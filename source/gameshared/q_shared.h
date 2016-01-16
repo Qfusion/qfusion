@@ -120,6 +120,10 @@ void COM_StripFilename( char *filename );
 int COM_FilePathLength( const char *in );
 
 // data is an in/out parm, returns a parsed out token
+char *COM_ParseExt2_r( char *token, size_t token_size, const char **data_p, bool nl, bool sq );
+#define COM_ParseExt_r( token, token_size, data_p, nl ) COM_ParseExt2_r( token, token_size, (const char **)data_p, nl, true )
+#define COM_Parse_r( token, token_size, data_p )   COM_ParseExt_r( token, token_size, data_p, true )
+
 char *COM_ParseExt2( const char **data_p, bool nl, bool sq );
 #define COM_ParseExt( data_p, nl ) COM_ParseExt2( (const char **)data_p, nl, true )
 #define COM_Parse( data_p )   COM_ParseExt( data_p, true )

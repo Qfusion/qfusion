@@ -498,14 +498,12 @@ int COM_Compress( char *data_p )
 	return out - data_p;
 }
 
-static char com_token[MAX_TOKEN_CHARS];
-
 /*
-* COM_ParseExt
+* COM_ParseExt2_r
 * 
 * Parse a token out of a string
 */
-char *COM_ParseExt2( const char **data_p, bool nl, bool sq )
+char *COM_ParseExt2_r( char *token, size_t token_size, const char **data_p, bool nl, bool sq )
 {
 	int c;
 	int len;
@@ -514,12 +512,12 @@ char *COM_ParseExt2( const char **data_p, bool nl, bool sq )
 
 	data = *data_p;
 	len = 0;
-	com_token[0] = 0;
+	token[0] = 0;
 
 	if( !data )
 	{
 		*data_p = NULL;
-		return com_token;
+		return token;
 	}
 
 	// skip whitespace
@@ -529,7 +527,7 @@ skipwhite:
 		if( c == 0 )
 		{
 			*data_p = NULL;
-			return com_token;
+			return token;
 		}
 		if( c == '\n' )
 			newlines = true;
@@ -539,7 +537,7 @@ skipwhite:
 	if( newlines && !nl )
 	{
 		*data_p = data;
-		return com_token;
+		return token;
 	}
 
 	// skip // comments
@@ -585,25 +583,25 @@ skipwhite:
 				if( !c )
 					data--;
 
-				if( ( len < MAX_TOKEN_CHARS ) && ( !sq ) )
+				if( ( len < token_size ) && ( !sq ) )
 				{
-					com_token[len] = '\"';
+					token[len] = '\"';
 					len++;
 					//data++;
 				}
 
-				if( len == MAX_TOKEN_CHARS )
+				if( len == token_size )
 				{
-					//Com_Printf ("Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS);
+					//Com_Printf ("Token exceeded %i chars, discarded.\n", (int)token_size);
 					len = 0;
 				}
-				com_token[len] = 0;
+				token[len] = 0;
 				*data_p = data;
-				return com_token;
+				return token;
 			}
-			if( len < MAX_TOKEN_CHARS )
+			if( len < token_size )
 			{
-				com_token[len] = c;
+				token[len] = c;
 				len++;
 			}
 		}
@@ -612,9 +610,9 @@ skipwhite:
 	// parse a regular word
 	do
 	{
-		if( len < MAX_TOKEN_CHARS )
+		if( len < token_size )
 		{
-			com_token[len] = c;
+			token[len] = c;
 			len++;
 		}
 		data++;
@@ -622,15 +620,27 @@ skipwhite:
 	}
 	while( (unsigned char)c > 32 );
 
-	if( len == MAX_TOKEN_CHARS )
+	if( len == token_size )
 	{
-		//Com_Printf ("Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS);
+		//Com_Printf ("Token exceeded %i chars, discarded.\n", (int)token_size);
 		len = 0;
 	}
-	com_token[len] = 0;
+	token[len] = 0;
 
 	*data_p = data;
-	return com_token;
+	return token;
+}
+
+static char com_token[MAX_TOKEN_CHARS];
+
+/*
+ * COM_ParseExt
+ *
+ * Parse a token out of a string
+ */
+char *COM_ParseExt2( const char **data_p, bool nl, bool sq )
+{
+	return COM_ParseExt2_r( com_token, MAX_TOKEN_CHARS, data_p, nl, sq );
 }
 
 /*
