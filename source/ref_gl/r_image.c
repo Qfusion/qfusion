@@ -3003,6 +3003,9 @@ static bool R_LoadAsyncImageFromDisk( image_t *image )
 
 	image->loaded = false;
 	image->missing = false;
+	
+	R_UnbindImage( image );
+	qglFlush();
 
 	R_IssueLoadPicLoaderCmd( id, image - images );
 	return true;
