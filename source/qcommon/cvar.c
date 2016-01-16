@@ -204,10 +204,10 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 	strcpy( var->name, var_name );
 	var->dvalue = ZoneCopyString( (char *) var_value );
 	var->string = ZoneCopyString( (char *) var_value );
-	Cvar_SetModified( var );
 	var->value = atof( var->string );
 	var->integer = Q_rint( var->value );
 	var->flags = flags;
+	Cvar_SetModified( var );
 
 	QMutex_Lock( cvar_mutex );
 	Trie_Insert( cvar_trie, var_name, var );
@@ -321,8 +321,6 @@ static cvar_t *Cvar_Set2( const char *var_name, const char *value, bool force )
 	if( !strcmp( value, var->string ) )
 		return var; // not changed
 
-	Cvar_SetModified( var );
-
 	if( Cvar_FlagIsSet( var->flags, CVAR_USERINFO ) )
 		userinfo_modified = true; // transmit at next oportunity
 
@@ -331,6 +329,7 @@ static cvar_t *Cvar_Set2( const char *var_name, const char *value, bool force )
 	var->string = ZoneCopyString( (char *) value );
 	var->value = atof( var->string );
 	var->integer = Q_rint( var->value );
+	Cvar_SetModified( var );
 
 	return var;
 }
