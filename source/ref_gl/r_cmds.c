@@ -24,9 +24,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qalgo/glob.h"
 
 /*
- * R_TakeScreenShot
+ * R_Localtime
  */
-void R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, int h, bool silent, bool media )
+static struct tm *R_Localtime( const time_t time, struct tm* _tm )
+{
+#ifdef _MSC_VER
+	localtime_s( _tm, &time );
+#else
+	localtime_r( &time, _tm );
+#endif
+	return _tm;
+}
+
+/*
+* R_TakeScreenShot
+*/
+void R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent, bool media )
 {
 	const char *extension;
 	size_t path_size = strlen( path ) + 1;
@@ -65,51 +78,30 @@ void R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, 
 	//
 	if( !checkname )
 	{
-		int i;
 		const int maxFiles = 100000;
 		static int lastIndex = 0;
 		bool addIndex = false;
-		time_t timestamp;
-		char timestamp_str[MAX_QPATH];
+		char timestampString[MAX_QPATH];
+		static char lastFmtString[MAX_QPATH];
 		struct tm newtime;
 		
-		timestamp = time( NULL );
-#ifdef _MSC_VER
-		localtime_s( &newtime, &timestamp );
-#else
-		localtime_r( &timestamp, &newtime );
-#endif
+		R_Localtime( time( NULL ), &newtime );
+		strftime( timestampString, sizeof( timestampString ), fmtString, &newtime );
 
-	   // validate timestamp string
-		for( i = 0; i < 2; i++ )
-		{
-			strftime( timestamp_str, sizeof( timestamp_str ), r_screenshot_fmtstr->string, &newtime );
-			if( !COM_ValidateRelativeFilename( timestamp_str ) )
-				ri.Cvar_ForceSet( r_screenshot_fmtstr->name, r_screenshot_fmtstr->dvalue );
-			else
-				break;
-		}
-		
-		// hm... shouldn't really happen, but check anyway
-		if( i == 2 )
-		{
-			Q_strncpyz( timestamp_str, glConfig.screenshotPrefix, sizeof( timestamp_str ) );
-			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, glConfig.screenshotPrefix );
-		}
-		
-		checkname_size = ( path_size - 1 ) + strlen( timestamp_str ) + 5 + 1 + strlen( extension );
+		checkname_size = ( path_size - 1 ) + strlen( timestampString ) + 5 + 1 + strlen( extension );
 		checkname = alloca( checkname_size );
 		
 		// if the string format is a constant or file already exists then iterate
-		if( !*timestamp_str || !strcmp( timestamp_str, r_screenshot_fmtstr->string ) )
+		if( !*fmtString || !strcmp( timestampString, fmtString ) )
 		{
 			addIndex = true;
 			
 			// force a rescan in case some vars have changed..
-			if( r_screenshot_fmtstr->modified )
+			if( strcmp( lastFmtString, fmtString ) )
 			{
 				lastIndex = 0;
-				r_screenshot_fmtstr->modified = true;
+				Q_strncpyz( lastFmtString, fmtString, sizeof( lastFmtString ) );
+				r_screenshot_fmtstr->modified = false;
 			}
 			if( r_screenshot_jpeg->modified )
 			{
@@ -119,7 +111,7 @@ void R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, 
 		}
 		else
 		{
-			Q_snprintfz( checkname, checkname_size, "%s%s%s", path, timestamp_str, extension );
+			Q_snprintfz( checkname, checkname_size, "%s%s%s", path, timestampString, extension );
 			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) != -1 )
 			{
 				lastIndex = 0;
@@ -129,7 +121,7 @@ void R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, 
 		
 		for( ; addIndex && lastIndex < maxFiles; lastIndex++ )
 		{
-			Q_snprintfz( checkname, checkname_size, "%s%s%05i%s", path, timestamp_str, lastIndex, extension );
+			Q_snprintfz( checkname, checkname_size, "%s%s%05i%s", path, timestampString, lastIndex, extension );
 			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) == -1 )
 				break; // file doesn't exist
 		}
@@ -157,10 +149,15 @@ void R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, 
 */
 void R_ScreenShot_f( void )
 {
+	int i;
 	const char *name;
 	const char *mediadir;
 	size_t path_size;
 	char *path;
+	char timestamp_str[MAX_QPATH];
+	struct tm newtime;
+	
+	R_Localtime( time( NULL ), &newtime );
 
 	name = ri.Cmd_Argv( 1 );
 
@@ -177,8 +174,23 @@ void R_ScreenShot_f( void )
 		path = alloca( path_size );
 		Q_snprintfz( path, path_size, "%s/%s/screenshots/", ri.FS_WriteDirectory(), ri.FS_GameDirectory() );
 	}
+	
+	// validate timestamp string
+	for( i = 0; i < 2; i++ )
+	{
+		strftime( timestamp_str, sizeof( timestamp_str ), r_screenshot_fmtstr->string, &newtime );
+		if( !COM_ValidateRelativeFilename( timestamp_str ) )
+			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, r_screenshot_fmtstr->dvalue );
+		else
+			break;
+	}
+	
+	// hm... shouldn't really happen, but check anyway
+	if( i == 2 )
+		ri.Cvar_ForceSet( r_screenshot_fmtstr->name, glConfig.screenshotPrefix );
 
-	RF_ScreenShot( path, name, ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? true : false );
+	RF_ScreenShot( path, name, r_screenshot_fmtstr->string,
+				  ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? true : false );
 }
 
 /*

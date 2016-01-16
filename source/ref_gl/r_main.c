@@ -234,14 +234,12 @@ CUSTOM COLORS
 =============================================================
 */
 
-static byte_vec4_t r_customColors[NUM_CUSTOMCOLORS];
-
 /*
 * R_InitCustomColors
 */
 void R_InitCustomColors( void )
 {
-	memset( r_customColors, 255, sizeof( r_customColors ) );
+	memset( rsh.customColors, 255, sizeof( rsh.customColors ) );
 }
 
 /*
@@ -251,7 +249,7 @@ void R_SetCustomColor( int num, int r, int g, int b )
 {
 	if( num < 0 || num >= NUM_CUSTOMCOLORS )
 		return;
-	Vector4Set( r_customColors[num], (uint8_t)r, (uint8_t)g, (uint8_t)b, 255 );
+	Vector4Set( rsh.customColors[num], (uint8_t)r, (uint8_t)g, (uint8_t)b, 255 );
 }
 /*
 * R_GetCustomColor
@@ -260,7 +258,7 @@ int R_GetCustomColor( int num )
 {
 	if( num < 0 || num >= NUM_CUSTOMCOLORS )
 		return COLOR_RGBA( 255, 255, 255, 255 );
-	return *(int *)r_customColors[num];
+	return *(int *)rsh.customColors[num];
 }
 
 /*
@@ -268,7 +266,7 @@ int R_GetCustomColor( int num )
 */
 void R_ShutdownCustomColors( void )
 {
-	memset( r_customColors, 255, sizeof( r_customColors ) );
+	memset( rsh.customColors, 255, sizeof( rsh.customColors ) );
 }
 
 /*
@@ -1646,29 +1644,15 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		R_UpdateHWGamma();
 	}
 
-	if( r_wallcolor->modified || r_floorcolor->modified ) {
-		int i;
-
-		// parse and clamp colors for walls and floors we will copy into our texture
-		sscanf( r_wallcolor->string,  "%3f %3f %3f", &rsh.wallColor[0], &rsh.wallColor[1], &rsh.wallColor[2] );
-		sscanf( r_floorcolor->string, "%3f %3f %3f", &rsh.floorColor[0], &rsh.floorColor[1], &rsh.floorColor[2] );
-		for( i = 0; i < 3; i++ ) {
-			rsh.wallColor[i] = bound( 0, floor(rsh.wallColor[i]) / 255.0, 1.0 );
-			rsh.floorColor[i] = bound( 0, floor(rsh.floorColor[i]) / 255.0, 1.0 );
-		}
-
-		r_wallcolor->modified = r_floorcolor->modified = false;
-	}
-
 	// draw buffer stuff
-	if( gl_drawbuffer->modified )
+	if( rf.newDrawBuffer )
 	{
-		gl_drawbuffer->modified = false;
+		rf.newDrawBuffer = false;
 
 #ifndef GL_ES_VERSION_2_0
 		if( cameraSeparation == 0 || !glConfig.stereoEnabled )
 		{
-			if( Q_stricmp( gl_drawbuffer->string, "GL_FRONT" ) == 0 )
+			if( Q_stricmp( rf.drawBuffer, "GL_FRONT" ) == 0 )
 				qglDrawBuffer( GL_FRONT );
 			else
 				qglDrawBuffer( GL_BACK );
@@ -1681,28 +1665,10 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		RB_Clear( GL_COLOR_BUFFER_BIT, 0, 0, 0, 1 );
 	}
 
-	// texturemode stuff
-	if( r_texturemode->modified )
-	{
-		R_TextureMode( r_texturemode->string );
-		r_texturemode->modified = false;
-	}
-
 	if( r_texturefilter->modified )
 	{
 		R_AnisotropicFilter( r_texturefilter->integer );
 		r_texturefilter->modified = false;
-	}
-
-	// keep r_outlines_cutoff value in sane bounds to prevent wallhacking
-	if( r_outlines_scale->modified ) {
-		if( r_outlines_scale->value < 0 ) {
-			ri.Cvar_ForceSet( r_outlines_scale->name, "0" );
-		}
-		else if( r_outlines_scale->value > 3 ) {
-			ri.Cvar_ForceSet( r_outlines_scale->name, "3" );
-		}
-		r_outlines_scale->modified = false;
 	}
 
 	// set swap interval (vertical synchronization)
@@ -1750,6 +1716,27 @@ void R_EndFrame( void )
 }
 
 //===================================================================
+
+/*
+* R_SetWallFloorColors
+*/
+void R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor )
+{
+	int i;
+	for( i = 0; i < 3; i++ ) {
+		rsh.wallColor[i] = bound( 0, floor(wallColor[i]) / 255.0, 1.0 );
+		rsh.floorColor[i] = bound( 0, floor(floorColor[i]) / 255.0, 1.0 );
+	}
+}
+
+/*
+* R_SetDrawBuffer
+*/
+void R_SetDrawBuffer( const char *drawbuffer )
+{
+	Q_strncpyz( rf.drawBuffer, drawbuffer, sizeof( rf.drawBuffer ) );
+	rf.newDrawBuffer = true;
+}
 
 /*
 * R_NormToLatLong

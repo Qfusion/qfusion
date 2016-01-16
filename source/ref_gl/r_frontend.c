@@ -238,6 +238,7 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 	RF_AdapterShutdown( &rrf.adapter );
 
 	memset( &rrf, 0, sizeof( rrf ) );
+	memset( rrf.customColors, 255, sizeof( rrf.customColors ) );
 	rrf.frame = &rrf.frames[0];
 
 	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo );
@@ -291,6 +292,42 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		}
 		r_maxfps->modified = false;
 	}
+
+	if( r_wallcolor->modified || r_floorcolor->modified ) {
+		vec3_t wallColor, floorColor;
+		
+		sscanf( r_wallcolor->string,  "%3f %3f %3f", &wallColor[0], &wallColor[1], &wallColor[2] );
+		sscanf( r_floorcolor->string, "%3f %3f %3f", &floorColor[0], &floorColor[1], &floorColor[2] );
+		
+		r_wallcolor->modified = r_floorcolor->modified = false;
+
+		RF_IssueSetWallFloorColorsReliableCmd( rrf.adapter.cmdPipe, wallColor, floorColor );		
+	}
+
+	if( gl_drawbuffer->modified )
+	{
+		gl_drawbuffer->modified = false;
+		RF_IssueSetDrawBufferReliableCmd( rrf.adapter.cmdPipe, gl_drawbuffer->string );
+	}
+	
+	// texturemode stuff
+	if( r_texturemode->modified )
+	{
+		r_texturemode->modified = false;
+		RF_IssueSetTextureModeReliableCmd( rrf.adapter.cmdPipe, r_texturemode->string );
+	}
+	
+	// keep r_outlines_cutoff value in sane bounds to prevent wallhacking
+	if( r_outlines_scale->modified ) {
+		if( r_outlines_scale->value < 0 ) {
+			ri.Cvar_ForceSet( r_outlines_scale->name, "0" );
+		}
+		else if( r_outlines_scale->value > 3 ) {
+			ri.Cvar_ForceSet( r_outlines_scale->name, "3" );
+		}
+		r_outlines_scale->modified = false;
+	}
+
 	rrf.adapter.maxfps = r_maxfps->integer;
 
 	// take the frame the backend is not busy processing
@@ -452,13 +489,20 @@ void RF_ResetScissor( void )
 
 void RF_SetCustomColor( int num, int r, int g, int b )
 {
-	RF_IssueSetCustomColorCmd( rrf.frame, num, r, g, b );
+	byte_vec4_t rgba;
+
+	Vector4Set( rgba, r, g, b, 255 );
+	
+	if( *(int *)rgba != *(int *)rrf.customColors[num] ) {
+		RF_IssueSetCustomColorReliableCmd( rrf.adapter.cmdPipe, num, r, g, b );
+		*(int *)rrf.customColors[num] = *(int *)rgba;
+	}
 }
 
-void RF_ScreenShot( const char *path, const char *name, bool silent )
+void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, bool silent )
 {
 	if( RF_RenderingEnabled() )
-		RF_IssueScreenShotReliableCmd( rrf.adapter.cmdPipe, path, name, silent );
+		RF_IssueScreenShotReliableCmd( rrf.adapter.cmdPipe, path, name, fmtstring, silent );
 }
 
 void RF_EnvShot( const char *path, const char *name, unsigned pixels )
