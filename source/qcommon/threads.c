@@ -387,7 +387,6 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned (**cmdHandlers)( const void * 
 
 		pipe->read_pos += cmd_size;
 		QBufPipe_BufLenAdd( pipe, -cmd_size ); // atomic
-		break;
 	}
 
 	return read;
