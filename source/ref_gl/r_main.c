@@ -1411,9 +1411,9 @@ int R_SetSwapInterval( int swapInterval, int oldSwapInterval )
 }
 
 /*
-* R_UpdateHWGamma
+* R_SetGamma
 */
-static void R_UpdateHWGamma( void )
+void R_SetGamma( float gamma )
 {
 	int i, v;
 	double invGamma, div;
@@ -1422,7 +1422,7 @@ static void R_UpdateHWGamma( void )
 	if( !glConfig.hwGamma )
 		return;
 
-	invGamma = 1.0 / bound( 0.5, r_gamma->value, 3.0 );
+	invGamma = 1.0 / bound( 0.5, gamma, 3.0 );
 	div = (double)( 1 << 0 ) / (glConfig.gammaRampSize - 0.5);
 
 	for( i = 0; i < glConfig.gammaRampSize; i++ )
@@ -1432,6 +1432,27 @@ static void R_UpdateHWGamma( void )
 	}
 
 	GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, gammaRamp );
+}
+
+/*
+* R_SetWallFloorColors
+*/
+void R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor )
+{
+	int i;
+	for( i = 0; i < 3; i++ ) {
+		rsh.wallColor[i] = bound( 0, floor(wallColor[i]) / 255.0, 1.0 );
+		rsh.floorColor[i] = bound( 0, floor(floorColor[i]) / 255.0, 1.0 );
+	}
+}
+
+/*
+* R_SetDrawBuffer
+*/
+void R_SetDrawBuffer( const char *drawbuffer )
+{
+	Q_strncpyz( rf.drawBuffer, drawbuffer, sizeof( rf.drawBuffer ) );
+	rf.newDrawBuffer = true;
 }
 
 /*
@@ -1637,13 +1658,6 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	}
 #endif
 
-	// update gamma
-	if( r_gamma->modified )
-	{
-		r_gamma->modified = false;
-		R_UpdateHWGamma();
-	}
-
 	// draw buffer stuff
 	if( rf.newDrawBuffer )
 	{
@@ -1663,12 +1677,6 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	if( forceClear )
 	{
 		RB_Clear( GL_COLOR_BUFFER_BIT, 0, 0, 0, 1 );
-	}
-
-	if( r_texturefilter->modified )
-	{
-		R_AnisotropicFilter( r_texturefilter->integer );
-		r_texturefilter->modified = false;
 	}
 
 	// set swap interval (vertical synchronization)
@@ -1716,27 +1724,6 @@ void R_EndFrame( void )
 }
 
 //===================================================================
-
-/*
-* R_SetWallFloorColors
-*/
-void R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor )
-{
-	int i;
-	for( i = 0; i < 3; i++ ) {
-		rsh.wallColor[i] = bound( 0, floor(wallColor[i]) / 255.0, 1.0 );
-		rsh.floorColor[i] = bound( 0, floor(floorColor[i]) / 255.0, 1.0 );
-	}
-}
-
-/*
-* R_SetDrawBuffer
-*/
-void R_SetDrawBuffer( const char *drawbuffer )
-{
-	Q_strncpyz( rf.drawBuffer, drawbuffer, sizeof( rf.drawBuffer ) );
-	rf.newDrawBuffer = true;
-}
 
 /*
 * R_NormToLatLong
