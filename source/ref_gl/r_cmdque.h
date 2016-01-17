@@ -99,6 +99,8 @@ enum
 	
 	REF_PIPE_CMD_SET_DRAWBUFFER,
 	REF_PIPE_CMD_SET_TEXTURE_MODE,
+	REF_PIPE_CMD_SET_TEXTURE_FILTER,
+	REF_PIPE_CMD_SET_GAMMA,
 
 	NUM_REF_PIPE_CMDS
 };
@@ -121,5 +123,7 @@ void RF_IssueSetCustomColorReliableCmd( qbufPipe_t *pipe, int num, int r, int g,
 void RF_IssueSetWallFloorColorsReliableCmd( qbufPipe_t *pipe, const vec3_t wallColor, const vec3_t floorColor );
 void RF_IssueSetDrawBufferReliableCmd( qbufPipe_t *pipe, const char *drawbuffer );
 void RF_IssueSetTextureModeReliableCmd( qbufPipe_t *pipe, const char *texturemode );
+void RF_IssueSetTextureFilterReliableCmd( qbufPipe_t *pipe, int filter );
+void RF_IssueSetGammaReliableCmd( qbufPipe_t *pipe, float gamma );
 
 #endif // R_CMDQUEUE_H

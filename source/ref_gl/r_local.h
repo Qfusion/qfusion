@@ -571,6 +571,9 @@ bool		R_IsRenderingToScreen( void );
 void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
 int 		R_SetSwapInterval( int swapInterval, int oldSwapInterval );
+void		R_SetGamma( float gamma );
+void		R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
+void		R_SetDrawBuffer( const char *drawbuffer );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 const msurface_t *R_GetDebugSurface( void );
@@ -636,9 +639,6 @@ void		R_BindFrameBufferObject( int object );
 void		R_Scissor( int x, int y, int w, int h );
 void		R_GetScissor( int *x, int *y, int *w, int *h );
 void		R_ResetScissor( void );
-
-void		R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
-void		R_SetDrawBuffer( const char *drawbuffer );
 
 //
 // r_mesh.c

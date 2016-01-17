@@ -283,7 +283,7 @@ void RF_Shutdown( bool verbose )
 	R_Shutdown( verbose );
 }
 
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
+static void RF_CheckCvars( void )
 {
 	// disallow bogus r_maxfps values, reset to default value instead
 	if( r_maxfps->modified ) {
@@ -291,6 +291,19 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 			ri.Cvar_ForceSet( r_maxfps->name, r_maxfps->dvalue );
 		}
 		r_maxfps->modified = false;
+	}
+
+	// update gamma
+	if( r_gamma->modified )
+	{
+		r_gamma->modified = false;
+		RF_IssueSetGammaReliableCmd( rrf.adapter.cmdPipe, r_gamma->value );
+	}
+	
+	if( r_texturefilter->modified )
+	{
+		r_texturefilter->modified = false;
+		RF_IssueSetTextureFilterReliableCmd( rrf.adapter.cmdPipe, r_texturefilter->integer );
 	}
 
 	if( r_wallcolor->modified || r_floorcolor->modified ) {
@@ -327,6 +340,11 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		}
 		r_outlines_scale->modified = false;
 	}
+}
+
+void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
+{
+	RF_CheckCvars();
 
 	rrf.adapter.maxfps = r_maxfps->integer;
 

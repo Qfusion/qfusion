@@ -687,6 +687,18 @@ typedef struct
 	char			texturemode[32];
 } refReliableCmdSetTextureMode_t;
 
+typedef struct
+{
+	int             id;
+	char			filter;
+} refReliableCmdSetTextureFilter_t;
+
+typedef struct
+{
+	int             id;
+	float			gamma;
+} refReliableCmdSetGamma_t;
+
 static unsigned R_HandleInitReliableCmd( void *pcmd );
 static unsigned R_HandleShutdownReliableCmd( void *pcmd );
 static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd );
@@ -698,6 +710,8 @@ static unsigned R_HandleSetCustomColorReliableCmd( void *pcmd );
 static unsigned R_HandleSetWallFloorColorsReliableCmd( void *pcmd );
 static unsigned R_HandleSetDrawBufferReliableCmd( void *pcmd );
 static unsigned R_HandleSetTextureModeReliableCmd( void *pcmd );
+static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd );
+static unsigned R_HandleSetGammaReliableCmd( void *pcmd );
 
 refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 {
@@ -712,6 +726,8 @@ refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 	(refPipeCmdHandler_t)R_HandleSetWallFloorColorsReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetDrawBufferReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetTextureModeReliableCmd,
+	(refPipeCmdHandler_t)R_HandleSetTextureFilterReliableCmd,
+	(refPipeCmdHandler_t)R_HandleSetGammaReliableCmd,
 };
 
 static unsigned R_HandleInitReliableCmd( void *pcmd )
@@ -825,6 +841,24 @@ static unsigned R_HandleSetTextureModeReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
+static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd )
+{
+	refReliableCmdSetTextureFilter_t *cmd = pcmd;
+
+	R_AnisotropicFilter( cmd->filter );
+
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleSetGammaReliableCmd( void *pcmd )
+{
+	refReliableCmdSetGamma_t *cmd = pcmd;
+
+	R_SetGamma( cmd->gamma );
+
+	return sizeof( *cmd );
+}
+
 // ============================================================================
 
 void RF_IssueInitReliableCmd( qbufPipe_t *pipe )
@@ -932,6 +966,26 @@ void RF_IssueSetTextureModeReliableCmd( qbufPipe_t *pipe, const char *texturemod
 	
 	cmd.id = REF_PIPE_CMD_SET_TEXTURE_MODE;
 	Q_strncpyz( cmd.texturemode, texturemode, sizeof( cmd.texturemode ) );
+
+	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
+}
+
+void RF_IssueSetTextureFilterReliableCmd( qbufPipe_t *pipe, int filter )
+{
+	refReliableCmdSetTextureFilter_t cmd;
+	
+	cmd.id = REF_PIPE_CMD_SET_TEXTURE_FILTER;
+	cmd.filter = filter;
+
+	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
+}
+
+void RF_IssueSetGammaReliableCmd( qbufPipe_t *pipe, float gamma )
+{
+	refReliableCmdSetGamma_t cmd;
+	
+	cmd.id = REF_PIPE_CMD_SET_GAMMA;
+	cmd.gamma = gamma;
 
 	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
 }
