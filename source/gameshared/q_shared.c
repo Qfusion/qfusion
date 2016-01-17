@@ -506,7 +506,7 @@ int COM_Compress( char *data_p )
 char *COM_ParseExt2_r( char *token, size_t token_size, const char **data_p, bool nl, bool sq )
 {
 	int c;
-	int len;
+	unsigned len;
 	const char *data;
 	bool newlines = false;
 
