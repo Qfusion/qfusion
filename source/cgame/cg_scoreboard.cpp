@@ -848,7 +848,7 @@ struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar, cvar_t *sizeCvar )
 void CG_DrawScoreboard( void )
 {
 	int pass;
-	char *ptr, *token, *layout, title[MAX_STRING_CHARS], type;
+	char *ptr, *token, *layout, title[MAX_CONFIGSTRING_CHARS], type;
 	int team = TEAM_PLAYERS;
 	int xpos;
 	int ypos, yoffset, maxyoffset;
@@ -873,7 +873,9 @@ void CG_DrawScoreboard( void )
 	ypos = (int)( cgs.vidHeight * 0.2 ) - 24 * cgs.vidHeight / 600;
 
 	// draw title
-	Q_snprintfz( title, sizeof( title ), va( "%s %s", trap_Cvar_String( "gamename" ), gs.gametypeName ) );
+	Q_strncpyz( title, cgs.configStrings[CS_GAMETYPETITLE], sizeof( title ) );
+	if( !title[0] )
+		Q_strncpyz( title, gs.gametypeName, sizeof( title ) );
 	Q_strupr( title );
 
 	trap_SCR_DrawString( xpos, ypos, ALIGN_CENTER_TOP, title, titlefont, whiteTransparent );
