@@ -552,6 +552,12 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		char *referer, *fullurl;
 		const char *headers[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
+		if( cls.download.offset == cls.download.size ) {
+			// special case for completed downloads to avoid passing empty HTTP range
+			CL_WebDownloadDoneCb( 200, "", NULL );
+			return;
+		}
+
 		alloc_size = strlen( APP_URI_SCHEME ) + strlen( NET_AddressToString( &cls.serveraddress ) ) + 1;
 		referer = alloca( alloc_size );
 		Q_snprintfz( referer, alloc_size, APP_URI_SCHEME "%s", NET_AddressToString( &cls.serveraddress ) );
