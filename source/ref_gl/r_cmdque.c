@@ -32,6 +32,32 @@ FRAME COMMANDS BUFFER
 =============================================================
 */
 
+#define REF_CMD_BUF_SIZE 0x400000
+
+enum
+{
+	REF_CMD_BEGIN_FRAME,
+	REF_CMD_END_FRAME,
+	
+	REF_CMD_DRAW_STRETCH_PIC,
+	REF_CMD_DRAW_STRETCH_POLY,
+	
+	REF_CMD_CLEAR_SCENE,
+	REF_CMD_ADD_ENTITY_TO_SCENE,
+	REF_CMD_ADD_LIGHT_TO_SCENE,
+	REF_CMD_ADD_POLY_TO_SCENE,
+	REF_CMD_ADD_LIGHT_STYLE_TO_SCENE,
+	REF_CMD_RENDER_SCENE,
+	
+	REF_CMD_SET_SCISSOR,
+	REF_CMD_RESET_SCISSOR,
+	
+	REF_CMD_DRAW_STRETCH_RAW,
+	REF_CMD_DRAW_STRETCH_RAW_YUV,
+
+	NUM_REF_CMDS
+};
+
 typedef struct
 {
 	int             id;
@@ -143,6 +169,25 @@ static unsigned R_HandleResetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleDrawStretchRawCmd( uint8_t *cmdbuf );
 static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *cmdbuf );
 
+// must match the corresponding REF_CMD_ enums!
+static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
+{
+	(refCmdHandler_t)R_HandleBeginFrameCmd,
+	(refCmdHandler_t)R_HandleEndFrameCmd,
+	(refCmdHandler_t)R_HandleDrawStretchPicCmd,
+	(refCmdHandler_t)R_HandleDrawStretchPolyCmd,
+	(refCmdHandler_t)R_HandleClearSceneCmd,
+	(refCmdHandler_t)R_HandleAddEntityToSceneCmd,
+	(refCmdHandler_t)R_HandleAddLightToSceneCmd,
+	(refCmdHandler_t)R_HandleAddPolyToSceneCmd,
+	(refCmdHandler_t)R_HandleAddLightStyleToSceneCmd,
+	(refCmdHandler_t)R_HandleRenderSceneCmd,
+	(refCmdHandler_t)R_HandleSetScissorCmd,
+	(refCmdHandler_t)R_HandleResetScissorCmd,
+	(refCmdHandler_t)R_HandleDrawStretchRawCmd,
+	(refCmdHandler_t)R_HandleDrawStretchRawYUVCmd,
+};
+
 static unsigned R_HandleBeginFrameCmd( uint8_t *pcmd )
 {
 	refCmdBeginFrame_t *cmd = (void *)pcmd;
@@ -253,40 +298,36 @@ static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *pcmd )
 
 // ============================================================================
 
+static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_len, size_t cmd_len )
+{
+	if( cmdbuf->len + cmd_len > cmdbuf->buf_size )
+		return;
+	memcpy( cmdbuf->buf + cmdbuf->len, cmd, struct_len );
+	cmdbuf->len += cmd_len;
+}
+
 static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation, bool forceClear, bool forceVsync )
 {
 	refCmdBeginFrame_t cmd;
-	size_t cmd_len = sizeof( cmd );
 
 	cmd.id = REF_CMD_BEGIN_FRAME;
 	cmd.cameraSeparation = cameraSeparation;
 	cmd.forceClear = forceClear;
 	cmd.forceVsync = forceVsync;
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueEndFrameCmd( ref_cmdbuf_t *cmdbuf )
 {
-	refCmdEndFrame_t cmd;
-	size_t cmd_len = sizeof( cmd );
-
-	cmd.id = REF_CMD_END_FRAME;
-
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	refCmdEndFrame_t cmd = { REF_CMD_END_FRAME };
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueDrawRotatedStretchPicCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h,
 	float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader )
 {
 	refCmdDrawStretchPic_t cmd;
-	size_t cmd_len = sizeof( cmd );
 
 	cmd.id = REF_CMD_DRAW_STRETCH_PIC;
 	cmd.x = x;
@@ -301,10 +342,7 @@ static void RF_IssueDrawRotatedStretchPicCmd( ref_cmdbuf_t *cmdbuf, int x, int y
 	cmd.shader = (void *)shader;
 	Vector4Copy( color, cmd.color );
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, int id, const poly_t *poly,
@@ -338,7 +376,7 @@ static void RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, in
 
 	cmd.length = cmd_len;
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
+	if( cmdbuf->len + cmd_len > cmdbuf->buf_size )
 		return;
 
 	pcmd = cmdbuf->buf + cmdbuf->len;
@@ -370,10 +408,7 @@ static void RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, in
 		pcmd += poly->numelems * sizeof( elem_t );
 	}
 
-	pcmd = cmdbuf->buf + cmdbuf->len;
-	memcpy( pcmd, &cmd, sizeof( cmd ) );
-
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
 }
 
 static void RF_IssueDrawStretchPolyCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly, float x_offset, float y_offset )
@@ -383,15 +418,8 @@ static void RF_IssueDrawStretchPolyCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly
 
 static void RF_IssueClearSceneCmd( ref_cmdbuf_t *cmdbuf )
 {
-	refCmdClearScene_t cmd;
-	size_t cmd_len = sizeof( cmd );
-
-	cmd.id = REF_CMD_CLEAR_SCENE;
-
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	refCmdClearScene_t cmd = { REF_CMD_CLEAR_SCENE };
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *cmdbuf, const entity_t *ent )
@@ -414,7 +442,7 @@ static void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *cmdbuf, const entity_t *e
 	}
 	cmd.length = cmd_len;
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
+	if( cmdbuf->len + cmd_len > cmdbuf->buf_size )
 		return;
 
 	pcmd = cmdbuf->buf + cmdbuf->len;
@@ -432,16 +460,12 @@ static void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *cmdbuf, const entity_t *e
 		pcmd += bones_len;
 	}
 
-	pcmd = cmdbuf->buf + cmdbuf->len;
-	memcpy( pcmd, &cmd, sizeof( cmd ) );
-
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
 }
 
 static void RF_IssueAddLightToSceneCmd( ref_cmdbuf_t *cmdbuf, const vec3_t org, float intensity, float r, float g, float b )
 {
 	refCmdAddLightToScene_t cmd;
-	size_t cmd_len = sizeof( cmd );
 
 	cmd.id = REF_CMD_ADD_LIGHT_TO_SCENE;
 	VectorCopy( org, cmd.origin );
@@ -450,10 +474,7 @@ static void RF_IssueAddLightToSceneCmd( ref_cmdbuf_t *cmdbuf, const vec3_t org, 
 	cmd.g = g;
 	cmd.b = b;
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly )
@@ -464,7 +485,6 @@ static void RF_IssueAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly 
 static void RF_IssueAddLightStyleToSceneCmd( ref_cmdbuf_t *cmdbuf, int style, float r, float g, float b )
 {
 	refCmdAddLightStyleToScene_t cmd;
-	size_t cmd_len = sizeof( cmd );
 
 	cmd.id = REF_CMD_ADD_LIGHT_STYLE_TO_SCENE;
 	cmd.style = style;
@@ -472,10 +492,7 @@ static void RF_IssueAddLightStyleToSceneCmd( ref_cmdbuf_t *cmdbuf, int style, fl
 	cmd.g = g;
 	cmd.b = b;
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd )
@@ -500,7 +517,7 @@ static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd )
 
 	cmd.length = cmd_len;
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
+	if( cmdbuf->len + cmd_len > cmdbuf->buf_size )
 		return;
 
 	pcmd = cmdbuf->buf + cmdbuf->len;
@@ -511,15 +528,12 @@ static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd )
 		memcpy( pcmd, fd->areabits, areabytes );
 	}
 
-	pcmd = cmdbuf->buf + cmdbuf->len;
-	memcpy( pcmd, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
 }
 
 static void RF_IssueSetScissorCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h )
 {
 	refCmdSetScissor_t cmd;
-	size_t cmd_len = sizeof( cmd );
 
 	cmd.id = REF_CMD_SET_SCISSOR;
 	cmd.x = x;
@@ -527,29 +541,18 @@ static void RF_IssueSetScissorCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, in
 	cmd.w = w;
 	cmd.h = h;
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueResetScissorCmd( ref_cmdbuf_t *cmdbuf )
 {
-	refCmdResetScissor_t cmd;
-	size_t cmd_len = sizeof( cmd );
-
-	cmd.id = REF_CMD_RESET_SCISSOR;
-
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	refCmdResetScissor_t cmd = { REF_CMD_RESET_SCISSOR };
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueDrawStretchRawOrRawYUVCmd( ref_cmdbuf_t *cmdbuf, int id, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
 {
 	refCmdDrawStretchRaw_t cmd;
-	size_t cmd_len = sizeof( cmd );
 
 	cmd.id = id;
 	cmd.x = x;
@@ -561,10 +564,7 @@ static void RF_IssueDrawStretchRawOrRawYUVCmd( ref_cmdbuf_t *cmdbuf, int id, int
 	cmd.s2 = s2;
 	cmd.t2 = t2;
 
-	if( cmdbuf->len + cmd_len > sizeof( cmdbuf->buf ) )
-		return;
-	memcpy( cmdbuf->buf + cmdbuf->len, &cmd, sizeof( cmd ) );
-	cmdbuf->len += cmd_len;
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueDrawStretchRawCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
@@ -581,27 +581,15 @@ static void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *cmdbuf, int x, int y, in
 
 static void RF_RunCmdBufProc( ref_cmdbuf_t *cmdbuf )
 {
-	// must match the corresponding REF_CMD_ enums!
-	static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
-	{
-		(refCmdHandler_t)R_HandleBeginFrameCmd,
-		(refCmdHandler_t)R_HandleEndFrameCmd,
-		(refCmdHandler_t)R_HandleDrawStretchPicCmd,
-		(refCmdHandler_t)R_HandleDrawStretchPolyCmd,
-		(refCmdHandler_t)R_HandleClearSceneCmd,
-		(refCmdHandler_t)R_HandleAddEntityToSceneCmd,
-		(refCmdHandler_t)R_HandleAddLightToSceneCmd,
-		(refCmdHandler_t)R_HandleAddPolyToSceneCmd,
-		(refCmdHandler_t)R_HandleAddLightStyleToSceneCmd,
-		(refCmdHandler_t)R_HandleRenderSceneCmd,
-		(refCmdHandler_t)R_HandleSetScissorCmd,
-		(refCmdHandler_t)R_HandleResetScissorCmd,
-		(refCmdHandler_t)R_HandleDrawStretchRawCmd,
-		(refCmdHandler_t)R_HandleDrawStretchRawYUVCmd,
-	};
-	size_t t;
+	size_t t, e;
 
-	for( t = 0; t < cmdbuf->len; ) {
+	assert( cmdbuf->len <= cmdbuf->buf_size );
+
+	e = cmdbuf->len;
+	if( e > cmdbuf->buf_size )
+		e = cmdbuf->buf_size;
+
+	for( t = 0; t < e; ) {
 		uint8_t *cmd = cmdbuf->buf + t;
 		int id = *(int *)cmd;
 			
@@ -637,6 +625,9 @@ ref_cmdbuf_t *RF_CreateCmdBuf( void )
 	ref_cmdbuf_t *cmdbuf;
 
 	cmdbuf = R_Malloc( sizeof( *cmdbuf ) );
+	cmdbuf->buf = R_Malloc( REF_CMD_BUF_SIZE );
+	cmdbuf->buf_size = REF_CMD_BUF_SIZE;
+
 	cmdbuf->BeginFrame = &RF_IssueBeginFrameCmd;
 	cmdbuf->EndFrame = &RF_IssueEndFrameCmd;
 	cmdbuf->DrawRotatedStretchPic = &RF_IssueDrawRotatedStretchPicCmd;
@@ -662,10 +653,16 @@ ref_cmdbuf_t *RF_CreateCmdBuf( void )
 
 void RF_DestroyCmdBuf( ref_cmdbuf_t **pcmdbuf )
 {
+	ref_cmdbuf_t *cmdbuf;
+
 	if( !pcmdbuf || !*pcmdbuf )
 		return;
-	R_Free( *pcmdbuf );
+
+	cmdbuf = *pcmdbuf;
 	*pcmdbuf = NULL;
+
+	R_Free( cmdbuf->buf );
+	R_Free( cmdbuf );
 }
 
 /*

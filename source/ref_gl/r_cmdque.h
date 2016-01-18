@@ -25,39 +25,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // public frontend -> frontend/backend commands
 
-// frame commands
-
-enum
-{
-	// a valid frame should begin and end with REF_CMD_BEGIN_FRAME and REF_CMD_END_FRAME cmds
-	REF_CMD_BEGIN_FRAME,
-	REF_CMD_END_FRAME,
-	
-	REF_CMD_DRAW_STRETCH_PIC,
-	REF_CMD_DRAW_STRETCH_POLY,
-	
-	REF_CMD_CLEAR_SCENE,
-	REF_CMD_ADD_ENTITY_TO_SCENE,
-	REF_CMD_ADD_LIGHT_TO_SCENE,
-	REF_CMD_ADD_POLY_TO_SCENE,
-	REF_CMD_ADD_LIGHT_STYLE_TO_SCENE,
-	REF_CMD_RENDER_SCENE,
-	
-	REF_CMD_SET_SCISSOR,
-	REF_CMD_RESET_SCISSOR,
-	
-	REF_CMD_DRAW_STRETCH_RAW,
-	REF_CMD_DRAW_STRETCH_RAW_YUV,
-
-	NUM_REF_CMDS
-};
-
 typedef struct ref_cmdbuf_s
 {
 	uint32_t		frameId;
 	size_t			len;
 
 	// command procs
+
+	// a valid frame should begin and end with BeginFrame and EndFrame respectively
 	void			( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, float cameraSeparation, bool forceClear, bool forceVsync );
 	void			( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
 	void			( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
@@ -80,7 +55,8 @@ typedef struct ref_cmdbuf_s
 	unsigned		( *GetFrameId )( struct ref_cmdbuf_s *cmdbuf );
 	void			( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
 
-	uint8_t			buf[0x400000];
+	size_t			buf_size;
+	uint8_t			*buf;
 } ref_cmdbuf_t;
 
 ref_cmdbuf_t *RF_CreateCmdBuf( void );
