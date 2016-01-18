@@ -30,6 +30,7 @@ rbackend_t rb;
 
 static void RB_SetGLDefaults( void );
 static void RB_RegisterStreamVBOs( void );
+static void RB_SelectTextureUnit( int tmu );
 
 /*
 * RB_Init
@@ -69,8 +70,23 @@ void RB_Shutdown( void )
 */
 void RB_BeginRegistration( void )
 {
+	int i;
+
 	RB_RegisterStreamVBOs();
 	RB_BindVBO( 0, 0 );
+
+	// unbind all texture targets on all TMUs
+	for( i = MAX_TEXTURE_UNITS - 1; i >= 0; i-- ) {
+		RB_SelectTextureUnit( i );
+
+		qglBindTexture( GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0 );
+		if( glConfig.ext.texture_array )
+			qglBindTexture( GL_TEXTURE_2D_ARRAY_EXT, 0 );
+		if( glConfig.ext.texture3D )
+			qglBindTexture( GL_TEXTURE_3D_EXT, 0 );
+		qglBindTexture( GL_TEXTURE_2D, 0 );
+	}
+
 	RB_FlushTextureCache();
 }
 
@@ -160,7 +176,7 @@ static void RB_SetGLDefaults( void )
 /*
 * RB_SelectTextureUnit
 */
-void RB_SelectTextureUnit( int tmu )
+static void RB_SelectTextureUnit( int tmu )
 {
 	if( tmu == rb.gl.currentTMU )
 		return;
