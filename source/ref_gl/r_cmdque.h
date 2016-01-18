@@ -46,40 +46,45 @@ enum
 	REF_CMD_SET_SCISSOR,
 	REF_CMD_RESET_SCISSOR,
 	
-	REF_CMD_SYNC,
-
 	REF_CMD_DRAW_STRETCH_RAW,
 	REF_CMD_DRAW_STRETCH_RAW_YUV,
 
 	NUM_REF_CMDS
 };
 
-typedef struct
+typedef struct ref_cmdbuf_s
 {
-	uint8_t			buf[0x400000];
 	uint32_t		frameId;
 	size_t			len;
+
+	// command procs
+	void			( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, float cameraSeparation, bool forceClear, bool forceVsync );
+	void			( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
+	void			( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
+						float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );
+	void			( *DrawStretchPoly )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly, float x_offset, float y_offset );
+	void			( *ClearScene )( struct ref_cmdbuf_s *cmdbuf );
+	void			( *AddEntityToScene )( struct ref_cmdbuf_s *cmdbuf, const entity_t *ent );
+	void			( *AddLightToScene )( struct ref_cmdbuf_s *cmdbuf, const vec3_t org, float intensity, float r, float g, float b );
+	void			( *AddPolyToScene )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly );
+	void			( *AddLightStyleToScene )( struct ref_cmdbuf_s *cmdbuf, int style, float r, float g, float b );
+	void			( *RenderScene )( struct ref_cmdbuf_s *cmdbuf, const refdef_t *fd );
+	void			( *SetScissor )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h );
+	void			( *ResetScissor )( struct ref_cmdbuf_s *cmdbuf );
+	void			( *DrawStretchRaw )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
+	void			( *DrawStretchRawYUV )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
+
+	// execution proc
+	void			( *Clear )( struct ref_cmdbuf_s *cmdbuf );
+	void			( *SetFrameId )( struct ref_cmdbuf_s *cmdbuf, unsigned frameId );
+	unsigned		( *GetFrameId )( struct ref_cmdbuf_s *cmdbuf );
+	void			( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
+
+	uint8_t			buf[0x400000];
 } ref_cmdbuf_t;
 
-typedef unsigned (*refCmdHandler_t)( const void * );
-extern refCmdHandler_t refCmdHandlers[];
-
-void RF_IssueBeginFrameCmd( ref_cmdbuf_t *frame, float cameraSeparation, bool forceClear, bool forceVsync );
-void RF_IssueEndFrameCmd( ref_cmdbuf_t *frame );
-void RF_IssueDrawRotatedStretchPicCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h,
-	float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );
-void RF_IssueDrawStretchPolyCmd( ref_cmdbuf_t *frame, const poly_t *poly, float x_offset, float y_offset );
-void RF_IssueClearSceneCmd( ref_cmdbuf_t *frame );
-void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *frame, const entity_t *ent );
-void RF_IssueAddLightToSceneCmd( ref_cmdbuf_t *frame, const vec3_t org, float intensity, float r, float g, float b );
-void RF_IssueAddPolyToSceneCmd( ref_cmdbuf_t *frame, const poly_t *poly );
-void RF_IssueAddLightStyleToSceneCmd( ref_cmdbuf_t *frame, int style, float r, float g, float b );
-void RF_IssueRenderSceneCmd( ref_cmdbuf_t *frame, const refdef_t *fd );
-void RF_IssueSetScissorCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h );
-void RF_IssueResetScissorCmd( ref_cmdbuf_t *frame );
-void RF_IssueSyncCmd( ref_cmdbuf_t *frame );
-void RF_IssueDrawStretchRawCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
-void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
+ref_cmdbuf_t *RF_CreateCmdBuf( void );
+void RF_DestroyCmdBuf( ref_cmdbuf_t **pcmdbuf );
 
 // ==========
 

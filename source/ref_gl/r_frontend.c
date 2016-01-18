@@ -31,27 +31,8 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
 static void RF_AdapterCmdsProc( ref_frontendAdapter_t *adapter, ref_cmdbuf_t *frame )
 {
 	if( frame ) {
-		size_t t;
-
-		for( t = 0; t < frame->len; ) {
-			uint8_t *cmd = frame->buf + t;
-			int id = *(int *)cmd;
-			
-			if( id < 0 || id >= NUM_REF_CMDS )
-				break;
-			
-			size_t len = refCmdHandlers[id]( cmd );
-
-			if( len == 0 )
-				break;
-			
-			if( adapter->shutdown )
-				break;
-			
-			t += len;
-		}
-
-		adapter->readFrameId = frame->frameId;
+		frame->RunCmds( frame );
+		adapter->readFrameId = frame->GetFrameId( frame );
 	}
 
 	ri.BufPipe_ReadCmds( adapter->cmdPipe, refPipeCmdHandlers );
@@ -146,6 +127,8 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter )
 	}
 
 	GLimp_EnableMultithreadedRendering( false );
+
+	memset( adapter, 0, sizeof( *adapter ) );
 }
 
 /*
@@ -210,8 +193,8 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter )
 		adapter->frameId = fe->frameId;
 		adapter->frameNum = fe->lastFrameNum;
 
-		result = &fe->frames[adapter->frameNum];
-		result->frameId = fe->frameId;
+		result = fe->frames[adapter->frameNum];
+		result->SetFrameId( result, fe->frameId );
 	}
 	ri.Mutex_Unlock( adapter->frameLock );
 
@@ -223,8 +206,21 @@ rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int 
 	void *hinstance, void *wndproc, void *parenthWnd, 
 	bool verbose )
 {
-	return R_Init( applicationName, screenshotPrefix, startupColor,
+	int i;
+	rserr_t err;
+
+	memset( &rrf, 0, sizeof( rrf ) );
+
+	err = R_Init( applicationName, screenshotPrefix, startupColor,
 		iconResource, iconXPM, hinstance, wndproc, parenthWnd, verbose );
+	if( err != rserr_ok )
+		return err;
+
+	for( i = 0; i < 3; i++ )
+		rrf.frames[i] = RF_CreateCmdBuf();
+	rrf.frame = rrf.frames[0];
+
+	return rserr_ok;
 }
 
 rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo )
@@ -237,9 +233,11 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 
 	RF_AdapterShutdown( &rrf.adapter );
 
-	memset( &rrf, 0, sizeof( rrf ) );
+	rrf.frameId = 0;
+	rrf.frameNum = rrf.lastFrameNum = 0;
+	rrf.frame = rrf.frames[0];
+	rrf.frame->Clear( rrf.frame );
 	memset( rrf.customColors, 255, sizeof( rrf.customColors ) );
-	rrf.frame = &rrf.frames[0];
 
 	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo );
 	if( err != rserr_ok ) {
@@ -278,7 +276,13 @@ void RF_AppActivate( bool active, bool destroy )
 
 void RF_Shutdown( bool verbose )
 {
+	int i;
+
 	RF_AdapterShutdown( &rrf.adapter );
+
+	for( i = 0; i < 3; i++ )
+		RF_DestroyCmdBuf( &rrf.frames[i] );
+	memset( &rrf, 0, sizeof( rrf ) );
 
 	R_Shutdown( verbose );
 }
@@ -357,10 +361,10 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	if( rrf.frameNum == 3 ) {
 		rrf.frameNum = 1;
 	}
-	rrf.frame = &rrf.frames[rrf.frameNum];
+	rrf.frame = rrf.frames[rrf.frameNum];
 	ri.Mutex_Unlock( rrf.adapter.frameLock );
 
-	rrf.frame->len = 0;
+	rrf.frame->Clear( rrf.frame );
 	rrf.cameraSeparation = cameraSeparation;
 
 	// run cinematic passes on shaders
@@ -368,14 +372,14 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 	R_DataSync();
 
-	RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
+	rrf.frame->BeginFrame( rrf.frame, cameraSeparation, forceClear, forceVsync );
 }
 
 void RF_EndFrame( void )
 {
 	R_DataSync();
 
-	RF_IssueEndFrameCmd( rrf.frame );
+	rrf.frame->EndFrame( rrf.frame );
 	
 	ri.Mutex_Lock( rrf.adapter.frameLock );
 	rrf.lastFrameNum = rrf.frameNum;
@@ -415,44 +419,44 @@ void RF_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 
 void RF_ClearScene( void )
 {
-	RF_IssueClearSceneCmd( rrf.frame );
+	rrf.frame->ClearScene( rrf.frame );
 }
 
 void RF_AddEntityToScene( const entity_t *ent )
 {
-	RF_IssueAddEntityToSceneCmd( rrf.frame, ent );
+	rrf.frame->AddEntityToScene( rrf.frame, ent );
 }
 
 void RF_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b )
 {
-	RF_IssueAddLightToSceneCmd( rrf.frame, org, intensity, r, g, b );
+	rrf.frame->AddLightToScene( rrf.frame, org, intensity, r, g, b );
 }
 
 void RF_AddPolyToScene( const poly_t *poly )
 {
-	RF_IssueAddPolyToSceneCmd( rrf.frame, poly );
+	rrf.frame->AddPolyToScene( rrf.frame, poly );
 }
 
 void RF_AddLightStyleToScene( int style, float r, float g, float b )
 {
-	RF_IssueAddLightStyleToSceneCmd( rrf.frame, style, r, g, b );
+	rrf.frame->AddLightStyleToScene( rrf.frame, style, r, g, b );
 }
 
 void RF_RenderScene( const refdef_t *fd )
 {
-	RF_IssueRenderSceneCmd( rrf.frame, fd );
+	rrf.frame->RenderScene( rrf.frame, fd );
 }
 
 void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, const shader_t *shader )
 {
-	RF_IssueDrawRotatedStretchPicCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2, 0, color, shader );
+	rrf.frame->DrawRotatedStretchPic( rrf.frame, x, y, w, h, s1, t1, s2, t2, 0, color, shader );
 }
 
 void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, 
 	const vec4_t color, const shader_t *shader )
 {
-	RF_IssueDrawRotatedStretchPicCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2, angle, color, shader );
+	rrf.frame->DrawRotatedStretchPic( rrf.frame, x, y, w, h, s1, t1, s2, t2, angle, color, shader );
 }
 
 void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
@@ -464,7 +468,7 @@ void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 	if( data )
 		R_UploadRawPic( rsh.rawTexture, cols, rows, data );
 
-	RF_IssueDrawStretchRawCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
+	rrf.frame->DrawStretchRaw( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
 void RF_DrawStretchRawYUV( int x, int y, int w, int h, 
@@ -473,17 +477,17 @@ void RF_DrawStretchRawYUV( int x, int y, int w, int h,
 	if( yuv )
 		R_UploadRawYUVPic( rsh.rawYUVTextures, yuv );
 
-	RF_IssueDrawStretchRawYUVCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
+	rrf.frame->DrawStretchRawYUV( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
 void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 {
-	RF_IssueDrawStretchPolyCmd( rrf.frame, poly, x_offset, y_offset );
+	rrf.frame->DrawStretchPoly( rrf.frame, poly, x_offset, y_offset );
 }
 
 void RF_SetScissor( int x, int y, int w, int h )
 {
-	RF_IssueSetScissorCmd( rrf.frame, x, y, w, h );
+	rrf.frame->SetScissor( rrf.frame, x, y, w, h );
 	Vector4Set( rrf.scissor, x, y, w, h );
 }
 
@@ -501,7 +505,7 @@ void RF_GetScissor( int *x, int *y, int *w, int *h )
 
 void RF_ResetScissor( void )
 {
-	RF_IssueResetScissorCmd( rrf.frame );
+	rrf.frame->ResetScissor( rrf.frame );
 	Vector4Set( rrf.scissor, 0, 0, glConfig.width, glConfig.height );
 }
 
@@ -545,10 +549,6 @@ const char *RF_SpeedsMessage( char *out, size_t size )
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
 {
 	R_ReplaceRawSubPic( shader, x, y, width, height, data );
-
-	qglFlush();
-
-	RF_IssueSyncCmd( rrf.frame );
 }
 
 /*
