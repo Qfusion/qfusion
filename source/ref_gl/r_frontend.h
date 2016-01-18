@@ -44,7 +44,7 @@ typedef struct
 	unsigned		lastFrameNum;
 	uint32_t 		frameId;
 
-	ref_cmdbuf_t	frames[3];			// triple-buffered
+	ref_cmdbuf_t	*frames[3];			// triple-buffered
 	ref_cmdbuf_t	*frame; 			// current frontend frame
 
 	void            *auxGLContext;
