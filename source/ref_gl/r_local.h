@@ -38,6 +38,8 @@ typedef unsigned short elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
+#define NUM_CUSTOMCOLORS		16
+
 #define NUM_LOADER_THREADS		2
 
 enum
@@ -120,6 +122,7 @@ typedef struct superLightStyle_s
 #define RF_CUBEMAPVIEW			( RF_ENVVIEW )
 #define RF_NONVIEWERREF			( RF_PORTALVIEW|RF_MIRRORVIEW|RF_ENVVIEW|RF_SHADOWMAPVIEW )
 
+#define MAX_REF_SCENES			32 // max scenes rendered per frame
 #define MAX_REF_ENTITIES		( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
 //===================================================================
@@ -195,15 +198,17 @@ typedef struct
 
 //====================================================
 
+// globals shared by the frontend and the backend
+// the backend should never attempt modifying any of these
 typedef struct
 {
 	// any asset (model, shader, texture, etc) with has not been registered
 	// or "touched" during the last registration sequence will be freed
-	int				registrationSequence;
-	bool			registrationOpen;
+	volatile int 	registrationSequence;
+	volatile bool 	registrationOpen;
 
 	// bumped each time R_RegisterWorldModel is called
-	int				worldModelSequence;
+	volatile int 	worldModelSequence;
 
 	float			sinTableByte[256];
 
@@ -237,6 +242,8 @@ typedef struct
 	shader_t		*skyShader;
 	shader_t		*whiteShader;
 	shader_t		*emptyFogShader;
+	
+	byte_vec4_t		customColors[NUM_CUSTOMCOLORS];
 } r_shared_t;
 
 typedef struct
@@ -262,8 +269,9 @@ typedef struct
 	unsigned int	numBmodelEntities;
 	entity_t		*bmodelEntities[MAX_REF_ENTITIES];
 
+	unsigned int	maxShadowGroups;
 	unsigned int	numShadowGroups;
-	shadowGroup_t	shadowGroups[MAX_SHADOWGROUPS];
+	shadowGroup_t	shadowGroups[MAX_REF_ENTITIES];
 	unsigned int	entShadowGroups[MAX_REF_ENTITIES];
 	unsigned int	entShadowBits[MAX_REF_ENTITIES];
 
@@ -272,18 +280,19 @@ typedef struct
 	unsigned int	renderedShadowBits;
 
 	refdef_t		refdef;
-
-	msurface_t		*debugSurface;
 } r_scene_t;
 
+// global frontend variables are stored here
+// the backend should never attempt reading or modifying them
 typedef struct
 {
-	bool		in2D;
+	bool 			in2D;
 	int				width2D, height2D;
 
 	int				frameBufferWidth, frameBufferHeight;
 
 	float			cameraSeparation;
+	int 			swapInterval;
 
 	int				worldModelSequence;
 
@@ -294,6 +303,8 @@ typedef struct
 	unsigned int	pvsframecount;
 
 	int				viewcluster, oldviewcluster, viewarea;
+	uint8_t			oldAreabits[MAX_MAP_AREAS*(MAX_MAP_AREAS+7)/8];
+	bool			haveOldAreabits;
 
 	struct {
 		unsigned int	c_brush_polys, c_world_leafs;
@@ -303,17 +314,35 @@ typedef struct
 		unsigned int	t_add_polys, t_add_entities;
 		unsigned int	t_draw_meshes;
 	} stats;
-} r_frontend_t;
+
+	struct {
+		unsigned 		average; // updates 4 times per second
+		unsigned 		time, oldTime;
+		unsigned 		count, oldCount;
+	} fps;
+
+	volatile bool 	dataSync; // call R_Finish
+
+	char 			speedsMsg[2048];
+	qmutex_t		*speedsMsgLock;
+	
+	msurface_t		*debugSurface;
+	qmutex_t		*debugSurfaceLock;
+	
+	char			drawBuffer[32];
+	bool			newDrawBuffer;
+} r_globals_t;
 
 extern ref_import_t ri;
 
 extern r_shared_t rsh;
 extern r_scene_t rsc;
-extern r_frontend_t rf;
+extern r_globals_t rf;
 
 #define R_ENT2NUM(ent) ((ent)-rsc.entities)
 #define R_NUM2ENT(num) (rsc.entities+(num))
 
+extern cvar_t *r_maxfps;
 extern cvar_t *r_norefresh;
 extern cvar_t *r_drawentities;
 extern cvar_t *r_drawworld;
@@ -407,7 +436,6 @@ extern cvar_t *r_maxglslbones;
 
 extern cvar_t *r_multithreading;
 
-extern cvar_t *gl_finish;
 extern cvar_t *gl_cull;
 
 extern cvar_t *vid_displayfrequency;
@@ -446,11 +474,14 @@ void		R_UploadCinematic( unsigned int id );
 image_t		*R_GetCinematicImage( unsigned int id );
 struct cinematics_s *R_GetCinematicById( unsigned int id );
 void		R_RestartCinematics( void );
+void		R_CinList_f( void );
 
 //
 // r_cmds.c
 //
+void 		R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent, bool media );
 void		R_ScreenShot_f( void );
+void 		R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
 void		R_EnvShot_f( void );
 void		R_ImageList_f( void );
 void		R_ShaderList_f( void );
@@ -500,7 +531,6 @@ void		RFB_Shutdown( void );
 unsigned int R_AddSurfaceDlighbits( const msurface_t *surf, unsigned int checkDlightBits );
 void		R_AddDynamicLights( unsigned int dlightbits, int state );
 void		R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
-void		R_LightForOrigin2( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
 void		R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects );
 void		R_InitLightStyles( model_t *mod );
 superLightStyle_t	*R_AddSuperLightStyle( model_t *mod, const int *lightmaps, 
@@ -537,13 +567,30 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define		R_LoadCacheFile(path,buffer) R_LoadFile_(path,FS_CACHE,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
-bool	R_ScreenEnabled( void );
+bool		R_IsRenderingToScreen( void );
 void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
+int 		R_SetSwapInterval( int swapInterval, int oldSwapInterval );
+void		R_SetGamma( float gamma );
+void		R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
+void		R_SetDrawBuffer( const char *drawbuffer );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
-const char *R_SpeedsMessage( char *out, size_t size );
-void		R_AppActivate( bool active, bool destroy );
+const msurface_t *R_GetDebugSurface( void );
+const char *R_WriteSpeedsMessage( char *out, size_t size );
+void		R_RenderDebugSurface( const refdef_t *fd );
+void 		R_Finish( void );
+void		R_Flush( void );
+
+/**
+ * Calls R_Finish if data sync was previously deferred.
+ */
+void 		R_DataSync( void );
+
+/**
+ * Defer R_DataSync call at the start/end of the next frame.
+ */
+void 		R_DeferDataSync( void );
 
 mfog_t		*R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t		*R_FogForSphere( const vec3_t centre, const float radius );
@@ -561,23 +608,21 @@ struct mesh_vbo_s *R_InitPostProcessingVBO( void );
 void		R_TransformForWorld( void );
 void		R_TransformForEntity( const entity_t *e );
 void		R_TranslateForEntity( const entity_t *e );
-void		R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
 void		R_TransformBounds( const vec3_t origin, const mat3_t axis, vec3_t mins, vec3_t maxs, vec3_t bbox[8] );
 
 void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, const shader_t *shader );
 void		R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	float angle, const vec4_t color, const shader_t *shader );
-void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
-	float s1, float t1, float s2, float t2, uint8_t *data );
+void		R_UploadRawPic( image_t *texture, int cols, int rows, uint8_t *data );
+void		R_UploadRawYUVPic( image_t **yuvTextures, ref_img_plane_t *yuv );
 void		R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
-	ref_img_plane_t *yuv, image_t **yuvTextures, int flip );
-void		R_DrawStretchRawYUV( int x, int y, int w, int h, 
-	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
+	image_t **yuvTextures, int flip );
+void		R_DrawStretchRaw( int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
+void		R_DrawStretchRawYUV( int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
 void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, int program_type, image_t *image, int blendMask );
 
-#define NUM_CUSTOMCOLORS	16
 void		R_InitCustomColors( void );
 void		R_SetCustomColor( int num, int r, int g, int b );
 int			R_GetCustomColor( int num );
@@ -589,16 +634,11 @@ void		R_ClearRefInstStack( void );
 bool		R_PushRefInst( void );
 void		R_PopRefInst( void );
 
-bool		R_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
-
 void		R_BindFrameBufferObject( int object );
 
 void		R_Scissor( int x, int y, int w, int h );
 void		R_GetScissor( int *x, int *y, int *w, int *h );
 void		R_ResetScissor( void );
-
-shader_t	*R_GetShaderForOrigin( const vec3_t origin );
-struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
 
 //
 // r_mesh.c
@@ -657,7 +697,6 @@ void		R_BeginRegistration( void );
 void		R_EndRegistration( void );
 void		R_Shutdown( bool verbose );
 rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
-rserr_t		R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 
 //
 // r_scene.c

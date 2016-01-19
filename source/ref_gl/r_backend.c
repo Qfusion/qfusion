@@ -30,6 +30,7 @@ rbackend_t rb;
 
 static void RB_SetGLDefaults( void );
 static void RB_RegisterStreamVBOs( void );
+static void RB_SelectTextureUnit( int tmu );
 
 /*
 * RB_Init
@@ -50,6 +51,8 @@ void RB_Init( void )
 
 	// create VBO's we're going to use for streamed data
 	RB_RegisterStreamVBOs();
+	
+	RP_PrecachePrograms();
 }
 
 /*
@@ -57,6 +60,8 @@ void RB_Init( void )
 */
 void RB_Shutdown( void )
 {
+	RP_StorePrecacheList();
+
 	R_FreePool( &rb.mempool );
 }
 
@@ -65,8 +70,24 @@ void RB_Shutdown( void )
 */
 void RB_BeginRegistration( void )
 {
+	int i;
+
 	RB_RegisterStreamVBOs();
 	RB_BindVBO( 0, 0 );
+
+	// unbind all texture targets on all TMUs
+	for( i = MAX_TEXTURE_UNITS - 1; i >= 0; i-- ) {
+		RB_SelectTextureUnit( i );
+
+		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, 0 );
+		if( glConfig.ext.texture_array )
+			qglBindTexture( GL_TEXTURE_2D_ARRAY_EXT, 0 );
+		if( glConfig.ext.texture3D )
+			qglBindTexture( GL_TEXTURE_3D_EXT, 0 );
+		qglBindTexture( GL_TEXTURE_2D, 0 );
+	}
+
+	RB_FlushTextureCache();
 }
 
 /*
@@ -101,6 +122,7 @@ void RB_BeginFrame( void )
 	// start fresh each frame
 	RB_SetShaderStateMask( ~0, 0 );
 	RB_BindVBO( 0, 0 );
+	RB_FlushTextureCache();
 }
 
 /*
@@ -152,13 +174,64 @@ static void RB_SetGLDefaults( void )
 }
 
 /*
-* RB_BindTexture
+* RB_SelectTextureUnit
 */
-void RB_BindTexture( int tmu, const image_t *tex )
+static void RB_SelectTextureUnit( int tmu )
 {
-	if( R_BindTexture( tmu, tex ) ) {
-		rb.stats.c_totalBinds++;
+	if( tmu == rb.gl.currentTMU )
+		return;
+
+	rb.gl.currentTMU = tmu;
+	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#ifndef GL_ES_VERSION_2_0
+	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#endif
+}
+
+/*
+* RB_FlushTextureCache
+*/
+void RB_FlushTextureCache( void )
+{
+	rb.gl.flushTextures = true;
+}
+
+/*
+* RB_BindImage
+*/
+void RB_BindImage( int tmu, const image_t *tex )
+{
+	GLuint texnum;
+
+	assert( tex != NULL );
+	assert( tex->texnum != 0 );
+
+	if( tex->missing ) {
+		tex = rsh.noTexture;
+	} else if( !tex->loaded ) {
+		// not yet loaded from disk
+		tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture;
+	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
+		// performance evaluation option
+		tex = rsh.noTexture;
 	}
+
+	if( rb.gl.flushTextures ) {
+		rb.gl.flushTextures = false;
+		memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
+	}
+
+	texnum = tex->texnum;
+	if( rb.gl.currentTextures[tmu] == texnum )
+		return;
+
+	rb.gl.currentTextures[tmu] = texnum;
+
+	RB_SelectTextureUnit( tmu );
+
+	qglBindTexture( R_TextureTarget( tex->flags, NULL ), tex->texnum );
+
+	rb.stats.c_totalBinds++;
 }
 
 /*
@@ -448,9 +521,9 @@ void RB_BindElementArrayBuffer( int buffer )
 }
 
 /*
-* GL_EnableVertexAttrib
+* RB_EnableVertexAttrib
 */
-static void GL_EnableVertexAttrib( int index, bool enable )
+static void RB_EnableVertexAttrib( int index, bool enable )
 {
 	unsigned int bit;
 	unsigned int diff;
@@ -801,6 +874,10 @@ void RB_FlushDynamicMeshes( void )
 	for( i = 0; i < RB_VBO_NUM_STREAMS; i++ ) {
 		stream = &rb.dynamicStreams[i];
 
+		// R_UploadVBO* are going to rebind buffer arrays for upload
+		// so update our local VBO state cache by calling RB_BindVBO
+		RB_BindVBO( -i - 1, GL_TRIANGLES ); // dummy value for primitive here
+
 		// because of firstVert, upload elems first
 		if( stream->drawElements.numElems ) {
 			mesh_t elemMesh;
@@ -880,69 +957,69 @@ static void RB_EnableVertexAttribs( void )
 	rb.gl.lastHalfFloatVAttribs = hfa;
 
 	// xyz position
-	GL_EnableVertexAttrib( VATTRIB_POSITION, true );
+	RB_EnableVertexAttrib( VATTRIB_POSITION, true );
 	qglVertexAttribPointerARB( VATTRIB_POSITION, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_POSITION_BIT, hfa ), 
 		GL_FALSE, vbo->vertexSize, ( const GLvoid * )0 );
 
 	// normal
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_NORMAL, true );
+		RB_EnableVertexAttrib( VATTRIB_NORMAL, true );
 		qglVertexAttribPointerARB( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_NORMAL_BIT, hfa ), 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->normalsOffset );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_NORMAL, false );
+		RB_EnableVertexAttrib( VATTRIB_NORMAL, false );
 	}
 
 	// s-vector
 	if( vattribs & VATTRIB_SVECTOR_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_SVECTOR, true );
+		RB_EnableVertexAttrib( VATTRIB_SVECTOR, true );
 		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SVECTOR_BIT, hfa ), 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->sVectorsOffset );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_SVECTOR, false );
+		RB_EnableVertexAttrib( VATTRIB_SVECTOR, false );
 	}
 	
 	// color
 	if( vattribs & VATTRIB_COLOR0_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_COLOR0, true );
+		RB_EnableVertexAttrib( VATTRIB_COLOR0, true );
 		qglVertexAttribPointerARB( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE, 
 			GL_TRUE, vbo->vertexSize, (const GLvoid * )vbo->colorsOffset[0] );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_COLOR0, false );
+		RB_EnableVertexAttrib( VATTRIB_COLOR0, false );
 	}
 
 	// texture coordinates
 	if( vattribs & VATTRIB_TEXCOORDS_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, true );
+		RB_EnableVertexAttrib( VATTRIB_TEXCOORDS, true );
 		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_GL_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ), 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->stOffset );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, false );
+		RB_EnableVertexAttrib( VATTRIB_TEXCOORDS, false );
 	}
 
 	if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
 		// submit sprite point
-		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, true );
+		RB_EnableVertexAttrib( VATTRIB_SPRITEPOINT, true );
 		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->spritePointsOffset );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, false );
+		RB_EnableVertexAttrib( VATTRIB_SPRITEPOINT, false );
 	}
 
 	// bones (skeletal models)
 	if( (vattribs & VATTRIB_BONES_BITS) == VATTRIB_BONES_BITS ) {
 		// submit indices
-		GL_EnableVertexAttrib( VATTRIB_BONESINDICES, true );
+		RB_EnableVertexAttrib( VATTRIB_BONESINDICES, true );
 		qglVertexAttribPointerARB( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE, 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->bonesIndicesOffset );
 
 		// submit weights
-		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, true );
+		RB_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, true );
 		qglVertexAttribPointerARB( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE, 
 			GL_TRUE, vbo->vertexSize, ( const GLvoid * )vbo->bonesWeightsOffset );
 	}
@@ -957,13 +1034,13 @@ static void RB_EnableVertexAttribs( void )
 
 		for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
 			if( vattribs & lmattrbit ) {
-				GL_EnableVertexAttrib( lmattr, true );
+				RB_EnableVertexAttrib( lmattr, true );
 				qglVertexAttribPointerARB( lmattr, vbo->lmstSize[i], 
 					FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), 
 					GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmstOffset[i] );
 			}
 			else {
-				GL_EnableVertexAttrib( lmattr, false );
+				RB_EnableVertexAttrib( lmattr, false );
 			}
 
 			lmattr++;
@@ -975,12 +1052,12 @@ static void RB_EnableVertexAttribs( void )
 
 		for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
 			if( vattribs & ( VATTRIB_LMLAYERS0123_BIT << i ) ) {
-				GL_EnableVertexAttrib( lmattr, true );
+				RB_EnableVertexAttrib( lmattr, true );
 				qglVertexAttribPointerARB( lmattr, 4, GL_UNSIGNED_BYTE,
 					GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmlayersOffset[i] );
 			}
 			else {
-				GL_EnableVertexAttrib( lmattr, false );
+				RB_EnableVertexAttrib( lmattr, false );
 			}
 
 			lmattr++;
@@ -988,18 +1065,18 @@ static void RB_EnableVertexAttribs( void )
 	}
 
 	if( (vattribs & VATTRIB_INSTANCES_BITS) == VATTRIB_INSTANCES_BITS ) {
-		GL_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, true );
+		RB_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, true );
 		qglVertexAttribPointerARB( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ), 
 			( const GLvoid * )vbo->instancesOffset );
 		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_QUAT, 1 );
 
-		GL_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, true );
+		RB_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, true );
 		qglVertexAttribPointerARB( VATTRIB_INSTANCE_XYZS, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ), 
 			( const GLvoid * )( vbo->instancesOffset + sizeof( vec_t ) * 4 ) );
 		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_XYZS, 1 );
 	} else {
-		GL_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, false );
-		GL_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, false );
+		RB_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, false );
+		RB_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, false );
 	}
 }
 
@@ -1211,22 +1288,6 @@ void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis )
 void RB_SetRenderFlags( int flags )
 {
 	rb.renderFlags = flags;
-}
-
-/*
-* RB_Finish
-*/
-void RB_Finish( void )
-{
-	qglFinish();
-}
-	
-/*
-* RB_Flush
-*/
-void RB_Flush( void )
-{
-	qglFlush();
 }
 
 /*

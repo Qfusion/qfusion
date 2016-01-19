@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
-r_frontend_t rf;
+r_globals_t rf;
 
 mapconfig_t mapConfig;
 
@@ -134,26 +134,6 @@ void R_TransformForEntity( const entity_t *e )
 }
 
 /*
-* R_LerpTag
-*/
-bool R_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name )
-{
-	if( !orient )
-		return false;
-
-	VectorClear( orient->origin );
-	Matrix3_Identity( orient->axis );
-
-	if( !name )
-		return false;
-
-	if( mod->type == mod_alias )
-		return R_AliasModelLerpTag( orient, (const maliasmodel_t *)mod->extradata, oldframe, frame, lerpfrac, name );
-
-	return false;
-}
-
-/*
 * R_FogForBounds
 */
 mfog_t *R_FogForBounds( const vec3_t mins, const vec3_t maxs )
@@ -254,14 +234,12 @@ CUSTOM COLORS
 =============================================================
 */
 
-static byte_vec4_t r_customColors[NUM_CUSTOMCOLORS];
-
 /*
 * R_InitCustomColors
 */
 void R_InitCustomColors( void )
 {
-	memset( r_customColors, 255, sizeof( r_customColors ) );
+	memset( rsh.customColors, 255, sizeof( rsh.customColors ) );
 }
 
 /*
@@ -271,7 +249,7 @@ void R_SetCustomColor( int num, int r, int g, int b )
 {
 	if( num < 0 || num >= NUM_CUSTOMCOLORS )
 		return;
-	Vector4Set( r_customColors[num], (uint8_t)r, (uint8_t)g, (uint8_t)b, 255 );
+	Vector4Set( rsh.customColors[num], (uint8_t)r, (uint8_t)g, (uint8_t)b, 255 );
 }
 /*
 * R_GetCustomColor
@@ -280,7 +258,7 @@ int R_GetCustomColor( int num )
 {
 	if( num < 0 || num >= NUM_CUSTOMCOLORS )
 		return COLOR_RGBA( 255, 255, 255, 255 );
-	return *(int *)r_customColors[num];
+	return *(int *)rsh.customColors[num];
 }
 
 /*
@@ -288,7 +266,7 @@ int R_GetCustomColor( int num )
 */
 void R_ShutdownCustomColors( void )
 {
-	memset( r_customColors, 255, sizeof( r_customColors ) );
+	memset( rsh.customColors, 255, sizeof( rsh.customColors ) );
 }
 
 /*
@@ -607,26 +585,51 @@ void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2,
 }
 
 /*
-* R_DrawStretchRaw
-*
-* Passing NULL for data redraws last uploaded frame
+* R_UploadRawPic
 */
-void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
-	float s1, float t1, float s2, float t2, uint8_t *data )
+void R_UploadRawPic( image_t *texture, int cols, int rows, uint8_t *data )
+{
+	if( texture->width != cols || texture->height != rows ) {
+		uint8_t *nodata[1] = { NULL };
+		R_ReplaceImage( texture, nodata, cols, rows, texture->flags, 1, 3 );
+	}
+	R_ReplaceSubImage( texture, 0, 0, 0, &data, cols, rows );
+}
+
+/*
+* R_UploadRawYUVPic
+*/
+void R_UploadRawYUVPic( image_t **yuvTextures, ref_img_plane_t *yuv )
+{
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		uint8_t *data = yuv[i].data;
+		int flags = yuvTextures[i]->flags;
+		int stride = yuv[i].stride;
+		int height = yuv[i].height;
+
+		if( stride < 0 ) {
+			// negative stride flips the image vertically
+			data = data + stride * height;
+			flags = (flags & ~(IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL)) | IT_FLIPY;
+			stride = -stride;
+		}
+
+		if( yuvTextures[i]->width != stride || yuvTextures[i]->height != height ) {
+			uint8_t *nodata[1] = { NULL };
+			R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1, 1 );
+		}
+		R_ReplaceSubImage( yuvTextures[i], 0, 0, 0, &data, stride, height );		
+	}
+}
+
+/*
+* R_DrawStretchRaw
+*/
+void R_DrawStretchRaw( int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
 {
 	float h_scale, v_scale;
-
-	if( !rows || !cols ) {
-		return;
-	}
-
-	if( data ) {
-		if( rsh.rawTexture->width != cols || rsh.rawTexture->height != rows ) {
-			uint8_t *nodata[1] = { NULL };
-			R_ReplaceImage( rsh.rawTexture, nodata, cols, rows, rsh.rawTexture->flags, 1, 3 );
-		}
-		R_ReplaceSubImage( rsh.rawTexture, 0, 0, 0, &data, cols, rows );
-	}
 
 	h_scale = (float)rsh.rawTexture->width / rsh.rawTexture->upload_width;
 	v_scale = (float)rsh.rawTexture->height / rsh.rawTexture->upload_height;
@@ -645,8 +648,7 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 * Set bit 1 in 'flip' to flip the image vertically
 */
 void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, 
-	float s1, float t1, float s2, float t2, 
-	ref_img_plane_t *yuv, image_t **yuvTextures, int flip )
+	float s1, float t1, float s2, float t2, image_t **yuvTextures, int flip )
 {
 	static char *s_name = "$builtinyuv";
 	static shaderpass_t p;
@@ -669,30 +671,6 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 	p.images[2] = yuvTextures[2];
 	p.flags = 0;
 	p.program_type = GLSL_PROGRAM_TYPE_YUV;
-
-	if( yuv ) {
-		int i;
-
-		for( i = 0; i < 3; i++ ) {
-			uint8_t *data = yuv[i].data;
-			int flags = yuvTextures[i]->flags;
-			int stride = yuv[i].stride;
-			int height = yuv[i].height;
-
-			if( stride < 0 ) {
-				// negative stride flips the image vertically
-				data = data + stride * height;
-				flags = (flags & ~(IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL)) | IT_FLIPY;
-				stride = -stride;
-			}
-
-			if( yuvTextures[i]->width != stride || yuvTextures[i]->height != height ) {
-				uint8_t *nodata[1] = { NULL };
-				R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1, 1 );
-			}
-			R_ReplaceSubImage( yuvTextures[i], 0, 0, 0, &data, stride, height );
-		}
-	}
 
 	h_scale = (float)yuvTextures[0]->width / yuvTextures[0]->upload_width;
 	v_scale = (float)yuvTextures[0]->height / yuvTextures[0]->upload_height;
@@ -732,17 +710,14 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 
 /*
 * R_DrawStretchRawYUV
-*
-* Passing NULL for data redraws last uploaded frame
 */
-void R_DrawStretchRawYUV( int x, int y, int w, int h, 
-	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv )
+void R_DrawStretchRawYUV( int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
 {
-	R_DrawStretchRawYUVBuiltin( x, y, w, h, s1, t1, s2, t2, yuv, rsh.rawYUVTextures, 0 );
+	R_DrawStretchRawYUVBuiltin( x, y, w, h, s1, t1, s2, t2, rsh.rawYUVTextures, 0 );
 }
 
 /*
-* R_DrawStretchImage
+* R_DrawStretchQuick
 */
 void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, int program_type, image_t *image, int blendMask )
@@ -992,6 +967,7 @@ static void R_SetupFrame( void )
 		if( rf.worldModelSequence != rsh.worldModelSequence ) {
 			rf.frameCount = 0;
 			rf.viewcluster = -1; // force R_MarkLeaves
+			rf.haveOldAreabits = false;
 			rf.worldModelSequence = rsh.worldModelSequence;
 
 			// load all world images if not yet
@@ -1386,24 +1362,58 @@ void R_PopRefInst( void )
 
 //=======================================================================
 
-/*
-* R_SwapInterval
-*/
-static void R_SwapInterval( int swapInterval )
-{
-	static int currentSwapInterval = 0;
 
-	if( ( swapInterval != currentSwapInterval ) && !r_swapinterval_min->integer && !glConfig.stereoEnabled )
-	{
-		GLimp_SetSwapInterval( swapInterval );
-		currentSwapInterval = swapInterval;
+void R_Finish( void )
+{
+    qglFinish();
+}
+
+void R_Flush( void )
+{
+	qglFlush();
+}
+
+void R_DeferDataSync( void )
+{
+	if( rsh.registrationOpen )
+		return;
+
+	rf.dataSync = true;
+	qglFlush();
+	RB_FlushTextureCache();
+}
+
+void R_DataSync( void )
+{
+	if( rf.dataSync ) {
+		if( glConfig.multithreading ) {
+			// synchronize data we might have uploaded this frame between the threads
+			// FIXME: only call this when absolutely necessary
+			R_Finish();
+		}
+		 rf.dataSync = false;
 	}
 }
 
 /*
-* R_UpdateHWGamma
+* R_SetSwapInterval
 */
-static void R_UpdateHWGamma( void )
+int R_SetSwapInterval( int swapInterval, int oldSwapInterval )
+{
+	if( glConfig.stereoEnabled )
+		return oldSwapInterval;
+
+	clamp_low( swapInterval, r_swapinterval_min->integer );
+	if( swapInterval != oldSwapInterval ) {
+		GLimp_SetSwapInterval( swapInterval );
+    }
+    return swapInterval;
+}
+
+/*
+* R_SetGamma
+*/
+void R_SetGamma( float gamma )
 {
 	int i, v;
 	double invGamma, div;
@@ -1412,7 +1422,7 @@ static void R_UpdateHWGamma( void )
 	if( !glConfig.hwGamma )
 		return;
 
-	invGamma = 1.0 / bound( 0.5, r_gamma->value, 3.0 );
+	invGamma = 1.0 / bound( 0.5, gamma, 3.0 );
 	div = (double)( 1 << 0 ) / (glConfig.gammaRampSize - 0.5);
 
 	for( i = 0; i < glConfig.gammaRampSize; i++ )
@@ -1425,11 +1435,200 @@ static void R_UpdateHWGamma( void )
 }
 
 /*
-* R_ScreenDisabled
+* R_SetWallFloorColors
 */
-bool R_ScreenEnabled( void )
+void R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor )
 {
-	return GLimp_ScreenEnabled();
+	int i;
+	for( i = 0; i < 3; i++ ) {
+		rsh.wallColor[i] = bound( 0, floor(wallColor[i]) / 255.0, 1.0 );
+		rsh.floorColor[i] = bound( 0, floor(floorColor[i]) / 255.0, 1.0 );
+	}
+}
+
+/*
+* R_SetDrawBuffer
+*/
+void R_SetDrawBuffer( const char *drawbuffer )
+{
+	Q_strncpyz( rf.drawBuffer, drawbuffer, sizeof( rf.drawBuffer ) );
+	rf.newDrawBuffer = true;
+}
+
+/*
+* R_IsRenderingToScreen
+*/
+bool R_IsRenderingToScreen( void )
+{
+	bool surfaceRenderable = true;
+	GLimp_GetWindowSurface( &surfaceRenderable );
+	return surfaceRenderable;
+}
+
+/*
+* R_WriteSpeedsMessage
+*/
+const char *R_WriteSpeedsMessage(char *out, size_t size)
+{
+	char backend_msg[1024];
+
+	if (!out || !size) {
+		return out;
+	}
+
+	out[0] = '\0';
+	if (r_speeds->integer && !(rn.refdef.rdflags & RDF_NOWORLDMODEL))
+	{
+		switch (r_speeds->integer)
+		{
+			case 1:
+				RB_StatsMessage(backend_msg, sizeof(backend_msg));
+
+				Q_snprintfz(out, size,
+					"%u fps\n"
+					"%4u wpoly %4u leafs\n"
+					"%5u\\%5u sverts %5u\\%5u stris\n"
+					"%s",
+					rf.fps.average,
+					rf.stats.c_brush_polys, rf.stats.c_world_leafs,
+					rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems / 3, rf.stats.c_slices_elems_real / 3,
+					backend_msg
+				);
+				break;
+			case 2:
+			case 3:
+				Q_snprintfz(out, size,
+					"lvs: %5u  node: %5u\n"
+					"polys\\ents: %5u\\%5i  draw: %5u\n",
+					rf.stats.t_mark_leaves, rf.stats.t_world_node,
+					rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
+				);
+				break;
+			case 4:
+			case 5:
+				if (rf.debugSurface)
+				{
+					int numVerts = 0, numTris = 0;
+					msurface_t *debugSurface = rf.debugSurface;
+
+					Q_snprintfz(out, size,
+						"%s type:%i sort:%i",
+						debugSurface->shader->name, debugSurface->facetype, debugSurface->shader->sort);
+
+					Q_strncatz(out, "\n", size);
+
+					if (r_speeds->integer == 5 && debugSurface->drawSurf->vbo) {
+						numVerts = debugSurface->drawSurf->vbo->numVerts;
+						numTris = debugSurface->drawSurf->vbo->numElems / 3;
+					}
+					else if (debugSurface->mesh) {
+						numVerts = debugSurface->mesh->numVerts;
+						numTris = debugSurface->mesh->numElems;
+					}
+
+					if (numVerts) {
+						Q_snprintfz(out + strlen(out), size - strlen(out),
+							"verts: %5i tris: %5i", numVerts, numTris);
+					}
+
+					Q_strncatz(out, "\n", size);
+
+					if (debugSurface->fog && debugSurface->fog->shader
+						&& debugSurface->fog->shader != debugSurface->shader)
+						Q_strncatz(out, debugSurface->fog->shader->name, size);
+				}
+				break;
+			case 6:
+				Q_snprintfz(out, size,
+					"%.1f %.1f %.1f",
+					rn.refdef.vieworg[0], rn.refdef.vieworg[1], rn.refdef.vieworg[2]
+				);
+				break;
+			default:
+				Q_snprintfz(out, size,
+					"%u fps",
+					rf.fps.average
+				);
+				break;
+		}
+	}
+
+	out[size - 1] = '\0';
+	return out;
+}
+
+/*
+* R_GetDebugSurface
+*/
+const msurface_t *R_GetDebugSurface( void )
+{
+	msurface_t *debugSurface;
+
+	ri.Mutex_Lock( rf.debugSurfaceLock );
+	debugSurface = rf.debugSurface;
+	ri.Mutex_Unlock( rf.debugSurfaceLock );
+
+	return debugSurface;
+}
+
+/*
+* R_RenderDebugSurface
+*/
+void R_RenderDebugSurface( const refdef_t *fd )
+{
+	rtrace_t tr;
+	vec3_t forward;
+	vec3_t start, end;
+	msurface_t *debugSurf = NULL;
+	
+	if( fd->rdflags & RDF_NOWORLDMODEL )
+		return;
+	
+	if( r_speeds->integer == 4 || r_speeds->integer == 5 )
+	{
+		msurface_t *surf = NULL;
+
+		VectorCopy( &fd->viewaxis[AXIS_FORWARD], forward );
+		VectorCopy( fd->vieworg, start );
+		VectorMA( start, 4096, forward, end );
+		
+		surf = R_TraceLine( &tr, start, end, 0 );
+		if( surf && surf->drawSurf && !r_showtris->integer )
+		{
+			R_ClearDrawList( rn.meshlist );
+			
+			R_ClearDrawList( rn.portalmasklist );
+			
+			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT(tr.ent), NULL, surf->shader, 0, 0, NULL, surf->drawSurf ) ) {
+				if( rn.refdef.rdflags & RDF_FLIPPED )
+					RB_FlipFrontFace();
+				
+				if( r_speeds->integer == 5 ) {
+					// VBO debug mode
+					R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces,
+								  surf->drawSurf->numVerts, surf->drawSurf->numElems,
+								  0, 0 );
+				}
+				else {
+					// classic mode (showtris for individual surface)
+					R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces,
+								  surf->mesh->numVerts, surf->mesh->numElems,
+								  surf->firstDrawSurfVert, surf->firstDrawSurfElem );
+				}
+				
+				R_DrawOutlinedSurfaces( rn.meshlist );
+				
+				if( rn.refdef.rdflags & RDF_FLIPPED )
+					RB_FlipFrontFace();
+				
+				debugSurf = surf;
+			}
+		}
+	}
+	
+	ri.Mutex_Lock( rf.debugSurfaceLock );
+	rf.debugSurface = debugSurf;
+	ri.Mutex_Unlock( rf.debugSurfaceLock );
 }
 
 /*
@@ -1437,66 +1636,37 @@ bool R_ScreenEnabled( void )
 */
 void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 {
+    unsigned int time = ri.Sys_Milliseconds();
+
 	GLimp_BeginFrame();
 
 	RB_BeginFrame();
 
-	if( !glConfig.stereoEnabled || !R_ScreenEnabled() )
+#ifndef GL_ES_VERSION_2_0
+	if( cameraSeparation && ( !glConfig.stereoEnabled || !R_IsRenderingToScreen() ) )
 		cameraSeparation = 0;
 
 	if( rf.cameraSeparation != cameraSeparation )
 	{
 		rf.cameraSeparation = cameraSeparation;
-#ifdef GL_ES_VERSION_2_0
-		if( glConfig.ext.multiview_draw_buffers )
-		{
-			int location = GL_MULTIVIEW_EXT;
-			int index = ( cameraSeparation > 0 ) ? 1 : 0;
-			qglDrawBuffersIndexedEXT( 1, &location, &index );
-		}
-#else
 		if( cameraSeparation < 0 )
 			qglDrawBuffer( GL_BACK_LEFT );
 		else if( cameraSeparation > 0 )
 			qglDrawBuffer( GL_BACK_RIGHT );
 		else
 			qglDrawBuffer( GL_BACK );
+	}
 #endif
-	}
-
-	// update gamma
-	if( r_gamma->modified )
-	{
-		r_gamma->modified = false;
-		R_UpdateHWGamma();
-	}
-
-	if( r_wallcolor->modified || r_floorcolor->modified ) {
-		int i;
-
-		// parse and clamp colors for walls and floors we will copy into our texture
-		sscanf( r_wallcolor->string,  "%3f %3f %3f", &rsh.wallColor[0], &rsh.wallColor[1], &rsh.wallColor[2] );
-		sscanf( r_floorcolor->string, "%3f %3f %3f", &rsh.floorColor[0], &rsh.floorColor[1], &rsh.floorColor[2] );
-		for( i = 0; i < 3; i++ ) {
-			rsh.wallColor[i] = bound( 0, floor(rsh.wallColor[i]) / 255.0, 1.0 );
-			rsh.floorColor[i] = bound( 0, floor(rsh.floorColor[i]) / 255.0, 1.0 );
-		}
-
-		r_wallcolor->modified = r_floorcolor->modified = false;
-	}
-
-	// run cinematic passes on shaders
-	R_RunAllCinematics();
 
 	// draw buffer stuff
-	if( gl_drawbuffer->modified )
+	if( rf.newDrawBuffer )
 	{
-		gl_drawbuffer->modified = false;
+		rf.newDrawBuffer = false;
 
 #ifndef GL_ES_VERSION_2_0
 		if( cameraSeparation == 0 || !glConfig.stereoEnabled )
 		{
-			if( Q_stricmp( gl_drawbuffer->string, "GL_FRONT" ) == 0 )
+			if( Q_stricmp( rf.drawBuffer, "GL_FRONT" ) == 0 )
 				qglDrawBuffer( GL_FRONT );
 			else
 				qglDrawBuffer( GL_BACK );
@@ -1509,34 +1679,20 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		RB_Clear( GL_COLOR_BUFFER_BIT, 0, 0, 0, 1 );
 	}
 
-	// texturemode stuff
-	if( r_texturemode->modified )
-	{
-		R_TextureMode( r_texturemode->string );
-		r_texturemode->modified = false;
-	}
-
-	if( r_texturefilter->modified )
-	{
-		R_AnisotropicFilter( r_texturefilter->integer );
-		r_texturefilter->modified = false;
-	}
-
-	// keep r_outlines_cutoff value in sane bounds to prevent wallhacking
-	if( r_outlines_scale->modified ) {
-		if( r_outlines_scale->value < 0 ) {
-			ri.Cvar_ForceSet( r_outlines_scale->name, "0" );
-		}
-		else if( r_outlines_scale->value > 3 ) {
-			ri.Cvar_ForceSet( r_outlines_scale->name, "3" );
-		}
-		r_outlines_scale->modified = false;
-	}
-
 	// set swap interval (vertical synchronization)
-	R_SwapInterval( ( r_swapinterval->integer || forceVsync ) ? 1 : 0 );
+	rf.swapInterval = R_SetSwapInterval( ( r_swapinterval->integer || forceVsync ) ? 1 : 0, rf.swapInterval );
 
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
+
+    // update fps meter
+    rf.fps.count++;
+    rf.fps.time = time;
+    if( rf.fps.time - rf.fps.oldTime >= 250 ) {
+        rf.fps.average = time - rf.fps.oldTime;
+        rf.fps.average = 1000.0f * (rf.fps.count - rf.fps.oldCount) / (float)rf.fps.average + 0.5f;
+        rf.fps.oldTime = time;
+        rf.fps.oldCount = rf.fps.count;
+    }
 
 	R_Set2DMode( true );
 }
@@ -1546,6 +1702,8 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 */
 void R_EndFrame( void )
 {
+	int error;
+
 	// render previously batched 2D geometry, if any
 	RB_FlushDynamicMeshes();
 
@@ -1560,251 +1718,9 @@ void R_EndFrame( void )
 	RB_EndFrame();
 
 	GLimp_EndFrame();
-}
 
-/*
-* R_AppActivate
-*/
-void R_AppActivate( bool active, bool destroy )
-{
-	qglFlush();
-	GLimp_AppActivate( active, destroy );
-}
-
-/*
-* R_SpeedsMessage
-*/
-const char *R_SpeedsMessage( char *out, size_t size )
-{
-	char backend_msg[1024];
-
-	if( !out || !size ) {
-		return out;
-	}
-
-	out[0] = '\0';
-	if( r_speeds->integer && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
-	{
-		switch( r_speeds->integer )
-		{
-		case 1:
-		default:
-			RB_StatsMessage( backend_msg, sizeof( backend_msg ) );
-
-			Q_snprintfz( out, size,
-				"%4u wpoly %4u leafs\n"
-				"sverts: %5u\\%5u  stris: %5u\\%5u\n"
-				"%s",
-				rf.stats.c_brush_polys, rf.stats.c_world_leafs,
-				rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems/3, rf.stats.c_slices_elems_real/3,
-				backend_msg
-			);
-			break;
-		case 2:
-		case 3:
-			Q_snprintfz( out, size,
-				"lvs: %5u  node: %5u\n"
-				"polys\\ents: %5u\\%5i  draw: %5u\n",
-				rf.stats.t_mark_leaves, rf.stats.t_world_node,
-				rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
-			);
-			break;
-		case 4:
-		case 5:
-			if( rsc.debugSurface )
-			{
-				int numVerts = 0, numTris = 0;
-
-				Q_snprintfz( out, size,
-					"%s type:%i sort:%i", 
-					rsc.debugSurface->shader->name, rsc.debugSurface->facetype, rsc.debugSurface->shader->sort );
-
-				Q_strncatz( out, "\n", size );
-
-				if( r_speeds->integer == 5 && rsc.debugSurface->drawSurf->vbo ) {
-					numVerts = rsc.debugSurface->drawSurf->vbo->numVerts;
-					numTris = rsc.debugSurface->drawSurf->vbo->numElems / 3;
-				}
-				else if( rsc.debugSurface->mesh ) {
-					numVerts = rsc.debugSurface->mesh->numVerts;
-					numTris = rsc.debugSurface->mesh->numElems;
-				}
-
-				if( numVerts ) {
-					Q_snprintfz( out + strlen( out ), size - strlen( out ),
-						"verts: %5i tris: %5i", numVerts, numTris );
-				}
-
-				Q_strncatz( out, "\n", size );
-
-				if( rsc.debugSurface->fog && rsc.debugSurface->fog->shader
-					&& rsc.debugSurface->fog->shader != rsc.debugSurface->shader )
-					Q_strncatz( out, rsc.debugSurface->fog->shader->name, size );
-			}
-			break;
-		case 6:
-			Q_snprintfz( out, size,
-				"%.1f %.1f %.1f",
-				rn.refdef.vieworg[0], rn.refdef.vieworg[1], rn.refdef.vieworg[2]
-				);
-			break;
-		}
-	}
-
-	out[size-1] = '\0';
-	return out;
-}
-
-//==================================================================================
-
-/*
-* R_BeginAviDemo
-*/
-void R_BeginAviDemo( void )
-{
-}
-
-/*
-* R_WriteAviFrame
-*/
-void R_WriteAviFrame( int frame, bool scissor )
-{
-	int x, y, w, h;
-	int quality;
-	const char *writedir, *gamedir;
-	size_t checkname_size;
-	char *checkname;
-	const char *extension;
-
-	if( !R_ScreenEnabled() )
-		return;
-
-	if( scissor )
-	{
-		x = rsc.refdef.x;
-		y = glConfig.height - rsc.refdef.height - rsc.refdef.y;
-		w = rsc.refdef.width;
-		h = rsc.refdef.height;
-	}
-	else
-	{
-		x = 0;
-		y = 0;
-		w = glConfig.width;
-		h = glConfig.height;
-	}
-
-	if( r_screenshot_jpeg->integer ) {
-		extension = ".jpg";
-		quality = r_screenshot_jpeg_quality->integer;
-	}
-	else {
-		extension = ".tga";
-		quality = 100;
-	}
-
-	writedir = ri.FS_WriteDirectory();
-	gamedir = ri.FS_GameDirectory();
-	checkname_size = strlen( writedir ) + 1 + strlen( gamedir ) + strlen( "/avi/avi" ) + 6 + strlen( extension ) + 1;
-	checkname = alloca( checkname_size );
-	Q_snprintfz( checkname, checkname_size, "%s/%s/avi/avi%06i", writedir, gamedir, frame );
-	COM_DefaultExtension( checkname, extension, checkname_size );
-
-	R_ScreenShot( checkname, x, y, w, h, quality, false, false, false, true );
-}
-
-/*
-* R_StopAviDemo
-*/
-void R_StopAviDemo( void )
-{
-}
-
-/*
-* R_TransformVectorToScreen
-*/
-void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )
-{
-	mat4_t p, m;
-	vec4_t temp, temp2;
-
-	if( !rd || !in || !out )
-		return;
-
-	temp[0] = in[0];
-	temp[1] = in[1];
-	temp[2] = in[2];
-	temp[3] = 1.0f;
-	
-	if( rd->rdflags & RDF_USEORTHO ) {
-		Matrix4_OrthogonalProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y, 
-			-4096.0f, 4096.0f, p );
-	}
-	else {
-		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rf.cameraSeparation, 
-			p, glConfig.depthEpsilon );
-	}
-
-	if( rd->rdflags & RDF_FLIPPED ) {
-		p[0] = -p[0];
-	}
-
-	Matrix4_Modelview( rd->vieworg, rd->viewaxis, m );
-
-	Matrix4_Multiply_Vector( m, temp, temp2 );
-	Matrix4_Multiply_Vector( p, temp2, temp );
-
-	if( !temp[3] )
-		return;
-
-	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
-	out[1] = glConfig.height - (rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f);
-}
-
-/*
-* R_GetShaderForOrigin
-*
-* Trace 64 units in all axial directions to find the closest surface
-*/
-shader_t *R_GetShaderForOrigin( const vec3_t origin )
-{
-	int i, j;
-	vec3_t dir, end;
-	rtrace_t tr;
-	shader_t *best = NULL;
-	float best_frac = 1000.0f;
-
-	for( i = 0; i < 3; i++ ) {
-		VectorClear( dir );
-
-		for( j = -1; j <= 1; j += 2 ) {
-			dir[i] = j;
-			VectorMA( origin, 64, dir, end );
-
-			R_TraceLine( &tr, origin, end, 0 );
-			if( !tr.shader ) {
-				continue;
-			}
-
-			if( tr.fraction < best_frac ) {
-				best = tr.shader;
-				best_frac = tr.fraction;
-			}
-		}
-	}
-
-	return best;
-}
-
-/*
-* R_GetShaderCinematic
-*/
-struct cinematics_s *R_GetShaderCinematic( shader_t *shader )
-{
-	if( !shader ) {
-		return NULL;
-	}
-	return R_GetCinematicById( shader->cin );
+	error = qglGetError();
+	assert( error == GL_NO_ERROR );
 }
 
 //===================================================================

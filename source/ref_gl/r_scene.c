@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
-static void R_RenderDebugSurface( const refdef_t *fd );
-
 static void R_ClearDebugBounds( void );
 static void R_RenderDebugBounds( void );
 
@@ -55,8 +53,6 @@ void R_ClearScene( void )
 	rsc.numEntities = rsc.numLocalEntities;
 
 	rsc.numBmodelEntities = 0;
-
-	rsc.debugSurface = NULL;
 
 	rsc.renderedShadowBits = 0;
 	rsc.frameCount++;
@@ -381,9 +377,6 @@ void R_RenderScene( const refdef_t *fd )
 	VectorCopy( fd->vieworg, rn.pvsOrigin );
 	VectorCopy( fd->vieworg, rn.lodOrigin );
 
-	if( gl_finish->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
-		RB_Finish();
-
 	R_BindFrameBufferObject( 0 );
 
 	R_BuildShadowGroups();
@@ -397,6 +390,12 @@ void R_RenderScene( const refdef_t *fd )
 	R_BindFrameBufferObject( 0 );
 
 	R_Set2DMode( true );
+
+	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
+		ri.Mutex_Lock( rf.speedsMsgLock );
+		R_WriteSpeedsMessage( rf.speedsMsg, sizeof( rf.speedsMsg ) );
+		ri.Mutex_Unlock( rf.speedsMsgLock );
+	}
 
 	// blit and blend framebuffers in proper order
 
@@ -549,59 +548,3 @@ static void R_RenderDebugBounds( void )
 }
 
 //=======================================================================
-
-/*
-* R_RenderDebugSurface
-*/
-static void R_RenderDebugSurface( const refdef_t *fd )
-{
-	rtrace_t tr;
-	vec3_t forward;
-	vec3_t start, end;
-	msurface_t *surf;
-
-	if( fd->rdflags & RDF_NOWORLDMODEL )
-		return;
-
-	if( r_speeds->integer != 4 && r_speeds->integer != 5 )
-		return;
-
-	VectorCopy( &fd->viewaxis[AXIS_FORWARD], forward );
-	VectorCopy( fd->vieworg, start );
-	VectorMA( start, 4096, forward, end );
-
-	surf = R_TraceLine( &tr, start, end, 0 );
-	if( surf && surf->drawSurf && !r_showtris->integer )
-	{
-		R_ClearDrawList( rn.meshlist );
-
-		R_ClearDrawList( rn.portalmasklist );
-
-		if( !R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT(tr.ent), NULL, surf->shader, 0, 0, NULL, surf->drawSurf ) ) {
-			return;
-		}
-
-		if( rn.refdef.rdflags & RDF_FLIPPED )
-			RB_FlipFrontFace();
-
-		rsc.debugSurface = surf;
-
-		if( r_speeds->integer == 5 ) {
-			// VBO debug mode
-			R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces, 
-				surf->drawSurf->numVerts, surf->drawSurf->numElems,
-				0, 0 );
-		}
-		else {
-			// classic mode (showtris for individual surface)
-			R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces, 
-				surf->mesh->numVerts, surf->mesh->numElems,
-				surf->firstDrawSurfVert, surf->firstDrawSurfElem );
-		}
-
-		R_DrawOutlinedSurfaces( rn.meshlist );
-
-		if( rn.refdef.rdflags & RDF_FLIPPED )
-			RB_FlipFrontFace();
-	}
-}

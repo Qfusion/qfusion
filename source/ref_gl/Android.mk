@@ -7,8 +7,8 @@ LOCAL_LDLIBS := -landroid
 LOCAL_STATIC_LIBRARIES := jpeg png
 
 LOCAL_SRC_FILES := \
-  ../android/android_glw.c \
-  ../android/android_qgl.c \
+  ../egl/egl_glw.c \
+  ../egl/egl_qgl.c \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
   ../qalgo/glob.c \
