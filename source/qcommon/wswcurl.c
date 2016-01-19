@@ -706,6 +706,7 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 	const char *proxy_userpwd = http_proxyuserpwd->string;
 
 	if( !curlLibrary ) {
+		Com_Printf( "!!! WARNING: external library is missing (libcurl).\n" );
 		return NULL;
 	}
 
