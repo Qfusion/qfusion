@@ -249,9 +249,6 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 	return rserr_ok;	
 }
 
-/*
-* RF_SetWindow
-*/
 rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
 	rserr_t err;
@@ -550,17 +547,11 @@ void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height,
 	R_ReplaceRawSubPic( shader, x, y, width, height, data );
 }
 
-/*
-* RF_BeginAviDemo
-*/
 void RF_BeginAviDemo( void )
 {
 	RF_AdapterWait( &rrf.adapter );
 }
 
-/*
-* R_WriteAviFrame
-*/
 void RF_WriteAviFrame( int frame, bool scissor )
 {
 	int x, y, w, h;
@@ -610,17 +601,11 @@ void RF_WriteAviFrame( int frame, bool scissor )
 	rrf.adapter.cmdPipe->AviShot( rrf.adapter.cmdPipe, path, name, x, y, w, h );
 }
 
-/*
-* RF_StopAviDemo
-*/
 void RF_StopAviDemo( void )
 {
 	RF_AdapterWait( &rrf.adapter );
 }
 
-/*
-* RF_TransformVectorToScreen
-*/
 void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )
 {
 	mat4_t p, m;
@@ -716,9 +701,6 @@ shader_t *RF_GetShaderForOrigin( const vec3_t origin )
 	return best;
 }
 
-/*
-* RF_GetShaderCinematic
-*/
 struct cinematics_s *RF_GetShaderCinematic( shader_t *shader )
 {
 	if( !shader ) {

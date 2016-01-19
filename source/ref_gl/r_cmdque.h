@@ -55,7 +55,7 @@ typedef struct ref_cmdbuf_s
 	unsigned		( *GetFrameId )( struct ref_cmdbuf_s *cmdbuf );
 	void			( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
 
-	bool			sync;
+	bool			sync; // if true, commands are executes in immediate mode
 	size_t			buf_size;
 	uint8_t			*buf;
 } ref_cmdbuf_t;
@@ -89,7 +89,7 @@ typedef struct ref_cmdpipe_s
 	int 			( *RunCmds )( struct ref_cmdpipe_s *cmdpipe );
 	void 			( *FinishCmds )( struct ref_cmdpipe_s *cmdpipe );
 
-	bool			sync;
+	bool			sync; // if true, commands are executes in immediate mode
 	qbufPipe_t		*pipe;
 } ref_cmdpipe_t;
 
