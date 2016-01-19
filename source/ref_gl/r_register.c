@@ -456,7 +456,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, texture_compression, false, false, &gl_ext_texture_compression_ARB_funcs )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( SGIS, texture_edge_clamp, true, true, NULL )
-	,GL_EXTENSION( ARB, texture_cube_map, false, false, NULL )
+	,GL_EXTENSION( ARB, texture_cube_map, true, true, NULL )
 	,GL_EXTENSION( ARB, depth_texture, false, false, NULL )
 	,GL_EXTENSION( SGIX, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( ARB, shadow, 1, false, false, NULL, depth_texture )
@@ -806,13 +806,8 @@ static void R_FinalizeGLExtensions( void )
 
 	/* GL_ARB_texture_cube_map */
 	glConfig.maxTextureCubemapSize = 0;
-	if( glConfig.ext.texture_cube_map )
-		qglGetIntegerv( GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, &glConfig.maxTextureCubemapSize );
+	qglGetIntegerv( GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, &glConfig.maxTextureCubemapSize );
 	glConfig.maxTextureCubemapSize = 1 << Q_log2( glConfig.maxTextureCubemapSize );
-#ifndef GL_ES_VERSION_2_0
-	if( glConfig.maxTextureCubemapSize <= 1 )
-		glConfig.ext.texture_cube_map = false;
-#endif
 
 	/* GL_ARB_multitexture */
 	glConfig.maxTextureUnits = 1;
@@ -1170,8 +1165,7 @@ static void R_GfxInfo_f( void )
 
 	Com_Printf( "GL_MAX_TEXTURE_SIZE: %i\n", glConfig.maxTextureSize );
 	Com_Printf( "GL_MAX_TEXTURE_IMAGE_UNITS: %i\n", glConfig.maxTextureUnits );
-	if( glConfig.ext.texture_cube_map )
-		Com_Printf( "GL_MAX_CUBE_MAP_TEXTURE_SIZE: %i\n", glConfig.maxTextureCubemapSize );
+	Com_Printf( "GL_MAX_CUBE_MAP_TEXTURE_SIZE: %i\n", glConfig.maxTextureCubemapSize );
 	if( glConfig.ext.texture3D )
 		Com_Printf( "GL_MAX_3D_TEXTURE_SIZE: %i\n", glConfig.maxTexture3DSize );
 	if( glConfig.ext.texture_array )
