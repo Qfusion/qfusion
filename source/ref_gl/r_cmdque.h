@@ -55,56 +55,45 @@ typedef struct ref_cmdbuf_s
 	unsigned		( *GetFrameId )( struct ref_cmdbuf_s *cmdbuf );
 	void			( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
 
+	bool			sync;
 	size_t			buf_size;
 	uint8_t			*buf;
 } ref_cmdbuf_t;
 
-ref_cmdbuf_t *RF_CreateCmdBuf( void );
+ref_cmdbuf_t *RF_CreateCmdBuf( bool sync );
 void RF_DestroyCmdBuf( ref_cmdbuf_t **pcmdbuf );
 
 // ==========
 
-enum
-{
-	REF_PIPE_CMD_INIT,
-	REF_PIPE_CMD_SHUTDOWN,
-	REF_PIPE_CMD_SURFACE_CHANGE,
-	REF_PIPE_CMD_SCREEN_SHOT,
-	REF_PIPE_CMD_ENV_SHOT,
-
-	REF_PIPE_CMD_BEGIN_REGISTRATION,
-	REF_PIPE_CMD_END_REGISTRATION,
-	
-	REF_PIPE_CMD_SET_CUSTOM_COLOR,
-	REF_PIPE_CMD_SET_WALL_FLOOR_COLORS,
-	
-	REF_PIPE_CMD_SET_DRAWBUFFER,
-	REF_PIPE_CMD_SET_TEXTURE_MODE,
-	REF_PIPE_CMD_SET_TEXTURE_FILTER,
-	REF_PIPE_CMD_SET_GAMMA,
-
-	NUM_REF_PIPE_CMDS
-};
-
 // inter-frame thread-safe pipe for commands
 // we need it to process commands that may not be dropped along with respective frames
 
-typedef unsigned (*refPipeCmdHandler_t)( const void * );
-extern refPipeCmdHandler_t refPipeCmdHandlers[];
+typedef struct ref_cmdpipe_s
+{
+	void			( *Init )( struct ref_cmdpipe_s *cmdpipe );
+	void			( *Shutdown )( struct ref_cmdpipe_s *cmdpipe );
 
-void RF_IssueInitReliableCmd( qbufPipe_t *pipe );
-void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe );
-void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe );
-void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, const char *fmtstring, bool silent );
-void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, unsigned pixels );
-void RF_IssueAviShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, int x, int y, int w, int h );
-void RF_IssueBeginRegistrationReliableCmd( qbufPipe_t *pipe );
-void RF_IssueEndRegistrationReliableCmd( qbufPipe_t *pipe );
-void RF_IssueSetCustomColorReliableCmd( qbufPipe_t *pipe, int num, int r, int g, int b );
-void RF_IssueSetWallFloorColorsReliableCmd( qbufPipe_t *pipe, const vec3_t wallColor, const vec3_t floorColor );
-void RF_IssueSetDrawBufferReliableCmd( qbufPipe_t *pipe, const char *drawbuffer );
-void RF_IssueSetTextureModeReliableCmd( qbufPipe_t *pipe, const char *texturemode );
-void RF_IssueSetTextureFilterReliableCmd( qbufPipe_t *pipe, int filter );
-void RF_IssueSetGammaReliableCmd( qbufPipe_t *pipe, float gamma );
+	void			( *SurfaceChange )( struct ref_cmdpipe_s *cmdpipe );
+	void			( *ScreenShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent );
+	void			( *EnvShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, unsigned pixels );
+	void			( *AviShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, int x, int y, int w, int h );
+	void			( *BeginRegistration )( struct ref_cmdpipe_s *cmdpipe );
+	void			( *EndRegistration )( struct ref_cmdpipe_s *cmdpipe );
+	void			( *SetCustomColor )( struct ref_cmdpipe_s *cmdpipe, int num, int r, int g, int b );
+	void			( *SetWallFloorColors )( struct ref_cmdpipe_s *cmdpipe, const vec3_t wallColor, const vec3_t floorColor );
+	void			( *SetDrawBuffer )( struct ref_cmdpipe_s *cmdpipe, const char *drawbuffer );
+	void			( *SetTextureMode )( struct ref_cmdpipe_s *cmdpipe, const char *texturemode );
+	void			( *SetTextureFilter )( struct ref_cmdpipe_s *cmdpipe, int filter );
+	void			( *SetGamma )( struct ref_cmdpipe_s *cmdpipe, float gamma );
+
+	int 			( *RunCmds )( struct ref_cmdpipe_s *cmdpipe );
+	void 			( *FinishCmds )( struct ref_cmdpipe_s *cmdpipe );
+
+	bool			sync;
+	qbufPipe_t		*pipe;
+} ref_cmdpipe_t;
+
+ref_cmdpipe_t *RF_CreateCmdPipe( bool sync );
+void RF_DestroyCmdPipe( ref_cmdpipe_t **pcmdpipe );
 
 #endif // R_CMDQUEUE_H
