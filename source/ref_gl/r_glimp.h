@@ -182,7 +182,6 @@ typedef struct
 				,framebuffer_blit
 				,depth24
 				,depth_nonlinear
-				,multiview_draw_buffers
 				,get_program_binary
 				,rgb8_rgba8
 				,ES3_compatibility
@@ -258,21 +257,30 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 ====================================================================
 */
 
-bool	GLimp_ScreenEnabled( void );
+bool	GLimp_RenderingEnabled( void );
 void	GLimp_BeginFrame( void );
 void	GLimp_EndFrame( void );
 int		GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
 			int iconResource, const int *iconXPM );
 void	GLimp_Shutdown( void );
 rserr_t	GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo );
-rserr_t	GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
+rserr_t	GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending );
+rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen );
 void	GLimp_AppActivate( bool active, bool destroy );
 bool	GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp );
 void	GLimp_SetGammaRamp( size_t stride, unsigned short   size, unsigned short *ramp );
 void	GLimp_SetSwapInterval( int swapInterval );
 
+bool	GLimp_MakeCurrent( void *context, void *surface );
+
+void	GLimp_EnableMultithreadedRendering( bool enable );
+// When multithreaded rendering is enabled, GetWindowSurface must be called from the rendering thread, not the main one.
+// The window surface may be managed by the rendering thread in this case, and the main thread may have a fake surface instead
+// if the context implementation doesn't support multiple contexts bound to the same surface.
+void	*GLimp_GetWindowSurface( bool *renderable );
+void	GLimp_UpdatePendingWindowSurface( void ); // Call from the rendering thread.
+
 bool	GLimp_SharedContext_Create( void **context, void **surface );
-bool	GLimp_SharedContext_MakeCurrent( void *context, void *surface );
 void	GLimp_SharedContext_Destroy( void *context, void *surface );
 
 #endif // R_GLIMP_H

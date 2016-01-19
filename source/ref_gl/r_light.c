@@ -161,7 +161,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	vec3_t ambientLocal, diffuseLocal;
 	vec_t *gridSize, *gridMins;
 	int *gridBounds;
-	static mgridlight_t lightarray[8];
+	mgridlight_t lightarray[8];
 	lightstyle_t *lightStyles = rsc.lightStyles;
 
 	VectorSet( ambientLocal, 0, 0, 0 );
@@ -343,14 +343,6 @@ dynamic:
 
 		diffuse[3] = 1.0f;
 	}
-}
-
-/*
-* R_LightForOrigin2
-*/
-void R_LightForOrigin2( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
-{
-	R_LightForOrigin( origin, dir, ambient, diffuse, radius, rn.refdef.rdflags & RDF_NOWORLDMODEL ? true : false );
 }
 
 /*
@@ -648,6 +640,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 		mlightmapRect_t *rect = rects;
 		int blockSize = w * h * LIGHTMAP_BYTES;
 		float texScale = 1.0f;
+		char tempbuf[16];
 
 		if( mapConfig.deluxeMaps )
 			numLightmaps /= 2;
@@ -666,7 +659,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 					break;
 				}
 				lightmapNum = r_numUploadedLightmaps++;
-				image = R_Create3DImage( va( "*lm%i", lightmapNum ), layerWidth, h,
+				image = R_Create3DImage( va_r( tempbuf, sizeof( tempbuf ), "*lm%i", lightmapNum ), layerWidth, h,
 					( ( i + numLayers ) <= numLightmaps ) ? numLayers : numLightmaps % numLayers,
 					IT_SPECIAL, IMAGE_TAG_GENERIC, LIGHTMAP_BYTES, true );
 				r_lightmapTextures[lightmapNum] = image;

@@ -2665,11 +2665,17 @@ void CL_Frame( int realmsec, int gamemsec )
 	
 	if( cls.state == CA_CINEMATIC )
 	{
+#if 1
+		maxFps = 10000.0f;
+		minMsec = 1;
+		roundingMsec = 0;
+#else
 		maxFps = SCR_CinematicFramerate() * 2;
 		if( maxFps < 24 ) 
 			maxFps = 24.0f;
 		minMsec = max( ( 1000.0f / maxFps ), 1 );
 		roundingMsec += max( ( 1000.0f / maxFps ), 1.0f ) - minMsec;
+#endif
 	}
 	else if( cl_maxfps->integer > 0 && !cl_timedemo->integer 
 		&& !( cls.demo.avi_video && cls.state == CA_ACTIVE ) )

@@ -27,15 +27,16 @@ typedef struct r_cinhandle_s
 {
 	unsigned int	id;
 	int				registrationSequence;
-	bool		reset;
+	volatile bool	reset;
 	char			*name;
 	char			*uploadName;
 	struct cinematics_s	*cin;
 	image_t			*image;
 	int				width, height;
-	uint8_t			*pic;
-	bool		new_frame;
-	bool		yuv;
+	volatile uint8_t *pic;
+	volatile bool	new_frame;
+	bool			yuv;
+	qmutex_t		*lock;
 	ref_yuv_t		*cyuv;
 	image_t			*yuv_images[3];
 	struct r_cinhandle_s *prev, *next;
@@ -47,58 +48,69 @@ static r_cinhandle_t r_cinematics_headnode, *r_free_cinematics;
 /*
 * R_RunCin
 */
-static bool R_RunCin( r_cinhandle_t *h )
+static void R_RunCin( r_cinhandle_t *h )
 {
-	bool redraw;
+	bool redraw = false;
 	unsigned int now = ri.Sys_Milliseconds();
 
 	// don't advance cinematics during registration
 	if( rsh.registrationOpen ) {
-		return false;
+		return;
 	}
 
+	ri.Mutex_Lock( h->lock );
+
 	if( h->reset ) {
+		h->new_frame = false;
 		h->reset = false;
 		ri.CIN_Reset( h->cin, now );
 	}
 
-	if( !ri.CIN_NeedNextFrame( h->cin, now ) ) {
-		return false;
+	if( ri.CIN_NeedNextFrame( h->cin, now ) ) {
+		if( h->yuv ) {
+			h->cyuv = ri.CIN_ReadNextFrameYUV( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
+			h->pic = ( uint8_t * )h->cyuv;
+		}
+		else {
+			h->pic = ri.CIN_ReadNextFrame( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
+		}
 	}
 
-	if( h->yuv ) {
-		h->cyuv = ri.CIN_ReadNextFrameYUV( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
-		h->pic = ( uint8_t * )h->cyuv;
+	if( h->pic == NULL ) {
+		h->new_frame = false;
+	} else {
+		h->new_frame |= redraw;
 	}
-	else {
-		h->pic = ri.CIN_ReadNextFrame( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
-	}
-	return redraw;
+
+	ri.Mutex_Unlock( h->lock );
 }
 
 /*
-* R_ResampleCinematicFrame
+* R_UploadCinematicFrame
 */
-static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
+static void R_UploadCinematicFrame( r_cinhandle_t *handle )
 {
 	const int samples = 4;
 
-	if( !handle->pic ) {
-		// we haven't yet read a new frame, return whatever image we got
-		// this will return NULL until at least one frame has been read
-		return handle->image;
+	ri.Mutex_Lock( handle->lock );
+
+	if( !handle->cin || !handle->pic ) {
+		ri.Mutex_Unlock( handle->lock );
+		return;
 	}
 
 	if( handle->yuv ) {
 		int i;
 
 		if( !handle->yuv_images[0] ) {
+			char tn[256];
 			uint8_t *fake_data[1] = { NULL };
 			const char *letters[3] = { "y", "u", "v" };
 
 			for( i = 0; i < 3; i++ ) {
-				handle->yuv_images[i] = R_LoadImage( va( "%s_%s", handle->name, letters[i] ), 
-					fake_data, 1, 1, IT_SPECIAL, 1, IMAGE_TAG_GENERIC, 1 );
+				handle->yuv_images[i] = R_LoadImage( 
+					va_r( tn, sizeof( tn ), "%s_%s", handle->name, letters[i] ), 
+					fake_data, 1, 1, IT_SPECIAL|IT_NO_DATA_SYNC, 1, IMAGE_TAG_GENERIC, 1 );
 			}
 			handle->new_frame = true;
 		}
@@ -109,7 +121,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 			
 			// render/convert three 8-bit YUV images into RGB framebuffer
 
-			in2D = rf.in2D;
+			in2D = rf.in2D;	
 			fbo = RFB_BoundObject();
 
 			if( !in2D ) {
@@ -128,6 +140,8 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 
 			RB_Viewport( 0, 0, handle->image->upload_width, handle->image->upload_height );
 
+			R_UploadRawYUVPic( handle->yuv_images, handle->cyuv->yuv );
+
 			// flip the image vertically because we're rendering to a FBO
 			R_DrawStretchRawYUVBuiltin( 
 				0, 0, 
@@ -136,7 +150,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 				(float)handle->cyuv->y_offset / handle->cyuv->image_height, 
 				(float)(handle->cyuv->x_offset + handle->cyuv->width) / handle->cyuv->image_width, 
 				(float)(handle->cyuv->y_offset + handle->cyuv->height) / handle->cyuv->image_height, 
-				handle->cyuv->yuv, handle->yuv_images, 2 );
+				handle->yuv_images, 2 );
 
 			if( !in2D ) {
 				R_PopRefInst();
@@ -150,17 +164,18 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 	}
 	else {
 		if( !handle->image ) {
-			handle->image = R_LoadImage( handle->name, &handle->pic, handle->width, handle->height, 
-				IT_SPECIAL, 1, IMAGE_TAG_GENERIC, samples );
-			handle->new_frame = false;
-		} else if( handle->new_frame ) {
-			R_ReplaceImage( handle->image, &handle->pic, handle->width, handle->height, 
+			handle->image = R_LoadImage( handle->name, (uint8_t **)&handle->pic, handle->width, handle->height, 
+				IT_SPECIAL|IT_NO_DATA_SYNC, 1, IMAGE_TAG_GENERIC, samples );
+		}
+		
+		if( handle->new_frame ) {
+			R_ReplaceImage( handle->image, (uint8_t **)&handle->pic, handle->width, handle->height, 
 				handle->image->flags, 1, samples );
 			handle->new_frame = false;
 		}
 	}
 
-	return handle->image;
+	ri.Mutex_Unlock( handle->lock );
 }
 
 //==================================================================================
@@ -218,8 +233,6 @@ void R_InitCinematics( void )
 			r_cinematics[i].next = &r_cinematics[i+1];
 		r_cinematics[i].id = i + 1;
 	}
-
-	ri.Cmd_AddCommand( "cinlist", R_CinList_f );
 }
 
 /*
@@ -233,7 +246,7 @@ void R_RunAllCinematics( void )
 	for( handle = hnode->prev; handle != hnode; handle = next )
 	{
 		next = handle->prev;
-		handle->new_frame = R_RunCin( handle );
+		R_RunCin( handle );
 	}
 }
 
@@ -286,7 +299,7 @@ void R_UploadCinematic( unsigned int id )
 	
 	handle = R_GetCinematicHandleById( id );
 	if( handle ) {
-		R_ResampleCinematicFrame( handle );
+		R_UploadCinematicFrame( handle );
 	}
 }
 
@@ -350,6 +363,7 @@ unsigned int R_StartCinematic( const char *arg )
 	handle->registrationSequence = rsh.registrationSequence;
 	handle->pic = NULL;
 	handle->cyuv = NULL;
+	handle->lock = ri.Mutex_Create();
 
 	// put handle at the start of the list
 	handle->prev = &r_cinematics_headnode;
@@ -373,6 +387,8 @@ void R_TouchCinematic( unsigned int id )
 		return;
 	}
 
+	ri.Mutex_Lock( handle->lock );
+
 	handle->registrationSequence = rsh.registrationSequence;
 
 	if( handle->image ) {
@@ -388,6 +404,8 @@ void R_TouchCinematic( unsigned int id )
 	handle->new_frame = false;
 	handle->pic = NULL;
 	handle->cyuv = NULL;
+
+	ri.Mutex_Unlock( handle->lock );
 }
 
 /*
@@ -411,6 +429,7 @@ void R_FreeUnusedCinematics( void )
 */
 void R_FreeCinematic( unsigned int id )
 {
+	qmutex_t *lock;
 	r_cinhandle_t *handle;
 	
 	handle = R_GetCinematicHandleById( id );
@@ -418,8 +437,12 @@ void R_FreeCinematic( unsigned int id )
 		return;
 	}
 
+	lock = handle->lock;
+	ri.Mutex_Lock( lock );
+
 	ri.CIN_Close( handle->cin );
 	handle->cin = NULL;
+	handle->lock = NULL;
 
 	assert( handle->name );
 	R_Free( handle->name );
@@ -436,6 +459,10 @@ void R_FreeCinematic( unsigned int id )
 	// insert into linked free list
 	handle->next = r_free_cinematics;
 	r_free_cinematics = handle;
+
+	ri.Mutex_Unlock( lock );
+
+	ri.Mutex_Destroy( &lock );
 }
 
 /*
@@ -443,7 +470,9 @@ void R_FreeCinematic( unsigned int id )
 */
 static void R_ResetCinematic( r_cinhandle_t *handle )
 {
+	ri.Mutex_Lock( handle->lock );
 	handle->reset = true;
+	ri.Mutex_Unlock( handle->lock );
 }
 
 /*
@@ -474,6 +503,4 @@ void R_ShutdownCinematics( void )
 	}
 
 	R_Free( r_cinematics );
-
-	ri.Cmd_RemoveCommand( "cinlist" );
 }

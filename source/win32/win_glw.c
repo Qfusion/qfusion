@@ -40,13 +40,13 @@ static int GLimp_InitGL( void );
 glwstate_t glw_state;
 
 /*
-** VID_CreateWindow
+** GLimp_CreateWindow
 */
 #define WITH_UTF8
 
 #pragma warning( disable : 4055 )
 
-static void VID_SetWindowSize( bool fullscreen )
+static void GLimp_SetWindowSize( bool fullscreen )
 {
 	RECT r;
 	int stylebits;
@@ -115,7 +115,7 @@ static void VID_SetWindowSize( bool fullscreen )
 	SetFocus( glw_state.hWnd );
 }
 
-static bool VID_CreateWindow( void )
+static void GLimp_CreateWindow( void )
 {
 	bool fullscreen = glConfig.fullScreen;
 	HWND parentHWND = glw_state.parenthWnd;
@@ -174,23 +174,16 @@ static bool VID_CreateWindow( void )
 	if( !glw_state.hWnd )
 		Sys_Error( "Couldn't create window" );
 
-	VID_SetWindowSize( fullscreen );
-
-	// init all the gl stuff for the window
-	if( !GLimp_InitGL() )
-	{
-		ri.Com_Printf( "VID_CreateWindow() - GLimp_InitGL failed\n" );
-		return false;
-	}
-
-	return true;
+	GLimp_SetWindowSize( fullscreen );
 }
 
 /*
-** VID_SetFullscreenMode
+** GLimp_SetFullscreenMode
 */
-static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
+rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 {
+	glConfig.fullScreen = false;
+
 	// do a CDS if needed
 	if( fullscreen )
 	{
@@ -219,17 +212,19 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 		if( a == DISP_CHANGE_SUCCESSFUL )
 		{
 			ri.Com_Printf( "ok\n" );
-			VID_SetWindowSize( true );
-			return true;
+			glConfig.fullScreen = true;
+			GLimp_SetWindowSize( true );
+			return rserr_ok;
 		}
 
 		ri.Com_Printf( "failed: %x\n", a );
+		return rserr_invalid_fullscreen;
 	}
 
 	ChangeDisplaySettings( 0, 0 );
-	VID_SetWindowSize( false );
+	GLimp_SetWindowSize( false );
 
-	return false;
+	return rserr_ok;
 }
 
 /*
@@ -238,14 +233,6 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
 {
 	const char *win_fs[] = { "W", "FS" };
-
-	// check whether we can toggle fullscreen without a vid_restart
-	if( glw_state.hWnd ) {
-		if( glConfig.width == width && glConfig.height == height && fullscreen != glConfig.fullScreen ) {
-			glConfig.fullScreen = VID_SetFullscreenMode( displayFrequency, fullscreen );
-			return ( ( glConfig.fullScreen == fullscreen ) ? rserr_ok : rserr_restart_required );
-		}
-	}
 
 	ri.Com_Printf( "Setting video mode:" );
 
@@ -273,11 +260,15 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.fullScreen = ( fullscreen ? VID_SetFullscreenMode( displayFrequency, fullscreen ) : false );
+	glConfig.fullScreen = ( fullscreen ? GLimp_SetFullscreenMode( displayFrequency, fullscreen ) == rserr_ok : false );
 	glConfig.stereoEnabled = stereo;
 
-	if( !VID_CreateWindow() ) {
-		return rserr_invalid_mode;
+	GLimp_CreateWindow();
+
+	// init all the gl stuff for the window
+	if( !GLimp_InitGL() ) {
+		ri.Com_Printf( "GLimp_CreateWindow() - GLimp_InitGL failed\n" );
+		return false;
 	}
 
 	return ( fullscreen == glConfig.fullScreen ? rserr_ok : rserr_invalid_fullscreen );
@@ -560,11 +551,6 @@ void GLimp_BeginFrame( void )
 */
 void GLimp_EndFrame( void )
 {
-	int err;
-
-	err = qglGetError();
-	assert( err == GL_NO_ERROR );
-
 	if( Q_stricmp( gl_drawbuffer->string, "GL_BACK" ) == 0 )
 	{
 		if( !qwglSwapBuffers( glw_state.hDC ) )
@@ -601,15 +587,18 @@ void GLimp_AppActivate( bool active, bool destroy )
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending )
 {
+	if( surfaceChangePending )
+		*surfaceChangePending = false;
+
 	return rserr_ok; // surface cannot be lost
 }
 
 /*
-** GLimp_ScreenEnabled
+** GLimp_RenderingEnabled
 */
-bool GLimp_ScreenEnabled( void )
+bool GLimp_RenderingEnabled( void )
 {
 	return true;
 }
@@ -624,6 +613,41 @@ void GLimp_SetSwapInterval( int swapInterval )
 }
 
 /*
+** GLimp_MakeCurrent
+*/
+bool GLimp_MakeCurrent( void *context, void *surface )
+{
+	if( qwglMakeCurrent && !qwglMakeCurrent( glw_state.hDC, context ) ) {
+		return false;
+	}
+	return true;
+}
+
+/*
+** GLimp_EnableMultithreadedRendering
+*/
+void GLimp_EnableMultithreadedRendering( bool enable )
+{
+}
+
+/*
+** GLimp_GetWindowSurface
+*/
+void *GLimp_GetWindowSurface( bool *renderable )
+{
+	if( renderable )
+		*renderable = true;
+	return NULL;
+}
+
+/*
+** GLimp_UpdatePendingWindowSurface
+*/
+void GLimp_UpdatePendingWindowSurface( void )
+{
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )
@@ -635,18 +659,8 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 
 	qwglShareLists( glw_state.hGLRC, ctx );
 	*context = ctx;
-	*surface = ( void * )1;
-	return true;
-}
-
-/*
-** GLimp_SharedContext_MakeCurrent
-*/
-bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
-{
-	if( qwglMakeCurrent && !qwglMakeCurrent( glw_state.hDC, context ) ) {
-		return false;
-	}
+	if( surface )
+		*surface = NULL;
 	return true;
 }
 

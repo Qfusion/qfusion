@@ -1086,15 +1086,18 @@ void GLimp_AppActivate( bool active, bool destroy )
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending )
 {
+	if( surfaceChangePending )
+		*surfaceChangePending = false;
+
 	return rserr_ok; // surface cannot be lost
 }
 
 /*
-** GLimp_ScreenEnabled
+** GLimp_RenderingEnabled
 */
-bool GLimp_ScreenEnabled( void )
+bool GLimp_RenderingEnabled( void )
 {
 	return true;
 }
@@ -1109,6 +1112,30 @@ void GLimp_SetSwapInterval( int swapInterval )
 }
 
 /*
+** GLimp_EnableMultithreadedRendering
+*/
+void GLimp_EnableMultithreadedRendering( bool enable )
+{
+}
+
+/*
+** GLimp_GetWindowSurface
+*/
+void *GLimp_GetWindowSurface( bool *renderable )
+{
+	if( renderable )
+		*renderable = true;
+	return ( void * )x11dispay.gl_win;
+}
+
+/*
+** GLimp_UpdatePendingWindowSurface
+*/
+void GLimp_UpdatePendingWindowSurface( void )
+{
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )
@@ -1118,7 +1145,8 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 		return false;
 
 	*context = (void *)ctx;
-	*surface = (void *)x11display.gl_win;
+	if( surface )
+		*surface = (void *)x11display.gl_win;
 	return true;
 }
 

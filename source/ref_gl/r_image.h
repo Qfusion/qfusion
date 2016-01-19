@@ -45,6 +45,7 @@ enum
 	,IT_ARRAY			= 1<<18
 	,IT_3D				= 1<<19
 	,IT_STENCIL			= 1<<20		// for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
+	,IT_NO_DATA_SYNC	= 1<<21		// owned by the drawing thread, do not sync in the frontend thread
 };
 
 /**
@@ -90,13 +91,13 @@ typedef struct image_s
 	struct image_s	*next, *prev;
 } image_t;
 
-void R_SelectTextureUnit( int tmu );
-bool R_BindTexture( int tmu, const image_t *tex );
-
 void R_InitImages( void );
+int R_TextureTarget( int flags, int *uploadTarget );
 void R_TouchImage( image_t *image, int tags );
 void R_FreeUnusedImagesByTags( int tags );
 void R_FreeUnusedImages( void );
+void R_InitBuiltinScreenImages( void );
+void R_ReleaseBuiltinScreenImages( void );
 void R_ShutdownImages( void );
 void R_InitViewportTexture( image_t **texture, const char *name, int id, 
 	int viewportWidth, int viewportHeight, int size, int flags, int tags, int samples );
@@ -118,9 +119,5 @@ image_t *R_Create3DImage( const char *name, int width, int height, int layers, i
 void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int flags, int minmipsize, int samples );
 void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, int width, int height );
 void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic );
-
-void R_BeginAviDemo( void );
-void R_WriteAviFrame( int frame, bool scissor );
-void R_StopAviDemo( void );
 
 #endif // R_IMAGE_H

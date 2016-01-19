@@ -666,6 +666,7 @@ static void Shader_SmallestMipMapSize( shader_t *shader, shaderpass_t *pass, con
 
 static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
+	char tmp[128];
 	char *token;
 	deformv_t *deformv;
 	shaderfunc_t *func;
@@ -689,7 +690,7 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 		deformv->args[0] = Shader_ParseFloat( ptr );
 		Shader_ParseFunc( ptr, func );
 		Q_strncatz( r_shaderDeformvKey, 
-			va( "%g%i%g%g%g%g", 
+			va_r( tmp, sizeof( tmp ), "%g%i%g%g%g%g", 
 			deformv->args[0], func->type, func->args[0], func->args[1], func->args[2], func->args[3] ), 
 			sizeof( r_shaderDeformvKey ) );
 		deformv->args[0] = deformv->args[0] ? 1.0f / deformv->args[0] : 100.0f;
@@ -699,7 +700,7 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 		deformv->type = DEFORMV_BULGE;
 		Shader_ParseVector( ptr, deformv->args, 4 );
 		Q_strncatz( r_shaderDeformvKey, 
-			va( "%g%g%g%g", 
+			va_r( tmp, sizeof( tmp ), "%g%g%g%g", 
 			deformv->args[0], deformv->args[1], deformv->args[2], deformv->args[3] ), 
 			sizeof( r_shaderDeformvKey ) );
 	}
@@ -709,7 +710,7 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 		Shader_ParseVector( ptr, deformv->args, 3 );
 		Shader_ParseFunc( ptr, &deformv->func );
 		Q_strncatz( r_shaderDeformvKey, 
-			va( "%g%g%g%i%g%g%g%g", 
+			va_r( tmp, sizeof( tmp ), "%g%g%g%i%g%g%g%g", 
 			deformv->args[0], deformv->args[1], deformv->args[2],
 			func->type, func->args[0], func->args[1], func->args[2], func->args[3] ), 
 			sizeof( r_shaderDeformvKey ) );
@@ -1156,14 +1157,6 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	flags = Shader_SetImageFlags( shader ) | addFlags;
 	pass->anim_fps = 0;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
-
-	if( !glConfig.ext.texture_cube_map )
-	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has an unsupported cubemap stage: %s.\n", shader->name );
-		pass->images[0] = rsh.noTexture;
-		pass->tcgen = TC_GEN_BASE;
-		return;
-	}
 
 	pass->images[0] = R_FindImage( token, NULL, flags|IT_CUBEMAP, r_shaderMinMipSize, shader->imagetags );
 	if( pass->images[0] )
