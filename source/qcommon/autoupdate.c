@@ -34,6 +34,7 @@ typedef struct filedownload_s {
 	char *temppath;
 	char *writepath;
 	int filenum;
+	unsigned checksum;
 	void (*done_cb)(struct filedownload_s *, int);
 	struct filedownload_s *next;
 } filedownload_t;
@@ -114,7 +115,7 @@ static filedownload_t *AU_AllocDownload( void )
 * AU_DownloadFile
 */
 static filedownload_t *AU_DownloadFile( const char *baseUrl, const char *filepath, bool silent, 
-	void (*done_cb)(struct filedownload_s *, int) )
+	unsigned checksum, void (*done_cb)(struct filedownload_s *, int) )
 {
 	int fsize, fnum;
 	int alloc_size;
@@ -143,9 +144,9 @@ static filedownload_t *AU_DownloadFile( const char *baseUrl, const char *filepat
 		Q_snprintfz( url, alloc_size, "%s/%s", baseUrl, filepath );
 
 	// add .tmp (relative + .tmp)
-	alloc_size = strlen( filepath ) + strlen( ".tmp" ) + 1;
+	alloc_size = strlen( filepath ) + 128 + strlen( ".tmp" ) + 1;
 	temppath = AU_MemAlloc( alloc_size );
-	Q_snprintfz( temppath, alloc_size, "%s.tmp", filepath );
+	Q_snprintfz( temppath, alloc_size, "%s.%i.tmp", filepath, Sys_GetCurrentProcessId() );
 
 	// full write path for curl
 	alloc_size = strlen( FS_WriteDirectory() ) + 1 + strlen( temppath ) + 1;
@@ -160,6 +161,7 @@ static filedownload_t *AU_DownloadFile( const char *baseUrl, const char *filepat
 	fd->filepath = AU_CopyString( filepath );
 	fd->temppath = temppath;
 	fd->writepath = writepath;
+	fd->checksum = checksum;
 	fd->done_cb = done_cb;
 
 	// test if file exist
@@ -216,11 +218,19 @@ static void AU_FinishDownload( filedownload_t *fd_, int status )
 
 	if( !au_download_errcount ) {
 		const char *temppath, *filepath;
+		unsigned checksum;
 
 		// rename downloaded files
 		for( fd = au_download_head; fd; fd = fd->next ) {
 			temppath = fd->temppath;
 			filepath = fd->filepath;
+
+			checksum = FS_ChecksumBaseFile( temppath );
+			if( checksum != fd->checksum ) {
+				Com_Printf( "AU_FinishDownload: checksum mismatch for %s. Expected %u, got %u\n", temppath, fd->checksum, checksum );
+				au_download_errcount++;
+				break;
+			}
 
 			if( FS_MoveBaseFile( temppath, filepath ) )
 				continue;
@@ -230,6 +240,10 @@ static void AU_FinishDownload( filedownload_t *fd_, int status )
 			if( FS_FOpenBaseFile( filepath, NULL, FS_READ ) == -1 ) {
 				Com_Printf( "AU_FinishDownload: failed to rename temporary file for unknown reason.\n" );
 				au_download_errcount++;
+			}
+			else if( checksum == FS_ChecksumBaseFile( filepath ) ) {
+				FS_RemoveBaseFile( temppath );
+				continue;
 			}
 			else {
 				char *backfile;
@@ -297,8 +311,7 @@ static void AU_FinishDownload( filedownload_t *fd_, int status )
 static void AU_ParseUpdateList( const char *data, bool checkOnly )
 {
 	const char *ptr = (const char *)data;
-	char checksumString1[32], checksumString2[32];
-	unsigned int checksum;
+	unsigned int checksum, expected_checksum;
 	const char *token;
 	const char *path;
 	char newVersionTag[MAX_QPATH];
@@ -326,7 +339,8 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 			return;
 
 		// copy checksum reported by server
-		Q_strncpyz( checksumString1, token, sizeof( checksumString1 ) );
+		expected_checksum = 0;
+		sscanf( token, "%u", &expected_checksum );
 
 		// get filename
 		token = COM_ParseExt( &ptr, true );
@@ -353,10 +367,9 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		path = token;
 
 		checksum = FS_ChecksumBaseFile( token );
-		Q_snprintfz( checksumString2, sizeof( checksumString2 ), "%u", checksum );
 
 		// if same checksum no need to update
-		if( !strcmp( checksumString1, checksumString2 ) )
+		if( checksum == expected_checksum )
 			continue;
 
 		// if it's a pack file and the file exists it can't be replaced, so skip
@@ -376,11 +389,11 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		}
 
 		if( developer->integer )
-			Com_Printf( "Downloading update of %s (checksum %s local checksum %s)\n", path, checksumString1, checksumString2 );
+			Com_Printf( "Downloading update of %s (checksum %u local checksum %u)\n", path, expected_checksum, checksum );
 		else
 			Com_Printf( "Updating %s\n", path );
 
-		fd = AU_DownloadFile( AU_BASE_URL, path, false, &AU_FinishDownload );
+		fd = AU_DownloadFile( AU_BASE_URL, path, false, checksum, &AU_FinishDownload );
 		if( !fd )
 		{
 			Com_Printf( "Failed to update %s\n", path );
