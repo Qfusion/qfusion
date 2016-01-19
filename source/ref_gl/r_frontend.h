@@ -33,7 +33,7 @@ typedef struct {
 	volatile uint32_t readFrameId;
 	qthread_t		*thread;
 	qmutex_t		*frameLock;
-	qbufPipe_t 		*cmdPipe;
+	ref_cmdpipe_t	*cmdPipe;
 	volatile bool 	shutdown;
 	volatile int 	maxfps;
 } ref_frontendAdapter_t;

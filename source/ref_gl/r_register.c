@@ -1470,6 +1470,10 @@ void R_BeginRegistration( void )
 	rsh.registrationOpen = true;
 
 	R_InitVolatileAssets();
+
+	R_DeferDataSync();
+
+	R_DataSync();
 }
 
 /*
@@ -1491,6 +1495,10 @@ void R_EndRegistration( void )
 	R_FreeUnusedImages();
 
 	R_RestartCinematics();
+
+	R_DeferDataSync();
+
+	R_DataSync();
 }
 
 /*
