@@ -1158,14 +1158,6 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	pass->anim_fps = 0;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
 
-	if( !glConfig.ext.texture_cube_map )
-	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has an unsupported cubemap stage: %s.\n", shader->name );
-		pass->images[0] = rsh.noTexture;
-		pass->tcgen = TC_GEN_BASE;
-		return;
-	}
-
 	pass->images[0] = R_FindImage( token, NULL, flags|IT_CUBEMAP, r_shaderMinMipSize, shader->imagetags );
 	if( pass->images[0] )
 	{
