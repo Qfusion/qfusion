@@ -1702,8 +1702,6 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 */
 void R_EndFrame( void )
 {
-	int error;
-
 	// render previously batched 2D geometry, if any
 	RB_FlushDynamicMeshes();
 
@@ -1719,8 +1717,7 @@ void R_EndFrame( void )
 
 	GLimp_EndFrame();
 
-	error = qglGetError();
-	assert( error == GL_NO_ERROR );
+	assert( qglGetError() == GL_NO_ERROR );
 }
 
 //===================================================================

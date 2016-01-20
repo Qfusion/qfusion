@@ -555,12 +555,10 @@ void RF_BeginAviDemo( void )
 void RF_WriteAviFrame( int frame, bool scissor )
 {
 	int x, y, w, h;
-	int quality;
 	const char *writedir, *gamedir;
 	size_t path_size;
 	char *path;
 	char name[32];
-	const char *extension;
 	
 	if( !R_IsRenderingToScreen() )
 		return;
@@ -578,15 +576,6 @@ void RF_WriteAviFrame( int frame, bool scissor )
 		y = 0;
 		w = glConfig.width;
 		h = glConfig.height;
-	}
-	
-	if( r_screenshot_jpeg->integer ) {
-		extension = ".jpg";
-		quality = r_screenshot_jpeg_quality->integer;
-	}
-	else {
-		extension = ".tga";
-		quality = 100;
 	}
 	
 	writedir = ri.FS_WriteDirectory();
