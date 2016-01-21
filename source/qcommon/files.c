@@ -2796,7 +2796,7 @@ return_result:
 }
 
 /*
-* FS_FreePakFiledownloads
+* FS_FreePakFile
 */
 static void FS_FreePakFile( pack_t *pack )
 {
