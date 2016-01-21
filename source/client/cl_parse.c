@@ -209,7 +209,7 @@ static void CL_DownloadComplete( void )
 
 	// Maplist hook so we also know when a new map is added
 	if( FS_CheckPakExtension( cls.download.name ) ) {
-		ML_Update ();
+		ML_Update();
 	}
 
 	cls.download.successCount++;
@@ -339,7 +339,9 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	bool allow_localhttpdownload;
 	bool modules_download = false;
 	bool explicit_pure_download = false;
+	bool official_web_download = false;
 	const char *baseurl;
+	const char *downloadsdir;
 	download_list_t *dl;
 
 	// ignore download commands coming from demo files
@@ -479,11 +481,22 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		}
 	}
 
-	cls.download.name = ZoneCopyString( filename );
+	// TODO: check for other official dowloads by poking the autoupdate URL with HEAD request
+	official_web_download = modules_download || explicit_pure_download;
+	downloadsdir = FS_DownloadsDirectory();
 
-	alloc_size = strlen( filename ) + strlen( ".tmp" ) + 1;
+	alloc_size = strlen( downloadsdir ) + 1 /* '/' */ + strlen( filename ) + 1;
+	cls.download.name = Mem_ZoneMalloc( alloc_size );
+	if( official_web_download && *downloadsdir ) {
+		Q_snprintfz( cls.download.name, alloc_size, "%s", filename );
+	}
+	else {
+		Q_snprintfz( cls.download.name, alloc_size, "%s/%s", FS_DownloadsDirectory(), filename );
+	}
+
+	alloc_size = strlen( cls.download.name ) + strlen( ".tmp" ) + 1;
 	cls.download.tempname = Mem_ZoneMalloc( alloc_size );
-	Q_snprintfz( cls.download.tempname, alloc_size, "%s.tmp", filename );
+	Q_snprintfz( cls.download.tempname, alloc_size, "%s.tmp", cls.download.name );
 
 	cls.download.web = false;
 	cls.download.cancelled = false;
@@ -510,12 +523,12 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	}
 
 	baseurl = cls.httpbaseurl;
-	if( modules_download || explicit_pure_download ) {
+	if( official_web_download ) {
 		baseurl = APP_UPDATE_URL APP_SERVER_UPDATE_DIRECTORY;
 		allow_localhttpdownload = false;
 	}
 
-	if( modules_download || explicit_pure_download ) {
+	if( official_web_download ) {
 		cls.download.web = true;
 		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, baseurl, filename );
 	}
@@ -563,7 +576,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		Q_snprintfz( referer, alloc_size, APP_URI_SCHEME "%s", NET_AddressToString( &cls.serveraddress ) );
 		Q_strlwr( referer );
 
-		if( modules_download || explicit_pure_download ) {
+		if( official_web_download ) {
 			alloc_size = strlen( baseurl ) + 1 + strlen( filename ) + 1;
 			fullurl = alloca( alloc_size );
 			Q_snprintfz( fullurl, alloc_size, "%s/%s", baseurl, filename );
