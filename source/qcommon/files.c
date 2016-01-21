@@ -73,6 +73,7 @@ static const char *forbidden_gamedirs[] = {
 	"libs",
 	"browser",
 	APPLICATION ".app",
+	"downloads",
 	NULL
 };
 
@@ -175,6 +176,7 @@ static qmutex_t *fs_searchpaths_mutex;
 
 static searchpath_t *fs_base_searchpaths;       // same as above, but without extra gamedirs
 static searchpath_t *fs_write_searchpath;       // write directory
+static searchpath_t *fs_downloads_searchpath;   // write directory for downloads from game servers
 
 static mempool_t *fs_mempool;
 
@@ -1396,8 +1398,6 @@ static int FS_ReadPK3File( uint8_t *buf, size_t len, filehandle_t *fh )
 			block = min( zipEntry->restReadCompressed, FS_ZIP_BUFSIZE );
 
 			read = fread( zipEntry->readBuffer, 1, block, fh->fstream );
-			if( read != block )		// we might have been trying to read from a CD
-				read = fread( zipEntry->readBuffer + read, 1, block - read, fh->fstream );
 
 			if( read != block )
 				Sys_Error( "FS_Read: can't read %i bytes", block );
@@ -2796,7 +2796,7 @@ return_result:
 }
 
 /*
-* FS_FreePakFile
+* FS_FreePakFiledownloads
 */
 static void FS_FreePakFile( pack_t *pack )
 {
@@ -3252,6 +3252,16 @@ const char *FS_SecureDirectory( void )
 const char *FS_MediaDirectory( fs_mediatype_t type )
 {
 	return Sys_FS_GetMediaDirectory( type );
+}
+
+/*
+* FS_DownloadsDirectory
+* 
+* Returns directory where we can write downloads to, no gamedir attached
+*/
+const char *FS_DownloadsDirectory( void )
+{
+	return fs_downloads_searchpath->path;
 }
 
 /*
@@ -4092,6 +4102,7 @@ void FS_Init( void )
 	int i;
 	const char *homedir;
 	const char *cachedir;
+	char downloadsdir[FS_MAX_PATH];
 
 	assert( !fs_initialized );
 
@@ -4135,10 +4146,25 @@ void FS_Init( void )
 
 	if( fs_cdpath->string[0] )
 		FS_AddBasePath( fs_cdpath->string );
+
 	FS_AddBasePath( fs_basepath->string );
-	if( homedir != NULL && fs_usehomedir->integer )
-		FS_AddBasePath( homedir );
 	fs_write_searchpath = fs_basepaths;
+
+	if( homedir != NULL && fs_usehomedir->integer ) {
+		Q_snprintfz( downloadsdir, sizeof( downloadsdir ), "%s/%s", homedir, "downloads" );
+	}
+	else {
+		Q_snprintfz( downloadsdir, sizeof( downloadsdir ), "%s", "downloads" );
+	}
+
+	FS_AddBasePath( downloadsdir );
+	fs_downloads_searchpath = fs_basepaths;
+
+	if( homedir != NULL && fs_usehomedir->integer ) {
+		FS_AddBasePath( homedir );
+		fs_write_searchpath = fs_basepaths;
+	}
+
 	cachedir = Sys_FS_GetCacheDirectory();
 	if( cachedir )
 		FS_AddBasePath( cachedir );
