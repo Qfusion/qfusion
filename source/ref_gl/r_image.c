@@ -2964,7 +2964,7 @@ static void R_InitImageLoader( int id )
 		return;
 	}
 
-	loader_queue[id] = ri.BufPipe_Create( 0x100000, 1 );
+	loader_queue[id] = ri.BufPipe_Create( 0x40000, 1 );
 	loader_thread[id] = ri.Thread_Create( R_ImageLoaderThreadProc, loader_queue[id] );
 
 	R_IssueInitLoaderCmd( id );
