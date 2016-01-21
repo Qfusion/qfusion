@@ -341,7 +341,6 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	bool explicit_pure_download = false;
 	bool official_web_download = false;
 	const char *baseurl;
-	const char *downloadsdir;
 	download_list_t *dl;
 
 	// ignore download commands coming from demo files
@@ -483,15 +482,14 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 
 	// TODO: check for other official dowloads by poking the autoupdate URL with HEAD request
 	official_web_download = modules_download || explicit_pure_download;
-	downloadsdir = FS_DownloadsDirectory();
 
-	alloc_size = strlen( downloadsdir ) + 1 /* '/' */ + strlen( filename ) + 1;
+	alloc_size = strlen( "downloads" ) + 1 /* '/' */ + strlen( filename ) + 1;
 	cls.download.name = Mem_ZoneMalloc( alloc_size );
-	if( official_web_download && *downloadsdir ) {
+	if( official_web_download ) {
 		Q_snprintfz( cls.download.name, alloc_size, "%s", filename );
 	}
 	else {
-		Q_snprintfz( cls.download.name, alloc_size, "%s/%s", FS_DownloadsDirectory(), filename );
+		Q_snprintfz( cls.download.name, alloc_size, "%s/%s", "downloads", filename );
 	}
 
 	alloc_size = strlen( cls.download.name ) + strlen( ".tmp" ) + 1;
@@ -511,13 +509,13 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	cls.download.baseoffset = 0;
 	cls.download.pending_reconnect = false;
 
-	Cvar_ForceSet( "cl_download_name", COM_FileBase( cls.download.name ) );
+	Cvar_ForceSet( "cl_download_name", COM_FileBase( filename ) );
 	Cvar_ForceSet( "cl_download_percent", "0" );
 
 	if( cls.download.requestnext )
 	{
 		dl = Mem_ZoneMalloc( sizeof( download_list_t ) );
-		dl->filename = ZoneCopyString( cls.download.name );
+		dl->filename = ZoneCopyString( filename );
 		dl->next = cls.download.list;
 		cls.download.list = dl;
 	}
