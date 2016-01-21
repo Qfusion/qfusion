@@ -40,7 +40,7 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 
 #define NUM_CUSTOMCOLORS		16
 
-#define NUM_LOADER_THREADS		2
+#define NUM_LOADER_THREADS		8
 
 enum
 {
