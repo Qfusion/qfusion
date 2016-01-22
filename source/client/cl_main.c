@@ -945,13 +945,8 @@ void CL_Disconnect( const char *message )
 
 	if( cls.download.requestname )
 	{
-		if( cls.download.name )
-		{
-			assert( !cls.download.web );
-
-			cls.download.cancelled = true;
-			CL_StopServerDownload();
-		}
+		cls.download.pending_reconnect = false;
+		cls.download.cancelled = true;
 		CL_DownloadDone();
 	}
 

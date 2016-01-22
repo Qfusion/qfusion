@@ -338,9 +338,7 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		if( !token[0] )
 			return;
 
-		// copy checksum reported by server
-		expected_checksum = 0;
-		sscanf( token, "%u", &expected_checksum );
+		expected_checksum = strtoul( token, NULL, 10 );
 
 		// get filename
 		token = COM_ParseExt( &ptr, true );
