@@ -147,8 +147,9 @@ typedef struct
 	unsigned int timestart;
 
 	// both downloads
-	char *name;                     // name of the file in download
-	char *tempname;                 // temporary location
+	char *name;                     // name of the file in download, relative to base path
+	char *origname;					// name of the file in download as originally passed by the server
+	char *tempname;                 // temporary location, relative to base path
 	size_t size;
 	unsigned checksum;
 
@@ -164,6 +165,11 @@ typedef struct
 
 	// web download
 	bool web;
+	bool web_official;
+	bool web_official_only;
+	char *web_url;					// download URL, passed by the server
+	bool web_local_http;
+
 	bool disconnect;            // set when user tries to disconnect, to allow cleaning up webdownload
 	bool pending_reconnect;		// set when we ignored a map change command to avoid stopping the download
 	bool cancelled;				// to allow cleaning up of temporary download file
@@ -578,7 +584,6 @@ void CL_DownloadStatus_f( void );
 void CL_DownloadCancel_f( void );
 void CL_DownloadDone( void );
 void CL_RequestNextDownload( void );
-void CL_StopServerDownload( void );
 void CL_CheckDownloadTimeout( void );
 
 //

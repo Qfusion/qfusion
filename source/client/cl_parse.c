@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
+static void CL_InitServerDownload( const char *filename, int size, unsigned checksum, bool allow_localhttpdownload,
+							const char *url, bool initial );
+void CL_StopServerDownload( void );
+
 //=============================================================================
 
 /*
@@ -239,6 +243,9 @@ void CL_DownloadDone( void )
 {
 	bool requestnext;
 
+	if( cls.download.name )
+		CL_StopServerDownload();
+
 	Mem_ZoneFree( cls.download.requestname );
 	cls.download.requestname = NULL;
 
@@ -270,32 +277,45 @@ void CL_DownloadDone( void )
 */
 static void CL_WebDownloadDoneCb( int status, const char *contentType, void *privatep )
 {
-	bool disconnect = cls.download.disconnect;
-	bool cancelled = cls.download.cancelled;
-	bool success = (cls.download.offset == cls.download.size) && (status > -1);
+	download_t download = cls.download;
+	bool disconnect = download.disconnect;
+	bool cancelled = download.cancelled;
+	bool success = (download.offset == download.size) && (status > -1);
+	bool try_non_official = download.web_official && !download.web_official_only;
 
-	Com_Printf( "Web download %s: %s (%i)\n", success ? "successful" : "failed", cls.download.tempname, status );
+	Com_Printf( "Web download %s: %s (%i)\n", success ? "successful" : "failed", download.tempname, status );
 
 	if( success ) {
 		CL_DownloadComplete();
 	}
-
-	CL_StopServerDownload();
-
 	if( cancelled ) {
 		cls.download.requestnext = false;
 	}
-	cls.download.web = false;
 
 	// check if user pressed escape to stop the downloa
 	if( disconnect ) {
-		CL_Disconnect( NULL );
+		CL_Disconnect( NULL ); // this also calls CL_DownloadDone()
 		return;
 	}
+	
+	// try a non-official mirror (the builtin HTTP server or a remote mirror)
+	if( !success && !cancelled && try_non_official ) {
+		int size = download.size;
+		char *filename = ZoneCopyString( download.origname );
+		unsigned checksum = download.checksum;
+		char *url = ZoneCopyString( download.web_url );
+		bool allow_localhttp = download.web_local_http;
 
-	/*if( success || cancelled )*/ {
-		CL_DownloadDone();
+		cls.download.cancelled = true; // remove the temp file
+		CL_StopServerDownload();
+		CL_InitServerDownload( filename, size, checksum, allow_localhttp, url, false );
+		
+		Mem_Free( filename );
+		Mem_Free( url );
+		return;
 	}
+	
+	CL_DownloadDone();
 }
 
 /*
@@ -326,33 +346,25 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 }
 
 /*
-* CL_InitDownload_f
+* CL_InitDownload
 * 
 * Hanldles server's initdownload message, starts web or server download if possible
 */
- static void CL_InitDownload_f( void )
+static void CL_InitServerDownload( const char *filename, int size, unsigned checksum, bool allow_localhttpdownload,
+							  const char *url, bool initial )
 {
-	const char *filename;
-	const char *url;
-	int size, alloc_size;
-	unsigned checksum;
-	bool allow_localhttpdownload;
+	int alloc_size;
 	bool modules_download = false;
 	bool explicit_pure_download = false;
+	bool force_web_official = initial;
 	bool official_web_download = false;
+	bool official_web_only = false;
 	const char *baseurl;
 	download_list_t *dl;
 
 	// ignore download commands coming from demo files
 	if( cls.demo.playing )
 		return;
-
-	// read the data
-	filename = Cmd_Argv( 1 );
-	size = atoi( Cmd_Argv( 2 ) );
-	checksum = strtoul( Cmd_Argv( 3 ), NULL, 10 );
-	allow_localhttpdownload = ( atoi( Cmd_Argv( 4 ) ) != 0 ) && cls.httpbaseurl != NULL;
-	url = Cmd_Argv( 5 );
 
 	if( !cls.download.requestname )
 	{
@@ -465,23 +477,26 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		}
 	}
 
-	if( cls.download.requestnext )
+	if( initial )
 	{
-		dl = cls.download.list;
-		while( dl != NULL )
+		if( cls.download.requestnext )
 		{
-			if( !Q_stricmp( dl->filename, filename ) )
+			dl = cls.download.list;
+			while( dl != NULL )
 			{
-				Com_Printf( "Skipping, already tried downloading: %s\n", filename );
-				CL_DownloadDone();
-				return;
+				if( !Q_stricmp( dl->filename, filename ) )
+				{
+					Com_Printf( "Skipping, already tried downloading: %s\n", filename );
+					CL_DownloadDone();
+					return;
+				}
+				dl = dl->next;
 			}
-			dl = dl->next;
 		}
 	}
 
-	// TODO: check for other official dowloads by poking the autoupdate URL with HEAD request
-	official_web_download = modules_download || explicit_pure_download;
+	official_web_only = modules_download || explicit_pure_download;
+	official_web_download = force_web_official || official_web_only;
 
 	alloc_size = strlen( "downloads" ) + 1 /* '/' */ + strlen( filename ) + 1;
 	cls.download.name = Mem_ZoneMalloc( alloc_size );
@@ -496,7 +511,12 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	cls.download.tempname = Mem_ZoneMalloc( alloc_size );
 	Q_snprintfz( cls.download.tempname, alloc_size, "%s.tmp", cls.download.name );
 
+	cls.download.origname = ZoneCopyString( filename );
 	cls.download.web = false;
+	cls.download.web_official = official_web_download;
+	cls.download.web_official_only = official_web_only;
+	cls.download.web_url = ZoneCopyString( url );
+	cls.download.web_local_http = allow_localhttpdownload;
 	cls.download.cancelled = false;
 	cls.download.disconnect = false;
 	cls.download.size = size;
@@ -512,12 +532,15 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	Cvar_ForceSet( "cl_download_name", COM_FileBase( filename ) );
 	Cvar_ForceSet( "cl_download_percent", "0" );
 
-	if( cls.download.requestnext )
+	if( initial )
 	{
-		dl = Mem_ZoneMalloc( sizeof( download_list_t ) );
-		dl->filename = ZoneCopyString( filename );
-		dl->next = cls.download.list;
-		cls.download.list = dl;
+		if( cls.download.requestnext )
+		{
+			dl = Mem_ZoneMalloc( sizeof( download_list_t ) );
+			dl->filename = ZoneCopyString( filename );
+			dl->next = cls.download.list;
+			cls.download.list = dl;
+		}
 	}
 
 	baseurl = cls.httpbaseurl;
@@ -546,15 +569,6 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	if( !cls.download.filenum )
 	{
 		Com_Printf( "Can't download, couldn't open %s for writing\n", cls.download.tempname );
-
-		Mem_ZoneFree( cls.download.name );
-		cls.download.name = NULL;
-		Mem_ZoneFree( cls.download.tempname );
-		cls.download.tempname = NULL;
-
-		cls.download.filenum = 0;
-		cls.download.offset = 0;
-		cls.download.size = 0;
 		CL_DownloadDone();
 		return;
 	}
@@ -610,6 +624,31 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 }
 
 /*
+* CL_InitDownload_f
+*/
+static void CL_InitDownload_f( void )
+{
+	const char *filename;
+	const char *url;
+	int size;
+	unsigned checksum;
+	bool allow_localhttpdownload;
+	
+	// ignore download commands coming from demo files
+	if( cls.demo.playing )
+		return;
+	
+	// read the data
+	filename = Cmd_Argv( 1 );
+	size = atoi( Cmd_Argv( 2 ) );
+	checksum = strtoul( Cmd_Argv( 3 ), NULL, 10 );
+	allow_localhttpdownload = ( atoi( Cmd_Argv( 4 ) ) != 0 ) && cls.httpbaseurl != NULL;
+	url = Cmd_Argv( 5 );
+	
+	CL_InitServerDownload( filename, size, checksum, allow_localhttpdownload, url, true );
+}
+
+/*
 * CL_StopServerDownload
 */
 void CL_StopServerDownload( void )
@@ -628,6 +667,12 @@ void CL_StopServerDownload( void )
 
 	Mem_ZoneFree( cls.download.tempname );
 	cls.download.tempname = NULL;
+
+	Mem_ZoneFree( cls.download.origname );
+	cls.download.origname = NULL;
+
+	Mem_ZoneFree( cls.download.web_url );
+	cls.download.web_url = NULL;
 
 	cls.download.offset = 0;
 	cls.download.size = 0;
@@ -653,7 +698,6 @@ static void CL_RetryDownload( void )
 
 		// let the server know we're done
 		CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, -2 ) );
-		CL_StopServerDownload();
 		CL_DownloadDone();
 	}
 	else
@@ -728,7 +772,6 @@ void CL_DownloadCancel_f( void )
 
 	if( !cls.download.web ) {
 		CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, -2 ) ); // let the server know we're done
-		CL_StopServerDownload();
 		CL_DownloadDone();
 	}
 }
@@ -814,8 +857,6 @@ static void CL_ParseDownload( msg_t *msg )
 
 		// let the server know we're done
 		CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, -1 ) );
-
-		CL_StopServerDownload();
 
 		CL_DownloadDone();
 	}
