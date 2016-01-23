@@ -1059,7 +1059,9 @@ static void G_UpdateMMPlayerInfoString( int playerNum )
 	// update client information in cgame
 	playerString[0] = 0;
 
-	Info_SetValueForKey( playerString, "f", va( "%x", client->mmflags ) ); // use hex for shorter representation
+	if( client->mmflags != 0 ) {
+		Info_SetValueForKey( playerString, "f", va( "%x", client->mmflags ) ); // use hex for shorter representation
+	}
 
 	playerString[MAX_CONFIGSTRING_CHARS-1] = 0;
 	trap_ConfigString( CS_MMPLAYERINFOS + playerNum, playerString );
