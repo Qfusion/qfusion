@@ -1042,6 +1042,30 @@ static void G_UpdatePlayerInfoString( int playerNum )
 }
 
 /*
+* G_UpdateMMPlayerInfoString
+*/
+static void G_UpdateMMPlayerInfoString( int playerNum )
+{
+	char playerString[MAX_INFO_STRING];
+	gclient_t *client;
+
+	assert( playerNum >= 0 && playerNum < gs.maxclients );
+	client = &game.clients[playerNum];
+
+	if( playerNum >= MAX_MMPLAYERINFOS ) {
+		return; // oops
+	}
+
+	// update client information in cgame
+	playerString[0] = 0;
+
+	Info_SetValueForKey( playerString, "f", va( "%x", client->mmflags ) ); // use hex for shorter representation
+
+	playerString[MAX_CONFIGSTRING_CHARS-1] = 0;
+	trap_ConfigString( CS_MMPLAYERINFOS + playerNum, playerString );
+}
+
+/*
 * ClientUserinfoChanged
 * called whenever the player updates a userinfo variable.
 * 
@@ -1208,6 +1232,9 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 	s = Info_ValueForKey( userinfo, "cl_mm_session" );
 	cl->mm_session = ( s == NULL ) ? 0 : atoi( s );
 
+	s = Info_ValueForKey( userinfo, "mmflags" );
+	cl->mmflags = ( s == NULL ) ? 0 : strtoul( s, NULL, 10 );
+
 	// tv
 	if( cl->isTV )
 	{
@@ -1234,6 +1261,7 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 	Q_strncpyz( cl->userinfo, userinfo, sizeof( cl->userinfo ) );
 
 	G_UpdatePlayerInfoString( PLAYERNUM( ent ) );
+	G_UpdateMMPlayerInfoString( PLAYERNUM( ent ) );
 
 	G_Gametype_ScoreEvent( cl, "userinfochanged", oldname );
 }
