@@ -4144,12 +4144,6 @@ void FS_Init( void )
 		fs_usehomedir = Cvar_Get( "fs_usehomedir", "0", CVAR_NOSET );
 #endif
 
-	if( fs_cdpath->string[0] )
-		FS_AddBasePath( fs_cdpath->string );
-
-	FS_AddBasePath( fs_basepath->string );
-	fs_write_searchpath = fs_basepaths;
-
 	if( homedir != NULL && fs_usehomedir->integer ) {
 		Q_snprintfz( downloadsdir, sizeof( downloadsdir ), "%s/%s", homedir, "downloads" );
 	}
@@ -4159,6 +4153,12 @@ void FS_Init( void )
 
 	FS_AddBasePath( downloadsdir );
 	fs_downloads_searchpath = fs_basepaths;
+
+	if( fs_cdpath->string[0] )
+		FS_AddBasePath( fs_cdpath->string );
+
+	FS_AddBasePath( fs_basepath->string );
+	fs_write_searchpath = fs_basepaths;
 
 	if( homedir != NULL && fs_usehomedir->integer ) {
 		FS_AddBasePath( homedir );
