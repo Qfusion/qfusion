@@ -163,7 +163,6 @@ typedef struct
 #define MAX_LOCATIONS		256
 #define MAX_WEAPONDEFS		MAX_ITEMS
 #define MAX_HELPMESSAGES		256
-#define MAX_MMPLAYERINFOS 	128
 
 //
 // config strings are a general means of communication from
@@ -219,8 +218,8 @@ typedef struct
 #define CS_LOCATIONS		( CS_GAMECOMMANDS+MAX_GAMECOMMANDS )
 #define CS_WEAPONDEFS		( CS_LOCATIONS+MAX_LOCATIONS )
 #define CS_GENERAL			( CS_WEAPONDEFS+MAX_WEAPONDEFS )
-#define CS_MMPLAYERINFOS 	( CS_GENERAL+MAX_GENERAL-MAX_MMPLAYERINFOS )
-#define CS_HELPMESSAGES		( CS_GENERAL+MAX_GENERAL ) // for localizable messages, that got a special place on the HUD
+#define CS_MMPLAYERINFOS 	( CS_GENERAL+MAX_GENERAL )
+#define CS_HELPMESSAGES		( CS_MMPLAYERINFOS+MAX_MMPLAYERINFOS ) // for localizable messages, that got a special place on the HUD
 
 #define	MAX_CONFIGSTRINGS	( CS_HELPMESSAGES+MAX_HELPMESSAGES )
 

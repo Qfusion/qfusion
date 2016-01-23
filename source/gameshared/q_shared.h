@@ -279,7 +279,8 @@ void Info_CleanValue( const char *in, char *out, size_t outsize );
 #define	MAX_IMAGES					256
 #define MAX_SKINFILES				256
 #define MAX_ITEMS					64			// 16x4
-#define MAX_GENERAL					( MAX_CLIENTS )	// general config strings
+#define MAX_GENERAL					128			// general config strings
+#define MAX_MMPLAYERINFOS 			128
 
 //============================================
 // HTTP
