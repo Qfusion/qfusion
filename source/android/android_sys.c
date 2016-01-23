@@ -286,6 +286,11 @@ void Sys_ReleaseWakeLock( void *wl )
 	(*env)->CallVoidMethod( env, wl, release );
 }
 
+int Sys_GetCurrentProcessId( void )
+{
+	return getpid();
+}
+
 void Sys_Quit( void )
 {
 	Qcommon_Shutdown();
