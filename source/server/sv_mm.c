@@ -211,6 +211,7 @@ static void sv_mm_clientconnect_done( stat_query_t *query, bool success, void *c
 	 * {
 	 *		id: [int],	// 0 on error, > 0 on logged-in user, < 0 for "anonymous" user
 	 *		login: [string],	// login-name for user on success
+	 *		mminfo: [int]
 	 *		ratings: [
 	 *			{ gametype: [string], rating: [float]: deviation: [float] }
 	 *			..
@@ -271,12 +272,20 @@ static void sv_mm_clientconnect_done( stat_query_t *query, bool success, void *c
 			else
 			{
 				const char *login = sq_api->GetString( root, "login" );
+				const char *mmflags = sq_api->GetString( root, "mmflags" );
 				ratings_section = sq_api->GetSection( root, "ratings" );
 
 				Q_strncpyz( cl->mm_login, login, sizeof( cl->mm_login ) );
 				if( !Info_SetValueForKey( cl->userinfo, "cl_mm_login", login ) ) {
-					Com_Printf( "Failed to set infokey cl_mm_login for player %s\n", login );
+					Com_Printf( "Failed to set infokey 'cl_mm_login' for player %s\n", login );
 				}
+
+				if( mmflags && *mmflags ) {
+					if( !Info_SetValueForKey( cl->userinfo, "mmflags", mmflags ) ) {
+						Com_Printf( "Failed to set infokey 'mmflags' for player %s\n", login );
+					}
+				}
+
 				userinfo_changed = true;
 
 				if( ge != NULL && ratings_section != NULL )

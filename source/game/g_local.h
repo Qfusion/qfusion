@@ -1224,6 +1224,7 @@ struct gclient_s
 	byte_vec4_t color;
 	int team;
 	int hand;
+	unsigned mmflags;
 	int handicap;
 	int movestyle;
 	int movestyle_latched;

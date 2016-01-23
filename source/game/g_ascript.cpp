@@ -3014,6 +3014,12 @@ static void asFunc_ConfigString( int index, asstring_t *str )
 		return;
 	}
 
+	if( index >= CS_MMPLAYERINFOS && index < CS_MMPLAYERINFOS+MAX_MMPLAYERINFOS )
+	{
+		G_Printf( "WARNING: ConfigString %i is write protected\n", index );
+		return;
+	}
+
 	// prevent team name exploits
 	if( index >= CS_TEAM_SPECTATOR_NAME && index < CS_TEAM_SPECTATOR_NAME + GS_MAX_TEAMS )
 	{
