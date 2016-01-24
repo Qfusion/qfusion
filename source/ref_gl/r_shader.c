@@ -37,7 +37,8 @@ typedef struct shadercache_s
 {
 	char *name;
 	char *buffer;
-	const char *filename;
+	char *filename;
+	bool download;
 	size_t offset;
 	struct shadercache_s *hash_next;
 } shadercache_t;
@@ -71,7 +72,7 @@ static char *r_shortShaderName;
 static size_t r_shortShaderNameSize;
 
 static bool Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr );
-static void Shader_MakeCache( const char *filename );
+static void Shader_MakeCache( const char *filename, bool download );
 static unsigned int Shader_GetCache( const char *name, shadercache_t **cache );
 #define R_FreePassCinematics(pass) if( (pass)->cin ) { R_FreeCinematic( (pass)->cin ); (pass)->cin = 0; }
 
@@ -1809,7 +1810,7 @@ void R_PrintShaderCache( const char *name )
 	cache->buffer[ptr - cache->buffer] = backup;
 }
 
-static void Shader_MakeCache( const char *filename )
+static void Shader_MakeCache( const char *filename, bool download )
 {
 	int size;
 	unsigned int key;
@@ -1875,13 +1876,20 @@ static void Shader_MakeCache( const char *filename )
 		cache = ( shadercache_t * )cacheMemBuf; cacheMemBuf += sizeof( shadercache_t ) + strlen( token ) + 1;
 		cache->hash_next = shadercache_hash[key];
 		cache->name = ( char * )( (uint8_t *)cache + sizeof( shadercache_t ) );
+		cache->download = download;
+		cache->filename = NULL;
 		strcpy( cache->name, token );
 		shadercache_hash[key] = cache;
 
 set_path_and_offset:
-		cache->filename = R_CopyString( filename );
-		cache->buffer = buf;
-		cache->offset = ptr - buf;
+		// only allow overriding shaders of same priority (downloads have lower priority than base shaders)
+		if( cache->download == download ) {
+			if( cache->filename )
+				R_Free( cache->filename );
+			cache->filename = R_CopyString( filename );
+			cache->buffer = buf;
+			cache->offset = ptr - buf;
+		}
 
 		Shader_SkipBlock( &ptr );
 	}
@@ -1923,38 +1931,46 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache )
 */
 static void R_InitShadersCache( void )
 {
+	int d;
 	int i, j, k, numfiles;
+	int numfiles_total;
 	const char *fileptr;
 	char shaderPaths[1024];
+	const char *dirs[2] = { ">scripts", "<scripts" };
 
 	r_shaderTemplateBuf = NULL;
 
 	memset( shadercache_hash, 0, sizeof( shadercache_t * )*SHADERCACHE_HASH_SIZE );
 	
-	// enumerate shaders
-	numfiles = ri.FS_GetFileList( "scripts", ".shader", NULL, 0, 0, 0 );
-	if( !numfiles ) {
-		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
-	}
-
 	Com_Printf( "Initializing Shaders:\n" );
 
-	// now load them all
-	for( i = 0; i < numfiles; i += k ) {
-		if( ( k = ri.FS_GetFileList( "scripts", ".shader", shaderPaths, sizeof( shaderPaths ), i, numfiles )) == 0 ) {
-			k = 1; // advance by one file
-			continue;
-		}
+	numfiles_total = 0;
+	for( d = 0; d < 2; d++ ) {
+		// enumerate shaders
+		numfiles = ri.FS_GetFileList( dirs[d], ".shader", NULL, 0, 0, 0 );
+		numfiles_total += numfiles;
 
-		fileptr = shaderPaths;
-		for( j = 0; j < k; j++ ) {
-			Shader_MakeCache( fileptr );
+		// now load them all
+		for( i = 0; i < numfiles; i += k ) {
+			if( ( k = ri.FS_GetFileList( dirs[d], ".shader", shaderPaths, sizeof( shaderPaths ), i, numfiles )) == 0 ) {
+				k = 1; // advance by one file
+				continue;
+			}
 
-			fileptr += strlen( fileptr ) + 1;
-			if( !*fileptr ) {
-				break;
+			fileptr = shaderPaths;
+			for( j = 0; j < k; j++ ) {
+				Shader_MakeCache( fileptr, d == 1 );
+
+				fileptr += strlen( fileptr ) + 1;
+				if( !*fileptr ) {
+					break;
+				}
 			}
 		}
+	}
+
+	if( !numfiles_total ) {
+		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
 	}
 
 	Com_Printf( "--------------------------------------\n" );

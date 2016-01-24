@@ -151,6 +151,7 @@ typedef struct searchpath_s
 {
 	char *path;                     // set on both, packs and directories, won't include the pack name, just path
 	pack_t *pack;
+	struct searchpath_s *base;		// parent basepath
 	struct searchpath_s *next;
 } searchpath_t;
 
@@ -3025,9 +3026,6 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 	return found;
 }
 
-/*
-* FS_GetFileListExt_
-*/
 #define FS_MIN_SEARCHFILES      0x400
 #define FS_MAX_SEARCHFILES      0xFFFF          // cap
 static int FS_SortFilesCmp( const searchfile_t *file1, const searchfile_t *file2 )
@@ -3035,6 +3033,13 @@ static int FS_SortFilesCmp( const searchfile_t *file1, const searchfile_t *file2
 	return Q_stricmp( ( file1 )->name, ( file2 )->name );
 }
 
+/*
+* FS_GetFileListExt_
+*
+* Directory names should not contain a trailing /
+* Directory names, beginning with a '<' only return downloaded files.
+* Directory names, beginning with a '>' only return stock/official files.
+*/
 static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf, size_t *bufsize, int maxFiles, int start, int end )
 {
 	int i;
@@ -3045,6 +3050,7 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 	static int maxFilesCache;
 	static char dircache[MAX_QPATH], extcache[MAX_QPATH];
 	bool useCache;
+	bool onlyDownloads = false, skipDownloads = false;
 
 	assert( !dir || dir[strlen( dir )-1] != '/' );
 
@@ -3076,6 +3082,15 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 	else
 		extcache[0] = '\0';
 
+	if( dir[0] == '<' ) {
+		onlyDownloads = true;
+		dir++;
+	}
+	else if( dir[0] == '>' ) {
+		skipDownloads = true;
+		dir++;
+	}
+
 	files = fs_searchfiles;
 	if( !useCache )
 	{
@@ -3084,6 +3099,12 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 		search = fs_searchpaths;
 		while( search )
 		{
+			if( ( onlyDownloads && search->base != fs_downloads_searchpath ) ||
+			   ( skipDownloads && search->base == fs_downloads_searchpath ) ) {
+				search = search->next;
+				continue;
+			}
+
 			limit = maxFiles ? min( fs_numsearchfiles, maxFiles ) : fs_numsearchfiles;
 			found = FS_PathGetFileListExt( search, dir, extension, files + allfound,
 				fs_numsearchfiles - allfound );
@@ -3522,7 +3543,7 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 /*
 * FS_TouchGamePath
 */
-static int FS_TouchGamePath( const char *basepath, const char *gamedir, bool initial )
+static int FS_TouchGamePath( searchpath_t *basepath, const char *gamedir, bool initial )
 {
 	int i, totalpaks, newpaks;
 	size_t path_size;
@@ -3539,9 +3560,10 @@ static int FS_TouchGamePath( const char *basepath, const char *gamedir, bool ini
 	{
 		search = ( searchpath_t* )FS_Malloc( sizeof( searchpath_t ) );
 
-		path_size = sizeof( char ) * ( strlen( basepath ) + 1 + strlen( gamedir ) + 1 );
+		path_size = sizeof( char ) * ( strlen( basepath->path ) + 1 + strlen( gamedir ) + 1 );
 		search->path = ( char* )FS_Malloc( path_size );
-		Q_snprintfz( search->path, path_size, "%s/%s", basepath, gamedir );
+		search->base = basepath;
+		Q_snprintfz( search->path, path_size, "%s/%s", basepath->path, gamedir );
 
 		search->next = fs_searchpaths;
 		fs_searchpaths = search;
@@ -3549,7 +3571,7 @@ static int FS_TouchGamePath( const char *basepath, const char *gamedir, bool ini
 
 	newpaks = 0;
 	totalpaks = 0;
-	if( ( paknames = FS_GamePathPaks( basepath, gamedir, &totalpaks ) ) != 0 )
+	if( ( paknames = FS_GamePathPaks( basepath->path, gamedir, &totalpaks ) ) != 0 )
 	{
 		for( i = 0; i < totalpaks; i++ )
 		{
@@ -3585,6 +3607,7 @@ static int FS_TouchGamePath( const char *basepath, const char *gamedir, bool ini
 			// now insert it for real
 			if( FS_FindPackFilePos( paknames[i], &search, &prev, &next ) )
 			{
+				search->base = basepath;
 				search->pack = pak;
 				if( !prev )
 				{
@@ -3612,7 +3635,7 @@ freename:
 /*
 * FS_AddGamePath
 */
-static int FS_AddGamePath( const char *basepath, const char *gamedir )
+static int FS_AddGamePath( searchpath_t *basepath, const char *gamedir )
 {
 	return FS_TouchGamePath( basepath, gamedir, true );
 }
@@ -3620,7 +3643,7 @@ static int FS_AddGamePath( const char *basepath, const char *gamedir )
 /*
 * FS_UpdateGamePath
 */
-static int FS_UpdateGamePath( const char *basepath, const char *gamedir )
+static int FS_UpdateGamePath( searchpath_t *basepath, const char *gamedir )
 {
 	return FS_TouchGamePath( basepath, gamedir, false );
 }
@@ -3765,9 +3788,9 @@ static int FS_TouchGameDirectory( const char *gamedir, bool initial )
 		while( basepath->next != prev )
 			basepath = basepath->next;
 		if( initial )
-			newpaks += FS_AddGamePath( basepath->path, gamedir );
+			newpaks += FS_AddGamePath( basepath, gamedir );
 		else
-			newpaks += FS_UpdateGamePath( basepath->path, gamedir );
+			newpaks += FS_UpdateGamePath( basepath, gamedir );
 		prev = basepath;
 	}
 
