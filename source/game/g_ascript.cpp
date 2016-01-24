@@ -580,6 +580,21 @@ static const asEnumVal_t asDamageEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const asEnumVal_t asKeyiconEnumVals[] =
+{
+	ASLIB_ENUM_VAL( KEYICON_FORWARD ),
+	ASLIB_ENUM_VAL( KEYICON_BACKWARD ),
+	ASLIB_ENUM_VAL( KEYICON_LEFT ),
+	ASLIB_ENUM_VAL( KEYICON_RIGHT ),
+	ASLIB_ENUM_VAL( KEYICON_FIRE ),
+	ASLIB_ENUM_VAL( KEYICON_JUMP ),
+	ASLIB_ENUM_VAL( KEYICON_CROUCH ),
+	ASLIB_ENUM_VAL( KEYICON_SPECIAL ),
+	ASLIB_ENUM_VAL( KEYICON_TOTAL ),
+	
+	ASLIB_ENUM_VAL_NULL
+};
+
 static const asEnumVal_t asMiscelaneaEnumVals[] =
 {
 	ASLIB_ENUM_VAL_NULL
@@ -617,6 +632,7 @@ static const asEnum_t asEnums[] =
 	{ "serverflags_e", asSVFlagEnumVals },
 	{ "meaningsofdeath_e", asMeaningsOfDeathEnumVals },
 	{ "takedamage_e", asDamageEnumVals },
+	{ "keyicon_e", asKeyiconEnumVals },
 	{ "miscelanea_e", asMiscelaneaEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
@@ -1768,6 +1784,11 @@ static unsigned int objectGameClient_getPMoveFeatures( gclient_t *self )
 	return self->ps.pmove.stats[PM_STAT_FEATURES];
 }
 
+static unsigned int objectGameClient_getPressedKeys(gclient_t *self)
+{
+	return self->ps.plrkeys;
+}
+
 static void objectGameClient_setPMoveMaxSpeed( float speed, gclient_t *self )
 {
 	if( speed < 0.0f )
@@ -1953,6 +1974,7 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL(void, set_pmoveJumpSpeed, ( float speed )), asFUNCTION(objectGameClient_setPMoveJumpSpeed), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_pmoveDashSpeed, ( float speed )), asFUNCTION(objectGameClient_setPMoveDashSpeed), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(uint, get_pmoveFeatures, () const), asFUNCTION(objectGameClient_getPMoveFeatures), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(uint, get_pressedKeys, () const), asFUNCTION(objectGameClient_getPressedKeys), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(float, get_pmoveMaxSpeed, () const), asFUNCTION(objectGameClient_getPMoveMaxSpeed), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(float, get_pmoveJumpSpeed, () const), asFUNCTION(objectGameClient_getPMoveJumpSpeed), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(float, get_pmoveDashSpeed, () const), asFUNCTION(objectGameClient_getPMoveDashSpeed), asCALL_CDECL_OBJLAST },
