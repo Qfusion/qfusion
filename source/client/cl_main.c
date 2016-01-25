@@ -790,8 +790,6 @@ void CL_ClearState( void )
 	cls.lastPacketSentTime = 0;
 	cls.lastPacketReceivedTime = 0;
 
-	cls.sv_pure = false;
-
 	if( cls.wakelock )
 	{
 		Sys_ReleaseWakeLock( cls.wakelock );
@@ -1674,7 +1672,7 @@ void CL_RequestNextDownload( void )
 
 		// we're done with the download phase, so clear the list
 		CL_FreeDownloadList();
-		if( cls.sv_pure )
+		if( cls.pure_restart )
 		{
 			restart = true;
 			restart_msg = "Pure server. Restarting media...";

@@ -878,6 +878,7 @@ static void CL_ParseServerData( msg_t *msg )
 	const char *str, *gamedir;
 	int i, sv_bitflags, numpure;
 	int http_portnum;
+	bool old_sv_pure;
 
 	Com_DPrintf( "Serverdata packet received.\n" );
 
@@ -1001,11 +1002,13 @@ static void CL_ParseServerData( msg_t *msg )
 	// get the configstrings request
 	CL_AddReliableCommand( va( "configstrings %i 0", cl.servercount ) );
 
+	old_sv_pure = cls.sv_pure;
 	cls.sv_pure = ( sv_bitflags & SV_BITFLAGS_PURE ) != 0;
+	cls.pure_restart = cls.sv_pure && old_sv_pure == false;
 	cls.sv_tv = ( sv_bitflags & SV_BITFLAGS_TVSERVER ) != 0;
 
 #ifdef PURE_CHEAT
-	cls.sv_pure = false;
+	cls.sv_pure = cls.pure_restart = false;
 #endif
 
 	cls.wakelock = Sys_AcquireWakeLock();
