@@ -1338,6 +1338,7 @@ static rserr_t R_PostInit( void )
 		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
 
     rf.swapInterval = -1;
+	rf.fpsLock = ri.Mutex_Create();
     rf.speedsMsgLock = ri.Mutex_Create();
 	rf.debugSurfaceLock = ri.Mutex_Create();
 
@@ -1539,6 +1540,7 @@ void R_Shutdown( bool verbose )
 	if( glConfig.hwGamma )
 		GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, glConfig.originalGammaRamp );
 
+	ri.Mutex_Destroy( &rf.fpsLock );
     ri.Mutex_Destroy( &rf.speedsMsgLock );
 	ri.Mutex_Destroy( &rf.debugSurfaceLock );
 

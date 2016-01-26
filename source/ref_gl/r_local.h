@@ -320,6 +320,7 @@ typedef struct
 		unsigned 		time, oldTime;
 		unsigned 		count, oldCount;
 	} fps;
+	qmutex_t		*fpsLock;
 
 	volatile bool 	dataSync; // call R_Finish
 

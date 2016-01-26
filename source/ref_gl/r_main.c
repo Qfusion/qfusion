@@ -1685,6 +1685,7 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
 
     // update fps meter
+	ri.Mutex_Lock( rf.fpsLock );
     rf.fps.count++;
     rf.fps.time = time;
     if( rf.fps.time - rf.fps.oldTime >= 250 ) {
@@ -1693,6 +1694,7 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
         rf.fps.oldTime = time;
         rf.fps.oldCount = rf.fps.count;
     }
+	ri.Mutex_Unlock( rf.fpsLock );
 
 	R_Set2DMode( true );
 }
