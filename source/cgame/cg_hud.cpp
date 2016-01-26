@@ -201,9 +201,17 @@ static int CG_GetFPS( const void *parameter )
 	int i;
 	double t;
 
+	if( cg_showFPS->integer == 1 )
+	{
+		// FIXME: this should be removed once the API no longer locked
+		fps = (int)trap_Cvar_Value( "r_fps" );
+		if( fps != 0 )
+			return fps;
+	}
+
 	frameTimes[cg.frameCount & FPSSAMPLESMASK] = cg.realFrameTime;
 
-	if( cg_showFPS->integer != 1 )
+	if( cg_showFPS->integer == 2 )
 	{
 		for( avFrameTime = 0.0f, i = 0; i < FPSSAMPLESCOUNT; i++ )
 		{
@@ -216,7 +224,8 @@ static int CG_GetFPS( const void *parameter )
 	{
 		t = cg.realTime * 0.001f;
 		if( ( t - oldtime ) >= 0.25 )
-		{                       // updates 4 times a second
+		{
+			// updates 4 times a second
 			fps = ( cg.frameCount - oldframecount ) / ( t - oldtime ) + 0.5;
 			oldframecount = cg.frameCount;
 			oldtime = t;

@@ -377,6 +377,8 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 void RF_EndFrame( void )
 {
+	char tmp[64];
+
 	R_DataSync();
 
 	rrf.frame->EndFrame( rrf.frame );
@@ -387,6 +389,11 @@ void RF_EndFrame( void )
 		rrf.frameId++;
 		ri.Mutex_Unlock( rrf.adapter.frameLock );
 	}
+
+	// FIXME: this should be removed once the API no longer locked
+	ri.Mutex_Lock( rf.fpsLock );
+	ri.Cvar_ForceSet( "r_fps", va_r( tmp, sizeof( tmp ), "%u", rf.fps.average ) );
+	ri.Mutex_Unlock( rf.fpsLock );
 }
 
 void RF_BeginRegistration( void )
