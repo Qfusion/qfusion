@@ -859,7 +859,7 @@ void CL_Disconnect( const char *message )
 	bool wasconnecting;
 
 	// We have to shut down webdownloading first
-	if( cls.download.web )
+	if( cls.download.web && !cls.download.disconnect )
 	{
 		cls.download.disconnect = true;
 		return;
