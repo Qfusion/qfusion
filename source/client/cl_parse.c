@@ -500,7 +500,9 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 
 	alloc_size = strlen( "downloads" ) + 1 /* '/' */ + strlen( filename ) + 1;
 	cls.download.name = Mem_ZoneMalloc( alloc_size );
-	if( official_web_download ) {
+	if( official_web_download || !cls.download.requestpak ) {
+		// it's an official pak, otherwise
+		// if we're not downloading a pak, this must be a demo so drop it into the gamedir
 		Q_snprintfz( cls.download.name, alloc_size, "%s", filename );
 	}
 	else {
