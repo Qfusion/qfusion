@@ -356,7 +356,7 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 	int alloc_size;
 	bool modules_download = false;
 	bool explicit_pure_download = false;
-	bool force_web_official = initial;
+	bool force_web_official = initial && cls.download.requestpak;
 	bool official_web_download = false;
 	bool official_web_only = false;
 	const char *baseurl;
