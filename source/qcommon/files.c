@@ -916,7 +916,7 @@ static int FS_AbsoluteFileExists( const char *filename )
 */
 bool FS_PakFileExists( const char *packfilename )
 {
-	return FS_AbsoluteFileExists( packfilename ) != -1 || FS_VFSHandleForPakName( packfilename ) != NULL;
+	return FS_FileExists( packfilename, true ) != -1 || Sys_VFS_FindFile( packfilename ) != NULL;
 }
 
 /*
