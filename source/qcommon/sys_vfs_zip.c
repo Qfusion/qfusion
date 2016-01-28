@@ -345,27 +345,10 @@ char **Sys_VFS_Zip_ListFiles( const char *basepath, const char *gamedir, const c
 
 void *Sys_VFS_Zip_FindFile( const char *filename )
 {
-	const char *p = filename, *prevslash = NULL, *lastslash = NULL;
 	sys_vfs_zip_file_t *file = NULL;
 
 	if( !sys_vfs_zip_numvfs )
 		return NULL;
-
-	while( *p )
-	{
-		if( *p == '/' )
-		{
-			prevslash = lastslash;
-			lastslash = p;
-		}
-		++p;
-	}
-
-	if( !lastslash )
-		return NULL;
-
-	if( prevslash )
-		filename = prevslash + 1;
 
 	Trie_Find( sys_vfs_zip_trie, filename, TRIE_EXACT_MATCH, ( void ** )&file );
 	return file;
