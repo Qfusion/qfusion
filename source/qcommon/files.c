@@ -3540,18 +3540,17 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 
 		for( i = 0; i < numpakfiles; )
 		{
+			bool skip = false;
 			bool wrongpure;
 
 			// ignore similarly named paks if they appear in both vfs and fs
-			if( i && !Q_stricmp( paknames[i], paknames[i-1] ) )
-			{
-				Mem_Free( paknames[i] );
-				memmove( &paknames[i], &paknames[i+1], (numpakfiles-- - i) * sizeof( *paknames ) );
-			}
+			skip = skip || ( i && !Q_stricmp( paknames[i], paknames[i-1] ) );
 
 			// ignore pure data and modules pk3 files from other versions
-			if( FS_IsExplicitPurePak( paknames[i], &wrongpure ) && wrongpure ) {
-				//Com_Printf( "Skipping %s\n", pakbasename );
+			skip = skip || ( FS_IsExplicitPurePak( paknames[i], &wrongpure ) && wrongpure );
+
+			if( skip )
+			{
 				Mem_Free( paknames[i] );
 				memmove( &paknames[i], &paknames[i+1], (numpakfiles-- - i) * sizeof( *paknames ) );
 				continue;
