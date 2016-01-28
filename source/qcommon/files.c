@@ -176,6 +176,7 @@ static searchpath_t *fs_searchpaths = NULL;     // game search directories, plus
 static qmutex_t *fs_searchpaths_mutex;
 
 static searchpath_t *fs_base_searchpaths;       // same as above, but without extra gamedirs
+static searchpath_t *fs_root_searchpath;        // base path directory
 static searchpath_t *fs_write_searchpath;       // write directory
 static searchpath_t *fs_downloads_searchpath;   // write directory for downloads from game servers
 
@@ -543,6 +544,26 @@ const char *FS_PakNameForFile( const char *filename )
 }
 
 /*
+* FS_VFSHandleForPakName
+*
+* Takes an explicit (not game tree related) path to a pak file.
+*/
+static void *FS_VFSHandleForPakName( const char *packfilename )
+{
+	// treat VFS similar to the root directory
+	size_t rootPathLength;
+
+	if( !fs_root_searchpath )
+		return NULL;
+
+	rootPathLength = strlen( fs_root_searchpath->path );
+	if( Q_strnicmp( packfilename, fs_root_searchpath->path, rootPathLength ) || packfilename[rootPathLength] != '/' )
+		return NULL;
+
+	return Sys_VFS_FindFile( packfilename + rootPathLength + 1 );
+}
+
+/*
 * Cmd_PakFile_f
 */
 static void Cmd_PakFile_f( void )
@@ -895,7 +916,7 @@ static int FS_AbsoluteFileExists( const char *filename )
 */
 bool FS_PakFileExists( const char *packfilename )
 {
-	return FS_FileExists( packfilename, true ) != -1 || Sys_VFS_FindFile( packfilename );
+	return FS_FileExists( packfilename, true ) != -1 || Sys_VFS_FindFile( packfilename ) != NULL;
 }
 
 /*
@@ -2507,8 +2528,8 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent )
 	void *handle = NULL;
 	void *vfsHandle = NULL;
 
-	if( FS_FileExists( packfilename, true ) == -1 )
-		vfsHandle = Sys_VFS_FindFile( packfilename );
+	if( FS_AbsoluteFileExists( packfilename ) == -1 )
+		vfsHandle = FS_VFSHandleForPakName( packfilename );
 
 	if( !vfsHandle )
 	{
@@ -3303,7 +3324,10 @@ static void FS_Path_f( void )
 		if( s == fs_base_searchpaths )
 			Com_Printf( "Base files:\n" );
 		if( s->pack )
-			Com_Printf( "%s (%s%i files)\n", s->pack->filename, ( s->pack->pure ? "pure, " : "" ), s->pack->numFiles );
+		{
+			Com_Printf( "%s (%s%s%i files)\n", s->pack->filename,
+				( s->pack->vfsHandle ? "in VFS, " : "" ), ( s->pack->pure ? "pure, " : "" ), s->pack->numFiles );
+		}
 		else
 			Com_Printf( "%s\n", s->path );
 	}
@@ -3458,7 +3482,7 @@ int FS_GetGameDirectoryList( char *buf, size_t bufsize )
 /*
 * FS_GamePathPaks
 */
-static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *numpaks )
+static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int *numpaks )
 {
 	int i, e, numpakfiles;
 	char **paknames = NULL;
@@ -3468,11 +3492,12 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 	for( e = 0; pak_extensions[e]; e++ )
 	{
 		int numvfsfiles = 0, numfiles = 0;
-		char **vfsfilenames, **filenames;
+		char **vfsfilenames = NULL, **filenames;
 
-		Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/*.%s", basepath, gamedir, pak_extensions[e] );
+		Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/*.%s", basepath->path, gamedir, pak_extensions[e] );
 
-		vfsfilenames = Sys_VFS_ListFiles( basepath, gamedir, pak_extensions[e], &numvfsfiles );
+		if( basepath == fs_root_searchpath ) // only add VFS once per game, treat it like the installation directory
+			vfsfilenames = Sys_VFS_ListFiles( basepath->path, gamedir, pak_extensions[e], &numvfsfiles );
 		filenames = FS_ListFiles( tempname, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM );
 		if( vfsfilenames || filenames )
 		{
@@ -3515,18 +3540,17 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 
 		for( i = 0; i < numpakfiles; )
 		{
+			bool skip = false;
 			bool wrongpure;
 
 			// ignore similarly named paks if they appear in both vfs and fs
-			if( i && !Q_stricmp( paknames[i], paknames[i-1] ) )
-			{
-				Mem_Free( paknames[i] );
-				memmove( &paknames[i], &paknames[i+1], (numpakfiles-- - i) * sizeof( *paknames ) );
-			}
+			skip = skip || ( i && !Q_stricmp( paknames[i], paknames[i-1] ) );
 
 			// ignore pure data and modules pk3 files from other versions
-			if( FS_IsExplicitPurePak( paknames[i], &wrongpure ) && wrongpure ) {
-				//Com_Printf( "Skipping %s\n", pakbasename );
+			skip = skip || ( FS_IsExplicitPurePak( paknames[i], &wrongpure ) && wrongpure );
+
+			if( skip )
+			{
 				Mem_Free( paknames[i] );
 				memmove( &paknames[i], &paknames[i+1], (numpakfiles-- - i) * sizeof( *paknames ) );
 				continue;
@@ -3571,7 +3595,7 @@ static int FS_TouchGamePath( searchpath_t *basepath, const char *gamedir, bool i
 
 	newpaks = 0;
 	totalpaks = 0;
-	if( ( paknames = FS_GamePathPaks( basepath->path, gamedir, &totalpaks ) ) != 0 )
+	if( ( paknames = FS_GamePathPaks( basepath, gamedir, &totalpaks ) ) != 0 )
 	{
 		for( i = 0; i < totalpaks; i++ )
 		{
@@ -4181,6 +4205,7 @@ void FS_Init( void )
 		FS_AddBasePath( fs_cdpath->string );
 
 	FS_AddBasePath( fs_basepath->string );
+	fs_root_searchpath = fs_basepaths;
 	fs_write_searchpath = fs_basepaths;
 
 	if( homedir != NULL && fs_usehomedir->integer ) {
