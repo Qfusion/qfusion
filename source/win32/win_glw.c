@@ -551,11 +551,8 @@ void GLimp_BeginFrame( void )
 */
 void GLimp_EndFrame( void )
 {
-	if( Q_stricmp( gl_drawbuffer->string, "GL_BACK" ) == 0 )
-	{
-		if( !qwglSwapBuffers( glw_state.hDC ) )
-			Sys_Error( "GLimp_EndFrame() - SwapBuffers() failed!" );
-	}
+	if( !qwglSwapBuffers( glw_state.hDC ) )
+		Sys_Error( "GLimp_EndFrame() - SwapBuffers() failed!" );
 }
 
 /*
