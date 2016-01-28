@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void Sys_VFS_Android_GetOBBVersions( const char *dir, int *mainVersion, int *patchVersion )
 {
 	DIR *fdir;
-	char mainFormat[PATH_MAX], patchFormat[PATH_MAX];
+	char mainFormat[PATH_MAX], patchFormat[PATH_MAX], checkPath[PATH_MAX];
 	struct dirent *entry;
 	int version, maxMain = -1, maxPatch = -1;
 	// Don't load OBBs for wrong versions of the game. A major update requires the game to be redownloaded entirely.
@@ -51,7 +51,9 @@ static void Sys_VFS_Android_GetOBBVersions( const char *dir, int *mainVersion, i
 		{
 			if( ( version < minVersion ) || ( version > maxVersion ) || ( version <= maxMain ) )
 				continue;
-			if( strcmp( entry->d_name, va( mainFormat, version ) ) )
+			// Make sure it's .obb, not .obb.tmp.
+			Q_snprintfz( checkPath, sizeof( checkPath ), mainFormat, version );
+			if( strcmp( entry->d_name, checkPath ) )
 				continue;
 			maxMain = version;
 		}
@@ -59,7 +61,8 @@ static void Sys_VFS_Android_GetOBBVersions( const char *dir, int *mainVersion, i
 		{
 			if( ( version < minVersion ) || ( version > maxVersion ) || ( version <= maxPatch ) )
 				continue;
-			if( strcmp( entry->d_name, va( patchFormat, version ) ) )
+			Q_snprintfz( checkPath, sizeof( checkPath ), patchFormat, version );
+			if( strcmp( entry->d_name, checkPath ) )
 				continue;
 			maxPatch = version;
 		}
