@@ -246,9 +246,9 @@ static void Sys_VFS_Zip_LoadVFS( int idx, const char *filename )
 	}
 
 	vfs = &sys_vfs_zip_files[idx];
-	vfs->name = filename;
+	vfs->name = Mem_CopyString( sys_vfs_zip_mempool, filename );
 	vfs->numFiles = numFiles;
-	vfs->files = ( sys_vfs_zip_file_t * )Mem_Alloc( sys_vfs_zip_mempool, numFiles * sizeof( sys_vfs_zip_file_t ) + namesLen );
+	vfs->files = Mem_Alloc( sys_vfs_zip_mempool, numFiles * sizeof( sys_vfs_zip_file_t ) + namesLen );
 	file = vfs->files;
 	names = ( char * )( vfs->files ) + numFiles * sizeof( sys_vfs_zip_file_t );
 	for( i = 0, centralPos = offsetCentralDir + byteBeforeTheZipFile; i < numFiles; ++i, ++file, centralPos += offset )
@@ -293,7 +293,7 @@ void Sys_VFS_Zip_Init( int numvfs, const char * const *vfsnames )
 
 	sys_vfs_zip_mempool = Mem_AllocPool( NULL, "Zip VFS" );
 	sys_vfs_zip_numvfs = numvfs;
-	sys_vfs_zip_files = ( sys_vfs_zip_vfs_t * )Mem_Alloc( sys_vfs_zip_mempool, numvfs * sizeof( sys_vfs_zip_vfs_t ) );
+	sys_vfs_zip_files = Mem_Alloc( sys_vfs_zip_mempool, numvfs * sizeof( sys_vfs_zip_vfs_t ) );
 
 	Trie_Create( TRIE_CASE_INSENSITIVE, &sys_vfs_zip_trie );
 	for( i = 0; i < numvfs; ++i )
@@ -309,6 +309,7 @@ char **Sys_VFS_Zip_ListFiles( const char *basepath, const char *gamedir, const c
 	sys_vfs_zip_file_t *file;
 	const char *name, *e;
 	size_t dirlen = strlen( gamedir );
+	size_t namesize;
 
 	for( i = 0, vfs = sys_vfs_zip_files; i < sys_vfs_zip_numvfs; ++i, ++vfs )
 		nfiles += vfs->numFiles;
@@ -319,7 +320,7 @@ char **Sys_VFS_Zip_ListFiles( const char *basepath, const char *gamedir, const c
 		return NULL;
 	}
 
-	list = ( char ** )Mem_ZoneMalloc( nfiles * sizeof( char * ) );
+	list = Mem_ZoneMalloc( nfiles * sizeof( char * ) );
 
 	nfiles = 0;
 	for( i = 0, vfs = sys_vfs_zip_files; i < sys_vfs_zip_numvfs; ++i, ++vfs )
@@ -334,7 +335,13 @@ char **Sys_VFS_Zip_ListFiles( const char *basepath, const char *gamedir, const c
 			e = COM_FileExtension( name );
 			if( !e || Q_stricmp( e + 1, extension ) )
 				continue;
-			list[nfiles++] = ZoneCopyString( va( "%s/%s", basepath, file->name ) );
+			namesize = ( basepath ? ( strlen( basepath ) + 1 ) : 0 ) + strlen( file->name ) + 1;
+			list[nfiles] = Mem_ZoneMalloc( namesize );
+			if( basepath )
+				Q_snprintfz( list[nfiles], namesize, "%s/%s", basepath, file->name );
+			else
+				Q_strncpyz( list[nfiles], file->name, namesize );
+			nfiles++;
 		}
 	}
 
@@ -345,27 +352,10 @@ char **Sys_VFS_Zip_ListFiles( const char *basepath, const char *gamedir, const c
 
 void *Sys_VFS_Zip_FindFile( const char *filename )
 {
-	const char *p = filename, *prevslash = NULL, *lastslash = NULL;
 	sys_vfs_zip_file_t *file = NULL;
 
 	if( !sys_vfs_zip_numvfs )
 		return NULL;
-
-	while( *p )
-	{
-		if( *p == '/' )
-		{
-			prevslash = lastslash;
-			lastslash = p;
-		}
-		++p;
-	}
-
-	if( !lastslash )
-		return NULL;
-
-	if( prevslash )
-		filename = prevslash + 1;
 
 	Trie_Find( sys_vfs_zip_trie, filename, TRIE_EXACT_MATCH, ( void ** )&file );
 	return file;
@@ -408,4 +398,6 @@ void Sys_VFS_Zip_Shutdown( void )
 
 	Trie_Destroy( sys_vfs_zip_trie );
 	Mem_FreePool( &sys_vfs_zip_mempool );
+
+	sys_vfs_zip_numvfs = 0;
 }
