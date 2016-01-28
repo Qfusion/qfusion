@@ -916,7 +916,7 @@ static int FS_AbsoluteFileExists( const char *filename )
 */
 bool FS_PakFileExists( const char *packfilename )
 {
-	return FS_FileExists( packfilename, true ) != -1 || FS_VFSHandleForPakName( packfilename ) != NULL;
+	return FS_AbsoluteFileExists( packfilename ) != -1 || FS_VFSHandleForPakName( packfilename ) != NULL;
 }
 
 /*
@@ -2528,7 +2528,7 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent )
 	void *handle = NULL;
 	void *vfsHandle = NULL;
 
-	if( FS_FileExists( packfilename, true ) == -1 )
+	if( FS_AbsoluteFileExists( packfilename ) == -1 )
 		vfsHandle = FS_VFSHandleForPakName( packfilename );
 
 	if( !vfsHandle )
