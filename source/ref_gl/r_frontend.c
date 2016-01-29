@@ -392,7 +392,7 @@ void RF_EndFrame( void )
 
 	// FIXME: this should be removed once the API no longer locked
 	ri.Mutex_Lock( rf.fpsLock );
-	ri.Cvar_ForceSet( "r_fps", va_r( tmp, sizeof( tmp ), "%u", rf.fps.average ) );
+	ri.Cvar_ForceSet( "r_fps", va_r( tmp, sizeof( tmp ), "%u", max( rf.fps.average, 1 ) ) );
 	ri.Mutex_Unlock( rf.fpsLock );
 }
 
