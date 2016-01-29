@@ -1931,7 +1931,7 @@ static void R_InitShadersCache( void )
 	int numfiles_total;
 	const char *fileptr;
 	char shaderPaths[1024];
-	const char *dirs[2] = { "<scripts", ">scripts" };
+	const char *dirs[3] = { "<scripts", ">scripts", "scripts" };
 
 	r_shaderTemplateBuf = NULL;
 
@@ -1940,7 +1940,14 @@ static void R_InitShadersCache( void )
 	Com_Printf( "Initializing Shaders:\n" );
 
 	numfiles_total = 0;
-	for( d = 0; d < 2; d++ ) {
+	for( d = 0; d < 3; d++ ) {
+		if( d == 2 ) {
+			// this is a fallback case for older bins that do not support the '<>' prefixes
+			// since we got some files, the binary is sufficiently up to date
+			if( numfiles_total )
+				break;
+		}
+
 		// enumerate shaders
 		numfiles = ri.FS_GetFileList( dirs[d], ".shader", NULL, 0, 0, 0 );
 		numfiles_total += numfiles;
