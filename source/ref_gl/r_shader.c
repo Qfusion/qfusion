@@ -38,7 +38,6 @@ typedef struct shadercache_s
 	char *name;
 	char *buffer;
 	char *filename;
-	bool download;
 	size_t offset;
 	struct shadercache_s *hash_next;
 } shadercache_t;
@@ -1876,20 +1875,16 @@ static void Shader_MakeCache( const char *filename, bool download )
 		cache = ( shadercache_t * )cacheMemBuf; cacheMemBuf += sizeof( shadercache_t ) + strlen( token ) + 1;
 		cache->hash_next = shadercache_hash[key];
 		cache->name = ( char * )( (uint8_t *)cache + sizeof( shadercache_t ) );
-		cache->download = download;
 		cache->filename = NULL;
 		strcpy( cache->name, token );
 		shadercache_hash[key] = cache;
 
 set_path_and_offset:
-		// only allow overriding shaders of same priority (downloads have lower priority than base shaders)
-		if( cache->download == download ) {
-			if( cache->filename )
-				R_Free( cache->filename );
-			cache->filename = R_CopyString( filename );
-			cache->buffer = buf;
-			cache->offset = ptr - buf;
-		}
+		if( cache->filename )
+			R_Free( cache->filename );
+		cache->filename = R_CopyString( filename );
+		cache->buffer = buf;
+		cache->offset = ptr - buf;
 
 		Shader_SkipBlock( &ptr );
 	}
@@ -1936,7 +1931,7 @@ static void R_InitShadersCache( void )
 	int numfiles_total;
 	const char *fileptr;
 	char shaderPaths[1024];
-	const char *dirs[2] = { ">scripts", "<scripts" };
+	const char *dirs[2] = { "<scripts", ">scripts" };
 
 	r_shaderTemplateBuf = NULL;
 
