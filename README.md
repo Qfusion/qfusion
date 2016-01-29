@@ -3,7 +3,7 @@ qfusion
 
 http://www.qfusion.net/
 
-qfusion is the id Tech 2 derived game engine powering the game <a href="http://warsow.net/">Warsow</a>
+qfusion is the id Tech 2 derived game engine powering the game <a href="https://warsow.gg/">Warsow</a>
 
 ## Features (incomplete list)
 
