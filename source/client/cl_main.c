@@ -2304,7 +2304,7 @@ void CL_AdjustServerTime( unsigned int gamemsec )
 	// hurry up if coming late (unless in demos)
 	if( !cls.demo.playing )
 	{
-		if( ( cl.newServerTimeDelta < cl.serverTimeDelta ) && gamemsec > 1 )
+		if( ( cl.newServerTimeDelta < cl.serverTimeDelta ) && gamemsec > 0 )
 			cl.serverTimeDelta--;
 		if( cl.newServerTimeDelta > cl.serverTimeDelta )
 			cl.serverTimeDelta++;
