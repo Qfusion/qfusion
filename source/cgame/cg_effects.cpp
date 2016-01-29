@@ -845,6 +845,9 @@ void CG_ElectroIonsTrail2( const vec3_t start, const vec3_t end, const vec4_t co
 	float len;
 	float dec2 = 8.0f;
 	cparticle_t *p;
+	
+	if( !cg_particles->integer )
+		return;
 
 	VectorSubtract( end, start, vec );
 	len = VectorNormalize( vec );
