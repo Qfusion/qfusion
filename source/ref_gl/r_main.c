@@ -1365,7 +1365,7 @@ void R_PopRefInst( void )
 
 void R_Finish( void )
 {
-    qglFinish();
+	qglFinish();
 }
 
 void R_Flush( void )
@@ -1389,9 +1389,9 @@ void R_DataSync( void )
 		if( glConfig.multithreading ) {
 			// synchronize data we might have uploaded this frame between the threads
 			// FIXME: only call this when absolutely necessary
-			R_Finish();
+			qglFinish();
 		}
-		 rf.dataSync = false;
+		rf.dataSync = false;
 	}
 }
 
