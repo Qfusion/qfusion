@@ -71,7 +71,7 @@ static char *r_shortShaderName;
 static size_t r_shortShaderNameSize;
 
 static bool Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr );
-static void Shader_MakeCache( const char *filename, bool download );
+static void Shader_MakeCache( const char *filename );
 static unsigned int Shader_GetCache( const char *name, shadercache_t **cache );
 #define R_FreePassCinematics(pass) if( (pass)->cin ) { R_FreeCinematic( (pass)->cin ); (pass)->cin = 0; }
 
@@ -1809,7 +1809,7 @@ void R_PrintShaderCache( const char *name )
 	cache->buffer[ptr - cache->buffer] = backup;
 }
 
-static void Shader_MakeCache( const char *filename, bool download )
+static void Shader_MakeCache( const char *filename )
 {
 	int size;
 	unsigned int key;
@@ -1954,7 +1954,7 @@ static void R_InitShadersCache( void )
 
 			fileptr = shaderPaths;
 			for( j = 0; j < k; j++ ) {
-				Shader_MakeCache( fileptr, d == 1 );
+				Shader_MakeCache( fileptr );
 
 				fileptr += strlen( fileptr ) + 1;
 				if( !*fileptr ) {
