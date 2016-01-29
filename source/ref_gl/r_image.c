@@ -3006,9 +3006,9 @@ static bool R_LoadAsyncImageFromDisk( image_t *image )
 	image->loaded = false;
 	image->missing = false;
 	
-	// unbind and flush so that the image resource becomes available in the loader's context
+	// unbind and finish so that the image resource becomes available in the loader's context
 	R_UnbindImage( image );
-	qglFlush();
+	qglFinish();
 
 	R_IssueLoadPicLoaderCmd( id, image - images );
 	return true;

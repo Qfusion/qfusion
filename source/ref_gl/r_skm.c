@@ -701,10 +701,13 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 			}
 			vblendweights_byte += SKM_MAX_WEIGHTS;
 		}
+	}
 
-		// creating a VBO only makes sense if GLSL is present and the number of bones 
-		// we can handle on the GPU is sufficient
-		if( glConfig.ext.vertex_buffer_object && poutmodel->numbones <= glConfig.maxGLSLBones ) {
+	// creating a VBO only makes sense if GLSL is present and the number of bones
+	// we can handle on the GPU is sufficient
+	// (created after the skins because skin loading may wait for GL commands to finish)
+	if( poutmodel->numbones <= glConfig.maxGLSLBones ) {
+		for( i = 0; i < header->num_meshes; i++ ) {
 			// build a static vertex buffer object for this mesh
 			Mod_SkeletalBuildStaticVBOForMesh( &poutmodel->meshes[i] );
 		}
