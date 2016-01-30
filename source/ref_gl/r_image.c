@@ -3006,7 +3006,10 @@ static bool R_LoadAsyncImageFromDisk( image_t *image )
 	image->loaded = false;
 	image->missing = false;
 	
-	// unbind and finish so that the image resource becomes available in the loader's context
+	// Unbind and finish so that the image resource becomes available in the loader's context.
+	// Not doing finish (or only doing flush instead) causes missing textures on Nvidia and possibly other GPUs,
+	// since the loader thread is woken up pretty much instantly, and the GL calls that initialize the texture
+	// may still be processed or only queued in the main thread while the loader is trying to load the image.
 	R_UnbindImage( image );
 	qglFinish();
 
@@ -3080,7 +3083,10 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 	if( !loaded ) {
 		image->missing = true;
 	} else {
-		// Make sure the image is updated on all contexts.
+		// Make sure:
+		// - The GL calls are submitted, otherwise they may stay in the queue until some other textures are loaded.
+		// - image->loaded is set when the image is actually uploaded, so the renderer doesn't try to use it while
+		//   it's still being uploaded, causing transient or even permanent glitches.
 		qglFinish();
 		image->loaded = true;
 	}
