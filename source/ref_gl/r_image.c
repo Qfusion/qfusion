@@ -2889,6 +2889,7 @@ enum
 	CMD_LOADER_INIT,
 	CMD_LOADER_SHUTDOWN,
 	CMD_LOADER_LOAD_PIC,
+	CMD_LOADER_DATA_SYNC,
 
 	NUM_LOADER_CMDS
 };
@@ -2950,6 +2951,16 @@ static void R_IssueLoadPicLoaderCmd( int id, int pic )
 }
 
 /*
+* R_IssueDataSyncLoaderCmd
+*/
+static void R_IssueDataSyncLoaderCmd( int id )
+{
+	int cmd;
+	cmd = CMD_LOADER_DATA_SYNC;
+	ri.BufPipe_WriteCmd( loader_queue[id], &cmd, sizeof( cmd ) );
+}
+
+/*
 * R_InitImageLoader
 */
 static void R_InitImageLoader( int id )
@@ -2979,6 +2990,12 @@ static void R_InitImageLoader( int id )
 void R_FinishLoadingImages( void )
 {
 	int i;
+
+	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
+		if( loader_gl_context[i] ) {
+			R_IssueDataSyncLoaderCmd( i );
+		}
+	}
 
 	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
 		if( loader_gl_context[i] ) {
@@ -3087,9 +3104,23 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 		// - The GL calls are submitted, otherwise they may stay in the queue until some other textures are loaded.
 		// - image->loaded is set when the image is actually uploaded, so the renderer doesn't try to use it while
 		//   it's still being uploaded, causing transient or even permanent glitches.
-		qglFinish();
+		if( !rsh.registrationOpen ) {
+			qglFinish();
+		}
 		image->loaded = true;
 	}
+
+	return sizeof( *cmd );
+}
+
+/*
+* R_HandleDataSyncLoaderCmd
+*/
+static unsigned R_HandleDataSyncLoaderCmd( void *pcmd )
+{
+	int *cmd = pcmd;
+
+	qglFinish();
 
 	return sizeof( *cmd );
 }
@@ -3112,7 +3143,8 @@ static void *R_ImageLoaderThreadProc( void *param )
 	{
 		(queueCmdHandler_t)R_HandleInitLoaderCmd,
 		(queueCmdHandler_t)R_HandleShutdownLoaderCmd,
-		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd
+		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd,
+		(queueCmdHandler_t)R_HandleDataSyncLoaderCmd,
 	};
 
 	ri.BufPipe_Wait( cmdQueue, R_ImageLoaderCmdsWaiter, cmdHandlers, Q_THREADS_WAIT_INFINITE );
