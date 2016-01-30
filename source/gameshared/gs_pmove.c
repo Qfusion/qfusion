@@ -1223,11 +1223,12 @@ static void PM_CheckWallJump( void )
 		point[2] = pml.origin[2] - STEPSIZE;
 
 		// don't walljump if our height is smaller than a step 
-		// unless the player is moving faster than dash speed and upwards
+		// unless jump is pressed or the player is moving faster than dash speed and upwards
 		hspeed = VectorLengthFast( tv( pml.velocity[0], pml.velocity[1], 0 ) );
 		module_Trace( &trace, pml.origin, pm->mins, pm->maxs, point, pm->playerState->POVnum, pm->contentmask, 0 );
 		
-		if( ( hspeed > pm->playerState->pmove.stats[PM_STAT_DASHSPEED] && pml.velocity[2] > 8 ) 
+		if( pml.upPush >= 10
+			|| ( hspeed > pm->playerState->pmove.stats[PM_STAT_DASHSPEED] && pml.velocity[2] > 8 )
 			|| ( trace.fraction == 1 ) || ( !ISWALKABLEPLANE( &trace.plane ) && !trace.startsolid ) )
 		{
 			VectorClear( normal );
