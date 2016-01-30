@@ -40,7 +40,7 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 
 #define NUM_CUSTOMCOLORS		16
 
-#define NUM_LOADER_THREADS		8
+#define NUM_LOADER_THREADS		4 // optimal value found by testing, when there are too many, CPU usage may be 100%
 
 enum
 {
