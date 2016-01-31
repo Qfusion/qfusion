@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "android_sys.h"
 #include <pthread.h>
-#include <signal.h>
 #include <unistd.h>
 #include <android/log.h>
 #include <android/window.h>
@@ -313,23 +312,11 @@ void Sys_Quit( void )
 	exit( 0 );
 }
 
-static void Sys_Android_SignalHandler( int sig )
-{
-	signal( SIGTERM, SIG_DFL );
-	signal( SIGINT, SIG_DFL );
-	Com_Printf( "Received signal %d, exiting...\n", sig );
-	Com_Quit();
-}
-
 static void Sys_Android_Init( void )
 {
 	struct android_app *app = sys_android_app;
 	JNIEnv *env;
 	jobject activity = app->activity->clazz;
-
-	// Set signal handlers.
-	signal( SIGTERM, Sys_Android_SignalHandler );
-	signal( SIGINT, Sys_Android_SignalHandler );
 
 	// Set working directory to external data path.
 	{
