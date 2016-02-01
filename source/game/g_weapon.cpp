@@ -1430,6 +1430,8 @@ static void _LaserImpact( trace_t *trace, vec3_t dir )
 
 	if( !trace || trace->ent <= 0 )
 		return;
+	if( trace->ent == laser_attackerNum )
+		return; // should not be possible theoretically but happened at least once in practice
 
 	attacker = &game.edicts[laser_attackerNum];
 
