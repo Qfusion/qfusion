@@ -725,16 +725,7 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t angles, int speed, 
 		damage = 9999;
 
 	if( aim_up )
-	{
 		angles[PITCH] -= 5.0f * ( 90.0f - fabs( angles[PITCH] ) ) / 90.0f; // aim some degrees upwards from view dir
-
-		// clamp to front side of the player
-		angles[PITCH] += -90; // rotate to make easier the check
-		while( angles[PITCH] < -360 ) angles[PITCH] += 360;
-		clamp( angles[PITCH], -180, 0 );
-		angles[PITCH] += 90;
-		while( angles[PITCH] > 360 ) angles[PITCH] -= 360;
-	}
 
 	grenade = W_Fire_TossProjectile( self, start, angles, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 	VectorClear( grenade->s.angles );
