@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qalgo/q_trie.h"
 
 //#define UNSAFE_EXIT
-#define MAX_MASTER_SERVERS					4
+#define NUM_RESOLVER_THREADS				4
 
 #ifdef PUBLIC_BUILD
 #define SERVERBROWSER_PROTOCOL_VERSION		APP_PROTOCOL_VERSION
@@ -57,7 +57,13 @@ static unsigned int masterServerUpdateSeq;
 
 static unsigned int localQueryTimeStamp = 0;
 
-static qthread_t **resolverThreads;
+typedef struct resolverThreadParam_s {
+	int threadNum;
+	char master[MAX_STRING_CHARS];
+} resolverThreadParam_t;
+
+static qthread_t *resolverThreads[NUM_RESOLVER_THREADS];
+static volatile bool resolverThreadsActive[NUM_RESOLVER_THREADS];
 static qmutex_t *resolveLock;
 
 //=========================================================
@@ -523,28 +529,65 @@ static void CL_ResolveMasterAddress( const char *master )
 {
 	netadr_t adr, *padr;
 
-	if( master && *master ) {
-		NET_StringToAddress( master, &adr );
+	if( *master ) {
+		if( NET_StringToAddress( master, &adr ) && ( adr.type == NA_IP || adr.type == NA_IP6 ) ) {
+			QMutex_Lock( resolveLock );
 
-		QMutex_Lock( resolveLock );
+			padr = ( netadr_t * )malloc( sizeof( adr ) );
+			*padr = adr;
 
-		padr = ( netadr_t * )malloc( sizeof( adr ) );
-		*padr = adr;
+			Trie_Insert( serverlist_masters_trie, master, padr );
 
-		Trie_Insert( serverlist_masters_trie, master, padr );
-
-		QMutex_Unlock( resolveLock );
+			QMutex_Unlock( resolveLock );
+		}
 	}
 }
 
 /*
 * CL_MasterResolverThreadEntry
 */
-static void *CL_MasterResolverThreadEntry( void *pmlist )
+static void *CL_MasterResolverThreadEntry( void *param )
 {
-	CL_ResolveMasterAddress( ( char * )pmlist );
-	free( pmlist );
+	const resolverThreadParam_t *resolveParam = param;
+
+	CL_ResolveMasterAddress( resolveParam->master );
+
+	resolverThreadsActive[resolveParam->threadNum] = false;
+	free( param );
 	return NULL;
+}
+
+/*
+* CL_StartMasterResolver
+*/
+static bool CL_StartMasterResolver( int num, const char *master )
+{
+	resolverThreadParam_t *param;
+
+	if( resolverThreadsActive[num] )
+		return false;
+
+	// release the old thread's resources
+	if( resolverThreads[num] )
+	{
+		QThread_Join( resolverThreads[num] );
+		resolverThreads[num] = NULL;
+	}
+
+	param = malloc( sizeof( resolverThreadParam_t ) );
+	param->threadNum = num;
+	Q_strncpyz( param->master, master, sizeof( param->master ) );
+
+	resolverThreadsActive[num] = true;
+	resolverThreads[num] = QThread_Create( CL_MasterResolverThreadEntry, param );
+	if( !resolverThreads[num] )
+	{
+		resolverThreadsActive[num] = false;
+		free( param );
+		return false;
+	}
+
+	return true;
 }
 
 /*
@@ -558,8 +601,6 @@ static void CL_MasterAddressCache_Init( void )
 	const char *masterservers;
 
 	Trie_Create( TRIE_CASE_INSENSITIVE, &serverlist_masters_trie );
-
-	resolverThreads = NULL;
 
 	masterservers = Cvar_String( "masterservers" );
 	if( !*masterservers ) {
@@ -577,8 +618,8 @@ static void CL_MasterAddressCache_Init( void )
 	}
 
 	// don't allow too many as each will spawn its own resolver thread
-	if( numMasters > MAX_MASTER_SERVERS )
-		numMasters = MAX_MASTER_SERVERS;
+	if( numMasters > NUM_RESOLVER_THREADS )
+		numMasters = NUM_RESOLVER_THREADS;
 
 	resolveLock = QMutex_Create();
 	if( resolveLock != NULL )
@@ -586,29 +627,15 @@ static void CL_MasterAddressCache_Init( void )
 		unsigned numResolverThreads;
 
 		numResolverThreads = 0;
-		resolverThreads = malloc( sizeof( *resolverThreads ) * (numMasters+1) );
-		memset( resolverThreads, 0, sizeof( *resolverThreads ) * (numMasters+1) );
 
 		for( ptr = masterservers; ptr; )
 		{
-			char *master_copy;
-			qthread_t *thread;
-
 			master = COM_Parse( &ptr );
 			if( !*master )
 				break;
 
-			master_copy = ( char * )malloc( strlen( master ) + 1 );
-			memcpy( master_copy, master, strlen( master ) + 1 );
-
-			thread = QThread_Create( CL_MasterResolverThreadEntry, ( void * )master_copy );
-			if( thread != NULL ) {
-				resolverThreads[numResolverThreads++] = thread;
-				continue;
-			}
-
-			// we shouldn't get here if all goes well with the resolving thread
-			free( master_copy );
+			if( CL_StartMasterResolver( numResolverThreads, master ) )
+				numResolverThreads++;
 		}
 	}
 }
@@ -625,16 +652,19 @@ static void CL_MasterAddressCache_Shutdown( void )
 		QMutex_Lock( resolveLock );
 
 #if defined(UNSAFE_EXIT) && defined(Q_THREADS_HAVE_CANCEL)
-		for( i = 0; resolverThreads[i]; i++ ) {
-			QThread_Cancel( resolverThreads[i] );
+		for( i = 0; i < NUM_RESOLVER_THREADS; i++ ) {
+			if( resolverThreads[i] ) {
+				QThread_Cancel( resolverThreads[i] );
+			}
 		}
 
 		QMutex_Unlock( resolveLock );
 
-		for( i = 0; resolverThreads[i]; i++ ) {
-			QThread_Join( resolverThreads[i] );
+		for( i = 0; i < NUM_RESOLVER_THREADS; i++ ) {
+			if( resolverThreads[i] ) {
+				QThread_Join( resolverThreads[i] );
+			}
 		}
-		free( resolverThreads );
 
 		QMutex_Destroy( &resolveLock );
 #else
@@ -644,8 +674,10 @@ static void CL_MasterAddressCache_Shutdown( void )
 		// we're going to kill the main thread anyway, so keep the lock and let the threads die
 #endif
 
-		free( resolverThreads );
-		resolverThreads = NULL;
+		for( i = 0; i < NUM_RESOLVER_THREADS; i++ ) {
+			resolverThreadsActive[i] = false;
+			resolverThreads[i] = NULL;
+		}
 		resolveLock = NULL;
 	}
 
@@ -726,7 +758,7 @@ void CL_GetServers_f( void )
 	err = Trie_Find( serverlist_masters_trie, master, TRIE_EXACT_MATCH, (void **)&padr );
 	QMutex_Unlock( resolveLock );
 
-	if( err == TRIE_OK && ( padr->type == NA_IP || padr->type == NA_IP6 ) )
+	if( err == TRIE_OK )
 	{
 		const char *cmdname;
 		socket_t *socket;
@@ -757,6 +789,11 @@ void CL_GetServers_f( void )
 	else
 	{
 		Com_Printf( "Bad address: %s\n", master );
+		for( i = 0; i < NUM_RESOLVER_THREADS; i++ )
+		{
+			if( CL_StartMasterResolver( i, master ) )
+				break;
+		}
 	}
 }
 
