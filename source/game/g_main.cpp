@@ -289,7 +289,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_armor_protection = trap_Cvar_Get( "g_armor_protection", va( "%.2f", ARMOR_PROTECTION ), CVAR_DEVELOPER );
 	g_respawn_delay_min = trap_Cvar_Get( "g_respawn_delay_min", "600", CVAR_DEVELOPER );
 	g_respawn_delay_max = trap_Cvar_Get( "g_respawn_delay_max", "6000", CVAR_DEVELOPER );
-	g_numbots = trap_Cvar_Get( "g_numbots", "0", CVAR_SERVERINFO|CVAR_ARCHIVE );
+	g_numbots = trap_Cvar_Get( "g_numbots", "0", CVAR_ARCHIVE );
 	g_deadbody_followkiller = trap_Cvar_Get( "g_deadbody_followkiller", "1", CVAR_DEVELOPER );
 	g_deadbody_autogib_delay = trap_Cvar_Get( "g_deadbody_autogib_delay", "2000", CVAR_DEVELOPER );
 	g_maxtimeouts = trap_Cvar_Get( "g_maxtimeouts", "2", CVAR_ARCHIVE );
