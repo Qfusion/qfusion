@@ -20,10 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_serverlist.c  -- interactuates with the master server
 
 #include "client.h"
-#include "../qalgo/q_trie.h"
 
 //#define UNSAFE_EXIT
-#define NUM_RESOLVER_THREADS				4
+#define MAX_MASTER_SERVERS					4
 
 #ifdef PUBLIC_BUILD
 #define SERVERBROWSER_PROTOCOL_VERSION		APP_PROTOCOL_VERSION
@@ -47,9 +46,6 @@ typedef struct serverlist_s
 
 serverlist_t *masterList, *favoritesList;
 
-// cache of resolved master server addresses/names
-static trie_t *serverlist_masters_trie = NULL;
-
 static bool filter_allow_full = false;
 static bool filter_allow_empty = false;
 
@@ -57,13 +53,17 @@ static unsigned int masterServerUpdateSeq;
 
 static unsigned int localQueryTimeStamp = 0;
 
-typedef struct resolverThreadParam_s {
-	int threadNum;
-	char master[MAX_STRING_CHARS];
-} resolverThreadParam_t;
+typedef struct masterserver_s
+{
+	char addressString[MAX_STRING_CHARS];
+	netadr_t address;
+	qthread_t *resolverThread;
+	volatile bool resolverActive;
+} masterserver_t;
 
-static qthread_t *resolverThreads[NUM_RESOLVER_THREADS];
-static volatile bool resolverThreadsActive[NUM_RESOLVER_THREADS];
+static masterserver_t masterServers[MAX_MASTER_SERVERS];
+int numMasterServers;
+
 static qmutex_t *resolveLock;
 
 //=========================================================
@@ -523,71 +523,27 @@ void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address
 }
 
 /*
-* CL_ResolveMasterAddress
+* CL_MasterResolverThreadFunc
 */
-static void CL_ResolveMasterAddress( const char *master )
+static void *CL_MasterResolverThreadFunc( void *param )
 {
-	netadr_t adr, *padr;
+	masterserver_t *master = param;
+	netadr_t adr;
 
-	if( *master ) {
-		if( NET_StringToAddress( master, &adr ) && ( adr.type == NA_IP || adr.type == NA_IP6 ) ) {
-			QMutex_Lock( resolveLock );
-
-			padr = ( netadr_t * )malloc( sizeof( adr ) );
-			*padr = adr;
-
-			Trie_Insert( serverlist_masters_trie, master, padr );
-
-			QMutex_Unlock( resolveLock );
+	if( NET_StringToAddress( master->addressString, &adr ) && ( adr.type == NA_IP || adr.type == NA_IP6 ) ) {
+		if( NET_GetAddressPort( &adr ) == 0 ) {
+			NET_SetAddressPort( &adr, PORT_MASTER );
 		}
+
+		QMutex_Lock( resolveLock );
+		memcpy( &master->address, &adr, sizeof( netadr_t ) );
+		QMutex_Unlock( resolveLock );
+	} else {
+		Com_Printf( "Failed to resolve master server address: %s\n", master->addressString );
 	}
-}
 
-/*
-* CL_MasterResolverThreadEntry
-*/
-static void *CL_MasterResolverThreadEntry( void *param )
-{
-	const resolverThreadParam_t *resolveParam = param;
-
-	CL_ResolveMasterAddress( resolveParam->master );
-
-	resolverThreadsActive[resolveParam->threadNum] = false;
-	free( param );
+	master->resolverActive = false;
 	return NULL;
-}
-
-/*
-* CL_StartMasterResolver
-*/
-static bool CL_StartMasterResolver( int num, const char *master )
-{
-	resolverThreadParam_t *param;
-
-	if( resolverThreadsActive[num] )
-		return false;
-
-	// release the old thread's resources
-	if( resolverThreads[num] )
-	{
-		QThread_Join( resolverThreads[num] );
-		resolverThreads[num] = NULL;
-	}
-
-	param = malloc( sizeof( resolverThreadParam_t ) );
-	param->threadNum = num;
-	Q_strncpyz( param->master, master, sizeof( param->master ) );
-
-	resolverThreadsActive[num] = true;
-	resolverThreads[num] = QThread_Create( CL_MasterResolverThreadEntry, param );
-	if( !resolverThreads[num] )
-	{
-		resolverThreadsActive[num] = false;
-		free( param );
-		return false;
-	}
-
-	return true;
 }
 
 /*
@@ -597,45 +553,47 @@ static void CL_MasterAddressCache_Init( void )
 {
 	int numMasters;
 	const char *ptr;
-	const char *master;
-	const char *masterservers;
+	const char *masterAddress;
+	const char *masterList;
+	masterserver_t *master;
+	int i;
 
-	Trie_Create( TRIE_CASE_INSENSITIVE, &serverlist_masters_trie );
-
-	masterservers = Cvar_String( "masterservers" );
-	if( !*masterservers ) {
+	masterList = Cvar_String( "masterservers" );
+	if( !*masterList ) {
 		return;
 	}
 
 	// count the number of master servers
 	numMasters = 0;
-	for( ptr = masterservers; ptr; ) {
-		master = COM_Parse( &ptr );
-		if( !*master ) {
+	for( ptr = masterList; ptr; ) {
+		masterAddress = COM_Parse( &ptr );
+		if( !*masterAddress ) {
 			break;
 		}
 		numMasters++;
 	}
 
 	// don't allow too many as each will spawn its own resolver thread
-	if( numMasters > NUM_RESOLVER_THREADS )
-		numMasters = NUM_RESOLVER_THREADS;
+	if( numMasters > MAX_MASTER_SERVERS )
+		numMasters = MAX_MASTER_SERVERS;
 
+	numMasterServers = 0;
 	resolveLock = QMutex_Create();
 	if( resolveLock != NULL )
 	{
-		unsigned numResolverThreads;
-
-		numResolverThreads = 0;
-
-		for( ptr = masterservers; ptr; )
+		for( i = 0, ptr = masterList, master = masterServers; i < numMasters && ptr; i++, master++ )
 		{
-			master = COM_Parse( &ptr );
-			if( !*master )
+			masterAddress = COM_Parse( &ptr );
+			if( !*masterAddress )
 				break;
 
-			if( CL_StartMasterResolver( numResolverThreads, master ) )
-				numResolverThreads++;
+			numMasterServers++;
+			Q_strncpyz( master->addressString, masterAddress, sizeof( master->addressString ) );
+			master->address.type = NA_NOTRANSMIT;
+			master->resolverActive = true;
+			master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
+			if( !master->resolverThread )
+				master->resolverActive = false;
 		}
 	}
 }
@@ -645,28 +603,29 @@ static void CL_MasterAddressCache_Init( void )
 */
 static void CL_MasterAddressCache_Shutdown( void )
 {
-	unsigned i;
-	trie_dump_t *dump;
-
-	if( resolverThreads ) {
+	if( resolveLock ) {
 		QMutex_Lock( resolveLock );
 
 #if defined(UNSAFE_EXIT) && defined(Q_THREADS_HAVE_CANCEL)
-		for( i = 0; i < NUM_RESOLVER_THREADS; i++ ) {
-			if( resolverThreads[i] ) {
-				QThread_Cancel( resolverThreads[i] );
+		{
+			int i;
+
+			for( i = 0; i < numMasterServers; i++ ) {
+				if( masterServers[i].resolverThread ) {
+					QThread_Cancel( masterServers[i].resolverThread );
+				}
 			}
-		}
 
-		QMutex_Unlock( resolveLock );
+			QMutex_Unlock( resolveLock );
 
-		for( i = 0; i < NUM_RESOLVER_THREADS; i++ ) {
-			if( resolverThreads[i] ) {
-				QThread_Join( resolverThreads[i] );
+			for( i = 0; i < numMasterServers; i++ ) {
+				if( masterServers[i].resolverThread ) {
+					QThread_Join( masterServers[i].resolverThread );
+				}
 			}
-		}
 
-		QMutex_Destroy( &resolveLock );
+			QMutex_Destroy( &resolveLock );
+		}
 #else
 		// here we leak the mutex and resources allocated for resolving threads,
 		// but at least we're not calling cancel on them, which is possibly dangerous
@@ -674,22 +633,9 @@ static void CL_MasterAddressCache_Shutdown( void )
 		// we're going to kill the main thread anyway, so keep the lock and let the threads die
 #endif
 
-		for( i = 0; i < NUM_RESOLVER_THREADS; i++ ) {
-			resolverThreadsActive[i] = false;
-			resolverThreads[i] = NULL;
-		}
+		numMasterServers = 0;
+		memset( masterServers, 0, sizeof( masterServers ) );
 		resolveLock = NULL;
-	}
-
-	// free allocated memory
-	if( serverlist_masters_trie ) {
-		Trie_Dump( serverlist_masters_trie, "", TRIE_DUMP_BOTH, &dump );
-		for( i = 0; i < dump->size; ++i ) {
-			free( dump->key_value_vector[i].value );
-		}
-		Trie_FreeDump( dump );
-		Trie_Destroy( serverlist_masters_trie );
-		serverlist_masters_trie = NULL;
 	}
 }
 
@@ -698,11 +644,11 @@ static void CL_MasterAddressCache_Shutdown( void )
 */
 void CL_GetServers_f( void )
 {
-	netadr_t adr, *padr;
+	netadr_t adr;
 	char *requeststring;
 	int i;
-	char *modname, *master;
-	trie_error_t err;
+	char *modname, *masterAddress;
+	masterserver_t *master = NULL;
 
 	filter_allow_full = false;
 	filter_allow_empty = false;
@@ -721,7 +667,6 @@ void CL_GetServers_f( void )
 			return;
 		}
 
-		padr = &adr;
 		localQueryTimeStamp = Sys_Milliseconds();
 
 		// send a broadcast packet
@@ -735,15 +680,15 @@ void CL_GetServers_f( void )
 
 		for( i = 0; i < NUM_BROADCAST_PORTS; i++ )
 		{
-			NET_BroadcastAddress( padr, PORT_SERVER + i );
-			Netchan_OutOfBandPrint( &cls.socket_udp, padr, "%s", requeststring );
+			NET_BroadcastAddress( &adr, PORT_SERVER + i );
+			Netchan_OutOfBandPrint( &cls.socket_udp, &adr, "%s", requeststring );
 		}
 		return;
 	}
 
 	//get what master
-	master = Cmd_Argv( 2 );
-	if( !master || !( *master ) )
+	masterAddress = Cmd_Argv( 2 );
+	if( !masterAddress || !( *masterAddress ) )
 		return;
 
 	modname = Cmd_Argv( 3 );
@@ -754,46 +699,58 @@ void CL_GetServers_f( void )
 	assert( modname[0] );
 
 	// check memory cache
-	QMutex_Lock( resolveLock );
-	err = Trie_Find( serverlist_masters_trie, master, TRIE_EXACT_MATCH, (void **)&padr );
-	QMutex_Unlock( resolveLock );
-
-	if( err == TRIE_OK )
+	for( i = 0; i < numMasterServers; i++ )
 	{
-		const char *cmdname;
-		socket_t *socket;
-
-		if ( padr->type == NA_IP )
+		if( !Q_stricmp( masterServers[i].addressString, masterAddress ) )
 		{
-			cmdname = "getservers";
-			socket = &cls.socket_udp;
+			master = &masterServers[i];
+			break;
+		}
+	}
+
+	if( master )
+	{
+		QMutex_Lock( resolveLock );
+		memcpy( &adr, &master->address, sizeof( netadr_t ) );
+		QMutex_Unlock( resolveLock );
+
+		if( adr.type == NA_IP || adr.type == NA_IP6 )
+		{
+			const char *cmdname;
+			socket_t *socket;
+
+			if ( adr.type == NA_IP )
+			{
+				cmdname = "getservers";
+				socket = &cls.socket_udp;
+			}
+			else
+			{
+				cmdname = "getserversExt";
+				socket = &cls.socket_udp6;
+			}
+
+			// create the message
+			requeststring = va( "%s %c%s %i %s %s", cmdname, toupper( modname[0] ), modname+1, SERVERBROWSER_PROTOCOL_VERSION,
+				filter_allow_full ? "full" : "",
+				filter_allow_empty ? "empty" : "" );
+
+			Netchan_OutOfBandPrint( socket, &adr, "%s", requeststring );
+
+			Com_DPrintf( "Querying %s (%s): %s\n", masterAddress, NET_AddressToString( &adr ), requeststring );
 		}
 		else
 		{
-			cmdname = "getserversExt";
-			socket = &cls.socket_udp6;
+			Com_DPrintf( "Resolving master server address: %s\n", masterAddress );
+			master->resolverActive = true;
+			master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
+			if( !master->resolverThread )
+				master->resolverActive = false;
 		}
-
-		// create the message
-		requeststring = va( "%s %c%s %i %s %s", cmdname, toupper( modname[0] ), modname+1, SERVERBROWSER_PROTOCOL_VERSION,
-			filter_allow_full ? "full" : "",
-			filter_allow_empty ? "empty" : "" );
-
-		if( NET_GetAddressPort( padr ) == 0 )
-			NET_SetAddressPort( padr, PORT_MASTER );
-
-		Netchan_OutOfBandPrint( socket, padr, "%s", requeststring );
-
-		Com_DPrintf( "quering %s...%s: %s\n", master, NET_AddressToString(padr), requeststring );
 	}
 	else
 	{
-		Com_Printf( "Bad address: %s\n", master );
-		for( i = 0; i < NUM_RESOLVER_THREADS; i++ )
-		{
-			if( CL_StartMasterResolver( i, master ) )
-				break;
-		}
+		Com_Printf( "Address is not in master servers list: %s\n", masterAddress );
 	}
 }
 
