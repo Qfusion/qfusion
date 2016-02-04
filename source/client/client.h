@@ -514,6 +514,7 @@ void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg
 void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address, msg_t *msg, bool extended );
 void CL_GetServers_f( void );
 void CL_PingServer_f( void );
+void CL_ServerListFrame( void );
 void CL_InitServerList( void );
 void CL_ShutDownServerList( void );
 
