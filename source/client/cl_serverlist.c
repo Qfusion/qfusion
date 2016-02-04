@@ -59,6 +59,7 @@ typedef struct masterserver_s
 	netadr_t address;
 	qthread_t *resolverThread;
 	volatile bool resolverActive;
+	char delayedRequestServersArgs[MAX_STRING_CHARS];
 } masterserver_t;
 
 static masterserver_t masterServers[MAX_MASTER_SERVERS];
@@ -744,13 +745,37 @@ void CL_GetServers_f( void )
 			Com_DPrintf( "Resolving master server address: %s\n", masterAddress );
 			master->resolverActive = true;
 			master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
-			if( !master->resolverThread )
+			if( master->resolverThread )
+				Q_strncpyz( master->delayedRequestServersArgs, Cmd_Args(), sizeof( master->delayedRequestServersArgs ) );
+			else
 				master->resolverActive = false;
 		}
 	}
 	else
 	{
 		Com_Printf( "Address is not in master servers list: %s\n", masterAddress );
+	}
+}
+
+/*
+* CL_ServerListFrame
+*/
+void CL_ServerListFrame( void )
+{
+	int i;
+	masterserver_t *master;
+	char cmd[MAX_STRING_CHARS];
+
+	for( i = 0, master = masterServers; i < numMasterServers; i++, master++ ) {
+		if( !master->delayedRequestServersArgs[0] || master->resolverActive ) {
+			continue;
+		}
+
+		if( master->address.type == NA_IP || master->address.type == NA_IP6 ) {
+			Q_snprintfz( cmd, sizeof( cmd ), "requestservers %s\n", master->delayedRequestServersArgs );
+			Cbuf_ExecuteText( EXEC_APPEND, cmd );
+		}
+		master->delayedRequestServersArgs[0] = '\0';
 	}
 }
 
