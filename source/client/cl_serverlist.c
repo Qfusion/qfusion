@@ -751,11 +751,11 @@ void CL_GetServers_f( void )
 
 				master->resolverActive = true;
 				master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
-				if( master->resolverThread )
-					Q_strncpyz( master->delayedRequestServersArgs, Cmd_Args(), sizeof( master->delayedRequestServersArgs ) );
-				else
+				if( !master->resolverThread )
 					master->resolverActive = false;
 			}
+
+			Q_strncpyz( master->delayedRequestServersArgs, Cmd_Args(), sizeof( master->delayedRequestServersArgs ) );
 		}
 	}
 	else
