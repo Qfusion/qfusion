@@ -742,13 +742,20 @@ void CL_GetServers_f( void )
 		}
 		else
 		{
-			Com_DPrintf( "Resolving master server address: %s\n", masterAddress );
-			master->resolverActive = true;
-			master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
-			if( master->resolverThread )
-				Q_strncpyz( master->delayedRequestServersArgs, Cmd_Args(), sizeof( master->delayedRequestServersArgs ) );
-			else
-				master->resolverActive = false;
+			if( !master->resolverActive )
+			{
+				Com_DPrintf( "Resolving master server address: %s\n", masterAddress );
+
+				if( master->resolverThread )
+					QThread_Join( master->resolverThread );
+
+				master->resolverActive = true;
+				master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
+				if( master->resolverThread )
+					Q_strncpyz( master->delayedRequestServersArgs, Cmd_Args(), sizeof( master->delayedRequestServersArgs ) );
+				else
+					master->resolverActive = false;
+			}
 		}
 	}
 	else
