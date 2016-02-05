@@ -2587,6 +2587,8 @@ static void CL_NetFrame( int realmsec, int gamemsec )
 	// resend a connection request if necessary
 	CL_CheckForResend();
 	CL_CheckDownloadTimeout();
+
+	CL_ServerListFrame();
 }
 
 /*
