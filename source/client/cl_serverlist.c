@@ -55,11 +55,11 @@ static unsigned int localQueryTimeStamp = 0;
 
 typedef struct masterserver_s
 {
-	char addressString[MAX_STRING_CHARS];
+	char addressString[MAX_TOKEN_CHARS];
 	netadr_t address;
 	qthread_t *resolverThread;
 	volatile bool resolverActive;
-	char delayedRequestModName[MAX_STRING_CHARS];
+	char delayedRequestModName[MAX_TOKEN_CHARS];
 } masterserver_t;
 
 static masterserver_t masterServers[MAX_MASTER_SERVERS];
