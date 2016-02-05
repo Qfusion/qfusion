@@ -65,8 +65,6 @@ typedef struct masterserver_s
 static masterserver_t masterServers[MAX_MASTER_SERVERS];
 int numMasterServers;
 
-static qmutex_t *resolveLock;
-
 //=========================================================
 
 /*
@@ -529,16 +527,12 @@ void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address
 static void *CL_MasterResolverThreadFunc( void *param )
 {
 	masterserver_t *master = param;
-	netadr_t adr;
 
-	if( NET_StringToAddress( master->addressString, &adr ) && ( adr.type == NA_IP || adr.type == NA_IP6 ) ) {
-		if( NET_GetAddressPort( &adr ) == 0 ) {
-			NET_SetAddressPort( &adr, PORT_MASTER );
+	NET_StringToAddress( master->addressString, &master->address );
+	if( master->address.type == NA_IP || master->address.type == NA_IP6 ) {
+		if( NET_GetAddressPort( &master->address ) == 0 ) {
+			NET_SetAddressPort( &master->address, PORT_MASTER );
 		}
-
-		QMutex_Lock( resolveLock );
-		memcpy( &master->address, &adr, sizeof( netadr_t ) );
-		QMutex_Unlock( resolveLock );
 	} else {
 		Com_Printf( "Failed to resolve master server address: %s\n", master->addressString );
 	}
@@ -579,23 +573,19 @@ static void CL_MasterAddressCache_Init( void )
 		numMasters = MAX_MASTER_SERVERS;
 
 	numMasterServers = 0;
-	resolveLock = QMutex_Create();
-	if( resolveLock != NULL )
+	for( i = 0, ptr = masterList, master = masterServers; i < numMasters && ptr; i++, master++ )
 	{
-		for( i = 0, ptr = masterList, master = masterServers; i < numMasters && ptr; i++, master++ )
-		{
-			masterAddress = COM_Parse( &ptr );
-			if( !*masterAddress )
-				break;
+		masterAddress = COM_Parse( &ptr );
+		if( !*masterAddress )
+			break;
 
-			numMasterServers++;
-			Q_strncpyz( master->addressString, masterAddress, sizeof( master->addressString ) );
-			master->address.type = NA_NOTRANSMIT;
-			master->resolverActive = true;
-			master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
-			if( !master->resolverThread )
-				master->resolverActive = false;
-		}
+		numMasterServers++;
+		Q_strncpyz( master->addressString, masterAddress, sizeof( master->addressString ) );
+		master->address.type = NA_NOTRANSMIT;
+		master->resolverActive = true;
+		master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
+		if( !master->resolverThread )
+			master->resolverActive = false;
 	}
 }
 
@@ -604,40 +594,28 @@ static void CL_MasterAddressCache_Init( void )
 */
 static void CL_MasterAddressCache_Shutdown( void )
 {
-	if( resolveLock ) {
-		QMutex_Lock( resolveLock );
-
 #if defined(UNSAFE_EXIT) && defined(Q_THREADS_HAVE_CANCEL)
-		{
-			int i;
+	int i;
 
-			for( i = 0; i < numMasterServers; i++ ) {
-				if( masterServers[i].resolverThread ) {
-					QThread_Cancel( masterServers[i].resolverThread );
-				}
-			}
-
-			QMutex_Unlock( resolveLock );
-
-			for( i = 0; i < numMasterServers; i++ ) {
-				if( masterServers[i].resolverThread ) {
-					QThread_Join( masterServers[i].resolverThread );
-				}
-			}
-
-			QMutex_Destroy( &resolveLock );
+	for( i = 0; i < numMasterServers; i++ ) {
+		if( masterServers[i].resolverThread ) {
+			QThread_Cancel( masterServers[i].resolverThread );
 		}
+	}
+
+	for( i = 0; i < numMasterServers; i++ ) {
+		if( masterServers[i].resolverThread ) {
+			QThread_Join( masterServers[i].resolverThread );
+		}
+	}
 #else
-		// here we leak the mutex and resources allocated for resolving threads,
-		// but at least we're not calling cancel on them, which is possibly dangerous
-		
-		// we're going to kill the main thread anyway, so keep the lock and let the threads die
+	// here we leak the mutex and resources allocated for resolving threads,
+	// but at least we're not calling cancel on them, which is possibly dangerous
+
+	// we're going to kill the main thread anyway, so keep the lock and let the threads die
 #endif
 
-		numMasterServers = 0;
-		memset( masterServers, 0, sizeof( masterServers ) );
-		resolveLock = NULL;
-	}
+	numMasterServers = 0;
 }
 
 /*
@@ -675,7 +653,6 @@ static void CL_SendMasterServerQuery( netadr_t *adr, const char *modname )
 */
 void CL_GetServers_f( void )
 {
-	netadr_t adr;
 	const char *requeststring;
 	int i;
 	const char *modname, *masterAddress;
@@ -711,8 +688,9 @@ void CL_GetServers_f( void )
 
 		for( i = 0; i < NUM_BROADCAST_PORTS; i++ )
 		{
-			NET_BroadcastAddress( &adr, PORT_SERVER + i );
-			Netchan_OutOfBandPrint( &cls.socket_udp, &adr, "%s", requeststring );
+			netadr_t broadcastAddress;
+			NET_BroadcastAddress( &broadcastAddress, PORT_SERVER + i );
+			Netchan_OutOfBandPrint( &cls.socket_udp, &broadcastAddress, "%s", requeststring );
 		}
 		return;
 	}
@@ -738,38 +716,33 @@ void CL_GetServers_f( void )
 		}
 	}
 
-	if( master )
-	{
-		QMutex_Lock( resolveLock );
-		memcpy( &adr, &master->address, sizeof( netadr_t ) );
-		QMutex_Unlock( resolveLock );
-
-		if( adr.type == NA_IP || adr.type == NA_IP6 )
-		{
-			CL_SendMasterServerQuery( &adr, modname );
-		}
-		else
-		{
-			if( !master->resolverActive )
-			{
-				Com_DPrintf( "Resolving master server address: %s\n", master->addressString );
-
-				if( master->resolverThread )
-					QThread_Join( master->resolverThread );
-
-				master->resolverActive = true;
-				master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
-				if( !master->resolverThread )
-					master->resolverActive = false;
-			}
-
-			Q_strncpyz( master->delayedRequestModName, modname, sizeof( master->delayedRequestModName ) );
-		}
-	}
-	else
+	if( !master )
 	{
 		Com_Printf( "Address is not in master servers list: %s\n", masterAddress );
+		return;
 	}
+
+	if( !master->resolverActive )
+	{
+		if( master->address.type == NA_IP || master->address.type == NA_IP6 )
+		{
+			CL_SendMasterServerQuery( &master->address, modname );
+			return;
+		}
+
+		Com_DPrintf( "Resolving master server address: %s\n", master->addressString );
+
+		if( master->resolverThread )
+			QThread_Join( master->resolverThread );
+
+		master->resolverActive = true;
+		master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
+		if( !master->resolverThread )
+			master->resolverActive = false;
+
+	}
+
+	Q_strncpyz( master->delayedRequestModName, modname, sizeof( master->delayedRequestModName ) );
 }
 
 /*
