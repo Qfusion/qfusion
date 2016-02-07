@@ -1564,12 +1564,13 @@ const char *NET_ErrorString( void )
 void NET_SetErrorString( const char *format, ... )
 {
 	va_list	argptr;
+	char msg[MAX_PRINTMSG];
 
 	va_start( argptr, format );
-	Q_vsnprintfz( errorstring, sizeof( errorstring ), format, argptr );
+	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
 
-	errorstring[sizeof( errorstring )-1] = '\0';
+	Q_strncpyz( errorstring, msg, sizeof( errorstring ) );
 }
 
 /*
