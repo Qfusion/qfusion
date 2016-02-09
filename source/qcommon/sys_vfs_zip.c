@@ -300,53 +300,49 @@ void Sys_VFS_Zip_Init( int numvfs, const char * const *vfsnames )
 		Sys_VFS_Zip_LoadVFS( i, vfsnames[i] );
 }
 
-char **Sys_VFS_Zip_ListFiles( const char *basepath, const char *gamedir, const char *extension, int *numfiles )
+char **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles )
 {
 	int i, j;
 	sys_vfs_zip_vfs_t *vfs;
-	int nfiles = 0;
+	int nFiles = 0;
 	char **list;
 	sys_vfs_zip_file_t *file;
-	const char *name, *e;
-	size_t dirlen = strlen( gamedir );
-	size_t namesize;
+	const char *name;
+	size_t nameSize;
 
 	for( i = 0, vfs = sys_vfs_zip_files; i < sys_vfs_zip_numvfs; ++i, ++vfs )
-		nfiles += vfs->numFiles;
+		nFiles += vfs->numFiles;
 
-	if( !nfiles )
+	if( !nFiles )
 	{
-		*numfiles = 0;
+		*numFiles = 0;
 		return NULL;
 	}
 
-	list = Mem_ZoneMalloc( nfiles * sizeof( char * ) );
+	list = Mem_ZoneMalloc( nFiles * sizeof( char * ) );
 
-	nfiles = 0;
+	nFiles = 0;
 	for( i = 0, vfs = sys_vfs_zip_files; i < sys_vfs_zip_numvfs; ++i, ++vfs )
 	{
 		for( j = vfs->numFiles, file = vfs->files; j-- > 0; ++file )
 		{
 			name = file->name;
 			if( !name )
+				continue; // overriden by another VFS later in the list
+			if( !Com_GlobMatch( pattern, name, false ) )
 				continue;
-			if( strncmp( name, gamedir, dirlen ) || ( name[dirlen] != '/' ) )
-				continue;
-			e = COM_FileExtension( name );
-			if( !e || Q_stricmp( e + 1, extension ) )
-				continue;
-			namesize = ( basepath ? ( strlen( basepath ) + 1 ) : 0 ) + strlen( file->name ) + 1;
-			list[nfiles] = Mem_ZoneMalloc( namesize );
-			if( basepath )
-				Q_snprintfz( list[nfiles], namesize, "%s/%s", basepath, file->name );
+			nameSize = ( prependBasePath ? ( strlen( prependBasePath ) + 1 ) : 0 ) + strlen( name ) + 1;
+			list[nFiles] = Mem_ZoneMalloc( nameSize );
+			if( prependBasePath )
+				Q_snprintfz( list[nFiles], nameSize, "%s/%s", prependBasePath, name );
 			else
-				Q_strncpyz( list[nfiles], file->name, namesize );
-			nfiles++;
+				Q_strncpyz( list[nFiles], name, nameSize );
+			nFiles++;
 		}
 	}
 
-	list[nfiles] = NULL;
-	*numfiles = nfiles;
+	list[nFiles] = NULL;
+	*numFiles = nFiles;
 	return list;
 }
 

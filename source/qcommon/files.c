@@ -3486,7 +3486,7 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 {
 	int i, e, numpakfiles;
 	char **paknames = NULL;
-	char tempname[FS_MAX_PATH];
+	char pattern[FS_MAX_PATH], basePattern[FS_MAX_PATH];
 
 	numpakfiles = 0;
 	for( e = 0; pak_extensions[e]; e++ )
@@ -3494,11 +3494,12 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 		int numvfsfiles = 0, numfiles = 0;
 		char **vfsfilenames = NULL, **filenames;
 
-		Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/*.%s", basepath->path, gamedir, pak_extensions[e] );
+		Q_snprintfz( pattern, sizeof( pattern ), "%s/*.%s", gamedir, pak_extensions[e] );
+		Q_snprintfz( basePattern, sizeof( basePattern ), "%s/%s", basepath->path, pattern );
 
 		if( basepath == fs_root_searchpath ) // only add VFS once per game, treat it like the installation directory
-			vfsfilenames = Sys_VFS_ListFiles( basepath->path, gamedir, pak_extensions[e], &numvfsfiles );
-		filenames = FS_ListFiles( tempname, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM );
+			vfsfilenames = Sys_VFS_ListFiles( pattern, basepath->path, &numvfsfiles );
+		filenames = FS_ListFiles( basePattern, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM );
 		if( vfsfilenames || filenames )
 		{
 			if( numpakfiles || ( vfsfilenames && filenames ) )
