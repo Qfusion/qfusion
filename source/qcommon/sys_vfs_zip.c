@@ -309,6 +309,7 @@ char **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, 
 	sys_vfs_zip_file_t *file;
 	const char *name;
 	size_t nameSize;
+	size_t basePathLength = 0;
 
 	for( i = 0, vfs = sys_vfs_zip_files; i < sys_vfs_zip_numvfs; ++i, ++vfs )
 		nFiles += vfs->numFiles;
@@ -321,6 +322,9 @@ char **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, 
 
 	list = Mem_ZoneMalloc( nFiles * sizeof( char * ) );
 
+	if( prependBasePath )
+		basePathLength = strlen( prependBasePath ) + 1;
+
 	nFiles = 0;
 	for( i = 0, vfs = sys_vfs_zip_files; i < sys_vfs_zip_numvfs; ++i, ++vfs )
 	{
@@ -331,7 +335,7 @@ char **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, 
 				continue; // overriden by another VFS later in the list
 			if( !Com_GlobMatch( pattern, name, false ) )
 				continue;
-			nameSize = ( prependBasePath ? ( strlen( prependBasePath ) + 1 ) : 0 ) + strlen( name ) + 1;
+			nameSize = basePathLength + strlen( name ) + 1;
 			list[nFiles] = Mem_ZoneMalloc( nameSize );
 			if( prependBasePath )
 				Q_snprintfz( list[nFiles], nameSize, "%s/%s", prependBasePath, name );
