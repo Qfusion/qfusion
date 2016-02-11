@@ -277,7 +277,7 @@ void SP_info_camp( edict_t *self )
 {
 }
 
-//QUAKED light (0 1 0) (-8 -8 -8) (8 8 8) START_OFF
+//QUAKED light (0 1 0) (-8 -8 -8) (8 8 8) LINEAR NOANGLE UNUSED1 UNUSED2 NOGRIDLIGHT UNUSED4 START_OFF
 //Non-displayed light.
 //Default light value is 300.
 //Default style is 0.
@@ -285,7 +285,7 @@ void SP_info_camp( edict_t *self )
 //Default _cone value is 10 (used to set size of light for spotlights)
 //
 
-#define START_OFF   1
+#define START_OFF   64
 
 static void light_use( edict_t *self, edict_t *other, edict_t *activator )
 {
@@ -999,7 +999,7 @@ void SP_misc_particles( edict_t *ent )
 	if( ent->spawnflags & 32 ) // SHRINK_EFFECT
 		ent->particlesInfo.shrinkEffect = true;
 
-	if( ent->spawnflags & 64 ) // START_OFF
+	if( ent->spawnflags & START_OFF ) // START_OFF
 		ent->r.svflags |= SVF_NOCLIENT;
 
 	if( st.radius > 0 )
