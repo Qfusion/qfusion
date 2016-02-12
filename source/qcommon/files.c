@@ -1792,7 +1792,7 @@ int FS_FileNo( int file )
 	filehandle_t *fh;
 
 	fh = FS_FileHandleForNum( file );
-	if( fh->fstream )
+	if( fh->fstream && !fh->pakFile && !fh->vfsHandle )
 		return Sys_FS_FileNo( fh->fstream );
 	return -1;
 }
