@@ -699,8 +699,132 @@ void G_PrecacheMedia( void )
 }
 
 /*
-* SpawnEntities
-* 
+* G_FreeEntities
+*/
+static void G_FreeEntities( void )
+{
+	int i;
+
+	if( !level.time )
+		memset( game.edicts, 0, game.maxentities * sizeof( game.edicts[0] ) );
+	else
+	{
+		G_FreeEdict( world );
+		for( i = gs.maxclients + 1; i < game.maxentities; i++ )
+		{
+			if( game.edicts[i].r.inuse )
+				G_FreeEdict( game.edicts + i );
+		}
+	}
+	
+	game.numentities = gs.maxclients + 1;
+}
+
+/*
+* G_SpawnEntities
+*/
+static void G_SpawnEntities( void )
+{
+	int i;
+	edict_t *ent;
+	char *token;
+	const gsitem_t *item;
+	char *entities;
+	
+	game.numentities = gs.maxclients + 1;
+	game.levelSpawnCount++;
+
+	level.spawnedTimeStamp = game.realtime;
+	level.canSpawnEntities = true;
+
+	G_InitBodyQueue(); // reserve some spots for dead player bodies
+	
+	entities = level.mapString;
+	level.map_parsed_ents[0] = 0;
+	level.map_parsed_len = 0;
+
+	i = 0;
+	ent = NULL;
+	while( 1 )
+	{
+		level.spawning_entity = NULL;
+		
+		// parse the opening brace
+		token = COM_Parse( &entities );
+		if( !entities )
+			break;
+		if( token[0] != '{' )
+			G_Error( "G_SpawnMapEntities: found %s when expecting {", token );
+		
+		if( !ent )
+		{
+			ent = world;
+			G_InitEdict( world );
+		}
+		else
+			ent = G_Spawn();
+		
+		ent->spawnString = entities; // keep track of string definition of this entity
+		
+		entities = ED_ParseEdict( entities, ent );
+		if( !ent->classname )
+		{
+			i++;
+			G_FreeEdict( ent );
+			continue;
+		}
+		
+		if( !G_CanSpawnEntity( ent ) )
+		{
+			i++;
+			G_FreeEdict( ent );
+			continue;
+		}
+
+		if( !G_CallSpawn( ent ) )
+		{
+			i++;
+			G_FreeEdict( ent );
+			continue;
+		}
+		
+		// check whether an item is allowed to spawn
+		if( ( item = ent->item ) )
+		{
+			// not pickable items aren't spawnable
+			if( item->flags & ITFLAG_PICKABLE )
+			{
+				if( G_Gametype_CanSpawnItem( item ) )
+				{
+					// override entity's classname with whatever item specifies
+					ent->classname = item->classname;
+					PrecacheItem( item );
+					continue;
+				}
+			}
+			
+			i++;
+			G_FreeEdict( ent );
+			continue;
+		}
+	}
+	
+	// is the parsing string sane?
+	assert( (int)level.map_parsed_len < level.mapStrlen );
+	level.map_parsed_ents[level.map_parsed_len] = 0;
+	
+	G_FindTeams();
+	
+	// make sure server got the edicts data
+	trap_LocateEntities( game.edicts, sizeof( game.edicts[0] ), game.numentities, game.maxentities );
+	
+	// items need brush model entities spawned before they are linked
+	G_Items_FinishSpawningItems();
+}
+
+/*
+* G_InitLevel
+*
 * Creates a server's entity / program execution context by
 * parsing textual entity definitions out of an ent file.
 */
@@ -709,9 +833,6 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	char *mapString = NULL;
 	char name[MAX_CONFIGSTRING_CHARS];
 	int i;
-	edict_t *ent;
-	char *token;
-	const gsitem_t *item;
 
 	G_asGarbageCollect( true );
 
@@ -762,19 +883,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	level.map_parsed_ents = ( char * )G_LevelMalloc( entstrlen + 1 );
 	level.map_parsed_ents[0] = 0;
 
-	if( !level.time )
-		memset( game.edicts, 0, game.maxentities * sizeof( game.edicts[0] ) );
-	else
-	{
-		G_FreeEdict( world );
-		for( i = gs.maxclients + 1; i < game.maxentities; i++ )
-		{
-			if( game.edicts[i].r.inuse )
-				G_FreeEdict( game.edicts + i );
-		}
-	}
-
-	game.numentities = gs.maxclients + 1;
+	G_FreeEntities();
 
 	// link client fields on player ents
 	for( i = 0; i < gs.maxclients; i++ )
@@ -817,89 +926,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	AI_InitLevel(); // load navigation file of the current map
 
 	// start spawning entities
-
-	level.canSpawnEntities = true;
-	G_InitBodyQueue(); // reserve some spots for dead player bodies
-
-	entities = level.mapString;
-
-	i = 0;
-	ent = NULL;
-	while( 1 )
-	{
-		level.spawning_entity = NULL;
-
-		// parse the opening brace
-		token = COM_Parse( &entities );
-		if( !entities )
-			break;
-		if( token[0] != '{' )
-			G_Error( "G_SpawnMapEntities: found %s when expecting {", token );
-
-		if( !ent )
-		{
-			ent = world;
-			G_InitEdict( world );
-		}
-		else
-			ent = G_Spawn();
-
-		ent->spawnString = entities; // keep track of string definition of this entity
-
-		entities = ED_ParseEdict( entities, ent );
-		if( !ent->classname )
-		{
-			i++;
-			G_FreeEdict( ent );
-			continue;
-		}
-
-		if( !G_CanSpawnEntity( ent ) )
-		{
-			i++;
-			G_FreeEdict( ent );
-			continue;
-		}
-
-		if( !G_CallSpawn( ent ) )
-		{
-			i++;
-			G_FreeEdict( ent );
-			continue;
-		}
-
-		// check whether an item is allowed to spawn
-		if( ( item = ent->item ) )
-		{
-			// not pickable items aren't spawnable
-			if( item->flags & ITFLAG_PICKABLE )
-			{
-				if( G_Gametype_CanSpawnItem( item ) )
-				{
-					// override entity's classname with whatever item specifies
-					ent->classname = item->classname;
-					PrecacheItem( item );
-					continue;
-				}
-			}
-
-			i++;
-			G_FreeEdict( ent );
-			continue;
-		}
-	}
-
-	G_FindTeams();
-
-	// is the parsing string sane?
-	assert( (int)level.map_parsed_len < entstrlen );
-	level.map_parsed_ents[level.map_parsed_len] = 0;
-
-	// make sure server got the edicts data
-	trap_LocateEntities( game.edicts, sizeof( game.edicts[0] ), game.numentities, game.maxentities );
-
-	// items need brush model entities spawned before they are linked
-	G_Items_FinishSpawningItems();
+	G_SpawnEntities();
 
 	//
 	// initialize game subsystems which require entities initialized
@@ -918,6 +945,26 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	G_Match_LaunchState( MATCH_STATE_WARMUP );
 
 	G_asGarbageCollect( true );
+}
+
+void G_ResetLevel( void )
+{
+	int i;
+	
+	G_FreeEdict( world );
+	for( i = gs.maxclients + 1; i < game.maxentities; i++ )
+	{
+		if( game.edicts[i].r.inuse )
+			G_FreeEdict( game.edicts + i );
+	}
+
+	G_SpawnEntities();
+
+	// call gametype specific
+	GT_asCallSpawn();
+	
+	// call map specific
+	G_asCallMapInit();
 }
 
 bool G_RespawnLevel( void )

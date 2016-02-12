@@ -772,10 +772,7 @@ static void Think_SpawnDoorTrigger( edict_t *ent )
 	other->touch = Touch_DoorTrigger;
 	GClip_LinkEntity( other );
 
-	if( ent->spawnflags & DOOR_START_OPEN )
-	{
-		door_use_areaportals( ent, true );
-	}
+	door_use_areaportals( ent, ( ent->spawnflags & DOOR_START_OPEN ) != 0 );
 
 	Think_CalcMoveSpeed( ent );
 }
@@ -923,6 +920,9 @@ void SP_func_door( edict_t *ent )
 
 	GClip_LinkEntity( ent );
 
+	ent->style = -1;
+	door_use_areaportals( ent, ( ent->spawnflags & DOOR_START_OPEN ) != 0 );
+	
 	ent->nextThink = level.time + 1;
 	if( ent->targetname )
 		ent->think = Think_CalcMoveSpeed;
