@@ -882,7 +882,7 @@ return_result:
 /*
 * FS_FileExists
 */
-static int FS_FileExists( const char *filename, bool base )
+static int FS_FileExists( const char *filename, bool base, bool inVFS )
 {
 	searchpath_t *search;
 	packfile_t *pakFile = NULL;
@@ -902,9 +902,9 @@ static int FS_FileExists( const char *filename, bool base )
 	}
 
 	if( base )
-		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ), &vfsHandle );
+		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ), inVFS ? &vfsHandle : NULL );
 	else
-		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), &vfsHandle, FS_SEARCH_ALL );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), inVFS ? &vfsHandle : NULL, FS_SEARCH_ALL );
 
 	if( !search )
 		return -1;
@@ -951,7 +951,7 @@ static int FS_AbsoluteFileExists( const char *filename )
 */
 bool FS_PakFileExists( const char *packfilename )
 {
-	return FS_FileExists( packfilename, true ) != -1 || Sys_VFS_FindFile( packfilename ) != NULL;
+	return FS_FileExists( packfilename, true, true ) != -1;
 }
 
 /*
@@ -1168,7 +1168,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 	if( !filenum )
 	{
 		if( mode == FS_READ )
-			return FS_FileExists( filename, base );
+			return FS_FileExists( filename, base, !gz );
 		return -1;
 	}
 
@@ -1272,9 +1272,9 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 	}
 
 	if( base )
-		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ), &vfsHandle );
+		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ), !gz ? &vfsHandle : NULL );
 	else
-		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), &vfsHandle, FS_SEARCH_ALL );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), !gz ? &vfsHandle : NULL, FS_SEARCH_ALL );
 
 	if( !search )
 		goto notfound_dprint;
