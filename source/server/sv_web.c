@@ -1107,12 +1107,15 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 			}
 
 			*content_length = FS_FOpenBaseFile( filename, &response->file, FS_READ );
-			if( !response->file ) {
+			response->fileno = -1;
+			if( response->file ) {
+				response->fileno = FS_FileNo( response->file );
+			}
+			if( response->fileno == -1 ) {
 				response->code = HTTP_RESP_NOT_FOUND;
 				*content_length = 0;
 			}
 			else {
-				response->fileno = FS_FileNo( response->file );
 				response->code = HTTP_RESP_OK;
 			}
 		}
