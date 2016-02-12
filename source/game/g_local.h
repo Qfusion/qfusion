@@ -971,6 +971,7 @@ void G_SnapFrame( void );
 //
 bool G_CallSpawn( edict_t *ent );
 bool G_RespawnLevel( void );
+void G_ResetLevel( void );
 void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int levelTime, unsigned int serverTime, unsigned int realTime );
 const char *G_GetEntitySpawnKey( const char *key, edict_t *self );
 

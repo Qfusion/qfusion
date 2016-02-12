@@ -2724,6 +2724,11 @@ static void asFunc_G_Match_RemoveAllProjectiles( void )
 	G_Match_RemoveAllProjectiles();
 }
 
+static void asFunc_G_ResetLevel( void )
+{
+	G_ResetLevel();
+}
+
 static void asFunc_G_Match_FreeBodyQueue( void )
 {
 	G_Match_FreeBodyQueue();
@@ -3280,6 +3285,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 
 	// misc management utils
 	{ "void G_RemoveAllProjectiles()", asFUNCTION(asFunc_G_Match_RemoveAllProjectiles), NULL },
+	{ "void G_ResetLevel()", asFUNCTION(asFunc_G_ResetLevel), NULL },
 	{ "void G_RemoveDeadBodies()", asFUNCTION(asFunc_G_Match_FreeBodyQueue), NULL },
 	{ "void G_Items_RespawnByType( uint typeMask, int item_tag, float delay )", asFUNCTION(asFunc_G_Items_RespawnByType), NULL },
 
