@@ -731,9 +731,7 @@ static void G_SpawnEntities( void )
 	const gsitem_t *item;
 	char *entities;
 	
-	game.numentities = gs.maxclients + 1;
 	game.levelSpawnCount++;
-
 	level.spawnedTimeStamp = game.realtime;
 	level.canSpawnEntities = true;
 
@@ -846,7 +844,6 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 
 	game.serverTime = serverTime;
 	game.realtime = realTime;
-	game.levelSpawnCount++;
 
 	GClip_ClearWorld(); // clear areas links
 
@@ -867,7 +864,6 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	memset( &level, 0, sizeof( level_locals_t ) );
 	memset( &gs.gameState, 0, sizeof( gs.gameState ) );
 
-	level.spawnedTimeStamp = game.realtime;
 	level.time = levelTime;
 	level.gravity = g_gravity->value;
 
