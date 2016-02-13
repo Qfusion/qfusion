@@ -1786,14 +1786,26 @@ int FS_Flush( int file )
 
 /*
 * FS_FileNo
+*
+* Returns the file handle that can be used in system calls.
+* Optionally returns the offset of the data if the file is in a pack or the VFS.
 */
-int FS_FileNo( int file )
+int FS_FileNo( int file, size_t *offset )
 {
 	filehandle_t *fh;
 
+	if( offset ) {
+		*offset = 0;
+	}
+
 	fh = FS_FileHandleForNum( file );
-	if( fh->fstream && !fh->pakFile && !fh->vfsHandle )
+	if( fh->fstream && !fh->zipEntry && !fh->gzstream ) {
+		if( offset ) {
+			*offset = fh->pakOffset;
+		}
 		return Sys_FS_FileNo( fh->fstream );
+	}
+
 	return -1;
 }
 
@@ -1897,7 +1909,7 @@ void *FS_MMapBaseFile( int file, size_t size, size_t offset )
 		return NULL;
 
 	fh = FS_FileHandleForNum( file );
-	if( !fh->fstream || fh->mapping )
+	if( !fh->fstream || fh->vfsHandle || fh->mapping )
 		return NULL;
 
 	data = Sys_FS_MMapFile( Sys_FS_FileNo( fh->fstream ), size, offset, &fh->mapping, &fh->mapping_offset );

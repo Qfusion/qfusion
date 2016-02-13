@@ -761,7 +761,7 @@ int	    FS_Seek( int file, int offset, int whence );
 int	    FS_Eof( int file );
 int	    FS_Flush( int file );
 bool	FS_IsUrl( const char *url );
-int		FS_FileNo( int file );
+int		FS_FileNo( int file, size_t *offset );
 
 void	FS_SetCompressionLevel( int file, int level );
 int		FS_GetCompressionLevel( int file );
