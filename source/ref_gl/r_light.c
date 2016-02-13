@@ -700,6 +700,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 	else
 	{
 		int stride = 1;
+		int dataRowSize = size * LIGHTMAP_BYTES;
 
 		if( mapConfig.deluxeMaps && !mapConfig.deluxeMappingEnabled )
 		{
@@ -709,8 +710,8 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 
 		for( i = 0, j = 0; i < numBlocks; i += p * stride, j += p )
 		{
-			p = R_PackLightmaps( numLightmaps - j, w, h, size * LIGHTMAP_BYTES, stride, samples,
-				false, "*lm", data + j * LIGHTMAP_BYTES * stride, &rects[i] );
+			p = R_PackLightmaps( numLightmaps - j, w, h, dataRowSize, stride, samples,
+				false, "*lm", data + j * dataRowSize * stride, &rects[i] );
 		}
 	}
 
