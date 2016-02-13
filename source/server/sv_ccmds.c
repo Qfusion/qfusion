@@ -283,9 +283,10 @@ void SV_Status_f( void )
 
 		s = NET_AddressToString( &cl->netchan.remoteAddress );
 		Com_Printf( "%s", s );
-		l = 22 - (int)strlen( s );
+		l = 21 - (int)strlen( s );
 		for( j = 0; j < l; j++ )
 			Com_Printf( " " );
+		Com_Printf( " " ); // always add at least one space between the columns because IPv6 addresses are long
 
 		Com_Printf( "%5i", cl->netchan.game_port );
 #ifndef RATEKILLED
