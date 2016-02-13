@@ -254,17 +254,29 @@ const char *Sys_FS_GetHomeDirectory( void )
 */
 const char *Sys_FS_GetCacheDirectory( void )
 {
-#ifdef __ANDROID__
 	static char cache[PATH_MAX] = { '\0' };
+
 	if( !cache[0] )
 	{
+#if !defined(__ANDROID__)
+		const char *homeEnv;
+		homeEnv = getenv( "HOME" );
+		if( !homeEnv )
+			return NULL;
+#endif
+
+#if defined(__MACOSX__)
+		Q_snprintfz( cache, sizeof( cache ), "%s/Library/Caches/%s-%d.%d", homeEnv, APPLICATION,
+				APP_VERSION_MAJOR, APP_VERSION_MINOR );
+#elif defined(__ANDROID__)
 		Q_snprintfz( cache, sizeof( cache ), "/data/data/%s/cache/%d.%d",
 			sys_android_packageName, APP_VERSION_MAJOR, APP_VERSION_MINOR );
-	}
-	return cache;
-#else
-	return NULL;
 #endif
+	}
+
+	if( cache[0] == '\0' )
+		return NULL;
+	return cache;
 }
 
 /*
