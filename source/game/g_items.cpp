@@ -421,9 +421,13 @@ void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags )
 		Touch_ItemSound( other, item );
 
 	if( !( ent->spawnflags & DROPPED_ITEM ) && G_Gametype_CanRespawnItem( item ) )
+	{
+		if( (item->type & IT_WEAPON ) && GS_RaceGametype() )
+			return; // weapons stay in race
 		SetRespawn( ent, G_Gametype_RespawnTimeForItem( item ) );
-	else
-		G_FreeEdict( ent );
+		return;
+	}
+	G_FreeEdict( ent );
 }
 
 //======================================================================
