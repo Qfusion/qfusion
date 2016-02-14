@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014 SiPlus, Chasseur de bots
+Copyright (C) 2016 SiPlus, Warsow development team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sys_fs.h"
 
 void		Sys_VFS_Zip_Init( int numvfs, const char * const *vfsnames );
-char		**Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles );
+char		**Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles, bool listFiles, bool listDirs );
 void		*Sys_VFS_Zip_FindFile( const char *filename );
 const char	*Sys_VFS_Zip_VFSName( void *handle );
 unsigned	Sys_VFS_Zip_FileOffset( void *handle );

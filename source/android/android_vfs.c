@@ -135,9 +135,9 @@ void Sys_VFS_TouchGamePath( const char *gamedir, bool initial )
 {
 }
 
-char **Sys_VFS_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles )
+char **Sys_VFS_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles, bool listFiles, bool listDirs )
 {
-	return Sys_VFS_Zip_ListFiles( pattern, prependBasePath, numFiles );
+	return Sys_VFS_Zip_ListFiles( pattern, prependBasePath, numFiles, listFiles, listDirs );
 }
 
 void *Sys_VFS_FindFile( const char *filename )
