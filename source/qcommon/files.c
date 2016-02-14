@@ -318,6 +318,33 @@ static char **FS_ListFiles( char *findname, int *numfiles, unsigned musthave, un
 }
 
 /*
+* FS_VFSPathForFileName
+*/
+static bool FS_VFSPathForFileName( const searchpath_t *search, const char *fileName, char *vfsPath, size_t vfsPathSize )
+{
+	if( search == fs_root_searchpath ) {
+		Q_strncpyz( vfsPath, fileName, vfsPathSize );
+		return true;
+	}
+
+	if( search->base == fs_root_searchpath ) {
+		const char *vfsGameDir;
+
+		vfsGameDir = strrchr( search->path, '/' );
+		if( vfsGameDir ) {
+			vfsGameDir++;
+		} else {
+			vfsGameDir = search->path;
+		}
+
+		Q_snprintfz( vfsPath, vfsPathSize, "%s/%s", vfsGameDir, fileName );
+		return true;
+	}
+
+	return false;
+}
+
+/*
 * FS_SearchPakForFile
 */
 static bool FS_SearchPakForFile( pack_t *pak, const char *filename, packfile_t **pout )
@@ -346,7 +373,7 @@ static bool FS_SearchPakForFile( pack_t *pak, const char *filename, packfile_t *
 static bool FS_SearchDirectoryForFile( searchpath_t *search, const char *filename, char *path, size_t path_size, void **vfsHandle )
 {
 	FILE *f;
-	char tempname[FS_MAX_PATH];
+	char tempname[FS_MAX_PATH], vfstempname[FS_MAX_PATH];
 	bool found = false;
 
 	assert( search );
@@ -362,27 +389,9 @@ static bool FS_SearchDirectoryForFile( searchpath_t *search, const char *filenam
 		found = true;
 	}
 
-	if( !found && vfsHandle && ( search == fs_root_searchpath || search->base == fs_root_searchpath ) )
+	if( !found && vfsHandle && FS_VFSPathForFileName( search, filename, vfstempname, sizeof( vfstempname ) ) )
 	{
-		if( search == fs_root_searchpath ) // base path
-		{
-			*vfsHandle = Sys_VFS_FindFile( filename );
-		}
-		else
-		{
-			const char *vfsGameDir;
-			char vfsTempName[FS_MAX_PATH];
-
-			vfsGameDir = strrchr( search->path, '/' );
-			if( vfsGameDir )
-				vfsGameDir++;
-			else
-				vfsGameDir = search->path;
-
-			Q_snprintfz( vfsTempName, sizeof( vfsTempName ), "%s/%s", vfsGameDir, filename );
-			*vfsHandle = Sys_VFS_FindFile( vfsTempName );
-		}
-
+		*vfsHandle = Sys_VFS_FindFile( vfstempname );
 		if( *vfsHandle )
 			found = true;
 	}
@@ -2967,81 +2976,103 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 
 	if( !search->pack )
 	{
-		size_t searchlen;
-		int numfiles;
-		char **filenames;
+		char vfstempname[FS_MAX_PATH];
+		size_t pathlen;
+		int numfiles = 0, numvfsfiles = 0, totalnumfiles;
+		char **filenames, **vfsfilenames = NULL, *filepath;
+		const char *filename;
 		unsigned int musthave, canthave;
 
 		musthave = 0;
 		canthave = SFF_HIDDEN | SFF_SYSTEM;
 
-		Q_strncpyz( tempname, search->path, sizeof( tempname ) );
-		Q_strncatz( tempname, "/", sizeof( tempname ) );
-
-		if( dirlen )
-		{
-			Q_strncatz( tempname, dir, sizeof( tempname ) );
-			Q_strncatz( tempname, "/", sizeof( tempname ) );
-		}
-		searchlen = strlen( tempname );
+		pathlen = strlen( search->path ) + 1;
 
 		if( extension )
 		{
 			if( extension[0] != '/' )
-			{
-				Q_strncatz( tempname, "*", sizeof( tempname ) );
-				Q_strncatz( tempname, extension, sizeof( tempname ) );
 				canthave |= SFF_SUBDIR;
+			else
+				musthave |= SFF_SUBDIR;
+		}
+
+		Q_snprintfz( tempname, sizeof( tempname ), "%s/%s%s*%s",
+			search->path, dir, dirlen ? "/" : "", ( extension && ( extension[0] != '/' ) ) ? extension : ".*");
+		filenames = FS_ListFiles( tempname, &numfiles, musthave, canthave );
+
+		Q_snprintfz( tempname, sizeof( tempname ), "%s%s*%s",
+			dir, dirlen ? "/" : "", ( extension && ( extension[0] != '/' ) ) ? extension : "");
+		if( FS_VFSPathForFileName( search, tempname, vfstempname, sizeof( vfstempname ) ) )
+			vfsfilenames = Sys_VFS_ListFiles( vfstempname, NULL, &numvfsfiles, !( musthave & SFF_SUBDIR ), !( canthave & SFF_SUBDIR ) );
+
+		totalnumfiles = numfiles + numvfsfiles; // not caring about duplicates because they will be removed later
+		for( i = 0; i < totalnumfiles; i++ )
+		{
+			if( i < numfiles )
+			{
+				// real file
+				filepath = filenames[i];
+				filename = filepath + pathlen + ( dirlen ? dirlen + 1 : 0 );
 			}
 			else
 			{
-				Q_strncatz( tempname, "*.*", sizeof( tempname ) );
-				musthave |= SFF_SUBDIR;
-			}
-		}
-		else
-		{
-			Q_strncatz( tempname, "*.*", sizeof( tempname ) );
-		}
+				// VFS file
+				const char *p;
 
-		if( ( filenames = FS_ListFiles( tempname, &numfiles, musthave, canthave ) ) )
-		{
-			for( i = 0; i < numfiles; i++ )
-			{
-				if( found < size )
+				filepath = vfsfilenames[i - numfiles];
+				filename = filepath + ( dirlen ? dirlen + 1 : 0 );
+				if( search->base )
 				{
-					size_t len = strlen( filenames[i] + searchlen );
+					// skip game directory
+					p = strchr( filename, '/' );
+					if( p )
+						filename = p + 1;
+				}
 
-					if( ( musthave & SFF_SUBDIR ) )
+				// skip subdirectories
+				p = strchr( filename, '/' );
+				if( p && p[1] )
+				{
+					Mem_ZoneFree( filepath );
+					continue;
+				}
+			}
+
+			if( found < size )
+			{
+				size_t len = strlen( filename );
+
+				if( ( musthave & SFF_SUBDIR ) )
+				{
+					if( filename[len-1] != '/' )
 					{
-						if( filenames[i][searchlen+len-1] != '/' )
-						{
-							files[found].name = ( char* )Mem_ZoneMalloc( len + 2 );
-							strcpy( files[found].name, filenames[i] + searchlen );
-							files[found].name[len] = '/';
-							files[found].name[len+1] = 0;
-						}
-						else
-						{
-							files[found].name = ZoneCopyString( filenames[i] + searchlen );
-						}
+						files[found].name = ( char* )Mem_ZoneMalloc( len + 2 );
+						strcpy( files[found].name, filename );
+						files[found].name[len] = '/';
+						files[found].name[len+1] = 0;
 					}
 					else
 					{
-						if( extension && ( len <= extlen ) )
-						{
-							Mem_ZoneFree( filenames[i] );
-							continue;
-						}
-						files[found].name = ZoneCopyString( filenames[i] + searchlen );
+						files[found].name = ZoneCopyString( filename );
 					}
-					files[found].searchPath = search;
-					found++;
 				}
-				Mem_ZoneFree( filenames[i] );
+				else
+				{
+					if( extension && ( len <= extlen ) )
+					{
+						Mem_ZoneFree( filepath );
+						continue;
+					}
+					files[found].name = ZoneCopyString( filename );
+				}
+				files[found].searchPath = search;
+				found++;
 			}
+
+			Mem_ZoneFree( filepath );
 		}
 		Mem_ZoneFree( filenames );
+		Mem_ZoneFree( vfsfilenames );
 
 		return found;
 	}
@@ -3546,7 +3577,7 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 		Q_snprintfz( basePattern, sizeof( basePattern ), "%s/%s", basepath->path, pattern );
 
 		if( basepath == fs_root_searchpath ) // only add VFS once per game, treat it like the installation directory
-			vfsfilenames = Sys_VFS_ListFiles( pattern, basepath->path, &numvfsfiles );
+			vfsfilenames = Sys_VFS_ListFiles( pattern, basepath->path, &numvfsfiles, true, false );
 		filenames = FS_ListFiles( basePattern, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM );
 		if( vfsfilenames || filenames )
 		{

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014 SiPlus, Chasseur de bots
+Copyright (C) 2016 SiPlus, Warsow development team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -37,6 +37,7 @@ static mempool_t *sys_vfs_zip_mempool;
 typedef struct
 {
 	char *name;
+	bool isDirectory;
 	int vfs;
 	unsigned offset, size;
 } sys_vfs_zip_file_t;
@@ -247,31 +248,35 @@ static void Sys_VFS_Zip_LoadVFS( int idx, const char *filename )
 
 	vfs = &sys_vfs_zip_files[idx];
 	vfs->name = Mem_CopyString( sys_vfs_zip_mempool, filename );
-	vfs->numFiles = numFiles;
+	vfs->numFiles = 0;
 	vfs->files = Mem_Alloc( sys_vfs_zip_mempool, numFiles * sizeof( sys_vfs_zip_file_t ) + namesLen );
 	file = vfs->files;
 	names = ( char * )( vfs->files ) + numFiles * sizeof( sys_vfs_zip_file_t );
-	for( i = 0, centralPos = offsetCentralDir + byteBeforeTheZipFile; i < numFiles; ++i, ++file, centralPos += offset )
+	for( i = 0, centralPos = offsetCentralDir + byteBeforeTheZipFile; i < numFiles; ++i, centralPos += offset )
 	{
 		offset = Sys_VFS_Zip_GetFileInfo( fin, centralPos, byteBeforeTheZipFile, names, &len, &file->offset, &file->size );
 		if( !offset )
 		{
 			Com_Printf( "%s is not a valid VFS zip file (may be compressed)\n", filename );
-			vfs->numFiles = i;
 			goto end;
 		}
-		if( names[0] && ( names[len - 1] != '/' ) )
+		if( names[0] )
 		{
 			file->name = names;
 			file->vfs = idx;
+			file->isDirectory = ( names[len - 1] == '/' );
+
 			trie_file = NULL;
 			trie_err = Trie_Replace( sys_vfs_zip_trie, names, file, ( void ** )&trie_file );
 			if( trie_err == TRIE_KEY_NOT_FOUND )
 				Trie_Insert( sys_vfs_zip_trie, names, file );
 			else if( trie_file )
 				trie_file->name = NULL; // make Sys_VFS_Zip_ListFiles skip already existing file if new vfs overrides it
+
+			++vfs->numFiles;
+			++file;
+			names += len + 1;
 		}
-		names += len + 1;
 	}
 
 	vfs->handle = handle;
@@ -300,7 +305,7 @@ void Sys_VFS_Zip_Init( int numvfs, const char * const *vfsnames )
 		Sys_VFS_Zip_LoadVFS( i, vfsnames[i] );
 }
 
-char **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles )
+char **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles, bool listFiles, bool listDirs )
 {
 	int i, j;
 	sys_vfs_zip_vfs_t *vfs;
@@ -320,7 +325,7 @@ char **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, 
 		return NULL;
 	}
 
-	list = Mem_ZoneMalloc( nFiles * sizeof( char * ) );
+	list = Mem_ZoneMalloc( ( nFiles + 1 ) * sizeof( char * ) );
 
 	if( prependBasePath )
 		basePathLength = strlen( prependBasePath ) + 1;
@@ -330,6 +335,8 @@ char **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, 
 	{
 		for( j = vfs->numFiles, file = vfs->files; j-- > 0; ++file )
 		{
+			if( ( !file->isDirectory && !listFiles ) || ( file->isDirectory && !listDirs ) )
+				continue;
 			name = file->name;
 			if( !name )
 				continue; // overriden by another VFS later in the list
@@ -358,6 +365,9 @@ void *Sys_VFS_Zip_FindFile( const char *filename )
 		return NULL;
 
 	Trie_Find( sys_vfs_zip_trie, filename, TRIE_EXACT_MATCH, ( void ** )&file );
+	if( file && file->isDirectory )
+		return NULL;
+
 	return file;
 }
 
