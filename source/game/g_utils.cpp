@@ -1248,6 +1248,7 @@ void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, .
 void G_CenterPrintMsg( edict_t *ent, const char *format, ... )
 {
 	char msg[1024];
+	char cmd[MAX_STRING_CHARS];
 	va_list	argptr;
 	char *p;
 	edict_t *other;
@@ -1261,7 +1262,8 @@ void G_CenterPrintMsg( edict_t *ent, const char *format, ... )
 	while( ( p = strchr( p, '\"' ) ) != NULL )
 		*p = '\'';
 
-	trap_GameCmd( ent, va( "cp \"%s\"", msg ) );
+	Q_snprintfz( cmd, sizeof( cmd ), "cp \"%s\"", msg );
+	trap_GameCmd( ent, cmd );
 
 	if( ent != NULL )
 	{
@@ -1272,7 +1274,7 @@ void G_CenterPrintMsg( edict_t *ent, const char *format, ... )
 				continue;
 
 			if( other->r.client->resp.chase.target == ENTNUM( ent ) )
-				trap_GameCmd( other, va( "cp \"%s\"", msg ) );
+				trap_GameCmd( other, cmd );
 		}
 	}
 }
