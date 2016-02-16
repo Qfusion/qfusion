@@ -82,7 +82,7 @@ void G_PlayerAward( edict_t *ent, const char *awardMsg )
 		if( !other->r.client || !other->r.inuse || !other->r.client->resp.chase.active )
 			continue;
 
-		if( other->r.client->ps.POVnum == (unsigned)ENTNUM( ent ) ) {
+		if( other->r.client->resp.chase.target == ENTNUM( ent ) ) {
 			trap_GameCmd( other, va( "aw \"%s\"", awardMsg ) );
 		}
 	}

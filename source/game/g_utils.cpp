@@ -1271,7 +1271,7 @@ void G_CenterPrintMsg( edict_t *ent, const char *format, ... )
 			if( !other->r.client || !other->r.inuse || !other->r.client->resp.chase.active )
 				continue;
 
-			if( other->r.client->ps.POVnum == (unsigned)ENTNUM( ent ) )
+			if( other->r.client->resp.chase.target == ENTNUM( ent ) )
 				trap_GameCmd( other, va( "cp \"%s\"", msg ) );
 		}
 	}
@@ -1360,7 +1360,7 @@ void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... )
 			if( !other->r.client || !other->r.inuse || !other->r.client->resp.chase.active )
 				continue;
 
-			if( other->r.client->ps.POVnum == (unsigned)ENTNUM( ent ) )
+			if( other->r.client->resp.chase.target == ENTNUM( ent ) )
 				trap_GameCmd( other, cmd );
 		}
 	}
