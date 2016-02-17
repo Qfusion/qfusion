@@ -149,11 +149,11 @@ static void SCR_ShutdownFonts( void )
 */
 static void SCR_CheckSystemFontsModified( void )
 {
-	if( !con_fontSystemFamily ) {
+	if( !con_fontSystemMonoFamily ) {
 		return;
 	}
 
-	if( con_fontSystemFamily->modified 
+	if( con_fontSystemMonoFamily->modified
 		|| con_fontSystemConsoleSize->modified 
 		) {
 		SCR_RegisterConsoleFont();
