@@ -1214,6 +1214,8 @@ static void Con_DisplayList( char **list )
 
 	if( i % columns != 0 )
 		Com_Printf( "\n" );
+
+	Com_Printf( "\n" );
 }
 
 /*
