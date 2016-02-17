@@ -1248,8 +1248,10 @@ void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, .
 void G_CenterPrintMsg( edict_t *ent, const char *format, ... )
 {
 	char msg[1024];
+	char cmd[MAX_STRING_CHARS];
 	va_list	argptr;
 	char *p;
+	edict_t *other;
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
@@ -1260,7 +1262,21 @@ void G_CenterPrintMsg( edict_t *ent, const char *format, ... )
 	while( ( p = strchr( p, '\"' ) ) != NULL )
 		*p = '\'';
 
-	trap_GameCmd( ent, va( "cp \"%s\"", msg ) );
+	Q_snprintfz( cmd, sizeof( cmd ), "cp \"%s\"", msg );
+	trap_GameCmd( ent, cmd );
+
+	if( ent != NULL )
+	{
+		// add it to every player who's chasing this player
+		for( other = game.edicts + 1; PLAYERNUM( other ) < gs.maxclients; other++ )
+		{
+			if( !other->r.client || !other->r.inuse || !other->r.client->resp.chase.active )
+				continue;
+
+			if( other->r.client->resp.chase.target == ENTNUM( ent ) )
+				trap_GameCmd( other, cmd );
+		}
+	}
 }
 
 /*
@@ -1278,6 +1294,7 @@ void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... )
 	char *p, *arg_p;
 	int num_args;
 	bool overflow = false;
+	edict_t *other;
 
 	Q_strncpyz( cmd, "cpf ", sizeof( cmd ) );
 
@@ -1336,6 +1353,19 @@ void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... )
 	}
 
 	trap_GameCmd( ent, cmd );
+
+	if( ent != NULL )
+	{
+		// add it to every player who's chasing this player
+		for( other = game.edicts + 1; PLAYERNUM( other ) < gs.maxclients; other++ )
+		{
+			if( !other->r.client || !other->r.inuse || !other->r.client->resp.chase.active )
+				continue;
+
+			if( other->r.client->resp.chase.target == ENTNUM( ent ) )
+				trap_GameCmd( other, cmd );
+		}
+	}
 }
 
 
