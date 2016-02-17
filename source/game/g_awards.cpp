@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void G_PlayerAward( edict_t *ent, const char *awardMsg )
 {
 	edict_t *other;
+	char cmd[MAX_STRING_CHARS];
 	gameaward_t *ga;
 	int i, size;
 	score_stats_t *stats;
@@ -38,7 +39,8 @@ void G_PlayerAward( edict_t *ent, const char *awardMsg )
 	if( !awardMsg || !awardMsg[0] || !ent->r.client )
 		return;
 
-	trap_GameCmd( ent, va( "aw \"%s\"", awardMsg ) );
+	Q_snprintfz( cmd, sizeof( cmd ), "aw \"%s\"", awardMsg );
+	trap_GameCmd( ent, cmd );
 
 	if( dedicated->integer )
 		G_Printf( "%s", COM_RemoveColorTokens( va( "%s receives a '%s' award.\n", ent->r.client->netname, awardMsg ) ) );
@@ -82,9 +84,8 @@ void G_PlayerAward( edict_t *ent, const char *awardMsg )
 		if( !other->r.client || !other->r.inuse || !other->r.client->resp.chase.active )
 			continue;
 
-		if( other->r.client->ps.POVnum == (unsigned)ENTNUM( ent ) ) {
-			trap_GameCmd( other, va( "aw \"%s\"", awardMsg ) );
-		}
+		if( other->r.client->resp.chase.target == ENTNUM( ent ) )
+			trap_GameCmd( other, cmd );
 	}
 }
 
