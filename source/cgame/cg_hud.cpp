@@ -2171,6 +2171,10 @@ static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_l
 	{
 		Q_strncpyz( layout_cursor_font_name, cgs.fontSystemFamily, sizeof( layout_cursor_font_name ) );
 	}
+	else if( !Q_stricmp( fontname, "con_fontSystemMono" ) )
+	{
+		Q_strncpyz( layout_cursor_font_name, cgs.fontSystemMonoFamily, sizeof( layout_cursor_font_name ) );
+	}
 	else
 	{
 		Q_strncpyz( layout_cursor_font_name, fontname, sizeof( layout_cursor_font_name ) );
