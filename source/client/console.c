@@ -1191,29 +1191,38 @@ static void Con_DisplayList( char **list )
 	maxlen += 2;
 	columns = width / maxlen;
 
-	for( i = 0; i < items; i++ )
+	if( columns == 0 )
 	{
-		columnwidth = 0;
-		for( j = i % columns; j < items; j += columns )
+		for( i = 0; i < items; i++ )
+			Com_Printf( "%s ", list[i] );
+		Com_Printf( "\n" );
+	}
+	else
+	{
+		for( i = 0; i < items; i++ )
 		{
-			len = (int)strlen( list[j] );
-			if( len > columnwidth )
-				columnwidth = len;
+			columnwidth = 0;
+			for( j = i % columns; j < items; j += columns )
+			{
+				len = (int)strlen( list[j] );
+				if( len > columnwidth )
+					columnwidth = len;
+			}
+			columnwidth += 2;
+
+			len = (int)strlen( list[i] );
+
+			Com_Printf( "%s", list[i] );
+			for( j = 0; j < columnwidth - len; j++ )
+				Com_Printf( " " );
+
+			if( i % columns == columns - 1 )
+				Com_Printf( "\n" );
 		}
-		columnwidth += 2;
 
-		len = (int)strlen( list[i] );
-
-		Com_Printf( "%s", list[i] );
-		for( j = 0; j < columnwidth - len; j++ )
-			Com_Printf( " " );
-
-		if( i % columns == columns - 1 )
+		if( i % columns != 0 )
 			Com_Printf( "\n" );
 	}
-
-	if( i % columns != 0 )
-		Com_Printf( "\n" );
 
 	Com_Printf( "\n" );
 }
