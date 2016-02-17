@@ -1173,42 +1173,47 @@ void Con_DrawConsole( void )
 */
 static void Con_DisplayList( char **list )
 {
-	int i = 0;
-	int pos = 0;
+	int i, j;
 	int len = 0;
 	int maxlen = 0;
-	int width = ( con.linewidth - 4 );
-	char **walk = list;
+	int width = con.linewidth - 4;
+	int columns;
+	int columnwidth;
+	int items = 0;
 
-	while( *walk )
+	while( list[items] )
 	{
-		len = (int)strlen( *walk );
+		len = (int)strlen( list[items] );
 		if( len > maxlen )
 			maxlen = len;
-		walk++;
+		items++;
 	}
-	maxlen += 1;
+	maxlen += 2;
+	columns = width / maxlen;
 
-	while( *list )
+	for( i = 0; i < items; i++ )
 	{
-		len = (int)strlen( *list );
-
-		if( pos + maxlen >= width )
+		columnwidth = 0;
+		for( j = i % columns; j < items; j += columns )
 		{
-			Com_Printf( "\n" );
-			pos = 0;
+			len = (int)strlen( list[j] );
+			if( len > columnwidth )
+				columnwidth = len;
 		}
+		columnwidth += 2;
 
-		Com_Printf( "%s", *list );
-		for( i = 0; i < ( maxlen - len ); i++ )
+		len = (int)strlen( list[i] );
+
+		Com_Printf( "%s", list[i] );
+		for( j = 0; j < columnwidth - len; j++ )
 			Com_Printf( " " );
 
-		pos += maxlen;
-		list++;
+		if( i % columns == columns - 1 )
+			Com_Printf( "\n" );
 	}
 
-	if( pos )
-		Com_Printf( "\n\n" );
+	if( i % columns != 0 )
+		Com_Printf( "\n" );
 }
 
 /*
