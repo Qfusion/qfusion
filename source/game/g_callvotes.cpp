@@ -265,6 +265,14 @@ static bool G_VoteMapValidate( callvotedata_t *data, bool first )
 
 	if( trap_ML_FilenameExists( mapname ) )
 	{
+		char msg[MAX_STRING_CHARS];
+		char fullname[MAX_TOKEN_CHARS];
+
+		Q_strncpyz( fullname, COM_RemoveColorTokens( trap_ML_GetFullname( mapname ) ), sizeof( fullname ) );
+		if( !Q_stricmp( mapname, fullname ) ) {
+			fullname[0] = '\0';
+		}
+
 		// check if valid map is in map pool when on
 		if( g_enforce_map_pool->integer )
 		{
@@ -281,7 +289,7 @@ static bool G_VoteMapValidate( callvotedata_t *data, bool first )
 				if ( !Q_stricmp( tok, mapname ) )
 				{
 					G_Free( s );
-					return true;
+					goto valid_map;
 				}
 				else
 					tok = strtok( NULL, MAPLIST_SEPS );
@@ -290,8 +298,16 @@ static bool G_VoteMapValidate( callvotedata_t *data, bool first )
 			G_PrintMsg( data->caller, "%sMap is not in map pool.\n", S_COLOR_RED );
 			return false;
 		}
+
+valid_map:
+		if( fullname[0] != '\0' )
+			Q_snprintfz( msg, sizeof( msg ), "%s (%s)", mapname, fullname );
 		else
-			return true;
+			Q_strncpyz( msg, mapname, sizeof( msg ) );
+
+		if( data->string ) G_Free( data->string );
+		data->string = G_CopyString( msg );
+		return true;
 	}
 
 	G_PrintMsg( data->caller, "%sNo such map available on this server\n", S_COLOR_RED );
