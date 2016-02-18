@@ -157,6 +157,7 @@ static void SCR_CheckSystemFontsModified( void )
 		|| con_fontSystemConsoleSize->modified 
 		) {
 		SCR_RegisterConsoleFont();
+		con_fontSystemMonoFamily->modified = false;
 		con_fontSystemConsoleSize->modified = false;
 	}
 }
