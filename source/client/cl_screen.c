@@ -54,6 +54,7 @@ static cvar_t *scr_graphshift;
 
 static cvar_t *con_fontSystemFamily;
 static cvar_t *con_fontSystemFallbackFamily;
+static cvar_t *con_fontSystemMonoFamily;
 static cvar_t *con_fontSystemConsoleSize;
 
 //
@@ -91,7 +92,7 @@ static void SCR_RegisterConsoleFont( void )
 	float pixelRatio = Con_GetPixelRatio();
 
 	// register system fonts
-	con_fontSystemFamilyName = con_fontSystemFamily->string;
+	con_fontSystemFamilyName = con_fontSystemMonoFamily->string;
 	if( !con_fontSystemConsoleSize->integer ) {
 		Cvar_SetValue( con_fontSystemConsoleSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE );
 	} else if( con_fontSystemConsoleSize->integer > DEFAULT_SYSTEM_FONT_SMALL_SIZE * 2 ) {
@@ -104,13 +105,13 @@ static void SCR_RegisterConsoleFont( void )
 	cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
 	if( !cls.consoleFont )
 	{
-		Cvar_ForceSet( con_fontSystemFamily->name, con_fontSystemFamily->dvalue );
-		con_fontSystemFamilyName = con_fontSystemFamily->dvalue;
+		Cvar_ForceSet( con_fontSystemMonoFamily->name, con_fontSystemMonoFamily->dvalue );
+		con_fontSystemFamilyName = con_fontSystemMonoFamily->dvalue;
 
 		size = DEFAULT_SYSTEM_FONT_SMALL_SIZE;
 		cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
 		if( !cls.consoleFont )
-			Com_Error( ERR_FATAL, "Couldn't load default font \"%s\"", con_fontSystemFamily->dvalue );
+			Com_Error( ERR_FATAL, "Couldn't load default font \"%s\"", con_fontSystemMonoFamily->dvalue );
 
 		Con_CheckResize();
 	}
@@ -123,6 +124,7 @@ static void SCR_RegisterConsoleFont( void )
 static void SCR_InitFonts( void )
 {
 	con_fontSystemFamily = Cvar_Get( "con_fontSystemFamily", DEFAULT_SYSTEM_FONT_FAMILY, CVAR_ARCHIVE );
+	con_fontSystemMonoFamily = Cvar_Get( "con_fontSystemMonoFamily", DEFAULT_SYSTEM_FONT_FAMILY_MONO, CVAR_ARCHIVE );
 	con_fontSystemFallbackFamily = Cvar_Get( "con_fontSystemFallbackFamily", DEFAULT_SYSTEM_FONT_FAMILY_FALLBACK, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	con_fontSystemConsoleSize = Cvar_Get( "con_fontSystemConsoleSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_SMALL_SIZE ), CVAR_ARCHIVE );
 
@@ -147,14 +149,15 @@ static void SCR_ShutdownFonts( void )
 */
 static void SCR_CheckSystemFontsModified( void )
 {
-	if( !con_fontSystemFamily ) {
+	if( !con_fontSystemMonoFamily ) {
 		return;
 	}
 
-	if( con_fontSystemFamily->modified 
+	if( con_fontSystemMonoFamily->modified
 		|| con_fontSystemConsoleSize->modified 
 		) {
 		SCR_RegisterConsoleFont();
+		con_fontSystemMonoFamily->modified = false;
 		con_fontSystemConsoleSize->modified = false;
 	}
 }

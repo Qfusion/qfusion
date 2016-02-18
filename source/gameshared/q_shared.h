@@ -80,6 +80,7 @@ extern float ( *LittleFloat )(float l);
 
 #define DEFAULT_SYSTEM_FONT_FAMILY			"Droid Sans"
 #define DEFAULT_SYSTEM_FONT_FAMILY_FALLBACK	"Droid Sans Fallback"
+#define DEFAULT_SYSTEM_FONT_FAMILY_MONO		"Droid Sans Mono"
 #define DEFAULT_SYSTEM_FONT_SMALL_SIZE		14
 #define DEFAULT_SYSTEM_FONT_MEDIUM_SIZE		16
 #define DEFAULT_SYSTEM_FONT_BIG_SIZE		24
