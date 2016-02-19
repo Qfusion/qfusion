@@ -858,8 +858,13 @@ static void target_delay_use( edict_t *ent, edict_t *other, edict_t *activator )
 //"random" delay variance, total delay = delay +/- random seconds
 void SP_target_delay( edict_t *ent )
 {
+	// check the "delay" key for backwards compatibility with Q3 maps
+	if( ent->delay )
+		ent->wait = ent->delay;
 	if( !ent->wait )
 		ent->wait = 1.0;
+
+	ent->delay = 0;
 	ent->use = target_delay_use;
 }
 
