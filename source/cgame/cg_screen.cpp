@@ -115,33 +115,10 @@ int scr_erase_center;
 */
 void CG_CenterPrint( const char *str )
 {
-	char c, *s;
-	int colorindex = -1;
-	const char *tmp;
+	char *s;
 	char l10n_buffer[sizeof(scr_centerstring)];
-	const char *l10n = NULL;
 
-	tmp = str;
-	if( Q_GrabCharFromColorString( &tmp, &c, &colorindex ) == GRABCHAR_COLOR ) {
-		// attempt to translate the remaining string
-		l10n = trap_L10n_TranslateString( tmp );
-	} else {
-		l10n = trap_L10n_TranslateString( str );
-	}
-
-	if( l10n ) {
-		if( colorindex > 0 ) {
-			l10n_buffer[0] = '^';
-			l10n_buffer[1] = '0' + colorindex;
-			Q_strncpyz( &l10n_buffer[2], l10n, sizeof( l10n_buffer ) - 2 );
-		}
-		else {
-			Q_strncpyz( l10n_buffer, l10n, sizeof( l10n_buffer ) );
-		}
-		str = l10n_buffer;
-	}
-
-	Q_strncpyz( scr_centerstring, str, sizeof( scr_centerstring ) );
+	Q_strncpyz( scr_centerstring, CG_TranslateColoredString( str, l10n_buffer, sizeof( l10n_buffer ) ), sizeof( scr_centerstring ) );
 	scr_centertime_off = cg_centerTime->value;
 	scr_centertime_start = cg.time;
 

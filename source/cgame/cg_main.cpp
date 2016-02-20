@@ -432,6 +432,42 @@ const char *CG_TranslateString( const char *string )
 }
 
 /*
+* CG_TranslateColoredString
+*/
+const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size )
+{
+	char c;
+	int colorindex;
+	const char *l10n, *tmp;
+
+	if( dst_size < 3 )
+		return string;
+
+	tmp = string;
+	if( Q_GrabCharFromColorString( &tmp, &c, &colorindex ) == GRABCHAR_COLOR ) {
+		// attempt to translate the remaining string
+		l10n = trap_L10n_TranslateString( tmp );
+	} else {
+		l10n = trap_L10n_TranslateString( string );
+	}
+
+	if( l10n ) {
+		int offset = 0;
+
+		if( colorindex > 0 ) {
+			dst[0] = '^';
+			dst[1] = '0' + colorindex;
+			offset = 2;
+		}
+		Q_strncpyz( &dst[offset], l10n, dst_size - offset );
+		return dst;
+	}
+
+	Q_strncpyz( dst, string, dst_size );
+	return dst;
+}
+
+/*
 * CG_RegisterWeaponModels
 */
 static void CG_RegisterWeaponModels( void )

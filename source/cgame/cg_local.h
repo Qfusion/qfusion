@@ -978,6 +978,7 @@ void CG_LocalPrint( const char *format, ... );
 int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const char *resp), void *privatep );
 
 const char *CG_TranslateString( const char *string );
+const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size );
 
 unsigned int CG_GetTouchButtonBits( void );
 void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip );
