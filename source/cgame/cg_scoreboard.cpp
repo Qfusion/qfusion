@@ -709,7 +709,10 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 			break;
 
 		case 's': // is a string
-			Q_strncpyz( string, token, sizeof( string ) );
+			{
+				char l10n[MAX_STRING_CHARS];
+				Q_strncpyz( string, CG_TranslateColoredString( token, l10n, sizeof( l10n ) ), sizeof( string ) );
+			}
 			break;
 
 		case 'n': // is a player name indicated by player number
