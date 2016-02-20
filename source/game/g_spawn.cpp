@@ -49,6 +49,7 @@ const field_t fields[] = {
 	{ "mass", FOFS( mass ), F_INT },
 	{ "attenuation", FOFS( attenuation ), F_FLOAT },
 	{ "map", FOFS( map ), F_LSTRING },
+	{ "random", FOFS( random ), F_FLOAT },
 
 	// temp spawn vars -- only valid when the spawn function is called
 	{ "lip", STOFS( lip ), F_INT, FFL_SPAWNTEMP },
