@@ -32,13 +32,12 @@ int CG_LostMultiviewPOV( void );
 
 /*
 * CG_ChaseStep
+*
+* Returns whether the POV was actually requested to be changed.
 */
-void CG_ChaseStep( int step )
+bool CG_ChaseStep( int step )
 {
 	int index, checkPlayer, i;
-
-	if( chaseCam.mode < 0 || chaseCam.mode >= CAM_MODES )
-		return;
 
 	if( cg.frame.multipov )
 	{
@@ -77,11 +76,16 @@ void CG_ChaseStep( int step )
 
 			cg.multiviewPlayerNum = cg.frame.playerStates[checkPlayer].playerNum;
 		}
+
+		return true;
 	}
 	else if( !cgs.demoPlaying )
 	{
 		trap_Cmd_ExecuteText( EXEC_NOW, step > 0 ? "chasenext" : "chaseprev" );
+		return true;
 	}
+
+	return false;
 }
 
 /*
@@ -758,82 +762,81 @@ float CG_ViewSmoothFallKick( void )
 }
 
 /*
-* CG_ChaseCamButtons
+* CG_SwitchChaseCamMode
+*
+* Returns whether the mode was actually switched.
 */
-static void CG_ChaseCamButtons( void )
+bool CG_SwitchChaseCamMode( void )
 {
-#define CHASECAMBUTTONSDELAY ( cg.time + 250 )
-	usercmd_t cmd;
 	bool chasecam = ( cg.frame.playerState.pmove.pm_type == PM_CHASECAM )
 		&& ( cg.frame.playerState.POVnum != (unsigned)( cgs.playerNum + 1 ) );
 	bool realSpec = cgs.demoPlaying || ISREALSPECTATOR();
 
-	if( (cg.frame.multipov || chasecam) && !CG_DemoCam_IsFree() )
+	if( ( cg.frame.multipov || chasecam ) && !CG_DemoCam_IsFree() )
 	{
-		if( cg.time <= chaseCam.cmd_mode_delay )
-			return;
+		if( chasecam )
+		{
+			if( realSpec )
+			{
+				if( ++chaseCam.mode >= CAM_MODES )
+				{
+					// if exceeds the cycle, start free fly
+					trap_Cmd_ExecuteText( EXEC_NOW, "camswitch" );
+					chaseCam.mode = 0;
+				}
+				return true;
+			}
+			return false;
+		}
 
+		chaseCam.mode = ( ( chaseCam.mode != CAM_THIRDPERSON ) ? CAM_THIRDPERSON : CAM_INEYES );
+		return true;
+	}
+
+	if( realSpec && ( CG_DemoCam_IsFree() || cg.frame.playerState.pmove.pm_type == PM_SPECTATOR ) )
+	{
+		trap_Cmd_ExecuteText( EXEC_NOW, "camswitch" );
+		return true;
+	}
+
+	return false;
+}
+
+/*
+* CG_UpdateChaseCam
+*/
+static void CG_UpdateChaseCam( void )
+{
+	bool chasecam = ( cg.frame.playerState.pmove.pm_type == PM_CHASECAM )
+		&& ( cg.frame.playerState.POVnum != (unsigned)( cgs.playerNum + 1 ) );
+
+	if( !( cg.frame.multipov || chasecam ) || CG_DemoCam_IsFree() )
+		chaseCam.mode = CAM_INEYES;
+
+	if( cg.time > chaseCam.cmd_mode_delay )
+	{
+		const int delay = 250;
+
+		usercmd_t cmd;
 		trap_NET_GetUserCmd( trap_NET_GetCurrentUserCmdNum() - 1, &cmd );
 
-		if( ( cmd.buttons & BUTTON_ATTACK ) )
+		if( cmd.buttons & BUTTON_ATTACK )
 		{
-			if( chasecam )
-			{
-				if( realSpec )
-				{
-					if( ++chaseCam.mode >= CAM_MODES )
-					{
-						// if exceeds the cycle, start free fly
-						trap_Cmd_ExecuteText( EXEC_NOW, "camswitch" );
-						chaseCam.mode = 0; // smallest, to start the new cycle
-					}
-
-					chaseCam.cmd_mode_delay = CHASECAMBUTTONSDELAY;
-				}
-			}
-			else
-			{
-				chaseCam.mode = ( chaseCam.mode != CAM_THIRDPERSON );
-				chaseCam.cmd_mode_delay = CHASECAMBUTTONSDELAY;
-			}
+			if( CG_SwitchChaseCamMode() )
+				chaseCam.cmd_mode_delay = cg.time + delay;
 		}
 
-		if( cg.frame.multipov || chasecam )
+		int chaseStep = 0;
+		if( cmd.upmove > 0 || cmd.buttons & BUTTON_SPECIAL )
+			chaseStep = 1;
+		else if( cmd.upmove < 0 )
+			chaseStep = -1;
+		if( chaseStep )
 		{
-			int step = 0;
-
-			if( cmd.upmove > 0 || cmd.buttons & BUTTON_SPECIAL )
-				step = 1;
-			else if( cmd.upmove < 0 )
-				step = -1;
-
-			if( step )
-			{
-				CG_ChaseStep( step );
-				chaseCam.cmd_mode_delay = CHASECAMBUTTONSDELAY;
-			}
+			if( CG_ChaseStep( chaseStep ) )
+				chaseCam.cmd_mode_delay = cg.time + delay;
 		}
 	}
-	else if( CG_DemoCam_IsFree() || cg.frame.playerState.pmove.pm_type == PM_SPECTATOR )
-	{
-		chaseCam.mode = CAM_INEYES;
-
-		if( realSpec )
-		{
-			trap_NET_GetUserCmd( trap_NET_GetCurrentUserCmdNum() - 1, &cmd );
-
-			if( ( cmd.buttons & BUTTON_ATTACK ) && cg.time > chaseCam.cmd_mode_delay )
-			{
-				trap_Cmd_ExecuteText( EXEC_NOW, "camswitch" );
-				chaseCam.cmd_mode_delay = CHASECAMBUTTONSDELAY;
-			}
-		}
-	}
-	else
-	{
-		chaseCam.mode = CAM_INEYES;
-	}
-#undef CHASECAMBUTTONSDELAY
 }
 
 /*
@@ -1116,7 +1119,7 @@ void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned
 	CG_CalcVrect(); // find sizes of the 3d drawing screen
 	CG_TileClear(); // clear any dirty part of the background
 
-	CG_ChaseCamButtons();
+	CG_UpdateChaseCam();
 
 	CG_RunLightStyles();
 

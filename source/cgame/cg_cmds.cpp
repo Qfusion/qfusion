@@ -1074,10 +1074,26 @@ static void CG_Cmd_WeaponCross_f( void )
 		return;
 	}
 
-	if( cgs.demoPlaying || ( cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) )
+	if( cgs.demoPlaying || ( cg.predictedPlayerState.pmove.pm_type != PM_NORMAL ) )
 	{
-		if( quarter )
-			CG_ChaseStep( ( quarter > 2 ) ? -1 : 1 );
+		if( cgs.demoPlaying ||
+			( cg.predictedPlayerState.pmove.pm_type == PM_SPECTATOR ) ||
+			( cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) )
+		{
+			switch( quarter )
+			{
+			case 1:
+			case 3:
+				CG_SwitchChaseCamMode();
+				break;
+			case 2:
+				CG_ChaseStep( 1 );
+				break;
+			case 4:
+				CG_ChaseStep( -1 );
+				break;
+			}
+		}
 		return;
 	}
 
