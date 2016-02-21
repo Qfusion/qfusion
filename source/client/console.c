@@ -826,7 +826,7 @@ void Con_DrawNotify( void )
 		char comp[MAX_STRING_CHARS];
 		size_t complen, imecursor, convstart, convlen;
 		char oldchar;
-		int precompcolor = ColorIndex( COLOR_WHITE );
+		int cursorcolor = ColorIndex( COLOR_WHITE );
 		vec4_t convcolor = { 1.0f, 1.0f, 1.0f, 0.3f };
 		int candwidth, numcands, selectedcand, firstcand, candspercol, candnumwidth;
 		int candx, candy, candsincol = 0, candprewidth;
@@ -928,23 +928,24 @@ void Con_DrawNotify( void )
 			chat_prestep = 0;
 		}
 
-		if( complen && ( chat_linepos < chat_bufferlen ) )
+		if( !complen || chat_linepos == chat_bufferlen )
 		{
-			oldchar = s[chat_linepos];
-			s[chat_linepos] = '\0';
 			SCR_DrawClampString( x - chat_prestep, y, s, x, y,
 				x + width, y + fontHeight, font, colorWhite, 0 );
-			precompcolor = Q_ColorStrLastColor( ColorIndex( COLOR_WHITE ), s, -1 );
-			s[chat_linepos] = oldchar;
-			SCR_DrawClampString( x - chat_prestep + compx + compwidth, y, s + chat_linepos, x, y,
-				x + width, y + fontHeight, font, color_table[precompcolor], 0 );
 		}
-		else
+		oldchar = s[chat_linepos];
+		s[chat_linepos] = '\0';
+		if( complen && chat_linepos < chat_bufferlen )
 		{
 			SCR_DrawClampString( x - chat_prestep, y, s, x, y,
 				x + width, y + fontHeight, font, colorWhite, 0 );
-			if( complen )
-				precompcolor = Q_ColorStrLastColor( ColorIndex( COLOR_WHITE ), s, -1 );
+		}
+		cursorcolor = Q_ColorStrLastColor( ColorIndex( COLOR_WHITE ), s, -1 );
+		s[chat_linepos] = oldchar;
+		if( complen && chat_linepos < chat_bufferlen )
+		{
+			SCR_DrawClampString( x - chat_prestep + compx + compwidth, y, s + chat_linepos, x, y,
+				x + width, y + fontHeight, font, color_table[cursorcolor], 0 );
 		}
 
 		if( complen )
@@ -958,7 +959,7 @@ void Con_DrawNotify( void )
 			}
 
 			SCR_DrawClampString( x - chat_prestep + compx, y, comp, x, y,
-				x + width, y + fontHeight, font, color_table[precompcolor], TEXTDRAWFLAG_NO_COLORS );
+				x + width, y + fontHeight, font, color_table[cursorcolor], TEXTDRAWFLAG_NO_COLORS );
 
 			SCR_DrawClampFillRect(
 				x - chat_prestep + compx, y + underlinePosition,
@@ -967,7 +968,7 @@ void Con_DrawNotify( void )
 		}
 
 		if( (int)( cls.realtime>>8 )&1 )
-			SCR_DrawFillRect( x + prewidth - chat_prestep, y, underlineThickness, fontHeight, colorWhite );
+			SCR_DrawFillRect( x + prewidth - chat_prestep, y, underlineThickness, fontHeight, color_table[cursorcolor] );
 
 
 		// draw IME candidates
