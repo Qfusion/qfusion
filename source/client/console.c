@@ -2139,20 +2139,92 @@ static void Con_MessageCompletion( const char *partial, bool teamonly )
 		Mem_Free( args );
 	}
 
-	if( comp[0] == '\0' ) {
-		return;
-	}
-
+	comp_len = 0;
 	partial_len = strlen( partial );
-	comp_len = strlen( comp );
 
-	// add ': ' to string if completing at the beginning of the string
-	if( comp[0] && ( chat_linepos == partial_len ) && ( chat_bufferlen + comp_len + 2 < MAX_CHAT_BYTES-1 ) ) {
-		Q_strncatz( comp, ", ", sizeof( comp ) );
-		comp_len += 2;
+	if( comp[0] != '\0' ) {
+		comp_len = strlen( comp );
+
+		// add ', ' to string if completing at the beginning of the string
+		if( comp[0] && ( chat_linepos == partial_len ) && ( chat_bufferlen + comp_len + 2 < MAX_CHAT_BYTES-1 ) ) {
+			Q_strncatz( comp, ", ", sizeof( comp ) );
+			comp_len += 2;
+		}
+	}
+	else {
+		int c, v, a, d, t;
+
+		c = Cmd_CompleteCountPossible( partial );
+		v = Cvar_CompleteCountPossible( partial );
+		a = Cmd_CompleteAliasCountPossible( partial );
+		d = Dynvar_CompleteCountPossible( partial );
+		t = c + v + a + d;
+
+		if( t > 0 )
+		{
+			int i;
+			char **list[5] = { 0, 0, 0, 0, 0 };
+			const char *cmd = NULL;
+
+			if( c )
+				cmd = *( list[0] = Cmd_CompleteBuildList( partial ) );
+			if( v )
+				cmd = *( list[1] = Cvar_CompleteBuildList( partial ) );
+			if( a )
+				cmd = *( list[2] = Cmd_CompleteAliasBuildList( partial ) );
+			if( d )
+				cmd = *( list[3] = (char **) Dynvar_CompleteBuildList( partial ) );
+
+			if( t == 1 )
+			{
+				comp_len = strlen( cmd );
+			}
+			else
+			{
+				comp_len = partial_len;
+				do
+				{
+					for( i = 0; i < 4; i++ )
+					{
+						char ch = cmd[comp_len];
+						char **l = list[i];
+						if( l )
+						{
+							while( *l && ( *l )[comp_len] == ch )
+								l++;
+							if( *l )
+								break;
+						}
+					}
+					if( i == 4 )
+						comp_len++;
+				}
+				while( i == 4 );
+			}
+
+			if( comp_len >= sizeof( comp ) - 1 )
+				comp_len = sizeof( comp ) - 1;
+
+			if( comp_len > partial_len )
+			{
+				memcpy( comp, cmd, comp_len );
+				comp[comp_len] = '\0';
+			}
+
+			for( i = 0; i < 4; ++i )
+			{
+				if( list[i] )
+					Mem_TempFree( list[i] );
+			}
+
+			if( t == 1 && comp_len < sizeof( comp ) - 1 ) {
+				Q_strncatz( comp, " ", sizeof( comp ) );
+				comp_len++;
+			}
+		}
 	}
 
-	if( chat_bufferlen + comp_len >= MAX_CHAT_BYTES-1 )
+	if( comp_len == 0 || comp_len == partial_len || chat_bufferlen + comp_len >= MAX_CHAT_BYTES-1 )
 		return;		// won't fit
 
 	chat_linepos -= partial_len;
