@@ -43,12 +43,15 @@ private:
 	vec3_t aWaveFrequency;
 	float fovX;
 	String mapName;
+	String colorCorrection;
+	struct shader_s *colorCorrectionShader;
 	bool Initialized;
 
 public:
 	UI_WorldviewWidget( const String &tag )
 		: Element( tag ), 
-		mapName( "" ), Initialized( false )
+		mapName( "" ), colorCorrection( "" ), colorCorrectionShader( NULL ),
+		Initialized( false )
 	{
 		memset( &refdef, 0, sizeof( refdef ) );
 		refdef.areabits = 0;
@@ -75,8 +78,15 @@ public:
 			if( mapName.Empty() ) {
 				return;
 			}
+
+			colorCorrectionShader = NULL;
 			firstRender = true;
 			Initialized = true;
+
+			if( !colorCorrection.Empty() ) {
+				colorCorrectionShader = trap::R_RegisterPic( colorCorrection.CString() );
+			}
+
 			trap::R_RegisterWorldModel( mapName.CString() );
 
 			this->DispatchEvent( "registerworldmodel", parameters, false );
@@ -90,7 +100,6 @@ public:
 		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
 		AdjustFov( &refdef.fov_x, &refdef.fov_y, refdef.width, refdef.height, false );
 		refdef.time = UI_Main::Get()->getRefreshState().time;
-		refdef.rdflags = RDF_OLDAREABITS;
 
 		vec3_t viewAngles;
 		for( int i = 0; i < 3; i++ ) {
@@ -110,6 +119,7 @@ public:
 		refdef.scissor_y = std::max( scissor_y, refdef.y );
 		refdef.scissor_width = std::min( scissor_w, refdef.width );
 		refdef.scissor_height = std::min( scissor_h, refdef.height );
+		refdef.colorCorrection = colorCorrectionShader;
 
 		trap::R_ClearScene();
 
@@ -193,6 +203,11 @@ public:
 			{
 				fovX = atof( GetProperty(*it)->Get<String>().CString() );
 			}
+
+			else if (*it == "color-correction")
+			{
+				colorCorrection = GetProperty(*it)->Get<String>();
+			}
 		}
 	}
 
@@ -270,6 +285,8 @@ public:
 		StyleSheetSpecification::RegisterProperty( "fov", "100", false ).AddParser( "number" );
 
 		StyleSheetSpecification::RegisterProperty( "worldmodel", "", false ).AddParser( "string" );
+
+		StyleSheetSpecification::RegisterProperty( "color-correction", "", false ).AddParser( "string" );
 	}
 
 	// Rocket overrides
