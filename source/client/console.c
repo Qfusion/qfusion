@@ -649,13 +649,13 @@ DRAWING
 */
 int Q_ColorCharCount( const char *s, int byteofs )
 {
-	char c;
+	wchar_t c;
 	const char *end = s + byteofs;
 	int charcount = 0;
 
 	while( s < end )
 	{
-		int gc = Q_GrabCharFromColorString( &s, &c, NULL );
+		int gc = Q_GrabWCharFromColorString( &s, &c, NULL );
 		if( gc == GRABCHAR_CHAR )
 			charcount++;
 		else if( gc == GRABCHAR_COLOR )
@@ -675,11 +675,11 @@ int Q_ColorCharCount( const char *s, int byteofs )
 int Q_ColorCharOffset( const char *s, int charcount )
 {
 	const char *start = s;
-	char c;
+	wchar_t c;
 
 	while( *s && charcount )
 	{
-		int gc = Q_GrabCharFromColorString( &s, &c, NULL );
+		int gc = Q_GrabWCharFromColorString( &s, &c, NULL );
 		if( gc == GRABCHAR_CHAR )
 			charcount--;
 		else if( gc == GRABCHAR_COLOR )
@@ -1828,11 +1828,7 @@ void Con_KeyDown( int key )
 		// jump over invisible color sequences
 		charcount = Q_ColorCharCount( key_lines[edit_line], key_linepos );
 		if( charcount > 1 )
-		{
 			key_linepos = Q_ColorCharOffset( key_lines[edit_line], charcount - 1 );
-			key_linepos = Q_Utf8SyncPos( key_lines[edit_line], key_linepos,	UTF8SYNC_LEFT );
-			key_linepos = max( key_linepos, 1 ); // Q_Utf8SyncPos could jump over [
-		}
 		return;
 	}
 
@@ -1843,8 +1839,9 @@ void Con_KeyDown( int key )
 			// skip to the end of color sequence
 			while( 1 )
 			{
-				char c, *tmp = key_lines[edit_line] + key_linepos;
-				if( Q_GrabCharFromColorString( ( const char ** )&tmp, &c, NULL ) == GRABCHAR_COLOR )
+				char *tmp = key_lines[edit_line] + key_linepos;
+				wchar_t c;
+				if( Q_GrabWCharFromColorString( ( const char ** )&tmp, &c, NULL ) == GRABCHAR_COLOR )
 					key_linepos = tmp - key_lines[edit_line]; // advance, try again
 				else	// GRABCHAR_CHAR or GRABCHAR_END
 					break;
@@ -1874,23 +1871,28 @@ void Con_KeyDown( int key )
 
 	if( ( key == K_RIGHTARROW ) || ( key == KP_RIGHTARROW ) )
 	{
+		int charcount = Q_ColorCharCount( key_lines[edit_line], key_linepos );
+
 		if( strlen( key_lines[edit_line] ) == key_linepos )
 		{
-			if( strlen( key_lines[( edit_line + 31 ) & 31] ) <= key_linepos )
-				return;
-
-			key_lines[edit_line][key_linepos] = key_lines[( edit_line + 31 ) & 31][key_linepos];
-			key_linepos++;
-			key_lines[edit_line][key_linepos] = 0;
+			char *oldline = key_lines[( edit_line + 31 ) & 31];
+			int oldcharcount = Q_ColorCharCount( oldline, strlen( oldline ) );
+			if( oldcharcount > charcount )
+			{
+				int oldcharofs = Q_ColorCharOffset( oldline, charcount );
+				int oldutflen = Q_Utf8SyncPos( oldline + oldcharofs, 1, UTF8SYNC_RIGHT );
+				if( key_linepos + oldutflen < MAXCMDLINE )
+				{
+					memcpy( key_lines[edit_line] + key_linepos, oldline + oldcharofs, oldutflen );
+					key_linepos += oldutflen;
+					key_lines[edit_line][key_linepos] = '\0';
+				}
+			}
 		}
 		else
 		{
-			int charcount;
-
 			// jump over invisible color sequences
-			charcount = Q_ColorCharCount( key_lines[edit_line], key_linepos );
 			key_linepos = Q_ColorCharOffset( key_lines[edit_line], charcount + 1 );
-			key_linepos = Q_Utf8SyncPos( key_lines[edit_line], key_linepos, UTF8SYNC_RIGHT );
 		}
 		return;
 	}
@@ -2221,7 +2223,6 @@ void Con_MessageKeyDown( int key )
 			// jump over invisible color sequences
 			charcount = Q_ColorCharCount( chat_buffer, chat_linepos );
 			chat_linepos = Q_ColorCharOffset( chat_buffer, charcount - 1 );
-			chat_linepos = Q_Utf8SyncPos( chat_buffer, chat_linepos, UTF8SYNC_LEFT );
 		}
 		return;
 	}
@@ -2235,7 +2236,6 @@ void Con_MessageKeyDown( int key )
 			// jump over invisible color sequences
 			charcount = Q_ColorCharCount( chat_buffer, chat_linepos );
 			chat_linepos = Q_ColorCharOffset( chat_buffer, charcount + 1 );
-			chat_linepos = Q_Utf8SyncPos( chat_buffer, chat_linepos, UTF8SYNC_RIGHT );
 		}
 		return;
 	}
@@ -2259,8 +2259,9 @@ void Con_MessageKeyDown( int key )
 			// skip to the end of color sequence
 			while( 1 )
 			{
-				char c, *tmp = chat_buffer + chat_linepos;
-				if( Q_GrabCharFromColorString( ( const char ** )&tmp, &c, NULL ) == GRABCHAR_COLOR )
+				char *tmp = chat_buffer + chat_linepos;
+				wchar_t c;
+				if( Q_GrabWCharFromColorString( ( const char ** )&tmp, &c, NULL ) == GRABCHAR_COLOR )
 					chat_linepos = tmp - chat_buffer; // advance, try again
 				else	// GRABCHAR_CHAR or GRABCHAR_END
 					break;
