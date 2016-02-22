@@ -1593,6 +1593,20 @@ static asstring_t *objectGameClient_getClanName( gclient_t *self )
 	return angelExport->asStringFactoryBuffer( temp, strlen( temp ) );
 }
 
+static asstring_t *objectGameClient_getMMLogin( gclient_t *self )
+{
+	const char *login = NULL;
+
+	if( self->mm_session > 0 ) {
+		login = Info_ValueForKey( self->userinfo, "cl_mm_login" );
+	}
+	if( !login ) {
+		login = "";
+	}
+
+	return angelExport->asStringFactoryBuffer( login, strlen( login ) );
+}
+
 static void objectGameClient_Respawn( bool ghost, gclient_t *self )
 {
 	int playerNum;
@@ -1956,6 +1970,7 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL(void, clearPlayerStateEvents, ()), asFUNCTION(objectGameClient_ClearPlayerStateEvents), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(const String @, get_name, () const), asFUNCTION(objectGameClient_getName), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(const String @, get_clanName, () const), asFUNCTION(objectGameClient_getClanName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_mmLogin, () const), asFUNCTION(objectGameClient_getMMLogin), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(Entity @, getEnt, () const), asFUNCTION(objectGameClient_GetEntity), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(int, inventoryCount, ( int tag ) const), asFUNCTION(objectGameClient_InventoryCount), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, inventorySetCount, ( int tag, int count )), asFUNCTION(objectGameClient_InventorySetCount), asCALL_CDECL_OBJLAST },
