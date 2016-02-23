@@ -1970,7 +1970,7 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL(void, clearPlayerStateEvents, ()), asFUNCTION(objectGameClient_ClearPlayerStateEvents), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(const String @, get_name, () const), asFUNCTION(objectGameClient_getName), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(const String @, get_clanName, () const), asFUNCTION(objectGameClient_getClanName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(const String @, get_mmLogin, () const), asFUNCTION(objectGameClient_getMMLogin), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, getMMLogin, () const), asFUNCTION(objectGameClient_getMMLogin), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(Entity @, getEnt, () const), asFUNCTION(objectGameClient_GetEntity), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(int, inventoryCount, ( int tag ) const), asFUNCTION(objectGameClient_InventoryCount), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, inventorySetCount, ( int tag, int count )), asFUNCTION(objectGameClient_InventorySetCount), asCALL_CDECL_OBJLAST },
