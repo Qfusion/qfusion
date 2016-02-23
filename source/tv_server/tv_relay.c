@@ -134,9 +134,16 @@ void TV_Relay_InitMap( relay_t *relay )
 
 	// allow different map checksums for demos
 	if( !relay->upstream->demo.playing )
+	{
 		if( (unsigned)atoi( relay->configstrings[CS_MAPCHECKSUM] ) != relay->map_checksum )
 			TV_Relay_Error( relay, "Local map version differs from server: %u != '%u'",
 			relay->map_checksum, (unsigned)atoi( relay->configstrings[CS_MAPCHECKSUM] ) );
+	}
+	else
+	{
+		// hack-update the map checksum for demos
+		Q_snprintfz( relay->configstrings[CS_MAPCHECKSUM], sizeof( relay->configstrings[CS_MAPCHECKSUM] ), "%u", relay->map_checksum );
+	}
 
 	// load and spawn all other entities
 	relay->module_export->SpawnEntities( relay->module, relay->configstrings[CS_WORLDMODEL],
