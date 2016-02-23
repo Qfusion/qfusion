@@ -79,7 +79,7 @@ static void TV_Upstream_ParseServerData( upstream_t *upstream, msg_t *msg )
 	// parse protocol version number
 	i = MSG_ReadLong( msg );
 
-	if( i != APP_PROTOCOL_VERSION )
+	if( i != APP_PROTOCOL_VERSION && !(upstream->demo.playing && i == APP_DEMO_PROTOCOL_VERSION) )
 		TV_Upstream_Error( upstream, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
 
 	upstream->servercount = MSG_ReadLong( msg );

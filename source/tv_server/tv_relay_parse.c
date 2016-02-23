@@ -98,7 +98,7 @@ static void TV_Relay_ParseServerData( relay_t *relay, msg_t *msg )
 	// parse protocol version number
 	i = MSG_ReadLong( msg );
 
-	if( i != APP_PROTOCOL_VERSION )
+	if( i != APP_PROTOCOL_VERSION && !(relay->upstream->demo.playing && i == APP_DEMO_PROTOCOL_VERSION) )
 		TV_Relay_Error( relay, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
 
 	relay->servercount = MSG_ReadLong( msg );
