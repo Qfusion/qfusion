@@ -76,6 +76,9 @@ static void ML_AddMap( const char *filename, const char *fullname )
 	if( !ML_ValidateFullname( fullname ) && *fullname )	// allow empty fullnames
 		return;
 
+	if( !strcmp(fullname, "ui") )
+		return;
+
 	ml_flush = true;	// tell everyone that maplist has changed
 	buffer = ( char* )Mem_ZoneMalloc( sizeof( mapinfo_t ) + strlen( filename ) + 1 + strlen( fullname ) + 1 );
 
