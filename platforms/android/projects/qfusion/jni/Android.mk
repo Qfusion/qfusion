@@ -17,8 +17,8 @@ include $(QFUSION_PATH)/source/android/libs/png.mk
 include $(QFUSION_PATH)/source/android/libs/theora.mk
 include $(QFUSION_PATH)/source/android/libs/vorbis.mk
 
-include $(QFUSION_PATH)/libsrcs/libRocket/libRocket/build/android/Controls.mk
-include $(QFUSION_PATH)/libsrcs/libRocket/libRocket/build/android/Core.mk
+include $(QFUSION_PATH)/libsrcs/libRocket/libRocket/Build/android/Controls.mk
+include $(QFUSION_PATH)/libsrcs/libRocket/libRocket/Build/android/Core.mk
 
 include $(QFUSION_PATH)/source/angelwrap/Android.mk
 include $(QFUSION_PATH)/source/cin/Android.mk
@@ -33,7 +33,7 @@ include $(QFUSION_PATH)/source/client/Android.mk
 
 # Set NDK_APP_DST_DIR to the temporary folder where the compiled game DLLs should be located before creating a modules PK3 with them.
 # On Windows, the absolute path is relative to the disk root.
-# NDK_APP_DST_DIR := $(HOME)/net.warsow/files/basewsw
+# NDK_APP_DST_DIR := $(HOME)/gg.warsow/files/basewsw
 
 include $(QFUSION_PATH)/source/cgame/Android.mk
 include $(QFUSION_PATH)/source/game/Android.mk
