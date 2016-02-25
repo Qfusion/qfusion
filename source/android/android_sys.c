@@ -29,6 +29,8 @@ unsigned int sys_frame_time;
 
 struct android_app *sys_android_app;
 
+char sys_android_internalDataPath[PATH_MAX];
+
 JNIEnv *sys_android_jniEnv;
 jclass sys_android_activityClass;
 jmethodID sys_android_getSystemService;
@@ -317,6 +319,13 @@ static void Sys_Android_Init( void )
 	struct android_app *app = sys_android_app;
 	JNIEnv *env;
 	jobject activity = app->activity->clazz;
+
+	// Resolve the app's internal storage root directory.
+	{
+		char relativePath[PATH_MAX];
+		Q_snprintfz( relativePath, sizeof( relativePath ), "%s/..", app->activity->internalDataPath );
+		realpath( relativePath, sys_android_internalDataPath );
+	}
 
 	// Set working directory to external data path.
 	{

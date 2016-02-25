@@ -41,6 +41,11 @@ enum
 extern struct android_app *sys_android_app;
 
 /**
+ * The root of the app's internal storage.
+ */
+extern char sys_android_internalDataPath[];
+
+/**
  * A global reference to the class of the engine activity.
  */
 extern jclass sys_android_activityClass;

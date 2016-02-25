@@ -269,8 +269,8 @@ const char *Sys_FS_GetCacheDirectory( void )
 		Q_snprintfz( cache, sizeof( cache ), "%s/Library/Caches/%s-%d.%d", homeEnv, APPLICATION,
 				APP_VERSION_MAJOR, APP_VERSION_MINOR );
 #elif defined(__ANDROID__)
-		Q_snprintfz( cache, sizeof( cache ), "/data/data/%s/cache/%d.%d",
-			sys_android_packageName, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+		Q_snprintfz( cache, sizeof( cache ), "%s/cache/%d.%d",
+			sys_android_internalDataPath, APP_VERSION_MAJOR, APP_VERSION_MINOR );
 #endif
 	}
 
