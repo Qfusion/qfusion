@@ -527,6 +527,8 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 */
 static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass )
 {
+	const image_t *tex;
+
 	if( pass->anim_fps ) {
 		return pass->images[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
 	}
@@ -541,13 +543,16 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass )
 	}
 
 	if( pass->cin ) {
-		return R_GetCinematicImage( pass->cin );
+		tex = R_GetCinematicImage( pass->cin );
+	}
+	else {
+		tex = pass->images[0];
 	}
 
-	if( !pass->images[0] )
+	if( !tex )
 		return rsh.noTexture;
-	if( !pass->images[0]->missing )
-		return pass->images[0];
+	if( !tex->missing )
+		return tex;
 	return r_usenotexture->integer == 0 ? rsh.greyTexture : rsh.noTexture;
 }
 
