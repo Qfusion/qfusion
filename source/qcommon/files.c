@@ -1332,7 +1332,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		file->pakOffset = vfsOffset;
 		file->uncompressedSize = Sys_VFS_FileSize( vfsHandle );
 
-		Com_DPrintf( "FS_FOpen%sFile: VFS %s : %s\n", (base ? "Base" : ""), tempname );
+		Com_DPrintf( "FS_FOpen%sFile: VFS %s : %s\n", (base ? "Base" : ""), vfsName, tempname );
 		return file->uncompressedSize;
 	}
 	else
