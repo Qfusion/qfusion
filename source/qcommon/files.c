@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 
 #include "sys_fs.h"
+#include "sys_threads.h"
 
 #include "compression.h"
 #include "wswcurl.h"
@@ -89,7 +90,7 @@ typedef struct
 #define FS_PACKFILE_COHERENT	    2
 #define FS_PACKFILE_DIRECTORY		4
 
-#define FS_PACKFILE_NUM_THREADS	4
+#define FS_PACKFILE_NUM_THREADS		4     // including the main thread
 
 typedef struct packfile_s
 {
@@ -112,7 +113,7 @@ typedef struct pack_s
 	char *manifest;
 	unsigned checksum;
 	fs_pure_t pure;
-	int deferred_shard;
+	bool deferred_load;
 	struct pack_s *deferred_pack;
 	void *sysHandle;
 	void *vfsHandle;
@@ -3706,7 +3707,7 @@ static int FS_TouchGamePath( searchpath_t *basepath, const char *gamedir, bool i
 			pak = ( pack_t* )FS_Malloc( sizeof( *pak ) );
 			pak->filename = FS_CopyString( paknames[i] );
 			pak->deferred_pack = NULL;
-			pak->deferred_shard = newpaks % FS_PACKFILE_NUM_THREADS + 1;
+			pak->deferred_load = true;
 
 			// now insert it for real
 			if( FS_FindPackFilePos( paknames[i], &search, &prev, &next ) )
@@ -3767,7 +3768,7 @@ static void FS_ReplaceDeferredPaks( void )
 	for( search = fs_searchpaths; search != NULL;  ) {
 		pack_t *pak = search->pack;
 		
-		if( pak && pak->deferred_shard ) {
+		if( pak && pak->deferred_load ) {
 			if( !pak->deferred_pack ) {
 				// failed to load this one, remove
 				if( prev ) {
@@ -3793,17 +3794,33 @@ static void FS_ReplaceDeferredPaks( void )
 /*
 * FS_LoadDeferredPaks_Job
 */
-static void *FS_LoadDeferredPaks_Job( void *pshard )
+typedef struct
 {
-	searchpath_t *search;
-	const int shard = (intptr_t)pshard;
+	volatile int *cnt;
+	int maxcnt;
+	pack_t **packs;
+	qmutex_t *mutex;
+} deferred_pack_arg_t;
 
-	// scan for deferred paks with matching shard id
-	for( search = fs_searchpaths; search != NULL; search = search->next ) {
-		if( search->pack && search->pack->deferred_shard == shard )	{
-			search->pack->deferred_pack = FS_LoadPackFile( search->pack->filename, false );
-		}
+static void *FS_LoadDeferredPaks_Job( void *parg )
+{
+	int i;
+	pack_t *pack;
+	deferred_pack_arg_t *arg = parg;
+
+	while( true ) {
+		i = Sys_Atomic_Add( arg->cnt, 1, arg->mutex );
+		if( i >= arg->maxcnt )
+			break;
+
+		pack = arg->packs[i];
+
+		assert( pack != NULL );
+		assert( pack->deferred_load );
+
+		pack->deferred_pack = FS_LoadPackFile( pack->filename, false );
 	}
+
 	return NULL;
 }
 
@@ -3813,24 +3830,53 @@ static void *FS_LoadDeferredPaks_Job( void *pshard )
 static void FS_LoadDeferredPaks( int newpaks )
 {
 	int i;
-	qthread_t *threads[FS_PACKFILE_NUM_THREADS];
-	const int num_threads = min( newpaks, FS_PACKFILE_NUM_THREADS );
+	volatile int cnt;
+	qthread_t *threads[FS_PACKFILE_NUM_THREADS - 1] = { NULL };
+	const int num_threads = min( newpaks, FS_PACKFILE_NUM_THREADS ) - 1;
+	pack_t **packs;
+	searchpath_t *search;
+	deferred_pack_arg_t *arg;
 
 	if( !newpaks )
 		return;
-	
-	if( newpaks == 1 ) {
-		FS_LoadDeferredPaks_Job( (void *)((intptr_t )1) );
-		FS_ReplaceDeferredPaks();
+
+	packs = Mem_TempMalloc( sizeof( *packs ) * ( newpaks + 1 ) );
+	if( !packs )
 		return;
+
+	cnt = 0;
+	for( search = fs_searchpaths; search != NULL; search = search->next ) {
+		if( search->pack && search->pack->deferred_load ) {
+			packs[cnt++] = search->pack;
+			if( cnt == newpaks )
+				break;
+		}
 	}
 
-	for( i = 0; i < num_threads; i++ )
-		threads[i] = QThread_Create( FS_LoadDeferredPaks_Job, ( void * )((intptr_t )(i + 1)) );
-	for( i = 0; i < num_threads; i++ )
-		QThread_Join( threads[i] );
+	arg = Mem_TempMalloc( sizeof( *arg ) );
+	arg->cnt = Mem_TempMalloc( sizeof( int ) );
+	arg->maxcnt = newpaks;
+	arg->packs = packs;
+	arg->mutex = QMutex_Create();
+
+	if( num_threads > 0 ) {
+		for( i = 0; i < num_threads; i++ )
+			threads[i] = QThread_Create( FS_LoadDeferredPaks_Job, arg );
+	}
+
+	FS_LoadDeferredPaks_Job( arg );
+
+	if( num_threads > 0 ) {
+		for( i = 0; i < num_threads; i++ )
+			QThread_Join( threads[i] );
+	}
 
 	FS_ReplaceDeferredPaks();
+
+	Mem_TempFree( (void *)arg->cnt );
+	Mem_TempFree( arg->packs );
+	QMutex_Destroy( &arg->mutex );
+	Mem_TempFree( arg );
 }
 
 /*
