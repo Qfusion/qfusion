@@ -317,8 +317,9 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 
 	FS_Seek( file, l.fileofs, FS_SEEK_SET );
 
-	entitystring = Mem_TempMalloc( l.filelen );
+	entitystring = Mem_TempMalloc( l.filelen + 1 );
 	FS_Read( entitystring, l.filelen, file );
+	entitystring[l.filelen] = '\0';
 
 	FS_FCloseFile( file );
 
