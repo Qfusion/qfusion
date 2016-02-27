@@ -677,6 +677,7 @@ void SV_UpdateActivity( void )
 static void SV_CheckAutoUpdate( void )
 {
 	unsigned int days;
+	unsigned int uptimeMinute;
 
 	if( !sv_pure->integer && sv_autoUpdate->integer )
 	{
@@ -688,10 +689,12 @@ static void SV_CheckAutoUpdate( void )
 		return;
 
 	days = (unsigned int)sv_lastAutoUpdate->integer;
+	uptimeMinute = ( Sys_Milliseconds() / 60000 ) % 60;
 
 	// daily check
-	if( days < Com_DaysSince1900() )
+	if( ( days < Com_DaysSince1900() ) && ( uptimeMinute == svc.autoUpdateMinute ) ) {
 		SV_AutoUpdateFromWeb( false );
+	}
 }
 
 /*
@@ -1054,6 +1057,8 @@ void SV_Init( void )
 		svc.gameFrameTime = svc.snapFrameTime;
 		Cvar_ForceSet( "sv_fps", sv_pps->dvalue );
 	}
+
+	svc.autoUpdateMinute = rand() % 60;
 
 	Com_Printf( "Game running at %i fps. Server transmit at %i pps\n", sv_fps->integer, sv_pps->integer );
 
