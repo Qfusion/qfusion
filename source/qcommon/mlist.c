@@ -441,7 +441,11 @@ void ML_Restart( bool forcemaps )
 {
 	ML_Shutdown();
 	if( forcemaps )
-		FS_RemoveFile( MLIST_CACHE );
+	{
+		int filenum;
+		if( FS_FOpenFile( MLIST_CACHE, &filenum, FS_WRITE|FS_CACHE ) != -1 )
+			FS_FCloseFile( filenum );
+	}
 	FS_Rescan();
 	ML_Init();
 }
