@@ -293,7 +293,7 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 		return message;
 	}
 
-	FS_Read( h_v, 4 + sizeof( int ), file );
+	FS_Read( h_v, sizeof( h_v ), file );
 	descr = Q_FindFormatDescriptor( cm_supportedformats, h_v, &bspFormat );
 	if( !descr )
 	{
@@ -304,10 +304,8 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 
 	FS_Seek( file, descr->headerLen + sizeof( int ) + sizeof( lump_t ) * bspFormat->entityLumpNum, FS_SEEK_SET );
 
-	FS_Read( &l.fileofs, sizeof( l.fileofs ), file );
+	FS_Read( &l, sizeof( l ), file );
 	l.fileofs = LittleLong( l.fileofs );
-
-	FS_Read( &l.filelen, sizeof( l.filelen ), file );
 	l.filelen = LittleLong( l.filelen );
 
 	if( !l.filelen )
