@@ -278,7 +278,7 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 	char *data, *entitystring;
 	lump_t l;
 	bool isworld;
-	char key[MAX_KEY], value[MAX_VALUE], *token;
+	char key[MAX_KEY], value[MAX_VALUE], token[MAX_TOKEN_CHARS];
 	size_t keyLength;
 	const modelFormatDescr_t *descr;
 	const bspFormatDesc_t *bspFormat = NULL;
@@ -322,14 +322,14 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 
 	FS_FCloseFile( file );
 
-	for( data = entitystring; ( token = COM_Parse( &data ) ) && token[0] == '{'; )
+	for( data = entitystring; ( COM_Parse_r( token, sizeof( token ), &data ) ) && token[0] == '{'; )
 	{
 		isworld = false;
 		*message = '\0';
 
 		while( 1 )
 		{
-			token = COM_Parse( &data );
+			COM_Parse_r( token, sizeof( token ), &data );
 			if( !token[0] || token[0] == '}' )
 				break; // end of entity
 
@@ -340,7 +340,7 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 				keyLength--;
 			key[keyLength] = '\0';
 
-			token = COM_Parse( &data );
+			COM_Parse_r( token, sizeof( token ), &data );
 			if( !token[0] )
 				break; // error
 
