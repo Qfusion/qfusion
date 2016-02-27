@@ -279,6 +279,7 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 	lump_t l;
 	bool isworld;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
+	size_t keyLength;
 	const modelFormatDescr_t *descr;
 	const bspFormatDesc_t *bspFormat = NULL;
 
@@ -334,8 +335,11 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 				break; // end of entity
 
 			Q_strncpyz( key, token, sizeof( key ) );
-			while( key[strlen( key )-1] == ' ' )  // remove trailing spaces
-				key[strlen( key )-1] = 0;
+			// remove trailing spaces
+			keyLength = strlen( key );
+			while( keyLength && key[keyLength - 1] == ' ' )
+				keyLength--;
+			key[keyLength] = '\0';
 
 			token = COM_Parse( &data );
 			if( !token[0] )
