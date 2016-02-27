@@ -324,7 +324,8 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 
 	for( data = entitystring; ( token = COM_Parse( &data ) ) && token[0] == '{'; )
 	{
-		isworld = true;
+		isworld = false;
+		*message = '\0';
 
 		while( 1 )
 		{
@@ -348,13 +349,15 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 			// now that we have the key pair worked out...
 			if( !strcmp( key, "classname" ) )
 			{
-				if( strcmp( value, "worldspawn" ) )
-					isworld = false;
+				isworld = strcmp( value, "worldspawn" ) == 0;
+				if( *message )
+					break;
 			}
 			else if( !strcmp( key, "message" ) )
 			{
 				Q_strncpyz( message, token, size );
-				break;
+				if( isworld )
+					break;
 			}
 		}
 
