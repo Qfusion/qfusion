@@ -1178,7 +1178,10 @@ error:
 	// expand paletted or RGB images with transparency to full alpha channels
 	// so the data will be available as RGBA quartets.
 	if( qpng_get_valid( png_ptr, info_ptr, PNG_INFO_tRNS ) ) {
-        qpng_set_tRNS_to_alpha( png_ptr );
+		qpng_set_tRNS_to_alpha( png_ptr );
+		if( samples & 1 ) {
+			samples++;
+		}
 	}
 
 	// expand grayscale images to the full 8 bits
