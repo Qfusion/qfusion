@@ -303,6 +303,7 @@ typedef struct
 	unsigned int gameFrameTime;		// msecs between game code executions
 	bool autostarted;
 	unsigned int lastMasterResolve;
+	unsigned int autoUpdateMinute;	// the minute number we should run the autoupdate check, in the range 0 to 59
 } server_constant_t;
 
 //=============================================================================
