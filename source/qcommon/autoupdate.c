@@ -218,19 +218,11 @@ static void AU_FinishDownload( filedownload_t *fd_, int status )
 
 	if( !au_download_errcount ) {
 		const char *temppath, *filepath;
-		unsigned checksum;
 
 		// rename downloaded files
 		for( fd = au_download_head; fd; fd = fd->next ) {
 			temppath = fd->temppath;
 			filepath = fd->filepath;
-
-			checksum = FS_ChecksumBaseFile( temppath );
-			if( checksum != fd->checksum ) {
-				Com_Printf( "AU_FinishDownload: checksum mismatch for %s. Expected %u, got %u\n", temppath, fd->checksum, checksum );
-				au_download_errcount++;
-				break;
-			}
 
 			if( FS_MoveBaseFile( temppath, filepath ) )
 				continue;
@@ -240,10 +232,6 @@ static void AU_FinishDownload( filedownload_t *fd_, int status )
 			if( FS_FOpenBaseFile( filepath, NULL, FS_READ ) == -1 ) {
 				Com_Printf( "AU_FinishDownload: failed to rename temporary file for unknown reason.\n" );
 				au_download_errcount++;
-			}
-			else if( checksum == FS_ChecksumBaseFile( filepath ) ) {
-				FS_RemoveBaseFile( temppath );
-				continue;
 			}
 			else {
 				char *backfile;
@@ -391,7 +379,7 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		else
 			Com_Printf( "Updating %s\n", path );
 
-		fd = AU_DownloadFile( AU_BASE_URL, path, false, checksum, &AU_FinishDownload );
+		fd = AU_DownloadFile( AU_BASE_URL, path, false, expected_checksum, &AU_FinishDownload );
 		if( !fd )
 		{
 			Com_Printf( "Failed to update %s\n", path );
