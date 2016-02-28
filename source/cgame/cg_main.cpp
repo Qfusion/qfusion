@@ -437,7 +437,7 @@ const char *CG_TranslateString( const char *string )
 const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size )
 {
 	char c;
-	int colorindex;
+	int colorindex = -1;
 	const char *l10n, *tmp;
 
 	if( dst_size < 3 )
@@ -454,7 +454,7 @@ const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst
 	if( l10n ) {
 		int offset = 0;
 
-		if( colorindex > 0 ) {
+		if( colorindex >= 0 ) {
 			dst[0] = '^';
 			dst[1] = '0' + colorindex;
 			offset = 2;
