@@ -2437,11 +2437,26 @@ static bool CG_LFuncDrawConfigstring( struct cg_layoutnode_s *commandnode, struc
 		CG_Printf( "WARNING 'CG_LFuncDrawConfigstring' Bad stat_string index" );
 		return false;
 	}
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, cgs.configStrings[index], CG_GetLayoutCursorFont(), layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
+		cgs.configStrings[index], CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawPlayername( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawCleanConfigstring( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	int index = (int)CG_GetNumericArg( &argumentnode );
+
+	if( index < 0 || index >= MAX_CONFIGSTRINGS )
+	{
+		CG_Printf( "WARNING 'CG_LFuncDrawCleanConfigstring' Bad stat_string index" );
+		return false;
+	}
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
+		COM_RemoveColorTokensExt( cgs.configStrings[index], true ), CG_GetLayoutCursorFont(), layout_cursor_color );
+	return true;
+}
+
+static bool CG_LFuncDrawPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
 
@@ -2450,7 +2465,27 @@ static bool CG_LFuncDrawPlayername( struct cg_layoutnode_s *commandnode, struct 
 
 	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] )
 	{
-		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, cgs.clientInfo[index].name, CG_GetLayoutCursorFont(), layout_cursor_color );
+		vec4_t color;
+		VectorCopy( colorWhite, color );
+		color[3] = layout_cursor_color[3];
+		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
+			cgs.clientInfo[index].name, CG_GetLayoutCursorFont(), color );
+		return true;
+	}
+	return false;
+}
+
+static bool CG_LFuncDrawCleanPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
+
+	if( cgs.demoTutorial )
+		return true;
+
+	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] )
+	{
+		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
+			COM_RemoveColorTokensExt( cgs.clientInfo[index].name, true ), CG_GetLayoutCursorFont(), layout_cursor_color );
 		return true;
 	}
 	return false;
@@ -3164,11 +3199,20 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	},
 
 	{
-		"drawPlayername",
-		CG_LFuncDrawPlayername,
+		"drawPlayerName",
+		CG_LFuncDrawPlayerName,
 		NULL,
 		1,
-		"Draws the name of the player with id provided by the argument",
+		"Draws the name of the player with id provided by the argument, colored with color tokens, white by default",
+		false
+	},
+
+	{
+		"drawCleanPlayerName",
+		CG_LFuncDrawCleanPlayerName,
+		NULL,
+		1,
+		"Draws the name of the player with id provided by the argument, using the current color",
 		false
 	},
 
@@ -3196,6 +3240,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		NULL,
 		1,
 		"Draws configstring of argument id",
+		false
+	},
+
+	{
+		"drawCleanStatString",
+		CG_LFuncDrawCleanConfigstring,
+		NULL,
+		1,
+		"Draws configstring of argument id, ignoring color codes",
 		false
 	},
 
