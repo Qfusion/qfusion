@@ -50,10 +50,10 @@ bool SystemInterface::LogMessage(Log::Type logtype, const String& message)
 	// By default we just send a platform message
 	if (logtype == Log::LT_ASSERT)
 	{
-		Core::String message(1024, "%s\nWould you like to interrupt execution?", message.CString());	
+		Core::String message_(1024, "%s\nWould you like to interrupt execution?", message.CString());
 
 		// Return TRUE if the user presses NO (continue execution)
-		return (IDNO == MessageBoxA(NULL, message.CString(), "Assertion Failure", MB_YESNO | MB_ICONSTOP | MB_DEFBUTTON2 | MB_TASKMODAL));
+		return (IDNO == MessageBoxA(NULL, message_.CString(), "Assertion Failure", MB_YESNO | MB_ICONSTOP | MB_DEFBUTTON2 | MB_TASKMODAL));
 	}
 	else
 	{
