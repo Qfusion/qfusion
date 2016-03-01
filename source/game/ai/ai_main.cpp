@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "../g_local.h"
-#include "ai_local.h"
+#include <new>
+#include "bot.h"
 
 cvar_t *sv_botpersonality;
 
@@ -135,6 +135,20 @@ void G_FreeAI( edict_t *ent )
 	if( ent->ai->type == AI_ISBOT ) {
 		game.numBots--;
 	}
+
+	// Invoke an appropriate destructor based on ai instance type, then free memory.
+	// It is enough to call G_Free(ent->ai->aiRef), since botRef (if it is present)
+	// points to the same block as aiRef does, but to avoid confusion we free pointer aliases explicitly.
+	if (ent->ai->botRef) {
+		ent->ai->botRef->~Bot();
+		G_Free(ent->ai->botRef);
+	} else {
+		ent->ai->aiRef->~Ai();
+		G_Free(ent->ai->aiRef);
+	}
+	ent->ai->aiRef = nullptr;
+	ent->ai->botRef = nullptr;
+
 	G_Free( ent->ai );
 	ent->ai = NULL;
 }
@@ -151,10 +165,19 @@ void G_SpawnAI( edict_t *ent )
 	else {
 		memset( &ent->ai, 0, sizeof( ai_handle_t ) );
 	}
-	if( ent->r.svflags & SVF_FAKECLIENT )
+
+	if( ent->r.svflags & SVF_FAKECLIENT ) {
 		ent->ai->type = AI_ISBOT;
-	else
+		void *mem = G_Malloc( sizeof(Bot) );
+		ent->ai->botRef = new(mem) Bot( ent );
+		ent->ai->aiRef = ent->ai->botRef;
+	}
+	else {
 		ent->ai->type = AI_ISMONSTER;
+		void *mem = G_Malloc( sizeof(Ai) );
+		ent->ai->botRef = nullptr;
+		ent->ai->aiRef = new(mem) Ai( ent );
+	}
 }
 
 nav_ents_t *AI_GetGoalentForEnt( edict_t *target )
