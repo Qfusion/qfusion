@@ -225,28 +225,41 @@ void Sys_FS_FindClose( void )
 */
 const char *Sys_FS_GetHomeDirectory( void )
 {
-#ifndef __ANDROID__
 	static char home[PATH_MAX] = { '\0' };
-	const char *homeEnv;
 
-	if( home[0] != '\0' )
-		return home;
-	homeEnv = getenv( "HOME" );
-	if( !homeEnv )
-		return NULL;
+	if( home[0] == '\0' )
+	{
+#ifndef __ANDROID__
+		const char *homeEnv = getenv( "HOME" );
+		const char *base = NULL, *local = "";
 
 #ifdef __MACOSX__
-	Q_snprintfz( home, sizeof( home ), "%s/Library/Application Support/%s-%d.%d", homeEnv, APPLICATION,
-		APP_VERSION_MAJOR, APP_VERSION_MINOR );
+		base = homeEnv;
+		local = "Library/Application Support/";
 #else
-	Q_snprintfz( home, sizeof( home ), "%s/.%c%s-%d.%d", homeEnv, tolower( *( (const char *)APPLICATION ) ),
-		( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+		base = getenv( "XDG_DATA_HOME" );
+		local = "";
+		if( !base ) {
+			base = homeEnv;
+			local = ".local/share/";
+		}
 #endif
-	return home;
 
+		if( base ) {
+#ifdef __MACOSX__
+			Q_snprintfz( home, sizeof( home ), "%s/%s%s-%d.%d", base, local, APPLICATION,
+				APP_VERSION_MAJOR, APP_VERSION_MINOR );
 #else
-	return NULL;
+			Q_snprintfz( home, sizeof( home ), "%s/%s%c%s-%d.%d", base, local, tolower( *( (const char *)APPLICATION ) ),
+				( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR );
 #endif
+		}
+#endif
+	}
+
+	if( home[0] == '\0' )
+		return NULL;
+	return home;
 }
 
 /*
@@ -256,21 +269,36 @@ const char *Sys_FS_GetCacheDirectory( void )
 {
 	static char cache[PATH_MAX] = { '\0' };
 
-	if( !cache[0] )
+	if( cache[0] == '\0' )
 	{
-#if !defined(__ANDROID__)
-		const char *homeEnv;
-		homeEnv = getenv( "HOME" );
-		if( !homeEnv )
-			return NULL;
-#endif
-
-#if defined(__MACOSX__)
-		Q_snprintfz( cache, sizeof( cache ), "%s/Library/Caches/%s-%d.%d", homeEnv, APPLICATION,
-				APP_VERSION_MAJOR, APP_VERSION_MINOR );
-#elif defined(__ANDROID__)
+#ifdef __ANDROID__
 		Q_snprintfz( cache, sizeof( cache ), "%s/cache/%d.%d",
 			sys_android_internalDataPath, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+#else
+		const char *homeEnv = getenv( "HOME" );
+		const char *base = NULL, *local = "";
+
+#ifdef __MACOSX__
+		base = homeEnv;
+		local = "Library/Caches/";
+#else
+		base = getenv( "XDG_CACHE_HOME" );
+		local = "";
+		if( !base ) {
+			base = homeEnv;
+			local = ".cache/";
+		}
+#endif
+
+		if( base ) {
+#ifdef __MACOSX__
+			Q_snprintfz( cache, sizeof( cache ), "%s/%s%s-%d.%d", base, local, APPLICATION,
+					APP_VERSION_MAJOR, APP_VERSION_MINOR );
+#else
+			Q_snprintfz( home, sizeof( home ), "%s/%s%c%s-%d.%d", base, local, tolower( *( (const char *)APPLICATION ) ),
+				( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+#endif
+		}
 #endif
 	}
 
