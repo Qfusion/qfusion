@@ -305,6 +305,8 @@ typedef struct ai_handle_s
 
 	int asFactored, asRefCount;
 
+	class Ai *aiRef;
+	class Bot *botRef;
 } ai_handle_t;
 
 //----------------------------------------------------------
@@ -401,7 +403,7 @@ unsigned int AI_CurrentLinkType( edict_t *self );
 
 //ai_class_dmbot.c
 //----------------------------------------------------------
-void BOT_DMclass_FindEnemy( edict_t *self );
-void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd );
-void BOT_DMclass_MoveWander( edict_t *self, usercmd_t *ucmd );
-void BOT_DMclass_Move( edict_t *self, usercmd_t *ucmd );
+//void BOT_DMclass_FindEnemy( edict_t *self );
+//void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd );
+//void BOT_DMclass_MoveWander( edict_t *self, usercmd_t *ucmd );
+//void BOT_DMclass_Move( edict_t *self, usercmd_t *ucmd );
