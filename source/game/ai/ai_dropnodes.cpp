@@ -23,9 +23,7 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
-#include "../g_local.h"
-#include "ai_local.h"
-
+#include "bot.h"
 
 //ACE
 
@@ -160,7 +158,7 @@ static void AI_DropLadderNodes( edict_t *self )
 	VectorCopy( self->s.origin, torigin );
 	VectorCopy( self->s.origin, borigin );
 
-	while( AI_IsLadder( torigin, self->r.client->ps.viewangles, self->r.mins, self->r.maxs, self ) )
+	while( Ai::IsLadder( torigin, self->r.client->ps.viewangles, self->r.mins, self->r.maxs, self ) )
 	{
 		torigin[2]++;
 	}
@@ -173,7 +171,7 @@ static void AI_DropLadderNodes( edict_t *self )
 	//trace = gi.trace( borigin, tv(-15,-15,-24), tv(15,15,0), tv(borigin[0], borigin[1], borigin[2] - 2048), self, MASK_NODESOLID );
 	G_Trace( &trace, borigin, playerbox_crouch_mins, tv( playerbox_crouch_maxs[0], playerbox_crouch_maxs[1], 0 ), tv( borigin[0], borigin[1], borigin[2] - 2048 ), self, MASK_NODESOLID );
 	if( !trace.startsolid && trace.fraction < 1.0
-		&& AI_IsLadder( trace.endpos, self->r.client->ps.viewangles, self->r.mins, self->r.maxs, self ) )
+		&& Ai::IsLadder( trace.endpos, self->r.client->ps.viewangles, self->r.mins, self->r.maxs, self ) )
 	{
 		VectorCopy( trace.endpos, borigin );
 
@@ -184,7 +182,7 @@ static void AI_DropLadderNodes( edict_t *self )
 
 		//trace = gi.trace( borigin, tv(-15,-15,-25), tv(15,15,0), borigin, self, MASK_NODESOLID );
 		G_Trace( &trace, borigin, tv( playerbox_crouch_mins[0], playerbox_crouch_mins[1], playerbox_crouch_mins[2]-1 ), tv( playerbox_crouch_maxs[0], playerbox_crouch_maxs[1], 0 ), borigin, self, MASK_NODESOLID );
-		while( AI_IsLadder( borigin, self->r.client->ps.viewangles, self->r.mins, self->r.maxs, self )
+		while( Ai::IsLadder( borigin, self->r.client->ps.viewangles, self->r.mins, self->r.maxs, self )
 			&& !trace.startsolid )
 		{
 			borigin[2]--;
@@ -227,7 +225,7 @@ static bool AI_CheckForLadder( edict_t *self )
 	if( self->velocity[2] < 5 )
 		return false;
 
-	if( !AI_IsLadder( self->s.origin, self->r.client->ps.viewangles, self->r.mins, self->r.maxs, self ) )
+	if( !Ai::IsLadder( self->s.origin, self->r.client->ps.viewangles, self->r.mins, self->r.maxs, self ) )
 		return false;
 
 	// If there is already a ladder node in here we've already done this ladder
@@ -266,7 +264,7 @@ static void AI_WaterJumpNode( void )
 				return;
 		}
 	}
-	if( AI_IsLadder( player.ent->s.origin, player.ent->r.client->ps.viewangles, player.ent->r.mins, player.ent->r.maxs, player.ent ) )
+	if( Ai::IsLadder( player.ent->s.origin, player.ent->r.client->ps.viewangles, player.ent->r.mins, player.ent->r.maxs, player.ent ) )
 		return;
 
 	VectorCopy( player.ent->s.origin, waterorigin );

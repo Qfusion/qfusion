@@ -548,12 +548,12 @@ static void AI_PickShortRangeGoal( edict_t *self )
 //===================
 void AI_CategorizePosition( edict_t *ent )
 {
-	bool stepping = AI_IsStep( ent );
+	bool stepping = Ai::IsStep(ent);
 
 	ent->was_swim = ent->is_swim;
 	ent->was_step = ent->is_step;
 
-	ent->is_ladder = AI_IsLadder( ent->s.origin, ent->s.angles, ent->r.mins, ent->r.maxs, ent );
+	ent->is_ladder = Ai::IsLadder( ent->s.origin, ent->s.angles, ent->r.mins, ent->r.maxs, ent );
 
 	G_CategorizePosition( ent );
 	if( ent->waterlevel > 2 || ( ent->waterlevel && !stepping ) )
