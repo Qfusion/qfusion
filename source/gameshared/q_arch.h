@@ -396,7 +396,9 @@ typedef int socket_handle_t;
 #endif
 
 #ifdef HAVE_STRTOK_S
+#ifndef strtok_r
 #define strtok_r strtok_s
+#endif
 #endif
 
 #ifdef HAVE__ALLOCA
