@@ -129,10 +129,11 @@ public:
 
     bool ReachabilityVisible(vec3_t point) const;
 
+    static bool DropNodeOriginToFloor(vec3_t origin, edict_t *passent);
     bool IsVisible(edict_t *other) const;
     bool IsInFront(edict_t *other) const;
-    bool IsInFront2D(edict_t *other) const;
-    bool NewEnemyInView(edict_t *enemy);
+    bool IsInFront2D(vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy) const;
+    void NewEnemyInView(edict_t *enemy);
     unsigned int CurrentLinkType() const;
 
     int	ChangeAngle();

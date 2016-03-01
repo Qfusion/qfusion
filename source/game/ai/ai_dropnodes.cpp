@@ -60,7 +60,7 @@ static int AI_AddNode( vec3_t origin, int flagsmask )
 
 	VectorCopy( origin, nodes[nav.num_nodes].origin );
 	if( !( flagsmask & NODEFLAGS_FLOAT ) )
-		AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, player.ent );
+		Ai::DropNodeOriginToFloor( nodes[nav.num_nodes].origin, player.ent );
 
 	nodes[nav.num_nodes].flags = flagsmask;
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, player.ent );

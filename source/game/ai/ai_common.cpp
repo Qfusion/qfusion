@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * AI_DropNodeOriginToFloor
 */
-bool AI_DropNodeOriginToFloor( vec3_t origin, edict_t *passent )
+bool Ai::DropNodeOriginToFloor(vec3_t origin, edict_t *passent)
 {
 	trace_t	trace;
 
@@ -38,7 +38,7 @@ bool AI_DropNodeOriginToFloor( vec3_t origin, edict_t *passent )
 	return true;
 }
 
-bool AI_visible( edict_t *self, edict_t *other )
+bool Ai::IsVisible(edict_t *other) const
 {
 	vec3_t spot1;
 	vec3_t spot2;
@@ -55,7 +55,7 @@ bool AI_visible( edict_t *self, edict_t *other )
 	return false;
 }
 
-bool AI_infront( edict_t *self, edict_t *other )
+bool Ai::IsInFront(edict_t *other) const
 {
 	vec3_t vec;
 	float dot;
@@ -71,7 +71,7 @@ bool AI_infront( edict_t *self, edict_t *other )
 	return false;
 }
 
-bool AI_infront2D( vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy )
+bool Ai::IsInFront2D(vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy) const
 {
 	vec3_t vec;
 	float dot;
@@ -91,7 +91,7 @@ bool AI_infront2D( vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy )
 	return ( dot > accuracy ) ? true : false;
 }
 
-void AI_NewEnemyInView( edict_t *self, edict_t *enemy )
+void Ai::NewEnemyInView(edict_t *enemy)
 {
 	if( enemy == self )
 		return;
@@ -100,7 +100,7 @@ void AI_NewEnemyInView( edict_t *self, edict_t *enemy )
 	self->ai->enemyReactionDelay = ( 50 + ( AI_REACTION_TIME * ( 1.0f - self->ai->pers.skillLevel ) ) );
 }
 
-unsigned int AI_CurrentLinkType( edict_t *self )
+unsigned int Ai::CurrentLinkType() const
 {
 	if( !AI_PlinkExists( self->ai->current_node, self->ai->next_node ) )
 		return LINK_INVALID;

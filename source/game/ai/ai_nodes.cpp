@@ -23,9 +23,7 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
-#include "../g_local.h"
-#include "ai_local.h"
-
+#include "bot.h"
 
 //ACE
 
@@ -246,7 +244,7 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 	nodes[nav.num_nodes].origin[0] = out[0];
 	nodes[nav.num_nodes].origin[1] = out[1];
 	nodes[nav.num_nodes].origin[2] = out[2];
-	AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL );
+	Ai::DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL );
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
@@ -317,7 +315,7 @@ static int AI_AddNode_Door( edict_t *ent )
 #ifdef SHOW_JUMPAD_GUESS
 	AI_JumpadGuess_ShowPoint( nodes[nav.num_nodes].origin, PATH_AMMO_BOX_MODEL );
 #endif
-	if( AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
+	if( Ai::DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
 	{
 		nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 		dropped[0] = nav.num_nodes;
@@ -329,7 +327,7 @@ static int AI_AddNode_Door( edict_t *ent )
 #ifdef SHOW_JUMPAD_GUESS
 	AI_JumpadGuess_ShowPoint( nodes[nav.num_nodes].origin, PATH_AMMO_BOX_MODEL );
 #endif
-	if( AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
+	if( Ai::DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
 	{
 		nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 		dropped[1] = nav.num_nodes;
@@ -345,7 +343,7 @@ static int AI_AddNode_Door( edict_t *ent )
 #ifdef SHOW_JUMPAD_GUESS
 		AI_JumpadGuess_ShowPoint( nodes[nav.num_nodes].origin, PATH_AMMO_BOX_MODEL );
 #endif
-		if( AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
+		if( Ai::DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
 		{
 			nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 			dropped[2] = nav.num_nodes;
@@ -357,7 +355,7 @@ static int AI_AddNode_Door( edict_t *ent )
 #ifdef SHOW_JUMPAD_GUESS
 		AI_JumpadGuess_ShowPoint( nodes[nav.num_nodes].origin, PATH_AMMO_BOX_MODEL );
 #endif
-		if( AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
+		if( Ai::DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
 		{
 			nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 			dropped[3] = nav.num_nodes;
@@ -570,7 +568,7 @@ static int AI_AddNode_Teleporter( edict_t *ent )
 	if( ent->spawnflags & 1 )  // droptofloor
 		nodes[nav.num_nodes].flags |= NODEFLAGS_FLOAT;
 	else
-		AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL );
+		Ai::DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL );
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, ent );
 #ifdef SHOW_JUMPAD_GUESS
@@ -599,7 +597,7 @@ static int AI_AddNode_GoalEntityNode( edict_t *ent )
 	VectorCopy( ent->s.origin, nodes[nav.num_nodes].origin );
 	if( ent->spawnflags & 1 )  // floating items
 		nodes[nav.num_nodes].flags |= NODEFLAGS_FLOAT;
-	else if( !AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, ent ) )
+	else if( !Ai::DropNodeOriginToFloor( nodes[nav.num_nodes].origin, ent ) )
 		return NODE_INVALID; // spawned inside solid
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );

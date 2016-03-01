@@ -85,7 +85,7 @@ bool Ai::NodeReachedGeneric() const
 
             // if falling from a jump pad use a taller cylinder
             if( !self->groundentity && !self->is_step && !self->is_swim
-                && ( AI_CurrentLinkType( self ) & LINK_JUMPPAD ) )
+                && ( CurrentLinkType() & LINK_JUMPPAD ) )
                 RADIUS = NODE_WIDE_REACH_RADIUS;
 
             // we use a wider radius in 2D, and a height range enough so they can't be jumped over
