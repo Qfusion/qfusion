@@ -20,7 +20,7 @@ void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
     n1 = self->ai->path.nodes[self->ai->path.numNodes];
     n2 = self->ai->path.nodes[self->ai->path.numNodes-1];
 
-    if( !AI_infront2D( lookdir, self->s.origin, nodes[n2].origin, 0.5 ) )
+    if( !Ai::IsInFront2D( lookdir, self->s.origin, nodes[n2].origin, 0.5 ) )
         bunnyhop = false;
 
     // do not dash if the next link will be a fall, jump or
@@ -102,7 +102,7 @@ void Bot::Move(usercmd_t *ucmd)
         return;
     }
 
-    linkType = AI_CurrentLinkType( self );
+    linkType = CurrentLinkType();
 
     specialMovement = ( self->ai->path.numNodes >= MIN_BUNNY_NODES ) ? true : false;
 
@@ -755,7 +755,7 @@ void Bot::FindEnemy()
         }
     }
 
-    AI_NewEnemyInView( self, bestTarget );
+    NewEnemyInView( bestTarget );
 #undef WEIGHT_MAXDISTANCE_FACTOR
 }
 
@@ -1448,7 +1448,7 @@ void Bot::RunFrame()
 
         weapon_quality = ChooseWeapon();
 
-        inhibitCombat = ( AI_CurrentLinkType( self ) & (LINK_JUMPPAD|LINK_JUMP|LINK_ROCKETJUMP) ) != 0 ? true : false;
+        inhibitCombat = ( CurrentLinkType() & (LINK_JUMPPAD|LINK_JUMP|LINK_ROCKETJUMP) ) != 0 ? true : false;
 
         if( self->enemy && weapon_quality >= 0.3 && !inhibitCombat ) // don't fight with bad weapons
         {

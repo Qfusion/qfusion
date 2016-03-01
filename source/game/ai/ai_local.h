@@ -388,12 +388,12 @@ void	    BOT_DMclass_InitPersistant( edict_t *self );
 
 //ai_common.c
 //----------------------------------------------------------
-bool    AI_DropNodeOriginToFloor( vec3_t origin, edict_t *passent );
-bool    AI_visible( edict_t *self, edict_t *other );
-bool    AI_infront( edict_t *self, edict_t *other );
-bool	AI_infront2D( vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy );
-void	    AI_NewEnemyInView( edict_t *self, edict_t *enemy );
-unsigned int AI_CurrentLinkType( edict_t *self );
+//bool    AI_DropNodeOriginToFloor( vec3_t origin, edict_t *passent );
+//bool    AI_visible( edict_t *self, edict_t *other );
+//bool    AI_infront( edict_t *self, edict_t *other );
+//bool	AI_infront2D( vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy );
+//void	    AI_NewEnemyInView( edict_t *self, edict_t *enemy );
+//unsigned int AI_CurrentLinkType( edict_t *self );
 
 //ai_class_dmbot.c
 //----------------------------------------------------------
