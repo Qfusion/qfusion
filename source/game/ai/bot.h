@@ -144,6 +144,9 @@ public:
 protected:
     ai_handle_t &ai() { return *self->ai; }
     const ai_handle_t &ai() const { return *self->ai; }
+
+    static constexpr int MIN_BUNNY_NODES = 2;
+    static constexpr int AI_JUMP_SPEED = 450;
 };
 
 class Bot: public Ai
@@ -168,6 +171,7 @@ public:
     void SayVoiceMessages();
     void GhostingFrame();
     void RunFrame();
+
 };
 
 #endif
