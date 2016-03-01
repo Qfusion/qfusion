@@ -445,8 +445,9 @@ void UI_Main::forceUI( bool force )
 void UI_Main::showUI( bool show )
 {
 	// only disable menu if not forced to display it
-	if( !show && forceMenu )
+	if( !show && forceMenu ) {
 		return;
+	}
 
 	menuVisible = show;
 	trap::CL_SetKeyDest( show ? key_menu : key_game );
@@ -456,7 +457,15 @@ void UI_Main::showUI( bool show )
 
 		UI_Navigation &navigation = navigations[UI_CONTEXT_MAIN];
 		NavigationStack *navigator = navigation.front();
-		navigator->popAllDocuments();
+		for( UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it ) {
+			NavigationStack *stack = *it;
+			if( stack->isTopModal() ) {
+				stack->popDocument();
+			}
+			if( stack == navigator ) {
+				stack->popAllDocuments();
+			}
+		}
 
 		rocketModule->hideCursor( UI_CONTEXT_MAIN, RocketModule::HIDECURSOR_REFRESH, 0 );
 	}

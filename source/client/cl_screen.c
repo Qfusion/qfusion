@@ -599,12 +599,15 @@ static void SCR_DrawConsole( void )
 */
 void SCR_BeginLoadingPlaque( void )
 {
+	CL_UIModule_ForceMenuOff();
+
 	CL_SoundModule_StopAllSounds( true, true );
 
 	memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
 
 	scr_conlines = 0;       // none visible
 	scr_draw_loading = 2;   // clear to black first
+
 	SCR_UpdateScreen();
 }
 
