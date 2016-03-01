@@ -809,7 +809,7 @@ static void G_SpawnEntities( void )
 	}
 	
 	// is the parsing string sane?
-	assert( (int)level.map_parsed_len < level.mapStrlen );
+	assert( level.map_parsed_len < level.mapStrlen );
 	level.map_parsed_ents[level.map_parsed_len] = 0;
 	
 	G_FindTeams();
