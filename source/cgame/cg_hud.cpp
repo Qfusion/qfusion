@@ -127,6 +127,12 @@ static const constant_numeric_t cg_numeric_constants[] = {
 	{ "PMOVE_TYPE_FREEZE", PM_FREEZE },
 	{ "PMOVE_TYPE_CHASECAM", PM_CHASECAM },
 
+	// config strings
+	{ "TEAM_SPECTATOR_NAME", CS_TEAM_SPECTATOR_NAME },
+	{ "TEAM_PLAYERS_NAME", CS_TEAM_PLAYERS_NAME },
+	{ "TEAM_ALPHA_NAME", CS_TEAM_ALPHA_NAME },
+	{ "TEAM_BETA_NAME", CS_TEAM_BETA_NAME },
+
 	{ NULL, 0 }
 };
 
