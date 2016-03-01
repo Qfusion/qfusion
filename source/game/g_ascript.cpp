@@ -2530,6 +2530,7 @@ static const asProperty_t gedict_Properties[] =
 	{ ASLIB_PROPERTY_DECL(int, count), ASLIB_FOFFSET(edict_t, count) },
 	{ ASLIB_PROPERTY_DECL(float, wait), ASLIB_FOFFSET(edict_t, wait) },
 	{ ASLIB_PROPERTY_DECL(float, delay), ASLIB_FOFFSET(edict_t, delay) },
+	{ ASLIB_PROPERTY_DECL(float, random), ASLIB_FOFFSET(edict_t, random) },
 	{ ASLIB_PROPERTY_DECL(int, waterLevel), ASLIB_FOFFSET(edict_t, waterlevel) },
 	{ ASLIB_PROPERTY_DECL(float, attenuation), ASLIB_FOFFSET(edict_t, attenuation) },
 	{ ASLIB_PROPERTY_DECL(int, mass), ASLIB_FOFFSET(edict_t, mass) },
