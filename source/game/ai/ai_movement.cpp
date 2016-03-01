@@ -23,8 +23,7 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
-#include "../g_local.h"
-#include "ai_local.h"
+#include "bot.h"
 
 //==========================================
 // AI_CanMove
@@ -32,7 +31,7 @@ in NO WAY supported by Steve Yeager.
 // Also, this is not a real accurate check, but does a
 // pretty good job and looks for lava/slime.
 //==========================================
-bool AI_CanMove( edict_t *self, int direction )
+bool Ai::CanMove(int direction )
 {
 	vec3_t forward, right;
 	vec3_t offset, start, end;
@@ -73,7 +72,7 @@ bool AI_CanMove( edict_t *self, int direction )
 //  Checks the floor one step below the player. Used to detect
 //  if the player is really falling or just walking down a stair.
 //===================
-bool AI_IsStep( edict_t *ent )
+bool Ai::IsStep(edict_t *ent)
 {
 	vec3_t point;
 	trace_t	trace;
@@ -98,7 +97,7 @@ bool AI_IsStep( edict_t *ent )
 // AI_IsLadder
 // check if entity is touching in front of a ladder
 //==========================================
-bool AI_IsLadder( vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent )
+bool Ai::IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent)
 {
 	vec3_t spot;
 	vec3_t flatforward, zforward;
@@ -128,7 +127,7 @@ bool AI_IsLadder( vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict
 // Helper for ACEMV_SpecialMove.
 // Tries to turn when in front of obstacle
 //==========================================
-static bool AI_CheckEyes( edict_t *self, usercmd_t *ucmd )
+bool Ai::CheckEyes(usercmd_t *ucmd)
 {
 	vec3_t forward, right;
 	vec3_t leftstart, rightstart, focalpoint;
@@ -175,7 +174,7 @@ static bool AI_CheckEyes( edict_t *self, usercmd_t *ucmd )
 // Handle special cases of crouch/jump
 // If the move is resolved here, this function returns true.
 //==========================================
-bool AI_SpecialMove( edict_t *self, usercmd_t *ucmd )
+bool Ai::SpecialMove(usercmd_t *ucmd)
 {
 	vec3_t forward;
 	trace_t tr;
@@ -236,10 +235,10 @@ bool AI_SpecialMove( edict_t *self, usercmd_t *ucmd )
 	}
 
 	// nothing worked, check for turning
-	return AI_CheckEyes( self, ucmd );
+	return CheckEyes( ucmd );
 }
 
-int AI_ChangeAngle( edict_t *ent )
+int Ai::ChangeAngle()
 {
 	float ideal_yaw;
 	float ideal_pitch;
@@ -249,7 +248,7 @@ int AI_ChangeAngle( edict_t *ent )
 	float speed;
 	float speed_yaw, speed_pitch;
 	vec3_t ideal_angle;
-	edict_t *self = ent;
+	edict_t *ent = self;
 
 	// Normalize the move angle first
 	VectorNormalize( ent->ai->move_vector );
@@ -380,7 +379,7 @@ int AI_ChangeAngle( edict_t *ent )
 * AI_MoveToShortRangeGoalEntity
 * A.K.A Item pick magnet
 */
-bool AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd )
+bool Ai::MoveToShortRangeGoalEntity(usercmd_t *ucmd)
 {
 	if( !self->movetarget || !self->r.client )
 		return false;

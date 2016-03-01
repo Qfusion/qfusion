@@ -335,12 +335,6 @@ bool    AI_ShortRangeReachable( edict_t *self, vec3_t goal );
 
 // ai_movement.c
 //----------------------------------------------------------
-int	AI_ChangeAngle( edict_t *ent );
-bool    AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd );
-bool    AI_SpecialMove( edict_t *self, usercmd_t *ucmd );
-bool    AI_CanMove( edict_t *self, int direction );
-bool    AI_IsLadder( vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent );
-bool    AI_IsStep( edict_t *ent );
 
 // ai_navigation.c
 //----------------------------------------------------------

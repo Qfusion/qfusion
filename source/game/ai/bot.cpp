@@ -312,7 +312,7 @@ void Bot::Move(usercmd_t *ucmd)
             // Move To Short Range goal (not following paths)
             // plats, grapple, etc have higher priority than SR Goals, cause the bot will
             // drop from them and have to repeat the process from the beginning
-            if( AI_MoveToShortRangeGoalEntity( self, ucmd ) )
+            if( MoveToShortRangeGoalEntity( ucmd ) )
             {
                 nodeReached = NodeReachedGeneric();
             }
@@ -330,7 +330,7 @@ void Bot::Move(usercmd_t *ucmd)
         // if static assume blocked and try to get free
         if( VectorLengthFast( self->velocity ) < 37 && ( ucmd->forwardmove || ucmd->sidemove || ucmd->upmove ) )
         {
-            if( random() > 0.1 && AI_SpecialMove( self, ucmd ) )  // jumps, crouches, turns...
+            if( random() > 0.1 && self->ai->aiRef->SpecialMove( ucmd ) )  // jumps, crouches, turns...
                 return;
 
             self->s.angles[YAW] += brandom( -90, 90 );
@@ -344,7 +344,7 @@ void Bot::Move(usercmd_t *ucmd)
             ucmd->upmove = 1;
     }
 
-    AI_ChangeAngle( self );
+    ChangeAngle();
 
     if( nodeReached )
         AI_NodeReached( self );
@@ -376,7 +376,7 @@ void Bot::MoveWander(usercmd_t *ucmd)
     }
 
     // Move To Goal (Short Range Goal, not following paths)
-    if( !AI_MoveToShortRangeGoalEntity( self, ucmd ) )
+    if( !MoveToShortRangeGoalEntity( ucmd ) )
     {
         // Swimming?
         VectorCopy( self->s.origin, temp );
@@ -415,14 +415,14 @@ void Bot::MoveWander(usercmd_t *ucmd)
         // Check for special movement
         if( VectorLengthFast( self->velocity ) < 37 )
         {
-            if( random() > 0.1 && AI_SpecialMove( self, ucmd ) )  //jumps, crouches, turns...
+            if( random() > 0.1 && SpecialMove( ucmd ) )  //jumps, crouches, turns...
                 return;
 
             self->s.angles[YAW] += random() * 180 - 90;
 
             if( !self->is_step )  // if there is ground continue otherwise wait for next move
                 ucmd->forwardmove = 0; //0
-            else if( AI_CanMove( self, BOT_MOVE_FORWARD ) )
+            else if( CanMove( BOT_MOVE_FORWARD ) )
             {
                 ucmd->forwardmove = 1;
                 ucmd->buttons |= BUTTON_WALK;
@@ -435,7 +435,7 @@ void Bot::MoveWander(usercmd_t *ucmd)
         ucmd->buttons |= BUTTON_WALK;
     }
 
-    if( AI_CanMove( self, BOT_MOVE_FORWARD ) )
+    if( CanMove( BOT_MOVE_FORWARD ) )
         ucmd->forwardmove = 1;
     else
         ucmd->forwardmove = -1;
@@ -530,10 +530,10 @@ void Bot::CombatMovement(usercmd_t *ucmd)
     {
         bool canMOVELEFT, canMOVERIGHT, canMOVEFRONT, canMOVEBACK;
 
-        canMOVELEFT = AI_CanMove( self, BOT_MOVE_LEFT );
-        canMOVERIGHT = AI_CanMove( self, BOT_MOVE_RIGHT );
-        canMOVEFRONT = AI_CanMove( self, BOT_MOVE_FORWARD );
-        canMOVEBACK = AI_CanMove( self, BOT_MOVE_BACK );
+        canMOVELEFT = CanMove( BOT_MOVE_LEFT );
+        canMOVERIGHT = CanMove( BOT_MOVE_RIGHT );
+        canMOVEFRONT = CanMove( BOT_MOVE_FORWARD );
+        canMOVEBACK = CanMove( BOT_MOVE_BACK );
 
         self->ai->combatmovepush_timeout = level.time + AI_COMBATMOVE_TIMEOUT;
         VectorClear( self->ai->combatmovepushes );
@@ -991,7 +991,7 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
             if( trace.fraction == 1.0f || ( trace.ent > 0 && game.edicts[trace.ent].takedamage ) )
                 VectorCopy( checktarget, target );
         }
-        else if( !AI_IsStep( self->enemy ) )
+        else if( !IsStep( self->enemy ) )
             wfac *= 2.5; // more imprecise for air rockets
     }
     else if( AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION )
@@ -1063,7 +1063,7 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
 
     //update angles
     VectorSubtract( target, fire_origin, self->ai->move_vector );
-    AI_ChangeAngle( self );
+    ChangeAngle();
 
     if( nav.debugMode && bot_showcombat->integer )
         G_PrintChasersf( self, "%s: attacking %s\n", self->ai->pers.netname, self->enemy->r.client ? self->enemy->r.client->netname : self->classname );

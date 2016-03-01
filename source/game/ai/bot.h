@@ -135,6 +135,14 @@ public:
     bool NewEnemyInView(edict_t *enemy);
     unsigned int CurrentLinkType() const;
 
+    int	ChangeAngle();
+    bool MoveToShortRangeGoalEntity(usercmd_t *ucmd);
+    bool CheckEyes(usercmd_t *ucmd);
+    bool SpecialMove(usercmd_t *ucmd);
+    bool CanMove(int direction);
+    static bool IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent );
+    static bool IsStep(edict_t *ent);
+
     bool AttemptWalljump();
 
     float ReactionTime() const { return ai().pers.cha.reaction_time; }
@@ -154,6 +162,7 @@ class Bot: public Ai
 public:
     Bot(edict_t *self): Ai(self) {}
 
+    using Ai::SpecialMove;
     void SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd);
     void Move(usercmd_t *ucmd);
     void MoveWander(usercmd_t *ucmd);
