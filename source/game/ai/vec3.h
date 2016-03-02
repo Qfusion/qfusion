@@ -28,6 +28,9 @@ public:
     float Length() { return VectorLength(dataPtr); }
     float LengthFast() { return VectorLengthFast(dataPtr); }
 
+    void Normalize() { VectorNormalize(dataPtr); }
+    void NormalizeFast() { VectorLengthFast(dataPtr); }
+
     void operator += (const Vec3Like &that)
     {
         x() += that.x();
