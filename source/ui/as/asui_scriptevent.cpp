@@ -134,8 +134,9 @@ public:
 
 		Element *elem = event.GetTargetElement();
 
-		if( elem->GetOwnerDocument() != target->GetOwnerDocument() ) {
+		if( ( elem->GetOwnerDocument() != target->GetOwnerDocument() ) && ( elem->GetOwnerDocument()->GetParentNode() != target ) ) {
 			// make sure the event originated from the same document as the original target
+			// but leak event to the parent iframe
 			return;
 		}
 
