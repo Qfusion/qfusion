@@ -10,9 +10,12 @@ class Vec3Like
     friend class Vec3Ref;
     friend class Vec3;
 private:
-    Vec3Like(float *data): dataPtr(dataPtr) {}
+    explicit Vec3Like(float *data): dataPtr(data) {}
+    float *dataPtr;
 public:
-    float * const dataPtr;
+
+    float *data() { return dataPtr; }
+    const float *data() const { return dataPtr; }
 
     float &x() { return dataPtr[0]; }
     float &y() { return dataPtr[1]; }
@@ -21,6 +24,9 @@ public:
     float x() const { return dataPtr[0]; }
     float y() const { return dataPtr[1]; }
     float z() const { return dataPtr[2]; }
+
+    float Length() { return VectorLength(dataPtr); }
+    float LengthFast() { return VectorLengthFast(dataPtr); }
 
     void operator += (const Vec3Like &that)
     {
@@ -56,7 +62,7 @@ public:
 class Vec3Ref: public Vec3Like
 {
 public:
-    Vec3Ref(vec3_t that): Vec3Like(that) {}
+    explicit Vec3Ref(vec3_t that): Vec3Like(that) {}
 };
 
 class Vec3: public Vec3Like
@@ -64,21 +70,25 @@ class Vec3: public Vec3Like
 private:
     vec3_t data;
 public:
-    Vec3(vec3_t that): Vec3Like(data)
+    explicit Vec3(vec3_t that): Vec3Like(data)
     {
         VectorCopy(that, data);
     }
+    explicit Vec3(const Vec3Like &that): Vec3Like(data)
+    {
+        VectorCopy(that.data(), data);
+    }
+
     Vec3(float x, float y, float z): Vec3Like(data)
     {
         this->x() = x;
         this->y() = y;
         this->z() = z;
     }
-    Vec3(const Vec3Like &that): Vec3Like(data)
+    Vec3 &operator=(const Vec3Like &that)
     {
-        this->x() = that.x();
-        this->y() = that.y();
-        this->z() = that.z();
+        VectorCopy(that.data(), data);
+        return *this;
     }
 };
 
@@ -97,7 +107,7 @@ inline Vec3 Vec3Like::operator + (const Vec3Like &that) const
 }
 inline Vec3 Vec3Like::operator + (const vec3_t that) const
 {
-    return *this + Vec3Like(const_cast<float *>(that));
+    return Vec3(x() + that[0], y() + that[1], z() + that[2]);
 }
 inline Vec3 Vec3Like::operator - (const Vec3Like &that) const
 {
@@ -105,7 +115,7 @@ inline Vec3 Vec3Like::operator - (const Vec3Like &that) const
 }
 inline Vec3 Vec3Like::operator - (const vec3_t that) const
 {
-    return *this - Vec3Like(const_cast<float *>(that));
+    return Vec3(x() - that[0], y() - that[1], z() - that[2]);
 }
 
 #endif
