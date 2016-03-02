@@ -19,8 +19,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#include "../g_local.h"
-#include "ai_local.h"
+#include "bot.h"
 
 edict_t	*LINKS_PASSENT = NULL;
 
@@ -985,7 +984,7 @@ int AI_LinkCloseNodes_JumpPass( int start )
 				{
 					int cost;
 					//make sure there isn't a good 'standard' path for it
-					cost = AI_FindCost( n1, n2, ( LINK_MOVE|LINK_STAIRS|LINK_FALL|LINK_WATER|LINK_WATERJUMP|LINK_CROUCH ) );
+					cost = Ai::FindCost( n1, n2, ( LINK_MOVE|LINK_STAIRS|LINK_FALL|LINK_WATER|LINK_WATERJUMP|LINK_CROUCH ) );
 					if( cost == -1 || cost > 4 )
 					{
 						if( AI_AddLink( n1, n2, LINK_JUMP ) )

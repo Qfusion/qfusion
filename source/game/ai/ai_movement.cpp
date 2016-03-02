@@ -385,7 +385,7 @@ bool Ai::MoveToShortRangeGoalEntity(usercmd_t *ucmd)
 		return false;
 
 	if( self->ai->goalEnt && ( self->ai->goalEnt->ent == self->movetarget )
-		&& ( AI_GetNodeFlags( self->ai->goal_node ) & NODEFLAGS_ENTITYREACH ) )
+		&& ( GetNodeFlags( self->ai->goal_node ) & NODEFLAGS_ENTITYREACH ) )
 	{
 		bool close, infront;
 

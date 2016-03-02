@@ -106,7 +106,7 @@ void Bot::Move(usercmd_t *ucmd)
 
     specialMovement = ( self->ai->path.numNodes >= MIN_BUNNY_NODES ) ? true : false;
 
-    if( AI_GetNodeFlags( self->ai->next_node ) & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) )
+    if( GetNodeFlags( self->ai->next_node ) & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) )
         specialMovement = false;
 
     if( linkType & (LINK_JUMP|LINK_JUMPPAD|LINK_CROUCH|LINK_FALL|LINK_WATER|LINK_LADDER|LINK_ROCKETJUMP) )
@@ -176,7 +176,7 @@ void Bot::Move(usercmd_t *ucmd)
         nodeReached = NodeReachedPlatformEnd();
     }
         // entering platform
-    else if( AI_GetNodeFlags( self->ai->next_node ) & NODEFLAGS_PLATFORM )
+    else if( GetNodeFlags( self->ai->next_node ) & NODEFLAGS_PLATFORM )
     {
         ucmd->forwardmove = 1;
         ucmd->upmove = 0;
@@ -347,7 +347,7 @@ void Bot::Move(usercmd_t *ucmd)
     ChangeAngle();
 
     if( nodeReached )
-        AI_NodeReached( self );
+        NodeReached();
 
 #undef BOT_FORWARD_EPSILON
 }
@@ -1376,7 +1376,7 @@ void Bot::GhostingFrame()
 {
     usercmd_t ucmd;
 
-    AI_ClearGoal( self );
+    ClearGoal();
 
     self->ai->blocked_timeout = level.time + 15000;
     self->nextThink = level.time + 100;

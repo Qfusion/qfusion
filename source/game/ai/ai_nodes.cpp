@@ -229,7 +229,7 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
-	closest_node = AI_FindClosestReachableNode( nodes[nav.num_nodes].origin, ent, 64, NODE_ALL );
+	closest_node = Ai::FindClosestReachableNode( nodes[nav.num_nodes].origin, ent, 64, NODE_ALL );
 
 	//put into ents table
 	AI_AddNavigatableEntity( ent, nav.num_nodes );
@@ -254,7 +254,7 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 	// link jumpad to dest
 	AI_AddLink( nav.num_nodes-1, nav.num_nodes, LINK_JUMPPAD );
 
-	closest_node = AI_FindClosestReachableNode( nodes[nav.num_nodes].origin, ent, 64, NODE_ALL );
+	closest_node = Ai::FindClosestReachableNode( nodes[nav.num_nodes].origin, ent, 64, NODE_ALL );
 
 	nav.num_nodes++;
 
@@ -413,7 +413,7 @@ static int AI_AddNode_Platform_FindLowerLinkableCandidate( edict_t *ent )
 	//try to find the closer reachable node to the bottom of the plat
 	do
 	{
-		candidate = AI_FindClosestNode( candidate_origin, mindist, NODE_DENSITY * 2, NODE_ALL );
+		candidate = Ai::FindClosestNode( candidate_origin, mindist, NODE_DENSITY * 2, NODE_ALL );
 		if( candidate != NODE_INVALID )
 		{
 			mindist = DistanceFast( candidate_origin, nodes[candidate].origin );
@@ -923,7 +923,7 @@ static void AI_AddGoalEntityNode( edict_t *ent, bool customReach )
 	if( !ent->r.inuse || !ent->classname )
 		return;
 
-	if( AI_GetGoalentForEnt( ent ) != NULL )
+	if( Ai::GetGoalentForEnt( ent ) != NULL )
 		return;
 
 	if( ent->r.client )
@@ -940,7 +940,7 @@ static void AI_AddGoalEntityNode( edict_t *ent, bool customReach )
 		range = AI_GOAL_SR_RADIUS;
 
 	// if we have a available node close enough to the entity, use it
-	node = AI_FindClosestReachableNode( ent->s.origin, ent, range, NODE_ALL );
+	node = Ai::FindClosestReachableNode( ent->s.origin, ent, range, NODE_ALL );
 	if( node != NODE_INVALID )
 	{
 		if( nodes[node].flags & NODE_MASK_NOREUSE )
@@ -1022,7 +1022,7 @@ void AI_RemoveGoalEntity( edict_t *ent )
 {
 	nav_ents_t *goalEnt;
 
-	goalEnt = AI_GetGoalentForEnt( ent );
+	goalEnt = Ai::GetGoalentForEnt( ent );
 	if( !goalEnt ) {
 		return;
 	}
