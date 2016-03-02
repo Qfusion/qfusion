@@ -23,8 +23,7 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
-#include "../g_local.h"
-#include "ai_local.h"
+#include "bot.h"
 
 void AI_Cheat_NoTarget( edict_t *ent )
 {
@@ -169,7 +168,7 @@ static void AITools_ShowPlinks( edict_t *target )
 		return;
 
 	//do it
-	current_node = AI_FindClosestReachableNode( target->s.origin, target, NODE_DENSITY * 3, NODE_ALL );
+	current_node = Ai::FindClosestReachableNode( target->s.origin, target, NODE_DENSITY * 3, NODE_ALL );
 
 	// draw the axis where the node is
 	if( nodes[current_node].flags & NODEFLAGS_SERVERLINK )
@@ -223,7 +222,7 @@ void Cmd_deleteClosestNode_f( edict_t *ent )
 
 	if( ent && nav.num_nodes > 0 )
 	{
-		node = AI_FindClosestReachableNode( ent->s.origin, ent, NODE_DENSITY*3, NODE_ALL );
+		node = Ai::FindClosestReachableNode( ent->s.origin, ent, NODE_DENSITY*3, NODE_ALL );
 		AI_DeleteNode( node );
 	}
 }

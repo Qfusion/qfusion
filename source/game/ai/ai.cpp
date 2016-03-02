@@ -1,6 +1,6 @@
 #include "bot.h"
 
-bool Ai::NodeReachedPlatformEnd() const
+bool Ai::NodeReachedPlatformEnd()
 {
     bool reached = false;
 
@@ -34,7 +34,7 @@ bool Ai::NodeReachedPlatformEnd() const
     return reached;
 }
 
-bool Ai::NodeReachedPlatformStart() const
+bool Ai::NodeReachedPlatformStart()
 {
     bool reached = false;
 
@@ -70,12 +70,12 @@ bool Ai::ReachabilityVisible(vec3_t point) const
     return false;
 }
 
-bool Ai::NodeReachedGeneric() const
+bool Ai::NodeReachedGeneric()
 {
     bool reached = false;
     float RADIUS = NODE_REACH_RADIUS;
 
-    if( !( AI_GetNodeFlags( self->ai->next_node ) & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) ) )
+    if( !( GetNodeFlags( self->ai->next_node ) & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) ) )
     {
         if( self->ai->path.numNodes >= MIN_BUNNY_NODES )
         {
@@ -89,8 +89,8 @@ bool Ai::NodeReachedGeneric() const
                 RADIUS = NODE_WIDE_REACH_RADIUS;
 
             // we use a wider radius in 2D, and a height range enough so they can't be jumped over
-            AI_GetNodeOrigin( n1, n1origin );
-            AI_GetNodeOrigin( n2, n2origin );
+            GetNodeOrigin( n1, n1origin );
+            GetNodeOrigin( n2, n2origin );
             VectorCopy( self->s.origin, origin );
             n1origin[2] = n2origin[2] = origin[2] = 0;
 
@@ -101,7 +101,7 @@ bool Ai::NodeReachedGeneric() const
                 ( DistanceFast( n2origin, origin ) < RADIUS )
                     )
             {
-                AI_NodeReached( self ); // advance the first
+                NodeReached(); // advance the first
                 reached = true;		// return the second as reached
             }
                 // see if reached the first
@@ -121,11 +121,11 @@ bool Ai::NodeReachedGeneric() const
     return reached;
 }
 
-bool Ai::NodeReachedSpecial() const
+bool Ai::NodeReachedSpecial()
 {
     bool reached = false;
 
-    if( self->ai->next_node != NODE_INVALID && !( AI_GetNodeFlags( self->ai->next_node ) & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) ) )
+    if( self->ai->next_node != NODE_INVALID && !( GetNodeFlags( self->ai->next_node ) & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) ) )
     {
         if( self->ai->path.numNodes >= MIN_BUNNY_NODES )
         {
@@ -134,8 +134,8 @@ bool Ai::NodeReachedSpecial() const
             vec3_t n1origin, n2origin, origin;
 
             // we use a wider radius in 2D, and a height range enough so they can't be jumped over
-            AI_GetNodeOrigin( n1, n1origin );
-            AI_GetNodeOrigin( n2, n2origin );
+            GetNodeOrigin( n1, n1origin );
+            GetNodeOrigin( n2, n2origin );
             VectorCopy( self->s.origin, origin );
             n1origin[2] = n2origin[2] = origin[2] = 0;
 
@@ -145,7 +145,7 @@ bool Ai::NodeReachedSpecial() const
                 ( DistanceFast( n2origin, origin ) < NODE_WIDE_REACH_RADIUS ) &&
                 ReachabilityVisible( nodes[n2].origin ) )
             {
-                AI_NodeReached( self ); // advance the first
+                NodeReached(); // advance the first
                 reached = true;		// return the second as reached
             }
                 // see if reached the first
@@ -176,8 +176,8 @@ bool Ai::AttemptWalljump()
             return false;
 
         // we use a wider radius in 2D, and a height range enough so they can't be jumped over
-        AI_GetNodeOrigin( n1, n1origin );
-        AI_GetNodeOrigin( n2, n2origin );
+        GetNodeOrigin( n1, n1origin );
+        GetNodeOrigin( n2, n2origin );
         VectorCopy( self->s.origin, origin );
 
         if( fabs( n1origin[2] - n2origin[2] ) < 32.0f && origin[2] >= n1origin[2] - 4.0f ) {

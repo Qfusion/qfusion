@@ -23,8 +23,7 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
-#include "../g_local.h"
-#include "ai_local.h"
+#include "bot.h"
 
 //ACE
 
@@ -50,7 +49,7 @@ void AI_EnemyRemoved( edict_t *ent )
 // AI_ItemIsReachable
 // Can we get there? Jalfixme: this needs better checks a lot
 //==========================================
-bool AI_ShortRangeReachable( edict_t *self, vec3_t goal )
+bool Ai::ShortRangeReachable( vec3_t goal )
 {
 	trace_t trace;
 	vec3_t v;

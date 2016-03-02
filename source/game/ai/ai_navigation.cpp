@@ -23,12 +23,11 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
-#include "../g_local.h"
-#include "ai_local.h"
+#include "bot.h"
 
 ai_navigation_t	nav;
 
-int AI_FindCost( int from, int to, int movetypes )
+int Ai::FindCost( int from, int to, int movetypes )
 {
 	astarpath_t path;
 
@@ -38,7 +37,7 @@ int AI_FindCost( int from, int to, int movetypes )
 	return path.totalDistance;
 }
 
-int AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, unsigned int flagsmask )
+int Ai::FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, unsigned int flagsmask )
 {
 	int i;
 	float closest;
@@ -80,7 +79,7 @@ int AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, uns
 	return node;
 }
 
-int AI_FindClosestNode( vec3_t origin, float mindist, int range, unsigned int flagsmask )
+int Ai::FindClosestNode( vec3_t origin, float mindist, int range, unsigned int flagsmask )
 {
 	int i;
 	float closest;
@@ -106,7 +105,7 @@ int AI_FindClosestNode( vec3_t origin, float mindist, int range, unsigned int fl
 	return node;
 }
 
-void AI_ClearGoal( edict_t *self )
+void Ai::ClearGoal()
 {
 	self->ai->goal_node = NODE_INVALID;
 	self->ai->current_node = NODE_INVALID;
@@ -119,23 +118,23 @@ void AI_ClearGoal( edict_t *self )
 	VectorSet( self->ai->move_vector, 0, 0, 0 );
 }
 
-void AI_SetGoal( edict_t *self, int goal_node )
+void Ai::SetGoal( int goal_node )
 {
 	int node;
 
 	self->ai->goal_node = goal_node;
-	node = AI_FindClosestReachableNode( self->s.origin, self, NODE_DENSITY * 3, NODE_ALL );
+	node = FindClosestReachableNode( self->s.origin, self, NODE_DENSITY * 3, NODE_ALL );
 
 	if( node == NODE_INVALID )
 	{
-		AI_ClearGoal( self );
+		ClearGoal();
 		return;
 	}
 
 	// ASTAR 
 	if( !AStar_GetPath( node, goal_node, self->ai->status.moveTypesMask, &self->ai->path ) )
 	{
-		AI_ClearGoal( self );
+		ClearGoal();
 		return;
 	}
 
@@ -150,7 +149,7 @@ void AI_SetGoal( edict_t *self, int goal_node )
 	self->ai->tries = 0; // Reset the count of how many times we tried this goal
 }
 
-bool AI_NewNextNode( edict_t *self ) 
+bool Ai::NewNextNode()
 {
 	// reset timeout
 	self->ai->node_timeout = 0;
@@ -180,7 +179,7 @@ bool AI_NewNextNode( edict_t *self )
 		*/
 
 		// don't let it wait too long to weight the inventory again
-		AI_ClearGoal( self );
+		ClearGoal();
 
 		return false; // force checking for a new long range goal
 	}
@@ -194,15 +193,15 @@ bool AI_NewNextNode( edict_t *self )
 	return true;
 }
 
-void AI_NodeReached( edict_t *self )
+void Ai::NodeReached()
 {
-	if( !AI_NewNextNode( self ) )
+	if( !NewNextNode() )
 	{
-		AI_ClearGoal( self );
+		ClearGoal();
 	}
 }
 
-bool AI_NodeHasTimedOut( edict_t *self )
+bool Ai::NodeHasTimedOut()
 {
 	if( self->ai->goal_node == NODE_INVALID )
 		return true;
@@ -216,7 +215,7 @@ bool AI_NodeHasTimedOut( edict_t *self )
 		if( self->ai->tries++ > 3 )
 			return true;
 		else
-			AI_SetGoal( self, self->ai->goal_node );
+			SetGoal( self->ai->goal_node );
 	}
 
 	if( self->ai->current_node == NODE_INVALID || self->ai->next_node == NODE_INVALID )
@@ -231,12 +230,17 @@ bool AI_NodeHasTimedOut( edict_t *self )
 * Some nodes are declared so they are never reached until the entity says so.
 * This is a entity saying so.
 */
-void AI_ReachedEntity( edict_t *self )
+void AI_ReachedEntity(edict_t *self)
+{
+	self->ai->aiRef->ReachedEntity();
+}
+
+void Ai::ReachedEntity()
 {
 	nav_ents_t *goalEnt;
 	edict_t *ent;
 
-	if( ( goalEnt = AI_GetGoalentForEnt( self ) ) == NULL )
+	if( ( goalEnt = GetGoalentForEnt(self) ) == NULL )
 		return;
 
 	// find all bots which have this node as goal and tell them their goal is reached
@@ -246,7 +250,7 @@ void AI_ReachedEntity( edict_t *self )
 			continue;
 
 		if( ent->ai->goal_node == goalEnt->node )
-			AI_ClearGoal( ent );
+			ClearGoal();
 	}
 }
 
@@ -255,7 +259,12 @@ void AI_ReachedEntity( edict_t *self )
 * Some AI has touched some entity. Some entities are declared to never be reached until touched.
 * See if it's one of them and declare it reached
 */
-void AI_TouchedEntity( edict_t *self, edict_t *ent )
+void AI_TouchedEntity(edict_t *self, edict_t *ent)
+{
+	self->ai->aiRef->TouchedEntity(ent);
+}
+
+void Ai::TouchedEntity( edict_t *ent )
 {
 	int i;
 	nav_ents_t *goalEnt;
@@ -275,7 +284,7 @@ void AI_TouchedEntity( edict_t *self, edict_t *ent )
 	{
 		if( nav.debugMode && bot_showlrgoal->integer > 1 )
 			G_PrintChasersf( self, "REACHED entity %s\n", ent->classname ? ent->classname : "no classname" );
-		AI_ClearGoal( self );
+		ClearGoal();
 		return;
 	}
 
@@ -289,7 +298,7 @@ void AI_TouchedEntity( edict_t *self, edict_t *ent )
 				if( nav.debugMode && bot_showlrgoal->integer > 1 )
 					G_PrintChasersf( self, "REACHED touch node %i with entity %s\n", self->ai->next_node, ent->classname ? ent->classname : "no classname" );
 
-				AI_NodeReached( self );
+				NodeReached();
 				return;
 			}
 		}
@@ -302,14 +311,14 @@ void AI_TouchedEntity( edict_t *self, edict_t *ent )
 				if( nav.debugMode && bot_showlrgoal->integer > 1 )
 					G_PrintChasersf( self, "REACHED touch node %i with entity %s\n", self->ai->next_node, ent->classname ? ent->classname : "no classname" );
 
-				AI_NodeReached( self );
+				NodeReached();
 				return;
 			}
 		}
 	}
 }
 
-void AI_GetNodeOrigin( int node, vec3_t origin ) 
+void Ai::GetNodeOrigin( int node, vec3_t origin ) const
 {
 	if( node == NODE_INVALID )
 		VectorCopy( vec3_origin, origin );
@@ -317,7 +326,7 @@ void AI_GetNodeOrigin( int node, vec3_t origin )
 		VectorCopy( nodes[node].origin, origin );
 }
 
-int AI_GetNodeFlags( int node ) 
+int Ai::GetNodeFlags( int node ) const
 {
 	if( node == NODE_INVALID )
 		return 0;

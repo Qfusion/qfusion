@@ -229,7 +229,7 @@ static bool AI_CheckForLadder( edict_t *self )
 		return false;
 
 	// If there is already a ladder node in here we've already done this ladder
-	closest_node = AI_FindClosestReachableNode( self->s.origin, self, NODE_DENSITY, NODEFLAGS_LADDER );
+	closest_node = Ai::FindClosestReachableNode( self->s.origin, self, NODE_DENSITY, NODEFLAGS_LADDER );
 	if( closest_node != -1 )
 		return false;
 
@@ -316,7 +316,7 @@ static void AI_WaterJumpNode( void )
 	VectorCopy( waterorigin, ent.s.origin );
 
 	// Look for the closest node of type water
-	closest_node = AI_FindClosestReachableNode( ent.s.origin, &ent, 32, NODEFLAGS_WATER );
+	closest_node = Ai::FindClosestReachableNode( ent.s.origin, &ent, 32, NODEFLAGS_WATER );
 	if( closest_node == -1 ) // we need to drop a node
 	{
 		closest_node = AI_AddNode( waterorigin, ( NODEFLAGS_WATER|NODEFLAGS_FLOAT ) );
@@ -401,7 +401,7 @@ static void AI_PathMap( void )
 		//normal nodes
 
 		//check for duplicates (prevent adding too many)
-		closest_node = AI_FindClosestReachableNode( player.ent->s.origin, player.ent, 64, NODE_ALL );
+		closest_node = Ai::FindClosestReachableNode( player.ent->s.origin, player.ent, 64, NODE_ALL );
 
 		//otherwise, add a new node
 		if( closest_node == NODE_INVALID )
@@ -426,7 +426,7 @@ static void AI_PathMap( void )
 
 
 	// Iterate through all nodes to make sure far enough apart
-	closest_node = AI_FindClosestReachableNode( player.ent->s.origin, player.ent, NODE_DENSITY, NODE_ALL );
+	closest_node = Ai::FindClosestReachableNode( player.ent->s.origin, player.ent, NODE_DENSITY, NODE_ALL );
 
 	// Add Nodes as needed
 	if( closest_node == NODE_INVALID )
@@ -496,7 +496,7 @@ void AITools_DropNodes( edict_t *ent )
 	if( nav.loaded || !nav.editmode )
 		return;
 
-	AI_CategorizePosition( ent );
+	Ai::CategorizePosition( ent );
 	player.ent = ent;
 	AI_PathMap();
 }

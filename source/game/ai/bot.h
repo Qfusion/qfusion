@@ -122,10 +122,10 @@ class Ai: public EdictRef
 public:
     Ai(edict_t *self): EdictRef(self) {}
 
-    bool NodeReachedGeneric() const;
-    bool NodeReachedSpecial() const;
-    bool NodeReachedPlatformStart() const;
-    bool NodeReachedPlatformEnd() const;
+    bool NodeReachedGeneric();
+    bool NodeReachedSpecial();
+    bool NodeReachedPlatformStart();
+    bool NodeReachedPlatformEnd();
 
     bool ReachabilityVisible(vec3_t point) const;
 
@@ -143,6 +143,30 @@ public:
     bool CanMove(int direction);
     static bool IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent );
     static bool IsStep(edict_t *ent);
+
+    static int FindCost(int from, int to, int movetypes);
+    static int FindClosestReachableNode(vec3_t origin, edict_t *passent, int range, unsigned int flagsmask);
+    static int FindClosestNode(vec3_t origin, float mindist, int range, unsigned int flagsmask);
+    void ClearGoal();
+    void SetGoal(int goal_node);
+    void NodeReached();
+    int GetNodeFlags(int node) const;
+    void GetNodeOrigin(int node, vec3_t origin) const;
+    bool NodeHasTimedOut();
+    bool NewNextNode();
+    void ReachedEntity();
+    void TouchedEntity(edict_t *ent);
+
+    bool ShortRangeReachable(vec3_t goal);
+
+    static nav_ents_t *GetGoalentForEnt(edict_t *target);
+    void PickLongRangeGoal();
+    void PickShortRangeGoal();
+    // Looks like it is unused since is not implemented in original code
+    void Frame(usercmd_t *ucmd);
+    void ResetNavigation();
+    static void CategorizePosition(edict_t *ent);
+    void UpdateStatus();
 
     bool AttemptWalljump();
 

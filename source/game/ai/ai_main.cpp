@@ -180,7 +180,7 @@ void G_SpawnAI( edict_t *ent )
 	}
 }
 
-nav_ents_t *AI_GetGoalentForEnt( edict_t *target )
+nav_ents_t *Ai::GetGoalentForEnt( edict_t *target )
 {
 	int entnum;
 
@@ -300,7 +300,7 @@ void AI_ResetWeights( ai_handle_t *ai )
 // AI_ResetNavigation
 // Init bot navigation. Called at first spawn & each respawn
 //==========================================
-void AI_ResetNavigation( edict_t *self )
+void Ai::ResetNavigation()
 {
 	self->enemy = self->ai->latched_enemy = NULL;
 	self->ai->state_combat_timeout = 0;
@@ -315,7 +315,7 @@ void AI_ResetNavigation( edict_t *self )
 	self->ai->shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 	self->movetarget = NULL;
 
-	AI_ClearGoal( self );
+	self->ai->aiRef->ClearGoal();
 }
 
 //==========================================
@@ -328,7 +328,7 @@ void AI_ResetNavigation( edict_t *self )
 // jal: I don't think there is any problem by calling it,
 // now that we have stored the costs at the nav.costs table (I don't do it anyway)
 //==========================================
-void AI_PickLongRangeGoal( edict_t *self )
+void Ai::PickLongRangeGoal()
 {
 #define WEIGHT_MAXDISTANCE_FACTOR 20000.0f
 #define COST_INFLUENCE	0.5f
@@ -339,7 +339,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 	float dist;
 	nav_ents_t *goalEnt, *bestGoalEnt = NULL;
 
-	AI_ClearGoal( self );
+	self->ai->aiRef->ClearGoal();
 
 	if( G_ISGHOSTING( self ) )
 		return;
@@ -354,7 +354,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 	self->ai->longRangeGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom( 0, 1000 );
 
 	// look for a target
-	current_node = AI_FindClosestReachableNode( self->s.origin, self, ( ( 1 + self->ai->nearest_node_tries ) * NODE_DENSITY ), NODE_ALL );
+	current_node = Ai::FindClosestReachableNode( self->s.origin, self, ( ( 1 + self->ai->nearest_node_tries ) * NODE_DENSITY ), NODE_ALL );
 	self->ai->current_node = current_node;
 
 	if( current_node == NODE_INVALID )
@@ -386,7 +386,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 			if( G_ISGHOSTING( goalEnt->ent ) || ( goalEnt->ent->flags & FL_NOTARGET ) || ( ( goalEnt->ent->flags & FL_BUSY ) && ( level.gametype.forceTeamHumans == level.gametype.forceTeamBots ) ) )
 				goalEnt->node = NODE_INVALID;
 			else
-				goalEnt->node = AI_FindClosestReachableNode( goalEnt->ent->s.origin, goalEnt->ent, NODE_DENSITY, NODE_ALL );
+				goalEnt->node = Ai::FindClosestReachableNode( goalEnt->ent->s.origin, goalEnt->ent, NODE_DENSITY, NODE_ALL );
 		}
 
 		if( goalEnt->ent->item )
@@ -408,7 +408,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 		if( dist > WEIGHT_MAXDISTANCE_FACTOR * weight/* || dist < AI_GOAL_SR_RADIUS*/ )
 			continue;
 
-		cost = AI_FindCost( current_node, goalEnt->node, self->ai->status.moveTypesMask );
+		cost = Ai::FindCost( current_node, goalEnt->node, self->ai->status.moveTypesMask );
 		if( cost == NODE_INVALID )
 			continue;
 
@@ -426,7 +426,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 	if( bestGoalEnt )
 	{
 		self->ai->goalEnt = bestGoalEnt;
-		AI_SetGoal( self, bestGoalEnt->node );
+		self->ai->aiRef->SetGoal( bestGoalEnt->node );
 
 		if( self->ai->goalEnt != NULL && nav.debugMode && bot_showlrgoal->integer )
 			G_PrintChasersf( self, "%s: selected a %s at node %d for LR goal. (weight %f)\n", self->ai->pers.netname, self->ai->goalEnt->ent->classname, self->ai->goalEnt->node, bestWeight );
@@ -447,7 +447,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 // overrides the long range goal selection for items that
 // are very close to the bot and are reachable.
 //==========================================
-static void AI_PickShortRangeGoal( edict_t *self )
+void Ai::PickShortRangeGoal()
 {
 	edict_t *bestGoal = NULL;
 	float bestWeight = 0;
@@ -507,7 +507,7 @@ static void AI_PickShortRangeGoal( edict_t *self )
 
 		clamp_low( dist, 0.01f );
 
-		if( AI_ShortRangeReachable( self, goalEnt->ent->s.origin ) )
+		if( ShortRangeReachable( goalEnt->ent->s.origin ) )
 		{
 			float weight;
 			bool in_front = G_InFront( self, goalEnt->ent );
@@ -546,7 +546,7 @@ static void AI_PickShortRangeGoal( edict_t *self )
 //  AI_CategorizePosition
 //  Categorize waterlevel and groundentity/stepping
 //===================
-void AI_CategorizePosition( edict_t *ent )
+void Ai::CategorizePosition( edict_t *ent )
 {
 	bool stepping = Ai::IsStep(ent);
 
@@ -567,7 +567,7 @@ void AI_CategorizePosition( edict_t *ent )
 	ent->is_step = stepping;
 }
 
-void AI_UpdateStatus( edict_t *self )
+void Ai::UpdateStatus()
 {
 	if( !G_ISGHOSTING( self ) )
 	{
@@ -603,7 +603,7 @@ void AI_Think( edict_t *self )
 	// check for being blocked
 	if( !G_ISGHOSTING( self ) )
 	{
-		AI_CategorizePosition( self );
+		Ai::CategorizePosition( self );
 
 		if( VectorLengthFast( self->velocity ) > 37 )
 			self->ai->blocked_timeout = level.time + 10000;
@@ -618,16 +618,16 @@ void AI_Think( edict_t *self )
 
 	//update status information to feed up ai
 	if( self->ai->statusUpdateTimeout <= level.time )
-		AI_UpdateStatus( self );
+		self->ai->aiRef->UpdateStatus();
 
-	if( AI_NodeHasTimedOut( self ) )
-		AI_ClearGoal( self );
+	if (self->ai->aiRef->NodeHasTimedOut())
+		self->ai->aiRef->ClearGoal();
 
 	if( self->ai->goal_node == NODE_INVALID )
-		AI_PickLongRangeGoal( self );
+		self->ai->aiRef->PickLongRangeGoal();
 
 	//if( self == level.think_client_entity )
-	AI_PickShortRangeGoal( self );
+	self->ai->aiRef->PickShortRangeGoal();
 
 	self->ai->pers.RunFrame( self );
 

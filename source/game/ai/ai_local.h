@@ -315,39 +315,6 @@ typedef struct ai_handle_s
 //----------------------------------------------------------
 void	    Use_Plat( edict_t *ent, edict_t *other, edict_t *activator );
 
-
-// ai_main.c
-//----------------------------------------------------------
-nav_ents_t *AI_GetGoalentForEnt( edict_t *target );
-void	    AI_PickLongRangeGoal( edict_t *ent );
-void	    AI_Frame( edict_t *self, usercmd_t *ucmd );
-void AI_ClearGoal( edict_t *self );
-void	    AI_ResetNavigation( edict_t *ent );
-void	    AI_CategorizePosition( edict_t *ent );
-void AI_UpdateStatus( edict_t *self );
-
-
-// ai_items.c
-//----------------------------------------------------------
-//float	    AI_ItemWeight( edict_t *ent, edict_t *item );
-bool    AI_ShortRangeReachable( edict_t *self, vec3_t goal );
-
-
-// ai_movement.c
-//----------------------------------------------------------
-
-// ai_navigation.c
-//----------------------------------------------------------
-int	    AI_FindCost( int from, int to, int movetypes );
-int	    AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, unsigned int flagsmask );
-int	    AI_FindClosestNode( vec3_t origin, float mindist, int range, unsigned int flagsmask );
-void	    AI_SetGoal( edict_t *self, int goal_node );
-void AI_NodeReached( edict_t *self );
-int AI_GetNodeFlags( int node );
-void AI_GetNodeOrigin( int node, vec3_t origin );
-bool AI_NodeHasTimedOut( edict_t *self );
-
-
 // ai_nodes.c
 //----------------------------------------------------------
 
