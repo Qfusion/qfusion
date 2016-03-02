@@ -122,6 +122,8 @@ class Ai: public EdictRef
 public:
     Ai(edict_t *self): EdictRef(self) {}
 
+    void Think();
+
     bool NodeReachedGeneric();
     bool NodeReachedSpecial();
     bool NodeReachedPlatformStart();

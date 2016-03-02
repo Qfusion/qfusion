@@ -224,17 +224,6 @@ bool Ai::NodeHasTimedOut()
 	return false;
 }
 
-
-/*
-* AI_ReachedEntity
-* Some nodes are declared so they are never reached until the entity says so.
-* This is a entity saying so.
-*/
-void AI_ReachedEntity(edict_t *self)
-{
-	self->ai->aiRef->ReachedEntity();
-}
-
 void Ai::ReachedEntity()
 {
 	nav_ents_t *goalEnt;
@@ -252,16 +241,6 @@ void Ai::ReachedEntity()
 		if( ent->ai->goal_node == goalEnt->node )
 			ClearGoal();
 	}
-}
-
-/*
-* AI_TouchedEntity
-* Some AI has touched some entity. Some entities are declared to never be reached until touched.
-* See if it's one of them and declare it reached
-*/
-void AI_TouchedEntity(edict_t *self, edict_t *ent)
-{
-	self->ai->aiRef->TouchedEntity(ent);
 }
 
 void Ai::TouchedEntity( edict_t *ent )

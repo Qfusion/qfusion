@@ -25,26 +25,6 @@ in NO WAY supported by Steve Yeager.
 
 #include "bot.h"
 
-//ACE
-
-//==========================================
-// AI_EnemyAdded
-// Add the Player to our list
-//==========================================
-void AI_EnemyAdded( edict_t *ent )
-{
-	AI_AddGoalEntity( ent );
-}
-
-//==========================================
-// AI_EnemyRemoved
-// Remove the Player from list
-//==========================================
-void AI_EnemyRemoved( edict_t *ent )
-{
-	AI_RemoveGoalEntity( ent );
-}
-
 //==========================================
 // AI_ItemIsReachable
 // Can we get there? Jalfixme: this needs better checks a lot

@@ -92,7 +92,6 @@ bool Ai::IsStep(edict_t *ent)
 	return true;
 }
 
-
 //==========================================
 // AI_IsLadder
 // check if entity is touching in front of a ladder
