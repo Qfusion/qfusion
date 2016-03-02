@@ -26,7 +26,9 @@ public:
     void SayVoiceMessages();
     void GhostingFrame();
     void RunFrame();
-
+private:
+    bool FindDangers(class Dangers &dangers);
+    bool FindProjectileDangers(class ProjectileDanger &danger, edict_t **entities, int entitiesCount);
 };
 
 #endif

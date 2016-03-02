@@ -1,4 +1,6 @@
 #include "bot.h"
+#include "../../gameshared/q_collision.h"
+#include "../../gameshared/gs_public.h"
 
 void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
 {
@@ -523,6 +525,89 @@ constexpr int AI_ROCKET_DANGER_RADIUS = 200;
 constexpr int AI_GRENADE_DANGER_RADIUS = 250;
 constexpr int AI_GB_BLAST_DANGER_RADIUS = 100;
 
+struct ProjectileDanger
+{
+    ProjectileDanger(float maxRadius): maxRadius(maxRadius)
+    {
+        projectile = nullptr;
+        percentage = 0;
+        selfToHitPoint = Vec3(0, 0, 0);
+    }
+    const float maxRadius;
+
+    edict_t *projectile;
+    float percentage;
+    Vec3 selfToHitPoint = Vec3(0, 0, 0);
+
+    bool IsPresent() { return projectile != nullptr; }
+};
+
+class Dangers
+{
+public:
+    Dangers() : rocketDanger(200), blastDanger(100) {}
+
+    ProjectileDanger rocketDanger;
+    ProjectileDanger blastDanger;
+};
+
+static Vec3 MakeEvadeDirection(edict_t *self, const Vec3 &selfToHitDir)
+{
+    Vec3 result(0, 0, 0);
+    RotatePointAroundVector(result.data(), &axis_identity[AXIS_UP], selfToHitDir.data(), -self->s.angles[YAW] );
+    result.NormalizeFast();
+
+    if( fabs( result.x() ) < 0.3 ) result.x() = 0;
+    if( fabs( result.y() ) < 0.3 ) result.y() = 0;
+    result.z() = 0;
+    result.x() *= -1.0f;
+    result.y() *= -1.0f;
+    return result;
+}
+
+bool Bot::FindDangers(Dangers &dangers)
+{
+    EntitiesDetector entitiesDetector;
+    entitiesDetector.DetectEntities(*this);
+
+    bool result = false;
+
+    result |= FindProjectileDangers(dangers.rocketDanger, entitiesDetector.rockets, entitiesDetector.rocketsCount);
+    result |= FindProjectileDangers(dangers.blastDanger, entitiesDetector.gbBlasts, entitiesDetector.gbBlastsCount);
+
+    return result;
+}
+
+bool Bot::FindProjectileDangers(ProjectileDanger &danger, edict_t **entities, int entitiesCount)
+{
+    float minPrjTime = 1.0f;
+
+    Vec3Ref botOrigin(self->s.origin);
+
+    for (int i = 0; i < entitiesCount; ++i)
+    {
+        edict_t *target = entities[i];
+        Vec3 end = Vec3Ref(target->s.origin) + 2.0f * Vec3Ref(target->velocity);
+        trace_t trace;
+        G_Trace( &trace, target->s.origin, target->r.mins, target->r.maxs, end.vec, target, MASK_SOLID );
+        if (trace.fraction < minPrjTime)
+        {
+            minPrjTime = trace.fraction;
+
+            Vec3 botToHitPoint = Vec3Ref(trace.endpos) - botOrigin;
+            float hitVecLen = botToHitPoint.LengthFast();
+            if (hitVecLen < danger.maxRadius)
+            {
+                danger.projectile = target;
+                danger.selfToHitPoint = botToHitPoint;
+                danger.percentage = 1.0f - hitVecLen / danger.maxRadius;
+            }
+        }
+    }
+
+    return minPrjTime < 1.0f;
+}
+
 bool Bot::FindRocket(vec3_t away_from_rocket)
 {
     float min_roxx_time = 1.0f;
@@ -581,8 +666,7 @@ void Bot::CombatMovement(usercmd_t *ucmd)
 {
     float c;
     float dist;
-    bool rocket = false;
-    vec3_t away_from_rocket = { 0, 0, 0 };
+    bool hasToEvade = false;
 
     if( !self->enemy || self->ai->rush_item )
     {
@@ -590,8 +674,10 @@ void Bot::CombatMovement(usercmd_t *ucmd)
         return;
     }
 
+    Dangers dangers;
+
     if( self->ai->pers.skillLevel >= 0.25f )
-        rocket = FindRocket(away_from_rocket);
+        hasToEvade = FindDangers(dangers);
 
     dist = DistanceFast( self->s.origin, self->enemy->s.origin );
     c = random();
@@ -608,8 +694,21 @@ void Bot::CombatMovement(usercmd_t *ucmd)
         self->ai->combatmovepush_timeout = level.time + AI_COMBATMOVE_TIMEOUT;
         VectorClear( self->ai->combatmovepushes );
 
-        if( rocket )
+        if( hasToEvade )
         {
+            float rocketScore = dangers.rocketDanger.percentage * 1.0f;
+            float blastScore = dangers.blastDanger.percentage * 0.75;
+
+            Vec3 evadeDir(0, 0, 0);
+
+            if (rocketScore > blastScore)
+                evadeDir = MakeEvadeDirection(self, dangers.rocketDanger.selfToHitPoint);
+            else
+                evadeDir = MakeEvadeDirection(self, dangers.blastDanger.selfToHitPoint);
+
+            vec3_t away_from_rocket;
+            VectorCopy(evadeDir.data(), away_from_rocket);
+
             //VectorScale(away_from_rocket,1,self->ai->combatmovepushes);
             if( away_from_rocket[0] )
             {
@@ -727,7 +826,7 @@ void Bot::CombatMovement(usercmd_t *ucmd)
         }
     }
 
-    if( !rocket && ( self->health < 25 || ( dist >= 500 && c < 0.2 ) || ( dist >= 1000 && c < 0.5 ) ) )
+    if( !hasToEvade && ( self->health < 25 || ( dist >= 500 && c < 0.2 ) || ( dist >= 1000 && c < 0.5 ) ) )
     {
         Move( ucmd );
     }
