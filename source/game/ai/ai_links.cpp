@@ -19,7 +19,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#include "bot.h"
+#include "ai_local.h"
 
 edict_t	*LINKS_PASSENT = NULL;
 

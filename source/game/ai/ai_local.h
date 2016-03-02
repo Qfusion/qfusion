@@ -25,6 +25,8 @@ in NO WAY supported by Steve Yeager.
 
 //==========================================================
 
+#include "edict_ref.h"
+
 #define AI_VERSION_STRING "A0059"
 
 //bot debug_chase options
@@ -353,18 +355,69 @@ void AI_LinkNavigationFile( bool silent );
 //----------------------------------------------------------
 void	    BOT_DMclass_InitPersistant( edict_t *self );
 
-//ai_common.c
-//----------------------------------------------------------
-//bool    AI_DropNodeOriginToFloor( vec3_t origin, edict_t *passent );
-//bool    AI_visible( edict_t *self, edict_t *other );
-//bool    AI_infront( edict_t *self, edict_t *other );
-//bool	AI_infront2D( vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy );
-//void	    AI_NewEnemyInView( edict_t *self, edict_t *enemy );
-//unsigned int AI_CurrentLinkType( edict_t *self );
+class Ai: public EdictRef
+{
+public:
+	Ai(edict_t *self): EdictRef(self) {}
 
-//ai_class_dmbot.c
-//----------------------------------------------------------
-//void BOT_DMclass_FindEnemy( edict_t *self );
-//void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd );
-//void BOT_DMclass_MoveWander( edict_t *self, usercmd_t *ucmd );
-//void BOT_DMclass_Move( edict_t *self, usercmd_t *ucmd );
+	void Think();
+
+	bool NodeReachedGeneric();
+	bool NodeReachedSpecial();
+	bool NodeReachedPlatformStart();
+	bool NodeReachedPlatformEnd();
+
+	bool ReachabilityVisible(vec3_t point) const;
+
+	static bool DropNodeOriginToFloor(vec3_t origin, edict_t *passent);
+	bool IsVisible(edict_t *other) const;
+	bool IsInFront(edict_t *other) const;
+	bool IsInFront2D(vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy) const;
+	void NewEnemyInView(edict_t *enemy);
+	unsigned int CurrentLinkType() const;
+
+	int	ChangeAngle();
+	bool MoveToShortRangeGoalEntity(usercmd_t *ucmd);
+	bool CheckEyes(usercmd_t *ucmd);
+	bool SpecialMove(usercmd_t *ucmd);
+	bool CanMove(int direction);
+	static bool IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent );
+	static bool IsStep(edict_t *ent);
+
+	static int FindCost(int from, int to, int movetypes);
+	static int FindClosestReachableNode(vec3_t origin, edict_t *passent, int range, unsigned int flagsmask);
+	static int FindClosestNode(vec3_t origin, float mindist, int range, unsigned int flagsmask);
+	void ClearGoal();
+	void SetGoal(int goal_node);
+	void NodeReached();
+	int GetNodeFlags(int node) const;
+	void GetNodeOrigin(int node, vec3_t origin) const;
+	bool NodeHasTimedOut();
+	bool NewNextNode();
+	void ReachedEntity();
+	void TouchedEntity(edict_t *ent);
+
+	bool ShortRangeReachable(vec3_t goal);
+
+	static nav_ents_t *GetGoalentForEnt(edict_t *target);
+	void PickLongRangeGoal();
+	void PickShortRangeGoal();
+	// Looks like it is unused since is not implemented in original code
+	void Frame(usercmd_t *ucmd);
+	void ResetNavigation();
+	static void CategorizePosition(edict_t *ent);
+	void UpdateStatus();
+
+	bool AttemptWalljump();
+
+	float ReactionTime() const { return ai().pers.cha.reaction_time; }
+	float Offensiveness() const { return ai().pers.cha.offensiveness; }
+	float Campiness() const { return ai().pers.cha.campiness; }
+	float Firerate() const { return ai().pers.cha.firerate; }
+protected:
+	ai_handle_t &ai() { return *self->ai; }
+	const ai_handle_t &ai() const { return *self->ai; }
+
+	static constexpr int MIN_BUNNY_NODES = 2;
+	static constexpr int AI_JUMP_SPEED = 450;
+};
