@@ -441,64 +441,134 @@ void Bot::MoveWander(usercmd_t *ucmd)
         ucmd->forwardmove = -1;
 }
 
+class EntitiesDetector {
+public:
+    // Store entities, not their offsets to reduce indirections
+    edict_t *rockets[MAX_EDICTS];
+    edict_t *plasmas[MAX_EDICTS];
+    edict_t *gbBlasts[MAX_EDICTS];
+    edict_t *grenades[MAX_EDICTS];
+    edict_t *lgBeams[MAX_EDICTS];
+
+    int rocketsCount;
+    int plasmasCount;
+    int gbBlastsCount;
+    int grenadesCount;
+    int lgBeamsCount;
+
+    static constexpr int DETECT_ROCKET_RADIUS = 1000;
+    static constexpr int DETECT_PLASMA_RADIUS = 1500;
+    static constexpr int DETECT_GB_BLAST_RADIUS = 1500;
+    static constexpr int DETECT_GRENADE_RADIUS = 1000;
+
+    void Clear()
+    {
+        rocketsCount = 0;
+        plasmasCount = 0;
+        gbBlastsCount = 0;
+        grenadesCount = 0;
+        lgBeamsCount = 0;
+    }
+
+    void DetectEntities(const EdictRef &self)
+    {
+        Clear();
+
+        const Vec3Like &origin = Vec3Ref(self.self->s.origin);
+
+        const int DETECT_LG_BEAM_RADIUS = GS_GetWeaponDef(WEAP_LASERGUN)->firedef.timeout + 32;
+
+        for (int i = 0; i < MAX_EDICTS; ++i)
+        {
+            edict_t *ent = game.edicts + i;
+            if (!ent)
+                continue;
+            if (!(ent->r.svflags & SVF_PROJECTILE))
+                continue;
+            if (!ent->r.owner)
+                continue;
+            if (ent->r.owner == self.self)
+                continue;
+
+            switch (ent->s.type)
+            {
+                case ET_ROCKET:
+                    if ((origin - ent->s.origin).LengthFast() < DETECT_ROCKET_RADIUS)
+                        rockets[rocketsCount++] = ent;
+                    break;
+                case ET_PLASMA:
+                    if ((origin - ent->s.origin).LengthFast() < DETECT_PLASMA_RADIUS)
+                        plasmas[plasmasCount++] = ent;
+                    break;
+                case ET_BLASTER:
+                    if ((origin - ent->s.origin).LengthFast() < DETECT_GB_BLAST_RADIUS)
+                        gbBlasts[gbBlastsCount++] = ent;
+                    break;
+                case ET_GRENADE:
+                    if ((origin - ent->s.origin).LengthFast() < DETECT_GRENADE_RADIUS)
+                        grenades[grenadesCount++] = ent;
+                    break;
+                case ET_LASERBEAM:
+                    if ((origin - ent->s.origin).LengthFast() < DETECT_LG_BEAM_RADIUS)
+                        lgBeams[lgBeamsCount++] = ent;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+};
+
+constexpr int AI_ROCKET_DANGER_RADIUS = 200;
+constexpr int AI_GRENADE_DANGER_RADIUS = 250;
+constexpr int AI_GB_BLAST_DANGER_RADIUS = 100;
+
 bool Bot::FindRocket(vec3_t away_from_rocket)
 {
-#define AI_ROCKET_DETECT_RADIUS 1000
-#define AI_ROCKET_DANGER_RADIUS 200
-    int i, numtargets;
-    int targets[MAX_EDICTS];
-    edict_t *target;
     float min_roxx_time = 1.0f;
     bool any_rocket = false;
 
-    numtargets = GClip_FindRadius( self->s.origin, AI_ROCKET_DETECT_RADIUS, targets, MAX_EDICTS );
-    for( i = 0; i < numtargets; i++ )
+    EntitiesDetector entitiesDetector;
+    entitiesDetector.DetectEntities(*this);
+
+    for ( int i = 0; i < entitiesDetector.rocketsCount; i++ )
     {
-        target = game.edicts + targets[i];
+        edict_t *target = entitiesDetector.rockets[i];
 
-        // Missile detection code
-        if( target->r.svflags & SVF_PROJECTILE && target->s.type != ET_PLASMA ) // (plasmas come in bunchs so are too complex for the bot to dodge)
+        vec3_t end;
+        trace_t trace;
+
+        VectorMA( target->s.origin, 2, target->velocity, end );
+
+        G_Trace( &trace, target->s.origin, target->r.mins, target->r.maxs, end, target, MASK_SOLID );
+        if( trace.fraction < min_roxx_time )
         {
-            if( target->r.owner && target->r.owner != self )
+            vec_t l;
+
+            any_rocket = true;
+            min_roxx_time = trace.fraction;
+            VectorSubtract( trace.endpos, self->s.origin, end );
+            // ok... end is where the impact will be.
+            // trace.fraction is the time.
+
+            if( ( l = VectorLengthFast( end ) ) < AI_ROCKET_DANGER_RADIUS )
             {
-                vec3_t end;
-                trace_t trace;
+                RotatePointAroundVector( away_from_rocket, &axis_identity[AXIS_UP], end, -self->s.angles[YAW] );
+                VectorNormalize( away_from_rocket );
 
-                VectorMA( target->s.origin, 2, target->velocity, end );
-                G_Trace( &trace, target->s.origin, target->r.mins, target->r.maxs, end, target, MASK_SOLID );
-                if( trace.fraction < min_roxx_time )
-                {
-                    vec_t l;
+                if( fabs( away_from_rocket[0] ) < 0.3 ) away_from_rocket[0] = 0;
+                if( fabs( away_from_rocket[1] ) < 0.3 ) away_from_rocket[1] = 0;
+                away_from_rocket[2] = 0;
+                away_from_rocket[0] *= -1.0f;
+                away_from_rocket[1] *= -1.0f;
 
-                    any_rocket = true;
-                    min_roxx_time = trace.fraction;
-                    VectorSubtract( trace.endpos, self->s.origin, end );
-                    // ok... end is where the impact will be.
-                    // trace.fraction is the time.
-
-                    if( ( l = VectorLengthFast( end ) ) < AI_ROCKET_DANGER_RADIUS )
-                    {
-                        RotatePointAroundVector( away_from_rocket, &axis_identity[AXIS_UP], end, -self->s.angles[YAW] );
-                        VectorNormalize( away_from_rocket );
-
-                        if( fabs( away_from_rocket[0] ) < 0.3 ) away_from_rocket[0] = 0;
-                        if( fabs( away_from_rocket[1] ) < 0.3 ) away_from_rocket[1] = 0;
-                        away_from_rocket[2] = 0;
-                        away_from_rocket[0] *= -1.0f;
-                        away_from_rocket[1] *= -1.0f;
-
-                        if( nav.debugMode && bot_showcombat->integer > 2 )
-                            G_PrintChasersf( self, "%s: ^1projectile dodge: ^2%f, %f d=%f^7\n", self->ai->pers.netname, away_from_rocket[0], away_from_rocket[1], l );
-                    }
-                }
+                if( nav.debugMode && bot_showcombat->integer > 2 )
+                    G_PrintChasersf( self, "%s: ^1projectile dodge: ^2%f, %f d=%f^7\n", self->ai->pers.netname, away_from_rocket[0], away_from_rocket[1], l );
             }
         }
     }
 
     return any_rocket;
-
-#undef AI_ROCKET_DETECT_RADIUS
-#undef AI_ROCKET_DANGER_RADIUS
 }
 
 //==========================================
