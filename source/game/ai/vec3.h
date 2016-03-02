@@ -70,19 +70,19 @@ public:
 
 class Vec3: public Vec3Like
 {
-private:
-    vec3_t data;
 public:
-    explicit Vec3(vec3_t that): Vec3Like(data)
+    vec3_t vec;
+
+    explicit Vec3(vec3_t that): Vec3Like(vec)
     {
-        VectorCopy(that, data);
+        VectorCopy(that, vec);
     }
-    explicit Vec3(const Vec3Like &that): Vec3Like(data)
+    explicit Vec3(const Vec3Like &that): Vec3Like(vec)
     {
-        VectorCopy(that.data(), data);
+        VectorCopy(that.data(), vec);
     }
 
-    Vec3(float x, float y, float z): Vec3Like(data)
+    Vec3(float x, float y, float z): Vec3Like(vec)
     {
         this->x() = x;
         this->y() = y;
@@ -90,7 +90,7 @@ public:
     }
     Vec3 &operator=(const Vec3Like &that)
     {
-        VectorCopy(that.data(), data);
+        VectorCopy(that.data(), vec);
         return *this;
     }
 };
