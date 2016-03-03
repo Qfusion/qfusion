@@ -2248,34 +2248,6 @@ static void CL_ShutdownLocal( void )
 
 //============================================================================
 
-
-#ifdef _DEBUG
-static void CL_LogStats( void )
-{
-	static unsigned int lasttimecalled = 0;
-	if( log_stats->integer )
-	{
-		if( cls.state == CA_ACTIVE )
-		{
-			if( !lasttimecalled )
-			{
-				lasttimecalled = Sys_Milliseconds();
-				if( log_stats_file )
-					FS_Printf( log_stats_file, "0\n" );
-			}
-			else
-			{
-				unsigned int now = Sys_Milliseconds();
-
-				if( log_stats_file )
-					FS_Printf( log_stats_file, "%u\n", now - lasttimecalled );
-				lasttimecalled = now;
-			}
-		}
-	}
-}
-#endif
-
 /*
 * CL_TimedemoStats
 */
@@ -2780,9 +2752,6 @@ void CL_Frame( int realmsec, int gamemsec )
 	allGameMsec = 0;
 
 	cls.framecount++;
-#ifdef _DEBUG
-	CL_LogStats();
-#endif
 }
 
 
