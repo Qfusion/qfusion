@@ -39,6 +39,8 @@ static int com_argc;
 static char *com_argv[MAX_NUM_ARGVS+1];
 static char com_errormsg[MAX_PRINTMSG];
 
+static bool com_quit;
+
 static jmp_buf abortframe;     // an ERR_DROP occured, exit the entire frame
 
 cvar_t *host_speeds;
@@ -139,18 +141,20 @@ void Com_EndRedirect( void )
 	QMutex_Unlock( com_print_mutex );
 }
 
-void Com_ReopenConsoleLog( void )
+void Com_DeferConsoleLogReopen( void )
 {
 	if( logconsole != NULL ) {
 		logconsole->modified = true;
 	}
 }
 
-static void Com_ReopenConsoleLogDeferred( void )
+static void Com_CloseConsoleLog( bool lock, bool shutdown )
 {
-	char errmsg[MAX_PRINTMSG] = { 0 };
+	if( shutdown )
+		lock = true;
 
-	QMutex_Lock( com_print_mutex );
+	if( lock )
+		QMutex_Lock( com_print_mutex );
 
 	if( log_file )
 	{
@@ -158,7 +162,22 @@ static void Com_ReopenConsoleLogDeferred( void )
 		log_file = 0;
 	}
 
-	if( logconsole->string && logconsole->string[0] )
+	if( shutdown )
+		logconsole = NULL;
+
+	if( lock )
+		QMutex_Unlock( com_print_mutex );
+}
+
+static void Com_ReopenConsoleLog( void )
+{
+	char errmsg[MAX_PRINTMSG] = { 0 };
+
+	QMutex_Lock( com_print_mutex );
+
+	Com_CloseConsoleLog( false, false );
+
+	if( logconsole && logconsole->string && logconsole->string[0] )
 	{
 		size_t name_size;
 		char *name;
@@ -225,12 +244,7 @@ void Com_Printf( const char *format, ... )
 	// also echo to debugging console
 	Sys_ConsoleOutput( msg );
 
-	QMutex_Unlock( com_print_mutex );
-
-	// console is protected with its own mutex
 	Con_Print( msg );
-
-	QMutex_Lock( com_print_mutex );
 
 	if( log_file )
 	{
@@ -315,6 +329,13 @@ void Com_Error( com_error_code_t code, const char *format, ... )
 	Sys_Error( "%s", msg );
 }
 
+/*
+* Com_DeferQuit
+*/
+void Com_DeferQuit( void )
+{
+	com_quit = true;
+}
 
 /*
 * Com_Quit
@@ -338,12 +359,6 @@ void Com_Quit( void )
 	SV_Shutdown( "Server quit\n" );
 	CL_Shutdown();
 	MM_Shutdown();
-
-	if( log_file )
-	{
-		FS_FCloseFile( log_file );
-		log_file = 0;
-	}
 
 	Sys_Quit();
 }
@@ -1037,13 +1052,16 @@ void Qcommon_Frame( unsigned int realmsec )
 	int time_before = 0, time_between = 0, time_after = 0;
 	static unsigned int gamemsec;
 
+	if( com_quit )
+		Com_Quit();
+
 	if( setjmp( abortframe ) )
 		return; // an ERR_DROP was thrown
 
 	if( logconsole && logconsole->modified )
 	{
 		logconsole->modified = false;
-		Com_ReopenConsoleLogDeferred();
+		Com_ReopenConsoleLog();
 	}
 
 	if( fixedtime->integer > 0 )
@@ -1156,16 +1174,7 @@ void Qcommon_Shutdown( void )
 	Qcommon_ShutdownCommands();
 	Memory_ShutdownCommands();
 
-	QMutex_Lock( com_print_mutex );
-
-	if( log_file )
-	{
-		FS_FCloseFile( log_file );
-		log_file = 0;
-	}
-	logconsole = NULL;
-
-	QMutex_Unlock( com_print_mutex );
+	Com_CloseConsoleLog( true, true );
 
 	FS_Shutdown();
 

@@ -838,10 +838,11 @@ MISC
 void	    Com_BeginRedirect( int target, char *buffer, int buffersize, 
 				void ( *flush )(int, const char*, const void*), const void *extra );
 void	    Com_EndRedirect( void );
-void 	    Com_ReopenConsoleLog( void );
+void 	    Com_DeferConsoleLogReopen( void );
 void	    Com_Printf( const char *format, ... );
 void	    Com_DPrintf( const char *format, ... );
 void	    Com_Error( com_error_code_t code, const char *format, ... );
+void		Com_DeferQuit( void );
 void	    Com_Quit( void );
 
 int			Com_ClientState( void );        // this should have just been a cvar...
