@@ -74,7 +74,12 @@ static void signal_handler( int sig )
 	switch( try++ )
 	{
 	case 0:
-		if( sig == SIGINT || sig == SIGTERM )
+		if( sig == SIGUSR1 )
+		{
+			Com_ReopenConsoleLog();
+			Com_Printf( "Reopened console log\n" );
+		}
+		else if( sig == SIGINT || sig == SIGTERM )
 		{
 			Com_Printf( "Received signal %d, exiting...\n", sig );
 			Com_Quit();
@@ -116,6 +121,7 @@ static void InitSig( void )
 	signal( SIGTERM, signal_handler );
 	signal( SIGINT, signal_handler );
 	signal( SIGPIPE, SIG_IGN );
+	signal( SIGUSR1, signal_handler );
 }
 
 /*

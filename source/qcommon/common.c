@@ -141,6 +141,40 @@ void Com_EndRedirect( void )
 	QMutex_Unlock( com_print_mutex );
 }
 
+void Com_ReopenConsoleLog( void )
+{
+	QMutex_Lock( com_print_mutex );
+
+	if( log_file )
+	{
+		FS_FCloseFile( log_file );
+		log_file = 0;
+	}
+
+	if( logconsole->string && logconsole->string[0] )
+	{
+		size_t name_size;
+		char *name;
+
+		name_size = strlen( logconsole->string ) + strlen( ".log" ) + 1;
+		name = ( char* )Mem_TempMalloc( name_size );
+		Q_strncpyz( name, logconsole->string, name_size );
+			COM_DefaultExtension( name, ".log", name_size );
+
+		if( FS_FOpenFile( name, &log_file, ( logconsole_append && logconsole_append->integer ? FS_APPEND : FS_WRITE ) ) == -1 )
+		{
+			log_file = 0;
+			// no dead lock here as both posix mutexes and critical sections 
+			// are reenterant for the thread, which owns the mutex/CS
+			Com_Printf( "Couldn't open: %s\n", name );
+		}
+
+		Mem_TempFree( name );
+	}
+
+	QMutex_Unlock( com_print_mutex );
+}
+
 /*
 * Com_Printf
 * 
@@ -149,7 +183,7 @@ void Com_EndRedirect( void )
 */
 void Com_Printf( const char *format, ... )
 {
-	va_list	argptr;
+	va_list argptr;
 	char msg[MAX_PRINTMSG];
 
 	time_t timestamp;
@@ -192,33 +226,7 @@ void Com_Printf( const char *format, ... )
 	if( logconsole && logconsole->modified )
 	{
 		logconsole->modified = false;
-
-		if( log_file )
-		{
-			FS_FCloseFile( log_file );
-			log_file = 0;
-		}
-
-		if( logconsole->string && logconsole->string[0] )
-		{
-			size_t name_size;
-			char *name;
-
-			name_size = strlen( logconsole->string ) + strlen( ".log" ) + 1;
-			name = ( char* )Mem_TempMalloc( name_size );
-			Q_strncpyz( name, logconsole->string, name_size );
-			COM_DefaultExtension( name, ".log", name_size );
-
-			if( FS_FOpenFile( name, &log_file, ( logconsole_append && logconsole_append->integer ? FS_APPEND : FS_WRITE ) ) == -1 )
-			{
-				log_file = 0;
-				// no dead lock here as both posix mutexes and critical sections 
-				// are reenterant for the thread, which owns the mutex/CS
-				Com_Printf( "Couldn't open: %s\n", name );
-			}
-
-			Mem_TempFree( name );
-		}
+		Com_ReopenConsoleLog();
 	}
 
 	if( log_file )
