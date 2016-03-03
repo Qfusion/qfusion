@@ -71,7 +71,7 @@ static void sigusr_handler( int sig )
 {
 	if( sig == SIGUSR1 )
 	{
-		Com_ReopenConsoleLog();
+		Com_DeferConsoleLogReopen();
 	}
 	return;
 }
