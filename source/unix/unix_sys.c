@@ -72,8 +72,8 @@ static void sigusr_handler( int sig )
 	if( sig == SIGUSR1 )
 	{
 		Com_ReopenConsoleLog();
-		Com_Printf( "Reopened console log\n" );
 	}
+	return;
 }
 
 static void signal_handler( int sig )
@@ -112,20 +112,29 @@ static void signal_handler( int sig )
 	}
 }
 
+static void catchsig( int sig, void (*handler)(int) )
+{
+	struct sigaction new_action, old_action;
+	new_action.sa_handler = handler;
+	sigemptyset( &new_action.sa_mask );
+	new_action.sa_flags = SA_RESTART;
+	sigaction( sig, &new_action, &old_action );
+}
+
 static void InitSig( void )
 {
-	signal( SIGHUP, signal_handler );
-	signal( SIGQUIT, signal_handler );
-	signal( SIGILL, signal_handler );
-	signal( SIGTRAP, signal_handler );
-	signal( SIGIOT, signal_handler );
-	signal( SIGBUS, signal_handler );
-	signal( SIGFPE, signal_handler );
-	signal( SIGSEGV, signal_handler );
-	signal( SIGTERM, signal_handler );
-	signal( SIGINT, signal_handler );
-	signal( SIGPIPE, SIG_IGN );
-	signal( SIGUSR1, sigusr_handler );
+	catchsig( SIGHUP, signal_handler );
+	catchsig( SIGQUIT, signal_handler );
+	catchsig( SIGILL, signal_handler );
+	catchsig( SIGTRAP, signal_handler );
+	catchsig( SIGIOT, signal_handler );
+	catchsig( SIGBUS, signal_handler );
+	catchsig( SIGFPE, signal_handler );
+	catchsig( SIGSEGV, signal_handler );
+	catchsig( SIGTERM, signal_handler );
+	catchsig( SIGINT, signal_handler );
+	catchsig( SIGPIPE, SIG_IGN );
+	catchsig( SIGUSR1, sigusr_handler );
 }
 
 /*
