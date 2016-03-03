@@ -143,6 +143,15 @@ void Com_EndRedirect( void )
 
 void Com_ReopenConsoleLog( void )
 {
+	if( logconsole != NULL ) {
+		logconsole->modified = true;
+	}
+}
+
+static void Com_ReopenConsoleLogDeferred( void )
+{
+	char errmsg[MAX_PRINTMSG] = { 0 };
+
 	QMutex_Lock( com_print_mutex );
 
 	if( log_file )
@@ -164,15 +173,18 @@ void Com_ReopenConsoleLog( void )
 		if( FS_FOpenFile( name, &log_file, ( logconsole_append && logconsole_append->integer ? FS_APPEND : FS_WRITE ) ) == -1 )
 		{
 			log_file = 0;
-			// no dead lock here as both posix mutexes and critical sections 
-			// are reenterant for the thread, which owns the mutex/CS
-			Com_Printf( "Couldn't open: %s\n", name );
+			Q_snprintfz( errmsg, MAX_PRINTMSG, "Couldn't open: %s\n", name );
 		}
 
 		Mem_TempFree( name );
 	}
 
 	QMutex_Unlock( com_print_mutex );
+
+	if( errmsg[0] )
+	{
+		Com_Printf( "%s", errmsg );
+	}
 }
 
 /*
@@ -212,22 +224,15 @@ void Com_Printf( const char *format, ... )
 		return;
 	}
 
+	// also echo to debugging console
+	Sys_ConsoleOutput( msg );
+
 	QMutex_Unlock( com_print_mutex );
 
 	// console is protected with its own mutex
 	Con_Print( msg );
 
 	QMutex_Lock( com_print_mutex );
-
-	// also echo to debugging console
-	Sys_ConsoleOutput( msg );
-
-	// logconsole
-	if( logconsole && logconsole->modified )
-	{
-		logconsole->modified = false;
-		Com_ReopenConsoleLog();
-	}
 
 	if( log_file )
 	{
@@ -1037,6 +1042,12 @@ void Qcommon_Frame( unsigned int realmsec )
 
 	if( setjmp( abortframe ) )
 		return; // an ERR_DROP was thrown
+
+	if( logconsole && logconsole->modified )
+	{
+		logconsole->modified = false;
+		Com_ReopenConsoleLogDeferred();
+	}
 
 	if( log_stats->modified )
 	{
