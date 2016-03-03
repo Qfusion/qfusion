@@ -76,6 +76,7 @@ static void signal_handler( int sig )
 	case 0:
 		if( sig == SIGUSR1 )
 		{
+			try = 0;
 			Com_ReopenConsoleLog();
 			Com_Printf( "Reopened console log\n" );
 		}
