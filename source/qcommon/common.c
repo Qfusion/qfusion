@@ -42,7 +42,6 @@ static char com_errormsg[MAX_PRINTMSG];
 static jmp_buf abortframe;     // an ERR_DROP occured, exit the entire frame
 
 cvar_t *host_speeds;
-cvar_t *log_stats;
 cvar_t *developer;
 cvar_t *timescale;
 cvar_t *dedicated;
@@ -60,7 +59,6 @@ static cvar_t *com_introPlayed3;
 
 static qmutex_t *com_print_mutex;
 
-int log_stats_file = 0;
 static int log_file = 0;
 
 static int server_state = CA_UNINITIALIZED;
@@ -944,7 +942,6 @@ void Qcommon_Init( int argc, char **argv )
 	Qcommon_InitCommands();
 
 	host_speeds =	    Cvar_Get( "host_speeds", "0", 0 );
-	log_stats =	    Cvar_Get( "log_stats", "0", 0 );
 	developer =	    Cvar_Get( "developer", "0", 0 );
 	timescale =	    Cvar_Get( "timescale", "1.0", CVAR_CHEAT );
 	fixedtime =	    Cvar_Get( "fixedtime", "0", CVAR_CHEAT );
@@ -1047,28 +1044,6 @@ void Qcommon_Frame( unsigned int realmsec )
 	{
 		logconsole->modified = false;
 		Com_ReopenConsoleLogDeferred();
-	}
-
-	if( log_stats->modified )
-	{
-		log_stats->modified = false;
-
-		if( log_stats->integer && !log_stats_file )
-		{
-			if( FS_FOpenFile( "stats.log", &log_stats_file, FS_WRITE ) != -1 )
-			{
-				FS_Printf( log_stats_file, "entities,dlights,parts,frame time\n" );
-			}
-			else
-			{
-				log_stats_file = 0;
-			}
-		}
-		else if( log_stats_file )
-		{
-			FS_FCloseFile( log_stats_file );
-			log_stats_file = 0;
-		}
 	}
 
 	if( fixedtime->integer > 0 )
@@ -1181,17 +1156,17 @@ void Qcommon_Shutdown( void )
 	Qcommon_ShutdownCommands();
 	Memory_ShutdownCommands();
 
-	if( log_stats_file )
-	{
-		FS_FCloseFile( log_stats_file );
-		log_stats_file = 0;
-	}
+	QMutex_Lock( com_print_mutex );
+
 	if( log_file )
 	{
 		FS_FCloseFile( log_file );
 		log_file = 0;
 	}
 	logconsole = NULL;
+
+	QMutex_Unlock( com_print_mutex );
+
 	FS_Shutdown();
 
 	Com_UnloadCompressionLibraries();
