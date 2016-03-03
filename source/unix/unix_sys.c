@@ -85,29 +85,20 @@ static void signal_handler( int sig )
 	case 0:
 		if( sig == SIGINT || sig == SIGTERM )
 		{
-			Com_Printf( "Received signal %d, exiting...\n", sig );
-			Com_Quit();
+			printf( "Received signal %d, exiting...\n", sig );
 		}
 		else
 		{
-			Com_Error( ERR_FATAL, "Received signal %d\n", sig );
+			fprintf( stderr, "Received signal %d\n", sig );
 		}
+		Com_DeferQuit();
 		break;
 	case 1:
-#ifndef DEDICATED_ONLY
-		printf( "Received signal %d, exiting...\n", sig );
-		SV_Shutdown( "Received signal, exiting...\n" );
-		CL_Shutdown();
-		_exit( 1 );
-		break;
-	case 2:
-#endif
 		printf( "Received signal %d, exiting...\n", sig );
 		_exit( 1 );
 		break;
-
 	default:
-		_exit( 1 );
+		_exit( 2 );
 		break;
 	}
 }
