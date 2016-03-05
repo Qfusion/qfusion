@@ -4823,8 +4823,6 @@ static void CG_LoadStatusBarFile( char *path )
 	customWeaponSelectPic = NULL;
 
 	cg_touch_dropWeaponX = cg_touch_dropWeaponY = 0.0f;
-
-	trap_Cvar_ForceSet( "con_chatCGame", "0" );
 }
 
 /*

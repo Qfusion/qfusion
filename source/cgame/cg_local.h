@@ -1186,8 +1186,6 @@ void CG_LaserBeamEffect( centity_t *cent );
 //
 // cg_chat.c
 //
-extern cvar_t *con_chatCGame;
-
 void CG_InitChat( cg_gamechat_t *chat );
 void CG_StackChatString( cg_gamechat_t *chat, const char *str );
 void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, int fontSize,

@@ -27,6 +27,8 @@
 // wsw : aiwa : global definition to activate case-sensitivity of console (1 == activated)
 #define	    CON_CASE_SENSITIVE 0
 
+struct qfontface_s;
+
 extern volatile bool con_initialized;
 
 void Con_CheckResize( void );
@@ -38,6 +40,7 @@ void Con_PrintSilent( const char *txt );
 void Con_CenteredPrint( char *text );
 void Con_Clear_f( void );
 void Con_DrawNotify( void );
+void Con_DrawChat( int x, int y, int width, struct qfontface_s *font );
 void Con_ClearNotify( void );
 void Con_ToggleConsole_f( void );
 void Con_Paste( void );

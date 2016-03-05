@@ -546,6 +546,14 @@ bool SCR_IsQuickMenuShown( void )
 	return cls.quickmenu && CL_UIModule_HaveQuickMenu();
 }
 
+/*
+* SCR_DrawConsole
+*/
+void SCR_DrawChat( int x, int y, int width, struct qfontface_s *font )
+{
+	Con_DrawChat( x, y, width, font );
+}
+
 //=============================================================================
 
 /*
@@ -587,11 +595,14 @@ static void SCR_DrawConsole( void )
 		Con_DrawConsole();
 		return;
 	}
+}
 
-	if( cls.state == CA_ACTIVE && ( cls.key_dest == key_game || cls.key_dest == key_message ) )
-	{
-		Con_DrawNotify(); // only draw notify in game
-	}
+/*
+* SCR_DrawNotify
+*/
+static void SCR_DrawNotify( void )
+{
+	Con_DrawNotify();
 }
 
 /*
@@ -780,6 +791,7 @@ void SCR_UpdateScreen( void )
 				SCR_DrawDebugGraph();
 
 			SCR_DrawConsole();
+			SCR_DrawNotify();
 		}
 
 		// wsw : aiwa : call any listeners so they can draw their stuff
