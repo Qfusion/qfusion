@@ -20,16 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-cvar_t *con_chatCGame;
-
 /*
 ** CG_InitChat
 */
 void CG_InitChat( cg_gamechat_t *chat )
 {
-	con_chatCGame = trap_Cvar_Get( "con_chatCGame", "0", CVAR_READONLY );
-	trap_Cvar_ForceSet( con_chatCGame->name, "0" );
-
 	memset( chat, 0, sizeof( *chat ) );
 }
 
@@ -43,29 +38,6 @@ void CG_StackChatString( cg_gamechat_t *chat, const char *str )
 
 	chat->lastMsgTime = cg.realTime;
 	chat->nextMsg = (chat->nextMsg + 1) % GAMECHAT_STACK_SIZE;
-}
-
-/*
-** CG_SetChatCvars
-*/
-static void CG_SetChatCvars( int x, int y, char *fontName, int fontSize, int font_height, int width, int height, int padding_x, int padding_y )
-{
-	char tstr[32];
-
-	trap_Cvar_ForceSet( "con_chatCGame", "1" );
-
-	trap_Cvar_ForceSet( "con_chatFontFamily",  fontName );
-	Q_snprintfz( tstr, sizeof( tstr ), "%i", fontSize );
-	trap_Cvar_ForceSet( "con_chatFontSize",  tstr );
-
-	Q_snprintfz( tstr, sizeof( tstr ), "%i", x + padding_x );
-	trap_Cvar_ForceSet( "con_chatX",  tstr );
-
-	Q_snprintfz( tstr, sizeof( tstr ), "%i", y + height - padding_y - font_height );
-	trap_Cvar_ForceSet( "con_chatY",  tstr );
-
-	Q_snprintfz( tstr, sizeof( tstr ), "%i", width - padding_x );
-	trap_Cvar_ForceSet( "con_chatWidth",  tstr );
 }
 
 #define GAMECHAT_NOTIFY_TIME		3000
@@ -144,9 +116,6 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 		backColor[3] *= chat->activeFrac;
 	else
 		backColor[3] *= (1.0 - chat->activeFrac);
-
-	// let the engine know where the input line should be drawn
-	CG_SetChatCvars( x, y, fontName, fontSize, font_height, width, height, padding_x, padding_y );
 
 	for( i = 0; i < GAMECHAT_STACK_SIZE; i++ )
 	{
@@ -302,6 +271,9 @@ parse_string:
 			total_lines += lines;
 		}
 	}
+
+	// let the engine know where the input line should be drawn
+	trap_SCR_DrawChat( x + padding_x, y + height - padding_y - font_height, width - padding_x, font );
 
 	chat->lastActive = chat_active;
 }

@@ -200,14 +200,7 @@ void CG_LocalPrint( const char *format, ... )
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
 
-	if( con_chatCGame->integer )
-	{
-		trap_PrintToLog( msg );
-	}
-	else
-	{
-		trap_Print( msg );
-	}
+	trap_PrintToLog( msg );
 
 	CG_StackChatString( &cg.chat, msg );
 }

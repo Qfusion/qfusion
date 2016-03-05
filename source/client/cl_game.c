@@ -390,9 +390,6 @@ void CL_GameModule_Init( void )
 
 	CL_GameModule_Shutdown();
 
-	// disable reading of client game module chat cvars
-	Cvar_ForceSet( "con_chatCGame", "0" );
-
 	cl_gamemodulepool = _Mem_AllocPool( NULL, "Client Game Progs", MEMPOOL_CLIENTGAME, __FILE__, __LINE__ );
 
 	import.Error = CL_GameModule_Error;
@@ -538,6 +535,7 @@ void CL_GameModule_Init( void )
 	import.SCR_EnableQuickMenu = SCR_EnableQuickMenu;
 	import.SCR_HaveQuickMenu = CL_UIModule_HaveQuickMenu;
 	import.SCR_IsQuickMenuShown = SCR_IsQuickMenuShown;
+	import.SCR_DrawChat = Con_DrawChat;
 
 	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
 	import.AsyncStream_UrlDecode = AsyncStream_UrlDecode;
