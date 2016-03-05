@@ -1113,7 +1113,7 @@ void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, vec4_t c
 {
 	char msg[1024];
 
-	trap_R_SpeedsMessage( msg, sizeof( msg ) );
+	trap_R_GetSpeedsMessage( msg, sizeof( msg ) );
 
 	if( msg[0] )
 	{

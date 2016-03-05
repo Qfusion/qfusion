@@ -377,8 +377,6 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 void RF_EndFrame( void )
 {
-	char tmp[64];
-
 	R_DataSync();
 
 	rrf.frame->EndFrame( rrf.frame );
@@ -389,11 +387,6 @@ void RF_EndFrame( void )
 		rrf.frameId++;
 		ri.Mutex_Unlock( rrf.adapter.frameLock );
 	}
-
-	// FIXME: this should be removed once the API no longer locked
-	ri.Mutex_Lock( rf.fpsLock );
-	ri.Cvar_ForceSet( "r_fps", va_r( tmp, sizeof( tmp ), "%u", max( rf.fps.average, 1 ) ) );
-	ri.Mutex_Unlock( rf.fpsLock );
 }
 
 void RF_BeginRegistration( void )
@@ -541,12 +534,17 @@ bool RF_RenderingEnabled( void )
 	return GLimp_RenderingEnabled();
 }
 
-const char *RF_SpeedsMessage( char *out, size_t size )
+const char *RF_GetSpeedsMessage( char *out, size_t size )
 {
 	ri.Mutex_Lock( rf.speedsMsgLock );
 	Q_strncpyz( out, rf.speedsMsg, size );
 	ri.Mutex_Unlock( rf.speedsMsgLock );
 	return out;
+}
+
+int RF_GetAverageFramerate( void )
+{
+	return rf.fps.average;
 }
 
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )

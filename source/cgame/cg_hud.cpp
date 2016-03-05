@@ -210,9 +210,10 @@ static int CG_GetFPS( const void *parameter )
 	if( cg_showFPS->integer == 1 )
 	{
 		// FIXME: this should be removed once the API no longer locked
-		fps = (int)trap_Cvar_Value( "r_fps" );
-		if( fps != 0 )
-			return fps;
+		fps = (int)trap_R_GetAverageFramerate();
+		if( fps < 1 )
+			fps = 1;
+		return fps;
 	}
 
 	frameTimes[cg.frameCount & FPSSAMPLESMASK] = cg.realFrameTime;
