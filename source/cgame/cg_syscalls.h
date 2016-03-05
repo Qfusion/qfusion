@@ -317,9 +317,14 @@ static inline void trap_R_RenderScene( const refdef_t *fd )
 	CGAME_IMPORT.R_RenderScene( fd );
 }
 
-static inline const char *trap_R_SpeedsMessage( char *out, size_t size )
+static inline const char *trap_R_GetSpeedsMessage( char *out, size_t size )
 {
-	return CGAME_IMPORT.R_SpeedsMessage( out, size );
+	return CGAME_IMPORT.R_GetSpeedsMessage( out, size );
+}
+
+static inline int trap_R_GetAverageFramerate( void )
+{
+	return CGAME_IMPORT.R_GetAverageFramerate();
 }
 
 static inline void trap_R_RegisterWorldModel( const char *name )

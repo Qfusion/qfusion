@@ -1685,16 +1685,14 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
 
     // update fps meter
-	ri.Mutex_Lock( rf.fpsLock );
-    rf.fps.count++;
-    rf.fps.time = time;
-    if( rf.fps.time - rf.fps.oldTime >= 250 ) {
-        rf.fps.average = time - rf.fps.oldTime;
-        rf.fps.average = 1000.0f * (rf.fps.count - rf.fps.oldCount) / (float)rf.fps.average + 0.5f;
-        rf.fps.oldTime = time;
-        rf.fps.oldCount = rf.fps.count;
-    }
-	ri.Mutex_Unlock( rf.fpsLock );
+	rf.fps.count++;
+	rf.fps.time = time;
+	if( rf.fps.time - rf.fps.oldTime >= 250 ) {
+		rf.fps.average = time - rf.fps.oldTime;
+		rf.fps.average = 1000.0f * (rf.fps.count - rf.fps.oldCount) / (float)rf.fps.average + 0.5f;
+		rf.fps.oldTime = time;
+		rf.fps.oldCount = rf.fps.count;
+	}
 
 	R_Set2DMode( true );
 }

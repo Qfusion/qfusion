@@ -85,7 +85,8 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.LerpTag = RF_LerpTag;
 	globals.TransformVectorToScreen = RF_TransformVectorToScreen;
 
-	globals.SpeedsMessage = RF_SpeedsMessage;
+	globals.GetSpeedsMessage = RF_GetSpeedsMessage;
+	globals.GetAverageFramerate = RF_GetAverageFramerate;
 
 	globals.BeginAviDemo = RF_BeginAviDemo;
 	globals.WriteAviFrame = RF_WriteAviFrame;

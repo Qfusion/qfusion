@@ -462,7 +462,8 @@ void CL_GameModule_Init( void )
 	import.R_AddPolyToScene = re.AddPolyToScene;
 	import.R_AddLightStyleToScene = re.AddLightStyleToScene;
 	import.R_RenderScene = re.RenderScene;
-	import.R_SpeedsMessage = re.SpeedsMessage;
+	import.R_GetSpeedsMessage = re.GetSpeedsMessage;
+	import.R_GetAverageFramerate = re.GetAverageFramerate;
 	import.R_RegisterWorldModel = CL_GameModule_R_RegisterWorldModel;
 	import.R_ModelBounds = re.ModelBounds;
 	import.R_ModelFrameBounds = re.ModelFrameBounds;

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 19
+#define REF_API_VERSION 21
 
 struct mempool_s;
 struct cinematics_s;
@@ -215,7 +215,8 @@ typedef struct
 
 	void		( *BeginFrame )( float cameraSeparation, bool forceClear, bool forceVsync );
 	void		( *EndFrame )( void );
-	const char *( *SpeedsMessage )( char *out, size_t size );
+	const char *( *GetSpeedsMessage )( char *out, size_t size );
+	int			( *GetAverageFramerate )( void );
 
 	void		( *BeginAviDemo )( void );
 	void		( *WriteAviFrame )( int frame, bool scissor );
