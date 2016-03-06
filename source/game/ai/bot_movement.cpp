@@ -422,10 +422,15 @@ void Bot::MoveWander(usercmd_t *ucmd)
 
             if( !self->is_step )  // if there is ground continue otherwise wait for next move
                 ucmd->forwardmove = 0; //0
-            else if( CanMove( BOT_MOVE_FORWARD ) )
+            else
             {
-                ucmd->forwardmove = 1;
-                ucmd->buttons |= BUTTON_WALK;
+                MoveTestResult forwardTest;
+                TestMove(&forwardTest, BOT_MOVE_FORWARD);
+                if (forwardTest.CanWalk())
+                {
+                    ucmd->forwardmove = 1;
+                    ucmd->buttons |= BUTTON_WALK;
+                }
             }
 
             return;
@@ -435,7 +440,9 @@ void Bot::MoveWander(usercmd_t *ucmd)
         ucmd->buttons |= BUTTON_WALK;
     }
 
-    if( CanMove( BOT_MOVE_FORWARD ) )
+    MoveTestResult forwardTest;
+    TestMove(&forwardTest, BOT_MOVE_FORWARD);
+    if( forwardTest.CanWalk() )
         ucmd->forwardmove = 1;
     else
         ucmd->forwardmove = -1;
@@ -519,12 +526,19 @@ void Bot::CombatMovement(usercmd_t *ucmd)
 
     if( level.time > self->ai->combatmovepush_timeout )
     {
-        bool canMOVELEFT, canMOVERIGHT, canMOVEFRONT, canMOVEBACK;
+        MoveTestResult leftTest;
+        MoveTestResult rightTest;
+        MoveTestResult frontTest;
+        MoveTestResult backTest;
+        TestMove(&leftTest, BOT_MOVE_LEFT);
+        TestMove(&rightTest, BOT_MOVE_RIGHT);
+        TestMove(&frontTest, BOT_MOVE_FORWARD);
+        TestMove(&backTest, BOT_MOVE_RIGHT);
 
-        canMOVELEFT = CanMove( BOT_MOVE_LEFT );
-        canMOVERIGHT = CanMove( BOT_MOVE_RIGHT );
-        canMOVEFRONT = CanMove( BOT_MOVE_FORWARD );
-        canMOVEBACK = CanMove( BOT_MOVE_BACK );
+        bool canMOVELEFT = leftTest.CanWalk();
+        bool canMOVERIGHT = rightTest.CanWalk();
+        bool canMOVEFRONT = frontTest.CanWalk();
+        bool canMOVEBACK = backTest.CanWalk();
 
         self->ai->combatmovepush_timeout = level.time + AI_COMBATMOVE_TIMEOUT;
         VectorClear( self->ai->combatmovepushes );
@@ -541,16 +555,16 @@ void Bot::CombatMovement(usercmd_t *ucmd)
 
             if (evadeDir.x())
             {
-                if( ( evadeDir.x() < 0 ) && canMOVEBACK )
+                if( ( evadeDir.x() < 0 ) && backTest.CanWalk() )
                     self->ai->combatmovepushes[0] = -1;
-                else if( ( evadeDir.x() > 0 ) && canMOVEFRONT )
+                else if( ( evadeDir.x() > 0 ) && frontTest.CanWalk() )
                     self->ai->combatmovepushes[0] = 1;
             }
             if( evadeDir.y() )
             {
-                if( ( evadeDir.y() < 0 ) && canMOVELEFT )
+                if( ( evadeDir.y() < 0 ) && leftTest.CanWalk() )
                     self->ai->combatmovepushes[1] = -1;
-                else if( ( evadeDir.y() > 0 ) && canMOVERIGHT )
+                else if( ( evadeDir.y() > 0 ) && rightTest.CanWalk() )
                     self->ai->combatmovepushes[1] = 1;
             }
 

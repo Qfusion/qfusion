@@ -24,19 +24,13 @@ in NO WAY supported by Steve Yeager.
 */
 
 #include "ai_local.h"
+#include "../../gameshared/q_collision.h"
 
-//==========================================
-// AI_CanMove
-// Checks if bot can move (really just checking the ground)
-// Also, this is not a real accurate check, but does a
-// pretty good job and looks for lava/slime.
-//==========================================
-bool Ai::CanMove(int direction )
+void Ai::TestMove(MoveTestResult *testResult, int direction)
 {
 	vec3_t forward, right;
 	vec3_t offset, start, end;
 	vec3_t angles;
-	trace_t tr;
 
 	// Now check to see if move will move us off an edge
 	VectorCopy( self->s.angles, angles );
@@ -48,22 +42,45 @@ bool Ai::CanMove(int direction )
 	else if( direction == BOT_MOVE_BACK )
 		angles[1] -= 180;
 
-
 	// Set up the vectors
 	AngleVectors( angles, forward, right, NULL );
 
-	VectorSet( offset, 36, 0, 24 );
+	VectorSet( offset, 15, 0, 24 );
 	G_ProjectSource( self->s.origin, offset, forward, right, start );
 
 	VectorSet( offset, 36, 0, -100 );
 	G_ProjectSource( self->s.origin, offset, forward, right, end );
 
-	G_Trace( &tr, start, NULL, NULL, end, self, MASK_AISOLID );
+	G_Trace(&testResult->forwardGroundTrace, start, NULL, NULL, end, self, MASK_AISOLID);
 
-	if( tr.fraction == 1.0 || tr.contents & ( CONTENTS_LAVA|CONTENTS_SLIME ) )
-		return false;
+	if (testResult->forwardGroundTrace.fraction == 1.0)
+	{
+		// Trace for pit
+		VectorSet(offset, 36, 0, -100);
+		G_ProjectSource( self->s.origin, offset, forward, right, start );
+		offset[2] -= 999999;
+		G_ProjectSource( self->s.origin, offset, forward, right, end );
+		G_Trace(&testResult->forwardPitTrace, start, NULL, NULL, end, self, MASK_AISOLID);
+	}
+	else
+	{
+		// Trace for full height (avoid bumping a ceiling by adding 5 units)
+		VectorSet(offset, 15, 0, playerbox_stand_maxs[2] + 5);
+		G_ProjectSource( self->s.origin, offset, forward, right, start );
+		offset[0] += 36;
+		G_ProjectSource( self->s.origin, offset, forward, right, end );
+		G_Trace(&testResult->wallFullHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
 
-	return true; // yup, can move
+		// Trace for step height (we're changing Z, do not need to project again)
+		start[2] -= playerbox_stand_maxs[2] - 5;
+		end[2] -= playerbox_stand_maxs[2] - 5;
+		G_Trace(&testResult->wallStepHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
+
+		// Trace for zero height (we're changing Z, do not need to project again)
+		start[2] += playerbox_stand_mins[2]; // < 0
+		end[2] += playerbox_stand_mins[2]; // < 0
+		G_Trace(&testResult->wallZeroHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
+	}
 }
 
 
