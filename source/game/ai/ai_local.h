@@ -28,6 +28,7 @@ in NO WAY supported by Steve Yeager.
 #define AL_LOCAL_H
 
 #include "edict_ref.h"
+#include "../../gameshared/q_collision.h"
 
 #ifdef max
 #undef max
@@ -365,6 +366,25 @@ void AI_LinkNavigationFile( bool silent );
 //----------------------------------------------------------
 void	    BOT_DMclass_InitPersistant( edict_t *self );
 
+struct MoveTestResult
+{
+	trace_t forwardGroundTrace;
+	trace_t forwardPitTrace;
+	trace_t wallFullHeightTrace;
+	trace_t wallStepHeightTrace;
+	trace_t wallZeroHeightTrace;
+
+	inline bool CanWalk()
+	{
+		return
+			forwardGroundTrace.fraction != 1.0 &&
+			!(forwardGroundTrace.contents & (CONTENTS_LAVA|CONTENTS_SLIME)) &&
+			wallFullHeightTrace.fraction == 1.0 &&
+			wallStepHeightTrace.fraction == 1.0 &&
+			wallZeroHeightTrace.fraction == 1.0;
+	}
+};
+
 class Ai: public EdictRef
 {
 public:
@@ -390,7 +410,7 @@ public:
 	bool MoveToShortRangeGoalEntity(usercmd_t *ucmd);
 	bool CheckEyes(usercmd_t *ucmd);
 	bool SpecialMove(usercmd_t *ucmd);
-	bool CanMove(int direction);
+	void TestMove(MoveTestResult *testResult, int direction);
 	static bool IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent );
 	static bool IsStep(edict_t *ent);
 
