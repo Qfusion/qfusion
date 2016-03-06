@@ -383,8 +383,7 @@ bool PlasmaBeamsBuilder::FindMostDangerousBeams(StaticVector<Danger, N> &dangers
             // It works for single-projectile beams too
             Vec3 beamDir(beam->startProjectile->velocity);
             beamDir.NormalizeFast();
-            tracedBeamStart -= 32.0f * beamDir;
-            tracedBeamEnd += 32.0f * beamDir;
+            tracedBeamEnd += 108.0f * beamDir;
 
 #ifdef _DEBUG
             AITools_DrawColorLine(tracedBeamStart.vec, tracedBeamEnd.vec, COLOR_RGB(144, 0, 0), 0);
@@ -558,7 +557,6 @@ bool DangersDetector::FindLaserDangers(StaticVector<Danger, N> &dangers, StaticV
             else
             {
                 // Very rare but really seen case - beam has zero length
-                printf("Boom!!\n");
                 vec3_t forward, right, up;
                 AngleVectors(owner->s.angles, forward, right, up);
                 direction += forward;
