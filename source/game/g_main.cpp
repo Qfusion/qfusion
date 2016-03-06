@@ -403,7 +403,7 @@ void G_Shutdown( void )
 
 	trap_Cvar_ForceSet( "nextmap", va( "map \"%s\"", G_SelectNextMapName() ) );
 
-	BOT_RemoveBot( "all" );
+	AI_Shutdown();
 
 	G_RemoveCommands();
 

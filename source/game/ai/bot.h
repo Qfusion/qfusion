@@ -1,18 +1,18 @@
 #ifndef AI_BOT_H
 #define AI_BOT_H
 
-#include "ai_local.h"
+#include "static_vector.h"
+#include "dangers_detector.h"
 
 class Bot: public Ai
 {
 public:
-    Bot(edict_t *self): Ai(self) {}
+    Bot(edict_t *self): Ai(self), dangersDetector(self) {}
 
     using Ai::SpecialMove;
     void SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd);
     void Move(usercmd_t *ucmd);
     void MoveWander(usercmd_t *ucmd);
-    bool FindRocket(vec3_t away_from_rocket);
     void CombatMovement(usercmd_t *ucmd);
     void FindEnemy();
     bool ChangeWeapon(int weapon);
@@ -27,8 +27,11 @@ public:
     void GhostingFrame();
     void RunFrame();
 private:
-    bool FindDangers(class Dangers &dangers);
-    bool FindProjectileDangers(class ProjectileDanger &danger, edict_t **entities, int entitiesCount);
+    DangersDetector dangersDetector;
+
+    Vec3 MakeEvadeDirection(const class Danger &danger);
 };
+
+
 
 #endif

@@ -1,10 +1,12 @@
 #include "bot.h"
-#include <new>
+#include "ai_shutdown_hooks_holder.h"
 
 cvar_t *sv_botpersonality;
 
 ai_weapon_t AIWeapons[WEAP_TOTAL];
 const size_t ai_handle_size = sizeof( ai_handle_t );
+
+static bool ai_intialized = false;
 
 //==========================================
 // AI_InitLevel
@@ -101,6 +103,18 @@ void AI_InitLevel( void )
     AIWeapons[WEAP_INSTAGUN].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.9f;
     AIWeapons[WEAP_INSTAGUN].RangeWeight[AIWEAP_SHORT_RANGE] = 0.9f;
     AIWeapons[WEAP_INSTAGUN].RangeWeight[AIWEAP_MELEE_RANGE] = 0.9f;
+
+    ai_intialized = true;
+}
+
+void AI_Shutdown( void )
+{
+    if (!ai_intialized)
+        return;
+    BOT_RemoveBot("all");
+
+    AiShutdownHooksHolder::Instance()->InvokeHooks();
+    ai_intialized = false;
 }
 
 //==========================================
