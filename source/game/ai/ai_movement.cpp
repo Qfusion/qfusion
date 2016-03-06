@@ -24,9 +24,56 @@ in NO WAY supported by Steve Yeager.
 */
 
 #include "ai_local.h"
-#include "../../gameshared/q_collision.h"
 
-void Ai::TestMove(MoveTestResult *testResult, int direction)
+bool MoveTestResult::CanWalk() const
+{
+	if (forwardGroundTrace.fraction == 1.0)
+		return false;
+	if (forwardGroundTrace.contents & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_DONOTENTER))
+		return false;
+	if (wallZeroHeightTrace.fraction != 1.0)
+	{
+		if (!ISWALKABLEPLANE(&wallZeroHeightTrace.plane))
+			return false;
+		if (wallStepHeightTrace.fraction != 1.0)
+		{
+			if (!ISWALKABLEPLANE(&wallStepHeightTrace.plane))
+				return false;
+			return wallFullHeightTrace.fraction == 1.0;
+		}
+		return wallFullHeightTrace.fraction == 1.0;
+	}
+	return wallStepHeightTrace.fraction == 1.0 && wallFullHeightTrace.fraction == 1.0;
+}
+
+bool MoveTestResult::CanWalkOrFallQuiteSafely() const
+{
+	if (wallFullHeightTrace.fraction != 1.0)
+		return false;
+	if (wallStepHeightTrace.fraction != 1.0)
+		return false;
+	if (wallZeroHeightTrace.fraction != 1.0)
+		return false;
+	if (forwardGroundTrace.fraction != 1.0)
+		return !(forwardGroundTrace.contents & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_DONOTENTER));
+	if (forwardPitTrace.fraction == 1.0)
+		return false;
+	if (forwardPitTrace.contents & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_DONOTENTER))
+		return false;
+	if (forwardPitTrace.surfFlags & SURF_NODAMAGE)
+		return true;
+	return (Vec3(self->s.origin) - forwardPitTrace.endpos).SquaredLength() < 450 * 450;
+}
+
+bool MoveTestResult::CanJump() const
+{
+	return
+		wallStepHeightTrace.fraction != 1.0 &&
+		!ISWALKABLEPLANE(&wallStepHeightTrace.plane)
+		&& wallFullHeightTrace.fraction == 1.0;
+}
+
+void Ai::TestMove(MoveTestResult *testResult, int direction) const
 {
 	vec3_t forward, right;
 	vec3_t offset, start, end;
@@ -72,8 +119,8 @@ void Ai::TestMove(MoveTestResult *testResult, int direction)
 		G_Trace(&testResult->wallFullHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
 
 		// Trace for step height (we're changing Z, do not need to project again)
-		start[2] -= playerbox_stand_maxs[2] - 5;
-		end[2] -= playerbox_stand_maxs[2] - 5;
+		start[2] -= playerbox_stand_maxs[2] - 10;
+		end[2] -= playerbox_stand_maxs[2] - 10;
 		G_Trace(&testResult->wallStepHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
 
 		// Trace for zero height (we're changing Z, do not need to project again)
@@ -81,6 +128,8 @@ void Ai::TestMove(MoveTestResult *testResult, int direction)
 		end[2] += playerbox_stand_mins[2]; // < 0
 		G_Trace(&testResult->wallZeroHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
 	}
+
+	testResult->self = self;
 }
 
 

@@ -553,22 +553,81 @@ void Bot::CombatMovement(usercmd_t *ucmd)
             AITools_DrawLine(drawnDirStart.vec, drawnDirEnd.vec);
 #endif
 
+            int walkingEvades = 0;
+            int walkingMovePushes[2] = {0, 0};
+            int jumpingEvades = 0;
+            int jumpingMovePushes[2] = {0, 0};
+
             if (evadeDir.x())
             {
-                if( ( evadeDir.x() < 0 ) && backTest.CanWalk() )
-                    self->ai->combatmovepushes[0] = -1;
-                else if( ( evadeDir.x() > 0 ) && frontTest.CanWalk() )
-                    self->ai->combatmovepushes[0] = 1;
+                if ((evadeDir.x() < 0))
+                {
+                    if (backTest.CanWalkOrFallQuiteSafely())
+                    {
+                        walkingMovePushes[0] = -1;
+                        ++walkingEvades;
+                    }
+                    else if (backTest.CanJump())
+                    {
+                        jumpingMovePushes[0] = -1;
+                        ++jumpingEvades;
+                    }
+                }
+                else if ((evadeDir.x() > 0))
+                {
+                    if (frontTest.CanWalkOrFallQuiteSafely())
+                    {
+                        walkingMovePushes[0] = 1;
+                        ++walkingEvades;
+                    }
+                    else if (frontTest.CanJump())
+                    {
+                        jumpingMovePushes[0] = 1;
+                        ++jumpingEvades;
+                    }
+                }
             }
-            if( evadeDir.y() )
+            if (evadeDir.y())
             {
-                if( ( evadeDir.y() < 0 ) && leftTest.CanWalk() )
-                    self->ai->combatmovepushes[1] = -1;
-                else if( ( evadeDir.y() > 0 ) && rightTest.CanWalk() )
-                    self->ai->combatmovepushes[1] = 1;
+                if ((evadeDir.y() < 0))
+                {
+                    if (leftTest.CanWalkOrFallQuiteSafely())
+                    {
+                        walkingMovePushes[1] = -1;
+                        ++walkingEvades;
+                    }
+                    else if (leftTest.CanJump())
+                    {
+                        jumpingMovePushes[1] = -1;
+                        ++jumpingEvades;
+                    }
+                }
+                else if ((evadeDir.y() > 0))
+                {
+                    if (rightTest.CanWalkOrFallQuiteSafely())
+                    {
+                        walkingMovePushes[1] = 1;
+                        ++walkingEvades;
+                    }
+                    else if (rightTest.CanJump())
+                    {
+                        jumpingMovePushes[1] = 1;
+                        ++jumpingEvades;
+                    }
+                }
             }
 
-            ucmd->buttons |= BUTTON_SPECIAL;
+            // Evades with dash have priority unless the bot is stunned
+            if (walkingEvades > 0 && !self->r.client->ps.stats[PM_STAT_STUN])
+            {
+                VectorCopy(walkingMovePushes, self->ai->combatmovepushes);
+                ucmd->buttons |= BUTTON_SPECIAL;
+            }
+            else if (jumpingEvades > 0)
+            {
+                jumpingMovePushes[2] = 1;
+                VectorCopy(jumpingMovePushes, self->ai->combatmovepushes);
+            }
         }
         else
         if( dist < 150 ) // range = AIWEAP_MELEE_RANGE;
