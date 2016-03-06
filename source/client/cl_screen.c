@@ -461,7 +461,7 @@ void SCR_DebugGraph( float value, float r, float g, float b )
 */
 static void SCR_DrawDebugGraph( void )
 {
-	int a, x, y, w, i, h;
+	int a, x, y, w, i, h, s;
 	float v;
 
 	//
@@ -473,6 +473,8 @@ static void SCR_DrawDebugGraph( void )
 	SCR_DrawFillRect( x, y-scr_graphheight->integer,
 		w, scr_graphheight->integer, colorBlack );
 
+	s = ( w + 1024 - 1 ) / 1024; //scale for resolutions with width >1024
+
 	for( a = 0; a < w; a++ )
 	{
 		i = ( current-1-a+1024 ) & 1023;
@@ -482,7 +484,7 @@ static void SCR_DrawDebugGraph( void )
 		if( v < 0 )
 			v += scr_graphheight->integer * ( 1+(int)( -v/scr_graphheight->integer ) );
 		h = (int)v % scr_graphheight->integer;
-		SCR_DrawFillRect( x+w-1-a, y - h, 1, h, values[i].color );
+		SCR_DrawFillRect( x+w-1-a*s, y - h, s, h, values[i].color );
 	}
 }
 
