@@ -550,7 +550,22 @@ bool DangersDetector::FindLaserDangers(StaticVector<Danger, N> &dangers, StaticV
 
             Vec3 direction(beam->s.origin2);
             direction -= beam->s.origin;
-            direction.NormalizeFast();
+            float squareLen = direction.SquaredLength();
+            if (squareLen > 1)
+            {
+                direction *= Q_RSqrt(squareLen);
+            }
+            else
+            {
+                // Very rare but really seen case - beam has zero length
+                printf("Boom!!\n");
+                vec3_t forward, right, up;
+                AngleVectors(owner->s.angles, forward, right, up);
+                direction += forward;
+                direction += right;
+                direction += up;
+                direction.NormalizeFast();
+            }
             if (dangers.empty())
             {
                 dangers.emplace_back(Danger(hitPoint, direction, 1.0f, owner, false));
