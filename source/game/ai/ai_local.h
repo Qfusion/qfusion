@@ -381,6 +381,14 @@ struct MoveTestResult
 	bool CanJump() const;
 };
 
+struct ClosePlaceProps
+{
+	MoveTestResult leftTest;
+	MoveTestResult rightTest;
+    MoveTestResult frontTest;
+	MoveTestResult backTest;
+};
+
 class Ai: public EdictRef
 {
 public:
@@ -406,7 +414,6 @@ public:
 	bool MoveToShortRangeGoalEntity(usercmd_t *ucmd);
 	bool CheckEyes(usercmd_t *ucmd);
 	bool SpecialMove(usercmd_t *ucmd);
-	void TestMove(MoveTestResult *testResult, int direction) const;
 	static bool IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent );
 	static bool IsStep(edict_t *ent);
 
@@ -441,11 +448,16 @@ public:
 	float Campiness() const { return ai().pers.cha.campiness; }
 	float Firerate() const { return ai().pers.cha.firerate; }
 protected:
+	void TestClosePlace();
+	ClosePlaceProps closeAreaProps;
+
 	ai_handle_t &ai() { return *self->ai; }
 	const ai_handle_t &ai() const { return *self->ai; }
 
 	static constexpr int MIN_BUNNY_NODES = 2;
 	static constexpr int AI_JUMP_SPEED = 450;
+private:
+	void TestMove(MoveTestResult *moveTestResult, int direction) const;
 };
 
 #endif

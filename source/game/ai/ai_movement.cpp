@@ -132,6 +132,13 @@ void Ai::TestMove(MoveTestResult *testResult, int direction) const
 	testResult->self = self;
 }
 
+void Ai::TestClosePlace()
+{
+	TestMove(&closeAreaProps.frontTest, BOT_MOVE_FORWARD);
+	TestMove(&closeAreaProps.backTest, BOT_MOVE_BACK);
+	TestMove(&closeAreaProps.leftTest, BOT_MOVE_LEFT);
+	TestMove(&closeAreaProps.rightTest, BOT_MOVE_RIGHT);
+}
 
 //===================
 //  AI_IsStep

@@ -15,6 +15,7 @@ public:
     void Move(usercmd_t *ucmd);
     void MoveWander(usercmd_t *ucmd);
     void CombatMovement(usercmd_t *ucmd);
+    void LookAround();
     void FindEnemy();
     bool ChangeWeapon(int weapon);
     float ChooseWeapon();

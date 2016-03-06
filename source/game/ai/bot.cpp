@@ -2,6 +2,13 @@
 #include <vector>
 #include <algorithm>
 
+void Bot::LookAround()
+{
+    TestClosePlace();
+
+    FindEnemy();
+}
+
 //==========================================
 // BOT_DMclass_FindEnemy
 // Scan for enemy (simplifed for now to just pick any visible enemy)
@@ -751,7 +758,6 @@ void Bot::GhostingFrame()
 void Bot::RunFrame()
 {
     usercmd_t ucmd;
-    float weapon_quality;
     bool inhibitCombat = false;
     int i;
 
@@ -774,9 +780,9 @@ void Bot::RunFrame()
     }
     else
     {
-        FindEnemy();
+        LookAround();
 
-        weapon_quality = ChooseWeapon();
+        float weapon_quality = ChooseWeapon();
 
         inhibitCombat = ( CurrentLinkType() & (LINK_JUMPPAD|LINK_JUMP|LINK_ROCKETJUMP) ) != 0 ? true : false;
 

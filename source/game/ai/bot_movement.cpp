@@ -424,9 +424,7 @@ void Bot::MoveWander(usercmd_t *ucmd)
                 ucmd->forwardmove = 0; //0
             else
             {
-                MoveTestResult forwardTest;
-                TestMove(&forwardTest, BOT_MOVE_FORWARD);
-                if (forwardTest.CanWalk())
+                if (closeAreaProps.frontTest.CanWalk())
                 {
                     ucmd->forwardmove = 1;
                     ucmd->buttons |= BUTTON_WALK;
@@ -440,9 +438,7 @@ void Bot::MoveWander(usercmd_t *ucmd)
         ucmd->buttons |= BUTTON_WALK;
     }
 
-    MoveTestResult forwardTest;
-    TestMove(&forwardTest, BOT_MOVE_FORWARD);
-    if( forwardTest.CanWalk() )
+    if( closeAreaProps.frontTest.CanWalk() )
         ucmd->forwardmove = 1;
     else
         ucmd->forwardmove = -1;
@@ -526,19 +522,10 @@ void Bot::CombatMovement(usercmd_t *ucmd)
 
     if( level.time > self->ai->combatmovepush_timeout )
     {
-        MoveTestResult leftTest;
-        MoveTestResult rightTest;
-        MoveTestResult frontTest;
-        MoveTestResult backTest;
-        TestMove(&leftTest, BOT_MOVE_LEFT);
-        TestMove(&rightTest, BOT_MOVE_RIGHT);
-        TestMove(&frontTest, BOT_MOVE_FORWARD);
-        TestMove(&backTest, BOT_MOVE_RIGHT);
-
-        bool canMOVELEFT = leftTest.CanWalk();
-        bool canMOVERIGHT = rightTest.CanWalk();
-        bool canMOVEFRONT = frontTest.CanWalk();
-        bool canMOVEBACK = backTest.CanWalk();
+        bool canMOVELEFT = closeAreaProps.leftTest.CanWalk();
+        bool canMOVERIGHT = closeAreaProps.rightTest.CanWalk();
+        bool canMOVEFRONT = closeAreaProps.frontTest.CanWalk();
+        bool canMOVEBACK = closeAreaProps.backTest.CanWalk();
 
         self->ai->combatmovepush_timeout = level.time + AI_COMBATMOVE_TIMEOUT;
         VectorClear( self->ai->combatmovepushes );
@@ -562,12 +549,12 @@ void Bot::CombatMovement(usercmd_t *ucmd)
             {
                 if ((evadeDir.x() < 0))
                 {
-                    if (backTest.CanWalkOrFallQuiteSafely())
+                    if (closeAreaProps.backTest.CanWalkOrFallQuiteSafely())
                     {
                         walkingMovePushes[0] = -1;
                         ++walkingEvades;
                     }
-                    else if (backTest.CanJump())
+                    else if (closeAreaProps.backTest.CanJump())
                     {
                         jumpingMovePushes[0] = -1;
                         ++jumpingEvades;
@@ -575,12 +562,12 @@ void Bot::CombatMovement(usercmd_t *ucmd)
                 }
                 else if ((evadeDir.x() > 0))
                 {
-                    if (frontTest.CanWalkOrFallQuiteSafely())
+                    if (closeAreaProps.frontTest.CanWalkOrFallQuiteSafely())
                     {
                         walkingMovePushes[0] = 1;
                         ++walkingEvades;
                     }
-                    else if (frontTest.CanJump())
+                    else if (closeAreaProps.frontTest.CanJump())
                     {
                         jumpingMovePushes[0] = 1;
                         ++jumpingEvades;
@@ -591,12 +578,12 @@ void Bot::CombatMovement(usercmd_t *ucmd)
             {
                 if ((evadeDir.y() < 0))
                 {
-                    if (leftTest.CanWalkOrFallQuiteSafely())
+                    if (closeAreaProps.leftTest.CanWalkOrFallQuiteSafely())
                     {
                         walkingMovePushes[1] = -1;
                         ++walkingEvades;
                     }
-                    else if (leftTest.CanJump())
+                    else if (closeAreaProps.leftTest.CanJump())
                     {
                         jumpingMovePushes[1] = -1;
                         ++jumpingEvades;
@@ -604,12 +591,12 @@ void Bot::CombatMovement(usercmd_t *ucmd)
                 }
                 else if ((evadeDir.y() > 0))
                 {
-                    if (rightTest.CanWalkOrFallQuiteSafely())
+                    if (closeAreaProps.rightTest.CanWalkOrFallQuiteSafely())
                     {
                         walkingMovePushes[1] = 1;
                         ++walkingEvades;
                     }
-                    else if (rightTest.CanJump())
+                    else if (closeAreaProps.rightTest.CanJump())
                     {
                         jumpingMovePushes[1] = 1;
                         ++jumpingEvades;
