@@ -617,11 +617,14 @@ void Bot::CombatMovement(usercmd_t *ucmd)
                 }
             }
 
-            // Evades with dash have priority unless the bot is stunned
-            if (walkingEvades > 0 && !self->r.client->ps.stats[PM_STAT_STUN])
+            // Walked evades involve dashes, so they are more important
+            if (walkingEvades > jumpingEvades)
             {
                 VectorCopy(walkingMovePushes, self->ai->combatmovepushes);
-                ucmd->buttons |= BUTTON_SPECIAL;
+                if (Skill() > 0.85f || (random() < (Skill() - 0.25f)))
+                {
+                    ucmd->buttons |= BUTTON_SPECIAL;
+                }
             }
             else if (jumpingEvades > 0)
             {
@@ -729,6 +732,35 @@ void Bot::CombatMovement(usercmd_t *ucmd)
     if( !hasToEvade && ( self->health < 25 || ( dist >= 500 && c < 0.2 ) || ( dist >= 1000 && c < 0.5 ) ) )
     {
         Move( ucmd );
+    }
+    else
+    {
+        if (Skill() > 0.25)
+        {
+            const auto &pmove = self->r.client->ps.pmove;
+            // Try to dash in fight depending of skill, if not already doing that
+            if (!(pmove.pm_flags & (PMF_DASHING | PMF_WALLJUMPING)))
+            {
+                float prob = Skill() - 0.25f;
+                const auto &oldPmove = self->r.client->old_pmove;
+                // If bot has been stunned in previous frame, try to do the possible blocked by stun dash with high priority
+                if (oldPmove.stats[PM_STAT_STUN] || oldPmove.stats[PM_STAT_KNOCKBACK])
+                {
+                    if (Skill() > 0.85f)
+                    {
+                        prob = 1.0f;
+                    }
+                    else if (Skill() > 0.66f)
+                    {
+                        prob *= 2;
+                    }
+                }
+                if (random() < prob)
+                {
+                    ucmd->buttons |= BUTTON_SPECIAL;
+                }
+            }
+        }
     }
 
     if( !self->ai->camp_item )
