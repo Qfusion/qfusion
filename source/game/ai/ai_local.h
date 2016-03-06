@@ -25,7 +25,7 @@ in NO WAY supported by Steve Yeager.
 
 //==========================================================
 #ifndef AI_LOCAL_H
-#define AL_LOCAL_H
+#define AI_LOCAL_H
 
 #include "edict_ref.h"
 #include "../../gameshared/q_collision.h"
