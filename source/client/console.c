@@ -1007,7 +1007,7 @@ void Con_DrawChat( int x, int y, int width, struct qfontface_s *font )
 /*
 * Con_GetMessageArea
 */
-static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2, int *promptwidth )
+static bool Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2, int *promptwidth )
 {
 	int x, y;
 	int width;
@@ -1033,6 +1033,8 @@ static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2, int *promptw
 	}
 
 	QMutex_Unlock( con.mutex );
+
+	return font ? true : false;
 }
 
 /*
@@ -2399,14 +2401,16 @@ static void Con_TouchUp( int x, int y )
 	}
 	else if( cls.key_dest == key_message )
 	{
-		int x1, y1, x2, y2, promptwidth;
-		Con_GetMessageArea( &x1, &y1, &x2, &y2, &promptwidth );
-		if( ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) )
+		int x1 = -1, y1 = -1, x2 = -1, y2 = -1, promptwidth = 0;
+		if( Con_GetMessageArea( &x1, &y1, &x2, &y2, &promptwidth ) )
 		{
-			if( x > x1 + promptwidth )
-				IN_ShowSoftKeyboard( true );
-			else
-				chat_team = !chat_team && Cmd_Exists( "say_team" );
+			if( ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) )
+			{
+				if( x > x1 + promptwidth )
+					IN_ShowSoftKeyboard( true );
+				else
+					chat_team = !chat_team && Cmd_Exists( "say_team" );
+			}
 		}
 	}
 
