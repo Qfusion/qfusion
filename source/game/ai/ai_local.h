@@ -24,8 +24,18 @@ in NO WAY supported by Steve Yeager.
 */
 
 //==========================================================
+#ifndef AI_LOCAL_H
+#define AL_LOCAL_H
 
 #include "edict_ref.h"
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
 
 #define AI_VERSION_STRING "A0059"
 
@@ -421,3 +431,5 @@ protected:
 	static constexpr int MIN_BUNNY_NODES = 2;
 	static constexpr int AI_JUMP_SPEED = 450;
 };
+
+#endif

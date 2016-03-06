@@ -25,11 +25,12 @@ public:
     float y() const { return dataPtr[1]; }
     float z() const { return dataPtr[2]; }
 
-    float Length() { return VectorLength(dataPtr); }
-    float LengthFast() { return VectorLengthFast(dataPtr); }
+    float Length() const { return VectorLength(dataPtr); }
+    float LengthFast() const { return VectorLengthFast(dataPtr); }
+    float SquaredLength() const { return VectorLengthSquared(dataPtr); }
 
     void Normalize() { VectorNormalize(dataPtr); }
-    void NormalizeFast() { VectorLengthFast(dataPtr); }
+    void NormalizeFast() { VectorNormalizeFast(dataPtr); }
 
     void operator += (const Vec3Like &that)
     {
@@ -60,6 +61,19 @@ public:
     Vec3 operator + (const vec3_t that) const;
     Vec3 operator - (const Vec3Like &that) const;
     Vec3 operator - (const vec3_t that) const;
+    Vec3 operator - () const;
+
+    float Dot(const Vec3Like &that) const
+    {
+        return x() * that.x() + y() * that.y() + z() * that.z();
+    }
+    float Dot(const vec3_t &that) const
+    {
+        return x() * that[0] + y() * that[1] + z() * that[2];
+    }
+
+    Vec3 Cross(const Vec3Like &that) const;
+    Vec3 Cross(const vec3_t that) const;
 };
 
 class Vec3Ref: public Vec3Like
@@ -73,7 +87,7 @@ class Vec3: public Vec3Like
 public:
     vec3_t vec;
 
-    explicit Vec3(vec3_t that): Vec3Like(vec)
+    explicit Vec3(const vec3_t that): Vec3Like(vec)
     {
         VectorCopy(that, vec);
     }
@@ -119,6 +133,25 @@ inline Vec3 Vec3Like::operator - (const Vec3Like &that) const
 inline Vec3 Vec3Like::operator - (const vec3_t that) const
 {
     return Vec3(x() - that[0], y() - that[1], z() - that[2]);
+}
+inline Vec3 Vec3Like::operator - () const
+{
+    return Vec3(-x(), -y(), -z());
+}
+
+inline Vec3 Vec3Like::Cross(const Vec3Like &that) const
+{
+    return Vec3(
+        y() * that.z() - z() * that.y(),
+        z() * that.x() - x() * that.z(),
+        x() * that.y() - y() * that.x());
+}
+inline Vec3 Vec3Like::Cross(const vec3_t that) const
+{
+    return Vec3(
+        y() * that[2] - z() * that[1],
+        z() * that[0] - x() * that[2],
+        x() * that[2] - y() * that[1]);
 }
 
 #endif
