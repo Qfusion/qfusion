@@ -3,6 +3,7 @@
 
 #include "static_vector.h"
 #include "dangers_detector.h"
+#include "ai_local.h"
 
 class Bot: public Ai
 {
@@ -26,6 +27,8 @@ public:
     void SayVoiceMessages();
     void GhostingFrame();
     void RunFrame();
+
+    inline float Skill() { return self->ai->pers.skillLevel; }
 private:
     DangersDetector dangersDetector;
 
