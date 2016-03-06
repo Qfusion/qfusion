@@ -1235,7 +1235,7 @@ void R_RenderView( const refdef_t *fd )
 	R_ClearDrawList( rn.portalmasklist );
 
 	if( !rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
-		ri.Com_Error( ERR_DROP, "R_RenderView: NULL worldmodel" );
+		return;
 
 	R_SetupFrame();
 
