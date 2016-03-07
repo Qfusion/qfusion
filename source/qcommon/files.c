@@ -3823,7 +3823,7 @@ static void *FS_LoadDeferredPaks_Job( void *parg )
 	deferred_pack_arg_t *arg = parg;
 
 	while( true ) {
-		i = Sys_Atomic_Add( arg->cnt, 1, arg->mutex );
+		i = Sys_Atomic_Add( arg->cnt, 1, arg->mutex ) - 1;
 		if( i >= arg->maxcnt )
 			break;
 
