@@ -195,7 +195,7 @@ static void CL_DownloadComplete( void )
 			Com_Printf( "Error: Couldn't load downloaded file\n" );
 			return;
 		}
-		checksum = FS_ChecksumBaseFile( cls.download.tempname );
+		checksum = FS_ChecksumBaseFile( cls.download.tempname, false );
 	}
 
 	if( cls.download.checksum != checksum )

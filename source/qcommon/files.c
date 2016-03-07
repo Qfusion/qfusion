@@ -2049,12 +2049,15 @@ static unsigned FS_PakChecksum( const char *filename )
 
 /*
 * FS_ChecksumBaseFile
+*
+* ignorePakChecksum - if true, returns md5 digest of file contents as found on the filesystem
+*                     otherwise, may return cached pk3 checksum
 */
-unsigned FS_ChecksumBaseFile( const char *filename )
+unsigned FS_ChecksumBaseFile( const char *filename, bool ignorePakChecksum )
 {
 	const char *fullname;
 
-	if( FS_CheckPakExtension( filename ) )
+	if( !ignorePakChecksum && FS_CheckPakExtension( filename ) )
 		return FS_PakChecksum( filename );
 
 	fullname = FS_AbsoluteNameForBaseFile( filename );
@@ -4205,7 +4208,7 @@ static void Cmd_FS_Search_f( void )
 */
 static void Cmd_FileChecksum_f( void )
 {
-	unsigned int checksum;
+	unsigned int checksum, checksum2;
 	const char *filename;
 
 	if( Cmd_Argc() != 2 )
@@ -4227,14 +4230,16 @@ static void Cmd_FileChecksum_f( void )
 		return;
 	}
 
-	checksum = FS_ChecksumBaseFile( filename );
-	if( !checksum )
+	checksum = FS_ChecksumBaseFile( filename, false );
+	checksum2 = FS_ChecksumBaseFile( filename, true );
+
+	if( !checksum || !checksum2 )
 	{
 		Com_Printf( "%s not found\n", filename );
 		return;
 	}
 
-	Com_Printf( "%u %s\n", checksum, filename );
+	Com_Printf( "%u %s %u\n", checksum, filename, checksum2 );
 }
 
 /*

@@ -759,7 +759,7 @@ static void SV_BeginDownload_f( client_t *client )
 		return;
 	}
 
-	checksum = FS_ChecksumBaseFile( uploadname );
+	checksum = FS_ChecksumBaseFile( uploadname, false );
 	client->download.timeout = svs.realtime + 1000 * 60 * 60; // this is web download timeout
 
 	alloc_size = sizeof( char ) * ( strlen( uploadname ) + 1 );

@@ -802,7 +802,7 @@ bool    FS_RemoveDirectory( const char *dirname );
 bool    FS_RemoveBaseDirectory( const char *dirname );
 bool    FS_RemoveAbsoluteDirectory( const char *dirname );
 unsigned    FS_ChecksumAbsoluteFile( const char *filename );
-unsigned    FS_ChecksumBaseFile( const char *filename );
+unsigned    FS_ChecksumBaseFile( const char *filename, bool ignorePakChecksum );
 bool	FS_CheckPakExtension( const char *filename );
 bool	FS_PakFileExists( const char *packfilename );
 
