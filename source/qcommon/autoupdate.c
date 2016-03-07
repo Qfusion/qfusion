@@ -310,7 +310,7 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 	const char *ptr = (const char *)data;
 	unsigned int checksum, expected_checksum;
 	const char *token;
-	const char *path;
+	char path[MAX_TOKEN_CHARS];
 	char newVersionTag[MAX_QPATH];
 	bool newVersion = false;
 
@@ -359,7 +359,7 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 			goto skip_line;
 		}
 
-		path = token;
+		Q_strncpyz( path, token, sizeof( path ) );
 
 		checksum = FS_ChecksumBaseFile( token, false );
 
@@ -410,9 +410,9 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		au_download_count++;
 
 skip_line:
-		do {
+		while( token[0] ) {
 			token = COM_ParseExt( &ptr, false );
-		} while( token[0] );		
+		}
 	}
 
 	if( newVersion ) {
