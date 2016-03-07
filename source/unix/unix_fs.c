@@ -395,6 +395,9 @@ const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type )
 */
 const char *Sys_FS_GetRuntimeDirectory( void )
 {
+	// disabled because some distributions mount /var/run with 'noexec' flag and consequently 
+	// game libs fail to load with 'failed to map segment from shared object' error
+#if 0
 	static char runtime[PATH_MAX] = { '\0' };
 
 	if( runtime[0] == '\0' )
@@ -405,7 +408,7 @@ const char *Sys_FS_GetRuntimeDirectory( void )
 
 		base = getenv( "XDG_RUNTIME_DIR" );
 		local = "";
-printf("%s\n", base);
+
 		if( base ) {
 			Q_snprintfz( runtime, sizeof( runtime ), "%s/%s%c%s-%d.%d", base, local, tolower( *( (const char *)APPLICATION ) ),
 				( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR );
@@ -414,9 +417,11 @@ printf("%s\n", base);
 #endif
 	}
 
-	if( runtime[0] == '\0' )
-		return NULL;
-	return runtime;
+	if( runtime[0] != '\0' )
+		return runtime;
+#endif
+
+	return NULL;
 }
 
 /*
