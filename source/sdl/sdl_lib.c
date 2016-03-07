@@ -26,7 +26,7 @@ const char *Sys_Library_GetFullName( const char *name )
 const char *Sys_Library_GetGameLibPath( const char *name, int64_t time, int randomizer )
 {
 	static char tempname[1024 * 10];
-	Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/tempmodules_%lld_%d_%d/%s", FS_WriteDirectory(), FS_GameDirectory(), 
+	Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/tempmodules_%lld_%d_%d/%s", FS_RuntimeDirectory(), FS_GameDirectory(), 
 		time, Sys_GetCurrentProcessId(), randomizer, name );
 	return tempname;
 }

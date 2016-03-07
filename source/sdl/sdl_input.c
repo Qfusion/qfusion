@@ -339,6 +339,7 @@ static void IN_HandleEvents( void )
 				break;
 
 			case SDL_QUIT:
+				Cbuf_ExecuteText( EXEC_NOW, "quit" );
 				break;
 
 			case SDL_WINDOWEVENT:
@@ -350,7 +351,6 @@ static void IN_HandleEvents( void )
 						AppActivate( false );
 						break;
 					case SDL_WINDOWEVENT_CLOSE:
-						Cbuf_ExecuteText( EXEC_NOW, "quit" );
 						break;
 					case SDL_WINDOWEVENT_FOCUS_GAINED:
 						input_focus = true;

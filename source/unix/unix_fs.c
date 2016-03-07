@@ -391,6 +391,35 @@ const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type )
 }
 
 /*
+* Sys_FS_GetRuntimeDirectory
+*/
+const char *Sys_FS_GetRuntimeDirectory( void )
+{
+	static char runtime[PATH_MAX] = { '\0' };
+
+	if( runtime[0] == '\0' )
+	{
+#ifndef __ANDROID__
+#ifndef __MACOSX__
+		const char *base = NULL, *local = "";
+
+		base = getenv( "XDG_RUNTIME_DIR" );
+		local = "";
+printf("%s\n", base);
+		if( base ) {
+			Q_snprintfz( runtime, sizeof( runtime ), "%s/%s%c%s-%d.%d", base, local, tolower( *( (const char *)APPLICATION ) ),
+				( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+		}
+#endif
+#endif
+	}
+
+	if( runtime[0] == '\0' )
+		return NULL;
+	return runtime;
+}
+
+/*
 * Sys_FS_LockFile
 */
 void *Sys_FS_LockFile( const char *path )

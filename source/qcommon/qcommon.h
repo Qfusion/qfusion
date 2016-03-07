@@ -741,6 +741,7 @@ const char *FS_CacheDirectory( void );
 const char *FS_SecureDirectory( void );
 const char *FS_MediaDirectory( fs_mediatype_t type );
 const char *FS_DownloadsDirectory( void );
+const char *FS_RuntimeDirectory( void );
 void	    FS_CreateAbsolutePath( const char *path );
 const char *FS_AbsoluteNameForFile( const char *filename );
 const char *FS_AbsoluteNameForBaseFile( const char *filename );
