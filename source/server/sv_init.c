@@ -135,7 +135,7 @@ void SV_PureList_f( void )
 static void SV_AddPurePak( const char *pakname )
 {
 	if( !Com_FindPakInPureList( svs.purelist, pakname ) )
-		Com_AddPakToPureList( &svs.purelist, pakname, FS_ChecksumBaseFile( pakname ), NULL );
+		Com_AddPakToPureList( &svs.purelist, pakname, FS_ChecksumBaseFile( pakname, false ), NULL );
 }
 
 /*

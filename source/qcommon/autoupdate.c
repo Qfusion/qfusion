@@ -224,6 +224,15 @@ static void AU_FinishDownload( filedownload_t *fd_, int status )
 			temppath = fd->temppath;
 			filepath = fd->filepath;
 
+			if( fd->checksum ) {
+				unsigned checksum = FS_ChecksumBaseFile( temppath, true );
+				if( checksum != fd->checksum ) {
+					Com_Printf( "AU_FinishDownload: checksum mismatch for %s. Expected %u, got %u\n", temppath, fd->checksum, checksum );
+					au_download_errcount++;
+					break;
+				}
+			}
+
 			if( FS_MoveBaseFile( temppath, filepath ) )
 				continue;
 
@@ -329,7 +338,7 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		expected_checksum = strtoul( token, NULL, 10 );
 
 		// get filename
-		token = COM_ParseExt( &ptr, true );
+		token = COM_ParseExt( &ptr, false );
 		if( !token[0] )
 			return;
 
@@ -341,22 +350,22 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		if( !COM_ValidateRelativeFilename( token ) )
 		{
 			Com_Printf( "AU_ParseUpdateList: Invalid filename %s\n", token );
-			continue;
+			goto skip_line;
 		}
 
 		if( !COM_FileExtension( token ) )
 		{
 			Com_Printf( "AU_ParseUpdateList: no file extension\n" );
-			continue;
+			goto skip_line;
 		}
 
 		path = token;
 
-		checksum = FS_ChecksumBaseFile( token );
+		checksum = FS_ChecksumBaseFile( token, false );
 
 		// if same checksum no need to update
 		if( checksum == expected_checksum )
-			continue;
+			goto skip_line;
 
 		// if it's a pack file and the file exists it can't be replaced, so skip
 		if( FS_CheckPakExtension( path ) && checksum )
@@ -365,13 +374,23 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 			Com_Printf( "WARNING: This file has been locally modified. It is highly \n" );
 			Com_Printf( "WARNING: recommended to restore the original file.\n" );
 			Com_Printf( "WARNING: Reinstalling \""APPLICATION"\" might be convenient.\n" );
-			continue;	
+			goto skip_line;
 		}
 
 		if( checkOnly )
 		{
 			Com_Printf( "File update available: %s\n", path );
-			continue;
+			goto skip_line;
+		}
+
+		// check optional md5-digest checksum
+		expected_checksum = 0;
+		token = COM_ParseExt( &ptr, false );
+		if( token[0] ) {
+			expected_checksum = strtoul( token, NULL, 10 );
+			if( expected_checksum == ULONG_MAX ) {
+				expected_checksum = 0;
+			}
 		}
 
 		if( developer->integer )
@@ -389,6 +408,11 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		fd->next = au_download_head;
 		au_download_head = fd;
 		au_download_count++;
+
+skip_line:
+		do {
+			token = COM_ParseExt( &ptr, false );
+		} while( token[0] );		
 	}
 
 	if( newVersion ) {
