@@ -233,6 +233,14 @@ const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type )
 }
 
 /*
+* Sys_FS_GetRuntimeDirectory
+*/
+const char *Sys_FS_GetRuntimeDirectory( void )
+{
+	return NULL;
+}
+
+/*
 * Sys_FS_LockFile
 */
 void *Sys_FS_LockFile( const char *path )

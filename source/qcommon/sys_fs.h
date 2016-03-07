@@ -25,6 +25,7 @@ const char *Sys_FS_GetHomeDirectory( void );
 const char *Sys_FS_GetCacheDirectory( void );
 const char *Sys_FS_GetSecureDirectory( void );
 const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type );
+const char *Sys_FS_GetRuntimeDirectory( void );
 
 bool    Sys_FS_RemoveDirectory( const char *path );
 bool    Sys_FS_CreateDirectory( const char *path );

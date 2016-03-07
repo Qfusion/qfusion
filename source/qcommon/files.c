@@ -3378,11 +3378,22 @@ const char *FS_MediaDirectory( fs_mediatype_t type )
 /*
 * FS_DownloadsDirectory
 * 
-* Returns directory where we can write downloads to, no gamedir attached
+* Returns directory where we can store downloads to, no gamedir attached
 */
 const char *FS_DownloadsDirectory( void )
 {
 	return fs_downloads_searchpath->path;
+}
+
+/*
+* FS_RuntimeDirectory
+* 
+* Returns directory where we can write non-essential runtime files to, no gamedir attached
+*/
+const char *FS_RuntimeDirectory( void )
+{
+	const char *dir = Sys_FS_GetRuntimeDirectory();
+	return dir ? dir : FS_WriteDirectory();
 }
 
 /*
