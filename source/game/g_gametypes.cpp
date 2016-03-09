@@ -1898,6 +1898,9 @@ void G_Gametype_SetDefaults( void )
 	level.gametype.numBots = 0;
 	level.gametype.dummyBots = false;
 
+	level.gametype.forceTeamHumans = TEAM_SPECTATOR;
+	level.gametype.forceTeamBots = TEAM_SPECTATOR;
+
     level.gametype.mmCompatible = false;
 }
 
