@@ -175,6 +175,9 @@ typedef struct
 
 	int numBots;
 	bool dummyBots;
+
+	int forceTeamHumans;
+	int forceTeamBots;
 } gametype_descriptor_t;
 
 typedef struct
