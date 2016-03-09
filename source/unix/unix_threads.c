@@ -132,7 +132,7 @@ void Sys_Thread_Yield( void )
 */
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 {
-	return __sync_fetch_and_add( value, add ) + add;
+	return __sync_fetch_and_add( value, add );
 }
 
 /*
