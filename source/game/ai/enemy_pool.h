@@ -406,6 +406,7 @@ class EnemyPool
     // Returns zero if ent not found
     unsigned LastAttackedByTime(const edict_t *ent) const;
     unsigned LastTargetTime(const edict_t *ent) const;
+    bool HasAnyDetectedEnemiesInView() const;
     void EnqueueAttacker(const edict_t *attacker, int damage);
     void EnqueueTarget(const edict_t *target);
     void SuggestAimWeaponAndTactics(CombatTask *task);
@@ -444,6 +445,8 @@ public:
     }
 
     void OnEnemyViewed(const edict_t *enemy);
+    // Call it after all calls to OnEnemyViewed()
+    void AfterAllEnemiesViewed();
     void OnPain(const edict_t *enemy, float kick, int damage);
     void OnEnemyDamaged(const edict_t *target, int damage);
 

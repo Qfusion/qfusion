@@ -56,6 +56,8 @@ void Bot::RegisterVisibleEnemies()
             enemyPool.OnEnemyViewed( goalEnt->ent );
         }
     }
+
+    enemyPool.AfterAllEnemiesViewed();
 }
 
 //==========================================
