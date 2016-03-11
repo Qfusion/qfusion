@@ -46,6 +46,9 @@ static void ClientObituary( edict_t *self, edict_t *inflictor, edict_t *attacker
 	char message[64];
 	char message2[64];
 
+	if( level.gametype.disableObituaries )
+		return;
+
 	mod = meansOfDeath;
 
 	GS_Obituary( self, G_PlayerGender( self ), attacker, mod, message, message2 );
@@ -773,7 +776,8 @@ void ClientBegin( edict_t *ent )
 		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " (" S_COLOR_YELLOW "%s" S_COLOR_WHITE ") entered the game\n", client->netname, mm_login );
 	}
 	else {
-		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " entered the game\n", client->netname );
+		if( !level.gametype.disableObituaries || !(ent->r.svflags & SVF_FAKECLIENT ) )
+			G_PrintMsg( NULL, "%s" S_COLOR_WHITE " entered the game\n", client->netname );
 	}
 
 	client->level.respawnCount = 0; // clear respawncount
@@ -1281,7 +1285,6 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient )
 {
 	char *value;
-	char message[MAX_STRING_CHARS];
 
 	assert( ent );
 	assert( userinfo && Info_Validate( userinfo ) );
@@ -1355,10 +1358,15 @@ bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient
 
 	ClientUserinfoChanged( ent, userinfo );
 
-	Q_snprintfz( message, sizeof( message ), "%s%s connected", ent->r.client->netname, S_COLOR_WHITE );
-	G_PrintMsg( NULL, "%s\n", message );
+	if( !fakeClient ) {
+		char message[MAX_STRING_CHARS];
 
-	G_Printf( "%s%s connected from %s\n", ent->r.client->netname, S_COLOR_WHITE, ent->r.client->ip );
+		Q_snprintfz( message, sizeof( message ), "%s%s connected", ent->r.client->netname, S_COLOR_WHITE );
+
+		G_PrintMsg( NULL, "%s\n", message );
+
+		G_Printf( "%s%s connected from %s\n", ent->r.client->netname, S_COLOR_WHITE, ent->r.client->ip );
+	}
 
 	// let the gametype scripts know this client just connected
 	G_Gametype_ScoreEvent( ent->r.client, "connect", NULL );

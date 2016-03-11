@@ -388,8 +388,9 @@ static void BOT_InitPersistant( edict_t *self )
 		self->ai->pers.netname = self->r.client->netname;
 	else
 		self->ai->pers.netname = "SomeBot";
-
-	G_Printf( "%s skill %i\n", self->r.client->netname, (int)( self->ai->pers.skillLevel * 100 ) );
+	
+	if( !level.gametype.disableObituaries ) // FIXME
+		G_Printf( "%s skill %i\n", self->r.client->netname, (int)( self->ai->pers.skillLevel * 100 ) );
 
 	//class: always set up default first
 	BOT_DMclass_InitPersistant( self );

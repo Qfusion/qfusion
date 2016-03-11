@@ -1186,6 +1186,7 @@ static const asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL(bool, isTutorial), ASLIB_FOFFSET(gametype_descriptor_t, isTutorial) },
 	{ ASLIB_PROPERTY_DECL(bool, inverseScore), ASLIB_FOFFSET(gametype_descriptor_t, inverseScore) },
 	{ ASLIB_PROPERTY_DECL(bool, hasChallengersQueue), ASLIB_FOFFSET(gametype_descriptor_t, hasChallengersQueue) },
+	{ ASLIB_PROPERTY_DECL(bool, hasChallengersRoulette), ASLIB_FOFFSET(gametype_descriptor_t, hasChallengersRoulette) },
 	{ ASLIB_PROPERTY_DECL(int, maxPlayersPerTeam), ASLIB_FOFFSET(gametype_descriptor_t, maxPlayersPerTeam) },
 	{ ASLIB_PROPERTY_DECL(int, ammoRespawn), ASLIB_FOFFSET(gametype_descriptor_t, ammo_respawn) },
 	{ ASLIB_PROPERTY_DECL(int, armorRespawn), ASLIB_FOFFSET(gametype_descriptor_t, armor_respawn) },
@@ -1211,6 +1212,7 @@ static const asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL(bool, dummyBots), ASLIB_FOFFSET(gametype_descriptor_t, dummyBots) },
 	{ ASLIB_PROPERTY_DECL(uint, forceTeamHumans), ASLIB_FOFFSET(gametype_descriptor_t, forceTeamHumans) },
 	{ ASLIB_PROPERTY_DECL(uint, forceTeamBots), ASLIB_FOFFSET(gametype_descriptor_t, forceTeamBots) },
+	{ ASLIB_PROPERTY_DECL(bool, disableObituaries), ASLIB_FOFFSET(gametype_descriptor_t, disableObituaries) },
 
 	ASLIB_PROPERTY_NULL
 };
