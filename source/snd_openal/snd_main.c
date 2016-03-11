@@ -399,7 +399,8 @@ void SF_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t v
 */
 void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation )
 {
-	S_IssueStartFixedSoundCmd( s_cmdPipe, sfx->id, origin, channel, fvol, attenuation );
+	if( sfx != NULL )
+		S_IssueStartFixedSoundCmd( s_cmdPipe, sfx->id, origin, channel, fvol, attenuation );
 }
 
 /*
@@ -407,7 +408,8 @@ void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvo
 */
 void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation )
 {
-	S_IssueStartRelativeSoundCmd( s_cmdPipe, sfx->id, entnum, channel, fvol, attenuation );
+	if( sfx != NULL )
+		S_IssueStartRelativeSoundCmd( s_cmdPipe, sfx->id, entnum, channel, fvol, attenuation );
 }
 
 /*
@@ -415,7 +417,8 @@ void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, flo
 */
 void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol )
 {
-	S_IssueStartGlobalSoundCmd( s_cmdPipe, sfx->id, channel, fvol );
+	if( sfx != NULL )
+		S_IssueStartGlobalSoundCmd( s_cmdPipe, sfx->id, channel, fvol );
 }
 
 /*
@@ -448,7 +451,8 @@ void SF_Clear( void )
 */
 void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation )
 {
-	S_IssueAddLoopSoundCmd( s_cmdPipe, sfx->id, entnum, fvol, attenuation );
+	if( sfx != NULL )
+		S_IssueAddLoopSoundCmd( s_cmdPipe, sfx->id, entnum, fvol, attenuation );
 }
 
 /*
