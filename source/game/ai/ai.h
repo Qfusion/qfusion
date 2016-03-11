@@ -62,6 +62,7 @@ int			AI_GetNextGoalEnt( int index );
 edict_t		*AI_GetGoalEntity( int index );
 void		AI_ReachedEntity( edict_t *self );
 void		AI_TouchedEntity( edict_t *self, edict_t *ent );
+void        AI_DamagedEntity( edict_t *self, edict_t *ent, int damage );
 float		AI_GetCharacterReactionTime( const ai_handle_t *ai );
 float		AI_GetCharacterOffensiveness( const ai_handle_t *ai );
 float		AI_GetCharacterCampiness( const ai_handle_t *ai );

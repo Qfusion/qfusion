@@ -1,4 +1,6 @@
 #include "bot.h"
+#include "ai_local.h"
+#include "../../gameshared/q_collision.h"
 
 void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
 {
@@ -504,30 +506,26 @@ Vec3 Bot::MakeEvadeDirection(const Danger &danger)
 //==========================================
 void Bot::CombatMovement(usercmd_t *ucmd)
 {
-    float c;
-    float dist;
-    bool hasToEvade = false;
 
-    if( !self->enemy || self->ai->rush_item )
+    const CombatTask &combatTask = enemyPool.combatTask;
+
+    if ((!combatTask.aimEnemy && !combatTask.spamEnemy) || self->ai->rush_item)
     {
         Move(ucmd);
         return;
     }
 
-    if( self->ai->pers.skillLevel >= 0.25f )
+    bool hasToEvade = false;
+    if (Skill() >= 0.25f)
         hasToEvade = dangersDetector.FindDangers();
 
-    dist = DistanceFast( self->s.origin, self->enemy->s.origin );
-    c = random();
+    const float dist = (combatTask.TargetOrigin() - self->s.origin).LengthFast();
+    const float c = random();
 
     if( level.time > self->ai->combatmovepush_timeout )
     {
-        bool canMOVELEFT = closeAreaProps.leftTest.CanWalk();
-        bool canMOVERIGHT = closeAreaProps.rightTest.CanWalk();
-        bool canMOVEFRONT = closeAreaProps.frontTest.CanWalk();
-        bool canMOVEBACK = closeAreaProps.backTest.CanWalk();
-
         self->ai->combatmovepush_timeout = level.time + AI_COMBATMOVE_TIMEOUT;
+
         VectorClear( self->ai->combatmovepushes );
 
         if (hasToEvade)
@@ -620,103 +618,35 @@ void Bot::CombatMovement(usercmd_t *ucmd)
             }
         }
         else
-        if( dist < 150 ) // range = AIWEAP_MELEE_RANGE;
         {
-            if( self->s.weapon == WEAP_GUNBLADE ) // go into him!
+            if (dist < 150.0f && self->s.weapon == WEAP_GUNBLADE) // go into him!
             {
                 ucmd->buttons &= ~BUTTON_ATTACK; // remove pressing fire
-                if( canMOVEFRONT )  // move to your enemy
+                if (closeAreaProps.frontTest.CanWalk())  // move to your enemy
                     self->ai->combatmovepushes[0] = 1;
-                else if( c <= 0.5 && canMOVELEFT )
+                else if (c <= 0.5 && closeAreaProps.leftTest.CanWalk())
                     self->ai->combatmovepushes[1] = -1;
-                else if( canMOVERIGHT )
+                else if (c <= 0.5 && closeAreaProps.rightTest.CanWalk())
                     self->ai->combatmovepushes[1] = 1;
             }
             else
             {
-                //priorize sides
-                if( canMOVELEFT || canMOVERIGHT )
-                {
-                    if( canMOVELEFT && canMOVERIGHT )
-                    {
-                        self->ai->combatmovepushes[1] = c < 0.5 ? -1 : 1;
-                    }
-                    else if( canMOVELEFT )
-                    {
-                        self->ai->combatmovepushes[1] = -1;
-                    }
-                    else
-                    {
-                        self->ai->combatmovepushes[1] = 1;
-                    }
-                }
+                // First, establish mapping from CombatTask tactical directions (if any) to bot movement key directions
+                int tacticalXMove, tacticalYMove;
+                bool advance = TacticsToAprioriMovePushes(&tacticalXMove, &tacticalYMove);
 
-                if( c < 0.3 && canMOVEBACK )
-                    self->ai->combatmovepushes[0] = -1;
-            }
-        }
-        else if( dist < 500 ) //AIWEAP_SHORT_RANGE limit is Grenade Laucher range
-        {
-            if( canMOVELEFT || canMOVERIGHT )
-            {
-                if( canMOVELEFT && canMOVERIGHT )
-                {
-                    self->ai->combatmovepushes[1] = c < 0.5 ? -1 : 1;
-                }
-                else if( canMOVELEFT )
-                {
-                    self->ai->combatmovepushes[1] = -1;
-                }
-                else
-                {
-                    self->ai->combatmovepushes[1] = 1;
-                }
-            }
+                const auto &placeProps = closeAreaProps;  // Shorthand
+                auto moveXAndUp = ApplyTacticalMove(tacticalXMove, advance, placeProps.frontTest, placeProps.backTest);
+                auto moveYAndUp = ApplyTacticalMove(tacticalYMove, advance, placeProps.rightTest, placeProps.leftTest);
 
-            if( c < 0.3 && canMOVEFRONT )
-            {
-                self->ai->combatmovepushes[0] = 1;
-            }
-        }
-        else if( dist < 900 )
-        {
-            if( canMOVELEFT || canMOVERIGHT )
-            {
-                if( canMOVELEFT && canMOVERIGHT )
-                {
-                    self->ai->combatmovepushes[1] = c < 0.5 ? -1 : 1;
-                }
-                else if( canMOVELEFT )
-                {
-                    self->ai->combatmovepushes[1] = -1;
-                }
-                else
-                {
-                    self->ai->combatmovepushes[1] = 1;
-                }
-            }
-        }
-        else //range = AIWEAP_LONG_RANGE;
-        {
-            if( c < 0.75 && ( canMOVELEFT || canMOVERIGHT ) )
-            {
-                if( canMOVELEFT && canMOVERIGHT )
-                {
-                    self->ai->combatmovepushes[1] = c < 0.5 ? -1 : 1;
-                }
-                else if( canMOVELEFT )
-                {
-                    self->ai->combatmovepushes[1] = -1;
-                }
-                else
-                {
-                    self->ai->combatmovepushes[1] = 1;
-                }
+                self->ai->combatmovepushes[0] = moveXAndUp.first;
+                self->ai->combatmovepushes[1] = moveYAndUp.first;
+                self->ai->combatmovepushes[2] = moveXAndUp.second || moveYAndUp.second;
             }
         }
     }
 
-    if( !hasToEvade && ( self->health < 25 || ( dist >= 500 && c < 0.2 ) || ( dist >= 1000 && c < 0.5 ) ) )
+    if(!hasToEvade && aimTarget.inhibit)
     {
         Move( ucmd );
     }
@@ -757,3 +687,100 @@ void Bot::CombatMovement(usercmd_t *ucmd)
     ucmd->sidemove = self->ai->combatmovepushes[1];
     ucmd->upmove = self->ai->combatmovepushes[2];
 }
+
+bool Bot::TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove)
+{
+    *tacticalXMove = 0;
+    *tacticalYMove = 0;
+
+    const CombatTask &combatTask = enemyPool.combatTask;
+
+    if (!combatTask.advance && !combatTask.retreat)
+        return false;
+
+    Vec3 botToEnemyDir(self->s.origin);
+    if (combatTask.aimEnemy)
+        botToEnemyDir -= combatTask.aimEnemy->LastSeenPosition();
+    else
+        botToEnemyDir -= combatTask.spamSpot;
+    // Normalize (and invert since we initialized a points difference by vector start, not the end)
+    botToEnemyDir *= -1.0f * Q_RSqrt(botToEnemyDir.SquaredLength());
+
+    Vec3 forward(0, 0, 0), right(0, 0, 0);
+    AngleVectors(self->s.angles, forward.vec, right.vec, nullptr);
+
+    float forwardDotToEnemyDir = forward.Dot(botToEnemyDir);
+    float rightDotToEnemyDir = right.Dot(botToEnemyDir);
+
+    // Currently we always prefer being cautious...
+    bool advance = combatTask.advance && !combatTask.retreat;
+    bool retreat = combatTask.retreat;
+    if (fabsf(forwardDotToEnemyDir) > 0.25f)
+    {
+        if (advance)
+            *tacticalXMove = +Q_sign(forwardDotToEnemyDir);
+        if (retreat)
+            *tacticalXMove = -Q_sign(forwardDotToEnemyDir);
+    }
+    if (fabsf(rightDotToEnemyDir) > 0.25f)
+    {
+        if (advance)
+            *tacticalYMove = +Q_sign(rightDotToEnemyDir);
+        if (retreat)
+            *tacticalYMove = -Q_sign(rightDotToEnemyDir);
+    }
+    return advance;
+}
+
+std::pair<int, int> Bot::ApplyTacticalMove(int tacticalMove, bool advance, const MoveTestResult &positiveDirTest, const MoveTestResult &negativeDirTest)
+{
+    auto result = std::make_pair(0, 0);
+    float c = random();
+    if (tacticalMove && c < 0.9)
+    {
+        const MoveTestResult &moveTestResult = tacticalMove > 0 ? positiveDirTest : negativeDirTest;
+        if (moveTestResult.CanWalkOrFallQuiteSafely())
+        {
+            // Only fall down to enemies while advancing, do not escape accidentally while trying to attack
+            if (moveTestResult.forwardGroundTrace.fraction == 1.0 && advance)
+            {
+                // It is finite and not very large, since CanWalkOrFallQuiteSafely() returned true
+                float fallHeight = self->s.origin[2] - moveTestResult.forwardGroundTrace.endpos[2];
+                // Allow to fall while attacking when enemy is still on bots height
+                if (self->s.origin[2] - fallHeight + 16 > enemyPool.combatTask.TargetOrigin().z())
+                    result.first = tacticalMove;
+            }
+            else
+                result.first = tacticalMove;
+        }
+        else if (moveTestResult.CanJump())
+        {
+            result.first = tacticalMove;
+            result.second = 1;
+        }
+    }
+    else
+    {
+        int movePushValue;
+        const MoveTestResult *moveTestResult;
+        if (c < 0.45)
+        {
+            movePushValue = 1;
+            moveTestResult = &positiveDirTest;
+        }
+        else
+        {
+            movePushValue = -1;
+            moveTestResult = &negativeDirTest;
+        }
+        if (moveTestResult->CanWalk())
+            result.first = movePushValue;
+        else if (moveTestResult->CanJump())
+        {
+            result.first = movePushValue;
+            result.second = 1;
+        }
+    }
+    return result;
+}
+

@@ -327,8 +327,10 @@ static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size, int bot_pe
 
 static void BOT_pain( edict_t *self, edict_t *other, float kick, int damage )
 {
-	if( !self->enemy && other->r.client ) {
+	if( other->r.client )
+	{
 		self->ai->last_attacker = other;
+		self->ai->botRef->Pain(other, kick, damage);
 	}
 }
 

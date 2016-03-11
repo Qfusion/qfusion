@@ -343,6 +343,8 @@ void G_Gametype_GENERIC_PlayerKilled( edict_t *targ, edict_t *attacker, edict_t 
 
 static void G_Gametype_GENERIC_PlayerDamaged( edict_t *targ, edict_t *attacker, int damage )
 {
+	if (attacker->ai)
+		AI_DamagedEntity( attacker, targ, damage );
 }
 
 void G_Gametype_GENERIC_ScoreEvent( gclient_t *client, const char *score_event, const char *args )
