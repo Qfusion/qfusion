@@ -714,7 +714,7 @@ void EnemyPool::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const V
             continue;
 
         // Spamming is not affected by distance, it is quite useful vs snipers
-        Vec3 botToSpotDirection = botOrigin - enemy.LastSeenPosition();
+        Vec3 botToSpotDirection = enemy.LastSeenPosition() - botOrigin;
         botToSpotDirection.NormalizeFast();
         float directionFactor = 0.3f + 0.7f * botToSpotDirection.Dot(botViewDirection);
         float timeFactor = 1.0f - BoundedFraction(level.time - enemy.LastSeenAt(), timeout);
