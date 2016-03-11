@@ -56,10 +56,14 @@ void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
 	}
 	else
 #endif
-    if( bunnyhop && ( (nextMoveType &LINK_JUMP) || level.gametype.spawnableItemsMask == 0 ) )
+    if( bunnyhop && ( (nextMoveType & (LINK_JUMP|LINK_MOVE)) || level.gametype.spawnableItemsMask == 0 ) )
     {
-        if( self->groundentity )
+        // Can't accelerate anymore (we have to add some delta to the default dash speed)
+        if( VectorLengthFast(self->velocity) >= DEFAULT_DASHSPEED - 16 )
             ucmd->upmove = 1;
+        // Get an initial speed by dash
+        else
+            ucmd->buttons |= BUTTON_SPECIAL;
 
 #if 0
         // fake strafe-jumping acceleration
