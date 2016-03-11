@@ -277,6 +277,12 @@ void AI_TouchedEntity(edict_t *self, edict_t *ent)
     self->ai->aiRef->TouchedEntity(ent);
 }
 
+void AI_DamagedEntity(edict_t *self, edict_t *ent, int damage)
+{
+    if (self->ai->botRef)
+        self->ai->botRef->OnEnemyDamaged(ent, damage);
+}
+
 float AI_GetCharacterReactionTime( const ai_handle_t *ai )
 {
     return ai == nullptr ? 0 : ai->pers.cha.reaction_time;

@@ -3,12 +3,12 @@
 
 #include "static_vector.h"
 #include "dangers_detector.h"
-#include "ai_local.h"
+#include "enemy_pool.h"
 
 class Bot: public Ai
 {
 public:
-    Bot(edict_t *self): Ai(self), dangersDetector(self) {}
+    Bot(edict_t *self): Ai(self), dangersDetector(self), enemyPool(self) {}
 
     using Ai::SpecialMove;
     void SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd);
@@ -16,13 +16,18 @@ public:
     void MoveWander(usercmd_t *ucmd);
     void CombatMovement(usercmd_t *ucmd);
     void LookAround();
-    void FindEnemy();
     bool ChangeWeapon(int weapon);
-    float ChooseWeapon();
     bool CheckShot(vec3_t point);
-    void PredictProjectileShot(vec3_t fire_origin, float projectile_speed, vec3_t target, vec3_t target_velocity);
+    void PredictProjectileShot(const vec3_t fire_origin, float projectile_speed, vec3_t target, const vec3_t target_velocity);
     bool FireWeapon(usercmd_t *ucmd);
-    float PlayerWeight(edict_t *enemy);
+    void Pain(const edict_t *enemy, float kick, int damage)
+    {
+        enemyPool.OnPain(enemy, kick, damage);
+    }
+    void OnEnemyDamaged(const edict_t *enemy, int damage)
+    {
+        enemyPool.OnEnemyDamaged(enemy, damage);
+    }
     void UpdateStatus();
     void BlockedTimeout();
     void SayVoiceMessages();
@@ -30,12 +35,19 @@ public:
     void RunFrame();
 
     inline float Skill() { return self->ai->pers.skillLevel; }
+
 private:
+    bool TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove);
+    std::pair<int, int> ApplyTacticalMove(
+        int tacticalMove, bool advance, const MoveTestResult &positiveDirTest, const MoveTestResult &negativeDirTest);
+
+    void RegisterVisibleEnemies();
+
     DangersDetector dangersDetector;
+    EnemyPool enemyPool;
+    CombatTask aimTarget;
 
     Vec3 MakeEvadeDirection(const class Danger &danger);
 };
-
-
 
 #endif
