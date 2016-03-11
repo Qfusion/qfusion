@@ -606,10 +606,6 @@ void SP_trigger_hurt( edict_t *self )
 		self->noise_index = trap_SoundIndex( st.noise );
 		G_PureSound( st.noise );
 	}
-	else if( self->spawnflags & 32 || self->spawnflags & 64 ) // KILL or FALL
-	{   
-		self->noise_index = trap_SoundIndex( S_PLAYER_FALLDEATH );
-	}
 	else
 	{
 		self->noise_index = 0;
