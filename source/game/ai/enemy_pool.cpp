@@ -717,7 +717,7 @@ void EnemyPool::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const V
         Vec3 botToSpotDirection = botOrigin - enemy.LastSeenPosition();
         botToSpotDirection.NormalizeFast();
         float directionFactor = 0.3f + 0.7f * botToSpotDirection.Dot(botViewDirection);
-        float timeFactor = BoundedFraction(level.time - enemy.LastSeenAt(), timeout);
+        float timeFactor = 1.0f - BoundedFraction(level.time - enemy.LastSeenAt(), timeout);
 
         float currScore = (0.5f * (enemy.maxPositiveWeight + enemy.avgPositiveWeight)) * directionFactor * timeFactor;
         if (currScore > bestScore)
