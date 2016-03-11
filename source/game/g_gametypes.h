@@ -145,6 +145,7 @@ typedef struct
 	bool isTutorial;
 	bool inverseScore;
 	bool hasChallengersQueue;
+	bool hasChallengersRoulette;
 	int maxPlayersPerTeam;
 
 	// default item respawn time
@@ -168,6 +169,7 @@ typedef struct
 	bool teamOnlyMinimap;
 	bool customDeadBodyCam;
 	bool removeInactivePlayers;
+	bool disableObituaries;
 
 	int spawnpointRadius;
 

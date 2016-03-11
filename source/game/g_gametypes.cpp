@@ -403,6 +403,7 @@ static void G_Gametype_GENERIC_Init( void )
 	level.gametype.isTutorial = false;
 	level.gametype.inverseScore = false;
 	level.gametype.hasChallengersQueue = false;
+	level.gametype.hasChallengersRoulette = false;
 	level.gametype.maxPlayersPerTeam = 0;
 
 	level.gametype.ammo_respawn = 20;
@@ -422,6 +423,12 @@ static void G_Gametype_GENERIC_Init( void )
 
 	level.gametype.canShowMinimap = false;
 	level.gametype.teamOnlyMinimap = true;
+	
+	level.gametype.numBots = 0;
+	level.gametype.dummyBots = false;
+
+	level.gametype.forceTeamHumans = TEAM_SPECTATOR;
+	level.gametype.forceTeamBots = TEAM_SPECTATOR;
 
 	level.gametype.mmCompatible = false;
 
@@ -1871,6 +1878,7 @@ void G_Gametype_SetDefaults( void )
 	level.gametype.isTutorial = false;
     level.gametype.inverseScore = false;
     level.gametype.hasChallengersQueue = false;
+	level.gametype.hasChallengersRoulette = false;
     level.gametype.maxPlayersPerTeam = 0;
 
     level.gametype.ammo_respawn = 20;
@@ -1892,6 +1900,7 @@ void G_Gametype_SetDefaults( void )
     level.gametype.teamOnlyMinimap = true;
 	level.gametype.customDeadBodyCam = false;
 	level.gametype.removeInactivePlayers = true;
+	level.gametype.disableObituaries = false;
 
     level.gametype.spawnpointRadius = 64;
 

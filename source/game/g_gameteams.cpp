@@ -934,14 +934,17 @@ void G_Teams_AdvanceChallengersQueue( void )
 		}
 	}
 
-	// put (back) the best scoring players in first positions of challengers queue
-	for( i = 0; i < winnerscount; i++ )
+	if( !level.gametype.hasChallengersRoulette )
 	{
-		won = G_Teams_BestScoreBelow( maxscore );
-		if( won )
+		// put (back) the best scoring players in first positions of challengers queue
+		for( i = 0; i < winnerscount; i++ )
 		{
-			maxscore = won->r.client->level.stats.score;
-			won->r.client->queueTimeStamp = 1 + ( winnerscount-i ); // never have 2 players with the same timestamp
+			won = G_Teams_BestScoreBelow( maxscore );
+			if( won )
+			{
+				maxscore = won->r.client->level.stats.score;
+				won->r.client->queueTimeStamp = 1 + ( winnerscount-i ); // never have 2 players with the same timestamp
+			}
 		}
 	}
 }
