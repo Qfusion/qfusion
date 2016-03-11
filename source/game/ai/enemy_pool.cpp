@@ -249,6 +249,39 @@ void EnemyPool::RemoveEnemy(Enemy &enemy)
     --trackedEnemiesCount;
 }
 
+bool EnemyPool::HasAnyDetectedEnemiesInView() const
+{
+    for (const Enemy &enemy: enemies)
+    {
+        if (!enemy.ent)
+            continue;
+        if (enemy.LastSeenAt() == level.time)
+        {
+            // Check whether we may react
+            for (unsigned seenTimestamp: enemy.lastSeenTimestamps)
+            {
+                if (seenTimestamp + reactionTime <= level.time)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+void EnemyPool::AfterAllEnemiesViewed()
+{
+    // Stop spamming if we see any enemy in view, choose a target to fight
+    if (combatTask.spamEnemy)
+    {
+        if (HasAnyDetectedEnemiesInView())
+        {
+            Debug("should stop spamming at %s, there are enemies in view\n", combatTask.spamEnemy->Nick());
+            combatTask.Reset();
+            nextTargetChoiceAt = level.time;
+        }
+    }
+}
+
 void EnemyPool::OnEnemyViewed(const edict_t *enemy)
 {
     if (!enemy)
@@ -579,7 +612,6 @@ void EnemyPool::UpdateCombatTask()
         TryFindNewCombatTask();
     }
 }
-
 
 void EnemyPool::UpdateKeptCurrentCombatTask()
 {
