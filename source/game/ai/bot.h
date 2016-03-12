@@ -64,7 +64,7 @@ private:
     Vec3 MakeEvadeDirection(const class Danger &danger);
 
     void SetupCoarseFireTarget(vec3_t fire_origin, vec3_t target);
-    void CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *inFront, bool *mayHit);
+    void CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *inFront, bool *mayHitApriory);
     // All these methods return suggested accuracy
     float AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target);
     float AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
@@ -72,7 +72,9 @@ private:
     float AdjustDropAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
     float AdjustInstantAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
 
-    void TryPressAttack(bool mayHit, usercmd_t *ucmd, float wfac, vec3_t target);
+    // Returns true if current look angle worth pressing attack
+    bool LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
+    void TryPressAttack(usercmd_t *ucmd);
 
     // Name clash... we have to use a method name prefix
     inline const CombatTask &GetCombatTask() { return enemyPool.combatTask; }
