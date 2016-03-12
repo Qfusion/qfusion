@@ -59,6 +59,7 @@ private:
     bool MoveLikeHavingShortGoal(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd, bool specialMovement);
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
 
+    void ApplyEvadeMovePushes(usercmd_t *ucmd);
     bool MayApplyCombatDash();
     Vec3 MakeEvadeDirection(const class Danger &danger);
 };

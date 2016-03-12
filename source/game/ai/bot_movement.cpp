@@ -598,92 +598,7 @@ void Bot::CombatMovement(usercmd_t *ucmd)
 
         if (hasToEvade)
         {
-            Vec3 evadeDir = MakeEvadeDirection(*dangersDetector.primaryDanger);
-#ifdef _DEBUG
-            Vec3 drawnDirStart(self->s.origin);
-            drawnDirStart.z() += 32;
-            Vec3 drawnDirEnd = drawnDirStart + 64.0f * evadeDir;
-            AITools_DrawLine(drawnDirStart.vec, drawnDirEnd.vec);
-#endif
-
-            int walkingEvades = 0;
-            int walkingMovePushes[3] = {0, 0, 0};
-            int jumpingEvades = 0;
-            int jumpingMovePushes[3] = {0, 0, 0};
-
-            if (evadeDir.x())
-            {
-                if ((evadeDir.x() < 0))
-                {
-                    if (closeAreaProps.backTest.CanWalkOrFallQuiteSafely())
-                    {
-                        walkingMovePushes[0] = -1;
-                        ++walkingEvades;
-                    }
-                    else if (closeAreaProps.backTest.CanJump())
-                    {
-                        jumpingMovePushes[0] = -1;
-                        ++jumpingEvades;
-                    }
-                }
-                else if ((evadeDir.x() > 0))
-                {
-                    if (closeAreaProps.frontTest.CanWalkOrFallQuiteSafely())
-                    {
-                        walkingMovePushes[0] = 1;
-                        ++walkingEvades;
-                    }
-                    else if (closeAreaProps.frontTest.CanJump())
-                    {
-                        jumpingMovePushes[0] = 1;
-                        ++jumpingEvades;
-                    }
-                }
-            }
-            if (evadeDir.y())
-            {
-                if ((evadeDir.y() < 0))
-                {
-                    if (closeAreaProps.leftTest.CanWalkOrFallQuiteSafely())
-                    {
-                        walkingMovePushes[1] = -1;
-                        ++walkingEvades;
-                    }
-                    else if (closeAreaProps.leftTest.CanJump())
-                    {
-                        jumpingMovePushes[1] = -1;
-                        ++jumpingEvades;
-                    }
-                }
-                else if ((evadeDir.y() > 0))
-                {
-                    if (closeAreaProps.rightTest.CanWalkOrFallQuiteSafely())
-                    {
-                        walkingMovePushes[1] = 1;
-                        ++walkingEvades;
-                    }
-                    else if (closeAreaProps.rightTest.CanJump())
-                    {
-                        jumpingMovePushes[1] = 1;
-                        ++jumpingEvades;
-                    }
-                }
-            }
-
-            // Walked evades involve dashes, so they are more important
-            if (walkingEvades > jumpingEvades)
-            {
-                VectorCopy(walkingMovePushes, self->ai->combatmovepushes);
-                if (Skill() > 0.85f || (random() < (Skill() - 0.25f)))
-                {
-                    ucmd->buttons |= BUTTON_SPECIAL;
-                }
-            }
-            else if (jumpingEvades > 0)
-            {
-                jumpingMovePushes[2] = 1;
-                VectorCopy(jumpingMovePushes, self->ai->combatmovepushes);
-            }
+            ApplyEvadeMovePushes(ucmd);
         }
         else
         {
@@ -730,6 +645,96 @@ void Bot::CombatMovement(usercmd_t *ucmd)
     }
     ucmd->sidemove = self->ai->combatmovepushes[1];
     ucmd->upmove = self->ai->combatmovepushes[2];
+}
+
+void Bot::ApplyEvadeMovePushes(usercmd_t *ucmd)
+{
+    Vec3 evadeDir = MakeEvadeDirection(*dangersDetector.primaryDanger);
+#ifdef _DEBUG
+    Vec3 drawnDirStart(self->s.origin);
+    drawnDirStart.z() += 32;
+    Vec3 drawnDirEnd = drawnDirStart + 64.0f * evadeDir;
+    AITools_DrawLine(drawnDirStart.vec, drawnDirEnd.vec);
+#endif
+
+    int walkingEvades = 0;
+    int walkingMovePushes[3] = {0, 0, 0};
+    int jumpingEvades = 0;
+    int jumpingMovePushes[3] = {0, 0, 0};
+
+    if (evadeDir.x())
+    {
+        if ((evadeDir.x() < 0))
+        {
+            if (closeAreaProps.backTest.CanWalkOrFallQuiteSafely())
+            {
+                walkingMovePushes[0] = -1;
+                ++walkingEvades;
+            }
+            else if (closeAreaProps.backTest.CanJump())
+            {
+                jumpingMovePushes[0] = -1;
+                ++jumpingEvades;
+            }
+        }
+        else if ((evadeDir.x() > 0))
+        {
+            if (closeAreaProps.frontTest.CanWalkOrFallQuiteSafely())
+            {
+                walkingMovePushes[0] = 1;
+                ++walkingEvades;
+            }
+            else if (closeAreaProps.frontTest.CanJump())
+            {
+                jumpingMovePushes[0] = 1;
+                ++jumpingEvades;
+            }
+        }
+    }
+    if (evadeDir.y())
+    {
+        if ((evadeDir.y() < 0))
+        {
+            if (closeAreaProps.leftTest.CanWalkOrFallQuiteSafely())
+            {
+                walkingMovePushes[1] = -1;
+                ++walkingEvades;
+            }
+            else if (closeAreaProps.leftTest.CanJump())
+            {
+                jumpingMovePushes[1] = -1;
+                ++jumpingEvades;
+            }
+        }
+        else if ((evadeDir.y() > 0))
+        {
+            if (closeAreaProps.rightTest.CanWalkOrFallQuiteSafely())
+            {
+                walkingMovePushes[1] = 1;
+                ++walkingEvades;
+            }
+            else if (closeAreaProps.rightTest.CanJump())
+            {
+                jumpingMovePushes[1] = 1;
+                ++jumpingEvades;
+            }
+        }
+    }
+
+    // Walked evades involve dashes, so they are more important
+    if (walkingEvades > jumpingEvades)
+    {
+        VectorCopy(walkingMovePushes, self->ai->combatmovepushes);
+        if (Skill() > 0.85f || (random() < (Skill() - 0.25f)))
+        {
+            ucmd->buttons |= BUTTON_SPECIAL;
+        }
+    }
+    else if (jumpingEvades > 0)
+    {
+        jumpingMovePushes[2] = 1;
+        VectorCopy(jumpingMovePushes, self->ai->combatmovepushes);
+    }
 }
 
 bool Bot::MayApplyCombatDash()
