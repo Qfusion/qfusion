@@ -991,7 +991,7 @@ void SV_Init( void )
 
 	sv_defaultmap =		    Cvar_Get( "sv_defaultmap", "wdm1", CVAR_ARCHIVE );
 	sv_reconnectlimit =	    Cvar_Get( "sv_reconnectlimit", "3", CVAR_ARCHIVE );
-	sv_maxclients =		    Cvar_Get( "sv_maxclients", "8", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH );
+	sv_maxclients =		    Cvar_Get( "sv_maxclients", "16", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH );
 	sv_maxmvclients =	    Cvar_Get( "sv_maxmvclients", "4", CVAR_ARCHIVE | CVAR_SERVERINFO );
 
 	Cvar_Get( "sv_modmanifest", "", CVAR_READONLY );
