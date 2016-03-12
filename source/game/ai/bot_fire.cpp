@@ -80,6 +80,7 @@ void Bot::PredictProjectileShot(const vec3_t fire_origin, float projectile_speed
         VectorCopy( predictedTarget, target );
 }
 
+
 //==========================================
 // BOT_DMclass_FireWeapon
 // Fire if needed
@@ -98,6 +99,9 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
     firedef_t *firedef = GS_FiredefForPlayerState(&self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON]);
 
     CombatTask &combatTask = enemyPool.combatTask;
+    const bool importantShot = combatTask.importantShot;
+    // Reset shot importance, it is for a single flick shot and the task is for many frames
+    combatTask.importantShot = false;
 
     if (!combatTask.aimEnemy && !combatTask.spamEnemy)
         return false;
@@ -217,7 +221,9 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
             wfac = WFAC_GENERIC_INSTANT;
     }
 
-    wfac = 25 + wfac * ( 1.0f - self->ai->pers.skillLevel );
+    wfac = 25 + wfac * (1.0f - Skill());
+    if (importantShot && Skill() > 0.33f)
+        wfac *= (1.13f - Skill());
 
     // look to target
     VectorSubtract( target, fire_origin, self->ai->move_vector );
