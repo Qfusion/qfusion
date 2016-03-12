@@ -667,32 +667,8 @@ void Bot::CombatMovement(usercmd_t *ucmd)
     }
     else
     {
-        if (Skill() > 0.25)
-        {
-            const auto &pmove = self->r.client->ps.pmove;
-            // Try to dash in fight depending of skill, if not already doing that
-            if (!(pmove.pm_flags & (PMF_DASHING | PMF_WALLJUMPING)))
-            {
-                float prob = Skill() - 0.25f;
-                const auto &oldPmove = self->r.client->old_pmove;
-                // If bot has been stunned in previous frame, try to do the possible blocked by stun dash with high priority
-                if (oldPmove.stats[PM_STAT_STUN] || oldPmove.stats[PM_STAT_KNOCKBACK])
-                {
-                    if (Skill() > 0.85f)
-                    {
-                        prob = 1.0f;
-                    }
-                    else if (Skill() > 0.66f)
-                    {
-                        prob *= 2;
-                    }
-                }
-                if (random() < prob)
-                {
-                    ucmd->buttons |= BUTTON_SPECIAL;
-                }
-            }
-        }
+        if (MayApplyCombatDash())
+            ucmd->buttons |= BUTTON_SPECIAL;
     }
 
     if( !self->ai->camp_item )
@@ -701,6 +677,33 @@ void Bot::CombatMovement(usercmd_t *ucmd)
     }
     ucmd->sidemove = self->ai->combatmovepushes[1];
     ucmd->upmove = self->ai->combatmovepushes[2];
+}
+
+bool Bot::MayApplyCombatDash()
+{
+    if (Skill() <= 0.25)
+        return false;
+
+    const auto &pmove = self->r.client->ps.pmove;
+    // Try to dash in fight depending of skill, if not already doing that
+    if (pmove.pm_flags & (PMF_DASHING | PMF_WALLJUMPING))
+        return false;
+
+    float prob = Skill() - 0.25f;
+    const auto &oldPmove = self->r.client->old_pmove;
+    // If bot has been stunned in previous frame, try to do the possible blocked by stun dash with high priority
+    if (oldPmove.stats[PM_STAT_STUN] || oldPmove.stats[PM_STAT_KNOCKBACK])
+    {
+        if (Skill() > 0.85f)
+        {
+            prob = 1.0f;
+        }
+        else if (Skill() > 0.66f)
+        {
+            prob *= 2;
+        }
+    }
+    return random() < prob;
 }
 
 bool Bot::TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove)
