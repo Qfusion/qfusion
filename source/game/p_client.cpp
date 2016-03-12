@@ -1396,10 +1396,13 @@ void ClientDisconnect( edict_t *ent, const char *reason )
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 		G_Teams_UnInvitePlayer( team, ent );
 
-	if( !reason )
-		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " disconnected\n", ent->r.client->netname );
-	else
-		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " disconnected (%s" S_COLOR_WHITE ")\n", ent->r.client->netname, reason );
+	if( !level.gametype.disableObituaries || !(ent->r.svflags & SVF_FAKECLIENT ) )
+	{
+		if( !reason )
+			G_PrintMsg( NULL, "%s" S_COLOR_WHITE " disconnected\n", ent->r.client->netname );
+		else
+			G_PrintMsg( NULL, "%s" S_COLOR_WHITE " disconnected (%s" S_COLOR_WHITE ")\n", ent->r.client->netname, reason );
+	}
 
 	// send effect
 	if( ent->s.team > TEAM_SPECTATOR )
