@@ -418,6 +418,8 @@ class EnemyPool
     int SuggestEasyBotsWeapon(const Enemy &enemy);
     void SuggestSpamEnemyWeaponAndTactics(CombatTask *task);
     int SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition);
+    bool IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition);
+    int SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     int SuggestQuadBearerWeapon(const Enemy &enemy);
     void SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Vec3 &botViewDirection);
     void StartSpamAtEnemy(CombatTask *task, const Enemy *enemy);
