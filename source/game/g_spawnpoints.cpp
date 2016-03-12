@@ -411,9 +411,6 @@ void G_SpawnQueue_SetTeamSpawnsystem( int team, int spawnsystem, int wave_time, 
 		return;
 
 	queue = &g_spawnQueues[team];
-	if( queue->system == spawnsystem )
-		return;
-
 	if( wave_time && wave_time != queue->wave_time )
 		queue->nextWaveTime = level.time + brandom( 0, wave_time * 1000 );
 
@@ -422,6 +419,8 @@ void G_SpawnQueue_SetTeamSpawnsystem( int team, int spawnsystem, int wave_time, 
 	queue->wave_maxcount = wave_maxcount;
 	if( spawnsystem != SPAWNSYSTEM_INSTANT )
 		queue->spectate_team = spectate_team;
+	else
+		queue->spectate_team = false;
 }
 
 /*
