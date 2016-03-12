@@ -114,10 +114,10 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
     if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN)
         continuous_fire = true;
 
-    bool isInFront, mayHit;
-    CheckEnemyInFrontAndMayBeHit(target, &isInFront, &mayHit);
+    bool isInFront, mayHitApriori;
+    CheckEnemyInFrontAndMayBeHit(target, &isInFront, &mayHitApriori);
 
-    if(!continuous_fire && !(isInFront && mayHit))
+    if(!continuous_fire && !(isInFront && mayHitApriori))
         return false;
 
     float wfac = AdjustTarget(weapon, firedef, fire_origin, target);
@@ -125,14 +125,11 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
     if (importantShot && Skill() > 0.33f)
         wfac *= (1.13f - Skill());
 
-    // look to target
-    VectorSubtract( target, fire_origin, self->ai->move_vector );
-
-    TryPressAttack(mayHit, ucmd, wfac, target);
-
-    //update angles
-    VectorSubtract( target, fire_origin, self->ai->move_vector );
-    ChangeAngle();
+    // mayHitReally means that enemy is quite close to "crosshair" to press attack,
+    // the main purpose is to prevent shooting in wall when real look dir is not close to ideal one
+    bool mayHitReally = LookAtEnemy(wfac, fire_origin, target);
+    if (mayHitReally)
+        TryPressAttack(ucmd);
 
     if (nav.debugMode && bot_showcombat->integer)
     {
@@ -185,7 +182,7 @@ void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, boo
     *mayHit = CheckShot(target);
 }
 
-void Bot::TryPressAttack(bool mayHit, usercmd_t *ucmd, float wfac, vec3_t target)
+void Bot::TryPressAttack(usercmd_t *ucmd)
 {
     const auto weapState = self->r.client->ps.weaponState;
     if (weapState != WEAPON_STATE_READY && weapState != WEAPON_STATE_REFIRE && weapState != WEAPON_STATE_REFIRESTRONG)
@@ -201,19 +198,34 @@ void Bot::TryPressAttack(bool mayHit, usercmd_t *ucmd, float wfac, vec3_t target
     if (firedelay <= 0.0f)
         return;
 
-    if (mayHit)
-        ucmd->buttons |= BUTTON_ATTACK;
+    ucmd->buttons |= BUTTON_ATTACK;
+}
 
-    if ((self->s.weapon == WEAP_LASERGUN) || (self->s.weapon == WEAP_PLASMAGUN))
-    {
-        target[0] += sinf( (float)level.time/100.0f) * wfac;
-        target[1] += cosf( (float)level.time/100.0f) * wfac;
-    }
+bool Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
+{
+    target[0] += (random() - 0.5f) * wfac;
+    target[1] += (random() - 0.5f) * wfac;
+    VectorSubtract( target, fire_origin, self->ai->move_vector );
+    ChangeAngle();
+
+    // Do not shoot enemies that are far from "crosshair" except they are very close
+
+    vec3_t newLookDir;
+    AngleVectors(self->s.angles, newLookDir, nullptr, nullptr);
+
+    Vec3 toTarget(target);
+    toTarget -= fire_origin;
+    float toTargetDotLookDir = toTarget.Dot(newLookDir);
+    // 0 on zero range, 1 on distanceFactorBound range
+    float distanceFactor;
+    constexpr float distanceFactorBound = 450.0f;
+    float squareDistance = toTarget.SquaredLength();
+    if (squareDistance < 1)
+        distanceFactor = 0.0f;
     else
-    {
-        target[0] += ( random()-0.5f ) * wfac;
-        target[1] += ( random()-0.5f ) * wfac;
-    }
+        distanceFactor = std::min(distanceFactorBound, 1.0f / Q_RSqrt(squareDistance)) / distanceFactorBound;
+
+    return toTargetDotLookDir > 0.8 * distanceFactor;
 }
 
 float Bot::AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
