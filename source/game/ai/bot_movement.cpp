@@ -2,7 +2,7 @@
 #include "ai_local.h"
 #include "../../gameshared/q_collision.h"
 
-void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
+void Bot::SpecialMove(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd)
 {
     bool wallJump = false;
 #if 0
@@ -103,270 +103,323 @@ void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
 
 void Bot::Move(usercmd_t *ucmd)
 {
-#define BOT_FORWARD_EPSILON 0.5f
-    int i;
-    unsigned int linkType;
-    bool printLink = false;
     bool nodeReached = false;
     bool specialMovement = false;
-    vec3_t v1, v2;
     vec3_t lookdir, pathdir;
-    float lookDot;
 
-    if( self->ai->next_node == NODE_INVALID || self->ai->goal_node == NODE_INVALID )
+    if (self->ai->next_node == NODE_INVALID || self->ai->goal_node == NODE_INVALID)
     {
-        MoveWander( ucmd );
+        MoveWander(ucmd);
         return;
     }
 
-    linkType = CurrentLinkType();
+    const unsigned linkType = CurrentLinkType();
 
-    specialMovement = ( self->ai->path.numNodes >= MIN_BUNNY_NODES ) ? true : false;
+    specialMovement = (self->ai->path.numNodes >= MIN_BUNNY_NODES) ? true : false;
 
-    if( GetNodeFlags( self->ai->next_node ) & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) )
+    if (GetNodeFlags(self->ai->next_node) & (NODEFLAGS_REACHATTOUCH | NODEFLAGS_ENTITYREACH))
         specialMovement = false;
 
-    if( linkType & (LINK_JUMP|LINK_JUMPPAD|LINK_CROUCH|LINK_FALL|LINK_WATER|LINK_LADDER|LINK_ROCKETJUMP) )
+    if (linkType & (LINK_JUMP | LINK_JUMPPAD | LINK_CROUCH | LINK_FALL | LINK_WATER | LINK_LADDER | LINK_ROCKETJUMP))
         specialMovement = false;
 
-    if( self->ai->pers.skillLevel < 0.33f )
+    if (self->ai->pers.skillLevel < 0.33f)
         specialMovement = false;
 
-    if( specialMovement == false || self->groundentity )
+    if (specialMovement == false || self->groundentity)
         self->ai->is_bunnyhop = false;
 
-    VectorSubtract( nodes[self->ai->next_node].origin, self->s.origin, self->ai->move_vector );
+    VectorSubtract(nodes[self->ai->next_node].origin, self->s.origin, self->ai->move_vector);
 
     // 2D, normalized versions of look and path directions
     pathdir[0] = self->ai->move_vector[0];
     pathdir[1] = self->ai->move_vector[1];
     pathdir[2] = 0.0f;
-    VectorNormalize( pathdir );
+    VectorNormalize(pathdir);
 
-    AngleVectors( self->s.angles, lookdir, NULL, NULL );
+    AngleVectors(self->s.angles, lookdir, NULL, NULL);
     lookdir[2] = 0.0f;
-    VectorNormalize( lookdir );
-
-    lookDot = DotProduct( lookdir, pathdir );
+    VectorNormalize(lookdir);
 
     // Ladder movement
-    if( self->is_ladder )
+    if (self->is_ladder)
     {
-        ucmd->forwardmove = 0;
-        ucmd->upmove = 1;
-        ucmd->sidemove = 0;
-
-        if( nav.debugMode && printLink )
-            G_PrintChasersf( self, "LINK_LADDER\n" );
-
-        nodeReached = NodeReachedGeneric();
+        nodeReached = MoveOnLadder(lookdir, pathdir, ucmd);
     }
-    else if( linkType & LINK_JUMPPAD )
+    else if (linkType & LINK_JUMPPAD)
     {
-        VectorCopy( self->s.origin, v1 );
-        VectorCopy( nodes[self->ai->next_node].origin, v2 );
-        v1[2] = v2[2] = 0;
-        if( DistanceFast( v1, v2 ) > 32 && lookDot > BOT_FORWARD_EPSILON ) {
-            ucmd->forwardmove = 1; // push towards destination
-            ucmd->buttons |= BUTTON_WALK;
-        }
-        nodeReached = self->groundentity != NULL && NodeReachedGeneric();
+        nodeReached = MoveOnJumppad(lookdir, pathdir, ucmd);
     }
-        // Platform riding - No move, riding elevator
-    else if( linkType & LINK_PLATFORM )
+    // Platform riding - No move, riding elevator
+    else if (linkType & LINK_PLATFORM)
     {
-        VectorCopy( self->s.origin, v1 );
-        VectorCopy( nodes[self->ai->next_node].origin, v2 );
-        v1[2] = v2[2] = 0;
-        if( DistanceFast( v1, v2 ) > 32 && lookDot > BOT_FORWARD_EPSILON )
-            ucmd->forwardmove = 1; // walk to center
-
-        ucmd->buttons |= BUTTON_WALK;
-        ucmd->upmove = 0;
-        ucmd->sidemove = 0;
-
-        if( nav.debugMode && printLink )
-            G_PrintChasersf( self, "LINK_PLATFORM (riding)\n" );
-
-        self->ai->move_vector[2] = 0; // put view horizontal
-
-        nodeReached = NodeReachedPlatformEnd();
+        nodeReached = MoveRidingPlatform(lookdir, pathdir, ucmd);
     }
-        // entering platform
-    else if( GetNodeFlags( self->ai->next_node ) & NODEFLAGS_PLATFORM )
+    // Entering platform
+    else if (GetNodeFlags(self->ai->next_node) & NODEFLAGS_PLATFORM)
     {
-        ucmd->forwardmove = 1;
-        ucmd->upmove = 0;
-        ucmd->sidemove = 0;
-
-        if( lookDot <= BOT_FORWARD_EPSILON )
-            ucmd->buttons |= BUTTON_WALK;
-
-        if( nav.debugMode && printLink )
-            G_PrintChasersf( self, "NODEFLAGS_PLATFORM (moving to plat)\n" );
-
-        // is lift down?
-        for( i = 0; i < nav.num_navigableEnts; i++ )
-        {
-            if( nav.navigableEnts[i].node == self->ai->next_node )
-            {
-                //testing line
-                //vec3_t	tPoint;
-                //int		j;
-                //for(j=0; j<3; j++)//center of the ent
-                //	tPoint[j] = nav.ents[i].ent->s.origin[j] + 0.5*(nav.ents[i].ent->r.mins[j] + nav.ents[i].ent->r.maxs[j]);
-                //tPoint[2] = nav.ents[i].ent->s.origin[2] + nav.ents[i].ent->r.maxs[2];
-                //tPoint[2] += 8;
-                //AITools_DrawLine( self->s.origin, tPoint );
-
-                //if not reachable, wait for it (only height matters)
-                if( ( nav.navigableEnts[i].ent->s.origin[2] + nav.navigableEnts[i].ent->r.maxs[2] ) > ( self->s.origin[2] + self->r.mins[2] + AI_JUMPABLE_HEIGHT ) &&
-                    nav.navigableEnts[i].ent->moveinfo.state != STATE_BOTTOM )
-                {
-                    self->ai->blocked_timeout = level.time + 10000;
-                    ucmd->forwardmove = 0;
-                }
-            }
-        }
-
-        nodeReached = NodeReachedPlatformStart();
+        nodeReached = MoveEnteringPlatform(lookdir, pathdir, ucmd);
     }
-        // Falling off ledge or jumping
-    else if( !self->groundentity && !self->is_step && !self->is_swim && !self->ai->is_bunnyhop )
+    // Falling off ledge or jumping
+    else if (!self->groundentity && !self->is_step && !self->is_swim && !self->ai->is_bunnyhop)
     {
-        ucmd->upmove = 0;
-        ucmd->sidemove = 0;
-        ucmd->forwardmove = 0;
-
-        if( lookDot > BOT_FORWARD_EPSILON )
-        {
-            ucmd->forwardmove = 1;
-
-            // add fake strafe accel
-            if( !(linkType & LINK_FALL) || linkType & (LINK_JUMP|LINK_ROCKETJUMP) )
-            {
-                if( linkType & LINK_JUMP )
-                {
-                    if( AttemptWalljump() ) {
-                        ucmd->buttons |= BUTTON_SPECIAL;
-                    }
-                    if( VectorLengthFast( tv( self->velocity[0], self->velocity[1], 0 ) ) < 600 )
-                        VectorMA( self->velocity, 6.0f, lookdir, self->velocity );
-                }
-                else
-                {
-                    if( VectorLengthFast( tv( self->velocity[0], self->velocity[1], 0 ) ) < 450 )
-                        VectorMA( self->velocity, 1.0f, lookdir, self->velocity );
-                }
-            }
-        }
-        else if( lookDot < -BOT_FORWARD_EPSILON )
-            ucmd->forwardmove = -1;
-
-        if( nav.debugMode && printLink )
-            G_PrintChasersf( self, "FLY MOVE\n" );
-
-        nodeReached = NodeReachedGeneric();
+        nodeReached = MoveFallingOrJumping(lookdir, pathdir, ucmd);
     }
     else // standard movement
     {
-        ucmd->forwardmove = 1;
-        ucmd->upmove = 0;
-        ucmd->sidemove = 0;
-
         // starting a jump
-        if( ( linkType & LINK_JUMP ) )
+        if ((linkType & LINK_JUMP))
         {
-            if( self->groundentity )
-            {
-                trace_t trace;
-                vec3_t v1, v2;
-
-                if( nav.debugMode && printLink )
-                    G_PrintChasersf( self, "LINK_JUMP\n" );
-
-                //check floor in front, if there's none... Jump!
-                VectorCopy( self->s.origin, v1 );
-                VectorNormalize2( self->ai->move_vector, v2 );
-                VectorMA( v1, 18, v2, v1 );
-                v1[2] += self->r.mins[2];
-                VectorCopy( v1, v2 );
-                v2[2] -= AI_JUMPABLE_HEIGHT;
-                G_Trace( &trace, v1, vec3_origin, vec3_origin, v2, self, MASK_AISOLID );
-                if( !trace.startsolid && trace.fraction == 1.0 )
-                {
-                    //jump!
-
-                    // prevent double jumping on crates
-                    VectorCopy( self->s.origin, v1 );
-                    v1[2] += self->r.mins[2];
-                    G_Trace( &trace, v1, tv( -12, -12, -8 ), tv( 12, 12, 0 ), v1, self, MASK_AISOLID );
-                    if( trace.startsolid )
-                        ucmd->upmove = 1;
-                }
-            }
-
-            nodeReached = NodeReachedGeneric();
+            nodeReached = MoveStartingAJump(lookdir, pathdir, ucmd);
         }
             // starting a rocket jump
-        else if( ( linkType & LINK_ROCKETJUMP ) )
+        else if ((linkType & LINK_ROCKETJUMP))
         {
-            if( nav.debugMode && printLink )
-                G_PrintChasersf( self, "LINK_ROCKETJUMP\n" );
-
-            if( !self->ai->rj_triggered && self->groundentity && ( self->s.weapon == WEAP_ROCKETLAUNCHER ) )
-            {
-                self->s.angles[PITCH] = 170;
-                ucmd->upmove = 1;
-                ucmd->buttons |= BUTTON_ATTACK;
-                self->ai->rj_triggered = true;
-            }
-
-            nodeReached = NodeReachedGeneric();
+            nodeReached = MoveStartingARocketjump(lookdir, pathdir, ucmd);
         }
         else
         {
-            // Move To Short Range goal (not following paths)
-            // plats, grapple, etc have higher priority than SR Goals, cause the bot will
-            // drop from them and have to repeat the process from the beginning
-            if( MoveToShortRangeGoalEntity( ucmd ) )
-            {
-                nodeReached = NodeReachedGeneric();
-            }
-            else if( specialMovement && !self->is_swim ) // bunny-hopping movement here
-            {
-                SpecialMove( lookdir, pathdir, ucmd );
-                nodeReached = NodeReachedSpecial();
-            }
-            else
-            {
-                nodeReached = NodeReachedGeneric();
-            }
+            nodeReached = MoveLikeHavingShortGoal(lookdir, pathdir, ucmd, specialMovement);
         }
-
-        // if static assume blocked and try to get free
-        if( VectorLengthFast( self->velocity ) < 37 && ( ucmd->forwardmove || ucmd->sidemove || ucmd->upmove ) )
-        {
-            if( random() > 0.1 && self->ai->aiRef->SpecialMove( ucmd ) )  // jumps, crouches, turns...
-                return;
-
-            self->s.angles[YAW] += brandom( -90, 90 );
-        }
+        TryMoveAwayIfBlocked(ucmd);
     }
 
     // swimming
-    if( self->is_swim )
+    if (self->is_swim)
     {
-        if( !( G_PointContents( nodes[self->ai->next_node].origin ) & MASK_WATER ) )  // Exit water
+        if (!(G_PointContents(nodes[self->ai->next_node].origin) & MASK_WATER))  // Exit water
             ucmd->upmove = 1;
     }
 
     ChangeAngle();
 
-    if( nodeReached )
+    if (nodeReached)
         NodeReached();
+}
 
-#undef BOT_FORWARD_EPSILON
+void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
+{
+    // if static assume blocked and try to get free
+    if (VectorLengthFast(self->velocity) < 37 && (ucmd->forwardmove || ucmd->sidemove || ucmd->upmove))
+    {
+        if (random() > 0.1 && self->ai->aiRef->SpecialMove(ucmd))  // jumps, crouches, turns...
+            return;
+
+        self->s.angles[YAW] += brandom(-90, 90);
+    }
+}
+
+static constexpr float BOT_FORWARD_EPSILON = 0.5f;
+
+bool Bot::MoveOnLadder(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd)
+{
+    ucmd->forwardmove = 0;
+    ucmd->upmove = 1;
+    ucmd->sidemove = 0;
+
+    if (nav.debugMode && printLink)
+        G_PrintChasersf(self, "LINK_LADDER\n");
+
+    return NodeReachedGeneric();
+}
+
+bool Bot::MoveOnJumppad(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd)
+{
+    vec3_t v1, v2;
+    VectorCopy(self->s.origin, v1);
+    VectorCopy(nodes[self->ai->next_node].origin, v2);
+    v1[2] = v2[2] = 0;
+    if (DistanceFast(v1, v2) > 32 && DotProduct(lookdir, pathdir) > BOT_FORWARD_EPSILON)
+    {
+        ucmd->forwardmove = 1; // push towards destination
+        ucmd->buttons |= BUTTON_WALK;
+    }
+    return self->groundentity != NULL && NodeReachedGeneric();
+}
+
+bool Bot::MoveRidingPlatform(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd)
+{
+    vec3_t v1, v2;
+    VectorCopy(self->s.origin, v1);
+    VectorCopy(nodes[self->ai->next_node].origin, v2);
+    v1[2] = v2[2] = 0;
+    if (DistanceFast(v1, v2) > 32 && DotProduct(lookdir, pathdir) > BOT_FORWARD_EPSILON)
+        ucmd->forwardmove = 1; // walk to center
+
+    ucmd->buttons |= BUTTON_WALK;
+    ucmd->upmove = 0;
+    ucmd->sidemove = 0;
+
+    if (nav.debugMode && printLink)
+        G_PrintChasersf(self, "LINK_PLATFORM (riding)\n");
+
+    self->ai->move_vector[2] = 0; // put view horizontal
+
+    return NodeReachedPlatformEnd();
+}
+
+bool Bot::MoveEnteringPlatform(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd)
+{
+    ucmd->forwardmove = 1;
+    ucmd->upmove = 0;
+    ucmd->sidemove = 0;
+
+    if (DotProduct(lookdir, pathdir) <= BOT_FORWARD_EPSILON)
+        ucmd->buttons |= BUTTON_WALK;
+
+    if (nav.debugMode && printLink)
+        G_PrintChasersf(self, "NODEFLAGS_PLATFORM (moving to plat)\n");
+
+    // is lift down?
+    for (int i = 0; i < nav.num_navigableEnts; i++)
+    {
+        if (nav.navigableEnts[i].node == self->ai->next_node)
+        {
+            //testing line
+            //vec3_t	tPoint;
+            //int		j;
+            //for(j=0; j<3; j++)//center of the ent
+            //	tPoint[j] = nav.ents[i].ent->s.origin[j] + 0.5*(nav.ents[i].ent->r.mins[j] + nav.ents[i].ent->r.maxs[j]);
+            //tPoint[2] = nav.ents[i].ent->s.origin[2] + nav.ents[i].ent->r.maxs[2];
+            //tPoint[2] += 8;
+            //AITools_DrawLine( self->s.origin, tPoint );
+
+            //if not reachable, wait for it (only height matters)
+            if ((nav.navigableEnts[i].ent->s.origin[2] + nav.navigableEnts[i].ent->r.maxs[2]) >
+                (self->s.origin[2] + self->r.mins[2] + AI_JUMPABLE_HEIGHT) &&
+                nav.navigableEnts[i].ent->moveinfo.state != STATE_BOTTOM)
+            {
+                self->ai->blocked_timeout = level.time + 10000;
+                ucmd->forwardmove = 0;
+            }
+        }
+    }
+
+    return NodeReachedPlatformStart();
+}
+
+bool Bot::MoveFallingOrJumping(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd)
+{
+    ucmd->upmove = 0;
+    ucmd->sidemove = 0;
+    ucmd->forwardmove = 0;
+
+    const float lookDot = DotProduct(lookdir, pathdir);
+
+    if (lookDot > BOT_FORWARD_EPSILON)
+    {
+        ucmd->forwardmove = 1;
+
+        const unsigned linkType = CurrentLinkType();
+
+        // add fake strafe accel
+        if (!(linkType & LINK_FALL) || linkType & (LINK_JUMP | LINK_ROCKETJUMP))
+        {
+            if (linkType & LINK_JUMP)
+            {
+                if (AttemptWalljump())
+                {
+                    ucmd->buttons |= BUTTON_SPECIAL;
+                }
+                if (VectorLengthFast(tv(self->velocity[0], self->velocity[1], 0)) < 600)
+                    VectorMA(self->velocity, 6.0f, lookdir, self->velocity);
+            }
+            else
+            {
+                if (VectorLengthFast(tv(self->velocity[0], self->velocity[1], 0)) < 450)
+                    VectorMA(self->velocity, 1.0f, lookdir, self->velocity);
+            }
+        }
+    }
+    else if (lookDot < -BOT_FORWARD_EPSILON)
+        ucmd->forwardmove = -1;
+
+    if (nav.debugMode && printLink)
+        G_PrintChasersf(self, "FLY MOVE\n");
+
+    return NodeReachedGeneric();
+}
+
+bool Bot::MoveStartingAJump(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd)
+{
+    ucmd->forwardmove = 1;
+    ucmd->upmove = 0;
+    ucmd->sidemove = 0;
+
+    if (self->groundentity)
+    {
+        trace_t trace;
+        vec3_t v1, v2;
+
+        if (nav.debugMode && printLink)
+            G_PrintChasersf(self, "LINK_JUMP\n");
+
+        //check floor in front, if there's none... Jump!
+        VectorCopy(self->s.origin, v1);
+        VectorNormalize2(self->ai->move_vector, v2);
+        VectorMA(v1, 18, v2, v1);
+        v1[2] += self->r.mins[2];
+        VectorCopy(v1, v2);
+        v2[2] -= AI_JUMPABLE_HEIGHT;
+        G_Trace(&trace, v1, vec3_origin, vec3_origin, v2, self, MASK_AISOLID);
+        if (!trace.startsolid && trace.fraction == 1.0)
+        {
+            //jump!
+
+            // prevent double jumping on crates
+            VectorCopy(self->s.origin, v1);
+            v1[2] += self->r.mins[2];
+            G_Trace(&trace, v1, tv(-12, -12, -8), tv(12, 12, 0), v1, self, MASK_AISOLID);
+            if (trace.startsolid)
+                ucmd->upmove = 1;
+        }
+    }
+
+    return NodeReachedGeneric();
+}
+
+bool Bot::MoveStartingARocketjump(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd)
+{
+    ucmd->forwardmove = 1;
+    ucmd->upmove = 0;
+    ucmd->sidemove = 0;
+
+    if (nav.debugMode && printLink)
+        G_PrintChasersf(self, "LINK_ROCKETJUMP\n");
+
+    if (!self->ai->rj_triggered && self->groundentity && (self->s.weapon == WEAP_ROCKETLAUNCHER))
+    {
+        self->s.angles[PITCH] = 170;
+        ucmd->upmove = 1;
+        ucmd->buttons |= BUTTON_ATTACK;
+        self->ai->rj_triggered = true;
+    }
+
+    return NodeReachedGeneric();
+}
+
+bool Bot::MoveLikeHavingShortGoal(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd, bool specialMovement)
+{
+    ucmd->forwardmove = 1;
+    ucmd->upmove = 0;
+    ucmd->sidemove = 0;
+
+    // Move To Short Range goal (not following paths)
+    // plats, grapple, etc have higher priority than SR Goals, cause the bot will
+    // drop from them and have to repeat the process from the beginning
+    if (MoveToShortRangeGoalEntity(ucmd))
+    {
+        return NodeReachedGeneric();
+    }
+    else if (specialMovement && !self->is_swim) // bunny-hopping movement here
+    {
+        SpecialMove(lookdir, pathdir, ucmd);
+        return NodeReachedSpecial();
+    }
+    else
+    {
+        return NodeReachedGeneric();
+    }
 }
 
 void Bot::MoveWander(usercmd_t *ucmd)

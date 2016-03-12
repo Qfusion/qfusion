@@ -8,10 +8,10 @@
 class Bot: public Ai
 {
 public:
-    Bot(edict_t *self): Ai(self), dangersDetector(self), enemyPool(self) {}
+    Bot(edict_t *self): Ai(self), dangersDetector(self), enemyPool(self), printLink(false) {}
 
     using Ai::SpecialMove;
-    void SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd);
+    void SpecialMove(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
     void Move(usercmd_t *ucmd);
     void MoveWander(usercmd_t *ucmd);
     void CombatMovement(usercmd_t *ucmd);
@@ -46,6 +46,18 @@ private:
     DangersDetector dangersDetector;
     EnemyPool enemyPool;
     CombatTask aimTarget;
+
+    bool printLink;
+
+    bool MoveOnLadder(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    bool MoveOnJumppad(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    bool MoveRidingPlatform(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    bool MoveEnteringPlatform(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    bool MoveFallingOrJumping(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    bool MoveStartingAJump(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    bool MoveStartingARocketjump(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    bool MoveLikeHavingShortGoal(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd, bool specialMovement);
+    void TryMoveAwayIfBlocked(usercmd_t *ucmd);
 
     bool MayApplyCombatDash();
     Vec3 MakeEvadeDirection(const class Danger &danger);
