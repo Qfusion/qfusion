@@ -1,5 +1,6 @@
 #include "bot.h"
 #include "enemy_pool.h"
+#include "../../gameshared/q_comref.h"
 #include <algorithm>
 #include <limits>
 #include <stdarg.h>
@@ -861,11 +862,27 @@ void EnemyPool::SuggestAimWeaponAndTactics(CombatTask *task)
     disposition.distance = distance;
 
     // If bot can switch weapon quickly
-    if (bot->r.client->ps.stats[STAT_WEAPON_TIME] < 32 && damageToKillEnemy < 100)
+    if (bot->r.client->ps.stats[STAT_WEAPON_TIME] < 32)
     {
         if (BotSkill() >= 0.85f || decisionRandom < BotSkill())
         {
-            int chosenWeapon = SuggestFinishWeapon(enemy, disposition);
+            int chosenWeapon = WEAP_NONE;
+            if (damageToKillEnemy < 75)
+            {
+                Debug("decided to finish %s that can resist %.1f damage units\n", enemy.Nick(), damageToKillEnemy);
+                chosenWeapon = SuggestFinishWeapon(enemy, disposition);
+                Debug("chosen %s to finish %s\n", WeapName(chosenWeapon), enemy.Nick());
+            }
+            else
+            {
+                // Try to hit escaping enemies hard in a single shot
+                if (IsEnemyEscaping(enemy, disposition))
+                {
+                    Debug("detected that %s is escaping\n", enemy.Nick());
+                    chosenWeapon = SuggestHitEscapingEnemyWeapon(enemy, disposition);
+                    Debug("chosen %s to hit escaping %s\n", WeapName(chosenWeapon), enemy.Nick());
+                }
+            }
             if (chosenWeapon != WEAP_NONE)
             {
                 task->suggestedShootWeapon = chosenWeapon;
@@ -1397,6 +1414,100 @@ int EnemyPool::SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &
         return WEAP_RIOTGUN;
 
     return WEAP_GUNBLADE;
+}
+
+static bool IsEscapingFromStandingEntity(const edict_t *escaping, const edict_t *standing, float escapingVelocitySqLen)
+{
+    // Too low relative speed with almost standing enemy
+    if (escaping->speed < DEFAULT_DASHSPEED * 1.35f)
+        return false;
+
+    Vec3 escapingVelocityDir(escaping->velocity);
+    escapingVelocityDir *= Q_RSqrt(escapingVelocitySqLen);
+
+    Vec3 escapingToStandingDir(standing->s.origin);
+    escapingToStandingDir -= escaping->s.origin;
+
+    float len = escapingToStandingDir.SquaredLength();
+    if (len < 1)
+        return false;
+
+    escapingToStandingDir *= Q_RSqrt(len);
+    return escapingToStandingDir.Dot(escapingVelocityDir) < -0.5f;
+}
+
+bool EnemyPool::IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition)
+{
+    // Very basic. Todo: Check env. behind an enemy or the bot, is it really tries to escape or just pushed on a wall
+
+    float botVelocitySqLen = VectorLengthSquared(bot->velocity);
+    float enemyVelocitySqLen = VectorLengthSquared(enemy.ent->velocity);
+
+    // Enemy is moving fast
+    if (enemyVelocitySqLen >= DEFAULT_DASHSPEED * DEFAULT_DASHSPEED)
+    {
+        // Both entities are moving fast
+        if (botVelocitySqLen >= DEFAULT_DASHSPEED * DEFAULT_DASHSPEED)
+        {
+            Vec3 botVelocityDir(bot->velocity);
+            Vec3 enemyVelocityDir(enemy.ent->velocity);
+            enemyVelocityDir *= Q_RSqrt(enemyVelocitySqLen);
+            botVelocityDir *= Q_RSqrt(botVelocitySqLen);
+            return botVelocityDir.Dot(enemyVelocityDir) < -0.5f;
+        }
+        // Bot is standing or walking, direction of its speed does not matter
+        return IsEscapingFromStandingEntity(enemy.ent, bot, enemyVelocitySqLen);
+    }
+
+    // Enemy is standing or walking, direction of its speed does not matter
+    return IsEscapingFromStandingEntity(enemy.ent, bot, enemyVelocitySqLen);
+}
+
+int EnemyPool::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition)
+{
+    const float lgRange = GetLaserRange();
+
+    // We think its too dangerous to switch weapons in this case
+    if (disposition.distance < lgRange - 150)
+    {
+        Debug("(hit escaping) too small distance %.1f to change weapon, too risky\n", disposition.distance);
+        return WEAP_NONE;
+    }
+
+    enum { EB, RL, GB, MAX_WEAPONS };
+    WeaponAndScore weaponScores[MAX_WEAPONS] =
+    {
+        WeaponAndScore(WEAP_ELECTROBOLT, BoltsReadyToFireCount() > 0),
+        WeaponAndScore(WEAP_ROCKETLAUNCHER, RocketsReadyToFireCount() > 0),
+        WeaponAndScore(WEAP_GUNBLADE, 0.8f)
+    };
+
+    weaponScores[EB].score *= 1.0f + 0.33f * BotSkill();
+
+    weaponScores[RL].score *= 1.33f * (0.3f + 0.7f * targetEnvironment.factor);
+    weaponScores[GB].score *= 0.6f + 0.4f * targetEnvironment.factor;
+
+    weaponScores[EB].score *= 0.3f + 0.7f * BoundedFraction(disposition.distance, 2000.0f);
+    weaponScores[RL].score *= 1.0f - BoundedFraction(disposition.distance, 1500.0f);
+    weaponScores[GB].score *= 1.0f - 0.3f * BoundedFraction(disposition.distance, 2500.0f);
+
+
+    // We are sure that weapon switch not only costs nothing, but even is intended, so do not call ChooseWeaponByScore()
+    int weapon = WEAP_NONE;
+    float maxScore = 0.0f;
+    for (int i = 0; i < MAX_WEAPONS; ++i)
+    {
+        if (maxScore < weaponScores[i].score)
+        {
+            maxScore = weaponScores[i].score;
+            weapon = weaponScores[i].weapon;
+        }
+    }
+
+    constexpr const char *format = "(hit escaping) raw scores: EB %.2f RL %.2f GB %.2f chose %s\n";
+    Debug(format, weaponScores[EB].score, weaponScores[RL].score, weaponScores[GB].score, WeapName(weapon));
+
+    return weapon;
 }
 
 int EnemyPool::SuggestQuadBearerWeapon(const Enemy &enemy)
