@@ -36,7 +36,6 @@ void UntypedCachingGameAllocator::Clear()
     if (!isInitialized)
         return;
 
-    printf("->" FANCY_TAG "Clear()\n", tag);
     if (isCleared)
     {
         printf(FANCY_TAG "Clear(): has been already cleared\n", tag);
@@ -48,7 +47,6 @@ void UntypedCachingGameAllocator::Clear()
     }
     G_Free(cache);
     isCleared = true;
-    printf("<-" FANCY_TAG "Clear()\n", tag);
 }
 
 UntypedCachingGameAllocator::~UntypedCachingGameAllocator()
@@ -72,7 +70,6 @@ void *UntypedCachingGameAllocator::Alloc()
 {
     Init();
 
-    //printf("->" FANCY_TAG "Alloc(): %d chunks used, %d chunks cached\n", tag, usedChunksCount, cachedChunksCount);
     if (usedChunksCount == limit)
     {
         printf(FANCY_TAG "Alloc(): Can't allocate more than %d chunks\n", tag, (int) limit);
@@ -80,13 +77,11 @@ void *UntypedCachingGameAllocator::Alloc()
     }
     usedChunksCount++;
     void *chunk = cachedChunksCount > 0 ? cache[--cachedChunksCount] : AllocDirect();
-    //printf("<-" FANCY_TAG "Alloc(): %d chunks used, %d chunks cached\n", tag, usedChunksCount, cachedChunksCount);
     return chunk;
 }
 
 void UntypedCachingGameAllocator::Free(void *ptr)
 {
-    //printf("->" FANCY_TAG "Free(): %d chunks used, %d chunks cached\n", tag, usedChunksCount, cachedChunksCount);
     if (!knownChunks.count(ptr))
     {
         printf(FANCY_TAG "Free(): Attempt to free chunk %p that has not been registered\n", tag, ptr);
@@ -94,5 +89,4 @@ void UntypedCachingGameAllocator::Free(void *ptr)
     }
     cache[cachedChunksCount++] = ptr;
     usedChunksCount--;
-    //printf("<-" FANCY_TAG "Free(): %d chunks used, %d chunks cached\n", tag, usedChunksCount, cachedChunksCount);
 }
