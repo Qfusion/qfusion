@@ -17,7 +17,7 @@ public:
     void CombatMovement(usercmd_t *ucmd);
     void LookAround();
     bool ChangeWeapon(int weapon);
-    bool CheckShot(vec3_t point);
+    bool CheckShot(const vec3_t point);
     void PredictProjectileShot(const vec3_t fire_origin, float projectile_speed, vec3_t target, const vec3_t target_velocity);
     bool FireWeapon(usercmd_t *ucmd);
     void Pain(const edict_t *enemy, float kick, int damage)
@@ -62,6 +62,22 @@ private:
     void ApplyEvadeMovePushes(usercmd_t *ucmd);
     bool MayApplyCombatDash();
     Vec3 MakeEvadeDirection(const class Danger &danger);
+
+    void SetupCoarseFireTarget(vec3_t fire_origin, vec3_t target);
+    void CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *inFront, bool *mayHit);
+    // All these methods return suggested accuracy
+    float AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target);
+    float AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
+    float AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
+    float AdjustDropAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
+    float AdjustInstantAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
+
+    void TryPressAttack(bool mayHit, usercmd_t *ucmd, float wfac, vec3_t target);
+
+    // Name clash... we have to use a method name prefix
+    inline const CombatTask &GetCombatTask() { return enemyPool.combatTask; }
+    inline const Enemy *AimEnemy() const { return enemyPool.combatTask.aimEnemy; }
+    inline const Vec3 &SpamSpot() const { return enemyPool.combatTask.spamSpot; }
 };
 
 #endif
