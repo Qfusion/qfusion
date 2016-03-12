@@ -161,7 +161,7 @@ typedef struct
 	bool readyAnnouncementEnabled;
 	bool scoreAnnouncementEnabled;
 	bool countdownEnabled;
-	bool mathAbortDisabled;
+	bool matchAbortDisabled;
 	bool shootingDisabled;
 	bool infiniteAmmo;
 	bool canForceModels;

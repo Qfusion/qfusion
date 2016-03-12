@@ -415,7 +415,7 @@ static void G_Gametype_GENERIC_Init( void )
 	level.gametype.ultrahealth_respawn = 60;
 
 	level.gametype.countdownEnabled = false;
-	level.gametype.mathAbortDisabled = false;
+	level.gametype.matchAbortDisabled = false;
 	level.gametype.canForceModels = true;
 	level.gametype.canShowMinimap = false;
 	level.gametype.teamOnlyMinimap = true;
@@ -692,7 +692,7 @@ static void G_Match_CheckStateAbort( void )
 	bool enough;
 
 	if( GS_MatchState() <= MATCH_STATE_NONE || GS_MatchState() >= MATCH_STATE_POSTMATCH
-		|| level.gametype.mathAbortDisabled )
+		|| level.gametype.matchAbortDisabled )
 	{
 		GS_GamestatSetFlag( GAMESTAT_FLAG_WAITING, false );
 		return;
@@ -1892,7 +1892,7 @@ void G_Gametype_SetDefaults( void )
     level.gametype.readyAnnouncementEnabled = false;
     level.gametype.scoreAnnouncementEnabled = false;
     level.gametype.countdownEnabled = false;
-    level.gametype.mathAbortDisabled = false;
+    level.gametype.matchAbortDisabled = false;
     level.gametype.shootingDisabled = false;
     level.gametype.infiniteAmmo = false;
     level.gametype.canForceModels = true;
