@@ -607,9 +607,9 @@ void Bot::CombatMovement(usercmd_t *ucmd)
 #endif
 
             int walkingEvades = 0;
-            int walkingMovePushes[2] = {0, 0};
+            int walkingMovePushes[3] = {0, 0, 0};
             int jumpingEvades = 0;
-            int jumpingMovePushes[2] = {0, 0};
+            int jumpingMovePushes[3] = {0, 0, 0};
 
             if (evadeDir.x())
             {
