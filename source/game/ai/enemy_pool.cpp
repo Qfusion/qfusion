@@ -23,7 +23,7 @@ inline float BoundedFraction(float value, float bound)
 
 float DamageToKill(const edict_t *client, float armorProtection, float armorDegradation)
 {
-    if (!client || client->r.client)
+    if (!client || !client->r.client)
         return 0.0f;
 
     float health = client->r.client->ps.stats[STAT_HEALTH];
