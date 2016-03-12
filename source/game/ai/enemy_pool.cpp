@@ -862,7 +862,7 @@ void EnemyPool::SuggestAimWeaponAndTactics(CombatTask *task)
     disposition.distance = distance;
 
     // If bot can switch weapon quickly
-    if (bot->r.client->ps.stats[STAT_WEAPON_TIME] < 32)
+    if (bot->r.client->ps.stats[STAT_WEAPON_TIME] < 64)
     {
         if (BotSkill() >= 0.85f || decisionRandom < BotSkill())
         {
