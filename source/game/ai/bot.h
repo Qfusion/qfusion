@@ -47,6 +47,7 @@ private:
     EnemyPool enemyPool;
     CombatTask aimTarget;
 
+    bool MayApplyCombatDash();
     Vec3 MakeEvadeDirection(const class Danger &danger);
 };
 
