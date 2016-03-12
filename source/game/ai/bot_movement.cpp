@@ -22,9 +22,6 @@ void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
     n1 = self->ai->path.nodes[self->ai->path.numNodes];
     n2 = self->ai->path.nodes[self->ai->path.numNodes-1];
 
-    if( !Ai::IsInFront2D( lookdir, self->s.origin, nodes[n2].origin, 0.5 ) )
-        bunnyhop = false;
-
     // do not dash if the next link will be a fall, jump or
     // any other kind of special link
     nextMoveType = AI_PlinkMoveType( n1, n2 );
@@ -60,10 +57,24 @@ void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
     {
         // Can't accelerate anymore (we have to add some delta to the default dash speed)
         if( VectorLengthFast(self->velocity) >= DEFAULT_DASHSPEED - 16 )
+        {
+            vec3_t n1origin, n2origin;
+            GetNodeOrigin(n1, n1origin);
+            GetNodeOrigin(n2, n2origin);
+            Vec3 linkVec(n2origin);
+            linkVec -= n1origin;
+            linkVec.z() *= 0.25f;
+
+            VectorCopy(linkVec.vec, self->ai->move_vector);
+
+            ucmd->forwardmove = 1;
             ucmd->upmove = 1;
+        }
         // Get an initial speed by dash
         else
+        {
             ucmd->buttons |= BUTTON_SPECIAL;
+        }
 
 #if 0
         // fake strafe-jumping acceleration
@@ -86,7 +97,7 @@ void Bot::SpecialMove(vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd)
     }
 
     // if pushing in the opposite direction of the path, reduce the push
-    if( DotProduct( lookdir, pathdir ) < -0.33f )
+    if( !self->ai->is_bunnyhop && DotProduct( lookdir, pathdir ) < -0.33f )
         ucmd->forwardmove = 0;
 }
 
