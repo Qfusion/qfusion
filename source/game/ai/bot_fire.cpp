@@ -1,10 +1,12 @@
 #include "bot.h"
+#include "ai_local.h"
+#include "../../gameshared/q_comref.h"
 
 //==========================================
 // BOT_DMclass_CheckShot
 // Checks if shot is blocked (doesn't verify it would hit)
 //==========================================
-bool Bot::CheckShot(vec3_t point)
+bool Bot::CheckShot(const vec3_t point)
 {
     trace_t tr;
     vec3_t start, forward, right, offset;
@@ -18,7 +20,7 @@ bool Bot::CheckShot(vec3_t point)
     G_ProjectSource( self->s.origin, offset, forward, right, start );
 
     // blocked, don't shoot
-    G_Trace( &tr, start, vec3_origin, vec3_origin, point, self, MASK_AISOLID );
+    G_Trace( &tr, start, vec3_origin, vec3_origin, const_cast<vec_t*>(point), self, MASK_AISOLID );
     if( tr.fraction < 0.8f )
     {
         if( tr.ent < 1 || !game.edicts[tr.ent].takedamage || game.edicts[tr.ent].movetype == MOVETYPE_PUSH )
@@ -80,6 +82,8 @@ void Bot::PredictProjectileShot(const vec3_t fire_origin, float projectile_speed
         VectorCopy( predictedTarget, target );
 }
 
+constexpr float WFAC_GENERIC_PROJECTILE = 300.0f;
+constexpr float WFAC_GENERIC_INSTANT = 150.0f;
 
 //==========================================
 // BOT_DMclass_FireWeapon
@@ -87,140 +91,36 @@ void Bot::PredictProjectileShot(const vec3_t fire_origin, float projectile_speed
 //==========================================
 bool Bot::FireWeapon(usercmd_t *ucmd)
 {
-#define WFAC_GENERIC_PROJECTILE 300.0
-#define WFAC_GENERIC_INSTANT 150.0
-    float firedelay;
-    vec3_t target;
-    int weapon, i;
-    float wfac;
-    vec3_t fire_origin;
-    trace_t trace;
-    bool continuous_fire = false;
-    firedef_t *firedef = GS_FiredefForPlayerState(&self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON]);
-
-    CombatTask &combatTask = enemyPool.combatTask;
-    const bool importantShot = combatTask.importantShot;
+    const bool importantShot = enemyPool.combatTask.importantShot;
     // Reset shot importance, it is for a single flick shot and the task is for many frames
-    combatTask.importantShot = false;
+    enemyPool.combatTask.importantShot = false;
 
-    if (!combatTask.aimEnemy && !combatTask.spamEnemy)
+    if (enemyPool.combatTask.Empty())
         return false;
 
-    weapon = self->s.weapon;
+    const firedef_t *firedef = GS_FiredefForPlayerState(&self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON]);
+
+    int weapon = self->s.weapon;
     if (weapon < 0 || weapon >= WEAP_TOTAL)
         weapon = 0;
 
     if (!firedef)
         return false;
 
-    if (combatTask.aimEnemy)
-    {
-        const edict_t *enemy = combatTask.aimEnemy->ent;
-        for (i = 0; i < 3; i++)
-        {
-            target[i] = enemy->s.origin[i] + (0.5f * (enemy->r.maxs[i] + enemy->r.mins[i]));
-        }
-    }
-    else
-    {
-        VectorCopy(combatTask.spamSpot.vec, target);
-    }
+    vec3_t target, fire_origin;
+    SetupCoarseFireTarget(fire_origin, target);
 
-    fire_origin[0] = self->s.origin[0];
-    fire_origin[1] = self->s.origin[1];
-    fire_origin[2] = self->s.origin[2] + self->viewheight;
-
+    bool continuous_fire = false;
     if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN)
         continuous_fire = true;
 
-    edict_t *targetEnt;
-    edict_t dummyEnt;
-    if (combatTask.aimEnemy)
-    {
-        targetEnt = const_cast<edict_t *>(combatTask.aimEnemy->ent);
-    }
-    else
-    {
-        VectorCopy(combatTask.spamSpot.vec, dummyEnt.s.origin);
-        targetEnt = &dummyEnt;
-    }
+    bool isInFront, mayHit;
+    CheckEnemyInFrontAndMayBeHit(target, &isInFront, &mayHit);
 
-    bool isInFront = Ai::IsInFront(targetEnt);
-    bool mayHit = CheckShot(target);
-
-    if( !continuous_fire && !(isInFront && mayHit))
+    if(!continuous_fire && !(isInFront && mayHit))
         return false;
 
-    // find out our weapon AIM style
-    if( AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION_EXPLOSIVE )
-    {
-        // in the lowest skill level, don't predict projectiles
-        if( self->ai->pers.skillLevel >= 0.33f )
-        {
-            if (combatTask.aimEnemy)
-                PredictProjectileShot(fire_origin, firedef->speed, target, combatTask.aimEnemy->ent->velocity);
-            else
-                PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
-        }
-
-        wfac = WFAC_GENERIC_PROJECTILE * 1.3;
-
-        if (combatTask.aimEnemy)
-        {
-            // aim to the feet when enemy isn't higher
-            if (fire_origin[2] > (target[2] + (self->enemy->r.mins[2] * 0.8)))
-            {
-                vec3_t checktarget;
-                VectorSet(checktarget,
-                          self->enemy->s.origin[0],
-                          self->enemy->s.origin[1],
-                          self->enemy->s.origin[2] + self->enemy->r.mins[2] + 4);
-
-                G_Trace(&trace, fire_origin, vec3_origin, vec3_origin, checktarget, self, MASK_SHOT);
-                if (trace.fraction == 1.0f || (trace.ent > 0 && game.edicts[trace.ent].takedamage))
-                    VectorCopy(checktarget, target);
-            }
-            else if (!IsStep(self->enemy))
-                wfac *= 2.5; // more imprecise for air rockets
-        }
-    }
-    else if( AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION )
-    {
-        if( self->s.weapon == WEAP_PLASMAGUN )
-            wfac = WFAC_GENERIC_PROJECTILE * 0.5;
-        else
-            wfac = WFAC_GENERIC_PROJECTILE;
-
-        // in the lowest skill level, don't predict projectiles
-        if( self->ai->pers.skillLevel >= 0.33f )
-        {
-            if (combatTask.aimEnemy)
-                PredictProjectileShot(fire_origin, firedef->speed, target, self->enemy->velocity);
-            else
-                PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
-        }
-    }
-    else if( AIWeapons[weapon].aimType == AI_AIMSTYLE_DROP )
-    {
-        //jalToDo
-        wfac = WFAC_GENERIC_PROJECTILE;
-        // in the lowest skill level, don't predict projectiles
-        if( self->ai->pers.skillLevel >= 0.33f )
-        {
-            const float *velocity = combatTask.aimEnemy ? combatTask.aimEnemy->ent->velocity : vec3_origin;
-            PredictProjectileShot(fire_origin, firedef->speed, target, velocity);
-        }
-    }
-    else // AI_AIMSTYLE_INSTANTHIT
-    {
-        if( self->s.weapon == WEAP_ELECTROBOLT )
-            wfac = WFAC_GENERIC_INSTANT;
-        else if( self->s.weapon == WEAP_LASERGUN )
-            wfac = WFAC_GENERIC_INSTANT * 1.5;
-        else
-            wfac = WFAC_GENERIC_INSTANT;
-    }
-
+    float wfac = AdjustTarget(weapon, firedef, fire_origin, target);
     wfac = 25 + wfac * (1.0f - Skill());
     if (importantShot && Skill() > 0.33f)
         wfac *= (1.13f - Skill());
@@ -228,52 +128,185 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
     // look to target
     VectorSubtract( target, fire_origin, self->ai->move_vector );
 
-    if( self->r.client->ps.weaponState == WEAPON_STATE_READY ||
-        self->r.client->ps.weaponState == WEAPON_STATE_REFIRE ||
-        self->r.client->ps.weaponState == WEAPON_STATE_REFIRESTRONG )
-    {
-        // in continuous fire weapons don't add delays
-        if( self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN )
-            firedelay = 1.0f;
-        else
-            firedelay = ( 1.0f - self->ai->pers.skillLevel ) - ( random()-0.25f );
-
-        if( firedelay > 0.0f )
-        {
-            if (mayHit)
-            {
-                ucmd->buttons |= BUTTON_ATTACK;
-            }
-            // mess up angles only in the attacking frames
-            if( self->r.client->ps.weaponState == WEAPON_STATE_READY ||
-                self->r.client->ps.weaponState == WEAPON_STATE_REFIRE ||
-                self->r.client->ps.weaponState == WEAPON_STATE_REFIRESTRONG )
-            {
-                if( (self->s.weapon == WEAP_LASERGUN) || (self->s.weapon == WEAP_PLASMAGUN) ) {
-                    target[0] += sinf( (float)level.time/100.0) * wfac;
-                    target[1] += cosf( (float)level.time/100.0) * wfac;
-                }
-                else
-                {
-                    target[0] += ( random()-0.5f ) * wfac;
-                    target[1] += ( random()-0.5f ) * wfac;
-                }
-            }
-        }
-    }
+    TryPressAttack(mayHit, ucmd, wfac, target);
 
     //update angles
     VectorSubtract( target, fire_origin, self->ai->move_vector );
     ChangeAngle();
 
-    if( nav.debugMode && bot_showcombat->integer )
+    if (nav.debugMode && bot_showcombat->integer)
     {
-        if (combatTask.aimEnemy)
+        if (AimEnemy())
         {
-            const edict_t *enemy = combatTask.aimEnemy->ent;
+            const edict_t *enemy = CombatTask().aimEnemy->ent;
             const char *enemyName = enemy->r.client ? enemy->r.client->netname : enemy->classname;
             G_PrintChasersf(self, "%s: attacking %s\n", self->ai->pers.netname, enemyName);
         }
     }
     return true;
+}
+
+void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
+{
+    if (AimEnemy())
+    {
+        const edict_t *enemy = AimEnemy()->ent;
+        for (int i = 0; i < 3; i++)
+        {
+            target[i] = enemy->s.origin[i] + (0.5f * (enemy->r.maxs[i] + enemy->r.mins[i]));
+        }
+    }
+    else
+    {
+        VectorCopy(SpamSpot().vec, target);
+    }
+
+    fire_origin[0] = self->s.origin[0];
+    fire_origin[1] = self->s.origin[1];
+    fire_origin[2] = self->s.origin[2] + self->viewheight;
+}
+
+void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, bool *mayHit)
+{
+    edict_t *targetEnt;
+    edict_t dummyEnt;
+    if (CombatTask().aimEnemy)
+    {
+        targetEnt = const_cast<edict_t *>(AimEnemy()->ent);
+    }
+    else
+    {
+        // To reuse Ai::IsInFront() atm we have to provide a dummy edict
+        // Ai::IsInFront uses only edict_t::s.origin
+        VectorCopy(CombatTask().spamSpot.vec, dummyEnt.s.origin);
+        targetEnt = &dummyEnt;
+    }
+    *isInFront = Ai::IsInFront(targetEnt);
+    *mayHit = CheckShot(target);
+}
+
+void Bot::TryPressAttack(bool mayHit, usercmd_t *ucmd, float wfac, vec3_t target)
+{
+    const auto weapState = self->r.client->ps.weaponState;
+    if (weapState != WEAPON_STATE_READY && weapState != WEAPON_STATE_REFIRE && weapState != WEAPON_STATE_REFIRESTRONG)
+        return;
+
+    float firedelay;
+    // in continuous fire weapons don't add delays
+    if( self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN )
+        firedelay = 1.0f;
+    else
+        firedelay = (1.0f - Skill()) - (random() - 0.25f);
+
+    if (firedelay <= 0.0f)
+        return;
+
+    if (mayHit)
+        ucmd->buttons |= BUTTON_ATTACK;
+
+    if ((self->s.weapon == WEAP_LASERGUN) || (self->s.weapon == WEAP_PLASMAGUN))
+    {
+        target[0] += sinf( (float)level.time/100.0f) * wfac;
+        target[1] += cosf( (float)level.time/100.0f) * wfac;
+    }
+    else
+    {
+        target[0] += ( random()-0.5f ) * wfac;
+        target[1] += ( random()-0.5f ) * wfac;
+    }
+}
+
+float Bot::AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
+{
+
+    switch (AIWeapons[weapon].aimType)
+    {
+        case AI_AIMSTYLE_PREDICTION_EXPLOSIVE:
+            return AdjustPredictionExplosiveAimStyleTarget(firedef, fire_origin, target);
+        case AI_AIMSTYLE_PREDICTION:
+            return AdjustPredictionAimStyleTarget(firedef, fire_origin, target);
+        case AI_AIMSTYLE_DROP:
+            return AdjustDropAimStyleTarget(firedef, fire_origin, target);
+        default:
+            return AdjustInstantAimStyleTarget(firedef, fire_origin, target);
+    }
+}
+
+float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target)
+{
+    // in the lowest skill level, don't predict projectiles
+    if (Skill() >= 0.33f)
+    {
+        if (CombatTask().aimEnemy)
+            PredictProjectileShot(fire_origin, firedef->speed, target, CombatTask().aimEnemy->ent->velocity);
+        else
+            PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
+    }
+
+    float wfac = WFAC_GENERIC_PROJECTILE * 1.3f;
+
+    if (CombatTask().aimEnemy)
+    {
+        // aim to the feet when enemy isn't higher
+        if (fire_origin[2] > (target[2] + (self->enemy->r.mins[2] * 0.8)))
+        {
+            vec3_t checktarget;
+            VectorSet(checktarget,
+                      self->enemy->s.origin[0],
+                      self->enemy->s.origin[1],
+                      self->enemy->s.origin[2] + self->enemy->r.mins[2] + 4);
+
+            trace_t trace;
+            G_Trace(&trace, fire_origin, vec3_origin, vec3_origin, checktarget, self, MASK_SHOT);
+            if (trace.fraction == 1.0f || (trace.ent > 0 && game.edicts[trace.ent].takedamage))
+                VectorCopy(checktarget, target);
+        }
+        else if (!IsStep(self->enemy))
+            wfac *= 2.5; // more imprecise for air rockets
+    }
+
+    return wfac;
+}
+
+float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
+{
+    float wfac;
+    if (self->s.weapon == WEAP_PLASMAGUN)
+        wfac = WFAC_GENERIC_PROJECTILE * 0.5f;
+    else
+        wfac = WFAC_GENERIC_PROJECTILE;
+
+    // in the lowest skill level, don't predict projectiles
+    if (Skill() >= 0.33f)
+    {
+        if (CombatTask().aimEnemy)
+            PredictProjectileShot(fire_origin, firedef->speed, target, self->enemy->velocity);
+        else
+            PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
+    }
+
+    return wfac;
+}
+
+float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
+{
+    //jalToDo
+    float wfac = WFAC_GENERIC_PROJECTILE;
+    // in the lowest skill level, don't predict projectiles
+    if (Skill() >= 0.33f)
+    {
+        const float *velocity = AimEnemy() ? AimEnemy()->ent->velocity : vec3_origin;
+        PredictProjectileShot(fire_origin, firedef->speed, target, velocity);
+    }
+    return wfac;
+}
+
+float Bot::AdjustInstantAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
+{
+    if( self->s.weapon == WEAP_ELECTROBOLT )
+        return WFAC_GENERIC_INSTANT;
+    if( self->s.weapon == WEAP_LASERGUN )
+        return WFAC_GENERIC_INSTANT * 1.5f;
+
+    return WFAC_GENERIC_INSTANT;
 }
