@@ -48,6 +48,9 @@ static bool G_Chase_IsValidTarget( edict_t *ent, edict_t *target, bool teamonly 
 	if( teamonly && target->s.team != ent->s.team )
 		return false;
 
+	if( G_ISGHOSTING( target ) && target->ai != NULL )
+		return false;
+
 	return true;
 }
 
