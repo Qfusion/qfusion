@@ -797,7 +797,7 @@ static void CG_RegisterVariables( void )
 	cg_showSelfShadow =	trap_Cvar_Get( "cg_showSelfShadow", "0", CVAR_ARCHIVE );
 
 	cg_cartoonEffects =		trap_Cvar_Get( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
-	cg_cartoonHitEffect =	trap_Cvar_Get( "cg_cartoonHitEffect", "0", CVAR_ARCHIVE );
+	cg_cartoonHitEffect =	trap_Cvar_Get( "cg_cartoonHitEffect", "1", CVAR_ARCHIVE );
 
 	cg_damage_indicator =	trap_Cvar_Get( "cg_damage_indicator", "1", CVAR_ARCHIVE );
 	cg_damage_indicator_time =	trap_Cvar_Get( "cg_damage_indicator_time", "25", CVAR_ARCHIVE );
