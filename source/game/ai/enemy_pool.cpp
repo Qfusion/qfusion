@@ -341,7 +341,7 @@ void EnemyPool::TryPushNewEnemy(const edict_t *enemy)
     // Significantly increases chances to get a slot, but not guarantees it.
     bool isNewEnemyAttacker = LastAttackedByTime(enemy) > 0;
     // It will be useful inside the loop, so it needs to be precomputed
-    float distanceToNewEnemy = (Vec3Ref(bot->s.origin) - enemy->s.origin).LengthFast();
+    float distanceToNewEnemy = (Vec3(bot->s.origin) - enemy->s.origin).LengthFast();
     float newEnemyWeight = ComputeRawWeight(enemy);
 
     for (unsigned i = 0; i < maxTrackedEnemies; ++i)

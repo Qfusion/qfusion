@@ -596,7 +596,7 @@ bool DangersDetector::FindProjectileDangers(StaticVector<Danger, N> &dangers, St
     for (unsigned i = 0; i < entities.size(); ++i)
     {
         edict_t *target = const_cast<edict_t *>(entities[i]);
-        Vec3 end = Vec3Ref(target->s.origin) + 2.0f * Vec3Ref(target->velocity);
+        Vec3 end = Vec3(target->s.origin) + 2.0f * Vec3(target->velocity);
         G_Trace(&trace, target->s.origin, target->r.mins, target->r.maxs, end.data(), target, MASK_AISOLID);
         if (trace.fraction < minPrjTime)
         {
