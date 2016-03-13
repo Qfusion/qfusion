@@ -129,7 +129,7 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
     // the main purpose is to prevent shooting in wall when real look dir is not close to ideal one
     bool mayHitReally = LookAtEnemy(wfac, fire_origin, target);
     if (mayHitReally)
-        TryPressAttack(ucmd);
+        TryPressAttack(ucmd, importantShot);
 
     if (nav.debugMode && bot_showcombat->integer)
     {
@@ -182,7 +182,7 @@ void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, boo
     *mayHit = CheckShot(target);
 }
 
-void Bot::TryPressAttack(usercmd_t *ucmd)
+void Bot::TryPressAttack(usercmd_t *ucmd, bool importantShot)
 {
     const auto weapState = self->r.client->ps.weaponState;
     if (weapState != WEAPON_STATE_READY && weapState != WEAPON_STATE_REFIRE && weapState != WEAPON_STATE_REFIRESTRONG)
@@ -190,10 +190,13 @@ void Bot::TryPressAttack(usercmd_t *ucmd)
 
     float firedelay;
     // in continuous fire weapons don't add delays
-    if( self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN )
+    if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN)
         firedelay = 1.0f;
     else
-        firedelay = (1.0f - Skill()) - (random() - 0.25f);
+        firedelay = (1.0f / Q_RSqrt(0.0001f + Skill())) - 1.25f * random();
+
+    if (importantShot)
+        firedelay += 0.25f * Skill();
 
     if (firedelay <= 0.0f)
         return;
