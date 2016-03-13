@@ -369,22 +369,22 @@ LONG WINAPI MainWndProc(
 
 	case WM_ACTIVATE:
 		{
-			int fActive, fMinimized;
+			BOOL fActive, fMinimized;
 
 			// KJB: Watch this for problems in fullscreen modes with Alt-tabbing.
-			fActive = LOWORD( wParam );
+			fActive = LOWORD( wParam ) != WA_INACTIVE;
 			fMinimized = (BOOL) HIWORD( wParam );
 
-			AppActivate( fActive != WA_INACTIVE, fMinimized, FALSE );
+			AppActivate( fActive, fMinimized, FALSE );
 
-			if( fActive != WA_INACTIVE )
+			if( fActive && !fMinimized )
 			{
 				SetForegroundWindow( cl_hwnd );
 				ShowWindow( cl_hwnd, SW_RESTORE );
 			}
 			else
 			{
-				if( vid_fullscreen->integer )
+				if( vid_fullscreen->integer || fMinimized )
 					ShowWindow( cl_hwnd, SW_MINIMIZE );
 			}
 		}
