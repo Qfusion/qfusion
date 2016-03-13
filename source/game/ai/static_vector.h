@@ -45,7 +45,7 @@ public:
     inline T &operator[](size_type index)
     {
 #ifdef _DEBUG
-        if (index > count)
+        if (index >= count)
         {
             printf("Index %d is out of range (count = %d)\n", index, count);
             abort();
@@ -56,7 +56,7 @@ public:
     inline const T &operator[](size_type index) const
     {
 #ifdef _DEBUG
-        if (index > count)
+        if (index >= count)
         {
             printf("Index %d is out of range (count = %d)\n", index, count);
             abort();
@@ -113,7 +113,7 @@ public:
 #ifdef _DEBUG
         if (count == 0)
         {
-            printf("pop_back(): count == 0");
+            printf("pop_back(): count == 0\n");
             abort();
         }
 #endif
