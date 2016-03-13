@@ -9,7 +9,7 @@ constexpr float MAX_ENEMY_WEIGHT = 5.0f;
 
 inline const char *Nick(const edict_t *ent)
 {
-    return ent && ent->r.client ? ent->r.client->netname : "<unknown enemy name>";
+    return ent && ent->r.client ? ent->r.client->netname : ent->classname;
 }
 
 inline const char *WeapName(int weapon)

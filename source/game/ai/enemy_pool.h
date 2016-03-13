@@ -118,7 +118,7 @@ public:
     void Clear();
     void OnViewed();
 
-    inline const char *Nick() const { return ent->r.client ? ent->r.client->netname : "<unknown enemy name>"; }
+    inline const char *Nick() const { return ent->r.client ? ent->r.client->netname : ent->classname; }
 
     inline bool HasQuad() const { return ::HasQuad(ent); }
     inline bool HasShell() const { return ::HasShell(ent); }
