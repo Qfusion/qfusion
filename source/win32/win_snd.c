@@ -126,13 +126,9 @@ static bool DS_CreateBuffers( void )
 	// create the secondary buffer we'll actually work with
 	memset( &dsbuf, 0, sizeof( dsbuf ) );
 	dsbuf.dwSize = sizeof( DSBUFFERDESC );
-	dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCHARDWARE;
+	dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCHARDWARE | DSBCAPS_GLOBALFOCUS;
 	dsbuf.dwBufferBytes = SECONDARY_BUFFER_SIZE;
 	dsbuf.lpwfxFormat = &format;
-
-	if( s_globalfocus->integer ) {
-		dsbuf.dwFlags |= DSBCAPS_GLOBALFOCUS;
-	}
 
 	memset( &dsbcaps, 0, sizeof( dsbcaps ) );
 	dsbcaps.dwSize = sizeof( dsbcaps );
@@ -141,10 +137,7 @@ static bool DS_CreateBuffers( void )
 		Com_Printf( "...creating secondary buffer: " );
 	if( DS_OK != pDS->lpVtbl->CreateSoundBuffer( pDS, &dsbuf, &pDSBuf, NULL ) )
 	{
-		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE;
-		if( s_globalfocus->integer ) {
-			dsbuf.dwFlags |= DSBCAPS_GLOBALFOCUS;
-		}
+		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
 
 		if( DS_OK != pDS->lpVtbl->CreateSoundBuffer( pDS, &dsbuf, &pDSBuf, NULL ) )
 		{
