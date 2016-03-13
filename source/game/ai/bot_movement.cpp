@@ -811,8 +811,7 @@ bool Bot::TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove)
 std::pair<int, int> Bot::ApplyTacticalMove(int tacticalMove, bool advance, const MoveTestResult &positiveDirTest, const MoveTestResult &negativeDirTest)
 {
     auto result = std::make_pair(0, 0);
-    float c = random();
-    if (tacticalMove && c < 0.9)
+    if (tacticalMove && random() < 0.9f)
     {
         const MoveTestResult &moveTestResult = tacticalMove > 0 ? positiveDirTest : negativeDirTest;
         if (moveTestResult.CanWalkOrFallQuiteSafely())
@@ -839,7 +838,7 @@ std::pair<int, int> Bot::ApplyTacticalMove(int tacticalMove, bool advance, const
     {
         int movePushValue;
         const MoveTestResult *moveTestResult;
-        if (c < 0.45)
+        if (random() < 0.5f)
         {
             movePushValue = 1;
             moveTestResult = &positiveDirTest;
