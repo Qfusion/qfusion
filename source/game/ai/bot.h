@@ -74,7 +74,7 @@ private:
 
     // Returns true if current look angle worth pressing attack
     bool LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
-    void TryPressAttack(usercmd_t *ucmd);
+    void TryPressAttack(usercmd_t *ucmd, bool importantShot);
 
     // Name clash... we have to use a method name prefix
     inline const CombatTask &GetCombatTask() { return enemyPool.combatTask; }
