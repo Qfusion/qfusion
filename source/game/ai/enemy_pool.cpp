@@ -770,7 +770,7 @@ int EnemyPool::SuggestEasyBotsWeapon(const Enemy &enemy)
 	float best_weight = 0.0;
 	int weapon_range = 0, best_weapon = WEAP_NONE;
 
-	const float	dist = DistanceFast(bot->s.origin, bot->enemy->s.origin);
+	const float	dist = DistanceFast(bot->s.origin, enemy.ent->s.origin);
 
     if (dist < 150)
         weapon_range = AIWEAP_MELEE_RANGE;
