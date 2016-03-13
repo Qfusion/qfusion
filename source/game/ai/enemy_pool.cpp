@@ -642,11 +642,13 @@ void EnemyPool::UpdateKeptCurrentCombatTask()
         {
             nextWeaponChoiceAt = level.time + aimWeaponChoicePeriod;
             SuggestAimWeaponAndTactics(task);
+            Debug("UpdateKeptCombatTask(): has aim enemy, next weapon choice at %09d\n", nextWeaponChoiceAt);
         }
         else if (task->spamEnemy)
         {
             nextWeaponChoiceAt = level.time + spamWeaponChoicePeriod;
             SuggestSpamEnemyWeaponAndTactics(task);
+            Debug("UpdateKeptCombatTask(): has spam enemy, next weapon choice at %09d\n", nextWeaponChoiceAt);
         }
     }
 }
@@ -701,6 +703,7 @@ void EnemyPool::TryFindNewCombatTask()
         task->aimEnemy = bestTarget;
         task->prevSpamEnemy = nullptr;
         nextTargetChoiceAt = level.time + aimTargetChoicePeriod;
+        Debug("TryFindNewCombatTask(): found aim enemy %s, next target choice at %09d\n", bestTarget->Nick(), nextTargetChoiceAt);
         SuggestAimWeaponAndTactics(task);
     }
     else
@@ -749,12 +752,6 @@ void EnemyPool::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const V
 
     if (bestEnemy)
     {
-#ifdef _DEBUG
-        const char *prevEnemyNick = task->prevSpamEnemy ? task->prevSpamEnemy->Nick() : "<none>";
-        const char *bestEnemyNick = bestEnemy ? bestEnemy->Nick() : "<none>";
-        Debug("SuggestSpamTask(): prev spam enemy %s, chosen (?) one %s\n", prevEnemyNick, bestEnemyNick);
-#endif
-
         StartSpamAtEnemy(task, bestEnemy);
         nextTargetChoiceAt = level.time + spamTargetChoicePeriod;
     }
@@ -763,6 +760,13 @@ void EnemyPool::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const V
         // If not set, bot will repeat try to find target on each next frame
         nextTargetChoiceAt = level.time + spamTargetChoicePeriod / 2;
     }
+
+#ifdef _DEBUG
+    const char *prevEnemyNick = task->prevSpamEnemy ? task->prevSpamEnemy->Nick() : "<none>";
+    const char *bestEnemyNick = bestEnemy ? bestEnemy->Nick() : "<none>";
+    const char *format = "SuggestSpamTask(): prev spam enemy %s, chosen (?) one %s, next target choice at %09d\n";
+    Debug(format, prevEnemyNick, bestEnemyNick, nextTargetChoiceAt);
+#endif
 
     // TODO: Spam on item spawn points if there are not nearby teammates and item is going to be spawned
     // TODO: Spam on spawn points in non-team-based gametypes
@@ -1612,7 +1616,8 @@ void EnemyPool::SuggestSpamEnemyWeaponAndTactics(CombatTask *task)
 #ifdef _DEBUG
     {
         const Vec3 &position = enemy.LastSeenPosition();
-        Debug("SuggestSpamWeapon...(): %s is at %f %f %f\n", enemy.Nick(), position.x(), position.y(), position.z());
+        constexpr const char *format = "SuggestSpamWeapon...(): %s has been last seen at %f %f %f\n";
+        Debug(format, enemy.Nick(), position.x(), position.y(), position.z());
     }
 #endif
     Vec3 botToSpotVec = enemy.LastSeenPosition();
