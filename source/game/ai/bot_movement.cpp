@@ -65,7 +65,7 @@ void Bot::SpecialMove(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucm
             linkVec -= n1origin;
             linkVec.z() *= 0.25f;
 
-            VectorCopy(linkVec.vec, self->ai->move_vector);
+            VectorCopy(linkVec.data(), self->ai->move_vector);
 
             ucmd->forwardmove = 1;
             ucmd->upmove = 1;
@@ -654,7 +654,7 @@ void Bot::ApplyEvadeMovePushes(usercmd_t *ucmd)
     Vec3 drawnDirStart(self->s.origin);
     drawnDirStart.z() += 32;
     Vec3 drawnDirEnd = drawnDirStart + 64.0f * evadeDir;
-    AITools_DrawLine(drawnDirStart.vec, drawnDirEnd.vec);
+    AITools_DrawLine(drawnDirStart.data(), drawnDirEnd.data());
 #endif
 
     int walkingEvades = 0;
@@ -783,7 +783,7 @@ bool Bot::TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove)
     botToEnemyDir *= -1.0f * Q_RSqrt(botToEnemyDir.SquaredLength());
 
     Vec3 forward(0, 0, 0), right(0, 0, 0);
-    AngleVectors(self->s.angles, forward.vec, right.vec, nullptr);
+    AngleVectors(self->s.angles, forward.data(), right.data(), nullptr);
 
     float forwardDotToEnemyDir = forward.Dot(botToEnemyDir);
     float rightDotToEnemyDir = right.Dot(botToEnemyDir);
