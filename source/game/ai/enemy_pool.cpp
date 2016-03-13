@@ -1696,7 +1696,7 @@ void EnemyPool::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetO
     // Now botToTarget is a normalized horizontal part of botToTarget - botOrigin
 
     edict_t *passedict = const_cast<edict_t*>(traceKey);
-    float *start = const_cast<float*>(botOrigin.vec);
+    float *start = const_cast<float*>(botOrigin.data());
     trace_t *traces = targetEnvironment.sideTraces;
 
     const float TRACE_DEPTH = TargetEnvironment::TRACE_DEPTH;
@@ -1717,7 +1717,7 @@ void EnemyPool::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetO
     {
         vec3_t end;
         trace_t *trace = traces + i;
-        G_ProjectSource(start, offsets + 3 * i, forward.vec, right.vec, end);
+        G_ProjectSource(start, offsets + 3 * i, forward.data(), right.data(), end);
         G_Trace(trace, start, mins, maxs, end, passedict, MASK_AISOLID);
         // Give some non-zero score by the fact that trace is detected a hit itself
         if (trace->fraction < 1.0f)

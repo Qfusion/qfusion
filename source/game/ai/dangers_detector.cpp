@@ -6,10 +6,10 @@
 inline trace_t Trace(const Vec3 &start, const Vec3 &mins, const Vec3 &maxs, const Vec3 &end, const edict_t *passedict, int contentmask = MASK_SOLID)
 {
     trace_t trace;
-    float *startVec = const_cast<float*>(start.vec);
-    float *minsVec = const_cast<float*>(mins.vec);
-    float *maxsVec = const_cast<float*>(maxs.vec);
-    float *endVec = const_cast<float*>(end.vec);
+    float *startVec = const_cast<float*>(start.data());
+    float *minsVec = const_cast<float*>(mins.data());
+    float *maxsVec = const_cast<float*>(maxs.data());
+    float *endVec = const_cast<float*>(end.data());
     G_Trace(&trace, startVec, minsVec, maxsVec, endVec, const_cast<edict_t*>(passedict), contentmask);
     return trace;
 }
@@ -386,7 +386,7 @@ bool PlasmaBeamsBuilder::FindMostDangerousBeams(StaticVector<Danger, N> &dangers
             tracedBeamEnd += 108.0f * beamDir;
 
 #ifdef _DEBUG
-            AITools_DrawColorLine(tracedBeamStart.vec, tracedBeamEnd.vec, COLOR_RGB(144, 0, 0), 0);
+            AITools_DrawColorLine(tracedBeamStart.data(), tracedBeamEnd.data(), COLOR_RGB(144, 0, 0), 0);
 #endif
             trace_t trace = Trace(tracedBeamStart, beamMins, beamMaxs, tracedBeamEnd, beam->owner);
             if (trace.fraction < 1.0f)
@@ -597,7 +597,7 @@ bool DangersDetector::FindProjectileDangers(StaticVector<Danger, N> &dangers, St
     {
         edict_t *target = const_cast<edict_t *>(entities[i]);
         Vec3 end = Vec3Ref(target->s.origin) + 2.0f * Vec3Ref(target->velocity);
-        G_Trace(&trace, target->s.origin, target->r.mins, target->r.maxs, end.vec, target, MASK_AISOLID);
+        G_Trace(&trace, target->s.origin, target->r.mins, target->r.maxs, end.data(), target, MASK_AISOLID);
         if (trace.fraction < minPrjTime)
         {
             minPrjTime = trace.fraction;

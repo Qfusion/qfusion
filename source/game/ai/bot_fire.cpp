@@ -155,7 +155,7 @@ void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
     }
     else
     {
-        VectorCopy(SpamSpot().vec, target);
+        VectorCopy(SpamSpot().data(), target);
     }
 
     fire_origin[0] = self->s.origin[0];
@@ -175,7 +175,7 @@ void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, boo
     {
         // To reuse Ai::IsInFront() atm we have to provide a dummy edict
         // Ai::IsInFront uses only edict_t::s.origin
-        VectorCopy(CombatTask().spamSpot.vec, dummyEnt.s.origin);
+        VectorCopy(CombatTask().spamSpot.data(), dummyEnt.s.origin);
         targetEnt = &dummyEnt;
     }
     *isInFront = Ai::IsInFront(targetEnt);
