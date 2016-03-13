@@ -136,6 +136,7 @@ void StreamCache::StreamDone( int status, const char *contentType, void *private
 		__delete__( stream );
 	}
 	else if( stream->cache_cb ) {
+		const bool noCache = stream->noCache;
 		std::string &tmpFile = stream->tmpFilename;
 		std::string _contentType = "", realFile;
 
@@ -168,7 +169,7 @@ void StreamCache::StreamDone( int status, const char *contentType, void *private
 
 		// remove the file if caching is disabled
 		// NOTE: this breaks lazy texture loading
-		if( stream->noCache ) {
+		if( noCache ) {
 			// trap::FS_RemoveFile( realFile.c_str() );
 		}
 	}
