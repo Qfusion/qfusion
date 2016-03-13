@@ -161,8 +161,18 @@ static float AI_FindLinkDistance( int n1, int n2, int linkType )
 //==========================================
 bool AI_AddLink( int n1, int n2, int linkType )
 {
+	assert( n1 >= 0 );
+	assert( n2 >= 0 );
+	assert( n1 < MAX_NODES );
+	assert( n2 < MAX_NODES );
+
 	//never store self-link
 	if( n1 == n2 )
+		return false;
+
+	if( n1 < 0 || n1 >= MAX_NODES )
+		return false;
+	if( n2 < 0 || n2 >= MAX_NODES )
 		return false;
 
 	if( nodes[n1].flags & NODEFLAGS_DONOTENTER || nodes[n2].flags & NODEFLAGS_DONOTENTER )
@@ -174,9 +184,6 @@ bool AI_AddLink( int n1, int n2, int linkType )
 
 	if( linkType == LINK_INVALID )
 		return false;
-
-	assert( n1 < MAX_NODES );
-	assert( n2 < MAX_NODES );
 
 	//add the link
 	if( pLinks[n1].numLinks >= NODES_MAX_PLINKS )
