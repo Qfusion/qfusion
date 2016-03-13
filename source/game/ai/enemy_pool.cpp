@@ -125,17 +125,36 @@ EnemyPool::EnemyPool(edict_t *bot)
         targets.emplace_back(AttackStats());
 }
 
+static void EscapePercent(const char *string, char *buffer, int bufferLen)
+{
+    int j = 0;
+    for (const char *s = string; *s && j < bufferLen - 1; ++s)
+    {
+        if (*s != '%')
+            buffer[j++] = *s;
+        else if (j < bufferLen - 2)
+            buffer[j++] = '%', buffer[j++] = '%';
+    }
+    buffer[j] = '\0';
+}
+
 void EnemyPool::Debug(const char *format, ...)
 {
 #ifdef _DEBUG
-    char buffer[1024];
-    int prefixLen = sprintf(buffer, "t=%6d %s: ", level.time, BotNick());
+    char concatBuffer[1024];
+
+    int prefixLen = sprintf(concatBuffer, "t=%09d %s: ", level.time, BotNick());
+
     va_list va;
     va_start(va, format);
-    Q_vsnprintfz(buffer + prefixLen, 1024 - prefixLen, format, va);
+    Q_vsnprintfz(concatBuffer + prefixLen, 1024 - prefixLen, format, va);
     va_end(va);
-    G_Printf(buffer);
-    printf(buffer);
+
+    // concatBuffer may contain player names such as "%APPDATA%"
+    char outputBuffer[2048];
+    EscapePercent(concatBuffer, outputBuffer, 2048);
+    G_Printf(outputBuffer);
+    printf(outputBuffer);
 #endif
 }
 
