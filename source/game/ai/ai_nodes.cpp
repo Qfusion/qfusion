@@ -261,9 +261,10 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 	nav.num_nodes++;
 
 	// link jumppad destination to closest walkable node
-	AI_AddLink( closest_node, nav.num_nodes-1, LINK_JUMPPAD );
+	if( closest_node != -1 )
+		AI_AddLink( closest_node, nav.num_nodes-1, LINK_JUMPPAD );
 
-	return nav.num_nodes -1;
+	return nav.num_nodes - 1;
 }
 
 
