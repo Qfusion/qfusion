@@ -3,156 +3,121 @@
 
 #include "../../gameshared/q_math.h"
 
-class Vec3;
-
-class Vec3Like
-{
-    friend class Vec3Ref;
-    friend class Vec3;
-private:
-    explicit Vec3Like(float *data): dataPtr(data) {}
-
-    float *dataPtr;
-public:
-
-    float *data() { return dataPtr; }
-    const float *data() const { return dataPtr; }
-
-    float &x() { return dataPtr[0]; }
-    float &y() { return dataPtr[1]; }
-    float &z() { return dataPtr[2]; }
-
-    float x() const { return dataPtr[0]; }
-    float y() const { return dataPtr[1]; }
-    float z() const { return dataPtr[2]; }
-
-    float Length() const { return VectorLength(dataPtr); }
-    float LengthFast() const { return VectorLengthFast(dataPtr); }
-    float SquaredLength() const { return VectorLengthSquared(dataPtr); }
-
-    void Normalize() { VectorNormalize(dataPtr); }
-    void NormalizeFast() { VectorNormalizeFast(dataPtr); }
-
-    void operator += (const Vec3Like &that)
-    {
-        x() += that.x();
-        y() += that.y();
-        z() += that.z();
-    }
-    void operator += (const vec3_t that) { *this += Vec3Like(const_cast<float *>(that)); }
-
-    void operator -= (const Vec3Like &that)
-    {
-        x() -= that.x();
-        y() -= that.y();
-        z() -= that.z();
-    }
-    void operator -= (const vec3_t that) { *this -= Vec3Like(const_cast<float *>(that)); }
-
-    void operator *= (float scale)
-    {
-        x() *= scale;
-        y() *= scale;
-        z() *= scale;
-    }
-
-    // Can't implement these methods here since Vec3 is not defined yet
-    Vec3 operator * (float scale) const;
-    Vec3 operator + (const Vec3Like &that) const;
-    Vec3 operator + (const vec3_t that) const;
-    Vec3 operator - (const Vec3Like &that) const;
-    Vec3 operator - (const vec3_t that) const;
-    Vec3 operator - () const;
-
-    float Dot(const Vec3Like &that) const
-    {
-        return x() * that.x() + y() * that.y() + z() * that.z();
-    }
-    float Dot(const vec3_t &that) const
-    {
-        return x() * that[0] + y() * that[1] + z() * that[2];
-    }
-
-    Vec3 Cross(const Vec3Like &that) const;
-    Vec3 Cross(const vec3_t that) const;
-};
-
-class Vec3Ref: public Vec3Like
-{
-public:
-    explicit Vec3Ref(vec3_t that): Vec3Like(that) {}
-};
-
-class Vec3: public Vec3Like
+class Vec3
 {
     vec3_t vec;
 public:
-
-    explicit Vec3(const vec3_t that): Vec3Like(vec)
+    explicit Vec3(const vec3_t that)
     {
         VectorCopy(that, data());
     }
-    explicit Vec3(const Vec3Like &that): Vec3Like(vec)
+    Vec3(const Vec3 &that)
     {
         VectorCopy(that.data(), data());
     }
 
-    Vec3(float x, float y, float z): Vec3Like(vec)
+    Vec3(vec_t x, vec_t y, vec_t z)
     {
-        this->x() = x;
-        this->y() = y;
-        this->z() = z;
+        VectorSet(vec, x, y, z);
     }
-    Vec3 &operator=(const Vec3Like &that)
+
+    Vec3 &operator=(const Vec3 &that)
     {
         VectorCopy(that.data(), data());
         return *this;
     }
+
+    float Length() const { return VectorLength(vec); }
+    float LengthFast() const { return VectorLengthFast(vec); }
+    float SquaredLength() const { return VectorLengthSquared(vec); }
+
+    void Normalize() { VectorNormalize(vec); }
+    void NormalizeFast() { VectorNormalizeFast(vec); }
+
+    float *data() { return vec; }
+    const float *data() const { return vec; }
+
+    vec_t &x() { return vec[0]; }
+    vec_t &y() { return vec[1]; }
+    vec_t &z() { return vec[2]; }
+
+    vec_t x() const { return vec[0]; }
+    vec_t y() const { return vec[1]; }
+    vec_t z() const { return vec[2]; }
+
+    void operator+=(const Vec3 &that)
+    {
+        VectorAdd(vec, that.vec, vec);
+    }
+    void operator+=(const vec3_t that)
+    {
+        VectorAdd(vec, that, vec);
+    }
+    void operator-=(const Vec3 &that)
+    {
+        VectorSubtract(vec, that.vec, vec);
+    }
+    void operator-=(const vec3_t that)
+    {
+        VectorSubtract(vec, that, vec);
+    }
+    void operator*=(float scale)
+    {
+        VectorScale(vec, scale, vec);
+    }
+    Vec3 operator*(float scale) const
+    {
+        return Vec3(scale * x(), scale * y(), scale * z());
+    }
+    Vec3 operator+(const Vec3 &that) const
+    {
+        return Vec3(x() + that.x(), y() + that.y(), z() + that.z());
+    }
+    Vec3 operator+(const vec3_t that) const
+    {
+        return Vec3(x() + that[0], y() + that[1], z() + that[2]);
+    }
+    Vec3 operator-(const Vec3 &that) const
+    {
+        return Vec3(x() - that.x(), y() - that.y(), z() - that.z());
+    }
+    Vec3 operator-(const vec3_t that) const
+    {
+        return Vec3(x() - that[0], y() - that[1], z() - that[2]);
+    }
+    Vec3 operator-() const
+    {
+        return Vec3(-x(), -y(), -z());
+    }
+
+    vec_t Dot(const Vec3 &that) const
+    {
+        return _DotProduct(vec, that.vec);
+    }
+    float Dot(const vec3_t that) const
+    {
+        return _DotProduct(vec, that);
+    }
+
+    inline Vec3 Cross(const Vec3 &that) const
+    {
+        return Vec3(
+            y() * that.z() - z() * that.y(),
+            z() * that.x() - x() * that.z(),
+            x() * that.y() - y() * that.x());
+    }
+    inline Vec3 Cross(const vec3_t that) const
+    {
+        return Vec3(
+            y() * that[2] - z() * that[1],
+            z() * that[0] - x() * that[2],
+            x() * that[2] - y() * that[1]);
+    }
 };
 
-inline Vec3 operator * (float scale, const Vec3Like &v)
+inline Vec3 operator * (float scale, const Vec3 &v)
 {
     return v * scale;
-}
-
-inline Vec3 Vec3Like::operator * (float scale) const
-{
-    return Vec3(scale * x(), scale * y(), scale * z());
-}
-inline Vec3 Vec3Like::operator + (const Vec3Like &that) const
-{
-    return Vec3(x() + that.x(), y() + that.y(), z() + that.z());
-}
-inline Vec3 Vec3Like::operator + (const vec3_t that) const
-{
-    return Vec3(x() + that[0], y() + that[1], z() + that[2]);
-}
-inline Vec3 Vec3Like::operator - (const Vec3Like &that) const
-{
-    return Vec3(x() - that.x(), y() - that.y(), z() - that.z());
-}
-inline Vec3 Vec3Like::operator - (const vec3_t that) const
-{
-    return Vec3(x() - that[0], y() - that[1], z() - that[2]);
-}
-inline Vec3 Vec3Like::operator - () const
-{
-    return Vec3(-x(), -y(), -z());
-}
-
-inline Vec3 Vec3Like::Cross(const Vec3Like &that) const
-{
-    return Vec3(
-        y() * that.z() - z() * that.y(),
-        z() * that.x() - x() * that.z(),
-        x() * that.y() - y() * that.x());
-}
-inline Vec3 Vec3Like::Cross(const vec3_t that) const
-{
-    return Vec3(
-        y() * that[2] - z() * that[1],
-        z() * that[0] - x() * that[2],
-        x() * that[2] - y() * that[1]);
 }
 
 #endif
