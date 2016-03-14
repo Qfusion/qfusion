@@ -1811,8 +1811,8 @@ void Con_KeyDown( int key )
 				key_linepos = Q_Utf8SyncPos( key_lines[edit_line], key_linepos - 1,
 					UTF8SYNC_LEFT );
 				key_linepos = max( key_linepos, 1 ); // Q_Utf8SyncPos could jump over [
-				strcpy( key_lines[edit_line] + key_linepos,
-					key_lines[edit_line] + oldpos );	// safe!
+				memmove( key_lines[edit_line] + key_linepos,
+					key_lines[edit_line] + oldpos, strlen( key_lines[edit_line] + oldpos ) + 1 );
 			}
 		}
 
@@ -1824,7 +1824,7 @@ void Con_KeyDown( int key )
 		char *s = key_lines[edit_line] + key_linepos;
 		int wc = Q_GrabWCharFromUtf8String( ( const char ** )&s );
 		if( wc )
-			strcpy( key_lines[edit_line] + key_linepos, s );	// safe!
+			memmove( key_lines[edit_line] + key_linepos, s, strlen( s ) + 1 );
 		return;
 	}
 
@@ -2275,7 +2275,7 @@ void Con_MessageKeyDown( int key )
 		int wc = Q_GrabWCharFromUtf8String( ( const char ** )&s );
 		if( wc )
 		{
-			strcpy( chat_buffer + chat_linepos, s );	// safe!
+			memmove( chat_buffer + chat_linepos, s, strlen( s ) + 1 );
 			chat_bufferlen -= (s - (chat_buffer + chat_linepos));
 		}
 		return;
@@ -2299,7 +2299,7 @@ void Con_MessageKeyDown( int key )
 			{
 				int oldpos = chat_linepos;
 				chat_linepos = Q_Utf8SyncPos( chat_buffer, chat_linepos - 1, UTF8SYNC_LEFT );
-				strcpy( chat_buffer + chat_linepos, chat_buffer + oldpos );	// safe!
+				memmove( chat_buffer + chat_linepos, chat_buffer + oldpos, strlen( chat_buffer + oldpos ) + 1 );
 				chat_bufferlen -= (oldpos - chat_linepos);
 			}
 		}
