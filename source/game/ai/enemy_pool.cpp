@@ -17,11 +17,6 @@ inline const char *WeapName(int weapon)
     return GS_GetWeaponDef(weapon)->name;
 }
 
-inline float BoundedFraction(float value, float bound)
-{
-    return std::min(value, bound) / bound;
-}
-
 float DamageToKill(const edict_t *client, float armorProtection, float armorDegradation)
 {
     if (!client || !client->r.client)

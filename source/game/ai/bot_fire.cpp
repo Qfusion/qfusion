@@ -213,22 +213,42 @@ bool Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
 
     // Do not shoot enemies that are far from "crosshair" except they are very close
 
-    vec3_t newLookDir;
-    AngleVectors(self->s.angles, newLookDir, nullptr, nullptr);
+    Vec3 newLookDir(0, 0, 0);
+    AngleVectors(self->s.angles, newLookDir.data(), nullptr, nullptr);
 
     Vec3 toTarget(target);
     toTarget -= fire_origin;
     float toTargetDotLookDir = toTarget.Dot(newLookDir);
-    // 0 on zero range, 1 on distanceFactorBound range
-    float distanceFactor;
-    constexpr float distanceFactorBound = 450.0f;
-    float squareDistance = toTarget.SquaredLength();
-    if (squareDistance < 1)
-        distanceFactor = 0.0f;
-    else
-        distanceFactor = std::min(distanceFactorBound, 1.0f / Q_RSqrt(squareDistance)) / distanceFactorBound;
 
-    return toTargetDotLookDir > 0.8 * distanceFactor;
+    // 0 on zero range, 1 on distanceFactorBound range
+    float directionDistanceFactor = 0.0001f;
+    float squareDistanceToTarget = toTarget.SquaredLength();
+    if (squareDistanceToTarget > 1)
+    {
+        directionDistanceFactor += BoundedFraction(Q_RSqrt(squareDistanceToTarget), 450.0f);
+    }
+
+    if (toTargetDotLookDir < 0.8f * directionDistanceFactor)
+        return false;
+
+    // Do not shoot in enemies that are behind obstacles atm, bot may kill himself easily
+    // We test directions factor first because it is cheaper to calculate
+
+    trace_t tr;
+    G_Trace(&tr, const_cast<float*>(fire_origin), nullptr, nullptr, (99999.0f * newLookDir + fire_origin).data(), self, MASK_AISOLID);
+    if (tr.fraction == 1.0f)
+        return true;
+
+    // Same as in CheckShot()
+    if (tr.ent < 1 || !game.edicts[tr.ent].takedamage || game.edicts[tr.ent].movetype == MOVETYPE_PUSH)
+        return false;
+    if (game.edicts[tr.ent].s.team == self->s.team && GS_TeamBasedGametype())
+        return false;
+
+    // CheckShot() checks whether we are looking straight on the target, we test just proximity of hit point to the target
+    float hitToTargetDist = (Vec3(target) - tr.endpos).LengthFast();
+    float proximityDistanceFactor = BoundedFraction(Q_RSqrt(squareDistanceToTarget), 2000.0f);
+    return hitToTargetDist < 30.0f + 500.0f * proximityDistanceFactor;
 }
 
 float Bot::AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target)

@@ -38,6 +38,8 @@ in NO WAY supported by Steve Yeager.
 #undef min
 #endif
 
+#include <algorithm>
+
 #define AI_VERSION_STRING "A0059"
 
 //bot debug_chase options
@@ -459,5 +461,10 @@ protected:
 private:
 	void TestMove(MoveTestResult *moveTestResult, int direction) const;
 };
+
+inline float BoundedFraction(float value, float bound)
+{
+	return std::min(value, bound) / bound;
+}
 
 #endif
