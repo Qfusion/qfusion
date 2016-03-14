@@ -2,61 +2,22 @@
 #include "ai_local.h"
 #include "../../gameshared/q_collision.h"
 
-void Bot::SpecialMove(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd)
+void Bot::TryMoveBunnyHopping(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd)
 {
-    bool wallJump = false;
-#if 0
-    bool dash = true;
-#endif
-    bool bunnyhop = true;
-    trace_t trace;
-    vec3_t end;
-    int n1, n2, nextMoveType;
-
     self->ai->is_bunnyhop = false;
 
     if( self->ai->path.numNodes < MIN_BUNNY_NODES )
         return;
 
-    // verify that the 2nd node is in front of us for dashing
-    n1 = self->ai->path.nodes[self->ai->path.numNodes];
-    n2 = self->ai->path.nodes[self->ai->path.numNodes-1];
+    const int n1 = self->ai->path.nodes[self->ai->path.numNodes];
+    const int n2 = self->ai->path.nodes[self->ai->path.numNodes-1];
 
-    // do not dash if the next link will be a fall, jump or
-    // any other kind of special link
-    nextMoveType = AI_PlinkMoveType( n1, n2 );
-#if 0
-    if( nextMoveType & (LINK_LADDER|LINK_PLATFORM|LINK_ROCKETJUMP|LINK_FALL|LINK_JUMP|LINK_CROUCH) )
-		dash = false;
-#endif
+    const int nextMoveType = AI_PlinkMoveType( n1, n2 );
 
-    if( nextMoveType &(LINK_LADDER|LINK_PLATFORM|LINK_FALL|LINK_CROUCH) )
-        bunnyhop = false;
-#if 0
-    if( VectorLengthFast( self->velocity ) < AI_JUMP_SPEED )
-	{
-		if( dash && self->groundentity ) // attempt dash
-		{
-			if( DotProduct( lookdir, pathdir ) > 0.9 )
-			{
-				// do not dash unless both next nodes are visible
-				if( AI_ReachabilityVisible( self, nodes[n1].origin ) &&
-					AI_ReachabilityVisible( self, nodes[n2].origin ) )
-				{
-					ucmd->buttons |= BUTTON_SPECIAL;
-					ucmd->sidemove = 0;
-					ucmd->forwardmove = 1;
-					self->ai->is_bunnyhop = true;
-				}
-			}
-		}
-	}
-	else
-#endif
-    if( bunnyhop && ( (nextMoveType & (LINK_JUMP|LINK_MOVE)) || level.gametype.spawnableItemsMask == 0 ) )
+    if (nextMoveType & (LINK_MOVE|LINK_JUMP|LINK_LADDER))
     {
         // Can't accelerate anymore (we have to add some delta to the default dash speed)
-        if( VectorLengthFast(self->velocity) >= DEFAULT_DASHSPEED - 16 )
+        if (VectorLengthFast(self->velocity) >= DEFAULT_DASHSPEED - 17)
         {
             vec3_t n1origin, n2origin;
             GetNodeOrigin(n1, n1origin);
@@ -73,27 +34,10 @@ void Bot::SpecialMove(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucm
         // Get an initial speed by dash
         else
         {
+            ucmd->forwardmove = 1;
             ucmd->buttons |= BUTTON_SPECIAL;
         }
-
-#if 0
-        // fake strafe-jumping acceleration
-		if( VectorLengthFast( self->velocity ) < 700 && DotProduct( lookdir, pathdir ) > 0.6 )
-			VectorMA( self->velocity, 0.1f, lookdir, self->velocity );
-#endif
         self->ai->is_bunnyhop = true;
-    }
-
-    if( wallJump )
-    {
-        if( self->ai->move_vector[2] > 25 && DotProduct( self->velocity, pathdir ) < -0.2 )
-        {
-            VectorMA( self->s.origin, 0.02, self->velocity, end );
-            G_Trace( &trace, self->s.origin, self->r.mins, self->r.maxs, end, self, MASK_AISOLID );
-
-            if( trace.fraction != 1.0f )
-                ucmd->buttons |= BUTTON_SPECIAL;
-        }
     }
 
     // if pushing in the opposite direction of the path, reduce the push
@@ -103,10 +47,6 @@ void Bot::SpecialMove(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucm
 
 void Bot::Move(usercmd_t *ucmd)
 {
-    bool nodeReached = false;
-    bool specialMovement = false;
-    vec3_t lookdir, pathdir;
-
     if (self->ai->next_node == NODE_INVALID || self->ai->goal_node == NODE_INVALID)
     {
         MoveWander(ucmd);
@@ -115,23 +55,10 @@ void Bot::Move(usercmd_t *ucmd)
 
     const unsigned linkType = CurrentLinkType();
 
-    specialMovement = (self->ai->path.numNodes >= MIN_BUNNY_NODES) ? true : false;
-
-    if (GetNodeFlags(self->ai->next_node) & (NODEFLAGS_REACHATTOUCH | NODEFLAGS_ENTITYREACH))
-        specialMovement = false;
-
-    if (linkType & (LINK_JUMP | LINK_JUMPPAD | LINK_CROUCH | LINK_FALL | LINK_WATER | LINK_LADDER | LINK_ROCKETJUMP))
-        specialMovement = false;
-
-    if (self->ai->pers.skillLevel < 0.33f)
-        specialMovement = false;
-
-    if (specialMovement == false || self->groundentity)
-        self->ai->is_bunnyhop = false;
-
     VectorSubtract(nodes[self->ai->next_node].origin, self->s.origin, self->ai->move_vector);
-
     // 2D, normalized versions of look and path directions
+    vec3_t lookdir, pathdir;
+
     pathdir[0] = self->ai->move_vector[0];
     pathdir[1] = self->ai->move_vector[1];
     pathdir[2] = 0.0f;
@@ -141,6 +68,7 @@ void Bot::Move(usercmd_t *ucmd)
     lookdir[2] = 0.0f;
     VectorNormalize(lookdir);
 
+    bool nodeReached;
     // Ladder movement
     if (self->is_ladder)
     {
@@ -177,18 +105,15 @@ void Bot::Move(usercmd_t *ucmd)
         {
             nodeReached = MoveStartingARocketjump(lookdir, pathdir, ucmd);
         }
+        else if (self->is_swim)
+        {
+            nodeReached = MoveSwimming(lookdir, pathdir, ucmd);
+        }
         else
         {
-            nodeReached = MoveLikeHavingShortGoal(lookdir, pathdir, ucmd, specialMovement);
+            nodeReached = MoveGenericRunning(lookdir, pathdir, ucmd);
         }
         TryMoveAwayIfBlocked(ucmd);
-    }
-
-    // swimming
-    if (self->is_swim)
-    {
-        if (!(G_PointContents(nodes[self->ai->next_node].origin) & MASK_WATER))  // Exit water
-            ucmd->upmove = 1;
     }
 
     ChangeAngle();
@@ -398,28 +323,73 @@ bool Bot::MoveStartingARocketjump(const vec_t *lookdir, const vec_t *pathdir, us
     return NodeReachedGeneric();
 }
 
-bool Bot::MoveLikeHavingShortGoal(const vec_t *lookdir, const vec_t *pathdir, usercmd_t *ucmd, bool specialMovement)
+bool Bot::MoveSwimming(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd)
 {
-    ucmd->forwardmove = 1;
-    ucmd->upmove = 0;
-    ucmd->sidemove = 0;
+    ucmd->forwardmove = true;
+    if (!(G_PointContents(nodes[self->ai->next_node].origin) & MASK_WATER))  // Exit water
+        ucmd->upmove = 1;
+    return NodeReachedGeneric();
+}
 
-    // Move To Short Range goal (not following paths)
-    // plats, grapple, etc have higher priority than SR Goals, cause the bot will
-    // drop from them and have to repeat the process from the beginning
-    if (MoveToShortRangeGoalEntity(ucmd))
+bool Bot::MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd)
+{
+    // Set forward-move apriori
+    ucmd->forwardmove = true;
+
+    TryMoveBunnyHopping(lookdir, pathdir, ucmd);
+
+    if (!self->movetarget)
     {
+        if (!self->ai->is_bunnyhop)
+        {
+            const auto &nextNode = nodes[self->ai->next_node];
+            VectorSubtract(nextNode.origin, self->s.origin, self->ai->move_vector);
+        }
         return NodeReachedGeneric();
     }
-    else if (specialMovement && !self->is_swim) // bunny-hopping movement here
+
+    if (!self->ai->is_bunnyhop)
     {
-        SpecialMove(lookdir, pathdir, ucmd);
-        return NodeReachedSpecial();
+        VectorSubtract(self->movetarget->s.origin, self->s.origin, self->ai->move_vector);
     }
-    else
+
+    // Short-range goal has been timed out or the goal is too far for short-range goal
+    if( self->movetarget->r.solid == SOLID_NOT || DistanceFast( self->movetarget->s.origin, self->s.origin ) > AI_GOAL_SR_RADIUS + 72 )
     {
+        self->movetarget = NULL;
+        self->ai->shortRangeGoalTimeout = level.time;
         return NodeReachedGeneric();
     }
+
+    if( self->movetarget->item && self->ai->move_vector[2] < 0.0f )
+    {
+        // we probably gonna touch this item anyway, no need to bend over
+        self->ai->move_vector[2] = 0.0f;
+    }
+
+    if (self->ai->goalEnt && self->ai->goalEnt->ent == self->movetarget)
+    {
+        if (GetNodeFlags(self->ai->goal_node) & NODEFLAGS_ENTITYREACH)
+        {
+            if (BoundsIntersect(self->movetarget->r.absmin, self->movetarget->r.absmax, self->r.absmin, self->r.absmax))
+            {
+                self->ai->node_timeout = 0;
+                return NodeReachedGeneric();
+            }
+        }
+    }
+
+    // The bot entity angles have not been changed yet.
+    // Old checks whether movetarget is in front via G_InFront() really are not applicable.
+    // Todo: Add the movetarget as a pendingLookAtPoint
+    // Try to roll at the same place
+    if (!G_InFront(self, self->movetarget))
+    {
+        ucmd->forwardmove = 0;
+        ucmd->sidemove = 0;
+        ucmd->upmove = 0;
+    }
+    return NodeReachedGeneric();
 }
 
 void Bot::MoveWander(usercmd_t *ucmd)

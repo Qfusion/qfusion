@@ -11,7 +11,6 @@ public:
     Bot(edict_t *self): Ai(self), dangersDetector(self), enemyPool(self), printLink(false) {}
 
     using Ai::SpecialMove;
-    void SpecialMove(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
     void Move(usercmd_t *ucmd);
     void MoveWander(usercmd_t *ucmd);
     void CombatMovement(usercmd_t *ucmd);
@@ -56,7 +55,9 @@ private:
     bool MoveFallingOrJumping(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
     bool MoveStartingAJump(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
     bool MoveStartingARocketjump(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveLikeHavingShortGoal(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd, bool specialMovement);
+    bool MoveSwimming(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    bool MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    void TryMoveBunnyHopping(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
 
     void ApplyEvadeMovePushes(usercmd_t *ucmd);
