@@ -2319,13 +2319,20 @@ static void objectGameEntity_UseTargets( edict_t *activator, edict_t *self )
 	G_UseTargets( self, activator );
 }
 
-static edict_t *objectGameEntity_DropItem( int tag, edict_t *self )
+static edict_t *objectGameEntity_DropItemByTag( int tag, edict_t *self )
 {
 	gsitem_t *item = GS_FindItemByTag( tag );
 
 	if( !item )
 		return NULL;
 
+	return Drop_Item( self, item );
+}
+
+static edict_t *objectGameEntity_DropItem( gsitem_t *item, edict_t *self )
+{
+	if( !item )
+		return NULL;
 	return Drop_Item( self, item );
 }
 
@@ -2485,7 +2492,8 @@ static const asMethod_t gedict_Methods[] =
 	{ ASLIB_FUNCTION_DECL(array<Entity @> @, findTargets, () const), asFUNCTION(objectGameEntity_findTargets), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(array<Entity @> @, findTargeting, () const), asFUNCTION(objectGameEntity_findTargeting), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, useTargets, ( const Entity @activator )), asFUNCTION(objectGameEntity_UseTargets), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(Entity @, dropItem, ( int tag ) const), asFUNCTION(objectGameEntity_DropItem), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(Entity @, dropItem, ( int tag ) const), asFUNCTION(objectGameEntity_DropItemByTag), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(Entity @, dropItem, ( Item @ ) const), asFUNCTION(objectGameEntity_DropItem), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, sustainDamage, ( Entity @inflicter, Entity @attacker, const Vec3 &in dir, float damage, float knockback, float stun, int mod )), asFUNCTION(objectGameEntity_sustainDamage), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, splashDamage, ( Entity @attacker, int radius, float damage, float knockback, float stun, int mod )), asFUNCTION(objectGameEntity_splashDamage), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, explosionEffect, ( int radius )), asFUNCTION(objectGameEntity_explosionEffect), asCALL_CDECL_OBJLAST },
