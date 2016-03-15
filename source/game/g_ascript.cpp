@@ -2033,6 +2033,7 @@ static const asProperty_t gameclient_Properties[] =
 	{ ASLIB_PROPERTY_DECL(const int16, pendingWeapon), ASLIB_FOFFSET(gclient_t, ps.stats[STAT_PENDING_WEAPON]) },
 	{ ASLIB_PROPERTY_DECL(bool, takeStun), ASLIB_FOFFSET(gclient_t, resp.takeStun) },
 	{ ASLIB_PROPERTY_DECL(uint, lastActivity), ASLIB_FOFFSET(gclient_t, level.last_activity) },
+	{ ASLIB_PROPERTY_DECL(const uint, uCmdTimeStamp), ASLIB_FOFFSET(gclient_t, ucmd.serverTimeStamp) },
 
 	ASLIB_PROPERTY_NULL
 };
