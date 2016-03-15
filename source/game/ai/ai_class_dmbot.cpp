@@ -939,10 +939,13 @@ void BOT_DMclass_FindEnemy( edict_t *self )
 		if( G_ISGHOSTING( goalEnt->ent ) )
 			continue;
 
-		if( self->ai->status.entityWeights[i] <= 0 || goalEnt->ent->flags & (FL_NOTARGET|FL_BUSY) )
+		if( self->ai->status.entityWeights[i] <= 0 || (goalEnt->ent->flags & FL_NOTARGET) )
 			continue;
 
 		if( GS_TeamBasedGametype() && goalEnt->ent->s.team == self->s.team )
+			continue;
+
+		if( ( goalEnt->ent->flags & FL_BUSY ) && ( level.gametype.forceTeamHumans == level.gametype.forceTeamBots ) )
 			continue;
 
 		dist = DistanceFast( self->s.origin, goalEnt->ent->s.origin );
@@ -1302,7 +1305,9 @@ float BOT_DMclass_PlayerWeight( edict_t *self, edict_t *enemy )
 	if( !enemy || enemy == self )
 		return 0;
 
-	if( G_ISGHOSTING( enemy ) || enemy->flags & (FL_NOTARGET|FL_BUSY) )
+	if( G_ISGHOSTING( enemy ) || ( enemy->flags & FL_NOTARGET) )
+		return 0;
+	if( ( enemy->flags & FL_BUSY ) && ( level.gametype.forceTeamHumans == level.gametype.forceTeamBots ) )
 		return 0;
 
 	if( self->r.client->ps.inventory[POWERUP_QUAD] || self->r.client->ps.inventory[POWERUP_SHELL] )

@@ -360,7 +360,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 
 		if( goalEnt->ent->r.client )
 		{
-			if( G_ISGHOSTING( goalEnt->ent ) || goalEnt->ent->flags & (FL_NOTARGET|FL_BUSY) )
+			if( G_ISGHOSTING( goalEnt->ent ) || ( goalEnt->ent->flags & FL_NOTARGET ) || ( ( goalEnt->ent->flags & FL_BUSY ) && ( level.gametype.forceTeamHumans == level.gametype.forceTeamBots ) ) )
 				goalEnt->node = NODE_INVALID;
 			else
 				goalEnt->node = AI_FindClosestReachableNode( goalEnt->ent->s.origin, goalEnt->ent, NODE_DENSITY, NODE_ALL );
