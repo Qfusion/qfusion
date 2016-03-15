@@ -310,141 +310,79 @@ bool Ai::SpecialMove(usercmd_t *ucmd)
 	return CheckEyes( ucmd );
 }
 
-int Ai::ChangeAngle()
+void Ai::ChangeAngle(float angularSpeedMultiplier /*= 1.0f*/)
 {
-	float ideal_yaw;
-	float ideal_pitch;
-	float current_yaw;
-	float current_pitch;
-	float pitch_move = 0, yaw_move = 0;
-	float speed;
-	float speed_yaw, speed_pitch;
-	vec3_t ideal_angle;
-	edict_t *ent = self;
+	Vec3 moveVec(self->ai->move_vector);
+	moveVec.NormalizeFast();
+	ChangeAngle(moveVec, angularSpeedMultiplier);
+}
 
-	// Normalize the move angle first
-	VectorNormalize( ent->ai->move_vector );
+void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*= 1.0f*/)
+{
+	const float currentYaw = anglemod(self->s.angles[YAW]);
+	const float currentPitch = anglemod(self->s.angles[PITCH]);
 
-	current_yaw = anglemod( ent->s.angles[YAW] );
-	current_pitch = anglemod( ent->s.angles[PITCH] );
+	vec3_t idealAngle;
+	VecToAngles(idealDirection.data(), idealAngle);
 
-	VecToAngles( ent->ai->move_vector, ideal_angle );
+	const float ideal_yaw = anglemod(idealAngle[YAW]);
+	const float ideal_pitch = anglemod(idealAngle[PITCH]);
 
-	ideal_yaw = anglemod( ideal_angle[YAW] );
-	ideal_pitch = anglemod( ideal_angle[PITCH] );
+	self->ai->speed_yaw *= angularSpeedMultiplier;
+	self->ai->speed_pitch *= angularSpeedMultiplier;
 
-	speed_yaw = ent->ai->speed_yaw;
-	speed_pitch = ent->ai->speed_pitch;
-
-	// Yaw
-	if( fabs( current_yaw - ideal_yaw ) < 10 )
+	if (fabsf(currentYaw - ideal_yaw) < 10)
 	{
-		speed_yaw *= 0.5;
+		self->ai->speed_yaw *= 0.5;
 	}
-	if( fabs( current_pitch - ideal_pitch ) < 10 )
+	if (fabsf(currentPitch - ideal_pitch) < 10)
 	{
-		speed_pitch *= 0.5;
+		self->ai->speed_pitch *= 0.5;
 	}
 
-	if( fabs( current_yaw - ideal_yaw ) > 1 )
+	ChangeAxisAngle(currentYaw, ideal_yaw, self->yaw_speed, &self->ai->speed_yaw, &self->s.angles[YAW]);
+	ChangeAxisAngle(currentPitch, ideal_pitch, self->yaw_speed, &self->ai->speed_pitch, &self->s.angles[PITCH]);
+}
+
+void Ai::ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle)
+{
+	float angleMove, speed;
+	if (fabsf(currAngle - idealAngle) > 1)
 	{
-		yaw_move = ideal_yaw - current_yaw;
-		speed = ent->yaw_speed * FRAMETIME;
-		if( ideal_yaw > current_yaw )
+		angleMove = idealAngle - currAngle;
+		speed = edictAngleSpeed * FRAMETIME;
+		if( idealAngle > currAngle )
 		{
-			if( yaw_move >= 180 )
-				yaw_move = yaw_move - 360;
+			if (angleMove >= 180)
+				angleMove -= 360;
 		}
 		else
 		{
-			if( yaw_move <= -180 )
-				yaw_move = yaw_move + 360;
+			if (angleMove <= -180)
+				angleMove += 360;
 		}
-		if( yaw_move > 0 )
+		if (angleMove > 0)
 		{
-			if( speed_yaw > speed )
-				speed_yaw = speed;
-			if( yaw_move < 3 )
-				speed_yaw += AI_YAW_ACCEL/4.0;
+			if (*aiAngleSpeed > speed)
+				*aiAngleSpeed = speed;
+			if (angleMove < 3)
+				*aiAngleSpeed += AI_YAW_ACCEL/4.0;
 			else
-				speed_yaw += AI_YAW_ACCEL;
+				*aiAngleSpeed += AI_YAW_ACCEL;
 		}
 		else
 		{
-			if( speed_yaw < -speed )
-				speed_yaw = -speed;
-			if( yaw_move > -3 )
-				speed_yaw -= AI_YAW_ACCEL/4.0;
+			if (*aiAngleSpeed < -speed)
+				*aiAngleSpeed = -speed;
+			if (angleMove > -3)
+				*aiAngleSpeed -= AI_YAW_ACCEL/4.0;
 			else
-				speed_yaw -= AI_YAW_ACCEL;
+				*aiAngleSpeed -= AI_YAW_ACCEL;
 		}
 
-		yaw_move = speed_yaw;
-		ent->s.angles[YAW] = anglemod( current_yaw + yaw_move );
-
-#if 0
-		if( yaw_move > 0 && ent->s.angles[YAW] > ideal_yaw ) {
-			ent->s.angles[YAW] = ideal_yaw;
-			speed_yaw = 0.0f;
-		} else if( yaw_move < 0 && ent->s.angles[YAW] < ideal_yaw ) {
-			ent->s.angles[YAW] = ideal_yaw;
-			speed_yaw = 0.0f;
-		}
-#endif
+		angleMove = *aiAngleSpeed;
+		*changedAngle = anglemod(currAngle + angleMove);
 	}
-
-
-	// Pitch
-	if( fabs( current_pitch - ideal_pitch ) > 1 )
-	{
-		pitch_move = ideal_pitch - current_pitch;
-		speed = ent->yaw_speed * FRAMETIME;
-		if( ideal_pitch > current_pitch )
-		{
-			if( pitch_move >= 180 )
-				pitch_move = pitch_move - 360;
-		}
-		else
-		{
-			if( pitch_move <= -180 )
-				pitch_move = pitch_move + 360;
-		}
-		if( pitch_move > 0 )
-		{
-			if( speed_pitch > speed )
-				speed_pitch = speed;
-			if( pitch_move < 3 )
-				speed_pitch += AI_YAW_ACCEL/4.0;
-			else
-				speed_pitch += AI_YAW_ACCEL;
-		}
-		else
-		{
-			if( speed_pitch < -speed )
-				speed_pitch = -speed;
-			if( pitch_move > -3 )
-				speed_pitch -= AI_YAW_ACCEL/4.0;
-			else
-				speed_pitch -= AI_YAW_ACCEL;
-		}
-
-		pitch_move = speed_pitch;
-		ent->s.angles[PITCH] = anglemod( current_pitch + pitch_move );
-#if 0
-		if( pitch_move > 0 && ent->s.angles[PITCH] > ideal_pitch ) {
-			ent->s.angles[PITCH] = ideal_pitch;
-			speed_pitch = 0.0f;
-		} else if( pitch_move < 0 && ent->s.angles[PITCH] < ideal_pitch ) {
-			ent->s.angles[PITCH] = ideal_pitch;
-			speed_pitch = 0.0f;
-		}
-#endif
-	}
-
-	ent->ai->speed_yaw = speed_yaw;
-	ent->ai->speed_pitch = speed_pitch;
-
-	return yaw_move > 0 ? 1 : -1;
 }
 
 /*

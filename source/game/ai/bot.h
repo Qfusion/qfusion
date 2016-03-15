@@ -7,8 +7,9 @@
 
 class Bot: public Ai
 {
+    friend class EnemyPool;
 public:
-    Bot(edict_t *self): Ai(self), dangersDetector(self), enemyPool(self), printLink(false) {}
+    Bot(edict_t *self);
 
     using Ai::SpecialMove;
     void Move(usercmd_t *ucmd);
@@ -47,6 +48,12 @@ private:
     CombatTask aimTarget;
 
     bool printLink;
+
+    Vec3 pendingLookAtPoint;
+    unsigned pendingLookAtPointTimeoutAt;
+    bool hasPendingLookAtPoint;
+
+    void ApplyPendingTurnToLookAtPoint();
 
     bool MoveOnLadder(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
     bool MoveOnJumppad(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);

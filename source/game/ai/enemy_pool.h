@@ -99,7 +99,7 @@ class Enemy
 {
 public:
 
-    Enemy() : ent(nullptr), lastSeenPosition(1/0.0f, 1/0.0f, 1/0.0f)
+    Enemy() : ent(nullptr), lastSeenPosition(1/0.0f, 1/0.0f, 1/0.0f), lastSeenVelocity(1/0.0f, 1/0.0f, 1/0.0f)
     {
         Clear();
     }
@@ -152,14 +152,20 @@ public:
 
     inline unsigned LastSeenAt() const { return lastSeenAt; }
     inline const Vec3 &LastSeenPosition() const { return lastSeenPosition; }
+    inline const Vec3 &LastSeenVelocity() const { return lastSeenVelocity; }
 
+    // TODO: Fuse in a single array of some struct
     // Array of last seen timestamps
     std::deque<unsigned> lastSeenTimestamps;
     // Array of last seen positions
     std::deque<Vec3> lastSeenPositions;
+    // Array of last seen enemy velocities
+    std::deque<Vec3> lastSeenVelocities;
 private:
     // Same as front() of lastSeenPositions, used for faster access
     Vec3 lastSeenPosition;
+    // Same as front() of lastSeenVelocities, used for faster access
+    Vec3 lastSeenVelocity;
     // Same as front() of lastSeenTimestamps, used for faster access
     unsigned lastSeenAt;
 };
@@ -421,6 +427,7 @@ class EnemyPool
     bool IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition);
     int SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     int SuggestQuadBearerWeapon(const Enemy &enemy);
+    bool SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy);
     void SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Vec3 &botViewDirection);
     void StartSpamAtEnemy(CombatTask *task, const Enemy *enemy);
     int ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end);
