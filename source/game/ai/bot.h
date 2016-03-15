@@ -52,6 +52,9 @@ private:
     Vec3 pendingLookAtPoint;
     unsigned pendingLookAtPointTimeoutAt;
     bool hasPendingLookAtPoint;
+    float lookAtPointTurnSpeedMultiplier;
+
+    void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutDuration = 500);
 
     void ApplyPendingTurnToLookAtPoint();
 

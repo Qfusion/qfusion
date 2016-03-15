@@ -8,7 +8,8 @@ Bot::Bot(edict_t *self)
       printLink(false),
       pendingLookAtPoint(0, 0, 0),
       pendingLookAtPointTimeoutAt(0),
-      hasPendingLookAtPoint(false)
+      hasPendingLookAtPoint(false),
+      lookAtPointTurnSpeedMultiplier(0.5f)
 {
 }
 
@@ -34,6 +35,14 @@ void Bot::LookAround()
         self->enemy = nullptr;
 }
 
+void Bot::SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier, unsigned int timeoutDuration)
+{
+    pendingLookAtPoint = point;
+    pendingLookAtPointTimeoutAt = level.time + timeoutDuration;
+    hasPendingLookAtPoint = true;
+    lookAtPointTurnSpeedMultiplier = turnSpeedMultiplier;
+}
+
 void Bot::ApplyPendingTurnToLookAtPoint()
 {
     if (!hasPendingLookAtPoint)
@@ -43,7 +52,7 @@ void Bot::ApplyPendingTurnToLookAtPoint()
     toPointDir -= self->s.origin;
     toPointDir.NormalizeFast();
 
-    ChangeAngle(toPointDir, 0.5f);
+    ChangeAngle(toPointDir, lookAtPointTurnSpeedMultiplier);
 
     if (pendingLookAtPointTimeoutAt <= level.time)
         hasPendingLookAtPoint = false;

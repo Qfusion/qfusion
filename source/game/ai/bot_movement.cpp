@@ -380,9 +380,7 @@ bool Bot::MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd
     }
 
     ucmd->forwardmove = 1;
-    hasPendingLookAtPoint = true;
-    pendingLookAtPoint = Vec3(self->movetarget->s.origin);
-    pendingLookAtPointTimeoutAt = 750;
+    SetPendingLookAtPoint(Vec3(self->movetarget->s.origin));
 
     return NodeReachedGeneric();
 }
