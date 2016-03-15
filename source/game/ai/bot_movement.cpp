@@ -379,16 +379,11 @@ bool Bot::MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd
         }
     }
 
-    // The bot entity angles have not been changed yet.
-    // Old checks whether movetarget is in front via G_InFront() really are not applicable.
-    // Todo: Add the movetarget as a pendingLookAtPoint
-    // Try to roll at the same place
-    if (!G_InFront(self, self->movetarget))
-    {
-        ucmd->forwardmove = 0;
-        ucmd->sidemove = 0;
-        ucmd->upmove = 0;
-    }
+    ucmd->forwardmove = 1;
+    hasPendingLookAtPoint = true;
+    pendingLookAtPoint = Vec3(self->movetarget->s.origin);
+    pendingLookAtPointTimeoutAt = 750;
+
     return NodeReachedGeneric();
 }
 
