@@ -39,6 +39,7 @@ in NO WAY supported by Steve Yeager.
 #endif
 
 #include <algorithm>
+#include <utility>
 
 #define AI_VERSION_STRING "A0059"
 
@@ -412,7 +413,8 @@ public:
 	void NewEnemyInView(edict_t *enemy);
 	unsigned int CurrentLinkType() const;
 
-	int	ChangeAngle();
+	void ChangeAngle(float angularSpeedMultiplier = 1.0f);
+	void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
 	bool MoveToShortRangeGoalEntity(usercmd_t *ucmd);
 	bool CheckEyes(usercmd_t *ucmd);
 	bool SpecialMove(usercmd_t *ucmd);
@@ -450,6 +452,8 @@ public:
 	float Campiness() const { return ai().pers.cha.campiness; }
 	float Firerate() const { return ai().pers.cha.firerate; }
 protected:
+	void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);
+
 	void TestClosePlace();
 	ClosePlaceProps closeAreaProps;
 

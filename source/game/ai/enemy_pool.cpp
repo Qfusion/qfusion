@@ -54,6 +54,7 @@ void Enemy::Clear()
     registeredAt = 0;
     lastSeenPositions.clear();
     lastSeenTimestamps.clear();
+    lastSeenVelocities.clear();
     lastSeenAt = 0;
 }
 
@@ -63,11 +64,15 @@ void Enemy::OnViewed()
     {
         lastSeenPositions.pop_back();
         lastSeenTimestamps.pop_back();
+        lastSeenVelocities.pop_back();
     }
-    // TODO: VectorCopy(ent->s.origin, lastSeenPosition.vec) produces garbage for some reason
-    lastSeenPosition = Vec3(ent->s.origin);
+    // Set members for faster access
+    VectorCopy(ent->s.origin, lastSeenPosition.data());
+    VectorCopy(ent->velocity, lastSeenVelocity.data());
     lastSeenAt = level.time;
+    // Store in a queue then for history
     lastSeenPositions.push_front(lastSeenPosition);
+    lastSeenVelocities.push_front(lastSeenVelocity);
     lastSeenTimestamps.push_front(lastSeenAt);
 }
 
@@ -651,6 +656,7 @@ void EnemyPool::UpdateKeptCurrentCombatTask()
 void EnemyPool::TryFindNewCombatTask()
 {
     CombatTask *task = &combatTask;
+    const Enemy *oldAimEnemy = task->aimEnemy;
     task->Reset();
 
     // Atm we just pick up a target that has best ai weight
@@ -703,8 +709,39 @@ void EnemyPool::TryFindNewCombatTask()
     }
     else
     {
-        SuggestSpamTask(task, botOrigin, botDirection);
+        if (bot->ai->botRef->hasPendingLookAtPoint)
+        {
+            Debug("TryFindNewCombatTask(): bot is already turning to some look-at-point, defer target assignment\n");
+        }
+        else if (oldAimEnemy)
+        {
+            SuggestPointToTurnToWhenEnemyIsLost(oldAimEnemy);
+        }
+        else
+        {
+            SuggestSpamTask(task, botOrigin, botDirection);
+        }
     }
+}
+
+bool EnemyPool::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
+{
+    unsigned notSeenDuration = level.time - oldEnemy->LastSeenAt();
+    if (notSeenDuration > 500)
+        return false;
+
+    Vec3 estimatedPos(oldEnemy->LastSeenPosition());
+    Vec3 lastSeenVelocityDir(oldEnemy->LastSeenVelocity());
+    float lastSeenSqSpeed = lastSeenVelocityDir.SquaredLength();
+    if (lastSeenSqSpeed > 1)
+        lastSeenVelocityDir *= 1.0f / Q_RSqrt(lastSeenSqSpeed);
+    // Extrapolate last seen position using last seen velocity and not seen duration in seconds
+    estimatedPos += (notSeenDuration / 1000.0f) * lastSeenVelocityDir;
+
+    bot->ai->botRef->hasPendingLookAtPoint = true;
+    bot->ai->botRef->pendingLookAtPoint = estimatedPos;
+    bot->ai->botRef->pendingLookAtPointTimeoutAt = level.time + 350;
+    return true;
 }
 
 void EnemyPool::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Vec3 &botViewDirection)

@@ -208,11 +208,17 @@ bool Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
 {
     target[0] += (random() - 0.5f) * wfac;
     target[1] += (random() - 0.5f) * wfac;
-    VectorSubtract( target, fire_origin, self->ai->move_vector );
-    ChangeAngle();
+
+    // TODO: Cancel pending turn?
+    if (!hasPendingLookAtPoint)
+    {
+        Vec3 lookAtVector(target);
+        lookAtVector -= fire_origin;
+        float angularSpeedMultiplier = 0.25f + 0.75f * Skill();
+        ChangeAngle(lookAtVector, angularSpeedMultiplier);
+    }
 
     // Do not shoot enemies that are far from "crosshair" except they are very close
-
     Vec3 newLookDir(0, 0, 0);
     AngleVectors(self->s.angles, newLookDir.data(), nullptr, nullptr);
 

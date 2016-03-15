@@ -1,8 +1,21 @@
 #include "bot.h"
 #include <algorithm>
 
+Bot::Bot(edict_t *self)
+    : Ai(self),
+      dangersDetector(self),
+      enemyPool(self),
+      printLink(false),
+      pendingLookAtPoint(0, 0, 0),
+      pendingLookAtPointTimeoutAt(0),
+      hasPendingLookAtPoint(false)
+{
+}
+
 void Bot::LookAround()
 {
+    ApplyPendingTurnToLookAtPoint();
+
     TestClosePlace();
 
     RegisterVisibleEnemies();
@@ -19,6 +32,21 @@ void Bot::LookAround()
         self->enemy = const_cast<edict_t*>(enemyPool.combatTask.aimEnemy->ent);
     else
         self->enemy = nullptr;
+}
+
+void Bot::ApplyPendingTurnToLookAtPoint()
+{
+    if (!hasPendingLookAtPoint)
+        return;
+
+    Vec3 toPointDir(pendingLookAtPoint);
+    toPointDir -= self->s.origin;
+    toPointDir.NormalizeFast();
+
+    ChangeAngle(toPointDir, 0.5f);
+
+    if (pendingLookAtPointTimeoutAt <= level.time)
+        hasPendingLookAtPoint = false;
 }
 
 void Bot::RegisterVisibleEnemies()
