@@ -738,9 +738,9 @@ bool EnemyPool::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
     // Extrapolate last seen position using last seen velocity and not seen duration in seconds
     estimatedPos += (notSeenDuration / 1000.0f) * lastSeenVelocityDir;
 
-    bot->ai->botRef->hasPendingLookAtPoint = true;
-    bot->ai->botRef->pendingLookAtPoint = estimatedPos;
-    bot->ai->botRef->pendingLookAtPointTimeoutAt = level.time + 350;
+    float turnSpeedMultiplier = 0.25f + 0.75f * BotSkill();
+    bot->ai->botRef->SetPendingLookAtPoint(estimatedPos, turnSpeedMultiplier, 750);
+
     return true;
 }
 
