@@ -121,7 +121,7 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
         return false;
 
     float wfac = AdjustTarget(weapon, firedef, fire_origin, target);
-    wfac = 25 + wfac * (1.0f - Skill());
+    wfac = 25 + wfac * (1.0f - 0.75f * Skill());
     if (importantShot && Skill() > 0.33f)
         wfac *= (1.13f - Skill());
 
@@ -193,10 +193,10 @@ void Bot::TryPressAttack(usercmd_t *ucmd, bool importantShot)
     if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN)
         firedelay = 1.0f;
     else
-        firedelay = (1.0f / Q_RSqrt(0.0001f + Skill())) - 1.25f * random();
+        firedelay = 0.95f + 0.55f * Skill() - 1.5f * random();
 
     if (importantShot)
-        firedelay += 0.25f * Skill();
+        firedelay += 0.45f * Skill();
 
     if (firedelay <= 0.0f)
         return;
@@ -214,7 +214,7 @@ bool Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
     {
         Vec3 lookAtVector(target);
         lookAtVector -= fire_origin;
-        float angularSpeedMultiplier = 0.25f + 0.75f * Skill();
+        float angularSpeedMultiplier = 0.5f + 0.5f * Skill();
         ChangeAngle(lookAtVector, angularSpeedMultiplier);
     }
 
