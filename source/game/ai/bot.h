@@ -67,7 +67,9 @@ private:
     bool MoveStartingARocketjump(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
     bool MoveSwimming(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
     bool MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    void TryMoveBunnyHopping(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    // Returns true if the bot is at least a bit blocked
+    bool GetLessBlockedMoveVec(Vec3 *moveVec);
+    void TryMoveBunnyHopping(usercmd_t *ucmd);
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
 
     void ApplyEvadeMovePushes(usercmd_t *ucmd);

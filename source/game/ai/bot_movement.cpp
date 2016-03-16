@@ -2,36 +2,27 @@
 #include "ai_local.h"
 #include "../../gameshared/q_collision.h"
 
-void Bot::TryMoveBunnyHopping(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd)
+void Bot::TryMoveBunnyHopping(usercmd_t *ucmd)
 {
     self->ai->is_bunnyhop = false;
 
-    if( self->ai->path.numNodes < MIN_BUNNY_NODES )
+    if (self->ai->path.numNodes < MIN_BUNNY_NODES)
         return;
 
     const int n1 = self->ai->path.nodes[self->ai->path.numNodes];
-    const int n2 = self->ai->path.nodes[self->ai->path.numNodes-1];
+    const int n2 = self->ai->path.nodes[self->ai->path.numNodes - 1];
 
-    const int nextMoveType = AI_PlinkMoveType( n1, n2 );
+    const int nextMoveType = AI_PlinkMoveType(n1, n2);
 
-    if (nextMoveType & (LINK_MOVE|LINK_JUMP|LINK_LADDER))
+    if (nextMoveType & (LINK_MOVE | LINK_JUMP | LINK_LADDER))
     {
         // Can't accelerate anymore (we have to add some delta to the default dash speed)
         if (VectorLengthFast(self->velocity) >= DEFAULT_DASHSPEED - 17)
         {
-            vec3_t n1origin, n2origin;
-            GetNodeOrigin(n1, n1origin);
-            GetNodeOrigin(n2, n2origin);
-            Vec3 linkVec(n2origin);
-            linkVec -= n1origin;
-            linkVec.z() *= 0.25f;
-
-            VectorCopy(linkVec.data(), self->ai->move_vector);
-
             ucmd->forwardmove = 1;
             ucmd->upmove = 1;
         }
-        // Get an initial speed by dash
+            // Get an initial speed by dash
         else
         {
             ucmd->forwardmove = 1;
@@ -39,10 +30,6 @@ void Bot::TryMoveBunnyHopping(const vec3_t lookdir, const vec3_t pathdir, usercm
         }
         self->ai->is_bunnyhop = true;
     }
-
-    // if pushing in the opposite direction of the path, reduce the push
-    if( !self->ai->is_bunnyhop && DotProduct( lookdir, pathdir ) < -0.33f )
-        ucmd->forwardmove = 0;
 }
 
 void Bot::Move(usercmd_t *ucmd)
@@ -331,26 +318,124 @@ bool Bot::MoveSwimming(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *uc
     return NodeReachedGeneric();
 }
 
+bool Bot::GetLessBlockedMoveVec(Vec3 *moveVec)
+{
+    Vec3 linkVec(0, 0, 0);
+    if (self->ai->next_node != self->ai->current_node)
+    {
+        vec3_t currNodeOrigin;
+        GetNodeOrigin(self->ai->current_node, currNodeOrigin);
+        GetNodeOrigin(self->ai->next_node, linkVec.data());
+        linkVec -= currNodeOrigin;
+    }
+    else
+    {
+        GetNodeOrigin(self->ai->next_node, linkVec.data());
+        linkVec -= self->s.origin;
+    }
+    linkVec.z() = 0;
+
+    vec3_t mins;
+    VectorCopy(playerbox_stand_mins, mins);
+    mins[2] += AI_STEPSIZE;
+    float * const maxs = playerbox_stand_maxs;
+
+    trace_t trace;
+    Vec3 pointABitForward = linkVec + self->s.origin;
+    G_Trace(&trace, self->s.origin, mins, maxs, pointABitForward.data(), self, MASK_AISOLID);
+    if (trace.fraction == 1.0)
+    {
+        *moveVec = linkVec;
+        return false;
+    }
+
+#ifdef _DEBUG
+    AITools_DrawColorLine(self->s.origin, pointABitForward.data(), COLOR_RGB(0, 192, 0), 0);
+#endif
+
+    float maxFraction = trace.fraction;
+    float testedAngles[2] = { 20, 50 };
+    for (int i = 0; i < 2; ++i)
+    {
+        vec3_t aBitLeft, aBitRight;
+        trace_t leftTrace, rightTrace;
+        vec3_t angles = {0, testedAngles[i], 0};
+        mat3_t rotationMatrix;
+
+        AnglesToAxis(angles, rotationMatrix);
+        Matrix3_TransformVector(rotationMatrix, linkVec.data(), aBitRight);
+        Vec3 pointABitRight(aBitRight);
+        pointABitRight += self->s.origin;
+        G_Trace(&rightTrace, self->s.origin, mins, maxs, pointABitRight.data(), self, MASK_AISOLID);
+
+#ifdef _DEBUG
+        AITools_DrawColorLine(self->s.origin, pointABitRight.data(), COLOR_RGB(192, 192, 0), 0);
+#endif
+
+        angles[1] *= -1;
+        AnglesToAxis(angles, rotationMatrix);
+        Matrix3_TransformVector(rotationMatrix, linkVec.data(), aBitLeft);
+        Vec3 pointABitLeft(aBitLeft);
+        pointABitLeft += self->s.origin;
+        G_Trace(&leftTrace, self->s.origin, mins, maxs, pointABitLeft.data(), self, MASK_AISOLID);
+
+#ifdef _DEBUG
+        AITools_DrawColorLine(self->s.origin, pointABitLeft.data(), COLOR_RGB(192, 0, 192), 0);
+#endif
+
+        if (leftTrace.fraction > maxFraction)
+        {
+            if (leftTrace.fraction > rightTrace.fraction)
+            {
+                VectorCopy(aBitLeft, moveVec->data());
+                maxFraction = leftTrace.fraction;
+            }
+            else
+            {
+                VectorCopy(aBitRight, moveVec->data());
+                maxFraction = rightTrace.fraction;
+            }
+        }
+
+        if (rightTrace.fraction > maxFraction)
+        {
+            if (leftTrace.fraction > rightTrace.fraction)
+            {
+                VectorCopy(aBitLeft, moveVec->data());
+                maxFraction = leftTrace.fraction;
+            }
+            else
+            {
+                VectorCopy(aBitRight, moveVec->data());
+                maxFraction = rightTrace.fraction;
+            }
+        }
+    }
+
+    // Still unchanged
+    if (maxFraction == trace.fraction)
+    {
+        // Both left and right probes are even move blocked
+        *moveVec = linkVec;
+    }
+    return true;
+}
+
 bool Bot::MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd)
 {
-    // Set forward-move apriori
-    ucmd->forwardmove = true;
+    Vec3 moveVec(0, 0, 0);
+    GetLessBlockedMoveVec(&moveVec);
 
-    TryMoveBunnyHopping(lookdir, pathdir, ucmd);
+    // Set forwardmove apriori
+    ucmd->forwardmove = 1;
+
+    TryMoveBunnyHopping(ucmd);
+
+    VectorCopy(moveVec.data(), self->ai->move_vector);
 
     if (!self->movetarget)
     {
-        if (!self->ai->is_bunnyhop)
-        {
-            const auto &nextNode = nodes[self->ai->next_node];
-            VectorSubtract(nextNode.origin, self->s.origin, self->ai->move_vector);
-        }
         return NodeReachedGeneric();
-    }
-
-    if (!self->ai->is_bunnyhop)
-    {
-        VectorSubtract(self->movetarget->s.origin, self->s.origin, self->ai->move_vector);
     }
 
     // Short-range goal has been timed out or the goal is too far for short-range goal
@@ -379,8 +464,10 @@ bool Bot::MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd
         }
     }
 
+    // Go to the item
     ucmd->forwardmove = 1;
-    SetPendingLookAtPoint(Vec3(self->movetarget->s.origin));
+    moveVec.NormalizeFast();
+    SetPendingLookAtPoint(12 * moveVec + self->s.origin, 2.0f);
 
     return NodeReachedGeneric();
 }
