@@ -501,6 +501,9 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item )
 
 			for( w = WEAP_GUNBLADE + 1; w < WEAP_TOTAL; w++ )
 			{
+				if( w == WEAP_INSTAGUN && !GS_Instagib() )
+					continue;
+
 				if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK )
 				{
 					int weakTag = GS_FindItemByTag( w )->weakammo_tag;
@@ -544,6 +547,9 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item )
 				dropped->count = item->quantity;
 			}
 		}
+
+		ent->r.client->teamstate.last_drop_item = item;
+		VectorCopy( dropped->s.origin, ent->r.client->teamstate.last_drop_location );
 	}
 	else
 	{
@@ -557,6 +563,9 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item )
 
 			for( w = WEAP_GUNBLADE + 1; w < WEAP_TOTAL; w++ )
 			{
+				if( w == WEAP_INSTAGUN && !GS_Instagib() )
+					continue;
+
 				if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK )
 				{
 					gsitem_t *ammo = GS_FindItemByTag( GS_FindItemByTag( w )->weakammo_tag );
@@ -585,9 +594,6 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item )
 
 	dropped->think = drop_make_touchable;
 	dropped->nextThink = level.time + 1000;
-
-	ent->r.client->teamstate.last_drop_item = item;
-	VectorCopy( dropped->s.origin, ent->r.client->teamstate.last_drop_location );
 
 	GClip_LinkEntity( dropped );
 
