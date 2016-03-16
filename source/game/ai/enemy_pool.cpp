@@ -957,6 +957,9 @@ void EnemyPool::SuggestAimWeaponAndTactics(CombatTask *task)
         SuggestMiddleRangeWeaponAndTactics(task, disposition);
     else
         SuggestCloseRangeWeaponAndTactics(task, disposition);
+
+    if (task->suggestedShootWeapon == WEAP_NONE)
+        task->suggestedShootWeapon = WEAP_GUNBLADE;
 }
 
 void EnemyPool::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
