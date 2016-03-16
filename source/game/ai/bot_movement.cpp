@@ -103,22 +103,25 @@ void Bot::Move(usercmd_t *ucmd)
         TryMoveAwayIfBlocked(ucmd);
     }
 
-    float turnSpeedMultiplier = 1.0f;
-    Vec3 moveVec(self->ai->move_vector);
-    if (AimEnemy())
+    if (!hasPendingLookAtPoint)
     {
-        moveVec.NormalizeFast();
-        Vec3 toEnemy(AimEnemy()->ent->s.origin);
-        toEnemy -= self->s.origin;
-        toEnemy.NormalizeFast();
-        if (moveVec.Dot(toEnemy) < -0.3f)
+        float turnSpeedMultiplier = 1.0f;
+        Vec3 moveVec(self->ai->move_vector);
+        if (AimEnemy())
         {
-            ucmd->forwardmove *= -1;
-            moveVec *= -1;
-            turnSpeedMultiplier += Skill();
+            moveVec.NormalizeFast();
+            Vec3 toEnemy(AimEnemy()->ent->s.origin);
+            toEnemy -= self->s.origin;
+            toEnemy.NormalizeFast();
+            if (moveVec.Dot(toEnemy) < -0.3f)
+            {
+                ucmd->forwardmove *= -1;
+                moveVec *= -1;
+                turnSpeedMultiplier += Skill();
+            }
         }
+        ChangeAngle(moveVec, turnSpeedMultiplier);
     }
-    ChangeAngle(moveVec, turnSpeedMultiplier);
 
     if (nodeReached)
         NodeReached();
