@@ -734,7 +734,7 @@ bool EnemyPool::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
     Vec3 lastSeenVelocityDir(oldEnemy->LastSeenVelocity());
     float lastSeenSqSpeed = lastSeenVelocityDir.SquaredLength();
     if (lastSeenSqSpeed > 1)
-        lastSeenVelocityDir *= 1.0f / Q_RSqrt(lastSeenSqSpeed);
+        lastSeenVelocityDir *= Q_RSqrt(lastSeenSqSpeed);
     // Extrapolate last seen position using last seen velocity and not seen duration in seconds
     estimatedPos += (notSeenDuration / 1000.0f) * lastSeenVelocityDir;
 
@@ -1123,15 +1123,19 @@ void EnemyPool::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDi
     }
 
     // Do not use plasma on fast-moving side-to-side enemies
-    if (enemy.ent->speed > DEFAULT_DASHSPEED)
+    Vec3 targetMoveDir = Vec3(enemy.ent->velocity);
+    float enemySpeed = targetMoveDir.SquaredLength();
+    if (enemySpeed > 0.1f)
     {
+        enemySpeed = 1.0f / Q_RSqrt(enemySpeed);
+    }
+    if (enemySpeed > DEFAULT_DASHSPEED)
+    {
+        targetMoveDir *= 1.0f / enemySpeed;
         Vec3 botToTargetDir = enemy.LastSeenPosition() - bot->s.origin;
         botToTargetDir.NormalizeFast();
-        Vec3 targetMoveDir = Vec3(enemy.ent->velocity);
-        targetMoveDir *= 1.0f / enemy.ent->speed;
 
-        constexpr float extraSpeedBounds = 1000.0f - DEFAULT_DASHSPEED;
-        float speedFactor = std::max(enemy.ent->speed - DEFAULT_DASHSPEED, extraSpeedBounds) / extraSpeedBounds;
+        float speedFactor = BoundedFraction(enemySpeed - DEFAULT_DASHSPEED, 1000.0f - DEFAULT_DASHSPEED);
         float dirFactor = fabsf(botToTargetDir.Dot(targetMoveDir));
         // If enemy moves fast but on botToTargetDir line, pg score is unaffected
         weaponScores[PG].score *= 1.0f - (1.0f - dirFactor) * speedFactor;
