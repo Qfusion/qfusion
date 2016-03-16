@@ -224,6 +224,9 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 	if( ps->pmove.pm_time != ops->pmove.pm_time )
 		pflags |= PS_M_TIME;
 
+	if( ps->pmove.skim_time != ops->pmove.skim_time )
+		pflags |= PS_M_SKIM;
+
 	if( ps->pmove.pm_flags != ops->pmove.pm_flags )
 		pflags |= PS_M_FLAGS;
 
@@ -336,6 +339,9 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 
 	if( pflags & PS_M_TIME )
 		MSG_WriteByte( msg, ps->pmove.pm_time );
+
+	if( pflags & PS_M_SKIM )
+		MSG_WriteByte( msg, ps->pmove.skim_time );
 
 	if( pflags & PS_M_FLAGS )
 		MSG_WriteShort( msg, ps->pmove.pm_flags );

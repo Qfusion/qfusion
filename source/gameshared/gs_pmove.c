@@ -49,6 +49,7 @@ int playerbox_gib_viewheight = 8;
 #define PM_AIRCONTROL_BOUNCE_DELAY 200
 #define PM_OVERBOUNCE		1.01f
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in
+#define PM_SKIM_TIME 230
 
 //===============================================================
 
@@ -294,15 +295,15 @@ static int PM_SlideMove( void )
 	float remainingTime = pml.frametime;
 	int blockedmask = 0;
 
-	VectorCopy( pml.velocity, old_velocity );
-	VectorCopy( pml.origin, last_valid_origin );
-
 	if( pm->groundentity != -1 )
 	{                          // clip velocity to ground, no need to wait
 		// if the ground is not horizontal (a ramp) clipping will slow the player down
 		if( pml.groundplane.normal[2] == 1.0f && pml.velocity[2] < 0.0f )
 			pml.velocity[2] = 0.0f;
 	}
+
+	VectorCopy( pml.velocity, old_velocity );
+	VectorCopy( pml.origin, last_valid_origin );
 
 	numplanes = 0; // clean up planes count for checking
 
@@ -409,9 +410,11 @@ static int PM_SlideMove( void )
 		}
 	}
 
-	if( pm->playerState->pmove.pm_time )
+	if( pm->numtouch )
 	{
-		VectorCopy( old_velocity, pml.velocity );
+		if( pm->playerState->pmove.pm_time || ( pm->playerState->pmove.skim_time > 0 && old_velocity[2] >= pml.velocity[2] ) )
+			VectorCopy( old_velocity, pml.velocity );
+		pm->playerState->pmove.skim_time -= pm->cmd.msec;
 	}
 
 	return blockedmask;
@@ -1115,6 +1118,8 @@ static void PM_CheckJump( void )
 	if( pml.groundplane.normal[2] > 0 && pml.velocity[2] < 0 && DotProduct2D( pml.groundplane.normal, pml.velocity ) > 0 )
 		GS_ClipVelocity( pml.velocity, pml.groundplane.normal, pml.velocity, PM_OVERBOUNCE );
 
+	pm->playerState->pmove.skim_time = PM_SKIM_TIME;
+
 	//if( gs.module == GS_MODULE_GAME ) GS_Printf( "upvel %f\n", pml.velocity[2] );
 	if( pml.velocity[2] > 100 )
 	{
@@ -1201,6 +1206,8 @@ static void PM_CheckDash( void )
 		pml.velocity[2] = upspeed;
 
 		pm->playerState->pmove.stats[PM_STAT_DASHTIME] = PM_DASHJUMP_TIMEDELAY;
+
+		pm->playerState->pmove.skim_time = PM_SKIM_TIME;
 
 		// return sound events
 		if( fabs( pml.sidePush ) > 10 && fabs( pml.sidePush ) >= fabs( pml.forwardPush ) )
@@ -1340,6 +1347,7 @@ static void PM_CheckWallJump( void )
 				else
 				{
 					pm->playerState->pmove.stats[PM_STAT_WJTIME] = PM_WALLJUMP_TIMEDELAY;
+					pm->playerState->pmove.skim_time = PM_SKIM_TIME;
 
 					// Create the event
 					module_PredictedEvent( pm->playerState->POVnum, EV_WALLJUMP, DirToByte( normal ) );
