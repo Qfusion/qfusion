@@ -506,6 +506,11 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 		Q_snprintfz( cls.download.name, alloc_size, "%s", filename );
 	}
 	else {
+		if( FS_DownloadsDirectory() == NULL ) {
+			Com_Printf( "Can't download, downloads directory is disabled\n" );
+			CL_DownloadDone();
+			return;
+		}
 		Q_snprintfz( cls.download.name, alloc_size, "%s/%s", "downloads", filename );
 	}
 

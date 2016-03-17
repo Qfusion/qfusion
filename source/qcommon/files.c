@@ -170,6 +170,7 @@ static int fs_cursearchfiles;
 static cvar_t *fs_basepath;
 static cvar_t *fs_cdpath;
 static cvar_t *fs_usehomedir;
+static cvar_t *fs_usedownloadsdir;
 static cvar_t *fs_basegame;
 static cvar_t *fs_game;
 
@@ -3202,10 +3203,12 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 		search = fs_searchpaths;
 		while( search )
 		{
-			if( ( onlyDownloads && search->base != fs_downloads_searchpath ) ||
-			   ( skipDownloads && search->base == fs_downloads_searchpath ) ) {
-				search = search->next;
-				continue;
+			if( fs_downloads_searchpath ) {
+				if( ( onlyDownloads && search->base != fs_downloads_searchpath ) ||
+				   ( skipDownloads && search->base == fs_downloads_searchpath ) ) {
+					search = search->next;
+					continue;
+				}
 			}
 
 			limit = maxFiles ? min( fs_numsearchfiles, maxFiles ) : fs_numsearchfiles;
@@ -3381,11 +3384,14 @@ const char *FS_MediaDirectory( fs_mediatype_t type )
 /*
 * FS_DownloadsDirectory
 * 
-* Returns directory where we can store downloads to, no gamedir attached
+* Returns directory where we can store downloads to, no gamedir attached.
+* Returns NULL if downloads are disabled.
 */
 const char *FS_DownloadsDirectory( void )
 {
-	return fs_downloads_searchpath->path;
+	if( fs_downloads_searchpath )
+		return fs_downloads_searchpath->path;
+	return NULL;
 }
 
 /*
@@ -4332,16 +4338,20 @@ void FS_Init( void )
 #else
 		fs_usehomedir = Cvar_Get( "fs_usehomedir", "0", CVAR_NOSET );
 #endif
+	fs_usedownloadsdir = Cvar_Get( "fs_usedownloadsdir", "1", CVAR_NOSET );
 
-	if( homedir != NULL && fs_usehomedir->integer ) {
-		Q_snprintfz( downloadsdir, sizeof( downloadsdir ), "%s/%s", homedir, "downloads" );
-	}
-	else {
-		Q_snprintfz( downloadsdir, sizeof( downloadsdir ), "%s", "downloads" );
-	}
+	fs_downloads_searchpath = NULL;
+	if( fs_usedownloadsdir->integer ) {
+		if( homedir != NULL && fs_usehomedir->integer ) {
+			Q_snprintfz( downloadsdir, sizeof( downloadsdir ), "%s/%s", homedir, "downloads" );
+		}
+		else {
+			Q_snprintfz( downloadsdir, sizeof( downloadsdir ), "%s", "downloads" );
+		}
 
-	FS_AddBasePath( downloadsdir );
-	fs_downloads_searchpath = fs_basepaths;
+		FS_AddBasePath( downloadsdir );
+		fs_downloads_searchpath = fs_basepaths;
+	}
 
 	if( fs_cdpath->string[0] )
 		FS_AddBasePath( fs_cdpath->string );
