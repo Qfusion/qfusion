@@ -2533,7 +2533,40 @@ static bool CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg
 }
 
 static bool CG_LFuncDrawCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	CG_DrawCrosshair( layout_cursor_x, layout_cursor_y, layout_cursor_align );
+	// FURY:
+	vec3_t fwd, headorg, aimtarg;
+	vec2_t scr_coords;
+	trace_t t;
+	firedef_t *firedef;
+	firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
+	
+	VectorCopy( cg.predictedPlayerState.pmove.origin, headorg );
+	headorg[2] += cg.predictedPlayerState.viewheight;
+	AngleVectors( cg.predictedPlayerState.viewangles, fwd, 0, 0 );
+	VectorMA( headorg, firedef->timeout, fwd, aimtarg );
+	CG_Trace( &t, headorg, vec3_origin, vec3_origin, aimtarg, cg.predictedPlayerState.POVnum, MASK_SHOT );
+
+	//change mask_shot to smth diff to not also move xhair to players
+	if( t.fraction != 1.0f )
+		VectorCopy( t.endpos, aimtarg );
+
+	trap_R_TransformVectorToScreen( &cg.view.refdef, aimtarg, scr_coords);
+
+	if ( cg_furyCameraMode->value == 0 ) {
+		scr_coords[0] = cgs.vidWidth - scr_coords[0];
+		scr_coords[1] = cgs.vidHeight - scr_coords[1];
+	} 
+	else 
+	{
+		// TODO: fix cameramode... vertical chair goes reversef
+	}
+
+	//TODO: fix this for rotating stuff, because arrow doesnt point right then
+	if( scr_coords[1] < 0 )
+		trap_R_DrawStretchPic( scr_coords[0] -8, 0, 16, 16, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( "gfx/ui/arrow_up" ) );
+	else
+		CG_DrawCrosshair( layout_cursor_x, layout_cursor_y, layout_cursor_align );
+
 	return true;
 }
 

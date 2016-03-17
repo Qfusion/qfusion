@@ -672,7 +672,7 @@ static void CG_ThirdPersonOffsetView( cg_viewdef_t *view ) {
 	r = -sin( r );
 	VectorMA( chase_dest, cg_thirdPersonRange->value * f, &view->axis[AXIS_FORWARD], chase_dest );
 	VectorMA( chase_dest, cg_thirdPersonRange->value * r, &view->axis[AXIS_RIGHT], chase_dest );
-	chase_dest[2] += 8;
+	chase_dest[2] += 500; // 8
 
 	// find the spot the player is looking at
 	VectorMA( view->origin, 512, &view->axis[AXIS_FORWARD], dest );
@@ -684,8 +684,11 @@ static void CG_ThirdPersonOffsetView( cg_viewdef_t *view ) {
 	if( dist < 1 ) {
 		dist = 1;
 	}
-	view->angles[PITCH] = RAD2DEG( -atan2( stop[2], dist ) );
-	view->angles[YAW] -= cg_thirdPersonAngle->value;
+	view->angles[PITCH] = 90;//	RAD2DEG( -atan2( stop[2], dist ) );
+	if ( cg_furyCameraMode->value == 0 ) 
+		view->angles[YAW] -= cg_thirdPersonAngle->value;
+	else 
+		view->angles[YAW] = 180;
 	Matrix3_FromAngles( view->angles, view->axis );
 
 	// move towards destination

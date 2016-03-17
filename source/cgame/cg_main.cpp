@@ -46,6 +46,9 @@ cvar_t *cg_thirdPerson;
 cvar_t *cg_thirdPersonAngle;
 cvar_t *cg_thirdPersonRange;
 
+// Fury
+cvar_t *cg_furyCameraMode;
+
 cvar_t *cg_colorCorrection;
 
 cvar_t *cg_weaponFlashes;
@@ -741,6 +744,9 @@ static void CG_RegisterVariables( void ) {
 	cg_thirdPersonAngle =   trap_Cvar_Get( "cg_thirdPersonAngle", "0", 0 );
 	cg_thirdPersonRange =   trap_Cvar_Get( "cg_thirdPersonRange", "90", 0 );
 
+	// Fury
+	cg_furyCameraMode =	trap_Cvar_Get( "cg_furyCameraMode", "0", CVAR_ARCHIVE );
+
 	cg_colorCorrection = trap_Cvar_Get( "cg_colorCorrection", "1", CVAR_ARCHIVE );
 
 	cg_gun =        trap_Cvar_Get( "cg_gun", "1", CVAR_ARCHIVE );
@@ -786,7 +792,7 @@ static void CG_RegisterVariables( void ) {
 	cg_showSelfShadow = trap_Cvar_Get( "cg_showSelfShadow", "0", CVAR_ARCHIVE );
 
 	cg_cartoonEffects =     trap_Cvar_Get( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
-	cg_cartoonHitEffect =   trap_Cvar_Get( "cg_cartoonHitEffect", "1", CVAR_ARCHIVE );
+	cg_cartoonHitEffect =   trap_Cvar_Get( "cg_cartoonHitEffect", "0", CVAR_ARCHIVE );
 
 	cg_damage_indicator =   trap_Cvar_Get( "cg_damage_indicator", "1", CVAR_ARCHIVE );
 	cg_damage_indicator_time =  trap_Cvar_Get( "cg_damage_indicator_time", "25", CVAR_ARCHIVE );
