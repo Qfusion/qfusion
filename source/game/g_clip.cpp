@@ -1089,7 +1089,6 @@ void GClip_TouchTriggers( edict_t *ent )
 
 void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin )
 {
-#define TRIGGER_GAP 0.01f
 	int i, num;
 	edict_t	*hit;
 	int touch[MAX_EDICTS];
@@ -1125,24 +1124,21 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin )
 
 	GClip_LinkEntity( ent );
 
-	// expand the search bounds to include previous and current origin
-	// open interval approximated by TRIGGER_GAP
+	// expand the search bounds to include the space between the previous and current origin
 	for( i = 0; i < 3; i++ )
 	{
 		if( previous_origin[i] < pm->playerState->pmove.origin[i] )
 		{
-			if( previous_origin[i] + TRIGGER_GAP < pm->playerState->pmove.origin[i] )
-				mins[i] = previous_origin[i] + TRIGGER_GAP + pm->mins[i];
-			else
-				mins[i] = pm->playerState->pmove.origin[i] + mins[i];
+			mins[i] = previous_origin[i] + pm->maxs[i];
+			if( mins[i] > pm->playerState->pmove.origin[i] + pm->mins[i] )
+				mins[i] = pm->playerState->pmove.origin[i] + pm->mins[i];
 			maxs[i] = pm->playerState->pmove.origin[i] + pm->maxs[i];
 		}
 		else
 		{
 			mins[i] = pm->playerState->pmove.origin[i] + pm->mins[i];
-			if( previous_origin[i] - TRIGGER_GAP > pm->playerState->pmove.origin[i] )
-				maxs[i] = previous_origin[i] - TRIGGER_GAP + pm->maxs[i];
-			else
+			maxs[i] = previous_origin[i] + pm->mins[i];
+			if( maxs[i] < pm->playerState->pmove.origin[i] + pm->maxs[i] )
 				maxs[i] = pm->playerState->pmove.origin[i] + pm->maxs[i];
 		}
 	}
@@ -1168,7 +1164,6 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin )
 
 		G_CallTouch( hit, ent, NULL, 0 );
 	}
-#undef TRIGGER_GAP
 }
 
 /*
