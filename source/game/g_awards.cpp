@@ -411,9 +411,12 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 			Q_strncpyz( s, S_COLOR_YELLOW "Extermination!", sizeof( s ) );
 			G_PrintMsg( NULL, "%s" S_COLOR_YELLOW " is Exterminating!\n", attacker->r.client->netname );
 			break;
-		default:
+		case 5:
 			Q_strncpyz( s, S_COLOR_YELLOW "God Mode!", sizeof( s ) );
 			G_PrintMsg( NULL, "%s" S_COLOR_YELLOW " is in God Mode!\n", attacker->r.client->netname );
+		default:
+			Q_strncpyz( s, S_COLOR_YELLOW "God Mode!", sizeof( s ) );
+			G_PrintMsg( NULL, "%s" S_COLOR_YELLOW " is in God Mode! " S_COLOR_WHITE "%d" S_COLOR_YELLOW " frags!\n", attacker->r.client->netname, attacker->r.client->resp.awardInfo.frag_count );
 			break;
 		}
 
@@ -538,4 +541,11 @@ void G_AwardFairPlay( edict_t *ent )
 	client->level.stats.fairplay_count++;
 	client->resp.awardInfo.fairplay_award = true;
 	G_PlayerAward( ent, S_COLOR_CYAN "Fair Play!" );
+}
+
+void G_DeathAwards( edict_t *ent )
+{
+	int frag_count = ent->r.client->resp.awardInfo.frag_count;
+	if( frag_count >= 5 )
+		G_PrintMsg( NULL, "%s" S_COLOR_YELLOW " made a spree of " S_COLOR_WHITE "%d" S_COLOR_YELLOW "!\n", ent->r.client->netname, frag_count );
 }

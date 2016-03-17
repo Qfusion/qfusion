@@ -987,6 +987,7 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 void G_AwardPlayerPickup( edict_t *self, edict_t *item );
 void G_AwardResetPlayerComboStats( edict_t *ent );
 void G_AwardRaceRecord( edict_t *self );
+void G_DeathAwards( edict_t *ent );
 
 /**
  * Gives the player the Fair Play award if all conditions are met.
