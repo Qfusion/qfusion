@@ -453,21 +453,15 @@ bool Bot::MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd
 
     if (!self->movetarget)
     {
-        return NodeReachedGeneric();
+        return self->ai->is_bunnyhop ? NodeReachedSpecial() : NodeReachedGeneric();
     }
 
     // Short-range goal has been timed out or the goal is too far for short-range goal
-    if( self->movetarget->r.solid == SOLID_NOT || DistanceFast( self->movetarget->s.origin, self->s.origin ) > AI_GOAL_SR_RADIUS + 72 )
+    if (self->movetarget->r.solid == SOLID_NOT || DistanceFast( self->movetarget->s.origin, self->s.origin ) > AI_GOAL_SR_RADIUS + 72)
     {
         self->movetarget = NULL;
         self->ai->shortRangeGoalTimeout = level.time;
-        return NodeReachedGeneric();
-    }
-
-    if( self->movetarget->item && self->ai->move_vector[2] < 0.0f )
-    {
-        // we probably gonna touch this item anyway, no need to bend over
-        self->ai->move_vector[2] = 0.0f;
+        return self->ai->is_bunnyhop ? NodeReachedSpecial() : NodeReachedGeneric();
     }
 
     if (self->ai->goalEnt && self->ai->goalEnt->ent == self->movetarget)
@@ -477,17 +471,29 @@ bool Bot::MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd
             if (BoundsIntersect(self->movetarget->r.absmin, self->movetarget->r.absmax, self->r.absmin, self->r.absmax))
             {
                 self->ai->node_timeout = 0;
-                return NodeReachedGeneric();
+                return self->ai->is_bunnyhop ? NodeReachedSpecial() : NodeReachedGeneric();
             }
         }
     }
 
     // Go to the item
     ucmd->forwardmove = 1;
-    moveVec.NormalizeFast();
-    SetPendingLookAtPoint(12 * moveVec + self->s.origin, 2.0f);
+    ucmd->sidemove = 0;
+    ucmd->buttons &= ~BUTTON_SPECIAL;
+    if (!hasPendingLookAtPoint || pendingLookAtPointTimeoutAt + 32 > level.time)
+    {
+        Vec3 pendingLookAtPoint(self->movetarget->s.origin);
+        // we probably gonna touch this item anyway, no need to bend over
+        if (self->movetarget->item)
+        {
+            float deltaZ = self->s.origin[2] - pendingLookAtPoint.z();
+            if (deltaZ > 0)
+                pendingLookAtPoint.z() += deltaZ;
+        }
+        SetPendingLookAtPoint(pendingLookAtPoint, 2.0f);
+    }
 
-    return NodeReachedGeneric();
+    return self->ai->is_bunnyhop ? NodeReachedSpecial() : NodeReachedGeneric();
 }
 
 void Bot::MoveWander(usercmd_t *ucmd)
