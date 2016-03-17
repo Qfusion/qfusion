@@ -2043,7 +2043,10 @@ void Pmove( pmove_t *pmove )
 #define MAX_FALLING_DAMAGE 15
 #define FALL_DAMAGE_SCALE 1.0
 
-	// check for falling damage
+	// Execute the triggers that are touched.
+	// We check the entire path between the origin before the pmove and the
+	// current origin to ensure no triggers are missed at high velocity.
+	// Note that this method assumes the movement has been linear.
 	module_PMoveTouchTriggers( pm, pml.previous_origin );
 
 	PM_UpdateDeltaAngles(); // in case some trigger action has moved the view angles (like teleported).
