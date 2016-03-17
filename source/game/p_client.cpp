@@ -460,6 +460,8 @@ void G_ClientClearStats( edict_t *ent )
 */
 void G_GhostClient( edict_t *ent )
 {
+	G_DeathAwards( ent );
+
 	ent->movetype = MOVETYPE_NONE;
 	ent->r.solid = SOLID_NOT;
 
@@ -502,6 +504,8 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 	vec3_t spawn_origin, spawn_angles;
 	gclient_t *client;
 	int old_team;
+
+	G_DeathAwards( self );
 
 	G_SpawnQueue_RemoveClient( self );
 
