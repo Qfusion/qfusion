@@ -73,6 +73,8 @@ cvar_t *cg_showTeamMates;
 
 cvar_t *cg_showPressedKeys;
 
+cvar_t *cg_showChasers;
+
 cvar_t *cg_scoreboardFontFamily;
 cvar_t *cg_scoreboardMonoFontFamily;
 cvar_t *cg_scoreboardTitleFontFamily;
@@ -325,6 +327,7 @@ void CG_ScreenInit( void )
 	cg_showTeamMates =	    trap_Cvar_Get( "cg_showTeamMates", "1", CVAR_ARCHIVE );
 
 	cg_showPressedKeys = trap_Cvar_Get( "cg_showPressedKeys", "0", CVAR_ARCHIVE );
+	cg_showChasers = trap_Cvar_Get( "cg_showChasers", "1", CVAR_ARCHIVE );
 
 	cg_scoreboardFontFamily = trap_Cvar_Get( "cg_scoreboardFontFamily", DEFAULT_SCOREBOARD_FONT_FAMILY, CVAR_ARCHIVE );
 	cg_scoreboardMonoFontFamily = trap_Cvar_Get( "cg_scoreboardMonoFontFamily", DEFAULT_SCOREBOARD_MONO_FONT_FAMILY, CVAR_ARCHIVE );
