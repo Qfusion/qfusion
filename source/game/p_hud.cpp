@@ -74,7 +74,10 @@ update:
 		if( forcedUpdate || ( client->ps.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD ) )
 		{
 			scoreboardString[staticlen] = '\0';
-			G_ScoreboardMessage_AddPersonalSpectators( ent->s.number );
+			if( client->resp.chase.active )
+				G_ScoreboardMessage_AddPersonalSpectators( client->resp.chase.target, ENTNUM( ent ) );
+			else
+				G_ScoreboardMessage_AddPersonalSpectators( ENTNUM( ent ), ENTNUM( ent ) );
 			Q_strncpyz( string, scoreBoardMessage ? scoreBoardMessage : "", maxlen );
 			Q_snprintfz( scoreboardString, sizeof( scoreboardString ), "scb \"%s\"", string );
 			scoreBoardMessage = scoreboardString;
@@ -188,7 +191,7 @@ void G_ScoreboardMessage_AddSpectators( void )
 	}
 }
 
-void G_ScoreboardMessage_AddPersonalSpectators( int entnum )
+void G_ScoreboardMessage_AddPersonalSpectators( int entnum, int entnum_self )
 {
 	char entry[MAX_TOKEN_CHARS];
 	int i;
@@ -206,6 +209,9 @@ void G_ScoreboardMessage_AddPersonalSpectators( int entnum )
 	for( i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ )
 	{
 		e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[i];
+
+		if( ENTNUM( e ) == entnum_self )
+			continue;
 
 		if( e->r.client->connecting || trap_GetClientState( PLAYERNUM( e ) ) < CS_SPAWNED )
 			continue;
