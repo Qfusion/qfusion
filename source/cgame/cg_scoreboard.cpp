@@ -978,13 +978,13 @@ void CG_DrawScoreboard( void )
 
 				maxyoffset += SCR_DrawSpectators( (const char **)&ptr, xpos, ypos + yoffset, panelWidth, font, true, "Spectators", colorYellow, pass );
 			}
-			else if( !Q_stricmp( token, "&y" ) ) // list of personal spectators
+			else if( !Q_stricmp( token, "&y" ) ) // list of chasers
 			{
 				if( yoffset < maxyoffset )
 					yoffset = maxyoffset;
 
 				if( cg_showChasers->integer )
-					maxyoffset += SCR_DrawSpectators( (const char **)&ptr, xpos, ypos + yoffset, panelWidth, font, false, "Spectating you", colorOrange, pass );
+					maxyoffset += SCR_DrawSpectators( (const char **)&ptr, xpos, ypos + yoffset, panelWidth, font, false, "Chasers", colorOrange, pass );
 				else
 					SCR_IgnoreSpectators( (const char **)&ptr, false );
 			}
