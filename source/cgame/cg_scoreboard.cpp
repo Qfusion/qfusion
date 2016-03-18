@@ -284,7 +284,6 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 	return yoffset;
 }
 
-
 /*
 * SCR_DrawSpectators
 */
