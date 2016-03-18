@@ -75,9 +75,9 @@ update:
 		{
 			scoreboardString[staticlen] = '\0';
 			if( client->resp.chase.active )
-				G_ScoreboardMessage_AddPersonalSpectators( client->resp.chase.target, ENTNUM( ent ) );
+				G_ScoreboardMessage_AddChasers( client->resp.chase.target, ENTNUM( ent ) );
 			else
-				G_ScoreboardMessage_AddPersonalSpectators( ENTNUM( ent ), ENTNUM( ent ) );
+				G_ScoreboardMessage_AddChasers( ENTNUM( ent ), ENTNUM( ent ) );
 			Q_strncpyz( string, scoreBoardMessage ? scoreBoardMessage : "", maxlen );
 			Q_snprintfz( scoreboardString, sizeof( scoreboardString ), "scb \"%s\"", string );
 			scoreBoardMessage = scoreboardString;
@@ -191,7 +191,7 @@ void G_ScoreboardMessage_AddSpectators( void )
 	}
 }
 
-void G_ScoreboardMessage_AddPersonalSpectators( int entnum, int entnum_self )
+void G_ScoreboardMessage_AddChasers( int entnum, int entnum_self )
 {
 	char entry[MAX_TOKEN_CHARS];
 	int i;
