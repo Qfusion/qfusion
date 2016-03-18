@@ -44,7 +44,7 @@ void G_UpdateScoreBoardMessages( void )
 	const char *scoreBoardMessage = "";
 	bool forcedUpdate = false;
 	char string[MAX_STRING_CHARS];
-	size_t maxlen;
+	size_t maxlen, staticlen;
 
 	// fixme : mess of copying
 	maxlen = MAX_STRING_CHARS - ( strlen( "scb \"\"" + 4 ) );
@@ -56,9 +56,7 @@ void G_UpdateScoreBoardMessages( void )
 
 	G_ScoreboardMessage_AddSpectators();
 
-	Q_strncpyz( string, scoreBoardMessage ? scoreBoardMessage : "", maxlen );
-	Q_snprintfz( scoreboardString, sizeof( scoreboardString ), "scb \"%s\"", string );
-	scoreBoardMessage = scoreboardString;
+	staticlen = strlen( scoreboardString );
 
 update:
 	// send to players who have scoreboard visible
@@ -75,6 +73,12 @@ update:
 
 		if( forcedUpdate || ( client->ps.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD ) )
 		{
+			scoreboardString[staticlen] = '\0';
+			G_ScoreboardMessage_AddPersonalSpectators( ent->s.number );
+			Q_strncpyz( string, scoreBoardMessage ? scoreBoardMessage : "", maxlen );
+			Q_snprintfz( scoreboardString, sizeof( scoreboardString ), "scb \"%s\"", string );
+			scoreBoardMessage = scoreboardString;
+
 			client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime%scoreboardInterval );
 			trap_GameCmd( ent, scoreBoardMessage );
 			trap_GameCmd( ent, G_PlayerStatsMessage( ent ) );
@@ -181,6 +185,36 @@ void G_ScoreboardMessage_AddSpectators( void )
 			Q_snprintfz( entry, sizeof( entry ), "%i %i ", PLAYERNUM( e ), -1 );
 			ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 		}
+	}
+}
+
+void G_ScoreboardMessage_AddPersonalSpectators( int entnum )
+{
+	char entry[MAX_TOKEN_CHARS];
+	int i;
+	edict_t *e;
+	size_t len;
+
+	len = strlen( scoreboardString );
+	if( !len )
+		return;
+
+	// add personal spectators
+	Q_strncpyz( entry, "&y ", sizeof( entry ) );
+	ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
+
+	for( i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ )
+	{
+		e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[i];
+
+		if( e->r.client->connecting || trap_GetClientState( PLAYERNUM( e ) ) < CS_SPAWNED )
+			continue;
+
+		if( !e->r.client->resp.chase.active || e->r.client->resp.chase.target != entnum )
+			continue;
+
+		Q_snprintfz( entry, sizeof( entry ), "%i ", PLAYERNUM( e ) );
+		ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 	}
 }
 

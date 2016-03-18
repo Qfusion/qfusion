@@ -923,6 +923,7 @@ void MoveClientToIntermission( edict_t *client );
 void G_SetClientStats( edict_t *ent );
 void G_Snap_UpdateWeaponListMessages( void );
 void G_ScoreboardMessage_AddSpectators( void );
+void G_ScoreboardMessage_AddPersonalSpectators( int entnum );
 void G_UpdateScoreBoardMessages( void );
 
 //
