@@ -5,12 +5,14 @@ include_directories(${ANGELSCRIPT_INCLUDE_DIR})
 file(GLOB GAME_HEADERS
     "*.h"
     "ai/*.h"
+	"ai/aas/*.h"
 	"../gameshared/*.h"
 )
 
 file(GLOB GAME_SOURCES
     "*.cpp"
     "ai/*.cpp"
+    "ai/aas/*.c"
     "../gameshared/*.c"
     "../matchmaker/mm_rating.c"
 )
@@ -20,3 +22,4 @@ target_link_libraries(game PRIVATE)
 add_dependencies(game angelwrap)
 set_property(TARGET game PROPERTY CXX_STANDARD 11)
 qf_set_output_dir(game ${QFUSION_GAME_DIR})
+
