@@ -395,6 +395,46 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 }
 
 /*
+* SCR_IgnoreSpectators
+*/
+static void SCR_IgnoreSpectators( const char **ptrptr, bool havePing )
+{
+	char *token;
+	const char *oldptr;
+
+	assert( ptrptr && *ptrptr );
+
+	while( *ptrptr )
+	{
+		oldptr = *ptrptr;
+		token = COM_ParseExt( ptrptr, true );
+		if( !token[0] )
+			break;
+
+		if( token[0] == '&' ) // it's a different command than 'spectators', so step back and return
+		{
+			*ptrptr = oldptr;
+			break;
+		}
+
+		if( havePing )
+		{
+			// get a second token
+			oldptr = *ptrptr;
+			token = COM_ParseExt( ptrptr, true );
+			if( !token[0] )
+				break;
+
+			if( token[0] == '&' ) // it's a different command than 'spectators', so step back and return
+			{
+				*ptrptr = oldptr;
+				break;
+			}
+		}
+	}
+}
+
+/*
 * SCR_GetNextColumnLayout
 */
 static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle, char *type, int *width, struct qfontface_s *font )
@@ -943,7 +983,10 @@ void CG_DrawScoreboard( void )
 				if( yoffset < maxyoffset )
 					yoffset = maxyoffset;
 
-				maxyoffset += SCR_DrawSpectators( (const char **)&ptr, xpos, ypos + yoffset, panelWidth, font, false, "Spectating you", colorOrange, pass );
+				if( cg_showChasers->integer )
+					maxyoffset += SCR_DrawSpectators( (const char **)&ptr, xpos, ypos + yoffset, panelWidth, font, false, "Spectating you", colorOrange, pass );
+				else
+					SCR_IgnoreSpectators( (const char **)&ptr, false );
 			}
 
 			if ( yoffset > maxyoffset )
