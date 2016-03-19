@@ -31,6 +31,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "q3compat.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define	BOTLIB_API_VERSION		2
 
 struct aas_clientmove_s;
@@ -433,7 +437,19 @@ typedef struct botlib_export_s
 } botlib_export_t;
 
 //linking of bot library
-botlib_export_t *GetBotLibAPI( int apiVersion, botlib_import_t *import );
+// botlib_export_t *GetBotLibAPI( int apiVersion, botlib_import_t *import );
+
+// These functions are called directly now in AI code instead of calling exported pointers
+int AAS_QF_BotLibSetup();
+int AAS_QF_BotLibShutdown();
+int AAS_QF_BotLibVarSet(char *var_name, char *value);
+int AAS_QF_BotLibVarGet(char *var_name, char *value, int size);
+int AAS_QF_BotLibStartFrame(float time);
+int AAS_QF_BotLibLoadMap(const char *mapname);
+
+#ifdef __cplusplus
+}
+#endif
 
 /* Library variables:
 

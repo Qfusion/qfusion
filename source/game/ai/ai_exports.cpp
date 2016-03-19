@@ -1,5 +1,6 @@
 #include "bot.h"
 #include "ai_shutdown_hooks_holder.h"
+#include "aas.h"
 
 cvar_t *sv_botpersonality;
 
@@ -7,6 +8,8 @@ ai_weapon_t AIWeapons[WEAP_TOTAL];
 const size_t ai_handle_size = sizeof( ai_handle_t );
 
 static bool ai_intialized = false;
+static bool aas_system_initialized = false;
+static bool aas_data_loaded = false;
 
 //==========================================
 // AI_InitLevel
@@ -27,6 +30,12 @@ void AI_InitLevel( void )
     nav.debugMode = false;
 
     AI_InitNavigationData( false );
+
+    aas_system_initialized = AI_InitAAS();
+    if (!aas_system_initialized)
+        G_Printf("Can't initialize AAS system\n");
+    if (aas_system_initialized);
+        aas_data_loaded = AI_LoadLevelAAS(level.mapname);
 
     // count bots
     game.numBots = 0;
@@ -112,6 +121,10 @@ void AI_Shutdown( void )
     if (!ai_intialized)
         return;
     BOT_RemoveBot("all");
+
+    if (aas_system_initialized)
+        AI_ShutdownAAS();
+    aas_system_initialized = false;
 
     AiShutdownHooksHolder::Instance()->InvokeHooks();
     ai_intialized = false;
