@@ -35,7 +35,7 @@ typedef unsigned char byte;
 #define Com_sprintf Q_snprintfz
 #define Q_strcat(dest, size, src) Q_strncatz(dest, src, size)
 
-typedef struct filehandle_s *fileHandle_t;
+typedef int fileHandle_t;
 typedef int fsMode_t;
 
 #define ENTITYNUM_WORLD 0

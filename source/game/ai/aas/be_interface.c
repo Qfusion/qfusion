@@ -47,7 +47,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 botlib_globals_t botlibglobals;
 
 botlib_export_t be_botlib_export;
-botlib_import_t botimport;
+// Now defined in the calling AI code to aid optimization since we link AAS code statically
+//botlib_import_t botimport;
 //
 int botDeveloper;
 //qtrue if the library is setup
@@ -124,7 +125,7 @@ qboolean BotLibSetup(char *str)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int Export_BotLibSetup(void)
+int AAS_QF_BotLibSetup(void)
 {
 	int		errnum;
 	
@@ -164,6 +165,7 @@ int Export_BotLibSetup(void)
 
 	errnum = AAS_Setup();			//be_aas_main.c
 	if (errnum != BLERR_NOERROR) return errnum;
+	// dnk777: unused in qfusion
 	/*
 	errnum = EA_Setup();			//be_ea.c
 	if (errnum != BLERR_NOERROR) return errnum;
@@ -188,7 +190,7 @@ int Export_BotLibSetup(void)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int Export_BotLibShutdown(void)
+int AAS_QF_BotLibShutdown(void)
 {
 	if (!BotLibSetup("BotLibShutdown")) return BLERR_LIBRARYNOTSETUP;
 #ifndef DEMO
@@ -223,7 +225,7 @@ int Export_BotLibShutdown(void)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int Export_BotLibVarSet(char *var_name, char *value)
+int AAS_QF_BotLibVarSet(char *var_name, char *value)
 {
 	LibVarSet(var_name, value);
 	return BLERR_NOERROR;
@@ -234,7 +236,7 @@ int Export_BotLibVarSet(char *var_name, char *value)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int Export_BotLibVarGet(char *var_name, char *value, int size)
+int AAS_QF_BotLibVarGet(char *var_name, char *value, int size)
 {
 	char *varvalue;
 
@@ -249,7 +251,7 @@ int Export_BotLibVarGet(char *var_name, char *value, int size)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int Export_BotLibStartFrame(float time)
+int AAS_QF_BotLibStartFrame(float time)
 {
 	if (!BotLibSetup("BotStartFrame")) return BLERR_LIBRARYNOTSETUP;
 	return AAS_StartFrame(time);
@@ -260,7 +262,7 @@ int Export_BotLibStartFrame(float time)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int Export_BotLibLoadMap(const char *mapname)
+int AAS_QF_BotLibLoadMap(const char *mapname)
 {
 #ifdef DEBUG
 	int starttime = Sys_MilliSeconds();
@@ -290,7 +292,7 @@ int Export_BotLibLoadMap(const char *mapname)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int Export_BotLibUpdateEntity(int ent, bot_entitystate_t *state)
+int AAS_QF_BotLibUpdateEntity(int ent, bot_entitystate_t *state)
 {
 	if (!BotLibSetup("BotUpdateEntity")) return BLERR_LIBRARYNOTSETUP;
 	if (!ValidEntityNumber(ent, "BotUpdateEntity")) return BLERR_INVALIDENTITYNUMBER;
@@ -662,6 +664,7 @@ int BotExportTest(int parm0, char *parm1, vec3_t parm2, vec3_t parm3)
 Init_AAS_Export
 ============
 */
+/*
 static void Init_AAS_Export( aas_export_t *aas ) {
 	//--------------------------------------------
 	// be_aas_entity.c
@@ -709,9 +712,8 @@ static void Init_AAS_Export( aas_export_t *aas ) {
 	//--------------------------------------------
 	aas->AAS_Swimming = AAS_Swimming;
 	aas->AAS_PredictClientMovement = AAS_PredictClientMovement;
-}
+}*/
 
-  
 /*
 ============
 Init_EA_Export
@@ -859,6 +861,7 @@ static void Init_AI_Export( ai_export_t *ai ) {
 GetBotLibAPI
 ============
 */
+/*
 botlib_export_t *GetBotLibAPI(int apiVersion, botlib_import_t *import) {
 	assert(import);
 	botimport = *import;
@@ -892,4 +895,4 @@ botlib_export_t *GetBotLibAPI(int apiVersion, botlib_import_t *import) {
 	be_botlib_export.Test = BotExportTest;
 
 	return &be_botlib_export;
-}
+}*/
