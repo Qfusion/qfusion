@@ -284,6 +284,7 @@ typedef struct
 	int weight;
 	float scale;
 	const char *gametype;
+	const char *not_gametype;
 	const char *shaderName;
 	int size;
 
