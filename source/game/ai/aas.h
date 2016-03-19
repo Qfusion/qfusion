@@ -7,4 +7,6 @@ bool AI_LoadLevelAAS(const char *mapname);
 
 void AI_ShutdownAAS();
 
+void AI_AASFrame();
+
 #endif

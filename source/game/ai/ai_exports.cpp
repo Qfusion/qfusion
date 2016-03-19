@@ -130,6 +130,11 @@ void AI_Shutdown( void )
     ai_intialized = false;
 }
 
+void AI_CommonFrame()
+{
+    AI_AASFrame();
+}
+
 //==========================================
 // G_FreeAI
 // removes the AI handle from memory

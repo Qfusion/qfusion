@@ -1,6 +1,10 @@
 #include "aas.h"
-#include "aas/botlib.h"
 #include "../g_local.h"
+#include "aas/aasfile.h"
+#include "aas/botlib.h"
+#include "aas/be_aas.h"
+#include "aas/be_aas_funcs.h"
+#include "aas/be_aas_debug.h"
 #include "../../gameshared/q_collision.h"
 
 #include <stdarg.h>
@@ -291,4 +295,11 @@ bool AI_LoadLevelAAS(const char *mapname)
     return AAS_QF_BotLibLoadMap(mapname) == BLERR_NOERROR;
 }
 
+void AI_AASFrame()
+{
+    if (AAS_Loaded())
+    {
+        AAS_QF_BotLibStartFrame(level.time);
+    }
+}
 
