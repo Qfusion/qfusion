@@ -41,18 +41,17 @@ void G_UpdateScoreBoardMessages( void )
 	int i;
 	edict_t	*ent;
 	gclient_t *client;
-	const char *scoreBoardMessage = "";
 	bool forcedUpdate = false;
-	char string[MAX_STRING_CHARS];
+	char command[MAX_STRING_CHARS];
 	size_t maxlen, staticlen;
 
 	// fixme : mess of copying
 	maxlen = MAX_STRING_CHARS - ( strlen( "scb \"\"" + 4 ) );
 
 	if( game.asEngine != NULL )
-		scoreBoardMessage = GT_asCallScoreboardMessage( maxlen );
+		GT_asCallScoreboardMessage( maxlen );
 	else
-		scoreBoardMessage = G_Gametype_GENERIC_ScoreboardMessage();
+		G_Gametype_GENERIC_ScoreboardMessage();
 
 	G_ScoreboardMessage_AddSpectators();
 
@@ -78,12 +77,10 @@ update:
 				G_ScoreboardMessage_AddChasers( client->resp.chase.target, ENTNUM( ent ) );
 			else
 				G_ScoreboardMessage_AddChasers( ENTNUM( ent ), ENTNUM( ent ) );
-			Q_strncpyz( string, scoreBoardMessage ? scoreBoardMessage : "", maxlen );
-			Q_snprintfz( scoreboardString, sizeof( scoreboardString ), "scb \"%s\"", string );
-			scoreBoardMessage = scoreboardString;
+			Q_snprintfz( command, sizeof( command ), "scb \"%s\"", scoreboardString );
 
 			client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime%scoreboardInterval );
-			trap_GameCmd( ent, scoreBoardMessage );
+			trap_GameCmd( ent, command );
 			trap_GameCmd( ent, G_PlayerStatsMessage( ent ) );
 		}
 	}
