@@ -882,31 +882,29 @@ static void Finish_SpawningItem( edict_t *ent )
 	if( ent->spawnflags & 1 )
 		ent->gravity = 0;
 
-	G_Trace( &tr, ent->s.origin, ent->r.mins, ent->r.maxs, ent->s.origin, ent, MASK_SOLID );
-	if( tr.startsolid )
-	{
-		vec3_t end;
-		vec3_t mins = { -16, -16, -16 }; // +- 15 here to match the bbox for quake items
-		vec3_t maxs = { 16, 16, 0 };
-
-		// move it 16 units up, cause it's typical they share the leaf with the floor
-		VectorCopy( ent->s.origin, end );
-		end[2] += 16;
-
-		G_Trace( &tr, end, mins, maxs, ent->s.origin, ent, MASK_SOLID );
-		if( tr.startsolid )
-		{
-			G_Printf( "Warning: %s %s spawns inside solid. Inhibited\n", ent->classname, vtos( ent->s.origin ) );
-			G_FreeEdict( ent );
-			return;
-		}
-
-		VectorCopy( tr.endpos, ent->s.origin );
-	}
-
 	// drop the item to floor
 	if( ent->gravity )
 	{
+		G_Trace( &tr, ent->s.origin, ent->r.mins, ent->r.maxs, ent->s.origin, ent, MASK_SOLID );
+		if( tr.startsolid )
+		{
+			vec3_t end;
+
+			// move it 16 units up, cause it's typical they share the leaf with the floor
+			VectorCopy( ent->s.origin, end );
+			end[2] += 16;
+
+			G_Trace( &tr, end, ent->r.mins, ent->r.maxs, ent->s.origin, ent, MASK_SOLID );
+			if( tr.startsolid )
+			{
+				G_Printf( "Warning: %s %s spawns inside solid. Inhibited\n", ent->classname, vtos( ent->s.origin ) );
+				G_FreeEdict( ent );
+				return;
+			}
+
+			VectorCopy( tr.endpos, ent->s.origin );
+		}
+
 		VectorSet( dest, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2] - 4096 );
 		G_Trace( &tr, ent->s.origin, ent->r.mins, ent->r.maxs, dest, ent, MASK_SOLID );
 		VectorCopy( tr.endpos, ent->s.origin );
