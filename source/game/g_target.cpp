@@ -51,7 +51,6 @@ void SP_target_temp_entity( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //-------- SPAWNFLAGS --------
 //LOOPED_ON : &1 sound will loop and initially start on in level (will toggle on/off when triggered).
 //LOOPED_OFF : &2 sound will loop and initially start off in level (will toggle on/off when triggered).
@@ -327,7 +326,6 @@ void SP_target_crosslevel_target( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //-------- SPAWNFLAGS --------
 //START_ON : when set, the laser will start on in the game.
 //RED :
@@ -663,7 +661,6 @@ void SP_target_string( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //-------- NOTES --------
 //To make a jump pad, place this entity at the highest point of the jump and target it with a trigger_push entity.
 
@@ -690,7 +687,6 @@ void SP_target_position( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 void SP_target_location( edict_t *self )
 {
 	int location;
@@ -721,7 +717,6 @@ void SP_target_location( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //-------- SPAWNFLAGS --------
 //SAMETEAM : &1 only players in activator's team will see the message.
 //OTHERTEAM : &2 only players in other than activator's team will see the message.
@@ -957,7 +952,6 @@ void SP_target_give( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
 //-------- SPAWNFLAGS --------
 //SPECTATOR : &1 only teleport players moving in spectator mode
 

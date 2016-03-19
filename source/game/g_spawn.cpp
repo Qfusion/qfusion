@@ -71,7 +71,6 @@ const field_t fields[] = {
 	{ "notteam", STOFS( notteam ), F_INT, FFL_SPAWNTEMP },
 	{ "notfree", STOFS( notfree ), F_INT, FFL_SPAWNTEMP },
 	{ "notduel", STOFS( notduel ), F_INT, FFL_SPAWNTEMP },
-	{ "notctf", STOFS( notctf ), F_INT, FFL_SPAWNTEMP },
 	{ "notffa", STOFS( notffa ), F_INT, FFL_SPAWNTEMP },
 	{ "noents", STOFS( noents ), F_INT, FFL_SPAWNTEMP },
 	{ "gameteam", STOFS( gameteam ), F_INT, FFL_SPAWNTEMP },
@@ -196,14 +195,14 @@ static bool G_CanSpawnEntity( edict_t *ent )
 	if( ent == world )
 		return true;
 
-	if( !Q_stricmp( gs.gametypeName, "dm" ) && st.notfree )
+	if( !GS_TeamBasedGametype() && st.notfree )
 		return false;
-	if( !Q_stricmp( gs.gametypeName, "duel" ) && st.notduel )
+	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() == 1 ) ) && st.notduel )
 		return false;
-	if( !Q_stricmp( gs.gametypeName, "tdm" ) && st.notteam )
+	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() > 1 ) ) && st.notteam )
 		return false;
-	if( !Q_stricmp( gs.gametypeName, "ctf" ) && st.notctf )
-		return false;
+	if( st.notsingle )
+		return false; // we don't have proper sinle player mode yet
 
 	// check for Q3TA-style inhibition key
 	if( st.gametype )

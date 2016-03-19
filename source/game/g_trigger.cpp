@@ -111,7 +111,6 @@ static void Touch_Multi( edict_t *self, edict_t *other, cplane_t *plane, int sur
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //MONSTER : &1 monsters won't activate this trigger unless this flag is set
 //NOT_PLAYER : &2 players can't trigger this one (for those triggered by other triggers)
@@ -176,7 +175,6 @@ void SP_trigger_multiple( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //MONSTER : &1 monsters won't activate this trigger unless this flag is set
 //NOT_PLAYER : &2 players can't trigger this one (for those triggered by other triggers)
@@ -199,7 +197,6 @@ void SP_trigger_once( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- NOTES --------
 //Trigger_relay is a tool for use in entities meccanos. It's of no use by itself, and can only be used as an intermediary between events. Wait key will be ignored.
 static void trigger_relay_use( edict_t *self, edict_t *other, edict_t *activator )
@@ -230,7 +227,6 @@ void SP_trigger_relay( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //NOMESSAGE : &1 if not set, it will print "1 more.. " etc when triggered and "sequence complete" when finished.
 //NOSOUNDS : &2 if not set, it will try to play the noise_start and noise_stop sounds
@@ -289,7 +285,6 @@ void SP_trigger_counter( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 
 void SP_trigger_always( edict_t *ent )
 {
@@ -317,7 +312,6 @@ void SP_trigger_always( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //PUSH_ONCE : &1 only push when touched the first time
 //-------- NOTES --------
@@ -480,7 +474,6 @@ void SP_trigger_push( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //START_OFF : needs to be triggered (toggle) for damage
 //TOGGLE : toogle
@@ -652,7 +645,6 @@ void SP_trigger_hurt( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- NOTES --------
 //Changes the touching entites gravity to the value of "gravity".  1.0 is standard gravity for the level.
 static void trigger_gravity_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
@@ -700,7 +692,6 @@ void SP_trigger_gravity( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //SPECTATOR : &1 only teleport players moving in spectator mode
 //-------- NOTES --------
@@ -790,7 +781,6 @@ void SP_trigger_teleport( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 
 void SP_info_teleport_destination( edict_t *ent )
 {

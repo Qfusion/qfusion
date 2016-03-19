@@ -277,7 +277,6 @@ typedef struct
 	int notteam;
 	int notfree;
 	int notduel;
-	int notctf;
 	int notffa;
 	int noents;
 
