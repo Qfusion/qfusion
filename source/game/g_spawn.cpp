@@ -71,7 +71,6 @@ const field_t fields[] = {
 	{ "notteam", STOFS( notteam ), F_INT, FFL_SPAWNTEMP },
 	{ "notfree", STOFS( notfree ), F_INT, FFL_SPAWNTEMP },
 	{ "notduel", STOFS( notduel ), F_INT, FFL_SPAWNTEMP },
-	{ "notffa", STOFS( notffa ), F_INT, FFL_SPAWNTEMP },
 	{ "noents", STOFS( noents ), F_INT, FFL_SPAWNTEMP },
 	{ "gameteam", STOFS( gameteam ), F_INT, FFL_SPAWNTEMP },
 	{ "weight", STOFS( weight ), F_INT, FFL_SPAWNTEMP },
