@@ -29,6 +29,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //clear the shown debug lines
 void AAS_ClearShownDebugLines(void);
 //
@@ -60,3 +64,6 @@ void AAS_ShowReachability(struct aas_reachability_s *reach);
 //show the reachable areas from the given area
 void AAS_ShowReachableAreas(int areanum);
 
+#ifdef __cplusplus
+}
+#endif

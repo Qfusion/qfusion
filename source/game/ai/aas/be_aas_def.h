@@ -31,6 +31,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "q3compat.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //debugging on
 #define AAS_DEBUG
 
@@ -268,6 +272,10 @@ typedef struct aas_s
 	int *reachabilityareaindex;
 	aas_reachabilityareas_t *reachabilityareas;
 } aas_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #define AASINTERN
 

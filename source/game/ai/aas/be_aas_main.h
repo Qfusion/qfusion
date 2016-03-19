@@ -29,6 +29,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //AAS error message
 void QDECL AAS_Error(char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
@@ -56,3 +60,7 @@ int AAS_Loaded(void);
 float AAS_Time(void);
 //
 void AAS_ProjectPointOntoVector( vec3_t point, vec3_t vStart, vec3_t vEnd, vec3_t vProj );
+
+#ifdef __cplusplus
+}
+#endif
