@@ -886,12 +886,12 @@ static void Finish_SpawningItem( edict_t *ent )
 	if( tr.startsolid )
 	{
 		vec3_t end;
-		vec3_t mins = { -15, -15, -15 }; // +- 15 here to match the bbox for quake items
-		vec3_t maxs = { 15, 15, 0 };
+		vec3_t mins = { -16, -16, -16 }; // +- 15 here to match the bbox for quake items
+		vec3_t maxs = { 16, 16, 0 };
 
-		// move it 15 units up, cause it's typical they share the leaf with the floor
+		// move it 16 units up, cause it's typical they share the leaf with the floor
 		VectorCopy( ent->s.origin, end );
-		end[2] += 15;
+		end[2] += 16;
 
 		G_Trace( &tr, end, mins, maxs, ent->s.origin, ent, MASK_SOLID );
 		if( tr.startsolid )
