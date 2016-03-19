@@ -211,12 +211,35 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 static char scoreboardString[MAX_STRING_CHARS];
 
 /*
+* SCR_ParseToken
+* Parses the next token and checks that it is not empty or a new command.
+*/
+static bool SCR_ParseToken( const char **ptrptr, const char **tokenptr )
+{
+	const char *oldptr, *token;
+
+	oldptr = *ptrptr;
+	*tokenptr = COM_ParseExt( ptrptr, true );
+	token = *tokenptr;
+
+	if( !token[0] ) // empty
+		return false;
+
+	if( token[0] == '&' ) // new command
+	{
+		*ptrptr = oldptr;
+		return false;
+	}
+
+	return true;
+}
+
+/*
 * SCR_DrawChallengers
 */
 static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, int pass )
 {
-	char *token;
-	const char *oldptr;
+	const char *token;
 	char string[MAX_STRING_CHARS];
 	int yoffset = 0, xoffset = 0;
 	int playerNum, ping;
@@ -237,16 +260,8 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 	// draw challengers
 	while( *ptrptr )
 	{
-		oldptr = *ptrptr;
-		token = COM_ParseExt( ptrptr, true );
-		if( !token[0] )
+		if( !SCR_ParseToken( ptrptr, &token ) )
 			break;
-
-		if( token[0] == '&' ) // it's a different command than 'challengers', so step back and return
-		{
-			*ptrptr = oldptr;
-			break;
-		}
 
 		// first token is played id
 		playerNum = atoi( token );
@@ -254,16 +269,8 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 			break;
 
 		// get a second token
-		oldptr = *ptrptr;
-		token = COM_ParseExt( ptrptr, true );
-		if( !token[0] )
+		if( !SCR_ParseToken( ptrptr, &token ) )
 			break;
-
-		if( token[0] == '&' ) // it's a different command than 'challengers', so step back and return
-		{
-			*ptrptr = oldptr;
-			break;
-		}
 
 		// second token is ping
 		ping = atoi( token );
@@ -287,10 +294,9 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 /*
 * SCR_DrawSpectators
 */
-static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, int pass )
+static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, bool havePing, const char *title, vec4_t titleColor, int pass )
 {
-	char *token;
-	const char *oldptr;
+	const char *token;
 	char string[MAX_STRING_CHARS];
 	int yoffset = 0, xoffset = 0;
 	int playerNum, ping;
@@ -319,32 +325,32 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	// draw spectators
 	while( *ptrptr )
 	{
-		oldptr = *ptrptr;
-		token = COM_ParseExt( ptrptr, true );
-		if( !token[0] )
+		if( !SCR_ParseToken( ptrptr, &token ) )
 			break;
-
-		if( token[0] == '&' ) // it's a different command than 'spectators', so step back and return
-		{
-			*ptrptr = oldptr;
-			break;
-		}
 
 		// first token is played id
 		playerNum = atoi( token );
 		if( playerNum < 0 || playerNum >= gs.maxclients )
 			break;
 
-		// get a second token
-		oldptr = *ptrptr;
-		token = COM_ParseExt( ptrptr, true );
-		if( !token[0] )
-			break;
-
-		if( token[0] == '&' ) // it's a different command than 'spectators', so step back and return
+		if( havePing )
 		{
-			*ptrptr = oldptr;
-			break;
+			// get a second token
+			if( !SCR_ParseToken( ptrptr, &token ) )
+				break;
+
+			// second token is ping
+			ping = atoi( token );
+
+			// draw the spectator
+			if( ping < 0 )
+				Q_snprintfz( string, sizeof( string ), "%s%s ...", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
+			else
+				Q_snprintfz( string, sizeof( string ), "%s%s %i", cgs.clientInfo[playerNum].name, S_COLOR_WHITE, ping );
+		}
+		else
+		{
+			Q_snprintfz( string, sizeof( string ), "%s%s", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
 		}
 
 		// draw title if there are any spectators
@@ -353,19 +359,10 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 			titleDrawn = true;
 			if( pass ) {
 				trap_SCR_DrawString( x, y + yoffset, ALIGN_CENTER_TOP,
-					CG_TranslateString( "Spectators" ), font, colorYellow );
+					CG_TranslateString( title ), font, titleColor );
 			}
 			yoffset += height;
 		}
-
-		// second token is ping
-		ping = atoi( token );
-
-		// draw the spectator
-		if( ping < 0 )
-			Q_snprintfz( string, sizeof( string ), "%s%s ...", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
-		else
-			Q_snprintfz( string, sizeof( string ), "%s%s %i", cgs.clientInfo[playerNum].name, S_COLOR_WHITE, ping );
 
 		xoffset = offsets[count] + CG_HorizontalAlignForWidth( 0, aligns[count], trap_SCR_strWidth( string, font, 0 ) );
 
@@ -385,6 +382,19 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	if( count )
 		yoffset += height;
 	return yoffset;
+}
+
+/*
+* SCR_IgnoreSpectators
+*/
+static void SCR_IgnoreSpectators( const char **ptrptr, bool havePing )
+{
+	const char *token;
+
+	assert( ptrptr && *ptrptr );
+
+	while( *ptrptr && SCR_ParseToken( ptrptr, &token ) && ( !havePing || SCR_ParseToken( ptrptr, &token ) ) )
+		;
 }
 
 /*
@@ -643,8 +653,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 {
 	int dir, align, i, columncount;
 	char type, string[MAX_STRING_CHARS];
-	const char *oldptr;
-	char *token, *layout;
+	const char *token, *layout;
 	int height, width, xoffset, yoffset;
 	vec4_t teamcolor = { 0.0f, 0.0f, 0.0f, 1.0f }, color;
 	int iconnum;
@@ -679,19 +688,10 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 	// draw the player tab column titles
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
 
-	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width, font ) != NULL )
+	while( SCR_GetNextColumnLayout( &layout, NULL, &type, &width, font ) != NULL )
 	{
 		// grab the actual scoreboard data
-
-		oldptr = *ptrptr; // in case we need to revert
-		token = COM_ParseExt( ptrptr, true );
-		if( token[0] == '&' )
-		{
-			*ptrptr = oldptr; // failed, but revert so it can continue with the next player
-			break;
-		}
-
-		if( !token[0] )
+		if( !SCR_ParseToken( ptrptr, &token ) )
 			break;
 
 		if( SCR_SkipColumn( type ) )
@@ -851,7 +851,8 @@ struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar, cvar_t *sizeCvar )
 void CG_DrawScoreboard( void )
 {
 	int pass;
-	char *ptr, *token, *layout, title[MAX_CONFIGSTRING_CHARS], type;
+	const char *ptr, *token, *layout;
+	char title[MAX_CONFIGSTRING_CHARS], type;
 	int team = TEAM_PLAYERS;
 	int xpos;
 	int ypos, yoffset, maxyoffset;
@@ -889,7 +890,7 @@ void CG_DrawScoreboard( void )
 	// calculate the panel width from the layout
 	panelWidth = 0;
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
-	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width, font ) != NULL )
+	while( SCR_GetNextColumnLayout( &layout, NULL, &type, &width, font ) != NULL )
 	{
 		if( !SCR_SkipColumn( type ) )
 			panelWidth += width;
@@ -911,25 +912,35 @@ void CG_DrawScoreboard( void )
 			if ( !Q_stricmp( token, "&t" ) ) // team tab
 			{
 				yoffset = 0;
-				yoffset += SCR_DrawTeamTab( (const char **)&ptr, &team, xpos, ypos + yoffset, panelWidth, font, titlefont, pass );
+				yoffset += SCR_DrawTeamTab( &ptr, &team, xpos, ypos + yoffset, panelWidth, font, titlefont, pass );
 			}
 			else if ( !Q_stricmp( token, "&p" ) ) // player tab
 			{
-				yoffset += SCR_DrawPlayerTab( (const char **)&ptr, team, xpos, ypos + yoffset, panelWidth, font, pass );
+				yoffset += SCR_DrawPlayerTab( &ptr, team, xpos, ypos + yoffset, panelWidth, font, pass );
 			}
 			else if ( !Q_stricmp( token, "&w" ) ) // list of challengers
 			{
 				if ( yoffset < maxyoffset )
 					yoffset = maxyoffset;
 
-				maxyoffset += SCR_DrawChallengers( (const char **)&ptr, xpos, ypos + yoffset, panelWidth, font, pass );
+				maxyoffset += SCR_DrawChallengers( &ptr, xpos, ypos + yoffset, panelWidth, font, pass );
 			}
 			else if ( !Q_stricmp( token, "&s" ) ) // list of spectators
 			{
 				if ( yoffset < maxyoffset )
 					yoffset = maxyoffset;
 
-				maxyoffset += SCR_DrawSpectators( (const char **)&ptr, xpos, ypos + yoffset, panelWidth, font, pass );
+				maxyoffset += SCR_DrawSpectators( &ptr, xpos, ypos + yoffset, panelWidth, font, true, "Spectators", colorYellow, pass );
+			}
+			else if( !Q_stricmp( token, "&y" ) ) // list of chasers
+			{
+				if( yoffset < maxyoffset )
+					yoffset = maxyoffset;
+
+				if( cg_showChasers->integer )
+					maxyoffset += SCR_DrawSpectators( &ptr, xpos, ypos + yoffset, panelWidth, font, false, "Chasers", colorOrange, pass );
+				else
+					SCR_IgnoreSpectators( &ptr, false );
 			}
 
 			if ( yoffset > maxyoffset )

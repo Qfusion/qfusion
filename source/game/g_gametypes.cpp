@@ -191,7 +191,7 @@ static void G_Gametype_GENERIC_ThinkRules( void )
 		return;
 }
 
-char *G_Gametype_GENERIC_ScoreboardMessage( void )
+void G_Gametype_GENERIC_ScoreboardMessage( void )
 {
 	char entry[MAX_TOKEN_CHARS];
 	size_t len;
@@ -240,7 +240,7 @@ char *G_Gametype_GENERIC_ScoreboardMessage( void )
 		}
 	}
 
-	return scoreboardString;
+	// The result is stored in the global scoreboardString variable.
 }
 
 void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team )
