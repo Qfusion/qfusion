@@ -29,6 +29,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef AASINTERN
 void AAS_InitAASLinkHeap(void);
 void AAS_InitAASLinkedEntities(void);
@@ -67,3 +71,6 @@ int AAS_PointReachabilityAreaIndex( vec3_t point );
 //returns the plane the given face is in
 void AAS_FacePlane(int facenum, vec3_t normal, float *dist);
 
+#ifdef __cplusplus
+}
+#endif

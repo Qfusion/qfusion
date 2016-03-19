@@ -29,6 +29,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef AASINTERN
 //initialize calculating the reachabilities
 void AAS_InitReachability(void);
@@ -66,3 +70,7 @@ int AAS_AreaLadder(int areanum);
 int AAS_AreaJumpPad(int areanum);
 //returns true if the area is donotenter
 int AAS_AreaDoNotEnter(int areanum);
+
+#ifdef __cplusplus
+}
+#endif

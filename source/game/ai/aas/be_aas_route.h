@@ -29,6 +29,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef AASINTERN
 //initialize the AAS routing
 void AAS_InitRouting(void);
@@ -64,4 +68,6 @@ int AAS_PredictRoute(struct aas_predictroute_s *route, int areanum, vec3_t origi
 							int goalareanum, int travelflags, int maxareas, int maxtime,
 							int stopevent, int stopcontents, int stoptfl, int stopareanum);
 
-
+#ifdef __cplusplus
+}
+#endif
