@@ -44,6 +44,8 @@ bool    BOT_ServerCommand( void );
 // ai_main.c
 void        AI_InitLevel( void );
 void        AI_Shutdown( void );
+// Should be called before all entities (including clients) think
+void        AI_CommonFrame( void );
 void		AI_AddGoalEntity( edict_t *ent );
 void		AI_AddGoalEntityCustom( edict_t *ent );
 void		AI_AddNavigatableEntity( edict_t *ent, int node );

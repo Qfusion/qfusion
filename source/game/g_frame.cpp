@@ -812,6 +812,7 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 
 	// run the world
 	G_asCallMapPreThink();
+	AI_CommonFrame();
 	G_RunClients();
 	G_RunEntities();
 	G_RunGametype();
