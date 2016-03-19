@@ -198,7 +198,7 @@ static bool G_CanSpawnEntity( edict_t *ent )
 		return false;
 	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() == 1 ) ) && st.notduel )
 		return false;
-	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() > 1 ) ) && st.notteam )
+	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() != 1 ) ) && st.notteam )
 		return false;
 	if( st.notsingle )
 		return false; // we don't have proper sinle player mode yet
