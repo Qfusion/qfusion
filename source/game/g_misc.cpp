@@ -168,7 +168,6 @@ void BecomeExplosion1( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //TELEPORT : &1 instant move to next target
 //-------- NOTES --------
@@ -252,7 +251,6 @@ void SP_info_null( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- NOTES --------
 //A target_position can be used instead of this but was kept in for legacy purposes.
 void SP_info_notnull( edict_t *self )
@@ -270,7 +268,6 @@ void SP_info_notnull( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- NOTES --------
 //It was created to mark camp spots for monsters and bots, but it isn't used anymore and is only kept in for legacy purposes.
 void SP_info_camp( edict_t *self )
@@ -339,7 +336,6 @@ void SP_light( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //TRIGGER_SPAWN : &1 the wall will not be present until triggered it will then blink in to existance; it will kill anything that was in its way
 //TOGGLE : &2 only valid for TRIGGER_SPAWN walls this allows the wall to be turned on and off
@@ -424,7 +420,6 @@ void SP_func_wall( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- NOTES --------
 //When using the model2 key, the origin point of the model will correspond to the origin point defined by either the origin brush or the origin coordinate value. If a model is included with a targeted func_static, the brush(es) of the entity will be removed from the game but the .md3 model won't: it will automatically be moved to the (0 0 0) world origin so you should NOT include an .md3 model to a targeted func_static.
 
@@ -450,7 +445,6 @@ void SP_func_static( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //TRIGGER_SPAWN : &1 spawn this entity when target is fired
 //-------- NOTES --------
@@ -538,7 +532,6 @@ void SP_func_object( edict_t *self )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- SPAWNFLAGS --------
 //TRIGGER_SPAWN : &1 spawn this entity when target is fired
 //-------- NOTES --------
@@ -734,7 +727,6 @@ void SP_light_mine( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- NOTES --------
 //Does the same thing as info_teleport_destination
 void SP_misc_teleporter_dest( edict_t *ent )
@@ -765,7 +757,6 @@ void SP_misc_model( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //-------- NOTES --------
 //The entity must be no farther than 64 units away from the portal surface to lock onto it. To make a mirror, apply the common/mirror shader to the surface, place this entity near it but don't target a misc_portal_camera.
 
@@ -870,7 +861,6 @@ void SP_misc_portal_surface( edict_t *ent )
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //noents : ignore entities, only render world surfaces
 //-------- SPAWNFLAGS --------
 //SLOWROTATE : makes the portal camera rotate slowly along the roll axis.
