@@ -253,7 +253,7 @@ static bool G_CanSpawnEntity( edict_t *ent )
 bool G_CallSpawn( edict_t *ent )
 {
 	spawn_t	*s;
-	gsitem_t	*item;
+	gsitem_t *item;
 
 	if( !ent->classname )
 	{
@@ -279,8 +279,8 @@ bool G_CallSpawn( edict_t *ent )
 	}
 
 	// see if there's a spawn definition in the gametype scripts
-	ent->scriptSpawned = G_asCallMapEntitySpawnScript( ent->classname, ent );
-	if( ent->scriptSpawned ) {
+	if( G_asCallMapEntitySpawnScript( ent->classname, ent ) )
+	{
 		return true; // handled by the script
 	}
 

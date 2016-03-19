@@ -3543,8 +3543,9 @@ bool G_asCallMapEntitySpawnScript( const char *classname, edict_t *ent )
 		return false;
 	}
 
-	// the spawn function may remove the entity
-	return ent->r.inuse == true;
+	// check the inuse flag because the entity might have been removed at the spawn
+	ent->scriptSpawned = ent->r.inuse;
+	return true;
 }
 
 /*
