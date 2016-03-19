@@ -76,6 +76,7 @@ const field_t fields[] = {
 	{ "weight", STOFS( weight ), F_INT, FFL_SPAWNTEMP },
 	{ "scale", STOFS( scale ), F_FLOAT, FFL_SPAWNTEMP },
 	{ "gametype", STOFS( gametype ), F_LSTRING, FFL_SPAWNTEMP },
+	{ "not_gametype", STOFS( not_gametype ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "debris1", STOFS( debris1 ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "debris2", STOFS( debris2 ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "shaderName", STOFS( shaderName ), F_LSTRING, FFL_SPAWNTEMP },
@@ -207,6 +208,11 @@ static bool G_CanSpawnEntity( edict_t *ent )
 	if( st.gametype )
 	{
 		if( !strstr( st.gametype, gs.gametypeName ) )
+			return false;
+	}
+	if( st.not_gametype )
+	{
+		if( strstr( st.not_gametype, gs.gametypeName ) )
 			return false;
 	}
 
