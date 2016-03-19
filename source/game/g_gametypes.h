@@ -235,7 +235,7 @@ void G_Teams_CoachUnLockTeam( edict_t *ent );
 void G_Teams_CoachRemovePlayer( edict_t *ent );
 
 bool G_Gametype_Exists( const char *name );
-char *G_Gametype_GENERIC_ScoreboardMessage( void );
+void G_Gametype_GENERIC_ScoreboardMessage( void );
 void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team );
 
 #endif //  __G_GAMETYPE_H__
