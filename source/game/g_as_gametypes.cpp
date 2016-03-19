@@ -215,7 +215,8 @@ void GT_asCallScoreEvent( gclient_t *client, const char *score_event, const char
 }
 
 //"String @GT_ScoreboardMessage( uint maxlen )"
-char *GT_asCallScoreboardMessage( unsigned int maxlen )
+// The result is stored in scoreboardString.
+void GT_asCallScoreboardMessage( unsigned int maxlen )
 {
 	asstring_t *string;
 	int error;
@@ -224,13 +225,13 @@ char *GT_asCallScoreboardMessage( unsigned int maxlen )
 	scoreboardString[0] = 0;
 
 	if( !level.gametype.scoreboardMessageFunc )
-		return NULL;
+		return;
 
 	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>(level.gametype.scoreboardMessageFunc) );
 	if( error < 0 ) 
-		return NULL;
+		return;
 
 	// Now we need to pass the parameters to the script function.
 	ctx->SetArgDWord( 0, maxlen );
@@ -241,11 +242,9 @@ char *GT_asCallScoreboardMessage( unsigned int maxlen )
 
 	string = ( asstring_t * )ctx->GetReturnObject( );
 	if( !string || !string->len || !string->buffer )
-		return NULL;
+		return;
 
 	Q_strncpyz( scoreboardString, string->buffer, sizeof( scoreboardString ) );
-
-	return scoreboardString;
 }
 
 //"Entity @GT_SelectSpawnPoint( Entity @ent )"

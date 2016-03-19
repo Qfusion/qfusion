@@ -41,24 +41,21 @@ void G_UpdateScoreBoardMessages( void )
 	int i;
 	edict_t	*ent;
 	gclient_t *client;
-	const char *scoreBoardMessage = "";
 	bool forcedUpdate = false;
-	char string[MAX_STRING_CHARS];
-	size_t maxlen;
+	char command[MAX_STRING_CHARS];
+	size_t maxlen, staticlen;
 
 	// fixme : mess of copying
 	maxlen = MAX_STRING_CHARS - ( strlen( "scb \"\"" + 4 ) );
 
 	if( game.asEngine != NULL )
-		scoreBoardMessage = GT_asCallScoreboardMessage( maxlen );
+		GT_asCallScoreboardMessage( maxlen );
 	else
-		scoreBoardMessage = G_Gametype_GENERIC_ScoreboardMessage();
+		G_Gametype_GENERIC_ScoreboardMessage();
 
 	G_ScoreboardMessage_AddSpectators();
 
-	Q_strncpyz( string, scoreBoardMessage ? scoreBoardMessage : "", maxlen );
-	Q_snprintfz( scoreboardString, sizeof( scoreboardString ), "scb \"%s\"", string );
-	scoreBoardMessage = scoreboardString;
+	staticlen = strlen( scoreboardString );
 
 update:
 	// send to players who have scoreboard visible
@@ -75,8 +72,15 @@ update:
 
 		if( forcedUpdate || ( client->ps.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD ) )
 		{
+			scoreboardString[staticlen] = '\0';
+			if( client->resp.chase.active )
+				G_ScoreboardMessage_AddChasers( client->resp.chase.target, ENTNUM( ent ) );
+			else
+				G_ScoreboardMessage_AddChasers( ENTNUM( ent ), ENTNUM( ent ) );
+			Q_snprintfz( command, sizeof( command ), "scb \"%s\"", scoreboardString );
+
 			client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime%scoreboardInterval );
-			trap_GameCmd( ent, scoreBoardMessage );
+			trap_GameCmd( ent, command );
 			trap_GameCmd( ent, G_PlayerStatsMessage( ent ) );
 		}
 	}
@@ -181,6 +185,39 @@ void G_ScoreboardMessage_AddSpectators( void )
 			Q_snprintfz( entry, sizeof( entry ), "%i %i ", PLAYERNUM( e ), -1 );
 			ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 		}
+	}
+}
+
+void G_ScoreboardMessage_AddChasers( int entnum, int entnum_self )
+{
+	char entry[MAX_TOKEN_CHARS];
+	int i;
+	edict_t *e;
+	size_t len;
+
+	len = strlen( scoreboardString );
+	if( !len )
+		return;
+
+	// add personal spectators
+	Q_strncpyz( entry, "&y ", sizeof( entry ) );
+	ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
+
+	for( i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ )
+	{
+		e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[i];
+
+		if( ENTNUM( e ) == entnum_self )
+			continue;
+
+		if( e->r.client->connecting || trap_GetClientState( PLAYERNUM( e ) ) < CS_SPAWNED )
+			continue;
+
+		if( !e->r.client->resp.chase.active || e->r.client->resp.chase.target != entnum )
+			continue;
+
+		Q_snprintfz( entry, sizeof( entry ), "%i ", PLAYERNUM( e ) );
+		ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 	}
 }
 
