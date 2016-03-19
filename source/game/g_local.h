@@ -752,7 +752,7 @@ void GClip_SetAreaPortalState( edict_t *ent, bool open );
 void GClip_LinkEntity( edict_t *ent );
 void GClip_UnlinkEntity( edict_t *ent );
 void GClip_TouchTriggers( edict_t *ent );
-void G_PMoveTouchTriggers( pmove_t *pm );
+void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin );
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
 int GClip_FindRadius( vec3_t org, float rad, int *list, int maxcount );
 
@@ -986,6 +986,7 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 void G_AwardPlayerPickup( edict_t *self, edict_t *item );
 void G_AwardResetPlayerComboStats( edict_t *ent );
 void G_AwardRaceRecord( edict_t *self );
+void G_DeathAwards( edict_t *ent );
 
 /**
  * Gives the player the Fair Play award if all conditions are met.
