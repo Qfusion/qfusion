@@ -191,6 +191,8 @@ static gsitem_t *G_ItemForEntity( edict_t *ent )
 static bool G_CanSpawnEntity( edict_t *ent )
 {
 	gsitem_t *item;
+	char *tok, *temp;
+	const char *list_separators = ", ";
 
 	if( ent == world )
 		return true;
@@ -207,13 +209,29 @@ static bool G_CanSpawnEntity( edict_t *ent )
 	// check for Q3TA-style inhibition key
 	if( st.gametype )
 	{
-		if( !strstr( st.gametype, gs.gametypeName ) )
-			return false;
+		temp = G_CopyString( st.gametype );
+		tok = strtok( temp, list_separators );
+		while( tok ) {
+			if( !Q_stricmp( tok, gs.gametypeName ) ) {
+				G_Free( temp );
+				return false;
+			}
+			tok = strtok( NULL, list_separators );
+		}
+		G_Free( temp );
 	}
 	if( st.not_gametype )
 	{
-		if( strstr( st.not_gametype, gs.gametypeName ) )
-			return false;
+		temp = G_CopyString( st.not_gametype );
+		tok = strtok( temp, list_separators );
+		while( tok ) {
+			if( Q_stricmp( tok, gs.gametypeName ) ) {
+				G_Free( temp );
+				return false;
+			}
+			tok = strtok( NULL, list_separators );
+		}
+		G_Free( temp );
 	}
 
 	if( ( item = G_ItemForEntity( ent ) ) != NULL )
