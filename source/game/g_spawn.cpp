@@ -207,30 +207,39 @@ static bool G_CanSpawnEntity( edict_t *ent )
 	// check for Q3TA-style inhibition key
 	if( st.gametype )
 	{
+		bool filtered = true;
+
 		temp = G_CopyString( st.gametype );
 		tok = strtok( temp, list_separators );
 		while( tok ) {
 			if( !Q_stricmp( tok, gs.gametypeName ) ) {
-				G_Free( temp );
-				return true;
+				filtered = false;
+				break;
 			}
 			tok = strtok( NULL, list_separators );
 		}
 		G_Free( temp );
-		return false;
+
+		if( filtered )
+			return false;
 	}
 	if( st.not_gametype )
 	{
+		bool filtered = false;
+
 		temp = G_CopyString( st.not_gametype );
 		tok = strtok( temp, list_separators );
 		while( tok ) {
 			if( !Q_stricmp( tok, gs.gametypeName ) ) {
-				G_Free( temp );
-				return false;
+				filtered = true;
+				break;
 			}
 			tok = strtok( NULL, list_separators );
 		}
 		G_Free( temp );
+
+		if( filtered )
+			return false;
 	}
 
 	if( ( item = G_ItemForEntity( ent ) ) != NULL )
