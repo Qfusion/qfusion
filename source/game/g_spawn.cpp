@@ -186,13 +186,36 @@ static gsitem_t *G_ItemForEntity( edict_t *ent )
 }
 
 /*
+* G_GametypeFilterMatch
+*
+* Returns true if there's a direct match
+*/
+static bool G_GametypeFilterMatch( const char *filter )
+{
+	const char *list_separators = ", ";
+	char *tok, *temp;
+	bool match = false;
+
+	temp = G_CopyString( filter );
+	tok = strtok( temp, list_separators );
+	while( tok ) {
+		if( !Q_stricmp( tok, gs.gametypeName ) ) {
+			match = true;
+			break;
+		}
+		tok = strtok( NULL, list_separators );
+	}
+	G_Free( temp );
+
+	return match;
+}
+
+/*
 * G_CanSpawnEntity
 */
 static bool G_CanSpawnEntity( edict_t *ent )
 {
 	gsitem_t *item;
-	char *tok, *temp;
-	const char *list_separators = ", ";
 
 	if( ent == world )
 		return true;
@@ -207,38 +230,12 @@ static bool G_CanSpawnEntity( edict_t *ent )
 	// check for Q3TA-style inhibition key
 	if( st.gametype )
 	{
-		bool filtered = true;
-
-		temp = G_CopyString( st.gametype );
-		tok = strtok( temp, list_separators );
-		while( tok ) {
-			if( !Q_stricmp( tok, gs.gametypeName ) ) {
-				filtered = false;
-				break;
-			}
-			tok = strtok( NULL, list_separators );
-		}
-		G_Free( temp );
-
-		if( filtered )
+		if( !G_GametypeFilterMatch( st.gametype ) )
 			return false;
 	}
 	if( st.not_gametype )
 	{
-		bool filtered = false;
-
-		temp = G_CopyString( st.not_gametype );
-		tok = strtok( temp, list_separators );
-		while( tok ) {
-			if( !Q_stricmp( tok, gs.gametypeName ) ) {
-				filtered = true;
-				break;
-			}
-			tok = strtok( NULL, list_separators );
-		}
-		G_Free( temp );
-
-		if( filtered )
+		if( G_GametypeFilterMatch( st.not_gametype ) )
 			return false;
 	}
 
