@@ -212,11 +212,12 @@ static bool G_CanSpawnEntity( edict_t *ent )
 		while( tok ) {
 			if( !Q_stricmp( tok, gs.gametypeName ) ) {
 				G_Free( temp );
-				return false;
+				return true;
 			}
 			tok = strtok( NULL, list_separators );
 		}
 		G_Free( temp );
+		return false;
 	}
 	if( st.not_gametype )
 	{
