@@ -199,7 +199,7 @@ static bool G_CanSpawnEntity( edict_t *ent )
 
 	if( !GS_TeamBasedGametype() && st.notfree )
 		return false;
-	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() == 1 ) ) && st.notduel )
+	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() == 1 ) ) && ( st.notduel || st.notfree ) )
 		return false;
 	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() != 1 ) ) && st.notteam )
 		return false;
