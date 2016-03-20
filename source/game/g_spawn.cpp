@@ -224,7 +224,7 @@ static bool G_CanSpawnEntity( edict_t *ent )
 		temp = G_CopyString( st.not_gametype );
 		tok = strtok( temp, list_separators );
 		while( tok ) {
-			if( Q_stricmp( tok, gs.gametypeName ) ) {
+			if( !Q_stricmp( tok, gs.gametypeName ) ) {
 				G_Free( temp );
 				return false;
 			}
