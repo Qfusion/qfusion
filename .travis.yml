@@ -8,7 +8,10 @@ matrix:
       env: QF_ARCH=win32_x86
       addons:
         apt:
+          sources:
+            - kubuntu-backports
           packages:
+            - cmake-2.8.12
             - binutils-mingw-w64-i686
             - binutils-mingw-w64-x86-64
             - gcc-mingw-w64-i686
@@ -22,7 +25,10 @@ matrix:
       env: QF_ARCH=win32_x86_64
       addons:
         apt:
+          sources:
+            - kubuntu-backports
           packages:
+            - cmake-2.8.12
             - binutils-mingw-w64-i686
             - binutils-mingw-w64-x86-64
             - gcc-mingw-w64-i686
