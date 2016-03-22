@@ -7,7 +7,7 @@ services:
 
 before_install:
   - docker build -t warsow/qfusion-win32_x86_64:latest -f docker/win32_x86_64/Dockerfile .
-  - docker run --rm -i -t warsow/qfusion-win32_x86_64:latest /bin/sh -c "/bin/sh"
+  - docker run --rm -i -t warsow/qfusion-win32_x86_64:latest /bin/sh -c "make -j2"
 
 script:
   - make
