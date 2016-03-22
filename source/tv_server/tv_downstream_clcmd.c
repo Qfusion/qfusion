@@ -559,8 +559,7 @@ void TV_Cmd_Say_f( client_t *client, bool arg0 )
 	}
 
 	// don't let text be too long for malicious reasons
-	if( strlen( text ) > 150 )
-		text[150] = 0;
+	text[MAX_CHAT_BYTES - 1] = 0;
 
 	Q_strncatz( text, "\n", sizeof( text ) );
 
