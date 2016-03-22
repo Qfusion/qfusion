@@ -44,5 +44,5 @@ before_install:
   - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake; fi
 
 script:
-  - make
+  - make -j2
 
