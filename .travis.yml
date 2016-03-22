@@ -9,7 +9,11 @@ matrix:
       addons:
         apt:
           packages:
+            - gcc-mingw-w64-i686
+            - gcc-mingw-w64-x86-64
             - gcc-mingw-w64
+            - g++-mingw-w64-i686
+            - g++-mingw-w64-x86-64
             - g++-mingw-w64
             - mingw-w64
     - os: linux
@@ -17,7 +21,11 @@ matrix:
       addons:
         apt:
           packages:
+            - gcc-mingw-w64-i686
+            - gcc-mingw-w64-x86-64
             - gcc-mingw-w64
+            - g++-mingw-w64-i686
+            - g++-mingw-w64-x86-64
             - g++-mingw-w64
             - mingw-w64
 
