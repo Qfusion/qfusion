@@ -1,6 +1,7 @@
 sudo: false
 language: c++
 install: true
+cache: apt
 
 matrix:
   include:
