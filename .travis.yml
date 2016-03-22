@@ -1,20 +1,29 @@
-sudo: required
-
+sudo: false
 language: c++
 install: true
 
-services:
-  - docker
+matrix:
+  include:
+    - os: linux
+      env: QF_ARCH=win32_x86
+      addons:
+        apt:
+          packages:
+            - cmake
+            - mingw-w64
+    - os: linux
+      env: QF_ARCH=win32_x86_64
+      addons:
+        apt:
+          packages:
+            - cmake
+            - mingw-w64
 
-before_install:
-  - docker build -t warsow/qfusion-x8_64:latest -f docker/x86_64/Dockerfile .
-  - docker build -t warsow/qfusion-win32_x86_64:latest -f docker/win32_x86_64/Dockerfile .
-  - docker build -t warsow/qfusion-x86:latest -f docker/x86/Dockerfile .
-  - docker build -t warsow/qfusion-win32_x86:latest -f docker/win32_x86/Dockerfile .
+before install:
+  - if [[ "$QF_ARCH" == "win32_x86" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i686-mingw.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32; fi
+  - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake; fi
 
 script:
-  - docker run --rm -i -t warsow/qfusion-x86_64:latest /bin/sh -c "make -j2"
-  - docker run --rm -i -t warsow/qfusion-win32_x86_64:latest /bin/sh -c "make -j2"
-  - docker run --rm -i -t warsow/qfusion-x86:latest /bin/sh -c "make -j2"
-  - docker run --rm -i -t warsow/qfusion-win32_x86:latest /bin/sh -c "make -j2"
+  - cd source
+  - make
 
