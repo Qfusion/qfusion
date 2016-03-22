@@ -1,4 +1,5 @@
 #include "bot.h"
+#include "aas/aasfile.h"
 #include <algorithm>
 
 Bot::Bot(edict_t *self)
@@ -6,6 +7,11 @@ Bot::Bot(edict_t *self)
       dangersDetector(self),
       enemyPool(self),
       printLink(false),
+      isBunnyHopping(false),
+      hasTriggeredRj(false),
+      rjTimeout(0),
+      combatMovePushTimeout(0),
+      vsayTimeout(level.time + 10000),
       pendingLookAtPoint(0, 0, 0),
       pendingLookAtPointTimeoutAt(0),
       hasPendingLookAtPoint(false),
@@ -61,39 +67,53 @@ void Bot::ApplyPendingTurnToLookAtPoint()
 
 void Bot::RegisterVisibleEnemies()
 {
-    nav_ents_t *goalEnt;
-
     if(G_ISGHOSTING(self) || GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled())
-    {
-        self->ai->enemyReactionDelay = 0;
-        self->enemy = self->ai->latched_enemy = NULL;
         return;
-    }
 
-    FOREACH_GOALENT( goalEnt )
+
+    /*
+    FOREACH_GOALENT(goalEnt)
     {
         int i = goalEnt->id;
 
         if( !goalEnt->ent || !goalEnt->ent->r.inuse )
             continue;
 
-        if( !goalEnt->ent->r.client ) // this may be changed, there could be enemies which aren't clients
+        if(!goalEnt->ent->r.client) // this may be changed, there could be enemies which aren't clients
             continue;
 
-        if( G_ISGHOSTING( goalEnt->ent ) )
+        if (G_ISGHOSTING(goalEnt->ent))
             continue;
 
-        if( self->ai->status.entityWeights[i] <= 0 || goalEnt->ent->flags & (FL_NOTARGET|FL_BUSY) )
+        if (self->ai->status.entityWeights[i] <= 0 || goalEnt->ent->flags & (FL_NOTARGET|FL_BUSY) )
             continue;
 
-        if( GS_TeamBasedGametype() && goalEnt->ent->s.team == self->s.team )
+        if (GS_TeamBasedGametype() && goalEnt->ent->s.team == self->s.team)
             continue;
 
-        if( trap_inPVS( self->s.origin, goalEnt->ent->s.origin ) && G_Visible( self, goalEnt->ent ) )
+        if (trap_inPVS(self->s.origin, goalEnt->ent->s.origin) && G_Visible(self, goalEnt->ent))
         {
-            enemyPool.OnEnemyViewed( goalEnt->ent );
+            enemyPool.OnEnemyViewed(goalEnt->ent);
         }
-    }
+    }*/
+
+    // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients
+    /*
+    for (int i = 0; i < gs.maxclients; ++i)
+    {
+        edict_t *ent = game.edicts + i;
+        if (!ent->r.inuse || !ent->r.client)
+            continue;
+        if (G_ISGHOSTING(ent))
+            continue;
+        if (ent->flags & (FL_NOTARGET|FL_BUSY))
+            continue;
+        if (GS_TeamBasedGametype() && ent->s.team == self->s.team)
+            continue;
+
+        if (trap_inPVS(self->s.origin, ent->s.origin) && G_Visible(self, ent))
+            enemyPool.OnEnemyViewed(ent);
+    }*/
 
     enemyPool.AfterAllEnemiesViewed();
 }
@@ -111,9 +131,130 @@ bool Bot::ChangeWeapon(int weapon)
 
     // Change to this weapon
     self->r.client->ps.stats[STAT_PENDING_WEAPON] = weapon;
-    self->ai->changeweapon_timeout = level.time + 2000 + ( 4000 * ( 1.0 - self->ai->pers.skillLevel ) );
 
     return true;
+}
+
+float Bot::ComputeItemWeight(const edict_t *ent, bool onlyGotGB) const
+{
+    switch (ent->item->type)
+    {
+        case IT_WEAPON: return ComputeWeaponWeight(ent, onlyGotGB);
+        case IT_AMMO: return ComputeAmmoWeight(ent);
+        case IT_HEALTH: return ComputeHealthWeight(ent);
+        case IT_ARMOR: return ComputeArmorWeight(ent);
+        case IT_POWERUP: return ComputePowerupWeight(ent);
+    }
+    return 0;
+}
+
+float Bot::ComputeWeaponWeight(const edict_t *ent, bool onlyGotGB) const
+{
+    if (Inventory()[ent->item->tag])
+    {
+        // TODO: Precache
+        const gsitem_t *ammo = GS_FindItemByTag(ent->item->ammo_tag);
+        if (Inventory()[ammo->tag] >= ammo->inventory_max)
+            return 0;
+
+        float ammoQuantityFactor = 1.0f - Inventory()[ammo->tag] / (float)ammo->inventory_max;
+
+        switch (ent->item->tag)
+        {
+            case WEAP_ELECTROBOLT: return ammoQuantityFactor;
+            case WEAP_LASERGUN: return ammoQuantityFactor * 1.1f;
+            case WEAP_PLASMAGUN: return ammoQuantityFactor * 1.1f;
+            case WEAP_ROCKETLAUNCHER: return ammoQuantityFactor;
+            default: return 0.5f * ammoQuantityFactor;
+        }
+    }
+
+    // We may consider plasmagun in a bot's hand as a top tier weapon too
+    const int topTierWeapons[4] = { WEAP_ELECTROBOLT, WEAP_LASERGUN, WEAP_ROCKETLAUNCHER, WEAP_PLASMAGUN };
+
+    // TODO: Precompute
+    float topTierWeaponGreed = 0.0f;
+    for (int i = 0; i < 4; ++i)
+    {
+        if (!Inventory()[topTierWeapons[i]])
+            topTierWeaponGreed += 1.0f;
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+        if (topTierWeapons[i] == ent->item->tag)
+            return (onlyGotGB ? 1.5f : 0.9f) + (topTierWeaponGreed - 1.0f) / 3.0f;
+    }
+
+    return onlyGotGB ? 1.5f : 0.7f;
+}
+
+float Bot::ComputeAmmoWeight(const edict_t *ent) const
+{
+    if (Inventory()[ent->item->tag] < ent->item->inventory_max)
+    {
+        float quantityFactor = 1.0f - Inventory()[ent->item->tag] / (float)ent->item->inventory_max;
+
+        for (int weapon = WEAP_GUNBLADE; weapon < WEAP_TOTAL; weapon++)
+        {
+            // TODO: Preache
+            const gsitem_t *weaponItem = GS_FindItemByTag( weapon );
+            if (weaponItem->ammo_tag == ent->item->tag)
+            {
+                if (Inventory()[weaponItem->tag])
+                {
+                    switch (weaponItem->tag)
+                    {
+                        case WEAP_ELECTROBOLT: return quantityFactor;
+                        case WEAP_LASERGUN: return quantityFactor * 1.1f;
+                        case WEAP_PLASMAGUN: return quantityFactor * 1.1f;
+                        case WEAP_ROCKETLAUNCHER: return quantityFactor;
+                        default: return 0.5f * quantityFactor;
+                    }
+                }
+                return quantityFactor * 0.33f;
+            }
+        }
+    }
+    return 0.0;
+}
+
+float Bot::ComputeHealthWeight(const edict_t *ent) const
+{
+    if (ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA)
+        return 2.5f;
+
+    if (ent->item->tag == HEALTH_SMALL)
+        return 0.2f + 0.3f * (1.0f - self->health / (float)self->max_health);
+
+    return std::max(0.0f, 1.0f - self->health / (float)self->max_health);
+}
+
+float Bot::ComputeArmorWeight(const edict_t *ent) const
+{
+    float currArmor = self->r.client->resp.armor;
+    switch (ent->item->tag)
+    {
+        case ARMOR_RA:
+            return currArmor < 150.0f ? 2.0f : 0.0f;
+        case ARMOR_YA:
+            return currArmor < 125.0f ? 1.7f : 0.0f;
+        case ARMOR_GA:
+            return currArmor < 100.0f ? 1.4f : 0.0f;
+        case ARMOR_SHARD:
+        {
+            if (currArmor < 25 || currArmor >= 150)
+                return 0.4f;
+            return 0.25f;
+        }
+    }
+    return 0;
+}
+
+float Bot::ComputePowerupWeight(const edict_t *ent) const
+{
+    // TODO: Make it dependent of current health/armor status;
+    return 3.5f;
 }
 
 //==========================================
@@ -123,144 +264,31 @@ bool Bot::ChangeWeapon(int weapon)
 //==========================================
 void Bot::UpdateStatus()
 {
-    float LowNeedFactor = 0.5;
-    gclient_t *client;
-    int i;
+    // Compute it once, not on each loop step
     bool onlyGotGB = true;
-    edict_t *ent;
-    ai_handle_t *ai;
-    nav_ents_t *goalEnt;
-
-    client = self->r.client;
-
-    ai = self->ai;
-
-    FOREACH_GOALENT( goalEnt )
+    for (int weapon = WEAP_GUNBLADE + 1; weapon < WEAP_TOTAL; ++weapon)
     {
-        i = goalEnt->id;
-        ent = goalEnt->ent;
-
-        // item timing disabled by now
-        if( ent->r.solid == SOLID_NOT )
+        if (Inventory()[weapon])
         {
-            ai->status.entityWeights[i] = 0;
-            continue;
-        }
-
-        if( ent->r.client )
-        {
-            ai->status.entityWeights[i] = enemyPool.PlayerAiWeight( ent );
-            continue;
-        }
-
-        if( ent->item )
-        {
-            if( ent->r.solid == SOLID_NOT )
-            {
-                ai->status.entityWeights[i] = 0;
-                continue;
-            }
-
-            if( ent->item->type & IT_WEAPON )
-            {
-                if( client->ps.inventory[ent->item->tag] )
-                {
-                    if( client->ps.inventory[ent->item->ammo_tag] )
-                    {
-                        // find ammo item for this weapon
-                        gsitem_t *ammoItem = GS_FindItemByTag( ent->item->ammo_tag );
-                        if( ammoItem->inventory_max )
-                        {
-                            ai->status.entityWeights[i] *= (0.5 + 0.5 * (1.0 - (float)client->ps.inventory[ent->item->ammo_tag] / ammoItem->inventory_max));
-                        }
-                        ai->status.entityWeights[i] *= LowNeedFactor;
-                    }
-                    else
-                    {
-                        // we need some ammo
-                        ai->status.entityWeights[i] *= LowNeedFactor;
-                    }
-                    onlyGotGB = false;
-                }
-            }
-            else if( ent->item->type & IT_AMMO )
-            {
-                if( client->ps.inventory[ent->item->tag] >= ent->item->inventory_max )
-                {
-                    ai->status.entityWeights[i] = 0.0;
-                }
-                else
-                {
-#if 0
-                    // find weapon item for this ammo
-					gsitem_t *weaponItem;
-					int weapon;
-
-					for( weapon = WEAP_GUNBLADE; weapon < WEAP_TOTAL; weapon++ )
-					{
-						weaponItem = GS_FindItemByTag( weapon );
-						if( weaponItem->ammo_tag == ent->item->tag )
-						{
-							if( !client->ps.inventory[weaponItem->tag] )
-								self->ai->status.entityWeights[i] *= LowNeedFactor;
-						}
-					}
-#endif
-                }
-            }
-            else if( ent->item->type & IT_ARMOR )
-            {
-                if ( self->r.client->resp.armor < ent->item->inventory_max || !ent->item->inventory_max )
-                {
-                    if( ent->item->inventory_max )
-                    {
-                        if( ( (float)self->r.client->resp.armor / (float)ent->item->inventory_max ) > 0.75 )
-                            ai->status.entityWeights[i] = self->ai->pers.inventoryWeights[ent->item->tag] * LowNeedFactor;
-                    }
-                    else
-                        ai->status.entityWeights[i] = self->ai->pers.inventoryWeights[ent->item->tag];
-                }
-                else
-                {
-                    ai->status.entityWeights[i] = 0;
-                }
-            }
-            else if( ent->item->type & IT_HEALTH )
-            {
-                if( ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA || ent->item->tag == HEALTH_SMALL )
-                    ai->status.entityWeights[i] = self->ai->pers.inventoryWeights[ent->item->tag];
-                else
-                {
-                    if( self->health >= self->max_health )
-                        ai->status.entityWeights[i] = 0;
-                    else
-                    {
-                        float health_func;
-
-                        health_func = self->health / self->max_health;
-                        health_func *= health_func;
-
-                        ai->status.entityWeights[i] = self->ai->pers.inventoryWeights[ent->item->tag] + ( 1.1f - health_func );
-                    }
-                }
-            }
-            else if( ent->item->type & IT_POWERUP )
-            {
-                ai->status.entityWeights[i] = self->ai->pers.inventoryWeights[ent->item->tag];
-            }
+            onlyGotGB = false;
+            break;
         }
     }
 
-    if( onlyGotGB )
+    FOREACH_GOALENT(goalEnt)
     {
-        FOREACH_GOALENT( goalEnt )
-        {
-            i = goalEnt->id;
-            ent = goalEnt->ent;
+        self->ai->status.entityWeights[goalEnt->id] = 0;
 
-            if( ent->item && ent->item->type & IT_WEAPON )
-                self->ai->status.entityWeights[i] *= 2.0f;
-        }
+        // item timing disabled by now
+        if (goalEnt->ent->r.solid == SOLID_NOT)
+            continue;
+
+        // Picking clients as goal entities is currently disabled
+        if (goalEnt->ent->r.client)
+            continue;
+
+        if (goalEnt->ent->item)
+            self->ai->status.entityWeights[goalEnt->id] = ComputeItemWeight(goalEnt->ent, onlyGotGB);
     }
 }
 
@@ -290,18 +318,18 @@ void Bot::SayVoiceMessages()
         return;
     }
 
-    if( self->ai->vsay_timeout > level.time )
+    if (vsayTimeout > level.time)
         return;
 
     if( GS_MatchDuration() && game.serverTime + 4000 > GS_MatchEndTime() )
     {
-        self->ai->vsay_timeout = game.serverTime + ( 1000 + (GS_MatchEndTime() - game.serverTime) );
+        vsayTimeout = game.serverTime + ( 1000 + (GS_MatchEndTime() - game.serverTime) );
         if( rand() & 1 )
             G_BOTvsay_f( self, "goodgame", false );
         return;
     }
 
-    self->ai->vsay_timeout = level.time + ( ( 8+random()*12 ) * 1000 );
+    vsayTimeout = level.time + ( ( 8+random()*12 ) * 1000 );
 
     // the more bots, the less vsays to play
     if( random() > 0.1 + 1.0f / game.numBots )
@@ -372,11 +400,11 @@ void Bot::SayVoiceMessages()
 void Bot::BlockedTimeout()
 {
     if( level.gametype.dummyBots || bot_dummy->integer ) {
-        self->ai->blocked_timeout = level.time + 15000;
+        blockedTimeout = level.time + 15000;
         return;
     }
     self->health = 0;
-    self->ai->blocked_timeout = level.time + 15000;
+    blockedTimeout = level.time + 15000;
     self->die( self, self, self, 100000, vec3_origin );
     G_Killed( self, self, self, 999, vec3_origin, MOD_SUICIDE );
     self->nextThink = level.time + 1;
@@ -390,9 +418,10 @@ void Bot::GhostingFrame()
 {
     usercmd_t ucmd;
 
-    ClearGoal();
+    if (HasGoal())
+        ClearGoal();
 
-    self->ai->blocked_timeout = level.time + 15000;
+    blockedTimeout = level.time + 15000;
     self->nextThink = level.time + 100;
 
     // wait 4 seconds after entering the level
@@ -427,6 +456,12 @@ void Bot::GhostingFrame()
     ClientThink( self, &ucmd, 0 );
 }
 
+void Bot::OnRespawn()
+{
+    statusUpdateTimeout = 0;
+    stateCombatTimeout = 0;
+    combatMovePushTimeout = 0;
+}
 
 //==========================================
 // BOT_DMclass_RunFrame
@@ -434,13 +469,9 @@ void Bot::GhostingFrame()
 //==========================================
 void Bot::RunFrame()
 {
-    usercmd_t ucmd;
-    bool inhibitCombat = false;
-    int i;
-
     enemyPool.PrepareToFrame();
 
-    if( G_ISGHOSTING( self ) )
+    if (G_ISGHOSTING(self))
     {
         enemyPool.combatTask.Reset();
         enemyPool.combatTask.prevSpamEnemy = nullptr;
@@ -451,7 +482,8 @@ void Bot::RunFrame()
         return;
     }
 
-    memset( &ucmd, 0, sizeof( ucmd ) );
+    usercmd_t ucmd;
+    memset(&ucmd, 0, sizeof(ucmd));
 
     //get ready if in the game
     if( GS_MatchState() <= MATCH_STATE_WARMUP && !level.ready[PLAYERNUM(self)]
@@ -468,31 +500,32 @@ void Bot::RunFrame()
 
         const CombatTask &combatTask = enemyPool.combatTask;
 
-        inhibitCombat = ( CurrentLinkType() & (LINK_JUMPPAD|LINK_JUMP|LINK_ROCKETJUMP) ) != 0;
+        bool inhibitCombat = nextAreaReach->traveltype & (TRAVEL_JUMP|TRAVEL_ROCKETJUMP|TRAVEL_JUMPPAD);
+        inhibitCombat &= IsCloseToReachStart();
 
-        if( (combatTask.aimEnemy || combatTask.spamEnemy) && !inhibitCombat )
+        if ((combatTask.aimEnemy || combatTask.spamEnemy) && !inhibitCombat)
         {
-            if( FireWeapon( &ucmd ) )
+            if (FireWeapon(&ucmd))
             {
                 if (!combatTask.spamEnemy)
-                    self->ai->state_combat_timeout = level.time + AI_COMBATMOVE_TIMEOUT;
+                    stateCombatTimeout = level.time + AI_COMBATMOVE_TIMEOUT;
             }
         }
 
-        if( inhibitCombat )
-            self->ai->state_combat_timeout = 0;
+        if (inhibitCombat)
+            stateCombatTimeout = 0;
 
-        if( self->ai->state_combat_timeout > level.time )
+        if (stateCombatTimeout > level.time)
         {
-            CombatMovement( &ucmd );
+            CombatMovement(&ucmd);
         }
         else
         {
-            Move( &ucmd );
+            Move(&ucmd);
         }
 
         //set up for pmove
-        for( i = 0; i < 3; i++ )
+        for (int i = 0; i < 3; i++)
             ucmd.angles[i] = ANGLE2SHORT( self->s.angles[i] ) - self->r.client->ps.pmove.delta_angles[i];
 
         VectorSet( self->r.client->ps.pmove.delta_angles, 0, 0, 0 );

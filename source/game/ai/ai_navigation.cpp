@@ -24,291 +24,147 @@ in NO WAY supported by Steve Yeager.
 */
 
 #include "ai_local.h"
+#include "aas.h"
 
-ai_navigation_t	nav;
-
-int Ai::FindCost( int from, int to, int movetypes )
+int Ai::FindCurrAASAreaNum()
 {
-	astarpath_t path;
-
-	if( !AStar_GetPath( from, to, movetypes, &path ) )
-		return -1;
-
-	return path.totalDistance;
-}
-
-int Ai::FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, unsigned int flagsmask )
-{
-	int i;
-	float closest;
-	float dist;
-	int node = -1;
-	trace_t	tr;
-	vec3_t maxs, mins;
-
-	VectorSet( mins, -8, -8, -8 );
-	VectorSet( maxs, 8, 8, 8 );
-
-	// For Ladders, do not worry so much about reachability
-	if( flagsmask & NODEFLAGS_LADDER )
+	int areaNum = AAS_PointAreaNum(self->s.origin);
+	if (!areaNum)
 	{
-		VectorCopy( vec3_origin, maxs );
-		VectorCopy( vec3_origin, mins );
-	}
-
-	closest = range;
-
-	for( i = 0; i < nav.num_nodes; i++ )
-	{
-		if( flagsmask == NODE_ALL || nodes[i].flags & flagsmask )
+		// Try all vertices of a bounding box
+		const float *mins = playerbox_stand_mins;
+		const float *maxs = playerbox_stand_maxs;
+		vec3_t point;
+		for (int i = 0; i < 8; ++i)
 		{
-			dist = DistanceFast( nodes[i].origin, origin );
+			VectorCopy(self->s.origin, point);
+			// Order of min/max pickup is shuffled to reduce worst case test calls count
+			point[0] += i & 1 ? mins[0] : maxs[0];
+			point[1] += i & 2 ? maxs[1] : mins[1];
+			point[2] += i & 4 ? mins[2] : maxs[2]; // Test upper bbox rectangle first
 
-			if( dist < closest )
-			{
-				// make sure it is visible
-				G_Trace( &tr, origin, mins, maxs, nodes[i].origin, passent, MASK_NODESOLID );
-				if( tr.fraction == 1.0 )
-				{
-					node = i;
-					closest = dist;
-				}
-			}
+			if (areaNum = AAS_PointAreaNum(point))
+				break;
 		}
 	}
-	return node;
-}
 
-int Ai::FindClosestNode( vec3_t origin, float mindist, int range, unsigned int flagsmask )
-{
-	int i;
-	float closest;
-	float dist;
-	int node = NODE_INVALID;
-
-	if( mindist > range ) return -1;
-
-	closest = range;
-
-	for( i = 0; i < nav.num_nodes; i++ )
-	{
-		if( flagsmask == NODE_ALL || nodes[i].flags & flagsmask )
-		{
-			dist = DistanceFast( nodes[i].origin, origin );
-			if( dist > mindist && dist < closest )
-			{
-				node = i;
-				closest = dist;
-			}
-		}
-	}
-	return node;
+	return areaNum;
 }
 
 void Ai::ClearGoal()
 {
-	self->ai->goal_node = NODE_INVALID;
-	self->ai->current_node = NODE_INVALID;
-	self->ai->next_node = NODE_INVALID;
-	self->ai->goalEnt = NULL;
-	self->ai->vsay_goalent = NULL;
-	self->ai->longRangeGoalTimeout = level.time; // pick a long range goal now
-	self->ai->shortRangeGoalTimeout = level.time; // pick a short range goal now
+	self->ai->goalEnt = nullptr;
+	self->goalentity = nullptr;
+	self->movetarget = nullptr;
 
-	VectorSet( self->ai->move_vector, 0, 0, 0 );
+	longRangeGoalTimeout = 0; // pick a long range goal now
+	shortRangeGoalTimeout = 0; // pick a short range goal now
+	statusUpdateTimeout = 0;
+
+	currAasAreaNum = FindCurrAASAreaNum();
+	nextAasAreaNum = 0;
+	currAasAreaNodeFlags = 0;
+	goalAasAreaNum = 0;
+	goalAasAreaNodeFlags = 0;
+
+	Debug("ClearGoal(): curr aas area num: %d\n", currAasAreaNum);
 }
 
-void Ai::SetGoal( int goal_node )
+void Ai::SetNextAreaReach(int reachNum)
 {
-	int node;
+	AAS_ReachabilityFromNum(reachNum, nextAreaReach);
+	nextAreaReachNum = reachNum;
+	nextAasAreaNum = nextAreaReach->areanum;
+	VectorCopy(nextAreaReach->start, currMoveTargetPoint.data());
+	Debug("SetNextAreaReach(reach num=%d): next aas area num: %d\n", reachNum, nextAasAreaNum);
+}
 
-	self->ai->goal_node = goal_node;
-	node = FindClosestReachableNode( self->s.origin, self, NODE_DENSITY * 3, NODE_ALL );
-
-	if( node == NODE_INVALID )
+void Ai::SetGoal(NavEntity *navEntity)
+{
+	// TODO: Check condition in original source
+	if (!navEntity->aasAreaNum)
 	{
+		const float *origin = navEntity->ent->s.origin;
+		constexpr const char *format = "Can't find AAS area num for entity %s with ent num %d at %f %f %f\n";
+		Debug(format, navEntity->ent->classname, ENTNUM(navEntity->ent), origin[0], origin[1], origin[2]);
 		ClearGoal();
 		return;
 	}
 
-	// ASTAR 
-	if( !AStar_GetPath( node, goal_node, self->ai->status.moveTypesMask, &self->ai->path ) )
+	if (currAasAreaNum == 0)
 	{
-		ClearGoal();
-		return;
-	}
-
-	self->ai->current_node = self->ai->path.nodes[self->ai->path.numNodes];
-
-	if( nav.debugMode && bot_showlrgoal->integer > 1 )
-		G_PrintChasersf( self, "%s: GOAL: new START NODE selected %d goal %d\n", self->ai->pers.netname, node, self->ai->goal_node );
-
-	self->ai->next_node = self->ai->current_node; // make sure we get to the nearest node first
-	self->ai->node_timeout = 0;
-	self->ai->longRangeGoalTimeout = 0;
-	self->ai->tries = 0; // Reset the count of how many times we tried this goal
-}
-
-bool Ai::NewNextNode()
-{
-	// reset timeout
-	self->ai->node_timeout = 0;
-
-	if( self->ai->next_node == self->ai->goal_node )
-	{
-		if( nav.debugMode && bot_showlrgoal->integer > 1 )
-			G_PrintChasersf( self, "%s: GOAL REACHED!\n", self->ai->pers.netname );
-
-		//if botroam, setup a timeout for it
-		/*
-		if( nodes[self->ai->goal_node].flags & NODEFLAGS_BOTROAM )
+		currAasAreaNum = FindCurrAASAreaNum();
+		if (currAasAreaNum == 0)
 		{
-		int i;
-		for( i = 0; i < nav.num_broams; i++ ) //find the broam
+			Debug("Still can't find curr AAS area\n");
+			ClearGoal();
+			return;
+		}
+	}
+
+	self->ai->goalEnt = navEntity;
+	self->goalentity = navEntity->ent;
+
+	goalAasAreaNum = navEntity->aasAreaNum;
+	goalAasAreaNodeFlags = navEntity->aasAreaNodeFlags;
+	goalTargetPoint = Vec3(navEntity->ent->s.origin);
+
+	if (currAasAreaNum != goalAasAreaNum)
+	{
+		int reachNum = AAS_AreaReachabilityToGoalArea(currAasAreaNum, self->s.origin, goalAasAreaNum, preferredAasTravelFlags);
+		if (!reachNum)
 		{
-		if( nav.broams[i].node != self->ai->goal_node )
-		continue;
-
-		//if(AIDevel.debugChased && bot_showlrgoal->integer)
-		//	G_PrintMsg (AIDevel.chaseguy, "%s: BotRoam Time Out set up for node %i\n", self->ai->pers.netname, nav.broams[i].node);
-		//Com_Printf( "%s: BotRoam Time Out set up for node %i\n", self->ai->pers.netname, nav.broams[i].node);
-		self->ai->status.broam_timeouts[i] = level.time + 15000;
-		break;
+			const float *origin = self->s.origin;
+			constexpr const char *format = "Ai::SetGoal(): Can't find reachability to goal area %d from %f %f %f at area %d\n";
+			Debug(format, navEntity->aasAreaNum, origin[0], origin[1], origin[2], currAasAreaNum);
+			ClearGoal();
+			return;
 		}
-		}
-		*/
-
-		// don't let it wait too long to weight the inventory again
-		ClearGoal();
-
-		return false; // force checking for a new long range goal
+		SetNextAreaReach(reachNum);
 	}
 
-	// we did not reach our goal yet. just setup next node...
-	self->ai->current_node = self->ai->next_node;
-	if( self->ai->path.numNodes )
-		self->ai->path.numNodes--;
-	self->ai->next_node = self->ai->path.nodes[self->ai->path.numNodes];
+	self->movetarget = navEntity->ent;
 
-	return true;
-}
-
-void Ai::NodeReached()
-{
-	if( !NewNextNode() )
-	{
-		ClearGoal();
-	}
-}
-
-bool Ai::NodeHasTimedOut()
-{
-	if( self->ai->goal_node == NODE_INVALID )
-		return true;
-
-	if( !GS_MatchPaused() )
-		self->ai->node_timeout += game.frametime;
-
-	// Try again?
-	if( self->ai->node_timeout > NODE_TIMEOUT || self->ai->next_node == NODE_INVALID )
-	{
-		if( self->ai->tries++ > 3 )
-			return true;
-		else
-			SetGoal( self->ai->goal_node );
-	}
-
-	if( self->ai->current_node == NODE_INVALID || self->ai->next_node == NODE_INVALID )
-		return true;
-
-	return false;
+	longRangeGoalTimeout = level.time + 15000;
 }
 
 void Ai::ReachedEntity()
 {
-	nav_ents_t *goalEnt;
-	edict_t *ent;
-
-	if( ( goalEnt = GetGoalentForEnt(self) ) == NULL )
+	NavEntity *goalEnt;
+	if (!(goalEnt = GetGoalentForEnt(self->goalentity)))
 		return;
 
+	Debug("reached entity %s\n", goalEnt->ent->classname);
+
+	ClearGoal();
+
 	// find all bots which have this node as goal and tell them their goal is reached
-	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
+	for (edict_t *ent = game.edicts + 1; PLAYERNUM(ent) < gs.maxclients; ent++)
 	{
-		if( !ent->ai || ent->ai->type == AI_INACTIVE )
+		if (!ent->ai || ent->ai->type == AI_INACTIVE)
 			continue;
 
-		if( ent->ai->goal_node == goalEnt->node )
-			ClearGoal();
+		if (ent->ai->aiRef->HasGoal() && ent->ai->goalEnt == goalEnt)
+			ent->ai->aiRef->ClearGoal();
 	}
 }
 
-void Ai::TouchedEntity( edict_t *ent )
+void Ai::TouchedEntity(edict_t *ent)
 {
-	int i;
-	nav_ents_t *goalEnt;
-
 	// right now we only support this on a few trigger entities (jumpads, teleporters)
-	if( ent->r.solid != SOLID_TRIGGER && ent->item == NULL )
+	if (ent->r.solid != SOLID_TRIGGER && ent->item == NULL)
 		return;
 
 	// clear short range goal, pick a new goal ASAP
-	if( ent == self->movetarget )
+	if (ent == self->movetarget)
 	{
 		self->movetarget = NULL;
-		self->ai->shortRangeGoalTimeout = level.time;
+		shortRangeGoalTimeout = 0;
 	}
 
-	if( self->ai->goalEnt && ent == self->ai->goalEnt->ent )
+	if (self->ai->goalEnt && ent == self->ai->goalEnt->ent)
 	{
-		if( nav.debugMode && bot_showlrgoal->integer > 1 )
-			G_PrintChasersf( self, "REACHED entity %s\n", ent->classname ? ent->classname : "no classname" );
 		ClearGoal();
 		return;
 	}
-
-	if( self->ai->next_node != NODE_INVALID &&
-		( nodes[self->ai->next_node].flags & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) ) )
-	{
-		for( i = 0; i < nav.num_navigableEnts; i++ )
-		{
-			if( nav.navigableEnts[i].node == self->ai->next_node && nav.navigableEnts[i].ent == ent )
-			{
-				if( nav.debugMode && bot_showlrgoal->integer > 1 )
-					G_PrintChasersf( self, "REACHED touch node %i with entity %s\n", self->ai->next_node, ent->classname ? ent->classname : "no classname" );
-
-				NodeReached();
-				return;
-			}
-		}
-
-		FOREACH_GOALENT( goalEnt )
-		{
-			i = goalEnt->id;
-			if( goalEnt->node == self->ai->next_node && goalEnt->ent == ent )
-			{
-				if( nav.debugMode && bot_showlrgoal->integer > 1 )
-					G_PrintChasersf( self, "REACHED touch node %i with entity %s\n", self->ai->next_node, ent->classname ? ent->classname : "no classname" );
-
-				NodeReached();
-				return;
-			}
-		}
-	}
-}
-
-void Ai::GetNodeOrigin( int node, vec3_t origin ) const
-{
-	if( node == NODE_INVALID )
-		VectorCopy( vec3_origin, origin );
-	else
-		VectorCopy( nodes[node].origin, origin );
-}
-
-int Ai::GetNodeFlags( int node ) const
-{
-	if( node == NODE_INVALID )
-		return 0;
-
-	return nodes[node].flags;
 }

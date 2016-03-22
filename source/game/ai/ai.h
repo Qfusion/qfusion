@@ -23,8 +23,6 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
-#include "AStar.h"
-
 typedef enum
 {
 	AI_INACTIVE,

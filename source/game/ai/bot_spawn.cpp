@@ -24,6 +24,7 @@ in NO WAY supported by Steve Yeager.
 */
 
 #include "bot.h"
+#include "aas.h"
 
 //===============================================================
 //
@@ -240,9 +241,6 @@ static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin, char *bot_name )
 			Q_strncpyz( localbotskin->bot_skin, p, sizeof( localbotskin->bot_skin ) );
 			Q_strncpyz( localbotskin->bot_name, LocalBotNames[skinnumber], sizeof( localbotskin->bot_name ) );
 
-			if( nav.debugMode )
-				Com_Printf( "Free skin: %i: %s %s\n", freeskins, localbotskin->bot_skin, localbotskin->bot_name );
-
 			freeskins++;
 		}
 
@@ -255,9 +253,6 @@ static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin, char *bot_name )
 	Q_strncpyz( bot_model, localbotskin->bot_model, sizeof( localbotskin->bot_model ) );
 	Q_strncpyz( bot_skin, localbotskin->bot_skin, sizeof( localbotskin->bot_skin ) );
 	Q_strncpyz( bot_name, localbotskin->bot_name, sizeof( localbotskin->bot_name ) );
-
-	if( nav.debugMode )
-		Com_Printf( "Assigned bot character: %i: %s %s %s\n", skinnumber, bot_model, bot_skin, bot_name );
 
 	G_Free( botskins );
 
@@ -329,7 +324,6 @@ static void BOT_pain( edict_t *self, edict_t *other, float kick, int damage )
 {
 	if( other->r.client )
 	{
-		self->ai->last_attacker = other;
 		self->ai->botRef->Pain(other, kick, damage);
 	}
 }
@@ -347,12 +341,7 @@ void BOT_Respawn( edict_t *self )
 	self->movetarget = NULL;
 	self->pain = BOT_pain;
 
-	self->ai->statusUpdateTimeout = 0;
-	self->ai->changeweapon_timeout = 0;
-	self->ai->combatmovepush_timeout = 0;
-	self->ai->state_combat_timeout = 0;
-	self->ai->enemyReactionDelay = 500 + random() * 300;
-	self->ai->last_attacker = NULL;
+	self->ai->botRef->OnRespawn();
 
 	VectorClear( self->r.client->ps.pmove.delta_angles );
 	self->r.client->level.last_activity = level.time;
@@ -409,7 +398,7 @@ static void BOT_DoSpawnBot( void )
 	static char fakeIP[] = "127.0.0.1";
 	int bot_pers;
 
-	if( !nav.loaded )
+	if (!AAS_Initialized())
 	{
 		Com_Printf( "AI: Can't spawn bots without a valid navigation file\n" );
 		if( g_numbots->integer ) 
@@ -469,7 +458,7 @@ void BOT_SpawnBot( const char *team_name )
 	if( level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities )
 		return;
 
-	if( !nav.loaded )
+	if(!AAS_Initialized())
 	{
 		Com_Printf( "AI: Can't spawn bots without a valid navigation file\n" );
 		if( g_numbots->integer ) 
@@ -493,7 +482,6 @@ void BOT_SpawnBot( const char *team_name )
 
 	game.numBots++;
 }
-
 
 //==========================================
 //	BOT_RemoveBot

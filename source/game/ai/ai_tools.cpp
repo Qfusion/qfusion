@@ -37,12 +37,20 @@ void AI_Cheat_NoTarget( edict_t *ent )
 		G_PrintMsg( ent, "Bot Notarget OFF\n" );
 }
 
+void AITools_DropNodes(edict_t *ent) {}
+
+void AITools_AddBotRoamNode_Cmd( void ) {}
+void AITools_AddNode_Cmd( void ) {}
+
+void AITools_InitEditnodes( void ) {}
+void AITools_InitMakenodes( void ) {}
 
 //==========================================
 // AIDebug_ToogleBotDebug
 //==========================================
 void AIDebug_ToogleBotDebug( void )
 {
+	/*
 	if( !sv_cheats->integer )
 	{
 		G_Printf( "BOT: Debug Mode can't be enabled without sv_cheats\n" );
@@ -60,6 +68,7 @@ void AIDebug_ToogleBotDebug( void )
 	//Activate debug mode
 	G_Printf( "BOT: Debug Mode On\n" );
 	nav.debugMode = true;
+	 */
 }
 
 //=======================================================================
@@ -121,6 +130,7 @@ void AITools_DrawAxis( vec3_t origin, int color )
 //==========================================
 void AITools_DrawPath( edict_t *self, int node_to )
 {
+	/*
 	static unsigned int drawnpath_timeout;
 	int count = 0;
 	int pos = 0;
@@ -149,7 +159,7 @@ void AITools_DrawPath( edict_t *self, int node_to )
 
 		pos--;
 		count++;
-	}
+	}*/
 }
 
 //==========================================
@@ -158,6 +168,7 @@ void AITools_DrawPath( edict_t *self, int node_to )
 //==========================================
 static void AITools_ShowPlinks( edict_t *target )
 {
+	/*
 	static unsigned int debugdrawplinks_timeout;
 	int current_node;
 	int plink_node;
@@ -166,15 +177,6 @@ static void AITools_ShowPlinks( edict_t *target )
 
 	if( !target || !target->r.client || !target->r.client->level.showPLinks )
 		return;
-
-	//do it
-	current_node = Ai::FindClosestReachableNode( target->s.origin, target, NODE_DENSITY * 3, NODE_ALL );
-
-	// draw the axis where the node is
-	if( nodes[current_node].flags & NODEFLAGS_SERVERLINK )
-		AITools_DrawAxis( nodes[current_node].origin, COLOR_RGBA( 255, 25, 25, 255 ) );
-	else
-		AITools_DrawAxis( nodes[current_node].origin, COLOR_RGBA( 210, 250, 250, 255 ) );
 
 	//don't draw the links every frame (flood)
 	if( level.time < debugdrawplinks_timeout )
@@ -196,35 +198,13 @@ static void AITools_ShowPlinks( edict_t *target )
 			break;
 		}
 	}
-
-	// no links to draw
-	if( !pLinks[current_node].numLinks )
-		return;
-
-	for( i = 0; i < pLinks[current_node].numLinks; i++ )
-	{
-		plink_node = pLinks[current_node].nodes[i];
-		if( pLinks[current_node].moveType[i] == LINK_ROCKETJUMP )
-			AITools_DrawColorLine( nodes[current_node].origin,
-			nodes[plink_node].origin, COLOR_RGBA( 0xff, 0x00, 0x00, 0x80 ), 0 );
-		else if( pLinks[current_node].moveType[i] == LINK_JUMP )
-			AITools_DrawColorLine( nodes[current_node].origin,
-			nodes[plink_node].origin, COLOR_RGBA( 0x00, 0x00, 0xff, 0x80 ), 0 );
-		else
-			AITools_DrawColorLine( nodes[current_node].origin,
-			nodes[plink_node].origin, COLOR_RGBA( 0x00, 0xff, 0x00, 0x80 ), 0 );
-	}
+	*/
 }
 
 void Cmd_deleteClosestNode_f( edict_t *ent )
 {
 	int node;
 
-	if( ent && nav.num_nodes > 0 )
-	{
-		node = Ai::FindClosestReachableNode( ent->s.origin, ent, NODE_DENSITY*3, NODE_ALL );
-		AI_DeleteNode( node );
-	}
 }
 
 void Cmd_ShowPLinks_f( edict_t *ent )
@@ -240,7 +220,6 @@ void Cmd_ShowPLinks_f( edict_t *ent )
 
 void Cmd_SaveNodes_f( void )
 {
-	AI_SaveNavigation();
 }
 
 //=======================================================================

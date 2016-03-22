@@ -27,14 +27,10 @@ void AI_InitLevel( void )
     bot_dummy = trap_Cvar_Get( "bot_dummy", "0", 0 );
     sv_botpersonality =	    trap_Cvar_Get( "sv_botpersonality", "0", CVAR_ARCHIVE );
 
-    nav.debugMode = false;
-
-    AI_InitNavigationData( false );
-
     aas_system_initialized = AI_InitAAS();
     if (!aas_system_initialized)
         G_Printf("Can't initialize AAS system\n");
-    if (aas_system_initialized);
+    if (aas_system_initialized)
         aas_data_loaded = AI_LoadLevelAAS(level.mapname);
 
     // count bots
@@ -224,8 +220,6 @@ void AI_SetGoalWeight( ai_handle_t *ai, int index, float weight )
 //==========================================
 void AI_ResetWeights( ai_handle_t *ai )
 {
-    nav_ents_t *goalEnt;
-
     // restore defaults from bot personality
     AI_ClearWeights( ai );
 
@@ -258,11 +252,10 @@ int AI_GetRootGoalEnt( void )
 //==========================================
 int AI_GetNextGoalEnt( int index )
 {
-    if ( !nav.loaded || index >= MAX_GOALENTS )
+    if (!AAS_Initialized() || index < 0 || index >= MAX_GOALENTS )
         return -1;
-    if( index < 0 )
-        return nav.goalEntsHeadnode.prev->id;
-    return nav.goalEnts[index].prev->id;
+
+    return GoalEntitiesRegistry::Instance()->GetNextGoalEnt(index);
 }
 
 //==========================================
@@ -270,9 +263,10 @@ int AI_GetNextGoalEnt( int index )
 //==========================================
 edict_t *AI_GetGoalEntity( int index )
 {
-    if ( !nav.loaded || index < 0 || index >= MAX_GOALENTS )
+    if (!AAS_Initialized() || index < 0 || index >= MAX_GOALENTS )
         return NULL;
-    return nav.goalEnts[index].ent;
+
+    return GoalEntitiesRegistry::Instance()->GetGoalEntity(index);
 }
 
 /*
