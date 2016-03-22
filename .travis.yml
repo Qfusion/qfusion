@@ -9,14 +9,16 @@ matrix:
       addons:
         apt:
           packages:
-            - cmake
+            - gcc-mingw-w64
+            - g++-mingw-w64
             - mingw-w64
     - os: linux
       env: QF_ARCH=win32_x86_64
       addons:
         apt:
           packages:
-            - cmake
+            - gcc-mingw-w64
+            - g++-mingw-w64
             - mingw-w64
 
 before install:
