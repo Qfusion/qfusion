@@ -33,7 +33,7 @@ matrix:
             - g++-mingw-w64
             - mingw-w64
 
-before install:
+before_install:
   - if [[ "$QF_ARCH" == "win32_x86" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i686-mingw.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32; fi
   - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake; fi
 
