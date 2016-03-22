@@ -11,7 +11,7 @@ matrix:
           sources:
             - kubuntu-backports
           packages:
-            - cmake-2.8.12
+            - cmake
             - binutils-mingw-w64-i686
             - binutils-mingw-w64-x86-64
             - gcc-mingw-w64-i686
@@ -28,7 +28,7 @@ matrix:
           sources:
             - kubuntu-backports
           packages:
-            - cmake-2.8.12
+            - cmake
             - binutils-mingw-w64-i686
             - binutils-mingw-w64-x86-64
             - gcc-mingw-w64-i686
