@@ -29,6 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static struct tm *R_Localtime( const time_t time, struct tm* _tm )
 {
 #ifdef _WIN32
+# ifdef MINGW_HAS_SECURE_API
+#  define localtime_s  v8_localtime_s
+# endif
 	localtime_s( _tm, &time );
 #else
 	localtime_r( &time, _tm );
