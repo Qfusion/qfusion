@@ -1,4 +1,4 @@
-qfusion
+qfusion [![Build Status](https://travis-ci.org/Warsow/qfusion.svg?branch=master)](https://travis-ci.org/Warsow/qfusion)
 =======
 
 http://www.qfusion.net/
