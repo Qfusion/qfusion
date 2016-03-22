@@ -334,7 +334,7 @@ void Con_SetMessageMode( void )
 static void Con_MessageMode_f( void )
 {
 	chat_team = false;
-	if( cls.state == CA_ACTIVE )
+	if( cls.state == CA_ACTIVE && !cls.demo.playing )
 	{
 		CL_SetKeyDest( key_message );
 		IN_ShowSoftKeyboard( true );
@@ -347,7 +347,7 @@ static void Con_MessageMode_f( void )
 static void Con_MessageMode2_f( void )
 {
 	chat_team = Cmd_Exists( "say_team" ); // if not, make it a normal "say: "
-	if( cls.state == CA_ACTIVE )
+	if( cls.state == CA_ACTIVE && !cls.demo.playing )
 	{
 		CL_SetKeyDest( key_message );
 		IN_ShowSoftKeyboard( true );
