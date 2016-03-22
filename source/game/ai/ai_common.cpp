@@ -20,24 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "ai_local.h"
 
-/*
-* AI_DropNodeOriginToFloor
-*/
-bool Ai::DropNodeOriginToFloor(vec3_t origin, edict_t *passent)
-{
-	trace_t	trace;
-
-	G_Trace( &trace, origin, tv( item_box_mins[0], item_box_mins[1], 0 ), tv( item_box_maxs[0], item_box_maxs[1], 0 ), tv( origin[0], origin[1], world->r.mins[2] ), passent, MASK_NODESOLID );
-	if( trace.startsolid )
-		return false;
-
-	origin[0] = trace.endpos[0];
-	origin[1] = trace.endpos[1];
-	origin[2] = trace.endpos[2] + 2.0f + fabs( playerbox_stand_mins[2] );
-
-	return true;
-}
-
 bool Ai::IsVisible(edict_t *other) const
 {
 	vec3_t spot1;
@@ -89,21 +71,4 @@ bool Ai::IsInFront2D(vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy
 	clamp( accuracy, -1, 1 );
 
 	return ( dot > accuracy ) ? true : false;
-}
-
-void Ai::NewEnemyInView(edict_t *enemy)
-{
-	if( enemy == self )
-		return;
-
-	self->ai->latched_enemy = enemy;
-	self->ai->enemyReactionDelay = ( 50 + ( AI_REACTION_TIME * ( 1.0f - self->ai->pers.skillLevel ) ) );
-}
-
-unsigned int Ai::CurrentLinkType() const
-{
-	if( !AI_PlinkExists( self->ai->current_node, self->ai->next_node ) )
-		return LINK_INVALID;
-
-	return AI_PlinkMoveType( self->ai->current_node, self->ai->next_node );
 }

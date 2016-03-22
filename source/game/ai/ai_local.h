@@ -40,6 +40,7 @@ in NO WAY supported by Steve Yeager.
 
 #include <algorithm>
 #include <utility>
+#include <stdarg.h>
 
 #define AI_VERSION_STRING "A0059"
 
@@ -142,63 +143,59 @@ extern cvar_t *sv_botpersonality;
 
 #define LINK_INVALID 0x00001000
 
-typedef struct nav_plink_s
-{
-	int numLinks;
-	int nodes[NODES_MAX_PLINKS];
-	int dist[NODES_MAX_PLINKS];
-	int moveType[NODES_MAX_PLINKS];
-
-} nav_plink_t;
-
-typedef struct nav_node_s
-{
-	vec3_t origin;
-	int flags;
-	int area;
-
-} nav_node_t;
-
-typedef struct nav_ents_s
+struct NavEntity
 {
 	int id;
-	edict_t	*ent;
-	int node;
-	struct nav_ents_s *prev, *next;
-} nav_ents_t;
+	int aasAreaNum;
+	int aasAreaNodeFlags;
+	edict_t *ent;
+	NavEntity *prev, *next;
+};
 
-typedef struct nav_path_s
+class GoalEntitiesRegistry
 {
-	int next;   // next node
-	int cost;
-	int moveTypes; // type of movements required to run along this path (flags)
+	NavEntity goalEnts[MAX_GOALENTS];
+	NavEntity *entGoals[MAX_EDICTS];
+	NavEntity *goalEntsFree;
+	NavEntity goalEntsHeadnode;
 
-} nav_path_t;
+	static GoalEntitiesRegistry instance;
 
-extern nav_plink_t pLinks[MAX_NODES];      // pLinks array
-extern nav_node_t nodes[MAX_NODES];        // nodes array
+	NavEntity *AllocGoalEntity();
+	void FreeGoalEntity(NavEntity *navEntity);
+public:
+	void Init();
 
-typedef struct
-{
-	bool loaded;
-	bool editmode;
-	bool debugMode;
+	NavEntity *AddGoalEntity(edict_t *ent, int aasAreaNum, int aasAreaNodeFlags = 0);
+	void RemoveGoalEntity(NavEntity *navEntity);
 
-	int num_nodes;          // total number of nodes
-	int serverNodesStart;
+	inline NavEntity *GoalEntityForEntity(edict_t *ent)
+	{
+		if (!ent) return nullptr;
+		return entGoals[ENTNUM(ent)];
+	}
 
-	nav_ents_t goalEnts[MAX_GOALENTS]; // entities which are potential goals
-	nav_ents_t goalEntsHeadnode;
-	nav_ents_t *goalEntsFree;
-	nav_ents_t *entsGoals[MAX_EDICTS]; // entities to goals map
+	inline edict_t *GetGoalEntity(int index) { return goalEnts[index].ent; }
+	inline int GetNextGoalEnt(int index) { return goalEnts[index].prev->id; }
 
-	int num_navigableEnts;
-	nav_ents_t navigableEnts[MAX_GOALENTS]; // plats, etc
-} ai_navigation_t;
+	class GoalEntitiesIterator
+	{
+		friend class GoalEntitiesRegistry;
+		NavEntity *currEntity;
+		inline GoalEntitiesIterator(NavEntity *currEntity): currEntity(currEntity) {}
+	public:
+		inline NavEntity *operator*() { return currEntity; }
+		inline const NavEntity *operator*() const { return currEntity; }
+		inline void operator++() { currEntity = currEntity->prev; }
+		inline bool operator!=(const GoalEntitiesIterator &that) const { return currEntity != that.currEntity; }
+	};
+	inline GoalEntitiesIterator begin() { return GoalEntitiesIterator(goalEntsHeadnode.prev); }
+	inline GoalEntitiesIterator end() { return GoalEntitiesIterator(&goalEntsHeadnode); }
 
-#define FOREACH_GOALENT(goalEnt) for( goalEnt = nav.goalEntsHeadnode.prev; goalEnt != &nav.goalEntsHeadnode; goalEnt = goalEnt->prev )
+	static inline GoalEntitiesRegistry *Instance() { return &instance; }
+};
 
-extern ai_navigation_t	nav;
+#define FOREACH_GOALENT(goalEnt) for (auto *goalEnt : *GoalEntitiesRegistry::Instance())
 
 //=============================================================
 //	WEAPON DECISSIONS DATA
@@ -278,52 +275,17 @@ typedef struct ai_handle_s
 
 	ai_type	type;
 
-	unsigned int state_combat_timeout;
-
-	// movement
-	vec3_t move_vector;
-	unsigned int blocked_timeout;
-	unsigned int changeweapon_timeout;
-	unsigned int statusUpdateTimeout;
-	edict_t *last_attacker;
-
-	unsigned int combatmovepush_timeout;
-	int combatmovepushes[3];
-
 	// nodes
-	int current_node;
-	int goal_node;
-	int next_node;
-	unsigned int node_timeout;
-	struct nav_ents_s *goalEnt;
-
-	unsigned int longRangeGoalTimeout;
-	unsigned int shortRangeGoalTimeout;
-	int tries;
-
-	struct astarpath_s path; //jabot092
-
-	int nearest_node_tries;     //for increasing radius of search with each try
-
-	//vsay
-	unsigned int vsay_timeout;
-	edict_t	*vsay_goalent;
-
-	edict_t	*latched_enemy;
-	int enemyReactionDelay;
-	//int				rethinkEnemyDelay;
-	bool rj_triggered;
-	bool dont_jump;
-	bool camp_item;
-	bool rush_item;
-	float speed_yaw, speed_pitch;
-	bool is_bunnyhop;
+	struct NavEntity *goalEnt;
 
 	int asFactored, asRefCount;
 
 	class Ai *aiRef;
 	class Bot *botRef;
 } ai_handle_t;
+
+void AI_Debug(const char *nick, const char *format, ...);
+void AI_Debugv(const char *nick, const char *format, va_list va);
 
 //----------------------------------------------------------
 
@@ -333,13 +295,6 @@ void	    Use_Plat( edict_t *ent, edict_t *other, edict_t *activator );
 
 // ai_nodes.c
 //----------------------------------------------------------
-
-void AI_InitNavigationData( bool silent );
-void AI_SaveNavigation( void );
-int	    AI_FlagsForNode( vec3_t origin, edict_t *passent );
-bool    AI_LoadPLKFile( char *mapname );
-void AI_DeleteNode( int node );
-
 
 // ai_tools.c
 //----------------------------------------------------------
@@ -351,19 +306,6 @@ void	    AITools_InitMakenodes( void );
 
 // ai_links.c
 //----------------------------------------------------------
-bool    AI_VisibleOrigins( vec3_t spot1, vec3_t spot2 );
-int	    AI_LinkCloseNodes( void );
-int	    AI_FindLinkType( int n1, int n2 );
-bool    AI_AddLink( int n1, int n2, int linkType );
-bool    AI_PlinkExists( int n1, int n2 );
-int	    AI_PlinkMoveType( int n1, int n2 );
-int	    AI_findNodeInRadius( int from, vec3_t org, float rad, bool ignoreHeight );
-const char *AI_LinkString( int linktype );
-int	    AI_GravityBoxToLink( int n1, int n2 );
-int	    AI_LinkCloseNodes_JumpPass( int start );
-int		AI_LinkCloseNodes_RocketJumpPass( int start );
-void AI_LinkNavigationFile( bool silent );
-
 
 //bot_classes
 //----------------------------------------------------------
@@ -394,74 +336,87 @@ struct ClosePlaceProps
 
 class Ai: public EdictRef
 {
+protected:
+	Vec3 currMoveTargetPoint;
+	int currAasAreaNum;
+	int currAasAreaNodeFlags;
+	Vec3 currTargetPoint;
+	int goalAasAreaNum;
+	int goalAasAreaNodeFlags;
+	Vec3 goalTargetPoint;
+
+	int nextAasAreaNum;
+	int allowedAasTravelFlags;
+	int preferredAasTravelFlags;
+
+	int nextAreaReachNum;
+	float distanceToNextReachStart;
+	float distanceToNextReachEnd;
+	inline bool IsCloseToReachStart() { return distanceToNextReachStart < 24.0f; };
+	inline bool IsCloseToReachEnd() { return distanceToNextReachEnd < 36.0f; }
+
+	struct aas_reachability_s *nextAreaReach;
+
+	unsigned statusUpdateTimeout;
+	unsigned blockedTimeout;
+
+	unsigned stateCombatTimeout;
+	unsigned longRangeGoalTimeout;
+	unsigned shortRangeGoalTimeout;
+
+	float aiYawSpeed, aiPitchSpeed;
+
+	// nextAreaReach refers to this buffer
+	// (we can't define non-pointer member for incomplete type, and can't refer to the complete one due to header conflict)
+	alignas(8) char _private[64];
+
+	void SetNextAreaReach(int reachNum);
 public:
-	Ai(edict_t *self): EdictRef(self) {}
+	Ai(edict_t *self);
+
+	inline bool IsGhosting() const { return G_ISGHOSTING(self); }
 
 	void Think();
 
-	bool NodeReachedGeneric();
-	bool NodeReachedSpecial();
-	bool NodeReachedPlatformStart();
-	bool NodeReachedPlatformEnd();
+	bool IsShortRangeReachable(const vec3_t targetOrigin) const;
 
-	bool ReachabilityVisible(vec3_t point) const;
-
-	static bool DropNodeOriginToFloor(vec3_t origin, edict_t *passent);
 	bool IsVisible(edict_t *other) const;
 	bool IsInFront(edict_t *other) const;
 	bool IsInFront2D(vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy) const;
-	void NewEnemyInView(edict_t *enemy);
-	unsigned int CurrentLinkType() const;
 
-	void ChangeAngle(float angularSpeedMultiplier = 1.0f);
 	void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
-	bool MoveToShortRangeGoalEntity(usercmd_t *ucmd);
-	bool CheckEyes(usercmd_t *ucmd);
-	bool SpecialMove(usercmd_t *ucmd);
-	static bool IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent );
 	static bool IsStep(edict_t *ent);
 
-	static int FindCost(int from, int to, int movetypes);
-	static int FindClosestReachableNode(vec3_t origin, edict_t *passent, int range, unsigned int flagsmask);
-	static int FindClosestNode(vec3_t origin, float mindist, int range, unsigned int flagsmask);
+	inline bool HasGoal() const { return goalAasAreaNum != 0; }
+	int FindCurrAASAreaNum();
 	void ClearGoal();
-	void SetGoal(int goal_node);
-	void NodeReached();
-	int GetNodeFlags(int node) const;
-	void GetNodeOrigin(int node, vec3_t origin) const;
-	bool NodeHasTimedOut();
-	bool NewNextNode();
+	void SetGoal(NavEntity *entity);
 	void ReachedEntity();
 	void TouchedEntity(edict_t *ent);
 
-	bool ShortRangeReachable(vec3_t goal);
-
-	static nav_ents_t *GetGoalentForEnt(edict_t *target);
+	static NavEntity *GetGoalentForEnt(edict_t *target);
 	void PickLongRangeGoal();
 	void PickShortRangeGoal();
 	// Looks like it is unused since is not implemented in original code
 	void Frame(usercmd_t *ucmd);
 	void ResetNavigation();
-	static void CategorizePosition(edict_t *ent);
+	void CategorizePosition();
 	void UpdateStatus();
-
-	bool AttemptWalljump();
-
-	float ReactionTime() const { return ai().pers.cha.reaction_time; }
-	float Offensiveness() const { return ai().pers.cha.offensiveness; }
-	float Campiness() const { return ai().pers.cha.campiness; }
-	float Firerate() const { return ai().pers.cha.firerate; }
 protected:
+	void Debug(const char *format, ...) const;
+	void FailWith(const char *format, ...) const;
+
+	const char *Nick() const
+	{
+		return self->r.client ? self->r.client->netname : self->classname;
+	}
+
+	void CheckReachedArea();
+
 	void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);
 
 	void TestClosePlace();
 	ClosePlaceProps closeAreaProps;
-
-	ai_handle_t &ai() { return *self->ai; }
-	const ai_handle_t &ai() const { return *self->ai; }
-
-	static constexpr int MIN_BUNNY_NODES = 2;
-	static constexpr int AI_JUMP_SPEED = 450;
 private:
 	void TestMove(MoveTestResult *moveTestResult, int direction) const;
 };

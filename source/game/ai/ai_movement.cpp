@@ -165,158 +165,6 @@ bool Ai::IsStep(edict_t *ent)
 	return true;
 }
 
-//==========================================
-// AI_IsLadder
-// check if entity is touching in front of a ladder
-//==========================================
-bool Ai::IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent)
-{
-	vec3_t spot;
-	vec3_t flatforward, zforward;
-	trace_t	trace;
-
-	AngleVectors( v_angle, zforward, NULL, NULL );
-
-	// check for ladder
-	flatforward[0] = zforward[0];
-	flatforward[1] = zforward[1];
-	flatforward[2] = 0;
-	VectorNormalize( flatforward );
-
-	VectorMA( origin, 1, flatforward, spot );
-
-	G_Trace( &trace, origin, mins, maxs, spot, passent, MASK_AISOLID );
-
-	if( ( trace.fraction < 1 ) && ( trace.surfFlags & SURF_LADDER ) )
-		return true;
-
-	return false;
-}
-
-
-//==========================================
-// AI_CheckEyes
-// Helper for ACEMV_SpecialMove.
-// Tries to turn when in front of obstacle
-//==========================================
-bool Ai::CheckEyes(usercmd_t *ucmd)
-{
-	vec3_t forward, right;
-	vec3_t leftstart, rightstart, focalpoint;
-	vec3_t dir, offset;
-	trace_t traceRight;
-	trace_t traceLeft;
-
-	// Get current angle and set up "eyes"
-	VectorCopy( self->s.angles, dir );
-	AngleVectors( dir, forward, right, NULL );
-
-	if( !self->movetarget )
-		VectorSet( offset, 200, 0, self->r.maxs[2]*0.5 ); // focalpoint
-	else
-		VectorSet( offset, 64, 0, self->r.maxs[2]*0.5 ); // wander focalpoint
-
-	G_ProjectSource( self->s.origin, offset, forward, right, focalpoint );
-
-	VectorSet( offset, 0, 18, self->r.maxs[2]*0.5 );
-	G_ProjectSource( self->s.origin, offset, forward, right, leftstart );
-	offset[1] -= 36;
-	G_ProjectSource( self->s.origin, offset, forward, right, rightstart );
-
-	G_Trace( &traceRight, rightstart, NULL, NULL, focalpoint, self, MASK_AISOLID );
-	G_Trace( &traceLeft, leftstart, NULL, NULL, focalpoint, self, MASK_AISOLID );
-
-	// Find the side with more open space and turn
-	if( traceRight.fraction != 1 || traceLeft.fraction != 1 )
-	{
-		if( traceRight.fraction > traceLeft.fraction )
-			self->s.angles[YAW] += ( 1.0 - traceLeft.fraction ) * 45.0;
-		else
-			self->s.angles[YAW] += -( 1.0 - traceRight.fraction ) * 45.0;
-
-		ucmd->forwardmove = 1;
-		return true;
-	}
-
-	return false;
-}
-
-//==========================================
-// AI_SpecialMove
-// Handle special cases of crouch/jump
-// If the move is resolved here, this function returns true.
-//==========================================
-bool Ai::SpecialMove(usercmd_t *ucmd)
-{
-	vec3_t forward;
-	trace_t tr;
-	vec3_t boxmins, boxmaxs, boxorigin;
-
-	// Get current direction
-	AngleVectors( tv( 0, self->s.angles[YAW], 0 ), forward, NULL, NULL );
-
-	// make sure we are blocked
-	VectorCopy( self->s.origin, boxorigin );
-	VectorMA( boxorigin, 8, forward, boxorigin ); //move box by 8 to front
-	G_Trace( &tr, self->s.origin, self->r.mins, self->r.maxs, boxorigin, self, MASK_AISOLID );
-	if( !tr.startsolid && tr.fraction == 1.0 )  // not blocked
-		return false;
-
-	//ramps
-	if( ISWALKABLEPLANE( &tr.plane ) )
-		return false;
-
-	if( self->ai->status.moveTypesMask & LINK_CROUCH || self->is_swim )
-	{
-		// crouch box
-		VectorCopy( self->s.origin, boxorigin );
-		VectorCopy( self->r.mins, boxmins );
-		VectorCopy( self->r.maxs, boxmaxs );
-		boxmaxs[2] = 14; // crouched size
-		VectorMA( boxorigin, 8, forward, boxorigin ); // move box by 8 to front
-		// see if blocked
-		G_Trace( &tr, boxorigin, boxmins, boxmaxs, boxorigin, self, MASK_AISOLID );
-		if( !tr.startsolid ) // can move by crouching
-		{
-			ucmd->forwardmove = 1;
-			ucmd->upmove = -1;
-			return true;
-		}
-	}
-
-	if( self->ai->status.moveTypesMask & LINK_JUMP && self->groundentity )
-	{
-		// jump box
-		VectorCopy( self->s.origin, boxorigin );
-		VectorCopy( self->r.mins, boxmins );
-		VectorCopy( self->r.maxs, boxmaxs );
-		VectorMA( boxorigin, 8, forward, boxorigin ); // move box by 8 to front
-		//
-		boxorigin[2] += ( boxmins[2] + AI_JUMPABLE_HEIGHT ); // put at bottom + jumpable height
-		boxmaxs[2] = boxmaxs[2] - boxmins[2]; // total player box height in boxmaxs
-		boxmins[2] = 0;
-
-		G_Trace( &tr, boxorigin, boxmins, boxmaxs, boxorigin, self, MASK_AISOLID );
-		if( !tr.startsolid ) // can move by jumping
-		{
-			ucmd->forwardmove = 1;
-			ucmd->upmove = 1;
-
-			return true;
-		}
-	}
-
-	// nothing worked, check for turning
-	return CheckEyes( ucmd );
-}
-
-void Ai::ChangeAngle(float angularSpeedMultiplier /*= 1.0f*/)
-{
-	Vec3 moveVec(self->ai->move_vector);
-	moveVec.NormalizeFast();
-	ChangeAngle(moveVec, angularSpeedMultiplier);
-}
-
 void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*= 1.0f*/)
 {
 	const float currentYaw = anglemod(self->s.angles[YAW]);
@@ -328,20 +176,20 @@ void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*
 	const float ideal_yaw = anglemod(idealAngle[YAW]);
 	const float ideal_pitch = anglemod(idealAngle[PITCH]);
 
-	self->ai->speed_yaw *= angularSpeedMultiplier;
-	self->ai->speed_pitch *= angularSpeedMultiplier;
+	aiYawSpeed *= angularSpeedMultiplier;
+	aiPitchSpeed *= angularSpeedMultiplier;
 
 	if (fabsf(currentYaw - ideal_yaw) < 10)
 	{
-		self->ai->speed_yaw *= 0.5;
+		aiYawSpeed *= 0.5;
 	}
 	if (fabsf(currentPitch - ideal_pitch) < 10)
 	{
-		self->ai->speed_pitch *= 0.5;
+		aiPitchSpeed *= 0.5;
 	}
 
-	ChangeAxisAngle(currentYaw, ideal_yaw, self->yaw_speed, &self->ai->speed_yaw, &self->s.angles[YAW]);
-	ChangeAxisAngle(currentPitch, ideal_pitch, self->yaw_speed, &self->ai->speed_pitch, &self->s.angles[PITCH]);
+	ChangeAxisAngle(currentYaw, ideal_yaw, self->yaw_speed, &aiYawSpeed, &self->s.angles[YAW]);
+	ChangeAxisAngle(currentPitch, ideal_pitch, self->yaw_speed, &aiPitchSpeed, &self->s.angles[PITCH]);
 }
 
 void Ai::ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle)
@@ -383,68 +231,5 @@ void Ai::ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpee
 		angleMove = *aiAngleSpeed;
 		*changedAngle = anglemod(currAngle + angleMove);
 	}
-}
-
-/*
-* AI_MoveToShortRangeGoalEntity
-* A.K.A Item pick magnet
-*/
-bool Ai::MoveToShortRangeGoalEntity(usercmd_t *ucmd)
-{
-	if( !self->movetarget || !self->r.client )
-		return false;
-
-	if( self->ai->goalEnt && ( self->ai->goalEnt->ent == self->movetarget )
-		&& ( GetNodeFlags( self->ai->goal_node ) & NODEFLAGS_ENTITYREACH ) )
-	{
-		bool close, infront;
-
-		// wait
-		VectorSubtract( self->movetarget->s.origin, self->s.origin, self->ai->move_vector );
-		if( self->movetarget->item && self->ai->move_vector[2] < 0.0f ) {
-			// we probably gonna touch this item anyway, no need to bend over
-			self->ai->move_vector[2] = 0.0f;
-		}
-
-		close = VectorLength( self->ai->move_vector ) < 72;
-		infront = G_InFront( self, self->movetarget );
-		if( close && infront )
-			ucmd->buttons |= BUTTON_WALK;
-
-		if( !infront || BoundsIntersect( self->movetarget->r.absmin, self->movetarget->r.absmax, self->r.absmin, self->r.absmax ) )
-		{
-			ucmd->forwardmove = 0;
-			ucmd->sidemove = 0;
-			ucmd->upmove = 0;
-			ucmd->buttons &= ~BUTTON_WALK;
-			self->ai->node_timeout = 0;
-			return true;
-		}
-	}
-
-	if( self->movetarget->r.solid == SOLID_NOT || DistanceFast( self->movetarget->s.origin, self->s.origin ) > AI_GOAL_SR_RADIUS + 72 )
-	{
-		self->movetarget = NULL;
-		self->ai->shortRangeGoalTimeout = level.time;
-		return false;
-	}
-
-	// Force movement direction to reach the goal entity
-	VectorSubtract( self->movetarget->s.origin, self->s.origin, self->ai->move_vector );
-	if( self->movetarget->item && self->ai->move_vector[2] < 0.0f ) {
-		// we probably gonna touch this item anyway, no need to bend over
-		self->ai->move_vector[2] = 0.0f;
-	}
-
-	if( !G_InFront( self, self->movetarget ) )
-	{
-		// keep turning in place
-		ucmd->forwardmove = 0;
-		ucmd->sidemove = 0;
-		ucmd->upmove = 0;
-		ucmd->buttons &= ~BUTTON_WALK;
-	}
-
-	return true;
 }
 

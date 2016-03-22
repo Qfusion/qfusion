@@ -131,6 +131,7 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
     if (mayHitReally)
         TryPressAttack(ucmd, importantShot);
 
+    /*
     if (nav.debugMode && bot_showcombat->integer)
     {
         if (AimEnemy())
@@ -140,6 +141,7 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
             G_PrintChasersf(self, "%s: attacking %s\n", self->ai->pers.netname, enemyName);
         }
     }
+    */
     return true;
 }
 

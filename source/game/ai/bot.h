@@ -4,6 +4,7 @@
 #include "static_vector.h"
 #include "dangers_detector.h"
 #include "enemy_pool.h"
+#include "../../gameshared/q_comref.h"
 
 class Bot: public Ai
 {
@@ -11,9 +12,7 @@ class Bot: public Ai
 public:
     Bot(edict_t *self);
 
-    using Ai::SpecialMove;
     void Move(usercmd_t *ucmd);
-    void MoveWander(usercmd_t *ucmd);
     void CombatMovement(usercmd_t *ucmd);
     void LookAround();
     bool ChangeWeapon(int weapon);
@@ -34,6 +33,8 @@ public:
     void GhostingFrame();
     void RunFrame();
 
+    void OnRespawn();
+
     inline float Skill() { return self->ai->pers.skillLevel; }
 
 private:
@@ -49,6 +50,15 @@ private:
 
     bool printLink;
 
+    bool isBunnyHopping;
+    bool hasTriggeredRj;
+    unsigned rjTimeout;
+
+    unsigned combatMovePushTimeout;
+    int combatMovePushes[3];
+
+    unsigned vsayTimeout;
+
     Vec3 pendingLookAtPoint;
     unsigned pendingLookAtPointTimeoutAt;
     bool hasPendingLookAtPoint;
@@ -58,18 +68,26 @@ private:
 
     void ApplyPendingTurnToLookAtPoint();
 
-    bool MoveOnLadder(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveOnJumppad(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveRidingPlatform(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveEnteringPlatform(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveFallingOrJumping(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveStartingAJump(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveStartingARocketjump(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveSwimming(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
-    bool MoveGenericRunning(const vec3_t lookdir, const vec3_t pathdir, usercmd_t *ucmd);
+    inline const int *Inventory() const { return self->r.client->ps.inventory; }
+
+    float ComputeItemWeight(const edict_t *ent, bool onlyGotGB) const;
+    float ComputeWeaponWeight(const edict_t *ent, bool onlyGotGB) const;
+    float ComputeAmmoWeight(const edict_t *ent) const;
+    float ComputeArmorWeight(const edict_t *ent) const;
+    float ComputeHealthWeight(const edict_t *ent) const;
+    float ComputePowerupWeight(const edict_t *ent) const;
+
+    void MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveOnJumppad(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveEnteringPlatform(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveFallingOrJumping(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveStartingAJump(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd);
+
     // Returns true if the bot is at least a bit blocked
-    bool GetLessBlockedMoveVec(Vec3 *moveVec);
-    void TryMoveBunnyHopping(usercmd_t *ucmd);
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
 
     void ApplyEvadeMovePushes(usercmd_t *ucmd);

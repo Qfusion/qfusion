@@ -19,16 +19,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "ai_local.h"
+#include "aas.h"
 
-nav_ents_t *Ai::GetGoalentForEnt( edict_t *target )
+NavEntity *Ai::GetGoalentForEnt( edict_t *target )
 {
-	int entnum;
-
-	if( !target )
-		return NULL;
-
-	entnum = ENTNUM( target );
-	return nav.entsGoals[entnum];
+	return GoalEntitiesRegistry::Instance()->GoalEntityForEntity(target);
 }
 
 //==========================================
@@ -37,20 +32,18 @@ nav_ents_t *Ai::GetGoalentForEnt( edict_t *target )
 //==========================================
 void Ai::ResetNavigation()
 {
-	self->enemy = self->ai->latched_enemy = NULL;
-	self->ai->state_combat_timeout = 0;
+	distanceToNextReachStart = std::numeric_limits<float>::infinity();
+	distanceToNextReachEnd = std::numeric_limits<float>::infinity();
 
-	self->ai->is_bunnyhop = false;
+	currAasAreaNum = AAS_PointAreaNum(self->s.origin);
+	nextAasAreaNum = 0;
+	goalAasAreaNum = 0;
 
-	self->ai->nearest_node_tries = 0;
-	self->ai->longRangeGoalTimeout = 0;
+	longRangeGoalTimeout = 0;
+	blockedTimeout = level.time + 15000;
+	shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 
-	self->ai->blocked_timeout = level.time + 15000;
-
-	self->ai->shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
-	self->movetarget = NULL;
-
-	self->ai->aiRef->ClearGoal();
+	ClearGoal();
 }
 
 //==========================================
@@ -63,117 +56,98 @@ void Ai::ResetNavigation()
 // jal: I don't think there is any problem by calling it,
 // now that we have stored the costs at the nav.costs table (I don't do it anyway)
 //==========================================
+
+constexpr float COST_INFLUENCE = 0.5f;
+
 void Ai::PickLongRangeGoal()
 {
-#define WEIGHT_MAXDISTANCE_FACTOR 20000.0f
-#define COST_INFLUENCE	0.5f
-	int i;
-	float weight, bestWeight = 0.0;
-	int current_node;
-	float cost;
-	float dist;
-	nav_ents_t *goalEnt, *bestGoalEnt = NULL;
+	if (HasGoal())
+		ClearGoal();
 
-	self->ai->aiRef->ClearGoal();
-
-	if( G_ISGHOSTING( self ) )
+	if (IsGhosting())
 		return;
 
-	if( self->ai->longRangeGoalTimeout > level.time )
+	if (longRangeGoalTimeout > level.time)
 		return;
 
-	if( !self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED] ) {
+	if (!self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED])
 		return;
-	}
 
-	self->ai->longRangeGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom( 0, 1000 );
+	longRangeGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom( 0, 1000 );
 
-	// look for a target
-	current_node = Ai::FindClosestReachableNode( self->s.origin, self, ( ( 1 + self->ai->nearest_node_tries ) * NODE_DENSITY ), NODE_ALL );
-	self->ai->current_node = current_node;
-
-	if( current_node == NODE_INVALID )
-	{
-		if( nav.debugMode && bot_showlrgoal->integer )
-			G_PrintChasersf( self, "%s: LRGOAL: Closest node not found. Tries:%i\n", self->ai->pers.netname, self->ai->nearest_node_tries );
-
-		self->ai->nearest_node_tries++; // extend search radius with each try
-		return;
-	}
-
-	self->ai->nearest_node_tries = 0;
+	float bestWeight = 0.0f;
+	NavEntity *bestGoalEnt = NULL;
 
 	// Run the list of potential goal entities
-	FOREACH_GOALENT( goalEnt )
+	FOREACH_GOALENT(goalEnt)
 	{
-		i = goalEnt->id;
-		if( !goalEnt->ent )
-			continue;
+		if (!goalEnt->ent)
+			FailWith("PickLongRangeGoal(): goalEnt %d ent is null\n", goalEnt->id);
 
-		if( !goalEnt->ent->r.inuse )
+		if (!goalEnt->aasAreaNum)
+			FailWith("PickLongRangeGoal():goalEnt %d aas area num\n", goalEnt->aasAreaNum);
+
+		if (goalEnt->ent->r.client)
+			FailWith("PickLongRangeGoal(): goalEnt %d is a client %s\n", goalEnt->ent->r.client->netname);
+
+		if (!goalEnt->ent->r.inuse)
 		{
-			goalEnt->node = NODE_INVALID;
+			//Debug("PickLongRangeGoal(): skipping goalEnt %s %d (is not in use)\n", goalEnt->ent->classname, goalEnt->id);
 			continue;
 		}
 
-		if( goalEnt->ent->r.client )
+		// Items timing is currently disabled
+		if (goalEnt->ent->r.solid == SOLID_NOT)
 		{
-			if( G_ISGHOSTING( goalEnt->ent ) || ( goalEnt->ent->flags & FL_NOTARGET ) || ( ( goalEnt->ent->flags & FL_BUSY ) && ( level.gametype.forceTeamHumans == level.gametype.forceTeamBots ) ) )
-				goalEnt->node = NODE_INVALID;
-			else
-				goalEnt->node = Ai::FindClosestReachableNode( goalEnt->ent->s.origin, goalEnt->ent, NODE_DENSITY, NODE_ALL );
+			//Debug("PickLongRangeGoal(): skipping goalEnt %s %d (is not solid)\n", goalEnt->ent->classname, goalEnt->id);
+			continue;
 		}
 
-		if( goalEnt->ent->item )
+		if (goalEnt->ent->item)
 		{
-			if( !G_Gametype_CanPickUpItem( goalEnt->ent->item ) )
+			if (!G_Gametype_CanPickUpItem(goalEnt->ent->item))
+			{
+				//Debug("PickLongRangeGoal(): skipping goalEnt %s %d (the item can't be picked up)", goalEnt->ent->classname, goalEnt->id);
 				continue;
+			}
 		}
 
-		if( goalEnt->node == NODE_INVALID )
+		float weight = self->ai->status.entityWeights[goalEnt->id];
+
+		if (weight <= 0.0f)
 			continue;
 
-		weight = self->ai->status.entityWeights[i];
+		float cost = 0;
+		if (currAasAreaNum == goalEnt->aasAreaNum)
+			cost = AAS_AreaTravelTime(goalEnt->aasAreaNum, self->s.origin, goalEnt->ent->s.origin);
+		else
+		{
+			// We ignore cost of traveling in goal area, since:
+			// 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
+			// 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
+			cost = AAS_AreaTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->aasAreaNum, preferredAasTravelFlags);
+		}
 
-		if( weight <= 0.0f )
+		if (cost == 0)
 			continue;
 
-		// don't try to find cost for too far away objects
-		dist = DistanceFast( self->s.origin, goalEnt->ent->s.origin );
-		if( dist > WEIGHT_MAXDISTANCE_FACTOR * weight/* || dist < AI_GOAL_SR_RADIUS*/ )
-			continue;
+		clamp_low(cost, 1);
+		weight = (1000 * weight) / (cost * COST_INFLUENCE); // Check against cost of getting there
 
-		cost = Ai::FindCost( current_node, goalEnt->node, self->ai->status.moveTypesMask );
-		if( cost == NODE_INVALID )
-			continue;
-
-		cost -= brandom( 0, 2000 ); // allow random variations
-		clamp_low( cost, 1 );
-		weight = ( 1000 * weight ) / ( cost * COST_INFLUENCE ); // Check against cost of getting there
-
-		if( weight > bestWeight )
+		if (weight > bestWeight)
 		{
 			bestWeight = weight;
 			bestGoalEnt = goalEnt;
 		}
 	}
 
-	if( bestGoalEnt )
+	if (bestGoalEnt)
 	{
+		constexpr const char *format = "chosen %s at area %d with weight %.2f as a long-term goal\n";
+		Debug(format, bestGoalEnt->ent->classname, bestWeight, bestGoalEnt->aasAreaNum);
 		self->ai->goalEnt = bestGoalEnt;
-		self->ai->aiRef->SetGoal( bestGoalEnt->node );
-
-		if( self->ai->goalEnt != NULL && nav.debugMode && bot_showlrgoal->integer )
-			G_PrintChasersf( self, "%s: selected a %s at node %d for LR goal. (weight %f)\n", self->ai->pers.netname, self->ai->goalEnt->ent->classname, self->ai->goalEnt->node, bestWeight );
-
-		return;
+		self->ai->aiRef->SetGoal(bestGoalEnt);
 	}
-
-	if( nav.debugMode && bot_showlrgoal->integer )
-		G_PrintChasersf( self, "%s: did not find a LR goal.\n", self->ai->pers.netname );
-
-#undef WEIGHT_MAXDISTANCE_FACTOR
-#undef COST_INFLUENCE
 }
 
 //==========================================
@@ -186,69 +160,67 @@ void Ai::PickShortRangeGoal()
 {
 	edict_t *bestGoal = NULL;
 	float bestWeight = 0;
-	nav_ents_t *goalEnt;
-	const gsitem_t *item;
-	bool canPickupItems;
-	int i;
 
-	if( !self->r.client || G_ISGHOSTING( self ) )
+	if (!self->r.client || G_ISGHOSTING(self))
 		return;
 
-	if( self->ai->state_combat_timeout > level.time )
+	if (stateCombatTimeout > level.time)
 	{
-		self->ai->shortRangeGoalTimeout = self->ai->state_combat_timeout;
+		shortRangeGoalTimeout = stateCombatTimeout;
 		return;
 	}
 
-	if( self->ai->shortRangeGoalTimeout > level.time )
+	if (shortRangeGoalTimeout > level.time)
 		return;
 
-	canPickupItems = (self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK) != 0 ? true : false;
+	bool canPickupItems = self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK;
 
-	self->ai->shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
+	shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 
 	self->movetarget = NULL;
 
-	FOREACH_GOALENT( goalEnt )
+	FOREACH_GOALENT(goalEnt)
 	{
 		float dist;
 
-		i = goalEnt->id;
-		if( !goalEnt->ent->r.inuse || goalEnt->ent->r.solid == SOLID_NOT )
+		int i = goalEnt->id;
+		if (!goalEnt->ent->r.inuse || goalEnt->ent->r.solid == SOLID_NOT)
 			continue;
 
-		if( goalEnt->ent->r.client )
+		if (goalEnt->ent->r.client)
 			continue;
 
-		if( self->ai->status.entityWeights[i] <= 0.0f )
+		if (self->ai->status.entityWeights[i] <= 0.0f)
 			continue;
 
-		item = goalEnt->ent->item;
-		if( canPickupItems && item ) {
-			if( !G_Gametype_CanPickUpItem( item ) || !( item->flags & ITFLAG_PICKABLE ) ) {
+		const auto &item = goalEnt->ent->item;
+		if (canPickupItems && item)
+		{
+			if(!G_Gametype_CanPickUpItem(item) || !(item->flags & ITFLAG_PICKABLE))
 				continue;
-			}
 		}
 
-		dist = DistanceFast( self->s.origin, goalEnt->ent->s.origin );
-		if( goalEnt == self->ai->goalEnt ) {
-			if( dist > AI_GOAL_SR_LR_RADIUS )
+		dist = DistanceFast(self->s.origin, goalEnt->ent->s.origin);
+		if (goalEnt == self->ai->goalEnt)
+		{
+			if (dist > AI_GOAL_SR_LR_RADIUS)
 				continue;			
 		}
-		else {
-			if( dist > AI_GOAL_SR_RADIUS )
+		else
+		{
+			if(dist > AI_GOAL_SR_RADIUS)
 				continue;
 		}		
 
-		clamp_low( dist, 0.01f );
+		clamp_low(dist, 0.01f);
 
-		if( ShortRangeReachable( goalEnt->ent->s.origin ) )
+		if (IsShortRangeReachable(goalEnt->ent->s.origin))
 		{
 			float weight;
-			bool in_front = G_InFront( self, goalEnt->ent );
+			bool in_front = G_InFront(self, goalEnt->ent);
 
 			// Long range goal gets top priority
-			if( in_front && goalEnt == self->ai->goalEnt ) 
+			if (in_front && goalEnt == self->ai->goalEnt)
 			{
 				bestGoal = goalEnt->ent;
 				break;
@@ -256,7 +228,7 @@ void Ai::PickShortRangeGoal()
 
 			// get the one with the best weight
 			weight = self->ai->status.entityWeights[i] / dist * (in_front ? 1.0f : 0.5f);
-			if( weight > bestWeight )
+			if (weight > bestWeight)
 			{
 				bestWeight = weight;
 				bestGoal = goalEnt->ent;
@@ -264,56 +236,171 @@ void Ai::PickShortRangeGoal()
 		}
 	}
 
-	if( bestGoal )
+	if (bestGoal)
 	{
 		self->movetarget = bestGoal;
-		if( nav.debugMode && bot_showsrgoal->integer )
-			G_PrintChasersf( self, "%i %s: selected a %s for SR goal.\n", level.framenum, self->ai->pers.netname, self->movetarget->classname );
 	}
 	else
 	{
-		// got nothing else to do so keep scanning
-		self->ai->shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY_IDLE;
+		shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY_IDLE;
 	}
 }
 
-//===================
-//  AI_CategorizePosition
-//  Categorize waterlevel and groundentity/stepping
-//===================
-void Ai::CategorizePosition( edict_t *ent )
+bool Ai::IsShortRangeReachable(const vec3_t targetOrigin) const
 {
-	bool stepping = Ai::IsStep(ent);
+	int targetAreaNum = AAS_PointAreaNum(const_cast<float*>(targetOrigin));
+	if (!targetAreaNum)
+		return false;
+	// TODO: We do not score distance in a goal area, but it seems to be cheap in the most cases, so it currently is left as is
+	return AAS_AreaTravelTimeToGoalArea(currAasAreaNum, self->s.origin, targetAreaNum, preferredAasTravelFlags) < AI_GOAL_SR_RADIUS;
+}
 
-	ent->was_swim = ent->is_swim;
-	ent->was_step = ent->is_step;
-
-	ent->is_ladder = Ai::IsLadder( ent->s.origin, ent->s.angles, ent->r.mins, ent->r.maxs, ent );
-
-	G_CategorizePosition( ent );
-	if( ent->waterlevel > 2 || ( ent->waterlevel && !stepping ) )
+void Ai::CheckReachedArea()
+{
+	const int actualAasAreaNum = AAS_PointAreaNum(self->s.origin);
+	// Current aas area num did not changed
+	if (currAasAreaNum == actualAasAreaNum)
 	{
-		ent->is_swim = true;
-		ent->is_step = false;
+#ifdef _DEBUG
+		AITools_DrawColorLine(nextAreaReach->start, nextAreaReach->end, COLOR_RGB(0, 192, 0), 0);
+		vec3_t start, start2;
+		vec3_t end, end2;
+		VectorCopy(nextAreaReach->start, start);
+		VectorCopy(nextAreaReach->start, start2);
+		VectorCopy(nextAreaReach->end, end);
+		VectorCopy(nextAreaReach->end, end2);
+		start2[2] += 4;
+		end2[2] += 4;
+		AITools_DrawColorLine(start, start2, COLOR_RGB(0, 0, 120), 0);
+		AITools_DrawColorLine(end, end2, COLOR_RGB(120, 0, 0), 0);
+#endif
+
+		// Just update move target point
+		if (actualAasAreaNum != goalAasAreaNum)
+		{
+			Vec3 selfToReachStartVec(nextAreaReach->start);
+			selfToReachStartVec -= self->s.origin;
+			if (selfToReachStartVec.SquaredLength() > 36 * 36)
+				currMoveTargetPoint = Vec3(nextAreaReach->start);
+			else
+			{
+				Vec3 selfToReachEndVec(nextAreaReach->end);
+				selfToReachEndVec -= self->s.origin;
+				if (selfToReachEndVec.SquaredLength() > 36 * 36)
+					currMoveTargetPoint = Vec3(nextAreaReach->end);
+				else
+				{
+					Vec3 linkVec(nextAreaReach->end);
+					linkVec -= nextAreaReach->start;
+					if (linkVec.SquaredLength() > 1)
+						linkVec.NormalizeFast();
+					currMoveTargetPoint = Vec3(nextAreaReach->end) + 24 * linkVec;
+				}
+			}
+		}
+			// We are in the goal area. Look at the target point (angles may be screwed e.g. while firing).
+		else if (actualAasAreaNum != 0)
+		{
+#ifdef _DEBUG
+			AITools_DrawColorLine(goalTargetPoint.data(), (goalTargetPoint + Vec3(0, 0, 54)).data(), COLOR_RGB(192, 192, 0), 0);
+#endif
+			currMoveTargetPoint = goalTargetPoint;
+		}
+	}
+	else
+	{
+		// We have reached next area as it was planned
+		if (actualAasAreaNum == nextAasAreaNum)
+		{
+			// Pick up next aas area num
+			if (actualAasAreaNum != goalAasAreaNum)
+			{
+				// TODO: Use cached route
+				int reachNum = AAS_AreaReachabilityToGoalArea(actualAasAreaNum, self->s.origin, goalAasAreaNum, preferredAasTravelFlags);
+				if (reachNum)
+					SetNextAreaReach(reachNum);
+				else
+				{
+					const char *format = "CategorizePosition(): Can't find reach. from next area %d to goal area %d\n";
+					Debug(format, actualAasAreaNum, goalAasAreaNum);
+					ClearGoal();
+				}
+			}
+				// We have reached the goal area. Look at the target point
+			else
+			{
+				Debug("CategorizePosition(): has reached goal area %d from %d\n", actualAasAreaNum, currAasAreaNum);
+				currMoveTargetPoint = goalTargetPoint;
+			}
+		}
+			// Looks like we have been pushed to some other area. We need to build a route again
+		else
+		{
+			int reachNum = AAS_AreaReachabilityToGoalArea(actualAasAreaNum, self->s.origin, goalAasAreaNum, preferredAasTravelFlags);
+			if (reachNum)
+			{
+				// TODO: Precache built route
+				SetNextAreaReach(reachNum);
+			}
+			else
+			{
+				const char *format = "CategorizePosition: Can't find reach. from actual area %d to goal area %d\n";
+				Debug(format, actualAasAreaNum, goalAasAreaNum);
+				ClearGoal();
+			}
+		}
+	}
+
+	currAasAreaNum = actualAasAreaNum;
+
+#ifdef _DEBUG
+	AITools_DrawColorLine(self->s.origin, currMoveTargetPoint.data(), COLOR_RGB(128, 0, 192), 0);
+#endif
+
+	distanceToNextReachStart = DistanceSquared(nextAreaReach->start, self->s.origin);
+	if (distanceToNextReachStart > 1)
+		distanceToNextReachStart = 1.0f / Q_RSqrt(distanceToNextReachStart);
+	distanceToNextReachEnd = DistanceSquared(nextAreaReach->end, self->s.origin);
+	if (distanceToNextReachEnd > 1)
+		distanceToNextReachEnd = 1.0f / Q_RSqrt(distanceToNextReachEnd);
+}
+
+void Ai::CategorizePosition()
+{
+	CheckReachedArea();
+
+	bool stepping = Ai::IsStep(self);
+
+	self->was_swim = self->is_swim;
+	self->was_step = self->is_step;
+
+	self->is_ladder = currAasAreaNum ? (bool)AAS_AreaLadder(currAasAreaNum) : false;
+
+	G_CategorizePosition(self);
+	if (self->waterlevel > 2 || (self->waterlevel && !stepping))
+	{
+		self->is_swim = true;
+		self->is_step = false;
 		return;
 	}
 
-	ent->is_swim = false;
-	ent->is_step = stepping;
+	self->is_swim = false;
+	self->is_step = stepping;
 }
 
 void Ai::UpdateStatus()
 {
-	if( !G_ISGHOSTING( self ) )
+	if(!G_ISGHOSTING(self))
 	{
-		AI_ResetWeights( self->ai );
+		AI_ResetWeights(self->ai);
 
 		self->ai->status.moveTypesMask = self->ai->pers.moveTypesMask;
 
-		if( !GT_asCallBotStatus( self ) )
-			self->ai->pers.UpdateStatus( self );
+		// Script status update disabled now!
+		//if (!GT_asCallBotStatus(self))
+		self->ai->pers.UpdateStatus(self);
 
-		self->ai->statusUpdateTimeout = level.time + AI_STATUS_TIMEOUT;
+		statusUpdateTimeout = level.time + AI_STATUS_TIMEOUT;
 
 		// no cheating with moveTypesMask
 		self->ai->status.moveTypesMask &= self->ai->pers.moveTypesMask;
@@ -322,61 +409,57 @@ void Ai::UpdateStatus()
 
 void Ai::Think()
 {
-	if( level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities )
+	if (level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities)
 	{
 		self->nextThink = level.time + game.snapFrameTime;
 		return;
 	}
 
 	// check for being blocked
-	if( !G_ISGHOSTING( self ) )
+	if (!G_ISGHOSTING(self))
 	{
-		Ai::CategorizePosition( self );
+		CategorizePosition();
 
-		if( VectorLengthFast( self->velocity ) > 37 )
-			self->ai->blocked_timeout = level.time + 10000;
+		if (VectorLengthFast(self->velocity) > 37)
+			blockedTimeout = level.time + 10000;
 
 		// if completely stuck somewhere
-		if( self->ai->blocked_timeout < level.time )
+		if (blockedTimeout < level.time)
 		{
-			self->ai->pers.blockedTimeout( self );
+			self->ai->pers.blockedTimeout(self);
 			return;
 		}
 	}
 
+	// Always update status (= entity weights) before goal picking, except we have updated it in this frame
+	bool statusUpdated = false;
 	//update status information to feed up ai
-	if( self->ai->statusUpdateTimeout <= level.time )
-		UpdateStatus();
-
-	if (NodeHasTimedOut())
-		ClearGoal();
-
-	if( self->ai->goal_node == NODE_INVALID )
-		PickLongRangeGoal();
-
-	//if( self == level.think_client_entity )
-	PickShortRangeGoal();
-
-	self->ai->pers.RunFrame( self );
-
-	// Show the path
-	if( nav.debugMode && bot_showpath->integer && self->ai->goal_node != NODE_INVALID )
+	if (statusUpdateTimeout <= level.time)
 	{
-		// only draw the path of those bots which are being chased
-		edict_t *chaser;
-		bool chaserFound = false;
-
-		for( chaser = game.edicts + 1; ENTNUM( chaser ) < gs.maxclients; chaser++ )
-		{
-			if( chaser->r.client->resp.chase.active && chaser->r.client->resp.chase.target == ENTNUM( self ) )
-			{
-				AITools_DrawPath( self, self->ai->goal_node );
-				chaserFound = true;
-			}
-		}
-
-		if( !chaserFound && game.numBots == 1 )
-			AITools_DrawPath( self, self->ai->goal_node );
+		UpdateStatus();
+		statusUpdated = true;
 	}
+
+	if (goalAasAreaNum == 0 || longRangeGoalTimeout <= level.time)
+	{
+		if (!statusUpdated)
+		{
+			UpdateStatus();
+			statusUpdated = true;
+		}
+		PickLongRangeGoal();
+	}
+
+	if (shortRangeGoalTimeout <= level.time)
+	{
+		if (!statusUpdated)
+		{
+			UpdateStatus();
+		}
+		//TODO: PickShortRangeGoal(); timeout update is a stub
+		shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
+	}
+
+	self->ai->pers.RunFrame(self);
 }
 
