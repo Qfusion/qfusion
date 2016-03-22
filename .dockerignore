@@ -2,8 +2,8 @@
 builds/
 source/CMakeCache.txt
 source/build/
-libsrcs/angelscript/sdk/angelscript/lib/
-libsrcs/angelscript/sdk/angelscript/projects/mingw/obj/
-libsrcs/angelscript/sdk/angelscript/projects/gnuc/obj/
-libsrcs/libRocket/libRocket/lib/
-libsrcs/libRocket/libRocket/Build/obj/
+libsrcs/angelscript/sdk/angelscript/lib/*
+libsrcs/angelscript/sdk/angelscript/projects/mingw/obj/*
+libsrcs/angelscript/sdk/angelscript/projects/gnuc/obj/*
+libsrcs/libRocket/libRocket/lib/*
+libsrcs/libRocket/libRocket/Build/obj/*
