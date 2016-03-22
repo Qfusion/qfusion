@@ -9,5 +9,6 @@ RUN apt-get update && apt-get install -y \
     gdebi -n /home/buildbot/qfusion/debian/*.deb
 WORKDIR /home/buildbot/qfusion/source
 RUN sudo chown -R buildbot:buildbot /home/buildbot/qfusion && \
-    sudo -u buildbot cmake -DQFUSION_TAR_GZ_OUTPUT_DIRECTORY=/home/buildbot/tar_gz .
+    sudo -u buildbot cmake -DQFUSION_TAR_GZ_OUTPUT_DIRECTORY=/home/buildbot/tar_gz . && \
+    sudo -u buildbot make clean
 USER buildbot
