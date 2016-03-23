@@ -6,6 +6,20 @@ cache: apt
 matrix:
   include:
     - os: linux
+      env: QF_ARCH=x86_64
+      addons:
+        apt:
+          packages:
+            - build-essential
+            - libopenal-dev
+            - libjpeg-dev
+            - libvorbis-dev
+            - libtheora-dev
+            - libfreetype6-dev
+            - libsdl2-dev
+            - zlib1g-dev
+            - libcurl4-gnutls-dev
+    - os: linux
       env: QF_ARCH=win32_x86
       addons:
         apt:
@@ -43,6 +57,9 @@ matrix:
 before_install:
   - if [[ "$QF_ARCH" == "win32_x86" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i686-mingw.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32; fi
   - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake; fi
+
+install:
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then curl -O http://www.libsdl.org/release/SDL2-2.0.4.tar.gz && tar -xzvf SDL2-2.0.4.tar.gz && cd SDL2-2.0.4 && ./configure --prefix="$HOME/.deps/sdl2" && make && make install && cd ../source && cmake; fi
 
 script:
   - make -j2
