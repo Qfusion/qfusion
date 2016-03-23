@@ -1,7 +1,12 @@
 sudo: false
 language: c++
 install: true
-cache: apt
+cache: 
+  apt: true
+  directories:
+    - $HOME/.deps
+notifications:
+  email: false
 
 matrix:
   include:
@@ -9,14 +14,16 @@ matrix:
       env: QF_ARCH=x86_64
       addons:
         apt:
+          sources:
+            - kubuntu-backports
           packages:
+            - cmake
             - build-essential
             - libopenal-dev
-            - libjpeg-dev
+            - libjpeg8-dev
             - libvorbis-dev
             - libtheora-dev
             - libfreetype6-dev
-            - libsdl2-dev
             - zlib1g-dev
             - libcurl4-gnutls-dev
     - os: linux
@@ -55,12 +62,13 @@ matrix:
             - mingw-w64
 
 before_install:
-  - if [[ "$QF_ARCH" == "win32_x86" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i686-mingw.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32; fi
-  - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cd source && cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake; fi
 
 install:
-  - if [[ "$QF_ARCH" == "x86_64" ]]; then curl -O http://www.libsdl.org/release/SDL2-2.0.4.tar.gz && tar -xzvf SDL2-2.0.4.tar.gz && cd SDL2-2.0.4 && ./configure --prefix="$HOME/.deps/sdl2" && make && make install && cd ../source && cmake; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]] && [ ! -e "$HOME/.deps/$QF_ARCH/lib/pkgconfig/sdl2.pc" ]; then mkdir -p $HOME/.deps/$QF_ARCH && cd $HOME/.deps/$QF_ARCH && curl -O http://www.libsdl.org/release/SDL2-2.0.4.tar.gz && tar -xzvf SDL2-2.0.4.tar.gz && cd SDL2-2.0.4 && ./configure --prefix="$HOME/.deps/$QF_ARCH" && make && make install && cd .. && rm -rf SDL2-2.0.4 && cd "$TRAVIS_BUILD_DIR"; fi
 
 script:
+  - cd source
+  - if [[ "$QF_ARCH" == "win32_x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i686-mingw.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 .; fi
+  - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake .; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then export SDL2DIR="$HOME/.deps/$QF_ARCH" && cmake .; fi
   - make -j2
-
