@@ -3,7 +3,7 @@ project(${QFUSION_CLIENT_NAME})
 include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
 
 if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
-    include_directories(${SDL2_INCLUDE_DIRS})
+    include_directories(${SDL2_INCLUDE_DIR})
 endif()
 
 if (NOT QFUSION_MAC_ICON)
