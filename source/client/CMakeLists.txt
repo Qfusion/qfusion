@@ -130,10 +130,14 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     set(BUNDLE_RESOURCES
         ../mac/Frameworks
-        ../../../${GAME_DATA_DIR}/basewsw
-        ../../../${GAME_DATA_DIR}/docs
         ${QFUSION_MAC_ICON}
     )
+	if (QFUSION_DATA_DIR)
+		list(APPEND BUNDLE_RESOURCES
+			${QFUSION_DATA_DIR}/${QFUSION_GAME_DIR}
+			${QFUSION_DATA_DIR}/docs
+		)
+	endif()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
