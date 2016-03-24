@@ -77,7 +77,6 @@ before_install:
 
 install:
   - if [[ "$QF_ARCH" == "x86_64" ]] && [ ! -e "$HOME/.deps/$QF_ARCH/lib/pkgconfig/sdl2.pc" ]; then mkdir -p $HOME/.deps/$QF_ARCH && cd $HOME/.deps/$QF_ARCH && curl -O http://www.libsdl.org/release/SDL2-2.0.4.tar.gz && tar -xzvf SDL2-2.0.4.tar.gz && cd SDL2-2.0.4 && ./configure --prefix="$HOME/.deps/$QF_ARCH" && make && make install && cd .. && rm -rf SDL2-2.0.4 && cd "$TRAVIS_BUILD_DIR"; fi
-  - if [[ "$QF_ARCH" == "OSX" ]]; then mkdir -p ../Warsow_20 && mkdir -p ../Warsow_20/basewsw && mkdir -p ../Warsow_20/docs; fi
 
 script:
   - cd source
