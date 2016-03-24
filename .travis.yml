@@ -11,6 +11,16 @@ notifications:
 matrix:
   include:
     - os: linux
+      env: QF_ARCH=x86
+      addons:
+        apt:
+          sources:
+            - kubuntu-backports
+          packages:
+            - cmake
+            - build-essential
+            - gcc-multilib
+    - os: linux
       env: QF_ARCH=x86_64
       addons:
         apt:
@@ -68,7 +78,7 @@ install:
 
 script:
   - cd source
-  - if [[ "$QF_ARCH" == "win32_x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i686-mingw.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 .; fi
-  - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake .; fi
-  - if [[ "$QF_ARCH" == "x86_64" ]]; then export SDL2DIR="$HOME/.deps/$QF_ARCH" && cmake .; fi
-  - make -j2
+  - if [[ "$QF_ARCH" == "win32_x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i686-mingw.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 . && make -j2; fi
+  - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake . && make -j2; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then export SDL2DIR="$HOME/.deps/$QF_ARCH" && cmake . && make -j2; fi
+  - if [[ "$QF_ARCH" == "x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.cmake -DGAME_MODULES_ONLY=1 . && make -j2 game cgame; fi
