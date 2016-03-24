@@ -72,7 +72,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../win32/qfusion.rc"
         )
 
-        set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARIES} "ws2_32.lib" "winmm.lib")
+        set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} "ws2_32.lib" "winmm.lib")
     else()
         file(GLOB CLIENT_PLATFORM_SOURCES
             "../win32/win_fs.c"
