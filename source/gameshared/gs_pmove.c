@@ -160,10 +160,10 @@ static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 		r = M_PI / 2.0f;
 	else if( pml.sidePush < 0 )
 		r = -M_PI / 2.0f;
-	else if( pml.forwardPush < 0 )
-		r = M_PI;
-	else
+	else if( pml.forwardPush > 0 )
 		r = 0.0f;
+	else
+		r = M_PI;
 
 	d = 0.0f; // current distance from the primary direction
 
