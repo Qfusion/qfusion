@@ -146,20 +146,30 @@ static vec_t VectorNormalize2D( vec3_t v ) // ByMiK : normalize horizontally (do
 // usage : nbTestDir = nb of direction to test around the player
 // maxZnormal is the Z value of the normal of a poly to considere it as a wall
 // normal is a pointer to the normal of the nearest wall
-
 static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 {
 	vec3_t zero, dir;
 	int i;
 	trace_t trace;
-	float r = 0.0, d = 0.0;
-	float dx, dy, m;
+	float r, d, dx, dy, m;
 
 	VectorClear( zero );
 
+	// determine the primary direction
+	if( pml.sidePush > 0 )
+		r = M_PI / 2.0f;
+	else if( pml.sidePush < 0 )
+		r = -M_PI / 2.0f;
+	else if( pml.forwardPush < 0 )
+		r = M_PI;
+	else
+		r = 0.0f;
+
+	d = 0.0f; // current distance from the primary direction
+
 	for( i = 0; i < nbTestDir; i++ )
 	{
-		// start in the view direction and alternate with its opposite while moving away from these
+		// start checking in the primary direction and alternate with its opposite while moving away from these
 		if( i != 0 )
 			r += M_PI; // switch front and back
 		if( i % 4 == 0 && i != 0 )
@@ -167,10 +177,12 @@ static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 			r -= 2 * d;
 		}
 		else if( i % 4 == 2 )
-		{ // move further away
+		{ // switch left and right and move further away
 			r += 2 * d + M_TWOPI / nbTestDir;
 			d += M_TWOPI / nbTestDir;
 		}
+
+		// determine the relative offsets from the origin
 		dx = cos( DEG2RAD( pm->playerState->viewangles[YAW] ) + r );
 		dy = sin( DEG2RAD( pm->playerState->viewangles[YAW] ) + r );
 
