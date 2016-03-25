@@ -268,11 +268,43 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
     // we are likely going to miss the target point. We have to check actual look angles
     // and assist by turning to the target harder and/or assisting by strafe keys (when picking an item)
 
+    Vec3 velocityVec(self->velocity);
+    float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
+
     Vec3 toTargetVec(currMoveTargetPoint);
     toTargetVec -= self->s.origin;
 
-    Vec3 velocityVec(self->velocity);
-    float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
+    const float transitionRadius = 36.0f + 128.0f * BoundedFraction(speed - 320, 640);
+
+    bool inTransition = false;
+
+    if (distanceToNextReachStart < transitionRadius && currAasAreaNum != goalAasAreaNum)
+    {
+        int predictedReachNum = AAS_AreaReachabilityToGoalArea(nextAreaReach->areanum, nextAreaReach->end, goalAasAreaNum, preferredAasTravelFlags);
+        if (predictedReachNum)
+        {
+            aas_reachability_t predictedReach;
+            AAS_ReachabilityFromNum(predictedReachNum, &predictedReach);
+            int bunnyCompatTravelType = TRAVEL_WALK|TRAVEL_WALKOFFLEDGE|TRAVEL_JUMP|TRAVEL_STRAFEJUMP;
+            if (predictedReach.traveltype & bunnyCompatTravelType)
+            {
+                Vec3 toNextTarget(predictedReach.start);
+                toNextTarget -= self->s.origin;
+                toNextTarget.NormalizeFast();
+                if (toTargetVec.SquaredLength() > 0.01f)
+                    toTargetVec.NormalizeFast();
+
+                float factor = distanceToNextReachStart / transitionRadius;
+                toTargetVec *= factor;
+                toNextTarget *= 1.0f - factor;
+                toTargetVec += toNextTarget;
+                toTargetVec.NormalizeFast();
+
+                inTransition = true;
+            }
+        }
+    }
+
 
     Vec3 toTargetDir2D(toTargetVec);
     toTargetDir2D.z() = 0;
@@ -303,7 +335,7 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             isBunnyHopping = true;
         }
 
-        if (toTarget2DSqLen > 0.1f)
+        if (toTarget2DSqLen > 0.1f && !inTransition)
         {
             toTargetDir2D *= Q_RSqrt(toTarget2DSqLen);
 
