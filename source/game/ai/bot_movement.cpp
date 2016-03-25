@@ -261,6 +261,58 @@ void Bot::MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd)
     //    ucmd->upmove = 1;
 }
 
+void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed)
+{
+    float moveVecSqLen = moveVec->SquaredLength();
+    if (moveVecSqLen < 0.01f)
+        return;
+
+    *moveVec *= Q_RSqrt(moveVecSqLen);
+
+    Vec3 baseOffsetVec(*moveVec);
+    baseOffsetVec *= 24.0f + 96.0f * BoundedFraction(speed, 900);
+
+    float *const mins = playerbox_stand_mins;
+    float *const maxs = playerbox_stand_maxs;
+
+    trace_t trace;
+    G_Trace(&trace, self->s.origin, mins, maxs, (baseOffsetVec + self->s.origin).data(), self, MASK_AISOLID);
+
+    if (trace.fraction == 1.0f)
+        return;
+
+    // Trace both a bit left and a bit right directions. Don't reject early (otherwise one side will be always preferred)
+    float angleStep = 35.0f - 15.0f * BoundedFraction(speed, 900);
+
+    float bestFraction = trace.fraction;
+    float *bestVec = baseOffsetVec.data();
+
+    float sign = -1.0f;
+    int stepNum = 1;
+    while (stepNum < 4)
+    {
+        mat3_t matrix;
+        vec3_t offsetVec;
+        vec3_t angles;
+
+        VectorSet(angles, 0, sign * angleStep * stepNum, 0);
+        AnglesToAxis(angles, matrix);
+        Matrix3_TransformVector(matrix, baseOffsetVec.data(), offsetVec);
+        G_Trace(&trace, self->s.origin, mins, maxs, (Vec3(offsetVec) + self->s.origin).data(), self, MASK_AISOLID);
+
+        if (trace.fraction > bestFraction)
+        {
+            bestFraction = trace.fraction;
+            VectorCopy(bestVec, moveVec->data());
+        }
+
+        if (sign > 0)
+            stepNum++;
+        sign = -sign;
+    }
+    // If bestFraction is still a fraction of the forward trace, moveVec is kept as is
+}
+
 void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
 {
     // moveDir is initially set to a vector from self to currMoveTargetPoint.
@@ -305,6 +357,7 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
         }
     }
 
+    CheckAndTryAvoidObstacles(moveVec, speed);
 
     Vec3 toTargetDir2D(toTargetVec);
     toTargetDir2D.z() = 0;
