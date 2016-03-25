@@ -76,6 +76,8 @@ void Ai::SetNextAreaReach(int reachNum)
 	nextAreaReachNum = reachNum;
 	nextAasAreaNum = nextAreaReach->areanum;
 	VectorCopy(nextAreaReach->start, currMoveTargetPoint.data());
+	// It prevents weird bending over the points for usual kinds of nodes
+	currMoveTargetPoint.z() += playerbox_stand_viewheight;
 	Debug("SetNextAreaReach(reach num=%d): next aas area num: %d\n", reachNum, nextAasAreaNum);
 }
 
@@ -108,6 +110,8 @@ void Ai::SetGoal(NavEntity *navEntity)
 	goalAasAreaNum = navEntity->aasAreaNum;
 	goalAasAreaNodeFlags = navEntity->aasAreaNodeFlags;
 	goalTargetPoint = Vec3(navEntity->ent->s.origin);
+	// It prevents weird bending over the points for usual kinds of nodes
+	goalTargetPoint.z() += playerbox_stand_viewheight;
 
 	if (currAasAreaNum != goalAasAreaNum)
 	{
