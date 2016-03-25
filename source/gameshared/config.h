@@ -4,7 +4,7 @@
 /* this will protect dangerous and untested pieces of code              */
 /************************************************************************/
 //#define PUBLIC_BUILD
-#define BROKEN_BUILD
+//#define BROKEN_BUILD
 
 //==============================================
 // wsw : jal :	these defines affect every project file. They are
