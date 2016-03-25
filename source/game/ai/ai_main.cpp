@@ -40,7 +40,7 @@ void Ai::ResetNavigation()
 	goalAasAreaNum = 0;
 
 	longRangeGoalTimeout = 0;
-	blockedTimeout = level.time + 15000;
+	blockedTimeout = level.time + BLOCKED_TIMEOUT;
 	shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 
 	ClearGoal();
@@ -420,8 +420,9 @@ void Ai::Think()
 	{
 		CategorizePosition();
 
+		// TODO: Check whether we are camping/holding a spot
 		if (VectorLengthFast(self->velocity) > 37)
-			blockedTimeout = level.time + 10000;
+			blockedTimeout = level.time + BLOCKED_TIMEOUT;
 
 		// if completely stuck somewhere
 		if (blockedTimeout < level.time)
