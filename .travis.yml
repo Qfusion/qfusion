@@ -8,7 +8,8 @@ cache:
 notifications:
   email: false
   slack:
-    secure: 14/HK8RO8PzfznH7vmZwlfaOY0L2qqD21s+xyNfSRsayJGTIJV1lZrjSqGRpUSZm+ZZ+j0P/zB4QBXaJu077vTRYSQrudp85OTELSFNrBxWqBHokxDgL5tvXMZMa+0MPY/pd6h6dAgOgjku0QQNtYI9axASMseRDpOZX5unnRtE=
+    rooms:
+      secure: 14/HK8RO8PzfznH7vmZwlfaOY0L2qqD21s+xyNfSRsayJGTIJV1lZrjSqGRpUSZm+ZZ+j0P/zB4QBXaJu077vTRYSQrudp85OTELSFNrBxWqBHokxDgL5tvXMZMa+0MPY/pd6h6dAgOgjku0QQNtYI9axASMseRDpOZX5unnRtE=
     on_success: change
     on_failure: always
 
