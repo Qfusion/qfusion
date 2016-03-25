@@ -197,7 +197,7 @@ static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 			m = fabs( pm->maxs[1] / dy );
 
 		// allow a gap between the player and the wall
-		m *= 2.0f;
+		m += pm->maxs[0];
 
 		dir[0] = pml.origin[0] + dx * m + pml.velocity[0] * 0.015f;
 		dir[1] = pml.origin[1] + dy * m + pml.velocity[1] * 0.015f;
