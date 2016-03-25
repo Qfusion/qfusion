@@ -65,8 +65,9 @@ void Bot::Move(usercmd_t *ucmd)
         {
             MoveGenericRunning(&moveVec, ucmd);
         }
-        TryMoveAwayIfBlocked(ucmd);
     }
+
+    TryMoveAwayIfBlocked(ucmd);
 
     if (!hasPendingLookAtPoint)
     {
@@ -90,11 +91,55 @@ void Bot::Move(usercmd_t *ucmd)
 
 void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
 {
-    // if static assume blocked and try to get free
-    if (VectorLengthFast(self->velocity) < 37 && (ucmd->forwardmove || ucmd->sidemove || ucmd->upmove))
+    // Make sure that blocked timeout start counting down and the bot is blocked for at least 1000 millis
+    if (blockedTimeout - level.time > BLOCKED_TIMEOUT - 1000)
+        return;
+
+    // Already turning
+    if (hasPendingLookAtPoint)
+        return;
+
+    // Try to get current aas area again (we may did a little move, and AAS area may become available)
+    if (currAasAreaNum == 0)
+        currAasAreaNum = FindCurrAASAreaNum();
+
+    // Still can't find current area or still is blocked, try to move in a random direction
+    if (currAasAreaNum == 0 || blockedTimeout - level.time < BLOCKED_TIMEOUT - 3000)
     {
-        self->s.angles[YAW] += brandom(-90, 90);
+        // We use different randoms to make moves independent
+        if (random() > 0.8f)
+        {
+            // Try either forwardmove or sidemove
+            if (random() > 0.5f)
+                ucmd->forwardmove = random() > 0.5f ? -1 : 1;
+            else
+                ucmd->sidemove = random() > 0.5f ? -1 : 1;
+        }
+        else
+        {
+            // Try both forwardmove and sidemove
+            ucmd->forwardmove = random() > 0.5f ? -1 : 1;
+            ucmd->sidemove = random() > 0.5f ? -1 : 1;
+        }
+        // These moves are mutual-exclusive
+        float r = random();
+        if (r > 0.8f)
+            ucmd->buttons |= BUTTON_SPECIAL;
+        else if (r > 0.6f)
+            ucmd->upmove = 1;
+        else if (r > 0.4f)
+            ucmd->upmove = -1;
+
+        return;
     }
+
+    aas_areainfo_t currAreaInfo;
+    AAS_AreaInfo(currAasAreaNum, &currAreaInfo);
+
+    // Way to this point should not be blocked
+    SetPendingLookAtPoint(Vec3(currAreaInfo.center), 1.5f);
+    ucmd->forwardmove = 1;
+    ucmd->buttons |= BUTTON_SPECIAL;
 }
 
 void Bot::MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd)

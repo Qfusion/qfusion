@@ -402,6 +402,8 @@ public:
 	void ResetNavigation();
 	void CategorizePosition();
 	void UpdateStatus();
+
+	static constexpr unsigned BLOCKED_TIMEOUT = 15000;
 protected:
 	void Debug(const char *format, ...) const;
 	void FailWith(const char *format, ...) const;

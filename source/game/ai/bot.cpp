@@ -400,11 +400,11 @@ void Bot::SayVoiceMessages()
 void Bot::BlockedTimeout()
 {
     if( level.gametype.dummyBots || bot_dummy->integer ) {
-        blockedTimeout = level.time + 15000;
+        blockedTimeout = level.time + BLOCKED_TIMEOUT;
         return;
     }
     self->health = 0;
-    blockedTimeout = level.time + 15000;
+    blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->die( self, self, self, 100000, vec3_origin );
     G_Killed( self, self, self, 999, vec3_origin, MOD_SUICIDE );
     self->nextThink = level.time + 1;
@@ -421,7 +421,7 @@ void Bot::GhostingFrame()
     if (HasGoal())
         ClearGoal();
 
-    blockedTimeout = level.time + 15000;
+    blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->nextThink = level.time + 100;
 
     // wait 4 seconds after entering the level
