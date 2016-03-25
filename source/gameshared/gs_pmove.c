@@ -149,49 +149,66 @@ static vec_t VectorNormalize2D( vec3_t v ) // ByMiK : normalize horizontally (do
 
 static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 {
-	vec3_t min, max, dir;
-	int i, j;
+	vec3_t zero, dir;
+	int i;
 	trace_t trace;
-	float dist = 1.0;
-	entity_state_t *state;
+	float r = 0.0, d = 0.0;
+	float dx, dy, m;
+
+	VectorClear( zero );
 
 	for( i = 0; i < nbTestDir; i++ )
 	{
-		dir[0] = pml.origin[0] + ( pm->maxs[0]*cos( ( M_TWOPI/nbTestDir )*i ) + pml.velocity[0] * 0.015f );
-		dir[1] = pml.origin[1] + ( pm->maxs[1]*sin( ( M_TWOPI/nbTestDir )*i ) + pml.velocity[1] * 0.015f );
+		// start in the view direction and alternate with its opposite while moving away from these
+		if( i != 0 )
+			r += M_PI; // switch front and back
+		if( i % 4 == 0 && i != 0 )
+		{ // switch left and right
+			r -= 2 * d;
+		}
+		else if( i % 4 == 2 )
+		{ // move further away
+			r += 2 * d + M_TWOPI / nbTestDir;
+			d += M_TWOPI / nbTestDir;
+		}
+		dx = cos( DEG2RAD( pm->playerState->viewangles[YAW] ) + r );
+		dy = sin( DEG2RAD( pm->playerState->viewangles[YAW] ) + r );
+
+		// project onto the player box
+		if( dx == 0 )
+			m = pm->maxs[1];
+		else if( dy == 0 )
+			m = pm->maxs[0];
+		else if( fabs( dx / pm->maxs[0] ) > fabs( dy / pm->maxs[1] ) )
+			m = fabs( pm->maxs[0] / dx );
+		else
+			m = fabs( pm->maxs[1] / dy );
+
+		// allow a gap between the player and the wall
+		m *= 2.0f;
+
+		dir[0] = pml.origin[0] + dx * m + pml.velocity[0] * 0.015f;
+		dir[1] = pml.origin[1] + dy * m + pml.velocity[1] * 0.015f;
 		dir[2] = pml.origin[2];
 
-		for( j = 0; j < 2; j++ )
-		{
-			min[j] = pm->mins[j];
-			max[j] = pm->maxs[j];
-		}
-		min[2] = max[2] = 0;
+		module_Trace( &trace, pml.origin, zero, zero, dir, pm->playerState->POVnum, pm->contentmask, 0 );
 
-		module_Trace( &trace, pml.origin, min, max, dir, pm->playerState->POVnum, pm->contentmask, 0 );
-
-		if( trace.allsolid ) return;
+		if( trace.allsolid )
+			return;
 
 		if( trace.fraction == 1 )
 			continue; // no wall in this direction
 
-		if( trace.surfFlags & (SURF_SKY|SURF_NOWALLJUMP) )
+		if( trace.surfFlags & ( SURF_SKY|SURF_NOWALLJUMP ) )
 			continue;
 
-		if( trace.ent > 0 )
-		{
-			state = module_GetEntityState( trace.ent, 0 );
-			if( state->type == ET_PLAYER )
-				continue;
-		}
+		if( trace.ent > 0 && module_GetEntityState( trace.ent, 0 )->type == ET_PLAYER )
+			continue;
 
-		if( trace.fraction > 0 )
+		if( trace.fraction > 0 && fabs( trace.plane.normal[2] ) < maxZnormal )
 		{
-			if( dist > trace.fraction && fabs( trace.plane.normal[2] ) < maxZnormal )
-			{
-				dist = trace.fraction;
-				VectorCopy( trace.plane.normal, *normal );
-			}
+			VectorCopy( trace.plane.normal, *normal );
+			return;
 		}
 	}
 }
