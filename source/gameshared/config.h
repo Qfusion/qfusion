@@ -4,12 +4,17 @@
 /* this will protect dangerous and untested pieces of code              */
 /************************************************************************/
 //#define PUBLIC_BUILD
+#define BROKEN_BUILD
 
 //==============================================
 // wsw : jal :	these defines affect every project file. They are
 //				work-in-progress stuff which is, sooner or later,
 //				going to be removed by keeping or discarding it.
 //==============================================
+
+#ifdef BROKEN_BUILD
+break
+#endif
 
 // pretty solid
 #define MOREGRAVITY
