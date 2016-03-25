@@ -141,11 +141,10 @@ static vec_t VectorNormalize2D( vec3_t v ) // ByMiK : normalize horizontally (do
 	return length;
 }
 
-// Could be used to test if player walk touching a wall, if not used in any other part of pm code i'll integrate
-// this function to the walljumpcheck function.
-// usage : nbTestDir = nb of direction to test around the player
-// maxZnormal is the Z value of the normal of a poly to considere it as a wall
-// normal is a pointer to the normal of the nearest wall
+// Walljump wall availability check
+// nbTestDir is the number of directions to test around the player
+// maxZnormal is the max Z value of the normal of a poly to consider it a wall
+// normal becomes a pointer to the normal of the most appropriate wall
 static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 {
 	vec3_t zero, dir;
