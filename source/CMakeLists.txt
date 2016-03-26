@@ -5,6 +5,18 @@ cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 include(QfusionUtils)
 
+if (QFUSION_GAME)
+	if (${QFUSION_GAME} MATCHES "Warsow")
+		set(QFUSION_GAME_DIR basewsw)
+		set(QFUSION_CLIENT_NAME warsow)
+		set(QFUSION_SERVER_NAME wsw_server)
+		set(QFUSION_SERVER_NAME wswtv_server)
+		set(QFUSION_APPLICATION_VERSION_HEADER \"version.warsow.h\")
+		set(QFUSION_MAC_ICON ../../icons/warsow.icns)
+		set(QFUSION_MAC_INFO_PLIST ../mac/Warsow-Info.plist)
+	endif()
+endif()
+
 # You can override this var with commandline option -DQFUSION_GAME_DIR=name
 if (NOT QFUSION_GAME_DIR)
     set(QFUSION_GAME_DIR base)
