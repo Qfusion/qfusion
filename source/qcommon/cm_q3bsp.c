@@ -367,10 +367,7 @@ static void CMod_FilterDfNoOverbounceParms( cmodel_state_t *cms )
 		return;
 
 	for( i = 0; i < cms->numshaderrefs; i++ )
-	{
-		if( cms->map_shaderrefs[i].flags & SURF_NOWALLJUMP )
-			cms->map_shaderrefs[i].flags = 0;
-	}
+		cms->map_shaderrefs[i].flags = cms->map_shaderrefs[i].flags & ~SURF_NOWALLJUMP;
 }
 
 /*
