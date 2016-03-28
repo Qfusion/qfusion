@@ -5,10 +5,7 @@
 
 Ai::Ai(edict_t *self)
     : EdictRef(self),
-      currMoveTargetPoint(0, 0, 0),
       currAasAreaNum(0),
-      currAasAreaNodeFlags(0),
-      currTargetPoint(0, 0, 0),
       goalAasAreaNum(0),
       goalAasAreaNodeFlags(0),
       goalTargetPoint(0, 0, 0),

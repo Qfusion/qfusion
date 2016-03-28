@@ -63,7 +63,6 @@ void Ai::ClearGoal()
 
 	currAasAreaNum = FindCurrAASAreaNum();
 	nextAasAreaNum = 0;
-	currAasAreaNodeFlags = 0;
 	goalAasAreaNum = 0;
 	goalAasAreaNodeFlags = 0;
 
@@ -75,9 +74,6 @@ void Ai::SetNextAreaReach(int reachNum)
 	AAS_ReachabilityFromNum(reachNum, nextAreaReach);
 	nextAreaReachNum = reachNum;
 	nextAasAreaNum = nextAreaReach->areanum;
-	VectorCopy(nextAreaReach->start, currMoveTargetPoint.data());
-	// It prevents weird bending over the points for usual kinds of nodes
-	currMoveTargetPoint.z() += playerbox_stand_viewheight;
 	Debug("SetNextAreaReach(reach num=%d): next aas area num: %d\n", reachNum, nextAasAreaNum);
 }
 

@@ -20,8 +20,28 @@ void Bot::Move(usercmd_t *ucmd)
     AAS_AreaInfo(currAasAreaNum, &currAreaInfo);
     const int currAreaContents = currAreaInfo.contents;
 
-    Vec3 moveVec(currMoveTargetPoint);
-    moveVec -= self->s.origin;
+    Vec3 moveVec(self->s.origin);
+    if (currAasAreaNum != goalAasAreaNum)
+    {
+        if (distanceToNextReachStart > 32)
+            moveVec -= nextAreaReach->start;
+        else if (distanceToNextReachEnd > 16)
+            moveVec -= nextAreaReach->end;
+        else
+        {
+            Vec3 linkVec(nextAreaReach->end);
+            linkVec -= nextAreaReach->start;
+            // We are sure that all AAS reachabilities has non-zero link vectors
+            linkVec.NormalizeFast();
+            moveVec -= nextAreaReach->end;
+            moveVec -= 16 * linkVec;
+        }
+    }
+    else
+    {
+        moveVec -= goalTargetPoint;
+    }
+    moveVec *= -1;
 
     // Ladder movement
     if (self->is_ladder)
