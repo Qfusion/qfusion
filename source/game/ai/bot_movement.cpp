@@ -313,6 +313,92 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed)
     // If bestFraction is still a fraction of the forward trace, moveVec is kept as is
 }
 
+constexpr int TRAVEL_BUNNY_LIKE = TRAVEL_WALK | TRAVEL_WALKOFFLEDGE | TRAVEL_JUMP | TRAVEL_STRAFEJUMP;
+
+bool Bot::CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed)
+{
+    const float transitionRadius = 36.0f + 128.0f * BoundedFraction(speed - 320, 640);
+
+    if (distanceToNextReachStart > transitionRadius)
+        return false;
+
+    int nextInChainReachNum = currAasAreaNum;
+    aas_reachability_t nextInChainReach;
+    AAS_ReachabilityFromNum(nextInChainReachNum, &nextInChainReach);
+
+    constexpr int MAX_LOOKAHEAD = 8;
+    vec3_t weightedDirsToReachStart[MAX_LOOKAHEAD];
+
+    // If true, next reach. is outside of a transition radius
+    bool hasOnlySingleFarReach = false;
+    vec3_t singleFarNextReachDir;
+
+    int nearestReachesCount = 0;
+    for (;;)
+    {
+        if (nextInChainReach.areanum == goalAasAreaNum)
+            break;
+
+        nextInChainReachNum = AAS_AreaReachabilityToGoalArea(nextInChainReach.areanum, nextInChainReach.end, goalAasAreaNum, preferredAasTravelFlags);
+        if (!nextInChainReachNum)
+            break;
+
+        AAS_ReachabilityFromNum(nextInChainReachNum, &nextInChainReach);
+        if (!nextInChainReach.traveltype & TRAVEL_BUNNY_LIKE)
+            break;
+
+        float squareDist = DistanceSquared(nextInChainReach.start, self->s.origin);
+        if (squareDist > transitionRadius * transitionRadius)
+        {
+            // If we haven't found next reach. yet
+            if (nearestReachesCount == 0)
+            {
+                VectorCopy(nextInChainReach.start, singleFarNextReachDir);
+                VectorSubtract(singleFarNextReachDir, self->s.origin, singleFarNextReachDir);
+                VectorNormalizeFast(singleFarNextReachDir);
+                hasOnlySingleFarReach = true;
+            }
+            break;
+        }
+
+        float *dir = weightedDirsToReachStart[nearestReachesCount];
+        // Copy vector from self origin to reach. start
+        VectorCopy(nextInChainReach.start, dir);
+        VectorSubtract(dir, self->s.origin, dir);
+        // Compute the vector length
+        float invDistance = Q_RSqrt(squareDist);
+        // Normalize the vector
+        VectorScale(dir, invDistance, dir);
+        // Scale by distance factor
+        VectorScale(dir, 1.0f - (1.0f / invDistance) / transitionRadius, dir);
+
+        nearestReachesCount++;
+        if (nearestReachesCount == MAX_LOOKAHEAD)
+            break;
+    }
+
+    if (nearestReachesCount && moveVec->SquaredLength() > 0.01f)
+    {
+        moveVec->NormalizeFast();
+        if (hasOnlySingleFarReach)
+        {
+            float factor = distanceToNextReachStart / transitionRadius; // 0..1
+            *moveVec *= factor;
+            VectorScale(singleFarNextReachDir, 1.0f - factor, singleFarNextReachDir);
+            *moveVec += singleFarNextReachDir;
+        }
+        else
+        {
+            *moveVec *= distanceToNextReachStart / transitionRadius;
+            for (int i = 0; i < nearestReachesCount; ++i)
+                *moveVec += weightedDirsToReachStart[i];
+        }
+        // moveVec is not required to be normalized, leave it as is
+        return true;
+    }
+    return false;
+}
+
 void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
 {
     // moveDir is initially set to a vector from self to currMoveTargetPoint.
@@ -323,43 +409,11 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
     Vec3 velocityVec(self->velocity);
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
-    Vec3 toTargetVec(currMoveTargetPoint);
-    toTargetVec -= self->s.origin;
-
-    const float transitionRadius = 36.0f + 128.0f * BoundedFraction(speed - 320, 640);
-
-    bool inTransition = false;
-
-    if (distanceToNextReachStart < transitionRadius && currAasAreaNum != goalAasAreaNum)
-    {
-        int predictedReachNum = AAS_AreaReachabilityToGoalArea(nextAreaReach->areanum, nextAreaReach->end, goalAasAreaNum, preferredAasTravelFlags);
-        if (predictedReachNum)
-        {
-            aas_reachability_t predictedReach;
-            AAS_ReachabilityFromNum(predictedReachNum, &predictedReach);
-            int bunnyCompatTravelType = TRAVEL_WALK|TRAVEL_WALKOFFLEDGE|TRAVEL_JUMP|TRAVEL_STRAFEJUMP;
-            if (predictedReach.traveltype & bunnyCompatTravelType)
-            {
-                Vec3 toNextTarget(predictedReach.start);
-                toNextTarget -= self->s.origin;
-                toNextTarget.NormalizeFast();
-                if (toTargetVec.SquaredLength() > 0.01f)
-                    toTargetVec.NormalizeFast();
-
-                float factor = distanceToNextReachStart / transitionRadius;
-                toTargetVec *= factor;
-                toNextTarget *= 1.0f - factor;
-                toTargetVec += toNextTarget;
-                toTargetVec.NormalizeFast();
-
-                inTransition = true;
-            }
-        }
-    }
+    bool inTransition = CheckAndTryStartNextReachTransition(moveVec, speed);
 
     CheckAndTryAvoidObstacles(moveVec, speed);
 
-    Vec3 toTargetDir2D(toTargetVec);
+    Vec3 toTargetDir2D(*moveVec);
     toTargetDir2D.z() = 0;
 
     Vec3 lookDir2D(0, 0, 0);
@@ -367,7 +421,7 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
     lookDir2D.z() = 0;
 
     float lookDir2DSqLen = lookDir2D.SquaredLength();
-    float toTarget2DSqLen = toTargetVec.SquaredLength();
+    float toTarget2DSqLen = toTargetDir2D.SquaredLength();
 
     if (lookDir2DSqLen > 0.1f)
     {
@@ -400,11 +454,11 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             }
             else
             {
-                // Given a move dir line (a line that goes through selfOrigin to selfOrigin + lookDir2D),
-                // determine on which side the target point is
-                float lineNormalX = +toTargetVec.y();
-                float lineNormalY = -toTargetVec.x();
-                int side = Q_sign(lineNormalX * toTargetVec.x() + lineNormalY * toTargetVec.y());
+                // Given an actual move dir line (a line that goes through selfOrigin to selfOrigin + lookDir2D),
+                // determine on which side the move target (defined by moveVec) is
+                float lineNormalX = +lookDir2D.y();
+                float lineNormalY = -lookDir2D.x();
+                int side = Q_sign(lineNormalX * moveVec->x() + lineNormalY * moveVec->y());
 
                 if (lookToTarget2DDot > 0.7)
                 {
@@ -462,16 +516,6 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             return;
         }
     }
-
-    float prepareToPickupDistance = 48.0f;
-    if (speed > 320)
-        prepareToPickupDistance += 128.0f * BoundedFraction(speed - 320, 640);
-
-    if (toTargetVec.LengthFast() < prepareToPickupDistance)
-        return;
-
-    // Disable dash (may miss target item)
-    ucmd->buttons &= ~BUTTON_SPECIAL;
 }
 
 Vec3 Bot::MakeEvadeDirection(const Danger &danger)
