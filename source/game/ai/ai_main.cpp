@@ -274,38 +274,6 @@ void Ai::CheckReachedArea()
 		AITools_DrawColorLine(start, start2, COLOR_RGB(0, 0, 120), 0);
 		AITools_DrawColorLine(end, end2, COLOR_RGB(120, 0, 0), 0);
 #endif
-
-		// Just update move target point
-		if (actualAasAreaNum != goalAasAreaNum)
-		{
-			Vec3 selfToReachStartVec(nextAreaReach->start);
-			selfToReachStartVec -= self->s.origin;
-			if (selfToReachStartVec.SquaredLength() > 36 * 36)
-				currMoveTargetPoint = Vec3(nextAreaReach->start);
-			else
-			{
-				Vec3 selfToReachEndVec(nextAreaReach->end);
-				selfToReachEndVec -= self->s.origin;
-				if (selfToReachEndVec.SquaredLength() > 36 * 36)
-					currMoveTargetPoint = Vec3(nextAreaReach->end);
-				else
-				{
-					Vec3 linkVec(nextAreaReach->end);
-					linkVec -= nextAreaReach->start;
-					if (linkVec.SquaredLength() > 1)
-						linkVec.NormalizeFast();
-					currMoveTargetPoint = Vec3(nextAreaReach->end) + 24 * linkVec;
-				}
-			}
-		}
-			// We are in the goal area. Look at the target point (angles may be screwed e.g. while firing).
-		else if (actualAasAreaNum != 0)
-		{
-#ifdef _DEBUG
-			AITools_DrawColorLine(goalTargetPoint.data(), (goalTargetPoint + Vec3(0, 0, 54)).data(), COLOR_RGB(192, 192, 0), 0);
-#endif
-			currMoveTargetPoint = goalTargetPoint;
-		}
 	}
 	else
 	{
@@ -326,11 +294,10 @@ void Ai::CheckReachedArea()
 					ClearGoal();
 				}
 			}
-				// We have reached the goal area. Look at the target point
+			// We have reached the goal area
 			else
 			{
 				Debug("CategorizePosition(): has reached goal area %d from %d\n", actualAasAreaNum, currAasAreaNum);
-				currMoveTargetPoint = goalTargetPoint;
 			}
 		}
 			// Looks like we have been pushed to some other area. We need to build a route again
@@ -352,10 +319,6 @@ void Ai::CheckReachedArea()
 	}
 
 	currAasAreaNum = actualAasAreaNum;
-
-#ifdef _DEBUG
-	AITools_DrawColorLine(self->s.origin, currMoveTargetPoint.data(), COLOR_RGB(128, 0, 192), 0);
-#endif
 
 	distanceToNextReachStart = DistanceSquared(nextAreaReach->start, self->s.origin);
 	if (distanceToNextReachStart > 1)

@@ -337,10 +337,7 @@ struct ClosePlaceProps
 class Ai: public EdictRef
 {
 protected:
-	Vec3 currMoveTargetPoint;
 	int currAasAreaNum;
-	int currAasAreaNodeFlags;
-	Vec3 currTargetPoint;
 	int goalAasAreaNum;
 	int goalAasAreaNodeFlags;
 	Vec3 goalTargetPoint;
