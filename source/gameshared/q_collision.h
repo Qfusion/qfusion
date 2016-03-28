@@ -82,6 +82,8 @@ extern "C" {
 #define SURF_DUST				0x40000		// leave a dust trail when walking on this surface
 #define SURF_NOWALLJUMP			0x80000		// can not perform walljumps on this surface
 
+#define SURF_FBSP_START			0x40000		// FBSP specific extensions to BSP
+
 // content masks
 #define	MASK_ALL			( -1 )
 #define	MASK_SOLID			( CONTENTS_SOLID )
