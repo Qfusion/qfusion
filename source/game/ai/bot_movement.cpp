@@ -47,13 +47,8 @@ void Bot::Move(usercmd_t *ucmd)
     }
     else // standard movement
     {
-        // starting a jump
-        if (IsCloseToReachStart() && nextAreaReach->traveltype == TRAVEL_JUMP)
-        {
-            MoveStartingAJump(&moveVec, ucmd);
-        }
         // starting a rocket jump
-        else if (IsCloseToReachStart() && nextAreaReach->traveltype == TRAVEL_ROCKETJUMP)
+        if (IsCloseToReachStart() && nextAreaReach->traveltype == TRAVEL_ROCKETJUMP)
         {
             MoveStartingARocketjump(&moveVec, ucmd);
         }
@@ -200,39 +195,6 @@ void Bot::MoveFallingOrJumping(Vec3 *moveVec, usercmd_t *ucmd)
     ucmd->upmove = 0;
     ucmd->sidemove = 0;
     ucmd->forwardmove = 1;
-}
-
-void Bot::MoveStartingAJump(Vec3 *moveVec, usercmd_t *ucmd)
-{
-    ucmd->forwardmove = 1;
-    ucmd->upmove = 0;
-    ucmd->sidemove = 0;
-
-    if (self->groundentity)
-    {
-        trace_t trace;
-        vec3_t v1, v2;
-
-        //check floor in front, if there's none... Jump!
-        VectorCopy(self->s.origin, v1);
-        VectorNormalize2(moveVec->data(), v2);
-        VectorMA(v1, 18, v2, v1);
-        v1[2] += self->r.mins[2];
-        VectorCopy(v1, v2);
-        v2[2] -= AI_JUMPABLE_HEIGHT;
-        G_Trace(&trace, v1, vec3_origin, vec3_origin, v2, self, MASK_AISOLID);
-        if (!trace.startsolid && trace.fraction == 1.0)
-        {
-            //jump!
-
-            // prevent double jumping on crates
-            VectorCopy(self->s.origin, v1);
-            v1[2] += self->r.mins[2];
-            G_Trace(&trace, v1, tv(-12, -12, -8), tv(12, 12, 0), v1, self, MASK_AISOLID);
-            if (trace.startsolid)
-                ucmd->upmove = 1;
-        }
-    }
 }
 
 void Bot::MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd)
