@@ -48,12 +48,12 @@ void Bot::Move(usercmd_t *ucmd)
     else // standard movement
     {
         // starting a jump
-        if (IsCloseToReachStart() && nextAreaReach->traveltype & TRAVEL_JUMP)
+        if (IsCloseToReachStart() && nextAreaReach->traveltype == TRAVEL_JUMP)
         {
             MoveStartingAJump(&moveVec, ucmd);
         }
         // starting a rocket jump
-        else if (IsCloseToReachStart() && nextAreaReach->traveltype & TRAVEL_ROCKETJUMP)
+        else if (IsCloseToReachStart() && nextAreaReach->traveltype == TRAVEL_ROCKETJUMP)
         {
             MoveStartingARocketjump(&moveVec, ucmd);
         }
@@ -313,8 +313,6 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed)
     // If bestFraction is still a fraction of the forward trace, moveVec is kept as is
 }
 
-constexpr int TRAVEL_BUNNY_LIKE = TRAVEL_WALK | TRAVEL_WALKOFFLEDGE | TRAVEL_JUMP | TRAVEL_STRAFEJUMP;
-
 bool Bot::CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed)
 {
     const float transitionRadius = 36.0f + 128.0f * BoundedFraction(speed - 320, 640);
@@ -344,7 +342,8 @@ bool Bot::CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed)
             break;
 
         AAS_ReachabilityFromNum(nextInChainReachNum, &nextInChainReach);
-        if (!nextInChainReach.traveltype & TRAVEL_BUNNY_LIKE)
+        if (nextInChainReach.traveltype != TRAVEL_WALK && nextInChainReach.traveltype != TRAVEL_WALKOFFLEDGE &&
+            nextInChainReach.traveltype != TRAVEL_JUMP && nextInChainReach.traveltype != TRAVEL_STRAFEJUMP)
             break;
 
         float squareDist = DistanceSquared(nextInChainReach.start, self->s.origin);
