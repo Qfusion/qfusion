@@ -20,6 +20,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#ifndef AAS_AASFILE_H
+#define AAS_AASFILE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //NOTE:	int =	default signed
 //				default long
@@ -265,3 +271,9 @@ typedef struct aas_header_s
 -	area zero is a dummy
 -	node zero is a dummy
 */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
