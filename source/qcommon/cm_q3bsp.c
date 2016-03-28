@@ -365,19 +365,6 @@ static void CMod_LoadSurfaces( cmodel_state_t *cms, lump_t *l )
 }
 
 /*
-* CMod_FilterDfNoOverbounceParms Filter defrag's "surfaceparm noob" flag which qfusion sees as "nowalljump"
-*/
-static void CMod_FilterDfNoOverbounceParms( cmodel_state_t *cms )
-{
-	int i;
-	if( cms->cmap_bspFormat->header == QFBSPHEADER ) // ignore qfusion maps
-		return;
-
-	for( i = 0; i < cms->numshaderrefs; i++ )
-		cms->map_shaderrefs[i].flags = cms->map_shaderrefs[i].flags & ~SURF_NOWALLJUMP;
-}
-
-/*
 * CMod_LoadVertexes
 */
 static void CMod_LoadVertexes( cmodel_state_t *cms, lump_t *l )
