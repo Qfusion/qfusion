@@ -1,5 +1,5 @@
 #include "bot.h"
-#include "aas/aasfile.h"
+#include "aas.h"
 #include <algorithm>
 
 Bot::Bot(edict_t *self)
@@ -500,8 +500,20 @@ void Bot::RunFrame()
 
         const CombatTask &combatTask = enemyPool.combatTask;
 
-        bool inhibitCombat = nextAreaReach->traveltype & (TRAVEL_JUMP|TRAVEL_ROCKETJUMP|TRAVEL_JUMPPAD);
-        inhibitCombat &= IsCloseToReachStart();
+        bool inhibitCombat = false;
+        if (currAasAreaNum != goalAasAreaNum && !nextReaches.empty())
+        {
+            if (IsCloseToReachStart())
+            {
+                int travelType = nextReaches.front().traveltype;
+                if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
+                    inhibitCombat = true;
+                else if (travelType == TRAVEL_CROUCH || travelType == TRAVEL_LADDER)
+                    inhibitCombat = true;
+            }
+            else if (currAasAreaTravelFlags & (TFL_CROUCH|TFL_AIR))
+                inhibitCombat = true;
+        }
 
         if ((combatTask.aimEnemy || combatTask.spamEnemy) && !inhibitCombat)
         {

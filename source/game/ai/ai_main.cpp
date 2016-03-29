@@ -35,8 +35,8 @@ void Ai::ResetNavigation()
 	distanceToNextReachStart = std::numeric_limits<float>::infinity();
 	distanceToNextReachEnd = std::numeric_limits<float>::infinity();
 
-	currAasAreaNum = AAS_PointAreaNum(self->s.origin);
-	nextAasAreaNum = 0;
+	currAasAreaNum = FindCurrAASAreaNum();
+	nextReaches.clear();
 	goalAasAreaNum = 0;
 
 	longRangeGoalTimeout = 0;
@@ -255,77 +255,85 @@ bool Ai::IsShortRangeReachable(const vec3_t targetOrigin) const
 	return AAS_AreaTravelTimeToGoalArea(currAasAreaNum, self->s.origin, targetAreaNum, preferredAasTravelFlags) < AI_GOAL_SR_RADIUS;
 }
 
+void Ai::UpdateReachCache(int reachedAreaNum)
+{
+	// First skip reaches to reached area
+	unsigned i = 0;
+	for (i = 0; i < nextReaches.size(); ++i)
+	{
+		if (nextReaches[i].areanum == reachedAreaNum)
+			break;
+	}
+
+	// We are outside of all cached areas atm
+	if (i == nextReaches.size())
+	{
+		nextReaches.clear();
+	}
+	else
+	{
+		// Shift reaches array left. TODO: Add StaticVector::remove_range method
+		unsigned j = 0, k = i + 1;
+		for (; k < nextReaches.size(); ++j, ++k)
+			nextReaches[j] = nextReaches[k];
+		while (nextReaches.size() != j)
+			nextReaches.pop_back();
+	}
+	int areaNum;
+	float *origin;
+	if (nextReaches.empty())
+	{
+		areaNum = reachedAreaNum;
+		origin = self->s.origin;
+	}
+	else
+	{
+		areaNum = nextReaches.back().areanum;
+		origin = nextReaches.back().end;
+	}
+	while (areaNum != goalAasAreaNum && nextReaches.size() != nextReaches.capacity())
+	{
+		int reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAasAreaNum, preferredAasTravelFlags);
+		// We hope we'll be pushed in some other area during movement, and goal area will become reachable. Leave as is.
+		if (!reachNum)
+			break;
+		aas_reachability_t reach;
+		AAS_ReachabilityFromNum(reachNum, &reach);
+		areaNum = reach.areanum;
+		origin = reach.end;
+		nextReaches.push_back(reach);
+	}
+}
+
 void Ai::CheckReachedArea()
 {
 	const int actualAasAreaNum = AAS_PointAreaNum(self->s.origin);
 	// Current aas area num did not changed
-	if (currAasAreaNum == actualAasAreaNum)
+	if (actualAasAreaNum)
 	{
-#ifdef _DEBUG
-		AITools_DrawColorLine(nextAreaReach->start, nextAreaReach->end, COLOR_RGB(0, 192, 0), 0);
-		vec3_t start, start2;
-		vec3_t end, end2;
-		VectorCopy(nextAreaReach->start, start);
-		VectorCopy(nextAreaReach->start, start2);
-		VectorCopy(nextAreaReach->end, end);
-		VectorCopy(nextAreaReach->end, end2);
-		start2[2] += 4;
-		end2[2] += 4;
-		AITools_DrawColorLine(start, start2, COLOR_RGB(0, 0, 120), 0);
-		AITools_DrawColorLine(end, end2, COLOR_RGB(120, 0, 0), 0);
-#endif
+		if (currAasAreaNum != actualAasAreaNum)
+		{
+			UpdateReachCache(actualAasAreaNum);
+		}
+		currAasAreaTravelFlags = AAS_AreaContentsTravelFlags(actualAasAreaNum);
 	}
 	else
 	{
-		// We have reached next area as it was planned
-		if (actualAasAreaNum == nextAasAreaNum)
-		{
-			// Pick up next aas area num
-			if (actualAasAreaNum != goalAasAreaNum)
-			{
-				// TODO: Use cached route
-				int reachNum = AAS_AreaReachabilityToGoalArea(actualAasAreaNum, self->s.origin, goalAasAreaNum, preferredAasTravelFlags);
-				if (reachNum)
-					SetNextAreaReach(reachNum);
-				else
-				{
-					const char *format = "CategorizePosition(): Can't find reach. from next area %d to goal area %d\n";
-					Debug(format, actualAasAreaNum, goalAasAreaNum);
-					ClearGoal();
-				}
-			}
-			// We have reached the goal area
-			else
-			{
-				Debug("CategorizePosition(): has reached goal area %d from %d\n", actualAasAreaNum, currAasAreaNum);
-			}
-		}
-			// Looks like we have been pushed to some other area. We need to build a route again
-		else
-		{
-			int reachNum = AAS_AreaReachabilityToGoalArea(actualAasAreaNum, self->s.origin, goalAasAreaNum, preferredAasTravelFlags);
-			if (reachNum)
-			{
-				// TODO: Precache built route
-				SetNextAreaReach(reachNum);
-			}
-			else
-			{
-				const char *format = "CategorizePosition: Can't find reach. from actual area %d to goal area %d\n";
-				Debug(format, actualAasAreaNum, goalAasAreaNum);
-				ClearGoal();
-			}
-		}
+		nextReaches.clear();
+		currAasAreaTravelFlags = TFL_INVALID;
 	}
 
 	currAasAreaNum = actualAasAreaNum;
 
-	distanceToNextReachStart = DistanceSquared(nextAreaReach->start, self->s.origin);
-	if (distanceToNextReachStart > 1)
-		distanceToNextReachStart = 1.0f / Q_RSqrt(distanceToNextReachStart);
-	distanceToNextReachEnd = DistanceSquared(nextAreaReach->end, self->s.origin);
-	if (distanceToNextReachEnd > 1)
-		distanceToNextReachEnd = 1.0f / Q_RSqrt(distanceToNextReachEnd);
+	if (!nextReaches.empty())
+	{
+		distanceToNextReachStart = DistanceSquared(nextReaches.front().start, self->s.origin);
+		if (distanceToNextReachStart > 1)
+			distanceToNextReachStart = 1.0f / Q_RSqrt(distanceToNextReachStart);
+		distanceToNextReachEnd = DistanceSquared(nextReaches.front().end, self->s.origin);
+		if (distanceToNextReachEnd > 1)
+			distanceToNextReachEnd = 1.0f / Q_RSqrt(distanceToNextReachEnd);
+	}
 }
 
 void Ai::CategorizePosition()
