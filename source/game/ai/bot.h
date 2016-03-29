@@ -86,7 +86,10 @@ private:
     void MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd);
     void CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed);
-    bool CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed);
+    void StraightenOrInterpolateMoveVec(Vec3 *moveVec, float speed);
+    bool TryStraightenMoveVec(Vec3 *moveVec, float speed);
+    void InterpolateMoveVec(Vec3 *moveVec, float speed);
+    void SetMoveVecToPendingReach(Vec3 *moveVec);
 
     // Returns true if the bot is at least a bit blocked
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
