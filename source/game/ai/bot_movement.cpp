@@ -1,6 +1,5 @@
 #include "bot.h"
 #include "aas.h"
-#include "../../gameshared/q_collision.h"
 
 void Bot::Move(usercmd_t *ucmd)
 {
@@ -252,7 +251,7 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed)
     Vec3 baseOffsetVec(*moveVec);
     baseOffsetVec *= 24.0f + 96.0f * BoundedFraction(speed, 900);
 
-    float *const mins = playerbox_stand_mins;
+    float *const mins = vec3_origin;
     float *const maxs = playerbox_stand_maxs;
 
     trace_t trace;
