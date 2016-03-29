@@ -1,6 +1,6 @@
 #include "bot.h"
-#include "ai_local.h"
 #include "aas.h"
+#include "../../gameshared/q_collision.h"
 
 void Bot::Move(usercmd_t *ucmd)
 {
@@ -293,15 +293,100 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed)
     // If bestFraction is still a fraction of the forward trace, moveVec is kept as is
 }
 
-bool Bot::CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed)
+void Bot::StraightenOrInterpolateMoveVec(Vec3 *moveVec, float speed)
 {
     if (nextReaches.empty())
+    {
+        // Looks like we are in air above a ground, keep as is waiting for landing.
+        VectorCopy(self->velocity, moveVec->data());
+        return;
+    }
+    if (currAasAreaNum == goalAasAreaNum)
+    {
+        *moveVec = goalTargetPoint - self->s.origin;
+        return;
+    }
+
+    if (!TryStraightenMoveVec(moveVec, speed))
+        InterpolateMoveVec(moveVec, speed);
+}
+
+bool Bot::TryStraightenMoveVec(Vec3 *moveVec, float speed)
+{
+    // We may miss target if we straighten path
+    if ((goalTargetPoint - self->s.origin).SquaredLength() < 175 * 175)
         return false;
 
-    const float transitionRadius = 36.0f + 128.0f * BoundedFraction(speed - 320, 640);
+    // First, count how many reach. are bunny-friendly
+    int bunnyLikeReachesCount = 0;
+    for (unsigned i = 0; i < nextReaches.size(); ++i)
+    {
+        // TODO: Check area travel types too?
+        int travelType = nextReaches[i].traveltype;
+        if (travelType == TRAVEL_WALK || travelType == TRAVEL_WALKOFFLEDGE)
+            bunnyLikeReachesCount++;
+        else if (travelType == TRAVEL_JUMP || travelType == TRAVEL_JUMPPAD)
+            bunnyLikeReachesCount++;
+        else
+            break;
+    }
 
-    if (distanceToNextReachStart > transitionRadius)
+    if (bunnyLikeReachesCount == 0)
         return false;
+
+    int areas[MAX_REACH_CACHED + 1];
+    vec3_t points[MAX_REACH_CACHED + 1];
+    while (bunnyLikeReachesCount > 1)
+    {
+        auto &endReach = nextReaches[bunnyLikeReachesCount - 1];
+        int numAreas = AAS_TraceAreas(self->s.origin, endReach.start, areas, points, bunnyLikeReachesCount + 1);
+        if (numAreas == bunnyLikeReachesCount + 1)
+        {
+            if (areas[0] == currAasAreaNum)
+            {
+                bool match = true;
+                for (int i = 0; i < bunnyLikeReachesCount; ++i)
+                {
+                    if (nextReaches[i].areanum != areas[i + 1])
+                    {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match)
+                {
+                    // Try trace obstacles now. Use null (= zero) as a mins (do not stop on small ground obstacles)
+                    trace_t trace;
+                    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, endReach.start, self, MASK_AISOLID);
+                    if (trace.fraction == 1.0f)
+                    {
+                        // TODO: try to check the ground!!!
+                        {
+                            *moveVec = Vec3(endReach.start) - self->s.origin;
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        bunnyLikeReachesCount /= 2;
+    }
+
+    return false;
+}
+
+void Bot::InterpolateMoveVec(Vec3 *moveVec, float speed)
+{
+    if (nextReaches.empty())
+        FailWith("InterpolateMoveVec(): nextReaches is empty");
+
+    const float radius = 72.0f + 72.0f * BoundedFraction(speed - 320, 640);
+
+    if (distanceToNextReachStart > radius)
+    {
+        SetMoveVecToPendingReach(moveVec);
+        return;
+    }
 
     vec3_t weightedDirsToReachStart[MAX_REACH_CACHED];
 
@@ -320,7 +405,7 @@ bool Bot::CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed)
                 break;
 
         float squareDist = DistanceSquared(reach.start, self->s.origin);
-        if (squareDist > transitionRadius * transitionRadius)
+        if (squareDist > radius * radius)
         {
             // If we haven't found next reach. yet
             if (nearestReachesCount == 0)
@@ -343,34 +428,42 @@ bool Bot::CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed)
         // Normalize the vector
         VectorScale(dir, invDistance, dir);
         // Scale by distance factor
-        VectorScale(dir, 1.0f - (1.0f / invDistance) / transitionRadius, dir);
+        //VectorScale(dir, 1.0f - (1.0f / invDistance) / radius, dir);
 
         nearestReachesCount++;
         if (nearestReachesCount == MAX_REACH_CACHED)
             break;
     }
 
-    *moveVec = Vec3(nextReaches.front().start) - self->s.origin;
-    if (nearestReachesCount && moveVec->SquaredLength() > 0.01f)
+    if (!nearestReachesCount || moveVec->SquaredLength() < 0.01f)
     {
-        moveVec->NormalizeFast();
-        if (hasOnlySingleFarReach)
-        {
-            float factor = distanceToNextReachStart / transitionRadius; // 0..1
-            *moveVec *= factor;
-            VectorScale(singleFarNextReachDir, 1.0f - factor, singleFarNextReachDir);
-            *moveVec += singleFarNextReachDir;
-        }
-        else
-        {
-            *moveVec *= distanceToNextReachStart / transitionRadius;
-            for (int i = 0; i < nearestReachesCount; ++i)
-                *moveVec += weightedDirsToReachStart[i];
-        }
-        // moveVec is not required to be normalized, leave it as is
-        return true;
+        SetMoveVecToPendingReach(moveVec);
+        return;
     }
-    return false;
+
+    *moveVec = Vec3(nextReaches.front().start) - self->s.origin;
+    moveVec->NormalizeFast();
+    if (hasOnlySingleFarReach)
+    {
+        float distanceFactor = distanceToNextReachStart / radius; // 0..1
+        *moveVec *= distanceFactor;
+        VectorScale(singleFarNextReachDir, 1.0f - distanceFactor, singleFarNextReachDir);
+        *moveVec += singleFarNextReachDir;
+    }
+    else
+    {
+        *moveVec *= distanceToNextReachStart / radius;
+        for (int i = 0; i < nearestReachesCount; ++i)
+            *moveVec += weightedDirsToReachStart[i];
+    }
+    // moveVec is not required to be normalized, leave it as is
+}
+
+void Bot::SetMoveVecToPendingReach(Vec3 *moveVec)
+{
+    Vec3 linkVec = Vec3(nextReaches.front().end) - nextReaches.front().start;
+    linkVec.NormalizeFast();
+    *moveVec = Vec3(16 * linkVec + nextReaches.front().start) - self->s.origin;
 }
 
 void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
@@ -383,7 +476,7 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
     Vec3 velocityVec(self->velocity);
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
-    bool inTransition = CheckAndTryStartNextReachTransition(moveVec, speed);
+    StraightenOrInterpolateMoveVec(moveVec, speed);
 
     CheckAndTryAvoidObstacles(moveVec, speed);
 
@@ -416,7 +509,7 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             isBunnyHopping = true;
         }
 
-        if (toTarget2DSqLen > 0.1f && !inTransition)
+        if (toTarget2DSqLen > 0.1f)
         {
             toTargetDir2D *= Q_RSqrt(toTarget2DSqLen);
 
