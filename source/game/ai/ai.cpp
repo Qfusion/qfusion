@@ -9,10 +9,8 @@ Ai::Ai(edict_t *self)
       goalAasAreaNum(0),
       goalAasAreaNodeFlags(0),
       goalTargetPoint(0, 0, 0),
-      nextAasAreaNum(0),
       allowedAasTravelFlags(TFL_DEFAULT),
       preferredAasTravelFlags(TFL_DEFAULT),
-      nextAreaReachNum(0),
       distanceToNextReachStart(std::numeric_limits<float>::infinity()),
       distanceToNextReachEnd(std::numeric_limits<float>::infinity()),
       statusUpdateTimeout(0),
@@ -23,9 +21,6 @@ Ai::Ai(edict_t *self)
       aiYawSpeed(0.0f),
       aiPitchSpeed(0.0f)
 {
-    memset(_private, 0, sizeof(_private));
-    nextAreaReach = (aas_reachability_t *) _private;
-
     // TODO: Modify preferred aas travel flags if there is no selfdamage for excessive rocketjumping
 }
 

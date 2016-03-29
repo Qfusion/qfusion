@@ -20,28 +20,27 @@ void Bot::Move(usercmd_t *ucmd)
     AAS_AreaInfo(currAasAreaNum, &currAreaInfo);
     const int currAreaContents = currAreaInfo.contents;
 
-    Vec3 moveVec(self->s.origin);
+    Vec3 moveVec(self->velocity);  // Use as a default one
     if (currAasAreaNum != goalAasAreaNum)
     {
-        if (distanceToNextReachStart > 32)
-            moveVec -= nextAreaReach->start;
-        else if (distanceToNextReachEnd > 16)
-            moveVec -= nextAreaReach->end;
-        else
+        if (!nextReaches.empty())
         {
-            Vec3 linkVec(nextAreaReach->end);
-            linkVec -= nextAreaReach->start;
-            // We are sure that all AAS reachabilities has non-zero link vectors
-            linkVec.NormalizeFast();
-            moveVec -= nextAreaReach->end;
-            moveVec -= 16 * linkVec;
+            const auto &nextReach = nextReaches.front();
+            if (!IsCloseToReachStart())
+                moveVec = Vec3(nextReach.start) - self->s.origin;
+            else
+            {
+                Vec3 linkVec(nextReach.end);
+                linkVec -= nextReach.start;
+                linkVec.NormalizeFast();
+                moveVec = (16.0f * linkVec + nextReach.end) - self->s.origin;
+            }
         }
     }
     else
     {
-        moveVec -= goalTargetPoint;
+        moveVec = Vec3(self->s.origin) - goalTargetPoint;
     }
-    moveVec *= -1;
 
     // Ladder movement
     if (self->is_ladder)
@@ -68,7 +67,7 @@ void Bot::Move(usercmd_t *ucmd)
     else // standard movement
     {
         // starting a rocket jump
-        if (IsCloseToReachStart() && nextAreaReach->traveltype == TRAVEL_ROCKETJUMP)
+        if (!nextReaches.empty() && IsCloseToReachStart() && nextReaches.front().traveltype == TRAVEL_ROCKETJUMP)
         {
             MoveStartingARocketjump(&moveVec, ucmd);
         }
@@ -166,11 +165,10 @@ void Bot::MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd)
 
 void Bot::MoveOnJumppad(Vec3 *moveVec, usercmd_t *ucmd)
 {
-    *moveVec = Vec3(nextAreaReach->end) - self->s.origin;
     ucmd->upmove = 0;
     ucmd->sidemove = 0;
     ucmd->forwardmove = 1;
-    if (IsCloseToReachEnd())
+    if (!nextReaches.empty() && IsCloseToReachEnd())
     {
         // Try to jump off wall to leave jumppad area
         ucmd->buttons |= BUTTON_SPECIAL;
@@ -297,54 +295,48 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed)
 
 bool Bot::CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed)
 {
+    if (nextReaches.empty())
+        return false;
+
     const float transitionRadius = 36.0f + 128.0f * BoundedFraction(speed - 320, 640);
 
     if (distanceToNextReachStart > transitionRadius)
         return false;
 
-    int nextInChainReachNum = currAasAreaNum;
-    aas_reachability_t nextInChainReach;
-    AAS_ReachabilityFromNum(nextInChainReachNum, &nextInChainReach);
-
-    constexpr int MAX_LOOKAHEAD = 8;
-    vec3_t weightedDirsToReachStart[MAX_LOOKAHEAD];
+    vec3_t weightedDirsToReachStart[MAX_REACH_CACHED];
 
     // If true, next reach. is outside of a transition radius
     bool hasOnlySingleFarReach = false;
     vec3_t singleFarNextReachDir;
 
     int nearestReachesCount = 0;
-    for (;;)
+    for (unsigned i = 1; i < nextReaches.size(); ++i)
     {
-        if (nextInChainReach.areanum == goalAasAreaNum)
-            break;
+        auto &reach = nextReaches[i];
+        int travelType = reach.traveltype;
+        // Make conditions fit line limit
+        if (travelType != TRAVEL_WALK && travelType != TRAVEL_WALKOFFLEDGE)
+            if (travelType != TRAVEL_JUMP && travelType != TRAVEL_STRAFEJUMP)
+                break;
 
-        nextInChainReachNum = AAS_AreaReachabilityToGoalArea(nextInChainReach.areanum, nextInChainReach.end, goalAasAreaNum, preferredAasTravelFlags);
-        if (!nextInChainReachNum)
-            break;
-
-        AAS_ReachabilityFromNum(nextInChainReachNum, &nextInChainReach);
-        if (nextInChainReach.traveltype != TRAVEL_WALK && nextInChainReach.traveltype != TRAVEL_WALKOFFLEDGE &&
-            nextInChainReach.traveltype != TRAVEL_JUMP && nextInChainReach.traveltype != TRAVEL_STRAFEJUMP)
-            break;
-
-        float squareDist = DistanceSquared(nextInChainReach.start, self->s.origin);
+        float squareDist = DistanceSquared(reach.start, self->s.origin);
         if (squareDist > transitionRadius * transitionRadius)
         {
             // If we haven't found next reach. yet
             if (nearestReachesCount == 0)
             {
-                VectorCopy(nextInChainReach.start, singleFarNextReachDir);
+                VectorCopy(reach.start, singleFarNextReachDir);
                 VectorSubtract(singleFarNextReachDir, self->s.origin, singleFarNextReachDir);
                 VectorNormalizeFast(singleFarNextReachDir);
                 hasOnlySingleFarReach = true;
+                nearestReachesCount = 1;
             }
             break;
         }
 
         float *dir = weightedDirsToReachStart[nearestReachesCount];
         // Copy vector from self origin to reach. start
-        VectorCopy(nextInChainReach.start, dir);
+        VectorCopy(reach.start, dir);
         VectorSubtract(dir, self->s.origin, dir);
         // Compute the vector length
         float invDistance = Q_RSqrt(squareDist);
@@ -354,10 +346,11 @@ bool Bot::CheckAndTryStartNextReachTransition(Vec3 *moveVec, float speed)
         VectorScale(dir, 1.0f - (1.0f / invDistance) / transitionRadius, dir);
 
         nearestReachesCount++;
-        if (nearestReachesCount == MAX_LOOKAHEAD)
+        if (nearestReachesCount == MAX_REACH_CACHED)
             break;
     }
 
+    *moveVec = Vec3(nextReaches.front().start) - self->s.origin;
     if (nearestReachesCount && moveVec->SquaredLength() > 0.01f)
     {
         moveVec->NormalizeFast();

@@ -334,6 +334,9 @@ struct ClosePlaceProps
 	MoveTestResult backTest;
 };
 
+#include "aas/aasfile.h"
+#include "static_vector.h"
+
 class Ai: public EdictRef
 {
 protected:
@@ -342,17 +345,18 @@ protected:
 	int goalAasAreaNodeFlags;
 	Vec3 goalTargetPoint;
 
-	int nextAasAreaNum;
 	int allowedAasTravelFlags;
 	int preferredAasTravelFlags;
 
-	int nextAreaReachNum;
+	int currAasAreaTravelFlags;
+	static constexpr unsigned MAX_REACH_CACHED = 8;
+	StaticVector<aas_reachability_t, MAX_REACH_CACHED> nextReaches;
+
 	float distanceToNextReachStart;
 	float distanceToNextReachEnd;
+
 	inline bool IsCloseToReachStart() { return distanceToNextReachStart < 24.0f; };
 	inline bool IsCloseToReachEnd() { return distanceToNextReachEnd < 36.0f; }
-
-	struct aas_reachability_s *nextAreaReach;
 
 	unsigned statusUpdateTimeout;
 	unsigned blockedTimeout;
@@ -363,11 +367,7 @@ protected:
 
 	float aiYawSpeed, aiPitchSpeed;
 
-	// nextAreaReach refers to this buffer
-	// (we can't define non-pointer member for incomplete type, and can't refer to the complete one due to header conflict)
-	alignas(8) char _private[64];
-
-	void SetNextAreaReach(int reachNum);
+	void UpdateReachCache(int reachedAreaNum);
 public:
 	Ai(edict_t *self);
 

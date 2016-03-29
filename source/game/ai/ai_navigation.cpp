@@ -62,19 +62,11 @@ void Ai::ClearGoal()
 	statusUpdateTimeout = 0;
 
 	currAasAreaNum = FindCurrAASAreaNum();
-	nextAasAreaNum = 0;
+	nextReaches.clear();
 	goalAasAreaNum = 0;
 	goalAasAreaNodeFlags = 0;
 
 	Debug("ClearGoal(): curr aas area num: %d\n", currAasAreaNum);
-}
-
-void Ai::SetNextAreaReach(int reachNum)
-{
-	AAS_ReachabilityFromNum(reachNum, nextAreaReach);
-	nextAreaReachNum = reachNum;
-	nextAasAreaNum = nextAreaReach->areanum;
-	Debug("SetNextAreaReach(reach num=%d): next aas area num: %d\n", reachNum, nextAasAreaNum);
 }
 
 void Ai::SetGoal(NavEntity *navEntity)
@@ -109,19 +101,8 @@ void Ai::SetGoal(NavEntity *navEntity)
 	// It prevents weird bending over the points for usual kinds of nodes
 	goalTargetPoint.z() += playerbox_stand_viewheight;
 
-	if (currAasAreaNum != goalAasAreaNum)
-	{
-		int reachNum = AAS_AreaReachabilityToGoalArea(currAasAreaNum, self->s.origin, goalAasAreaNum, preferredAasTravelFlags);
-		if (!reachNum)
-		{
-			const float *origin = self->s.origin;
-			constexpr const char *format = "Ai::SetGoal(): Can't find reachability to goal area %d from %f %f %f at area %d\n";
-			Debug(format, navEntity->aasAreaNum, origin[0], origin[1], origin[2], currAasAreaNum);
-			ClearGoal();
-			return;
-		}
-		SetNextAreaReach(reachNum);
-	}
+	nextReaches.clear();
+	UpdateReachCache(currAasAreaNum);
 
 	self->movetarget = navEntity->ent;
 
