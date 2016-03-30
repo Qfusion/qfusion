@@ -410,6 +410,11 @@ protected:
 		return self->r.client ? self->r.client->netname : self->classname;
 	}
 
+	int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
+	int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
+	float FindSquareDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const;
+	inline float FindDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const;
+
 	void CheckReachedArea();
 
 	void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);
@@ -417,6 +422,8 @@ protected:
 	void TestClosePlace();
 	ClosePlaceProps closeAreaProps;
 private:
+	template <typename AASFn>
+	int FindAASParamToGoalArea(AASFn fn, int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
 	void TestMove(MoveTestResult *moveTestResult, int direction) const;
 };
 

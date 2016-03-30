@@ -125,7 +125,7 @@ void Ai::PickLongRangeGoal()
 			// We ignore cost of traveling in goal area, since:
 			// 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
 			// 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
-			cost = AAS_AreaTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->aasAreaNum, preferredAasTravelFlags);
+			cost = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->aasAreaNum);
 		}
 
 		if (cost == 0)
@@ -252,7 +252,7 @@ bool Ai::IsShortRangeReachable(const vec3_t targetOrigin) const
 	if (!targetAreaNum)
 		return false;
 	// TODO: We do not score distance in a goal area, but it seems to be cheap in the most cases, so it currently is left as is
-	return AAS_AreaTravelTimeToGoalArea(currAasAreaNum, self->s.origin, targetAreaNum, preferredAasTravelFlags) < AI_GOAL_SR_RADIUS;
+	return FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, targetAreaNum) < AI_GOAL_SR_RADIUS;
 }
 
 void Ai::UpdateReachCache(int reachedAreaNum)
@@ -293,7 +293,7 @@ void Ai::UpdateReachCache(int reachedAreaNum)
 	}
 	while (areaNum != goalAasAreaNum && nextReaches.size() != nextReaches.capacity())
 	{
-		int reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAasAreaNum, preferredAasTravelFlags);
+		int reachNum = FindAASReachabilityToGoalArea(areaNum, origin, goalAasAreaNum);
 		// We hope we'll be pushed in some other area during movement, and goal area will become reachable. Leave as is.
 		if (!reachNum)
 			break;
