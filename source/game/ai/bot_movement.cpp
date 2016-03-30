@@ -500,35 +500,33 @@ bool Bot::TryStraightenMoveVec(Vec3 *moveVec, float speed)
     {
         auto &endReach = nextReaches[bunnyLikeReachesCount - 1];
         int numAreas = AAS_TraceAreas(self->s.origin, endReach.start, areas, points, bunnyLikeReachesCount + 1);
-        if (numAreas == bunnyLikeReachesCount + 1)
-        {
-            if (areas[0] == currAasAreaNum)
-            {
-                bool match = true;
-                for (int i = 0; i < bunnyLikeReachesCount; ++i)
-                {
-                    if (nextReaches[i].areanum != areas[i + 1])
-                    {
-                        match = false;
-                        break;
-                    }
-                }
-                if (match)
-                {
-                    // Try trace obstacles now. Use null (= zero) as a mins (do not stop on small ground obstacles)
-                    trace_t trace;
-                    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, endReach.start, self, MASK_AISOLID);
-                    if (trace.fraction == 1.0f)
-                    {
-                        // TODO: try to check the ground!!!
-                        {
-                            *moveVec = Vec3(endReach.start) - self->s.origin;
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
+
+        if (numAreas != bunnyLikeReachesCount + 1)
+            goto lesserStep;
+
+        if (areas[0] != currAasAreaNum)
+            goto lesserStep;
+
+        for (int i = 0; i < bunnyLikeReachesCount; ++i)
+            if (nextReaches[i].areanum != areas[i + 1])
+                goto lesserStep;
+
+        // There are not cheap ways to check whether we may fail following straightened path.
+        // So at least do not try to straighten path when some reachabilities are higher than current origin
+        for (int i = 0; i < bunnyLikeReachesCount; ++i)
+            if (nextReaches[i].start[2] > self->s.origin[2] || nextReaches[i].end[2] > self->s.origin[2])
+                goto lesserStep;
+
+        // Try trace obstacles now. Use null (= zero) as a mins (do not stop on small ground obstacles)
+        trace_t trace;
+        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, endReach.start, self, MASK_AISOLID);
+        if (trace.fraction != 1.0f)
+            goto lesserStep;
+
+        *moveVec = Vec3(endReach.start) - self->s.origin;
+        return true;
+
+lesserStep:
         bunnyLikeReachesCount /= 2;
     }
 
