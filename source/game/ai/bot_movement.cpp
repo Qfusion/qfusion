@@ -41,14 +41,17 @@ void Bot::Move(usercmd_t *ucmd)
         moveVec = Vec3(self->s.origin) - goalTargetPoint;
     }
 
-    // Ladder movement
     if (self->is_ladder)
     {
         MoveOnLadder(&moveVec, ucmd);
     }
     else if (currAreaContents & AREACONTENTS_JUMPPAD)
     {
-        MoveOnJumppad(&moveVec, ucmd);
+        MoveEnteringJumppad(&moveVec, ucmd);
+    }
+    else if (hasTriggeredJumppad)
+    {
+        MoveRidingJummpad(&moveVec, ucmd);
     }
     // Platform riding - No move, riding elevator
     else if (currAreaContents & AREACONTENTS_MOVER)
@@ -162,16 +165,158 @@ void Bot::MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd)
     ucmd->sidemove = 0;
 }
 
-void Bot::MoveOnJumppad(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveEnteringJumppad(Vec3 *moveVec, usercmd_t *ucmd)
 {
     ucmd->upmove = 0;
     ucmd->sidemove = 0;
-    ucmd->forwardmove = 1;
-    if (!nextReaches.empty() && IsCloseToReachEnd())
+    ucmd->forwardmove = 0;
+
+    if (!hasTriggeredJumppad)
     {
-        // Try to jump off wall to leave jumppad area
-        ucmd->buttons |= BUTTON_SPECIAL;
+        if (!nextReaches.empty())
+        {
+            jumppadDestAreaNum = nextReaches.front().areanum;
+            VectorCopy(nextReaches.front().end, jumppadReachEndPoint.data());
+            // Look at the destination point
+            SetPendingLookAtPoint(jumppadReachEndPoint);
+            unsigned approxFlightTime = 2 * (unsigned) DistanceFast(nextReaches.front().start, nextReaches.front().end);
+            jumppadMoveTimeout = level.time + approxFlightTime;
+        }
+        else
+        {
+            jumppadDestAreaNum = 0;
+            VectorSet(jumppadReachEndPoint.data(), INFINITY, INFINITY, INFINITY);
+            jumppadMoveTimeout = level.time + 1000;
+        }
+
+        ucmd->forwardmove = 1;
+        hasTriggeredJumppad = true;
     }
+}
+
+void Bot::MoveRidingJummpad(Vec3 *moveVec, usercmd_t *ucmd)
+{
+    // First check whether bot finally landed to some area
+    if (self->groundentity)
+    {
+        hasTriggeredJumppad = false;
+        ucmd->forwardmove = 1;
+        return;
+    }
+
+    ucmd->upmove = 0;
+    ucmd->sidemove = 0;
+    ucmd->forwardmove = 0;
+
+    if (jumppadMoveTimeout <= level.time)
+    {
+        if (jumppadDestAreaNum)
+        {
+            TryLandOnArea(jumppadDestAreaNum, moveVec, ucmd);
+            return;
+        }
+        // TryLandOnNearbyAreas() is expensive. TODO: Use timeout between calls based on current speed
+        TryLandOnNearbyAreas(moveVec, ucmd);
+    }
+}
+
+static inline float CoordDistance(float coord, float coordMins, float coordMaxs)
+{
+    if (coord < coordMins)
+        return coordMins - coord;
+    if (coord > coordMaxs)
+        return coord - coordMaxs;
+    return 0;
+}
+
+static float SquareDistanceToBoxBottom(const vec3_t origin, const vec3_t boxMins, const vec3_t boxMaxs)
+{
+    float xDist = CoordDistance(origin[0], boxMins[0], boxMaxs[0]);
+    float yDist = CoordDistance(origin[1], boxMins[1], boxMaxs[2]);
+    float zDist = origin[2] - boxMins[2];
+    return xDist * xDist + yDist * yDist + zDist * zDist;
+}
+
+void Bot::TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd)
+{
+    Vec3 bboxMins(self->s.origin), bboxMaxs(self->s.origin);
+    bboxMins += Vec3(-128, -128, -128);
+    bboxMaxs += Vec3(+128, +128, +128);
+
+    constexpr int MAX_LANDING_AREAS = 16;
+    int areas[MAX_LANDING_AREAS];
+    int groundedAreas[MAX_LANDING_AREAS];
+    float distanceToAreas[MAX_LANDING_AREAS];
+
+    int numAllAreas = AAS_BBoxAreas(bboxMins.data(), bboxMaxs.data(), areas, MAX_LANDING_AREAS);
+    if (!numAllAreas)
+        return;
+
+    int numGroundedAreas = 0;
+    for (int i = 0; i < numAllAreas; ++i)
+    {
+        if (AAS_AreaGrounded(areas[i]))
+            groundedAreas[numGroundedAreas++] = areas[i];
+    }
+
+    // Sort areas by distance from bot to area bottom
+
+    for (int i = 0; i < numGroundedAreas; ++i)
+    {
+        const aas_area_t &area = aasworld.areas[groundedAreas[i]];
+        distanceToAreas[i] = SquareDistanceToBoxBottom(self->s.origin, area.mins, area.maxs);
+    }
+
+    for (int i = 1; i < numGroundedAreas; ++i)
+    {
+        for (int j = i; j > 0 && distanceToAreas[j - 1] > distanceToAreas[j]; --j)
+        {
+            std::swap(groundedAreas[j], groundedAreas[j - 1]);
+            std::swap(distanceToAreas[j], distanceToAreas[j - 1]);
+        }
+    }
+
+    for (int i = 0; i < numGroundedAreas; ++i)
+    {
+        if (TryLandOnArea(areas[i], moveVec, ucmd))
+            return;
+    }
+    // Do not press keys each frame
+    float r;
+    if ((r = random()) > 0.8)
+        ucmd->forwardmove = r > 0.9 ? -1 : 1;
+    if ((r = random()) > 0.8)
+        ucmd->sidemove = r > 0.9 ? -1 : 1;
+    if (random() > 0.8)
+        ucmd->buttons |= BUTTON_SPECIAL;
+}
+
+bool Bot::TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd)
+{
+    Vec3 areaPoint(aasworld.areas[areaNum].center);
+
+    // Lower area point to a bottom of area. Area mins/maxs are absolute.
+    areaPoint.z() = aasworld.areas[areaNum].mins[2];
+    // Do not try to "land" on upper areas
+    if (areaPoint.z() > self->s.origin[2])
+        return false;
+
+    // We have to offset traced end point since we do not test a zero-width ray
+    Vec3 areaPointToBotVec(self->s.origin);
+    areaPointToBotVec -= areaPoint;
+    areaPointToBotVec.NormalizeFast();
+    Vec3 traceEnd(areaPoint);
+
+    trace_t trace;
+    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.data(), self, MASK_AISOLID);
+    if (trace.fraction == 1.0f)
+    {
+        ucmd->forwardmove = 1;
+        *moveVec = -areaPointToBotVec;
+        return true;
+    }
+
+    return false;
 }
 
 void Bot::MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd)

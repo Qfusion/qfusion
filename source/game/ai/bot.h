@@ -4,7 +4,6 @@
 #include "static_vector.h"
 #include "dangers_detector.h"
 #include "enemy_pool.h"
-#include "../../gameshared/q_comref.h"
 
 class Bot: public Ai
 {
@@ -54,6 +53,15 @@ private:
     bool hasTriggeredRj;
     unsigned rjTimeout;
 
+    bool hasTriggeredJumppad;
+    // This timeout is set when bot triggers a jumppad (in MoveEnteringJumppad).
+    // Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
+    // If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
+    unsigned jumppadMoveTimeout;
+    // We have to store next areas props since reach. cache is likely to be lost in flight
+    int jumppadDestAreaNum;
+    Vec3 jumppadReachEndPoint;
+
     unsigned combatMovePushTimeout;
     int combatMovePushes[3];
 
@@ -78,7 +86,8 @@ private:
     float ComputePowerupWeight(const edict_t *ent) const;
 
     void MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveOnJumppad(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveEnteringJumppad(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveRidingJummpad(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveEnteringPlatform(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveFallingOrJumping(Vec3 *moveVec, usercmd_t *ucmd);
@@ -90,6 +99,8 @@ private:
     bool TryStraightenMoveVec(Vec3 *moveVec, float speed);
     void InterpolateMoveVec(Vec3 *moveVec, float speed);
     void SetMoveVecToPendingReach(Vec3 *moveVec);
+    void TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd);
+    bool TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd);
 
     // Returns true if the bot is at least a bit blocked
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
