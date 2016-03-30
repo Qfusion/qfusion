@@ -4,6 +4,7 @@
 
 cvar_t *in_grabinconsole;
 cvar_t *in_disablemacosxmouseaccel;
+cvar_t *in_mousehack;
 
 extern cvar_t *vid_xpos;
 extern cvar_t *vid_ypos;
@@ -78,7 +79,9 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state )
 		return;
 	}
 
-	if( button <= 3 ) {
+	if( button <= 10 ) {
+		// The engine only supports up to 8 buttons plus the mousewheel.
+
 		switch( button ) {
 			case SDL_BUTTON_LEFT:
 				Key_MouseEvent( K_MOUSE1, state, Sys_Milliseconds() );
@@ -89,17 +92,30 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state )
 			case SDL_BUTTON_RIGHT:
 				Key_MouseEvent( K_MOUSE2, state, Sys_Milliseconds() );
 				break;
+			case 4:
+				if( in_mousehack->integer )
+					Key_MouseEvent( K_MOUSE6, state, Sys_Milliseconds() );
+				break;
+			case 5:
+				if( in_mousehack->integer )
+					Key_MouseEvent( K_MOUSE7, state, Sys_Milliseconds() );
+				break;
+			case 6:
+				Key_MouseEvent( K_MOUSE6, state, Sys_Milliseconds() );
+				break;
+			case 7:
+				Key_MouseEvent( K_MOUSE7, state, Sys_Milliseconds() );
+				break;
+			case 8:
+				Key_MouseEvent( K_MOUSE4, state, Sys_Milliseconds() );
+				break;
+			case 9:
+				Key_MouseEvent( K_MOUSE5, state, Sys_Milliseconds() );
+				break;
+			case 10:
+				Key_MouseEvent( K_MOUSE8, state, Sys_Milliseconds() );
+				break;
 		}
-	} else if( button <= 8 ) {
-		// The engine only supports up to 8 buttons plus the mousewheel.
-
-		// Switch place of MOUSE4-5 with MOUSE6-7
-		if( button == 4 || button == 5 )
-			button += 2;
-		else if( button == 6 || button == 7 )
-			button -= 2;
-
-		Key_MouseEvent( K_MOUSE1 + button - 1, state, Sys_Milliseconds() );
 	} else
 		Com_Printf( "sdl_input.c: Unsupported mouse button (button = %u)\n", button );
 }
@@ -436,6 +452,7 @@ void IN_Init()
 
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
+	in_mousehack = Cvar_Get( "in_mousehack", "0", CVAR_ARCHIVE );
 
 	SDL_GetVersion( &linked );
 
