@@ -385,7 +385,7 @@ void Bot::MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd)
     //    ucmd->upmove = 1;
 }
 
-void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed)
+void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
 {
     float moveVecSqLen = moveVec->SquaredLength();
     if (moveVecSqLen < 0.01f)
@@ -396,14 +396,30 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, float speed)
     Vec3 baseOffsetVec(*moveVec);
     baseOffsetVec *= 24.0f + 96.0f * BoundedFraction(speed, 900);
 
+    Vec3 forwardVec(baseOffsetVec);
+    forwardVec += self->s.origin;
+
     float *const mins = vec3_origin;
     float *const maxs = playerbox_stand_maxs;
 
     trace_t trace;
-    G_Trace(&trace, self->s.origin, mins, maxs, (baseOffsetVec + self->s.origin).data(), self, MASK_AISOLID);
+    G_Trace(&trace, self->s.origin, mins, maxs, forwardVec.data(), self, MASK_AISOLID);
 
     if (trace.fraction == 1.0f)
         return;
+
+    // If we are in air, check whether we may crouch to prevent bumping a ceiling by head
+    // We do not switch to crouch movement style, since we are still in air and have bunny speed
+    if (!self->groundentity)
+    {
+        trace_t crouchTrace;
+        G_Trace(&crouchTrace, self->s.origin, nullptr, playerbox_crouch_maxs, forwardVec.data(), self, MASK_AISOLID);
+        if (crouchTrace.fraction == 1.0f)
+        {
+            ucmd->upmove = -1;
+            return;
+        }
+    }
 
     // Trace both a bit left and a bit right directions. Don't reject early (otherwise one side will be always preferred)
     float angleStep = 35.0f - 15.0f * BoundedFraction(speed, 900);
@@ -622,7 +638,8 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
 
     StraightenOrInterpolateMoveVec(moveVec, speed);
 
-    CheckAndTryAvoidObstacles(moveVec, speed);
+    // This call may set ucmd->upmove to -1 to prevent bumping a ceiling in air
+    CheckAndTryAvoidObstacles(moveVec, ucmd, speed);
 
     Vec3 toTargetDir2D(*moveVec);
     toTargetDir2D.z() = 0;
@@ -649,7 +666,9 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
         }
         else
         {
-            ucmd->upmove = 1;
+            // If we are not crouching in air to prevent bumping a ceiling, keep jump key pressed
+            if (ucmd->upmove != -1)
+                ucmd->upmove = 1;
             isBunnyHopping = true;
         }
 
