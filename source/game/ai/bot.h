@@ -101,6 +101,7 @@ private:
     void SetMoveVecToPendingReach(Vec3 *moveVec);
     void TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd);
     bool TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd);
+    void CheckTargetReached();
 
     // Returns true if the bot is at least a bit blocked
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
