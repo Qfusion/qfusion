@@ -1368,6 +1368,22 @@ void G_Match_ToggleReady( edict_t *ent )
 /*
 * G_Match_RemoveAllProjectiles
 */
+void G_Match_RemoveProjectiles( edict_t *owner )
+{
+	edict_t *ent;
+
+	for( ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ )
+	{
+		if( ent->r.inuse && !ent->r.client && ent->r.svflags & SVF_PROJECTILE && ent->r.solid != SOLID_NOT && ent->r.owner->s.number == owner->s.number )
+		{
+			G_FreeEdict( ent );
+		}
+	}
+}
+
+/*
+* G_Match_RemoveAllProjectiles
+*/
 void G_Match_RemoveAllProjectiles( void )
 {
 	edict_t *ent;

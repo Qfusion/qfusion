@@ -2749,6 +2749,11 @@ static gsitem_t *asFunc_GS_FindItemByClassname( asstring_t *name )
 	return ( !name || !name->len ) ? NULL : GS_FindItemByClassname( name->buffer );
 }
 
+static void asFunc_G_Match_RemoveProjectiles( edict_t *owner )
+{
+	G_Match_RemoveProjectiles( owner );
+}
+
 static void asFunc_G_Match_RemoveAllProjectiles( void )
 {
 	G_Match_RemoveAllProjectiles();
@@ -3314,6 +3319,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "array<Entity @> @G_FindByClassname( const String &in )", asFUNCTION(asFunc_G_FindByClassname), NULL },
 
 	// misc management utils
+	{ "void G_RemoveProjectiles( Entity @ )", asFUNCTION(asFunc_G_Match_RemoveProjectiles), NULL },
 	{ "void G_RemoveAllProjectiles()", asFUNCTION(asFunc_G_Match_RemoveAllProjectiles), NULL },
 	{ "void G_ResetLevel()", asFUNCTION(asFunc_G_ResetLevel), NULL },
 	{ "void G_RemoveDeadBodies()", asFUNCTION(asFunc_G_Match_FreeBodyQueue), NULL },
