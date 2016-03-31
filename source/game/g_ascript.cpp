@@ -2756,7 +2756,7 @@ static void asFunc_G_Match_RemoveProjectiles( edict_t *owner )
 
 static void asFunc_G_Match_RemoveAllProjectiles( void )
 {
-	G_Match_RemoveAllProjectiles();
+	G_Match_RemoveProjectiles( NULL );
 }
 
 static void asFunc_G_ResetLevel( void )

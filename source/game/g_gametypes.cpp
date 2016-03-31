@@ -64,7 +64,7 @@ void G_Gametype_GENERIC_SetUpCountdown( void )
 	bool any = false;
 	int team;
 
-	G_Match_RemoveAllProjectiles();
+	G_Match_RemoveProjectiles( NULL );
 	G_Items_RespawnByType( 0, 0, 0 ); // respawn all items
 
 	level.gametype.readyAnnouncementEnabled = false;
@@ -1374,23 +1374,8 @@ void G_Match_RemoveProjectiles( edict_t *owner )
 
 	for( ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ )
 	{
-		if( ent->r.inuse && !ent->r.client && ent->r.svflags & SVF_PROJECTILE && ent->r.solid != SOLID_NOT && ent->r.owner->s.number == owner->s.number )
-		{
-			G_FreeEdict( ent );
-		}
-	}
-}
-
-/*
-* G_Match_RemoveAllProjectiles
-*/
-void G_Match_RemoveAllProjectiles( void )
-{
-	edict_t *ent;
-
-	for( ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ )
-	{
-		if( ent->r.inuse && !ent->r.client && ent->r.svflags & SVF_PROJECTILE && ent->r.solid != SOLID_NOT )
+		if( ent->r.inuse && !ent->r.client && ent->r.svflags & SVF_PROJECTILE && ent->r.solid != SOLID_NOT &&
+				( owner == NULL || ent->r.owner->s.number == owner->s.number ) )
 		{
 			G_FreeEdict( ent );
 		}

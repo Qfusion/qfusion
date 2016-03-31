@@ -207,7 +207,6 @@ extern char clockstring[16];
 bool G_Match_Tied( void );
 bool G_Match_CheckExtendPlayTime( void );
 void G_Match_RemoveProjectiles( edict_t *owner );
-void G_Match_RemoveAllProjectiles( void );
 void G_Match_CleanUpPlayerStats( edict_t *ent );
 void G_Match_FreeBodyQueue( void );
 void G_Match_LaunchState( int matchState );
