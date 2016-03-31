@@ -661,16 +661,16 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
     Vec3 toTargetDir2D(*moveVec);
     toTargetDir2D.z() = 0;
 
-    Vec3 lookDir2D(0, 0, 0);
-    AngleVectors(self->s.angles, lookDir2D.data(), nullptr, nullptr);
-    lookDir2D.z() = 0;
+    // Do not use look dir as an actual dir, bot may move backwards
+    Vec3 actualDir2D(velocityVec);
+    actualDir2D.z() = 0;
 
-    float lookDir2DSqLen = lookDir2D.SquaredLength();
-    float toTarget2DSqLen = toTargetDir2D.SquaredLength();
+    float actualDir2DSqLen = actualDir2D.SquaredLength();
+    float toTargetDir2DSqLen = toTargetDir2D.SquaredLength();
 
-    if (lookDir2DSqLen > 0.1f)
+    if (actualDir2DSqLen > 0.1f)
     {
-        lookDir2D *= Q_RSqrt(lookDir2DSqLen);
+        actualDir2D *= Q_RSqrt(actualDir2DSqLen);
 
         ucmd->forwardmove = 1;
         isBunnyHopping = false;
@@ -689,12 +689,12 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             isBunnyHopping = true;
         }
 
-        if (toTarget2DSqLen > 0.1f)
+        if (toTargetDir2DSqLen > 0.1f)
         {
-            toTargetDir2D *= Q_RSqrt(toTarget2DSqLen);
+            toTargetDir2D *= Q_RSqrt(toTargetDir2DSqLen);
 
-            float lookToTarget2DDot = lookDir2D.Dot(toTargetDir2D);
-            if (lookToTarget2DDot > 0.99)
+            float actualToTarget2DDot = actualDir2D.Dot(toTargetDir2D);
+            if (actualToTarget2DDot > 0.99)
             {
                 // TODO: Implement "true" strafejumping
                 if (Skill() > 0.33f)
@@ -705,19 +705,19 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             }
             else
             {
-                // Given an actual move dir line (a line that goes through selfOrigin to selfOrigin + lookDir2D),
+                // Given an actual move dir line (a line that goes through selfOrigin to selfOrigin + actualDir2D),
                 // determine on which side the move target (defined by moveVec) is
-                float lineNormalX = +lookDir2D.y();
-                float lineNormalY = -lookDir2D.x();
+                float lineNormalX = +actualDir2D.y();
+                float lineNormalY = -actualDir2D.x();
                 int side = Q_sign(lineNormalX * moveVec->x() + lineNormalY * moveVec->y());
 
-                if (lookToTarget2DDot > 0.7)
+                if (actualToTarget2DDot > 0.7)
                 {
                     // currAngle is an angle between actual lookDir and moveDir
                     // moveDir is a requested look direction
                     // due to view angles change latency requested angles may be not set immediately in this frame
                     // We have to request an angle that is greater than it is needed
-                    float currAngle = RAD2DEG(acosf(lookToTarget2DDot)) * side;
+                    float currAngle = RAD2DEG(acosf(actualToTarget2DDot)) * side;
                     mat3_t matrix;
                     AnglesToAxis(Vec3(0, currAngle * 1.1f, 0).data(), matrix);
                     Matrix3_TransformVector(matrix, moveVec->data(), moveVec->data());
