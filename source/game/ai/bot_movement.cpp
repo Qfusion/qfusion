@@ -677,8 +677,12 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             float lookToTarget2DDot = lookDir2D.Dot(toTargetDir2D);
             if (lookToTarget2DDot > 0.99)
             {
-                // TODO: Enable strafejumping
-                AITools_DrawColorLine(self->s.origin, (64 * toTargetDir2D + self->s.origin).data(), COLOR_RGB(0, 255, 0), 0);
+                // TODO: Implement "true" strafejumping
+                if (Skill() > 0.33f)
+                {
+                    float skillFactor = 0.15f + 0.20f * Skill();
+                    VectorScale(self->velocity, 1.0f + skillFactor * 0.0001f * game.frametime, self->velocity);
+                }
             }
             else
             {
