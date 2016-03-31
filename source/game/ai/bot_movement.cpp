@@ -476,7 +476,24 @@ void Bot::StraightenOrInterpolateMoveVec(Vec3 *moveVec, float speed)
 bool Bot::TryStraightenMoveVec(Vec3 *moveVec, float speed)
 {
     // We may miss target if we straighten path
-    if ((goalTargetPoint - self->s.origin).SquaredLength() < 175 * 175)
+
+    Vec3 botToGoalDir = goalTargetPoint - self->s.origin;
+    Vec3 velocityDir(self->velocity);
+    // Check normalization conditions
+    float squareDistanceToGoal = botToGoalDir.SquaredLength();
+    if (squareDistanceToGoal < 0.1f || speed < 0.1f)
+        return false;
+    // Normalize direction vectors
+    botToGoalDir *= Q_RSqrt(squareDistanceToGoal);
+    velocityDir *= 1.0f / speed;
+
+    float proximityLimit = 64.0f;
+    // 1 for opposite directions, 0 for matching directions
+    float directionFactor = 0.5f - 0.5f * botToGoalDir.Dot(velocityDir);
+    float speedFactor = BoundedFraction(speed - 160, 640);
+    proximityLimit += 400.0f * directionFactor * speedFactor;
+
+    if (squareDistanceToGoal < proximityLimit * proximityLimit)
         return false;
 
     // First, count how many reach. are bunny-friendly
