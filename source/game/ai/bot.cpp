@@ -21,7 +21,7 @@ Bot::Bot(edict_t *self)
       hasPendingLookAtPoint(false),
       lookAtPointTurnSpeedMultiplier(0.5f)
 {
-    self->r.client->movestyle = GS_NEWBUNNY;
+    self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;
 }
 
 void Bot::LookAround()
