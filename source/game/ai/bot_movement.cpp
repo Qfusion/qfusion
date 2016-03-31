@@ -85,6 +85,8 @@ void Bot::Move(usercmd_t *ucmd)
 
     TryMoveAwayIfBlocked(ucmd);
 
+    CheckTargetReached();
+
     if (!hasPendingLookAtPoint)
     {
         float turnSpeedMultiplier = 1.0f;
@@ -721,7 +723,10 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
         ucmd->forwardmove = 0;
         ucmd->upmove = 0;
     }
+}
 
+void Bot::CheckTargetReached()
+{
     // TODO: This is a condition for long term goal located in `goalAasAreaNum`, short term goals are not covered
     if (!self->movetarget || currAasAreaNum != goalAasAreaNum)
         return;
