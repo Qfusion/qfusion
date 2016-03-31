@@ -745,18 +745,16 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
 void Bot::CheckTargetReached()
 {
     // TODO: This is a condition for long term goal located in `goalAasAreaNum`, short term goals are not covered
-    if (!self->movetarget || currAasAreaNum != goalAasAreaNum)
+    if (!longTermGoal || currAasAreaNum != goalAasAreaNum)
         return;
-
-    if (!self->goalentity)
-        FailWith("Movetarget is present, but goalentity is absent\n");
 
     // TODO: Implement goal timeout (including short-range one) in common AI code, not there
 
     // Check whether we have reached the target
     if (goalAasAreaNodeFlags & (NODEFLAGS_ENTITYREACH | NODEFLAGS_REACHATTOUCH))
     {
-        if (BoundsIntersect(self->goalentity->r.absmin, self->goalentity->r.absmax, self->r.absmin, self->r.absmax))
+        edict_t *ent = longTermGoal->ent;
+        if (BoundsIntersect(ent->r.absmin, ent->r.absmax, self->r.absmin, self->r.absmax))
         {
             Ai::ReachedEntity();
             return;

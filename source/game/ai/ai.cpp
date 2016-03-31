@@ -6,6 +6,8 @@
 
 Ai::Ai(edict_t *self)
     : EdictRef(self),
+      longTermGoal(nullptr),
+      shortTermGoal(nullptr),
       currAasAreaNum(0),
       goalAasAreaNum(0),
       goalAasAreaNodeFlags(0),

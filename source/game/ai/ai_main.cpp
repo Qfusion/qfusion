@@ -145,8 +145,7 @@ void Ai::PickLongRangeGoal()
 	{
 		constexpr const char *format = "chosen %s at area %d with weight %.2f as a long-term goal\n";
 		Debug(format, bestGoalEnt->ent->classname, bestWeight, bestGoalEnt->aasAreaNum);
-		self->ai->goalEnt = bestGoalEnt;
-		self->ai->aiRef->SetGoal(bestGoalEnt);
+		SetGoal(bestGoalEnt);
 	}
 }
 
@@ -158,7 +157,7 @@ void Ai::PickLongRangeGoal()
 //==========================================
 void Ai::PickShortRangeGoal()
 {
-	edict_t *bestGoal = NULL;
+	NavEntity *bestGoalEnt = NULL;
 	float bestWeight = 0;
 
 	if (!self->r.client || G_ISGHOSTING(self))
@@ -176,8 +175,6 @@ void Ai::PickShortRangeGoal()
 	bool canPickupItems = self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK;
 
 	shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
-
-	self->movetarget = NULL;
 
 	FOREACH_GOALENT(goalEnt)
 	{
@@ -201,7 +198,7 @@ void Ai::PickShortRangeGoal()
 		}
 
 		dist = DistanceFast(self->s.origin, goalEnt->ent->s.origin);
-		if (goalEnt == self->ai->goalEnt)
+		if (goalEnt == longTermGoal)
 		{
 			if (dist > AI_GOAL_SR_LR_RADIUS)
 				continue;			
@@ -220,9 +217,9 @@ void Ai::PickShortRangeGoal()
 			bool in_front = G_InFront(self, goalEnt->ent);
 
 			// Long range goal gets top priority
-			if (in_front && goalEnt == self->ai->goalEnt)
+			if (in_front && goalEnt == longTermGoal)
 			{
-				bestGoal = goalEnt->ent;
+				bestGoalEnt = goalEnt;
 				break;
 			}
 
@@ -231,14 +228,14 @@ void Ai::PickShortRangeGoal()
 			if (weight > bestWeight)
 			{
 				bestWeight = weight;
-				bestGoal = goalEnt->ent;
+				bestGoalEnt = goalEnt;
 			}
 		}
 	}
 
-	if (bestGoal)
+	if (bestGoalEnt)
 	{
-		self->movetarget = bestGoal;
+		shortTermGoal = bestGoalEnt;
 	}
 	else
 	{

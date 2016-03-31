@@ -275,9 +275,6 @@ typedef struct ai_handle_s
 
 	ai_type	type;
 
-	// nodes
-	struct NavEntity *goalEnt;
-
 	int asFactored, asRefCount;
 
 	class Ai *aiRef;
@@ -340,6 +337,9 @@ struct ClosePlaceProps
 class Ai: public EdictRef
 {
 protected:
+	NavEntity *longTermGoal;
+	NavEntity *shortTermGoal;
+
 	int currAasAreaNum;
 	int goalAasAreaNum;
 	int goalAasAreaNodeFlags;
