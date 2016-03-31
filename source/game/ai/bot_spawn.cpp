@@ -338,7 +338,6 @@ void BOT_Respawn( edict_t *self )
 		return;
 
 	self->enemy = NULL;
-	self->movetarget = NULL;
 	self->pain = BOT_pain;
 
 	self->ai->botRef->OnRespawn();
