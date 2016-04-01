@@ -51,78 +51,119 @@ int Ai::FindCurrAASAreaNum()
 	return areaNum;
 }
 
-void Ai::ClearGoal()
+void Ai::ClearLongTermGoal()
 {
 	longTermGoal = nullptr;
+	// Request immediate long-term goal update
+	longTermGoalTimeout = 0;
+	// Clear short-term goal too
 	shortTermGoal = nullptr;
-
-	longRangeGoalTimeout = 0; // pick a long range goal now
-	shortRangeGoalTimeout = 0; // pick a short range goal now
+	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
+	// Request immediate status update
 	statusUpdateTimeout = 0;
 
-	currAasAreaNum = FindCurrAASAreaNum();
-	nextReaches.clear();
 	goalAasAreaNum = 0;
-	goalAasAreaNodeFlags = 0;
-
-	Debug("ClearGoal(): curr aas area num: %d\n", currAasAreaNum);
+	nextReaches.clear();
 }
 
-void Ai::SetGoal(NavEntity *navEntity)
+void Ai::ClearShortTermGoal()
 {
-	// TODO: Check condition in original source
-	if (!navEntity->aasAreaNum)
-	{
-		const float *origin = navEntity->ent->s.origin;
-		constexpr const char *format = "Can't find AAS area num for entity %s with ent num %d at %f %f %f\n";
-		Debug(format, navEntity->ent->classname, ENTNUM(navEntity->ent), origin[0], origin[1], origin[2]);
-		ClearGoal();
-		return;
-	}
+	shortTermGoal = nullptr;
+	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 
-	if (currAasAreaNum == 0)
+	goalAasAreaNum = 0;
+	nextReaches.clear();
+}
+
+void Ai::SetLongTermGoal(NavEntity *goalEnt)
+{
+	if (!currAasAreaNum)
 	{
 		currAasAreaNum = FindCurrAASAreaNum();
-		if (currAasAreaNum == 0)
+		if (!currAasAreaNum)
 		{
-			Debug("Still can't find curr AAS area\n");
-			ClearGoal();
+			Debug("Still can't find curr aas area num\n");
 			return;
 		}
 	}
 
-	longTermGoal = navEntity;
-	shortTermGoal = nullptr;
+	longTermGoal = goalEnt;
 
-	goalAasAreaNum = navEntity->aasAreaNum;
-	goalAasAreaNodeFlags = navEntity->aasAreaNodeFlags;
-	goalTargetPoint = Vec3(navEntity->ent->s.origin);
-	// It prevents weird bending over the points for usual kinds of nodes
+	shortTermGoal = nullptr;
+	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
+
+	goalAasAreaNum = goalEnt->aasAreaNum;
+	goalTargetPoint = Vec3(goalEnt->ent->s.origin);
 	goalTargetPoint.z() += playerbox_stand_viewheight;
 
 	nextReaches.clear();
 	UpdateReachCache(currAasAreaNum);
 
-	longRangeGoalTimeout = level.time + 15000;
+	longTermGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY;
 }
 
-void Ai::ReachedEntity()
+void Ai::SetShortTermGoal(NavEntity *goalEnt)
 {
-	// TODO: Implement short-term goal handling
+	if (!currAasAreaNum)
+	{
+		currAasAreaNum = FindCurrAASAreaNum();
+		if (!currAasAreaNum)
+		{
+			Debug("Still can't find curr aas area num\n");
+			return;
+		}
+	}
+
+	shortTermGoal = goalEnt;
+
+	goalAasAreaNum = goalEnt->aasAreaNum;
+	goalTargetPoint = Vec3(goalEnt->ent->s.origin);
+	goalTargetPoint.z() += playerbox_stand_viewheight;
+
+	nextReaches.clear();
+	UpdateReachCache(currAasAreaNum);
+
+	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
+}
+
+void Ai::OnLongTermGoalReached()
+{
 	NavEntity *goalEnt = longTermGoal;
+	Debug("reached long-term goal %s\n", goalEnt->ent->classname);
+	ClearLongTermGoal();
+	CancelOtherAisGoals(goalEnt);
+}
 
-	Debug("reached entity %s\n", goalEnt->ent->classname);
+void Ai::OnShortTermGoalReached()
+{
+	NavEntity *goalEnt = shortTermGoal;
+	Debug("reached short-term goal %s\n", goalEnt->ent->classname);
+	ClearShortTermGoal();
+	CancelOtherAisGoals(goalEnt);
+	// Restore long-term goal overridden by short-term one
+	if (longTermGoal && longTermGoal != shortTermGoal)
+	{
+		SetLongTermGoal(longTermGoal);
+	}
+}
 
-	ClearGoal();
+void Ai::CancelOtherAisGoals(NavEntity *canceledGoal)
+{
+	if (!canceledGoal)
+		return;
 
 	// find all bots which have this node as goal and tell them their goal is reached
 	for (edict_t *ent = game.edicts + 1; PLAYERNUM(ent) < gs.maxclients; ent++)
 	{
 		if (!ent->ai || ent->ai->type == AI_INACTIVE)
 			continue;
+		if (ent->ai->aiRef == this)
+			continue;
 
-		if (ent->ai->aiRef->HasGoal() && ent->ai->aiRef->longTermGoal == goalEnt)
-			ent->ai->aiRef->ClearGoal();
+		if (ent->ai->aiRef->longTermGoal == canceledGoal)
+			ent->ai->aiRef->ClearLongTermGoal();
+		else if (ent->ai->aiRef->shortTermGoal == canceledGoal)
+			ent->ai->aiRef->ClearShortTermGoal();
 	}
 }
 
@@ -132,11 +173,18 @@ void Ai::TouchedEntity(edict_t *ent)
 	if (ent->r.solid != SOLID_TRIGGER && ent->item == NULL)
 		return;
 
-	// Todo: Implement short-term goal handling
+	// TODO: Implement triggers handling?
 
 	if (longTermGoal && ent == longTermGoal->ent)
 	{
-		ClearGoal();
+		// This also implies cleaning a short-term goal
+		ClearLongTermGoal();
+		return;
+	}
+
+	if (shortTermGoal && ent == shortTermGoal->ent)
+	{
+		ClearShortTermGoal();
 		return;
 	}
 }

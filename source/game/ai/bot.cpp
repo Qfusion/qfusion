@@ -422,8 +422,9 @@ void Bot::GhostingFrame()
 {
     usercmd_t ucmd;
 
-    if (HasGoal())
-        ClearGoal();
+    // This cleans short-term goal too
+    if (HasLongTermGoal())
+        ClearLongTermGoal();
 
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->nextThink = level.time + 100;

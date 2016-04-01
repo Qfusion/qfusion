@@ -102,6 +102,9 @@ extern cvar_t *sv_botpersonality;
 #define AI_GOAL_SR_RADIUS		200
 #define AI_GOAL_SR_LR_RADIUS	600
 
+constexpr int AI_GOAL_SR_MILLIS = 750;
+constexpr int AI_GOAL_SR_LR_MILLIS = 1500;
+
 #define MASK_NODESOLID      ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_MONSTERCLIP )
 #define MASK_AISOLID        ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP )
 
@@ -147,9 +150,11 @@ struct NavEntity
 {
 	int id;
 	int aasAreaNum;
-	int aasAreaNodeFlags;
+	int nodeFlags;
 	edict_t *ent;
 	NavEntity *prev, *next;
+
+	bool MayBeReachedNow(const edict_t *grabber);
 };
 
 class GoalEntitiesRegistry
@@ -166,7 +171,7 @@ class GoalEntitiesRegistry
 public:
 	void Init();
 
-	NavEntity *AddGoalEntity(edict_t *ent, int aasAreaNum, int aasAreaNodeFlags = 0);
+	NavEntity *AddGoalEntity(edict_t *ent, int aasAreaNum, int nodeFlags = 0);
 	void RemoveGoalEntity(NavEntity *navEntity);
 
 	inline NavEntity *GoalEntityForEntity(edict_t *ent)
@@ -342,7 +347,6 @@ protected:
 
 	int currAasAreaNum;
 	int goalAasAreaNum;
-	int goalAasAreaNodeFlags;
 	Vec3 goalTargetPoint;
 
 	int allowedAasTravelFlags;
@@ -362,8 +366,8 @@ protected:
 	unsigned blockedTimeout;
 
 	unsigned stateCombatTimeout;
-	unsigned longRangeGoalTimeout;
-	unsigned shortRangeGoalTimeout;
+	unsigned longTermGoalTimeout;
+	unsigned shortTermGoalTimeout;
 
 	float aiYawSpeed, aiPitchSpeed;
 
@@ -384,16 +388,21 @@ public:
 	void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
 	static bool IsStep(edict_t *ent);
 
-	inline bool HasGoal() const { return goalAasAreaNum != 0; }
 	int FindCurrAASAreaNum();
-	void ClearGoal();
-	void SetGoal(NavEntity *entity);
-	void ReachedEntity();
+
+	inline bool HasLongTermGoal() { return longTermGoal != nullptr; }
+	inline bool HasShortTermGoal() { return shortTermGoal != nullptr; }
+	void ClearLongTermGoal();
+	void ClearShortTermGoal();
+	void SetLongTermGoal(NavEntity *goalEnt);
+	void SetShortTermGoal(NavEntity *goalEnt);
+	void OnLongTermGoalReached();
+	void OnShortTermGoalReached();
 	void TouchedEntity(edict_t *ent);
 
 	static NavEntity *GetGoalentForEnt(edict_t *target);
-	void PickLongRangeGoal();
-	void PickShortRangeGoal();
+	void PickLongTermGoal();
+	void PickShortTermGoal();
 	// Looks like it is unused since is not implemented in original code
 	void Frame(usercmd_t *ucmd);
 	void ResetNavigation();
@@ -424,6 +433,7 @@ protected:
 private:
 	template <typename AASFn>
 	int FindAASParamToGoalArea(AASFn fn, int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
+	void CancelOtherAisGoals(NavEntity *canceledGoal);
 	void TestMove(MoveTestResult *moveTestResult, int direction) const;
 };
 

@@ -134,6 +134,24 @@ static bool AI_PredictJumpadDestity( edict_t *ent, vec3_t out )
 	return true;
 }
 
+bool NavEntity::MayBeReachedNow(const edict_t *grabber)
+{
+	if (!grabber)
+		return false;
+
+	if (nodeFlags & (NODEFLAGS_ENTITYREACH|NODEFLAGS_REACHATTOUCH))
+	{
+		if (BoundsIntersect(ent->r.mins, ent->r.maxs, grabber->r.mins, grabber->r.maxs))
+			return true;
+	}
+	else
+	{
+		if (DistanceSquared(ent->s.origin, grabber->s.origin) < 48 * 48)
+			return true;
+	}
+	return false;
+}
+
 GoalEntitiesRegistry GoalEntitiesRegistry::instance;
 
 void GoalEntitiesRegistry::Init()
@@ -175,7 +193,7 @@ NavEntity *GoalEntitiesRegistry::AllocGoalEntity()
 	return goalEnt;
 }
 
-NavEntity *GoalEntitiesRegistry::AddGoalEntity(edict_t *ent, int aasAreaNum, int aasAreaNodeFlags/*=0*/)
+NavEntity *GoalEntitiesRegistry::AddGoalEntity(edict_t *ent, int aasAreaNum, int nodeFlags/*=0*/)
 {
 	if (aasAreaNum == 0) abort();
 	NavEntity *goalEnt = AllocGoalEntity();
@@ -183,7 +201,7 @@ NavEntity *GoalEntitiesRegistry::AddGoalEntity(edict_t *ent, int aasAreaNum, int
 	{
 		goalEnt->ent = ent;
 		goalEnt->aasAreaNum = aasAreaNum;
-		goalEnt->aasAreaNodeFlags = aasAreaNodeFlags;
+		goalEnt->nodeFlags = nodeFlags;
 		entGoals[ENTNUM(ent)] = goalEnt;
 	}
 	return goalEnt;
