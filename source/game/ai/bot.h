@@ -62,6 +62,12 @@ private:
     int jumppadDestAreaNum;
     Vec3 jumppadReachEndPoint;
 
+    bool hasPendingLandingDash;
+    bool isOnGroundThisFrame;
+    bool wasOnGroundPrevFrame;
+    unsigned pendingLandingDashTimeout;
+    float requestedViewTurnSpeedMultiplier;
+
     unsigned combatMovePushTimeout;
     int combatMovePushes[3];
 
@@ -102,6 +108,10 @@ private:
     void TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd);
     bool TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd);
     void CheckTargetReached();
+
+    void SetPendingLandingDash(usercmd_t *ucmd);
+    void TryApplyPendingLandingDash(usercmd_t *ucmd);
+    void CheckPendingLandingDashTimedOut();
 
     // Returns true if the bot is at least a bit blocked
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
