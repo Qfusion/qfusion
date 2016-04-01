@@ -15,6 +15,10 @@ void Bot::Move(usercmd_t *ucmd)
     if (hasTriggeredRj && rjTimeout <= level.time)
         hasTriggeredRj = false;
 
+    CheckPendingLandingDashTimedOut();
+
+    isOnGroundThisFrame = self->groundentity != nullptr;
+
     aas_areainfo_t currAreaInfo;
     AAS_AreaInfo(currAasAreaNum, &currAreaInfo);
     const int currAreaContents = currAreaInfo.contents;
@@ -89,7 +93,7 @@ void Bot::Move(usercmd_t *ucmd)
 
     if (!hasPendingLookAtPoint)
     {
-        float turnSpeedMultiplier = 1.0f;
+        float turnSpeedMultiplier = requestedViewTurnSpeedMultiplier;
         if (AimEnemy())
         {
             moveVec.NormalizeFast();
@@ -100,11 +104,13 @@ void Bot::Move(usercmd_t *ucmd)
             {
                 ucmd->forwardmove *= -1;
                 moveVec *= -1;
-                turnSpeedMultiplier += Skill();
+                turnSpeedMultiplier = 1.0f + Skill();
             }
         }
         ChangeAngle(moveVec, turnSpeedMultiplier);
     }
+
+    wasOnGroundPrevFrame = isOnGroundThisFrame;
 }
 
 void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
@@ -643,8 +649,51 @@ void Bot::SetMoveVecToPendingReach(Vec3 *moveVec)
     *moveVec = Vec3(16 * linkVec + nextReaches.front().start) - self->s.origin;
 }
 
+void Bot::SetPendingLandingDash(usercmd_t *ucmd)
+{
+    if (isOnGroundThisFrame)
+        return;
+
+    ucmd->forwardmove = 0;
+    ucmd->sidemove = 0;
+    ucmd->upmove = 0;
+    hasPendingLandingDash = true;
+    pendingLandingDashTimeout = level.time + 700;
+    requestedViewTurnSpeedMultiplier = 1.35f;
+}
+
+void Bot::TryApplyPendingLandingDash(usercmd_t *ucmd)
+{
+    if (!hasPendingLandingDash)
+        return;
+    if (!isOnGroundThisFrame || wasOnGroundPrevFrame)
+        return;
+
+    ucmd->forwardmove = 1;
+    ucmd->sidemove = 0;
+    ucmd->upmove = 0;
+    ucmd->buttons |= BUTTON_SPECIAL;
+    hasPendingLandingDash = false;
+    requestedViewTurnSpeedMultiplier = 1.0f;
+}
+
+void Bot::CheckPendingLandingDashTimedOut()
+{
+    if (hasPendingLandingDash && pendingLandingDashTimeout <= level.time)
+    {
+        hasPendingLandingDash = false;
+        requestedViewTurnSpeedMultiplier = 1.0f;
+    }
+}
+
 void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
 {
+    if (hasPendingLandingDash)
+    {
+        TryApplyPendingLandingDash(ucmd);
+        return;
+    }
+
     // moveDir is initially set to a vector from self to currMoveTargetPoint.
     // However, if we have any tangential velocity in a trajectory and it is not directed to the target.
     // we are likely going to miss the target point. We have to check actual look angles
@@ -711,22 +760,48 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
                 float lineNormalY = -actualDir2D.x();
                 int side = Q_sign(lineNormalX * moveVec->x() + lineNormalY * moveVec->y());
 
-                if (actualToTarget2DDot > 0.7)
+                // Check whether we may increase requested turn direction
+                if (actualToTarget2DDot > -0.5)
                 {
                     // currAngle is an angle between actual lookDir and moveDir
                     // moveDir is a requested look direction
                     // due to view angles change latency requested angles may be not set immediately in this frame
                     // We have to request an angle that is greater than it is needed
+                    float extraTurn = 0.1f;
+                    // Turning using forward (GS_NEWBUNNY) aircontrol is not suitable. Use old Quakeworld style.
+                    if (actualToTarget2DDot < 0.5)
+                    {
+                        // Release +forward and press strafe key in accordance to view turn direction
+                        ucmd->forwardmove = 0;
+                        ucmd->sidemove = side;
+                        extraTurn = 0.03f;
+                    }
                     float currAngle = RAD2DEG(acosf(actualToTarget2DDot)) * side;
                     mat3_t matrix;
-                    AnglesToAxis(Vec3(0, currAngle * 1.1f, 0).data(), matrix);
+                    AnglesToAxis(Vec3(0, currAngle * (1.0f + extraTurn), 0).data(), matrix);
                     Matrix3_TransformVector(matrix, moveVec->data(), moveVec->data());
+                }
+                else if (!isOnGroundThisFrame && Skill() > 0.33f)
+                {
+                    SetPendingLandingDash(ucmd);
                 }
                 else
                 {
-                    // Release +forward and use aircontrol to turn to the movetarget
-                    ucmd->forwardmove = 0;
-                    ucmd->sidemove = side;
+                    // Try move backwards to a goal
+                    if ((longTermGoal && DistanceSquared(longTermGoal->ent->s.origin, self->s.origin) < 128 * 128) ||
+                        (shortTermGoal && DistanceSquared(shortTermGoal->ent->s.origin, self->s.origin) < 128 * 128))
+                    {
+                        ucmd->upmove = 0;
+                        ucmd->forwardmove = -1;
+                        ucmd->sidemove = side;
+                    }
+                    else
+                    {
+                        // Just reduce a push
+                        ucmd->upmove = 1;
+                        ucmd->sidemove = 0;
+                        ucmd->forwardmove = 0;
+                    }
                 }
             }
 
