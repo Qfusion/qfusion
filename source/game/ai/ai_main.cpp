@@ -39,78 +39,46 @@ void Ai::ResetNavigation()
 	nextReaches.clear();
 	goalAasAreaNum = 0;
 
-	longRangeGoalTimeout = 0;
+	longTermGoal = 0;
+	shortTermGoal = 0;
+
+	longTermGoalTimeout = 0;
 	blockedTimeout = level.time + BLOCKED_TIMEOUT;
-	shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
-
-	ClearGoal();
+	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 }
-
-//==========================================
-// AI_PickLongRangeGoal
-//
-// Evaluate the best long range goal and send the bot on
-// its way. This is a good time waster, so use it sparingly.
-// Do not call it for every think cycle.
-//
-// jal: I don't think there is any problem by calling it,
-// now that we have stored the costs at the nav.costs table (I don't do it anyway)
-//==========================================
 
 constexpr float COST_INFLUENCE = 0.5f;
 
-void Ai::PickLongRangeGoal()
+void Ai::PickLongTermGoal()
 {
-	if (HasGoal())
-		ClearGoal();
+	// Clear short-term goal too
+	longTermGoal = nullptr;
+	shortTermGoal = nullptr;
 
 	if (IsGhosting())
 		return;
 
-	if (longRangeGoalTimeout > level.time)
+	if (longTermGoalTimeout > level.time)
 		return;
 
 	if (!self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED])
 		return;
 
-	longRangeGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom( 0, 1000 );
-
-	float bestWeight = 0.0f;
+	float bestWeight = 0.000001f;
 	NavEntity *bestGoalEnt = NULL;
 
 	// Run the list of potential goal entities
 	FOREACH_GOALENT(goalEnt)
 	{
-		if (!goalEnt->ent)
-			FailWith("PickLongRangeGoal(): goalEnt %d ent is null\n", goalEnt->id);
-
-		if (!goalEnt->aasAreaNum)
-			FailWith("PickLongRangeGoal():goalEnt %d aas area num\n", goalEnt->aasAreaNum);
-
-		if (goalEnt->ent->r.client)
-			FailWith("PickLongRangeGoal(): goalEnt %d is a client %s\n", goalEnt->ent->r.client->netname);
-
 		if (!goalEnt->ent->r.inuse)
-		{
-			//Debug("PickLongRangeGoal(): skipping goalEnt %s %d (is not in use)\n", goalEnt->ent->classname, goalEnt->id);
 			continue;
-		}
 
 		// Items timing is currently disabled
 		if (goalEnt->ent->r.solid == SOLID_NOT)
-		{
-			//Debug("PickLongRangeGoal(): skipping goalEnt %s %d (is not solid)\n", goalEnt->ent->classname, goalEnt->id);
 			continue;
-		}
 
-		if (goalEnt->ent->item)
-		{
-			if (!G_Gametype_CanPickUpItem(goalEnt->ent->item))
-			{
-				//Debug("PickLongRangeGoal(): skipping goalEnt %s %d (the item can't be picked up)", goalEnt->ent->classname, goalEnt->id);
-				continue;
-			}
-		}
+		if (goalEnt->ent->item && !G_Gametype_CanPickUpItem(goalEnt->ent->item))
+			continue;
 
 		float weight = self->ai->status.entityWeights[goalEnt->id];
 
@@ -119,7 +87,10 @@ void Ai::PickLongRangeGoal()
 
 		float cost = 0;
 		if (currAasAreaNum == goalEnt->aasAreaNum)
-			cost = AAS_AreaTravelTime(goalEnt->aasAreaNum, self->s.origin, goalEnt->ent->s.origin);
+		{
+			// Traveling in a single area is cheap anyway for a player-like bot, don't bother to compute travel time.
+		    cost = 1;
+		}
 		else
 		{
 			// We ignore cost of traveling in goal area, since:
@@ -143,51 +114,46 @@ void Ai::PickLongRangeGoal()
 
 	if (bestGoalEnt)
 	{
-		constexpr const char *format = "chosen %s at area %d with weight %.2f as a long-term goal\n";
-		Debug(format, bestGoalEnt->ent->classname, bestWeight, bestGoalEnt->aasAreaNum);
-		SetGoal(bestGoalEnt);
+		Debug("chose %s weighted %.f as a long-term goal\n", bestGoalEnt->ent->classname, bestWeight);
+		SetLongTermGoal(bestGoalEnt);
+		// Having a long-term is mandatory, so set the timeout only when a goal is found
+		longTermGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom(0, 1000);
 	}
 }
 
-//==========================================
-// AI_PickShortRangeGoal
-// Pick best goal based on importance and range. This function
-// overrides the long range goal selection for items that
-// are very close to the bot and are reachable.
-//==========================================
-void Ai::PickShortRangeGoal()
+void Ai::PickShortTermGoal()
 {
-	NavEntity *bestGoalEnt = NULL;
-	float bestWeight = 0;
+	NavEntity *bestGoalEnt = nullptr;
+	float bestWeight = 0.000001f;
 
 	if (!self->r.client || G_ISGHOSTING(self))
 		return;
 
+	// Do not bother picking short-term (usually low-priority) items in combat.
 	if (stateCombatTimeout > level.time)
 	{
-		shortRangeGoalTimeout = stateCombatTimeout;
+		shortTermGoalTimeout = stateCombatTimeout;
 		return;
 	}
 
-	if (shortRangeGoalTimeout > level.time)
+	if (shortTermGoalTimeout > level.time)
 		return;
 
 	bool canPickupItems = self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK;
 
-	shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
-
 	FOREACH_GOALENT(goalEnt)
 	{
-		float dist;
+		if (!goalEnt->ent->r.inuse)
+			continue;
 
-		int i = goalEnt->id;
-		if (!goalEnt->ent->r.inuse || goalEnt->ent->r.solid == SOLID_NOT)
+		// Do not predict short-term goal spawn (looks weird)
+		if (goalEnt->ent->r.solid == SOLID_NOT)
 			continue;
 
 		if (goalEnt->ent->r.client)
 			continue;
 
-		if (self->ai->status.entityWeights[i] <= 0.0f)
+		if (self->ai->status.entityWeights[goalEnt->id] <= 0.0f)
 			continue;
 
 		const auto &item = goalEnt->ent->item;
@@ -197,7 +163,9 @@ void Ai::PickShortRangeGoal()
 				continue;
 		}
 
-		dist = DistanceFast(self->s.origin, goalEnt->ent->s.origin);
+		// First cut off items by distance for performance reasons since this function is called quite frequently.
+		// It is not very accurate in terms of level connectivity, but short-term goals are not critical.
+		float dist = DistanceFast(self->s.origin, goalEnt->ent->s.origin);
 		if (goalEnt == longTermGoal)
 		{
 			if (dist > AI_GOAL_SR_LR_RADIUS)
@@ -205,51 +173,75 @@ void Ai::PickShortRangeGoal()
 		}
 		else
 		{
-			if(dist > AI_GOAL_SR_RADIUS)
+			if (dist > AI_GOAL_SR_RADIUS)
 				continue;
 		}		
 
 		clamp_low(dist, 0.01f);
 
-		if (IsShortRangeReachable(goalEnt->ent->s.origin))
-		{
-			float weight;
-			bool in_front = G_InFront(self, goalEnt->ent);
 
-			// Long range goal gets top priority
-			if (in_front && goalEnt == longTermGoal)
+		bool inFront = G_InFront(self, goalEnt->ent);
+
+		// Cut items by weight first, IsShortRangeReachable() is quite expensive
+		float weight = self->ai->status.entityWeights[goalEnt->id] / dist * (inFront ? 1.0f : 0.5f);
+		if (weight > 0)
+		{
+			if (weight > bestWeight)
+			{
+				if (IsShortRangeReachable(goalEnt->ent->s.origin))
+				{
+					bestWeight = weight;
+					bestGoalEnt = goalEnt;
+				}
+			}
+		    // Long-term goal just need some positive weight and be in front to be chosen as a short-term goal too
+			else if (inFront && goalEnt == longTermGoal)
 			{
 				bestGoalEnt = goalEnt;
 				break;
-			}
-
-			// get the one with the best weight
-			weight = self->ai->status.entityWeights[i] / dist * (in_front ? 1.0f : 0.5f);
-			if (weight > bestWeight)
-			{
-				bestWeight = weight;
-				bestGoalEnt = goalEnt;
 			}
 		}
 	}
 
 	if (bestGoalEnt)
 	{
-		shortTermGoal = bestGoalEnt;
+		Debug("chose %s weighted %.f as a short-term goal\n", bestGoalEnt->ent->classname, bestWeight);
+		SetShortTermGoal(bestGoalEnt);
 	}
-	else
-	{
-		shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY_IDLE;
-	}
+	// Having a short-term goal is not mandatory, so search again after a timeout even if a goal has not been found
+	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 }
 
 bool Ai::IsShortRangeReachable(const vec3_t targetOrigin) const
 {
-	int targetAreaNum = AAS_PointAreaNum(const_cast<float*>(targetOrigin));
-	if (!targetAreaNum)
+	vec3_t testedOrigin;
+	VectorCopy(targetOrigin, testedOrigin);
+	int areaNum = AAS_PointAreaNum(testedOrigin);
+	if (!areaNum)
+	{
+		testedOrigin[2] += 8.0f;
+		areaNum = AAS_PointAreaNum(testedOrigin);
+		if (!areaNum)
+		{
+			testedOrigin[2] -= 16.0f;
+			areaNum = AAS_PointAreaNum(testedOrigin);
+		}
+	}
+	if (!areaNum)
 		return false;
-	// TODO: We do not score distance in a goal area, but it seems to be cheap in the most cases, so it currently is left as is
-	return FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, targetAreaNum) < AI_GOAL_SR_RADIUS;
+
+	if (areaNum == currAasAreaNum)
+		return true;
+
+	// AAS functions return time in seconds^-2
+	int toTravelTimeMillis = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, areaNum) * 10;
+	if (!toTravelTimeMillis)
+		return false;
+	int backTravelTimeMillis = FindAASTravelTimeToGoalArea(areaNum, testedOrigin, currAasAreaNum) * 10;
+	if (!backTravelTimeMillis)
+		return false;
+
+	return (toTravelTimeMillis + backTravelTimeMillis) / 2 < AI_GOAL_SR_MILLIS;
 }
 
 void Ai::UpdateReachCache(int reachedAreaNum)
@@ -409,24 +401,23 @@ void Ai::Think()
 		statusUpdated = true;
 	}
 
-	if (goalAasAreaNum == 0 || longRangeGoalTimeout <= level.time)
+	if (goalAasAreaNum == 0 || longTermGoalTimeout <= level.time)
 	{
 		if (!statusUpdated)
 		{
 			UpdateStatus();
 			statusUpdated = true;
 		}
-		PickLongRangeGoal();
+		PickLongTermGoal();
 	}
 
-	if (shortRangeGoalTimeout <= level.time)
+	if (shortTermGoalTimeout <= level.time)
 	{
 		if (!statusUpdated)
 		{
 			UpdateStatus();
 		}
-		//TODO: PickShortRangeGoal(); timeout update is a stub
-		shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
+		PickShortTermGoal();
 	}
 
 	self->ai->pers.RunFrame(self);

@@ -10,7 +10,6 @@ Ai::Ai(edict_t *self)
       shortTermGoal(nullptr),
       currAasAreaNum(0),
       goalAasAreaNum(0),
-      goalAasAreaNodeFlags(0),
       goalTargetPoint(0, 0, 0),
       allowedAasTravelFlags(TFL_DEFAULT),
       preferredAasTravelFlags(TFL_DEFAULT),
@@ -19,8 +18,8 @@ Ai::Ai(edict_t *self)
       statusUpdateTimeout(0),
       blockedTimeout(level.time + 15000),
       stateCombatTimeout(0),
-      longRangeGoalTimeout(0),
-      shortRangeGoalTimeout(0),
+      longTermGoalTimeout(0),
+      shortTermGoalTimeout(0),
       aiYawSpeed(0.0f),
       aiPitchSpeed(0.0f)
 {

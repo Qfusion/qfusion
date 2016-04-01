@@ -276,7 +276,9 @@ edict_t *AI_GetGoalEntity( int index )
 */
 void AI_ReachedEntity(edict_t *self)
 {
-    self->ai->aiRef->ReachedEntity();
+    // self->ai->aiRef->ReachedEntity();
+    // Currently disabled
+    abort();
 }
 
 /*

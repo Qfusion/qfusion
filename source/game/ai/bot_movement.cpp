@@ -6,8 +6,8 @@ void Bot::Move(usercmd_t *ucmd)
     if (currAasAreaNum == 0 || goalAasAreaNum == 0)
     {
         // Request a goal to be assigned asap
-        longRangeGoalTimeout = 0;
-        shortRangeGoalTimeout = 0;
+        longTermGoalTimeout = 0;
+        shortTermGoalTimeout = 0;
         statusUpdateTimeout = 0;
         return;
     }
@@ -744,29 +744,18 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
 
 void Bot::CheckTargetReached()
 {
-    // TODO: This is a condition for long term goal located in `goalAasAreaNum`, short term goals are not covered
-    if (!longTermGoal || currAasAreaNum != goalAasAreaNum)
+    if (currAasAreaNum != goalAasAreaNum || (!longTermGoal && !shortTermGoal))
         return;
 
-    // TODO: Implement goal timeout (including short-range one) in common AI code, not there
-
-    // Check whether we have reached the target
-    if (goalAasAreaNodeFlags & (NODEFLAGS_ENTITYREACH | NODEFLAGS_REACHATTOUCH))
+    if (longTermGoal && longTermGoal->MayBeReachedNow(self))
     {
-        edict_t *ent = longTermGoal->ent;
-        if (BoundsIntersect(ent->r.absmin, ent->r.absmax, self->r.absmin, self->r.absmax))
-        {
-            Ai::ReachedEntity();
-            return;
-        }
+        Ai::OnLongTermGoalReached();
+        return;
     }
-    else
+    if (shortTermGoal && shortTermGoal->MayBeReachedNow(self))
     {
-        if ((goalTargetPoint - self->s.origin).SquaredLength() < 64 * 64)
-        {
-            Ai::ReachedEntity();
-            return;
-        }
+        Ai::OnShortTermGoalReached();
+        return;
     }
 }
 
