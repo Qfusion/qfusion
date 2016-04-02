@@ -3,11 +3,11 @@
 
 #include "static_vector.h"
 #include "dangers_detector.h"
-#include "enemy_pool.h"
+#include "bot_brain.h"
 
 class Bot: public Ai
 {
-    friend class EnemyPool;
+    friend class BotBrain;
 public:
     Bot(edict_t *self);
 
@@ -20,11 +20,11 @@ public:
     bool FireWeapon(usercmd_t *ucmd);
     void Pain(const edict_t *enemy, float kick, int damage)
     {
-        enemyPool.OnPain(enemy, kick, damage);
+        botBrain.OnPain(enemy, kick, damage);
     }
     void OnEnemyDamaged(const edict_t *enemy, int damage)
     {
-        enemyPool.OnEnemyDamaged(enemy, damage);
+        botBrain.OnEnemyDamaged(enemy, damage);
     }
     void UpdateStatus();
     void BlockedTimeout();
@@ -44,7 +44,7 @@ private:
     void RegisterVisibleEnemies();
 
     DangersDetector dangersDetector;
-    EnemyPool enemyPool;
+    BotBrain botBrain;
     CombatTask aimTarget;
 
     bool printLink;
@@ -134,9 +134,9 @@ private:
     void TryPressAttack(usercmd_t *ucmd, bool importantShot);
 
     // Name clash... we have to use a method name prefix
-    inline const CombatTask &GetCombatTask() { return enemyPool.combatTask; }
-    inline const Enemy *AimEnemy() const { return enemyPool.combatTask.aimEnemy; }
-    inline const Vec3 &SpamSpot() const { return enemyPool.combatTask.spamSpot; }
+    inline const CombatTask &GetCombatTask() { return botBrain.combatTask; }
+    inline const Enemy *AimEnemy() const { return botBrain.combatTask.aimEnemy; }
+    inline const Vec3 &SpamSpot() const { return botBrain.combatTask.spamSpot; }
 };
 
 #endif

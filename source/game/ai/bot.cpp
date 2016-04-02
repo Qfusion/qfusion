@@ -5,7 +5,7 @@
 Bot::Bot(edict_t *self)
     : Ai(self),
       dangersDetector(self),
-      enemyPool(self),
+      botBrain(self),
       printLink(false),
       isBunnyHopping(false),
       hasTriggeredRj(false),
@@ -37,16 +37,16 @@ void Bot::LookAround()
 
     RegisterVisibleEnemies();
 
-    enemyPool.UpdateCombatTask();
+    botBrain.UpdateCombatTask();
 
-    if (enemyPool.combatTask.aimEnemy)
-        ChangeWeapon(enemyPool.combatTask.suggestedShootWeapon);
-    else if (enemyPool.combatTask.spamEnemy)
-        ChangeWeapon(enemyPool.combatTask.suggestedSpamWeapon);
+    if (botBrain.combatTask.aimEnemy)
+        ChangeWeapon(botBrain.combatTask.suggestedShootWeapon);
+    else if (botBrain.combatTask.spamEnemy)
+        ChangeWeapon(botBrain.combatTask.suggestedSpamWeapon);
 
     // Try to keep compatibility with other code, especially scripts
-    if (enemyPool.combatTask.aimEnemy)
-        self->enemy = const_cast<edict_t*>(enemyPool.combatTask.aimEnemy->ent);
+    if (botBrain.combatTask.aimEnemy)
+        self->enemy = const_cast<edict_t*>(botBrain.combatTask.aimEnemy->ent);
     else
         self->enemy = nullptr;
 }
@@ -102,7 +102,7 @@ void Bot::RegisterVisibleEnemies()
 
         if (trap_inPVS(self->s.origin, goalEnt->ent->s.origin) && G_Visible(self, goalEnt->ent))
         {
-            enemyPool.OnEnemyViewed(goalEnt->ent);
+            botBrain.OnEnemyViewed(goalEnt->ent);
         }
     }*/
 
@@ -121,10 +121,10 @@ void Bot::RegisterVisibleEnemies()
             continue;
 
         if (trap_inPVS(self->s.origin, ent->s.origin) && G_Visible(self, ent))
-            enemyPool.OnEnemyViewed(ent);
+            botBrain.OnEnemyViewed(ent);
     }*/
 
-    enemyPool.AfterAllEnemiesViewed();
+    botBrain.AfterAllEnemiesViewed();
 }
 
 //==========================================
@@ -479,16 +479,16 @@ void Bot::OnRespawn()
 //==========================================
 void Bot::RunFrame()
 {
-    enemyPool.PrepareToFrame();
+    botBrain.PrepareToFrame();
 
     if (G_ISGHOSTING(self))
     {
-        enemyPool.combatTask.Reset();
-        enemyPool.combatTask.prevSpamEnemy = nullptr;
+        botBrain.combatTask.Reset();
+        botBrain.combatTask.prevSpamEnemy = nullptr;
 
         GhostingFrame();
 
-        enemyPool.FinishFrame();
+        botBrain.FinishFrame();
         return;
     }
 
@@ -508,7 +508,7 @@ void Bot::RunFrame()
     {
         LookAround();
 
-        const CombatTask &combatTask = enemyPool.combatTask;
+        const CombatTask &combatTask = botBrain.combatTask;
 
         bool inhibitCombat = false;
         if (currAasAreaNum != goalAasAreaNum && !nextReaches.empty())
@@ -562,7 +562,7 @@ void Bot::RunFrame()
 
     SayVoiceMessages();
 
-    enemyPool.FinishFrame();
+    botBrain.FinishFrame();
 }
 
 

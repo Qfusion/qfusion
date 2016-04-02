@@ -1,5 +1,5 @@
 #include "bot.h"
-#include "enemy_pool.h"
+#include "bot_brain.h"
 #include "../../gameshared/q_comref.h"
 #include <algorithm>
 #include <limits>
@@ -76,7 +76,7 @@ void Enemy::OnViewed()
     lastSeenTimestamps.push_front(lastSeenAt);
 }
 
-EnemyPool::EnemyPool(edict_t *bot)
+BotBrain::BotBrain(edict_t *bot)
     : bot(bot),
       trackedEnemiesCount(0),
       maxTrackedEnemies(3 + (unsigned)((MAX_TRACKED_ENEMIES-3) * BotSkill())),
@@ -138,7 +138,7 @@ static void EscapePercent(const char *string, char *buffer, int bufferLen)
     buffer[j] = '\0';
 }
 
-void EnemyPool::Debug(const char *format, ...)
+void BotBrain::Debug(const char *format, ...)
 {
 #ifdef _DEBUG
     char concatBuffer[1024];
@@ -158,7 +158,7 @@ void EnemyPool::Debug(const char *format, ...)
 #endif
 }
 
-void EnemyPool::PrepareToFrame()
+void BotBrain::PrepareToFrame()
 {
     const unsigned levelTime = level.time;
     for (Enemy &enemy: enemies)
@@ -227,7 +227,7 @@ void EnemyPool::PrepareToFrame()
     }
 }
 
-void EnemyPool::UpdateWeight(Enemy &enemy)
+void BotBrain::UpdateWeight(Enemy &enemy)
 {
     if (level.time - enemy.LastSeenAt() > reactionTime)
     {
@@ -250,7 +250,7 @@ void EnemyPool::UpdateWeight(Enemy &enemy)
     }
 }
 
-void EnemyPool::RemoveEnemy(Enemy &enemy)
+void BotBrain::RemoveEnemy(Enemy &enemy)
 {
     // Enemies always are located in the same buffer, so we may compare pointers
     if (&enemy == combatTask.aimEnemy)
@@ -269,7 +269,7 @@ void EnemyPool::RemoveEnemy(Enemy &enemy)
     --trackedEnemiesCount;
 }
 
-bool EnemyPool::HasAnyDetectedEnemiesInView() const
+bool BotBrain::HasAnyDetectedEnemiesInView() const
 {
     for (const Enemy &enemy: enemies)
     {
@@ -288,7 +288,7 @@ bool EnemyPool::HasAnyDetectedEnemiesInView() const
     return false;
 }
 
-void EnemyPool::AfterAllEnemiesViewed()
+void BotBrain::AfterAllEnemiesViewed()
 {
     // Stop spamming if we see any enemy in view, choose a target to fight
     if (combatTask.spamEnemy)
@@ -302,7 +302,7 @@ void EnemyPool::AfterAllEnemiesViewed()
     }
 }
 
-void EnemyPool::OnEnemyViewed(const edict_t *enemy)
+void BotBrain::OnEnemyViewed(const edict_t *enemy)
 {
     if (!enemy)
         return;
@@ -335,7 +335,7 @@ void EnemyPool::OnEnemyViewed(const edict_t *enemy)
     }
 }
 
-void EnemyPool::EmplaceEnemy(const edict_t *enemy, int slot)
+void BotBrain::EmplaceEnemy(const edict_t *enemy, int slot)
 {
     Enemy &slotEnemy = enemies[slot];
     slotEnemy.ent = enemy;
@@ -348,7 +348,7 @@ void EnemyPool::EmplaceEnemy(const edict_t *enemy, int slot)
     Debug("has stored enemy %s in slot %d\n", slotEnemy.Nick(), slot);
 }
 
-void EnemyPool::TryPushNewEnemy(const edict_t *enemy)
+void BotBrain::TryPushNewEnemy(const edict_t *enemy)
 {
     // Try to find a free slot. For each used and not reserved slot compute eviction score relative to new enemy
 
@@ -432,7 +432,7 @@ void EnemyPool::TryPushNewEnemy(const edict_t *enemy)
     }
 }
 
-float EnemyPool::ComputeRawWeight(const edict_t *enemy)
+float BotBrain::ComputeRawWeight(const edict_t *enemy)
 {
     if (!enemy || G_ISGHOSTING(enemy))
         return 0.0;
@@ -485,7 +485,7 @@ float EnemyPool::ComputeRawWeight(const edict_t *enemy)
     return result;
 }
 
-float EnemyPool::PlayerAiWeight(const edict_t *enemy)
+float BotBrain::PlayerAiWeight(const edict_t *enemy)
 {
     if (!enemy)
         return 0.0;
@@ -500,7 +500,7 @@ float EnemyPool::PlayerAiWeight(const edict_t *enemy)
     return 0.0f;
 }
 
-unsigned EnemyPool::LastAttackedByTime(const edict_t *ent) const
+unsigned BotBrain::LastAttackedByTime(const edict_t *ent) const
 {
     for (const AttackStats &attackStats: attackers)
         if (ent && attackStats.ent == ent)
@@ -509,7 +509,7 @@ unsigned EnemyPool::LastAttackedByTime(const edict_t *ent) const
     return 0;
 }
 
-unsigned EnemyPool::LastTargetTime(const edict_t *ent) const
+unsigned BotBrain::LastTargetTime(const edict_t *ent) const
 {
     for (const AttackStats &targetStats: targets)
         if (ent && targetStats.ent == ent)
@@ -518,12 +518,12 @@ unsigned EnemyPool::LastTargetTime(const edict_t *ent) const
     return 0;
 }
 
-void EnemyPool::OnPain(const edict_t *enemy, float kick, int damage)
+void BotBrain::OnPain(const edict_t *enemy, float kick, int damage)
 {
     EnqueueAttacker(enemy, damage);
 }
 
-void EnemyPool::EnqueueAttacker(const edict_t *attacker, int damage)
+void BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
 {
     if (!attacker)
         return;
@@ -562,7 +562,7 @@ void EnemyPool::EnqueueAttacker(const edict_t *attacker, int damage)
     attackers[freeSlot].OnDamage(damage);
 }
 
-void EnemyPool::EnqueueTarget(const edict_t *target)
+void BotBrain::EnqueueTarget(const edict_t *target)
 {
     if (!target)
         return;
@@ -603,7 +603,7 @@ void EnemyPool::EnqueueTarget(const edict_t *target)
     targets[freeSlot].Touch();
 }
 
-void EnemyPool::OnEnemyDamaged(const edict_t *target, int damage)
+void BotBrain::OnEnemyDamaged(const edict_t *target, int damage)
 {
     if (!target)
         return;
@@ -617,7 +617,7 @@ void EnemyPool::OnEnemyDamaged(const edict_t *target, int damage)
     }
 }
 
-void EnemyPool::UpdateCombatTask()
+void BotBrain::UpdateCombatTask()
 {
     if (combatTask.aimEnemy && (level.time - combatTask.aimEnemy->LastSeenAt()) > reactionTime)
     {
@@ -633,7 +633,7 @@ void EnemyPool::UpdateCombatTask()
     }
 }
 
-void EnemyPool::UpdateKeptCurrentCombatTask()
+void BotBrain::UpdateKeptCurrentCombatTask()
 {
     auto *task = &combatTask;
     if (nextWeaponChoiceAt <= level.time)
@@ -653,7 +653,7 @@ void EnemyPool::UpdateKeptCurrentCombatTask()
     }
 }
 
-void EnemyPool::TryFindNewCombatTask()
+void BotBrain::TryFindNewCombatTask()
 {
     CombatTask *task = &combatTask;
     const Enemy *oldAimEnemy = task->aimEnemy;
@@ -724,7 +724,7 @@ void EnemyPool::TryFindNewCombatTask()
     }
 }
 
-bool EnemyPool::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
+bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
 {
     unsigned notSeenDuration = level.time - oldEnemy->LastSeenAt();
     if (notSeenDuration > 500)
@@ -744,7 +744,7 @@ bool EnemyPool::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
     return true;
 }
 
-void EnemyPool::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Vec3 &botViewDirection)
+void BotBrain::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Vec3 &botViewDirection)
 {
     // Low-skill bots never spam
     if (BotSkill() < 0.33f)
@@ -804,7 +804,7 @@ void EnemyPool::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const V
     // TODO: Spam on spawn points in non-team-based gametypes
 }
 
-void EnemyPool::StartSpamAtEnemy(CombatTask *task, const Enemy *enemy)
+void BotBrain::StartSpamAtEnemy(CombatTask *task, const Enemy *enemy)
 {
     // Do not add spamTargetChoicePeriod but add very small period when you start spam at enemy (enemy may come back quickly)
     // TODO: Calculate possible enemy position based on last seen ones
@@ -820,7 +820,7 @@ void EnemyPool::StartSpamAtEnemy(CombatTask *task, const Enemy *enemy)
 }
 
 // Old weapon selection code with some style and C to C++ fixes
-int EnemyPool::SuggestEasyBotsWeapon(const Enemy &enemy)
+int BotBrain::SuggestEasyBotsWeapon(const Enemy &enemy)
 {
 	float best_weight = 0.0;
 	int weapon_range = 0, best_weapon = WEAP_NONE;
@@ -876,7 +876,7 @@ inline float GetLaserRange()
     return (lgDef->firedef.timeout + lgDef->firedef.timeout) / 2.0f;
 }
 
-void EnemyPool::SuggestAimWeaponAndTactics(CombatTask *task)
+void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 {
     const Enemy &enemy = *task->aimEnemy;
     if (BotSkill() < 0.33f)
@@ -962,7 +962,7 @@ void EnemyPool::SuggestAimWeaponAndTactics(CombatTask *task)
         task->suggestedShootWeapon = WEAP_GUNBLADE;
 }
 
-void EnemyPool::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
+void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
 {
     const Enemy &enemy = *task->aimEnemy;
 
@@ -1022,7 +1022,7 @@ struct WeaponAndScore
     }
 };
 
-int EnemyPool::ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end)
+int BotBrain::ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end)
 {
     int weapon = WEAP_NONE;
     const int pendingWeapon = bot->r.client->ps.stats[STAT_PENDING_WEAPON];
@@ -1069,7 +1069,7 @@ int EnemyPool::ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponA
     return weapon;
 }
 
-void EnemyPool::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
+void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
 {
     const Enemy &enemy = *task->aimEnemy;
 
@@ -1162,7 +1162,7 @@ void EnemyPool::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDi
     task->suggestedShootWeapon = chosenWeapon;
 }
 
-void EnemyPool::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
+void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
 {
     const Enemy &enemy = *task->aimEnemy;
     const float distance = disposition.distance;
@@ -1327,7 +1327,7 @@ void EnemyPool::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Comba
     task->suggestedShootWeapon = chosenWeapon;
 }
 
-void EnemyPool::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
+void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
 {
     int chosenWeapon = WEAP_NONE;
 
@@ -1412,7 +1412,7 @@ void EnemyPool::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const Combat
     task->suggestedShootWeapon = chosenWeapon;
 }
 
-int EnemyPool::SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition)
+int BotBrain::SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition)
 {
     if (disposition.distance < CLOSE_RANGE)
     {
@@ -1498,7 +1498,7 @@ static bool IsEscapingFromStandingEntity(const edict_t *escaping, const edict_t 
     return escapingToStandingDir.Dot(escapingVelocityDir) < -0.5f;
 }
 
-bool EnemyPool::IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition)
+bool BotBrain::IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition)
 {
     // Very basic. Todo: Check env. behind an enemy or the bot, is it really tries to escape or just pushed on a wall
 
@@ -1525,7 +1525,7 @@ bool EnemyPool::IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &dis
     return IsEscapingFromStandingEntity(enemy.ent, bot, enemyVelocitySqLen);
 }
 
-int EnemyPool::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition)
+int BotBrain::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition)
 {
     const float lgRange = GetLaserRange();
 
@@ -1572,7 +1572,7 @@ int EnemyPool::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDis
     return weapon;
 }
 
-int EnemyPool::SuggestQuadBearerWeapon(const Enemy &enemy)
+int BotBrain::SuggestQuadBearerWeapon(const Enemy &enemy)
 {
     float distance = (enemy.LastSeenPosition() - bot->s.origin).LengthFast();
     auto lgDef = GS_GetWeaponDef(WEAP_LASERGUN);
@@ -1618,7 +1618,7 @@ int EnemyPool::SuggestQuadBearerWeapon(const Enemy &enemy)
     return WEAP_GUNBLADE;
 }
 
-int EnemyPool::SuggestInstagibWeapon(const Enemy &enemy)
+int BotBrain::SuggestInstagibWeapon(const Enemy &enemy)
 {
     // Prefer hitscan weapons
     if (BulletsReadyToFireCount())
@@ -1648,7 +1648,7 @@ int EnemyPool::SuggestInstagibWeapon(const Enemy &enemy)
     return WEAP_GUNBLADE;
 }
 
-void EnemyPool::SuggestSpamEnemyWeaponAndTactics(CombatTask *task)
+void BotBrain::SuggestSpamEnemyWeaponAndTactics(CombatTask *task)
 {
     const Enemy &enemy = *task->spamEnemy;
 
@@ -1737,9 +1737,9 @@ void EnemyPool::SuggestSpamEnemyWeaponAndTactics(CombatTask *task)
     task->suggestedSpamWeapon = weapon;
 }
 
-const float EnemyPool::TargetEnvironment::TRACE_DEPTH = 250.0f;
+const float BotBrain::TargetEnvironment::TRACE_DEPTH = 250.0f;
 
-void EnemyPool::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey)
+void BotBrain::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey)
 {
     Vec3 forward = targetOrigin - botOrigin;
     forward.z() = 0;

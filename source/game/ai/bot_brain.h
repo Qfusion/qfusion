@@ -172,7 +172,7 @@ private:
 
 class AttackStats
 {
-    friend class EnemyPool;
+    friend class BotBrain;
 
     // Very close to 4 game seconds
     static constexpr unsigned MAX_KEPT_FRAMES = 64 * 4;
@@ -304,7 +304,7 @@ struct CombatDisposition
     inline float KillToBeKilledDamageRatio() const { return damageToKill / damageToBeKilled; }
 };
 
-class EnemyPool
+class BotBrain
 {
     edict_t *bot;
 
@@ -436,15 +436,15 @@ class EnemyPool
     void UpdateKeptCurrentCombatTask();
     void TryFindNewCombatTask();
 
-    EnemyPool() = delete;
+    BotBrain() = delete;
     // Disable copying and moving
-    EnemyPool(EnemyPool &&that) = delete;
+    BotBrain(BotBrain &&that) = delete;
 
     void Debug(const char *format, ...);
 public:
     CombatTask combatTask;
 
-    EnemyPool(edict_t *bot);
+    BotBrain(edict_t *bot);
 
     void PrepareToFrame();
 
