@@ -355,6 +355,13 @@ static void CMod_LoadSurfaces( cmodel_state_t *cms, lump_t *l )
 
 	for( i = 0; i < count; i++ )
 		cms->map_shaderrefs[i].name = buffer + ( size_t )( ( void * )cms->map_shaderrefs[i].name );
+
+	// For non-FBSP maps (i.e. Q3, RTWC), unset FBSP specific surface flags
+	if( cms->cmap_bspFormat->header != QFBSPHEADER )
+	{
+		for( i = 0; i < cms->numshaderrefs; i++ )
+			cms->map_shaderrefs[i].flags = cms->map_shaderrefs[i].flags & ( SURF_FBSP_START - 1 );
+	}
 }
 
 /*
