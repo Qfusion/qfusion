@@ -307,6 +307,7 @@ struct CombatDisposition
 class BotBrain
 {
     edict_t *bot;
+    edict_t *self; // Alias to *bot for ported code. TODO: Remove *bot for uniform-looking code
 
     static constexpr unsigned MAX_TRACKED_ENEMIES = 10;
     static constexpr unsigned MAX_TRACKED_ATTACKERS = 5;
@@ -436,6 +437,13 @@ class BotBrain
     void UpdateKeptCurrentCombatTask();
     void TryFindNewCombatTask();
 
+    float ComputeItemWeight(const gsitem_t *item, bool onlyGotGB) const;
+    float ComputeWeaponWeight(const gsitem_t *item, bool onlyGotGB) const;
+    float ComputeAmmoWeight(const gsitem_t *item) const;
+    float ComputeArmorWeight(const gsitem_t *item) const;
+    float ComputeHealthWeight(const gsitem_t *item) const;
+    float ComputePowerupWeight(const gsitem_t *item) const;
+
     BotBrain() = delete;
     // Disable copying and moving
     BotBrain(BotBrain &&that) = delete;
@@ -461,6 +469,7 @@ public:
 
     void UpdateCombatTask();
 
+    void UpdatePotentialGoalsWeights();
     float PlayerAiWeight(const edict_t *enemy);
 };
 

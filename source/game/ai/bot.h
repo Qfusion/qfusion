@@ -84,13 +84,6 @@ private:
 
     inline const int *Inventory() const { return self->r.client->ps.inventory; }
 
-    float ComputeItemWeight(const gsitem_t *item, bool onlyGotGB) const;
-    float ComputeWeaponWeight(const gsitem_t *item, bool onlyGotGB) const;
-    float ComputeAmmoWeight(const gsitem_t *item) const;
-    float ComputeArmorWeight(const gsitem_t *item) const;
-    float ComputeHealthWeight(const gsitem_t *item) const;
-    float ComputePowerupWeight(const gsitem_t *item) const;
-
     void MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveEnteringJumppad(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveRidingJummpad(Vec3 *moveVec, usercmd_t *ucmd);
