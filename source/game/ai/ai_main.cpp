@@ -141,6 +141,9 @@ void Ai::PickShortTermGoal()
 
 	bool canPickupItems = self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK;
 
+	vec3_t forward;
+	AngleVectors(self->s.angles, forward, nullptr, nullptr);
+
 	FOREACH_GOALENT(goalEnt)
 	{
 		if (goalEnt->IsDisabled())
@@ -178,10 +181,14 @@ void Ai::PickShortTermGoal()
 
 		clamp_low(dist, 0.01f);
 
-		// TODO: Get rid of G_InFront
-		edict_t dummyEnt;
-		VectorCopy(goalEnt->Origin().data(), dummyEnt.s.origin);
-		bool inFront = G_InFront(self, &dummyEnt);
+		bool inFront = true;
+		if (dist > 1)
+		{
+			Vec3 botToTarget = goalEnt->Origin() - self->s.origin;
+			botToTarget *= 1.0f / dist;
+			if (botToTarget.Dot(forward) < 0.7)
+				inFront = false;
+		}
 
 		// Cut items by weight first, IsShortRangeReachable() is quite expensive
 		float weight = self->ai->status.entityWeights[goalEnt->Id()] / dist * (inFront ? 1.0f : 0.5f);
