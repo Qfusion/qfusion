@@ -225,8 +225,8 @@ void AI_ResetWeights( ai_handle_t *ai )
 
     FOREACH_GOALENT( goalEnt )
     {
-        if( goalEnt->ent->item )
-            AI_SetGoalWeight( ai, goalEnt->id, AI_GetItemWeight( ai, goalEnt->ent->item ) );
+        if( goalEnt->Item() )
+            AI_SetGoalWeight( ai, goalEnt->Id(), AI_GetItemWeight( ai, goalEnt->Item() ) );
     }
 }
 

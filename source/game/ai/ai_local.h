@@ -146,13 +146,26 @@ constexpr int AI_GOAL_SR_LR_MILLIS = 1500;
 
 #define LINK_INVALID 0x00001000
 
-struct NavEntity
+class NavEntity
 {
+	friend class GoalEntitiesRegistry;
 	int id;
 	int aasAreaNum;
 	int nodeFlags;
 	edict_t *ent;
 	NavEntity *prev, *next;
+public:
+	inline int Id() const { return id; }
+	inline int AasAreaNum() const { return aasAreaNum; }
+	inline Vec3 Origin() const { return Vec3(ent->s.origin); }
+	inline const gsitem_t *Item() const { return ent->item; }
+	inline const char *Name() const { return ent->classname; }
+	inline bool IsEnabled() const { return ent && ent->r.inuse; }
+	inline bool IsDisabled() const { return !ent || !ent->r.inuse; }
+	inline bool IsBasedOnEntity(const edict_t *ent) const { return ent && this->ent == ent; }
+	inline bool IsClient() const { return ent->r.client != nullptr; }
+	inline bool IsSpawnedAtm() const { return ent->r.solid != SOLID_NOT; }
+	inline bool ToBeSpawnedLater() const { return ent->r.solid == SOLID_NOT; }
 
 	bool MayBeReachedNow(const edict_t *grabber);
 };
@@ -379,7 +392,7 @@ public:
 
 	void Think();
 
-	bool IsShortRangeReachable(const vec3_t targetOrigin) const;
+	bool IsShortRangeReachable(const Vec3 &targetOrigin) const;
 
 	bool IsVisible(edict_t *other) const;
 	bool IsInFront(edict_t *other) const;

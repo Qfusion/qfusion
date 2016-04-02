@@ -92,8 +92,8 @@ void Ai::SetLongTermGoal(NavEntity *goalEnt)
 	shortTermGoal = nullptr;
 	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 
-	goalAasAreaNum = goalEnt->aasAreaNum;
-	goalTargetPoint = Vec3(goalEnt->ent->s.origin);
+	goalAasAreaNum = goalEnt->AasAreaNum();
+	goalTargetPoint = goalEnt->Origin();
 	goalTargetPoint.z() += playerbox_stand_viewheight;
 
 	nextReaches.clear();
@@ -116,8 +116,8 @@ void Ai::SetShortTermGoal(NavEntity *goalEnt)
 
 	shortTermGoal = goalEnt;
 
-	goalAasAreaNum = goalEnt->aasAreaNum;
-	goalTargetPoint = Vec3(goalEnt->ent->s.origin);
+	goalAasAreaNum = goalEnt->AasAreaNum();
+	goalTargetPoint = goalEnt->Origin();
 	goalTargetPoint.z() += playerbox_stand_viewheight;
 
 	nextReaches.clear();
@@ -129,7 +129,7 @@ void Ai::SetShortTermGoal(NavEntity *goalEnt)
 void Ai::OnLongTermGoalReached()
 {
 	NavEntity *goalEnt = longTermGoal;
-	Debug("reached long-term goal %s\n", goalEnt->ent->classname);
+	Debug("reached long-term goal %s\n", goalEnt->Name());
 	ClearLongTermGoal();
 	CancelOtherAisGoals(goalEnt);
 }
@@ -137,7 +137,7 @@ void Ai::OnLongTermGoalReached()
 void Ai::OnShortTermGoalReached()
 {
 	NavEntity *goalEnt = shortTermGoal;
-	Debug("reached short-term goal %s\n", goalEnt->ent->classname);
+	Debug("reached short-term goal %s\n", goalEnt->Name());
 	ClearShortTermGoal();
 	CancelOtherAisGoals(goalEnt);
 	// Restore long-term goal overridden by short-term one
@@ -175,14 +175,14 @@ void Ai::TouchedEntity(edict_t *ent)
 
 	// TODO: Implement triggers handling?
 
-	if (longTermGoal && ent == longTermGoal->ent)
+	if (longTermGoal && longTermGoal->IsBasedOnEntity(ent))
 	{
 		// This also implies cleaning a short-term goal
 		ClearLongTermGoal();
 		return;
 	}
 
-	if (shortTermGoal && ent == shortTermGoal->ent)
+	if (shortTermGoal && shortTermGoal->IsBasedOnEntity(ent))
 	{
 		ClearShortTermGoal();
 		return;
