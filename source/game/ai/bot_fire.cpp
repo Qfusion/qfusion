@@ -91,11 +91,11 @@ constexpr float WFAC_GENERIC_INSTANT = 150.0f;
 //==========================================
 bool Bot::FireWeapon(usercmd_t *ucmd)
 {
-    const bool importantShot = enemyPool.combatTask.importantShot;
+    const bool importantShot = botBrain.combatTask.importantShot;
     // Reset shot importance, it is for a single flick shot and the task is for many frames
-    enemyPool.combatTask.importantShot = false;
+    botBrain.combatTask.importantShot = false;
 
-    if (enemyPool.combatTask.Empty())
+    if (botBrain.combatTask.Empty())
         return false;
 
     const firedef_t *firedef = GS_FiredefForPlayerState(&self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON]);

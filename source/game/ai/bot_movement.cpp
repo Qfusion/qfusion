@@ -896,7 +896,7 @@ void Bot::CombatMovement(usercmd_t *ucmd)
 {
     // TODO: Check whether we are holding/camping a point
 
-    const CombatTask &combatTask = enemyPool.combatTask;
+    const CombatTask &combatTask = botBrain.combatTask;
 
     if ((!combatTask.aimEnemy && !combatTask.spamEnemy))
     {
@@ -1087,7 +1087,7 @@ bool Bot::TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove)
     *tacticalXMove = 0;
     *tacticalYMove = 0;
 
-    const CombatTask &combatTask = enemyPool.combatTask;
+    const CombatTask &combatTask = botBrain.combatTask;
 
     if (!combatTask.advance && !combatTask.retreat)
         return false;
@@ -1140,7 +1140,7 @@ std::pair<int, int> Bot::ApplyTacticalMove(int tacticalMove, bool advance, const
                 // It is finite and not very large, since CanWalkOrFallQuiteSafely() returned true
                 float fallHeight = self->s.origin[2] - moveTestResult.forwardGroundTrace.endpos[2];
                 // Allow to fall while attacking when enemy is still on bots height
-                if (self->s.origin[2] - fallHeight + 16 > enemyPool.combatTask.TargetOrigin().z())
+                if (self->s.origin[2] - fallHeight + 16 > botBrain.combatTask.TargetOrigin().z())
                     result.first = tacticalMove;
             }
             else
