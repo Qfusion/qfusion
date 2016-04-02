@@ -144,31 +144,31 @@ bool Bot::ChangeWeapon(int weapon)
     return true;
 }
 
-float Bot::ComputeItemWeight(const edict_t *ent, bool onlyGotGB) const
+float Bot::ComputeItemWeight(const gsitem_t *item, bool onlyGotGB) const
 {
-    switch (ent->item->type)
+    switch (item->type)
     {
-        case IT_WEAPON: return ComputeWeaponWeight(ent, onlyGotGB);
-        case IT_AMMO: return ComputeAmmoWeight(ent);
-        case IT_HEALTH: return ComputeHealthWeight(ent);
-        case IT_ARMOR: return ComputeArmorWeight(ent);
-        case IT_POWERUP: return ComputePowerupWeight(ent);
+        case IT_WEAPON: return ComputeWeaponWeight(item, onlyGotGB);
+        case IT_AMMO: return ComputeAmmoWeight(item);
+        case IT_HEALTH: return ComputeHealthWeight(item);
+        case IT_ARMOR: return ComputeArmorWeight(item);
+        case IT_POWERUP: return ComputePowerupWeight(item);
     }
     return 0;
 }
 
-float Bot::ComputeWeaponWeight(const edict_t *ent, bool onlyGotGB) const
+float Bot::ComputeWeaponWeight(const gsitem_t *item, bool onlyGotGB) const
 {
-    if (Inventory()[ent->item->tag])
+    if (Inventory()[item->tag])
     {
         // TODO: Precache
-        const gsitem_t *ammo = GS_FindItemByTag(ent->item->ammo_tag);
+        const gsitem_t *ammo = GS_FindItemByTag(item->ammo_tag);
         if (Inventory()[ammo->tag] >= ammo->inventory_max)
             return 0;
 
         float ammoQuantityFactor = 1.0f - Inventory()[ammo->tag] / (float)ammo->inventory_max;
 
-        switch (ent->item->tag)
+        switch (item->tag)
         {
             case WEAP_ELECTROBOLT: return ammoQuantityFactor;
             case WEAP_LASERGUN: return ammoQuantityFactor * 1.1f;
@@ -191,24 +191,24 @@ float Bot::ComputeWeaponWeight(const edict_t *ent, bool onlyGotGB) const
 
     for (int i = 0; i < 4; ++i)
     {
-        if (topTierWeapons[i] == ent->item->tag)
+        if (topTierWeapons[i] == item->tag)
             return (onlyGotGB ? 1.5f : 0.9f) + (topTierWeaponGreed - 1.0f) / 3.0f;
     }
 
     return onlyGotGB ? 1.5f : 0.7f;
 }
 
-float Bot::ComputeAmmoWeight(const edict_t *ent) const
+float Bot::ComputeAmmoWeight(const gsitem_t *item) const
 {
-    if (Inventory()[ent->item->tag] < ent->item->inventory_max)
+    if (Inventory()[item->tag] < item->inventory_max)
     {
-        float quantityFactor = 1.0f - Inventory()[ent->item->tag] / (float)ent->item->inventory_max;
+        float quantityFactor = 1.0f - Inventory()[item->tag] / (float)item->inventory_max;
 
         for (int weapon = WEAP_GUNBLADE; weapon < WEAP_TOTAL; weapon++)
         {
             // TODO: Preache
             const gsitem_t *weaponItem = GS_FindItemByTag( weapon );
-            if (weaponItem->ammo_tag == ent->item->tag)
+            if (weaponItem->ammo_tag == item->tag)
             {
                 if (Inventory()[weaponItem->tag])
                 {
@@ -228,21 +228,21 @@ float Bot::ComputeAmmoWeight(const edict_t *ent) const
     return 0.0;
 }
 
-float Bot::ComputeHealthWeight(const edict_t *ent) const
+float Bot::ComputeHealthWeight(const gsitem_t *item) const
 {
-    if (ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA)
+    if (item->tag == HEALTH_MEGA || item->tag == HEALTH_ULTRA)
         return 2.5f;
 
-    if (ent->item->tag == HEALTH_SMALL)
+    if (item->tag == HEALTH_SMALL)
         return 0.2f + 0.3f * (1.0f - self->health / (float)self->max_health);
 
     return std::max(0.0f, 1.0f - self->health / (float)self->max_health);
 }
 
-float Bot::ComputeArmorWeight(const edict_t *ent) const
+float Bot::ComputeArmorWeight(const gsitem_t *item) const
 {
     float currArmor = self->r.client->resp.armor;
-    switch (ent->item->tag)
+    switch (item->tag)
     {
         case ARMOR_RA:
             return currArmor < 150.0f ? 2.0f : 0.0f;
@@ -260,7 +260,7 @@ float Bot::ComputeArmorWeight(const edict_t *ent) const
     return 0;
 }
 
-float Bot::ComputePowerupWeight(const edict_t *ent) const
+float Bot::ComputePowerupWeight(const gsitem_t *item) const
 {
     // TODO: Make it dependent of current health/armor status;
     return 3.5f;
@@ -286,18 +286,18 @@ void Bot::UpdateStatus()
 
     FOREACH_GOALENT(goalEnt)
     {
-        self->ai->status.entityWeights[goalEnt->id] = 0;
+        self->ai->status.entityWeights[goalEnt->Id()] = 0;
 
         // item timing disabled by now
-        if (goalEnt->ent->r.solid == SOLID_NOT)
+        if (!goalEnt->IsSpawnedAtm())
             continue;
 
         // Picking clients as goal entities is currently disabled
-        if (goalEnt->ent->r.client)
+        if (goalEnt->IsClient())
             continue;
 
-        if (goalEnt->ent->item)
-            self->ai->status.entityWeights[goalEnt->id] = ComputeItemWeight(goalEnt->ent, onlyGotGB);
+        if (goalEnt->Item())
+            self->ai->status.entityWeights[goalEnt->Id()] = ComputeItemWeight(goalEnt->Item(), onlyGotGB);
     }
 }
 

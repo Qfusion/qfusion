@@ -788,8 +788,8 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
                 else
                 {
                     // Try move backwards to a goal
-                    if ((longTermGoal && DistanceSquared(longTermGoal->ent->s.origin, self->s.origin) < 128 * 128) ||
-                        (shortTermGoal && DistanceSquared(shortTermGoal->ent->s.origin, self->s.origin) < 128 * 128))
+                    if ((longTermGoal && (longTermGoal->Origin() - self->s.origin).SquaredLength() < 128 * 128) ||
+                        (shortTermGoal && (shortTermGoal->Origin() - self->s.origin).SquaredLength() < 128 * 128))
                     {
                         ucmd->upmove = 0;
                         ucmd->forwardmove = -1;

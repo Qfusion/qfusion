@@ -70,23 +70,23 @@ void Ai::PickLongTermGoal()
 	// Run the list of potential goal entities
 	FOREACH_GOALENT(goalEnt)
 	{
-		if (!goalEnt->ent->r.inuse)
+		if (goalEnt->IsDisabled())
 			continue;
 
 		// Items timing is currently disabled
-		if (goalEnt->ent->r.solid == SOLID_NOT)
+		if (goalEnt->ToBeSpawnedLater())
 			continue;
 
-		if (goalEnt->ent->item && !G_Gametype_CanPickUpItem(goalEnt->ent->item))
+		if (goalEnt->Item() && !G_Gametype_CanPickUpItem(goalEnt->Item()))
 			continue;
 
-		float weight = self->ai->status.entityWeights[goalEnt->id];
+		float weight = self->ai->status.entityWeights[goalEnt->Id()];
 
 		if (weight <= 0.0f)
 			continue;
 
 		float cost = 0;
-		if (currAasAreaNum == goalEnt->aasAreaNum)
+		if (currAasAreaNum == goalEnt->AasAreaNum())
 		{
 			// Traveling in a single area is cheap anyway for a player-like bot, don't bother to compute travel time.
 		    cost = 1;
@@ -96,7 +96,7 @@ void Ai::PickLongTermGoal()
 			// We ignore cost of traveling in goal area, since:
 			// 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
 			// 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
-			cost = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->aasAreaNum);
+			cost = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum());
 		}
 
 		if (cost == 0)
@@ -114,7 +114,7 @@ void Ai::PickLongTermGoal()
 
 	if (bestGoalEnt)
 	{
-		Debug("chose %s weighted %.f as a long-term goal\n", bestGoalEnt->ent->classname, bestWeight);
+		Debug("chose %s weighted %.f as a long-term goal\n", bestGoalEnt->Name(), bestWeight);
 		SetLongTermGoal(bestGoalEnt);
 		// Having a long-term is mandatory, so set the timeout only when a goal is found
 		longTermGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom(0, 1000);
@@ -143,29 +143,28 @@ void Ai::PickShortTermGoal()
 
 	FOREACH_GOALENT(goalEnt)
 	{
-		if (!goalEnt->ent->r.inuse)
+		if (goalEnt->IsDisabled())
 			continue;
 
 		// Do not predict short-term goal spawn (looks weird)
-		if (goalEnt->ent->r.solid == SOLID_NOT)
+		if (goalEnt->ToBeSpawnedLater())
 			continue;
 
-		if (goalEnt->ent->r.client)
+		if (goalEnt->IsClient())
 			continue;
 
-		if (self->ai->status.entityWeights[goalEnt->id] <= 0.0f)
+		if (self->ai->status.entityWeights[goalEnt->Id()] <= 0.0f)
 			continue;
 
-		const auto &item = goalEnt->ent->item;
-		if (canPickupItems && item)
+		if (canPickupItems && goalEnt->Item())
 		{
-			if(!G_Gametype_CanPickUpItem(item) || !(item->flags & ITFLAG_PICKABLE))
+			if(!G_Gametype_CanPickUpItem(goalEnt->Item()) || !(goalEnt->Item()->flags & ITFLAG_PICKABLE))
 				continue;
 		}
 
 		// First cut off items by distance for performance reasons since this function is called quite frequently.
 		// It is not very accurate in terms of level connectivity, but short-term goals are not critical.
-		float dist = DistanceFast(self->s.origin, goalEnt->ent->s.origin);
+		float dist = (goalEnt->Origin() - self->s.origin).LengthFast();
 		if (goalEnt == longTermGoal)
 		{
 			if (dist > AI_GOAL_SR_LR_RADIUS)
@@ -179,16 +178,18 @@ void Ai::PickShortTermGoal()
 
 		clamp_low(dist, 0.01f);
 
-
-		bool inFront = G_InFront(self, goalEnt->ent);
+		// TODO: Get rid of G_InFront
+		edict_t dummyEnt;
+		VectorCopy(goalEnt->Origin().data(), dummyEnt.s.origin);
+		bool inFront = G_InFront(self, &dummyEnt);
 
 		// Cut items by weight first, IsShortRangeReachable() is quite expensive
-		float weight = self->ai->status.entityWeights[goalEnt->id] / dist * (inFront ? 1.0f : 0.5f);
+		float weight = self->ai->status.entityWeights[goalEnt->Id()] / dist * (inFront ? 1.0f : 0.5f);
 		if (weight > 0)
 		{
 			if (weight > bestWeight)
 			{
-				if (IsShortRangeReachable(goalEnt->ent->s.origin))
+				if (IsShortRangeReachable(goalEnt->Origin()))
 				{
 					bestWeight = weight;
 					bestGoalEnt = goalEnt;
@@ -205,17 +206,17 @@ void Ai::PickShortTermGoal()
 
 	if (bestGoalEnt)
 	{
-		Debug("chose %s weighted %.f as a short-term goal\n", bestGoalEnt->ent->classname, bestWeight);
+		Debug("chose %s weighted %.f as a short-term goal\n", bestGoalEnt->Name(), bestWeight);
 		SetShortTermGoal(bestGoalEnt);
 	}
 	// Having a short-term goal is not mandatory, so search again after a timeout even if a goal has not been found
 	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 }
 
-bool Ai::IsShortRangeReachable(const vec3_t targetOrigin) const
+bool Ai::IsShortRangeReachable(const Vec3 &targetOrigin) const
 {
 	vec3_t testedOrigin;
-	VectorCopy(targetOrigin, testedOrigin);
+	VectorCopy(targetOrigin.data(), testedOrigin);
 	int areaNum = AAS_PointAreaNum(testedOrigin);
 	if (!areaNum)
 	{
