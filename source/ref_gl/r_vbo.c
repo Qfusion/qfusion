@@ -554,6 +554,11 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 		assert( ( mesh->elems && mesh->numElems ) || ( numVerts == 4 ) );
 		if( mesh->elems && mesh->numElems ) {
 			numQuads = mesh->numElems / 6;
+
+			// protect against bogus autosprite2 meshes
+			if( numQuads > mesh->numVerts / 4 ) {
+				numQuads = mesh->numVerts / 4;
+			}
 		} else if( numVerts == 4 ) {
 			// single quad as triangle fan
 			numQuads = 1;
