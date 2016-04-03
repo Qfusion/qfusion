@@ -81,35 +81,7 @@ void Bot::RegisterVisibleEnemies()
     if(G_ISGHOSTING(self) || GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled())
         return;
 
-
-    /*
-    FOREACH_GOALENT(goalEnt)
-    {
-        int i = goalEnt->id;
-
-        if( !goalEnt->ent || !goalEnt->ent->r.inuse )
-            continue;
-
-        if(!goalEnt->ent->r.client) // this may be changed, there could be enemies which aren't clients
-            continue;
-
-        if (G_ISGHOSTING(goalEnt->ent))
-            continue;
-
-        if (self->ai->status.entityWeights[i] <= 0 || goalEnt->ent->flags & (FL_NOTARGET|FL_BUSY) )
-            continue;
-
-        if (GS_TeamBasedGametype() && goalEnt->ent->s.team == self->s.team)
-            continue;
-
-        if (trap_inPVS(self->s.origin, goalEnt->ent->s.origin) && G_Visible(self, goalEnt->ent))
-        {
-            botBrain.OnEnemyViewed(goalEnt->ent);
-        }
-    }*/
-
     // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients
-    /*
     for (int i = 0; i < gs.maxclients; ++i)
     {
         edict_t *ent = game.edicts + i;
@@ -124,7 +96,7 @@ void Bot::RegisterVisibleEnemies()
 
         if (trap_inPVS(self->s.origin, ent->s.origin) && G_Visible(self, ent))
             botBrain.OnEnemyViewed(ent);
-    }*/
+    }
 
     botBrain.AfterAllEnemiesViewed();
 }
@@ -363,18 +335,19 @@ void Bot::RunFrame()
                 else if (travelType == TRAVEL_CROUCH || travelType == TRAVEL_LADDER)
                     inhibitCombat = true;
             }
-            else if (currAasAreaTravelFlags & (TFL_CROUCH|TFL_AIR))
+            else if (currAasAreaTravelFlags & (TFL_CROUCH))
                 inhibitCombat = true;
         }
 
-        bool doCombatMove = false;
         if ((combatTask.aimEnemy || combatTask.spamEnemy) && !inhibitCombat)
         {
             if (FireWeapon(&ucmd))
-                doCombatMove = true;
+            {
+                SetCombatMoveTimeout(AI_COMBATMOVE_TIMEOUT);
+            }
         }
 
-        if (IsReadyToCombat() && doCombatMove)
+        if (IsReadyToCombat())
         {
             CombatMovement(&ucmd);
         }
