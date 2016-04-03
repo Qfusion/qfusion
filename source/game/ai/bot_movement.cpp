@@ -93,12 +93,24 @@ void Bot::Move(usercmd_t *ucmd)
             moveVec.NormalizeFast();
             Vec3 toEnemy(AimEnemy()->ent->s.origin);
             toEnemy -= self->s.origin;
-            toEnemy.NormalizeFast();
-            if (moveVec.Dot(toEnemy) < -0.3f)
+            float squareDistanceToEnemy = toEnemy.SquaredLength();
+            if (squareDistanceToEnemy > 1)
             {
-                ucmd->forwardmove *= -1;
-                moveVec *= -1;
-                turnSpeedMultiplier = 1.0f + Skill();
+                float invDistanceToEnemy = Q_RSqrt(squareDistanceToEnemy);
+                toEnemy *= invDistanceToEnemy;
+                if (moveVec.Dot(toEnemy) < -0.3f)
+                {
+                    // Check whether we should center view to prevent looking at the sky or a floor while spinning
+                    float factor = fabsf(self->s.origin[2] - AimEnemy()->ent->s.origin[2]) * invDistanceToEnemy;
+                    // If distance to enemy is 4x more than height difference, center view
+                    if (factor < 0.25f)
+                    {
+                        moveVec.z() *= 0.0001f;
+                    }
+                    ucmd->forwardmove *= -1;
+                    moveVec *= -1;
+                    turnSpeedMultiplier = 1.35f;
+                }
             }
         }
         ChangeAngle(moveVec, turnSpeedMultiplier);
@@ -777,6 +789,8 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
                 }
                 else if (!isOnGroundThisFrame && Skill() > 0.33f)
                 {
+                    // Center view before spinning, do not spin looking at the sky or a floor
+                    moveVec->z() = 0;
                     SetPendingLandingDash(ucmd);
                 }
                 else
