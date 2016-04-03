@@ -3,7 +3,7 @@ qfusion [![Build Status](https://travis-ci.org/Warsow/qfusion.svg?branch=master)
 
 http://www.qfusion.net/
 
-qfusion is the id Tech 2 derived game engine powering the game <a href="https://warsow.gg/">Warsow</a>
+qfusion is the id Tech 2 derived game engine
 
 ## Features (incomplete list)
 
@@ -25,6 +25,9 @@ qfusion is the id Tech 2 derived game engine powering the game <a href="https://
 - Flexible HUD scripting
 - "Pure" (models, maps, textures, sounds) game content is automatically delivered to players by game servers
 - Players are allowed to locally override non-"pure" game content
+
+## Notable games
+- <a href="https://www.warsow.net/">Warsow</a>
 
 ## License (GPLv2)
 
