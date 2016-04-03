@@ -297,30 +297,55 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, bool havePing, const char *title, vec4_t titleColor, int pass )
 {
 	const char *token;
+	const char *backup;
 	char string[MAX_STRING_CHARS];
 	int yoffset = 0, xoffset = 0;
 	int playerNum, ping;
-	int aligns[3], offsets[3];
-	int colwidth, fullwidth, count = 0, height;
+	int columns, colwidth, fullwidth, count = 0, height, index;
+	int width, maxwidth = 0;
 	bool titleDrawn = false;
+
+	assert( ptrptr && *ptrptr );
 
 	fullwidth = panelWidth * 1.5;
 	if( fullwidth > cgs.vidWidth * 0.7 )
 		fullwidth = cgs.vidWidth * 0.7;
-	colwidth = fullwidth / 3;
-
-	aligns[0] = ALIGN_CENTER_TOP;
-	aligns[1] = ALIGN_LEFT_TOP;
-	aligns[2] = ALIGN_RIGHT_TOP;
-
-	offsets[0] = 0;
-	offsets[1] = -fullwidth * 0.5;
-	offsets[2] = fullwidth * 0.5;
-
-	assert( ptrptr && *ptrptr );
 
 	height = trap_SCR_FontHeight( font );
 	yoffset = height;
+
+	backup = *ptrptr;
+
+	// determine number of columns available
+	while( *ptrptr )
+	{
+		if( !SCR_ParseToken( ptrptr, &token ) )
+			break;
+
+		playerNum = atoi( token );
+
+		if( playerNum < 0 || playerNum >= gs.maxclients )
+			break;
+
+		if( havePing && !SCR_ParseToken( ptrptr, &token ) )
+			break;
+
+		width = trap_SCR_strWidth( cgs.clientInfo[playerNum].name, font, 0 ) + trap_SCR_strWidth( "M", font, 0 ) * ( havePing ? 6 : 2 );
+		if( width > maxwidth )
+			maxwidth = width;
+		count++;
+	}
+	if( !maxwidth )
+		return yoffset;
+	columns = fullwidth / maxwidth;
+	if( count < columns )
+		columns = count;
+	else if( columns < 3 )
+		columns = 3;
+	colwidth = fullwidth / columns;
+
+	*ptrptr = backup;
+	count = 0;
 
 	// draw spectators
 	while( *ptrptr )
@@ -328,21 +353,17 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 		if( !SCR_ParseToken( ptrptr, &token ) )
 			break;
 
-		// first token is played id
 		playerNum = atoi( token );
 		if( playerNum < 0 || playerNum >= gs.maxclients )
 			break;
 
 		if( havePing )
 		{
-			// get a second token
 			if( !SCR_ParseToken( ptrptr, &token ) )
 				break;
 
-			// second token is ping
 			ping = atoi( token );
 
-			// draw the spectator
 			if( ping < 0 )
 				Q_snprintfz( string, sizeof( string ), "%s%s ...", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
 			else
@@ -357,30 +378,30 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 		if( !titleDrawn )
 		{
 			titleDrawn = true;
-			if( pass ) {
-				trap_SCR_DrawString( x, y + yoffset, ALIGN_CENTER_TOP,
-					CG_TranslateString( title ), font, titleColor );
-			}
+			if( pass )
+				trap_SCR_DrawString( x, y + yoffset, ALIGN_CENTER_TOP, CG_TranslateString( title ), font, titleColor );
 			yoffset += height;
 		}
 
-		xoffset = offsets[count] + CG_HorizontalAlignForWidth( 0, aligns[count], trap_SCR_strWidth( string, font, 0 ) );
+		index = count % columns;
+		width = trap_SCR_strWidth( string, font, 0 );
+		if( width > colwidth )
+			width = colwidth;
+		xoffset = -fullwidth / 2 + ( ( index + 1 ) / ( ( columns + index ) % 2 ? -2 : 2 ) + columns / 2 ) * colwidth +
+			( colwidth - width ) / 2;
 
-		if ( pass ) {
-			// fixme: the boxes aren't actually correctly aligned
-			trap_SCR_DrawClampString( x + xoffset, y + yoffset, string, x + xoffset, y + yoffset, x + xoffset + colwidth, y + yoffset + height, font, colorWhite );
-		}
+		if( pass )
+			trap_SCR_DrawClampString( x + xoffset, y + yoffset, string, x + xoffset, y + yoffset,
+					x + xoffset + colwidth, y + yoffset + height, font, colorWhite );
 
 		count++;
-		if( count > 2 )
-		{
-			count = 0;
+		if( count % columns == 0 )
 			yoffset += height;
-		}
 	}
 
-	if( count )
+	if( count % columns )
 		yoffset += height;
+
 	return yoffset;
 }
 
