@@ -4,22 +4,17 @@
 
 #include <stdarg.h>
 
-Ai::Ai(edict_t *self)
+Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
     : EdictRef(self),
-      longTermGoal(nullptr),
-      shortTermGoal(nullptr),
+      aiBaseBrain(nullptr), // Must be set in a subclass constructor
       currAasAreaNum(0),
       goalAasAreaNum(0),
       goalTargetPoint(0, 0, 0),
-      allowedAasTravelFlags(TFL_DEFAULT),
-      preferredAasTravelFlags(TFL_DEFAULT),
+      allowedAasTravelFlags(allowedAasTravelFlags),
+      preferredAasTravelFlags(preferredAasTravelFlags),
       distanceToNextReachStart(std::numeric_limits<float>::infinity()),
       distanceToNextReachEnd(std::numeric_limits<float>::infinity()),
-      statusUpdateTimeout(0),
       blockedTimeout(level.time + 15000),
-      stateCombatTimeout(0),
-      longTermGoalTimeout(0),
-      shortTermGoalTimeout(0),
       aiYawSpeed(0.0f),
       aiPitchSpeed(0.0f)
 {
@@ -80,45 +75,53 @@ void AI_Debugv(const char *nick, const char *format, va_list va)
 }
 
 template<typename AASFn>
-int Ai::FindAASParamToGoalArea(AASFn fn, int fromAreaNum, const vec_t *origin, int goalAreaNum) const
+static int FindAASParamToGoalArea(
+    AASFn fn, int fromAreaNum, const vec_t *origin, int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags)
 {
-    int param = fn(fromAreaNum, const_cast<float*>(origin), goalAreaNum, preferredAasTravelFlags);
+    int param = fn(fromAreaNum, const_cast<float*>(origin), goalAreaNum, travelFlags);
     if (param)
         return param;
+
     float DEPTH_LIMIT = 1.5f * (playerbox_stand_maxs[2] - playerbox_stand_mins[2]);
-    float distanceToGround = FindDistanceToGround(origin, DEPTH_LIMIT);
+    float distanceToGround = FindDistanceToGround(origin, ignoreInTrace, DEPTH_LIMIT);
     // Distance to ground is significantly greater than player height
     if (distanceToGround > DEPTH_LIMIT)
         return 0;
+
     // Add some epsilon offset from ground
     vec3_t projectedOrigin = { origin[0], origin[1], origin[2] - distanceToGround + 1.0f };
-    return fn(fromAreaNum, projectedOrigin, goalAreaNum, preferredAasTravelFlags);
+    return fn(fromAreaNum, projectedOrigin, goalAreaNum, travelFlags);
 }
 
-int Ai::FindAASReachabilityToGoalArea(int fromAreaNum, const vec_t *origin, int goalAreaNum) const
+int FindAASReachabilityToGoalArea(
+    int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags)
 {
-    return FindAASParamToGoalArea(AAS_AreaReachabilityToGoalArea, fromAreaNum, origin, goalAreaNum);
+    return ::FindAASParamToGoalArea(
+        AAS_AreaReachabilityToGoalArea, fromAreaNum, fromOrigin, goalAreaNum, ignoreInTrace, travelFlags);
 }
 
-int Ai::FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
+int FindAASTravelTimeToGoalArea(
+    int fromAreaNum, const vec3_t fromOrigin , int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags)
 {
-    return FindAASParamToGoalArea(AAS_AreaTravelTimeToGoalArea, fromAreaNum, origin, goalAreaNum);
+    return ::FindAASParamToGoalArea(
+        AAS_AreaTravelTimeToGoalArea, fromAreaNum, fromOrigin, goalAreaNum, ignoreInTrace, travelFlags);
 }
 
-float Ai::FindSquareDistanceToGround(const vec3_t origin, float traceDepth) const
+float FindSquareDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth)
 {
     vec3_t end = { origin[0], origin[1], origin[2] - traceDepth };
 
     trace_t trace;
+    edict_t *self = const_cast<edict_t*>(ignoreInTrace);
     G_Trace(&trace, const_cast<float*>(origin), playerbox_stand_mins, playerbox_stand_maxs, end, self, MASK_AISOLID);
 
     // We do not use trace.fraction to avoid floating point computation issues (avoid 0.000001 * 999999)
     return trace.fraction != 1.0f ? DistanceSquared(origin, trace.endpos) : INFINITY;
 }
 
-float Ai::FindDistanceToGround(const vec3_t origin, float traceDepth) const
+float FindDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth)
 {
-    float squareDistance = FindSquareDistanceToGround(origin, traceDepth);
+    float squareDistance = FindSquareDistanceToGround(origin, ignoreInTrace, traceDepth);
     if (squareDistance == 0)
         return 0;
     if (squareDistance == INFINITY)

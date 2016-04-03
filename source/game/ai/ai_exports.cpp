@@ -201,7 +201,9 @@ ai_type AI_GetType( const ai_handle_t *ai )
 //==========================================
 void AI_ClearWeights( ai_handle_t *ai )
 {
-    memset( ai->status.entityWeights, 0, sizeof( ai->status.entityWeights ) );
+    // Currently disabled, script interface should be changed
+    abort();
+    //memset( ai->status.entityWeights, 0, sizeof( ai->status.entityWeights ) );
 }
 
 //==========================================
@@ -209,9 +211,11 @@ void AI_ClearWeights( ai_handle_t *ai )
 //==========================================
 void AI_SetGoalWeight( ai_handle_t *ai, int index, float weight )
 {
-    if( index < 0 || index >= MAX_GOALENTS )
-        return;
-    ai->status.entityWeights[index] = weight;
+    // Currently disabled, script interface should be changed
+    abort();
+    //if( index < 0 || index >= MAX_GOALENTS )
+    //    return;
+    //ai->status.entityWeights[index] = weight;
 }
 
 //==========================================
@@ -220,14 +224,16 @@ void AI_SetGoalWeight( ai_handle_t *ai, int index, float weight )
 //==========================================
 void AI_ResetWeights( ai_handle_t *ai )
 {
+    // Currently disabled, script interface should be changed
+    abort();
     // restore defaults from bot personality
-    AI_ClearWeights( ai );
+    //AI_ClearWeights( ai );
 
-    FOREACH_GOALENT( goalEnt )
-    {
-        if( goalEnt->Item() )
-            AI_SetGoalWeight( ai, goalEnt->Id(), AI_GetItemWeight( ai, goalEnt->Item() ) );
-    }
+    //FOREACH_GOALENT( goalEnt )
+    //{
+    //    if( goalEnt->Item() )
+    //        AI_SetGoalWeight( ai, goalEnt->Id(), AI_GetItemWeight( ai, goalEnt->Item() ) );
+    //}
 }
 
 //==========================================

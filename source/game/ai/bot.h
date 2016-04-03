@@ -26,11 +26,10 @@ public:
     {
         botBrain.OnEnemyDamaged(enemy, damage);
     }
-    void UpdateStatus();
-    void BlockedTimeout();
+    virtual void OnBlockedTimeout() override;
     void SayVoiceMessages();
     void GhostingFrame();
-    void RunFrame();
+    virtual void RunFrame() override;
 
     void OnRespawn();
 
@@ -101,6 +100,10 @@ private:
     void TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd);
     bool TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd);
     void CheckTargetReached();
+    inline bool IsCloseToAnyGoal()
+    {
+        return botBrain.IsCloseToShortTermGoal() || botBrain.IsCloseToLongTermGoal();
+    }
 
     void SetPendingLandingDash(usercmd_t *ucmd);
     void TryApplyPendingLandingDash(usercmd_t *ucmd);

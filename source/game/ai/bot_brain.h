@@ -304,10 +304,9 @@ struct CombatDisposition
     inline float KillToBeKilledDamageRatio() const { return damageToKill / damageToBeKilled; }
 };
 
-class BotBrain
+class BotBrain: public AiBaseBrain
 {
     edict_t *bot;
-    edict_t *self; // Alias to *bot for ported code. TODO: Remove *bot for uniform-looking code
 
     static constexpr unsigned MAX_TRACKED_ENEMIES = 10;
     static constexpr unsigned MAX_TRACKED_ATTACKERS = 5;
@@ -447,8 +446,6 @@ class BotBrain
     BotBrain() = delete;
     // Disable copying and moving
     BotBrain(BotBrain &&that) = delete;
-
-    void Debug(const char *format, ...);
 public:
     CombatTask combatTask;
 
@@ -469,8 +466,7 @@ public:
 
     void UpdateCombatTask();
 
-    void UpdatePotentialGoalsWeights();
-    float PlayerAiWeight(const edict_t *enemy);
+    virtual void UpdatePotentialGoalsWeights() override;
 };
 
 #endif //QFUSION_ENEMY_POOL_H

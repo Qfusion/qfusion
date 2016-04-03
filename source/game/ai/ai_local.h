@@ -249,11 +249,110 @@ extern ai_weapon_t AIWeapons[WEAP_TOTAL];
 
 //----------------------------------------------------------
 
-typedef struct
+#include "aas.h"
+
+int FindAASReachabilityToGoalArea(
+	int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags);
+
+int FindAASTravelTimeToGoalArea(
+	int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags);
+
+float FindSquareDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
+float FindDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
+
+class AiGametypeBrain
 {
-	unsigned int moveTypesMask; // moves the bot can perform at this moment
+protected:
+	AiGametypeBrain() {}
+	// May be instantiated dynamically with a some subtype of this class in future
+	static AiGametypeBrain instance;
+public:
+	// May return some of subtypes of this class depending on a gametype in future
+	static inline AiGametypeBrain *Instance() { return &instance; }
+	void ClearGoals(NavEntity *canceledGoal, class Ai *goalGrabber);
+};
+
+class AiBaseBrain
+{
+	friend class Ai;
+	friend class AiGametypeBrain;
+protected:
+	edict_t *self;
+
+	NavEntity *longTermGoal;
+	NavEntity *shortTermGoal;
+
+	unsigned longTermGoalTimeout;
+	unsigned shortTermGoalTimeout;
+
+	unsigned statusUpdateTimeout;
+	unsigned stateCombatTimeout;
+
+	int currAasAreaNum;
+
+	int allowedAasTravelFlags;
+	int preferredAasTravelFlags;
+
 	float entityWeights[MAX_GOALENTS];
-} ai_status_t;
+
+	AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags);
+
+	void ClearWeights();
+	void UpdateWeights();
+	virtual void UpdatePotentialGoalsWeights();
+
+	void PickLongTermGoal();
+	void PickShortTermGoal();
+	void ClearLongTermGoal();
+	void ClearShortTermGoal();
+	void SetShortTermGoal(NavEntity *goalEnt);
+	void SetLongTermGoal(NavEntity *goalEnt);
+
+	bool IsShortRangeReachable(const Vec3 &targetPoint) const;
+
+	inline int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
+	{
+		return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
+	}
+	inline int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
+	{
+		return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
+	}
+	inline bool IsCloseToGoal(const NavEntity *goalEnt, float proximityThreshold)
+	{
+		if (!goalEnt)
+			return false;
+		return (goalEnt->Origin() - self->s.origin).SquaredLength() <= proximityThreshold * proximityThreshold;
+	}
+
+	inline int GoalAasAreaNum()
+	{
+		if (shortTermGoal)
+			return shortTermGoal->AasAreaNum();
+		if (longTermGoal)
+			return longTermGoal->AasAreaNum();
+		return 0;
+	}
+
+	void Debug(const char *format, ...);
+public:
+	void UpdateStatus(int currAasAreaNum);
+
+	inline bool MayReachLongTermGoalNow() { return longTermGoal && longTermGoal->MayBeReachedNow(self); }
+	inline bool MayReachShortTermGoalNow() { return shortTermGoal && shortTermGoal->MayBeReachedNow(self); }
+
+	inline bool IsCloseToLongTermGoal(float proximityThreshold = 128.0f)
+	{
+		return IsCloseToGoal(longTermGoal, proximityThreshold);
+	}
+	inline bool IsCloseToShortTermGoal(float proximityThreshold = 128.0f)
+	{
+		return IsCloseToGoal(shortTermGoal, proximityThreshold);
+	}
+
+	void OnLongTermGoalReached();
+	void OnShortTermGoalReached();
+};
 
 typedef struct
 {
@@ -278,18 +377,12 @@ typedef struct
 	unsigned int moveTypesMask;      // bot can perform these moves, to check against required moves for a given path
 	float inventoryWeights[MAX_ITEMS];
 
-	//class based functions
-	void ( *UpdateStatus )( edict_t *ent );
-	void ( *RunFrame )( edict_t *ent );
-	void ( *blockedTimeout )( edict_t *ent );
-
 	ai_character cha;
 } ai_pers_t;
 
 typedef struct ai_handle_s
 {
 	ai_pers_t pers;         // persistant definition (class?)
-	ai_status_t status;     //player (bot, NPC) status for AI frame
 
 	ai_type	type;
 
@@ -354,11 +447,17 @@ struct ClosePlaceProps
 
 class Ai: public EdictRef
 {
+	friend class AiGametypeBrain;
+	friend class AiBaseBrain;
 protected:
-	NavEntity *longTermGoal;
-	NavEntity *shortTermGoal;
+	// Must be set in a subclass constructor. A subclass manages memory for its brain
+	// (it either has it as an intrusive member of allocates it on heap)
+	// and provides a reference to it to this base class via this pointer.
+	AiBaseBrain *aiBaseBrain;
 
+	// Must be updated before brain thinks (set the brain currAasAreaNum to an updated value).
 	int currAasAreaNum;
+	// Must be updated after brain thinks (copy from a brain goal)
 	int goalAasAreaNum;
 	Vec3 goalTargetPoint;
 
@@ -375,24 +474,25 @@ protected:
 	inline bool IsCloseToReachStart() { return distanceToNextReachStart < 24.0f; };
 	inline bool IsCloseToReachEnd() { return distanceToNextReachEnd < 36.0f; }
 
-	unsigned statusUpdateTimeout;
 	unsigned blockedTimeout;
-
-	unsigned stateCombatTimeout;
-	unsigned longTermGoalTimeout;
-	unsigned shortTermGoalTimeout;
 
 	float aiYawSpeed, aiPitchSpeed;
 
+	void ClearAllGoals();
+
+	inline bool IsReadyToCombat() { return aiBaseBrain->stateCombatTimeout <= level.time; }
+
+	// Called by brain via self->ai->aiRef when long-term or short-term goals are set
+	void OnGoalSet(NavEntity *goalEnt);
+
 	void UpdateReachCache(int reachedAreaNum);
+
 public:
-	Ai(edict_t *self);
+	Ai(edict_t *self, int preferredAasTravelFlags = TFL_DEFAULT, int allowedAasTravelFlags = TFL_DEFAULT);
 
 	inline bool IsGhosting() const { return G_ISGHOSTING(self); }
 
 	void Think();
-
-	bool IsShortRangeReachable(const Vec3 &targetOrigin) const;
 
 	bool IsVisible(edict_t *other) const;
 	bool IsInFront(edict_t *other) const;
@@ -400,27 +500,16 @@ public:
 
 	void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
 	static bool IsStep(edict_t *ent);
-
 	int FindCurrAASAreaNum();
-
-	inline bool HasLongTermGoal() { return longTermGoal != nullptr; }
-	inline bool HasShortTermGoal() { return shortTermGoal != nullptr; }
-	void ClearLongTermGoal();
-	void ClearShortTermGoal();
-	void SetLongTermGoal(NavEntity *goalEnt);
-	void SetShortTermGoal(NavEntity *goalEnt);
-	void OnLongTermGoalReached();
-	void OnShortTermGoalReached();
 	void TouchedEntity(edict_t *ent);
 
 	static NavEntity *GetGoalentForEnt(edict_t *target);
-	void PickLongTermGoal();
-	void PickShortTermGoal();
-	// Looks like it is unused since is not implemented in original code
-	void Frame(usercmd_t *ucmd);
+
 	void ResetNavigation();
 	void CategorizePosition();
-	void UpdateStatus();
+
+	virtual void OnBlockedTimeout() {};
+	virtual void RunFrame() {};
 
 	static constexpr unsigned BLOCKED_TIMEOUT = 15000;
 protected:
@@ -432,21 +521,29 @@ protected:
 		return self->r.client ? self->r.client->netname : self->classname;
 	}
 
-	int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
-	int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
-	float FindSquareDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const;
-	inline float FindDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const;
+	inline int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
+	{
+		return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
+	}
+	inline int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
+	{
+		return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
+	}
+	inline float FindSquareDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const
+	{
+		return ::FindSquareDistanceToGround(origin, self, traceDepth);
+	}
+	inline float FindDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const
+	{
+		return ::FindDistanceToGround(origin, self, traceDepth);
+	}
 
 	void CheckReachedArea();
-
 	void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);
 
 	void TestClosePlace();
 	ClosePlaceProps closeAreaProps;
 private:
-	template <typename AASFn>
-	int FindAASParamToGoalArea(AASFn fn, int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
-	void CancelOtherAisGoals(NavEntity *canceledGoal);
 	void TestMove(MoveTestResult *moveTestResult, int direction) const;
 };
 
