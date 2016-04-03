@@ -20,21 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "bot.h"
 
-static void BOT_DMclass_RunFrame(edict_t *self)
-{
-    self->ai->botRef->RunFrame();
-}
-
-static void BOT_DMclass_UpdateStatus(edict_t *self)
-{
-    self->ai->botRef->UpdateStatus();
-}
-
-static void BOT_DMClass_BlockedTimeout(edict_t *self)
-{
-    self->ai->botRef->BlockedTimeout();
-}
-
 //==========================================
 // BOT_DMclass_InitPersistant
 // Persistant after respawns.
@@ -50,11 +35,6 @@ void BOT_DMclass_InitPersistant( edict_t *self )
         self->ai->pers.netname = self->r.client->netname;
     else
         self->ai->pers.netname = "dmBot";
-
-    //set 'class' functions
-    self->ai->pers.RunFrame = BOT_DMclass_RunFrame;
-    self->ai->pers.UpdateStatus = BOT_DMclass_UpdateStatus;
-    self->ai->pers.blockedTimeout = BOT_DMClass_BlockedTimeout;
 
     //available moveTypes for this class
     self->ai->pers.moveTypesMask = ( LINK_MOVE|LINK_STAIRS|LINK_FALL|LINK_WATER|LINK_WATERJUMP|LINK_JUMPPAD|LINK_PLATFORM|LINK_TELEPORT|LINK_LADDER|LINK_JUMP|LINK_CROUCH );

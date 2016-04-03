@@ -77,8 +77,8 @@ void Enemy::OnViewed()
 }
 
 BotBrain::BotBrain(edict_t *bot)
-    : bot(bot),
-      self(bot),
+    : AiBaseBrain(bot, TFL_DEFAULT, TFL_DEFAULT),
+      bot(bot),
       trackedEnemiesCount(0),
       maxTrackedEnemies(3 + (unsigned)((MAX_TRACKED_ENEMIES-3) * BotSkill())),
       maxTrackedAttackers(1 + (unsigned)((MAX_TRACKED_ATTACKERS-1) * BotSkill())),
@@ -124,39 +124,6 @@ BotBrain::BotBrain(edict_t *bot)
 
     for (unsigned i = 0; i < maxTrackedTargets; ++i)
         targets.emplace_back(AttackStats());
-}
-
-static void EscapePercent(const char *string, char *buffer, int bufferLen)
-{
-    int j = 0;
-    for (const char *s = string; *s && j < bufferLen - 1; ++s)
-    {
-        if (*s != '%')
-            buffer[j++] = *s;
-        else if (j < bufferLen - 2)
-            buffer[j++] = '%', buffer[j++] = '%';
-    }
-    buffer[j] = '\0';
-}
-
-void BotBrain::Debug(const char *format, ...)
-{
-#ifdef _DEBUG
-    char concatBuffer[1024];
-
-    int prefixLen = sprintf(concatBuffer, "t=%09d %s: ", level.time, BotNick());
-
-    va_list va;
-    va_start(va, format);
-    Q_vsnprintfz(concatBuffer + prefixLen, 1024 - prefixLen, format, va);
-    va_end(va);
-
-    // concatBuffer may contain player names such as "%APPDATA%"
-    char outputBuffer[2048];
-    EscapePercent(concatBuffer, outputBuffer, 2048);
-    G_Printf(outputBuffer);
-    printf(outputBuffer);
-#endif
 }
 
 void BotBrain::PrepareToFrame()
@@ -484,21 +451,6 @@ float BotBrain::ComputeRawWeight(const edict_t *enemy)
     float result = std::min(std::max(0.0f, weight), MAX_ENEMY_WEIGHT);
     //AiDebug("%s has computed a weight for %s, the weight is %f\n", BotNick(), Nick(enemy), result);
     return result;
-}
-
-float BotBrain::PlayerAiWeight(const edict_t *enemy)
-{
-    if (!enemy)
-        return 0.0;
-
-    for (const Enemy &knownEnemy: enemies)
-    {
-        if (!knownEnemy.ent)
-            continue;
-        if (knownEnemy.ent == enemy)
-            return 0.5f * knownEnemy.weight + 0.2f * knownEnemy.maxPositiveWeight + 0.3f * knownEnemy.avgPositiveWeight;
-    }
-    return 0.0f;
 }
 
 unsigned BotBrain::LastAttackedByTime(const edict_t *ent) const
@@ -1821,7 +1773,7 @@ void BotBrain::UpdatePotentialGoalsWeights()
 
     FOREACH_GOALENT(goalEnt)
     {
-        self->ai->status.entityWeights[goalEnt->Id()] = 0;
+        entityWeights[goalEnt->Id()] = 0;
 
         // item timing disabled by now
         if (!goalEnt->IsSpawnedAtm())
@@ -1832,7 +1784,7 @@ void BotBrain::UpdatePotentialGoalsWeights()
             continue;
 
         if (goalEnt->Item())
-            self->ai->status.entityWeights[goalEnt->Id()] = ComputeItemWeight(goalEnt->Item(), onlyGotGB);
+            entityWeights[goalEnt->Id()] = ComputeItemWeight(goalEnt->Item(), onlyGotGB);
     }
 }
 

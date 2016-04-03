@@ -4,13 +4,7 @@
 void Bot::Move(usercmd_t *ucmd)
 {
     if (currAasAreaNum == 0 || goalAasAreaNum == 0)
-    {
-        // Request a goal to be assigned asap
-        longTermGoalTimeout = 0;
-        shortTermGoalTimeout = 0;
-        statusUpdateTimeout = 0;
         return;
-    }
 
     if (hasTriggeredRj && rjTimeout <= level.time)
         hasTriggeredRj = false;
@@ -788,8 +782,7 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
                 else
                 {
                     // Try move backwards to a goal
-                    if ((longTermGoal && (longTermGoal->Origin() - self->s.origin).SquaredLength() < 128 * 128) ||
-                        (shortTermGoal && (shortTermGoal->Origin() - self->s.origin).SquaredLength() < 128 * 128))
+                    if (IsCloseToAnyGoal())
                     {
                         ucmd->upmove = 0;
                         ucmd->forwardmove = -1;
@@ -819,17 +812,18 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
 
 void Bot::CheckTargetReached()
 {
-    if (currAasAreaNum != goalAasAreaNum || (!longTermGoal && !shortTermGoal))
+    if (currAasAreaNum != goalAasAreaNum)
         return;
 
-    if (longTermGoal && longTermGoal->MayBeReachedNow(self))
+    if (botBrain.MayReachLongTermGoalNow())
     {
-        Ai::OnLongTermGoalReached();
+        botBrain.OnLongTermGoalReached();
         return;
     }
-    if (shortTermGoal && shortTermGoal->MayBeReachedNow(self))
+
+    if (botBrain.MayReachShortTermGoalNow())
     {
-        Ai::OnShortTermGoalReached();
+        botBrain.OnShortTermGoalReached();
         return;
     }
 }

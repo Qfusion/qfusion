@@ -39,217 +39,10 @@ void Ai::ResetNavigation()
 	nextReaches.clear();
 	goalAasAreaNum = 0;
 
-	longTermGoal = 0;
-	shortTermGoal = 0;
+	// This call cleans short-term goal too
+	aiBaseBrain->ClearLongTermGoal();
 
-	longTermGoalTimeout = 0;
 	blockedTimeout = level.time + BLOCKED_TIMEOUT;
-	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
-}
-
-constexpr float COST_INFLUENCE = 0.5f;
-
-void Ai::PickLongTermGoal()
-{
-	// Clear short-term goal too
-	longTermGoal = nullptr;
-	shortTermGoal = nullptr;
-
-	if (IsGhosting())
-		return;
-
-	if (longTermGoalTimeout > level.time)
-		return;
-
-	if (!self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED])
-		return;
-
-	float bestWeight = 0.000001f;
-	NavEntity *bestGoalEnt = NULL;
-
-	// Run the list of potential goal entities
-	FOREACH_GOALENT(goalEnt)
-	{
-		if (goalEnt->IsDisabled())
-			continue;
-
-		// Items timing is currently disabled
-		if (goalEnt->ToBeSpawnedLater())
-			continue;
-
-		if (goalEnt->Item() && !G_Gametype_CanPickUpItem(goalEnt->Item()))
-			continue;
-
-		float weight = self->ai->status.entityWeights[goalEnt->Id()];
-
-		if (weight <= 0.0f)
-			continue;
-
-		float cost = 0;
-		if (currAasAreaNum == goalEnt->AasAreaNum())
-		{
-			// Traveling in a single area is cheap anyway for a player-like bot, don't bother to compute travel time.
-		    cost = 1;
-		}
-		else
-		{
-			// We ignore cost of traveling in goal area, since:
-			// 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
-			// 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
-			cost = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum());
-		}
-
-		if (cost == 0)
-			continue;
-
-		clamp_low(cost, 1);
-		weight = (1000 * weight) / (cost * COST_INFLUENCE); // Check against cost of getting there
-
-		if (weight > bestWeight)
-		{
-			bestWeight = weight;
-			bestGoalEnt = goalEnt;
-		}
-	}
-
-	if (bestGoalEnt)
-	{
-		Debug("chose %s weighted %.f as a long-term goal\n", bestGoalEnt->Name(), bestWeight);
-		SetLongTermGoal(bestGoalEnt);
-		// Having a long-term is mandatory, so set the timeout only when a goal is found
-		longTermGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom(0, 1000);
-	}
-}
-
-void Ai::PickShortTermGoal()
-{
-	NavEntity *bestGoalEnt = nullptr;
-	float bestWeight = 0.000001f;
-
-	if (!self->r.client || G_ISGHOSTING(self))
-		return;
-
-	// Do not bother picking short-term (usually low-priority) items in combat.
-	if (stateCombatTimeout > level.time)
-	{
-		shortTermGoalTimeout = stateCombatTimeout;
-		return;
-	}
-
-	if (shortTermGoalTimeout > level.time)
-		return;
-
-	bool canPickupItems = self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK;
-
-	vec3_t forward;
-	AngleVectors(self->s.angles, forward, nullptr, nullptr);
-
-	FOREACH_GOALENT(goalEnt)
-	{
-		if (goalEnt->IsDisabled())
-			continue;
-
-		// Do not predict short-term goal spawn (looks weird)
-		if (goalEnt->ToBeSpawnedLater())
-			continue;
-
-		if (goalEnt->IsClient())
-			continue;
-
-		if (self->ai->status.entityWeights[goalEnt->Id()] <= 0.0f)
-			continue;
-
-		if (canPickupItems && goalEnt->Item())
-		{
-			if(!G_Gametype_CanPickUpItem(goalEnt->Item()) || !(goalEnt->Item()->flags & ITFLAG_PICKABLE))
-				continue;
-		}
-
-		// First cut off items by distance for performance reasons since this function is called quite frequently.
-		// It is not very accurate in terms of level connectivity, but short-term goals are not critical.
-		float dist = (goalEnt->Origin() - self->s.origin).LengthFast();
-		if (goalEnt == longTermGoal)
-		{
-			if (dist > AI_GOAL_SR_LR_RADIUS)
-				continue;			
-		}
-		else
-		{
-			if (dist > AI_GOAL_SR_RADIUS)
-				continue;
-		}		
-
-		clamp_low(dist, 0.01f);
-
-		bool inFront = true;
-		if (dist > 1)
-		{
-			Vec3 botToTarget = goalEnt->Origin() - self->s.origin;
-			botToTarget *= 1.0f / dist;
-			if (botToTarget.Dot(forward) < 0.7)
-				inFront = false;
-		}
-
-		// Cut items by weight first, IsShortRangeReachable() is quite expensive
-		float weight = self->ai->status.entityWeights[goalEnt->Id()] / dist * (inFront ? 1.0f : 0.5f);
-		if (weight > 0)
-		{
-			if (weight > bestWeight)
-			{
-				if (IsShortRangeReachable(goalEnt->Origin()))
-				{
-					bestWeight = weight;
-					bestGoalEnt = goalEnt;
-				}
-			}
-		    // Long-term goal just need some positive weight and be in front to be chosen as a short-term goal too
-			else if (inFront && goalEnt == longTermGoal)
-			{
-				bestGoalEnt = goalEnt;
-				break;
-			}
-		}
-	}
-
-	if (bestGoalEnt)
-	{
-		Debug("chose %s weighted %.f as a short-term goal\n", bestGoalEnt->Name(), bestWeight);
-		SetShortTermGoal(bestGoalEnt);
-	}
-	// Having a short-term goal is not mandatory, so search again after a timeout even if a goal has not been found
-	shortTermGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
-}
-
-bool Ai::IsShortRangeReachable(const Vec3 &targetOrigin) const
-{
-	vec3_t testedOrigin;
-	VectorCopy(targetOrigin.data(), testedOrigin);
-	int areaNum = AAS_PointAreaNum(testedOrigin);
-	if (!areaNum)
-	{
-		testedOrigin[2] += 8.0f;
-		areaNum = AAS_PointAreaNum(testedOrigin);
-		if (!areaNum)
-		{
-			testedOrigin[2] -= 16.0f;
-			areaNum = AAS_PointAreaNum(testedOrigin);
-		}
-	}
-	if (!areaNum)
-		return false;
-
-	if (areaNum == currAasAreaNum)
-		return true;
-
-	// AAS functions return time in seconds^-2
-	int toTravelTimeMillis = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, areaNum) * 10;
-	if (!toTravelTimeMillis)
-		return false;
-	int backTravelTimeMillis = FindAASTravelTimeToGoalArea(areaNum, testedOrigin, currAasAreaNum) * 10;
-	if (!backTravelTimeMillis)
-		return false;
-
-	return (toTravelTimeMillis + backTravelTimeMillis) / 2 < AI_GOAL_SR_MILLIS;
 }
 
 void Ai::UpdateReachCache(int reachedAreaNum)
@@ -356,22 +149,76 @@ void Ai::CategorizePosition()
 	self->is_step = stepping;
 }
 
-void Ai::UpdateStatus()
+int Ai::FindCurrAASAreaNum()
 {
-	if(!G_ISGHOSTING(self))
+	int areaNum = AAS_PointAreaNum(self->s.origin);
+	if (!areaNum)
 	{
-		AI_ResetWeights(self->ai);
+		// Try all vertices of a bounding box
+		const float *mins = playerbox_stand_mins;
+		const float *maxs = playerbox_stand_maxs;
+		vec3_t point;
+		for (int i = 0; i < 8; ++i)
+		{
+			VectorCopy(self->s.origin, point);
+			// Order of min/max pickup is shuffled to reduce worst case test calls count
+			point[0] += i & 1 ? mins[0] : maxs[0];
+			point[1] += i & 2 ? maxs[1] : mins[1];
+			point[2] += i & 4 ? mins[2] : maxs[2]; // Test upper bbox rectangle first
 
-		self->ai->status.moveTypesMask = self->ai->pers.moveTypesMask;
+			if (areaNum = AAS_PointAreaNum(point))
+				break;
+		}
+	}
 
-		// Script status update disabled now!
-		//if (!GT_asCallBotStatus(self))
-		self->ai->pers.UpdateStatus(self);
+	return areaNum;
+}
 
-		statusUpdateTimeout = level.time + AI_STATUS_TIMEOUT;
+void Ai::ClearAllGoals()
+{
+	// This clears short-term goal too
+	aiBaseBrain->ClearLongTermGoal();
+	nextReaches.clear();
+}
 
-		// no cheating with moveTypesMask
-		self->ai->status.moveTypesMask &= self->ai->pers.moveTypesMask;
+void Ai::OnGoalSet(NavEntity *goalEnt)
+{
+	if (!currAasAreaNum)
+	{
+		currAasAreaNum = FindCurrAASAreaNum();
+		if (!currAasAreaNum)
+		{
+			Debug("Still can't find curr aas area num");
+		}
+	}
+
+	goalAasAreaNum = goalEnt->AasAreaNum();
+	goalTargetPoint = goalEnt->Origin();
+	goalTargetPoint.z() += playerbox_stand_viewheight;
+
+	nextReaches.clear();
+	UpdateReachCache(currAasAreaNum);
+}
+
+void Ai::TouchedEntity(edict_t *ent)
+{
+	// right now we only support this on a few trigger entities (jumpads, teleporters)
+	if (ent->r.solid != SOLID_TRIGGER && ent->item == NULL)
+		return;
+
+	// TODO: Implement triggers handling?
+
+	if (aiBaseBrain->longTermGoal && aiBaseBrain->longTermGoal->IsBasedOnEntity(ent))
+	{
+		// This also implies cleaning a short-term goal
+		aiBaseBrain->ClearLongTermGoal();
+		return;
+	}
+
+	if (aiBaseBrain->shortTermGoal && aiBaseBrain->shortTermGoal->IsBasedOnEntity(ent))
+	{
+		aiBaseBrain->ClearShortTermGoal();
+		return;
 	}
 }
 
@@ -395,39 +242,14 @@ void Ai::Think()
 		// if completely stuck somewhere
 		if (blockedTimeout < level.time)
 		{
-			self->ai->pers.blockedTimeout(self);
+			OnBlockedTimeout();
 			return;
 		}
+
+		// Should be called after CategorizePosition() to ensure that currAasAreaNum is not outdated
+		aiBaseBrain->UpdateStatus(currAasAreaNum);
 	}
 
-	// Always update status (= entity weights) before goal picking, except we have updated it in this frame
-	bool statusUpdated = false;
-	//update status information to feed up ai
-	if (statusUpdateTimeout <= level.time)
-	{
-		UpdateStatus();
-		statusUpdated = true;
-	}
-
-	if (goalAasAreaNum == 0 || longTermGoalTimeout <= level.time)
-	{
-		if (!statusUpdated)
-		{
-			UpdateStatus();
-			statusUpdated = true;
-		}
-		PickLongTermGoal();
-	}
-
-	if (shortTermGoalTimeout <= level.time)
-	{
-		if (!statusUpdated)
-		{
-			UpdateStatus();
-		}
-		PickShortTermGoal();
-	}
-
-	self->ai->pers.RunFrame(self);
+	RunFrame();
 }
 

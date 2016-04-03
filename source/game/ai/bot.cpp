@@ -26,6 +26,8 @@ Bot::Bot(edict_t *self)
       hasPendingLookAtPoint(false),
       lookAtPointTurnSpeedMultiplier(0.5f)
 {
+    // Set the base brain reference in Ai class, it is mandatory
+    this->aiBaseBrain = &botBrain;
     self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;
 }
 
@@ -145,16 +147,6 @@ bool Bot::ChangeWeapon(int weapon)
 }
 
 //==========================================
-// BOT_DMclass_UpdateStatus
-// update ai.status values based on bot state,
-// so ai can decide based on these settings
-//==========================================
-void Bot::UpdateStatus()
-{
-    botBrain.UpdatePotentialGoalsWeights();
-}
-
-//==========================================
 // BOT_DMclass_VSAYmessages
 //==========================================
 void Bot::SayVoiceMessages()
@@ -259,7 +251,7 @@ void Bot::SayVoiceMessages()
 // BOT_DMClass_BlockedTimeout
 // the bot has been blocked for too long
 //==========================================
-void Bot::BlockedTimeout()
+void Bot::OnBlockedTimeout()
 {
     if( level.gametype.dummyBots || bot_dummy->integer ) {
         blockedTimeout = level.time + BLOCKED_TIMEOUT;
@@ -280,9 +272,7 @@ void Bot::GhostingFrame()
 {
     usercmd_t ucmd;
 
-    // This cleans short-term goal too
-    if (HasLongTermGoal())
-        ClearLongTermGoal();
+    Ai::ClearAllGoals();
 
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->nextThink = level.time + 100;
@@ -321,8 +311,7 @@ void Bot::GhostingFrame()
 
 void Bot::OnRespawn()
 {
-    statusUpdateTimeout = 0;
-    stateCombatTimeout = 0;
+    // Ai status will be updated implicitly (since a bot stopped ghosting)
     combatMovePushTimeout = 0;
 }
 
@@ -378,19 +367,14 @@ void Bot::RunFrame()
                 inhibitCombat = true;
         }
 
+        bool doCombatMove = false;
         if ((combatTask.aimEnemy || combatTask.spamEnemy) && !inhibitCombat)
         {
             if (FireWeapon(&ucmd))
-            {
-                if (!combatTask.spamEnemy)
-                    stateCombatTimeout = level.time + AI_COMBATMOVE_TIMEOUT;
-            }
+                doCombatMove = true;
         }
 
-        if (inhibitCombat)
-            stateCombatTimeout = 0;
-
-        if (stateCombatTimeout > level.time)
+        if (IsReadyToCombat() && doCombatMove)
         {
             CombatMovement(&ucmd);
         }
