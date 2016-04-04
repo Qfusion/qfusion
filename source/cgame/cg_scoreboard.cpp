@@ -32,7 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SCB_CENTERMARGIN ( 16 * cgs.vidHeight / 600 )
 
 typedef struct {
-	bool failed;
 	int playerNum;
 	int ping;
 } scr_spectator_t;
@@ -240,38 +239,27 @@ static bool SCR_ParseToken( const char **ptrptr, const char **tokenptr )
 	return true;
 }
 
-static scr_spectator_t SCR_ParseSpectator( const char **ptrptr, bool havePing )
+static bool SCR_ParseSpectator( scr_spectator_t *result, const char **ptrptr, bool havePing )
 {
 	const char *token;
-	scr_spectator_t result;
 
 	if( !SCR_ParseToken( ptrptr, &token ) )
-	{
-		result.failed = true;
-		return result;
-	}
+		return false;
 
-	result.playerNum = atoi( token );
+	result->playerNum = atoi( token );
 
-	if( result.playerNum < 0 || result.playerNum >= gs.maxclients )
-	{
-		result.failed = true;
-		return result;
-	}
+	if( result->playerNum < 0 || result->playerNum >= gs.maxclients )
+		return false;
 
 	if( havePing )
 	{
 		if( !SCR_ParseToken( ptrptr, &token ) )
-		{
-			result.failed = true;
-			return result;
-		}
-		result.ping = atoi( token );
+			return false;
+
+		result->ping = atoi( token );
 	}
 
-	result.failed = false;
-
-	return result;
+	return true;
 }
 
 static void SCR_SpectatorString( char *string, size_t size, scr_spectator_t spec, bool havePing )
@@ -314,8 +302,7 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 	// draw challengers
 	while( *ptrptr )
 	{
-		spec = SCR_ParseSpectator( ptrptr, true );
-		if( spec.failed )
+		if( !SCR_ParseSpectator( &spec, ptrptr, true ) )
 			break;
 
 		if( pass )
@@ -358,8 +345,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	// determine number of columns available
 	while( *ptrptr )
 	{
-		spec = SCR_ParseSpectator( ptrptr, havePing );
-		if( spec.failed )
+		if( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
 			break;
 
 		width = trap_SCR_strWidth( cgs.clientInfo[spec.playerNum].name, font, 0 ) + trap_SCR_strWidth( "M", font, 0 ) * ( havePing ? 6 : 2 );
@@ -382,8 +368,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	// draw spectators
 	while( *ptrptr )
 	{
-		spec = SCR_ParseSpectator( ptrptr, havePing );
-		if( spec.failed )
+		if( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
 			break;
 
 		// draw title if there are any spectators
@@ -423,9 +408,11 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 */
 static void SCR_IgnoreSpectators( const char **ptrptr, bool havePing )
 {
+	scr_spectator_t spec;
+
 	assert( ptrptr && *ptrptr );
 
-	while( !SCR_ParseSpectator( ptrptr, havePing ).failed )
+	while( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
 		;
 }
 
