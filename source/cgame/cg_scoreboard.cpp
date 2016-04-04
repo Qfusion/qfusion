@@ -317,6 +317,14 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 	return yoffset;
 }
 
+static int SCR_CountFromCenter( int index, int items )
+{
+	int result = ( index + 1 ) >> 1; // calculate distance from center
+	if( ( items % 2 ) ^ ( index % 2 ) )
+		result *= -1; // swap sides in half of the cases
+	return result + ( items >> 1 ); // relative to center
+}
+
 /*
 * SCR_DrawSpectators
 */
@@ -327,7 +335,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	char string[MAX_STRING_CHARS];
 	int yoffset = 0, xoffset = 0;
 	int fullwidth, height;
-	int columns, colwidth, width, maxwidth = 0, index;
+	int columns, colwidth, width, maxwidth = 0;
 	int count = 0;
 	bool titleDrawn = false;
 
@@ -390,8 +398,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 		width = trap_SCR_strWidth( string, font, 0 );
 		if( width > colwidth )
 			width = colwidth;
-		index = count % columns;
-		xoffset = -fullwidth / 2 + ( ( index + 1 ) / ( ( columns % 2 ) ^ ( index % 2 ) ? -2 : 2 ) + columns / 2 ) * colwidth +
+		xoffset = -fullwidth / 2 + SCR_CountFromCenter( count % columns, columns ) * colwidth +
 			CG_HorizontalAlignForWidth( colwidth / 2, ALIGN_CENTER_TOP, width );
 
 		if( pass )
