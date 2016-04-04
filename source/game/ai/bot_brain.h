@@ -247,6 +247,7 @@ private:
         inhibit = false;
         importantShot = false;
     }
+
 public:
     CombatTask(): spamSpot(vec3_origin)
     {

@@ -169,7 +169,7 @@ void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, boo
 {
     edict_t *targetEnt;
     edict_t dummyEnt;
-    if (CombatTask().aimEnemy)
+    if (GetCombatTask().aimEnemy)
     {
         targetEnt = const_cast<edict_t *>(AimEnemy()->ent);
     }
@@ -177,7 +177,7 @@ void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, boo
     {
         // To reuse Ai::IsInFront() atm we have to provide a dummy edict
         // Ai::IsInFront uses only edict_t::s.origin
-        VectorCopy(CombatTask().spamSpot.data(), dummyEnt.s.origin);
+        VectorCopy(GetCombatTask().spamSpot.data(), dummyEnt.s.origin);
         targetEnt = &dummyEnt;
     }
     *isInFront = Ai::IsInFront(targetEnt);
@@ -280,15 +280,15 @@ float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec
     // in the lowest skill level, don't predict projectiles
     if (Skill() >= 0.33f)
     {
-        if (CombatTask().aimEnemy)
-            PredictProjectileShot(fire_origin, firedef->speed, target, CombatTask().aimEnemy->ent->velocity);
+        if (GetCombatTask().aimEnemy)
+            PredictProjectileShot(fire_origin, firedef->speed, target, GetCombatTask().aimEnemy->ent->velocity);
         else
             PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
     }
 
     float wfac = WFAC_GENERIC_PROJECTILE * 1.3f;
 
-    if (CombatTask().aimEnemy)
+    if (GetCombatTask().aimEnemy)
     {
         // aim to the feet when enemy isn't higher
         if (fire_origin[2] > (target[2] + (self->enemy->r.mins[2] * 0.8)))
@@ -322,7 +322,7 @@ float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_
     // in the lowest skill level, don't predict projectiles
     if (Skill() >= 0.33f)
     {
-        if (CombatTask().aimEnemy)
+        if (GetCombatTask().aimEnemy)
             PredictProjectileShot(fire_origin, firedef->speed, target, self->enemy->velocity);
         else
             PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
