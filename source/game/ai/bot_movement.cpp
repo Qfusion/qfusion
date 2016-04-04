@@ -954,7 +954,7 @@ void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
         }
     }
 
-    if(!hasToEvade && aimTarget.inhibit)
+    if (!hasToEvade && combatTask.inhibit)
     {
         Move( ucmd );
     }
