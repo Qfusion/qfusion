@@ -147,18 +147,8 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
 
 void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
 {
-    if (AimEnemy())
-    {
-        const edict_t *enemy = AimEnemy()->ent;
-        for (int i = 0; i < 3; i++)
-        {
-            target[i] = enemy->s.origin[i] + (0.5f * (enemy->r.maxs[i] + enemy->r.mins[i]));
-        }
-    }
-    else
-    {
-        VectorCopy(SpamSpot().data(), target);
-    }
+    VectorCopy(EnemyOrigin().data(), target);
+    VectorAdd(target, (0.5f * (EnemyMins() + EnemyMaxs())).data(), target);
 
     fire_origin[0] = self->s.origin[0];
     fire_origin[1] = self->s.origin[1];
@@ -167,20 +157,10 @@ void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
 
 void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, bool *mayHit)
 {
-    edict_t *targetEnt;
+    // TODO: Inline Ai::IsInFront() contents or change Ai::IsInFront() signature
     edict_t dummyEnt;
-    if (GetCombatTask().aimEnemy)
-    {
-        targetEnt = const_cast<edict_t *>(AimEnemy()->ent);
-    }
-    else
-    {
-        // To reuse Ai::IsInFront() atm we have to provide a dummy edict
-        // Ai::IsInFront uses only edict_t::s.origin
-        VectorCopy(GetCombatTask().spamSpot.data(), dummyEnt.s.origin);
-        targetEnt = &dummyEnt;
-    }
-    *isInFront = Ai::IsInFront(targetEnt);
+    VectorCopy(target, dummyEnt.s.origin);
+    *isInFront = Ai::IsInFront(&dummyEnt);
     *mayHit = CheckShot(target);
 }
 
@@ -278,12 +258,9 @@ float Bot::AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin
 float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target)
 {
     // in the lowest skill level, don't predict projectiles
-    if (Skill() >= 0.33f)
+    if (Skill() >= 0.33f && !IsEnemyStatic())
     {
-        if (GetCombatTask().aimEnemy)
-            PredictProjectileShot(fire_origin, firedef->speed, target, GetCombatTask().aimEnemy->ent->velocity);
-        else
-            PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
+        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data());
     }
 
     float wfac = WFAC_GENERIC_PROJECTILE * 1.3f;
@@ -323,12 +300,9 @@ float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_
         wfac = WFAC_GENERIC_PROJECTILE;
 
     // in the lowest skill level, don't predict projectiles
-    if (Skill() >= 0.33f)
+    if (Skill() >= 0.33f && !IsEnemyStatic())
     {
-        if (GetCombatTask().aimEnemy)
-            PredictProjectileShot(fire_origin, firedef->speed, target, GetCombatTask().aimEnemy->ent->velocity);
-        else
-            PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
+        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data());
     }
 
     return wfac;
@@ -339,10 +313,9 @@ float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin
     //jalToDo
     float wfac = WFAC_GENERIC_PROJECTILE;
     // in the lowest skill level, don't predict projectiles
-    if (Skill() >= 0.33f)
+    if (Skill() >= 0.33f && !IsEnemyStatic())
     {
-        const float *velocity = AimEnemy() ? AimEnemy()->ent->velocity : vec3_origin;
-        PredictProjectileShot(fire_origin, firedef->speed, target, velocity);
+        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data());
     }
     return wfac;
 }

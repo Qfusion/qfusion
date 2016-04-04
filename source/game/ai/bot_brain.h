@@ -232,7 +232,49 @@ public:
 
 class CombatTask
 {
-private:
+    friend class BotBrain;
+    // If it is not null, it is a chosen target for shooting.
+    const Enemy *aimEnemy;
+
+    // May be null if spamming is not personal for the enemy.
+    // Used to cancel spamming if enemy is killed by bot or other player
+    // (this means there is no sense to do spamming).
+    const Enemy *spamEnemy;
+    // Used to prevent infinite spamming on the same point, should be set in Reset();
+    const Enemy *prevSpamEnemy;
+    Vec3 spamSpot;
+
+    int suggestedShootWeapon;
+    int suggestedSpamWeapon;
+#if defined(__GNUC__) || defined(__clang__)
+    void FailWith(const char *message) const __attribute__ ((noreturn))
+#else
+    void FailWith(const char *message) const
+#endif
+    {
+        G_Printf(message);
+        abort();
+    }
+
+public:
+
+    // When level.time == spamTimesOutAt, stop spamming
+    unsigned spamTimesOutAt;
+
+    bool spamKeyPoint;
+    bool advance;
+    bool retreat;
+    bool inhibit;
+
+    // Must be set back to false by shooting code.
+    bool importantShot;
+
+    CombatTask() : spamSpot(vec3_origin)
+    {
+        Clear();
+    };
+
+    // This call completely cleans object state
     void Clear()
     {
         aimEnemy = nullptr;
@@ -248,12 +290,7 @@ private:
         importantShot = false;
     }
 
-public:
-    CombatTask(): spamSpot(vec3_origin)
-    {
-        Clear();
-    };
-
+    // This call cleans all fields except prevSpamEnemy which is set to currSpamEnemy
     void Reset()
     {
         const Enemy *currSpamEnemy = spamEnemy;
@@ -263,44 +300,42 @@ public:
 
     bool Empty() const  { return !aimEnemy && !spamEnemy; }
 
-    const Vec3 &TargetOrigin() const
+    bool IsTargetStatic() const { return !aimEnemy; }
+
+    Vec3 EnemyOrigin() const
     {
         if (aimEnemy) return aimEnemy->LastSeenPosition();
         if (spamEnemy) return spamSpot;
-        abort();
+        FailWith("EnemyOrigin(): combat task is empty\n");
+    }
+
+    Vec3 EnemyVelocity() const
+    {
+        if (aimEnemy) return Vec3(aimEnemy->ent->velocity);
+        if (spamEnemy) return Vec3(0, 0, 0);
+        FailWith("EnemyVelocity(): combat task is empty\n");
+    }
+
+    Vec3 EnemyMins() const
+    {
+        if (aimEnemy) return Vec3(aimEnemy->ent->r.mins);
+        if (spamEnemy) return Vec3(0, 0, 0);
+        FailWith("EnemyMins(): combat task is empty\n");
+    }
+
+    Vec3 EnemyMaxs() const
+    {
+        if (aimEnemy) return Vec3(aimEnemy->ent->r.maxs);
+        if (spamEnemy) return Vec3(0, 0, 0);
+        FailWith("EnemyMaxs(): combat task is empty\n");
     }
 
     const int Weapon()
     {
         if (aimEnemy) return suggestedShootWeapon;
         if (spamEnemy) return suggestedSpamWeapon;
-        abort();
+        FailWith("Weapon(): combat task is empty\n");
     }
-
-    // If it is not null, it is a chosen target for shooting.
-    const Enemy *aimEnemy;
-
-    // May be null if spamming is not personal for the enemy.
-    // Used to cancel spamming if enemy is killed by bot or other player
-    // (this means there is no sense to do spamming).
-    const Enemy *spamEnemy;
-    // Used to prevent infinite spamming on the same point, should be set in Reset();
-    const Enemy *prevSpamEnemy;
-    Vec3 spamSpot;
-
-    int suggestedShootWeapon;
-    int suggestedSpamWeapon;
-
-    // When level.time == spamTimesOutAt, stop spamming
-    unsigned spamTimesOutAt;
-
-    bool spamKeyPoint;
-    bool advance;
-    bool retreat;
-    bool inhibit;
-
-    // Must be set back to false by shooting code.
-    bool importantShot;
 };
 
 struct CombatDisposition

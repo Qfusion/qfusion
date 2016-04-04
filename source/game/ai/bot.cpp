@@ -289,8 +289,7 @@ void Bot::RunFrame()
 
     if (G_ISGHOSTING(self))
     {
-        botBrain.combatTask.Reset();
-        botBrain.combatTask.prevSpamEnemy = nullptr;
+        botBrain.combatTask.Clear();
 
         GhostingFrame();
 
@@ -316,7 +315,7 @@ void Bot::RunFrame()
 
         const CombatTask &combatTask = botBrain.combatTask;
 
-        bool inhibitCombat = false;
+        bool inhibitCombat = combatTask.inhibit;
         if (currAasAreaNum != goalAasAreaNum && !nextReaches.empty())
         {
             if (IsCloseToReachStart())
@@ -331,7 +330,7 @@ void Bot::RunFrame()
                 inhibitCombat = true;
         }
 
-        if ((combatTask.aimEnemy || combatTask.spamEnemy) && !inhibitCombat)
+        if (!combatTask.Empty() && !inhibitCombat)
         {
             if (FireWeapon(&ucmd))
             {
