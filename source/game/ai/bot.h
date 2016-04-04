@@ -128,10 +128,12 @@ private:
     bool LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
     void TryPressAttack(usercmd_t *ucmd, bool importantShot);
 
-    // Name clash... we have to use a method name prefix
-    inline const CombatTask &GetCombatTask() { return botBrain.combatTask; }
-    inline const Enemy *AimEnemy() const { return botBrain.combatTask.aimEnemy; }
-    inline const Vec3 &SpamSpot() const { return botBrain.combatTask.spamSpot; }
+    inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
+    inline bool IsEnemyStatic() const { return botBrain.combatTask.IsTargetStatic(); }
+    inline Vec3 EnemyOrigin() const { return botBrain.combatTask.EnemyOrigin(); }
+    inline Vec3 EnemyVelocity() const { return botBrain.combatTask.EnemyVelocity(); }
+    inline Vec3 EnemyMins() const { return botBrain.combatTask.EnemyMins(); }
+    inline Vec3 EnemyMaxs() const { return botBrain.combatTask.EnemyMaxs(); }
 };
 
 #endif

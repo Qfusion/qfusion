@@ -88,10 +88,10 @@ void Bot::Move(usercmd_t *ucmd)
     if (!hasPendingLookAtPoint)
     {
         float turnSpeedMultiplier = requestedViewTurnSpeedMultiplier;
-        if (AimEnemy())
+        if (HasEnemy())
         {
             moveVec.NormalizeFast();
-            Vec3 toEnemy(AimEnemy()->ent->s.origin);
+            Vec3 toEnemy(EnemyOrigin());
             toEnemy -= self->s.origin;
             float squareDistanceToEnemy = toEnemy.SquaredLength();
             if (squareDistanceToEnemy > 1)
@@ -101,7 +101,7 @@ void Bot::Move(usercmd_t *ucmd)
                 if (moveVec.Dot(toEnemy) < -0.3f)
                 {
                     // Check whether we should center view to prevent looking at the sky or a floor while spinning
-                    float factor = fabsf(self->s.origin[2] - AimEnemy()->ent->s.origin[2]) * invDistanceToEnemy;
+                    float factor = fabsf(self->s.origin[2] - EnemyOrigin().z()) * invDistanceToEnemy;
                     // If distance to enemy is 4x more than height difference, center view
                     if (factor < 0.25f)
                     {
@@ -906,13 +906,13 @@ void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
 
     const CombatTask &combatTask = botBrain.combatTask;
 
-    if ((!combatTask.aimEnemy && !combatTask.spamEnemy))
+    if (!HasEnemy())
     {
         Move(ucmd);
         return;
     }
 
-    const float dist = (combatTask.TargetOrigin() - self->s.origin).LengthFast();
+    const float dist = (combatTask.EnemyOrigin() - self->s.origin).LengthFast();
     const float c = random();
 
     if (combatMovePushTimeout <= level.time)
@@ -1096,13 +1096,8 @@ bool Bot::TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove)
     if (!combatTask.advance && !combatTask.retreat)
         return false;
 
-    Vec3 botToEnemyDir(self->s.origin);
-    if (combatTask.aimEnemy)
-        botToEnemyDir -= combatTask.aimEnemy->LastSeenPosition();
-    else
-        botToEnemyDir -= combatTask.spamSpot;
-    // Normalize (and invert since we initialized a points difference by vector start, not the end)
-    botToEnemyDir *= -1.0f * Q_RSqrt(botToEnemyDir.SquaredLength());
+    Vec3 botToEnemyDir = EnemyOrigin() - self->s.origin;
+    botToEnemyDir.NormalizeFast();
 
     Vec3 forward(0, 0, 0), right(0, 0, 0);
     AngleVectors(self->s.angles, forward.data(), right.data(), nullptr);
@@ -1142,7 +1137,7 @@ std::pair<int, int> Bot::ApplyTacticalMove(int tacticalMove, bool advance, const
             if (moveTestResult.CanFall() && advance)
             {
                 // Allow to fall while attacking when enemy is still on bots height
-                if (self->s.origin[2] - moveTestResult.PotentialFallDepth() + 16 > botBrain.combatTask.TargetOrigin().z())
+                if (self->s.origin[2] - moveTestResult.PotentialFallDepth() + 16 > botBrain.combatTask.EnemyOrigin().z())
                     result.first = tacticalMove;
             }
             else
