@@ -31,6 +31,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SCB_SCORENUMBER_SIZE ( 48 * cgs.vidHeight / 600 )
 #define SCB_CENTERMARGIN ( 16 * cgs.vidHeight / 600 )
 
+typedef struct {
+	bool failed;
+	int playerNum;
+	int ping;
+} scr_spectator_t;
+
 void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, int charheight, int value );
 
 /*
@@ -234,15 +240,63 @@ static bool SCR_ParseToken( const char **ptrptr, const char **tokenptr )
 	return true;
 }
 
+static scr_spectator_t SCR_ParseSpectator( const char **ptrptr, bool havePing )
+{
+	const char *token;
+	scr_spectator_t result;
+
+	if( !SCR_ParseToken( ptrptr, &token ) )
+	{
+		result.failed = true;
+		return result;
+	}
+
+	result.playerNum = atoi( token );
+
+	if( result.playerNum < 0 || result.playerNum >= gs.maxclients )
+	{
+		result.failed = true;
+		return result;
+	}
+
+	if( havePing )
+	{
+		if( !SCR_ParseToken( ptrptr, &token ) )
+		{
+			result.failed = true;
+			return result;
+		}
+		result.ping = atoi( token );
+	}
+
+	result.failed = false;
+
+	return result;
+}
+
+static void SCR_SpectatorString( char *string, size_t size, scr_spectator_t spec, bool havePing )
+{
+	if( havePing )
+	{
+		if( spec.ping < 0 )
+			Q_snprintfz( string, size, "%s%s ...", cgs.clientInfo[spec.playerNum].name, S_COLOR_WHITE );
+		else
+			Q_snprintfz( string, size, "%s%s %i", cgs.clientInfo[spec.playerNum].name, S_COLOR_WHITE, spec.ping );
+	}
+	else
+	{
+		Q_snprintfz( string, size, "%s%s", cgs.clientInfo[spec.playerNum].name, S_COLOR_WHITE );
+	}
+}
+
 /*
 * SCR_DrawChallengers
 */
 static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, int pass )
 {
-	const char *token;
 	char string[MAX_STRING_CHARS];
+	scr_spectator_t spec;
 	int yoffset = 0, xoffset = 0;
-	int playerNum, ping;
 	int height;
 
 	assert( ptrptr && *ptrptr );
@@ -260,28 +314,13 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 	// draw challengers
 	while( *ptrptr )
 	{
-		if( !SCR_ParseToken( ptrptr, &token ) )
+		spec = SCR_ParseSpectator( ptrptr, true );
+		if( spec.failed )
 			break;
 
-		// first token is played id
-		playerNum = atoi( token );
-		if( playerNum < 0 || playerNum >= gs.maxclients )
-			break;
-
-		// get a second token
-		if( !SCR_ParseToken( ptrptr, &token ) )
-			break;
-
-		// second token is ping
-		ping = atoi( token );
-
-		// draw the challenger
-		if( ping < 0 )
-			Q_snprintfz( string, sizeof( string ), "%s%s ...", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
-		else
-			Q_snprintfz( string, sizeof( string ), "%s%s %i", cgs.clientInfo[playerNum].name, S_COLOR_WHITE, ping );
-
-		if( pass ) {
+		if( pass )
+		{
+			SCR_SpectatorString( string, sizeof( string ), spec, true );
 			trap_SCR_DrawString( x + xoffset, y + yoffset, ALIGN_CENTER_TOP, string, font, colorWhite );
 		}
 		yoffset += height;
@@ -296,13 +335,13 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 */
 static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, bool havePing, const char *title, vec4_t titleColor, int pass )
 {
-	const char *token;
 	const char *backup;
+	scr_spectator_t spec;
 	char string[MAX_STRING_CHARS];
 	int yoffset = 0, xoffset = 0;
-	int playerNum, ping;
-	int columns, colwidth, fullwidth, count = 0, height, index;
-	int width, maxwidth = 0;
+	int fullwidth, height;
+	int columns, colwidth, width, maxwidth = 0, index;
+	int count = 0;
 	bool titleDrawn = false;
 
 	assert( ptrptr && *ptrptr );
@@ -319,18 +358,11 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	// determine number of columns available
 	while( *ptrptr )
 	{
-		if( !SCR_ParseToken( ptrptr, &token ) )
+		spec = SCR_ParseSpectator( ptrptr, havePing );
+		if( spec.failed )
 			break;
 
-		playerNum = atoi( token );
-
-		if( playerNum < 0 || playerNum >= gs.maxclients )
-			break;
-
-		if( havePing && !SCR_ParseToken( ptrptr, &token ) )
-			break;
-
-		width = trap_SCR_strWidth( cgs.clientInfo[playerNum].name, font, 0 ) + trap_SCR_strWidth( "M", font, 0 ) * ( havePing ? 6 : 2 );
+		width = trap_SCR_strWidth( cgs.clientInfo[spec.playerNum].name, font, 0 ) + trap_SCR_strWidth( "M", font, 0 ) * ( havePing ? 6 : 2 );
 		if( width > maxwidth )
 			maxwidth = width;
 		count++;
@@ -350,29 +382,9 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	// draw spectators
 	while( *ptrptr )
 	{
-		if( !SCR_ParseToken( ptrptr, &token ) )
+		spec = SCR_ParseSpectator( ptrptr, havePing );
+		if( spec.failed )
 			break;
-
-		playerNum = atoi( token );
-		if( playerNum < 0 || playerNum >= gs.maxclients )
-			break;
-
-		if( havePing )
-		{
-			if( !SCR_ParseToken( ptrptr, &token ) )
-				break;
-
-			ping = atoi( token );
-
-			if( ping < 0 )
-				Q_snprintfz( string, sizeof( string ), "%s%s ...", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
-			else
-				Q_snprintfz( string, sizeof( string ), "%s%s %i", cgs.clientInfo[playerNum].name, S_COLOR_WHITE, ping );
-		}
-		else
-		{
-			Q_snprintfz( string, sizeof( string ), "%s%s", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
-		}
 
 		// draw title if there are any spectators
 		if( !titleDrawn )
@@ -383,12 +395,13 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 			yoffset += height;
 		}
 
+		SCR_SpectatorString( string, sizeof( string ), spec, havePing );
 		index = count % columns;
 		width = trap_SCR_strWidth( string, font, 0 );
 		if( width > colwidth )
 			width = colwidth;
-		xoffset = -fullwidth / 2 + ( ( index + 1 ) / ( ( columns + index ) % 2 ? -2 : 2 ) + columns / 2 ) * colwidth +
-			( colwidth - width ) / 2;
+		xoffset = -fullwidth / 2 + ( ( index + 1 ) / ( ( columns % 2 ) ^ ( index % 2 ) ? -2 : 2 ) + columns / 2 ) * colwidth +
+			CG_HorizontalAlignForWidth( colwidth / 2, ALIGN_CENTER_TOP, width );
 
 		if( pass )
 			trap_SCR_DrawClampString( x + xoffset, y + yoffset, string, x + xoffset, y + yoffset,
@@ -410,11 +423,9 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 */
 static void SCR_IgnoreSpectators( const char **ptrptr, bool havePing )
 {
-	const char *token;
-
 	assert( ptrptr && *ptrptr );
 
-	while( *ptrptr && SCR_ParseToken( ptrptr, &token ) && ( !havePing || SCR_ParseToken( ptrptr, &token ) ) )
+	while( !SCR_ParseSpectator( ptrptr, havePing ).failed )
 		;
 }
 
