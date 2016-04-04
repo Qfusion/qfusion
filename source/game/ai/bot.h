@@ -44,7 +44,6 @@ private:
 
     DangersDetector dangersDetector;
     BotBrain botBrain;
-    CombatTask aimTarget;
 
     bool printLink;
 
