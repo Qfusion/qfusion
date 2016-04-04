@@ -421,17 +421,24 @@ void	    BOT_DMclass_InitPersistant( edict_t *self );
 
 struct MoveTestResult
 {
-	trace_t forwardGroundTrace;
-	trace_t forwardPitTrace;
-	trace_t wallFullHeightTrace;
-	trace_t wallStepHeightTrace;
-	trace_t wallZeroHeightTrace;
-
-	const edict_t *self;
-
-	bool CanWalk() const;
-	bool CanWalkOrFallQuiteSafely() const;
-	bool CanJump() const;
+	friend class Ai;
+private:
+	bool canWalk;
+	bool canFall;
+	bool canJump;
+	float fallDepth;
+	void Clear()
+	{
+		canWalk = canFall = canJump = false;
+		fallDepth = 0;
+	}
+public:
+	inline bool CanWalk() const { return canWalk; }
+	inline bool CanFall() const { return canFall; }
+	// TODO: Check exact falldamage condition
+	inline bool CanWalkOrFallQuiteSafely() const { return canWalk || (canFall && fallDepth < 200); }
+	inline bool CanJump() const { return canJump; }
+	inline float PotentialFallDepth() const { return fallDepth; }
 };
 
 struct ClosePlaceProps
@@ -545,7 +552,7 @@ protected:
 	void TestClosePlace();
 	ClosePlaceProps closeAreaProps;
 private:
-	void TestMove(MoveTestResult *moveTestResult, int direction) const;
+	void TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3_t forward) const;
 };
 
 inline float BoundedFraction(float value, float bound)

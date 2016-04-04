@@ -1139,12 +1139,10 @@ std::pair<int, int> Bot::ApplyTacticalMove(int tacticalMove, bool advance, const
         if (moveTestResult.CanWalkOrFallQuiteSafely())
         {
             // Only fall down to enemies while advancing, do not escape accidentally while trying to attack
-            if (moveTestResult.forwardGroundTrace.fraction == 1.0 && advance)
+            if (moveTestResult.CanFall() && advance)
             {
-                // It is finite and not very large, since CanWalkOrFallQuiteSafely() returned true
-                float fallHeight = self->s.origin[2] - moveTestResult.forwardGroundTrace.endpos[2];
                 // Allow to fall while attacking when enemy is still on bots height
-                if (self->s.origin[2] - fallHeight + 16 > botBrain.combatTask.TargetOrigin().z())
+                if (self->s.origin[2] - moveTestResult.PotentialFallDepth() + 16 > botBrain.combatTask.TargetOrigin().z())
                     result.first = tacticalMove;
             }
             else

@@ -25,119 +25,106 @@ in NO WAY supported by Steve Yeager.
 
 #include "ai_local.h"
 
-bool MoveTestResult::CanWalk() const
+void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3_t forward) const
 {
-	if (forwardGroundTrace.fraction == 1.0)
-		return false;
-	if (forwardGroundTrace.contents & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_DONOTENTER))
-		return false;
-	if (wallZeroHeightTrace.fraction != 1.0)
+	constexpr int MAX_TRACED_AREAS = 6;
+	int tracedAreas[MAX_TRACED_AREAS];
+	Vec3 traceEnd = 36 * Vec3(forward) + self->s.origin;
+	int numTracedAreas = AAS_TraceAreas(self->s.origin, traceEnd.data(), tracedAreas, nullptr, MAX_TRACED_AREAS);
+
+	// These values will be returned by default
+	moveTestResult->canWalk = 0;
+	moveTestResult->canFall = 0;
+	moveTestResult->canJump = 0;
+	moveTestResult->fallDepth = 0;
+
+	if (!numTracedAreas)
+		return;
+
+	// We are still in current area
+	if (tracedAreas[numTracedAreas] == currAasAreaNum)
 	{
-		if (!ISWALKABLEPLANE(&wallZeroHeightTrace.plane))
-			return false;
-		if (wallStepHeightTrace.fraction != 1.0)
+		moveTestResult->canWalk = 1;
+		moveTestResult->canFall = 0;
+		moveTestResult->canJump = 1;
+		return;
+	}
+
+	int traceFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_BARRIERJUMP;
+	float fallDepth = 0;
+
+	for (int i = 0; i < numTracedAreas - 1; ++i)
+	{
+		const int nextAreaNum = tracedAreas[i + 1];
+		const aas_areasettings_t &currAreaSettings = aasworld.areasettings[tracedAreas[i]];
+		if (!currAreaSettings.numreachableareas)
+			return; // blocked
+
+		int reachFlags = 0;
+		for (int j = 0; j < currAreaSettings.numreachableareas; ++j)
 		{
-			if (!ISWALKABLEPLANE(&wallStepHeightTrace.plane))
-				return false;
-			return wallFullHeightTrace.fraction == 1.0;
+			const aas_reachability_t &reach = aasworld.reachability[currAreaSettings.firstreachablearea + j];
+			if (reach.areanum == nextAreaNum)
+			{
+				switch (reach.traveltype)
+				{
+					case TRAVEL_WALK:
+					// Bot can escape using a teleporter
+					case TRAVEL_TELEPORT:
+						reachFlags |= TFL_WALK;
+						break;
+					case TRAVEL_WALKOFFLEDGE:
+						fallDepth += reach.start[2] - reach.end[2];
+						reachFlags |= TFL_WALKOFFLEDGE;
+						break;
+					case TRAVEL_BARRIERJUMP:
+					case TRAVEL_DOUBLEJUMP:
+						reachFlags |= TFL_BARRIERJUMP;
+						break;
+				}
+			}
 		}
-		return wallFullHeightTrace.fraction == 1.0;
-	}
-	return wallStepHeightTrace.fraction == 1.0 && wallFullHeightTrace.fraction == 1.0;
-}
-
-bool MoveTestResult::CanWalkOrFallQuiteSafely() const
-{
-	if (wallFullHeightTrace.fraction != 1.0)
-		return false;
-	if (wallStepHeightTrace.fraction != 1.0)
-		return false;
-	if (wallZeroHeightTrace.fraction != 1.0)
-		return false;
-	if (forwardGroundTrace.fraction != 1.0)
-		return !(forwardGroundTrace.contents & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_DONOTENTER));
-	if (forwardPitTrace.fraction == 1.0)
-		return false;
-	if (forwardPitTrace.contents & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_DONOTENTER))
-		return false;
-	if (forwardPitTrace.surfFlags & SURF_NODAMAGE)
-		return true;
-	return (Vec3(self->s.origin) - forwardPitTrace.endpos).SquaredLength() < 450 * 450;
-}
-
-bool MoveTestResult::CanJump() const
-{
-	return
-		wallStepHeightTrace.fraction != 1.0 &&
-		!ISWALKABLEPLANE(&wallStepHeightTrace.plane)
-		&& wallFullHeightTrace.fraction == 1.0;
-}
-
-void Ai::TestMove(MoveTestResult *testResult, int direction) const
-{
-	vec3_t forward, right;
-	vec3_t offset, start, end;
-	vec3_t angles;
-
-	// Now check to see if move will move us off an edge
-	VectorCopy( self->s.angles, angles );
-
-	if( direction == BOT_MOVE_LEFT )
-		angles[1] += 90;
-	else if( direction == BOT_MOVE_RIGHT )
-		angles[1] -= 90;
-	else if( direction == BOT_MOVE_BACK )
-		angles[1] -= 180;
-
-	// Set up the vectors
-	AngleVectors( angles, forward, right, NULL );
-
-	VectorSet( offset, 15, 0, 24 );
-	G_ProjectSource( self->s.origin, offset, forward, right, start );
-
-	VectorSet( offset, 36, 0, -100 );
-	G_ProjectSource( self->s.origin, offset, forward, right, end );
-
-	G_Trace(&testResult->forwardGroundTrace, start, NULL, NULL, end, self, MASK_AISOLID);
-
-	if (testResult->forwardGroundTrace.fraction == 1.0)
-	{
-		// Trace for pit
-		VectorSet(offset, 36, 0, -100);
-		G_ProjectSource( self->s.origin, offset, forward, right, start );
-		offset[2] -= 999999;
-		G_ProjectSource( self->s.origin, offset, forward, right, end );
-		G_Trace(&testResult->forwardPitTrace, start, NULL, NULL, end, self, MASK_AISOLID);
-	}
-	else
-	{
-		// Trace for full height (avoid bumping a ceiling by adding 5 units)
-		VectorSet(offset, 15, 0, playerbox_stand_maxs[2] + 5);
-		G_ProjectSource( self->s.origin, offset, forward, right, start );
-		offset[0] += 36;
-		G_ProjectSource( self->s.origin, offset, forward, right, end );
-		G_Trace(&testResult->wallFullHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
-
-		// Trace for step height (we're changing Z, do not need to project again)
-		start[2] -= playerbox_stand_maxs[2] - 10;
-		end[2] -= playerbox_stand_maxs[2] - 10;
-		G_Trace(&testResult->wallStepHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
-
-		// Trace for zero height (we're changing Z, do not need to project again)
-		start[2] += playerbox_stand_mins[2]; // < 0
-		end[2] += playerbox_stand_mins[2]; // < 0
-		G_Trace(&testResult->wallZeroHeightTrace, start, NULL, NULL, end, self, MASK_AISOLID);
+		traceFlags &= reachFlags;
+		// Reject early
+		if (!traceFlags)
+			return; // blocked
 	}
 
-	testResult->self = self;
-}
+	moveTestResult->canWalk = 0 != (traceFlags & TFL_WALK);
+	moveTestResult->canFall = 0 != (traceFlags & TFL_WALKOFFLEDGE);
+	moveTestResult->canJump = 0 != (traceFlags & TFL_BARRIERJUMP);
+	moveTestResult->fallDepth = fallDepth;
+};
 
 void Ai::TestClosePlace()
 {
-	TestMove(&closeAreaProps.frontTest, BOT_MOVE_FORWARD);
-	TestMove(&closeAreaProps.backTest, BOT_MOVE_BACK);
-	TestMove(&closeAreaProps.leftTest, BOT_MOVE_LEFT);
-	TestMove(&closeAreaProps.rightTest, BOT_MOVE_RIGHT);
+	if (!currAasAreaNum)
+	{
+		closeAreaProps.frontTest.Clear();
+		closeAreaProps.backTest.Clear();
+		closeAreaProps.rightTest.Clear();
+		closeAreaProps.leftTest.Clear();
+		return;
+	}
+	// TODO: Try to shortcut using area boundaries
+
+	vec3_t angles, forward;
+	VectorCopy(self->s.angles, angles);
+
+	AngleVectors(angles, forward, nullptr, nullptr);
+	TestMove(&closeAreaProps.frontTest, currAasAreaNum, forward);
+
+	angles[1] = self->s.angles[1] + 90;
+	AngleVectors(angles, forward, nullptr, nullptr);
+	TestMove(&closeAreaProps.leftTest, currAasAreaNum, forward);
+
+	angles[1] = self->s.angles[1] - 90;
+	AngleVectors(angles, forward, nullptr, nullptr);
+	TestMove(&closeAreaProps.rightTest, currAasAreaNum, forward);
+
+	angles[1] = self->s.angles[1] - 180;
+	AngleVectors(angles, forward, nullptr, nullptr);
+	TestMove(&closeAreaProps.backTest, currAasAreaNum, forward);
 }
 
 //===================
