@@ -900,7 +900,7 @@ Vec3 Bot::MakeEvadeDirection(const Danger &danger)
 // NOTE: Very simple for now, just a basic move about avoidance.
 //       Change this routine for more advanced attack movement.
 //==========================================
-void Bot::CombatMovement(usercmd_t *ucmd)
+void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
 {
     // TODO: Check whether we are holding/camping a point
 
@@ -911,10 +911,6 @@ void Bot::CombatMovement(usercmd_t *ucmd)
         Move(ucmd);
         return;
     }
-
-    bool hasToEvade = false;
-    if (Skill() >= 0.25f)
-        hasToEvade = dangersDetector.FindDangers();
 
     const float dist = (combatTask.TargetOrigin() - self->s.origin).LengthFast();
     const float c = random();

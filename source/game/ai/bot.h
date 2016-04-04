@@ -12,7 +12,7 @@ public:
     Bot(edict_t *self);
 
     void Move(usercmd_t *ucmd);
-    void CombatMovement(usercmd_t *ucmd);
+    void CombatMovement(usercmd_t *ucmd, bool hasDangers);
     void LookAround();
     bool ChangeWeapon(int weapon);
     bool CheckShot(const vec3_t point);
