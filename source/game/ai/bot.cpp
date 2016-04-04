@@ -347,9 +347,13 @@ void Bot::RunFrame()
             }
         }
 
-        if (IsReadyToCombat())
+        bool hasToEvade = false;
+        if (Skill() > 0.25f)
+            hasToEvade = dangersDetector.FindDangers();
+
+        if (IsReadyToCombat() || hasToEvade)
         {
-            CombatMovement(&ucmd);
+            CombatMovement(&ucmd, hasToEvade);
         }
         else
         {
