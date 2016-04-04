@@ -360,12 +360,18 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 		columns = count;
 	else if( columns < 3 )
 		columns = 3;
+
+	// determine column width
 	colwidth = fullwidth / columns;
+	// use smaller columns if possible, and adjust the width of the whole area
+	if( maxwidth < colwidth )
+		colwidth = maxwidth;
+	fullwidth = colwidth * columns;
 
 	*ptrptr = backup;
 	count = 0;
 
-	// draw spectators
+	// draw the spectators
 	while( *ptrptr )
 	{
 		if( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
@@ -381,10 +387,10 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 		}
 
 		SCR_SpectatorString( string, sizeof( string ), spec, havePing );
-		index = count % columns;
 		width = trap_SCR_strWidth( string, font, 0 );
 		if( width > colwidth )
 			width = colwidth;
+		index = count % columns;
 		xoffset = -fullwidth / 2 + ( ( index + 1 ) / ( ( columns % 2 ) ^ ( index % 2 ) ? -2 : 2 ) + columns / 2 ) * colwidth +
 			CG_HorizontalAlignForWidth( colwidth / 2, ALIGN_CENTER_TOP, width );
 
