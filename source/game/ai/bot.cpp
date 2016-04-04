@@ -41,10 +41,8 @@ void Bot::LookAround()
 
     botBrain.UpdateCombatTask();
 
-    if (botBrain.combatTask.aimEnemy)
-        ChangeWeapon(botBrain.combatTask.suggestedShootWeapon);
-    else if (botBrain.combatTask.spamEnemy)
-        ChangeWeapon(botBrain.combatTask.suggestedSpamWeapon);
+    if (!botBrain.combatTask.Empty())
+        ChangeWeapon(botBrain.combatTask.Weapon());
 }
 
 void Bot::SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier, unsigned int timeoutDuration)

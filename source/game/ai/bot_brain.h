@@ -270,6 +270,13 @@ public:
         abort();
     }
 
+    const int Weapon()
+    {
+        if (aimEnemy) return suggestedShootWeapon;
+        if (spamEnemy) return suggestedSpamWeapon;
+        abort();
+    }
+
     // If it is not null, it is a chosen target for shooting.
     const Enemy *aimEnemy;
 
