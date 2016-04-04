@@ -288,6 +288,8 @@ float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec
 
     float wfac = WFAC_GENERIC_PROJECTILE * 1.3f;
 
+    // TODO: Disabled to get rid of self->enemy until sophisticated prediction code will be introduced
+    /*
     if (GetCombatTask().aimEnemy)
     {
         // aim to the feet when enemy isn't higher
@@ -307,6 +309,7 @@ float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec
         else if (!IsStep(self->enemy))
             wfac *= 2.5; // more imprecise for air rockets
     }
+     */
 
     return wfac;
 }
@@ -323,7 +326,7 @@ float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_
     if (Skill() >= 0.33f)
     {
         if (GetCombatTask().aimEnemy)
-            PredictProjectileShot(fire_origin, firedef->speed, target, self->enemy->velocity);
+            PredictProjectileShot(fire_origin, firedef->speed, target, GetCombatTask().aimEnemy->ent->velocity);
         else
             PredictProjectileShot(fire_origin, firedef->speed, target, vec3_origin);
     }
