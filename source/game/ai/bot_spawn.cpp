@@ -337,7 +337,6 @@ void BOT_Respawn( edict_t *self )
 	if( AI_GetType( self->ai ) != AI_ISBOT )
 		return;
 
-	self->enemy = NULL;
 	self->pain = BOT_pain;
 
 	self->ai->botRef->OnRespawn();

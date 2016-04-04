@@ -45,12 +45,6 @@ void Bot::LookAround()
         ChangeWeapon(botBrain.combatTask.suggestedShootWeapon);
     else if (botBrain.combatTask.spamEnemy)
         ChangeWeapon(botBrain.combatTask.suggestedSpamWeapon);
-
-    // Try to keep compatibility with other code, especially scripts
-    if (botBrain.combatTask.aimEnemy)
-        self->enemy = const_cast<edict_t*>(botBrain.combatTask.aimEnemy->ent);
-    else
-        self->enemy = nullptr;
 }
 
 void Bot::SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier, unsigned int timeoutDuration)
