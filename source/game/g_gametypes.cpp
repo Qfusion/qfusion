@@ -1366,7 +1366,7 @@ void G_Match_ToggleReady( edict_t *ent )
 }
 
 /*
-* G_Match_RemoveAllProjectiles
+* G_Match_RemoveProjectiles
 */
 void G_Match_RemoveProjectiles( edict_t *owner )
 {
