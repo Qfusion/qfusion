@@ -222,6 +222,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 static cvar_t *Cvar_Set2( const char *var_name, const char *value, bool force )
 {
 	cvar_t *var = Cvar_Find( var_name );
+	char *new_dir;
 
 	if( !var )
 	{
@@ -296,7 +297,9 @@ static cvar_t *Cvar_Set2( const char *var_name, const char *value, bool force )
 				{
 					if( !strcmp( var->name, "fs_game" ) )
 					{
-						FS_SetGameDirectory( value, false );
+						new_dir = ZoneCopyString( value );
+						FS_SetGameDirectory( new_dir, false );
+						Mem_ZoneFree( new_dir );
 						return var;
 					}
 					Mem_ZoneFree( var->string ); // free the old value string
