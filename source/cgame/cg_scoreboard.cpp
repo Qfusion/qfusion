@@ -366,8 +366,8 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	columns = fullwidth / maxwidth;
 	if( count < columns )
 		columns = count;
-	else if( columns < 3 )
-		columns = 3;
+	else if( columns < 3 && count >= 3 )
+		columns = 3; // force 3 columns if less than 3 fit
 
 	// determine column width
 	colwidth = fullwidth / columns;
@@ -403,7 +403,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 
 		if( pass )
 			trap_SCR_DrawClampString( x + xoffset, y + yoffset, string, x + xoffset, y + yoffset,
-					x + xoffset + colwidth, y + yoffset + height, font, colorWhite );
+					x + xoffset + width, y + yoffset + height, font, colorWhite );
 
 		count++;
 		if( count % columns == 0 )
