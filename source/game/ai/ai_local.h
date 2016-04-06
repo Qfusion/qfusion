@@ -59,12 +59,9 @@ extern cvar_t *sv_botpersonality;
 #define AI_SHORT_RANGE_GOAL_DELAY 250
 #define AI_SHORT_RANGE_GOAL_DELAY_IDLE 25
 
-#define AI_DEFAULT_YAW_SPEED	( self->ai->pers.cha.default_yaw_speed )
-#define AI_REACTION_TIME	( self->ai->pers.cha.reaction_time )
-#define AI_COMBATMOVE_TIMEOUT	( self->ai->pers.cha.combatmove_timeout )
-#define AI_YAW_ACCEL		( self->ai->pers.cha.yaw_accel * FRAMETIME )
-#define AI_CHAR_OFFENSIVNESS ( self->ai->pers.cha.offensiveness )
-#define AI_CHAR_CAMPINESS ( self->ai->pers.cha.campiness )
+#define AI_DEFAULT_YAW_SPEED	( 35 * 5 )
+#define AI_COMBATMOVE_TIMEOUT	( 500 )
+#define AI_YAW_ACCEL		( 95 * FRAMETIME )
 
 // Platform states:
 #define	STATE_TOP	    0
@@ -370,20 +367,8 @@ typedef struct
 	float weapon_affinity[WEAP_TOTAL];
 } ai_character;
 
-typedef struct
-{
-	const char *netname;
-	float skillLevel;       // Affects AIM and fire rate (fraction of 1)
-	unsigned int moveTypesMask;      // bot can perform these moves, to check against required moves for a given path
-	float inventoryWeights[MAX_ITEMS];
-
-	ai_character cha;
-} ai_pers_t;
-
 typedef struct ai_handle_s
 {
-	ai_pers_t pers;         // persistant definition (class?)
-
 	ai_type	type;
 
 	int asFactored, asRefCount;
@@ -417,7 +402,6 @@ void	    AITools_InitMakenodes( void );
 
 //bot_classes
 //----------------------------------------------------------
-void	    BOT_DMclass_InitPersistant( edict_t *self );
 
 struct MoveTestResult
 {

@@ -2,10 +2,11 @@
 #include "aas.h"
 #include <algorithm>
 
-Bot::Bot(edict_t *self)
+Bot::Bot(edict_t *self, float skillLevel)
     : Ai(self),
       dangersDetector(self),
-      botBrain(self),
+      botBrain(self, skillLevel),
+      skillLevel(skillLevel),
       printLink(false),
       isBunnyHopping(false),
       hasTriggeredRj(false),

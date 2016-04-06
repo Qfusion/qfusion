@@ -76,9 +76,10 @@ void Enemy::OnViewed()
     lastSeenTimestamps.push_front(lastSeenAt);
 }
 
-BotBrain::BotBrain(edict_t *bot)
+BotBrain::BotBrain(edict_t *bot, float skillLevel)
     : AiBaseBrain(bot, TFL_DEFAULT, TFL_DEFAULT),
       bot(bot),
+      skillLevel(skillLevel),
       trackedEnemiesCount(0),
       maxTrackedEnemies(3 + (unsigned)((MAX_TRACKED_ENEMIES-3) * BotSkill())),
       maxTrackedAttackers(1 + (unsigned)((MAX_TRACKED_ATTACKERS-1) * BotSkill())),
@@ -791,7 +792,6 @@ int BotBrain::SuggestEasyBotsWeapon(const Enemy &enemy)
 
 	for (int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++)
 	{
-        const auto personality = bot->ai->pers;
         gsitem_t *weaponItem;
 		float rangeWeight;
 
@@ -801,14 +801,14 @@ int BotBrain::SuggestEasyBotsWeapon(const Enemy &enemy)
 		if(!GS_CheckAmmoInWeapon( &bot->r.client->ps, i ))
 			continue;
 
-		rangeWeight = AIWeapons[i].RangeWeight[weapon_range] * personality.cha.weapon_affinity[i - (WEAP_GUNBLADE - 1)];
+		rangeWeight = AIWeapons[i].RangeWeight[weapon_range];
 
 		// weigh up if having strong ammo
 		if( bot->r.client->ps.inventory[weaponItem->ammo_tag] )
 			rangeWeight *= 1.25;
 
 		// add a small random factor (less random the more skill)
-		rangeWeight += brandom(-( 1.0 - personality.skillLevel ), 1.0 - personality.skillLevel);
+		rangeWeight += brandom(-(1.0f - BotSkill()), 1.0f - BotSkill());
 
 		// compare range weights
 		if(rangeWeight > best_weight)

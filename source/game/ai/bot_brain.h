@@ -88,11 +88,6 @@ inline bool IsCarrier(const edict_t *ent)
     return ent && ent->r.client && ent->s.effects & EF_CARRIER;
 }
 
-inline float Skill(const edict_t *ent)
-{
-    return ent && ent->ai ? ent->ai->pers.skillLevel : 0.0f;
-}
-
 float DamageToKill(const edict_t *client, float armorProtection, float armorDegradation);
 
 class Enemy
@@ -124,7 +119,6 @@ public:
     inline bool HasShell() const { return ::HasShell(ent); }
     inline bool HasPowerups() const { return ::HasPowerups(ent); }
     inline bool IsCarrier() const { return ::IsCarrier(ent); }
-    inline float Skill() const { return ::Skill(ent); }
 
     template<int Weapon> inline int AmmoReadyToFireCount() const
     {
@@ -350,6 +344,7 @@ struct CombatDisposition
 class BotBrain: public AiBaseBrain
 {
     edict_t *bot;
+    float skillLevel;
 
     static constexpr unsigned MAX_TRACKED_ENEMIES = 10;
     static constexpr unsigned MAX_TRACKED_ATTACKERS = 5;
@@ -428,7 +423,7 @@ class BotBrain: public AiBaseBrain
     inline bool BotHasShell() const { return ::HasShell(bot); }
     inline bool BotHasPowerups() const { return ::HasPowerups(bot); }
     inline bool BotIsCarrier() const { return ::IsCarrier(bot); }
-    inline float BotSkill() const { return ::Skill(bot); }
+    float BotSkill() const { return skillLevel; }
 
     inline float DamageToKill(const edict_t *client) const
     {
@@ -492,7 +487,7 @@ class BotBrain: public AiBaseBrain
 public:
     CombatTask combatTask;
 
-    BotBrain(edict_t *bot);
+    BotBrain(edict_t *bot, float skillLevel);
 
     void PrepareToFrame();
 
