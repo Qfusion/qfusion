@@ -278,6 +278,7 @@ void Bot::OnRespawn()
 {
     // Ai status will be updated implicitly (since a bot stopped ghosting)
     combatMovePushTimeout = 0;
+    ResetNavigation();
 }
 
 //==========================================
