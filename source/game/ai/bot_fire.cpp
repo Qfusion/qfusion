@@ -11,9 +11,6 @@ bool Bot::CheckShot(const vec3_t point)
     trace_t tr;
     vec3_t start, forward, right, offset;
 
-    if( random() > self->ai->pers.cha.firerate )
-        return false;
-
     AngleVectors( self->r.client->ps.viewangles, forward, right, NULL );
 
     VectorSet( offset, 0, 0, self->viewheight );

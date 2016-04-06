@@ -165,7 +165,7 @@ void G_FreeAI( edict_t *ent )
 // G_SpawnAI
 // allocate ai_handle_t for this entity
 //==========================================
-void G_SpawnAI( edict_t *ent )
+void G_SpawnAI( edict_t *ent, float skillLevel )
 {
     if( !ent->ai ) {
         ent->ai = ( ai_handle_t * )G_Malloc( sizeof( ai_handle_t ) );
@@ -177,7 +177,7 @@ void G_SpawnAI( edict_t *ent )
     if( ent->r.svflags & SVF_FAKECLIENT ) {
         ent->ai->type = AI_ISBOT;
         void *mem = G_Malloc( sizeof(Bot) );
-        ent->ai->botRef = new(mem) Bot( ent );
+        ent->ai->botRef = new(mem) Bot( ent, skillLevel );
         ent->ai->aiRef = ent->ai->botRef;
     }
     else {
@@ -241,9 +241,8 @@ void AI_ResetWeights( ai_handle_t *ai )
 //==========================================
 float AI_GetItemWeight( const ai_handle_t *ai, const gsitem_t *item )
 {
-    if( !item )
-        return 0;
-    return ai->pers.inventoryWeights[item->tag];
+    // Currently disabled, script interface should be changed
+    abort();
 }
 //==========================================
 // AI_GetRootGoalEnt
@@ -305,22 +304,30 @@ void AI_DamagedEntity(edict_t *self, edict_t *ent, int damage)
 
 float AI_GetCharacterReactionTime( const ai_handle_t *ai )
 {
-    return ai == nullptr ? 0 : ai->pers.cha.reaction_time;
+    // Currently disabled, script interface should be changed
+    abort();
+    return 0;
 }
 
 float AI_GetCharacterOffensiveness( const ai_handle_t *ai )
 {
-    return ai == nullptr ? 0 : ai->pers.cha.offensiveness;
+    // Currently disabled, script interface should be changed
+    abort();
+    return 0;
 }
 
 float AI_GetCharacterCampiness( const ai_handle_t *ai )
 {
-    return ai == nullptr ? 0 : ai->pers.cha.campiness;
+    // Currently disabled, script interface should be changed
+    abort();
+    return 0;
 }
 
 float AI_GetCharacterFirerate( const ai_handle_t *ai )
 {
-    return ai == nullptr ? 0 : ai->pers.cha.firerate;
+    // Currently disabled, script interface should be changed
+    abort();
+    return 0;
 }
 
 void AI_Think(edict_t *self)

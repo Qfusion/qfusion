@@ -9,7 +9,7 @@ class Bot: public Ai
 {
     friend class BotBrain;
 public:
-    Bot(edict_t *self);
+    Bot(edict_t *self, float skillLevel);
 
     void Move(usercmd_t *ucmd);
     void CombatMovement(usercmd_t *ucmd, bool hasDangers);
@@ -33,7 +33,7 @@ public:
 
     void OnRespawn();
 
-    inline float Skill() { return self->ai->pers.skillLevel; }
+    inline float Skill() const { return skillLevel; }
 
 private:
     bool TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove);
@@ -45,6 +45,7 @@ private:
     DangersDetector dangersDetector;
     BotBrain botBrain;
 
+    float skillLevel;
     bool printLink;
 
     bool isBunnyHopping;

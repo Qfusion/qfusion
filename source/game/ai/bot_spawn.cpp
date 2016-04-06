@@ -103,40 +103,6 @@ static const char * const LocalBotNames[] =
 
 	NULL
 };
-/*
-typedef struct
-{
-const char *name;
-float default_yaw_speed;
-float reaction_time;		
-float combatmove_timeout;
-float yaw_accel;
-float offensiveness;
-float campiness;
-float firerate;
-float armor_grabber;
-float health_grabber;
-
-float weapon_affinity[WEAP_TOTAL];
-} ai_character;
-*/
-static const ai_character bot_personalities[] = {
-	// yaw  reac comb  yacc off  camp fire armor health weapon affinities
-	//	no gb mg   rg   gl   rl   pg   lg   eb   ig
-	{ "JoeB",    35*5, 80, 500,  95,  1.0, 1.0, 1.0, 1.0,  1.0,   { 0, 1, 1,   1,   1,   1,   1,   1,   1,   1} },
-	{ "Rock",    45*5, 90, 400,  95,  1.2, 4.0, 0.6, 1.0,  1.0,   { 0, 1, 1,   1.4, 1,   1,   1.4, 1,   1,   1} },
-	{ "PGuy",    40*5, 70, 600,  100,  0.7, 4.0, 0.4, 1.0,  1.0,   { 0, 1, 1.2, 2,   1,   1,   1.2, 1.6, 1.2, 1} },
-	{ "proBot",  20*5, 80, 600,  90,  0.8, 4.0, 1.0, 1.2,  1.2,   { 0, 1, 1.2, 1.6, 1,   1,   1.2, 1.2, 1.2, 1} },
-	{ "Baas",    30*5, 70, 500,  95,  0.9, 0.1, 0.5, 1.0,  1.0,   { 0, 1, 1,   1.2, 1,   1,   1,   1.2, 1.6, 1} },
-	{ "camB",    25*5, 90, 700,  90,  0.8, 0.1, 1.2, 1.0,  1.0,   { 0, 1, 1,   1.2, 1.2, 1,   1,   1,   1,   1} },
-	{ "Ovot",    35*5, 85, 600,  110,  0.9, 2.5, 0.1, 1.0,  1.0,   { 0, 1, 1,   1,   1,   1,   1,   1,   1,   1} },
-	{ "Bumm",    25*5, 70, 600,  90,  1.1, 1.5, 1.0, 1.0,  1.1,   { 0, 1, 1,   1.2, 1.6, 1.2, 1,   1.2, 1,   1} },
-	{ "Gran",    30*5, 90, 600,  115,  1.3, 1.5, 1.0, 1.0,  1.0,   { 0, 1, 1,   1,   1,   1.6, 1,   1,   1,   1} },
-	{ "Laaz",    20*5, 70, 600,  85,  1.2, 1.5, 0.6, 1.0,  1.0,   { 0, 1, 1,   1,   1.2, 1,   1,   1,   1.6, 1} },
-	{ "Peacy",   40*5, 90, 750, 110, 0.8, 2.0, 1.0, 0.9,  0.9,   { 0, 1, 1,   1.6, 1,   1.2, 1.2, 1.2, 1,   1} },
-	{ "m-sook",  25*5, 70, 500,  95,  0.8, 2.0, 0.7, 1.0,  1.0,   { 0, 1, 1,   1,   1.2, 1.6, 1,   1,   1,   1} },
-	{ "boom",    40*5, 60, 600,  90,  1.2, 1.0, 1.0, 1.0,  1.0,   { 0, 1, 1,   1.2, 1.2, 1.2, 1,   1.6, 1.6, 1} }
-};
 
 #define BOT_NUMCHARACTERS 13
 //------------------------------------------------------------
@@ -264,7 +230,7 @@ static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin, char *bot_name )
 // BOT_CreateUserinfo
 // Creates UserInfo string to connect with
 //==========================================
-static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size, int bot_pers )
+static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size )
 {
 	char bot_skin[MAX_INFO_STRING];
 	char bot_name[MAX_NAME_BYTES];
@@ -347,128 +313,16 @@ void BOT_Respawn( edict_t *self )
 	self->ai->aiRef->ResetNavigation();
 }
 
-//==========================================
-// BOT_InitPersistant
-// Persistant after respawns. To be class definition in the future
-//==========================================
-static void BOT_InitPersistant( edict_t *self )
+static float MakeRandomBotSkillByServerSkillLevel()
 {
-	float sv_skill;
-	//standard stuff
-	self->think = NULL;
-	self->nextThink = level.time + 1;
-	self->ai->type = AI_ISBOT;
-	self->classname = "bot";
-	self->yaw_speed = AI_DEFAULT_YAW_SPEED;
-	self->die = player_die;
-
-	// set skill based on sv_skilllevel cvar
-	sv_skill = trap_Cvar_Value( "sv_skilllevel" ); // 0 = easy, 2 = hard
-	sv_skill += random(); // so we have a float between 0 and 3 meaning the server skill
-	clamp( sv_skill, 0.1f, 3.0f );
-	self->ai->pers.skillLevel = sv_skill/3.0f; // the same being a fraction of 1.
-	if( self->ai->pers.skillLevel < 0.1f ) self->ai->pers.skillLevel = 0.1f;
-
-	self->yaw_speed -= 20 * ( 1.0f - self->ai->pers.skillLevel );
-
-	if( self->r.client->netname[0] )
-		self->ai->pers.netname = self->r.client->netname;
-	else
-		self->ai->pers.netname = "SomeBot";
-	
-	if( !level.gametype.disableObituaries ) // FIXME
-		G_Printf( "%s skill %i\n", self->r.client->netname, (int)( self->ai->pers.skillLevel * 100 ) );
-
-	//class: always set up default first
-	BOT_DMclass_InitPersistant( self );
-}
-
-//==========================================
-// BOT_DMclass_InitPersistant
-// Persistant after respawns.
-//==========================================
-void BOT_DMclass_InitPersistant( edict_t *self )
-{
-	gsitem_t *item;
-	int i, w;
-
-	self->classname = "dmbot";
-
-	if( self->r.client->netname )
-		self->ai->pers.netname = self->r.client->netname;
-	else
-		self->ai->pers.netname = "dmBot";
-
-	//available moveTypes for this class
-	self->ai->pers.moveTypesMask = ( LINK_MOVE|LINK_STAIRS|LINK_FALL|LINK_WATER|LINK_WATERJUMP|LINK_JUMPPAD|LINK_PLATFORM|LINK_TELEPORT|LINK_LADDER|LINK_JUMP|LINK_CROUCH );
-
-	//Persistant Inventory Weights (0 = can not pick)
-	memset( self->ai->pers.inventoryWeights, 0, sizeof( self->ai->pers.inventoryWeights ) );
-
-	// weapons
-	self->ai->pers.inventoryWeights[WEAP_GUNBLADE] = 0.0f;
-	self->ai->pers.inventoryWeights[WEAP_MACHINEGUN] = 0.75f;
-	self->ai->pers.inventoryWeights[WEAP_RIOTGUN] = 0.75f;
-	self->ai->pers.inventoryWeights[WEAP_GRENADELAUNCHER] = 0.7f;
-	self->ai->pers.inventoryWeights[WEAP_ROCKETLAUNCHER] = 0.8f;
-	self->ai->pers.inventoryWeights[WEAP_PLASMAGUN] = 0.75f;
-	self->ai->pers.inventoryWeights[WEAP_ELECTROBOLT] = 0.8f;
-	self->ai->pers.inventoryWeights[WEAP_LASERGUN] = 0.8f;
-
-	// ammo
-	self->ai->pers.inventoryWeights[AMMO_WEAK_GUNBLADE] = 0.0f;
-	self->ai->pers.inventoryWeights[AMMO_BULLETS] = 0.7f;
-	self->ai->pers.inventoryWeights[AMMO_SHELLS] = 0.7f;
-	self->ai->pers.inventoryWeights[AMMO_GRENADES] = 0.7f;
-	self->ai->pers.inventoryWeights[AMMO_ROCKETS] = 0.7f;
-	self->ai->pers.inventoryWeights[AMMO_PLASMA] = 0.7f;
-	self->ai->pers.inventoryWeights[AMMO_BOLTS] = 0.7f;
-	self->ai->pers.inventoryWeights[AMMO_LASERS] = 0.7f;
-
-	// armor
-	self->ai->pers.inventoryWeights[ARMOR_RA] = self->ai->pers.cha.armor_grabber * 2.0f;
-	self->ai->pers.inventoryWeights[ARMOR_YA] = self->ai->pers.cha.armor_grabber * 1.0f;
-	self->ai->pers.inventoryWeights[ARMOR_GA] = self->ai->pers.cha.armor_grabber * 0.75f;
-	self->ai->pers.inventoryWeights[ARMOR_SHARD] = self->ai->pers.cha.armor_grabber * 0.5f;
-
-	// health
-	self->ai->pers.inventoryWeights[HEALTH_MEGA] = /*self->ai->pers.cha.health_grabber **/ 2.0f;
-	self->ai->pers.inventoryWeights[HEALTH_ULTRA] = /*self->ai->pers.cha.health_grabber **/ 2.0f;
-	self->ai->pers.inventoryWeights[HEALTH_LARGE] = /*self->ai->pers.cha.health_grabber **/ 1.0f;
-	self->ai->pers.inventoryWeights[HEALTH_MEDIUM] = /*self->ai->pers.cha.health_grabber **/ 0.9f;
-	self->ai->pers.inventoryWeights[HEALTH_SMALL] = /*self->ai->pers.cha.health_grabber **/ 0.4f;
-
-	// backpack
-	self->ai->pers.inventoryWeights[AMMO_PACK] = 0.4f;
-
-	self->ai->pers.inventoryWeights[POWERUP_QUAD] = self->ai->pers.cha.offensiveness * 2.0f;
-	self->ai->pers.inventoryWeights[POWERUP_SHELL] = self->ai->pers.cha.offensiveness * 2.0f;
-
-	// scale the inventoryWeights by the character weapon affinities
-	// FIXME: rewrite this loop!
-	for( i = 1; i < MAX_ITEMS; i++ )
-	{
-		if( ( item = GS_FindItemByTag( i ) ) == NULL )
-			continue;
-
-		if( item->type & IT_WEAPON )
-		{
-			self->ai->pers.inventoryWeights[i] *= self->ai->pers.cha.weapon_affinity[ i - ( WEAP_GUNBLADE - 1 ) ];
-		}
-		else if( item->type & IT_AMMO )
-		{
-			// find weapon for ammo
-			for( w = WEAP_GUNBLADE; w < WEAP_TOTAL; w++ )
-			{
-				if( GS_FindItemByTag( w )->ammo_tag == item->tag ||
-					GS_FindItemByTag( w )->weakammo_tag == item->tag )
-				{
-					self->ai->pers.inventoryWeights[i] *= self->ai->pers.cha.weapon_affinity[ w - ( WEAP_GUNBLADE - 1 ) ];
-					break;
-				}
-			}
-		}
-	}
+	float skillLevel = trap_Cvar_Value("sv_skilllevel"); // 0 = easy, 2 = hard
+	skillLevel += random(); // so we have a float between 0 and 3 meaning the server skill
+	skillLevel /= 3.0f;
+	if (skillLevel < 0.1f)
+		skillLevel = 0.1f;
+	else if (skillLevel > 1.0f) // Won't happen?
+		skillLevel = 1.0f;
+	return skillLevel;
 }
 
 //==========================================
@@ -482,7 +336,6 @@ static void BOT_DoSpawnBot( void )
 	edict_t	*ent;
 	static char fakeSocketType[] = "loopback";
 	static char fakeIP[] = "127.0.0.1";
-	int bot_pers;
 
 	if (!AAS_Initialized())
 	{
@@ -492,12 +345,7 @@ static void BOT_DoSpawnBot( void )
 		return;
 	}
 
-	if( sv_botpersonality->integer )
-		bot_pers = sv_botpersonality->integer % BOT_NUMCHARACTERS;
-	else
-		bot_pers = (int)brandom( 0, BOT_NUMCHARACTERS ) % BOT_NUMCHARACTERS;
-
-	BOT_CreateUserinfo( userinfo, sizeof( userinfo ), bot_pers );
+	BOT_CreateUserinfo( userinfo, sizeof( userinfo ) );
 
 	entNum = trap_FakeClientConnect( userinfo, fakeSocketType, fakeIP );
 	if( entNum < 1 )
@@ -507,13 +355,22 @@ static void BOT_DoSpawnBot( void )
 	}
 
 	ent = &game.edicts[entNum];
-	G_SpawnAI( ent );
+
+	// We have to determine skill level early, since G_SpawnAI calls Bot constructor that requires it as a constant
+	float skillLevel = MakeRandomBotSkillByServerSkillLevel();
+
+	G_SpawnAI( ent, skillLevel );
 
 	//init this bot
+	ent->think = NULL;
+	ent->nextThink = level.time + 1;
+	ent->ai->type = AI_ISBOT;
+	ent->classname = "bot";
+	ent->yaw_speed = AI_DEFAULT_YAW_SPEED;
+	ent->die = player_die;
+	ent->yaw_speed -= 20 * (1.0f - skillLevel);
 
-	ent->ai->pers.cha = bot_personalities[ bot_pers ];
-
-	BOT_InitPersistant( ent );
+	G_Printf("%s skill %i\n", ent->r.client->netname, (int) (skillLevel * 100));
 
 	//set up for Spawn
 	BOT_Respawn( ent );

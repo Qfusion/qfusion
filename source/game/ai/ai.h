@@ -51,7 +51,7 @@ void		AI_RemoveGoalEntity( edict_t *ent );
 void		AI_InitEntitiesData( void );
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );
-void        G_SpawnAI( edict_t *ent );
+void        G_SpawnAI( edict_t *ent, float skillLevel = 0.1f );
 ai_type		AI_GetType( const ai_handle_t *ai );
 void		AI_ClearWeights( ai_handle_t *ai );
 void		AI_SetGoalWeight( ai_handle_t *ai, int index, float weight );
