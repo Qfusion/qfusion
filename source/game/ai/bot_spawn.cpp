@@ -33,199 +33,39 @@ in NO WAY supported by Steve Yeager.
 //
 //===============================================================
 
-// JALFIXME : we only have 1 skin now, so I use invalid names so the randomizer check works
-// and force the default one later on
-static const char * const LocalBotSkins[] =
-{
-	"bigvic/default",
-	"bigvic/default2",
-	"bigvic/default3",
-	"bigvic/default4",
-	"bigvic/default5",
+static struct { const char *name; const char *model; } botCharacters[] = {
+	{ "Viciious",   "bigvic" },
+	{ "Sid",        "bigvic" },
+	{ "Pervert",    "bigvic" },
+	{ "Sick",       "bigvic" },
+	{ "Punk",       "bigvic" },
 
-	"monada/default",
-	"monada/default1",
-	"monada/default2",
-	"monada/default3",
-	"monada/default4",
+	{ "Black Sis",  "monada" },
+	{ "Monada",     "monada" },
+	{ "Afrodita",   "monada" },
+	{ "Goddess",    "monada" },
+	{ "Athena",     "monada" },
 
-	"silverclaw/default",
-	"silverclaw/default1",
-	"silverclaw/default2",
-	"silverclaw/default3",
-	"silverclaw/default4",
+	{ "Silver",     "silverclas" },
+	{ "Cathy",      "silverclaw" },
+	{ "MishiMishi", "silverclaw" },
+	{ "Lobita",     "silverclaw" },
+	{ "SisterClaw", "silverclaw" },
 
-	"padpork/default",
-	"padpork/default1",
-	"padpork/default2",
-	"padpork/default3",
-	"padpork/default4",
+	{ "Padpork",    "padpork" },
+	{ "Jason",      "padpork" },
+	{ "Lord Hog",   "padpork" },
+	{ "Porkalator", "padpork" },
+	{ "Babe",       "padpork" },
 
-	"bobot/default",
-	"bobot/default1",
-	"bobot/default2",
-	"bobot/default3",
-	"bobot/default4",
-
-	NULL
+	{ "YYZ2112",    "bobot" },
+	{ "01011001",   "bobot" },
+	{ "Sector",     "bobot" },
+	{ "%APPDATA%",  "bobot" },
+	{ "P.E.#1",     "bobot" },
 };
 
-static const char * const LocalBotNames[] =
-{
-	"Viciious",
-	"Sid",
-	"Pervert",
-	"Sick",
-	"Punk",
-
-	"Black Sis",
-	"Monada",
-	"Afrodita",
-	"Goddess",
-	"Athena",
-
-	"Silver",
-	"Cathy",
-	"MishiMishi",
-	"Lobita",
-	"SisterClaw",
-
-	"Padpork",
-	"Jason",
-	"Lord Hog",
-	"Porkalator",
-	"Babe",
-
-	"YYZ2112",
-	"01011001",
-	"Sector",
-	"%APPDATA%",
-	"P.E.#1",
-
-	NULL
-};
-
-#define BOT_NUMCHARACTERS 13
-//------------------------------------------------------------
-
-
-typedef struct
-{
-	char bot_model[MAX_INFO_STRING];
-	char bot_skin[MAX_INFO_STRING];
-	char bot_name[MAX_NAME_BYTES];
-} localbotskin_t;
-
-
-//==========================================
-// BOT_GetUnusedSkin
-// Retrieve a random unused skin & name
-//==========================================
-static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin, char *bot_name )
-{
-	bool inuse;
-	int skinnumber;
-	char *model, *skin;
-	char scratch[MAX_INFO_STRING];
-	int i, freeskins;
-	edict_t	*ent;
-	localbotskin_t *botskins;
-	localbotskin_t *localbotskin;
-
-	//count the unused skins, and make sure there is at least 1 of them
-	skinnumber = freeskins = 0;
-	while( LocalBotSkins[skinnumber] != NULL )
-	{
-		inuse = false;
-		for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ )
-		{
-			if( !( ent->r.svflags & SVF_FAKECLIENT ) || !ent->r.client )
-				continue;
-
-			model = Info_ValueForKey( ent->r.client->userinfo, "model" );
-			skin = Info_ValueForKey( ent->r.client->userinfo, "skinl" );
-
-			if( model && skin )
-			{
-				Q_snprintfz( scratch, sizeof( scratch ), "%s/%s", model, skin );
-
-				if( !Q_stricmp( scratch, LocalBotSkins[skinnumber] ) )
-				{
-					inuse = true;
-					break;
-				}
-			}
-		}
-		if( inuse == false )
-			freeskins++;
-
-		skinnumber++;
-	}
-
-	//fallback to old method
-	if( !freeskins )
-		return false;
-
-	//assign tmp memory for storing unused skins
-	botskins = (localbotskin_t *)G_Malloc( sizeof( localbotskin_t ) * freeskins );
-
-	//create a list of unused skins
-	skinnumber = freeskins = 0;
-	while( LocalBotSkins[skinnumber] != NULL )
-	{
-		inuse = false;
-		for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ )
-		{
-			if( !( ent->r.svflags & SVF_FAKECLIENT ) || !ent->r.client )
-				continue;
-
-			model = Info_ValueForKey( ent->r.client->userinfo, "model" );
-			skin = Info_ValueForKey( ent->r.client->userinfo, "skinl" );
-
-			if( model && skin )
-			{
-				Q_snprintfz( scratch, sizeof( scratch ), "%s/%s", model, skin );
-
-				if( !Q_stricmp( scratch, LocalBotSkins[skinnumber] ) )
-				{
-					inuse = true;
-					break;
-				}
-			}
-		}
-		//store and advance
-		if( inuse == false )
-		{
-			const char *p;
-			localbotskin = botskins + freeskins;
-
-			p = strchr( LocalBotSkins[skinnumber], '/' );
-			if( !strlen( p ) )
-				continue;
-			p++;
-
-			Q_strncpyz( localbotskin->bot_model, LocalBotSkins[skinnumber], strlen( LocalBotSkins[skinnumber] ) - strlen( p ) );
-			Q_strncpyz( localbotskin->bot_skin, p, sizeof( localbotskin->bot_skin ) );
-			Q_strncpyz( localbotskin->bot_name, LocalBotNames[skinnumber], sizeof( localbotskin->bot_name ) );
-
-			freeskins++;
-		}
-
-		skinnumber++;
-	}
-
-	//now get a random skin from the list
-	skinnumber = (int)( random()*freeskins );
-	localbotskin = botskins + skinnumber;
-	Q_strncpyz( bot_model, localbotskin->bot_model, sizeof( localbotskin->bot_model ) );
-	Q_strncpyz( bot_skin, localbotskin->bot_skin, sizeof( localbotskin->bot_skin ) );
-	Q_strncpyz( bot_name, localbotskin->bot_name, sizeof( localbotskin->bot_name ) );
-
-	G_Free( botskins );
-
-	return true;
-}
-
+static constexpr int BOT_CHARACTERS_COUNT = sizeof(botCharacters) / sizeof(botCharacters[0]);
 
 //==========================================
 // BOT_CreateUserinfo
@@ -233,58 +73,17 @@ static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin, char *bot_name )
 //==========================================
 static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size )
 {
-	char bot_skin[MAX_INFO_STRING];
-	char bot_name[MAX_NAME_BYTES];
-	char bot_model[MAX_INFO_STRING];
+	// Try to avoid bad distribution, otherwise some bots are selected too often. Weights are prime numbers
+	int characterIndex = ((int)(3 * random() + 11 * random() +  97 * random() + 997 * random())) % BOT_CHARACTERS_COUNT;
 
-	//jalfixme: we have only one skin yet
+	memset(userinfo, 0, userinfo_size);
 
-	//GetUnusedSkin doesn't repeat already used skins/names
-	if( !BOT_GetUnusedSkin( bot_model, bot_skin, bot_name ) )
-	{
-		float r;
-		int i, botcount = 0;
-		edict_t	*ent;
-
-		//count spawned bots for the names
-		for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ )
-		{
-			if( !ent->r.inuse || !ent->ai ) continue;
-			if( ent->r.svflags & SVF_FAKECLIENT && AI_GetType( ent->ai ) == AI_ISBOT )
-				botcount++;
-		}
-
-		// Set the name for the bot.
-		Q_snprintfz( bot_name, sizeof( bot_name ), "Bot%d", botcount+1 );
-
-		// randomly choose skin
-		r = random();
-		if( r > 0.8f )
-			Q_snprintfz( bot_model, sizeof( bot_model ), "bigvic" );
-		else if( r > 0.6f )
-			Q_snprintfz( bot_model, sizeof( bot_model ), "padpork" );
-		else if( r > 0.4f )
-			Q_snprintfz( bot_model, sizeof( bot_model ), "silverclaw" );
-		else if( r > 0.2f )
-			Q_snprintfz( bot_model, sizeof( bot_model ), "bobot" );
-		else
-			Q_snprintfz( bot_model, sizeof( bot_model ), "monada" );
-
-		Q_snprintfz( bot_skin, sizeof( bot_skin ), "default" );
-	}
-
-	//Q_strncpyz( bot_name, bot_personalities[bot_pers].name, sizeof( bot_name ) );
-
-	// initialize userinfo
-	memset( userinfo, 0, userinfo_size );
-
-	// add bot's name/skin/hand to userinfo
-	Info_SetValueForKey( userinfo, "name", bot_name );
-	Info_SetValueForKey( userinfo, "model", bot_model );
-	//Info_SetValueForKey( userinfo, "skin", bot_skin );
-	Info_SetValueForKey( userinfo, "skin", "default" ); // JALFIXME
-	Info_SetValueForKey( userinfo, "hand", va( "%i", (int)( random()*2.5 ) ) );
-	Info_SetValueForKey( userinfo, "color", va( "%i %i %i", (uint8_t)( random()*255 ), (uint8_t)( random()*255 ), (uint8_t)( random()*255 ) ) );
+	Info_SetValueForKey(userinfo, "name", botCharacters[characterIndex].name);
+	Info_SetValueForKey(userinfo, "model", botCharacters[characterIndex].model);
+	Info_SetValueForKey(userinfo, "skin", "default");
+	Info_SetValueForKey(userinfo, "hand", va( "%i", (int)( random()*2.5 ) ) );
+	const char *color = va("%i %i %i", (uint8_t)(random()*255), (uint8_t)(random()*255), (uint8_t)(random()*255));
+	Info_SetValueForKey(userinfo, "color", color);
 }
 
 static void BOT_pain( edict_t *self, edict_t *other, float kick, int damage )
