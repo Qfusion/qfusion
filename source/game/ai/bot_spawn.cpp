@@ -25,6 +25,7 @@ in NO WAY supported by Steve Yeager.
 
 #include "bot.h"
 #include "aas.h"
+#include "../../gameshared/gs_public.h"
 
 //===============================================================
 //
@@ -433,21 +434,29 @@ void BOT_SpawnBot( const char *team_name )
 void BOT_RemoveBot( const char *name )
 {
 	int i;
-	bool freed = false;
-	edict_t	*ent;
-
-	for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ )
+	edict_t *ent;
+	// If a named bot should be removed
+	if (Q_stricmp(name, "all"))
 	{
-		if( !ent->r.inuse || AI_GetType( ent->ai ) != AI_ISBOT )
-			continue;
-
-		if( !Q_stricmp( ent->r.client->netname, name ) || !Q_stricmp( name, "all" ) )
+		for (i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++)
 		{
-			trap_DropClient( ent, DROP_TYPE_GENERAL, NULL );
-			freed = true;
+			if (!Q_stricmp(ent->r.client->netname, name))
+			{
+				trap_DropClient(ent, DROP_TYPE_GENERAL, nullptr);
+				break;
+			}
+		}
+		if (i == gs.maxclients)
+			G_Printf("BOT: %s not found\n", name);
+	}
+	else
+	{
+		for (i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++)
+		{
+			if (!ent->r.inuse || AI_GetType(ent->ai) != AI_ISBOT)
+				continue;
+
+			trap_DropClient(ent, DROP_TYPE_GENERAL, nullptr);
 		}
 	}
-
-	if( !freed && Q_stricmp( name, "all" ) )
-		G_Printf( "BOT: %s not found\n", name );
 }
