@@ -25,7 +25,6 @@ in NO WAY supported by Steve Yeager.
 
 #include "bot.h"
 #include "aas.h"
-#include "../../gameshared/gs_public.h"
 
 //===============================================================
 //
@@ -103,7 +102,6 @@ void BOT_Respawn( edict_t *self )
 	if( AI_GetType( self->ai ) != AI_ISBOT )
 		return;
 
-	self->pain = BOT_pain;
 	self->ai->botRef->OnRespawn();
 
 	VectorClear( self->r.client->ps.pmove.delta_angles );
@@ -123,18 +121,15 @@ static float MakeRandomBotSkillByServerSkillLevel()
 }
 
 //==========================================
-// BOT_DoSpawnBot
-// Spawn the bot
+// BOT_SpawnBot
+// Used Spawn the bot
 //==========================================
-static void BOT_DoSpawnBot( void )
+void BOT_SpawnBot( const char *team_name )
 {
-	char userinfo[MAX_INFO_STRING];
-	int entNum;
-	edict_t	*ent;
-	static char fakeSocketType[] = "loopback";
-	static char fakeIP[] = "127.0.0.1";
+	if( level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities )
+		return;
 
-	if (!AAS_Initialized())
+	if(!AAS_Initialized())
 	{
 		Com_Printf( "AI: Can't spawn bots without a valid navigation file\n" );
 		if( g_numbots->integer ) 
@@ -142,16 +137,19 @@ static void BOT_DoSpawnBot( void )
 		return;
 	}
 
+	char userinfo[MAX_INFO_STRING];
+	static char fakeSocketType[] = "loopback";
+	static char fakeIP[] = "127.0.0.1";
 	BOT_CreateUserinfo( userinfo, sizeof( userinfo ) );
 
-	entNum = trap_FakeClientConnect( userinfo, fakeSocketType, fakeIP );
+	int entNum = trap_FakeClientConnect( userinfo, fakeSocketType, fakeIP );
 	if( entNum < 1 )
 	{          // 0 is worldspawn, -1 is error
 		Com_Printf( "AI: Can't spawn the fake client\n" );
 		return;
 	}
 
-	ent = &game.edicts[entNum];
+	edict_t *ent = &game.edicts[entNum];
 
 	// We have to determine skill level early, since G_SpawnAI calls Bot constructor that requires it as a constant
 	float skillLevel = MakeRandomBotSkillByServerSkillLevel();
@@ -164,6 +162,7 @@ static void BOT_DoSpawnBot( void )
 	ent->ai->type = AI_ISBOT;
 	ent->classname = "bot";
 	ent->yaw_speed = AI_DEFAULT_YAW_SPEED;
+	ent->pain = BOT_pain;
 	ent->die = player_die;
 	ent->yaw_speed -= 20 * (1.0f - skillLevel);
 
@@ -172,53 +171,17 @@ static void BOT_DoSpawnBot( void )
 	//set up for Spawn
 	BOT_Respawn( ent );
 
-	//stay as spectator, give random time for joining
-	ent->nextThink = level.time + random() * 8000;
-}
-
-//==========================================
-// BOT_SpawnerThink
-// Call the real bot spawning function
-//==========================================
-static void BOT_SpawnerThink( edict_t *spawner )
-{
-	BOT_DoSpawnBot();
-	G_FreeEdict( spawner );
-}
-
-//==========================================
-// BOT_SpawnBot
-// Used Spawn the bot
-//==========================================
-void BOT_SpawnBot( const char *team_name )
-{
-	edict_t *spawner;
-	int team;
-
-	if( level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities )
-		return;
-
-	if(!AAS_Initialized())
+	int team = GS_Teams_TeamFromName(team_name);
+	if (team != -1 && team > TEAM_PLAYERS)
 	{
-		Com_Printf( "AI: Can't spawn bots without a valid navigation file\n" );
-		if( g_numbots->integer ) 
-			trap_Cvar_Set( "g_numbots", "0" );
-		return;
+		// Join specified team immediately
+		G_Teams_JoinTeam(ent, team);
 	}
-
-	// create a entity which will call the bot spawn
-	spawner = G_Spawn();
-	spawner->think = BOT_SpawnerThink;
-
-	team = GS_Teams_TeamFromName( team_name );
-	if( team != -1 )
-		spawner->s.team = team;
-
-	spawner->nextThink = level.time + random() * 3000;
-	spawner->movetype = MOVETYPE_NONE;
-	spawner->r.solid = SOLID_NOT;
-	spawner->r.svflags |= SVF_NOCLIENT;
-	GClip_LinkEntity( spawner );
+	else
+	{
+		//stay as spectator, give random time for joining
+		ent->nextThink = level.time + 500 + random() * 2000;
+	}
 
 	game.numBots++;
 }
