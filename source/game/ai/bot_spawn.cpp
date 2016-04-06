@@ -104,13 +104,10 @@ void BOT_Respawn( edict_t *self )
 		return;
 
 	self->pain = BOT_pain;
-
 	self->ai->botRef->OnRespawn();
 
 	VectorClear( self->r.client->ps.pmove.delta_angles );
 	self->r.client->level.last_activity = level.time;
-
-	self->ai->aiRef->ResetNavigation();
 }
 
 static float MakeRandomBotSkillByServerSkillLevel()
