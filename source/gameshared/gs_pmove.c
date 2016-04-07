@@ -147,12 +147,30 @@ static vec_t VectorNormalize2D( vec3_t v ) // ByMiK : normalize horizontally (do
 // normal becomes a pointer to the normal of the most appropriate wall
 static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 {
-	vec3_t zero, dir;
+	vec3_t zero, dir, mins, maxs;
 	int i;
 	trace_t trace;
 	float r, d, dx, dy, m;
 
 	VectorClear( zero );
+
+	// if there is nothing at all within the checked area, we can skip the individual checks
+	mins[0] = pm->mins[0] - pm->maxs[0];
+	mins[1] = pm->mins[1] - pm->maxs[0];
+	maxs[0] = pm->maxs[0] + pm->maxs[0];
+	maxs[1] = pm->maxs[1] + pm->maxs[0];
+	if( pml.velocity[0] > 0 )
+		maxs[0] += pml.velocity[0] * 0.015f;
+	else
+		mins[0] += pml.velocity[0] * 0.015f;
+	if( pml.velocity[1] > 0 )
+		maxs[1] += pml.velocity[1] * 0.015f;
+	else
+		mins[1] += pml.velocity[1] * 0.015f;
+	mins[2] = maxs[2] = 0;
+	module_Trace( &trace, pml.origin, mins, maxs, pml.origin, pm->playerState->POVnum, pm->contentmask, 0 );
+	if( !trace.allsolid && trace.fraction == 1 )
+		return;
 
 	// determine the primary direction
 	if( pml.sidePush > 0 )
