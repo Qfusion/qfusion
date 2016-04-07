@@ -155,6 +155,7 @@ static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 	VectorClear( zero );
 
 	// if there is nothing at all within the checked area, we can skip the individual checks
+	// this optimization must always overapproximate the combination of those checks
 	mins[0] = pm->mins[0] - pm->maxs[0];
 	mins[1] = pm->mins[1] - pm->maxs[0];
 	maxs[0] = pm->maxs[0] + pm->maxs[0];
