@@ -341,7 +341,9 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 
 	assert( ptrptr && *ptrptr );
 
-	fullwidth = cgs.vidWidth * 0.8;
+	fullwidth = panelWidth * 2.0;
+	if( fullwidth > cgs.vidWidth * 0.75 )
+		fullwidth = cgs.vidWidth * 0.75;
 
 	height = trap_SCR_FontHeight( font );
 	yoffset = height;
@@ -369,6 +371,14 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	else if( columns < 3 && count >= 3 )
 		columns = 3; // force 3 columns if less than 3 fit
 
+	int rows = count / columns + ( count % columns ? 1 : 0 );
+	// decrease columns if the number of rows stays equal
+	while( columns > 1 && count / ( columns - 1 ) + ( count % ( columns - 1 ) ? 1 : 0 ) == rows )
+		columns--;
+	// prevent ugly situations
+	if( rows == 2 && columns > 3 && count % 2 != columns % 2 )
+		columns++;
+
 	// determine column width
 	colwidth = fullwidth / columns;
 	// use smaller columns if possible, and adjust the width of the whole area
@@ -376,10 +386,11 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 		colwidth = maxwidth;
 	fullwidth = colwidth * columns;
 
-	*ptrptr = backup;
+	int total = count;
 	count = 0;
 
 	// draw the spectators
+	*ptrptr = backup;
 	while( *ptrptr )
 	{
 		if( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
@@ -407,11 +418,22 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 
 		count++;
 		if( count % columns == 0 )
+		{
 			yoffset += height;
+			if( total - count < columns && total > count )
+			{
+				// center the last row properly
+				columns = total - count;
+				count = 0;
+				// redetermine column width
+				colwidth = fullwidth / columns;
+				// use smaller columns if possible, and adjust the width of the whole area
+				if( maxwidth < colwidth )
+					colwidth = maxwidth;
+				fullwidth = colwidth * columns;
+			}
+		}
 	}
-
-	if( count % columns )
-		yoffset += height;
 
 	return yoffset;
 }
