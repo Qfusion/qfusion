@@ -1663,7 +1663,6 @@ static void objectGameClient_InventorySetCount( int index, int newcount, gclient
 		{
 			self->ps.stats[STAT_WEAPON] = self->ps.stats[STAT_PENDING_WEAPON] = WEAP_NONE;
 			self->ps.weaponState = WEAPON_STATE_READY;
-			self->ps.stats[STAT_WEAPON_TIME] = 0;
 		}
 	}
 
@@ -1703,7 +1702,6 @@ static void objectGameClient_InventoryClear( gclient_t *self )
 
 	self->ps.stats[STAT_WEAPON] = self->ps.stats[STAT_PENDING_WEAPON] = WEAP_NONE;
 	self->ps.weaponState = WEAPON_STATE_READY;
-	self->ps.stats[STAT_WEAPON_TIME] = 0;
 }
 
 static bool objectGameClient_CanSelectWeapon( int index, gclient_t *self )
