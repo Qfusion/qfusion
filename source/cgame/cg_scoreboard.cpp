@@ -319,10 +319,10 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 
 static int SCR_CountFromCenter( int index, int items )
 {
-	int result = ( index + 1 ) >> 1; // calculate distance from center
-	if( ( items % 2 ) ^ ( index % 2 ) )
-		result *= -1; // swap sides in half of the cases
-	return result + ( items >> 1 ); // relative to center
+	int result = ( index + 1 ) >> 1; // distance from center
+	if( items % 2 == index % 2 )
+		result *= -1; // swap sides half of the cases
+	return result + ( ( items - 1 ) >> 1 ); // relative to center
 }
 
 /*
