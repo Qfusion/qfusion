@@ -325,6 +325,16 @@ static int SCR_CountFromCenter( int index, int items )
 	return result + ( ( items - 1 ) >> 1 ); // relative to center
 }
 
+static int SCR_TableRows( int columns, int count )
+{
+	return count / columns + ( count % columns ? 1 : 0 );
+}
+
+static bool SCR_NiceSpecConfig( int rows, int columns, int count )
+{
+	return rows != 2 || columns <= 3 || ( count % columns ) % 2 == columns % 2;
+}
+
 /*
 * SCR_DrawSpectators
 */
@@ -371,13 +381,21 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	else if( columns < 3 && count >= 3 )
 		columns = 3; // force 3 columns if less than 3 fit
 
-	int rows = count / columns + ( count % columns ? 1 : 0 );
-	while( ( columns > 1 && count / ( columns - 1 ) + ( count % ( columns - 1 ) ? 1 : 0 ) == rows ) // optimize number of columns
-			|| ( rows == 2 && columns > 3 && ( count % columns ) % 2 != columns % 2 ) ) // avoid ugly configurations
+	int rows = SCR_TableRows( columns, count );
+	while( !SCR_NiceSpecConfig( rows, columns, count ) )
+	{ // avoid ugly configurations
+		columns--;
+		rows = SCR_TableRows( columns, count );
+	}
+	// optimize number of columns
+	int best = columns;
+	while( columns > 1 && SCR_TableRows( columns - 1, count ) == rows )
 	{
 		columns--;
-		rows = count / columns + ( count % columns ? 1 : 0 );
+		if( SCR_NiceSpecConfig( rows, columns, count ) )
+			best = columns;
 	}
+	columns = best;
 
 	// determine column width
 	colwidth = fullwidth / columns;
