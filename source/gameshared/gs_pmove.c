@@ -1278,7 +1278,7 @@ static void PM_CheckWallJump( void )
 			|| ( trace.fraction == 1 ) || ( !ISWALKABLEPLANE( &trace.plane ) && !trace.startsolid ) )
 		{
 			VectorClear( normal );
-			PlayerTouchWall( 12, 0.3f, &normal );
+			PlayerTouchWall( 18, 0.3f, &normal );
 			if( !VectorLength( normal ) )
 				return;
 
