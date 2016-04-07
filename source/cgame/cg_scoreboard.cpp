@@ -372,12 +372,12 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 		columns = 3; // force 3 columns if less than 3 fit
 
 	int rows = count / columns + ( count % columns ? 1 : 0 );
-	// decrease columns if the number of rows stays equal
-	while( columns > 1 && count / ( columns - 1 ) + ( count % ( columns - 1 ) ? 1 : 0 ) == rows )
+	while( ( columns > 1 && count / ( columns - 1 ) + ( count % ( columns - 1 ) ? 1 : 0 ) == rows ) // optimize number of columns
+			|| ( rows == 2 && columns > 3 && ( count % columns ) % 2 != columns % 2 ) ) // avoid ugly configurations
+	{
 		columns--;
-	// prevent ugly situations
-	if( rows == 2 && columns > 3 && count % 2 != columns % 2 )
-		columns++;
+		rows = count / columns + ( count % columns ? 1 : 0 );
+	}
 
 	// determine column width
 	colwidth = fullwidth / columns;
