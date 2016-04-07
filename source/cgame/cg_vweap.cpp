@@ -137,7 +137,10 @@ static int CG_ViewWeapon_baseanimFromWeaponState( int weaponState )
 		/* fall through. Not used */
 	default:
 	case WEAPON_STATE_READY:
-		anim = WEAPMODEL_STANDBY;
+		if( cg_gunbob->integer )
+			anim = WEAPMODEL_STANDBY;
+		else
+			anim = WEAPMODEL_NOANIM;
 		break;
 	}
 
@@ -183,7 +186,7 @@ void CG_ViewWeapon_RefreshAnimation( cg_viewweapon_t *viewweapon )
 	weaponInfo = CG_GetWeaponInfo( viewweapon->weapon );
 
 	// Full restart
-	if( !viewweapon->baseAnim || !viewweapon->baseAnimStartTime )
+	if( !viewweapon->baseAnimStartTime )
 	{
 		viewweapon->baseAnim = baseAnim;
 		viewweapon->baseAnimStartTime = cg.time;
