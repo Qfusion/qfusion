@@ -362,7 +362,9 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	if( !maxwidth )
 		return yoffset;
 	columns = fullwidth / maxwidth;
-	if( count < columns )
+	if( columns == 0 )
+		columns = 1;
+	else if( count < columns )
 		columns = count;
 	else if( columns < 3 && count >= 3 )
 		columns = 3; // force 3 columns if less than 3 fit
