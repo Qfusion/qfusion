@@ -436,7 +436,7 @@ static void CG_FireWeaponEvent( int entNum, int weapon, int fireMode )
 	}
 
 	// add animation to the view weapon model
-	if( ISVIEWERENTITY( entNum ) && !cg.view.thirdperson && cg_gunbob->integer )
+	if( ISVIEWERENTITY( entNum ) && !cg.view.thirdperson )
 		CG_ViewWeapon_StartAnimationEvent( fireMode == FIRE_MODE_STRONG ? WEAPMODEL_ATTACK_STRONG : WEAPMODEL_ATTACK_WEAK );
 }
 
