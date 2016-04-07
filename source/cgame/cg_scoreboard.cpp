@@ -341,9 +341,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 
 	assert( ptrptr && *ptrptr );
 
-	fullwidth = panelWidth * 1.75;
-	if( fullwidth > cgs.vidWidth * 0.8 )
-		fullwidth = cgs.vidWidth * 0.8;
+	fullwidth = cgs.vidWidth * 0.8;
 
 	height = trap_SCR_FontHeight( font );
 	yoffset = height;
