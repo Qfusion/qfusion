@@ -21,3 +21,17 @@ void AiGametypeBrain::ClearGoals(NavEntity *canceledGoal, Ai *goalGrabber)
             ent->ai->aiRef->aiBaseBrain->ClearShortTermGoal();
     }
 }
+
+void AiGametypeBrain::Frame()
+{
+    if (!GS_TeamBasedGametype())
+    {
+        AiBaseTeamBrain::GetBrainForTeam(TEAM_PLAYERS)->Frame();
+        return;
+    }
+
+    for (int team = TEAM_ALPHA; team < GS_MAX_TEAMS; ++team)
+    {
+        AiBaseTeamBrain::GetBrainForTeam(team)->Frame();
+    }
+}

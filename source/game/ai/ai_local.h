@@ -260,13 +260,86 @@ float FindDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, fl
 class AiGametypeBrain
 {
 protected:
-	AiGametypeBrain() {}
+	AiGametypeBrain() {};
+
 	// May be instantiated dynamically with a some subtype of this class in future
 	static AiGametypeBrain instance;
 public:
 	// May return some of subtypes of this class depending on a gametype in future
 	static inline AiGametypeBrain *Instance() { return &instance; }
+	void Frame();
 	void ClearGoals(NavEntity *canceledGoal, class Ai *goalGrabber);
+};
+
+class AiBaseTeamBrain
+{
+	friend class Bot;  // Bots should be able to notify its team in destructor when they get dropped immediately
+	friend class AiGametypeBrain;
+
+	// We can't initialize these vars in constructor, because game exports may be not yet intialized.
+	// These values are set to -1 in constructor and computed on demand
+	mutable int svFps;
+	mutable int svSkill;
+
+	// Bots are split in groups by frame affinity to reduce server workload and distribute it to many frames.
+	// Frame affinity is defined by two numbers: a modulo and an offset, where modulo > 0 and 0 <= offset < modulo.
+	// Usually (but not mandatory) a bot performs CPU-intense computations when level.framenum % modulo == offset
+	mutable int affinityModulo;
+	static constexpr int MAX_AFFINITY_OFFSET = 4;
+	// This array contains count of bots that use corresponding offset for each possible affinity offset
+	unsigned affinityOffsetsInUse[MAX_AFFINITY_OFFSET];
+	mutable int teamAffinityOffset;
+
+	// These arrays store copies of bot affinities to be able to access them even if the bot reference has been lost
+	unsigned char botAffinityModulo[MAX_CLIENTS];
+	unsigned char botAffinityOffsets[MAX_CLIENTS];
+
+	unsigned AffinityModulo() const;
+	unsigned TeamAffinityOffset() const;
+
+	// This function instantiates another brain instance and registers its shutdown hook
+	static AiBaseTeamBrain *CreateTeamBrain(int team);
+protected:
+	AiBaseTeamBrain(int team);
+	virtual ~AiBaseTeamBrain() {}
+
+	const int team;
+	int prevFrameBotsCount;
+	int prevFrameBots[MAX_CLIENTS];
+
+	int currBotsCount;
+	int currBots[MAX_CLIENTS];
+
+	void AddBot(int botEntNum);
+	void RemoveBot(int botEntNum);
+	virtual void OnBotAdded(int botEntNum) {};
+	virtual void OnBotRemoved(int botEntNum) {};
+
+	void AcquireBotFrameAffinity(int entNum);
+	void ReleaseBotFrameAffinity(int entNum);
+	void SetBotFrameAffinity(int bot, unsigned modulo, unsigned offset);
+
+	void Frame();
+
+	void CheckTeamChanges();
+
+	virtual void Think() {};
+
+	inline int GetCachedCVar(int *cached, const char *name) const
+	{
+		if (*cached == -1)
+		{
+			*cached = (int)trap_Cvar_Value(name);
+		}
+		return *cached;
+	}
+
+	inline int ServerFps() const { return GetCachedCVar(&svFps, "sv_fps"); }
+	inline int ServerSkill() const { return GetCachedCVar(&svSkill, "sv_skilllevel"); }
+
+	void Debug(const char *format, ...);
+public:
+	static AiBaseTeamBrain *GetBrainForTeam(int team);
 };
 
 class AiBaseBrain
