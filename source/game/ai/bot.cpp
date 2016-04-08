@@ -76,6 +76,9 @@ void Bot::RegisterVisibleEnemies()
     if(G_ISGHOSTING(self) || GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled())
         return;
 
+    if (botBrain.ShouldSkipFrame())
+        return;
+
     // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients
     for (int i = 0; i < gs.maxclients; ++i)
     {

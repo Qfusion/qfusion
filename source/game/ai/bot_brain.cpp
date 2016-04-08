@@ -89,9 +89,11 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       spamTargetChoicePeriod(1333 - (unsigned)(500.0f * BotSkill())),
       aimWeaponChoicePeriod(1032 - (unsigned)(500.0f * BotSkill())),
       spamWeaponChoicePeriod(1000 - (unsigned)(333.0f * BotSkill())),
+      frameAffinityModulo(0),
+      frameAffinityOffset(0),
       nextTargetChoiceAt(level.time),
       nextWeaponChoiceAt(level.time),
-      prevLevelTime(level.time),
+      prevThinkLevelTime(level.time),
       armorProtection(g_armor_protection->value),
       armorDegradation(g_armor_degradation->value),
       weaponScoreRandom(0.0f),
@@ -129,6 +131,9 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
 
 void BotBrain::PrepareToFrame()
 {
+    if (ShouldSkipFrame())
+        return;
+
     const unsigned levelTime = level.time;
     for (Enemy &enemy: enemies)
     {
@@ -365,9 +370,9 @@ void BotBrain::TryPushNewEnemy(const edict_t *enemy)
         }
 
         // Forget far and not seen enemies
-        if (slotEnemy.LastSeenAt() < prevLevelTime)
+        if (slotEnemy.LastSeenAt() < prevThinkLevelTime)
         {
-            float absTimeDiff = prevLevelTime - slotEnemy.LastSeenAt();
+            float absTimeDiff = prevThinkLevelTime - slotEnemy.LastSeenAt();
             // 0..1
             float timeFactor = std::min(absTimeDiff, (float)NOT_SEEN_TIMEOUT) / NOT_SEEN_TIMEOUT;
 
@@ -573,6 +578,9 @@ void BotBrain::OnEnemyDamaged(const edict_t *target, int damage)
 
 void BotBrain::UpdateCombatTask()
 {
+    if (ShouldSkipFrame())
+        return;
+
     if (combatTask.aimEnemy && (level.time - combatTask.aimEnemy->LastSeenAt()) > reactionTime)
     {
         TryFindNewCombatTask();
