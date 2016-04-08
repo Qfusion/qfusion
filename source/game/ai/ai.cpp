@@ -6,6 +6,8 @@
 
 Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
     : EdictRef(self),
+      frameAffinityModulo(0),
+      frameAffinityOffset(0),
       aiBaseBrain(nullptr), // Must be set in a subclass constructor
       currAasAreaNum(0),
       goalAasAreaNum(0),

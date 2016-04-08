@@ -3,6 +3,8 @@
 
 AiBaseBrain::AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
     : self(self),
+      frameAffinityModulo(0),
+      frameAffinityOffset(0),
       longTermGoal(nullptr),
       shortTermGoal(nullptr),
       longTermGoalTimeout(0),
