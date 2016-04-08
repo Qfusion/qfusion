@@ -131,7 +131,7 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
 
 void BotBrain::PrepareToFrame()
 {
-    if (ShouldSkipFrame())
+    if (ShouldSkipThinkFrame())
         return;
 
     const unsigned levelTime = level.time;
@@ -582,7 +582,7 @@ void BotBrain::OnEnemyDamaged(const edict_t *target, int damage)
 
 void BotBrain::UpdateCombatTask()
 {
-    if (ShouldSkipFrame())
+    if (ShouldSkipThinkFrame())
         return;
 
     if (combatTask.aimEnemy && (level.time - combatTask.aimEnemy->LastSeenAt()) > reactionTime)

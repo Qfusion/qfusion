@@ -343,6 +343,8 @@ struct CombatDisposition
 
 class BotBrain: public AiBaseBrain
 {
+    friend class Bot;
+
     edict_t *bot;
     float skillLevel;
 
@@ -495,33 +497,13 @@ public:
 
     void PrepareToFrame();
 
-    inline void SetFrameAffinity(unsigned modulo, unsigned offset)
-    {
-        frameAffinityModulo = modulo;
-        frameAffinityOffset = offset;
-    }
-
-    inline bool ShouldSkipFrame()
-    {
-        // Frame affinity modulo may be zero when bot has not joined any team yet
-        return frameAffinityModulo <= 0 || level.framenum % frameAffinityModulo != frameAffinityOffset;
-    }
-
     inline void FinishFrame()
     {
-        if (!ShouldSkipFrame())
+        if (!ShouldSkipThinkFrame())
             prevThinkLevelTime = level.time;
     }
 
-    inline void CheckIsInThinkFrame(const char *function)
-    {
-        if (ShouldSkipFrame())
-        {
-            const char *format = "%s has been called not in think frame: frame#=%d, modulo=%d, offset=%d\n";
-            Debug(format, function, frameAffinityModulo, frameAffinityOffset);
-            abort();
-        }
-    }
+
 
     void OnEnemyViewed(const edict_t *enemy);
     // Call it after all calls to OnEnemyViewed()

@@ -6,8 +6,6 @@ Bot::Bot(edict_t *self, float skillLevel)
     : Ai(self),
       dangersDetector(self),
       botBrain(self, skillLevel),
-      frameAffinityModulo(1),
-      frameAffinityOffset(0),
       skillLevel(skillLevel),
       printLink(false),
       isBunnyHopping(false),
@@ -76,7 +74,7 @@ void Bot::RegisterVisibleEnemies()
     if(G_ISGHOSTING(self) || GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled())
         return;
 
-    if (botBrain.ShouldSkipFrame())
+    if (botBrain.ShouldSkipThinkFrame())
         return;
 
     // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients

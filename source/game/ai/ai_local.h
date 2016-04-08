@@ -349,6 +349,31 @@ class AiBaseBrain
 protected:
 	edict_t *self;
 
+	unsigned frameAffinityModulo;
+	unsigned frameAffinityOffset;
+
+	inline void SetFrameAffinity(unsigned modulo, unsigned offset)
+	{
+		frameAffinityModulo = modulo;
+		frameAffinityOffset = offset;
+	}
+
+	inline bool ShouldSkipThinkFrame()
+	{
+		// Check whether the modulo has not been set yet
+		return frameAffinityModulo == 0 || level.framenum % frameAffinityModulo != frameAffinityOffset;
+	}
+
+	inline void CheckIsInThinkFrame(const char *function)
+	{
+		if (ShouldSkipThinkFrame())
+		{
+			const char *format = "%s has been called not in think frame: frame#=%d, modulo=%d, offset=%d\n";
+			Debug(format, function, frameAffinityModulo, frameAffinityOffset);
+			abort();
+		}
+	}
+
 	NavEntity *longTermGoal;
 	NavEntity *shortTermGoal;
 
@@ -512,8 +537,12 @@ struct ClosePlaceProps
 class Ai: public EdictRef
 {
 	friend class AiGametypeBrain;
+	friend class AiBaseTeamBrain;
 	friend class AiBaseBrain;
 protected:
+	unsigned frameAffinityModulo;
+	unsigned frameAffinityOffset;
+
 	// Must be set in a subclass constructor. A subclass manages memory for its brain
 	// (it either has it as an intrusive member of allocates it on heap)
 	// and provides a reference to it to this base class via this pointer.
@@ -541,6 +570,29 @@ protected:
 	unsigned blockedTimeout;
 
 	float aiYawSpeed, aiPitchSpeed;
+
+	inline void SetFrameAffinity(unsigned modulo, unsigned offset)
+	{
+		frameAffinityModulo = modulo;
+		frameAffinityOffset = offset;
+		aiBaseBrain->SetFrameAffinity(modulo, offset);
+	}
+
+	inline bool ShouldSkipThinkFrame()
+	{
+		// Check whether the modulo has not been set yet
+		return frameAffinityModulo == 0 || level.framenum % frameAffinityModulo != frameAffinityOffset;
+	}
+
+	inline void CheckIsInThinkFrame(const char *function)
+	{
+		if (ShouldSkipThinkFrame())
+		{
+			const char *format = "%s has been called not in think frame: frame#=%d, modulo=%d, offset=%d\n";
+			Debug(format, function, frameAffinityModulo, frameAffinityOffset);
+			abort();
+		}
+	}
 
 	void ClearAllGoals();
 
