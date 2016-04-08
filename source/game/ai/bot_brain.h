@@ -513,6 +513,16 @@ public:
             prevThinkLevelTime = level.time;
     }
 
+    inline void CheckIsInThinkFrame(const char *function)
+    {
+        if (ShouldSkipFrame())
+        {
+            const char *format = "%s has been called not in think frame: frame#=%d, modulo=%d, offset=%d\n";
+            Debug(format, function, frameAffinityModulo, frameAffinityOffset);
+            abort();
+        }
+    }
+
     void OnEnemyViewed(const edict_t *enemy);
     // Call it after all calls to OnEnemyViewed()
     void AfterAllEnemiesViewed();
