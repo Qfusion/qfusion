@@ -381,7 +381,7 @@ class BotBrain: public AiBaseBrain
     StaticVector<AttackStats, MAX_TRACKED_ATTACKERS> attackers;
     StaticVector<AttackStats, MAX_TRACKED_TARGETS> targets;
 
-    unsigned prevLevelTime;
+    unsigned prevThinkLevelTime;
 
     // These values are loaded from cvars for fast access
     const float armorProtection;
@@ -501,9 +501,16 @@ public:
         frameAffinityOffset = offset;
     }
 
+    inline bool ShouldSkipFrame()
+    {
+        // Frame affinity modulo may be zero when bot has not joined any team yet
+        return frameAffinityModulo <= 0 || level.framenum % frameAffinityModulo != frameAffinityOffset;
+    }
+
     inline void FinishFrame()
     {
-        prevLevelTime = level.time;
+        if (!ShouldSkipFrame())
+            prevThinkLevelTime = level.time;
     }
 
     void OnEnemyViewed(const edict_t *enemy);
