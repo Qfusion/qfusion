@@ -31,6 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SCB_SCORENUMBER_SIZE ( 48 * cgs.vidHeight / 600 )
 #define SCB_CENTERMARGIN ( 16 * cgs.vidHeight / 600 )
 
+typedef struct {
+	int playerNum;
+	int ping;
+} scr_spectator_t;
+
 void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, int charheight, int value );
 
 /*
@@ -234,15 +239,52 @@ static bool SCR_ParseToken( const char **ptrptr, const char **tokenptr )
 	return true;
 }
 
+static bool SCR_ParseSpectator( scr_spectator_t *result, const char **ptrptr, bool havePing )
+{
+	const char *token;
+
+	if( !SCR_ParseToken( ptrptr, &token ) )
+		return false;
+
+	result->playerNum = atoi( token );
+
+	if( result->playerNum < 0 || result->playerNum >= gs.maxclients )
+		return false;
+
+	if( havePing )
+	{
+		if( !SCR_ParseToken( ptrptr, &token ) )
+			return false;
+
+		result->ping = atoi( token );
+	}
+
+	return true;
+}
+
+static void SCR_SpectatorString( char *string, size_t size, scr_spectator_t spec, bool havePing )
+{
+	if( havePing )
+	{
+		if( spec.ping < 0 )
+			Q_snprintfz( string, size, "%s%s ...", cgs.clientInfo[spec.playerNum].name, S_COLOR_WHITE );
+		else
+			Q_snprintfz( string, size, "%s%s %i", cgs.clientInfo[spec.playerNum].name, S_COLOR_WHITE, spec.ping );
+	}
+	else
+	{
+		Q_snprintfz( string, size, "%s%s", cgs.clientInfo[spec.playerNum].name, S_COLOR_WHITE );
+	}
+}
+
 /*
 * SCR_DrawChallengers
 */
 static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, int pass )
 {
-	const char *token;
 	char string[MAX_STRING_CHARS];
+	scr_spectator_t spec;
 	int yoffset = 0, xoffset = 0;
-	int playerNum, ping;
 	int height;
 
 	assert( ptrptr && *ptrptr );
@@ -260,28 +302,12 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 	// draw challengers
 	while( *ptrptr )
 	{
-		if( !SCR_ParseToken( ptrptr, &token ) )
+		if( !SCR_ParseSpectator( &spec, ptrptr, true ) )
 			break;
 
-		// first token is played id
-		playerNum = atoi( token );
-		if( playerNum < 0 || playerNum >= gs.maxclients )
-			break;
-
-		// get a second token
-		if( !SCR_ParseToken( ptrptr, &token ) )
-			break;
-
-		// second token is ping
-		ping = atoi( token );
-
-		// draw the challenger
-		if( ping < 0 )
-			Q_snprintfz( string, sizeof( string ), "%s%s ...", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
-		else
-			Q_snprintfz( string, sizeof( string ), "%s%s %i", cgs.clientInfo[playerNum].name, S_COLOR_WHITE, ping );
-
-		if( pass ) {
+		if( pass )
+		{
+			SCR_SpectatorString( string, sizeof( string ), spec, true );
 			trap_SCR_DrawString( x + xoffset, y + yoffset, ALIGN_CENTER_TOP, string, font, colorWhite );
 		}
 		yoffset += height;
@@ -291,96 +317,142 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 	return yoffset;
 }
 
+static int SCR_CountFromCenter( int index, int items )
+{
+	int result = ( index + 1 ) >> 1; // distance from center
+	if( items % 2 == index % 2 )
+		result *= -1; // swap sides half of the cases
+	return result + ( ( items - 1 ) >> 1 ); // relative to center
+}
+
+static int SCR_TableRows( int columns, int count )
+{
+	return count / columns + ( count % columns ? 1 : 0 );
+}
+
+static bool SCR_NiceSpecConfig( int rows, int columns, int count )
+{
+	return rows > 2 || columns == 1 || ( rows == columns && count % columns == 0 );
+}
+
 /*
 * SCR_DrawSpectators
 */
 static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, bool havePing, const char *title, vec4_t titleColor, int pass )
 {
-	const char *token;
+	const char *backup;
+	scr_spectator_t spec;
 	char string[MAX_STRING_CHARS];
 	int yoffset = 0, xoffset = 0;
-	int playerNum, ping;
-	int aligns[3], offsets[3];
-	int colwidth, fullwidth, count = 0, height;
+	int fullwidth, height;
+	int columns, colwidth, width, maxwidth = 0;
+	int count = 0;
 	bool titleDrawn = false;
 
-	fullwidth = panelWidth * 1.5;
-	if( fullwidth > cgs.vidWidth * 0.7 )
-		fullwidth = cgs.vidWidth * 0.7;
-	colwidth = fullwidth / 3;
-
-	aligns[0] = ALIGN_CENTER_TOP;
-	aligns[1] = ALIGN_LEFT_TOP;
-	aligns[2] = ALIGN_RIGHT_TOP;
-
-	offsets[0] = 0;
-	offsets[1] = -fullwidth * 0.5;
-	offsets[2] = fullwidth * 0.5;
-
 	assert( ptrptr && *ptrptr );
+
+	fullwidth = panelWidth * 2.0;
+	if( fullwidth > cgs.vidWidth * 0.75 )
+		fullwidth = cgs.vidWidth * 0.75;
 
 	height = trap_SCR_FontHeight( font );
 	yoffset = height;
 
-	// draw spectators
+	backup = *ptrptr;
+
+	// determine number of columns available
 	while( *ptrptr )
 	{
-		if( !SCR_ParseToken( ptrptr, &token ) )
+		if( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
 			break;
 
-		// first token is played id
-		playerNum = atoi( token );
-		if( playerNum < 0 || playerNum >= gs.maxclients )
+		width = trap_SCR_strWidth( cgs.clientInfo[spec.playerNum].name, font, 0 ) + trap_SCR_strWidth( "M", font, 0 ) * ( havePing ? 6 : 2 );
+		if( width > maxwidth )
+			maxwidth = width;
+		count++;
+	}
+	if( !maxwidth )
+		return yoffset;
+	columns = fullwidth / maxwidth;
+	if( columns == 0 )
+		columns = 1;
+	else if( count < columns )
+		columns = count;
+	else if( columns < 3 && count >= 3 )
+		columns = 3; // force 3 columns if less than 3 fit
+
+	int rows = SCR_TableRows( columns, count );
+	while( !SCR_NiceSpecConfig( rows, columns, count ) )
+	{ // avoid ugly configurations
+		columns--;
+		rows = SCR_TableRows( columns, count );
+	}
+	// optimize number of columns
+	int best = columns;
+	while( columns > 1 && SCR_TableRows( columns - 1, count ) == rows )
+	{
+		columns--;
+		if( SCR_NiceSpecConfig( rows, columns, count ) )
+			best = columns;
+	}
+	columns = best;
+
+	// determine column width
+	colwidth = fullwidth / columns;
+	// use smaller columns if possible, and adjust the width of the whole area
+	if( maxwidth < colwidth )
+		colwidth = maxwidth;
+	fullwidth = colwidth * columns;
+
+	int total = count;
+	count = 0;
+
+	// draw the spectators
+	*ptrptr = backup;
+	while( *ptrptr )
+	{
+		if( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
 			break;
-
-		if( havePing )
-		{
-			// get a second token
-			if( !SCR_ParseToken( ptrptr, &token ) )
-				break;
-
-			// second token is ping
-			ping = atoi( token );
-
-			// draw the spectator
-			if( ping < 0 )
-				Q_snprintfz( string, sizeof( string ), "%s%s ...", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
-			else
-				Q_snprintfz( string, sizeof( string ), "%s%s %i", cgs.clientInfo[playerNum].name, S_COLOR_WHITE, ping );
-		}
-		else
-		{
-			Q_snprintfz( string, sizeof( string ), "%s%s", cgs.clientInfo[playerNum].name, S_COLOR_WHITE );
-		}
 
 		// draw title if there are any spectators
 		if( !titleDrawn )
 		{
 			titleDrawn = true;
-			if( pass ) {
-				trap_SCR_DrawString( x, y + yoffset, ALIGN_CENTER_TOP,
-					CG_TranslateString( title ), font, titleColor );
-			}
+			if( pass )
+				trap_SCR_DrawString( x, y + yoffset, ALIGN_CENTER_TOP, CG_TranslateString( title ), font, titleColor );
 			yoffset += height;
 		}
 
-		xoffset = offsets[count] + CG_HorizontalAlignForWidth( 0, aligns[count], trap_SCR_strWidth( string, font, 0 ) );
+		SCR_SpectatorString( string, sizeof( string ), spec, havePing );
+		width = trap_SCR_strWidth( string, font, 0 );
+		if( width > colwidth )
+			width = colwidth;
+		xoffset = -fullwidth / 2 + SCR_CountFromCenter( count % columns, columns ) * colwidth +
+			CG_HorizontalAlignForWidth( colwidth / 2, ALIGN_CENTER_TOP, width );
 
-		if ( pass ) {
-			// fixme: the boxes aren't actually correctly aligned
-			trap_SCR_DrawClampString( x + xoffset, y + yoffset, string, x + xoffset, y + yoffset, x + xoffset + colwidth, y + yoffset + height, font, colorWhite );
-		}
+		if( pass )
+			trap_SCR_DrawClampString( x + xoffset, y + yoffset, string, x + xoffset, y + yoffset,
+					x + xoffset + width, y + yoffset + height, font, colorWhite );
 
 		count++;
-		if( count > 2 )
+		if( count % columns == 0 )
 		{
-			count = 0;
 			yoffset += height;
+			if( total - count < columns && total > count )
+			{
+				// center the last row properly
+				columns = total - count;
+				count = 0;
+				// redetermine column width
+				colwidth = fullwidth / columns;
+				// use smaller columns if possible, and adjust the width of the whole area
+				if( maxwidth < colwidth )
+					colwidth = maxwidth;
+				fullwidth = colwidth * columns;
+			}
 		}
 	}
 
-	if( count )
-		yoffset += height;
 	return yoffset;
 }
 
@@ -389,11 +461,11 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 */
 static void SCR_IgnoreSpectators( const char **ptrptr, bool havePing )
 {
-	const char *token;
+	scr_spectator_t spec;
 
 	assert( ptrptr && *ptrptr );
 
-	while( *ptrptr && SCR_ParseToken( ptrptr, &token ) && ( !havePing || SCR_ParseToken( ptrptr, &token ) ) )
+	while( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
 		;
 }
 
