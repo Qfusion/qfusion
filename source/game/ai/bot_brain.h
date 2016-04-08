@@ -372,6 +372,9 @@ class BotBrain: public AiBaseBrain
     const unsigned aimWeaponChoicePeriod;
     const unsigned spamWeaponChoicePeriod;
 
+    unsigned frameAffinityModulo;
+    unsigned frameAffinityOffset;
+
     unsigned nextTargetChoiceAt;
     unsigned nextWeaponChoiceAt;
 
@@ -416,6 +419,7 @@ class BotBrain: public AiBaseBrain
     void TryPushNewEnemy(const edict_t *enemy);
 
     void EmplaceEnemy(const edict_t *enemy, int slot);
+
 
     inline const char *BotNick() const { return bot->r.client->netname; }
 
@@ -490,6 +494,12 @@ public:
     BotBrain(edict_t *bot, float skillLevel);
 
     void PrepareToFrame();
+
+    inline void SetFrameAffinity(unsigned modulo, unsigned offset)
+    {
+        frameAffinityModulo = modulo;
+        frameAffinityOffset = offset;
+    }
 
     inline void FinishFrame()
     {

@@ -129,6 +129,8 @@ void AI_Shutdown( void )
 void AI_CommonFrame()
 {
     AI_AASFrame();
+
+    AiGametypeBrain::Instance()->Frame();
 }
 
 //==========================================

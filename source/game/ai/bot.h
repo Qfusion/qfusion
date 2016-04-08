@@ -7,6 +7,8 @@
 
 class Bot: public Ai
 {
+    friend class AiGametypeBrain;
+    friend class AiBaseTeamBrain;
     friend class BotBrain;
 public:
     Bot(edict_t *self, float skillLevel);
@@ -45,6 +47,9 @@ private:
     DangersDetector dangersDetector;
     BotBrain botBrain;
 
+    unsigned frameAffinityModulo;
+    unsigned frameAffinityOffset;
+
     float skillLevel;
     bool printLink;
 
@@ -80,6 +85,13 @@ private:
     void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutDuration = 500);
 
     void ApplyPendingTurnToLookAtPoint();
+
+    inline void SetFrameAffinity(unsigned modulo, unsigned offset)
+    {
+        frameAffinityModulo = modulo;
+        frameAffinityOffset = offset;
+        botBrain.SetFrameAffinity(modulo, offset);
+    }
 
     inline const int *Inventory() const { return self->r.client->ps.inventory; }
 

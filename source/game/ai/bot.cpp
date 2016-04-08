@@ -6,6 +6,8 @@ Bot::Bot(edict_t *self, float skillLevel)
     : Ai(self),
       dangersDetector(self),
       botBrain(self, skillLevel),
+      frameAffinityModulo(1),
+      frameAffinityOffset(0),
       skillLevel(skillLevel),
       printLink(false),
       isBunnyHopping(false),
