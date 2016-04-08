@@ -264,6 +264,8 @@ bool BotBrain::HasAnyDetectedEnemiesInView() const
 
 void BotBrain::AfterAllEnemiesViewed()
 {
+    CheckIsInThinkFrame(__FUNCTION__);
+
     // Stop spamming if we see any enemy in view, choose a target to fight
     if (combatTask.spamEnemy)
     {
@@ -278,6 +280,8 @@ void BotBrain::AfterAllEnemiesViewed()
 
 void BotBrain::OnEnemyViewed(const edict_t *enemy)
 {
+    CheckIsInThinkFrame(__FUNCTION__);
+
     if (!enemy)
         return;
 
