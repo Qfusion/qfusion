@@ -332,7 +332,7 @@ static int SCR_TableRows( int columns, int count )
 
 static bool SCR_NiceSpecConfig( int rows, int columns, int count )
 {
-	return rows != 2 || columns <= 3 || ( count % columns ) % 2 == columns % 2;
+	return rows > 2 || columns == 1 || ( rows == columns && count % columns == 0 );
 }
 
 /*
