@@ -3,8 +3,6 @@
 
 AiBaseBrain::AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
     : self(self),
-      frameAffinityModulo(0),
-      frameAffinityOffset(0),
       longTermGoal(nullptr),
       shortTermGoal(nullptr),
       longTermGoalTimeout(0),
@@ -41,9 +39,11 @@ void AiBaseBrain::UpdateWeights()
 // To be overridden. Its a stub that does not modify cleared weights
 void AiBaseBrain::UpdatePotentialGoalsWeights() { }
 
-void AiBaseBrain::UpdateStatus(int currAasAreaNum)
+void AiBaseBrain::Think()
 {
-    this->currAasAreaNum = currAasAreaNum;
+    if (!currAasAreaNum)
+        return;
+
     // Always update weights before goal picking, except we have updated it in this frame
     bool weightsUpdated = false;
     //update status information to feed up ai

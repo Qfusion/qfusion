@@ -129,11 +129,8 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
         targets.emplace_back(AttackStats());
 }
 
-void BotBrain::PrepareToFrame()
+void BotBrain::PreThink()
 {
-    if (ShouldSkipThinkFrame())
-        return;
-
     const unsigned levelTime = level.time;
     for (Enemy &enemy: enemies)
     {
@@ -199,6 +196,11 @@ void BotBrain::PrepareToFrame()
         decisionRandom = random();
         nextDecisionRandomUpdate = levelTime + 2500;
     }
+}
+
+void BotBrain::PostThink()
+{
+    prevThinkLevelTime = level.time;
 }
 
 void BotBrain::UpdateWeight(Enemy &enemy)

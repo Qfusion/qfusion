@@ -284,13 +284,22 @@ void Bot::OnRespawn()
     ResetNavigation();
 }
 
+void Bot::Think()
+{
+    // Call superclass method first
+    Ai::Think();
+
+    // TODO: Place movement code there and precache ucmd between frames
+}
+
 //==========================================
 // BOT_DMclass_RunFrame
 // States Machine & call client movement
 //==========================================
-void Bot::RunFrame()
+void Bot::Frame()
 {
-    botBrain.PrepareToFrame();
+    // Call superclass method first
+    Ai::Frame();
 
     if (G_ISGHOSTING(self))
     {
@@ -298,7 +307,6 @@ void Bot::RunFrame()
 
         GhostingFrame();
 
-        botBrain.FinishFrame();
         return;
     }
 
@@ -371,8 +379,6 @@ void Bot::RunFrame()
     self->nextThink = level.time + 1;
 
     SayVoiceMessages();
-
-    botBrain.FinishFrame();
 }
 
 

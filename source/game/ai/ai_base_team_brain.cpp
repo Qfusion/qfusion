@@ -10,8 +10,8 @@ AiBaseTeamBrain::AiBaseTeamBrain(int team)
 {
     svFps = -1;
     svSkill = -1;
-    affinityModulo = -1;
-    teamAffinityOffset = -1;
+    teamBrainAffinityModulo = -1;
+    teamBrainAffinityOffset = -1;
     prevFrameBotsCount = 0;
     memset(prevFrameBots, 0, sizeof(prevFrameBots));
     currBotsCount = 0;
@@ -47,9 +47,6 @@ AiBaseTeamBrain *AiBaseTeamBrain::GetBrainForTeam(int team)
 void AiBaseTeamBrain::Frame()
 {
     CheckTeamChanges();
-
-    if (level.framenum % AffinityModulo() == TeamAffinityOffset())
-        Think();
 }
 
 void AiBaseTeamBrain::CheckTeamChanges()
@@ -85,33 +82,41 @@ void AiBaseTeamBrain::CheckTeamChanges()
 
 unsigned AiBaseTeamBrain::AffinityModulo() const
 {
-    if (affinityModulo == -1)
+    if (teamBrainAffinityModulo == -1)
     {
-        int frameTime = 1000 / ServerFps();
-        // 4 for 60 fps or more, 1 for 16 fps or less
-        affinityModulo = std::min(4, std::max(1, 62 / frameTime));
+        InitTeamAffinity();
     }
-    // Negative initial value is used only to indicate lazy computation
-    return (unsigned)affinityModulo;
+    return (unsigned)teamBrainAffinityModulo;
 }
 
 unsigned AiBaseTeamBrain::TeamAffinityOffset() const
 {
-    if (teamAffinityOffset == -1)
+    if (teamBrainAffinityOffset == -1)
     {
-        switch (AffinityModulo())
-        {
-            // The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 2
-            case 4: teamAffinityOffset = team * 2; break;
-            // Both Alpha and Beta team brains think on frame 0
-            case 3: teamAffinityOffset = 0; break;
-            // The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 1
-            case 2: teamAffinityOffset = team; break;
-            // All brains think in the same frame
-            case 1: teamAffinityOffset = 0; break;
-        }
+        InitTeamAffinity();
     }
-    return (unsigned)teamAffinityOffset;
+    return (unsigned)teamBrainAffinityOffset;
+}
+
+void AiBaseTeamBrain::InitTeamAffinity() const
+{
+    // We round frame time to integer milliseconds
+    int frameTime = 1000 / ServerFps();
+    // 4 for 60 fps or more, 1 for 16 fps or less
+    teamBrainAffinityModulo = std::min(4, std::max(1, 64 / frameTime));
+    switch (teamBrainAffinityModulo)
+    {
+        // The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 2
+        case 4: teamBrainAffinityOffset = team * 2; break;
+            // Both Alpha and Beta team brains think on frame 0
+        case 3: teamBrainAffinityOffset = 0; break;
+            // The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 1
+        case 2: teamBrainAffinityOffset = team; break;
+            // All brains think in the same frame
+        case 1: teamBrainAffinityOffset = 0; break;
+    }
+    // Initialize superclass fields
+    const_cast<AiBaseTeamBrain*>(this)->SetFrameAffinity(teamBrainAffinityModulo, teamBrainAffinityOffset);
 }
 
 void AiBaseTeamBrain::AddBot(int entNum)

@@ -130,7 +130,7 @@ void AI_CommonFrame()
 {
     AI_AASFrame();
 
-    AiGametypeBrain::Instance()->Frame();
+    AiGametypeBrain::Instance()->Update();
 }
 
 //==========================================
@@ -337,7 +337,7 @@ void AI_Think(edict_t *self)
     if( !self->ai || self->ai->type == AI_INACTIVE )
         return;
 
-    self->ai->aiRef->Think();
+    self->ai->aiRef->Update();
 }
 
 //==========================================

@@ -495,15 +495,8 @@ public:
 
     BotBrain(edict_t *bot, float skillLevel);
 
-    void PrepareToFrame();
-
-    inline void FinishFrame()
-    {
-        if (!ShouldSkipThinkFrame())
-            prevThinkLevelTime = level.time;
-    }
-
-
+    virtual void PreThink() override;
+    virtual void PostThink() override;
 
     void OnEnemyViewed(const edict_t *enemy);
     // Call it after all calls to OnEnemyViewed()

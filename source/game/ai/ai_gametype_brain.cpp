@@ -26,12 +26,12 @@ void AiGametypeBrain::Frame()
 {
     if (!GS_TeamBasedGametype())
     {
-        AiBaseTeamBrain::GetBrainForTeam(TEAM_PLAYERS)->Frame();
+        AiBaseTeamBrain::GetBrainForTeam(TEAM_PLAYERS)->Update();
         return;
     }
 
     for (int team = TEAM_ALPHA; team < GS_MAX_TEAMS; ++team)
     {
-        AiBaseTeamBrain::GetBrainForTeam(team)->Frame();
+        AiBaseTeamBrain::GetBrainForTeam(team)->Update();
     }
 }
