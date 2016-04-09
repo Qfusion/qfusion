@@ -95,6 +95,14 @@ bool Bot::FireWeapon()
     if (botBrain.combatTask.Empty())
         return false;
 
+    bool continuousFire = false;
+    if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN)
+        continuousFire = true;
+
+    // Skip shooting in non-think frames unless continuous fire is required
+    if (!continuousFire && ShouldSkipThinkFrame())
+        return false;
+
     const firedef_t *firedef = GS_FiredefForPlayerState(&self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON]);
 
     int weapon = self->s.weapon;
@@ -107,14 +115,10 @@ bool Bot::FireWeapon()
     vec3_t target, fire_origin;
     SetupCoarseFireTarget(fire_origin, target);
 
-    bool continuous_fire = false;
-    if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN)
-        continuous_fire = true;
-
     bool isInFront, mayHitApriori;
     CheckEnemyInFrontAndMayBeHit(target, &isInFront, &mayHitApriori);
 
-    if(!continuous_fire && !(isInFront && mayHitApriori))
+    if(!continuousFire && !(isInFront && mayHitApriori))
         return false;
 
     float wfac = AdjustTarget(weapon, firedef, fire_origin, target);
