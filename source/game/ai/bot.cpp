@@ -25,7 +25,9 @@ Bot::Bot(edict_t *self, float skillLevel)
       pendingLookAtPoint(0, 0, 0),
       pendingLookAtPointTimeoutAt(0),
       hasPendingLookAtPoint(false),
-      lookAtPointTurnSpeedMultiplier(0.5f)
+      lookAtPointTurnSpeedMultiplier(0.5f),
+      cachedMoveVec(INFINITY, INFINITY, INFINITY),
+      hasCachedMoveVec(false)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;
@@ -34,7 +36,7 @@ Bot::Bot(edict_t *self, float skillLevel)
 
 void Bot::LookAround()
 {
-    ApplyPendingTurnToLookAtPoint();
+    CheckIsInThinkFrame(__FUNCTION__);
 
     TestClosePlace();
 
@@ -74,8 +76,7 @@ void Bot::RegisterVisibleEnemies()
     if(G_ISGHOSTING(self) || GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled())
         return;
 
-    if (botBrain.ShouldSkipThinkFrame())
-        return;
+    CheckIsInThinkFrame(__FUNCTION__);
 
     // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients
     for (int i = 0; i < gs.maxclients; ++i)
@@ -289,7 +290,10 @@ void Bot::Think()
     // Call superclass method first
     Ai::Think();
 
-    // TODO: Place movement code there and precache ucmd between frames
+    if (IsGhosting())
+        return;
+
+    LookAround();
 }
 
 //==========================================
@@ -301,7 +305,7 @@ void Bot::Frame()
     // Call superclass method first
     Ai::Frame();
 
-    if (G_ISGHOSTING(self))
+    if (IsGhosting())
     {
         botBrain.combatTask.Clear();
 
@@ -323,51 +327,51 @@ void Bot::Frame()
     }
     else
     {
-        LookAround();
+        ApplyPendingTurnToLookAtPoint();
 
         const CombatTask &combatTask = botBrain.combatTask;
 
-        bool inhibitCombat = combatTask.inhibit;
-        if (currAasAreaNum != goalAasAreaNum && !nextReaches.empty())
+        bool inhibitCombat = combatTask.Empty() || combatTask.inhibit;
+        if (!inhibitCombat)
         {
-            if (IsCloseToReachStart())
+            if (currAasAreaNum != goalAasAreaNum && !nextReaches.empty())
             {
-                int travelType = nextReaches.front().traveltype;
-                if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
-                    inhibitCombat = true;
-                else if (travelType == TRAVEL_CROUCH || travelType == TRAVEL_LADDER)
+                if (IsCloseToReachStart())
+                {
+                    int travelType = nextReaches.front().traveltype;
+                    if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
+                        inhibitCombat = true;
+                    else if (travelType == TRAVEL_CROUCH || travelType == TRAVEL_LADDER)
+                        inhibitCombat = true;
+                }
+                else if (currAasAreaTravelFlags & (TFL_CROUCH))
                     inhibitCombat = true;
             }
-            else if (currAasAreaTravelFlags & (TFL_CROUCH))
-                inhibitCombat = true;
         }
 
-        if (!combatTask.Empty() && !inhibitCombat)
+        // Do not modify the ucmd in FireWeapon(), it will be overwritten by MoveFrame()
+        bool fireButtonPressed = false;
+        if (!inhibitCombat)
         {
-            if (FireWeapon(&ucmd))
+            if (FireWeapon())
             {
                 SetCombatMoveTimeout(AI_COMBATMOVE_TIMEOUT);
+                fireButtonPressed = true;
             }
         }
 
-        bool hasToEvade = false;
-        if (Skill() > 0.25f)
-            hasToEvade = dangersDetector.FindDangers();
+        inhibitCombat |= !IsReadyToCombat();
 
-        if (IsReadyToCombat() || hasToEvade)
-        {
-            CombatMovement(&ucmd, hasToEvade);
-        }
-        else
-        {
-            Move(&ucmd);
-        }
+        MoveFrame(&ucmd, inhibitCombat);
+
+        if (fireButtonPressed)
+            ucmd.buttons |= BUTTON_ATTACK;
 
         //set up for pmove
         for (int i = 0; i < 3; i++)
-            ucmd.angles[i] = ANGLE2SHORT( self->s.angles[i] ) - self->r.client->ps.pmove.delta_angles[i];
+            ucmd.angles[i] = ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
 
-        VectorSet( self->r.client->ps.pmove.delta_angles, 0, 0, 0 );
+        VectorSet(self->r.client->ps.pmove.delta_angles, 0, 0, 0);
     }
 
     // set approximate ping and show values

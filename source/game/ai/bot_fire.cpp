@@ -86,7 +86,7 @@ constexpr float WFAC_GENERIC_INSTANT = 150.0f;
 // BOT_DMclass_FireWeapon
 // Fire if needed
 //==========================================
-bool Bot::FireWeapon(usercmd_t *ucmd)
+bool Bot::FireWeapon()
 {
     const bool importantShot = botBrain.combatTask.importantShot;
     // Reset shot importance, it is for a single flick shot and the task is for many frames
@@ -126,7 +126,9 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
     // the main purpose is to prevent shooting in wall when real look dir is not close to ideal one
     bool mayHitReally = LookAtEnemy(wfac, fire_origin, target);
     if (mayHitReally)
-        TryPressAttack(ucmd, importantShot);
+        return TryPressAttack(importantShot);
+
+    return false;
 
     /*
     if (nav.debugMode && bot_showcombat->integer)
@@ -139,7 +141,6 @@ bool Bot::FireWeapon(usercmd_t *ucmd)
         }
     }
     */
-    return true;
 }
 
 void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
@@ -161,11 +162,11 @@ void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, boo
     *mayHit = CheckShot(target);
 }
 
-void Bot::TryPressAttack(usercmd_t *ucmd, bool importantShot)
+bool Bot::TryPressAttack(bool importantShot)
 {
     const auto weapState = self->r.client->ps.weaponState;
     if (weapState != WEAPON_STATE_READY && weapState != WEAPON_STATE_REFIRE && weapState != WEAPON_STATE_REFIRESTRONG)
-        return;
+        return false;
 
     float firedelay;
     // in continuous fire weapons don't add delays
@@ -177,10 +178,7 @@ void Bot::TryPressAttack(usercmd_t *ucmd, bool importantShot)
     if (importantShot)
         firedelay += 0.45f * Skill();
 
-    if (firedelay <= 0.0f)
-        return;
-
-    ucmd->buttons |= BUTTON_ATTACK;
+    return firedelay > 0;
 }
 
 bool Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)

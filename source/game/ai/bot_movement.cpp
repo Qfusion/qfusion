@@ -1,17 +1,35 @@
 #include "bot.h"
 #include "aas.h"
 
-void Bot::Move(usercmd_t *ucmd)
+void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
 {
-    if (currAasAreaNum == 0 || goalAasAreaNum == 0)
-        return;
+    isOnGroundThisFrame = self->groundentity != nullptr;
 
     if (hasTriggeredRj && rjTimeout <= level.time)
         hasTriggeredRj = false;
 
     CheckPendingLandingDashTimedOut();
 
-    isOnGroundThisFrame = self->groundentity != nullptr;
+    bool hasToEvade = false;
+    if (Skill() > 0.25f && !ShouldSkipThinkFrame())
+        hasToEvade = dangersDetector.FindDangers();
+
+    if (inhibitCombat && !hasToEvade)
+        Move(ucmd);
+    else
+        CombatMovement(ucmd, hasToEvade);
+
+    TryMoveAwayIfBlocked(ucmd);
+
+    CheckTargetReached();
+
+    wasOnGroundPrevFrame = isOnGroundThisFrame;
+}
+
+void Bot::Move(usercmd_t *ucmd)
+{
+    if (currAasAreaNum == 0 || goalAasAreaNum == 0)
+        return;
 
     aas_areainfo_t currAreaInfo;
     AAS_AreaInfo(currAasAreaNum, &currAreaInfo);
@@ -81,10 +99,6 @@ void Bot::Move(usercmd_t *ucmd)
         }
     }
 
-    TryMoveAwayIfBlocked(ucmd);
-
-    CheckTargetReached();
-
     if (!hasPendingLookAtPoint)
     {
         float turnSpeedMultiplier = requestedViewTurnSpeedMultiplier;
@@ -115,8 +129,6 @@ void Bot::Move(usercmd_t *ucmd)
         }
         ChangeAngle(moveVec, turnSpeedMultiplier);
     }
-
-    wasOnGroundPrevFrame = isOnGroundThisFrame;
 }
 
 void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
@@ -399,11 +411,11 @@ void Bot::MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd)
     //    ucmd->upmove = 1;
 }
 
-void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
+bool Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
 {
     float moveVecSqLen = moveVec->SquaredLength();
     if (moveVecSqLen < 0.01f)
-        return;
+        return true;
 
     *moveVec *= Q_RSqrt(moveVecSqLen);
 
@@ -420,7 +432,7 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
     G_Trace(&trace, self->s.origin, mins, maxs, forwardVec.data(), self, MASK_AISOLID);
 
     if (trace.fraction == 1.0f)
-        return;
+        return false;
 
     // If we are in air, check whether we may crouch to prevent bumping a ceiling by head
     // We do not switch to crouch movement style, since we are still in air and have bunny speed
@@ -431,7 +443,7 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
         if (crouchTrace.fraction == 1.0f)
         {
             ucmd->upmove = -1;
-            return;
+            return true;
         }
     }
 
@@ -465,6 +477,7 @@ void Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
         sign = -sign;
     }
     // If bestFraction is still a fraction of the forward trace, moveVec is kept as is
+    return true;
 }
 
 void Bot::StraightenOrInterpolateMoveVec(Vec3 *moveVec, float speed)
@@ -668,12 +681,12 @@ void Bot::SetPendingLandingDash(usercmd_t *ucmd)
     requestedViewTurnSpeedMultiplier = 1.35f;
 }
 
-void Bot::TryApplyPendingLandingDash(usercmd_t *ucmd)
+bool Bot::TryApplyPendingLandingDash(usercmd_t *ucmd)
 {
     if (!hasPendingLandingDash)
-        return;
+        return false;
     if (!isOnGroundThisFrame || wasOnGroundPrevFrame)
-        return;
+        return false;
 
     ucmd->forwardmove = 1;
     ucmd->sidemove = 0;
@@ -681,24 +694,24 @@ void Bot::TryApplyPendingLandingDash(usercmd_t *ucmd)
     ucmd->buttons |= BUTTON_SPECIAL;
     hasPendingLandingDash = false;
     requestedViewTurnSpeedMultiplier = 1.0f;
+    return true;
 }
 
-void Bot::CheckPendingLandingDashTimedOut()
+bool Bot::CheckPendingLandingDashTimedOut()
 {
     if (hasPendingLandingDash && pendingLandingDashTimeout <= level.time)
     {
         hasPendingLandingDash = false;
         requestedViewTurnSpeedMultiplier = 1.0f;
+        return true;
     }
+    return false;
 }
 
 void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
 {
-    if (hasPendingLandingDash)
-    {
-        TryApplyPendingLandingDash(ucmd);
+    if (TryApplyPendingLandingDash(ucmd))
         return;
-    }
 
     // moveDir is initially set to a vector from self to currMoveTargetPoint.
     // However, if we have any tangential velocity in a trajectory and it is not directed to the target.
@@ -708,10 +721,19 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
     Vec3 velocityVec(self->velocity);
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
-    StraightenOrInterpolateMoveVec(moveVec, speed);
-
-    // This call may set ucmd->upmove to -1 to prevent bumping a ceiling in air
-    CheckAndTryAvoidObstacles(moveVec, ucmd, speed);
+    bool shouldSaveCachedMoveVec = false;
+    if (ShouldSkipThinkFrame() && hasCachedMoveVec)
+    {
+        *moveVec = cachedMoveVec;
+    }
+    else
+    {
+        // Following two calls are quite expensive, so its a good idea
+        // to cache results of these calls for a think cycle (several game frames)
+        StraightenOrInterpolateMoveVec(moveVec, speed);
+        bool hasObstacles = CheckAndTryAvoidObstacles(moveVec, ucmd, speed);
+        shouldSaveCachedMoveVec = !hasObstacles;
+    }
 
     Vec3 toTargetDir2D(*moveVec);
     toTargetDir2D.z() = 0;
@@ -822,6 +844,12 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
         ucmd->forwardmove = 0;
         ucmd->upmove = 0;
     }
+
+    if (shouldSaveCachedMoveVec)
+    {
+        cachedMoveVec = *moveVec;
+    }
+    hasCachedMoveVec = shouldSaveCachedMoveVec;
 }
 
 void Bot::CheckTargetReached()
