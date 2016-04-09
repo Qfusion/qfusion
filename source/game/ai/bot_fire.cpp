@@ -96,7 +96,7 @@ bool Bot::FireWeapon()
         return false;
 
     bool continuousFire = false;
-    if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN)
+    if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN || self->s.weapon == WEAP_MACHINEGUN)
         continuousFire = true;
 
     // Skip shooting in non-think frames unless continuous fire is required
