@@ -3061,7 +3061,7 @@ static void asFunc_RegisterCallvote( asstring_t *asname, asstring_t *asusage, as
 static asstring_t *asFunc_GetConfigString( int index )
 {
 	const char *cs = trap_GetConfigString( index );
-	return angelExport->asStringFactoryBuffer( (char *)cs, strlen( cs ) );
+	return angelExport->asStringFactoryBuffer( (char *)cs, cs ? strlen( cs ) : 0 );
 }
 
 static void asFunc_ConfigString( int index, asstring_t *str )
