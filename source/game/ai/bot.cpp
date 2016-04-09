@@ -314,9 +314,8 @@ void Bot::Frame()
     memset(&ucmd, 0, sizeof(ucmd));
 
     //get ready if in the game
-    if( GS_MatchState() <= MATCH_STATE_WARMUP && !level.ready[PLAYERNUM(self)]
-        && self->r.client->teamstate.timeStamp + 4000 < level.time )
-        G_Match_Ready( self );
+    if(GS_MatchState() <= MATCH_STATE_WARMUP && !IsReady() && self->r.client->teamstate.timeStamp + 4000 < level.time)
+        G_Match_Ready(self);
 
     if( level.gametype.dummyBots || bot_dummy->integer )
     {
