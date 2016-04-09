@@ -85,6 +85,24 @@ void Bot::RegisterVisibleEnemies()
     float fov = 110.0f + 69.0f * Skill();
     float dotFactor = cosf((float)DEG2RAD(fov / 2));
 
+    struct EntAndDistance
+    {
+        int entNum;
+        float distance;
+
+        EntAndDistance(int entNum, float distance): entNum(entNum), distance(distance) {}
+        bool operator<(const EntAndDistance &that) const { return distance < that.distance; }
+    };
+
+    // Do not call inPVS() and G_Visible() for potential targets inside a loop for all clients.
+    // In worst case when all bots may see each other we get N^2 traces and PVS tests
+    // First, select all candidate targets along with distance to a bot.
+    // Then choose not more than BotBrain::maxTrackedEnemies nearest enemies for calling OnEnemyViewed()
+    // It may cause data loss (far enemies may have higher logical priority),
+    // but in a common good case (when there are few visible enemies) it preserves data,
+    // and in the worst case mentioned above it does not act weird from player POV and prevents server hang up.
+    StaticVector<EntAndDistance, MAX_CLIENTS> candidateTargets;
+
     // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients
     for (int i = 0; i < gs.maxclients; ++i)
     {
@@ -101,10 +119,24 @@ void Bot::RegisterVisibleEnemies()
         // Reject targets quickly by fov
         Vec3 toTarget(ent->s.origin);
         toTarget -= self->s.origin;
-        toTarget.NormalizeFast();
+        float squareDistance = toTarget.SquaredLength();
+        if (squareDistance < 1)
+            continue;
+        float invDistance = Q_RSqrt(squareDistance);
+        toTarget *= invDistance;
         if (toTarget.Dot(lookDir) < dotFactor)
             continue;
 
+        // It seams to be more instruction cache-friendly to just add an entity to a plain array
+        // and sort it once after the loop instead of pushing an entity in a heap on each iteration
+        candidateTargets.emplace_back(EntAndDistance(ENTNUM(ent), 1.0f / invDistance));
+    }
+
+    std::sort(candidateTargets.begin(), candidateTargets.end());
+
+    for (int i = 0, end = std::min(candidateTargets.size(), botBrain.maxTrackedEnemies); i < end; ++i)
+    {
+        edict_t *ent = game.edicts + candidateTargets[i].entNum;
         if (trap_inPVS(self->s.origin, ent->s.origin) && G_Visible(self, ent))
             botBrain.OnEnemyViewed(ent);
     }
