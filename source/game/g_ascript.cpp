@@ -3058,6 +3058,12 @@ static void asFunc_RegisterCallvote( asstring_t *asname, asstring_t *asusage, as
 		ashelp ? ashelp->buffer : NULL );
 }
 
+static asstring_t *asFunc_GetConfigString( int index )
+{
+	const char *cs = trap_GetConfigString( index );
+	return angelExport->asStringFactoryBuffer( (char *)cs, strlen( cs ) );
+}
+
 static void asFunc_ConfigString( int index, asstring_t *str )
 {
 	if( !str || !str->buffer )
@@ -3371,6 +3377,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "int G_SoundIndex( const String &in, bool pure )", asFUNCTION(asFunc_SoundIndexExt), NULL },
 	{ "void G_RegisterCommand( const String &in )", asFUNCTION(asFunc_RegisterCommand), NULL },
 	{ "void G_RegisterCallvote( const String &in, const String &in, const String &in, const String &in )", asFUNCTION(asFunc_RegisterCallvote), NULL },
+	{ "const String @G_GetConfigString( int index )", asFUNCTION(asFunc_GetConfigString), NULL },
 	{ "void G_ConfigString( int index, const String &in )", asFUNCTION(asFunc_ConfigString), NULL },
 
 	// projectile firing
