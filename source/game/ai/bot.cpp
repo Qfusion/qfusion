@@ -78,6 +78,13 @@ void Bot::RegisterVisibleEnemies()
 
     CheckIsInThinkFrame(__FUNCTION__);
 
+    // Compute look dir before loop
+    vec3_t lookDir;
+    AngleVectors(self->s.angles, lookDir, nullptr, nullptr);
+
+    float fov = 110.0f + 69.0f * Skill();
+    float dotFactor = cosf((float)DEG2RAD(fov / 2));
+
     // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients
     for (int i = 0; i < gs.maxclients; ++i)
     {
@@ -89,6 +96,13 @@ void Bot::RegisterVisibleEnemies()
         if (ent->flags & (FL_NOTARGET|FL_BUSY))
             continue;
         if (GS_TeamBasedGametype() && ent->s.team == self->s.team)
+            continue;
+
+        // Reject targets quickly by fov
+        Vec3 toTarget(ent->s.origin);
+        toTarget -= self->s.origin;
+        toTarget.NormalizeFast();
+        if (toTarget.Dot(lookDir) < dotFactor)
             continue;
 
         if (trap_inPVS(self->s.origin, ent->s.origin) && G_Visible(self, ent))
