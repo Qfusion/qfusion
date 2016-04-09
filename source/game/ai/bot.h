@@ -31,11 +31,15 @@ public:
     virtual void OnBlockedTimeout() override;
     void SayVoiceMessages();
     void GhostingFrame();
-    virtual void RunFrame() override;
+
 
     void OnRespawn();
 
     inline float Skill() const { return skillLevel; }
+
+protected:
+    virtual void Frame() override;
+    virtual void Think() override;
 
 private:
     bool TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove);

@@ -222,18 +222,33 @@ void Ai::TouchedEntity(edict_t *ent)
 	}
 }
 
-void Ai::Think()
+void Ai::Frame()
 {
+	// Call super method first
+	AiFrameAwareUpdatable::Frame();
+
+	// Call brain Update() (Frame() and, maybe Think())
+	aiBaseBrain->Update();
+
 	if (level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities)
 	{
 		self->nextThink = level.time + game.snapFrameTime;
 		return;
 	}
+}
 
+void Ai::Think()
+{
 	// check for being blocked
 	if (!G_ISGHOSTING(self))
 	{
 		CategorizePosition();
+
+		// Update currAasAreaNum value of AiBaseBrain
+		// Ai::Think() returns to Ai::Frame()
+		// Ai::Frame() calls AiBaseBrain::Frame()
+		// AiBaseBrain::Frame() calls AiBaseBrain::Think() in this frame
+		aiBaseBrain->currAasAreaNum = currAasAreaNum;
 
 		// TODO: Check whether we are camping/holding a spot
 		if (VectorLengthFast(self->velocity) > 37)
@@ -245,11 +260,6 @@ void Ai::Think()
 			OnBlockedTimeout();
 			return;
 		}
-
-		// Should be called after CategorizePosition() to ensure that currAasAreaNum is not outdated
-		aiBaseBrain->UpdateStatus(currAasAreaNum);
 	}
-
-	RunFrame();
 }
 

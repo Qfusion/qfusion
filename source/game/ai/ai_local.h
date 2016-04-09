@@ -257,21 +257,80 @@ int FindAASTravelTimeToGoalArea(
 float FindSquareDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
 float FindDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
 
-class AiGametypeBrain
+class AiFrameAwareUpdatable
+{
+protected:
+	unsigned frameAffinityModulo;
+	unsigned frameAffinityOffset;
+
+	bool ShouldSkipThinkFrame()
+	{
+		// Check whether the modulo has not been set yet
+		return frameAffinityModulo == 0 || level.framenum % frameAffinityModulo != frameAffinityOffset;
+	}
+
+	// This method group is called on each frame. See Update() for calls order.
+	// It is not recommended (but not forbidden) to do CPU-intensive updates in these methods.
+	virtual void Frame() {}
+	virtual void PreFrame() {}
+	virtual void PostFrame() {}
+
+	inline void CheckIsInThinkFrame(const char *function)
+	{
+		if (ShouldSkipThinkFrame())
+		{
+			const char *format = "%s has been called not in think frame: frame#=%d, modulo=%d, offset=%d\n";
+			G_Printf(format, function, frameAffinityModulo, frameAffinityOffset);
+			printf(format, function, frameAffinityModulo, frameAffinityOffset);
+			abort();
+		}
+	}
+
+	// This method group is called only when frame affinity allows to do it. See Update() for calls order.
+	// It is recommended (but not mandatory) to do all CPU-intensive updates in these methods instead of Frame();
+	virtual void Think() {}
+	virtual void PreThink() {}
+	virtual void PostThink() {}
+
+	// May be overridden if some actions should be performed when a frame affinity is set
+	virtual void SetFrameAffinity(unsigned modulo, unsigned offset)
+	{
+		frameAffinityModulo = modulo;
+		frameAffinityOffset = offset;
+	}
+public:
+	AiFrameAwareUpdatable(): frameAffinityModulo(0), frameAffinityOffset(0) {}
+
+	// Call this method to update an instance state.
+	void Update()
+	{
+		PreFrame();
+		Frame();
+		if (!ShouldSkipThinkFrame())
+		{
+			PreThink();
+			Think();
+			PostThink();
+		}
+		PostFrame();
+	}
+};
+
+class AiGametypeBrain: public AiFrameAwareUpdatable
 {
 protected:
 	AiGametypeBrain() {};
 
 	// May be instantiated dynamically with a some subtype of this class in future
 	static AiGametypeBrain instance;
+	virtual void Frame() override;
 public:
 	// May return some of subtypes of this class depending on a gametype in future
 	static inline AiGametypeBrain *Instance() { return &instance; }
-	void Frame();
 	void ClearGoals(NavEntity *canceledGoal, class Ai *goalGrabber);
 };
 
-class AiBaseTeamBrain
+class AiBaseTeamBrain: public AiFrameAwareUpdatable
 {
 	friend class Bot;  // Bots should be able to notify its team in destructor when they get dropped immediately
 	friend class AiGametypeBrain;
@@ -281,14 +340,12 @@ class AiBaseTeamBrain
 	mutable int svFps;
 	mutable int svSkill;
 
-	// Bots are split in groups by frame affinity to reduce server workload and distribute it to many frames.
-	// Frame affinity is defined by two numbers: a modulo and an offset, where modulo > 0 and 0 <= offset < modulo.
-	// Usually (but not mandatory) a bot performs CPU-intense computations when level.framenum % modulo == offset
-	mutable int affinityModulo;
+	// These vars are used instead of AiFrameAwareUpdatable for lazy intiailization
+	mutable int teamBrainAffinityModulo;
+	mutable int teamBrainAffinityOffset;
 	static constexpr int MAX_AFFINITY_OFFSET = 4;
 	// This array contains count of bots that use corresponding offset for each possible affinity offset
 	unsigned affinityOffsetsInUse[MAX_AFFINITY_OFFSET];
-	mutable int teamAffinityOffset;
 
 	// These arrays store copies of bot affinities to be able to access them even if the bot reference has been lost
 	unsigned char botAffinityModulo[MAX_CLIENTS];
@@ -296,6 +353,8 @@ class AiBaseTeamBrain
 
 	unsigned AffinityModulo() const;
 	unsigned TeamAffinityOffset() const;
+
+	void InitTeamAffinity() const;  // Callers are const ones, and only mutable vars are modified
 
 	// This function instantiates another brain instance and registers its shutdown hook
 	static AiBaseTeamBrain *CreateTeamBrain(int team);
@@ -319,11 +378,9 @@ protected:
 	void ReleaseBotFrameAffinity(int entNum);
 	void SetBotFrameAffinity(int bot, unsigned modulo, unsigned offset);
 
-	void Frame();
-
 	void CheckTeamChanges();
 
-	virtual void Think() {};
+	virtual void Frame() override;
 
 	inline int GetCachedCVar(int *cached, const char *name) const
 	{
@@ -342,37 +399,13 @@ public:
 	static AiBaseTeamBrain *GetBrainForTeam(int team);
 };
 
-class AiBaseBrain
+class AiBaseBrain: public AiFrameAwareUpdatable
 {
 	friend class Ai;
 	friend class AiGametypeBrain;
+	friend class AiBaseTeamBrain;
 protected:
 	edict_t *self;
-
-	unsigned frameAffinityModulo;
-	unsigned frameAffinityOffset;
-
-	inline void SetFrameAffinity(unsigned modulo, unsigned offset)
-	{
-		frameAffinityModulo = modulo;
-		frameAffinityOffset = offset;
-	}
-
-	inline bool ShouldSkipThinkFrame()
-	{
-		// Check whether the modulo has not been set yet
-		return frameAffinityModulo == 0 || level.framenum % frameAffinityModulo != frameAffinityOffset;
-	}
-
-	inline void CheckIsInThinkFrame(const char *function)
-	{
-		if (ShouldSkipThinkFrame())
-		{
-			const char *format = "%s has been called not in think frame: frame#=%d, modulo=%d, offset=%d\n";
-			Debug(format, function, frameAffinityModulo, frameAffinityOffset);
-			abort();
-		}
-	}
 
 	NavEntity *longTermGoal;
 	NavEntity *shortTermGoal;
@@ -430,8 +463,9 @@ protected:
 	}
 
 	void Debug(const char *format, ...);
+
+	virtual void Think() override;
 public:
-	void UpdateStatus(int currAasAreaNum);
 
 	inline bool MayReachLongTermGoalNow() { return longTermGoal && longTermGoal->MayBeReachedNow(self); }
 	inline bool MayReachShortTermGoalNow() { return shortTermGoal && shortTermGoal->MayBeReachedNow(self); }
@@ -534,15 +568,12 @@ struct ClosePlaceProps
 #include "aas/aasfile.h"
 #include "static_vector.h"
 
-class Ai: public EdictRef
+class Ai: public EdictRef, public AiFrameAwareUpdatable
 {
 	friend class AiGametypeBrain;
 	friend class AiBaseTeamBrain;
 	friend class AiBaseBrain;
 protected:
-	unsigned frameAffinityModulo;
-	unsigned frameAffinityOffset;
-
 	// Must be set in a subclass constructor. A subclass manages memory for its brain
 	// (it either has it as an intrusive member of allocates it on heap)
 	// and provides a reference to it to this base class via this pointer.
@@ -571,27 +602,11 @@ protected:
 
 	float aiYawSpeed, aiPitchSpeed;
 
-	inline void SetFrameAffinity(unsigned modulo, unsigned offset)
+	void SetFrameAffinity(unsigned modulo, unsigned offset) override
 	{
 		frameAffinityModulo = modulo;
 		frameAffinityOffset = offset;
 		aiBaseBrain->SetFrameAffinity(modulo, offset);
-	}
-
-	inline bool ShouldSkipThinkFrame()
-	{
-		// Check whether the modulo has not been set yet
-		return frameAffinityModulo == 0 || level.framenum % frameAffinityModulo != frameAffinityOffset;
-	}
-
-	inline void CheckIsInThinkFrame(const char *function)
-	{
-		if (ShouldSkipThinkFrame())
-		{
-			const char *format = "%s has been called not in think frame: frame#=%d, modulo=%d, offset=%d\n";
-			Debug(format, function, frameAffinityModulo, frameAffinityOffset);
-			abort();
-		}
 	}
 
 	void ClearAllGoals();
@@ -604,12 +619,12 @@ protected:
 
 	void UpdateReachCache(int reachedAreaNum);
 
+	virtual void Frame() override;
+	virtual void Think() override;
 public:
 	Ai(edict_t *self, int preferredAasTravelFlags = TFL_DEFAULT, int allowedAasTravelFlags = TFL_DEFAULT);
 
 	inline bool IsGhosting() const { return G_ISGHOSTING(self); }
-
-	void Think();
 
 	bool IsVisible(edict_t *other) const;
 	bool IsInFront(edict_t *other) const;
@@ -626,7 +641,6 @@ public:
 	void CategorizePosition();
 
 	virtual void OnBlockedTimeout() {};
-	virtual void RunFrame() {};
 
 	static constexpr unsigned BLOCKED_TIMEOUT = 15000;
 protected:
