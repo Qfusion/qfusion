@@ -141,57 +141,104 @@ static vec_t VectorNormalize2D( vec3_t v ) // ByMiK : normalize horizontally (do
 	return length;
 }
 
-// Could be used to test if player walk touching a wall, if not used in any other part of pm code i'll integrate
-// this function to the walljumpcheck function.
-// usage : nbTestDir = nb of direction to test around the player
-// maxZnormal is the Z value of the normal of a poly to considere it as a wall
-// normal is a pointer to the normal of the nearest wall
-
+// Walljump wall availability check
+// nbTestDir is the number of directions to test around the player
+// maxZnormal is the max Z value of the normal of a poly to consider it a wall
+// normal becomes a pointer to the normal of the most appropriate wall
 static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 {
-	vec3_t min, max, dir;
-	int i, j;
+	vec3_t zero, dir, mins, maxs;
+	int i;
 	trace_t trace;
-	float dist = 1.0;
-	entity_state_t *state;
+	float r, d, dx, dy, m;
+
+	VectorClear( zero );
+
+	// if there is nothing at all within the checked area, we can skip the individual checks
+	// this optimization must always overapproximate the combination of those checks
+	mins[0] = pm->mins[0] - pm->maxs[0];
+	mins[1] = pm->mins[1] - pm->maxs[0];
+	maxs[0] = pm->maxs[0] + pm->maxs[0];
+	maxs[1] = pm->maxs[1] + pm->maxs[0];
+	if( pml.velocity[0] > 0 )
+		maxs[0] += pml.velocity[0] * 0.015f;
+	else
+		mins[0] += pml.velocity[0] * 0.015f;
+	if( pml.velocity[1] > 0 )
+		maxs[1] += pml.velocity[1] * 0.015f;
+	else
+		mins[1] += pml.velocity[1] * 0.015f;
+	mins[2] = maxs[2] = 0;
+	module_Trace( &trace, pml.origin, mins, maxs, pml.origin, pm->playerState->POVnum, pm->contentmask, 0 );
+	if( !trace.allsolid && trace.fraction == 1 )
+		return;
+
+	// determine the primary direction
+	if( pml.sidePush > 0 )
+		r = M_PI / 2.0f;
+	else if( pml.sidePush < 0 )
+		r = -M_PI / 2.0f;
+	else if( pml.forwardPush > 0 )
+		r = 0.0f;
+	else
+		r = M_PI;
+
+	d = 0.0f; // current distance from the primary direction
 
 	for( i = 0; i < nbTestDir; i++ )
 	{
-		dir[0] = pml.origin[0] + ( pm->maxs[0]*cos( ( M_TWOPI/nbTestDir )*i ) + pml.velocity[0] * 0.015f );
-		dir[1] = pml.origin[1] + ( pm->maxs[1]*sin( ( M_TWOPI/nbTestDir )*i ) + pml.velocity[1] * 0.015f );
+		// start checking in the primary direction and alternate with its opposite while moving away from these
+		if( i != 0 )
+			r += M_PI; // switch front and back
+		if( i % 4 == 0 && i != 0 )
+		{ // switch left and right
+			r -= 2 * d;
+		}
+		else if( i % 4 == 2 )
+		{ // switch left and right and move further away
+			r += 2 * d + M_TWOPI / nbTestDir;
+			d += M_TWOPI / nbTestDir;
+		}
+
+		// determine the relative offsets from the origin
+		dx = cos( DEG2RAD( pm->playerState->viewangles[YAW] ) + r );
+		dy = sin( DEG2RAD( pm->playerState->viewangles[YAW] ) + r );
+
+		// project onto the player box
+		if( dx == 0 )
+			m = pm->maxs[1];
+		else if( dy == 0 )
+			m = pm->maxs[0];
+		else if( fabs( dx / pm->maxs[0] ) > fabs( dy / pm->maxs[1] ) )
+			m = fabs( pm->maxs[0] / dx );
+		else
+			m = fabs( pm->maxs[1] / dy );
+
+		// allow a gap between the player and the wall
+		m += pm->maxs[0];
+
+		dir[0] = pml.origin[0] + dx * m + pml.velocity[0] * 0.015f;
+		dir[1] = pml.origin[1] + dy * m + pml.velocity[1] * 0.015f;
 		dir[2] = pml.origin[2];
 
-		for( j = 0; j < 2; j++ )
-		{
-			min[j] = pm->mins[j];
-			max[j] = pm->maxs[j];
-		}
-		min[2] = max[2] = 0;
+		module_Trace( &trace, pml.origin, zero, zero, dir, pm->playerState->POVnum, pm->contentmask, 0 );
 
-		module_Trace( &trace, pml.origin, min, max, dir, pm->playerState->POVnum, pm->contentmask, 0 );
-
-		if( trace.allsolid ) return;
+		if( trace.allsolid )
+			return;
 
 		if( trace.fraction == 1 )
 			continue; // no wall in this direction
 
-		if( trace.surfFlags & (SURF_SKY|SURF_NOWALLJUMP) )
+		if( trace.surfFlags & ( SURF_SKY|SURF_NOWALLJUMP ) )
 			continue;
 
-		if( trace.ent > 0 )
-		{
-			state = module_GetEntityState( trace.ent, 0 );
-			if( state->type == ET_PLAYER )
-				continue;
-		}
+		if( trace.ent > 0 && module_GetEntityState( trace.ent, 0 )->type == ET_PLAYER )
+			continue;
 
-		if( trace.fraction > 0 )
+		if( trace.fraction > 0 && fabs( trace.plane.normal[2] ) < maxZnormal )
 		{
-			if( dist > trace.fraction && fabs( trace.plane.normal[2] ) < maxZnormal )
-			{
-				dist = trace.fraction;
-				VectorCopy( trace.plane.normal, *normal );
-			}
+			VectorCopy( trace.plane.normal, *normal );
+			return;
 		}
 	}
 }
@@ -1232,7 +1279,7 @@ static void PM_CheckWallJump( void )
 			|| ( trace.fraction == 1 ) || ( !ISWALKABLEPLANE( &trace.plane ) && !trace.startsolid ) )
 		{
 			VectorClear( normal );
-			PlayerTouchWall( 12, 0.3f, &normal );
+			PlayerTouchWall( 20, 0.3f, &normal );
 			if( !VectorLength( normal ) )
 				return;
 
