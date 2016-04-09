@@ -414,7 +414,6 @@ protected:
 	unsigned shortTermGoalTimeout;
 
 	unsigned statusUpdateTimeout;
-	unsigned stateCombatTimeout;
 
 	int currAasAreaNum;
 
@@ -610,9 +609,6 @@ protected:
 	}
 
 	void ClearAllGoals();
-
-	inline bool IsReadyToCombat() { return aiBaseBrain->stateCombatTimeout <= level.time; }
-	inline void SetCombatMoveTimeout(unsigned delay) { aiBaseBrain->stateCombatTimeout = level.time + delay; }
 
 	// Called by brain via self->ai->aiRef when long-term or short-term goals are set
 	void OnGoalSet(NavEntity *goalEnt);
