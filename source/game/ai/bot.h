@@ -36,6 +36,7 @@ public:
     void OnRespawn();
 
     inline float Skill() const { return skillLevel; }
+    inline bool IsReady() const { return level.ready[PLAYERNUM(self)]; }
 
 protected:
     virtual void Frame() override;
