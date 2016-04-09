@@ -19,7 +19,7 @@ public:
     bool ChangeWeapon(int weapon);
     bool CheckShot(const vec3_t point);
     void PredictProjectileShot(const vec3_t fire_origin, float projectile_speed, vec3_t target, const vec3_t target_velocity);
-    bool FireWeapon(usercmd_t *ucmd);
+    bool FireWeapon();
     void Pain(const edict_t *enemy, float kick, int damage)
     {
         botBrain.OnPain(enemy, kick, damage);
@@ -84,11 +84,17 @@ private:
     bool hasPendingLookAtPoint;
     float lookAtPointTurnSpeedMultiplier;
 
+    Vec3 cachedMoveVec;
+    bool hasCachedMoveVec;
+
     void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutDuration = 500);
 
     void ApplyPendingTurnToLookAtPoint();
 
     inline const int *Inventory() const { return self->r.client->ps.inventory; }
+
+    // Must be called on each frame
+    void MoveFrame(usercmd_t *ucmd, bool inhibitCombat);
 
     void MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveEnteringJumppad(Vec3 *moveVec, usercmd_t *ucmd);
@@ -99,7 +105,7 @@ private:
     void MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd);
-    void CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed);
+    bool CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed);
     void StraightenOrInterpolateMoveVec(Vec3 *moveVec, float speed);
     bool TryStraightenMoveVec(Vec3 *moveVec, float speed);
     void InterpolateMoveVec(Vec3 *moveVec, float speed);
@@ -113,8 +119,9 @@ private:
     }
 
     void SetPendingLandingDash(usercmd_t *ucmd);
-    void TryApplyPendingLandingDash(usercmd_t *ucmd);
-    void CheckPendingLandingDashTimedOut();
+    bool TryApplyPendingLandingDash(usercmd_t *ucmd);
+    // Returns true if a pending landing dash has timed out
+    bool CheckPendingLandingDashTimedOut();
 
     // Returns true if the bot is at least a bit blocked
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
@@ -134,7 +141,7 @@ private:
 
     // Returns true if current look angle worth pressing attack
     bool LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
-    void TryPressAttack(usercmd_t *ucmd, bool importantShot);
+    bool TryPressAttack(bool importantShot);
 
     inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
     inline bool IsEnemyStatic() const { return botBrain.combatTask.IsTargetStatic(); }
