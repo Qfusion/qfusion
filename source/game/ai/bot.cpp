@@ -345,8 +345,9 @@ void Bot::Frame()
 
         const CombatTask &combatTask = botBrain.combatTask;
 
-        bool inhibitCombat = combatTask.Empty() || combatTask.inhibit;
-        if (!inhibitCombat)
+        bool inhibitShooting = combatTask.Empty();
+        bool inhibitCombatMove = inhibitShooting || combatTask.inhibit;
+        if (!inhibitCombatMove)
         {
             if (currAasAreaNum != goalAasAreaNum && !nextReaches.empty())
             {
@@ -354,18 +355,20 @@ void Bot::Frame()
                 {
                     int travelType = nextReaches.front().traveltype;
                     if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
-                        inhibitCombat = true;
-                    else if (travelType == TRAVEL_CROUCH || travelType == TRAVEL_LADDER)
-                        inhibitCombat = true;
+                        inhibitCombatMove = true;
+                    else if (travelType == TRAVEL_CROUCH)
+                        inhibitCombatMove = true;
+                    else if (travelType == TRAVEL_LADDER)
+                        inhibitCombatMove = inhibitShooting = true;
                 }
                 else if (currAasAreaTravelFlags & (TFL_CROUCH))
-                    inhibitCombat = true;
+                    inhibitCombatMove = true;
             }
         }
 
         // Do not modify the ucmd in FireWeapon(), it will be overwritten by MoveFrame()
         bool fireButtonPressed = false;
-        if (!inhibitCombat)
+        if (!inhibitShooting)
         {
             if (FireWeapon())
             {
@@ -373,7 +376,7 @@ void Bot::Frame()
             }
         }
 
-        MoveFrame(&ucmd, inhibitCombat);
+        MoveFrame(&ucmd, inhibitCombatMove);
 
         if (fireButtonPressed)
             ucmd.buttons |= BUTTON_ATTACK;
