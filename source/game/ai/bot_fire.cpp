@@ -35,48 +35,31 @@ bool Bot::CheckShot(const vec3_t point)
 // BOT_DMclass_PredictProjectileShot
 // predict target movement
 //==========================================
-void Bot::PredictProjectileShot(const vec3_t fire_origin, float projectile_speed, vec3_t target, const vec3_t target_velocity)
+void Bot::PredictProjectileShot(const vec3_t fireOrigin, float projectileSpeed, vec3_t target, const vec3_t targetVelocity)
 {
-    vec3_t predictedTarget;
-    vec3_t targetMovedir;
-    float targetSpeed;
-    float predictionTime;
-    float distance;
-    trace_t	trace;
-    int contents;
-
-    if( projectile_speed <= 0.0f )
+    if (projectileSpeed <= 0.0f)
         return;
 
-    targetSpeed = VectorNormalize2( target_velocity, targetMovedir );
+    Vec3 targetMoveDir(targetVelocity);
+    float targetSpeed = targetMoveDir.LengthFast();
+    if (targetSpeed < 1)
+        return;
 
-    // ok, this is not going to be 100% precise, since we will find the
-    // time our projectile will take to travel to enemy's CURRENT position,
-    // and them find enemy's position given his CURRENT velocity and his CURRENT dir
-    // after prediction time. The result will be much better if the player
-    // is moving to the sides (relative to us) than in depth (relative to us).
-    // And, of course, when the player moves in a curve upwards it will totally miss (ie, jumping).
+    targetMoveDir *= 1.0f / targetSpeed;
 
-    // but in general it does a great job, much better than any human player :)
+    float distance = DistanceFast(fireOrigin, target);
+    float predictionTime = distance / projectileSpeed;
 
-    distance = DistanceFast( fire_origin, target );
-    predictionTime = distance/projectile_speed;
-    VectorMA( target, predictionTime*targetSpeed, targetMovedir, predictedTarget );
+    Vec3 extrapolatedTarget(target);
+    extrapolatedTarget += predictionTime * targetSpeed * targetMoveDir;
 
-    // if this position is inside solid, try finding a position at half of the prediction time
-    contents = G_PointContents( predictedTarget );
-    if( contents & CONTENTS_SOLID && !( contents & CONTENTS_PLAYERCLIP ) )
-    {
-        VectorMA( target, ( predictionTime * 0.5f )*targetSpeed, targetMovedir, predictedTarget );
-        contents = G_PointContents( predictedTarget );
-        if( contents & CONTENTS_SOLID && !( contents & CONTENTS_PLAYERCLIP ) )
-            return; // INVALID
-    }
-
-    // if we can see this point, we use it, otherwise we keep the current position
-    G_Trace( &trace, const_cast<float*>(fire_origin), vec3_origin, vec3_origin, predictedTarget, self, MASK_SHOT );
-    if( trace.fraction == 1.0f || ( trace.ent && game.edicts[trace.ent].takedamage ) )
-        VectorCopy( predictedTarget, target );
+    // Check where the target should hit a solid (if any) and stop
+    trace_t trace;
+    G_Trace(&trace, target, nullptr, nullptr, extrapolatedTarget.data(), self, MASK_AISOLID);
+    if (trace.fraction == 1.0f)
+        VectorCopy(extrapolatedTarget.data(), target);
+    else
+        VectorCopy(trace.endpos, target);
 }
 
 constexpr float WFAC_GENERIC_PROJECTILE = 300.0f;

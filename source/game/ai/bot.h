@@ -18,7 +18,7 @@ public:
     void LookAround();
     bool ChangeWeapon(int weapon);
     bool CheckShot(const vec3_t point);
-    void PredictProjectileShot(const vec3_t fire_origin, float projectile_speed, vec3_t target, const vec3_t target_velocity);
+    void PredictProjectileShot(const vec3_t fireOrigin, float projectileSpeed, vec3_t target, const vec3_t targetVelocity);
     bool FireWeapon();
     void Pain(const edict_t *enemy, float kick, int damage)
     {
