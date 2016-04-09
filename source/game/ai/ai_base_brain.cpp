@@ -8,7 +8,6 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferred
       longTermGoalTimeout(0),
       shortTermGoalTimeout(0),
       statusUpdateTimeout(0),
-      stateCombatTimeout(0),
       allowedAasTravelFlags(allowedAasTravelFlags),
       preferredAasTravelFlags(preferredAasTravelFlags)
 {
@@ -154,13 +153,6 @@ void AiBaseBrain::PickShortTermGoal()
 
     if (!self->r.client || G_ISGHOSTING(self))
         return;
-
-    // Do not bother picking short-term (usually low-priority) items in combat.
-    if (stateCombatTimeout > level.time)
-    {
-        shortTermGoalTimeout = stateCombatTimeout;
-        return;
-    }
 
     if (shortTermGoalTimeout > level.time)
         return;

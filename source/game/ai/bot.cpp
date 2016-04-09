@@ -369,12 +369,9 @@ void Bot::Frame()
         {
             if (FireWeapon())
             {
-                SetCombatMoveTimeout(AI_COMBATMOVE_TIMEOUT);
                 fireButtonPressed = true;
             }
         }
-
-        inhibitCombat |= !IsReadyToCombat();
 
         MoveFrame(&ucmd, inhibitCombat);
 
