@@ -86,6 +86,20 @@ bool PredictProjectileNoClip(const Vec3 &fireOrigin, float projectileSpeed, vec3
     return true;
 }
 
+void Bot::GetPredictedTargetOrigin(const vec3_t fireOrigin, float projSpeed, vec_t *target)
+{
+    if (Skill() < 0.33f || IsEnemyStatic())
+        return;
+
+    // Check whether we are shooting the same enemy and cached predicted origin is not outdated
+    if (!HasCachedTargetOrigin())
+    {
+        PredictProjectileShot(fireOrigin, projSpeed, target, EnemyVelocity().data(), true);
+        cachedPredictedTargetInstanceId = EnemyInstanceId();
+        cachedPredictedTargetValidUntil = level.time + 66;
+    }
+}
+
 //==========================================
 // BOT_DMclass_PredictProjectileShot
 // predict target movement
@@ -386,11 +400,7 @@ float Bot::AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin
 
 float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target)
 {
-    // in the lowest skill level, don't predict projectiles
-    if (Skill() >= 0.33f && !IsEnemyStatic())
-    {
-        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data(), true);
-    }
+    GetPredictedTargetOrigin(fire_origin, firedef->speed, target);
 
     float wfac = WFAC_GENERIC_PROJECTILE * 1.3f;
 
@@ -428,12 +438,7 @@ float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_
     else
         wfac = WFAC_GENERIC_PROJECTILE;
 
-    // in the lowest skill level, don't predict projectiles
-    if (Skill() >= 0.33f && !IsEnemyStatic())
-    {
-        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data(), true);
-    }
-
+    GetPredictedTargetOrigin(fire_origin, firedef->speed, target);
     return wfac;
 }
 
@@ -441,11 +446,7 @@ float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin
 {
     //jalToDo
     float wfac = WFAC_GENERIC_PROJECTILE;
-    // in the lowest skill level, don't predict projectiles
-    if (Skill() >= 0.33f && !IsEnemyStatic())
-    {
-        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data(), true);
-    }
+    GetPredictedTargetOrigin(fire_origin, firedef->speed, target);
     return wfac;
 }
 
