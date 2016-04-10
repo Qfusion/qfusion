@@ -330,6 +330,8 @@ public:
         if (spamEnemy) return suggestedSpamWeapon;
         FailWith("Weapon(): combat task is empty\n");
     }
+
+    const edict_t *TraceKey() const { return aimEnemy ? aimEnemy->ent : nullptr; }
 };
 
 struct CombatDisposition
