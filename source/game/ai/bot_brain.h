@@ -255,6 +255,13 @@ public:
     // When level.time == spamTimesOutAt, stop spamming
     unsigned spamTimesOutAt;
 
+    // Used to distinguish different combat tasks and track combat task changes
+    // (e.g. when some parameters that depend of a combat task are cached by some external code
+    // and instanceId of the combat task has been changed, its time to invalidate cached parameters)
+    // When combat task is empty, instanceId is 0.
+    // When combat task is updated, instanceId is set to a number unique for all combat tasks of this bot.
+    unsigned instanceId;
+
     bool spamKeyPoint;
     bool advance;
     bool retreat;
@@ -275,6 +282,7 @@ public:
         spamEnemy = nullptr;
         prevSpamEnemy = nullptr;
         spamTimesOutAt = level.time;
+        instanceId = 0;
         suggestedShootWeapon = WEAP_NONE;
         suggestedSpamWeapon = WEAP_NONE;
         spamKeyPoint = false;
@@ -376,6 +384,8 @@ class BotBrain: public AiBaseBrain
     const unsigned aimWeaponChoicePeriod;
     const unsigned spamWeaponChoicePeriod;
 
+    unsigned combatTaskInstanceCounter;
+
     unsigned frameAffinityModulo;
     unsigned frameAffinityOffset;
 
@@ -424,6 +434,7 @@ class BotBrain: public AiBaseBrain
 
     void EmplaceEnemy(const edict_t *enemy, int slot);
 
+    inline unsigned NextCombatTaskInstanceId() { return combatTaskInstanceCounter++; }
 
     inline const char *BotNick() const { return bot->r.client->netname; }
 

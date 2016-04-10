@@ -27,7 +27,10 @@ Bot::Bot(edict_t *self, float skillLevel)
       hasPendingLookAtPoint(false),
       lookAtPointTurnSpeedMultiplier(0.5f),
       cachedMoveVec(INFINITY, INFINITY, INFINITY),
-      hasCachedMoveVec(false)
+      hasCachedMoveVec(false),
+      cachedPredictedTargetOrigin(INFINITY, INFINITY, INFINITY),
+      cachedPredictedTargetValidUntil(0),
+      cachedPredictedTargetInstanceId(0)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;

@@ -89,6 +89,7 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       spamTargetChoicePeriod(1333 - (unsigned)(500.0f * BotSkill())),
       aimWeaponChoicePeriod(1032 - (unsigned)(500.0f * BotSkill())),
       spamWeaponChoicePeriod(1000 - (unsigned)(333.0f * BotSkill())),
+      combatTaskInstanceCounter(1),
       frameAffinityModulo(0),
       frameAffinityOffset(0),
       nextTargetChoiceAt(level.time),
@@ -671,6 +672,7 @@ void BotBrain::TryFindNewCombatTask()
         EnqueueTarget(bestTarget->ent);
         task->aimEnemy = bestTarget;
         task->prevSpamEnemy = nullptr;
+        task->instanceId = NextCombatTaskInstanceId();
         nextTargetChoiceAt = level.time + aimTargetChoicePeriod;
         Debug("TryFindNewCombatTask(): found aim enemy %s, next target choice at %09d\n", bestTarget->Nick(), nextTargetChoiceAt);
         SuggestAimWeaponAndTactics(task);
@@ -779,6 +781,7 @@ void BotBrain::StartSpamAtEnemy(CombatTask *task, const Enemy *enemy)
     Vec3 spamSpot = enemy->LastSeenPosition();
     task->spamEnemy = enemy;
     task->spamSpot = spamSpot;
+    task->instanceId = NextCombatTaskInstanceId();
     SuggestSpamEnemyWeaponAndTactics(task);
     // TODO: Make it dependent of a skill level?
     task->spamTimesOutAt = level.time + 1200;

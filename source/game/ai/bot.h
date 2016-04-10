@@ -18,8 +18,6 @@ public:
     void LookAround();
     bool ChangeWeapon(int weapon);
     bool CheckShot(const vec3_t point);
-    void PredictProjectileShot(
-        const vec3_t fireOrigin, float projSpeed, vec3_t target, const vec3_t targetVelocity, bool applyTargetGravity);
     bool FireWeapon();
     void Pain(const edict_t *enemy, float kick, int damage)
     {
@@ -88,6 +86,10 @@ private:
     Vec3 cachedMoveVec;
     bool hasCachedMoveVec;
 
+    Vec3 cachedPredictedTargetOrigin;
+    unsigned cachedPredictedTargetValidUntil;
+    unsigned cachedPredictedTargetInstanceId;
+
     void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutDuration = 500);
 
     void ApplyPendingTurnToLookAtPoint();
@@ -140,6 +142,15 @@ private:
     float AdjustDropAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
     float AdjustInstantAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
 
+    inline bool HasCachedTargetOrigin() const
+    {
+        return EnemyInstanceId() == cachedPredictedTargetInstanceId && cachedPredictedTargetValidUntil > level.time;
+    }
+
+    void GetPredictedTargetOrigin(const vec3_t fireOrigin, float projSpeed, vec3_t target);
+    void PredictProjectileShot(
+        const vec3_t fireOrigin, float projSpeed, vec3_t target, const vec3_t targetVelocity, bool applyTargetGravity);
+
     // Returns true if current look angle worth pressing attack
     bool LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
     bool TryPressAttack(bool importantShot);
@@ -151,6 +162,7 @@ private:
     inline Vec3 EnemyVelocity() const { return botBrain.combatTask.EnemyVelocity(); }
     inline Vec3 EnemyMins() const { return botBrain.combatTask.EnemyMins(); }
     inline Vec3 EnemyMaxs() const { return botBrain.combatTask.EnemyMaxs(); }
+    inline unsigned EnemyInstanceId() const { return botBrain.combatTask.instanceId; }
 };
 
 #endif
