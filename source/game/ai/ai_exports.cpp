@@ -47,7 +47,7 @@ void AI_InitLevel( void )
     memset( &AIWeapons, 0, sizeof( ai_weapon_t )*WEAP_TOTAL );
 
     //WEAP_GUNBLADE
-    AIWeapons[WEAP_GUNBLADE].aimType = AI_AIMSTYLE_INSTANTHIT;
+    AIWeapons[WEAP_GUNBLADE].aimType = AI_AIMSTYLE_PREDICTION_EXPLOSIVE;
     AIWeapons[WEAP_GUNBLADE].RangeWeight[AIWEAP_LONG_RANGE] = 0.1f;
     AIWeapons[WEAP_GUNBLADE].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.2f;
     AIWeapons[WEAP_GUNBLADE].RangeWeight[AIWEAP_SHORT_RANGE] = 0.3f;
