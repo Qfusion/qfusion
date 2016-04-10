@@ -90,22 +90,123 @@ bool PredictProjectileNoClip(const Vec3 &fireOrigin, float projectileSpeed, vec3
 // BOT_DMclass_PredictProjectileShot
 // predict target movement
 //==========================================
-void Bot::PredictProjectileShot(const vec3_t fireOrigin, float projectileSpeed, vec3_t target, const vec3_t targetVelocity)
+void Bot::PredictProjectileShot(
+    const vec3_t fire_origin, float projectileSpeed, vec3_t target, const vec3_t targetVelocity, bool applyTargetGravity)
 {
     if (projectileSpeed <= 0.0f)
         return;
 
-    Vec3 predictedTarget(target);
-    if (!PredictProjectileNoClip(Vec3(fireOrigin), projectileSpeed, predictedTarget.data(), Vec3(targetVelocity)))
-        return;
+    // Copy for convenience
+    Vec3 fireOrigin(fire_origin);
 
-    trace_t trace;
-    edict_t *traceKey = const_cast<edict_t*>(EnemyTraceKey());
-    G_Trace(&trace, target, nullptr, nullptr, predictedTarget.data(), traceKey, MASK_AISOLID);
-    if (trace.fraction == 1.0f)
-        VectorCopy(predictedTarget.data(), target);
+    if (applyTargetGravity)
+    {
+        // Aside from solving quite complicated system of equations that involve acceleration,
+        // we have to predict target collision with map environment.
+        // To solve it, we approximate target trajectory as a polyline
+        // that consists of linear segments plus an end ray from last segment point to infinity.
+        // We assume that target velocity is constant withing bounds of a segment.
+
+        constexpr float TIME_STEP = 0.15f; // Time is in seconds
+
+        Vec3 currPoint(target);
+        float currTime = 0.0f;
+        float nextTime = TIME_STEP;
+
+        trace_t trace;
+        edict_t *traceKey = const_cast<edict_t*>(EnemyTraceKey());
+
+        const int maxSegments = 2 + (int)(2.1 * Skill());
+
+        for (int i = 0; i < maxSegments; ++i)
+        {
+            Vec3 nextPoint(target);
+            nextPoint.x() += targetVelocity[0] * nextTime;
+            nextPoint.y() += targetVelocity[1] * nextTime;
+            nextPoint.z() += targetVelocity[2] * nextTime - GRAVITY * nextTime * nextTime;
+
+            // We assume that target has the same velocity as currPoint on a [currPoint, nextPoint] segment
+            Vec3 currTargetVelocity(targetVelocity);
+            currTargetVelocity.z() -= GRAVITY * currTime;
+
+            // TODO: Projectile speed used in PredictProjectileNoClip() needs correction
+            // We can't offset fire origin since we do not know direction to target yet
+            // Instead, increase projectile speed used in calculations according to currTime
+            // Exact formula is to be proven yet
+            Vec3 predictedTarget(currPoint);
+            if (!PredictProjectileNoClip(fireOrigin, projectileSpeed, predictedTarget.data(), currTargetVelocity))
+                return;
+
+            // Check whether predictedTarget is within [currPoint, nextPoint]
+            // where extrapolation that use currTargetVelocity is assumed to be valid.
+            Vec3 currToNextVec = nextPoint - currPoint;
+            Vec3 predictedTargetToNextVec = nextPoint - predictedTarget;
+            Vec3 predictedTargetToCurrVec = currPoint - predictedTarget;
+
+            if (currToNextVec.Dot(predictedTargetToNextVec) >= 0 && currToNextVec.Dot(predictedTargetToCurrVec) <= 0)
+            {
+                // Trace from the segment start (currPoint) to the predictedTarget
+                G_Trace(&trace, currPoint.data(), nullptr, nullptr, predictedTarget.data(), traceKey, MASK_AISOLID);
+                if (trace.fraction == 1.0f)
+                {
+                    // Target may be hit in air
+                    VectorCopy(predictedTarget.data(), target);
+                }
+                else
+                {
+                    // Segment from currPoint to predictedTarget hits solid, use trace end as a predicted target
+                    VectorCopy(trace.endpos, target);
+                }
+                return;
+            }
+            else
+            {
+                // Trace from the segment start (currPoint) to the segment end (nextPoint)
+                G_Trace(&trace, currPoint.data(), nullptr, nullptr, nextPoint.data(), traceKey, MASK_AISOLID);
+                if (trace.fraction != 1.0f)
+                {
+                    // Trajectory segment hits solid, use trace end as a predicted target point and return
+                    VectorCopy(trace.endpos, target);
+                    return;
+                }
+            }
+
+            // Test next segment
+            currTime = nextTime;
+            nextTime += TIME_STEP;
+            currPoint = nextPoint;
+        }
+
+        // We have tested all segments up to maxSegments and have not found an impact point yet.
+        // Approximate the rest of the trajectory as a ray.
+
+        Vec3 currTargetVelocity(targetVelocity);
+        currTargetVelocity.z() -= GRAVITY * currTime;
+
+        Vec3 predictedTarget(currPoint);
+        if (!PredictProjectileNoClip(fireOrigin, projectileSpeed, predictedTarget.data(), currTargetVelocity))
+            return;
+
+        G_Trace(&trace, currPoint.data(), nullptr, nullptr, predictedTarget.data(), traceKey, MASK_AISOLID);
+        if (trace.fraction == 1.0f)
+            VectorCopy(predictedTarget.data(), target);
+        else
+            VectorCopy(trace.endpos, target);
+    }
     else
-        VectorCopy(trace.endpos, target);
+    {
+        Vec3 predictedTarget(target);
+        if (!PredictProjectileNoClip(Vec3(fireOrigin), projectileSpeed, predictedTarget.data(), Vec3(targetVelocity)))
+            return;
+
+        trace_t trace;
+        edict_t *traceKey = const_cast<edict_t *>(EnemyTraceKey());
+        G_Trace(&trace, target, nullptr, nullptr, predictedTarget.data(), traceKey, MASK_AISOLID);
+        if (trace.fraction == 1.0f)
+            VectorCopy(predictedTarget.data(), target);
+        else
+            VectorCopy(trace.endpos, target);
+    }
 }
 
 constexpr float WFAC_GENERIC_PROJECTILE = 300.0f;
@@ -288,7 +389,7 @@ float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec
     // in the lowest skill level, don't predict projectiles
     if (Skill() >= 0.33f && !IsEnemyStatic())
     {
-        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data());
+        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data(), true);
     }
 
     float wfac = WFAC_GENERIC_PROJECTILE * 1.3f;
@@ -330,7 +431,7 @@ float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_
     // in the lowest skill level, don't predict projectiles
     if (Skill() >= 0.33f && !IsEnemyStatic())
     {
-        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data());
+        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data(), true);
     }
 
     return wfac;
@@ -343,7 +444,7 @@ float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin
     // in the lowest skill level, don't predict projectiles
     if (Skill() >= 0.33f && !IsEnemyStatic())
     {
-        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data());
+        PredictProjectileShot(fire_origin, firedef->speed, target, EnemyVelocity().data(), true);
     }
     return wfac;
 }
