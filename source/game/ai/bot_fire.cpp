@@ -31,6 +31,61 @@ bool Bot::CheckShot(const vec3_t point)
     return true;
 }
 
+// This is a port of public domain projectile prediction code by Kain Shin
+// http://ringofblades.com/Blades/Code/PredictiveAim.cs
+// This function assumes that target velocity is constant and gravity is not applied to projectile and target.
+bool PredictProjectileNoClip(const Vec3 &fireOrigin, float projectileSpeed, vec3_t target, const Vec3 &targetVelocity)
+{
+    constexpr float EPSILON = 0.0001f;
+
+    float projectileSpeedSq = projectileSpeed * projectileSpeed;
+    float targetSpeedSq = targetVelocity.SquaredLength();
+    float targetSpeed = sqrtf(targetSpeedSq);
+    Vec3 targetToFire = fireOrigin - target;
+    float targetToFireDistSq = targetToFire.SquaredLength();
+    float targetToFireDist = sqrtf(targetToFireDistSq);
+    Vec3 targetToFireDir(targetToFire);
+    targetToFireDir.Normalize();
+
+    Vec3 targetVelocityDir(targetVelocity);
+    targetVelocityDir.Normalize();
+
+    float cosTheta = targetToFireDir.Dot(targetVelocityDir);
+
+    float t;
+    if (fabsf(projectileSpeedSq - targetSpeedSq) < EPSILON)
+    {
+        if (cosTheta <= 0)
+            return false;
+
+        t = 0.5f * targetToFireDist / (targetSpeed * cosTheta);
+    }
+    else
+    {
+        float a = projectileSpeedSq - targetSpeedSq;
+        float b = 2.0f * targetToFireDist * targetSpeed * cosTheta;
+        float c = -targetToFireDistSq;
+        float discriminant = b * b - 4.0f * a * c;
+
+        if (discriminant < 0)
+            return false;
+
+        float uglyNumber = sqrtf(discriminant);
+        float t0 = 0.5f * (-b + uglyNumber) / a;
+        float t1 = 0.5f * (-b - uglyNumber) / a;
+        t = std::min(t0, t1);
+        if (t < EPSILON)
+            t = std::max(t0, t1);
+
+        if (t < EPSILON)
+            return false;
+    }
+
+    Vec3 move = targetVelocity * t;
+    VectorAdd(target, move.data(), target);
+    return true;
+}
+
 //==========================================
 // BOT_DMclass_PredictProjectileShot
 // predict target movement
@@ -40,24 +95,15 @@ void Bot::PredictProjectileShot(const vec3_t fireOrigin, float projectileSpeed, 
     if (projectileSpeed <= 0.0f)
         return;
 
-    Vec3 targetMoveDir(targetVelocity);
-    float targetSpeed = targetMoveDir.LengthFast();
-    if (targetSpeed < 1)
+    Vec3 predictedTarget(target);
+    if (!PredictProjectileNoClip(Vec3(fireOrigin), projectileSpeed, predictedTarget.data(), Vec3(targetVelocity)))
         return;
 
-    targetMoveDir *= 1.0f / targetSpeed;
-
-    float distance = DistanceFast(fireOrigin, target);
-    float predictionTime = distance / projectileSpeed;
-
-    Vec3 extrapolatedTarget(target);
-    extrapolatedTarget += predictionTime * targetSpeed * targetMoveDir;
-
-    // Check where the target should hit a solid (if any) and stop
     trace_t trace;
-    G_Trace(&trace, target, nullptr, nullptr, extrapolatedTarget.data(), self, MASK_AISOLID);
+    edict_t *traceKey = const_cast<edict_t*>(EnemyTraceKey());
+    G_Trace(&trace, target, nullptr, nullptr, predictedTarget.data(), traceKey, MASK_AISOLID);
     if (trace.fraction == 1.0f)
-        VectorCopy(extrapolatedTarget.data(), target);
+        VectorCopy(predictedTarget.data(), target);
     else
         VectorCopy(trace.endpos, target);
 }

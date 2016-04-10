@@ -145,6 +145,7 @@ private:
 
     inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
     inline bool IsEnemyStatic() const { return botBrain.combatTask.IsTargetStatic(); }
+    inline const edict_t *EnemyTraceKey() const { return botBrain.combatTask.TraceKey(); }
     inline Vec3 EnemyOrigin() const { return botBrain.combatTask.EnemyOrigin(); }
     inline Vec3 EnemyVelocity() const { return botBrain.combatTask.EnemyVelocity(); }
     inline Vec3 EnemyMins() const { return botBrain.combatTask.EnemyMins(); }
