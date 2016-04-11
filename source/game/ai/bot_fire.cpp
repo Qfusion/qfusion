@@ -444,10 +444,37 @@ float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_
 
 float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
 {
-    //jalToDo
-    float wfac = WFAC_GENERIC_PROJECTILE;
+    bool wasCached = HasCachedTargetOrigin();
     GetPredictedTargetOrigin(fire_origin, firedef->speed, target);
-    return wfac;
+    // If new generic predicted target origin has been computed, adjust it for gravity (changes will be cached)
+    if (!wasCached)
+    {
+        // It is not very accurate but satisfactory
+        Vec3 fireOriginToTarget = Vec3(target) - fire_origin;
+        Vec3 fireOriginToTarget2D(fireOriginToTarget.x(), fireOriginToTarget.y(), 0);
+        float squareDistance2D = fireOriginToTarget2D.SquaredLength();
+        if (squareDistance2D > 0)
+        {
+            Vec3 velocity2DVec(fireOriginToTarget);
+            velocity2DVec.NormalizeFast();
+            velocity2DVec *= firedef->speed;
+            velocity2DVec.z() = 0;
+            float squareVelocity2D = velocity2DVec.SquaredLength();
+            if (squareVelocity2D > 0)
+            {
+                float distance2D = 1.0f / Q_RSqrt(squareDistance2D);
+                float velocity2D = 1.0f / Q_RSqrt(squareVelocity2D);
+                float time = distance2D / velocity2D;
+                float height = std::max(0.0f, 0.5f * GRAVITY * time * time - 32.0f);
+                // Modify both cached and temporary values
+                cachedPredictedTargetOrigin.z() += height;
+                target[2] += height;
+            }
+        }
+    }
+
+    // This kind of weapons is not precise by its nature, do not add any more noise.
+    return 0.3f * (1.01f - Skill()) * WFAC_GENERIC_PROJECTILE;
 }
 
 float Bot::AdjustInstantAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
