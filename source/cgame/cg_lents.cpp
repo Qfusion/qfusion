@@ -1084,10 +1084,11 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent )
 			else
 			{
 				VectorCopy( cent->teleportedTo, teleportOrigin );
-				if( ISVIEWERENTITY( cent->current.number ) ) {
+				if( ISVIEWERENTITY( cent->current.number ) )
 					VectorSet( rgb, 0.1, 0.1, 0.1 );
-				}
 			}
+			if( cg_raceGhosts->integer && !ISVIEWERENTITY( cent->current.number ) )
+				VectorScale( rgb, cg_raceGhostsAlpha->value, rgb );
 
 			// spawn a dummy model
 			le = CG_AllocModel( LE_RGB_FADE, teleportOrigin, vec3_origin, 10, 
