@@ -1087,7 +1087,7 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent )
 				if( ISVIEWERENTITY( cent->current.number ) )
 					VectorSet( rgb, 0.1, 0.1, 0.1 );
 			}
-			if( cg_raceGhosts->integer && !ISVIEWERENTITY( cent->current.number ) )
+			if( cg_raceGhosts->integer && !ISVIEWERENTITY( cent->current.number ) && GS_RaceGametype() )
 				VectorScale( rgb, cg_raceGhostsAlpha->value, rgb );
 
 			// spawn a dummy model
