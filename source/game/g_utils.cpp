@@ -909,31 +909,21 @@ void G_AddEvent( edict_t *ent, int event, int parm, bool highPriority )
 	if( !event )
 		return;
 
-	// replace the most outdated low-priority event
-	if( !highPriority )
-	{
-		int oldEventNum = -1;
+	int eventNum = ent->numEvents & 1;
 
-		if( !ent->eventPriority[0] && !ent->eventPriority[1] )
-			oldEventNum = ( ent->numEvents + 1 ) & 2;
-		else if( !ent->eventPriority[0] )
-			oldEventNum = 0;
+	if( !highPriority && ( ent->eventPriority[0] || ent->eventPriority[1] ) )
+	{ // replace the most outdated low-priority event
+		if( !ent->eventPriority[0] )
+			eventNum = 0;
 		else if( !ent->eventPriority[1] )
-			oldEventNum = 1;
-
-		// no luck
-		if( oldEventNum == -1 )
+			eventNum = 1;
+		else // no luck
 			return;
-
-		ent->s.events[oldEventNum] = event;
-		ent->s.eventParms[oldEventNum] = parm & 0xFF;
-		ent->eventPriority[oldEventNum] = false;
-		return;
 	}
 
-	ent->s.events[ent->numEvents & 1] = event;
-	ent->s.eventParms[ent->numEvents & 1] = parm & 0xFF;
-	ent->eventPriority[ent->numEvents & 1] = highPriority;
+	ent->s.events[eventNum] = event;
+	ent->s.eventParms[eventNum] = parm & 0xFF;
+	ent->eventPriority[eventNum] = highPriority;
 	ent->numEvents++;
 }
 
