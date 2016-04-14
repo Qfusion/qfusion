@@ -274,9 +274,58 @@ extern "C" const botlib_import_t botimport = {
 // Wtf? AAS code can't find this symbol while linking...
 extern "C" void Com_Error(com_error_code_t code, const char *format, ...) {}
 
+// Use it instead of calling AAS_QF_BotLibVarSet to avoid casting a string literal to a (non-const) char * warning
+inline void LibVarSet(const char *name, const char *value)
+{
+    AAS_QF_BotLibVarSet(const_cast<char*>(name), const_cast<char*>(value));
+}
+
 bool AI_InitAAS()
 {
-    return AAS_QF_BotLibSetup() == BLERR_NOERROR;
+    if (AAS_QF_BotLibSetup() != BLERR_NOERROR)
+        return false;
+
+    // These values will be read by AAS_InitSettings() during map loading
+    // This is a "complementary" (get->set) copy of AAS_InitSettings() stuff with obvious fixes for the QF game
+
+    LibVarSet("phys_friction", "8"); // wsw
+    LibVarSet("phys_stopspeed", "100");
+    LibVarSet("phys_gravity", va("%f", (float)GRAVITY)); // wsw
+    LibVarSet("phys_waterfriction", "1");
+    LibVarSet("phys_watergravity", "400");
+    LibVarSet("phys_maxvelocity", "320");
+    LibVarSet("phys_maxwalkvelocity", "320");
+    LibVarSet("phys_maxcrouchvelocity", "100");
+    LibVarSet("phys_maxswimvelocity", "150");
+    LibVarSet("phys_walkaccelerate", "12"); // wsw
+    LibVarSet("phys_airaccelerate", "1");
+    LibVarSet("phys_swimaccelerate", "10"); // wsw
+    LibVarSet("phys_maxstep", "19");
+    LibVarSet("phys_maxsteepness", "0.7");
+    LibVarSet("phys_maxwaterjump", "18");
+    LibVarSet("phys_maxbarrier", "33");
+    LibVarSet("phys_jumpvel", va("%f", (float)DEFAULT_JUMPSPEED)); // wsw
+    LibVarSet("phys_falldelta5", "40");
+    LibVarSet("phys_falldelta10", "60");
+    LibVarSet("rs_waterjump", "400");
+    LibVarSet("rs_teleport", "50");
+    LibVarSet("rs_barrierjump", "100");
+    LibVarSet("rs_startcrouch", "300");
+    LibVarSet("rs_startgrapple", "500");
+    LibVarSet("rs_startwalkoffledge", "70");
+    LibVarSet("rs_startjump", "300");
+    LibVarSet("rs_rocketjump", "500");
+    LibVarSet("rs_bfgjump", "500");
+    LibVarSet("rs_jumppad", "250");
+    LibVarSet("rs_aircontrolledjumppad", "300");
+    LibVarSet("rs_funcbob", "300");
+    LibVarSet("rs_startelevator", "50");
+    LibVarSet("rs_falldamage5", "300");
+    LibVarSet("rs_falldamage10", "500");
+    LibVarSet("rs_maxfallheight", "0");
+    LibVarSet("rs_maxjumpfallheight", "450");
+
+    return true;
 }
 
 void AI_ShutdownAAS()
