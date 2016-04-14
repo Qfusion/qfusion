@@ -100,7 +100,7 @@ static void AAS_QF_ClipToEntity(trace_t *trace, const vec3_t start, const vec3_t
     float *origin = touch->s.origin;
     float *angles = touch->s.angles;
 
-    if (!touch->r.solid & SOLID_BMODEL)
+    if (!(touch->r.solid & SOLID_BMODEL))
         angles = vec3_origin;	// boxes don't rotate
 
     trap_CM_TransformedBoxTrace(

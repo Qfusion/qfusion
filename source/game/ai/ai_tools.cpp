@@ -203,7 +203,7 @@ static void AITools_ShowPlinks( edict_t *target )
 
 void Cmd_deleteClosestNode_f( edict_t *ent )
 {
-	int node;
+	//int node;
 
 }
 

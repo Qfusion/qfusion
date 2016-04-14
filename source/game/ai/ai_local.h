@@ -159,7 +159,7 @@ public:
 	inline const char *Name() const { return ent->classname; }
 	inline bool IsEnabled() const { return ent && ent->r.inuse; }
 	inline bool IsDisabled() const { return !ent || !ent->r.inuse; }
-	inline bool IsBasedOnEntity(const edict_t *ent) const { return ent && this->ent == ent; }
+	inline bool IsBasedOnEntity(const edict_t *e) const { return e && this->ent == e; }
 	inline bool IsClient() const { return ent->r.client != nullptr; }
 	inline bool IsSpawnedAtm() const { return ent->r.solid != SOLID_NOT; }
 	inline bool ToBeSpawnedLater() const { return ent->r.solid == SOLID_NOT; }

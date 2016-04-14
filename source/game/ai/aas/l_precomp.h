@@ -153,10 +153,17 @@ source_t *LoadSourceFile(const char *filename);
 source_t *LoadSourceMemory(char *ptr, int length, char *name);
 //free the given source
 void FreeSource(source_t *source);
+#ifdef _MSC_VER
 //print a source error
-void QDECL SourceError(source_t *source, char *str, ...) __attribute__ ((format (printf, 2, 3)));
+void QDECL SourceError(source_t *source, char *str, ...);
 //print a source warning
-void QDECL SourceWarning(source_t *source, char *str, ...)  __attribute__ ((format (printf, 2, 3)));
+void QDECL SourceWarning(source_t *source, char *str, ...);
+#else
+//print a source error
+void QDECL SourceError(source_t *source, char *str, ...) __attribute__((format(printf, 2, 3)));
+//print a source warning
+void QDECL SourceWarning(source_t *source, char *str, ...)  __attribute__((format(printf, 2, 3)));
+#endif
 
 #ifdef BSPC
 // some of BSPC source does include game/q_shared.h and some does not

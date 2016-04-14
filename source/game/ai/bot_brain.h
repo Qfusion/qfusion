@@ -94,7 +94,7 @@ class Enemy
 {
 public:
 
-    Enemy() : ent(nullptr), lastSeenPosition(1/0.0f, 1/0.0f, 1/0.0f), lastSeenVelocity(1/0.0f, 1/0.0f, 1/0.0f)
+    Enemy() : ent(nullptr), lastSeenPosition(NAN, NAN, NAN), lastSeenVelocity(NAN, NAN, NAN)
     {
         Clear();
     }

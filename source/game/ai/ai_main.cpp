@@ -135,7 +135,7 @@ void Ai::CategorizePosition()
 	self->was_swim = self->is_swim;
 	self->was_step = self->is_step;
 
-	self->is_ladder = currAasAreaNum ? (bool)AAS_AreaLadder(currAasAreaNum) : false;
+	self->is_ladder = currAasAreaNum ? AAS_AreaLadder(currAasAreaNum) != 0 : false;
 
 	G_CategorizePosition(self);
 	if (self->waterlevel > 2 || (self->waterlevel && !stepping))

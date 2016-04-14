@@ -34,7 +34,11 @@ extern "C" {
 #endif
 
 //AAS error message
+#ifdef _MSC_VER
+void QDECL AAS_Error(char *fmt, ...);
+#else
 void QDECL AAS_Error(char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+#endif
 
 #ifdef AASINTERN
 
