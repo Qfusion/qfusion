@@ -104,7 +104,6 @@ private:
     void MoveRidingJummpad(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveEnteringPlatform(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveFallingOrJumping(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd);
