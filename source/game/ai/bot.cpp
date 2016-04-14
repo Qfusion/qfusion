@@ -109,7 +109,7 @@ void Bot::RegisterVisibleEnemies()
     // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients
     for (int i = 0; i < gs.maxclients; ++i)
     {
-        edict_t *ent = game.edicts + i;
+        edict_t *ent = PLAYERENT(i);
         if (!ent->r.inuse || !ent->r.client)
             continue;
         if (G_ISGHOSTING(ent))
