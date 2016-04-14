@@ -137,7 +137,7 @@ void Bot::PredictProjectileShot(
             Vec3 nextPoint(target);
             nextPoint.x() += targetVelocity[0] * nextTime;
             nextPoint.y() += targetVelocity[1] * nextTime;
-            nextPoint.z() += targetVelocity[2] * nextTime - level.gravity * nextTime * nextTime;
+            nextPoint.z() += targetVelocity[2] * nextTime - 0.5f * level.gravity * nextTime * nextTime;
 
             // We assume that target has the same velocity as currPoint on a [currPoint, nextPoint] segment
             Vec3 currTargetVelocity(targetVelocity);
