@@ -137,11 +137,11 @@ void Bot::PredictProjectileShot(
             Vec3 nextPoint(target);
             nextPoint.x() += targetVelocity[0] * nextTime;
             nextPoint.y() += targetVelocity[1] * nextTime;
-            nextPoint.z() += targetVelocity[2] * nextTime - GRAVITY * nextTime * nextTime;
+            nextPoint.z() += targetVelocity[2] * nextTime - level.gravity * nextTime * nextTime;
 
             // We assume that target has the same velocity as currPoint on a [currPoint, nextPoint] segment
             Vec3 currTargetVelocity(targetVelocity);
-            currTargetVelocity.z() -= GRAVITY * currTime;
+            currTargetVelocity.z() -= level.gravity * currTime;
 
             // TODO: Projectile speed used in PredictProjectileNoClip() needs correction
             // We can't offset fire origin since we do not know direction to target yet
@@ -195,7 +195,7 @@ void Bot::PredictProjectileShot(
         // Approximate the rest of the trajectory as a ray.
 
         Vec3 currTargetVelocity(targetVelocity);
-        currTargetVelocity.z() -= GRAVITY * currTime;
+        currTargetVelocity.z() -= level.gravity * currTime;
 
         Vec3 predictedTarget(currPoint);
         if (!PredictProjectileNoClip(fireOrigin, projectileSpeed, predictedTarget.data(), currTargetVelocity))
@@ -465,7 +465,7 @@ float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin
                 float distance2D = 1.0f / Q_RSqrt(squareDistance2D);
                 float velocity2D = 1.0f / Q_RSqrt(squareVelocity2D);
                 float time = distance2D / velocity2D;
-                float height = std::max(0.0f, 0.5f * GRAVITY * time * time - 32.0f);
+                float height = std::max(0.0f, 0.5f * level.gravity * time * time - 32.0f);
                 // Modify both cached and temporary values
                 cachedPredictedTargetOrigin.z() += height;
                 target[2] += height;
