@@ -77,11 +77,6 @@ void Bot::Move(usercmd_t *ucmd)
         else
             MoveRidingPlatform(&moveVec, ucmd);
     }
-    // Falling off ledge or jumping
-    else if (!self->groundentity && !self->is_step && !self->is_swim && !isBunnyHopping)
-    {
-        MoveFallingOrJumping(&moveVec, ucmd);
-    }
     else // standard movement
     {
         // starting a rocket jump
@@ -374,15 +369,6 @@ void Bot::MoveEnteringPlatform(Vec3 *moveVec, usercmd_t *ucmd)
     ucmd->sidemove = 0;
 
     // TODO: Change platform
-}
-
-void Bot::MoveFallingOrJumping(Vec3 *moveVec, usercmd_t *ucmd)
-{
-    // TODO: Use aircontrol to reach destination
-
-    ucmd->upmove = 0;
-    ucmd->sidemove = 0;
-    ucmd->forwardmove = 1;
 }
 
 void Bot::MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd)
