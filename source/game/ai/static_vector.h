@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef _MSC_VER
+#pragma warning( disable : 4324 )       // structure was padded due to alignment specifier
+#endif
+
 template <typename T, unsigned int N>
 class alignas(16) StaticVector
 {

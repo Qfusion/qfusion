@@ -130,7 +130,7 @@ private:
 
     void ApplyEvadeMovePushes(usercmd_t *ucmd);
     bool MayApplyCombatDash();
-    Vec3 MakeEvadeDirection(const class Danger &danger);
+    Vec3 MakeEvadeDirection(const Danger &danger);
 
     void SetupCoarseFireTarget(vec3_t fire_origin, vec3_t target);
     void CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *inFront, bool *mayHitApriory);

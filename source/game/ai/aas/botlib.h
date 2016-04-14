@@ -176,7 +176,11 @@ typedef struct bot_entitystate_s
 typedef struct botlib_import_s
 {
 	//print messages from the bot library
+#ifdef _MSC_VER
+	void(*Print)(int type, char *fmt, ...);
+#else
 	void		(*Print)(int type, char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+#endif
 	//trace a bbox through the world
 	void		(*Trace)(bsp_trace_t *trace, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask);
 	//trace a bbox against a specific entity
