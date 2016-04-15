@@ -593,7 +593,7 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 //
 // g_utils.c
 //
-#define G_LEVELPOOL_BASE_SIZE	5 * 1024 * 1024
+#define G_LEVELPOOL_BASE_SIZE	15 * 1024 * 1024
 
 bool KillBox( edict_t *ent );
 float LookAtKillerYAW( edict_t *self, edict_t *inflictor, edict_t *attacker );
