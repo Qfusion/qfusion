@@ -14,21 +14,22 @@ void AiShutdownHooksHolder::InvokeHooks()
 {
     if (hooksInvoked)
     {
-        printf(TAG "InvokeHooks(): Hooks have been already invoked");
-        abort();
+        G_Printf(S_COLOR_RED TAG "InvokeHooks(): Hooks have been already invoked\n");
     }
-    for (auto &hook: hooks)
+    else
     {
-        hook();
+        for (auto &hook: hooks)
+        {
+            hook();
+        }
+        hooksInvoked = true;
     }
-    hooksInvoked = true;
 }
 
 AiShutdownHooksHolder::~AiShutdownHooksHolder()
 {
     if (!hooksInvoked)
     {
-        printf(TAG "~AiShutdownHooksHolder(): Hooks have not been invoked\n");
-        abort();
+        G_Printf(S_COLOR_RED TAG "~AiShutdownHooksHolder(): Hooks have not been invoked\n");
     }
 }
