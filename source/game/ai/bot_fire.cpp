@@ -274,7 +274,7 @@ bool Bot::FireWeapon()
     // the main purpose is to prevent shooting in wall when real look dir is not close to ideal one
     bool mayHitReally = LookAtEnemy(wfac, fire_origin, target);
     if (mayHitReally)
-        return TryPressAttack(importantShot);
+        return TryPressAttack();
 
     return false;
 
@@ -310,23 +310,10 @@ void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, boo
     *mayHit = CheckShot(target);
 }
 
-bool Bot::TryPressAttack(bool importantShot)
+bool Bot::TryPressAttack()
 {
     const auto weapState = self->r.client->ps.weaponState;
-    if (weapState != WEAPON_STATE_READY && weapState != WEAPON_STATE_REFIRE && weapState != WEAPON_STATE_REFIRESTRONG)
-        return false;
-
-    float firedelay;
-    // in continuous fire weapons don't add delays
-    if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN)
-        firedelay = 1.0f;
-    else
-        firedelay = 0.95f + 0.55f * Skill() - 1.5f * random();
-
-    if (importantShot)
-        firedelay += 0.45f * Skill();
-
-    return firedelay > 0;
+    return weapState == WEAPON_STATE_READY || weapState == WEAPON_STATE_REFIRE || weapState == WEAPON_STATE_REFIRESTRONG;
 }
 
 bool Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
