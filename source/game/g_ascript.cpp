@@ -3058,7 +3058,13 @@ static void asFunc_RegisterCallvote( asstring_t *asname, asstring_t *asusage, as
 		ashelp ? ashelp->buffer : NULL );
 }
 
-static void asFunc_ConfigString( int index, asstring_t *str )
+static asstring_t *asFunc_GetConfigString( int index )
+{
+	const char *cs = trap_GetConfigString( index );
+	return angelExport->asStringFactoryBuffer( (char *)cs, cs ? strlen( cs ) : 0 );
+}
+
+static void asFunc_SetConfigString( int index, asstring_t *str )
 {
 	if( !str || !str->buffer )
 		return;
@@ -3371,7 +3377,8 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "int G_SoundIndex( const String &in, bool pure )", asFUNCTION(asFunc_SoundIndexExt), NULL },
 	{ "void G_RegisterCommand( const String &in )", asFUNCTION(asFunc_RegisterCommand), NULL },
 	{ "void G_RegisterCallvote( const String &in, const String &in, const String &in, const String &in )", asFUNCTION(asFunc_RegisterCallvote), NULL },
-	{ "void G_ConfigString( int index, const String &in )", asFUNCTION(asFunc_ConfigString), NULL },
+	{ "const String @G_ConfigString( int index )", asFUNCTION(asFunc_GetConfigString), NULL },
+	{ "void G_ConfigString( int index, const String &in )", asFUNCTION(asFunc_SetConfigString), NULL },
 
 	// projectile firing
 	{ "void G_FireInstaShot( const Vec3 &in origin, const Vec3 &in angles, int range, int damage, int knockback, int stun, Entity @owner )", asFUNCTION(asFunc_FireInstaShot), NULL },
