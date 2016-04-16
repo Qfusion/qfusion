@@ -152,7 +152,7 @@ private:
 
     // Returns true if current look angle worth pressing attack
     bool LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
-    bool TryPressAttack(bool importantShot);
+    bool TryPressAttack();
 
     inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
     inline bool IsEnemyStatic() const { return botBrain.combatTask.IsTargetStatic(); }
