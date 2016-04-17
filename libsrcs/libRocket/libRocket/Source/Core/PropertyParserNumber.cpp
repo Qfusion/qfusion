@@ -58,6 +58,7 @@ bool PropertyParserNumber::ParseValue(Property& property, const String& value, c
 	property.unit = Property::NUMBER;
 
 	// Check for a unit declaration at the end of the number.
+	size_t unit_pos = value.Length();
 	for (size_t i = 0; i < unit_suffixes.size(); i++)
 	{
 		const UnitSuffix& unit_suffix = unit_suffixes[i];
@@ -65,15 +66,19 @@ bool PropertyParserNumber::ParseValue(Property& property, const String& value, c
 		if (value.Length() < unit_suffix.second.Length())
 			continue;
 
-		if (strcasecmp(value.CString() + (value.Length() - unit_suffix.second.Length()), unit_suffix.second.CString()) == 0)
+		size_t test_unit_pos = value.Length() - unit_suffix.second.Length();
+		if (strcasecmp(value.CString() + test_unit_pos, unit_suffix.second.CString()) == 0)
 		{
 			property.unit = unit_suffix.first;
+			unit_pos = test_unit_pos;
 			break;
 		}
 	}
 
+	String str_value(value.CString(), value.CString() + unit_pos);
+
 	float float_value;
-	if (sscanf(value.CString(), "%f", &float_value) == 1)
+	if (sscanf(str_value.CString(), "%f", &float_value) == 1)
 	{
 		property.value = Variant(float_value);
 		return true;
