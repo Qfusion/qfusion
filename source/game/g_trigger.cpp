@@ -295,8 +295,8 @@ static void trigger_always_think( edict_t *ent )
 void SP_trigger_always( edict_t *ent )
 {
 	// we must have some delay to make sure our use targets are present
-	if( ent->delay < 0.2f )
-		ent->delay = 0.2f;
+	if( ent->delay < 0.3f )
+		ent->delay = 0.3f;
 
 	ent->think = trigger_always_think;
 	ent->nextThink = level.time + 1000 * ent->delay;
