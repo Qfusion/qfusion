@@ -286,12 +286,20 @@ void SP_trigger_counter( edict_t *self )
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 
+static void trigger_always_think( edict_t *ent )
+{
+	G_UseTargets( ent, ent );
+	G_FreeEdict( ent );
+}
+
 void SP_trigger_always( edict_t *ent )
 {
 	// we must have some delay to make sure our use targets are present
-	if( ent->delay < 0.2f )
-		ent->delay = 0.2f;
-	G_UseTargets( ent, ent );
+	if( ent->delay < 0.3f )
+		ent->delay = 0.3f;
+
+	ent->think = trigger_always_think;
+	ent->nextThink = level.time + 1000 * ent->delay;
 }
 
 
