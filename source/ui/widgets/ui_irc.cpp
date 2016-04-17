@@ -14,14 +14,14 @@ class IrcLogWidget : public Element
 public:
 	IrcLogWidget( const String &tag ) : Element(tag), history_size( 0 )
 	{
-		Rocket::Core::XMLAttributes attributes;
+		Rocket::Core::XMLAttributes attr;
 
 		formatter = new ColorCodeFormatter();
 
 		SetProperty( "display", "block" );
 		SetProperty( "overflow-y", "auto" );
 
-		body = Factory::InstanceElement( this, "*", "irclogbody", attributes );
+		body = Factory::InstanceElement( this, "*", "irclogbody", attr);
 		AppendChild( body );
 		body->RemoveReference();
 	}
