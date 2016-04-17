@@ -79,11 +79,11 @@ int StringBase<char>::FormatString(StringBase<char>::size_type max_size, const c
 	va_list argument_list;
 	va_start(argument_list, fmt);
 
-	int length = RocketStringFormatString(*this, (int)max_size, fmt, argument_list);
+	int format_length = RocketStringFormatString(*this, (int)max_size, fmt, argument_list);
 
 	va_end(argument_list);
 
-	return length;
+	return format_length;
 }
 
 String operator+(const char* cstring, const String& string)

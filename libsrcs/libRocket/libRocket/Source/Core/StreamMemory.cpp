@@ -237,9 +237,9 @@ bool StreamMemory::IsWriteReady()
 	return true;
 }
 
-void StreamMemory::SetSourceURL(const URL& url)
+void StreamMemory::SetSourceURL(const URL& source_url)
 {
-	SetStreamDetails(url, Stream::MODE_READ | (owns_buffer ? Stream::MODE_WRITE : 0));
+	SetStreamDetails(source_url, Stream::MODE_READ | (owns_buffer ? Stream::MODE_WRITE : 0));
 }
 
 // Resize the buffer

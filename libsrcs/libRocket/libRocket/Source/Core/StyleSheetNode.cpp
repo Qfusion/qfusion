@@ -113,10 +113,10 @@ void StyleSheetNode::Write(Stream* stream)
 		const Rocket::Core::PropertyMap& property_map = properties.GetProperties();
 		for (Rocket::Core::PropertyMap::const_iterator i = property_map.begin(); i != property_map.end(); ++i)
 		{
-			const String& name = i->first;
+			const String& pname = i->first;
 			const Rocket::Core::Property& property = i->second;
 
-			stream->Write(String(1024, "\t%s: %s; /* specificity: %d */\n", name.CString(), property.value.Get< String >().CString(), property.specificity));
+			stream->Write(String(1024, "\t%s: %s; /* specificity: %d */\n", pname.CString(), property.value.Get< String >().CString(), property.specificity));
 		}
 
 		stream->Write("}\n\n");
@@ -571,13 +571,13 @@ int StyleSheetNode::CalculateSpecificity()
 	// Calculate the specificity of just this node; tags are worth 10,000, IDs 1,000,000 and other specifiers (classes
 	// and pseudo-classes) 100,000.
 
-	int specificity = 0;
+	int res_specificity = 0;
 	switch (type)
 	{
 		case TAG:
 		{
 			if (!name.Empty())
-				specificity = 10000;
+				res_specificity = 10000;
 		}
 		break;
 
@@ -585,28 +585,28 @@ int StyleSheetNode::CalculateSpecificity()
 		case PSEUDO_CLASS:
 		case STRUCTURAL_PSEUDO_CLASS:
 		{
-			specificity = 100000;
+			res_specificity = 100000;
 		}
 		break;
 
 		case ID:
 		{
-			specificity = 1000000;
+			res_specificity = 1000000;
 		}
 		break;
 
 		default:
 		{
-			specificity = 0;
+			res_specificity = 0;
 		}
 		break;
 	}
 
 	// Add our parent's specificity onto ours.
 	if (parent != NULL)
-		specificity += parent->CalculateSpecificity();
+		res_specificity += parent->CalculateSpecificity();
 
-	return specificity;
+	return res_specificity;
 }
 
 }

@@ -127,12 +127,12 @@ ElementDefinition* StyleSheet::GetElementDefinition(const Element* element) cons
 
 			// There are! Now see if we satisfy all of their parenting requirements. What this involves is traversing the style
 			// nodes backwards, trying to match nodes in the element's hierarchy to nodes in the style hierarchy.
-			for (NodeList::const_iterator iterator = nodes.begin(); iterator != nodes.end(); iterator++)
+			for (NodeList::const_iterator iterator_ = nodes.begin(); iterator_ != nodes.end(); iterator_++)
 			{
-				if ((*iterator)->IsApplicable(element))
+				if ((*iterator_)->IsApplicable(element))
 				{
 					// Get the node to add any of its non-tag children that we match into our list.
-					(*iterator)->GetApplicableDescendants(applicable_nodes, element);
+					(*iterator_)->GetApplicableDescendants(applicable_nodes, element);
 				}
 			}
 		}
@@ -152,17 +152,17 @@ ElementDefinition* StyleSheet::GetElementDefinition(const Element* element) cons
 			const NodeList& nodes = (*iterator).second;
 
 			// See if we satisfy all of the parenting requirements for each of these nodes (as in the previous loop).
-			for (NodeList::const_iterator iterator = nodes.begin(); iterator != nodes.end(); iterator++)
+			for (NodeList::const_iterator iterator_ = nodes.begin(); iterator_ != nodes.end(); iterator_++)
 			{
-				structurally_volatile |= (*iterator)->IsStructurallyVolatile();
+				structurally_volatile |= (*iterator_)->IsStructurallyVolatile();
 
-				if ((*iterator)->IsApplicable(element))
+				if ((*iterator_)->IsApplicable(element))
 				{
 					std::vector< const StyleSheetNode* > volatile_nodes;
-					(*iterator)->GetApplicableDescendants(volatile_nodes, element);
+					(*iterator_)->GetApplicableDescendants(volatile_nodes, element);
 
-					for (size_t i = 0; i < volatile_nodes.size(); ++i)
-						volatile_nodes[i]->GetVolatilePseudoClasses(volatile_pseudo_classes);
+					for (size_t j = 0; j < volatile_nodes.size(); ++j)
+						volatile_nodes[j]->GetVolatilePseudoClasses(volatile_pseudo_classes);
 				}
 			}
 		}

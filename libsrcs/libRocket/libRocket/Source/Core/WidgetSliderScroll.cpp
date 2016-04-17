@@ -88,9 +88,9 @@ void WidgetSliderScroll::FormatElements(const Vector2f& containing_block, float 
 }
 
 // Called when the slider's bar position is set or dragged.
-float WidgetSliderScroll::OnBarChange(float bar_position)
+float WidgetSliderScroll::OnBarChange(float new_bar_position)
 {
-	return bar_position;
+	return new_bar_position;
 }
 
 // Called when the slider is incremented by one 'line', either by the down / right key or a mouse-click on the

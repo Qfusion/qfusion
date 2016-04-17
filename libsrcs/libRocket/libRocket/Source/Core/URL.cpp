@@ -180,16 +180,16 @@ bool URL::SetURL(const String& _url)
 	
 	// Check for parameters
 	String path_segment;
-	const char* parameters = strchr(path_begin, '?');
-	if ( parameters )
+	const char* parms = strchr(path_begin, '?');
+	if (parms)
 	{
 		// Pull the path segment out, so further processing doesn't read the parameters
-		path_segment.Assign(path_begin, parameters);
+		path_segment.Assign(path_begin, parms);
 		path_begin = path_segment.CString();
 		
 		// Loop through all parameters, loading them
 		StringList parameter_list;
-		StringUtilities::ExpandString( parameter_list, parameters + 1, '&' );
+		StringUtilities::ExpandString( parameter_list, parms + 1, '&' );
 		for ( size_t i = 0; i < parameter_list.size(); i++ )
 		{
 			// Split into key and value

@@ -44,12 +44,12 @@ WidgetSliderInput::~WidgetSliderInput()
 {
 }
 
-void WidgetSliderInput::SetValue(float value)
+void WidgetSliderInput::SetValue(float new_value)
 {
-	float num_steps = (value - min_value) / step;
-	float new_value = min_value + Rocket::Core::Math::Round(num_steps) * step;
+	float num_steps = (new_value - min_value) / step;
+	float new_rounded_value = min_value + Rocket::Core::Math::Round(num_steps) * step;
 
-	SetBarPosition(SetValueInternal(new_value));
+	SetBarPosition(SetValueInternal(new_rounded_value));
 }
 
 float WidgetSliderInput::GetValue()
@@ -87,9 +87,9 @@ void WidgetSliderInput::FormatElements()
 }
 
 // Called when the slider's bar position is set or dragged.
-float WidgetSliderInput::OnBarChange(float bar_position)
+float WidgetSliderInput::OnBarChange(float new_bar_position)
 {
-	float new_value = min_value + bar_position * (max_value - min_value);
+	float new_value = min_value + new_bar_position * (max_value - min_value);
 	int num_steps = Rocket::Core::Math::Round((new_value - value) / step);
 
 	return SetValueInternal(value + num_steps * step);

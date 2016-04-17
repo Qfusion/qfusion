@@ -201,7 +201,7 @@ int WidgetDropDown::GetSelection() const
 }
 
 // Adds a new option to the select control.
-int WidgetDropDown::AddOption(const Rocket::Core::String& rml, const Rocket::Core::String& value, int before, bool select, bool selectable)
+int WidgetDropDown::AddOption(const Rocket::Core::String& rml, const Rocket::Core::String& option_value, int before, bool select, bool selectable)
 {
 	// Instance a new element for the option.
 	Core::Element* element = Core::Factory::InstanceElement(selection_element, "*", "option", Rocket::Core::XMLAttributes());
@@ -217,13 +217,13 @@ int WidgetDropDown::AddOption(const Rocket::Core::String& rml, const Rocket::Cor
 		before >= (int) options.size())
 	{
 		selection_element->AppendChild(element);
-		options.push_back(SelectOption(element, value, selectable));
+		options.push_back(SelectOption(element, option_value, selectable));
 		option_index = (int) options.size() - 1;
 	}
 	else
 	{
 		selection_element->InsertBefore(element, selection_element->GetChild(before));
-		options.insert(options.begin() + before, SelectOption(element, value, selectable));
+		options.insert(options.begin() + before, SelectOption(element, option_value, selectable));
 		option_index = before;
 	}
 

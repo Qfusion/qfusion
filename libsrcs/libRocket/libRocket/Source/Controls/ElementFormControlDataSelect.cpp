@@ -193,18 +193,18 @@ void ElementFormControlDataSelect::BuildOptions()
 	DataQuery query(data_source, data_table, fields);
 	while (query.NextRow())
 	{
-		Rocket::Core::StringList fields;
+		Rocket::Core::StringList query_fields;
 		Rocket::Core::String value = query.Get<Rocket::Core::String>(0, "");
 
 		for (size_t i = 1; i < query.GetNumFields(); ++i)
-			fields.push_back(query.Get< Rocket::Core::String>(i, ""));
+			query_fields.push_back(query.Get< Rocket::Core::String>(i, ""));
 
 		Rocket::Core::String formatted("");
-		if (fields.size() > 0)
-			formatted = fields[0];
+		if (query_fields.size() > 0)
+			formatted = query_fields[0];
 
 		if (data_formatter)
-			data_formatter->FormatData(formatted, fields);
+			data_formatter->FormatData(formatted, query_fields);
 
 		// Add the data as an option.
 		widget->AddOption(formatted, value, -1, false);

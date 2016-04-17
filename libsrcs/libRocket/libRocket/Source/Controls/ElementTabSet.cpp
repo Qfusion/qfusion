@@ -209,17 +209,17 @@ void ElementTabSet::OnChildRemove(Core::Element* child)
 	}
 }
 
-Core::Element* ElementTabSet::GetChildByTag(const Rocket::Core::String& tag)
+Core::Element* ElementTabSet::GetChildByTag(const Rocket::Core::String& child_tag)
 {
 	// Look for the existing child
 	for (int i = 0; i < GetNumChildren(); i++)
 	{
-		if (GetChild(i)->GetTagName() == tag)
+		if (GetChild(i)->GetTagName() == child_tag)
 			return GetChild(i);
 	}
 
 	// If it doesn't exist, create it
-	Core::Element* element = Core::Factory::InstanceElement(this, "*", tag, Rocket::Core::XMLAttributes());
+	Core::Element* element = Core::Factory::InstanceElement(this, "*", child_tag, Rocket::Core::XMLAttributes());
 	AppendChild(element);
 	element->RemoveReference();
 	return element;
