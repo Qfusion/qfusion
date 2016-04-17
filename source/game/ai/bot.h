@@ -141,6 +141,11 @@ private:
     float AdjustDropAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
     float AdjustInstantAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
 
+    // Returns true is a shootable environment for inflicting a splash damage has been found
+    bool AdjustTargetByEnvironment(const firedef_t *firedef, const vec3_t fire_origin, vec3_t target);
+    bool AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire_origin, vec3_t target);
+    bool AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire_origin, vec3_t target, int targetAreaNum);
+
     inline bool HasCachedTargetOrigin() const
     {
         return EnemyInstanceId() == cachedPredictedTargetInstanceId && cachedPredictedTargetValidUntil > level.time;
@@ -157,6 +162,7 @@ private:
     inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
     inline bool IsEnemyStatic() const { return botBrain.combatTask.IsTargetStatic(); }
     inline const edict_t *EnemyTraceKey() const { return botBrain.combatTask.TraceKey(); }
+    inline const bool IsEnemyOnGround() const { return botBrain.combatTask.IsOnGround(); }
     inline Vec3 EnemyOrigin() const { return botBrain.combatTask.EnemyOrigin(); }
     inline Vec3 EnemyVelocity() const { return botBrain.combatTask.EnemyVelocity(); }
     inline Vec3 EnemyMins() const { return botBrain.combatTask.EnemyMins(); }

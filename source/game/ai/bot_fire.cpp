@@ -1,6 +1,5 @@
 #include "bot.h"
-#include "ai_local.h"
-#include "../../gameshared/q_comref.h"
+#include "ai_shutdown_hooks_holder.h"
 
 //==========================================
 // BOT_DMclass_CheckShot
@@ -385,36 +384,346 @@ float Bot::AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin
     }
 }
 
+bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire_origin, vec3_t target)
+{
+    trace_t trace;
+
+    float minSqDistance = 999999.0f;
+    vec_t nearestPoint[3] = { NAN, NAN, NAN };  // Avoid an "uninitialized" compiler/inspection warning
+
+    edict_t *traceKey = const_cast<edict_t *>(EnemyTraceKey());
+    float *firePoint = const_cast<float*>(fire_origin);
+
+    if (IsEnemyOnGround())
+    {
+        Vec3 groundPoint(target);
+        groundPoint.z() += playerbox_stand_maxs[2];
+        // Check whether shot to this point is not blocked
+        G_Trace(&trace, firePoint, nullptr, nullptr, groundPoint.data(), traceKey, MASK_AISOLID);
+        if (trace.fraction > 0.999f)
+        {
+            // For mid-skill bots it may be enough. Do not waste cycles.
+            if (Skill() < 0.66f && random() < (1.0f - Skill()))
+            {
+                target[2] += playerbox_stand_mins[2];
+                return true;
+            }
+
+            VectorCopy(groundPoint.data(), nearestPoint);
+            minSqDistance = playerbox_stand_mins[2] * playerbox_stand_mins[2];
+        }
+    }
+
+    Vec3 toTargetDir(target);
+    toTargetDir -= fire_origin;
+    float sqDistanceToTarget = toTargetDir.SquaredLength();
+    // Not only prevent division by zero, but keep target as-is when it is colliding with bot
+    if (sqDistanceToTarget < 16 * 16)
+        return false;
+
+    // Normalize to target dir
+    toTargetDir *= Q_RSqrt(sqDistanceToTarget);
+    Vec3 traceEnd = Vec3(target) + splashRadius * toTargetDir;
+
+    // We hope this function will be called rarely only when somebody wants to load a stripped Q3 AAS.
+    // Just trace an environment behind the bot, it is better than it used to be anyway.
+    G_Trace(&trace, target, nullptr, nullptr, traceEnd.data(), traceKey, MASK_AISOLID);
+    if (trace.fraction != 1.0f)
+    {
+        // First check whether an explosion in the point behind may damage the target to cut a trace quickly
+        float sqDistance = DistanceSquared(target, trace.endpos);
+        if (sqDistance < minSqDistance)
+        {
+            // trace.endpos will be overwritten
+            Vec3 pointBehind(trace.endpos);
+            // Check whether shot to this point is not blocked
+            G_Trace(&trace, firePoint, nullptr, nullptr, pointBehind.data(), traceKey, MASK_AISOLID);
+            if (trace.fraction > 0.999f)
+            {
+                minSqDistance = sqDistance;
+                VectorCopy(pointBehind.data(), nearestPoint);
+            }
+        }
+    }
+
+    // Modify `target` if we have found some close solid point
+    if (minSqDistance <= splashRadius)
+    {
+        VectorCopy(nearestPoint, target);
+        return true;
+    }
+    return false;
+}
+
+class FixedBitVector
+{
+private:
+    unsigned size;   // Count of bits this vector is capable to contain
+    uint32_t *words; // Actual bits data. We are limited 32-bit words to work fast on 32-bit processors.
+
+public:
+    FixedBitVector(unsigned size): size(size)
+    {
+        words = (uint32_t *)(G_Malloc(size / 8 + 4));
+        Clear();
+    }
+
+    // These following move-related members are mandatory for intended BitVectorHolder behavior
+
+    FixedBitVector(FixedBitVector &&that)
+    {
+        words = that.words;
+        that.words = nullptr;
+    }
+
+    FixedBitVector &operator=(FixedBitVector &&that)
+    {
+        if (words) G_Free(words);
+        words = that.words;
+        that.words = nullptr;
+        return *this;
+    }
+
+    ~FixedBitVector()
+    {
+        // If not moved
+        if (words) G_Free(words);
+    }
+
+    void Clear() { memset(words, 0, size / 8 + 4); }
+
+    // TODO: Shift by a variable may be an interpreted instruction on some CPUs
+
+    inline bool IsSet(int bitIndex) const
+    {
+        unsigned wordIndex = (unsigned)bitIndex / 32;
+        unsigned bitOffset = (unsigned)bitIndex - wordIndex * 32;
+
+        return (words[wordIndex] & (1 << bitOffset)) != 0;
+    }
+
+    inline void Set(int bitIndex, bool value) const
+    {
+        unsigned wordIndex = (unsigned)bitIndex / 32;
+        unsigned bitOffset = (unsigned)bitIndex - wordIndex * 32;
+        if (value)
+            words[wordIndex] |= ((unsigned)value << bitOffset);
+        else
+            words[wordIndex] &= ~((unsigned)value << bitOffset);
+    }
+};
+
+class BitVectorHolder
+{
+private:
+    StaticVector<FixedBitVector, 1> vectorHolder;
+    unsigned size;
+    bool hasRegisteredShutdownHook;
+
+    BitVectorHolder(BitVectorHolder &&that) = delete;
+public:
+    BitVectorHolder(): size(std::numeric_limits<unsigned>::max()), hasRegisteredShutdownHook(false) {}
+
+    FixedBitVector &Get(unsigned size)
+    {
+        if (this->size != size)
+            vectorHolder.clear();
+
+        this->size = size;
+
+        if (vectorHolder.empty())
+        {
+            vectorHolder.emplace_back(FixedBitVector(size));
+        }
+
+        if (!hasRegisteredShutdownHook)
+        {
+            // Clean up the held bit vector on shutdown
+            const auto hook = [&]() { this->vectorHolder.clear(); };
+            AiShutdownHooksHolder::Instance()->RegisterHook(hook);
+            hasRegisteredShutdownHook = true;
+        }
+
+        return vectorHolder[0];
+    }
+};
+
+static BitVectorHolder visitedFacesHolder;
+static BitVectorHolder visitedAreasHolder;
+
+struct PointAndDistance
+{
+    Vec3 point;
+    float distance;
+    inline PointAndDistance(const Vec3 &point, float distance): point(point), distance(distance) {}
+    inline bool operator<(const PointAndDistance &that) const { return distance < that.distance; }
+};
+
+constexpr int MAX_CLOSEST_FACE_POINTS = 8;
+
+static void FindClosestAreasFacesPoints(float splashRadius, const vec3_t target, int startAreaNum,
+                                        StaticVector<PointAndDistance, MAX_CLOSEST_FACE_POINTS + 1> &closestPoints)
+{
+    // Retrieve these instances before the loop
+    FixedBitVector &visitedFaces = visitedFacesHolder.Get((unsigned)aasworld.numfaces);
+    FixedBitVector &visitedAreas = visitedAreasHolder.Get((unsigned)aasworld.numareas);
+
+    visitedFaces.Clear();
+    visitedAreas.Clear();
+
+    // Actually it is not a limit of a queue capacity but a limit of processed areas number
+    constexpr int MAX_FRINGE_AREAS = 16;
+    // This is a breadth-first search fringe queue for a BFS through areas
+    int areasFringe[MAX_FRINGE_AREAS];
+
+    // Points to a head (front) of the fringe queue.
+    int areasFringeHead = 0;
+    // Points after a tail (back) of the fringe queue.
+    int areasFringeTail = 0;
+    // Push the start area to the queue
+    areasFringe[areasFringeTail++] = startAreaNum;
+
+    while (areasFringeHead < areasFringeTail)
+    {
+        const int areaNum = areasFringe[areasFringeHead++];
+        visitedAreas.Set(areaNum, true);
+
+        const aas_area_t *area = aasworld.areas + areaNum;
+
+        for (int faceIndexNum = area->firstface; faceIndexNum < area->firstface + area->numfaces; ++faceIndexNum)
+        {
+            int faceIndex = aasworld.faceindex[faceIndexNum];
+
+            // If the face has been already processed, skip it
+            if (visitedFaces.IsSet(abs(faceIndex)))
+                continue;
+
+            // Mark the face as processed
+            visitedFaces.Set(abs(faceIndex), true);
+
+            // Get actual face and area behind it by a sign of the faceIndex
+            const aas_face_t *face;
+            int areaBehindFace;
+            if (faceIndex >= 0)
+            {
+                face = aasworld.faces + faceIndex;
+                areaBehindFace = face->backarea;
+            }
+            else
+            {
+                face = aasworld.faces - faceIndex;
+                areaBehindFace = face->frontarea;
+            }
+
+            // Determine a distance from the target to the face
+            const aas_plane_t *plane = aasworld.planes + face->planenum;
+            const aas_edge_t *anyFaceEdge = aasworld.edges + abs(aasworld.edgeindex[face->firstedge]);
+
+            Vec3 anyPlanePointToTarget(target);
+            anyPlanePointToTarget -= aasworld.vertexes[anyFaceEdge->v[0]];
+            const float pointToFaceDistance = anyPlanePointToTarget.Dot(plane->normal);
+
+            // This is the actual loop stop condition.
+            // This means that `areaBehindFace` will not be pushed to the fringe queue, and the queue will shrink.
+            if (pointToFaceDistance > splashRadius)
+                continue;
+
+            // If the area borders with a solid
+            if (areaBehindFace == 0)
+            {
+                Vec3 projectedPoint = Vec3(target) - pointToFaceDistance * Vec3(plane->normal);
+                // We are sure we always have a free slot (closestPoints.capacity() == MAX_CLOSEST_FACE_POINTS + 1)
+                closestPoints.push_back(PointAndDistance(projectedPoint, pointToFaceDistance));
+                std::push_heap(closestPoints.begin(), closestPoints.end());
+                // Ensure that we have a free slot by evicting a largest distance point
+                // Do this afterward the addition to allow a newly added point win over some old one
+                if (closestPoints.size() == closestPoints.capacity())
+                {
+                    std::pop_heap(closestPoints.begin(), closestPoints.end());
+                    closestPoints.pop_back();
+                }
+            }
+            // If the area behind face is not checked yet and areas BFS limit is not reached
+            else if (!visitedAreas.IsSet(areaBehindFace) && areasFringeTail != MAX_FRINGE_AREAS)
+            {
+                // Enqueue `areaBehindFace` to the fringe queue
+                areasFringe[areasFringeTail++] = areaBehindFace;
+            }
+        }
+    }
+
+    // `closestPoints` is a heap arranged for quick eviction of the largest value.
+    // We have to sort it in ascending order
+    std::sort(closestPoints.begin(), closestPoints.end());
+}
+
+bool Bot::AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire_origin, vec3_t target, int areaNum)
+{
+    // We can't just get a closest point from AAS world, it may be blocked for shooting.
+    // Also we can't check each potential point for being blocked, tracing is very expensive.
+    // Instead we get MAX_CLOSEST_FACE_POINTS best points and for each check whether it is blocked.
+    // We hope at least a single point will not be blocked.
+
+    StaticVector<PointAndDistance, MAX_CLOSEST_FACE_POINTS + 1> closestAreaFacePoints;
+    FindClosestAreasFacesPoints(splashRadius, target, areaNum, closestAreaFacePoints);
+
+    trace_t trace;
+
+    // On each step get a best point left and check it for being blocked for shooting
+    // We assume that FindClosestAreasFacesPoints() returns a sorted array where closest points are first
+    for (const PointAndDistance &pointAndDistance: closestAreaFacePoints)
+    {
+        float *traceEnd = const_cast<float*>(pointAndDistance.point.data());
+        float *traceStart = const_cast<float*>(fire_origin);
+        edict_t *traceKey = const_cast<edict_t*>(EnemyTraceKey());
+        G_Trace(&trace, traceStart, nullptr, nullptr, traceEnd, traceKey, MASK_AISOLID);
+
+        if (trace.fraction > 0.999f)
+        {
+            VectorCopy(traceEnd, target);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Bot::AdjustTargetByEnvironment(const firedef_t *firedef, const vec3_t fire_origin, vec3_t target)
+{
+    int targetAreaNum = 0;
+    // Reject AAS worlds that look like stripped
+    if (aasworld.numfaces > 512)
+    {
+        targetAreaNum = AAS_PointAreaNum(target);
+        if (!targetAreaNum)
+        {
+            // Try some close random point (usually Z should be greater)
+            Vec3 offsetTarget(target);
+            offsetTarget += Vec3(-4.0f + 8.0f * random(),  -4.0f + 8.0f * random(), 4.0f + 4.0f * random());
+            targetAreaNum = AAS_PointAreaNum(offsetTarget.data());
+        }
+    }
+
+    if (targetAreaNum)
+        return AdjustTargetByEnvironmentWithAAS(firedef->splash_radius, fire_origin, target, targetAreaNum);
+
+    return AdjustTargetByEnvironmentTracing(firedef->splash_radius, fire_origin, target);
+}
+
 float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target)
 {
+    bool wasCached = HasCachedTargetOrigin();
     GetPredictedTargetOrigin(fire_origin, firedef->speed, target);
-
-    float wfac = WFAC_GENERIC_PROJECTILE * 1.3f;
-
-    // TODO: Disabled to get rid of self->enemy until sophisticated prediction code will be introduced
-    /*
-    if (GetCombatTask().aimEnemy)
+    // If new generic predicted target origin has been computed, adjust it for target environment
+    if (!wasCached)
     {
-        // aim to the feet when enemy isn't higher
-        if (fire_origin[2] > (target[2] + (self->enemy->r.mins[2] * 0.8)))
-        {
-            vec3_t checktarget;
-            VectorSet(checktarget,
-                      self->enemy->s.origin[0],
-                      self->enemy->s.origin[1],
-                      self->enemy->s.origin[2] + self->enemy->r.mins[2] + 4);
-
-            trace_t trace;
-            G_Trace(&trace, fire_origin, vec3_origin, vec3_origin, checktarget, self, MASK_SHOT);
-            if (trace.fraction == 1.0f || (trace.ent > 0 && game.edicts[trace.ent].takedamage))
-                VectorCopy(checktarget, target);
-        }
-        else if (!IsStep(self->enemy))
-            wfac *= 2.5; // more imprecise for air rockets
+        // First, modify temporary `target` value
+        AdjustTargetByEnvironment(firedef, fire_origin, target);
+        // Copy modified `target` value to cached value
+        cachedPredictedTargetOrigin = Vec3(target);
     }
-     */
-
-    return wfac;
+    // Accuracy for air rockets is worse anyway (movement prediction in gravity field is approximate)
+    return 1.3f * (1.01f - Skill()) * WFAC_GENERIC_PROJECTILE;
 }
 
 float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)

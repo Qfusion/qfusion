@@ -304,6 +304,8 @@ public:
 
     bool IsTargetStatic() const { return !aimEnemy; }
 
+    bool IsOnGround() const { return aimEnemy && aimEnemy->ent->groundentity; }
+
     Vec3 EnemyOrigin() const
     {
         if (aimEnemy) return aimEnemy->LastSeenPosition();
