@@ -50,10 +50,10 @@ public:
 	int getType( void ) const { return type; }
 
 	float getPercent( void ) const { return percent; }
-	void setPercent( const float percent ) { this->percent = percent; }
+	void setPercent( const float p ) { this->percent = p; }
 
 	int getSpeed( void ) const { return speed; }
-	void setSpeed( const int speed ) { this->speed = speed; }
+	void setSpeed( const int s ) { this->speed = s; }
 
 private:
 	std::string name;

@@ -74,7 +74,7 @@ namespace WSWUI {
 		bool IsViewed (void) const { return viewed; }
 		bool IsModal(void);
 		NavigationStack *getStack() const { return stack; }
-		void setStack(NavigationStack *stack) { this->stack = stack; }
+		void setStack(NavigationStack *s) { this->stack = s; }
 
 	private:
 		// this will also be the name for the asmodule!
