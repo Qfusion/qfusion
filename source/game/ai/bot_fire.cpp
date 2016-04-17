@@ -1,35 +1,6 @@
 #include "bot.h"
 #include "ai_shutdown_hooks_holder.h"
 
-//==========================================
-// BOT_DMclass_CheckShot
-// Checks if shot is blocked (doesn't verify it would hit)
-//==========================================
-bool Bot::CheckShot(const vec3_t point)
-{
-    trace_t tr;
-    vec3_t start, forward, right, offset;
-
-    AngleVectors( self->r.client->ps.viewangles, forward, right, NULL );
-
-    VectorSet( offset, 0, 0, self->viewheight );
-    G_ProjectSource( self->s.origin, offset, forward, right, start );
-
-    // blocked, don't shoot
-    G_Trace( &tr, start, vec3_origin, vec3_origin, const_cast<vec_t*>(point), self, MASK_AISOLID );
-    if( tr.fraction < 0.8f )
-    {
-        if( tr.ent < 1 || !game.edicts[tr.ent].takedamage || game.edicts[tr.ent].movetype == MOVETYPE_PUSH )
-            return false;
-
-        // check if the player we found is at our team
-        if( game.edicts[tr.ent].s.team == self->s.team && GS_TeamBasedGametype() )
-            return false;
-    }
-
-    return true;
-}
-
 // This is a port of public domain projectile prediction code by Kain Shin
 // http://ringofblades.com/Blades/Code/PredictiveAim.cs
 // This function assumes that target velocity is constant and gravity is not applied to projectile and target.
@@ -242,10 +213,6 @@ bool Bot::FireWeapon()
     if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN || self->s.weapon == WEAP_MACHINEGUN)
         continuousFire = true;
 
-    // Skip shooting in non-think frames unless continuous fire is required
-    if (!continuousFire && ShouldSkipThinkFrame())
-        return false;
-
     const firedef_t *firedef = GS_FiredefForPlayerState(&self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON]);
 
     int weapon = self->s.weapon;
@@ -255,39 +222,28 @@ bool Bot::FireWeapon()
     if (!firedef)
         return false;
 
+    // Always try to to track enemy with a "crosshair" like a human does
+
     vec3_t target, fire_origin;
     SetupCoarseFireTarget(fire_origin, target);
 
-    bool isInFront, mayHitApriori;
-    CheckEnemyInFrontAndMayBeHit(target, &isInFront, &mayHitApriori);
-
-    if(!continuousFire && !(isInFront && mayHitApriori))
-        return false;
-
+    // AdjustTarget() uses caching, so it is not expensive to call it each frame
     float wfac = AdjustTarget(weapon, firedef, fire_origin, target);
     wfac = 25 + wfac * (1.0f - 0.75f * Skill());
     if (importantShot && Skill() > 0.33f)
         wfac *= (1.13f - Skill());
 
-    // mayHitReally means that enemy is quite close to "crosshair" to press attack,
-    // the main purpose is to prevent shooting in wall when real look dir is not close to ideal one
-    bool mayHitReally = LookAtEnemy(wfac, fire_origin, target);
-    if (mayHitReally)
+    // Always track enemy with a "crosshair" like a human does in each frame
+    LookAtEnemy(wfac, fire_origin, target);
+
+    // Attack only in Think() frames unless a continuousFire is required
+    if (!continuousFire && ShouldSkipThinkFrame())
+        return false;
+
+    if (CheckShot(fire_origin, target))
         return TryPressAttack();
 
     return false;
-
-    /*
-    if (nav.debugMode && bot_showcombat->integer)
-    {
-        if (AimEnemy())
-        {
-            const edict_t *enemy = CombatTask().aimEnemy->ent;
-            const char *enemyName = enemy->r.client ? enemy->r.client->netname : enemy->classname;
-            G_PrintChasersf(self, "%s: attacking %s\n", self->ai->pers.netname, enemyName);
-        }
-    }
-    */
 }
 
 void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
@@ -300,22 +256,13 @@ void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
     fire_origin[2] = self->s.origin[2] + self->viewheight;
 }
 
-void Bot::CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *isInFront, bool *mayHit)
-{
-    // TODO: Inline Ai::IsInFront() contents or change Ai::IsInFront() signature
-    edict_t dummyEnt;
-    VectorCopy(target, dummyEnt.s.origin);
-    *isInFront = Ai::IsInFront(&dummyEnt);
-    *mayHit = CheckShot(target);
-}
-
 bool Bot::TryPressAttack()
 {
     const auto weapState = self->r.client->ps.weaponState;
     return weapState == WEAPON_STATE_READY || weapState == WEAPON_STATE_REFIRE || weapState == WEAPON_STATE_REFIRESTRONG;
 }
 
-bool Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
+void Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
 {
     target[0] += (random() - 0.5f) * wfac;
     target[1] += (random() - 0.5f) * wfac;
@@ -328,7 +275,10 @@ bool Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
         float angularSpeedMultiplier = 0.5f + 0.5f * Skill();
         ChangeAngle(lookAtVector, angularSpeedMultiplier);
     }
+}
 
+bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target)
+{
     // Do not shoot enemies that are far from "crosshair" except they are very close
     Vec3 newLookDir(0, 0, 0);
     AngleVectors(self->s.angles, newLookDir.data(), nullptr, nullptr);

@@ -17,7 +17,6 @@ public:
     void CombatMovement(usercmd_t *ucmd, bool hasDangers);
     void LookAround();
     bool ChangeWeapon(int weapon);
-    bool CheckShot(const vec3_t point);
     bool FireWeapon();
     void Pain(const edict_t *enemy, float kick, int damage)
     {
@@ -133,7 +132,8 @@ private:
     Vec3 MakeEvadeDirection(const Danger &danger);
 
     void SetupCoarseFireTarget(vec3_t fire_origin, vec3_t target);
-    void CheckEnemyInFrontAndMayBeHit(const vec3_t target, bool *inFront, bool *mayHitApriory);
+    // Returns true if current look angle worth pressing attack
+    bool CheckShot(const vec3_t fire_origin, const vec3_t target);
     // All these methods return suggested accuracy
     float AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target);
     float AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
@@ -155,8 +155,7 @@ private:
     void PredictProjectileShot(
         const vec3_t fireOrigin, float projSpeed, vec3_t target, const vec3_t targetVelocity, bool applyTargetGravity);
 
-    // Returns true if current look angle worth pressing attack
-    bool LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
+    void LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
     bool TryPressAttack();
 
     inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
