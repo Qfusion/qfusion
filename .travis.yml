@@ -9,7 +9,7 @@ notifications:
   email: false
   slack:
     rooms:
-      secure: 14/HK8RO8PzfznH7vmZwlfaOY0L2qqD21s+xyNfSRsayJGTIJV1lZrjSqGRpUSZm+ZZ+j0P/zB4QBXaJu077vTRYSQrudp85OTELSFNrBxWqBHokxDgL5tvXMZMa+0MPY/pd6h6dAgOgjku0QQNtYI9axASMseRDpOZX5unnRtE=
+      secure: FO4vtIe+YSl6xpJVmNzSOvef5RQxOjuUGJ02zhRrkBK3DOQMP2pOjIRIyEq6m0xx+BVK5UoLl8ACFS5e5P0wJOE7Bvl963yonKgK+sGutEGck5EmroBLCln9KvXkYaBElMgDZBZDm8q9ValjVwB2ym/aP82//6LLnCeVRBMThjE=
     on_success: change
     on_failure: always
 
