@@ -23,7 +23,10 @@ matrix:
         apt:
           sources:
             - kubuntu-backports
+            - ubuntu-toolchain-r-test
           packages:
+            - gcc-4.9
+            - g++-4.9
             - cmake
             - build-essential
             - gcc-multilib
@@ -33,7 +36,10 @@ matrix:
         apt:
           sources:
             - kubuntu-backports
+            - ubuntu-toolchain-r-test
           packages:
+            - gcc-4.9
+            - g++-4.9
             - cmake
             - build-essential
             - libopenal-dev
@@ -90,3 +96,28 @@ script:
   - if [[ "$QF_ARCH" == "x86_64" ]]; then export SDL2DIR="$HOME/.deps/$QF_ARCH" && cmake . && make -j2; fi
   - if [[ "$QF_ARCH" == "x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.cmake -DGAME_MODULES_ONLY=1 . && make -j2 game cgame; fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then cmake -G Xcode . && xcodebuild -project qfusion.xcodeproj/ -configuration Release -target ALL_BUILD; fi
+
+before_deploy:
+  - cd build
+  - if [[ "$QF_ARCH" == "OSX" ]]; then cd Release && zip -r ../../tmp *.app && cd ..; fi
+  - if [[ "$QF_ARCH" != "OSX" ]]; then zip -r ../tmp * --exclude *.a --exclude base*/*.a libs/*.a; fi
+  - cd ..
+  - mkdir -p dpl_cd_upload/${TRAVIS_BRANCH}
+  - mv tmp.zip dpl_cd_upload/${TRAVIS_BRANCH}/${QF_ARCH}-Release.zip
+
+deploy:
+  provider: s3
+  access_key_id: AKIAJAWHJ4EIHVBH42NQ
+  secret_access_key:
+    secure: cwOXqpr83YXgvY8Teyos7oMVbMWby7xTw6HwtLC/4jeGchNqryVEucSP3ogMQ3HYufprTxat4NzeC0Lflh0ULpfPesmlTvWUUXueBRO6521vZTH15RFY06h5bPfU1Abjh8zAhiD71VOuhgypDZjYSArzJgcMeV/il6Dnd7ok3IA=
+  bucket: bin.qfusion.net
+  local-dir: dpl_cd_upload
+  acl: public_read
+  skip_cleanup: true
+  region: eu-central-1
+  on:
+    repo: Qfusion/qfusion
+    branch:
+      - master
+      - ci
+      - warsow_2_1
