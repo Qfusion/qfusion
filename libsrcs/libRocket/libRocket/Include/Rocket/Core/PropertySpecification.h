@@ -118,7 +118,7 @@ private:
 	PropertyNameList inherited_property_names;
 	mutable PropertyNameList em_property_names;
 
-	bool ParsePropertyValues(StringList& values_list, const String& values, bool split_values) const;
+	static bool ParsePropertyValues(StringList& values_list, const String& values, bool split_values);
 };
 
 }

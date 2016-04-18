@@ -167,7 +167,7 @@ bool PropertySpecification::ParsePropertyDeclaration(PropertyDictionary& diction
 	const PropertyDefinition* property_definition = GetProperty(lower_case_name);
 
 	StringList property_values;
-	if (!ParsePropertyValues(property_values, property_value, property_definition == NULL) || property_values.size() == 0)
+	if (!ParsePropertyValues(property_values, property_value, property_definition == NULL) || property_values.empty())
 		return false;
 
 	if (property_definition != NULL)
@@ -347,7 +347,7 @@ void PropertySpecification::SetPropertyDefaults(PropertyDictionary& dictionary) 
 	}
 }
 
-bool PropertySpecification::ParsePropertyValues(StringList& values_list, const String& values, bool split_values) const
+bool PropertySpecification::ParsePropertyValues(StringList& values_list, const String& values, bool split_values)
 {
 	String value;
 
