@@ -1073,7 +1073,7 @@ void CG_UpdatePlayerModelEnt( centity_t *cent )
 	else
 	{
 		// update smoothed velocities used for animations and leaning angles
-		int i, count;
+		int count;
 		float adelta;
 
 		// rotational yaw velocity
