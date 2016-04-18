@@ -349,8 +349,8 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
         Vec3 groundPoint(target);
         groundPoint.z() += playerbox_stand_maxs[2];
         // Check whether shot to this point is not blocked
-        G_Trace(&trace, firePoint, nullptr, nullptr, groundPoint.data(), traceKey, MASK_AISOLID);
-        if (trace.fraction > 0.999f)
+        G_Trace(&trace, firePoint, nullptr, nullptr, groundPoint.data(), self, MASK_AISOLID);
+        if (trace.fraction > 0.999f || EnemyTraceKey() == game.edicts + trace.ent)
         {
             // For mid-skill bots it may be enough. Do not waste cycles.
             if (Skill() < 0.66f && random() < (1.0f - Skill()))
@@ -387,8 +387,8 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
             // trace.endpos will be overwritten
             Vec3 pointBehind(trace.endpos);
             // Check whether shot to this point is not blocked
-            G_Trace(&trace, firePoint, nullptr, nullptr, pointBehind.data(), traceKey, MASK_AISOLID);
-            if (trace.fraction > 0.999f)
+            G_Trace(&trace, firePoint, nullptr, nullptr, pointBehind.data(), self, MASK_AISOLID);
+            if (trace.fraction > 0.999f || EnemyTraceKey() == game.edicts + trace.ent)
             {
                 minSqDistance = sqDistance;
                 VectorCopy(pointBehind.data(), nearestPoint);
@@ -625,10 +625,9 @@ bool Bot::AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire
     {
         float *traceEnd = const_cast<float*>(pointAndDistance.point.data());
         float *traceStart = const_cast<float*>(fire_origin);
-        edict_t *traceKey = const_cast<edict_t*>(EnemyTraceKey());
-        G_Trace(&trace, traceStart, nullptr, nullptr, traceEnd, traceKey, MASK_AISOLID);
+        G_Trace(&trace, traceStart, nullptr, nullptr, traceEnd, self, MASK_AISOLID);
 
-        if (trace.fraction > 0.999f)
+        if (trace.fraction > 0.999f || EnemyTraceKey() == game.edicts + trace.ent)
         {
             VectorCopy(traceEnd, target);
             return true;
