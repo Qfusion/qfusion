@@ -112,6 +112,7 @@ deploy:
     secure: cwOXqpr83YXgvY8Teyos7oMVbMWby7xTw6HwtLC/4jeGchNqryVEucSP3ogMQ3HYufprTxat4NzeC0Lflh0ULpfPesmlTvWUUXueBRO6521vZTH15RFY06h5bPfU1Abjh8zAhiD71VOuhgypDZjYSArzJgcMeV/il6Dnd7ok3IA=
   bucket: bin.qfusion.net
   local-dir: dpl_cd_upload
+  upload-dir: qfusion
   acl: public_read
   skip_cleanup: true
   region: eu-central-1
