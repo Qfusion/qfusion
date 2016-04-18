@@ -3,7 +3,7 @@
 /* define this when we compile for a public release                     */
 /* this will protect dangerous and untested pieces of code              */
 /************************************************************************/
-//#define PUBLIC_BUILD
+#define PUBLIC_BUILD
 //#define BROKEN_BUILD
 
 //==============================================
