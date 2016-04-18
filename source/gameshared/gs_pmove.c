@@ -600,7 +600,7 @@ static void PM_AirAccelerate( vec3_t wishdir, float wishspeed )
 
 	if( wishspeed > curspeed * 1.01f ) // moving below pm_maxspeed
 	{
-		float accelspeed = curspeed + airforwardaccel * pml.maxPlayerSpeed * pml.frametime;
+		accelspeed = curspeed + airforwardaccel * pml.maxPlayerSpeed * pml.frametime;
 		if( accelspeed < wishspeed )
 			wishspeed = accelspeed;
 	}
@@ -631,7 +631,7 @@ static void PM_AirAccelerate( vec3_t wishdir, float wishspeed )
 }
 
 // when using +strafe convert the inertia to forward speed.
-static void PM_Aircontrol( pmove_t *pm, vec3_t wishdir, float wishspeed )
+static void PM_Aircontrol( vec3_t wishdir, float wishspeed )
 {
 	int i;
 	float zspeed, speed, dot, k;
@@ -874,7 +874,7 @@ static void PM_Move( void )
 		// Air control
 		PM_Accelerate( wishdir, wishspeed, accel );
 		if( pm_aircontrol && !( pm->playerState->pmove.pm_flags & PMF_WALLJUMPING ) && ( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] <= 0 ) )  // no air ctrl while wjing
-			PM_Aircontrol( pm, wishdir, wishspeed2 );
+			PM_Aircontrol( wishdir, wishspeed2 );
 
 		// add gravity
 		pml.velocity[2] -= pm->playerState->pmove.gravity * pml.frametime;
@@ -944,7 +944,7 @@ static void PM_Move( void )
 					wishspeed = pm_wishspeed;
 
 				PM_Accelerate( wishdir, wishspeed, pm_strafebunnyaccel );
-				PM_Aircontrol( pm, wishdir, wishspeed2 );
+				PM_Aircontrol( wishdir, wishspeed2 );
 			}
 			else // standard movement (includes strafejumping)
 			{
