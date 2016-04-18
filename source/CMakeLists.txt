@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 include(QfusionUtils)
 
+set(QFUSION_GAME Warsow)
+
 if (QFUSION_GAME)
 	if (${QFUSION_GAME} MATCHES "Warsow")
 		set(QFUSION_GAME_DIR basewsw)
