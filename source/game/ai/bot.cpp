@@ -45,8 +45,6 @@ void Bot::LookAround()
 
     RegisterVisibleEnemies();
 
-    botBrain.UpdateCombatTask();
-
     if (!botBrain.combatTask.Empty())
         ChangeWeapon(botBrain.combatTask.Weapon());
 }

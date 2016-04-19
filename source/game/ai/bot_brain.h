@@ -388,9 +388,6 @@ class BotBrain: public AiBaseBrain
 
     unsigned combatTaskInstanceCounter;
 
-    unsigned frameAffinityModulo;
-    unsigned frameAffinityOffset;
-
     unsigned nextTargetChoiceAt;
     unsigned nextWeaponChoiceAt;
 
@@ -492,6 +489,7 @@ class BotBrain: public AiBaseBrain
     int ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end);
     void TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey);
     void RemoveEnemy(Enemy &enemy);
+    void UpdateCombatTask();
     void UpdateKeptCurrentCombatTask();
     void TryFindNewCombatTask();
 
@@ -510,6 +508,8 @@ public:
 
     BotBrain(edict_t *bot, float skillLevel);
 
+    virtual void Frame() override;
+    virtual void Think() override;
     virtual void PreThink() override;
     virtual void PostThink() override;
 
@@ -519,7 +519,6 @@ public:
     void OnPain(const edict_t *enemy, float kick, int damage);
     void OnEnemyDamaged(const edict_t *target, int damage);
 
-    void UpdateCombatTask();
 
     virtual void UpdatePotentialGoalsWeights() override;
 };
