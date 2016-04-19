@@ -92,6 +92,7 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       combatTaskInstanceCounter(1),
       nextTargetChoiceAt(level.time),
       nextWeaponChoiceAt(level.time),
+      nextFastWeaponSwitchActionCheckAt(level.time),
       prevThinkLevelTime(level.time),
       armorProtection(g_armor_protection->value),
       armorDegradation(g_armor_degradation->value),
@@ -212,6 +213,15 @@ void BotBrain::Think()
 {
     // Call superclass method first
     AiBaseBrain::Think();
+
+    if (nextFastWeaponSwitchActionCheckAt <= level.time)
+    {
+        if (CheckFastWeaponSwitchAction())
+        {
+            nextFastWeaponSwitchActionCheckAt = level.time + 500;
+            return;
+        }
+    }
 
     if (combatTask.aimEnemy && (level.time - combatTask.aimEnemy->LastSeenAt()) > reactionTime)
     {
@@ -626,6 +636,53 @@ void BotBrain::UpdateKeptCurrentCombatTask()
     }
 }
 
+bool BotBrain::CheckFastWeaponSwitchAction()
+{
+    if (!combatTask.aimEnemy)
+        return false;
+
+    if (self->r.client->ps.stats[STAT_WEAPON_TIME] >= 64)
+        return false;
+
+    // Easy bots do not perform fast weapon switch actions
+    if (BotSkill() < 0.33f)
+        return false;
+
+    // Mid-skill bots do these actions time to time
+    if (BotSkill() < 0.66f && (random() > BotSkill() || random() > BotSkill()))
+        return false;
+
+    const Enemy &enemy = *combatTask.aimEnemy;
+    CombatDisposition disposition = GetCombatDisposition(*combatTask.aimEnemy);
+
+    int chosenWeapon = WEAP_NONE;
+    if (disposition.damageToKill < 75)
+    {
+        Debug("decided to finish %s that can resist %.1f damage units\n", enemy.Nick(), disposition.damageToKill);
+        chosenWeapon = SuggestFinishWeapon(enemy, disposition);
+        Debug("chosen %s to finish %s\n", WeapName(chosenWeapon), enemy.Nick());
+    }
+    else
+    {
+        // Try to hit escaping enemies hard in a single shot
+        if (IsEnemyEscaping(enemy, disposition))
+        {
+            Debug("detected that %s is escaping\n", enemy.Nick());
+            chosenWeapon = SuggestHitEscapingEnemyWeapon(enemy, disposition);
+            Debug("chosen %s to hit escaping %s\n", WeapName(chosenWeapon), enemy.Nick());
+        }
+    }
+
+    if (chosenWeapon != WEAP_NONE)
+    {
+        combatTask.suggestedShootWeapon = chosenWeapon;
+        combatTask.importantShot = true;
+        return true;
+    }
+
+    return false;
+}
+
 void BotBrain::TryFindNewCombatTask()
 {
     CombatTask *task = &combatTask;
@@ -850,6 +907,26 @@ inline float GetLaserRange()
     return (lgDef->firedef.timeout + lgDef->firedef.timeout) / 2.0f;
 }
 
+CombatDisposition BotBrain::GetCombatDisposition(const Enemy &enemy)
+{
+    float damageToBeKilled = DamageToKill(bot);
+    if (BotHasShell())
+        damageToBeKilled /= 4.0f;
+    if (enemy.HasQuad())
+        damageToBeKilled *= 4.0f;
+    float damageToKillEnemy = DamageToKill(enemy.ent);
+    if (enemy.HasShell())
+        damageToKillEnemy *= 4.0f;
+
+    float distance = (enemy.LastSeenPosition() - self->s.origin).LengthFast();
+
+    CombatDisposition disposition;
+    disposition.damageToBeKilled = damageToBeKilled;
+    disposition.damageToKill = damageToKillEnemy;
+    disposition.distance = distance;
+    return disposition;
+}
+
 void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 {
     const Enemy &enemy = *task->aimEnemy;
@@ -874,60 +951,15 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
         return;
     }
 
-    float damageToBeKilled = DamageToKill(bot);
-    if (BotHasShell())
-        damageToBeKilled /= 4.0f;
-    if (enemy.HasQuad())
-        damageToBeKilled *= 4.0f;
-    float damageToKillEnemy = DamageToKill(enemy.ent);
-    if (enemy.HasShell())
-        damageToKillEnemy *= 4.0f;
-
-    float distance = (botOrigin - enemy.LastSeenPosition()).LengthFast();
-
-    CombatDisposition disposition;
-    disposition.damageToBeKilled = damageToBeKilled;
-    disposition.damageToKill = damageToKillEnemy;
-    disposition.distance = distance;
-
-    // If bot can switch weapon quickly
-    if (bot->r.client->ps.stats[STAT_WEAPON_TIME] < 64)
-    {
-        if (BotSkill() >= 0.85f || decisionRandom < BotSkill())
-        {
-            int chosenWeapon = WEAP_NONE;
-            if (damageToKillEnemy < 75)
-            {
-                Debug("decided to finish %s that can resist %.1f damage units\n", enemy.Nick(), damageToKillEnemy);
-                chosenWeapon = SuggestFinishWeapon(enemy, disposition);
-                Debug("chosen %s to finish %s\n", WeapName(chosenWeapon), enemy.Nick());
-            }
-            else
-            {
-                // Try to hit escaping enemies hard in a single shot
-                if (IsEnemyEscaping(enemy, disposition))
-                {
-                    Debug("detected that %s is escaping\n", enemy.Nick());
-                    chosenWeapon = SuggestHitEscapingEnemyWeapon(enemy, disposition);
-                    Debug("chosen %s to hit escaping %s\n", WeapName(chosenWeapon), enemy.Nick());
-                }
-            }
-            if (chosenWeapon != WEAP_NONE)
-            {
-                task->suggestedShootWeapon = chosenWeapon;
-                task->importantShot = true;
-                return;
-            }
-        }
-    }
+    CombatDisposition disposition = GetCombatDisposition(enemy);
 
     const float lgRange = GetLaserRange();
 
-    if (distance > lgRange * 2.0f)
+    if (disposition.distance > lgRange * 2.0f)
         SuggestSniperRangeWeaponAndTactics(task, disposition);
-    else if (distance > lgRange)
+    else if (disposition.distance > lgRange)
         SuggestFarRangeWeaponAndTactics(task, disposition);
-    else if (distance > CLOSE_RANGE)
+    else if (disposition.distance > CLOSE_RANGE)
         SuggestMiddleRangeWeaponAndTactics(task, disposition);
     else
         SuggestCloseRangeWeaponAndTactics(task, disposition);
