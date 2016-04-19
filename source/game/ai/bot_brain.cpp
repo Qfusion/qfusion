@@ -90,8 +90,6 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       aimWeaponChoicePeriod(1032 - (unsigned)(500.0f * BotSkill())),
       spamWeaponChoicePeriod(1000 - (unsigned)(333.0f * BotSkill())),
       combatTaskInstanceCounter(1),
-      frameAffinityModulo(0),
-      frameAffinityOffset(0),
       nextTargetChoiceAt(level.time),
       nextWeaponChoiceAt(level.time),
       prevThinkLevelTime(level.time),
@@ -163,19 +161,7 @@ void BotBrain::PreThink()
         UpdateWeight(enemy);
     }
 
-    for (AttackStats &attackerStats: attackers)
-    {
-        attackerStats.Frame();
-        if (attackerStats.LastActivityAt() + ATTACKER_TIMEOUT < levelTime)
-            attackerStats.Clear();
-    }
 
-    for (AttackStats &targetStats: targets)
-    {
-        targetStats.Frame();
-        if (targetStats.LastActivityAt() + TARGET_TIMEOUT < levelTime)
-            targetStats.Clear();
-    }
 
     if (combatTask.spamEnemy)
     {
@@ -202,6 +188,34 @@ void BotBrain::PreThink()
 void BotBrain::PostThink()
 {
     prevThinkLevelTime = level.time;
+}
+
+void BotBrain::Frame()
+{
+    // Call superclass method first
+    AiBaseBrain::Frame();
+
+    for (AttackStats &attackerStats: attackers)
+    {
+        attackerStats.Frame();
+        if (attackerStats.LastActivityAt() + ATTACKER_TIMEOUT < level.time)
+            attackerStats.Clear();
+    }
+
+    for (AttackStats &targetStats: targets)
+    {
+        targetStats.Frame();
+        if (targetStats.LastActivityAt() + TARGET_TIMEOUT < level.time)
+            targetStats.Clear();
+    }
+}
+
+void BotBrain::Think()
+{
+    // Call superclass method first
+    AiBaseBrain::Think();
+
+    UpdateCombatTask();
 }
 
 void BotBrain::UpdateWeight(Enemy &enemy)
