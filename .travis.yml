@@ -99,7 +99,7 @@ script:
 
 before_deploy:
   - cd build
-  - if [[ "$QF_ARCH" == "OSX" ]]; then cd Release && zip -r ../../tmp *.app && cd ..; fi
+  - if [[ "$QF_ARCH" == "OSX" ]]; then cd Release && zip -r ../../tmp * && cd ..; fi
   - if [[ "$QF_ARCH" != "OSX" ]]; then zip -r ../tmp * --exclude *.a --exclude base*/*.a libs/*.a; fi
   - cd ..
   - mkdir -p dpl_cd_upload/${TRAVIS_BRANCH}
