@@ -391,6 +391,8 @@ class BotBrain: public AiBaseBrain
     unsigned nextTargetChoiceAt;
     unsigned nextWeaponChoiceAt;
 
+    unsigned nextFastWeaponSwitchActionCheckAt;
+
     StaticVector<AttackStats, MAX_TRACKED_ATTACKERS> attackers;
     StaticVector<AttackStats, MAX_TRACKED_TARGETS> targets;
 
@@ -491,6 +493,8 @@ class BotBrain: public AiBaseBrain
     void RemoveEnemy(Enemy &enemy);
     void UpdateKeptCurrentCombatTask();
     void TryFindNewCombatTask();
+    bool CheckFastWeaponSwitchAction();
+    CombatDisposition GetCombatDisposition(const Enemy &enemy);
 
     float ComputeItemWeight(const gsitem_t *item, bool onlyGotGB) const;
     float ComputeWeaponWeight(const gsitem_t *item, bool onlyGotGB) const;
