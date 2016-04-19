@@ -161,8 +161,6 @@ void BotBrain::PreThink()
         UpdateWeight(enemy);
     }
 
-
-
     if (combatTask.spamEnemy)
     {
         if (combatTask.spamTimesOutAt <= levelTime)
@@ -215,7 +213,18 @@ void BotBrain::Think()
     // Call superclass method first
     AiBaseBrain::Think();
 
-    UpdateCombatTask();
+    if (combatTask.aimEnemy && (level.time - combatTask.aimEnemy->LastSeenAt()) > reactionTime)
+    {
+        TryFindNewCombatTask();
+    }
+    else if (nextTargetChoiceAt > level.time)
+    {
+        UpdateKeptCurrentCombatTask();
+    }
+    else
+    {
+        TryFindNewCombatTask();
+    }
 }
 
 void BotBrain::UpdateWeight(Enemy &enemy)
@@ -594,25 +603,6 @@ void BotBrain::OnEnemyDamaged(const edict_t *target, int damage)
             targets[i].OnDamage(damage);
             return;
         }
-    }
-}
-
-void BotBrain::UpdateCombatTask()
-{
-    if (ShouldSkipThinkFrame())
-        return;
-
-    if (combatTask.aimEnemy && (level.time - combatTask.aimEnemy->LastSeenAt()) > reactionTime)
-    {
-        TryFindNewCombatTask();
-    }
-    else if (nextTargetChoiceAt > level.time)
-    {
-        UpdateKeptCurrentCombatTask();
-    }
-    else
-    {
-        TryFindNewCombatTask();
     }
 }
 

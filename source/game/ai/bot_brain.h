@@ -489,7 +489,6 @@ class BotBrain: public AiBaseBrain
     int ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end);
     void TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey);
     void RemoveEnemy(Enemy &enemy);
-    void UpdateCombatTask();
     void UpdateKeptCurrentCombatTask();
     void TryFindNewCombatTask();
 
