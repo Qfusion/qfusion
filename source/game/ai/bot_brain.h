@@ -484,6 +484,8 @@ class BotBrain: public AiBaseBrain
     int SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     bool IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition);
     int SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition);
+    bool CheckForShotOfDespair(const Enemy &enemy, const CombatDisposition &disposition);
+    int SuggestShotOfDespairWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     int SuggestQuadBearerWeapon(const Enemy &enemy);
     bool SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy);
     void SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Vec3 &botViewDirection);
