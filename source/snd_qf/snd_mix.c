@@ -65,137 +65,7 @@ static void S_WriteSwappedLinearBlastStereo16( void )
 		snd_out[i+1] = val;
 	}
 }
-
-#elif !defined ( id386 ) || defined ( __MACOSX__ )
-#ifdef _WIN32
-#pragma warning( push )
-#pragma warning( disable : 4310 )       // cast truncates constant value
-#endif
-static void S_WriteLinearBlastStereo16( void )
-{
-	int i;
-	int val;
-
-	for( i = 0; i < snd_linear_count; i += 2 )
-	{
-		val = snd_p[i]>>8;
-		snd_out[i] = bound( (short)0x8000, val, 0x7fff );
-
-		val = snd_p[i+1]>>8;
-		snd_out[i+1] = bound( (short)0x8000, val, 0x7fff );
-	}
-}
-
-static void S_WriteSwappedLinearBlastStereo16( void )
-{
-	int i;
-	int val;
-
-	for( i = 0; i < snd_linear_count; i += 2 )
-	{
-		val = snd_p[i+1]>>8;
-		snd_out[i] = bound( (short)0x8000, val, 0x7fff );
-
-		val = snd_p[i]>>8;
-		snd_out[i+1] = bound( (short)0x8000, val, 0x7fff );
-	}
-#ifdef _WIN32
-#pragma warning( pop )
-#endif
-}
-#elif defined ( __GNUC__ )
-
-ATTRIBUTE_NOINLINE void S_WriteSwappedLinearBlastStereo16( void );
-ATTRIBUTE_NOINLINE void S_WriteLinearBlastStereo16( void );
-
-void S_WriteLinearBlastStereo16( void )
-{
-	__asm__ __volatile__(
-	        "		# preserve register variables\n"
-	        "		pushl	%edi\n"
-	        "		pushl	%ebx\n"
-	        "		movl	"VAR(snd_linear_count)",%ecx\n"
-	        "		movl	"VAR(snd_p)",%ebx\n"
-	        "		movl	"VAR(snd_out)",%edi\n"
-	        "	LWLBLoopTop:\n"
-	        "		movl	-8(%ebx,%ecx,4),%eax\n"
-	        "		sarl	$8,%eax\n"
-	        "		cmpl	$0x7FFF,%eax\n"
-	        "		jg	LClampHigh\n"
-	        "		cmpl	$0xFFFF8000,%eax\n"
-	        "		jnl	LClampDone\n"
-	        "		movl	$0xFFFF8000,%eax\n"
-	        "		jmp	LClampDone\n"
-	        "	LClampHigh:\n"
-	        "		movl	$0x7FFF,%eax\n"
-	        "	LClampDone:\n"
-	        "		movl	-4(%ebx,%ecx,4),%edx\n"
-	        "		sarl	$8,%edx\n"
-	        "		cmpl	$0x7FFF,%edx\n"
-	        "		jg	LClampHigh2\n"
-	        "		cmpl	$0xFFFF8000,%edx\n"
-	        "		jnl	LClampDone2\n"
-	        "		movl	$0xFFFF8000,%edx\n"
-	        "		jmp	LClampDone2\n"
-	        "	LClampHigh2:\n"
-	        "		movl	$0x7FFF,%edx\n"
-	        "	LClampDone2:\n"
-	        "		shll	$16,%edx\n"
-	        "		andl	$0xFFFF,%eax\n"
-	        "		orl		%eax,%edx\n"
-	        "		movl	%edx,-4(%edi,%ecx,2)\n"
-	        "		subl	$2,%ecx\n"
-	        "		jnz	LWLBLoopTop\n"
-	        "		popl	%ebx\n"
-	        "		popl	%edi\n"
-	        "#		ret\n"
-	);
-}
-
-void S_WriteSwappedLinearBlastStereo16( void )
-{
-	__asm__ __volatile__(
-	        "		# preserve register variables\n"
-	        "		pushl	%edi\n"
-	        "		pushl	%ebx\n"
-	        "		movl	"VAR(snd_linear_count)",%ecx\n"
-	        "		movl	"VAR(snd_p)",%ebx\n"
-	        "		movl	"VAR(snd_out)",%edi\n"
-	        "	LWLBLoopTopS:\n"
-	        "		movl	-4(%ebx,%ecx,4),%eax\n"
-	        "		sarl	$8,%eax\n"
-	        "		cmpl	$0x7FFF,%eax\n"
-	        "		jg	LClampHighS\n"
-	        "		cmpl	$0xFFFF8000,%eax\n"
-	        "		jnl	LClampDoneS\n"
-	        "		movl	$0xFFFF8000,%eax\n"
-	        "		jmp	LClampDoneS\n"
-	        "	LClampHighS:\n"
-	        "		movl	$0x7FFF,%eax\n"
-	        "	LClampDoneS:\n"
-	        "		movl	-8(%ebx,%ecx,4),%edx\n"
-	        "		sarl	$8,%edx\n"
-	        "		cmpl	$0x7FFF,%edx\n"
-	        "		jg	LClampHigh2S\n"
-	        "		cmpl	$0xFFFF8000,%edx\n"
-	        "		jnl	LClampDone2S\n"
-	        "		movl	$0xFFFF8000,%edx\n"
-	        "		jmp	LClampDone2S\n"
-	        "	LClampHigh2S:\n"
-	        "		movl	$0x7FFF,%edx\n"
-	        "	LClampDone2S:\n"
-	        "		shll	$16,%edx\n"
-	        "		andl	$0xFFFF,%eax\n"
-	        "		orl	%eax,%edx\n"
-	        "		movl	%edx,-4(%edi,%ecx,2)\n"
-	        "		subl	$2,%ecx\n"
-	        "		jnz	LWLBLoopTopS\n"
-	        "		popl	%ebx\n"
-	        "		popl	%edi\n"
-	        "#		ret\n"
-	);
-}
-#elif defined (_WIN32)
+#elif defined ( _MSC_VER ) && !defined( id386 )
 static ATTRIBUTE_NAKED void S_WriteLinearBlastStereo16( void )
 {
 	__asm {
@@ -290,6 +160,43 @@ LClampDone2:
 			pop edi
 			ret
 	}
+}
+#else
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4310 )       // cast truncates constant value
+#endif
+static void S_WriteLinearBlastStereo16( void )
+{
+	int i;
+	int val;
+
+	for( i = 0; i < snd_linear_count; i += 2 )
+	{
+		val = snd_p[i]>>8;
+		snd_out[i] = bound( (short)0x8000, val, 0x7fff );
+
+		val = snd_p[i+1]>>8;
+		snd_out[i+1] = bound( (short)0x8000, val, 0x7fff );
+	}
+}
+
+static void S_WriteSwappedLinearBlastStereo16( void )
+{
+	int i;
+	int val;
+
+	for( i = 0; i < snd_linear_count; i += 2 )
+	{
+		val = snd_p[i+1]>>8;
+		snd_out[i] = bound( (short)0x8000, val, 0x7fff );
+
+		val = snd_p[i]>>8;
+		snd_out[i+1] = bound( (short)0x8000, val, 0x7fff );
+	}
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 }
 #endif
 
