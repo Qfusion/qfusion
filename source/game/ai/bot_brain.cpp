@@ -648,10 +648,6 @@ bool BotBrain::CheckFastWeaponSwitchAction()
     if (BotSkill() < 0.33f)
         return false;
 
-    // Mid-skill bots do these actions time to time
-    if (BotSkill() < 0.66f && (random() > BotSkill() || random() > BotSkill()))
-        return false;
-
     const Enemy &enemy = *combatTask.aimEnemy;
     CombatDisposition disposition = GetCombatDisposition(*combatTask.aimEnemy);
 
@@ -660,17 +656,21 @@ bool BotBrain::CheckFastWeaponSwitchAction()
     {
         Debug("decided to finish %s that can resist %.1f damage units\n", enemy.Nick(), disposition.damageToKill);
         chosenWeapon = SuggestFinishWeapon(enemy, disposition);
-        Debug("chosen %s to finish %s\n", WeapName(chosenWeapon), enemy.Nick());
+        Debug("chose %s to finish %s\n", WeapName(chosenWeapon), enemy.Nick());
     }
-    else
+    // Try to hit escaping enemies hard in a single shot
+    else if (IsEnemyEscaping(enemy, disposition))
     {
-        // Try to hit escaping enemies hard in a single shot
-        if (IsEnemyEscaping(enemy, disposition))
-        {
-            Debug("detected that %s is escaping\n", enemy.Nick());
-            chosenWeapon = SuggestHitEscapingEnemyWeapon(enemy, disposition);
-            Debug("chosen %s to hit escaping %s\n", WeapName(chosenWeapon), enemy.Nick());
-        }
+        Debug("detected that %s is escaping\n", enemy.Nick());
+        chosenWeapon = SuggestHitEscapingEnemyWeapon(enemy, disposition);
+        Debug("chose %s to hit escaping %s\n", WeapName(chosenWeapon), enemy.Nick());
+    }
+    // Try to hit enemy hard in a single shot before death
+    else if (CheckForShotOfDespair(enemy, disposition))
+    {
+        Debug("decided to do a shot of despair having %.1f damage units to be killed\n", disposition.damageToBeKilled);
+        chosenWeapon = SuggestShotOfDespairWeapon(enemy, disposition);
+        Debug("chose %s for shot of despair at %s\n", WeapName(chosenWeapon), enemy.Nick());
     }
 
     if (chosenWeapon != WEAP_NONE)
@@ -1576,6 +1576,123 @@ int BotBrain::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisp
     Debug(format, weaponScores[EB].score, weaponScores[RL].score, weaponScores[GB].score, WeapName(weapon));
 
     return weapon;
+}
+
+bool BotBrain::CheckForShotOfDespair(const Enemy &enemy, const CombatDisposition &disposition)
+{
+    if (BotHasPowerups())
+        return false;
+
+    // Restrict weapon switch time even more compared to generic fast switch action
+    if (self->r.client->ps.stats[STAT_WEAPON_TIME] > 16)
+        return false;
+
+    float adjustedDamageToBeKilled = disposition.damageToBeKilled * (enemy.HasQuad() ? 0.25f : 1.0f);
+    if (adjustedDamageToBeKilled > 25)
+        return false;
+
+    if (disposition.damageToKill < 35)
+        return false;
+
+    const float lgRange = GetLaserRange();
+
+    if (disposition.distance > lgRange)
+        return false;
+
+    switch (enemy.PendingWeapon())
+    {
+        case WEAP_LASERGUN:
+            return true;
+        case WEAP_PLASMAGUN:
+            return random() > disposition.distance / lgRange;
+        case WEAP_ROCKETLAUNCHER:
+            return random() > disposition.distance / lgRange;
+        case WEAP_MACHINEGUN:
+            return true;
+        default:
+            return false;
+    }
+}
+
+int BotBrain::SuggestShotOfDespairWeapon(const Enemy &enemy, const CombatDisposition &disposition)
+{
+    // Prevent negative scores from self-damage suicide.
+    int score = self->r.client->ps.stats[STAT_SCORE];
+    if (level.gametype.inverseScore)
+        score *= -1;
+
+    if (score <= 0)
+    {
+        if (BoltsReadyToFireCount() > 0)
+            return WEAP_ELECTROBOLT;
+        if (ShellsReadyToFireCount() > 0)
+            return WEAP_RIOTGUN;
+        return WEAP_NONE;
+    }
+
+    const float lgRange = GetLaserRange();
+
+    enum { EB, RG, RL, GB, GL, WEIGHTS_COUNT };
+
+    WeaponAndScore scores[WEIGHTS_COUNT] =
+    {
+        WeaponAndScore(WEAP_ELECTROBOLT, BoltsReadyToFireCount() > 0),
+        WeaponAndScore(WEAP_RIOTGUN, ShellsReadyToFireCount() > 0),
+        WeaponAndScore(WEAP_ROCKETLAUNCHER, RocketsReadyToFireCount() > 0),
+        WeaponAndScore(WEAP_GUNBLADE, 0.8f),
+        WeaponAndScore(WEAP_GRENADELAUNCHER, 0.7f)
+    };
+
+    TestTargetEnvironment(Vec3(self->s.origin), Vec3(enemy.ent->s.origin), enemy.ent);
+
+    // Do not touch hitscan weapons scores, we are not going to do a continuous fight
+    scores[RL].score *= targetEnvironment.factor;
+    scores[GL].score *= targetEnvironment.factor;
+    scores[GB].score *= 0.5f + 0.5f * targetEnvironment.factor;
+
+    // Since shots of despair are done in LG range, do not touch GB
+    scores[RL].score *= 1.0f - 0.750f * disposition.distance / lgRange;
+    scores[GL].score *= 1.0f - 0.999f * disposition.distance / lgRange;
+
+    // Add extra scores for very close shots (we are not going to prevent bot suicide)
+    if (disposition.distance < 150)
+    {
+        scores[RL].score *= 2.0f;
+        scores[GL].score *= 2.0f;
+    }
+
+    // Prioritize EB for relatively far shots
+    if (disposition.distance > lgRange * 0.66)
+        scores[EB].score *= 1.5f;
+
+    // Counteract some weapons with their antipodes
+    switch (enemy.PendingWeapon())
+    {
+        case WEAP_LASERGUN:
+        case WEAP_PLASMAGUN:
+            scores[RL].score *= 1.75f;
+            scores[GL].score *= 1.35f;
+            break;
+        case WEAP_ROCKETLAUNCHER:
+            scores[RG].score *= 2.0f;
+            break;
+        default: // Shut up inspections
+            break;
+    }
+
+    // Do not call ChoseWeaponByScores() which gives current weapon a slight priority, weapon switch is intended
+    float bestScore = 0;
+    int bestWeapon = WEAP_NONE;
+    for (const auto &weaponAndScore: scores)
+    {
+        if (bestScore < weaponAndScore.score)
+        {
+            bestScore = weaponAndScore.score;
+            bestWeapon = weaponAndScore.weapon;
+        }
+    }
+
+    return bestWeapon;
 }
 
 int BotBrain::SuggestQuadBearerWeapon(const Enemy &enemy)
