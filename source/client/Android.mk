@@ -10,6 +10,7 @@ endif
 LOCAL_LDLIBS := -landroid -llog -lz
 LOCAL_STATIC_LIBRARIES := curl
 LOCAL_WHOLE_STATIC_LIBRARIES := android_native_app_glue
+LOCAL_DISABLE_FATAL_LINKER_WARNINGS := true
 
 LOCAL_SRC_FILES := \
   android/android_client.c \
