@@ -1733,7 +1733,7 @@ void BOT_DMclass_InitPersistant( edict_t *self )
 
 	self->classname = "dmbot";
 
-	if( self->r.client->netname )
+	if( self->r.client->netname[0] )
 		self->ai->pers.netname = self->r.client->netname;
 	else
 		self->ai->pers.netname = "dmBot";

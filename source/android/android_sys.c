@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <android/log.h>
 #include <android/window.h>
 #include <linux/limits.h>
+#include <sys/stat.h>
 
 unsigned int sys_frame_time;
 
@@ -333,7 +334,7 @@ static void Sys_Android_Init( void )
 		Q_snprintfz( externalDataPath, sizeof( externalDataPath ), "%s/%d.%d",
 			app->activity->externalDataPath, APP_VERSION_MAJOR, APP_VERSION_MINOR );
 		FS_CreateAbsolutePath( externalDataPath );
-		Sys_FS_CreateDirectory( externalDataPath );
+		mkdir( externalDataPath, 0777 );
 		if( chdir( externalDataPath ) )
 			Sys_Error( "Failed to change working directory" );
 	}

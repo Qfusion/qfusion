@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qas_precompiled.h"
 #include "addon_string.h"
 #include <string>
+#include <algorithm>
 
 #define CONST_STRING_BITFLAG	(1<<31)
 #define ENABLE_STRING_IMPLICIT_CASTS
@@ -409,7 +410,7 @@ static asstring_t *objectString_Substring( int start, int length, asstring_t *se
 	if( start >= (int)self->len )
 		return objectString_FactoryBuffer( NULL, 0 );
 
-	return objectString_FactoryBuffer( self->buffer + start, min( length, (int)self->len - start ) );
+	return objectString_FactoryBuffer( self->buffer + start, std::min( length, (int)self->len - start ) );
 }
 
 static asstring_t *objectString_Substring2( int start, asstring_t *self )
