@@ -21,13 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __QAS_LOCAL_H__
 #define __QAS_LOCAL_H__
 
-#include <new>
-#include <string>
-
-#if defined ( _WIN32 ) || ( _WIN64 )
-#include <string.h>
-#endif
-
 #define AS_USE_STLNAMES 1
 
 #include "../gameshared/q_arch.h"
@@ -37,6 +30,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../gameshared/q_angeliface.h"
 #include "qas_public.h"
 #include "qas_syscalls.h"
+
+// few fixes regarding Quake and std compatibility
+#ifdef min
+	#undef min
+#endif
+#ifdef max
+	#undef max
+#endif
+
+#include <new>
+#include <string>
+
+#if defined ( _WIN32 ) || ( _WIN64 )
+#include <string.h>
+#endif
 
 extern struct mempool_s *angelwrappool;
 

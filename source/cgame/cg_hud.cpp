@@ -2307,7 +2307,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 				case 0:
 					helpmessage = "";
 					if( showhelp ) {
-						if( cg.helpmessage && cg.helpmessage[0] ) {
+						if( cg.helpmessage[0] ) {
 							int s_x, e_x;
 							float moveTime = ( cg.time - cg.helpmessage_time ) / 1000.0f;
 
