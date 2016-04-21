@@ -1031,28 +1031,7 @@ void *Q_memset32( void *dest, int c, size_t dwords )
 {
 	assert( ( (size_t)dest & 0x03 ) == 0 );
 
-#if defined ( __GNUC__ ) && defined ( id386 )
-	__asm__ (	"cld\n"
-			"rep; stosl\n"
-			:	// nada
-			: "c"(dwords), "D"(dest), "a"(c)
-		);
-#elif defined ( _WIN32 ) && defined ( id386 )
-	__asm {
-		cld
-		mov edi, dest
-		mov eax, c
-		mov ecx, dwords
-		repne stosd
-	}
-#else
-	{
-		size_t i;
-		int *idest = (int *)dest;
-		for( i = 0; i < dwords; i++ )
-			*idest++ = c;
-	}
-#endif
+	memset( dest, c, dwords * sizeof( int ) );
 
 	return dest;
 }

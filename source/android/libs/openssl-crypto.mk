@@ -555,50 +555,10 @@ ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
     crypto/sha/asm/sha512-armv4.S
 else ifeq ($(TARGET_ARCH_ABI),x86)
   LOCAL_CFLAGS += \
-    -DAES_ASM \
     -DDES_PTR \
     -DDES_RISC1 \
     -DDES_UNROLL \
-    -DGHASH_ASM \
-    -DMD5_ASM \
-    -DOPENSSL_BN_ASM_GF2m \
-    -DOPENSSL_BN_ASM_MONT \
-    -DOPENSSL_BN_ASM_PART_WORDS \
-    -DOPENSSL_CPUID_OBJ \
-    -DOPENSSL_IA32_SSE2 \
-    -DRC4_INDEX \
-    -DRMD160_ASM \
-    -DSHA1_ASM \
-    -DSHA256_ASM \
-    -DSHA512_ASM \
-    -DVPAES_ASM
-  LOCAL_SRC_FILES := \
-    $(filter-out \
-      crypto/aes/aes_cbc.c \
-      crypto/aes/aes_core.c \
-      crypto/bf/bf_enc.c \
-      crypto/bn/bn_asm.c \
-      crypto/des/des_enc.c \
-      crypto/des/fcrypt_b.c \
-      crypto/mem_clr.c,\
-    $(LOCAL_SRC_FILES))
-  LOCAL_SRC_FILES += \
-    crypto/aes/asm/aes-586.S \
-    crypto/aes/asm/aesni-x86.S \
-    crypto/aes/asm/vpaes-x86.S \
-    crypto/bf/asm/bf-586.S \
-    crypto/bn/asm/bn-586.S \
-    crypto/bn/asm/co-586.S \
-    crypto/bn/asm/x86-gf2m.S \
-    crypto/bn/asm/x86-mont.S \
-    crypto/des/asm/crypt586.S \
-    crypto/des/asm/des-586.S \
-    crypto/md5/asm/md5-586.S \
-    crypto/modes/asm/ghash-x86.S \
-    crypto/sha/asm/sha1-586.S \
-    crypto/sha/asm/sha256-586.S \
-    crypto/sha/asm/sha512-586.S \
-    crypto/x86cpuid.S
+    -DRC4_INDEX
 else ifeq ($(TARGET_ARCH_ABI),mips)
   LOCAL_CFLAGS += \
     -DAES_ASM \
