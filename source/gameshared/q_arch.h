@@ -483,6 +483,14 @@ typedef int socket_handle_t;
 #define NULL ( (void *)0 )
 #endif
 
+#ifdef ALIGN
+#undef ALIGN
+#endif
+
+// the ALIGN macro as defined by Linux kernel
+#define __ALIGN_MASK(x,mask)    (((x)+(mask))&~(mask))
+#define ALIGN(x,a)              __ALIGN_MASK(x,(typeof(x))(a)-1)
+
 #ifdef __cplusplus
 };
 #endif
