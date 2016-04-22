@@ -135,7 +135,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++10x")
+        set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x")
     endif()
 
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
