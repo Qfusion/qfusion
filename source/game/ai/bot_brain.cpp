@@ -219,6 +219,10 @@ void BotBrain::Think()
         if (CheckFastWeaponSwitchAction())
         {
             nextFastWeaponSwitchActionCheckAt = level.time + 500;
+            if (nextTargetChoiceAt <= level.time + 64)
+                nextTargetChoiceAt += 64 + 1;
+            if (nextWeaponChoiceAt <= level.time + 64)
+                nextWeaponChoiceAt += 64 + 1;
             return;
         }
     }
