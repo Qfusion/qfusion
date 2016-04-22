@@ -136,4 +136,4 @@ deploy:
     branch:
       - master
       - ci
-      - warsow_2_1
+      - warsow_2.1
