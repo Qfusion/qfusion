@@ -18,7 +18,10 @@ matrix:
     - os: osx
       env: QF_ARCH=OSX
     - os: linux
-      env: QF_ARCH=x86
+      env:
+            - QF_ARCH=x86
+            - CC=gcc-4.9
+            - CXX=g++-4.9
       addons:
         apt:
           sources:
@@ -31,7 +34,10 @@ matrix:
             - build-essential
             - gcc-multilib
     - os: linux
-      env: QF_ARCH=x86_64
+      env:
+            - QF_ARCH=x86_64
+            - CC=gcc-4.9
+            - CXX=g++-4.9
       addons:
         apt:
           sources:
