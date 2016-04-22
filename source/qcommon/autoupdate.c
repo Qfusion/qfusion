@@ -34,7 +34,7 @@ typedef struct filedownload_s {
 	char *temppath;
 	char *writepath;
 	int filenum;
-	unsigned checksum;
+	unsigned long checksum;
 	void (*done_cb)(struct filedownload_s *, int);
 	struct filedownload_s *next;
 } filedownload_t;
@@ -115,7 +115,7 @@ static filedownload_t *AU_AllocDownload( void )
 * AU_DownloadFile
 */
 static filedownload_t *AU_DownloadFile( const char *baseUrl, const char *filepath, bool silent, 
-	unsigned checksum, void (*done_cb)(struct filedownload_s *, int) )
+	unsigned long checksum, void (*done_cb)(struct filedownload_s *, int) )
 {
 	int fsize, fnum;
 	int alloc_size;
@@ -308,7 +308,7 @@ static void AU_FinishDownload( filedownload_t *fd_, int status )
 static void AU_ParseUpdateList( const char *data, bool checkOnly )
 {
 	const char *ptr = (const char *)data;
-	unsigned int checksum, expected_checksum;
+	unsigned long checksum, expected_checksum;
 	const char *token;
 	char path[MAX_TOKEN_CHARS];
 	char newVersionTag[MAX_QPATH];
@@ -394,7 +394,7 @@ static void AU_ParseUpdateList( const char *data, bool checkOnly )
 		}
 
 		if( developer->integer )
-			Com_Printf( "Downloading update of %s (checksum %u local checksum %u)\n", path, expected_checksum, checksum );
+			Com_Printf( "Downloading update of %s (checksum %lu, local checksum %lu)\n", path, expected_checksum, checksum );
 		else
 			Com_Printf( "Updating %s\n", path );
 

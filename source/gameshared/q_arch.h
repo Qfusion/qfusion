@@ -173,18 +173,18 @@ extern "C" {
 #define HAVE___CDECL
 #endif
 
+#ifdef __GNUC__
+#define HAVE_TYPEOF
+#endif
+
 #include <malloc.h>
 #define HAVE__ALLOCA
 
-// wsw : aiwa : 64bit integers and integer-pointer types
-#include <basetsd.h>
-
 typedef int socklen_t;
+
 typedef unsigned long ioctl_param_t;
 
-// The following definition comes from WinSock2.h (typedef UINT_PTR SOCKET)
-// But we don't want to include all those Windows definitions there, do we?
-typedef UINT_PTR socket_handle_t;
+typedef uintptr_t socket_handle_t;
 
 #endif
 
@@ -197,6 +197,8 @@ typedef UINT_PTR socket_handle_t;
 #ifndef HAVE_STRCASECMP // SDL_config.h seems to define this too...
 #define HAVE_STRCASECMP
 #endif
+
+#define HAVE_TYPEOF
 
 #define LIB_DIRECTORY "libs"
 #define LIB_PREFIX "lib"
@@ -304,6 +306,8 @@ typedef int socket_handle_t;
 #ifndef HAVE_STRCASECMP // SDL_config.h seems to define this too...
 #define HAVE_STRCASECMP
 #endif
+
+#define HAVE_TYPEOF
 
 #define LIB_DIRECTORY "libs"
 #define LIB_PREFIX "lib"
@@ -454,6 +458,18 @@ typedef int socket_handle_t;
 #define strtoull _strtoi64
 #endif
 
+#ifdef ALIGN
+#undef ALIGN
+#endif
+
+// the ALIGN macro as defined by Linux kernel
+#ifdef HAVE_TYPEOF
+#define __ALIGN_MASK(x,mask)    (((x)+(mask))&~(mask))
+#define ALIGN(x,a)              __ALIGN_MASK(x,(typeof(x))(a)-1)
+#else
+#define ALIGN( x, a ) ( ( ( x ) + ( ( size_t )( a ) - 1 ) ) & ~( ( size_t )( a ) - 1 ) )
+#endif
+
 #ifdef _M_AMD64
 #define STR_TO_POINTER(str) (void *)strtoll(str,NULL,0)
 #else
@@ -482,7 +498,6 @@ typedef int socket_handle_t;
 #ifndef NULL
 #define NULL ( (void *)0 )
 #endif
-
 #ifdef __cplusplus
 };
 #endif

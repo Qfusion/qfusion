@@ -1851,8 +1851,7 @@ static void G_VoteRebalancePassed( callvotedata_t *vote )
 
 		if( e->s.team != newteam )
 			G_Teams_SetTeam( e, newteam );
-		else
-			memset( &e->r.client->level.stats, 0, sizeof( e->r.client->level.stats ) ); // clear scores
+		memset( &e->r.client->level.stats, 0, sizeof( e->r.client->level.stats ) ); // clear scores
 
 		if( i % 2 == 0 )
 			team++;
@@ -2503,6 +2502,12 @@ void G_OperatorVote_Cmd( edict_t *ent )
 		if( ( playerEnt = G_PlayerForText( splayer ) ) == NULL )
 		{
 			G_PrintMsg( ent, "The player '%s' couldn't be found.\n", splayer );
+			return;
+		}
+
+		if( playerEnt->s.team == newTeam )
+		{
+			G_PrintMsg( ent, "The player '%s' is already in team '%s'.\n", playerEnt->r.client->netname, GS_TeamName( newTeam ) );
 			return;
 		}
 

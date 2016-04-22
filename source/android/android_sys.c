@@ -330,10 +330,9 @@ static void Sys_Android_Init( void )
 	// Set working directory to external data path.
 	{
 		char externalDataPath[PATH_MAX];
-		Q_snprintfz( externalDataPath, sizeof( externalDataPath ), "%s/%d.%d",
+		Q_snprintfz( externalDataPath, sizeof( externalDataPath ), "%s/%d.%d/", // The trailing slash is here to make it a directory path, not a file path
 			app->activity->externalDataPath, APP_VERSION_MAJOR, APP_VERSION_MINOR );
 		FS_CreateAbsolutePath( externalDataPath );
-		Sys_FS_CreateDirectory( externalDataPath );
 		if( chdir( externalDataPath ) )
 			Sys_Error( "Failed to change working directory" );
 	}

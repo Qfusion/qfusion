@@ -315,20 +315,30 @@ void G_Teams_SetTeam( edict_t *ent, int team )
 	assert( ent && ent->r.inuse && ent->r.client );
 	assert( team >= TEAM_SPECTATOR && team < GS_MAX_TEAMS );
 
-	// if player was on a team, send partial report to matchmaker
-	if( ent->r.client->team != TEAM_SPECTATOR && ent->r.client->team != team && GS_MatchState() == MATCH_STATE_PLAYTIME )
+	if( ent->r.client->team != TEAM_SPECTATOR && team != TEAM_SPECTATOR )
 	{
-		G_Printf("Sending teamchange to MM, team %d to team %d\n", ent->r.client->team, team );
-		G_AddPlayerReport( ent, false );
-		// trap_MR_SendPartialReport();
+		// keep scores when switching between non-spectating teams
+		unsigned int timeStamp = ent->r.client->teamstate.timeStamp;
+		memset( &ent->r.client->teamstate, 0, sizeof( ent->r.client->teamstate ) );
+		ent->r.client->teamstate.timeStamp = timeStamp;
+	}
+	else
+	{
+		// if player was on a team, send partial report to matchmaker
+		if( ent->r.client->team != TEAM_SPECTATOR && GS_MatchState() == MATCH_STATE_PLAYTIME )
+		{
+			G_Printf("Sending teamchange to MM, team %d to team %d\n", ent->r.client->team, team );
+			G_AddPlayerReport( ent, false );
+			// trap_MR_SendPartialReport();
+		}
+
+		// clear scores at changing team
+		memset( &ent->r.client->level.stats, 0, sizeof( ent->r.client->level.stats ) );
+		memset( &ent->r.client->teamstate, 0, sizeof( ent->r.client->teamstate ) );
+		ent->r.client->teamstate.timeStamp = level.time;
 	}
 
-	// clear scores at changing team
-	memset( &ent->r.client->level.stats, 0, sizeof( ent->r.client->level.stats ) );
-
-	memset( &ent->r.client->teamstate, 0, sizeof( ent->r.client->teamstate ) );
 	ent->r.client->team = team;
-	ent->r.client->teamstate.timeStamp = level.time;
 	G_Teams_UnInvitePlayer( team, ent );
 
 	G_ClientRespawn( ent, true ); // make ghost using G_ClientRespawn so team is updated at ghosting

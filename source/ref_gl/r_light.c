@@ -501,7 +501,7 @@ static int R_PackLightmaps( int num, int w, int h, int dataSize, int stride, int
 
 	if( maxY > maxX )
 	{
-		for(; ( num >= root ) && ( rectY < maxY ); rectY++, num -= root ) ;
+		for(; ( num >= root ) && ( rectY < maxY ); rectY++, num -= root ) {}
 
 		//if( !glConfig.ext.texture_non_power_of_two )
 		{
@@ -514,7 +514,7 @@ static int R_PackLightmaps( int num, int w, int h, int dataSize, int stride, int
 	}
 	else
 	{
-		for(; ( num >= root ) && ( rectX < maxX ); rectX++, num -= root ) ;
+		for(; ( num >= root ) && ( rectX < maxX ); rectX++, num -= root ) {}
 
 		//if( !glConfig.ext.texture_non_power_of_two )
 		{
