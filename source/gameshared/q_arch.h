@@ -181,11 +181,10 @@ extern "C" {
 #define HAVE__ALLOCA
 
 typedef int socklen_t;
+
 typedef unsigned long ioctl_param_t;
 
-// The following definition comes from WinSock2.h (typedef UINT_PTR SOCKET)
-// But we don't want to include all those Windows definitions there, do we?
-typedef UINT_PTR socket_handle_t;
+typedef uintptr_t socket_handle_t;
 
 #endif
 
