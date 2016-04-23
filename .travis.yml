@@ -114,6 +114,7 @@ script:
 
 before_deploy:
   - cd build
+  - echo "${TRAVIS_COMMIT}" >commit.txt
   - if [[ "$QF_ARCH" == "OSX" ]]; then cd Release && zip -r ../../tmp *.app && cd ..; fi
   - if [[ "$QF_ARCH" != "OSX" ]]; then zip -r ../tmp * --exclude *.a --exclude base*/*.a libs/*.a; fi
   - cd ..
