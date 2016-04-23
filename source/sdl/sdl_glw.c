@@ -237,6 +237,7 @@ bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *r
 		memcpy( ramp, ramp256, 256 * sizeof( *ramp ) );
 		memcpy( ramp + stride, ramp256 + 256, 256 * sizeof( *ramp ) );
 		memcpy( ramp + 2 * stride, ramp256 + 2 * 256, 256 * sizeof( *ramp ) );
+		return true;
 	}
 	return false;
 }
