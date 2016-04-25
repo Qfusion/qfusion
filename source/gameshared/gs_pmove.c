@@ -148,8 +148,9 @@ static vec_t VectorNormalize2D( vec3_t v ) // ByMiK : normalize horizontally (do
 static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 {
 	vec3_t zero, dir, mins, maxs;
-	int i;
 	trace_t trace;
+	int i;
+	bool alternate;
 	float r, d, dx, dy, m;
 
 	VectorClear( zero );
@@ -175,29 +176,33 @@ static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 
 	// determine the primary direction
 	if( pml.sidePush > 0 )
-		r = M_PI / 2.0f;
-	else if( pml.sidePush < 0 )
 		r = -M_PI / 2.0f;
+	else if( pml.sidePush < 0 )
+		r = M_PI / 2.0f;
 	else if( pml.forwardPush > 0 )
 		r = 0.0f;
 	else
 		r = M_PI;
+	alternate = pml.sidePush == 0 || pml.forwardPush == 0;
 
 	d = 0.0f; // current distance from the primary direction
 
 	for( i = 0; i < nbTestDir; i++ )
 	{
-		// start checking in the primary direction and alternate with its opposite while moving away from these
 		if( i != 0 )
-			r += M_PI; // switch front and back
-		if( i % 4 == 0 && i != 0 )
-		{ // switch left and right
-			r -= 2 * d;
-		}
-		else if( i % 4 == 2 )
-		{ // switch left and right and move further away
-			r += 2 * d + M_TWOPI / nbTestDir;
-			d += M_TWOPI / nbTestDir;
+		{
+			if( alternate )
+				r += M_PI; // switch front and back
+			if( ( !alternate && i % 2 == 0 ) || ( alternate && i % 4 == 0 ) )
+			{ // switch from left to right
+				r -= 2 * d;
+			}
+			else if( !alternate || ( alternate && i % 4 == 2 ) )
+			{ // switch from right to left and move further away
+				r += d;
+				d += M_TWOPI / nbTestDir;
+				r += d;
+			}
 		}
 
 		// determine the relative offsets from the origin
