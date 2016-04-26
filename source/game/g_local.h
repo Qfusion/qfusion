@@ -598,7 +598,6 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 bool KillBox( edict_t *ent );
 float LookAtKillerYAW( edict_t *self, edict_t *inflictor, edict_t *attacker );
 edict_t *G_Find( edict_t *from, size_t fieldofs, const char *match );
-edict_t *G_FindBoxInRadius( edict_t *from, edict_t *to, vec3_t org, float rad );
 edict_t *G_PickTarget( const char *targetname );
 void G_UseTargets( edict_t *ent, edict_t *activator );
 void G_SetMovedir( vec3_t angles, vec3_t movedir );
@@ -744,7 +743,7 @@ void G_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, e
 int G_PointContents4D( vec3_t p, int timeDelta );
 void G_Trace4D( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask, int timeDelta );
 void GClip_BackUpCollisionFrame( void );
-int GClip_FindBoxInRadius4D( vec3_t org, float rad, int *list, int maxcount, int timeDelta );
+int GClip_FindInRadius4D( vec3_t org, float rad, int *list, int maxcount, int timeDelta );
 void G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir, float *kickFrac, float *dmgFrac, int timeDelta );
 void GClip_ClearWorld( void );
 void GClip_SetBrushModel( edict_t *ent, const char *name );
@@ -754,7 +753,7 @@ void GClip_UnlinkEntity( edict_t *ent );
 void GClip_TouchTriggers( edict_t *ent );
 void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin );
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
-int GClip_FindRadius( vec3_t org, float rad, int *list, int maxcount );
+int GClip_FindInRadius( vec3_t org, float rad, int *list, int maxcount );
 
 //
 // g_combat.c

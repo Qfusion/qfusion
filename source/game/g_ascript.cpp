@@ -3145,7 +3145,7 @@ static CScriptArrayInterface *asFunc_G_FindInRadius( asvec3_t *org, float radius
 	asIObjectType *ot = asEntityArrayType();
 
 	int touch[MAX_EDICTS];
-	int numtouch = GClip_FindRadius( org->v, radius, touch, MAX_EDICTS );
+	int numtouch = GClip_FindInRadius( org->v, radius, touch, MAX_EDICTS );
 	CScriptArrayInterface *arr = angelExport->asCreateArrayCpp( numtouch, ot );
 	for( int i = 0; i < numtouch; i++ ) {
 		*((edict_t **)arr->At( i )) = game.edicts + touch[i];

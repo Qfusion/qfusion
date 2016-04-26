@@ -29,7 +29,7 @@ void	G_Trace( tvm_relay_t *relay, trace_t *tr, vec3_t start, vec3_t mins, vec3_t
 int	G_PointContents4D( tvm_relay_t *relay, vec3_t p, int timeDelta );
 void	G_Trace4D( tvm_relay_t *relay, trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask, int timeDelta );
 void	GClip_BackUpCollisionFrame( tvm_relay_t *relay );
-edict_t	*GClip_FindBoxInRadius4D( tvm_relay_t *relay, edict_t *from, vec3_t org, float rad, int timeDelta );
+edict_t	*GClip_FindInRadius4D( tvm_relay_t *relay, edict_t *from, vec3_t org, float rad, int timeDelta );
 #endif
 void	GClip_ClearWorld( tvm_relay_t *relay );
 void	GClip_SetBrushModel( tvm_relay_t *relay, edict_t *ent, char *name );
