@@ -1167,10 +1167,10 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin )
 }
 
 /*
-* GClip_FindBoxInRadius
+* GClip_FindInRadius4D
 * Returns entities that have their boxes within a spherical area
 */
-int GClip_FindBoxInRadius4D( vec3_t org, float rad, int *list, int maxcount, int timeDelta )
+int GClip_FindInRadius4D( vec3_t org, float rad, int *list, int maxcount, int timeDelta )
 {
 	int i, num;
 	int listnum;
@@ -1192,8 +1192,6 @@ int GClip_FindBoxInRadius4D( vec3_t org, float rad, int *list, int maxcount, int
 		// make absolute mins and maxs
 		if( !BoundsAndSphereIntersect( check->r.absmin, check->r.absmax, org, rad ) )
 			continue;
-		if( check->s.solid == SOLID_NOT )
-			continue;
 
 		if( listnum < maxcount ) {
 			list[listnum] = touch[i];
@@ -1205,13 +1203,13 @@ int GClip_FindBoxInRadius4D( vec3_t org, float rad, int *list, int maxcount, int
 }
 
 /*
-* GClip_FindRadius
+* GClip_FindInRadius
 * 
-* Returns entities that have origins within a spherical area
+* Returns entities that have their boxes within a spherical area
 */
-int GClip_FindRadius( vec3_t org, float rad, int *list, int maxcount )
+int GClip_FindInRadius( vec3_t org, float rad, int *list, int maxcount )
 {
-	return GClip_FindBoxInRadius4D( org, rad, list, maxcount, 0 );
+	return GClip_FindInRadius4D( org, rad, list, maxcount, 0 );
 }
 
 void G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir, 
