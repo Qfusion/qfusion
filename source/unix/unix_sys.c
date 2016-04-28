@@ -52,9 +52,6 @@ FIXME:  This will be remidied once a native Mac port is complete
 
 #if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
 
-cvar_t *nostdout;
-bool nostdout_backup_val = false;
-
 unsigned sys_frame_time;
 
 uid_t saved_euid;
@@ -133,11 +130,6 @@ static void InitSig( void )
 */
 void Sys_Quit( void )
 {
-	// Qcommon_Shutdown is going destroy the cvar, so backup its value now
-	// and invalidate the pointer
-	nostdout_backup_val = (nostdout && nostdout->integer ? true : false);
-	nostdout = NULL;
-
 	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) & ~O_NONBLOCK );
 
 	Qcommon_Shutdown();
@@ -323,12 +315,6 @@ int main( int argc, char **argv )
 	Qcommon_Init( argc, argv );
 
 	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | O_NONBLOCK );
-
-	nostdout = Cvar_Get( "nostdout", "0", 0 );
-	if( !nostdout->integer )
-	{
-		fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | O_NONBLOCK );
-	}
 
 	oldtime = Sys_Milliseconds();
 	while( true )

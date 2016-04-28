@@ -56,6 +56,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../win32/win_fs.c"
             "../win32/win_net.c"
             "../win32/win_sys.c"
+            "../win32/win_console.c"
             "../win32/win_threads.c"
             "../null/sys_vfs_null.c"
 
@@ -108,6 +109,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../unix/unix_fs.c"
         "../unix/unix_net.c"
         "../unix/unix_sys.c"
+        "../unix/unix_console.c"
         "../unix/unix_threads.c"
         "../null/sys_vfs_null.c"
 
@@ -148,6 +150,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../unix/unix_fs.c"
             "../unix/unix_net.c"
             "../unix/unix_sys.c"
+            "../unix/unix_console.c"
             "../unix/unix_threads.c"
             "../null/sys_vfs_null.c"
 

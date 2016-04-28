@@ -14,6 +14,9 @@
    interface from being ambiguous.
  */
 
+// checks if the cvar system can still be used
+bool Cvar_Initialized( void );
+
 // flag manipulation routines
 static inline cvar_flag_t Cvar_FlagSet( cvar_flag_t *flags, cvar_flag_t flag );
 static inline cvar_flag_t Cvar_FlagUnset( cvar_flag_t *flags, cvar_flag_t flag );

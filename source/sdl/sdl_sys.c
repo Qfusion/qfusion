@@ -89,15 +89,6 @@ void Sys_SendKeyEvents( void )
 	sys_frame_time = Sys_Milliseconds();
 }
 
-char *Sys_ConsoleInput( void )
-{
-	return NULL;
-}
-
-void Sys_ConsoleOutput( char *string )
-{
-}
-
 /*****************************************************************************/
 
 int main( int argc, char **argv )

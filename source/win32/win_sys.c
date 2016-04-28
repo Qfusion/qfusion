@@ -44,8 +44,6 @@ int ActiveApp;
 int Minimized;
 int AppFocused;
 
-HANDLE hinput, houtput;
-
 unsigned sys_msg_time;
 unsigned sys_frame_time;
 
@@ -131,8 +129,6 @@ void Sys_Init( void )
 
 		if( !AllocConsole() )
 			Sys_Error( "Couldn't create dedicated server console" );
-		hinput = GetStdHandle( STD_INPUT_HANDLE );
-		houtput = GetStdHandle( STD_OUTPUT_HANDLE );
 
 		// let QHOST hook in
 		InitConProc( argc, argv );
