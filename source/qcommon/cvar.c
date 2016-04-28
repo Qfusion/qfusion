@@ -67,9 +67,17 @@ static bool Cvar_InfoValidate( const char *s, bool name )
 }
 
 /*
+* Cvar_Initialized
+*/
+bool Cvar_Initialized( void )
+{
+	return cvar_initialized;
+}
+
+/*
 * Cvar_Find
 */
-cvar_t *Cvar_Find ( const char *var_name )
+cvar_t *Cvar_Find( const char *var_name )
 {
 	cvar_t *cvar;
 	assert( cvar_trie );

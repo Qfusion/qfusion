@@ -1,7 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "winquake.h"
 
-extern HANDLE hinput, houtput;
+HANDLE hinput = NULL;
+HANDLE houtput = NULL;
 
 #define MAX_CONSOLETEXT 256
 static char console_text[MAX_CONSOLETEXT];
@@ -45,6 +46,11 @@ char *Sys_ConsoleInput( void )
 
 	if( !dedicated || !dedicated->integer )
 		return NULL;
+
+	if( !hinput )
+		hinput = GetStdHandle( STD_INPUT_HANDLE );
+	if( !houtput )
+		houtput = GetStdHandle( STD_OUTPUT_HANDLE );
 
 	for(;; )
 	{
@@ -159,6 +165,9 @@ void Sys_ConsoleOutput( char *string )
 
 	if( !dedicated || !dedicated->integer )
 		return;
+
+	if( !houtput )
+		houtput = GetStdHandle( STD_OUTPUT_HANDLE );
 
 	if( console_textlen )
 	{
