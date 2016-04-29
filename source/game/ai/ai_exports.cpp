@@ -155,15 +155,19 @@ void AI_AddStaticItem( edict_t *ent )
 
 void AI_AddDroppedItem( edict_t *ent )
 {
-    // Its a stub. Dropped items time out and goal timeout tracking is not implemented yet.
+    int areaNum = EntAASAreaNum(ent);
+    if (areaNum)
+        GoalEntitiesRegistry::Instance()->AddGoalEntity(ent, areaNum, GoalFlags::REACH_ENTITY | GoalFlags::DROPPED_ENTITY);
 }
 
 void AI_DeleteItem( edict_t *ent )
 {
-    // Is almost a stub. Only static items are handled
     NavEntity *navEntity = GoalEntitiesRegistry::Instance()->GoalEntityForEntity(ent);
     if (navEntity)
+    {
+        AiGametypeBrain::Instance()->ClearGoals(navEntity, nullptr);
         GoalEntitiesRegistry::Instance()->RemoveGoalEntity(navEntity);
+    }
 }
 
 //==========================================
