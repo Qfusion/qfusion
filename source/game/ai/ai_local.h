@@ -42,9 +42,6 @@ in NO WAY supported by Steve Yeager.
 #include <utility>
 #include <stdarg.h>
 
-#define AI_LONG_RANGE_GOAL_DELAY 2000
-#define AI_SHORT_RANGE_GOAL_DELAY 250
-
 #define AI_DEFAULT_YAW_SPEED	( 35 * 5 )
 #define AI_COMBATMOVE_TIMEOUT	( 500 )
 #define AI_YAW_ACCEL		( 95 * FRAMETIME )
@@ -348,8 +345,17 @@ protected:
 	NavEntity *longTermGoal;
 	NavEntity *shortTermGoal;
 
-	unsigned longTermGoalTimeout;
-	unsigned shortTermGoalTimeout;
+	unsigned longTermGoalSearchTimeout;
+	unsigned shortTermGoalSearchTimeout;
+
+	const unsigned longTermGoalSearchPeriod;
+	const unsigned shortTermGoalSearchPeriod;
+
+	unsigned longTermGoalReevaluationTimeout;
+	unsigned shortTermGoalReevaluationTimeout;
+
+	const unsigned longTermGoalReevaluationPeriod;
+	const unsigned shortTermGoalReevaluationPeriod;
 
 	unsigned statusUpdateTimeout;
 
@@ -366,8 +372,8 @@ protected:
 	void UpdateWeights();
 	virtual void UpdatePotentialGoalsWeights();
 
-	void PickLongTermGoal();
-	void PickShortTermGoal();
+	void PickLongTermGoal(const NavEntity *currLongTermGoalEnt);
+	void PickShortTermGoal(const NavEntity *currLongTermGoalEnt);
 	void ClearLongTermGoal();
 	void ClearShortTermGoal();
 	void SetShortTermGoal(NavEntity *goalEnt);
