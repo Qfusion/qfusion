@@ -35,57 +35,29 @@ typedef enum
 typedef struct ai_handle_s ai_handle_t;
 extern const size_t ai_handle_size;
 
-// bot_cmds.c
-bool    BOT_Commands( edict_t *ent );
-bool    BOT_ServerCommand( void );
+// Should be called before static entities spawn
+void AI_InitLevel( void );
+// Should be called before level and entities data cleanup
+void AI_Shutdown( void );
+// Should be called before all entities (including AI's and clients) think
+void AI_CommonFrame( void );
+// Should be called when a static level item is about to spawn first time
+void AI_AddStaticItem( edict_t *ent );
+// Should be called when an item has been dropped
+void AI_AddDroppedItem( edict_t *ent );
+// Should be called when an item edict is about to be freed
+void AI_DeleteItem( edict_t *ent );
 
-// ai_main.c
-void        AI_InitLevel( void );
-void        AI_Shutdown( void );
-// Should be called before all entities (including clients) think
-void        AI_CommonFrame( void );
-void		AI_AddGoalEntity( edict_t *ent );
-void		AI_AddGoalEntityCustom( edict_t *ent );
-void		AI_AddNavigatableEntity( edict_t *ent, int node );
-void		AI_RemoveGoalEntity( edict_t *ent );
-void		AI_InitEntitiesData( void );
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );
 void        G_SpawnAI( edict_t *ent, float skillLevel = 0.1f );
 ai_type		AI_GetType( const ai_handle_t *ai );
-void		AI_ClearWeights( ai_handle_t *ai );
-void		AI_SetGoalWeight( ai_handle_t *ai, int index, float weight );
-void		AI_ResetWeights( ai_handle_t *ai );
-float		AI_GetItemWeight( const ai_handle_t *ai, const gsitem_t *item );
-int			AI_GetRootGoalEnt( void );
-int			AI_GetNextGoalEnt( int index );
-edict_t		*AI_GetGoalEntity( int index );
-void		AI_ReachedEntity( edict_t *self );
 void		AI_TouchedEntity( edict_t *self, edict_t *ent );
 void        AI_DamagedEntity( edict_t *self, edict_t *ent, int damage );
-float		AI_GetCharacterReactionTime( const ai_handle_t *ai );
-float		AI_GetCharacterOffensiveness( const ai_handle_t *ai );
-float		AI_GetCharacterCampiness( const ai_handle_t *ai );
-float		AI_GetCharacterFirerate( const ai_handle_t *ai );
-
-// ai_items.c
-void        AI_EnemyAdded( edict_t *ent );
-void        AI_EnemyRemoved( edict_t *ent );
 
 // bot_spawn.c
 void        BOT_SpawnBot( const char *team );
 void        BOT_RemoveBot( const char *name );
 void        BOT_Respawn( edict_t *ent );
-
-// ai_tools.c
-void        AIDebug_ToogleBotDebug( void );
-
-void        AITools_Frame( void );
-void        AITools_DropNodes( edict_t *ent );
-void        AITools_InitEditnodes( void );
-void        AITools_InitMakenodes( void );
-void        AITools_AddBotRoamNode_Cmd( void );
-void        AITools_AddNode_Cmd( void );
-void		Cmd_SaveNodes_f( void );
 
 void        AI_Cheat_NoTarget( edict_t *ent );

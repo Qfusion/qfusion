@@ -469,7 +469,7 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item )
 	dropped->r.solid = SOLID_TRIGGER;
 	dropped->movetype = MOVETYPE_TOSS;
 	dropped->touch = drop_temp_touch;
-	dropped->stop = AI_AddGoalEntity;
+	dropped->stop = AI_AddDroppedItem;
 	dropped->r.owner = ent;
 	dropped->r.svflags &= ~SVF_NOCLIENT;
 	dropped->s.team = ent->s.team;
@@ -943,7 +943,7 @@ static void Finish_SpawningItem( edict_t *ent )
 
 	GClip_LinkEntity( ent );
 
-	AI_AddGoalEntity( ent );
+	AI_AddStaticItem( ent );
 }
 
 #define MAX_IMPORTANT_ITEMS_THRESHOLD	5

@@ -1387,8 +1387,6 @@ void G_InitGameCommands( void )
 	G_AddCommand( "vsay_team", G_Teams_vsay_Cmd );
 
 	// bot commands
-	G_AddCommand( "showclosestnode", Cmd_ShowPLinks_f );
-	G_AddCommand( "deleteclosestnode", Cmd_deleteClosestNode_f );
 	G_AddCommand( "botnotarget", AI_Cheat_NoTarget );
 
 	// ch : added awards

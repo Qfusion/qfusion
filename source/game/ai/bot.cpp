@@ -169,8 +169,6 @@ void Bot::SayVoiceMessages()
 {
     if( GS_MatchState() != MATCH_STATE_PLAYTIME )
         return;
-    if( level.gametype.dummyBots || bot_dummy->integer )
-        return;
 
     if( self->snap.damageteam_given > 25 )
     {
@@ -269,10 +267,6 @@ void Bot::SayVoiceMessages()
 //==========================================
 void Bot::OnBlockedTimeout()
 {
-    if( level.gametype.dummyBots || bot_dummy->integer ) {
-        blockedTimeout = level.time + BLOCKED_TIMEOUT;
-        return;
-    }
     self->health = 0;
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->die( self, self, self, 100000, vec3_origin );
@@ -368,58 +362,51 @@ void Bot::Frame()
     if(GS_MatchState() <= MATCH_STATE_WARMUP && !IsReady() && self->r.client->teamstate.timeStamp + 4000 < level.time)
         G_Match_Ready(self);
 
-    if( level.gametype.dummyBots || bot_dummy->integer )
-    {
-        self->r.client->level.last_activity = level.time;
-    }
-    else
-    {
-        ApplyPendingTurnToLookAtPoint();
+    ApplyPendingTurnToLookAtPoint();
 
-        const CombatTask &combatTask = botBrain.combatTask;
+    const CombatTask &combatTask = botBrain.combatTask;
 
-        bool inhibitShooting = combatTask.Empty();
-        bool inhibitCombatMove = inhibitShooting || combatTask.inhibit;
-        if (!inhibitCombatMove)
+    bool inhibitShooting = combatTask.Empty();
+    bool inhibitCombatMove = inhibitShooting || combatTask.inhibit;
+    if (!inhibitCombatMove)
+    {
+        if (currAasAreaNum != goalAasAreaNum && !nextReaches.empty())
         {
-            if (currAasAreaNum != goalAasAreaNum && !nextReaches.empty())
+            if (IsCloseToReachStart())
             {
-                if (IsCloseToReachStart())
-                {
-                    int travelType = nextReaches.front().traveltype;
-                    if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
-                        inhibitCombatMove = true;
-                    else if (travelType == TRAVEL_CROUCH)
-                        inhibitCombatMove = true;
-                    else if (travelType == TRAVEL_LADDER)
-                        inhibitCombatMove = inhibitShooting = true;
-                }
-                else if (currAasAreaTravelFlags & (TFL_CROUCH))
+                int travelType = nextReaches.front().traveltype;
+                if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
                     inhibitCombatMove = true;
+                else if (travelType == TRAVEL_CROUCH)
+                    inhibitCombatMove = true;
+                else if (travelType == TRAVEL_LADDER)
+                    inhibitCombatMove = inhibitShooting = true;
             }
+            else if (currAasAreaTravelFlags & (TFL_CROUCH))
+                inhibitCombatMove = true;
         }
-
-        // Do not modify the ucmd in FireWeapon(), it will be overwritten by MoveFrame()
-        bool fireButtonPressed = false;
-        if (!inhibitShooting)
-        {
-            if (FireWeapon())
-            {
-                fireButtonPressed = true;
-            }
-        }
-
-        MoveFrame(&ucmd, inhibitCombatMove);
-
-        if (fireButtonPressed)
-            ucmd.buttons |= BUTTON_ATTACK;
-
-        //set up for pmove
-        for (int i = 0; i < 3; i++)
-            ucmd.angles[i] = ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
-
-        VectorSet(self->r.client->ps.pmove.delta_angles, 0, 0, 0);
     }
+
+    // Do not modify the ucmd in FireWeapon(), it will be overwritten by MoveFrame()
+    bool fireButtonPressed = false;
+    if (!inhibitShooting)
+    {
+        if (FireWeapon())
+        {
+            fireButtonPressed = true;
+        }
+    }
+
+    MoveFrame(&ucmd, inhibitCombatMove);
+
+    if (fireButtonPressed)
+        ucmd.buttons |= BUTTON_ATTACK;
+
+    //set up for pmove
+    for (int i = 0; i < 3; i++)
+        ucmd.angles[i] = ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
+
+    VectorSet(self->r.client->ps.pmove.delta_angles, 0, 0, 0);
 
     // set approximate ping and show values
     ucmd.msec = game.frametime;

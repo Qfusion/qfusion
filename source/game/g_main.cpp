@@ -59,14 +59,6 @@ cvar_t *g_floodprotection_penalty;
 
 cvar_t *g_inactivity_maxtime;
 
-//MBotGame [start]
-cvar_t *bot_showpath;
-cvar_t *bot_showcombat;
-cvar_t *bot_showsrgoal;
-cvar_t *bot_showlrgoal;
-cvar_t *bot_dummy;
-//[end]
-
 cvar_t *g_projectile_touch_owner;
 cvar_t *g_projectile_prestep;
 cvar_t *g_numbots;
