@@ -49,6 +49,8 @@ void AiBaseBrain::Think()
     if (!currAasAreaNum)
         return;
 
+    CheckOrCancelGoal();
+
     // Always update weights before goal picking, except we have updated it in this frame
     bool weightsUpdated = false;
     //update status information to feed up ai
@@ -76,6 +78,29 @@ void AiBaseBrain::Think()
         }
         PickShortTermGoal(shortTermGoal);
     }
+}
+
+void AiBaseBrain::CheckOrCancelGoal()
+{
+    // Check for goal nullity in this function, not in ShouldCancelGoal()
+    // (ShouldCancelGoal() return result may be confusing)
+
+    // Check long-term goal first (long-term goal cancellation implies short-term goal cancellation too)
+    if (longTermGoal && ShouldCancelGoal(longTermGoal))
+        ClearLongTermGoal();
+    else if (shortTermGoal && ShouldCancelGoal(shortTermGoal))
+        ClearShortTermGoal();
+}
+
+bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
+{
+    if (goalEnt->IsDisabled())
+        return true;
+    // TODO: Remove when item timing is implemented
+    if (!goalEnt->IsSpawnedAtm())
+        return true;
+
+    return false;
 }
 
 constexpr float COST_INFLUENCE = 0.5f;
@@ -129,6 +154,14 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
             // 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
             // 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
             cost = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum());
+
+            if (goalEnt->IsDroppedEntity())
+            {
+                // Do not pick an entity that is likely to dispose before it may be reached
+                // AAS travel times are measured in seconds^-2
+                if (goalEnt->DroppedEntityTimeout() <= level.time + 10 * (unsigned)cost)
+                    cost = 0;
+            }
         }
 
         if (cost == 0)
@@ -254,10 +287,29 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
         {
             if (weight > bestWeight)
             {
-                if (IsShortRangeReachable(goalEnt->Origin()))
+                std::pair<unsigned, unsigned> toAndBackAasTravelTimes = FindToAndBackTravelTimes(goalEnt->Origin());
+                if (toAndBackAasTravelTimes.first > 0 && toAndBackAasTravelTimes.second > 0)
                 {
-                    bestWeight = weight;
-                    bestGoalEnt = goalEnt;
+                    // Convert from AAS centiseconds
+                    unsigned toTravelMillis = 10 * toAndBackAasTravelTimes.first;
+                    unsigned backTravelMillis = 10 * toAndBackAasTravelTimes.second;
+                    if (goalEnt->IsDroppedEntity())
+                    {
+                        // Ensure it will not dispose before the bot may reach it
+                        if (goalEnt->DroppedEntityTimeout() > level.time + toTravelMillis)
+                        {
+                            if ((toTravelMillis + backTravelMillis) / 2 < AI_GOAL_SR_MILLIS)
+                            {
+                                bestWeight = weight;
+                                bestGoalEnt = goalEnt;
+                            }
+                        }
+                    }
+                    else if ((toTravelMillis + backTravelMillis) / 2 < AI_GOAL_SR_MILLIS)
+                    {
+                        bestWeight = weight;
+                        bestGoalEnt = goalEnt;
+                    }
                 }
             }
                 // Long-term goal just need some positive weight and be in front to be chosen as a short-term goal too
@@ -369,7 +421,7 @@ void AiBaseBrain::OnShortTermGoalReached()
     }
 }
 
-bool AiBaseBrain::IsShortRangeReachable(const Vec3 &targetOrigin) const
+std::pair<unsigned, unsigned> AiBaseBrain::FindToAndBackTravelTimes(const Vec3 &targetOrigin) const
 {
     vec3_t testedOrigin;
     VectorCopy(targetOrigin.data(), testedOrigin);
@@ -385,19 +437,15 @@ bool AiBaseBrain::IsShortRangeReachable(const Vec3 &targetOrigin) const
         }
     }
     if (!areaNum)
-        return false;
+        return std::make_pair(0, 0);
 
     if (areaNum == currAasAreaNum)
-        return true;
+        return std::make_pair(1, 1);
 
-    // AAS functions return time in seconds^-2
-    int toTravelTimeMillis = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, areaNum) * 10;
-    if (!toTravelTimeMillis)
-        return false;
-    int backTravelTimeMillis = FindAASTravelTimeToGoalArea(areaNum, testedOrigin, currAasAreaNum) * 10;
-    if (!backTravelTimeMillis)
-        return false;
-
-    return (toTravelTimeMillis + backTravelTimeMillis) / 2 < AI_GOAL_SR_MILLIS;
+    int toAasTravelTime = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, areaNum);
+    if (!toAasTravelTime)
+        return std::make_pair(0, 0);
+    int backAasTravelTime = FindAASTravelTimeToGoalArea(areaNum, testedOrigin, currAasAreaNum);
+    return std::make_pair(toAasTravelTime, backAasTravelTime);
 }
 

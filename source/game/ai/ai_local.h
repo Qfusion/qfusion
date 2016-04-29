@@ -72,7 +72,8 @@ enum class GoalFlags
 {
 	NONE = 0x0,
 	REACH_AT_TOUCH = 0x1,
-	REACH_ENTITY = 0x2
+	REACH_ENTITY = 0x2,
+	DROPPED_ENTITY = 0x4
 };
 
 inline GoalFlags operator|(const GoalFlags &lhs, const GoalFlags &rhs) { return (GoalFlags)((int)lhs | (int)rhs); }
@@ -98,6 +99,13 @@ public:
 	inline bool IsClient() const { return ent->r.client != nullptr; }
 	inline bool IsSpawnedAtm() const { return ent->r.solid != SOLID_NOT; }
 	inline bool ToBeSpawnedLater() const { return ent->r.solid == SOLID_NOT; }
+	inline bool IsDroppedEntity() const { return ent && GoalFlags::NONE != (goalFlags & GoalFlags::DROPPED_ENTITY); }
+	inline unsigned DroppedEntityTimeout() const
+	{
+		if (!IsDroppedEntity())
+			return std::numeric_limits<unsigned>::max();
+		return ent->nextThink;
+	}
 
 	bool MayBeReachedNow(const edict_t *grabber);
 };
@@ -372,6 +380,9 @@ protected:
 	void UpdateWeights();
 	virtual void UpdatePotentialGoalsWeights();
 
+	void CheckOrCancelGoal();
+	bool ShouldCancelGoal(const NavEntity *goalEnt);
+
 	void PickLongTermGoal(const NavEntity *currLongTermGoalEnt);
 	void PickShortTermGoal(const NavEntity *currLongTermGoalEnt);
 	void ClearLongTermGoal();
@@ -379,7 +390,8 @@ protected:
 	void SetShortTermGoal(NavEntity *goalEnt);
 	void SetLongTermGoal(NavEntity *goalEnt);
 
-	bool IsShortRangeReachable(const Vec3 &targetPoint) const;
+	// Returns a pair of AAS travel times to the target point and back
+	std::pair<unsigned, unsigned> FindToAndBackTravelTimes(const Vec3 &targetPoint) const;
 
 	inline int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
 	{
