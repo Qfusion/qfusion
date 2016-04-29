@@ -600,8 +600,6 @@ void G_SnapFrame( void )
 		return;
 	}
 
-	AITools_Frame(); //MbotGame //give think time to AI debug tools
-
 	// finish snap
 	G_SnapClients(); // build the playerstate_t structures for all players
 	G_SnapEntities(); // add effects based on accumulated info along the frame

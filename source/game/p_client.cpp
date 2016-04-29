@@ -790,8 +790,6 @@ void ClientBegin( edict_t *ent )
 	// schedule the next scoreboard update
 	client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime%scoreboardInterval );
 
-	AI_EnemyAdded( ent );
-
 	G_ClientEndSnapFrame( ent ); // make sure all view stuff is valid
 
 	// let the gametype scripts now this client just entered the level
@@ -1420,7 +1418,6 @@ void ClientDisconnect( edict_t *ent, const char *reason )
 	G_Gametype_ScoreEvent( ent->r.client, "disconnect", NULL );
 
 	G_FreeAI( ent );
-	AI_EnemyRemoved( ent );
 
 	ent->r.inuse = false;
 	ent->r.svflags = SVF_NOCLIENT;

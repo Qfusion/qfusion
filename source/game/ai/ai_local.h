@@ -42,22 +42,8 @@ in NO WAY supported by Steve Yeager.
 #include <utility>
 #include <stdarg.h>
 
-#define AI_VERSION_STRING "A0059"
-
-//bot debug_chase options
-extern cvar_t *bot_showpath;
-extern cvar_t *bot_showcombat;
-extern cvar_t *bot_showsrgoal;
-extern cvar_t *bot_showlrgoal;
-extern cvar_t *bot_dummy;
-extern cvar_t *sv_botpersonality;
-
-//----------------------------------------------------------
-
-#define AI_STATUS_TIMEOUT	150
 #define AI_LONG_RANGE_GOAL_DELAY 2000
 #define AI_SHORT_RANGE_GOAL_DELAY 250
-#define AI_SHORT_RANGE_GOAL_DELAY_IDLE 25
 
 #define AI_DEFAULT_YAW_SPEED	( 35 * 5 )
 #define AI_COMBATMOVE_TIMEOUT	( 500 )
@@ -65,30 +51,11 @@ extern cvar_t *sv_botpersonality;
 
 // Platform states:
 #define	STATE_TOP	    0
-#define	STATE_BOTTOM	    1
+#define	STATE_BOTTOM	1
 #define STATE_UP	    2
 #define STATE_DOWN	    3
 
-#define BOT_MOVE_LEFT		0
-#define BOT_MOVE_RIGHT		1
-#define BOT_MOVE_FORWARD	2
-#define BOT_MOVE_BACK		3
-
-//=============================================================
-//	NAVIGATION DATA
-//=============================================================
-
-#define MAX_GOALENTS 1024
-#define MAX_NODES 2048        //jalToDo: needs dynamic alloc (big terrain maps)
-#define NODE_INVALID  -1
-#define NODE_DENSITY 128         // Density setting for nodes
-#define NODE_TIMEOUT 1500 // (milli)seconds to reach the next node
-#define NODE_REACH_RADIUS 36
-#define NODE_WIDE_REACH_RADIUS 92
-#define	NODES_MAX_PLINKS 16
-#define	NAV_FILE_VERSION 10
-#define NAV_FILE_EXTENSION "nav"
-#define NAV_FILE_FOLDER "navigation"
+#define MAX_GOALENTS MAX_EDICTS
 
 #define	AI_STEPSIZE	STEPSIZE    // 18
 #define AI_JUMPABLE_HEIGHT		50
@@ -102,53 +69,24 @@ extern cvar_t *sv_botpersonality;
 constexpr int AI_GOAL_SR_MILLIS = 750;
 constexpr int AI_GOAL_SR_LR_MILLIS = 1500;
 
-#define MASK_NODESOLID      ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_MONSTERCLIP )
 #define MASK_AISOLID        ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP )
 
-// node flags
-#define	NODEFLAGS_WATER 0x00000001
-#define	NODEFLAGS_LADDER 0x00000002
-#define NODEFLAGS_SERVERLINK 0x00000004  // plats, doors, teles. Only server can link 2 nodes with this flag
-#define	NODEFLAGS_FLOAT 0x00000008  // don't drop node to floor ( air & water )
-#define	NODEFLAGS_DONOTENTER 0x00000010
-#define	NODEFLAGS_BOTROAM 0x00000020
-#define NODEFLAGS_JUMPPAD 0x00000040
-#define NODEFLAGS_JUMPPAD_LAND 0x00000080
-#define	NODEFLAGS_PLATFORM 0x00000100
-#define	NODEFLAGS_TELEPORTER_IN 0x00000200
-#define NODEFLAGS_TELEPORTER_OUT 0x00000400
-#define NODEFLAGS_REACHATTOUCH 0x00000800
-#define NODEFLAGS_ENTITYREACH 0x00001000 // never reachs on it's own, the entity has to declare itself reached
+enum class GoalFlags
+{
+	NONE = 0x0,
+	REACH_AT_TOUCH = 0x1,
+	REACH_ENTITY = 0x2
+};
 
-#define NODE_ALL 0xFFFFFFFF
-
-#define NODE_MASK_SERVERFLAGS ( NODEFLAGS_SERVERLINK|NODEFLAGS_BOTROAM|NODEFLAGS_JUMPPAD|NODEFLAGS_JUMPPAD_LAND|NODEFLAGS_PLATFORM|NODEFLAGS_TELEPORTER_IN|NODEFLAGS_TELEPORTER_OUT|NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH )
-#define NODE_MASK_NOREUSE ( NODEFLAGS_LADDER|NODEFLAGS_JUMPPAD|NODEFLAGS_JUMPPAD_LAND|NODEFLAGS_PLATFORM|NODEFLAGS_TELEPORTER_IN|NODEFLAGS_TELEPORTER_OUT|NODEFLAGS_ENTITYREACH )
-
-// links types (movetypes required to run node links)
-#define	LINK_MOVE 0x00000001
-#define	LINK_STAIRS 0x00000002
-#define LINK_FALL 0x00000004
-#define	LINK_CLIMB 0x00000008
-#define	LINK_TELEPORT 0x00000010
-#define	LINK_PLATFORM 0x00000020
-#define LINK_JUMPPAD 0x00000040
-#define LINK_WATER 0x00000080
-#define	LINK_WATERJUMP 0x00000100
-#define	LINK_LADDER	0x00000200
-#define LINK_JUMP 0x00000400
-#define LINK_CROUCH 0x00000800
-#define LINK_ROCKETJUMP 0x00002000
-#define LINK_DOOR 0x00004000
-
-#define LINK_INVALID 0x00001000
+inline GoalFlags operator|(const GoalFlags &lhs, const GoalFlags &rhs) { return (GoalFlags)((int)lhs | (int)rhs); }
+inline GoalFlags operator&(const GoalFlags &lhs, const GoalFlags &rhs) { return (GoalFlags)((int)lhs & (int)rhs); }
 
 class NavEntity
 {
 	friend class GoalEntitiesRegistry;
 	int id;
 	int aasAreaNum;
-	int nodeFlags;
+	GoalFlags goalFlags;
 	edict_t *ent;
 	NavEntity *prev, *next;
 public:
@@ -181,7 +119,7 @@ class GoalEntitiesRegistry
 public:
 	void Init();
 
-	NavEntity *AddGoalEntity(edict_t *ent, int aasAreaNum, int nodeFlags = 0);
+	NavEntity *AddGoalEntity(edict_t *ent, int aasAreaNum, GoalFlags flags = GoalFlags::NONE);
 	void RemoveGoalEntity(NavEntity *navEntity);
 
 	inline NavEntity *GoalEntityForEntity(edict_t *ent)
@@ -482,22 +420,6 @@ public:
 	void OnShortTermGoalReached();
 };
 
-typedef struct
-{
-	const char *name;
-	float default_yaw_speed;
-	float reaction_time;		
-	float combatmove_timeout;
-	float yaw_accel;
-	float offensiveness;
-	float campiness;
-	float firerate;
-	float armor_grabber;
-	float health_grabber;
-
-	float weapon_affinity[WEAP_TOTAL];
-} ai_character;
-
 typedef struct ai_handle_s
 {
 	ai_type	type;
@@ -522,11 +444,8 @@ void	    Use_Plat( edict_t *ent, edict_t *other, edict_t *activator );
 
 // ai_tools.c
 //----------------------------------------------------------
-void	    AITools_DrawPath( edict_t *self, int node_to );
 void	    AITools_DrawLine( vec3_t origin, vec3_t dest );
 void	    AITools_DrawColorLine( vec3_t origin, vec3_t dest, int color, int parm );
-void	    AITools_InitEditnodes( void );
-void	    AITools_InitMakenodes( void );
 
 // ai_links.c
 //----------------------------------------------------------

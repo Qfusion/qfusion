@@ -2,8 +2,6 @@
 #include "ai_shutdown_hooks_holder.h"
 #include "aas.h"
 
-cvar_t *sv_botpersonality;
-
 ai_weapon_t AIWeapons[WEAP_TOTAL];
 const size_t ai_handle_size = sizeof( ai_handle_t );
 
@@ -18,14 +16,6 @@ static bool aas_data_loaded = false;
 void AI_InitLevel( void )
 {
     edict_t	*ent;
-
-    //Init developer mode
-    bot_showpath = trap_Cvar_Get( "bot_showpath", "0", 0 );
-    bot_showcombat = trap_Cvar_Get( "bot_showcombat", "0", 0 );
-    bot_showsrgoal = trap_Cvar_Get( "bot_showsrgoal", "0", 0 );
-    bot_showlrgoal = trap_Cvar_Get( "bot_showlrgoal", "0", 0 );
-    bot_dummy = trap_Cvar_Get( "bot_dummy", "0", 0 );
-    sv_botpersonality =	    trap_Cvar_Get( "sv_botpersonality", "0", CVAR_ARCHIVE );
 
     aas_system_initialized = AI_InitAAS();
     if (!aas_system_initialized)
@@ -109,6 +99,8 @@ void AI_InitLevel( void )
     AIWeapons[WEAP_INSTAGUN].RangeWeight[AIWEAP_SHORT_RANGE] = 0.9f;
     AIWeapons[WEAP_INSTAGUN].RangeWeight[AIWEAP_MELEE_RANGE] = 0.9f;
 
+    GoalEntitiesRegistry::Instance()->Init();
+
     ai_intialized = true;
 }
 
@@ -131,6 +123,47 @@ void AI_CommonFrame()
     AI_AASFrame();
 
     AiGametypeBrain::Instance()->Update();
+}
+
+static int EntAASAreaNum(edict_t *ent)
+{
+    if (!ent || ent->r.client)
+        return 0;
+
+    int areaNum = AAS_PointAreaNum(ent->s.origin);
+    if (!areaNum)
+    {
+        vec3_t point;
+        VectorCopy(ent->s.origin, point);
+        point[2] += 8;
+        areaNum = AAS_PointAreaNum(point);
+        if (!areaNum)
+        {
+            point[2] +=  8;
+            areaNum = AAS_PointAreaNum(point);
+        }
+    }
+    return areaNum;
+}
+
+void AI_AddStaticItem( edict_t *ent )
+{
+    int areaNum = EntAASAreaNum(ent);
+    if (areaNum)
+        GoalEntitiesRegistry::Instance()->AddGoalEntity(ent, areaNum, GoalFlags::REACH_ENTITY);
+}
+
+void AI_AddDroppedItem( edict_t *ent )
+{
+    // Its a stub. Dropped items time out and goal timeout tracking is not implemented yet.
+}
+
+void AI_DeleteItem( edict_t *ent )
+{
+    // Is almost a stub. Only static items are handled
+    NavEntity *navEntity = GoalEntitiesRegistry::Instance()->GoalEntityForEntity(ent);
+    if (navEntity)
+        GoalEntitiesRegistry::Instance()->RemoveGoalEntity(navEntity);
 }
 
 //==========================================
@@ -198,96 +231,6 @@ ai_type AI_GetType( const ai_handle_t *ai )
     return ai ? ai->type : AI_INACTIVE;
 }
 
-//==========================================
-// AI_ClearWeights
-//==========================================
-void AI_ClearWeights( ai_handle_t *ai )
-{
-    // Currently disabled, script interface should be changed
-    abort();
-    //memset( ai->status.entityWeights, 0, sizeof( ai->status.entityWeights ) );
-}
-
-//==========================================
-// AI_SetGoalWeight
-//==========================================
-void AI_SetGoalWeight( ai_handle_t *ai, int index, float weight )
-{
-    // Currently disabled, script interface should be changed
-    abort();
-    //if( index < 0 || index >= MAX_GOALENTS )
-    //    return;
-    //ai->status.entityWeights[index] = weight;
-}
-
-//==========================================
-// AI_ResetWeights
-// Init bot weights from bot-class weights.
-//==========================================
-void AI_ResetWeights( ai_handle_t *ai )
-{
-    // Currently disabled, script interface should be changed
-    abort();
-    // restore defaults from bot personality
-    //AI_ClearWeights( ai );
-
-    //FOREACH_GOALENT( goalEnt )
-    //{
-    //    if( goalEnt->Item() )
-    //        AI_SetGoalWeight( ai, goalEnt->Id(), AI_GetItemWeight( ai, goalEnt->Item() ) );
-    //}
-}
-
-//==========================================
-// AI_GetItemWeight
-//==========================================
-float AI_GetItemWeight( const ai_handle_t *ai, const gsitem_t *item )
-{
-    // Currently disabled, script interface should be changed
-    abort();
-}
-//==========================================
-// AI_GetRootGoalEnt
-//==========================================
-int AI_GetRootGoalEnt( void )
-{
-    return -1;
-}
-
-//==========================================
-// AI_GetNextGoalEnt
-//==========================================
-int AI_GetNextGoalEnt( int index )
-{
-    if (!AAS_Initialized() || index < 0 || index >= MAX_GOALENTS )
-        return -1;
-
-    return GoalEntitiesRegistry::Instance()->GetNextGoalEnt(index);
-}
-
-//==========================================
-// AI_GetGoalEntity
-//==========================================
-edict_t *AI_GetGoalEntity( int index )
-{
-    if (!AAS_Initialized() || index < 0 || index >= MAX_GOALENTS )
-        return NULL;
-
-    return GoalEntitiesRegistry::Instance()->GetGoalEntity(index);
-}
-
-/*
-* AI_ReachedEntity
-* Some nodes are declared so they are never reached until the entity says so.
-* This is a entity saying so.
-*/
-void AI_ReachedEntity(edict_t *self)
-{
-    // self->ai->aiRef->ReachedEntity();
-    // Currently disabled
-    abort();
-}
-
 /*
 * AI_TouchedEntity
 * Some AI has touched some entity. Some entities are declared to never be reached until touched.
@@ -304,56 +247,10 @@ void AI_DamagedEntity(edict_t *self, edict_t *ent, int damage)
         self->ai->botRef->OnEnemyDamaged(ent, damage);
 }
 
-float AI_GetCharacterReactionTime( const ai_handle_t *ai )
-{
-    // Currently disabled, script interface should be changed
-    abort();
-    return 0;
-}
-
-float AI_GetCharacterOffensiveness( const ai_handle_t *ai )
-{
-    // Currently disabled, script interface should be changed
-    abort();
-    return 0;
-}
-
-float AI_GetCharacterCampiness( const ai_handle_t *ai )
-{
-    // Currently disabled, script interface should be changed
-    abort();
-    return 0;
-}
-
-float AI_GetCharacterFirerate( const ai_handle_t *ai )
-{
-    // Currently disabled, script interface should be changed
-    abort();
-    return 0;
-}
-
 void AI_Think(edict_t *self)
 {
     if( !self->ai || self->ai->type == AI_INACTIVE )
         return;
 
     self->ai->aiRef->Update();
-}
-
-//==========================================
-// AI_EnemyAdded
-// Add the Player to our list
-//==========================================
-void AI_EnemyAdded( edict_t *ent )
-{
-    AI_AddGoalEntity( ent );
-}
-
-//==========================================
-// AI_EnemyRemoved
-// Remove the Player from list
-//==========================================
-void AI_EnemyRemoved( edict_t *ent )
-{
-    AI_RemoveGoalEntity( ent );
 }
