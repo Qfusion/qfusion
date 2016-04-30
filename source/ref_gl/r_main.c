@@ -966,9 +966,25 @@ static void R_SetupFrame( void )
 
 		if( rf.worldModelSequence != rsh.worldModelSequence ) {
 			rf.frameCount = 0;
-			rf.viewcluster = -1; // force R_MarkLeaves
-			rf.haveOldAreabits = false;
 			rf.worldModelSequence = rsh.worldModelSequence;
+
+			if( !rf.numWorldSurfVis ) {
+				rf.worldSurfVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
+				rf.numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
+			}
+			else if( rf.numWorldSurfVis < rsh.worldBrushModel->numsurfaces ) {
+				rf.worldSurfVis = R_Realloc( (void *)rf.worldSurfVis, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
+				rf.numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
+			}
+
+			if( !rf.numWorldLeafVis ) {
+				rf.worldLeafVis = R_Malloc( rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
+				rf.numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
+			}
+			else if( rf.numWorldLeafVis < rsh.worldBrushModel->numvisleafs ) {
+				rf.worldLeafVis = R_Realloc( (void *)rf.worldLeafVis, rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
+				rf.numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
+			}
 
 			// load all world images if not yet
 			R_FinishLoadingImages();
@@ -980,7 +996,6 @@ static void R_SetupFrame( void )
 		viewarea = -1;
 	}
 
-	rf.oldviewcluster = rf.viewcluster;
 	rf.viewcluster = viewcluster;
 	rf.viewarea = viewarea;
 
@@ -1245,12 +1260,6 @@ void R_RenderView( const refdef_t *fd )
 	// R_DrawEntities can make adjustments as well
 
 	if( !shadowMap ) {
-		if( r_speeds->integer )
-			msec = ri.Sys_Milliseconds();
-		R_MarkLeaves();
-		if( r_speeds->integer )
-			rf.stats.t_mark_leaves += ( ri.Sys_Milliseconds() - msec );
-
 		if( ! ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 			R_DrawWorld();
 
@@ -1498,9 +1507,9 @@ const char *R_WriteSpeedsMessage(char *out, size_t size)
 			case 2:
 			case 3:
 				Q_snprintfz(out, size,
-					"lvs: %5u  node: %5u\n"
+					"node: %5u\n"
 					"polys\\ents: %5u\\%5i  draw: %5u\n",
-					rf.stats.t_mark_leaves, rf.stats.t_world_node,
+					rf.stats.t_world_node,
 					rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
 				);
 				break;
