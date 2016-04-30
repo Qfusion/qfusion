@@ -307,7 +307,7 @@ typedef int socket_handle_t;
 #define HAVE_STRCASECMP
 #endif
 
-#define HAVE_TYPEOF
+//#define HAVE_TYPEOF
 
 #define LIB_DIRECTORY "libs"
 #define LIB_PREFIX "lib"
