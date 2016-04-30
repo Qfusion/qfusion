@@ -1341,6 +1341,8 @@ static rserr_t R_PostInit( void )
     rf.speedsMsgLock = ri.Mutex_Create();
 	rf.debugSurfaceLock = ri.Mutex_Create();
 
+	RJ_Init();
+
 	R_InitDrawLists();
 
 	if( !R_RegisterGLExtensions() ) {
@@ -1541,6 +1543,8 @@ void R_Shutdown( bool verbose )
 
     ri.Mutex_Destroy( &rf.speedsMsgLock );
 	ri.Mutex_Destroy( &rf.debugSurfaceLock );
+
+	RJ_Shutdown();
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
 	GLimp_Shutdown();

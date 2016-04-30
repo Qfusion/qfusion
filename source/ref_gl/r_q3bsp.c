@@ -360,9 +360,6 @@ static void Mod_LoadFaces( const lump_t *l )
 			}			
 		}
 
-		// add this super style
-		out->superLightStyle = R_AddSuperLightStyle( loadmodel, lightmaps, lightmapStyles, vertexStyles, lmRects );
-
 		// load shader
 		shaderRef = loadmodel_shaderrefs + LittleLong( in->shadernum );
 		if( lightmapStyles[0] == 255 ) {
@@ -370,9 +367,15 @@ static void Mod_LoadFaces( const lump_t *l )
 		} else {
 			shaderType = SHADER_TYPE_DELUXEMAP;
 		}
-		
+
 		out->shader = shaderRef->shaders[shaderType-SHADER_TYPE_BSP_MIN];
-		out->flags = shaderRef->flags;
+		out->flags = shaderRef->flags & ~SURF_NOLIGHTMAP;
+		if( lightmapStyles[0] == 255 ) {
+			out->flags |= SURF_NOLIGHTMAP;
+		}
+
+		// add this super style
+		out->superLightStyle = R_AddSuperLightStyle( loadmodel, lightmaps, lightmapStyles, vertexStyles, lmRects );
 
 		fogNum = LittleLong( in->fognum );
 		if( fogNum >= 0 && ( (unsigned)fogNum < loadbmodel->numfogs ) )
@@ -934,8 +937,9 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 	case FACETYPE_TRISURF:
 	case FACETYPE_FOLIAGE:
 		{
-			int j, numVerts, firstVert, numElems, firstElem;
-			int numFoliageInstances;
+			unsigned j;
+			unsigned numVerts, firstVert, numElems, firstElem;
+			unsigned numFoliageInstances;
 			bool hasLightmap[MAX_LIGHTMAPS];
 
 			if( out->facetype == FACETYPE_FOLIAGE )
@@ -951,7 +955,6 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			}
 
 			firstVert = LittleLong( in->firstvert );
-
 			numElems = LittleLong( in->numelems );
 			firstElem = LittleLong( in->firstelem );
 
@@ -975,8 +978,6 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( byte_vec4_t );
 			bufSize = ALIGN( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
-			if( out->facetype == FACETYPE_PLANAR )
-				bufSize = ALIGN( bufSize, 16 ) + sizeof( cplane_t );
 			bufSize = ALIGN( bufSize, 16 ) + numFoliageInstances * sizeof( instancePoint_t );
 
 			buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
@@ -1031,25 +1032,23 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 
 			if( out->facetype == FACETYPE_PLANAR )
 			{
-				cplane_t *plane;
 				vec3_t v[3];
+				cplane_t plane;
 
 				// don't trust q3map, recalculate surface plane from the first triangle
-				bufPos = ALIGN( bufPos, 16 );
-				plane = out->plane = ( cplane_t * )( buffer + bufPos ); bufPos += sizeof( cplane_t );
-
-				// do not trust compiler on surface normal
 				for( j = 0; j < 3; j++ ) {
 					VectorCopy( mesh->xyzArray[mesh->elems[j]], v[j] );
 				}
 
-				PlaneFromPoints( v, plane );
-				CategorizePlane( plane );
+				PlaneFromPoints( v, &plane );
+				CategorizePlane( &plane );
+
+				VectorCopy( plane.normal, out->plane );
+				out->plane[3] = plane.dist;
 			}
 
 			if( numFoliageInstances > 0 )
 			{
-				unsigned int j;
 				vec3_t *origins = loadmodel_xyz_array + firstVert, *origin;
 				instancePoint_t *instance;
 
@@ -1139,7 +1138,6 @@ static void Mod_LoadNodes( const lump_t *l )
 	int i, j, count, p;
 	dnode_t	*in;
 	mnode_t	*out;
-	bool badBounds;
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
@@ -1161,22 +1159,6 @@ static void Mod_LoadNodes( const lump_t *l )
 				out->children[j] = loadbmodel->nodes + p;
 			else
 				out->children[j] = ( mnode_t * )( loadbmodel->leafs + ( -1 - p ) );
-		}
-
-		badBounds = false;
-		for( j = 0; j < 3; j++ )
-		{
-			out->mins[j] = (float)LittleLong( in->mins[j] );
-			out->maxs[j] = (float)LittleLong( in->maxs[j] );
-			if( out->mins[j] > out->maxs[j] )
-				badBounds = true;
-		}
-
-		if( badBounds || VectorCompare( out->mins, out->maxs ) )
-		{
-			ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: bad node %i bounds:\n", i );
-			ri.Com_DPrintf( S_COLOR_YELLOW "mins: %i %i %i\n", Q_rint( out->mins[0] ), Q_rint( out->mins[1] ), Q_rint( out->mins[2] ) );
-			ri.Com_DPrintf( S_COLOR_YELLOW "maxs: %i %i %i\n", Q_rint( out->maxs[0] ), Q_rint( out->maxs[1] ), Q_rint( out->maxs[2] ) );
 		}
 	}
 }
@@ -1284,7 +1266,7 @@ static void Mod_LoadFogs( const lump_t *l, const lump_t *brLump, const lump_t *b
 */
 static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 {
-	int i, j, k, count, countMarkSurfaces;
+	int i, j, count, countMarkSurfaces;
 	dleaf_t	*in;
 	mleaf_t	*out;
 	size_t size;
@@ -1352,23 +1334,25 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 		numVisSurfaces = numMarkSurfaces;
 		numFragmentSurfaces = numMarkSurfaces;
 
-		size = ((numVisSurfaces + 1) + (numFragmentSurfaces + 1)) * sizeof( msurface_t * );
+		size = (numVisSurfaces + numFragmentSurfaces) * sizeof( unsigned );
 		buffer = ( uint8_t * )Mod_Malloc( loadmodel, size );
 
-		out->firstVisSurface = ( msurface_t ** )buffer;
-		buffer += ( numVisSurfaces + 1 ) * sizeof( msurface_t * );
+		out->visSurfaces = ( unsigned * )buffer;
+		buffer += numVisSurfaces * sizeof( unsigned );
 
-		out->firstFragmentSurface = ( msurface_t ** )buffer;
-		buffer += ( numFragmentSurfaces + 1 ) * sizeof( msurface_t * );
+		out->fragmentSurfaces = ( unsigned * )buffer;
+		buffer += numFragmentSurfaces * sizeof( unsigned );
 
 		numVisSurfaces = numFragmentSurfaces = 0;
 		for( j = 0; j < numMarkSurfaces; j++ )
 		{
-			k = LittleLong( inMarkSurfaces[firstMarkSurface + j] );
-
-			out->firstVisSurface[numVisSurfaces++] = loadbmodel->surfaces + k;
-			out->firstFragmentSurface[numFragmentSurfaces++] = loadbmodel->surfaces + k;
+			unsigned k = LittleLong( inMarkSurfaces[firstMarkSurface + j] );
+			out->visSurfaces[numVisSurfaces++] = k;
+			out->fragmentSurfaces[numFragmentSurfaces++] = k;
 		}
+
+		out->numVisSurfaces = numVisSurfaces;
+		out->numFragmentSurfaces = numFragmentSurfaces;
 	}
 }
 

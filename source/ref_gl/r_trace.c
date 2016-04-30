@@ -118,7 +118,7 @@ static bool R_TraceAgainstSurface( msurface_t *surf )
 			// flip normal is we are on the backside (does it really happen?)...
 			if( isPlanar )
 			{
-				if( DotProduct( trace_plane.normal, surf->plane->normal ) < 0 )
+				if( DotProduct( trace_plane.normal, surf->plane ) < 0 )
 					VectorInverse( trace_plane.normal );
 			}
 			return true;
@@ -133,28 +133,26 @@ static bool R_TraceAgainstSurface( msurface_t *surf )
 */
 static int R_TraceAgainstLeaf( mleaf_t *leaf )
 {
-	msurface_t *surf, **mark;
+	unsigned i;
+	msurface_t *surf;
 
 	if( leaf->cluster == -1 )
 		return 1;	// solid leaf
 
-	mark = leaf->firstVisSurface;
-	if( mark )
+	for( i = 0; i < leaf->numVisSurfaces; i++ )
 	{
-		do
-		{
-			surf = *mark++;
-			if( surf->fragmentframe == r_traceframecount )
-				continue;	// do not test the same surface more than once
-			surf->fragmentframe = r_traceframecount;
+		surf = rsh.worldBrushModel->surfaces + leaf->visSurfaces[i];
 
-			if( surf->flags & trace_umask )
-				continue;
+		if( surf->fragmentframe == r_traceframecount )
+			continue;	// do not test the same surface more than once
+		surf->fragmentframe = r_traceframecount;
 
-			if( surf->mesh )
-				if( R_TraceAgainstSurface( surf ) )
-					trace_surface = surf;	// impact surface
-		} while( *mark );
+		if( surf->flags & trace_umask )
+			continue;
+
+		if( surf->mesh )
+			if( R_TraceAgainstSurface( surf ) )
+				trace_surface = surf;	// impact surface
 	}
 
 	return 0;

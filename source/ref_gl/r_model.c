@@ -110,32 +110,20 @@ uint8_t *Mod_ClusterPVS( int cluster, model_t *model )
 //===============================================================================
 
 /*
-* Mod_SetParent
-*/
-static void Mod_SetParent( mnode_t *node, mnode_t *parent )
-{
-	node->parent = parent;
-	if( !node->plane )
-		return;
-	Mod_SetParent( node->children[0], node );
-	Mod_SetParent( node->children[1], node );
-}
-
-/*
 * Mod_CreateVisLeafs
 */
 static void Mod_CreateVisLeafs( model_t *mod )
 {
-	int i;
-	int count, numVisLeafs;
-	int numVisSurfaces, numFragmentSurfaces;
+	unsigned i, j;
+	unsigned count, numVisLeafs;
+	unsigned numVisSurfaces, numFragmentSurfaces;
 	mleaf_t *leaf;
-	msurface_t *surf, **mark;
+	msurface_t *surf;
 	mbrushmodel_t *loadbmodel = (( mbrushmodel_t * )mod->extradata);
 
 	count = loadbmodel->numleafs;
-	loadbmodel->visleafs = Mod_Malloc( mod, ( count+1 )*sizeof( *loadbmodel->visleafs ) );
-	memset( loadbmodel->visleafs, 0, ( count+1 )*sizeof( *loadbmodel->visleafs ) );
+	loadbmodel->visleafs = Mod_Malloc( mod, count*sizeof( *loadbmodel->visleafs ) );
+	memset( loadbmodel->visleafs, 0, count*sizeof( *loadbmodel->visleafs ) );
 
 	numVisLeafs = 0;
 	for( i = 0; i < count; i++ )
@@ -143,35 +131,31 @@ static void Mod_CreateVisLeafs( model_t *mod )
 		numVisSurfaces = numFragmentSurfaces = 0;
 
 		leaf = loadbmodel->leafs + i;
-		if( leaf->cluster < 0 || !leaf->firstVisSurface )
+		if( leaf->cluster < 0 || !leaf->numVisSurfaces )
 		{
-			leaf->firstVisSurface = NULL;
-			leaf->firstFragmentSurface = NULL;
+			leaf->visSurfaces = NULL;
+			leaf->numFragmentSurfaces = 0;
+			leaf->fragmentSurfaces = NULL;
 			continue;
 		}
 
-		mark = leaf->firstVisSurface;
-		do
+		for( j = 0; j < leaf->numVisSurfaces; j++ )
 		{
-			surf = *mark++;
+			unsigned surfNum;
+
+			surfNum = leaf->visSurfaces[j];
+			surf = loadbmodel->surfaces + surfNum;
 
 			if( R_SurfPotentiallyVisible( surf ) )
 			{
-				leaf->firstVisSurface[numVisSurfaces++] = surf;
+				leaf->visSurfaces[numVisSurfaces++] = surfNum;
 				if( R_SurfPotentiallyFragmented( surf ) )
-					leaf->firstFragmentSurface[numFragmentSurfaces++] = surf;
+					leaf->fragmentSurfaces[numFragmentSurfaces++] = surfNum;
 			}
-		} while( *mark );
+		}
 
-		if( numVisSurfaces )
-			leaf->firstVisSurface[numVisSurfaces] = NULL;
-		else
-			leaf->firstVisSurface = NULL;
-
-		if( numFragmentSurfaces )
-			leaf->firstFragmentSurface[numFragmentSurfaces] = NULL;
-		else
-			leaf->firstFragmentSurface = NULL;
+		leaf->numVisSurfaces = numVisSurfaces;
+		leaf->numFragmentSurfaces = numFragmentSurfaces;
 
 		if( !numVisSurfaces )
 		{
@@ -182,7 +166,7 @@ static void Mod_CreateVisLeafs( model_t *mod )
 		loadbmodel->visleafs[numVisLeafs++] = leaf;
 	}
 
-	loadbmodel->visleafs[numVisLeafs] = NULL;
+	loadbmodel->numvisleafs = numVisLeafs;
 }
 
 /*
@@ -336,7 +320,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	int *longrow, *longrow2;
 	mmodel_t *bm;
 	mbrushmodel_t *loadbmodel;
-	msurface_t *surf, *surf2, **mark;
+	msurface_t *surf, *surf2;
 	msurface_t **surfmap;
 	msurface_t **surfaces;
 	unsigned numSurfaces;
@@ -388,13 +372,12 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 
 		for( pleaf = loadbmodel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
 		{
-			mark = leaf->firstVisSurface;
-			do
+			for( i = 0; i < leaf->numVisSurfaces; i++ )
 			{
 				unsigned surfnum;
-
-				surf = *mark++;
-				surfnum = surf - loadbmodel->surfaces;
+				
+				surfnum = leaf->visSurfaces[i];
+				surf = loadbmodel->surfaces + surfnum;
 
 				if( surfnum >= bm->numfaces ) {
 					// some buggy maps such as aeroq2 contain visleafs that address faces from submodels...
@@ -422,7 +405,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				}
 
 				numSurfaces++;
-			} while( *mark );
+			}
 		}
 
 		memset( surfmap, 0, bm->numfaces * sizeof( *surfmap ) );
@@ -794,8 +777,6 @@ static void Mod_FinalizeBrushModel( model_t *model, const dvis_t *pvsData )
 	Mod_CreateVisLeafs( model );
 
 	Mod_SetupSubmodels( model );
-
-	Mod_SetParent( (( mbrushmodel_t * )model->extradata)->nodes, NULL );
 
 	Mod_CreateVertexBufferObjects( model );
 
@@ -1195,8 +1176,6 @@ static void R_InitMapConfig( const char *model )
 	mapConfig.deluxeMaps = false;
 	mapConfig.deluxeMappingEnabled = false;
 	mapConfig.overbrightBits = max( 0, r_mapoverbrightbits->integer );
-	mapConfig.checkWaterCrossing = false;
-	mapConfig.depthWritingSky = true;
 	mapConfig.forceClear = false;
 	mapConfig.lightingIntensity = 0;
 	mapConfig.forceWorldOutlines = false;

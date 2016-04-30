@@ -128,10 +128,12 @@ static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int 
 */
 unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool lightmap, bool dlight )
 {
-	int order;
+	int order = 0;
 
 	// shader order
-	order = R_PackShaderOrder( shader );
+	if( shader ) {
+		order = R_PackShaderOrder( shader );
+	}
 
 	// group by lightmap
 	if( lightmap )
