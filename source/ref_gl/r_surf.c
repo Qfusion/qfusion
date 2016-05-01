@@ -615,6 +615,9 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned items, unsigned clipFl
 
 	for( i = 0; i < items; i++ )
 	{
+		int clipped;
+		unsigned bit, testFlags;
+		cplane_t *clipplane;
 		unsigned l = firstLeaf + i;
 
 		leaf = rsh.worldBrushModel->visleafs[l];
@@ -631,12 +634,37 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned items, unsigned clipFl
 				continue; // not visible
 		}
 
-		if( R_CullBox( leaf->mins, leaf->maxs, clipFlags ) )
-			continue;
+		// track leaves, which are entirely inside the frustum
+		clipped = 0;
+		testFlags = clipFlags;
+		for( j = sizeof( rn.frustum )/sizeof( rn.frustum[0] ), bit = 1, clipplane = rn.frustum; j > 0; j--, bit<<=1, clipplane++ )
+		{
+			if( testFlags & bit )
+			{
+				clipped = BoxOnPlaneSide( leaf->mins, leaf->maxs, clipplane );
+				if( clipped == 2 )
+					break;
+				else if( clipped == 1 )
+					testFlags &= ~bit; // node is entirely on screen
+			}
+		}
 
-		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-			assert( leaf->visSurfaces[j] < rf.numWorldSurfVis );
-			rf.worldSurfVis[leaf->visSurfaces[j]] = 1;
+		if( clipped == 2 )
+			continue; // fully clipped
+
+		if( testFlags == 0 ) {
+			// fully visible
+			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+				assert( leaf->visSurfaces[j] < rf.numWorldSurfVis );
+				rf.worldSurfFullVis[leaf->visSurfaces[j]] = 1;
+			}
+		}
+		else {
+			// partly visible
+			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+				assert( leaf->visSurfaces[j] < rf.numWorldSurfVis );
+				rf.worldSurfVis[leaf->visSurfaces[j]] = 1;
+			}
 		}
 
 		rf.worldLeafVis[l] = 1;
@@ -652,11 +680,17 @@ static void R_CullVisSurfaces( unsigned firstSurf, unsigned items, unsigned clip
 
 	for( i = 0; i < items; i++ ) {
 		unsigned s = firstSurf + i;
-		if( !rf.worldSurfVis[s] ) {
+		if( rf.worldSurfVis[s] ) {
+			// the surface is at partly visible in at least one leaf, frustum cull it
+			if( R_CullSurface( rsc.worldent, rsh.worldBrushModel->surfaces + s, clipFlags ) ) {
+				rf.worldSurfVis[s] = 0;
+			}
+			rf.worldSurfFullVis[s] = 0;
 			continue;
 		}
-		if( R_CullSurface( rsc.worldent, rsh.worldBrushModel->surfaces + s, clipFlags ) ) {
-			rf.worldSurfVis[s] = 0;
+		if( rf.worldSurfFullVis[s] ) {
+			// a fully visible surface, mark as visible
+			rf.worldSurfVis[s] = 1;
 		}
 	}
 }
@@ -765,11 +799,13 @@ void R_DrawWorld( void )
 	if( rsh.worldBrushModel->numvisleafs > rsh.worldBrushModel->numsurfaces )
 	{
 		memset( (void *)rf.worldSurfVis, 1, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
+		memset( (void *)rf.worldSurfFullVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
 		memset( (void *)rf.worldLeafVis, 1, rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
 	}
 	else
 	{
 		memset( (void *)rf.worldSurfVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
+		memset( (void *)rf.worldSurfFullVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
 		memset( (void *)rf.worldLeafVis, 0, rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
 
 		RJ_ScheduleJob( &R_CullVisLeavesJob, &ja, rsh.worldBrushModel->numvisleafs );
