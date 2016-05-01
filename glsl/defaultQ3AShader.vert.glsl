@@ -50,7 +50,7 @@ void main(void)
 		float Depth = dot(Normal.xyz, Projection) * 2.0;
 		v_TexCoord = 0.5 + (Normal.yz * Depth - Projection.yz) * vec2(0.5, -0.5);
 #elif defined(APPLY_TC_GEN_VECTOR)
-		v_TexCoord = vec2(u_VectorTexMatrix * Position);
+		v_TexCoord = vec2(Position * u_VectorTexMatrix); // account for u_VectorTexMatrix being transposed
 #elif defined(APPLY_TC_GEN_PROJECTION)
 		v_TexCoord = vec2(normalize(u_ModelViewProjectionMatrix * Position) * 0.5 + vec4(0.5));
 #elif defined(APPLY_TC_MOD)
