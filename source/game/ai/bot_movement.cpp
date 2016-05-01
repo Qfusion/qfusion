@@ -340,6 +340,115 @@ bool Bot::TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd)
     return false;
 }
 
+void Bot::MoveCampingASpot(Vec3 *moveVec, usercmd_t *ucmd)
+{
+    // If hasCampingLookAtPoint is false and this function has not been called yet since last camping spot setting,
+    // campingSpotLookAtPoint contains a junk, so it need to be overwritten
+    Vec3 lookAtPoint(campingSpotLookAtPoint);
+    // If the camping action does not have a defined look direction, choose some random one
+    if (!hasCampingLookAtPoint)
+    {
+        // If the previously chosen look at point has timed out, choose a new one
+        if (campingSpotLookAtPointTimeout <= level.time)
+        {
+            // Choose some random point to look at
+            campingSpotLookAtPoint.x() = self->s.origin[0] - 50.0f + 100.0f * random();
+            campingSpotLookAtPoint.y() = self->s.origin[1] - 50.0f + 100.0f * random();
+            campingSpotLookAtPoint.z() = self->s.origin[2] - 15.0f + 30.0f * random();
+            campingSpotLookAtPointTimeout = level.time + 1500 - (unsigned)(1250.0f * campingAlertness);
+        }
+        lookAtPoint = campingSpotLookAtPoint;
+    }
+    MoveCampingASpotWithGivenLookAtPoint(lookAtPoint, moveVec, ucmd);
+}
+
+void KeyMoveVecToUcmd(const Vec3 &keyMoveVec, const vec3_t actualLookDir, const vec3_t actualRightDir, usercmd_t *ucmd)
+{
+    ucmd->forwardmove = 0;
+    ucmd->sidemove = 0;
+    ucmd->upmove = 0;
+
+    float dotForward = keyMoveVec.Dot(actualLookDir);
+    if (dotForward > 0.3)
+        ucmd->forwardmove = 1;
+    else if (dotForward < -0.3)
+        ucmd->forwardmove = -1;
+
+    float dotRight = keyMoveVec.Dot(actualRightDir);
+    if (dotRight > 0.3)
+        ucmd->sidemove = 1;
+    else if (dotRight < -0.3)
+        ucmd->sidemove = -1;
+}
+
+void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *moveVec, usercmd_t *ucmd)
+{
+    vec3_t actualLookDir, actualRightDir;
+    AngleVectors(self->s.angles, actualLookDir, actualRightDir, nullptr);
+
+    Vec3 botToSpot = campingSpotOrigin - self->s.origin;
+    float distance = botToSpot.Length();
+
+    if (distance / campingSpotRadius > 2.0f)
+    {
+        // Bot should return to a point
+        ucmd->forwardmove = 1;
+        ucmd->sidemove = 0;
+        ucmd->upmove = 0;
+
+        *moveVec = botToSpot;
+        // Very cheap workaround for "moving in planet gravity field" glitch by lowering move speed
+        Vec3 botToSpotDir = botToSpot * (1.0f / distance);
+        if (botToSpotDir.Dot(actualLookDir) < 0.7f)
+            ucmd->buttons |= BUTTON_WALK;
+
+        return;
+    }
+
+    Vec3 expectedLookDir = lookAtPoint - campingSpotOrigin;
+    expectedLookDir.NormalizeFast();
+
+    if (expectedLookDir.Dot(actualLookDir) < 0.85)
+    {
+        if (!hasPendingLookAtPoint)
+        {
+            SetPendingLookAtPoint(campingSpotLookAtPoint, 1.1f);
+            ucmd->forwardmove = 0;
+            ucmd->sidemove = 0;
+            ucmd->upmove = 0;
+            ucmd->buttons |= BUTTON_WALK;
+            return;
+        }
+    }
+
+    // Keep actual look dir as-is, adjust position by keys only
+    *moveVec = Vec3(actualLookDir);
+
+    if (campingSpotStrafeTimeout < level.time)
+    {
+        // This means we may strafe randomly
+        if (distance / campingSpotRadius < 0.7f)
+        {
+            campingSpotStrafeDir.x() = -0.5f + random();
+            campingSpotStrafeDir.y() = -0.5f + random();
+            campingSpotStrafeDir.z() = 0.0f;
+            campingSpotStrafeTimeout = level.time + 500 + (unsigned)(100.0f * random() - 250.0f * campingAlertness);
+        }
+        else
+        {
+            campingSpotStrafeDir = botToSpot;
+        }
+        campingSpotStrafeDir.NormalizeFast();
+    }
+
+    Vec3 strafeMoveVec = campingSpotStrafeDir;
+
+    KeyMoveVecToUcmd(strafeMoveVec, actualLookDir, actualRightDir, ucmd);
+
+    if (random() > campingAlertness * 0.75f)
+        ucmd->buttons |= BUTTON_WALK;
+}
+
 void Bot::MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd)
 {
     /*
