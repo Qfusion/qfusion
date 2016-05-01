@@ -30,7 +30,16 @@ Bot::Bot(edict_t *self, float skillLevel)
       hasCachedMoveVec(false),
       cachedPredictedTargetOrigin(INFINITY, INFINITY, INFINITY),
       cachedPredictedTargetValidUntil(0),
-      cachedPredictedTargetInstanceId(0)
+      cachedPredictedTargetInstanceId(0),
+      hasCampingSpot(false),
+      hasCampingLookAtPoint(false),
+      campingSpotRadius(INFINITY),
+      campingAlertness(INFINITY),
+      campingSpotOrigin(INFINITY, INFINITY, INFINITY),
+      campingSpotLookAtPoint(INFINITY, INFINITY, INFINITY),
+      campingSpotStrafeDir(INFINITY, INFINITY, INFINITY),
+      campingSpotStrafeTimeout(0),
+      campingSpotLookAtPointTimeout(0)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;
@@ -70,6 +79,39 @@ void Bot::ApplyPendingTurnToLookAtPoint()
 
     if (pendingLookAtPointTimeoutAt <= level.time)
         hasPendingLookAtPoint = false;
+}
+
+void Bot::SetCampingSpot(const Vec3 &spotOrigin, float spotRadius, float alertness)
+{
+    hasCampingSpot = true;
+    hasCampingLookAtPoint = false;
+    campingSpotRadius = spotRadius;
+    campingAlertness = alertness;
+    campingSpotOrigin = spotOrigin;
+    campingSpotStrafeTimeout = 0;
+    // Select some random look-at-point on first call of MoveCampingASpot()
+    campingSpotLookAtPointTimeout = 0;
+}
+
+void Bot::SetCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRaduis, float alertness)
+{
+    hasCampingSpot = true;
+    hasCampingLookAtPoint = true;
+    campingSpotRadius = spotRaduis;
+    campingAlertness = alertness;
+    campingSpotOrigin = spotOrigin;
+    campingSpotLookAtPoint = lookAtPoint;
+    campingSpotStrafeTimeout = 0;
+}
+
+void Bot::ClearCampingSpot()
+{
+    hasCampingSpot = false;
+    hasCampingLookAtPoint = false;
+    campingSpotRadius = INFINITY;
+    campingAlertness = INFINITY;
+    campingSpotOrigin = Vec3(INFINITY, INFINITY, INFINITY);
+    campingSpotLookAtPoint = Vec3(INFINITY, INFINITY, INFINITY);
 }
 
 void Bot::RegisterVisibleEnemies()

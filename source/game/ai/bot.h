@@ -89,6 +89,27 @@ private:
     unsigned cachedPredictedTargetValidUntil;
     unsigned cachedPredictedTargetInstanceId;
 
+    // If it is set, the bot should stay on a spot defined by campingSpotOrigin
+    bool hasCampingSpot;
+    // If it is set, the bot should prefer to look at the campingSpotLookAtPoint while camping
+    // Otherwise the bot should spin view randomly
+    bool hasCampingLookAtPoint;
+    // Maximum bot origin deviation from campingSpotOrigin while strafing when camping a spot
+    float campingSpotRadius;
+    // 0..1, greater values result in frequent and hectic strafing/camera rotating
+    float campingAlertness;
+    Vec3 campingSpotOrigin;
+    Vec3 campingSpotLookAtPoint;
+    Vec3 campingSpotStrafeDir;
+    // When to change chosen strafe dir
+    unsigned campingSpotStrafeTimeout;
+    // When to change randomly chosen look-at-point (if the point is not initially specified)
+    unsigned campingSpotLookAtPointTimeout;
+
+    void SetCampingSpot(const Vec3 &spotOrigin, float spotRadius, float alertness = 0.5f);
+    void SetCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRaduis, float alertness = 0.5f);
+    void ClearCampingSpot();
+
     void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutDuration = 500);
 
     void ApplyPendingTurnToLookAtPoint();
@@ -104,6 +125,8 @@ private:
     void MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveEnteringPlatform(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveCampingASpot(Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, Vec3 *moveVec, usercmd_t *ucmd);
     void MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd);
     void MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd);
     bool CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed);
