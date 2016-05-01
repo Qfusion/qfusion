@@ -327,6 +327,7 @@ typedef struct
 
 	unsigned int	numWorldSurfVis;
 	volatile unsigned char *worldSurfVis;
+	volatile unsigned char *worldSurfFullVis;
 
 	unsigned int	numWorldLeafVis;
 	volatile unsigned char *worldLeafVis;
