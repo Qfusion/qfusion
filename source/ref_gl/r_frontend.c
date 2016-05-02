@@ -205,7 +205,7 @@ rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int 
 	return rserr_ok;
 }
 
-rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo )
+rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless )
 {
 	rserr_t err;
 
@@ -215,7 +215,7 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 
 	RF_AdapterShutdown( &rrf.adapter );
 
-	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo );
+	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo, borderless );
 	if( err != rserr_ok ) {
 		return err;
 	}

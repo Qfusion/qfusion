@@ -72,10 +72,15 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
     return rserr_invalid_fullscreen;
 }
 
-static void GLimp_CreateWindow( int x, int y, int width, int height )
+static void GLimp_CreateWindow( int x, int y, int width, int height, bool borderless )
 {
+	unsigned flags = SDL_WINDOW_OPENGL;
+	
+	if( borderless )
+		flags |= SDL_WINDOW_BORDERLESS;
+	
 	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, 
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL );
+		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags );
 
 	if( !glw_state.sdl_window )
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
@@ -95,7 +100,7 @@ static void GLimp_CreateWindow( int x, int y, int width, int height )
  * @param fullscreen <code>true</code> for a fullscreen mode,
  *     <code>false</code> otherwise
  */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless )
 {
 	const char *win_fs[] = {"W", "FS"};
 
@@ -108,7 +113,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		GLimp_Shutdown();
 	}
 
-	GLimp_CreateWindow( x, y, width, height );
+	GLimp_CreateWindow( x, y, width, height, borderless );
 
 	// init all the gl stuff for the window
 	if( !GLimp_InitGL( r_stencilbits->integer, stereo ) ) {
@@ -119,6 +124,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
     glConfig.fullScreen = fullscreen ? GLimp_SetFullscreenMode( displayFrequency, fullscreen ) == rserr_ok : false;
 	glConfig.width = width;
 	glConfig.height = height;
+	glConfig.borderless = borderless;
 
     return glConfig.fullScreen == fullscreen ? rserr_ok : rserr_invalid_fullscreen;
 }

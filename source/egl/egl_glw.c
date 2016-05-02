@@ -342,7 +342,7 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless )
 {
 	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen )
 	{
@@ -358,6 +358,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.fullScreen = fullscreen;
+	glConfig.borderless = borderless;
 
 	if( !GLimp_InitGL() )
 	{
