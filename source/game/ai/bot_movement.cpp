@@ -887,11 +887,14 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                     AnglesToAxis(Vec3(0, currAngle * (1.0f + extraTurn), 0).data(), matrix);
                     Matrix3_TransformVector(matrix, intendedLookVec->data(), intendedLookVec->data());
                 }
-                else if (!isOnGroundThisFrame && Skill() > 0.33f)
+                else if (currAasAreaNum != goalAasAreaNum && !isOnGroundThisFrame && Skill() > 0.33f)
                 {
                     // Center view before spinning, do not spin looking at the sky or a floor
                     intendedLookVec->z() = 0;
-                    SetPendingLandingDash(ucmd);
+                    if (!hasPendingLandingDash)
+                    {
+                        SetPendingLandingDash(ucmd);
+                    }
                 }
                 else
                 {
