@@ -71,7 +71,7 @@ void Sys_AppActivate( void )
 {
 }
 
-char *Sys_GetClipboardData( bool primary )
+char *Sys_GetClipboardData( void )
 {
 	return NULL;
 }

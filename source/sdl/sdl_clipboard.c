@@ -4,9 +4,11 @@
 /*
 * Sys_GetClipboardData
 */
-char *Sys_GetClipboardData( bool primary )
+char *Sys_GetClipboardData( void )
 {
-	return SDL_GetClipboardText();
+	if( SDL_HasClipboardText() == SDL_TRUE )
+		return SDL_GetClipboardText();
+	return NULL;
 }
 
 /*

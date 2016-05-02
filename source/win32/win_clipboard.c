@@ -4,7 +4,7 @@
 /*
 * Sys_GetClipboardData
 */
-char *Sys_GetClipboardData( bool primary )
+char *Sys_GetClipboardData( void )
 {
 	char *utf8text = NULL;
 	int utf8size;

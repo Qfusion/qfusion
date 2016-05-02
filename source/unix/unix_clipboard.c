@@ -9,7 +9,7 @@ extern char* clip_data;
 *
 * Orginally from EzQuake
 */
-char *Sys_GetClipboardData( bool primary )
+char *Sys_GetClipboardData( void )
 {
 	Window win;
 	Atom type;
@@ -22,14 +22,7 @@ char *Sys_GetClipboardData( bool primary )
 	if( !x11display.dpy )
 		return NULL;
 
-	if( primary )
-	{
-		atom = XInternAtom( x11display.dpy, "PRIMARY", True );
-	}
-	else
-	{
-		atom = XInternAtom( x11display.dpy, "CLIPBOARD", True );
-	}
+	atom = XInternAtom( x11display.dpy, "CLIPBOARD", True );
 	if( atom == None )
 		return NULL;
 

@@ -238,8 +238,12 @@ namespace trap
 			UI_IMPORT.CL_ResetServerCount ();
 		}
 
-		inline char *CL_GetClipboardData( bool primary ) {
-			return UI_IMPORT.CL_GetClipboardData( primary );
+		inline char *CL_GetClipboardData( void ) {
+			return UI_IMPORT.CL_GetClipboardData();
+		}
+
+		inline void CL_SetClipboardData( const char *data ) {
+			UI_IMPORT.CL_SetClipboardData( data );
 		}
 
 		inline void CL_FreeClipboardData( char *data ) {

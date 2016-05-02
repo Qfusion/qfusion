@@ -1421,13 +1421,13 @@ static void Con_Key_Copy( void )
 * Inserts stuff from clipboard to console
 * Should be Con_Paste prolly
 */
-static void Con_Key_Paste( bool primary )
+static void Con_Key_Paste( void )
 {
 	char *cbd;
 	char *tok;
 	size_t linelen, i, next;
 
-	cbd = CL_GetClipboardData( primary );
+	cbd = CL_GetClipboardData();
 	if( cbd )
 	{
 		tok = strtok( cbd, "\n\r\b" );
@@ -1496,7 +1496,7 @@ void Con_CharEvent( wchar_t key )
 	switch( key )
 	{
 	case 22: // CTRL - V : paste
-		Con_Key_Paste( false );
+		Con_Key_Paste();
 		return;
 
 	case 12: // CTRL - L : clear
@@ -1764,7 +1764,7 @@ void Con_KeyDown( int key )
 
 	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT)) )
 	{
-		Con_Key_Paste( true );
+		Con_Key_Paste();
 		return;
 	}
 
@@ -1946,13 +1946,13 @@ void Con_KeyDown( int key )
 /*
 * Con_MessageKeyPaste
 */
-static void Con_MessageKeyPaste( bool primary )
+static void Con_MessageKeyPaste( void )
 {
 	char *cbd;
 	char *tok;
 	size_t i, next;
 
-	cbd = CL_GetClipboardData( primary );
+	cbd = CL_GetClipboardData();
 	if( cbd )
 	{
 		tok = strtok( cbd, "\n\r\b" );
@@ -2018,7 +2018,7 @@ void Con_MessageCharEvent( wchar_t key )
 		chat_linepos = chat_bufferlen;
 		return;
 	case 22: // CTRL - V : paste
-		Con_MessageKeyPaste( false );
+		Con_MessageKeyPaste();
 		return;
 	}
 
@@ -2233,7 +2233,7 @@ void Con_MessageKeyDown( int key )
 
 	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT) ) )
 	{
-		Con_MessageKeyPaste( true );
+		Con_MessageKeyPaste();
 		return;
 	}
 
