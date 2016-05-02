@@ -82,8 +82,8 @@ private:
     bool hasPendingLookAtPoint;
     float lookAtPointTurnSpeedMultiplier;
 
-    Vec3 cachedMoveVec;
-    bool hasCachedMoveVec;
+    Vec3 cachedIntendedLookVec;
+    bool hasCachedIntendedLookVec;
 
     Vec3 cachedPredictedTargetOrigin;
     unsigned cachedPredictedTargetValidUntil;
@@ -119,23 +119,23 @@ private:
     // Must be called on each frame
     void MoveFrame(usercmd_t *ucmd, bool inhibitCombat);
 
-    void MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveEnteringJumppad(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveRidingJummpad(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveEnteringPlatform(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveCampingASpot(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd);
-    void MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd);
-    bool CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed);
-    void StraightenOrInterpolateMoveVec(Vec3 *moveVec, float speed);
-    bool TryStraightenMoveVec(Vec3 *moveVec, float speed);
-    void InterpolateMoveVec(Vec3 *moveVec, float speed);
-    void SetMoveVecToPendingReach(Vec3 *moveVec);
-    void TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd);
-    bool TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd);
+    void MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveRidingPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveEnteringPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveStartingARocketjump(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveSwimming(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    bool CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed);
+    void StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed);
+    bool TryStraightenLookVec(Vec3 *intendedLookVec, float speed);
+    void InterpolateLookVec(Vec3 *intendedLookVec, float speed);
+    void SetLookVecToPendingReach(Vec3 *intendedLookVec);
+    void TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    bool TryLandOnArea(int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd);
     void CheckTargetReached();
     inline bool IsCloseToAnyGoal()
     {
