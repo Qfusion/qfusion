@@ -132,5 +132,14 @@ void SystemInterface::OnReferenceDeactivate()
 	Release();
 }
 
+
+void SystemInterface::GetClipboardText(Rocket::Core::WString &text)
+{
+}
+
+void SystemInterface::SetClipboardText(const Rocket::Core::WString &text)
+{
+}
+
 }
 }

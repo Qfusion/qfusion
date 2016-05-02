@@ -88,6 +88,12 @@ public:
 	/// Called when this system interface is no longer required.
 	virtual void Release();
 
+	///
+	virtual void GetClipboardText(Rocket::Core::WString &text);
+
+	///
+	virtual void SetClipboardText(const Rocket::Core::WString &text);
+
 protected:
 	virtual void OnReferenceDeactivate();
 };
