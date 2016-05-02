@@ -26,8 +26,6 @@ Bot::Bot(edict_t *self, float skillLevel)
       pendingLookAtPointTimeoutAt(0),
       hasPendingLookAtPoint(false),
       lookAtPointTurnSpeedMultiplier(0.5f),
-      cachedIntendedLookVec(INFINITY, INFINITY, INFINITY),
-      hasCachedIntendedLookVec(false),
       cachedPredictedTargetOrigin(INFINITY, INFINITY, INFINITY),
       cachedPredictedTargetValidUntil(0),
       cachedPredictedTargetInstanceId(0),
