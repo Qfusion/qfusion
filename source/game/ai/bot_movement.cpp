@@ -589,8 +589,7 @@ void Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
         return;
     }
 
-    if (!TryStraightenLookVec(intendedLookVec, speed))
-        InterpolateLookVec(intendedLookVec, speed);
+    InterpolateLookVec(intendedLookVec, speed);
 }
 
 bool Bot::TryStraightenLookVec(Vec3 *intendedLookVec, float speed)
