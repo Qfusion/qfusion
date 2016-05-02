@@ -83,4 +83,25 @@ int UI_SystemInterface::TranslateString(Rocket::Core::String& translated, const 
 	return 0;
 }
 
+void UI_SystemInterface::GetClipboardText(Rocket::Core::WString &text)
+{
+	Rocket::Core::WString clipboard_content;
+	
+	char *data = trap::CL_GetClipboardData();
+	if (data == NULL) {
+		text = "";
+		return;
+	}
+	
+	text = data;
+	trap::CL_FreeClipboardData(data);
+}
+
+void UI_SystemInterface::SetClipboardText(const Rocket::Core::WString &text)
+{
+	Rocket::Core::String utf8_text;
+	text.ToUTF8(utf8_text);
+	trap::CL_SetClipboardData(utf8_text.CString());
+}
+
 }

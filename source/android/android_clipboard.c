@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string.h>
 #include "android_sys.h"
 
-char *Sys_GetClipboardData( bool primary )
+char *Sys_GetClipboardData( void )
 {
 	JNIEnv *env = Sys_Android_GetJNIEnv();
 	jmethodID getClipboardData;

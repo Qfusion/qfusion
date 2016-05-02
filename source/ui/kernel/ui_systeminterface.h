@@ -38,6 +38,12 @@ public:
 	/// @param[in] input String as received from XML.
 	/// @return Number of translations that occured.
 	virtual int TranslateString(Rocket::Core::String& translated, const Rocket::Core::String& input);
+
+	///
+	virtual void GetClipboardText(Rocket::Core::WString &text);
+
+	///
+	virtual void SetClipboardText(const Rocket::Core::WString &text);
 };
 
 }

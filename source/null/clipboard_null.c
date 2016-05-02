@@ -3,7 +3,7 @@
 /*
 * Sys_GetClipboardData
 */
-char *Sys_GetClipboardData( bool primary )
+char *Sys_GetClipboardData( void )
 {
 	return NULL;
 }

@@ -602,17 +602,17 @@ static void CL_Rcon_f( void )
 /*
 * CL_GetClipboardData
 */
-char *CL_GetClipboardData( bool primary )
+char *CL_GetClipboardData( void )
 {
-	return Sys_GetClipboardData( primary );
+	return Sys_GetClipboardData();
 }
 
 /*
 * CL_SetClipboardData
 */
-bool CL_SetClipboardData( const char *data )
+void CL_SetClipboardData( const char *data )
 {
-	return Sys_SetClipboardData( data );
+	Sys_SetClipboardData( data );
 }
 
 /*
