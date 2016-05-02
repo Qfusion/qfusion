@@ -82,9 +82,6 @@ private:
     bool hasPendingLookAtPoint;
     float lookAtPointTurnSpeedMultiplier;
 
-    Vec3 cachedIntendedLookVec;
-    bool hasCachedIntendedLookVec;
-
     Vec3 cachedPredictedTargetOrigin;
     unsigned cachedPredictedTargetValidUntil;
     unsigned cachedPredictedTargetInstanceId;

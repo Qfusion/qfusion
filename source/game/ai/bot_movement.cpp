@@ -810,19 +810,8 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     Vec3 velocityVec(self->velocity);
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
-    bool shouldSaveCachedLookVec = false;
-    if (ShouldSkipThinkFrame() && hasCachedIntendedLookVec)
-    {
-        *intendedLookVec = cachedIntendedLookVec;
-    }
-    else
-    {
-        // Following two calls are quite expensive, so its a good idea
-        // to cache results of these calls for a think cycle (several game frames)
-        StraightenOrInterpolateLookVec(intendedLookVec, speed);
-        bool hasObstacles = CheckAndTryAvoidObstacles(intendedLookVec, ucmd, speed);
-        shouldSaveCachedLookVec = !hasObstacles;
-    }
+    StraightenOrInterpolateLookVec(intendedLookVec, speed);
+    CheckAndTryAvoidObstacles(intendedLookVec, ucmd, speed);
 
     Vec3 toTargetDir2D(*intendedLookVec);
     toTargetDir2D.z() = 0;
@@ -933,12 +922,6 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
         ucmd->forwardmove = 0;
         ucmd->upmove = 0;
     }
-
-    if (shouldSaveCachedLookVec)
-    {
-        cachedIntendedLookVec = *intendedLookVec;
-    }
-    hasCachedIntendedLookVec = shouldSaveCachedLookVec;
 }
 
 void Bot::CheckTargetReached()
