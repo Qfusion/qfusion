@@ -32,7 +32,7 @@ bool NavEntity::MayBeReachedNow(const edict_t *grabber)
 
 	if ((goalFlags & (GoalFlags::REACH_ENTITY | GoalFlags::REACH_AT_TOUCH)) != GoalFlags::NONE)
 	{
-		if (BoundsIntersect(ent->r.mins, ent->r.maxs, grabber->r.mins, grabber->r.maxs))
+		if (BoundsIntersect(ent->r.absmin, ent->r.absmax, grabber->r.absmin, grabber->r.absmax))
 			return true;
 	}
 	else
