@@ -579,13 +579,17 @@ void Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
 {
     if (nextReaches.empty())
     {
-        // Looks like we are in air above a ground, keep as is waiting for landing.
-        VectorCopy(self->velocity, intendedLookVec->data());
-        return;
-    }
-    if (currAasAreaNum == goalAasAreaNum)
-    {
-        *intendedLookVec = goalTargetPoint - self->s.origin;
+        if (currAasAreaNum != goalAasAreaNum)
+        {
+            // Looks like we are in air above a ground, keep as is waiting for landing.
+            VectorCopy(self->velocity, intendedLookVec->data());
+            return;
+        }
+        else
+        {
+            // Move to a goal origin
+            *intendedLookVec = goalTargetPoint - self->s.origin;
+        }
         return;
     }
 
