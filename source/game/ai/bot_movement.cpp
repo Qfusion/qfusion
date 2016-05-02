@@ -35,62 +35,62 @@ void Bot::Move(usercmd_t *ucmd)
     AAS_AreaInfo(currAasAreaNum, &currAreaInfo);
     const int currAreaContents = currAreaInfo.contents;
 
-    Vec3 moveVec(self->velocity);  // Use as a default one
+    Vec3 intendedLookVec(self->velocity);  // Use as a default one
     if (currAasAreaNum != goalAasAreaNum)
     {
         if (!nextReaches.empty())
         {
             const auto &nextReach = nextReaches.front();
             if (!IsCloseToReachStart())
-                moveVec = Vec3(nextReach.start) - self->s.origin;
+                intendedLookVec = Vec3(nextReach.start) - self->s.origin;
             else
             {
                 Vec3 linkVec(nextReach.end);
                 linkVec -= nextReach.start;
                 linkVec.NormalizeFast();
-                moveVec = (16.0f * linkVec + nextReach.end) - self->s.origin;
+                intendedLookVec = (16.0f * linkVec + nextReach.end) - self->s.origin;
             }
         }
     }
     else
     {
-        moveVec = Vec3(self->s.origin) - goalTargetPoint;
+        intendedLookVec = Vec3(self->s.origin) - goalTargetPoint;
     }
 
     if (self->is_ladder)
     {
-        MoveOnLadder(&moveVec, ucmd);
+        MoveOnLadder(&intendedLookVec, ucmd);
     }
     else if (currAreaContents & AREACONTENTS_JUMPPAD)
     {
-        MoveEnteringJumppad(&moveVec, ucmd);
+        MoveEnteringJumppad(&intendedLookVec, ucmd);
     }
     else if (hasTriggeredJumppad)
     {
-        MoveRidingJummpad(&moveVec, ucmd);
+        MoveRidingJummpad(&intendedLookVec, ucmd);
     }
     // Platform riding - No move, riding elevator
     else if (currAreaContents & AREACONTENTS_MOVER)
     {
         if (IsCloseToReachStart())
-            MoveEnteringPlatform(&moveVec, ucmd);
+            MoveEnteringPlatform(&intendedLookVec, ucmd);
         else
-            MoveRidingPlatform(&moveVec, ucmd);
+            MoveRidingPlatform(&intendedLookVec, ucmd);
     }
     else // standard movement
     {
         // starting a rocket jump
         if (!nextReaches.empty() && IsCloseToReachStart() && nextReaches.front().traveltype == TRAVEL_ROCKETJUMP)
         {
-            MoveStartingARocketjump(&moveVec, ucmd);
+            MoveStartingARocketjump(&intendedLookVec, ucmd);
         }
         else if (self->is_swim)
         {
-            MoveSwimming(&moveVec, ucmd);
+            MoveSwimming(&intendedLookVec, ucmd);
         }
         else
         {
-            MoveGenericRunning(&moveVec, ucmd);
+            MoveGenericRunning(&intendedLookVec, ucmd);
         }
     }
 
@@ -99,7 +99,7 @@ void Bot::Move(usercmd_t *ucmd)
         float turnSpeedMultiplier = requestedViewTurnSpeedMultiplier;
         if (HasEnemy())
         {
-            moveVec.NormalizeFast();
+            intendedLookVec.NormalizeFast();
             Vec3 toEnemy(EnemyOrigin());
             toEnemy -= self->s.origin;
             float squareDistanceToEnemy = toEnemy.SquaredLength();
@@ -107,22 +107,22 @@ void Bot::Move(usercmd_t *ucmd)
             {
                 float invDistanceToEnemy = Q_RSqrt(squareDistanceToEnemy);
                 toEnemy *= invDistanceToEnemy;
-                if (moveVec.Dot(toEnemy) < -0.3f)
+                if (intendedLookVec.Dot(toEnemy) < -0.3f)
                 {
                     // Check whether we should center view to prevent looking at the sky or a floor while spinning
                     float factor = fabsf(self->s.origin[2] - EnemyOrigin().z()) * invDistanceToEnemy;
                     // If distance to enemy is 4x more than height difference, center view
                     if (factor < 0.25f)
                     {
-                        moveVec.z() *= 0.0001f;
+                        intendedLookVec.z() *= 0.0001f;
                     }
                     ucmd->forwardmove *= -1;
-                    moveVec *= -1;
+                    intendedLookVec *= -1;
                     turnSpeedMultiplier = 1.35f;
                 }
             }
         }
-        ChangeAngle(moveVec, turnSpeedMultiplier);
+        ChangeAngle(intendedLookVec, turnSpeedMultiplier);
     }
 }
 
@@ -179,14 +179,14 @@ void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
     ucmd->buttons |= BUTTON_SPECIAL;
 }
 
-void Bot::MoveOnLadder(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     ucmd->forwardmove = 1;
     ucmd->upmove = 1;
     ucmd->sidemove = 0;
 }
 
-void Bot::MoveEnteringJumppad(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     ucmd->upmove = 0;
     ucmd->sidemove = 0;
@@ -215,7 +215,7 @@ void Bot::MoveEnteringJumppad(Vec3 *moveVec, usercmd_t *ucmd)
     }
 }
 
-void Bot::MoveRidingJummpad(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     // First check whether bot finally landed to some area
     if (self->groundentity)
@@ -233,11 +233,11 @@ void Bot::MoveRidingJummpad(Vec3 *moveVec, usercmd_t *ucmd)
     {
         if (jumppadDestAreaNum)
         {
-            TryLandOnArea(jumppadDestAreaNum, moveVec, ucmd);
+            TryLandOnArea(jumppadDestAreaNum, intendedLookVec, ucmd);
             return;
         }
         // TryLandOnNearbyAreas() is expensive. TODO: Use timeout between calls based on current speed
-        TryLandOnNearbyAreas(moveVec, ucmd);
+        TryLandOnNearbyAreas(intendedLookVec, ucmd);
     }
 }
 
@@ -258,7 +258,7 @@ static float SquareDistanceToBoxBottom(const vec3_t origin, const vec3_t boxMins
     return xDist * xDist + yDist * yDist + zDist * zDist;
 }
 
-void Bot::TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     Vec3 bboxMins(self->s.origin), bboxMaxs(self->s.origin);
     bboxMins += Vec3(-128, -128, -128);
@@ -299,7 +299,7 @@ void Bot::TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd)
 
     for (int i = 0; i < numGroundedAreas; ++i)
     {
-        if (TryLandOnArea(areas[i], moveVec, ucmd))
+        if (TryLandOnArea(areas[i], intendedLookVec, ucmd))
             return;
     }
     // Do not press keys each frame
@@ -312,7 +312,7 @@ void Bot::TryLandOnNearbyAreas(Vec3 *moveVec, usercmd_t *ucmd)
         ucmd->buttons |= BUTTON_SPECIAL;
 }
 
-bool Bot::TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd)
+bool Bot::TryLandOnArea(int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     Vec3 areaPoint(aasworld.areas[areaNum].center);
 
@@ -333,14 +333,14 @@ bool Bot::TryLandOnArea(int areaNum, Vec3 *moveVec, usercmd_t *ucmd)
     if (trace.fraction == 1.0f)
     {
         ucmd->forwardmove = 1;
-        *moveVec = -areaPointToBotVec;
+        *intendedLookVec = -areaPointToBotVec;
         return true;
     }
 
     return false;
 }
 
-void Bot::MoveCampingASpot(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     // If hasCampingLookAtPoint is false and this function has not been called yet since last camping spot setting,
     // campingSpotLookAtPoint contains a junk, so it need to be overwritten
@@ -359,7 +359,7 @@ void Bot::MoveCampingASpot(Vec3 *moveVec, usercmd_t *ucmd)
         }
         lookAtPoint = campingSpotLookAtPoint;
     }
-    MoveCampingASpotWithGivenLookAtPoint(lookAtPoint, moveVec, ucmd);
+    MoveCampingASpotWithGivenLookAtPoint(lookAtPoint, intendedLookVec, ucmd);
 }
 
 void KeyMoveVecToUcmd(const Vec3 &keyMoveVec, const vec3_t actualLookDir, const vec3_t actualRightDir, usercmd_t *ucmd)
@@ -381,7 +381,7 @@ void KeyMoveVecToUcmd(const Vec3 &keyMoveVec, const vec3_t actualLookDir, const 
         ucmd->sidemove = -1;
 }
 
-void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     vec3_t actualLookDir, actualRightDir;
     AngleVectors(self->s.angles, actualLookDir, actualRightDir, nullptr);
@@ -396,7 +396,7 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *mo
         ucmd->sidemove = 0;
         ucmd->upmove = 0;
 
-        *moveVec = botToSpot;
+        *intendedLookVec = botToSpot;
         // Very cheap workaround for "moving in planet gravity field" glitch by lowering move speed
         Vec3 botToSpotDir = botToSpot * (1.0f / distance);
         if (botToSpotDir.Dot(actualLookDir) < 0.7f)
@@ -422,7 +422,7 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *mo
     }
 
     // Keep actual look dir as-is, adjust position by keys only
-    *moveVec = Vec3(actualLookDir);
+    *intendedLookVec = Vec3(actualLookDir);
 
     if (campingSpotStrafeTimeout < level.time)
     {
@@ -471,7 +471,7 @@ void Bot::MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd)
     moveVec->z() = 0;
 }
 
-void Bot::MoveEnteringPlatform(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveEnteringPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     ucmd->forwardmove = 1;
     ucmd->upmove = 1;
@@ -480,7 +480,7 @@ void Bot::MoveEnteringPlatform(Vec3 *moveVec, usercmd_t *ucmd)
     // TODO: Change platform
 }
 
-void Bot::MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveStartingARocketjump(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     ucmd->forwardmove = 1;
     ucmd->upmove = 0;
@@ -497,7 +497,7 @@ void Bot::MoveStartingARocketjump(Vec3 *moveVec, usercmd_t *ucmd)
     }
 }
 
-void Bot::MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveSwimming(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     ucmd->forwardmove = true;
 
@@ -506,15 +506,15 @@ void Bot::MoveSwimming(Vec3 *moveVec, usercmd_t *ucmd)
     //    ucmd->upmove = 1;
 }
 
-bool Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
+bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed)
 {
-    float moveVecSqLen = moveVec->SquaredLength();
-    if (moveVecSqLen < 0.01f)
+    float squareLen = intendedLookVec->SquaredLength();
+    if (squareLen < 0.01f)
         return true;
 
-    *moveVec *= Q_RSqrt(moveVecSqLen);
+    *intendedLookVec *= Q_RSqrt(squareLen);
 
-    Vec3 baseOffsetVec(*moveVec);
+    Vec3 baseOffsetVec(*intendedLookVec);
     baseOffsetVec *= 24.0f + 96.0f * BoundedFraction(speed, 900);
 
     Vec3 forwardVec(baseOffsetVec);
@@ -564,7 +564,7 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
         if (trace.fraction > bestFraction)
         {
             bestFraction = trace.fraction;
-            VectorCopy(bestVec, moveVec->data());
+            VectorCopy(bestVec, intendedLookVec->data());
         }
 
         if (sign > 0)
@@ -575,25 +575,25 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *moveVec, usercmd_t *ucmd, float speed)
     return true;
 }
 
-void Bot::StraightenOrInterpolateMoveVec(Vec3 *moveVec, float speed)
+void Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
 {
     if (nextReaches.empty())
     {
         // Looks like we are in air above a ground, keep as is waiting for landing.
-        VectorCopy(self->velocity, moveVec->data());
+        VectorCopy(self->velocity, intendedLookVec->data());
         return;
     }
     if (currAasAreaNum == goalAasAreaNum)
     {
-        *moveVec = goalTargetPoint - self->s.origin;
+        *intendedLookVec = goalTargetPoint - self->s.origin;
         return;
     }
 
-    if (!TryStraightenMoveVec(moveVec, speed))
-        InterpolateMoveVec(moveVec, speed);
+    if (!TryStraightenLookVec(intendedLookVec, speed))
+        InterpolateLookVec(intendedLookVec, speed);
 }
 
-bool Bot::TryStraightenMoveVec(Vec3 *moveVec, float speed)
+bool Bot::TryStraightenLookVec(Vec3 *intendedLookVec, float speed)
 {
     // We may miss target if we straighten path
 
@@ -662,7 +662,7 @@ bool Bot::TryStraightenMoveVec(Vec3 *moveVec, float speed)
         if (trace.fraction != 1.0f)
             goto lesserStep;
 
-        *moveVec = Vec3(endReach.start) - self->s.origin;
+        *intendedLookVec = Vec3(endReach.start) - self->s.origin;
         return true;
 
 lesserStep:
@@ -672,16 +672,16 @@ lesserStep:
     return false;
 }
 
-void Bot::InterpolateMoveVec(Vec3 *moveVec, float speed)
+void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
 {
     if (nextReaches.empty())
-        FailWith("InterpolateMoveVec(): nextReaches is empty");
+        FailWith("InterpolateLookVec(): nextReaches is empty");
 
     const float radius = 72.0f + 72.0f * BoundedFraction(speed - 320, 640);
 
     if (distanceToNextReachStart > radius)
     {
-        SetMoveVecToPendingReach(moveVec);
+        SetLookVecToPendingReach(intendedLookVec);
         return;
     }
 
@@ -732,35 +732,35 @@ void Bot::InterpolateMoveVec(Vec3 *moveVec, float speed)
             break;
     }
 
-    if (!nearestReachesCount || moveVec->SquaredLength() < 0.01f)
+    if (!nearestReachesCount || intendedLookVec->SquaredLength() < 0.01f)
     {
-        SetMoveVecToPendingReach(moveVec);
+        SetLookVecToPendingReach(intendedLookVec);
         return;
     }
 
-    *moveVec = Vec3(nextReaches.front().start) - self->s.origin;
-    moveVec->NormalizeFast();
+    *intendedLookVec = Vec3(nextReaches.front().start) - self->s.origin;
+    intendedLookVec->NormalizeFast();
     if (hasOnlySingleFarReach)
     {
         float distanceFactor = distanceToNextReachStart / radius; // 0..1
-        *moveVec *= distanceFactor;
+        *intendedLookVec *= distanceFactor;
         VectorScale(singleFarNextReachDir, 1.0f - distanceFactor, singleFarNextReachDir);
-        *moveVec += singleFarNextReachDir;
+        *intendedLookVec += singleFarNextReachDir;
     }
     else
     {
-        *moveVec *= distanceToNextReachStart / radius;
+        *intendedLookVec *= distanceToNextReachStart / radius;
         for (int i = 0; i < nearestReachesCount; ++i)
-            *moveVec += weightedDirsToReachStart[i];
+            *intendedLookVec += weightedDirsToReachStart[i];
     }
     // moveVec is not required to be normalized, leave it as is
 }
 
-void Bot::SetMoveVecToPendingReach(Vec3 *moveVec)
+void Bot::SetLookVecToPendingReach(Vec3 *intendedLookVec)
 {
     Vec3 linkVec = Vec3(nextReaches.front().end) - nextReaches.front().start;
     linkVec.NormalizeFast();
-    *moveVec = Vec3(16 * linkVec + nextReaches.front().start) - self->s.origin;
+    *intendedLookVec = Vec3(16 * linkVec + nextReaches.front().start) - self->s.origin;
 }
 
 void Bot::SetPendingLandingDash(usercmd_t *ucmd)
@@ -803,34 +803,29 @@ bool Bot::CheckPendingLandingDashTimedOut()
     return false;
 }
 
-void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     if (TryApplyPendingLandingDash(ucmd))
         return;
 
-    // moveDir is initially set to a vector from self to currMoveTargetPoint.
-    // However, if we have any tangential velocity in a trajectory and it is not directed to the target.
-    // we are likely going to miss the target point. We have to check actual look angles
-    // and assist by turning to the target harder and/or assisting by strafe keys (when picking an item)
-
     Vec3 velocityVec(self->velocity);
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
-    bool shouldSaveCachedMoveVec = false;
-    if (ShouldSkipThinkFrame() && hasCachedMoveVec)
+    bool shouldSaveCachedLookVec = false;
+    if (ShouldSkipThinkFrame() && hasCachedIntendedLookVec)
     {
-        *moveVec = cachedMoveVec;
+        *intendedLookVec = cachedIntendedLookVec;
     }
     else
     {
         // Following two calls are quite expensive, so its a good idea
         // to cache results of these calls for a think cycle (several game frames)
-        StraightenOrInterpolateMoveVec(moveVec, speed);
-        bool hasObstacles = CheckAndTryAvoidObstacles(moveVec, ucmd, speed);
-        shouldSaveCachedMoveVec = !hasObstacles;
+        StraightenOrInterpolateLookVec(intendedLookVec, speed);
+        bool hasObstacles = CheckAndTryAvoidObstacles(intendedLookVec, ucmd, speed);
+        shouldSaveCachedLookVec = !hasObstacles;
     }
 
-    Vec3 toTargetDir2D(*moveVec);
+    Vec3 toTargetDir2D(*intendedLookVec);
     toTargetDir2D.z() = 0;
 
     // Do not use look dir as an actual dir, bot may move backwards
@@ -878,10 +873,10 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             else
             {
                 // Given an actual move dir line (a line that goes through selfOrigin to selfOrigin + actualDir2D),
-                // determine on which side the move target (defined by moveVec) is
+                // determine on which side the move target (defined by intendedLookVec) is
                 float lineNormalX = +actualDir2D.y();
                 float lineNormalY = -actualDir2D.x();
-                int side = Q_sign(lineNormalX * moveVec->x() + lineNormalY * moveVec->y());
+                int side = Q_sign(lineNormalX * intendedLookVec->x() + lineNormalY * intendedLookVec->y());
 
                 // Check whether we may increase requested turn direction
                 if (actualToTarget2DDot > -0.5)
@@ -902,12 +897,12 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
                     float currAngle = RAD2DEG(acosf(actualToTarget2DDot)) * side;
                     mat3_t matrix;
                     AnglesToAxis(Vec3(0, currAngle * (1.0f + extraTurn), 0).data(), matrix);
-                    Matrix3_TransformVector(matrix, moveVec->data(), moveVec->data());
+                    Matrix3_TransformVector(matrix, intendedLookVec->data(), intendedLookVec->data());
                 }
                 else if (!isOnGroundThisFrame && Skill() > 0.33f)
                 {
                     // Center view before spinning, do not spin looking at the sky or a floor
-                    moveVec->z() = 0;
+                    intendedLookVec->z() = 0;
                     SetPendingLandingDash(ucmd);
                 }
                 else
@@ -930,7 +925,7 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
             }
 
             // Don't bend too hard
-            moveVec->z() *= 0.33f;
+            intendedLookVec->z() *= 0.33f;
         }
     }
     else
@@ -940,11 +935,11 @@ void Bot::MoveGenericRunning(Vec3 *moveVec, usercmd_t *ucmd)
         ucmd->upmove = 0;
     }
 
-    if (shouldSaveCachedMoveVec)
+    if (shouldSaveCachedLookVec)
     {
-        cachedMoveVec = *moveVec;
+        cachedIntendedLookVec = *intendedLookVec;
     }
-    hasCachedMoveVec = shouldSaveCachedMoveVec;
+    hasCachedIntendedLookVec = shouldSaveCachedLookVec;
 }
 
 void Bot::CheckTargetReached()
