@@ -1393,11 +1393,11 @@ static rserr_t R_PostInit( void )
 /*
 * R_SetMode
 */
-rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo )
+rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless )
 {
 	rserr_t err;
 	
-	err = GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo );
+	err = GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo, borderless );
 	if( err != rserr_ok )
 	{
 		Com_Printf( "Could not GLimp_SetMode()\n" );

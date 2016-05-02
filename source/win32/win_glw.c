@@ -46,7 +46,7 @@ glwstate_t glw_state;
 
 #pragma warning( disable : 4055 )
 
-static void GLimp_SetWindowSize( bool fullscreen )
+static void GLimp_SetWindowSize( bool fullscreen, bool borderless )
 {
 	RECT r;
 	int stylebits;
@@ -64,15 +64,24 @@ static void GLimp_SetWindowSize( bool fullscreen )
 		stylebits = ( WS_POPUP|WS_VISIBLE );
 		parentHWND = NULL;
 	}
-	else if( parentHWND )
+	else 
 	{
-		exstyle = 0;
-		stylebits = WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_VISIBLE;
-	}
-	else
-	{
-		exstyle = 0;
-		stylebits = WINDOW_STYLE;
+		if( borderless )
+		{
+			exstyle = WS_EX_TOPMOST;
+			stylebits = ( WS_POPUP|WS_VISIBLE );
+			parentHWND = NULL;
+		}
+		else if( parentHWND )
+		{
+			exstyle = 0;
+			stylebits = WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_VISIBLE;
+		}
+		else
+		{
+			exstyle = 0;
+			stylebits = WINDOW_STYLE;
+		}
 	}
 
 	r.left = 0;
@@ -117,7 +126,6 @@ static void GLimp_SetWindowSize( bool fullscreen )
 
 static void GLimp_CreateWindow( void )
 {
-	bool fullscreen = glConfig.fullScreen;
 	HWND parentHWND = glw_state.parenthWnd;
 #ifdef WITH_UTF8
 	WNDCLASSW wc;
@@ -174,7 +182,7 @@ static void GLimp_CreateWindow( void )
 	if( !glw_state.hWnd )
 		Sys_Error( "Couldn't create window" );
 
-	GLimp_SetWindowSize( fullscreen );
+	GLimp_SetWindowSize( glConfig.fullScreen, glConfig.borderless );
 }
 
 /*
@@ -213,7 +221,7 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 		{
 			ri.Com_Printf( "ok\n" );
 			glConfig.fullScreen = true;
-			GLimp_SetWindowSize( true );
+			GLimp_SetWindowSize( true, glConfig.borderless );
 			return rserr_ok;
 		}
 
@@ -222,7 +230,7 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 	}
 
 	ChangeDisplaySettings( 0, 0 );
-	GLimp_SetWindowSize( false );
+	GLimp_SetWindowSize( false, glConfig.borderless );
 
 	return rserr_ok;
 }
@@ -230,7 +238,7 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless )
 {
 	const char *win_fs[] = { "W", "FS" };
 
@@ -262,6 +270,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.height = height;
 	glConfig.fullScreen = ( fullscreen ? GLimp_SetFullscreenMode( displayFrequency, fullscreen ) == rserr_ok : false );
 	glConfig.stereoEnabled = stereo;
+	glConfig.borderless = borderless;
 
 	GLimp_CreateWindow();
 
