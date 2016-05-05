@@ -54,31 +54,28 @@ void GLimp_SetWindowIcon( void )
 rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 {
 	Uint32 flags = 0;
+	bool borderless = glConfig.borderless;
 
 	if( fullscreen ) {
-#ifdef __APPLE__
+		flags = SDL_WINDOW_FULLSCREEN;
+	}
+	if( borderless ) {
 		// we need to use SDL_WINDOW_FULLSCREEN_DESKTOP to support Alt+Tab from fullscreen on OS X
 		flags = SDL_WINDOW_FULLSCREEN_DESKTOP;
-#else
-		flags = SDL_WINDOW_FULLSCREEN;
-#endif
 	}
 
-    if( SDL_SetWindowFullscreen( glw_state.sdl_window, flags ) == 0 ) {
-        glConfig.fullScreen = fullscreen;
-        return rserr_ok;
-    }
+	if( SDL_SetWindowFullscreen( glw_state.sdl_window, flags ) == 0 ) {
+		glConfig.fullScreen = fullscreen;
+		return rserr_ok;
+	}
 
     return rserr_invalid_fullscreen;
 }
 
-static void GLimp_CreateWindow( int x, int y, int width, int height, bool borderless )
+static void GLimp_CreateWindow( int x, int y, int width, int height )
 {
 	unsigned flags = SDL_WINDOW_OPENGL;
-	
-	if( borderless )
-		flags |= SDL_WINDOW_BORDERLESS;
-	
+
 	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, 
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags );
 
@@ -104,6 +101,15 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 {
 	const char *win_fs[] = {"W", "FS"};
 
+#ifdef __APLE__
+	if( fullscreen ) {
+		borderless = true;
+	}
+	else {
+		borderless = false;
+	}
+#endif
+
 	ri.Com_Printf( "Initializing OpenGL display\n" );
 	ri.Com_Printf( "...setting mode:" );
 	ri.Com_Printf( " %d %d %s\n", width, height, win_fs[fullscreen] );
@@ -113,7 +119,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		GLimp_Shutdown();
 	}
 
-	GLimp_CreateWindow( x, y, width, height, borderless );
+	GLimp_CreateWindow( x, y, width, height );
 
 	// init all the gl stuff for the window
 	if( !GLimp_InitGL( r_stencilbits->integer, stereo ) ) {
@@ -121,10 +127,16 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		return rserr_invalid_mode;
 	}
 
-    glConfig.fullScreen = fullscreen ? GLimp_SetFullscreenMode( displayFrequency, fullscreen ) == rserr_ok : false;
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.borderless = borderless;
+	glConfig.fullScreen = fullscreen;
+	if( GLimp_SetFullscreenMode( displayFrequency, fullscreen ) == rserr_ok ) {
+		glConfig.fullScreen = fullscreen;
+	}
+	else {
+		glConfig.fullScreen = !fullscreen;
+	}
 
     return glConfig.fullScreen == fullscreen ? rserr_ok : rserr_invalid_fullscreen;
 }

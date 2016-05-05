@@ -585,18 +585,14 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned items, unsigned clipFl
 	unsigned i, j;
 	mleaf_t	*leaf;
 	uint8_t *pvs;
-	int rdflags;
 	uint8_t *areabits;
 	int arearowbytes, areabytes;
-	bool haveareabits, novis;
+	bool novis;
 
 	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return;
 
 	novis = rn.renderFlags & RF_NOVIS || rf.viewcluster == -1 || !rsh.worldBrushModel->pvs;
-	rdflags = rn.refdef.rdflags;
-
-	haveareabits = rn.refdef.areabits != NULL;
 	arearowbytes = ((rsh.worldBrushModel->numareas+7)/8);
 	areabytes = arearowbytes;
 #ifdef AREAPORTALS_MATRIX
