@@ -65,7 +65,7 @@ static void S_WriteSwappedLinearBlastStereo16( void )
 		snd_out[i+1] = val;
 	}
 }
-#elif defined ( _MSC_VER ) && !defined( id386 )
+#elif defined ( _MSC_VER ) && defined( id386 )
 static ATTRIBUTE_NAKED void S_WriteLinearBlastStereo16( void )
 {
 	__asm {
