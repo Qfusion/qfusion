@@ -119,8 +119,7 @@ private:
     void MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveRidingPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveEnteringPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveStartingARocketjump(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, Vec3 *intendedLookVec, usercmd_t *ucmd);

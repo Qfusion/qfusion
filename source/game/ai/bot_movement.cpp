@@ -69,13 +69,9 @@ void Bot::Move(usercmd_t *ucmd)
     {
         MoveRidingJummpad(&intendedLookVec, ucmd);
     }
-    // Platform riding - No move, riding elevator
-    else if (currAreaContents & AREACONTENTS_MOVER)
+    else if (self->groundentity && Use_Plat == self->groundentity->use)
     {
-        if (IsCloseToReachStart())
-            MoveEnteringPlatform(&intendedLookVec, ucmd);
-        else
-            MoveRidingPlatform(&intendedLookVec, ucmd);
+        MoveOnPlatform(&intendedLookVec, ucmd);
     }
     else // standard movement
     {
@@ -449,35 +445,21 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *in
         ucmd->buttons |= BUTTON_WALK;
 }
 
-void Bot::MoveRidingPlatform(Vec3 *moveVec, usercmd_t *ucmd)
+void Bot::MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
-    /*
-    vec3_t v1, v2;
-    VectorCopy(self->s.origin, v1);
-    VectorCopy(nodes[self->ai->next_node].origin, v2);
-    v1[2] = v2[2] = 0;
-    if (DistanceFast(v1, v2) > 32 && DotProduct(lookdir, pathdir) > BOT_FORWARD_EPSILON)
-        ucmd->forwardmove = 1; // walk to center
-
-     */
-
-    // TODO: Change to "MoveHoldingASpot(Vec3 spotOrigin, int spotAreaNum);
-    // TODO: Spot origin and area may be updated
-
-    ucmd->buttons |= BUTTON_WALK;
-    ucmd->upmove = 0;
-    ucmd->sidemove = 0;
-
-    moveVec->z() = 0;
-}
-
-void Bot::MoveEnteringPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd)
-{
-    ucmd->forwardmove = 1;
-    ucmd->upmove = 1;
-    ucmd->sidemove = 0;
-
-    // TODO: Change platform
+    switch (self->groundentity->moveinfo.state)
+    {
+        case STATE_TOP:
+            // Start bunnying off the platform
+            MoveGenericRunning(intendedLookVec, ucmd);
+            break;
+        default:
+            // Its poor but platforms are not widely used.
+            ucmd->forwardmove = 0;
+            ucmd->sidemove = 0;
+            ucmd->upmove = 0;
+            break;
+    }
 }
 
 void Bot::MoveStartingARocketjump(Vec3 *intendedLookVec, usercmd_t *ucmd)
