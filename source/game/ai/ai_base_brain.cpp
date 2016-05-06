@@ -96,14 +96,21 @@ bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
 {
     if (goalEnt->IsDisabled())
         return true;
-    // TODO: Remove when item timing is implemented
-    if (!goalEnt->IsSpawnedAtm())
-        return true;
+
+    if (goalEnt->IsBasedOnSomeEntity())
+    {
+        unsigned spawnTime = goalEnt->SpawnTime();
+        // The entity is not spawned and respawn time is unknown
+        if (!spawnTime)
+            return true;
+    }
 
     return false;
 }
 
 constexpr float COST_INFLUENCE = 0.5f;
+constexpr float MOVE_TIME_WEIGHT = 1.0f;
+constexpr float WAIT_TIME_WEIGHT = 3.5f;
 
 void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
 {
@@ -130,10 +137,6 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
         if (goalEnt->IsDisabled())
             continue;
 
-        // Items timing is currently disabled
-        if (goalEnt->ToBeSpawnedLater())
-            continue;
-
         if (goalEnt->Item() && !G_Gametype_CanPickUpItem(goalEnt->Item()))
             continue;
 
@@ -142,32 +145,45 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
         if (weight <= 0.0f)
             continue;
 
-        float cost = 0;
-        if (currAasAreaNum == goalEnt->AasAreaNum())
-        {
-            // Traveling in a single area is cheap anyway for a player-like bot, don't bother to compute travel time.
-            cost = 1;
-        }
-        else
+        unsigned moveDuration = 1;
+        unsigned waitDuration = 1;
+        if (currAasAreaNum != goalEnt->AasAreaNum())
         {
             // We ignore cost of traveling in goal area, since:
             // 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
             // 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
-            cost = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum());
+            moveDuration = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum()) * 10U;
+            // AAS functions return 0 as a "none" value, 1 as a lowest feasible value
+            if (!moveDuration)
+                continue;
 
             if (goalEnt->IsDroppedEntity())
             {
                 // Do not pick an entity that is likely to dispose before it may be reached
-                // AAS travel times are measured in seconds^-2
-                if (goalEnt->DroppedEntityTimeout() <= level.time + 10 * (unsigned)cost)
-                    cost = 0;
+                if (goalEnt->DroppedEntityTimeout() <= level.time + moveDuration)
+                    continue;
             }
         }
 
-        if (cost == 0)
-            continue;
+        if (goalEnt->IsBasedOnSomeEntity())
+        {
+            unsigned spawnTime = goalEnt->SpawnTime();
+            // The entity is not spawned and respawn time is unknown
+            if (!spawnTime)
+                continue;
 
-        clamp_low(cost, 1);
+            // Entity origin may be reached at this time
+            unsigned reachTime = level.time + moveDuration;
+            if (reachTime < spawnTime)
+                waitDuration = spawnTime - reachTime;
+
+            // Waiting time is too large
+            if (waitDuration > 3000)
+                continue;
+        }
+
+        float cost = 0.0001f + MOVE_TIME_WEIGHT * moveDuration + WAIT_TIME_WEIGHT * waitDuration;
+
         weight = (1000 * weight) / (cost * COST_INFLUENCE); // Check against cost of getting there
 
         if (currLongTermGoalEnt == goalEnt)
@@ -179,6 +195,7 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
             bestGoalEnt = goalEnt;
         }
     }
+
 
     // If it is time to pick a new goal (not just re-evaluate current one), do not be too sticky to the current goal
     const float currToBestWeightThreshold = longTermGoalSearchTimeout > level.time ? 0.6f : 0.8f;

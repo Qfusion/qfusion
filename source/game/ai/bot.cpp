@@ -37,7 +37,8 @@ Bot::Bot(edict_t *self, float skillLevel)
       campingSpotLookAtPoint(INFINITY, INFINITY, INFINITY),
       campingSpotStrafeDir(INFINITY, INFINITY, INFINITY),
       campingSpotStrafeTimeout(0),
-      campingSpotLookAtPointTimeout(0)
+      campingSpotLookAtPointTimeout(0),
+      isWaitingForItemSpawn(false)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;

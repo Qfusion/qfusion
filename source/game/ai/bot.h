@@ -103,6 +103,8 @@ private:
     // When to change randomly chosen look-at-point (if the point is not initially specified)
     unsigned campingSpotLookAtPointTimeout;
 
+    bool isWaitingForItemSpawn;
+
     void SetCampingSpot(const Vec3 &spotOrigin, float spotRadius, float alertness = 0.5f);
     void SetCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRaduis, float alertness = 0.5f);
     void ClearCampingSpot();
