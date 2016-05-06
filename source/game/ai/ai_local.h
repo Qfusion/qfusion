@@ -96,6 +96,7 @@ public:
 	inline bool IsEnabled() const { return ent && ent->r.inuse; }
 	inline bool IsDisabled() const { return !ent || !ent->r.inuse; }
 	inline bool IsBasedOnEntity(const edict_t *e) const { return e && this->ent == e; }
+	inline bool IsBasedOnSomeEntity() const { return ent != nullptr; }
 	inline bool IsClient() const { return ent->r.client != nullptr; }
 	inline bool IsSpawnedAtm() const { return ent->r.solid != SOLID_NOT; }
 	inline bool ToBeSpawnedLater() const { return ent->r.solid == SOLID_NOT; }
@@ -108,6 +109,10 @@ public:
 	}
 
 	bool MayBeReachedNow(const edict_t *grabber);
+	// Returns level.time when the item is already spawned
+	// Returns zero if spawn time is unknown
+	// Returns spawn time when the item is not spawned and spawn time may be predicted
+	unsigned SpawnTime() const;
 };
 
 class GoalEntitiesRegistry
@@ -424,6 +429,18 @@ public:
 
 	inline bool MayReachLongTermGoalNow() { return longTermGoal && longTermGoal->MayBeReachedNow(self); }
 	inline bool MayReachShortTermGoalNow() { return shortTermGoal && shortTermGoal->MayBeReachedNow(self); }
+
+	bool ShouldWaitForLongTermGoal()
+	{
+		if (!longTermGoal)
+			return false;
+		unsigned spawnTime = longTermGoal->SpawnTime();
+		if (!spawnTime)
+			return false;
+		return spawnTime > level.time;
+	}
+
+	inline Vec3 LongTermGoalOrigin() { return longTermGoal->Origin(); }
 
 	inline bool IsCloseToLongTermGoal(float proximityThreshold = 128.0f)
 	{

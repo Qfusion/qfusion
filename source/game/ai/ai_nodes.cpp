@@ -32,6 +32,9 @@ bool NavEntity::MayBeReachedNow(const edict_t *grabber)
 
 	if ((goalFlags & (GoalFlags::REACH_ENTITY | GoalFlags::REACH_AT_TOUCH)) != GoalFlags::NONE)
 	{
+		if (!IsSpawnedAtm())
+			return false;
+
 		if (BoundsIntersect(ent->r.absmin, ent->r.absmax, grabber->r.absmin, grabber->r.absmax))
 			return true;
 	}
@@ -41,6 +44,23 @@ bool NavEntity::MayBeReachedNow(const edict_t *grabber)
 			return true;
 	}
 	return false;
+}
+
+unsigned NavEntity::SpawnTime() const
+{
+	if (!ent || !ent->r.inuse)
+		return 0;
+	if (ent->r.solid == SOLID_TRIGGER)
+		return level.time;
+	if (!ent->item || !ent->classname)
+		return 0;
+	// MH needs special handling
+	// If MH owner is sent, exact MH spawn time can't be predicted
+	// Otherwise fallback to the generic spawn prediction code below
+	// Check owner first to cut off string comparison early in negative case
+	if (ent->r.owner && !Q_stricmp("item_health_mega", ent->classname))
+		return 0;
+	return ent->nextThink;
 }
 
 GoalEntitiesRegistry GoalEntitiesRegistry::instance;

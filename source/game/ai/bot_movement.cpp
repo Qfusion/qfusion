@@ -75,8 +75,12 @@ void Bot::Move(usercmd_t *ucmd)
     }
     else // standard movement
     {
+        if (isWaitingForItemSpawn)
+        {
+            MoveCampingASpot(&intendedLookVec, ucmd);
+        }
         // starting a rocket jump
-        if (!nextReaches.empty() && IsCloseToReachStart() && nextReaches.front().traveltype == TRAVEL_ROCKETJUMP)
+        else if (!nextReaches.empty() && IsCloseToReachStart() && nextReaches.front().traveltype == TRAVEL_ROCKETJUMP)
         {
             MoveStartingARocketjump(&intendedLookVec, ucmd);
         }
@@ -916,18 +920,50 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
 void Bot::CheckTargetReached()
 {
     if (currAasAreaNum != goalAasAreaNum)
+    {
+        // If the bot was waiting for item spawn and for example has been pushed from the goal, stop camping a goal
+        if (isWaitingForItemSpawn)
+        {
+            ClearCampingSpot();
+            isWaitingForItemSpawn = false;
+        }
         return;
+    }
 
     if (botBrain.MayReachLongTermGoalNow())
     {
         botBrain.OnLongTermGoalReached();
+        if (isWaitingForItemSpawn)
+        {
+            ClearCampingSpot();
+            isWaitingForItemSpawn = false;
+        }
+        goalAasAreaNum = 0;
+        nextReaches.clear();
         return;
     }
 
     if (botBrain.MayReachShortTermGoalNow())
     {
         botBrain.OnShortTermGoalReached();
+        if (isWaitingForItemSpawn)
+        {
+            ClearCampingSpot();
+            isWaitingForItemSpawn = false;
+        }
+        goalAasAreaNum = 0;
+        nextReaches.clear();
         return;
+    }
+
+    // This call checks for long term goal existence too
+    if (botBrain.ShouldWaitForLongTermGoal())
+    {
+        if (!isWaitingForItemSpawn)
+        {
+            SetCampingSpot(botBrain.LongTermGoalOrigin(), 36, 0.75f);
+            isWaitingForItemSpawn = true;
+        }
     }
 }
 
