@@ -851,10 +851,10 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             else
             {
                 // Given an actual move dir line (a line that goes through selfOrigin to selfOrigin + actualDir2D),
-                // determine on which side the move target (defined by intendedLookVec) is
+                // determine on which side the move target (defined by toTargetDir2D) is
                 float lineNormalX = +actualDir2D.y();
                 float lineNormalY = -actualDir2D.x();
-                int side = Q_sign(lineNormalX * intendedLookVec->x() + lineNormalY * intendedLookVec->y());
+                int side = Q_sign(lineNormalX * toTargetDir2D.x() + lineNormalY * toTargetDir2D.y());
 
                 // Check whether we may increase requested turn direction
                 if (actualToTarget2DDot > -0.5)
