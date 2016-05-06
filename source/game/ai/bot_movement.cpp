@@ -675,10 +675,12 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
     }
 
     vec3_t weightedDirsToReachStart[MAX_REACH_CACHED];
+    vec3_t weightedDirsToAreaCenter[MAX_REACH_CACHED];
 
     // If true, next reach. is outside of a transition radius
     bool hasOnlySingleFarReach = false;
-    vec3_t singleFarNextReachDir;
+    Vec3 singleFarNextReachDir(0, 0, 0);
+    Vec3 singleFarNextAreaCenterDir(0, 0, 0);
 
     int nearestReachesCount = 0;
     for (unsigned i = 1; i < nextReaches.size(); ++i)
@@ -696,9 +698,10 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
             // If we haven't found next reach. yet
             if (nearestReachesCount == 0)
             {
-                VectorCopy(reach.start, singleFarNextReachDir);
-                VectorSubtract(singleFarNextReachDir, self->s.origin, singleFarNextReachDir);
-                VectorNormalizeFast(singleFarNextReachDir);
+                singleFarNextReachDir = Vec3(reach.start) - self->s.origin;
+                singleFarNextReachDir.NormalizeFast();
+                singleFarNextAreaCenterDir = Vec3(aasworld.areas[reach.areanum].center) - self->s.origin;
+                singleFarNextAreaCenterDir.NormalizeFast();
                 hasOnlySingleFarReach = true;
                 nearestReachesCount = 1;
             }
@@ -713,8 +716,12 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
         float invDistance = Q_RSqrt(squareDist);
         // Normalize the vector
         VectorScale(dir, invDistance, dir);
-        // Scale by distance factor
-        //VectorScale(dir, 1.0f - (1.0f / invDistance) / radius, dir);
+
+        float *centerDir = weightedDirsToAreaCenter[nearestReachesCount];
+        // Copy vector from self origin to area center
+        VectorCopy(aasworld.areas[reach.areanum].center, centerDir);
+        VectorSubtract(centerDir, self->s.origin, centerDir);
+        VectorScale(centerDir, 1.0f / VectorLengthFast(centerDir), centerDir);
 
         nearestReachesCount++;
         if (nearestReachesCount == MAX_REACH_CACHED)
@@ -733,14 +740,15 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
     {
         float distanceFactor = distanceToNextReachStart / radius; // 0..1
         *intendedLookVec *= distanceFactor;
-        VectorScale(singleFarNextReachDir, 1.0f - distanceFactor, singleFarNextReachDir);
-        *intendedLookVec += singleFarNextReachDir;
+        singleFarNextReachDir *= 1.0f - distanceFactor;
+        singleFarNextAreaCenterDir *= 1.0f - distanceFactor;
+        *intendedLookVec += 0.5f * (singleFarNextReachDir + singleFarNextAreaCenterDir);
     }
     else
     {
         *intendedLookVec *= distanceToNextReachStart / radius;
         for (int i = 0; i < nearestReachesCount; ++i)
-            *intendedLookVec += weightedDirsToReachStart[i];
+            *intendedLookVec += 0.5f * (Vec3(weightedDirsToReachStart[i]) + weightedDirsToAreaCenter[i]);
     }
     // moveVec is not required to be normalized, leave it as is
 }
