@@ -54,38 +54,6 @@ matrix:
             - libfreetype6-dev
             - zlib1g-dev
             - libcurl4-gnutls-dev
-    - os: linux
-      language: c++
-      env: QF_ARCH=win32_x86
-      compiler: i686-w64-mingw32-gcc
-      addons:
-        apt:
-          sources:
-            - kubuntu-backports
-          packages:
-            - cmake
-            - binutils-mingw-w64-i686
-            - gcc-mingw-w64-i686
-            - gcc-mingw-w64
-            - g++-mingw-w64-i686
-            - g++-mingw-w64
-            - mingw-w64
-    - os: linux
-      language: c++
-      env: QF_ARCH=win32_x86_64
-      compiler: x86_64-w64-mingw32-gcc
-      addons:
-        apt:
-          sources:
-            - kubuntu-backports
-          packages:
-            - cmake
-            - binutils-mingw-w64-x86-64
-            - gcc-mingw-w64-x86-64
-            - gcc-mingw-w64
-            - g++-mingw-w64-x86-64
-            - g++-mingw-w64
-            - mingw-w64
     - language: android
       env: QF_ARCH=android
       jdk: oraclejdk7
@@ -105,8 +73,6 @@ install:
 
 script:
   - cd source
-  - if [[ "$QF_ARCH" == "win32_x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i686-mingw.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 . && make; fi
-  - if [[ "$QF_ARCH" == "win32_x86_64" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake . && make; fi
   - if [[ "$QF_ARCH" == "x86_64" ]]; then export SDL2DIR="$HOME/.deps/$QF_ARCH" && cmake . && make; fi
   - if [[ "$QF_ARCH" == "x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.cmake -DGAME_MODULES_ONLY=1 . && make game cgame; fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then cmake -G Xcode . && xcodebuild -project qfusion.xcodeproj/ -configuration Release -target ALL_BUILD; fi
