@@ -16,4 +16,4 @@ The user data is located in `/sdcard/Android/data/package name/files/APP_VERSION
 
 Docker
 =======
-For details about compiling Docker images, please read the following Wiki [https://github.com/Picmip/qfusion/wiki/Cross-compiling-with-Docker-images](page).
+For details about compiling Docker images, please read the following Wiki  [page](https://github.com/Picmip/qfusion/wiki/Cross-compiling-with-Docker-images).
