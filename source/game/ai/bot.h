@@ -62,9 +62,11 @@ private:
     // Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
     // If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
     unsigned jumppadMoveTimeout;
-    // We have to store next areas props since reach. cache is likely to be lost in flight
-    int jumppadDestAreaNum;
-    Vec3 jumppadReachEndPoint;
+    // Next reach. cache is lost in air.
+    // Thus we have to store next areas starting a jumppad movement and try to prefer these areas for landing
+    static constexpr int MAX_LANDING_AREAS = 16;
+    int jumppadLandingAreas[MAX_LANDING_AREAS];
+    int jummpadLandingAreasCount;
 
     bool hasPendingLandingDash;
     bool isOnGroundThisFrame;
