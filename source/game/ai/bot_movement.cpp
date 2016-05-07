@@ -194,19 +194,22 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
     if (!hasTriggeredJumppad)
     {
+        jummpadLandingAreasCount = 0;
         if (!nextReaches.empty())
         {
-            jumppadDestAreaNum = nextReaches.front().areanum;
-            VectorCopy(nextReaches.front().end, jumppadReachEndPoint.data());
             // Look at the destination point
-            SetPendingLookAtPoint(jumppadReachEndPoint);
-            unsigned approxFlightTime = 2 * (unsigned) DistanceFast(nextReaches.front().start, nextReaches.front().end);
+            SetPendingLookAtPoint(Vec3(nextReaches.front().end));
+            unsigned approxFlightTime = (unsigned) DistanceFast(nextReaches.front().start, nextReaches.front().end);
             jumppadMoveTimeout = level.time + approxFlightTime;
+
+            for (const auto &reach: nextReaches)
+            {
+                if (AAS_AreaGrounded(reach.areanum))
+                    jumppadLandingAreas[jummpadLandingAreasCount++] = reach.areanum;
+            }
         }
         else
         {
-            jumppadDestAreaNum = 0;
-            VectorSet(jumppadReachEndPoint.data(), INFINITY, INFINITY, INFINITY);
             jumppadMoveTimeout = level.time + 1000;
         }
 
@@ -231,10 +234,14 @@ void Bot::MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
     if (jumppadMoveTimeout <= level.time)
     {
-        if (jumppadDestAreaNum)
+        if (jummpadLandingAreasCount)
         {
-            TryLandOnArea(jumppadDestAreaNum, intendedLookVec, ucmd);
-            return;
+            // Start from the last area in next areas chain (try to shortcut path in air)
+            for (int i = jummpadLandingAreasCount - 1; i >= 0; --i)
+            {
+                if (TryLandOnArea(jumppadLandingAreas[i], intendedLookVec, ucmd))
+                    return;
+            }
         }
         // TryLandOnNearbyAreas() is expensive. TODO: Use timeout between calls based on current speed
         TryLandOnNearbyAreas(intendedLookVec, ucmd);
