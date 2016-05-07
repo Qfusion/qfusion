@@ -95,5 +95,5 @@ deploy:
   file: "*-Release.zip"
   overwrite: true
   on:
-    repo: Qfusion/qfusion
+    repo: Picmip/qfusion
     tags: true
