@@ -375,16 +375,16 @@ static bool CG_WeaponModelUpdateRegistration( weaponinfo_t *weaponinfo, char *fi
 
 	for( p = 0; p < WEAPMODEL_PARTS; p++ )
 	{
+		// iqm
+		if( !weaponinfo->model[p] )
+		{
+			Q_snprintfz( scratch, sizeof( scratch ), "models/weapons/%s%s.iqm", filename, wmPartSufix[p] );
+			weaponinfo->model[p] = CG_RegisterModel( scratch );
+		}
 		// md3
 		if( !weaponinfo->model[p] )
 		{
 			Q_snprintfz( scratch, sizeof( scratch ), "models/weapons/%s%s.md3", filename, wmPartSufix[p] );
-			weaponinfo->model[p] = CG_RegisterModel( scratch );
-		}
-		// skm
-		if( !weaponinfo->model[p] )
-		{
-			Q_snprintfz( scratch, sizeof( scratch ), "models/weapons/%s%s.iqm", filename, wmPartSufix[p] );
 			weaponinfo->model[p] = CG_RegisterModel( scratch );
 		}
 	}
