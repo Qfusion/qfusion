@@ -1365,6 +1365,54 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 }
 
 /*
+* R_SkeletalModelLerpTag
+*/
+bool R_SkeletalModelLerpTag( orientation_t *orient, const mskmodel_t *skmodel, int oldframenum, int framenum, float lerpfrac, const char *name )
+{
+	unsigned i;
+	dualquat_t dq;
+	const bonepose_t *bp, *oldbp;
+
+	// find the appropriate tag
+	for( i = 0; i < skmodel->numbones; i++ )
+	{
+		if( skmodel->bones[i].parent < 0 && !Q_stricmp( skmodel->bones[i].name, name ) )
+			break;
+	}
+
+	if( i == skmodel->numbones )
+	{
+		//ri.Com_DPrintf ("R_SkeletalModelLerpTag: no such tag %s\n", name );
+		return false;
+	}
+
+	// ignore invalid frames
+	if( ( framenum >= (int)skmodel->numframes ) || ( framenum < 0 ) )
+	{
+#ifndef PUBLIC_BUILD
+		ri.Com_DPrintf( "R_SkeletalModelLerpTag %s: no such oldframe %i\n", name, framenum );
+#endif
+		framenum = 0;
+	}
+	if( ( oldframenum >= (int)skmodel->numframes ) || ( oldframenum < 0 ) )
+	{
+#ifndef PUBLIC_BUILD
+		ri.Com_DPrintf( "R_SkeletalModelLerpTag %s: no such oldframe %i\n", name, oldframenum );
+#endif
+		oldframenum = 0;
+	}
+
+	bp = skmodel->frames[framenum].boneposes + i;
+	oldbp = skmodel->frames[oldframenum].boneposes + i;
+
+	// interpolate axis and origin
+	DualQuat_Lerp( oldbp->dualquat, bp->dualquat, lerpfrac, dq );
+	DualQuat_ToMatrix3AndVector( dq, orient->axis, orient->origin );
+
+	return true;
+}
+
+/*
 * R_SkeletalModelBBox
 */
 float R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs )
