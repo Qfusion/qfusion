@@ -140,6 +140,7 @@ UI_Main::~UI_Main()
 	trap::Cmd_RemoveCommand( "menu_open" );
 	trap::Cmd_RemoveCommand( "menu_modal" );
 	trap::Cmd_RemoveCommand( "menu_close" );
+	trap::Cmd_RemoveCommand( "menu_quick" );
 
 	unregisterRocketCustoms();
 
