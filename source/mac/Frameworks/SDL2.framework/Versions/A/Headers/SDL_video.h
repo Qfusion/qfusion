@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2014 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -53,8 +53,8 @@ extern "C" {
 typedef struct
 {
     Uint32 format;              /**< pixel format */
-    int w;                      /**< width */
-    int h;                      /**< height */
+    int w;                      /**< width, in screen coordinates */
+    int h;                      /**< height, in screen coordinates */
     int refresh_rate;           /**< refresh rate (or zero for unspecified) */
     void *driverdata;           /**< driver-specific data, initialize to 0 */
 } SDL_DisplayMode;
@@ -143,7 +143,9 @@ typedef enum
     SDL_WINDOWEVENT_MOVED,          /**< Window has been moved to data1, data2
                                      */
     SDL_WINDOWEVENT_RESIZED,        /**< Window has been resized to data1xdata2 */
-    SDL_WINDOWEVENT_SIZE_CHANGED,   /**< The window size has changed, either as a result of an API call or through the system or user changing the window size. */
+    SDL_WINDOWEVENT_SIZE_CHANGED,   /**< The window size has changed, either as
+                                         a result of an API call or through the
+                                         system or user changing the window size. */
     SDL_WINDOWEVENT_MINIMIZED,      /**< Window has been minimized */
     SDL_WINDOWEVENT_MAXIMIZED,      /**< Window has been maximized */
     SDL_WINDOWEVENT_RESTORED,       /**< Window has been restored to normal size
@@ -189,7 +191,8 @@ typedef enum
     SDL_GL_CONTEXT_FLAGS,
     SDL_GL_CONTEXT_PROFILE_MASK,
     SDL_GL_SHARE_WITH_CURRENT_CONTEXT,
-    SDL_GL_FRAMEBUFFER_SRGB_CAPABLE
+    SDL_GL_FRAMEBUFFER_SRGB_CAPABLE,
+    SDL_GL_CONTEXT_RELEASE_BEHAVIOR
 } SDL_GLattr;
 
 typedef enum
@@ -206,6 +209,12 @@ typedef enum
     SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG      = 0x0004,
     SDL_GL_CONTEXT_RESET_ISOLATION_FLAG    = 0x0008
 } SDL_GLcontextFlag;
+
+typedef enum
+{
+    SDL_GL_CONTEXT_RELEASE_BEHAVIOR_NONE   = 0x0000,
+    SDL_GL_CONTEXT_RELEASE_BEHAVIOR_FLUSH  = 0x0001
+} SDL_GLcontextReleaseFlag;
 
 
 /* Function prototypes */
@@ -288,6 +297,18 @@ extern DECLSPEC const char * SDLCALL SDL_GetDisplayName(int displayIndex);
  *  \sa SDL_GetNumVideoDisplays()
  */
 extern DECLSPEC int SDLCALL SDL_GetDisplayBounds(int displayIndex, SDL_Rect * rect);
+
+/**
+ *  \brief Get the dots/pixels-per-inch for a display
+ *
+ *  \note Diagonal, horizontal and vertical DPI can all be optionally
+ *        returned if the parameter is non-NULL.
+ *
+ *  \return 0 on success, or -1 if no DPI information is available or the index is out of range.
+ *
+ *  \sa SDL_GetNumVideoDisplays()
+ */
+extern DECLSPEC int SDLCALL SDL_GetDisplayDPI(int displayIndex, float * ddpi, float * hdpi, float * vdpi);
 
 /**
  *  \brief Returns the number of available display modes.
@@ -393,8 +414,8 @@ extern DECLSPEC Uint32 SDLCALL SDL_GetWindowPixelFormat(SDL_Window * window);
  *               ::SDL_WINDOWPOS_UNDEFINED.
  *  \param y     The y position of the window, ::SDL_WINDOWPOS_CENTERED, or
  *               ::SDL_WINDOWPOS_UNDEFINED.
- *  \param w     The width of the window.
- *  \param h     The height of the window.
+ *  \param w     The width of the window, in screen coordinates.
+ *  \param h     The height of the window, in screen coordinates.
  *  \param flags The flags for the window, a mask of any of the following:
  *               ::SDL_WINDOW_FULLSCREEN,    ::SDL_WINDOW_OPENGL,
  *               ::SDL_WINDOW_HIDDEN,        ::SDL_WINDOW_BORDERLESS,
@@ -403,6 +424,12 @@ extern DECLSPEC Uint32 SDLCALL SDL_GetWindowPixelFormat(SDL_Window * window);
  *               ::SDL_WINDOW_ALLOW_HIGHDPI.
  *
  *  \return The id of the window created, or zero if window creation failed.
+ *
+ *  If the window is created with the SDL_WINDOW_ALLOW_HIGHDPI flag, its size
+ *  in pixels may differ from its size in screen coordinates on platforms with
+ *  high-DPI support (e.g. iOS and Mac OS X). Use SDL_GetWindowSize() to query
+ *  the client area's size in screen coordinates, and SDL_GL_GetDrawableSize()
+ *  or SDL_GetRendererOutputSize() to query the drawable size in pixels.
  *
  *  \sa SDL_DestroyWindow()
  */
@@ -494,10 +521,10 @@ extern DECLSPEC void *SDLCALL SDL_GetWindowData(SDL_Window * window,
  *  \brief Set the position of a window.
  *
  *  \param window   The window to reposition.
- *  \param x        The x coordinate of the window, ::SDL_WINDOWPOS_CENTERED, or
-                    ::SDL_WINDOWPOS_UNDEFINED.
- *  \param y        The y coordinate of the window, ::SDL_WINDOWPOS_CENTERED, or
-                    ::SDL_WINDOWPOS_UNDEFINED.
+ *  \param x        The x coordinate of the window in screen coordinates, or
+ *                  ::SDL_WINDOWPOS_CENTERED or ::SDL_WINDOWPOS_UNDEFINED.
+ *  \param y        The y coordinate of the window in screen coordinates, or
+ *                  ::SDL_WINDOWPOS_CENTERED or ::SDL_WINDOWPOS_UNDEFINED.
  *
  *  \note The window coordinate origin is the upper left of the display.
  *
@@ -510,8 +537,10 @@ extern DECLSPEC void SDLCALL SDL_SetWindowPosition(SDL_Window * window,
  *  \brief Get the position of a window.
  *
  *  \param window   The window to query.
- *  \param x        Pointer to variable for storing the x position, may be NULL
- *  \param y        Pointer to variable for storing the y position, may be NULL
+ *  \param x        Pointer to variable for storing the x position, in screen
+ *                  coordinates. May be NULL.
+ *  \param y        Pointer to variable for storing the y position, in screen
+ *                  coordinates. May be NULL.
  *
  *  \sa SDL_SetWindowPosition()
  */
@@ -522,11 +551,16 @@ extern DECLSPEC void SDLCALL SDL_GetWindowPosition(SDL_Window * window,
  *  \brief Set the size of a window's client area.
  *
  *  \param window   The window to resize.
- *  \param w        The width of the window, must be >0
- *  \param h        The height of the window, must be >0
+ *  \param w        The width of the window, in screen coordinates. Must be >0.
+ *  \param h        The height of the window, in screen coordinates. Must be >0.
  *
  *  \note You can't change the size of a fullscreen window, it automatically
  *        matches the size of the display mode.
+ *
+ *  The window size in screen coordinates may differ from the size in pixels, if
+ *  the window was created with SDL_WINDOW_ALLOW_HIGHDPI on a platform with
+ *  high-dpi support (e.g. iOS or OS X). Use SDL_GL_GetDrawableSize() or
+ *  SDL_GetRendererOutputSize() to get the real client area size in pixels.
  *
  *  \sa SDL_GetWindowSize()
  */
@@ -537,8 +571,15 @@ extern DECLSPEC void SDLCALL SDL_SetWindowSize(SDL_Window * window, int w,
  *  \brief Get the size of a window's client area.
  *
  *  \param window   The window to query.
- *  \param w        Pointer to variable for storing the width, may be NULL
- *  \param h        Pointer to variable for storing the height, may be NULL
+ *  \param w        Pointer to variable for storing the width, in screen
+ *                  coordinates. May be NULL.
+ *  \param h        Pointer to variable for storing the height, in screen
+ *                  coordinates. May be NULL.
+ *
+ *  The window size in screen coordinates may differ from the size in pixels, if
+ *  the window was created with SDL_WINDOW_ALLOW_HIGHDPI on a platform with
+ *  high-dpi support (e.g. iOS or OS X). Use SDL_GL_GetDrawableSize() or
+ *  SDL_GetRendererOutputSize() to get the real client area size in pixels.
  *
  *  \sa SDL_SetWindowSize()
  */
@@ -715,6 +756,9 @@ extern DECLSPEC int SDLCALL SDL_UpdateWindowSurfaceRects(SDL_Window * window,
  *  \param window The window for which the input grab mode should be set.
  *  \param grabbed This is SDL_TRUE to grab input, and SDL_FALSE to release input.
  *
+ *  If the caller enables a grab while another window is currently grabbed,
+ *  the other window loses its grab in favor of the caller's window.
+ *
  *  \sa SDL_GetWindowGrab()
  */
 extern DECLSPEC void SDLCALL SDL_SetWindowGrab(SDL_Window * window,
@@ -728,6 +772,15 @@ extern DECLSPEC void SDLCALL SDL_SetWindowGrab(SDL_Window * window,
  *  \sa SDL_SetWindowGrab()
  */
 extern DECLSPEC SDL_bool SDLCALL SDL_GetWindowGrab(SDL_Window * window);
+
+/**
+ *  \brief Get the window that currently has an input grab enabled.
+ *
+ *  \return This returns the window if input is grabbed, and NULL otherwise.
+ *
+ *  \sa SDL_SetWindowGrab()
+ */
+extern DECLSPEC SDL_Window * SDLCALL SDL_GetGrabbedWindow(void);
 
 /**
  *  \brief Set the brightness (gamma correction) for a window.
@@ -978,11 +1031,12 @@ extern DECLSPEC SDL_Window* SDLCALL SDL_GL_GetCurrentWindow(void);
 extern DECLSPEC SDL_GLContext SDLCALL SDL_GL_GetCurrentContext(void);
 
 /**
- *  \brief Get the size of a window's underlying drawable (for use with glViewport).
+ *  \brief Get the size of a window's underlying drawable in pixels (for use
+ *         with glViewport).
  *
  *  \param window   Window from which the drawable size should be queried
- *  \param w        Pointer to variable for storing the width, may be NULL
- *  \param h        Pointer to variable for storing the height, may be NULL
+ *  \param w        Pointer to variable for storing the width in pixels, may be NULL
+ *  \param h        Pointer to variable for storing the height in pixels, may be NULL
  *
  * This may differ from SDL_GetWindowSize() if we're rendering to a high-DPI
  * drawable, i.e. the window was created with SDL_WINDOW_ALLOW_HIGHDPI on a
