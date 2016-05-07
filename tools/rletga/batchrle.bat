@@ -1,1 +1,0 @@
-for %%f in (*.tga) do call rletga.exe %%f
