@@ -649,6 +649,8 @@ bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int fr
 	if( !name )
 		return false;
  	
+	if( mod->type == mod_skeletal )
+		return R_SkeletalModelLerpTag( orient, (const mskmodel_t *)mod->extradata, oldframe, frame, lerpfrac, name );
 	if( mod->type == mod_alias )
 		return R_AliasModelLerpTag( orient, (const maliasmodel_t *)mod->extradata, oldframe, frame, lerpfrac, name );
  	
