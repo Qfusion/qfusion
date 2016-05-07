@@ -13,3 +13,7 @@ To build Qfusion, do the following steps:
 The engine loads the game files from the APK expansion files which are uncompressed zip archives containing game PK3s. Only OBBs that are created for the current major and minor version will be loaded, so the games must be redownloaded entirely in case of a major update.
 
 The user data is located in `/sdcard/Android/data/package name/files/APP_VERSION_MAJOR.APP_VERSION_MINOR/game directory`.
+
+Docker
+=======
+For details about compiling Docker images, please read the following Wiki [https://github.com/Picmip/qfusion/wiki/Cross-compiling-with-Docker-images](page).
