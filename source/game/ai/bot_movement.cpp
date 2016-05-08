@@ -715,20 +715,28 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
             break;
         }
 
-        float *dir = weightedDirsToReachStart[nearestReachesCount];
+        float *reachDir = weightedDirsToReachStart[nearestReachesCount];
         // Copy vector from self origin to reach. start
-        VectorCopy(reach.start, dir);
-        VectorSubtract(dir, self->s.origin, dir);
+        VectorCopy(reach.start, reachDir);
+        VectorSubtract(reachDir, self->s.origin, reachDir);
         // Compute the vector length
-        float invDistance = Q_RSqrt(squareDist);
-        // Normalize the vector
-        VectorScale(dir, invDistance, dir);
+        float invDistanceToReach = Q_RSqrt(squareDist);
+        // Normalize the vector to reach. start
+        VectorScale(reachDir, invDistanceToReach, reachDir);
+        // Compute and apply reach. distance factor (closest reach'es should have greater weight)
+        float reachDistanceFactor = 1.0f - (1.0f / invDistanceToReach) / radius;
+        VectorScale(reachDir, reachDistanceFactor, reachDir);
 
         float *centerDir = weightedDirsToAreaCenter[nearestReachesCount];
         // Copy vector from self origin to area center
         VectorCopy(aasworld.areas[reach.areanum].center, centerDir);
         VectorSubtract(centerDir, self->s.origin, centerDir);
-        VectorScale(centerDir, 1.0f / VectorLengthFast(centerDir), centerDir);
+        // Normalize the vector to area center
+        float invDistanceToCenter = Q_RSqrt(VectorLengthSquared(centerDir));
+        VectorScale(centerDir, invDistanceToCenter, centerDir);
+        // Compute and apply center distance factor (closest center points should have greater weight)
+        float centerDistanceFactor = 1.0f - (1.0f / invDistanceToCenter) / radius;
+        VectorScale(centerDir, centerDistanceFactor, centerDir);
 
         nearestReachesCount++;
         if (nearestReachesCount == MAX_REACH_CACHED)
@@ -745,19 +753,21 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
     intendedLookVec->NormalizeFast();
     if (hasOnlySingleFarReach)
     {
-        float distanceFactor = distanceToNextReachStart / radius; // 0..1
-        *intendedLookVec *= distanceFactor;
-        singleFarNextReachDir *= 1.0f - distanceFactor;
-        singleFarNextAreaCenterDir *= 1.0f - distanceFactor;
+        float pendingReachDistanceFactor = distanceToNextReachStart / radius;
+        float nextReachDistanceFactor = 1.0f - pendingReachDistanceFactor;
+        *intendedLookVec *= pendingReachDistanceFactor;
+        singleFarNextReachDir *= 1.0f - nextReachDistanceFactor;
+        singleFarNextAreaCenterDir *= 1.0f - nextReachDistanceFactor;
         *intendedLookVec += 0.5f * (singleFarNextReachDir + singleFarNextAreaCenterDir);
     }
     else
     {
-        *intendedLookVec *= distanceToNextReachStart / radius;
+        // Closest reach. start should have greater weight
+        *intendedLookVec *= 1.0f - distanceToNextReachStart / radius;
         for (int i = 0; i < nearestReachesCount; ++i)
             *intendedLookVec += 0.5f * (Vec3(weightedDirsToReachStart[i]) + weightedDirsToAreaCenter[i]);
     }
-    // moveVec is not required to be normalized, leave it as is
+    // intendedLookVec is not required to be normalized, leave it as is
 }
 
 void Bot::SetLookVecToPendingReach(Vec3 *intendedLookVec)
