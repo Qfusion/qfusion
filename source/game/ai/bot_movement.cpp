@@ -843,7 +843,6 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
         actualDir2D *= Q_RSqrt(actualDir2DSqLen);
 
         ucmd->forwardmove = 1;
-        isBunnyHopping = false;
 
         if (speed < DEFAULT_DASHSPEED - 16)
         {
@@ -856,7 +855,6 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             // If we are not crouching in air to prevent bumping a ceiling, keep jump key pressed
             if (ucmd->upmove != -1)
                 ucmd->upmove = 1;
-            isBunnyHopping = true;
         }
 
         if (toTargetDir2DSqLen > 0.1f)

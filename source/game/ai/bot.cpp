@@ -8,7 +8,6 @@ Bot::Bot(edict_t *self, float skillLevel)
       botBrain(self, skillLevel),
       skillLevel(skillLevel),
       printLink(false),
-      isBunnyHopping(false),
       hasTriggeredRj(false),
       rjTimeout(0),
       hasTriggeredJumppad(false),

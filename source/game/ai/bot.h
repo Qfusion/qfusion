@@ -53,7 +53,6 @@ private:
     float skillLevel;
     bool printLink;
 
-    bool isBunnyHopping;
     bool hasTriggeredRj;
     unsigned rjTimeout;
 

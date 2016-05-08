@@ -196,7 +196,6 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
         }
     }
 
-
     // If it is time to pick a new goal (not just re-evaluate current one), do not be too sticky to the current goal
     const float currToBestWeightThreshold = longTermGoalSearchTimeout > level.time ? 0.6f : 0.8f;
 
