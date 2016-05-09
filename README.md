@@ -1,4 +1,4 @@
-qfusion [![Build Status](https://travis-ci.org/Qfusion/qfusion.svg?branch=master)](https://travis-ci.org/Qfusion/qfusion) [![Build status](https://ci.appveyor.com/api/projects/status/ijn380lud31mepv6?svg=true)](https://ci.appveyor.com/project/viciious/qfusion)
+qfusion [![Build Status](https://travis-ci.org/Picmip/qfusion.svg?branch=master)](https://travis-ci.org/Picmip/qfusion) [![Build status](https://ci.appveyor.com/api/projects/status/ijn380lud31mepv6?svg=true)](https://ci.appveyor.com/project/viciious/qfusion)
 =======
 
 http://www.qfusion.net/
