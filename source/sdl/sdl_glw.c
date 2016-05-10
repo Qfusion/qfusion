@@ -101,7 +101,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 {
 	const char *win_fs[] = {"W", "FS"};
 
-#ifdef __APLE__
+#ifdef __APPLE__
 	if( fullscreen ) {
 		borderless = true;
 	}
