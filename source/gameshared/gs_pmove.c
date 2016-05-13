@@ -532,7 +532,7 @@ static void PM_Friction( void )
 	drop = 0;
 
 	// apply ground friction
-	if( ( ( ( ( pm->groundentity != -1 ) && !( pml.groundsurfFlags & SURF_SLICK ) ) ) && ( pm->waterlevel < 2 ) ) || ( pml.ladder ) )
+	if( ( ( ( ( pm->groundentity != -1 ) && !( pml.groundsurfFlags & SURF_SLICK ) ) ) && ( pm->waterlevel < 2 ) && pml.upPush >= 0 ) || pml.ladder )
 	{
 		if( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] <= 0 )
 		{
@@ -567,19 +567,27 @@ static void PM_Friction( void )
 */
 static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel )
 {
-	int i;
-	float addspeed, accelspeed, currentspeed;
+	float addspeed, accelspeed, currentspeed, realspeed, newspeed;
+
+	realspeed = VectorLengthFast( pml.velocity );
 
 	currentspeed = DotProduct( pml.velocity, wishdir );
 	addspeed = wishspeed - currentspeed;
 	if( addspeed <= 0 )
 		return;
+
 	accelspeed = accel*pml.frametime*wishspeed;
 	if( accelspeed > addspeed )
 		accelspeed = addspeed;
 
-	for( i = 0; i < 3; i++ )
-		pml.velocity[i] += accelspeed*wishdir[i];
+	VectorMA( pml.velocity, accelspeed, wishdir, pml.velocity );
+
+	if( pml.upPush < 0 )
+	{
+		newspeed = VectorLengthFast( pml.velocity );
+		if( newspeed > wishspeed && newspeed != 0 )
+			VectorScale( pml.velocity, fmax( wishspeed, realspeed ) / newspeed, pml.velocity );
+	}
 }
 
 static void PM_AirAccelerate( vec3_t wishdir, float wishspeed )
