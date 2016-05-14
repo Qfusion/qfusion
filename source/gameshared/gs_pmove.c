@@ -1368,21 +1368,17 @@ static void PM_CheckWallJump( void )
 */
 static void PM_CheckCrouchSlide( void )
 {
-	if( pml.upPush < 0 )
+	if( pml.upPush < 0 && VectorLengthFast( tv( pml.velocity[0], pml.velocity[1], 0 ) ) > pml.dashPlayerSpeed )
 	{
 		if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > 0 )
 			return; // cooldown or already sliding
 
-		if( pm->groundentity == -1 )
-		{
-			// enable slide on landing if moving faster than dash speed
-			if( VectorLengthFast( tv( pml.velocity[0], pml.velocity[1], 0 ) ) > pml.dashPlayerSpeed )
-				pm->playerState->pmove.pm_flags |= PMF_CROUCH_SLIDING;
-		}
-		else if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING )
-		{ // start sliding
-			pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE;
-		}
+		if( pm->groundentity != -1 )
+			return; // already on the ground
+
+		// start sliding when we land
+		pm->playerState->pmove.pm_flags |= PMF_CROUCH_SLIDING;
+		pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE;
 	}
 	else if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING )
 	{
