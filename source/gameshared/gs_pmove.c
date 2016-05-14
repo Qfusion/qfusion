@@ -586,7 +586,7 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel )
 
 	VectorMA( pml.velocity, accelspeed, wishdir, pml.velocity );
 
-	if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING && pm->groundentity != -1 )
+	if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING && pm->groundentity != -1 && !( pml.groundsurfFlags & SURF_SLICK ) )
 	{ // disable overacceleration while crouch sliding
 		newspeed = VectorLengthFast( pml.velocity );
 		if( newspeed > wishspeed && newspeed != 0 )
