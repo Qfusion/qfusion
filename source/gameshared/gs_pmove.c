@@ -48,6 +48,8 @@ int playerbox_gib_viewheight = 8;
 #define PM_SPECIAL_CROUCH_INHIBIT 400
 #define PM_AIRCONTROL_BOUNCE_DELAY 200
 #define PM_OVERBOUNCE		1.01f
+#define PM_CROUCHSLIDE 1500
+#define PM_CROUCHSLIDE_TIMEDELAY 700
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in
 
 //===============================================================
@@ -532,7 +534,9 @@ static void PM_Friction( void )
 	drop = 0;
 
 	// apply ground friction
-	if( ( ( ( ( pm->groundentity != -1 ) && !( pml.groundsurfFlags & SURF_SLICK ) ) ) && ( pm->waterlevel < 2 ) && pml.upPush >= 0 ) || pml.ladder )
+	if( ( ( ( ( pm->groundentity != -1 ) && !( pml.groundsurfFlags & SURF_SLICK ) ) )
+				&& ( pm->waterlevel < 2 ) && !( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING ) )
+			|| pml.ladder )
 	{
 		if( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] <= 0 )
 		{
@@ -582,8 +586,8 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel )
 
 	VectorMA( pml.velocity, accelspeed, wishdir, pml.velocity );
 
-	if( pml.upPush < 0 )
-	{
+	if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING && pm->groundentity != -1 )
+	{ // disable overacceleration while crouch sliding
 		newspeed = VectorLengthFast( pml.velocity );
 		if( newspeed > wishspeed && newspeed != 0 )
 			VectorScale( pml.velocity, fmax( wishspeed, realspeed ) / newspeed, pml.velocity );
@@ -1360,6 +1364,34 @@ static void PM_CheckWallJump( void )
 }
 
 /*
+* PM_CheckCrouchSlide
+*/
+static void PM_CheckCrouchSlide( void )
+{
+	if( pml.upPush < 0 )
+	{
+		if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > 0 )
+			return; // cooldown or already sliding
+
+		if( pm->groundentity == -1 )
+		{
+			// enable slide on landing if moving faster than dash speed
+			if( VectorLengthFast( tv( pml.velocity[0], pml.velocity[1], 0 ) ) > pml.dashPlayerSpeed )
+				pm->playerState->pmove.pm_flags |= PMF_CROUCH_SLIDING;
+		}
+		else if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING )
+		{ // start sliding
+			pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE;
+		}
+	}
+	else if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING )
+	{
+		pm->playerState->pmove.pm_flags &= ~PMF_CROUCH_SLIDING;
+		pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE_TIMEDELAY;
+	}
+}
+
+/*
 * PM_CheckSpecialMovement
 */
 static void PM_CheckSpecialMovement( void )
@@ -1958,6 +1990,19 @@ void Pmove( pmove_t *pmove )
 			pm->playerState->pmove.stats[PM_STAT_FWDTIME] -= pm->cmd.msec;
 		else if( pm->playerState->pmove.stats[PM_STAT_FWDTIME] < 0 )
 			pm->playerState->pmove.stats[PM_STAT_FWDTIME] = 0;
+
+		if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > 0 )
+		{
+			pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] -= pm->cmd.msec;
+			if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] <= 0 )
+			{
+				if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING )
+					pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE_TIMEDELAY;
+				else
+					pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = 0;
+				pm->playerState->pmove.pm_flags &= ~PMF_CROUCH_SLIDING;
+			}
+		}
 	}
 
 	pml.forwardPush = pm->cmd.forwardmove * SPEEDKEY;
@@ -2053,6 +2098,8 @@ void Pmove( pmove_t *pmove )
 		PM_CheckJump();
 		PM_CheckDash();
 		PM_CheckWallJump();
+
+		PM_CheckCrouchSlide();
 
 		PM_Friction();
 

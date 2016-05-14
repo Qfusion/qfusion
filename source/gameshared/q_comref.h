@@ -92,6 +92,7 @@ enum
 	PM_STAT_JUMPSPEED,
 	PM_STAT_DASHSPEED,
 	PM_STAT_FWDTIME,
+	PM_STAT_CROUCHSLIDETIME,
 
 	PM_STAT_SIZE = MAX_PM_STATS
 };
@@ -123,6 +124,7 @@ typedef enum
 #define PMF_WALLJUMPING	    ( 1<<9 ) // WJ starting flag
 #define PMF_DOUBLEJUMPED    ( 1<<10 ) // DJ stat flag
 #define PMF_JUMPPAD_TIME    ( 1<<11 )    // temporarily disables fall damage
+#define PMF_CROUCH_SLIDING  ( 1<<12 )    // Crouch slide flag
 
 typedef struct
 {
