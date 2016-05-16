@@ -820,21 +820,20 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
     StraightenOrInterpolateLookVec(intendedLookVec, speed);
-    CheckAndTryAvoidObstacles(intendedLookVec, ucmd, speed);
+    bool hasObstacles = CheckAndTryAvoidObstacles(intendedLookVec, ucmd, speed);
 
     Vec3 toTargetDir2D(*intendedLookVec);
     toTargetDir2D.z() = 0;
 
-    // Do not use look dir as an actual dir, bot may move backwards
-    Vec3 actualDir2D(velocityVec);
-    actualDir2D.z() = 0;
+    Vec3 velocityDir2D(velocityVec);
+    velocityDir2D.z() = 0;
 
-    float actualDir2DSqLen = actualDir2D.SquaredLength();
+    float speed2DSquared = velocityDir2D.SquaredLength();
     float toTargetDir2DSqLen = toTargetDir2D.SquaredLength();
 
-    if (actualDir2DSqLen > 0.1f)
+    if (speed2DSquared > 0.1f)
     {
-        actualDir2D *= Q_RSqrt(actualDir2DSqLen);
+        velocityDir2D *= Q_RSqrt(speed2DSquared);
 
         ucmd->forwardmove = 1;
 
@@ -855,69 +854,82 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
         {
             toTargetDir2D *= Q_RSqrt(toTargetDir2DSqLen);
 
-            float actualToTarget2DDot = actualDir2D.Dot(toTargetDir2D);
-            if (actualToTarget2DDot > 0.99)
+            float velocityToTarget2DDot = velocityDir2D.Dot(toTargetDir2D);
+            if (velocityToTarget2DDot < 0.99)
             {
-                // TODO: Implement "true" strafejumping
-                if (Skill() > 0.33f)
+                // Correct trajectory using cheating aircontrol
+                if (velocityToTarget2DDot > 0)
                 {
-                    float skillFactor = 0.15f + 0.20f * Skill();
-                    VectorScale(self->velocity, 1.0f + skillFactor * 0.0001f * game.frametime, self->velocity);
+                    // Make correction less effective for large angles multiplying it
+                    // by the dot product to avoid a weird-looking cheating movement
+                    float controlMultiplier = 0.005f + velocityToTarget2DDot * 0.05f;
+                    Vec3 newVelocity(velocityVec);
+                    newVelocity *= 1.0f / speed;
+                    newVelocity += controlMultiplier * toTargetDir2D;
+                    // Preserve velocity magnitude
+                    newVelocity.NormalizeFast();
+                    newVelocity *= speed;
+                    VectorCopy(newVelocity.data(), self->velocity);
+                }
+                else if (IsCloseToAnyGoal())
+                {
+                    // velocity and forwardLookDir may mismatch, retrieve these actual look dirs
+                    vec3_t forwardLookDir, rightLookDir;
+                    AngleVectors(self->s.angles, forwardLookDir, rightLookDir, nullptr);
+
+                    // Stop bunnying and move to goal using only keys
+                    ucmd->upmove = 0;
+                    ucmd->buttons &= ~BUTTON_SPECIAL;
+
+                    ucmd->forwardmove = 0;
+                    ucmd->sidemove = 0;
+
+                    float targetDirDotForward = toTargetDir2D.Dot(forwardLookDir);
+                    float targetDirDotRight = toTargetDir2D.Dot(rightLookDir);
+
+                    if (targetDirDotForward > 0.3f)
+                        ucmd->forwardmove = 1;
+                    else if (targetDirDotForward < -0.3f)
+                        ucmd->forwardmove = -1;
+
+                    if (targetDirDotRight > 0.3f)
+                        ucmd->sidemove = 1;
+                    else if (targetDirDotRight > 0.3f)
+                        ucmd->sidemove = -1;
+
+                    // Prevent blocking if neither forwardmove, not sidemove has been chosen
+                    if (!ucmd->forwardmove && !ucmd->sidemove)
+                        ucmd->forwardmove = -1;
                 }
             }
-            else
-            {
-                // Given an actual move dir line (a line that goes through selfOrigin to selfOrigin + actualDir2D),
-                // determine on which side the move target (defined by toTargetDir2D) is
-                float lineNormalX = +actualDir2D.y();
-                float lineNormalY = -actualDir2D.x();
-                int side = Q_sign(lineNormalX * toTargetDir2D.x() + lineNormalY * toTargetDir2D.y());
 
-                // Check whether we may increase requested turn direction
-                if (actualToTarget2DDot > -0.5)
+            // Apply cheating acceleration if bot is moving quite straight to a target
+            constexpr float accelDotThreshold = 0.9f;
+            if (velocityToTarget2DDot > accelDotThreshold)
+            {
+                if (!self->groundentity && !hasObstacles && !IsCloseToAnyGoal() && Skill() > 0.33f)
                 {
-                    // currAngle is an angle between actual lookDir and moveDir
-                    // moveDir is a requested look direction
-                    // due to view angles change latency requested angles may be not set immediately in this frame
-                    // We have to request an angle that is greater than it is needed
-                    float extraTurn = 0.1f;
-                    // Turning using forward (GS_NEWBUNNY) aircontrol is not suitable. Use old Quakeworld style.
-                    if (actualToTarget2DDot < 0.5)
+                    if (speed > 320.0f) // Avoid division by zero and logic errors
                     {
-                        // Release +forward and press strafe key in accordance to view turn direction
-                        ucmd->forwardmove = 0;
-                        ucmd->sidemove = side;
-                        extraTurn = 0.03f;
-                    }
-                    float currAngle = RAD2DEG(acosf(actualToTarget2DDot)) * side;
-                    mat3_t matrix;
-                    AnglesToAxis(Vec3(0, currAngle * (1.0f + extraTurn), 0).data(), matrix);
-                    Matrix3_TransformVector(matrix, intendedLookVec->data(), intendedLookVec->data());
-                }
-                else if (currAasAreaNum != goalAasAreaNum && !isOnGroundThisFrame && Skill() > 0.33f)
-                {
-                    // Center view before spinning, do not spin looking at the sky or a floor
-                    intendedLookVec->z() = 0;
-                    if (!hasPendingLandingDash)
-                    {
-                        SetPendingLandingDash(ucmd);
-                    }
-                }
-                else
-                {
-                    // Try move backwards to a goal
-                    if (IsCloseToAnyGoal())
-                    {
-                        ucmd->upmove = 0;
-                        ucmd->forwardmove = -1;
-                        ucmd->sidemove = side;
-                    }
-                    else
-                    {
-                        // Just reduce a push
-                        ucmd->upmove = 1;
-                        ucmd->sidemove = 0;
-                        ucmd->forwardmove = 0;
+                        // Max accel is measured in units per second and decreases with speed
+                        // For speed of 320 maxAccel is 120
+                        // For speed of 700 and greater maxAccel is 0
+                        // This means cheating acceleration is not applied for speeds greater than 700 ups
+                        // However the bot may reach greater speed since builtin GS_NEWBUNNY forward accel is enabled
+                        float maxAccel = 120.0f * (1.0f - BoundedFraction(speed - 320.0f, 700.0f - 320.0f));
+                        // Accel contains of constant and directional parts
+                        // If velocity dir exactly matches target dir, accel = maxAccel
+                        float accel = 0.5f;
+                        accel += 0.5f * (velocityToTarget2DDot - accelDotThreshold) / (1.0f - accelDotThreshold);
+                        accel *= maxAccel;
+
+                        Vec3 velocityBoost(self->velocity);
+                        // Normalize velocity direction
+                        velocityBoost *= 1.0f / speed;
+                        // Multiply by accel and frame time in millis
+                        velocityBoost *= accel * 0.001f * game.frametime;
+                        // Modify bot entity velocity
+                        VectorAdd(self->velocity, velocityBoost.data(), self->velocity);
                     }
                 }
             }
