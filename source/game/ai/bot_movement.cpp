@@ -675,12 +675,6 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
 
     const float radius = 72.0f + 72.0f * BoundedFraction(speed - 320, 640);
 
-    if (distanceToNextReachStart > radius)
-    {
-        SetLookVecToPendingReach(intendedLookVec);
-        return;
-    }
-
     vec3_t weightedDirsToReachStart[MAX_REACH_CACHED];
     vec3_t weightedDirsToAreaCenter[MAX_REACH_CACHED];
 
