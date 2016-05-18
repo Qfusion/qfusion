@@ -573,10 +573,8 @@ protected:
 	StaticVector<aas_reachability_t, MAX_REACH_CACHED> nextReaches;
 
 	float distanceToNextReachStart;
-	float distanceToNextReachEnd;
 
 	inline bool IsCloseToReachStart() { return distanceToNextReachStart < 24.0f; };
-	inline bool IsCloseToReachEnd() { return distanceToNextReachEnd < 36.0f; }
 
 	unsigned blockedTimeout;
 

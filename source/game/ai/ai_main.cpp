@@ -33,7 +33,6 @@ NavEntity *Ai::GetGoalentForEnt( edict_t *target )
 void Ai::ResetNavigation()
 {
 	distanceToNextReachStart = std::numeric_limits<float>::infinity();
-	distanceToNextReachEnd = std::numeric_limits<float>::infinity();
 
 	currAasAreaNum = FindCurrAASAreaNum();
 	nextReaches.clear();
@@ -120,9 +119,6 @@ void Ai::CheckReachedArea()
 		distanceToNextReachStart = DistanceSquared(nextReaches.front().start, self->s.origin);
 		if (distanceToNextReachStart > 1)
 			distanceToNextReachStart = 1.0f / Q_RSqrt(distanceToNextReachStart);
-		distanceToNextReachEnd = DistanceSquared(nextReaches.front().end, self->s.origin);
-		if (distanceToNextReachEnd > 1)
-			distanceToNextReachEnd = 1.0f / Q_RSqrt(distanceToNextReachEnd);
 	}
 }
 
