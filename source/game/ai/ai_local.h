@@ -601,10 +601,6 @@ public:
 
 	inline bool IsGhosting() const { return G_ISGHOSTING(self); }
 
-	bool IsVisible(edict_t *other) const;
-	bool IsInFront(edict_t *other) const;
-	bool IsInFront2D(vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy) const;
-
 	void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
 	static bool IsStep(edict_t *ent);
 	int FindCurrAASAreaNum();
