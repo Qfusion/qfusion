@@ -141,6 +141,7 @@ private:
     {
         return botBrain.IsCloseToShortTermGoal() || botBrain.IsCloseToLongTermGoal();
     }
+    void OnGoalCleanedUp(const NavEntity *goalEnt);
 
     void SetPendingLandingDash(usercmd_t *ucmd);
     bool TryApplyPendingLandingDash(usercmd_t *ucmd);

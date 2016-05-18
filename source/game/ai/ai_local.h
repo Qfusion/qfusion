@@ -403,6 +403,7 @@ protected:
 	void ClearShortTermGoal();
 	void SetShortTermGoal(NavEntity *goalEnt);
 	void SetLongTermGoal(NavEntity *goalEnt);
+	virtual void OnGoalCleanedUp(const NavEntity *goalEnt) {}
 
 	// Returns a pair of AAS travel times to the target point and back
 	std::pair<unsigned, unsigned> FindToAndBackTravelTimes(const Vec3 &targetPoint) const;

@@ -396,6 +396,7 @@ void AiBaseBrain::SetShortTermGoal(NavEntity *goalEnt)
 
 void AiBaseBrain::ClearLongTermGoal()
 {
+    NavEntity *goalEnt = longTermGoal;
     longTermGoal = nullptr;
     // Request immediate long-term goal update
     longTermGoalSearchTimeout = 0;
@@ -406,15 +407,18 @@ void AiBaseBrain::ClearLongTermGoal()
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
     // Request immediate status update
     weightsUpdateTimeout = 0;
+    OnGoalCleanedUp(goalEnt);
 }
 
 void AiBaseBrain::ClearShortTermGoal()
 {
+    NavEntity *goalEnt = shortTermGoal;
     shortTermGoal = nullptr;
     shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
     // Request immediate status update
     weightsUpdateTimeout = 0;
+    OnGoalCleanedUp(goalEnt);
 }
 
 void AiBaseBrain::OnLongTermGoalReached()

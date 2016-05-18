@@ -505,6 +505,8 @@ class BotBrain: public AiBaseBrain
     float ComputeHealthWeight(const gsitem_t *item) const;
     float ComputePowerupWeight(const gsitem_t *item) const;
 
+    virtual void OnGoalCleanedUp(const NavEntity *goalEnt) override;
+
     BotBrain() = delete;
     // Disable copying and moving
     BotBrain(BotBrain &&that) = delete;
