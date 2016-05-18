@@ -370,7 +370,7 @@ protected:
 	const unsigned longTermGoalReevaluationPeriod;
 	const unsigned shortTermGoalReevaluationPeriod;
 
-	unsigned statusUpdateTimeout;
+	unsigned weightsUpdateTimeout;
 
 	int currAasAreaNum;
 
