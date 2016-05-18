@@ -40,6 +40,7 @@ protected:
     virtual void Frame() override;
     virtual void Think() override;
 
+    virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) override;
 private:
     bool TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove);
     std::pair<int, int> ApplyTacticalMove(
@@ -135,7 +136,7 @@ private:
     void SetLookVecToPendingReach(Vec3 *intendedLookVec);
     void TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd);
     bool TryLandOnArea(int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void CheckTargetReached();
+    void CheckTargetProximity();
     inline bool IsCloseToAnyGoal()
     {
         return botBrain.IsCloseToShortTermGoal() || botBrain.IsCloseToLongTermGoal();

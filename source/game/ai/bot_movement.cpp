@@ -21,7 +21,7 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
 
     TryMoveAwayIfBlocked(ucmd);
 
-    CheckTargetReached();
+    CheckTargetProximity();
 
     wasOnGroundPrevFrame = isOnGroundThisFrame;
 }
@@ -946,8 +946,10 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     }
 }
 
-void Bot::CheckTargetReached()
+void Bot::CheckTargetProximity()
 {
+    // This is the only action related to reach-at-touch items that may be performed here.
+    // Other actions for that kind of goals are performed in Ai::TouchedEntity, Ai/Bot::TouchedNotSolidTriggerEntity
     if (currAasAreaNum != goalAasAreaNum)
     {
         // If the bot was waiting for item spawn and for example has been pushed from the goal, stop camping a goal
@@ -959,40 +961,21 @@ void Bot::CheckTargetReached()
         return;
     }
 
-    if (botBrain.MayReachLongTermGoalNow())
+    if (botBrain.IsCloseEnoughToConsiderLongTermGoalReached())
     {
+        // This implies STG clearing too
         botBrain.OnLongTermGoalReached();
-        if (isWaitingForItemSpawn)
-        {
-            ClearCampingSpot();
-            isWaitingForItemSpawn = false;
-        }
         goalAasAreaNum = 0;
         nextReaches.clear();
         return;
     }
 
-    if (botBrain.MayReachShortTermGoalNow())
+    if (botBrain.IsCloseEnoughToConsiderShortTermGoalReached())
     {
         botBrain.OnShortTermGoalReached();
-        if (isWaitingForItemSpawn)
-        {
-            ClearCampingSpot();
-            isWaitingForItemSpawn = false;
-        }
         goalAasAreaNum = 0;
         nextReaches.clear();
         return;
-    }
-
-    // This call checks for long term goal existence too
-    if (botBrain.ShouldWaitForLongTermGoal())
-    {
-        if (!isWaitingForItemSpawn)
-        {
-            SetCampingSpot(botBrain.LongTermGoalOrigin(), 36, 0.75f);
-            isWaitingForItemSpawn = true;
-        }
     }
 }
 

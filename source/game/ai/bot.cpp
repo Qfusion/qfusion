@@ -111,6 +111,29 @@ void Bot::ClearCampingSpot()
     campingSpotLookAtPoint = Vec3(INFINITY, INFINITY, INFINITY);
 }
 
+void Bot::TouchedGoal(const edict_t *goalUnderlyingEntity)
+{
+    // If goal is being picked up
+    if (goalUnderlyingEntity->s.solid == SOLID_TRIGGER)
+    {
+        // Stop camping a spawn point if the bot did it
+        if (isWaitingForItemSpawn)
+        {
+            ClearCampingSpot();
+            isWaitingForItemSpawn = false;
+        }
+    }
+    else
+    {
+        // Start camping an item spawn if the bot have not start doing it yet
+        if (!isWaitingForItemSpawn)
+        {
+            SetCampingSpot(Vec3(goalUnderlyingEntity->s.origin), 36, 0.75f);
+            isWaitingForItemSpawn = true;
+        }
+    }
+}
+
 void Bot::RegisterVisibleEnemies()
 {
     if(G_ISGHOSTING(self) || GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled())
