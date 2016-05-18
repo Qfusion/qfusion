@@ -13,7 +13,7 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferred
       shortTermGoalReevaluationTimeout(0),
       longTermGoalReevaluationPeriod(700),
       shortTermGoalReevaluationPeriod(350),
-      statusUpdateTimeout(0),
+      weightsUpdateTimeout(0),
       allowedAasTravelFlags(allowedAasTravelFlags),
       preferredAasTravelFlags(preferredAasTravelFlags)
 {
@@ -54,7 +54,7 @@ void AiBaseBrain::Think()
     // Always update weights before goal picking, except we have updated it in this frame
     bool weightsUpdated = false;
     //update status information to feed up ai
-    if (statusUpdateTimeout <= level.time)
+    if (weightsUpdateTimeout <= level.time)
     {
         UpdateWeights();
         weightsUpdated = true;
@@ -401,7 +401,7 @@ void AiBaseBrain::ClearLongTermGoal()
     shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalReevaluationPeriod;
     // Request immediate status update
-    statusUpdateTimeout = 0;
+    weightsUpdateTimeout = 0;
 }
 
 void AiBaseBrain::ClearShortTermGoal()
@@ -410,7 +410,7 @@ void AiBaseBrain::ClearShortTermGoal()
     shortTermGoalSearchTimeout = level.time + shortTermGoalReevaluationPeriod;
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalReevaluationPeriod;
     // Request immediate status update
-    statusUpdateTimeout = 0;
+    weightsUpdateTimeout = 0;
 }
 
 void AiBaseBrain::OnLongTermGoalReached()
