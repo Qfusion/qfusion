@@ -979,6 +979,18 @@ void Bot::CheckTargetProximity()
     }
 }
 
+void Bot::OnGoalCleanedUp(const NavEntity *goalEnt)
+{
+    if (isWaitingForItemSpawn)
+    {
+        if (!goalEnt || (goalEnt->Origin() - campingSpotOrigin).SquaredLength() < 32 * 32)
+        {
+            ClearCampingSpot();
+            isWaitingForItemSpawn = false;
+        }
+    }
+}
+
 Vec3 Bot::MakeEvadeDirection(const Danger &danger)
 {
     if (danger.splash)

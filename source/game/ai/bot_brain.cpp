@@ -620,6 +620,11 @@ void BotBrain::OnEnemyDamaged(const edict_t *target, int damage)
     }
 }
 
+void BotBrain::OnGoalCleanedUp(const NavEntity *goalEnt)
+{
+    self->ai->botRef->OnGoalCleanedUp(goalEnt);
+}
+
 void BotBrain::UpdateKeptCurrentCombatTask()
 {
     auto *task = &combatTask;
