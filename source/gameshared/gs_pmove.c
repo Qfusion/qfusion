@@ -49,6 +49,7 @@ int playerbox_gib_viewheight = 8;
 #define PM_AIRCONTROL_BOUNCE_DELAY 200
 #define PM_OVERBOUNCE		1.01f
 #define PM_CROUCHSLIDE 1500
+#define PM_CROUCHSLIDE_FADE 500
 #define PM_CROUCHSLIDE_TIMEDELAY 700
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in
 
@@ -535,13 +536,19 @@ static void PM_Friction( void )
 
 	// apply ground friction
 	if( ( ( ( ( pm->groundentity != -1 ) && !( pml.groundsurfFlags & SURF_SLICK ) ) )
-				&& ( pm->waterlevel < 2 ) && !( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING ) )
-			|| pml.ladder )
+				&& ( pm->waterlevel < 2 ) ) || pml.ladder )
 	{
 		if( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] <= 0 )
 		{
 			friction = pm_friction;
 			control = speed < pm_decelerate ? pm_decelerate : speed;
+			if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING )
+			{
+				if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] < PM_CROUCHSLIDE_FADE )
+					friction *= 1 - sqrt( (float)pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] / PM_CROUCHSLIDE_FADE );
+				else
+					friction = 0;
+			}
 			drop += control * friction * pml.frametime;
 		}
 	}
@@ -1378,12 +1385,11 @@ static void PM_CheckCrouchSlide( void )
 
 		// start sliding when we land
 		pm->playerState->pmove.pm_flags |= PMF_CROUCH_SLIDING;
-		pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE;
+		pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE + PM_CROUCHSLIDE_FADE;
 	}
 	else if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING )
 	{
-		pm->playerState->pmove.pm_flags &= ~PMF_CROUCH_SLIDING;
-		pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE_TIMEDELAY;
+		pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = min( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME], PM_CROUCHSLIDE_FADE );
 	}
 }
 
