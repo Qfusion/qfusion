@@ -107,6 +107,16 @@ bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
         // The entity is not spawned and respawn time is unknown
         if (!spawnTime)
             return true;
+
+        // Find milliseconds required to move to a goal
+        unsigned moveTime = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum()) * 10U;
+        if (moveTime)
+        {
+            unsigned reachTime = level.time + moveTime;
+            // A goal requires too long waiting
+            if (spawnTime > reachTime && spawnTime - reachTime > 3000)
+                return true;
+        }
     }
 
     return false;
