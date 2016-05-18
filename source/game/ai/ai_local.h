@@ -107,8 +107,17 @@ public:
 			return std::numeric_limits<unsigned>::max();
 		return ent->nextThink;
 	}
+	inline bool ShouldBeReachedAtTouch() const
+	{
+		return GoalFlags::NONE != (goalFlags & GoalFlags::REACH_AT_TOUCH);
+	}
+	// Returns true if it is enough to be close to the goal (not to pick up an item)
+	// to reach it and the grabber is close enough to reach it atm.
+	inline bool IsCloseEnoughToBeConsideredReached(const edict_t *grabber) const
+	{
+		return !ShouldBeReachedAtTouch() && (Origin() - grabber->s.origin).SquaredLength() < 32.0f * 32.0f;
+	}
 
-	bool MayBeReachedNow(const edict_t *grabber);
 	// Returns level.time when the item is already spawned
 	// Returns zero if spawn time is unknown
 	// Returns spawn time when the item is not spawned and spawn time may be predicted
@@ -412,6 +421,12 @@ protected:
 			return false;
 		return (goalEnt->Origin() - self->s.origin).SquaredLength() <= proximityThreshold * proximityThreshold;
 	}
+	inline bool IsCloseEnoughToConsiderGoalReached(const NavEntity *goalEnt)
+	{
+		if (!goalEnt)
+			return false;
+		return goalEnt->IsCloseEnoughToBeConsideredReached(self);
+	}
 
 	inline int GoalAasAreaNum()
 	{
@@ -425,10 +440,12 @@ protected:
 	void Debug(const char *format, ...);
 
 	virtual void Think() override;
-public:
 
-	inline bool MayReachLongTermGoalNow() { return longTermGoal && longTermGoal->MayBeReachedNow(self); }
-	inline bool MayReachShortTermGoalNow() { return shortTermGoal && shortTermGoal->MayBeReachedNow(self); }
+public:
+	// Returns true if the LTG does not require being touched and it is close enough to consider it reached
+	inline bool IsCloseEnoughToConsiderLongTermGoalReached() { return IsCloseEnoughToConsiderGoalReached(longTermGoal); }
+	// Returns true if the STG does not require being touched and it is close enough to consider it reached
+	inline bool IsCloseEnoughToConsiderShortTermGoalReached() { return IsCloseEnoughToConsiderGoalReached(shortTermGoal); }
 
 	bool ShouldWaitForLongTermGoal()
 	{
@@ -449,6 +466,16 @@ public:
 	inline bool IsCloseToShortTermGoal(float proximityThreshold = 128.0f)
 	{
 		return IsCloseToGoal(shortTermGoal, proximityThreshold);
+	}
+
+	inline bool UnderliesLongTermGoal(const edict_t *ent) const
+	{
+		return longTermGoal && longTermGoal->IsBasedOnEntity(ent);
+	}
+
+	inline bool UnderliesShortTermGoal(const edict_t *ent) const
+	{
+		return shortTermGoal && shortTermGoal->IsBasedOnEntity(ent);
 	}
 
 	void OnLongTermGoalReached();
@@ -618,6 +645,8 @@ protected:
 	{
 		return ::FindDistanceToGround(origin, self, traceDepth);
 	}
+
+	virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) {};
 
 	void CheckReachedArea();
 	void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);

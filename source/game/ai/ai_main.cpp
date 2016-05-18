@@ -202,22 +202,26 @@ void Ai::OnGoalSet(NavEntity *goalEnt)
 
 void Ai::TouchedEntity(edict_t *ent)
 {
-	// right now we only support this on a few trigger entities (jumpads, teleporters)
-	if (ent->r.solid != SOLID_TRIGGER && ent->item == NULL)
-		return;
-
-	// TODO: Implement triggers handling?
-
-	if (aiBaseBrain->longTermGoal && aiBaseBrain->longTermGoal->IsBasedOnEntity(ent))
+	if (aiBaseBrain->UnderliesLongTermGoal(ent))
 	{
-		// This also implies cleaning a short-term goal
-		aiBaseBrain->ClearLongTermGoal();
+		TouchedGoal(ent);
+		// If the goal item may be picked now
+		if (ent->s.solid == SOLID_TRIGGER)
+		{
+			// This call implies short-term goal clearing too
+			aiBaseBrain->OnLongTermGoalReached();
+		}
 		return;
 	}
 
-	if (aiBaseBrain->shortTermGoal && aiBaseBrain->shortTermGoal->IsBasedOnEntity(ent))
+	if (aiBaseBrain->UnderliesShortTermGoal(ent))
 	{
-		aiBaseBrain->ClearShortTermGoal();
+		TouchedGoal(ent);
+		// If the goal item may be picked now
+		if (ent->s.solid == SOLID_TRIGGER)
+		{
+			aiBaseBrain->OnShortTermGoalReached();
+		}
 		return;
 	}
 }

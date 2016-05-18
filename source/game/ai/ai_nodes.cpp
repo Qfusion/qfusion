@@ -25,27 +25,6 @@ in NO WAY supported by Steve Yeager.
 
 #include "ai_local.h"
 
-bool NavEntity::MayBeReachedNow(const edict_t *grabber)
-{
-	if (!grabber)
-		return false;
-
-	if ((goalFlags & (GoalFlags::REACH_ENTITY | GoalFlags::REACH_AT_TOUCH)) != GoalFlags::NONE)
-	{
-		if (!IsSpawnedAtm())
-			return false;
-
-		if (BoundsIntersect(ent->r.absmin, ent->r.absmax, grabber->r.absmin, grabber->r.absmax))
-			return true;
-	}
-	else
-	{
-		if (DistanceSquared(ent->s.origin, grabber->s.origin) < 48 * 48)
-			return true;
-	}
-	return false;
-}
-
 unsigned NavEntity::SpawnTime() const
 {
 	if (!ent || !ent->r.inuse)
