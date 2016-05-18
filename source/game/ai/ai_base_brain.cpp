@@ -75,9 +75,13 @@ void AiBaseBrain::Think()
         if (!weightsUpdated)
         {
             UpdateWeights();
+            weightsUpdated = true;
         }
         PickShortTermGoal(shortTermGoal);
     }
+
+    if (weightsUpdated)
+        weightsUpdateTimeout = level.time + 500;
 }
 
 void AiBaseBrain::CheckOrCancelGoal()
