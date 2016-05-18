@@ -425,18 +425,9 @@ void AiBaseBrain::OnShortTermGoalReached()
 {
     NavEntity *goalEnt = shortTermGoal;
     Debug("reached short-term goal %s\n", goalEnt->Name());
-    ClearShortTermGoal();
+    // This call implies clearing short-term goal too
+    ClearLongTermGoal();
     AiGametypeBrain::Instance()->ClearGoals(goalEnt, self->ai->aiRef);
-    // Clear long-term goal too if it is based on the goalEnt
-    if (longTermGoal == goalEnt)
-    {
-        ClearLongTermGoal();
-    }
-    // Restore old long-term goal overridden by short-term one if it is still present
-    else if (longTermGoal)
-    {
-        SetLongTermGoal(longTermGoal);
-    }
 }
 
 std::pair<unsigned, unsigned> AiBaseBrain::FindToAndBackTravelTimes(const Vec3 &targetOrigin) const
