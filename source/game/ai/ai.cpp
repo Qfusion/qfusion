@@ -13,7 +13,6 @@ Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
       allowedAasTravelFlags(allowedAasTravelFlags),
       preferredAasTravelFlags(preferredAasTravelFlags),
       distanceToNextReachStart(std::numeric_limits<float>::infinity()),
-      distanceToNextReachEnd(std::numeric_limits<float>::infinity()),
       blockedTimeout(level.time + 15000),
       aiYawSpeed(0.0f),
       aiPitchSpeed(0.0f)
