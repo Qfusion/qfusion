@@ -403,7 +403,7 @@ void AiBaseBrain::ClearLongTermGoal()
     // Clear short-term goal too
     shortTermGoal = nullptr;
     shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
-    shortTermGoalReevaluationTimeout = level.time + shortTermGoalReevaluationPeriod;
+    shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
     // Request immediate status update
     weightsUpdateTimeout = 0;
 }
@@ -411,8 +411,8 @@ void AiBaseBrain::ClearLongTermGoal()
 void AiBaseBrain::ClearShortTermGoal()
 {
     shortTermGoal = nullptr;
-    shortTermGoalSearchTimeout = level.time + shortTermGoalReevaluationPeriod;
-    shortTermGoalReevaluationTimeout = level.time + shortTermGoalReevaluationPeriod;
+    shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
+    shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
     // Request immediate status update
     weightsUpdateTimeout = 0;
 }
