@@ -409,6 +409,8 @@ void AiBaseBrain::ClearShortTermGoal()
     shortTermGoal = nullptr;
     shortTermGoalSearchTimeout = level.time + shortTermGoalReevaluationPeriod;
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalReevaluationPeriod;
+    // Request immediate status update
+    statusUpdateTimeout = 0;
 }
 
 void AiBaseBrain::OnLongTermGoalReached()
