@@ -117,6 +117,12 @@ bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
             if (spawnTime > reachTime && spawnTime - reachTime > 3000)
                 return true;
         }
+
+        if (MayNotBeFeasibleGoal(goalEnt))
+        {
+            Debug("Goal %s should be canceled as not looking like a feasible goal\n", goalEnt->Name());
+            return true;
+        }
     }
 
     return false;
@@ -200,11 +206,21 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
 
         weight = (1000 * weight) / (cost * COST_INFLUENCE); // Check against cost of getting there
 
+        // MayNotBeFeasibleGoal() calls are very expensive.
+        // Try to cut off these calls when it is possible and cache results.
+        bool feasibilityChecked = false;
         if (currLongTermGoalEnt == goalEnt)
+        {
+            if (MayNotBeFeasibleGoal(goalEnt))
+                continue;
+            feasibilityChecked = true;
             currGoalEntWeight = weight;
+        }
 
         if (weight > bestWeight)
         {
+            if (!feasibilityChecked && MayNotBeFeasibleGoal(goalEnt))
+                continue;
             bestWeight = weight;
             bestGoalEnt = goalEnt;
         }
@@ -310,8 +326,16 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
         // Cut items by weight first, IsShortRangeReachable() is quite expensive
         float weight = entityWeights[goalEnt->Id()] / dist * (inFront ? 1.0f : 0.5f);
 
+        // MayNotBeFeasibleGoal() calls are very expensive.
+        // Try to cut off these calls when it is possible and cache results.
+        bool feasibilityChecked = false;
         if (currShortTermGoalEnt == goalEnt)
+        {
+            if (MayNotBeFeasibleGoal(goalEnt))
+                continue;
+            feasibilityChecked = true;
             currGoalEntWeight = weight;
+        }
 
         if (weight > 0)
         {
@@ -330,6 +354,10 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
                         {
                             if ((toTravelMillis + backTravelMillis) / 2 < AI_GOAL_SR_MILLIS)
                             {
+                                // We hope this call will be cut for most entities
+                                if (!feasibilityChecked && MayNotBeFeasibleGoal(goalEnt))
+                                    continue;
+
                                 bestWeight = weight;
                                 bestGoalEnt = goalEnt;
                             }
@@ -337,6 +365,10 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
                     }
                     else if ((toTravelMillis + backTravelMillis) / 2 < AI_GOAL_SR_MILLIS)
                     {
+                        // We hope this call will be cut for most entities
+                        if (!feasibilityChecked && MayNotBeFeasibleGoal(goalEnt))
+                            continue;
+
                         bestWeight = weight;
                         bestGoalEnt = goalEnt;
                     }
