@@ -1,0 +1,12 @@
+/shared/constants.as;
+/shared/utils.as;
+/shared/files.as;
+
+generic/quickmenu.as;
+generic/matchstates.as;
+generic/bots.as;
+generic/awards.as;
+
+ca.as;
+
+legacy/quake1.as;
