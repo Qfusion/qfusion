@@ -442,6 +442,11 @@ protected:
 
 	virtual void Think() override;
 
+	// Used for additional potential goal rejection that does not reflected in entity weights.
+	// Returns true if the goal entity is not feasible for some reasons.
+	// Return result "false" does not means that goal is feasible though.
+	// Should be overridden in subclasses to implement domain-specific behaviour.
+	virtual bool MayNotBeFeasibleGoal(const NavEntity *goalEnt) { return false; };
 public:
 	// Returns true if the LTG does not require being touched and it is close enough to consider it reached
 	inline bool IsCloseEnoughToConsiderLongTermGoalReached() { return IsCloseEnoughToConsiderGoalReached(longTermGoal); }

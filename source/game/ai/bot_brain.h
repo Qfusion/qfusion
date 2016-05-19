@@ -506,6 +506,9 @@ class BotBrain: public AiBaseBrain
     float ComputePowerupWeight(const gsitem_t *item) const;
 
     virtual void OnGoalCleanedUp(const NavEntity *goalEnt) override;
+    virtual bool MayNotBeFeasibleGoal(const NavEntity *goalEnt) override;
+
+    bool MayPathToAreaBeBlocked(int goalAreaNum, const edict_t *enemy) const;
 
     BotBrain() = delete;
     // Disable copying and moving
