@@ -503,25 +503,22 @@ constexpr float Z_NO_BEND_SCALE = 0.25f;
 
 bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed)
 {
-    Vec3 testedLookVec(*intendedLookVec);
-    testedLookVec.z() *= Z_NO_BEND_SCALE;
-    float squareLen = testedLookVec.SquaredLength();
-    if (squareLen < 0.01f)
+    Vec3 baseForwardVec(*intendedLookVec);
+    baseForwardVec.z() *= Z_NO_BEND_SCALE;
+    // Treat inability to check obstacles as obstacles presence
+    if (baseForwardVec.SquaredLength() < 0.01f)
         return true;
 
-    testedLookVec *= Q_RSqrt(squareLen);
+    baseForwardVec.NormalizeFast();
+    baseForwardVec *= 24.0f + 96.0f * BoundedFraction(speed, 900);
 
-    Vec3 baseOffsetVec(testedLookVec);
-    baseOffsetVec *= 24.0f + 96.0f * BoundedFraction(speed, 900);
-
-    Vec3 forwardVec(baseOffsetVec);
-    forwardVec += self->s.origin;
+    Vec3 forwardPoint = Vec3(baseForwardVec) + self->s.origin;
 
     float *const mins = vec3_origin;
     float *const maxs = playerbox_stand_maxs;
 
     trace_t trace;
-    G_Trace(&trace, self->s.origin, mins, maxs, forwardVec.data(), self, MASK_AISOLID);
+    G_Trace(&trace, self->s.origin, mins, maxs, forwardPoint.data(), self, MASK_AISOLID);
 
     if (trace.fraction == 1.0f)
         return false;
@@ -531,7 +528,7 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, floa
     if (!self->groundentity)
     {
         trace_t crouchTrace;
-        G_Trace(&crouchTrace, self->s.origin, nullptr, playerbox_crouch_maxs, forwardVec.data(), self, MASK_AISOLID);
+        G_Trace(&crouchTrace, self->s.origin, nullptr, playerbox_crouch_maxs, forwardPoint.data(), self, MASK_AISOLID);
         if (crouchTrace.fraction == 1.0f)
         {
             ucmd->upmove = -1;
@@ -543,31 +540,38 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, floa
     float angleStep = 35.0f - 15.0f * BoundedFraction(speed, 900);
 
     float bestFraction = trace.fraction;
-    float *bestVec = baseOffsetVec.data();
 
     float sign = -1.0f;
     int stepNum = 1;
+
+    Vec3 angles(0, 0, 0);
     while (stepNum < 4)
     {
         mat3_t matrix;
-        vec3_t offsetVec;
-        vec3_t angles;
+        vec3_t rotatedForwardVec;
 
-        VectorSet(angles, 0, sign * angleStep * stepNum, 0);
-        AnglesToAxis(angles, matrix);
-        Matrix3_TransformVector(matrix, baseOffsetVec.data(), offsetVec);
-        G_Trace(&trace, self->s.origin, mins, maxs, (Vec3(offsetVec) + self->s.origin).data(), self, MASK_AISOLID);
+        // First, rotate baseForwardVec by angle = sign * angleStep * stepNum
+        angles.y() = sign * angleStep * stepNum;
+        AnglesToAxis(angles.data(), matrix);
+        Matrix3_TransformVector(matrix, baseForwardVec.data(), rotatedForwardVec);
+
+        Vec3 rotatedForwardPoint = Vec3(rotatedForwardVec) + self->s.origin;
+        G_Trace(&trace, self->s.origin, mins, maxs, rotatedForwardPoint.data(), self, MASK_AISOLID);
 
         if (trace.fraction > bestFraction)
         {
             bestFraction = trace.fraction;
-            VectorCopy(bestVec, intendedLookVec->data());
+            // Copy found less blocked rotated forward vector to the intendedLookVec
+            VectorCopy(rotatedForwardVec, intendedLookVec->data());
+            // Compensate applied Z scale applied to baseForwardVec (intendedLookVec Z is likely to be scaled again)
+            intendedLookVec->z() *= 1.0f / Z_NO_BEND_SCALE;
         }
 
         if (sign > 0)
             stepNum++;
         sign = -sign;
     }
+
     // If bestFraction is still a fraction of the forward trace, moveVec is kept as is
     return true;
 }
