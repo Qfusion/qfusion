@@ -111,10 +111,10 @@ void Bot::ClearCampingSpot()
     campingSpotLookAtPoint = Vec3(INFINITY, INFINITY, INFINITY);
 }
 
-void Bot::TouchedGoal(const edict_t *goalUnderlyingEntity)
+void Bot::TouchedGoal(const edict_t *goalUnderlyingEntity, int goalOldSolid)
 {
     // If goal is being picked up
-    if (goalUnderlyingEntity->s.solid == SOLID_TRIGGER)
+    if (goalOldSolid == SOLID_TRIGGER && goalUnderlyingEntity->s.solid != SOLID_TRIGGER)
     {
         // Stop camping a spawn point if the bot did it
         if (isWaitingForItemSpawn)

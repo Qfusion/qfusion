@@ -610,7 +610,8 @@ public:
 	void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
 	static bool IsStep(edict_t *ent);
 	int FindCurrAASAreaNum();
-	void TouchedEntity(edict_t *ent);
+	// Accepts a touched entity and its old solid before touch
+	void TouchedEntity(edict_t *ent, int oldSolid);
 
 	static NavEntity *GetGoalentForEnt(edict_t *target);
 
@@ -646,7 +647,7 @@ protected:
 		return ::FindDistanceToGround(origin, self, traceDepth);
 	}
 
-	virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) {};
+	virtual void TouchedGoal(const edict_t *goalUnderlyingEntity, int goalOldSolid) {};
 
 	void CheckReachedArea();
 	void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);
