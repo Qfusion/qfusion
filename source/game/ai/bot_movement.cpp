@@ -523,6 +523,9 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, floa
     if (trace.fraction == 1.0f)
         return false;
 
+    if (trace.fraction > 0.5f && ISWALKABLEPLANE(&trace.plane))
+        return false;
+
     // If we are in air, check whether we may crouch to prevent bumping a ceiling by head
     // We do not switch to crouch movement style, since we are still in air and have bunny speed
     if (!self->groundentity)
