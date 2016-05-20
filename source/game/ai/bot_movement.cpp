@@ -499,15 +499,19 @@ void Bot::MoveSwimming(Vec3 *intendedLookVec, usercmd_t *ucmd)
     //    ucmd->upmove = 1;
 }
 
+constexpr float Z_NO_BEND_SCALE = 0.25f;
+
 bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed)
 {
-    float squareLen = intendedLookVec->SquaredLength();
+    Vec3 testedLookVec(*intendedLookVec);
+    testedLookVec.z() *= Z_NO_BEND_SCALE;
+    float squareLen = testedLookVec.SquaredLength();
     if (squareLen < 0.01f)
         return true;
 
-    *intendedLookVec *= Q_RSqrt(squareLen);
+    testedLookVec *= Q_RSqrt(squareLen);
 
-    Vec3 baseOffsetVec(*intendedLookVec);
+    Vec3 baseOffsetVec(testedLookVec);
     baseOffsetVec *= 24.0f + 96.0f * BoundedFraction(speed, 900);
 
     Vec3 forwardVec(baseOffsetVec);
@@ -935,7 +939,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             }
 
             // Don't bend too hard
-            intendedLookVec->z() *= 0.33f;
+            intendedLookVec->z() *= Z_NO_BEND_SCALE;
         }
     }
     else
