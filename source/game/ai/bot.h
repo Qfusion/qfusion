@@ -40,7 +40,7 @@ protected:
     virtual void Frame() override;
     virtual void Think() override;
 
-    virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) override;
+    virtual void TouchedGoal(const edict_t *goalUnderlyingEntity, int goalOldSolid) override;
 private:
     bool TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove);
     std::pair<int, int> ApplyTacticalMove(
