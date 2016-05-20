@@ -868,12 +868,16 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             float velocityToTarget2DDot = velocityDir2D.Dot(toTargetDir2D);
             if (velocityToTarget2DDot < 0.99)
             {
+                // Compute this condition once
+                bool isCloseToAnyGoal = IsCloseToAnyGoal();
                 // Correct trajectory using cheating aircontrol
                 if (velocityToTarget2DDot > 0)
                 {
                     // Make correction less effective for large angles multiplying it
                     // by the dot product to avoid a weird-looking cheating movement
                     float controlMultiplier = 0.005f + velocityToTarget2DDot * 0.05f;
+                    if (isCloseToAnyGoal)
+                        controlMultiplier += 0.33f;
                     Vec3 newVelocity(velocityVec);
                     newVelocity *= 1.0f / speed;
                     newVelocity += controlMultiplier * toTargetDir2D;
@@ -882,7 +886,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                     newVelocity *= speed;
                     VectorCopy(newVelocity.data(), self->velocity);
                 }
-                else if (IsCloseToAnyGoal())
+                else if (isCloseToAnyGoal)
                 {
                     // velocity and forwardLookDir may mismatch, retrieve these actual look dirs
                     vec3_t forwardLookDir, rightLookDir;
