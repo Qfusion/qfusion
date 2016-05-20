@@ -131,7 +131,6 @@ private:
     void MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd);
     bool CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed);
     void StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed);
-    bool TryStraightenLookVec(Vec3 *intendedLookVec, float speed);
     void InterpolateLookVec(Vec3 *intendedLookVec, float speed);
     void SetLookVecToPendingReach(Vec3 *intendedLookVec);
     void TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd);
