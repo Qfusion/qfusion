@@ -38,8 +38,7 @@ void Ai::ResetNavigation()
 	nextReaches.clear();
 	goalAasAreaNum = 0;
 
-	// This call cleans short-term goal too
-	aiBaseBrain->ClearLongTermGoal();
+	aiBaseBrain->ClearAllGoals();
 
 	blockedTimeout = level.time + BLOCKED_TIMEOUT;
 }
@@ -173,7 +172,7 @@ int Ai::FindCurrAASAreaNum()
 void Ai::ClearAllGoals()
 {
 	// This clears short-term goal too
-	aiBaseBrain->ClearLongTermGoal();
+	aiBaseBrain->ClearAllGoals();
 	nextReaches.clear();
 }
 

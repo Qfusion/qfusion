@@ -284,7 +284,7 @@ protected:
 public:
 	// May return some of subtypes of this class depending on a gametype in future
 	static inline AiGametypeBrain *Instance() { return &instance; }
-	void ClearGoals(NavEntity *canceledGoal, class Ai *goalGrabber);
+	void ClearGoals(const NavEntity *canceledGoal, const class Ai *goalGrabber);
 };
 
 class AiBaseTeamBrain: public AiFrameAwareUpdatable
@@ -399,8 +399,7 @@ protected:
 
 	void PickLongTermGoal(const NavEntity *currLongTermGoalEnt);
 	void PickShortTermGoal(const NavEntity *currLongTermGoalEnt);
-	void ClearLongTermGoal();
-	void ClearShortTermGoal();
+	void ClearLongAndShortTermGoal(const NavEntity *pickedGoal);
 	void SetShortTermGoal(NavEntity *goalEnt);
 	void SetLongTermGoal(NavEntity *goalEnt);
 	virtual void OnGoalCleanedUp(const NavEntity *goalEnt) {}
@@ -446,6 +445,7 @@ protected:
 	void OnShortTermGoalReached();
 
 public:
+	void ClearAllGoals();
 
 	// Should return true if entity touch has been handled
 	bool HandleGoalTouch(const edict_t *ent);
