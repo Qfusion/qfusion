@@ -41,6 +41,7 @@ protected:
     virtual void Think() override;
 
     virtual void TouchedGoal(const edict_t *goalUnderlyingEntity, int goalOldSolid) override;
+    virtual void TouchedJumppad(const edict_t *jumppad) override;
 private:
     bool TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove);
     std::pair<int, int> ApplyTacticalMove(
@@ -57,8 +58,12 @@ private:
     bool hasTriggeredRj;
     unsigned rjTimeout;
 
-    bool hasTriggeredJumppad;
-    // This timeout is set when bot triggers a jumppad (in MoveEnteringJumppad).
+    // Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
+    // It gets processed by movement code in next frame
+    bool hasTouchedJumppad;
+    // If this flag is set, bot is in "jumppad" movement state
+    bool hasEnteredJumppad;
+    // This timeout is computed and set in Bot::TouchedJumppad().
     // Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
     // If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
     unsigned jumppadMoveTimeout;

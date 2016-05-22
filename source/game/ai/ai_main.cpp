@@ -220,6 +220,12 @@ void Ai::TouchedEntity(edict_t *ent, int oldSolid)
 		}
 		return;
 	}
+
+	if (ent->classname && !Q_stricmp(ent->classname, "trigger_push"))
+	{
+		TouchedJumppad(ent);
+		return;
+	}
 }
 
 void Ai::Frame()
