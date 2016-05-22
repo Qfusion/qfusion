@@ -2,7 +2,7 @@
 
 AiGametypeBrain AiGametypeBrain::instance;
 
-void AiGametypeBrain::ClearGoals(NavEntity *canceledGoal, Ai *goalGrabber)
+void AiGametypeBrain::ClearGoals(const NavEntity *canceledGoal, const Ai *goalGrabber)
 {
     if (!canceledGoal)
         return;
@@ -16,9 +16,9 @@ void AiGametypeBrain::ClearGoals(NavEntity *canceledGoal, Ai *goalGrabber)
             continue;
 
         if (ent->ai->aiRef->aiBaseBrain->longTermGoal == canceledGoal)
-            ent->ai->aiRef->aiBaseBrain->ClearLongTermGoal();
+            ent->ai->aiRef->aiBaseBrain->ClearLongAndShortTermGoal(canceledGoal);
         else if (ent->ai->aiRef->aiBaseBrain->shortTermGoal == canceledGoal)
-            ent->ai->aiRef->aiBaseBrain->ClearShortTermGoal();
+            ent->ai->aiRef->aiBaseBrain->ClearLongAndShortTermGoal(canceledGoal);
     }
 }
 

@@ -89,11 +89,11 @@ void AiBaseBrain::CheckOrCancelGoal()
     // Check for goal nullity in this function, not in ShouldCancelGoal()
     // (ShouldCancelGoal() return result may be confusing)
 
-    // Check long-term goal first (long-term goal cancellation implies short-term goal cancellation too)
+    // Check long-term goal first
     if (longTermGoal && ShouldCancelGoal(longTermGoal))
-        ClearLongTermGoal();
+        ClearLongAndShortTermGoal(longTermGoal);
     else if (shortTermGoal && ShouldCancelGoal(shortTermGoal))
-        ClearShortTermGoal();
+        ClearLongAndShortTermGoal(shortTermGoal);
 }
 
 bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
@@ -126,6 +126,14 @@ bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
     }
 
     return false;
+}
+
+void AiBaseBrain::ClearAllGoals()
+{
+    if (longTermGoal)
+        ClearLongAndShortTermGoal(longTermGoal);
+    if (shortTermGoal)
+        ClearLongAndShortTermGoal(shortTermGoal);
 }
 
 bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
@@ -524,12 +532,11 @@ void AiBaseBrain::SetShortTermGoal(NavEntity *goalEnt)
     self->ai->aiRef->OnGoalSet(goalEnt);
 }
 
-void AiBaseBrain::ClearLongTermGoal()
+void AiBaseBrain::ClearLongAndShortTermGoal(const NavEntity *pickedGoal)
 {
-    NavEntity *goalEnt = longTermGoal;
     longTermGoal = nullptr;
-    // Request immediate long-term goal update
-    longTermGoalSearchTimeout = 0;
+    // Request long-term goal update in next frame
+    longTermGoalSearchTimeout = level.time + 1;
     longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
     // Clear short-term goal too
     shortTermGoal = nullptr;
@@ -537,35 +544,22 @@ void AiBaseBrain::ClearLongTermGoal()
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
     // Request immediate status update
     weightsUpdateTimeout = 0;
-    OnGoalCleanedUp(goalEnt);
-}
-
-void AiBaseBrain::ClearShortTermGoal()
-{
-    NavEntity *goalEnt = shortTermGoal;
-    shortTermGoal = nullptr;
-    shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
-    shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
-    // Request immediate status update
-    weightsUpdateTimeout = 0;
-    OnGoalCleanedUp(goalEnt);
+    // Call possible overridden child callback method
+    OnGoalCleanedUp(pickedGoal);
+    // Notify other AI's about the goal pickup
+    AiGametypeBrain::Instance()->ClearGoals(pickedGoal, self->ai->aiRef);
 }
 
 void AiBaseBrain::OnLongTermGoalReached()
 {
-    NavEntity *goalEnt = longTermGoal;
-    Debug("reached long-term goal %s\n", goalEnt->Name());
-    ClearLongTermGoal();
-    AiGametypeBrain::Instance()->ClearGoals(goalEnt, self->ai->aiRef);
+    Debug("reached long-term goal %s\n", longTermGoal->Name());
+    ClearLongAndShortTermGoal(longTermGoal);
 }
 
 void AiBaseBrain::OnShortTermGoalReached()
 {
-    NavEntity *goalEnt = shortTermGoal;
-    Debug("reached short-term goal %s\n", goalEnt->Name());
-    // This call implies clearing short-term goal too
-    ClearLongTermGoal();
-    AiGametypeBrain::Instance()->ClearGoals(goalEnt, self->ai->aiRef);
+    Debug("reached short-term goal %s\n", shortTermGoal->Name());
+    ClearLongAndShortTermGoal(shortTermGoal);
 }
 
 std::pair<unsigned, unsigned> AiBaseBrain::FindToAndBackTravelTimes(const Vec3 &targetOrigin) const
