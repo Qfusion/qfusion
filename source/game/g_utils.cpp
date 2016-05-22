@@ -1030,7 +1030,6 @@ void G_CallThink( edict_t *ent )
 void G_CallTouch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
 {
 	bool touched = false;
-	int oldSolid = self->s.solid;
 
 	if( self == other )
 		return;
@@ -1045,7 +1044,7 @@ void G_CallTouch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags 
 	}
 
 	if( touched && other->ai )
-		AI_TouchedEntity( other, self, oldSolid );
+		AI_TouchedEntity( other, self );
 }
 
 /*

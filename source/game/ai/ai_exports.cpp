@@ -235,9 +235,9 @@ ai_type AI_GetType( const ai_handle_t *ai )
     return ai ? ai->type : AI_INACTIVE;
 }
 
-void AI_TouchedEntity(edict_t *self, edict_t *ent, int oldSolid)
+void AI_TouchedEntity(edict_t *self, edict_t *ent)
 {
-    self->ai->aiRef->TouchedEntity(ent, oldSolid);
+    self->ai->aiRef->TouchedEntity(ent);
 }
 
 void AI_DamagedEntity(edict_t *self, edict_t *ent, int damage)

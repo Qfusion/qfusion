@@ -887,21 +887,22 @@ void Bot::CheckTargetProximity()
         return;
     }
 
-    if (botBrain.IsCloseEnoughToConsiderLongTermGoalReached())
+    if (botBrain.IsCloseToAnyGoal())
     {
-        // This implies STG clearing too
-        botBrain.OnLongTermGoalReached();
-        goalAasAreaNum = 0;
-        nextReaches.clear();
-        return;
-    }
-
-    if (botBrain.IsCloseEnoughToConsiderShortTermGoalReached())
-    {
-        botBrain.OnShortTermGoalReached();
-        goalAasAreaNum = 0;
-        nextReaches.clear();
-        return;
+        if (botBrain.TryReachGoalByProximity())
+        {
+            goalAasAreaNum = 0;
+            nextReaches.clear();
+            return;
+        }
+        if (botBrain.ShouldWaitForGoal())
+        {
+            if (!isWaitingForItemSpawn)
+            {
+                SetCampingSpot(botBrain.ClosestGoalOrigin(), 36.0f, 0.75f);
+                isWaitingForItemSpawn = true;
+            }
+        }
     }
 }
 
@@ -909,11 +910,8 @@ void Bot::OnGoalCleanedUp(const NavEntity *goalEnt)
 {
     if (isWaitingForItemSpawn)
     {
-        if (!goalEnt || (goalEnt->Origin() - campingSpotOrigin).SquaredLength() < 32 * 32)
-        {
-            ClearCampingSpot();
-            isWaitingForItemSpawn = false;
-        }
+        ClearCampingSpot();
+        isWaitingForItemSpawn = false;
     }
 }
 

@@ -20,7 +20,7 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferred
     ClearWeights();
 }
 
-void AiBaseBrain::Debug(const char *format, ...)
+void AiBaseBrain::Debug(const char *format, ...) const
 {
     va_list va;
     va_start(va, format);
@@ -126,6 +126,94 @@ bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
     }
 
     return false;
+}
+
+bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
+{
+    // Handle long-term goal first (this implies short-term goal handling too)
+    if (longTermGoal && longTermGoal->IsBasedOnEntity(ent))
+    {
+        OnLongTermGoalReached();
+        return true;
+    }
+
+    if (shortTermGoal && shortTermGoal->IsBasedOnEntity(ent))
+    {
+        OnShortTermGoalReached();
+        return true;
+    }
+
+    return false;
+}
+
+bool AiBaseBrain::IsCloseToAnyGoal() const
+{
+    return IsCloseToGoal(longTermGoal, 128.0f) && IsCloseToGoal(shortTermGoal, 128.0f);
+}
+
+constexpr float GOAL_PROXIMITY_SQ_THRESHOLD = 40.0f * 40.0f;
+
+bool AiBaseBrain::TryReachGoalByProximity()
+{
+    // Bots do not wait for these kind of goals atm, just check goal presence, kind and proximity
+    // Check long-term goal first
+    if (longTermGoal && !longTermGoal->ShouldBeReachedAtTouch())
+    {
+        if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        {
+            OnLongTermGoalReached();
+            return true;
+        }
+    }
+
+    if (shortTermGoal && !shortTermGoal->ShouldBeReachedAtTouch())
+    {
+        if ((shortTermGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        {
+            OnShortTermGoalReached();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool AiBaseBrain::ShouldWaitForGoal() const
+{
+    // Only long-term goals may be waited for
+    if (longTermGoal && longTermGoal->ShouldBeReachedAtTouch())
+    {
+        if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        {
+            if (longTermGoal->SpawnTime() > level.time)
+                return true;
+        }
+    }
+    return false;
+}
+
+Vec3 AiBaseBrain::ClosestGoalOrigin() const
+{
+    float minSqDist = INFINITY;
+    NavEntity *chosenGoal = nullptr;
+    for (NavEntity *goal: { longTermGoal, shortTermGoal })
+    {
+        if (!goal) continue;
+        float sqDist = (goal->Origin() - self->s.origin).SquaredLength();
+        if (minSqDist < sqDist)
+        {
+            minSqDist = sqDist;
+            chosenGoal = goal;
+        }
+    }
+#ifdef _DEBUG
+    if (!chosenGoal)
+    {
+        Debug("AiBaseBrain::ClosestGoalOrigin(): there are no goals\n");
+        abort();
+    }
+#endif
+    return chosenGoal->Origin();
 }
 
 constexpr float COST_INFLUENCE = 0.5f;
