@@ -416,17 +416,11 @@ protected:
 	{
 		return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
 	}
-	inline bool IsCloseToGoal(const NavEntity *goalEnt, float proximityThreshold)
+	inline bool IsCloseToGoal(const NavEntity *goalEnt, float proximityThreshold) const
 	{
 		if (!goalEnt)
 			return false;
 		return (goalEnt->Origin() - self->s.origin).SquaredLength() <= proximityThreshold * proximityThreshold;
-	}
-	inline bool IsCloseEnoughToConsiderGoalReached(const NavEntity *goalEnt)
-	{
-		if (!goalEnt)
-			return false;
-		return goalEnt->IsCloseEnoughToBeConsideredReached(self);
 	}
 
 	inline int GoalAasAreaNum()
@@ -438,7 +432,7 @@ protected:
 		return 0;
 	}
 
-	void Debug(const char *format, ...);
+	void Debug(const char *format, ...) const;
 
 	virtual void Think() override;
 
@@ -447,45 +441,18 @@ protected:
 	// Return result "false" does not means that goal is feasible though.
 	// Should be overridden in subclasses to implement domain-specific behaviour.
 	virtual bool MayNotBeFeasibleGoal(const NavEntity *goalEnt) { return false; };
-public:
-	// Returns true if the LTG does not require being touched and it is close enough to consider it reached
-	inline bool IsCloseEnoughToConsiderLongTermGoalReached() { return IsCloseEnoughToConsiderGoalReached(longTermGoal); }
-	// Returns true if the STG does not require being touched and it is close enough to consider it reached
-	inline bool IsCloseEnoughToConsiderShortTermGoalReached() { return IsCloseEnoughToConsiderGoalReached(shortTermGoal); }
-
-	bool ShouldWaitForLongTermGoal()
-	{
-		if (!longTermGoal)
-			return false;
-		unsigned spawnTime = longTermGoal->SpawnTime();
-		if (!spawnTime)
-			return false;
-		return spawnTime > level.time;
-	}
-
-	inline Vec3 LongTermGoalOrigin() { return longTermGoal->Origin(); }
-
-	inline bool IsCloseToLongTermGoal(float proximityThreshold = 128.0f)
-	{
-		return IsCloseToGoal(longTermGoal, proximityThreshold);
-	}
-	inline bool IsCloseToShortTermGoal(float proximityThreshold = 128.0f)
-	{
-		return IsCloseToGoal(shortTermGoal, proximityThreshold);
-	}
-
-	inline bool UnderliesLongTermGoal(const edict_t *ent) const
-	{
-		return longTermGoal && longTermGoal->IsBasedOnEntity(ent);
-	}
-
-	inline bool UnderliesShortTermGoal(const edict_t *ent) const
-	{
-		return shortTermGoal && shortTermGoal->IsBasedOnEntity(ent);
-	}
 
 	void OnLongTermGoalReached();
 	void OnShortTermGoalReached();
+
+public:
+
+	// Should return true if entity touch has been handled
+	bool HandleGoalTouch(const edict_t *ent);
+	bool IsCloseToAnyGoal() const;
+	bool TryReachGoalByProximity();
+	bool ShouldWaitForGoal() const;
+	Vec3 ClosestGoalOrigin() const;
 };
 
 typedef struct ai_handle_s
@@ -611,7 +578,7 @@ public:
 	static bool IsStep(edict_t *ent);
 	int FindCurrAASAreaNum();
 	// Accepts a touched entity and its old solid before touch
-	void TouchedEntity(edict_t *ent, int oldSolid);
+	void TouchedEntity(edict_t *ent);
 
 	static NavEntity *GetGoalentForEnt(edict_t *target);
 
@@ -647,7 +614,7 @@ protected:
 		return ::FindDistanceToGround(origin, self, traceDepth);
 	}
 
-	virtual void TouchedGoal(const edict_t *goalUnderlyingEntity, int goalOldSolid) {};
+	virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) {};
 	virtual void TouchedJumppad(const edict_t *jumppad) {};
 
 	void CheckReachedArea();

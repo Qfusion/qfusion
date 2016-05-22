@@ -40,7 +40,7 @@ protected:
     virtual void Frame() override;
     virtual void Think() override;
 
-    virtual void TouchedGoal(const edict_t *goalUnderlyingEntity, int goalOldSolid) override;
+    virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) override;
     virtual void TouchedJumppad(const edict_t *jumppad) override;
 private:
     bool TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove);
@@ -143,7 +143,7 @@ private:
     void CheckTargetProximity();
     inline bool IsCloseToAnyGoal()
     {
-        return botBrain.IsCloseToShortTermGoal() || botBrain.IsCloseToLongTermGoal();
+        return botBrain.IsCloseToAnyGoal();
     }
     void OnGoalCleanedUp(const NavEntity *goalEnt);
 

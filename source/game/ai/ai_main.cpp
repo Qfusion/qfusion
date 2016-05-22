@@ -196,28 +196,11 @@ void Ai::OnGoalSet(NavEntity *goalEnt)
 	UpdateReachCache(currAasAreaNum);
 }
 
-void Ai::TouchedEntity(edict_t *ent, int oldSolid)
+void Ai::TouchedEntity(edict_t *ent)
 {
-	if (aiBaseBrain->UnderliesLongTermGoal(ent))
+	if (aiBaseBrain->HandleGoalTouch(ent))
 	{
-		TouchedGoal(ent, oldSolid);
-		// If the goal item may be picked now
-		if (oldSolid == SOLID_TRIGGER && ent->s.solid != SOLID_TRIGGER)
-		{
-			// This call implies short-term goal clearing too
-			aiBaseBrain->OnLongTermGoalReached();
-		}
-		return;
-	}
-
-	if (aiBaseBrain->UnderliesShortTermGoal(ent))
-	{
-		TouchedGoal(ent, oldSolid);
-		// If the goal item may be picked now
-		if (oldSolid == SOLID_TRIGGER && ent->s.solid != SOLID_TRIGGER)
-		{
-			aiBaseBrain->OnShortTermGoalReached();
-		}
+		TouchedGoal(ent);
 		return;
 	}
 
