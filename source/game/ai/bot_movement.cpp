@@ -31,10 +31,6 @@ void Bot::Move(usercmd_t *ucmd)
     if (currAasAreaNum == 0 || goalAasAreaNum == 0)
         return;
 
-    aas_areainfo_t currAreaInfo;
-    AAS_AreaInfo(currAasAreaNum, &currAreaInfo);
-    const int currAreaContents = currAreaInfo.contents;
-
     Vec3 intendedLookVec(self->velocity);  // Use as a default one
     if (currAasAreaNum != goalAasAreaNum)
     {
@@ -61,11 +57,11 @@ void Bot::Move(usercmd_t *ucmd)
     {
         MoveOnLadder(&intendedLookVec, ucmd);
     }
-    else if (currAreaContents & AREACONTENTS_JUMPPAD)
+    else if (hasTouchedJumppad)
     {
         MoveEnteringJumppad(&intendedLookVec, ucmd);
     }
-    else if (hasTriggeredJumppad)
+    else if (hasEnteredJumppad)
     {
         MoveRidingJummpad(&intendedLookVec, ucmd);
     }
@@ -192,15 +188,13 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     ucmd->sidemove = 0;
     ucmd->forwardmove = 0;
 
-    if (!hasTriggeredJumppad)
+    if (!hasEnteredJumppad)
     {
         jummpadLandingAreasCount = 0;
         if (!nextReaches.empty())
         {
             // Look at the destination point
             SetPendingLookAtPoint(Vec3(nextReaches.front().end));
-            unsigned approxFlightTime = (unsigned) DistanceFast(nextReaches.front().start, nextReaches.front().end);
-            jumppadMoveTimeout = level.time + approxFlightTime;
 
             for (const auto &reach: nextReaches)
             {
@@ -208,13 +202,9 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
                     jumppadLandingAreas[jummpadLandingAreasCount++] = reach.areanum;
             }
         }
-        else
-        {
-            jumppadMoveTimeout = level.time + 1000;
-        }
 
         ucmd->forwardmove = 1;
-        hasTriggeredJumppad = true;
+        hasEnteredJumppad = true;
     }
 }
 
@@ -223,7 +213,7 @@ void Bot::MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     // First check whether bot finally landed to some area
     if (self->groundentity)
     {
-        hasTriggeredJumppad = false;
+        hasEnteredJumppad = false;
         ucmd->forwardmove = 1;
         return;
     }

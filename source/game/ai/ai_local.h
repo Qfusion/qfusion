@@ -648,6 +648,7 @@ protected:
 	}
 
 	virtual void TouchedGoal(const edict_t *goalUnderlyingEntity, int goalOldSolid) {};
+	virtual void TouchedJumppad(const edict_t *jumppad) {};
 
 	void CheckReachedArea();
 	void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);

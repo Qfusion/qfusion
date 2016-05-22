@@ -10,7 +10,8 @@ Bot::Bot(edict_t *self, float skillLevel)
       printLink(false),
       hasTriggeredRj(false),
       rjTimeout(0),
-      hasTriggeredJumppad(false),
+      hasTouchedJumppad(false),
+      hasEnteredJumppad(false),
       jumppadMoveTimeout(0),
       jummpadLandingAreasCount(0),
       hasPendingLandingDash(false),
@@ -132,6 +133,27 @@ void Bot::TouchedGoal(const edict_t *goalUnderlyingEntity, int goalOldSolid)
             isWaitingForItemSpawn = true;
         }
     }
+}
+
+void Bot::TouchedJumppad(const edict_t *jumppad)
+{
+    // jumppad->s.origin2 contains initial push velocity
+    Vec3 pushDir(jumppad->s.origin2);
+    pushDir.NormalizeFast();
+
+    float relaxedFlightSeconds = 0;
+    float zDotFactor = pushDir.Dot(&axis_identity[AXIS_UP]);
+    if (zDotFactor > 0)
+    {
+        // Start to find landing area when vertical velocity is close to zero.
+        // This may be wrong for Q3-like horizontal jumppads,
+        // but its unlikely to see this kind of triggers in the QF game.
+        relaxedFlightSeconds = 0.90f * jumppad->s.origin2[2] / (level.gravity + 0.0001f);
+    }
+    // Otherwise (for some weird jumppad that pushes dow) start to find landing area immediately
+
+    jumppadMoveTimeout = level.time + (unsigned)(1000.0f * relaxedFlightSeconds);
+    hasTouchedJumppad = true;
 }
 
 void Bot::RegisterVisibleEnemies()
@@ -473,6 +495,9 @@ void Bot::Frame()
     // set approximate ping and show values
     ucmd.msec = game.frametime;
     ucmd.serverTimeStamp = game.serverTime;
+
+    // If this value is modified by ClientThink() callbacks, it will be kept until next frame reaches this line
+    hasTouchedJumppad = false;
 
     ClientThink( self, &ucmd, 0 );
     self->nextThink = level.time + 1;
