@@ -43,7 +43,6 @@ in NO WAY supported by Steve Yeager.
 #include <stdarg.h>
 
 constexpr auto AI_DEFAULT_YAW_SPEED = 35 * 5;
-constexpr auto AI_COMBATMOVE_TIMEOUT = 500;
 
 // Platform states:
 constexpr auto STATE_TOP    = 0;

@@ -14,7 +14,6 @@ public:
     Bot(edict_t *self, float skillLevel);
 
     void Move(usercmd_t *ucmd);
-    void CombatMovement(usercmd_t *ucmd, bool hasDangers);
     void LookAround();
     bool ChangeWeapon(int weapon);
     bool FireWeapon();
@@ -155,6 +154,8 @@ private:
     // Returns true if the bot is at least a bit blocked
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
 
+    void CombatMovement(usercmd_t *ucmd, bool hasDangers);
+    void UpdateCombatMovePushes();
     void ApplyEvadeMovePushes(usercmd_t *ucmd);
     bool MayApplyCombatDash();
     Vec3 MakeEvadeDirection(const Danger &danger);

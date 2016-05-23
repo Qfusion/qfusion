@@ -967,79 +967,92 @@ Vec3 Bot::MakeEvadeDirection(const Danger &danger)
     return result;
 }
 
-//==========================================
-// BOT_DMclass_CombatMovement
-//
-// NOTE: Very simple for now, just a basic move about avoidance.
-//       Change this routine for more advanced attack movement.
-//==========================================
+constexpr auto AI_COMBATMOVE_TIMEOUT = 400;
+
 void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
 {
-    // TODO: Check whether we are holding/camping a point
-
-    const CombatTask &combatTask = botBrain.combatTask;
-
-    if (!HasEnemy())
+    if (hasToEvade)
     {
-        Move(ucmd);
+        ApplyEvadeMovePushes(ucmd);
         return;
     }
 
-    const float dist = (combatTask.EnemyOrigin() - self->s.origin).LengthFast();
-    const float c = random();
-
+    // Combat movement key directions `combatMovePushes` are cached for AI_COMBATMOVE_TIMEOUT millis
+    // Changing combat movement keys each frame does not work due to ground friction
     if (combatMovePushTimeout <= level.time)
     {
         combatMovePushTimeout = level.time + AI_COMBATMOVE_TIMEOUT;
-
-        VectorClear(combatMovePushes);
-
-        if (hasToEvade)
-        {
-            ApplyEvadeMovePushes(ucmd);
-        }
-        else
-        {
-            if (dist < 150.0f && self->s.weapon == WEAP_GUNBLADE) // go into him!
-            {
-                ucmd->buttons &= ~BUTTON_ATTACK; // remove pressing fire
-                if (closeAreaProps.frontTest.CanWalk())  // move to your enemy
-                    combatMovePushes[0] = 1;
-                else if (c <= 0.5 && closeAreaProps.leftTest.CanWalk())
-                    combatMovePushes[1] = -1;
-                else if (c <= 0.5 && closeAreaProps.rightTest.CanWalk())
-                    combatMovePushes[1] = 1;
-            }
-            else
-            {
-                // First, establish mapping from CombatTask tactical directions (if any) to bot movement key directions
-                int tacticalXMove, tacticalYMove;
-                bool advance = TacticsToAprioriMovePushes(&tacticalXMove, &tacticalYMove);
-
-                const auto &placeProps = closeAreaProps;  // Shorthand
-                auto moveXAndUp = ApplyTacticalMove(tacticalXMove, advance, placeProps.frontTest, placeProps.backTest);
-                auto moveYAndUp = ApplyTacticalMove(tacticalYMove, advance, placeProps.rightTest, placeProps.leftTest);
-
-                combatMovePushes[0] = moveXAndUp.first;
-                combatMovePushes[1] = moveYAndUp.first;
-                combatMovePushes[2] = moveXAndUp.second || moveYAndUp.second;
-            }
-        }
+        UpdateCombatMovePushes();
     }
 
-    if (!hasToEvade && combatTask.inhibit)
-    {
-        Move( ucmd );
-    }
-    else
-    {
-        if (MayApplyCombatDash())
-            ucmd->buttons |= BUTTON_SPECIAL;
-    }
+    // Dash is a single-frame event not affected by friction, so it should be checked each frame
+    if (MayApplyCombatDash())
+        ucmd->buttons |= BUTTON_SPECIAL;
 
+    // Copy cached or updated key directions to ucmd
     ucmd->forwardmove = combatMovePushes[0];
     ucmd->sidemove = combatMovePushes[1];
     ucmd->upmove = combatMovePushes[2];
+}
+
+void Bot::UpdateCombatMovePushes()
+{
+    VectorClear(combatMovePushes);
+
+    // Use the same algorithm for combat move vec as for roaming look vec. The difference is:
+    // In roaming movement we keep forward pressed and align view to look vec
+    // In combat movement we keep view as-is (it set by aiming ai part) and move to goal using appropriate keys
+    Vec3 intendedMoveVec(0, 0, 0);
+    StraightenOrInterpolateLookVec(&intendedMoveVec, (float)VectorLength(self->velocity));
+    intendedMoveVec.NormalizeFast();
+
+    vec3_t forward, right;
+    AngleVectors(self->s.angles, forward, right, nullptr);
+
+    const float moveDotForward = intendedMoveVec.Dot(forward);
+    const float moveDotRight = intendedMoveVec.Dot(right);
+
+    Vec3 toEnemyDir = EnemyOrigin() - self->s.origin;
+    toEnemyDir.NormalizeFast();
+
+    float forwardBackRandomness = 0.2f;
+    float rightLeftRandomness = 0.2f;
+    // Increase randomness for directions perpendicular to enemy
+    if (fabsf(toEnemyDir.Dot(forward)) < 0.3f)
+        forwardBackRandomness += 0.15f;
+    if (fabsf(toEnemyDir.Dot(right)) < 0.3f)
+        rightLeftRandomness += 0.15f;
+
+    // Choose direction randomly but leaning to intendedMoveVec direction
+    // Do not cache random() call to make choices independent
+
+    if (moveDotForward > 0.3f)
+        combatMovePushes[0] = random() > forwardBackRandomness ? 1 : -1;
+    else if (moveDotForward < -0.3f)
+        combatMovePushes[0] = random() > forwardBackRandomness ? -1 : 1;
+    else if (random() > 0.85f)
+        combatMovePushes[0] = Q_sign(random() - 0.5f);
+
+    if (moveDotRight > 0.3f)
+        combatMovePushes[1] = random() > rightLeftRandomness ? 1 : -1;
+    else if (moveDotRight < -0.3f)
+        combatMovePushes[1] = random() > rightLeftRandomness ? -1 : 1;
+    else if (random() > 0.85f)
+        combatMovePushes[1] = Q_sign(random() - 0.5f);
+
+    // If neither forward-back, nor left-right direction has been chosen, chose directions randomly
+    if (!combatMovePushes[0] && !combatMovePushes[1])
+    {
+        combatMovePushes[0] = Q_sign(random() - 0.5f);
+        combatMovePushes[1] = Q_sign(random() - 0.5f);
+    }
+
+    // Tend to jump or crouch excessively if we have height advantage
+    if (toEnemyDir.z() < -0.3)
+        combatMovePushes[2] = random() > 0.75f ? Q_sign(random() - 0.5f) : 0;
+    // Otherwise do these moves sparingly only to surprise enemy sometimes
+    else
+        combatMovePushes[2] = random() > 0.9f ? Q_sign(random() - 0.5f) : 0;
 }
 
 void Bot::ApplyEvadeMovePushes(usercmd_t *ucmd)
