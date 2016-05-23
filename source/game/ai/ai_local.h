@@ -42,31 +42,30 @@ in NO WAY supported by Steve Yeager.
 #include <utility>
 #include <stdarg.h>
 
-#define AI_DEFAULT_YAW_SPEED	( 35 * 5 )
-#define AI_COMBATMOVE_TIMEOUT	( 500 )
-#define AI_YAW_ACCEL		( 95 * FRAMETIME )
+constexpr auto AI_DEFAULT_YAW_SPEED = 35 * 5;
+constexpr auto AI_COMBATMOVE_TIMEOUT = 500;
 
 // Platform states:
-#define	STATE_TOP	    0
-#define	STATE_BOTTOM	1
-#define STATE_UP	    2
-#define STATE_DOWN	    3
+constexpr auto STATE_TOP    = 0;
+constexpr auto STATE_BOTTOM = 1;
+constexpr auto STATE_UP     = 2;
+constexpr auto STATE_DOWN   = 3;
 
-#define MAX_GOALENTS MAX_EDICTS
+constexpr auto MAX_GOALENTS = MAX_EDICTS;
 
-#define	AI_STEPSIZE	STEPSIZE    // 18
-#define AI_JUMPABLE_HEIGHT		50
-#define AI_JUMPABLE_DISTANCE	360
-#define AI_WATERJUMP_HEIGHT		24
-#define AI_MIN_RJ_HEIGHT		128
-#define AI_MAX_RJ_HEIGHT		512
-#define AI_GOAL_SR_RADIUS		200
-#define AI_GOAL_SR_LR_RADIUS	600
+constexpr auto AI_STEPSIZE          = STEPSIZE; // 18
+constexpr auto AI_JUMPABLE_HEIGHT   = 50;
+constexpr auto AI_JUMPABLE_DISTANCE	= 360;
+constexpr auto AI_WATERJUMP_HEIGHT  = 24;
+constexpr auto AI_MIN_RJ_HEIGHT	    = 128;
+constexpr auto AI_MAX_RJ_HEIGHT	    = 512;
+constexpr auto AI_GOAL_SR_RADIUS    = 200;
+constexpr auto AI_GOAL_SR_LR_RADIUS = 600;
 
-constexpr int AI_GOAL_SR_MILLIS = 750;
+constexpr int AI_GOAL_SR_MILLIS    = 750;
 constexpr int AI_GOAL_SR_LR_MILLIS = 1500;
 
-#define MASK_AISOLID        ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP )
+constexpr auto MASK_AISOLID = CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP;
 
 enum class GoalFlags
 {
