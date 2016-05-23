@@ -334,6 +334,17 @@ public:
         FailWith("EnemyMaxs(): combat task is empty\n");
     }
 
+    Vec3 EnemyLookDir() const
+    {
+        if (aimEnemy)
+        {
+            vec3_t forward;
+            AngleVectors(aimEnemy->ent->s.angles, forward, nullptr, nullptr);
+            return Vec3(forward);
+        }
+        FailWith("EnemyLookDir(): aim enemy is not present");
+    }
+
     const int Weapon()
     {
         if (aimEnemy) return suggestedShootWeapon;
