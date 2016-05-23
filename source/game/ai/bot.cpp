@@ -456,6 +456,29 @@ void Bot::Frame()
             else if (currAasAreaTravelFlags & (TFL_CROUCH))
                 inhibitCombatMove = true;
         }
+        // Try to move bunnying instead of dodging on ground
+        // if the enemy is not looking to bot being able to hit him
+        // and the bot is able to hit while moving without changing angle significantly
+        if (!inhibitCombatMove && !combatTask.IsTargetStatic())
+        {
+            Vec3 enemyLookDir = combatTask.EnemyLookDir();
+            Vec3 enemyToBotDir = Vec3(self->s.origin) - combatTask.EnemyOrigin();
+            float squaredDistance = enemyToBotDir.SquaredLength();
+            // If the enemy is far enough
+            if (squaredDistance > 200.0f * 200.0f)
+            {
+                enemyToBotDir *= Q_RSqrt(squaredDistance);
+                // Check whether the enemy may not hit the bot
+                if (enemyLookDir.Dot(enemyToBotDir) < 0.9)
+                {
+                    vec3_t botLookDir;
+                    AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
+                    // Check whether the bot may hit while running
+                    if ((-enemyToBotDir).Dot(botLookDir) > 0.99)
+                        inhibitCombatMove = true;
+                }
+            }
+        }
     }
 
     // Do not modify the ucmd in FireWeapon(), it will be overwritten by MoveFrame()
