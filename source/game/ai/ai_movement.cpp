@@ -179,6 +179,8 @@ void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*
 	ChangeAxisAngle(currentPitch, ideal_pitch, self->yaw_speed, &aiPitchSpeed, &self->s.angles[PITCH]);
 }
 
+#define AI_YAW_ACCEL ( 95 * FRAMETIME )
+
 void Ai::ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle)
 {
 	float angleMove, speed;
