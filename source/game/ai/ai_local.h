@@ -203,11 +203,11 @@ extern ai_weapon_t AIWeapons[WEAP_TOTAL];
 
 #include "aas.h"
 
-int FindAASReachabilityToGoalArea(
-	int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags);
+int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum,
+								  const edict_t *ignoreInTrace, int preferredTravelFlags, int allowedTravelFlags);
 
-int FindAASTravelTimeToGoalArea(
-	int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags);
+int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum,
+								const edict_t *ignoreInTrace, int preferredTravelFlags, int allowedTravelFlags);
 
 float FindSquareDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
 float FindDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
@@ -407,11 +407,13 @@ protected:
 
 	inline int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
 	{
-		return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
+		return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self,
+											   preferredAasTravelFlags, allowedAasTravelFlags);
 	}
 	inline int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
 	{
-		return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
+		return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self,
+											 preferredAasTravelFlags, allowedAasTravelFlags);
 	}
 	inline bool IsCloseToGoal(const NavEntity *goalEnt, float proximityThreshold) const
 	{
@@ -597,11 +599,13 @@ protected:
 
 	inline int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
 	{
-		return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
+		return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self,
+											   preferredAasTravelFlags, allowedAasTravelFlags);
 	}
 	inline int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
 	{
-		return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self, allowedAasTravelFlags);
+		return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self,
+											 preferredAasTravelFlags, allowedAasTravelFlags);
 	}
 	inline float FindSquareDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const
 	{

@@ -74,36 +74,44 @@ void AI_Debugv(const char *nick, const char *format, va_list va)
 }
 
 template<typename AASFn>
-static int FindAASParamToGoalArea(
-    AASFn fn, int fromAreaNum, const vec_t *origin, int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags)
+static int FindAASParamToGoalArea(AASFn fn, int fromAreaNum, const vec_t *origin, int goalAreaNum,
+                                  const edict_t *ignoreInTrace, int preferredTravelFlags, int allowedTravelFlags)
 {
-    int param = fn(fromAreaNum, const_cast<float*>(origin), goalAreaNum, travelFlags);
+    // First try to find AAS parameter for current origin and preferred flags
+    int param = fn(fromAreaNum, const_cast<float*>(origin), goalAreaNum, preferredTravelFlags);
     if (param)
         return param;
 
+    // Trace for ground
     float DEPTH_LIMIT = 1.5f * (playerbox_stand_maxs[2] - playerbox_stand_mins[2]);
     float distanceToGround = FindDistanceToGround(origin, ignoreInTrace, DEPTH_LIMIT);
-    // Distance to ground is significantly greater than player height
+    // Distance to ground is significantly greater than player height.
+    // Return search result for current origin and allowed flags
     if (distanceToGround > DEPTH_LIMIT)
-        return 0;
+        return fn(fromAreaNum, const_cast<float*>(origin), goalAreaNum, allowedTravelFlags);
 
     // Add some epsilon offset from ground
     vec3_t projectedOrigin = { origin[0], origin[1], origin[2] - distanceToGround + 1.0f };
-    return fn(fromAreaNum, projectedOrigin, goalAreaNum, travelFlags);
+    // Try to find AAS parameter for grounded origin and preferred flags
+    param = fn(fromAreaNum, projectedOrigin, goalAreaNum, preferredTravelFlags);
+    if (param)
+        return param;
+    // Return search result for grounded origin and allowed flags
+    return fn(fromAreaNum, projectedOrigin, goalAreaNum, allowedTravelFlags);
 }
 
-int FindAASReachabilityToGoalArea(
-    int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags)
+int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum,
+                                  const edict_t *ignoreInTrace, int preferredTravelFlags, int allowedTravelFlags)
 {
-    return ::FindAASParamToGoalArea(
-        AAS_AreaReachabilityToGoalArea, fromAreaNum, fromOrigin, goalAreaNum, ignoreInTrace, travelFlags);
+    return ::FindAASParamToGoalArea(AAS_AreaReachabilityToGoalArea, fromAreaNum, fromOrigin, goalAreaNum,
+                                    ignoreInTrace, preferredTravelFlags, allowedTravelFlags);
 }
 
-int FindAASTravelTimeToGoalArea(
-    int fromAreaNum, const vec3_t fromOrigin , int goalAreaNum, const edict_t *ignoreInTrace, int travelFlags)
+int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum,
+                                const edict_t *ignoreInTrace, int preferredTravelFlags, int allowedTravelFlags)
 {
-    return ::FindAASParamToGoalArea(
-        AAS_AreaTravelTimeToGoalArea, fromAreaNum, fromOrigin, goalAreaNum, ignoreInTrace, travelFlags);
+    return ::FindAASParamToGoalArea(AAS_AreaTravelTimeToGoalArea, fromAreaNum, fromOrigin, goalAreaNum,
+                                    ignoreInTrace, preferredTravelFlags, allowedTravelFlags);
 }
 
 float FindSquareDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth)
