@@ -1,7 +1,7 @@
 #include "ai_local.h"
 #include "aas.h"
 
-AiBaseBrain::AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
+AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags)
     : self(self),
       longTermGoal(nullptr),
       shortTermGoal(nullptr),
@@ -14,8 +14,8 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferred
       longTermGoalReevaluationPeriod(700),
       shortTermGoalReevaluationPeriod(350),
       weightsUpdateTimeout(0),
-      allowedAasTravelFlags(allowedAasTravelFlags),
-      preferredAasTravelFlags(preferredAasTravelFlags)
+      preferredAasTravelFlags(preferredAasTravelFlags),
+      allowedAasTravelFlags(allowedAasTravelFlags)
 {
     ClearWeights();
 }

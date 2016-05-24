@@ -3,7 +3,7 @@
 #include <algorithm>
 
 Bot::Bot(edict_t *self, float skillLevel)
-    : Ai(self),
+    : Ai(self, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
       dangersDetector(self),
       botBrain(self, skillLevel),
       skillLevel(skillLevel),

@@ -220,10 +220,11 @@ void G_SpawnAI( edict_t *ent, float skillLevel )
         ent->ai->aiRef = ent->ai->botRef;
     }
     else {
+        // TODO: Monster brain is not implemented! This is just a stub!
         ent->ai->type = AI_ISMONSTER;
         void *mem = G_Malloc( sizeof(Ai) );
         ent->ai->botRef = nullptr;
-        ent->ai->aiRef = new(mem) Ai( ent );
+        ent->ai->aiRef = new(mem) Ai( ent, TFL_DEFAULT, TFL_DEFAULT );
     }
 }
 
