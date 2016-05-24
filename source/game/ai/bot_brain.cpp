@@ -77,7 +77,7 @@ void Enemy::OnViewed()
 }
 
 BotBrain::BotBrain(edict_t *bot, float skillLevel)
-    : AiBaseBrain(bot, TFL_DEFAULT, TFL_DEFAULT),
+    : AiBaseBrain(bot, Bot::PREFERRED_TRAVEL_FLAGS, Bot::ALLOWED_TRAVEL_FLAGS),
       bot(bot),
       skillLevel(skillLevel),
       trackedEnemiesCount(0),

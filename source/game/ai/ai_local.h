@@ -381,12 +381,12 @@ protected:
 
 	int currAasAreaNum;
 
-	int allowedAasTravelFlags;
 	int preferredAasTravelFlags;
+	int allowedAasTravelFlags;
 
 	float entityWeights[MAX_GOALENTS];
 
-	AiBaseBrain(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags);
+	AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
 
 	void ClearWeights();
 	void UpdateWeights();
@@ -568,7 +568,7 @@ protected:
 	virtual void Frame() override;
 	virtual void Think() override;
 public:
-	Ai(edict_t *self, int preferredAasTravelFlags = TFL_DEFAULT, int allowedAasTravelFlags = TFL_DEFAULT);
+	Ai(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
 
 	inline bool IsGhosting() const { return G_ISGHOSTING(self); }
 
