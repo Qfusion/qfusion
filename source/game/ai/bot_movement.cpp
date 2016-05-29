@@ -188,24 +188,60 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     ucmd->sidemove = 0;
     ucmd->forwardmove = 0;
 
-    if (!hasEnteredJumppad)
+    if (hasEnteredJumppad)
+        return;
+
+    jumppadLandingAreasCount = 0;
+    // Estimate distance (we may use bot origin as approximate jumppad origin since bot has just triggered it)
+    float approxDistance = (jumppadTarget - self->s.origin).LengthFast();
+    // Use larger box for huge jumppads
+    float baseSide = 56.0f + 72.0f * BoundedFraction(approxDistance, 1500.0f);
+    // Jumppad target has been set in Bot::TouchedJumppad()
+    Vec3 bboxMins = jumppadTarget + Vec3(-1.25f * baseSide, -1.25f * baseSide, -0.55f * baseSide);
+    Vec3 bboxMaxs = jumppadTarget + Vec3(+1.25f * baseSide, +1.25f * baseSide, +0.55f * baseSide);
+    // First, fetch all areas in the target bounding box (more than required)
+    int rawAreas[MAX_LANDING_AREAS * 2];
+    int rawAreasCount = AAS_BBoxAreas(bboxMins.data(), bboxMaxs.data(), rawAreas, MAX_LANDING_AREAS * 2);
+    int filteredAreas[MAX_LANDING_AREAS * 2];
+    int filteredAreasCount = 0;
+    // Then filter raw areas
+    for (int i = 0; i < rawAreasCount; ++i)
     {
-        jummpadLandingAreasCount = 0;
-        if (!nextReaches.empty())
-        {
-            // Look at the destination point
-            SetPendingLookAtPoint(Vec3(nextReaches.front().end));
-
-            for (const auto &reach: nextReaches)
-            {
-                if (AAS_AreaGrounded(reach.areanum))
-                    jumppadLandingAreas[jummpadLandingAreasCount++] = reach.areanum;
-            }
-        }
-
-        ucmd->forwardmove = 1;
-        hasEnteredJumppad = true;
+        int areaNum = rawAreas[i];
+        // Skip non-grounded areas
+        if (!AAS_AreaGrounded(areaNum))
+            continue;
+        // Skip areas above target that a-priori may not be a landing site. Areas bounds are absolute.
+        if (aasworld.areas[areaNum].center[2] > jumppadTarget.z())
+            continue;
+        // Do not trace, trace requires actual bot origin and will be performed later, though it may consume cycles
+        filteredAreas[filteredAreasCount++] = areaNum;
     }
+    if (!nextReaches.empty())
+    {
+        // Look at the destination point
+        SetPendingLookAtPoint(Vec3(nextReaches.front().end));
+        // Start from the last known reachability. (Try to shortcut path on landing)
+        for (int i = nextReaches.size() - 1; i >= 0; --i)
+        {
+            const int reachAreaNum = nextReaches[i].areanum;
+            int *end = filteredAreas + filteredAreasCount;
+            // If path area is in filtered areas, add it to the landing areas
+            if (std::find(filteredAreas, end, reachAreaNum) != end)
+                jumppadLandingAreas[jumppadLandingAreasCount++] = reachAreaNum;
+        }
+    }
+    if (!jumppadLandingAreasCount)
+    {
+        int numAreasToCopy = std::min(MAX_LANDING_AREAS, filteredAreasCount);
+        // Copy areas. The case when filteredAreasCount > areasToCopyCount
+        // should be very rare, don't bother about possible data loss
+        std::copy(filteredAreas, filteredAreas + numAreasToCopy, jumppadLandingAreas);
+        jumppadLandingAreasCount = numAreasToCopy;
+    }
+
+    ucmd->forwardmove = 1;
+    hasEnteredJumppad = true;
 }
 
 void Bot::MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd)
@@ -224,10 +260,10 @@ void Bot::MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
     if (jumppadMoveTimeout <= level.time)
     {
-        if (jummpadLandingAreasCount)
+        if (jumppadLandingAreasCount)
         {
-            // Start from the last area in next areas chain (try to shortcut path in air)
-            for (int i = jummpadLandingAreasCount - 1; i >= 0; --i)
+            // `jumppadLandingAreas` is assumed to be sorted, best areas first
+            for (int i = 0; i < jumppadLandingAreasCount; ++i)
             {
                 if (TryLandOnArea(jumppadLandingAreas[i], intendedLookVec, ucmd))
                     return;

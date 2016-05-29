@@ -12,8 +12,9 @@ Bot::Bot(edict_t *self, float skillLevel)
       rjTimeout(0),
       hasTouchedJumppad(false),
       hasEnteredJumppad(false),
+      jumppadTarget(INFINITY, INFINITY, INFINITY),
       jumppadMoveTimeout(0),
-      jummpadLandingAreasCount(0),
+      jumppadLandingAreasCount(0),
       hasPendingLandingDash(false),
       isOnGroundThisFrame(false),
       wasOnGroundPrevFrame(false),
@@ -141,6 +142,7 @@ void Bot::TouchedJumppad(const edict_t *jumppad)
 
     jumppadMoveTimeout = level.time + (unsigned)(1000.0f * relaxedFlightSeconds);
     hasTouchedJumppad = true;
+    jumppadTarget = Vec3(jumppad->target_ent->s.origin);
 }
 
 void Bot::RegisterVisibleEnemies()
