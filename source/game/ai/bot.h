@@ -75,7 +75,8 @@ private:
     // Thus we have to store next areas starting a jumppad movement and try to prefer these areas for landing
     static constexpr int MAX_LANDING_AREAS = 16;
     int jumppadLandingAreas[MAX_LANDING_AREAS];
-    int jummpadLandingAreasCount;
+    int jumppadLandingAreasCount;
+    Vec3 jumppadTarget;
 
     bool hasPendingLandingDash;
     bool isOnGroundThisFrame;
