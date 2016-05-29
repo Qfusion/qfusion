@@ -495,6 +495,8 @@ void Bot::MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd)
             ucmd->forwardmove = 0;
             ucmd->sidemove = 0;
             ucmd->upmove = 0;
+            // Prevent treating standing on the same point as being blocked
+            blockedTimeout += game.frametime;
             break;
     }
 }
