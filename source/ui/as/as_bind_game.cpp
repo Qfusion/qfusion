@@ -40,7 +40,6 @@ public:
 typedef WSWUI::DemoInfo DemoInfo;
 typedef WSWUI::DownloadInfo DownloadInfo;
 
-// ch : whats up with these statics?
 static Game dummyGame;
 
 // =====================================================================================
@@ -121,18 +120,6 @@ static void Game_ExecAppend( Game *game, const asstring_t &cmd )
 static void Game_ExecInsert( Game *game, const asstring_t &cmd )
 {
 	trap::Cmd_ExecuteText( EXEC_INSERT, cmd.buffer );
-}
-
-static void Game_Print( Game *game, const asstring_t &s )
-{
-	trap::Print( s.buffer );
-}
-
-static void Game_DPrint( Game *game, const asstring_t &s )
-{
-	if( UI_Main::Get()->debugOn() ) {
-		trap::Print( s.buffer );
-	}
 }
 
 static int Game_PlayerNum( Game *game )
@@ -219,9 +206,6 @@ void BindGame( ASInterface *as )
 		.constmethod( Game_Exec, "exec", true )
 		.constmethod( Game_ExecAppend, "execAppend", true )
 		.constmethod( Game_ExecInsert, "execInsert", true )
-
-		.constmethod( Game_Print, "print", true )
-		.constmethod( Game_DPrint, "dprint", true )
 
 		.constmethod( Game_ServerName, "get_serverName", true )
 		.constmethod( Game_RejectMessage, "get_rejectMessage", true )
