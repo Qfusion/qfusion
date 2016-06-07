@@ -60,12 +60,16 @@ static void Console_Debug( Console *console, const asstring_t &s )
 
 static void Console_Error( Console *console, const asstring_t &s )
 {
-	trap::Print( s.buffer );
+	char msg[MAX_PRINTMSG];
+	Q_snprintfz( msg, sizeof( msg ), S_COLOR_RED "ERROR: %s\n", s.buffer );
+	trap::Print( msg );
 }
 
 static void Console_Warn( Console *console, const asstring_t &s )
 {
-	trap::Print( s.buffer );
+	char msg[MAX_PRINTMSG];
+	Q_snprintfz( msg, sizeof( msg ), S_COLOR_YELLOW "WARNING: %s\n", s.buffer );
+	trap::Print( msg );
 }
 
 static void Console_Trace( Console *console )
@@ -74,7 +78,7 @@ static void Console_Trace( Console *console )
 	auto *ctx = UI_Main::Get()->getAS()->getActiveContext();
 
 	// Show the call stack
-	Q_snprintfz( msg, sizeof( msg ), "Stacktrace for %s:\n", ctx->GetFunction( 0 )->GetModuleName() );
+	Q_snprintfz( msg, sizeof( msg ), S_COLOR_CYAN "Stacktrace for %s:\n", ctx->GetFunction( 0 )->GetModuleName() );
 	trap::Print( msg );
 
 	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
@@ -86,7 +90,7 @@ static void Console_Trace( Console *console )
 		func = ctx->GetFunction( n );
 		line = ctx->GetLineNumber( n, &column, &scriptSection );
 
-		Q_snprintfz( msg, sizeof( msg ), "  %s:%s:%d,%d\n", scriptSection, func->GetDeclaration(), line, column );
+		Q_snprintfz( msg, sizeof( msg ), S_COLOR_CYAN "  %s:%s:%d,%d\n", scriptSection, func->GetDeclaration(), line, column );
 		trap::Print( msg );
 	}
 }
@@ -94,7 +98,7 @@ static void Console_Trace( Console *console )
 static void Console_Assert( Console *console, bool condition )
 {
 	if( condition == false ) {
-		trap::Print( "Assertion failed\n" );
+		trap::Print( S_COLOR_RED "Assertion failed\n" );
 		Console_Trace( console );
 	}
 }
