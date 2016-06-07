@@ -76,6 +76,11 @@ namespace ASUI
 	void PrebindDataSource( ASInterface *as );
 	void BindDataSource( ASInterface *as );
 
+	// as_bind_console.cpp
+	void PrebindConsole( ASInterface *as );
+	void BindConsole( ASInterface *as );
+	void BindConsoleGlobal( ASInterface *as );
+
 	// as_bind_game.cpp
 	void PrebindGame( ASInterface *as );
 	void BindGame( ASInterface *as );
