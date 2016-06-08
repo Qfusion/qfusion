@@ -627,23 +627,27 @@ static void CL_AddAnglesFromKeys( int frametime )
 */
 static void CL_AddMovementFromKeys( vec3_t movement )
 {
+	float down;
+
 	if( in_strafe.state & 1 )
 	{
-		movement[0] += ( float )CL_KeyState( &in_right );
-		movement[0] -= ( float )CL_KeyState( &in_left );
+		movement[0] += CL_KeyState( &in_right );
+		movement[0] -= CL_KeyState( &in_left );
 	}
 
-	movement[0] += ( float )CL_KeyState( &in_moveright );
-	movement[0] -= ( float )CL_KeyState( &in_moveleft );
-
-	movement[2] += ( float )CL_KeyState( &in_up );
-	movement[2] -= ( float )CL_KeyState( &in_down );
+	movement[0] += CL_KeyState( &in_moveright );
+	movement[0] -= CL_KeyState( &in_moveleft );
 
 	if( !( in_klook.state & 1 ) )
 	{
-		movement[1] += ( float )CL_KeyState( &in_forward );
-		movement[1] -= ( float )CL_KeyState( &in_back );
+		movement[1] += CL_KeyState( &in_forward );
+		movement[1] -= CL_KeyState( &in_back );
 	}
+
+	movement[2] += CL_KeyState( &in_up );
+	down = CL_KeyState( &in_down );
+	if( down > movement[2] )
+		movement[2] -= down;
 }
 
 /*
