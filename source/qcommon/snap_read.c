@@ -162,6 +162,9 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 	if( flags & PS_M_TIME )
 		state->pmove.pm_time = (uint8_t)MSG_ReadByte( msg );
 
+	if( flags & PS_M_SKIM )
+		state->pmove.skim_time = (uint8_t)MSG_ReadByte( msg );
+
 	if( flags & PS_M_FLAGS )
 		state->pmove.pm_flags = MSG_ReadShort( msg );
 

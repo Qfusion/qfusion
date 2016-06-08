@@ -306,6 +306,7 @@ enum clc_ops_e
 #define PS_PMOVESTATS	( 1<<18 )
 #define	PS_M_FLAGS	    ( 1<<19 )
 #define PS_PLRKEYS	    ( 1<<20 )
+#define	PS_M_SKIM	    ( 1<<21 )
 //...
 #define PS_MOREBITS3	( 1<<23 )
 
