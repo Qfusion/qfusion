@@ -81,10 +81,10 @@ script:
 before_deploy:
   - cd build
   - echo "${TRAVIS_COMMIT}" >commit.txt
-  - if [[ "$QF_ARCH" == "OSX" ]]; then cd Release && zip -r ../../tmp *.app && cd ..; fi
-  - if [[ "$QF_ARCH" != "OSX" ]]; then zip -r ../tmp * --exclude *.a --exclude base*/*.a libs/*.a; fi
+  - if [[ "$QF_ARCH" == "OSX" ]]; then cd Release && tar -czvf ../../tmp.tar.gz *.app && cd ..; fi
+  - if [[ "$QF_ARCH" != "OSX" ]]; then tar -czvf ../tmp.tar.gz * --exclude *.a --exclude base*/*.a libs/*.a; fi
   - cd ..
-  - mv tmp.zip ${QF_ARCH}-Release.zip
+  - mv tmp.tar.gz ${QF_ARCH}-Release.tar.gz
 
 deploy:
   provider: releases
@@ -92,7 +92,7 @@ deploy:
     secure: QJZp/MxExRLxtb/vBVNPjnavK/VlveFY5McQOi8qaSa3n30Rihlnlg7XuvAvwTY6zvpEAJcTlxFYh6T4zM2SRuql3XE2uBWFAsrhvw44JhqiSgZZepGu31eWPor4OeqEwuofXjXBzkz+m3xAOtpjnlKD/8crcMXnAlut/10jUoM=
   skip_cleanup: true
   file_glob: true
-  file: "*-Release.zip"
+  file: "*-Release.tar.gz"
   overwrite: true
   on:
     repo: Picmip/qfusion
