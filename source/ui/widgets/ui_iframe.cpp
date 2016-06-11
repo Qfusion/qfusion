@@ -129,19 +129,19 @@ private:
 
 	void AttachToOwnerDocument( void )
 	{
-		ElementDocument *owner_document = GetOwnerDocument();
-		if( owner_document ) {
-			owner_document->AddEventListener( "show", this );
-			owner_document->AddEventListener( "hide", this );
+		ElementDocument *doc = GetOwnerDocument();
+		if( doc ) {
+			doc->AddEventListener( "show", this );
+			doc->AddEventListener( "hide", this );
 		}
 	}
 
 	void DetachFromOwnerDocument( void )
 	{
-		ElementDocument *owner_document = GetOwnerDocument();
-		if( owner_document ) {
-			owner_document->RemoveEventListener( "show", this );
-			owner_document->RemoveEventListener( "hide", this );
+		ElementDocument *doc = GetOwnerDocument();
+		if( doc ) {
+			doc->RemoveEventListener( "show", this );
+			doc->RemoveEventListener( "hide", this );
 		}
 	}
 

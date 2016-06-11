@@ -42,14 +42,14 @@ class ScriptEventListener : public EventListener
 
 	/** DAMN MIXTURE OF Rocket::String, std::string and std::ostringstream!! **/
 
-	String createFunctionName( int uniqueId )
+	String createFunctionName( void )
 	{
 		std::ostringstream os;
 		os << "__eventfunc_" << uniqueId;
 		return String( os.str().c_str() );
 	}
 
-	String createFunctionCode( int uniqueId, const String &code )
+	String createFunctionCode( const String &code )
 	{
 		std::ostringstream os;
 		// TODO: grab the typenames from ASBind::TypeString
@@ -76,8 +76,8 @@ class ScriptEventListener : public EventListener
 		else
 		{
 			// compile inline code
-			funcName = createFunctionName( uniqueId );
-			String funcCode = createFunctionCode( uniqueId, script );
+			funcName = createFunctionName();
+			String funcCode = createFunctionCode( script );
 			script = funcCode;
 			asIScriptFunction *scriptFunc = NULL;
 

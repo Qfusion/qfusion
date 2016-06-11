@@ -120,16 +120,16 @@ private:
 	// returns the parent <idiv> element for anchor, if any
 	Element *GetParentIDiv( void ) const
 	{
-		Element *parent;
+		Element *p;
 
-		parent = ( Element * )this;
+		p = ( Element * )this;
 		while( 1 ) {
-			parent = parent->GetParentNode();
-			if( !parent ) {
+			p = p->GetParentNode();
+			if( !p ) {
 				break;
 			}
-			if( parent->GetTagName() == "idiv" ) {
-				return parent;
+			if( p->GetTagName() == "idiv" ) {
+				return p;
 			}
 		}
 

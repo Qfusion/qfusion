@@ -66,7 +66,7 @@ void VideoDataSource::updateVideoModeList( void )
 
 	// notify updates
 	int size = modesList.size();
-	for( int i = 0; i < size; i++ )
+	for( i = 0; i < size; i++ )
 		NotifyRowAdd( TABLE_NAME, i, 1 );
 }
 
