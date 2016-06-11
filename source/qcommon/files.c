@@ -4216,6 +4216,70 @@ static void Cmd_FS_Search_f( void )
 }
 
 /*
+* Cmd_FS_Untouched_f
+*/
+static void Cmd_FS_Untouched_f( void )
+{
+	char *pattern;
+	int argc = Cmd_Argc();
+	int total;
+	searchpath_t *search;
+
+	if( argc != 2 )
+	{
+		Com_Printf( "Usage: %s <pattern>\n", Cmd_Argv(0) );
+		return;
+	}
+
+	total = 0;
+	pattern = Cmd_Argv( 1 );
+
+	QMutex_Lock( fs_searchpaths_mutex );
+
+	for( search = fs_searchpaths; search; search = search->next )
+	{
+		unsigned int i;
+		pack_t *pack;
+		packfile_t *pakfile;
+		bool first;
+		struct trie_dump_s *trie_dump = NULL;
+		trie_error_t trie_err;
+
+		pack = search->pack;
+		if( !pack )
+			continue;
+
+		trie_err = Trie_DumpIf( pack->trie, "", TRIE_DUMP_VALUES, 
+			FS_PatternMatchesPackfile, pattern, &trie_dump );
+
+		if( trie_err == TRIE_OK ) {
+			first = true;
+
+			for( i = 0; i < trie_dump->size; i++ ) {
+				pakfile = ( (packfile_t *) ( trie_dump->key_value_vector[i].value ) );
+
+				if( pakfile->flags & (FS_PACKFILE_DIRECTORY|FS_PACKFILE_COHERENT) ) {
+					continue;
+				}
+
+				if( first )
+				{
+					Com_Printf( "\n" S_COLOR_YELLOW "%s%s\n", pack->filename, pack->pure ? " (P)" : "" );
+					first = false;
+				}
+				Com_Printf( "   %s\n", pakfile->name );
+				total++;
+			}
+		}
+		Trie_FreeDump( trie_dump );
+	}
+
+	QMutex_Unlock( fs_searchpaths_mutex );
+
+	Com_Printf( "\nFound " S_COLOR_YELLOW "%i" S_COLOR_WHITE " untouched files matching the pattern.\n", total );
+}
+
+/*
 * Cmd_FileChecksum_f
 */
 static void Cmd_FileChecksum_f( void )
@@ -4317,6 +4381,7 @@ void FS_Init( void )
 	Cmd_AddCommand( "fs_search", Cmd_FS_Search_f );
 	Cmd_AddCommand( "fs_checksum", Cmd_FileChecksum_f );
 	Cmd_AddCommand( "fs_mtime", Cmd_FileMTime_f );
+	Cmd_AddCommand( "fs_untoched", Cmd_FS_Untouched_f );
 
 	fs_numsearchfiles = FS_MIN_SEARCHFILES;
 	fs_searchfiles = ( searchfile_t* )FS_Malloc( sizeof( searchfile_t ) * fs_numsearchfiles );
