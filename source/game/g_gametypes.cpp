@@ -599,7 +599,6 @@ void G_Match_Autorecord_Start( void )
 			if( GS_InvidualGameType() )
 			{
 				const char *netname;
-				int team;
 				edict_t *ent;
 
 				for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
