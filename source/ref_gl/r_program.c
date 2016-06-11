@@ -2267,7 +2267,6 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 	vec4_t shaderColor[4];
 
 	if( superLightStyle ) {
-		int i;
 		GLfloat rgb[3];
 		static float deluxemapOffset[(MAX_LIGHTMAPS + 3) & (~3)];
 

@@ -30,11 +30,11 @@ typedef struct
 	int side;
 } loaderCbInfo_t;
 
-static image_t images[MAX_GLIMAGES];
-static image_t images_hash_headnode[IMAGES_HASH_SIZE], *free_images;
+static image_t r_images[MAX_GLIMAGES];
+static image_t r_images_hash_headnode[IMAGES_HASH_SIZE], *r_free_images;
 static qmutex_t *r_imagesLock;
 
-static int unpackAlignment[NUM_QGL_CONTEXTS];
+static int r_unpackAlignment[NUM_QGL_CONTEXTS];
 
 static int *r_8to24table;
 
@@ -168,7 +168,7 @@ void R_TextureMode( char *string )
 	gl_filter_max = modes[i].maximize;
 
 	// change all the existing mipmap texture objects
-	for( i = 1, glt = images; i < MAX_GLIMAGES; i++, glt++ )
+	for( i = 1, glt = r_images; i < MAX_GLIMAGES; i++, glt++ )
 	{
 		if( !glt->texnum ) {
 			continue;
@@ -199,10 +199,10 @@ void R_TextureMode( char *string )
 */
 static void R_UnpackAlignment( int ctx, int value )
 {
-	if( unpackAlignment[ctx] == value )
+	if( r_unpackAlignment[ctx] == value )
 		return;
 
-	unpackAlignment[ctx] = value;
+	r_unpackAlignment[ctx] = value;
 	qglPixelStorei( GL_UNPACK_ALIGNMENT, value );
 }
 
@@ -223,7 +223,7 @@ void R_AnisotropicFilter( int value )
 		return;
 
 	// change all the existing mipmap texture objects
-	for( i = 1, glt = images; i < MAX_GLIMAGES; i++, glt++ )
+	for( i = 1, glt = r_images; i < MAX_GLIMAGES; i++, glt++ )
 	{
 		if( !glt->texnum ) {
 			continue;
@@ -251,7 +251,7 @@ void R_PrintImageList( const char *mask, bool (*filter)( const char *mask, const
 	Com_Printf( "------------------\n" );
 
 	numImages = 0;
-	for( i = 0, image = images; i < MAX_GLIMAGES; i++, image++ )
+	for( i = 0, image = r_images; i < MAX_GLIMAGES; i++, image++ )
 	{
 		if( !image->texnum ) {
 			continue;
@@ -1664,6 +1664,8 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image )
 		{
 			for( j = 0; j < 6; j++ )
 			{
+				int cbflags = cubemapSides[i][j].flags;
+
 				pathname[len+1] = cubemapSides[i][j].suf[0];
 				pathname[len+2] = cubemapSides[i][j].suf[1];
 				pathname[len+3] = 0;
@@ -1687,15 +1689,14 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image )
 						ri.Com_DPrintf( S_COLOR_YELLOW "Different cubemap image size: %s\n", pathname );
 						break;
 					}
-					if( cubemapSides[i][j].flags & ( IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL ) )
+					if( cbflags & ( IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL ) )
 					{
-						int flags = cubemapSides[i][j].flags;
 						uint8_t *temp = R_PrepareImageBuffer( ctx,
 							TEXTURE_FLIPPING_BUF0+j, width * height * samples );
 						R_FlipTexture( pic[j], temp, width, height, 4, 
-							(flags & IT_FLIPX) ? true : false, 
-							(flags & IT_FLIPY) ? true : false, 
-							(flags & IT_FLIPDIAGONAL) ? true : false );
+							(cbflags & IT_FLIPX) ? true : false, 
+							(cbflags & IT_FLIPY) ? true : false, 
+							(cbflags & IT_FLIPDIAGONAL) ? true : false );
 						pic[j] = temp;
 					}
 					continue;
@@ -1769,19 +1770,19 @@ static image_t *R_LinkPic( unsigned int hash )
 {
 	image_t *image;
 
-	if( !free_images ) {
+	if( !r_free_images ) {
 		return NULL;
 	}
 
 	ri.Mutex_Lock( r_imagesLock );
 
 	hash = hash % IMAGES_HASH_SIZE;
-	image = free_images;
-	free_images = image->next;
+	image = r_free_images;
+	r_free_images = image->next;
 
 	// link to the list of active images
-	image->prev = &images_hash_headnode[hash];
-	image->next = images_hash_headnode[hash].next;
+	image->prev = &r_images_hash_headnode[hash];
+	image->next = r_images_hash_headnode[hash].next;
 	image->next->prev = image;
 	image->prev->next = image;
 
@@ -1802,8 +1803,8 @@ static void R_UnlinkPic( image_t *image )
 	image->next->prev = image->prev;
 
 	// insert into linked free list
-	image->next = free_images;
-	free_images = image;
+	image->next = r_free_images;
+	r_free_images = image;
 
 	ri.Mutex_Unlock( r_imagesLock );
 }
@@ -2051,7 +2052,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, int minmi
 
 	// look for it
 	key = COM_SuperFastHash( ( const uint8_t *)pathname, len, len ) % IMAGES_HASH_SIZE;
-	hnode = &images_hash_headnode[key];
+	hnode = &r_images_hash_headnode[key];
 	searchFlags = flags & ~IT_LOADFLAGS;
 	for( image = hnode->prev; image != hnode; image = image->prev )
 	{
@@ -2737,7 +2738,7 @@ void R_InitImages( void )
 	r_imagesPool = R_AllocPool( r_mempool, "Images" );
 	r_imagesLock = ri.Mutex_Create();
 
-	unpackAlignment[QGL_CONTEXT_MAIN] = 4;
+	r_unpackAlignment[QGL_CONTEXT_MAIN] = 4;
 	qglPixelStorei( GL_PACK_ALIGNMENT, 1 );
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
@@ -2745,16 +2746,16 @@ void R_InitImages( void )
 
 	r_8to24table = NULL;
 
-	memset( images, 0, sizeof( images ) );
+	memset( r_images, 0, sizeof( r_images ) );
 
 	// link images
-	free_images = images;
+	r_free_images = r_images;
 	for( i = 0; i < IMAGES_HASH_SIZE; i++ ) {
-		images_hash_headnode[i].prev = &images_hash_headnode[i];
-		images_hash_headnode[i].next = &images_hash_headnode[i];
+		r_images_hash_headnode[i].prev = &r_images_hash_headnode[i];
+		r_images_hash_headnode[i].next = &r_images_hash_headnode[i];
 	}
 	for( i = 0; i < MAX_GLIMAGES - 1; i++ ) {
-		images[i].next = &images[i+1];
+		r_images[i].next = &r_images[i+1];
 	}
 
 	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
@@ -2795,7 +2796,7 @@ void R_FreeUnusedImagesByTags( int tags )
 	image_t *image;
 	int keeptags = ~tags;
 
-	for( i = 0, image = images; i < MAX_GLIMAGES; i++, image++ ) {
+	for( i = 0, image = r_images; i < MAX_GLIMAGES; i++, image++ ) {
 		if( !image->name ) {
 			// free image
 			continue;
@@ -2845,7 +2846,7 @@ void R_ShutdownImages( void )
 
 	R_ReleaseBuiltinImages();
 
-	for( i = 0, image = images; i < MAX_GLIMAGES; i++, image++ ) {
+	for( i = 0, image = r_images; i < MAX_GLIMAGES; i++, image++ ) {
 		if( !image->name ) {
 			// free texture
 			continue;
@@ -3009,13 +3010,15 @@ void R_FinishLoadingImages( void )
 */
 static bool R_LoadAsyncImageFromDisk( image_t *image )
 {
+	int pic;
 	int id;
 
 	if( loader_gl_context[0] == NULL ) {
 		return false;
 	}
-
-	id = (image - images) % NUM_LOADER_THREADS;
+	
+	pic = image - r_images;
+	id = pic % NUM_LOADER_THREADS;
 	if ( loader_gl_context[id] == NULL ) {
 		id = 0;
 	}
@@ -3030,7 +3033,7 @@ static bool R_LoadAsyncImageFromDisk( image_t *image )
 	R_UnbindImage( image );
 	qglFinish();
 
-	R_IssueLoadPicLoaderCmd( id, image - images );
+	R_IssueLoadPicLoaderCmd( id, pic );
 	return true;
 }
 
@@ -3070,7 +3073,7 @@ static unsigned R_HandleInitLoaderCmd( void *pcmd )
 	loaderInitCmd_t *cmd = pcmd;
 
 	GLimp_MakeCurrent( loader_gl_context[cmd->self], loader_gl_surface[cmd->self] );
-	unpackAlignment[QGL_CONTEXT_LOADER + cmd->self] = 4;
+	r_unpackAlignment[QGL_CONTEXT_LOADER + cmd->self] = 4;
 
 	return sizeof( *cmd );
 }
@@ -3091,7 +3094,7 @@ static unsigned R_HandleShutdownLoaderCmd( void *pcmd )
 static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 {
 	loaderPicCmd_t *cmd = pcmd;
-	image_t *image = images + cmd->pic;
+	image_t *image = r_images + cmd->pic;
 	bool loaded;
 
 	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER + cmd->self, image );

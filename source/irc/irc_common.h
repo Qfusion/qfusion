@@ -20,11 +20,11 @@
 
 #define Irc_Println(format, color_filter, ...) \
 	do { \
-		char buf[4096]; \
-		char buf2[4096]; \
-		snprintf(buf, sizeof(buf), format, ##__VA_ARGS__); \
-		Irc_ColorFilter(buf, color_filter, buf2); \
-		Irc_Println_Str(buf2); \
+		char ircbuf[4096]; \
+		char ircbuf2[4096]; \
+		snprintf(ircbuf, sizeof(ircbuf), format, ##__VA_ARGS__); \
+		Irc_ColorFilter(ircbuf, color_filter, ircbuf2); \
+		Irc_Println_Str(ircbuf2); \
 	} while (0)
 
 #define IRC_CHAT_HISTORY_SIZE 128

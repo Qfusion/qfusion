@@ -958,7 +958,7 @@ static void Shader_Template( shader_t *shader, shaderpass_t *pass, const char **
 	*ptr = ptr_backup;
 	while( (pos = strstr( pos, "$" )) != NULL )
 	{
-		int i, arg;
+		int arg;
 
 		// calculate the placeholder index
 		for( i = 1, arg = 0; ; i++ )

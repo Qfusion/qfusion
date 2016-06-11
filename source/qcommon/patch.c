@@ -89,15 +89,15 @@ void Patch_GetFlatness( float maxflat, const float *points, int comp, const int 
 */
 #define Patch_Evaluate_QuadricBezier__(t,point0,point1,point2,out,comp)		\
 	do {																	\
-		int i;																\
+		int k;																\
 		float qt = t * t;													\
 		float dt = 2.0f * t, tt, tt2;										\
 																			\
 		tt = 1.0f - dt + qt;													\
 		tt2 = dt - 2.0f * qt;												\
 																			\
-		for( i = 0; i < comp; i++ )											\
-			out[i] = point0[i] * tt + point1[i] * tt2 + point2[i] * qt;		\
+		for( k = 0; k < comp; k++ )											\
+			out[k] = point0[k] * tt + point1[k] * tt2 + point2[k] * qt;		\
 	} while( 0 )
 
 /*
