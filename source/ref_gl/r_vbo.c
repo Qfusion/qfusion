@@ -463,7 +463,6 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 
 	// upload lightmap texture coordinates
 	if( vbo->lmstOffset[0] && ( vattribs & VATTRIB_LMCOORDS0_BIT ) ) {
-		int i;
 		vattribbit_t lmattrbit;
 		int type = FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa );
 		int lmstSize = ( ( type == GL_HALF_FLOAT ) ? 2 * sizeof( GLhalfARB ) : 2 * sizeof( float ) );
@@ -499,7 +498,6 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 
 	// upload lightmap array texture layers
 	if( vbo->lmlayersOffset[0] && ( vattribs & VATTRIB_LMLAYERS0123_BIT ) ) {
-		int i;
 		vattribbit_t lmattrbit;
 
 		lmattrbit = VATTRIB_LMLAYERS0123_BIT;
