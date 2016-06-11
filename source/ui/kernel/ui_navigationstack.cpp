@@ -99,9 +99,7 @@ void DocumentCache::purgeAllDocuments()
 		Com_Printf("DocumentCache::purgeAllDocument\n");
 	}
 
-	DocumentSet::iterator it = documentSet.begin();
-	while( it != documentSet.end() )
-	{
+	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ) {
 		it = purgeDocument( it );
 	}
 

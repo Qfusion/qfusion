@@ -191,21 +191,21 @@ private:
 		DataQuery query(data_source, data_table, fields);
 		while (query.NextRow())
 		{
-			StringList fields;
+			StringList raw_fields;
 			String value = query.Get<String>(0, "");
 
 			// save the item
 			items.push_back( value );
 
 			for (size_t i = 1; i < query.GetNumFields(); ++i)
-				fields.push_back(query.Get< String>(i, ""));
+				raw_fields.push_back(query.Get< String>(i, ""));
 
 			String formatted("");
-			if (fields.size() > 0)
-				formatted = fields[0];
+			if (raw_fields.size() > 0)
+				formatted = raw_fields[0];
 
 			if (data_formatter)
-				data_formatter->FormatData(formatted, fields);
+				data_formatter->FormatData(formatted, raw_fields);
 
 			// save formatted item
 			formatted_items.push_back(formatted);
