@@ -1671,13 +1671,16 @@ int FS_Seek( int file, int offset, int whence )
 	// clamp so we don't get out of bounds
 	if( offset < 0 )
 		return -1;
-	if( offset == currentOffset )
-		return 0;
 
 	if( fh->streamHandle ) {
 		size_t rxReceived, returned;
 		wswcurl_req *newreq;
 		char *url;
+
+		if( offset == currentOffset ) {
+			wswcurl_ignore_bytes( fh->streamHandle, 0 );
+			return 0;
+		}
 
 		wswcurl_getsize( fh->streamHandle, &rxReceived );
 		returned = wswcurl_tell( fh->streamHandle );
@@ -1711,6 +1714,9 @@ int FS_Seek( int file, int offset, int whence )
 		fh->offset = offset;
 		return 0;
 	}
+
+	if( offset == currentOffset )
+		return 0;
 
 	if( !fh->fstream )
 		return -1;

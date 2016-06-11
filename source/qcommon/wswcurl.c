@@ -459,7 +459,7 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 		if( req->ignore_bytes >= numb ) {
 			req->ignore_bytes -= numb;
 			cb->rxoffset += numb;
-			continue;
+			goto advance;
 		}
 		else {
 			cb->rxoffset += req->ignore_bytes;
@@ -470,6 +470,7 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 		written += numb;
 		cb->rxoffset += numb;
 
+advance:
 		if( cb->rxoffset >= cb->rxsize )
 		{
 			// flush the buffer away
@@ -943,7 +944,7 @@ static size_t wswcurl_readheader(void *ptr, size_t size, size_t nmemb, void *str
 
 	if ( (str = (char*)strstr(buf, "CONTENT-LENGTH:")) )
 	{
-		int size;
+		int length;
 
 		while (*str && (*str != ':')) { str++; }
 		str++;
@@ -956,9 +957,9 @@ static size_t wswcurl_readheader(void *ptr, size_t size, size_t nmemb, void *str
 			slen = strlen(str) - 1;
 		}
 
-		size = atoi(str);
-		if( size >= 0 ) {
-			req->rx_expsize = size;
+		length = atoi(str);
+		if( length >= 0 ) {
+			req->rx_expsize = length;
 		}
 	}
 	else if ( (str  = (char*)strstr(buf, "TRANSFER-ENCODING:")) )
