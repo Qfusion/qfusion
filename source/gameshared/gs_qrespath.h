@@ -167,7 +167,7 @@ extern "C" {
 #define PATH_GRENADELAUNCHER_MODEL	"models/weapons/glauncher/glauncher.md3"
 #define PATH_ROCKETLAUNCHER_MODEL	"models/weapons/rlauncher/rlauncher.md3"
 #define PATH_PLASMAGUN_MODEL		"models/weapons/plasmagun/plasmagun.md3"
-#define PATH_ELECTROBOLT_MODEL		"models/weapons/electrobolt/electrobolt.md3"
+#define PATH_ELECTROBOLT_MODEL		"models/weapons/electrobolt/electrobolt.iqm"
 #define PATH_LASERGUN_MODEL		"models/weapons/lasergun/lasergun.md3"
 #define PATH_INSTAGUN_MODEL		"models/weapons/instagun/instagun.md3"
 
