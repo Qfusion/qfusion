@@ -611,7 +611,7 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 	image = R_FindImage( name, NULL, flags, r_shaderMinMipSize, shader->imagetags );
 	if( !image )
 	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with no image: %s\n", shader->name, name );
+		ri.Com_Printf( S_COLOR_YELLOW "WARNING: shader %s has a stage with no image: %s\n", shader->name, name );
 		return r_defaultImage;
 	}
 
