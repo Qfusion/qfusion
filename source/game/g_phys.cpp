@@ -814,7 +814,7 @@ static void SV_Physics_Toss( edict_t *ent )
 		if( ent->movetype == MOVETYPE_BOUNCE )
 			backoff = 1.5;
 		else if( ent->movetype == MOVETYPE_BOUNCEGRENADE )
-			backoff = 1.4;
+			backoff = 1.5;
 		else
 			backoff = 1;
 
@@ -830,7 +830,7 @@ static void SV_Physics_Toss( edict_t *ent )
 			// method taken from Darkplaces sourcecode
 			if( trace.allsolid || 
 				( ISWALKABLEPLANE( &trace.plane ) && 
-					fabs( DotProduct( trace.plane.normal, ent->velocity ) ) < 60 
+					fabs( DotProduct( trace.plane.normal, ent->velocity ) ) < 40 
 				)
 			)
 			{
