@@ -124,7 +124,7 @@ bool GS_SnapPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int 
 		for( i = 0; i < 3; i++ )
 		{
 			if( bits & ( 1<<i ) )
-				originInt[i] += sign[i];
+				originInt[i] += sign[i] * PM_VECTOR_SNAP;
 		}
 
 		if( GS_GoodPosition( originInt, mins, maxs, passent, contentmask ) )
