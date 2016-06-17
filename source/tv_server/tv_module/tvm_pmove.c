@@ -44,7 +44,7 @@ int playerbox_stand_viewheight = 30;
 
 // movement parameters
 
-#define DEFAULT_PLAYERSPEED 320.0f
+#define DEFAULT_PLAYERSPEED 350.0f
 
 const float pm_friction = 8; // initially 6
 
