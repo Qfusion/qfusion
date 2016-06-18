@@ -269,8 +269,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	if( header->ofs_text ) {
 		memcpy( texts, (const char *)(pbase + header->ofs_text), header->num_text );
 	}
-	texts[header->ofs_text] = '\0';
-
+	texts[header->num_text] = '\0';
 
 	// load vertex arrays
 	vposition = NULL;
@@ -404,6 +403,9 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 		poutmodel->bones[i].name = texts + joint.name;
 		poutmodel->bones[i].parent = joint.parent;
+
+		if( !Q_stricmp( poutmodel->bones[i].name, "tag" ) )
+			printf("");
 
 		DualQuat_FromQuat3AndVector( joint.rotate, joint.translate, baseposes[i].dualquat );
 
