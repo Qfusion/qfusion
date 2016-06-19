@@ -572,15 +572,12 @@ void GLimp_AppActivate( bool active, bool destroy )
 	if( active )
 	{
 		ri.Cvar_Set( "gl_drawbuffer", "GL_BACK" );
-		SetForegroundWindow( glw_state.hWnd );
-		ShowWindow( glw_state.hWnd, SW_RESTORE );
 	}
 	else
 	{
 		if( glConfig.fullScreen )
 		{
 			ri.Cvar_Set( "gl_drawbuffer", "GL_NONE" );
-			ShowWindow( glw_state.hWnd, SW_MINIMIZE );
 		}
 		else
 		{
