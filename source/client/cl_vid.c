@@ -206,6 +206,7 @@ static rserr_t VID_ChangeMode( void )
 		}
 	}
 	else {
+		borderless = false;
 		x = vid_xpos->integer;
 		y = vid_ypos->integer;
 		w = vid_width->integer;
