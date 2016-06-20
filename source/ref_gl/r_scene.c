@@ -20,6 +20,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
+enum
+{
+	PPFX_SOFT_PARTICLES,
+	PPFX_COLOR_CORRECTION,
+	PPFX_FXAA,
+};
+
+enum
+{
+	PPFX_BIT_SOFT_PARTICLES = RF_BIT( PPFX_SOFT_PARTICLES ),
+	PPFX_BIT_COLOR_CORRECTION = RF_BIT( PPFX_COLOR_CORRECTION ),
+	PPFX_BIT_FXAA = RF_BIT( PPFX_FXAA ),
+};
+
 static void R_ClearDebugBounds( void );
 static void R_RenderDebugBounds( void );
 
@@ -345,19 +359,19 @@ void R_RenderScene( const refdef_t *fd )
 			rn.fbColorAttachment = rsh.screenTexture;
 			rn.fbDepthAttachment = rsh.screenDepthTexture;
 			rn.renderFlags |= RF_SOFT_PARTICLES;
-			fbFlags |= 1;
+			fbFlags |= PPFX_BIT_SOFT_PARTICLES;
 		}
 
 		if( rsh.screenPPCopies[0] && rsh.screenPPCopies[1] ) {
 			int oldFlags = fbFlags;
 			shader_t *cc = rn.refdef.colorCorrection;
 
-			if( r_fxaa->integer ) {
-				fbFlags |= 2;
+			if( cc && cc->numpasses > 0 && cc->passes[0].images[0] && cc->passes[0].images[0] != rsh.noTexture ) {
+				fbFlags |= PPFX_BIT_COLOR_CORRECTION;
 			}
 
-			if( cc && cc->numpasses > 0 && cc->passes[0].images[0] && cc->passes[0].images[0] != rsh.noTexture ) {
-				fbFlags |= 4;
+			if( r_fxaa->integer ) {
+				fbFlags |= PPFX_BIT_FXAA;
 			}
 
 			if( fbFlags != oldFlags ) {
@@ -399,7 +413,7 @@ void R_RenderScene( const refdef_t *fd )
 
 	// blit and blend framebuffers in proper order
 
-	if( fbFlags == 1 ) {
+	if( fbFlags == PPFX_BIT_SOFT_PARTICLES ) {
 		// only blit soft particles directly when we don't have any other post processing
 		// otherwise use the soft particles FBO as the base texture on the next layer
 		// to avoid wasting time on resolves and the fragment shader to blit to a temp texture
@@ -408,14 +422,33 @@ void R_RenderScene( const refdef_t *fd )
 			GLSL_PROGRAM_TYPE_NONE,
 			colorWhite, 0,
 			0, NULL );
+		return;
 	}
-	fbFlags &= ~1;
 
-	// apply FXAA
-	if( fbFlags & 2 ) {
+	fbFlags &= ~PPFX_BIT_SOFT_PARTICLES;
+
+	// apply color correction
+	if( fbFlags & PPFX_BIT_COLOR_CORRECTION ) {
 		image_t *dest;
 
-		fbFlags &= ~2;
+		fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
+		dest = fbFlags ? rsh.screenPPCopies[ppFrontBuffer] : NULL;
+
+		R_BlitTextureToScrFbo( fd,
+			ppSource, dest ? dest->fbo : 0,
+			GLSL_PROGRAM_TYPE_COLORCORRECTION,
+			colorWhite, 0,
+			1, rn.refdef.colorCorrection->passes[0].images );
+
+		ppFrontBuffer ^= 1;
+		ppSource = dest;
+	}
+
+	// apply FXAA
+	if( fbFlags & PPFX_BIT_FXAA ) {
+		image_t *dest;
+
+		fbFlags &= ~PPFX_BIT_FXAA;
 		dest = fbFlags ? rsh.screenPPCopies[ppFrontBuffer] : NULL;
 
 		R_BlitTextureToScrFbo( fd,
@@ -426,20 +459,6 @@ void R_RenderScene( const refdef_t *fd )
 
 		ppFrontBuffer ^= 1;
 		ppSource = dest;
-	}
-
-	// apply color correction
-	if( fbFlags & 4 ) {
-		image_t *dest;
-
-		fbFlags &= ~4;
-		dest = fbFlags ? rsh.screenPPCopies[ppFrontBuffer] : NULL;
-
-		R_BlitTextureToScrFbo( fd,
-			ppSource, dest ? dest->fbo : 0,
-			GLSL_PROGRAM_TYPE_COLORCORRECTION,
-			colorWhite, 0,
-			1, &( rn.refdef.colorCorrection->passes[0].images[0] ) );
 	}
 }
 
