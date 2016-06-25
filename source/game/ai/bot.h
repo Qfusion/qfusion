@@ -136,7 +136,15 @@ private:
     void MoveSwimming(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd);
     bool CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed);
-    void StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed);
+    // Tries to straighten look vec first.
+    // If the straightening failed, tries to interpolate it.
+    // Also, handles case of empty reachabilities chain in goal area and outside it.
+    // Returns true if look vec has been straightened (and is directed to an important spot).
+    bool StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed);
+    // Returns true if the intendedLookVec has been straightened
+    // Otherwise InterpolateLookVec() should be used
+    bool TryStraightenLookVec(Vec3 *intendedLookVec);
+    // Interpolates intendedLookVec for the pending areas chain
     void InterpolateLookVec(Vec3 *intendedLookVec, float speed);
     void SetLookVecToPendingReach(Vec3 *intendedLookVec);
     void TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd);

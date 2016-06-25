@@ -582,7 +582,7 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, floa
     return true;
 }
 
-void Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
+bool Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
 {
     if (nextReaches.empty())
     {
@@ -590,17 +590,82 @@ void Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
         {
             // Looks like we are in air above a ground, keep as is waiting for landing.
             VectorCopy(self->velocity, intendedLookVec->data());
-            return;
+            return false;
         }
-        else
-        {
-            // Move to a goal origin
-            *intendedLookVec = goalTargetPoint - self->s.origin;
-        }
-        return;
+        // Move to a goal origin
+        *intendedLookVec = goalTargetPoint - self->s.origin;
+        return true;
     }
 
+    if (TryStraightenLookVec(intendedLookVec))
+        return true;
+
     InterpolateLookVec(intendedLookVec, speed);
+    return false;
+}
+
+bool Bot::TryStraightenLookVec(Vec3 *intendedLookVec)
+{
+    if (nextReaches.empty())
+        FailWith("TryStraightenLookVec(): nextReaches is empty");
+
+    // First, loop over known next reachabilities checking its travel type and Z level.
+    // If Z differs too much, path can't be straightened, thus, reject straightening early.
+    // Break on first non-TRAVEL_WALK reachability.
+    unsigned i = 0;
+    float minZ = self->s.origin[2];
+    float maxZ = self->s.origin[2];
+    for (; i < nextReaches.size(); ++i) {
+        const auto &reach = nextReaches[i];
+        float currZ = 0.5f * (reach.start[2] + reach.end[2]);
+        if (currZ < maxZ - 24)
+            return false;
+        if (currZ > maxZ + 24)
+            return false;
+        if (currZ < minZ)
+            minZ = currZ;
+        else if (currZ > maxZ)
+            maxZ = currZ;
+
+        if (reach.traveltype != TRAVEL_WALK)
+            break;
+    }
+
+    bool traceStraightenedPath = false;
+    Vec3 lookAtPoint(0, 0, 0);
+
+    // All next known reachabilities. have TRAVEL_WALK travel type
+    if (i == nextReaches.size()) {
+        // If a reachablities chain contains goal area, goal area is last in the chain
+        if (nextReaches[i - 1].areanum == goalAasAreaNum) {
+            traceStraightenedPath = true;
+            lookAtPoint = goalTargetPoint;
+        }
+    }
+    else
+    {
+        switch (nextReaches[i].traveltype)
+        {
+            case TRAVEL_TELEPORT:
+            case TRAVEL_JUMPPAD:
+            case TRAVEL_ELEVATOR:
+                // Look at the trigger
+                traceStraightenedPath = true;
+                lookAtPoint = Vec3(nextReaches[i].start);
+        }
+    }
+
+    if (!traceStraightenedPath)
+        return false;
+
+    // Check for obstacles on the straightened path
+    trace_t trace;
+    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, lookAtPoint.data(), self, MASK_AISOLID);
+    if (trace.fraction != 1.0f)
+        return false;
+
+    *intendedLookVec = lookAtPoint - self->s.origin;
+    return true;
 }
 
 void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
@@ -754,7 +819,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     Vec3 velocityVec(self->velocity);
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
-    StraightenOrInterpolateLookVec(intendedLookVec, speed);
+    bool lookingOnImportantItem = StraightenOrInterpolateLookVec(intendedLookVec, speed);
     bool hasObstacles = CheckAndTryAvoidObstacles(intendedLookVec, ucmd, speed);
 
     Vec3 toTargetDir2D(*intendedLookVec);
@@ -792,15 +857,13 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             float velocityToTarget2DDot = velocityDir2D.Dot(toTargetDir2D);
             if (velocityToTarget2DDot < 0.99)
             {
-                // Compute this condition once
-                bool isCloseToAnyGoal = IsCloseToAnyGoal();
                 // Correct trajectory using cheating aircontrol
                 if (velocityToTarget2DDot > 0)
                 {
                     // Make correction less effective for large angles multiplying it
                     // by the dot product to avoid a weird-looking cheating movement
                     float controlMultiplier = 0.005f + velocityToTarget2DDot * 0.05f;
-                    if (isCloseToAnyGoal)
+                    if (lookingOnImportantItem)
                         controlMultiplier += 0.33f;
                     Vec3 newVelocity(velocityVec);
                     newVelocity *= 1.0f / speed;
@@ -810,7 +873,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                     newVelocity *= speed;
                     VectorCopy(newVelocity.data(), self->velocity);
                 }
-                else if (isCloseToAnyGoal)
+                else if (IsCloseToAnyGoal())
                 {
                     // velocity and forwardLookDir may mismatch, retrieve these actual look dirs
                     vec3_t forwardLookDir, rightLookDir;
