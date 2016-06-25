@@ -8,8 +8,6 @@ Bot::Bot(edict_t *self, float skillLevel)
       botBrain(self, skillLevel),
       skillLevel(skillLevel),
       printLink(false),
-      hasTriggeredRj(false),
-      rjTimeout(0),
       hasTouchedJumppad(false),
       hasEnteredJumppad(false),
       jumppadTarget(INFINITY, INFINITY, INFINITY),
