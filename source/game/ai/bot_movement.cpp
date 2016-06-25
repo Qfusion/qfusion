@@ -5,9 +5,6 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
 {
     isOnGroundThisFrame = self->groundentity != nullptr;
 
-    if (hasTriggeredRj && rjTimeout <= level.time)
-        hasTriggeredRj = false;
-
     CheckPendingLandingDashTimedOut();
 
     bool hasToEvade = false;
@@ -74,11 +71,6 @@ void Bot::Move(usercmd_t *ucmd)
         if (isWaitingForItemSpawn)
         {
             MoveCampingASpot(&intendedLookVec, ucmd);
-        }
-        // starting a rocket jump
-        else if (!nextReaches.empty() && IsCloseToReachStart() && nextReaches.front().traveltype == TRAVEL_ROCKETJUMP)
-        {
-            MoveStartingARocketjump(&intendedLookVec, ucmd);
         }
         else if (self->is_swim)
         {
@@ -498,23 +490,6 @@ void Bot::MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd)
             // Prevent treating standing on the same point as being blocked
             blockedTimeout += game.frametime;
             break;
-    }
-}
-
-void Bot::MoveStartingARocketjump(Vec3 *intendedLookVec, usercmd_t *ucmd)
-{
-    ucmd->forwardmove = 1;
-    ucmd->upmove = 0;
-    ucmd->sidemove = 0;
-
-    // TODO: Switch to a weapon
-    if (!hasTriggeredRj && self->groundentity && (self->s.weapon == WEAP_ROCKETLAUNCHER))
-    {
-        self->s.angles[PITCH] = 170;
-        ucmd->upmove = 1;
-        ucmd->buttons |= BUTTON_ATTACK;
-        hasTriggeredRj = true;
-        rjTimeout = level.time + 500;
     }
 }
 

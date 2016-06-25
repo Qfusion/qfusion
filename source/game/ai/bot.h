@@ -59,9 +59,6 @@ private:
     float skillLevel;
     bool printLink;
 
-    bool hasTriggeredRj;
-    unsigned rjTimeout;
-
     // Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
     // It gets processed by movement code in next frame
     bool hasTouchedJumppad;
@@ -134,7 +131,6 @@ private:
     void MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveStartingARocketjump(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveSwimming(Vec3 *intendedLookVec, usercmd_t *ucmd);
