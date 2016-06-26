@@ -174,6 +174,15 @@ void Bot::MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd)
     ucmd->sidemove = 0;
 }
 
+template <typename T> struct AttributedArea
+{
+    int areaNum;
+    T attr;
+    AttributedArea() {}
+    AttributedArea(int areaNum, T attr): areaNum(areaNum), attr(attr) {}
+    bool operator<(const AttributedArea &that) const { return attr < that.attr; }
+};
+
 void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     ucmd->upmove = 0;
@@ -189,48 +198,58 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     // Use larger box for huge jumppads
     float baseSide = 56.0f + 72.0f * BoundedFraction(approxDistance, 1500.0f);
     // Jumppad target has been set in Bot::TouchedJumppad()
-    Vec3 bboxMins = jumppadTarget + Vec3(-1.25f * baseSide, -1.25f * baseSide, -0.55f * baseSide);
-    Vec3 bboxMaxs = jumppadTarget + Vec3(+1.25f * baseSide, +1.25f * baseSide, +0.55f * baseSide);
+    Vec3 bboxMins = jumppadTarget + Vec3(-1.25f * baseSide, -1.25f * baseSide, -0.45f * baseSide);
+    Vec3 bboxMaxs = jumppadTarget + Vec3(+1.25f * baseSide, +1.25f * baseSide, +0.15f * baseSide);
     // First, fetch all areas in the target bounding box (more than required)
     int rawAreas[MAX_LANDING_AREAS * 2];
     int rawAreasCount = AAS_BBoxAreas(bboxMins.data(), bboxMaxs.data(), rawAreas, MAX_LANDING_AREAS * 2);
-    int filteredAreas[MAX_LANDING_AREAS * 2];
+    // Then filter raw areas and sort by distance to jumppad target
+    AttributedArea<float> filteredAreas[MAX_LANDING_AREAS * 2];
     int filteredAreasCount = 0;
-    // Then filter raw areas
     for (int i = 0; i < rawAreasCount; ++i)
     {
         int areaNum = rawAreas[i];
+        // Skip areas above target that a-priori may not be a landing site. Areas bounds are absolute.
+        if (aasworld.areas[areaNum].mins[2] + 8 > jumppadTarget.z())
+            continue;
         // Skip non-grounded areas
         if (!AAS_AreaGrounded(areaNum))
             continue;
-        // Skip areas above target that a-priori may not be a landing site. Areas bounds are absolute.
-        if (aasworld.areas[areaNum].center[2] > jumppadTarget.z())
+        // Skip "do not enter" areas
+        if (AAS_AreaDoNotEnter(areaNum))
             continue;
-        // Do not trace, trace requires actual bot origin and will be performed later, though it may consume cycles
-        filteredAreas[filteredAreasCount++] = areaNum;
+        float squareDistance = (jumppadTarget - aasworld.areas[areaNum].center).SquaredLength();
+        filteredAreas[filteredAreasCount++] = AttributedArea<float>(areaNum, squareDistance);
     }
-    if (!nextReaches.empty())
+    std::sort(filteredAreas, filteredAreas + filteredAreasCount);
+
+    // Select no more than MAX_LANDING_AREAS feasible areas
+    // Since areas are sorted by proximity to jumppad target point,
+    // its unlikely that best areas may be rejected by this limit.
+    AttributedArea<int> areasAndTravelTimes[MAX_LANDING_AREAS];
+    int selectedAreasCount = 0;
+    for (int i = 0, end = filteredAreasCount; i < end; ++i)
     {
-        // Look at the destination point
-        SetPendingLookAtPoint(Vec3(nextReaches.front().end));
-        // Start from the last known reachability. (Try to shortcut path on landing)
-        for (int i = nextReaches.size() - 1; i >= 0; --i)
+        int areaNum = filteredAreas[i].areaNum;
+        // Project the area center to the ground manually.
+        // (otherwise the following pathfinder call may perform a trace for it)
+        // Note that AAS area mins are absolute.
+        Vec3 origin(aasworld.areas[areaNum].center);
+        origin.z() = aasworld.areas[areaNum].mins[2] + 8;
+        // Returns 1 as a lowest feasible travel time value (in seconds ^-2), 0 when a path can't be found
+        int aasTravelTime = FindAASTravelTimeToGoalArea(areaNum, origin.data(), goalAasAreaNum);
+        if (aasTravelTime)
         {
-            const int reachAreaNum = nextReaches[i].areanum;
-            int *end = filteredAreas + filteredAreasCount;
-            // If path area is in filtered areas, add it to the landing areas
-            if (std::find(filteredAreas, end, reachAreaNum) != end)
-                jumppadLandingAreas[jumppadLandingAreasCount++] = reachAreaNum;
+            areasAndTravelTimes[selectedAreasCount++] = AttributedArea<int>(areaNum, aasTravelTime);
+            if (selectedAreasCount == MAX_LANDING_AREAS)
+                break;
         }
     }
-    if (!jumppadLandingAreasCount)
-    {
-        int numAreasToCopy = std::min(MAX_LANDING_AREAS, filteredAreasCount);
-        // Copy areas. The case when filteredAreasCount > areasToCopyCount
-        // should be very rare, don't bother about possible data loss
-        std::copy(filteredAreas, filteredAreas + numAreasToCopy, jumppadLandingAreas);
-        jumppadLandingAreasCount = numAreasToCopy;
-    }
+    // Sort landing areas by travel time to a goal, closest to goal areas first
+    std::sort(areasAndTravelTimes, areasAndTravelTimes + selectedAreasCount);
+    // Store areas for landing
+    for (int i = 0; i < selectedAreasCount; ++i)
+        jumppadLandingAreas[jumppadLandingAreasCount++] = areasAndTravelTimes[i].areaNum;
 
     ucmd->forwardmove = 1;
     hasEnteredJumppad = true;
