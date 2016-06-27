@@ -1074,6 +1074,9 @@ void G_CallStop( edict_t *self )
 */
 void G_CallPain( edict_t *ent, edict_t *attacker, float kick, float damage )
 {
+	if ( ent->ai )
+		AI_Pain( ent, attacker, kick, damage );
+
 	if( ent->pain )
 		ent->pain( ent, attacker, kick, damage );
 	else if( ent->scriptSpawned && ent->asPainFunc )

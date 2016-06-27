@@ -85,14 +85,6 @@ static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size )
 	Info_SetValueForKey(userinfo, "color", color);
 }
 
-static void BOT_pain( edict_t *self, edict_t *other, float kick, int damage )
-{
-	if( other->r.client )
-	{
-		self->ai->botRef->Pain(other, kick, damage);
-	}
-}
-
 //==========================================
 // BOT_Respawn
 // Set up bot for Spawn. Called at first spawn & each respawn
@@ -162,7 +154,6 @@ void BOT_SpawnBot( const char *team_name )
 	ent->ai->type = AI_ISBOT;
 	ent->classname = "bot";
 	ent->yaw_speed = AI_DEFAULT_YAW_SPEED;
-	ent->pain = BOT_pain;
 	ent->die = player_die;
 	ent->yaw_speed -= 20 * (1.0f - skillLevel);
 

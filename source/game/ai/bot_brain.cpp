@@ -523,13 +523,67 @@ unsigned BotBrain::LastTargetTime(const edict_t *ent) const
 
 void BotBrain::OnPain(const edict_t *enemy, float kick, int damage)
 {
-    EnqueueAttacker(enemy, damage);
+    int attackerSlot = EnqueueAttacker(enemy, damage);
+    if (attackerSlot < 0)
+        return;
+
+    bool newThreat = true;
+    if (combatTask.aimEnemy)
+    {
+        newThreat = false;
+        int currEnemySlot = -1;
+        for (int i = 0, end = attackers.size(); i < end; ++i)
+        {
+            if (attackers[i].ent == combatTask.aimEnemy->ent)
+            {
+                currEnemySlot = i;
+                break;
+            }
+        }
+        // If current enemy did not inflict any damage
+        // or new attacker hits harder than current one, there is a new threat
+        if (currEnemySlot < 0 || attackers[currEnemySlot].totalDamage < attackers[attackerSlot].totalDamage)
+            newThreat = true;
+    }
+
+    if (newThreat)
+    {
+        if (!combatTask.Empty())
+        {
+            combatTask.Clear();
+            nextTargetChoiceAt = level.time + 1;
+            nextWeaponChoiceAt = level.time + 1;
+        }
+
+        vec3_t botLookDir;
+        AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
+        Vec3 toEnemyDir = Vec3(enemy->s.origin) - self->s.origin;
+        float squareDistance = toEnemyDir.SquaredLength();
+        if (squareDistance > 1)
+        {
+            float distance = 1.0f / Q_RSqrt(squareDistance);
+            toEnemyDir *= distance;
+            if (toEnemyDir.Dot(botLookDir) < 0)
+            {
+                if (!self->ai->botRef->hasPendingLookAtPoint)
+                {
+                    // Try to guess enemy origin
+                    toEnemyDir.x() += -0.25f + 0.50f * random();
+                    toEnemyDir.y() += -0.10f + 0.20f * random();
+                    toEnemyDir.NormalizeFast();
+                    Vec3 threatPoint(self->s.origin);
+                    threatPoint += distance * toEnemyDir;
+                    self->ai->botRef->SetPendingLookAtPoint(threatPoint, 1.0f);
+                }
+            }
+        }
+    }
 }
 
-void BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
+int BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
 {
     if (!attacker)
-        return;
+        return -1;
 
     int freeSlot = -1;
     for (unsigned i = 0; i < attackers.size(); ++i)
@@ -537,7 +591,7 @@ void BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
         if (attackers[i].ent == attacker)
         {
             attackers[i].OnDamage(damage);
-            return;
+            return i;
         }
         else if (!attackers[i].ent && freeSlot < 0)
             freeSlot = i;
@@ -545,8 +599,9 @@ void BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
     if (freeSlot >= 0)
     {
         attackers[freeSlot].ent = attacker;
+        attackers[freeSlot].Clear();
         attackers[freeSlot].OnDamage(damage);
-        return;
+        return freeSlot;
     }
     float maxEvictionScore = 0.0f;
     for (unsigned i = 0; i < attackers.size(); ++i)
@@ -562,7 +617,9 @@ void BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
         }
     }
     attackers[freeSlot].ent = attacker;
+    attackers[freeSlot].Clear();
     attackers[freeSlot].OnDamage(damage);
+    return freeSlot;
 }
 
 void BotBrain::EnqueueTarget(const edict_t *target)
