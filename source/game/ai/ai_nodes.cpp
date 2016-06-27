@@ -25,8 +25,27 @@ in NO WAY supported by Steve Yeager.
 
 #include "ai_local.h"
 
+bool NavEntity::IsTopTierItem() const
+{
+	if (!ent || !ent->item)
+		return false;
+
+	if (ent->item->type == IT_POWERUP)
+		return true;
+
+	if (ent->item->type == IT_HEALTH && (ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA))
+		return true;
+
+	if (ent->item->type == IT_ARMOR && ent->item->tag == ARMOR_RA)
+		return true;
+
+	return false;
+}
+
 unsigned NavEntity::SpawnTime() const
 {
+	if (explicitSpawnTime)
+		return explicitSpawnTime;
 	if (!ent || !ent->r.inuse)
 		return 0;
 	if (ent->r.solid == SOLID_TRIGGER)
@@ -40,6 +59,15 @@ unsigned NavEntity::SpawnTime() const
 	if (ent->r.owner && !Q_stricmp("item_health_mega", ent->classname))
 		return 0;
 	return ent->nextThink;
+}
+
+unsigned NavEntity::Timeout() const
+{
+	if (explicitTimeout)
+		return explicitTimeout;
+	if (ent && IsDroppedEntity())
+		return ent->nextThink;
+	return std::numeric_limits<unsigned>::max();
 }
 
 GoalEntitiesRegistry GoalEntitiesRegistry::instance;
@@ -92,6 +120,7 @@ NavEntity *GoalEntitiesRegistry::AddGoalEntity(edict_t *ent, int aasAreaNum, Goa
 		goalEnt->ent = ent;
 		goalEnt->aasAreaNum = aasAreaNum;
 		goalEnt->goalFlags = goalFlags;
+		Q_snprintfz(goalEnt->name, NavEntity::MAX_NAME_LEN, "%s(ent#%d)", ent->classname, ENTNUM(ent));
 		entGoals[ENTNUM(ent)] = goalEnt;
 	}
 	return goalEnt;

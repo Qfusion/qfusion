@@ -20,6 +20,36 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowed
     ClearWeights();
 }
 
+int AiBaseBrain::FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
+{
+    return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self,
+                                           preferredAasTravelFlags, allowedAasTravelFlags);
+}
+
+int AiBaseBrain::FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
+{
+    return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self,
+                                         preferredAasTravelFlags, allowedAasTravelFlags);
+}
+
+bool AiBaseBrain::IsCloseToGoal(const NavEntity *goalEnt, float proximityThreshold) const
+{
+    if (!goalEnt)
+        return false;
+    return (goalEnt->Origin() - self->s.origin).SquaredLength() <= proximityThreshold * proximityThreshold;
+}
+
+int AiBaseBrain::GoalAasAreaNum() const
+{
+    if (specialGoal)
+        return specialGoal->AasAreaNum();
+    if (longTermGoal)
+        return longTermGoal->AasAreaNum();
+    if (shortTermGoal)
+        return shortTermGoal->AasAreaNum();
+    return 0;
+}
+
 void AiBaseBrain::Debug(const char *format, ...) const
 {
     va_list va;
@@ -94,6 +124,9 @@ void AiBaseBrain::CheckOrCancelGoal()
         ClearLongAndShortTermGoal(longTermGoal);
     else if (shortTermGoal && ShouldCancelGoal(shortTermGoal))
         ClearLongAndShortTermGoal(shortTermGoal);
+
+    if (specialGoal && ShouldCancelGoal(specialGoal))
+        OnClearSpecialGoalRequested();
 }
 
 bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
@@ -101,13 +134,17 @@ bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
     if (goalEnt->IsDisabled())
         return true;
 
+    unsigned spawnTime = goalEnt->SpawnTime();
+    // The entity is not spawned and respawn time is unknown
+    if (!spawnTime)
+        return true;
+
+    unsigned timeout = goalEnt->Timeout();
+    if (timeout <= level.time)
+        return true;
+
     if (goalEnt->IsBasedOnSomeEntity())
     {
-        unsigned spawnTime = goalEnt->SpawnTime();
-        // The entity is not spawned and respawn time is unknown
-        if (!spawnTime)
-            return true;
-
         // Find milliseconds required to move to a goal
         unsigned moveTime = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum()) * 10U;
         if (moveTime)
@@ -125,6 +162,9 @@ bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
         }
     }
 
+    if (goalEnt == specialGoal)
+        return ShouldCancelSpecialGoalBySpecificReasons();
+
     return false;
 }
 
@@ -134,6 +174,15 @@ void AiBaseBrain::ClearAllGoals()
         ClearLongAndShortTermGoal(longTermGoal);
     if (shortTermGoal)
         ClearLongAndShortTermGoal(shortTermGoal);
+    // Do not clear directly but delegate it
+    if (specialGoal)
+        OnClearSpecialGoalRequested();
+}
+
+void AiBaseBrain::OnClearSpecialGoalRequested()
+{
+    OnGoalCleanedUp(specialGoal);
+    specialGoal = nullptr;
 }
 
 bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
@@ -151,12 +200,25 @@ bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
         return true;
     }
 
+    return HandleSpecialGoalTouch(ent);
+}
+
+bool AiBaseBrain::HandleSpecialGoalTouch(const edict_t *ent)
+{
+    if (specialGoal && specialGoal->IsBasedOnEntity(ent))
+    {
+        OnSpecialGoalReached();
+        return true;
+    }
     return false;
 }
 
 bool AiBaseBrain::IsCloseToAnyGoal() const
 {
-    return IsCloseToGoal(longTermGoal, 128.0f) && IsCloseToGoal(shortTermGoal, 128.0f);
+    return
+        IsCloseToGoal(longTermGoal, 128.0f) ||
+        IsCloseToGoal(shortTermGoal, 128.0f) ||
+        IsCloseToGoal(specialGoal, 128.0f);
 }
 
 constexpr float GOAL_PROXIMITY_SQ_THRESHOLD = 40.0f * 40.0f;
@@ -183,17 +245,43 @@ bool AiBaseBrain::TryReachGoalByProximity()
         }
     }
 
+    return TryReachSpecialGoalByProximity();
+}
+
+bool AiBaseBrain::TryReachSpecialGoalByProximity()
+{
+    if (specialGoal && !specialGoal->ShouldBeReachedAtTouch())
+    {
+        if ((specialGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        {
+            OnSpecialGoalReached();
+            return true;
+        }
+    }
     return false;
 }
 
 bool AiBaseBrain::ShouldWaitForGoal() const
 {
-    // Only long-term goals may be waited for
     if (longTermGoal && longTermGoal->ShouldBeReachedAtTouch())
     {
         if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
         {
             if (longTermGoal->SpawnTime() > level.time)
+                return true;
+        }
+    }
+
+    return ShouldWaitForSpecialGoal();
+}
+
+bool AiBaseBrain::ShouldWaitForSpecialGoal() const
+{
+    if (specialGoal)
+    {
+        if ((specialGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        {
+            if (specialGoal->SpawnTime() > level.time)
                 return true;
         }
     }
@@ -204,7 +292,7 @@ Vec3 AiBaseBrain::ClosestGoalOrigin() const
 {
     float minSqDist = INFINITY;
     NavEntity *chosenGoal = nullptr;
-    for (NavEntity *goal: { longTermGoal, shortTermGoal })
+    for (NavEntity *goal: { longTermGoal, shortTermGoal, specialGoal })
     {
         if (!goal) continue;
         float sqDist = (goal->Origin() - self->s.origin).SquaredLength();
@@ -244,6 +332,10 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
     shortTermGoal = nullptr;
 
     if (G_ISGHOSTING(self))
+        return;
+
+    // Present special goal blocks other goals selection
+    if (specialGoal)
         return;
 
     if (longTermGoalSearchTimeout > level.time && longTermGoalReevaluationTimeout > level.time)
@@ -288,7 +380,7 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
             if (goalEnt->IsDroppedEntity())
             {
                 // Do not pick an entity that is likely to dispose before it may be reached
-                if (goalEnt->DroppedEntityTimeout() <= level.time + moveDuration)
+                if (goalEnt->Timeout() <= level.time + moveDuration)
                     continue;
             }
         }
@@ -384,6 +476,10 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
 
 void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
 {
+    // Present special goal blocks other goals selection
+    if (specialGoal)
+        return;
+
     float currGoalEntWeight = 0.0f;
 
     if (!self->r.client || G_ISGHOSTING(self))
@@ -477,7 +573,7 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
             if (goalAndWeight.goal->IsDroppedEntity())
             {
                 // Ensure it will not dispose before the bot may reach it
-                if (goalAndWeight.goal->DroppedEntityTimeout() > level.time + toTravelMillis)
+                if (goalAndWeight.goal->Timeout() > level.time + toTravelMillis)
                 {
                     if ((toTravelMillis + backTravelMillis) / 2 < AI_GOAL_SR_MILLIS)
                     {
@@ -575,6 +671,12 @@ void AiBaseBrain::SetShortTermGoal(NavEntity *goalEnt)
     self->ai->aiRef->OnGoalSet(goalEnt);
 }
 
+void AiBaseBrain::SetSpecialGoal(NavEntity *goalEnt)
+{
+    specialGoal = goalEnt;
+    self->ai->aiRef->OnGoalSet(goalEnt);
+}
+
 void AiBaseBrain::ClearLongAndShortTermGoal(const NavEntity *pickedGoal)
 {
     longTermGoal = nullptr;
@@ -603,6 +705,12 @@ void AiBaseBrain::OnShortTermGoalReached()
 {
     Debug("reached short-term goal %s\n", shortTermGoal->Name());
     ClearLongAndShortTermGoal(shortTermGoal);
+}
+
+void AiBaseBrain::OnSpecialGoalReached()
+{
+    Debug("reached special goal %s\n", specialGoal->Name());
+    OnClearSpecialGoalRequested();
 }
 
 std::pair<unsigned, unsigned> AiBaseBrain::FindToAndBackTravelTimes(const Vec3 &targetOrigin) const

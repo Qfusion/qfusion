@@ -438,6 +438,9 @@ class BotBrain: public AiBaseBrain
 
     TargetEnvironment targetEnvironment;
 
+    // This var holds memory referred by AiBaseBrain::specialGoal
+    NavEntity pursuitGoal;
+
     float ComputeRawWeight(const edict_t *enemy);
 
     void UpdateWeight(Enemy &enemy);
@@ -520,6 +523,9 @@ class BotBrain: public AiBaseBrain
     virtual bool MayNotBeFeasibleGoal(const NavEntity *goalEnt) override;
 
     bool MayPathToAreaBeBlocked(int goalAreaNum, const edict_t *enemy) const;
+
+    void StartPursuit(const Enemy &enemy);
+    virtual bool ShouldCancelSpecialGoalBySpecificReasons() override;
 
     BotBrain() = delete;
     // Disable copying and moving

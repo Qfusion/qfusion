@@ -720,11 +720,59 @@ bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum, const edict_t *enemy) con
     return false;
 }
 
+bool BotBrain::ShouldCancelSpecialGoalBySpecificReasons()
+{
+    if (!specialGoal)
+        return false;
+
+    // Cancel pursuit goal if combat task has changed
+    if (combatTask.instanceId != specialGoal->combatTaskInstanceId)
+        return true;
+
+    // Prefer picking up top-tier items rather than pursuit an enemy
+    if ((longTermGoal && longTermGoal->IsTopTierItem()) || (shortTermGoal && shortTermGoal->IsTopTierItem()))
+        return true;
+
+    // Cancel pursuit if its path includes jumppads or elevators, or other vulnerable kinds of movement
+    int areaNum = currAasAreaNum;
+    int goalAreaNum = specialGoal->AasAreaNum();
+    while (areaNum != goalAreaNum)
+    {
+        const aas_area_t &area = aasworld.areas[areaNum];
+        // First, project origin to floor manually. Otherwise, next call may perform a trace.
+        Vec3 origin(area.center);
+        origin.z() = area.mins[2] + 4;
+        int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.data(), goalAreaNum);
+        // If reachability can't be found, cancel goal
+        if (!reachNum)
+            return true;
+        const aas_reachability_t &reach = aasworld.reachability[reachNum];
+        switch (reach.traveltype)
+        {
+            case TRAVEL_JUMPPAD:
+            case TRAVEL_ELEVATOR:
+            case TRAVEL_FUNCBOB:
+            case TRAVEL_CROUCH:
+            case TRAVEL_LADDER:
+            case TRAVEL_SWIM:
+                return true;
+            default:
+                // Go to the next area in chain
+                areaNum = reach.areanum;
+        }
+    }
+
+    return false;
+}
+
 void BotBrain::UpdateKeptCurrentCombatTask()
 {
     auto *task = &combatTask;
     if (nextWeaponChoiceAt <= level.time)
     {
+        bool oldAdvance = task->advance;
+        bool oldRetreat = task->retreat;
+        bool oldInhibit = task->inhibit;
         if (task->aimEnemy)
         {
             nextWeaponChoiceAt = level.time + aimWeaponChoicePeriod;
@@ -737,6 +785,10 @@ void BotBrain::UpdateKeptCurrentCombatTask()
             SuggestSpamEnemyWeaponAndTactics(task);
             Debug("UpdateKeptCombatTask(): has spam enemy, next weapon choice at %09d\n", nextWeaponChoiceAt);
         }
+
+        // If tactics has been changed, treat updated combat task as new
+        if (task->advance != oldAdvance || task->retreat != oldRetreat || task->inhibit != oldInhibit)
+            combatTask.instanceId = NextCombatTaskInstanceId();
     }
 }
 
@@ -955,6 +1007,31 @@ void BotBrain::StartSpamAtEnemy(CombatTask *task, const Enemy *enemy)
     Debug(fmt, spamSpot.x(), spamSpot.y(), spamSpot.z(), WeapName(task->suggestedSpamWeapon), enemy->Nick(), timeDelta);
 }
 
+void BotBrain::StartPursuit(const Enemy &enemy)
+{
+    int areaNum = AAS_PointAreaNum(const_cast<float*>(enemy.ent->s.origin));
+    if (!areaNum)
+    {
+        Vec3 origin(enemy.ent->s.origin);
+        AdjustOriginToFloor(enemy.ent, &origin);
+        areaNum = AAS_PointAreaNum(origin.data());
+        if (!areaNum)
+            return;
+    }
+    Debug("decided to pursuit %s\n", enemy.Nick());
+    pursuitGoal.aasAreaNum = areaNum;
+    pursuitGoal.combatTaskInstanceId = combatTask.instanceId;
+    pursuitGoal.goalFlags = GoalFlags::TACTICAL_SPOT;
+    pursuitGoal.explicitTimeout = level.time + 1000;
+    pursuitGoal.explicitSpawnTime = 1;
+    pursuitGoal.explicitOrigin = enemy.LastSeenPosition();
+    float x = pursuitGoal.explicitOrigin.x();
+    float y = pursuitGoal.explicitOrigin.y();
+    float z = pursuitGoal.explicitOrigin.z();
+    Q_snprintfz(pursuitGoal.name, NavEntity::MAX_NAME_LEN, "%s seen spot @(%.3f %3.f %3.f)", enemy.Nick(), x, y, z);
+    SetSpecialGoal(&pursuitGoal);
+}
+
 // Old weapon selection code with some style and C to C++ fixes
 int BotBrain::SuggestEasyBotsWeapon(const Enemy &enemy)
 {
@@ -1052,6 +1129,8 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
     if (BotHasQuad())
     {
         task->suggestedShootWeapon = SuggestQuadBearerWeapon(enemy);
+        task->advance = true;
+        StartPursuit(enemy);
         return;
     }
 
@@ -1070,6 +1149,15 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 
     if (task->suggestedShootWeapon == WEAP_NONE)
         task->suggestedShootWeapon = WEAP_GUNBLADE;
+
+    if (task->advance)
+    {
+        // Prefer to pickup an item rather than pursuit an enemy if the item is valuable
+        if ((longTermGoal && longTermGoal->IsTopTierItem()) || (shortTermGoal && shortTermGoal->IsTopTierItem()))
+            task->advance = false;
+        else
+            StartPursuit(enemy);
+    }
 }
 
 void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
