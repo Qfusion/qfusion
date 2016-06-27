@@ -1080,7 +1080,7 @@ int BotBrain::SuggestEasyBotsWeapon(const Enemy &enemy)
     return best_weapon;
 }
 
-static constexpr float CLOSE_RANGE = 300.0f;
+static constexpr float CLOSE_RANGE = 150.0f;
 
 inline float GetLaserRange()
 {
