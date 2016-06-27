@@ -1241,14 +1241,42 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
     if (task->suggestedShootWeapon == WEAP_NONE)
         task->suggestedShootWeapon = WEAP_GUNBLADE;
 
+    // TODO: This should not be used a-posteriori.
+    // Use an enemy group for a-priori weapon and tactics selection instead of just a single aimEnemy
+    bool isOutnumbered = false;
+    if (!BotHasPowerups() && activeEnemies.size() > 1)
+    {
+        float totalDamageToKill = disposition.damageToKill;
+        // Start from second active enemy
+        for (unsigned i = 1; i < activeEnemies.size(); ++i)
+        {
+            const Enemy *e = activeEnemies[i];
+            if (e->ent && DistanceSquared(e->ent->s.origin, enemy.ent->s.origin) < 192 * 192)
+                totalDamageToKill += DamageToKill(activeEnemies[i]->ent);
+        }
+        if (totalDamageToKill > 1.5 * disposition.damageToBeKilled)
+            isOutnumbered = true;
+    }
+
+    bool oldAdvance = task->advance;
+    bool oldRetreat = task->retreat;
+
     if (task->advance)
     {
         // Prefer to pickup an item rather than pursuit an enemy if the item is valuable
         if ((longTermGoal && longTermGoal->IsTopTierItem()) || (shortTermGoal && shortTermGoal->IsTopTierItem()))
             task->advance = false;
-        else
+        else if (!isOutnumbered)
             StartPursuit(enemy);
+        else
+            task->retreat = true;
     }
+    if (!task->retreat && !oldAdvance && isOutnumbered)
+        task->retreat = true;
+
+    // Treat task as a new if tactics has been changed
+    if (oldAdvance != task->advance || oldRetreat != task->retreat)
+        combatTask.instanceId = NextCombatTaskInstanceId();
 }
 
 void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
