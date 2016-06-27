@@ -71,7 +71,8 @@ enum class GoalFlags
 	NONE = 0x0,
 	REACH_AT_TOUCH = 0x1,
 	REACH_ENTITY = 0x2,
-	DROPPED_ENTITY = 0x4
+	DROPPED_ENTITY = 0x4,
+	TACTICAL_SPOT = 0x8
 };
 
 inline GoalFlags operator|(const GoalFlags &lhs, const GoalFlags &rhs) { return (GoalFlags)((int)lhs | (int)rhs); }
@@ -80,40 +81,80 @@ inline GoalFlags operator&(const GoalFlags &lhs, const GoalFlags &rhs) { return 
 class NavEntity
 {
 	friend class GoalEntitiesRegistry;
+	friend class BotBrain;
+
+	// Numeric id that matches index of corresponding entity in game edicts (if any)
 	int id;
+	// Id of area this goal is located in
 	int aasAreaNum;
+	// Contains instance id of associated combat task
+	// If current combat task instance id has been changed
+	// and this is a special goal, this goal should be invalidated
+	unsigned combatTaskInstanceId;
+	// If zero (not set), should be computed according to goal-specific rules
+	unsigned explicitTimeout;
+	// If zero (not set), should be computed according to goal-specific rules
+	unsigned explicitSpawnTime;
+	// Should be used unless a goal is based on some entity.
+	// In that case, origin of entity should be used
+	Vec3 explicitOrigin;
+	// Misc. goal flags, mainly defining way this goal should be reached
 	GoalFlags goalFlags;
+	// An entity this goal may be based on
 	edict_t *ent;
+	// Links for registry goals pool
 	NavEntity *prev, *next;
+
+	static constexpr unsigned MAX_NAME_LEN = 64;
+	char name[MAX_NAME_LEN];
+
+	// Should initialize all fields since it may be used as a AiBaseBrain subclass field not held by the registry
+	NavEntity()
+		: explicitOrigin(INFINITY, INFINITY, INFINITY)
+	{
+		id = 0;
+		aasAreaNum = 0;
+		combatTaskInstanceId = 0;
+		explicitTimeout = 0;
+		explicitSpawnTime = 0;
+		goalFlags = GoalFlags::NONE;
+		ent = nullptr;
+		prev = next = nullptr;
+		name[0] = '\0';
+	}
 public:
+
 	inline int Id() const { return id; }
 	inline int AasAreaNum() const { return aasAreaNum; }
-	inline Vec3 Origin() const { return Vec3(ent->s.origin); }
+	inline Vec3 Origin() const
+	{
+		return IsBasedOnSomeEntity()? Vec3(ent->s.origin) : explicitOrigin;
+	}
 	inline const gsitem_t *Item() const { return ent->item; }
-	inline const char *Name() const { return ent->classname; }
-	inline bool IsEnabled() const { return ent && ent->r.inuse; }
-	inline bool IsDisabled() const { return !ent || !ent->r.inuse; }
+	inline const char *Name() const { return name; }
+	inline bool IsEnabled() const
+	{
+		return !IsTacticalSpot() ? ent && ent->r.inuse : true;
+	}
+	inline bool IsDisabled() const { return !IsEnabled(); }
 	inline bool IsBasedOnEntity(const edict_t *e) const { return e && this->ent == e; }
 	inline bool IsBasedOnSomeEntity() const { return ent != nullptr; }
 	inline bool IsClient() const { return ent->r.client != nullptr; }
 	inline bool IsSpawnedAtm() const { return ent->r.solid != SOLID_NOT; }
 	inline bool ToBeSpawnedLater() const { return ent->r.solid == SOLID_NOT; }
-	inline bool IsDroppedEntity() const { return ent && GoalFlags::NONE != (goalFlags & GoalFlags::DROPPED_ENTITY); }
-	inline unsigned DroppedEntityTimeout() const
+	inline bool IsDroppedEntity() const
 	{
-		if (!IsDroppedEntity())
-			return std::numeric_limits<unsigned>::max();
-		return ent->nextThink;
+		return ent && GoalFlags::NONE != (goalFlags & GoalFlags::DROPPED_ENTITY);
 	}
+	bool IsTopTierItem() const;
+	inline bool IsTacticalSpot() const
+	{
+		return GoalFlags::NONE != (goalFlags & GoalFlags::TACTICAL_SPOT);
+	}
+	unsigned Timeout() const;
 	inline bool ShouldBeReachedAtTouch() const
 	{
 		return GoalFlags::NONE != (goalFlags & GoalFlags::REACH_AT_TOUCH);
-	}
-	// Returns true if it is enough to be close to the goal (not to pick up an item)
-	// to reach it and the grabber is close enough to reach it atm.
-	inline bool IsCloseEnoughToBeConsideredReached(const edict_t *grabber) const
-	{
-		return !ShouldBeReachedAtTouch() && (Origin() - grabber->s.origin).SquaredLength() < 32.0f * 32.0f;
 	}
 
 	// Returns level.time when the item is already spawned
@@ -364,6 +405,9 @@ protected:
 
 	NavEntity *longTermGoal;
 	NavEntity *shortTermGoal;
+	// A domain-specific goal that overrides regular goals.
+	// By default is NULL. May be set by subclasses logic/team AI logic.
+	NavEntity *specialGoal;
 
 	unsigned longTermGoalSearchTimeout;
 	unsigned shortTermGoalSearchTimeout;
@@ -394,42 +438,26 @@ protected:
 
 	void CheckOrCancelGoal();
 	bool ShouldCancelGoal(const NavEntity *goalEnt);
+	// To be overridden in subclass. Should check other reasons of goal rejection aside generic ones for all goals.
+	virtual bool ShouldCancelSpecialGoalBySpecificReasons() { return false; }
 
 	void PickLongTermGoal(const NavEntity *currLongTermGoalEnt);
 	void PickShortTermGoal(const NavEntity *currLongTermGoalEnt);
 	void ClearLongAndShortTermGoal(const NavEntity *pickedGoal);
 	void SetShortTermGoal(NavEntity *goalEnt);
 	void SetLongTermGoal(NavEntity *goalEnt);
+	// Overriding method should call this one
+	virtual void SetSpecialGoal(NavEntity *goalEnt);
 	virtual void OnGoalCleanedUp(const NavEntity *goalEnt) {}
 
 	// Returns a pair of AAS travel times to the target point and back
 	std::pair<unsigned, unsigned> FindToAndBackTravelTimes(const Vec3 &targetPoint) const;
 
-	inline int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
-	{
-		return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self,
-											   preferredAasTravelFlags, allowedAasTravelFlags);
-	}
-	inline int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
-	{
-		return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self,
-											 preferredAasTravelFlags, allowedAasTravelFlags);
-	}
-	inline bool IsCloseToGoal(const NavEntity *goalEnt, float proximityThreshold) const
-	{
-		if (!goalEnt)
-			return false;
-		return (goalEnt->Origin() - self->s.origin).SquaredLength() <= proximityThreshold * proximityThreshold;
-	}
+	int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
+	int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
+	bool IsCloseToGoal(const NavEntity *goalEnt, float proximityThreshold) const;
 
-	inline int GoalAasAreaNum()
-	{
-		if (shortTermGoal)
-			return shortTermGoal->AasAreaNum();
-		if (longTermGoal)
-			return longTermGoal->AasAreaNum();
-		return 0;
-	}
+	int GoalAasAreaNum() const;
 
 	void Debug(const char *format, ...) const;
 
@@ -443,15 +471,23 @@ protected:
 
 	void OnLongTermGoalReached();
 	void OnShortTermGoalReached();
-
+	// To be overridden in subclasses
+	virtual void OnSpecialGoalReached();
 public:
 	void ClearAllGoals();
+	// May be overridden in subclasses
+	virtual void OnClearSpecialGoalRequested();
 
 	// Should return true if entity touch has been handled
 	bool HandleGoalTouch(const edict_t *ent);
+	virtual bool HandleSpecialGoalTouch(const edict_t *ent);
 	bool IsCloseToAnyGoal() const;
 	bool TryReachGoalByProximity();
+	// To be overridden in subclasses
+	virtual bool TryReachSpecialGoalByProximity();
 	bool ShouldWaitForGoal() const;
+	// To be overridden in subclasses
+	virtual bool ShouldWaitForSpecialGoal() const;
 	Vec3 ClosestGoalOrigin() const;
 };
 
