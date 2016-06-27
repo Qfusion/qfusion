@@ -379,7 +379,7 @@ class BotBrain: public AiBaseBrain
     static_assert(MAX_TRACKED_ATTACKERS + 3 <= MAX_TRACKED_ENEMIES, "Leave at least 3 free slots for ordinary enemies");
     static_assert(MAX_TRACKED_TARGETS + 3 <= MAX_TRACKED_ENEMIES, "Leave at least 3 free slots for ordinary enemies");
 
-    static constexpr unsigned NOT_SEEN_TIMEOUT = 10000;
+    static constexpr unsigned NOT_SEEN_TIMEOUT = 4000;
     static constexpr unsigned ATTACKER_TIMEOUT = 3000;
     static constexpr unsigned TARGET_TIMEOUT = 3000;
 
