@@ -529,7 +529,7 @@ class BotBrain: public AiBaseBrain
     virtual void OnGoalCleanedUp(const NavEntity *goalEnt) override;
     virtual bool MayNotBeFeasibleGoal(const NavEntity *goalEnt) override;
 
-    bool MayPathToAreaBeBlocked(int goalAreaNum, const edict_t *enemy) const;
+    bool MayPathToAreaBeBlocked(int goalAreaNum) const;
 
     void StartPursuit(const Enemy &enemy);
     virtual bool ShouldCancelSpecialGoalBySpecificReasons() override;
