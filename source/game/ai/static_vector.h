@@ -69,9 +69,9 @@ public:
         return basePointer[index];
     }
 
-    inline size_type size() { return count; }
-    inline size_type capacity() { return N; }
-    inline bool empty() { return count == 0; }
+    inline size_type size() const { return count; }
+    inline size_type capacity() const { return N; }
+    inline bool empty() const { return count == 0; }
 
     inline iterator begin() { return basePointer; }
     inline const_iterator begin() const { return basePointer; }
