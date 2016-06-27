@@ -485,7 +485,8 @@ class BotBrain: public AiBaseBrain
     unsigned LastAttackedByTime(const edict_t *ent) const;
     unsigned LastTargetTime(const edict_t *ent) const;
     bool HasAnyDetectedEnemiesInView() const;
-    void EnqueueAttacker(const edict_t *attacker, int damage);
+    // Returns attacker slot number
+    int EnqueueAttacker(const edict_t *attacker, int damage);
     void EnqueueTarget(const edict_t *target);
     void SuggestAimWeaponAndTactics(CombatTask *task);
     void SuggestSniperRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition);

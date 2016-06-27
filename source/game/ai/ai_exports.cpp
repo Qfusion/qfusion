@@ -247,6 +247,12 @@ void AI_DamagedEntity(edict_t *self, edict_t *ent, int damage)
         self->ai->botRef->OnEnemyDamaged(ent, damage);
 }
 
+void AI_Pain(edict_t *self, edict_t *attacker, int kick, int damage)
+{
+    if (self->ai->botRef)
+        self->ai->botRef->Pain(attacker, kick, damage);
+}
+
 void AI_Think(edict_t *self)
 {
     if( !self->ai || self->ai->type == AI_INACTIVE )
