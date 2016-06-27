@@ -383,12 +383,18 @@ class BotBrain: public AiBaseBrain
     static constexpr unsigned ATTACKER_TIMEOUT = 3000;
     static constexpr unsigned TARGET_TIMEOUT = 3000;
 
-    StaticVector<Enemy, MAX_TRACKED_ENEMIES> enemies;
+    // All known (viewed and not forgotten) enemies
+    StaticVector<Enemy, MAX_TRACKED_ENEMIES> trackedEnemies;
+
+    static constexpr unsigned MAX_ACTIVE_ENEMIES = 3;
+    // Active enemies (potential targets) in order of importance, chosen aim enemy first
+    StaticVector<Enemy *, MAX_ACTIVE_ENEMIES> activeEnemies;
 
     unsigned trackedEnemiesCount;
     const unsigned maxTrackedEnemies;
     const unsigned maxTrackedAttackers;
     const unsigned maxTrackedTargets;
+    const unsigned maxActiveEnemies;
 
     const unsigned reactionTime;
 

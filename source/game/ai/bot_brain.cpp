@@ -76,19 +76,30 @@ void Enemy::OnViewed()
     lastSeenTimestamps.push_front(lastSeenAt);
 }
 
+static unsigned From0UpToMax(unsigned maxValue, float ratio)
+{
+    // Ensure that value never exceeds maxValue by lowering ratio a bit
+    unsigned value = (unsigned)(maxValue * ratio);
+    // Return values less than maxValue except a case when maxValue is 0
+    if (value == maxValue && maxValue)
+        return maxValue;
+    return value;
+}
+
 BotBrain::BotBrain(edict_t *bot, float skillLevel)
     : AiBaseBrain(bot, Bot::PREFERRED_TRAVEL_FLAGS, Bot::ALLOWED_TRAVEL_FLAGS),
       bot(bot),
       skillLevel(skillLevel),
       trackedEnemiesCount(0),
-      maxTrackedEnemies(3 + (unsigned)((MAX_TRACKED_ENEMIES-3) * BotSkill())),
-      maxTrackedAttackers(1 + (unsigned)((MAX_TRACKED_ATTACKERS-1) * BotSkill())),
-      maxTrackedTargets(1 + (unsigned)((MAX_TRACKED_TARGETS-1) * BotSkill())),
-      reactionTime(32 + (unsigned)(300.0f * (1.0f - BotSkill()))),
-      aimTargetChoicePeriod(1000 - (unsigned)(900.0f * BotSkill())),
-      spamTargetChoicePeriod(1333 - (unsigned)(500.0f * BotSkill())),
-      aimWeaponChoicePeriod(1032 - (unsigned)(500.0f * BotSkill())),
-      spamWeaponChoicePeriod(1000 - (unsigned)(333.0f * BotSkill())),
+      maxTrackedEnemies(3 + From0UpToMax(MAX_TRACKED_ENEMIES-2, BotSkill())),
+      maxTrackedAttackers(1 + From0UpToMax(MAX_TRACKED_ATTACKERS, BotSkill())),
+      maxTrackedTargets(1 + From0UpToMax(MAX_TRACKED_TARGETS, BotSkill())),
+      maxActiveEnemies(1 + From0UpToMax(MAX_ACTIVE_ENEMIES, BotSkill())),
+      reactionTime(320 - From0UpToMax(300, BotSkill())),
+      aimTargetChoicePeriod(1000 - From0UpToMax(900, BotSkill())),
+      spamTargetChoicePeriod(1333 - From0UpToMax(500, BotSkill())),
+      aimWeaponChoicePeriod(1032 - From0UpToMax(500, BotSkill())),
+      spamWeaponChoicePeriod(1000 - From0UpToMax(333, BotSkill())),
       combatTaskInstanceCounter(1),
       nextTargetChoiceAt(level.time),
       nextWeaponChoiceAt(level.time),
@@ -120,7 +131,7 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
 
     // Initialize empty slots
     for (unsigned i = 0; i < maxTrackedEnemies; ++i)
-        enemies.push_back(Enemy());
+        trackedEnemies.push_back(Enemy());
 
     for (unsigned i = 0; i < maxTrackedAttackers; ++i)
         attackers.emplace_back(AttackStats());
@@ -132,7 +143,7 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
 void BotBrain::PreThink()
 {
     const unsigned levelTime = level.time;
-    for (Enemy &enemy: enemies)
+    for (Enemy &enemy: trackedEnemies)
     {
         // If enemy slot is free
         if (!enemy.ent)
@@ -285,7 +296,7 @@ void BotBrain::RemoveEnemy(Enemy &enemy)
 
 bool BotBrain::HasAnyDetectedEnemiesInView() const
 {
-    for (const Enemy &enemy: enemies)
+    for (const Enemy &enemy: trackedEnemies)
     {
         if (!enemy.ent)
             continue;
@@ -326,16 +337,16 @@ void BotBrain::OnEnemyViewed(const edict_t *enemy)
         return;
 
     int freeSlot = -1;
-    for (unsigned i = 0; i < enemies.size(); ++i)
+    for (unsigned i = 0; i < trackedEnemies.size(); ++i)
     {
         // Use first free slot for faster access and to avoid confusion
-        if (!enemies[i].ent && freeSlot < 0)
+        if (!trackedEnemies[i].ent && freeSlot < 0)
         {
             freeSlot = i;
         }
-        else if (enemies[i].ent == enemy)
+        else if (trackedEnemies[i].ent == enemy)
         {
-            enemies[i].OnViewed();
+            trackedEnemies[i].OnViewed();
             return;
         }
     }
@@ -355,7 +366,7 @@ void BotBrain::OnEnemyViewed(const edict_t *enemy)
 
 void BotBrain::EmplaceEnemy(const edict_t *enemy, int slot)
 {
-    Enemy &slotEnemy = enemies[slot];
+    Enemy &slotEnemy = trackedEnemies[slot];
     slotEnemy.ent = enemy;
     slotEnemy.registeredAt = level.time;
     slotEnemy.weight = 0.0f;
@@ -383,7 +394,7 @@ void BotBrain::TryPushNewEnemy(const edict_t *enemy)
 
     for (unsigned i = 0; i < maxTrackedEnemies; ++i)
     {
-        Enemy &slotEnemy = enemies[i];
+        Enemy &slotEnemy = trackedEnemies[i];
         // Skip last attackers
         if (LastAttackedByTime(slotEnemy.ent) > 0)
             continue;
@@ -896,31 +907,37 @@ bool BotBrain::CheckFastWeaponSwitchAction()
     return false;
 }
 
+struct EnemyAndScore
+{
+    Enemy *enemy;
+    float score;
+    EnemyAndScore(Enemy *enemy, float score): enemy(enemy), score(score) {}
+    bool operator<(const EnemyAndScore &that) const { return score > that.score; }
+};
+
 void BotBrain::TryFindNewCombatTask()
 {
     CombatTask *task = &combatTask;
     const Enemy *oldAimEnemy = task->aimEnemy;
     task->Reset();
+    activeEnemies.clear();
 
     // Atm we just pick up a target that has best ai weight
     // We multiply it by distance factor since weights are almost not affected by distance.
 
-    Enemy *bestTarget = nullptr;
-    float bestScore = 0.0f;
-
     Vec3 botOrigin(bot->s.origin);
-    vec3_t forward, right, up;
-    AngleVectors(bot->s.angles, forward, right, up);
+    vec3_t forward;
+    AngleVectors(bot->s.angles, forward, nullptr, nullptr);
     Vec3 botDirection(forward);
-    botDirection += right;
-    botDirection += up;
 
     // Until these bounds distance factor scales linearly
     constexpr float distanceBounds = 3500.0f;
 
+    StaticVector<EnemyAndScore, MAX_TRACKED_ENEMIES> candidates;
+
     for (unsigned i = 0; i < maxTrackedEnemies; ++i)
     {
-        Enemy &enemy = enemies[i];
+        Enemy &enemy = trackedEnemies[i];
         if (!enemy.ent)
             continue;
         // Not seen in this frame enemies have zero weight;
@@ -934,15 +951,27 @@ void BotBrain::TryFindNewCombatTask()
         float directionFactor = 0.7f + 0.3f * botDirection.Dot(botToEnemy);
 
         float currScore = enemy.weight * distanceFactor * directionFactor;
-        if (currScore > bestScore)
-        {
-            bestScore = currScore;
-            bestTarget = &enemy;
-        }
+        candidates.push_back(EnemyAndScore(&enemy, currScore));
     }
 
-    if (bestTarget)
+    // Its better to sort once instead of pushing into a heap inside the loop above
+    std::sort(candidates.begin(), candidates.end());
+
+    if (!candidates.empty())
     {
+        // Best candidates are first (EnemyAndScore::operator<() yields this result)
+        // Choose not more than maxActiveEnemies candidates
+        // that have a score not than twice less than the best one
+        float bestScore = candidates.front().score;
+        for (int i = 0, end = std::min(candidates.size(), maxActiveEnemies); i < end; ++i)
+        {
+            if (candidates[i].score < 0.5f * bestScore)
+                break;
+            activeEnemies.push_back(candidates[i].enemy);
+        }
+
+        // Set best active enemy as a current aim enemy
+        const Enemy *bestTarget = activeEnemies.front();
         EnqueueTarget(bestTarget->ent);
         task->aimEnemy = bestTarget;
         task->prevSpamEnemy = nullptr;
@@ -1003,7 +1032,7 @@ void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task, const Vec3 &botViewDir
 
     for (unsigned i = 0; i < maxTrackedEnemies; ++i)
     {
-        const Enemy &enemy = enemies[i];
+        const Enemy &enemy = trackedEnemies[i];
         if (!enemy.ent)
             continue;
         if (enemy.weight)
