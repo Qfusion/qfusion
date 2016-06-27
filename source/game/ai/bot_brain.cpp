@@ -906,7 +906,7 @@ void BotBrain::TryFindNewCombatTask()
         }
         else
         {
-            SuggestSpamTask(task, botOrigin, botDirection);
+            SuggestPursuitOrSpamTask(task, botDirection);
         }
     }
 }
@@ -931,13 +931,12 @@ bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
     return true;
 }
 
-void BotBrain::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Vec3 &botViewDirection)
+void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task, const Vec3 &botViewDirection)
 {
-    // Low-skill bots never spam
+    // Low-skill bots never do pursuit or spam
     if (BotSkill() < 0.33f)
         return;
 
-    // TODO: Do not spam if bot tries to hide
     static_assert(NOT_SEEN_TIMEOUT > 2000, "This value will yield too low spam enemy timeout");
     // If enemy has been not seen more than timeout, do not start spam at this enemy location
     const unsigned timeout = (unsigned)((NOT_SEEN_TIMEOUT - 1000) * BotSkill());
@@ -955,13 +954,21 @@ void BotBrain::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Ve
         if (&enemy == task->prevSpamEnemy)
             continue;
 
-        // Spamming is not affected by distance, it is quite useful vs snipers
-        Vec3 botToSpotDirection = enemy.LastSeenPosition() - botOrigin;
-        botToSpotDirection.NormalizeFast();
-        float directionFactor = 0.3f + 0.7f * botToSpotDirection.Dot(botViewDirection);
+        Vec3 botToSpotDirection = enemy.LastSeenPosition() - self->s.origin;
+        float directionFactor = 0.5f;
+        float distanceFactor = 1.0f;
+        float squareDistance = botToSpotDirection.SquaredLength();
+        if (squareDistance > 1)
+        {
+            float distance = 1.0f / Q_RSqrt(squareDistance);
+            botToSpotDirection *= 1.0f / distance;
+            directionFactor = 0.3f + 0.7f * botToSpotDirection.Dot(botViewDirection);
+            distanceFactor = 1.0f - 0.9f * BoundedFraction(distance, 2000.0f);
+        }
         float timeFactor = 1.0f - BoundedFraction(level.time - enemy.LastSeenAt(), timeout);
 
-        float currScore = (0.5f * (enemy.maxPositiveWeight + enemy.avgPositiveWeight)) * directionFactor * timeFactor;
+        float currScore = (0.5f * (enemy.maxPositiveWeight + enemy.avgPositiveWeight));
+        currScore *= directionFactor * distanceFactor * timeFactor;
         if (currScore > bestScore)
         {
             bestScore = currScore;
@@ -971,7 +978,7 @@ void BotBrain::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Ve
 
     if (bestEnemy)
     {
-        StartSpamAtEnemy(task, bestEnemy);
+        StartSpamAtEnemyOrPursuit(task, bestEnemy);
         nextTargetChoiceAt = level.time + spamTargetChoicePeriod;
     }
     else
@@ -979,28 +986,24 @@ void BotBrain::SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Ve
         // If not set, bot will repeat try to find target on each next frame
         nextTargetChoiceAt = level.time + spamTargetChoicePeriod / 2;
     }
-
-#ifdef _DEBUG
-    const char *prevEnemyNick = task->prevSpamEnemy ? task->prevSpamEnemy->Nick() : "<none>";
-    const char *bestEnemyNick = bestEnemy ? bestEnemy->Nick() : "<none>";
-    const char *format = "SuggestSpamTask(): prev spam enemy %s, chosen (?) one %s, next target choice at %09d\n";
-    Debug(format, prevEnemyNick, bestEnemyNick, nextTargetChoiceAt);
-#endif
-
-    // TODO: Spam on item spawn points if there are not nearby teammates and item is going to be spawned
-    // TODO: Spam on spawn points in non-team-based gametypes
 }
 
-void BotBrain::StartSpamAtEnemy(CombatTask *task, const Enemy *enemy)
+void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
 {
-    // Do not add spamTargetChoicePeriod but add very small period when you start spam at enemy (enemy may come back quickly)
-    // TODO: Calculate possible enemy position based on last seen ones
+    CombatDisposition disposition = GetCombatDisposition(*enemy);
+    if (disposition.KillToBeKilledDamageRatio() > 1.0f)
+    {
+        task->aimEnemy = enemy;
+        task->instanceId = NextCombatTaskInstanceId();
+        StartPursuit(*enemy);
+        return;
+    }
+
     Vec3 spamSpot = enemy->LastSeenPosition();
     task->spamEnemy = enemy;
     task->spamSpot = spamSpot;
     task->instanceId = NextCombatTaskInstanceId();
     SuggestSpamEnemyWeaponAndTactics(task);
-    // TODO: Make it dependent of a skill level?
     task->spamTimesOutAt = level.time + 1200;
     unsigned timeDelta = level.time - enemy->LastSeenAt();
     constexpr const char *fmt = "starts spamming at %.3f %.3f %.3f with %s where it has seen %s %d ms ago\n";

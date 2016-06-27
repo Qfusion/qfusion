@@ -502,8 +502,8 @@ class BotBrain: public AiBaseBrain
     int SuggestShotOfDespairWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     int SuggestQuadBearerWeapon(const Enemy &enemy);
     bool SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy);
-    void SuggestSpamTask(CombatTask *task, const Vec3 &botOrigin, const Vec3 &botViewDirection);
-    void StartSpamAtEnemy(CombatTask *task, const Enemy *enemy);
+    void SuggestPursuitOrSpamTask(CombatTask *task, const Vec3 &botViewDirection);
+    void StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy);
     int ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end);
     void TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey);
     void RemoveEnemy(Enemy &enemy);
@@ -546,6 +546,7 @@ public:
     void OnPain(const edict_t *enemy, float kick, int damage);
     void OnEnemyDamaged(const edict_t *target, int damage);
 
+    bool IsPursuing() const { return specialGoal == &pursuitGoal; }
 
     virtual void UpdatePotentialGoalsWeights() override;
 };
