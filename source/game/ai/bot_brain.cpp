@@ -697,11 +697,13 @@ bool BotBrain::MayNotBeFeasibleGoal(const NavEntity *goalEnt)
 {
     if (!combatTask.aimEnemy || !combatTask.retreat)
         return false;
-    return MayPathToAreaBeBlocked(goalEnt->AasAreaNum(), combatTask.aimEnemy->ent);
+    return MayPathToAreaBeBlocked(goalEnt->AasAreaNum());
 }
 
 static bool AdjustOriginToFloor(const edict_t *ent, Vec3 *result)
 {
+    if (!ent)
+        return false;
     Vec3 v1(ent->s.origin), v2(ent->s.origin);
     v2.z() -= 256.0f;
     trace_t trace;
@@ -715,74 +717,74 @@ static bool AdjustOriginToFloor(const edict_t *ent, Vec3 *result)
     return true;
 }
 
-bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum, const edict_t *enemy) const
+bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
 {
-    int blockingAreaNum = AAS_PointAreaNum(const_cast<vec_t*>(enemy->s.origin));
-    if (!blockingAreaNum)
-        return false;
-
-    // TODO: Choose these values using more sophisticated approach
-    const int dangerMoveMillis = 1750;
-    const float dangerRadius = 256.0f;
-
-    // Danger origin should be put to a floor by a single trace to ensure
+    // Blocker origin should be put to a floor by a single trace to ensure
     // that FindAASTravelTimeToGoalArea() will not do it on each loop step
-
-    Vec3 dangerOrigin(0, 0, 0);
-    // Can't figure out feasible enemy origin that may be supplied to AAS routines
-    // TODO: Predict enemy movement instead just using a ground area below?
-    if (!AdjustOriginToFloor(enemy, &dangerOrigin))
-        return false;
-
-    // Try to reject path early to save CPU cycles by testing end of a path
-    // Do a coarse distance check first
-    if ((dangerOrigin - aasworld.areas[goalAreaNum].center).SquaredLength() < dangerRadius * dangerRadius)
+    StaticVector<Vec3, MAX_ACTIVE_ENEMIES> blockerOrigins;
+    StaticVector<int, MAX_ACTIVE_ENEMIES> blockerAreaNums;
+    for (unsigned i = 0; i < activeEnemies.size(); ++i)
     {
-        // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
-        int travelTime = FindAASTravelTimeToGoalArea(blockingAreaNum, dangerOrigin.data(), goalAreaNum) * 10;
-        // If goal area is reachable for enemy in dangerMoveMillis
-        if (travelTime && travelTime < dangerMoveMillis)
-            return true;
+        Vec3 origin(0, 0, 0);
+        int areaNum = 0;
+        if (AdjustOriginToFloor(activeEnemies[i]->ent, &origin))
+            areaNum = AAS_PointAreaNum(origin.data());
+        blockerOrigins.push_back(origin);
+        blockerAreaNums.push_back(areaNum);
     }
 
-    int areaNum = currAasAreaNum;
-    while (areaNum != goalAreaNum)
+    for (unsigned i = 0; i < activeEnemies.size(); ++i)
     {
-        const aas_area_t &area = aasworld.areas[areaNum];
+        int blockerAreaNum = blockerAreaNums[i];
+        if (!blockerAreaNum)
+            continue;
 
-        // Make a coarse distance test first to cut off expensive FindAASTravelTimeToGoalArea() call
-        if ((dangerOrigin - area.center).SquaredLength() < dangerRadius * dangerRadius)
+        Vec3 &blockerOrigin = blockerOrigins[i];
+
+        const float blockerRadius = 250.0f;
+        const int blockerMoveMillis = 1750;
+
+        // Try to reject path early to save CPU cycles by testing end of a path
+        // Do a coarse distance check first
+        if ((blockerOrigin - aasworld.areas[goalAreaNum].center).SquaredLength() < blockerRadius * blockerRadius)
         {
-            // Prevent blocking all possible areas close to bot by enemy that is close to bot too
-            // An area may be treated as blocked only if it is relatively far to bot
-            if ((Vec3(area.center) - self->s.origin).SquaredLength() > dangerRadius * dangerRadius)
+            // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
+            int travelTime = FindAASTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.data(), goalAreaNum) * 10;
+            // If goal area is reachable for enemy in dangerMoveMillis
+            if (travelTime && travelTime < blockerMoveMillis)
+                return true;
+        }
+
+        int areaNum = currAasAreaNum;
+        while (areaNum != goalAreaNum)
+        {
+            const aas_area_t &area = aasworld.areas[areaNum];
+
+            // Make a coarse distance test first to cut off expensive FindAASTravelTimeToGoalArea() call
+            if ((blockerOrigin - area.center).SquaredLength() < blockerRadius * blockerRadius)
             {
-                // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
-                int travelTime = FindAASTravelTimeToGoalArea(blockingAreaNum, dangerOrigin.data(), areaNum) * 10;
-                // If goal area is reachable for enemy in dangerMoveMillis
-                if (travelTime && travelTime < dangerMoveMillis)
-                    return true;
+                // Prevent blocking all possible areas close to bot by enemy that is close to bot too
+                // An area may be treated as blocked only if it is relatively far to bot
+                if ((Vec3(area.center) - self->s.origin).SquaredLength() > blockerRadius * blockerRadius)
+                {
+                    // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
+                    int travelTime = FindAASTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.data(), areaNum) * 10;
+                    // If goal area is reachable for enemy in dangerMoveMillis
+                    if (travelTime && travelTime < blockerMoveMillis)
+                        return true;
+                }
             }
-        }
 
-        // Keep bot origin as is if we are testing the current bot area
-        Vec3 origin(self->s.origin);
-        if (currAasAreaNum != areaNum)
-        {
-            // Our aim is to lower origin to ground to ensure that FindAASAreaNum()
-            // will find path quickly without a failed attempt and then projecting origin to ground using trace
-            origin.x() = area.center[0];
-            origin.y() = area.center[1];
-            // Use a level just a bit above the area bottom as origin Z
-            origin.z() = area.mins[2] + 4;
-        }
-        // This call tries to correct origin if first attempt failed (in worst case).
-        // If it returns with failure we may consider a path broken and treat it as blocked
-        int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.data(), goalAreaNum);
-        if (!reachNum)
-            return true;
+            // Drop area origin to floor
+            Vec3 origin(area.center[0], area.center[1], area.mins[2] + 4);
+            // This call tries to correct origin if first attempt failed (in worst case).
+            // If it returns with failure we may consider a path broken and treat it as blocked
+            int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.data(), goalAreaNum);
+            if (!reachNum)
+                return true;
 
-        areaNum = aasworld.reachability[reachNum].areanum;
+            areaNum = aasworld.reachability[reachNum].areanum;
+        }
     }
 
     return false;
