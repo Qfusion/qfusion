@@ -1654,30 +1654,36 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
     int rocketsCount = RocketsReadyToFireCount();
     int plasmasCount = PlasmasReadyToFireCount();
 
+    float distanceFactor = BoundedFraction(disposition.distance, CLOSE_RANGE);
+
     if (g_allow_selfdamage->integer)
     {
-        // Prefer lasers over explosives to avoid selfdamage
-        if (lasersCount > 10)
-            chosenWeapon = WEAP_LASERGUN;
-        else if (plasmasCount > 10 && disposition.damageToBeKilled > 50)
+        if (ShellsReadyToFireCount() && (disposition.damageToKill < 90 || weaponScoreRandom < 0.4))
         {
-            chosenWeapon = WEAP_PLASMAGUN;
-            task->retreat = true;
+            chosenWeapon = WEAP_RIOTGUN;
+            task->advance = true;
         }
-        else if (rocketsCount > 0 && disposition.damageToBeKilled > 80)
+        else if (rocketsCount > 0 && disposition.damageToBeKilled > 100.0f - 75.0f * distanceFactor)
         {
             chosenWeapon = WEAP_ROCKETLAUNCHER;
+            if (distanceFactor < 0.5)
+                task->retreat = true;
+        }
+        else if (plasmasCount > 10 && disposition.damageToBeKilled > 75.0f - 50.0f * distanceFactor)
+        {
+            chosenWeapon = WEAP_PLASMAGUN;
+            if (distanceFactor < 0.5)
+                task->retreat = true;
+        }
+        else if (lasersCount > 10)
+        {
+            chosenWeapon = WEAP_LASERGUN;
             task->retreat = true;
         }
     }
     else
     {
-        if (plasmasCount > 10)
-        {
-            chosenWeapon = WEAP_PLASMAGUN;
-            task->advance = true;
-        }
-        else if (rocketsCount)
+        if (rocketsCount)
         {
             chosenWeapon = WEAP_ROCKETLAUNCHER;
             task->advance = true;
@@ -1711,7 +1717,7 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
             chosenWeapon = WEAP_LASERGUN;
             task->retreat = true;
         }
-        else if (plasmasCount > 0 && disposition.damageToBeKilled > 35)
+        else if (plasmasCount > 0)
         {
             chosenWeapon = WEAP_PLASMAGUN;
             task->retreat = true;
