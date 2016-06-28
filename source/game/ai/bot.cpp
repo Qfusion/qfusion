@@ -187,6 +187,8 @@ void Bot::RegisterVisibleEnemies()
             continue;
         if (GS_TeamBasedGametype() && ent->s.team == self->s.team)
             continue;
+        if (ent == self)
+            continue;
 
         // Reject targets quickly by fov
         Vec3 toTarget(ent->s.origin);
