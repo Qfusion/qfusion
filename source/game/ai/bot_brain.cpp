@@ -1265,15 +1265,25 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 
     if (task->advance)
     {
-        // Prefer to pickup an item rather than pursuit an enemy if the item is valuable
+        // Advance and retreat flags are not mutual exclusive, and retreat one has higher priority
+
+        // Prefer to pickup an item rather than pursuit an enemy
+        // if the item is valuable, even if the bot is outnumbered
         if ((longTermGoal && longTermGoal->IsTopTierItem()) || (shortTermGoal && shortTermGoal->IsTopTierItem()))
+        {
             task->advance = false;
+            task->retreat = false;
+        }
         else if (!isOutnumbered)
-            StartPursuit(enemy);
+        {
+            if (!task->retreat)
+                StartPursuit(enemy);
+        }
         else
             task->retreat = true;
     }
-    if (!task->retreat && !oldAdvance && isOutnumbered)
+    // If the bot is outnumbered and old advance flag is not set, start retreating
+    if (isOutnumbered && !oldAdvance)
         task->retreat = true;
 
     // Treat task as a new if tactics has been changed
