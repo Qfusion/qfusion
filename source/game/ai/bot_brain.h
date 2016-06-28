@@ -447,9 +447,9 @@ class BotBrain: public AiBaseBrain
     // This var holds memory referred by AiBaseBrain::specialGoal
     NavEntity pursuitGoal;
 
-    float ComputeRawWeight(const edict_t *enemy);
+    float ComputeRawEnemyWeight(const edict_t *enemy);
 
-    void UpdateWeight(Enemy &enemy);
+    void UpdateEnemyWeight(Enemy &enemy);
 
     void TryPushNewEnemy(const edict_t *enemy);
 

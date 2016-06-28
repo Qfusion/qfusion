@@ -170,7 +170,7 @@ void BotBrain::PreThink()
         if (enemy.registeredAt + reactionTime > levelTime)
             continue;
 
-        UpdateWeight(enemy);
+        UpdateEnemyWeight(enemy);
     }
 
     if (combatTask.spamEnemy)
@@ -252,26 +252,28 @@ void BotBrain::Think()
     }
 }
 
-void BotBrain::UpdateWeight(Enemy &enemy)
+void BotBrain::UpdateEnemyWeight(Enemy &enemy)
 {
-    if (level.time - enemy.LastSeenAt() > reactionTime)
+    // Explicitly limit effective reaction time to a time quantum between Think() calls
+    // This method gets called before all enemies are viewed.
+    // For seen enemy registration actual weights of known enemies are mandatory
+    // (enemies may get evicted based on their weights and weight of a just seen enemy).
+    if (level.time - enemy.LastSeenAt() > std::max(64u, reactionTime))
     {
         enemy.weight = 0;
         return;
     }
 
-    enemy.weight = ComputeRawWeight(enemy.ent);
+    enemy.weight = ComputeRawEnemyWeight(enemy.ent);
     if (enemy.weight > enemy.maxPositiveWeight)
     {
         enemy.maxPositiveWeight = enemy.weight;
-        //AiDebug("%s UpdateWeight(%s): maxPositiveWeight: %.2f\n", BotNick(), enemy.Nick(), enemy.maxPositiveWeight);
     }
     if (enemy.weight > 0)
     {
         enemy.avgPositiveWeight = enemy.avgPositiveWeight * enemy.positiveWeightsCount + enemy.weight;
         enemy.positiveWeightsCount++;
         enemy.avgPositiveWeight /= enemy.positiveWeightsCount;
-        //AiDebug("%s UpdateWeight(%s): avgPositiveWeight: %.2f\n", BotNick(), enemy.Nick(), enemy.avgPositiveWeight);
     }
 }
 
@@ -390,7 +392,7 @@ void BotBrain::TryPushNewEnemy(const edict_t *enemy)
     bool isNewEnemyAttacker = LastAttackedByTime(enemy) > 0;
     // It will be useful inside the loop, so it needs to be precomputed
     float distanceToNewEnemy = (Vec3(bot->s.origin) - enemy->s.origin).LengthFast();
-    float newEnemyWeight = ComputeRawWeight(enemy);
+    float newEnemyWeight = ComputeRawEnemyWeight(enemy);
 
     for (unsigned i = 0; i < maxTrackedEnemies; ++i)
     {
@@ -461,7 +463,7 @@ void BotBrain::TryPushNewEnemy(const edict_t *enemy)
     }
 }
 
-float BotBrain::ComputeRawWeight(const edict_t *enemy)
+float BotBrain::ComputeRawEnemyWeight(const edict_t *enemy)
 {
     if (!enemy || G_ISGHOSTING(enemy))
         return 0.0;
@@ -509,9 +511,7 @@ float BotBrain::ComputeRawWeight(const edict_t *enemy)
             weight *= 1.5f;
     }
 
-    float result = std::min(std::max(0.0f, weight), MAX_ENEMY_WEIGHT);
-    //AiDebug("%s has computed a weight for %s, the weight is %f\n", BotNick(), Nick(enemy), result);
-    return result;
+    return std::min(std::max(0.0f, weight), MAX_ENEMY_WEIGHT);
 }
 
 unsigned BotBrain::LastAttackedByTime(const edict_t *ent) const
