@@ -609,8 +609,8 @@ int BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
     }
     if (freeSlot >= 0)
     {
-        attackers[freeSlot].ent = attacker;
         attackers[freeSlot].Clear();
+        attackers[freeSlot].ent = attacker;
         attackers[freeSlot].OnDamage(damage);
         return freeSlot;
     }
@@ -627,8 +627,8 @@ int BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
             freeSlot = i;
         }
     }
-    attackers[freeSlot].ent = attacker;
     attackers[freeSlot].Clear();
+    attackers[freeSlot].ent = attacker;
     attackers[freeSlot].OnDamage(damage);
     return freeSlot;
 }
@@ -651,6 +651,7 @@ void BotBrain::EnqueueTarget(const edict_t *target)
     }
     if (freeSlot >= 0)
     {
+        targets[freeSlot].Clear();
         targets[freeSlot].ent = target;
         targets[freeSlot].Touch();
         return;
@@ -670,6 +671,7 @@ void BotBrain::EnqueueTarget(const edict_t *target)
             freeSlot = i;
         }
     }
+    targets[freeSlot].Clear();
     targets[freeSlot].ent = target;
     targets[freeSlot].Touch();
 }
