@@ -1357,6 +1357,10 @@ int BotBrain::ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAn
     float maxScore = 0.0f;
     if (pendingWeaponScore != std::numeric_limits<float>::infinity())
     {
+        float weightDiffThreshold = 0.1f;
+        // Do not switch too often continuous fire weapons
+        if (pendingWeapon == WEAP_LASERGUN || pendingWeapon == WEAP_PLASMAGUN || pendingWeapon == WEAP_MACHINEGUN)
+            weightDiffThreshold += 0.2f;
         for (WeaponAndScore *it = begin; it != end; ++it)
         {
             float currScore = it->score + weaponScoreRandom;
@@ -1364,7 +1368,7 @@ int BotBrain::ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAn
             {
                 // Do not change weapon if its score is almost equal to current one to avoid weapon choice "jitter"
                 // when a bot tries to change weapon infinitely when weapon scores are close to each other
-                if (pendingWeapon == it->weapon || fabsf(currScore - pendingWeaponScore) > 0.1f)
+                if (pendingWeapon == it->weapon || fabsf(currScore - pendingWeaponScore) > weightDiffThreshold)
                 {
                     maxScore = currScore;
                     weapon = it->weapon;
@@ -1509,8 +1513,8 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     weaponScores[GL].weapon = WEAP_GRENADELAUNCHER;
 
     weaponScores[RL].score = 1.0f * BoundedFraction(RocketsReadyToFireCount(), 3.0f);
-    weaponScores[LG].score = 1.0f * BoundedFraction(LasersReadyToFireCount(), 20.0f);
-    weaponScores[PG].score = 0.9f * BoundedFraction(PlasmasReadyToFireCount(), 25.0f);
+    weaponScores[LG].score = 1.2f * BoundedFraction(LasersReadyToFireCount(), 15.0f);
+    weaponScores[PG].score = 0.8f * BoundedFraction(PlasmasReadyToFireCount(), 20.0f);
     weaponScores[MG].score = 0.8f * BoundedFraction(BulletsReadyToFireCount(), 20.0f);
     weaponScores[RG].score = 0.7f * BoundedFraction(ShellsReadyToFireCount(), 3.0f);
     weaponScores[GL].score = 0.5f * BoundedFraction(GrenadesReadyToFireCount(), 5.0f);
@@ -1531,10 +1535,10 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     }
 
     // 1 on mid range bound, 0 on close range bound
-    float distanceFactor = (distance - 250.0f) / (lgRange - 250.0f);
+    float distanceFactor = (distance - CLOSE_RANGE) / (lgRange - CLOSE_RANGE);
 
     weaponScores[RL].score *= 1.0f - 0.7f * distanceFactor;
-    weaponScores[LG].score *= 0.6f + 0.4f * distanceFactor;
+    weaponScores[LG].score *= 0.7f + 0.3f * distanceFactor;
     weaponScores[PG].score *= 1.0f - 0.4f * distanceFactor;
     weaponScores[MG].score *= 0.3f + 0.7f * distanceFactor;
     weaponScores[RG].score *= 1.0f - 0.7f * distanceFactor;
@@ -1542,7 +1546,7 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     weaponScores[GL].score *= 1.0f - fabsf(midRangeDistance - midRangeLen / 2.0f) / midRangeDistance;
 
     weaponScores[RL].score *= targetEnvironment.factor;
-    weaponScores[LG].score *= 1.0f - 0.5f * targetEnvironment.factor;
+    weaponScores[LG].score *= 1.0f - 0.4f * targetEnvironment.factor;
     weaponScores[PG].score *= 0.5f + 0.5f * targetEnvironment.factor;
     weaponScores[MG].score *= 1.0f - targetEnvironment.factor;
     weaponScores[RG].score *= 1.0f - 0.5f * targetEnvironment.factor;
