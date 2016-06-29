@@ -466,12 +466,29 @@ void Bot::Frame()
             Vec3 enemyLookDir = combatTask.EnemyLookDir();
             Vec3 enemyToBotDir = Vec3(self->s.origin) - combatTask.EnemyOrigin();
             float squaredDistance = enemyToBotDir.SquaredLength();
-            // If the enemy is far enough
-            if (squaredDistance > 200.0f * 200.0f)
+            if (squaredDistance > 1)
             {
-                enemyToBotDir *= Q_RSqrt(squaredDistance);
+                float distance = 1.0f / Q_RSqrt(squaredDistance);
+                enemyToBotDir *= 1.0f / distance;
+                // Compute a cosine of angle between enemy look dir and enemy to bot dir
+                float cosPhi = enemyLookDir.Dot(enemyToBotDir);
                 // Check whether the enemy may not hit the bot
-                if (enemyLookDir.Dot(enemyToBotDir) < 0.9)
+                bool mayNotHit;
+                // Be aware of RL splash on its range
+                if (distance < 150.0f)
+                    mayNotHit = cosPhi < 0.3;
+                else if (cosPhi <= 0.3)
+                    mayNotHit = true;
+                else
+                {
+                    float cotPhi = Q_RSqrt((1.0f / (cosPhi * cosPhi)) - 1);
+                    float sideMiss = distance / cotPhi;
+                    // Use hitbox height plus a bit as a worst case
+                    float hitboxLargestSectionSide = 8.0f + playerbox_stand_maxs[2] - playerbox_stand_mins[2];
+                    mayNotHit = sideMiss > hitboxLargestSectionSide;
+                }
+
+                if (mayNotHit)
                 {
                     vec3_t botLookDir;
                     AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
