@@ -47,10 +47,6 @@ protected:
     virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) override;
     virtual void TouchedJumppad(const edict_t *jumppad) override;
 private:
-    bool TacticsToAprioriMovePushes(int *tacticalXMove, int *tacticalYMove);
-    std::pair<int, int> ApplyTacticalMove(
-        int tacticalMove, bool advance, const MoveTestResult &positiveDirTest, const MoveTestResult &negativeDirTest);
-
     void RegisterVisibleEnemies();
 
     DangersDetector dangersDetector;
