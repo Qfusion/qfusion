@@ -198,14 +198,17 @@ private:
     bool TryPressAttack();
 
     inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
-    inline bool IsEnemyStatic() const { return botBrain.combatTask.IsTargetStatic(); }
+    inline bool IsEnemyAStaticSpot() const { return botBrain.combatTask.IsTargetAStaticSpot(); }
     inline const edict_t *EnemyTraceKey() const { return botBrain.combatTask.TraceKey(); }
     inline const bool IsEnemyOnGround() const { return botBrain.combatTask.IsOnGround(); }
     inline Vec3 EnemyOrigin() const { return botBrain.combatTask.EnemyOrigin(); }
+    inline Vec3 EnemyLookDir() const { return botBrain.combatTask.EnemyLookDir(); }
     inline Vec3 EnemyVelocity() const { return botBrain.combatTask.EnemyVelocity(); }
     inline Vec3 EnemyMins() const { return botBrain.combatTask.EnemyMins(); }
     inline Vec3 EnemyMaxs() const { return botBrain.combatTask.EnemyMaxs(); }
     inline unsigned EnemyInstanceId() const { return botBrain.combatTask.instanceId; }
+
+    bool MayKeepRunningInCombat() const;
 };
 
 #endif
