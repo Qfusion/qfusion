@@ -58,7 +58,7 @@ bool PredictProjectileNoClip(const Vec3 &fireOrigin, float projectileSpeed, vec3
 
 void Bot::GetPredictedTargetOrigin(const vec3_t fireOrigin, float projSpeed, vec_t *target)
 {
-    if (Skill() < 0.33f || IsEnemyStatic())
+    if (Skill() < 0.33f || IsEnemyAStaticSpot())
         return;
 
     // Check whether we are shooting the same enemy and cached predicted origin is not outdated

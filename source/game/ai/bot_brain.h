@@ -302,7 +302,7 @@ public:
 
     bool Empty() const  { return !aimEnemy && !spamEnemy; }
 
-    bool IsTargetStatic() const { return !aimEnemy; }
+    bool IsTargetAStaticSpot() const { return !aimEnemy; }
 
     bool IsOnGround() const { return aimEnemy && aimEnemy->ent->groundentity; }
 
