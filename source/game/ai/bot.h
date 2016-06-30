@@ -162,7 +162,7 @@ private:
 
     void CombatMovement(usercmd_t *ucmd, bool hasDangers);
     void UpdateCombatMovePushes();
-    void ApplyEvadeMovePushes(usercmd_t *ucmd);
+    void MakeEvadeMovePushes(usercmd_t *ucmd);
     bool MayApplyCombatDash();
     Vec3 MakeEvadeDirection(const Danger &danger);
 
