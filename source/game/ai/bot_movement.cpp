@@ -1068,13 +1068,9 @@ void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
 {
     if (hasToEvade)
     {
-        ApplyEvadeMovePushes(ucmd);
-        return;
+        MakeEvadeMovePushes(ucmd);
     }
-
-    // Combat movement key directions `combatMovePushes` are cached for AI_COMBATMOVE_TIMEOUT millis
-    // Changing combat movement keys each frame does not work due to ground friction
-    if (combatMovePushTimeout <= level.time)
+    else if (combatMovePushTimeout <= level.time)
     {
         combatMovePushTimeout = level.time + AI_COMBATMOVE_TIMEOUT;
         UpdateCombatMovePushes();
@@ -1150,7 +1146,7 @@ void Bot::UpdateCombatMovePushes()
         combatMovePushes[2] = random() > 0.9f ? Q_sign(random() - 0.5f) : 0;
 }
 
-void Bot::ApplyEvadeMovePushes(usercmd_t *ucmd)
+void Bot::MakeEvadeMovePushes(usercmd_t *ucmd)
 {
     Vec3 evadeDir = MakeEvadeDirection(*dangersDetector.primaryDanger);
 #ifdef _DEBUG
