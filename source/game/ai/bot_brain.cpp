@@ -879,6 +879,8 @@ bool BotBrain::CheckFastWeaponSwitchAction()
     const Enemy &enemy = *combatTask.aimEnemy;
     CombatDisposition disposition = GetCombatDisposition(*combatTask.aimEnemy);
 
+    bool botMovesFast, enemyMovesFast;
+
     int chosenWeapon = WEAP_NONE;
     if (disposition.damageToKill < 75)
     {
@@ -887,10 +889,10 @@ bool BotBrain::CheckFastWeaponSwitchAction()
         Debug("chose %s to finish %s\n", WeapName(chosenWeapon), enemy.Nick());
     }
     // Try to hit escaping enemies hard in a single shot
-    else if (IsEnemyEscaping(enemy, disposition))
+    else if (IsEnemyEscaping(enemy, disposition, &botMovesFast, &enemyMovesFast))
     {
         Debug("detected that %s is escaping\n", enemy.Nick());
-        chosenWeapon = SuggestHitEscapingEnemyWeapon(enemy, disposition);
+        chosenWeapon = SuggestHitEscapingEnemyWeapon(enemy, disposition, botMovesFast, enemyMovesFast);
         Debug("chose %s to hit escaping %s\n", WeapName(chosenWeapon), enemy.Nick());
     }
     // Try to hit enemy hard in a single shot before death
@@ -1837,7 +1839,8 @@ static bool IsEscapingFromStandingEntity(const edict_t *escaping, const edict_t 
     return escapingToStandingDir.Dot(escapingVelocityDir) < -0.5f;
 }
 
-bool BotBrain::IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition)
+bool BotBrain::IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition,
+                               bool *botMovesFast, bool *enemyMovesFast)
 {
     // Very basic. Todo: Check env. behind an enemy or the bot, is it really tries to escape or just pushed on a wall
 
@@ -1854,26 +1857,94 @@ bool BotBrain::IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disp
             Vec3 enemyVelocityDir(enemy.ent->velocity);
             enemyVelocityDir *= Q_RSqrt(enemyVelocitySqLen);
             botVelocityDir *= Q_RSqrt(botVelocitySqLen);
-            return botVelocityDir.Dot(enemyVelocityDir) < -0.5f;
+            if (botVelocityDir.Dot(enemyVelocityDir) < -0.5f)
+            {
+                *botMovesFast = true;
+                *enemyMovesFast = true;
+                return true;
+            }
+            return false;
         }
         // Bot is standing or walking, direction of its speed does not matter
-        return IsEscapingFromStandingEntity(enemy.ent, bot, enemyVelocitySqLen);
+        if (IsEscapingFromStandingEntity(enemy.ent, bot, enemyVelocitySqLen))
+        {
+            *botMovesFast = false;
+            *enemyMovesFast = true;
+            return true;
+        }
+        return false;
     }
 
     // Enemy is standing or walking, direction of its speed does not matter
-    return IsEscapingFromStandingEntity(enemy.ent, bot, enemyVelocitySqLen);
+    if (IsEscapingFromStandingEntity(bot, enemy.ent, botVelocitySqLen))
+    {
+        *botMovesFast = true;
+        *enemyMovesFast = false;
+        return true;
+    }
+    return false;
 }
 
-int BotBrain::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition)
+int BotBrain::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition,
+                                            bool botMovesFast, bool enemyMovesFast)
 {
-    const float lgRange = GetLaserRange();
-
-    // We think its too dangerous to switch weapons in this case
-    if (disposition.distance < lgRange - 150)
+    if (disposition.distance < CLOSE_RANGE)
     {
         Debug("(hit escaping) too small distance %.1f to change weapon, too risky\n", disposition.distance);
         return WEAP_NONE;
     }
+
+
+    if (disposition.distance < GetLaserRange())
+    {
+        // If target will be lost out of sight, its worth to do a fast weapon switching
+        // Extrapolate bot origin for 0.5 seconds
+        Vec3 extrapolatedBotOrigin = 0.5f * Vec3(self->velocity) + self->s.origin;
+        Vec3 predictedBotOrigin(extrapolatedBotOrigin);
+        // Extrapolate enemy origin for 0.5 seconds
+        Vec3 extrapolatedEnemyOrigin = 0.5f * Vec3(enemy.ent->velocity) + enemy.ent->s.origin;
+        Vec3 predictedEnemyOrigin(extrapolatedEnemyOrigin);
+
+        trace_t trace;
+        // Predict bot position after 0.5 seconds
+        G_Trace(&trace, self->s.origin, playerbox_stand_mins, playerbox_stand_maxs,
+                extrapolatedBotOrigin.data(), self, MASK_AISOLID);
+        if (trace.fraction != 1.0f)
+        {
+            predictedBotOrigin = Vec3(trace.endpos);
+            // Compensate Z for ground trace hit point
+            if (trace.endpos[2] > extrapolatedBotOrigin.z())
+                predictedBotOrigin.z() += std::min(24.0f, trace.endpos[2] = extrapolatedEnemyOrigin.z());
+        }
+        // Predict enemy origin after 0.5 seconds
+        G_Trace(&trace, const_cast<float*>(enemy.ent->s.origin), playerbox_stand_mins, playerbox_stand_maxs,
+                extrapolatedEnemyOrigin.data(), const_cast<edict_t*>(enemy.ent), MASK_AISOLID);
+        if (trace.fraction != 1.0f)
+        {
+            predictedEnemyOrigin = Vec3(trace.endpos);
+            if (trace.endpos[2] > extrapolatedEnemyOrigin.z())
+                predictedEnemyOrigin.z() += std::min(24.0f, trace.endpos[2] - extrapolatedEnemyOrigin.z());
+        }
+
+        // Check whether bot may hit enemy after 0.5s
+        G_Trace(&trace, predictedBotOrigin.data(), nullptr, nullptr, predictedEnemyOrigin.data(), self, MASK_AISOLID);
+        // Still may hit, keep using current weapon
+        if (trace.fraction == 1.0f || enemy.ent == game.edicts + trace.ent)
+            return WEAP_NONE;
+
+        TestTargetEnvironment(Vec3(self->s.origin), enemy.LastSeenPosition(), enemy.ent);
+        // Hit fast-moving enemy using EB
+        if (BoltsReadyToFireCount() && (enemyMovesFast || targetEnvironment.factor < 0.5f))
+            return WEAP_ELECTROBOLT;
+        // Bot moves fast or target environment is good for explosives. Choose RL, GL or GB
+        if (RocketsReadyToFireCount())
+            return WEAP_ROCKETLAUNCHER;
+        if (GrenadesReadyToFireCount())
+            return WEAP_GRENADELAUNCHER;
+        return WEAP_GUNBLADE;
+    }
+
+    TestTargetEnvironment(Vec3(self->s.origin), enemy.LastSeenPosition(), enemy.ent);
 
     enum { EB, RL, GB, MAX_WEAPONS };
     WeaponAndScore weaponScores[MAX_WEAPONS] =
@@ -1884,14 +1955,17 @@ int BotBrain::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisp
     };
 
     weaponScores[EB].score *= 1.0f + 0.33f * BotSkill();
+    if (enemyMovesFast)
+        weaponScores[EB].score += 0.33f;
 
     weaponScores[RL].score *= 1.33f * (0.3f + 0.7f * targetEnvironment.factor);
     weaponScores[GB].score *= 0.6f + 0.4f * targetEnvironment.factor;
+    if (botMovesFast)
+        weaponScores[GB].score += 0.33f;
 
     weaponScores[EB].score *= 0.3f + 0.7f * BoundedFraction(disposition.distance, 2000.0f);
     weaponScores[RL].score *= 1.0f - BoundedFraction(disposition.distance, 1500.0f);
     weaponScores[GB].score *= 1.0f - 0.3f * BoundedFraction(disposition.distance, 2500.0f);
-
 
     // We are sure that weapon switch not only costs nothing, but even is intended, so do not call ChooseWeaponByScore()
     int weapon = WEAP_NONE;
