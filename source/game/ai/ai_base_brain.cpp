@@ -719,7 +719,7 @@ void AiBaseBrain::OnSpecialGoalReached()
 std::pair<unsigned, unsigned> AiBaseBrain::FindToAndBackTravelTimes(const Vec3 &targetOrigin) const
 {
     vec3_t testedOrigin;
-    VectorCopy(targetOrigin.data(), testedOrigin);
+    VectorCopy(targetOrigin.Data(), testedOrigin);
     int areaNum = AAS_PointAreaNum(testedOrigin);
     if (!areaNum)
     {
