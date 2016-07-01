@@ -1,4 +1,7 @@
-#include "ai_local.h"
+#include "ai_gametype_brain.h"
+#include "ai_base_brain.h"
+#include "ai_base_team_brain.h"
+#include "ai_base_ai.h"
 
 AiGametypeBrain AiGametypeBrain::instance;
 

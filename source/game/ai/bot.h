@@ -4,6 +4,7 @@
 #include "static_vector.h"
 #include "dangers_detector.h"
 #include "bot_brain.h"
+#include "ai_base_ai.h"
 
 class Bot: public Ai
 {

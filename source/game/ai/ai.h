@@ -23,6 +23,9 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
+#ifndef QFUSION_AI_H
+#define QFUSION_AI_H
+
 typedef enum
 {
 	AI_INACTIVE,
@@ -63,3 +66,5 @@ void        BOT_RemoveBot( const char *name );
 void        BOT_Respawn( edict_t *ent );
 
 void        AI_Cheat_NoTarget( edict_t *ent );
+
+#endif

@@ -1,41 +1,6 @@
-#include "bot.h"
-#include "aas.h"
-#include "../../gameshared/q_collision.h"
-
+#include "ai_local.h"
+#include "ai.h"
 #include <stdarg.h>
-
-Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
-    : EdictRef(self),
-      aiBaseBrain(nullptr), // Must be set in a subclass constructor
-      currAasAreaNum(0),
-      goalAasAreaNum(0),
-      goalTargetPoint(0, 0, 0),
-      allowedAasTravelFlags(allowedAasTravelFlags),
-      preferredAasTravelFlags(preferredAasTravelFlags),
-      distanceToNextReachStart(std::numeric_limits<float>::infinity()),
-      blockedTimeout(level.time + 15000),
-      aiYawSpeed(0.0f),
-      aiPitchSpeed(0.0f)
-{
-    // TODO: Modify preferred aas travel flags if there is no selfdamage for excessive rocketjumping
-}
-
-void Ai::Debug(const char *format, ...) const
-{
-    va_list va;
-    va_start(va, format);
-    AI_Debugv(Nick(), format, va);
-    va_end(va);
-}
-
-void Ai::FailWith(const char *format, ...) const
-{
-    va_list va;
-    va_start(va, format);
-    AI_Debugv(Nick(), format, va);
-    va_end(va);
-    abort();
-}
 
 static void EscapePercent(const char *string, char *buffer, int bufferLen)
 {

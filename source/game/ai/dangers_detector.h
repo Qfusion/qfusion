@@ -2,6 +2,7 @@
 #define AI_DANGERS_DETECTOR_H
 
 #include "ai_local.h"
+#include "vec3.h"
 
 struct Danger
 {

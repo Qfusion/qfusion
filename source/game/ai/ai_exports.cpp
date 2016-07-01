@@ -1,5 +1,6 @@
 #include "bot.h"
 #include "ai_shutdown_hooks_holder.h"
+#include "ai_gametype_brain.h"
 #include "aas.h"
 
 ai_weapon_t AIWeapons[WEAP_TOTAL];

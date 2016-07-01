@@ -1,5 +1,8 @@
-#include "ai_local.h"
+#include "ai_base_brain.h"
+#include "ai_gametype_brain.h"
+#include "ai_base_ai.h"
 #include "aas.h"
+#include "static_vector.h"
 
 AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags)
     : self(self),
