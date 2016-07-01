@@ -113,11 +113,14 @@ void Bot::ClearCampingSpot()
 
 void Bot::TouchedGoal(const edict_t *goalUnderlyingEntity)
 {
-    // Stop camping a spawn point if the bot did it
-    if (isWaitingForItemSpawn)
+    if (botBrain.HandleGoalTouch(goalUnderlyingEntity))
     {
-        ClearCampingSpot();
-        isWaitingForItemSpawn = false;
+        // Stop camping a spawn point if the bot did it
+        if (isWaitingForItemSpawn)
+        {
+            ClearCampingSpot();
+            isWaitingForItemSpawn = false;
+        }
     }
 }
 
