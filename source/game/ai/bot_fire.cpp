@@ -52,7 +52,7 @@ bool PredictProjectileNoClip(const Vec3 &fireOrigin, float projectileSpeed, vec3
     }
 
     Vec3 move = targetVelocity * t;
-    VectorAdd(target, move.data(), target);
+    VectorAdd(target, move.Data(), target);
     return true;
 }
 
@@ -64,7 +64,7 @@ void Bot::GetPredictedTargetOrigin(const vec3_t fireOrigin, float projSpeed, vec
     // Check whether we are shooting the same enemy and cached predicted origin is not outdated
     if (!HasCachedTargetOrigin())
     {
-        PredictProjectileShot(fireOrigin, projSpeed, target, EnemyVelocity().data(), true);
+        PredictProjectileShot(fireOrigin, projSpeed, target, EnemyVelocity().Data(), true);
         cachedPredictedTargetInstanceId = EnemyInstanceId();
         cachedPredictedTargetValidUntil = level.time + 66;
     }
@@ -105,20 +105,20 @@ void Bot::PredictProjectileShot(
         for (int i = 0; i < maxSegments; ++i)
         {
             Vec3 nextPoint(target);
-            nextPoint.x() += targetVelocity[0] * nextTime;
-            nextPoint.y() += targetVelocity[1] * nextTime;
-            nextPoint.z() += targetVelocity[2] * nextTime - 0.5f * level.gravity * nextTime * nextTime;
+            nextPoint.X() += targetVelocity[0] * nextTime;
+            nextPoint.Y() += targetVelocity[1] * nextTime;
+            nextPoint.Z() += targetVelocity[2] * nextTime - 0.5f * level.gravity * nextTime * nextTime;
 
             // We assume that target has the same velocity as currPoint on a [currPoint, nextPoint] segment
             Vec3 currTargetVelocity(targetVelocity);
-            currTargetVelocity.z() -= level.gravity * currTime;
+            currTargetVelocity.Z() -= level.gravity * currTime;
 
             // TODO: Projectile speed used in PredictProjectileNoClip() needs correction
             // We can't offset fire origin since we do not know direction to target yet
             // Instead, increase projectile speed used in calculations according to currTime
             // Exact formula is to be proven yet
             Vec3 predictedTarget(currPoint);
-            if (!PredictProjectileNoClip(fireOrigin, projectileSpeed, predictedTarget.data(), currTargetVelocity))
+            if (!PredictProjectileNoClip(fireOrigin, projectileSpeed, predictedTarget.Data(), currTargetVelocity))
                 return;
 
             // Check whether predictedTarget is within [currPoint, nextPoint]
@@ -130,11 +130,11 @@ void Bot::PredictProjectileShot(
             if (currToNextVec.Dot(predictedTargetToNextVec) >= 0 && currToNextVec.Dot(predictedTargetToCurrVec) <= 0)
             {
                 // Trace from the segment start (currPoint) to the predictedTarget
-                G_Trace(&trace, currPoint.data(), nullptr, nullptr, predictedTarget.data(), traceKey, MASK_AISOLID);
+                G_Trace(&trace, currPoint.Data(), nullptr, nullptr, predictedTarget.Data(), traceKey, MASK_AISOLID);
                 if (trace.fraction == 1.0f)
                 {
                     // Target may be hit in air
-                    VectorCopy(predictedTarget.data(), target);
+                    VectorCopy(predictedTarget.Data(), target);
                 }
                 else
                 {
@@ -146,7 +146,7 @@ void Bot::PredictProjectileShot(
             else
             {
                 // Trace from the segment start (currPoint) to the segment end (nextPoint)
-                G_Trace(&trace, currPoint.data(), nullptr, nullptr, nextPoint.data(), traceKey, MASK_AISOLID);
+                G_Trace(&trace, currPoint.Data(), nullptr, nullptr, nextPoint.Data(), traceKey, MASK_AISOLID);
                 if (trace.fraction != 1.0f)
                 {
                     // Trajectory segment hits solid, use trace end as a predicted target point and return
@@ -165,29 +165,29 @@ void Bot::PredictProjectileShot(
         // Approximate the rest of the trajectory as a ray.
 
         Vec3 currTargetVelocity(targetVelocity);
-        currTargetVelocity.z() -= level.gravity * currTime;
+        currTargetVelocity.Z() -= level.gravity * currTime;
 
         Vec3 predictedTarget(currPoint);
-        if (!PredictProjectileNoClip(fireOrigin, projectileSpeed, predictedTarget.data(), currTargetVelocity))
+        if (!PredictProjectileNoClip(fireOrigin, projectileSpeed, predictedTarget.Data(), currTargetVelocity))
             return;
 
-        G_Trace(&trace, currPoint.data(), nullptr, nullptr, predictedTarget.data(), traceKey, MASK_AISOLID);
+        G_Trace(&trace, currPoint.Data(), nullptr, nullptr, predictedTarget.Data(), traceKey, MASK_AISOLID);
         if (trace.fraction == 1.0f)
-            VectorCopy(predictedTarget.data(), target);
+            VectorCopy(predictedTarget.Data(), target);
         else
             VectorCopy(trace.endpos, target);
     }
     else
     {
         Vec3 predictedTarget(target);
-        if (!PredictProjectileNoClip(Vec3(fireOrigin), projectileSpeed, predictedTarget.data(), Vec3(targetVelocity)))
+        if (!PredictProjectileNoClip(Vec3(fireOrigin), projectileSpeed, predictedTarget.Data(), Vec3(targetVelocity)))
             return;
 
         trace_t trace;
         edict_t *traceKey = const_cast<edict_t *>(EnemyTraceKey());
-        G_Trace(&trace, target, nullptr, nullptr, predictedTarget.data(), traceKey, MASK_AISOLID);
+        G_Trace(&trace, target, nullptr, nullptr, predictedTarget.Data(), traceKey, MASK_AISOLID);
         if (trace.fraction == 1.0f)
-            VectorCopy(predictedTarget.data(), target);
+            VectorCopy(predictedTarget.Data(), target);
         else
             VectorCopy(trace.endpos, target);
     }
@@ -248,8 +248,8 @@ bool Bot::FireWeapon()
 
 void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
 {
-    VectorCopy(EnemyOrigin().data(), target);
-    VectorAdd(target, (0.5f * (EnemyMins() + EnemyMaxs())).data(), target);
+    VectorCopy(EnemyOrigin().Data(), target);
+    VectorAdd(target, (0.5f * (EnemyMins() + EnemyMaxs())).Data(), target);
 
     fire_origin[0] = self->s.origin[0];
     fire_origin[1] = self->s.origin[1];
@@ -281,7 +281,7 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target)
 {
     // Do not shoot enemies that are far from "crosshair" except they are very close
     Vec3 newLookDir(0, 0, 0);
-    AngleVectors(self->s.angles, newLookDir.data(), nullptr, nullptr);
+    AngleVectors(self->s.angles, newLookDir.Data(), nullptr, nullptr);
 
     Vec3 toTarget(target);
     toTarget -= fire_origin;
@@ -302,7 +302,7 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target)
     // We test directions factor first because it is cheaper to calculate
 
     trace_t tr;
-    G_Trace(&tr, const_cast<float*>(fire_origin), nullptr, nullptr, (99999.0f * newLookDir + fire_origin).data(), self, MASK_AISOLID);
+    G_Trace(&tr, const_cast<float*>(fire_origin), nullptr, nullptr, (99999.0f * newLookDir + fire_origin).Data(), self, MASK_AISOLID);
     if (tr.fraction == 1.0f)
         return true;
 
@@ -347,9 +347,9 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
     if (IsEnemyOnGround())
     {
         Vec3 groundPoint(target);
-        groundPoint.z() += playerbox_stand_maxs[2];
+        groundPoint.Z() += playerbox_stand_maxs[2];
         // Check whether shot to this point is not blocked
-        G_Trace(&trace, firePoint, nullptr, nullptr, groundPoint.data(), self, MASK_AISOLID);
+        G_Trace(&trace, firePoint, nullptr, nullptr, groundPoint.Data(), self, MASK_AISOLID);
         if (trace.fraction > 0.999f || EnemyTraceKey() == game.edicts + trace.ent)
         {
             // For mid-skill bots it may be enough. Do not waste cycles.
@@ -359,7 +359,7 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
                 return true;
             }
 
-            VectorCopy(groundPoint.data(), nearestPoint);
+            VectorCopy(groundPoint.Data(), nearestPoint);
             minSqDistance = playerbox_stand_mins[2] * playerbox_stand_mins[2];
         }
     }
@@ -377,7 +377,7 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
 
     // We hope this function will be called rarely only when somebody wants to load a stripped Q3 AAS.
     // Just trace an environment behind the bot, it is better than it used to be anyway.
-    G_Trace(&trace, target, nullptr, nullptr, traceEnd.data(), traceKey, MASK_AISOLID);
+    G_Trace(&trace, target, nullptr, nullptr, traceEnd.Data(), traceKey, MASK_AISOLID);
     if (trace.fraction != 1.0f)
     {
         // First check whether an explosion in the point behind may damage the target to cut a trace quickly
@@ -387,11 +387,11 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
             // trace.endpos will be overwritten
             Vec3 pointBehind(trace.endpos);
             // Check whether shot to this point is not blocked
-            G_Trace(&trace, firePoint, nullptr, nullptr, pointBehind.data(), self, MASK_AISOLID);
+            G_Trace(&trace, firePoint, nullptr, nullptr, pointBehind.Data(), self, MASK_AISOLID);
             if (trace.fraction > 0.999f || EnemyTraceKey() == game.edicts + trace.ent)
             {
                 minSqDistance = sqDistance;
-                VectorCopy(pointBehind.data(), nearestPoint);
+                VectorCopy(pointBehind.Data(), nearestPoint);
             }
         }
     }
@@ -623,7 +623,7 @@ bool Bot::AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire
     // We assume that FindClosestAreasFacesPoints() returns a sorted array where closest points are first
     for (const PointAndDistance &pointAndDistance: closestAreaFacePoints)
     {
-        float *traceEnd = const_cast<float*>(pointAndDistance.point.data());
+        float *traceEnd = const_cast<float*>(pointAndDistance.point.Data());
         float *traceStart = const_cast<float*>(fire_origin);
         G_Trace(&trace, traceStart, nullptr, nullptr, traceEnd, self, MASK_AISOLID);
 
@@ -649,7 +649,7 @@ bool Bot::AdjustTargetByEnvironment(const firedef_t *firedef, const vec3_t fire_
             // Try some close random point (usually Z should be greater)
             Vec3 offsetTarget(target);
             offsetTarget += Vec3(-4.0f + 8.0f * random(),  -4.0f + 8.0f * random(), 4.0f + 4.0f * random());
-            targetAreaNum = AAS_PointAreaNum(offsetTarget.data());
+            targetAreaNum = AAS_PointAreaNum(offsetTarget.Data());
         }
     }
 
@@ -696,14 +696,14 @@ float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin
     {
         // It is not very accurate but satisfactory
         Vec3 fireOriginToTarget = Vec3(target) - fire_origin;
-        Vec3 fireOriginToTarget2D(fireOriginToTarget.x(), fireOriginToTarget.y(), 0);
+        Vec3 fireOriginToTarget2D(fireOriginToTarget.X(), fireOriginToTarget.Y(), 0);
         float squareDistance2D = fireOriginToTarget2D.SquaredLength();
         if (squareDistance2D > 0)
         {
             Vec3 velocity2DVec(fireOriginToTarget);
             velocity2DVec.NormalizeFast();
             velocity2DVec *= firedef->speed;
-            velocity2DVec.z() = 0;
+            velocity2DVec.Z() = 0;
             float squareVelocity2D = velocity2DVec.SquaredLength();
             if (squareVelocity2D > 0)
             {
@@ -712,7 +712,7 @@ float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin
                 float time = distance2D / velocity2D;
                 float height = std::max(0.0f, 0.5f * level.gravity * time * time - 32.0f);
                 // Modify both cached and temporary values
-                cachedPredictedTargetOrigin.z() += height;
+                cachedPredictedTargetOrigin.Z() += height;
                 target[2] += height;
             }
         }

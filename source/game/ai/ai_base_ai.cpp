@@ -206,7 +206,7 @@ void Ai::OnGoalSet(NavEntity *goalEnt)
 
     goalAasAreaNum = goalEnt->AasAreaNum();
     goalTargetPoint = goalEnt->Origin();
-    goalTargetPoint.z() += playerbox_stand_viewheight;
+    goalTargetPoint.Z() += playerbox_stand_viewheight;
 
     nextReaches.clear();
     UpdateReachCache(currAasAreaNum);
@@ -278,7 +278,7 @@ void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3
     constexpr int MAX_TRACED_AREAS = 6;
     int tracedAreas[MAX_TRACED_AREAS];
     Vec3 traceEnd = 36 * Vec3(forward) + self->s.origin;
-    int numTracedAreas = AAS_TraceAreas(self->s.origin, traceEnd.data(), tracedAreas, nullptr, MAX_TRACED_AREAS);
+    int numTracedAreas = AAS_TraceAreas(self->s.origin, traceEnd.Data(), tracedAreas, nullptr, MAX_TRACED_AREAS);
 
     // These values will be returned by default
     moveTestResult->canWalk = 0;
@@ -406,7 +406,7 @@ void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*
     const float currentPitch = anglemod(self->s.angles[PITCH]);
 
     vec3_t idealAngle;
-    VecToAngles(idealDirection.data(), idealAngle);
+    VecToAngles(idealDirection.Data(), idealAngle);
 
     const float ideal_yaw = anglemod(idealAngle[YAW]);
     const float ideal_pitch = anglemod(idealAngle[PITCH]);

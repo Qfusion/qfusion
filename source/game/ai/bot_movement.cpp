@@ -98,11 +98,11 @@ void Bot::Move(usercmd_t *ucmd)
                 if (intendedLookVec.Dot(toEnemy) < -0.3f)
                 {
                     // Check whether we should center view to prevent looking at the sky or a floor while spinning
-                    float factor = fabsf(self->s.origin[2] - EnemyOrigin().z()) * invDistanceToEnemy;
+                    float factor = fabsf(self->s.origin[2] - EnemyOrigin().Z()) * invDistanceToEnemy;
                     // If distance to enemy is 4x more than height difference, center view
                     if (factor < 0.25f)
                     {
-                        intendedLookVec.z() *= 0.0001f;
+                        intendedLookVec.Z() *= 0.0001f;
                     }
                     ucmd->forwardmove *= -1;
                     intendedLookVec *= -1;
@@ -202,7 +202,7 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     Vec3 bboxMaxs = jumppadTarget + Vec3(+1.25f * baseSide, +1.25f * baseSide, +0.15f * baseSide);
     // First, fetch all areas in the target bounding box (more than required)
     int rawAreas[MAX_LANDING_AREAS * 2];
-    int rawAreasCount = AAS_BBoxAreas(bboxMins.data(), bboxMaxs.data(), rawAreas, MAX_LANDING_AREAS * 2);
+    int rawAreasCount = AAS_BBoxAreas(bboxMins.Data(), bboxMaxs.Data(), rawAreas, MAX_LANDING_AREAS * 2);
     // Then filter raw areas and sort by distance to jumppad target
     AttributedArea<float> filteredAreas[MAX_LANDING_AREAS * 2];
     int filteredAreasCount = 0;
@@ -210,7 +210,7 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     {
         int areaNum = rawAreas[i];
         // Skip areas above target that a-priori may not be a landing site. Areas bounds are absolute.
-        if (aasworld.areas[areaNum].mins[2] + 8 > jumppadTarget.z())
+        if (aasworld.areas[areaNum].mins[2] + 8 > jumppadTarget.Z())
             continue;
         // Skip non-grounded areas
         if (!AAS_AreaGrounded(areaNum))
@@ -235,9 +235,9 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
         // (otherwise the following pathfinder call may perform a trace for it)
         // Note that AAS area mins are absolute.
         Vec3 origin(aasworld.areas[areaNum].center);
-        origin.z() = aasworld.areas[areaNum].mins[2] + 8;
+        origin.Z() = aasworld.areas[areaNum].mins[2] + 8;
         // Returns 1 as a lowest feasible travel time value (in seconds ^-2), 0 when a path can't be found
-        int aasTravelTime = FindAASTravelTimeToGoalArea(areaNum, origin.data(), goalAasAreaNum);
+        int aasTravelTime = FindAASTravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum);
         if (aasTravelTime)
         {
             areasAndTravelTimes[selectedAreasCount++] = AttributedArea<int>(areaNum, aasTravelTime);
@@ -313,7 +313,7 @@ void Bot::TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd)
     int groundedAreas[MAX_LANDING_AREAS];
     float distanceToAreas[MAX_LANDING_AREAS];
 
-    int numAllAreas = AAS_BBoxAreas(bboxMins.data(), bboxMaxs.data(), areas, MAX_LANDING_AREAS);
+    int numAllAreas = AAS_BBoxAreas(bboxMins.Data(), bboxMaxs.Data(), areas, MAX_LANDING_AREAS);
     if (!numAllAreas)
         return;
 
@@ -361,9 +361,9 @@ bool Bot::TryLandOnArea(int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd)
     Vec3 areaPoint(aasworld.areas[areaNum].center);
 
     // Lower area point to a bottom of area. Area mins/maxs are absolute.
-    areaPoint.z() = aasworld.areas[areaNum].mins[2];
+    areaPoint.Z() = aasworld.areas[areaNum].mins[2];
     // Do not try to "land" on upper areas
-    if (areaPoint.z() > self->s.origin[2])
+    if (areaPoint.Z() > self->s.origin[2])
         return false;
 
     // We have to offset traced end point since we do not test a zero-width ray
@@ -373,7 +373,7 @@ bool Bot::TryLandOnArea(int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd)
     Vec3 traceEnd(areaPoint);
 
     trace_t trace;
-    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.data(), self, MASK_AISOLID);
+    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.Data(), self, MASK_AISOLID);
     if (trace.fraction == 1.0f)
     {
         ucmd->forwardmove = 1;
@@ -396,9 +396,9 @@ void Bot::MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd)
         if (campingSpotLookAtPointTimeout <= level.time)
         {
             // Choose some random point to look at
-            campingSpotLookAtPoint.x() = self->s.origin[0] - 50.0f + 100.0f * random();
-            campingSpotLookAtPoint.y() = self->s.origin[1] - 50.0f + 100.0f * random();
-            campingSpotLookAtPoint.z() = self->s.origin[2] - 15.0f + 30.0f * random();
+            campingSpotLookAtPoint.X() = self->s.origin[0] - 50.0f + 100.0f * random();
+            campingSpotLookAtPoint.Y() = self->s.origin[1] - 50.0f + 100.0f * random();
+            campingSpotLookAtPoint.Z() = self->s.origin[2] - 15.0f + 30.0f * random();
             campingSpotLookAtPointTimeout = level.time + 1500 - (unsigned)(1250.0f * campingAlertness);
         }
         lookAtPoint = campingSpotLookAtPoint;
@@ -473,9 +473,9 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *in
         // This means we may strafe randomly
         if (distance / campingSpotRadius < 0.7f)
         {
-            campingSpotStrafeDir.x() = -0.5f + random();
-            campingSpotStrafeDir.y() = -0.5f + random();
-            campingSpotStrafeDir.z() = 0.0f;
+            campingSpotStrafeDir.X() = -0.5f + random();
+            campingSpotStrafeDir.Y() = -0.5f + random();
+            campingSpotStrafeDir.Z() = 0.0f;
             campingSpotStrafeTimeout = level.time + 500 + (unsigned)(100.0f * random() - 250.0f * campingAlertness);
         }
         else
@@ -526,7 +526,7 @@ constexpr float Z_NO_BEND_SCALE = 0.25f;
 bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed)
 {
     Vec3 baseForwardVec(*intendedLookVec);
-    baseForwardVec.z() *= Z_NO_BEND_SCALE;
+    baseForwardVec.Z() *= Z_NO_BEND_SCALE;
     // Treat inability to check obstacles as obstacles presence
     if (baseForwardVec.SquaredLength() < 0.01f)
         return true;
@@ -540,7 +540,7 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, floa
     float *const maxs = playerbox_stand_maxs;
 
     trace_t trace;
-    G_Trace(&trace, self->s.origin, mins, maxs, forwardPoint.data(), self, MASK_AISOLID);
+    G_Trace(&trace, self->s.origin, mins, maxs, forwardPoint.Data(), self, MASK_AISOLID);
 
     if (trace.fraction == 1.0f)
         return false;
@@ -553,7 +553,7 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, floa
     if (!self->groundentity)
     {
         trace_t crouchTrace;
-        G_Trace(&crouchTrace, self->s.origin, nullptr, playerbox_crouch_maxs, forwardPoint.data(), self, MASK_AISOLID);
+        G_Trace(&crouchTrace, self->s.origin, nullptr, playerbox_crouch_maxs, forwardPoint.Data(), self, MASK_AISOLID);
         if (crouchTrace.fraction == 1.0f)
         {
             ucmd->upmove = -1;
@@ -576,20 +576,20 @@ bool Bot::CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, floa
         vec3_t rotatedForwardVec;
 
         // First, rotate baseForwardVec by angle = sign * angleStep * stepNum
-        angles.y() = sign * angleStep * stepNum;
-        AnglesToAxis(angles.data(), matrix);
-        Matrix3_TransformVector(matrix, baseForwardVec.data(), rotatedForwardVec);
+        angles.Y() = sign * angleStep * stepNum;
+        AnglesToAxis(angles.Data(), matrix);
+        Matrix3_TransformVector(matrix, baseForwardVec.Data(), rotatedForwardVec);
 
         Vec3 rotatedForwardPoint = Vec3(rotatedForwardVec) + self->s.origin;
-        G_Trace(&trace, self->s.origin, mins, maxs, rotatedForwardPoint.data(), self, MASK_AISOLID);
+        G_Trace(&trace, self->s.origin, mins, maxs, rotatedForwardPoint.Data(), self, MASK_AISOLID);
 
         if (trace.fraction > bestFraction)
         {
             bestFraction = trace.fraction;
             // Copy found less blocked rotated forward vector to the intendedLookVec
-            VectorCopy(rotatedForwardVec, intendedLookVec->data());
+            VectorCopy(rotatedForwardVec, intendedLookVec->Data());
             // Compensate applied Z scale applied to baseForwardVec (intendedLookVec Z is likely to be scaled again)
-            intendedLookVec->z() *= 1.0f / Z_NO_BEND_SCALE;
+            intendedLookVec->Z() *= 1.0f / Z_NO_BEND_SCALE;
         }
 
         if (sign > 0)
@@ -608,7 +608,7 @@ bool Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
         if (currAasAreaNum != goalAasAreaNum)
         {
             // Looks like we are in air above a ground, keep as is waiting for landing.
-            VectorCopy(self->velocity, intendedLookVec->data());
+            VectorCopy(self->velocity, intendedLookVec->Data());
             return false;
         }
         // Move to a goal origin
@@ -679,7 +679,7 @@ bool Bot::TryStraightenLookVec(Vec3 *intendedLookVec)
 
     // Check for obstacles on the straightened path
     trace_t trace;
-    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, lookAtPoint.data(), self, MASK_AISOLID);
+    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, lookAtPoint.Data(), self, MASK_AISOLID);
     if (trace.fraction != 1.0f)
         return false;
 
@@ -842,10 +842,10 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     bool hasObstacles = CheckAndTryAvoidObstacles(intendedLookVec, ucmd, speed);
 
     Vec3 toTargetDir2D(*intendedLookVec);
-    toTargetDir2D.z() = 0;
+    toTargetDir2D.Z() = 0;
 
     Vec3 velocityDir2D(velocityVec);
-    velocityDir2D.z() = 0;
+    velocityDir2D.Z() = 0;
 
     float speed2DSquared = velocityDir2D.SquaredLength();
     float toTargetDir2DSqLen = toTargetDir2D.SquaredLength();
@@ -890,7 +890,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                     // Preserve velocity magnitude
                     newVelocity.NormalizeFast();
                     newVelocity *= speed;
-                    VectorCopy(newVelocity.data(), self->velocity);
+                    VectorCopy(newVelocity.Data(), self->velocity);
                 }
                 else if (IsCloseToAnyGoal())
                 {
@@ -950,13 +950,13 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                         // Multiply by accel and frame time in millis
                         velocityBoost *= accel * 0.001f * game.frametime;
                         // Modify bot entity velocity
-                        VectorAdd(self->velocity, velocityBoost.data(), self->velocity);
+                        VectorAdd(self->velocity, velocityBoost.Data(), self->velocity);
                     }
                 }
             }
 
             // Don't bend too hard
-            intendedLookVec->z() *= Z_NO_BEND_SCALE;
+            intendedLookVec->Z() *= Z_NO_BEND_SCALE;
         }
     }
     else
@@ -1016,19 +1016,19 @@ Vec3 Bot::MakeEvadeDirection(const Danger &danger)
     {
         Vec3 result(0, 0, 0);
         Vec3 selfToHitDir = danger.hitPoint - self->s.origin;
-        RotatePointAroundVector(result.data(), &axis_identity[AXIS_UP], selfToHitDir.data(), -self->s.angles[YAW]);
+        RotatePointAroundVector(result.Data(), &axis_identity[AXIS_UP], selfToHitDir.Data(), -self->s.angles[YAW]);
         result.NormalizeFast();
 
-        if (fabs(result.x()) < 0.3) result.x() = 0;
-        if (fabs(result.y()) < 0.3) result.y() = 0;
-        result.z() = 0;
-        result.x() *= -1.0f;
-        result.y() *= -1.0f;
+        if (fabs(result.X()) < 0.3) result.X() = 0;
+        if (fabs(result.Y()) < 0.3) result.Y() = 0;
+        result.Z() = 0;
+        result.X() *= -1.0f;
+        result.Y() *= -1.0f;
         return result;
     }
 
     Vec3 selfToHitPoint = danger.hitPoint - self->s.origin;
-    selfToHitPoint.z() = 0;
+    selfToHitPoint.Z() = 0;
     // If bot is not hit in its center, try pick a direction that is opposite to a vector from bot center to hit point
     if (selfToHitPoint.SquaredLength() > 4 * 4)
     {
@@ -1037,8 +1037,8 @@ Vec3 Bot::MakeEvadeDirection(const Danger &danger)
         // (the less is the abs. value of the dot product, the closer is the chosen direction to a perpendicular one)
         if (fabs(selfToHitPoint.Dot(danger.direction)) < 0.5f)
         {
-            if (fabs(selfToHitPoint.x()) < 0.3) selfToHitPoint.x() = 0;
-            if (fabs(selfToHitPoint.y()) < 0.3) selfToHitPoint.y() = 0;
+            if (fabs(selfToHitPoint.X()) < 0.3) selfToHitPoint.X() = 0;
+            if (fabs(selfToHitPoint.Y()) < 0.3) selfToHitPoint.Y() = 0;
             return -selfToHitPoint;
         }
     }
@@ -1049,14 +1049,14 @@ Vec3 Bot::MakeEvadeDirection(const Danger &danger)
     for (int i = 0; i < 3; ++i)
     {
         Vec3 cross = danger.direction.Cross(&axis_identity[i * 3]);
-        cross.z() = 0;
+        cross.Z() = 0;
         float crossSqLen = cross.SquaredLength();
         if (crossSqLen > maxCrossSqLen)
         {
             maxCrossSqLen = crossSqLen;
             float invLen = Q_RSqrt(crossSqLen);
-            result.x() = cross.x() * invLen;
-            result.y() = cross.y() * invLen;
+            result.X() = cross.X() * invLen;
+            result.Y() = cross.Y() * invLen;
         }
     }
     return result;
@@ -1139,7 +1139,7 @@ void Bot::UpdateCombatMovePushes()
     }
 
     // Tend to jump or crouch excessively if we have height advantage
-    if (toEnemyDir.z() < -0.3)
+    if (toEnemyDir.Z() < -0.3)
         combatMovePushes[2] = random() > 0.75f ? Q_sign(random() - 0.5f) : 0;
     // Otherwise do these moves sparingly only to surprise enemy sometimes
     else
@@ -1151,9 +1151,9 @@ void Bot::MakeEvadeMovePushes(usercmd_t *ucmd)
     Vec3 evadeDir = MakeEvadeDirection(*dangersDetector.primaryDanger);
 #ifdef _DEBUG
     Vec3 drawnDirStart(self->s.origin);
-    drawnDirStart.z() += 32;
+    drawnDirStart.Z() += 32;
     Vec3 drawnDirEnd = drawnDirStart + 64.0f * evadeDir;
-    AITools_DrawLine(drawnDirStart.data(), drawnDirEnd.data());
+    AITools_DrawLine(drawnDirStart.Data(), drawnDirEnd.Data());
 #endif
 
     int walkingEvades = 0;
@@ -1161,9 +1161,9 @@ void Bot::MakeEvadeMovePushes(usercmd_t *ucmd)
     int jumpingEvades = 0;
     int jumpingMovePushes[3] = {0, 0, 0};
 
-    if (evadeDir.x())
+    if (evadeDir.X())
     {
-        if ((evadeDir.x() < 0))
+        if ((evadeDir.X() < 0))
         {
             if (closeAreaProps.backTest.CanWalkOrFallQuiteSafely())
             {
@@ -1176,7 +1176,7 @@ void Bot::MakeEvadeMovePushes(usercmd_t *ucmd)
                 ++jumpingEvades;
             }
         }
-        else if ((evadeDir.x() > 0))
+        else if ((evadeDir.X() > 0))
         {
             if (closeAreaProps.frontTest.CanWalkOrFallQuiteSafely())
             {
@@ -1190,9 +1190,9 @@ void Bot::MakeEvadeMovePushes(usercmd_t *ucmd)
             }
         }
     }
-    if (evadeDir.y())
+    if (evadeDir.Y())
     {
-        if ((evadeDir.y() < 0))
+        if ((evadeDir.Y() < 0))
         {
             if (closeAreaProps.leftTest.CanWalkOrFallQuiteSafely())
             {
@@ -1205,7 +1205,7 @@ void Bot::MakeEvadeMovePushes(usercmd_t *ucmd)
                 ++jumpingEvades;
             }
         }
-        else if ((evadeDir.y() > 0))
+        else if ((evadeDir.Y() > 0))
         {
             if (closeAreaProps.rightTest.CanWalkOrFallQuiteSafely())
             {

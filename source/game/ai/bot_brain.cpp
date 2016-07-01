@@ -67,8 +67,8 @@ void Enemy::OnViewed()
         lastSeenVelocities.pop_back();
     }
     // Set members for faster access
-    VectorCopy(ent->s.origin, lastSeenPosition.data());
-    VectorCopy(ent->velocity, lastSeenVelocity.data());
+    VectorCopy(ent->s.origin, lastSeenPosition.Data());
+    VectorCopy(ent->velocity, lastSeenVelocity.Data());
     lastSeenAt = level.time;
     // Store in a queue then for history
     lastSeenPositions.push_front(lastSeenPosition);
@@ -579,8 +579,8 @@ void BotBrain::OnPain(const edict_t *enemy, float kick, int damage)
                 if (!self->ai->botRef->hasPendingLookAtPoint)
                 {
                     // Try to guess enemy origin
-                    toEnemyDir.x() += -0.25f + 0.50f * random();
-                    toEnemyDir.y() += -0.10f + 0.20f * random();
+                    toEnemyDir.X() += -0.25f + 0.50f * random();
+                    toEnemyDir.Y() += -0.10f + 0.20f * random();
                     toEnemyDir.NormalizeFast();
                     Vec3 threatPoint(self->s.origin);
                     threatPoint += distance * toEnemyDir;
@@ -707,15 +707,15 @@ static bool AdjustOriginToFloor(const edict_t *ent, Vec3 *result)
     if (!ent)
         return false;
     Vec3 v1(ent->s.origin), v2(ent->s.origin);
-    v2.z() -= 256.0f;
+    v2.Z() -= 256.0f;
     trace_t trace;
     edict_t *key = const_cast<edict_t*>(ent);
-    G_Trace(&trace, v1.data(), playerbox_stand_mins, playerbox_stand_maxs, v2.data(), key, MASK_AISOLID);
+    G_Trace(&trace, v1.Data(), playerbox_stand_mins, playerbox_stand_maxs, v2.Data(), key, MASK_AISOLID);
     if (trace.fraction == 1.0f)
         return false;
-    VectorCopy(trace.endpos, result->data());
+    VectorCopy(trace.endpos, result->Data());
     // Offset Z a bit
-    result->z() += 1.0f;
+    result->Z() += 1.0f;
     return true;
 }
 
@@ -730,7 +730,7 @@ bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
         Vec3 origin(0, 0, 0);
         int areaNum = 0;
         if (AdjustOriginToFloor(activeEnemies[i]->ent, &origin))
-            areaNum = AAS_PointAreaNum(origin.data());
+            areaNum = AAS_PointAreaNum(origin.Data());
         blockerOrigins.push_back(origin);
         blockerAreaNums.push_back(areaNum);
     }
@@ -751,7 +751,7 @@ bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
         if ((blockerOrigin - aasworld.areas[goalAreaNum].center).SquaredLength() < blockerRadius * blockerRadius)
         {
             // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
-            int travelTime = FindAASTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.data(), goalAreaNum) * 10;
+            int travelTime = FindAASTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.Data(), goalAreaNum) * 10;
             // If goal area is reachable for enemy in dangerMoveMillis
             if (travelTime && travelTime < blockerMoveMillis)
                 return true;
@@ -770,7 +770,7 @@ bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
                 if ((Vec3(area.center) - self->s.origin).SquaredLength() > blockerRadius * blockerRadius)
                 {
                     // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
-                    int travelTime = FindAASTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.data(), areaNum) * 10;
+                    int travelTime = FindAASTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.Data(), areaNum) * 10;
                     // If goal area is reachable for enemy in dangerMoveMillis
                     if (travelTime && travelTime < blockerMoveMillis)
                         return true;
@@ -781,7 +781,7 @@ bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
             Vec3 origin(area.center[0], area.center[1], area.mins[2] + 4);
             // This call tries to correct origin if first attempt failed (in worst case).
             // If it returns with failure we may consider a path broken and treat it as blocked
-            int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.data(), goalAreaNum);
+            int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.Data(), goalAreaNum);
             if (!reachNum)
                 return true;
 
@@ -813,8 +813,8 @@ bool BotBrain::ShouldCancelSpecialGoalBySpecificReasons()
         const aas_area_t &area = aasworld.areas[areaNum];
         // First, project origin to floor manually. Otherwise, next call may perform a trace.
         Vec3 origin(area.center);
-        origin.z() = area.mins[2] + 4;
-        int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.data(), goalAreaNum);
+        origin.Z() = area.mins[2] + 4;
+        int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.Data(), goalAreaNum);
         // If reachability can't be found, cancel goal
         if (!reachNum)
             return true;
@@ -1099,7 +1099,7 @@ void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
     task->spamTimesOutAt = level.time + 1200;
     unsigned timeDelta = level.time - enemy->LastSeenAt();
     constexpr const char *fmt = "starts spamming at %.3f %.3f %.3f with %s where it has seen %s %d ms ago\n";
-    Debug(fmt, spamSpot.x(), spamSpot.y(), spamSpot.z(), WeapName(task->suggestedSpamWeapon), enemy->Nick(), timeDelta);
+    Debug(fmt, spamSpot.X(), spamSpot.Y(), spamSpot.Z(), WeapName(task->suggestedSpamWeapon), enemy->Nick(), timeDelta);
 }
 
 void BotBrain::StartPursuit(const Enemy &enemy)
@@ -1109,7 +1109,7 @@ void BotBrain::StartPursuit(const Enemy &enemy)
     {
         Vec3 origin(enemy.ent->s.origin);
         AdjustOriginToFloor(enemy.ent, &origin);
-        areaNum = AAS_PointAreaNum(origin.data());
+        areaNum = AAS_PointAreaNum(origin.Data());
         if (!areaNum)
             return;
     }
@@ -1120,9 +1120,9 @@ void BotBrain::StartPursuit(const Enemy &enemy)
     pursuitGoal.explicitTimeout = level.time + 1000;
     pursuitGoal.explicitSpawnTime = 1;
     pursuitGoal.explicitOrigin = enemy.LastSeenPosition();
-    float x = pursuitGoal.explicitOrigin.x();
-    float y = pursuitGoal.explicitOrigin.y();
-    float z = pursuitGoal.explicitOrigin.z();
+    float x = pursuitGoal.explicitOrigin.X();
+    float y = pursuitGoal.explicitOrigin.Y();
+    float z = pursuitGoal.explicitOrigin.Z();
     Q_snprintfz(pursuitGoal.name, NavEntity::MAX_NAME_LEN, "%s seen spot @(%.3f %3.f %3.f)", enemy.Nick(), x, y, z);
     SetSpecialGoal(&pursuitGoal);
 }
@@ -1908,26 +1908,26 @@ int BotBrain::SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisp
         trace_t trace;
         // Predict bot position after 0.5 seconds
         G_Trace(&trace, self->s.origin, playerbox_stand_mins, playerbox_stand_maxs,
-                extrapolatedBotOrigin.data(), self, MASK_AISOLID);
+                extrapolatedBotOrigin.Data(), self, MASK_AISOLID);
         if (trace.fraction != 1.0f)
         {
             predictedBotOrigin = Vec3(trace.endpos);
             // Compensate Z for ground trace hit point
-            if (trace.endpos[2] > extrapolatedBotOrigin.z())
-                predictedBotOrigin.z() += std::min(24.0f, trace.endpos[2] = extrapolatedEnemyOrigin.z());
+            if (trace.endpos[2] > extrapolatedBotOrigin.Z())
+                predictedBotOrigin.Z() += std::min(24.0f, trace.endpos[2] = extrapolatedEnemyOrigin.Z());
         }
         // Predict enemy origin after 0.5 seconds
         G_Trace(&trace, const_cast<float*>(enemy.ent->s.origin), playerbox_stand_mins, playerbox_stand_maxs,
-                extrapolatedEnemyOrigin.data(), const_cast<edict_t*>(enemy.ent), MASK_AISOLID);
+                extrapolatedEnemyOrigin.Data(), const_cast<edict_t*>(enemy.ent), MASK_AISOLID);
         if (trace.fraction != 1.0f)
         {
             predictedEnemyOrigin = Vec3(trace.endpos);
-            if (trace.endpos[2] > extrapolatedEnemyOrigin.z())
-                predictedEnemyOrigin.z() += std::min(24.0f, trace.endpos[2] - extrapolatedEnemyOrigin.z());
+            if (trace.endpos[2] > extrapolatedEnemyOrigin.Z())
+                predictedEnemyOrigin.Z() += std::min(24.0f, trace.endpos[2] - extrapolatedEnemyOrigin.Z());
         }
 
         // Check whether bot may hit enemy after 0.5s
-        G_Trace(&trace, predictedBotOrigin.data(), nullptr, nullptr, predictedEnemyOrigin.data(), self, MASK_AISOLID);
+        G_Trace(&trace, predictedBotOrigin.Data(), nullptr, nullptr, predictedEnemyOrigin.Data(), self, MASK_AISOLID);
         // Still may hit, keep using current weapon
         if (trace.fraction == 1.0f || enemy.ent == game.edicts + trace.ent)
             return WEAP_NONE;
@@ -2140,7 +2140,7 @@ int BotBrain::SuggestQuadBearerWeapon(const Enemy &enemy)
     {
         if (GrenadesReadyToFireCount() > 0 && distance > CLOSE_RANGE && distance < lgRange)
         {
-            float deltaZ = bot->s.origin[2] - enemy.LastSeenPosition().z();
+            float deltaZ = bot->s.origin[2] - enemy.LastSeenPosition().Z();
             if (deltaZ < -250.0f && random() > 0.5f)
                 return WEAP_GRENADELAUNCHER;
         }
@@ -2186,7 +2186,7 @@ void BotBrain::SuggestSpamEnemyWeaponAndTactics(CombatTask *task)
     {
         const Vec3 &position = enemy.LastSeenPosition();
         constexpr const char *format = "SuggestSpamWeapon...(): %s has been last seen at %f %f %f\n";
-        Debug(format, enemy.Nick(), position.x(), position.y(), position.z());
+        Debug(format, enemy.Nick(), position.X(), position.Y(), position.Z());
     }
 #endif
     Vec3 botToSpotVec = enemy.LastSeenPosition();
@@ -2225,7 +2225,7 @@ void BotBrain::SuggestSpamEnemyWeaponAndTactics(CombatTask *task)
     scores[GL].score *= targetEnvironment.factor;
     scores[GB].score *= 0.4f + 0.6 * targetEnvironment.factor;
 
-    float deltaZ = bot->s.origin[2] - enemy.LastSeenPosition().z();
+    float deltaZ = bot->s.origin[2] - enemy.LastSeenPosition().Z();
     float deltaZBound = g_gravity->value / 2;
     // 0 for enemies that are deltaZBound or more units higher, 1 for enemies that are deltaZBound or more lower
     float gravityFactor = (std::min(deltaZ, deltaZBound) / deltaZBound + 1.0f) / 2.0f;
@@ -2272,7 +2272,7 @@ const float BotBrain::TargetEnvironment::TRACE_DEPTH = 250.0f;
 void BotBrain::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey)
 {
     Vec3 forward = targetOrigin - botOrigin;
-    forward.z() = 0;
+    forward.Z() = 0;
     float frontSquareLen = forward.SquaredLength();
     if (frontSquareLen > 1)
     {
@@ -2289,7 +2289,7 @@ void BotBrain::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOr
     // Now botToTarget is a normalized horizontal part of botToTarget - botOrigin
 
     edict_t *passedict = const_cast<edict_t*>(traceKey);
-    float *start = const_cast<float*>(botOrigin.data());
+    float *start = const_cast<float*>(botOrigin.Data());
     trace_t *traces = targetEnvironment.sideTraces;
 
     const float TRACE_DEPTH = TargetEnvironment::TRACE_DEPTH;
@@ -2310,7 +2310,7 @@ void BotBrain::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOr
     {
         vec3_t end;
         trace_t *trace = traces + i;
-        G_ProjectSource(start, offsets + 3 * i, forward.data(), right.data(), end);
+        G_ProjectSource(start, offsets + 3 * i, forward.Data(), right.Data(), end);
         G_Trace(trace, start, mins, maxs, end, passedict, MASK_AISOLID);
         // Give some non-zero score by the fact that trace is detected a hit itself
         if (trace->fraction < 1.0f)

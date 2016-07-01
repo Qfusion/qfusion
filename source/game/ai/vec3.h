@@ -9,11 +9,11 @@ class Vec3
 public:
     explicit Vec3(const vec3_t that)
     {
-        VectorCopy(that, data());
+        VectorCopy(that, Data());
     }
     Vec3(const Vec3 &that)
     {
-        VectorCopy(that.data(), data());
+        VectorCopy(that.Data(), Data());
     }
 
     Vec3(vec_t x, vec_t y, vec_t z)
@@ -23,7 +23,7 @@ public:
 
     Vec3 &operator=(const Vec3 &that)
     {
-        VectorCopy(that.data(), data());
+        VectorCopy(that.Data(), Data());
         return *this;
     }
 
@@ -34,16 +34,16 @@ public:
     void Normalize() { VectorNormalize(vec); }
     void NormalizeFast() { VectorNormalizeFast(vec); }
 
-    float *data() { return vec; }
-    const float *data() const { return vec; }
+    float *Data() { return vec; }
+    const float *Data() const { return vec; }
 
-    vec_t &x() { return vec[0]; }
-    vec_t &y() { return vec[1]; }
-    vec_t &z() { return vec[2]; }
+    vec_t &X() { return vec[0]; }
+    vec_t &Y() { return vec[1]; }
+    vec_t &Z() { return vec[2]; }
 
-    vec_t x() const { return vec[0]; }
-    vec_t y() const { return vec[1]; }
-    vec_t z() const { return vec[2]; }
+    vec_t X() const { return vec[0]; }
+    vec_t Y() const { return vec[1]; }
+    vec_t Z() const { return vec[2]; }
 
     void operator+=(const Vec3 &that)
     {
@@ -67,27 +67,27 @@ public:
     }
     Vec3 operator*(float scale) const
     {
-        return Vec3(scale * x(), scale * y(), scale * z());
+        return Vec3(scale * X(), scale * Y(), scale * Z());
     }
     Vec3 operator+(const Vec3 &that) const
     {
-        return Vec3(x() + that.x(), y() + that.y(), z() + that.z());
+        return Vec3(X() + that.X(), Y() + that.Y(), Z() + that.Z());
     }
     Vec3 operator+(const vec3_t that) const
     {
-        return Vec3(x() + that[0], y() + that[1], z() + that[2]);
+        return Vec3(X() + that[0], Y() + that[1], Z() + that[2]);
     }
     Vec3 operator-(const Vec3 &that) const
     {
-        return Vec3(x() - that.x(), y() - that.y(), z() - that.z());
+        return Vec3(X() - that.X(), Y() - that.Y(), Z() - that.Z());
     }
     Vec3 operator-(const vec3_t that) const
     {
-        return Vec3(x() - that[0], y() - that[1], z() - that[2]);
+        return Vec3(X() - that[0], Y() - that[1], Z() - that[2]);
     }
     Vec3 operator-() const
     {
-        return Vec3(-x(), -y(), -z());
+        return Vec3(-X(), -Y(), -Z());
     }
 
     vec_t Dot(const Vec3 &that) const
@@ -102,16 +102,16 @@ public:
     inline Vec3 Cross(const Vec3 &that) const
     {
         return Vec3(
-            y() * that.z() - z() * that.y(),
-            z() * that.x() - x() * that.z(),
-            x() * that.y() - y() * that.x());
+            Y() * that.Z() - Z() * that.Y(),
+            Z() * that.X() - X() * that.Z(),
+            X() * that.Y() - Y() * that.X());
     }
     inline Vec3 Cross(const vec3_t that) const
     {
         return Vec3(
-            y() * that[2] - z() * that[1],
-            z() * that[0] - x() * that[2],
-            x() * that[2] - y() * that[1]);
+            Y() * that[2] - Z() * that[1],
+            Z() * that[0] - X() * that[2],
+            X() * that[2] - Y() * that[1]);
     }
 };
 
