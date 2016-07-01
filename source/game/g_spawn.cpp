@@ -838,6 +838,8 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	G_asShutdownMapScript();
 	GT_asShutdownScript();
 
+	AI_UnloadLevel();
+
 	G_FreeCallvotes();
 
 	game.serverTime = serverTime;

@@ -9,12 +9,15 @@ class AiGametypeBrain: public AiFrameAwareUpdatable
 protected:
     AiGametypeBrain() {};
 
-    // May be instantiated dynamically with a some subtype of this class in future
-    static AiGametypeBrain instance;
+    static AiGametypeBrain *instance;
     virtual void Frame() override;
 public:
+    virtual ~AiGametypeBrain() override {}
+
+    // This call does actual (re-)initialization of this class instance and team AI's
+    static void OnGametypeChanged(const char *gametype);
     // May return some of subtypes of this class depending on a gametype in future
-    static inline AiGametypeBrain *Instance() { return &instance; }
+    static inline AiGametypeBrain *Instance() { return instance; }
     void ClearGoals(const NavEntity *canceledGoal, const class Ai *goalGrabber);
 };
 

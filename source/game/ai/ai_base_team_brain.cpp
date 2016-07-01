@@ -35,11 +35,14 @@ void AiBaseTeamBrain::Debug(const char *format, ...)
 AiBaseTeamBrain *AiBaseTeamBrain::GetBrainForTeam(int team)
 {
     if (team < TEAM_PLAYERS || team >= GS_MAX_TEAMS)
-        return nullptr;
-
+    {
+        AI_Debug("AiBaseTeamBrain", "GetBrainForTeam(): Illegal team %d\n", team);
+        abort();
+    }
     if (!teamBrains[team - 1])
     {
-        teamBrains[team - 1] = CreateTeamBrain(team);
+        AI_Debug("AiBaseTeamBrain", "GetBrainForTeam(): Team brain for team %d is not instantiated atm\n", team);
+        abort();
     }
     return teamBrains[team - 1];
 }
@@ -203,17 +206,64 @@ void AiBaseTeamBrain::SetBotFrameAffinity(int entNum, unsigned modulo, unsigned 
     game.edicts[entNum].ai->botRef->SetFrameAffinity(modulo, offset);
 }
 
-AiBaseTeamBrain *AiBaseTeamBrain::CreateTeamBrain(int team)
+void AiBaseTeamBrain::OnGametypeChanged(const char *gametype)
 {
-    AiBaseTeamBrain *newInstance = new (G_Malloc(sizeof(AiBaseTeamBrain)))AiBaseTeamBrain(team);
-    const auto shutdownHook = [=]()
-    {
-        newInstance->~AiBaseTeamBrain();
-        G_Free(newInstance);
-    };
-    AiShutdownHooksHolder::Instance()->RegisterHook(shutdownHook);
+    // First, unregister all current brains (if any)
+    for (int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; ++team)
+        UnregisterTeamBrain(team);
 
-    return newInstance;
+    if (GS_TeamBasedGametype())
+    {
+        for (int team = TEAM_ALPHA; team < GS_MAX_TEAMS; ++team)
+        {
+            RegisterTeamBrain(team, InstantiateTeamBrain(team, gametype));
+        }
+    }
+    else
+    {
+        RegisterTeamBrain(TEAM_PLAYERS, InstantiateTeamBrain(TEAM_PLAYERS, gametype));
+    }
+}
+
+void AiBaseTeamBrain::RegisterTeamBrain(int team, AiBaseTeamBrain *brain)
+{
+    if (teamBrains[team - 1])
+    {
+        UnregisterTeamBrain(team);
+    }
+    // Set team brain pointer
+    teamBrains[team - 1] = brain;
+    // Use address of a static array cell for the brain pointer as a tag
+    uint64_t tag = (uint64_t)(teamBrains + team - 1);
+    // Capture brain pointer (a stack variable) by value!
+    AiShutdownHooksHolder::Instance()->RegisterHook(tag, [=]
+    {
+        brain->~AiBaseTeamBrain();
+        G_Free(brain);
+    });
+}
+
+void AiBaseTeamBrain::UnregisterTeamBrain(int team)
+{
+    if (!teamBrains[team - 1])
+        return;
+
+    AiBaseTeamBrain *brainToDelete = teamBrains[team - 1];
+    // Reset team brain pointer
+    teamBrains[team - 1] = nullptr;
+    // Destruct the brain
+    brainToDelete->~AiBaseTeamBrain();
+    // Free brain memory
+    G_Free(brainToDelete);
+    // Use address of a static array cell for the brain pointer as a tag
+    uint64_t tag = (uint64_t)(teamBrains + team - 1);
+    AiShutdownHooksHolder::Instance()->UnregisterHook(tag);
+}
+
+AiBaseTeamBrain *AiBaseTeamBrain::InstantiateTeamBrain(int team, const char *gametype)
+{
+    void *mem = G_Malloc(sizeof(AiBaseTeamBrain));
+    return new(mem)AiBaseTeamBrain(team);
 }
 
 

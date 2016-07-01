@@ -83,6 +83,7 @@ protected:
     virtual void Think() override;
 public:
     Ai(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
+    virtual ~Ai() override {};
 
     inline bool IsGhosting() const { return G_ISGHOSTING(self); }
 

@@ -29,11 +29,15 @@ class AiBaseTeamBrain: public AiFrameAwareUpdatable
 
     void InitTeamAffinity() const;  // Callers are const ones, and only mutable vars are modified
 
-    // This function instantiates another brain instance and registers its shutdown hook
-    static AiBaseTeamBrain *CreateTeamBrain(int team);
+    static void RegisterTeamBrain(int team, AiBaseTeamBrain *brain);
+    static void UnregisterTeamBrain(int team);
+
+    // A factory method for team brain creation.
+    // Instantiates appropriate kind of team brain for a current gametype.
+    static AiBaseTeamBrain *InstantiateTeamBrain(int team, const char *gametype);
 protected:
     AiBaseTeamBrain(int team);
-    virtual ~AiBaseTeamBrain() {}
+    virtual ~AiBaseTeamBrain() override {}
 
     const int team;
     int prevFrameBotsCount;
@@ -69,6 +73,7 @@ protected:
 
     void Debug(const char *format, ...);
 public:
+    static void OnGametypeChanged(const char *gametype);
     static AiBaseTeamBrain *GetBrainForTeam(int team);
 };
 
