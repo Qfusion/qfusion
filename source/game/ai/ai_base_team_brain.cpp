@@ -1,4 +1,4 @@
-#include "ai_local.h"
+#include "ai_base_team_brain.h"
 #include "ai_shutdown_hooks_holder.h"
 #include "bot.h"
 

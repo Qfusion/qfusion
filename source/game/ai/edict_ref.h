@@ -1,8 +1,8 @@
 #ifndef AI_EDICTREF_H
 #define AI_EDICTREF_H
 
+#include "ai_local.h"
 #include "vec3.h"
-#include "../g_local.h"
 
 class EdictRef
 {

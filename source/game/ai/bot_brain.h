@@ -1,7 +1,9 @@
-#ifndef AI_ENEMY_POOL_H
-#define AI_ENEMY_POOL_H
+#ifndef QFUSION_BOT_BRAIN_H
+#define QFUSION_BOT_BRAIN_H
 
-#include "ai_local.h"
+#include <stdarg.h>
+#include "ai_base_ai.h"
+#include "ai_base_brain.h"
 #include "../../gameshared/q_comref.h"
 #include <deque>
 #include <limits>
