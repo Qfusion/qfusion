@@ -726,8 +726,9 @@ float Bot::AdjustInstantAimStyleTarget(const firedef_t *firedef, vec_t *fire_ori
 {
     if( self->s.weapon == WEAP_ELECTROBOLT )
         return WFAC_GENERIC_INSTANT;
+    // It is affected by bot view latency (lastSeenPosition() + finite yaw/pitch speed) enough, decrease aim error
     if( self->s.weapon == WEAP_LASERGUN )
-        return WFAC_GENERIC_INSTANT * 1.5f;
+        return 0.33f * WFAC_GENERIC_INSTANT * (1.0f - Skill());
 
     return WFAC_GENERIC_INSTANT;
 }
