@@ -1113,7 +1113,7 @@ void BotBrain::StartPursuit(const Enemy &enemy)
         if (!areaNum)
             return;
     }
-    Debug("decided to pursuit %s\n", enemy.Nick());
+    Debug("decided to pursue %s\n", enemy.Nick());
     pursuitGoal.aasAreaNum = areaNum;
     pursuitGoal.combatTaskInstanceId = combatTask.instanceId;
     pursuitGoal.goalFlags = GoalFlags::TACTICAL_SPOT;
