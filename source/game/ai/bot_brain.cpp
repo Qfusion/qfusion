@@ -1524,10 +1524,10 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     weaponScores[RG].weapon = WEAP_RIOTGUN;
     weaponScores[GL].weapon = WEAP_GRENADELAUNCHER;
 
-    weaponScores[RL].score = 1.0f * BoundedFraction(RocketsReadyToFireCount(), 3.0f);
-    weaponScores[LG].score = 1.2f * BoundedFraction(LasersReadyToFireCount(), 15.0f);
-    weaponScores[PG].score = 0.8f * BoundedFraction(PlasmasReadyToFireCount(), 20.0f);
-    weaponScores[MG].score = 0.8f * BoundedFraction(BulletsReadyToFireCount(), 20.0f);
+    weaponScores[RL].score = 1.2f * BoundedFraction(RocketsReadyToFireCount(), 3.0f);
+    weaponScores[LG].score = 1.5f * BoundedFraction(LasersReadyToFireCount(), 15.0f);
+    weaponScores[PG].score = 0.7f * BoundedFraction(PlasmasReadyToFireCount(), 15.0f);
+    weaponScores[MG].score = 1.0f * BoundedFraction(BulletsReadyToFireCount(), 15.0f);
     weaponScores[RG].score = 0.7f * BoundedFraction(ShellsReadyToFireCount(), 3.0f);
     weaponScores[GL].score = 0.5f * BoundedFraction(GrenadesReadyToFireCount(), 5.0f);
 
@@ -1560,7 +1560,7 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     weaponScores[RL].score *= targetEnvironment.factor;
     weaponScores[LG].score *= 1.0f - 0.4f * targetEnvironment.factor;
     weaponScores[PG].score *= 0.5f + 0.5f * targetEnvironment.factor;
-    weaponScores[MG].score *= 1.0f - targetEnvironment.factor;
+    weaponScores[MG].score *= 1.0f - 0.4f * targetEnvironment.factor;
     weaponScores[RG].score *= 1.0f - 0.5f * targetEnvironment.factor;
     weaponScores[GL].score *= targetEnvironment.factor;
 
