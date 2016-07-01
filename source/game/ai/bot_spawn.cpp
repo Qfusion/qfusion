@@ -112,6 +112,12 @@ static float MakeRandomBotSkillByServerSkillLevel()
 	return skillLevel;
 }
 
+static void BOT_JoinPlayers(edict_t *self)
+{
+	G_Teams_JoinAnyTeam(self, true);
+	self->think = nullptr;
+}
+
 //==========================================
 // BOT_SpawnBot
 // Used Spawn the bot
@@ -146,10 +152,11 @@ void BOT_SpawnBot( const char *team_name )
 	// We have to determine skill level early, since G_SpawnAI calls Bot constructor that requires it as a constant
 	float skillLevel = MakeRandomBotSkillByServerSkillLevel();
 
+	// This also does an increment of game.numBots
 	G_SpawnAI( ent, skillLevel );
 
 	//init this bot
-	ent->think = NULL;
+	ent->think = nullptr;
 	ent->nextThink = level.time + 1;
 	ent->ai->type = AI_ISBOT;
 	ent->classname = "bot";
@@ -171,7 +178,8 @@ void BOT_SpawnBot( const char *team_name )
 	else
 	{
 		//stay as spectator, give random time for joining
-		ent->nextThink = level.time + 500 + random() * 2000;
+		ent->think = BOT_JoinPlayers;
+		ent->nextThink = level.time + 500 + (unsigned)(random() * 2000);
 	}
 
 	game.numBots++;
@@ -183,30 +191,32 @@ void BOT_SpawnBot( const char *team_name )
 //==========================================
 void BOT_RemoveBot( const char *name )
 {
-	int i;
-	edict_t *ent;
 	// If a named bot should be removed
 	if (Q_stricmp(name, "all"))
 	{
-		for (i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++)
+		for (edict_t *ent = game.edicts + gs.maxclients; PLAYERNUM(ent) >= 0; ent--)
 		{
 			if (!Q_stricmp(ent->r.client->netname, name))
 			{
 				trap_DropClient(ent, DROP_TYPE_GENERAL, nullptr);
-				break;
+				G_FreeAI(ent);
+				game.numBots--;
+				return;
 			}
 		}
-		if (i == gs.maxclients)
-			G_Printf("BOT: %s not found\n", name);
+		G_Printf("BOT: %s not found\n", name);
 	}
 	else
 	{
-		for (i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++)
+		// Remove all bots
+		for (edict_t *ent = game.edicts + gs.maxclients; PLAYERNUM(ent) >= 0; ent--)
 		{
 			if (!ent->r.inuse || AI_GetType(ent->ai) != AI_ISBOT)
 				continue;
 
 			trap_DropClient(ent, DROP_TYPE_GENERAL, nullptr);
+			G_FreeAI(ent);
+			game.numBots--;
 		}
 	}
 }

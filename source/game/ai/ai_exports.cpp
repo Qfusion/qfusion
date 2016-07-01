@@ -8,7 +8,6 @@ const size_t ai_handle_size = sizeof( ai_handle_t );
 
 static bool ai_intialized = false;
 static bool aas_system_initialized = false;
-static bool aas_data_loaded = false;
 
 //==========================================
 // AI_InitLevel
@@ -16,22 +15,11 @@ static bool aas_data_loaded = false;
 //==========================================
 void AI_InitLevel( void )
 {
-    edict_t	*ent;
-
     aas_system_initialized = AI_InitAAS();
     if (!aas_system_initialized)
         G_Printf("Can't initialize AAS system\n");
-    if (aas_system_initialized)
-        aas_data_loaded = AI_LoadLevelAAS(level.mapname);
-
-    // count bots
-    game.numBots = 0;
-    for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
-    {
-        if( !ent->r.inuse || !ent->ai ) continue;
-        if( ent->r.svflags & SVF_FAKECLIENT && AI_GetType( ent->ai ) == AI_ISBOT )
-            game.numBots++;
-    }
+    else if (!AI_LoadLevelAAS(level.mapname))
+        G_Printf("Can't load AAS for level %s\n", level.mapname);
 
     // set up weapon usage weights
 
@@ -109,14 +97,26 @@ void AI_Shutdown( void )
 {
     if (!ai_intialized)
         return;
-    BOT_RemoveBot("all");
 
-    if (aas_system_initialized)
-        AI_ShutdownAAS();
-    aas_system_initialized = false;
+    AI_UnloadLevel();
 
     AiShutdownHooksHolder::Instance()->InvokeHooks();
     ai_intialized = false;
+}
+
+void AI_UnloadLevel()
+{
+    BOT_RemoveBot("all");
+    if (aas_system_initialized)
+    {
+        AI_ShutdownAAS();
+        aas_system_initialized = false;
+    }
+}
+
+void AI_GametypeChanged(const char *gametype)
+{
+    AiGametypeBrain::OnGametypeChanged(gametype);
 }
 
 void AI_CommonFrame()
@@ -177,28 +177,27 @@ void AI_DeleteItem( edict_t *ent )
 //==========================================
 void G_FreeAI( edict_t *ent )
 {
-    if( !ent->ai ) {
+    if (!ent->ai)
         return;
-    }
-    if( ent->ai->type == AI_ISBOT ) {
-        game.numBots--;
-    }
 
     // Invoke an appropriate destructor based on ai instance type, then free memory.
     // It is enough to call G_Free(ent->ai->aiRef), since botRef (if it is present)
     // points to the same block as aiRef does, but to avoid confusion we free pointer aliases explicitly.
-    if (ent->ai->botRef) {
+    if (ent->ai->botRef)
+    {
         ent->ai->botRef->~Bot();
         G_Free(ent->ai->botRef);
-    } else {
+    }
+    else
+    {
         ent->ai->aiRef->~Ai();
         G_Free(ent->ai->aiRef);
     }
     ent->ai->aiRef = nullptr;
     ent->ai->botRef = nullptr;
 
-    G_Free( ent->ai );
-    ent->ai = NULL;
+    G_Free(ent->ai);
+    ent->ai = nullptr;
 }
 
 //==========================================
@@ -207,20 +206,20 @@ void G_FreeAI( edict_t *ent )
 //==========================================
 void G_SpawnAI( edict_t *ent, float skillLevel )
 {
-    if( !ent->ai ) {
+    if (!ent->ai)
         ent->ai = ( ai_handle_t * )G_Malloc( sizeof( ai_handle_t ) );
-    }
-    else {
+    else
         memset( &ent->ai, 0, sizeof( ai_handle_t ) );
-    }
 
-    if( ent->r.svflags & SVF_FAKECLIENT ) {
+    if( ent->r.svflags & SVF_FAKECLIENT )
+    {
         ent->ai->type = AI_ISBOT;
         void *mem = G_Malloc( sizeof(Bot) );
         ent->ai->botRef = new(mem) Bot( ent, skillLevel );
         ent->ai->aiRef = ent->ai->botRef;
     }
-    else {
+    else
+    {
         // TODO: Monster brain is not implemented! This is just a stub!
         ent->ai->type = AI_ISMONSTER;
         void *mem = G_Malloc( sizeof(Ai) );

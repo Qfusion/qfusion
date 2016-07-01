@@ -327,7 +327,11 @@ void AAS_Shutdown(void)
 	//free the aas data
 	AAS_DumpAASData();
 	//free the entities
-	if (aasworld.entities) FreeMemory(aasworld.entities);
+	if (aasworld.entities)
+	{
+		FreeMemory(aasworld.entities);
+		aasworld.entities = NULL;
+	}
 	//clear the aasworld structure
 	Com_Memset(&aasworld, 0, sizeof(aas_t));
 	//aas has not been initialized

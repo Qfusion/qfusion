@@ -48,6 +48,7 @@ protected:
     }
 public:
     AiFrameAwareUpdatable(): frameAffinityModulo(0), frameAffinityOffset(0) {}
+    virtual ~AiFrameAwareUpdatable() {}
 
     // Call this method to update an instance state.
     void Update();

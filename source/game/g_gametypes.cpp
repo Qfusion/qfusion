@@ -1652,7 +1652,7 @@ static void G_CheckNumBots( void )
 				continue;
 			if( AI_GetType( ent->ai ) == AI_ISBOT )
 			{
-				trap_DropClient( ent, DROP_TYPE_GENERAL, NULL );
+				BOT_RemoveBot( ent->r.client->netname );
 				break;
 			}
 		}
@@ -2014,5 +2014,8 @@ void G_Gametype_Init( void )
 	// ch : if new gametype has been initialized, transfer the
 	// client-specific ratings to gametype-specific list
 	if( changed )
+	{
 		G_TransferRatings();
+		AI_GametypeChanged(g_gametype->string);
+	}
 }

@@ -84,6 +84,8 @@ protected:
     // To be overridden in subclasses
     virtual void OnSpecialGoalReached();
 public:
+    virtual ~AiBaseBrain() override {}
+
     void ClearAllGoals();
     // May be overridden in subclasses
     virtual void OnClearSpecialGoalRequested();
