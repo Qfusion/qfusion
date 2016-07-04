@@ -42,7 +42,7 @@ int playerbox_gib_viewheight = 8;
 
 #define SPEEDKEY    500
 
-#define PM_DASHJUMP_TIMEDELAY 1000 // delay in milliseconds
+#define PM_DASHJUMP_TIMEDELAY 1300 // delay in milliseconds
 #define PM_WALLJUMP_TIMEDELAY	1300
 #define PM_WALLJUMP_FAILED_TIMEDELAY	700
 #define PM_SPECIAL_CROUCH_INHIBIT 400
@@ -1383,7 +1383,7 @@ static void PM_CheckWallJump( void )
 */
 static void PM_CheckCrouchSlide( void )
 {
-	if( pml.upPush < 0 && VectorLengthFast( tv( pml.velocity[0], pml.velocity[1], 0 ) ) > pml.dashPlayerSpeed )
+	if( pml.upPush < 0 && VectorLengthFast( tv( pml.velocity[0], pml.velocity[1], 0 ) ) > pml.maxWalkSpeed )
 	{
 		if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > 0 )
 			return; // cooldown or already sliding
