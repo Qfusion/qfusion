@@ -51,6 +51,7 @@ int playerbox_gib_viewheight = 8;
 #define PM_CROUCHSLIDE 1500
 #define PM_CROUCHSLIDE_FADE 500
 #define PM_CROUCHSLIDE_TIMEDELAY 700
+#define PM_CROUCHSLIDE_CONTROL 3
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in
 #define PM_SKIM_TIME 230
 
@@ -582,6 +583,7 @@ static void PM_Friction( void )
 static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel )
 {
 	float addspeed, accelspeed, currentspeed, realspeed, newspeed;
+	bool crouchslide;
 
 	realspeed = VectorLengthFast( pml.velocity );
 
@@ -594,9 +596,14 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel )
 	if( accelspeed > addspeed )
 		accelspeed = addspeed;
 
+	crouchslide = pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING && pm->groundentity != -1 && !( pml.groundsurfFlags & SURF_SLICK );
+
+	if( crouchslide )
+		accelspeed *= PM_CROUCHSLIDE_CONTROL;
+
 	VectorMA( pml.velocity, accelspeed, wishdir, pml.velocity );
 
-	if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING && pm->groundentity != -1 && !( pml.groundsurfFlags & SURF_SLICK ) )
+	if( crouchslide )
 	{ // disable overacceleration while crouch sliding
 		newspeed = VectorLengthFast( pml.velocity );
 		if( newspeed > wishspeed && newspeed != 0 )
