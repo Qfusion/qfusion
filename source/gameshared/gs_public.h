@@ -674,7 +674,7 @@ float GS_FrameForTime( int *frame, unsigned int curTime, unsigned int startTimeS
 #define	PMFEAT_WEAPONSWITCH		( 1<<12 )
 
 #define PMFEAT_ALL				( 0xFFFF )
-#define PMFEAT_DEFAULT			( PMFEAT_ALL & ~(PMFEAT_GHOSTMOVE|PMFEAT_DASH) )
+#define PMFEAT_DEFAULT			( PMFEAT_ALL & ~PMFEAT_GHOSTMOVE )
 
 enum
 {
