@@ -418,6 +418,8 @@ static int PM_SlideMove( void )
 		if( pm->playerState->pmove.pm_time || ( pm->groundentity == -1 && pm->playerState->pmove.skim_time > 0 && old_velocity[2] >= pml.velocity[2] ) )
 			VectorCopy( old_velocity, pml.velocity );
 		pm->playerState->pmove.skim_time -= pm->cmd.msec;
+		if( pm->playerState->pmove.skim_time < 0 )
+			pm->playerState->pmove.skim_time = 0;
 	}
 
 	return blockedmask;
