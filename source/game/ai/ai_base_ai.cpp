@@ -69,21 +69,12 @@ void Ai::UpdateReachCache(int reachedAreaNum)
         if (nextReaches[i].areanum == reachedAreaNum)
             break;
     }
-
-    // We are outside of all cached areas atm
-    if (i == nextReaches.size())
-    {
-        nextReaches.clear();
-    }
+    // Remove all reaches including i-th
+    if (i != nextReaches.size())
+        nextReaches.erase(nextReaches.begin(), nextReaches.begin() + i + 1);
     else
-    {
-        // Shift reaches array left. TODO: Add StaticVector::remove_range method
-        unsigned j = 0, k = i + 1;
-        for (; k < nextReaches.size(); ++j, ++k)
-            nextReaches[j] = nextReaches[k];
-        while (nextReaches.size() != j)
-            nextReaches.pop_back();
-    }
+        nextReaches.clear();
+
     int areaNum;
     float *origin;
     if (nextReaches.empty())
