@@ -87,6 +87,9 @@ public:
 
     inline bool IsGhosting() const { return G_ISGHOSTING(self); }
 
+    inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
+    inline int AllowedTravelFlags() const { return allowedAasTravelFlags; }
+
     void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
     static bool IsStep(edict_t *ent);
     int FindCurrAASAreaNum();

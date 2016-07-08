@@ -1,4 +1,5 @@
 #include "ai_base_team_brain.h"
+#include "ai_squad_based_team_brain.h"
 #include "ai_shutdown_hooks_holder.h"
 #include "bot.h"
 
@@ -107,15 +108,23 @@ void AiBaseTeamBrain::InitTeamAffinity() const
     int frameTime = 1000 / ServerFps();
     // 4 for 60 fps or more, 1 for 16 fps or less
     teamBrainAffinityModulo = std::min(4, std::max(1, 64 / frameTime));
+    if (team == TEAM_PLAYERS)
+    {
+        teamBrainAffinityOffset = 0;
+        const_cast<AiBaseTeamBrain*>(this)->SetFrameAffinity(teamBrainAffinityModulo, teamBrainAffinityOffset);
+        return;
+    }
+
+    static_assert(TEAM_ALPHA == 2 && TEAM_BETA == 3, "Modify affinity offset computations");
     switch (teamBrainAffinityModulo)
     {
         // The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 2
-        case 4: teamBrainAffinityOffset = team * 2; break;
-            // Both Alpha and Beta team brains think on frame 0
+        case 4: teamBrainAffinityOffset = (team - 2) * 2; break;
+        // Both Alpha and Beta team brains think on frame 0
         case 3: teamBrainAffinityOffset = 0; break;
-            // The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 1
-        case 2: teamBrainAffinityOffset = team; break;
-            // All brains think in the same frame
+        // The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 1
+        case 2: teamBrainAffinityOffset = team - 2; break;
+        // All brains think in the same frame
         case 1: teamBrainAffinityOffset = 0; break;
     }
     // Initialize superclass fields
@@ -262,6 +271,10 @@ void AiBaseTeamBrain::UnregisterTeamBrain(int team)
 
 AiBaseTeamBrain *AiBaseTeamBrain::InstantiateTeamBrain(int team, const char *gametype)
 {
+    // Delegate construction to AiSquadBasedTeamBrain
+    if (GS_TeamBasedGametype() && !GS_InvidualGameType())
+        return AiSquadBasedTeamBrain::InstantiateTeamBrain(team, gametype);
+
     void *mem = G_Malloc(sizeof(AiBaseTeamBrain));
     return new(mem)AiBaseTeamBrain(team);
 }
