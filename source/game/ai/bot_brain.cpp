@@ -178,7 +178,7 @@ void BotBrain::PreThink()
         if (combatTask.spamTimesOutAt <= levelTime)
         {
             Debug("spamming at %s has timed out\n", combatTask.spamEnemy->Nick());
-            combatTask.Reset();
+            ResetCombatTask();
             nextTargetChoiceAt = levelTime;
         }
     }
@@ -282,14 +282,12 @@ void BotBrain::RemoveEnemy(Enemy &enemy)
     // Enemies always are located in the same buffer, so we may compare pointers
     if (&enemy == combatTask.aimEnemy)
     {
-        combatTask.Reset();
-        combatTask.prevSpamEnemy = nullptr;
+        ResetCombatTask();
         nextTargetChoiceAt = level.time + reactionTime;
     }
     else if (&enemy == combatTask.spamEnemy)
     {
-        combatTask.Reset();
-        combatTask.prevSpamEnemy = nullptr;
+        ResetCombatTask();
         nextTargetChoiceAt = level.time + reactionTime;
     }
     enemy.Clear();
@@ -325,7 +323,7 @@ void BotBrain::AfterAllEnemiesViewed()
         if (HasAnyDetectedEnemiesInView())
         {
             Debug("should stop spamming at %s, there are enemies in view\n", combatTask.spamEnemy->Nick());
-            combatTask.Reset();
+            ResetCombatTask();
             nextTargetChoiceAt = level.time;
         }
     }
@@ -561,7 +559,7 @@ void BotBrain::OnPain(const edict_t *enemy, float kick, int damage)
     {
         if (!combatTask.Empty())
         {
-            combatTask.Clear();
+            ResetCombatTask();
             nextTargetChoiceAt = level.time + 1;
             nextWeaponChoiceAt = level.time + 1;
         }
@@ -925,7 +923,6 @@ void BotBrain::TryFindNewCombatTask()
 {
     CombatTask *task = &combatTask;
     const Enemy *oldAimEnemy = task->aimEnemy;
-    task->Reset();
     activeEnemies.clear();
 
     // Atm we just pick up a target that has best ai weight
@@ -980,7 +977,6 @@ void BotBrain::TryFindNewCombatTask()
         const Enemy *bestTarget = activeEnemies.front();
         EnqueueTarget(bestTarget->ent);
         task->aimEnemy = bestTarget;
-        task->prevSpamEnemy = nullptr;
         task->instanceId = NextCombatTaskInstanceId();
         nextTargetChoiceAt = level.time + aimTargetChoicePeriod;
         Debug("TryFindNewCombatTask(): found aim enemy %s, next target choice at %09d\n", bestTarget->Nick(), nextTargetChoiceAt);
@@ -1043,7 +1039,7 @@ void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task, const Vec3 &botViewDir
             continue;
         if (enemy.weight)
             continue;
-        if (&enemy == task->prevSpamEnemy)
+        if (&enemy == oldCombatTask.spamEnemy)
             continue;
 
         Vec3 botToSpotDirection = enemy.LastSeenPosition() - self->s.origin;
