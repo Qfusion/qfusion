@@ -236,8 +236,6 @@ class CombatTask
     // Used to cancel spamming if enemy is killed by bot or other player
     // (this means there is no sense to do spamming).
     const Enemy *spamEnemy;
-    // Used to prevent infinite spamming on the same point, should be set in Reset();
-    const Enemy *prevSpamEnemy;
     Vec3 spamSpot;
 
     int suggestedShootWeapon;
@@ -277,12 +275,10 @@ public:
         Clear();
     };
 
-    // This call completely cleans object state
     void Clear()
     {
         aimEnemy = nullptr;
         spamEnemy = nullptr;
-        prevSpamEnemy = nullptr;
         spamTimesOutAt = level.time;
         instanceId = 0;
         suggestedShootWeapon = WEAP_NONE;
@@ -292,14 +288,6 @@ public:
         retreat = false;
         inhibit = false;
         importantShot = false;
-    }
-
-    // This call cleans all fields except prevSpamEnemy which is set to currSpamEnemy
-    void Reset()
-    {
-        const Enemy *currSpamEnemy = spamEnemy;
-        Clear();
-        prevSpamEnemy = currSpamEnemy;
     }
 
     bool Empty() const  { return !aimEnemy && !spamEnemy; }
@@ -541,6 +529,14 @@ class BotBrain: public AiBaseBrain
     BotBrain() = delete;
     // Disable copying and moving
     BotBrain(BotBrain &&that) = delete;
+
+    void ResetCombatTask()
+    {
+        oldCombatTask = combatTask;
+        combatTask.Clear();
+    }
+
+    CombatTask oldCombatTask;
 public:
     CombatTask combatTask;
 
