@@ -930,14 +930,19 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             {
                 if (!self->groundentity && !hasObstacles && !IsCloseToAnyGoal() && Skill() > 0.33f)
                 {
-                    if (speed > 320.0f) // Avoid division by zero and logic errors
+                    float runSpeed = DEFAULT_PLAYERSPEED_STANDARD;
+                    if (GS_Instagib())
+                        runSpeed = DEFAULT_PLAYERSPEED_INSTAGIB;
+                    else if (GS_RaceGametype())
+                        runSpeed = DEFAULT_PLAYERSPEED_RACE;
+                    if (speed > runSpeed) // Avoid division by zero and logic errors
                     {
                         // Max accel is measured in units per second and decreases with speed
-                        // For speed of 320 maxAccel is 120
-                        // For speed of 700 and greater maxAccel is 0
-                        // This means cheating acceleration is not applied for speeds greater than 700 ups
+                        // For speed of runSpeed maxAccel is 180
+                        // For speed of 900 and greater maxAccel is 0
+                        // This means cheating acceleration is not applied for speeds greater than 900 ups
                         // However the bot may reach greater speed since builtin GS_NEWBUNNY forward accel is enabled
-                        float maxAccel = 120.0f * (1.0f - BoundedFraction(speed - 320.0f, 700.0f - 320.0f));
+                        float maxAccel = 180.0f * (1.0f - BoundedFraction(speed - runSpeed, 900.0f - runSpeed));
                         // Accel contains of constant and directional parts
                         // If velocity dir exactly matches target dir, accel = maxAccel
                         float accel = 0.5f;
