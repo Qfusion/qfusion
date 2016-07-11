@@ -233,6 +233,7 @@ private:
     inline const bool IsEnemyOnGround() const { return botBrain.combatTask.IsOnGround(); }
     inline Vec3 EnemyOrigin() const { return botBrain.combatTask.EnemyOrigin(); }
     inline Vec3 EnemyLookDir() const { return botBrain.combatTask.EnemyLookDir(); }
+    inline unsigned EnemyFireDelay() const { return botBrain.combatTask.EnemyFireDelay(); }
     inline Vec3 EnemyVelocity() const { return botBrain.combatTask.EnemyVelocity(); }
     inline Vec3 EnemyMins() const { return botBrain.combatTask.EnemyMins(); }
     inline Vec3 EnemyMaxs() const { return botBrain.combatTask.EnemyMaxs(); }

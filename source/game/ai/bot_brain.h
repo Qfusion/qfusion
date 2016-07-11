@@ -127,6 +127,17 @@ public:
         FailWith("EnemyLookDir(): aim enemy is not present");
     }
 
+    unsigned EnemyFireDelay() const
+    {
+        if (aimEnemy && aimEnemy->ent)
+        {
+            if (!aimEnemy->ent->r.client)
+                return 0;
+            return (unsigned)aimEnemy->ent->r.client->ps.stats[STAT_WEAPON_TIME];
+        }
+        return std::numeric_limits<unsigned>::max();
+    }
+
     const int Weapon()
     {
         if (aimEnemy) return suggestedShootWeapon;
