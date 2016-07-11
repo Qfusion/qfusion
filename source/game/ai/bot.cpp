@@ -422,7 +422,13 @@ bool Bot::MayKeepRunningInCombat() const
     Vec3 enemyToBotDir = Vec3(self->s.origin) - EnemyOrigin();
     bool enemyMayHit = true;
     if (IsEnemyAStaticSpot())
+    {
         enemyMayHit = false;
+    }
+    else if (EnemyFireDelay() > 300)
+    {
+        enemyMayHit = false;
+    }
     else
     {
         Vec3 enemyLookDir = EnemyLookDir();
