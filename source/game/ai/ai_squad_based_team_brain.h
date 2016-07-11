@@ -2,9 +2,12 @@
 #define QFUSION_AI_SQUAD_BASED_TEAM_BRAIN_H
 
 #include "ai_base_team_brain.h"
+#include "ai_base_enemy_pool.h"
 #include "static_vector.h"
 #include <deque>
 #include <utility>
+
+class Bot;
 
 class CachedTravelTimesMatrix
 {
@@ -47,31 +50,54 @@ private:
     bool CheckCanFightTogether() const;
     bool CheckCanMoveTogether() const;
 
-public:
-    AiSquad(CachedTravelTimesMatrix &travelTimesMatrix)
-        : isValid(false),
-          inUse(false),
-          brokenConnectivityTimeoutAt(0),
-          travelTimesMatrix(travelTimesMatrix) {}
-
-    AiSquad(const AiSquad &that)
-        : travelTimesMatrix(that.travelTimesMatrix)
+    class SquadEnemyPool: public AiBaseEnemyPool
     {
-        isValid = that.isValid;
-        inUse = that.inUse;
-        canFightTogether = that.canFightTogether;
-        canMoveTogether = that.canMoveTogether;
-        brokenConnectivityTimeoutAt = that.brokenConnectivityTimeoutAt;
-        for (Bot *bot: that.bots)
-            bots.push_back(bot);
-    }
+        friend class AiSquad;
+        AiSquad *squad;
 
-    virtual ~AiSquad() override {}
+        float botRoleWeights[AiSquad::MAX_SIZE];
+        const Enemy *botEnemies[AiSquad::MAX_SIZE];
+
+        unsigned GetBotSlot(const Bot *bot) const;
+        void CheckSquadValid() const;
+    protected:
+        virtual void OnNewThreat(const edict_t *newThreat) override;
+        virtual bool CheckHasQuad() const override;
+        virtual bool CheckHasShell() const override;
+        virtual float ComputeDamageToBeKilled() const override;
+        virtual void OnEnemyRemoved(const Enemy *enemy) override;
+        virtual void TryPushNewEnemy(const edict_t *enemy) override;
+
+        void SetBotRoleWeight(const edict_t *bot, float weight) override;
+        float GetAdditionalEnemyWeight(const edict_t *bot, const edict_t *enemy) const override;
+        void OnBotEnemyAssigned(const edict_t *bot, const Enemy *enemy) override;
+    public:
+        SquadEnemyPool(AiSquad *squad, float skill);
+        virtual ~SquadEnemyPool() override {}
+    };
+
+    // We can't use it as a value member because squads should be copyable or moveable
+    SquadEnemyPool *squadEnemyPool;
+protected:
+    virtual void SetFrameAffinity(unsigned modulo, unsigned offset) override
+    {
+        // Call super method first
+        AiFrameAwareUpdatable::SetFrameAffinity(modulo, offset);
+        // Allow enemy pool to think
+        squadEnemyPool->SetFrameAffinity(modulo, offset);
+    }
+public:
+    AiSquad(CachedTravelTimesMatrix &travelTimesMatrix);
+    AiSquad(AiSquad &&that);
+    virtual ~AiSquad() override;
 
     // If this is false, squad is not valid and should be
     inline bool IsValid() const { return isValid; }
     inline bool InUse() const { return inUse; }
     inline const BotsList &Bots() const { return bots; };
+
+    inline AiBaseEnemyPool *EnemyPool() { return squadEnemyPool; }
+    inline const AiBaseEnemyPool *EnemyPool() const { return squadEnemyPool; }
 
     template<typename Container> void ReleaseBotsTo(Container &output)
     {
@@ -90,7 +116,9 @@ public:
         brokenConnectivityTimeoutAt = level.time + 1;
         bots.clear();
     }
+
     void AddBot(Bot *bot);
+
     // Checks whether a bot may be attached to an existing squad
     bool MayAttachBot(const Bot *bot) const;
     bool TryAttachBot(Bot *bot)
@@ -103,8 +131,24 @@ public:
         return false;
     }
 
+    void Invalidate();
+
     void OnBotRemoved(int botEntNum);
 
+    inline void OnBotViewedEnemy(const edict_t *bot, const edict_t *enemy)
+    {
+        squadEnemyPool->OnEnemyViewed(enemy);
+    }
+    inline void OnBotPain(const edict_t *bot, const edict_t *enemy, float kick, int damage)
+    {
+        squadEnemyPool->OnPain(bot, enemy, kick, damage);
+    }
+    inline void OnBotDamagedEnemy(const edict_t *bot, const edict_t *target, int damage)
+    {
+        squadEnemyPool->OnEnemyDamaged(bot, target, damage);
+    }
+
+    virtual void Frame() override;
     virtual void Think() override;
 };
 
@@ -127,7 +171,7 @@ protected:
     static AiSquadBasedTeamBrain *InstantiateTeamBrain(int team, const char *gametype);
 public:
     AiSquadBasedTeamBrain(int team): AiBaseTeamBrain(team) {}
-    virtual ~AiSquadBasedTeamBrain() override {}
+    virtual ~AiSquadBasedTeamBrain() override {};
 
     virtual void Frame() override;
     virtual void Think() override;

@@ -7,11 +7,16 @@
 #include "ai_base_ai.h"
 #include "vec3.h"
 
+class AiSquad;
+class AiBaseEnemyPool;
+
 class Bot: public Ai
 {
     friend class AiGametypeBrain;
     friend class AiBaseTeamBrain;
     friend class BotBrain;
+    friend class AiSquad;
+    friend class AiBaseEnemyPool;
 public:
     static constexpr auto PREFERRED_TRAVEL_FLAGS =
         TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR | TFL_TELEPORT | TFL_JUMPPAD;
@@ -37,12 +42,35 @@ public:
     void SayVoiceMessages();
     void GhostingFrame();
 
-
     void OnRespawn();
 
     inline float Skill() const { return skillLevel; }
     inline bool IsReady() const { return level.ready[PLAYERNUM(self)]; }
 
+    inline void OnAttachedToSquad(AiSquad *squad)
+    {
+        botBrain.OnAttachedToSquad(squad);
+    }
+    inline void OnDetachedFromSquad(AiSquad *squad)
+    {
+        botBrain.OnDetachedFromSquad(squad);
+    }
+    inline unsigned LastAttackedByTime(const edict_t *attacker)
+    {
+        return botBrain.LastAttackedByTime(attacker);
+    }
+    inline unsigned LastTargetTime(const edict_t *target)
+    {
+        return botBrain.LastTargetTime(target);
+    }
+    inline void OnEnemyRemoved(const Enemy *enemy)
+    {
+        botBrain.OnEnemyRemoved(enemy);
+    }
+    inline void OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable *threatDetector)
+    {
+        botBrain.OnNewThreat(newThreat, threatDetector);
+    }
 protected:
     virtual void Frame() override;
     virtual void Think() override;
@@ -51,6 +79,9 @@ protected:
     virtual void TouchedJumppad(const edict_t *jumppad) override;
 private:
     void RegisterVisibleEnemies();
+
+    inline bool IsPrimaryAimEnemy(const edict_t *enemy) const { return botBrain.IsPrimaryAimEnemy(enemy); }
+    inline bool IsOldHiddenEnemy(const edict_t *enemy) const { return botBrain.IsOldHiddenEnemy(enemy); }
 
     DangersDetector dangersDetector;
     BotBrain botBrain;

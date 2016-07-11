@@ -4,227 +4,8 @@
 #include <stdarg.h>
 #include "ai_base_ai.h"
 #include "ai_base_brain.h"
-#include "../../gameshared/q_comref.h"
-#include <deque>
-#include <limits>
-
-template <int Weapon> struct WeaponAmmo
-{
-    static constexpr int strongAmmoTag = AMMO_NONE;
-    static constexpr int weakAmmoTag = AMMO_NONE;
-};
-
-template<> struct WeaponAmmo<WEAP_NONE>
-{
-    static constexpr int strongAmmoTag = AMMO_NONE;
-    static constexpr int weakAmmoTag = AMMO_NONE;
-};
-
-template<> struct WeaponAmmo<WEAP_GUNBLADE>
-{
-    static constexpr int strongAmmoTag = AMMO_GUNBLADE;
-    static constexpr int weakAmmoTag = AMMO_WEAK_GUNBLADE;
-};
-
-template<> struct WeaponAmmo<WEAP_RIOTGUN>
-{
-    static constexpr int strongAmmoTag = AMMO_SHELLS;
-    static constexpr int weakAmmoTag = AMMO_WEAK_SHELLS;
-};
-
-template<> struct WeaponAmmo<WEAP_GRENADELAUNCHER>
-{
-    static constexpr int strongAmmoTag = AMMO_GRENADES;
-    static constexpr int weakAmmoTag = AMMO_WEAK_GRENADES;
-};
-
-template<> struct WeaponAmmo<WEAP_ROCKETLAUNCHER>
-{
-    static constexpr int strongAmmoTag = AMMO_ROCKETS;
-    static constexpr int weakAmmoTag = AMMO_WEAK_ROCKETS;
-};
-
-template<> struct WeaponAmmo<WEAP_PLASMAGUN>
-{
-    static constexpr int strongAmmoTag = AMMO_PLASMA;
-    static constexpr int weakAmmoTag = AMMO_WEAK_PLASMA;
-};
-
-template<> struct WeaponAmmo<WEAP_LASERGUN>
-{
-    static constexpr int strongAmmoTag = AMMO_LASERS;
-    static constexpr int weakAmmoTag = AMMO_WEAK_LASERS;
-};
-
-template<> struct WeaponAmmo<WEAP_MACHINEGUN>
-{
-    static constexpr int strongAmmoTag = AMMO_BULLETS;
-    static constexpr int weakAmmoTag = AMMO_WEAK_BULLETS;
-};
-
-template<> struct WeaponAmmo<WEAP_ELECTROBOLT>
-{
-    static constexpr int strongAmmoTag = AMMO_BOLTS;
-    static constexpr int weakAmmoTag = AMMO_WEAK_BOLTS;
-};
-
-inline bool HasQuad(const edict_t *ent)
-{
-    return ent && ent->r.client && ent->r.client->ps.inventory[POWERUP_QUAD];
-}
-
-inline bool HasShell(const edict_t *ent)
-{
-    return ent && ent->r.client && ent->r.client->ps.inventory[POWERUP_SHELL];
-}
-
-inline bool HasPowerups(const edict_t *ent)
-{
-    if (!ent || !ent->r.client)
-        return false;
-    return ent->r.client->ps.inventory[POWERUP_QUAD] && ent->r.client->ps.inventory[POWERUP_SHELL];
-}
-
-inline bool IsCarrier(const edict_t *ent)
-{
-    return ent && ent->r.client && ent->s.effects & EF_CARRIER;
-}
-
-float DamageToKill(const edict_t *client, float armorProtection, float armorDegradation);
-
-class Enemy
-{
-public:
-
-    Enemy() : ent(nullptr), lastSeenPosition(NAN, NAN, NAN), lastSeenVelocity(NAN, NAN, NAN)
-    {
-        Clear();
-    }
-
-    const edict_t *ent;  // If null, the enemy slot is unused
-
-    static constexpr unsigned MAX_TRACKED_POSITIONS = 16;
-
-    float weight;
-    float avgPositiveWeight;
-    float maxPositiveWeight;
-    unsigned positiveWeightsCount;
-
-    unsigned registeredAt;
-
-    void Clear();
-    void OnViewed();
-
-    inline const char *Nick() const { return ent->r.client ? ent->r.client->netname : ent->classname; }
-
-    inline bool HasQuad() const { return ::HasQuad(ent); }
-    inline bool HasShell() const { return ::HasShell(ent); }
-    inline bool HasPowerups() const { return ::HasPowerups(ent); }
-    inline bool IsCarrier() const { return ::IsCarrier(ent); }
-
-    template<int Weapon> inline int AmmoReadyToFireCount() const
-    {
-        if (!ent->r.client)
-            return 0;
-        const int *inventory = ent->r.client->ps.inventory;
-        if (!inventory[Weapon])
-            return 0;
-        return inventory[WeaponAmmo<Weapon>::strongAmmoTag] + inventory[WeaponAmmo<Weapon>::weakAmmoTag];
-    }
-
-    inline int ShellsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_RIOTGUN>(); }
-    inline int GrenadesReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_GRENADELAUNCHER>(); }
-    inline int RocketsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ROCKETLAUNCHER>(); }
-    inline int PlasmasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_PLASMAGUN>(); }
-    inline int BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
-    inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
-    inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
-
-    inline int PendingWeapon() const
-    {
-        // TODO: It does not check ammo
-        return ent->r.client ? ent->r.client->ps.stats[STAT_PENDING_WEAPON] : WEAP_NONE;
-    }
-
-    inline unsigned LastSeenAt() const { return lastSeenAt; }
-    inline const Vec3 &LastSeenPosition() const { return lastSeenPosition; }
-    inline const Vec3 &LastSeenVelocity() const { return lastSeenVelocity; }
-
-    // TODO: Fuse in a single array of some struct
-    // Array of last seen timestamps
-    std::deque<unsigned> lastSeenTimestamps;
-    // Array of last seen positions
-    std::deque<Vec3> lastSeenPositions;
-    // Array of last seen enemy velocities
-    std::deque<Vec3> lastSeenVelocities;
-private:
-    // Same as front() of lastSeenPositions, used for faster access
-    Vec3 lastSeenPosition;
-    // Same as front() of lastSeenVelocities, used for faster access
-    Vec3 lastSeenVelocity;
-    // Same as front() of lastSeenTimestamps, used for faster access
-    unsigned lastSeenAt;
-};
-
-class AttackStats
-{
-    friend class BotBrain;
-
-    // Very close to 4 game seconds
-    static constexpr unsigned MAX_KEPT_FRAMES = 64 * 4;
-
-    static_assert((MAX_KEPT_FRAMES & (MAX_KEPT_FRAMES - 1)) == 0, "Should be a power of 2 for fast modulo computation");
-
-    float frameDamages[MAX_KEPT_FRAMES];
-
-    unsigned frameIndex;
-    unsigned totalAttacks;
-    unsigned lastDamageAt;
-    unsigned lastTouchAt;
-    float totalDamage;
-
-    const edict_t *ent;
-
-    AttackStats() { Clear(); }
-public:
-
-    void Clear()
-    {
-        ent = nullptr;
-        totalDamage = 0;
-        totalAttacks = 0;
-        lastDamageAt = 0;
-        lastTouchAt = level.time;
-        frameIndex = 0;
-        memset(frameDamages, 0, sizeof(frameDamages));
-    }
-
-    // Call it once in a game frame
-    void Frame()
-    {
-        float overwrittenDamage = frameDamages[frameIndex];
-        frameIndex = (frameIndex + 1) % MAX_KEPT_FRAMES;
-        totalDamage -= overwrittenDamage;
-        frameDamages[frameIndex] = 0.0f;
-        if (overwrittenDamage > 0)
-            totalAttacks--;
-    }
-
-    // Call it after Frame() in the same frame
-    void OnDamage(float damage)
-    {
-        frameDamages[frameIndex] = damage;
-        totalDamage += damage;
-        totalAttacks++;
-        lastDamageAt = level.time;
-    }
-
-    // Call it after Frame() in the same frame if damage is not registered
-    // but you want to mark frame as a frame of activity anyway
-    void Touch() { lastTouchAt = level.time; }
-
-    unsigned LastActivityAt() const { return std::max(lastDamageAt, lastTouchAt); }
-};
+#include "ai_base_enemy_pool.h"
+#include "bot.h"
 
 class CombatTask
 {
@@ -240,14 +21,25 @@ class CombatTask
 
     int suggestedShootWeapon;
     int suggestedSpamWeapon;
-#if defined(__GNUC__) || defined(__clang__)
-    void FailWith(const char *message) const __attribute__ ((noreturn))
+#ifndef _MSC_VER
+    inline void FailWith(const char *message) const __attribute__ ((noreturn))
 #else
-    void FailWith(const char *message) const
+    __declspec(noreturn) inline void FailWith(const char *message) const
 #endif
     {
-        G_Printf(message);
+        fputs("CombatTask ", stderr);
+        fputs(message, stderr);
+        fflush(stderr);
         abort();
+    }
+
+    const edict_t *AimEnemyEnt() const
+    {
+        if (!aimEnemy)
+            FailWith("There is no aim enemy");
+        if (!aimEnemy->ent)
+            FailWith("AimEnemy is present but ent is null (this means this enemy slot has been released)");
+        return aimEnemy->ent;
     }
 
 public:
@@ -305,21 +97,21 @@ public:
 
     Vec3 EnemyVelocity() const
     {
-        if (aimEnemy) return Vec3(aimEnemy->ent->velocity);
+        if (aimEnemy) return Vec3(AimEnemyEnt()->velocity);
         if (spamEnemy) return Vec3(0, 0, 0);
         FailWith("EnemyVelocity(): combat task is empty\n");
     }
 
     Vec3 EnemyMins() const
     {
-        if (aimEnemy) return Vec3(aimEnemy->ent->r.mins);
+        if (aimEnemy) return Vec3(AimEnemyEnt()->r.mins);
         if (spamEnemy) return Vec3(0, 0, 0);
         FailWith("EnemyMins(): combat task is empty\n");
     }
 
     Vec3 EnemyMaxs() const
     {
-        if (aimEnemy) return Vec3(aimEnemy->ent->r.maxs);
+        if (aimEnemy) return Vec3(AimEnemyEnt()->r.maxs);
         if (spamEnemy) return Vec3(0, 0, 0);
         FailWith("EnemyMaxs(): combat task is empty\n");
     }
@@ -329,7 +121,7 @@ public:
         if (aimEnemy)
         {
             vec3_t forward;
-            AngleVectors(aimEnemy->ent->s.angles, forward, nullptr, nullptr);
+            AngleVectors(AimEnemyEnt()->s.angles, forward, nullptr, nullptr);
             return Vec3(forward);
         }
         FailWith("EnemyLookDir(): aim enemy is not present");
@@ -359,33 +151,7 @@ class BotBrain: public AiBaseBrain
     friend class Bot;
 
     edict_t *bot;
-    float skillLevel;
-
-    static constexpr unsigned MAX_TRACKED_ENEMIES = 10;
-    static constexpr unsigned MAX_TRACKED_ATTACKERS = 5;
-    static constexpr unsigned MAX_TRACKED_TARGETS = 5;
-    // Ensure we always will have at least 3 free slots for new enemies
-    // (quad/shell owners and carrier) FOR MAXIMAL SKILL
-    static_assert(MAX_TRACKED_ATTACKERS + 3 <= MAX_TRACKED_ENEMIES, "Leave at least 3 free slots for ordinary enemies");
-    static_assert(MAX_TRACKED_TARGETS + 3 <= MAX_TRACKED_ENEMIES, "Leave at least 3 free slots for ordinary enemies");
-
-    static constexpr unsigned NOT_SEEN_TIMEOUT = 4000;
-    static constexpr unsigned ATTACKER_TIMEOUT = 3000;
-    static constexpr unsigned TARGET_TIMEOUT = 3000;
-
-    // All known (viewed and not forgotten) enemies
-    StaticVector<Enemy, MAX_TRACKED_ENEMIES> trackedEnemies;
-
-    static constexpr unsigned MAX_ACTIVE_ENEMIES = 3;
-    // Active enemies (potential targets) in order of importance, chosen aim enemy first
-    StaticVector<Enemy *, MAX_ACTIVE_ENEMIES> activeEnemies;
-
-    unsigned trackedEnemiesCount;
-    const unsigned maxTrackedEnemies;
-    const unsigned maxTrackedAttackers;
-    const unsigned maxTrackedTargets;
-    const unsigned maxActiveEnemies;
-
+    const float skillLevel;
     const unsigned reactionTime;
 
     const unsigned aimTargetChoicePeriod;
@@ -399,9 +165,6 @@ class BotBrain: public AiBaseBrain
     unsigned nextWeaponChoiceAt;
 
     unsigned nextFastWeaponSwitchActionCheckAt;
-
-    StaticVector<AttackStats, MAX_TRACKED_ATTACKERS> attackers;
-    StaticVector<AttackStats, MAX_TRACKED_TARGETS> targets;
 
     unsigned prevThinkLevelTime;
 
@@ -437,17 +200,7 @@ class BotBrain: public AiBaseBrain
     // This var holds memory referred by AiBaseBrain::specialGoal
     NavEntity pursuitGoal;
 
-    float ComputeRawEnemyWeight(const edict_t *enemy);
-
-    void UpdateEnemyWeight(Enemy &enemy);
-
-    void TryPushNewEnemy(const edict_t *enemy);
-
-    void EmplaceEnemy(const edict_t *enemy, int slot);
-
     inline unsigned NextCombatTaskInstanceId() { return combatTaskInstanceCounter++; }
-
-    inline const char *BotNick() const { return bot->r.client->netname; }
 
     inline bool BotHasQuad() const { return ::HasQuad(bot); }
     inline bool BotHasShell() const { return ::HasShell(bot); }
@@ -477,13 +230,6 @@ class BotBrain: public AiBaseBrain
     inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
     inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
 
-    // Returns zero if ent not found
-    unsigned LastAttackedByTime(const edict_t *ent) const;
-    unsigned LastTargetTime(const edict_t *ent) const;
-    bool HasAnyDetectedEnemiesInView() const;
-    // Returns attacker slot number
-    int EnqueueAttacker(const edict_t *attacker, int damage);
-    void EnqueueTarget(const edict_t *target);
     void SuggestAimWeaponAndTactics(CombatTask *task);
     void SuggestSniperRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition);
     void SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition);
@@ -501,11 +247,10 @@ class BotBrain: public AiBaseBrain
     int SuggestShotOfDespairWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     int SuggestQuadBearerWeapon(const Enemy &enemy);
     bool SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy);
-    void SuggestPursuitOrSpamTask(CombatTask *task, const Vec3 &botViewDirection);
+    void SuggestPursuitOrSpamTask(CombatTask *task);
     void StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy);
     int ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end);
     void TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey);
-    void RemoveEnemy(Enemy &enemy);
     void UpdateKeptCurrentCombatTask();
     void TryFindNewCombatTask();
     bool CheckFastWeaponSwitchAction();
@@ -534,9 +279,46 @@ class BotBrain: public AiBaseBrain
     {
         oldCombatTask = combatTask;
         combatTask.Clear();
+        nextTargetChoiceAt = level.time;
     }
 
+    class EnemyPool: public AiBaseEnemyPool
+    {
+        friend class BotBrain;
+        edict_t *bot;
+        BotBrain *botBrain;
+    protected:
+        void OnNewThreat(const edict_t *newThreat) override;
+        bool CheckHasQuad() const override { return ::HasQuad(bot); }
+        bool CheckHasShell() const override { return ::HasShell(bot); }
+        float ComputeDamageToBeKilled() const override { return DamageToKill(bot); }
+        void OnEnemyRemoved(const Enemy *enemy) override;
+        void TryPushNewEnemy(const edict_t *enemy) override { TryPushEnemyOfSingleBot(bot, enemy); }
+        void SetBotRoleWeight(const edict_t *bot, float weight) override {}
+        float GetAdditionalEnemyWeight(const edict_t *bot, const edict_t *enemy) const override { return 0; }
+        void OnBotEnemyAssigned(const edict_t *bot, const Enemy *enemy) override {}
+    public:
+        EnemyPool(edict_t *bot, BotBrain *botBrain, float skill)
+            : AiBaseEnemyPool(skill), bot(bot), botBrain(botBrain)
+        {
+            SetTag(va("BotBrain(%s)::EnemyPool", bot->r.client->netname));
+        }
+        virtual ~EnemyPool() override {}
+    };
+
+    class AiSquad *squad;
+    EnemyPool botEnemyPool;
+    AiBaseEnemyPool *activeEnemyPool;
+
     CombatTask oldCombatTask;
+protected:
+    virtual void SetFrameAffinity(unsigned modulo, unsigned offset) override
+    {
+        // Call super method first
+        AiBaseBrain::SetFrameAffinity(modulo, offset);
+        // Allow bot's own enemy pool to think
+        botEnemyPool.SetFrameAffinity(modulo, offset);
+    }
 public:
     CombatTask combatTask;
 
@@ -547,15 +329,43 @@ public:
     virtual void PreThink() override;
     virtual void PostThink() override;
 
+    void OnAttachedToSquad(AiSquad *squad);
+    void OnDetachedFromSquad(AiSquad *squad);
+
+    void OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable *threatDetector);
+    void OnEnemyRemoved(const Enemy *enemy);
+
+    inline unsigned MaxTrackedEnemies() const { return botEnemyPool.MaxTrackedEnemies(); }
+
     void OnEnemyViewed(const edict_t *enemy);
     // Call it after all calls to OnEnemyViewed()
     void AfterAllEnemiesViewed();
     void OnPain(const edict_t *enemy, float kick, int damage);
     void OnEnemyDamaged(const edict_t *target, int damage);
 
-    bool IsPursuing() const { return specialGoal == &pursuitGoal; }
+    // In these calls use not active but bot's own enemy pool
+    // (this behaviour is expected by callers, otherwise referring to a squad enemy pool is enough)
+    inline unsigned LastAttackedByTime(const edict_t *attacker) const
+    {
+        return botEnemyPool.LastAttackedByTime(attacker);
+    }
+    inline unsigned LastTargetTime(const edict_t *target) const
+    {
+        return botEnemyPool.LastTargetTime(target);
+    }
+
+    inline bool IsPrimaryAimEnemy(const edict_t *enemy) const
+    {
+        return combatTask.aimEnemy && combatTask.aimEnemy->ent == enemy;
+    }
+    inline bool IsOldHiddenEnemy(const edict_t *enemy) const
+    {
+        return combatTask.spamEnemy && combatTask.spamEnemy->ent == enemy;
+    }
+
+    inline bool IsPursuing() const { return specialGoal == &pursuitGoal; }
 
     virtual void UpdatePotentialGoalsWeights() override;
 };
 
-#endif //QFUSION_ENEMY_POOL_H
+#endif

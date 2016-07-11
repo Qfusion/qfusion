@@ -1,100 +1,92 @@
 #include "bot.h"
+#include "ai_squad_based_team_brain.h"
 #include "bot_brain.h"
 #include "../../gameshared/q_comref.h"
 #include <algorithm>
 #include <limits>
 #include <stdarg.h>
 
-constexpr float MAX_ENEMY_WEIGHT = 5.0f;
-
-inline const char *Nick(const edict_t *ent)
+void BotBrain::EnemyPool::OnEnemyRemoved(const Enemy *enemy)
 {
-    return ent && ent->r.client ? ent->r.client->netname : ent->classname;
+    bot->ai->botRef->OnEnemyRemoved(enemy);
 }
 
-inline const char *WeapName(int weapon)
+void BotBrain::EnemyPool::OnNewThreat(const edict_t *newThreat)
 {
-    return GS_GetWeaponDef(weapon)->name;
+    bot->ai->botRef->botBrain.OnNewThreat(newThreat, this);
 }
 
-float DamageToKill(const edict_t *client, float armorProtection, float armorDegradation)
+void BotBrain::OnAttachedToSquad(AiSquad *squad)
 {
-    if (!client || !client->r.client)
-        return 0.0f;
+    this->squad = squad;
+    activeEnemyPool = squad->EnemyPool();
+    ResetCombatTask();
+}
 
-    float health = client->r.client->ps.stats[STAT_HEALTH];
-    float armor = client->r.client->ps.stats[STAT_ARMOR];
-
-    if (!armor)
-        return health;
-    if (armorProtection == 1.0f)
-        return std::numeric_limits<float>::infinity();
-
-    if (armorDegradation != 0)
+void BotBrain::OnDetachedFromSquad(AiSquad *squad)
+{
+    if (this->squad != squad)
     {
-        float damageToWipeArmor = armor / armorDegradation;
-        float healthDamageToWipeArmor = damageToWipeArmor * (1.0f - armorProtection);
+        FailWith("was not attached to squad %s", squad ? squad->Tag() : "???");
+    }
+    this->squad = nullptr;
+    activeEnemyPool = &botEnemyPool;
+    ResetCombatTask();
+}
 
-        if (healthDamageToWipeArmor < health)
-            return damageToWipeArmor + (health - healthDamageToWipeArmor);
+void BotBrain::OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable *threatDetector)
+{
+    // Reject threats detected by bot brain if there is active squad.
+    // Otherwise there may be two calls for a single or different threats
+    // detected by squad and the bot brain enemy pool itself.
+    if (squad && threatDetector == &this->botEnemyPool)
+        return;
 
-        return health / (1.0f - armorProtection);
+    if (!combatTask.Empty())
+    {
+        ResetCombatTask();
+        nextTargetChoiceAt = level.time + 1;
+        nextWeaponChoiceAt = level.time + 1;
     }
 
-    return health / (1.0f - armorProtection);
-}
-
-void Enemy::Clear()
-{
-    ent = nullptr;
-    weight = 0.0f;
-    avgPositiveWeight = 0.0f;
-    maxPositiveWeight = 0.0f;
-    positiveWeightsCount = 0;
-    registeredAt = 0;
-    lastSeenPositions.clear();
-    lastSeenTimestamps.clear();
-    lastSeenVelocities.clear();
-    lastSeenAt = 0;
-}
-
-void Enemy::OnViewed()
-{
-    if (lastSeenPositions.size() == MAX_TRACKED_POSITIONS)
+    vec3_t botLookDir;
+    AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
+    Vec3 toEnemyDir = Vec3(newThreat->s.origin) - self->s.origin;
+    float squareDistance = toEnemyDir.SquaredLength();
+    if (squareDistance > 1)
     {
-        lastSeenPositions.pop_back();
-        lastSeenTimestamps.pop_back();
-        lastSeenVelocities.pop_back();
+        float distance = 1.0f / Q_RSqrt(squareDistance);
+        toEnemyDir *= distance;
+        if (toEnemyDir.Dot(botLookDir) < 0)
+        {
+            if (!self->ai->botRef->hasPendingLookAtPoint)
+            {
+                // Try to guess enemy origin
+                toEnemyDir.X() += -0.25f + 0.50f * random();
+                toEnemyDir.Y() += -0.10f + 0.20f * random();
+                toEnemyDir.NormalizeFast();
+                Vec3 threatPoint(self->s.origin);
+                threatPoint += distance * toEnemyDir;
+                self->ai->botRef->SetPendingLookAtPoint(threatPoint, 1.0f);
+            }
+        }
     }
-    // Set members for faster access
-    VectorCopy(ent->s.origin, lastSeenPosition.Data());
-    VectorCopy(ent->velocity, lastSeenVelocity.Data());
-    lastSeenAt = level.time;
-    // Store in a queue then for history
-    lastSeenPositions.push_front(lastSeenPosition);
-    lastSeenVelocities.push_front(lastSeenVelocity);
-    lastSeenTimestamps.push_front(lastSeenAt);
 }
 
-static unsigned From0UpToMax(unsigned maxValue, float ratio)
+void BotBrain::OnEnemyRemoved(const Enemy *enemy)
 {
-    // Ensure that value never exceeds maxValue by lowering ratio a bit
-    unsigned value = (unsigned)(maxValue * ratio);
-    // Return values less than maxValue except a case when maxValue is 0
-    if (value == maxValue && maxValue)
-        return maxValue;
-    return value;
+    if (enemy == combatTask.aimEnemy)
+    {
+        ResetCombatTask();
+        // This implicitly causes a call to TryFindNewCombatTask() in this or next think frame
+        nextTargetChoiceAt = level.time + reactionTime;
+    }
 }
 
 BotBrain::BotBrain(edict_t *bot, float skillLevel)
     : AiBaseBrain(bot, Bot::PREFERRED_TRAVEL_FLAGS, Bot::ALLOWED_TRAVEL_FLAGS),
       bot(bot),
       skillLevel(skillLevel),
-      trackedEnemiesCount(0),
-      maxTrackedEnemies(3 + From0UpToMax(MAX_TRACKED_ENEMIES-2, BotSkill())),
-      maxTrackedAttackers(1 + From0UpToMax(MAX_TRACKED_ATTACKERS, BotSkill())),
-      maxTrackedTargets(1 + From0UpToMax(MAX_TRACKED_TARGETS, BotSkill())),
-      maxActiveEnemies(1 + From0UpToMax(MAX_ACTIVE_ENEMIES, BotSkill())),
       reactionTime(320 - From0UpToMax(300, BotSkill())),
       aimTargetChoicePeriod(1000 - From0UpToMax(900, BotSkill())),
       spamTargetChoicePeriod(1333 - From0UpToMax(500, BotSkill())),
@@ -110,76 +102,32 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       weaponScoreRandom(0.0f),
       nextWeaponScoreRandomUpdate(level.time),
       decisionRandom(0.5f),
-      nextDecisionRandomUpdate(level.time)
+      nextDecisionRandomUpdate(level.time),
+      botEnemyPool(bot, this, BotSkill())
 {
-#ifdef _DEBUG
-    float skill = BotSkill();
-    unsigned maxEnemies = maxTrackedEnemies;
-    // Ensure we always will have at least 2 free slots for new enemies
-    // (quad/shell owners and carrier) FOR ANY SKILL (high skills will have at least 3)
-    if (maxTrackedAttackers + 2 > maxEnemies)
-    {
-        printf("skill %f: maxTrackedAttackers %d + 2 > maxTrackedEnemies %d\n", skill, maxTrackedAttackers, maxEnemies);
-        abort();
-    }
-    if (maxTrackedTargets + 2 > maxEnemies)
-    {
-        printf("skill %f: maxTrackedTargets %d + 2 > maxTrackedEnemies %d\n", skill, maxTrackedTargets, maxEnemies);
-        abort();
-    }
-#endif
-
-    // Initialize empty slots
-    for (unsigned i = 0; i < maxTrackedEnemies; ++i)
-        trackedEnemies.push_back(Enemy());
-
-    for (unsigned i = 0; i < maxTrackedAttackers; ++i)
-        attackers.emplace_back(AttackStats());
-
-    for (unsigned i = 0; i < maxTrackedTargets; ++i)
-        targets.emplace_back(AttackStats());
+    squad = nullptr;
+    activeEnemyPool = &botEnemyPool;
+    SetTag(bot->r.client->netname);
 }
 
 void BotBrain::PreThink()
 {
     const unsigned levelTime = level.time;
-    for (Enemy &enemy: trackedEnemies)
-    {
-        // If enemy slot is free
-        if (!enemy.ent)
-        {
-            continue;
-        }
-        // Remove not seen yet enemies
-        if (levelTime - enemy.LastSeenAt() > NOT_SEEN_TIMEOUT)
-        {
-            Debug("has not seen %s for %d ms, should forget this enemy\n", enemy.Nick(), NOT_SEEN_TIMEOUT);
-            RemoveEnemy(enemy);
-            continue;
-        }
-        if (G_ISGHOSTING(enemy.ent))
-        {
-            Debug("should forget %s (this enemy is ghosting)\n", enemy.Nick());
-            RemoveEnemy(enemy);
-            continue;
-        }
-        // Do not forget, just skip
-        if (enemy.ent->flags & (FL_NOTARGET|FL_BUSY))
-            continue;
-        // Skip during reaction time
-        if (enemy.registeredAt + reactionTime > levelTime)
-            continue;
 
-        UpdateEnemyWeight(enemy);
-    }
-
-    if (combatTask.spamEnemy)
+    if (combatTask.aimEnemy)
     {
-        if (combatTask.spamTimesOutAt <= levelTime)
+        if (!combatTask.aimEnemy->IsValid())
         {
-            Debug("spamming at %s has timed out\n", combatTask.spamEnemy->Nick());
+            Debug("aiming on an ememy has been invalidated\n");
             ResetCombatTask();
-            nextTargetChoiceAt = levelTime;
+        }
+    }
+    else if (combatTask.spamEnemy)
+    {
+        if (!combatTask.spamEnemy->IsValid() || combatTask.spamTimesOutAt <= levelTime)
+        {
+            Debug("spamming on an ememy has been invalidated\n");
+            ResetCombatTask();
         }
     }
 
@@ -205,19 +153,7 @@ void BotBrain::Frame()
     // Call superclass method first
     AiBaseBrain::Frame();
 
-    for (AttackStats &attackerStats: attackers)
-    {
-        attackerStats.Frame();
-        if (attackerStats.LastActivityAt() + ATTACKER_TIMEOUT < level.time)
-            attackerStats.Clear();
-    }
-
-    for (AttackStats &targetStats: targets)
-    {
-        targetStats.Frame();
-        if (targetStats.LastActivityAt() + TARGET_TIMEOUT < level.time)
-            targetStats.Clear();
-    }
+    botEnemyPool.Update();
 }
 
 void BotBrain::Think()
@@ -252,67 +188,6 @@ void BotBrain::Think()
     }
 }
 
-void BotBrain::UpdateEnemyWeight(Enemy &enemy)
-{
-    // Explicitly limit effective reaction time to a time quantum between Think() calls
-    // This method gets called before all enemies are viewed.
-    // For seen enemy registration actual weights of known enemies are mandatory
-    // (enemies may get evicted based on their weights and weight of a just seen enemy).
-    if (level.time - enemy.LastSeenAt() > std::max(64u, reactionTime))
-    {
-        enemy.weight = 0;
-        return;
-    }
-
-    enemy.weight = ComputeRawEnemyWeight(enemy.ent);
-    if (enemy.weight > enemy.maxPositiveWeight)
-    {
-        enemy.maxPositiveWeight = enemy.weight;
-    }
-    if (enemy.weight > 0)
-    {
-        enemy.avgPositiveWeight = enemy.avgPositiveWeight * enemy.positiveWeightsCount + enemy.weight;
-        enemy.positiveWeightsCount++;
-        enemy.avgPositiveWeight /= enemy.positiveWeightsCount;
-    }
-}
-
-void BotBrain::RemoveEnemy(Enemy &enemy)
-{
-    // Enemies always are located in the same buffer, so we may compare pointers
-    if (&enemy == combatTask.aimEnemy)
-    {
-        ResetCombatTask();
-        nextTargetChoiceAt = level.time + reactionTime;
-    }
-    else if (&enemy == combatTask.spamEnemy)
-    {
-        ResetCombatTask();
-        nextTargetChoiceAt = level.time + reactionTime;
-    }
-    enemy.Clear();
-    --trackedEnemiesCount;
-}
-
-bool BotBrain::HasAnyDetectedEnemiesInView() const
-{
-    for (const Enemy &enemy: trackedEnemies)
-    {
-        if (!enemy.ent)
-            continue;
-        if (enemy.LastSeenAt() == level.time)
-        {
-            // Check whether we may react
-            for (unsigned seenTimestamp: enemy.lastSeenTimestamps)
-            {
-                if (seenTimestamp + reactionTime <= level.time)
-                    return true;
-            }
-        }
-    }
-    return false;
-}
-
 void BotBrain::AfterAllEnemiesViewed()
 {
     CheckIsInThinkFrame(__FUNCTION__);
@@ -320,7 +195,7 @@ void BotBrain::AfterAllEnemiesViewed()
     // Stop spamming if we see any enemy in view, choose a target to fight
     if (combatTask.spamEnemy)
     {
-        if (HasAnyDetectedEnemiesInView())
+        if (activeEnemyPool->WillAssignAimEnemy())
         {
             Debug("should stop spamming at %s, there are enemies in view\n", combatTask.spamEnemy->Nick());
             ResetCombatTask();
@@ -331,361 +206,23 @@ void BotBrain::AfterAllEnemiesViewed()
 
 void BotBrain::OnEnemyViewed(const edict_t *enemy)
 {
-    CheckIsInThinkFrame(__FUNCTION__);
-
-    if (!enemy)
-        return;
-
-    int freeSlot = -1;
-    for (unsigned i = 0; i < trackedEnemies.size(); ++i)
-    {
-        // Use first free slot for faster access and to avoid confusion
-        if (!trackedEnemies[i].ent && freeSlot < 0)
-        {
-            freeSlot = i;
-        }
-        else if (trackedEnemies[i].ent == enemy)
-        {
-            trackedEnemies[i].OnViewed();
-            return;
-        }
-    }
-
-    if (freeSlot >= 0)
-    {
-        Debug("has viewed a new enemy %s, uses free slot #%d to remember it\n", Nick(enemy), freeSlot);
-        EmplaceEnemy(enemy, freeSlot);
-        trackedEnemiesCount++;
-    }
-    else
-    {
-        Debug("has viewed a new enemy %s, all slots are used. Should try evict some slot\n", Nick(enemy));
-        TryPushNewEnemy(enemy);
-    }
-}
-
-void BotBrain::EmplaceEnemy(const edict_t *enemy, int slot)
-{
-    Enemy &slotEnemy = trackedEnemies[slot];
-    slotEnemy.ent = enemy;
-    slotEnemy.registeredAt = level.time;
-    slotEnemy.weight = 0.0f;
-    slotEnemy.avgPositiveWeight = 0.0f;
-    slotEnemy.maxPositiveWeight = 0.0f;
-    slotEnemy.positiveWeightsCount = 0;
-    slotEnemy.OnViewed();
-    Debug("has stored enemy %s in slot %d\n", slotEnemy.Nick(), slot);
-}
-
-void BotBrain::TryPushNewEnemy(const edict_t *enemy)
-{
-    // Try to find a free slot. For each used and not reserved slot compute eviction score relative to new enemy
-
-    int candidateSlot = -1;
-
-    // Floating point computations for zero cases from pure math point of view may yield a non-zero result,
-    // so use some positive value that is greater that possible computation zero epsilon.
-    float maxEvictionScore = 0.001f;
-    // Significantly increases chances to get a slot, but not guarantees it.
-    bool isNewEnemyAttacker = LastAttackedByTime(enemy) > 0;
-    // It will be useful inside the loop, so it needs to be precomputed
-    float distanceToNewEnemy = (Vec3(bot->s.origin) - enemy->s.origin).LengthFast();
-    float newEnemyWeight = ComputeRawEnemyWeight(enemy);
-
-    for (unsigned i = 0; i < maxTrackedEnemies; ++i)
-    {
-        Enemy &slotEnemy = trackedEnemies[i];
-        // Skip last attackers
-        if (LastAttackedByTime(slotEnemy.ent) > 0)
-            continue;
-        // Skip last targets
-        if (LastTargetTime(slotEnemy.ent) > 0)
-            continue;
-
-        // Never evict powerup owners or item carriers
-        if (slotEnemy.HasPowerups() || slotEnemy.IsCarrier())
-            continue;
-
-        float currEvictionScore = 0.0f;
-        if (isNewEnemyAttacker)
-            currEvictionScore += 0.5f;
-
-        float absWeightDiff = slotEnemy.weight - newEnemyWeight;
-        if (newEnemyWeight > slotEnemy.weight)
-        {
-            currEvictionScore += newEnemyWeight - slotEnemy.weight;
-        }
-        else
-        {
-            if (BotSkill() < 0.66f)
-            {
-                if (decisionRandom > BotSkill())
-                    currEvictionScore += (1.0 - BotSkill()) * expf(-absWeightDiff);
-            }
-        }
-
-        // Forget far and not seen enemies
-        if (slotEnemy.LastSeenAt() < prevThinkLevelTime)
-        {
-            float absTimeDiff = prevThinkLevelTime - slotEnemy.LastSeenAt();
-            // 0..1
-            float timeFactor = std::min(absTimeDiff, (float)NOT_SEEN_TIMEOUT) / NOT_SEEN_TIMEOUT;
-
-            float distanceToSlotEnemy = (slotEnemy.LastSeenPosition() - bot->s.origin).LengthFast();
-            constexpr float maxDistanceDiff = 2500.0f;
-            float nonNegDistDiff = std::max(0.0f, distanceToSlotEnemy - distanceToNewEnemy);
-            // 0..1
-            float distanceFactor = std::min(maxDistanceDiff, nonNegDistDiff) / maxDistanceDiff;
-
-            // += 0..1,  Increase eviction score linearly for far enemies
-            currEvictionScore += 1.0f - distanceFactor;
-            // += 2..0, Increase eviction score non-linearly for non-seen enemies (forget far enemies faster)
-            currEvictionScore += 2.0f - timeFactor * (1.0f + distanceFactor);
-        }
-
-        if (currEvictionScore > maxEvictionScore)
-        {
-            maxEvictionScore = currEvictionScore;
-            candidateSlot = i;
-        }
-    }
-
-    if (candidateSlot != -1)
-    {
-        Debug("will evict %s to make a free slot, new enemy have higher priority atm\n", Nick(enemy));
-        EmplaceEnemy(enemy, candidateSlot);
-    }
-    else
-    {
-        Debug("can't find free slot for %s, all current enemies have higher priority\n", Nick(enemy));
-    }
-}
-
-float BotBrain::ComputeRawEnemyWeight(const edict_t *enemy)
-{
-    if (!enemy || G_ISGHOSTING(enemy))
-        return 0.0;
-
-    float weight = 0.5f;
-
-    if (unsigned time = LastAttackedByTime(enemy))
-    {
-        weight += 0.75f * ((level.time - time) / (float) ATTACKER_TIMEOUT);
-        // TODO: Add weight for poor attackers (by total damage / attack attepts ratio)
-    }
-
-    if (unsigned time = LastTargetTime(enemy))
-    {
-        weight += 1.55f * ((level.time - time) / (float) TARGET_TIMEOUT);
-        // TODO: Add weight for targets that are well hit by bot
-    }
-
-    if (::IsCarrier(enemy))
-        weight += 2.0f;
-
-    constexpr float maxDamageToKill = 350.0f;
-
-    const bool hasQuad = BotHasQuad();
-    const bool hasShell = BotHasShell();
-
-    float damageToKill = DamageToKill(enemy);
-    if (hasQuad && !HasShell(enemy))
-        damageToKill /= 4;
-
-    float damageToBeKilled = DamageToKill(bot);
-    if (hasShell && !HasQuad(enemy))
-        damageToBeKilled /= 4;
-
-    // abs(damageToBeKilled - damageToKill) / maxDamageToKill may be > 1
-    weight += (damageToBeKilled - damageToKill) / maxDamageToKill;
-
-    if (weight > 0)
-    {
-        if (hasQuad)
-            weight *= 1.5f;
-        if (hasShell)
-            weight += 0.5f;
-        if (hasQuad && hasShell)
-            weight *= 1.5f;
-    }
-
-    return std::min(std::max(0.0f, weight), MAX_ENEMY_WEIGHT);
-}
-
-unsigned BotBrain::LastAttackedByTime(const edict_t *ent) const
-{
-    for (const AttackStats &attackStats: attackers)
-        if (ent && attackStats.ent == ent)
-            return attackStats.LastActivityAt();
-
-    return 0;
-}
-
-unsigned BotBrain::LastTargetTime(const edict_t *ent) const
-{
-    for (const AttackStats &targetStats: targets)
-        if (ent && targetStats.ent == ent)
-            return targetStats.LastActivityAt();
-
-    return 0;
+    botEnemyPool.OnEnemyViewed(enemy);
+    if (squad)
+        squad->OnBotViewedEnemy(self, enemy);
 }
 
 void BotBrain::OnPain(const edict_t *enemy, float kick, int damage)
 {
-    int attackerSlot = EnqueueAttacker(enemy, damage);
-    if (attackerSlot < 0)
-        return;
-
-    bool newThreat = true;
-    if (combatTask.aimEnemy)
-    {
-        newThreat = false;
-        int currEnemySlot = -1;
-        for (int i = 0, end = attackers.size(); i < end; ++i)
-        {
-            if (attackers[i].ent == combatTask.aimEnemy->ent)
-            {
-                currEnemySlot = i;
-                break;
-            }
-        }
-        // If current enemy did not inflict any damage
-        // or new attacker hits harder than current one, there is a new threat
-        if (currEnemySlot < 0 || attackers[currEnemySlot].totalDamage < attackers[attackerSlot].totalDamage)
-            newThreat = true;
-    }
-
-    if (newThreat)
-    {
-        if (!combatTask.Empty())
-        {
-            ResetCombatTask();
-            nextTargetChoiceAt = level.time + 1;
-            nextWeaponChoiceAt = level.time + 1;
-        }
-
-        vec3_t botLookDir;
-        AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
-        Vec3 toEnemyDir = Vec3(enemy->s.origin) - self->s.origin;
-        float squareDistance = toEnemyDir.SquaredLength();
-        if (squareDistance > 1)
-        {
-            float distance = 1.0f / Q_RSqrt(squareDistance);
-            toEnemyDir *= distance;
-            if (toEnemyDir.Dot(botLookDir) < 0)
-            {
-                if (!self->ai->botRef->hasPendingLookAtPoint)
-                {
-                    // Try to guess enemy origin
-                    toEnemyDir.X() += -0.25f + 0.50f * random();
-                    toEnemyDir.Y() += -0.10f + 0.20f * random();
-                    toEnemyDir.NormalizeFast();
-                    Vec3 threatPoint(self->s.origin);
-                    threatPoint += distance * toEnemyDir;
-                    self->ai->botRef->SetPendingLookAtPoint(threatPoint, 1.0f);
-                }
-            }
-        }
-    }
-}
-
-int BotBrain::EnqueueAttacker(const edict_t *attacker, int damage)
-{
-    if (!attacker)
-        return -1;
-
-    int freeSlot = -1;
-    for (unsigned i = 0; i < attackers.size(); ++i)
-    {
-        if (attackers[i].ent == attacker)
-        {
-            attackers[i].OnDamage(damage);
-            return i;
-        }
-        else if (!attackers[i].ent && freeSlot < 0)
-            freeSlot = i;
-    }
-    if (freeSlot >= 0)
-    {
-        attackers[freeSlot].Clear();
-        attackers[freeSlot].ent = attacker;
-        attackers[freeSlot].OnDamage(damage);
-        return freeSlot;
-    }
-    float maxEvictionScore = 0.0f;
-    for (unsigned i = 0; i < attackers.size(); ++i)
-    {
-        float timeFactor = (level.time - attackers[i].LastActivityAt()) / (float)ATTACKER_TIMEOUT;
-        float damageFactor = 1.0f - BoundedFraction(attackers[i].totalDamage, 500.0f);
-        // Always > 0, so we always evict some attacker
-        float evictionScore = 0.1f + timeFactor * damageFactor;
-        if (maxEvictionScore < evictionScore)
-        {
-            maxEvictionScore = evictionScore;
-            freeSlot = i;
-        }
-    }
-    attackers[freeSlot].Clear();
-    attackers[freeSlot].ent = attacker;
-    attackers[freeSlot].OnDamage(damage);
-    return freeSlot;
-}
-
-void BotBrain::EnqueueTarget(const edict_t *target)
-{
-    if (!target)
-        return;
-
-    int freeSlot = -1;
-    for (unsigned i = 0; i < targets.size(); ++i)
-    {
-        if (targets[i].ent == target)
-        {
-            targets[i].Touch();
-            return;
-        }
-        else if (!targets[i].ent && freeSlot < 0)
-            freeSlot = i;
-    }
-    if (freeSlot >= 0)
-    {
-        targets[freeSlot].Clear();
-        targets[freeSlot].ent = target;
-        targets[freeSlot].Touch();
-        return;
-    }
-    float maxEvictionScore = 0.0f;
-    for (unsigned i = 0; i < targets.size(); ++i)
-    {
-        float timeFactor = (level.time - targets[i].LastActivityAt()) / (float)TARGET_TIMEOUT;
-        // Do not evict enemies that bot hit hard
-        float damageScale = BotHasQuad() ? 4.0f : 1.0f;
-        float damageFactor = 1.0f - BoundedFraction(targets[i].totalDamage, 300.0f * damageScale);
-        // Always > 0, so we always evict some target
-        float evictionScore = 0.1f + timeFactor * damageFactor;
-        if (maxEvictionScore < evictionScore)
-        {
-            maxEvictionScore = evictionScore;
-            freeSlot = i;
-        }
-    }
-    targets[freeSlot].Clear();
-    targets[freeSlot].ent = target;
-    targets[freeSlot].Touch();
+    botEnemyPool.OnPain(self, enemy, kick, damage);
+    if (squad)
+        squad->OnBotPain(self, enemy, kick, damage);
 }
 
 void BotBrain::OnEnemyDamaged(const edict_t *target, int damage)
 {
-    if (!target)
-        return;
-    for (unsigned i = 0; i < targets.size(); ++i)
-    {
-        if (targets[i].ent == target)
-        {
-            targets[i].OnDamage(damage);
-            return;
-        }
-    }
+    botEnemyPool.OnEnemyDamaged(self, target, damage);
+    if (squad)
+        squad->OnBotDamagedEnemy(self, target, damage);
 }
 
 void BotBrain::OnGoalCleanedUp(const NavEntity *goalEnt)
@@ -719,10 +256,11 @@ static bool AdjustOriginToFloor(const edict_t *ent, Vec3 *result)
 
 bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
 {
+    const auto &activeEnemies = activeEnemyPool->ActiveEnemies();
     // Blocker origin should be put to a floor by a single trace to ensure
     // that FindAASTravelTimeToGoalArea() will not do it on each loop step
-    StaticVector<Vec3, MAX_ACTIVE_ENEMIES> blockerOrigins;
-    StaticVector<int, MAX_ACTIVE_ENEMIES> blockerAreaNums;
+    StaticVector<Vec3, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> blockerOrigins;
+    StaticVector<int, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> blockerAreaNums;
     for (unsigned i = 0; i < activeEnemies.size(); ++i)
     {
         Vec3 origin(0, 0, 0);
@@ -911,92 +449,34 @@ bool BotBrain::CheckFastWeaponSwitchAction()
     return false;
 }
 
-struct EnemyAndScore
-{
-    Enemy *enemy;
-    float score;
-    EnemyAndScore(Enemy *enemy, float score): enemy(enemy), score(score) {}
-    bool operator<(const EnemyAndScore &that) const { return score > that.score; }
-};
-
 void BotBrain::TryFindNewCombatTask()
 {
-    CombatTask *task = &combatTask;
-    const Enemy *oldAimEnemy = task->aimEnemy;
-    activeEnemies.clear();
-
-    // Atm we just pick up a target that has best ai weight
-    // We multiply it by distance factor since weights are almost not affected by distance.
-
-    Vec3 botOrigin(bot->s.origin);
-    vec3_t forward;
-    AngleVectors(bot->s.angles, forward, nullptr, nullptr);
-    Vec3 botDirection(forward);
-
-    // Until these bounds distance factor scales linearly
-    constexpr float distanceBounds = 3500.0f;
-
-    StaticVector<EnemyAndScore, MAX_TRACKED_ENEMIES> candidates;
-
-    for (unsigned i = 0; i < maxTrackedEnemies; ++i)
+    if (const Enemy *aimEnemy = activeEnemyPool->ChooseAimEnemy(bot))
     {
-        Enemy &enemy = trackedEnemies[i];
-        if (!enemy.ent)
-            continue;
-        // Not seen in this frame enemies have zero weight;
-        if (!enemy.weight)
-            continue;
-
-        Vec3 botToEnemy = botOrigin - enemy.ent->s.origin;
-        float distance = botToEnemy.LengthFast();
-        botToEnemy *= 1.0f / distance;
-        float distanceFactor = 0.3f + 0.7f * BoundedFraction(distance, distanceBounds);
-        float directionFactor = 0.7f + 0.3f * botDirection.Dot(botToEnemy);
-
-        float currScore = enemy.weight * distanceFactor * directionFactor;
-        candidates.push_back(EnemyAndScore(&enemy, currScore));
-    }
-
-    // Its better to sort once instead of pushing into a heap inside the loop above
-    std::sort(candidates.begin(), candidates.end());
-
-    if (!candidates.empty())
-    {
-        // Best candidates are first (EnemyAndScore::operator<() yields this result)
-        // Choose not more than maxActiveEnemies candidates
-        // that have a score not than twice less than the best one
-        float bestScore = candidates.front().score;
-        for (int i = 0, end = std::min(candidates.size(), maxActiveEnemies); i < end; ++i)
-        {
-            if (candidates[i].score < 0.5f * bestScore)
-                break;
-            activeEnemies.push_back(candidates[i].enemy);
-        }
-
-        // Set best active enemy as a current aim enemy
-        const Enemy *bestTarget = activeEnemies.front();
-        EnqueueTarget(bestTarget->ent);
-        task->aimEnemy = bestTarget;
-        task->instanceId = NextCombatTaskInstanceId();
+        combatTask.aimEnemy = aimEnemy;
+        combatTask.instanceId = NextCombatTaskInstanceId();
         nextTargetChoiceAt = level.time + aimTargetChoicePeriod;
-        Debug("TryFindNewCombatTask(): found aim enemy %s, next target choice at %09d\n", bestTarget->Nick(), nextTargetChoiceAt);
-        SuggestAimWeaponAndTactics(task);
+        activeEnemyPool->EnqueueTarget(aimEnemy->ent);
+
+        Debug("TryFindNewCombatTask(): found aim enemy %s, next target choice at %09d\n", aimEnemy->Nick(), nextTargetChoiceAt);
+        SuggestAimWeaponAndTactics(&combatTask);
+        return;
     }
-    else
+
+    if (oldCombatTask.aimEnemy)
     {
         if (bot->ai->botRef->hasPendingLookAtPoint)
         {
             Debug("TryFindNewCombatTask(): bot is already turning to some look-at-point, defer target assignment\n");
         }
-        else if (oldAimEnemy)
-        {
-            SuggestPointToTurnToWhenEnemyIsLost(oldAimEnemy);
-        }
         else
         {
-            SuggestPursuitOrSpamTask(task, botDirection);
+            SuggestPointToTurnToWhenEnemyIsLost(oldCombatTask.aimEnemy);
         }
+        return;
     }
+
+    SuggestPursuitOrSpamTask(&combatTask);
 }
 
 bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
@@ -1019,52 +499,11 @@ bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
     return true;
 }
 
-void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task, const Vec3 &botViewDirection)
+void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task)
 {
-    // Low-skill bots never do pursuit or spam
-    if (BotSkill() < 0.33f)
-        return;
-
-    static_assert(NOT_SEEN_TIMEOUT > 2000, "This value will yield too low spam enemy timeout");
-    // If enemy has been not seen more than timeout, do not start spam at this enemy location
-    const unsigned timeout = (unsigned)((NOT_SEEN_TIMEOUT - 1000) * BotSkill());
-
-    float bestScore = 0.0f;
-    const Enemy *bestEnemy = nullptr;
-
-    for (unsigned i = 0; i < maxTrackedEnemies; ++i)
-    {
-        const Enemy &enemy = trackedEnemies[i];
-        if (!enemy.ent)
-            continue;
-        if (enemy.weight)
-            continue;
-        if (&enemy == oldCombatTask.spamEnemy)
-            continue;
-
-        Vec3 botToSpotDirection = enemy.LastSeenPosition() - self->s.origin;
-        float directionFactor = 0.5f;
-        float distanceFactor = 1.0f;
-        float squareDistance = botToSpotDirection.SquaredLength();
-        if (squareDistance > 1)
-        {
-            float distance = 1.0f / Q_RSqrt(squareDistance);
-            botToSpotDirection *= 1.0f / distance;
-            directionFactor = 0.3f + 0.7f * botToSpotDirection.Dot(botViewDirection);
-            distanceFactor = 1.0f - 0.9f * BoundedFraction(distance, 2000.0f);
-        }
-        float timeFactor = 1.0f - BoundedFraction(level.time - enemy.LastSeenAt(), timeout);
-
-        float currScore = (0.5f * (enemy.maxPositiveWeight + enemy.avgPositiveWeight));
-        currScore *= directionFactor * distanceFactor * timeFactor;
-        if (currScore > bestScore)
-        {
-            bestScore = currScore;
-            bestEnemy = &enemy;
-        }
-    }
-
-    if (bestEnemy)
+    // TODO: Reject both spamming and pursuit here to save cycles
+    // (ChooseHiddenEnemy() is more expensive than a condition)
+    if (const Enemy *bestEnemy = activeEnemyPool->ChooseHiddenEnemy(bot))
     {
         StartSpamAtEnemyOrPursuit(task, bestEnemy);
         nextTargetChoiceAt = level.time + spamTargetChoicePeriod;
@@ -1078,11 +517,13 @@ void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task, const Vec3 &botViewDir
 
 void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
 {
-    CombatDisposition disposition = GetCombatDisposition(*enemy);
-    if (disposition.KillToBeKilledDamageRatio() > 1.0f)
+    float killToBeKilledRatio = GetCombatDisposition(*enemy).KillToBeKilledDamageRatio();
+    // If bot is supported by a squad
+    if (squad)
+        killToBeKilledRatio *= 1.75f;
+
+    if (killToBeKilledRatio > 1.0f)
     {
-        task->aimEnemy = enemy;
-        task->instanceId = NextCombatTaskInstanceId();
         StartPursuit(*enemy);
         return;
     }
@@ -1201,6 +642,7 @@ CombatDisposition BotBrain::GetCombatDisposition(const Enemy &enemy)
 
 void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 {
+    const auto &activeEnemies = activeEnemyPool->ActiveEnemies();
     const Enemy &enemy = *task->aimEnemy;
     if (BotSkill() < 0.33f)
     {

@@ -2,6 +2,7 @@
 #define QFUSION_AI_FRAME_AWARE_UPDATABLE_H
 
 #include "ai_local.h"
+#include <stdarg.h>
 
 class AiFrameAwareUpdatable
 {
@@ -46,9 +47,46 @@ protected:
         frameAffinityModulo = modulo;
         frameAffinityOffset = offset;
     }
+
+#ifndef _MSC_VER
+    inline void Debug(const char *format, ...) const __attribute__((format(printf, 2, 3)))
+#else
+    inline void Debug(_Printf_format_string_ const char *format, ...) const
+#endif
+    {
+        va_list va;
+        va_start(va, format);
+        AI_Debugv(tag, format, va);
+        va_end(va);
+    }
+
+#ifndef _MSC_VER
+    inline void FailWith(const char *format, ...) const __attribute__((format(printf, 2, 3))) __attribute__((noreturn))
+#else
+    __declspec(noreturn) inline void FailWith(_Printf_format_string_ const char *format, ...) const
+#endif
+    {
+        va_list va;
+        va_start(va, format);
+        AI_FailWithv(tag, format, va);
+        va_end(va);
+    }
+
+    static constexpr unsigned MAX_TAG_LEN = 128;
+    char tag[MAX_TAG_LEN];
+
+    void SetTag(const char *tag)
+    {
+        Q_strncpyz(this->tag, tag, MAX_TAG_LEN);
+    }
 public:
-    AiFrameAwareUpdatable(): frameAffinityModulo(0), frameAffinityOffset(0) {}
+    AiFrameAwareUpdatable(): frameAffinityModulo(0), frameAffinityOffset(0)
+    {
+        tag[0] = '\0';
+    }
     virtual ~AiFrameAwareUpdatable() {}
+
+    inline const char *Tag() const { return tag; }
 
     // Call this method to update an instance state.
     void Update();

@@ -38,6 +38,21 @@ void AI_Debugv(const char *nick, const char *format, va_list va)
     printf(outputBuffer);
 }
 
+void AI_FailWith(const char *tag, const char *format, ...)
+{
+    va_list va;
+    va_start(va, format);
+    AI_FailWithv(tag, format, va);
+    va_end(va);
+}
+
+void AI_FailWithv(const char *tag, const char *format, va_list va)
+{
+    AI_Debugv(tag, format, va);
+    fflush(stdout);
+    abort();
+}
+
 template<typename AASFn>
 static int FindAASParamToGoalArea(AASFn fn, int fromAreaNum, const vec_t *origin, int goalAreaNum,
                                   const edict_t *ignoreInTrace, int preferredTravelFlags, int allowedTravelFlags)

@@ -69,8 +69,6 @@ protected:
 
     int GoalAasAreaNum() const;
 
-    void Debug(const char *format, ...) const;
-
     virtual void Think() override;
 
     // Used for additional potential goal rejection that does not reflected in entity weights.
