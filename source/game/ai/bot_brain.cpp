@@ -919,6 +919,12 @@ void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDis
         weaponScores[PG].score *= 1.0f - (1.0f - dirFactor) * speedFactor;
     }
 
+    if (squad)
+    {
+        // In squad prefer MG to gun down an enemy together
+        weaponScores[MG].score *= 1.75f;
+    }
+
     int chosenWeapon = ChooseWeaponByScores(weaponScores, weaponScores + 4);
 
     if (chosenWeapon == WEAP_NONE)
@@ -970,6 +976,15 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     weaponScores[MG].score = 1.0f * BoundedFraction(BulletsReadyToFireCount(), 15.0f);
     weaponScores[RG].score = 0.7f * BoundedFraction(ShellsReadyToFireCount(), 3.0f);
     weaponScores[GL].score = 0.5f * BoundedFraction(GrenadesReadyToFireCount(), 5.0f);
+
+    if (squad)
+    {
+        // In squad prefer continuous fire weapons to burn an enemy quick together
+        float boost = 1.5f;
+        weaponScores[LG].score *= boost;
+        weaponScores[PG].score *= boost;
+        weaponScores[MG].score *= boost;
+    }
 
     if (task->advance)
     {
