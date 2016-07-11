@@ -117,8 +117,46 @@ typedef struct ai_handle_s
 	class Bot *botRef;
 } ai_handle_t;
 
-void AI_Debug(const char *nick, const char *format, ...);
-void AI_Debugv(const char *nick, const char *format, va_list va);
+#ifndef _MSC_VER
+void AI_Debug(const char *tag, const char *format, ...) __attribute__((format(printf, 2, 3)));
+void AI_Debugv(const char *tag, const char *format, va_list va);
+void AI_FailWith(const char *tag, const char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((noreturn));
+void AI_FailWithv(const char *tag, const char *format, va_list va) __attribute__((noreturn));
+#else
+void AI_Debug(const char *tag, _Printf_format_string_ const char *format, ...);
+void AI_Debugv(const char *tag, const char *format, va_list va);
+__declspec(noreturn) void AI_FailWith(const char *tag, _Printf_format_string_ const char *format, ...);
+__declspec(noreturn) void AI_FailWithv(const char *tag, const char *format, va_list va);
+#endif
+
+inline float BoundedFraction(float value, float bound)
+{
+	return std::min(value, bound) / bound;
+}
+
+inline unsigned From0UpToMax(unsigned maxValue, float ratio)
+{
+	// Ensure that value never exceeds maxValue by lowering ratio a bit
+	unsigned value = (unsigned)(maxValue * ratio);
+	// Return values less than maxValue except a case when maxValue is 0
+	if (value == maxValue && maxValue)
+		return maxValue;
+	return value;
+}
+
+inline const char *Nick(const edict_t *ent)
+{
+	if (!ent)
+		return "???";
+	if (ent->r.client)
+		return ent->r.client->netname;
+	return ent->classname;
+}
+
+inline const char *WeapName(int weapon)
+{
+	return GS_GetWeaponDef(weapon)->name;
+}
 
 //----------------------------------------------------------
 

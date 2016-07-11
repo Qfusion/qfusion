@@ -55,6 +55,155 @@ int CachedTravelTimesMatrix::FindAASTravelTime(const edict_t *client1, const edi
                                        client1->ai->aiRef->AllowedTravelFlags());
 }
 
+AiSquad::SquadEnemyPool::SquadEnemyPool(AiSquad *squad, float skill)
+    : AiBaseEnemyPool(skill), squad(squad)
+{
+    std::fill_n(botRoleWeights, AiSquad::MAX_SIZE, 0.0f);
+    std::fill_n(botEnemies, AiSquad::MAX_SIZE, nullptr);
+}
+
+unsigned AiSquad::SquadEnemyPool::GetBotSlot(const Bot *bot) const
+{
+    for (unsigned i = 0, end = squad->bots.size(); i < end; ++i)
+        if (bot == squad->bots[i])
+            return i;
+
+    if (bot)
+        FailWith("Can't find a slot for bot %s", bot->Tag());
+    else
+        FailWith("Can't find a slot for a null bot");
+}
+
+void AiSquad::SquadEnemyPool::CheckSquadValid() const
+{
+    if (!squad->InUse())
+        FailWith("Squad %s is not in use", squad->Tag());
+    if (!squad->IsValid())
+        FailWith("Squad %s is not valid", squad->Tag());
+}
+
+// We have to skip ghosting bots because squads itself did not think yet when enemy pool thinks
+
+void AiSquad::SquadEnemyPool::OnNewThreat(const edict_t *newThreat)
+{
+    CheckSquadValid();
+    // TODO: Use more sophisticated bot selection?
+    for (Bot *bot: squad->bots)
+        if (!bot->IsGhosting())
+            bot->OnNewThreat(newThreat, this);
+}
+
+bool AiSquad::SquadEnemyPool::CheckHasQuad() const
+{
+    CheckSquadValid();
+    for (Bot *bot: squad->bots)
+        if (!bot->IsGhosting() && ::HasQuad(bot->Self()))
+            return true;
+    return false;
+}
+
+bool AiSquad::SquadEnemyPool::CheckHasShell() const
+{
+    CheckSquadValid();
+    for (Bot *bot: squad->bots)
+        if (!bot->IsGhosting() && ::HasShell(bot->Self()))
+            return true;
+    return false;
+}
+
+float AiSquad::SquadEnemyPool::ComputeDamageToBeKilled() const
+{
+    CheckSquadValid();
+    float result = 0.0f;
+    for (Bot *bot: squad->bots)
+        if (!bot->IsGhosting())
+            result += DamageToKill(bot->Self());
+    return result;
+}
+
+void AiSquad::SquadEnemyPool::OnEnemyRemoved(const Enemy *enemy)
+{
+    CheckSquadValid();
+    for (Bot *bot: squad->bots)
+        bot->OnEnemyRemoved(enemy);
+}
+
+void AiSquad::SquadEnemyPool::TryPushNewEnemy(const edict_t *enemy)
+{
+    CheckSquadValid();
+    for (Bot *bot: squad->bots)
+        if (!bot->IsGhosting())
+            TryPushEnemyOfSingleBot(bot->Self(), enemy);
+}
+
+void AiSquad::SquadEnemyPool::SetBotRoleWeight(const edict_t *bot, float weight)
+{
+    CheckSquadValid();
+    botRoleWeights[GetBotSlot(bot->ai->botRef)] = weight;
+}
+
+float AiSquad::SquadEnemyPool::GetAdditionalEnemyWeight(const edict_t *bot, const edict_t *enemy) const
+{
+    CheckSquadValid();
+    if (!enemy)
+        FailWith("Illegal null enemy");
+
+    // TODO: Use something more sophisticated...
+
+    float result = 0.0f;
+    for (unsigned i = 0, end = squad->bots.size(); i < end; ++i)
+        if (botEnemies[i] && enemy == botEnemies[i]->ent)
+            result += 0.5f + botRoleWeights[i];
+
+    return result;
+}
+
+void AiSquad::SquadEnemyPool::OnBotEnemyAssigned(const edict_t *bot, const Enemy *enemy)
+{
+    CheckSquadValid();
+    botEnemies[GetBotSlot(bot->ai->botRef)] = enemy;
+}
+
+AiSquad::AiSquad(CachedTravelTimesMatrix &travelTimesMatrix)
+    : isValid(false),
+      inUse(false),
+      brokenConnectivityTimeoutAt(0),
+      travelTimesMatrix(travelTimesMatrix)
+{
+    float skillLevel = trap_Cvar_Value("sv_skilllevel"); // {0, 1, 2}
+    float skill = std::min(1.0f, 0.33f * (0.1f + skillLevel + random())); // (0..1)
+    // There is a clash with a getter name, thus we have to introduce a type alias
+    squadEnemyPool = new (G_Malloc(sizeof(SquadEnemyPool)))SquadEnemyPool(this, skill);
+}
+
+AiSquad::AiSquad(AiSquad &&that)
+    : travelTimesMatrix(that.travelTimesMatrix)
+{
+    isValid = that.isValid;
+    inUse = that.inUse;
+    canFightTogether = that.canFightTogether;
+    canMoveTogether = that.canMoveTogether;
+    brokenConnectivityTimeoutAt = that.brokenConnectivityTimeoutAt;
+    for (Bot *bot: that.bots)
+        bots.push_back(bot);
+
+    // Move the allocated enemy pool
+    this->squadEnemyPool = that.squadEnemyPool;
+    // Hack! Since EnemyPool refers to `that`, modify the reference
+    this->squadEnemyPool->squad = this;
+    that.squadEnemyPool = nullptr;
+}
+
+AiSquad::~AiSquad()
+{
+    // If the enemy pool has not been moved
+    if (squadEnemyPool)
+    {
+        squadEnemyPool->~SquadEnemyPool();
+        G_Free(squadEnemyPool);
+    }
+}
+
 void AiSquad::OnBotRemoved(int botEntNum)
 {
     // Unused squads do not have bots. From the other hand, invalid squads may still have some bots to remove
@@ -65,10 +214,18 @@ void AiSquad::OnBotRemoved(int botEntNum)
         if (ENTNUM((*it)->Self()) == botEntNum)
         {
             bots.erase(it);
-            isValid = false;
+            Invalidate();
             return;
         }
     }
+}
+
+void AiSquad::Invalidate()
+{
+    for (Bot *bot: bots)
+        bot->OnDetachedFromSquad(this);
+
+    isValid = false;
 }
 
 // Squad connectivity should be restored in this limit of time, otherwise a squad should be invalidated
@@ -78,6 +235,13 @@ constexpr float CONNECTIVITY_PROXIMITY = 500;
 // This value defines summary aas move time limit from one bot to other and back
 constexpr int CONNECTIVITY_MOVE_CENTISECONDS = 400;
 
+void AiSquad::Frame()
+{
+    // Update enemy pool
+    if (inUse && isValid)
+        squadEnemyPool->Update();
+}
+
 void AiSquad::Think()
 {
     if (!inUse || !isValid) return;
@@ -86,7 +250,7 @@ void AiSquad::Think()
     {
         if (bot->IsGhosting())
         {
-            isValid = false;
+            Invalidate();
             return;
         }
     }
@@ -97,7 +261,7 @@ void AiSquad::Think()
     if (canMoveTogether || canFightTogether)
         brokenConnectivityTimeoutAt = level.time + CONNECTIVITY_TIMEOUT;
     else if (brokenConnectivityTimeoutAt <= level.time)
-        isValid = false;
+        Invalidate();
 }
 
 bool AiSquad::CheckCanMoveTogether() const
@@ -144,13 +308,12 @@ bool AiSquad::CheckCanFightTogether() const
 
 void AiSquad::AddBot(Bot *bot)
 {
+#ifdef _DEBUG
     if (!inUse || !isValid)
     {
         AI_Debug("AiSquad", "Can't add a bot to a unused or invalid squad\n");
         abort();
     }
-
-#ifdef _DEBUG
 
     for (const Bot *presentBot: bots)
     {
@@ -161,7 +324,9 @@ void AiSquad::AddBot(Bot *bot)
         }
     }
 #endif
+
     bots.push_back(bot);
+    bot->OnAttachedToSquad(this);
 }
 
 bool AiSquad::MayAttachBot(const Bot *bot) const
@@ -501,7 +666,7 @@ unsigned AiSquadBasedTeamBrain::GetFreeSquadSlot()
             return i;
         }
     }
-    squads.push_back(AiSquad(travelTimesMatrix));
+    squads.emplace_back(AiSquad(travelTimesMatrix));
     // This is very important action, otherwise the squad will not think
     squads.back().SetFrameAffinity(frameAffinityModulo, frameAffinityOffset);
     squads.back().PrepareToAddBots();

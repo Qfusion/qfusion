@@ -53,14 +53,6 @@ int AiBaseBrain::GoalAasAreaNum() const
     return 0;
 }
 
-void AiBaseBrain::Debug(const char *format, ...) const
-{
-    va_list va;
-    va_start(va, format);
-    AI_Debugv(self->r.client ? self->r.client->netname : self->classname, format, va);
-    va_end(va);
-}
-
 void AiBaseBrain::ClearWeights()
 {
     memset(entityWeights, 0, sizeof(entityWeights));

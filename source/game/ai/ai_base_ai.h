@@ -144,9 +144,4 @@ private:
     void TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3_t forward) const;
 };
 
-inline float BoundedFraction(float value, float bound)
-{
-    return std::min(value, bound) / bound;
-}
-
 #endif

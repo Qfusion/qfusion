@@ -41,6 +41,7 @@ Bot::Bot(edict_t *self, float skillLevel)
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;
     self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;
+    SetTag(self->r.client->netname);
 }
 
 void Bot::LookAround()
@@ -211,7 +212,7 @@ void Bot::RegisterVisibleEnemies()
 
     std::sort(candidateTargets.begin(), candidateTargets.end());
 
-    for (int i = 0, end = std::min(candidateTargets.size(), botBrain.maxTrackedEnemies); i < end; ++i)
+    for (int i = 0, end = std::min(candidateTargets.size(), botBrain.MaxTrackedEnemies()); i < end; ++i)
     {
         edict_t *ent = game.edicts + candidateTargets[i].entNum;
         if (trap_inPVS(self->s.origin, ent->s.origin) && G_Visible(self, ent))
@@ -415,6 +416,9 @@ void Bot::Think()
 
 bool Bot::MayKeepRunningInCombat() const
 {
+    if (!HasEnemy())
+        FailWith("MayKeepRunningInCombat(): there is no enemy");
+
     Vec3 enemyToBotDir = Vec3(self->s.origin) - EnemyOrigin();
     bool enemyMayHit = true;
     if (IsEnemyAStaticSpot())
@@ -465,6 +469,7 @@ void Bot::Frame()
 
     if (IsGhosting())
     {
+        botBrain.oldCombatTask.Clear();
         botBrain.combatTask.Clear();
 
         GhostingFrame();
