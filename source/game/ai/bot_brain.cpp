@@ -186,6 +186,9 @@ void BotBrain::Think()
     {
         TryFindNewCombatTask();
     }
+
+    if (!specialGoal && !combatTask.Empty())
+        CheckTacticalPosition();
 }
 
 void BotBrain::AfterAllEnemiesViewed()
@@ -517,6 +520,9 @@ void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task)
 
 void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
 {
+    if (specialGoal)
+        return;
+
     float killToBeKilledRatio = GetCombatDisposition(*enemy).KillToBeKilledDamageRatio();
     // If bot is supported by a squad
     if (squad)
@@ -539,29 +545,76 @@ void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
     Debug(fmt, spamSpot.X(), spamSpot.Y(), spamSpot.Z(), WeapName(task->suggestedSpamWeapon), enemy->Nick(), timeDelta);
 }
 
-void BotBrain::StartPursuit(const Enemy &enemy)
+bool BotBrain::StartPursuit(const Enemy &enemy, unsigned timeout)
 {
-    int areaNum = AAS_PointAreaNum(const_cast<float*>(enemy.ent->s.origin));
-    if (!areaNum)
-    {
-        Vec3 origin(enemy.ent->s.origin);
-        AdjustOriginToFloor(enemy.ent, &origin);
-        areaNum = AAS_PointAreaNum(origin.Data());
-        if (!areaNum)
-            return;
-    }
     Debug("decided to pursue %s\n", enemy.Nick());
-    pursuitGoal.aasAreaNum = areaNum;
-    pursuitGoal.combatTaskInstanceId = combatTask.instanceId;
-    pursuitGoal.goalFlags = GoalFlags::TACTICAL_SPOT;
-    pursuitGoal.explicitTimeout = level.time + 1000;
-    pursuitGoal.explicitSpawnTime = 1;
-    pursuitGoal.explicitOrigin = enemy.LastSeenPosition();
+    if (!SetTacticalSpot(Vec3(enemy.ent->s.origin), timeout))
+    {
+        Debug("Can't set pursuit tactical spot for %s\n", enemy.Nick());
+        return false;
+    }
     float x = pursuitGoal.explicitOrigin.X();
     float y = pursuitGoal.explicitOrigin.Y();
     float z = pursuitGoal.explicitOrigin.Z();
     Q_snprintfz(pursuitGoal.name, NavEntity::MAX_NAME_LEN, "%s seen spot @(%.3f %3.f %3.f)", enemy.Nick(), x, y, z);
+    return true;
+}
+
+bool BotBrain::SetTacticalSpot(const Vec3 &origin, unsigned int timeout)
+{
+    int areaNum = AAS_PointAreaNum(const_cast<float*>(origin.Data()));
+    if (!areaNum)
+    {
+        areaNum = AAS_PointAreaNum((Vec3(0, 0, -16) + origin).Data());
+        if (!areaNum)
+        {
+            areaNum = AAS_PointAreaNum((Vec3(0, 0, +16) + origin).Data());
+            if (!areaNum)
+                return false;
+        }
+    }
+    pursuitGoal.aasAreaNum = areaNum;
+    pursuitGoal.combatTaskInstanceId = combatTask.instanceId;
+    pursuitGoal.goalFlags = GoalFlags::TACTICAL_SPOT;
+    pursuitGoal.explicitTimeout = level.time + timeout;
+    pursuitGoal.explicitSpawnTime = 1;
+    pursuitGoal.explicitOrigin = origin;
     SetSpecialGoal(&pursuitGoal);
+    return true;
+}
+
+void BotBrain::CheckTacticalPosition()
+{
+    trace_t trace;
+
+    // First, trace whether a bot may hit an enemy from current position
+    // (Do a trace from bot origin to enemy origin)
+    Vec3 fireOrigin(self->s.origin);
+    fireOrigin.Z() += self->viewheight;
+    G_Trace(&trace, fireOrigin.Data(), nullptr, nullptr, combatTask.EnemyOrigin().Data(), self, MASK_AISOLID);
+
+    // Bot may hit from the current position
+    if (trace.fraction == 1.0f || game.edicts + trace.ent == combatTask.TraceKey())
+        return;
+
+    // Avoid another trace call by doing a cheap velocity test first
+    // (Predicting origin makes sense for relatively high speed, otherwise the origin is almost the same)
+    if (VectorLengthSquared(self->velocity) > 200 * 200)
+    {
+        // Predict origin for 0.5 s
+        float t = 0.5f;
+        fireOrigin += t * Vec3(self->velocity);
+        // TODO: Check ground trace
+        if (!self->groundentity)
+            fireOrigin.Z() -= 0.5f * level.gravity * t * t;
+        G_Trace(&trace, fireOrigin.Data(), nullptr, nullptr, combatTask.EnemyOrigin().Data(), self, MASK_AISOLID);
+
+        // Bot would be able to hit
+        if (trace.fraction == 1.0f || game.edicts + trace.ent == combatTask.TraceKey())
+            return;
+    }
+
+    SetTacticalSpot(combatTask.EnemyOrigin(), 750);
 }
 
 // Old weapon selection code with some style and C to C++ fixes
