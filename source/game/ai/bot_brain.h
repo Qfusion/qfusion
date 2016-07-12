@@ -127,6 +127,13 @@ public:
         FailWith("EnemyLookDir(): aim enemy is not present");
     }
 
+    Vec3 EnemyAngles() const
+    {
+        if (aimEnemy)
+            return Vec3(AimEnemyEnt()->s.angles);
+        FailWith("EnemyAngles(): aim enemy is not present");
+    }
+
     unsigned EnemyFireDelay() const
     {
         if (aimEnemy && aimEnemy->ent)
@@ -279,8 +286,11 @@ class BotBrain: public AiBaseBrain
 
     bool MayPathToAreaBeBlocked(int goalAreaNum) const;
 
-    void StartPursuit(const Enemy &enemy);
+    bool StartPursuit(const Enemy &enemy, unsigned timeout = 1000);
+    bool SetTacticalSpot(const Vec3 &origin, unsigned timeout = 1000);
     virtual bool ShouldCancelSpecialGoalBySpecificReasons() override;
+
+    void CheckTacticalPosition();
 
     BotBrain() = delete;
     // Disable copying and moving
