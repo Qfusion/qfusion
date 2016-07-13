@@ -67,10 +67,10 @@ AiBaseEnemyPool::AiBaseEnemyPool(float avgSkill)
       decisionRandom(0.5f),
       decisionRandomUpdateAt(0),
       trackedEnemiesCount(0),
-      maxTrackedEnemies(3 + From0UpToMax(MAX_TRACKED_ENEMIES-2, avgSkill)),
-      maxTrackedAttackers(1 + From0UpToMax(MAX_TRACKED_ATTACKERS, avgSkill)),
-      maxTrackedTargets(1 + From0UpToMax(MAX_TRACKED_TARGETS, avgSkill)),
-      maxActiveEnemies(1 + From0UpToMax(MAX_ACTIVE_ENEMIES, avgSkill)),
+      maxTrackedEnemies(3 + From0UpToMax(MAX_TRACKED_ENEMIES-3, avgSkill)),
+      maxTrackedAttackers(From1UpToMax(MAX_TRACKED_ATTACKERS, avgSkill)),
+      maxTrackedTargets(From1UpToMax(MAX_TRACKED_TARGETS, avgSkill)),
+      maxActiveEnemies(From1UpToMax(MAX_ACTIVE_ENEMIES, avgSkill)),
       reactionTime(320 - From0UpToMax(300, avgSkill))
 {
     unsigned maxEnemies = maxTrackedEnemies;

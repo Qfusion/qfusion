@@ -136,12 +136,24 @@ inline float BoundedFraction(float value, float bound)
 
 inline unsigned From0UpToMax(unsigned maxValue, float ratio)
 {
-	// Ensure that value never exceeds maxValue by lowering ratio a bit
-	unsigned value = (unsigned)(maxValue * ratio);
-	// Return values less than maxValue except a case when maxValue is 0
-	if (value == maxValue && maxValue)
-		return maxValue;
-	return value;
+//#ifdef _DEBUG
+	if (ratio < 0 || ratio > 1)
+	{
+		AI_FailWith("From0UpToMax()", "ratio %f is out of valid [0,1] bounds", ratio);
+	}
+//#endif
+	return (unsigned)(maxValue * ratio);
+}
+
+inline unsigned From1UpToMax(unsigned maxValue, float ratio)
+{
+//#ifdef _DEBUG
+	if (!maxValue)
+	{
+		AI_FailWith("From1UpToMax()", "maxValue is 0");
+	}
+//#endif
+	return 1 + From0UpToMax(maxValue - 1, ratio);
 }
 
 inline const char *Nick(const edict_t *ent)
