@@ -99,41 +99,19 @@ public:
     inline AiBaseEnemyPool *EnemyPool() { return squadEnemyPool; }
     inline const AiBaseEnemyPool *EnemyPool() const { return squadEnemyPool; }
 
-    template<typename Container> void ReleaseBotsTo(Container &output)
-    {
-        for (auto &bot: bots)
-            output.push_back(bot);
-        bots.clear();
-        inUse = false;
-    }
+    void ReleaseBotsTo(StaticVector<Bot *, MAX_CLIENTS> &orphans);
 
-    void PrepareToAddBots()
-    {
-        isValid = true;
-        inUse = true;
-        canFightTogether = false;
-        canMoveTogether = false;
-        brokenConnectivityTimeoutAt = level.time + 1;
-        bots.clear();
-    }
+    void PrepareToAddBots();
 
     void AddBot(Bot *bot);
 
     // Checks whether a bot may be attached to an existing squad
     bool MayAttachBot(const Bot *bot) const;
-    bool TryAttachBot(Bot *bot)
-    {
-        if (MayAttachBot(bot))
-        {
-            AddBot(bot);
-            return true;
-        }
-        return false;
-    }
+    bool TryAttachBot(Bot *bot);
 
     void Invalidate();
 
-    void OnBotRemoved(int botEntNum);
+    void OnBotRemoved(Bot *bot);
 
     inline void OnBotViewedEnemy(const edict_t *bot, const edict_t *enemy)
     {
@@ -160,8 +138,8 @@ class AiSquadBasedTeamBrain: public AiBaseTeamBrain
 
     CachedTravelTimesMatrix travelTimesMatrix;
 protected:
-    virtual void OnBotAdded(int botEntNum) override;
-    virtual void OnBotRemoved(int botEntNum) override;
+    virtual void OnBotAdded(Bot *bot) override;
+    virtual void OnBotRemoved(Bot *bot) override;
 
     // Should be overridden completely if you want to modify squad clustering logic
     // (this method should not be called in overridden one)

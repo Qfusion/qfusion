@@ -46,6 +46,25 @@ void AiGametypeBrain::ClearGoals(const NavEntity *canceledGoal, const Ai *goalGr
     }
 }
 
+void AiGametypeBrain::OnBotJoinedTeam(edict_t *ent, int team)
+{
+    const int clientId = ENTNUM(ent);
+    const int oldTeam = teams[clientId];
+    if (oldTeam != team)
+    {
+        if (oldTeam != TEAM_SPECTATOR)
+            AiBaseTeamBrain::GetBrainForTeam(oldTeam)->RemoveBot(ent->ai->botRef);
+        if (team != TEAM_SPECTATOR)
+            AiBaseTeamBrain::GetBrainForTeam(team)->AddBot(ent->ai->botRef);
+        teams[clientId] = team;
+    }
+}
+
+void AiGametypeBrain::OnBotDropped(edict_t *ent)
+{
+    OnBotJoinedTeam(ent, TEAM_SPECTATOR);
+}
+
 void AiGametypeBrain::Frame()
 {
     if (!GS_TeamBasedGametype())

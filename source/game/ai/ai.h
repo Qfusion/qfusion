@@ -55,6 +55,8 @@ void AI_AddDroppedItem( edict_t *ent );
 // Should be called when an item edict is about to be freed
 void AI_DeleteItem( edict_t *ent );
 
+void AI_JoinedTeam( edict_t *ent, int team );
+
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );
 void        G_SpawnAI( edict_t *ent, float skillLevel = 0.1f );
