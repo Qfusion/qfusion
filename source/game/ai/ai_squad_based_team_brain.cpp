@@ -559,12 +559,14 @@ static void MakeSortedNearbyMatesLists(NearbyMatesList **sortedMatesLists, Nearb
 // Returns count of new squads.
 static unsigned MakeNewSquads(NearbyMatesList **sortedMatesLists, unsigned listsCount, unsigned char *orphanSquadIds)
 {
+    static_assert(std::numeric_limits<unsigned char>::max() >= AiSquad::MAX_SIZE,
+                  "Use ushort type for squads larger than 256(!) clients");
     unsigned char orphanSquadMatesCount[MAX_CLIENTS];
 
     std::fill_n(orphanSquadIds, listsCount, 0);
     std::fill_n(orphanSquadMatesCount, listsCount, 0);
 
-    unsigned newSquadsCount = 0;
+    unsigned char newSquadsCount = 0;
 
     // For each bot and its mates list starting from bot that has closest teammates
     // (note that i-th list does not correspond to i-th orphan
@@ -576,7 +578,9 @@ static unsigned MakeNewSquads(NearbyMatesList **sortedMatesLists, unsigned lists
         if (orphanSquadMatesCount[ownerOrphanIndex] >= AiSquad::MAX_SIZE - 1)
             continue;
 
-        unsigned squadId = orphanSquadIds[ownerOrphanIndex];
+        unsigned char squadId = orphanSquadIds[ownerOrphanIndex];
+
+        StaticVector<unsigned, AiSquad::MAX_SIZE-1> assignedMatesOrphanIds;
 
         // For each bot close to the current orphan
         for (NearbyBotProps botProps: *matesList)
@@ -589,7 +593,7 @@ static unsigned MakeNewSquads(NearbyMatesList **sortedMatesLists, unsigned lists
             bool areMutuallyClosest = false;
             for (NearbyBotProps thatProps: *botProps.botMates)
             {
-                if (thatProps.botOrphanIndex == matesList->botIndex)
+                if (thatProps.botOrphanIndex == ownerOrphanIndex)
                 {
                     areMutuallyClosest = true;
                     break;
@@ -599,9 +603,13 @@ static unsigned MakeNewSquads(NearbyMatesList **sortedMatesLists, unsigned lists
                 continue;
 
             // Mutually assign orphans
+            assignedMatesOrphanIds.push_back(botOrphanIndex);
+            // Increase mates count of the mates list owner (the count does not include a bot itself)
             orphanSquadMatesCount[ownerOrphanIndex]++;
-            // We have to use teammates count
-            orphanSquadMatesCount[botOrphanIndex] = orphanSquadMatesCount[ownerOrphanIndex];
+            const auto matesCount = orphanSquadMatesCount[ownerOrphanIndex];
+            // For all already assigned mates modify their mates count
+            for (unsigned orphanId: assignedMatesOrphanIds)
+                orphanSquadMatesCount[orphanId] = matesCount;
 
             // Make new squad id only when we are sure that there are some selected squad members
             // (squad ids must be sequential and indicate feasible squads)
@@ -612,7 +620,7 @@ static unsigned MakeNewSquads(NearbyMatesList **sortedMatesLists, unsigned lists
             orphanSquadIds[botOrphanIndex] = squadId;
 
             // Stop assignation of squad mates for the bot that is i-th NearbyMatesList owner
-            if (orphanSquadMatesCount[ownerOrphanIndex] == AiSquad::MAX_SIZE - 1)
+            if (matesCount == AiSquad::MAX_SIZE - 1)
                 break;
         }
     }
