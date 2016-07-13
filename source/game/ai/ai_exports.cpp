@@ -1,6 +1,7 @@
 #include "bot.h"
 #include "ai_shutdown_hooks_holder.h"
 #include "ai_gametype_brain.h"
+#include "ai_base_team_brain.h"
 #include "aas.h"
 
 ai_weapon_t AIWeapons[WEAP_TOTAL];
@@ -119,6 +120,11 @@ void AI_GametypeChanged(const char *gametype)
     AiGametypeBrain::OnGametypeChanged(gametype);
 }
 
+void AI_JoinedTeam(edict_t *ent, int team)
+{
+    AiGametypeBrain::Instance()->OnBotJoinedTeam(ent, team);
+}
+
 void AI_CommonFrame()
 {
     AI_AASFrame();
@@ -185,6 +191,7 @@ void G_FreeAI( edict_t *ent )
     // points to the same block as aiRef does, but to avoid confusion we free pointer aliases explicitly.
     if (ent->ai->botRef)
     {
+        AiGametypeBrain::Instance()->OnBotDropped(ent);
         ent->ai->botRef->~Bot();
         G_Free(ent->ai->botRef);
     }

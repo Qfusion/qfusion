@@ -204,14 +204,14 @@ AiSquad::~AiSquad()
     }
 }
 
-void AiSquad::OnBotRemoved(int botEntNum)
+void AiSquad::OnBotRemoved(Bot *bot)
 {
     // Unused squads do not have bots. From the other hand, invalid squads may still have some bots to remove
     if (!inUse) return;
 
-    for (auto it = bots.cbegin(); it != bots.cend(); ++it)
+    for (auto it = bots.begin(); it != bots.end(); ++it)
     {
-        if (ENTNUM((*it)->Self()) == botEntNum)
+        if (*it == bot)
         {
             bots.erase(it);
             Invalidate();
@@ -306,6 +306,25 @@ bool AiSquad::CheckCanFightTogether() const
     return true;
 }
 
+void AiSquad::ReleaseBotsTo(StaticVector<Bot *, MAX_CLIENTS> &orphans)
+{
+    for (Bot *bot: bots)
+        orphans.push_back(bot);
+
+    bots.clear();
+    inUse = false;
+}
+
+void AiSquad::PrepareToAddBots()
+{
+    isValid = true;
+    inUse = true;
+    canFightTogether = false;
+    canMoveTogether = false;
+    brokenConnectivityTimeoutAt = level.time + 1;
+    bots.clear();
+}
+
 void AiSquad::AddBot(Bot *bot)
 {
 #ifdef _DEBUG
@@ -367,10 +386,30 @@ bool AiSquad::MayAttachBot(const Bot *bot) const
     return false;
 }
 
+bool AiSquad::TryAttachBot(Bot *bot)
+{
+    if (MayAttachBot(bot))
+    {
+        AddBot(bot);
+        return true;
+    }
+    return false;
+}
+
 void AiSquadBasedTeamBrain::Frame()
 {
     // Call super method first, it may contain some logic
     AiBaseTeamBrain::Frame();
+
+    // Drain invalid squads
+    for (auto &squad: squads)
+    {
+        if (!squad.InUse())
+            continue;
+        if (squad.IsValid())
+            continue;
+        squad.ReleaseBotsTo(orphanBots);
+    }
 
     // This should be called before AiSquad::Update() (since squads refer to this matrix)
     travelTimesMatrix.Clear();
@@ -382,20 +421,20 @@ void AiSquadBasedTeamBrain::Frame()
         squad.Update();
 }
 
-void AiSquadBasedTeamBrain::OnBotAdded(int botEntNum)
+void AiSquadBasedTeamBrain::OnBotAdded(Bot *bot)
 {
-    orphanBots.push_back(game.edicts[botEntNum].ai->botRef);
+    orphanBots.push_back(bot);
 }
 
-void AiSquadBasedTeamBrain::OnBotRemoved(int botEntNum)
+void AiSquadBasedTeamBrain::OnBotRemoved(Bot *bot)
 {
     for (auto &squad: squads)
-        squad.OnBotRemoved(botEntNum);
+        squad.OnBotRemoved(bot);
 
     // Remove from orphans as well
     for (auto it = orphanBots.begin(); it != orphanBots.end(); ++it)
     {
-        if (ENTNUM((*it)->Self()) == botEntNum)
+        if (*it == bot)
         {
             orphanBots.erase(it);
             return;
@@ -407,16 +446,6 @@ void AiSquadBasedTeamBrain::Think()
 {
     // Call super method first, this call must not be omitted
     AiBaseTeamBrain::Think();
-
-    // Drain invalid squads
-    for (auto &squad: squads)
-    {
-        if (!squad.InUse())
-            continue;
-        if (squad.IsValid())
-            continue;
-        squad.ReleaseBotsTo(orphanBots);
-    }
 
     if (!orphanBots.empty())
         SetupSquads();

@@ -12,6 +12,8 @@ public:
 
     edict_t *Self() { return self; }
     const edict_t *Self() const { return self; }
+
+    int EntNum() const { return ENTNUM(self); }
 };
 
 #endif

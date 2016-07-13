@@ -40,24 +40,15 @@ protected:
     virtual ~AiBaseTeamBrain() override {}
 
     const int team;
-    int prevFrameBotsCount;
-    int prevFrameBots[MAX_CLIENTS];
 
-    int currBotsCount;
-    int currBots[MAX_CLIENTS];
-
-    void AddBot(int botEntNum);
-    void RemoveBot(int botEntNum);
-    virtual void OnBotAdded(int botEntNum) {};
-    virtual void OnBotRemoved(int botEntNum) {};
+    void AddBot(class Bot *bot);
+    void RemoveBot(class Bot *bot);
+    virtual void OnBotAdded(class Bot *bot) {};
+    virtual void OnBotRemoved(class Bot *bot) {};
 
     void AcquireBotFrameAffinity(int entNum);
     void ReleaseBotFrameAffinity(int entNum);
     void SetBotFrameAffinity(int bot, unsigned modulo, unsigned offset);
-
-    void CheckTeamChanges();
-
-    virtual void Frame() override;
 
     inline int GetCachedCVar(int *cached, const char *name) const
     {

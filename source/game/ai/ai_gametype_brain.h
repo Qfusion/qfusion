@@ -7,7 +7,12 @@
 class AiGametypeBrain: public AiFrameAwareUpdatable
 {
 protected:
-    AiGametypeBrain() {};
+    AiGametypeBrain()
+    {
+        std::fill_n(teams, MAX_CLIENTS, TEAM_SPECTATOR);
+    };
+
+    int teams[MAX_CLIENTS];
 
     static AiGametypeBrain *instance;
     virtual void Frame() override;
@@ -19,6 +24,8 @@ public:
     // May return some of subtypes of this class depending on a gametype in future
     static inline AiGametypeBrain *Instance() { return instance; }
     void ClearGoals(const NavEntity *canceledGoal, const class Ai *goalGrabber);
+    void OnBotJoinedTeam(edict_t *ent, int team);
+    void OnBotDropped(edict_t *ent);
 };
 
 #endif

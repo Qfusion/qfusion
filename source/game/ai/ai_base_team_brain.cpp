@@ -13,10 +13,6 @@ AiBaseTeamBrain::AiBaseTeamBrain(int team)
     svSkill = -1;
     teamBrainAffinityModulo = -1;
     teamBrainAffinityOffset = -1;
-    prevFrameBotsCount = 0;
-    memset(prevFrameBots, 0, sizeof(prevFrameBots));
-    currBotsCount = 0;
-    memset(currBots, 0, sizeof(currBots));
 
     memset(botAffinityModulo, 0, sizeof(botAffinityModulo));
     memset(botAffinityOffsets, 0, sizeof(botAffinityOffsets));
@@ -46,42 +42,6 @@ AiBaseTeamBrain *AiBaseTeamBrain::GetBrainForTeam(int team)
         abort();
     }
     return teamBrains[team - 1];
-}
-
-void AiBaseTeamBrain::Frame()
-{
-    CheckTeamChanges();
-}
-
-void AiBaseTeamBrain::CheckTeamChanges()
-{
-    currBotsCount = 0;
-    for (int i = 0; i < teamlist[team].numplayers; ++i)
-    {
-        int entIndex = teamlist[team].playerIndices[i];
-        edict_t *ent = game.edicts + entIndex;
-        if (!ent || !ent->r.inuse || !ent->r.client)
-            continue;
-        if (ent->ai && ent->ai->type == AI_ISBOT)
-            currBots[currBotsCount++] = entIndex;
-    }
-
-    for (int i = 0; i < currBotsCount; ++i)
-    {
-        auto *const prevFrameBotsEnd = prevFrameBots + prevFrameBotsCount;
-        if (std::find(prevFrameBots, prevFrameBotsEnd, currBots[i]) == prevFrameBotsEnd)
-            AddBot(currBots[i]);
-    }
-
-    for (int i = 0; i < prevFrameBotsCount; ++i)
-    {
-        auto *const currBotsEnd = currBots + currBotsCount;
-        if (std::find(currBots, currBotsEnd, prevFrameBots[i]) == currBotsEnd)
-            RemoveBot(prevFrameBots[i]);
-    }
-
-    std::copy(currBots, currBots + currBotsCount, prevFrameBots);
-    prevFrameBotsCount = currBotsCount;
 }
 
 unsigned AiBaseTeamBrain::AffinityModulo() const
@@ -131,25 +91,22 @@ void AiBaseTeamBrain::InitTeamAffinity() const
     const_cast<AiBaseTeamBrain*>(this)->SetFrameAffinity(teamBrainAffinityModulo, teamBrainAffinityOffset);
 }
 
-void AiBaseTeamBrain::AddBot(int entNum)
+void AiBaseTeamBrain::AddBot(Bot *bot)
 {
-    Debug("new bot %s has been added\n", game.edicts[entNum].r.client->netname);
+    Debug("new bot %s has been added\n", bot->Nick());
 
-    AcquireBotFrameAffinity(entNum);
+    AcquireBotFrameAffinity(bot->EntNum());
     // Call subtype method (if any)
-    OnBotAdded(entNum);
+    OnBotAdded(bot);
 }
 
-void AiBaseTeamBrain::RemoveBot(int entNum)
+void AiBaseTeamBrain::RemoveBot(Bot *bot)
 {
-    if (game.edicts[entNum].r.client)
-        Debug("bot %s has been removed\n", game.edicts[entNum].r.client->netname);
-    else
-        Debug("bot (entNum=%d) has been removed\n", entNum);
+    Debug("bot %s has been removed\n", bot->Nick());
 
-    ReleaseBotFrameAffinity(entNum);
+    ReleaseBotFrameAffinity(bot->EntNum());
     // Call subtype method (if any)
-    OnBotRemoved(entNum);
+    OnBotRemoved(bot);
 }
 
 void AiBaseTeamBrain::AcquireBotFrameAffinity(int entNum)
