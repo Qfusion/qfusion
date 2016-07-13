@@ -266,22 +266,28 @@ void Ai::Think()
 
 void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3_t forward) const
 {
-    constexpr int MAX_TRACED_AREAS = 6;
-    int tracedAreas[MAX_TRACED_AREAS];
-    Vec3 traceEnd = 36 * Vec3(forward) + self->s.origin;
-    int numTracedAreas = AAS_TraceAreas(self->s.origin, traceEnd.Data(), tracedAreas, nullptr, MAX_TRACED_AREAS);
-
     // These values will be returned by default
     moveTestResult->canWalk = 0;
     moveTestResult->canFall = 0;
     moveTestResult->canJump = 0;
     moveTestResult->fallDepth = 0;
 
+    if (!AAS_AreaGrounded(currAasAreaNum))
+        return;
+
+    if (!currAasAreaNum)
+        return;
+
+    constexpr int MAX_TRACED_AREAS = 6;
+    int tracedAreas[MAX_TRACED_AREAS];
+    Vec3 traceEnd = 36.0f * Vec3(forward) + self->s.origin;
+    int numTracedAreas = AAS_TraceAreas(self->s.origin, traceEnd.Data(), tracedAreas, nullptr, MAX_TRACED_AREAS);
+
     if (!numTracedAreas)
         return;
 
-    // We are still in current area
-    if (tracedAreas[numTracedAreas] == currAasAreaNum)
+    // Trace ends still in current area
+    if (numTracedAreas == 1)
     {
         moveTestResult->canWalk = 1;
         moveTestResult->canFall = 0;
@@ -295,6 +301,10 @@ void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3
     for (int i = 0; i < numTracedAreas - 1; ++i)
     {
         const int nextAreaNum = tracedAreas[i + 1];
+        // Trace ends in solid
+        if (!nextAreaNum)
+            return;
+
         const aas_areasettings_t &currAreaSettings = aasworld.areasettings[tracedAreas[i]];
         if (!currAreaSettings.numreachableareas)
             return; // blocked
@@ -326,7 +336,7 @@ void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3
         traceFlags &= reachFlags;
         // Reject early
         if (!traceFlags)
-            return; // blocked
+            return;
     }
 
     moveTestResult->canWalk = 0 != (traceFlags & TFL_WALK);
