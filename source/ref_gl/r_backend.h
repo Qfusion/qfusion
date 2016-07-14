@@ -34,6 +34,7 @@ struct shader_s;
 struct mfog_s;
 struct superLightStyle_s;
 struct portalSurface_s;
+struct refScreenTexSet_s;
 
 // core
 void RB_Init( void );
@@ -62,6 +63,7 @@ void RB_ApplyScissor( void );
 void RB_Viewport( int x, int y, int w, int h );
 void RB_Clear( int bits, float r, float g, float b, float a );
 void RB_SetZClip( float zNear, float zFar );
+void RB_SetScreenImageSet( const struct refScreenTexSet_s *st );
 
 void RB_BindFrameBufferObject( int object );
 int RB_BoundFrameBufferObject( void );
@@ -92,7 +94,7 @@ void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );
 void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
 void RB_SetRenderFlags( int flags );
-void RB_SetLightParams( float minLight, bool noWorldLight );
+void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
 void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis );
 bool RB_EnableTriangleOutlines( bool enable );

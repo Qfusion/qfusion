@@ -465,7 +465,7 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, int imaget
 					suffix[0] = '\0';
 				Q_strncatz( suffix, cubemapSides[i][j].suf, sizeof( suffix ) );
 
-				images[j] = R_FindImage( token, suffix, IT_SKYFLAGS|cubemapSides[i][j].flags, 1, imagetags );
+				images[j] = R_FindImage( token, suffix, IT_SKYFLAGS|cubemapSides[i][j].flags|IT_SRGB, 1, imagetags );
 				if( !images[j] )
 					break;
 			}
@@ -1112,7 +1112,7 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 		}
 	}
 
-	flags = Shader_SetImageFlags( shader ) | addFlags;
+	flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 	pass->tcgen = TC_GEN_BASE;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
 	pass->anim_fps = 0;
@@ -1126,7 +1126,7 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 
 	R_FreePassCinematics( pass );
 
-	flags = Shader_SetImageFlags( shader ) | addFlags;
+	flags = Shader_SetImageFlags( shader ) | addFlags |  IT_SRGB;
 
 	pass->tcgen = TC_GEN_BASE;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
@@ -1154,7 +1154,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	R_FreePassCinematics( pass );
 
 	token = Shader_ParseString( ptr );
-	flags = Shader_SetImageFlags( shader ) | addFlags;
+	flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 	pass->anim_fps = 0;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
 
@@ -1237,7 +1237,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 		token = shader->name;
 	}
 
-	pass->images[0] = Shader_FindImage( shader, token, flags );
+	pass->images[0] = Shader_FindImage( shader, token, flags | IT_SRGB );
 	if( !pass->images[0] )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: failed to load base/diffuse image for material %s in shader %s.\n", token, shader->name );
@@ -1289,7 +1289,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 				}
 
 				if( strcmp( token, "-" ) ) {
-					pass->images[i] = Shader_FindImage( shader, token, flags );
+					pass->images[i] = Shader_FindImage( shader, token, flags | IT_SRGB );
 				}
 				else {
 					pass->images[i] = rsh.whiteTexture;
@@ -1376,7 +1376,7 @@ static void Shaderpass_Celshade( shader_t *shader, shaderpass_t *pass, const cha
 
 	R_FreePassCinematics( pass );
 
-	flags = Shader_SetImageFlags( shader );
+	flags = Shader_SetImageFlags( shader ) | IT_SRGB;
 	pass->tcgen = TC_GEN_BASE;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
 	if( pass->rgbgen.type == RGB_GEN_UNKNOWN )
@@ -2693,7 +2693,7 @@ create_default:
 			pass->tcgen = TC_GEN_BASE;
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
-			pass->images[0] = Shader_FindImage( s, longname, 0 );
+			pass->images[0] = Shader_FindImage( s, longname, IT_SRGB );
 			break;
 		case SHADER_TYPE_DELUXEMAP:
 			// deluxemapping
@@ -2714,7 +2714,7 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_IDENTITY;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-			pass->images[0] = Shader_FindImage( s, longname, 0 );
+			pass->images[0] = Shader_FindImage( s, longname, IT_SRGB );
 			pass->images[1] = materialImages[0]; // normalmap
 			pass->images[2] = materialImages[1]; // glossmap
 			pass->images[3] = materialImages[2]; // decalmap
@@ -2755,7 +2755,7 @@ create_default:
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
 			pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-			pass->images[0] = Shader_FindImage( s, longname, 0 );
+			pass->images[0] = Shader_FindImage( s, longname,  IT_SRGB );
 			pass->images[1] = materialImages[0]; // normalmap
 			pass->images[2] = materialImages[1]; // glossmap
 			pass->images[3] = materialImages[2]; // decalmap

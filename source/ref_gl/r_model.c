@@ -1169,16 +1169,14 @@ static void R_InitMapConfig( const char *model )
 {
 	memset( &mapConfig, 0, sizeof( mapConfig ) );
 
-	mapConfig.pow2MapOvrbr = 0;
 	mapConfig.lightmapsPacking = false;
 	mapConfig.lightmapArrays = false;
 	mapConfig.maxLightmapSize = 0;
 	mapConfig.deluxeMaps = false;
 	mapConfig.deluxeMappingEnabled = false;
-	mapConfig.overbrightBits = max( 0, r_mapoverbrightbits->integer );
 	mapConfig.forceClear = false;
-	mapConfig.lightingIntensity = 0;
 	mapConfig.forceWorldOutlines = false;
+	mapConfig.averageLightingIntensity = 1;
 
 	VectorClear( mapConfig.ambient );
 	VectorClear( mapConfig.outlineColor );
@@ -1215,23 +1213,11 @@ static void R_FinishMapConfig( const model_t *mod )
 	if( r_fullbright->integer )
 	{
 		VectorSet( mapConfig.ambient, 1, 1, 1 );
+		mapConfig.averageLightingIntensity = 1;
 	}
 	else
 	{
-		int i;
-		float scale;
-
-		scale = mapConfig.mapLightColorScale / 255.0f;
-		if( mapConfig.lightingIntensity )
-		{
-			for( i = 0; i < 3; i++ )
-				mapConfig.ambient[i] = mapConfig.ambient[i] * scale;
-		}
-		else
-		{
-			for( i = 0; i < 3; i++ )
-				mapConfig.ambient[i] = bound( 0, mapConfig.ambient[i] * scale, 1 );
-		}
+		ColorNormalize( mapConfig.ambient,  mapConfig.ambient );
 	}
 
 	mod_mapConfigs[mod - mod_known] = mapConfig;

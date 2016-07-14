@@ -128,6 +128,14 @@ typedef struct superLightStyle_s
 
 //===================================================================
 
+typedef struct refScreenTexSet_s {
+	image_t			*screenTex;
+	image_t			*screenTexCopy;
+	image_t			*screenPPCopies[2];
+	image_t			*screenDepthTex;
+	image_t			*screenDepthTexCopy;
+} refScreenTexSet_t;
+
 typedef struct portalSurface_s
 {
 	const entity_t	*entity;
@@ -142,6 +150,7 @@ typedef struct
 {
 	unsigned int	renderFlags;
 
+	refScreenTexSet_t *st;					// points to either either a 8bit or a 16bit float set
 	image_t			*fbColorAttachment;
 	image_t			*fbDepthAttachment;
 
@@ -170,6 +179,7 @@ typedef struct
 	vec3_t			visMins, visMaxs;
 	unsigned int	numVisSurfaces;
 	float			visFarClip;
+	float			hdrExposure;
 
 	mat4_t			objectMatrix;
 	mat4_t			cameraMatrix;
@@ -233,11 +243,8 @@ typedef struct
 	image_t			*coronaTexture;
 	image_t			*portalTextures[MAX_PORTAL_TEXTURES+1];
 	image_t			*shadowmapTextures[MAX_SHADOWGROUPS];
-	image_t			*screenTexture;
-	image_t			*screenDepthTexture;
-	image_t			*screenTextureCopy;
-	image_t			*screenDepthTextureCopy;
-	image_t			*screenPPCopies[2];
+
+	refScreenTexSet_t st, stf;
 
 	shader_t		*envShader;
 	shader_t		*skyShader;
@@ -356,8 +363,8 @@ extern cvar_t *r_lightmap;
 extern cvar_t *r_novis;
 extern cvar_t *r_nocull;
 extern cvar_t *r_lerpmodels;
-extern cvar_t *r_mapoverbrightbits;
 extern cvar_t *r_brightness;
+extern cvar_t *r_sRGB;
 
 extern cvar_t *r_dynamiclight;
 extern cvar_t *r_coronascale;
@@ -384,6 +391,7 @@ extern cvar_t *r_lighting_maxlmblocksize;
 extern cvar_t *r_lighting_vertexlight;
 extern cvar_t *r_lighting_maxglsldlights;
 extern cvar_t *r_lighting_grayscale;
+extern cvar_t *r_lighting_intensity;
 
 extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;
@@ -405,13 +413,16 @@ extern cvar_t *r_outlines_cutoff;
 extern cvar_t *r_soft_particles;
 extern cvar_t *r_soft_particles_scale;
 
+extern cvar_t *r_hdr;
+extern cvar_t *r_hdr_gamma;
+extern cvar_t *r_hdr_exposure;
+
 extern cvar_t *r_fxaa;
 
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
 
 extern cvar_t *r_gamma;
-extern cvar_t *r_texturebits;
 extern cvar_t *r_texturemode;
 extern cvar_t *r_texturefilter;
 extern cvar_t *r_texturecompression;
@@ -449,6 +460,11 @@ extern cvar_t *vid_multiscreen_head;
 void R_NormToLatLong( const vec_t *normal, uint8_t latlong[2] );
 void R_LatLongToNorm( const uint8_t latlong[2], vec3_t out );
 void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
+
+#define R_LinearFloatFromsRGBFloat(c) (((c) <= 0.04045f) ? (c) * (1.0f / 12.92f) : (float)pow(((c) + 0.055f)*(1.0f/1.055f), 2.4f))
+#define R_sRGBFloatFromLinearFloat(c) (((c) < 0.0031308f) ? (c) * 12.92f : 1.055f * (float)pow((c), 1.0f/2.4f) - 0.055f)
+#define R_LinearFloatFromsRGB(c) Image_LinearFloatFromsRGBFloat((c) * (1.0f / 255.0f))
+#define R_sRGBFloatFromLinear(c) Image_sRGBFloatFromLinearFloat((c) * (1.0f / 255.0f))
 
 //====================================================================
 
@@ -534,6 +550,7 @@ void		RFB_Shutdown( void );
 unsigned int R_AddSurfaceDlighbits( const msurface_t *surf, unsigned int checkDlightBits );
 void		R_AddDynamicLights( unsigned int dlightbits, int state );
 void		R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
+float		R_LightExposureForOrigin( const vec3_t origin );
 void		R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects );
 void		R_InitLightStyles( model_t *mod );
 superLightStyle_t	*R_AddSuperLightStyle( model_t *mod, const int *lightmaps, 
@@ -841,14 +858,11 @@ bool		R_AddSkySurfToDrawList( const msurface_t *fa, const portalSurface_t *porta
 typedef struct
 {
 	int				overbrightBits;			// map specific overbright bits
-	int				pow2MapOvrbr;
-	float			mapLightColorScale;		// 1<<overbrightbits * intensity
 
 	float			ambient[3];
 	byte_vec4_t		outlineColor;
 	byte_vec4_t		environmentColor;
-
-	float			lightingIntensity;
+	float			averageLightingIntensity;
 
 	bool			lightmapsPacking;
 	bool			lightmapArrays;			// true if using array textures for lightmaps

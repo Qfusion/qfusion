@@ -39,8 +39,8 @@ cvar_t *r_lightmap;
 cvar_t *r_novis;
 cvar_t *r_nocull;
 cvar_t *r_lerpmodels;
-cvar_t *r_mapoverbrightbits;
 cvar_t *r_brightness;
+cvar_t *r_sRGB;
 
 cvar_t *r_dynamiclight;
 cvar_t *r_coronascale;
@@ -67,6 +67,7 @@ cvar_t *r_lighting_maxlmblocksize;
 cvar_t *r_lighting_vertexlight;
 cvar_t *r_lighting_maxglsldlights;
 cvar_t *r_lighting_grayscale;
+cvar_t *r_lighting_intensity;
 
 cvar_t *r_offsetmapping;
 cvar_t *r_offsetmapping_scale;
@@ -88,6 +89,10 @@ cvar_t *r_outlines_cutoff;
 cvar_t *r_soft_particles;
 cvar_t *r_soft_particles_scale;
 
+cvar_t *r_hdr;
+cvar_t *r_hdr_gamma;
+cvar_t *r_hdr_exposure;
+
 cvar_t *r_fxaa;
 
 cvar_t *r_lodbias;
@@ -95,7 +100,6 @@ cvar_t *r_lodscale;
 
 cvar_t *r_stencilbits;
 cvar_t *r_gamma;
-cvar_t *r_texturebits;
 cvar_t *r_texturemode;
 cvar_t *r_texturefilter;
 cvar_t *r_texturecompression;
@@ -472,6 +476,8 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, packed_depth_stencil, false, false, NULL )
 	,GL_EXTENSION( SGIS, texture_lod, false, false, NULL )
 	,GL_EXTENSION( ARB, gpu_shader5, false, false, NULL )
+	,GL_EXTENSION( ARB, texture_float, false, false, NULL )
+	,GL_EXTENSION( EXT, texture_sRGB, false, false, NULL )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
@@ -960,6 +966,10 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.depthEpsilon = 1.0 / (1<<14);
 	}
 
+	// require both texture_sRGB and texture_float for sRGB rendering as 8bit framebuffers
+	// run out of precision for linear colors in darker areas
+	glConfig.sSRGB = r_sRGB->integer && glConfig.ext.texture_sRGB && glConfig.ext.texture_float;
+
 	cvar = ri.Cvar_Get( "gl_ext_vertex_buffer_object_hack", "0", CVAR_ARCHIVE|CVAR_NOSET );
 	if( cvar && !cvar->integer ) 
 	{
@@ -1035,8 +1045,8 @@ static void R_Register( const char *screenshotsPrefix )
 	r_skymip = ri.Cvar_Get( "r_skymip", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_polyblend = ri.Cvar_Get( "r_polyblend", "1", 0 );
 
-	r_mapoverbrightbits = ri.Cvar_Get( "r_mapoverbrightbits", "2", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_brightness = ri.Cvar_Get( "r_brightness", "0", CVAR_ARCHIVE );
+	r_sRGB = ri.Cvar_Get( "r_sRGB", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "1", CVAR_ARCHIVE );
 
@@ -1063,6 +1073,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "16", CVAR_ARCHIVE );
 	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
 
 	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
 	r_offsetmapping_scale = ri.Cvar_Get( "r_offsetmapping_scale", "0.02", CVAR_ARCHIVE );
@@ -1088,13 +1099,16 @@ static void R_Register( const char *screenshotsPrefix )
 	r_soft_particles = ri.Cvar_Get( "r_soft_particles", "1", CVAR_ARCHIVE );
 	r_soft_particles_scale = ri.Cvar_Get( "r_soft_particles_scale", "0.02", CVAR_ARCHIVE );
 
+	r_hdr = ri.Cvar_Get( "r_hdr", "1", CVAR_ARCHIVE );
+	r_hdr_gamma = ri.Cvar_Get( "r_hdr_gamma", "2.2", CVAR_ARCHIVE );
+	r_hdr_exposure = ri.Cvar_Get( "r_hdr_exposure", "1.0", CVAR_ARCHIVE );
+
 	r_fxaa = ri.Cvar_Get( "r_fxaa", "1", CVAR_ARCHIVE );
 
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
 
 	r_gamma = ri.Cvar_Get( "r_gamma", "1.0", CVAR_ARCHIVE );
-	r_texturebits = ri.Cvar_Get( "r_texturebits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_texturemode = ri.Cvar_Get( "r_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE );
 	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
 	r_texturecompression = ri.Cvar_Get( "r_texturecompression", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );

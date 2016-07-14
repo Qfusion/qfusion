@@ -151,30 +151,6 @@ static void Mod_LoadLighting( const lump_t *l, const lump_t *faces )
 
 	R_InitLightStyles( loadmodel );
 
-	// set overbright bits for lightmaps and lightgrid
-	// deluxemapped maps have zero scale because most surfaces
-	// have a gloss stage that makes them look brighter anyway
-	if( mapConfig.lightingIntensity )
-	{
-		mapConfig.overbrightBits -= atoi( r_mapoverbrightbits->dvalue );
-		if( mapConfig.overbrightBits < 0 )
-			mapConfig.overbrightBits = 0;
-		mapConfig.pow2MapOvrbr = max( mapConfig.overbrightBits, 0 );
-		mapConfig.mapLightColorScale = ( 1 << mapConfig.pow2MapOvrbr ) * mapConfig.lightingIntensity;
-	}
-	else
-	{
-		// for maps that do not specify lighting intensity, default intensity to 2
-		// and reduce overbright bits according
-		// this allows for more dramatic shadows while staying faithful to author's original intention
-		mapConfig.pow2MapOvrbr = mapConfig.overbrightBits - 1;
-		if( mapConfig.pow2MapOvrbr < 0 )
-			mapConfig.pow2MapOvrbr = 0;
-		mapConfig.lightingIntensity = (float)(1 << max( mapConfig.overbrightBits - mapConfig.pow2MapOvrbr, 0 ));
-		mapConfig.overbrightBits = 0;
-		mapConfig.mapLightColorScale = mapConfig.lightingIntensity;
-	}
-
 	// we don't need lightmaps for vertex lighting
 	if( r_lighting_vertexlight->integer )
 		return;
@@ -398,7 +374,6 @@ static void Mod_LoadVertexes( const lump_t *l )
 	uint8_t *buffer, *out_colors;
 	size_t bufSize;
 	vec3_t color;
-	float div = (float)( 1 << mapConfig.overbrightBits ) * mapConfig.lightingIntensity / 255.0f;
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
@@ -448,22 +423,17 @@ static void Mod_LoadVertexes( const lump_t *l )
 			out_colors[2] = 255;
 			out_colors[3] = in->color[3];
 		}
+		else if( r_lighting_grayscale->integer )
+		{
+			vec_t grey = ColorGrayscale( in->color );
+			out_colors[0] = out_colors[1] = out_colors[2] = bound( 0, grey, 255 );
+			out_colors[3] = in->color[3];
+		}
 		else
 		{
-			color[0] = ( ( float )in->color[0] * div );
-			color[1] = ( ( float )in->color[1] * div );
-			color[2] = ( ( float )in->color[2] * div );
-			ColorNormalize( color, color );
-
-			// convert to grayscale if monochrome lighting is enabled
-			if( r_lighting_grayscale->integer ) {
-				vec_t grey = ColorGrayscale( color );
-				color[0] = color[1] = color[2] = bound( 0, grey, 1 );
-			}
-
-			out_colors[0] = ( uint8_t )( color[0] * 255 );
-			out_colors[1] = ( uint8_t )( color[1] * 255 );
-			out_colors[2] = ( uint8_t )( color[2] * 255 );
+			out_colors[0] = in->color[0];
+			out_colors[1] = in->color[1];
+			out_colors[2] = in->color[2];
 			out_colors[3] = in->color[3];
 		}
 	}
@@ -480,7 +450,6 @@ static void Mod_LoadVertexes_RBSP( const lump_t *l )
 	uint8_t *buffer, *out_colors[MAX_LIGHTMAPS];
 	size_t bufSize;
 	vec3_t color;
-	float div = (float)( 1 << mapConfig.overbrightBits ) * mapConfig.lightingIntensity / 255.0f;
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
@@ -533,22 +502,17 @@ static void Mod_LoadVertexes_RBSP( const lump_t *l )
 				out_colors[j][2] = 255;
 				out_colors[j][3] = in->color[j][3];
 			}
+			else if( r_lighting_grayscale->integer )
+			{
+				vec_t grey = ColorGrayscale( in->color[j] );
+				out_colors[j][0] = out_colors[j][1] = out_colors[j][2] = bound( 0, grey, 255 );
+				out_colors[j][3] = in->color[j][3];
+			}
 			else
 			{
-				color[0] = ( ( float )in->color[j][0] * div );
-				color[1] = ( ( float )in->color[j][1] * div );
-				color[2] = ( ( float )in->color[j][2] * div );
-				ColorNormalize( color, color );
-
-				// convert to grayscale if monochrome lighting is enabled
-				if( r_lighting_grayscale->integer ) {
-					vec_t grey = ColorGrayscale( color );
-					color[0] = color[1] = color[2] = bound( 0, grey, 1 );
-				}
-
-				out_colors[j][0] = ( uint8_t )( color[0] * 255 );
-				out_colors[j][1] = ( uint8_t )( color[1] * 255 );
-				out_colors[j][2] = ( uint8_t )( color[2] * 255 );
+				out_colors[j][0] = in->color[j][0];
+				out_colors[j][1] = in->color[j][1];
+				out_colors[j][2] = in->color[j][2];
 				out_colors[j][3] = in->color[j][3];
 			}
 		}
@@ -1476,7 +1440,7 @@ static void Mod_LoadLightgrid_RBSP( const lump_t *l )
 static void Mod_LoadLightArray( void )
 {
 	int i, count;
-	mgridlight_t **out;
+	int *out;
 
 	count = loadbmodel->numlightgridelems;
 	out = Mod_Malloc( loadmodel, sizeof( *out )*count );
@@ -1485,7 +1449,7 @@ static void Mod_LoadLightArray( void )
 	loadbmodel->numlightarrayelems = count;
 
 	for( i = 0; i < count; i++, out++ )
-		*out = loadbmodel->lightgrid + i;
+		*out = i;
 }
 
 /*
@@ -1496,7 +1460,7 @@ static void Mod_LoadLightArray_RBSP( const lump_t *l )
 	int i, count;
 	unsigned index;
 	unsigned short *in;
-	mgridlight_t **out;
+	int *out;
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
@@ -1513,7 +1477,7 @@ static void Mod_LoadLightArray_RBSP( const lump_t *l )
 		if( index >= (unsigned)loadbmodel->numlightgridelems ) {
 			ri.Com_Error( ERR_DROP, "Mod_LoadLightArray_RBSP: funny grid index(%i):%i in %s", i, index, loadmodel->name );
 		}
-		*out = loadbmodel->lightgrid + index;
+		*out = index;
 	}
 }
 
@@ -1598,14 +1562,6 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 			{
 				if( atof( value ) != 0 )
 					mapConfig.forceClear = true;
-			}
-			else if( !strcmp( key, "_lightingIntensity" ) )
-			{
-				if( !r_fullbright->integer )
-				{
-					// non power of two intensity scale for lighting
-					sscanf( value, "%8f", &mapConfig.lightingIntensity );
-				}
 			}
 			else if( !strcmp( key, "_outlinecolor" ) )
 			{
@@ -1718,9 +1674,23 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 	loadbmodel->gridBounds[3] = loadbmodel->gridBounds[1] * loadbmodel->gridBounds[0];
 
 	// ambient lighting
-	for( i = 0; i < 3; i++ )
-		mapConfig.ambient[i] = ambient[i];
-	
+	VectorScale( ambient, 1.0f / 255.0f, mapConfig.ambient );
+
+	if( loadbmodel->numlightgridelems > 0 ) {
+		mapConfig.averageLightingIntensity = 0;
+		for( i = 0; i < loadbmodel->numlightgridelems; i++ ) {
+			vec3_t a, d;
+
+			VectorScale( loadbmodel->lightgrid[i].ambient[0], 1.0f/255.0f, a );
+			VectorScale( loadbmodel->lightgrid[i].diffuse[0], 1.0f/255.0f, d );
+
+			mapConfig.averageLightingIntensity += ColorGrayscale( a ) + ColorGrayscale( d );
+		}
+		mapConfig.averageLightingIntensity /= (float)loadbmodel->numlightgridelems;
+		mapConfig.averageLightingIntensity *= 1.5f;
+		clamp( mapConfig.averageLightingIntensity, 0.0f, 1.0f );
+	}
+
 	// outline color
 	for( i = 0; i < 3; i++ )
 		mapConfig.outlineColor[i] = (uint8_t)(bound( 0, outline[i]*255.0f, 255 ));

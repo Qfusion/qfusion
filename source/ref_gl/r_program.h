@@ -53,7 +53,7 @@ enum
 	GLSL_PROGRAM_TYPE_FOG,
 	GLSL_PROGRAM_TYPE_FXAA,
 	GLSL_PROGRAM_TYPE_YUV,
-	GLSL_PROGRAM_TYPE_COLORCORRECTION,
+	GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
 
 	GLSL_PROGRAM_TYPE_MAXTYPE
 };
@@ -67,7 +67,8 @@ enum
 #define GLSL_SHADER_COMMON_RGB_GEN_VERTEX 		GLSL_BIT(5)
 #define GLSL_SHADER_COMMON_RGB_GEN_ONE_MINUS_VERTEX (GLSL_SHADER_COMMON_RGB_GEN_CONST | GLSL_SHADER_COMMON_RGB_GEN_VERTEX)
 #define GLSL_SHADER_COMMON_RGB_DISTANCERAMP      GLSL_BIT(6)
-#define GLSL_SHADER_COMMON_RGB_GEN_DIFFUSELIGHT  GLSL_BIT(7)
+
+#define GLSL_SHADER_COMMON_SRGB_COLORS			GLSL_BIT(7)
 
 #define GLSL_SHADER_COMMON_ALPHA_GEN_CONST 		GLSL_BIT(8)
 #define GLSL_SHADER_COMMON_ALPHA_GEN_VERTEX 	GLSL_BIT(9)
@@ -187,6 +188,10 @@ enum
 // fxaa
 #define GLSL_SHADER_FXAA_FXAA3					GLSL_BIT(32)
 
+// hdr/bloom/tone-mapping/color-correction
+#define GLSL_SHADER_COLOR_CORRECTION_LUT		GLSL_BIT(32)
+#define GLSL_SHADER_COLOR_CORRECTION_HDR		GLSL_BIT(33)
+
 void RP_Init( void );
 void RP_Shutdown( void );
 void RP_PrecachePrograms( void );
@@ -238,11 +243,13 @@ void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat
 
 void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDualQuat );
 
-void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t floorColor );
-
 void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **groups, const mat4_t objectMatrix,
 	const vec3_t objectOrigin, const mat3_t objectAxis );
 
 void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePoint_t *instances );
+
+void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t floorColor );
+
+void RP_UpdateColorCorrectionUniforms( int elem, float hdrGamme, float hdrExposure );
 
 #endif // R_PROGRAM_H

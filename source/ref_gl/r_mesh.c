@@ -438,6 +438,8 @@ static void _R_DrawSurfaces( drawList_t *list )
 
 	riFBO = RB_BoundFrameBufferObject();
 
+	RB_SetScreenImageSet( rn.st );
+
 	for( i = 0; i < list->numDrawSurfs; i++ ) {
 		sds = list->drawSurfs + i;
 		sortKey = sds->sortKey;
@@ -519,14 +521,14 @@ static void _R_DrawSurfaces( drawList_t *list )
 
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
 				depthCopied = true;
-				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && rn.fbDepthAttachment && rsh.screenTextureCopy ) {
+				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && rn.fbDepthAttachment && rn.st->screenTexCopy ) {
 					// draw all dynamic surfaces that write depth before copying
 					if( batchOpaque ) {
 						batchOpaque = false;
 						RB_FlushDynamicMeshes();
 						batchFlushed = true;
 					}
-					RB_BlitFrameBufferObject( rsh.screenTextureCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
+					RB_BlitFrameBufferObject( rn.st->screenTexCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
 				}
 			}
 

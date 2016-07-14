@@ -73,6 +73,7 @@ typedef struct glsl_program_s
 					LightDir,
 					LightAmbient,
 					LightDiffuse,
+					LightingIntensity,
 
 					TextureMatrix,
 
@@ -130,6 +131,9 @@ typedef struct glsl_program_s
 					
 					SoftParticlesScale;
 
+		int			hdrGamma,
+					hdrExposure;
+
 		// builtin uniforms
 		struct {
 			int		ShaderTime,
@@ -186,7 +190,7 @@ void RP_Init( void )
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, DEFAULT_GLSL_YUV_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLORCORRECTION, DEFAULT_GLSL_COLORCORRECTION_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLOR_CORRECTION, DEFAULT_GLSL_COLORCORRECTION_PROGRAM, NULL, NULL, 0, 0 );
 
 	// check whether compilation of the shader with GPU skinning succeeds, if not, disable GPU bone transforms
 	if ( glConfig.maxGLSLBones ) {
@@ -606,6 +610,8 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_RGB_GEN_VERTEX, "#define APPLY_RGB_VERTEX\n", "_cv" },
 	{ GLSL_SHADER_COMMON_RGB_DISTANCERAMP, "#define APPLY_RGB_DISTANCERAMP\n", "_rgb_dr" },
 
+	{ GLSL_SHADER_COMMON_SRGB_COLORS, "#define APPLY_SRGB_COLORS\n", "_srgb" },
+
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX, "#define APPLY_ALPHA_ONE_MINUS_VERTEX\n", "_a1-v" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_VERTEX, "#define APPLY_ALPHA_VERTEX\n", "_av" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_CONST, "#define APPLY_ALPHA_CONST\n", "_ac" },
@@ -671,6 +677,8 @@ static const glsl_feature_t glsl_features_distortion[] =
 	{ GLSL_SHADER_COMMON_RGB_GEN_CONST, "#define APPLY_RGB_CONST\n", "_cc" },
 	{ GLSL_SHADER_COMMON_RGB_GEN_VERTEX, "#define APPLY_RGB_VERTEX\n", "_cv" },
 	{ GLSL_SHADER_COMMON_RGB_DISTANCERAMP, "#define APPLY_RGB_DISTANCERAMP\n", "_rgb_dr" },
+
+	{ GLSL_SHADER_COMMON_SRGB_COLORS, "#define APPLY_SRGB_COLORS\n", "_srgb" },
 
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX, "#define APPLY_ALPHA_ONE_MINUS_VERTEX\n", "_a1-v" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_CONST, "#define APPLY_ALPHA_CONST\n", "_ac" },
@@ -797,7 +805,6 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
 	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
-
 	{ GLSL_SHADER_COMMON_TC_MOD, "#define APPLY_TC_MOD\n", "_tc_mod" },
 
 	{ GLSL_SHADER_Q3_TC_GEN_CELSHADE, "#define APPLY_TC_GEN_CELSHADE\n", "_tc_cel" },
@@ -835,7 +842,8 @@ static const glsl_feature_t glsl_features_celshade[] =
 	{ GLSL_SHADER_COMMON_RGB_GEN_ONE_MINUS_VERTEX, "#define APPLY_RGB_ONE_MINUS_VERTEX\n", "_c1-v" },
 	{ GLSL_SHADER_COMMON_RGB_GEN_CONST, "#define APPLY_RGB_CONST\n", "_cc" },
 	{ GLSL_SHADER_COMMON_RGB_GEN_VERTEX, "#define APPLY_RGB_VERTEX\n", "_cv" },
-	{ GLSL_SHADER_COMMON_RGB_GEN_DIFFUSELIGHT, "#define APPLY_RGB_GEN_DIFFUSELIGHT\n", "_cl" },
+
+	{ GLSL_SHADER_COMMON_SRGB_COLORS, "#define APPLY_SRGB_COLORS\n", "_srgb" },
 
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX, "#define APPLY_ALPHA_ONE_MINUS_VERTEX\n", "_a1-v" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_VERTEX, "#define APPLY_ALPHA_VERTEX\n", "_av" },
@@ -873,6 +881,8 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define QF_NUM_BONE_INFLUENCES 2\n", "_bones2" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define QF_NUM_BONE_INFLUENCES 1\n", "_bones1" },
 
+	{ GLSL_SHADER_COMMON_SRGB_COLORS, "#define APPLY_SRGB_COLORS\n", "_srgb" },
+
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
@@ -892,6 +902,17 @@ static const glsl_feature_t glsl_features_fxaa[] =
 
 	{ 0, NULL, NULL }
 };
+
+static const glsl_feature_t glsl_features_colcorrection[] =
+{
+	{ GLSL_SHADER_COMMON_SRGB_COLORS, "#define APPLY_SRGB_COLORS\n", "_srgb" },
+
+	{ GLSL_SHADER_COLOR_CORRECTION_LUT, "#define APPLY_LUT\n", "_lut" },
+	{ GLSL_SHADER_COLOR_CORRECTION_HDR, "#define APPLY_HDR\n", "_hdr" },
+
+	{ 0, NULL, NULL }
+};
+
 
 static const glsl_feature_t * const glsl_programtypes_features[] =
 {
@@ -919,8 +940,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_fxaa,
 	// GLSL_PROGRAM_TYPE_YUV
 	glsl_features_empty,
-	// GLSL_PROGRAM_TYPE_COLORCORRECTION
-	glsl_features_empty
+	// GLSL_PROGRAM_TYPE_COLOR_CORRECTION
+	glsl_features_colcorrection
 };
 
 // ======================================================================================
@@ -2088,6 +2109,9 @@ void RP_UpdateShaderUniforms( int elem,
 
 		qglUniform4fvARB( program->loc.TextureMatrix, 2, m );
 	}
+
+	if( program->loc.LightingIntensity >= 0 )
+		qglUniform1fARB( program->loc.LightingIntensity, 1.0 );
 }
 
 /*
@@ -2180,6 +2204,8 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 		qglUniform3fARB( program->loc.LightAmbient, lightAmbient[0], lightAmbient[1], lightAmbient[2] );
 	if( program->loc.LightDiffuse >= 0 && lightDiffuse )
 		qglUniform3fARB( program->loc.LightDiffuse, lightDiffuse[0], lightDiffuse[1], lightDiffuse[2] );
+	if( program->loc.LightingIntensity >= 0 )
+		qglUniform1fARB( program->loc.LightingIntensity, r_lighting_intensity->value );
 }
 
 /*
@@ -2260,8 +2286,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 {
 	int i, n, c;
 	dlight_t *dl;
-	float colorScale = mapConfig.mapLightColorScale;
-	vec3_t dlorigin, tvec, dlcolor;
+	vec3_t dlorigin, tvec;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 	bool identityAxis = Matrix3_Compare( entAxis, axis_identity );
 	vec4_t shaderColor[4];
@@ -2272,8 +2297,6 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 
 		for( i = 0; i < MAX_LIGHTMAPS && superLightStyle->lightmapStyles[i] != 255; i++ ) {
 			VectorCopy( rsc.lightStyles[superLightStyle->lightmapStyles[i]].rgb, rgb );
-			if( mapConfig.lightingIntensity )
-				VectorScale( rgb, mapConfig.lightingIntensity, rgb );
 
 			if( program->loc.LightstyleColor[i] >= 0 )	
 				qglUniform3fvARB( program->loc.LightstyleColor[i], 1, rgb );
@@ -2303,14 +2326,13 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 				VectorCopy( dlorigin, tvec );
 				Matrix3_TransformVector( entAxis, tvec, dlorigin );
 			}
-			VectorScale( dl->color, colorScale, dlcolor );
 
 			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, dlorigin );
 
 			c = n & 3;
-			shaderColor[0][c] = dlcolor[0];
-			shaderColor[1][c] = dlcolor[1];
-			shaderColor[2][c] = dlcolor[2];
+			shaderColor[0][c] = dl->color[0];
+			shaderColor[1][c] = dl->color[1];
+			shaderColor[2][c] = dl->color[2];
 			shaderColor[3][c] = 1.0f / dl->intensity;
 
 			// DynamicLightsDiffuseAndInvRadius is transposed for SIMD, but it's still 4x4
@@ -2464,6 +2486,18 @@ void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePo
 	qglUniform4fvARB( program->loc.InstancePoints, numInstances * 2, &instances[0][0] );
 }
 
+/*
+* RP_UpdateColorCorrectionUniforms
+*/
+void RP_UpdateColorCorrectionUniforms( int elem, float hdrGamma, float hdrExposure )
+{
+	glsl_program_t *program = r_glslprograms + elem - 1;
+
+	if( program->loc.hdrGamma >= 0 )
+		qglUniform1fARB( program->loc.hdrGamma, hdrGamma );
+	if( program->loc.hdrExposure >= 0 )
+		qglUniform1fARB( program->loc.hdrExposure, hdrExposure );
+}
 
 /*
 * RP_UpdateDrawFlatUniforms
@@ -2523,6 +2557,7 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	program->loc.LightDir = qglGetUniformLocationARB( program->object, "u_LightDir" );
 	program->loc.LightAmbient = qglGetUniformLocationARB( program->object, "u_LightAmbient" );
 	program->loc.LightDiffuse = qglGetUniformLocationARB( program->object, "u_LightDiffuse" );
+	program->loc.LightingIntensity = qglGetUniformLocationARB( program->object, "u_LightingIntensity" );
 
 	program->loc.TextureMatrix = qglGetUniformLocationARB( program->object, "u_TextureMatrix" );
 	
@@ -2649,6 +2684,9 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	
 	program->loc.WallColor = qglGetUniformLocationARB( program->object, "u_WallColor" );
 	program->loc.FloorColor = qglGetUniformLocationARB( program->object, "u_FloorColor" );
+
+	program->loc.hdrGamma = qglGetUniformLocationARB( program->object, "u_HDRGamma" );
+	program->loc.hdrExposure = qglGetUniformLocationARB( program->object, "u_HDRExposure" );
 
 	if( locBaseTexture >= 0 )
 		qglUniform1iARB( locBaseTexture, 0 );

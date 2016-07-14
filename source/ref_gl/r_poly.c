@@ -414,7 +414,7 @@ static void R_RecursiveFragmentNode( void )
 	mleaf_t	*leaf;
 	msurface_t *surf;
 
-	for( node = rsh.worldBrushModel->nodes, stackdepth = 0;; )
+	for( node = rsh.worldBrushModel->nodes, stackdepth = 0; node != NULL; )
 	{
 		if( node->plane == NULL )
 		{
