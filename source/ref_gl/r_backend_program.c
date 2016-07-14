@@ -737,6 +737,19 @@ static r_glslfeat_t RB_TcModsProgramFeatures( const shaderpass_t *pass )
 }
 
 /*
+* RB_sRGBProgramFeatures
+*
+* The main framebuffer is always srgb, otherwise assume linear
+*/
+static r_glslfeat_t RB_sRGBProgramFeatures( void )
+{
+	if( glConfig.sSRGB && RB_BoundFrameBufferObject() != 0 ) {
+		return GLSL_SHADER_COMMON_SRGB_COLORS;
+	}
+	return 0;
+}
+
+/*
 * RB_UpdateCommonUniforms
 */
 static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4_t texMatrix )
@@ -855,7 +868,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	}
 
 	if( ( rb.currentModelType == mod_brush && !mapConfig.deluxeMappingEnabled )
-		|| ( normalmap == rsh.blankBumpTexture && !glossmap && !decalmap && !entdecalmap ) ) {
+		/*|| ( normalmap == rsh.blankBumpTexture && !glossmap && !decalmap && !entdecalmap )*/ ) {
 		// render as plain Q3A shader, which is less computation-intensive
 		RB_RenderMeshGLSL_Q3AShader( pass, programFeatures );
 		return;
@@ -987,7 +1000,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 			if( mapConfig.lightmapArrays )
 				programFeatures |= GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS;
 
-			if( i == 1 && !mapConfig.lightingIntensity )
+			if( i == 1 )
 			{
 				vec_t *rgb = rsc.lightStyles[lightStyle->lightmapStyles[0]].rgb;
 
@@ -1052,8 +1065,10 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 				if( e->flags & RF_MINLIGHT )
 				{
 					float minLight = rb.minLight;
-					if( ambient[0] <= minLight || ambient[1] <= minLight || ambient[2] <= minLight )
-						VectorSet( ambient, minLight, minLight, minLight );
+					if( VectorLength( ambient ) < minLight ) {
+						VectorNormalize( ambient );
+						VectorScale( ambient, minLight, ambient );
+					}
 				}
 
 				// rotate direction
@@ -1516,9 +1531,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		vec3_t temp = { 0.1f, 0.2f, 0.7f };
 		float radius = 1;
 
-		if( e != rsc.worldent && e->model != NULL ) {
+		if( e != rsc.worldent && e->model != NULL )
 			radius = e->model->radius;
-		}
 
 		// get weighted incoming direction of world and dynamic lights
 		R_LightForOrigin( e->lightingOrigin, temp, lightAmbient, lightDiffuse, radius * e->scale, rb.noWorldLight );
@@ -1580,7 +1594,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	RB_SetShaderpassState( state );
 
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
-		RB_BindImage( 3, rsh.screenDepthTextureCopy );
+		RB_BindImage( 3, rb.st.screenDepthTexCopy );
 	}
 
 	if( isLightmapped ) {
@@ -1603,7 +1617,9 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		RP_UpdateTexGenUniforms( program, texMatrix, genVectors );
 
-		RP_UpdateDiffuseLightUniforms( program, lightDir, lightAmbient, lightDiffuse );
+		if( isWorldSurface || rgbgen == RGB_GEN_LIGHTING_DIFFUSE ) {
+			RP_UpdateDiffuseLightUniforms( program, lightDir, lightAmbient, lightDiffuse );
+		}
 
 		if( programFeatures & GLSL_SHADER_COMMON_FOG ) {
 			RB_UpdateFogUniforms( program, fog );
@@ -1626,7 +1642,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
 			RP_UpdateTextureUniforms( program, 
-				rsh.screenDepthTexture->upload_width, rsh.screenDepthTexture->upload_height );
+				rb.st.screenDepthTex->upload_width, rb.st.screenDepthTex->upload_height );
 		}
 
 		RB_DrawElementsReal( &rb.drawElements );
@@ -1832,20 +1848,32 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 	int program;
 	mat4_t texMatrix;
 
+	if( pass->images[1] ) // lut
+		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_LUT;
+
+	if( pass->images[0]->flags & IT_FLOAT ) {
+		programFeatures |= RB_sRGBProgramFeatures();
+		if( r_hdr->integer )
+			programFeatures |= GLSL_SHADER_COLOR_CORRECTION_HDR;
+	}
+
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
 	Matrix4_Identity( texMatrix );
 
 	RB_BindImage( 0, pass->images[0] );
-	RB_BindImage( 1, pass->images[1] );
+	if( pass->images[1] )
+		RB_BindImage( 1, pass->images[1] );
 
 	// update uniforms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_COLORCORRECTION, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_COLOR_CORRECTION, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
+
+		RP_UpdateColorCorrectionUniforms( program, r_hdr_gamma->value, rb.hdrExposure );
 
 		RB_DrawElementsReal( &rb.drawElements );
 	}
@@ -1872,9 +1900,10 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	features |= RB_InstancedArraysProgramFeatures();
 	features |= RB_AlphatestProgramFeatures( pass );
 	features |= RB_TcModsProgramFeatures( pass );
-	
+	features |= RB_sRGBProgramFeatures();
+
 	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) 
-		&& rsh.screenDepthTextureCopy
+		&& rb.st.screenDepthTexCopy
 		&& ( rb.renderFlags & RF_SOFT_PARTICLES ) ) {
 		features |= GLSL_SHADER_COMMON_SOFT_PARTICLE;
 	}
@@ -1911,7 +1940,7 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	case GLSL_PROGRAM_TYPE_YUV:
 		RB_RenderMeshGLSL_YUV( pass, features );
 		break;
-	case GLSL_PROGRAM_TYPE_COLORCORRECTION:
+	case GLSL_PROGRAM_TYPE_COLOR_CORRECTION:
 		RB_RenderMeshGLSL_ColorCorrection( pass, features );
 		break;
 	default:
@@ -2120,10 +2149,19 @@ void RB_SetZClip( float zNear, float zFar )
 /*
 * RB_SetLightParams
 */
-void RB_SetLightParams( float minLight, bool noWorldLight )
+void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure )
 {
 	rb.minLight = minLight;
 	rb.noWorldLight = noWorldLight;
+	rb.hdrExposure = hdrExposure;
+}
+
+/*
+* RB_SetScreenImageSet
+*/
+void RB_SetScreenImageSet( const refScreenTexSet_t *st )
+{
+	rb.st = *st;
 }
 
 /*

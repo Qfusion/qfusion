@@ -295,7 +295,7 @@ void R_PrintImageList( const char *mask, bool (*filter)( const char *mask, const
 		Com_Printf( " %iW x %iH", image->upload_width, image->upload_height );
 		if( image->layers > 1 )
 			Com_Printf( " x %iL", image->layers );
-		Com_Printf( " x %iBPP: %s%s%s %.1f KB\n", bpp, image->name, image->extension,
+		Com_Printf( " x %s%iBPP: %s%s%s %.1f KB\n", image->flags & IT_SRGB ? "s" : "", bpp, image->name, image->extension,
 			((image->flags & (IT_NOMIPMAP|IT_NOFILTERING)) ? "" : " (mip)"), bytes / 1024.0 );
 
 		numImages++;
@@ -795,39 +795,54 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 #ifndef GL_ES_VERSION_2_0
 static int R_TextureInternalFormat( int samples, int flags, int pixelType )
 {
-	int bits = r_texturebits->integer;
+	bool sRGB = (flags & IT_SRGB) != 0;
 
 	if( !( flags & IT_NOCOMPRESS ) && r_texturecompression->integer && glConfig.ext.texture_compression )
 	{
-		if( samples == 4 )
-			return GL_COMPRESSED_RGBA_ARB;
-		if( samples == 3 )
-			return GL_COMPRESSED_RGB_ARB;
-		if( samples == 2 )
-			return GL_COMPRESSED_LUMINANCE_ALPHA_ARB;
-		if( ( samples == 1 ) && !( flags & IT_ALPHAMASK ) )
-			return GL_COMPRESSED_LUMINANCE_ARB;
+		if( sRGB ) {
+			if( samples == 4 )
+				return GL_COMPRESSED_SRGB_ALPHA_EXT;
+			if( samples == 3 )
+				return GL_COMPRESSED_SRGB_EXT;
+			if( samples == 2 )
+				return GL_COMPRESSED_SLUMINANCE_EXT;
+			if( ( samples == 1 ) && !( flags & IT_ALPHAMASK ) )
+				return GL_COMPRESSED_SLUMINANCE_ALPHA_EXT;
+		}
+		else
+		{
+			if( samples == 4 )
+				return GL_COMPRESSED_RGBA_ARB;
+			if( samples == 3 )
+				return GL_COMPRESSED_RGB_ARB;
+			if( samples == 2 )
+				return GL_COMPRESSED_LUMINANCE_ALPHA_ARB;
+			if( ( samples == 1 ) && !( flags & IT_ALPHAMASK ) )
+				return GL_COMPRESSED_LUMINANCE_ARB;
+		}
 	}
 
 	if( samples == 3 )
 	{
-		if( bits == 16 )
-			return GL_RGB5;
+		if( sRGB )
+			return GL_SRGB_EXT;
 		return GL_RGB;
 	}
 
 	if( samples == 2 )
 	{
+		if( sRGB )
+			return GL_SLUMINANCE_ALPHA_EXT;
 		return GL_LUMINANCE_ALPHA;
 	}
 
 	if( samples == 1 )
 	{
+		if( sRGB )
+			return ( ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_SLUMINANCE_EXT );
 		return ( ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_LUMINANCE );
 	}
 
-	if( ( bits == 16 ) && ( pixelType != GL_UNSIGNED_SHORT_5_5_5_1 ) )
-		return GL_RGBA4;
 	return GL_RGBA;
 }
 #endif
@@ -871,10 +886,18 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*comp = *format = GL_RGB;
 			*type = glConfig.ext.rgb8_rgba8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5;
 		}
+
+		if( flags & IT_FLOAT )
+		{
+			*type = GL_FLOAT;
+			if( samples == 4 )
+				*comp = GL_RGBA16F_ARB;
+			else if( samples == 3 )
+				*comp = GL_RGB16F_ARB;
+		}
 	}
 	else
 	{
-		*type = GL_UNSIGNED_BYTE;
 		if( samples == 4 )
 			*format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
 		else if( samples == 3 )
@@ -885,10 +908,30 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*format = GL_ALPHA;
 		else
 			*format = GL_LUMINANCE;
-		*comp = *format;
+
+		if( flags & IT_FLOAT )
+		{
+			*type = GL_FLOAT;
+			if( samples == 4 )
+				*comp = GL_RGBA16F_ARB;
+			else if( samples == 3 )
+				*comp = GL_RGB16F_ARB;
+			else if( samples == 2 )
+				*comp = GL_LUMINANCE_ALPHA16F_ARB;
+			else if( flags & IT_ALPHAMASK )
+				*comp = GL_ALPHA16F_ARB;
+			else
+				*comp = GL_LUMINANCE16F_ARB;
+		}
+		else
+		{
+			*type = GL_UNSIGNED_BYTE;
+			*comp = *format;
+
 #ifndef GL_ES_VERSION_2_0
-		if( !( flags & IT_3D ) )
-			*comp = R_TextureInternalFormat( samples, flags, GL_UNSIGNED_BYTE );
+			if( !( flags & IT_3D ) )
+				*comp = R_TextureInternalFormat( samples, flags, GL_UNSIGNED_BYTE );
+		}
 #endif
 	}
 }
@@ -1479,8 +1522,13 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname )
 		else
 		{
 			int target;
-			int compressedFormat = glConfig.ext.ES3_compatibility ? GL_COMPRESSED_RGB8_ETC2 : GL_ETC1_RGB8_OES;
+			int compressedFormat;
 			size_t faceSize;
+
+			if( glConfig.ext.ES3_compatibility && ( image->flags & IT_SRGB ) )
+				compressedFormat = GL_COMPRESSED_SRGB8_ETC2;
+			else
+				compressedFormat = glConfig.ext.ES3_compatibility ? GL_COMPRESSED_RGB8_ETC2 : GL_ETC1_RGB8_OES;
 
 			R_TextureTarget( image->flags, &target );
 
@@ -1853,6 +1901,9 @@ image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, in
 {
 	image_t *image;
 
+	if( !glConfig.sSRGB )
+		flags &= ~IT_SRGB;
+
 	image = R_CreateImage( name, width, height, 1, flags, minmipsize, tags, samples );
 
 	R_BindImage( image );
@@ -1875,6 +1926,8 @@ image_t *R_Create3DImage( const char *name, int width, int height, int layers, i
 	assert( array ? ( layers <= glConfig.maxTextureLayers ) : ( layers <= glConfig.maxTexture3DSize ) );
 
 	flags |= ( array ? IT_ARRAY : IT_3D );
+	if( !glConfig.sSRGB )
+		flags &= ~IT_SRGB;
 
 	image = R_CreateImage( name, width, height, layers, flags, 1, tags, samples );
 	R_BindImage( image );
@@ -1935,6 +1988,9 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 {
 	assert( image );
 	assert( image->texnum );
+
+	if( !glConfig.sSRGB )
+		flags &= ~IT_SRGB;
 
 	R_BindImage( image );
 
@@ -2050,10 +2106,13 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, int minmi
 
 	pathname[len] = 0;
 
+	if( !glConfig.sSRGB )
+		flags &= ~IT_SRGB;
+	searchFlags = flags & ~IT_LOADFLAGS;
+
 	// look for it
 	key = COM_SuperFastHash( ( const uint8_t *)pathname, len, len ) % IMAGES_HASH_SIZE;
 	hnode = &r_images_hash_headnode[key];
-	searchFlags = flags & ~IT_LOADFLAGS;
 	for( image = hnode->prev; image != hnode; image = image->prev )
 	{
 		if( ( ( image->flags & ~IT_LOADFLAGS ) == searchFlags ) &&
@@ -2213,7 +2272,7 @@ static void R_InitNoTexture( int *w, int *h, int *flags, int *samples )
 	// also use this for bad textures, but without alpha
 	//
 	*w = *h = 8;
-	*flags = 0;
+	*flags = IT_SRGB;
 	*samples = 3;
 
 	// ch : check samples
@@ -2232,7 +2291,7 @@ static void R_InitNoTexture( int *w, int *h, int *flags, int *samples )
 /*
 * R_InitSolidColorTexture
 */
-static uint8_t *R_InitSolidColorTexture( int *w, int *h, int *flags, int *samples, int color )
+static uint8_t *R_InitSolidColorTexture( int *w, int *h, int *flags, int *samples, int color, bool srgb )
 {
 	uint8_t *data;
 
@@ -2242,6 +2301,8 @@ static uint8_t *R_InitSolidColorTexture( int *w, int *h, int *flags, int *sample
 	*w = *h = 1;
 	*flags = IT_NOPICMIP|IT_NOCOMPRESS;
 	*samples = 3;
+	if( srgb )
+		*flags |= IT_SRGB;
 
 	// ch : check samples
 	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 1 * 1 * 3 );
@@ -2263,7 +2324,7 @@ static void R_InitParticleTexture( int *w, int *h, int *flags, int *samples )
 	// particle texture
 	//
 	*w = *h = 16;
-	*flags = IT_NOPICMIP|IT_NOMIPMAP;
+	*flags = IT_NOPICMIP|IT_NOMIPMAP|IT_SRGB;
 	*samples = 4;
 
 	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 16 * 16 * 4 );
@@ -2287,7 +2348,7 @@ static void R_InitParticleTexture( int *w, int *h, int *flags, int *samples )
 */
 static void R_InitWhiteTexture( int *w, int *h, int *flags, int *samples )
 {
-	R_InitSolidColorTexture( w, h, flags, samples, 255 );
+	R_InitSolidColorTexture( w, h, flags, samples, 255, true );
 }
 
 /*
@@ -2298,7 +2359,7 @@ static void R_InitWhiteCubemapTexture( int *w, int *h, int *flags, int *samples 
 	int i;
 
 	*w = *h = 1;
-	*flags = IT_NOPICMIP|IT_NOCOMPRESS|IT_CUBEMAP;
+	*flags = IT_NOPICMIP|IT_NOCOMPRESS|IT_CUBEMAP|IT_SRGB;
 	*samples = 3;
 
 	for( i = 0; i < 6; i++ ) {
@@ -2313,7 +2374,7 @@ static void R_InitWhiteCubemapTexture( int *w, int *h, int *flags, int *samples 
 */
 static void R_InitBlackTexture( int *w, int *h, int *flags, int *samples )
 {
-	R_InitSolidColorTexture( w, h, flags, samples, 0 );
+	R_InitSolidColorTexture( w, h, flags, samples, 0, true );
 }
 
 /*
@@ -2321,7 +2382,7 @@ static void R_InitBlackTexture( int *w, int *h, int *flags, int *samples )
 */
 static void R_InitGreyTexture( int *w, int *h, int *flags, int *samples )
 {
-	R_InitSolidColorTexture( w, h, flags, samples, 127 );
+	R_InitSolidColorTexture( w, h, flags, samples, 127, true );
 }
 
 /*
@@ -2329,7 +2390,7 @@ static void R_InitGreyTexture( int *w, int *h, int *flags, int *samples )
 */
 static void R_InitBlankBumpTexture( int *w, int *h, int *flags, int *samples )
 {
-	uint8_t *data = R_InitSolidColorTexture( w, h, flags, samples, 128 );
+	uint8_t *data = R_InitSolidColorTexture( w, h, flags, samples, 128, false );
 
 /*
 	data[0] = 128;	// normal X
@@ -2352,7 +2413,7 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples )
 	// light corona texture
 	//
 	*w = *h = 32;
-	*flags = IT_SPECIAL;
+	*flags = IT_SPECIAL|IT_SRGB;
 	*samples = 4;
 
 	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 32 * 32 * 4 );
@@ -2571,7 +2632,7 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 */
 static void R_InitStretchRawImages( void )
 {
-	rsh.rawTexture = R_CreateImage( "*** raw ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 3 );
+	rsh.rawTexture = R_CreateImage( "*** raw ***", 0, 0, 1, IT_SPECIAL|IT_SRGB, 1, IMAGE_TAG_BUILTIN, 3 );
 	rsh.rawYUVTextures[0] = R_CreateImage( "*** rawyuv0 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
 	rsh.rawYUVTextures[1] = R_CreateImage( "*** rawyuv1 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
 	rsh.rawYUVTextures[2] = R_CreateImage( "*** rawyuv2 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
@@ -2580,7 +2641,7 @@ static void R_InitStretchRawImages( void )
 /*
 * R_InitScreenImagePair
 */
-static void R_InitScreenImagePair( const char *name, image_t **color, image_t **depth, bool stencil )
+static void R_InitScreenImagePair( const char *name, image_t **color, image_t **depth, bool stencil, bool useFloat )
 {
 	char tn[128];
 	int flags, colorFlags, depthFlags;
@@ -2604,6 +2665,9 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 			colorFlags |= IT_STENCIL;
 		}
 	}
+	if( useFloat ) {
+		colorFlags |= IT_FLOAT;
+	}
 
 	if( color ) {
 		R_InitViewportTexture( color, name, 
@@ -2618,22 +2682,74 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 }
 
 /*
-* R_InitBuiltinScreenImages
+* R_InitBuiltinScreenImageSet
 *
  * Screen textures may only be used in or referenced from the rendering context/thread.
 */
-void R_InitBuiltinScreenImages( void )
+static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, bool useFloat )
 {
+	char name[128];
+	const char *postfix = useFloat ? "16f" : "";
+
 	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit )
 	{
-		R_InitScreenImagePair( "r_screentex", &rsh.screenTexture, &rsh.screenDepthTexture, true );
+		Q_snprintfz( name, sizeof( name ), "r_screentex%s", postfix );
+		R_InitScreenImagePair( name, &st->screenTex, &st->screenDepthTex, true, useFloat );
 
 		// Stencil is required in the copy for depth/stencil formats to match when blitting.
-		R_InitScreenImagePair( "r_screentexcopy", &rsh.screenTextureCopy, &rsh.screenDepthTextureCopy, true );
+		Q_snprintfz( name, sizeof( name ), "r_screentexcopy%s", postfix );
+		R_InitScreenImagePair( name, &st->screenTexCopy, &st->screenDepthTexCopy, true, useFloat );
 	}
 
-	R_InitScreenImagePair( "rsh.screenPPCopy0", &rsh.screenPPCopies[0], NULL, true );
-	R_InitScreenImagePair( "rsh.screenPPCopy1", &rsh.screenPPCopies[1], NULL, false );
+	Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy0", postfix );
+	R_InitScreenImagePair( name, &st->screenPPCopies[0], NULL, false, useFloat );
+
+	Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy1", postfix );
+	R_InitScreenImagePair( name, &st->screenPPCopies[1], NULL, false, useFloat );
+}
+
+/*
+* R_ReleaseBuiltinScreenImageSet
+*/
+static void R_ReleaseBuiltinScreenImageSet( refScreenTexSet_t *st )
+{
+	if( st->screenTex ) {
+		R_FreeImage( st->screenTex );
+	}
+	if( st->screenDepthTex ) {
+		R_FreeImage( st->screenDepthTex );
+	}
+
+	if( st->screenTexCopy ) {
+		R_FreeImage( st->screenTexCopy );
+	}
+	if( st->screenDepthTexCopy ) {
+		R_FreeImage( st->screenDepthTexCopy );
+	}
+
+	if( st->screenPPCopies[0] ) {
+		R_FreeImage( st->screenPPCopies[0] );
+	}
+	if( st->screenPPCopies[1] ) {
+		R_FreeImage( st->screenPPCopies[1] );
+	}
+
+	st->screenTex = st->screenDepthTex = NULL;
+	st->screenTexCopy = st->screenDepthTexCopy = NULL;
+	st->screenPPCopies[0] = NULL;
+	st->screenPPCopies[1] = NULL;
+}
+
+/*
+* R_InitBuiltinScreenImages
+*/
+void R_InitBuiltinScreenImages( void )
+{
+	R_InitBuiltinScreenImageSet( &rsh.st, false );
+
+	if( glConfig.ext.texture_float ) {
+		R_InitBuiltinScreenImageSet( &rsh.stf, true );
+	}
 }
 
 /*
@@ -2641,31 +2757,8 @@ void R_InitBuiltinScreenImages( void )
 */
 void R_ReleaseBuiltinScreenImages( void )
 {
-	if( rsh.screenTexture ) {
-		R_FreeImage( rsh.screenTexture );
-	}
-	if( rsh.screenDepthTexture ) {
-		R_FreeImage( rsh.screenDepthTexture );
-	}
-
-	if( rsh.screenTextureCopy ) {
-		R_FreeImage( rsh.screenTextureCopy );
-	}
-	if( rsh.screenDepthTextureCopy ) {
-		R_FreeImage( rsh.screenDepthTextureCopy );
-	}
-
-	if( rsh.screenPPCopies[0] ) {
-		R_FreeImage( rsh.screenPPCopies[0] );
-	}
-	if( rsh.screenPPCopies[1] ) {
-		R_FreeImage( rsh.screenPPCopies[1] );
-	}
-
-	rsh.screenTexture = rsh.screenDepthTexture = NULL;
-	rsh.screenTextureCopy = rsh.screenDepthTextureCopy = NULL;
-	rsh.screenPPCopies[0] = NULL;
-	rsh.screenPPCopies[1] = NULL;
+	R_ReleaseBuiltinScreenImageSet( &rsh.st );
+	R_ReleaseBuiltinScreenImageSet( &rsh.stf );
 }
 
 /*

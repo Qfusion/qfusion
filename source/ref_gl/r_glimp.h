@@ -191,6 +191,8 @@ typedef struct
 				,packed_depth_stencil
 				,texture_lod
 				,gpu_shader5
+				,texture_float
+				,texture_sRGB
 				;
 	union { char shadow, shadow_samplers; };
 	union { char texture3D, texture_3D; };
@@ -244,6 +246,7 @@ typedef struct
 
 	bool			forceRGBAFramebuffers;	// PowerVR hack - its blending interprets alpha in RGB FBs as 0, not 1
 	bool			multithreading;
+	bool			sSRGB;
 
 	glextinfo_t		ext;
 } glconfig_t;

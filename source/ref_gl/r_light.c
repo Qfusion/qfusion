@@ -156,7 +156,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	int i, j;
 	int k, s;
 	int vi[3], elem[4];
-	float dot, t[8], scale;
+	float dot, t[8];
 	vec3_t vf, vf2, tdir;
 	vec3_t ambientLocal, diffuseLocal;
 	vec_t *gridSize, *gridMins;
@@ -197,10 +197,10 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 	for( i = 0; i < 4; i++ )
 	{
-		lightarray[i*2+0] = *rsh.worldBrushModel->lightarray[bound( 0, elem[i]+0, 
-			(int)rsh.worldBrushModel->numlightarrayelems-1)];
-		lightarray[i*2+1] = *rsh.worldBrushModel->lightarray[bound( 1, elem[i]+1, 
-			(int)rsh.worldBrushModel->numlightarrayelems-1)];
+		lightarray[i*2+0] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[bound( 0, elem[i]+0, 
+			(int)rsh.worldBrushModel->numlightarrayelems-1)]];
+		lightarray[i*2+1] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[bound( 1, elem[i]+1, 
+			(int)rsh.worldBrushModel->numlightarrayelems-1)]];
 	}
 
 	t[0] = vf2[0] * vf2[1] * vf2[2];
@@ -322,27 +322,57 @@ dynamic:
 
 	VectorNormalizeFast( dir );
 
-	scale = mapConfig.mapLightColorScale / 255.0f;
+	if( r_fullbright->integer ) {
+		Vector4Set( ambientLocal, 1, 1, 1, 1 );
+		Vector4Set( diffuseLocal, 1, 1, 1, 1 );
+	}
+	else {
+		float scale = (1 << mapConfig.overbrightBits) / 255.0f;
+
+		for( i = 0; i < 3; i++ )
+			ambientLocal[i] = ambientLocal[i] * scale * bound( 0.0f, r_lighting_ambientscale->value, 1.0f );
+		ColorNormalize( ambientLocal, ambientLocal );
+
+		for( i = 0; i < 3; i++ )
+			diffuseLocal[i] = diffuseLocal[i] * scale * bound( 0.0f, r_lighting_directedscale->value, 1.0f );
+		ColorNormalize( diffuseLocal, diffuseLocal );
+	}
 
 	if( ambient )
 	{
-		float scale2 = bound( 0.0f, r_lighting_ambientscale->value, 1.0f ) * scale;
-
-		for( i = 0; i < 3; i++ )
-			ambient[i] = ambientLocal[i] * scale2;
-
+		VectorCopy( ambientLocal, ambient );
 		ambient[3] = 1.0f;
 	}
 
 	if( diffuse )
 	{
-		float scale2 = bound( 0.0f, r_lighting_directedscale->value, 1.0f ) * scale;
-
-		for( i = 0; i < 3; i++ )
-			diffuse[i] = diffuseLocal[i] * scale2;
-
+		VectorCopy( diffuseLocal, diffuse );
 		diffuse[3] = 1.0f;
 	}
+}
+
+/*
+* R_LightExposureForOrigin
+*/
+float R_LightExposureForOrigin( const vec3_t origin )
+{
+	int i;
+	vec3_t dir;
+	vec4_t ambient, diffuse, total;
+
+	R_LightForOrigin( origin, dir, ambient, diffuse, 0.1f, false );
+
+	for( i = 0; i < 3; i++ ) {
+		ambient[i] = R_LinearFloatFromsRGBFloat( ambient[i] );
+		diffuse[i] = R_LinearFloatFromsRGBFloat( diffuse[i] );
+	}
+
+	if( r_lighting_grayscale->integer ) {
+		return ambient[0] + diffuse[0];
+	}
+	
+	Vector4Add( ambient, diffuse, total );
+	return /*log( ( ColorGrayscale( total ) + 1.0f ) * r_hdr_exposure->value )*//*ColorGrayscale( total ) * *//*exp( mapConfig.averageLightingIntensity ) * */r_hdr_exposure->value;
 }
 
 /*
@@ -368,7 +398,6 @@ static void R_BuildLightmap( int w, int h, bool deluxe, const uint8_t *data, uin
 {
 	int x, y;
 	uint8_t *rgba;
-	int bits = mapConfig.pow2MapOvrbr;
 
 	if( !data || (r_fullbright->integer && !deluxe) )
 	{
@@ -378,42 +407,32 @@ static void R_BuildLightmap( int w, int h, bool deluxe, const uint8_t *data, uin
 		return;
 	}
 
-	if( deluxe || ( !bits && !r_lighting_grayscale->integer ) ) // samples == LIGHTMAP_BYTES in this case
+	if( deluxe || !r_lighting_grayscale->integer ) // samples == LIGHTMAP_BYTES in this case
 	{
 		int wB = w * LIGHTMAP_BYTES;
 		for( y = 0, rgba = dest; y < h; y++, data += wB, rgba += blockWidth )
-		{
 			memcpy( rgba, data, wB );
+		return;
+	}
+
+	if( r_lighting_grayscale->integer ) {
+		for( y = 0; y < h; y++ ) {
+			for( x = 0, rgba = dest + y * blockWidth; x < w; x++, data += LIGHTMAP_BYTES, rgba += samples ) {
+				rgba[0] = bound( 0, ColorGrayscale( data ), 255 );
+				if( samples > 1 ) {
+					rgba[1] = rgba[0];
+					rgba[2] = rgba[0];
+				}
+			}
 		}
 	}
-	else
-	{
-		float scaled[3];
-		float intensity = (1 << bits) / 255.0f;
-
-		for( y = 0; y < h; y++ )
-		{
-			for( x = 0, rgba = dest + y * blockWidth; x < w; x++, data += LIGHTMAP_BYTES, rgba += samples )
-			{
-				vec3_t normalized;
-
-				scaled[0] = (float)( (int)data[0] ) * intensity;
-				scaled[1] = (float)( (int)data[1] ) * intensity;
-				scaled[2] = (float)( (int)data[2] ) * intensity;
-
-				ColorNormalize( scaled, normalized );
-
-				// monochrome lighting: convert to grayscale
-				if( r_lighting_grayscale->integer ) {
-					vec_t grey = ColorGrayscale( normalized );
-					normalized[0] = normalized[1] = normalized[2] = bound( 0, grey, 1 );
-				}
-
-				rgba[0] = ( uint8_t )( normalized[0] * 255 );
-				if( samples > 1 )
-				{
-					rgba[1] = ( uint8_t )( normalized[1] * 255 );
-					rgba[2] = ( uint8_t )( normalized[2] * 255 );
+	else {
+		for( y = 0; y < h; y++ ) {
+			for( x = 0, rgba = dest + y * blockWidth; x < w; x++, data += LIGHTMAP_BYTES, rgba += samples ) {
+				rgba[0] = data[0];
+				if( samples > 1 ) {
+					rgba[1] = data[1];
+					rgba[2] = data[2];
 				}
 			}
 		}
@@ -423,7 +442,7 @@ static void R_BuildLightmap( int w, int h, bool deluxe, const uint8_t *data, uin
 /*
 * R_UploadLightmap
 */
-static int R_UploadLightmap( const char *name, uint8_t *data, int w, int h, int samples )
+static int R_UploadLightmap( const char *name, uint8_t *data, int w, int h, int samples, bool deluxe )
 {
 	image_t *image;
 	char uploadName[128];
@@ -469,7 +488,7 @@ static int R_PackLightmaps( int num, int w, int h, int dataSize, int stride, int
 		// process as it is
 		R_BuildLightmap( w, h, deluxe, data, r_lightmapBuffer, w * samples, samples );
 
-		lightmapNum = R_UploadLightmap( name, r_lightmapBuffer, w, h, samples );
+		lightmapNum = R_UploadLightmap( name, r_lightmapBuffer, w, h, samples, deluxe );
 		if( rects )
 		{
 			rects[0].texNum = lightmapNum;
@@ -563,7 +582,7 @@ static int R_PackLightmaps( int num, int w, int h, int dataSize, int stride, int
 		}
 	}
 
-	lightmapNum = R_UploadLightmap( name, r_lightmapBuffer, rectW, rectH, samples );
+	lightmapNum = R_UploadLightmap( name, r_lightmapBuffer, rectW, rectH, samples, deluxe );
 	if( rects )
 	{
 		for( i = 0, rect = rects; i < num; i++, rect += stride )

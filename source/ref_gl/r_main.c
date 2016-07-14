@@ -1084,7 +1084,7 @@ static void R_SetupGL( void )
 
 	RB_SetCamera( rn.viewOrigin, rn.viewAxis );
 
-	RB_SetLightParams( rn.refdef.minLight, rn.refdef.rdflags & RDF_NOWORLDMODEL ? true : false );
+	RB_SetLightParams( rn.refdef.minLight, (rn.refdef.rdflags & RDF_NOWORLDMODEL) != 0, rn.hdrExposure );
 
 	RB_SetRenderFlags( rn.renderFlags );
 
@@ -1223,6 +1223,7 @@ void R_RenderView( const refdef_t *fd )
 	R_SetupViewMatrices();
 
 	rn.fog_eye = NULL;
+	rn.hdrExposure = 1;
 
 	rn.shadowBits = 0;
 	rn.dlightBits = 0;
@@ -1271,6 +1272,7 @@ void R_RenderView( const refdef_t *fd )
 			}
 
 			rn.fog_eye = R_FogForSphere( rn.viewOrigin, 0.5 );
+			rn.hdrExposure = R_LightExposureForOrigin( rn.viewOrigin );
 		}
 
 		R_DrawCoronas();

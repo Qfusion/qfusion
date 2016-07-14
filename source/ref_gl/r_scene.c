@@ -231,6 +231,8 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	mat4_t m;
 
 	assert( rsh.postProcessingVBO );
+	if( numShaderImages >= MAX_SHADER_IMAGES )
+		numShaderImages = MAX_SHADER_IMAGES;
 
 	// blit + flip using a static mesh to avoid redundant buffer uploads
 	// (also using custom PP effects like FXAA with the stream VBO causes
@@ -279,8 +281,13 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	p.alphagen.type = ALPHA_GEN_IDENTITY;
 	p.tcgen = TC_GEN_NONE;
 	p.images[0] = image;
-	for( i = 0; i < numShaderImages; i++ )
-		p.images[i + 1] = shaderImages[i];
+	for( i = 1; i < numShaderImages + 1; i++ ) {
+		if( i >= MAX_SHADER_IMAGES )
+			break;
+		p.images[i] = shaderImages[i - 1];
+	}
+	for( ; i < MAX_SHADER_IMAGES; i++ )
+		p.images[i] = NULL;
 	p.flags = blendMask;
 	p.program_type = program_type;
 
@@ -321,6 +328,7 @@ void R_RenderScene( const refdef_t *fd )
 	int fbFlags = 0;
 	int ppFrontBuffer = 0;
 	image_t *ppSource;
+	shader_t *cc;
 
 	if( r_norefresh->integer )
 		return;
@@ -351,32 +359,41 @@ void R_RenderScene( const refdef_t *fd )
 	rn.dlightBits = 0;
 	rn.shadowGroup = NULL;
 
-	fbFlags = 0;
+	rn.st = &rsh.st;
 	rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
-	
+
+	fbFlags = 0;
+	cc = rn.refdef.colorCorrection;
+	if( !( cc && cc->numpasses > 0 && cc->passes[0].images[0] && cc->passes[0].images[0] != rsh.noTexture ) ) {
+		cc = NULL;
+	}
+
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
-		if( r_soft_particles->integer && ( rsh.screenTexture != NULL ) ) {
-			rn.fbColorAttachment = rsh.screenTexture;
-			rn.fbDepthAttachment = rsh.screenDepthTexture;
+		if( glConfig.sSRGB && rsh.stf.screenTex ) {
+			rn.st = &rsh.stf;
+			fbFlags |= PPFX_BIT_COLOR_CORRECTION;
+		}
+
+		if( r_soft_particles->integer && ( rn.st->screenTex != NULL ) ) {
+			rn.fbColorAttachment = rn.st->screenTex;
+			rn.fbDepthAttachment = rn.st->screenDepthTex;
 			rn.renderFlags |= RF_SOFT_PARTICLES;
 			fbFlags |= PPFX_BIT_SOFT_PARTICLES;
 		}
 
-		if( rsh.screenPPCopies[0] && rsh.screenPPCopies[1] ) {
+		if( rn.st->screenPPCopies[0] && rn.st->screenPPCopies[1] ) {
 			int oldFlags = fbFlags;
-			shader_t *cc = rn.refdef.colorCorrection;
-
-			if( cc && cc->numpasses > 0 && cc->passes[0].images[0] && cc->passes[0].images[0] != rsh.noTexture ) {
+	
+			if( cc ) {
 				fbFlags |= PPFX_BIT_COLOR_CORRECTION;
 			}
-
 			if( r_fxaa->integer ) {
 				fbFlags |= PPFX_BIT_FXAA;
 			}
 
 			if( fbFlags != oldFlags ) {
 				if( !rn.fbColorAttachment ) {
-					rn.fbColorAttachment = rsh.screenPPCopies[0];
+					rn.fbColorAttachment = rn.st->screenPPCopies[0];
 					ppFrontBuffer = 1;
 				}
 			}
@@ -432,13 +449,13 @@ void R_RenderScene( const refdef_t *fd )
 		image_t *dest;
 
 		fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
-		dest = fbFlags ? rsh.screenPPCopies[ppFrontBuffer] : NULL;
+		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // FXAA only works on LDR input
 
 		R_BlitTextureToScrFbo( fd,
 			ppSource, dest ? dest->fbo : 0,
-			GLSL_PROGRAM_TYPE_COLORCORRECTION,
+			GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
 			colorWhite, 0,
-			1, rn.refdef.colorCorrection->passes[0].images );
+			cc ? 1 : 0, cc ? cc->passes[0].images : NULL );
 
 		ppFrontBuffer ^= 1;
 		ppSource = dest;
@@ -446,19 +463,11 @@ void R_RenderScene( const refdef_t *fd )
 
 	// apply FXAA
 	if( fbFlags & PPFX_BIT_FXAA ) {
-		image_t *dest;
-
-		fbFlags &= ~PPFX_BIT_FXAA;
-		dest = fbFlags ? rsh.screenPPCopies[ppFrontBuffer] : NULL;
-
 		R_BlitTextureToScrFbo( fd,
-			ppSource, dest ? dest->fbo : 0,
+			ppSource,  0,
 			GLSL_PROGRAM_TYPE_FXAA,
 			colorWhite, 0,
 			0, NULL );
-
-		ppFrontBuffer ^= 1;
-		ppSource = dest;
 	}
 }
 

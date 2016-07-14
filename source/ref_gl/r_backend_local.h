@@ -183,7 +183,9 @@ typedef struct r_backend_s
 	float hackedAlpha;
 
 	float minLight;
+	float hdrExposure;
 	bool noWorldLight;
+	refScreenTexSet_t st;
 } rbackend_t;
 
 extern rbackend_t rb;

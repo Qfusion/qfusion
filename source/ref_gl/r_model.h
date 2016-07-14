@@ -169,7 +169,7 @@ typedef struct mbrushmodel_s
 	mgridlight_t	*lightgrid;
 
 	unsigned int	numlightarrayelems;
-	mgridlight_t	**lightarray;
+	int 			*lightarray;
 
 	unsigned int	numfogs;
 	mfog_t			*fogs;
