@@ -234,48 +234,6 @@ void SP_target_changelevel( edict_t *ent )
 
 //==========================================================
 
-//QUAKED target_spawner (1 0 0) (-8 -8 -8) (8 8 8)
-//Set target to the type of entity you want spawned.
-//Useful for spawning monsters and gibs in the factory levels.
-//
-//For monsters:
-//	Set direction to the facing you want it to have.
-//
-//For gibs:
-//	Set direction if you want it moving and
-//	speed how fast it should be moving otherwise it
-//	will just be dropped
-
-static void use_target_spawner( edict_t *self, edict_t *other, edict_t *activator )
-{
-	edict_t	*ent;
-
-	ent = G_Spawn();
-	ent->classname = self->target;
-	VectorCopy( self->s.origin, ent->s.origin );
-	VectorCopy( self->s.angles, ent->s.angles );
-	G_CallSpawn( ent );
-	GClip_UnlinkEntity( ent );
-	KillBox( ent );
-	GClip_LinkEntity( ent );
-	if( self->speed )
-		VectorCopy( self->moveinfo.movedir, ent->velocity );
-}
-
-void SP_target_spawner( edict_t *self )
-{
-	self->use = use_target_spawner;
-	self->r.svflags = SVF_NOCLIENT;
-	if( self->speed )
-	{
-		G_SetMovedir( self->s.angles, self->moveinfo.movedir );
-		VectorScale( self->moveinfo.movedir, self->speed, self->moveinfo.movedir );
-	}
-}
-
-
-//==========================================================
-
 //QUAKED target_crosslevel_trigger (.5 .5 .5) (-8 -8 -8) (8 8 8) trigger1 trigger2 trigger3 trigger4 trigger5 trigger6 trigger7 trigger8
 //Once this trigger is touched/used, any trigger_crosslevel_target with the same trigger number is automatically used when a level is started within the same unit.  It is OK to check multiple triggers.  Message, delay, target, and killtarget also work.
 static void trigger_crosslevel_trigger_use( edict_t *self, edict_t *other, edict_t *activator )

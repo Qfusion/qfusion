@@ -131,7 +131,6 @@ spawn_t	spawns[] = {
 	{ "target_temp_entity", SP_target_temp_entity },
 	{ "target_speaker", SP_target_speaker },
 	{ "target_explosion", SP_target_explosion },
-	{ "target_spawner", SP_target_spawner },
 	{ "target_crosslevel_trigger", SP_target_crosslevel_trigger },
 	{ "target_crosslevel_target", SP_target_crosslevel_target },
 	{ "target_laser", SP_target_laser },

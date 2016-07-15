@@ -874,7 +874,6 @@ void target_laser_start( edict_t *self );
 void SP_target_temp_entity( edict_t *ent );
 void SP_target_speaker( edict_t *ent );
 void SP_target_explosion( edict_t *ent );
-void SP_target_spawner( edict_t *ent );
 void SP_target_crosslevel_trigger( edict_t *ent );
 void SP_target_crosslevel_target( edict_t *ent );
 void SP_target_laser( edict_t *self );
