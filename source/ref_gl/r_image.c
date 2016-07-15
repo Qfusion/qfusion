@@ -931,8 +931,8 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 #ifndef GL_ES_VERSION_2_0
 			if( !( flags & IT_3D ) )
 				*comp = R_TextureInternalFormat( samples, flags, GL_UNSIGNED_BYTE );
-		}
 #endif
+		}
 	}
 }
 
