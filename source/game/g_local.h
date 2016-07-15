@@ -878,7 +878,6 @@ void SP_target_crosslevel_trigger( edict_t *ent );
 void SP_target_crosslevel_target( edict_t *ent );
 void SP_target_laser( edict_t *self );
 void SP_target_lightramp( edict_t *self );
-void SP_target_earthquake( edict_t *ent );
 void SP_target_string( edict_t *ent );
 void SP_target_location( edict_t *self );
 void SP_target_position( edict_t *self );
