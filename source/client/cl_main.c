@@ -2255,7 +2255,7 @@ static void CL_ShutdownLocal( void )
 */
 static void CL_TimedemoStats( void )
 {
-	if( cl_timedemo->integer )
+	if( cl_timedemo->integer && cls.demo.playing )
 	{
 		unsigned lastTime = cl.timedemo.lastTime;
 		if( lastTime != 0 )
