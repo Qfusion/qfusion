@@ -77,6 +77,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.ResetScissor = RF_ResetScissor;
 	globals.SetCustomColor = RF_SetCustomColor;
 	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
+	globals.Finish = RF_Finish;
 	
 	globals.GetShaderForOrigin = RF_GetShaderForOrigin;
 	globals.GetShaderCinematic = RF_GetShaderCinematic;
