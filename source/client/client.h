@@ -43,7 +43,8 @@ typedef struct qfontface_s qfontface_t;
 typedef struct
 {
 	int frames;
-	unsigned int start;
+	unsigned int startTime;
+	unsigned int lastTime;
 	int counts[100];
 } cl_timedemo_t;
 

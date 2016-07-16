@@ -662,14 +662,11 @@ void SCR_ShutDownConsoleMedia( void )
 */
 static void SCR_RenderView( float stereo_separation )
 {
-	if( cls.demo.playing )
+	if( cl_timedemo->integer && cls.demo.playing )
 	{
-		if( cl_timedemo->integer )
-		{
-			if( !cl.timedemo.start )
-				cl.timedemo.start = Sys_Milliseconds();
-			cl.timedemo.frames++;
-		}
+		if( !cl.timedemo.startTime )
+			cl.timedemo.startTime = Sys_Milliseconds();
+		cl.timedemo.frames++;
 	}
 
 	// frame is not valid until we load the CM data

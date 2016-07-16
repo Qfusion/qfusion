@@ -893,7 +893,7 @@ void CL_Disconnect( const char *message )
 		}
 
 		Com_Printf( "\n" );
-		time = Sys_Milliseconds() - cl.timedemo.start;
+		time = Sys_Milliseconds() - cl.timedemo.startTime;
 		if( time > 0 )
 			Com_Printf( "%i frames, %3.1f seconds: %3.1f fps\n", cl.timedemo.frames,
 			time/1000.0, cl.timedemo.frames*1000.0 / time );
@@ -2257,16 +2257,22 @@ static void CL_TimedemoStats( void )
 {
 	if( cl_timedemo->integer )
 	{
-		static int lasttime = 0;
-		int curtime = Sys_Milliseconds();
-		if( lasttime != 0 )
+		unsigned lastTime = cl.timedemo.lastTime;
+		if( lastTime != 0 )
 		{
-			if( curtime - lasttime >= 100 )
+			unsigned curTime;
+
+			re.Finish();
+
+			curTime = Sys_Milliseconds();
+			if( curTime - lastTime >= 100 )
 				cl.timedemo.counts[99]++;
 			else
-				cl.timedemo.counts[curtime-lasttime]++;
+				cl.timedemo.counts[curTime-lastTime]++;
+			cl.timedemo.lastTime = curTime;
+			return;
 		}
-		lasttime = curtime;
+		cl.timedemo.lastTime = Sys_Milliseconds();
 	}
 }
 
@@ -2725,7 +2731,6 @@ void CL_Frame( int realmsec, int gamemsec )
 	if( host_speeds->integer )
 		time_after_ref = Sys_Milliseconds();
 
-	// 0.50 doesn't refresh input from cgame if prediction is disabled.
 	CL_UpdateCommandInput();
 
 	if( CL_WriteAvi() )
