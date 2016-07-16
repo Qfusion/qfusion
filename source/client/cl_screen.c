@@ -660,9 +660,9 @@ void SCR_ShutDownConsoleMedia( void )
 /*
 * SCR_RenderView
 */
-static void SCR_RenderView( float stereo_separation )
+static void SCR_RenderView( float stereo_separation, bool timedemo )
 {
-	if( cl_timedemo->integer && cls.demo.playing )
+	if( timedemo )
 	{
 		if( !cl.timedemo.startTime )
 			cl.timedemo.startTime = Sys_Milliseconds();
@@ -690,6 +690,7 @@ void SCR_UpdateScreen( void )
 	float separation[2];
 	bool cinematic;
 	bool forcevsync, forceclear;
+	bool timedemo;
 
 	if( !updatescreen )
 		updatescreen = Dynvar_Create( "updatescreen", false, DYNVAR_WRITEONLY, DYNVAR_READONLY );
@@ -738,10 +739,11 @@ void SCR_UpdateScreen( void )
 	cinematic = cls.state == CA_CINEMATIC ? true : false;
 	forcevsync = cinematic;
 	forceclear = cinematic;
+	timedemo = cl_timedemo->integer != 0 && cls.demo.playing;
 
 	for( i = 0; i < numframes; i++ )
 	{
-		re.BeginFrame( separation[i], forceclear, forcevsync );
+		re.BeginFrame( separation[i], forceclear, forcevsync, timedemo );
 
 		if( scr_draw_loading == 2 )
 		{ 
@@ -770,7 +772,7 @@ void SCR_UpdateScreen( void )
 			if( cls.cgameActive )
 			{
 				CL_UIModule_UpdateConnectScreen( false );
-				SCR_RenderView( separation[i] );
+				SCR_RenderView( separation[i], timedemo );
 			}
 			else
 			{
@@ -779,7 +781,7 @@ void SCR_UpdateScreen( void )
 		}
 		else if( cls.state == CA_ACTIVE )
 		{
-			SCR_RenderView( separation[i] );
+			SCR_RenderView( separation[i], timedemo );
 
 			CL_UIModule_Refresh( false, true );
 

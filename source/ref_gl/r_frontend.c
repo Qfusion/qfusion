@@ -344,14 +344,19 @@ static void RF_CheckCvars( void )
 	}
 }
 
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
+void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS )
 {
 	RF_CheckCvars();
 
 	// run cinematic passes on shaders
 	R_RunAllCinematics();
 
-	rrf.adapter.maxfps = r_maxfps->integer;
+	if( uncappedFPS ) {
+		rrf.adapter.maxfps = 0;
+	}
+	else {
+		rrf.adapter.maxfps = r_maxfps->integer;
+	}
 
 	// take the frame the backend is not busy processing
 	if( glConfig.multithreading ) {
