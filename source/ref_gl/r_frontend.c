@@ -418,6 +418,11 @@ void RF_ClearScene( void )
 	rrf.frame->ClearScene( rrf.frame );
 }
 
+void RF_Finish( void )
+{
+	RF_AdapterWait( &rrf.adapter );
+}
+
 void RF_AddEntityToScene( const entity_t *ent )
 {
 	rrf.frame->AddEntityToScene( rrf.frame, ent );
