@@ -404,9 +404,6 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		poutmodel->bones[i].name = texts + joint.name;
 		poutmodel->bones[i].parent = joint.parent;
 
-		if( !Q_stricmp( poutmodel->bones[i].name, "tag" ) )
-			printf("");
-
 		DualQuat_FromQuat3AndVector( joint.rotate, joint.translate, baseposes[i].dualquat );
 
 		// scale is unused
