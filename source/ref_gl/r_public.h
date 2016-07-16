@@ -213,7 +213,7 @@ typedef struct
 	// Should only be used as a hint - the renderer may keep drawing or not drawing to the window for a few frames when this changes
 	bool		( *RenderingEnabled )( void );
 
-	void		( *BeginFrame )( float cameraSeparation, bool forceClear, bool forceVsync );
+	void		( *BeginFrame )( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS );
 	void		( *EndFrame )( void );
 	const char *( *GetSpeedsMessage )( char *out, size_t size );
 	int			( *GetAverageFramerate )( void );
