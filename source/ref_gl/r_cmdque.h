@@ -85,6 +85,7 @@ typedef struct ref_cmdpipe_s
 	void			( *SetTextureMode )( struct ref_cmdpipe_s *cmdpipe, const char *texturemode );
 	void			( *SetTextureFilter )( struct ref_cmdpipe_s *cmdpipe, int filter );
 	void			( *SetGamma )( struct ref_cmdpipe_s *cmdpipe, float gamma );
+	void			( *Fence )( struct ref_cmdpipe_s *cmdpipe );
 
 	int 			( *RunCmds )( struct ref_cmdpipe_s *cmdpipe );
 	void 			( *FinishCmds )( struct ref_cmdpipe_s *cmdpipe );
