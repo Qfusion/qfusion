@@ -713,6 +713,7 @@ enum
 	REF_PIPE_CMD_SET_TEXTURE_MODE,
 	REF_PIPE_CMD_SET_TEXTURE_FILTER,
 	REF_PIPE_CMD_SET_GAMMA,
+	REF_PIPE_CMD_FENCE,
 
 	NUM_REF_PIPE_CMDS
 };
@@ -781,6 +782,12 @@ typedef struct
 	float			gamma;
 } refReliableCmdSetGamma_t;
 
+// dummy cmd used for syncing with the frontend
+typedef struct
+{
+	int             id;
+} refReliableCmdFence_t;
+
 typedef unsigned (*refPipeCmdHandler_t)( const void * );
 
 static unsigned R_HandleInitReliableCmd( void *pcmd );
@@ -796,6 +803,7 @@ static unsigned R_HandleSetDrawBufferReliableCmd( void *pcmd );
 static unsigned R_HandleSetTextureModeReliableCmd( void *pcmd );
 static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd );
 static unsigned R_HandleSetGammaReliableCmd( void *pcmd );
+static unsigned R_HandleFenceReliableCmd( void *pcmd );
 
 static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 {
@@ -812,6 +820,7 @@ static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 	(refPipeCmdHandler_t)R_HandleSetTextureModeReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetTextureFilterReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetGammaReliableCmd,
+	(refPipeCmdHandler_t)R_HandleFenceReliableCmd,
 };
 
 static unsigned R_HandleInitReliableCmd( void *pcmd )
@@ -939,6 +948,13 @@ static unsigned R_HandleSetGammaReliableCmd( void *pcmd )
 	refReliableCmdSetGamma_t *cmd = pcmd;
 
 	R_SetGamma( cmd->gamma );
+
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleFenceReliableCmd( void *pcmd )
+{
+	refReliableCmdFence_t *cmd = pcmd;
 
 	return sizeof( *cmd );
 }
@@ -1093,6 +1109,15 @@ static void RF_IssueSetGammaReliableCmd( ref_cmdpipe_t *cmdpipe, float gamma )
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
+static void RF_IssueFenceReliableCmd( ref_cmdpipe_t *cmdpipe )
+{
+	refReliableCmdFence_t cmd;
+
+	cmd.id = REF_PIPE_CMD_FENCE;
+
+	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
+}
+
 // ============================================================================
 
 static int RF_RunCmdPipeProc( ref_cmdpipe_t *cmdpipe )
@@ -1134,6 +1159,7 @@ ref_cmdpipe_t *RF_CreateCmdPipe( bool sync )
 	cmdpipe->SetTextureMode = &RF_IssueSetTextureModeReliableCmd;
 	cmdpipe->SetTextureFilter = &RF_IssueSetTextureFilterReliableCmd;
 	cmdpipe->SetGamma = &RF_IssueSetGammaReliableCmd;
+	cmdpipe->Fence = &RF_IssueFenceReliableCmd;
 
 	cmdpipe->RunCmds = &RF_RunCmdPipeProc;
 	cmdpipe->FinishCmds = &RF_FinishCmdPipeProc;

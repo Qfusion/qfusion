@@ -164,7 +164,8 @@ static void RF_AdapterWait( ref_frontendAdapter_t *adapter )
 	}
 
 	while( adapter->frameId != adapter->readFrameId ) {
-		ri.Sys_Sleep( 0 );
+		adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
+		adapter->cmdPipe->Fence( adapter->cmdPipe );
 	}
 	
 	adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
