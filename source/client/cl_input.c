@@ -1001,13 +1001,15 @@ static bool CL_NextUserCommandTimeReached( int realmsec )
 	// the cvar is developer only
 	//clamp( maxucmds, 10, 90 ); // don't let people abuse cl_ucmdFPS
 
-	if( !cl_timedemo->integer && !cls.demo.playing )
+	if( cls.demo.playing )
+	{
+		minMsec = 1;
+	}
+	else
 	{
 		minMsec = ( 1000.0f / maxucmds );
 		roundingMsec += ( 1000.0f / maxucmds ) - minMsec;
 	}
-	else
-		minMsec = 1;
 
 	if( roundingMsec >= 1.0f )
 	{
