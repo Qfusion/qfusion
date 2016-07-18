@@ -479,7 +479,8 @@ void BotBrain::TryFindNewCombatTask()
         return;
     }
 
-    SuggestPursuitOrSpamTask(&combatTask);
+    if (!HasMoreImportantTasksThanEnemies())
+        SuggestPursuitOrSpamTask(&combatTask);
 }
 
 bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
@@ -520,9 +521,6 @@ void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task)
 
 void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
 {
-    if (specialGoal)
-        return;
-
     float killToBeKilledRatio = GetCombatDisposition(*enemy).KillToBeKilledDamageRatio();
     // If bot is supported by a squad
     if (squad)
@@ -543,6 +541,20 @@ void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
     unsigned timeDelta = level.time - enemy->LastSeenAt();
     constexpr const char *fmt = "starts spamming at %.3f %.3f %.3f with %s where it has seen %s %d ms ago\n";
     Debug(fmt, spamSpot.X(), spamSpot.Y(), spamSpot.Z(), WeapName(task->suggestedSpamWeapon), enemy->Nick(), timeDelta);
+}
+
+bool BotBrain::HasMoreImportantTasksThanEnemies() const
+{
+    if (specialGoal)
+        return true;
+
+    if (longTermGoal && longTermGoal->IsTopTierItem())
+        return true;
+
+    if (shortTermGoal && shortTermGoal->IsTopTierItem())
+        return true;
+
+    return false;
 }
 
 bool BotBrain::StartPursuit(const Enemy &enemy, unsigned timeout)
@@ -762,10 +774,13 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 
         // Prefer to pickup an item rather than pursuit an enemy
         // if the item is valuable, even if the bot is outnumbered
-        if ((longTermGoal && longTermGoal->IsTopTierItem()) || (shortTermGoal && shortTermGoal->IsTopTierItem()))
+        if (HasMoreImportantTasksThanEnemies())
         {
-            task->advance = false;
-            task->retreat = false;
+            if (!specialGoal || !specialGoal->IsTacticalSpot())
+            {
+                task->advance = false;
+                task->retreat = false;
+            }
         }
         else if (!isOutnumbered)
         {
