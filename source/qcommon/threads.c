@@ -260,7 +260,7 @@ static void QBufPipe_BufLenAdd( qbufPipe_t *pipe, int val )
 * Note that there are race conditions here but in the worst case we're going
 * to erroneously drop cmd's instead of stepping on the reader's toes.
 */
-void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *cmd, unsigned cmd_size )
+void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *pcmd, unsigned cmd_size )
 {
 	void *buf;
 	unsigned write_remains;
@@ -323,7 +323,7 @@ void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *cmd, unsigned cmd_size )
 	}
 
 	buf = QBufPipe_AllocCmd( pipe, cmd_size );
-	memcpy( buf, cmd, cmd_size );
+	memcpy( buf, pcmd, cmd_size );
 	QBufPipe_BufLenAdd( pipe, cmd_size ); // atomic
 
 	// wake the other thread waiting for signal
@@ -400,12 +400,12 @@ void QBufPipe_Wait( qbufPipe_t *pipe, int (*read)( qbufPipe_t *, unsigned( ** )(
 {
 	while( !pipe->terminated ) {
 		int res;
-		bool result = false;
+		bool timeout = false;
 
 		while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0, pipe->cmdbuf_mutex ) == true ) {
 			QMutex_Lock( pipe->nonempty_mutex );
 
-			result = QCondVar_Wait( pipe->nonempty_condvar, pipe->nonempty_mutex, timeout_msec );
+			timeout = QCondVar_Wait( pipe->nonempty_condvar, pipe->nonempty_mutex, timeout_msec ) == false;
 
 			// don't hold the mutex, changes to cmdbuf_len are atomic anyway
 			QMutex_Unlock( pipe->nonempty_mutex );
@@ -414,7 +414,7 @@ void QBufPipe_Wait( qbufPipe_t *pipe, int (*read)( qbufPipe_t *, unsigned( ** )(
 
 		// we're guaranteed at this point that either cmdbuf_len is > 0
 		// or that waiting on the condition variable has timed out
-		res = read( pipe, cmdHandlers, result );
+		res = read( pipe, cmdHandlers, timeout );
 		if( res < 0 ) {
 			// done
 			return;
