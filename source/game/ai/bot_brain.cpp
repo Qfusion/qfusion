@@ -1038,7 +1038,7 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     weaponScores[RG].weapon = WEAP_RIOTGUN;
     weaponScores[GL].weapon = WEAP_GRENADELAUNCHER;
 
-    weaponScores[RL].score = 1.2f * BoundedFraction(RocketsReadyToFireCount(), 3.0f);
+    weaponScores[RL].score = 1.5f * BoundedFraction(RocketsReadyToFireCount(), 3.0f);
     weaponScores[LG].score = 1.5f * BoundedFraction(LasersReadyToFireCount(), 15.0f);
     weaponScores[PG].score = 0.7f * BoundedFraction(PlasmasReadyToFireCount(), 15.0f);
     weaponScores[MG].score = 1.0f * BoundedFraction(BulletsReadyToFireCount(), 15.0f);
@@ -1072,7 +1072,7 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     // 1 on mid range bound, 0 on close range bound
     float distanceFactor = (distance - CLOSE_RANGE) / (lgRange - CLOSE_RANGE);
 
-    weaponScores[RL].score *= 1.0f - 0.7f * distanceFactor;
+    weaponScores[RL].score *= 1.0f - distanceFactor;
     weaponScores[LG].score *= 0.7f + 0.3f * distanceFactor;
     weaponScores[PG].score *= 1.0f - 0.4f * distanceFactor;
     weaponScores[MG].score *= 0.3f + 0.7f * distanceFactor;
