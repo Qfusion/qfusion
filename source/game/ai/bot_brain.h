@@ -286,6 +286,7 @@ class BotBrain: public AiBaseBrain
 
     bool MayPathToAreaBeBlocked(int goalAreaNum) const;
 
+    bool HasMoreImportantTasksThanEnemies() const;
     bool StartPursuit(const Enemy &enemy, unsigned timeout = 1000);
     bool SetTacticalSpot(const Vec3 &origin, unsigned timeout = 1000);
     virtual bool ShouldCancelSpecialGoalBySpecificReasons() override;
