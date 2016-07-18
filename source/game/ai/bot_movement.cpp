@@ -970,6 +970,20 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
         ucmd->forwardmove = 0;
         ucmd->upmove = 0;
     }
+
+    // Prevent falling by switching to a cautious move style
+    if (closeAreaProps.frontTest.CanFall() || closeAreaProps.leftTest.CanFall() || closeAreaProps.rightTest.CanFall())
+    {
+        ucmd->buttons &= ~BUTTON_SPECIAL;
+        ucmd->upmove = 0;
+    }
+    // If there is a side wall
+    else if (!closeAreaProps.leftTest.CanWalk() || !closeAreaProps.rightTest.CanWalk())
+    {
+        // If bot is in air and there are no obstacles on chosen forward direction, do a WJ.
+        if (!self->groundentity && !hasObstacles)
+            ucmd->buttons |= BUTTON_SPECIAL;
+    }
 }
 
 void Bot::CheckTargetProximity()
