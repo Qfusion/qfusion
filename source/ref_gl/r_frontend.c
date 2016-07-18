@@ -27,6 +27,9 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
 
 /*
 * RF_AdapterFrame
+*
+* Handles polling for the next frame at fixed time intervals, yielding in between.
+* If vsync is enabled, only yields if got nothing to do.
 */
 static void RF_AdapterFrame( ref_frontendAdapter_t *adapter )
 {
@@ -37,39 +40,47 @@ static void RF_AdapterFrame( ref_frontendAdapter_t *adapter )
 	unsigned minMsec;
 	ref_cmdbuf_t *frame;
 
-	if( adapter->maxfps > 0 )
-		minMsec = 1000 / adapter->maxfps;
-	else
-		minMsec = 1;
-	frameTime = (int)(time - lastTime);
-	
-	bias += frameTime - minMsec;
-	if( bias > (int)minMsec )
-		bias = (int)minMsec;
-
-    // Adjust minMsec if previous frame took too long to render so
-    // that framerate is stable at the requested value.
-	bias -= minMsec;
-
-	wait = frameTime;
-	do {
-		if( wait >= minMsec )
-			wait = 0;
+	if( !adapter->lastForceVsync ) {
+		if( adapter->maxfps > 0 )
+			minMsec = 1000 / adapter->maxfps;
 		else
-			wait = minMsec - wait;
-		if( wait < 1 )
-			ri.Sys_Sleep( 0 );
-		else
-			ri.Sys_Sleep( wait - 1 );
-		wait = ri.Sys_Milliseconds() - lastTime;
-	} while( wait < minMsec );
+			minMsec = 1;
+		frameTime = (int)(time - lastTime);
 	
+		bias += frameTime - minMsec;
+		if( bias > (int)minMsec )
+			bias = (int)minMsec;
+
+		// Adjust minMsec if previous frame took too long to render so
+		// that framerate is stable at the requested value.
+		bias -= minMsec;
+
+		wait = frameTime;
+		do {
+			if( wait >= minMsec )
+				wait = 0;
+			else
+				wait = minMsec - wait;
+			if( wait > 1 )
+				adapter->cmdPipe->WaitForCmds( adapter->cmdPipe, wait - 1 );
+			else
+				ri.Sys_Sleep( 0 );
+			wait = ri.Sys_Milliseconds() - lastTime;
+		} while( wait < minMsec );
+	}
+
 	lastTime = ri.Sys_Milliseconds();
 
 	frame = RF_GetNextAdapterFrame( adapter );
 	if( frame ) {
 		frame->RunCmds( frame );
+		adapter->lastForceVsync = frame->GetForceVsync( frame );
 		adapter->readFrameId = frame->GetFrameId( frame );
+	}
+	else {
+		if( adapter->lastForceVsync ) {
+			ri.Sys_Sleep( 0 );
+		}
 	}
 
 	adapter->cmdPipe->RunCmds( adapter->cmdPipe );
@@ -347,6 +358,8 @@ static void RF_CheckCvars( void )
 
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS )
 {
+	int swapInterval;
+
 	RF_CheckCvars();
 
 	// run cinematic passes on shaders
@@ -378,7 +391,10 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bo
 
 	R_DataSync();
 
-	rrf.frame->BeginFrame( rrf.frame, cameraSeparation, forceClear, forceVsync );
+	swapInterval = r_swapinterval->integer || forceVsync ? 1 : 0;
+	clamp_low( swapInterval, r_swapinterval_min->integer );
+
+	rrf.frame->BeginFrame( rrf.frame, cameraSeparation, forceClear, swapInterval );
 }
 
 void RF_EndFrame( void )

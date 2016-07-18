@@ -63,7 +63,7 @@ typedef struct
 	int             id;
 	float           cameraSeparation;
 	bool            forceClear;
-	bool            forceVsync;
+	int             swapInterval;
 } refCmdBeginFrame_t;
 
 typedef struct
@@ -191,7 +191,7 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 static unsigned R_HandleBeginFrameCmd( uint8_t *pcmd )
 {
 	refCmdBeginFrame_t *cmd = (void *)pcmd;
-	R_BeginFrame( cmd->cameraSeparation, cmd->forceClear, cmd->forceVsync );
+	R_BeginFrame( cmd->cameraSeparation, cmd->forceClear, cmd->swapInterval );
 	return sizeof( *cmd );
 }
 
@@ -312,14 +312,15 @@ static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_
 	cmdbuf->len += cmd_len;
 }
 
-static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation, bool forceClear, bool forceVsync )
+static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval )
 {
 	refCmdBeginFrame_t cmd;
 
 	cmd.id = REF_CMD_BEGIN_FRAME;
 	cmd.cameraSeparation = cameraSeparation;
 	cmd.forceClear = forceClear;
-	cmd.forceVsync = forceVsync;
+	cmd.swapInterval = swapInterval;
+	cmdbuf->forceVsync = swapInterval != 0;
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
@@ -636,6 +637,11 @@ static unsigned RF_GetCmdBufFrameId( ref_cmdbuf_t *cmdbuf )
 	return cmdbuf->frameId;
 }
 
+static bool RF_GetCmdBufForceVsync( ref_cmdbuf_t *cmdbuf )
+{
+	return cmdbuf->forceVsync;
+}
+
 ref_cmdbuf_t *RF_CreateCmdBuf( bool sync )
 {
 	ref_cmdbuf_t *cmdbuf;
@@ -666,6 +672,7 @@ ref_cmdbuf_t *RF_CreateCmdBuf( bool sync )
 	cmdbuf->Clear = &RF_ClearCmdBuf;
 	cmdbuf->SetFrameId = &RF_SetCmdBufFrameId;
 	cmdbuf->GetFrameId = &RF_GetCmdBufFrameId;
+	cmdbuf->GetForceVsync = &RF_GetCmdBufForceVsync;
 	cmdbuf->RunCmds = &RF_RunCmdBufProc;
 
 	return cmdbuf;
@@ -1120,11 +1127,24 @@ static void RF_IssueFenceReliableCmd( ref_cmdpipe_t *cmdpipe )
 
 // ============================================================================
 
+static int RF_CmdPipeWaiter( qbufPipe_t *queue, refPipeCmdHandler_t *cmdHandlers, bool timeout )
+{
+	ri.BufPipe_ReadCmds( queue, cmdHandlers );
+	return -1;
+}
+
 static int RF_RunCmdPipeProc( ref_cmdpipe_t *cmdpipe )
 {
 	if( cmdpipe->sync )
 		return 0;
 	return ri.BufPipe_ReadCmds( cmdpipe->pipe, refPipeCmdHandlers );
+}
+
+static void RF_WaitForCmdPipeProc( ref_cmdpipe_t *cmdpipe, unsigned timeout )
+{
+	if( cmdpipe->sync )
+		return;
+	ri.BufPipe_Wait( cmdpipe->pipe, RF_CmdPipeWaiter, refPipeCmdHandlers, timeout );
 }
 
 static void RF_FinishCmdPipeProc( ref_cmdpipe_t *cmdpipe )
@@ -1162,6 +1182,7 @@ ref_cmdpipe_t *RF_CreateCmdPipe( bool sync )
 	cmdpipe->Fence = &RF_IssueFenceReliableCmd;
 
 	cmdpipe->RunCmds = &RF_RunCmdPipeProc;
+	cmdpipe->WaitForCmds = &RF_WaitForCmdPipeProc;
 	cmdpipe->FinishCmds = &RF_FinishCmdPipeProc;
 
 	return cmdpipe;

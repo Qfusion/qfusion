@@ -29,11 +29,12 @@ typedef struct ref_cmdbuf_s
 {
 	uint32_t		frameId;
 	size_t			len;
+	bool			forceVsync;
 
 	// command procs
 
 	// a valid frame should begin and end with BeginFrame and EndFrame respectively
-	void			( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, float cameraSeparation, bool forceClear, bool forceVsync );
+	void			( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval );
 	void			( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
 	void			( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
 						float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );
@@ -54,6 +55,7 @@ typedef struct ref_cmdbuf_s
 	void			( *SetFrameId )( struct ref_cmdbuf_s *cmdbuf, unsigned frameId );
 	unsigned		( *GetFrameId )( struct ref_cmdbuf_s *cmdbuf );
 	void			( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
+	bool			( *GetForceVsync )( struct ref_cmdbuf_s *cmdbuf );
 
 	bool			sync; // if true, commands are executes in immediate mode
 	size_t			buf_size;
@@ -88,6 +90,7 @@ typedef struct ref_cmdpipe_s
 	void			( *Fence )( struct ref_cmdpipe_s *cmdpipe );
 
 	int 			( *RunCmds )( struct ref_cmdpipe_s *cmdpipe );
+	void 			( *WaitForCmds )( struct ref_cmdpipe_s *cmdpipe, unsigned timeout );
 	void 			( *FinishCmds )( struct ref_cmdpipe_s *cmdpipe );
 
 	bool			sync; // if true, commands are executes in immediate mode
