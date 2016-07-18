@@ -36,6 +36,7 @@ typedef struct {
 	ref_cmdpipe_t	*cmdPipe;
 	volatile bool 	shutdown;
 	volatile int 	maxfps;
+	bool			lastForceVsync;
 } ref_frontendAdapter_t;
 
 typedef struct

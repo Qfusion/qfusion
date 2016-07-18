@@ -373,7 +373,6 @@ static void Mod_LoadVertexes( const lump_t *l )
 	float *out_xyz, *out_normals, *out_st, *out_lmst;
 	uint8_t *buffer, *out_colors;
 	size_t bufSize;
-	vec3_t color;
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
@@ -449,7 +448,6 @@ static void Mod_LoadVertexes_RBSP( const lump_t *l )
 	float *out_xyz, *out_normals, *out_st, *out_lmst[MAX_LIGHTMAPS];
 	uint8_t *buffer, *out_colors[MAX_LIGHTMAPS];
 	size_t bufSize;
-	vec3_t color;
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
