@@ -1852,7 +1852,8 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_LUT;
 
 	if( pass->images[0]->flags & IT_FLOAT ) {
-		programFeatures |= RB_sRGBProgramFeatures();
+		if( glConfig.sSRGB )
+			programFeatures |= GLSL_SHADER_COMMON_SRGB_COLORS;
 		if( r_hdr->integer )
 			programFeatures |= GLSL_SHADER_COLOR_CORRECTION_HDR;
 	}
