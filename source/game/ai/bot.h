@@ -71,6 +71,8 @@ public:
     {
         botBrain.OnNewThreat(newThreat, threatDetector);
     }
+
+    inline const int *Inventory() const { return self->r.client->ps.inventory; }
 protected:
     virtual void Frame() override;
     virtual void Think() override;
@@ -151,8 +153,6 @@ private:
     void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutDuration = 500);
 
     void ApplyPendingTurnToLookAtPoint();
-
-    inline const int *Inventory() const { return self->r.client->ps.inventory; }
 
     // Must be called on each frame
     void MoveFrame(usercmd_t *ucmd, bool inhibitCombat);
@@ -240,6 +240,16 @@ private:
     inline unsigned EnemyInstanceId() const { return botBrain.combatTask.instanceId; }
 
     bool MayKeepRunningInCombat() const;
+
+    inline bool HasSpecialGoal() const { return botBrain.HasSpecialGoal(); }
+    inline bool IsSpecialGoalSetBy(const AiFrameAwareUpdatable *setter) const
+    {
+        return botBrain.IsSpecialGoalSetBy(setter);
+    }
+    inline void SetSpecialGoalFromEntity(edict_t *ent, const AiFrameAwareUpdatable *setter)
+    {
+        botBrain.SetSpecialGoalFromEntity(ent, setter);
+    }
 };
 
 #endif

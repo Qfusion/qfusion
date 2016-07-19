@@ -240,6 +240,13 @@ bool BotBrain::MayNotBeFeasibleGoal(const NavEntity *goalEnt)
     return MayPathToAreaBeBlocked(goalEnt->AasAreaNum());
 }
 
+void BotBrain::OnClearSpecialGoalRequested()
+{
+    AiBaseBrain::OnClearSpecialGoalRequested();
+    // Prevent reuse of an old goal for newly set goals
+    localSpecialGoal.Clear();
+}
+
 static bool AdjustOriginToFloor(const edict_t *ent, Vec3 *result)
 {
     if (!ent)
@@ -565,15 +572,20 @@ bool BotBrain::StartPursuit(const Enemy &enemy, unsigned timeout)
         Debug("Can't set pursuit tactical spot for %s\n", enemy.Nick());
         return false;
     }
-    float x = pursuitGoal.explicitOrigin.X();
-    float y = pursuitGoal.explicitOrigin.Y();
-    float z = pursuitGoal.explicitOrigin.Z();
-    Q_snprintfz(pursuitGoal.name, NavEntity::MAX_NAME_LEN, "%s seen spot @(%.3f %3.f %3.f)", enemy.Nick(), x, y, z);
+    float x = localSpecialGoal.explicitOrigin.X();
+    float y = localSpecialGoal.explicitOrigin.Y();
+    float z = localSpecialGoal.explicitOrigin.Z();
+    Q_snprintfz(localSpecialGoal.name, NavEntity::MAX_NAME_LEN, "%s seen spot @(%.3f %3.f %3.f)", enemy.Nick(), x, y, z);
     return true;
 }
 
 bool BotBrain::SetTacticalSpot(const Vec3 &origin, unsigned int timeout)
 {
+    if (localSpecialGoal.setter != nullptr)
+    {
+        Debug("Can't set tactical spot (a special goal is set by an external AI entity)");
+        return false;
+    }
     int areaNum = AAS_PointAreaNum(const_cast<float*>(origin.Data()));
     if (!areaNum)
     {
@@ -585,13 +597,13 @@ bool BotBrain::SetTacticalSpot(const Vec3 &origin, unsigned int timeout)
                 return false;
         }
     }
-    pursuitGoal.aasAreaNum = areaNum;
-    pursuitGoal.combatTaskInstanceId = combatTask.instanceId;
-    pursuitGoal.goalFlags = GoalFlags::TACTICAL_SPOT;
-    pursuitGoal.explicitTimeout = level.time + timeout;
-    pursuitGoal.explicitSpawnTime = 1;
-    pursuitGoal.explicitOrigin = origin;
-    SetSpecialGoal(&pursuitGoal);
+    localSpecialGoal.aasAreaNum = areaNum;
+    localSpecialGoal.combatTaskInstanceId = combatTask.instanceId;
+    localSpecialGoal.goalFlags = GoalFlags::TACTICAL_SPOT;
+    localSpecialGoal.explicitTimeout = level.time + timeout;
+    localSpecialGoal.explicitSpawnTime = 1;
+    localSpecialGoal.explicitOrigin = origin;
+    SetSpecialGoal(&localSpecialGoal);
     return true;
 }
 

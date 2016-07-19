@@ -50,6 +50,21 @@ private:
     bool CheckCanFightTogether() const;
     bool CheckCanMoveTogether() const;
 
+    unsigned lastDroppedByBotTimestamps[MAX_SIZE];
+    unsigned lastDroppedForBotTimestamps[MAX_SIZE];
+
+    void CheckMembersInventory();
+    void RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponTiers);
+
+    typedef StaticVector<unsigned, AiSquad::MAX_SIZE - 1> Suppliers;
+    void FindSupplierCandidates(unsigned botNum, Suppliers &result) const;
+
+    edict_t *TryDropAmmo(unsigned botNum, unsigned supplierNum, int weapon);
+    edict_t *TryDropWeapon(unsigned botNum, unsigned supplierNum, int weapon, const int *maxBotWeaponTiers);
+
+    // Hack! To be able to access bot's private methods, define this entity physics callback as a (static) member
+    static void SetDroppedEntityAsBotGoal(edict_t *ent);
+
     class SquadEnemyPool: public AiBaseEnemyPool
     {
         friend class AiSquad;
