@@ -1,5 +1,7 @@
 #include "ai_squad_based_team_brain.h"
 #include "bot.h"
+#include "../g_gametypes.h"
+#include "../../gameshared/gs_public.h"
 #include <algorithm>
 #include <limits>
 
@@ -170,6 +172,9 @@ AiSquad::AiSquad(CachedTravelTimesMatrix &travelTimesMatrix)
       brokenConnectivityTimeoutAt(0),
       travelTimesMatrix(travelTimesMatrix)
 {
+    std::fill_n(lastDroppedByBotTimestamps, MAX_SIZE, 0);
+    std::fill_n(lastDroppedForBotTimestamps, MAX_SIZE, 0);
+
     float skillLevel = trap_Cvar_Value("sv_skilllevel"); // {0, 1, 2}
     float skill = std::min(1.0f, 0.33f * (0.1f + skillLevel + random())); // (0..1)
     // There is a clash with a getter name, thus we have to introduce a type alias
@@ -186,6 +191,9 @@ AiSquad::AiSquad(AiSquad &&that)
     brokenConnectivityTimeoutAt = that.brokenConnectivityTimeoutAt;
     for (Bot *bot: that.bots)
         bots.push_back(bot);
+
+    std::fill_n(lastDroppedByBotTimestamps, MAX_SIZE, 0);
+    std::fill_n(lastDroppedForBotTimestamps, MAX_SIZE, 0);
 
     // Move the allocated enemy pool
     this->squadEnemyPool = that.squadEnemyPool;
@@ -262,6 +270,11 @@ void AiSquad::Think()
         brokenConnectivityTimeoutAt = level.time + CONNECTIVITY_TIMEOUT;
     else if (brokenConnectivityTimeoutAt <= level.time)
         Invalidate();
+
+    if (!isValid)
+        return;
+
+    CheckMembersInventory();
 }
 
 bool AiSquad::CheckCanMoveTogether() const
@@ -304,6 +317,345 @@ bool AiSquad::CheckCanFightTogether() const
         }
     }
     return true;
+}
+
+static bool areWeaponDefHelpersInitialized = false;
+// i-th value contains a tier for weapon #i
+static int tiersForWeapon[WEAP_TOTAL];
+// Contains weapons sorted by tier in descending order (best weapons first)
+static int bestWeapons[WEAP_TOTAL];
+// i-th value contains weapon def for weapon #i
+static gs_weapon_definition_t *weaponDefs[WEAP_TOTAL];
+
+static void InitWeaponDefHelpers()
+{
+    if (areWeaponDefHelpersInitialized)
+        return;
+
+    struct WeaponAndTier
+    {
+        int weapon, tier;
+        WeaponAndTier() {}
+        WeaponAndTier(int weapon, int tier): weapon(weapon), tier(tier) {}
+        bool operator<(const WeaponAndTier &that) const { return tier > that.tier; }
+    };
+
+    WeaponAndTier weaponTiers[WEAP_TOTAL];
+
+    weaponTiers[WEAP_NONE]            = WeaponAndTier(WEAP_NONE, 0);
+    weaponTiers[WEAP_GUNBLADE]        = WeaponAndTier(WEAP_GUNBLADE, 0);
+    weaponTiers[WEAP_GRENADELAUNCHER] = WeaponAndTier(WEAP_GRENADELAUNCHER, 1);
+    weaponTiers[WEAP_RIOTGUN]         = WeaponAndTier(WEAP_RIOTGUN, 1);
+    weaponTiers[WEAP_MACHINEGUN]      = WeaponAndTier(WEAP_MACHINEGUN, 2);
+    weaponTiers[WEAP_PLASMAGUN]       = WeaponAndTier(WEAP_PLASMAGUN, 2);
+    weaponTiers[WEAP_LASERGUN]        = WeaponAndTier(WEAP_LASERGUN, 3);
+    weaponTiers[WEAP_ROCKETLAUNCHER]  = WeaponAndTier(WEAP_ROCKETLAUNCHER, 3);
+    weaponTiers[WEAP_ELECTROBOLT]     = WeaponAndTier(WEAP_ELECTROBOLT, 3);
+    weaponTiers[WEAP_INSTAGUN]        = WeaponAndTier(WEAP_INSTAGUN, 3);
+
+    static_assert(WEAP_NONE == 0, "This loop assume zero lower bound");
+    for (int weapon = WEAP_NONE; weapon < WEAP_TOTAL; ++weapon)
+        tiersForWeapon[weapon] = weaponTiers[weapon].tier;
+
+    std::sort(weaponTiers, weaponTiers + WEAP_TOTAL);
+    for (int i = 0; i < WEAP_TOTAL; ++i)
+        bestWeapons[i] = weaponTiers[i].weapon;
+
+    for (int weapon = WEAP_NONE; weapon < WEAP_TOTAL; ++weapon)
+        weaponDefs[weapon] = GS_GetWeaponDef(weapon);
+
+    areWeaponDefHelpersInitialized = true;
+}
+
+void AiSquad::CheckMembersInventory()
+{
+    if (!(level.gametype.dropableItemsMask & (IT_WEAPON|IT_AMMO)))
+        return;
+
+    // Check whether combat disposition is too dangerous to do weapon drops
+    for (const Enemy *enemy: squadEnemyPool->ActiveEnemies())
+    {
+        for (const Bot *bot: bots)
+        {
+            if (!enemy || !enemy->ent)
+                continue;
+            // An enemy is to close to a bot
+            if (DistanceSquared(bot->Self()->s.origin, enemy->ent->s.origin) < 400 * 400)
+                return;
+        }
+    }
+
+    InitWeaponDefHelpers();
+
+    int maxBotWeaponTiers[MAX_SIZE];
+    std::fill_n(maxBotWeaponTiers, MAX_SIZE, 0);
+
+    for (unsigned botNum = 0; botNum < bots.size(); ++botNum)
+    {
+        for (int weapon = WEAP_GUNBLADE; weapon != WEAP_TOTAL; ++weapon)
+        {
+            if (bots[botNum]->Inventory()[weapon])
+            {
+                int weaponAmmoTag = weaponDefs[weapon]->firedef.ammo_id;
+                if (weaponAmmoTag == AMMO_NONE)
+                    continue;
+                if (bots[botNum]->Inventory()[weaponAmmoTag] > weaponDefs[weapon]->firedef.ammo_low)
+                    if (maxBotWeaponTiers[botNum] < tiersForWeapon[weapon])
+                        maxBotWeaponTiers[botNum] = tiersForWeapon[weapon];
+            }
+        }
+    }
+
+    for (unsigned botNum = 0; botNum < bots.size(); ++botNum)
+    {
+        // Bot has a weapon good enough
+        if (maxBotWeaponTiers[botNum] > 2)
+            continue;
+
+        // We can't set special goal immediately (a dropped entity must touch a solid first)
+        // For this case, we just prevent dropping for this bot for 1000 ms
+        if (level.time - lastDroppedForBotTimestamps[botNum] < 1000)
+            continue;
+
+        // Bot already has a some special goal that the squad owns
+        if (bots[botNum]->HasSpecialGoal() && bots[botNum]->IsSpecialGoalSetBy(this))
+            continue;
+
+        RequestWeaponAndAmmoDrop(botNum, maxBotWeaponTiers);
+    }
+}
+
+void AiSquad::FindSupplierCandidates(unsigned botNum, StaticVector<unsigned, AiSquad::MAX_SIZE - 1> &result) const
+{
+    Vec3 botVelocityDir(bots[botNum]->Self()->velocity);
+    float squareBotSpeed = botVelocityDir.SquaredLength();
+
+    // If a bot moves fast, modify score for mates depending of the bot velocity direction
+    // (try to avoid stopping a fast-moving bot)
+    bool applyDirectionFactor = false;
+    if (squareBotSpeed > DEFAULT_PLAYERSPEED * DEFAULT_PLAYERSPEED)
+    {
+        botVelocityDir *= Q_RSqrt(squareBotSpeed);
+        applyDirectionFactor = true;
+    }
+
+    struct BotAndScore
+    {
+        unsigned botNum;
+        float score;
+        BotAndScore(unsigned botNum, float score): botNum(botNum), score(score) {}
+        bool operator<(const BotAndScore &that) const { return score > that.score; }
+    };
+
+    StaticVector<BotAndScore, MAX_SIZE - 1> candidates;
+    for (unsigned thatBotNum = 0; thatBotNum < bots.size(); ++thatBotNum)
+    {
+        if (thatBotNum == botNum)
+            continue;
+        // Wait a second for next drop
+        if (level.time - lastDroppedByBotTimestamps[botNum] < 1000)
+            continue;
+
+        // The lowest feasible AAS travel time is 1, 0 means that thatBot is not reachable for currBot
+        int travelTime = travelTimesMatrix.GetAASTravelTime(bots[botNum], bots[thatBotNum]);
+        if (!travelTime)
+            continue;
+
+        float score = 1.0f - BoundedFraction(travelTime, CONNECTIVITY_MOVE_CENTISECONDS);
+        if (applyDirectionFactor)
+        {
+            Vec3 botToThatBot(bots[thatBotNum]->Self()->s.origin);
+            botToThatBot -= bots[botNum]->Self()->s.origin;
+            botToThatBot.NormalizeFast();
+            score *= 0.5f + 0.5f * botToThatBot.Dot(botVelocityDir);
+        }
+        candidates.push_back(BotAndScore(thatBotNum, score));
+    }
+
+    // Sort mates, most suitable item suppliers first
+    std::sort(candidates.begin(), candidates.end());
+
+    // Copy sorted mates nums to result
+    result.clear();
+    for (BotAndScore &botAndScore: candidates)
+        result.push_back(botAndScore.botNum);
+}
+
+// See definition explanation why the code is weird
+void AiSquad::SetDroppedEntityAsBotGoal(edict_t *ent)
+{
+    const char *tag = __FUNCTION__;
+    if (!ent || !ent->r.inuse)
+        AI_FailWith(tag, "ent is null or not in use");
+
+    // The target ent should be set to a bot entity
+    if (!ent->target_ent || !ent->target_ent->r.inuse)
+        AI_FailWith(tag, "target_ent is not set or not in use");
+
+    // Check whether bot has been removed
+    edict_t *bot = ent->target_ent;
+    if (!bot->ai || !bot->ai->botRef)
+        return;
+
+    // The enemy should point to a squad ref
+    AiSquad *squad = (AiSquad *)ent->enemy;
+    if (!squad)
+        AI_FailWith(tag, "Squad is not set");
+
+    // Force dropped item as a special goal for the suppliant
+    bot->ai->botRef->SetSpecialGoalFromEntity(ent, squad);
+    // Allow other bots (and itself) to grab this item too
+    // (But the suppliant has a priority since the goal has been set immediately)
+    AI_AddDroppedItem(ent);
+}
+
+void AiSquad::RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponTiers)
+{
+    StaticVector<unsigned, MAX_SIZE - 1> bestSuppliers;
+    FindSupplierCandidates(botNum, bestSuppliers);
+
+    // Should be set to a first chosen supplier's botNum
+    // Further drop attempts should be made only for this bot.
+    // (Items should be dropped from the same origin to be able to set a common movement goal)
+    unsigned chosenSupplier = std::numeric_limits<unsigned>::max();
+    // Not more than 3 items may be dropped on the same time (and by the same bot)
+    int droppedItemsCount = 0;
+
+    for (int i = 0; i < WEAP_TOTAL; ++i)
+    {
+        const int currWeapon = bestWeapons[i];
+        const auto &fireDef = weaponDefs[currWeapon]->firedef;
+
+        edict_t *dropped = nullptr;
+
+        // If the bot has this weapon, check whether he needs an ammo for it
+        if (bots[botNum]->Inventory()[currWeapon])
+        {
+            // No ammo is required, go to the next weapon
+            if (fireDef.ammo_id == AMMO_NONE)
+                continue;
+            // Bot has enough ammo, go to the next weapon
+            if (bots[botNum]->Inventory()[fireDef.ammo_id] > fireDef.ammo_low)
+                continue;
+
+            // Find who may drop an ammo
+            if (level.gametype.dropableItemsMask & IT_AMMO)
+            {
+                if (chosenSupplier != std::numeric_limits<unsigned>::max())
+                {
+                    dropped = TryDropAmmo(botNum, chosenSupplier, currWeapon);
+                }
+                else
+                {
+                    for (unsigned mateNum: bestSuppliers)
+                    {
+                        dropped = TryDropAmmo(botNum, mateNum, currWeapon);
+                        if (dropped)
+                        {
+                            chosenSupplier = mateNum;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check who may drop a weapon
+        if (!dropped)
+        {
+            if (chosenSupplier != std::numeric_limits<unsigned>::max())
+            {
+                dropped = TryDropWeapon(botNum, chosenSupplier, currWeapon, maxBotWeaponTiers);
+            }
+            else
+            {
+                for (unsigned mateNum: bestSuppliers)
+                {
+                    dropped = TryDropWeapon(botNum, mateNum, currWeapon, maxBotWeaponTiers);
+                    if (dropped)
+                    {
+                        chosenSupplier = mateNum;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (dropped)
+        {
+            // If this is first dropped item, set is as a pending goal
+            if (!droppedItemsCount)
+            {
+                dropped->target_ent = bots[botNum]->Self();
+                dropped->enemy = (edict_t *)this;
+                dropped->stop = AiSquad::SetDroppedEntityAsBotGoal;
+                // Register drop timestamp
+                lastDroppedForBotTimestamps[botNum] = level.time;
+                lastDroppedByBotTimestamps[chosenSupplier] = level.time;
+            }
+            droppedItemsCount++;
+            if (droppedItemsCount == 3)
+                return;
+        }
+    }
+}
+
+edict_t *AiSquad::TryDropAmmo(unsigned botNum, unsigned supplierNum, int weapon)
+{
+    Bot *mate = bots[supplierNum];
+    const auto &fireDef = weaponDefs[weapon]->firedef;
+    // Min ammo quantity to be able to drop it
+    float minAmmo = fireDef.ammo_pickup;
+    // If mate has not only ammo but weapon, leave mate some ammo
+    if (mate->Inventory()[weapon])
+        minAmmo += fireDef.ammo_low;
+
+    if (mate->Inventory()[fireDef.ammo_id] < minAmmo)
+        return nullptr;
+
+    edict_t *dropped = G_DropItem(mate->Self(), GS_FindItemByTag(fireDef.ammo_id));
+    if (dropped)
+        G_Say_Team(bots[supplierNum]->Self(), va("Dropped %%d at %%D for %s", Nick(bots[botNum]->Self())), false);
+    return dropped;
+}
+
+edict_t *AiSquad::TryDropWeapon(unsigned botNum, unsigned supplierNum, int weapon, const int *maxBotWeaponTiers)
+{
+    Bot *mate = bots[supplierNum];
+
+    // The mate does not have this weapon
+    if (!mate->Inventory()[weapon])
+        return nullptr;
+
+    const auto &fireDef = weaponDefs[weapon]->firedef;
+    // The mate does not have enough ammo for this weapon
+    if (mate->Inventory()[fireDef.ammo_id] <= fireDef.ammo_low)
+        return nullptr;
+
+    // Compute a weapon tier of mate's inventory left after the possible drop
+    int newMaxBestWeaponTier = 0;
+    for (int otherWeapon = WEAP_GUNBLADE + 1; otherWeapon < WEAP_TOTAL; ++otherWeapon)
+    {
+        if (otherWeapon == weapon)
+            continue;
+        if (!mate->Inventory()[otherWeapon])
+            continue;
+        const auto &otherFireDef = weaponDefs[otherWeapon]->firedef;
+        if (mate->Inventory()[otherFireDef.ammo_id] <= otherFireDef.ammo_low)
+            continue;
+
+        newMaxBestWeaponTier = std::max(newMaxBestWeaponTier, tiersForWeapon[otherWeapon]);
+    }
+
+    // If the does not keep its top weapon tier after dropping a weapon
+    if (newMaxBestWeaponTier < maxBotWeaponTiers[supplierNum])
+        return nullptr;
+
+    // Try drop a weapon
+    edict_t *dropped = G_DropItem(mate->Self(), GS_FindItemByTag(weapon));
+    if (dropped)
+        G_Say_Team(bots[supplierNum]->Self(), va("Dropped %%d at %%D for %s", Nick(bots[botNum]->Self())), false);
+    return dropped;
 }
 
 void AiSquad::ReleaseBotsTo(StaticVector<Bot *, MAX_CLIENTS> &orphans)

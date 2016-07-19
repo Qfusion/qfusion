@@ -216,7 +216,7 @@ class BotBrain: public AiBaseBrain
     TargetEnvironment targetEnvironment;
 
     // This var holds memory referred by AiBaseBrain::specialGoal
-    NavEntity pursuitGoal;
+    NavEntity localSpecialGoal;
 
     inline unsigned NextCombatTaskInstanceId() { return combatTaskInstanceCounter++; }
 
@@ -283,8 +283,10 @@ class BotBrain: public AiBaseBrain
 
     virtual void OnGoalCleanedUp(const NavEntity *goalEnt) override;
     virtual bool MayNotBeFeasibleGoal(const NavEntity *goalEnt) override;
+    virtual void OnClearSpecialGoalRequested() override;
 
     bool MayPathToAreaBeBlocked(int goalAreaNum) const;
+
 
     bool HasMoreImportantTasksThanEnemies() const;
     bool StartPursuit(const Enemy &enemy, unsigned timeout = 1000);
@@ -292,6 +294,38 @@ class BotBrain: public AiBaseBrain
     virtual bool ShouldCancelSpecialGoalBySpecificReasons() override;
 
     void CheckTacticalPosition();
+
+    inline bool HasSpecialGoal() const { return specialGoal != nullptr; }
+
+    bool IsSpecialGoalSetBy(const AiFrameAwareUpdatable *setter) const
+    {
+        // If special goal setter is defined
+        if (specialGoal->setter)
+        {
+            // Pointers should match exactly
+            if (specialGoal->setter == setter)
+                return true;
+        }
+        else
+        {
+            // If there is no special goal setter, treat it as set by bot or bot's brain
+            if (setter == (AiFrameAwareUpdatable*)bot->ai->botRef)
+                return true;
+            if (setter == this)
+                return true;
+        }
+        return false;
+    }
+
+    inline void SetSpecialGoalFromEntity(edict_t *entity, const AiFrameAwareUpdatable *setter)
+    {
+        localSpecialGoal.Clear();
+        localSpecialGoal.goalFlags = GoalFlags::DROPPED_ENTITY | GoalFlags::REACH_ENTITY | GoalFlags::REACH_AT_TOUCH;
+        localSpecialGoal.ent = entity;
+        localSpecialGoal.aasAreaNum = AAS_PointAreaNum(entity->s.origin);
+        localSpecialGoal.setter = setter;
+        SetSpecialGoal(&localSpecialGoal);
+    }
 
     BotBrain() = delete;
     // Disable copying and moving
@@ -384,8 +418,6 @@ public:
     {
         return combatTask.spamEnemy && combatTask.spamEnemy->ent == enemy;
     }
-
-    inline bool IsPursuing() const { return specialGoal == &pursuitGoal; }
 
     virtual void UpdatePotentialGoalsWeights() override;
 };

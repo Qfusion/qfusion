@@ -587,7 +587,7 @@ void Touch_ItemSound( edict_t *other, const gsitem_t *item );
 void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags );
 bool G_PickupItem( edict_t *other, const gsitem_t *it, int flags, int count, const int *invpack );
 void G_UseItem( struct edict_s *ent, const gsitem_t *item );
-void G_DropItem( struct edict_s *ent, const gsitem_t *item );
+edict_t *G_DropItem( struct edict_s *ent, const gsitem_t *item );
 bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 
 //
@@ -822,7 +822,7 @@ edict_t	*W_Fire_Lasergun_Weak( edict_t *self, vec3_t start, vec3_t end, float da
 void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int stun, int radius, int range, int mod, int timeDelta );
 
 bool Pickup_Weapon( edict_t *other, const gsitem_t *item, int flags, int ammo_count );
-void Drop_Weapon( edict_t *ent, const gsitem_t *item );
+edict_t *Drop_Weapon( edict_t *ent, const gsitem_t *item );
 void Use_Weapon( edict_t *ent, const gsitem_t *item );
 
 //

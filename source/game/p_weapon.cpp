@@ -127,7 +127,7 @@ bool Pickup_Weapon( edict_t *other, const gsitem_t *item, int flags, int ammo_co
 /*
 * Drop_Weapon
 */
-void Drop_Weapon( edict_t *ent, const gsitem_t *item )
+edict_t *Drop_Weapon( edict_t *ent, const gsitem_t *item )
 {
 	int otherweapon;
 	edict_t *drop;
@@ -136,7 +136,7 @@ void Drop_Weapon( edict_t *ent, const gsitem_t *item )
 	if( item->tag < 1 || item->tag >= WEAP_TOTAL )
 	{
 		G_PrintMsg( ent, "Can't drop unknown weapon\n" );
-		return;
+		return NULL;
 	}
 
 	// find out the amount of ammo to drop
@@ -163,6 +163,7 @@ void Drop_Weapon( edict_t *ent, const gsitem_t *item )
 			Use_Weapon( ent, GS_FindItemByTag( otherweapon ) );
 		}
 	}
+	return drop;
 }
 
 //======================================================================

@@ -42,6 +42,10 @@ class NavEntity
     edict_t *ent;
     // Links for registry goals pool
     NavEntity *prev, *next;
+    // Who has set this goal.
+    // For global goals it is null (global goals are shared for all bots).
+    // If setter is null, the setter should be treated as bot itself.
+    const class AiFrameAwareUpdatable *setter;
 
     static constexpr unsigned MAX_NAME_LEN = 64;
     char name[MAX_NAME_LEN];
@@ -49,6 +53,10 @@ class NavEntity
     // Should initialize all fields since it may be used as a AiBaseBrain subclass field not held by the registry
     NavEntity()
         : explicitOrigin(INFINITY, INFINITY, INFINITY)
+    {
+        Clear();
+    }
+    void Clear()
     {
         id = 0;
         aasAreaNum = 0;
@@ -58,6 +66,7 @@ class NavEntity
         goalFlags = GoalFlags::NONE;
         ent = nullptr;
         prev = next = nullptr;
+        setter = nullptr;
         name[0] = '\0';
     }
 public:
@@ -94,6 +103,8 @@ public:
     {
         return GoalFlags::NONE != (goalFlags & GoalFlags::REACH_AT_TOUCH);
     }
+    // Hack for incomplete type
+    inline const decltype(setter) Setter() const { return setter; }
 
     // Returns level.time when the item is already spawned
     // Returns zero if spawn time is unknown
