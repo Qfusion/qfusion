@@ -2524,7 +2524,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 		if( t->flags & IT_FRAMEBUFFER ) {
 			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height, ( tags & IMAGE_TAG_BUILTIN ) != 0,
 				( flags & IT_DEPTHRB ) != 0, ( flags & IT_STENCIL ) != 0 );
-			RFB_AttachTextureToObject( t->fbo, t );
+			RFB_AttachTextureToObject( t->fbo, t, 0 );
 		}
 	}
 }
@@ -2677,7 +2677,7 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	if( depth && *color ) {
 		R_InitViewportTexture( depth, va_r( tn, sizeof( tn ), "%s_depth", name ), 
 			0, glConfig.width, glConfig.height, 0, depthFlags, IMAGE_TAG_BUILTIN, 1 );
-		RFB_AttachTextureToObject( (*color)->fbo, *depth );
+		RFB_AttachTextureToObject( (*color)->fbo, *depth, 0 );
 	}
 }
 

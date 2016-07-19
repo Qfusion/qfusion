@@ -359,6 +359,14 @@ static const gl_extension_func_t gl_ext_texture3D_EXT_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_ARB_draw_buffers */
+static const gl_extension_func_t gl_ext_draw_buffers_ARB_funcs[] =
+{
+	GL_EXTENSION_FUNC(DrawBuffersARB)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 #else // GL_ES_VERSION_2_0
 
 /* GL_ANGLE_framebuffer_blit */
@@ -472,6 +480,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, ES3_compatibility, false, false, NULL )
 	,GL_EXTENSION( EXT, blend_func_separate, true, true, &gl_ext_blend_func_separate_EXT_funcs )
 	,GL_EXTENSION( EXT, texture3D, false, false, &gl_ext_texture3D_EXT_funcs )
+	,GL_EXTENSION( ARB, draw_buffers, false, false, &gl_ext_draw_buffers_ARB_funcs )
 	,GL_EXTENSION_EXT( EXT, texture_array, 1, false, false, NULL, texture3D )
 	,GL_EXTENSION( EXT, packed_depth_stencil, false, false, NULL )
 	,GL_EXTENSION( SGIS, texture_lod, false, false, NULL )
