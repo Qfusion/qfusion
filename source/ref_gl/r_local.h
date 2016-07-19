@@ -533,7 +533,7 @@ void		RFB_UnregisterObject( int object );
 void		RFB_TouchObject( int object );
 void		RFB_BindObject( int object );
 int			RFB_BoundObject( void );
-void		RFB_AttachTextureToObject( int object, image_t *texture );
+bool		RFB_AttachTextureToObject( int object, image_t *texture, int target );
 image_t		*RFB_GetObjectTextureAttachment( int object, bool depth );
 void		RFB_BlitObject( int dest, int bitMask, int mode );
 bool	RFB_CheckObjectStatus( void );

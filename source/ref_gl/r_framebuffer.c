@@ -240,19 +240,26 @@ void RFB_BindObject( int object )
 /*
 * RFB_AttachTextureToObject
 */
-void RFB_AttachTextureToObject( int object, image_t *texture )
+bool RFB_AttachTextureToObject( int object, image_t *texture, int target )
 {
 	r_fbo_t *fbo;
 	int attachment;
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
 	if( object <= 0 || object > r_num_framebuffer_objects ) {
-		return;
+		return false;
 	}
 
 	assert( texture != NULL );
 	if( !texture ) {
-		return;
+		return false;
+	}
+
+	if( target < 0 ) {
+		return false;
+	}
+	if( target > 0 && !glConfig.ext.draw_buffers ) {
+		return false;
 	}
 
 	fbo = r_framebuffer_objects + object - 1;
@@ -278,6 +285,7 @@ void RFB_AttachTextureToObject( int object, image_t *texture )
 	}
 
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_objectID ? r_bound_framebuffer_object->objectID : 0 );
+	return true;
 }
 
 /*

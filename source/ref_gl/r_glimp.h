@@ -193,6 +193,7 @@ typedef struct
 				,gpu_shader5
 				,texture_float
 				,texture_sRGB
+				,draw_buffers
 				;
 	union { char shadow, shadow_samplers; };
 	union { char texture3D, texture_3D; };
