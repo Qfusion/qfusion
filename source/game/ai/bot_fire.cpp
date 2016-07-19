@@ -679,7 +679,7 @@ float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_
 {
     float wfac;
     if (self->s.weapon == WEAP_PLASMAGUN)
-        wfac = WFAC_GENERIC_PROJECTILE * 0.5f;
+        wfac = 0.5f * WFAC_GENERIC_PROJECTILE * (1.0f - Skill());
     else
         wfac = WFAC_GENERIC_PROJECTILE;
 
