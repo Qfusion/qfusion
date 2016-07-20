@@ -23,14 +23,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 enum
 {
 	PPFX_SOFT_PARTICLES,
+	PPFX_TONE_MAPPING,
 	PPFX_COLOR_CORRECTION,
+	PPFX_OVERBRIGHT_TARGET,
+	PPFX_BLOOM,
 	PPFX_FXAA,
 };
 
 enum
 {
 	PPFX_BIT_SOFT_PARTICLES = RF_BIT( PPFX_SOFT_PARTICLES ),
+	PPFX_BIT_TONE_MAPPING = RF_BIT( PPFX_TONE_MAPPING ),
 	PPFX_BIT_COLOR_CORRECTION = RF_BIT( PPFX_COLOR_CORRECTION ),
+	PPFX_BIT_OVERBRIGHT_TARGET = RF_BIT( PPFX_OVERBRIGHT_TARGET ),
+	PPFX_BIT_BLOOM = RF_BIT( PPFX_BLOOM ),
 	PPFX_BIT_FXAA = RF_BIT( PPFX_FXAA ),
 };
 
@@ -219,7 +225,7 @@ void R_AddLightStyleToScene( int style, float r, float g, float b )
 * R_BlitTextureToScrFbo
 */
 static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo, 
-	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages )
+	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages, int iParam0 )
 {
 	int x, y;
 	int w, h, fw, fh;
@@ -258,7 +264,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		// set the viewport to full resolution of the framebuffer (without the NPOT padding if there's one)
 		// draw quad on the whole framebuffer texture
 		// set scissor to default framebuffer resolution
-		image_t *cb = RFB_GetObjectTextureAttachment( dstFbo, false );
+		image_t *cb = RFB_GetObjectTextureAttachment( dstFbo, false, 0 );
 		x = 0;
 		y = 0;
 		w = fw = rf.frameBufferWidth;
@@ -290,6 +296,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		p.images[i] = NULL;
 	p.flags = blendMask;
 	p.program_type = program_type;
+	p.anim_numframes = iParam0;
 
 	if( !dstFbo ) {
 		tcmod.type = TC_MOD_TRANSFORM;
@@ -321,14 +328,52 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 }
 
 /*
+* R_BlurTextureToScrFbo
+*
+* Performs Kawase blur which approximates standard Gaussian blur in multiple passes
+*/
+static image_t *R_BlurTextureToScrFbo( const refdef_t *fd, image_t *image, image_t *otherImage )
+{
+	unsigned i;
+	image_t *images[2];
+	const int kernel35x35[] = 
+		{ 0, 1, 2, 2, 3 }; //  equivalent to 35x35 kernel
+	;
+	const int kernel63x63[] = 
+		{ 0, 1, 2, 3, 4, 4, 5 } // equivalent to 63x63 kernel
+	;
+	const int *kernel;
+	unsigned numPasses;
+
+	if( true ) {
+		kernel = kernel63x63;
+		numPasses = sizeof( kernel63x63 ) / sizeof( kernel63x63[0] );
+	}
+	else {
+		kernel = kernel35x35;
+		numPasses = sizeof( kernel35x35 ) / sizeof( kernel35x35[0] );
+	}
+
+	images[0] = image;
+	images[1] = otherImage;
+	for( i = 0; i < numPasses; i++ ) {
+		R_BlitTextureToScrFbo( fd, images[i&1], images[(i + 1)&1]->fbo, GLSL_PROGRAM_TYPE_KAWASE_BLUR, colorWhite, 0, 0, NULL, kernel[i] );
+	}
+
+	return images[(i + 1)&1];
+}
+
+/*
 * R_RenderScene
 */
 void R_RenderScene( const refdef_t *fd )
 {
+	int l;
 	int fbFlags = 0;
 	int ppFrontBuffer = 0;
 	image_t *ppSource;
 	shader_t *cc;
+	image_t *bloomTex[NUM_BLOOM_LODS];
 
 	if( r_norefresh->integer )
 		return;
@@ -371,7 +416,6 @@ void R_RenderScene( const refdef_t *fd )
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
 		if( glConfig.sSRGB && rsh.stf.screenTex ) {
 			rn.st = &rsh.stf;
-			fbFlags |= PPFX_BIT_COLOR_CORRECTION;
 		}
 
 		if( r_soft_particles->integer && ( rn.st->screenTex != NULL ) ) {
@@ -383,12 +427,18 @@ void R_RenderScene( const refdef_t *fd )
 
 		if( rn.st->screenPPCopies[0] && rn.st->screenPPCopies[1] ) {
 			int oldFlags = fbFlags;
-	
+
+			if( rn.st == &rsh.stf ) {
+				fbFlags |= PPFX_BIT_TONE_MAPPING|PPFX_BIT_COLOR_CORRECTION;
+			}
 			if( cc ) {
 				fbFlags |= PPFX_BIT_COLOR_CORRECTION;
 			}
 			if( r_fxaa->integer ) {
 				fbFlags |= PPFX_BIT_FXAA;
+			}
+			if( r_hdr->integer && r_bloom->integer && rn.st == &rsh.stf && glConfig.ext.draw_buffers && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS-1][1] ) {
+				fbFlags |= PPFX_BIT_OVERBRIGHT_TARGET|PPFX_BIT_COLOR_CORRECTION;
 			}
 
 			if( fbFlags != oldFlags ) {
@@ -438,24 +488,96 @@ void R_RenderScene( const refdef_t *fd )
 			ppSource, 0,
 			GLSL_PROGRAM_TYPE_NONE,
 			colorWhite, 0,
-			0, NULL );
+			0, NULL, 0 );
 		return;
 	}
 
 	fbFlags &= ~PPFX_BIT_SOFT_PARTICLES;
 
-	// apply color correction
-	if( fbFlags & PPFX_BIT_COLOR_CORRECTION ) {
+	// apply tone mapping (and possibly color correction too, if not doing the bloom as well)
+	if( fbFlags & PPFX_BIT_TONE_MAPPING ) {
+		unsigned numImages = 0;
+		image_t *images[MAX_SHADER_IMAGES] = { NULL };
 		image_t *dest;
 
-		fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
-		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // FXAA only works on LDR input
+		fbFlags &= ~PPFX_BIT_TONE_MAPPING;
+		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // LDR
+
+		if( fbFlags & PPFX_BIT_OVERBRIGHT_TARGET ) {
+			if( !RFB_AttachTextureToObject( dest->fbo, false, 1, rsh.st.screenOverbrightTex ) ) {
+				dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // re-evaluate
+			}
+			else {
+				fbFlags |= PPFX_BIT_BLOOM;
+			}
+			fbFlags &= ~PPFX_BIT_OVERBRIGHT_TARGET;
+		}
+
+		if( fbFlags & PPFX_BIT_BLOOM ) {
+			images[1] = rsh.st.screenOverbrightTex;
+			numImages = 2;
+		}
+		else if( cc ) {
+			images[0] = cc->passes[0].images[0];
+			numImages = 2;
+			fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
+			cc = NULL;
+		}
 
 		R_BlitTextureToScrFbo( fd,
 			ppSource, dest ? dest->fbo : 0,
 			GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
 			colorWhite, 0,
-			cc ? 1 : 0, cc ? cc->passes[0].images : NULL );
+			numImages, images, 0 );
+
+		ppFrontBuffer ^= 1;
+		ppSource = dest;
+
+		if( fbFlags & PPFX_BIT_BLOOM ) {
+			// detach
+			RFB_AttachTextureToObject( dest->fbo, false, 1, NULL );
+		}
+	}
+
+	// apply bloom
+	if( fbFlags & PPFX_BIT_BLOOM ) {
+		image_t *src;
+
+		// continously downscale and blur
+		src = rsh.st.screenOverbrightTex;
+		for( l = 0; l < NUM_BLOOM_LODS; l++ ) {
+			// halve the resolution
+			R_BlitTextureToScrFbo( fd,
+				src, rsh.st.screenBloomLodTex[l][0]->fbo,
+				GLSL_PROGRAM_TYPE_NONE,
+				colorWhite, 0,
+				0, NULL, 0 );
+
+			src = R_BlurTextureToScrFbo( fd, rsh.st.screenBloomLodTex[l][0], rsh.st.screenBloomLodTex[l][1] );
+			bloomTex[l] = src;
+		}
+	}
+
+	// apply color correction
+	if( fbFlags & PPFX_BIT_COLOR_CORRECTION ) {
+		image_t *dest;
+		unsigned numImages = 0;
+		image_t *images[MAX_SHADER_IMAGES] = { NULL };
+
+		fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
+		if( fbFlags & PPFX_BIT_BLOOM ) {
+			memcpy( images + 2, bloomTex, sizeof( image_t * ) * NUM_BLOOM_LODS );
+			fbFlags &= ~PPFX_BIT_BLOOM;
+		}
+		images[0] = cc ? cc->passes[0].images[0] : NULL;
+		numImages = MAX_SHADER_IMAGES;
+
+		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL;
+		R_BlitTextureToScrFbo( fd,
+			ppSource, dest ? dest->fbo : 0,
+			GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
+			colorWhite, 0,
+			numImages, images, 0 );
 
 		ppFrontBuffer ^= 1;
 		ppSource = dest;
@@ -463,11 +585,12 @@ void R_RenderScene( const refdef_t *fd )
 
 	// apply FXAA
 	if( fbFlags & PPFX_BIT_FXAA ) {
+		// not that FXAA only works on LDR input
 		R_BlitTextureToScrFbo( fd,
 			ppSource,  0,
 			GLSL_PROGRAM_TYPE_FXAA,
 			colorWhite, 0,
-			0, NULL );
+			0, NULL, 0 );
 	}
 }
 

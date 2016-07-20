@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 
 #define MAX_FRAMEBUFFER_OBJECTS	    1024
+#define MAX_FRAMEBUFFER_COLOR_ATTACHMENTS 2
 
 typedef struct
 {
@@ -32,7 +33,7 @@ typedef struct
 	unsigned int stencilRenderBuffer;
 	int width, height;
 	image_t *depthTexture;
-	image_t *colorTexture;
+	image_t *colorTexture[MAX_FRAMEBUFFER_COLOR_ATTACHMENTS];
 } r_fbo_t;
 
 static bool r_frambuffer_objects_initialized;
@@ -240,22 +241,18 @@ void RFB_BindObject( int object )
 /*
 * RFB_AttachTextureToObject
 */
-bool RFB_AttachTextureToObject( int object, image_t *texture, int target )
+bool RFB_AttachTextureToObject( int object, bool depth, int target, image_t *texture )
 {
 	r_fbo_t *fbo;
 	int attachment;
+	GLuint texnum = 0;
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
 	if( object <= 0 || object > r_num_framebuffer_objects ) {
 		return false;
 	}
 
-	assert( texture != NULL );
-	if( !texture ) {
-		return false;
-	}
-
-	if( target < 0 ) {
+	if( target < 0 || target >= MAX_FRAMEBUFFER_COLOR_ATTACHMENTS ) {
 		return false;
 	}
 	if( target > 0 && !glConfig.ext.draw_buffers ) {
@@ -265,33 +262,73 @@ bool RFB_AttachTextureToObject( int object, image_t *texture, int target )
 	fbo = r_framebuffer_objects + object - 1;
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
-	if( texture->flags & IT_DEPTH ) {
+	if( depth ) {
 		attachment = GL_DEPTH_ATTACHMENT_EXT;
-		fbo->depthTexture = texture;
+
+		if( texture ) {
+			assert( texture->flags & IT_DEPTH );
+			texnum = texture->texnum;
+			texture->fbo = object;
+		}
 	} else {
-		attachment = GL_COLOR_ATTACHMENT0_EXT;
-		fbo->colorTexture = texture;
 #ifndef GL_ES_VERSION_2_0
-		qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
-		qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT );
+		const GLenum fboBuffers[8] = { 
+			GL_COLOR_ATTACHMENT0_EXT,
+			GL_COLOR_ATTACHMENT1_EXT,
+			GL_COLOR_ATTACHMENT2_EXT,
+			GL_COLOR_ATTACHMENT3_EXT,
+			GL_COLOR_ATTACHMENT4_EXT,
+			GL_COLOR_ATTACHMENT5_EXT,
+			GL_COLOR_ATTACHMENT6_EXT,
+			GL_COLOR_ATTACHMENT7_EXT,
+		};
 #endif
+
+		attachment = GL_COLOR_ATTACHMENT0_EXT + target;
+
+#ifndef GL_ES_VERSION_2_0
+		if( target > 0 && texture )
+		{
+			qglDrawBuffersARB( target + 1, fboBuffers );
+		}
+		else
+		{
+			if( glConfig.ext.draw_buffers )
+				qglDrawBuffersARB( 0, fboBuffers );
+			qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+			qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT );
+		}
+#endif
+
+		if( texture ) {
+			assert( !(texture->flags & IT_DEPTH) );
+			texnum = texture->texnum;
+			texture->fbo = object;
+		}
 	}
-	texture->fbo = object;
 
 	// attach texture
-	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, texture->texnum, 0 );
-	if( ( texture->flags & ( IT_DEPTH|IT_STENCIL ) ) == ( IT_DEPTH|IT_STENCIL ) ) {
-		qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texture->texnum, 0 );
+	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, texnum, 0 );
+	if( texture ) {
+		if( ( !texture && depth ) || ( ( texture->flags & ( IT_DEPTH|IT_STENCIL ) ) == ( IT_DEPTH|IT_STENCIL ) ) ) {
+			qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texnum, 0 );
+		}
 	}
-
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_objectID ? r_bound_framebuffer_object->objectID : 0 );
+
+	if( depth ) {
+		fbo->depthTexture = texture;
+	}
+	else {
+		fbo->colorTexture[target] = texture;
+	}
 	return true;
 }
 
 /*
 * RFB_GetObjectTextureAttachment
 */
-image_t	*RFB_GetObjectTextureAttachment( int object, bool depth )
+image_t	*RFB_GetObjectTextureAttachment( int object, bool depth, int target )
 {
 	r_fbo_t *fbo;
 
@@ -299,9 +336,12 @@ image_t	*RFB_GetObjectTextureAttachment( int object, bool depth )
 	if( object <= 0 || object > r_num_framebuffer_objects ) {
 		return NULL;
 	}
+	if( target < 0 || target >= MAX_FRAMEBUFFER_COLOR_ATTACHMENTS ) {
+		return false;
+	}
 
 	fbo = r_framebuffer_objects + object - 1;
-	return depth ? fbo->depthTexture : fbo->colorTexture;
+	return depth ? fbo->depthTexture : fbo->colorTexture[target];
 }
 
 /*

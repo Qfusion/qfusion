@@ -94,6 +94,8 @@ typedef struct superLightStyle_s
 #define MAX_PORTAL_SURFACES		32
 #define MAX_PORTAL_TEXTURES		64
 
+#define NUM_BLOOM_LODS			4
+
 #define BACKFACE_EPSILON		4
 
 #define	ON_EPSILON				0.1         // point on plane side epsilon
@@ -134,6 +136,8 @@ typedef struct refScreenTexSet_s {
 	image_t			*screenPPCopies[2];
 	image_t			*screenDepthTex;
 	image_t			*screenDepthTexCopy;
+	image_t			*screenOverbrightTex; // the overbrights output target
+	image_t			*screenBloomLodTex[NUM_BLOOM_LODS][2]; // lods + backups for bloom
 } refScreenTexSet_t;
 
 typedef struct portalSurface_s
@@ -417,6 +421,8 @@ extern cvar_t *r_hdr;
 extern cvar_t *r_hdr_gamma;
 extern cvar_t *r_hdr_exposure;
 
+extern cvar_t *r_bloom;
+
 extern cvar_t *r_fxaa;
 
 extern cvar_t *r_lodbias;
@@ -533,8 +539,8 @@ void		RFB_UnregisterObject( int object );
 void		RFB_TouchObject( int object );
 void		RFB_BindObject( int object );
 int			RFB_BoundObject( void );
-bool		RFB_AttachTextureToObject( int object, image_t *texture, int target );
-image_t		*RFB_GetObjectTextureAttachment( int object, bool depth );
+bool		RFB_AttachTextureToObject( int object, bool depth, int target, image_t *texture );
+image_t		*RFB_GetObjectTextureAttachment( int object, bool depth, int target );
 void		RFB_BlitObject( int dest, int bitMask, int mode );
 bool	RFB_CheckObjectStatus( void );
 void		RFB_GetObjectSize( int object, int *width, int *height );

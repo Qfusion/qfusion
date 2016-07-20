@@ -1845,11 +1845,17 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 */
 static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslfeat_t programFeatures )
 {
+	int i;
 	int program;
 	mat4_t texMatrix;
 
+	programFeatures &= ~GLSL_SHADER_COMMON_SRGB_COLORS;
 	if( pass->images[1] ) // lut
 		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_LUT;
+	if( pass->images[2] ) // output bloom
+		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_OVERBRIGHT;
+	if( pass->images[3] ) // apply bloom
+		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_BLOOM;
 
 	if( pass->images[0]->flags & IT_FLOAT ) {
 		if( glConfig.sSRGB )
@@ -1866,6 +1872,10 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 	RB_BindImage( 0, pass->images[0] );
 	if( pass->images[1] )
 		RB_BindImage( 1, pass->images[1] );
+	for( i = 0; i < NUM_BLOOM_LODS; i++ ) {
+		if( pass->images[3+i] )
+			RB_BindImage( 2+i, pass->images[3+i] );
+	}
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_COLOR_CORRECTION, NULL,
@@ -1875,6 +1885,34 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
 
 		RP_UpdateColorCorrectionUniforms( program, r_hdr_gamma->value, rb.hdrExposure );
+
+		RB_DrawElementsReal( &rb.drawElements );
+	}
+}
+
+/*
+* RB_RenderMeshGLSL_KawaseBlur
+*/
+static void RB_RenderMeshGLSL_KawaseBlur( const shaderpass_t *pass, r_glslfeat_t programFeatures )
+{
+	int program;
+	mat4_t texMatrix = { 0 };
+
+	// set shaderpass state (blending, depthwrite, etc)
+	RB_SetShaderpassState( pass->flags );
+
+	RB_BindImage( 0, pass->images[0] );
+
+	Matrix4_Identity( texMatrix );
+
+	// update uniforms
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_KAWASE_BLUR, NULL,
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+	if( RB_BindProgram( program ) )
+	{
+		RB_UpdateCommonUniforms( program, pass, texMatrix );
+
+		RP_UpdateKawaseUniforms( program, pass->images[0]->upload_width, pass->images[0]->upload_height, pass->anim_numframes );
 
 		RB_DrawElementsReal( &rb.drawElements );
 	}
@@ -1943,6 +1981,9 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 		break;
 	case GLSL_PROGRAM_TYPE_COLOR_CORRECTION:
 		RB_RenderMeshGLSL_ColorCorrection( pass, features );
+		break;
+	case GLSL_PROGRAM_TYPE_KAWASE_BLUR:
+		RB_RenderMeshGLSL_KawaseBlur( pass, features );
 		break;
 	default:
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: Unknown GLSL program type %i\n", programType );

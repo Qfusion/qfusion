@@ -191,6 +191,7 @@ void RP_Init( void )
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, DEFAULT_GLSL_YUV_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLOR_CORRECTION, DEFAULT_GLSL_COLORCORRECTION_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_KAWASE_BLUR, DEFAULT_GLSL_KAWASE_BLUR_PROGRAM, NULL, NULL, 0, 0 );
 
 	// check whether compilation of the shader with GPU skinning succeeds, if not, disable GPU bone transforms
 	if ( glConfig.maxGLSLBones ) {
@@ -909,6 +910,8 @@ static const glsl_feature_t glsl_features_colcorrection[] =
 
 	{ GLSL_SHADER_COLOR_CORRECTION_LUT, "#define APPLY_LUT\n", "_lut" },
 	{ GLSL_SHADER_COLOR_CORRECTION_HDR, "#define APPLY_HDR\n", "_hdr" },
+	{ GLSL_SHADER_COLOR_CORRECTION_OVERBRIGHT, "#define APPLY_OVEBRIGHT\n", "_obloom" },
+	{ GLSL_SHADER_COLOR_CORRECTION_BLOOM, "#define APPLY_BLOOM\n", "_bloom" },
 
 	{ 0, NULL, NULL }
 };
@@ -941,7 +944,9 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	// GLSL_PROGRAM_TYPE_YUV
 	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_COLOR_CORRECTION
-	glsl_features_colcorrection
+	glsl_features_colcorrection,
+	// GLSL_PROGRAM_TYPE_KAWASE_BLUR
+	glsl_features_empty,
 };
 
 // ======================================================================================
@@ -1000,6 +1005,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#ifdef FRAGMENT_SHADER\n" \
 "# define qf_FrontColor gl_Color\n" \
 "# define qf_FragColor gl_FragColor\n" \
+"# define qf_BrightColor gl_FragData[1]\n" \
 "#endif\n" \
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
@@ -1021,6 +1027,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#ifdef FRAGMENT_SHADER\n" \
 "  in myhalf4 qf_FrontColor;\n" \
 "  out myhalf4 qf_FragColor;\n" \
+"  out myhalf4 qf_BrightColor;\n" \
 "# define qf_varying in\n" \
 "# define qf_flat_varying flat in\n" \
 "#endif\n" \
@@ -1081,6 +1088,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "  precision lowp sampler3D;\n" \
 "  precision lowp sampler2DShadow;\n" \
 "  layout(location = 0) out vec4 qf_FragColor;\n" \
+"  layout(location = 1) out vec4 qf_BrightColor;\n" \
 "# define qf_varying in\n" \
 "# define qf_flat_varying flat in\n" \
 "#endif\n" \
@@ -2513,6 +2521,18 @@ void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t f
 }
 
 /*
+* RP_UpdateKawaseUniforms
+*/
+void RP_UpdateKawaseUniforms( int elem, int TexWidth, int TexHeight, int iteration )
+{
+	glsl_program_t *program = r_glslprograms + elem - 1;
+
+	if( program->loc.TextureParams >= 0 )
+		qglUniform4fARB( program->loc.TextureParams, 
+			TexWidth ? 1.0 / TexWidth : 1.0, TexHeight ? 1.0 / TexHeight : 1.0, (float)iteration, 1.0 );
+}
+
+/*
 * RP_GetUniformLocations
 */
 static void RP_GetUniformLocations( glsl_program_t *program )
@@ -2534,6 +2554,7 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 			locDiffuseTexture,
 			locStripesTexture,
 			locDepthTexture,
+			locBloomTexture[NUM_BLOOM_LODS],
 			locYUVTextureY,
 			locYUVTextureU,
 			locYUVTextureV,
@@ -2588,6 +2609,9 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	locYUVTextureY = qglGetUniformLocationARB( program->object, "u_YUVTextureY" );
 	locYUVTextureU = qglGetUniformLocationARB( program->object, "u_YUVTextureU" );
 	locYUVTextureV = qglGetUniformLocationARB( program->object, "u_YUVTextureV" );
+
+	for( i = 0; i < NUM_BLOOM_LODS; i++ )
+		locBloomTexture[i] = qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_BloomTexture%i", i ) );
 
 	locColorLUT = qglGetUniformLocationARB( program->object, "u_ColorLUT" );
 
@@ -2740,6 +2764,9 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 
 	if( locColorLUT >= 0 )
 		qglUniform1iARB( locColorLUT, 1 );
+
+	for( i = 0; i < NUM_BLOOM_LODS && locBloomTexture[i] >= 0; i++ )
+		qglUniform1iARB( locBloomTexture[i], 2+i );
 }
 
 /*
@@ -2774,6 +2801,7 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program )
 #ifndef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		qglBindFragDataLocation( program->object, 0, "qf_FragColor" );
+		qglBindFragDataLocation( program->object, 1, "qf_BrightColor" );
 	}
 #endif
 }
