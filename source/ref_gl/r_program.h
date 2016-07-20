@@ -37,6 +37,7 @@ typedef uint64_t r_glslfeat_t;
 #define DEFAULT_GLSL_FXAA_PROGRAM				"defaultFXAA"
 #define DEFAULT_GLSL_YUV_PROGRAM				"defaultYUV"
 #define DEFAULT_GLSL_COLORCORRECTION_PROGRAM	"defaultColorCorrection"
+#define DEFAULT_GLSL_KAWASE_BLUR_PROGRAM		"defaultKawaseBlur"
 
 // program types
 enum
@@ -54,6 +55,7 @@ enum
 	GLSL_PROGRAM_TYPE_FXAA,
 	GLSL_PROGRAM_TYPE_YUV,
 	GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
+	GLSL_PROGRAM_TYPE_KAWASE_BLUR,
 
 	GLSL_PROGRAM_TYPE_MAXTYPE
 };
@@ -191,6 +193,8 @@ enum
 // hdr/bloom/tone-mapping/color-correction
 #define GLSL_SHADER_COLOR_CORRECTION_LUT		GLSL_BIT(32)
 #define GLSL_SHADER_COLOR_CORRECTION_HDR		GLSL_BIT(33)
+#define GLSL_SHADER_COLOR_CORRECTION_OVERBRIGHT	GLSL_BIT(34)
+#define GLSL_SHADER_COLOR_CORRECTION_BLOOM		GLSL_BIT(35)
 
 void RP_Init( void );
 void RP_Shutdown( void );
@@ -251,5 +255,7 @@ void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePo
 void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t floorColor );
 
 void RP_UpdateColorCorrectionUniforms( int elem, float hdrGamme, float hdrExposure );
+
+void RP_UpdateKawaseUniforms( int elem, int TexWidth, int TexHeight, int iteration );
 
 #endif // R_PROGRAM_H
