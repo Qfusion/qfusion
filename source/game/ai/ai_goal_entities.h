@@ -75,7 +75,7 @@ public:
     inline int AasAreaNum() const { return aasAreaNum; }
     inline Vec3 Origin() const
     {
-        return IsBasedOnSomeEntity()? Vec3(ent->s.origin) : explicitOrigin;
+        return IsBasedOnSomeEntity() ? Vec3(ent->s.origin) : explicitOrigin;
     }
     inline const gsitem_t *Item() const { return ent->item; }
     inline const char *Name() const { return name; }

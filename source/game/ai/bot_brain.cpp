@@ -105,6 +105,7 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       nextDecisionRandomUpdate(level.time),
       botEnemyPool(bot, this, BotSkill())
 {
+    localSpecialGoal.Clear();
     squad = nullptr;
     activeEnemyPool = &botEnemyPool;
     SetTag(bot->r.client->netname);
@@ -548,6 +549,20 @@ void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
     unsigned timeDelta = level.time - enemy->LastSeenAt();
     constexpr const char *fmt = "starts spamming at %.3f %.3f %.3f with %s where it has seen %s %d ms ago\n";
     Debug(fmt, spamSpot.X(), spamSpot.Y(), spamSpot.Z(), WeapName(task->suggestedSpamWeapon), enemy->Nick(), timeDelta);
+}
+
+bool BotBrain::IsGoalATopTierItem() const
+{
+    if (specialGoal && specialGoal->IsTopTierItem())
+        return true;
+
+    if (longTermGoal && longTermGoal->IsTopTierItem())
+        return true;
+
+    if (shortTermGoal && shortTermGoal->IsTopTierItem())
+        return true;
+
+    return false;
 }
 
 bool BotBrain::HasMoreImportantTasksThanEnemies() const

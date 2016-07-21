@@ -107,6 +107,10 @@ private:
     int jumppadLandingAreasCount;
     Vec3 jumppadTarget;
 
+    Vec3 rocketJumpTarget;
+    bool hasTriggeredRocketJump;
+    unsigned rocketJumpTimeoutAt;
+
     bool hasPendingLandingDash;
     bool isOnGroundThisFrame;
     bool wasOnGroundPrevFrame;
@@ -160,6 +164,7 @@ private:
     void MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveTriggeredARocketJump(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, Vec3 *intendedLookVec, usercmd_t *ucmd);
@@ -190,6 +195,8 @@ private:
     bool TryApplyPendingLandingDash(usercmd_t *ucmd);
     // Returns true if a pending landing dash has timed out
     bool CheckPendingLandingDashTimedOut();
+
+    bool TryRocketJumpToAGoal(usercmd_t *ucmd);
 
     // Returns true if the bot is at least a bit blocked
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
