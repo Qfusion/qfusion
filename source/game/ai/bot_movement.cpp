@@ -126,8 +126,8 @@ void Bot::Move(usercmd_t *ucmd)
 
 void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
 {
-    // Make sure that blocked timeout start counting down and the bot is blocked for at least 1000 millis
-    if (blockedTimeout - level.time > BLOCKED_TIMEOUT - 1000)
+    // Make sure that blocked timeout start counting down and the bot is blocked for at least 500 millis
+    if (blockedTimeout - level.time > BLOCKED_TIMEOUT - 500)
         return;
 
     // Already turning
@@ -139,7 +139,7 @@ void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
         currAasAreaNum = FindCurrAASAreaNum();
 
     // Still can't find current area or still is blocked, try to move in a random direction
-    if (currAasAreaNum == 0 || blockedTimeout - level.time < BLOCKED_TIMEOUT - 3000)
+    if (currAasAreaNum == 0 || blockedTimeout - level.time < BLOCKED_TIMEOUT - 750)
     {
         // We use different randoms to make moves independent
         if (random() > 0.8f)
