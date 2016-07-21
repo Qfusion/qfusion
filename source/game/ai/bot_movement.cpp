@@ -50,6 +50,12 @@ void Bot::Move(usercmd_t *ucmd)
         intendedLookVec = Vec3(self->s.origin) - goalTargetPoint;
     }
 
+    if (hasTriggeredRocketJump)
+    {
+        if (self->groundentity || rocketJumpTimeoutAt <= level.time)
+            hasTriggeredRocketJump = false;
+    }
+
     if (self->is_ladder)
     {
         MoveOnLadder(&intendedLookVec, ucmd);
@@ -65,6 +71,10 @@ void Bot::Move(usercmd_t *ucmd)
     else if (self->groundentity && Use_Plat == self->groundentity->use)
     {
         MoveOnPlatform(&intendedLookVec, ucmd);
+    }
+    else if (hasTriggeredRocketJump)
+    {
+        MoveTriggeredARocketJump(&intendedLookVec, ucmd);
     }
     else // standard movement
     {
@@ -172,6 +182,23 @@ void Bot::MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd)
     ucmd->forwardmove = 1;
     ucmd->upmove = 1;
     ucmd->sidemove = 0;
+}
+
+void Bot::MoveTriggeredARocketJump(Vec3 *intendedLookVec, usercmd_t *ucmd)
+{
+    *intendedLookVec = rocketJumpTarget - self->s.origin;
+
+    ucmd->forwardmove = 0;
+    ucmd->upmove = 0;
+    ucmd->sidemove = 0;
+
+    if (rocketJumpTimeoutAt - level.time < 200)
+    {
+        ucmd->forwardmove = 1;
+        // Bounce off walls
+        if (!closeAreaProps.leftTest.CanWalk() || !closeAreaProps.rightTest.CanWalk())
+            ucmd->buttons |= BUTTON_SPECIAL;
+    }
 }
 
 template <typename T> struct AttributedArea
@@ -835,6 +862,9 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     if (TryApplyPendingLandingDash(ucmd))
         return;
 
+    if (TryRocketJumpToAGoal(ucmd))
+        return;
+
     Vec3 velocityVec(self->velocity);
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
@@ -984,6 +1014,131 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
         if (!self->groundentity && !hasObstacles)
             ucmd->buttons |= BUTTON_SPECIAL;
     }
+}
+
+bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
+{
+    // Try to do simple checks first to prevent wasting CPU cycles in G_Trace()
+
+    if (!botBrain.HasGoal())
+        return false;
+    // No need for that
+    if (currAasAreaNum == goalAasAreaNum)
+        return false;
+
+    if (!self->groundentity)
+    {
+        trace_t trace;
+        G_Trace(&trace, self->s.origin, nullptr, nullptr, (Vec3(0, 0, -36) + self->s.origin).Data(), self, MASK_AISOLID);
+        if (trace.fraction == 1.0f)
+            return false;
+        if (trace.surfFlags & SURF_NOIMPACT)
+            return false;
+    }
+
+    // Only RL and IG jumps are supported, bots fail almost all GB jumps in testing
+    int weapon = WEAP_NONE;
+    if (Inventory()[WEAP_ROCKETLAUNCHER] && (Inventory()[AMMO_ROCKETS] || Inventory()[AMMO_WEAK_ROCKETS]))
+        weapon = WEAP_ROCKETLAUNCHER;
+    if (Inventory()[WEAP_INSTAGUN])
+        weapon = WEAP_INSTAGUN;
+    if (weapon == WEAP_NONE)
+        return false;
+
+    Vec3 goalOrigin = botBrain.ClosestGoalOrigin();
+    float squareDistanceToGoal = (goalOrigin - self->s.origin).SquaredLength();
+
+    // Too close to a goal
+    if (squareDistanceToGoal < 128.0f * 128.0f)
+        return false;
+
+    // Too far from a goal
+    if (squareDistanceToGoal > 450.0f * 450.0f)
+        return false;
+
+    const aas_area_t &currArea = aasworld.areas[currAasAreaNum];
+    const aas_area_t &goalArea = aasworld.areas[goalAasAreaNum];
+
+    // Can't RJ to a lower area or just slightly higher area
+    float height = goalArea.mins[2] - currArea.mins[2];
+    if (height < 48.0f)
+        return false;
+
+    // Can't jump so high
+    if (height > 280.0f)
+        return false;
+
+    if (GS_SelfDamage() && weapon == WEAP_INSTAGUN)
+    {
+        // A goal does not worth a weapon jump
+        if (!botBrain.IsGoalATopTierItem())
+            return false;
+        float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
+        if (HasQuad(self))
+            damageToBeKilled /= 4.0f;
+        if (HasShell(self))
+            damageToBeKilled *= 4.0f;
+        // Too risky
+        if (damageToBeKilled < 100.0f)
+            return false;
+        // Can't refill health and armor picking it on the map
+        if (damageToBeKilled < 150.0f && !(level.gametype.spawnableItemsMask & (IT_HEALTH|IT_ARMOR)))
+            return false;
+    }
+
+    // Check whether area will be reached soon anyway
+    for (unsigned i = 0, end = std::min(nextReaches.size(), 8u); i < end; ++i)
+        if (nextReaches[i].areanum == goalAasAreaNum)
+            return false;
+
+    Vec3 traceEnd(goalOrigin);
+
+    Vec3 botToGoal2D(goalOrigin);
+    botToGoal2D -= self->s.origin;
+    botToGoal2D.Z() = 0;
+    float botToGoalSquareDist2D = botToGoal2D.SquaredLength();
+    if (botToGoalSquareDist2D > 1)
+    {
+        float botToGoalDist2D = 1.0f / Q_RSqrt(botToGoalSquareDist2D);
+        botToGoal2D *= 1.0f / botToGoalSquareDist2D;
+        // Aim not directly to goal but a bit closer to bot in XY plane
+        // (he will fly down to a goal from the trajectory zenith)
+        traceEnd -= 0.33f * botToGoalDist2D * botToGoal2D;
+    }
+
+    trace_t trace;
+    for (int i = 0; i < 3; ++i)
+    {
+        traceEnd.Z() += 32.0f;
+        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.Data(), self, MASK_AISOLID);
+        if (trace.fraction == 1.0f)
+            break;
+    }
+
+    if (trace.fraction != 1.0f)
+        return false;
+
+    ChangeWeapon(weapon);
+    if (self->r.client->ps.stats[STAT_WEAPON] != weapon)
+        return false;
+    if (self->r.client->ps.stats[STAT_WEAPON_TIME])
+        return false;
+
+    Vec3 botToTarget = traceEnd - self->s.origin;
+    vec3_t lookAngles = {0, 0, 0};
+    VecToAngles((-botToTarget).Data(), lookAngles);
+    lookAngles[PITCH] = std::min(lookAngles[PITCH] + 60.0f, 170.0f);
+    VectorCopy(lookAngles, self->s.angles);
+
+    ucmd->forwardmove = 0;
+    ucmd->sidemove = 0;
+    ucmd->upmove = 1;
+    ucmd->buttons |= (BUTTON_ATTACK|BUTTON_SPECIAL);
+
+    rocketJumpTarget = goalOrigin;
+    hasTriggeredRocketJump = true;
+    rocketJumpTimeoutAt = level.time + 750;
+    return true;
 }
 
 void Bot::CheckTargetProximity()

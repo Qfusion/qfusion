@@ -8,6 +8,7 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowed
     : self(self),
       longTermGoal(nullptr),
       shortTermGoal(nullptr),
+      specialGoal(nullptr),
       longTermGoalSearchTimeout(0),
       shortTermGoalSearchTimeout(0),
       longTermGoalSearchPeriod(1500),
@@ -285,25 +286,23 @@ bool AiBaseBrain::ShouldWaitForSpecialGoal() const
 
 Vec3 AiBaseBrain::ClosestGoalOrigin() const
 {
-    float minSqDist = INFINITY;
+    float minSqDist = std::numeric_limits<float>::max();
     NavEntity *chosenGoal = nullptr;
     for (NavEntity *goal: { longTermGoal, shortTermGoal, specialGoal })
     {
-        if (!goal) continue;
+        if (!goal)
+            continue;
         float sqDist = (goal->Origin() - self->s.origin).SquaredLength();
-        if (minSqDist < sqDist)
+        if (minSqDist > sqDist)
         {
             minSqDist = sqDist;
             chosenGoal = goal;
         }
     }
-#ifdef _DEBUG
     if (!chosenGoal)
     {
-        Debug("AiBaseBrain::ClosestGoalOrigin(): there are no goals\n");
-        abort();
+        FailWith("ClosestGoalOrigin(): there are no goals\n");
     }
-#endif
     return chosenGoal->Origin();
 }
 

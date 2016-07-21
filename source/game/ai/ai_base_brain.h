@@ -46,6 +46,8 @@ protected:
     void UpdateWeights();
     virtual void UpdatePotentialGoalsWeights();
 
+
+
     void CheckOrCancelGoal();
     bool ShouldCancelGoal(const NavEntity *goalEnt);
     // To be overridden in subclass. Should check other reasons of goal rejection aside generic ones for all goals.
@@ -83,6 +85,11 @@ protected:
     virtual void OnSpecialGoalReached();
 public:
     virtual ~AiBaseBrain() override {}
+
+    inline bool HasGoal() const
+    {
+        return longTermGoal || shortTermGoal || specialGoal;
+    }
 
     void ClearAllGoals();
     // May be overridden in subclasses
