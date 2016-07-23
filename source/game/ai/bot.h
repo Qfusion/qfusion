@@ -109,6 +109,7 @@ private:
 
     Vec3 rocketJumpTarget;
     bool hasTriggeredRocketJump;
+    bool wasTriggeredRocketJumpPrevFrame;
     unsigned rocketJumpTimeoutAt;
 
     bool hasPendingLandingDash;
