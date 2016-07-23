@@ -12,6 +12,7 @@ qfusion is the id Tech 2 derived game engine
 - Modern and fast OpenGL 3.0 and OpenGL ES 3.0 renderer, running in a dedicated program thread
 - <a href="http://librocket.com/wiki/documentation">User Interface</a> based on XHTML/CSS standards with support for remote content
 - Support for vertex and skeletal animation
+- HDR, Bloom and map-specific color correction profiles
 - Powerful multiplayer & eSports features (global stats, friend lists, IRC, TV-server, etc.)
 - Ready to go FPS example gametype scripts from Warsow
 - Multithreaded sound mixer design
