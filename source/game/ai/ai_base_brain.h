@@ -35,8 +35,6 @@ protected:
     const unsigned longTermGoalReevaluationPeriod;
     const unsigned shortTermGoalReevaluationPeriod;
 
-    unsigned weightsUpdateTimeout;
-
     int currAasAreaNum;
 
     int preferredAasTravelFlags;

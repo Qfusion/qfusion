@@ -20,7 +20,6 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowed
       shortTermGoalReevaluationTimeout(0),
       longTermGoalReevaluationPeriod(700),
       shortTermGoalReevaluationPeriod(350),
-      weightsUpdateTimeout(0),
       preferredAasTravelFlags(preferredAasTravelFlags),
       allowedAasTravelFlags(allowedAasTravelFlags)
 {
@@ -83,12 +82,6 @@ void AiBaseBrain::Think()
 
     // Always update weights before goal picking, except we have updated it in this frame
     bool weightsUpdated = false;
-    //update status information to feed up ai
-    if (weightsUpdateTimeout <= level.time)
-    {
-        UpdateWeights();
-        weightsUpdated = true;
-    }
 
     if (longTermGoalSearchTimeout <= level.time || longTermGoalReevaluationTimeout <= level.time)
     {
@@ -109,9 +102,6 @@ void AiBaseBrain::Think()
         }
         PickShortTermGoal(shortTermGoal);
     }
-
-    if (weightsUpdated)
-        weightsUpdateTimeout = level.time + 500;
 }
 
 void AiBaseBrain::CheckOrCancelGoal()
@@ -712,8 +702,6 @@ void AiBaseBrain::ClearLongAndShortTermGoal(const Goal *pickedGoal)
     shortTermGoal = nullptr;
     shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
-    // Request immediate status update
-    weightsUpdateTimeout = 0;
     // Call possible overridden child callback method
     OnGoalCleanedUp(pickedGoal);
     // Notify other AI's about the goal pickup
