@@ -1065,7 +1065,11 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 				if( e->flags & RF_MINLIGHT )
 				{
 					float minLight = rb.minLight;
-					if( VectorLength( ambient ) < minLight ) {
+					float ambientL = VectorLength( ambient );
+
+					if( ambientL < minLight ) {
+						if( ambientL < 0.001 )
+							VectorSet( ambient, 1, 1, 1 );
 						VectorNormalize( ambient );
 						VectorScale( ambient, minLight, ambient );
 					}
