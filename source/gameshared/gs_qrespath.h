@@ -163,6 +163,7 @@ extern "C" {
 // weapons
 #define PATH_GUNBLADE_MODEL		"models/weapons/gunblade/gunblade.md3"
 #define PATH_MACHINEGUN_MODEL		"models/weapons/machinegun/machinegun.iqm"
+#define PATH_MACHINEGUN_BARREL_MODEL		"models/weapons/machinegun/machinegun_barrel.iqm"
 #define PATH_RIOTGUN_MODEL		"models/weapons/riotgun/riotgun.md3"
 #define PATH_GRENADELAUNCHER_MODEL	"models/weapons/glauncher/glauncher.iqm"
 #define PATH_GRENADELAUNCHER_BARREL_MODEL	"models/weapons/glauncher/glauncher_barrel.iqm"
