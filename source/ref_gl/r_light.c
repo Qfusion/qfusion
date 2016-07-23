@@ -323,8 +323,8 @@ dynamic:
 	VectorNormalizeFast( dir );
 
 	if( r_fullbright->integer ) {
-		Vector4Set( ambientLocal, 1, 1, 1, 1 );
-		Vector4Set( diffuseLocal, 1, 1, 1, 1 );
+		VectorSet( ambientLocal, 1, 1, 1 );
+		VectorSet( diffuseLocal, 1, 1, 1 );
 	}
 	else {
 		float scale = (1 << mapConfig.overbrightBits) / 255.0f;
@@ -358,7 +358,8 @@ float R_LightExposureForOrigin( const vec3_t origin )
 {
 	int i;
 	vec3_t dir;
-	vec4_t ambient, diffuse, total;
+	vec4_t ambient, diffuse;
+	//vec4_t total;
 
 	R_LightForOrigin( origin, dir, ambient, diffuse, 0.1f, false );
 
@@ -371,8 +372,9 @@ float R_LightExposureForOrigin( const vec3_t origin )
 		return ambient[0] + diffuse[0];
 	}
 	
-	Vector4Add( ambient, diffuse, total );
-	return /*log( ( ColorGrayscale( total ) + 1.0f ) * r_hdr_exposure->value )*//*ColorGrayscale( total ) * *//*exp( mapConfig.averageLightingIntensity ) * */r_hdr_exposure->value;
+	return r_hdr_exposure->value;
+	//Vector4Add( ambient, diffuse, total );
+	//return log( ( ColorGrayscale( total ) + 1.0f ) * r_hdr_exposure->value )*//*ColorGrayscale( total ) * *//*exp( mapConfig.averageLightingIntensity ) * r_hdr_exposure->value;
 }
 
 /*

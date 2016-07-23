@@ -330,7 +330,8 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 /*
 * R_BlurTextureToScrFbo
 *
-* Performs Kawase blur which approximates standard Gaussian blur in multiple passes
+* Performs Kawase blur which approximates standard Gaussian blur in multiple passes.
+* Supposedly performs better on high resolution inputs.
 */
 static image_t *R_BlurTextureToScrFbo( const refdef_t *fd, image_t *image, image_t *otherImage )
 {
