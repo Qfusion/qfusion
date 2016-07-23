@@ -2717,7 +2717,7 @@ static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, bool useFloat )
 	Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy1", postfix );
 	R_InitScreenImagePair( name, &st->screenPPCopies[1], NULL, false, useFloat, 0, ~0 );
 
-	if( !useFloat ) {
+	if( !useFloat && glConfig.ext.draw_buffers ) {
 		Q_snprintfz( name, sizeof( name ), "rsh.screenTexOverbright%s", postfix );
 		R_InitScreenImagePair( name, &st->screenOverbrightTex, NULL, false, false, 0, ~IT_FRAMEBUFFER );
 
