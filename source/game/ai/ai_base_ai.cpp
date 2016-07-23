@@ -166,7 +166,6 @@ void Ai::OnGoalSet(Goal *goalEnt)
 
     goalAasAreaNum = goalEnt->AasAreaNum();
     goalTargetPoint = goalEnt->Origin();
-    goalTargetPoint.Z() += playerbox_stand_viewheight;
 
     nextReaches.clear();
     UpdateReachCache(currAasAreaNum);
