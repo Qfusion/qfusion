@@ -1016,6 +1016,22 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
         if (!self->groundentity && !hasObstacles)
             ucmd->buttons |= BUTTON_SPECIAL;
     }
+
+    // Skip dash and WJ near triggers to prevent missing a trigger
+    switch (nextReaches.front().traveltype)
+    {
+        case TRAVEL_TELEPORT:
+        case TRAVEL_JUMPPAD:
+        case TRAVEL_ELEVATOR:
+        case TRAVEL_LADDER:
+        case TRAVEL_BARRIERJUMP:
+            ucmd->buttons &= ~BUTTON_SPECIAL;
+        default:
+            // If has other goal than special goal (that always has a highest prioriy)
+            if (!HasSpecialGoal() && IsCloseToAnyGoal())
+                ucmd->buttons &= ~BUTTON_SPECIAL;
+    }
+
 }
 
 bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
