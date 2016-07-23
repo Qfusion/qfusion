@@ -24,6 +24,7 @@ public:
     // May return some of subtypes of this class depending on a gametype in future
     static inline AiGametypeBrain *Instance() { return instance; }
     void ClearGoals(const NavEntity *canceledGoal, const class Ai *goalGrabber);
+    void ClearGoals(const Goal *canceledGoal, const class Ai *goalGrabber);
     void OnBotJoinedTeam(edict_t *ent, int team);
     void OnBotDropped(edict_t *ent);
 };

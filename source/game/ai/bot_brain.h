@@ -215,9 +215,6 @@ class BotBrain: public AiBaseBrain
 
     TargetEnvironment targetEnvironment;
 
-    // This var holds memory referred by AiBaseBrain::specialGoal
-    NavEntity localSpecialGoal;
-
     inline unsigned NextCombatTaskInstanceId() { return combatTaskInstanceCounter++; }
 
     inline bool BotHasQuad() const { return ::HasQuad(bot); }
@@ -281,8 +278,16 @@ class BotBrain: public AiBaseBrain
     float ComputeHealthWeight(const gsitem_t *item) const;
     float ComputePowerupWeight(const gsitem_t *item) const;
 
-    virtual void OnGoalCleanedUp(const NavEntity *goalEnt) override;
-    virtual bool MayNotBeFeasibleGoal(const NavEntity *goalEnt) override;
+    virtual void OnGoalCleanedUp(const Goal *goalEnt) override;
+    virtual bool MayNotBeFeasibleGoal(const Goal *goal) override
+    {
+        return MayNotBeFeasibleGoal(goal->AasAreaNum());
+    }
+    virtual bool MayNotBeFeasibleGoal(const NavEntity *navEntity) override
+    {
+        return MayNotBeFeasibleGoal(navEntity->AasAreaNum());
+    }
+    bool MayNotBeFeasibleGoal(int goalAreaNum);
     virtual void OnClearSpecialGoalRequested() override;
 
     bool MayPathToAreaBeBlocked(int goalAreaNum) const;
@@ -299,33 +304,14 @@ class BotBrain: public AiBaseBrain
 
     bool IsSpecialGoalSetBy(const AiFrameAwareUpdatable *setter) const
     {
-        // If special goal setter is defined
-        if (specialGoal->setter)
-        {
-            // Pointers should match exactly
-            if (specialGoal->setter == setter)
-                return true;
-        }
-        else
-        {
-            // If there is no special goal setter, treat it as set by bot or bot's brain
-            if (setter == (AiFrameAwareUpdatable*)bot->ai->botRef)
-                return true;
-            if (setter == this)
-                return true;
-        }
-        return false;
+        return specialGoal->Setter() == setter;
     }
 
-    inline void SetSpecialGoalFromEntity(edict_t *entity, const AiFrameAwareUpdatable *setter)
-    {
-        localSpecialGoal.Clear();
-        localSpecialGoal.goalFlags = GoalFlags::DROPPED_ENTITY | GoalFlags::REACH_ENTITY | GoalFlags::REACH_AT_TOUCH;
-        localSpecialGoal.ent = entity;
-        localSpecialGoal.aasAreaNum = AAS_PointAreaNum(entity->s.origin);
-        localSpecialGoal.setter = setter;
-        SetSpecialGoal(&localSpecialGoal);
-    }
+    unsigned specialGoalCombatTaskId;
+
+    NavEntity localNavEntity;
+
+    void SetSpecialGoalFromEntity(edict_t *entity, const AiFrameAwareUpdatable *setter);
 
     BotBrain() = delete;
     // Disable copying and moving

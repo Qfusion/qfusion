@@ -189,7 +189,7 @@ private:
     {
         return botBrain.IsCloseToAnyGoal();
     }
-    void OnGoalCleanedUp(const NavEntity *goalEnt);
+    void OnGoalCleanedUp(const Goal *goal);
 
     void SetPendingLandingDash(usercmd_t *ucmd);
     bool TryApplyPendingLandingDash(usercmd_t *ucmd);

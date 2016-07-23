@@ -6,8 +6,11 @@
 
 AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags)
     : self(self),
+      localLongTermGoal(this),
       longTermGoal(nullptr),
+      localShortTermGoal(this),
       shortTermGoal(nullptr),
+      localSpecialGoal(this),
       specialGoal(nullptr),
       longTermGoalSearchTimeout(0),
       shortTermGoalSearchTimeout(0),
@@ -36,11 +39,12 @@ int AiBaseBrain::FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origi
                                          preferredAasTravelFlags, allowedAasTravelFlags);
 }
 
-bool AiBaseBrain::IsCloseToGoal(const NavEntity *goalEnt, float proximityThreshold) const
+bool AiBaseBrain::IsCloseToGoal(const Goal *goal, float proximityThreshold) const
 {
-    if (!goalEnt)
+    if (!goal)
         return false;
-    return (goalEnt->Origin() - self->s.origin).SquaredLength() <= proximityThreshold * proximityThreshold;
+    float radius = goal->RadiusOrDefault(proximityThreshold) + 32.0f;
+    return (goal->Origin() - self->s.origin).SquaredLength() <= radius * radius;
 }
 
 int AiBaseBrain::GoalAasAreaNum() const
@@ -125,24 +129,24 @@ void AiBaseBrain::CheckOrCancelGoal()
         OnClearSpecialGoalRequested();
 }
 
-bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
+bool AiBaseBrain::ShouldCancelGoal(const Goal *goal)
 {
-    if (goalEnt->IsDisabled())
+    if (goal->IsDisabled())
         return true;
 
-    unsigned spawnTime = goalEnt->SpawnTime();
+    unsigned spawnTime = goal->SpawnTime();
     // The entity is not spawned and respawn time is unknown
     if (!spawnTime)
         return true;
 
-    unsigned timeout = goalEnt->Timeout();
+    unsigned timeout = goal->Timeout();
     if (timeout <= level.time)
         return true;
 
-    if (goalEnt->IsBasedOnSomeEntity())
+    if (goal->IsBasedOnSomeEntity())
     {
         // Find milliseconds required to move to a goal
-        unsigned moveTime = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum()) * 10U;
+        unsigned moveTime = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goal->AasAreaNum()) * 10U;
         if (moveTime)
         {
             unsigned reachTime = level.time + moveTime;
@@ -151,14 +155,14 @@ bool AiBaseBrain::ShouldCancelGoal(const NavEntity *goalEnt)
                 return true;
         }
 
-        if (MayNotBeFeasibleGoal(goalEnt))
+        if (MayNotBeFeasibleGoal(goal))
         {
-            Debug("Goal %s should be canceled as not looking like a feasible goal\n", goalEnt->Name());
+            Debug("Goal %s should be canceled as not looking like a feasible goal\n", goal->Name());
             return true;
         }
     }
 
-    if (goalEnt == specialGoal)
+    if (goal == specialGoal)
         return ShouldCancelSpecialGoalBySpecificReasons();
 
     return false;
@@ -212,9 +216,9 @@ bool AiBaseBrain::HandleSpecialGoalTouch(const edict_t *ent)
 bool AiBaseBrain::IsCloseToAnyGoal() const
 {
     return
-        IsCloseToGoal(longTermGoal, 128.0f) ||
-        IsCloseToGoal(shortTermGoal, 128.0f) ||
-        IsCloseToGoal(specialGoal, 128.0f);
+        IsCloseToGoal(longTermGoal, 96.0f) ||
+        IsCloseToGoal(shortTermGoal, 96.0f) ||
+        IsCloseToGoal(specialGoal, 96.0f);
 }
 
 constexpr float GOAL_PROXIMITY_SQ_THRESHOLD = 40.0f * 40.0f;
@@ -287,8 +291,8 @@ bool AiBaseBrain::ShouldWaitForSpecialGoal() const
 Vec3 AiBaseBrain::ClosestGoalOrigin() const
 {
     float minSqDist = std::numeric_limits<float>::max();
-    NavEntity *chosenGoal = nullptr;
-    for (NavEntity *goal: { longTermGoal, shortTermGoal, specialGoal })
+    Goal *chosenGoal = nullptr;
+    for (Goal *goal: { longTermGoal, shortTermGoal, specialGoal })
     {
         if (!goal)
             continue;
@@ -310,19 +314,76 @@ constexpr float COST_INFLUENCE = 0.5f;
 constexpr float MOVE_TIME_WEIGHT = 1.0f;
 constexpr float WAIT_TIME_WEIGHT = 3.5f;
 
-struct GoalAndWeight
+float AiBaseBrain::SelectLongTermGoalCandidates(const Goal *currLongTermGoal, GoalCandidates &result)
 {
-    NavEntity *goal;
-    float weight;
-    inline GoalAndWeight(NavEntity *goal, float weight): goal(goal), weight(weight) {}
-    // For sorting in descending by weight order operator < is negated
-    inline bool operator<(const GoalAndWeight &that) const { return weight > that.weight; }
-};
+    result.clear();
+    float currGoalEntWeight = 0.0f;
 
-void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
+    FOREACH_NAVENT(navEnt)
+    {
+        if (navEnt->IsDisabled())
+            continue;
+
+        if (navEnt->Item() && !G_Gametype_CanPickUpItem(navEnt->Item()))
+            continue;
+
+        float weight = entityWeights[navEnt->Id()];
+
+        if (weight <= 0.0f)
+            continue;
+
+        unsigned moveDuration = 1;
+        unsigned waitDuration = 1;
+        if (currAasAreaNum != navEnt->AasAreaNum())
+        {
+            // We ignore cost of traveling in goal area, since:
+            // 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
+            // 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
+            moveDuration = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, navEnt->AasAreaNum()) * 10U;
+            // AAS functions return 0 as a "none" value, 1 as a lowest feasible value
+            if (!moveDuration)
+                continue;
+
+            if (navEnt->IsDroppedEntity())
+            {
+                // Do not pick an entity that is likely to dispose before it may be reached
+                if (navEnt->Timeout() <= level.time + moveDuration)
+                    continue;
+            }
+        }
+
+        unsigned spawnTime = navEnt->SpawnTime();
+        // The entity is not spawned and respawn time is unknown
+        if (!spawnTime)
+            continue;
+
+        // Entity origin may be reached at this time
+        unsigned reachTime = level.time + moveDuration;
+        if (reachTime < spawnTime)
+            waitDuration = spawnTime - reachTime;
+
+        // Waiting time is too large
+        if (waitDuration > 3000)
+            continue;
+
+        float cost = 0.0001f + MOVE_TIME_WEIGHT * moveDuration + WAIT_TIME_WEIGHT * waitDuration;
+
+        weight = (1000 * weight) / (cost * COST_INFLUENCE); // Check against cost of getting there
+
+        // Store current weight of the current goal entity
+        if (currLongTermGoal && currLongTermGoal->IsBasedOnNavEntity(navEnt))
+            currGoalEntWeight = weight;
+
+        result.emplace_back(NavEntityAndWeight(navEnt, weight));
+    }
+
+    std::sort(result.begin(), result.end());
+
+    return currGoalEntWeight;
+}
+
+void AiBaseBrain::PickLongTermGoal(const Goal *currLongTermGoal)
 {
-    // Clear short-term goal too
-    longTermGoal = nullptr;
     shortTermGoal = nullptr;
 
     if (G_ISGHOSTING(self))
@@ -332,189 +393,127 @@ void AiBaseBrain::PickLongTermGoal(const NavEntity *currLongTermGoalEnt)
     if (specialGoal)
         return;
 
+    // Should defer long-term goal pickup
     if (longTermGoalSearchTimeout > level.time && longTermGoalReevaluationTimeout > level.time)
         return;
 
+    // Can't pickup items if can't move
     if (!self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED])
         return;
 
-    float currGoalEntWeight = 0.0f;
-
-    // To avoid many expensive calls to MayNotBeFeasibleGoal() inside the loop for each goal entity,
-    // filter potential goals by non-zero weight, sort by weight
-    // and perform feasibility checks starting from the best goal
-    StaticVector<GoalAndWeight, MAX_GOALENTS> weightFilteredGoals;
-
-    // Run the list of potential goal entities
-    FOREACH_GOALENT(goalEnt)
-    {
-        if (goalEnt->IsDisabled())
-            continue;
-
-        if (goalEnt->Item() && !G_Gametype_CanPickUpItem(goalEnt->Item()))
-            continue;
-
-        float weight = entityWeights[goalEnt->Id()];
-
-        if (weight <= 0.0f)
-            continue;
-
-        unsigned moveDuration = 1;
-        unsigned waitDuration = 1;
-        if (currAasAreaNum != goalEnt->AasAreaNum())
-        {
-            // We ignore cost of traveling in goal area, since:
-            // 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
-            // 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
-            moveDuration = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goalEnt->AasAreaNum()) * 10U;
-            // AAS functions return 0 as a "none" value, 1 as a lowest feasible value
-            if (!moveDuration)
-                continue;
-
-            if (goalEnt->IsDroppedEntity())
-            {
-                // Do not pick an entity that is likely to dispose before it may be reached
-                if (goalEnt->Timeout() <= level.time + moveDuration)
-                    continue;
-            }
-        }
-
-        if (goalEnt->IsBasedOnSomeEntity())
-        {
-            unsigned spawnTime = goalEnt->SpawnTime();
-            // The entity is not spawned and respawn time is unknown
-            if (!spawnTime)
-                continue;
-
-            // Entity origin may be reached at this time
-            unsigned reachTime = level.time + moveDuration;
-            if (reachTime < spawnTime)
-                waitDuration = spawnTime - reachTime;
-
-            // Waiting time is too large
-            if (waitDuration > 3000)
-                continue;
-        }
-
-        float cost = 0.0001f + MOVE_TIME_WEIGHT * moveDuration + WAIT_TIME_WEIGHT * waitDuration;
-
-        weight = (1000 * weight) / (cost * COST_INFLUENCE); // Check against cost of getting there
-
-        // Store current weight of the current goal entity
-        if (goalEnt == currLongTermGoalEnt)
-            currGoalEntWeight = weight;
-
-        weightFilteredGoals.emplace_back(GoalAndWeight(goalEnt, weight));
-    }
-
-    // Sort by weight in descending order
-    std::sort(weightFilteredGoals.begin(), weightFilteredGoals.end());
+    StaticVector<NavEntityAndWeight, MAX_NAVENTS> goalCandidates;
+    float currGoalEntWeight = SelectLongTermGoalCandidates(currLongTermGoal, goalCandidates);
 
     // Always check current goal feasibility if this goal has non-zero current weight
-    if (currGoalEntWeight && MayNotBeFeasibleGoal(currLongTermGoalEnt))
+    if (currGoalEntWeight && MayNotBeFeasibleGoal(currLongTermGoal))
         currGoalEntWeight = 0;
 
-    NavEntity *bestGoalEnt = nullptr;
-    float bestWeight = 0.000001f;
-
-    for (auto &goalAndWeight: weightFilteredGoals)
+    if (goalCandidates.empty())
     {
-        // Avoid computing MayNotBeFeasibleGoal() twice for currLongTermGoalEnt
-        bool isFeasibleGoal;
-        if (goalAndWeight.goal != currLongTermGoalEnt)
-            isFeasibleGoal = !MayNotBeFeasibleGoal(goalAndWeight.goal);
-        else
-            isFeasibleGoal = currGoalEntWeight > 0;
+        Debug("Can't find any long-term goal nav. entity candidates\n");
+        return;
+    }
 
-        if (isFeasibleGoal)
+    NavEntity *bestNavEnt = nullptr;
+    float bestWeight;
+
+    for (auto &goalAndWeight: goalCandidates)
+    {
+        if (!MayNotBeFeasibleGoal(goalAndWeight.goal))
         {
-            bestGoalEnt = goalAndWeight.goal;
+            // Goals are sorted by weight in descending order,
+            // so the first feasible goal has largest weight among other feasible ones
+            bestNavEnt = goalAndWeight.goal;
             bestWeight = goalAndWeight.weight;
             break;
         }
     }
 
+    if (!bestNavEnt)
+    {
+        Debug("Can't find a feasible long-term goal nav. entity\n");
+        return;
+    }
+
     // If it is time to pick a new goal (not just re-evaluate current one), do not be too sticky to the current goal
     const float currToBestWeightThreshold = longTermGoalSearchTimeout > level.time ? 0.6f : 0.8f;
 
-    if (bestGoalEnt)
+    if (currLongTermGoal && currLongTermGoal->IsBasedOnNavEntity(bestNavEnt))
     {
-        if (currLongTermGoalEnt == bestGoalEnt)
+        Debug("current long-term goal %s is kept as still having best weight %.3f\n", currLongTermGoal->Name(), bestWeight);
+    }
+    else if (currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold)
+    {
+        const char *format =
+            "current long-term goal %s is kept as having weight %.3f good enough to not consider picking another one\n";
+        // If currGoalEntWeight > 0, currLongTermGoalEnt is guaranteed to be non-null
+        Debug(format, currLongTermGoal->Name(), currGoalEntWeight);
+    }
+    else
+    {
+        if (currLongTermGoal)
         {
-            Debug("current long-term goal %s is kept as still having best weight %.3f\n", bestGoalEnt->Name(), bestWeight);
-        }
-        else if (currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold)
-        {
-            const char *format =
-                "current long-term goal %s is kept as having weight %.3f good enough to not consider picking another one\n";
-            // If currGoalEntWeight > 0, currLongTermGoalEnt is guaranteed to be non-null
-            Debug(format, currLongTermGoalEnt->Name(), currGoalEntWeight);
+            const char *format = "chose %s weighted %.3f as a long-term goal instead of %s weighted now as %.3f\n";
+            Debug(format, bestNavEnt->Name(), bestWeight, currLongTermGoal->Name(), currGoalEntWeight);
         }
         else
         {
-            if (currLongTermGoalEnt)
-            {
-                const char *format = "chose %s weighted %.3f as a long-term goal instead of %s weighted now as %.3f\n";
-                Debug(format, bestGoalEnt->Name(), bestWeight, currLongTermGoalEnt->Name(), currGoalEntWeight);
-            }
-            else
-            {
-                Debug("chose %s weighted %.3f as a new long-term goal\n", bestGoalEnt->Name(), bestWeight);
-            }
-            SetLongTermGoal(bestGoalEnt);
+            Debug("chose %s weighted %.3f as a new long-term goal\n", bestNavEnt->Name(), bestWeight);
         }
     }
 
-    longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
+    if (!currLongTermGoal || !currLongTermGoal->IsBasedOnNavEntity(bestNavEnt))
+        SetLongTermGoal(bestNavEnt);
+
+    // Was doing search
+    if (longTermGoalSearchTimeout <= level.time)
+    {
+        longTermGoalSearchTimeout = level.time + longTermGoalSearchPeriod;
+        longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
+        shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
+        shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationTimeout;
+    }
+    else
+    {
+        longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
+    }
 }
 
-void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
+float AiBaseBrain::SelectShortTermGoalCandidates(const Goal *currShortTermGoal, GoalCandidates &result)
 {
-    // Present special goal blocks other goals selection
-    if (specialGoal)
-        return;
-
+    result.clear();
     float currGoalEntWeight = 0.0f;
 
-    if (!self->r.client || G_ISGHOSTING(self))
-        return;
-
-    if (shortTermGoalSearchTimeout > level.time && shortTermGoalReevaluationTimeout > level.time)
-        return;
-
-    bool canPickupItems = self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK;
+    bool canPickupItems = (self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK) != 0;
 
     vec3_t forward;
     AngleVectors(self->s.angles, forward, nullptr, nullptr);
 
-    // First, filter all goals by non-zero weight to choose best goals for further checks
-    StaticVector<GoalAndWeight, MAX_GOALENTS> weightFilteredGoals;
-
-    FOREACH_GOALENT(goalEnt)
+    FOREACH_NAVENT(navEnt)
     {
-        if (goalEnt->IsDisabled())
+        if (navEnt->IsDisabled())
             continue;
 
         // Do not predict short-term goal spawn (looks weird)
-        if (goalEnt->ToBeSpawnedLater())
+        if (navEnt->ToBeSpawnedLater())
             continue;
 
-        if (goalEnt->IsClient())
+        if (navEnt->IsClient())
             continue;
 
-        if (entityWeights[goalEnt->Id()] <= 0.0f)
+        if (entityWeights[navEnt->Id()] <= 0.0f)
             continue;
 
-        if (canPickupItems && goalEnt->Item())
+        if (canPickupItems && navEnt->Item())
         {
-            if (!G_Gametype_CanPickUpItem(goalEnt->Item()) || !(goalEnt->Item()->flags & ITFLAG_PICKABLE))
+            if (!G_Gametype_CanPickUpItem(navEnt->Item()) || !(navEnt->Item()->flags & ITFLAG_PICKABLE))
                 continue;
         }
 
         // First cut off items by distance for performance reasons since this function is called quite frequently.
         // It is not very accurate in terms of level connectivity, but short-term goals are not critical.
-        float dist = (goalEnt->Origin() - self->s.origin).LengthFast();
-        if (goalEnt == longTermGoal)
+        float dist = (navEnt->Origin() - self->s.origin).LengthFast();
+        if (longTermGoal && longTermGoal->IsBasedOnNavEntity(navEnt))
         {
             if (dist > AI_GOAL_SR_LR_RADIUS)
                 continue;
@@ -530,31 +529,36 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
         bool inFront = true;
         if (dist > 1)
         {
-            Vec3 botToTarget = goalEnt->Origin() - self->s.origin;
+            Vec3 botToTarget = navEnt->Origin() - self->s.origin;
             botToTarget *= 1.0f / dist;
             if (botToTarget.Dot(forward) < 0.7)
                 inFront = false;
         }
 
-        float weight = entityWeights[goalEnt->Id()] / dist * (inFront ? 1.0f : 0.5f);
+        float weight = entityWeights[navEnt->Id()] / dist * (inFront ? 1.0f : 0.5f);
 
         if (!weight)
             continue;
 
         // Store current short-term goal current weight
-        if (currShortTermGoalEnt == goalEnt)
+        if (currShortTermGoal && currShortTermGoal->IsBasedOnNavEntity(navEnt))
             currGoalEntWeight = weight;
 
-        weightFilteredGoals.emplace_back(GoalAndWeight(goalEnt, weight));
+        result.emplace_back(NavEntityAndWeight(navEnt, weight));
     }
 
-    // Sort by weight in descending order
-    std::sort(weightFilteredGoals.begin(), weightFilteredGoals.end());
+    std::sort(result.begin(), result.end());
 
-    // Then, filter non-zero weight goals by short-term reachability to choose best goals for feasibilty checks
-    StaticVector<GoalAndWeight, MAX_GOALENTS> shortTermReachableGoals;
+    return currGoalEntWeight;
+}
 
-    for (auto &goalAndWeight: weightFilteredGoals)
+bool AiBaseBrain::SelectShortTermReachableGoals(const Goal *currShortTermGoal, const GoalCandidates &candidates,
+                                                GoalCandidates &result)
+{
+    result.clear();
+    bool isCurrGoalReachable = false;
+
+    for (const NavEntityAndWeight &goalAndWeight: candidates)
     {
         std::pair<unsigned, unsigned> toAndBackAasTravelTimes = FindToAndBackTravelTimes(goalAndWeight.goal->Origin());
         bool shortTermReachable = false;
@@ -571,40 +575,62 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
                 {
                     if ((toTravelMillis + backTravelMillis) / 2 < AI_GOAL_SR_MILLIS)
                     {
-                        shortTermReachableGoals.push_back(goalAndWeight);
+                        result.push_back(goalAndWeight);
                         shortTermReachable = true;
                     }
                 }
             }
             else if ((toTravelMillis + backTravelMillis) / 2 < AI_GOAL_SR_MILLIS)
             {
-                shortTermReachableGoals.push_back(goalAndWeight);
+                result.push_back(goalAndWeight);
                 shortTermReachable = true;
             }
         }
-        // Cut off current short-term goal if it is not short-term reachable
-        if (!shortTermReachable && goalAndWeight.goal == currShortTermGoalEnt)
-            currGoalEntWeight = 0;
+        if (shortTermReachable && currShortTermGoal && currShortTermGoal->IsBasedOnNavEntity(goalAndWeight.goal))
+            isCurrGoalReachable = true;
     }
 
+    return isCurrGoalReachable;
+}
+
+void AiBaseBrain::PickShortTermGoal(const Goal *currShortTermGoal)
+{
+    // Present special goal blocks other goals selection
+    if (specialGoal)
+        return;
+
+    if (G_ISGHOSTING(self))
+        return;
+
+    if (shortTermGoalSearchTimeout > level.time && shortTermGoalReevaluationTimeout > level.time)
+        return;
+
+    // First, filter all goals by non-zero weight to choose best goals for further checks
+    StaticVector<NavEntityAndWeight, MAX_NAVENTS> goalCandidates;
+    float currGoalEntWeight = SelectShortTermGoalCandidates(currShortTermGoal, goalCandidates);
+
+    if (goalCandidates.empty())
+        return;
+
     // Always check feasibility for current short-term goal
-    if (currGoalEntWeight > 0 && MayNotBeFeasibleGoal(currShortTermGoalEnt))
+    if (currGoalEntWeight > 0 && MayNotBeFeasibleGoal(currShortTermGoal))
         currGoalEntWeight = 0;
+
+    // Then, filter non-zero weight goals by short-term reachability to choose best goals for feasibilty checks
+    StaticVector<NavEntityAndWeight, MAX_NAVENTS> shortTermReachableGoals;
+    if (!SelectShortTermReachableGoals(currShortTermGoal, goalCandidates, shortTermReachableGoals))
+        currGoalEntWeight = 0;
+
+    if (shortTermReachableGoals.empty())
+        return;
 
     NavEntity *bestGoalEnt = nullptr;
     float bestWeight = 0.000001f;
 
-    // Since `weightFilteredGoals` is sorted and the filter was sequential, `shortTermReachableGoals` is sorted too
-    for (auto &goalAndWeight: weightFilteredGoals)
+    // Since `goalCandidates` is sorted and the filter was sequential, `shortTermReachableGoals` is sorted too
+    for (auto &goalAndWeight: shortTermReachableGoals)
     {
-        // Avoid computing MayNotBeFeasibleGoal() twice for currShortTermGoalEnt
-        bool isFeasibleGoal;
-        if (goalAndWeight.goal != currShortTermGoalEnt)
-            isFeasibleGoal = !MayNotBeFeasibleGoal(goalAndWeight.goal);
-        else
-            isFeasibleGoal = currGoalEntWeight > 0;
-
-        if (isFeasibleGoal)
+        if (!MayNotBeFeasibleGoal(goalAndWeight.goal))
         {
             bestGoalEnt = goalAndWeight.goal;
             bestWeight = goalAndWeight.weight;
@@ -612,36 +638,39 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
         }
     }
 
+    if (!bestGoalEnt)
+        return;
+
     const bool isDoingSearch = level.time <= shortTermGoalReevaluationTimeout;
     const float currToBestWeightThreshold = isDoingSearch ? 0.9f : 0.7f;
 
-    if (bestGoalEnt)
+    if (currShortTermGoal && currShortTermGoal->IsBasedOnNavEntity(bestGoalEnt))
     {
-        if (currShortTermGoalEnt == bestGoalEnt)
+        Debug("current short-term goal %s is kept as still having best weight %.3f\n", bestGoalEnt->Name(), bestWeight);
+    }
+    else if (currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold)
+    {
+        const char *format =
+            "current short-term goal %s is kept as having weight %.3f good enough to not consider picking another one\n";
+        // If currGoalEntWeight > 0, currShortTermGoal is guaranteed to be non-null
+        Debug(format, currShortTermGoal->Name(), currGoalEntWeight);
+    }
+    else
+    {
+        if (currShortTermGoal)
         {
-            Debug("current short-term goal %s is kept as still having best weight %.3f\n", bestGoalEnt->Name(), bestWeight);
-        }
-        else if (currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold)
-        {
-            const char *format =
-                "current short-term goal %s is kept as having weight %.3f good enough to not consider picking another one\n";
-            // If currGoalEntWeight > 0, currShortTermGoal is guaranteed to be non-null
-            Debug(format, currShortTermGoalEnt->Name(), currGoalEntWeight);
+            const char *format = "chose %s weighted %.3f as a short-term goal instead of %s weighted now as %.3f\n";
+            Debug(format, bestGoalEnt->Name(), bestWeight, currShortTermGoal->Name(), currGoalEntWeight);
         }
         else
         {
-            if (currShortTermGoalEnt)
-            {
-                const char *format = "chose %s weighted %.3f as a short-term goal instead of %s weighted now as %.3f\n";
-                Debug(format, bestGoalEnt->Name(), bestWeight, currShortTermGoalEnt->Name(), currGoalEntWeight);
-            }
-            else
-            {
-                Debug("chose %s weighted %.3f as a new short-term goal\n", bestGoalEnt->Name(), bestWeight);
-            }
-            SetShortTermGoal(bestGoalEnt);
+            Debug("chose %s weighted %.3f as a new short-term goal\n", bestGoalEnt->Name(), bestWeight);
         }
     }
+
+    if (!currShortTermGoal || !currShortTermGoal->IsBasedOnNavEntity(bestGoalEnt))
+        SetShortTermGoal(bestGoalEnt);
+
     if (isDoingSearch)
     {
         shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
@@ -651,27 +680,29 @@ void AiBaseBrain::PickShortTermGoal(const NavEntity *currShortTermGoalEnt)
 
 void AiBaseBrain::SetLongTermGoal(NavEntity *goalEnt)
 {
-    longTermGoal = goalEnt;
+    longTermGoal = &localLongTermGoal;
+    longTermGoal->SetToNavEntity(goalEnt, this);
     longTermGoalSearchTimeout = level.time + longTermGoalSearchPeriod;
     longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
-    self->ai->aiRef->OnGoalSet(goalEnt);
+    self->ai->aiRef->OnGoalSet(&localLongTermGoal);
 }
 
 void AiBaseBrain::SetShortTermGoal(NavEntity *goalEnt)
 {
-    shortTermGoal = goalEnt;
+    shortTermGoal = &localShortTermGoal;
+    shortTermGoal->SetToNavEntity(goalEnt, this);
     shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalReevaluationPeriod;
-    self->ai->aiRef->OnGoalSet(goalEnt);
+    self->ai->aiRef->OnGoalSet(&localShortTermGoal);
 }
 
-void AiBaseBrain::SetSpecialGoal(NavEntity *goalEnt)
+void AiBaseBrain::SetSpecialGoal(Goal *goal)
 {
-    specialGoal = goalEnt;
-    self->ai->aiRef->OnGoalSet(goalEnt);
+    specialGoal = goal;
+    self->ai->aiRef->OnGoalSet(goal);
 }
 
-void AiBaseBrain::ClearLongAndShortTermGoal(const NavEntity *pickedGoal)
+void AiBaseBrain::ClearLongAndShortTermGoal(const Goal *pickedGoal)
 {
     longTermGoal = nullptr;
     // Request long-term goal update in next frame

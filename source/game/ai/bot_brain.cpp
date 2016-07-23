@@ -103,9 +103,10 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       nextWeaponScoreRandomUpdate(level.time),
       decisionRandom(0.5f),
       nextDecisionRandomUpdate(level.time),
-      botEnemyPool(bot, this, BotSkill())
+      botEnemyPool(bot, this, BotSkill()),
+      specialGoalCombatTaskId(0)
 {
-    localSpecialGoal.Clear();
+    memset(&localNavEntity, 0, sizeof(NavEntity));
     squad = nullptr;
     activeEnemyPool = &botEnemyPool;
     SetTag(bot->r.client->netname);
@@ -229,23 +230,23 @@ void BotBrain::OnEnemyDamaged(const edict_t *target, int damage)
         squad->OnBotDamagedEnemy(self, target, damage);
 }
 
-void BotBrain::OnGoalCleanedUp(const NavEntity *goalEnt)
+void BotBrain::OnGoalCleanedUp(const Goal *goal)
 {
-    self->ai->botRef->OnGoalCleanedUp(goalEnt);
+    self->ai->botRef->OnGoalCleanedUp(goal);
 }
 
-bool BotBrain::MayNotBeFeasibleGoal(const NavEntity *goalEnt)
+bool BotBrain::MayNotBeFeasibleGoal(int goalAreaNum)
 {
     if (!combatTask.aimEnemy || !combatTask.retreat)
         return false;
-    return MayPathToAreaBeBlocked(goalEnt->AasAreaNum());
+    return MayPathToAreaBeBlocked(goalAreaNum);
 }
 
 void BotBrain::OnClearSpecialGoalRequested()
 {
     AiBaseBrain::OnClearSpecialGoalRequested();
     // Prevent reuse of an old goal for newly set goals
-    localSpecialGoal.Clear();
+    localSpecialGoal.ResetWithSetter(this);
 }
 
 static bool AdjustOriginToFloor(const edict_t *ent, Vec3 *result)
@@ -343,9 +344,12 @@ bool BotBrain::ShouldCancelSpecialGoalBySpecificReasons()
 {
     if (!specialGoal)
         return false;
+    // Can't cancel special goal that was not set by bot itself
+    if (specialGoal->Setter() != this)
+        return false;
 
     // Cancel pursuit goal if combat task has changed
-    if (combatTask.instanceId != specialGoal->combatTaskInstanceId)
+    if (combatTask.instanceId != specialGoalCombatTaskId)
         return true;
 
     // Prefer picking up top-tier items rather than pursuit an enemy
@@ -582,44 +586,37 @@ bool BotBrain::HasMoreImportantTasksThanEnemies() const
 bool BotBrain::StartPursuit(const Enemy &enemy, unsigned timeout)
 {
     Debug("decided to pursue %s\n", enemy.Nick());
-    if (!SetTacticalSpot(Vec3(enemy.ent->s.origin), timeout))
+    Vec3 origin(enemy.ent->s.origin);
+    if (!SetTacticalSpot(origin, timeout))
     {
         Debug("Can't set pursuit tactical spot for %s\n", enemy.Nick());
         return false;
     }
-    float x = localSpecialGoal.explicitOrigin.X();
-    float y = localSpecialGoal.explicitOrigin.Y();
-    float z = localSpecialGoal.explicitOrigin.Z();
-    Q_snprintfz(localSpecialGoal.name, NavEntity::MAX_NAME_LEN, "%s seen spot @(%.3f %3.f %3.f)", enemy.Nick(), x, y, z);
     return true;
 }
 
-bool BotBrain::SetTacticalSpot(const Vec3 &origin, unsigned int timeout)
+bool BotBrain::SetTacticalSpot(const Vec3 &origin, unsigned timeout)
 {
-    if (localSpecialGoal.setter != nullptr)
+    if (localSpecialGoal.Setter() != this)
     {
-        Debug("Can't set tactical spot (a special goal is set by an external AI entity)");
+        Debug("Can't set tactical spot (a special goal is set by an external AI entity)\n");
+        Debug("localSpecialGoal.Setter(): %p, this: %p\n", localSpecialGoal.Setter(), this);
         return false;
     }
-    int areaNum = AAS_PointAreaNum(const_cast<float*>(origin.Data()));
-    if (!areaNum)
-    {
-        areaNum = AAS_PointAreaNum((Vec3(0, 0, -16) + origin).Data());
-        if (!areaNum)
-        {
-            areaNum = AAS_PointAreaNum((Vec3(0, 0, +16) + origin).Data());
-            if (!areaNum)
-                return false;
-        }
-    }
-    localSpecialGoal.aasAreaNum = areaNum;
-    localSpecialGoal.combatTaskInstanceId = combatTask.instanceId;
-    localSpecialGoal.goalFlags = GoalFlags::TACTICAL_SPOT;
-    localSpecialGoal.explicitTimeout = level.time + timeout;
-    localSpecialGoal.explicitSpawnTime = 1;
-    localSpecialGoal.explicitOrigin = origin;
+    localSpecialGoal.SetToTacticalSpot(origin, timeout, this);
     SetSpecialGoal(&localSpecialGoal);
+    specialGoalCombatTaskId = combatTask.instanceId;
     return true;
+}
+
+void BotBrain::SetSpecialGoalFromEntity(edict_t *entity, const AiFrameAwareUpdatable *setter)
+{
+    memset(&localNavEntity, 0, sizeof(NavEntity));
+    localNavEntity.ent = entity;
+    localNavEntity.aasAreaNum = AAS_PointAreaNum(entity->s.origin);
+    localNavEntity.flags = NavEntityFlags::REACH_AT_TOUCH | NavEntityFlags::DROPPED_ENTITY;
+    localSpecialGoal.SetToNavEntity(&localNavEntity, setter);
+    SetSpecialGoal(&localSpecialGoal);
 }
 
 void BotBrain::CheckTacticalPosition()
@@ -1898,7 +1895,7 @@ void BotBrain::UpdatePotentialGoalsWeights()
         }
     }
 
-    FOREACH_GOALENT(goalEnt)
+    FOREACH_NAVENT(goalEnt)
     {
         entityWeights[goalEnt->Id()] = 0;
 

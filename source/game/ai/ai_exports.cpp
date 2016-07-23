@@ -89,7 +89,7 @@ void AI_InitLevel( void )
     AIWeapons[WEAP_INSTAGUN].RangeWeight[AIWEAP_SHORT_RANGE] = 0.9f;
     AIWeapons[WEAP_INSTAGUN].RangeWeight[AIWEAP_MELEE_RANGE] = 0.9f;
 
-    GoalEntitiesRegistry::Instance()->Init();
+    NavEntitiesRegistry::Instance()->Init();
 
     ai_intialized = true;
 }
@@ -132,49 +132,40 @@ void AI_CommonFrame()
     AiGametypeBrain::Instance()->Update();
 }
 
-static int EntAASAreaNum(edict_t *ent)
-{
-    if (!ent || ent->r.client)
-        return 0;
-
-    int areaNum = AAS_PointAreaNum(ent->s.origin);
-    if (!areaNum)
-    {
-        vec3_t point;
-        VectorCopy(ent->s.origin, point);
-        point[2] += 8;
-        areaNum = AAS_PointAreaNum(point);
-        if (!areaNum)
-        {
-            point[2] +=  8;
-            areaNum = AAS_PointAreaNum(point);
-        }
-    }
-    return areaNum;
-}
-
 void AI_AddStaticItem( edict_t *ent )
 {
-    int areaNum = EntAASAreaNum(ent);
+    int areaNum = FindAASAreaNum(ent);
     if (areaNum)
-        GoalEntitiesRegistry::Instance()->AddGoalEntity(ent, areaNum, GoalFlags::REACH_ENTITY);
+    {
+        NavEntitiesRegistry::Instance()->AddNavEntity(ent, areaNum, NavEntityFlags::REACH_AT_TOUCH);
+        return;
+    }
+    constexpr const char *format = S_COLOR_RED "AI_AddStaticItem(): Can't find an area num for %s @ %.3f %.3f %.3f\n";
+    G_Printf(format, ent->classname, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
 }
 
 void AI_AddDroppedItem( edict_t *ent )
 {
-    int areaNum = EntAASAreaNum(ent);
+    int areaNum = FindAASAreaNum(ent);
     if (areaNum)
-        GoalEntitiesRegistry::Instance()->AddGoalEntity(ent, areaNum, GoalFlags::REACH_ENTITY | GoalFlags::DROPPED_ENTITY);
+    {
+        NavEntityFlags flags = NavEntityFlags::REACH_AT_TOUCH | NavEntityFlags::DROPPED_ENTITY;
+        NavEntitiesRegistry::Instance()->AddNavEntity(ent, areaNum, flags);
+        return;
+    }
+    constexpr const char *format = S_COLOR_RED "AI_AddDroppedItem(): Can't find an area num for %s @ %.3f %.3f %.3f\n";
+    G_Printf(format, ent->classname, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
 }
 
 void AI_DeleteItem( edict_t *ent )
 {
-    NavEntity *navEntity = GoalEntitiesRegistry::Instance()->GoalEntityForEntity(ent);
+    NavEntity *navEntity = NavEntitiesRegistry::Instance()->NavEntityForEntity(ent);
     if (navEntity)
     {
         AiGametypeBrain::Instance()->ClearGoals(navEntity, nullptr);
-        GoalEntitiesRegistry::Instance()->RemoveGoalEntity(navEntity);
+        NavEntitiesRegistry::Instance()->RemoveNavEntity(navEntity);
     }
+    // (An nav. item absence is not an error, this function is called for each entity in game)
 }
 
 //==========================================
