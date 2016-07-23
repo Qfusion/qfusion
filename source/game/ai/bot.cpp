@@ -15,6 +15,7 @@ Bot::Bot(edict_t *self, float skillLevel)
       jumppadLandingAreasCount(0),
       rocketJumpTarget(INFINITY, INFINITY, INFINITY),
       hasTriggeredRocketJump(false),
+      wasTriggeredRocketJumpPrevFrame(false),
       rocketJumpTimeoutAt(0),
       hasPendingLandingDash(false),
       isOnGroundThisFrame(false),

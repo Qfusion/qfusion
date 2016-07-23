@@ -21,6 +21,7 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
     CheckTargetProximity();
 
     wasOnGroundPrevFrame = isOnGroundThisFrame;
+    wasTriggeredRocketJumpPrevFrame = hasTriggeredRocketJump;
 }
 
 void Bot::Move(usercmd_t *ucmd)
@@ -92,7 +93,8 @@ void Bot::Move(usercmd_t *ucmd)
         }
     }
 
-    if (!hasPendingLookAtPoint)
+    bool hasJustTriggeredRocketJump = hasTriggeredRocketJump && !wasTriggeredRocketJumpPrevFrame;
+    if (!hasPendingLookAtPoint && !hasJustTriggeredRocketJump)
     {
         float turnSpeedMultiplier = requestedViewTurnSpeedMultiplier;
         if (HasEnemy())
