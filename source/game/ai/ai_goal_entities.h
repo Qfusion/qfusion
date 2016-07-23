@@ -4,107 +4,89 @@
 #include "ai_local.h"
 #include "vec3.h"
 
-enum class GoalFlags
+enum class NavEntityFlags: unsigned
 {
     NONE = 0x0,
     REACH_AT_TOUCH = 0x1,
-    REACH_ENTITY = 0x2,
-    DROPPED_ENTITY = 0x4,
+    REACH_ON_EVENT = 0x2,
+    DROPPED_ENTITY = 0x4
+};
+
+inline NavEntityFlags operator|(const NavEntityFlags &lhs, const NavEntityFlags &rhs)
+{
+    return (NavEntityFlags)((unsigned)lhs | (unsigned)(rhs));
+}
+inline NavEntityFlags operator&(const NavEntityFlags &lhs, const NavEntityFlags &rhs)
+{
+    return (NavEntityFlags)((unsigned)lhs & (unsigned)(rhs));
+}
+
+enum class GoalFlags: unsigned
+{
+    NONE = 0x0,
+    REACH_ON_RADIUS = 0x1,
+    REACH_ON_EVENT = 0x2,
     TACTICAL_SPOT = 0x8
 };
 
-inline GoalFlags operator|(const GoalFlags &lhs, const GoalFlags &rhs) { return (GoalFlags)((int)lhs | (int)rhs); }
-inline GoalFlags operator&(const GoalFlags &lhs, const GoalFlags &rhs) { return (GoalFlags)((int)lhs & (int)rhs); }
+inline GoalFlags operator|(const GoalFlags &lhs, const GoalFlags &rhs)
+{
+    return (GoalFlags)((unsigned)lhs | (unsigned)rhs);
+}
+inline GoalFlags operator&(const GoalFlags &lhs, const GoalFlags &rhs)
+{
+    return (GoalFlags)((unsigned)lhs & (unsigned)rhs);
+}
 
+// A NavEntity is based on some entity (edict_t) plus some attributes.
+// All NavEntities are global for all Ai beings.
+// A Goal is often based on a NavEntity
 class NavEntity
 {
-    friend class GoalEntitiesRegistry;
+    friend class NavEntitiesRegistry;
     friend class BotBrain;
 
     // Numeric id that matches index of corresponding entity in game edicts (if any)
     int id;
     // Id of area this goal is located in
     int aasAreaNum;
-    // Contains instance id of associated combat task
-    // If current combat task instance id has been changed
-    // and this is a special goal, this goal should be invalidated
-    unsigned combatTaskInstanceId;
-    // If zero (not set), should be computed according to goal-specific rules
-    unsigned explicitTimeout;
-    // If zero (not set), should be computed according to goal-specific rules
-    unsigned explicitSpawnTime;
-    // Should be used unless a goal is based on some entity.
-    // In that case, origin of entity should be used
-    Vec3 explicitOrigin;
     // Misc. goal flags, mainly defining way this goal should be reached
-    GoalFlags goalFlags;
-    // An entity this goal may be based on
+    NavEntityFlags flags;
+    // An entity this goal is based on
     edict_t *ent;
     // Links for registry goals pool
     NavEntity *prev, *next;
-    // Who has set this goal.
-    // For global goals it is null (global goals are shared for all bots).
-    // If setter is null, the setter should be treated as bot itself.
-    const class AiFrameAwareUpdatable *setter;
+    // All fields are set to zero by NavEntities registry initialization code
+    NavEntity() {}
 
-    static constexpr unsigned MAX_NAME_LEN = 64;
+    static constexpr unsigned MAX_NAME_LEN = 128;
     char name[MAX_NAME_LEN];
-
-    // Should initialize all fields since it may be used as a AiBaseBrain subclass field not held by the registry
-    NavEntity()
-        : explicitOrigin(INFINITY, INFINITY, INFINITY)
-    {
-        Clear();
-    }
-    void Clear()
-    {
-        id = 0;
-        aasAreaNum = 0;
-        combatTaskInstanceId = 0;
-        explicitTimeout = 0;
-        explicitSpawnTime = 0;
-        goalFlags = GoalFlags::NONE;
-        ent = nullptr;
-        prev = next = nullptr;
-        setter = nullptr;
-        name[0] = '\0';
-    }
 public:
-
+    inline NavEntityFlags Flags() const { return flags; }
     inline int Id() const { return id; }
     inline int AasAreaNum() const { return aasAreaNum; }
-    inline Vec3 Origin() const
-    {
-        return IsBasedOnSomeEntity() ? Vec3(ent->s.origin) : explicitOrigin;
-    }
-    inline const gsitem_t *Item() const { return ent->item; }
-    inline const char *Name() const { return name; }
-    inline bool IsEnabled() const
-    {
-        return !IsTacticalSpot() ? ent && ent->r.inuse : true;
-    }
+    inline Vec3 Origin() const { return Vec3(ent->s.origin); }
+    inline const gsitem_t *Item() const { return ent ? ent->item : nullptr; }
+    inline bool IsEnabled() const { return ent && ent->r.inuse; }
     inline bool IsDisabled() const { return !IsEnabled(); }
     inline bool IsBasedOnEntity(const edict_t *e) const { return e && this->ent == e; }
-    inline bool IsBasedOnSomeEntity() const { return ent != nullptr; }
     inline bool IsClient() const { return ent->r.client != nullptr; }
     inline bool IsSpawnedAtm() const { return ent->r.solid != SOLID_NOT; }
     inline bool ToBeSpawnedLater() const { return ent->r.solid == SOLID_NOT; }
     inline bool IsDroppedEntity() const
     {
-        return ent && GoalFlags::NONE != (goalFlags & GoalFlags::DROPPED_ENTITY);
+        return NavEntityFlags::NONE != (flags & NavEntityFlags ::DROPPED_ENTITY);
     }
     bool IsTopTierItem() const;
-    inline bool IsTacticalSpot() const
-    {
-        return GoalFlags::NONE != (goalFlags & GoalFlags::TACTICAL_SPOT);
-    }
+
+    const char *Name() const { return name; }
+
     unsigned Timeout() const;
+
     inline bool ShouldBeReachedAtTouch() const
     {
-        return GoalFlags::NONE != (goalFlags & GoalFlags::REACH_AT_TOUCH);
+        return NavEntityFlags::NONE != (flags & NavEntityFlags::REACH_AT_TOUCH);
     }
-    // Hack for incomplete type
-    inline const decltype(setter) Setter() const { return setter; }
 
     // Returns level.time when the item is already spawned
     // Returns zero if spawn time is unknown
@@ -112,35 +94,152 @@ public:
     unsigned SpawnTime() const;
 };
 
-class GoalEntitiesRegistry
+// A goal may be based on a NavEntity (an item with attributes) or may be an "aritficial" spot
+// A goal has a setter, an Ai superclass.
+// If a goal user does not own a goal (is not a setter of a goal),
+// the goal cannot be canceled by the user, but can time out as any other goal.
+class Goal
 {
-    NavEntity goalEnts[MAX_GOALENTS];
-    NavEntity *entGoals[MAX_EDICTS];
-    NavEntity *goalEntsFree;
-    NavEntity goalEntsHeadnode;
+    friend class Ai;
 
-    static GoalEntitiesRegistry instance;
+    NavEntity *navEntity;
 
-    NavEntity *AllocGoalEntity();
-    void FreeGoalEntity(NavEntity *navEntity);
+    const class AiFrameAwareUpdatable *setter;
+
+    GoalFlags flags;
+
+    Vec3 explicitOrigin;
+
+    int explicitAasAreaNum;
+    unsigned explicitSpawnTime;
+    unsigned explicitTimeout;
+    float explicitRadius;
+
+    const char *name;
+
+    void Clear();
+public:
+    Goal(const class AiFrameAwareUpdatable *initialSetter);
+    ~Goal();
+
+    // Instead of cleaning the goal completely set a "setter" of this action
+    // (otherwise a null setter cannot release the goal ownership)
+    void ResetWithSetter(const class AiFrameAwareUpdatable *setter)
+    {
+        Clear();
+        this->setter = setter;
+    }
+
+    void SetToNavEntity(NavEntity *navEntity, const AiFrameAwareUpdatable *setter);
+    void SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter);
+
+
+    inline int AasAreaNum() const
+    {
+        return navEntity ? navEntity->AasAreaNum() : explicitAasAreaNum;
+    }
+
+    inline bool IsBasedOnEntity(const edict_t *ent) const
+    {
+        return navEntity ? navEntity->IsBasedOnEntity(ent) : false;
+    }
+
+    inline bool IsBasedOnNavEntity(const NavEntity *navEntity) const
+    {
+        return navEntity && this->navEntity == navEntity;
+    }
+
+    inline bool IsBasedOnSomeEntity() const { return navEntity != nullptr; }
+
+    inline bool IsDisabled() const
+    {
+        return navEntity && navEntity->IsDisabled();
+    }
+
+    inline bool IsDroppedEntity() const
+    {
+        return navEntity && navEntity->IsDroppedEntity();
+    }
+
+    inline bool IsTacticalSpot() const
+    {
+        return GoalFlags::NONE != (flags & GoalFlags::TACTICAL_SPOT);
+    }
+
+    inline bool IsEnabled() const { return !IsDisabled(); }
+
+    inline bool IsTopTierItem()
+    {
+        return navEntity && navEntity->IsTopTierItem();
+    }
+
+    inline const char *Name() const { return name ? name : "???"; }
+
+    inline Vec3 Origin() const
+    {
+        return navEntity ? navEntity->Origin() : explicitOrigin;
+    }
+
+    inline float RadiusOrDefault(float defaultRadius) const
+    {
+        if (ShouldBeReachedAtRadius())
+            return explicitRadius;
+        return defaultRadius;
+    }
+
+    inline bool ShouldBeReachedAtRadius() const
+    {
+        return GoalFlags::NONE != (flags | GoalFlags::REACH_ON_RADIUS);
+    }
+
+    inline bool ShouldBeReachedAtTouch() const
+    {
+        return navEntity ? navEntity->ShouldBeReachedAtTouch() : false;
+    }
+
+    // Returns level.time when the item is already spawned
+    // Returns zero if spawn time is unknown
+    // Returns spawn time when the item is not spawned and spawn time may be predicted
+    inline unsigned SpawnTime() const
+    {
+        return navEntity ? navEntity->SpawnTime() : explicitSpawnTime;
+    }
+
+    inline unsigned Timeout() const
+    {
+        return navEntity ? navEntity->Timeout() : explicitTimeout;
+    }
+
+    // Hack for incomplete type
+    inline const decltype(setter) Setter() const { return setter; }
+};
+
+class NavEntitiesRegistry
+{
+    NavEntity navEntities[MAX_NAVENTS];
+    NavEntity *entityToNavEntity[MAX_EDICTS];
+    NavEntity *freeNavEntity;
+    NavEntity headnode;
+
+    static NavEntitiesRegistry instance;
+
+    NavEntity *AllocNavEntity();
+    void FreeNavEntity(NavEntity *navEntity);
 public:
     void Init();
 
-    NavEntity *AddGoalEntity(edict_t *ent, int aasAreaNum, GoalFlags flags = GoalFlags::NONE);
-    void RemoveGoalEntity(NavEntity *navEntity);
+    NavEntity *AddNavEntity(edict_t *ent, int aasAreaNum, NavEntityFlags flags);
+    void RemoveNavEntity(NavEntity *navEntity);
 
-    inline NavEntity *GoalEntityForEntity(edict_t *ent)
+    inline NavEntity *NavEntityForEntity(edict_t *ent)
     {
         if (!ent) return nullptr;
-        return entGoals[ENTNUM(ent)];
+        return entityToNavEntity[ENTNUM(ent)];
     }
-
-    inline edict_t *GetGoalEntity(int index) { return goalEnts[index].ent; }
-    inline int GetNextGoalEnt(int index) { return goalEnts[index].prev->id; }
 
     class GoalEntitiesIterator
     {
-        friend class GoalEntitiesRegistry;
+        friend class NavEntitiesRegistry;
         NavEntity *currEntity;
         inline GoalEntitiesIterator(NavEntity *currEntity): currEntity(currEntity) {}
     public:
@@ -149,12 +248,12 @@ public:
         inline void operator++() { currEntity = currEntity->prev; }
         inline bool operator!=(const GoalEntitiesIterator &that) const { return currEntity != that.currEntity; }
     };
-    inline GoalEntitiesIterator begin() { return GoalEntitiesIterator(goalEntsHeadnode.prev); }
-    inline GoalEntitiesIterator end() { return GoalEntitiesIterator(&goalEntsHeadnode); }
+    inline GoalEntitiesIterator begin() { return GoalEntitiesIterator(headnode.prev); }
+    inline GoalEntitiesIterator end() { return GoalEntitiesIterator(&headnode); }
 
-    static inline GoalEntitiesRegistry *Instance() { return &instance; }
+    static inline NavEntitiesRegistry *Instance() { return &instance; }
 };
 
-#define FOREACH_GOALENT(goalEnt) for (auto *goalEnt : *GoalEntitiesRegistry::Instance())
+#define FOREACH_NAVENT(navEnt) for (auto *navEnt : *NavEntitiesRegistry::Instance())
 
 #endif

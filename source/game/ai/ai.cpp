@@ -1,5 +1,6 @@
 #include "ai_local.h"
 #include "ai.h"
+#include "vec3.h"
 #include <stdarg.h>
 
 static void EscapePercent(const char *string, char *buffer, int bufferLen)
@@ -51,6 +52,48 @@ void AI_FailWithv(const char *tag, const char *format, va_list va)
     AI_Debugv(tag, format, va);
     fflush(stdout);
     abort();
+}
+
+int FindAASAreaNum(const Vec3 &origin)
+{
+    Vec3 testedOrigin(origin);
+    int areaNum = AAS_PointAreaNum(testedOrigin.Data());
+    if (areaNum)
+        return areaNum;
+    testedOrigin.Z() += 12.0f;
+    areaNum = AAS_PointAreaNum(testedOrigin.Data());
+    if (areaNum)
+        return areaNum;
+    testedOrigin.Z() -= 24.0f;
+    return AAS_PointAreaNum(testedOrigin.Data());
+}
+
+int FindAASAreaNum(const edict_t *ent)
+{
+    // Reject degenerate case
+    if (ent->r.absmin[0] == ent->r.absmax[0] &&
+        ent->r.absmin[1] == ent->r.absmax[1] &&
+        ent->r.absmin[2] == ent->r.absmax[2])
+        return FindAASAreaNum(Vec3(ent->s.origin));
+
+    Vec3 testedOrigin(ent->s.origin);
+    int areaNum = AAS_PointAreaNum(testedOrigin.Data());
+    if (areaNum)
+        return areaNum;
+
+    const vec_t *bounds[2] = { ent->r.absmin, ent->r.absmax };
+    // Test all AABB vertices
+    for (int i = 0; i < 8; ++i)
+    {
+        testedOrigin.X() = bounds[(i >> 0) & 1][0];
+        testedOrigin.Y() = bounds[(i >> 1) & 1][1];
+        testedOrigin.Z() = bounds[(i >> 2) & 1][2];
+        areaNum = AAS_PointAreaNum(testedOrigin.Data());
+        if (areaNum)
+            return areaNum;
+    }
+
+    return 0;
 }
 
 template<typename AASFn>

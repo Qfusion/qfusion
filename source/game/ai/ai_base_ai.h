@@ -75,7 +75,7 @@ protected:
     void ClearAllGoals();
 
     // Called by brain via self->ai->aiRef when long-term or short-term goals are set
-    void OnGoalSet(NavEntity *goalEnt);
+    void OnGoalSet(Goal *goal);
 
     void UpdateReachCache(int reachedAreaNum);
 
@@ -92,11 +92,8 @@ public:
 
     void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
     static bool IsStep(edict_t *ent);
-    int FindCurrAASAreaNum();
     // Accepts a touched entity and its old solid before touch
     void TouchedEntity(edict_t *ent);
-
-    static NavEntity *GetGoalentForEnt(edict_t *target);
 
     void ResetNavigation();
     void CategorizePosition();

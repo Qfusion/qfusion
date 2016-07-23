@@ -50,7 +50,7 @@ constexpr auto STATE_BOTTOM = 1;
 constexpr auto STATE_UP     = 2;
 constexpr auto STATE_DOWN   = 3;
 
-constexpr auto MAX_GOALENTS = MAX_EDICTS;
+constexpr auto MAX_NAVENTS = MAX_EDICTS;
 
 constexpr auto AI_STEPSIZE          = STEPSIZE; // 18
 constexpr auto AI_JUMPABLE_HEIGHT   = 50;
@@ -106,6 +106,9 @@ int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int go
 
 float FindSquareDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
 float FindDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
+
+int FindAASAreaNum(const class Vec3 &origin);
+int FindAASAreaNum(const edict_t *ent);
 
 typedef struct ai_handle_s
 {

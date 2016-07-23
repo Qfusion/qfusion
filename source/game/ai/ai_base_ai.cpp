@@ -41,17 +41,11 @@ void Ai::SetFrameAffinity(unsigned modulo, unsigned offset)
     aiBaseBrain->SetFrameAffinity(modulo, offset);
 }
 
-
-NavEntity *Ai::GetGoalentForEnt( edict_t *target )
-{
-    return GoalEntitiesRegistry::Instance()->GoalEntityForEntity(target);
-}
-
 void Ai::ResetNavigation()
 {
     distanceToNextReachStart = std::numeric_limits<float>::infinity();
 
-    currAasAreaNum = FindCurrAASAreaNum();
+    currAasAreaNum = FindAASAreaNum(self);
     nextReaches.clear();
     goalAasAreaNum = 0;
 
@@ -152,31 +146,6 @@ void Ai::CategorizePosition()
     self->is_step = stepping;
 }
 
-int Ai::FindCurrAASAreaNum()
-{
-    int areaNum = AAS_PointAreaNum(self->s.origin);
-    if (!areaNum)
-    {
-        // Try all vertices of a bounding box
-        const float *mins = playerbox_stand_mins;
-        const float *maxs = playerbox_stand_maxs;
-        vec3_t point;
-        for (int i = 0; i < 8; ++i)
-        {
-            VectorCopy(self->s.origin, point);
-            // Order of min/max pickup is shuffled to reduce worst case test calls count
-            point[0] += i & 1 ? mins[0] : maxs[0];
-            point[1] += i & 2 ? maxs[1] : mins[1];
-            point[2] += i & 4 ? mins[2] : maxs[2]; // Test upper bbox rectangle first
-
-            if (areaNum = AAS_PointAreaNum(point))
-                break;
-        }
-    }
-
-    return areaNum;
-}
-
 void Ai::ClearAllGoals()
 {
     // This clears short-term goal too
@@ -184,11 +153,11 @@ void Ai::ClearAllGoals()
     nextReaches.clear();
 }
 
-void Ai::OnGoalSet(NavEntity *goalEnt)
+void Ai::OnGoalSet(Goal *goalEnt)
 {
     if (!currAasAreaNum)
     {
-        currAasAreaNum = FindCurrAASAreaNum();
+        currAasAreaNum = FindAASAreaNum(self);
         if (!currAasAreaNum)
         {
             Debug("Still can't find curr aas area num");

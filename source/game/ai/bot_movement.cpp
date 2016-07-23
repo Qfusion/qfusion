@@ -136,7 +136,7 @@ void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
 
     // Try to get current aas area again (we may did a little move, and AAS area may become available)
     if (currAasAreaNum == 0)
-        currAasAreaNum = FindCurrAASAreaNum();
+        currAasAreaNum = FindAASAreaNum(self);
 
     // Still can't find current area or still is blocked, try to move in a random direction
     if (currAasAreaNum == 0 || blockedTimeout - level.time < BLOCKED_TIMEOUT - 750)
@@ -1175,7 +1175,7 @@ void Bot::CheckTargetProximity()
     }
 }
 
-void Bot::OnGoalCleanedUp(const NavEntity *goalEnt)
+void Bot::OnGoalCleanedUp(const Goal *goal)
 {
     if (isWaitingForItemSpawn)
     {

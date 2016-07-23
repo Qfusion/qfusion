@@ -2,7 +2,7 @@
 
 bool NavEntity::IsTopTierItem() const
 {
-    if (!ent || !ent->item)
+    if (!ent->r.inuse || !ent->item)
         return false;
 
     if (ent->item->type == IT_POWERUP)
@@ -19,9 +19,7 @@ bool NavEntity::IsTopTierItem() const
 
 unsigned NavEntity::SpawnTime() const
 {
-    if (explicitSpawnTime)
-        return explicitSpawnTime;
-    if (!ent || !ent->r.inuse)
+    if (!ent->r.inuse)
         return 0;
     if (ent->r.solid == SOLID_TRIGGER)
         return level.time;
@@ -38,83 +36,135 @@ unsigned NavEntity::SpawnTime() const
 
 unsigned NavEntity::Timeout() const
 {
-    if (explicitTimeout)
-        return explicitTimeout;
-    if (ent && IsDroppedEntity())
+    if (IsDroppedEntity())
         return ent->nextThink;
     return std::numeric_limits<unsigned>::max();
 }
 
-GoalEntitiesRegistry GoalEntitiesRegistry::instance;
-
-void GoalEntitiesRegistry::Init()
+Goal::Goal(const AiFrameAwareUpdatable *initialSetter)
+    : explicitOrigin(INFINITY, INFINITY, INFINITY)
 {
-    memset(goalEnts, 0, sizeof(goalEnts));
-    memset(entGoals, 0, sizeof(entGoals));
-
-    goalEntsFree = goalEnts;
-    goalEntsHeadnode.id = -1;
-    goalEntsHeadnode.ent = game.edicts;
-    goalEntsHeadnode.aasAreaNum = 0;
-    goalEntsHeadnode.prev = &goalEntsHeadnode;
-    goalEntsHeadnode.next = &goalEntsHeadnode;
-    int i;
-    for (i = 0; i < sizeof(goalEnts)/sizeof(goalEnts[0]) - 1; i++)
-    {
-        goalEnts[i].id = i;
-        goalEnts[i].next = &goalEnts[i+1];
-    }
-    goalEnts[i].id = i;
-    goalEnts[i].next = NULL;
+    ResetWithSetter(initialSetter);
 }
 
-NavEntity *GoalEntitiesRegistry::AllocGoalEntity()
+Goal::~Goal()
 {
-    if (!goalEntsFree)
+    if (name)
+    {
+        // If name does not refer to NavEntity::Name()
+        if (navEntity && navEntity->Name() != name)
+        {
+            G_Free(const_cast<char*>(name));
+        }
+    }
+}
+
+void Goal::SetToNavEntity(NavEntity *navEntity, const AiFrameAwareUpdatable *setter)
+{
+    this->navEntity = navEntity;
+    this->name = navEntity->Name();
+    this->setter = setter;
+}
+
+void Goal::SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter)
+{
+    this->navEntity = nullptr;
+    this->name = nullptr;
+    this->setter = setter;
+    this->flags = GoalFlags::REACH_ON_RADIUS | GoalFlags::TACTICAL_SPOT;
+    // If area num is zero, this goal will be canceled on its reevaluation
+    this->explicitAasAreaNum = FindAASAreaNum(origin);
+    this->explicitOrigin = origin;
+    this->explicitSpawnTime = 1;
+    this->explicitTimeout = level.time + timeout;
+    this->explicitRadius = 48.0f;
+}
+
+void Goal::Clear()
+{
+    navEntity = nullptr;
+    setter = nullptr;
+    flags = GoalFlags::NONE;
+    VectorSet(explicitOrigin.Data(), INFINITY, INFINITY, INFINITY);
+    explicitAasAreaNum = 0;
+    explicitSpawnTime = 0;
+    explicitRadius = 0;
+    explicitTimeout = 0;
+    name = nullptr;
+}
+
+NavEntitiesRegistry NavEntitiesRegistry::instance;
+
+void NavEntitiesRegistry::Init()
+{
+    memset(navEntities, 0, sizeof(navEntities));
+    memset(entityToNavEntity, 0, sizeof(entityToNavEntity));
+
+    freeNavEntity = navEntities;
+    headnode.id = -1;
+    headnode.ent = game.edicts;
+    headnode.aasAreaNum = 0;
+    headnode.prev = &headnode;
+    headnode.next = &headnode;
+    unsigned i;
+    for (i = 0; i < sizeof(navEntities)/sizeof(navEntities[0]) - 1; i++)
+    {
+        navEntities[i].id = i;
+        navEntities[i].next = &navEntities[i+1];
+    }
+    navEntities[i].id = i;
+    navEntities[i].next = NULL;
+}
+
+NavEntity *NavEntitiesRegistry::AllocNavEntity()
+{
+    if (!freeNavEntity)
         return nullptr;
 
-    // take a free decal if possible
-    NavEntity *goalEnt = goalEntsFree;
-    goalEntsFree = goalEnt->next;
+    NavEntity *navEntity = freeNavEntity;
+    freeNavEntity = navEntity->next;
 
-    // put the decal at the start of the list
-    goalEnt->prev = &goalEntsHeadnode;
-    goalEnt->next = goalEntsHeadnode.next;
-    goalEnt->next->prev = goalEnt;
-    goalEnt->prev->next = goalEnt;
+    navEntity->prev = &headnode;
+    navEntity->next = headnode.next;
+    navEntity->next->prev = navEntity;
+    navEntity->prev->next = navEntity;
 
-    return goalEnt;
+    return navEntity;
 }
 
-NavEntity *GoalEntitiesRegistry::AddGoalEntity(edict_t *ent, int aasAreaNum, GoalFlags goalFlags)
+NavEntity *NavEntitiesRegistry::AddNavEntity(edict_t *ent, int aasAreaNum, NavEntityFlags flags)
 {
-    if (aasAreaNum == 0) abort();
-    NavEntity *goalEnt = AllocGoalEntity();
-    if (goalEnt)
+    NavEntity *navEntity = AllocNavEntity();
+    if (navEntity)
     {
-        goalEnt->ent = ent;
-        goalEnt->aasAreaNum = aasAreaNum;
-        goalEnt->goalFlags = goalFlags;
-        Q_snprintfz(goalEnt->name, NavEntity::MAX_NAME_LEN, "%s(ent#%d)", ent->classname, ENTNUM(ent));
-        entGoals[ENTNUM(ent)] = goalEnt;
+        int entNum = ENTNUM(ent);
+        navEntity->ent = ent;
+        navEntity->id = entNum;
+        navEntity->aasAreaNum = aasAreaNum;
+        navEntity->flags = flags;
+        Q_snprintfz(navEntity->name, NavEntity::MAX_NAME_LEN, "%s(ent#=%d)", ent->classname, entNum);
+        entityToNavEntity[entNum] = navEntity;
+        return navEntity;
     }
-    return goalEnt;
+    constexpr const char *format = S_COLOR_RED "Can't allocate a nav. entity for %s @ %.3f %.3f %.3f\n";
+    G_Printf(format, ent->classname, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
+    return nullptr;
 }
 
-void GoalEntitiesRegistry::RemoveGoalEntity(NavEntity *navEntity)
+void NavEntitiesRegistry::RemoveNavEntity(NavEntity *navEntity)
 {
     edict_t *ent = navEntity->ent;
-    FreeGoalEntity(navEntity);
-    entGoals[ENTNUM(ent)] = nullptr;
+    FreeNavEntity(navEntity);
+    entityToNavEntity[ENTNUM(ent)] = nullptr;
 }
 
-void GoalEntitiesRegistry::FreeGoalEntity(NavEntity *goalEnt)
+void NavEntitiesRegistry::FreeNavEntity(NavEntity *navEntity)
 {
     // remove from linked active list
-    goalEnt->prev->next = goalEnt->next;
-    goalEnt->next->prev = goalEnt->prev;
+    navEntity->prev->next = navEntity->next;
+    navEntity->next->prev = navEntity->prev;
 
     // insert into linked free list
-    goalEnt->next = goalEntsFree;
-    goalEntsFree = goalEnt;
+    navEntity->next = freeNavEntity;
+    freeNavEntity = navEntity;
 }

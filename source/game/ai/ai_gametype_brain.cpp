@@ -39,10 +39,32 @@ void AiGametypeBrain::ClearGoals(const NavEntity *canceledGoal, const Ai *goalGr
         if (ent->ai->aiRef == goalGrabber)
             continue;
 
-        if (ent->ai->aiRef->aiBaseBrain->longTermGoal == canceledGoal)
-            ent->ai->aiRef->aiBaseBrain->ClearLongAndShortTermGoal(canceledGoal);
-        else if (ent->ai->aiRef->aiBaseBrain->shortTermGoal == canceledGoal)
-            ent->ai->aiRef->aiBaseBrain->ClearLongAndShortTermGoal(canceledGoal);
+        AiBaseBrain *aiBrain = ent->ai->aiRef->aiBaseBrain;
+        if (aiBrain->longTermGoal->IsBasedOnNavEntity(canceledGoal))
+            aiBrain->ClearLongAndShortTermGoal(aiBrain->longTermGoal);
+        else if (aiBrain->shortTermGoal->IsBasedOnNavEntity(canceledGoal))
+            aiBrain->ClearLongAndShortTermGoal(aiBrain->shortTermGoal);
+    }
+}
+
+void AiGametypeBrain::ClearGoals(const Goal *canceledGoal, const struct Ai *goalGrabber)
+{
+    if (!canceledGoal)
+        return;
+
+    // find all bots which have this node as goal and tell them their goal is reached
+    for (edict_t *ent = game.edicts + 1; PLAYERNUM(ent) < gs.maxclients; ent++)
+    {
+        if (!ent->ai || ent->ai->type == AI_INACTIVE)
+            continue;
+        if (ent->ai->aiRef == goalGrabber)
+            continue;
+
+        AiBaseBrain *aiBrain = ent->ai->aiRef->aiBaseBrain;
+        if (aiBrain->longTermGoal == canceledGoal)
+            aiBrain->ClearLongAndShortTermGoal(canceledGoal);
+        else if (aiBrain->shortTermGoal == canceledGoal)
+            aiBrain->ClearLongAndShortTermGoal(canceledGoal);
     }
 }
 
