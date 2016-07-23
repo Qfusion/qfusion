@@ -843,6 +843,8 @@ static int R_TextureInternalFormat( int samples, int flags, int pixelType )
 		return ( ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_LUMINANCE );
 	}
 
+	if( sRGB )
+		return GL_SRGB8_ALPHA8_EXT;
 	return GL_RGBA;
 }
 #endif
