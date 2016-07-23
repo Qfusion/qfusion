@@ -108,7 +108,9 @@ private:
     Vec3 jumppadTarget;
 
     Vec3 rocketJumpTarget;
+    Vec3 rocketJumpFireTarget;
     bool hasTriggeredRocketJump;
+    bool hasCorrectedRocketJump;
     bool wasTriggeredRocketJumpPrevFrame;
     unsigned rocketJumpTimeoutAt;
 

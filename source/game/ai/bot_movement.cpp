@@ -194,7 +194,21 @@ void Bot::MoveTriggeredARocketJump(Vec3 *intendedLookVec, usercmd_t *ucmd)
     ucmd->upmove = 0;
     ucmd->sidemove = 0;
 
-    if (rocketJumpTimeoutAt - level.time < 200)
+    if (!hasCorrectedRocketJump)
+    {
+        Vec3 newVelocity(rocketJumpFireTarget);
+        newVelocity -= self->s.origin;
+        float squareCorrectedDirLen = newVelocity.SquaredLength();
+        if (squareCorrectedDirLen > 1)
+        {
+            float speed = (float)VectorLength(self->velocity);
+            newVelocity *= Q_RSqrt(squareCorrectedDirLen);
+            newVelocity *= speed;
+            VectorCopy(newVelocity.Data(), self->velocity);
+        }
+        hasCorrectedRocketJump = true;
+    }
+    else if (rocketJumpTimeoutAt - level.time < 300)
     {
         ucmd->forwardmove = 1;
         // Bounce off walls
@@ -1074,6 +1088,8 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (squareDistanceToGoal > 450.0f * 450.0f)
         return false;
 
+    float distanceToGoal = 1.0f / Q_RSqrt(squareDistanceToGoal);
+
     const aas_area_t &currArea = aasworld.areas[currAasAreaNum];
     const aas_area_t &goalArea = aasworld.areas[goalAasAreaNum];
 
@@ -1086,7 +1102,7 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (height > 280.0f)
         return false;
 
-    if (GS_SelfDamage() && weapon == WEAP_INSTAGUN)
+    if (GS_SelfDamage() && weapon != WEAP_INSTAGUN)
     {
         // A goal does not worth a weapon jump
         if (!botBrain.IsGoalATopTierItem())
@@ -1109,7 +1125,7 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
         if (nextReaches[i].areanum == goalAasAreaNum)
             return false;
 
-    Vec3 traceEnd(goalOrigin);
+    Vec3 fireTarget(goalOrigin);
 
     Vec3 botToGoal2D(goalOrigin);
     botToGoal2D -= self->s.origin;
@@ -1118,19 +1134,20 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (botToGoalSquareDist2D > 1)
     {
         float botToGoalDist2D = 1.0f / Q_RSqrt(botToGoalSquareDist2D);
-        botToGoal2D *= 1.0f / botToGoalSquareDist2D;
+        botToGoal2D *= 1.0f / botToGoalDist2D;
         // Aim not directly to goal but a bit closer to bot in XY plane
         // (he will fly down to a goal from the trajectory zenith)
-        traceEnd -= 0.33f * botToGoalDist2D * botToGoal2D;
+        fireTarget -= 0.33f * botToGoalDist2D * botToGoal2D;
     }
 
     trace_t trace;
+    fireTarget.Z() += 32.0f + 72.0f * BoundedFraction(distanceToGoal, 500);
     for (int i = 0; i < 3; ++i)
     {
-        traceEnd.Z() += 32.0f;
-        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.Data(), self, MASK_AISOLID);
+        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTarget.Data(), self, MASK_AISOLID);
         if (trace.fraction == 1.0f)
             break;
+        fireTarget.Z() += 48.0f * BoundedFraction(height, 280.0f);
     }
 
     if (trace.fraction != 1.0f)
@@ -1142,10 +1159,11 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (self->r.client->ps.stats[STAT_WEAPON_TIME])
         return false;
 
-    Vec3 botToTarget = traceEnd - self->s.origin;
+    Vec3 botToFireTarget = fireTarget - self->s.origin;
     vec3_t lookAngles = {0, 0, 0};
-    VecToAngles((-botToTarget).Data(), lookAngles);
-    lookAngles[PITCH] = std::min(lookAngles[PITCH] + 60.0f, 170.0f);
+    VecToAngles((-botToFireTarget).Data(), lookAngles);
+    // Is corrected when hasCorrectedRocketJump is checked
+    lookAngles[PITCH] = 170.0f;
     VectorCopy(lookAngles, self->s.angles);
 
     ucmd->forwardmove = 0;
@@ -1154,7 +1172,9 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     ucmd->buttons |= (BUTTON_ATTACK|BUTTON_SPECIAL);
 
     rocketJumpTarget = goalOrigin;
+    rocketJumpFireTarget = fireTarget;
     hasTriggeredRocketJump = true;
+    hasCorrectedRocketJump = false;
     rocketJumpTimeoutAt = level.time + 750;
     return true;
 }
