@@ -53,7 +53,7 @@ void Bot::Move(usercmd_t *ucmd)
 
     if (hasTriggeredRocketJump)
     {
-        if (self->groundentity || rocketJumpTimeoutAt <= level.time)
+        if (self->groundentity || (rocketJumpTarget - self->s.origin).SquaredLength() < 48 * 48)
             hasTriggeredRocketJump = false;
     }
 
