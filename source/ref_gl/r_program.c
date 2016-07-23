@@ -128,6 +128,7 @@ typedef struct glsl_program_s
 					ShadowEntityDist[GLSL_SHADOWMAP_LIMIT],
 					
 					BlendMix,
+					ColorMod,
 					
 					SoftParticlesScale;
 
@@ -2088,7 +2089,7 @@ void RP_UpdateShaderUniforms( int elem,
 	float shaderTime, 
 	const vec3_t entOrigin, const vec3_t entDist, const uint8_t *entityColor, 
 	const uint8_t *constColor, const float *rgbGenFuncArgs, const float *alphaGenFuncArgs,
-	const mat4_t texMatrix )
+	const mat4_t texMatrix, float colorMod )
 {
 	GLfloat m[9];
 	glsl_program_t *program = r_glslprograms + elem - 1;
@@ -2128,6 +2129,8 @@ void RP_UpdateShaderUniforms( int elem,
 
 	if( program->loc.LightingIntensity >= 0 )
 		qglUniform1fARB( program->loc.LightingIntensity, 1.0 );
+	if( program->loc.ColorMod >= 0 )
+		qglUniform1fARB( program->loc.ColorMod, colorMod );
 }
 
 /*
@@ -2707,6 +2710,7 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	}
 
 	program->loc.BlendMix = qglGetUniformLocationARB( program->object, "u_BlendMix" );
+	program->loc.ColorMod = qglGetUniformLocationARB( program->object, "u_ColorMod" );
 
 	program->loc.SoftParticlesScale = qglGetUniformLocationARB( program->object, "u_SoftParticlesScale" );
 

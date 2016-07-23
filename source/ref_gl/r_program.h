@@ -113,7 +113,7 @@ enum
 
 #define GLSL_SHADER_COMMON_LINEAR2SRB			GLSL_BIT(28)
 
-// material prgoram type features
+// material program type features
 #define GLSL_SHADER_MATERIAL_LIGHTSTYLE0		GLSL_BIT(32)
 #define GLSL_SHADER_MATERIAL_LIGHTSTYLE1		GLSL_BIT(33)
 #define GLSL_SHADER_MATERIAL_LIGHTSTYLE2		(GLSL_SHADER_MATERIAL_LIGHTSTYLE0 | GLSL_SHADER_MATERIAL_LIGHTSTYLE1)
@@ -214,7 +214,7 @@ void RP_UpdateShaderUniforms( int elem,
 	float shaderTime, 
 	const vec3_t entOrigin, const vec3_t entDist, const uint8_t *entityColor, 
 	const uint8_t *constColor, const float *rgbGenFuncArgs, const float *alphaGenFuncArgs,
-	const mat4_t texMatrix );
+	const mat4_t texMatrix, float colorMod );
 
 void RP_UpdateViewUniforms( int elem, 
 	const mat4_t modelviewMatrix, const mat4_t modelviewProjectionMatrix,

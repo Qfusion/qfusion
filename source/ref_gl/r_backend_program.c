@@ -374,7 +374,7 @@ void RB_ApplyTCMods( const shaderpass_t *pass, mat4_t result )
 /*
 * RB_GetShaderpassColor
 */
-void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
+void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *colorMod )
 {
 	int c;
 	int rgba[4];
@@ -398,7 +398,6 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 	case RGB_GEN_ENTITYWAVE:
 	case RGB_GEN_WAVE:
 	case RGB_GEN_CUSTOMWAVE:
-		
 		if( rgbgenfunc->type == SHADER_FUNC_NONE )
 		{
 			temp = 1;
@@ -446,9 +445,10 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 			VectorCopy( pass->rgbgen.args, v );
 		}
 
-		a = v[0] * temp; rgba[0] = ( int )( a * 255.0f );
-		a = v[1] * temp; rgba[1] = ( int )( a * 255.0f );
-		a = v[2] * temp; rgba[2] = ( int )( a * 255.0f );
+		a = v[0]; rgba[0] = ( int )( a * 255.0f );
+		a = v[1]; rgba[1] = ( int )( a * 255.0f );
+		a = v[2]; rgba[2] = ( int )( a * 255.0f );
+		*colorMod = (float)temp;
 		break;
 	case RGB_GEN_OUTLINE:
 		rgba[0] = rb.entityOutlineColor[0];
@@ -580,6 +580,7 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 			break;
 		case RGB_GEN_WAVE:
 		case RGB_GEN_CUSTOMWAVE:
+		case RGB_GEN_ENTITYWAVE:
 			programFeatures |= GLSL_SHADER_COMMON_RGB_GEN_CONST;
 			if( rgbgen->func.type == SHADER_FUNC_RAMP ) {
 				programFeatures |= GLSL_SHADER_COMMON_RGB_DISTANCERAMP;
@@ -768,6 +769,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 {
 	vec3_t entDist, entOrigin;
 	byte_vec4_t constColor;
+	float colorMod = 1.0f;
 	const entity_t *e = rb.currentEntity;
 	vec3_t tmp;
 	vec2_t blendMix = { 0, 0 };
@@ -783,13 +785,11 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 	}
 
 	// calculate constant color
-	RB_GetShaderpassColor( pass, constColor );
+	RB_GetShaderpassColor( pass, constColor, &colorMod );
 
 	// apply modifications to texture coordinates
 	if( pass->numtcmods )
-	{
 		RB_ApplyTCMods( pass, texMatrix );
-	}
 
 	RP_UpdateViewUniforms( program,
 		rb.modelviewMatrix, rb.modelviewProjectionMatrix,
@@ -807,7 +807,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 	} else {
 		blendMix[0] = 1;
 		if( rb.alphaHack ) {
-			constColor[0] *= rb.hackedAlpha,constColor[1] *= rb.hackedAlpha, constColor[2] *= rb.hackedAlpha;
+			constColor[0] *= rb.hackedAlpha, constColor[1] *= rb.hackedAlpha, constColor[2] *= rb.hackedAlpha;
 		}
 	}
 
@@ -817,7 +817,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 		constColor, 
 		pass->rgbgen.func.type != SHADER_FUNC_NONE ? pass->rgbgen.func.args : pass->rgbgen.args, 
 		pass->alphagen.func.type != SHADER_FUNC_NONE ? pass->alphagen.func.args : pass->alphagen.args,
-		texMatrix );
+		texMatrix, colorMod );
 
 	RP_UpdateBlendMixUniform( program, blendMix );
 
