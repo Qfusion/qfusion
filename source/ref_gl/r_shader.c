@@ -1126,7 +1126,7 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 
 	R_FreePassCinematics( pass );
 
-	flags = Shader_SetImageFlags( shader ) | addFlags |  IT_SRGB;
+	flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 
 	pass->tcgen = TC_GEN_BASE;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
@@ -2764,6 +2764,7 @@ create_default:
 		case SHADER_TYPE_2D:
 		case SHADER_TYPE_2D_RAW:
 		case SHADER_TYPE_VIDEO:
+		case SHADER_TYPE_2D_LINEAR:
 			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 
 			s->flags = 0;
@@ -2788,8 +2789,10 @@ create_default:
 					pass->cin = R_StartCinematic( shortname );
 				s->cin = pass->cin;
 				pass->images[0] = rsh.noTexture;
-			} else if( type != SHADER_TYPE_2D_RAW ) {
+			} else if( type == SHADER_TYPE_2D_LINEAR ) {
 				pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL|IT_SYNC );
+			} else if( type != SHADER_TYPE_2D_RAW ) {
+				pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL|IT_SYNC|IT_SRGB );
 			}
 			break;
 		case SHADER_TYPE_OPAQUE_ENV:
@@ -3102,6 +3105,14 @@ shader_t *R_RegisterSkin( const char *name )
 shader_t *R_RegisterVideo( const char *name )
 {
 	return R_LoadShader( name, SHADER_TYPE_VIDEO, false );
+}
+
+/*
+* R_RegisterLinearPic
+*/
+shader_t *R_RegisterLinearPic( const char *name )
+{
+	return R_LoadShader( name, SHADER_TYPE_2D_LINEAR, false );
 }
 
 /*

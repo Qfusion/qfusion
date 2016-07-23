@@ -41,6 +41,7 @@ typedef enum
 	SHADER_TYPE_VIDEO			= 7,
 	SHADER_TYPE_SKYBOX			= 8,
 	SHADER_TYPE_FOG				= 9,
+	SHADER_TYPE_2D_LINEAR		= 10,
 } shaderType_e;
 
 #define NUM_SHADER_TYPES_BSP (SHADER_TYPE_BSP_MAX-SHADER_TYPE_BSP_MIN+1)
@@ -97,7 +98,8 @@ enum
 
 	SHADERPASS_AFUNC_GT0			= SHADERPASS_MARK_BEGIN << 5,
 	SHADERPASS_AFUNC_LT128			= SHADERPASS_MARK_BEGIN << 6,
-	SHADERPASS_AFUNC_GE128			= SHADERPASS_AFUNC_GT0|SHADERPASS_AFUNC_LT128
+	SHADERPASS_AFUNC_GE128			= SHADERPASS_AFUNC_GT0|SHADERPASS_AFUNC_LT128,
+	SHADERPASS_NOSRGB				= SHADERPASS_MARK_BEGIN << 7,
 };
 
 #define SHADERPASS_ALPHAFUNC ( SHADERPASS_AFUNC_GT0|SHADERPASS_AFUNC_LT128|SHADERPASS_AFUNC_GE128 )
@@ -305,6 +307,7 @@ shader_t	*R_RegisterRawAlphaMask( const char *name, int width, int height, uint8
 shader_t	*R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *matchesDefault );
 shader_t	*R_RegisterSkin( const char *name );
 shader_t	*R_RegisterVideo( const char *name );
+shader_t	*R_RegisterLinearPic( const char *name );
 
 unsigned	R_PackShaderOrder( const shader_t *shader );
 

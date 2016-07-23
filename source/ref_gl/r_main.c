@@ -1041,10 +1041,13 @@ static void R_Clear( int bitMask )
 	bool rgbShadow = ( rn.renderFlags & RF_SHADOWMAPVIEW ) && rn.fbColorAttachment != NULL ? true : false;
 	bool depthPortal = ( rn.renderFlags & (RF_MIRRORVIEW|RF_PORTALVIEW) ) != 0 && ( rn.renderFlags & RF_PORTAL_CAPTURE ) == 0;
 
-	if( ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) || rgbShadow ) {
-		clearColor = rgbShadow;
+	if( rgbShadow ) {
+		clearColor = true;
 		Vector4Set( envColor, 1, 1, 1, 1 );
-	} else {
+	} else if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
+		clearColor = rn.fbColorAttachment != NULL;
+		Vector4Set( envColor, 1, 1, 1, 0 );
+	} else  {
 		clearColor = !rn.numDepthPortalSurfaces || R_FASTSKY();
 		if( rsh.worldBrushModel && rsh.worldBrushModel->globalfog && rsh.worldBrushModel->globalfog->shader ) {
 			Vector4Scale( rsh.worldBrushModel->globalfog->shader->fog_color, 1.0/255.0, envColor );
@@ -1063,7 +1066,7 @@ static void R_Clear( int bitMask )
 
 	bits &= bitMask;
 
-	RB_Clear( bits, envColor[0], envColor[1], envColor[2], 1 );
+	RB_Clear( bits, envColor[0], envColor[1], envColor[2], envColor[3] );
 }
 
 /*

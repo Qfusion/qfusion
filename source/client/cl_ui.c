@@ -261,6 +261,7 @@ void CL_UIModule_Init( void )
 	import.R_RegisterSkin = re.RegisterSkin;
 	import.R_RegisterSkinFile = re.RegisterSkinFile;
 	import.R_RegisterVideo = re.RegisterVideo;
+	import.R_RegisterLinearPic = re.RegisterLinearPic;
 	import.R_LerpTag = re.LerpTag;
 	import.R_DrawStretchPic = re.DrawStretchPic;
 	import.R_DrawRotatedStretchPic = re.DrawRotatedStretchPic;

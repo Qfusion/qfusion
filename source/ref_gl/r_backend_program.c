@@ -741,12 +741,24 @@ static r_glslfeat_t RB_TcModsProgramFeatures( const shaderpass_t *pass )
 *
 * The main framebuffer is always srgb, otherwise assume linear
 */
-static r_glslfeat_t RB_sRGBProgramFeatures( void )
+static r_glslfeat_t RB_sRGBProgramFeatures( const shaderpass_t *pass )
 {
-	if( glConfig.sSRGB && RB_BoundFrameBufferObject() != 0 ) {
-		return GLSL_SHADER_COMMON_SRGB_COLORS;
+	r_glslfeat_t f = 0;
+
+	if( pass->flags & SHADERPASS_NOSRGB )
+		return 0; // don't do srgb<->linear conversions at all, used for blitting framebuffers
+
+	if( glConfig.sSRGB ) {
+		f |= GLSL_SHADER_COMMON_SRGB2LINEAR;
+
+		// ok, so we're getting sRGB linear input while rendering to 
+		// default framebuffer, so we need to go back from linear to sRGB
+		if( RB_BoundFrameBufferObject() == 0 ) {
+			f |= GLSL_SHADER_COMMON_LINEAR2SRB;
+		}
 	}
-	return 0;
+
+	return f;
 }
 
 /*
@@ -1853,7 +1865,7 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 	int program;
 	mat4_t texMatrix;
 
-	programFeatures &= ~GLSL_SHADER_COMMON_SRGB_COLORS;
+	programFeatures &= ~GLSL_SHADER_COMMON_SRGB2LINEAR;
 	if( pass->images[1] ) // lut
 		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_LUT;
 	if( pass->images[2] ) // output bloom
@@ -1863,7 +1875,7 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 
 	if( pass->images[0]->flags & IT_FLOAT ) {
 		if( glConfig.sSRGB )
-			programFeatures |= GLSL_SHADER_COMMON_SRGB_COLORS;
+			programFeatures |= GLSL_SHADER_COMMON_SRGB2LINEAR;
 		if( r_hdr->integer )
 			programFeatures |= GLSL_SHADER_COLOR_CORRECTION_HDR;
 	}
@@ -1943,7 +1955,7 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	features |= RB_InstancedArraysProgramFeatures();
 	features |= RB_AlphatestProgramFeatures( pass );
 	features |= RB_TcModsProgramFeatures( pass );
-	features |= RB_sRGBProgramFeatures();
+	features |= RB_sRGBProgramFeatures( pass );
 
 	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) 
 		&& rb.st.screenDepthTexCopy

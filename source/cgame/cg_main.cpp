@@ -630,7 +630,10 @@ static void CG_RegisterShaders( void )
 		if( !CG_LoadingItemName( name ) )
 			return;
 
-		cgs.imagePrecache[i] = trap_R_RegisterPic( name );
+		if( strstr( name, "correction/" ) ) // HACK HACK HACK -- for color correction LUTs
+			cgs.imagePrecache[i] = trap_R_RegisterLinearPic( name );
+		else
+			cgs.imagePrecache[i] = trap_R_RegisterPic( name );
 	}
 
 	if( cgs.precacheShadersStart != MAX_IMAGES )

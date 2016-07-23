@@ -116,6 +116,10 @@ namespace trap
 			return UI_IMPORT.R_RegisterVideo( name );
 		}
 
+		inline struct shader_s *R_RegisterLinearPic( const char *name ) {
+			return UI_IMPORT.R_RegisterLinearPic( name );
+		}
+
 		inline void R_GetShaderDimensions( const struct shader_s *shader, int *width, int *height ) {
 			UI_IMPORT.R_GetShaderDimensions( shader, width, height );
 		}
