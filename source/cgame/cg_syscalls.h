@@ -380,6 +380,11 @@ static inline struct shader_s *trap_R_RegisterVideo( const char *name )
 	return CGAME_IMPORT.R_RegisterVideo( name );
 }
 
+static inline struct shader_s *trap_R_RegisterLinearPic( const char *name )
+{
+	return CGAME_IMPORT.R_RegisterLinearPic( name );
+}
+
 static inline bool trap_R_LerpTag( orientation_t *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name )
 {
 	return CGAME_IMPORT.R_LerpTag( orient, mod, oldframe, frame, lerpfrac, name ) == true;

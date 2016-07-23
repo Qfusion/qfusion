@@ -294,7 +294,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	}
 	for( ; i < MAX_SHADER_IMAGES; i++ )
 		p.images[i] = NULL;
-	p.flags = blendMask;
+	p.flags = blendMask | SHADERPASS_NOSRGB;
 	p.program_type = program_type;
 	p.anim_numframes = iParam0;
 
@@ -438,7 +438,7 @@ void R_RenderScene( const refdef_t *fd )
 			if( r_fxaa->integer ) {
 				fbFlags |= PPFX_BIT_FXAA;
 			}
-			if( r_hdr->integer && r_bloom->integer && rn.st == &rsh.stf && glConfig.ext.draw_buffers && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS-1][1] ) {
+			if( r_hdr->integer && r_bloom->integer && rn.st == &rsh.stf && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS-1][1] ) {
 				fbFlags |= PPFX_BIT_OVERBRIGHT_TARGET|PPFX_BIT_COLOR_CORRECTION;
 			}
 

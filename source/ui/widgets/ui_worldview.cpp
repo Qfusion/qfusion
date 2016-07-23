@@ -84,7 +84,7 @@ public:
 			Initialized = true;
 
 			if( !colorCorrection.Empty() ) {
-				colorCorrectionShader = trap::R_RegisterPic( colorCorrection.CString() );
+				colorCorrectionShader = trap::R_RegisterLinearPic( colorCorrection.CString() );
 			}
 
 			trap::R_RegisterWorldModel( mapName.CString() );

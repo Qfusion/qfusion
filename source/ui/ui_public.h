@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    63
+#define	UI_API_VERSION	    64
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -95,6 +95,7 @@ typedef struct
 	struct shader_s *( *R_RegisterLevelshot )( const char *name, struct shader_s *defaultPic, bool *matchesDefault );
 	struct skinfile_s *( *R_RegisterSkinFile )( const char *name );
 	struct shader_s *( *R_RegisterVideo )( const char *name );
+	struct shader_s *( *R_RegisterLinearPic )( const char *name );
 	bool ( *R_LerpTag )( orientation_t *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name );
 	void ( *R_DrawStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 	void ( *R_DrawStretchPoly )( const struct poly_s *poly, float x_offset, float y_offset );

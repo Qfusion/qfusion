@@ -102,7 +102,8 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.RegisterSkin = R_RegisterSkin;
 	globals.RegisterSkinFile = R_RegisterSkinFile;
 	globals.RegisterVideo = R_RegisterVideo;
-	
+	globals.RegisterLinearPic = R_RegisterLinearPic;
+
 	globals.RemapShader = R_RemapShader;
 	globals.GetShaderDimensions = R_GetShaderDimensions;
 	

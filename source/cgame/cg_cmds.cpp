@@ -164,7 +164,10 @@ void CG_ConfigString( int i, const char *s )
 	}
 	else if( i >= CS_IMAGES && i < CS_IMAGES+MAX_IMAGES )
 	{
-		cgs.imagePrecache[i-CS_IMAGES] = trap_R_RegisterPic( cgs.configStrings[i] );
+		if( strstr( cgs.configStrings[i], "correction/" ) ) // HACK HACK HACK -- for color correction LUTs
+			cgs.imagePrecache[i-CS_IMAGES] = trap_R_RegisterLinearPic( cgs.configStrings[i] );
+		else
+			cgs.imagePrecache[i-CS_IMAGES] = trap_R_RegisterPic( cgs.configStrings[i] );
 	}
 	else if( i >= CS_SKINFILES && i < CS_SKINFILES+MAX_SKINFILES )
 	{

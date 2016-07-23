@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   98
+#define	CGAME_API_VERSION   99
 
 //
 // structs and variables shared with the main engine
@@ -184,6 +184,7 @@ typedef struct
 	struct shader_s *( *R_RegisterSkin )( const char *name );
 	struct skinfile_s *( *R_RegisterSkinFile )( const char *name );
 	struct shader_s *( *R_RegisterVideo )( const char *name );
+	struct shader_s *( *R_RegisterLinearPic )( const char *name );
 	bool ( *R_LerpTag )( struct orientation_s *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name );
 	void ( *R_SetCustomColor )( int num, int r, int g, int b );
 	void ( *R_LightForOrigin )( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
