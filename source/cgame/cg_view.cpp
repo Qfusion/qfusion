@@ -597,6 +597,9 @@ static int CG_RenderFlags( void )
 	if( cg.view.flipped )
 		rdflags |= RDF_FLIPPED;
 
+	if( GS_MatchState() >= MATCH_STATE_POSTMATCH )
+		rdflags |= RDF_BLURRED;
+
 	rdflags |= CG_SkyPortal();
 
 	return rdflags;
