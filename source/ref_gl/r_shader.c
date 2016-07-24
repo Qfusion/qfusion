@@ -602,6 +602,8 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 		return rsh.blankBumpTexture;
 	if( !Q_stricmp( name, "$particleimage" ) || !Q_stricmp( name, "*particle" ) )
 		return rsh.particleTexture;
+	if( !Q_stricmp( name, "$coronaimage" ) || !Q_stricmp( name, "*corona" ) )
+		return rsh.coronaTexture;
 	if( !Q_strnicmp( name, "*lm", 3 ) )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with explicit lightmap image\n", shader->name );
@@ -2734,7 +2736,7 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
-			pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL );
+			pass->images[0] = Shader_FindImage( s, "*corona", IT_SPECIAL );
 			break;
 		case SHADER_TYPE_DIFFUSE:
 			// load material images
