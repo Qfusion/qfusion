@@ -76,7 +76,11 @@ static bool CompareAttributes( unsigned found, unsigned musthave, unsigned canth
 const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned canthave )
 {
 	size_t size;
+#ifdef _UNICODE
+	struct _wfinddata_t findinfo;
+#else
 	struct _finddata_t findinfo;
+#endif
 	const char *finame;
 
 	assert( path );
@@ -124,7 +128,11 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 {
 	size_t size;
+#ifdef _UNICODE
+	struct _wfinddata_t findinfo;
+#else
 	struct _finddata_t findinfo;
+#endif
 	const char *finame;
 
 	assert( findhandle != -1 );
@@ -135,7 +143,16 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 
 	while( _findnext( findhandle, &findinfo ) != -1 )
 	{
+#ifdef _UNICODE
+		char utf8finame[MAX_PATH];
+
+		WideCharToMultiByte( CP_UTF8, 0, findinfo.name, -1, utf8finame, sizeof( utf8finame ), NULL, NULL );
+		utf8finame[sizeof(utf8finame)-1] = '\0';
+
+		finame = utf8finame;
+#else
 		finame = findinfo.name;
+#endif
 
 		if( strcmp( finame, "." ) && strcmp( finame, ".." ) &&
 			CompareAttributes( findinfo.attrib, musthave, canthave ) )
