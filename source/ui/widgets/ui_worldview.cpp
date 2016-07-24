@@ -208,6 +208,14 @@ public:
 			{
 				colorCorrection = GetProperty(*it)->Get<String>();
 			}
+			else if (*it == "blur")
+			{
+				int blur = atoi( GetProperty(*it)->Get<String>().CString() );
+				if( blur )
+					refdef.rdflags |= RDF_BLURRED;
+				else
+					refdef.rdflags &= ~RDF_BLURRED;
+			}
 		}
 	}
 
@@ -287,6 +295,7 @@ public:
 		StyleSheetSpecification::RegisterProperty( "worldmodel", "", false ).AddParser( "string" );
 
 		StyleSheetSpecification::RegisterProperty( "color-correction", "", false ).AddParser( "string" );
+		StyleSheetSpecification::RegisterProperty( "blur", "", false ).AddParser( "number" );
 	}
 
 	// Rocket overrides
