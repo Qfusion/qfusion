@@ -189,15 +189,7 @@ void Bot::RegisterVisibleEnemies()
     for (int i = 0; i < gs.maxclients; ++i)
     {
         edict_t *ent = PLAYERENT(i);
-        if (!ent->r.inuse || !ent->r.client)
-            continue;
-        if (G_ISGHOSTING(ent))
-            continue;
-        if (ent->flags & (FL_NOTARGET|FL_BUSY))
-            continue;
-        if (GS_TeamBasedGametype() && ent->s.team == self->s.team)
-            continue;
-        if (ent == self)
+        if (botBrain.MayNotBeFeasibleEnemy(ent))
             continue;
 
         // Reject targets quickly by fov

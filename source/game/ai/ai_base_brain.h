@@ -40,19 +40,28 @@ protected:
     int preferredAasTravelFlags;
     int allowedAasTravelFlags;
 
-    float entityWeights[MAX_NAVENTS];
+    // Weights computed by a bot
+    float internalEntityWeights[MAX_EDICTS];
+    // Weights set by external code.
+    // These weights completely override internal weights
+    // (If an external weight != 0, the external weight is used).
+    // Weights may be negative (in this case an entity will be excluded from potential goals).
+    float externalEntityWeights[MAX_EDICTS];
 
     AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
 
-    void ClearWeights();
-    void UpdateWeights();
+    inline void ClearInternalEntityWeights()
+    {
+        memset(internalEntityWeights, 0, sizeof(internalEntityWeights));
+    }
+    void UpdateInternalWeights();
     virtual void UpdatePotentialGoalsWeights();
+    float GetEntityWeight(int entNum) const;
 
     void CheckOrCancelGoal();
     bool ShouldCancelGoal(const Goal *goal);
     // To be overridden in subclass. Should check other reasons of goal rejection aside generic ones for all goals.
     virtual bool ShouldCancelSpecialGoalBySpecificReasons() { return false; }
-
 
     void PickLongTermGoal(const Goal *currLongTermGoal);
     void PickShortTermGoal(const Goal *currLongTermGoal);
@@ -113,6 +122,17 @@ public:
     inline bool HasGoal() const
     {
         return longTermGoal || shortTermGoal || specialGoal;
+    }
+
+    void ClearExternalEntityWeights()
+    {
+        memset(externalEntityWeights, 0, sizeof(externalEntityWeights));
+    }
+    // Sets an external entity weight.
+    // This weight overrides internal one computed by this brain itself.
+    void SetExternalEntityWeight(const edict_t *ent, float weight)
+    {
+        externalEntityWeights[ENTNUM(const_cast<edict_t*>(ent))] = weight;
     }
 
     void ClearAllGoals();

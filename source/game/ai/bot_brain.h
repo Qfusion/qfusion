@@ -353,6 +353,10 @@ class BotBrain: public AiBaseBrain
     AiBaseEnemyPool *activeEnemyPool;
 
     CombatTask oldCombatTask;
+
+    signed char attitude[MAX_EDICTS];
+    // Used to detect attitude change
+    signed char oldAttitude[MAX_EDICTS];
 protected:
     virtual void SetFrameAffinity(unsigned modulo, unsigned offset) override
     {
@@ -404,6 +408,13 @@ public:
     {
         return combatTask.spamEnemy && combatTask.spamEnemy->ent == enemy;
     }
+
+    void SetAttitude(const edict_t *ent, int attitude);
+
+    // Helps to reject non-feasible enemies quickly.
+    // A false result does not guarantee that enemy is feasible.
+    // A true result guarantees that enemy is not feasible.
+    bool MayNotBeFeasibleEnemy(const edict_t *ent) const;
 
     virtual void UpdatePotentialGoalsWeights() override;
 };

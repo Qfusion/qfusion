@@ -338,6 +338,9 @@ public:
 
     void OnEnemyViewed(const edict_t *enemy);
 
+    // Force the pool to forget the enemy (for example, when bot attitude to an enemy has been changed)
+    void Forget(const edict_t *enemy);
+
     bool WillAssignAimEnemy() const;
 
     // Note that these methods modify this object state

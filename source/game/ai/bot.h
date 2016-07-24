@@ -72,6 +72,19 @@ public:
         botBrain.OnNewThreat(newThreat, threatDetector);
     }
 
+    inline void SetAttitude(const edict_t *ent, int attitude)
+    {
+        botBrain.SetAttitude(ent, attitude);
+    }
+    inline void ClearExternalEntityWeights()
+    {
+        botBrain.ClearExternalEntityWeights();
+    }
+    inline void SetExternalEntityWeight(const edict_t *ent, float weight)
+    {
+        botBrain.SetExternalEntityWeight(ent, weight);
+    }
+
     inline const int *Inventory() const { return self->r.client->ps.inventory; }
 protected:
     virtual void Frame() override;

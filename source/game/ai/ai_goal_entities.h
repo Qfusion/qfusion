@@ -8,8 +8,10 @@ enum class NavEntityFlags: unsigned
 {
     NONE = 0x0,
     REACH_AT_TOUCH = 0x1,
-    REACH_ON_EVENT = 0x2,
-    DROPPED_ENTITY = 0x4
+    REACH_AT_RADIUS = 0x2,
+    REACH_ON_EVENT = 0x4,
+    REACH_IN_GROUP = 0x8,
+    DROPPED_ENTITY = 0x10
 };
 
 inline NavEntityFlags operator|(const NavEntityFlags &lhs, const NavEntityFlags &rhs)
@@ -26,6 +28,7 @@ enum class GoalFlags: unsigned
     NONE = 0x0,
     REACH_ON_RADIUS = 0x1,
     REACH_ON_EVENT = 0x2,
+    REACH_IN_GROUP = 0x4,
     TACTICAL_SPOT = 0x8
 };
 
@@ -61,32 +64,38 @@ class NavEntity
 
     static constexpr unsigned MAX_NAME_LEN = 128;
     char name[MAX_NAME_LEN];
+
+    inline bool IsFlagSet(NavEntityFlags flag) const
+    {
+        return NavEntityFlags::NONE != (this->flags & flag);
+    }
 public:
     inline NavEntityFlags Flags() const { return flags; }
     inline int Id() const { return id; }
     inline int AasAreaNum() const { return aasAreaNum; }
     inline Vec3 Origin() const { return Vec3(ent->s.origin); }
     inline const gsitem_t *Item() const { return ent ? ent->item : nullptr; }
+    inline const char *Classname() const { return ent ? ent->classname : nullptr; }
     inline bool IsEnabled() const { return ent && ent->r.inuse; }
     inline bool IsDisabled() const { return !IsEnabled(); }
     inline bool IsBasedOnEntity(const edict_t *e) const { return e && this->ent == e; }
     inline bool IsClient() const { return ent->r.client != nullptr; }
     inline bool IsSpawnedAtm() const { return ent->r.solid != SOLID_NOT; }
     inline bool ToBeSpawnedLater() const { return ent->r.solid == SOLID_NOT; }
-    inline bool IsDroppedEntity() const
-    {
-        return NavEntityFlags::NONE != (flags & NavEntityFlags ::DROPPED_ENTITY);
-    }
+
+    inline bool IsDroppedEntity() const { return IsFlagSet(NavEntityFlags::DROPPED_ENTITY); }
+
+    inline bool MayBeReachedInGroup() const { return IsFlagSet(NavEntityFlags::REACH_IN_GROUP); }
+
     bool IsTopTierItem() const;
 
     const char *Name() const { return name; }
 
     unsigned Timeout() const;
 
-    inline bool ShouldBeReachedAtTouch() const
-    {
-        return NavEntityFlags::NONE != (flags & NavEntityFlags::REACH_AT_TOUCH);
-    }
+    inline bool ShouldBeReachedAtTouch() const { return IsFlagSet(NavEntityFlags::REACH_AT_TOUCH); }
+    inline bool ShouldBeReachedAtRadius() const { return IsFlagSet(NavEntityFlags::REACH_AT_RADIUS); }
+    inline bool ShouldBeReachedOnEvent() const { return IsFlagSet(NavEntityFlags::REACH_ON_EVENT); }
 
     // Returns level.time when the item is already spawned
     // Returns zero if spawn time is unknown
@@ -118,6 +127,11 @@ class Goal
     const char *name;
 
     void Clear();
+
+    inline bool IsFlagSet(GoalFlags flag) const
+    {
+        return GoalFlags::NONE != (this->flags & flag);
+    }
 public:
     Goal(const class AiFrameAwareUpdatable *initialSetter);
     ~Goal();
@@ -132,7 +146,6 @@ public:
 
     void SetToNavEntity(NavEntity *navEntity, const AiFrameAwareUpdatable *setter);
     void SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter);
-
 
     inline int AasAreaNum() const
     {
@@ -161,16 +174,20 @@ public:
         return navEntity && navEntity->IsDroppedEntity();
     }
 
-    inline bool IsTacticalSpot() const
-    {
-        return GoalFlags::NONE != (flags & GoalFlags::TACTICAL_SPOT);
-    }
+    inline bool IsTacticalSpot() const { return IsFlagSet(GoalFlags::TACTICAL_SPOT); }
 
     inline bool IsEnabled() const { return !IsDisabled(); }
 
     inline bool IsTopTierItem()
     {
         return navEntity && navEntity->IsTopTierItem();
+    }
+
+    inline bool MayBeReachedInGroup() const
+    {
+        if (navEntity)
+            return navEntity->MayBeReachedInGroup();
+        return IsFlagSet(GoalFlags::REACH_IN_GROUP);
     }
 
     inline const char *Name() const { return name ? name : "???"; }
@@ -187,14 +204,23 @@ public:
         return defaultRadius;
     }
 
-    inline bool ShouldBeReachedAtRadius() const
-    {
-        return GoalFlags::NONE != (flags | GoalFlags::REACH_ON_RADIUS);
-    }
-
     inline bool ShouldBeReachedAtTouch() const
     {
-        return navEntity ? navEntity->ShouldBeReachedAtTouch() : false;
+        return navEntity ? navEntity->ShouldBeReachedAtTouch(): false;
+    }
+
+    inline bool ShouldBeReachedAtRadius() const
+    {
+        if (navEntity)
+            return navEntity->ShouldBeReachedAtRadius();
+        return IsFlagSet(GoalFlags::REACH_ON_RADIUS);
+    }
+
+    inline bool ShouldBeReachedOnEvent() const
+    {
+        if (navEntity)
+            return navEntity->ShouldBeReachedOnEvent();
+        return IsFlagSet(GoalFlags::REACH_ON_EVENT);
     }
 
     // Returns level.time when the item is already spawned

@@ -595,6 +595,17 @@ static const asEnumVal_t asKeyiconEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const asEnumVal_t asNavEntityFlagsEnumVals[] =
+{
+	ASLIB_ENUM_VAL( AI_NAV_REACH_AT_TOUCH ),
+	ASLIB_ENUM_VAL( AI_NAV_REACH_AT_RADIUS ),
+	ASLIB_ENUM_VAL( AI_NAV_REACH_ON_EVENT ),
+	ASLIB_ENUM_VAL( AI_NAV_REACH_IN_GROUP ),
+	ASLIB_ENUM_VAL( AI_NAV_DROPPED ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 static const asEnumVal_t asMiscelaneaEnumVals[] =
 {
 	ASLIB_ENUM_VAL_NULL
@@ -633,6 +644,7 @@ static const asEnum_t asEnums[] =
 	{ "meaningsofdeath_e", asMeaningsOfDeathEnumVals },
 	{ "takedamage_e", asDamageEnumVals },
 	{ "keyicon_e", asKeyiconEnumVals },
+	{ "nav_entity_flags_e", asNavEntityFlagsEnumVals },
 	{ "miscelanea_e", asMiscelaneaEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
@@ -1484,67 +1496,11 @@ static const asBehavior_t asbot_ObjectBehaviors[] =
 	ASLIB_BEHAVIOR_NULL
 };
 
-static void FailOnStub(const char *function, const char *file, int line)
-{
-	G_Printf("%s %s:%d is a stub\n", function, file, line);
-}
-
-static void asFunc_AI_ClearWeights( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-}
-
-static void asFunc_AI_ResetWeights( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-}
-
-static void asFunc_AI_SetGoalWeight( int i, float weight )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-}
-
-static void asFunc_AI_GetItemWeight( gsitem_t *item )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-}
-
-static float asFunc_AI_GetCharacterReactionTime( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-	return NAN;
-}
-
-static float asFunc_AI_GetCharacterOffensiveness( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-	return NAN;
-}
-
-static float asFunc_AI_GetCharacterCampiness( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-	return NAN;
-}
-
-static float asFunc_AI_GetCharacterFirerate( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-	return NAN;
-}
-
 static const asMethod_t asbot_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL(void, clearGoalWeights, ()), asFUNCTION(asFunc_AI_ClearWeights), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(void, resetGoalWeights, ()), asFUNCTION(asFunc_AI_ResetWeights), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(void, setGoalWeight, ( int i, float weight )), asFUNCTION(asFunc_AI_SetGoalWeight), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(float, getItemWeight, ( const Item @item ) const), asFUNCTION(asFunc_AI_GetItemWeight), asCALL_CDECL_OBJFIRST },
-
-	// character
-	{ ASLIB_FUNCTION_DECL(float, get_reactionTime, () const), asFUNCTION(asFunc_AI_GetCharacterReactionTime), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(float, get_offensiveness, () const), asFUNCTION(asFunc_AI_GetCharacterOffensiveness), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(float, get_campiness, () const), asFUNCTION(asFunc_AI_GetCharacterCampiness), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(float, get_firerate, () const), asFUNCTION(asFunc_AI_GetCharacterFirerate), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(void, setAttitude, (Entity @ent, int attitude)), asFUNCTION(AI_SetBotAttitude), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(void, clearExternalEntityWeights, ()), asFUNCTION(AI_ClearBotExternalEntityWeights), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(void, setExternalEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_SetBotExternalEntityWeight), asCALL_CDECL_OBJFIRST },
 
 	ASLIB_METHOD_NULL
 };
@@ -3454,54 +3410,11 @@ static const asglobfuncs_t asGlobFuncs[] =
 
 // ============================================================================
 
-static int asFunc_AI_GetRootGoal()
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-	return -1;
-}
-
-static int asFunc_AI_GetNextGoal()
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-	return -1;
-}
-
-static edict_t *asFunc_AI_GetGoalEntity( int index )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-	return NULL;
-}
-
-static void asFunc_AI_AddGoal( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-}
-
-static void asFunc_AI_AddGoalCustomReach( edict_t *self, bool customReach )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-}
-
-static void asFunc_AI_RemoveGoal( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-}
-
-static void asFunc_AI_ReachedGoal( edict_t *self )
-{
-	FailOnStub(__FUNCTION__, __FILE__, __LINE__);
-}
-
 static const asglobfuncs_t asAIGlobFuncs[] =
 {
-	{ "int GetRootGoal()", asFUNCTION(asFunc_AI_GetRootGoal), NULL },
-	{ "int GetNextGoal( int index )", asFUNCTION(asFunc_AI_GetNextGoal), NULL },
-	{ "Entity @GetGoalEntity( int index )", asFUNCTION(asFunc_AI_GetGoalEntity), NULL },
-
-	{ "void AddGoal( Entity @ent )", asFUNCTION(asFunc_AI_AddGoal), NULL },
-	{ "void AddGoal( Entity @ent, bool customReach )", asFUNCTION(asFunc_AI_AddGoalCustomReach), NULL },
-	{ "void RemoveGoal( Entity @ent )", asFUNCTION(asFunc_AI_RemoveGoal), NULL },
-	{ "void ReachedGoal( Entity @ent )", asFUNCTION(asFunc_AI_ReachedGoal), NULL },
+	{ "void AddNavEntity( Entity @ent, int flags )", asFUNCTION(AI_AddNavEntity), NULL },
+	{ "void RemoveNavEntity( Entity @ent )", asFUNCTION(AI_RemoveNavEntity), NULL },
+	{ "void NavEntityReached( Entity @ent )", asFUNCTION(AI_NavEntityReached), NULL },
 
 	{ NULL }
 };
