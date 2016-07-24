@@ -38,7 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static char *findbase = NULL;
 static char *findpath = NULL;
 static size_t findpath_size = 0;
-static int findhandle = -1;
+static intptr_t findhandle = -1;
 
 /*
 * CompareAttributes
