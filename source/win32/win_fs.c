@@ -29,6 +29,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 # define CSIDL_APPDATA					0x001A
 #endif
 
+#ifndef CSIDL_PERSONAL
+# define CSIDL_PERSONAL					0x0005        // My Documents
+#endif
+
+#define USE_MY_DOCUMENTS
+
 static char *findbase = NULL;
 static char *findpath = NULL;
 static size_t findpath_size = 0;
@@ -182,6 +188,12 @@ void Sys_FS_FindClose( void )
 */
 const char *Sys_FS_GetHomeDirectory( void )
 {
+#ifdef USE_MY_DOCUMENTS
+	int csidl = CSIDL_PERSONAL;
+#else
+	int csidl = CSIDL_APPDATA;
+#endif
+
 	static char home[MAX_PATH] = { '\0' };
 	if( home[0] != '\0' )
 		return home;
@@ -194,16 +206,22 @@ const char *Sys_FS_GetHomeDirectory( void )
 
 	SHGetFolderPath = GetProcAddress( shFolderDll, "SHGetFolderPathA" );
 	if( SHGetFolderPath )
-		SHGetFolderPath( NULL, CSIDL_APPDATA, 0, 0, home );
+		SHGetFolderPath( NULL, csidl, 0, 0, home );
 
 	FreeLibrary( shFolderDll );
 #else
-	SHGetFolderPath( 0, CSIDL_APPDATA, 0, 0, home );
+	SHGetFolderPath( 0, csidl, 0, 0, home );
 #endif
 
 	if ( home[0] == '\0' )
 		return NULL;
+
+#ifdef USE_MY_DOCUMENTS
+	Q_strncpyz( home, va( "%s/My Games/%s %d.%d", COM_SanitizeFilePath( home ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( home ) );
+#else
 	Q_strncpyz( home, va( "%s/%s %d.%d", COM_SanitizeFilePath( home ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( home ) );
+#endif
+
 	return home;
 }
 
