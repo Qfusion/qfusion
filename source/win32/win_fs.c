@@ -71,17 +71,32 @@ static bool CompareAttributes( unsigned found, unsigned musthave, unsigned canth
 }
 
 /*
+* _Sys_Utf8FileNameToWide
+*/
+static void _Sys_Utf8FileNameToWide(const char *utf8name, wchar_t *wname, size_t wchars)
+{
+	MultiByteToWideChar( CP_UTF8, 0, utf8name, -1, wname, wchars );
+	wname[wchars-1] = '\0';
+}
+
+/*
+* _Sys_WideFileNameToUtf8
+*/
+static void _Sys_WideFileNameToUtf8(const wchar_t *wname, char *utf8name, size_t utf8chars)
+{
+	WideCharToMultiByte( CP_UTF8, 0, wname, -1, utf8name, utf8chars, NULL, NULL );
+	utf8name[utf8chars-1] = '\0';
+}
+
+/*
 * Sys_FS_FindFirst
 */
 const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned canthave )
 {
 	size_t size;
-#ifdef _UNICODE
 	struct _wfinddata_t findinfo;
-#else
-	struct _finddata_t findinfo;
-#endif
-	const char *finame;
+	char finame[MAX_PATH];
+	WCHAR wpath[MAX_PATH];
 
 	assert( path );
 	assert( findhandle == -1 );
@@ -94,12 +109,14 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 	Q_strncpyz( findbase, path, ( strlen( path ) + 1 ) );
 	COM_StripFilename( findbase );
 
-	findhandle = _findfirst( path, &findinfo );
+	_Sys_Utf8FileNameToWide( path, wpath, sizeof( wpath )/sizeof( wpath[0] ) );
+
+	findhandle = _wfindfirst( wpath, &findinfo );
 
 	if( findhandle == -1 )
 		return NULL;
 
-	finame = findinfo.name;
+	_Sys_WideFileNameToUtf8( findinfo.name, finame, sizeof( finame ) );
 
 	if( strcmp( finame, "." ) && strcmp( finame, ".." ) &&
 		CompareAttributes( findinfo.attrib, musthave, canthave ) )
@@ -128,12 +145,8 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 {
 	size_t size;
-#ifdef _UNICODE
 	struct _wfinddata_t findinfo;
-#else
-	struct _finddata_t findinfo;
-#endif
-	const char *finame;
+	char finame[MAX_PATH];
 
 	assert( findhandle != -1 );
 	assert( findbase );
@@ -141,18 +154,9 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 	if( findhandle == -1 )
 		return NULL;
 
-	while( _findnext( findhandle, &findinfo ) != -1 )
+	while( _wfindnext( findhandle, &findinfo ) != -1 )
 	{
-#ifdef _UNICODE
-		char utf8finame[MAX_PATH];
-
-		WideCharToMultiByte( CP_UTF8, 0, findinfo.name, -1, utf8finame, sizeof( utf8finame ), NULL, NULL );
-		utf8finame[sizeof(utf8finame)-1] = '\0';
-
-		finame = utf8finame;
-#else
-		finame = findinfo.name;
-#endif
+		_Sys_WideFileNameToUtf8( findinfo.name, finame, sizeof( finame ) );
 
 		if( strcmp( finame, "." ) && strcmp( finame, ".." ) &&
 			CompareAttributes( findinfo.attrib, musthave, canthave ) )
