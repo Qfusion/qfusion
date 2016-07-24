@@ -506,7 +506,7 @@ void AiSquad::SetDroppedEntityAsBotGoal(edict_t *ent)
     bot->ai->botRef->SetSpecialGoalFromEntity(ent, squad);
     // Allow other bots (and itself) to grab this item too
     // (But the suppliant has a priority since the goal has been set immediately)
-    AI_AddDroppedItem(ent);
+    AI_AddNavEntity(ent, (ai_nav_entity_flags)(AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED));
 }
 
 void AiSquad::RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponTiers)

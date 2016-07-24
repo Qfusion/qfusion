@@ -132,40 +132,75 @@ void AI_CommonFrame()
     AiGametypeBrain::Instance()->Update();
 }
 
-void AI_AddStaticItem( edict_t *ent )
+void AI_AddNavEntity(edict_t *ent, ai_nav_entity_flags flags)
 {
+    if (!flags)
+    {
+        G_Printf(S_COLOR_RED "AI_AddNavEntity(): flags are empty");
+        return;
+    }
+    int onlyMutExFlags = flags & (AI_NAV_REACH_AT_TOUCH | AI_NAV_REACH_AT_RADIUS | AI_NAV_REACH_ON_EVENT);
+    // Valid mutual exclusive flags give a power of two
+    if (onlyMutExFlags & (onlyMutExFlags - 1))
+    {
+        G_Printf(S_COLOR_RED, "AI_AddNavEntity(): illegal flags %x for nav entity %s", flags, ent->classname);
+        return;
+    }
+
+    NavEntityFlags navEntityFlags = NavEntityFlags::NONE;
+    if (flags & AI_NAV_REACH_AT_TOUCH)
+        navEntityFlags = navEntityFlags | NavEntityFlags::REACH_AT_TOUCH;
+    if (flags & AI_NAV_REACH_AT_RADIUS)
+        navEntityFlags = navEntityFlags | NavEntityFlags::REACH_AT_RADIUS;
+    if (flags & AI_NAV_REACH_ON_EVENT)
+        navEntityFlags = navEntityFlags | NavEntityFlags::REACH_ON_EVENT;
+    if (flags & AI_NAV_REACH_IN_GROUP)
+        navEntityFlags = navEntityFlags | NavEntityFlags::REACH_IN_GROUP;
+    if (flags & AI_NAV_DROPPED)
+        navEntityFlags = navEntityFlags | NavEntityFlags::DROPPED_ENTITY;
+
     int areaNum = FindAASAreaNum(ent);
     if (areaNum)
     {
-        NavEntitiesRegistry::Instance()->AddNavEntity(ent, areaNum, NavEntityFlags::REACH_AT_TOUCH);
+        NavEntitiesRegistry::Instance()->AddNavEntity(ent, areaNum, navEntityFlags);
         return;
     }
-    constexpr const char *format = S_COLOR_RED "AI_AddStaticItem(): Can't find an area num for %s @ %.3f %.3f %.3f\n";
+    constexpr const char *format = S_COLOR_RED "AI_AddNavEntity(): Can't find an area num for %s @ %.3f %.3f %.3f\n";
     G_Printf(format, ent->classname, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
 }
 
-void AI_AddDroppedItem( edict_t *ent )
-{
-    int areaNum = FindAASAreaNum(ent);
-    if (areaNum)
-    {
-        NavEntityFlags flags = NavEntityFlags::REACH_AT_TOUCH | NavEntityFlags::DROPPED_ENTITY;
-        NavEntitiesRegistry::Instance()->AddNavEntity(ent, areaNum, flags);
-        return;
-    }
-    constexpr const char *format = S_COLOR_RED "AI_AddDroppedItem(): Can't find an area num for %s @ %.3f %.3f %.3f\n";
-    G_Printf(format, ent->classname, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
-}
-
-void AI_DeleteItem( edict_t *ent )
+void AI_RemoveNavEntity(edict_t *ent)
 {
     NavEntity *navEntity = NavEntitiesRegistry::Instance()->NavEntityForEntity(ent);
-    if (navEntity)
-    {
-        AiGametypeBrain::Instance()->ClearGoals(navEntity, nullptr);
-        NavEntitiesRegistry::Instance()->RemoveNavEntity(navEntity);
-    }
     // (An nav. item absence is not an error, this function is called for each entity in game)
+    if (!navEntity)
+        return;
+
+    AiGametypeBrain::Instance()->ClearGoals(navEntity, nullptr);
+    NavEntitiesRegistry::Instance()->RemoveNavEntity(navEntity);
+}
+
+void AI_NavEntityReached(edict_t *ent)
+{
+    AiGametypeBrain::Instance()->NavEntityReached(ent);
+}
+
+void AI_SetBotAttitude(ai_handle_t *ai, edict_t *ent, int attitude)
+{
+    if (ai && ent)
+        ai->botRef->SetAttitude(ent, attitude);
+}
+
+void AI_ClearBotExternalEntityWeights(ai_handle_t *ai)
+{
+    if (ai)
+        ai->botRef->ClearExternalEntityWeights();
+}
+
+void AI_SetBotExternalEntityWeight(ai_handle_t *ai, edict_t *ent, float weight)
+{
+    if (ai && ent)
+        ai->botRef->SetExternalEntityWeight(ent, weight);
 }
 
 //==========================================

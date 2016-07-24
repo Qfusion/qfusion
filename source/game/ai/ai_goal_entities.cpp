@@ -23,7 +23,12 @@ unsigned NavEntity::SpawnTime() const
         return 0;
     if (ent->r.solid == SOLID_TRIGGER)
         return level.time;
-    if (!ent->item || !ent->classname)
+    // This means the nav entity is spawned by a script
+    // (only items are hardcoded nav. entities)
+    // Let the script manage the entity, do not prevent any action with the entity
+    if (!ent->item)
+        return level.time;
+    if (!ent->classname)
         return 0;
     // MH needs special handling
     // If MH owner is sent, exact MH spawn time can't be predicted

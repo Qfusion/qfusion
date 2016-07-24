@@ -1,5 +1,6 @@
 #include "ai_base_brain.h"
 #include "ai_gametype_brain.h"
+#include "ai_base_team_brain.h"
 #include "ai_base_ai.h"
 #include "aas.h"
 #include "static_vector.h"
@@ -23,7 +24,10 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowed
       preferredAasTravelFlags(preferredAasTravelFlags),
       allowedAasTravelFlags(allowedAasTravelFlags)
 {
-    ClearWeights();
+    ClearInternalEntityWeights();
+    // External weights are cleared by AI code only once in this constructor.
+    // Their values are completely managed by external code.
+    ClearExternalEntityWeights();
 }
 
 int AiBaseBrain::FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
@@ -57,14 +61,9 @@ int AiBaseBrain::GoalAasAreaNum() const
     return 0;
 }
 
-void AiBaseBrain::ClearWeights()
+void AiBaseBrain::UpdateInternalWeights()
 {
-    memset(entityWeights, 0, sizeof(entityWeights));
-}
-
-void AiBaseBrain::UpdateWeights()
-{
-    ClearWeights();
+    ClearInternalEntityWeights();
 
     // Call (overridden) subclass method that sets nav entities weights
     UpdatePotentialGoalsWeights();
@@ -72,6 +71,15 @@ void AiBaseBrain::UpdateWeights()
 
 // To be overridden. Its a stub that does not modify cleared weights
 void AiBaseBrain::UpdatePotentialGoalsWeights() { }
+
+float AiBaseBrain::GetEntityWeight(int entNum) const
+{
+    float externalWeight = externalEntityWeights[entNum];
+    // Note: a negative value of an external weight overrides corresponding internal weight too.
+    if (externalWeight != 0.0f)
+        return externalWeight;
+    return internalEntityWeights[entNum];
+}
 
 void AiBaseBrain::Think()
 {
@@ -87,7 +95,7 @@ void AiBaseBrain::Think()
     {
         if (!weightsUpdated)
         {
-            UpdateWeights();
+            UpdateInternalWeights();
             weightsUpdated = true;
         }
         PickLongTermGoal(longTermGoal);
@@ -97,7 +105,7 @@ void AiBaseBrain::Think()
     {
         if (!weightsUpdated)
         {
-            UpdateWeights();
+            UpdateInternalWeights();
             weightsUpdated = true;
         }
         PickShortTermGoal(shortTermGoal);
@@ -178,13 +186,13 @@ void AiBaseBrain::OnClearSpecialGoalRequested()
 bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
 {
     // Handle long-term goal first (this implies short-term goal handling too)
-    if (longTermGoal && longTermGoal->IsBasedOnEntity(ent))
+    if (longTermGoal && longTermGoal->ShouldBeReachedAtTouch() && longTermGoal->IsBasedOnEntity(ent))
     {
         OnLongTermGoalReached();
         return true;
     }
 
-    if (shortTermGoal && shortTermGoal->IsBasedOnEntity(ent))
+    if (shortTermGoal && longTermGoal->ShouldBeReachedAtTouch() && shortTermGoal->IsBasedOnEntity(ent))
     {
         OnShortTermGoalReached();
         return true;
@@ -195,7 +203,7 @@ bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
 
 bool AiBaseBrain::HandleSpecialGoalTouch(const edict_t *ent)
 {
-    if (specialGoal && specialGoal->IsBasedOnEntity(ent))
+    if (specialGoal && specialGoal->ShouldBeReachedAtTouch() && specialGoal->IsBasedOnEntity(ent))
     {
         OnSpecialGoalReached();
         return true;
@@ -211,24 +219,26 @@ bool AiBaseBrain::IsCloseToAnyGoal() const
         IsCloseToGoal(specialGoal, 96.0f);
 }
 
-constexpr float GOAL_PROXIMITY_SQ_THRESHOLD = 40.0f * 40.0f;
+constexpr float GOAL_PROXIMITY_THRESHOLD = 40.0f * 40.0f;
 
 bool AiBaseBrain::TryReachGoalByProximity()
 {
     // Bots do not wait for these kind of goals atm, just check goal presence, kind and proximity
     // Check long-term goal first
-    if (longTermGoal && !longTermGoal->ShouldBeReachedAtTouch())
+    if (longTermGoal && longTermGoal->ShouldBeReachedAtRadius())
     {
-        if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        float radius = longTermGoal->RadiusOrDefault(GOAL_PROXIMITY_THRESHOLD);
+        if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
         {
             OnLongTermGoalReached();
             return true;
         }
     }
 
-    if (shortTermGoal && !shortTermGoal->ShouldBeReachedAtTouch())
+    if (shortTermGoal && shortTermGoal->ShouldBeReachedAtRadius())
     {
-        if ((shortTermGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        float radius = shortTermGoal->RadiusOrDefault(GOAL_PROXIMITY_THRESHOLD);
+        if ((shortTermGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
         {
             OnShortTermGoalReached();
             return true;
@@ -240,9 +250,10 @@ bool AiBaseBrain::TryReachGoalByProximity()
 
 bool AiBaseBrain::TryReachSpecialGoalByProximity()
 {
-    if (specialGoal && !specialGoal->ShouldBeReachedAtTouch())
+    if (specialGoal && specialGoal->ShouldBeReachedAtRadius())
     {
-        if ((specialGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        float radius = specialGoal->RadiusOrDefault(GOAL_PROXIMITY_THRESHOLD);
+        if ((specialGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
         {
             OnSpecialGoalReached();
             return true;
@@ -253,9 +264,10 @@ bool AiBaseBrain::TryReachSpecialGoalByProximity()
 
 bool AiBaseBrain::ShouldWaitForGoal() const
 {
-    if (longTermGoal && longTermGoal->ShouldBeReachedAtTouch())
+    if (longTermGoal && !longTermGoal->ShouldBeReachedAtRadius())
     {
-        if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        float radius = GOAL_PROXIMITY_THRESHOLD;
+        if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
         {
             if (longTermGoal->SpawnTime() > level.time)
                 return true;
@@ -267,9 +279,10 @@ bool AiBaseBrain::ShouldWaitForGoal() const
 
 bool AiBaseBrain::ShouldWaitForSpecialGoal() const
 {
-    if (specialGoal)
+    if (specialGoal && !specialGoal->ShouldBeReachedAtRadius())
     {
-        if ((specialGoal->Origin() - self->s.origin).SquaredLength() < GOAL_PROXIMITY_SQ_THRESHOLD)
+        float radius = GOAL_PROXIMITY_THRESHOLD;
+        if ((specialGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
         {
             if (specialGoal->SpawnTime() > level.time)
                 return true;
@@ -317,8 +330,7 @@ float AiBaseBrain::SelectLongTermGoalCandidates(const Goal *currLongTermGoal, Go
         if (navEnt->Item() && !G_Gametype_CanPickUpItem(navEnt->Item()))
             continue;
 
-        float weight = entityWeights[navEnt->Id()];
-
+        float weight = GetEntityWeight(navEnt->Id());
         if (weight <= 0.0f)
             continue;
 
@@ -491,7 +503,8 @@ float AiBaseBrain::SelectShortTermGoalCandidates(const Goal *currShortTermGoal, 
         if (navEnt->IsClient())
             continue;
 
-        if (entityWeights[navEnt->Id()] <= 0.0f)
+        float weight = GetEntityWeight(navEnt->Id());
+        if (weight <= 0.0f)
             continue;
 
         if (canPickupItems && navEnt->Item())
@@ -525,10 +538,7 @@ float AiBaseBrain::SelectShortTermGoalCandidates(const Goal *currShortTermGoal, 
                 inFront = false;
         }
 
-        float weight = entityWeights[navEnt->Id()] / dist * (inFront ? 1.0f : 0.5f);
-
-        if (!weight)
-            continue;
+        weight = weight / dist * (inFront ? 1.0f : 0.5f);
 
         // Store current short-term goal current weight
         if (currShortTermGoal && currShortTermGoal->IsBasedOnNavEntity(navEnt))

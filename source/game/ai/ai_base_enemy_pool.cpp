@@ -567,6 +567,21 @@ void AiBaseEnemyPool::OnEnemyViewed(const edict_t *enemy)
     }
 }
 
+void AiBaseEnemyPool::Forget(const edict_t *enemy)
+{
+    if (!enemy)
+        return;
+
+    for (unsigned i = 0; i < trackedEnemies.size(); ++i)
+    {
+        if (trackedEnemies[i].ent == enemy)
+        {
+            RemoveEnemy(trackedEnemies[i]);
+            return;
+        }
+    }
+}
+
 void AiBaseEnemyPool::RemoveEnemy(Enemy &enemy)
 {
     // Call overridden method that should contain domain-specific logic

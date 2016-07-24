@@ -792,7 +792,7 @@ void G_FreeEdict( edict_t *ed )
 
 	GClip_UnlinkEntity( ed );   // unlink from world
 
-	AI_DeleteItem( ed );
+	AI_RemoveNavEntity( ed );
 	G_FreeAI( ed );
 
 	G_asReleaseEntityBehaviors( ed );

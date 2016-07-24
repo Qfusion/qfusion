@@ -110,6 +110,15 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
     squad = nullptr;
     activeEnemyPool = &botEnemyPool;
     SetTag(bot->r.client->netname);
+
+    // Set a default ignore attitude to a world and non-client entities
+    attitude[0] = 0;
+    memset(attitude + gs.maxclients, 0, sizeof(attitude));
+    // Set a default negative attitude to all clients
+    std::fill_n(attitude + 1, gs.maxclients, -1);
+    // Save the attitude values as an old attitude values
+    static_assert(sizeof(attitude) == sizeof(oldAttitude), "");
+    memcpy(oldAttitude, attitude, sizeof(attitude));
 }
 
 void BotBrain::PreThink()
@@ -1882,6 +1891,44 @@ void BotBrain::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOr
     targetEnvironment.factor = std::min(1.0f, factor / 6.0f);
 }
 
+void BotBrain::SetAttitude(const edict_t *ent, int attitude)
+{
+    int entNum = ENTNUM(const_cast<edict_t*>(ent));
+    oldAttitude[entNum] = this->attitude[entNum];
+    this->attitude[entNum] = (signed char)attitude;
+
+    if (oldAttitude[entNum] < 0 && attitude >= 0)
+    {
+        botEnemyPool.Forget(ent);
+        if (squad)
+            activeEnemyPool->Forget(ent);
+    }
+}
+
+bool BotBrain::MayNotBeFeasibleEnemy(const edict_t *ent) const
+{
+    // Only valid clients may be feasible enemies
+    if (!ent->r.inuse || !ent->r.client)
+        return true;
+    // Skip non-spawned clients
+    if (G_ISGHOSTING(ent))
+        return true;
+    // Skip chatting clients or "notarget" cheat users
+    if (ent->flags & (FL_NOTARGET|FL_BUSY))
+        return true;
+    // Skip teammates. Note that team overrides attitude
+    if (GS_TeamBasedGametype() && ent->s.team == self->s.team)
+        return true;
+    // Skip entities that has a non-negative bot attitude
+    if (attitude[ENTNUM(const_cast<edict_t*>(ent))] >= 0)
+        return true;
+    // Skip the bot itself
+    if (ent == self)
+        return true;
+
+    return false;
+}
+
 void BotBrain::UpdatePotentialGoalsWeights()
 {
     // Compute it once, not on each loop step
@@ -1895,20 +1942,16 @@ void BotBrain::UpdatePotentialGoalsWeights()
         }
     }
 
+    // Weights are set to zero by caller code.
+    // Only non-zero weights should be set.
     FOREACH_NAVENT(goalEnt)
     {
-        entityWeights[goalEnt->Id()] = 0;
-
-        // item timing disabled by now
-        if (!goalEnt->IsSpawnedAtm())
-            continue;
-
         // Picking clients as goal entities is currently disabled
         if (goalEnt->IsClient())
             continue;
 
         if (goalEnt->Item())
-            entityWeights[goalEnt->Id()] = ComputeItemWeight(goalEnt->Item(), onlyGotGB);
+            internalEntityWeights[goalEnt->Id()] = ComputeItemWeight(goalEnt->Item(), onlyGotGB);
     }
 }
 
