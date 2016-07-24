@@ -149,7 +149,7 @@ bool AiBaseBrain::ShouldCancelGoal(const Goal *goal)
         {
             unsigned reachTime = level.time + moveTime;
             // A goal requires too long waiting
-            if (spawnTime > reachTime && spawnTime - reachTime > 3000)
+            if (spawnTime > reachTime && spawnTime - reachTime > goal->MaxWaitDuration())
                 return true;
         }
 
@@ -364,8 +364,7 @@ float AiBaseBrain::SelectLongTermGoalCandidates(const Goal *currLongTermGoal, Go
         if (reachTime < spawnTime)
             waitDuration = spawnTime - reachTime;
 
-        // Waiting time is too large
-        if (waitDuration > 3000)
+        if (waitDuration > navEnt->MaxWaitDuration())
             continue;
 
         float cost = 0.0001f + MOVE_TIME_WEIGHT * moveDuration + WAIT_TIME_WEIGHT * waitDuration;

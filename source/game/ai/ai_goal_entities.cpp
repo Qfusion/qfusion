@@ -39,6 +39,30 @@ unsigned NavEntity::SpawnTime() const
     return ent->nextThink;
 }
 
+unsigned NavEntity::MaxWaitDuration() const
+{
+    if (!ent->item)
+        return 0;
+
+    if (ent->item->type == IT_POWERUP)
+        return 9000;
+
+    if (ent->item->type == IT_HEALTH && (ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA))
+        return 6000;
+
+    if (ent->item->type == IT_ARMOR)
+    {
+        if (ent->item->tag == ARMOR_RA)
+            return 6000;
+        if (ent->item->tag == ARMOR_YA)
+            return 5000;
+        if (ent->item->tag == ARMOR_GA)
+            return 4000;
+    }
+
+    return 3000;
+}
+
 unsigned NavEntity::Timeout() const
 {
     if (IsDroppedEntity())

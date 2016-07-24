@@ -87,6 +87,8 @@ public:
 
     inline bool MayBeReachedInGroup() const { return IsFlagSet(NavEntityFlags::REACH_IN_GROUP); }
 
+    unsigned MaxWaitDuration() const;
+
     bool IsTopTierItem() const;
 
     const char *Name() const { return name; }
@@ -181,6 +183,11 @@ public:
     inline bool IsTopTierItem()
     {
         return navEntity && navEntity->IsTopTierItem();
+    }
+
+    inline unsigned MaxWaitDuration() const
+    {
+        return navEntity ? navEntity->MaxWaitDuration() : 0;
     }
 
     inline bool MayBeReachedInGroup() const
