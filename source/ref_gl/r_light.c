@@ -368,11 +368,11 @@ float R_LightExposureForOrigin( const vec3_t origin )
 		diffuse[i] = R_LinearFloatFromsRGBFloat( diffuse[i] );
 	}
 
-	if( r_lighting_grayscale->integer ) {
-		return ambient[0] + diffuse[0];
-	}
-	
 	return r_hdr_exposure->value;
+
+	//if( r_lighting_grayscale->integer ) {
+	//	return ambient[0] + diffuse[0];
+	//}	
 	//Vector4Add( ambient, diffuse, total );
 	//return log( ( ColorGrayscale( total ) + 1.0f ) * r_hdr_exposure->value )*//*ColorGrayscale( total ) * *//*exp( mapConfig.averageLightingIntensity ) * r_hdr_exposure->value;
 }
