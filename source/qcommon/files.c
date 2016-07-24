@@ -411,7 +411,9 @@ static int FS_FileLength( FILE *f, bool close )
 {
 	int pos, end;
 
-	assert( f );
+	assert( f != NULL );
+	if( !f )
+		return 0;
 
 	pos = ftell( f );
 	fseek( f, 0, SEEK_END );
