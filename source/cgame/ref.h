@@ -52,6 +52,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define RDF_WORLDOUTLINES		0x40	// draw cell outlines for world surfaces
 #define RDF_CROSSINGWATER		0x80	// potentially crossing water surface
 #define RDF_USEORTHO			0x100	// use orthographic projection
+#define RDF_BLURRED				0x200
 
 // skm flags
 #define SKM_ATTACHMENT_BONE		1

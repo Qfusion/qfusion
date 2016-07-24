@@ -28,6 +28,7 @@ enum
 	PPFX_OVERBRIGHT_TARGET,
 	PPFX_BLOOM,
 	PPFX_FXAA,
+	PPFX_BLUR,
 };
 
 enum
@@ -38,6 +39,7 @@ enum
 	PPFX_BIT_OVERBRIGHT_TARGET = RF_BIT( PPFX_OVERBRIGHT_TARGET ),
 	PPFX_BIT_BLOOM = RF_BIT( PPFX_BLOOM ),
 	PPFX_BIT_FXAA = RF_BIT( PPFX_FXAA ),
+	PPFX_BIT_BLUR = RF_BIT( PPFX_BLUR ),
 };
 
 static void R_ClearDebugBounds( void );
@@ -441,6 +443,10 @@ void R_RenderScene( const refdef_t *fd )
 			if( r_hdr->integer && r_bloom->integer && rn.st == &rsh.stf && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS-1][1] ) {
 				fbFlags |= PPFX_BIT_OVERBRIGHT_TARGET|PPFX_BIT_COLOR_CORRECTION;
 			}
+			if( fd->rdflags & RDF_BLURRED ) {
+				fbFlags |= PPFX_BIT_BLUR;
+				fbFlags &= ~PPFX_BIT_FXAA;
+			}
 
 			if( fbFlags != oldFlags ) {
 				if( !rn.fbColorAttachment ) {
@@ -590,6 +596,16 @@ void R_RenderScene( const refdef_t *fd )
 		R_BlitTextureToScrFbo( fd,
 			ppSource,  0,
 			GLSL_PROGRAM_TYPE_FXAA,
+			colorWhite, 0,
+			0, NULL, 0 );
+		return;
+	}
+
+	if( fbFlags & PPFX_BIT_BLUR ) {
+		ppSource = R_BlurTextureToScrFbo( fd, ppSource, rsh.st.screenPPCopies[ppFrontBuffer] );
+		R_BlitTextureToScrFbo( fd,
+			ppSource,  0,
+			GLSL_PROGRAM_TYPE_NONE,
 			colorWhite, 0,
 			0, NULL, 0 );
 	}
