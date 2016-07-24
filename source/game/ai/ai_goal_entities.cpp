@@ -11,7 +11,7 @@ bool NavEntity::IsTopTierItem() const
     if (ent->item->type == IT_HEALTH && (ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA))
         return true;
 
-    if (ent->item->type == IT_ARMOR && ent->item->tag == ARMOR_RA)
+    if (ent->item->type == IT_ARMOR && (ent->item->tag == ARMOR_RA || ent->item->tag == ARMOR_YA))
         return true;
 
     return false;
