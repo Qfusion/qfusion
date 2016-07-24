@@ -440,7 +440,7 @@ void R_RenderScene( const refdef_t *fd )
 			if( r_fxaa->integer ) {
 				fbFlags |= PPFX_BIT_FXAA;
 			}
-			if( r_hdr->integer && r_bloom->integer && rn.st == &rsh.stf && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS-1][1] ) {
+			if( r_bloom->integer && rn.st == &rsh.stf && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS-1][1] ) {
 				fbFlags |= PPFX_BIT_OVERBRIGHT_TARGET|PPFX_BIT_COLOR_CORRECTION;
 			}
 			if( fd->rdflags & RDF_BLURRED ) {
