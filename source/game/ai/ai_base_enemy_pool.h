@@ -325,6 +325,8 @@ public:
     virtual void SetBotRoleWeight(const edict_t *bot, float weight) = 0;
 
     inline unsigned MaxTrackedEnemies() const { return maxTrackedEnemies; }
+    // Note that enemies in this array should be validated by IsValid() before access to their properties
+    inline const StaticVector<Enemy, MAX_TRACKED_ENEMIES> &TrackedEnemies() const { return trackedEnemies; };
     inline const StaticVector<Enemy*, MAX_ACTIVE_ENEMIES> &ActiveEnemies() const { return activeEnemies; };
 
     virtual void Frame() override;

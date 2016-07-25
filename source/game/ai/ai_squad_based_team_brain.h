@@ -54,6 +54,7 @@ private:
     unsigned lastDroppedForBotTimestamps[MAX_SIZE];
 
     void CheckMembersInventory();
+    bool ShouldNotDropWeaponsNow() const;
     void RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponTiers);
 
     typedef StaticVector<unsigned, AiSquad::MAX_SIZE - 1> Suppliers;

@@ -372,23 +372,13 @@ void AiSquad::CheckMembersInventory()
     if (!(level.gametype.dropableItemsMask & (IT_WEAPON|IT_AMMO)))
         return;
 
-    // Check whether combat disposition is too dangerous to do weapon drops
-    for (const Enemy *enemy: squadEnemyPool->ActiveEnemies())
-    {
-        for (const Bot *bot: bots)
-        {
-            if (!enemy || !enemy->ent)
-                continue;
-            // An enemy is to close to a bot
-            if (DistanceSquared(bot->Self()->s.origin, enemy->ent->s.origin) < 400 * 400)
-                return;
-        }
-    }
-
     InitWeaponDefHelpers();
 
+    // i-th bot has best weapon of tier maxBotWeaponTiers[i]
     int maxBotWeaponTiers[MAX_SIZE];
     std::fill_n(maxBotWeaponTiers, MAX_SIZE, 0);
+    // Worst weapon tier among all squad bots
+    int minBotWeaponTier = 3;
 
     for (unsigned botNum = 0; botNum < bots.size(); ++botNum)
     {
@@ -404,7 +394,16 @@ void AiSquad::CheckMembersInventory()
                         maxBotWeaponTiers[botNum] = tiersForWeapon[weapon];
             }
         }
+        if (minBotWeaponTier > maxBotWeaponTiers[botNum])
+            minBotWeaponTier = maxBotWeaponTiers[botNum];
     }
+
+    // We try to skip expensive ShouldNotDropWeaponsNow() call by doing this cheap test first
+    if (minBotWeaponTier > 2)
+        return;
+
+    if (ShouldNotDropWeaponsNow())
+        return;
 
     for (unsigned botNum = 0; botNum < bots.size(); ++botNum)
     {
@@ -423,6 +422,66 @@ void AiSquad::CheckMembersInventory()
 
         RequestWeaponAndAmmoDrop(botNum, maxBotWeaponTiers);
     }
+}
+
+bool AiSquad::ShouldNotDropWeaponsNow() const
+{
+    // First, compute squad AABB
+    vec3_t mins = { +999999, +999999, +999999 };
+    vec3_t maxs = { -999999, -999999, -999999 };
+    for (const Bot *bot: bots)
+    {
+        const float *origin = bot->Self()->s.origin;
+        for (int i = 0; i < 3; ++i)
+        {
+            if (maxs[i] < origin[i])
+                maxs[i] = origin[i];
+            if (mins[i] > origin[i])
+                mins[i] = origin[i];
+        }
+    }
+
+    // First reject enemies by distance
+    StaticVector<const Enemy *, AiBaseEnemyPool::MAX_TRACKED_ENEMIES> potentialStealers;
+    for (const Enemy &enemy: squadEnemyPool->TrackedEnemies())
+    {
+        // Check whether an enemy has been invalidated and invalidation is not processed yet to prevent crash
+        if (!enemy.IsValid())
+            continue;
+        if (!BoundsAndSphereIntersect(mins, maxs, enemy.LastSeenPosition().Data(), 400.0f))
+            continue;
+        potentialStealers.push_back(&enemy);
+    }
+
+    // Sort all stealers based on last seen time (recently seen first)
+    std::sort(potentialStealers.begin(), potentialStealers.end(), [&](const Enemy *a, const Enemy *b)
+    {
+        return a->LastSeenAt() > b->LastSeenAt();
+    });
+
+    // Then do a reachability check for not more than 4 recently seen stealers
+    for (unsigned i = 0, end = std::min(4u, potentialStealers.size()); i < end; ++i)
+    {
+        Vec3 stealerOrigin(potentialStealers[i]->LastSeenPosition());
+        int stealerAreaNum = FindAASAreaNum(stealerOrigin);
+        if (!stealerAreaNum)
+            continue;
+        edict_t *traceKey = const_cast<edict_t *>(potentialStealers[i]->ent);
+        for (const Bot *bot: bots)
+        {
+            int travelTime = FindAASTravelTimeToGoalArea(stealerAreaNum, stealerOrigin.Data(),
+                                                         bot->CurrAreaNum(), traceKey, TFL_DEFAULT, TFL_DEFAULT);
+            // The stealer can't reach a bot (if it moves like a bot with TFL_DEFAULT)
+            if (!travelTime)
+                continue;
+            // If the stealer can reach one of squad bots in 2.5 seconds, its too dangerous to drop items
+            // AAS returns travel time in seconds^-2
+            if (travelTime < 250)
+                return true;
+        }
+    }
+
+    return false;
 }
 
 void AiSquad::FindSupplierCandidates(unsigned botNum, StaticVector<unsigned, AiSquad::MAX_SIZE - 1> &result) const
