@@ -1069,15 +1069,6 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
             return false;
     }
 
-    // Only RL and IG jumps are supported, bots fail almost all GB jumps in testing
-    int weapon = WEAP_NONE;
-    if (Inventory()[WEAP_ROCKETLAUNCHER] && (Inventory()[AMMO_ROCKETS] || Inventory()[AMMO_WEAK_ROCKETS]))
-        weapon = WEAP_ROCKETLAUNCHER;
-    if (Inventory()[WEAP_INSTAGUN])
-        weapon = WEAP_INSTAGUN;
-    if (weapon == WEAP_NONE)
-        return false;
-
     Vec3 goalOrigin = botBrain.ClosestGoalOrigin();
     float squareDistanceToGoal = (goalOrigin - self->s.origin).SquaredLength();
 
@@ -1103,21 +1094,24 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (height > 280.0f)
         return false;
 
-    if (GS_SelfDamage() && weapon != WEAP_INSTAGUN)
+    float damageToBeKilled = 99999;
+    bool canRefillHealthAndArmor = true;
+    canRefillHealthAndArmor &= level.gametype.spawnableItemsMask & IT_HEALTH;
+    canRefillHealthAndArmor &= level.gametype.spawnableItemsMask & IT_ARMOR;
+    // If a selfdamage would be inflicted, try to do a coarse health test first
+    // to reject expensive further checks (we do not know yet what weapon will be selected).
+    if (GS_SelfDamage() && !Inventory()[WEAP_INSTAGUN])
     {
         // A goal does not worth a weapon jump
         if (!botBrain.IsGoalATopTierItem())
             return false;
-        float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
+        damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
         if (HasQuad(self))
             damageToBeKilled /= 4.0f;
         if (HasShell(self))
             damageToBeKilled *= 4.0f;
-        // Too risky
-        if (damageToBeKilled < 100.0f)
-            return false;
         // Can't refill health and armor picking it on the map
-        if (damageToBeKilled < 150.0f && !(level.gametype.spawnableItemsMask & (IT_HEALTH|IT_ARMOR)))
+        if (damageToBeKilled < 60.0f || (damageToBeKilled < 150.0f && !canRefillHealthAndArmor))
             return false;
     }
 
@@ -1197,9 +1191,35 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
             return false;
     }
 
+    int weapon = WEAP_GUNBLADE;
     // Check corrected distance to a goal
-    if ((fireTarget - self->s.origin).SquaredLength() > 450 * 450)
-        return false;
+    float distanceToFireTarget = (fireTarget - self->s.origin).LengthFast();
+    float fireTargetHeight = fireTarget.Z() - self->s.origin[2];
+    // TODO: Compute actual trajectory
+    if (distanceToFireTarget > 350.0f || fireTargetHeight > 172.0f)
+    {
+        if (Inventory()[WEAP_INSTAGUN])
+            weapon = WEAP_INSTAGUN;
+        else if (Inventory()[WEAP_ROCKETLAUNCHER] && (Inventory()[AMMO_ROCKETS] || Inventory()[AMMO_WEAK_ROCKETS]))
+            weapon = WEAP_ROCKETLAUNCHER;
+        // Can't switch to IG or RL
+        if (weapon == WEAP_GUNBLADE)
+            return false;
+        // Check selfdamage aposteriori
+        if (GS_SelfDamage() && weapon == WEAP_ROCKETLAUNCHER)
+        {
+            if (damageToBeKilled < 125)
+                return false;
+            if (damageToBeKilled < 175.0f && !(level.gametype.spawnableItemsMask & (IT_HEALTH|IT_ARMOR)))
+                return false;
+        }
+    }
+    else
+    {
+        // Should use GB but can't resist it
+        if (GS_SelfDamage() && (damageToBeKilled < 60.0f || (damageToBeKilled < 150.0f && !canRefillHealthAndArmor)))
+            ChangeWeapon(WEAP_INSTAGUN);
+    }
 
     ChangeWeapon(weapon);
     if (self->r.client->ps.stats[STAT_WEAPON] != weapon)
