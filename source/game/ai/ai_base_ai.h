@@ -87,6 +87,9 @@ public:
 
     inline bool IsGhosting() const { return G_ISGHOSTING(self); }
 
+    inline int CurrAreaNum() const { return currAasAreaNum; }
+    inline int GoalAreaNum() const { return goalAasAreaNum; }
+
     inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
     inline int AllowedTravelFlags() const { return allowedAasTravelFlags; }
 
