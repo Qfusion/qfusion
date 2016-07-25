@@ -578,6 +578,22 @@ bool BotBrain::IsGoalATopTierItem() const
     return false;
 }
 
+unsigned BotBrain::GoalSpawnTime() const
+{
+    // Note: goals are listed in order of (short-term) priority
+
+    if (specialGoal)
+        return specialGoal->SpawnTime();
+
+    if (shortTermGoal)
+        return shortTermGoal->SpawnTime();
+
+    if (longTermGoal)
+        return longTermGoal->SpawnTime();
+
+    return level.time;
+}
+
 bool BotBrain::HasMoreImportantTasksThanEnemies() const
 {
     if (specialGoal)

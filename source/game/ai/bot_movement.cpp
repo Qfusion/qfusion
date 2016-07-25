@@ -1059,6 +1059,13 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (currAasAreaNum == goalAasAreaNum)
         return false;
 
+    unsigned goalSpawnTime = botBrain.GoalSpawnTime();
+
+    // Do not do rocketjumps to non-urgent goals
+    // Avoid unsigned overflows
+    if (goalSpawnTime && goalSpawnTime > level.time && goalSpawnTime - level.time > 3000)
+        return false;
+
     if (!self->groundentity)
     {
         trace_t trace;
