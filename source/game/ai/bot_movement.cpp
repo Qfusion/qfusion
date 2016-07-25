@@ -1085,8 +1085,8 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (squareDistanceToGoal < 128.0f * 128.0f)
         return false;
 
-    // Too far from a goal
-    if (squareDistanceToGoal > 450.0f * 450.0f)
+    // Too far from a goal (do a bit wider check because RJ target are may be closer than a goal)
+    if (squareDistanceToGoal > 750.0f * 750.0f)
         return false;
 
     float distanceToGoal = 1.0f / Q_RSqrt(squareDistanceToGoal);
@@ -1128,30 +1128,77 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
 
     Vec3 fireTarget(goalOrigin);
 
-    Vec3 botToGoal2D(goalOrigin);
-    botToGoal2D -= self->s.origin;
-    botToGoal2D.Z() = 0;
-    float botToGoalSquareDist2D = botToGoal2D.SquaredLength();
+    Vec3 botToGoal2DDir(goalOrigin);
+    botToGoal2DDir -= self->s.origin;
+    botToGoal2DDir.Z() = 0;
+    float botToGoalSquareDist2D = botToGoal2DDir.SquaredLength();
+    float botToGoalDist2D = -1;
     if (botToGoalSquareDist2D > 1)
     {
-        float botToGoalDist2D = 1.0f / Q_RSqrt(botToGoalSquareDist2D);
-        botToGoal2D *= 1.0f / botToGoalDist2D;
+        botToGoalDist2D = 1.0f / Q_RSqrt(botToGoalSquareDist2D);
+        botToGoal2DDir *= 1.0f / botToGoalDist2D;
         // Aim not directly to goal but a bit closer to bot in XY plane
         // (he will fly down to a goal from the trajectory zenith)
-        fireTarget -= 0.33f * botToGoalDist2D * botToGoal2D;
+        fireTarget -= 0.33f * botToGoalDist2D * botToGoal2DDir;
     }
 
+    // Check whether there are obstacles on a line from bot origin to a point slightly above a goal
     trace_t trace;
     fireTarget.Z() += 32.0f + 72.0f * BoundedFraction(distanceToGoal, 500);
-    for (int i = 0; i < 3; ++i)
+    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTarget.Data(), self, MASK_AISOLID);
+    // If there are obstacles
+    if (trace.fraction != 1.0f)
     {
-        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTarget.Data(), self, MASK_AISOLID);
-        if (trace.fraction == 1.0f)
-            break;
-        fireTarget.Z() += 48.0f * BoundedFraction(height, 280.0f);
+        if (botToGoalDist2D < 48.0f)
+            return false;
+
+        Vec3 areaTraceStart(goalArea.center);
+        areaTraceStart.Z() = goalArea.mins[2] + 4.0f;
+
+        Vec3 areaTraceEnd(areaTraceStart);
+        areaTraceEnd -= (botToGoalDist2D - 48.0f) * botToGoal2DDir;
+
+        int areas[16];
+        int numTracedAreas = AAS_TraceAreas(goalOrigin.Data(), areaTraceEnd.Data(), areas, nullptr, 16);
+
+        int travelFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_AIR;
+        // Start from the area closest to the bot, end on first area in trace after the goal area (i = 0)
+        for (int i = numTracedAreas - 1; i >= 1; --i)
+        {
+            // Do not try to reach a non-grounded area
+            if (!AAS_AreaGrounded(areas[i]))
+                continue;
+
+            // Check whether goal area is reachable from area pointed by areas[i]
+            // (note, we check reachablity from area to goal area, and not the opposite,
+            // because the given travel flags are not reversible).
+            aas_area_t &area = aasworld.areas[areas[i]];
+            Vec3 areaPoint(area.center);
+            areaPoint.Z() = area.mins[2] + 4.0f;
+            int reachNum = AAS_AreaReachabilityToGoalArea(areas[i], areaPoint.Data(), goalAasAreaNum, travelFlags);
+            // This means goal area is not reachable with these travel flags
+            if (!reachNum)
+                continue;
+
+            // Set fireTarget to a point a bit above a grounded center of the area
+            // Check whether there are obstacles on a line from bot origin to fireTarget
+            fireTarget = areaPoint;
+            fireTarget.Z() += 48.0f;
+            fireTarget.Z() += 64.0f * BoundedFraction((areaPoint - self->s.origin).LengthFast(), 500);
+
+            G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTarget.Data(), self, MASK_AISOLID);
+            // fireTarget is reachable
+            if (trace.fraction == 1.0f)
+                break;
+        }
+
+        // fireTarget is still not reachable
+        if (trace.fraction != 1.0f)
+            return false;
     }
 
-    if (trace.fraction != 1.0f)
+    // Check corrected distance to a goal
+    if ((fireTarget - self->s.origin).SquaredLength() > 450 * 450)
         return false;
 
     ChangeWeapon(weapon);
