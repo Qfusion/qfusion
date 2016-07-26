@@ -4,6 +4,7 @@
 #include "ai_base_ai.h"
 #include "aas.h"
 #include "static_vector.h"
+#include "../../gameshared/q_collision.h"
 
 AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags)
     : self(self),
@@ -87,6 +88,13 @@ void AiBaseBrain::Think()
         return;
 
     CheckOrCancelGoal();
+
+    // Do not bother of picking a goal while in air (many areas are not reachable from air areas).
+    // Otherwise bot will spam lots of messages "Can't find any goal candidates".
+    trace_t trace;
+    G_Trace(&trace, self->s.origin, nullptr, nullptr, (Vec3(0, 0, -48) + self->s.origin).Data(), self, MASK_AISOLID);
+    if (trace.fraction == 1.0f)
+        return;
 
     // Always update weights before goal picking, except we have updated it in this frame
     bool weightsUpdated = false;
