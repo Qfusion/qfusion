@@ -885,7 +885,8 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     if (TryApplyPendingLandingDash(ucmd))
         return;
 
-    if (TryRocketJumpShortcut(ucmd))
+    // TryRocketJumpShortcut() is expensive, call it only in Think() frames
+    if (!ShouldSkipThinkFrame() && TryRocketJumpShortcut(ucmd))
         return;
 
     Vec3 velocityVec(self->velocity);
