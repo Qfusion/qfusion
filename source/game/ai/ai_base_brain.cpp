@@ -269,6 +269,8 @@ bool AiBaseBrain::ShouldWaitForGoal() const
         float radius = GOAL_PROXIMITY_THRESHOLD;
         if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
         {
+            if (longTermGoal->ShouldBeReachedOnEvent())
+                return true;
             if (longTermGoal->SpawnTime() > level.time)
                 return true;
         }
@@ -284,6 +286,8 @@ bool AiBaseBrain::ShouldWaitForSpecialGoal() const
         float radius = GOAL_PROXIMITY_THRESHOLD;
         if ((specialGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
         {
+            if (specialGoal->ShouldBeReachedOnEvent())
+                return true;
             if (specialGoal->SpawnTime() > level.time)
                 return true;
         }
