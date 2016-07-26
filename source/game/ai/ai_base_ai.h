@@ -59,7 +59,7 @@ protected:
     int preferredAasTravelFlags;
 
     int currAasAreaTravelFlags;
-    static constexpr unsigned MAX_REACH_CACHED = 8;
+    static constexpr unsigned MAX_REACH_CACHED = 24;
     StaticVector<aas_reachability_t, MAX_REACH_CACHED> nextReaches;
 
     float distanceToNextReachStart;

@@ -878,7 +878,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     if (TryApplyPendingLandingDash(ucmd))
         return;
 
-    if (TryRocketJumpToAGoal(ucmd))
+    if (TryRocketJumpShortcut(ucmd))
         return;
 
     Vec3 velocityVec(self->velocity);
@@ -1049,9 +1049,9 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
 }
 
-bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
+bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
 {
-    // Try to do simple checks first to prevent wasting CPU cycles in G_Trace()
+    // Try to do coarse cheap checks first to prevent wasting CPU cycles in G_Trace()
 
     if (!botBrain.HasGoal())
         return false;
@@ -1059,15 +1059,43 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (currAasAreaNum == goalAasAreaNum)
         return false;
 
-    unsigned goalSpawnTime = botBrain.GoalSpawnTime();
+    float squareDistanceToGoal = DistanceSquared(self->s.origin, botBrain.ClosestGoalOrigin().Data());
 
-    // Do not do rocketjumps to non-urgent goals
-    // Avoid unsigned overflows
-    if (goalSpawnTime && goalSpawnTime > level.time && goalSpawnTime - level.time > 3000)
+    // Too close to the goal
+    if (squareDistanceToGoal < 128.0f * 128.0f)
         return false;
+
+    bool canRefillHealthAndArmor = true;
+    canRefillHealthAndArmor &= level.gametype.spawnableItemsMask & IT_HEALTH;
+    canRefillHealthAndArmor &= level.gametype.spawnableItemsMask & IT_ARMOR;
+
+    // This means a bot would inflict himself a damage (he can't switch to a safe gun)
+    if (GS_SelfDamage() && !Inventory()[WEAP_INSTAGUN])
+    {
+        // A target does not worth a weapon jump
+        // (if target is a top tier item, not only direct jumps to a goal but path shortcuts are worth doing)
+        if (!botBrain.IsGoalATopTierItem())
+            return false;
+
+        float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
+        if (HasQuad(self))
+            damageToBeKilled /= 4.0f;
+        if (HasShell(self))
+            damageToBeKilled *= 4.0f;
+
+        // Can't refill health and armor picking it on the map
+        if (damageToBeKilled < 60.0f || (damageToBeKilled < 200.0f && !canRefillHealthAndArmor))
+            return false;
+
+        // We tested minimal estimated damage values to cut off
+        // further expensive tests that involve lots of traces.
+        // Selfdamage should be tested again when weapon selection is performed.
+    }
 
     if (!self->groundentity)
     {
+        // Check whether a bot has a ground surface to push off it
+        // TODO: Check for walls?
         trace_t trace;
         G_Trace(&trace, self->s.origin, nullptr, nullptr, (Vec3(0, 0, -36) + self->s.origin).Data(), self, MASK_AISOLID);
         if (trace.fraction == 1.0f)
@@ -1076,135 +1104,232 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
             return false;
     }
 
-    Vec3 goalOrigin = botBrain.ClosestGoalOrigin();
-    float squareDistanceToGoal = (goalOrigin - self->s.origin).SquaredLength();
-
-    // Too close to a goal
-    if (squareDistanceToGoal < 128.0f * 128.0f)
-        return false;
-
-    // Too far from a goal (do a bit wider check because RJ target are may be closer than a goal)
-    if (squareDistanceToGoal > 750.0f * 750.0f)
-        return false;
-
-    float distanceToGoal = 1.0f / Q_RSqrt(squareDistanceToGoal);
-
-    const aas_area_t &currArea = aasworld.areas[currAasAreaNum];
-    const aas_area_t &goalArea = aasworld.areas[goalAasAreaNum];
-
-    // Can't RJ to a lower area or just slightly higher area
-    float height = goalArea.mins[2] - currArea.mins[2];
-    if (height < 48.0f)
-        return false;
-
-    // Can't jump so high
-    if (height > 280.0f)
-        return false;
-
-    float damageToBeKilled = 99999;
-    bool canRefillHealthAndArmor = true;
-    canRefillHealthAndArmor &= level.gametype.spawnableItemsMask & IT_HEALTH;
-    canRefillHealthAndArmor &= level.gametype.spawnableItemsMask & IT_ARMOR;
-    // If a selfdamage would be inflicted, try to do a coarse health test first
-    // to reject expensive further checks (we do not know yet what weapon will be selected).
-    if (GS_SelfDamage() && !Inventory()[WEAP_INSTAGUN])
+    Vec3 targetOrigin(0, 0, 0);
+    Vec3 fireTarget(0, 0, 0);
+    if (squareDistanceToGoal < 750.0f * 750.0f)
     {
-        // A goal does not worth a weapon jump
-        if (!botBrain.IsGoalATopTierItem())
+        // Do not do rocketjumps to non-urgent goals
+        unsigned goalSpawnTime = botBrain.GoalSpawnTime();
+        // Avoid unsigned overflows
+        if (goalSpawnTime && goalSpawnTime > level.time && goalSpawnTime - level.time > 3000)
             return false;
-        damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
-        if (HasQuad(self))
-            damageToBeKilled /= 4.0f;
-        if (HasShell(self))
-            damageToBeKilled *= 4.0f;
-        // Can't refill health and armor picking it on the map
-        if (damageToBeKilled < 60.0f || (damageToBeKilled < 150.0f && !canRefillHealthAndArmor))
+
+        if (!AdjustDirectRocketJumpToAGoalTarget(&targetOrigin, &fireTarget))
+            return false;
+    }
+    else
+    {
+        // The goal does not seam to be reachable for RJ.
+        // Try just shortcut a path.
+        if (!AdjustRocketJumpTargetForPathShortcut(&targetOrigin, &fireTarget))
             return false;
     }
 
-    // Check whether area will be reached soon anyway
-    for (unsigned i = 0, end = std::min(nextReaches.size(), 8u); i < end; ++i)
-        if (nextReaches[i].areanum == goalAasAreaNum)
-            return false;
+    return TryTriggerWeaponJump(ucmd, targetOrigin, fireTarget);
+}
 
-    Vec3 fireTarget(goalOrigin);
+bool Bot::AdjustRocketJumpTargetForPathShortcut(Vec3 *targetOrigin, Vec3 *fireTarget) const
+{
+    const aas_area_t &currArea = aasworld.areas[currAasAreaNum];
+    trace_t trace;
+    // Avoid occasional unsigned overflow (the loop starts from nextReaches.size() - 1 or 0)
+    for (unsigned i = std::min(nextReaches.size(), nextReaches.size() - 1); i >= 1; --i)
+    {
+        const auto &reach = nextReaches[i];
+        // Reject non-grounded areas
+        if (!AAS_AreaGrounded(reach.areanum))
+            continue;
+        const auto &area = aasworld.areas[reach.areanum];
+        // Can't RJ to lower areas
+        if (area.mins[2] - currArea.mins[2] < 48.0f)
+            continue;
+        // Can't be reached using RJ aprori
+        if (area.mins[2] - currArea.mins[2] > 280.0f)
+            continue;
+        // Avoid rocketjumping to degenerate areas
+        if (area.maxs[0] - area.mins[0] < 32.0f)
+            continue;
+        if (area.maxs[1] - area.mins[1] < 32.0f)
+            continue;
 
-    Vec3 botToGoal2DDir(goalOrigin);
+        // Then we try to select a grounded area point nearest to a bot
+        // Offset this Z a bit above the ground to ensure that a point is strictly inside the area.
+        const float groundZ = area.mins[2] + 4.0f;
+        // Find nearest point of area AABB base
+        const float *bounds[2] = { area.mins, area.maxs };
+        vec3_t nearestBasePoint = { NAN, NAN, NAN };
+        float minDistance = std::numeric_limits<float>::max();
+        for (int j = 0; j < 4; ++j)
+        {
+            vec3_t basePoint;
+            basePoint[0] = bounds[(j >> 0) & 1][0];
+            basePoint[1] = bounds[(j >> 1) & 1][1];
+            basePoint[2] = groundZ;
+            float distance = DistanceSquared(self->s.origin, basePoint);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                VectorCopy(basePoint, nearestBasePoint);
+            }
+        }
+
+        // We can't simply use nearest point of area AABB
+        // since AABB may be greater than area itself (areas may be an arbitrary prism).
+        // Use an average of area grounded center and nearest grounded point for approximation of target point.
+        Vec3 areaPoint(area.center);
+        areaPoint.Z() = groundZ;
+        areaPoint += nearestBasePoint;
+        areaPoint *= 0.5f;
+
+        float squareDistanceToArea = DistanceSquared(self->s.origin, areaPoint.Data());
+        if (squareDistanceToArea > 550.0f * 550.0f)
+            continue;
+        if (squareDistanceToArea < 64.0f * 64.0f)
+            continue;
+
+        float distanceToArea = 1.0f / Q_RSqrt(squareDistanceToArea);
+
+        Vec3 traceEnd(areaPoint);
+        traceEnd.Z() += 48.0f + 64.0f * BoundedFraction(distanceToArea, 500);
+
+        // Check whether there are no obstacles on a segment from bot origin to fireTarget
+        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.Data(), self, MASK_AISOLID);
+        if (trace.fraction == 1.0f)
+        {
+            VectorCopy(areaPoint.Data(), targetOrigin->Data());
+            VectorCopy(traceEnd.Data(), fireTarget->Data());
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Bot::AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarget) const
+{
+    // Make aliases for convenience to avoid pointer operations
+    Vec3 &targetOriginRef = *targetOrigin;
+    Vec3 &fireTargetRef = *fireTarget;
+
+    targetOriginRef = botBrain.ClosestGoalOrigin();
+
+    // Check target height for feasibility
+    float height = targetOriginRef.Z() - self->s.origin[2];
+    if (height < 48.0f || height > 280.0f)
+        return false;
+
+    // We are sure this distance not only non-zero but greater than 1.5-2x player height
+    float distanceToGoal = DistanceFast(self->s.origin, targetOriginRef.Data());
+
+    fireTargetRef = targetOriginRef;
+    fireTargetRef.Z() += 48.0f + 64.0f * BoundedFraction(distanceToGoal, 500);
+
+    Vec3 botToGoal2DDir(targetOriginRef);
     botToGoal2DDir -= self->s.origin;
     botToGoal2DDir.Z() = 0;
     float botToGoalSquareDist2D = botToGoal2DDir.SquaredLength();
     float botToGoalDist2D = -1;
+
     if (botToGoalSquareDist2D > 1)
     {
         botToGoalDist2D = 1.0f / Q_RSqrt(botToGoalSquareDist2D);
         botToGoal2DDir *= 1.0f / botToGoalDist2D;
         // Aim not directly to goal but a bit closer to bot in XY plane
         // (he will fly down to a goal from the trajectory zenith)
-        fireTarget -= 0.33f * botToGoalDist2D * botToGoal2DDir;
+        *fireTarget -= 0.33f * botToGoalDist2D * botToGoal2DDir;
     }
 
-    // Check whether there are obstacles on a line from bot origin to a point slightly above a goal
     trace_t trace;
-    fireTarget.Z() += 32.0f + 72.0f * BoundedFraction(distanceToGoal, 500);
-    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTarget.Data(), self, MASK_AISOLID);
+    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTargetRef.Data(), self, MASK_AISOLID);
     // If there are obstacles
     if (trace.fraction != 1.0f)
     {
         if (botToGoalDist2D < 48.0f)
             return false;
 
-        Vec3 areaTraceStart(goalArea.center);
-        areaTraceStart.Z() = goalArea.mins[2] + 4.0f;
-
-        Vec3 areaTraceEnd(areaTraceStart);
-        areaTraceEnd -= (botToGoalDist2D - 48.0f) * botToGoal2DDir;
-
-        int areas[16];
-        int numTracedAreas = AAS_TraceAreas(goalOrigin.Data(), areaTraceEnd.Data(), areas, nullptr, 16);
-
-        int travelFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_AIR;
-        // Start from the area closest to the bot, end on first area in trace after the goal area (i = 0)
-        for (int i = numTracedAreas - 1; i >= 1; --i)
-        {
-            // Do not try to reach a non-grounded area
-            if (!AAS_AreaGrounded(areas[i]))
-                continue;
-
-            // Check whether goal area is reachable from area pointed by areas[i]
-            // (note, we check reachablity from area to goal area, and not the opposite,
-            // because the given travel flags are not reversible).
-            aas_area_t &area = aasworld.areas[areas[i]];
-            Vec3 areaPoint(area.center);
-            areaPoint.Z() = area.mins[2] + 4.0f;
-            int reachNum = AAS_AreaReachabilityToGoalArea(areas[i], areaPoint.Data(), goalAasAreaNum, travelFlags);
-            // This means goal area is not reachable with these travel flags
-            if (!reachNum)
-                continue;
-
-            // Set fireTarget to a point a bit above a grounded center of the area
-            // Check whether there are obstacles on a line from bot origin to fireTarget
-            fireTarget = areaPoint;
-            fireTarget.Z() += 48.0f;
-            fireTarget.Z() += 64.0f * BoundedFraction((areaPoint - self->s.origin).LengthFast(), 500);
-
-            G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTarget.Data(), self, MASK_AISOLID);
-            // fireTarget is reachable
-            if (trace.fraction == 1.0f)
-                break;
-        }
-
-        // fireTarget is still not reachable
-        if (trace.fraction != 1.0f)
+        int targetAreaNum = TryFindRocketJumpAreaCloseToGoal(botToGoal2DDir, botToGoalDist2D);
+        if (!targetAreaNum)
             return false;
+
+        const aas_area_t &targetArea = aasworld.areas[targetAreaNum];
+        VectorCopy(targetArea.center, targetOriginRef.Data());
+        targetOriginRef.Z() = targetArea.mins[2] + 16.0f;
+
+        // Recalculate
+        distanceToGoal = DistanceFast(self->s.origin, targetOriginRef.Data());
+
+        VectorCopy(targetOriginRef.Data(), fireTargetRef.Data());
+        fireTargetRef.Z() += 48.0f + 64.0f * BoundedFraction(distanceToGoal, 500);
     }
 
-    int weapon = WEAP_GUNBLADE;
-    // Check corrected distance to a goal
-    float distanceToFireTarget = (fireTarget - self->s.origin).LengthFast();
-    float fireTargetHeight = fireTarget.Z() - self->s.origin[2];
-    // TODO: Compute actual trajectory
-    if (distanceToFireTarget > 350.0f || fireTargetHeight > 172.0f)
+    return true;
+}
+
+int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botToGoalDist2D) const
+{
+    const aas_area_t &targetArea = aasworld.areas[goalAasAreaNum];
+    Vec3 targetOrigin(targetArea.center);
+    targetOrigin.Z() = targetArea.mins[2] + 16.0f;
+
+    Vec3 areaTraceStart(targetArea.center);
+    areaTraceStart.Z() = targetArea.mins[2] + 16.0f;
+
+    Vec3 areaTraceEnd(areaTraceStart);
+    areaTraceEnd -= (botToGoalDist2D - 48.0f) * botToGoalDir2D;
+
+    int areas[16];
+    int numTracedAreas = AAS_TraceAreas(targetOrigin.Data(), areaTraceEnd.Data(), areas, nullptr, 16);
+
+    int travelFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_AIR;
+    trace_t trace;
+    // Start from the area closest to the bot, end on first area in trace after the goal area (i = 0)
+    for (int i = numTracedAreas - 1; i >= 1; --i)
     {
+        // Do not try to reach a non-grounded area
+        if (!AAS_AreaGrounded(areas[i]))
+            continue;
+
+        // Check whether goal area is reachable from area pointed by areas[i]
+        // (note, we check reachablity from area to goal area, and not the opposite,
+        // because the given travel flags are not reversible).
+        aas_area_t &area = aasworld.areas[areas[i]];
+        Vec3 areaPoint(area.center);
+        areaPoint.Z() = area.mins[2] + 4.0f;
+        int reachNum = AAS_AreaReachabilityToGoalArea(areas[i], areaPoint.Data(), goalAasAreaNum, travelFlags);
+        // This means goal area is not reachable with these travel flags
+        if (!reachNum)
+            continue;
+
+        // Set fireTarget to a point a bit above a grounded center of the area
+        // Check whether there are obstacles on a line from bot origin to fireTarget
+        Vec3 fireTarget = areaPoint;
+        fireTarget.Z() += 48.0f + 64.0f * BoundedFraction((areaPoint - self->s.origin).LengthFast(), 500);
+
+        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTarget.Data(), self, MASK_AISOLID);
+        // fireTarget is reachable
+        if (trace.fraction == 1.0f)
+            return areas[i];
+    }
+
+    return 0;
+}
+
+bool Bot::TryTriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget)
+{
+    // Update values for adjusted target
+    float originDistance = DistanceFast(self->s.origin, targetOrigin.Data());
+    float originHeight = targetOrigin.Z() - self->s.origin[2];
+
+    // TODO: Compute actual trajectory
+    if (originDistance > 550.0f || originHeight > 280.0f)
+        return false;
+
+    // Select appropriate weapon
+    // TODO: Compute actual trajectory
+    int weapon = WEAP_GUNBLADE;
+    if (originDistance > 450.0f || originHeight > 240.0f)
+    {
+        // Should use a powerful weapon. Try to select an IG to prevent damaging itself.
         if (Inventory()[WEAP_INSTAGUN])
             weapon = WEAP_INSTAGUN;
         else if (Inventory()[WEAP_ROCKETLAUNCHER] && (Inventory()[AMMO_ROCKETS] || Inventory()[AMMO_WEAK_ROCKETS]))
@@ -1215,17 +1340,32 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
         // Check selfdamage aposteriori
         if (GS_SelfDamage() && weapon == WEAP_ROCKETLAUNCHER)
         {
+            float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
+            if (HasQuad(self))
+                damageToBeKilled /= 4.0f;
+            if (HasShell(self))
+                damageToBeKilled *= 4.0f;
             if (damageToBeKilled < 125)
                 return false;
-            if (damageToBeKilled < 175.0f && !(level.gametype.spawnableItemsMask & (IT_HEALTH|IT_ARMOR)))
+            if (damageToBeKilled < 200.0f && !(level.gametype.spawnableItemsMask & (IT_HEALTH|IT_ARMOR)))
                 return false;
         }
     }
     else
     {
         // Should use GB but can't resist it
-        if (GS_SelfDamage() && (damageToBeKilled < 60.0f || (damageToBeKilled < 150.0f && !canRefillHealthAndArmor)))
-            ChangeWeapon(WEAP_INSTAGUN);
+        if (GS_SelfDamage())
+        {
+            float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
+            if (HasQuad(self))
+                damageToBeKilled /= 4.0f;
+            if (HasShell(self))
+                damageToBeKilled *= 4.0f;
+            if (damageToBeKilled < 60.0f)
+                weapon = WEAP_INSTAGUN;
+            else if (damageToBeKilled < 150.0f && !(level.gametype.spawnableItemsMask & (IT_HEALTH|IT_ARMOR)))
+                weapon = WEAP_INSTAGUN;
+        }
     }
 
     ChangeWeapon(weapon);
@@ -1234,6 +1374,12 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     if (self->r.client->ps.stats[STAT_WEAPON_TIME])
         return false;
 
+    TriggerWeaponJump(ucmd, targetOrigin, fireTarget);
+    return true;
+}
+
+void Bot::TriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget)
+{
     Vec3 botToFireTarget = fireTarget - self->s.origin;
     vec3_t lookAngles = {0, 0, 0};
     VecToAngles((-botToFireTarget).Data(), lookAngles);
@@ -1246,12 +1392,11 @@ bool Bot::TryRocketJumpToAGoal(usercmd_t *ucmd)
     ucmd->upmove = 1;
     ucmd->buttons |= (BUTTON_ATTACK|BUTTON_SPECIAL);
 
-    rocketJumpTarget = goalOrigin;
+    rocketJumpTarget = targetOrigin;
     rocketJumpFireTarget = fireTarget;
     hasTriggeredRocketJump = true;
     hasCorrectedRocketJump = false;
     rocketJumpTimeoutAt = level.time + 750;
-    return true;
 }
 
 void Bot::CheckTargetProximity()

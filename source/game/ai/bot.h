@@ -212,7 +212,25 @@ private:
     // Returns true if a pending landing dash has timed out
     bool CheckPendingLandingDashTimedOut();
 
-    bool TryRocketJumpToAGoal(usercmd_t *ucmd);
+    bool TryRocketJumpShortcut(usercmd_t *ucmd);
+    // A bot should aim to fireTarget while doing a RJ
+    // A bot should look on targetOrigin in flight
+    // Return false if targets can't be adjusted (and a RJ should be rejected).
+    bool AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarget) const;
+    // Should be called when a goal does not seem to be reachable for RJ on the distance to a goal.
+    bool AdjustRocketJumpTargetForPathShortcut(Vec3 *targetOrigin, Vec3 *fireTarget) const;
+    // Should be called when a goal seems to be reachable for RJ on the distance to a goal,
+    // but direct rocketjump to a goal is blocked by obstacles.
+    // Returns area num of found area (if any)
+    int TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botToGoalDist2D) const;
+    // Tries to select an appropriate weapon and trigger a rocketjump.
+    // Assumes that targetOrigin and fireTarget are checked.
+    // Returns false if a rocketjump cannot be triggered.
+    bool TryTriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget);
+    // Triggers a jump/dash and fire actions, and schedules trajectory correction to fireTarget to a next frame.
+    // Assumes that targetOrigin and fireTarget are checked.
+    // Make sure you have selected an appropriate weapon and its ready to fire before you call it.
+    void TriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget);
 
     // Returns true if the bot is at least a bit blocked
     void TryMoveAwayIfBlocked(usercmd_t *ucmd);
