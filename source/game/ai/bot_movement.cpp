@@ -5,16 +5,21 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
 {
     isOnGroundThisFrame = self->groundentity != nullptr;
 
-    CheckPendingLandingDashTimedOut();
-
-    bool hasToEvade = false;
-    if (Skill() > 0.25f && !ShouldSkipThinkFrame())
-        hasToEvade = dangersDetector.FindDangers();
-
-    if (inhibitCombat && !hasToEvade)
+    // These triggered actions should be processed
+    if (hasTouchedJumppad || hasEnteredJumppad || hasTriggeredRocketJump || hasPendingLandingDash)
+    {
         Move(ucmd);
+    }
     else
-        CombatMovement(ucmd, hasToEvade);
+    {
+        bool hasToEvade = false;
+        if (Skill() >= 0.33f && !ShouldSkipThinkFrame())
+            hasToEvade = dangersDetector.FindDangers();
+        if (!hasToEvade && (inhibitCombat || hasCampingSpot))
+            Move(ucmd);
+        else
+            CombatMovement(ucmd, hasToEvade);
+    }
 
     TryMoveAwayIfBlocked(ucmd);
 
@@ -26,6 +31,14 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
 
 void Bot::Move(usercmd_t *ucmd)
 {
+    CheckPendingLandingDashTimedOut();
+
+    if (hasTriggeredRocketJump)
+    {
+        if (self->groundentity || (rocketJumpTarget - self->s.origin).SquaredLength() < 48 * 48)
+            hasTriggeredRocketJump = false;
+    }
+
     if (currAasAreaNum == 0 || goalAasAreaNum == 0)
         return;
 
@@ -49,12 +62,6 @@ void Bot::Move(usercmd_t *ucmd)
     else
     {
         intendedLookVec = Vec3(self->s.origin) - goalTargetPoint;
-    }
-
-    if (hasTriggeredRocketJump)
-    {
-        if (self->groundentity || (rocketJumpTarget - self->s.origin).SquaredLength() < 48 * 48)
-            hasTriggeredRocketJump = false;
     }
 
     if (self->is_ladder)
