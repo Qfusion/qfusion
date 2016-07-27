@@ -1058,6 +1058,8 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                 ucmd->buttons &= ~BUTTON_SPECIAL;
     }
 
+    if (AAS_AreaPresenceType(currAasAreaNum) == PRESENCE_CROUCH)
+        ucmd->upmove = -1;
 }
 
 bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
