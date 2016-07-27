@@ -1018,7 +1018,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             }
 
             // Prevent bending except in air (where it is useful to push a bot to a goal)
-            if (self->groundentity && !IsCloseToAnyGoal())
+            if (self->groundentity || !IsCloseToAnyGoal())
                 intendedLookVec->Z() *= Z_NO_BEND_SCALE;
         }
     }
