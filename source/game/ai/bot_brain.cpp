@@ -1,7 +1,7 @@
 #include "bot.h"
+#include "ai_ground_trace_cache.h"
 #include "ai_squad_based_team_brain.h"
 #include "bot_brain.h"
-#include "../../gameshared/q_comref.h"
 #include <algorithm>
 #include <limits>
 #include <stdarg.h>
@@ -123,6 +123,8 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
 
 void BotBrain::PreThink()
 {
+    AiBaseBrain::PreThink();
+
     const unsigned levelTime = level.time;
 
     if (combatTask.aimEnemy)
@@ -156,6 +158,8 @@ void BotBrain::PreThink()
 
 void BotBrain::PostThink()
 {
+    AiBaseBrain::PostThink();
+
     prevThinkLevelTime = level.time;
 }
 
@@ -258,37 +262,23 @@ void BotBrain::OnClearSpecialGoalRequested()
     localSpecialGoal.ResetWithSetter(this);
 }
 
-static bool AdjustOriginToFloor(const edict_t *ent, Vec3 *result)
-{
-    if (!ent)
-        return false;
-    Vec3 v1(ent->s.origin), v2(ent->s.origin);
-    v2.Z() -= 256.0f;
-    trace_t trace;
-    edict_t *key = const_cast<edict_t*>(ent);
-    G_Trace(&trace, v1.Data(), playerbox_stand_mins, playerbox_stand_maxs, v2.Data(), key, MASK_AISOLID);
-    if (trace.fraction == 1.0f)
-        return false;
-    VectorCopy(trace.endpos, result->Data());
-    // Offset Z a bit
-    result->Z() += 1.0f;
-    return true;
-}
-
 bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
 {
     const auto &activeEnemies = activeEnemyPool->ActiveEnemies();
+    AiGroundTraceCache *groundTraceCache = AiGroundTraceCache::Instance();
     // Blocker origin should be put to a floor by a single trace to ensure
     // that FindAASTravelTimeToGoalArea() will not do it on each loop step
     StaticVector<Vec3, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> blockerOrigins;
     StaticVector<int, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> blockerAreaNums;
     for (unsigned i = 0; i < activeEnemies.size(); ++i)
     {
-        Vec3 origin(0, 0, 0);
+        Enemy *enemy = activeEnemies[i];
+        vec3_t origin;
         int areaNum = 0;
-        if (AdjustOriginToFloor(activeEnemies[i]->ent, &origin))
-            areaNum = AAS_PointAreaNum(origin.Data());
-        blockerOrigins.push_back(origin);
+        // Check whether enemy is valid before access to any of its props
+        if (enemy->IsValid() && groundTraceCache->TryDropToFloor(enemy->ent, 128.0f, origin))
+            areaNum = FindAASAreaNum(origin);
+        blockerOrigins.push_back(Vec3(origin));
         blockerAreaNums.push_back(areaNum);
     }
 
@@ -308,7 +298,8 @@ bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
         if ((blockerOrigin - aasworld.areas[goalAreaNum].center).SquaredLength() < blockerRadius * blockerRadius)
         {
             // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
-            int travelTime = FindAASTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.Data(), goalAreaNum) * 10;
+            int travelTime = AAS_AreaTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.Data(), goalAreaNum, TFL_DEFAULT);
+            travelTime *= 10;
             // If goal area is reachable for enemy in dangerMoveMillis
             if (travelTime && travelTime < blockerMoveMillis)
                 return true;
@@ -327,7 +318,7 @@ bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
                 if ((Vec3(area.center) - self->s.origin).SquaredLength() > blockerRadius * blockerRadius)
                 {
                     // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
-                    int travelTime = FindAASTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.Data(), areaNum) * 10;
+                    int travelTime = AAS_AreaTravelTimeToGoalArea(blockerAreaNum, blockerOrigin.Data(), areaNum, TFL_DEFAULT);
                     // If goal area is reachable for enemy in dangerMoveMillis
                     if (travelTime && travelTime < blockerMoveMillis)
                         return true;
@@ -338,7 +329,7 @@ bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
             Vec3 origin(area.center[0], area.center[1], area.mins[2] + 4);
             // This call tries to correct origin if first attempt failed (in worst case).
             // If it returns with failure we may consider a path broken and treat it as blocked
-            int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.Data(), goalAreaNum);
+            int reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin.Data(), goalAreaNum, TFL_DEFAULT);
             if (!reachNum)
                 return true;
 
@@ -374,24 +365,12 @@ bool BotBrain::ShouldCancelSpecialGoalBySpecificReasons()
         // First, project origin to floor manually. Otherwise, next call may perform a trace.
         Vec3 origin(area.center);
         origin.Z() = area.mins[2] + 4;
-        int reachNum = FindAASReachabilityToGoalArea(areaNum, origin.Data(), goalAreaNum);
+        int travelFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR;
+        int reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin.Data(), goalAreaNum, travelFlags);
         // If reachability can't be found, cancel goal
         if (!reachNum)
             return true;
-        const aas_reachability_t &reach = aasworld.reachability[reachNum];
-        switch (reach.traveltype)
-        {
-            case TRAVEL_JUMPPAD:
-            case TRAVEL_ELEVATOR:
-            case TRAVEL_FUNCBOB:
-            case TRAVEL_CROUCH:
-            case TRAVEL_LADDER:
-            case TRAVEL_SWIM:
-                return true;
-            default:
-                // Go to the next area in chain
-                areaNum = reach.areanum;
-        }
+        areaNum = aasworld.reachability[reachNum].areanum;
     }
 
     return false;
@@ -638,7 +617,7 @@ void BotBrain::SetSpecialGoalFromEntity(edict_t *entity, const AiFrameAwareUpdat
 {
     memset(&localNavEntity, 0, sizeof(NavEntity));
     localNavEntity.ent = entity;
-    localNavEntity.aasAreaNum = AAS_PointAreaNum(entity->s.origin);
+    localNavEntity.aasAreaNum = FindAASAreaNum(entity->s.origin);
     localNavEntity.flags = NavEntityFlags::REACH_AT_TOUCH | NavEntityFlags::DROPPED_ENTITY;
     localSpecialGoal.SetToNavEntity(&localNavEntity, setter);
     SetSpecialGoal(&localSpecialGoal);

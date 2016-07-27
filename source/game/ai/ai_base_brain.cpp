@@ -2,6 +2,7 @@
 #include "ai_gametype_brain.h"
 #include "ai_base_team_brain.h"
 #include "ai_base_ai.h"
+#include "ai_ground_trace_cache.h"
 #include "aas.h"
 #include "static_vector.h"
 #include "../../gameshared/q_collision.h"
@@ -22,6 +23,9 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowed
       shortTermGoalReevaluationTimeout(0),
       longTermGoalReevaluationPeriod(700),
       shortTermGoalReevaluationPeriod(350),
+      currAasAreaNum(0),
+      droppedToFloorAasAreaNum(0),
+      droppedToFloorOrigin(NAN, NAN, NAN),
       preferredAasTravelFlags(preferredAasTravelFlags),
       allowedAasTravelFlags(allowedAasTravelFlags)
 {
@@ -29,18 +33,6 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowed
     // External weights are cleared by AI code only once in this constructor.
     // Their values are completely managed by external code.
     ClearExternalEntityWeights();
-}
-
-int AiBaseBrain::FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
-{
-    return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self,
-                                           preferredAasTravelFlags, allowedAasTravelFlags);
-}
-
-int AiBaseBrain::FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
-{
-    return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self,
-                                         preferredAasTravelFlags, allowedAasTravelFlags);
 }
 
 bool AiBaseBrain::IsCloseToGoal(const Goal *goal, float proximityThreshold) const
@@ -60,6 +52,26 @@ int AiBaseBrain::GoalAasAreaNum() const
     if (shortTermGoal)
         return shortTermGoal->AasAreaNum();
     return 0;
+}
+
+template<typename AASFun>
+int AiBaseBrain::FindAASParamToGoalArea(AASFun aasFun, int goalAreaNum) const
+{
+    float *origin = const_cast<float*>(droppedToFloorOrigin.Data());
+    int param = aasFun(droppedToFloorAasAreaNum, origin, goalAreaNum, preferredAasTravelFlags);
+    if (param)
+        return param;
+    return aasFun(droppedToFloorAasAreaNum, origin, goalAreaNum, allowedAasTravelFlags);
+}
+
+int AiBaseBrain::FindAASReachabilityToGoalArea(int goalAreaNum) const
+{
+    return AiBaseBrain::FindAASParamToGoalArea(AAS_AreaReachabilityToGoalArea, goalAreaNum);
+}
+
+int AiBaseBrain::FindAASTravelTimeToGoalArea(int goalAreaNum) const
+{
+    return AiBaseBrain::FindAASParamToGoalArea(AAS_AreaTravelTimeToGoalArea, goalAreaNum);
 }
 
 void AiBaseBrain::UpdateInternalWeights()
@@ -82,6 +94,15 @@ float AiBaseBrain::GetEntityWeight(int entNum) const
     return internalEntityWeights[entNum];
 }
 
+void AiBaseBrain::PreThink()
+{
+    // Copy these values for faster access and (mainly) backward compatibility
+    // TODO: Make these values read-only properties to avoid confusion?
+    currAasAreaNum = self->ai->aiRef->currAasAreaNum;
+    droppedToFloorAasAreaNum = self->ai->aiRef->droppedToFloorAasAreaNum;
+    droppedToFloorOrigin = self->ai->aiRef->droppedToFloorOrigin;
+}
+
 void AiBaseBrain::Think()
 {
     if (!currAasAreaNum)
@@ -92,7 +113,7 @@ void AiBaseBrain::Think()
     // Do not bother of picking a goal while in air (many areas are not reachable from air areas).
     // Otherwise bot will spam lots of messages "Can't find any goal candidates".
     trace_t trace;
-    G_Trace(&trace, self->s.origin, nullptr, nullptr, (Vec3(0, 0, -48) + self->s.origin).Data(), self, MASK_AISOLID);
+    AiGroundTraceCache::Instance()->GetGroundTrace(self, 96.0f, &trace);
     if (trace.fraction == 1.0f)
         return;
 
@@ -152,7 +173,7 @@ bool AiBaseBrain::ShouldCancelGoal(const Goal *goal)
     if (goal->IsBasedOnSomeEntity())
     {
         // Find milliseconds required to move to a goal
-        unsigned moveTime = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, goal->AasAreaNum()) * 10U;
+        unsigned moveTime = FindAASTravelTimeToGoalArea(goal->AasAreaNum()) * 10U;
         if (moveTime)
         {
             unsigned reachTime = level.time + moveTime;
@@ -353,7 +374,7 @@ float AiBaseBrain::SelectLongTermGoalCandidates(const Goal *currLongTermGoal, Go
             // We ignore cost of traveling in goal area, since:
             // 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
             // 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
-            moveDuration = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, navEnt->AasAreaNum()) * 10U;
+            moveDuration = FindAASTravelTimeToGoalArea(navEnt->AasAreaNum()) * 10U;
             // AAS functions return 0 as a "none" value, 1 as a lowest feasible value
             if (!moveDuration)
                 continue;
@@ -749,29 +770,21 @@ void AiBaseBrain::OnSpecialGoalReached()
 
 std::pair<unsigned, unsigned> AiBaseBrain::FindToAndBackTravelTimes(const Vec3 &targetOrigin) const
 {
-    vec3_t testedOrigin;
-    VectorCopy(targetOrigin.Data(), testedOrigin);
-    int areaNum = AAS_PointAreaNum(testedOrigin);
-    if (!areaNum)
-    {
-        testedOrigin[2] += 8.0f;
-        areaNum = AAS_PointAreaNum(testedOrigin);
-        if (!areaNum)
-        {
-            testedOrigin[2] -= 16.0f;
-            areaNum = AAS_PointAreaNum(testedOrigin);
-        }
-    }
+    // We hope that target origin has been already dropped to floor, so no adjustment is required
+    float *targetOriginRef = const_cast<float*>(targetOrigin.Data());
+    int areaNum = FindAASAreaNum(targetOriginRef);
+
     if (!areaNum)
         return std::make_pair(0, 0);
-
     if (areaNum == currAasAreaNum)
         return std::make_pair(1, 1);
 
-    int toAasTravelTime = FindAASTravelTimeToGoalArea(currAasAreaNum, self->s.origin, areaNum);
+    int toAasTravelTime = FindAASTravelTimeToGoalArea(areaNum);
     if (!toAasTravelTime)
         return std::make_pair(0, 0);
-    int backAasTravelTime = FindAASTravelTimeToGoalArea(areaNum, testedOrigin, currAasAreaNum);
+    int backAasTravelTime = AAS_AreaTravelTimeToGoalArea(areaNum, targetOriginRef, currAasAreaNum, preferredAasTravelFlags);
+    if (!backAasTravelTime)
+        backAasTravelTime = AAS_AreaTravelTimeToGoalArea(areaNum, targetOriginRef, currAasAreaNum, allowedAasTravelFlags);
     return std::make_pair(toAasTravelTime, backAasTravelTime);
 }
 

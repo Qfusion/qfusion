@@ -163,6 +163,7 @@ NavEntity *NavEntitiesRegistry::AllocNavEntity()
 
 NavEntity *NavEntitiesRegistry::AddNavEntity(edict_t *ent, int aasAreaNum, NavEntityFlags flags)
 {
+    if (!aasAreaNum) abort();
     NavEntity *navEntity = AllocNavEntity();
     if (navEntity)
     {
