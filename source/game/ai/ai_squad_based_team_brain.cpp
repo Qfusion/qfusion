@@ -1,7 +1,6 @@
 #include "ai_squad_based_team_brain.h"
+#include "ai_ground_trace_cache.h"
 #include "bot.h"
-#include "../g_gametypes.h"
-#include "../../gameshared/gs_public.h"
 #include <algorithm>
 #include <limits>
 
@@ -38,23 +37,30 @@ int CachedTravelTimesMatrix::GetAASTravelTime(const Bot *from, const Bot *to)
 
 int CachedTravelTimesMatrix::FindAASTravelTime(const edict_t *client1, const edict_t *client2)
 {
-    // First we have to find area nums of both clients.
-    Vec3 origins[2] = { Vec3(client1->s.origin), Vec3(client2->s.origin) };
+    AiGroundTraceCache *groundTraceCache = AiGroundTraceCache::Instance();
+
+    const edict_t *clients[2] = { client1, client2 };
+    vec3_t origins[2];
     int areaNums[2] = { 0, 0 };
-    for (int clientNum = 0; clientNum < 2; ++clientNum)
+
+    for (int i = 0; i < 2; ++i)
     {
-        for (int i = 0; !areaNums[clientNum] && i < 3; ++i)
-        {
-            // TODO: Replace Z steps by tracing?
-            areaNums[clientNum] = AAS_PointAreaNum(origins[clientNum].Data());
-            origins[clientNum].Z() -= 16.0f;
-        }
-        if (!areaNums[clientNum])
+        if (!groundTraceCache->TryDropToFloor(clients[i], 96.0f, origins[i]))
+            return 0;
+        areaNums[i] = FindAASAreaNum(origins[i]);
+        if (!areaNums[i])
             return 0;
     }
-    return FindAASTravelTimeToGoalArea(areaNums[0], origins[0].Data(), areaNums[1], client1,
-                                       client1->ai->aiRef->PreferredTravelFlags(),
-                                       client1->ai->aiRef->AllowedTravelFlags());
+
+    int travelFlags[2] = { client1->ai->aiRef->PreferredTravelFlags(), client1->ai->aiRef->AllowedTravelFlags() };
+    for (int i = 0; i < 2; ++i)
+    {
+        int travelTime = AAS_AreaTravelTimeToGoalArea(areaNums[0], origins[0], areaNums[1], travelFlags[i]);
+        if (travelTime)
+            return travelTime;
+    }
+
+    return 0;
 }
 
 AiSquad::SquadEnemyPool::SquadEnemyPool(AiSquad *squad, float skill)
@@ -446,7 +452,7 @@ bool AiSquad::ShouldNotDropWeaponsNow() const
     for (const Enemy &enemy: squadEnemyPool->TrackedEnemies())
     {
         // Check whether an enemy has been invalidated and invalidation is not processed yet to prevent crash
-        if (!enemy.IsValid())
+        if (!enemy.IsValid() || G_ISGHOSTING(enemy.ent))
             continue;
         if (!BoundsAndSphereIntersect(mins, maxs, enemy.LastSeenPosition().Data(), 400.0f))
             continue;
@@ -459,18 +465,38 @@ bool AiSquad::ShouldNotDropWeaponsNow() const
         return a->LastSeenAt() > b->LastSeenAt();
     });
 
+    AiGroundTraceCache *groundTraceCache = AiGroundTraceCache::Instance();
+
     // Then do a reachability check for not more than 4 recently seen stealers
     for (unsigned i = 0, end = std::min(4u, potentialStealers.size()); i < end; ++i)
     {
-        Vec3 stealerOrigin(potentialStealers[i]->LastSeenPosition());
+        const Enemy *stealer = potentialStealers[i];
+        Vec3 stealerOrigin(stealer->LastSeenPosition());
+        // We can't use ground trace cache for stealers (stealers positions are not actual but last seen)
+        Vec3 traceEnd(stealerOrigin);
+        traceEnd.Z() -= 172.0f;
+        trace_t trace;
+        edict_t *stealerEnt = const_cast<edict_t*>(stealer->ent);
+        G_Trace(&trace, stealerOrigin.Data(), nullptr, nullptr, traceEnd.Data(), stealerEnt, MASK_AISOLID);
+        if (trace.fraction == 1.0f)
+            continue;
+        stealerOrigin.Z() -= trace.fraction * 172.0f;
+        stealerOrigin.Z() += 16.0f; // Add some delta
+
         int stealerAreaNum = FindAASAreaNum(stealerOrigin);
         if (!stealerAreaNum)
             continue;
-        edict_t *traceKey = const_cast<edict_t *>(potentialStealers[i]->ent);
+
         for (const Bot *bot: bots)
         {
-            int travelTime = FindAASTravelTimeToGoalArea(stealerAreaNum, stealerOrigin.Data(),
-                                                         bot->CurrAreaNum(), traceKey, TFL_DEFAULT, TFL_DEFAULT);
+            vec3_t botGroundedOrigin;
+            if (!groundTraceCache->TryDropToFloor(bot->Self(), 96.0f, botGroundedOrigin))
+                continue;
+            int botGroundedAreaNum = FindAASAreaNum(botGroundedOrigin);
+            if (!botGroundedAreaNum)
+                continue;
+
+            int travelTime = AAS_AreaTravelTimeToGoalArea(stealerAreaNum, stealerOrigin.Data(), botGroundedAreaNum, TFL_DEFAULT);
             // The stealer can't reach a bot (if it moves like a bot with TFL_DEFAULT)
             if (!travelTime)
                 continue;

@@ -36,6 +36,8 @@ protected:
     const unsigned shortTermGoalReevaluationPeriod;
 
     int currAasAreaNum;
+    int droppedToFloorAasAreaNum;
+    Vec3 droppedToFloorOrigin;
 
     int preferredAasTravelFlags;
     int allowedAasTravelFlags;
@@ -49,6 +51,9 @@ protected:
     float externalEntityWeights[MAX_EDICTS];
 
     AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
+
+    int FindAASReachabilityToGoalArea(int goalAreaNum) const;
+    int FindAASTravelTimeToGoalArea(int goalAreaNum) const;
 
     inline void ClearInternalEntityWeights()
     {
@@ -75,12 +80,11 @@ protected:
     // Returns a pair of AAS travel times to the target point and back
     std::pair<unsigned, unsigned> FindToAndBackTravelTimes(const Vec3 &targetPoint) const;
 
-    int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
-    int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const;
     bool IsCloseToGoal(const Goal *goal, float proximityThreshold) const;
 
     int GoalAasAreaNum() const;
 
+    virtual void PreThink() override;
     virtual void Think() override;
 
     // Used for additional potential goal rejection that does not reflected in entity weights.
@@ -96,6 +100,7 @@ protected:
     virtual void OnSpecialGoalReached();
 private:
     // Implementation helpers
+    template <typename AASFun> int FindAASParamToGoalArea(AASFun aasFun, int goalAreaNum) const;
 
     struct NavEntityAndWeight
     {

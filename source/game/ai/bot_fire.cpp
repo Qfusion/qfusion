@@ -642,16 +642,7 @@ bool Bot::AdjustTargetByEnvironment(const firedef_t *firedef, const vec3_t fire_
     int targetAreaNum = 0;
     // Reject AAS worlds that look like stripped
     if (aasworld.numfaces > 512)
-    {
-        targetAreaNum = AAS_PointAreaNum(target);
-        if (!targetAreaNum)
-        {
-            // Try some close random point (usually Z should be greater)
-            Vec3 offsetTarget(target);
-            offsetTarget += Vec3(-4.0f + 8.0f * random(),  -4.0f + 8.0f * random(), 4.0f + 4.0f * random());
-            targetAreaNum = AAS_PointAreaNum(offsetTarget.Data());
-        }
-    }
+        targetAreaNum = FindAASAreaNum(target);
 
     if (targetAreaNum)
         return AdjustTargetByEnvironmentWithAAS(firedef->splash_radius, fire_origin, target, targetAreaNum);

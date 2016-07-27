@@ -1,5 +1,6 @@
 #include "bot.h"
 #include "aas.h"
+#include "ai_ground_trace_cache.h"
 
 void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
 {
@@ -287,7 +288,9 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
         Vec3 origin(aasworld.areas[areaNum].center);
         origin.Z() = aasworld.areas[areaNum].mins[2] + 8;
         // Returns 1 as a lowest feasible travel time value (in seconds ^-2), 0 when a path can't be found
-        int aasTravelTime = FindAASTravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum);
+        int aasTravelTime = AAS_AreaTravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum, PreferredTravelFlags());
+        if (!aasTravelTime)
+            aasTravelTime = AAS_AreaTravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum, AllowedTravelFlags());
         if (aasTravelTime)
         {
             areasAndTravelTimes[selectedAreasCount++] = AttributedArea<int>(areaNum, aasTravelTime);
@@ -1105,7 +1108,7 @@ bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
         // Check whether a bot has a ground surface to push off it
         // TODO: Check for walls?
         trace_t trace;
-        G_Trace(&trace, self->s.origin, nullptr, nullptr, (Vec3(0, 0, -36) + self->s.origin).Data(), self, MASK_AISOLID);
+        AiGroundTraceCache::Instance()->GetGroundTrace(self, 36, &trace);
         if (trace.fraction == 1.0f)
             return false;
         if (trace.surfFlags & SURF_NOIMPACT)

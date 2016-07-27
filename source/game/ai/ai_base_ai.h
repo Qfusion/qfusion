@@ -49,9 +49,15 @@ protected:
     // and provides a reference to it to this base class via this pointer.
     class AiBaseBrain *aiBaseBrain;
 
-    // Must be updated before brain thinks (set the brain currAasAreaNum to an updated value).
+    // Must be updated before brain thinks.
     int currAasAreaNum;
-    // Must be updated after brain thinks (copy from a brain goal)
+    // Must be updated before brain thinks
+    // May match currAasAreaNum if the origin can't be dropped to floor
+    // (An Ai is more than 96 units above a floor (if any))
+    int droppedToFloorAasAreaNum;
+    Vec3 droppedToFloorOrigin;
+
+    // Set by goal callback
     int goalAasAreaNum;
     Vec3 goalTargetPoint;
 
@@ -88,6 +94,7 @@ public:
     inline bool IsGhosting() const { return G_ISGHOSTING(self); }
 
     inline int CurrAreaNum() const { return currAasAreaNum; }
+    inline int DroppedToFloorAreaNum() const { return droppedToFloorAasAreaNum; }
     inline int GoalAreaNum() const { return goalAasAreaNum; }
 
     inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
@@ -111,25 +118,6 @@ protected:
     const char *Nick() const
     {
         return self->r.client ? self->r.client->netname : self->classname;
-    }
-
-    inline int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
-    {
-        return ::FindAASReachabilityToGoalArea(fromAreaNum, origin, goalAreaNum, self,
-                                               preferredAasTravelFlags, allowedAasTravelFlags);
-    }
-    inline int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t origin, int goalAreaNum) const
-    {
-        return ::FindAASTravelTimeToGoalArea(fromAreaNum, origin, goalAreaNum, self,
-                                             preferredAasTravelFlags, allowedAasTravelFlags);
-    }
-    inline float FindSquareDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const
-    {
-        return ::FindSquareDistanceToGround(origin, self, traceDepth);
-    }
-    inline float FindDistanceToGround(const vec3_t origin, float traceDepth = 999999.0f) const
-    {
-        return ::FindDistanceToGround(origin, self, traceDepth);
     }
 
     virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) {};

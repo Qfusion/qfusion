@@ -1,10 +1,13 @@
 #include "ai_base_ai.h"
 #include "ai_base_brain.h"
+#include "ai_ground_trace_cache.h"
 
 Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
     : EdictRef(self),
       aiBaseBrain(nullptr), // Must be set in a subclass constructor
       currAasAreaNum(0),
+      droppedToFloorAasAreaNum(0),
+      droppedToFloorOrigin(0, 0, 0),
       goalAasAreaNum(0),
       goalTargetPoint(0, 0, 0),
       allowedAasTravelFlags(allowedAasTravelFlags),
@@ -14,7 +17,6 @@ Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
       aiYawSpeed(0.0f),
       aiPitchSpeed(0.0f)
 {
-    // TODO: Modify preferred aas travel flags if there is no selfdamage for excessive rocketjumping
 }
 
 void Ai::Debug(const char *format, ...) const
@@ -74,7 +76,7 @@ void Ai::UpdateReachCache(int reachedAreaNum)
     if (nextReaches.empty())
     {
         areaNum = reachedAreaNum;
-        origin = self->s.origin;
+        origin = droppedToFloorOrigin.Data();
     }
     else
     {
@@ -83,12 +85,13 @@ void Ai::UpdateReachCache(int reachedAreaNum)
     }
     while (areaNum != goalAasAreaNum && nextReaches.size() != nextReaches.capacity())
     {
-        int reachNum = FindAASReachabilityToGoalArea(areaNum, origin, goalAasAreaNum);
+        int reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAasAreaNum, preferredAasTravelFlags);
+        if (!reachNum)
+            reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAasAreaNum, allowedAasTravelFlags);
         // We hope we'll be pushed in some other area during movement, and goal area will become reachable. Leave as is.
         if (!reachNum)
             break;
-        aas_reachability_t reach;
-        AAS_ReachabilityFromNum(reachNum, &reach);
+        aas_reachability_t &reach = aasworld.reachability[reachNum];
         areaNum = reach.areanum;
         origin = reach.end;
         nextReaches.push_back(reach);
@@ -97,7 +100,23 @@ void Ai::UpdateReachCache(int reachedAreaNum)
 
 void Ai::CheckReachedArea()
 {
-    const int actualAasAreaNum = AAS_PointAreaNum(self->s.origin);
+    const int actualAasAreaNum = FindAASAreaNum(self);
+
+    // It deserves a separate statement (may modify droppedToFloorOrigin)
+    bool droppedToFloor = AiGroundTraceCache::Instance()->TryDropToFloor(self, 96.0f, droppedToFloorOrigin.Data());
+    if (droppedToFloor)
+    {
+        droppedToFloorAasAreaNum = FindAASAreaNum(droppedToFloorOrigin);
+        if (!droppedToFloorAasAreaNum)
+        {
+            // Revert the dropping attempt
+            VectorCopy(self->s.origin, droppedToFloorOrigin.Data());
+            droppedToFloorAasAreaNum = actualAasAreaNum;
+        }
+    }
+    else
+        droppedToFloorAasAreaNum = actualAasAreaNum;
+
     // Current aas area num did not changed
     if (actualAasAreaNum)
     {

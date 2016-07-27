@@ -97,18 +97,14 @@ extern ai_weapon_t AIWeapons[WEAP_TOTAL];
 //----------------------------------------------------------
 
 #include "aas.h"
+#include "vec3.h"
 
-int FindAASReachabilityToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum,
-								  const edict_t *ignoreInTrace, int preferredTravelFlags, int allowedTravelFlags);
-
-int FindAASTravelTimeToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int goalAreaNum,
-								const edict_t *ignoreInTrace, int preferredTravelFlags, int allowedTravelFlags);
-
-float FindSquareDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
-float FindDistanceToGround(const vec3_t origin, const edict_t *ignoreInTrace, float traceDepth = 999999.0f);
-
-int FindAASAreaNum(const class Vec3 &origin);
+int FindAASAreaNum(const vec3_t origin);
 int FindAASAreaNum(const edict_t *ent);
+inline int FindAASAreaNum(const Vec3 &origin)
+{
+	return FindAASAreaNum(origin.Data());
+}
 
 typedef struct ai_handle_s
 {
