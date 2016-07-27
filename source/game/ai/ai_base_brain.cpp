@@ -57,11 +57,19 @@ int AiBaseBrain::GoalAasAreaNum() const
 template<typename AASFun>
 int AiBaseBrain::FindAASParamToGoalArea(AASFun aasFun, int goalAreaNum) const
 {
-    float *origin = const_cast<float*>(droppedToFloorOrigin.Data());
-    int param = aasFun(droppedToFloorAasAreaNum, origin, goalAreaNum, preferredAasTravelFlags);
-    if (param)
-        return param;
-    return aasFun(droppedToFloorAasAreaNum, origin, goalAreaNum, allowedAasTravelFlags);
+    int areaNums[2] = { droppedToFloorAasAreaNum, currAasAreaNum };
+    float *origins[2] = { const_cast<float*>(droppedToFloorOrigin.Data()), self->s.origin };
+    int travelFlags[2] = { preferredAasTravelFlags, allowedAasTravelFlags };
+
+    for (int i = 0; i < 4; ++i)
+    {
+        int originNum = (i >> 1) & 1;
+        int travelFlagNum = (i >> 0) & 1;
+        int param = aasFun(areaNums[originNum], origins[originNum], goalAreaNum, travelFlags[travelFlagNum]);
+        if (param)
+            return param;
+    }
+    return 0;
 }
 
 int AiBaseBrain::FindAASReachabilityToGoalArea(int goalAreaNum) const
