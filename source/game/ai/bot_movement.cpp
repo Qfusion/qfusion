@@ -22,7 +22,7 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
             CombatMovement(ucmd, hasToEvade);
     }
 
-    TryMoveAwayIfBlocked(ucmd);
+    TryEscapeIfBlocked(ucmd);
 
     CheckTargetProximity();
 
@@ -134,7 +134,7 @@ void Bot::Move(usercmd_t *ucmd)
     }
 }
 
-void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
+void Bot::TryEscapeIfBlocked(usercmd_t *ucmd)
 {
     // Make sure that blocked timeout start counting down and the bot is blocked for at least 500 millis
     if (blockedTimeout - level.time > BLOCKED_TIMEOUT - 500)
@@ -144,45 +144,12 @@ void Bot::TryMoveAwayIfBlocked(usercmd_t *ucmd)
     if (hasPendingLookAtPoint)
         return;
 
-    // Try to get current aas area again (we may did a little move, and AAS area may become available)
-    if (currAasAreaNum == 0)
-        currAasAreaNum = FindAASAreaNum(self);
-
-    // Still can't find current area or still is blocked, try to move in a random direction
-    if (currAasAreaNum == 0 || blockedTimeout - level.time < BLOCKED_TIMEOUT - 750)
-    {
-        // We use different randoms to make moves independent
-        if (random() > 0.8f)
-        {
-            // Try either forwardmove or sidemove
-            if (random() > 0.5f)
-                ucmd->forwardmove = random() > 0.5f ? -1 : 1;
-            else
-                ucmd->sidemove = random() > 0.5f ? -1 : 1;
-        }
-        else
-        {
-            // Try both forwardmove and sidemove
-            ucmd->forwardmove = random() > 0.5f ? -1 : 1;
-            ucmd->sidemove = random() > 0.5f ? -1 : 1;
-        }
-        // These moves are mutual-exclusive
-        float r = random();
-        if (r > 0.8f)
-            ucmd->buttons |= BUTTON_SPECIAL;
-        else if (r > 0.6f)
-            ucmd->upmove = 1;
-        else if (r > 0.4f)
-            ucmd->upmove = -1;
-
+    // Let the bot do a suicide, its better than he will hop on the same point randomly trying to escape
+    if (!currAasAreaNum)
         return;
-    }
-
-    aas_areainfo_t currAreaInfo;
-    AAS_AreaInfo(currAasAreaNum, &currAreaInfo);
 
     // Way to this point should not be blocked
-    SetPendingLookAtPoint(Vec3(currAreaInfo.center), 1.5f);
+    SetPendingLookAtPoint(Vec3(aasworld.areas[currAasAreaNum].center), 1.5f);
     ucmd->forwardmove = 1;
     ucmd->buttons |= BUTTON_SPECIAL;
 }
