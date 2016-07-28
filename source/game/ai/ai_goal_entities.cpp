@@ -41,6 +41,9 @@ unsigned NavEntity::SpawnTime() const
 
 unsigned NavEntity::MaxWaitDuration() const
 {
+    if (ShouldBeReachedOnEvent())
+        return std::numeric_limits<unsigned>::max();
+
     if (!ent->item)
         return 0;
 
