@@ -102,7 +102,6 @@ private:
     BotBrain botBrain;
 
     float skillLevel;
-    bool printLink;
 
     // Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
     // It gets processed by movement code in next frame
