@@ -84,7 +84,7 @@ public:
     }
 
     inline size_type size() const { return count; }
-    inline size_type capacity() const { return N; }
+    inline static constexpr size_type capacity() { return N; }
     inline bool empty() const { return count == 0; }
 
     inline iterator begin() { return basePointer; }

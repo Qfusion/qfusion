@@ -10,6 +10,8 @@ const size_t ai_handle_size = sizeof( ai_handle_t );
 static bool ai_intialized = false;
 static bool aas_system_initialized = false;
 
+StaticVector<int, 16> hubAreas;
+
 //==========================================
 // AI_InitLevel
 // Inits Map local parameters
@@ -96,6 +98,8 @@ void AI_InitLevel( void )
 
 void AI_Shutdown( void )
 {
+    hubAreas.clear();
+
     if (!ai_intialized)
         return;
 
@@ -132,6 +136,138 @@ void AI_CommonFrame()
     AiGametypeBrain::Instance()->Update();
 }
 
+static void FindHubAreas()
+{
+    if (!hubAreas.empty())
+        return;
+
+    // Select not more than hubAreas.capacity() grounded areas that have highest connectivity to other areas.
+
+    struct AreaAndReachCount
+    {
+        int area, reachCount;
+        AreaAndReachCount(int area, int reachCount): area(area), reachCount(reachCount) {}
+        // Ensure that area with lowest reachCount will be evicted in pop_heap(), so use >
+        bool operator<(const AreaAndReachCount &that) const { return reachCount > that.reachCount; }
+    };
+
+    StaticVector<AreaAndReachCount, hubAreas.capacity() + 1> bestAreasHeap;
+    for (int i = 1; i < aasworld.numareas; ++i)
+    {
+        const auto &areaSettings = aasworld.areasettings[i];
+        if (!(areaSettings.areaflags & AREA_GROUNDED))
+            continue;
+        if (areaSettings.areaflags & AREA_DISABLED)
+            continue;
+        if (areaSettings.contents & (AREACONTENTS_DONOTENTER|AREACONTENTS_LAVA|AREACONTENTS_SLIME|AREACONTENTS_WATER))
+            continue;
+
+        // Reject degenerate areas, pass only relatively large areas
+        const auto &area = aasworld.areas[i];
+        if (area.maxs[0] - area.mins[0] < 128.0f)
+            continue;
+        if (area.maxs[1] - area.mins[1] < 128.0f)
+            continue;
+
+        // Count as useful only several kinds of reachabilities
+        int usefulReachCount = 0;
+        int reachNum = areaSettings.firstreachablearea;
+        int lastReachNum = areaSettings.firstreachablearea + areaSettings.numreachableareas - 1;
+        while (reachNum <= lastReachNum)
+        {
+            const auto &reach = aasworld.reachability[reachNum];
+            if (reach.traveltype == TRAVEL_WALK || reach.traveltype == TRAVEL_WALKOFFLEDGE)
+                usefulReachCount++;
+            ++reachNum;
+        }
+
+        // Reject early to avoid more expensive call to push_heap()
+        if (!usefulReachCount)
+            continue;
+
+        bestAreasHeap.push_back(AreaAndReachCount(i, usefulReachCount));
+        std::push_heap(bestAreasHeap.begin(), bestAreasHeap.end());
+
+        // bestAreasHeap size should be always less than its capacity:
+        // 1) to ensure that there is a free room for next area;
+        // 2) to ensure that hubAreas capacity will not be exceeded.
+        if (bestAreasHeap.size() == bestAreasHeap.capacity())
+        {
+            std::pop_heap(bestAreasHeap.begin(), bestAreasHeap.end());
+            bestAreasHeap.pop_back();
+        }
+    }
+    static_assert(bestAreasHeap.capacity() == hubAreas.capacity() + 1, "");
+    for (const auto &areaAndReachCount: bestAreasHeap)
+        hubAreas.push_back(areaAndReachCount.area);
+}
+
+static inline void ExtendDimension(float *mins, float *maxs, int dimension)
+{
+    float side = maxs[dimension] - mins[dimension];
+    if (side < 48.0f)
+    {
+        maxs[dimension] += 0.5f * (48.0f - side);
+        mins[dimension] -= 0.5f * (48.0f - side);
+    }
+}
+
+static int FindGoalAASArea(edict_t *ent)
+{
+    Vec3 mins(ent->r.mins), maxs(ent->r.maxs);
+    // Extend AABB XY dimensions
+    ExtendDimension(mins.Data(), maxs.Data(), 0);
+    ExtendDimension(mins.Data(), maxs.Data(), 1);
+    // Z needs special extension rules
+    float presentHeight = maxs.Z() - mins.Z();
+    float playerHeight = playerbox_stand_maxs[2] - playerbox_stand_mins[2];
+    if (playerHeight > presentHeight)
+        maxs.Z() += playerHeight - presentHeight;
+
+    // Find all areas in bounds
+    int areas[16];
+    // Convert bounds to absolute ones
+    mins += ent->s.origin;
+    maxs += ent->s.origin;
+    const int numAreas = AAS_BBoxAreas(mins.Data(), maxs.Data(), areas, 16);
+
+    // Find hub areas (or use cached)
+    FindHubAreas();
+
+    int bestArea = 0;
+    int bestAreaReachCount = 0;
+    for (int i = 0; i < numAreas; ++i)
+    {
+        const int areaNum = areas[i];
+        int areaReachCount = 0;
+        for (const int hubAreaNum: hubAreas)
+        {
+            const aas_area_t &hubArea = aasworld.areas[hubAreaNum];
+            Vec3 hubAreaPoint(hubArea.center);
+            hubAreaPoint.Z() = hubArea.mins[2] + std::min(24.0f, hubArea.maxs[2] - hubArea.mins[2]);
+            // Do not waste pathfinder cycles testing for preferred flags that may fail.
+            constexpr int travelFlags = Bot::ALLOWED_TRAVEL_FLAGS;
+            if (AAS_AreaReachabilityToGoalArea(hubAreaNum, hubAreaPoint.Data(), areaNum, travelFlags))
+            {
+                areaReachCount++;
+                // Thats't enough, do not waste CPU cycles
+                if (areaReachCount == 4)
+                    return areaNum;
+            }
+        }
+        if (areaReachCount > bestAreaReachCount)
+        {
+            bestArea = areaNum;
+            bestAreaReachCount = areaReachCount;
+        }
+    }
+    if (bestArea)
+        return bestArea;
+
+    // Fall back to a default method and hope it succeeds
+    return FindAASAreaNum(ent);
+}
+
 void AI_AddNavEntity(edict_t *ent, ai_nav_entity_flags flags)
 {
     if (!flags)
@@ -159,7 +295,7 @@ void AI_AddNavEntity(edict_t *ent, ai_nav_entity_flags flags)
     if (flags & AI_NAV_DROPPED)
         navEntityFlags = navEntityFlags | NavEntityFlags::DROPPED_ENTITY;
 
-    int areaNum = FindAASAreaNum(ent);
+    int areaNum = FindGoalAASArea(ent);
     if (areaNum)
     {
         NavEntitiesRegistry::Instance()->AddNavEntity(ent, areaNum, navEntityFlags);
