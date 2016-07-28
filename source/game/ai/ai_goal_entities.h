@@ -73,6 +73,10 @@ public:
     inline NavEntityFlags Flags() const { return flags; }
     inline int Id() const { return id; }
     inline int AasAreaNum() const { return aasAreaNum; }
+    // A cost influence defines how base entity weight is affected by cost (move duration and wait time).
+    // A cost influence is a positive float number usually in 0.5-1.0 range.
+    // Lesser cost influence means that an entity weight is less affected by distance.
+    float CostInfluence() const;
     inline Vec3 Origin() const { return Vec3(ent->s.origin); }
     inline const gsitem_t *Item() const { return ent ? ent->item : nullptr; }
     inline const char *Classname() const { return ent ? ent->classname : nullptr; }
@@ -152,6 +156,14 @@ public:
     inline int AasAreaNum() const
     {
         return navEntity ? navEntity->AasAreaNum() : explicitAasAreaNum;
+    }
+
+    // A cost influence defines how base goal weight is affected by cost (move duration and wait time).
+    // A cost influence is a positive float number usually in 0.5-1.0 range.
+    // Lesser cost influence means that a goal weight is less affected by distance.
+    inline float CostInfluence() const
+    {
+        return navEntity ? navEntity->CostInfluence() : 0.5f;
     }
 
     inline bool IsBasedOnEntity(const edict_t *ent) const

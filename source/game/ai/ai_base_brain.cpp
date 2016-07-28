@@ -354,7 +354,6 @@ Vec3 AiBaseBrain::ClosestGoalOrigin() const
     return chosenGoal->Origin();
 }
 
-constexpr float COST_INFLUENCE = 0.5f;
 constexpr float MOVE_TIME_WEIGHT = 1.0f;
 constexpr float WAIT_TIME_WEIGHT = 3.5f;
 
@@ -410,7 +409,7 @@ float AiBaseBrain::SelectLongTermGoalCandidates(const Goal *currLongTermGoal, Go
 
         float cost = 0.0001f + MOVE_TIME_WEIGHT * moveDuration + WAIT_TIME_WEIGHT * waitDuration;
 
-        weight = (1000 * weight) / (cost * COST_INFLUENCE); // Check against cost of getting there
+        weight = (1000 * weight) / (cost * navEnt->CostInfluence()); // Check against cost of getting there
 
         // Store current weight of the current goal entity
         if (currLongTermGoal && currLongTermGoal->IsBasedOnNavEntity(navEnt))
@@ -578,7 +577,7 @@ float AiBaseBrain::SelectShortTermGoalCandidates(const Goal *currShortTermGoal, 
                 inFront = false;
         }
 
-        weight = weight / dist * (inFront ? 1.0f : 0.5f);
+        weight = weight / dist * (inFront ? 1.0f : 0.5f) * navEnt->CostInfluence();
 
         // Store current short-term goal current weight
         if (currShortTermGoal && currShortTermGoal->IsBasedOnNavEntity(navEnt))
