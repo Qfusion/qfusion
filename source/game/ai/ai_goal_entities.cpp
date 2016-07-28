@@ -1,5 +1,35 @@
 #include "ai_goal_entities.h"
 
+float NavEntity::CostInfluence() const
+{
+    // Usually these kinds of nav entities are CTF flags or bomb spots,
+    // so these entities should be least affected by cost.
+    if (!ent->item)
+        return 0.5f;
+
+    // Cost influence is not a weight.
+    // Cost influence separates different classes of items, not items itself.
+    // For two items of the same cost class costs should match and weights may (and usually) no.
+    // We add extra conditions just because MH and a health bubble,
+    // RA and an armor shard are not really in the same class.
+    switch (ent->item->type)
+    {
+        case IT_POWERUP:
+            return 0.6f;
+        case IT_ARMOR:
+            return (ent->item->tag != ARMOR_SHARD) ? 0.7f : 0.9f;
+        case IT_HEALTH:
+            return (ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA) ? 0.7f : 0.9f;
+        case IT_WEAPON:
+            return 0.8f;
+        case IT_AMMO:
+            return 1.0f;
+    }
+
+    // Return a default value for malformed (e.g. in custom GT scripts) item type/tags.
+    return 0.5f;
+}
+
 bool NavEntity::IsTopTierItem() const
 {
     if (!ent->r.inuse || !ent->item)
