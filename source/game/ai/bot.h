@@ -103,6 +103,9 @@ private:
 
     float skillLevel;
 
+    unsigned nextBlockedEscapeAttemptAt;
+    Vec3 blockedEscapeGoalOrigin;
+
     // Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
     // It gets processed by movement code in next frame
     bool hasTouchedJumppad;
@@ -231,8 +234,7 @@ private:
     // Make sure you have selected an appropriate weapon and its ready to fire before you call it.
     void TriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget);
 
-    // Returns true if the bot is at least a bit blocked
-    void TryMoveAwayIfBlocked(usercmd_t *ucmd);
+    void TryEscapeIfBlocked(usercmd_t *ucmd);
 
     void CombatMovement(usercmd_t *ucmd, bool hasDangers);
     void UpdateCombatMovePushes();

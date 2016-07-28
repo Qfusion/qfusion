@@ -7,6 +7,8 @@ Bot::Bot(edict_t *self, float skillLevel)
       dangersDetector(self),
       botBrain(self, skillLevel),
       skillLevel(skillLevel),
+      nextBlockedEscapeAttemptAt(0),
+      blockedEscapeGoalOrigin(INFINITY, INFINITY, INFINITY),
       hasTouchedJumppad(false),
       hasEnteredJumppad(false),
       jumppadTarget(INFINITY, INFINITY, INFINITY),
