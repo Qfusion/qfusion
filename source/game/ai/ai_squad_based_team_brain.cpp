@@ -446,63 +446,85 @@ bool AiSquad::ShouldNotDropWeaponsNow() const
                 mins[i] = origin[i];
         }
     }
+    Vec3 squadCenter(mins);
+    squadCenter += maxs;
+    squadCenter *= 0.5f;
+
+    struct PotentialStealer
+    {
+        const Enemy *enemy;
+        Vec3 extrapolatedOrigin;
+        PotentialStealer(const Enemy *enemy, const Vec3 &extrapolatedOrigin)
+            : enemy(enemy), extrapolatedOrigin(extrapolatedOrigin) {}
+
+        // Recently seen stealers should be first in a sorted list
+        bool operator<(const PotentialStealer &that) const
+        {
+            return enemy->LastSeenAt() > that.enemy->LastSeenAt();
+        }
+    };
 
     // First reject enemies by distance
-    StaticVector<const Enemy *, AiBaseEnemyPool::MAX_TRACKED_ENEMIES> potentialStealers;
+    StaticVector<PotentialStealer, AiBaseEnemyPool::MAX_TRACKED_ENEMIES> potentialStealers;
     for (const Enemy &enemy: squadEnemyPool->TrackedEnemies())
     {
         // Check whether an enemy has been invalidated and invalidation is not processed yet to prevent crash
         if (!enemy.IsValid() || G_ISGHOSTING(enemy.ent))
             continue;
-        if (!BoundsAndSphereIntersect(mins, maxs, enemy.LastSeenPosition().Data(), 400.0f))
+
+        Vec3 enemyVelocityDir(enemy.LastSeenVelocity());
+        float squareEnemySpeed = enemyVelocityDir.SquaredLength();
+        if (squareEnemySpeed < 1)
             continue;
-        potentialStealers.push_back(&enemy);
+
+        float enemySpeed = 1.0f / Q_RSqrt(squareEnemySpeed);
+        enemyVelocityDir *= 1.0f / enemySpeed;
+
+        // Extrapolate last seen position but not more for 1 second
+        // TODO: Test for collisions with the solid (it may be expensive)
+        // If an extrapolated origin is inside solid, further trace test will treat an enemy as invisible
+        float extrapolationSeconds = std::min(1.0f, 0.001f * (level.time - enemy.LastSeenAt()));
+        Vec3 extrapolatedLastSeenPosition(enemy.LastSeenVelocity());
+        extrapolatedLastSeenPosition *= extrapolationSeconds;
+        extrapolatedLastSeenPosition += enemy.LastSeenPosition();
+
+        Vec3 enemyToSquadCenterDir(squadCenter);
+        enemyToSquadCenterDir -= extrapolatedLastSeenPosition;
+        if (enemyToSquadCenterDir.SquaredLength() < 1)
+        {
+            potentialStealers.push_back(PotentialStealer(&enemy, extrapolatedLastSeenPosition));
+            continue;
+        }
+        enemyToSquadCenterDir.NormalizeFast();
+
+        float directionFactor = enemyToSquadCenterDir.Dot(enemyVelocityDir);
+        if (directionFactor < 0)
+        {
+            if (BoundsAndSphereIntersect(mins, maxs, extrapolatedLastSeenPosition.Data(), 192.0f))
+                potentialStealers.push_back(PotentialStealer(&enemy, extrapolatedLastSeenPosition));
+        }
+        else
+        {
+            float radius = 192.0f + extrapolationSeconds * enemySpeed * directionFactor;
+            if (BoundsAndSphereIntersect(mins, maxs, extrapolatedLastSeenPosition.Data(), radius))
+                potentialStealers.push_back(PotentialStealer(&enemy, extrapolatedLastSeenPosition));
+        }
     }
 
     // Sort all stealers based on last seen time (recently seen first)
-    std::sort(potentialStealers.begin(), potentialStealers.end(), [&](const Enemy *a, const Enemy *b)
-    {
-        return a->LastSeenAt() > b->LastSeenAt();
-    });
+    std::sort(potentialStealers.begin(), potentialStealers.end());
 
-    AiGroundTraceCache *groundTraceCache = AiGroundTraceCache::Instance();
-
-    // Then do a reachability check for not more than 4 recently seen stealers
+    // Check not more than 4 most recently seen stealers.
+    // Use trace instead of path travel time estimation because pathfinder may fail to find a path.
+    trace_t trace;
     for (unsigned i = 0, end = std::min(4u, potentialStealers.size()); i < end; ++i)
     {
-        const Enemy *stealer = potentialStealers[i];
-        Vec3 stealerOrigin(stealer->LastSeenPosition());
-        // We can't use ground trace cache for stealers (stealers positions are not actual but last seen)
-        Vec3 traceEnd(stealerOrigin);
-        traceEnd.Z() -= 172.0f;
-        trace_t trace;
-        edict_t *stealerEnt = const_cast<edict_t*>(stealer->ent);
-        G_Trace(&trace, stealerOrigin.Data(), nullptr, nullptr, traceEnd.Data(), stealerEnt, MASK_AISOLID);
-        if (trace.fraction == 1.0f)
-            continue;
-        stealerOrigin.Z() -= trace.fraction * 172.0f;
-        stealerOrigin.Z() += 16.0f; // Add some delta
-
-        int stealerAreaNum = FindAASAreaNum(stealerOrigin);
-        if (!stealerAreaNum)
-            continue;
-
+        PotentialStealer stealer = potentialStealers[i];
         for (const Bot *bot: bots)
         {
-            vec3_t botGroundedOrigin;
-            if (!groundTraceCache->TryDropToFloor(bot->Self(), 96.0f, botGroundedOrigin))
-                continue;
-            int botGroundedAreaNum = FindAASAreaNum(botGroundedOrigin);
-            if (!botGroundedAreaNum)
-                continue;
-
-            int travelTime = AAS_AreaTravelTimeToGoalArea(stealerAreaNum, stealerOrigin.Data(), botGroundedAreaNum, TFL_DEFAULT);
-            // The stealer can't reach a bot (if it moves like a bot with TFL_DEFAULT)
-            if (!travelTime)
-                continue;
-            // If the stealer can reach one of squad bots in 2.5 seconds, its too dangerous to drop items
-            // AAS returns travel time in seconds^-2
-            if (travelTime < 250)
+            edict_t *botEnt = const_cast<edict_t*>(bot->Self());
+            G_Trace(&trace, botEnt->s.origin, nullptr, nullptr, stealer.extrapolatedOrigin.Data(), botEnt, MASK_AISOLID);
+            if (trace.fraction == 1.0f || game.edicts + trace.ent == stealer.enemy->ent)
                 return true;
         }
     }
