@@ -80,7 +80,7 @@ class cBombSite
 		this.model.modelindex = modelIndicator;
 		this.model.svflags &= ~SVF_NOCLIENT;
 		this.model.effects = EF_ROTATE_AND_BOB;
-		AI::AddGoal( this.model, true ); // bases are special 
+		AI::AddNavEntity( this.model, AI_NAV_REACH_ON_EVENT | AI_NAV_REACH_IN_GROUP ); // bases are special 
 		this.model.linkEntity();
 
 		@this.sprite = @G_SpawnEntity( "capture_indicator_sprite" );

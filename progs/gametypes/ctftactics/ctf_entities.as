@@ -65,7 +65,9 @@ class cFlagBase
             this.owner.moveType = MOVETYPE_TOSS;
 
         this.owner.linkEntity();
-		AI::AddGoal( this.owner ); // bases are special because of the timers, use custom reachability checks
+
+        // CTFT flag is always instant, so it should be reached at touch as an ordinary entity       
+        AI::AddNavEntity( this.owner, AI_NAV_REACH_AT_TOUCH );
 
         // drop to floor
         Trace tr;
@@ -162,8 +164,6 @@ class cFlagBase
             this.flagCaptured( activator );
             this.owner.linkEntity();
 
-			AI::ReachedGoal( this.owner ); // let bots know their mission was completed
-
             return;
         }
 
@@ -171,8 +171,6 @@ class cFlagBase
         {
             this.flagStolen( activator );
             this.owner.linkEntity();
-
-			AI::ReachedGoal( this.owner ); // let bots know their mission was completed
 
             return;
         }
@@ -588,7 +586,7 @@ void ctf_flag_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
 // the flag is dropped in motion, add it to AI goals when it stops
 void ctf_flag_stop( Entity @ent )
 {
-	AI::AddGoal( ent );
+	AI::AddNavEntity( ent, AI_NAV_REACH_AT_TOUCH );
 }
 
 void ctf_flag_think( Entity @ent )

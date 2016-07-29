@@ -325,12 +325,18 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-// When this function is called the weights of items have been reset to their default values,
-// this means, the weights *are set*, and what this function does is scaling them depending
-// on the current bot status.
-// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
-// unless a weight is assigned here.
-bool GT_UpdateBotStatus( Entity @ent )
+void CTFT_UpdateBotsExtraGoals() 
+{
+    Entity @ent;
+    for ( int i = 1; i <= maxClients; ++i )
+    {
+        @ent = @G_GetEntity( i );
+        if ( @ent != null )
+            CTFT_UpdateBotExtraGoals( ent );
+    }
+}
+
+bool CTFT_UpdateBotExtraGoals( Entity @ent )
 {
     Entity @goal;
     Bot @bot;
@@ -341,7 +347,7 @@ bool GT_UpdateBotStatus( Entity @ent )
     if ( @bot == null )
         return false;
 
-    float offensiveStatus = GENERIC_OffensiveStatus( ent );
+    float offensiveStatus = 1.0f;
 
     // play defensive when being a flag carrier
     if ( ( ent.effects & EF_CARRIER ) != 0 )
@@ -360,22 +366,9 @@ bool GT_UpdateBotStatus( Entity @ent )
     }
 
     // loop all the goal entities
-    for ( int i = AI::GetNextGoal( AI::GetRootGoal() ); i != AI::GetRootGoal(); i = AI::GetNextGoal( i ) )
+    for ( int i = maxClients + 1; i < numEntities; ++i )
     {
-        @goal = @AI::GetGoalEntity( i );
-
-        // by now, always full-ignore not solid entities
-        if ( goal.solid == SOLID_NOT )
-        {
-            bot.setGoalWeight( i, 0 );
-            continue;
-        }
-
-        if ( @goal.client != null )
-        {
-            bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * offensiveStatus );
-            continue;
-        }
+        @goal = @G_GetEntity( i );
 
         // when being a flag carrier have a tendency to stay around your own base
         baseFactor = 1.0f;
@@ -393,33 +386,6 @@ bool GT_UpdateBotStatus( Entity @ent )
                 baseFactor = 0.5f;
         }
 
-        if ( @goal.item != null )
-        {
-            // all the following entities are items
-            if ( ( goal.item.type & IT_WEAPON ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_WeaponWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_AMMO ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_AmmoWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_ARMOR ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_ArmorWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_HEALTH ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_HealthWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_POWERUP ) != 0 )
-            {
-                bot.setGoalWeight( i, bot.getItemWeight( goal.item ) * offensiveStatus * baseFactor );
-            }
-
-            continue;
-        }
-
         // the entities spawned from scripts never have linked items,
         // so the flags are weighted here
 
@@ -433,11 +399,11 @@ bool GT_UpdateBotStatus( Entity @ent )
             {
                 if ( @flagBase.owner == @flagBase.carrier ) // enemy flag is at base
                 {
-                    bot.setGoalWeight( i, 12.0f * offensiveStatus );
+                    bot.setExternalEntityWeight( @goal, 12.0f * offensiveStatus );
                 }
                 else
                 {
-                    bot.setGoalWeight( i, 0 );
+                    bot.setExternalEntityWeight( @goal, 0 );
                 }
             }
             else // team
@@ -445,11 +411,11 @@ bool GT_UpdateBotStatus( Entity @ent )
                 // flag is at base and this bot has the enemy flag
                 if ( ( ent.effects & EF_CARRIER ) != 0 && ( goal.effects & EF_CARRIER ) != 0 )
                 {
-                    bot.setGoalWeight( i, 3.5f * baseFactor );
+                    bot.setExternalEntityWeight( @goal, 3.5f * baseFactor );
                 }
                 else
                 {
-                    bot.setGoalWeight( i, 0 );
+                    bot.setExternalEntityWeight( @goal, 0 );
                 }
             }
 
@@ -464,19 +430,16 @@ bool GT_UpdateBotStatus( Entity @ent )
             // it's my flag, dropped somewhere
             if ( goal.team == ent.team )
             {
-                bot.setGoalWeight( i, 5.0f * baseFactor );
+                bot.setExternalEntityWeight( @goal, 5.0f * baseFactor );
             }
             // it's enemy flag, dropped somewhere
             else if ( goal.team != ent.team )
             {
-                bot.setGoalWeight( i, 3.5f * offensiveStatus * baseFactor );
+                bot.setExternalEntityWeight( @goal, 3.5f * offensiveStatus * baseFactor );
             }
 
             continue;
         }
-
-        // we don't know what entity is this, so ignore it
-        bot.setGoalWeight( i, 0 );
     }
 
     return true; // handled by the script
@@ -861,6 +824,8 @@ void GT_ThinkRules()
         player.watchWarshell();
         player.updateHUDstats();
     }
+
+    CTFT_UpdateBotsExtraGoals();
 }
 
 // The game has detected the end of the match state, but it

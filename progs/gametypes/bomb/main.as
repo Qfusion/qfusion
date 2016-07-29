@@ -317,11 +317,6 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 	return false;
 }
 
-bool GT_UpdateBotStatus( Entity @ent )
-{
-	return BOMB_UpdateBotStatus( @ent );
-}
-
 Entity @GT_SelectSpawnPoint( Entity @self )
 {
 	if ( self.team == attackingTeam )
@@ -732,6 +727,8 @@ void GT_ThinkRules()
 	}
 
 	GENERIC_Think();
+
+    BOMB_UpdateBotsExtraGoals();
 }
 
 // The game has detected the end of the match state, but it

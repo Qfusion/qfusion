@@ -144,7 +144,7 @@ void bombModelCreate()
 void bombInit()
 {
 	// i'm not setting svflags &= ~SVF_NOCLIENT yet
-	// no need to link either
+	// no need to link either 
 	
 	bombModelCreate();
 
@@ -199,7 +199,7 @@ void bombSetCarrier( Entity @ent )
 
 	bombState = BOMBSTATE_CARRIED;
 
-	AI::ReachedGoal( bombModel ); // let bots know their mission was completed
+	AI::NavEntityReached( bombModel ); // let bots know their mission was completed
 }
 
 void bombDrop( uint dropType )
@@ -343,8 +343,8 @@ void bombPlant( cBombSite @site )
 	bombActionTime = levelTime;
 	bombState = BOMBSTATE_PLANTING;
 
-	AI::AddGoal( bombModel, true ); // let bots they have to arm the bomb
-	AI::ReachedGoal( site.model ); // let bots know their mission was completed
+	AI::AddNavEntity( bombModel, AI_NAV_REACH_ON_EVENT | AI_NAV_REACH_IN_GROUP ); // let bots they have to arm the bomb
+	AI::NavEntityReached( site.model ); // let bots know their mission was completed
 }
 
 void bombArm(array<Entity @> @nearby)
@@ -374,7 +374,7 @@ void bombArm(array<Entity @> @nearby)
 	if( @fastPlanter != null && ! isFastPlant() )
 		@fastPlanter = null;
 
-	AI::ReachedGoal( bombModel ); // let bots know their mission was completed
+	AI::NavEntityReached( bombModel ); // let bots know their mission was completed
 }
 
 // missing an and :DD
@@ -385,7 +385,7 @@ void bombDefuse(array<Entity @> @nearby)
 	bombModel.light = BOMB_LIGHT_INACTIVE;
 	bombModel.modelindex = modelBombModel;
 
-	AI::ReachedGoal( bombModel ); // let bots know their mission was completed
+	AI::NavEntityReached( bombModel ); // let bots know their mission was completed
 
 	hide( @bombDecal );
 
@@ -977,6 +977,6 @@ void dynamite_stop( Entity @ent )
 		bombSprite.origin = origin;
 		bombMinimap.origin = origin;
 
-		AI::AddGoal( bombModel, true ); // let bots they have to arm or pick the bomb
+		AI::AddNavEntity( bombModel, AI_NAV_REACH_AT_TOUCH ); // let bots they have to arm or pick the bomb
 	}
 }

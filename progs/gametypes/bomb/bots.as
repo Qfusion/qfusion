@@ -17,76 +17,39 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-
-float BOMB_PlayerWeight( Entity @self, Entity @enemy )
+void BOMB_UpdateBotsExtraGoals()
 {
-    float weight;
-
-    if ( @enemy == null || @enemy == @self )
-        return 0;
-
-    if ( enemy.isGhosting() )
-        return 0;
-
-    //if not team based give some weight to every one
-    if ( gametype.isTeamBased && ( enemy.team == self.team ) )
-        return 0;
-
-    if( !self.client.isBot() )
-        return 0.0f;
-
-    weight = 0.35f;
-
-	// bomb carrier is someone you want to kill
-	cPlayer @player = @playerFromClient( @enemy.client );
-	if( player.isCarrier )
-		weight *= 1.5f;
-
-    return weight;
+    Entity @ent;
+    for ( int i = 1; i <= maxClients; ++i )
+    {
+        @ent = G_GetEntity( i );
+        if ( ent.inuse )
+            BOMB_UpdateBotExtraGoals( ent );
+    }
 }
 
-
-
-// When this function is called the weights of items have been reset to their default values,
-// this means, the weights *are set*, and what this function does is scaling them depending
-// on the current bot status.
-// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
-// unless a weight is assigned here.
-bool BOMB_UpdateBotStatus( Entity @self )
+void BOMB_UpdateBotExtraGoals( Entity @self )
 {
     Entity @goal;
     Bot @bot;
 
     @bot = @self.client.getBot();
     if ( @bot == null )
-        return false;
-
-    // loop all the goal entities
-    for ( int i = AI::GetNextGoal( AI::GetRootGoal() ); i != AI::GetRootGoal(); i = AI::GetNextGoal( i ) )
+        return;
+   
+    // TODO: Do not iterate over all non-player entities but check only needed ones
+    for ( int i = maxClients + 1; i < numEntities; ++i )
     {
-        @goal = @AI::GetGoalEntity( i );
-
-        // by now, always full-ignore not solid entities
-        if ( goal.solid == SOLID_NOT )
-        {
-            bot.setGoalWeight( i, 0 );
-            continue;
-        }
-
-        if ( @goal.client != null )
-        {
-            bot.setGoalWeight( i, BOMB_PlayerWeight( self, goal ) );
-            continue;
-        }
+        @goal = @G_GetEntity( i );
 
 		if( @bombCarrier != null && @bombCarrier == @self )
 		{
 			if( goal.classname == "capture_indicator_model" )
 			{
 				if( @BOMB_BOTS_SITE != null && @BOMB_BOTS_SITE.model == @goal )
-					bot.setGoalWeight( i, 5.0f );
+					bot.setExternalEntityWeight( goal, 5.0f );
 				else
-					bot.setGoalWeight( i, 2.0f );
+					bot.setExternalEntityWeight( goal, 2.0f );
 
 				continue;
 			}
@@ -97,11 +60,11 @@ bool BOMB_UpdateBotStatus( Entity @self )
 		{
 			if( self.team == defendingTeam )
 			{
-				bot.setGoalWeight( i, 3.0f );
+				bot.setExternalEntityWeight( goal, 3.0f );
 			}
 			else
 			{
-				bot.setGoalWeight( i, random() );
+				bot.setExternalEntityWeight( goal, random() );
 			}
 			
 			@self.owner = null;
@@ -114,7 +77,7 @@ bool BOMB_UpdateBotStatus( Entity @self )
 			{
 				if( self.team == attackingTeam )
 				{
-					bot.setGoalWeight( i, 3.0f );
+					bot.setExternalEntityWeight( goal, 3.0f );
 					continue;
 				}
 			}
@@ -122,17 +85,12 @@ bool BOMB_UpdateBotStatus( Entity @self )
 			{
 				if( self.team == defendingTeam )
 				{
-					bot.setGoalWeight( i, 2.0f );
+					bot.setExternalEntityWeight( goal, 2.0f );
 					continue;
 				}
 			}
 		}
-
-        // we don't know what entity is this, so ignore it
-        bot.setGoalWeight( i, 0 );
     }
-
-    return true; // handled by the script
 }
 
 cBombSite @BOMB_PickRandomTargetSite( )
