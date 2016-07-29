@@ -321,6 +321,22 @@ void AI_NavEntityReached(edict_t *ent)
     AiGametypeBrain::Instance()->NavEntityReached(ent);
 }
 
+float AI_GetBotBaseOffensiveness(ai_handle_t *ai)
+{
+    return ai ? ai->botRef->GetBaseOffensiveness() : 0.0f;
+}
+
+float AI_GetBotEffectiveOffensiveness(ai_handle_t *ai)
+{
+    return ai ? ai->botRef->GetEffectiveOffensiveness() : 0.0f;
+}
+
+void AI_SetBotBaseOffensiveness(ai_handle_t *ai, float baseOffensiveness)
+{
+    if (ai)
+        ai->botRef->SetBaseOffensiveness(baseOffensiveness);
+}
+
 void AI_SetBotAttitude(ai_handle_t *ai, edict_t *ent, int attitude)
 {
     if (ai && ent)

@@ -1498,7 +1498,12 @@ static const asBehavior_t asbot_ObjectBehaviors[] =
 
 static const asMethod_t asbot_Methods[] =
 {
+	{ ASLIB_FUNCTION_DECL(float, getBaseOffensiveness, ()), asFUNCTION(AI_GetBotBaseOffensiveness), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, getEffectiveOffensiveness, ()), asFUNCTION(AI_GetBotEffectiveOffensiveness), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(void, setBaseOffensiveness, (float baseOffensiveness)), asFUNCTION(AI_SetBotBaseOffensiveness), asCALL_CDECL_OBJFIRST },
+
 	{ ASLIB_FUNCTION_DECL(void, setAttitude, (Entity @ent, int attitude)), asFUNCTION(AI_SetBotAttitude), asCALL_CDECL_OBJFIRST },
+
 	{ ASLIB_FUNCTION_DECL(void, clearExternalEntityWeights, ()), asFUNCTION(AI_ClearBotExternalEntityWeights), asCALL_CDECL_OBJFIRST },
 	{ ASLIB_FUNCTION_DECL(void, setExternalEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_SetBotExternalEntityWeight), asCALL_CDECL_OBJFIRST },
 

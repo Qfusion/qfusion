@@ -248,6 +248,19 @@ void AiSquad::Invalidate()
     isValid = false;
 }
 
+bool AiSquad::IsSupporter(const edict_t *bot) const
+{
+    if (!isValid || !inUse)
+        return false;
+
+    for (Bot *member: bots)
+    {
+        if (!member->IsGhosting() && IsCarrier(member->Self()))
+            return !IsCarrier(bot);
+    }
+    return false;
+}
+
 // Squad connectivity should be restored in this limit of time, otherwise a squad should be invalidated
 constexpr unsigned CONNECTIVITY_TIMEOUT = 750;
 // This value defines a distance limit for quick rejection of non-feasible bot pairs for new squads

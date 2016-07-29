@@ -160,6 +160,8 @@ struct CombatDisposition
     float damageToKill;
     float damageToBeKilled;
     float distance;
+    float offensiveness;
+    bool isOutnumbered;
 
     inline float KillToBeKilledDamageRatio() const { return damageToKill / damageToBeKilled; }
 };
@@ -169,6 +171,7 @@ class BotBrain: public AiBaseBrain
     friend class Bot;
 
     edict_t *bot;
+    float baseOffensiveness;
     const float skillLevel;
     const unsigned reactionTime;
 
@@ -411,6 +414,16 @@ public:
     }
 
     void SetAttitude(const edict_t *ent, int attitude);
+
+    inline float GetBaseOffensiveness() const { return baseOffensiveness; }
+
+    float GetEffectiveOffensiveness() const;
+
+    inline void SetBaseOffensiveness(float baseOffensiveness)
+    {
+        this->baseOffensiveness = baseOffensiveness;
+        clamp(baseOffensiveness, 0.0f, 1.0f);
+    }
 
     // Helps to reject non-feasible enemies quickly.
     // A false result does not guarantee that enemy is feasible.

@@ -86,6 +86,7 @@ void BotBrain::OnEnemyRemoved(const Enemy *enemy)
 BotBrain::BotBrain(edict_t *bot, float skillLevel)
     : AiBaseBrain(bot, Bot::PREFERRED_TRAVEL_FLAGS, Bot::ALLOWED_TRAVEL_FLAGS),
       bot(bot),
+      baseOffensiveness(0.5f),
       skillLevel(skillLevel),
       reactionTime(320 - From0UpToMax(300, BotSkill())),
       aimTargetChoicePeriod(1000 - From0UpToMax(900, BotSkill())),
@@ -167,6 +168,10 @@ void BotBrain::Frame()
 {
     // Call superclass method first
     AiBaseBrain::Frame();
+
+    // Reset offensiveness to a default value
+    if (G_ISGHOSTING(self))
+        baseOffensiveness = 0.5f;
 
     botEnemyPool.Update();
 }
@@ -479,7 +484,7 @@ void BotBrain::TryFindNewCombatTask()
         return;
     }
 
-    if (!HasMoreImportantTasksThanEnemies())
+    if (!HasMoreImportantTasksThanEnemies());
         SuggestPursuitOrSpamTask(&combatTask);
 }
 
@@ -505,8 +510,11 @@ bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
 
 void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task)
 {
-    // TODO: Reject both spamming and pursuit here to save cycles
-    // (ChooseHiddenEnemy() is more expensive than a condition)
+    if (GetEffectiveOffensiveness() < 0.25f)
+    {
+        nextTargetChoiceAt = level.time + spamTargetChoicePeriod / 3;
+        return;
+    }
     if (const Enemy *bestEnemy = activeEnemyPool->ChooseHiddenEnemy(bot))
     {
         StartSpamAtEnemyOrPursuit(task, bestEnemy);
@@ -521,12 +529,23 @@ void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task)
 
 void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
 {
-    float killToBeKilledRatio = GetCombatDisposition(*enemy).KillToBeKilledDamageRatio();
+    const auto disposition = GetCombatDisposition(*enemy);
+    float effectiveKillToBeKilledRatio = disposition.KillToBeKilledDamageRatio();
     // If bot is supported by a squad
     if (squad)
-        killToBeKilledRatio *= 1.75f;
+        effectiveKillToBeKilledRatio /= 1.5f;
 
-    if (killToBeKilledRatio > 1.0f)
+    float offensiveness = disposition.offensiveness;
+    // For offensiveness of 0 this should be 0
+    // For base offensiveness of 0.5 this should be 0.75f
+    // For offensiveness of 1 this should be relatively large (about 5.0f)
+    float pursuitThresholdKillToBeKilledRatio = 1.5f;
+    if (offensiveness <= 0.5f)
+        pursuitThresholdKillToBeKilledRatio *= offensiveness;
+    else
+        pursuitThresholdKillToBeKilledRatio *= 0.5f * powf(10.0f, 2.0f * (offensiveness - 0.5f));
+
+    if (effectiveKillToBeKilledRatio < pursuitThresholdKillToBeKilledRatio)
     {
         StartPursuit(*enemy);
         return;
@@ -717,25 +736,45 @@ CombatDisposition BotBrain::GetCombatDisposition(const Enemy &enemy)
 {
     float damageToBeKilled = DamageToKill(bot);
     if (BotHasShell())
-        damageToBeKilled /= 4.0f;
-    if (enemy.HasQuad())
         damageToBeKilled *= 4.0f;
+    if (enemy.HasQuad())
+        damageToBeKilled /= 4.0f;
     float damageToKillEnemy = DamageToKill(enemy.ent);
     if (enemy.HasShell())
         damageToKillEnemy *= 4.0f;
 
     float distance = (enemy.LastSeenPosition() - self->s.origin).LengthFast();
 
+    bool isOutnumbered = false;
+    const auto &activeEnemies = activeEnemyPool->ActiveEnemies();
+    if (!BotHasPowerups() && activeEnemies.size() > 1)
+    {
+        // Start from second active enemy
+        for (unsigned i = 1; i < activeEnemies.size(); ++i)
+        {
+            const Enemy *e = activeEnemies[i];
+            if (e == &enemy)
+                continue;
+            if (!e->ent)
+                continue;
+            if (DistanceSquared(e->ent->s.origin, enemy.ent->s.origin) < 192 * 192)
+                damageToKillEnemy += DamageToKill(activeEnemies[i]->ent);
+        }
+        if (damageToKillEnemy > 1.5 * damageToBeKilled)
+            isOutnumbered = true;
+    }
+
     CombatDisposition disposition;
     disposition.damageToBeKilled = damageToBeKilled;
     disposition.damageToKill = damageToKillEnemy;
     disposition.distance = distance;
+    disposition.offensiveness = GetEffectiveOffensiveness();
+    disposition.isOutnumbered = isOutnumbered;
     return disposition;
 }
 
 void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 {
-    const auto &activeEnemies = activeEnemyPool->ActiveEnemies();
     const Enemy &enemy = *task->aimEnemy;
     if (BotSkill() < 0.33f)
     {
@@ -752,15 +791,24 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
         return;
     }
 
-    if (BotHasQuad())
+    CombatDisposition disposition = GetCombatDisposition(enemy);
+
+    if (BotHasPowerups())
     {
         task->suggestedShootWeapon = SuggestQuadBearerWeapon(enemy);
-        task->advance = true;
-        StartPursuit(enemy);
+        if (!BotIsCarrier() && task->suggestedShootWeapon != WEAP_GUNBLADE)
+        {
+            task->advance = true;
+            task->retreat = false;
+            StartPursuit(enemy);
+        }
+        else
+        {
+            task->advance = false;
+            task->retreat = disposition.isOutnumbered;
+        }
         return;
     }
-
-    CombatDisposition disposition = GetCombatDisposition(enemy);
 
     const float lgRange = GetLaserRange();
 
@@ -776,30 +824,11 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
     if (task->suggestedShootWeapon == WEAP_NONE)
         task->suggestedShootWeapon = WEAP_GUNBLADE;
 
-    // TODO: This should not be used a-posteriori.
-    // Use an enemy group for a-priori weapon and tactics selection instead of just a single aimEnemy
-    bool isOutnumbered = false;
-    if (!BotHasPowerups() && activeEnemies.size() > 1)
-    {
-        float totalDamageToKill = disposition.damageToKill;
-        // Start from second active enemy
-        for (unsigned i = 1; i < activeEnemies.size(); ++i)
-        {
-            const Enemy *e = activeEnemies[i];
-            if (e->ent && DistanceSquared(e->ent->s.origin, enemy.ent->s.origin) < 192 * 192)
-                totalDamageToKill += DamageToKill(activeEnemies[i]->ent);
-        }
-        if (totalDamageToKill > 1.5 * disposition.damageToBeKilled)
-            isOutnumbered = true;
-    }
-
     bool oldAdvance = task->advance;
     bool oldRetreat = task->retreat;
 
     if (task->advance)
     {
-        // Advance and retreat flags are not mutual exclusive, and retreat one has higher priority
-
         // Prefer to pickup an item rather than pursuit an enemy
         // if the item is valuable, even if the bot is outnumbered
         if (HasMoreImportantTasksThanEnemies())
@@ -810,17 +839,7 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
                 task->retreat = false;
             }
         }
-        else if (!isOutnumbered)
-        {
-            if (!task->retreat)
-                StartPursuit(enemy);
-        }
-        else
-            task->retreat = true;
     }
-    // If the bot is outnumbered and old advance flag is not set, start retreating
-    if (isOutnumbered && !oldAdvance)
-        task->retreat = true;
 
     // Treat task as a new if tactics has been changed
     if (oldAdvance != task->advance || oldRetreat != task->retreat)
@@ -859,17 +878,16 @@ void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const Combat
     // Still not chosen
     if (chosenWeapon == WEAP_NONE)
     {
-        if (disposition.damageToBeKilled < 25.0f && ShellsReadyToFireCount())
+        if (disposition.damageToKill < 25.0f && ShellsReadyToFireCount())
             chosenWeapon = WEAP_RIOTGUN;
-        else
-        {
-            float ratio = disposition.KillToBeKilledDamageRatio();
-            if (ratio < 2 || (ratio > 0.75 && decisionRandom < 0.5))
-                task->advance = true;
-            else
-                task->inhibit = true;
-        }
     }
+
+    task->retreat = false;
+    float ratio = disposition.KillToBeKilledDamageRatio();
+    if (ratio < 2 || (ratio > 0.75 && decisionRandom < 0.5))
+        task->advance = random() < disposition.offensiveness;
+    else
+        task->inhibit = true;
 
     Debug("(sniper range)... : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
@@ -950,16 +968,16 @@ void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDis
         enemy.RocketsReadyToFireCount() >= 2 || enemy.PlasmasReadyToFireCount() > 15;
 
     if (botHasMidRangeWeapons && !enemyHasMidRangeWeapons)
-        task->advance = true;
+        task->advance = disposition.offensiveness > 0;
     if (!botHasMidRangeWeapons && enemyHasMidRangeWeapons)
-        task->retreat = true;
+        task->retreat = disposition.offensiveness <= 0.5f;
 
-    if (disposition.KillToBeKilledDamageRatio() > 2)
+    if (disposition.KillToBeKilledDamageRatio() > 1.5f * (2.0f * disposition.offensiveness))
     {
         task->advance = false;
         task->retreat = true;
     }
-    else if (disposition.KillToBeKilledDamageRatio() < 1)
+    else if (disposition.KillToBeKilledDamageRatio() < 0.75f * (2.0f * disposition.offensiveness))
     {
         task->advance = true;
         task->retreat = false;
@@ -1052,9 +1070,9 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     int chosenWeapon = WEAP_NONE;
 
     // First, give a bot some apriori tactics based on health status
-    if (disposition.KillToBeKilledDamageRatio() < 0.75f)
+    if (disposition.KillToBeKilledDamageRatio() < 0.75f * (2.0f * disposition.offensiveness))
         task->advance = true;
-    else if (disposition.KillToBeKilledDamageRatio() > 1.5f)
+    else if (disposition.KillToBeKilledDamageRatio() > 1.5f * (2.0f * disposition.offensiveness))
         task->retreat = true;
 
     enum { RL, LG, PG, MG, RG, GL };
@@ -1228,13 +1246,13 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
         if (ShellsReadyToFireCount() && (disposition.damageToKill < 90 || weaponScoreRandom < 0.4))
         {
             chosenWeapon = WEAP_RIOTGUN;
-            task->advance = true;
+            task->advance = disposition.offensiveness >= 0.5f;
         }
         else if (rocketsCount > 0 && disposition.damageToBeKilled > 100.0f - 75.0f * distanceFactor)
         {
             chosenWeapon = WEAP_ROCKETLAUNCHER;
             if (distanceFactor < 0.5)
-                task->retreat = true;
+                task->retreat = disposition.offensiveness <= 0.5f;
         }
         else if (plasmasCount > 10 && disposition.damageToBeKilled > 75.0f - 50.0f * distanceFactor)
         {
@@ -1253,7 +1271,7 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
         if (rocketsCount)
         {
             chosenWeapon = WEAP_ROCKETLAUNCHER;
-            task->advance = true;
+            task->advance = disposition.offensiveness >= 0.5f;
         }
         else if (lasersCount > 10)
         {
@@ -1295,7 +1313,7 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
             if (disposition.KillToBeKilledDamageRatio() < 0.33f)
                 task->advance = true;
             else
-                task->retreat = true;
+                task->retreat = disposition.offensiveness <= 0.5f;
         }
     }
 
@@ -1898,6 +1916,17 @@ void BotBrain::SetAttitude(const edict_t *ent, int attitude)
         if (squad)
             activeEnemyPool->Forget(ent);
     }
+}
+
+float BotBrain::GetEffectiveOffensiveness() const
+{
+    if (!squad)
+    {
+        if (combatTask.aimEnemy && IsCarrier(combatTask.aimEnemy->ent))
+            return 0.65f + 0.35f * decisionRandom;
+        return baseOffensiveness;
+    }
+    return squad->IsSupporter(self) ? 1.0f : 0.0f;
 }
 
 bool BotBrain::MayNotBeFeasibleEnemy(const edict_t *ent) const
