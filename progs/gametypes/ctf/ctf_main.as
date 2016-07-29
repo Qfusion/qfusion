@@ -324,28 +324,38 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
     Entity @goal;
     Bot @bot;
     float baseFactor;
-    float alphaDist, betaDist, homeDist;
+
+    float botToHomeBaseDist  = 999999.0f;
 
     @bot = @ent.client.getBot();
     if ( @bot == null )
         return;
 
-    float offensiveStatus = 1.0f;
-
-    // play defensive when being a flag carrier
-    if ( ( ent.effects & EF_CARRIER ) != 0 )
-        offensiveStatus = 0.33f;
+    float offensiveness = bot.getEffectiveOffensiveness();
 
     cFlagBase @alphaBase = @CTF_getBaseForTeam( TEAM_ALPHA );
     cFlagBase @betaBase = @CTF_getBaseForTeam( TEAM_BETA );
 
-    // for carriers, find the raw distance to base
-    if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
+    if ( @alphaBase != null && @betaBase != null )
     {
+        float botToAlphaBaseDist = ent.origin.distance( alphaBase.owner.origin );
+        float botToBetaBaseDist = ent.origin.distance( betaBase.owner.origin );
+        float botToEnemyBaseDist;        
         if ( ent.team == TEAM_ALPHA )
-            homeDist = ent.origin.distance( alphaBase.owner.origin );
+        {
+            botToHomeBaseDist = botToAlphaBaseDist;
+            botToEnemyBaseDist = botToBetaBaseDist;
+        }        
         else
-            homeDist = ent.origin.distance( betaBase.owner.origin );
+        {
+            botToHomeBaseDist = botToBetaBaseDist;
+            botToEnemyBaseDist = botToAlphaBaseDist;
+        }
+        float homeToEnemyBaseDistRatio = botToHomeBaseDist / (0.001f + botToEnemyBaseDist);
+        if (homeToEnemyBaseDistRatio < 0.5f)
+            bot.setBaseOffensiveness( 2.0f * (0.5f - homeToEnemyBaseDistRatio) );
+        else
+            bot.setBaseOffensiveness( 0.0f );
     }
 
     // TODO: Do not iterate over all entities but check only bases and flags
@@ -358,12 +368,12 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
 
         if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
         {
-            alphaDist = goal.origin.distance( alphaBase.owner.origin );
-            betaDist = goal.origin.distance( betaBase.owner.origin );
+            float alphaDist = goal.origin.distance( alphaBase.owner.origin );
+            float betaDist = goal.origin.distance( betaBase.owner.origin );
 
-            if ( ( ent.team == TEAM_ALPHA ) && ( alphaDist + 64 < betaDist || alphaDist < homeDist + 128 ) )
+            if ( ( ent.team == TEAM_ALPHA ) && ( alphaDist + 64 < betaDist || alphaDist < botToHomeBaseDist + 128 ) )
                 baseFactor = 5.0f;
-            else if ( ( ent.team == TEAM_BETA ) && ( betaDist + 64 < alphaDist || betaDist < homeDist + 128 ) )
+            else if ( ( ent.team == TEAM_BETA ) && ( betaDist + 64 < alphaDist || betaDist < botToHomeBaseDist + 128 ) )
                 baseFactor = 5.0f;
             else
                 baseFactor = 0.5f;
@@ -382,7 +392,7 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
             {
                 if ( @flagBase.owner == @flagBase.carrier ) // enemy flag is at base
                 {
-                    bot.setExternalEntityWeight( goal, 12.0f * offensiveStatus );
+                    bot.setExternalEntityWeight( goal, 12.0f );
                 }
                 else
                 {
@@ -418,7 +428,7 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
             // it's enemy flag, dropped somewhere
             else if ( goal.team != ent.team )
             {
-                bot.setExternalEntityWeight( goal, 3.5f * offensiveStatus * baseFactor );
+                bot.setExternalEntityWeight( goal, 4.5f * offensiveness * baseFactor );
             }
 
             continue;
