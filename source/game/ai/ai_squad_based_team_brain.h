@@ -144,6 +144,9 @@ public:
         squadEnemyPool->OnEnemyDamaged(bot, target, damage);
     }
 
+    // Assumes the bot is a valid squad member
+    bool IsSupporter(const edict_t *bot) const;
+
     virtual void Frame() override;
     virtual void Think() override;
 };

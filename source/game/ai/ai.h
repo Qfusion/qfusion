@@ -84,6 +84,20 @@ void AI_NavEntityReached( edict_t *ent );
 
 // Bot methods accessible from scripts
 
+// An offensiveness is a value in range [0.0f, 1.0f].
+// An offensiveness affects whether and when a bot will pursue enemies, ignore enemies or retreat from enemies.
+// Base offensiveness may be modified by provided setter.
+// For example, bots on its own flag base should have high offensiveness to pursue an invader,
+// and a flag base invader should have low offensiveness to prefer stealing a flag rather than fighting.
+// If a value set is outside of the valid offensiveness range, it will be clamped.
+// Effective offensiveness is computed based on the base offensiveness and carrier/supporter bot status.
+// (a carrier automatically obtain zero offensiveness, and its supporters get a maximal one)
+// Effective offensiveness cannot be overridden but may be retrieved using the provided getter.
+// Base offensiveness is reset to its default value 0.5f on each death.
+float AI_GetBotBaseOffensiveness( ai_handle_t *ai );
+float AI_GetBotEffectiveOffensiveness( ai_handle_t *ai );
+void AI_SetBotBaseOffensiveness( ai_handle_t *ai, float baseOffensiveness );
+
 // Negative attitude means that the ent is an enemy.
 // Positive attitude means that the ent is a mate.
 // Zero attitude means bot should ignore the ent.

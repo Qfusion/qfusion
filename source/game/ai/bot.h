@@ -85,6 +85,13 @@ public:
         botBrain.SetExternalEntityWeight(ent, weight);
     }
 
+    inline float GetBaseOffensiveness() const { return botBrain.GetBaseOffensiveness(); }
+    inline float GetEffectiveOffensiveness() const { return botBrain.GetEffectiveOffensiveness(); }
+    inline void SetBaseOffensiveness(float baseOffensiveness)
+    {
+        botBrain.SetBaseOffensiveness(baseOffensiveness);
+    }
+
     inline const int *Inventory() const { return self->r.client->ps.inventory; }
 protected:
     virtual void Frame() override;
