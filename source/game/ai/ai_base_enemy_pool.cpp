@@ -442,7 +442,10 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy(const edict_t *challenger)
     }
 
     if (candidates.empty())
+    {
+        OnBotEnemyAssigned(challenger, nullptr);
         return nullptr;
+    }
 
     // Its better to sort once instead of pushing into a heap inside the loop above
     std::sort(candidates.begin(), candidates.end());
@@ -475,6 +478,7 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy(const edict_t *challenger)
         activeEnemiesScores.push_back(mergedActiveEnemies[i].score);
     }
 
+    OnBotEnemyAssigned(challenger, candidates.front().enemy);
     // (We operate on pointers to enemies which are allocated in the enemy pool)
     return candidates.front().enemy;
 }

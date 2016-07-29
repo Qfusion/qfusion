@@ -50,6 +50,8 @@ private:
     bool CheckCanFightTogether() const;
     bool CheckCanMoveTogether() const;
 
+    void UpdateBotRoleWeights();
+
     unsigned lastDroppedByBotTimestamps[MAX_SIZE];
     unsigned lastDroppedForBotTimestamps[MAX_SIZE];
 

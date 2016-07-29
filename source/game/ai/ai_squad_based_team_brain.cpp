@@ -158,10 +158,16 @@ float AiSquad::SquadEnemyPool::GetAdditionalEnemyWeight(const edict_t *bot, cons
 
     // TODO: Use something more sophisticated...
 
+    const unsigned botSlot = GetBotSlot(bot->ai->botRef);
     float result = 0.0f;
     for (unsigned i = 0, end = squad->bots.size(); i < end; ++i)
+    {
+        // Do not add extra score for the own enemy
+        if (botSlot == i)
+            continue;
         if (botEnemies[i] && enemy == botEnemies[i]->ent)
-            result += 0.5f + botRoleWeights[i];
+            result += botRoleWeights[i];
+    }
 
     return result;
 }
@@ -280,6 +286,8 @@ void AiSquad::Think()
     if (!isValid)
         return;
 
+    UpdateBotRoleWeights();
+
     CheckMembersInventory();
 }
 
@@ -323,6 +331,38 @@ bool AiSquad::CheckCanFightTogether() const
         }
     }
     return true;
+}
+
+void AiSquad::UpdateBotRoleWeights()
+{
+    if (!inUse || !isValid)
+        return;
+
+    // Find a carrier
+    bool hasCarriers = false;
+    for (Bot *bot: bots)
+    {
+        if (!bot->IsGhosting() && IsCarrier(bot->Self()))
+        {
+            hasCarriers = true;
+            break;
+        }
+    }
+    if (!hasCarriers)
+    {
+        for (Bot *bot: bots)
+            squadEnemyPool->SetBotRoleWeight(bot->Self(), 0.25f);
+    }
+    else
+    {
+        for (Bot *bot: bots)
+        {
+            if (!bot->IsGhosting() && IsCarrier(bot->Self()))
+                squadEnemyPool->SetBotRoleWeight(bot->Self(), 1.0f);
+            else
+                squadEnemyPool->SetBotRoleWeight(bot->Self(), 0.0f);
+        }
+    }
 }
 
 static bool areWeaponDefHelpersInitialized = false;
