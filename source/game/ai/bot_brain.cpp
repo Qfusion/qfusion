@@ -502,7 +502,7 @@ bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
     // Extrapolate last seen position using last seen velocity and not seen duration in seconds
     estimatedPos += (notSeenDuration / 1000.0f) * lastSeenVelocityDir;
 
-    float turnSpeedMultiplier = 0.25f + 0.75f * BotSkill();
+    float turnSpeedMultiplier = 0.55f + 0.55f * BotSkill();
     bot->ai->botRef->SetPendingLookAtPoint(estimatedPos, turnSpeedMultiplier, 750);
 
     return true;
