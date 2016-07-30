@@ -433,7 +433,9 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy(const edict_t *challenger)
         Vec3 botToEnemy = botOrigin - enemy.ent->s.origin;
         float distance = botToEnemy.LengthFast();
         botToEnemy *= 1.0f / distance;
-        float distanceFactor = 0.3f + 0.7f * BoundedFraction(distance, distanceBounds);
+        // For far enemies distance factor is lower
+        float distanceFactor = 1.0f - 0.7f * BoundedFraction(distance, distanceBounds);
+        // Should affect the score only a bit (otherwise bot will miss a dangerous enemy that he is not looking at).
         float directionFactor = 0.7f + 0.3f * botToEnemy.Dot(forward);
 
         float weight = enemy.weight + GetAdditionalEnemyWeight(challenger, enemy.ent);
