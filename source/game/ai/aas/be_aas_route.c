@@ -236,7 +236,7 @@ void AAS_FreeRoutingCache(aas_routingcache_t *cache)
 {
 	AAS_UnlinkCache(cache);
 	routingcachesize -= cache->size;
-	FreeMemory(cache);
+	FreePooledChunk(cache);
 } //end of the function AAS_FreeRoutingCache
 //===========================================================================
 //
@@ -745,7 +745,7 @@ aas_routingcache_t *AAS_AllocRoutingCache(int numtraveltimes)
 	//
 	routingcachesize += size;
 	//
-	cache = (aas_routingcache_t *) GetClearedMemory(size);
+	cache = (aas_routingcache_t *) AllocPooledChunk(size);
 	cache->reachabilities = (unsigned char *) cache + sizeof(aas_routingcache_t)
 								+ numtraveltimes * sizeof(unsigned short int);
 	cache->size = size;
@@ -1621,7 +1621,7 @@ int AAS_AreaRouteToGoalArea(int areanum, vec3_t origin, int goalareanum, int tra
 		return qfalse;
 	} //end if
 	// make sure the routing cache doesn't grow to large
-	while(AvailableMemory() < 1 * 1024 * 1024) {
+	while(AvailablePoolMemory() < 1 * 1024 * 1024) {
 		if (!AAS_FreeOldestCache()) break;
 	}
 	//

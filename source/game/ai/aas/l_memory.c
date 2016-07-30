@@ -438,10 +438,21 @@ void FreeMemory(void *ptr)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int AvailableMemory(void)
+void *AllocPooledChunk(int size)
 {
-	return botimport.AvailableMemory();
+	return botimport.AllocPooledChunk(size);
+}
+
+void FreePooledChunk(void *ptr)
+{
+	return botimport.FreePooledChunk(ptr);
+}
+
+int AvailablePoolMemory(void)
+{
+	return botimport.AvailablePoolMemory();
 } //end of the function AvailableMemory
+
 //===========================================================================
 //
 // Parameter:			-

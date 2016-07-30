@@ -177,14 +177,37 @@ void AAS_QF_FreeMemory(void *ptr)
     G_Free(ptr);
 }
 
-int AAS_QF_AvailableMemory()
-{
-    return 128 * 1024 * 1024;
-}
-
 void *AAS_QF_HunkAlloc(int size)
 {
     return G_LevelMalloc(size);
+}
+
+// This means actual amount of used memory is limited by 4 MiB
+// (AAS pathfinder starts to clear its cache when available memory is less than 1 MiB)
+static uint64_t aasAvailableMemory = 5 * 1024 * 1024;
+
+void *AAS_QF_AllocPooledChunk(int size)
+{
+    // A chunk should be at least 8-byte aligned (as said in malloc(2) man)
+    uint64_t realSize = (unsigned)size + 8;
+    if (aasAvailableMemory < realSize)
+        return nullptr;
+    uint64_t *envelope = (uint64_t *)G_Malloc(realSize);
+    aasAvailableMemory -= realSize;
+    envelope[0] = realSize;
+    return envelope + 1;
+}
+
+void AAS_QF_FreePooledChunk(void *ptr)
+{
+    uint64_t *envelope = ((uint64_t *)ptr) - 1;
+    aasAvailableMemory += envelope[0];
+    G_Free(envelope);
+}
+
+int AAS_QF_AvailablePooledMemory()
+{
+    return (int)aasAvailableMemory;
 }
 
 int AAS_QF_FS_FOpenFile( const char *qpath, fileHandle_t *file, fsMode_t mode)
@@ -245,10 +268,14 @@ extern "C" const botlib_import_t botimport = {
     AAS_QF_GetMemory,
     //void (*FreeMemory)(void *ptr);        // free memory from Zone
     AAS_QF_FreeMemory,
-    //int (*AvailableMemory)(void);        // available Zone memory
-    AAS_QF_AvailableMemory,
     //void *(*HunkAlloc)(int size);        // allocate from hunk
     AAS_QF_HunkAlloc,
+    //void *(AllocPooledChunk)(int size);  // allocate a pooled chunk
+    AAS_QF_AllocPooledChunk,
+    //void (*FreePooledChunk)(void *ptr);  // free a pooled chunk
+    AAS_QF_FreePooledChunk,
+    //int (*AvailablePoolMemory)(void);   // get amount of memory available in the pool
+    AAS_QF_AvailablePooledMemory,
     //int (*FS_FOpenFile)(const char *qpath, fileHandle_t *file, fsMode_t mode);
     AAS_QF_FS_FOpenFile,
     //int (*FS_Read)(void *buffer, int len, fileHandle_t f);

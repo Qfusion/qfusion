@@ -64,8 +64,10 @@ void *GetClearedHunkMemory(unsigned long size);
 
 //free the given memory block
 void FreeMemory(void *ptr);
-//returns the amount available memory
-int AvailableMemory(void);
+// Qfusion addition
+void *AllocPooledChunk(int size);
+void FreePooledChunk(void *ptr);
+int AvailablePoolMemory(void);
 //prints the total used memory size
 void PrintUsedMemorySize(void);
 //print all memory blocks with label

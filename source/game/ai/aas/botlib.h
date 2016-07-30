@@ -198,8 +198,11 @@ typedef struct botlib_import_s
 	//memory allocation
 	void		*(*GetMemory)(int size);		// allocate from Zone
 	void		(*FreeMemory)(void *ptr);		// free memory from Zone
-	int			(*AvailableMemory)(void);		// available Zone memory
 	void		*(*HunkAlloc)(int size);		// allocate from hunk
+	// Qfusion addition for AAS routing cache
+	void        *(*AllocPooledChunk)(int size);  // allocate a pooled chunk
+	void        (*FreePooledChunk)(void *ptr);  // free a pooled chunk
+	int         (*AvailablePoolMemory)(void);   // get amount of memory available in the pool
 	//file system access
 	int			(*FS_FOpenFile)( const char *qpath, fileHandle_t *file, fsMode_t mode );
 	int			(*FS_Read)( void *buffer, int len, fileHandle_t f );
