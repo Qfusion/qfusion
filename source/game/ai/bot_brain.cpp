@@ -673,7 +673,9 @@ void BotBrain::CheckTacticalPosition()
             return;
     }
 
-    SetTacticalSpot(combatTask.EnemyOrigin(), 750);
+    combatTask.inhibit = true;
+    combatTask.instanceId = NextCombatTaskInstanceId();
+    SetTacticalSpot(combatTask.EnemyOrigin(), 350 + (unsigned)(250 * GetBaseOffensiveness()));
 }
 
 // Old weapon selection code with some style and C to C++ fixes
