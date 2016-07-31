@@ -50,6 +50,10 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality );
 
 r_imginfo_t LoadPNG( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
 
+r_imginfo_t LoadPCX( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
+
+r_imginfo_t LoadWAL( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
+
 void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, bool bgr );
 
 #endif // R_IMAGELIB_H

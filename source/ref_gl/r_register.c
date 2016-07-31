@@ -1450,10 +1450,10 @@ static void R_InitVolatileAssets( void )
 	R_InitCoronas();
 	R_InitCustomColors();
 
-	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, true );
-	rsh.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, true );
-	rsh.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, true );
-	rsh.emptyFogShader = R_LoadShader( "$emptyfog", SHADER_TYPE_FOG, true );
+	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, true, NULL );
+	rsh.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, true, NULL );
+	rsh.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, true, NULL );
+	rsh.emptyFogShader = R_LoadShader( "$emptyfog", SHADER_TYPE_FOG, true, NULL );
 
 	if( !rsh.nullVBO ) {
 		rsh.nullVBO = R_InitNullModelVBO();

@@ -152,6 +152,14 @@ struct cmodel_state_s
 	vec3_t *map_verts;              // this will be freed
 	int numvertexes;
 
+	// ==== Q1 specific stuff ===
+	int numclipnodes;
+	cnode_t *map_clipnodes;
+
+	int nummaphulls;
+	struct chull_s *map_hulls;		// nummaphulls * numcmodels
+	// ==== Q1 specific stuff ===
+
 	// each area has a list of portals that lead into other areas
 	// when portals are closed, other areas may not be visible or
 	// hearable even if the vis info says that it should be
@@ -203,3 +211,5 @@ void	CM_InitBoxHull( cmodel_state_t *cms );
 void	CM_InitOctagonHull( cmodel_state_t *cms );
 
 void	CM_FloodAreaConnections( cmodel_state_t *cms );
+
+uint8_t	*CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed );

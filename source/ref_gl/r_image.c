@@ -36,7 +36,7 @@ static qmutex_t *r_imagesLock;
 
 static int r_unpackAlignment[NUM_QGL_CONTEXTS];
 
-static int *r_8to24table;
+static unsigned *r_8to24table[2];
 
 static mempool_t *r_imagesPool;
 static char *r_imagePathBuf, *r_imagePathBuf2;
@@ -442,6 +442,10 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 			imginfo = LoadTGA( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
 		else if( !Q_stricmp( extension, ".png" ) )
 			imginfo = LoadPNG( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
+		else if( !Q_stricmp( extension, ".pcx" ) )
+			imginfo = LoadPCX( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
+		else if( !Q_stricmp( extension, ".wal" ) )
+			imginfo = LoadWAL( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
 		else
 			return 0;
 
@@ -462,6 +466,8 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 		{
 			if( ( imginfo.samples >= 3 ) && ( ( imginfo.comp & ~1 ) == IMGCOMP_BGR ) )
 				*flags |= IT_BGRA;
+			if( imginfo.samples > 0 && !Q_stricmp( extension, ".wal" ) )
+				*flags = (*flags|IT_WAL) & ~IT_SRGB;
 		}
 	}
 
@@ -575,6 +581,30 @@ static void R_FlipTexture( const uint8_t *in, uint8_t *out, int width, int heigh
 			for( x = 0, p = line + col_ofs; x < width; x++, p += col_inc, out += samples )
 				for( i = 0; i < samples; i++ )
 					out[i] = p[i];
+	}
+}
+
+/*
+* R_CutImage
+*/
+static void R_CutImage( const uint8_t *in, int inwidth, int height, uint8_t *out, int x, int y, int outwidth, int outheight, int samples )
+{
+	int i;
+	uint8_t *iout;
+
+	if( x + outwidth > inwidth )
+		outwidth = inwidth - x;
+	if( y + outheight > height )
+		outheight = height - y;
+
+	x *= samples;
+	inwidth *= samples;
+	outwidth *= samples;
+
+	for( i = 0, iout = (uint8_t *)out; i < outheight; i++, iout += outwidth )
+	{
+		const uint8_t *iin = (uint8_t *)in + (y + i) * inwidth + x;
+		memcpy( iout, iin, outwidth );
 	}
 }
 
@@ -1043,6 +1073,17 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 	}
 	else
 	{
+		if( flags & (IT_LEFTHALF|IT_RIGHTHALF) )
+		{
+			// assume width represents half of the original image width
+			uint8_t *temp = R_PrepareImageBuffer( ctx, TEXTURE_CUT_BUF, width * height * samples );
+			if( flags & IT_LEFTHALF )
+				R_CutImage( *data, width * 2, height, temp, 0, 0, width, height, samples );
+			else
+				R_CutImage( *data, width * 2, height, temp, width, 0, width, height, samples );
+			data = &r_imageBuffers[ctx][TEXTURE_CUT_BUF];
+		}
+
 		if( flags & ( IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL ) )
 		{
 			uint8_t *temp = R_PrepareImageBuffer( ctx, TEXTURE_FLIPPING_BUF0, width * height * samples );
@@ -1178,6 +1219,105 @@ static int R_PixelFormatSize( int format, int type )
 		break;
 	}
 	return 0;
+}
+
+/*
+=================================================================
+
+PALETTES
+
+=================================================================
+*/
+
+/*
+* R_LoadQuake1Palette
+*/
+static void R_LoadQuake1Palette( unsigned *out )
+{
+	uint8_t *raw;
+	int r, g, b;
+	unsigned v;
+	int i, len;
+	const uint8_t *pal;
+	static const uint8_t host_quakepal[768] =
+#include "../qcommon/quake1pal.h"
+		;
+
+	// get the palette
+	len = R_LoadFile( "gfx/palette.lmp", (void **)&raw );
+	pal = ( raw && len >= 768 ) ? raw : host_quakepal;
+
+	for( i = 0; i < 256; i++ )
+	{
+		r = pal[i*3 + 0];
+		g = pal[i*3 + 1];
+		b = pal[i*3 + 2];
+
+		v = COLOR_RGBA( r, g, b, 255 );
+		out[i] = LittleLong( v );
+	}
+
+	R_FreeFile( raw );
+
+	out[255] = 0;	// 255 is transparent
+}
+
+/*
+* R_LoadQuake2Palette
+*/
+static void R_LoadQuake2Palette( unsigned *out )
+{
+	int			i;
+	uint8_t		*pal;
+	int			r, g, b;
+	unsigned	v;
+	loaderCbInfo_t cbinfo = { QGL_CONTEXT_MAIN, 0 };
+	r_imginfo_t imginfo;	
+
+	imginfo = LoadPCX( "pics/colormap.pcx", _R_AllocImageBufferCb, (void *)&cbinfo );
+	if( !imginfo.pixels )
+		return;
+
+	pal = imginfo.pixels + imginfo.width * imginfo.height * imginfo.samples;
+	for( i = 0; i < 256; i++ )
+	{
+		r = pal[i*3 + 0];
+		g = pal[i*3 + 1];
+		b = pal[i*3 + 2];
+
+		v = COLOR_RGBA( r, g, b, 255 );
+		out[i] = LittleLong( v );
+	}
+
+	out[255] &= LittleLong( 0xffffff );	// 255 is transparent
+}
+
+/*
+* R_LoadPalette
+* 
+* Loads Q1 or Q2 palette from disk if not already loaded.
+*/
+unsigned *R_LoadPalette( int flags )
+{
+	assert( ( flags & (IT_MIPTEX|IT_WAL) ) != 0 );
+
+	if( flags & IT_MIPTEX ) {
+		if( !r_8to24table[0] ) {
+			r_8to24table[0] = R_MallocExt( r_imagesPool, sizeof( unsigned ) * 256, 0, 1 );
+			R_LoadQuake1Palette( r_8to24table[0] );
+		}
+		return r_8to24table[0];
+	}
+
+	if( flags & IT_WAL ) {
+		if( !r_8to24table[1] ) {
+			r_8to24table[1] = R_MallocExt( r_imagesPool, sizeof( unsigned ) * 256, 0, 1 );
+			R_LoadQuake2Palette( r_8to24table[1] );
+		}
+		return r_8to24table[1];
+	}
+
+	return NULL;
 }
 
 /*
@@ -1668,6 +1808,95 @@ error: // must not be reached after actually starting uploading the texture
 }
 
 /*
+=========================================================
+
+MIPTEX LOADING
+
+=========================================================
+*/
+
+/*
+* LoadMipTex
+*/
+static int LoadMipTex( uint8_t **pic, int width, int height, int flags )
+{
+	unsigned int i;
+	unsigned int s, *trans;
+	uint8_t *imgbuf, *data;
+	const unsigned *table8to24 = R_LoadPalette( IT_MIPTEX );
+
+	data = *pic;
+	s = width * height;
+	imgbuf = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, s * 4 );
+	*pic = imgbuf;
+	trans = ( unsigned int * )imgbuf;
+
+	if( flags & IT_SKY )
+	{
+		unsigned j;
+		unsigned r, g, b;
+		unsigned transpix;
+		unsigned rgba;
+		int halfwidth = width >> 1;
+
+		// a sky texture is 256*128, with the right side being a masked overlay
+		r = g = b = 0;
+		for( i = 0; i < (unsigned)height; i++ )
+		{
+			for( j = 0; j < (unsigned)halfwidth; j++ )
+			{
+				uint8_t p = data[i*width + halfwidth + j];
+				rgba = table8to24[p];
+				trans[i*width + halfwidth + j] = rgba;
+				r += COLOR_R( rgba );
+				g += COLOR_G( rgba );
+				b += COLOR_B( rgba );
+			}
+		}
+
+		// make an average value for the back to avoid
+		// a fringe on the top level
+		transpix = COLOR_RGBA( r/(halfwidth*height), g/(halfwidth*height), b/(halfwidth*height), 0 );
+
+		for( i = 0; i < (unsigned)height; i++ )
+		{
+			for( j = 0; j < (unsigned)halfwidth; j++ )
+			{
+				uint8_t p = data[i*width + j];
+				trans[i*width + j] = p ? table8to24[p] : transpix;
+			}
+		}
+		return 4;
+	}
+	else if( flags & IT_MIPTEX_FULLBRIGHT )
+	{
+		// this is a fullbright mask, so make all non-fullbright
+		// colors transparent
+		for( i = 0; i < s; i++ )
+		{
+			uint8_t p = data[i];
+			if( p < 224 )
+				trans[i] = 0; // transparent
+			else
+				trans[i] = table8to24[p];	// fullbright
+		}
+		return 4;
+	}
+	else
+	{
+		// copy rgb components
+		for( i = 0; i < s; i++ )
+		{
+			uint8_t p = data[i];
+			*imgbuf++ = ((uint8_t *)&table8to24[p])[0];
+			*imgbuf++ = ((uint8_t *)&table8to24[p])[1];
+			*imgbuf++ = ((uint8_t *)&table8to24[p])[2];
+		}
+		return 3;
+	}
+}
+
+/*
 * R_LoadImageFromDisk
 */
 static bool R_LoadImageFromDisk( int ctx, image_t *image )
@@ -1902,9 +2131,15 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int minmipsize, int tags, int samples )
 {
 	image_t *image;
+	uint8_t **data = pic;
 
 	if( !glConfig.sSRGB )
 		flags &= ~IT_SRGB;
+
+	if( flags & IT_MIPTEX )
+		samples = LoadMipTex( data, width, height, flags );
+	if( !( flags & IT_CUBEMAP ) && ( flags & (IT_LEFTHALF|IT_RIGHTHALF) ) )
+		width /= 2;
 
 	image = R_CreateImage( name, width, height, 1, flags, minmipsize, tags, samples );
 
@@ -2882,7 +3117,7 @@ void R_InitImages( void )
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;
 
-	r_8to24table = NULL;
+	r_8to24table[0] = r_8to24table[1] = NULL;
 
 	memset( r_images, 0, sizeof( r_images ) );
 
@@ -2999,11 +3234,11 @@ void R_ShutdownImages( void )
 	if( r_imagePathBuf2 )
 		R_Free( r_imagePathBuf2 );
 
-	if( r_8to24table )
-	{
-		R_Free( r_8to24table );
-		r_8to24table = NULL;
-	}
+	if( r_8to24table[0] )
+		R_Free( r_8to24table[0] );
+	if( r_8to24table[1] )
+		R_Free( r_8to24table[1] );
+	r_8to24table[0] = r_8to24table[1] = NULL;
 
 	ri.Mutex_Destroy( &r_imagesLock );
 

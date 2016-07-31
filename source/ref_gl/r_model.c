@@ -27,6 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadSkeletalModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_LoadQ2BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_FixupQ1MipTex( model_t *mod );
 
 model_t *Mod_LoadModel( model_t *mod, bool crash );
 
@@ -56,6 +59,12 @@ static const modelFormatDescr_t mod_supportedformats[] =
 
 	// Q3-alike .bsp models
 	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ3BrushModel },
+
+	// Q2 .bsp models
+	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ2BrushModel },
+
+	// Q1 .bsp models
+	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ1BrushModel },
 
 	// trailing NULL
 	{ NULL,	0, NULL, 0, NULL }
@@ -1254,6 +1263,18 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 	R_TouchModel( rsh.worldModel );
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
 	rsh.worldBrushModel->pvs = ( dvis_t * )pvsData;
+}
+
+/*
+* R_WaitWorldModel
+*/
+void R_WaitWorldModel( void )
+{
+	// load all world images if not yet
+	R_FinishLoadingImages();
+	
+	// if it's a Quake1 .bsp, load default miptex's for all missing high res images
+	Mod_FixupQ1MipTex( rsh.worldModel );
 }
 
 /*

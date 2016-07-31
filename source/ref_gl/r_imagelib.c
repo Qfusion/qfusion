@@ -1035,6 +1035,222 @@ error:
 }
 
 /*
+=================================================================
+
+PCX LOADING
+
+=================================================================
+*/
+
+typedef struct
+{
+	char manufacturer;
+	char version;
+	char encoding;
+	char bits_per_pixel;
+	unsigned short xmin, ymin, xmax, ymax;
+	unsigned short hres, vres;
+	unsigned char palette[48];
+	char reserved;
+	char color_planes;
+	unsigned short bytes_per_line;
+	unsigned short palette_type;
+	char filler[58];
+	unsigned char data;         // unbounded
+} pcx_t;
+
+/*
+* LoadPCX
+*/
+r_imginfo_t LoadPCX( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr )
+{
+	uint8_t *raw;
+	pcx_t *pcx;
+	int x, y;
+	int len, columns, rows;
+	int dataByte, runLength;
+	uint8_t *pal, *pix, *c;
+	r_imginfo_t imginfo;
+
+	memset( &imginfo, 0, sizeof( imginfo ) );
+
+	//
+	// load the file
+	//
+	len = R_LoadFile( name, (void **)&raw );
+	if( !raw )
+		return imginfo;
+
+	//
+	// parse the PCX file
+	//
+	pcx = (pcx_t *)raw;
+
+	pcx->xmin = LittleShort( pcx->xmin );
+	pcx->ymin = LittleShort( pcx->ymin );
+	pcx->xmax = LittleShort( pcx->xmax );
+	pcx->ymax = LittleShort( pcx->ymax );
+	pcx->hres = LittleShort( pcx->hres );
+	pcx->vres = LittleShort( pcx->vres );
+	pcx->bytes_per_line = LittleShort( pcx->bytes_per_line );
+	pcx->palette_type = LittleShort( pcx->palette_type );
+
+	raw = &pcx->data;
+
+	if( pcx->manufacturer != 0x0a
+		|| pcx->version != 5
+		|| pcx->encoding != 1
+		|| pcx->bits_per_pixel != 8
+		|| len < 768 )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "Bad pcx file %s\n", name );
+		R_FreeFile( pcx );
+		return imginfo;
+	}
+
+	columns = pcx->xmax + 1;
+	rows = pcx->ymax + 1;
+	pix = allocbuf( uptr, columns * rows * 3 + 768, __FILE__, __LINE__ );
+	pal = pix + columns * rows * 3;
+	memcpy( pal, (uint8_t *)pcx + len - 768, 768 );
+
+	c = pix;
+	for( y = 0; y < rows; y++ )
+	{
+		for( x = 0; x < columns; )
+		{
+			dataByte = *raw++;
+
+			if( ( dataByte & 0xC0 ) == 0xC0 )
+			{
+				runLength = dataByte & 0x3F;
+				dataByte = *raw++;
+			}
+			else
+				runLength = 1;
+
+			while( runLength-- > 0 )
+			{
+				c[0] = pal[dataByte*3+0];
+				c[1] = pal[dataByte*3+1];
+				c[2] = pal[dataByte*3+2];
+				x++;
+				c+=3;
+			}
+		}
+	}
+
+	R_FreeFile( pcx );
+
+	if( raw - (uint8_t *)pcx > len )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "PCX file %s was malformed", name );
+		return imginfo;
+	}
+
+	imginfo.comp = IMGCOMP_RGB;
+	imginfo.width = rows;
+	imginfo.height = columns;
+	imginfo.samples = 3;
+	imginfo.pixels = pix;
+	return imginfo;
+}
+
+/*
+=========================================================
+
+WAL LOADING
+
+=========================================================
+*/
+
+/*
+* LoadWAL
+*/
+r_imginfo_t LoadWAL( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr )
+{
+	unsigned int i;
+	unsigned int p, s, *trans;
+	unsigned int rows, columns;
+	int samples;
+	uint8_t *buffer, *data, *imgbuf;
+	q2miptex_t *mt;
+	const unsigned *table8to24 = R_LoadPalette( IT_WAL );
+	r_imginfo_t imginfo;
+
+	memset( &imginfo, 0, sizeof( imginfo ) );
+
+	// load the file
+	R_LoadFile( name, (void **)&buffer );
+	if( !buffer )
+		return imginfo;
+
+	mt = ( q2miptex_t * )buffer;
+	rows = LittleLong( mt->width );
+	columns = LittleLong( mt->height );
+	data = buffer + LittleLong( mt->offsets[0] );
+	s = LittleLong( mt->width ) * LittleLong( mt->height );
+
+	// determine the number of channels
+	for( i = 0; i < s && data[i] != 255; i++ );
+	samples = (i < s) ? 4 : 3;
+
+	imgbuf = allocbuf( uptr, s * samples, __FILE__, __LINE__ );
+	trans = ( unsigned int * )imgbuf;
+
+	if( samples == 4 )
+	{
+		for( i = 0; i < s; i++ )
+		{
+			p = data[i];
+			trans[i] = table8to24[p];
+
+			if( p == 255 )
+			{	
+				// transparent, so scan around for another color
+				// to avoid alpha fringes
+				// FIXME: do a full flood fill so mips work...
+				if( i > rows && data[i-rows] != 255 )
+					p = data[i-rows];
+				else if( i < s-rows && data[i+rows] != 255 )
+					p = data[i+rows];
+				else if( i > 0 && data[i-1] != 255 )
+					p = data[i-1];
+				else if( i < s-1 && data[i+1] != 255 )
+					p = data[i+1];
+				else
+					p = 0;
+
+				// copy rgb components
+				((uint8_t *)&trans[i])[0] = ((uint8_t *)&table8to24[p])[0];
+				((uint8_t *)&trans[i])[1] = ((uint8_t *)&table8to24[p])[1];
+				((uint8_t *)&trans[i])[2] = ((uint8_t *)&table8to24[p])[2];
+			}
+		}
+	}
+	else
+	{
+		// copy rgb components
+		for( i = 0; i < s; i++ )
+		{
+			p = data[i];
+			*imgbuf++ = ((uint8_t *)&table8to24[p])[0];
+			*imgbuf++ = ((uint8_t *)&table8to24[p])[1];
+			*imgbuf++ = ((uint8_t *)&table8to24[p])[2];
+		}
+	}
+
+	R_FreeFile( mt );
+
+	imginfo.comp = (samples == 3 ? IMGCOMP_RGB : IMGCOMP_RGBA);
+	imginfo.width = rows;
+	imginfo.height = columns;
+	imginfo.samples = samples;
+	imginfo.pixels = (void *)trans;
+	return imginfo;
+}
+
+/*
 =========================================================
 
 PNG LOADING

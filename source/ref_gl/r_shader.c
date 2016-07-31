@@ -2605,10 +2605,9 @@ static size_t R_ShaderCleanName( const char *name, char *shortname, size_t short
 * R_LoadShaderReal
 */
 static void R_LoadShaderReal( shader_t *s, const char *shortname, 
-	size_t shortname_length, const char *longname, shaderType_e type, bool forceDefault )
+	size_t shortname_length, const char *longname, shaderType_e type, const char *text )
 {
 	void *data;
-	shadercache_t *cache;
 	shaderpass_t *pass;
 	image_t *materialImages[MAX_SHADER_IMAGES];
 
@@ -2639,17 +2638,8 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 	if( !r_defaultImage )
 		r_defaultImage = rsh.noTexture;
 
-	cache = NULL;
-	if( !forceDefault )
-		Shader_GetCache( shortname, &cache );
-
-	if( cache ) {
-		const char *text;
+	if( text ) {
 		const char *ptr, *token;
-
-		// shader is in the shader scripts
-		text = cache->buffer + cache->offset;
-		ri.Com_DPrintf( "Loading shader %s from cache...\n", shortname );
 
 		ptr = text;
 		token = COM_ParseExt( &ptr, true );
@@ -2935,12 +2925,13 @@ void R_TouchShadersByName( const char *name )
 /*
 * R_LoadShader
 */
-shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault )
+shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, const char *text )
 {
 	unsigned int key, nameLength;
 	char *shortname;
 	shader_t *s;
 	shader_t *hnode, *prev, *next;
+	shadercache_t *cache = NULL;
 
 	if( !name || !name[0] )
 		return NULL;
@@ -2987,6 +2978,17 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault )
 		ri.Com_Error( ERR_FATAL, "R_LoadShader: Shader limit exceeded" );
 	}
 
+	if( !text ) {	
+		if( !forceDefault )
+			Shader_GetCache( shortname, &cache );
+
+		// shader is in the shader scripts
+		if( cache ) {
+			text = cache->buffer + cache->offset;
+			ri.Com_DPrintf( "Loading shader %s from cache...\n", shortname );
+		}
+	}
+
 	s = r_free_shaders;
 	r_free_shaders = s->next;
 
@@ -2996,7 +2998,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault )
 	s->next = next;
 	s->prev = prev;
 	s->id = s - r_shaders;
-	R_LoadShaderReal( s, shortname, nameLength, name, type, forceDefault );
+	R_LoadShaderReal( s, shortname, nameLength, name, type, text );
 
 	// add to linked lists
 	s->prev = hnode;
@@ -3012,7 +3014,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault )
 */
 shader_t *R_RegisterPic( const char *name )
 {
-	return R_LoadShader( name, SHADER_TYPE_2D, false );
+	return R_LoadShader( name, SHADER_TYPE_2D, false, NULL );
 }
 
 /*
@@ -3028,7 +3030,7 @@ shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *d
 	type = SHADER_TYPE_2D_RAW;
 	flags |= IT_SPECIAL;
 
-	s = R_LoadShader( name, type, true );
+	s = R_LoadShader( name, type, true, NULL );
 	if( s ) {
 		image_t *image;
 
@@ -3075,7 +3077,7 @@ shader_t *R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *
 	shader_t *shader;
 
 	r_defaultImage = defaultShader ? defaultShader->passes[0].images[0] : NULL;
-	shader = R_LoadShader( name, SHADER_TYPE_2D, true );
+	shader = R_LoadShader( name, SHADER_TYPE_2D, true, NULL );
 
 	if( matchesDefault )
 		*matchesDefault = ((shader->passes[0].images[0] == r_defaultImage) ? true : false);
@@ -3090,7 +3092,7 @@ shader_t *R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *
 */
 shader_t *R_RegisterShader( const char *name, shaderType_e type )
 {
-	return R_LoadShader( name, type, false );
+	return R_LoadShader( name, type, false, NULL );
 }
 
 /*
@@ -3098,7 +3100,7 @@ shader_t *R_RegisterShader( const char *name, shaderType_e type )
 */
 shader_t *R_RegisterSkin( const char *name )
 {
-	return R_LoadShader( name, SHADER_TYPE_DIFFUSE, false );
+	return R_LoadShader( name, SHADER_TYPE_DIFFUSE, false, NULL );
 }
 
 /*
@@ -3106,7 +3108,7 @@ shader_t *R_RegisterSkin( const char *name )
 */
 shader_t *R_RegisterVideo( const char *name )
 {
-	return R_LoadShader( name, SHADER_TYPE_VIDEO, false );
+	return R_LoadShader( name, SHADER_TYPE_VIDEO, false, NULL );
 }
 
 /*
@@ -3114,7 +3116,7 @@ shader_t *R_RegisterVideo( const char *name )
 */
 shader_t *R_RegisterLinearPic( const char *name )
 {
-	return R_LoadShader( name, SHADER_TYPE_2D_LINEAR, false );
+	return R_LoadShader( name, SHADER_TYPE_2D_LINEAR, false, NULL );
 }
 
 /*
