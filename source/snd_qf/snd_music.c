@@ -84,7 +84,7 @@ static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info )
 	// find "RIFF" chunk
 	if( !S_BackgroundTrack_FindNextChunk( "RIFF", &last_chunk, file ) )
 	{
-		Com_Printf( "Missing RIFF chunk\n" );
+		//Com_Printf( "Missing RIFF chunk\n" );
 		return 0;
 	}
 
