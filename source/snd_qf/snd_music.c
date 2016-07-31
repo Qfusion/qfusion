@@ -49,14 +49,16 @@ static bool S_BackgroundTrack_FindNextChunk( char *name, int *last_chunk, int fi
 			return false; // didn't find the chunk
 
 		trap_FS_Seek( file, 4, FS_SEEK_CUR );
-		trap_FS_Read( &iff_chunk_len, sizeof( iff_chunk_len ), file );
+		if( trap_FS_Read( &iff_chunk_len, sizeof( iff_chunk_len ), file ) < 4 )
+			return false;
 		iff_chunk_len = LittleLong( iff_chunk_len );
 		if( iff_chunk_len < 0 )
 			return false; // didn't find the chunk
 
 		trap_FS_Seek( file, -8, FS_SEEK_CUR );
 		*last_chunk = trap_FS_Tell( file ) + 8 + ( ( iff_chunk_len + 1 ) & ~1 );
-		trap_FS_Read( chunkName, 4, file );
+		if( trap_FS_Read( chunkName, 4, file ) < 4 )
+			return false;
 		if( !strncmp( chunkName, name, 4 ) )
 			return true;
 	}
