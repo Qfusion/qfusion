@@ -48,6 +48,12 @@ enum
 	,IT_NO_DATA_SYNC	= 1<<21		// owned by the drawing thread, do not sync in the frontend thread
 	,IT_FLOAT			= 1<<22
 	,IT_SRGB			= 1<<23
+	,IT_WAL				= 1<<24
+	,IT_MIPTEX			= 1<<25
+	,IT_MIPTEX_FULLBRIGHT = 1<<26
+	,IT_LEFTHALF		= 1<<27
+	,IT_RIGHTHALF		= 1<<28
+
 };
 
 /**
@@ -56,7 +62,7 @@ enum
  * The loader threads may modify these flags (but no other flags),
  * so they must not be used for anything that has a long-term effect.
  */
-#define IT_LOADFLAGS		( IT_ALPHAMASK|IT_BGRA|IT_SYNC )
+#define IT_LOADFLAGS		( IT_ALPHAMASK|IT_BGRA|IT_SYNC|IT_SRGB )
 
 #define IT_SPECIAL			( IT_CLAMP|IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS )
 #define IT_SKYFLAGS			( IT_SKY|IT_NOMIPMAP|IT_CLAMP|IT_SYNC )
@@ -121,5 +127,6 @@ image_t *R_Create3DImage( const char *name, int width, int height, int layers, i
 void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int flags, int minmipsize, int samples );
 void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, int width, int height );
 void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic );
+unsigned *R_LoadPalette( int flags );
 
 #endif // R_IMAGE_H

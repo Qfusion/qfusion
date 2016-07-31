@@ -55,6 +55,8 @@ typedef struct
 } modelFormatDescr_t;
 
 extern const bspFormatDesc_t q3BSPFormats[];
+extern const bspFormatDesc_t q2BSPFormats[];
+extern const bspFormatDesc_t q1BSPFormats[];
 
 const bspFormatDesc_t *Q_FindBSPFormat( const bspFormatDesc_t *formats, const char *header, int version );
 const modelFormatDescr_t *Q_FindFormatDescriptor( const modelFormatDescr_t *formats, const uint8_t *buf, const bspFormatDesc_t **bspFormat );

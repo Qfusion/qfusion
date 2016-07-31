@@ -988,8 +988,7 @@ static void R_SetupFrame( void )
 				rf.numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
 			}
 
-			// load all world images if not yet
-			R_FinishLoadingImages();
+			R_WaitWorldModel();
 		}
 	}
 	else

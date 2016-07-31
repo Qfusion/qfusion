@@ -41,7 +41,7 @@ void R_InitCoronas( void )
 {
 	int i;
 
-	r_coronaShader = R_LoadShader( "$corona", SHADER_TYPE_CORONA, true );
+	r_coronaShader = R_LoadShader( "$corona", SHADER_TYPE_CORONA, true, NULL );
 
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
 		r_coronaSurfs[i] = ST_CORONA;
