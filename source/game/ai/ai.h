@@ -82,6 +82,11 @@ void AI_RemoveNavEntity(edict_t *ent);
 // (A corresponding nav entity should be added with a AI_NAV_REACH_ON_EVENT flag)
 void AI_NavEntityReached( edict_t *ent );
 
+void AI_AddDefenceSpot( int team, int id, edict_t *ent, float radius );
+void AI_RemoveDefenceSpot( int team, int id );
+void AI_AddOffenceSpot( int team, int id, edict_t *ent );
+void AI_RemoveOffenceSpot( int team, int id );
+
 // Bot methods accessible from scripts
 
 // An offensiveness is a value in range [0.0f, 1.0f].

@@ -1,7 +1,7 @@
 #include "bot.h"
 #include "ai_shutdown_hooks_holder.h"
 #include "ai_gametype_brain.h"
-#include "ai_base_team_brain.h"
+#include "ai_objective_based_team_brain.h"
 #include "aas.h"
 
 ai_weapon_t AIWeapons[WEAP_TOTAL];
@@ -319,6 +319,47 @@ void AI_RemoveNavEntity(edict_t *ent)
 void AI_NavEntityReached(edict_t *ent)
 {
     AiGametypeBrain::Instance()->NavEntityReached(ent);
+}
+
+static inline AiObjectiveBasedTeamBrain *GetObjectiveBasedTeamBrain(const char *caller, int team)
+{
+    // Make sure that AiBaseTeamBrain::GetBrainForTeam() will not crash for illegal team
+    if (team != TEAM_ALPHA && team != TEAM_BETA)
+    {
+        G_Printf(S_COLOR_RED "%s: illegal team %d\n", caller, team);
+        return nullptr;
+    }
+
+    AiBaseTeamBrain *baseTeamBrain = AiBaseTeamBrain::GetBrainForTeam(team);
+    if (auto *objectiveBasedTeamBrain = dynamic_cast<AiObjectiveBasedTeamBrain*>(baseTeamBrain))
+        return objectiveBasedTeamBrain;
+
+    G_Printf(S_COLOR_RED "%s: can't be used in not objective based gametype\n", caller);
+    return nullptr;
+}
+
+void AI_AddDefenceSpot( int team, int id, edict_t *ent, float radius )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->AddDefenceSpot(id, ent, radius);
+}
+
+void AI_RemoveDefenceSpot( int team, int id )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->RemoveDefenceSpot(id);
+}
+
+void AI_AddOffenceSpot( int team, int id, edict_t *ent )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->AddOffenceSpot(id, ent);
+}
+
+void AI_RemoveOffenceSpot( int team, int id )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->RemoveOffenceSpot(id);
 }
 
 float AI_GetBotBaseOffensiveness(ai_handle_t *ai)
