@@ -14,7 +14,9 @@ file(GLOB TV_SERVER_HEADERS
 file(GLOB TV_SERVER_SOURCES
 	"../qcommon/asyncstream.c"
 	"../qcommon/autoupdate.c"
-    "../qcommon/cm_main.c"
+	"../qcommon/cm_main.c"
+	"../qcommon/cm_q1bsp.c"
+	"../qcommon/cm_q2bsp.c"
     "../qcommon/cm_q3bsp.c"
     "../qcommon/cm_trace.c"
 	"../qcommon/compression.c"
