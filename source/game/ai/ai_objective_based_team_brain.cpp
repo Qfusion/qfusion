@@ -1,0 +1,274 @@
+#include "ai_objective_based_team_brain.h"
+#include "bot.h"
+
+template <typename Container, typename T>
+inline void AiObjectiveBasedTeamBrain::AddItem(const char *name, Container &c, T &&item)
+{
+    for (unsigned i = 0, end = c.size(); i < end; ++i)
+    {
+        if (c[i].id == item.id)
+        {
+            G_Printf(S_COLOR_YELLOW "%s (id=%d) is already present\n", name, item.id);
+            return;
+        }
+    }
+    c.push_back(item);
+};
+
+template <typename Container>
+inline void AiObjectiveBasedTeamBrain::RemoveItem(const char *name, Container &c, int id)
+{
+    for (unsigned i = 0, end = c.size(); i < end; ++i)
+    {
+        if (c[i].id == id)
+        {
+            c.erase(c.begin() + i);
+            return;
+        }
+    }
+    G_Printf(S_COLOR_YELLOW "%s (id=%d) cannot be found\n", name, id);
+}
+
+void AiObjectiveBasedTeamBrain::AddDefenceSpot(int id, const edict_t *entity, float radius)
+{
+    AddItem("DefenceSpot", defenceSpots, DefenceSpot(id, entity, radius));
+}
+
+void AiObjectiveBasedTeamBrain::RemoveDefenceSpot(int id)
+{
+    RemoveItem("DefenceSpot", defenceSpots, id);
+}
+
+void AiObjectiveBasedTeamBrain::AddOffenceSpot(int id, const edict_t *entity)
+{
+    AddItem("OffenceSpot", offenceSpots, OffenceSpot(id, entity));
+}
+
+void AiObjectiveBasedTeamBrain::RemoveOffenceSpot(int id)
+{
+    RemoveItem("OffenceSpot", offenceSpots, id);
+}
+
+void AiObjectiveBasedTeamBrain::Think()
+{
+    // Call super method first, it contains an obligatory logic
+    AiSquadBasedTeamBrain::Think();
+
+    StaticVector<BotAndScore, MAX_CLIENTS> candidates;
+    FindAllCandidates(candidates);
+
+    // First reset all candidates statuses to default values
+    for (auto &botAndScore: candidates)
+    {
+        Bot *bot = botAndScore.bot->ai->botRef;
+        for (const auto &defenceSpot: defenceSpots)
+            bot->SetExternalEntityWeight(defenceSpot.entity, 0.0f);
+        for (const auto &offenceSpot: offenceSpots)
+            bot->SetExternalEntityWeight(offenceSpot.entity, 0.0f);
+        bot->SetBaseOffensiveness(0.5f);
+    }
+
+    AssignDefenders(candidates);
+    AssignAttackers(candidates);
+
+    for (unsigned i = 0; i < defenceSpots.size(); ++i)
+        UpdateDefendersStatus(i);
+
+    for (unsigned spotNum = 0; spotNum < offenceSpots.size(); ++spotNum)
+        UpdateAttackersStatus(spotNum);
+}
+
+void AiObjectiveBasedTeamBrain::FindAllCandidates(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+{
+    for (int i = 0; i <= gs.maxclients; ++i)
+    {
+        edict_t *ent = game.edicts + i;
+        if (!ent->r.inuse || !ent->ai || !ent->ai->botRef)
+            continue;
+        // If an entity is an AI, it is a client too.
+        if (G_ISGHOSTING(ent))
+            continue;
+
+        candidates.push_back(BotAndScore(ent));
+    }
+}
+
+void AiObjectiveBasedTeamBrain::AssignDefenders(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+{
+    for (unsigned i = 0; i < defenceSpots.size(); ++i)
+        defenders[i].clear();
+
+    for (unsigned i = 0; i < defenceSpots.size(); ++i)
+        defenceSpots[i].weight = 1.0f / defenceSpots.size();
+
+    auto cmp = [](const DefenceSpot &a, const DefenceSpot &b) { return a.weight > b.weight; };
+    std::sort(defenceSpots.begin(), defenceSpots.end(), cmp);
+
+    // Compute raw score of bots as defenders
+    ComputeDefenceRawScore(candidates);
+
+    // Count of extra defenders additional to a mandatory single defender per defence spot
+    unsigned totalExtraDefenders = candidates.size() - defenceSpots.size();
+    for (unsigned spotNum = 0; spotNum < defenceSpots.size(); ++spotNum)
+    {
+        if (candidates.empty())
+            break;
+
+        // Compute effective bot defender scores for i-th defence spot
+        ComputeDefenceScore(candidates, spotNum);
+        // Sort candidates so best candidates are last
+        std::sort(candidates.begin(), candidates.end());
+        unsigned extraDefenders = (unsigned)(defenceSpots[spotNum].weight * totalExtraDefenders);
+        if (extraDefenders > std::min(MAX_SPOT_DEFENDERS - 1, candidates.size()))
+            extraDefenders = std::min(MAX_SPOT_DEFENDERS - 1, candidates.size());
+        for (unsigned j = 0; j < extraDefenders + 1; ++j)
+        {
+            defenders[spotNum].push_back(candidates.back().bot);
+            candidates.pop_back();
+        }
+    }
+}
+
+void AiObjectiveBasedTeamBrain::ComputeDefenceRawScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+{
+    const float armorProtection = g_armor_protection->value;
+    const float armorDegradation = g_armor_degradation->value;
+    for (auto &botAndScore: candidates)
+    {
+        // Be offensive having powerups
+        if (HasPowerups(botAndScore.bot))
+            botAndScore.rawScore = 0.001f;
+
+        float resistanceScore = DamageToKill(botAndScore.bot, armorProtection, armorDegradation);
+        float weaponScore = 0.0f;
+        const int *inventory = botAndScore.bot->r.client->ps.inventory;
+        for (int weapon = WEAP_GUNBLADE + 1; weapon < WEAP_TOTAL; ++weapon)
+        {
+            if (!inventory[weapon])
+                continue;
+
+            const auto *weaponDef = GS_GetWeaponDef(weapon);
+
+            if (weaponDef->firedef.ammo_id != AMMO_NONE)
+                weaponScore += inventory[weaponDef->firedef.ammo_id] / weaponDef->firedef.ammo_max;
+            else
+                weaponScore += 1.0f;
+
+            if (weaponDef->firedef_weak.ammo_id != AMMO_NONE)
+                weaponScore += inventory[weaponDef->firedef_weak.ammo_id] / weaponDef->firedef.ammo_max;
+            else
+                weaponScore += 1.0f;
+
+            // TODO: Modify by weapon tier
+        }
+        weaponScore /= (WEAP_TOTAL - WEAP_GUNBLADE - 1);
+        weaponScore = 1.0f / Q_RSqrt(weaponScore + 0.001f);
+
+        botAndScore.rawScore = resistanceScore * weaponScore;
+    }
+}
+
+void AiObjectiveBasedTeamBrain::ComputeDefenceScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates, int spotNum)
+{
+    const float *origin = defenceSpots[spotNum].entity->s.origin;
+    for (auto &botAndScore: candidates)
+    {
+        float squareDistance = DistanceSquared(botAndScore.bot->s.origin, origin);
+        float inverseDistance = Q_RSqrt(squareDistance + 0.001f);
+        botAndScore.effectiveScore = botAndScore.rawScore * inverseDistance;
+    }
+}
+
+void AiObjectiveBasedTeamBrain::AssignAttackers(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+{
+    for (unsigned i = 0; i < offenceSpots.size(); ++i)
+        attackers[i].clear();
+
+    for (unsigned i = 0; i < offenceSpots.size(); ++i)
+        offenceSpots[i].weight = 1.0f / offenceSpots.size();
+
+    auto cmp = [](const OffenceSpot &a, const OffenceSpot &b) { return a.weight < b.weight; };
+    std::sort(offenceSpots.begin(), offenceSpots.end(), cmp);
+
+    ComputeOffenceRawScore(candidates);
+
+    unsigned totalExtraAttackers = offenceSpots.size();
+    for (unsigned spotNum = 0; spotNum < offenceSpots.size(); ++spotNum)
+    {
+        ComputeOffenceScore(candidates, spotNum);
+        std::sort(candidates.begin(), candidates.end());
+
+        if (candidates.empty())
+            break;
+
+        // Compute effective bot defender scores for i-th defence spot
+        ComputeDefenceScore(candidates, spotNum);
+        // Sort candidates so best candidates are last
+        std::sort(candidates.begin(), candidates.end());
+        unsigned extraAttackers = (unsigned)(offenceSpots[spotNum].weight * totalExtraAttackers);
+        if (extraAttackers > std::min(MAX_SPOT_ATTACKERS - 1, candidates.size()))
+            extraAttackers = std::min(MAX_SPOT_ATTACKERS - 1, candidates.size());
+        for (unsigned j = 0; j < extraAttackers + 1; ++j)
+        {
+            attackers[spotNum].push_back(candidates.back().bot);
+            candidates.pop_back();
+        }
+    }
+}
+
+void AiObjectiveBasedTeamBrain::ComputeOffenceRawScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+{
+    for (auto &botAndScore: candidates)
+    {
+        float resistanceScore = DamageToKill(botAndScore.bot, g_armor_protection->value, g_armor_degradation->value);
+        if (HasShell(botAndScore.bot))
+            resistanceScore *= 4.0f;
+        botAndScore.rawScore = resistanceScore;
+        if (HasQuad(botAndScore.bot))
+            botAndScore.rawScore *= 4.0f;
+    }
+}
+
+void AiObjectiveBasedTeamBrain::ComputeOffenceScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates, int spotNum)
+{
+    const float *origin = offenceSpots[spotNum].entity->s.origin;
+    for (auto &botAndScore: candidates)
+    {
+        float squareDistance = DistanceSquared(botAndScore.bot->s.origin, origin);
+        float inverseDistance = Q_RSqrt(squareDistance + 0.001f);
+        botAndScore.effectiveScore = botAndScore.rawScore * inverseDistance;
+    }
+}
+
+void AiObjectiveBasedTeamBrain::UpdateDefendersStatus(unsigned defenceSpotNum)
+{
+    const DefenceSpot &spot = defenceSpots[defenceSpotNum];
+    const float *spotOrigin = defenceSpots[defenceSpotNum].entity->s.origin;
+    for (unsigned i = 0; i < defenders[defenceSpotNum].size(); ++i)
+    {
+        edict_t *bot = defenders[defenceSpotNum][i];
+        float distance = 1.0f / Q_RSqrt(0.001f + DistanceSquared(bot->s.origin, spotOrigin));
+        float distanceFactor = 1.0f;
+        if (distance < spot.radius)
+        {
+            if (distance < 0.33f * spot.radius)
+                distanceFactor = 0.0f;
+            else
+                distanceFactor = distance / spot.radius;
+        }
+        bot->ai->botRef->SetExternalEntityWeight(bot, 12.0f * distanceFactor);
+        bot->ai->botRef->SetBaseOffensiveness(1.0f - distanceFactor);
+    }
+}
+
+void AiObjectiveBasedTeamBrain::UpdateAttackersStatus(unsigned offenceSpotNum)
+{
+    const edict_t *spotEnt = offenceSpots[offenceSpotNum].entity;
+    for (unsigned i = 0; i < attackers[offenceSpotNum].size(); ++i)
+    {
+        edict_t *bot = attackers[offenceSpotNum][i];
+        bot->ai->botRef->SetExternalEntityWeight(spotEnt, 9.0f);
+        bot->ai->botRef->SetBaseOffensiveness(0.0f);
+    }
+}
+
