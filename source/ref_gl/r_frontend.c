@@ -105,6 +105,25 @@ static void *RF_AdapterThreadProc( void *param )
 }
 
 /*
+* RF_AdapterWait
+*
+* Blocks the current thread until adapter is finished processing frame and inter-frame commands.
+*/
+static void RF_AdapterWait( ref_frontendAdapter_t *adapter )
+{
+	if( adapter->thread == NULL ) {
+		return;
+	}
+
+	while( adapter->frameId != adapter->readFrameId ) {
+		adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
+		adapter->cmdPipe->Fence( adapter->cmdPipe );
+	}
+
+	adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
+}
+
+/*
 * RF_AdapterShutdown
 */
 static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter )
@@ -112,6 +131,8 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter )
 	if( !adapter->cmdPipe ) {
 		return;
 	}
+
+	RF_AdapterWait( adapter );
 
 	adapter->cmdPipe->Shutdown( adapter->cmdPipe );
 	adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
@@ -161,25 +182,6 @@ static bool RF_AdapterInit( ref_frontendAdapter_t *adapter )
 	adapter->cmdPipe->Init( adapter->cmdPipe );
 
 	return true;
-}
-
-/*
-* RF_AdapterWait
-*
-* Blocks the current thread until adapter is finished processing frame and inter-frame commands.
-*/
-static void RF_AdapterWait( ref_frontendAdapter_t *adapter )
-{
-	if( adapter->thread == NULL ) {
-		return;
-	}
-
-	while( adapter->frameId != adapter->readFrameId ) {
-		adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
-		adapter->cmdPipe->Fence( adapter->cmdPipe );
-	}
-	
-	adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
 }
 
 static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter )
