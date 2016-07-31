@@ -2189,8 +2189,7 @@ static void Mod_Q1FixUpMiptexShader( q1mmiptex_t *miptex )
 		return;
 
 	// override textures with inlined miptex if no custom texture was found
-	basepass = miptex->fullbrights || (miptex->flags & Q2_SURF_SKY) ? 2 : 1;
-	basepass = basepass >= shader->numpasses ? 0 : shader->numpasses - basepass;
+	basepass = 0;
 	pass = shader->passes + basepass;
 
 	if( miptex->flags & Q2_SURF_SKY )
