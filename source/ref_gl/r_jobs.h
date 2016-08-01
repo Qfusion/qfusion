@@ -21,7 +21,7 @@
 #ifndef R_JOBS_H
 #define R_JOBS_H
 
-#define NUM_JOB_THREADS 4
+#define NUM_JOB_THREADS 2
 
 typedef struct
 {
