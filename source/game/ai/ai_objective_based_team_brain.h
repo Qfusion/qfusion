@@ -59,18 +59,20 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
         }
     };
 
-    void FindAllCandidates(StaticVector<BotAndScore, MAX_CLIENTS> &candidates);
-    void AssignDefenders(StaticVector<BotAndScore, MAX_CLIENTS> &candidates);
-    void ComputeDefenceRawScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates);
-    void ComputeDefenceScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates, int spotNum);
-    void AssignAttackers(StaticVector<BotAndScore, MAX_CLIENTS> &candidates);
-    void ComputeOffenceRawScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates);
-    void ComputeOffenceScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates, int spotNum);
+    typedef StaticVector<BotAndScore, MAX_CLIENTS> Candidates;
+
+    void FindAllCandidates(Candidates &candidates);
+    void AssignDefenders(Candidates &candidates);
+    void ComputeDefenceRawScore(Candidates &candidates);
+    void ComputeDefenceScore(Candidates &candidates, int spotNum);
+    void AssignAttackers(Candidates &candidates);
+    void ComputeOffenceRawScore(Candidates &candidates);
+    void ComputeOffenceScore(Candidates &candidates, int spotNum);
 
     void UpdateDefendersStatus(unsigned defenceSpotNum);
     void UpdateAttackersStatus(unsigned offenceSpotNum);
     const edict_t *FindCarrier() const;
-    void SetSupportCarrierOrders(const edict_t *carrier, StaticVector<BotAndScore, MAX_CLIENTS> &candidates);
+    void SetSupportCarrierOrders(const edict_t *carrier, Candidates &candidates);
 public:
     AiObjectiveBasedTeamBrain(int team): AiSquadBasedTeamBrain(team) {}
     virtual ~AiObjectiveBasedTeamBrain() override {}
