@@ -95,6 +95,8 @@ void AiObjectiveBasedTeamBrain::FindAllCandidates(Candidates &candidates)
         // If an entity is an AI, it is a client too.
         if (G_ISGHOSTING(ent))
             continue;
+        if (ent->r.client->team != this->team)
+            continue;
 
         candidates.push_back(BotAndScore(ent));
     }
@@ -114,8 +116,6 @@ void AiObjectiveBasedTeamBrain::AssignDefenders(Candidates &candidates)
     // Compute raw score of bots as defenders
     ComputeDefenceRawScore(candidates);
 
-    // Count of extra defenders additional to a mandatory single defender per defence spot
-    unsigned totalExtraDefenders = candidates.size() - defenceSpots.size();
     for (unsigned spotNum = 0; spotNum < defenceSpots.size(); ++spotNum)
     {
         if (candidates.empty())
@@ -125,10 +125,18 @@ void AiObjectiveBasedTeamBrain::AssignDefenders(Candidates &candidates)
         ComputeDefenceScore(candidates, spotNum);
         // Sort candidates so best candidates are last
         std::sort(candidates.begin(), candidates.end());
-        unsigned extraDefenders = (unsigned)(defenceSpots[spotNum].weight * totalExtraDefenders);
-        if (extraDefenders > std::min(MAX_SPOT_DEFENDERS - 1, candidates.size()))
-            extraDefenders = std::min(MAX_SPOT_DEFENDERS - 1, candidates.size());
-        for (unsigned j = 0; j < extraDefenders + 1; ++j)
+        unsigned totalDefenders = 1;
+        if (candidates.size() > 1)
+        {
+            unsigned totalExtraDefenders = 0;
+            if (candidates.size() > defenceSpots.size() - spotNum)
+                totalExtraDefenders = candidates.size() - defenceSpots.size() - spotNum;
+            unsigned extraDefenders = (unsigned) (defenceSpots[spotNum].weight * totalExtraDefenders);
+            if (extraDefenders > std::min(MAX_SPOT_DEFENDERS - 1, candidates.size() - 1))
+                extraDefenders = std::min(MAX_SPOT_DEFENDERS - 1, candidates.size() - 1);
+            totalDefenders += extraDefenders;
+        }
+        for (unsigned j = 0; j < totalDefenders; ++j)
         {
             defenders[spotNum].push_back(candidates.back().bot);
             candidates.pop_back();
@@ -199,7 +207,6 @@ void AiObjectiveBasedTeamBrain::AssignAttackers(Candidates &candidates)
 
     ComputeOffenceRawScore(candidates);
 
-    unsigned totalExtraAttackers = offenceSpots.size();
     for (unsigned spotNum = 0; spotNum < offenceSpots.size(); ++spotNum)
     {
         ComputeOffenceScore(candidates, spotNum);
@@ -209,13 +216,21 @@ void AiObjectiveBasedTeamBrain::AssignAttackers(Candidates &candidates)
             break;
 
         // Compute effective bot defender scores for i-th defence spot
-        ComputeDefenceScore(candidates, spotNum);
+        ComputeOffenceScore(candidates, spotNum);
         // Sort candidates so best candidates are last
         std::sort(candidates.begin(), candidates.end());
-        unsigned extraAttackers = (unsigned)(offenceSpots[spotNum].weight * totalExtraAttackers);
-        if (extraAttackers > std::min(MAX_SPOT_ATTACKERS - 1, candidates.size()))
-            extraAttackers = std::min(MAX_SPOT_ATTACKERS - 1, candidates.size());
-        for (unsigned j = 0; j < extraAttackers + 1; ++j)
+        unsigned totalAttackers = 1;
+        if (candidates.size() > 1)
+        {
+            unsigned totalExtraAttackers = 0;
+            if (candidates.size() > offenceSpots.size() - spotNum)
+                totalExtraAttackers = candidates.size() - offenceSpots.size() + spotNum;
+            unsigned extraAttackers = (unsigned)(offenceSpots[spotNum].weight * totalExtraAttackers);
+            if (extraAttackers > std::min(MAX_SPOT_ATTACKERS - 1, candidates.size() - 1))
+                extraAttackers = std::min(MAX_SPOT_ATTACKERS - 1, candidates.size() - 1);
+            totalAttackers += extraAttackers;
+        }
+        for (unsigned j = 0; j < totalAttackers; ++j)
         {
             attackers[spotNum].push_back(candidates.back().bot);
             candidates.pop_back();
@@ -263,7 +278,7 @@ void AiObjectiveBasedTeamBrain::UpdateDefendersStatus(unsigned defenceSpotNum)
             else
                 distanceFactor = distance / spot.radius;
         }
-        bot->ai->botRef->SetExternalEntityWeight(bot, 12.0f * distanceFactor);
+        bot->ai->botRef->SetExternalEntityWeight(spot.entity, 12.0f * distanceFactor);
         bot->ai->botRef->SetBaseOffensiveness(1.0f - distanceFactor);
     }
 }
