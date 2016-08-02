@@ -133,6 +133,8 @@ void AI_CommonFrame()
 {
     AI_AASFrame();
 
+    NavEntitiesRegistry::Instance()->Update();
+
     AiGametypeBrain::Instance()->Update();
 }
 
@@ -294,9 +296,12 @@ void AI_AddNavEntity(edict_t *ent, ai_nav_entity_flags flags)
         navEntityFlags = navEntityFlags | NavEntityFlags::REACH_IN_GROUP;
     if (flags & AI_NAV_DROPPED)
         navEntityFlags = navEntityFlags | NavEntityFlags::DROPPED_ENTITY;
+    if (flags & AI_NAV_MOVABLE)
+        navEntityFlags = navEntityFlags | NavEntityFlags::MOVABLE;
 
     int areaNum = FindGoalAASArea(ent);
-    if (areaNum)
+    // Allow addition of temporary unreachable goals based on movable entities
+    if (areaNum || (flags & AI_NAV_MOVABLE))
     {
         NavEntitiesRegistry::Instance()->AddNavEntity(ent, areaNum, navEntityFlags);
         return;

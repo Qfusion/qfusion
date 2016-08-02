@@ -11,7 +11,8 @@ enum class NavEntityFlags: unsigned
     REACH_AT_RADIUS = 0x2,
     REACH_ON_EVENT = 0x4,
     REACH_IN_GROUP = 0x8,
-    DROPPED_ENTITY = 0x10
+    DROPPED_ENTITY = 0x10,
+    MOVABLE = 0x40
 };
 
 inline NavEntityFlags operator|(const NavEntityFlags &lhs, const NavEntityFlags &rhs)
@@ -53,6 +54,10 @@ class NavEntity
     int id;
     // Id of area this goal is located in
     int aasAreaNum;
+    // A goal origin, set once on goal addition or updated explicitly for movable goals
+    // (It is duplicated from entity origin to prevent cheating with revealing
+    // an actual origin of movable entities not marked as movable).
+    Vec3 origin;
     // Misc. goal flags, mainly defining way this goal should be reached
     NavEntityFlags flags;
     // An entity this goal is based on
@@ -60,7 +65,7 @@ class NavEntity
     // Links for registry goals pool
     NavEntity *prev, *next;
     // All fields are set to zero by NavEntities registry initialization code
-    NavEntity() {}
+    NavEntity(): origin(0, 0, 0) {}
 
     static constexpr unsigned MAX_NAME_LEN = 128;
     char name[MAX_NAME_LEN];
@@ -77,7 +82,7 @@ public:
     // A cost influence is a positive float number usually in 0.5-1.0 range.
     // Lesser cost influence means that an entity weight is less affected by distance.
     float CostInfluence() const;
-    inline Vec3 Origin() const { return Vec3(ent->s.origin); }
+    inline Vec3 Origin() const { return origin; }
     inline const gsitem_t *Item() const { return ent ? ent->item : nullptr; }
     inline const char *Classname() const { return ent ? ent->classname : nullptr; }
     inline bool IsEnabled() const { return ent && ent->r.inuse; }
@@ -272,6 +277,7 @@ class NavEntitiesRegistry
     void FreeNavEntity(NavEntity *navEntity);
 public:
     void Init();
+    void Update();
 
     NavEntity *AddNavEntity(edict_t *ent, int aasAreaNum, NavEntityFlags flags);
     void RemoveNavEntity(NavEntity *navEntity);

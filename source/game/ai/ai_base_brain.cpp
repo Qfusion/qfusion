@@ -378,6 +378,10 @@ float AiBaseBrain::SelectLongTermGoalCandidates(const Goal *currLongTermGoal, Go
         if (navEnt->IsDisabled())
             continue;
 
+        // Since movable goals have been introduced (and clients qualify as movable goals), prevent picking itself as a goal.
+        if (navEnt->Id() == ENTNUM(self))
+            continue;
+
         if (navEnt->Item() && !G_Gametype_CanPickUpItem(navEnt->Item()))
             continue;
 
@@ -550,7 +554,8 @@ float AiBaseBrain::SelectShortTermGoalCandidates(const Goal *currShortTermGoal, 
         if (navEnt->ToBeSpawnedLater())
             continue;
 
-        if (navEnt->IsClient())
+        // Since movable goals have been introduced (and clients qualify as movable goals), prevent picking itself as a goal.
+        if (navEnt->Id() == ENTNUM(self))
             continue;
 
         float weight = GetEntityWeight(navEnt->Id());
