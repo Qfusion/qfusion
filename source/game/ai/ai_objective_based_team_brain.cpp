@@ -67,6 +67,8 @@ void AiObjectiveBasedTeamBrain::Think()
         for (const auto &offenceSpot: offenceSpots)
             bot->SetExternalEntityWeight(offenceSpot.entity, 0.0f);
         bot->SetBaseOffensiveness(0.5f);
+        for (int i = 1; i <= gs.maxclients; ++i)
+            bot->SetExternalEntityWeight(game.edicts + i, 0.0f);
     }
 
     AssignDefenders(candidates);
