@@ -57,10 +57,6 @@ protected:
     int droppedToFloorAasAreaNum;
     Vec3 droppedToFloorOrigin;
 
-    // Set by goal callback
-    int goalAasAreaNum;
-    Vec3 goalTargetPoint;
-
     int allowedAasTravelFlags;
     int preferredAasTravelFlags;
 
@@ -95,7 +91,8 @@ public:
 
     inline int CurrAreaNum() const { return currAasAreaNum; }
     inline int DroppedToFloorAreaNum() const { return droppedToFloorAasAreaNum; }
-    inline int GoalAreaNum() const { return goalAasAreaNum; }
+    int GoalAreaNum() const;
+    Vec3 GoalOrigin() const;
 
     inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
     inline int AllowedTravelFlags() const { return allowedAasTravelFlags; }

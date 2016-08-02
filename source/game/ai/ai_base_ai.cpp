@@ -8,8 +8,6 @@ Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
       currAasAreaNum(0),
       droppedToFloorAasAreaNum(0),
       droppedToFloorOrigin(0, 0, 0),
-      goalAasAreaNum(0),
-      goalTargetPoint(0, 0, 0),
       allowedAasTravelFlags(allowedAasTravelFlags),
       preferredAasTravelFlags(preferredAasTravelFlags),
       distanceToNextReachStart(std::numeric_limits<float>::infinity()),
@@ -43,13 +41,24 @@ void Ai::SetFrameAffinity(unsigned modulo, unsigned offset)
     aiBaseBrain->SetFrameAffinity(modulo, offset);
 }
 
+// These getters cannot be defined in headers due to incomplete AiBaseBrain class definition
+
+int Ai::GoalAreaNum() const
+{
+    return aiBaseBrain->GoalAasAreaNum();
+}
+
+Vec3 Ai::GoalOrigin() const
+{
+    return aiBaseBrain->CurrentGoalOrigin();
+}
+
 void Ai::ResetNavigation()
 {
     distanceToNextReachStart = std::numeric_limits<float>::infinity();
 
     currAasAreaNum = FindAASAreaNum(self);
     nextReaches.clear();
-    goalAasAreaNum = 0;
 
     aiBaseBrain->ClearAllGoals();
 
@@ -58,6 +67,9 @@ void Ai::ResetNavigation()
 
 void Ai::UpdateReachCache(int reachedAreaNum)
 {
+    if (!aiBaseBrain->HasGoal())
+        return;
+    const int goalAreaNum = GoalAreaNum();
     // First skip reaches to reached area
     unsigned i = 0;
     for (i = 0; i < nextReaches.size(); ++i)
@@ -83,11 +95,11 @@ void Ai::UpdateReachCache(int reachedAreaNum)
         areaNum = nextReaches.back().areanum;
         origin = nextReaches.back().end;
     }
-    while (areaNum != goalAasAreaNum && nextReaches.size() != nextReaches.capacity())
+    while (areaNum != goalAreaNum && nextReaches.size() != nextReaches.capacity())
     {
-        int reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAasAreaNum, preferredAasTravelFlags);
+        int reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAreaNum, preferredAasTravelFlags);
         if (!reachNum)
-            reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAasAreaNum, allowedAasTravelFlags);
+            reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAreaNum, allowedAasTravelFlags);
         // We hope we'll be pushed in some other area during movement, and goal area will become reachable. Leave as is.
         if (!reachNum)
             break;
@@ -183,9 +195,6 @@ void Ai::OnGoalSet(Goal *goalEnt)
         }
     }
 
-    goalAasAreaNum = goalEnt->AasAreaNum();
-    goalTargetPoint = goalEnt->Origin();
-
     nextReaches.clear();
     UpdateReachCache(currAasAreaNum);
 }
@@ -199,7 +208,6 @@ void Ai::TouchedEntity(edict_t *ent)
         // Usually it gets overwritten in this or next frame, when bot picks up next goal,
         // but sometimes there are no other goals to pick up.
         nextReaches.clear();
-        goalAasAreaNum = 0;
         return;
     }
 

@@ -47,11 +47,22 @@ int AiBaseBrain::GoalAasAreaNum() const
 {
     if (specialGoal)
         return specialGoal->AasAreaNum();
-    if (longTermGoal)
-        return longTermGoal->AasAreaNum();
     if (shortTermGoal)
         return shortTermGoal->AasAreaNum();
-    return 0;
+    if (longTermGoal)
+        return longTermGoal->AasAreaNum();
+    FailWith("GoalAasAreaNum(): there is no goal\n");
+}
+
+Vec3 AiBaseBrain::CurrentGoalOrigin() const
+{
+    if (specialGoal)
+        return specialGoal->Origin();
+    if (shortTermGoal)
+        return shortTermGoal->Origin();
+    if (longTermGoal)
+        return longTermGoal->Origin();
+    FailWith("CurrentGoalOrigin(): there is no goal\n");
 }
 
 template<typename AASFun>
