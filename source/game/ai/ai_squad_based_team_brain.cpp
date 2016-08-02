@@ -1,4 +1,5 @@
 #include "ai_squad_based_team_brain.h"
+#include "ai_objective_based_team_brain.h"
 #include "ai_ground_trace_cache.h"
 #include "bot.h"
 #include <algorithm>
@@ -1224,6 +1225,13 @@ unsigned AiSquadBasedTeamBrain::GetFreeSquadSlot()
 
 AiSquadBasedTeamBrain *AiSquadBasedTeamBrain::InstantiateTeamBrain(int team, const char *gametype)
 {
+    // HACK!
+    // TODO: Add better way to detect objective-based gametypes
+    if (strstr(g_gametype->string, "bomb") || strstr(g_gametype->string, "ctf"))
+    {
+        void *mem = G_Malloc(sizeof(AiObjectiveBasedTeamBrain));
+        return new(mem) AiObjectiveBasedTeamBrain(team);
+    }
     void *mem = G_Malloc(sizeof(AiSquadBasedTeamBrain));
     return new(mem) AiSquadBasedTeamBrain(team);
 }
