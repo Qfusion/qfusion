@@ -55,7 +55,7 @@ void AiObjectiveBasedTeamBrain::Think()
     // Call super method first, it contains an obligatory logic
     AiSquadBasedTeamBrain::Think();
 
-    StaticVector<BotAndScore, MAX_CLIENTS> candidates;
+    Candidates candidates;
     FindAllCandidates(candidates);
 
     // First reset all candidates statuses to default values
@@ -83,7 +83,7 @@ void AiObjectiveBasedTeamBrain::Think()
         SetSupportCarrierOrders(carrier, candidates);
 }
 
-void AiObjectiveBasedTeamBrain::FindAllCandidates(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+void AiObjectiveBasedTeamBrain::FindAllCandidates(Candidates &candidates)
 {
     for (int i = 0; i <= gs.maxclients; ++i)
     {
@@ -98,7 +98,7 @@ void AiObjectiveBasedTeamBrain::FindAllCandidates(StaticVector<BotAndScore, MAX_
     }
 }
 
-void AiObjectiveBasedTeamBrain::AssignDefenders(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+void AiObjectiveBasedTeamBrain::AssignDefenders(Candidates &candidates)
 {
     for (unsigned i = 0; i < defenceSpots.size(); ++i)
         defenders[i].clear();
@@ -134,7 +134,7 @@ void AiObjectiveBasedTeamBrain::AssignDefenders(StaticVector<BotAndScore, MAX_CL
     }
 }
 
-void AiObjectiveBasedTeamBrain::ComputeDefenceRawScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+void AiObjectiveBasedTeamBrain::ComputeDefenceRawScore(Candidates &candidates)
 {
     const float armorProtection = g_armor_protection->value;
     const float armorDegradation = g_armor_degradation->value;
@@ -173,7 +173,7 @@ void AiObjectiveBasedTeamBrain::ComputeDefenceRawScore(StaticVector<BotAndScore,
     }
 }
 
-void AiObjectiveBasedTeamBrain::ComputeDefenceScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates, int spotNum)
+void AiObjectiveBasedTeamBrain::ComputeDefenceScore(Candidates &candidates, int spotNum)
 {
     const float *origin = defenceSpots[spotNum].entity->s.origin;
     for (auto &botAndScore: candidates)
@@ -184,7 +184,7 @@ void AiObjectiveBasedTeamBrain::ComputeDefenceScore(StaticVector<BotAndScore, MA
     }
 }
 
-void AiObjectiveBasedTeamBrain::AssignAttackers(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+void AiObjectiveBasedTeamBrain::AssignAttackers(Candidates &candidates)
 {
     for (unsigned i = 0; i < offenceSpots.size(); ++i)
         attackers[i].clear();
@@ -221,7 +221,7 @@ void AiObjectiveBasedTeamBrain::AssignAttackers(StaticVector<BotAndScore, MAX_CL
     }
 }
 
-void AiObjectiveBasedTeamBrain::ComputeOffenceRawScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+void AiObjectiveBasedTeamBrain::ComputeOffenceRawScore(Candidates &candidates)
 {
     for (auto &botAndScore: candidates)
     {
@@ -234,7 +234,7 @@ void AiObjectiveBasedTeamBrain::ComputeOffenceRawScore(StaticVector<BotAndScore,
     }
 }
 
-void AiObjectiveBasedTeamBrain::ComputeOffenceScore(StaticVector<BotAndScore, MAX_CLIENTS> &candidates, int spotNum)
+void AiObjectiveBasedTeamBrain::ComputeOffenceScore(Candidates &candidates, int spotNum)
 {
     const float *origin = offenceSpots[spotNum].entity->s.origin;
     for (auto &botAndScore: candidates)
@@ -292,8 +292,7 @@ const edict_t *AiObjectiveBasedTeamBrain::FindCarrier() const
     return nullptr;
 }
 
-void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier,
-                                                        StaticVector<BotAndScore, MAX_CLIENTS> &candidates)
+void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier, Candidates &candidates)
 {
     float *carrierOrigin = const_cast<float *>(carrier->s.origin);
     auto *groundTraceCache = AiGroundTraceCache::Instance();
