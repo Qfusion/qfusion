@@ -40,8 +40,13 @@ void Bot::Move(usercmd_t *ucmd)
             hasTriggeredRocketJump = false;
     }
 
-    if (currAasAreaNum == 0 || goalAasAreaNum == 0)
+    if (currAasAreaNum == 0)
         return;
+
+    if (!botBrain.HasGoal())
+        return;
+
+    const int goalAasAreaNum = GoalAreaNum();
 
     Vec3 intendedLookVec(self->velocity);  // Use as a default one
     if (currAasAreaNum != goalAasAreaNum)
@@ -62,7 +67,7 @@ void Bot::Move(usercmd_t *ucmd)
     }
     else
     {
-        intendedLookVec = Vec3(self->s.origin) - goalTargetPoint;
+        intendedLookVec = Vec3(self->s.origin) - GoalOrigin();
     }
 
     if (self->is_ladder)
@@ -209,6 +214,11 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
     if (hasEnteredJumppad)
         return;
+
+    if (!botBrain.HasGoal())
+        return;
+
+    const int goalAasAreaNum = GoalAreaNum();
 
     jumppadLandingAreasCount = 0;
     // Estimate distance (we may use bot origin as approximate jumppad origin since bot has just triggered it)
@@ -625,14 +635,14 @@ bool Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
 {
     if (nextReaches.empty())
     {
-        if (currAasAreaNum != goalAasAreaNum)
+        if (currAasAreaNum != GoalAreaNum())
         {
             // Looks like we are in air above a ground, keep as is waiting for landing.
             VectorCopy(self->velocity, intendedLookVec->Data());
             return false;
         }
         // Move to a goal origin
-        *intendedLookVec = goalTargetPoint - self->s.origin;
+        *intendedLookVec = GoalOrigin() - self->s.origin;
         return true;
     }
 
@@ -674,11 +684,13 @@ bool Bot::TryStraightenLookVec(Vec3 *intendedLookVec)
     Vec3 lookAtPoint(0, 0, 0);
 
     // All next known reachabilities. have TRAVEL_WALK travel type
-    if (i == nextReaches.size()) {
+    if (i == nextReaches.size())
+    {
         // If a reachablities chain contains goal area, goal area is last in the chain
-        if (nextReaches[i - 1].areanum == goalAasAreaNum) {
+        if (nextReaches[i - 1].areanum == GoalAreaNum())
+        {
             traceStraightenedPath = true;
-            lookAtPoint = goalTargetPoint;
+            lookAtPoint = GoalOrigin();
         }
     }
     else
@@ -1036,7 +1048,7 @@ bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
     if (!botBrain.HasGoal())
         return false;
     // No need for that
-    if (currAasAreaNum == goalAasAreaNum)
+    if (currAasAreaNum == GoalAreaNum())
         return false;
 
     float squareDistanceToGoal = DistanceSquared(self->s.origin, botBrain.ClosestGoalOrigin().Data());
@@ -1247,7 +1259,8 @@ bool Bot::AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarg
 
 int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botToGoalDist2D) const
 {
-    const aas_area_t &targetArea = aasworld.areas[goalAasAreaNum];
+    const int goalAreaNum = GoalAreaNum();
+    const aas_area_t &targetArea = aasworld.areas[goalAreaNum];
     Vec3 targetOrigin(targetArea.center);
     targetOrigin.Z() = targetArea.mins[2] + 16.0f;
 
@@ -1275,7 +1288,7 @@ int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botT
         aas_area_t &area = aasworld.areas[areas[i]];
         Vec3 areaPoint(area.center);
         areaPoint.Z() = area.mins[2] + 4.0f;
-        int reachNum = AAS_AreaReachabilityToGoalArea(areas[i], areaPoint.Data(), goalAasAreaNum, travelFlags);
+        int reachNum = AAS_AreaReachabilityToGoalArea(areas[i], areaPoint.Data(), goalAreaNum, travelFlags);
         // This means goal area is not reachable with these travel flags
         if (!reachNum)
             continue;
@@ -1381,9 +1394,12 @@ void Bot::TriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec
 
 void Bot::CheckTargetProximity()
 {
+    if (!botBrain.HasGoal())
+        return;
+
     // This is the only action related to reach-at-touch items that may be performed here.
     // Other actions for that kind of goals are performed in Ai::TouchedEntity, Ai/Bot::TouchedNotSolidTriggerEntity
-    if (currAasAreaNum != goalAasAreaNum)
+    if (currAasAreaNum != GoalAreaNum())
     {
         // If the bot was waiting for item spawn and for example has been pushed from the goal, stop camping a goal
         if (isWaitingForItemSpawn)
@@ -1398,7 +1414,6 @@ void Bot::CheckTargetProximity()
     {
         if (botBrain.TryReachGoalByProximity())
         {
-            goalAasAreaNum = 0;
             nextReaches.clear();
             return;
         }
@@ -1506,7 +1521,16 @@ void Bot::UpdateCombatMovePushes()
     // In roaming movement we keep forward pressed and align view to look vec
     // In combat movement we keep view as-is (it set by aiming ai part) and move to goal using appropriate keys
     Vec3 intendedMoveVec(0, 0, 0);
-    StraightenOrInterpolateLookVec(&intendedMoveVec, (float)VectorLength(self->velocity));
+    if (botBrain.HasGoal())
+    {
+        StraightenOrInterpolateLookVec(&intendedMoveVec, (float) VectorLength(self->velocity));
+    }
+    else
+    {
+        intendedMoveVec.X() = 0.5f - random();
+        intendedMoveVec.Y() = 0.5f - random();
+        intendedMoveVec.Z() = 0.5f - random();
+    }
     intendedMoveVec.NormalizeFast();
 
     vec3_t forward, right;

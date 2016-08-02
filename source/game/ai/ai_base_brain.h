@@ -83,6 +83,7 @@ protected:
     bool IsCloseToGoal(const Goal *goal, float proximityThreshold) const;
 
     int GoalAasAreaNum() const;
+    Vec3 CurrentGoalOrigin() const;
 
     virtual void PreThink() override;
     virtual void Think() override;
