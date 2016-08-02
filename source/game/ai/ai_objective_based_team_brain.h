@@ -69,6 +69,8 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
 
     void UpdateDefendersStatus(unsigned defenceSpotNum);
     void UpdateAttackersStatus(unsigned offenceSpotNum);
+    const edict_t *FindCarrier() const;
+    void SetSupportCarrierOrders(const edict_t *carrier, StaticVector<BotAndScore, MAX_CLIENTS> &candidates);
 public:
     AiObjectiveBasedTeamBrain(int team): AiSquadBasedTeamBrain(team) {}
     virtual ~AiObjectiveBasedTeamBrain() override {}
