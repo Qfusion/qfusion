@@ -178,6 +178,17 @@ void NavEntitiesRegistry::Init()
     navEntities[i].next = NULL;
 }
 
+void NavEntitiesRegistry::Update()
+{
+    FOREACH_NAVENT(navEnt)
+    {
+        if ((navEnt->flags & NavEntityFlags::MOVABLE) != NavEntityFlags::NONE)
+        {
+            navEnt->aasAreaNum = FindAASAreaNum(navEnt->ent->s.origin);
+        }
+    }
+}
+
 NavEntity *NavEntitiesRegistry::AllocNavEntity()
 {
     if (!freeNavEntity)
@@ -196,7 +207,6 @@ NavEntity *NavEntitiesRegistry::AllocNavEntity()
 
 NavEntity *NavEntitiesRegistry::AddNavEntity(edict_t *ent, int aasAreaNum, NavEntityFlags flags)
 {
-    if (!aasAreaNum) abort();
     NavEntity *navEntity = AllocNavEntity();
     if (navEntity)
     {
@@ -204,6 +214,7 @@ NavEntity *NavEntitiesRegistry::AddNavEntity(edict_t *ent, int aasAreaNum, NavEn
         navEntity->ent = ent;
         navEntity->id = entNum;
         navEntity->aasAreaNum = aasAreaNum;
+        navEntity->origin = Vec3(ent->s.origin);
         navEntity->flags = flags;
         Q_snprintfz(navEntity->name, NavEntity::MAX_NAME_LEN, "%s(ent#=%d)", ent->classname, entNum);
         entityToNavEntity[entNum] = navEntity;

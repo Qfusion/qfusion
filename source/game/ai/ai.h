@@ -56,7 +56,11 @@ typedef enum
 	AI_NAV_REACH_IN_GROUP = 0x8,
 	// A nav entity will disappear at its next think.
 	// An AI may skip this goal if it thinks that goal will disappear before it may be reached.
-	AI_NAV_DROPPED = 0x1000
+	AI_NAV_DROPPED = 0x1000,
+	// A nav entity is movable (e.g. is a player).
+	// Use this flag cautious to prevent AI cheating with revealing enemy origin.
+	// (A good use case for this flag is a flag carrier of the own team, not the enemy one).
+	AI_NAV_MOVABLE = 0x4000
 } ai_nav_entity_flags;
 
 // Should be called before static entities spawn
