@@ -176,6 +176,9 @@ void NavEntitiesRegistry::Init()
     }
     navEntities[i].id = i;
     navEntities[i].next = NULL;
+
+    for (int clientEnt = 1; clientEnt <= gs.maxclients; ++clientEnt)
+        AddNavEntity(game.edicts + clientEnt, 0, NavEntityFlags::REACH_ON_EVENT | NavEntityFlags::MOVABLE);
 }
 
 void NavEntitiesRegistry::Update()

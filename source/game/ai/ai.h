@@ -60,6 +60,9 @@ typedef enum
 	// A nav entity is movable (e.g. is a player).
 	// Use this flag cautious to prevent AI cheating with revealing enemy origin.
 	// (A good use case for this flag is a flag carrier of the own team, not the enemy one).
+	// Note that all clients are already added as such entities at level start.
+	// If you really want to force AI pursue some client, set its external entity weight.
+	// Note that client nav entities also have REACH_ON_EVENT flags.
 	AI_NAV_MOVABLE = 0x4000
 } ai_nav_entity_flags;
 
