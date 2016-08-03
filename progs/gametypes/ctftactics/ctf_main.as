@@ -336,51 +336,53 @@ void CTFT_UpdateBotsExtraGoals()
     }
 }
 
-bool CTFT_UpdateBotExtraGoals( Entity @ent )
+void CTFT_UpdateBotExtraGoals( Entity @ent )
 {
     Entity @goal;
     Bot @bot;
     float baseFactor;
-    float alphaDist, betaDist, homeDist;
+
+    float botToHomeBaseDist  = 999999.0f;
 
     @bot = @ent.client.getBot();
     if ( @bot == null )
-        return false;
+        return;
 
-    float offensiveStatus = 1.0f;
-
-    // play defensive when being a flag carrier
-    if ( ( ent.effects & EF_CARRIER ) != 0 )
-        offensiveStatus = 0.33f;
+    float offensiveness = bot.getEffectiveOffensiveness();
 
     cFlagBase @alphaBase = @CTF_getBaseForTeam( TEAM_ALPHA );
     cFlagBase @betaBase = @CTF_getBaseForTeam( TEAM_BETA );
 
-    // for carriers, find the raw distance to base
-    if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
+    if ( @alphaBase != null && @betaBase != null )
     {
+        float botToAlphaBaseDist = ent.origin.distance( alphaBase.owner.origin );
+        float botToBetaBaseDist = ent.origin.distance( betaBase.owner.origin );        
         if ( ent.team == TEAM_ALPHA )
-            homeDist = ent.origin.distance( alphaBase.owner.origin );
+        {
+            botToHomeBaseDist = botToAlphaBaseDist;
+        }        
         else
-            homeDist = ent.origin.distance( betaBase.owner.origin );
+        {
+            botToHomeBaseDist = botToBetaBaseDist;
+        }
     }
 
-    // loop all the goal entities
+    // TODO: Do not iterate over all entities but check only bases and flags
     for ( int i = maxClients + 1; i < numEntities; ++i )
     {
-        @goal = @G_GetEntity( i );
+        @goal = @G_GetEntity(i);
 
         // when being a flag carrier have a tendency to stay around your own base
         baseFactor = 1.0f;
 
         if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
         {
-            alphaDist = goal.origin.distance( alphaBase.owner.origin );
-            betaDist = goal.origin.distance( betaBase.owner.origin );
+            float alphaDist = goal.origin.distance( alphaBase.owner.origin );
+            float betaDist = goal.origin.distance( betaBase.owner.origin );
 
-            if ( ( ent.team == TEAM_ALPHA ) && ( alphaDist + 64 < betaDist || alphaDist < homeDist + 128 ) )
+            if ( ( ent.team == TEAM_ALPHA ) && ( alphaDist + 64 < betaDist || alphaDist < botToHomeBaseDist + 128 ) )
                 baseFactor = 5.0f;
-            else if ( ( ent.team == TEAM_BETA ) && ( betaDist + 64 < alphaDist || betaDist < homeDist + 128 ) )
+            else if ( ( ent.team == TEAM_BETA ) && ( betaDist + 64 < alphaDist || betaDist < botToHomeBaseDist + 128 ) )
                 baseFactor = 5.0f;
             else
                 baseFactor = 0.5f;
@@ -389,60 +391,63 @@ bool CTFT_UpdateBotExtraGoals( Entity @ent )
         // the entities spawned from scripts never have linked items,
         // so the flags are weighted here
 
-        cFlagBase @flagBase = @CTF_getBaseForOwner( goal );
+        // Flags defence/offence/carrier support is managed by native code
+        // using provided status of defence/offence spots.
 
-        if ( @flagBase != null && @flagBase.owner != null )
+        // The only thing should be managed in scripts is returning to a base.
+        // (Carrier behaviour differs for custom gametypes).
+
+        // The bot is a carrier, so it should return to the team base
+        if ( ( ent.effects & EF_CARRIER ) != 0)
         {
-            // enemy or team?
+            cFlagBase @flagBase = @CTF_getBaseForOwner( goal );
 
-            if ( flagBase.owner.team != ent.team ) // enemy base
+            if ( @flagBase != null && @flagBase.owner != null )
             {
-                if ( @flagBase.owner == @flagBase.carrier ) // enemy flag is at base
+                // If the base is the team base 
+                if ( flagBase.owner.team == ent.team )
                 {
-                    bot.setExternalEntityWeight( @goal, 12.0f * offensiveStatus );
+                    // the flag is at our base, return to the base
+                    if ( ( goal.effects & EF_CARRIER ) != 0 )
+                    {
+                        bot.setExternalEntityWeight( goal, 9.0f );
+                    }
+                    // our flag is stolen    
+                    else
+                    {
+                        // return to our base
+                        if ( botToHomeBaseDist > 768.0f )
+                        {
+                            bot.setExternalEntityWeight( goal, 9.0f );
+                        }
+                        // do not camp at our flag spot, hide somewhere else
+                        else 
+                        {
+                            bot.setExternalEntityWeight( goal, 9.0f * ( botToHomeBaseDist / 768.0f ) );
+                        }
+                    }    
                 }
-                else
-                {
-                    bot.setExternalEntityWeight( @goal, 0 );
-                }
-            }
-            else // team
-            {
-                // flag is at base and this bot has the enemy flag
-                if ( ( ent.effects & EF_CARRIER ) != 0 && ( goal.effects & EF_CARRIER ) != 0 )
-                {
-                    bot.setExternalEntityWeight( @goal, 3.5f * baseFactor );
-                }
-                else
-                {
-                    bot.setExternalEntityWeight( @goal, 0 );
-                }
-            }
 
-            continue;
+                continue;
+            }
         }
 
         if ( goal.classname == "ctf_flag" )
         {
-            // ** please, note, no item has a weight above 1.0 **
-            // ** these are really huge weights **
-
             // it's my flag, dropped somewhere
             if ( goal.team == ent.team )
             {
-                bot.setExternalEntityWeight( @goal, 5.0f * baseFactor );
+                bot.setExternalEntityWeight( goal, 9.0f * baseFactor );
             }
             // it's enemy flag, dropped somewhere
             else if ( goal.team != ent.team )
             {
-                bot.setExternalEntityWeight( @goal, 3.5f * offensiveStatus * baseFactor );
+                bot.setExternalEntityWeight( goal, 9.0f * offensiveness );
             }
 
             continue;
         }
     }
-
-    return true; // handled by the script
 }
 
 // select a spawning point for a player

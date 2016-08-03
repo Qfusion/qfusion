@@ -36,6 +36,8 @@ class cFlagBase
     bool handDropped;
     uint droppedTime;
     cFlagBase @next;
+    int team;
+    int enemyTeam;
 
     void Initialize( Entity @spawner )
     {
@@ -49,6 +51,8 @@ class cFlagBase
         this.droppedTime = 0;
         @this.next = @fbHead;
         @fbHead = @this;
+        this.team = spawner.team;
+        this.enemyTeam = spawner.team == TEAM_ALPHA ? TEAM_BETA : TEAM_ALPHA;
 
         @this.owner = @spawner;
         @this.carrier = @spawner;
@@ -74,6 +78,11 @@ class cFlagBase
         spawner.linkEntity();
         // bases are special because of the timers, use custom reachability checks
 		AI::AddNavEntity( spawner, AI_NAV_REACH_ON_EVENT | AI_NAV_REACH_IN_GROUP );
+        // identify spots by id (set id as defence/offence spot to team id)
+        // add a defence spot for the team
+        AI::AddDefenceSpot( this.team, this.team, spawner, 768.0f );
+        // add an offence spot for the enemy team
+        AI::AddOffenceSpot( this.enemyTeam, this.team, spawner ); 
 
 		// drop to floor
 		Trace tr;
@@ -145,11 +154,15 @@ class cFlagBase
 		{
             this.owner.solid = SOLID_TRIGGER;
 			this.decal.svflags &= ~SVF_NOCLIENT;
+            AI::AddDefenceSpot( this.team, this.team, this.owner, 768.0f );
+            AI::AddOffenceSpot( this.enemyTeam, this.team, this.owner );
 		}
         else
 		{
             this.owner.solid = SOLID_NOT;
 			this.decal.svflags |= SVF_NOCLIENT;
+            AI::RemoveDefenceSpot( this.team, this.team );
+            AI::RemoveOffenceSpot( this.enemyTeam, this.team );
 		}
 
         this.owner.linkEntity();

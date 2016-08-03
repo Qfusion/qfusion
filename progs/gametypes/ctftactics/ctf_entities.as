@@ -32,6 +32,8 @@ class cFlagBase
     bool handDropped;
     uint droppedTime;
     cFlagBase @next;
+    int team;
+    int enemyTeam;
 
     void Initialize( Entity @spawner )
     {
@@ -42,6 +44,8 @@ class cFlagBase
 		this.checkBlockages = 0;
         @this.next = @fbHead;
         @fbHead = @this;
+        this.team = spawner.team;
+        this.enemyTeam = spawner.team == TEAM_ALPHA ? TEAM_BETA : TEAM_ALPHA;
 
         @this.owner = @spawner;
         @this.carrier = @spawner;
@@ -66,8 +70,13 @@ class cFlagBase
 
         this.owner.linkEntity();
 
-        // CTFT flag is always instant, so it should be reached at touch as an ordinary entity       
-        AI::AddNavEntity( this.owner, AI_NAV_REACH_AT_TOUCH );
+        // ctf:tactics flag is always instant, so it should be reached at touch as an ordinary item
+		AI::AddNavEntity( spawner, AI_NAV_REACH_AT_TOUCH );
+        // identify spots by id (set id as defence/offence spot to team id)
+        // add a defence spot for the team
+        AI::AddDefenceSpot( this.team, this.team, spawner, 768.0f );
+        // add an offence spot for the enemy team
+        AI::AddOffenceSpot( this.enemyTeam, this.team, spawner ); 
 
         // drop to floor
         Trace tr;
@@ -116,10 +125,14 @@ class cFlagBase
         if ( @this.carrier == @this.owner )
         {
             this.owner.solid = SOLID_TRIGGER;
+            AI::AddDefenceSpot( this.team, this.team, this.owner, 768.0f );
+            AI::AddOffenceSpot( this.enemyTeam, this.team, this.owner );
         }
         else
         {
             this.owner.solid = SOLID_NOT;
+            AI::RemoveDefenceSpot( this.team, this.team );
+            AI::RemoveOffenceSpot( this.enemyTeam, this.team );
         }
 
         this.owner.linkEntity();
