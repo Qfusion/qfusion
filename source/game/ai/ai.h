@@ -91,7 +91,15 @@ void AI_NavEntityReached( edict_t *ent );
 
 void AI_AddDefenceSpot( int team, int id, edict_t *ent, float radius );
 void AI_RemoveDefenceSpot( int team, int id );
+
 void AI_DefenceSpotAlert( int team, int id, float alertLevel, unsigned timeoutPeriod );
+
+// If bots of a team see an enemy in defence spot bounds, they call an alert.
+// Enemy detection uses "fair" vision of bots, it does not cheat with wallhacking.
+// Bots will decide what alert level and timeout should be used.
+void AI_EnableDefenceSpotAutoAlert( int team, int id );
+void AI_DisableDefenceSpotAutoAlert( int team, int id );
+
 void AI_AddOffenceSpot( int team, int id, edict_t *ent );
 void AI_RemoveOffenceSpot( int team, int id );
 

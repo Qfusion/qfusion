@@ -13,11 +13,18 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
         float weight;
         float alertLevel;
         unsigned alertTimeoutAt;
+        bool usesAutoAlert;
 
         // Weight may be set automatically or on event (bomb plant)
 
         DefenceSpot(int id, const edict_t *entity, float radius)
-            : id(id), entity(entity), radius(radius), weight(0.0f), alertLevel(0.0f), alertTimeoutAt(0) {}
+            : id(id),
+              entity(entity),
+              radius(radius),
+              weight(0.0f),
+              alertLevel(0.0f),
+              alertTimeoutAt(0),
+              usesAutoAlert(false) {}
     };
 
     struct OffenceSpot
@@ -75,6 +82,13 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
     void UpdateAttackersStatus(unsigned offenceSpotNum);
     const edict_t *FindCarrier() const;
     void SetSupportCarrierOrders(const edict_t *carrier, Candidates &candidates);
+
+    void EnableDefenceSpotAutoAlert(DefenceSpot *defenceSpot);
+    void DisableDefenceSpotAutoAlert(DefenceSpot *defenceSpot);
+
+    static void AlertCallback(void *receiver, Bot *bot, int id, float alertLevel);
+
+    void OnAlertReported(Bot *bot, int id, float alertLevel);
 public:
     AiObjectiveBasedTeamBrain(int team): AiSquadBasedTeamBrain(team) {}
     virtual ~AiObjectiveBasedTeamBrain() override {}
@@ -84,8 +98,14 @@ public:
 
     void SetDefenceSpotAlert(int id, float alertLevel, unsigned timeoutPeriod);
 
+    void EnableDefenceSpotAutoAlert(int id);
+    void DisableDefenceSpotAutoAlert(int id);
+
     void AddOffenceSpot(int id, const edict_t *entity);
     void RemoveOffenceSpot(int id);
+
+    virtual void OnBotAdded(Bot *bot) override;
+    virtual void OnBotRemoved(Bot *bot) override;
 
     virtual void Think() override;
 };
