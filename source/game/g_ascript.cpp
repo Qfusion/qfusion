@@ -3424,7 +3424,11 @@ static const asglobfuncs_t asAIGlobFuncs[] =
 
 	{ "void AddDefenceSpot(int team, int id, Entity @ent, float radius)", asFUNCTION(AI_AddDefenceSpot), NULL },
 	{ "void RemoveDefenceSpot(int team, int id)", asFUNCTION(AI_RemoveDefenceSpot), NULL },
+
 	{ "void DefenceSpotAlert(int team, int id, float level, uint timeoutPeriod)", asFUNCTION(AI_DefenceSpotAlert), NULL },
+	{ "void EnableDefenceSpotAutoAlert(int team, int id)", asFUNCTION(AI_EnableDefenceSpotAutoAlert), NULL },
+	{ "void DisableDefenceSpotAutoAlert(int team, int id)", asFUNCTION(AI_DisableDefenceSpotAutoAlert), NULL },
+
 	{ "void AddOffenceSpot(int team, int id, Entity @ent)", asFUNCTION(AI_AddOffenceSpot), NULL },
 	{ "void RemoveOffenceSpot(int team, int id)", asFUNCTION(AI_RemoveOffenceSpot), NULL },
 

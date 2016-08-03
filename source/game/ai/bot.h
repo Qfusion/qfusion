@@ -93,6 +93,10 @@ public:
     }
 
     inline const int *Inventory() const { return self->r.client->ps.inventory; }
+
+    typedef void (*AlertCallback)(void *receiver, Bot *bot, int id, float alertLevel);
+    void EnableAutoAlert(int id, const Vec3 &spotOrigin, float spotRadius, AlertCallback callback, void *receiver);
+    void DisableAutoAlert(int id);
 protected:
     virtual void Frame() override;
     virtual void Think() override;
@@ -174,6 +178,38 @@ private:
     unsigned campingSpotLookAtPointTimeout;
 
     bool isWaitingForItemSpawn;
+
+    struct AlertSpot
+    {
+        Vec3 origin;
+        int id;
+        float radius;
+        unsigned lastReportedAt;
+        float lastReportedScore;
+        AlertCallback callback;
+        void *receiver;
+
+        AlertSpot(const Vec3 &origin, int id, float radius, AlertCallback callback, void *receiver)
+            : origin(origin),
+              id(id),
+              radius(radius),
+              lastReportedAt(0),
+              lastReportedScore(0.0f),
+              callback(callback),
+              receiver(receiver) {};
+
+        inline void Alert(Bot *bot, float score)
+        {
+            callback(receiver, bot, id, score);
+            lastReportedAt = level.time;
+            lastReportedScore = score;
+        }
+    };
+
+    static constexpr unsigned MAX_ALERT_SPOTS = 3;
+    StaticVector<AlertSpot, MAX_ALERT_SPOTS> alertSpots;
+
+    void CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTargets);
 
     void SetCampingSpot(const Vec3 &spotOrigin, float spotRadius, float alertness = 0.5f);
     void SetCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRaduis, float alertness = 0.5f);

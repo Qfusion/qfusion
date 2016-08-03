@@ -355,10 +355,22 @@ void AI_RemoveDefenceSpot( int team, int id )
         objectiveBasedTeamBrain->RemoveDefenceSpot(id);
 }
 
-void AI_DefenceSpotAlert(int team, int id, float alertLevel, unsigned timeoutPeriod)
+void AI_DefenceSpotAlert( int team, int id, float alertLevel, unsigned timeoutPeriod )
 {
     if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
         objectiveBasedTeamBrain->SetDefenceSpotAlert(id, alertLevel, timeoutPeriod);
+}
+
+void AI_EnableDefenceSpotAutoAlert( int team, int id )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->EnableDefenceSpotAutoAlert( id );
+}
+
+void AI_DisableDefenceSpotAutoAlert( int team, int id )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->DisableDefenceSpotAutoAlert( id );
 }
 
 void AI_AddOffenceSpot( int team, int id, edict_t *ent )

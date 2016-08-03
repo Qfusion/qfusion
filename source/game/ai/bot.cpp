@@ -154,6 +154,35 @@ void Bot::TouchedJumppad(const edict_t *jumppad)
     jumppadTarget = Vec3(jumppad->target_ent->s.origin);
 }
 
+void Bot::EnableAutoAlert(int id, const Vec3 &spotOrigin, float spotRadius, AlertCallback callback, void *receiver)
+{
+    // First check duplicate ids. Fail on error since callers of this method are internal.
+    for (unsigned i = 0; i < alertSpots.size(); ++i)
+    {
+        if (alertSpots[i].id == id)
+            FailWith("Duplicated alert spot (id=%d)\n", id);
+    }
+
+    if (alertSpots.size() == alertSpots.capacity())
+        FailWith("Can't add an alert spot (id=%d)\n: too many spots", id);
+
+    alertSpots.emplace_back(AlertSpot(spotOrigin, id, spotRadius, callback, receiver));
+}
+
+void Bot::DisableAutoAlert(int id)
+{
+    for (unsigned i = 0; i < alertSpots.size(); ++i)
+    {
+        if (alertSpots[i].id == id)
+        {
+            alertSpots.erase(alertSpots.begin() + i);
+            return;
+        }
+    }
+
+    FailWith("Can't find alert spot by id %d\n", id);
+}
+
 void Bot::RegisterVisibleEnemies()
 {
     if(G_ISGHOSTING(self) || GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled())
@@ -211,14 +240,84 @@ void Bot::RegisterVisibleEnemies()
 
     std::sort(candidateTargets.begin(), candidateTargets.end());
 
+    // Select inPVS/visible targets first to aid instruction cache, do not call callbacks in loop
+    StaticVector<edict_t *, MAX_CLIENTS> targetsInPVS;
+    StaticVector<edict_t *, MAX_CLIENTS> visibleTargets;
+
     for (int i = 0, end = std::min(candidateTargets.size(), botBrain.MaxTrackedEnemies()); i < end; ++i)
     {
         edict_t *ent = game.edicts + candidateTargets[i].entNum;
-        if (trap_inPVS(self->s.origin, ent->s.origin) && G_Visible(self, ent))
-            botBrain.OnEnemyViewed(ent);
+        if (trap_inPVS(self->s.origin, ent->s.origin))
+            targetsInPVS.push_back(ent);
     }
 
+    for (auto ent: targetsInPVS)
+        if (G_Visible(self, ent))
+            visibleTargets.push_back(ent);
+
+    // Call bot brain callbacks on visible targets
+    for (auto ent: visibleTargets)
+        botBrain.OnEnemyViewed(ent);
+
     botBrain.AfterAllEnemiesViewed();
+
+    CheckAlertSpots(visibleTargets);
+}
+
+void Bot::CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTargets)
+{
+    float scores[MAX_ALERT_SPOTS];
+
+    // First compute scores (good for instruction cache)
+    for (unsigned i = 0; i < alertSpots.size(); ++i)
+    {
+        float score = 0.0f;
+        const auto &alertSpot = alertSpots[i];
+        const float squareRadius = alertSpot.radius * alertSpot.radius;
+        const float invRadius = 1.0f / alertSpot.radius;
+        for (const edict_t *ent: visibleTargets)
+        {
+            float squareDistance = DistanceSquared(ent->s.origin, alertSpot.origin.Data());
+            if (squareDistance > squareRadius)
+                continue;
+            float distance = Q_RSqrt(squareDistance + 0.001f);
+            score += 1.0f - distance * invRadius;
+            if (HasPowerups(ent))
+                score *= 4.0f;
+        }
+        // Clamp score by a max value
+        clamp_high(score, 3.0f);
+        // Convert score to [0, 1] range
+        score /= 3.0f;
+        // Get a square root of score (values closer to 0 gets scaled more than ones closer to 1)
+        score = 1.0f / Q_RSqrt(score + 0.001f);
+        // Sanitize
+        clamp(score, 0.0f, 1.0f);
+        scores[i] = score;
+    }
+
+    // Then call callbacks
+    const unsigned levelTime = level.time;
+    for (unsigned i = 0; i < alertSpots.size(); ++i)
+    {
+        auto &alertSpot = alertSpots[i];
+        unsigned nonReportedFor = levelTime - alertSpot.lastReportedAt;
+        if (nonReportedFor >= 1000)
+            alertSpot.lastReportedScore = 0.0f;
+
+        // Since scores are sanitized, they are in range [0.0f, 1.0f], and abs(scoreDelta) is in range [-1.0f, 1.0f];
+        float scoreDelta = scores[i] - alertSpot.lastReportedScore;
+        if (scoreDelta >= 0)
+        {
+            if (nonReportedFor >= 1000 - scoreDelta * 500)
+                alertSpot.Alert(this, scores[i]);
+        }
+        else
+        {
+            if (nonReportedFor >= 500 - scoreDelta * 500)
+                alertSpot.Alert(this, scores[i]);
+        }
+    }
 }
 
 //==========================================
