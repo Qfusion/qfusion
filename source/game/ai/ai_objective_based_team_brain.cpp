@@ -13,6 +13,12 @@ inline void AiObjectiveBasedTeamBrain::AddItem(const char *name, Container &c, T
             return;
         }
     }
+    // Check for duplicates first, check capacity only after that.
+    if (c.size() == c.capacity())
+    {
+        G_Printf(S_COLOR_YELLOW "Can't add %s (id=%d): too many %s's\n", name, item.id, name);
+        return;
+    }
     c.push_back(item);
 };
 
