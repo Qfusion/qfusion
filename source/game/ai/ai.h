@@ -91,6 +91,7 @@ void AI_NavEntityReached( edict_t *ent );
 
 void AI_AddDefenceSpot( int team, int id, edict_t *ent, float radius );
 void AI_RemoveDefenceSpot( int team, int id );
+void AI_DefenceSpotAlert( int team, int id, float alertLevel, unsigned timeoutPeriod );
 void AI_AddOffenceSpot( int team, int id, edict_t *ent );
 void AI_RemoveOffenceSpot( int team, int id );
 

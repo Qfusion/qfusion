@@ -56,6 +56,21 @@ void AiObjectiveBasedTeamBrain::RemoveOffenceSpot(int id)
     RemoveItem("OffenceSpot", offenceSpots, id);
 }
 
+void AiObjectiveBasedTeamBrain::SetDefenceSpotAlert(int id, float alertLevel, unsigned timeoutPeriod)
+{
+    for (unsigned i = 0; i < defenceSpots.size(); ++i)
+    {
+        if (defenceSpots[i].id == id)
+        {
+            clamp(alertLevel, 0.0f, 1.0f);
+            defenceSpots[i].alertLevel = alertLevel;
+            defenceSpots[i].alertTimeoutAt = level.time + timeoutPeriod;
+            return;
+        }
+    }
+    G_Printf(S_COLOR_YELLOW "Can't find a DefenceSpot (id=%d)\n", id);
+}
+
 void AiObjectiveBasedTeamBrain::Think()
 {
     // Call super method first, it contains an obligatory logic
@@ -113,8 +128,13 @@ void AiObjectiveBasedTeamBrain::AssignDefenders(Candidates &candidates)
     for (unsigned i = 0; i < defenceSpots.size(); ++i)
         defenders[i].clear();
 
-    for (unsigned i = 0; i < defenceSpots.size(); ++i)
-        defenceSpots[i].weight = 1.0f / defenceSpots.size();
+    for (auto &defenceSpot: defenceSpots)
+    {
+        if (defenceSpot.alertTimeoutAt <= level.time)
+            defenceSpot.alertLevel = 0.0f;
+
+        defenceSpot.weight = defenceSpot.alertLevel;
+    }
 
     auto cmp = [](const DefenceSpot &a, const DefenceSpot &b) { return a.weight > b.weight; };
     std::sort(defenceSpots.begin(), defenceSpots.end(), cmp);

@@ -11,11 +11,13 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
         const edict_t *entity;
         float radius;
         float weight;
+        float alertLevel;
+        unsigned alertTimeoutAt;
 
         // Weight may be set automatically or on event (bomb plant)
 
         DefenceSpot(int id, const edict_t *entity, float radius)
-            : id(id), entity(entity), radius(radius), weight(0.0f) {}
+            : id(id), entity(entity), radius(radius), weight(0.0f), alertLevel(0.0f), alertTimeoutAt(0) {}
     };
 
     struct OffenceSpot
@@ -79,6 +81,9 @@ public:
 
     void AddDefenceSpot(int id, const edict_t *entity, float radius);
     void RemoveDefenceSpot(int id);
+
+    void SetDefenceSpotAlert(int id, float alertLevel, unsigned timeoutPeriod);
+
     void AddOffenceSpot(int id, const edict_t *entity);
     void RemoveOffenceSpot(int id);
 
