@@ -289,6 +289,9 @@ class cFlagBase
                 }
             }
         }
+        
+        if ( this.enemyInfluence )
+            AI::DefenceSpotAlert( this.team, this.team, 1.0f, uint(1000) );
 
         if ( CTF_CAPTURE_TIME > 0 && !ctfInstantFlag.boolean )
         {
