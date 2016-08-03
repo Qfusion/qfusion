@@ -126,11 +126,13 @@ class cFlagBase
         {
             this.owner.solid = SOLID_TRIGGER;
             AI::AddDefenceSpot( this.team, this.team, this.owner, 768.0f );
+            AI::EnableDefenceSpotAutoAlert( this.team, this.team );
             AI::AddOffenceSpot( this.enemyTeam, this.team, this.owner );
         }
         else
         {
             this.owner.solid = SOLID_NOT;
+            AI::DisableDefenceSpotAutoAlert( this.team, this.team );
             AI::RemoveDefenceSpot( this.team, this.team );
             AI::RemoveOffenceSpot( this.enemyTeam, this.team );
         }
