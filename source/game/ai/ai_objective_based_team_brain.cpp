@@ -22,13 +22,14 @@ inline void AiObjectiveBasedTeamBrain::AddItem(const char *name, Container &c, T
     c.push_back(item);
 };
 
-template <typename Container>
-inline void AiObjectiveBasedTeamBrain::RemoveItem(const char *name, Container &c, int id)
+template <typename Container, typename OnRemoved>
+inline void AiObjectiveBasedTeamBrain::RemoveItem(const char *name, Container &c, int id, OnRemoved onRemoved)
 {
     for (unsigned i = 0, end = c.size(); i < end; ++i)
     {
         if (c[i].id == id)
         {
+            onRemoved(&c[i]);
             c.erase(c.begin() + i);
             return;
         }
@@ -43,7 +44,7 @@ void AiObjectiveBasedTeamBrain::AddDefenceSpot(int id, const edict_t *entity, fl
 
 void AiObjectiveBasedTeamBrain::RemoveDefenceSpot(int id)
 {
-    RemoveItem("DefenceSpot", defenceSpots, id);
+    RemoveItem("DefenceSpot", defenceSpots, id, [&](DefenceSpot *s) { OnDefenceSpotRemoved(s); });
 }
 
 void AiObjectiveBasedTeamBrain::AddOffenceSpot(int id, const edict_t *entity)
@@ -53,7 +54,21 @@ void AiObjectiveBasedTeamBrain::AddOffenceSpot(int id, const edict_t *entity)
 
 void AiObjectiveBasedTeamBrain::RemoveOffenceSpot(int id)
 {
-    RemoveItem("OffenceSpot", offenceSpots, id);
+    RemoveItem("OffenceSpot", offenceSpots, id, [&](OffenceSpot *s) { OnOffenceSpotRemoved(s); });
+}
+
+void AiObjectiveBasedTeamBrain::ClearExternalEntityWeights(const edict_t *ent)
+{
+    // TODO: AiBaseTeamBrain should maintain a list of its bots
+    for (int i = 0; i < gs.maxclients; ++i)
+    {
+        edict_t *player = PLAYERENT(i);
+        if (!player->r.inuse || !player->ai || !player->ai->botRef)
+            continue;
+        if (player->r.client->team != this->team)
+            continue;
+        player->ai->botRef->SetExternalEntityWeight(ent, 0.0f);
+    }
 }
 
 void AiObjectiveBasedTeamBrain::SetDefenceSpotAlert(int id, float alertLevel, unsigned timeoutPeriod)
