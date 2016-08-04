@@ -53,8 +53,22 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
     StaticVector<DefenceSpot, MAX_DEFENCE_SPOTS> defenceSpots;
     StaticVector<OffenceSpot, MAX_OFFENCE_SPOTS> offenceSpots;
 
-    template <typename Container, typename T> inline void AddItem(const char *name, Container &c, T&& item);
-    template <typename Container> inline void RemoveItem(const char *name, Container &c, int id);
+    template <typename Container, typename T>
+    inline void AddItem(const char *name, Container &c, T&& item);
+
+    template <typename Container, typename OnRemoved>
+    inline void RemoveItem(const char *name, Container &c, int id, OnRemoved onRemoved);
+
+    inline void OnDefenceSpotRemoved(DefenceSpot *defenceSpot)
+    {
+        ClearExternalEntityWeights(defenceSpot->entity);
+    }
+    inline void OnOffenceSpotRemoved(OffenceSpot *offenceSpot)
+    {
+        ClearExternalEntityWeights(offenceSpot->entity);
+    }
+
+    void ClearExternalEntityWeights(const edict_t *ent);
 
     struct BotAndScore
     {
