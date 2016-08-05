@@ -1,5 +1,6 @@
 #include "ai_ground_trace_cache.h"
 #include "ai_objective_based_team_brain.h"
+#include "ai_aas_route_cache.h"
 #include "bot.h"
 
 template <typename Container, typename T>
@@ -490,11 +491,13 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier, 
 {
     float *carrierOrigin = const_cast<float *>(carrier->s.origin);
     auto *groundTraceCache = AiGroundTraceCache::Instance();
+    auto *aasWorld = AiAasWorld::Instance();
+    auto *routeCache = AiAasRouteCache::Shared();
 
     Vec3 groundedCarrierOrigin(carrierOrigin);
     groundTraceCache->TryDropToFloor(carrier, 64.0f, groundedCarrierOrigin.Data());
 
-    const int carrierAreaNum = FindAASAreaNum(carrierOrigin);
+    const int carrierAreaNum = aasWorld->FindAreaNum(carrierOrigin);
     if (!carrierAreaNum)
     {
         for (const auto &botAndScore: candidates)
@@ -538,14 +541,14 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier, 
             botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 4.5f);
             continue;
         }
-        int botAreaNum = FindAASAreaNum(groundedBotOrigin);
+        int botAreaNum = aasWorld->FindAreaNum(groundedBotOrigin);
         if (!botAreaNum)
         {
             botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 4.5f);
             continue;
         }
-        int travelTime = AAS_AreaTravelTimeToGoalArea(botAreaNum, groundedBotOrigin.Data(), carrierAreaNum,
-                                                      Bot::ALLOWED_TRAVEL_FLAGS);
+        int travelTime = routeCache->TravelTimeToGoalArea(botAreaNum, groundedBotOrigin, carrierAreaNum,
+                                                          Bot::ALLOWED_TRAVEL_FLAGS);
         // A carrier is not reachable in a short period of time
         // AAS travel time is given in seconds^-2 and lowest feasible value is 1
         if (!travelTime || travelTime > 250)

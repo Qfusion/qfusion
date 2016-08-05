@@ -1,5 +1,5 @@
 #include "bot.h"
-#include "aas.h"
+#include "ai_aas_world.h"
 #include <algorithm>
 
 Bot::Bot(edict_t *self, float skillLevel)
@@ -47,6 +47,9 @@ Bot::Bot(edict_t *self, float skillLevel)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;
+    // Set the route cache reference in Ai class, it is mandatory
+    // Use a separate instance of a route cache
+    this->routeCache = AiAasRouteCache::NewInstance();
     self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;
     SetTag(self->r.client->netname);
 }
@@ -608,7 +611,7 @@ void Bot::Frame()
                 else if (travelType == TRAVEL_LADDER)
                     inhibitCombatMove = inhibitShooting = true;
             }
-            else if (currAasAreaTravelFlags & (TFL_CROUCH))
+            else if (aasWorld->AreaCrouch(currAasAreaNum))
                 inhibitCombatMove = true;
         }
         // Try to move bunnying instead of dodging on ground

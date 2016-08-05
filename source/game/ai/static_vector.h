@@ -3,6 +3,7 @@
 
 #include <initializer_list>
 #include <utility>
+#include <new>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>

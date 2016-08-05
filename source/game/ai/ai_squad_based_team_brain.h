@@ -3,6 +3,8 @@
 
 #include "ai_base_team_brain.h"
 #include "ai_base_enemy_pool.h"
+#include "ai_aas_route_cache.h"
+#include "ai_aas_world.h"
 #include "static_vector.h"
 #include <deque>
 #include <utility>
@@ -13,7 +15,14 @@ class CachedTravelTimesMatrix
 {
     int aasTravelTimes[MAX_CLIENTS * MAX_CLIENTS];
     int FindAASTravelTime(const edict_t *fromClient, const edict_t *toClient);
+
+    // Cached references
+    AiAasWorld *aasWorld;
+    AiAasRouteCache *routeCache;
 public:
+    CachedTravelTimesMatrix()
+        : aasWorld(AiAasWorld::Instance()),
+          routeCache(AiAasRouteCache::Shared()) {}
     inline void Clear()
     {
         // -1 means that a value should be lazily computed on demand
