@@ -5,6 +5,8 @@
 #include "ai_goal_entities.h"
 #include "ai_frame_aware_updatable.h"
 #include "static_vector.h"
+#include "ai_aas_route_cache.h"
+#include "ai_base_ai.h"
 
 class AiBaseBrain: public AiFrameAwareUpdatable
 {
@@ -42,6 +44,10 @@ protected:
     int preferredAasTravelFlags;
     int allowedAasTravelFlags;
 
+    const AiAasWorld *AasWorld() const { return self->ai->aiRef->aasWorld; }
+    AiAasRouteCache *RouteCache() { return self->ai->aiRef->routeCache; }
+    const AiAasRouteCache *RouteCache() const { return self->ai->aiRef->routeCache; }
+
     // Weights computed by a bot
     float internalEntityWeights[MAX_EDICTS];
     // Weights set by external code.
@@ -52,8 +58,8 @@ protected:
 
     AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
 
-    int FindAASReachabilityToGoalArea(int goalAreaNum) const;
-    int FindAASTravelTimeToGoalArea(int goalAreaNum) const;
+    int FindReachabilityToGoalArea(int goalAreaNum) const;
+    int FindTravelTimeToGoalArea(int goalAreaNum) const;
 
     inline void ClearInternalEntityWeights()
     {
@@ -100,9 +106,6 @@ protected:
     // To be overridden in subclasses
     virtual void OnSpecialGoalReached();
 private:
-    // Implementation helpers
-    template <typename AASFun> int FindAASParamToGoalArea(AASFun aasFun, int goalAreaNum) const;
-
     struct NavEntityAndWeight
     {
         NavEntity *goal;

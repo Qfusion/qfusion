@@ -48,7 +48,7 @@ int CachedTravelTimesMatrix::FindAASTravelTime(const edict_t *client1, const edi
     {
         if (!groundTraceCache->TryDropToFloor(clients[i], 96.0f, origins[i]))
             return 0;
-        areaNums[i] = FindAASAreaNum(origins[i]);
+        areaNums[i] = aasWorld->FindAreaNum(origins[i]);
         if (!areaNums[i])
             return 0;
     }
@@ -56,7 +56,7 @@ int CachedTravelTimesMatrix::FindAASTravelTime(const edict_t *client1, const edi
     int travelFlags[2] = { client1->ai->aiRef->PreferredTravelFlags(), client1->ai->aiRef->AllowedTravelFlags() };
     for (int i = 0; i < 2; ++i)
     {
-        int travelTime = AAS_AreaTravelTimeToGoalArea(areaNums[0], origins[0], areaNums[1], travelFlags[i]);
+        int travelTime = routeCache->TravelTimeToGoalArea(areaNums[0], origins[0], areaNums[1], travelFlags[i]);
         if (travelTime)
             return travelTime;
     }

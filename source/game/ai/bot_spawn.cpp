@@ -24,7 +24,7 @@ in NO WAY supported by Steve Yeager.
 */
 
 #include "bot.h"
-#include "aas.h"
+#include "ai_aas_world.h"
 
 //===============================================================
 //
@@ -127,7 +127,7 @@ void BOT_SpawnBot( const char *team_name )
 	if( level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities )
 		return;
 
-	if(!AAS_Initialized())
+	if (!AiAasWorld::Instance()->IsLoaded())
 	{
 		Com_Printf( "AI: Can't spawn bots without a valid navigation file\n" );
 		if( g_numbots->integer ) 

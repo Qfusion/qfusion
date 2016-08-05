@@ -135,7 +135,7 @@ void Goal::SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrame
     this->setter = setter;
     this->flags = GoalFlags::REACH_ON_RADIUS | GoalFlags::TACTICAL_SPOT;
     // If area num is zero, this goal will be canceled on its reevaluation
-    this->explicitAasAreaNum = FindAASAreaNum(origin);
+    this->explicitAasAreaNum = AiAasWorld::Instance()->FindAreaNum(origin);
     this->explicitOrigin = origin;
     this->explicitSpawnTime = 1;
     this->explicitTimeout = level.time + timeout;
@@ -183,11 +183,12 @@ void NavEntitiesRegistry::Init()
 
 void NavEntitiesRegistry::Update()
 {
+    AiAasWorld *aasWorld = AiAasWorld::Instance();
     FOREACH_NAVENT(navEnt)
     {
         if ((navEnt->flags & NavEntityFlags::MOVABLE) != NavEntityFlags::NONE)
         {
-            navEnt->aasAreaNum = FindAASAreaNum(navEnt->ent->s.origin);
+            navEnt->aasAreaNum = aasWorld->FindAreaNum(navEnt->ent->s.origin);
         }
     }
 }

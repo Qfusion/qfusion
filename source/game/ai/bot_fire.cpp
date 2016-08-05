@@ -515,8 +515,9 @@ static void FindClosestAreasFacesPoints(float splashRadius, const vec3_t target,
                                         StaticVector<PointAndDistance, MAX_CLOSEST_FACE_POINTS + 1> &closestPoints)
 {
     // Retrieve these instances before the loop
-    FixedBitVector &visitedFaces = visitedFacesHolder.Get((unsigned)aasworld.numfaces);
-    FixedBitVector &visitedAreas = visitedAreasHolder.Get((unsigned)aasworld.numareas);
+    const AiAasWorld *aasWorld = AiAasWorld::Instance();
+    FixedBitVector &visitedFaces = visitedFacesHolder.Get((unsigned)aasWorld->NumFaces());
+    FixedBitVector &visitedAreas = visitedAreasHolder.Get((unsigned)aasWorld->NumFaces());
 
     visitedFaces.Clear();
     visitedAreas.Clear();
@@ -538,11 +539,11 @@ static void FindClosestAreasFacesPoints(float splashRadius, const vec3_t target,
         const int areaNum = areasFringe[areasFringeHead++];
         visitedAreas.Set(areaNum, true);
 
-        const aas_area_t *area = aasworld.areas + areaNum;
+        const aas_area_t *area = aasWorld->Areas() + areaNum;
 
         for (int faceIndexNum = area->firstface; faceIndexNum < area->firstface + area->numfaces; ++faceIndexNum)
         {
-            int faceIndex = aasworld.faceindex[faceIndexNum];
+            int faceIndex = aasWorld->FaceIndex()[faceIndexNum];
 
             // If the face has been already processed, skip it
             if (visitedFaces.IsSet(abs(faceIndex)))
@@ -556,21 +557,21 @@ static void FindClosestAreasFacesPoints(float splashRadius, const vec3_t target,
             int areaBehindFace;
             if (faceIndex >= 0)
             {
-                face = aasworld.faces + faceIndex;
+                face = aasWorld->Faces() + faceIndex;
                 areaBehindFace = face->backarea;
             }
             else
             {
-                face = aasworld.faces - faceIndex;
+                face = aasWorld->Faces() - faceIndex;
                 areaBehindFace = face->frontarea;
             }
 
             // Determine a distance from the target to the face
-            const aas_plane_t *plane = aasworld.planes + face->planenum;
-            const aas_edge_t *anyFaceEdge = aasworld.edges + abs(aasworld.edgeindex[face->firstedge]);
+            const aas_plane_t *plane = aasWorld->Planes() + face->planenum;
+            const aas_edge_t *anyFaceEdge = aasWorld->Edges() + abs(aasWorld->EdgeIndex()[face->firstedge]);
 
             Vec3 anyPlanePointToTarget(target);
-            anyPlanePointToTarget -= aasworld.vertexes[anyFaceEdge->v[0]];
+            anyPlanePointToTarget -= aasWorld->Vertexes()[anyFaceEdge->v[0]];
             const float pointToFaceDistance = anyPlanePointToTarget.Dot(plane->normal);
 
             // This is the actual loop stop condition.
@@ -641,8 +642,8 @@ bool Bot::AdjustTargetByEnvironment(const firedef_t *firedef, const vec3_t fire_
 {
     int targetAreaNum = 0;
     // Reject AAS worlds that look like stripped
-    if (aasworld.numfaces > 512)
-        targetAreaNum = FindAASAreaNum(target);
+    if (aasWorld->NumFaces() > 512)
+        targetAreaNum = aasWorld->FindAreaNum(target);
 
     if (targetAreaNum)
         return AdjustTargetByEnvironmentWithAAS(firedef->splash_radius, fire_origin, target, targetAreaNum);

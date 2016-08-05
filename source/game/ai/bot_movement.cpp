@@ -1,5 +1,5 @@
 #include "bot.h"
-#include "aas.h"
+#include "ai_aas_world.h"
 #include "ai_ground_trace_cache.h"
 
 void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
@@ -154,7 +154,7 @@ void Bot::TryEscapeIfBlocked(usercmd_t *ucmd)
         return;
 
     // Way to this point should not be blocked
-    SetPendingLookAtPoint(Vec3(aasworld.areas[currAasAreaNum].center), 1.5f);
+    SetPendingLookAtPoint(Vec3(aasWorld->Areas()[currAasAreaNum].center), 1.5f);
     ucmd->forwardmove = 1;
     ucmd->buttons |= BUTTON_SPECIAL;
 }
@@ -220,6 +220,9 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
     const int goalAasAreaNum = GoalAreaNum();
 
+    // Cache reference to avoid indirections
+    const aas_area_t *aasWorldAreas = aasWorld->Areas();
+
     jumppadLandingAreasCount = 0;
     // Estimate distance (we may use bot origin as approximate jumppad origin since bot has just triggered it)
     float approxDistance = (jumppadTarget - self->s.origin).LengthFast();
@@ -230,7 +233,7 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     Vec3 bboxMaxs = jumppadTarget + Vec3(+1.25f * baseSide, +1.25f * baseSide, +0.15f * baseSide);
     // First, fetch all areas in the target bounding box (more than required)
     int rawAreas[MAX_LANDING_AREAS * 2];
-    int rawAreasCount = AAS_BBoxAreas(bboxMins.Data(), bboxMaxs.Data(), rawAreas, MAX_LANDING_AREAS * 2);
+    int rawAreasCount = aasWorld->BBoxAreas(bboxMins, bboxMaxs, rawAreas, MAX_LANDING_AREAS * 2);
     // Then filter raw areas and sort by distance to jumppad target
     AttributedArea<float> filteredAreas[MAX_LANDING_AREAS * 2];
     int filteredAreasCount = 0;
@@ -238,15 +241,15 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     {
         int areaNum = rawAreas[i];
         // Skip areas above target that a-priori may not be a landing site. Areas bounds are absolute.
-        if (aasworld.areas[areaNum].mins[2] + 8 > jumppadTarget.Z())
+        if (aasWorldAreas[areaNum].mins[2] + 8 > jumppadTarget.Z())
             continue;
         // Skip non-grounded areas
-        if (!AAS_AreaGrounded(areaNum))
+        if (!aasWorld->AreaGrounded(areaNum))
             continue;
         // Skip "do not enter" areas
-        if (AAS_AreaDoNotEnter(areaNum))
+        if (aasWorld->AreaDoNotEnter(areaNum))
             continue;
-        float squareDistance = (jumppadTarget - aasworld.areas[areaNum].center).SquaredLength();
+        float squareDistance = (jumppadTarget - aasWorld->Areas()[areaNum].center).SquaredLength();
         filteredAreas[filteredAreasCount++] = AttributedArea<float>(areaNum, squareDistance);
     }
     std::sort(filteredAreas, filteredAreas + filteredAreasCount);
@@ -262,12 +265,12 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
         // Project the area center to the ground manually.
         // (otherwise the following pathfinder call may perform a trace for it)
         // Note that AAS area mins are absolute.
-        Vec3 origin(aasworld.areas[areaNum].center);
-        origin.Z() = aasworld.areas[areaNum].mins[2] + 8;
+        Vec3 origin(aasWorldAreas[areaNum].center);
+        origin.Z() = aasWorldAreas[areaNum].mins[2] + 8;
         // Returns 1 as a lowest feasible travel time value (in seconds ^-2), 0 when a path can't be found
-        int aasTravelTime = AAS_AreaTravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum, PreferredTravelFlags());
+        int aasTravelTime = routeCache->TravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum, PreferredTravelFlags());
         if (!aasTravelTime)
-            aasTravelTime = AAS_AreaTravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum, AllowedTravelFlags());
+            aasTravelTime = routeCache->TravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum, AllowedTravelFlags());
         if (aasTravelTime)
         {
             areasAndTravelTimes[selectedAreasCount++] = AttributedArea<int>(areaNum, aasTravelTime);
@@ -343,14 +346,14 @@ void Bot::TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd)
     int groundedAreas[MAX_LANDING_AREAS];
     float distanceToAreas[MAX_LANDING_AREAS];
 
-    int numAllAreas = AAS_BBoxAreas(bboxMins.Data(), bboxMaxs.Data(), areas, MAX_LANDING_AREAS);
+    int numAllAreas = aasWorld->BBoxAreas(bboxMins.Data(), bboxMaxs.Data(), areas, MAX_LANDING_AREAS);
     if (!numAllAreas)
         return;
 
     int numGroundedAreas = 0;
     for (int i = 0; i < numAllAreas; ++i)
     {
-        if (AAS_AreaGrounded(areas[i]))
+        if (aasWorld->AreaGrounded(areas[i]))
             groundedAreas[numGroundedAreas++] = areas[i];
     }
 
@@ -358,7 +361,7 @@ void Bot::TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
     for (int i = 0; i < numGroundedAreas; ++i)
     {
-        const aas_area_t &area = aasworld.areas[groundedAreas[i]];
+        const aas_area_t &area = aasWorld->Areas()[groundedAreas[i]];
         distanceToAreas[i] = SquareDistanceToBoxBottom(self->s.origin, area.mins, area.maxs);
     }
 
@@ -388,10 +391,10 @@ void Bot::TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
 bool Bot::TryLandOnArea(int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
-    Vec3 areaPoint(aasworld.areas[areaNum].center);
+    Vec3 areaPoint(aasWorld->Areas()[areaNum].center);
 
     // Lower area point to a bottom of area. Area mins/maxs are absolute.
-    areaPoint.Z() = aasworld.areas[areaNum].mins[2];
+    areaPoint.Z() = aasWorld->Areas()[areaNum].mins[2];
     // Do not try to "land" on upper areas
     if (areaPoint.Z() > self->s.origin[2])
         return false;
@@ -734,6 +737,9 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
     Vec3 singleFarNextReachDir(0, 0, 0);
     Vec3 singleFarNextAreaCenterDir(0, 0, 0);
 
+    // Cache a referece to avoid indirection
+    const aas_area_t *areas = aasWorld->Areas();
+
     int nearestReachesCount = 0;
     for (unsigned i = 1; i < nextReaches.size(); ++i)
     {
@@ -752,7 +758,7 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
             {
                 singleFarNextReachDir = Vec3(reach.start) - self->s.origin;
                 singleFarNextReachDir.NormalizeFast();
-                singleFarNextAreaCenterDir = Vec3(aasworld.areas[reach.areanum].center) - self->s.origin;
+                singleFarNextAreaCenterDir = Vec3(areas[reach.areanum].center) - self->s.origin;
                 singleFarNextAreaCenterDir.NormalizeFast();
                 hasOnlySingleFarReach = true;
                 nearestReachesCount = 1;
@@ -774,7 +780,7 @@ void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
 
         float *centerDir = weightedDirsToAreaCenter[nearestReachesCount];
         // Copy vector from self origin to area center
-        VectorCopy(aasworld.areas[reach.areanum].center, centerDir);
+        VectorCopy(areas[reach.areanum].center, centerDir);
         VectorSubtract(centerDir, self->s.origin, centerDir);
         // Normalize the vector to area center
         float invDistanceToCenter = Q_RSqrt(VectorLengthSquared(centerDir));
@@ -1037,8 +1043,8 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                 ucmd->buttons &= ~BUTTON_SPECIAL;
     }
 
-    if (AAS_AreaPresenceType(currAasAreaNum) == PRESENCE_CROUCH)
-        ucmd->upmove = -1;
+    //if (aasWorld->AreaCrouch(currAasAreaNum))
+    //    ucmd->upmove = -1;
 }
 
 bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
@@ -1122,16 +1128,20 @@ bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
 
 bool Bot::AdjustRocketJumpTargetForPathShortcut(Vec3 *targetOrigin, Vec3 *fireTarget) const
 {
-    const aas_area_t &currArea = aasworld.areas[currAasAreaNum];
+    // Cache references to avoid indirections
+    const aas_area_t *aasWorldAreas = aasWorld->Areas();
+    const aas_areasettings_t *aasWorldAreaSettings = aasWorld->AreaSettings();
+
+    const aas_area_t &currArea = aasWorldAreas[currAasAreaNum];
     trace_t trace;
     // Avoid occasional unsigned overflow (the loop starts from nextReaches.size() - 1 or 0)
     for (unsigned i = std::min(nextReaches.size(), nextReaches.size() - 1); i >= 1; --i)
     {
         const auto &reach = nextReaches[i];
         // Reject non-grounded areas
-        if (!AAS_AreaGrounded(reach.areanum))
+        if (!aasWorldAreaSettings[reach.areanum].areaflags & AREA_GROUNDED)
             continue;
-        const auto &area = aasworld.areas[reach.areanum];
+        const auto &area = aasWorldAreas[reach.areanum];
         // Can't RJ to lower areas
         if (area.mins[2] - currArea.mins[2] < 48.0f)
             continue;
@@ -1243,7 +1253,7 @@ bool Bot::AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarg
         if (!targetAreaNum)
             return false;
 
-        const aas_area_t &targetArea = aasworld.areas[targetAreaNum];
+        const aas_area_t &targetArea = aasWorld->Areas()[targetAreaNum];
         VectorCopy(targetArea.center, targetOriginRef.Data());
         targetOriginRef.Z() = targetArea.mins[2] + 16.0f;
 
@@ -1260,7 +1270,7 @@ bool Bot::AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarg
 int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botToGoalDist2D) const
 {
     const int goalAreaNum = GoalAreaNum();
-    const aas_area_t &targetArea = aasworld.areas[goalAreaNum];
+    const aas_area_t &targetArea = aasWorld->Areas()[goalAreaNum];
     Vec3 targetOrigin(targetArea.center);
     targetOrigin.Z() = targetArea.mins[2] + 16.0f;
 
@@ -1271,7 +1281,7 @@ int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botT
     areaTraceEnd -= (botToGoalDist2D - 48.0f) * botToGoalDir2D;
 
     int areas[16];
-    int numTracedAreas = AAS_TraceAreas(targetOrigin.Data(), areaTraceEnd.Data(), areas, nullptr, 16);
+    int numTracedAreas = aasWorld->TraceAreas(targetOrigin.Data(), areaTraceEnd.Data(), areas, nullptr, 16);
 
     int travelFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_AIR;
     trace_t trace;
@@ -1279,16 +1289,16 @@ int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botT
     for (int i = numTracedAreas - 1; i >= 1; --i)
     {
         // Do not try to reach a non-grounded area
-        if (!AAS_AreaGrounded(areas[i]))
+        if (!aasWorld->AreaGrounded(areas[i]))
             continue;
 
         // Check whether goal area is reachable from area pointed by areas[i]
         // (note, we check reachablity from area to goal area, and not the opposite,
         // because the given travel flags are not reversible).
-        aas_area_t &area = aasworld.areas[areas[i]];
+        const aas_area_t &area = aasWorld->Areas()[areas[i]];
         Vec3 areaPoint(area.center);
         areaPoint.Z() = area.mins[2] + 4.0f;
-        int reachNum = AAS_AreaReachabilityToGoalArea(areas[i], areaPoint.Data(), goalAreaNum, travelFlags);
+        int reachNum = routeCache->ReachabilityToGoalArea(areas[i], areaPoint.Data(), goalAreaNum, travelFlags);
         // This means goal area is not reachable with these travel flags
         if (!reachNum)
             continue;

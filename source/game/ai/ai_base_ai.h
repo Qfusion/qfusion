@@ -35,7 +35,8 @@ struct ClosePlaceProps
     MoveTestResult backTest;
 };
 
-#include "aas/aasfile.h"
+#include "ai_aas_world.h"
+#include "ai_aas_route_cache.h"
 #include "static_vector.h"
 
 class Ai: public EdictRef, public AiFrameAwareUpdatable
@@ -48,6 +49,12 @@ protected:
     // (it either has it as an intrusive member of allocates it on heap)
     // and provides a reference to it to this base class via this pointer.
     class AiBaseBrain *aiBaseBrain;
+    // Must be set in a subclass constructor.
+    // A subclass should decide whether a shared or separated route cache should be used.
+    // A subclass should destroy the cache instance if necessary.
+    AiAasRouteCache *routeCache;
+    // A cached reference to an AAS world, set by this class
+    AiAasWorld *aasWorld;
 
     // Must be updated before brain thinks.
     int currAasAreaNum;
@@ -60,7 +67,6 @@ protected:
     int allowedAasTravelFlags;
     int preferredAasTravelFlags;
 
-    int currAasAreaTravelFlags;
     static constexpr unsigned MAX_REACH_CACHED = 24;
     StaticVector<aas_reachability_t, MAX_REACH_CACHED> nextReaches;
 

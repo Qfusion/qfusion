@@ -24,7 +24,10 @@ public:
         PREFERRED_TRAVEL_FLAGS | TFL_WATER | TFL_WATERJUMP | TFL_SWIM | TFL_LADDER | TFL_ELEVATOR;
 
     Bot(edict_t *self, float skillLevel);
-    virtual ~Bot() override {}
+    virtual ~Bot() override
+    {
+        AiAasRouteCache::ReleaseInstance(routeCache);
+    }
 
     void Move(usercmd_t *ucmd);
     void LookAround();

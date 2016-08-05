@@ -2,13 +2,11 @@
 #include "ai_shutdown_hooks_holder.h"
 #include "ai_gametype_brain.h"
 #include "ai_objective_based_team_brain.h"
-#include "aas.h"
+#include "ai_aas_world.h"
+#include "ai_aas_route_cache.h"
 
 ai_weapon_t AIWeapons[WEAP_TOTAL];
 const size_t ai_handle_size = sizeof( ai_handle_t );
-
-static bool ai_intialized = false;
-static bool aas_system_initialized = false;
 
 StaticVector<int, 16> hubAreas;
 
@@ -18,11 +16,8 @@ StaticVector<int, 16> hubAreas;
 //==========================================
 void AI_InitLevel( void )
 {
-    aas_system_initialized = AI_InitAAS();
-    if (!aas_system_initialized)
-        G_Printf("Can't initialize AAS system\n");
-    else if (!AI_LoadLevelAAS(level.mapname))
-        G_Printf("Can't load AAS for level %s\n", level.mapname);
+    AiAasWorld::Init(level.mapname);
+    AiAasRouteCache::Init(*AiAasWorld::Instance());
 
     // set up weapon usage weights
 
@@ -92,31 +87,22 @@ void AI_InitLevel( void )
     AIWeapons[WEAP_INSTAGUN].RangeWeight[AIWEAP_MELEE_RANGE] = 0.9f;
 
     NavEntitiesRegistry::Instance()->Init();
-
-    ai_intialized = true;
 }
 
 void AI_Shutdown( void )
 {
     hubAreas.clear();
 
-    if (!ai_intialized)
-        return;
-
     AI_UnloadLevel();
 
     AiShutdownHooksHolder::Instance()->InvokeHooks();
-    ai_intialized = false;
 }
 
 void AI_UnloadLevel()
 {
     BOT_RemoveBot("all");
-    if (aas_system_initialized)
-    {
-        AI_ShutdownAAS();
-        aas_system_initialized = false;
-    }
+    AiAasRouteCache::Shutdown();
+    AiAasWorld::Shutdown();
 }
 
 void AI_GametypeChanged(const char *gametype)
@@ -131,7 +117,7 @@ void AI_JoinedTeam(edict_t *ent, int team)
 
 void AI_CommonFrame()
 {
-    AI_AASFrame();
+    AiAasWorld::Instance()->Frame();
 
     NavEntitiesRegistry::Instance()->Update();
 
@@ -141,6 +127,10 @@ void AI_CommonFrame()
 static void FindHubAreas()
 {
     if (!hubAreas.empty())
+        return;
+
+    AiAasWorld *aasWorld = AiAasWorld::Instance();
+    if (!aasWorld->IsLoaded())
         return;
 
     // Select not more than hubAreas.capacity() grounded areas that have highest connectivity to other areas.
@@ -154,9 +144,9 @@ static void FindHubAreas()
     };
 
     StaticVector<AreaAndReachCount, hubAreas.capacity() + 1> bestAreasHeap;
-    for (int i = 1; i < aasworld.numareas; ++i)
+    for (int i = 1; i < aasWorld->NumAreas(); ++i)
     {
-        const auto &areaSettings = aasworld.areasettings[i];
+        const auto &areaSettings = aasWorld->AreaSettings()[i];
         if (!(areaSettings.areaflags & AREA_GROUNDED))
             continue;
         if (areaSettings.areaflags & AREA_DISABLED)
@@ -165,7 +155,7 @@ static void FindHubAreas()
             continue;
 
         // Reject degenerate areas, pass only relatively large areas
-        const auto &area = aasworld.areas[i];
+        const auto &area = aasWorld->Areas()[i];
         if (area.maxs[0] - area.mins[0] < 128.0f)
             continue;
         if (area.maxs[1] - area.mins[1] < 128.0f)
@@ -177,7 +167,7 @@ static void FindHubAreas()
         int lastReachNum = areaSettings.firstreachablearea + areaSettings.numreachableareas - 1;
         while (reachNum <= lastReachNum)
         {
-            const auto &reach = aasworld.reachability[reachNum];
+            const auto &reach = aasWorld->Reachabilities()[reachNum];
             if (reach.traveltype == TRAVEL_WALK || reach.traveltype == TRAVEL_WALKOFFLEDGE)
                 usefulReachCount++;
             ++reachNum;
@@ -216,6 +206,10 @@ static inline void ExtendDimension(float *mins, float *maxs, int dimension)
 
 static int FindGoalAASArea(edict_t *ent)
 {
+    AiAasWorld *aasWorld = AiAasWorld::Instance();
+    if (!aasWorld->IsLoaded())
+        return 0;
+
     Vec3 mins(ent->r.mins), maxs(ent->r.maxs);
     // Extend AABB XY dimensions
     ExtendDimension(mins.Data(), maxs.Data(), 0);
@@ -226,30 +220,32 @@ static int FindGoalAASArea(edict_t *ent)
     if (playerHeight > presentHeight)
         maxs.Z() += playerHeight - presentHeight;
 
+
     // Find all areas in bounds
     int areas[16];
     // Convert bounds to absolute ones
     mins += ent->s.origin;
     maxs += ent->s.origin;
-    const int numAreas = AAS_BBoxAreas(mins.Data(), maxs.Data(), areas, 16);
+    const int numAreas = aasWorld->BBoxAreas(mins, maxs, areas, 16);
 
     // Find hub areas (or use cached)
     FindHubAreas();
 
     int bestArea = 0;
     int bestAreaReachCount = 0;
+    AiAasRouteCache *routeCache = AiAasRouteCache::Shared();
     for (int i = 0; i < numAreas; ++i)
     {
         const int areaNum = areas[i];
         int areaReachCount = 0;
         for (const int hubAreaNum: hubAreas)
         {
-            const aas_area_t &hubArea = aasworld.areas[hubAreaNum];
+            const aas_area_t &hubArea = aasWorld->Areas()[hubAreaNum];
             Vec3 hubAreaPoint(hubArea.center);
             hubAreaPoint.Z() = hubArea.mins[2] + std::min(24.0f, hubArea.maxs[2] - hubArea.mins[2]);
             // Do not waste pathfinder cycles testing for preferred flags that may fail.
             constexpr int travelFlags = Bot::ALLOWED_TRAVEL_FLAGS;
-            if (AAS_AreaReachabilityToGoalArea(hubAreaNum, hubAreaPoint.Data(), areaNum, travelFlags))
+            if (routeCache->ReachabilityToGoalArea(hubAreaNum, hubAreaPoint.Data(), areaNum, travelFlags))
             {
                 areaReachCount++;
                 // Thats't enough, do not waste CPU cycles
@@ -267,7 +263,7 @@ static int FindGoalAASArea(edict_t *ent)
         return bestArea;
 
     // Fall back to a default method and hope it succeeds
-    return FindAASAreaNum(ent);
+    return aasWorld->FindAreaNum(ent);
 }
 
 void AI_AddNavEntity(edict_t *ent, ai_nav_entity_flags flags)

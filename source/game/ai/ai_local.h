@@ -96,15 +96,8 @@ extern ai_weapon_t AIWeapons[WEAP_TOTAL];
 
 //----------------------------------------------------------
 
-#include "aas.h"
+#include "ai_aas_world.h"
 #include "vec3.h"
-
-int FindAASAreaNum(const vec3_t origin);
-int FindAASAreaNum(const edict_t *ent);
-inline int FindAASAreaNum(const Vec3 &origin)
-{
-	return FindAASAreaNum(origin.Data());
-}
 
 typedef struct ai_handle_s
 {

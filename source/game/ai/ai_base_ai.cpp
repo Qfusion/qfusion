@@ -5,6 +5,8 @@
 Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
     : EdictRef(self),
       aiBaseBrain(nullptr), // Must be set in a subclass constructor
+      routeCache(nullptr), // Must be set in a subclass constructor
+      aasWorld(AiAasWorld::Instance()),
       currAasAreaNum(0),
       droppedToFloorAasAreaNum(0),
       droppedToFloorOrigin(0, 0, 0),
@@ -57,7 +59,7 @@ void Ai::ResetNavigation()
 {
     distanceToNextReachStart = std::numeric_limits<float>::infinity();
 
-    currAasAreaNum = FindAASAreaNum(self);
+    currAasAreaNum = aasWorld->FindAreaNum(self);
     nextReaches.clear();
 
     aiBaseBrain->ClearAllGoals();
@@ -83,42 +85,32 @@ void Ai::UpdateReachCache(int reachedAreaNum)
     else
         nextReaches.clear();
 
-    int areaNum;
-    float *origin;
-    if (nextReaches.empty())
-    {
-        areaNum = reachedAreaNum;
-        origin = droppedToFloorOrigin.Data();
-    }
-    else
-    {
-        areaNum = nextReaches.back().areanum;
-        origin = nextReaches.back().end;
-    }
+    int areaNum = nextReaches.empty() ? reachedAreaNum : nextReaches.back().areanum;
     while (areaNum != goalAreaNum && nextReaches.size() != nextReaches.capacity())
     {
-        int reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAreaNum, preferredAasTravelFlags);
+        int reachNum = routeCache->ReachabilityToGoalArea(areaNum, goalAreaNum, preferredAasTravelFlags);
         if (!reachNum)
-            reachNum = AAS_AreaReachabilityToGoalArea(areaNum, origin, goalAreaNum, allowedAasTravelFlags);
+            reachNum = routeCache->ReachabilityToGoalArea(areaNum, goalAreaNum, allowedAasTravelFlags);
         // We hope we'll be pushed in some other area during movement, and goal area will become reachable. Leave as is.
         if (!reachNum)
             break;
-        aas_reachability_t &reach = aasworld.reachability[reachNum];
+        if (reachNum > aasWorld->NumReachabilities())
+            break;
+        const aas_reachability_t &reach = aasWorld->Reachabilities()[reachNum];
         areaNum = reach.areanum;
-        origin = reach.end;
         nextReaches.push_back(reach);
     }
 }
 
 void Ai::CheckReachedArea()
 {
-    const int actualAasAreaNum = FindAASAreaNum(self);
+    const int actualAasAreaNum = aasWorld->FindAreaNum(self);
 
     // It deserves a separate statement (may modify droppedToFloorOrigin)
     bool droppedToFloor = AiGroundTraceCache::Instance()->TryDropToFloor(self, 96.0f, droppedToFloorOrigin.Data());
     if (droppedToFloor)
     {
-        droppedToFloorAasAreaNum = FindAASAreaNum(droppedToFloorOrigin);
+        droppedToFloorAasAreaNum = aasWorld->FindAreaNum(droppedToFloorOrigin);
         if (!droppedToFloorAasAreaNum)
         {
             // Revert the dropping attempt
@@ -136,12 +128,10 @@ void Ai::CheckReachedArea()
         {
             UpdateReachCache(actualAasAreaNum);
         }
-        currAasAreaTravelFlags = AAS_AreaContentsTravelFlags(actualAasAreaNum);
     }
     else
     {
         nextReaches.clear();
-        currAasAreaTravelFlags = TFL_INVALID;
     }
 
     currAasAreaNum = actualAasAreaNum;
@@ -163,7 +153,7 @@ void Ai::CategorizePosition()
     self->was_swim = self->is_swim;
     self->was_step = self->is_step;
 
-    self->is_ladder = currAasAreaNum ? AAS_AreaLadder(currAasAreaNum) != 0 : false;
+    self->is_ladder = aasWorld->AreaLadder(currAasAreaNum);
 
     G_CategorizePosition(self);
     if (self->waterlevel > 2 || (self->waterlevel && !stepping))
@@ -188,7 +178,7 @@ void Ai::OnGoalSet(Goal *goalEnt)
 {
     if (!currAasAreaNum)
     {
-        currAasAreaNum = FindAASAreaNum(self);
+        currAasAreaNum = aasWorld->FindAreaNum(self);
         if (!currAasAreaNum)
         {
             Debug("Still can't find curr aas area num");
@@ -267,7 +257,7 @@ void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3
     moveTestResult->canJump = 0;
     moveTestResult->fallDepth = 0;
 
-    if (!AAS_AreaGrounded(currAasAreaNum))
+    if (!aasWorld->AreaGrounded(currAasAreaNum))
         return;
 
     if (!currAasAreaNum)
@@ -276,7 +266,7 @@ void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3
     constexpr int MAX_TRACED_AREAS = 6;
     int tracedAreas[MAX_TRACED_AREAS];
     Vec3 traceEnd = 36.0f * Vec3(forward) + self->s.origin;
-    int numTracedAreas = AAS_TraceAreas(self->s.origin, traceEnd.Data(), tracedAreas, nullptr, MAX_TRACED_AREAS);
+    int numTracedAreas = aasWorld->TraceAreas(self->s.origin, traceEnd.Data(), tracedAreas, MAX_TRACED_AREAS);
 
     if (!numTracedAreas)
         return;
@@ -300,14 +290,14 @@ void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3
         if (!nextAreaNum)
             return;
 
-        const aas_areasettings_t &currAreaSettings = aasworld.areasettings[tracedAreas[i]];
+        const aas_areasettings_t &currAreaSettings = aasWorld->AreaSettings()[tracedAreas[i]];
         if (!currAreaSettings.numreachableareas)
             return; // blocked
 
         int reachFlags = 0;
         for (int j = 0; j < currAreaSettings.numreachableareas; ++j)
         {
-            const aas_reachability_t &reach = aasworld.reachability[currAreaSettings.firstreachablearea + j];
+            const aas_reachability_t &reach = aasWorld->Reachabilities()[currAreaSettings.firstreachablearea + j];
             if (reach.areanum == nextAreaNum)
             {
                 switch (reach.traveltype)
