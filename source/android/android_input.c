@@ -47,7 +47,7 @@ static const int s_android_scantokey[] =
 	K_RSHIFT,		K_TAB,			K_SPACE,		0,				0,				// 60
 	0,				K_ENTER,		K_BACKSPACE,	'`',			'-',			// 65
 	'=',			'[',			']',			'\\',			';',			// 70
-	'\'',			'/',			'@',			K_NUMLOCK,		0,				// 75
+	'\'',			'/',			'@',			K_LALT,			0,				// 75
 	0,				'+',			0,				0,				0,				// 80
 	0,				0,				0,				0,				0,				// 85
 	0,				0,				K_PGUP,			K_PGDN,			0,				// 90
