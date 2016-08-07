@@ -272,7 +272,7 @@ static int32_t IN_Android_OnInputEvent( struct android_app *app, AInputEvent *ev
 
 		case AINPUT_SOURCE_MOUSE:
 			{
-				switch( action )
+				switch( action & AMOTION_EVENT_ACTION_MASK )
 				{
 				case AMOTION_EVENT_ACTION_DOWN:
 				case AMOTION_EVENT_ACTION_UP:
