@@ -139,7 +139,7 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 	trace_t trace;
 	orientation_t projectsource;
 	vec4_t color;
-	vec3_t laserOrigin, laserAngles, laserPoint;
+	vec3_t laserOrigin, laserAngles, laserPoint, laserDir;
 
 	if( cent->localEffects[LOCALEFFECT_LASERBEAM] <= cg.time ) {
 		if( cent->localEffects[LOCALEFFECT_LASERBEAM] ) {
@@ -169,20 +169,20 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 		VectorCopy( cg.predictedPlayerState.pmove.origin, laserOrigin );
 		laserOrigin[2] += cg.predictedPlayerState.viewheight;
 		VectorCopy( cg.predictedPlayerState.viewangles, laserAngles );
+		AngleVectors( laserAngles, laserDir, NULL, NULL );
 
 		VectorLerp( cent->laserPointOld, cg.lerpfrac, cent->laserPoint, laserPoint );
 	} else {
 		VectorLerp( cent->laserOriginOld, cg.lerpfrac, cent->laserOrigin, laserOrigin );
 		VectorLerp( cent->laserPointOld, cg.lerpfrac, cent->laserPoint, laserPoint );
 		if( !cent->laserCurved ) {
-			vec3_t dir;
-
 			// make up the angles from the start and end points (s->angles is not so precise)
-			VectorSubtract( laserPoint, laserOrigin, dir );
-			VecToAngles( dir, laserAngles );
-		} else {   // use player entity angles
+			VectorSubtract( laserPoint, laserOrigin, laserDir );
+			VectorNormalize( laserDir );
+		} else { // use player entity angles
 			for( i = 0; i < 3; i++ )
 				laserAngles[i] = LerpAngle( cent->prev.angles[i], cent->current.angles[i], cg.lerpfrac );
+			AngleVectors( laserAngles, laserDir, NULL, NULL );
 		}
 	}
 
@@ -196,8 +196,8 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 		}
 
 		// trace the beam: for tracing we use the real beam origin
-		GS_TraceLaserBeam( &trace, laserOrigin, laserAngles, range, cent->current.number, 0, _LaserImpact );
-
+		GS_TraceLaserBeam( &trace, laserOrigin, laserDir, range, cent->current.number, 0, _LaserImpact );
+		
 		// draw the beam: for drawing we use the weapon projection source (already handles the case of viewer entity)
 		if( CG_PModel_GetProjectionSource( cent->current.number, &projectsource ) ) {
 			VectorCopy( projectsource.origin, laserOrigin );
@@ -252,7 +252,7 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 			AngleVectors( tmpangles, dir, NULL, NULL );
 			VectorMA( projectsource.origin, range * frac, dir, end );
 
-			GS_TraceLaserBeam( &trace, from, tmpangles, DistanceFast( from, end ), passthrough, 0, NULL );
+			GS_TraceLaserBeam( &trace, from, dir, DistanceFast( from, end ), passthrough, 0, NULL );
 			CG_LaserGunPolyBeam( from, trace.endpos, color, cent->current.number );
 			if( trace.fraction != 1.0f ) {
 				break;

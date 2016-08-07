@@ -238,17 +238,17 @@ static void W_Touch_Projectile( edict_t *ent, edict_t *other, cplane_t *plane, i
 /*
 * W_Fire_LinearProjectile - Spawn a generic linear projectile without a model, touch func, sound nor mod
 */
-static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t angles, int speed,
+static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t dir, int speed,
 										 float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int timeDelta ) {
 	edict_t *projectile;
-	vec3_t dir;
+	vec3_t angles;
 
 	projectile = G_Spawn();
 	VectorCopy( start, projectile->s.origin );
 	VectorCopy( start, projectile->olds.origin );
 
+	VecToAngles( dir, angles );
 	VectorCopy( angles, projectile->s.angles );
-	AngleVectors( angles, dir, NULL, NULL );
 	VectorScale( dir, speed, projectile->velocity );
 
 	projectile->movetype = MOVETYPE_LINEARPROJECTILE;
@@ -295,17 +295,17 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 /*
 * W_Fire_TossProjectile - Spawn a generic projectile without a model, touch func, sound nor mod
 */
-static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t angles, int speed,
+static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t dir, int speed,
 									   float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int timeDelta ) {
 	edict_t *projectile;
-	vec3_t dir;
+	vec3_t angles;
 
 	projectile = G_Spawn();
 	VectorCopy( start, projectile->s.origin );
 	VectorCopy( start, projectile->olds.origin );
 
+	VecToAngles( dir, angles );
 	VectorCopy( angles, projectile->s.angles );
-	AngleVectors( angles, dir, NULL, NULL );
 	VectorScale( dir, speed, projectile->velocity );
 
 	projectile->movetype = MOVETYPE_BOUNCEGRENADE;
@@ -354,19 +354,17 @@ static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t angle
 /*
 * W_Fire_Blade
 */
-void W_Fire_Blade( edict_t *self, int range, vec3_t start, vec3_t angles, float damage, int knockback, int stun, int mod, int timeDelta ) {
+void W_Fire_Blade( edict_t *self, int range, vec3_t start, vec3_t dir, float damage, int knockback, int stun, int mod, int timeDelta ) {
 	edict_t *event, *other = NULL;
 	vec3_t end;
 	trace_t trace;
 	int mask = MASK_SHOT;
-	vec3_t dir;
 	int dmgflags = 0;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
-	AngleVectors( angles, dir, NULL, NULL );
 	VectorMA( start, range, dir, end );
 
 	if( GS_RaceGametype() ) {
@@ -440,14 +438,14 @@ static void W_Touch_GunbladeBlast( edict_t *ent, edict_t *other, cplane_t *plane
 /*
 * W_Fire_GunbladeBlast
 */
-edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t angles, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta ) {
-	edict_t *blast;
+edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t dir, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta ) {
+	edict_t	*blast;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
-	blast = W_Fire_LinearProjectile( self, start, angles, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
+	blast = W_Fire_LinearProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 	blast->s.modelindex = trap_ModelIndex( PATH_GUNBLADEBLAST_STRONG_MODEL );
 	blast->s.type = ET_BLASTER;
 	blast->s.effects |= EF_STRONG_WEAPON;
@@ -464,9 +462,8 @@ edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t angles, float
 /*
 * W_Fire_Bullet
 */
-void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int hspread, int vspread,
+void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t dir, int seed, int range, int hspread, int vspread,
 					float damage, int knockback, int stun, int mod, int timeDelta ) {
-	vec3_t dir;
 	edict_t *event;
 	float r, u;
 	double alpha, s;
@@ -476,8 +473,6 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
-
-	AngleVectors( angles, dir, NULL, NULL );
 
 	// send the event
 	event = G_SpawnEvent( EV_FIRE_BULLET, seed, start );
@@ -504,7 +499,7 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 }
 
 //Sunflower spiral with Fibonacci numbers
-static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count,
+void W_Fire_SunflowerBucket( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count,
 									 int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta ) {
 	int i;
 	float r;
@@ -529,9 +524,9 @@ static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, in
 	}
 }
 
-#if 0
-static void G_Fire_RandomPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count,
-								  int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta ) {
+void W_Fire_RandomBucket( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, 
+	int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
+{
 	int i;
 	float r;
 	float u;
@@ -552,19 +547,15 @@ static void G_Fire_RandomPattern( edict_t *self, vec3_t start, vec3_t dir, int *
 		}
 	}
 }
-#endif
 
-void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int hspread, int vspread,
+void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t dir, int seed, int range, int hspread, int vspread,
 					 int count, float damage, int knockback, int stun, int mod, int timeDelta ) {
-	vec3_t dir;
 	edict_t *event;
 	int dmgflags = 0;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
-
-	AngleVectors( angles, dir, NULL, NULL );
 
 	// send the event
 	event = G_SpawnEvent( EV_FIRE_RIOTGUN, seed, start );
@@ -573,8 +564,8 @@ void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int r
 	event->s.weapon = WEAP_RIOTGUN;
 	event->s.firemode = ( mod == MOD_RIOTGUN_S ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 
-	G_Fire_SunflowerPattern( self, start, dir, &seed, count, hspread, vspread,
-							 range, damage, knockback, stun, dmgflags, mod, timeDelta );
+	W_Fire_SunflowerBucket( self, start, dir, &seed, count, hspread, vspread,
+		range, damage, knockback, stun, dmgflags, mod, timeDelta );
 }
 
 /*
@@ -662,20 +653,16 @@ static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int 
 /*
 * W_Fire_Grenade
 */
-edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t angles, int speed, float damage,
+edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage,
 						 int minKnockback, int maxKnockback, int stun, int minDamage, float radius,
-						 int timeout, int mod, int timeDelta, bool aim_up ) {
+						 int timeout, int mod, int timeDelta ) {
 	edict_t *grenade;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
-	if( aim_up ) {
-		angles[PITCH] -= 5.0f * cos( DEG2RAD( angles[PITCH] ) ); // aim some degrees upwards from view dir
-
-	}
-	grenade = W_Fire_TossProjectile( self, start, angles, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
+	grenade = W_Fire_TossProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 	VectorClear( grenade->s.angles );
 	grenade->style = mod;
 	grenade->s.type = ET_GRENADE;
@@ -765,14 +752,14 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 /*
 * W_Fire_Rocket
 */
-edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t angles, int speed, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int mod, int timeDelta ) {
-	edict_t *rocket;
+edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int mod, int timeDelta ) {
+	edict_t	*rocket;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
-	rocket = W_Fire_LinearProjectile( self, start, angles, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
+	rocket = W_Fire_LinearProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 
 	rocket->s.type = ET_ROCKET; //rocket trail sfx
 	if( mod == MOD_ROCKET_S ) {
@@ -910,14 +897,14 @@ static void W_AutoTouch_Plasma( edict_t *ent, edict_t *other, cplane_t *plane, i
 /*
 * W_Fire_Plasma
 */
-edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t angles, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta ) {
-	edict_t *plasma;
+edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t dir, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta ) {
+	edict_t	*plasma;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
-	plasma = W_Fire_LinearProjectile( self, start, angles, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
+	plasma = W_Fire_LinearProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 	plasma->s.type = ET_PLASMA;
 	plasma->classname = "plasma";
 	plasma->style = mod;
@@ -988,8 +975,8 @@ static void W_Touch_Bolt( edict_t *self, edict_t *other, cplane_t *plane, int su
 /*
 * W_Fire_Electrobolt_Combined
 */
-void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, float maxdamage, float mindamage, float maxknockback, float minknockback, int stun, int range, int mod, int timeDelta ) {
-	vec3_t from, end, dir;
+void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t dir, float maxdamage, float mindamage, float maxknockback, float minknockback, int stun, int range, int mod, int timeDelta ) {
+	vec3_t from, end;
 	trace_t tr;
 	edict_t *ignore, *event, *hit, *damaged;
 	int hit_movetype;
@@ -1008,7 +995,6 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 		maxdamage = mindamage = 9999;
 	}
 
-	AngleVectors( angles, dir, NULL, NULL );
 	VectorMA( start, range, dir, end );
 	VectorCopy( start, from );
 
@@ -1087,13 +1073,13 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 		gs_weapon_definition_t *weapondef = GS_GetWeaponDef( self->s.weapon );
 
 		// fire a weak EB from the end position
-		bolt = W_Fire_Electrobolt_Weak( self, end, angles, weapondef->firedef_weak.speed, mindamage, minknockback, minknockback, stun, weapondef->firedef_weak.timeout, mod, timeDelta );
+		bolt = W_Fire_Electrobolt_Weak( self, end, dir, weapondef->firedef_weak.speed, mindamage, minknockback, minknockback, stun, weapondef->firedef_weak.timeout, mod, timeDelta );
 		bolt->enemy = damaged;
 	}
 }
 
-void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles, float maxdamage, float mindamage, int maxknockback, int minknockback, int stun, int range, int minDamageRange, int mod, int timeDelta ) {
-	vec3_t from, end, dir;
+void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t dir, float maxdamage, float mindamage, int maxknockback, int minknockback, int stun, int range, int minDamageRange, int mod, int timeDelta ) {
+	vec3_t from, end;
 	trace_t tr;
 	edict_t *ignore, *event, *hit;
 	int hit_movetype;
@@ -1107,7 +1093,6 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 		maxdamage = mindamage = 9999;
 	}
 
-	AngleVectors( angles, dir, NULL, NULL );
 	VectorMA( start, range, dir, end );
 	VectorCopy( start, from );
 
@@ -1198,15 +1183,15 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 /*
 * W_Fire_Electrobolt_Weak
 */
-edict_t *W_Fire_Electrobolt_Weak( edict_t *self, vec3_t start, vec3_t angles, float speed, float damage, int minKnockback, int maxKnockback, int stun, int timeout, int mod, int timeDelta ) {
-	edict_t *bolt;
+edict_t *W_Fire_Electrobolt_Weak( edict_t *self, vec3_t start, vec3_t dir, float speed, float damage, int minKnockback, int maxKnockback, int stun, int timeout, int mod, int timeDelta ) {
+	edict_t	*bolt;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
 	// projectile, weak mode
-	bolt = W_Fire_LinearProjectile( self, start, angles, speed, damage, minKnockback, maxKnockback, stun, 0, 0, timeout, timeDelta );
+	bolt = W_Fire_LinearProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, 0, 0, timeout, timeDelta );
 	bolt->s.modelindex = trap_ModelIndex( PATH_ELECTROBOLT_WEAK_MODEL );
 	bolt->s.type = ET_ELECTRO_WEAK; //add particle trail and light
 	bolt->s.ownerNum = ENTNUM( self );
@@ -1221,11 +1206,11 @@ edict_t *W_Fire_Electrobolt_Weak( edict_t *self, vec3_t start, vec3_t angles, fl
 /*
 * W_Fire_Instagun_Strong
 */
-void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback,
+void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t dir, float damage, int knockback,
 					  int stun, int radius, int range, int mod, int timeDelta ) {
-	vec3_t from, end, dir;
-	trace_t tr;
-	edict_t *ignore, *event, *hit;
+	vec3_t from, end;
+	trace_t	tr;
+	edict_t	*ignore, *event, *hit;
 	int hit_movetype;
 	int mask;
 	bool missed = true;
@@ -1235,7 +1220,6 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 		damage = 9999;
 	}
 
-	AngleVectors( angles, dir, NULL, NULL );
 	VectorMA( start, range, dir, end );
 	VectorCopy( start, from );
 	ignore = self;
@@ -1412,11 +1396,10 @@ static edict_t *_FindOrSpawnLaser( edict_t *owner, int entType, bool *newLaser )
 /*
 * W_Fire_Lasergun
 */
-edict_t *W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int stun, int range, int mod, int timeDelta ) {
-	edict_t *laser;
+edict_t *W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t dir, float damage, int knockback, int stun, int range, int mod, int timeDelta ) {
+	edict_t	*laser;
 	bool newLaser;
-	trace_t tr;
-	vec3_t dir;
+	trace_t	tr;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
@@ -1437,11 +1420,10 @@ edict_t *W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t angles, float dama
 	laser_mod = mod;
 	laser_missed = true;
 
-	GS_TraceLaserBeam( &tr, start, angles, range, ENTNUM( self ), timeDelta, _LaserImpact );
+	GS_TraceLaserBeam( &tr, start, dir, range, ENTNUM( self ), timeDelta, _LaserImpact );
 
 	laser->r.svflags |= SVF_FORCEOWNER;
 	VectorCopy( start, laser->s.origin );
-	AngleVectors( angles, dir, NULL, NULL );
 	VectorMA( laser->s.origin, range, dir, laser->s.origin2 );
 
 	laser->think = G_Laser_Think;

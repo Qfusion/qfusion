@@ -446,6 +446,7 @@ static edict_t *G_Fire_Grenade( vec3_t origin, vec3_t angles, firedef_t *firedef
 	int speed, minKnockback, knockback, stun, minDamage, radius, mod;
 	float damage;
 	int timeDelta;
+	vec3_t angles_, dir;
 
 	// FIXME2: projectiles go slower underwater, do this at the actual firing function
 
@@ -473,8 +474,12 @@ static edict_t *G_Fire_Grenade( vec3_t origin, vec3_t angles, firedef_t *firedef
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	return W_Fire_Grenade( owner, origin, angles, speed, damage, minKnockback, knockback, stun,
-						   minDamage, radius, firedef->timeout, mod, timeDelta, true );
+	VectorCopy( angles, angles_ );
+	angles_[PITCH] -= 5.0f * cos( DEG2RAD( angles_[PITCH] ) ); // aim some degrees upwards from view dir
+	AngleVectors( angles_, dir, NULL, NULL );
+
+	return W_Fire_Grenade( owner, origin, dir, speed, damage, minKnockback, knockback, stun,
+		minDamage, radius, firedef->timeout, mod, timeDelta );
 }
 
 /*

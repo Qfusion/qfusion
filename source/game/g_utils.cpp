@@ -1807,6 +1807,44 @@ realcheck:
 }
 
 /*
+* G_Visible
+*
+* Returns true if the entity is visible to self, even if not infront ()
+*/
+bool G_Visible( edict_t *self, edict_t *other ) {
+	vec3_t	spot1;
+	vec3_t	spot2;
+	trace_t	trace;
+
+	VectorCopy( self->s.origin, spot1 );
+	spot1[2] += self->viewheight;
+
+	VectorCopy( other->s.origin, spot2 );
+	spot2[2] += other->viewheight;
+
+	G_Trace( &trace, spot1, vec3_origin, vec3_origin, spot2, self, MASK_OPAQUE );	
+	return( trace.fraction == 1.0 );
+}
+
+/*
+* G_InFront
+*
+* Returns true if the entity is in front (in sight) of self
+*/
+bool G_InFront( edict_t *self, edict_t *other ) {
+	vec3_t	vec;
+	float	dot;
+	vec3_t	forward;
+	
+	AngleVectors( self->s.angles, forward, NULL, NULL );
+	VectorSubtract( other->s.origin, self->s.origin, vec );
+	VectorNormalize( vec );
+	dot = DotProduct( vec, forward );
+	
+	return( dot > 0.3 );
+}
+
+/*
 * G_SetBoundsForSpanEntity
 *
 * Set origin and origin2 and then call this before linkEntity
