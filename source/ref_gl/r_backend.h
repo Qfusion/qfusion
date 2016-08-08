@@ -67,7 +67,7 @@ void RB_SetScreenImageSet( const struct refScreenTexSet_s *st );
 
 void RB_BindFrameBufferObject( int object );
 int RB_BoundFrameBufferObject( void );
-void RB_BlitFrameBufferObject( int dest, int bitMask, int mode );
+void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt );
 
 void RB_BindVBO( int id, int primitive );
 

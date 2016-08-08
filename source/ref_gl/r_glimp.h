@@ -194,6 +194,8 @@ typedef struct
 				,texture_float
 				,texture_sRGB
 				,draw_buffers
+				,multisample
+				,pixel_format
 				;
 	union { char shadow, shadow_samplers; };
 	union { char texture3D, texture_3D; };
@@ -265,7 +267,7 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 bool	GLimp_RenderingEnabled( void );
 void	GLimp_BeginFrame( void );
 void	GLimp_EndFrame( void );
-int		GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
+bool	GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
 			int iconResource, const int *iconXPM );
 void	GLimp_Shutdown( void );
 rserr_t	GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless );

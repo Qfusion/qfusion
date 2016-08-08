@@ -528,7 +528,7 @@ static void _R_DrawSurfaces( drawList_t *list )
 						RB_FlushDynamicMeshes();
 						batchFlushed = true;
 					}
-					RB_BlitFrameBufferObject( rn.st->screenTexCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
+					RB_BlitFrameBufferObject( RB_BoundFrameBufferObject(), rn.st->screenTexCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
 				}
 			}
 

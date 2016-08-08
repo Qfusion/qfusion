@@ -661,9 +661,9 @@ int RB_BoundFrameBufferObject( void )
 /*
 * RB_BlitFrameBufferObject
 */
-void RB_BlitFrameBufferObject( int dest, int bitMask, int mode )
+void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt )
 {
-	RFB_BlitObject( dest, bitMask, mode );
+	RFB_BlitObject( src, dest, bitMask, mode, filter, readAtt, drawAtt );
 }
 
 /*
