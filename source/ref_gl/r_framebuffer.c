@@ -350,12 +350,14 @@ image_t	*RFB_GetObjectTextureAttachment( int object, bool depth, int target )
 * The target FBO must be equal or greater in both dimentions than
 * the currently bound FBO!
 */
-void RFB_BlitObject( int dest, int bitMask, int mode )
+void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt )
 {
 	int bits;
+	int error;
+	int destObj;
 	int dx, dy, dw, dh;
-	r_fbo_t *fbo = r_bound_framebuffer_object, 
-		*destfbo = r_framebuffer_objects + dest - 1;
+	r_fbo_t *fbo;
+	r_fbo_t *destfbo;
 
 	if( !r_bound_framebuffer_object ) {
 		return;
@@ -364,9 +366,22 @@ void RFB_BlitObject( int dest, int bitMask, int mode )
 		return;
 	}
 
-	assert( dest > 0 && dest <= r_num_framebuffer_objects );
-	if( dest <= 0 || dest > r_num_framebuffer_objects ) {
+	assert( src >= 0 && src <= r_num_framebuffer_objects );
+	if( src < 0 || src > r_num_framebuffer_objects ) {
 		return;
+	}
+	fbo = r_bound_framebuffer_object;
+
+	assert( dest >= 0 && dest <= r_num_framebuffer_objects );
+	if( dest < 0 || dest > r_num_framebuffer_objects ) {
+		return;
+	}
+
+	if( dest ) {
+		destfbo = r_framebuffer_objects + dest - 1;
+	}
+	else {
+		destfbo = NULL;
 	}
 
 	bits = bitMask;
@@ -376,18 +391,35 @@ void RFB_BlitObject( int dest, int bitMask, int mode )
 
 	RB_ApplyScissor();
 
+	if( destfbo ) {
+		dw = destfbo->width;
+		dh = destfbo->height;
+		destObj = destfbo->objectID;
+	}
+	else {
+		dw = glConfig.width;
+		dh = glConfig.height;
+		destObj = 0;
+	}
+
 	switch( mode ) {
 		case FBO_COPY_CENTREPOS:
-			dx = (destfbo->width - fbo->width) / 2;
-			dy = (destfbo->height - fbo->height) / 2;
+			dx = (dw - fbo->width) / 2;
+			dy = (dh - fbo->height) / 2;
 			dw = fbo->width;
 			dh = fbo->height;
 			break;
 		case FBO_COPY_INVERT_Y:
 			dx = 0;
-			dy = destfbo->height - fbo->height;
+			dy = dh - fbo->height;
 			dw = fbo->width;
 			dh = fbo->height;
+			break;
+		case FBO_COPY_NORMAL_DST_SIZE:
+			dx = 0;
+			dy = 0;
+			dw = dw;
+			dh = dh;
 			break;
 		default:
 			dx = 0;
@@ -397,15 +429,26 @@ void RFB_BlitObject( int dest, int bitMask, int mode )
 			break;
 	}
 
+#ifndef GL_ES_VERSION_2_0
+	qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT + readAtt );
+	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT + drawAtt );
+#endif
+
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 	qglBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, fbo->objectID );
-	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, destfbo->objectID );
-	qglBlitFramebufferEXT( 0, 0, fbo->width, fbo->height, dx, dy, dx + dw, dy + dh, bits, GL_NEAREST );
+	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, destObj );
+	qglBlitFramebufferEXT( 0, 0, fbo->width, fbo->height, dx, dy, dx + dw, dy + dh, bits, filter );
 	qglBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, 0 );
 	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 );
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
-	assert( qglGetError() == GL_NO_ERROR );
+#ifndef GL_ES_VERSION_2_0
+	qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT );
+	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+#endif
+
+	error = qglGetError();
+	assert( error == GL_NO_ERROR );
 }
 
 /*

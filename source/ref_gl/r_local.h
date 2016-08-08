@@ -530,7 +530,8 @@ enum
 {
 	FBO_COPY_NORMAL = 0,
 	FBO_COPY_CENTREPOS = 1,
-	FBO_COPY_INVERT_Y = 2
+	FBO_COPY_INVERT_Y = 2,
+	FBO_COPY_NORMAL_DST_SIZE = 3,
 };
 
 void		RFB_Init( void );
@@ -541,7 +542,7 @@ void		RFB_BindObject( int object );
 int			RFB_BoundObject( void );
 bool		RFB_AttachTextureToObject( int object, bool depth, int target, image_t *texture );
 image_t		*RFB_GetObjectTextureAttachment( int object, bool depth, int target );
-void		RFB_BlitObject( int dest, int bitMask, int mode );
+void		RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt );
 bool	RFB_CheckObjectStatus( void );
 void		RFB_GetObjectSize( int object, int *width, int *height );
 void		RFB_FreeUnusedObjects( void );

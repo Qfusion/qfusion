@@ -227,7 +227,8 @@ void R_AddLightStyleToScene( int style, float r, float g, float b )
 * R_BlitTextureToScrFbo
 */
 static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo, 
-	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages, int iParam0 )
+	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages, 
+	int iParam0 )
 {
 	int x, y;
 	int w, h, fw, fh;
@@ -511,13 +512,14 @@ void R_RenderScene( const refdef_t *fd )
 		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // LDR
 
 		if( fbFlags & PPFX_BIT_OVERBRIGHT_TARGET ) {
+			fbFlags &= ~PPFX_BIT_OVERBRIGHT_TARGET;
+
 			if( !RFB_AttachTextureToObject( dest->fbo, false, 1, rsh.st.screenOverbrightTex ) ) {
 				dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // re-evaluate
 			}
 			else {
 				fbFlags |= PPFX_BIT_BLOOM;
 			}
-			fbFlags &= ~PPFX_BIT_OVERBRIGHT_TARGET;
 		}
 
 		if( fbFlags & PPFX_BIT_BLOOM ) {
@@ -528,6 +530,7 @@ void R_RenderScene( const refdef_t *fd )
 			images[0] = cc->passes[0].images[0];
 			numImages = 2;
 			fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
+			dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // re-evaluate
 			cc = NULL;
 		}
 
@@ -594,7 +597,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( fbFlags & PPFX_BIT_FXAA ) {
 		// not that FXAA only works on LDR input
 		R_BlitTextureToScrFbo( fd,
-			ppSource,  0,
+			ppSource, 0,
 			GLSL_PROGRAM_TYPE_FXAA,
 			colorWhite, 0,
 			0, NULL, 0 );
@@ -604,7 +607,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( fbFlags & PPFX_BIT_BLUR ) {
 		ppSource = R_BlurTextureToScrFbo( fd, ppSource, rsh.st.screenPPCopies[ppFrontBuffer] );
 		R_BlitTextureToScrFbo( fd,
-			ppSource,  0,
+			ppSource, 0,
 			GLSL_PROGRAM_TYPE_NONE,
 			colorWhite, 0,
 			0, NULL, 0 );
