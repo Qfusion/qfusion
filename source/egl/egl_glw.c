@@ -50,7 +50,7 @@ void GLimp_EndFrame( void )
 ** This routine is responsible for initializing the OS specific portions
 ** of OpenGL.
 */
-int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
+bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
 	int iconResource, const int *iconXPM )
 {
 	glw_state.window = ( EGLNativeWindowType )parenthWnd;
