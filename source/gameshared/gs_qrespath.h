@@ -446,10 +446,6 @@ extern "C" {
 //===============================
 // UI
 //===============================
-#define S_UI_MENU_IN_SOUND			"sounds/menu/ok"
-#define S_UI_MENU_MOVE_SOUND		"sounds/menu/mouseover"
-#define S_UI_MENU_OUT_SOUND			"sounds/menu/back"
-
 #define UI_SHADER_VIDEOBACK			"gfx/ui/background"
 #define UI_SHADER_FXBACK			"gfx/ui/menubackfx"
 #define UI_SHADER_BIGLOGO			"gfx/ui/logo512"
