@@ -26,7 +26,7 @@
 glwstate_t glw_state = {NULL, false};
 cvar_t *vid_fullscreen;
 
-static int GLimp_InitGL( int stencilbits, bool stereo );
+static bool GLimp_InitGL( int stencilbits, bool stereo );
 
 void GLimp_SetWindowIcon( void )
 {
@@ -163,7 +163,7 @@ void GLimp_Shutdown()
  * @param wndproc
  */
 
-int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
+bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
 	int iconResource, const int *iconXPM )
 {
 	glw_state.wndproc = wndproc;
@@ -181,7 +181,7 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	return true;
 }
 
-static int GLimp_InitGL( int stencilbits, bool stereo )
+static bool GLimp_InitGL( int stencilbits, bool stereo )
 {
 	int colorBits, depthBits, stencilBits, stereo_;
 
