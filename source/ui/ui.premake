@@ -1,0 +1,57 @@
+project "ui"
+
+    kind      "SharedLib"
+    language  "C++"
+    
+    qf_targetdir "base"
+
+    -- pchheader "ui_precompiled.h"
+    -- pchsource "ui_precompiled.cpp"
+
+    includedirs { ".", "../../libsrcs/libRocket/libRocket/Include" }
+    defines     { "STATIC_LIB" }
+
+    files { 
+        "*.h",
+        "as/*.h",
+        "datasources/*.h",
+        "decorators/*.h",
+        "formatters/*.h",
+        "kernel/*.h",
+        "widgets/*.h",
+        "../qalgo/hash.h",
+        "../qalgo/md5.h",
+        "../gameshared/config.h",
+        "../gameshared/gs_qrespath.h",
+        "../gameshared/gs_ref.h",
+        "../gameshared/q_arch.h",
+        "../gameshared/q_cvar.h",
+        "../gameshared/q_dynvar.h",
+        "../gameshared/q_keycodes.h",
+        "../gameshared/q_math.h",
+        "../gameshared/q_shared.h",
+        "ui_public.cpp",
+        "ui_precompiled.cpp",
+        "as/*.cpp",
+        "datasources/*.cpp",
+        "decorators/*.cpp",
+        "formatters/*.cpp",
+        "kernel/*.cpp",
+        "widgets/*.cpp",
+        "parsers/*.cpp",
+        "../qalgo/hash.c",
+        "../qalgo/md5.c",
+        "../gameshared/q_math.c",
+        "../gameshared/q_shared.c",
+    }
+
+    configuration "windows"
+        links { "RocketCore", "RocketControls" }
+
+    configuration "linux"
+        libdirs {
+            "../../libsrcs/libRocket/libRocket/Build/lib",
+            "../../libsrcs/libRocket/libRocket/lib",
+        }
+        
+        links { "RocketWSW", "freetype" }

@@ -1,0 +1,45 @@
+project "ref_gl"
+
+    kind         "SharedLib"
+    language     "C"
+    qf_targetdir "libs"
+    
+    files    { 
+        "*.h",
+        "../cgame/ref.h",
+        "../gameshared/anorms.h",
+        "../gameshared/config.h",
+        "../gameshared/q_arch.h",
+        "../gameshared/q_cvar.h",
+        "../gameshared/q_math.h",
+        "../gameshared/q_shared.h",
+        "../gameshared/q_trie.h",
+        "../qcommon/patch.h",
+        "../qalgo/glob.h",
+        "../qalgo/hash.h",
+        "*.c",
+        "../gameshared/q_math.c",
+        "../gameshared/q_shared.c",
+        "../qcommon/bsp.c",
+        "../qcommon/patch.c",
+        "../qalgo/glob.c",
+        "../qalgo/q_trie.c",
+        "../qalgo/hash.c",
+    }
+
+    qf_links { "png", "jpeg" }
+
+    configuration "windows"
+        files {
+            "../win32/win_glw.c",
+            "../win32/win_qgl.c",
+        }
+
+    configuration "linux"
+        files {
+            "../unix/unix_glw.c",
+            "../unix/unix_qgl.c",
+            "../unix/unix_xpm.c",
+        }
+
+        links { "X11", "Xext", "Xinerama", "Xrandr", "Xxf86vm" }
