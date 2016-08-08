@@ -1056,6 +1056,10 @@ QGL_EXT(void, glBlitFramebufferNV, (GLint, GLint, GLint, GLint, GLint, GLint, GL
 #endif
 #endif
 
+#ifndef GL_ES_VERSION_2_0
+QGL_EXT(void, glRenderbufferStorageMultisampleEXT, (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height));
+#endif
+
 #ifdef GL_ES_VERSION_2_0
 QGL_EXT(void, glReadBufferIndexedEXT, (GLenum, GLint));
 QGL_EXT(void, glDrawBuffersIndexedEXT, (GLint, const GLenum *, const GLint *));
