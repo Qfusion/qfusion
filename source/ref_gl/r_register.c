@@ -369,6 +369,14 @@ static const gl_extension_func_t gl_ext_draw_buffers_ARB_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_ARB_multisample */
+static const gl_extension_func_t gl_ext_multisample_ARB_funcs[] =
+{
+	GL_EXTENSION_FUNC(SampleCoverageARB)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 #else // GL_ES_VERSION_2_0
 
 /* GL_ANGLE_framebuffer_blit */
@@ -415,6 +423,14 @@ static const gl_extension_func_t gl_ext_texture_3D_OES_funcs[] =
 static const gl_extension_func_t wgl_ext_swap_interval_EXT_funcs[] =
 {
 	 GL_EXTENSION_FUNC_EXT("wglSwapIntervalEXT",&qwglSwapIntervalEXT)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
+/* WGL_ARB_pixel_format */
+static const gl_extension_func_t wgl_ext_pixel_format_ARB_funcs[] =
+{
+	GL_EXTENSION_FUNC_EXT("wglChoosePixelFormatARB",&qwglChoosePixelFormatARB)
 
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
@@ -483,6 +499,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, blend_func_separate, true, true, &gl_ext_blend_func_separate_EXT_funcs )
 	,GL_EXTENSION( EXT, texture3D, false, false, &gl_ext_texture3D_EXT_funcs )
 	,GL_EXTENSION( ARB, draw_buffers, false, false, &gl_ext_draw_buffers_ARB_funcs )
+	,GL_EXTENSION( ARB, multisample, false, false, &gl_ext_multisample_ARB_funcs )
 	,GL_EXTENSION_EXT( EXT, texture_array, 1, false, false, NULL, texture3D )
 	,GL_EXTENSION( EXT, packed_depth_stencil, false, false, NULL )
 	,GL_EXTENSION( SGIS, texture_lod, false, false, NULL )
@@ -522,6 +539,9 @@ static const gl_extension_t gl_extensions_decl[] =
 #endif
 #ifdef _WIN32
 	,GL_EXTENSION( WGL_EXT, swap_control, true, false, &wgl_ext_swap_interval_EXT_funcs )
+#endif
+#ifdef _WIN32
+	,GL_EXTENSION_EXT( WGL_EXT, pixel_format, 1, true, false, &wgl_ext_pixel_format_ARB_funcs, multisample )
 #endif
 #endif
 };
