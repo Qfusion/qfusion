@@ -35,7 +35,7 @@
 
 #define WINDOW_STYLE	( WS_OVERLAPPED|WS_BORDER|WS_CAPTION|WS_VISIBLE|WS_SYSMENU|WS_MINIMIZEBOX )
 
-static int GLimp_InitGL( void );
+static bool GLimp_InitGL( void );
 
 glwstate_t glw_state;
 
@@ -124,7 +124,7 @@ static void GLimp_SetWindowSize( bool fullscreen, bool borderless )
 	SetFocus( glw_state.hWnd );
 }
 
-static void GLimp_CreateWindow( void )
+static void GLimp_CreateWindow( bool dummy )
 {
 	HWND parentHWND = glw_state.parenthWnd;
 #ifdef WITH_UTF8
@@ -182,7 +182,8 @@ static void GLimp_CreateWindow( void )
 	if( !glw_state.hWnd )
 		Sys_Error( "Couldn't create window" );
 
-	GLimp_SetWindowSize( glConfig.fullScreen, glConfig.borderless );
+	if( !dummy )
+		GLimp_SetWindowSize( glConfig.fullScreen, glConfig.borderless );
 }
 
 /*
@@ -272,7 +273,12 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.stereoEnabled = stereo;
 	glConfig.borderless = borderless;
 
-	GLimp_CreateWindow();
+	if( r_stencilbits->integer == 8 || r_stencilbits->integer == 16 )
+		glConfig.stencilBits = r_stencilbits->integer;
+	else
+		glConfig.stencilBits = 0;
+
+	GLimp_CreateWindow( false );
 
 	// init all the gl stuff for the window
 	if( !GLimp_InitGL() ) {
@@ -287,9 +293,9 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 ** GLimp_Shutdown
 **
 ** This routine does all OS specific shutdown procedures for the OpenGL
-** subsystem.  Under OpenGL this means NULLing out the current DC and
+** subsystem. Under OpenGL this means NULLing out the current DC and
 ** HGLRC, deleting the rendering context, and releasing the DC acquired
-** for the window.  The state structure is also nulled out.
+** for the window. The state structure is also nulled out.
 **
 */
 void GLimp_Shutdown( void )
@@ -353,11 +359,11 @@ void GLimp_Shutdown( void )
 ** GLimp_Init
 **
 ** This routine is responsible for initializing the OS specific portions
-** of OpenGL.  Under Win32 this means dealing with the pixelformats and
+** of OpenGL. Under Win32 this means dealing with the pixelformats and
 ** doing the wgl interface stuff.
 */
-int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
-	int iconResource, const int *iconXPM )
+static int GLimp_Init_( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
+	int iconResource, const int *iconXPM, bool needPixelFormatARB )
 {
 	size_t applicationNameSize = strlen( applicationName ) + 1;
 	// save off hInstance and wndproc
@@ -373,10 +379,39 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	glw_state.parenthWnd = ( HWND )parenthWnd;
 	glw_state.applicationIconResourceID = iconResource;
 
+	// create a temporary window and startup temporary OpenGL context 
+	// to get the function pointer to wglChoosePixelFormatARB
+	if( needPixelFormatARB ) {
+		const char *wglExtensions;
+
+		GLimp_CreateWindow( true );
+
+		if( !GLimp_InitGL() )
+			return false;
+
+		wglExtensions = qglGetGLWExtensionsString();
+
+		if ( wglExtensions && strstr( wglExtensions, "WGL_ARB_pixel_format" ) ) {
+			qwglChoosePixelFormatARB = qglGetProcAddress( (const GLubyte *)"wglChoosePixelFormatARB" );
+			qwglGetPixelFormatAttribivARB = qglGetProcAddress( (const GLubyte *)"wglGetPixelFormatAttribivARB" );
+		}
+
+		GLimp_Shutdown();
+	}
+
 	return true;
 }
 
-static int GLimp_InitGL( void )
+bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
+	int iconResource, const int *iconXPM )
+{
+	if( !GLimp_Init_( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM, true ) ) {
+		return false;
+	}
+	return GLimp_Init_( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM, false );
+}
+
+static bool GLimp_InitGL( void )
 {
 	PIXELFORMATDESCRIPTOR pfd =
 	{
@@ -399,10 +434,31 @@ static int GLimp_InitGL( void )
 		0,                      // reserved
 		0, 0, 0                 // layer masks ignored
 	};
-	int pixelformat;
+	int iAttributes[] = {
+		WGL_STENCIL_BITS_ARB, 0,
+		WGL_SAMPLE_BUFFERS_ARB, GL_FALSE,
+		WGL_SAMPLES_ARB, 0,
+		WGL_STEREO_ARB, GL_FALSE,
+		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB, 32,
+		WGL_RED_BITS_ARB, 8,
+		WGL_GREEN_BITS_ARB, 8, 
+		WGL_BLUE_BITS_ARB, 8,
+		WGL_ALPHA_BITS_ARB, 8,
+		WGL_DEPTH_BITS_ARB, 24,
+		0
+	};
+	int pixelformat = 0;
 
-	if( r_stencilbits->integer == 8 || r_stencilbits->integer == 16 )
-		pfd.cStencilBits = r_stencilbits->integer;
+	if( glConfig.stencilBits )
+	{
+		ri.Com_DPrintf( "...attempting to set stencil bits\n" );
+		pfd.cStencilBits = glConfig.stencilBits;
+		iAttributes[0*2+1] = glConfig.stencilBits; // WGL_STENCIL_BITS_ARB
+	}
 
 	/*
 	** set PFD_STEREO if necessary
@@ -411,6 +467,7 @@ static int GLimp_InitGL( void )
 	{
 		ri.Com_DPrintf( "...attempting to use stereo\n" );
 		pfd.dwFlags |= PFD_STEREO;
+		iAttributes[3*2+1] = GL_TRUE; // WGL_STEREO_ARB
 	}
 
 	/*
@@ -425,11 +482,24 @@ static int GLimp_InitGL( void )
 		return false;
 	}
 
-	if( ( pixelformat = ChoosePixelFormat( glw_state.hDC, &pfd ) ) == 0 )
+	if( qwglChoosePixelFormatARB )
 	{
-		ri.Com_Printf( "GLimp_Init() - ChoosePixelFormat failed\n" );
-		return false;
+		UINT numFormats;
+		if( qwglChoosePixelFormatARB( glw_state.hDC, iAttributes, NULL, 1, &pixelformat, &numFormats ) == 0 )
+		{
+			ri.Com_Printf( "GLimp_Init() - wglChoosePixelFormatARB failed\n" );
+			return false;
+		}
 	}
+	else
+	{
+		if( ( pixelformat = ChoosePixelFormat( glw_state.hDC, &pfd ) ) == 0 )
+		{
+			ri.Com_Printf( "GLimp_Init() - ChoosePixelFormat failed\n" );
+			return false;
+		}
+	}
+
 	if( SetPixelFormat( glw_state.hDC, pixelformat, &pfd ) == FALSE )
 	{
 		ri.Com_Printf( "GLimp_Init() - SetPixelFormat failed\n" );
@@ -467,7 +537,7 @@ static int GLimp_InitGL( void )
 	/*
 	** print out PFD specifics
 	*/
-	ri.Com_Printf( "GL PFD: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", ( int ) pfd.cColorBits, ( int ) pfd.cDepthBits, ( int )pfd.cStencilBits );
+	ri.Com_DPrintf( "GL PFD: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", ( int ) pfd.cColorBits, ( int ) pfd.cDepthBits, ( int )pfd.cStencilBits );
 
 	return true;
 
