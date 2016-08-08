@@ -196,6 +196,7 @@ typedef struct
 				,draw_buffers
 				,multisample
 				,pixel_format
+				,framebuffer_multisample
 				;
 	union { char shadow, shadow_samplers; };
 	union { char texture3D, texture_3D; };

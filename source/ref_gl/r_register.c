@@ -335,6 +335,14 @@ static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_EXT_framebuffer_multisample */
+static const gl_extension_func_t gl_ext_framebuffer_multisample_EXT_funcs[] =
+{
+	GL_EXTENSION_FUNC(RenderbufferStorageMultisampleEXT)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 /* GL_ARB_texture_compression */
 static const gl_extension_func_t gl_ext_texture_compression_ARB_funcs[] =
 {
@@ -483,6 +491,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, draw_range_elements, false, false, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, false, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
+	,GL_EXTENSION_EXT( EXT, framebuffer_multisample, 1, false, false, &gl_ext_framebuffer_multisample_EXT_funcs, framebuffer_blit )
 	,GL_EXTENSION( ARB, texture_compression, false, false, &gl_ext_texture_compression_ARB_funcs )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( SGIS, texture_edge_clamp, true, true, NULL )
