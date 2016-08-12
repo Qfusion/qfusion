@@ -2670,7 +2670,7 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples )
 /*
 * R_GetViewportTextureSize
 */
-static void R_GetViewportTextureSize( const int viewportWidth, const int viewportHeight, 
+void R_GetViewportTextureSize( const int viewportWidth, const int viewportHeight, 
 	const int size, const int flags, int *width, int *height )
 {
 	int limit;
