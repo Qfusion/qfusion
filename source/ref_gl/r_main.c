@@ -1037,14 +1037,14 @@ static void R_Clear( int bitMask )
 	int bits;
 	vec4_t envColor;
 	bool clearColor = false;
-	bool rgbShadow = ( rn.renderFlags & RF_SHADOWMAPVIEW ) && rn.fbColorAttachment != NULL ? true : false;
+	bool rgbShadow = ( rn.renderFlags & (RF_SHADOWMAPVIEW|RF_SHADOWMAPVIEW_RGB) ) == (RF_SHADOWMAPVIEW|RF_SHADOWMAPVIEW_RGB);
 	bool depthPortal = ( rn.renderFlags & (RF_MIRRORVIEW|RF_PORTALVIEW) ) != 0 && ( rn.renderFlags & RF_PORTAL_CAPTURE ) == 0;
 
 	if( rgbShadow ) {
 		clearColor = true;
 		Vector4Set( envColor, 1, 1, 1, 1 );
 	} else if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
-		clearColor = rn.fbColorAttachment != NULL;
+		clearColor = rn.renderTarget != 0;
 		Vector4Set( envColor, 1, 1, 1, 0 );
 	} else  {
 		clearColor = !rn.numDepthPortalSurfaces || R_FASTSKY();
@@ -1195,18 +1195,7 @@ static void R_DrawEntities( void )
 */
 static void R_BindRefInstFBO( void )
 {
-	int fbo;
-
-	if( rn.fbColorAttachment ) {
-		fbo = rn.fbColorAttachment->fbo;
-	}
-	else if( rn.fbDepthAttachment ) {
-		fbo = rn.fbDepthAttachment->fbo;
-	}
-	else {
-		fbo = 0;
-	}
-
+	int fbo = rn.renderTarget;
 	R_BindFrameBufferObject( fbo );
 }
 

@@ -391,18 +391,15 @@ setup_and_render:
 		rn.refdef.height = h;
 		rn.refdef.x = 0;
 		rn.refdef.y = 0;
-		rn.fbColorAttachment = captureTexture;
+		rn.renderTarget = captureTexture->fbo;
 		rn.renderFlags |= RF_PORTAL_CAPTURE;
-		// no point in capturing the depth buffer due to oblique frustum messing up
-		// the far plane and depth values
-		rn.fbDepthAttachment = NULL;
 		Vector4Set( rn.viewport, rn.refdef.x + x, rn.refdef.y + y, w, h );
 		Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 	}
 	else {
 		// no point in capturing the depth buffer due to oblique frustum messing up
 		// the far plane and depth values
-		rn.fbDepthAttachment = NULL;
+		rn.renderTarget = 0;
 		rn.renderFlags &= ~RF_PORTAL_CAPTURE;
 	}
 

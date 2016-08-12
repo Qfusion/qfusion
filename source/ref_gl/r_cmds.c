@@ -242,7 +242,7 @@ void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels )
 	rn.renderFlags |= RF_CUBEMAPVIEW;
 	rn.clipFlags = 15;
 	rn.shadowGroup = NULL;
-	rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
+	rn.renderTarget = 0;
 	
 	Vector4Set( rn.viewport, fd.x, glConfig.height - size - fd.y, size, size );
 	Vector4Set( rn.scissor, fd.x, glConfig.height - size - fd.y, size, size );

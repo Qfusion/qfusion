@@ -409,7 +409,7 @@ void R_RenderScene( const refdef_t *fd )
 	rn.shadowGroup = NULL;
 
 	rn.st = &rsh.st;
-	rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
+	rn.renderTarget = 0;
 
 	fbFlags = 0;
 	cc = rn.refdef.colorCorrection;
@@ -423,8 +423,8 @@ void R_RenderScene( const refdef_t *fd )
 		}
 
 		if( r_soft_particles->integer && ( rn.st->screenTex != NULL ) ) {
-			rn.fbColorAttachment = rn.st->screenTex;
-			rn.fbDepthAttachment = rn.st->screenDepthTex;
+			// use a FBO with a depth renderbuffer attached
+			rn.renderTarget = rn.st->screenTex->fbo;
 			rn.renderFlags |= RF_SOFT_PARTICLES;
 			fbFlags |= PPFX_BIT_SOFT_PARTICLES;
 		}
@@ -450,15 +450,19 @@ void R_RenderScene( const refdef_t *fd )
 			}
 
 			if( fbFlags != oldFlags ) {
-				if( !rn.fbColorAttachment ) {
-					rn.fbColorAttachment = rn.st->screenPPCopies[0];
+				// use a FBO without a depth renderbuffer attached, unless we need one for soft particles
+				if( !rn.renderTarget ) {
+					rn.renderTarget = rn.st->screenPPCopies[0]->fbo;
 					ppFrontBuffer = 1;
 				}
 			}
 		}
 	}
 
-	ppSource = rn.fbColorAttachment;
+	if( rn.renderTarget )
+		ppSource = RFB_GetObjectTextureAttachment( rn.renderTarget, false, 0 );
+	else
+		ppSource = NULL;
 
 	// clip new scissor region to the one currently set
 	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );

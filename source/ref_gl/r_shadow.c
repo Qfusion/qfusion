@@ -430,16 +430,12 @@ void R_DrawShadowmaps( void )
 			continue;
 		}
 
-		if( shadowmap->flags & IT_DEPTH ) {
-			rn.fbColorAttachment = NULL;
-			rn.fbDepthAttachment = shadowmap;
-		}
-		else {
-			rn.fbColorAttachment = shadowmap;
-			rn.fbDepthAttachment = NULL;
-		}
+		rn.renderTarget = shadowmap->fbo;
 		rn.farClip = farClip;
 		rn.renderFlags = RF_SHADOWMAPVIEW|RF_FLIPFRONTFACE;
+		if( ( !shadowmap->flags & IT_DEPTH ) ) {
+			rn.renderFlags |= RF_SHADOWMAPVIEW_RGB;
+		}
 		rn.clipFlags |= 16; // clip by far plane too
 		rn.meshlist = &r_shadowlist;
 		rn.portalmasklist = NULL;
