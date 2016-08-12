@@ -31,6 +31,7 @@ typedef struct
 	unsigned int objectID;
 	unsigned int depthRenderBuffer;
 	unsigned int stencilRenderBuffer;
+	unsigned int colorRenderBuffer;
 	int width, height;
 	image_t *depthTexture;
 	image_t *colorTexture[MAX_FRAMEBUFFER_COLOR_ATTACHMENTS];
@@ -66,19 +67,25 @@ static void RFB_DeleteObject( r_fbo_t *fbo )
 {
 	if( fbo->depthRenderBuffer )
 	{
-		qglDeleteRenderbuffersEXT( 1, &( fbo->depthRenderBuffer ) );
+		qglDeleteRenderbuffersEXT( 1, &fbo->depthRenderBuffer );
 		fbo->depthRenderBuffer = 0;
 	}
 
 	if( fbo->stencilRenderBuffer )
 	{
-		qglDeleteRenderbuffersEXT( 1, &( fbo->stencilRenderBuffer ) );
+		qglDeleteRenderbuffersEXT( 1, &fbo->stencilRenderBuffer );
 		fbo->stencilRenderBuffer = 0;
+	}
+
+	if( fbo->colorRenderBuffer )
+	{
+		qglDeleteRenderbuffersEXT( 1, &fbo->colorRenderBuffer );
+		fbo->colorRenderBuffer = 0;
 	}
 
 	if( fbo->objectID )
 	{
-		qglDeleteFramebuffersEXT( 1, &( fbo->objectID ) );
+		qglDeleteFramebuffersEXT( 1, &fbo->objectID );
 		fbo->objectID = 0;
 	}
 }
@@ -86,7 +93,8 @@ static void RFB_DeleteObject( r_fbo_t *fbo )
 /*
 * RFB_RegisterObject
 */
-int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB )
+int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB, 
+	bool colorRB, int samples, int multiSamples )
 {
 	int i;
 	GLuint fbID;
@@ -94,6 +102,9 @@ int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool 
 	r_fbo_t *fbo;
 
 	if( !r_frambuffer_objects_initialized )
+		return 0;
+
+	if( multiSamples && !glConfig.ext.framebuffer_multisample )
 		return 0;
 
 	for( i = 0, fbo = r_framebuffer_objects; i < r_num_framebuffer_objects; i++, fbo++ ) {
@@ -131,6 +142,24 @@ found:
 	qglReadBuffer( GL_NONE );
 #endif
 
+	if( colorRB )
+	{
+		int format = samples == 4 ? GL_RGBA : 3;
+
+		qglGenRenderbuffersEXT( 1, &rbID );
+		fbo->colorRenderBuffer = rbID;
+		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rbID );
+
+		if( multiSamples )
+			qglRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, multiSamples, format, width, height );
+		else
+			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
+		
+		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, rbID );
+
+		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );	
+	}
+
 	if( depthRB )
 	{
 		int format;
@@ -147,7 +176,10 @@ found:
 			format = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
 		else
 			format = GL_DEPTH_COMPONENT16;
-		qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
+		if( multiSamples )
+			qglRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, multiSamples, format, width, height );
+		else
+			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
 
 		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rbID );
 		if( stencilRB )
