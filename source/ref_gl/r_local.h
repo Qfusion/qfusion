@@ -121,6 +121,7 @@ typedef struct superLightStyle_s
 #define RF_LIGHTMAP				RF_BIT(8)
 #define RF_SOFT_PARTICLES		RF_BIT(9)
 #define RF_PORTAL_CAPTURE		RF_BIT(10)
+#define RF_SHADOWMAPVIEW_RGB	RF_BIT(11)
 
 #define RF_CUBEMAPVIEW			( RF_ENVVIEW )
 #define RF_NONVIEWERREF			( RF_PORTALVIEW|RF_MIRRORVIEW|RF_ENVVIEW|RF_SHADOWMAPVIEW )
@@ -155,8 +156,7 @@ typedef struct
 	unsigned int	renderFlags;
 
 	refScreenTexSet_t *st;					// points to either either a 8bit or a 16bit float set
-	image_t			*fbColorAttachment;
-	image_t			*fbDepthAttachment;
+	int				renderTarget;
 
 	refdef_t		refdef;
 	int				scissor[4];

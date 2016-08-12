@@ -520,16 +520,21 @@ static void _R_DrawSurfaces( drawList_t *list )
 			}
 
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
-				depthCopied = true;
-				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && rn.fbDepthAttachment && rn.st->screenTexCopy ) {
+				int fbo = RB_BoundFrameBufferObject();
+				image_t *depthTexture = RFB_GetObjectTextureAttachment( fbo, true, 0 );
+
+				// ignore texture portals because oblique frustum has messed up the far plane and the depth values
+				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && !( rn.renderFlags & RF_PORTAL_CAPTURE ) && depthTexture && rn.st->screenTexCopy ) {
 					// draw all dynamic surfaces that write depth before copying
 					if( batchOpaque ) {
 						batchOpaque = false;
 						RB_FlushDynamicMeshes();
 						batchFlushed = true;
 					}
-					RB_BlitFrameBufferObject( RB_BoundFrameBufferObject(), rn.st->screenTexCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
+					RB_BlitFrameBufferObject( fbo, rn.st->screenTexCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
 				}
+
+				depthCopied = true;
 			}
 
 			if( batchDrawSurf ) {
