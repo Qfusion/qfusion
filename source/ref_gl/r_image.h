@@ -107,6 +107,8 @@ void R_FreeUnusedImages( void );
 void R_InitBuiltinScreenImages( void );
 void R_ReleaseBuiltinScreenImages( void );
 void R_ShutdownImages( void );
+void R_GetViewportTextureSize( const int viewportWidth, const int viewportHeight, 
+	const int size, const int flags, int *width, int *height );
 void R_InitViewportTexture( image_t **texture, const char *name, int id, 
 	int viewportWidth, int viewportHeight, int size, int flags, int tags, int samples );
 image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight, int flags, unsigned frameNum );

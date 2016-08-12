@@ -156,7 +156,7 @@ typedef struct
 	unsigned int	renderFlags;
 
 	refScreenTexSet_t *st;					// points to either either a 8bit or a 16bit float set
-	int				renderTarget;
+	int				renderTarget;			// target framebuffer object
 
 	refdef_t		refdef;
 	int				scissor[4];
