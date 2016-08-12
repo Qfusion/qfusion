@@ -535,7 +535,7 @@ enum
 };
 
 void		RFB_Init( void );
-int			RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB );
+int			RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB, bool colorRB, int samples, int multiSamples );
 void		RFB_UnregisterObject( int object );
 void		RFB_TouchObject( int object );
 void		RFB_BindObject( int object );
