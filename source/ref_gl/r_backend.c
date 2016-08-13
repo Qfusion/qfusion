@@ -475,6 +475,16 @@ void RB_SetState( int state )
 		}
 	}
 
+	if( diff & GLSTATE_ALPHATEST )
+	{
+		if( glConfig.ext.multisample ) {
+			if( state & GLSTATE_ALPHATEST )
+				qglEnable( GL_SAMPLE_ALPHA_TO_COVERAGE_ARB );
+			else
+				qglDisable( GL_SAMPLE_ALPHA_TO_COVERAGE_ARB );
+		}
+	}
+
 	rb.gl.state = state;
 }
 
