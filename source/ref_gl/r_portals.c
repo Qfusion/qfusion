@@ -397,9 +397,6 @@ setup_and_render:
 		Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 	}
 	else {
-		// no point in capturing the depth buffer due to oblique frustum messing up
-		// the far plane and depth values
-		rn.renderTarget = 0;
 		rn.renderFlags &= ~RF_PORTAL_CAPTURE;
 	}
 

@@ -520,8 +520,8 @@ static void _R_DrawSurfaces( drawList_t *list )
 			}
 
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
-				// ignore texture portals because oblique frustum has messed up the far plane and the depth values
-				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && !( rn.renderFlags & RF_PORTAL_CAPTURE ) ) {
+				// ignore portals because oblique frustum messes up the depth values
+				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && !( rn.renderFlags & RF_CLIPPLANE ) ) {
 					int fbo = RB_BoundFrameBufferObject();
 					if( RFB_HasDepthRenderBuffer( fbo ) && rn.st->screenTexCopy ) {
 						// draw all dynamic surfaces that write depth before copying
