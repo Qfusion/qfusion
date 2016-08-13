@@ -2668,10 +2668,10 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples )
 }
 
 /*
-* R_GetViewportTextureSize
+* R_GetRenderBufferSize
 */
-void R_GetViewportTextureSize( const int viewportWidth, const int viewportHeight, 
-	const int size, const int flags, int *width, int *height )
+void R_GetRenderBufferSize( const int inWidth, const int inHeight, 
+	const int inLimit, const int flags, int *outWidth, int *outHeight )
 {
 	int limit;
 	int width_, height_;
@@ -2680,8 +2680,8 @@ void R_GetViewportTextureSize( const int viewportWidth, const int viewportHeight
 	// limit the texture size to either screen resolution in case we can't use FBO
 	// or hardware limits and ensure it's a POW2-texture if we don't support such textures
 	limit = glConfig.maxRenderbufferSize;
-	if( size )
-		limit = min( limit, size );
+	if( inLimit )
+		limit = min( limit, inLimit );
 	if( limit < 1 )
 		limit = 1;
 	width_ = height_ = limit;
@@ -2692,32 +2692,32 @@ void R_GetViewportTextureSize( const int viewportWidth, const int viewportHeight
 #endif
 	if( npot )
 	{
-		width_ = min( viewportWidth, limit );
-		height_ = min( viewportHeight, limit );
+		width_ = min( inWidth, limit );
+		height_ = min( inHeight, limit );
 	}
 	else
 	{
 		int d;
 
 		// calculate the upper bound and make sure it's not a pow of 2
-		d = min( limit, viewportWidth );
+		d = min( limit, inWidth );
 		if( ( d & (d-1) ) == 0 ) d--;
 		for( width_ = 2; width_ <= d; width_ <<= 1 );
 
-		d = min( limit, viewportHeight );
+		d = min( limit, inHeight );
 		if( ( d & (d-1) ) == 0 ) d--;
 		for( height_ = 2; height_ <= d; height_ <<= 1 );
 
-		if( size ) {
-			while( width_ > size || height_ > size ) {
+		if( inLimit ) {
+			while( width_ > inLimit || height_ > inLimit ) {
 				width_ >>= 1;
 				height_ >>= 1;
 			}
 		}
 	}
 
-	*width = width_;
-	*height = height_;
+	*outWidth = width_;
+	*outHeight = height_;
 }
 
 /*
@@ -2729,7 +2729,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 	int width, height;
 	image_t *t;
 
-	R_GetViewportTextureSize( viewportWidth, viewportHeight, size, flags, &width, &height );
+	R_GetRenderBufferSize( viewportWidth, viewportHeight, size, flags, &width, &height );
 
 	// create a new texture or update the old one
 	if( !( *texture ) || ( *texture )->width != width || ( *texture )->height != height )
@@ -2760,7 +2760,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 		}
 		if( t->flags & IT_FRAMEBUFFER ) {
 			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height, ( tags & IMAGE_TAG_BUILTIN ) != 0,
-				( flags & IT_DEPTHRB ) != 0, ( flags & IT_STENCIL ) != 0, false, 0, 0 );
+				( flags & IT_DEPTHRB ) != 0, ( flags & IT_STENCIL ) != 0, false, 0, false );
 			RFB_AttachTextureToObject( t->fbo, (t->flags & IT_DEPTH) != 0, 0, t );
 		}
 	}
@@ -2778,7 +2778,7 @@ static int R_GetPortalTextureId( const int viewportWidth, const int viewportHeig
 	int realflags = IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags;
 	image_t *image;
 
-	R_GetViewportTextureSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
+	R_GetRenderBufferSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
 		flags, &realwidth, &realheight );
 
 	for( i = 0; i < MAX_PORTAL_TEXTURES; i++ )

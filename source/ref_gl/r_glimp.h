@@ -245,6 +245,7 @@ typedef struct
 					,maxVertexUniformComponents
 					,maxVertexAttribs
 					,maxFragmentUniformComponents
+					,maxFramebufferSamples
 					;
 	unsigned int	maxGLSLBones;	// the maximum amount of bones we can handle in a vertex shader
 

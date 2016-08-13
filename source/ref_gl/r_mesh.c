@@ -520,18 +520,20 @@ static void _R_DrawSurfaces( drawList_t *list )
 			}
 
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
-				int fbo = RB_BoundFrameBufferObject();
-				image_t *depthTexture = RFB_GetObjectTextureAttachment( fbo, true, 0 );
-
 				// ignore texture portals because oblique frustum has messed up the far plane and the depth values
-				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && !( rn.renderFlags & RF_PORTAL_CAPTURE ) && depthTexture && rn.st->screenTexCopy ) {
-					// draw all dynamic surfaces that write depth before copying
-					if( batchOpaque ) {
-						batchOpaque = false;
-						RB_FlushDynamicMeshes();
-						batchFlushed = true;
+				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && !( rn.renderFlags & RF_PORTAL_CAPTURE ) ) {
+					int fbo = RB_BoundFrameBufferObject();
+					if( RFB_HasDepthRenderBuffer( fbo ) && rn.st->screenTexCopy ) {
+						// draw all dynamic surfaces that write depth before copying
+						if( batchOpaque ) {
+							batchOpaque = false;
+							RB_FlushDynamicMeshes();
+							batchFlushed = true;
+						}
+						// this also resolves the multisampling fbo
+						rn.multisampleDepthResolved = true;
+						RB_BlitFrameBufferObject( fbo, rn.st->screenTexCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
 					}
-					RB_BlitFrameBufferObject( fbo, rn.st->screenTexCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
 				}
 
 				depthCopied = true;

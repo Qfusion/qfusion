@@ -33,6 +33,7 @@ typedef struct
 	unsigned int stencilRenderBuffer;
 	unsigned int colorRenderBuffer;
 	int width, height;
+	int samples;
 	image_t *depthTexture;
 	image_t *colorTexture[MAX_FRAMEBUFFER_COLOR_ATTACHMENTS];
 } r_fbo_t;
@@ -94,17 +95,18 @@ static void RFB_DeleteObject( r_fbo_t *fbo )
 * RFB_RegisterObject
 */
 int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB, 
-	bool colorRB, int samples, int multiSamples )
+	bool colorRB, int samples, bool useFloat )
 {
 	int i;
+	int format;
 	GLuint fbID;
-	GLuint rbID;
-	r_fbo_t *fbo;
+	GLuint rbID = 0;
+	r_fbo_t *fbo = NULL;
 
 	if( !r_frambuffer_objects_initialized )
 		return 0;
 
-	if( multiSamples && !glConfig.ext.framebuffer_multisample )
+	if( samples && !glConfig.ext.framebuffer_multisample )
 		return 0;
 
 	for( i = 0, fbo = r_framebuffer_objects; i < r_num_framebuffer_objects; i++, fbo++ ) {
@@ -120,6 +122,8 @@ int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool 
 		return 0;
 	}
 
+	clamp_high( samples, glConfig.maxFramebufferSamples );
+
 	i = r_num_framebuffer_objects++;
 	fbo = r_framebuffer_objects + i;
 
@@ -133,37 +137,36 @@ found:
 		fbo->registrationSequence = rsh.registrationSequence;
 	fbo->width = width;
 	fbo->height = height;
+	fbo->samples = samples;
 
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
-#ifndef GL_ES_VERSION_2_0
-	// until a color texture is attached, don't enable drawing to the buffer
-	qglDrawBuffer( GL_NONE );
-	qglReadBuffer( GL_NONE );
-#endif
-
 	if( colorRB )
 	{
-		int format = samples == 4 ? GL_RGBA : 3;
+		format = glConfig.forceRGBAFramebuffers ? GL_RGBA : GL_RGB;
+		if( useFloat ) {
+			format = glConfig.forceRGBAFramebuffers ? GL_RGBA16F_ARB : GL_RGB16F_ARB;
+		}
 
 		qglGenRenderbuffersEXT( 1, &rbID );
 		fbo->colorRenderBuffer = rbID;
 		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rbID );
 
-		if( multiSamples )
-			qglRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, multiSamples, format, width, height );
+		if( samples )
+			qglRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, samples, format, width, height );
 		else
 			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
-		
-		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, rbID );
-
-		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );	
 	}
+	else {
+#ifndef GL_ES_VERSION_2_0
+		// until a color texture is attached, don't enable drawing to the buffer
+		qglDrawBuffer( GL_NONE );
+		qglReadBuffer( GL_NONE );
+	}
+#endif
 
 	if( depthRB )
 	{
-		int format;
-
 		qglGenRenderbuffersEXT( 1, &rbID );
 		fbo->depthRenderBuffer = rbID;
 		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rbID );
@@ -176,16 +179,26 @@ found:
 			format = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
 		else
 			format = GL_DEPTH_COMPONENT16;
-		if( multiSamples )
-			qglRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, multiSamples, format, width, height );
+		if( samples )
+			qglRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, samples, format, width, height );
 		else
 			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
+	}
 
-		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rbID );
-		if( stencilRB )
-			qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rbID );
-
+	if( rbID )
 		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );	
+
+	if( fbo->colorRenderBuffer )
+		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, fbo->colorRenderBuffer );
+	if( fbo->depthRenderBuffer )
+		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->depthRenderBuffer );
+	if( stencilRB && fbo->depthRenderBuffer )
+		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->depthRenderBuffer );
+
+	if( colorRB && depthRB ) {
+		if( !RFB_CheckObjectStatus() ) {
+			goto fail;
+		}
 	}
 
 	if( r_bound_framebuffer_objectID )
@@ -194,6 +207,13 @@ found:
 		qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 
 	return i+1;
+
+fail:
+	if( fbo ) {
+		RFB_DeleteObject( fbo );
+	}
+	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+	return 0;
 }
 
 /*
@@ -377,6 +397,51 @@ image_t	*RFB_GetObjectTextureAttachment( int object, bool depth, int target )
 }
 
 /*
+* RFB_HasColorRenderBuffer
+*/
+bool RFB_HasColorRenderBuffer( int object )
+{
+	r_fbo_t *fbo;
+
+	assert( object > 0 && object <= r_num_framebuffer_objects );
+	if( object <= 0 || object > r_num_framebuffer_objects ) {
+		return false;
+	}
+	fbo = r_framebuffer_objects + object - 1;
+	return fbo->colorRenderBuffer != 0;
+}
+
+/*
+* RFB_HasDepthRenderBuffer
+*/
+bool RFB_HasDepthRenderBuffer( int object )
+{
+	r_fbo_t *fbo;
+
+	assert( object > 0 && object <= r_num_framebuffer_objects );
+	if( object <= 0 || object > r_num_framebuffer_objects ) {
+		return false;
+	}
+	fbo = r_framebuffer_objects + object - 1;
+	return fbo->depthRenderBuffer != 0;
+}
+
+/*
+* RFB_GetSamples
+*/
+int RFB_GetSamples( int object )
+{
+	r_fbo_t *fbo;
+
+	assert( object > 0 && object <= r_num_framebuffer_objects );
+	if( object <= 0 || object > r_num_framebuffer_objects ) {
+		return 0;
+	}
+	fbo = r_framebuffer_objects + object - 1;
+	return fbo->samples;
+}
+
+/*
 * RFB_BlitObject
 *
 * The target FBO must be equal or greater in both dimentions than
@@ -391,18 +456,15 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 	r_fbo_t *fbo;
 	r_fbo_t *destfbo;
 
-	if( !r_bound_framebuffer_object ) {
-		return;
-	}
 	if( !glConfig.ext.framebuffer_blit ) {
 		return;
 	}
 
-	assert( src >= 0 && src <= r_num_framebuffer_objects );
-	if( src < 0 || src > r_num_framebuffer_objects ) {
+	assert( src > 0 && src <= r_num_framebuffer_objects );
+	if( src <= 0 || src > r_num_framebuffer_objects ) {
 		return;
 	}
-	fbo = r_bound_framebuffer_object;
+	fbo = r_framebuffer_objects + src - 1;
 
 	assert( dest >= 0 && dest <= r_num_framebuffer_objects );
 	if( dest < 0 || dest > r_num_framebuffer_objects ) {
@@ -461,14 +523,15 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 			break;
 	}
 
+	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+	qglBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, fbo->objectID );
+	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, destObj );
+
 #ifndef GL_ES_VERSION_2_0
 	qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT + readAtt );
 	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT + drawAtt );
 #endif
 
-	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
-	qglBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, fbo->objectID );
-	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, destObj );
 	qglBlitFramebufferEXT( 0, 0, fbo->width, fbo->height, dx, dy, dx + dw, dy + dh, bits, filter );
 	qglBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, 0 );
 	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 );
@@ -501,6 +564,27 @@ bool RFB_CheckObjectStatus( void )
 		case GL_FRAMEBUFFER_COMPLETE_EXT:
 			return true;
 		case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
+			return false;
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
+			assert( status != GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT );
+			return false;
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
+			assert( status != GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT );
+			return false;
+		case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
+			assert( status != GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT );
+			return false;
+		case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
+			assert( status != GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT );
+			return false;
+		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
+			assert( status != GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT );
+			return false;
+		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
+			assert( status != GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT );
+			return false;
+		case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT:
+			assert( status != GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_EXT );
 			return false;
 		default:
 			// programming error; will fail on all hardware

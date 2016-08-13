@@ -139,6 +139,7 @@ typedef struct refScreenTexSet_s {
 	image_t			*screenDepthTexCopy;
 	image_t			*screenOverbrightTex; // the overbrights output target
 	image_t			*screenBloomLodTex[NUM_BLOOM_LODS][2]; // lods + backups for bloom
+	int				multisampleTarget;	  // multisample fbo
 } refScreenTexSet_t;
 
 typedef struct portalSurface_s
@@ -157,6 +158,7 @@ typedef struct
 
 	refScreenTexSet_t *st;					// points to either either a 8bit or a 16bit float set
 	int				renderTarget;			// target framebuffer object
+	bool			multisampleDepthResolved;
 
 	refdef_t		refdef;
 	int				scissor[4];
@@ -424,6 +426,7 @@ extern cvar_t *r_hdr_exposure;
 extern cvar_t *r_bloom;
 
 extern cvar_t *r_fxaa;
+extern cvar_t *r_samples;
 
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
@@ -535,15 +538,18 @@ enum
 };
 
 void		RFB_Init( void );
-int			RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB, bool colorRB, int samples, int multiSamples );
+int			RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB, bool colorRB, int samples, bool useFloat );
 void		RFB_UnregisterObject( int object );
 void		RFB_TouchObject( int object );
 void		RFB_BindObject( int object );
 int			RFB_BoundObject( void );
 bool		RFB_AttachTextureToObject( int object, bool depth, int target, image_t *texture );
 image_t		*RFB_GetObjectTextureAttachment( int object, bool depth, int target );
+bool		RFB_HasColorRenderBuffer( int object );
+bool		RFB_HasDepthRenderBuffer( int object );
+int			RFB_GetSamples( int object );
 void		RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt );
-bool	RFB_CheckObjectStatus( void );
+bool		RFB_CheckObjectStatus( void );
 void		RFB_GetObjectSize( int object, int *width, int *height );
 void		RFB_FreeUnusedObjects( void );
 void		RFB_Shutdown( void );
