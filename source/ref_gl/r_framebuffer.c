@@ -401,6 +401,7 @@ image_t	*RFB_GetObjectTextureAttachment( int object, bool depth, int target )
 */
 bool RFB_HasColorRenderBuffer( int object )
 {
+	int i;
 	r_fbo_t *fbo;
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
@@ -408,7 +409,13 @@ bool RFB_HasColorRenderBuffer( int object )
 		return false;
 	}
 	fbo = r_framebuffer_objects + object - 1;
-	return fbo->colorRenderBuffer != 0;
+	if( fbo->colorRenderBuffer != 0 )
+		return true;
+	for( i = 0; i < MAX_FRAMEBUFFER_COLOR_ATTACHMENTS; i++ ) {
+		if( fbo->colorTexture[i] != NULL )
+			return true;
+	}
+	return false;
 }
 
 /*
@@ -423,7 +430,7 @@ bool RFB_HasDepthRenderBuffer( int object )
 		return false;
 	}
 	fbo = r_framebuffer_objects + object - 1;
-	return fbo->depthRenderBuffer != 0;
+	return fbo->depthRenderBuffer != 0 || fbo->depthTexture != NULL;
 }
 
 /*
