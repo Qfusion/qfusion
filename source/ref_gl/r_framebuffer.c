@@ -106,8 +106,13 @@ int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool 
 	if( !r_frambuffer_objects_initialized )
 		return 0;
 
+#ifdef GL_ES_VERSION_2_0
+	if( samples )
+		return 0;
+#else
 	if( samples && !glConfig.ext.framebuffer_multisample )
 		return 0;
+#endif
 
 	for( i = 0, fbo = r_framebuffer_objects; i < r_num_framebuffer_objects; i++, fbo++ ) {
 		if( !fbo->objectID ) {
@@ -152,9 +157,11 @@ found:
 		fbo->colorRenderBuffer = rbID;
 		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rbID );
 
+#ifndef GL_ES_VERSION_2_0
 		if( samples )
 			qglRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, samples, format, width, height );
 		else
+#endif
 			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
 	}
 	else {
@@ -179,9 +186,12 @@ found:
 			format = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
 		else
 			format = GL_DEPTH_COMPONENT16;
+
+#ifndef GL_ES_VERSION_2_0
 		if( samples )
 			qglRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, samples, format, width, height );
 		else
+#endif
 			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
 	}
 
