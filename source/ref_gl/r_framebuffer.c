@@ -164,14 +164,14 @@ found:
 #endif
 			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
 	}
-	else {
 #ifndef GL_ES_VERSION_2_0
+	else {
 		// until a color texture is attached, don't enable drawing to the buffer
 		qglDrawBuffer( GL_NONE );
 		qglReadBuffer( GL_NONE );
 	}
 #endif
-
+	
 	if( depthRB )
 	{
 		qglGenRenderbuffersEXT( 1, &rbID );
