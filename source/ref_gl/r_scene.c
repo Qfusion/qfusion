@@ -435,7 +435,8 @@ void R_RenderScene( const refdef_t *fd )
 			int width, height;
 			R_GetRenderBufferSize( glConfig.width, glConfig.height, 0, IT_SPECIAL, &width, &height );
 
-			RFB_UnregisterObject( rn.st->multisampleTarget );
+			if( rn.st->multisampleTarget )
+				RFB_UnregisterObject( rn.st->multisampleTarget );
 			rn.st->multisampleTarget = RFB_RegisterObject( width, height, true, true, glConfig.stencilBits != 0, true, 
 				samples, rn.st == &rsh.stf );
 		}

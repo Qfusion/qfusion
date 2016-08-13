@@ -1590,13 +1590,16 @@ static void Shaderpass_AlphaFunc( shader_t *shader, shaderpass_t *pass, const ch
 
 	token = Shader_ParseString( ptr );
 
-	pass->flags &= ~(SHADERPASS_ALPHAFUNC);
+	pass->flags &= ~(SHADERPASS_ALPHAFUNC|GLSTATE_ALPHATEST);
 	if( !strcmp( token, "gt0" ) )
 		pass->flags |= SHADERPASS_AFUNC_GT0;
 	else if( !strcmp( token, "lt128" ) )
 		pass->flags |= SHADERPASS_AFUNC_LT128;
 	else if( !strcmp( token, "ge128" ) )
 		pass->flags |= SHADERPASS_AFUNC_GE128;
+
+	if( pass->flags & SHADERPASS_ALPHAFUNC )
+		pass->flags |= GLSTATE_ALPHATEST;
 }
 
 static void Shaderpass_DepthFunc( shader_t *shader, shaderpass_t *pass, const char **ptr )
