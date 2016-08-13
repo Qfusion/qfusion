@@ -641,6 +641,8 @@ void RB_BindFrameBufferObject( int object )
 
 	RFB_BindObject( object );
 
+	RFB_CheckObjectStatus();
+
 	RFB_GetObjectSize( object, &width, &height );
 
 	if( rb.gl.fbHeight != height )

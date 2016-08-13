@@ -375,6 +375,7 @@ void R_RenderScene( const refdef_t *fd )
 	int l;
 	int fbFlags = 0;
 	int ppFrontBuffer = 0;
+	int samples = 0;
 	image_t *ppSource;
 	shader_t *cc;
 	image_t *bloomTex[NUM_BLOOM_LODS];
@@ -410,6 +411,7 @@ void R_RenderScene( const refdef_t *fd )
 
 	rn.st = &rsh.st;
 	rn.renderTarget = 0;
+	rn.multisampleDepthResolved = false;
 
 	fbFlags = 0;
 	cc = rn.refdef.colorCorrection;
@@ -418,13 +420,39 @@ void R_RenderScene( const refdef_t *fd )
 	}
 
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
+		if( !glConfig.ext.framebuffer_multisample ) {
+			samples = 0;
+		} else {
+			samples = bound( 0, r_samples->integer, glConfig.maxFramebufferSamples );
+		}
+
 		if( glConfig.sSRGB && rsh.stf.screenTex ) {
 			rn.st = &rsh.stf;
 		}
 
+		// reload the multisample framebuffer if needed
+		if( samples > 0 && (  !rn.st->multisampleTarget || RFB_GetSamples( rn.st->multisampleTarget ) != samples ) ) {
+			int width, height;
+			R_GetRenderBufferSize( glConfig.width, glConfig.height, 0, IT_SPECIAL, &width, &height );
+
+			RFB_UnregisterObject( rn.st->multisampleTarget );
+			rn.st->multisampleTarget = RFB_RegisterObject( width, height, true, true, glConfig.stencilBits != 0, true, 
+				samples, rn.st == &rsh.stf );
+		}
+
+		// ignore r_samples values below 2 or if we failed to allocate the multisample fb
+		if( samples > 1 && rn.st->multisampleTarget != 0 ) {
+			rn.renderTarget = rn.st->multisampleTarget;
+		}
+		else {
+			samples = 0;
+		}
+
 		if( r_soft_particles->integer && ( rn.st->screenTex != NULL ) ) {
 			// use a FBO with a depth renderbuffer attached
-			rn.renderTarget = rn.st->screenTex->fbo;
+			if( !rn.renderTarget ) {
+				rn.renderTarget = rn.st->screenTex->fbo;
+			}
 			rn.renderFlags |= RF_SOFT_PARTICLES;
 			fbFlags |= PPFX_BIT_SOFT_PARTICLES;
 		}
@@ -459,11 +487,6 @@ void R_RenderScene( const refdef_t *fd )
 		}
 	}
 
-	if( rn.renderTarget )
-		ppSource = RFB_GetObjectTextureAttachment( rn.renderTarget, false, 0 );
-	else
-		ppSource = NULL;
-
 	// clip new scissor region to the one currently set
 	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
 	Vector4Set( rn.viewport, fd->x, fd->y, fd->width, fd->height );
@@ -491,6 +514,25 @@ void R_RenderScene( const refdef_t *fd )
 	}
 
 	// blit and blend framebuffers in proper order
+	
+	// resolve the multisample framebuffer
+	if( samples > 0 ) {
+		int bits = GL_COLOR_BUFFER_BIT;
+		
+		if( !rn.multisampleDepthResolved ) {
+			bits |= GL_DEPTH_BUFFER_BIT;
+			rn.multisampleDepthResolved = true;
+		}
+
+		RB_BlitFrameBufferObject( rn.renderTarget, rn.st->screenTexCopy->fbo, bits, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
+		ppSource = rn.st->screenTexCopy;
+	}
+	else {
+		if( rn.renderTarget )
+			ppSource = RFB_GetObjectTextureAttachment( rn.renderTarget, false, 0 );
+		else
+			ppSource = NULL;
+	}
 
 	if( fbFlags == PPFX_BIT_SOFT_PARTICLES ) {
 		// only blit soft particles directly when we don't have any other post processing

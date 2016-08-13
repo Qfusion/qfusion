@@ -96,6 +96,7 @@ cvar_t *r_hdr_exposure;
 cvar_t *r_bloom;
 
 cvar_t *r_fxaa;
+cvar_t *r_samples;
 
 cvar_t *r_lodbias;
 cvar_t *r_lodscale;
@@ -1024,6 +1025,9 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.forceRGBAFramebuffers = true;
 #endif
 
+	if( glConfig.ext.framebuffer_multisample )
+		qglGetIntegerv( GL_MAX_SAMPLES_EXT, &glConfig.maxFramebufferSamples );
+
 	ri.Cvar_Get( "r_texturefilter_max", "0", CVAR_READONLY );
 	ri.Cvar_ForceSet( "r_texturefilter_max", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureFilterAnisotropic ) );
 
@@ -1146,6 +1150,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_bloom = ri.Cvar_Get( "r_bloom", "1", CVAR_ARCHIVE );
 
 	r_fxaa = ri.Cvar_Get( "r_fxaa", "1", CVAR_ARCHIVE );
+	r_samples = ri.Cvar_Get( "r_samples", "0", CVAR_ARCHIVE );
 
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
@@ -1233,6 +1238,7 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "GL_MAX_VERTEX_UNIFORM_COMPONENTS: %i\n", glConfig.maxVertexUniformComponents );
 	Com_Printf( "GL_MAX_VERTEX_ATTRIBS: %i\n", glConfig.maxVertexAttribs );
 	Com_Printf( "GL_MAX_FRAGMENT_UNIFORM_COMPONENTS: %i\n", glConfig.maxFragmentUniformComponents );
+	Com_Printf( "GL_MAX_SAMPLES: %i\n", glConfig.maxFramebufferSamples );
 	Com_Printf( "\n" );
 
 	Com_Printf( "mode: %ix%i%s\n", glConfig.width, glConfig.height,
