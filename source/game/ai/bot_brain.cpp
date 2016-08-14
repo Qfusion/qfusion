@@ -364,26 +364,17 @@ bool BotBrain::ShouldCancelSpecialGoalBySpecificReasons()
     if ((longTermGoal && longTermGoal->IsTopTierItem()) || (shortTermGoal && shortTermGoal->IsTopTierItem()))
         return true;
 
-    // Cancel pursuit if its path includes jumppads or elevators, or other vulnerable kinds of movement
-    int areaNum = currAasAreaNum;
     int goalAreaNum = specialGoal->AasAreaNum();
-    const AiAasWorld *aasWorld = AasWorld();
-    const AiAasRouteCache *routeCache = RouteCache();
-    while (areaNum != goalAreaNum)
-    {
-        const aas_area_t &area = aasWorld->Areas()[areaNum];
-        // First, project origin to floor manually. Otherwise, next call may perform a trace.
-        Vec3 origin(area.center);
-        origin.Z() = area.mins[2] + 4;
-        int travelFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR;
-        int reachNum = routeCache->ReachabilityToGoalArea(areaNum, origin.Data(), goalAreaNum, travelFlags);
-        // If reachability can't be found, cancel goal
-        if (!reachNum)
-            return true;
-        areaNum = aasWorld->Reachabilities()[reachNum].areanum;
-    }
+    // Bot is already in a goal area
+    if (droppedToFloorAasAreaNum == goalAreaNum)
+        return false;
 
-    return false;
+    // Cancel pursuit if its path includes jumppads or elevators, or other vulnerable kinds of movement.
+    // Define small set of less-vulnerable travel flags and check an area reachability for these flags.
+    int travelFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR;
+    int reachNum = RouteCache()->ReachabilityToGoalArea(droppedToFloorAasAreaNum, goalAreaNum, travelFlags);
+    // If a reachability can't be found, cancel goal
+    return reachNum == 0;
 }
 
 void BotBrain::UpdateKeptCurrentCombatTask()
