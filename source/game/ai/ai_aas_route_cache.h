@@ -267,7 +267,25 @@ class AiAasRouteCache
     void UpdatePortalRoutingCache(aas_routingcache_t *portalcache);
     aas_routingcache_t *GetPortalRoutingCache(int clusternum, int areanum, int travelflags);
     unsigned short AreaTravelTime(int areanum, const vec3_t start, const vec3_t end);
-    bool RouteToGoalArea(int areanum, const vec3_t origin, int goalareanum, int travelflags, int *traveltime, int *reachnum);
+
+    struct RoutingRequest
+    {
+        int areanum;
+        const float *origin;
+        int goalareanum;
+        int travelflags;
+    };
+
+    struct RoutingResult
+    {
+        int reachnum;
+        int traveltime;
+    };
+
+    bool RoutingResultToGoalArea(int fromAreaNum, const vec3_t origin, int toAreaNum, int travelFlags, RoutingResult *result) const;
+
+    bool RouteToGoalArea(const RoutingRequest &request, RoutingResult *result);
+    bool RouteToGoalPortal(const RoutingRequest &request, aas_routingcache_t *portalcache, RoutingResult *result);
 
     int PortalMaxTravelTime(int portalnum);
 
@@ -316,11 +334,10 @@ public:
 
     inline int ReachabilityToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int toAreaNum, int travelFlags) const
     {
-        int traveltime, reachnum;
-        auto *nonConstThis = const_cast<AiAasRouteCache*>(this);
-        if (nonConstThis->RouteToGoalArea(fromAreaNum, fromOrigin, toAreaNum, travelFlags, &traveltime, &reachnum))
+        RoutingResult result;
+        if (RoutingResultToGoalArea(fromAreaNum, fromOrigin, toAreaNum, travelFlags, &result))
         {
-            return reachnum;
+            return result.reachnum;
         }
         return 0;
     }
@@ -337,11 +354,10 @@ public:
 
     inline int TravelTimeToGoalArea(int fromAreaNum, const vec3_t fromOrigin, int toAreaNum, int travelFlags) const
     {
-        int traveltime, reachnum;
-        auto *nonConstThis = const_cast<AiAasRouteCache*>(this);
-        if (nonConstThis->RouteToGoalArea(fromAreaNum, fromOrigin, toAreaNum, travelFlags, &traveltime, &reachnum))
+        RoutingResult result;
+        if (RoutingResultToGoalArea(fromAreaNum, fromOrigin, toAreaNum, travelFlags, &result))
         {
-            return traveltime;
+            return result.traveltime;
         }
         return 0;
     }

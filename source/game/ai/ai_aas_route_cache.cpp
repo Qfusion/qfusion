@@ -1090,84 +1090,86 @@ AiAasRouteCache::aas_routingcache_t *AiAasRouteCache::GetPortalRoutingCache(int 
     return cache;
 }
 
-bool AiAasRouteCache::RouteToGoalArea(int areanum, const vec3_t origin, int goalareanum, int travelflags, int *traveltime, int *reachnum)
+bool AiAasRouteCache::RoutingResultToGoalArea(int fromAreaNum, const vec_t *origin, int toAreaNum,
+                                              int travelFlags, RoutingResult *result) const
 {
-    if (areanum == goalareanum)
+    if (fromAreaNum == toAreaNum)
     {
-        *traveltime = 1;
-        *reachnum = 0;
+        result->traveltime = 1;
+        result->reachnum = 0;
         return true;
     }
-    //
-    if (areanum <= 0 || areanum >= aasWorld.NumAreas())
-    {
-        return false;
-    }
-    if (goalareanum <= 0 || goalareanum >= aasWorld.NumAreas())
-    {
-        return false;
-    }
-    if (aasWorld.AreaDoNotEnter(areanum) || aasWorld.AreaDoNotEnter(goalareanum))
-    {
-        travelflags |= TFL_DONOTENTER;
-    }
 
+    if (fromAreaNum <= 0 || fromAreaNum >= aasWorld.NumAreas())
+        return false;
+
+    if (toAreaNum <= 0 || toAreaNum >= aasWorld.NumAreas())
+        return false;
+
+    if (aasWorld.AreaDoNotEnter(fromAreaNum) || aasWorld.AreaDoNotEnter(toAreaNum))
+        travelFlags |= TFL_DONOTENTER;
+
+    RoutingRequest request;
+    request.areanum = fromAreaNum;
+    request.origin = origin;
+    request.goalareanum = toAreaNum;
+    request.travelflags = travelFlags;
+    return const_cast<AiAasRouteCache *>(this)->RouteToGoalArea(request, result);
+}
+
+bool AiAasRouteCache::RouteToGoalArea(const RoutingRequest &request, RoutingResult *result)
+{
     while (ShouldDrainCache())
     {
-        if (FreeOldestCache())
+        if (!FreeOldestCache())
             break;
     }
 
-    int clusternum = aasWorld.AreaSettings()[areanum].cluster;
-    int goalclusternum = aasWorld.AreaSettings()[goalareanum].cluster;
+    int clusternum = aasWorld.AreaSettings()[request.areanum].cluster;
+    int goalclusternum = aasWorld.AreaSettings()[request.goalareanum].cluster;
     //check if the area is a portal of the goal area cluster
     if (clusternum < 0 && goalclusternum > 0)
     {
         const aas_portal_t *portal = &aasWorld.Portals()[-clusternum];
         if (portal->frontcluster == goalclusternum || portal->backcluster == goalclusternum)
-        {
             clusternum = goalclusternum;
-        }
     }
     //check if the goalarea is a portal of the area cluster
     else if (clusternum > 0 && goalclusternum < 0)
     {
         const aas_portal_t *portal = &aasWorld.Portals()[-goalclusternum];
         if (portal->frontcluster == clusternum || portal->backcluster == clusternum)
-        {
             goalclusternum = clusternum;
-        }
     }
 
     //if both areas are in the same cluster
     //NOTE: there might be a shorter route via another cluster!!! but we don't care
     if (clusternum > 0 && goalclusternum > 0 && clusternum == goalclusternum)
     {
-        aas_routingcache_t *areacache = GetAreaRoutingCache(clusternum, goalareanum, travelflags);
+        aas_routingcache_t *areacache = GetAreaRoutingCache(clusternum, request.goalareanum, request.travelflags);
         //the number of the area in the cluster
-        int clusterareanum = ClusterAreaNum(clusternum, areanum);
+        int clusterareanum = ClusterAreaNum(clusternum, request.areanum);
         //the cluster the area is in
         const aas_cluster_t *cluster = &aasWorld.Clusters()[clusternum];
         //if the area is NOT a reachability area
         if (clusterareanum >= cluster->numreachabilityareas)
-            return 0;
+            return false;
         //if it is possible to travel to the goal area through this cluster
         if (areacache->traveltimes[clusterareanum] != 0)
         {
-            *reachnum = aasWorld.AreaSettings()[areanum].firstreachablearea + areacache->reachabilities[clusterareanum];
-            if (!origin)
+            result->reachnum = aasWorld.AreaSettings()[request.areanum].firstreachablearea + areacache->reachabilities[clusterareanum];
+            if (!request.origin)
             {
-                *traveltime = areacache->traveltimes[clusterareanum];
+                result->traveltime = areacache->traveltimes[clusterareanum];
                 return true;
             }
-            const aas_reachability_t *reach = &aasWorld.Reachabilities()[*reachnum];
-            *traveltime = areacache->traveltimes[clusterareanum] + AreaTravelTime(areanum, origin, reach->start);
+            const aas_reachability_t *reach = &aasWorld.Reachabilities()[result->reachnum];
+            int areaTravelTime = AreaTravelTime(request.areanum, request.origin, reach->start);
+            result->traveltime = areacache->traveltimes[clusterareanum] + areaTravelTime;
             return true;
         }
     }
-    //
-    clusternum = aasWorld.AreaSettings()[areanum].cluster;
-    goalclusternum = aasWorld.AreaSettings()[goalareanum].cluster;
+    goalclusternum = aasWorld.AreaSettings()[request.goalareanum].cluster;
     //if the goal area is a portal
     if (goalclusternum < 0)
     {
@@ -1176,15 +1178,20 @@ bool AiAasRouteCache::RouteToGoalArea(int areanum, const vec3_t origin, int goal
         goalclusternum = portal->frontcluster;
     }
     //get the portal routing cache
-    aas_routingcache_t *portalcache = GetPortalRoutingCache(goalclusternum, goalareanum, travelflags);
+    aas_routingcache_t *portalcache = GetPortalRoutingCache(goalclusternum, request.goalareanum, request.travelflags);
+    return RouteToGoalPortal(request, portalcache, result);
+}
+
+bool AiAasRouteCache::RouteToGoalPortal(const RoutingRequest &request, aas_routingcache_t *portalcache, RoutingResult *result)
+{
+    int clusternum = aasWorld.AreaSettings()[request.areanum].cluster;
     //if the area is a cluster portal, read directly from the portal cache
     if (clusternum < 0)
     {
-        *traveltime = portalcache->traveltimes[-clusternum];
-        *reachnum = aasWorld.AreaSettings()[areanum].firstreachablearea + portalcache->reachabilities[-clusternum];
+        result->traveltime = portalcache->traveltimes[-clusternum];
+        result->reachnum = aasWorld.AreaSettings()[request.areanum].firstreachablearea + portalcache->reachabilities[-clusternum];
         return true;
     }
-    //
     unsigned short besttime = 0;
     int bestreachnum = -1;
     //the cluster the area is in
@@ -1199,9 +1206,9 @@ bool AiAasRouteCache::RouteToGoalArea(int areanum, const vec3_t origin, int goal
         //
         const aas_portal_t *portal = &aasWorld.Portals()[portalnum];
         //get the cache of the portal area
-        aas_routingcache_t *areacache = GetAreaRoutingCache(clusternum, portal->areanum, travelflags);
+        aas_routingcache_t *areacache = GetAreaRoutingCache(clusternum, portal->areanum, request.travelflags);
         //current area inside the current cluster
-        int clusterareanum = ClusterAreaNum(clusternum, areanum);
+        int clusterareanum = ClusterAreaNum(clusternum, request.areanum);
         //if the area is NOT a reachability area
         if (clusterareanum >= cluster->numreachabilityareas)
             continue;
@@ -1217,25 +1224,25 @@ bool AiAasRouteCache::RouteToGoalArea(int areanum, const vec3_t origin, int goal
         //		to be more specific we don't know which reachability was used to travel
         //		into the portal area
         t += portalmaxtraveltimes[portalnum];
-        //
-        if (origin)
+        // Qfusion: always fetch the reachnum even if origin is not present.
+        int reachnum = aasWorld.AreaSettings()[request.areanum].firstreachablearea + areacache->reachabilities[clusterareanum];
+        if (request.origin)
         {
-            *reachnum = aasWorld.AreaSettings()[areanum].firstreachablearea +
-                        areacache->reachabilities[clusterareanum];
-            const aas_reachability_t *reach = aasWorld.Reachabilities() + *reachnum;
-            t += AreaTravelTime(areanum, origin, reach->start);
+            const aas_reachability_t *reach = aasWorld.Reachabilities() + reachnum;
+            t += AreaTravelTime(request.areanum, request.origin, reach->start);
         }
         //if the time is better than the one already found
         if (!besttime || t < besttime)
         {
-            bestreachnum = *reachnum;
+            bestreachnum = reachnum;
             besttime = t;
         }
     }
+
     if (bestreachnum < 0)
         return false;
 
-    *reachnum = bestreachnum;
-    *traveltime = besttime;
+    result->reachnum = bestreachnum;
+    result->traveltime = besttime;
     return true;
 }
