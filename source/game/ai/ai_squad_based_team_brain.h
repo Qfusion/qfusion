@@ -16,13 +16,7 @@ class CachedTravelTimesMatrix
     int aasTravelTimes[MAX_CLIENTS * MAX_CLIENTS];
     int FindAASTravelTime(const edict_t *fromClient, const edict_t *toClient);
 
-    // Cached references
-    AiAasWorld *aasWorld;
-    AiAasRouteCache *routeCache;
 public:
-    CachedTravelTimesMatrix()
-        : aasWorld(AiAasWorld::Instance()),
-          routeCache(AiAasRouteCache::Shared()) {}
     inline void Clear()
     {
         // -1 means that a value should be lazily computed on demand

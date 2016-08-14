@@ -39,6 +39,8 @@ int CachedTravelTimesMatrix::GetAASTravelTime(const Bot *from, const Bot *to)
 int CachedTravelTimesMatrix::FindAASTravelTime(const edict_t *client1, const edict_t *client2)
 {
     AiGroundTraceCache *groundTraceCache = AiGroundTraceCache::Instance();
+    AiAasWorld *aasWorld = AiAasWorld::Instance();
+    AiAasRouteCache *routeCache = AiAasRouteCache::Shared();
 
     const edict_t *clients[2] = { client1, client2 };
     vec3_t origins[2];
@@ -88,7 +90,7 @@ void AiSquad::SquadEnemyPool::CheckSquadValid() const
     if (!squad->InUse())
         FailWith("Squad %s is not in use", squad->Tag());
     if (!squad->IsValid())
-        FailWith("Squad %s is not valid", squad->Tag());
+        FailWith("Squad %s is not valit id", squad->Tag());
 }
 
 // We have to skip ghosting bots because squads itself did not think yet when enemy pool thinks
