@@ -615,44 +615,51 @@ void AiAasRouteCache::FreeMemory(void *ptr)
 
 bool AiAasRouteCache::FreeOldestCache()
 {
-    aas_routingcache_t *cache;
-    for (cache = oldestcache; cache; cache = cache->time_next)
+    for (aas_routingcache_t *cache = oldestcache; cache; cache = cache->time_next)
     {
         // never free area cache leading towards a portal
         if (cache->type == CACHETYPE_AREA && aasWorld.AreaSettings()[cache->areanum].cluster < 0)
-        {
             continue;
-        }
-        break;
-    }
-    if (!cache)
-        return false;
 
-    // unlink the cache
+        UnlinkAndFreeRoutingCache(cache);
+        return true;
+    }
+
+    return false;
+}
+
+void AiAasRouteCache::UnlinkAndFreeRoutingCache(aas_routingcache_t *cache)
+{
     if (cache->type == CACHETYPE_AREA)
-    {
-        //number of the area in the cluster
-        int clusterareanum = ClusterAreaNum(cache->cluster, cache->areanum);
-        // unlink from cluster area cache
-        if (cache->prev)
-            cache->prev->next = cache->next;
-        else
-            clusterareacache[cache->cluster][clusterareanum] = cache->next;
-        if (cache->next)
-            cache->next->prev = cache->prev;
-    }
+        UnlinkAreaRoutingCache(cache);
     else
-    {
-        // unlink from portal cache
-        if (cache->prev)
-            cache->prev->next = cache->next;
-        else
-            portalcache[cache->areanum] = cache->next;
-        if (cache->next)
-            cache->next->prev = cache->prev;
-    }
+        UnlinkPortalRoutingCache(cache);
+
     FreeRoutingCache(cache);
-    return true;
+}
+
+void AiAasRouteCache::UnlinkAreaRoutingCache(aas_routingcache_t *cache)
+{
+    //number of the area in the cluster
+    int clusterareanum = ClusterAreaNum(cache->cluster, cache->areanum);
+    // unlink from cluster area cache
+    if (cache->prev)
+        cache->prev->next = cache->next;
+    else
+        clusterareacache[cache->cluster][clusterareanum] = cache->next;
+    if (cache->next)
+        cache->next->prev = cache->prev;
+}
+
+void AiAasRouteCache::UnlinkPortalRoutingCache(aas_routingcache_t *cache)
+{
+    // unlink from portal cache
+    if (cache->prev)
+        cache->prev->next = cache->next;
+    else
+        portalcache[cache->areanum] = cache->next;
+    if (cache->next)
+        cache->next->prev = cache->prev;
 }
 
 AiAasRouteCache::aas_routingcache_t *AiAasRouteCache::AllocRoutingCache(int numtraveltimes)

@@ -258,6 +258,9 @@ class AiAasRouteCache
 
     bool FreeOldestCache();
     aas_routingcache_t *AllocRoutingCache(int numtraveltimes);
+    void UnlinkAndFreeRoutingCache(aas_routingcache_t *cache);
+    void UnlinkAreaRoutingCache(aas_routingcache_t *cache);
+    void UnlinkPortalRoutingCache(aas_routingcache_t *cache);
 
     void UpdateAreaRoutingCache(aas_routingcache_t *areacache);
     aas_routingcache_t *GetAreaRoutingCache(int clusternum, int areanum, int travelflags);
