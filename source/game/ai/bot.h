@@ -290,7 +290,7 @@ private:
 
     void SetupCoarseFireTarget(vec3_t fire_origin, vec3_t target);
     // Returns true if current look angle worth pressing attack
-    bool CheckShot(const vec3_t fire_origin, const vec3_t target);
+    bool CheckShot(const vec3_t fire_origin, const vec3_t target, bool continuousFire);
     // All these methods return suggested accuracy
     float AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target);
     float AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
