@@ -190,10 +190,11 @@ bool AiBaseBrain::ShouldCancelGoal(const Goal *goal)
             if (spawnTime > reachTime && spawnTime - reachTime > goal->MaxWaitDuration())
                 return true;
         }
-
-        if (MayNotBeFeasibleGoal(goal))
+        // The goal is unreachable and bot is not in air
+        // (if bot is in air, some really reachable goals may be treated as unreachable ones)
+        else if (self->groundentity)
         {
-            Debug("Goal %s should be canceled as not looking like a feasible goal\n", goal->Name());
+            Debug("Goal %s should be canceled as unreachable\n", goal->Name());
             return true;
         }
     }

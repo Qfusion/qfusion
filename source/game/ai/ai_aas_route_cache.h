@@ -100,10 +100,19 @@ class AiAasRouteCache
 
     bool loaded;
 
-    // Each AiAasRouteCache has separate area settings flags.
-    // This field corresponds to aas_areasettings_t::flags field.
-    // To prevent excessive memory usage, only this field is duplicated for an AiAasRouteCache instance.
-    int *areaflags;
+    // These three following buffers are allocated at once, and only the first one should be released.
+    // Total size of compound allocated buffer is aasWorld.NumAreas() * (2 * sizeof(int) + 2 * sizeof(bool))
+    // A scratchpad for SetDisabledRegions() that is capable to store aasWorld.NumAreas() values
+    int *currDisabledAreaNums;
+    // A scratchpad for SetDisabledRegions() that is capable to store aasWorld.NumAreas() values
+    int *cleanCacheAreaNums;
+    // Has (almost) direct mapping to area num indices:
+    // for an index i value at i * 2 + 0 is a new status
+    // for an index i value at i * 2 + 1 is an old status
+    // We do not use bitsets since variable shifts are required in used access patterns,
+    // and variable shift instructions are usually microcoded.
+    // We store adjacent pair of statuses according to the memory access pattern used.
+    bool *oldAndCurrAreaDisabledStatus;
 
     //index to retrieve travel flag for a travel type
     // Note this is not shared for faster local acccess
@@ -235,10 +244,11 @@ class AiAasRouteCache
 
     void FreeRoutingCache(aas_routingcache_t *cache);
 
+    void RemoveRoutingCacheInClusterForArea(int areaNum);
     void RemoveRoutingCacheInCluster(int clusternum);
+    void RemoveAllPortalsCache();
 
     int GetAreaContentsTravelFlags(int areanum);
-    void RemoveRoutingCacheUsingArea(int areanum);
 
     inline void *AllocPooledChunk(int size)
     {
@@ -289,7 +299,7 @@ class AiAasRouteCache
 
     int PortalMaxTravelTime(int portalnum);
 
-    void InitAreaFlags();
+    void InitDisabledAreasStatusAndHelpers();
     void InitAreaContentsTravelFlags();
     void InitRoutingUpdate();
     void CreateReversedReachability();
@@ -362,7 +372,7 @@ public:
         return 0;
     }
 
-    int EnableRoutingArea(int areanum, int enable);
+    void SetDisabledRegions(const Vec3 *spotAbsMins, const Vec3 *spotAbsMaxs, int numSpots);
 };
 
 #endif

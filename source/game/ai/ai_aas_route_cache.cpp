@@ -4,8 +4,8 @@
 #undef min
 #undef max
 #include <stdlib.h>
+#include <algorithm>
 #include <limits>
-
 
 // Static member definition
 AiAasRouteCache *AiAasRouteCache::shared = nullptr;
@@ -54,7 +54,7 @@ void AiAasRouteCache::ReleaseInstance(AiAasRouteCache *instance)
 AiAasRouteCache::AiAasRouteCache(const AiAasWorld &aasWorld)
     : aasWorld(aasWorld), loaded(false)
 {
-    InitAreaFlags();
+    InitDisabledAreasStatusAndHelpers();
     //
     InitTravelFlagFromType();
     //
@@ -79,7 +79,9 @@ AiAasRouteCache::AiAasRouteCache(const AiAasWorld &aasWorld)
 AiAasRouteCache::AiAasRouteCache(AiAasRouteCache &&that)
     : aasWorld(that.aasWorld), loaded(true)
 {
-    areaflags = that.areaflags;
+    currDisabledAreaNums = that.currDisabledAreaNums;
+    cleanCacheAreaNums = that.cleanCacheAreaNums;
+    oldAndCurrAreaDisabledStatus = that.oldAndCurrAreaDisabledStatus;
 
     memcpy(travelflagfortype, that.travelflagfortype, sizeof(travelflagfortype));
 
@@ -105,7 +107,7 @@ AiAasRouteCache::AiAasRouteCache(AiAasRouteCache &&that)
 AiAasRouteCache::AiAasRouteCache(AiAasRouteCache *parent)
     : aasWorld(parent->aasWorld), loaded(true)
 {
-    InitAreaFlags();
+    InitDisabledAreasStatusAndHelpers();
 
     memcpy(travelflagfortype, parent->travelflagfortype, sizeof(travelflagfortype));
 
@@ -155,8 +157,8 @@ AiAasRouteCache::~AiAasRouteCache()
     FreeRefCountedMemory(reachabilityareaindex);
     // free area contents travel flags look up table
     FreeRefCountedMemory(areacontentstravelflags);
-    // free a local copy of areasettings flags
-    FreeMemory(areaflags);
+    // other arrays related to disabled areas are allocated in this buffer too
+    FreeMemory(currDisabledAreaNums);
 }
 
 inline int AiAasRouteCache::ClusterAreaNum(int cluster, int areanum)
@@ -247,6 +249,23 @@ void AiAasRouteCache::FreeRoutingCache(aas_routingcache_t *cache)
     FreePooledChunk(cache);
 }
 
+void AiAasRouteCache::RemoveRoutingCacheInClusterForArea(int areaNum)
+{
+    // TODO: aasWorld ref chasing is not cache-friendly
+    int clusterNum = aasWorld.AreaSettings()[areaNum].cluster;
+    if (clusterNum > 0)
+    {
+        //remove all the cache in the cluster the area is in
+        RemoveRoutingCacheInCluster( clusterNum );
+    }
+    else
+    {
+        // if this is a portal remove all cache in both the front and back cluster
+        RemoveRoutingCacheInCluster( aasWorld.Portals()[-clusterNum].frontcluster );
+        RemoveRoutingCacheInCluster( aasWorld.Portals()[-clusterNum].backcluster );
+    }
+}
+
 void AiAasRouteCache::RemoveRoutingCacheInCluster(int clusternum)
 {
     if (!clusterareacache)
@@ -265,25 +284,11 @@ void AiAasRouteCache::RemoveRoutingCacheInCluster(int clusternum)
     }
 }
 
-void AiAasRouteCache::RemoveRoutingCacheUsingArea( int areanum )
+void AiAasRouteCache::RemoveAllPortalsCache()
 {
-    int clusternum = aasWorld.AreaSettings()[areanum].cluster;
-    if (clusternum > 0)
-    {
-        //remove all the cache in the cluster the area is in
-        RemoveRoutingCacheInCluster( clusternum );
-    }
-    else
-    {
-        // if this is a portal remove all cache in both the front and back cluster
-        RemoveRoutingCacheInCluster( aasWorld.Portals()[-clusternum].frontcluster );
-        RemoveRoutingCacheInCluster( aasWorld.Portals()[-clusternum].backcluster );
-    }
-    // remove all portal cache
-    for (int i = 0; i < aasWorld.NumAreas(); i++)
+    for (int i = 0, end = aasWorld.NumAreas(); i < end; i++)
     {
         aas_routingcache_t *cache, *nextcache;
-        //refresh portal cache
         for (cache = portalcache[i]; cache; cache = nextcache)
         {
             nextcache = cache->next;
@@ -293,28 +298,57 @@ void AiAasRouteCache::RemoveRoutingCacheUsingArea( int areanum )
     }
 }
 
-int AiAasRouteCache::EnableRoutingArea(int areanum, int enable)
+void AiAasRouteCache::SetDisabledRegions(const Vec3 *spotAbsMins, const Vec3 *spotAbsMaxs, int numSpots)
 {
-    if (areanum <= 0 || areanum >= aasWorld.NumAreas())
-    {
-        return 0;
-    }
-    int flags = areaflags[areanum] & AREA_DISABLED;
-    if (enable < 0)
-        return !flags;
+    // (We try to aid data and instruction cache, so we do not do
+    // any complicated control flow in loops and use several loops instead)
 
-    // Qfusion: thats why we need a local copy of areaflags
-    if (enable)
-        areaflags[areanum] &= ~AREA_DISABLED;
-    else
-        areaflags[areanum] |= AREA_DISABLED;
-    // if the status of the area changed
-    if ( (flags & AREA_DISABLED) != (areaflags[areanum] & AREA_DISABLED) )
+    // First, save old area statuses and set new ones as non-blocked
+    for (int i = 0, end = 2 * aasWorld.NumAreas(); i < end; i += 2)
     {
-        //remove all routing cache involving this area
-        RemoveRoutingCacheUsingArea( areanum );
+        oldAndCurrAreaDisabledStatus[i + 1] = oldAndCurrAreaDisabledStatus[i];
+        oldAndCurrAreaDisabledStatus[i] = false;
     }
-    return !flags;
+
+    // Select all disabled area nums
+    int totalDisabledAreas = 0;
+    // It's unlikely areasBuffer will overflow for real count of spots, but check it anyway.
+    // (We give each spot a room of 96 areas)
+    for (int spotNum = 0, endNum = std::min(numSpots * 96, aasWorld.NumAreas()) / 96; spotNum < endNum; ++spotNum)
+    {
+        int *areasBuffer = currDisabledAreaNums + totalDisabledAreas;
+        totalDisabledAreas += aasWorld.BBoxAreas(spotAbsMins[spotNum], spotAbsMaxs[spotNum], areasBuffer, 96);
+    }
+
+    // Precache this reference for faster access
+    const aas_areasettings_t *areaSettings = aasWorld.AreaSettings();
+    // For each selected area mark area as disabled
+    for (int i = 0; i < totalDisabledAreas; ++i)
+    {
+        int areaNum = currDisabledAreaNums[i];
+        // Cut off non-grounded areas. Setting these areas disabled makes less sence and also it causes lags.
+        if (areaSettings[areaNum].areaflags & AREA_GROUNDED)
+            oldAndCurrAreaDisabledStatus[areaNum * 2] = true;
+    }
+
+    // For each area compare its old and new status
+    int totalClearCacheAreas = 0;
+    for (int i = 0, end = aasWorld.NumAreas(); i < end; ++i)
+    {
+        bool oldStatus = oldAndCurrAreaDisabledStatus[i * 2 + 1];
+        bool currStatus = oldAndCurrAreaDisabledStatus[i * 2];
+        if (currStatus != oldStatus)
+            cleanCacheAreaNums[totalClearCacheAreas++] = i;
+    }
+
+    if (totalClearCacheAreas)
+    {
+        for (int i = 0; i < totalClearCacheAreas; ++i)
+        {
+            RemoveRoutingCacheInClusterForArea(cleanCacheAreaNums[i]);
+        }
+        RemoveAllPortalsCache();
+    }
 }
 
 int AiAasRouteCache::GetAreaContentsTravelFlags(int areanum)
@@ -340,13 +374,14 @@ int AiAasRouteCache::GetAreaContentsTravelFlags(int areanum)
     return tfl;
 }
 
-void AiAasRouteCache::InitAreaFlags()
+void AiAasRouteCache::InitDisabledAreasStatusAndHelpers()
 {
-    areaflags = (int *)GetClearedMemory(aasWorld.NumAreas() * sizeof(int));
-    for (int i = 0; i < aasWorld.NumAreas(); ++i)
-    {
-        areaflags[i] = aasWorld.AreaSettings()[i].areaflags;
-    }
+    static_assert(sizeof(bool) == 1, "");
+    int size = aasWorld.NumAreas() * (2 * sizeof(int) + 2 * sizeof(bool));
+    char *ptr = (char *)GetClearedMemory(size);
+    currDisabledAreaNums = (int *)ptr;
+    cleanCacheAreaNums = ((int *)ptr) + aasWorld.NumAreas();
+    oldAndCurrAreaDisabledStatus = (bool *)(((int *)ptr) + 2 * aasWorld.NumAreas());
 }
 
 void AiAasRouteCache::InitAreaContentsTravelFlags(void)
@@ -878,8 +913,10 @@ void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areacache)
             if (TravelFlagForType(reach->traveltype) & badtravelflags)
                 continue;
             //if not allowed to enter the next area
-            // Qfusion note: we use areaflags of this AiAasRouteCache instance
-            if (areaflags[reach->areanum] & AREA_DISABLED)
+            if (oldAndCurrAreaDisabledStatus[reach->areanum * 2])
+                continue;
+            // Respect global flags too
+            if (aasWorld.AreaSettings()[reach->areanum].areaflags & AREA_DISABLED)
                 continue;
             //if the next area has a not allowed travel flag
             if (AreaContentsTravelFlags(reach->areanum) & badtravelflags)
