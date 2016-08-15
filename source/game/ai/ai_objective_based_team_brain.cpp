@@ -467,7 +467,12 @@ void AiObjectiveBasedTeamBrain::UpdateAttackersStatus(unsigned offenceSpotNum)
     for (unsigned i = 0; i < attackers[offenceSpotNum].size(); ++i)
     {
         edict_t *bot = attackers[offenceSpotNum][i];
-        bot->ai->botRef->SetExternalEntityWeight(spotEnt, 9.0f);
+        // If bot is not in squad, set an offence spot weight to a value of an ordinary valuable item.
+        // Thus bots will not attack alone and will grab some items instead in order to prepare to attack.
+        if (bot->ai->botRef->IsInSquad())
+            bot->ai->botRef->SetExternalEntityWeight(spotEnt, 9.0f);
+        else
+            bot->ai->botRef->SetExternalEntityWeight(spotEnt, 3.0f);
         bot->ai->botRef->SetBaseOffensiveness(0.0f);
     }
 }

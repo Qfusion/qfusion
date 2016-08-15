@@ -53,11 +53,15 @@ public:
     inline void OnAttachedToSquad(AiSquad *squad)
     {
         botBrain.OnAttachedToSquad(squad);
+        isInSquad = true;
     }
     inline void OnDetachedFromSquad(AiSquad *squad)
     {
         botBrain.OnDetachedFromSquad(squad);
+        isInSquad = false;
     }
+    inline bool IsInSquad() const { return isInSquad; }
+
     inline unsigned LastAttackedByTime(const edict_t *attacker)
     {
         return botBrain.LastAttackedByTime(attacker);
@@ -181,6 +185,8 @@ private:
     unsigned campingSpotLookAtPointTimeout;
 
     bool isWaitingForItemSpawn;
+
+    bool isInSquad;
 
     struct AlertSpot
     {
