@@ -81,6 +81,7 @@ class cFlagBase
         // identify spots by id (set id as defence/offence spot to team id)
         // add a defence spot for the team
         AI::AddDefenceSpot( this.team, this.team, spawner, 768.0f );
+        AI::EnableDefenceSpotAutoAlert( this.team, this.team );
         // add an offence spot for the enemy team
         AI::AddOffenceSpot( this.enemyTeam, this.team, spawner ); 
 
