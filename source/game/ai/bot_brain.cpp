@@ -253,99 +253,11 @@ void BotBrain::OnGoalCleanedUp(const Goal *goal)
     self->ai->botRef->OnGoalCleanedUp(goal);
 }
 
-bool BotBrain::MayNotBeFeasibleGoal(int goalAreaNum)
-{
-    if (!combatTask.aimEnemy || !combatTask.retreat)
-        return false;
-    return MayPathToAreaBeBlocked(goalAreaNum);
-}
-
 void BotBrain::OnClearSpecialGoalRequested()
 {
     AiBaseBrain::OnClearSpecialGoalRequested();
     // Prevent reuse of an old goal for newly set goals
     localSpecialGoal.ResetWithSetter(this);
-}
-
-bool BotBrain::MayPathToAreaBeBlocked(int goalAreaNum) const
-{
-    const auto &activeEnemies = activeEnemyPool->ActiveEnemies();
-    AiGroundTraceCache *groundTraceCache = AiGroundTraceCache::Instance();
-    const AiAasWorld *aasWorld = AasWorld();
-    // Use shared instance because we test movement reachabilities for enemies, not the bot.
-    const AiAasRouteCache *routeCache = AiAasRouteCache::Shared();
-    // Blocker origin should be put to a floor by a single trace to ensure
-    // that FindTravelTimeToGoalArea() will not do it on each loop step
-    StaticVector<Vec3, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> blockerOrigins;
-    StaticVector<int, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> blockerAreaNums;
-    for (unsigned i = 0; i < activeEnemies.size(); ++i)
-    {
-        Enemy *enemy = activeEnemies[i];
-        vec3_t origin;
-        int areaNum = 0;
-        // Check whether enemy is valid before access to any of its props
-        if (enemy->IsValid() && groundTraceCache->TryDropToFloor(enemy->ent, 128.0f, origin))
-            areaNum = aasWorld->FindAreaNum(origin);
-        blockerOrigins.push_back(Vec3(origin));
-        blockerAreaNums.push_back(areaNum);
-    }
-
-    for (unsigned i = 0; i < activeEnemies.size(); ++i)
-    {
-        int blockerAreaNum = blockerAreaNums[i];
-        if (!blockerAreaNum)
-            continue;
-
-        Vec3 &blockerOrigin = blockerOrigins[i];
-
-        const float blockerRadius = 250.0f;
-        const int blockerMoveMillis = 1750;
-
-        // Try to reject path early to save CPU cycles by testing end of a path
-        // Do a coarse distance check first
-        if ((blockerOrigin - aasWorld->Areas()[goalAreaNum].center).SquaredLength() < blockerRadius * blockerRadius)
-        {
-            // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
-            int travelTime = routeCache->TravelTimeToGoalArea(blockerAreaNum, blockerOrigin.Data(), goalAreaNum, TFL_DEFAULT);
-            travelTime *= 10;
-            // If goal area is reachable for enemy in dangerMoveMillis
-            if (travelTime && travelTime < blockerMoveMillis)
-                return true;
-        }
-
-        int areaNum = currAasAreaNum;
-        while (areaNum != goalAreaNum)
-        {
-            const aas_area_t &area = AasWorld()->Areas()[areaNum];
-
-            // Make a coarse distance test first to cut off expensive FindTravelTimeToGoalArea() call
-            if ((blockerOrigin - area.center).SquaredLength() < blockerRadius * blockerRadius)
-            {
-                // Prevent blocking all possible areas close to bot by enemy that is close to bot too
-                // An area may be treated as blocked only if it is relatively far to bot
-                if ((Vec3(area.center) - self->s.origin).SquaredLength() > blockerRadius * blockerRadius)
-                {
-                    // This call returns zero on failure, 1 as a lowest feasible value of travel time in seconds^-2
-                    int travelTime = routeCache->TravelTimeToGoalArea(blockerAreaNum, blockerOrigin.Data(), areaNum, TFL_DEFAULT);
-                    // If goal area is reachable for enemy in dangerMoveMillis
-                    if (travelTime && travelTime < blockerMoveMillis)
-                        return true;
-                }
-            }
-
-            // Drop area origin to floor
-            Vec3 origin(area.center[0], area.center[1], area.mins[2] + 4);
-            // This call tries to correct origin if first attempt failed (in worst case).
-            // If it returns with failure we may consider a path broken and treat it as blocked
-            int reachNum = routeCache->ReachabilityToGoalArea(areaNum, origin.Data(), goalAreaNum, TFL_DEFAULT);
-            if (!reachNum)
-                return true;
-
-            areaNum = aasWorld->Reachabilities()[reachNum].areanum;
-        }
-    }
-
-    return false;
 }
 
 bool BotBrain::ShouldCancelSpecialGoalBySpecificReasons()
@@ -401,6 +313,8 @@ void BotBrain::UpdateKeptCurrentCombatTask()
         // If tactics has been changed, treat updated combat task as new
         if (task->advance != oldAdvance || task->retreat != oldRetreat || task->inhibit != oldInhibit)
             combatTask.instanceId = NextCombatTaskInstanceId();
+
+        UpdateBlockedAreasStatus();
     }
 }
 
@@ -461,6 +375,7 @@ void BotBrain::TryFindNewCombatTask()
         combatTask.instanceId = NextCombatTaskInstanceId();
         nextTargetChoiceAt = level.time + aimTargetChoicePeriod;
         activeEnemyPool->EnqueueTarget(aimEnemy->ent);
+        UpdateBlockedAreasStatus();
 
         Debug("TryFindNewCombatTask(): found aim enemy %s, next target choice at %09d\n", aimEnemy->Nick(), nextTargetChoiceAt);
         SuggestAimWeaponAndTactics(&combatTask);
@@ -672,6 +587,55 @@ void BotBrain::CheckTacticalPosition()
     combatTask.inhibit = true;
     combatTask.instanceId = NextCombatTaskInstanceId();
     SetTacticalSpot(combatTask.EnemyOrigin(), 350 + (unsigned)(250 * GetBaseOffensiveness()));
+}
+
+void BotBrain::UpdateBlockedAreasStatus()
+{
+    if (!combatTask.retreat)
+    {
+        // Reset all possibly blocked areas
+        RouteCache()->SetDisabledRegions(nullptr, nullptr, 0);
+        return;
+    }
+
+    StaticVector<Vec3, EnemyPool::MAX_TRACKED_ENEMIES> mins;
+    StaticVector<Vec3, EnemyPool::MAX_TRACKED_ENEMIES> maxs;
+
+    AiGroundTraceCache *groundTraceCache = AiGroundTraceCache::Instance();
+    for (const Enemy *enemy: activeEnemyPool->ActiveEnemies())
+    {
+        if (!enemy->IsValid())
+            continue;
+
+        // TODO: This may act as cheating since actual enemy origin is used.
+        // This is kept for conformance to following ground trace check.
+        float squareDistance = DistanceSquared(self->s.origin, enemy->ent->s.origin);
+        // (Otherwise all nearby paths are treated as blocked by enemy)
+        if (squareDistance < 72.0f)
+            continue;
+        float distance = 1.0f / Q_RSqrt(squareDistance);
+        float side = 72.0f + 192.0f * BoundedFraction(distance - 72.0f, 384.0f);
+
+        // Try to drop an enemy origin to floor
+        // TODO: AiGroundTraceCache interface forces using an actual enemy origin
+        // and not last seen one, so this may act as cheating.
+        vec3_t origin;
+        // If an enemy is close to ground (an origin may and has been dropped to floor)
+        if (groundTraceCache->TryDropToFloor(enemy->ent, 128.0f, origin, level.time - enemy->LastSeenAt()))
+        {
+            // Do not use bounds lower than origin[2] (except some delta)
+            mins.push_back(Vec3(-side, -side, -8.0f) + origin);
+            maxs.push_back(Vec3(+side, +side, 128.0f) + origin);
+        }
+        else
+        {
+            // Use a bit lower bounds (an enemy is likely to fall down)
+            mins.push_back(Vec3(-side, -side, -192.0f) + origin);
+            maxs.push_back(Vec3(+side, +side, +108.0f) + origin);
+        }
+    }
+
+    RouteCache()->SetDisabledRegions(&mins[0], &maxs[0], mins.size());
 }
 
 // Old weapon selection code with some style and C to C++ fixes

@@ -282,18 +282,7 @@ class BotBrain: public AiBaseBrain
     float ComputePowerupWeight(const gsitem_t *item) const;
 
     virtual void OnGoalCleanedUp(const Goal *goalEnt) override;
-    virtual bool MayNotBeFeasibleGoal(const Goal *goal) override
-    {
-        return MayNotBeFeasibleGoal(goal->AasAreaNum());
-    }
-    virtual bool MayNotBeFeasibleGoal(const NavEntity *navEntity) override
-    {
-        return MayNotBeFeasibleGoal(navEntity->AasAreaNum());
-    }
-    bool MayNotBeFeasibleGoal(int goalAreaNum);
     virtual void OnClearSpecialGoalRequested() override;
-
-    bool MayPathToAreaBeBlocked(int goalAreaNum) const;
 
     bool IsGoalATopTierItem() const;
     unsigned GoalSpawnTime() const;
@@ -303,6 +292,7 @@ class BotBrain: public AiBaseBrain
     virtual bool ShouldCancelSpecialGoalBySpecificReasons() override;
 
     void CheckTacticalPosition();
+    void UpdateBlockedAreasStatus();
 
     inline bool HasSpecialGoal() const { return specialGoal != nullptr; }
 
