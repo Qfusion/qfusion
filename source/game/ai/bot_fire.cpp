@@ -240,7 +240,7 @@ bool Bot::FireWeapon()
     if (!continuousFire && ShouldSkipThinkFrame())
         return false;
 
-    if (CheckShot(fire_origin, target))
+    if (CheckShot(fire_origin, target, continuousFire))
         return TryPressAttack();
 
     return false;
@@ -277,7 +277,7 @@ void Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
     }
 }
 
-bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target)
+bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, bool continuousFire)
 {
     // Do not shoot enemies that are far from "crosshair" except they are very close
     Vec3 newLookDir(0, 0, 0);
@@ -285,6 +285,7 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target)
 
     Vec3 toTarget(target);
     toTarget -= fire_origin;
+    toTarget.NormalizeFast();
     float toTargetDotLookDir = toTarget.Dot(newLookDir);
 
     // 0 on zero range, 1 on distanceFactorBound range
@@ -292,11 +293,20 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target)
     float squareDistanceToTarget = toTarget.SquaredLength();
     if (squareDistanceToTarget > 1)
     {
-        directionDistanceFactor += BoundedFraction(Q_RSqrt(squareDistanceToTarget), 450.0f);
+        float distance = 1.0f / Q_RSqrt(squareDistanceToTarget);
+        directionDistanceFactor += BoundedFraction(distance, 450.0f);
     }
 
-    if (toTargetDotLookDir < 0.8f * directionDistanceFactor)
-        return false;
+    if (continuousFire)
+    {
+        if (toTargetDotLookDir < 0.8f * directionDistanceFactor)
+            return false;
+    }
+    else
+    {
+        if (toTargetDotLookDir < 0.6f * directionDistanceFactor)
+            return false;
+    }
 
     // Do not shoot in enemies that are behind obstacles atm, bot may kill himself easily
     // We test directions factor first because it is cheaper to calculate
@@ -306,9 +316,11 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target)
     if (tr.fraction == 1.0f)
         return true;
 
-    // Same as in CheckShot()
-    if (tr.ent < 1 || !game.edicts[tr.ent].takedamage || game.edicts[tr.ent].movetype == MOVETYPE_PUSH)
-        return false;
+    if (!continuousFire)
+    {
+        if (tr.ent < 1 || !game.edicts[tr.ent].takedamage || game.edicts[tr.ent].movetype == MOVETYPE_PUSH)
+            return false;
+    }
     if (game.edicts[tr.ent].s.team == self->s.team && GS_TeamBasedGametype())
         return false;
 
