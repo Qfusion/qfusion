@@ -165,13 +165,13 @@ float AiBaseEnemyPool::ComputeRawEnemyWeight(const edict_t *enemy)
 
     if (unsigned time = LastAttackedByTime(enemy))
     {
-        weight += 0.75f * ((level.time - time) / (float) ATTACKER_TIMEOUT);
+        weight += 1.55f * (1.0f - BoundedFraction(level.time - time, ATTACKER_TIMEOUT));
         // TODO: Add weight for poor attackers (by total damage / attack attepts ratio)
     }
 
     if (unsigned time = LastTargetTime(enemy))
     {
-        weight += 1.55f * ((level.time - time) / (float) TARGET_TIMEOUT);
+        weight += 1.55f * (1.0f - BoundedFraction(level.time - time, TARGET_TIMEOUT));
         // TODO: Add weight for targets that are well hit by bot
     }
 
