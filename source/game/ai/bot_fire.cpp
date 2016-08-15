@@ -320,14 +320,13 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target)
 
 float Bot::AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
 {
-
-    switch (AIWeapons[weapon].aimType)
+    switch (WeaponAimType(weapon))
     {
-        case AI_AIMSTYLE_PREDICTION_EXPLOSIVE:
+        case AiWeaponAimType::PREDICTION_EXPLOSIVE:
             return AdjustPredictionExplosiveAimStyleTarget(firedef, fire_origin, target);
-        case AI_AIMSTYLE_PREDICTION:
+        case AiWeaponAimType::PREDICTION:
             return AdjustPredictionAimStyleTarget(firedef, fire_origin, target);
-        case AI_AIMSTYLE_DROP:
+        case AiWeaponAimType::DROP:
             return AdjustDropAimStyleTarget(firedef, fire_origin, target);
         default:
             return AdjustInstantAimStyleTarget(firedef, fire_origin, target);

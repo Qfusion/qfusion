@@ -3,6 +3,23 @@
 #include "vec3.h"
 #include <stdarg.h>
 
+AiWeaponAimType WeaponAimType(int weapon)
+{
+    switch (weapon)
+    {
+        case WEAP_GUNBLADE:
+            return AiWeaponAimType::PREDICTION_EXPLOSIVE;
+        case WEAP_GRENADELAUNCHER:
+            return AiWeaponAimType::DROP;
+        case WEAP_ROCKETLAUNCHER:
+            return AiWeaponAimType::PREDICTION_EXPLOSIVE;
+        case WEAP_PLASMAGUN:
+            return AiWeaponAimType::PREDICTION;
+        default:
+            return AiWeaponAimType::INSTANT_HIT;
+    }
+}
+
 static void EscapePercent(const char *string, char *buffer, int bufferLen)
 {
     int j = 0;
