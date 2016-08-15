@@ -364,6 +364,7 @@ float AiBaseBrain::SelectLongTermGoalCandidates(const Goal *currLongTermGoal, Go
     result.clear();
     float currGoalEntWeight = 0.0f;
 
+    GoalCandidates rawWeightCandidates;
     FOREACH_NAVENT(navEnt)
     {
         if (navEnt->IsDisabled())
@@ -376,9 +377,31 @@ float AiBaseBrain::SelectLongTermGoalCandidates(const Goal *currLongTermGoal, Go
         if (navEnt->Item() && !G_Gametype_CanPickUpItem(navEnt->Item()))
             continue;
 
-        float weight = GetEntityWeight(navEnt->Id());
-        if (weight <= 0.0f)
+        // Reject an entity quickly if it looks like blocked by an enemy that is close to the entity.
+        // Note than passing this test does not guarantee that entire path to the entity is not blocked by enemies.
+        if (RouteCache()->AreaDisabled(navEnt->AasAreaNum()))
             continue;
+
+        // This is a coarse and cheap test, helps to reject recently picked armors and powerups
+        unsigned spawnTime = navEnt->SpawnTime();
+        // A feasible spawn time (non-zero) always >= level.time.
+        if (!spawnTime || level.time - spawnTime > 15000)
+            continue;
+
+        float weight = GetEntityWeight(navEnt->Id());
+        if (weight > 0)
+            rawWeightCandidates.push_back(NavEntityAndWeight(navEnt, weight));
+    }
+
+    // Sort all pre-selected candidates by their raw weights
+    std::sort(rawWeightCandidates.begin(), rawWeightCandidates.end());
+    // Test not more than 16 best pre-selected by raw weight candidates.
+    // (We try to avoid too many expensive FindTravelTimeToGoalArea() calls,
+    // thats why we start from the best item to avoid wasting these calls for low-priority items)
+    for (unsigned i = 0, end = std::min(rawWeightCandidates.size(), 16U); i < end; ++i)
+    {
+        NavEntity *navEnt = rawWeightCandidates[i].goal;
+        float weight = rawWeightCandidates[i].weight;
 
         unsigned moveDuration = 1;
         unsigned waitDuration = 1;
