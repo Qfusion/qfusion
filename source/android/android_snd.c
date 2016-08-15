@@ -123,9 +123,6 @@ static const char *SNDDMA_Android_Init( void )
 	sink.pLocator = &sinkLocator;
 	sink.pFormat = NULL;
 
-	interfaceID = SL_IID_BUFFERQUEUE;
-	interfaceRequired = SL_BOOLEAN_TRUE;
-
 	result = (*engine)->CreateAudioPlayer( engine, &snddma_android_player, &source, &sink, 1, audioPlayerInterfaceIDs, audioPlayerInterfacesRequired );
 	if( result != SL_RESULT_SUCCESS ) return "engine->CreateAudioPlayer";
 	result = (*snddma_android_player)->Realize( snddma_android_player, SL_BOOLEAN_FALSE );
