@@ -288,6 +288,9 @@ class cFlagBase
                         this.unlockTime = int( CTF_UNLOCK_TIME * 1000 );
 
                     this.enemyInfluence = true;
+                    // Sometimes there are no bots in flagroom, so autoalert fails.
+                    // A human is notified via indicator on screen about enemy influence. Notify bots too.
+                    AI::DefenceSpotAlert( this.team, this.team, 1.0f, uint(1500) );
                     break;
                 }
             }
