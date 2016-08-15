@@ -67,12 +67,9 @@ class AiAasRouteCache
     {
         int cluster;
         int areanum;								//area number of the update
-        vec3_t start;								//start point the area was entered
         unsigned short int tmptraveltime;			//temporary travel time
         unsigned short int *areatraveltimes;		//travel times within the area
-        bool inlist;							    //true if the update is in the list
-        struct aas_routingupdate_s *next;
-        struct aas_routingupdate_s *prev;
+        bool marked;							    //true if the update is in the list
     } aas_routingupdate_t;
 
     //reversed reachability link
@@ -233,11 +230,6 @@ class AiAasRouteCache
 
     inline int ClusterAreaNum(int cluster, int areanum);
     void InitTravelFlagFromType();
-    inline int TravelFlagForType(int traveltype);
-    inline int AreaContentsTravelFlags(int areanum)
-    {
-        return areacontentstravelflags[areanum];
-    }
 
     void LinkCache(aas_routingcache_t *cache);
     void UnlinkCache(aas_routingcache_t *cache);
