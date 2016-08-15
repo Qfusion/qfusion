@@ -830,12 +830,12 @@ int BotBrain::ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAn
     float maxScore = 0.0f;
     if (pendingWeaponScore != std::numeric_limits<float>::infinity())
     {
-        float weightDiffThreshold = 0.1f;
+        float weightDiffThreshold = 0.3f;
         // Do not switch too often continuous fire weapons
         if (pendingWeapon == WEAP_PLASMAGUN || pendingWeapon == WEAP_MACHINEGUN)
-            weightDiffThreshold += 0.2f;
+            weightDiffThreshold += 0.15f;
         else if (pendingWeapon == WEAP_LASERGUN)
-            weightDiffThreshold += 0.3f;
+            weightDiffThreshold += 0.15f;
         for (WeaponAndScore *it = begin; it != end; ++it)
         {
             float currScore = it->score + weaponScoreRandom;
