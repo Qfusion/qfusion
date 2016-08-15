@@ -66,35 +66,15 @@ constexpr int AI_GOAL_SR_LR_MILLIS = 1500;
 
 constexpr auto MASK_AISOLID = CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP;
 
-enum
+enum class AiWeaponAimType
 {
-	AI_AIMSTYLE_INSTANTHIT,
-	AI_AIMSTYLE_PREDICTION,
-	AI_AIMSTYLE_PREDICTION_EXPLOSIVE,
-	AI_AIMSTYLE_DROP,
-
-	AIWEAP_AIM_TYPES
+	INSTANT_HIT,
+	PREDICTION,
+	PREDICTION_EXPLOSIVE,
+	DROP
 };
 
-enum
-{
-	AIWEAP_MELEE_RANGE,
-	AIWEAP_SHORT_RANGE,
-	AIWEAP_MEDIUM_RANGE,
-	AIWEAP_LONG_RANGE,
-
-	AIWEAP_RANGES
-};
-
-typedef struct
-{
-	int aimType;
-	float RangeWeight[AIWEAP_RANGES];
-} ai_weapon_t;
-
-extern ai_weapon_t AIWeapons[WEAP_TOTAL];
-
-//----------------------------------------------------------
+AiWeaponAimType WeaponAimType(int weapon);
 
 #include "ai_aas_world.h"
 #include "vec3.h"

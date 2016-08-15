@@ -254,7 +254,6 @@ class BotBrain: public AiBaseBrain
     void SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition);
     void SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition);
     int SuggestInstagibWeapon(const Enemy &enemy);
-    int SuggestEasyBotsWeapon(const Enemy &enemy);
     void SuggestSpamEnemyWeaponAndTactics(CombatTask *task);
     int SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     bool IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition,

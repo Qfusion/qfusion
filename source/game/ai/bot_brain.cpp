@@ -638,54 +638,6 @@ void BotBrain::UpdateBlockedAreasStatus()
     RouteCache()->SetDisabledRegions(&mins[0], &maxs[0], mins.size());
 }
 
-// Old weapon selection code with some style and C to C++ fixes
-int BotBrain::SuggestEasyBotsWeapon(const Enemy &enemy)
-{
-	float best_weight = 0.0;
-	int weapon_range = 0, best_weapon = WEAP_NONE;
-
-	const float	dist = DistanceFast(bot->s.origin, enemy.ent->s.origin);
-
-    if (dist < 150)
-        weapon_range = AIWEAP_MELEE_RANGE;
-    else if (dist < 500)  // Medium range limit is Grenade launcher range
-        weapon_range = AIWEAP_SHORT_RANGE;
-    else if (dist < 900)
-        weapon_range = AIWEAP_MEDIUM_RANGE;
-    else
-        weapon_range = AIWEAP_LONG_RANGE;
-
-	for (int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++)
-	{
-        gsitem_t *weaponItem;
-		float rangeWeight;
-
-		if((weaponItem = GS_FindItemByTag(i)) == nullptr)
-			continue;
-
-		if(!GS_CheckAmmoInWeapon( &bot->r.client->ps, i ))
-			continue;
-
-		rangeWeight = AIWeapons[i].RangeWeight[weapon_range];
-
-		// weigh up if having strong ammo
-		if( bot->r.client->ps.inventory[weaponItem->ammo_tag] )
-			rangeWeight *= 1.25;
-
-		// add a small random factor (less random the more skill)
-		rangeWeight += brandom(-(1.0f - BotSkill()), 1.0f - BotSkill());
-
-		// compare range weights
-		if(rangeWeight > best_weight)
-		{
-			best_weight = rangeWeight;
-			best_weapon = i;
-		}
-	}
-
-    return best_weapon;
-}
-
 static constexpr float CLOSE_RANGE = 150.0f;
 
 inline float GetLaserRange()
@@ -738,11 +690,6 @@ CombatDisposition BotBrain::GetCombatDisposition(const Enemy &enemy)
 void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 {
     const Enemy &enemy = *task->aimEnemy;
-    if (BotSkill() < 0.33f)
-    {
-        task->suggestedShootWeapon = SuggestEasyBotsWeapon(enemy);
-        return;
-    }
 
     Vec3 botOrigin(bot->s.origin);
     TestTargetEnvironment(botOrigin, enemy.LastSeenPosition(), enemy.ent);
