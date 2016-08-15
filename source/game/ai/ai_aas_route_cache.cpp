@@ -198,21 +198,6 @@ void AiAasRouteCache::InitTravelFlagFromType()
     travelflagfortype[TRAVEL_FUNCBOB] = TFL_FUNCBOB;
 }
 
-inline int AiAasRouteCache::TravelFlagForType(int traveltype)
-{
-    int tfl = 0;
-
-    if (traveltype & TRAVELFLAG_NOTTEAM1)
-        tfl |= TFL_NOTTEAM1;
-    if (traveltype & TRAVELFLAG_NOTTEAM2)
-        tfl |= TFL_NOTTEAM2;
-    traveltype &= TRAVELTYPE_MASK;
-    if (traveltype < 0 || traveltype >= MAX_TRAVELTYPES)
-        return TFL_INVALID;
-    tfl |= travelflagfortype[traveltype];
-    return tfl;
-}
-
 void AiAasRouteCache::UnlinkCache(aas_routingcache_t *cache)
 {
     if (cache->time_next)
@@ -860,105 +845,129 @@ void AiAasRouteCache::InitReachabilityAreas()
     }
 }
 
+struct RoutingUpdateRef
+{
+    int index;
+    unsigned short tmpTravelTime;
+
+    inline RoutingUpdateRef(int index, unsigned short tmpTravelTime)
+        : index(index), tmpTravelTime(tmpTravelTime) {}
+
+    inline bool operator<(const RoutingUpdateRef &that)
+    {
+        return tmpTravelTime > that.tmpTravelTime;
+    }
+};
+
 void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areacache)
 {
-    unsigned short startareatraveltimes[128]; //NOTE: not more than 128 reachabilities per area allowed
+    //NOTE: not more than 128 reachabilities per area allowed
+    unsigned short startareatraveltimes[128];
+    // Copied from the member to stack for faster access
+    int travelflagfortype[MAX_TRAVELTYPES];
 
     //number of reachability areas within this cluster
-    int numreachabilityareas = aasWorld.Clusters()[areacache->cluster].numreachabilityareas;
-    //clear the routing update fields
-//	Com_Memset(aasworld.areaupdate, 0, aasworld.numareas * sizeof(aas_routingupdate_t));
-    //
-    int badtravelflags = ~areacache->travelflags;
-    //
+    const int numreachabilityareas = aasWorld.Clusters()[areacache->cluster].numreachabilityareas;
+    const int badtravelflags = ~areacache->travelflags;
+
     int clusterareanum = ClusterAreaNum(areacache->cluster, areacache->areanum);
-    if (clusterareanum >= numreachabilityareas) return;
-    //
+    if (clusterareanum >= numreachabilityareas)
+        return;
+
     memset(startareatraveltimes, 0, sizeof(startareatraveltimes));
-    //
-    aas_routingupdate_t *curupdate = &areaupdate[clusterareanum];
+    // Copy to stack for faster access
+    memcpy(travelflagfortype, this->travelflagfortype, sizeof(this->travelflagfortype));
+
+    // Precache all references to avoid pointer chasing in loop
+    const aas_areasettings_t *areaSettings = aasWorld.AreaSettings();
+    const aas_reachability_t *reachabilities = aasWorld.Reachabilities();
+    const aas_reversedreachability_t *reversedreachability = this->reversedreachability;
+    const aas_portal_t *portals = aasWorld.Portals();
+    aas_routingupdate_t *routingupdate = this->areaupdate;
+    const int *areacontentstravelflags = this->areacontentstravelflags;
+    const bool *oldAndCurrAreaDisabledStatus = this->oldAndCurrAreaDisabledStatus;
+    unsigned short ***areatraveltimes = this->areatraveltimes;
+
+    aas_routingupdate_t *curupdate = &routingupdate[clusterareanum];
     curupdate->areanum = areacache->areanum;
-    //VectorCopy(areacache->origin, curupdate->start);
     curupdate->areatraveltimes = startareatraveltimes;
     curupdate->tmptraveltime = areacache->starttraveltime;
-    //
     areacache->traveltimes[clusterareanum] = areacache->starttraveltime;
-    //put the area to start with in the current read list
-    curupdate->next = nullptr;
-    curupdate->prev = nullptr;
-    aas_routingupdate_t *updateliststart = curupdate;
-    aas_routingupdate_t *updatelistend = curupdate;
+
+    StaticVector<RoutingUpdateRef, 1024> updateHeap;
+    updateHeap.push_back(RoutingUpdateRef(clusterareanum, curupdate->tmptraveltime));
+
     //while there are updates in the current list
-    while (updateliststart)
+    while (!updateHeap.empty())
     {
-        curupdate = updateliststart;
-        //
-        if (curupdate->next)
-            curupdate->next->prev = nullptr;
-        else
-            updatelistend = nullptr;
-        updateliststart = curupdate->next;
-        //
-        curupdate->inlist = false;
+        std::pop_heap(updateHeap.begin(), updateHeap.end());
+        RoutingUpdateRef currUpdateRef = updateHeap.back();
+        updateHeap.pop_back();
+
+        curupdate = &routingupdate[currUpdateRef.index];
+        curupdate->marked = false;
+
         //check all reversed reachability links
-        aas_reversedreachability_t *revreach = &reversedreachability[curupdate->areanum];
+        const aas_reversedreachability_t *revreach = &reversedreachability[curupdate->areanum];
         //
         int i = 0;
         aas_reversedlink_t *revlink = revreach->first;
         for (; revlink; revlink = revlink->next, i++)
         {
             int linknum = revlink->linknum;
-            const aas_reachability_t *reach = &aasWorld.Reachabilities()[linknum];
+            const aas_reachability_t *reach = &reachabilities[linknum];
             //if there is used an undesired travel type
-            if (TravelFlagForType(reach->traveltype) & badtravelflags)
+            if (travelflagfortype[reach->traveltype & TRAVELTYPE_MASK] & badtravelflags)
                 continue;
             //if not allowed to enter the next area
             if (oldAndCurrAreaDisabledStatus[reach->areanum * 2])
                 continue;
             // Respect global flags too
-            if (aasWorld.AreaSettings()[reach->areanum].areaflags & AREA_DISABLED)
+            if (areaSettings[reach->areanum].areaflags & AREA_DISABLED)
                 continue;
             //if the next area has a not allowed travel flag
-            if (AreaContentsTravelFlags(reach->areanum) & badtravelflags)
+            if (areacontentstravelflags[reach->areanum] & badtravelflags)
                 continue;
             //number of the area the reversed reachability leads to
             int nextareanum = revlink->areanum;
             //get the cluster number of the area
-            int cluster = aasWorld.AreaSettings()[nextareanum].cluster;
+            int cluster = areaSettings[nextareanum].cluster;
             //don't leave the cluster
             if (cluster > 0 && cluster != areacache->cluster)
                 continue;
-            //get the number of the area in the cluster
-            clusterareanum = ClusterAreaNum(areacache->cluster, nextareanum);
+
+            // Here goes the inlined ClusterAreaNum() body
+            const int areacluster = areaSettings[nextareanum].cluster;
+            if (areacluster > 0)
+            {
+                clusterareanum = areaSettings[nextareanum].clusterareanum;
+            }
+            else
+            {
+                int side = portals[-areacluster].frontcluster != cluster;
+                clusterareanum = portals[-areacluster].clusterareanum[side];
+            }
             if (clusterareanum >= numreachabilityareas)
                 continue;
+
             //time already travelled plus the traveltime through
             //the current area plus the travel time from the reachability
-            unsigned short t = curupdate->tmptraveltime + curupdate->areatraveltimes[i] + reach->traveltime;
+            const unsigned short t = curupdate->tmptraveltime + curupdate->areatraveltimes[i] + reach->traveltime;
             //
             if (!areacache->traveltimes[clusterareanum] || areacache->traveltimes[clusterareanum] > t)
             {
-                int firstnextareareach = aasWorld.AreaSettings()[nextareanum].firstreachablearea;
+                int firstnextareareach = areaSettings[nextareanum].firstreachablearea;
                 areacache->traveltimes[clusterareanum] = t;
                 areacache->reachabilities[clusterareanum] = linknum - firstnextareareach;
-                aas_routingupdate_t *nextupdate = &areaupdate[clusterareanum];
+                aas_routingupdate_t *nextupdate = &routingupdate[clusterareanum];
                 nextupdate->areanum = nextareanum;
                 nextupdate->tmptraveltime = t;
-                //VectorCopy(reach->start, nextupdate->start);
                 nextupdate->areatraveltimes = areatraveltimes[nextareanum][linknum - firstnextareareach];
-                if (!nextupdate->inlist)
+                if (!nextupdate->marked)
                 {
-                    // we add the update to the end of the list
-                    // we could also use a B+ tree to have a real sorted list
-                    // on travel time which makes for faster routing updates
-                    nextupdate->next = nullptr;
-                    nextupdate->prev = updatelistend;
-                    if (updatelistend)
-                        updatelistend->next = nextupdate;
-                    else
-                        updateliststart = nextupdate;
-                    updatelistend = nextupdate;
-                    nextupdate->inlist = true;
+                    nextupdate->marked = true;
+                    updateHeap.push_back(RoutingUpdateRef(clusterareanum, t));
+                    std::push_heap(updateHeap.begin(), updateHeap.end());
                 }
             }
         }
@@ -1007,47 +1016,62 @@ AiAasRouteCache::aas_routingcache_t *AiAasRouteCache::GetAreaRoutingCache(int cl
 
 void AiAasRouteCache::UpdatePortalRoutingCache(aas_routingcache_t *portalcache)
 {
-    aas_routingupdate_t *curupdate = &portalupdate[aasWorld.NumPortals()];
+    // Precache these references to avoid pointer chasing in loop
+    const aas_areasettings_t *areasettings = aasWorld.AreaSettings();
+    const aas_portalindex_t *portalindex = aasWorld.PortalIndex();
+    const aas_cluster_t *clusters = aasWorld.Clusters();
+    const aas_portal_t *portals = aasWorld.Portals();
+    aas_routingupdate_t *routingupdate = this->portalupdate;
+    int *portalmaxtraveltimes = this->portalmaxtraveltimes;
+
+    aas_routingupdate_t *curupdate = &routingupdate[aasWorld.NumPortals()];
+
     curupdate->cluster = portalcache->cluster;
     curupdate->areanum = portalcache->areanum;
     curupdate->tmptraveltime = portalcache->starttraveltime;
     //if the start area is a cluster portal, store the travel time for that portal
-    int clusternum = aasWorld.AreaSettings()[portalcache->areanum].cluster;
+    int clusternum = areasettings[portalcache->areanum].cluster;
     if (clusternum < 0)
     {
         portalcache->traveltimes[-clusternum] = portalcache->starttraveltime;
     }
-    //put the area to start with in the current read list
-    curupdate->next = nullptr;
-    curupdate->prev = nullptr;
-    aas_routingupdate_t *updateliststart = curupdate;
-    aas_routingupdate_t *updatelistend = curupdate;
+
+    StaticVector<RoutingUpdateRef, 1024> updateHeap;
+    updateHeap.push_back(RoutingUpdateRef(aasWorld.NumPortals(), portalcache->starttraveltime));
+
     //while there are updates in the current list
-    while (updateliststart)
+    while (!updateHeap.empty())
     {
-        curupdate = updateliststart;
-        //remove the current update from the list
-        if (curupdate->next)
-            curupdate->next->prev = nullptr;
-        else
-            updatelistend = nullptr;
-        updateliststart = curupdate->next;
+        std::pop_heap(updateHeap.begin(), updateHeap.end());
+        curupdate = &portalupdate[updateHeap.back().index];
+        updateHeap.pop_back();
+
         //current update is removed from the list
-        curupdate->inlist = false;
+        curupdate->marked = false;
         //
-        const aas_cluster_t *cluster = &aasWorld.Clusters()[curupdate->cluster];
+        const aas_cluster_t *cluster = &clusters[curupdate->cluster];
         //
         aas_routingcache_t *cache = GetAreaRoutingCache(curupdate->cluster, curupdate->areanum, portalcache->travelflags);
         //take all portals of the cluster
         for (int i = 0; i < cluster->numportals; i++)
         {
-            int portalnum = aasWorld.PortalIndex()[cluster->firstportal + i];
-            const aas_portal_t *portal = &aasWorld.Portals()[portalnum];
+            int portalnum = portalindex[cluster->firstportal + i];
+            const aas_portal_t *portal = &portals[portalnum];
             //if this is the portal of the current update continue
             if (portal->areanum == curupdate->areanum)
                 continue;
-            //
-            int clusterareanum = ClusterAreaNum(curupdate->cluster, portal->areanum);
+            // Here goes the inlined ClusterAreaNum() body
+            int clusterareanum;
+            const int areacluster = aasWorld.AreaSettings()[portal->areanum].cluster;
+            if (areacluster > 0)
+            {
+                clusterareanum = aasWorld.AreaSettings()[portal->areanum].clusterareanum;
+            }
+            else
+            {
+                int side = portals[-areacluster].frontcluster != curupdate->cluster;
+                clusterareanum = portals[-areacluster].clusterareanum[side];
+            }
             if (clusterareanum >= cluster->numreachabilityareas)
                 continue;
             //
@@ -1059,7 +1083,7 @@ void AiAasRouteCache::UpdatePortalRoutingCache(aas_routingcache_t *portalcache)
             if (!portalcache->traveltimes[portalnum] || portalcache->traveltimes[portalnum] > t)
             {
                 portalcache->traveltimes[portalnum] = t;
-                aas_routingupdate_t *nextupdate = &portalupdate[portalnum];
+                aas_routingupdate_t *nextupdate = &routingupdate[portalnum];
                 if (portal->frontcluster == curupdate->cluster)
                 {
                     nextupdate->cluster = portal->backcluster;
@@ -1071,19 +1095,11 @@ void AiAasRouteCache::UpdatePortalRoutingCache(aas_routingcache_t *portalcache)
                 nextupdate->areanum = portal->areanum;
                 //add travel time through the actual portal area for the next update
                 nextupdate->tmptraveltime = t + portalmaxtraveltimes[portalnum];
-                if (!nextupdate->inlist)
+                if (!nextupdate->marked)
                 {
-                    // we add the update to the end of the list
-                    // we could also use a B+ tree to have a real sorted list
-                    // on travel time which makes for faster routing updates
-                    nextupdate->next = nullptr;
-                    nextupdate->prev = updatelistend;
-                    if (updatelistend)
-                        updatelistend->next = nextupdate;
-                    else
-                        updateliststart = nextupdate;
-                    updatelistend = nextupdate;
-                    nextupdate->inlist = true;
+                    nextupdate->marked = true;
+                    updateHeap.push_back(RoutingUpdateRef(portalnum, nextupdate->tmptraveltime));
+                    std::push_heap(updateHeap.begin(), updateHeap.end());
                 }
             }
         }
