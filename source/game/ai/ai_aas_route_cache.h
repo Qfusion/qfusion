@@ -364,6 +364,11 @@ public:
         return 0;
     }
 
+    inline bool AreaDisabled(int areaNum)
+    {
+        return oldAndCurrAreaDisabledStatus[areaNum * 2] || (aasWorld.AreaSettings()[areaNum].areaflags & AREA_DISABLED);
+    }
+
     void SetDisabledRegions(const Vec3 *spotAbsMins, const Vec3 *spotAbsMaxs, int numSpots);
 };
 
