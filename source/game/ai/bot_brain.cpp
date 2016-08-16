@@ -591,7 +591,8 @@ void BotBrain::CheckTacticalPosition()
 
 void BotBrain::UpdateBlockedAreasStatus()
 {
-    if (!combatTask.retreat)
+    // (advance and retreat flags are not mutual exclusive, and retreat flag has higher priority)
+    if (combatTask.advance && !combatTask.retreat)
     {
         // Reset all possibly blocked areas
         RouteCache()->SetDisabledRegions(nullptr, nullptr, 0);
