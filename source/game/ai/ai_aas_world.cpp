@@ -474,19 +474,60 @@ void AiAasWorld::FreeLinkedEntities()
     arealinkedentities = nullptr;
 }
 
-void AiAasWorld::SetAreaLedgeFlags()
+void AiAasWorld::ComputeExtraAreaFlags()
 {
     for (int areaNum = 1; areaNum < numareas; ++areaNum)
     {
-        int reachNum = areasettings[areaNum].firstreachablearea;
-        int endReachNum = areasettings[areaNum].firstreachablearea + areasettings[areaNum].numreachableareas;
-        for (; reachNum != endReachNum; ++reachNum)
+        TrySetAreaLedgeFlags(areaNum);
+        TrySetAreaWallFlags(areaNum);
+    }
+}
+
+void AiAasWorld::TrySetAreaLedgeFlags(int areaNum)
+{
+    int reachNum = areasettings[areaNum].firstreachablearea;
+    int endReachNum = areasettings[areaNum].firstreachablearea + areasettings[areaNum].numreachableareas;
+    for (; reachNum != endReachNum; ++reachNum)
+    {
+        if (reachability[reachNum].traveltype == TRAVEL_WALKOFFLEDGE)
         {
-            if (reachability[reachNum].traveltype == TRAVEL_WALKOFFLEDGE)
-            {
-                areasettings[areaNum].areaflags |= AREA_LEDGE;
-                break;
-            }
+            areasettings[areaNum].areaflags |= AREA_LEDGE;
+            break;
+        }
+    }
+}
+
+void AiAasWorld::TrySetAreaWallFlags(int areaNum)
+{
+    int faceIndexNum = areas[areaNum].firstface;
+    int endFaceIndexNum = areas[areaNum].firstface + areas[areaNum].numfaces;
+    const float *zAxis = &axis_identity[AXIS_UP];
+    for (; faceIndexNum != endFaceIndexNum; ++faceIndexNum)
+    {
+        int faceIndex = faceindex[faceIndexNum];
+        int areaBehindFace;
+        const aas_face_t *face;
+        if (faceIndex >= 0)
+        {
+            face = &faces[faceIndex];
+            areaBehindFace = face->backarea;
+        }
+        else
+        {
+            face = &faces[-faceIndex];
+            areaBehindFace = face->frontarea;
+        }
+
+        // There is no solid but some other area behind the face
+        if (areaBehindFace)
+            continue;
+
+        const aas_plane_t *facePlane = &planes[face->planenum];
+        // Do not treat bounding ceilings and ground as a wall
+        if (fabsf(DotProduct(zAxis, facePlane->normal)) < 0.3f)
+        {
+            areasettings[areaNum].areaflags |= AREA_WALL;
+            break;
         }
     }
 }
