@@ -957,8 +957,13 @@ void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areacache)
 
             //time already travelled plus the traveltime through
             //the current area plus the travel time from the reachability
-            const unsigned short t = curupdate->tmptraveltime + curupdate->areatraveltimes[i] + reach->traveltime;
-            //
+            unsigned short t = curupdate->tmptraveltime + curupdate->areatraveltimes[i] + reach->traveltime;
+            // Try to avoid ledge areas to prevent unintended falling
+            // by increasing the travel time by some penalty value (2 seconds).
+            // That's an idea from Doom 3 source code.
+            if (areaSettings[nextareanum].areaflags & AREA_LEDGE)
+                t += 200;
+
             if (!areacache->traveltimes[clusterareanum] || areacache->traveltimes[clusterareanum] > t)
             {
                 int firstnextareareach = areaSettings[nextareanum].firstreachablearea;
