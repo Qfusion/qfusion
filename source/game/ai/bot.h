@@ -114,7 +114,6 @@ private:
     void RegisterVisibleEnemies();
 
     inline bool IsPrimaryAimEnemy(const edict_t *enemy) const { return botBrain.IsPrimaryAimEnemy(enemy); }
-    inline bool IsOldHiddenEnemy(const edict_t *enemy) const { return botBrain.IsOldHiddenEnemy(enemy); }
 
     DangersDetector dangersDetector;
     BotBrain botBrain;
