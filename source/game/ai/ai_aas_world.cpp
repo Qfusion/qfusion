@@ -29,8 +29,7 @@ bool AiAasWorld::Init(const char *mapname)
     {
         return false;
     }
-    instance->InitLinkHeap();
-    instance->InitLinkedEntities();
+    instance->PostLoad();
     return true;
 }
 
@@ -473,6 +472,23 @@ void AiAasWorld::FreeLinkedEntities()
     if (arealinkedentities)
         G_LevelFree(arealinkedentities);
     arealinkedentities = nullptr;
+}
+
+void AiAasWorld::SetAreaLedgeFlags()
+{
+    for (int areaNum = 1; areaNum < numareas; ++areaNum)
+    {
+        int reachNum = areasettings[areaNum].firstreachablearea;
+        int endReachNum = areasettings[areaNum].firstreachablearea + areasettings[areaNum].numreachableareas;
+        for (; reachNum != endReachNum; ++reachNum)
+        {
+            if (reachability[reachNum].traveltype == TRAVEL_WALKOFFLEDGE)
+            {
+                areasettings[areaNum].areaflags |= AREA_LEDGE;
+                break;
+            }
+        }
+    }
 }
 
 int AiAasWorld::BoxOnPlaneSide2(const vec3_t absmins, const vec3_t absmaxs, const aas_plane_t *p)

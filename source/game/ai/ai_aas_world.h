@@ -71,6 +71,7 @@
 #define AREA_LIQUID					4		//area contains a liquid
 #define AREA_DISABLED				8		//area is disabled for routing when set
 #define AREA_BRIDGE					16		//area ontop of a bridge
+#define AREA_LEDGE                  128     //Qfusion: area looks like a ledge. This flag is set on world loading.
 
 //========== bounding box =========
 
@@ -260,10 +261,18 @@ class AiAasWorld
 
     bool Load(const char *mapname);
 
+    void PostLoad()
+    {
+        InitLinkHeap();
+        InitLinkedEntities();
+        SetAreaLedgeFlags();
+    }
+
     void SwapData();
 
     void InitLinkHeap();
     void InitLinkedEntities();
+    void SetAreaLedgeFlags();
 
     void FreeLinkHeap();
     void FreeLinkedEntities();
