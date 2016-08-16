@@ -522,7 +522,10 @@ void AiAasRouteCache::InitPortalMaxTravelTimes(void)
 
 
 AiAasRouteCache::FreelistPool::FreelistPool(void *buffer, unsigned bufferSize, unsigned chunkSize)
-    : buffer((char *)buffer), chunkSize(chunkSize), maxChunks(bufferSize / (chunkSize + sizeof(ChunkHeader)))
+    : buffer((char *)buffer),
+      chunkSize(chunkSize),
+      maxChunks(bufferSize / (chunkSize + sizeof(ChunkHeader))),
+      chunksInUse(0)
 {
 #ifdef _DEBUG
     if (((uintptr_t)buffer) & 7)
@@ -574,6 +577,7 @@ void *AiAasRouteCache::FreelistPool::Alloc(int size)
     newChunk->next->prev = newChunk;
     newChunk->prev->next = newChunk;
 
+    ++chunksInUse;
     return newChunk + 1;
 }
 
@@ -589,6 +593,7 @@ void AiAasRouteCache::FreelistPool::Free(void *ptr)
     oldChunk->next->prev = oldChunk->prev;
     oldChunk->next = freeChunk;
     freeChunk = oldChunk;
+    --chunksInUse;
 }
 
 AiAasRouteCache::ChunksCache::ChunksCache()

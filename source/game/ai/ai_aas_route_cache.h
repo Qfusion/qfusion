@@ -179,6 +179,7 @@ class AiAasRouteCache
 
         // An actual chunk data size and a maximal count of chunks.
         const unsigned chunkSize, maxChunks;
+        unsigned chunksInUse;
     public:
 
         FreelistPool(void *buffer, unsigned bufferSize, unsigned chunkSize);
@@ -194,6 +195,8 @@ class AiAasRouteCache
             return ptr >= buffer && ptr < buffer + maxChunks * (chunkSize + sizeof(ChunkHeader));
         }
         inline bool IsFull() const { return freeChunk == nullptr; }
+        inline unsigned Size() const { return chunksInUse; }
+        inline unsigned Capacity() const { return maxChunks; }
     };
 
     // The enclosing class is either allocated via G_Malloc() that should be at least 8-byte aligned,
@@ -201,7 +204,7 @@ class AiAasRouteCache
     class alignas(8) ChunksCache
     {
         static constexpr unsigned CHUNK_SIZE = 8192 - sizeof(FreelistPool::ChunkHeader);
-        static constexpr unsigned MAX_CHUNKS = 256;
+        static constexpr unsigned MAX_CHUNKS = 384;
 
         alignas(8) char buffer[MAX_CHUNKS * (CHUNK_SIZE + sizeof(FreelistPool::ChunkHeader))];
 
@@ -222,7 +225,9 @@ class AiAasRouteCache
 
         bool NeedsCleanup()
         {
-            return pooledChunks.IsFull() || heapMemoryUsed > sizeof(buffer) / 3;
+            if (pooledChunks.Size() / (float)pooledChunks.Capacity() > 0.66f)
+                return true;
+            return heapMemoryUsed > sizeof(buffer) / 3;
         }
     };
 
