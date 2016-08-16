@@ -508,10 +508,6 @@ const Enemy *AiBaseEnemyPool::ChooseHiddenEnemy(const edict_t *challenger)
             continue;
         if (enemy.weight)
             continue;
-        // TODO: Remove this condition for non-bots
-        // Bot already tried to do an action over this enemy
-        if (challenger->ai->botRef->IsOldHiddenEnemy(enemy.ent))
-            continue;
 
         Vec3 botToSpotDirection = enemy.LastSeenPosition() - challenger->s.origin;
         float directionFactor = 0.5f;

@@ -75,7 +75,7 @@ void BotBrain::OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable
 
 void BotBrain::OnEnemyRemoved(const Enemy *enemy)
 {
-    if (enemy == combatTask.aimEnemy)
+    if (enemy == combatTask.enemy)
     {
         ResetCombatTask();
         // This implicitly causes a call to TryFindNewCombatTask() in this or next think frame
@@ -90,7 +90,7 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       skillLevel(skillLevel),
       reactionTime(320 - From0UpToMax(300, BotSkill())),
       aimTargetChoicePeriod(1000 - From0UpToMax(900, BotSkill())),
-      spamTargetChoicePeriod(1333 - From0UpToMax(500, BotSkill())),
+      idleTargetChoicePeriod(1333 - From0UpToMax(500, BotSkill())),
       aimWeaponChoicePeriod(1032 - From0UpToMax(500, BotSkill())),
       spamWeaponChoicePeriod(1000 - From0UpToMax(333, BotSkill())),
       combatTaskInstanceCounter(1),
@@ -128,19 +128,11 @@ void BotBrain::PreThink()
 
     const unsigned levelTime = level.time;
 
-    if (combatTask.aimEnemy)
+    if (combatTask.enemy)
     {
-        if (!combatTask.aimEnemy->IsValid())
+        if (!combatTask.enemy->IsValid())
         {
             Debug("aiming on an ememy has been invalidated\n");
-            ResetCombatTask();
-        }
-    }
-    else if (combatTask.spamEnemy)
-    {
-        if (!combatTask.spamEnemy->IsValid() || combatTask.spamTimesOutAt <= levelTime)
-        {
-            Debug("spamming on an ememy has been invalidated\n");
             ResetCombatTask();
         }
     }
@@ -194,7 +186,7 @@ void BotBrain::Think()
         }
     }
 
-    if (combatTask.aimEnemy && (level.time - combatTask.aimEnemy->LastSeenAt()) > reactionTime)
+    if (combatTask.enemy && (level.time - combatTask.enemy->LastSeenAt()) > reactionTime)
     {
         TryFindNewCombatTask();
     }
@@ -209,22 +201,6 @@ void BotBrain::Think()
 
     if (!specialGoal && !combatTask.Empty())
         CheckTacticalPosition();
-}
-
-void BotBrain::AfterAllEnemiesViewed()
-{
-    CheckIsInThinkFrame(__FUNCTION__);
-
-    // Stop spamming if we see any enemy in view, choose a target to fight
-    if (combatTask.spamEnemy)
-    {
-        if (activeEnemyPool->WillAssignAimEnemy())
-        {
-            Debug("should stop spamming at %s, there are enemies in view\n", combatTask.spamEnemy->Nick());
-            ResetCombatTask();
-            nextTargetChoiceAt = level.time;
-        }
-    }
 }
 
 void BotBrain::OnEnemyViewed(const edict_t *enemy)
@@ -297,17 +273,11 @@ void BotBrain::UpdateKeptCurrentCombatTask()
         bool oldAdvance = task->advance;
         bool oldRetreat = task->retreat;
         bool oldInhibit = task->inhibit;
-        if (task->aimEnemy)
+        if (task->enemy)
         {
             nextWeaponChoiceAt = level.time + aimWeaponChoicePeriod;
             SuggestAimWeaponAndTactics(task);
             Debug("UpdateKeptCombatTask(): has aim enemy, next weapon choice at %09d\n", nextWeaponChoiceAt);
-        }
-        else if (task->spamEnemy)
-        {
-            nextWeaponChoiceAt = level.time + spamWeaponChoicePeriod;
-            SuggestSpamEnemyWeaponAndTactics(task);
-            Debug("UpdateKeptCombatTask(): has spam enemy, next weapon choice at %09d\n", nextWeaponChoiceAt);
         }
 
         // If tactics has been changed, treat updated combat task as new
@@ -320,7 +290,7 @@ void BotBrain::UpdateKeptCurrentCombatTask()
 
 bool BotBrain::CheckFastWeaponSwitchAction()
 {
-    if (!combatTask.aimEnemy)
+    if (!combatTask.enemy)
         return false;
 
     if (self->r.client->ps.stats[STAT_WEAPON_TIME] >= 64)
@@ -330,8 +300,8 @@ bool BotBrain::CheckFastWeaponSwitchAction()
     if (BotSkill() < 0.33f)
         return false;
 
-    const Enemy &enemy = *combatTask.aimEnemy;
-    CombatDisposition disposition = GetCombatDisposition(*combatTask.aimEnemy);
+    const Enemy &enemy = *combatTask.enemy;
+    CombatDisposition disposition = GetCombatDisposition(*combatTask.enemy);
 
     bool botMovesFast, enemyMovesFast;
 
@@ -359,7 +329,7 @@ bool BotBrain::CheckFastWeaponSwitchAction()
 
     if (chosenWeapon != WEAP_NONE)
     {
-        combatTask.suggestedShootWeapon = chosenWeapon;
+        combatTask.suggestedWeapon = chosenWeapon;
         combatTask.importantShot = true;
         return true;
     }
@@ -371,7 +341,7 @@ void BotBrain::TryFindNewCombatTask()
 {
     if (const Enemy *aimEnemy = activeEnemyPool->ChooseAimEnemy(bot))
     {
-        combatTask.aimEnemy = aimEnemy;
+        combatTask.enemy = aimEnemy;
         combatTask.instanceId = NextCombatTaskInstanceId();
         nextTargetChoiceAt = level.time + aimTargetChoicePeriod;
         activeEnemyPool->EnqueueTarget(aimEnemy->ent);
@@ -382,7 +352,7 @@ void BotBrain::TryFindNewCombatTask()
         return;
     }
 
-    if (oldCombatTask.aimEnemy)
+    if (oldCombatTask.enemy)
     {
         if (bot->ai->botRef->hasPendingLookAtPoint)
         {
@@ -390,13 +360,13 @@ void BotBrain::TryFindNewCombatTask()
         }
         else
         {
-            SuggestPointToTurnToWhenEnemyIsLost(oldCombatTask.aimEnemy);
+            SuggestPointToTurnToWhenEnemyIsLost(oldCombatTask.enemy);
         }
         return;
     }
 
     if (!HasMoreImportantTasksThanEnemies());
-        SuggestPursuitOrSpamTask(&combatTask);
+    SuggestPursuitTask(&combatTask);
 }
 
 bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
@@ -419,26 +389,26 @@ bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
     return true;
 }
 
-void BotBrain::SuggestPursuitOrSpamTask(CombatTask *task)
+void BotBrain::SuggestPursuitTask(CombatTask *task)
 {
     if (GetEffectiveOffensiveness() < 0.25f)
     {
-        nextTargetChoiceAt = level.time + spamTargetChoicePeriod / 3;
+        nextTargetChoiceAt = level.time + idleTargetChoicePeriod / 3;
         return;
     }
     if (const Enemy *bestEnemy = activeEnemyPool->ChooseHiddenEnemy(bot))
     {
-        StartSpamAtEnemyOrPursuit(task, bestEnemy);
-        nextTargetChoiceAt = level.time + spamTargetChoicePeriod;
+        TryStartPursuit(task, bestEnemy);
+        nextTargetChoiceAt = level.time + idleTargetChoicePeriod;
     }
     else
     {
         // If not set, bot will repeat try to find target on each next frame
-        nextTargetChoiceAt = level.time + spamTargetChoicePeriod / 2;
+        nextTargetChoiceAt = level.time + idleTargetChoicePeriod / 2;
     }
 }
 
-void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
+void BotBrain::TryStartPursuit(CombatTask *task, const Enemy *enemy)
 {
     const auto disposition = GetCombatDisposition(*enemy);
     float effectiveKillToBeKilledRatio = disposition.KillToBeKilledDamageRatio();
@@ -457,20 +427,7 @@ void BotBrain::StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy)
         pursuitThresholdKillToBeKilledRatio *= 0.5f * powf(10.0f, 2.0f * (offensiveness - 0.5f));
 
     if (effectiveKillToBeKilledRatio < pursuitThresholdKillToBeKilledRatio)
-    {
         StartPursuit(*enemy);
-        return;
-    }
-
-    Vec3 spamSpot = enemy->LastSeenPosition();
-    task->spamEnemy = enemy;
-    task->spamSpot = spamSpot;
-    task->instanceId = NextCombatTaskInstanceId();
-    SuggestSpamEnemyWeaponAndTactics(task);
-    task->spamTimesOutAt = level.time + 1200;
-    unsigned timeDelta = level.time - enemy->LastSeenAt();
-    constexpr const char *fmt = "starts spamming at %.3f %.3f %.3f with %s where it has seen %s %d ms ago\n";
-    Debug(fmt, spamSpot.X(), spamSpot.Y(), spamSpot.Z(), WeapName(task->suggestedSpamWeapon), enemy->Nick(), timeDelta);
 }
 
 bool BotBrain::IsGoalATopTierItem() const
@@ -690,14 +647,14 @@ CombatDisposition BotBrain::GetCombatDisposition(const Enemy &enemy)
 
 void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 {
-    const Enemy &enemy = *task->aimEnemy;
+    const Enemy &enemy = *task->enemy;
 
     Vec3 botOrigin(bot->s.origin);
     TestTargetEnvironment(botOrigin, enemy.LastSeenPosition(), enemy.ent);
 
     if (GS_Instagib())
     {
-        task->suggestedShootWeapon = SuggestInstagibWeapon(enemy);
+        task->suggestedWeapon = SuggestInstagibWeapon(enemy);
         return;
     }
 
@@ -705,8 +662,8 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 
     if (BotHasPowerups())
     {
-        task->suggestedShootWeapon = SuggestQuadBearerWeapon(enemy);
-        if (!BotIsCarrier() && task->suggestedShootWeapon != WEAP_GUNBLADE)
+        task->suggestedWeapon = SuggestQuadBearerWeapon(enemy);
+        if (!BotIsCarrier() && task->suggestedWeapon != WEAP_GUNBLADE)
         {
             task->advance = true;
             task->retreat = false;
@@ -731,8 +688,8 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
     else
         SuggestCloseRangeWeaponAndTactics(task, disposition);
 
-    if (task->suggestedShootWeapon == WEAP_NONE)
-        task->suggestedShootWeapon = WEAP_GUNBLADE;
+    if (task->suggestedWeapon == WEAP_NONE)
+        task->suggestedWeapon = WEAP_GUNBLADE;
 
     bool oldAdvance = task->advance;
     bool oldRetreat = task->retreat;
@@ -758,7 +715,7 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 
 void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
 {
-    const Enemy &enemy = *task->aimEnemy;
+    const Enemy &enemy = *task->enemy;
 
     int chosenWeapon = WEAP_NONE;
 
@@ -801,7 +758,7 @@ void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const Combat
 
     Debug("(sniper range)... : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
-    task->suggestedShootWeapon = chosenWeapon;
+    task->suggestedWeapon = chosenWeapon;
 }
 
 struct WeaponAndScore
@@ -870,7 +827,7 @@ int BotBrain::ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAn
 
 void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
 {
-    const Enemy &enemy = *task->aimEnemy;
+    const Enemy &enemy = *task->enemy;
 
     bool botHasMidRangeWeapons = LasersReadyToFireCount() >= 15 ||
         RocketsReadyToFireCount() >= 3 || PlasmasReadyToFireCount() >= 20;
@@ -964,12 +921,12 @@ void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDis
     }
     Debug("(far range)... chose %s\n", GS_GetWeaponDef(chosenWeapon)->name);
 
-    task->suggestedShootWeapon = chosenWeapon;
+    task->suggestedWeapon = chosenWeapon;
 }
 
 void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
 {
-    const Enemy &enemy = *task->aimEnemy;
+    const Enemy &enemy = *task->enemy;
     const float distance = disposition.distance;
     const float lgRange = GetLaserRange();
     // Should be equal to max mid range distance - min mid range distance
@@ -1138,7 +1095,7 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     Debug(format, rl, lg, pg, mg, rg, gl, GS_GetWeaponDef(chosenWeapon)->name);
 #endif
 
-    task->suggestedShootWeapon = chosenWeapon;
+    task->suggestedWeapon = chosenWeapon;
 }
 
 void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
@@ -1229,7 +1186,7 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
 
     Debug("(close range) : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
-    task->suggestedShootWeapon = chosenWeapon;
+    task->suggestedWeapon = chosenWeapon;
 }
 
 int BotBrain::SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition)
@@ -1657,95 +1614,6 @@ int BotBrain::SuggestInstagibWeapon(const Enemy &enemy)
     return WEAP_GUNBLADE;
 }
 
-void BotBrain::SuggestSpamEnemyWeaponAndTactics(CombatTask *task)
-{
-    const Enemy &enemy = *task->spamEnemy;
-
-#ifdef _DEBUG
-    {
-        const Vec3 &position = enemy.LastSeenPosition();
-        constexpr const char *format = "SuggestSpamWeapon...(): %s has been last seen at %f %f %f\n";
-        Debug(format, enemy.Nick(), position.X(), position.Y(), position.Z());
-    }
-#endif
-    Vec3 botToSpotVec = enemy.LastSeenPosition();
-    botToSpotVec -= bot->s.origin;
-    float distance = botToSpotVec.LengthFast();
-
-    TestTargetEnvironment(Vec3(bot->s.origin), enemy.LastSeenPosition(), nullptr);
-
-    enum { PG, MG, RL, GL, GB, WEIGHTS_COUNT };
-    const float distanceBounds[WEIGHTS_COUNT] = { 5000.0f, 2000.0f, 1500.0f, 1100.0f, 3000.0f };
-    float distanceFactors[WEIGHTS_COUNT];
-    for (int i = 0; i < WEIGHTS_COUNT; ++i)
-    {
-        distanceFactors[i] = BoundedFraction(distance, distanceBounds[i]);
-    }
-
-    WeaponAndScore scores[5] =
-    {
-        WeaponAndScore(WEAP_PLASMAGUN, 1.0f * BoundedFraction(PlasmasReadyToFireCount(), 30)),
-        WeaponAndScore(WEAP_MACHINEGUN, 0.7f * BoundedFraction(BulletsReadyToFireCount(), 30)),
-        WeaponAndScore(WEAP_ROCKETLAUNCHER, 1.2f * BoundedFraction(RocketsReadyToFireCount(), 5)),
-        WeaponAndScore(WEAP_GRENADELAUNCHER, 1.0f * BoundedFraction(GrenadesReadyToFireCount(), 3)),
-        WeaponAndScore(WEAP_GUNBLADE, 0.5f)
-    };
-
-    // All scores decrease linearly with distance (except for MG)
-    scores[PG].score *= 1.0f - 0.8f * distanceFactors[PG];
-    scores[MG].score *= distanceFactors[MG];
-    scores[RL].score *= 0.5f - 0.5f * distanceFactors[RL];
-    scores[GL].score *= 1.0f - distanceFactors[GL];
-    scores[GB].score *= 1.0f - 0.5f * distanceFactors[GB];
-
-    scores[PG].score *= 0.7f + 0.3f * targetEnvironment.factor;
-    scores[MG].score *= 1.0f - targetEnvironment.factor;
-    scores[RL].score *= 0.2f + 0.8f * targetEnvironment.factor;
-    scores[GL].score *= targetEnvironment.factor;
-    scores[GB].score *= 0.4f + 0.6 * targetEnvironment.factor;
-
-    float deltaZ = bot->s.origin[2] - enemy.LastSeenPosition().Z();
-    float deltaZBound = g_gravity->value / 2;
-    // 0 for enemies that are deltaZBound or more units higher, 1 for enemies that are deltaZBound or more lower
-    float gravityFactor = (std::min(deltaZ, deltaZBound) / deltaZBound + 1.0f) / 2.0f;
-    scores[GL].score *= 1.5f * gravityFactor;
-
-    // Don't hit itself
-    if (distance < 200.0f)
-        scores[RL].score = 0;
-    if (distance < 250.0f)
-        scores[GB].score = 0;
-    if (distance < 50.0f)
-        scores[PG].score = 0;
-    if (distance < 70.0f)
-        scores[GB].score = 0;
-
-    int weapon = ChooseWeaponByScores(scores, scores + 5);
-
-    // Do not spam if there are no spam weapons and the enemy is close, choose a weapon to be ready to fight
-    if (weapon <= WEAP_GUNBLADE && level.time - enemy.LastSeenAt() < 1000)
-    {
-        task->inhibit = true;
-
-        if (distance < GetLaserRange())
-        {
-            if (LasersReadyToFireCount() > 15)
-                weapon = WEAP_LASERGUN;
-            else if (ShellsReadyToFireCount() > 0)
-                weapon = WEAP_RIOTGUN;
-        }
-        else if (BoltsReadyToFireCount() > 0)
-            weapon = WEAP_ELECTROBOLT;
-        else if (PlasmasReadyToFireCount() > 0)
-            weapon = WEAP_PLASMAGUN;
-    }
-
-    constexpr const char *fmt = "spam raw weapon scores: PG %.2f MG %.2f RL %.2f GL %.2f GB %.2f chose %s\n";
-    Debug(fmt, scores[PG].score, scores[MG].score, scores[RL].score, scores[GL].score, scores[GB].score, WeapName(weapon));
-
-    task->suggestedSpamWeapon = weapon;
-}
-
 const float BotBrain::TargetEnvironment::TRACE_DEPTH = 250.0f;
 
 void BotBrain::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey)
@@ -1832,7 +1700,7 @@ float BotBrain::GetEffectiveOffensiveness() const
 {
     if (!squad)
     {
-        if (combatTask.aimEnemy && IsCarrier(combatTask.aimEnemy->ent))
+        if (combatTask.enemy && IsCarrier(combatTask.enemy->ent))
             return 0.65f + 0.35f * decisionRandom;
         return baseOffensiveness;
     }

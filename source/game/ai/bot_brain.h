@@ -11,15 +11,9 @@ class CombatTask
 {
     friend class BotBrain;
     // If it is not null, it is a chosen target for shooting.
-    const Enemy *aimEnemy;
+    const Enemy *enemy;
 
-    // May be null if spamming is not personal for the enemy.
-    // Used to cancel spamming if enemy is killed by bot or other player
-    // (this means there is no sense to do spamming).
-    const Enemy *spamEnemy;
-    Vec3 spamSpot;
-
-    int suggestedShootWeapon;
+    int suggestedWeapon;
     int suggestedSpamWeapon;
 #ifndef _MSC_VER
     inline void FailWith(const char *message) const __attribute__ ((noreturn))
@@ -33,20 +27,16 @@ class CombatTask
         abort();
     }
 
-    const edict_t *AimEnemyEnt() const
+    const edict_t *EnemyEnt() const
     {
-        if (!aimEnemy)
+        if (!enemy)
             FailWith("There is no aim enemy");
-        if (!aimEnemy->ent)
+        if (!enemy->ent)
             FailWith("AimEnemy is present but ent is null (this means this enemy slot has been released)");
-        return aimEnemy->ent;
+        return enemy->ent;
     }
 
 public:
-
-    // When level.time == spamTimesOutAt, stop spamming
-    unsigned spamTimesOutAt;
-
     // Used to distinguish different combat tasks and track combat task changes
     // (e.g. when some parameters that depend of a combat task are cached by some external code
     // and instanceId of the combat task has been changed, its time to invalidate cached parameters)
@@ -54,7 +44,6 @@ public:
     // When combat task is updated, instanceId is set to a number unique for all combat tasks of this bot.
     unsigned instanceId;
 
-    bool spamKeyPoint;
     bool advance;
     bool retreat;
     bool inhibit;
@@ -62,66 +51,59 @@ public:
     // Must be set back to false by shooting code.
     bool importantShot;
 
-    CombatTask() : spamSpot(vec3_origin)
+    CombatTask()
     {
         Clear();
     };
 
     void Clear()
     {
-        aimEnemy = nullptr;
-        spamEnemy = nullptr;
-        spamTimesOutAt = level.time;
+        enemy = nullptr;
         instanceId = 0;
-        suggestedShootWeapon = WEAP_NONE;
+        suggestedWeapon = WEAP_NONE;
         suggestedSpamWeapon = WEAP_NONE;
-        spamKeyPoint = false;
         advance = false;
         retreat = false;
         inhibit = false;
         importantShot = false;
     }
 
-    bool Empty() const  { return !aimEnemy && !spamEnemy; }
+    bool Empty() const  { return !enemy; }
 
-    bool IsTargetAStaticSpot() const { return !aimEnemy; }
+    bool IsTargetAStaticSpot() const { return !enemy; }
 
-    bool IsOnGround() const { return aimEnemy && aimEnemy->ent->groundentity; }
+    bool IsOnGround() const { return enemy && enemy->ent->groundentity; }
 
     Vec3 EnemyOrigin() const
     {
-        if (aimEnemy) return aimEnemy->LastSeenPosition();
-        if (spamEnemy) return spamSpot;
+        if (enemy) return enemy->LastSeenPosition();
         FailWith("EnemyOrigin(): combat task is empty\n");
     }
 
     Vec3 EnemyVelocity() const
     {
-        if (aimEnemy) return Vec3(AimEnemyEnt()->velocity);
-        if (spamEnemy) return Vec3(0, 0, 0);
+        if (enemy) return Vec3(EnemyEnt()->velocity);
         FailWith("EnemyVelocity(): combat task is empty\n");
     }
 
     Vec3 EnemyMins() const
     {
-        if (aimEnemy) return Vec3(AimEnemyEnt()->r.mins);
-        if (spamEnemy) return Vec3(0, 0, 0);
+        if (enemy) return Vec3(EnemyEnt()->r.mins);
         FailWith("EnemyMins(): combat task is empty\n");
     }
 
     Vec3 EnemyMaxs() const
     {
-        if (aimEnemy) return Vec3(AimEnemyEnt()->r.maxs);
-        if (spamEnemy) return Vec3(0, 0, 0);
+        if (enemy) return Vec3(EnemyEnt()->r.maxs);
         FailWith("EnemyMaxs(): combat task is empty\n");
     }
 
     Vec3 EnemyLookDir() const
     {
-        if (aimEnemy)
+        if (enemy)
         {
             vec3_t forward;
-            AngleVectors(AimEnemyEnt()->s.angles, forward, nullptr, nullptr);
+            AngleVectors(EnemyEnt()->s.angles, forward, nullptr, nullptr);
             return Vec3(forward);
         }
         FailWith("EnemyLookDir(): aim enemy is not present");
@@ -129,30 +111,29 @@ public:
 
     Vec3 EnemyAngles() const
     {
-        if (aimEnemy)
-            return Vec3(AimEnemyEnt()->s.angles);
+        if (enemy)
+            return Vec3(EnemyEnt()->s.angles);
         FailWith("EnemyAngles(): aim enemy is not present");
     }
 
     unsigned EnemyFireDelay() const
     {
-        if (aimEnemy && aimEnemy->ent)
+        if (enemy && enemy->ent)
         {
-            if (!aimEnemy->ent->r.client)
+            if (!enemy->ent->r.client)
                 return 0;
-            return (unsigned)aimEnemy->ent->r.client->ps.stats[STAT_WEAPON_TIME];
+            return (unsigned)enemy->ent->r.client->ps.stats[STAT_WEAPON_TIME];
         }
         return std::numeric_limits<unsigned>::max();
     }
 
-    const int Weapon()
+    int Weapon() const
     {
-        if (aimEnemy) return suggestedShootWeapon;
-        if (spamEnemy) return suggestedSpamWeapon;
+        if (enemy) return suggestedWeapon;
         FailWith("Weapon(): combat task is empty\n");
     }
 
-    const edict_t *TraceKey() const { return aimEnemy ? aimEnemy->ent : nullptr; }
+    const edict_t *TraceKey() const { return enemy ? enemy->ent : nullptr; }
 };
 
 struct CombatDisposition
@@ -176,7 +157,7 @@ class BotBrain: public AiBaseBrain
     const unsigned reactionTime;
 
     const unsigned aimTargetChoicePeriod;
-    const unsigned spamTargetChoicePeriod;
+    const unsigned idleTargetChoicePeriod;
     const unsigned aimWeaponChoicePeriod;
     const unsigned spamWeaponChoicePeriod;
 
@@ -254,7 +235,6 @@ class BotBrain: public AiBaseBrain
     void SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition);
     void SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition);
     int SuggestInstagibWeapon(const Enemy &enemy);
-    void SuggestSpamEnemyWeaponAndTactics(CombatTask *task);
     int SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     bool IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition,
                          bool *botMovesFast, bool *enemyMovesFast);
@@ -264,8 +244,8 @@ class BotBrain: public AiBaseBrain
     int SuggestShotOfDespairWeapon(const Enemy &enemy, const CombatDisposition &disposition);
     int SuggestQuadBearerWeapon(const Enemy &enemy);
     bool SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy);
-    void SuggestPursuitOrSpamTask(CombatTask *task);
-    void StartSpamAtEnemyOrPursuit(CombatTask *task, const Enemy *enemy);
+    void SuggestPursuitTask(CombatTask *task);
+    void TryStartPursuit(CombatTask *task, const Enemy *enemy);
     int ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end);
     void TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey);
     void UpdateKeptCurrentCombatTask();
@@ -377,8 +357,7 @@ public:
     inline unsigned MaxTrackedEnemies() const { return botEnemyPool.MaxTrackedEnemies(); }
 
     void OnEnemyViewed(const edict_t *enemy);
-    // Call it after all calls to OnEnemyViewed()
-    void AfterAllEnemiesViewed();
+    void AfterAllEnemiesViewed() {}
     void OnPain(const edict_t *enemy, float kick, int damage);
     void OnEnemyDamaged(const edict_t *target, int damage);
 
@@ -395,11 +374,7 @@ public:
 
     inline bool IsPrimaryAimEnemy(const edict_t *enemy) const
     {
-        return combatTask.aimEnemy && combatTask.aimEnemy->ent == enemy;
-    }
-    inline bool IsOldHiddenEnemy(const edict_t *enemy) const
-    {
-        return combatTask.spamEnemy && combatTask.spamEnemy->ent == enemy;
+        return combatTask.enemy && combatTask.enemy->ent == enemy;
     }
 
     void SetAttitude(const edict_t *ent, int attitude);
