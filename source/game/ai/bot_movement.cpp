@@ -892,22 +892,32 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     float speed2DSquared = velocityDir2D.SquaredLength();
     float toTargetDir2DSqLen = toTargetDir2D.SquaredLength();
 
+    const short *movementSettings = self->r.client->ps.pmove.stats;
+    const short movementFeatures = movementSettings[PM_STAT_FEATURES];
+
     if (speed2DSquared > 0.1f)
     {
         velocityDir2D *= Q_RSqrt(speed2DSquared);
 
         ucmd->forwardmove = 1;
 
-        if (speed < DEFAULT_DASHSPEED - 16)
+        if (movementFeatures & PMFEAT_DASH)
         {
-            ucmd->upmove = 0;
-            if (self->groundentity)
-                ucmd->buttons |= BUTTON_SPECIAL;
+            if (speed < movementSettings[PM_STAT_DASHSPEED])
+            {
+                ucmd->upmove = 0;
+                if (self->groundentity)
+                    ucmd->buttons |= BUTTON_SPECIAL;
+            }
+            // If we are not crouching in air to prevent bumping a ceiling, keep jump key pressed
+            else if (ucmd->upmove != -1 && movementFeatures & PMFEAT_JUMP)
+                ucmd->upmove = 1;
         }
         else
         {
-            // If we are not crouching in air to prevent bumping a ceiling, keep jump key pressed
-            if (ucmd->upmove != -1)
+            if (speed < movementSettings[PM_STAT_MAXSPEED])
+                ucmd->upmove = 0;
+            else if (ucmd->upmove != -1 && movementFeatures & PMFEAT_JUMP)
                 ucmd->upmove = 1;
         }
 
@@ -921,18 +931,21 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                 // Correct trajectory using cheating aircontrol
                 if (velocityToTarget2DDot > 0)
                 {
-                    // Make correction less effective for large angles multiplying it
-                    // by the dot product to avoid a weird-looking cheating movement
-                    float controlMultiplier = 0.005f + velocityToTarget2DDot * 0.05f;
-                    if (lookingOnImportantItem)
-                        controlMultiplier += 0.33f;
-                    Vec3 newVelocity(velocityVec);
-                    newVelocity *= 1.0f / speed;
-                    newVelocity += controlMultiplier * toTargetDir2D;
-                    // Preserve velocity magnitude
-                    newVelocity.NormalizeFast();
-                    newVelocity *= speed;
-                    VectorCopy(newVelocity.Data(), self->velocity);
+                    if (movementFeatures & PMFEAT_AIRCONTROL)
+                    {
+                        // Make correction less effective for large angles multiplying it
+                        // by the dot product to avoid a weird-looking cheating movement
+                        float controlMultiplier = 0.005f + velocityToTarget2DDot * 0.05f;
+                        if (lookingOnImportantItem)
+                            controlMultiplier += 0.33f;
+                        Vec3 newVelocity(velocityVec);
+                        newVelocity *= 1.0f / speed;
+                        newVelocity += controlMultiplier * toTargetDir2D;
+                        // Preserve velocity magnitude
+                        newVelocity.NormalizeFast();
+                        newVelocity *= speed;
+                        VectorCopy(newVelocity.Data(), self->velocity);
+                    }
                 }
                 else if (IsCloseToAnyGoal())
                 {
@@ -972,11 +985,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             {
                 if (!self->groundentity && !hasObstacles && !IsCloseToAnyGoal() && Skill() > 0.33f)
                 {
-                    float runSpeed = DEFAULT_PLAYERSPEED_STANDARD;
-                    if (GS_Instagib())
-                        runSpeed = DEFAULT_PLAYERSPEED_INSTAGIB;
-                    else if (GS_RaceGametype())
-                        runSpeed = DEFAULT_PLAYERSPEED_RACE;
+                    float runSpeed = movementSettings[PM_STAT_MAXSPEED];
                     if (speed > runSpeed) // Avoid division by zero and logic errors
                     {
                         // Max accel is measured in units per second and decreases with speed
@@ -985,6 +994,10 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                         // This means cheating acceleration is not applied for speeds greater than 900 ups
                         // However the bot may reach greater speed since builtin GS_NEWBUNNY forward accel is enabled
                         float maxAccel = 180.0f * (1.0f - BoundedFraction(speed - runSpeed, 900.0f - runSpeed));
+
+                        // Modify maxAccel to respect player class movement limitations
+                        maxAccel *= movementSettings[PM_STAT_MAXSPEED] / 320.0f;
+
                         // Accel contains of constant and directional parts
                         // If velocity dir exactly matches target dir, accel = maxAccel
                         float accel = 0.5f;
@@ -1025,7 +1038,8 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
     {
         // If bot is in air and there are no obstacles on chosen forward direction, do a WJ.
         if (!self->groundentity && !hasObstacles)
-            ucmd->buttons |= BUTTON_SPECIAL;
+            if (movementFeatures & PMFEAT_WALLJUMP)
+                ucmd->buttons |= BUTTON_SPECIAL;
     }
 
     // Skip dash and WJ near triggers to prevent missing a trigger
