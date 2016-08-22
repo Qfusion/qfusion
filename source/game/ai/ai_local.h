@@ -85,6 +85,8 @@ typedef struct ai_handle_s
 
 	int asFactored, asRefCount;
 
+	ai_handle_t *prev, *next;
+
 	class Ai *aiRef;
 	class Bot *botRef;
 } ai_handle_t;

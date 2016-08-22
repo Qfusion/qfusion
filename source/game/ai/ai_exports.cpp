@@ -1,6 +1,6 @@
 #include "bot.h"
 #include "ai_shutdown_hooks_holder.h"
-#include "ai_gametype_brain.h"
+#include "ai_manager.h"
 #include "ai_objective_based_team_brain.h"
 #include "ai_aas_world.h"
 #include "ai_aas_route_cache.h"
@@ -32,19 +32,19 @@ void AI_Shutdown( void )
 
 void AI_UnloadLevel()
 {
-    BOT_RemoveBot("all");
+    AI_RemoveBots();
     AiAasRouteCache::Shutdown();
     AiAasWorld::Shutdown();
 }
 
 void AI_GametypeChanged(const char *gametype)
 {
-    AiGametypeBrain::OnGametypeChanged(gametype);
+    AiManager::OnGametypeChanged(gametype);
 }
 
 void AI_JoinedTeam(edict_t *ent, int team)
 {
-    AiGametypeBrain::Instance()->OnBotJoinedTeam(ent, team);
+    AiManager::Instance()->OnBotJoinedTeam(ent, team);
 }
 
 void AI_CommonFrame()
@@ -53,7 +53,7 @@ void AI_CommonFrame()
 
     NavEntitiesRegistry::Instance()->Update();
 
-    AiGametypeBrain::Instance()->Update();
+    AiManager::Instance()->Update();
 }
 
 static void FindHubAreas()
@@ -245,13 +245,13 @@ void AI_RemoveNavEntity(edict_t *ent)
     if (!navEntity)
         return;
 
-    AiGametypeBrain::Instance()->ClearGoals(navEntity, nullptr);
+    AiManager::Instance()->ClearGoals(navEntity, nullptr);
     NavEntitiesRegistry::Instance()->RemoveNavEntity(navEntity);
 }
 
 void AI_NavEntityReached(edict_t *ent)
 {
-    AiGametypeBrain::Instance()->NavEntityReached(ent);
+    AiManager::Instance()->NavEntityReached(ent);
 }
 
 static inline AiObjectiveBasedTeamBrain *GetObjectiveBasedTeamBrain(const char *caller, int team)
@@ -356,12 +356,14 @@ void G_FreeAI( edict_t *ent )
     if (!ent->ai)
         return;
 
+    AiManager::Instance()->UnlinkAi(ent->ai);
+
     // Invoke an appropriate destructor based on ai instance type, then free memory.
     // It is enough to call G_Free(ent->ai->aiRef), since botRef (if it is present)
     // points to the same block as aiRef does, but to avoid confusion we free pointer aliases explicitly.
     if (ent->ai->botRef)
     {
-        AiGametypeBrain::Instance()->OnBotDropped(ent);
+        AiManager::Instance()->OnBotDropped(ent);
         ent->ai->botRef->~Bot();
         G_Free(ent->ai->botRef);
     }
@@ -403,6 +405,8 @@ void G_SpawnAI( edict_t *ent, float skillLevel )
         ent->ai->botRef = nullptr;
         ent->ai->aiRef = new(mem) Ai( ent, TFL_DEFAULT, TFL_DEFAULT );
     }
+
+    AiManager::Instance()->LinkAi(ent->ai);
 }
 
 //==========================================
@@ -436,4 +440,36 @@ void AI_Think(edict_t *self)
         return;
 
     self->ai->aiRef->Update();
+}
+
+void AI_SpawnBot( const char *team )
+{
+    AiManager::Instance()->SpawnBot(team);
+}
+
+void AI_Respawn( edict_t *ent )
+{
+    AiManager::Instance()->RespawnBot(ent);
+}
+
+void AI_RemoveBot( const char *name )
+{
+    AiManager::Instance()->RemoveBot(name);
+}
+
+void AI_RemoveBots()
+{
+    AiManager::Instance()->RemoveBots();
+}
+
+void AI_Cheat_NoTarget( edict_t *ent )
+{
+    if (!sv_cheats->integer)
+        return;
+
+    ent->flags ^= FL_NOTARGET;
+    if (ent->flags & FL_NOTARGET)
+        G_PrintMsg(ent, "Bot Notarget ON\n");
+    else
+        G_PrintMsg(ent, "Bot Notarget OFF\n");
 }

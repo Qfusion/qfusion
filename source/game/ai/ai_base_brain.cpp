@@ -1,5 +1,5 @@
 #include "ai_base_brain.h"
-#include "ai_gametype_brain.h"
+#include "ai_manager.h"
 #include "ai_base_team_brain.h"
 #include "ai_base_ai.h"
 #include "ai_ground_trace_cache.h"
@@ -155,14 +155,12 @@ void AiBaseBrain::CheckOrCancelGoal()
     // Check for goal nullity in this function, not in ShouldCancelGoal()
     // (ShouldCancelGoal() return result may be confusing)
 
-    // Check long-term goal first
     if (longTermGoal && ShouldCancelGoal(longTermGoal))
-        ClearLongAndShortTermGoal(longTermGoal);
+        ClearAllGoals();
     else if (shortTermGoal && ShouldCancelGoal(shortTermGoal))
-        ClearLongAndShortTermGoal(shortTermGoal);
-
-    if (specialGoal && ShouldCancelGoal(specialGoal))
-        OnClearSpecialGoalRequested();
+        ClearAllGoals();
+    else if (specialGoal && ShouldCancelGoal(specialGoal))
+        ClearAllGoals();
 }
 
 bool AiBaseBrain::ShouldCancelGoal(const Goal *goal)
@@ -208,9 +206,9 @@ bool AiBaseBrain::ShouldCancelGoal(const Goal *goal)
 void AiBaseBrain::ClearAllGoals()
 {
     if (longTermGoal)
-        ClearLongAndShortTermGoal(longTermGoal);
+        CancelLongAndShortTermGoal(longTermGoal);
     if (shortTermGoal)
-        ClearLongAndShortTermGoal(shortTermGoal);
+        CancelLongAndShortTermGoal(shortTermGoal);
     // Do not clear directly but delegate it
     if (specialGoal)
         OnClearSpecialGoalRequested();
@@ -771,7 +769,7 @@ void AiBaseBrain::SetSpecialGoal(Goal *goal)
     self->ai->aiRef->OnGoalSet(goal);
 }
 
-void AiBaseBrain::ClearLongAndShortTermGoal(const Goal *pickedGoal)
+void AiBaseBrain::CancelLongAndShortTermGoal(const Goal *canceledGoal)
 {
     longTermGoal = nullptr;
     // Request long-term goal update in next frame
@@ -782,26 +780,27 @@ void AiBaseBrain::ClearLongAndShortTermGoal(const Goal *pickedGoal)
     shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
     shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
     // Call possible overridden child callback method
-    OnGoalCleanedUp(pickedGoal);
-    // Notify other AI's about the goal pickup
-    AiGametypeBrain::Instance()->ClearGoals(pickedGoal, self->ai->aiRef);
+    OnGoalCleanedUp(canceledGoal);
 }
 
 void AiBaseBrain::OnLongTermGoalReached()
 {
     Debug("reached long-term goal %s\n", longTermGoal->Name());
-    ClearLongAndShortTermGoal(longTermGoal);
+    AiManager::Instance()->ClearGoals(longTermGoal, self->ai->aiRef);
+    CancelLongAndShortTermGoal(longTermGoal);
 }
 
 void AiBaseBrain::OnShortTermGoalReached()
 {
     Debug("reached short-term goal %s\n", shortTermGoal->Name());
-    ClearLongAndShortTermGoal(shortTermGoal);
+    AiManager::Instance()->ClearGoals(shortTermGoal, self->ai->aiRef);
+    CancelLongAndShortTermGoal(shortTermGoal);
 }
 
 void AiBaseBrain::OnSpecialGoalReached()
 {
     Debug("reached special goal %s\n", specialGoal->Name());
+    AiManager::Instance()->ClearGoals(specialGoal, self->ai->aiRef);
     OnClearSpecialGoalRequested();
 }
 

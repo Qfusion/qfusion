@@ -1652,7 +1652,7 @@ static void G_CheckNumBots( void )
 				continue;
 			if( AI_GetType( ent->ai ) == AI_ISBOT )
 			{
-				BOT_RemoveBot( ent->r.client->netname );
+				AI_RemoveBot(ent->r.client->netname);
 				break;
 			}
 		}
@@ -1664,7 +1664,7 @@ static void G_CheckNumBots( void )
 		for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients && game.numBots < desiredNumBots; ent++ )
 		{
 			if( !ent->r.inuse && trap_GetClientState( PLAYERNUM( ent ) ) == CS_FREE )
-				BOT_SpawnBot( NULL );
+                AI_SpawnBot(NULL);
 		}
 	}
 }

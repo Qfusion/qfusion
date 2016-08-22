@@ -41,7 +41,7 @@ struct ClosePlaceProps
 
 class Ai: public EdictRef, public AiFrameAwareUpdatable
 {
-    friend class AiGametypeBrain;
+    friend class AiManager;
     friend class AiBaseTeamBrain;
     friend class AiBaseBrain;
 protected:

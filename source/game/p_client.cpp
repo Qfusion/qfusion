@@ -657,7 +657,7 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 	client->ps.stats[STAT_TIME_ALPHA] = STAT_NOTSET;
 	client->ps.stats[STAT_TIME_BETA] = STAT_NOTSET;
 
-	BOT_Respawn( self );
+	AI_Respawn(self);
 
 	self->r.client->level.respawnCount++;
 
