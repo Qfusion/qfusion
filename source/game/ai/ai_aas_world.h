@@ -73,6 +73,7 @@
 #define AREA_BRIDGE					16		//area ontop of a bridge
 #define AREA_LEDGE                  128     //Qfusion: area looks like a ledge. This flag is set on world loading.
 #define AREA_WALL                   256     //Qfusion: area has bounding solid walls.
+#define AREA_JUNK                   512     //Qfusion: area does not look like useful.
 
 //========== bounding box =========
 
@@ -277,6 +278,7 @@ class AiAasWorld
     void ComputeExtraAreaFlags();
     void TrySetAreaLedgeFlags(int areaNum);
     void TrySetAreaWallFlags(int areaNum);
+    void TrySetAreaJunkFlags(int areaNum);
 
     void FreeLinkHeap();
     void FreeLinkedEntities();

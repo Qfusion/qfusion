@@ -480,6 +480,7 @@ void AiAasWorld::ComputeExtraAreaFlags()
     {
         TrySetAreaLedgeFlags(areaNum);
         TrySetAreaWallFlags(areaNum);
+        TrySetAreaJunkFlags(areaNum);
     }
 }
 
@@ -530,6 +531,19 @@ void AiAasWorld::TrySetAreaWallFlags(int areaNum)
             break;
         }
     }
+}
+
+void AiAasWorld::TrySetAreaJunkFlags(int areaNum)
+{
+    const aas_area_t &area = areas[areaNum];
+    int junkFactor = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+        if (area.maxs[i] - area.mins[i] < 24.0f)
+            ++junkFactor;
+    }
+    if (junkFactor > 1)
+        areasettings[areaNum].areaflags |= AREA_JUNK;
 }
 
 int AiAasWorld::BoxOnPlaneSide2(const vec3_t absmins, const vec3_t absmaxs, const aas_plane_t *p)
