@@ -71,11 +71,8 @@ unsigned NavEntity::SpawnTime() const
 
 unsigned NavEntity::MaxWaitDuration() const
 {
-    if (ShouldBeReachedOnEvent())
+    if (!ent->item || ShouldBeReachedOnEvent())
         return std::numeric_limits<unsigned>::max();
-
-    if (!ent->item)
-        return 0;
 
     if (ent->item->type == IT_POWERUP)
         return 9000;
