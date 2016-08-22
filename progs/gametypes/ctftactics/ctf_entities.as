@@ -72,9 +72,10 @@ class cFlagBase
 
         // ctf:tactics flag is always instant, so it should be reached at touch as an ordinary item
 		AI::AddNavEntity( spawner, AI_NAV_REACH_AT_TOUCH );
-        // identify spots by id (set id as defence/offence spot to team id)
+        // identify spots by id (set defence/offence spot id to team id)
         // add a defence spot for the team
         AI::AddDefenceSpot( this.team, this.team, spawner, 768.0f );
+        AI::EnableDefenceSpotAutoAlert( this.team, this.team );    
         // add an offence spot for the enemy team
         AI::AddOffenceSpot( this.enemyTeam, this.team, spawner ); 
 
