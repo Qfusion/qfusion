@@ -6,7 +6,7 @@
 class AiBaseTeamBrain: public AiFrameAwareUpdatable
 {
     friend class Bot;  // Bots should be able to notify its team in destructor when they get dropped immediately
-    friend class AiGametypeBrain;
+    friend class AiManager;
 
     // We can't initialize these vars in constructor, because game exports may be not yet intialized.
     // These values are set to -1 in constructor and computed on demand

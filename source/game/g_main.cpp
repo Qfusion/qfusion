@@ -657,7 +657,7 @@ void G_ExitLevel( void )
 
 	if( loadmap )
 	{
-		BOT_RemoveBot( "all" ); // MbotGame (Disconnect all bots before changing map)
+        AI_RemoveBots();
 		Q_snprintfz( command, sizeof( command ), "gamemap \"%s\"\n", nextmapname );
 		trap_Cmd_ExecuteText( EXEC_APPEND, command );
 	}

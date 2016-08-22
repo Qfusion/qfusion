@@ -12,7 +12,7 @@ class AiBaseEnemyPool;
 
 class Bot: public Ai
 {
-    friend class AiGametypeBrain;
+    friend class AiManager;
     friend class AiBaseTeamBrain;
     friend class BotBrain;
     friend class AiSquad;

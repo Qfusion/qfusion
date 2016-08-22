@@ -146,10 +146,10 @@ void        AI_DamagedEntity( edict_t *self, edict_t *ent, int damage );
 // For unknown reasons self->pain is not called for bots, this is the workaround
 void        AI_Pain( edict_t *self, edict_t *attacker, int kick, int damage );
 
-// bot_spawn.c
-void        BOT_SpawnBot( const char *team );
-void        BOT_RemoveBot( const char *name );
-void        BOT_Respawn( edict_t *ent );
+void        AI_SpawnBot(const char *team);
+void        AI_RemoveBot(const char *name);
+void        AI_RemoveBots();
+void        AI_Respawn(edict_t *ent);
 
 void        AI_Cheat_NoTarget( edict_t *ent );
 

@@ -11,7 +11,7 @@
 class AiBaseBrain: public AiFrameAwareUpdatable
 {
     friend class Ai;
-    friend class AiGametypeBrain;
+    friend class AiManager;
     friend class AiBaseTeamBrain;
 protected:
     edict_t *self;
@@ -76,7 +76,7 @@ protected:
 
     void PickLongTermGoal(const Goal *currLongTermGoal);
     void PickShortTermGoal(const Goal *currLongTermGoal);
-    void ClearLongAndShortTermGoal(const Goal *pickedGoal);
+    void CancelLongAndShortTermGoal(const Goal *canceledGoal);
     void SetShortTermGoal(NavEntity *navEntity);
     void SetLongTermGoal(NavEntity *navEntity);
     // Overriding method should call this one

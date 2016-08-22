@@ -25,18 +25,6 @@ in NO WAY supported by Steve Yeager.
 
 #include "ai_local.h"
 
-void AI_Cheat_NoTarget( edict_t *ent )
-{
-	if( !sv_cheats->integer )
-		return;
-
-	ent->flags ^= FL_NOTARGET;
-	if( ent->flags & FL_NOTARGET )
-		G_PrintMsg( ent, "Bot Notarget ON\n" );
-	else
-		G_PrintMsg( ent, "Bot Notarget OFF\n" );
-}
-
 //==========================================
 // AITools_DrawLine
 // Just so I don't hate to write the event every time
