@@ -1531,10 +1531,47 @@ void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
     if (MayApplyCombatDash())
         ucmd->buttons |= BUTTON_SPECIAL;
 
-    // Copy cached or updated key directions to ucmd
-    ucmd->forwardmove = combatMovePushes[0];
-    ucmd->sidemove = combatMovePushes[1];
-    ucmd->upmove = combatMovePushes[2];
+    if (self->groundentity)
+    {
+        ucmd->forwardmove = combatMovePushes[0];
+        ucmd->sidemove = combatMovePushes[1];
+        ucmd->upmove = combatMovePushes[2];
+        if (!(ucmd->buttons & BUTTON_SPECIAL))
+            ApplyCheatingGroundAcceleration(ucmd);
+    }
+    else
+    {
+        // Release forward button in air to use aircontrol
+        if (ucmd->sidemove != 0)
+            ucmd->forwardmove = 0;
+    }
+}
+
+void Bot::ApplyCheatingGroundAcceleration(const usercmd_t *ucmd)
+{
+    vec3_t forward, right;
+    AngleVectors(self->s.angles, forward, right, nullptr);
+    
+    float factor = 500.0f * game.frametime * Skill();
+    VectorScale(forward, factor * ucmd->forwardmove, forward);
+    VectorScale(right, factor * ucmd->sidemove, right);
+    
+    VectorAdd(self->velocity, forward, self->velocity);
+    VectorAdd(self->velocity, right, self->velocity);
+
+    float squareSpeed = VectorLengthSquared(self->velocity);
+    if (squareSpeed > 1)
+    {
+        float speed = 1.09f / Q_RSqrt(squareSpeed);
+        float maxGroundSpeed = self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED];
+        if (speed > maxGroundSpeed)
+        {
+            // Normalize current direction
+            VectorScale(self->velocity, 1.0f / speed, self->velocity);
+            // Set current velocity magnitude to maxGroundSpeed
+            VectorScale(self->velocity, maxGroundSpeed, self->velocity);
+        }
+    }
 }
 
 void Bot::UpdateCombatMovePushes()
