@@ -90,7 +90,7 @@ inline bool IsCarrier(const edict_t *ent)
     return ent && ent->r.client && ent->s.effects & EF_CARRIER;
 }
 
-float DamageToKill(const edict_t *client, float armorProtection, float armorDegradation);
+float DamageToKill(const edict_t *ent, float armorProtection, float armorDegradation);
 
 class Enemy
 {
@@ -308,9 +308,9 @@ protected:
 
     inline float DamageToBeKilled() const { return damageToBeKilled; }
 
-    inline static float DamageToKill(const edict_t *client)
+    inline static float DamageToKill(const edict_t *ent)
     {
-        return ::DamageToKill(client, g_armor_protection->value, g_armor_degradation->value);
+        return ::DamageToKill(ent, g_armor_protection->value, g_armor_degradation->value);
     }
 
     inline float AvgSkill() const { return avgSkill; }

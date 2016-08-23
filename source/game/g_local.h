@@ -1412,6 +1412,7 @@ struct edict_s
 	moveinfo_t moveinfo;        // func movers movement
 
 	ai_handle_t *ai;     //MbotGame
+	float aiIntrinsicEnemyWeight;
 
 	snap_edict_t snap; // information that is cleared each frame snap
 

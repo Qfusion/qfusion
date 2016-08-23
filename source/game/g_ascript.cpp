@@ -2559,6 +2559,8 @@ static const asProperty_t gedict_Properties[] =
 	{ ASLIB_PROPERTY_DECL(int, mass), ASLIB_FOFFSET(edict_t, mass) },
 	{ ASLIB_PROPERTY_DECL(uint, timeStamp), ASLIB_FOFFSET(edict_t, timeStamp) },
 
+	{ ASLIB_PROPERTY_DECL(float, aiIntrinsicEnemyWeight), ASLIB_FOFFSET(edict_t, aiIntrinsicEnemyWeight) },
+
 	{ ASLIB_PROPERTY_DECL(entThink @, think), ASLIB_FOFFSET(edict_t, asThinkFunc ) },
 	{ ASLIB_PROPERTY_DECL(entTouch @, touch), ASLIB_FOFFSET(edict_t, asTouchFunc ) },
 	{ ASLIB_PROPERTY_DECL(entUse @, use), ASLIB_FOFFSET(edict_t, asUseFunc ) },
