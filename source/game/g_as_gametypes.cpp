@@ -33,8 +33,12 @@ static void GT_ResetScriptData( void )
 	level.gametype.scoreboardMessageFunc = NULL;
 	level.gametype.selectSpawnPointFunc = NULL;
 	level.gametype.clientCommandFunc = NULL;
-	level.gametype.botStatusFunc = NULL;
 	level.gametype.shutdownFunc = NULL;
+
+	level.gametype.botWouldDropHealthFunc = NULL;
+	level.gametype.botDropHealthFunc = NULL;
+	level.gametype.botWouldDropArmorFunc = NULL;
+	level.gametype.botDropArmorFunc = NULL;
 }
 
 void GT_asShutdownScript( void )
@@ -317,32 +321,6 @@ bool GT_asCallGameCommand( gclient_t *client, const char *cmd, const char *args,
 	return ctx->GetReturnByte() == 0 ? false : true;
 }
 
-//"bool GT_UpdateBotStatus( Entity @ent )"
-bool GT_asCallBotStatus( edict_t *ent )
-{
-	int error;
-	asIScriptContext *ctx;
-
-	if( !level.gametype.botStatusFunc )
-		return false; // should have a hardcoded backup
-
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
-
-	error = ctx->Prepare( static_cast<asIScriptFunction *>(level.gametype.botStatusFunc) );
-	if( error < 0 ) 
-		return false;
-
-	// Now we need to pass the parameters to the script function.
-	ctx->SetArgObject( 0, ent );
-
-	error = ctx->Execute();
-	if( G_ExecutionErrorReport( error ) )
-		GT_asShutdownScript();
-
-	// Retrieve the return from the context
-	return ctx->GetReturnByte() == 0 ? false : true;
-}
-
 //"void GT_Shutdown()"
 void GT_asCallShutdown( void )
 {
@@ -361,6 +339,65 @@ void GT_asCallShutdown( void )
 	error = ctx->Execute();
 	if( G_ExecutionErrorReport( error ) )
 		GT_asShutdownScript();
+}
+
+static bool CallBotWouldDropFunc(const edict_t *ent, void *func)
+{
+	if (!func || !angelExport)
+		return false;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction *>(func));
+	if ( error < 0 )
+		return false;
+
+	ctx->SetArgObject( 0, const_cast<edict_t *>(ent) );
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+		GT_asShutdownScript();
+
+	if (error < 0)
+		return false;
+
+	return ctx->GetReturnByte() != 0;
+}
+
+static void CallBotDropFunc(const edict_t *ent, void *func)
+{
+	if (!func || !angelExport)
+		return;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction *>(func));
+	if ( error < 0 )
+		return;
+
+	ctx->SetArgObject( 0, const_cast<edict_t *>(ent) );
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+		GT_asShutdownScript();
+}
+
+bool GT_asBotWouldDropHealth(const edict_t *ent)
+{
+	return CallBotWouldDropFunc(ent, level.gametype.botWouldDropHealthFunc);
+}
+
+void GT_asBotDropHealth( edict_t *ent )
+{
+	return CallBotDropFunc(ent, level.gametype.botDropHealthFunc);
+}
+
+bool GT_asBotWouldDropArmor(const edict_t *ent)
+{
+	return CallBotWouldDropFunc(ent, level.gametype.botWouldDropArmorFunc);
+}
+
+void GT_asBotDropArmor( edict_t *ent )
+{
+	return CallBotDropFunc(ent, level.gametype.botDropArmorFunc);
 }
 
 static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
@@ -473,9 +510,39 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "bool GT_UpdateBotStatus( Entity @ent )";
-	level.gametype.botStatusFunc = asModule->GetFunctionByDecl( fdeclstr );
-	if( !level.gametype.botStatusFunc )
+	fdeclstr = "bool GT_BotWouldDropHealth( Entity @ent )";
+	level.gametype.botWouldDropHealthFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.botWouldDropHealthFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "void GT_BotDropHealth( Entity @ent )";
+	level.gametype.botDropHealthFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.botDropHealthFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "bool GT_BotWouldDropArmor( Entity @ent )";
+	level.gametype.botWouldDropArmorFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.botWouldDropArmorFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "void GT_BotDropArmor( Entity @ent )";
+	level.gametype.botDropArmorFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.botDropArmorFunc )
 	{
 		if( developer->integer || sv_cheats->integer )
 			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );

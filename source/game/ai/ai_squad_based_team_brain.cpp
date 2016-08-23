@@ -429,17 +429,12 @@ static void InitWeaponDefHelpers()
     areWeaponDefHelpersInitialized = true;
 }
 
-void AiSquad::CheckMembersInventory()
+int AiSquad::FindBotWeaponsTiers(int *maxBotWeaponTiers) const
 {
-    if (!(level.gametype.dropableItemsMask & (IT_WEAPON|IT_AMMO)))
-        return;
-
     InitWeaponDefHelpers();
 
-    // i-th bot has best weapon of tier maxBotWeaponTiers[i]
-    int maxBotWeaponTiers[MAX_SIZE];
     std::fill_n(maxBotWeaponTiers, MAX_SIZE, 0);
-    // Worst weapon tier among all squad bots
+    // Lowest best weapon tier among all squad bots
     int minBotWeaponTier = 3;
 
     for (unsigned botNum = 0; botNum < bots.size(); ++botNum)
@@ -452,27 +447,99 @@ void AiSquad::CheckMembersInventory()
                 if (weaponAmmoTag == AMMO_NONE)
                     continue;
                 if (bots[botNum]->Inventory()[weaponAmmoTag] > weaponDefs[weapon]->firedef.ammo_low)
-                    if (maxBotWeaponTiers[botNum] < tiersForWeapon[weapon])
-                        maxBotWeaponTiers[botNum] = tiersForWeapon[weapon];
+                if (maxBotWeaponTiers[botNum] < tiersForWeapon[weapon])
+                    maxBotWeaponTiers[botNum] = tiersForWeapon[weapon];
             }
         }
         if (minBotWeaponTier > maxBotWeaponTiers[botNum])
             minBotWeaponTier = maxBotWeaponTiers[botNum];
     }
 
-    // We try to skip expensive ShouldNotDropWeaponsNow() call by doing this cheap test first
-    if (minBotWeaponTier > 2)
+    return minBotWeaponTier;
+}
+
+int AiSquad::FindLowestBotHealth() const
+{
+    int result = bots[0]->Health();
+    for (unsigned botNum = 1; botNum < bots.size(); ++botNum)
+        if (bots[botNum]->Health() < result)
+            result = bots[botNum]->Health();
+
+    return result;
+}
+
+int AiSquad::FindLowestBotArmor() const
+{
+    int result = bots[0]->Armor();
+    for (unsigned botNum = 1; botNum < bots.size(); ++botNum)
+        if (bots[botNum]->Armor() < result)
+            result = bots[botNum]->Armor();
+
+    return result;
+}
+
+bool AiSquad::FindHealthSuppliers(bool wouldSupplyHealth[MAX_SIZE]) const
+{
+    bool result = false;
+    for (unsigned i = 0; i < bots.size(); ++i)
+    {
+        wouldSupplyHealth[i] = bots[i]->CanAndWouldDropHealth();
+        result |= wouldSupplyHealth[i];
+    }
+    return result;
+}
+
+bool AiSquad::FindArmorSuppliers(bool wouldSupplyArmor[MAX_SIZE]) const
+{
+    bool result = false;
+    for (unsigned i = 0; i < bots.size(); ++i)
+    {
+        wouldSupplyArmor[i] = bots[i]->CanAndWouldDropArmor();
+        result |= wouldSupplyArmor[i];
+    }
+    return result;
+}
+
+void AiSquad::CheckMembersInventory()
+{
+    // In this function we try to do cheap test first to reject expensive calls early
+
+    // i-th bot has best weapon of tier maxBotWeaponTiers[i]
+    int maxBotWeaponTiers[MAX_SIZE];
+    bool canDropWeapons = false;
+    bool shouldDropWeapons = false;
+    if (level.gametype.dropableItemsMask & (IT_WEAPON|IT_AMMO))
+    {
+        int minBotWeaponTier = FindBotWeaponsTiers(maxBotWeaponTiers);
+        shouldDropWeapons = minBotWeaponTier <= 2;
+        canDropWeapons = true;
+    }
+
+    bool shouldDropHealth = FindLowestBotHealth() < 75;
+    bool shouldDropArmor = FindLowestBotArmor() < 50;
+
+    if (!shouldDropWeapons && !shouldDropHealth && !shouldDropArmor)
         return;
 
-    if (ShouldNotDropWeaponsNow())
+    bool wouldBotDropHealth[MAX_SIZE];
+    bool wouldDropHealth = false;
+    if (shouldDropHealth && (level.gametype.dropableItemsMask & IT_HEALTH))
+        wouldDropHealth = FindHealthSuppliers(wouldBotDropHealth);
+
+    bool wouldBotDropArmor[MAX_SIZE];
+    bool wouldDropArmor = false;
+    if (shouldDropArmor && (level.gametype.dropableItemsMask & IT_ARMOR))
+        wouldDropArmor = FindArmorSuppliers(wouldBotDropArmor);
+
+    if (!shouldDropWeapons && !wouldDropHealth && !wouldDropArmor)
+        return;
+
+    // This is a very expensive call
+    if (ShouldNotDropItemsNow())
         return;
 
     for (unsigned botNum = 0; botNum < bots.size(); ++botNum)
     {
-        // Bot has a weapon good enough
-        if (maxBotWeaponTiers[botNum] > 2)
-            continue;
-
         // We can't set special goal immediately (a dropped entity must touch a solid first)
         // For this case, we just prevent dropping for this bot for 1000 ms
         if (level.time - lastDroppedForBotTimestamps[botNum] < 1000)
@@ -482,11 +549,34 @@ void AiSquad::CheckMembersInventory()
         if (bots[botNum]->HasSpecialGoal() && bots[botNum]->IsSpecialGoalSetBy(this))
             continue;
 
-        RequestWeaponAndAmmoDrop(botNum, maxBotWeaponTiers);
+        bool needsWeapon = maxBotWeaponTiers[botNum] <= 2;
+        // TODO: Check player class abilities
+        bool needsHealth = bots[botNum]->Health() < 75;
+        bool needsArmor = bots[botNum]->Armor() < 50;
+
+        // Skip expensive FindSupplierCandidates() call by doing this cheap test first
+        if (!needsWeapon && !needsHealth && !needsArmor)
+            continue;
+
+        StaticVector<unsigned, MAX_SIZE - 1> supplierCandidates;
+        FindSupplierCandidates(botNum, supplierCandidates);
+
+        // Do not do simultaneous drops by different bots.
+        // In theory dropping health, armor and weapon+ammo by a single bot is OK
+        // but its unlikely that there are player classes capable of doing that.
+
+        if (needsHealth && wouldDropHealth && RequestHealthDrop(botNum, wouldBotDropHealth, supplierCandidates))
+            continue;
+
+        if (needsWeapon && canDropWeapons && RequestWeaponAndAmmoDrop(botNum, maxBotWeaponTiers, supplierCandidates))
+            continue;
+
+        if (needsArmor && wouldDropArmor && RequestArmorDrop(botNum, wouldBotDropArmor, supplierCandidates))
+            continue;
     }
 }
 
-bool AiSquad::ShouldNotDropWeaponsNow() const
+bool AiSquad::ShouldNotDropItemsNow() const
 {
     // First, compute squad AABB
     vec3_t mins = { +999999, +999999, +999999 };
@@ -672,11 +762,8 @@ void AiSquad::SetDroppedEntityAsBotGoal(edict_t *ent)
     AI_AddNavEntity(ent, (ai_nav_entity_flags)(AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED));
 }
 
-void AiSquad::RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponTiers)
+bool AiSquad::RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponTiers, Suppliers &supplierCandidates)
 {
-    StaticVector<unsigned, MAX_SIZE - 1> bestSuppliers;
-    FindSupplierCandidates(botNum, bestSuppliers);
-
     // Should be set to a first chosen supplier's botNum
     // Further drop attempts should be made only for this bot.
     // (Items should be dropped from the same origin to be able to set a common movement goal)
@@ -710,14 +797,20 @@ void AiSquad::RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponT
                 }
                 else
                 {
-                    for (unsigned mateNum: bestSuppliers)
+                    for (unsigned mateNum: supplierCandidates)
                     {
+                        // We have checked this once during supplier candidates selection
+                        // mostly for suppliers selection algorithm optimization,
+                        // but this may have changed during weapon/health/armor drops in this frame.
+                        if (level.time - lastDroppedByBotTimestamps[mateNum] < 1000)
+                            continue;
+
                         dropped = TryDropAmmo(botNum, mateNum, currWeapon);
-                        if (dropped)
-                        {
-                            chosenSupplier = mateNum;
-                            break;
-                        }
+                        if (!dropped)
+                            continue;
+
+                        chosenSupplier = mateNum;
+                        break;
                     }
                 }
             }
@@ -732,14 +825,17 @@ void AiSquad::RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponT
             }
             else
             {
-                for (unsigned mateNum: bestSuppliers)
+                for (unsigned mateNum: supplierCandidates)
                 {
+                    if (level.time - lastDroppedByBotTimestamps[mateNum] < 1000)
+                        continue;
+
                     dropped = TryDropWeapon(botNum, mateNum, currWeapon, maxBotWeaponTiers);
-                    if (dropped)
-                    {
-                        chosenSupplier = mateNum;
-                        break;
-                    }
+                    if (!dropped)
+                        continue;
+
+                    chosenSupplier = mateNum;
+                    break;
                 }
             }
         }
@@ -758,9 +854,11 @@ void AiSquad::RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponT
             }
             droppedItemsCount++;
             if (droppedItemsCount == 3)
-                return;
+                return true;
         }
     }
+
+    return droppedItemsCount > 0;
 }
 
 edict_t *AiSquad::TryDropAmmo(unsigned botNum, unsigned supplierNum, int weapon)
@@ -819,6 +917,37 @@ edict_t *AiSquad::TryDropWeapon(unsigned botNum, unsigned supplierNum, int weapo
     if (dropped)
         G_Say_Team(bots[supplierNum]->Self(), va("Dropped %%d at %%D for %s", Nick(bots[botNum]->Self())), false);
     return dropped;
+}
+
+bool AiSquad::RequestHealthDrop(unsigned botNum, bool wouldSupplyHealth[MAX_SIZE], Suppliers &suppliers)
+{
+    return RequestDrop(botNum, wouldSupplyHealth, suppliers, &Bot::DropHealth);
+}
+
+bool AiSquad::RequestArmorDrop(unsigned botNum, bool wouldSupplyArmor[MAX_SIZE], Suppliers &suppliers)
+{
+    return RequestDrop(botNum, wouldSupplyArmor, suppliers, &Bot::DropArmor);
+}
+
+bool AiSquad::RequestDrop(unsigned botNum, bool wouldSupply[MAX_SIZE], Suppliers &suppliers, void (Bot::*dropFunc)())
+{
+    for (const unsigned supplierNum: suppliers)
+    {
+        if (!wouldSupply[supplierNum])
+            continue;
+        // We have checked this once during supplier candidates selection
+        // mostly for suppliers selection algorithm optimization,
+        // but this may have changed during weapon/health/armor drops in this frame.
+        if (level.time - lastDroppedByBotTimestamps[supplierNum] < 1000)
+            continue;
+
+        (bots[supplierNum]->*dropFunc)();
+        lastDroppedByBotTimestamps[supplierNum] = level.time;
+        lastDroppedForBotTimestamps[botNum] = level.time;
+        G_Say_Team(bots[supplierNum]->Self(), va("Dropped %%d at %%D for %s", Nick(bots[botNum]->Self())), false);
+        return true;
+    }
+    return false;
 }
 
 void AiSquad::ReleaseBotsTo(StaticVector<Bot *, MAX_CLIENTS> &orphans)

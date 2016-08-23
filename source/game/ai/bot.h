@@ -104,6 +104,31 @@ public:
     typedef void (*AlertCallback)(void *receiver, Bot *bot, int id, float alertLevel);
     void EnableAutoAlert(int id, const Vec3 &spotOrigin, float spotRadius, AlertCallback callback, void *receiver);
     void DisableAutoAlert(int id);
+
+    inline int Health() const
+    {
+        return self->r.client->ps.stats[STAT_HEALTH];
+    }
+    inline int Armor() const
+    {
+        return self->r.client->ps.stats[STAT_ARMOR];
+    }
+    inline bool CanAndWouldDropHealth() const
+    {
+        return GT_asBotWouldDropHealth(self);
+    }
+    inline void DropHealth()
+    {
+        GT_asBotDropHealth(self);
+    }
+    inline bool CanAndWouldDropArmor() const
+    {
+        return GT_asBotWouldDropArmor(self);
+    }
+    void DropArmor()
+    {
+        GT_asBotDropArmor(self);
+    }
 protected:
     virtual void Frame() override;
     virtual void Think() override;

@@ -59,11 +59,29 @@ private:
     unsigned lastDroppedForBotTimestamps[MAX_SIZE];
 
     void CheckMembersInventory();
-    bool ShouldNotDropWeaponsNow() const;
-    void RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponTiers);
+
+    // Returns lowest best weapon tier among all squad bots
+    int FindBotWeaponsTiers(int maxBotWeaponTiers[MAX_SIZE]) const;
+    int FindLowestBotHealth() const;
+    int FindLowestBotArmor() const;
+    // Returns true if at least a single bot can and would drop health
+    bool FindHealthSuppliers(bool wouldSupplyHealth[MAX_SIZE]) const;
+    // Returns true if at least a single bot can and would drop armor
+    bool FindArmorSuppliers(bool wouldSupplyArmor[MAX_SIZE]) const;
+
+    bool ShouldNotDropItemsNow() const;
 
     typedef StaticVector<unsigned, AiSquad::MAX_SIZE - 1> Suppliers;
+    // maxBotWeaponTiers, wouldSupplyHealth, wouldSupplyArmor are global for all bots.
+    // Potential suppliers are selected for a single bot, best (nearest) suppliers first.
+    // Potential suppliers should be checked then against global capabilities mentioned above.
     void FindSupplierCandidates(unsigned botNum, Suppliers &result) const;
+
+    bool RequestWeaponAndAmmoDrop(unsigned botNum, const int *maxBotWeaponTiers, Suppliers &supplierCandidates);
+    bool RequestHealthDrop(unsigned botNum, bool wouldSupplyHealth[MAX_SIZE], Suppliers &suppliers);
+    bool RequestArmorDrop(unsigned botNum, bool wouldSupplyArmor[MAX_SIZE], Suppliers &suppliers);
+
+    bool RequestDrop(unsigned botNum, bool wouldSupply[MAX_SIZE], Suppliers &suppliers, void (Bot::*dropFunc)());
 
     edict_t *TryDropAmmo(unsigned botNum, unsigned supplierNum, int weapon);
     edict_t *TryDropWeapon(unsigned botNum, unsigned supplierNum, int weapon, const int *maxBotWeaponTiers);

@@ -137,6 +137,11 @@ void AI_ClearBotExternalEntityWeights( ai_handle_t *ai );
 // If a weight is negative, the ent will be ignored in search for a goal.
 void AI_SetBotExternalEntityWeight( ai_handle_t *ai, edict_t *ent, float weight );
 
+bool GT_asBotWouldDropHealth( const edict_t *ent );
+void GT_asBotDropHealth( edict_t *ent );
+bool GT_asBotWouldDropArmor( const edict_t *ent );
+void GT_asBotDropArmor( edict_t *ent );
+
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );
 void        G_SpawnAI( edict_t *ent, float skillLevel = 0.1f );
