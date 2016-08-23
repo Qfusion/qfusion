@@ -71,3 +71,26 @@ void AI_FailWithv(const char *tag, const char *format, va_list va)
     abort();
 }
 
+void AITools_DrawLine( const vec3_t origin, const vec3_t dest )
+{
+    edict_t	*event;
+
+    event = G_SpawnEvent( EV_GREEN_LASER, 0, const_cast<float *>(origin) );
+    event->r.svflags = SVF_TRANSMITORIGIN2;
+    VectorCopy( dest, event->s.origin2 );
+    G_SetBoundsForSpanEntity( event, 8 );
+    GClip_LinkEntity( event );
+}
+
+void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, int parm )
+{
+    edict_t	*event;
+
+    event = G_SpawnEvent( EV_PNODE, parm, const_cast<float *>(origin) );
+    event->s.colorRGBA = color;
+    event->r.svflags = SVF_TRANSMITORIGIN2;
+    VectorCopy( dest, event->s.origin2 );
+    G_SetBoundsForSpanEntity( event, 8 );
+    GClip_LinkEntity( event );
+}
+
