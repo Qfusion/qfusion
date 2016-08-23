@@ -292,6 +292,7 @@ private:
     void MakeEvadeMovePushes(usercmd_t *ucmd);
     bool MayApplyCombatDash();
     Vec3 MakeEvadeDirection(const Danger &danger);
+    void ApplyCheatingGroundAcceleration(const usercmd_t *ucmd);
 
     void SetupCoarseFireTarget(vec3_t fire_origin, vec3_t target);
     // Returns true if current look angle worth pressing attack
