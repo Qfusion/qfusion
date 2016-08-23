@@ -125,9 +125,17 @@ public:
     {
         return GT_asBotWouldDropArmor(self);
     }
-    void DropArmor()
+    inline void DropArmor()
     {
         GT_asBotDropArmor(self);
+    }
+    inline float PlayerClassDefenceScore() const
+    {
+        return GT_asBotPlayerClassDefenceScore(self);
+    }
+    inline float PlayerClassOffenceScore() const
+    {
+        return GT_asBotPlayerClassOffenceScore(self);
     }
 protected:
     virtual void Frame() override;
