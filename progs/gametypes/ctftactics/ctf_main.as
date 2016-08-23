@@ -365,6 +365,44 @@ void GT_BotDropArmor( Entity @ent )
         CTFT_DropArmor( ent.client, "Yellow Armor" );
 }
 
+float GT_BotPlayerClassOffenceScore( Entity @ent )
+{
+    if ( @ent != null || @ent.client != null )
+    {
+        switch ( GetPlayer( ent.client ).playerClass.tag )
+        {
+            case PLAYERCLASS_GRUNT:
+                return 0.3f;
+            case PLAYERCLASS_MEDIC:
+                return 0.7f;
+            case PLAYERCLASS_RUNNER:
+                return 1.0f;
+            case PLAYERCLASS_ENGINEER:
+                return 0.0f;
+        }
+    }
+    return 0.5f;
+}
+
+float GT_BotPlayerClassDefenceScore( Entity @ent )
+{
+    if ( @ent != null || @ent.client != null )
+    {
+        switch ( GetPlayer( ent.client ).playerClass.tag )
+        {
+            case PLAYERCLASS_GRUNT:
+                return 0.9f;
+            case PLAYERCLASS_MEDIC:
+                return 0.5f;
+            case PLAYERCLASS_RUNNER:
+                return 0.0f;
+            case PLAYERCLASS_ENGINEER:
+                return 1.0f;
+        }
+    }
+    return 0.5f;
+}
+
 void CTFT_UpdateBotsExtraGoals() 
 {
     Entity @ent;
