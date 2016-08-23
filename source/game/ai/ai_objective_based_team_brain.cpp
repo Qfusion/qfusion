@@ -357,7 +357,7 @@ void AiObjectiveBasedTeamBrain::ComputeDefenceRawScore(Candidates &candidates)
         weaponScore /= (WEAP_TOTAL - WEAP_GUNBLADE - 1);
         weaponScore = 1.0f / Q_RSqrt(weaponScore + 0.001f);
 
-        botAndScore.rawScore = resistanceScore * weaponScore;
+        botAndScore.rawScore = resistanceScore * weaponScore * botAndScore.bot->ai->botRef->PlayerClassDefenceScore();
     }
 }
 
@@ -420,12 +420,13 @@ void AiObjectiveBasedTeamBrain::ComputeOffenceRawScore(Candidates &candidates)
 {
     for (auto &botAndScore: candidates)
     {
-        float resistanceScore = DamageToKill(botAndScore.bot, g_armor_protection->value, g_armor_degradation->value);
+        float score = DamageToKill(botAndScore.bot, g_armor_protection->value, g_armor_degradation->value);
         if (HasShell(botAndScore.bot))
-            resistanceScore *= 4.0f;
-        botAndScore.rawScore = resistanceScore;
+            score *= 4.0f;
         if (HasQuad(botAndScore.bot))
-            botAndScore.rawScore *= 4.0f;
+            score *= 4.0f;
+        score *= botAndScore.bot->ai->botRef->PlayerClassOffenceScore();
+        botAndScore.rawScore = score;
     }
 }
 
