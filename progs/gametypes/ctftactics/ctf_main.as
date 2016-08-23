@@ -325,6 +325,46 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
+bool GT_BotWouldDropHealth( Entity @ent )
+{
+    if ( @ent == null || @ent.client == null )
+        return false;
+
+    if ( ( ent.effects & EF_CARRIER ) != 0 )
+        return false;
+
+    if ( GetPlayer( ent.client ).playerClass.tag != PLAYERCLASS_MEDIC )
+        return false;
+
+    return ent.health > 95;
+}
+
+void GT_BotDropHealth( Entity @ent )
+{
+    if ( @ent != null )
+        CTFT_DropHealth( ent.client );
+}
+
+bool GT_BotWouldDropArmor( Entity @ent )
+{
+    if ( @ent == null || @ent.client == null )
+        return false;
+
+    if ( ( ent.effects & EF_CARRIER ) != 0 )
+        return false;
+
+    if ( GetPlayer( ent.client ).playerClass.tag != PLAYERCLASS_GRUNT )
+        return false;
+
+    return ent.client.armor > 65;
+}
+
+void GT_BotDropArmor( Entity @ent )
+{
+    if ( @ent != null )
+        CTFT_DropArmor( ent.client, "Yellow Armor" );
+}
+
 void CTFT_UpdateBotsExtraGoals() 
 {
     Entity @ent;
