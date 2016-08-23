@@ -150,7 +150,7 @@ inline const char *WeapName(int weapon)
 //----------------------------------------------------------
 void Use_Plat( edict_t *ent, edict_t *other, edict_t *activator );
 
-void AITools_DrawLine( vec3_t origin, vec3_t dest );
-void AITools_DrawColorLine( vec3_t origin, vec3_t dest, int color, int parm );
+void AITools_DrawLine( const vec3_t origin, const vec3_t dest );
+void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, int parm );
 
 #endif
