@@ -3,13 +3,16 @@
 
 constexpr float MAX_ENEMY_WEIGHT = 5.0f;
 
-float DamageToKill(const edict_t *client, float armorProtection, float armorDegradation)
+float DamageToKill(const edict_t *ent, float armorProtection, float armorDegradation)
 {
-    if (!client || !client->r.client)
-        return 0.0f;
+    if (!ent || !ent->takedamage)
+        return std::numeric_limits<float>::infinity();
 
-    float health = client->r.client->ps.stats[STAT_HEALTH];
-    float armor = client->r.client->ps.stats[STAT_ARMOR];
+    if (!ent->r.client)
+        return ent->health;
+
+    float health = ent->r.client->ps.stats[STAT_HEALTH];
+    float armor = ent->r.client->ps.stats[STAT_ARMOR];
 
     if (!armor)
         return health;
@@ -162,6 +165,12 @@ float AiBaseEnemyPool::ComputeRawEnemyWeight(const edict_t *enemy)
         return 0.0;
 
     float weight = 0.5f;
+    if (!enemy->r.client)
+    {
+        weight = enemy->aiIntrinsicEnemyWeight;
+        if (weight <= 0.0f)
+            return 0.0f;
+    }
 
     if (unsigned time = LastAttackedByTime(enemy))
     {

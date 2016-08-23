@@ -219,10 +219,9 @@ void Bot::RegisterVisibleEnemies()
     // and in the worst case mentioned above it does not act weird from player POV and prevents server hang up.
     StaticVector<EntAndDistance, MAX_CLIENTS> candidateTargets;
 
-    // Atm clients cannot be goal entities, so instead of iterating all goal ents we iterate just over all clients
-    for (int i = 0; i < gs.maxclients; ++i)
+    for (int i = 1; i < game.numentities; ++i)
     {
-        edict_t *ent = PLAYERENT(i);
+        edict_t *ent = game.edicts + i;
         if (botBrain.MayNotBeFeasibleEnemy(ent))
             continue;
 

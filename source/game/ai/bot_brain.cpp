@@ -112,11 +112,8 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
     activeEnemyPool = &botEnemyPool;
     SetTag(bot->r.client->netname);
 
-    // Set a default ignore attitude to a world and non-client entities
-    attitude[0] = 0;
-    memset(attitude + gs.maxclients, 0, sizeof(attitude));
-    // Set a default negative attitude to all clients
-    std::fill_n(attitude + 1, gs.maxclients, -1);
+    // Set a negative attitude to other entities
+    std::fill_n(attitude, MAX_EDICTS, -1);
     // Save the attitude values as an old attitude values
     static_assert(sizeof(attitude) == sizeof(oldAttitude), "");
     memcpy(oldAttitude, attitude, sizeof(attitude));
@@ -1709,19 +1706,22 @@ float BotBrain::GetEffectiveOffensiveness() const
 
 bool BotBrain::MayNotBeFeasibleEnemy(const edict_t *ent) const
 {
-    // Only valid clients may be feasible enemies
-    if (!ent->r.inuse || !ent->r.client)
+    if (!ent->r.inuse)
         return true;
-    // Skip non-spawned clients
+    // Skip non-clients that do not have positive intrinsic entity weight
+    if (!ent->r.client && ent->aiIntrinsicEnemyWeight <= 0.0f)
+        return true;
+    // Skip ghosting entities
     if (G_ISGHOSTING(ent))
         return true;
-    // Skip chatting clients or "notarget" cheat users
+    // Skip chatting or notarget entities
     if (ent->flags & (FL_NOTARGET|FL_BUSY))
         return true;
     // Skip teammates. Note that team overrides attitude
     if (GS_TeamBasedGametype() && ent->s.team == self->s.team)
         return true;
-    // Skip entities that has a non-negative bot attitude
+    // Skip entities that has a non-negative bot attitude.
+    // Note that by default all entities have negative attitude.
     if (attitude[ENTNUM(const_cast<edict_t*>(ent))] >= 0)
         return true;
     // Skip the bot itself
