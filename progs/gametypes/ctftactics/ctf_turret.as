@@ -218,7 +218,12 @@ class cTurret
         this.bodyEnt.mass = 450;
         this.bodyEnt.takeDamage = 1;
         this.bodyEnt.nextThink = levelTime + 1;
-        this.bodyEnt.linkEntity();
+        // Allow bots to lock on the turret body. 
+        // Note that team overrides intrinsic enemy weight, 
+        // so bots won't threat turrets of same team as enemies
+        this.bodyEnt.aiIntrinsicEnemyWeight = 3.5f;  
+        this.bodyEnt.linkEntity();      
+
 
         // the count field will be used to store the index of the cTurret object
         // int the list. If the object is part of the list, ofc. This is just for
