@@ -387,12 +387,8 @@ void AiObjectiveBasedTeamBrain::AssignAttackers(Candidates &candidates)
 
     for (unsigned spotNum = 0; spotNum < offenceSpots.size(); ++spotNum)
     {
-        ComputeOffenceScore(candidates, spotNum);
-        std::sort(candidates.begin(), candidates.end());
-
         if (candidates.empty())
             break;
-
         // Compute effective bot defender scores for i-th defence spot
         ComputeOffenceScore(candidates, spotNum);
         // Sort candidates so best candidates are last
