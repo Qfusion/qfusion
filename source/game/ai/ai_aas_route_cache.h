@@ -374,7 +374,17 @@ public:
         return oldAndCurrAreaDisabledStatus[areaNum * 2] || (aasWorld.AreaSettings()[areaNum].areaflags & AREA_DISABLED);
     }
 
-    void SetDisabledRegions(const Vec3 *spotAbsMins, const Vec3 *spotAbsMaxs, int numSpots);
+    // For numSpots regions disables all areas in region for routing.
+    // An i-th region is defined by absolute bounds mins[i], maxs[i].
+    // Note than bounding box of areas disabled for region is wider than the defined region itself.
+    // In order to prevent blocking important areas
+    // regions will not be disabled if any of a region areas contains noBlockPoint.
+    inline void SetDisabledRegions(const Vec3 *mins, const Vec3 *maxs, int numRegions, const vec3_t noBlockPoint)
+    {
+        SetDisabledRegions(mins, maxs, numRegions, aasWorld.PointAreaNum(noBlockPoint));
+    }
+
+    void SetDisabledRegions(const Vec3 *mins, const Vec3 *maxs, int numRegions, int noBlockAreaNum);
 };
 
 #endif

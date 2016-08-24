@@ -549,7 +549,7 @@ void BotBrain::UpdateBlockedAreasStatus()
     if (combatTask.advance && !combatTask.retreat)
     {
         // Reset all possibly blocked areas
-        RouteCache()->SetDisabledRegions(nullptr, nullptr, 0);
+        RouteCache()->SetDisabledRegions(nullptr, nullptr, 0, droppedToFloorAasAreaNum);
         return;
     }
 
@@ -590,7 +590,7 @@ void BotBrain::UpdateBlockedAreasStatus()
         }
     }
 
-    RouteCache()->SetDisabledRegions(&mins[0], &maxs[0], mins.size());
+    RouteCache()->SetDisabledRegions(&mins[0], &maxs[0], mins.size(), droppedToFloorAasAreaNum);
 }
 
 static constexpr float CLOSE_RANGE = 150.0f;
