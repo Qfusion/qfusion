@@ -569,7 +569,7 @@ void BotBrain::UpdateBlockedAreasStatus()
         if (squareDistance < 72.0f)
             continue;
         float distance = 1.0f / Q_RSqrt(squareDistance);
-        float side = 72.0f + 192.0f * BoundedFraction(distance - 72.0f, 384.0f);
+        float side = 24.0f + 96.0f * BoundedFraction(distance - 72.0f, 4 * 384.0f);
 
         // Try to drop an enemy origin to floor
         // TODO: AiGroundTraceCache interface forces using an actual enemy origin
