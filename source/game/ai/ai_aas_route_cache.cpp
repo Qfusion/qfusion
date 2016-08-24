@@ -283,7 +283,7 @@ void AiAasRouteCache::RemoveAllPortalsCache()
     }
 }
 
-void AiAasRouteCache::SetDisabledRegions(const Vec3 *spotAbsMins, const Vec3 *spotAbsMaxs, int numSpots)
+void AiAasRouteCache::SetDisabledRegions(const Vec3 *mins, const Vec3 *maxs, int numSpots, int noBlockAreaNum)
 {
     // (We try to aid data and instruction cache, so we do not do
     // any complicated control flow in loops and use several loops instead)
@@ -302,7 +302,16 @@ void AiAasRouteCache::SetDisabledRegions(const Vec3 *spotAbsMins, const Vec3 *sp
     for (int spotNum = 0, endNum = std::min(numSpots * 96, aasWorld.NumAreas()) / 96; spotNum < endNum; ++spotNum)
     {
         int *areasBuffer = currDisabledAreaNums + totalDisabledAreas;
-        totalDisabledAreas += aasWorld.BBoxAreas(spotAbsMins[spotNum], spotAbsMaxs[spotNum], areasBuffer, 96);
+        int numBBoxAreas = aasWorld.BBoxAreas(mins[spotNum], maxs[spotNum], areasBuffer, 96);
+        // Check whether these areas contains an area that should not be blocked.
+        // (We cannot just skip this area because in that case the area may become surrounded by disabled areas)
+        for (int i = 0; i < numBBoxAreas; ++i)
+        {
+            if (areasBuffer[i] == noBlockAreaNum)
+                goto nextSpot;
+        }
+        totalDisabledAreas += numBBoxAreas;
+    nextSpot:;
     }
 
     // Precache this reference for faster access
