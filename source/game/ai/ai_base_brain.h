@@ -125,6 +125,10 @@ private:
     // Returns true if current short-term goal (if any) is reachable
     bool SelectShortTermReachableGoals(const Goal *currShortTermGoal, const GoalCandidates &candidates,
                                        GoalCandidates &result);
+
+    bool MayConsiderGoalReachedAtTouch(const Goal *goal, const edict_t *touchedEntity) const;
+    bool MayConsiderGoalReachedAtRadius(const Goal *goal) const;
+    bool ShouldWaitForGoal(const Goal *goal) const;
 public:
     virtual ~AiBaseBrain() override {}
 

@@ -220,16 +220,27 @@ void AiBaseBrain::OnClearSpecialGoalRequested()
     specialGoal = nullptr;
 }
 
+bool AiBaseBrain::MayConsiderGoalReachedAtTouch(const Goal *goal, const edict_t *touchedEntity) const
+{
+    if (!goal)
+        return false;
+    if (!goal->ShouldBeReachedAtTouch())
+        return false;
+    return goal->IsBasedOnEntity(touchedEntity);
+}
+
 bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
 {
-    // Handle long-term goal first (this implies short-term goal handling too)
-    if (longTermGoal && longTermGoal->ShouldBeReachedAtTouch() && longTermGoal->IsBasedOnEntity(ent))
+    if (!ent)
+        return false;
+
+    if (MayConsiderGoalReachedAtTouch(longTermGoal, ent))
     {
         OnLongTermGoalReached();
         return true;
     }
 
-    if (shortTermGoal && longTermGoal->ShouldBeReachedAtTouch() && shortTermGoal->IsBasedOnEntity(ent))
+    if (MayConsiderGoalReachedAtTouch(shortTermGoal, ent))
     {
         OnShortTermGoalReached();
         return true;
@@ -240,7 +251,7 @@ bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
 
 bool AiBaseBrain::HandleSpecialGoalTouch(const edict_t *ent)
 {
-    if (specialGoal && specialGoal->ShouldBeReachedAtTouch() && specialGoal->IsBasedOnEntity(ent))
+    if (MayConsiderGoalReachedAtTouch(specialGoal, ent))
     {
         OnSpecialGoalReached();
         return true;
@@ -258,28 +269,30 @@ bool AiBaseBrain::IsCloseToAnyGoal() const
 
 constexpr float GOAL_PROXIMITY_THRESHOLD = 40.0f * 40.0f;
 
+bool AiBaseBrain::MayConsiderGoalReachedAtRadius(const Goal *goal) const
+{
+    if (!goal)
+        return false;
+    if (!goal->ShouldBeReachedAtRadius())
+        return false;
+    float radius = goal->RadiusOrDefault(GOAL_PROXIMITY_THRESHOLD);
+    return DistanceSquared(goal->Origin().Data(), self->s.origin) < radius * radius;
+}
+
 bool AiBaseBrain::TryReachGoalByProximity()
 {
     // Bots do not wait for these kind of goals atm, just check goal presence, kind and proximity
     // Check long-term goal first
-    if (longTermGoal && longTermGoal->ShouldBeReachedAtRadius())
+    if (MayConsiderGoalReachedAtRadius(longTermGoal))
     {
-        float radius = longTermGoal->RadiusOrDefault(GOAL_PROXIMITY_THRESHOLD);
-        if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
-        {
-            OnLongTermGoalReached();
-            return true;
-        }
+        OnLongTermGoalReached();
+        return true;
     }
 
-    if (shortTermGoal && shortTermGoal->ShouldBeReachedAtRadius())
+    if (MayConsiderGoalReachedAtRadius(shortTermGoal))
     {
-        float radius = shortTermGoal->RadiusOrDefault(GOAL_PROXIMITY_THRESHOLD);
-        if ((shortTermGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
-        {
-            OnShortTermGoalReached();
-            return true;
-        }
+        OnShortTermGoalReached();
+        return true;
     }
 
     return TryReachSpecialGoalByProximity();
@@ -287,49 +300,36 @@ bool AiBaseBrain::TryReachGoalByProximity()
 
 bool AiBaseBrain::TryReachSpecialGoalByProximity()
 {
-    if (specialGoal && specialGoal->ShouldBeReachedAtRadius())
+    if (MayConsiderGoalReachedAtRadius(specialGoal))
     {
-        float radius = specialGoal->RadiusOrDefault(GOAL_PROXIMITY_THRESHOLD);
-        if ((specialGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
-        {
-            OnSpecialGoalReached();
-            return true;
-        }
+        OnSpecialGoalReached();
+        return true;
     }
+    return false;
+}
+
+bool AiBaseBrain::ShouldWaitForGoal(const Goal *goal) const
+{
+    if (!goal)
+        return false;
+    float radius = GOAL_PROXIMITY_THRESHOLD;
+    if (DistanceSquared(goal->Origin().Data(), self->s.origin) > radius * radius)
+        return false;
+    if (goal->ShouldBeReachedOnEvent())
+        return true;
+    if (goal->SpawnTime() > level.time)
+        return true;
     return false;
 }
 
 bool AiBaseBrain::ShouldWaitForGoal() const
 {
-    if (longTermGoal && !longTermGoal->ShouldBeReachedAtRadius())
-    {
-        float radius = GOAL_PROXIMITY_THRESHOLD;
-        if ((longTermGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
-        {
-            if (longTermGoal->ShouldBeReachedOnEvent())
-                return true;
-            if (longTermGoal->SpawnTime() > level.time)
-                return true;
-        }
-    }
-
-    return ShouldWaitForSpecialGoal();
+    return ShouldWaitForGoal(longTermGoal) || ShouldWaitForSpecialGoal();
 }
 
 bool AiBaseBrain::ShouldWaitForSpecialGoal() const
 {
-    if (specialGoal && !specialGoal->ShouldBeReachedAtRadius())
-    {
-        float radius = GOAL_PROXIMITY_THRESHOLD;
-        if ((specialGoal->Origin() - self->s.origin).SquaredLength() < radius * radius)
-        {
-            if (specialGoal->ShouldBeReachedOnEvent())
-                return true;
-            if (specialGoal->SpawnTime() > level.time)
-                return true;
-        }
-    }
-    return false;
+    return ShouldWaitForGoal(specialGoal);
 }
 
 Vec3 AiBaseBrain::ClosestGoalOrigin() const
