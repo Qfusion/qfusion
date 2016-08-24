@@ -178,8 +178,10 @@ void AiObjectiveBasedTeamBrain::OnAlertReported(Bot *bot, int id, float alertLev
             else if (defenceSpots[i].alertTimeoutAt < level.time + 150)
                 defenceSpots[i].alertLevel = alertLevel;
 
-            // Keep alert state
-            defenceSpots[i].alertTimeoutAt = level.time + 1000;
+            // Keep alert state if an alert is present
+            // Note: bots may (and usually do) report zero alert level.
+            if (alertLevel > 0)
+                defenceSpots[i].alertTimeoutAt = level.time + 1000;
 
             if (oldAlertLevel + 0.3f < alertLevel)
             {
