@@ -359,7 +359,8 @@ void AiObjectiveBasedTeamBrain::ComputeDefenceRawScore(Candidates &candidates)
         weaponScore /= (WEAP_TOTAL - WEAP_GUNBLADE - 1);
         weaponScore = 1.0f / Q_RSqrt(weaponScore + 0.001f);
 
-        botAndScore.rawScore = resistanceScore * weaponScore * botAndScore.bot->ai->botRef->PlayerClassDefenceScore();
+        botAndScore.rawScore = resistanceScore * weaponScore *
+            botAndScore.bot->ai->botRef->PlayerDefenciveAbilitiesScore();
     }
 }
 
@@ -423,7 +424,7 @@ void AiObjectiveBasedTeamBrain::ComputeOffenceRawScore(Candidates &candidates)
             score *= 4.0f;
         if (HasQuad(botAndScore.bot))
             score *= 4.0f;
-        score *= botAndScore.bot->ai->botRef->PlayerClassOffenceScore();
+        score *= botAndScore.bot->ai->botRef->PlayerOffenciveAbilitiesScore();
         botAndScore.rawScore = score;
     }
 }

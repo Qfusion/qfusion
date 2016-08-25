@@ -146,8 +146,8 @@ void GT_asBotDropArmor( edict_t *ent );
 // Default score should be 0.5f, and it should be returned
 // when a GT script does not provide these function counterparts.
 // Note that offence and defence score are not complementary but independent.
-float GT_asBotPlayerClassOffenceScore(const edict_t *ent);
-float GT_asBotPlayerClassDefenceScore(const edict_t *ent);
+float GT_asPlayerOffenciveAbilitiesScore(const gclient_t *client);
+float GT_asPlayerDefenciveAbilitiesScore(const gclient_t *client);
 
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );

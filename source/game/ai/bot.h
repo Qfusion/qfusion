@@ -129,13 +129,13 @@ public:
     {
         GT_asBotDropArmor(self);
     }
-    inline float PlayerClassDefenceScore() const
+    inline float PlayerDefenciveAbilitiesScore() const
     {
-        return GT_asBotPlayerClassDefenceScore(self);
+        return GT_asPlayerDefenciveAbilitiesScore(self->r.client);
     }
-    inline float PlayerClassOffenceScore() const
+    inline float PlayerOffenciveAbilitiesScore() const
     {
-        return GT_asBotPlayerClassOffenceScore(self);
+        return GT_asPlayerOffenciveAbilitiesScore(self->r.client);
     }
 protected:
     virtual void Frame() override;
