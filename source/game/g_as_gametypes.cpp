@@ -39,8 +39,8 @@ static void GT_ResetScriptData( void )
 	level.gametype.botDropHealthFunc = NULL;
 	level.gametype.botWouldDropArmorFunc = NULL;
 	level.gametype.botDropArmorFunc = NULL;
-	level.gametype.botPlayerClassOffenceScore = NULL;
-	level.gametype.botPlayerClassDefenceScore = NULL;
+	level.gametype.playerOffenciveAbilitiesScoreFunc = NULL;
+	level.gametype.playerDefenciveAbilitiesScoreFunc = NULL;
 }
 
 void GT_asShutdownScript( void )
@@ -402,7 +402,7 @@ void GT_asBotDropArmor( edict_t *ent )
 	return CallBotDropFunc(ent, level.gametype.botDropArmorFunc);
 }
 
-static float CallBotPlayerClassScoreFunc(const edict_t *ent, void *func)
+static float CallBotPlayerAbilitiesScoreFunc(const gclient_t *client, void *func)
 {
 	if (!func || !angelExport)
 		return 0.5f;
@@ -412,7 +412,7 @@ static float CallBotPlayerClassScoreFunc(const edict_t *ent, void *func)
 	if ( error < 0 )
 		return 0.5f;
 
-	ctx->SetArgObject( 0, const_cast<edict_t *>(ent) );
+	ctx->SetArgObject( 0, const_cast<gclient_t *>(client) );
 
 	error = ctx->Execute();
 	if (G_ExecutionErrorReport(error))
@@ -424,14 +424,14 @@ static float CallBotPlayerClassScoreFunc(const edict_t *ent, void *func)
 	return ctx->GetReturnFloat();
 }
 
-float GT_asBotPlayerClassOffenceScore(const edict_t *ent)
+float GT_asPlayerOffenciveAbilitiesScore(const gclient_t *client)
 {
-	return CallBotPlayerClassScoreFunc(ent, level.gametype.botPlayerClassOffenceScore);
+	return CallBotPlayerAbilitiesScoreFunc(client, level.gametype.playerOffenciveAbilitiesScoreFunc);
 }
 
-float GT_asBotPlayerClassDefenceScore(const edict_t *ent)
+float GT_asPlayerDefenciveAbilitiesScore(const gclient_t *client)
 {
-	return CallBotPlayerClassScoreFunc(ent, level.gametype.botPlayerClassDefenceScore);
+	return CallBotPlayerAbilitiesScoreFunc(client, level.gametype.playerDefenciveAbilitiesScoreFunc);
 }
 
 static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
@@ -584,9 +584,9 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "float GT_BotPlayerClassOffenceScore( Entity @ent )";
-	level.gametype.botPlayerClassOffenceScore = asModule->GetFunctionByDecl( fdeclstr );
-	if ( !level.gametype.botPlayerClassOffenceScore )
+	fdeclstr = "float GT_PlayerOffenciveAbilitiesScore( Client @client )";
+	level.gametype.playerOffenciveAbilitiesScoreFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.playerOffenciveAbilitiesScoreFunc )
 	{
 		if( developer->integer || sv_cheats->integer )
 			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
@@ -594,9 +594,9 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "float GT_BotPlayerClassDefenceScore( Entity @ent )";
-	level.gametype.botPlayerClassDefenceScore = asModule->GetFunctionByDecl( fdeclstr );
-	if ( !level.gametype.botPlayerClassDefenceScore )
+	fdeclstr = "float GT_PlayerDefenciveAbilitiesScore( Client @client )";
+	level.gametype.playerDefenciveAbilitiesScoreFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.playerDefenciveAbilitiesScoreFunc )
 	{
 		if( developer->integer || sv_cheats->integer )
 			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );

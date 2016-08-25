@@ -138,8 +138,8 @@ typedef struct
 	void *botDropHealthFunc;
 	void *botWouldDropArmorFunc;
 	void *botDropArmorFunc;
-	void *botPlayerClassOffenceScore;
-	void *botPlayerClassDefenceScore;
+	void *playerOffenciveAbilitiesScoreFunc;
+	void *playerDefenciveAbilitiesScoreFunc;
 
 	int spawnableItemsMask;
 	int respawnableItemsMask;
