@@ -971,13 +971,15 @@ void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areacache)
             // by increasing the travel time by some penalty value (3 seconds).
             // That's an idea from Doom 3 source code.
             if (areaSettings[nextareanum].areaflags & AREA_LEDGE)
-                t += 200;
-            // Apply wall areas penalty too to prevent bumping into walls
-            if (areaSettings[nextareanum].areaflags & AREA_WALL)
-                t += 100;
-            // Apply penalty of areas that do not look like useful
+            {
+                // If this area has a wall, it usually cannot be avoided, so apply lesser penalty
+                t += areaSettings[nextareanum].areaflags & AREA_WALL ? 50 : 150;
+            }
+            // Apply penalty on areas that do not look like useful
             if (areaSettings[nextareanum].areaflags & AREA_JUNK)
-                t += 150;
+            {
+                t += areaSettings[nextareanum].areaflags & AREA_WALL ? 150 : 100;
+            }
 
             if (!areacache->traveltimes[clusterareanum] || areacache->traveltimes[clusterareanum] > t)
             {
