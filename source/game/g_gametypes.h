@@ -140,6 +140,8 @@ typedef struct
 	void *botDropArmorFunc;
 	void *playerOffenciveAbilitiesScoreFunc;
 	void *playerDefenciveAbilitiesScoreFunc;
+	void *onBotTouchedGoalFunc;
+	void *onBotReachedGoalRadiusFunc;
 
 	int spawnableItemsMask;
 	int respawnableItemsMask;

@@ -12,6 +12,7 @@ enum class NavEntityFlags: unsigned
     REACH_ON_EVENT = 0x4,
     REACH_IN_GROUP = 0x8,
     DROPPED_ENTITY = 0x10,
+    NOTIFY_SCRIPT = 0x20,
     MOVABLE = 0x40
 };
 
@@ -102,11 +103,25 @@ public:
 
     const char *Name() const { return name; }
 
+    inline void NotifyTouchedByBot(const edict_t *bot)
+    {
+        if (ShouldNotifyScript())
+            GT_asBotTouchedGoal(bot->ai, ent);
+    }
+
+    inline void NotifyBotReachedRadius(const edict_t *bot)
+    {
+        if (ShouldNotifyScript())
+            GT_asBotReachedGoalRadius(bot->ai, ent);
+    }
+
     unsigned Timeout() const;
 
     inline bool ShouldBeReachedAtTouch() const { return IsFlagSet(NavEntityFlags::REACH_AT_TOUCH); }
     inline bool ShouldBeReachedAtRadius() const { return IsFlagSet(NavEntityFlags::REACH_AT_RADIUS); }
     inline bool ShouldBeReachedOnEvent() const { return IsFlagSet(NavEntityFlags::REACH_ON_EVENT); }
+
+    inline bool ShouldNotifyScript() const { return IsFlagSet(NavEntityFlags::NOTIFY_SCRIPT); }
 
     // Returns level.time when the item is already spawned
     // Returns zero if spawn time is unknown
@@ -245,6 +260,23 @@ public:
         if (navEntity)
             return navEntity->ShouldBeReachedOnEvent();
         return IsFlagSet(GoalFlags::REACH_ON_EVENT);
+    }
+
+    inline bool ShouldNotifyScript() const
+    {
+        return navEntity ? navEntity->ShouldNotifyScript() : false;
+    }
+
+    inline void NotifyTouchedByBot(const edict_t *bot) const
+    {
+        if (navEntity)
+            navEntity->NotifyTouchedByBot(bot);
+    }
+
+    inline void NotifyBotReachedRadius(const edict_t *bot) const
+    {
+        if (navEntity)
+            navEntity->NotifyBotReachedRadius(bot);
     }
 
     // Returns level.time when the item is already spawned
