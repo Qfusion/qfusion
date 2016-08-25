@@ -41,6 +41,8 @@ static void GT_ResetScriptData( void )
 	level.gametype.botDropArmorFunc = NULL;
 	level.gametype.playerOffenciveAbilitiesScoreFunc = NULL;
 	level.gametype.playerDefenciveAbilitiesScoreFunc = NULL;
+	level.gametype.onBotTouchedGoalFunc = NULL;
+	level.gametype.onBotReachedGoalRadiusFunc = NULL;
 }
 
 void GT_asShutdownScript( void )
@@ -434,6 +436,34 @@ float GT_asPlayerDefenciveAbilitiesScore(const gclient_t *client)
 	return CallBotPlayerAbilitiesScoreFunc(client, level.gametype.playerDefenciveAbilitiesScoreFunc);
 }
 
+static void CallBotGoalCallbackFunc(const ai_handle_t *bot, const edict_t *goalEnt, void *func)
+{
+	if (!func || !angelExport)
+		return;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction *>(func));
+	if( error < 0 )
+		return;
+
+	ctx->SetArgObject(0, const_cast<ai_handle_t *>(bot));
+	ctx->SetArgObject(1, const_cast<edict_t *>(goalEnt));
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+		GT_asShutdownScript();
+}
+
+void GT_asBotTouchedGoal(const ai_handle_t *bot, const edict_t *goalEnt)
+{
+	CallBotGoalCallbackFunc(bot, goalEnt, level.gametype.onBotTouchedGoalFunc);
+}
+
+void GT_asBotReachedGoalRadius(const ai_handle_t *bot, const edict_t *goalEnt)
+{
+	CallBotGoalCallbackFunc(bot, goalEnt, level.gametype.onBotReachedGoalRadiusFunc);
+}
+
 static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 {
 	int error;
@@ -597,6 +627,26 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	fdeclstr = "float GT_PlayerDefenciveAbilitiesScore( Client @client )";
 	level.gametype.playerDefenciveAbilitiesScoreFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if ( !level.gametype.playerDefenciveAbilitiesScoreFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "void GT_BotTouchedGoal( Bot @bot, Entity @goalEnt )";
+	level.gametype.onBotTouchedGoalFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.onBotTouchedGoalFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "void GT_BotReachedGoalRadius( Bot @bot, Entity @goalEnt )";
+	level.gametype.onBotReachedGoalRadiusFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.onBotReachedGoalRadiusFunc )
 	{
 		if( developer->integer || sv_cheats->integer )
 			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );

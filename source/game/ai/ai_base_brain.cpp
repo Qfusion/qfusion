@@ -236,12 +236,14 @@ bool AiBaseBrain::HandleGoalTouch(const edict_t *ent)
 
     if (MayConsiderGoalReachedAtTouch(longTermGoal, ent))
     {
+        longTermGoal->NotifyTouchedByBot(self);
         OnLongTermGoalReached();
         return true;
     }
 
     if (MayConsiderGoalReachedAtTouch(shortTermGoal, ent))
     {
+        shortTermGoal->NotifyTouchedByBot(self);
         OnShortTermGoalReached();
         return true;
     }
@@ -253,6 +255,7 @@ bool AiBaseBrain::HandleSpecialGoalTouch(const edict_t *ent)
 {
     if (MayConsiderGoalReachedAtTouch(specialGoal, ent))
     {
+        specialGoal->NotifyTouchedByBot(self);
         OnSpecialGoalReached();
         return true;
     }
@@ -285,12 +288,14 @@ bool AiBaseBrain::TryReachGoalByProximity()
     // Check long-term goal first
     if (MayConsiderGoalReachedAtRadius(longTermGoal))
     {
+        longTermGoal->NotifyBotReachedRadius(self);
         OnLongTermGoalReached();
         return true;
     }
 
     if (MayConsiderGoalReachedAtRadius(shortTermGoal))
     {
+        shortTermGoal->NotifyBotReachedRadius(self);
         OnShortTermGoalReached();
         return true;
     }
@@ -302,6 +307,7 @@ bool AiBaseBrain::TryReachSpecialGoalByProximity()
 {
     if (MayConsiderGoalReachedAtRadius(specialGoal))
     {
+        specialGoal->NotifyBotReachedRadius(self);
         OnSpecialGoalReached();
         return true;
     }

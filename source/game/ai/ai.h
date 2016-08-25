@@ -54,6 +54,11 @@ typedef enum
 	// If this flag is set, all AI's in a squad (if any) will try to reach it.
 	// Otherwise a squad will select a goal grabber, and other AIs will try to assist it (like Quad pickup).
 	AI_NAV_REACH_IN_GROUP = 0x8,
+	// One of the following callbacks:
+	// AI_asOnBotTouchedGoal() for REACH_AT_TOUCH
+	// AI_asOnBotIsCloseToGoal() for REACH_AT_RADIUS
+	// should be called on corresponding event detected by bot native code
+	AI_NAV_NOTIFY_SCRIPT = 0x100,
 	// A nav entity will disappear at its next think.
 	// An AI may skip this goal if it thinks that goal will disappear before it may be reached.
 	AI_NAV_DROPPED = 0x1000,
@@ -141,6 +146,9 @@ bool GT_asBotWouldDropHealth( const edict_t *ent );
 void GT_asBotDropHealth( edict_t *ent );
 bool GT_asBotWouldDropArmor( const edict_t *ent );
 void GT_asBotDropArmor( edict_t *ent );
+
+void GT_asBotTouchedGoal( const ai_handle_t *bot, const edict_t *goalEnt );
+void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt );
 
 // These functions return a score in range [0, 1].
 // Default score should be 0.5f, and it should be returned

@@ -302,6 +302,13 @@ void AI_AddNavEntity(edict_t *ent, ai_nav_entity_flags flags)
         return;
     }
 
+    if ((flags & AI_NAV_NOTIFY_SCRIPT) && !(flags & (AI_NAV_REACH_AT_TOUCH|AI_NAV_REACH_AT_RADIUS)))
+    {
+        G_Printf(S_COLOR_RED,
+                 "AI_AddNavEntity(): NOTIFY_SCRIPT flag may be combined only with REACH_AT_TOUCH or REACH_AT_RADIUS");
+        return;
+    }
+
     NavEntityFlags navEntityFlags = NavEntityFlags::NONE;
     if (flags & AI_NAV_REACH_AT_TOUCH)
         navEntityFlags = navEntityFlags | NavEntityFlags::REACH_AT_TOUCH;
@@ -315,6 +322,8 @@ void AI_AddNavEntity(edict_t *ent, ai_nav_entity_flags flags)
         navEntityFlags = navEntityFlags | NavEntityFlags::DROPPED_ENTITY;
     if (flags & AI_NAV_MOVABLE)
         navEntityFlags = navEntityFlags | NavEntityFlags::MOVABLE;
+    if (flags & AI_NAV_NOTIFY_SCRIPT)
+        navEntityFlags = navEntityFlags | NavEntityFlags::NOTIFY_SCRIPT;
 
     int areaNum = FindGoalAASArea(ent);
     // Allow addition of temporary unreachable goals based on movable entities
