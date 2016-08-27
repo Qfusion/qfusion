@@ -142,10 +142,10 @@ void AI_ClearBotExternalEntityWeights( ai_handle_t *ai );
 // If a weight is negative, the ent will be ignored in search for a goal.
 void AI_SetBotExternalEntityWeight( ai_handle_t *ai, edict_t *ent, float weight );
 
-bool GT_asBotWouldDropHealth( const edict_t *ent );
-void GT_asBotDropHealth( edict_t *ent );
-bool GT_asBotWouldDropArmor( const edict_t *ent );
-void GT_asBotDropArmor( edict_t *ent );
+bool GT_asBotWouldDropHealth( const gclient_t *client );
+void GT_asBotDropHealth( gclient_t *client );
+bool GT_asBotWouldDropArmor( const gclient_t *client );
+void GT_asBotDropArmor( gclient_t *client );
 
 void GT_asBotTouchedGoal( const ai_handle_t *bot, const edict_t *goalEnt );
 void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt );
