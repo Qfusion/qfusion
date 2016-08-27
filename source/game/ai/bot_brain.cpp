@@ -338,6 +338,7 @@ void BotBrain::TryFindNewCombatTask()
 {
     if (const Enemy *aimEnemy = activeEnemyPool->ChooseAimEnemy(bot))
     {
+        ResetCombatTask();
         combatTask.enemy = aimEnemy;
         combatTask.instanceId = NextCombatTaskInstanceId();
         nextTargetChoiceAt = level.time + aimTargetChoicePeriod;
