@@ -138,6 +138,9 @@ typedef struct
 	void *botDropHealthFunc;
 	void *botWouldDropArmorFunc;
 	void *botDropArmorFunc;
+	void *botWouldCloakFunc;
+	void *setBotCloakEnabledFunc;
+	void *isEntityCloakingFunc;
 	void *playerOffenciveAbilitiesScoreFunc;
 	void *playerDefenciveAbilitiesScoreFunc;
 	void *onBotTouchedGoalFunc;

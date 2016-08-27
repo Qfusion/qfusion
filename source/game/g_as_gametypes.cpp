@@ -39,6 +39,9 @@ static void GT_ResetScriptData( void )
 	level.gametype.botDropHealthFunc = NULL;
 	level.gametype.botWouldDropArmorFunc = NULL;
 	level.gametype.botDropArmorFunc = NULL;
+	level.gametype.botWouldCloakFunc = NULL;
+	level.gametype.setBotCloakEnabledFunc = NULL;
+	level.gametype.isEntityCloakingFunc = NULL;
 	level.gametype.playerOffenciveAbilitiesScoreFunc = NULL;
 	level.gametype.playerDefenciveAbilitiesScoreFunc = NULL;
 	level.gametype.onBotTouchedGoalFunc = NULL;
@@ -404,6 +407,80 @@ void GT_asBotDropArmor(gclient_t *client)
 	return CallBotDropFunc(client, level.gametype.botDropArmorFunc);
 }
 
+// May be reused for other abilities
+
+static bool CallBotWouldUseAbility(const gclient_t *client, void *func)
+{
+	if (!func || !angelExport)
+		return false;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction *>(func));
+	if (error < 0)
+		return false;
+
+	ctx->SetArgObject(0, const_cast<gclient_t*>(client));
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+		GT_asShutdownScript();
+
+	if (error < 0)
+		return false;
+
+	return ctx->GetReturnByte() != 0;
+}
+
+static void CallSetBotAbilityEnabled(gclient_t *client, bool enabled, void *func)
+{
+	if (!func || !angelExport)
+		return;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction *>(func));
+	if (error < 0)
+		return;
+
+	ctx->SetArgObject(0, client);
+	ctx->SetArgByte(1, enabled);
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+		G_asShutdownMapScript();
+}
+
+bool GT_asBotWouldCloak(const gclient_t *client)
+{
+	return CallBotWouldUseAbility(client, level.gametype.botWouldCloakFunc);
+}
+
+bool GT_asIsEntityCloaking(const edict_t *ent)
+{
+	if (!level.gametype.isEntityCloakingFunc || !angelExport)
+		return false;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction *>(level.gametype.isEntityCloakingFunc));
+	if (error < 0)
+		return false;
+
+	ctx->SetArgObject(0, const_cast<edict_t *>(ent));
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+		GT_asShutdownScript();
+
+	if (error < 0)
+		return false;
+
+	return ctx->GetReturnByte() != 0;
+}
+
+void GT_asSetBotCloakEnabled(gclient_t *client, bool enabled)
+{
+	CallSetBotAbilityEnabled(client, enabled, level.gametype.setBotCloakEnabledFunc);
+}
+
 static float CallBotPlayerAbilitiesScoreFunc(const gclient_t *client, void *func)
 {
 	if (!func || !angelExport)
@@ -607,6 +684,36 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	fdeclstr = "void GT_BotDropArmor( Client @client )";
 	level.gametype.botDropArmorFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if ( !level.gametype.botDropArmorFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "bool GT_BotWouldCloak( Client @client )";
+	level.gametype.botWouldCloakFunc = asModule->GetFunctionByDecl(fdeclstr);
+	if ( !level.gametype.botWouldCloakFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "void GT_SetBotCloakEnabled( Client @client, bool enabled )";
+	level.gametype.setBotCloakEnabledFunc = asModule->GetFunctionByDecl(fdeclstr);
+	if ( !level.gametype.setBotCloakEnabledFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "bool GT_IsEntityCloaking( Entity @ent )";
+	level.gametype.isEntityCloakingFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.isEntityCloakingFunc )
 	{
 		if( developer->integer || sv_cheats->integer )
 			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );

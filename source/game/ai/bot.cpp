@@ -631,6 +631,16 @@ void Bot::Frame()
         }
     }
 
+    if (inhibitShooting && !combatTask.Empty())
+    {
+        if (CanAndWouldCloak())
+        {
+            SetCloakEnabled(true);
+        }
+    }
+    else
+        SetCloakEnabled(false);
+
     MoveFrame(&ucmd, inhibitCombatMove);
 
     if (fireButtonPressed)
