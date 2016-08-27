@@ -103,6 +103,18 @@ __declspec(noreturn) void AI_FailWith(const char *tag, _Printf_format_string_ co
 __declspec(noreturn) void AI_FailWithv(const char *tag, const char *format, va_list va);
 #endif
 
+inline float Clamp(float value)
+{
+	clamp(value, 0.0f, 1.0f);
+	return value;
+}
+
+inline float Clamp(float value, float minValue, float maxValue)
+{
+	clamp(value, minValue, maxValue);
+	return value;
+}
+
 inline float BoundedFraction(float value, float bound)
 {
 	return std::min(value, bound) / bound;
