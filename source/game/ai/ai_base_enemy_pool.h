@@ -157,6 +157,15 @@ public:
 
     inline bool IsValid() const { return ent != nullptr; }
 
+    inline Vec3 LookDir() const
+    {
+        vec3_t forward;
+        AngleVectors(ent->s.angles, forward, nullptr, nullptr);
+        return Vec3(forward);
+    }
+
+    inline Vec3 Angles() const { return Vec3(ent->s.angles); }
+
     // TODO: Fuse in a single array of some struct
     // Array of last seen timestamps
     std::deque<unsigned> lastSeenTimestamps;

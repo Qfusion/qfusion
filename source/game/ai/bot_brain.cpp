@@ -634,11 +634,22 @@ CombatDisposition BotBrain::GetCombatDisposition(const Enemy &enemy)
             isOutnumbered = true;
     }
 
+    Vec3 enemyToBotDir(self->s.origin);
+    enemyToBotDir -= enemy.ent->s.origin;
+    enemyToBotDir.NormalizeFast();
+    float enemyLookDirToBotDir = enemyToBotDir.Dot(enemy.LookDir());
+
+    vec3_t botLookDir;
+    AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
+    float botLookDirDotToEnemyDir = (-enemyToBotDir).Dot(botLookDir);
+
     CombatDisposition disposition;
     disposition.damageToBeKilled = damageToBeKilled;
     disposition.damageToKill = damageToKillEnemy;
     disposition.distance = distance;
     disposition.offensiveness = GetEffectiveOffensiveness();
+    disposition.enemyLookDirDotToBotDir = enemyLookDirToBotDir;
+    disposition.botLookDirDotToEnemyDir = botLookDirDotToEnemyDir;
     disposition.isOutnumbered = isOutnumbered;
     return disposition;
 }
@@ -669,6 +680,7 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
         }
         else
         {
+            task->inhibit = disposition.enemyLookDirDotToBotDir < 0.3f && HasMoreImportantTasksThanEnemies();
             task->advance = false;
             task->retreat = disposition.isOutnumbered;
         }
@@ -747,12 +759,23 @@ void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const Combat
             chosenWeapon = WEAP_RIOTGUN;
     }
 
-    task->retreat = false;
-    float ratio = disposition.KillToBeKilledDamageRatio();
-    if (ratio < 2 || (ratio > 0.75 && decisionRandom < 0.5))
+    if (disposition.KillToBeKilledDamageRatio() < 1.5f || decisionRandom < 0.5f)
         task->advance = random() < disposition.offensiveness;
-    else
-        task->inhibit = true;
+
+    // Check for fight inhibition not only for low offensiveness value but for default one too
+    if (disposition.offensiveness <= 0.5f && disposition.botLookDirDotToEnemyDir < 0.95f)
+    {
+        float offensivenessFactor = 0.1f + 0.9f * disposition.offensiveness;
+        float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
+        float attackChance = offensivenessFactor * enemyTargetFactor;
+        if (HasMoreImportantTasksThanEnemies())
+            attackChance -= 0.7f * (1.0f - enemyTargetFactor);
+        if (random() > attackChance)
+        {
+            task->advance = false;
+            task->inhibit = true;
+        }
+    }
 
     Debug("(sniper range)... : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
@@ -918,6 +941,40 @@ void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDis
         }
     }
     Debug("(far range)... chose %s\n", GS_GetWeaponDef(chosenWeapon)->name);
+
+    // If bot offensiveness is less than default one
+    if (disposition.offensiveness < 0.5f)
+    {
+        if (disposition.botLookDirDotToEnemyDir < 0.90f - 0.20f * disposition.offensiveness)
+        {
+            float offensivenessFactor = 0.2f + 0.7f * disposition.offensiveness;
+            float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
+            if (random() > offensivenessFactor * enemyTargetFactor)
+            {
+                task->advance = false;
+                task->inhibit = true;
+            }
+            else if (task->advance)
+                task->advance = random() > enemyTargetFactor;
+        }
+    }
+    // On far range fight may be inhibited for default offensiveness too
+    else if (disposition.offensiveness == 0.5f)
+    {
+        if (disposition.botLookDirDotToEnemyDir < 0.7f)
+        {
+            // Special goal may be set as a pursuit goal (it qualifies as an important task)
+            if (!specialGoal && HasMoreImportantTasksThanEnemies())
+            {
+                float attackChance = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
+                if (random() > attackChance)
+                {
+                    task->inhibit = true;
+                    task->advance = false;
+                }
+            }
+        }
+    }
 
     task->suggestedWeapon = chosenWeapon;
 }
@@ -1093,6 +1150,27 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     Debug(format, rl, lg, pg, mg, rg, gl, GS_GetWeaponDef(chosenWeapon)->name);
 #endif
 
+    // If bot offensiveness is less than the default one
+    if (disposition.offensiveness < 0.5f)
+    {
+        if (disposition.botLookDirDotToEnemyDir < 0.85f - 0.25f * disposition.offensiveness)
+        {
+            // [0.4f, 1.0f)
+            float offensivenessFactor = 0.4f + 1.0f * disposition.offensiveness;
+            // [0.0f, 1.0f]
+            float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
+            float attackChance = offensivenessFactor * enemyTargetFactor;
+            if (HasMoreImportantTasksThanEnemies())
+                attackChance -= 0.5f * (1.0f - enemyTargetFactor);
+
+            if (random() > attackChance)
+            {
+                task->advance = false;
+                task->inhibit = true;
+            }
+        }
+    }
+
     task->suggestedWeapon = chosenWeapon;
 }
 
@@ -1183,6 +1261,26 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
     }
 
     Debug("(close range) : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
+
+    // If bot offensiveness is less than the default one
+    if (disposition.offensiveness < 0.5f)
+    {
+        if (disposition.botLookDirDotToEnemyDir < 0.6f - 0.4f * disposition.offensiveness)
+        {
+            // [0.5f, 1.0f), close to 1.0f for offensiveness close to 0.5f
+            float offensivenessFactor = 0.5f + disposition.offensiveness;
+            // [0.5f, 1.0f], 1.0f for enemies looking straight on the bot
+            float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
+            float attackChance = offensivenessFactor * enemyTargetFactor;
+            if (HasMoreImportantTasksThanEnemies())
+                attackChance -= 0.35f * (1.0f - enemyTargetFactor);
+            if (random() > attackChance)
+            {
+                task->advance = false;
+                task->inhibit = true;
+            }
+        }
+    }
 
     task->suggestedWeapon = chosenWeapon;
 }

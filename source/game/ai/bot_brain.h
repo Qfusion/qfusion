@@ -101,11 +101,7 @@ public:
     Vec3 EnemyLookDir() const
     {
         if (enemy)
-        {
-            vec3_t forward;
-            AngleVectors(EnemyEnt()->s.angles, forward, nullptr, nullptr);
-            return Vec3(forward);
-        }
+            return enemy->LookDir();
         FailWith("EnemyLookDir(): aim enemy is not present");
     }
 
@@ -142,6 +138,8 @@ struct CombatDisposition
     float damageToBeKilled;
     float distance;
     float offensiveness;
+    float enemyLookDirDotToBotDir;
+    float botLookDirDotToEnemyDir;
     bool isOutnumbered;
 
     inline float KillToBeKilledDamageRatio() const { return damageToKill / damageToBeKilled; }
