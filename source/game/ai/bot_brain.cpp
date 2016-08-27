@@ -246,7 +246,7 @@ bool BotBrain::ShouldCancelSpecialGoalBySpecificReasons()
         return true;
 
     // Prefer picking up top-tier items rather than pursuit an enemy
-    if ((longTermGoal && longTermGoal->IsTopTierItem()) || (shortTermGoal && shortTermGoal->IsTopTierItem()))
+    if (IsGoalATopTierItem(longTermGoal) || IsGoalATopTierItem(shortTermGoal))
         return true;
 
     int goalAreaNum = specialGoal->AasAreaNum();
@@ -428,20 +428,6 @@ void BotBrain::TryStartPursuit(CombatTask *task, const Enemy *enemy)
         StartPursuit(*enemy);
 }
 
-bool BotBrain::IsGoalATopTierItem() const
-{
-    if (specialGoal && specialGoal->IsTopTierItem())
-        return true;
-
-    if (longTermGoal && longTermGoal->IsTopTierItem())
-        return true;
-
-    if (shortTermGoal && shortTermGoal->IsTopTierItem())
-        return true;
-
-    return false;
-}
-
 unsigned BotBrain::GoalSpawnTime() const
 {
     // Note: goals are listed in order of (short-term) priority
@@ -463,10 +449,10 @@ bool BotBrain::HasMoreImportantTasksThanEnemies() const
     if (specialGoal)
         return true;
 
-    if (longTermGoal && longTermGoal->IsTopTierItem())
+    if (IsGoalATopTierItem(longTermGoal))
         return true;
 
-    if (shortTermGoal && shortTermGoal->IsTopTierItem())
+    if (IsGoalATopTierItem(shortTermGoal))
         return true;
 
     return false;

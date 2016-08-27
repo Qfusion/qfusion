@@ -30,10 +30,13 @@ float NavEntity::CostInfluence() const
     return 0.5f;
 }
 
-bool NavEntity::IsTopTierItem() const
+bool NavEntity::IsTopTierItem(const float *externalEntityWeights) const
 {
-    if (!ent->r.inuse || !ent->item)
+    if (!ent->r.inuse)
         return false;
+
+    if (!ent->item)
+        return externalEntityWeights && externalEntityWeights[ENTNUM(ent)] >= 2.0f;
 
     if (ent->item->type == IT_POWERUP)
         return true;

@@ -99,7 +99,7 @@ public:
 
     unsigned MaxWaitDuration() const;
 
-    bool IsTopTierItem() const;
+    bool IsTopTierItem(const float *externalEntityWeights = nullptr) const;
 
     const char *Name() const { return name; }
 
@@ -212,9 +212,9 @@ public:
 
     inline bool IsEnabled() const { return !IsDisabled(); }
 
-    inline bool IsTopTierItem()
+    inline bool IsTopTierItem(const float *externalEntityWeights = nullptr) const
     {
-        return navEntity && navEntity->IsTopTierItem();
+        return navEntity && navEntity->IsTopTierItem(externalEntityWeights);
     }
 
     inline unsigned MaxWaitDuration() const
