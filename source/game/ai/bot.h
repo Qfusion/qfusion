@@ -129,6 +129,18 @@ public:
     {
         GT_asBotDropArmor(self->r.client);
     }
+    inline bool CanAndWouldCloak() const
+    {
+        return GT_asBotWouldCloak(self->r.client);
+    }
+    inline void SetCloakEnabled(bool enabled)
+    {
+        GT_asSetBotCloakEnabled(self->r.client, enabled);
+    }
+    inline bool IsCloaking() const
+    {
+        return GT_asIsEntityCloaking(self);
+    }
     inline float PlayerDefenciveAbilitiesScore() const
     {
         return GT_asPlayerDefenciveAbilitiesScore(self->r.client);

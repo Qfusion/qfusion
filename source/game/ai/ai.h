@@ -147,6 +147,11 @@ void GT_asBotDropHealth( gclient_t *client );
 bool GT_asBotWouldDropArmor( const gclient_t *client );
 void GT_asBotDropArmor( gclient_t *client );
 
+bool GT_asBotWouldCloak( const gclient_t *client );
+void GT_asSetBotCloakEnabled( gclient_t *client, bool enabled );
+// Useful for testing any entity for cloaking
+bool GT_asIsEntityCloaking( const edict_t *ent );
+
 void GT_asBotTouchedGoal( const ai_handle_t *bot, const edict_t *goalEnt );
 void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt );
 
