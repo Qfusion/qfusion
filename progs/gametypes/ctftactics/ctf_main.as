@@ -325,10 +325,12 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-bool GT_BotWouldDropHealth( Entity @ent )
+bool GT_BotWouldDropHealth( Client @client )
 {
-    if ( @ent == null || @ent.client == null )
+    if ( @client == null )
         return false;
+
+    Entity @ent = G_GetEntity( client.playerNum + 1 );
 
     if ( ( ent.effects & EF_CARRIER ) != 0 )
         return false;
@@ -339,30 +341,32 @@ bool GT_BotWouldDropHealth( Entity @ent )
     return ent.health > 95;
 }
 
-void GT_BotDropHealth( Entity @ent )
+void GT_BotDropHealth( Client @client )
 {
-    if ( @ent != null )
-        CTFT_DropHealth( ent.client );
+    if ( @client != null )
+        CTFT_DropHealth( client );
 }
 
-bool GT_BotWouldDropArmor( Entity @ent )
+bool GT_BotWouldDropArmor( Client @client )
 {
-    if ( @ent == null || @ent.client == null )
+    if ( @client == null )
         return false;
+
+    Entity @ent = G_GetEntity( client.playerNum + 1 );
 
     if ( ( ent.effects & EF_CARRIER ) != 0 )
         return false;
 
-    if ( GetPlayer( ent.client ).playerClass.tag != PLAYERCLASS_GRUNT )
+    if ( GetPlayer( client ).playerClass.tag != PLAYERCLASS_GRUNT )
         return false;
 
-    return ent.client.armor > 65;
+    return client.armor > 65;
 }
 
-void GT_BotDropArmor( Entity @ent )
+void GT_BotDropArmor( Client @client )
 {
-    if ( @ent != null )
-        CTFT_DropArmor( ent.client, "Yellow Armor" );
+    if ( @client != null )
+        CTFT_DropArmor( client, "Yellow Armor" );
 }
 
 float GT_PlayerOffenciveAbilitiesScore( Client @client )
