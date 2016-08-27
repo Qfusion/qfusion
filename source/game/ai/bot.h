@@ -115,19 +115,19 @@ public:
     }
     inline bool CanAndWouldDropHealth() const
     {
-        return GT_asBotWouldDropHealth(self);
+        return GT_asBotWouldDropHealth(self->r.client);
     }
     inline void DropHealth()
     {
-        GT_asBotDropHealth(self);
+        GT_asBotDropHealth(self->r.client);
     }
     inline bool CanAndWouldDropArmor() const
     {
-        return GT_asBotWouldDropArmor(self);
+        return GT_asBotWouldDropArmor(self->r.client);
     }
     inline void DropArmor()
     {
-        GT_asBotDropArmor(self);
+        GT_asBotDropArmor(self->r.client);
     }
     inline float PlayerDefenciveAbilitiesScore() const
     {

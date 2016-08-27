@@ -345,7 +345,7 @@ void GT_asCallShutdown( void )
 		GT_asShutdownScript();
 }
 
-static bool CallBotWouldDropFunc(const edict_t *ent, void *func)
+static bool CallBotWouldDropFunc(const gclient_t *client, void *func)
 {
 	if (!func || !angelExport)
 		return false;
@@ -355,7 +355,7 @@ static bool CallBotWouldDropFunc(const edict_t *ent, void *func)
 	if ( error < 0 )
 		return false;
 
-	ctx->SetArgObject( 0, const_cast<edict_t *>(ent) );
+	ctx->SetArgObject( 0, const_cast<gclient_t *>(client) );
 
 	error = ctx->Execute();
 	if (G_ExecutionErrorReport(error))
@@ -367,7 +367,7 @@ static bool CallBotWouldDropFunc(const edict_t *ent, void *func)
 	return ctx->GetReturnByte() != 0;
 }
 
-static void CallBotDropFunc(const edict_t *ent, void *func)
+static void CallBotDropFunc(gclient_t *client, void *func)
 {
 	if (!func || !angelExport)
 		return;
@@ -377,31 +377,31 @@ static void CallBotDropFunc(const edict_t *ent, void *func)
 	if ( error < 0 )
 		return;
 
-	ctx->SetArgObject( 0, const_cast<edict_t *>(ent) );
+	ctx->SetArgObject( 0, const_cast<gclient_t *>(client) );
 
 	error = ctx->Execute();
 	if (G_ExecutionErrorReport(error))
 		GT_asShutdownScript();
 }
 
-bool GT_asBotWouldDropHealth(const edict_t *ent)
+bool GT_asBotWouldDropHealth(const gclient_t *client)
 {
-	return CallBotWouldDropFunc(ent, level.gametype.botWouldDropHealthFunc);
+	return CallBotWouldDropFunc(client, level.gametype.botWouldDropHealthFunc);
 }
 
-void GT_asBotDropHealth( edict_t *ent )
+void GT_asBotDropHealth(gclient_t *client)
 {
-	return CallBotDropFunc(ent, level.gametype.botDropHealthFunc);
+	return CallBotDropFunc(client, level.gametype.botDropHealthFunc);
 }
 
-bool GT_asBotWouldDropArmor(const edict_t *ent)
+bool GT_asBotWouldDropArmor(const gclient_t *client)
 {
-	return CallBotWouldDropFunc(ent, level.gametype.botWouldDropArmorFunc);
+	return CallBotWouldDropFunc(client, level.gametype.botWouldDropArmorFunc);
 }
 
-void GT_asBotDropArmor( edict_t *ent )
+void GT_asBotDropArmor(gclient_t *client)
 {
-	return CallBotDropFunc(ent, level.gametype.botDropArmorFunc);
+	return CallBotDropFunc(client, level.gametype.botDropArmorFunc);
 }
 
 static float CallBotPlayerAbilitiesScoreFunc(const gclient_t *client, void *func)
@@ -574,7 +574,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "bool GT_BotWouldDropHealth( Entity @ent )";
+	fdeclstr = "bool GT_BotWouldDropHealth( Client @client )";
 	level.gametype.botWouldDropHealthFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if ( !level.gametype.botWouldDropHealthFunc )
 	{
@@ -584,7 +584,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "void GT_BotDropHealth( Entity @ent )";
+	fdeclstr = "void GT_BotDropHealth( Client @client )";
 	level.gametype.botDropHealthFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if ( !level.gametype.botDropHealthFunc )
 	{
@@ -594,7 +594,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "bool GT_BotWouldDropArmor( Entity @ent )";
+	fdeclstr = "bool GT_BotWouldDropArmor( Client @client )";
 	level.gametype.botWouldDropArmorFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if ( !level.gametype.botWouldDropArmorFunc )
 	{
@@ -604,7 +604,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "void GT_BotDropArmor( Entity @ent )";
+	fdeclstr = "void GT_BotDropArmor( Client @client )";
 	level.gametype.botDropArmorFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if ( !level.gametype.botDropArmorFunc )
 	{
