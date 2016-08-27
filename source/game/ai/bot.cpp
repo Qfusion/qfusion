@@ -595,8 +595,8 @@ void Bot::Frame()
 
     const CombatTask &combatTask = botBrain.combatTask;
 
-    bool inhibitShooting = combatTask.Empty();
-    bool inhibitCombatMove = inhibitShooting || combatTask.inhibit;
+    bool inhibitShooting = combatTask.Empty() || combatTask.inhibit;
+    bool inhibitCombatMove = inhibitShooting;
     if (!inhibitCombatMove)
     {
         if (botBrain.HasGoal() && currAasAreaNum != GoalAreaNum() && !nextReaches.empty())
