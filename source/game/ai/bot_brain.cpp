@@ -749,23 +749,57 @@ void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const Combat
         task->advance = random() < disposition.offensiveness;
 
     // Check for fight inhibition not only for low offensiveness value but for default one too
-    if (disposition.offensiveness <= 0.5f && disposition.botLookDirDotToEnemyDir < 0.95f)
+    if (disposition.offensiveness <= 0.5f)
     {
-        float offensivenessFactor = 0.1f + 0.9f * disposition.offensiveness;
-        float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
-        float attackChance = offensivenessFactor * enemyTargetFactor;
-        if (HasMoreImportantTasksThanEnemies())
-            attackChance -= 0.7f * (1.0f - enemyTargetFactor);
-        if (random() > attackChance)
+        bool hasImportantGoals = HasMoreImportantTasksThanEnemies();
+        if (disposition.botLookDirDotToEnemyDir < 0.95f)
         {
-            task->advance = false;
-            task->inhibit = true;
+            float offensivenessFactor = 0.1f + 0.9f * disposition.offensiveness;
+            float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
+            float attackChance = offensivenessFactor * enemyTargetFactor;
+
+            if (hasImportantGoals)
+                attackChance -= 0.35f * (1.0f - enemyTargetFactor);
+
+            attackChance += GetCloakingAttackChanceDelta(hasImportantGoals, enemyTargetFactor);
+
+            if (random() > attackChance)
+            {
+                task->advance = false;
+                task->inhibit = true;
+            }
+        }
+        else if (self->ai->botRef->CanAndWouldCloak())
+        {
+            if (hasImportantGoals || self->ai->botRef->IsCloaking())
+            {
+                task->advance = false;
+                task->inhibit = true;
+            }
         }
     }
 
     Debug("(sniper range)... : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
     task->suggestedWeapon = chosenWeapon;
+}
+
+float BotBrain::GetCloakingAttackChanceDelta(bool hasImportantGoals, float enemyTargetFactor)
+{
+    if (!self->ai->botRef->CanAndWouldCloak())
+        return 0.0f;
+
+    // Never attack if current goal is important
+    // (this causes turning cloaking on)
+    if (hasImportantGoals)
+        return -999.0f;
+
+    // Attack if enemy can't hit and did not see the bot
+    // (this causes turning cloaking off)
+    if (self->ai->botRef->IsCloaking() && enemyTargetFactor < 0.3)
+        return 1.0f;
+
+    return -0.25f - 0.50f * enemyTargetFactor;
 }
 
 struct WeaponAndScore
@@ -935,7 +969,9 @@ void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDis
         {
             float offensivenessFactor = 0.2f + 0.7f * disposition.offensiveness;
             float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
-            if (random() > offensivenessFactor * enemyTargetFactor)
+            float attackChance = offensivenessFactor * enemyTargetFactor;
+            attackChance += GetCloakingAttackChanceDelta(HasMoreImportantTasksThanEnemies(), enemyTargetFactor);
+            if (random() > attackChance)
             {
                 task->advance = false;
                 task->inhibit = true;
@@ -947,17 +983,28 @@ void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDis
     // On far range fight may be inhibited for default offensiveness too
     else if (disposition.offensiveness == 0.5f)
     {
+        bool hasImportantGoals = HasMoreImportantTasksThanEnemies();
         if (disposition.botLookDirDotToEnemyDir < 0.7f)
         {
             // Special goal may be set as a pursuit goal (it qualifies as an important task)
-            if (!specialGoal && HasMoreImportantTasksThanEnemies())
+            if (!specialGoal && hasImportantGoals)
             {
                 float attackChance = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
+                float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
+                attackChance += GetCloakingAttackChanceDelta(hasImportantGoals, enemyTargetFactor);
                 if (random() > attackChance)
                 {
                     task->inhibit = true;
                     task->advance = false;
                 }
+            }
+        }
+        else if (self->ai->botRef->CanAndWouldCloak())
+        {
+            if (hasImportantGoals || self->ai->botRef->IsCloaking())
+            {
+                task->advance = false;
+                task->inhibit = true;
             }
         }
     }
@@ -1139,6 +1186,7 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     // If bot offensiveness is less than the default one
     if (disposition.offensiveness < 0.5f)
     {
+        bool hasImportantGoals = HasMoreImportantTasksThanEnemies();
         if (disposition.botLookDirDotToEnemyDir < 0.85f - 0.25f * disposition.offensiveness)
         {
             // [0.4f, 1.0f)
@@ -1146,10 +1194,21 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
             // [0.0f, 1.0f]
             float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
             float attackChance = offensivenessFactor * enemyTargetFactor;
-            if (HasMoreImportantTasksThanEnemies())
+
+            if (hasImportantGoals)
                 attackChance -= 0.5f * (1.0f - enemyTargetFactor);
 
+            attackChance += GetCloakingAttackChanceDelta(hasImportantGoals, enemyTargetFactor);
+
             if (random() > attackChance)
+            {
+                task->advance = false;
+                task->inhibit = true;
+            }
+        }
+        else if (self->ai->botRef->CanAndWouldCloak())
+        {
+            if (hasImportantGoals || self->ai->botRef->IsCloaking())
             {
                 task->advance = false;
                 task->inhibit = true;
@@ -1251,6 +1310,7 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
     // If bot offensiveness is less than the default one
     if (disposition.offensiveness < 0.5f)
     {
+        bool hasImportantGoals = HasMoreImportantTasksThanEnemies();
         if (disposition.botLookDirDotToEnemyDir < 0.6f - 0.4f * disposition.offensiveness)
         {
             // [0.5f, 1.0f), close to 1.0f for offensiveness close to 0.5f
@@ -1258,9 +1318,21 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
             // [0.5f, 1.0f], 1.0f for enemies looking straight on the bot
             float enemyTargetFactor = 0.5f + 0.5f * disposition.enemyLookDirDotToBotDir;
             float attackChance = offensivenessFactor * enemyTargetFactor;
-            if (HasMoreImportantTasksThanEnemies())
+
+            if (hasImportantGoals)
                 attackChance -= 0.35f * (1.0f - enemyTargetFactor);
+
+            attackChance += GetCloakingAttackChanceDelta(hasImportantGoals, enemyTargetFactor);
+
             if (random() > attackChance)
+            {
+                task->advance = false;
+                task->inhibit = true;
+            }
+        }
+        else if (self->ai->botRef->CanAndWouldCloak())
+        {
+            if (hasImportantGoals || self->ai->botRef->IsCloaking())
             {
                 task->advance = false;
                 task->inhibit = true;
