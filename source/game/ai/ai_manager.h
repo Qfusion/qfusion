@@ -20,7 +20,6 @@ protected:
     static AiManager *instance;
     virtual void Frame() override;
 
-
     bool CheckCanSpawnBots();
     void CreateUserInfo(char *buffer, size_t bufferSize);
     edict_t * ConnectFakeClient();
