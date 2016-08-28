@@ -88,6 +88,15 @@ protected:
 
     bool IsCloseToGoal(const Goal *goal, float proximityThreshold) const;
 
+    inline bool IsGoalATopTierItem() const
+    {
+        return IsGoalATopTierItem(specialGoal) || IsGoalATopTierItem(longTermGoal) || IsGoalATopTierItem(shortTermGoal);
+    }
+    inline bool IsGoalATopTierItem(const Goal *goal) const
+    {
+        return goal && goal->IsTopTierItem(externalEntityWeights);
+    }
+
     int GoalAasAreaNum() const;
     Vec3 CurrentGoalOrigin() const;
 
@@ -155,7 +164,7 @@ public:
     // Should return true if entity touch has been handled
     bool HandleGoalTouch(const edict_t *ent);
     virtual bool HandleSpecialGoalTouch(const edict_t *ent);
-    bool IsCloseToAnyGoal() const;
+    bool IsCloseToAnyGoal(float proximityThreshold = 96.0f, bool onlyImportantGoals = false) const;
     bool TryReachGoalByProximity();
     // To be overridden in subclasses
     virtual bool TryReachSpecialGoalByProximity();

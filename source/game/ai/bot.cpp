@@ -625,12 +625,30 @@ void Bot::Frame()
     bool fireButtonPressed = false;
     if (!inhibitShooting)
     {
-        SetCloakEnabled(true);
+        SetCloakEnabled(false);
         if (FireWeapon())
             fireButtonPressed = true;
     }
     else
-        SetCloakEnabled(!combatTask.Empty());
+    {
+        if (!combatTask.Empty())
+        {
+            SetCloakEnabled(true);
+        }
+        else if (botBrain.HasGoal())
+        {
+            if (botBrain.IsCloseToAnyGoal(768.0f, true))
+                SetCloakEnabled(true);
+            else if (botBrain.IsCloseToAnyGoal(384.0f, false))
+                SetCloakEnabled(true);
+            else
+                SetCloakEnabled(false);
+        }
+        else
+        {
+            SetCloakEnabled(false);
+        }
+    }
 
     MoveFrame(&ucmd, inhibitCombatMove);
 
