@@ -244,6 +244,7 @@ class BotBrain: public AiBaseBrain
     bool SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy);
     void SuggestPursuitTask(CombatTask *task);
     void TryStartPursuit(CombatTask *task, const Enemy *enemy);
+    float GetCloakingAttackChanceDelta(bool hasImportantGoals, float enemyTargetFactor);
     int ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end);
     void TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey);
     void UpdateKeptCurrentCombatTask();
