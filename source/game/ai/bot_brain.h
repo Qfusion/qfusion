@@ -262,14 +262,6 @@ class BotBrain: public AiBaseBrain
     virtual void OnGoalCleanedUp(const Goal *goalEnt) override;
     virtual void OnClearSpecialGoalRequested() override;
 
-    inline bool IsGoalATopTierItem() const
-    {
-        return IsGoalATopTierItem(specialGoal) || IsGoalATopTierItem(longTermGoal) || IsGoalATopTierItem(shortTermGoal);
-    }
-    inline bool IsGoalATopTierItem(const Goal *goal) const
-    {
-        return goal && goal->IsTopTierItem(externalEntityWeights);
-    }
     unsigned GoalSpawnTime() const;
     bool HasMoreImportantTasksThanEnemies() const;
     bool StartPursuit(const Enemy &enemy, unsigned timeout = 1000);

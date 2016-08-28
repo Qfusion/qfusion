@@ -262,12 +262,23 @@ bool AiBaseBrain::HandleSpecialGoalTouch(const edict_t *ent)
     return false;
 }
 
-bool AiBaseBrain::IsCloseToAnyGoal() const
+bool AiBaseBrain::IsCloseToAnyGoal(float proximityThreshold, bool onlyImportantGoals) const
 {
-    return
-        IsCloseToGoal(longTermGoal, 96.0f) ||
-        IsCloseToGoal(shortTermGoal, 96.0f) ||
-        IsCloseToGoal(specialGoal, 96.0f);
+    const Goal *goals[] = { longTermGoal, shortTermGoal, specialGoal };
+    // Put likely case first
+    if (!onlyImportantGoals)
+    {
+        for (const Goal *goal: goals)
+            if (IsCloseToGoal(goal, proximityThreshold))
+                return true;
+    }
+    else
+    {
+        for (const Goal *goal: goals)
+            if (IsCloseToGoal(goal, proximityThreshold) && IsGoalATopTierItem(goal))
+                return true;
+    }
+    return false;
 }
 
 constexpr float GOAL_PROXIMITY_THRESHOLD = 40.0f * 40.0f;
