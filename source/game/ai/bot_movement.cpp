@@ -2,14 +2,14 @@
 #include "ai_aas_world.h"
 #include "ai_ground_trace_cache.h"
 
-void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
+void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
 {
     isOnGroundThisFrame = self->groundentity != nullptr;
 
     // These triggered actions should be processed
     if (hasTouchedJumppad || hasEnteredJumppad || hasTriggeredRocketJump || hasPendingLandingDash)
     {
-        Move(ucmd);
+        Move(ucmd, beSilent);
     }
     else
     {
@@ -17,7 +17,7 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
         if (Skill() >= 0.33f && !ShouldSkipThinkFrame())
             hasToEvade = dangersDetector.FindDangers();
         if (!hasToEvade && (inhibitCombat || hasCampingSpot))
-            Move(ucmd);
+            Move(ucmd, beSilent);
         else
             CombatMovement(ucmd, hasToEvade);
     }
@@ -30,7 +30,7 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat)
     wasTriggeredRocketJumpPrevFrame = hasTriggeredRocketJump;
 }
 
-void Bot::Move(usercmd_t *ucmd)
+void Bot::Move(usercmd_t *ucmd, bool beSilent)
 {
     CheckPendingLandingDashTimedOut();
 
@@ -102,7 +102,7 @@ void Bot::Move(usercmd_t *ucmd)
         }
         else
         {
-            MoveGenericRunning(&intendedLookVec, ucmd);
+            MoveGenericRunning(&intendedLookVec, ucmd, beSilent);
         }
     }
 
@@ -532,7 +532,7 @@ void Bot::MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd)
     {
         case STATE_TOP:
             // Start bunnying off the platform
-            MoveGenericRunning(intendedLookVec, ucmd);
+            MoveGenericRunning(intendedLookVec, ucmd, false);
             break;
         default:
             // Its poor but platforms are not widely used.
@@ -868,13 +868,13 @@ bool Bot::CheckPendingLandingDashTimedOut()
     return false;
 }
 
-void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
+void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSilent)
 {
     if (TryApplyPendingLandingDash(ucmd))
         return;
 
     // TryRocketJumpShortcut() is expensive, call it only in Think() frames
-    if (!ShouldSkipThinkFrame() && TryRocketJumpShortcut(ucmd))
+    if (!beSilent && !ShouldSkipThinkFrame() && TryRocketJumpShortcut(ucmd))
         return;
 
     Vec3 velocityVec(self->velocity);
@@ -1057,8 +1057,11 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                 ucmd->buttons &= ~BUTTON_SPECIAL;
     }
 
-    //if (aasWorld->AreaCrouch(currAasAreaNum))
-    //    ucmd->upmove = -1;
+    if (beSilent)
+    {
+        ucmd->upmove = 0;
+        ucmd->buttons &= ~BUTTON_SPECIAL;
+    }
 }
 
 bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
