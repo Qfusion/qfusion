@@ -29,7 +29,7 @@ public:
         AiAasRouteCache::ReleaseInstance(routeCache);
     }
 
-    void Move(usercmd_t *ucmd);
+    void Move(usercmd_t *ucmd, bool beSilent);
     void LookAround();
     bool ChangeWeapon(int weapon);
     bool FireWeapon();
@@ -273,7 +273,7 @@ private:
     void ApplyPendingTurnToLookAtPoint();
 
     // Must be called on each frame
-    void MoveFrame(usercmd_t *ucmd, bool inhibitCombat);
+    void MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent);
 
     void MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd);
@@ -283,7 +283,7 @@ private:
     void MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, Vec3 *intendedLookVec, usercmd_t *ucmd);
     void MoveSwimming(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSilent);
     bool CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed);
     // Tries to straighten look vec first.
     // If the straightening failed, tries to interpolate it.

@@ -650,7 +650,30 @@ void Bot::Frame()
         }
     }
 
-    MoveFrame(&ucmd, inhibitCombatMove);
+    bool beSilent = false;
+    if (inhibitShooting && !combatTask.Empty())
+    {
+        if ((combatTask.EnemyOrigin() - self->s.origin).SquaredLength() < 384.0f * 384.0f)
+        {
+            if (CanAndWouldCloak())
+            {
+                beSilent = true;
+            }
+            // When there is only a single enemy
+            else if (botBrain.activeEnemyPool->ActiveEnemies().size() < 2)
+            {
+                Vec3 enemyToBot(self->s.origin);
+                enemyToBot -= combatTask.EnemyOrigin();
+                enemyToBot.NormalizeFast();
+                if (enemyToBot.Dot(EnemyLookDir()) < -0)
+                    beSilent = true;
+            }
+        }
+    }
+
+    // Do not modify pmove features by beSilent value, features may be changed dynamically by script.
+
+    MoveFrame(&ucmd, inhibitCombatMove, beSilent);
 
     if (fireButtonPressed)
         ucmd.buttons |= BUTTON_ATTACK;
