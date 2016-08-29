@@ -149,6 +149,23 @@ public:
     {
         return GT_asPlayerOffenciveAbilitiesScore(self->r.client);
     }
+    inline int DefenceSpotId() const { return defenceSpotId; }
+    inline int OffenceSpotId() const { return offenceSpotId; }
+    inline void ClearDefenceAndOffenceSpots()
+    {
+        defenceSpotId = -1;
+        offenceSpotId = -1;
+    }
+    inline void SetDefenceSpotId(int spotId)
+    {
+        defenceSpotId = spotId;
+        offenceSpotId = -1;
+    }
+    inline void SetOffenceSpotId(int spotId)
+    {
+        defenceSpotId = -1;
+        offenceSpotId = spotId;
+    }
 protected:
     virtual void Frame() override;
     virtual void Think() override;
@@ -231,6 +248,9 @@ private:
     bool isWaitingForItemSpawn;
 
     bool isInSquad;
+
+    int defenceSpotId;
+    int offenceSpotId;
 
     struct AlertSpot
     {

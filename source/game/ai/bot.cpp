@@ -44,7 +44,9 @@ Bot::Bot(edict_t *self, float skillLevel)
       campingSpotStrafeTimeout(0),
       campingSpotLookAtPointTimeout(0),
       isWaitingForItemSpawn(false),
-      isInSquad(false)
+      isInSquad(false),
+      defenceSpotId(-1),
+      offenceSpotId(-1)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;

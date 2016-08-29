@@ -2,6 +2,7 @@
 #include "ai_shutdown_hooks_holder.h"
 #include "ai_manager.h"
 #include "ai_objective_based_team_brain.h"
+#include "tactical_spots_detector.h"
 
 AiWeaponAimType WeaponAimType(int weapon)
 {
@@ -443,6 +444,40 @@ void AI_SetBotExternalEntityWeight(ai_handle_t *ai, edict_t *ent, float weight)
 {
     if (ai && ent)
         ai->botRef->SetExternalEntityWeight(ent, weight);
+}
+
+int AI_BotDefenceSpotId(const ai_handle_t *ai)
+{
+    return ai && ai->botRef ? ai->botRef->DefenceSpotId() : -1;
+}
+
+int AI_BotOffenceSpotId(const ai_handle_t *ai)
+{
+    return ai && ai->botRef ? ai->botRef->OffenceSpotId() : -1;
+}
+
+int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float searchRadius, vec3_t *spots, int maxSpots)
+{
+    TacticalSpotsDetector tacticalSpotsDetector;
+    // A reachability to a spot from an entity will be checked.
+    // Checking a reachability from a planting spot to an entity does not make sense.
+    tacticalSpotsDetector.SetCheckToAndBackReachability(false);
+    tacticalSpotsDetector.SetDistanceInfluence(0.9f);
+    // This means weight never falls off and farther spots have greater weight.
+    tacticalSpotsDetector.SetWeightFalloffDistanceRatio(1.0f);
+    // Travel time should not affect it significantly (spots planting is a "background task" for bots).
+    tacticalSpotsDetector.SetTravelTimeInfluence(0.2f);
+    // Avoid planting near ledges (a bot may miss and drop an item from a ledge trying to plant it).
+    tacticalSpotsDetector.SetLedgePenalty(10.0f);
+    // Avoid planting near walls (enemies can destroy planted items easily using explosives).
+    tacticalSpotsDetector.SetWallPenalty(5.0f);
+    // Allow planting on ground and a bit below if there are no elevated areas
+    tacticalSpotsDetector.SetMinHeightAdvantage(-64.0f);
+    // Prefer elevated areas
+    tacticalSpotsDetector.SetHeightInfluence(0.9f);
+    TacticalSpotsDetector::OriginParams originParams(defendedEntity, searchRadius, AiAasRouteCache::Shared());
+    TacticalSpotsDetector::AdvantageProblemParams problemParams(defendedEntity);
+    return tacticalSpotsDetector.FindPositionalAdvantageSpots(originParams, problemParams, spots, maxSpots);
 }
 
 //==========================================

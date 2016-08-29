@@ -108,6 +108,11 @@ void AI_DisableDefenceSpotAutoAlert( int team, int id );
 void AI_AddOffenceSpot( int team, int id, edict_t *ent );
 void AI_RemoveOffenceSpot( int team, int id );
 
+// Used for GT-specific defence subgoals scripting like planting turrets.
+// It looks like a too low-level for scripts but this allows handling these subgoals entirely in scripts.
+// Other approaches to implement these subgoals are much more uglier.
+int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float searchRadius, vec3_t *spots, int maxSpots);
+
 // Bot methods accessible from scripts
 
 // An offensiveness is a value in range [0.0f, 1.0f].
@@ -141,6 +146,13 @@ void AI_ClearBotExternalEntityWeights( ai_handle_t *ai );
 // If a zero weight is set, an internal weight computed by hardcoded bot logic is used.
 // If a weight is negative, the ent will be ignored in search for a goal.
 void AI_SetBotExternalEntityWeight( ai_handle_t *ai, edict_t *ent, float weight );
+
+// Useful for checking whether a bot is a defender or an attacker.
+// Note that bot may be neither defender not attacker.
+// Returns a value of the corresponding team order spot for the order,
+// or a negative value if bot does not have that order.
+int AI_BotDefenceSpotId( const ai_handle_t *ai );
+int AI_BotOffenceSpotId( const ai_handle_t *ai );
 
 bool GT_asBotWouldDropHealth( const gclient_t *client );
 void GT_asBotDropHealth( gclient_t *client );
