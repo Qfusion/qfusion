@@ -475,6 +475,8 @@ int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float searchRa
     tacticalSpotsDetector.SetMinHeightAdvantage(-64.0f);
     // Prefer elevated areas
     tacticalSpotsDetector.SetHeightInfluence(0.9f);
+    // Prevent selection of spots that are too close to each other
+    tacticalSpotsDetector.SetSpotProximityThreshold(128.0f);
     TacticalSpotsDetector::OriginParams originParams(defendedEntity, searchRadius, AiAasRouteCache::Shared());
     TacticalSpotsDetector::AdvantageProblemParams problemParams(defendedEntity);
     return tacticalSpotsDetector.FindPositionalAdvantageSpots(originParams, problemParams, spots, maxSpots);
