@@ -58,6 +58,8 @@ protected:
 
     AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
 
+    int FindAasParamToGoalArea(int goalAreaNum, int (AiAasRouteCache::*pathFindingMethod)(int, int, int) const) const;
+
     int FindReachabilityToGoalArea(int goalAreaNum) const;
     int FindTravelTimeToGoalArea(int goalAreaNum) const;
 

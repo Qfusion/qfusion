@@ -65,22 +65,31 @@ Vec3 AiBaseBrain::CurrentGoalOrigin() const
     FailWith("CurrentGoalOrigin(): there is no goal\n");
 }
 
-int AiBaseBrain::FindReachabilityToGoalArea(int goalAreaNum) const
+int AiBaseBrain::FindAasParamToGoalArea(int goalAreaNum, int (AiAasRouteCache::*pathFindingMethod)(int, int, int) const) const
 {
     const AiAasRouteCache *routeCache = RouteCache();
-    int reach = routeCache->ReachabilityToGoalArea(droppedToFloorAasAreaNum, goalAreaNum, preferredAasTravelFlags);
-    if (reach)
-        return reach;
-    return routeCache->ReachabilityToGoalArea(droppedToFloorAasAreaNum, goalAreaNum, allowedAasTravelFlags);
+
+    const int fromAreaNums[2] = { droppedToFloorAasAreaNum, currAasAreaNum };
+    const int travelFlags[2] = { preferredAasTravelFlags, allowedAasTravelFlags };
+
+    for (int i = 0; i < 4; ++i)
+    {
+        int aasParam = (routeCache->*pathFindingMethod)(fromAreaNums[i & 1], goalAreaNum, travelFlags[(i >> 1) & 1]);
+        if (aasParam)
+            return aasParam;
+    }
+
+    return 0;
+}
+
+int AiBaseBrain::FindReachabilityToGoalArea(int goalAreaNum) const
+{
+    return FindAasParamToGoalArea(goalAreaNum, &AiAasRouteCache::ReachabilityToGoalArea);
 }
 
 int AiBaseBrain::FindTravelTimeToGoalArea(int goalAreaNum) const
 {
-    const AiAasRouteCache *routeCache = RouteCache();
-    int travelTime = routeCache->TravelTimeToGoalArea(droppedToFloorAasAreaNum, goalAreaNum, preferredAasTravelFlags);
-    if (travelTime)
-        return travelTime;
-    return routeCache->TravelTimeToGoalArea(droppedToFloorAasAreaNum, goalAreaNum, allowedAasTravelFlags);
+    return FindAasParamToGoalArea(goalAreaNum, &AiAasRouteCache::TravelTimeToGoalArea);
 }
 
 void AiBaseBrain::UpdateInternalWeights()
