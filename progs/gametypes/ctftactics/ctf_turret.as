@@ -454,6 +454,8 @@ class cTurret
         	}
         }
 
+        this.notifyBotOwnerOfPain();        
+
         // for those trying to learn working with angles
         // Vec3.x is the PITCH angle (up and down rotation)
         // Vec3.y is the YAW angle (left and right rotation)
@@ -614,6 +616,39 @@ class cTurret
                 G_CenterPrintMsg( client.getEnt(), S_COLOR_RED + "Your turrets are being damaged" );
             }
         }
+    }
+    
+    void notifyBotOwnerOfPain()
+    {
+        Bot @bot = @this.client.getBot();
+        if ( @bot == null )
+            return;
+
+        // Owner class has been changed.
+        // This means external entity weights have been reset.
+        if ( GetPlayer( this.client ).playerClass.tag != PLAYERCLASS_ENGINEER )
+            return;
+
+        bot.setExternalEntityWeight( this.bodyEnt, 0.0f );
+        
+        if ( levelTime - this.lastPainTime > 4000 )
+            return;
+        
+        Entity @botEnt = G_GetEntity( this.client.playerNum + 1 );
+
+        if ( ( botEnt.effects & EF_CARRIER ) != 0 )
+            return;
+        
+        // If the bot is not defender
+        if ( bot.defenceSpotId < 0 ) 
+        {
+            // Do not care about far turrets
+            if ( botEnt.origin.distance( this.bodyEnt.origin ) > 900 )
+                return;
+        }       
+    
+        // Investigate what's up
+        bot.setExternalEntityWeight( this.bodyEnt, 12.0f );
     }
 }
 
