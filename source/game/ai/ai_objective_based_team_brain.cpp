@@ -6,6 +6,11 @@
 template <typename Container, typename T>
 inline void AiObjectiveBasedTeamBrain::AddItem(const char *name, Container &c, T &&item)
 {
+    if (item.id < 0)
+    {
+        G_Printf(S_COLOR_YELLOW "%s has illegal id %d < 0", name, item.id);
+        return;
+    }
     for (unsigned i = 0, end = c.size(); i < end; ++i)
     {
         if (c[i].id == item.id)
@@ -237,6 +242,7 @@ void AiObjectiveBasedTeamBrain::Think()
     for (auto &botAndScore: candidates)
     {
         Bot *bot = botAndScore.bot->ai->botRef;
+        bot->ClearDefenceAndOffenceSpots();
         for (const auto &defenceSpot: defenceSpots)
             bot->SetExternalEntityWeight(defenceSpot.entity, 0.0f);
         for (const auto &offenceSpot: offenceSpots)
@@ -447,6 +453,7 @@ void AiObjectiveBasedTeamBrain::UpdateDefendersStatus(unsigned defenceSpotNum)
     for (unsigned i = 0; i < defenders[defenceSpotNum].size(); ++i)
     {
         edict_t *bot = defenders[defenceSpotNum][i];
+        bot->ai->botRef->SetDefenceSpotId(spot.id);
         float distance = 1.0f / Q_RSqrt(0.001f + DistanceSquared(bot->s.origin, spotOrigin));
         float distanceFactor = 1.0f;
         if (distance < spot.radius)
@@ -467,6 +474,7 @@ void AiObjectiveBasedTeamBrain::UpdateAttackersStatus(unsigned offenceSpotNum)
     for (unsigned i = 0; i < attackers[offenceSpotNum].size(); ++i)
     {
         edict_t *bot = attackers[offenceSpotNum][i];
+        bot->ai->botRef->SetOffenceSpotId(offenceSpots[offenceSpotNum].id);
         // If bot is not in squad, set an offence spot weight to a value of an ordinary valuable item.
         // Thus bots will not attack alone and will grab some items instead in order to prepare to attack.
         if (bot->ai->botRef->IsInSquad())

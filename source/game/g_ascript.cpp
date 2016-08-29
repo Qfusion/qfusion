@@ -1500,7 +1500,6 @@ static const asBehavior_t asbot_ObjectBehaviors[] =
 
 static const asMethod_t asbot_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL(float, getBaseOffensiveness, ()), asFUNCTION(AI_GetBotBaseOffensiveness), asCALL_CDECL_OBJFIRST },
 	{ ASLIB_FUNCTION_DECL(float, getEffectiveOffensiveness, ()), asFUNCTION(AI_GetBotEffectiveOffensiveness), asCALL_CDECL_OBJFIRST },
 	{ ASLIB_FUNCTION_DECL(void, setBaseOffensiveness, (float baseOffensiveness)), asFUNCTION(AI_SetBotBaseOffensiveness), asCALL_CDECL_OBJFIRST },
 
@@ -1508,6 +1507,9 @@ static const asMethod_t asbot_Methods[] =
 
 	{ ASLIB_FUNCTION_DECL(void, clearExternalEntityWeights, ()), asFUNCTION(AI_ClearBotExternalEntityWeights), asCALL_CDECL_OBJFIRST },
 	{ ASLIB_FUNCTION_DECL(void, setExternalEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_SetBotExternalEntityWeight), asCALL_CDECL_OBJFIRST },
+
+	{ ASLIB_FUNCTION_DECL(int, get_defenceSpotId, () const), asFUNCTION(AI_BotDefenceSpotId), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(int, get_offenceSpotId, () const), asFUNCTION(AI_BotOffenceSpotId), asCALL_CDECL_OBJFIRST },
 
 	ASLIB_METHOD_NULL
 };
@@ -3419,6 +3421,30 @@ static const asglobfuncs_t asGlobFuncs[] =
 
 // ============================================================================
 
+static CScriptArrayInterface *asFunc_AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float radius, int maxSpots)
+{
+	if (maxSpots > 8)
+	{
+		G_Printf(S_COLOR_YELLOW "AI_SuggestDefencePlantingSpots(): maxSpots value %d will be limited to 8\n", maxSpots);
+		maxSpots = 8;
+	}
+
+	vec3_t spots[8];
+	unsigned numSpots = (unsigned)AI_SuggestDefencePlantingSpots(defendedEntity, radius, spots, maxSpots);
+
+	auto *ctx = angelExport->asGetActiveContext();
+	auto *engine = ctx->GetEngine();
+	auto *arrayObjectType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<Vec3>"));
+
+	CScriptArrayInterface *result = angelExport->asCreateArrayCpp( numSpots, arrayObjectType );
+	for (unsigned i = 0; i < numSpots; ++i)
+	{
+		asvec3_t *dst = (asvec3_t *)result->At( i );
+		VectorCopy(spots[i], dst->v);
+	}
+	return result;
+}
+
 static const asglobfuncs_t asAIGlobFuncs[] =
 {
 	{ "void AddNavEntity( Entity @ent, int flags )", asFUNCTION(AI_AddNavEntity), NULL },
@@ -3434,6 +3460,8 @@ static const asglobfuncs_t asAIGlobFuncs[] =
 
 	{ "void AddOffenceSpot(int team, int id, Entity @ent)", asFUNCTION(AI_AddOffenceSpot), NULL },
 	{ "void RemoveOffenceSpot(int team, int id)", asFUNCTION(AI_RemoveOffenceSpot), NULL },
+
+	{ "array<Vec3> @SuggestDefencePlantingSpots(Entity @defendedEntity, float radius, int maxSpots)", asFUNCTION(asFunc_AI_SuggestDefencePlantingSpots), NULL },
 
 	{ NULL }
 };
