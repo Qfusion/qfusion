@@ -692,6 +692,17 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
             continue;
         }
 
+        if ( goal.classname == "dispenser_body" )
+        {
+            if ( goal.team != ent.team )
+                continue;
+            
+            if ( CTFT_isDispenserCooldown( ent ) )
+                bot.setExternalEntityWeight( goal, 0.0f );
+            else
+                bot.setExternalEntityWeight( goal, 1.0f );
+        }
+
         if ( player.playerClass.tag == PLAYERCLASS_ENGINEER )
         {
             CTFT_UpdateEngineerExtraGoal( ent, bot, player, goal );
