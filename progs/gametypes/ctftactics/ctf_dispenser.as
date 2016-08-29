@@ -95,6 +95,8 @@ class cDispenser
         this.bodyEnt.mass = 450;
         this.bodyEnt.takeDamage = DAMAGE_YES;
         this.bodyEnt.nextThink = levelTime + 1000;
+        // Dispensers are low-priority enemies for bots
+        this.bodyEnt.aiIntrinsicEnemyWeight = 0.15f;
         this.bodyEnt.linkEntity();
 
         // the count field will be used to store the index of the cdispenser object
