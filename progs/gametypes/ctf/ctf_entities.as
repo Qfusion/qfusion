@@ -36,8 +36,10 @@ class cFlagBase
     bool handDropped;
     uint droppedTime;
     cFlagBase @next;
+
     int team;
     int enemyTeam;
+    int aiSpotId;
 
     void Initialize( Entity @spawner )
     {
@@ -51,8 +53,6 @@ class cFlagBase
         this.droppedTime = 0;
         @this.next = @fbHead;
         @fbHead = @this;
-        this.team = spawner.team;
-        this.enemyTeam = spawner.team == TEAM_ALPHA ? TEAM_BETA : TEAM_ALPHA;
 
         @this.owner = @spawner;
         @this.carrier = @spawner;
@@ -76,14 +76,8 @@ class cFlagBase
             spawner.moveType = MOVETYPE_TOSS;
 
         spawner.linkEntity();
-        // bases are special because of the timers, use custom reachability checks
-		AI::AddNavEntity( spawner, AI_NAV_REACH_ON_EVENT | AI_NAV_REACH_IN_GROUP );
-        // identify spots by id (set id as defence/offence spot to team id)
-        // add a defence spot for the team
-        AI::AddDefenceSpot( this.team, this.team, spawner, 768.0f );
-        AI::EnableDefenceSpotAutoAlert( this.team, this.team );
-        // add an offence spot for the enemy team
-        AI::AddOffenceSpot( this.enemyTeam, this.team, spawner ); 
+        
+        setupAIGoalProperties( spawner );		
 
 		// drop to floor
 		Trace tr;
@@ -131,11 +125,44 @@ class cFlagBase
     {
     }
 
+    void setupAIGoalProperties( Entity @spawner )
+    {
+        this.team = spawner.team;
+        this.enemyTeam = spawner.team == TEAM_ALPHA ? TEAM_BETA : TEAM_ALPHA;
+        this.aiSpotId = spawner.team;
+
+        AI::AddNavEntity( spawner, AI_NAV_REACH_ON_EVENT | AI_NAV_REACH_IN_GROUP );
+        AI::AddDefenceSpot( this.team, this.aiSpotId, spawner, 768.0f );
+        AI::EnableDefenceSpotAutoAlert( this.team, this.aiSpotId );
+        AI::AddOffenceSpot( this.enemyTeam, this.aiSpotId, spawner ); 
+    }
+
+    void notifyAIOfNewCarrier( Entity @oldCarrier, Entity @newCarrier )
+    {
+        // The flag is returned to the base
+        if ( @newCarrier == @this.owner )
+        {
+            AI::AddDefenceSpot( this.team, this.aiSpotId, this.owner, 768.0f );
+            AI::EnableDefenceSpotAutoAlert( this.team, this.aiSpotId );
+            AI::AddOffenceSpot( this.enemyTeam, this.aiSpotId, this.owner );
+        }
+        // The flag is stolen from a base by a player
+        else if ( @newCarrier.client != null && @oldCarrier == @this.owner ) 
+        {
+            AI::DisableDefenceSpotAutoAlert( this.team, this.aiSpotId );
+            AI::RemoveDefenceSpot( this.team, this.aiSpotId );
+            AI::RemoveOffenceSpot( this.enemyTeam, this.aiSpotId );
+        }
+        
+        // Dropping a flag and picking up a dropped flag do not affect AI order spots status       
+    }
+
     void setCarrier( Entity @ent )
     {
         if ( @this.carrier != @ent )
         {
             this.carrier.effects &= ~uint( EF_CARRIER|EF_FLAG_TRAIL );
+            notifyAIOfNewCarrier( this.carrier, ent );
         }
 
         @this.carrier = @ent;
@@ -155,17 +182,11 @@ class cFlagBase
 		{
             this.owner.solid = SOLID_TRIGGER;
 			this.decal.svflags &= ~SVF_NOCLIENT;
-            AI::AddDefenceSpot( this.team, this.team, this.owner, 768.0f );
-            AI::EnableDefenceSpotAutoAlert( this.team, this.team );
-            AI::AddOffenceSpot( this.enemyTeam, this.team, this.owner );
 		}
         else
 		{
             this.owner.solid = SOLID_NOT;
-			this.decal.svflags |= SVF_NOCLIENT;
-            AI::DisableDefenceSpotAutoAlert( this.team, this.team );
-            AI::RemoveDefenceSpot( this.team, this.team );
-            AI::RemoveOffenceSpot( this.enemyTeam, this.team );
+			this.decal.svflags |= SVF_NOCLIENT;   
 		}
 
         this.owner.linkEntity();
