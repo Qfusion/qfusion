@@ -564,6 +564,20 @@ void CTFT_UpdateEngineerExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entit
     bot.setExternalEntityWeight( goal, 999.0f );
 }
 
+void CTFT_UpdateMedicExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @goal )
+{
+    if ( goal.team != ent.team )
+        return;
+
+    if ( goal.classname != "reviver" )
+        return;
+
+    if ( ( ent.effects & EF_CARRIER ) == 0 )
+        bot.setExternalEntityWeight( goal, 5.0f );
+    else
+        bot.setExternalEntityWeight( goal, 1.5f );
+}
+
 void CTFT_UpdateBotExtraGoals( Entity @ent )
 {
     Entity @goal;
@@ -681,6 +695,10 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
         if ( player.playerClass.tag == PLAYERCLASS_ENGINEER )
         {
             CTFT_UpdateEngineerExtraGoal( ent, bot, player, goal );
+        }
+        else if ( player.playerClass.tag == PLAYERCLASS_MEDIC )
+        {
+            CTFT_UpdateMedicExtraGoal( ent, bot, player, goal );
         }
     }
 }
