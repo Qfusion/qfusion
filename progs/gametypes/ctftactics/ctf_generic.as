@@ -77,7 +77,7 @@ void CTFT_RemoveBombs()
     }
 }
 
-bool CTFT_IsMaxTurretsReached( int team )
+int CTFT_TeamTurretsNum( int team )
 {
     int ii = 0;
     for ( int i = 0; i < MAX_TURRETS; i++ )
@@ -87,14 +87,15 @@ bool CTFT_IsMaxTurretsReached( int team )
             ii++;
         }
     }
-
-    if( ii >= CTFT_MAXTURRETS_PER_TEAM )
-        return true;
-    else
-        return false;
+    return ii;
 }
 
-bool CTFT_IsMaxDispensersReached( int team )
+bool CTFT_IsMaxTurretsReached( int team )
+{
+    return CTFT_TeamTurretsNum( team ) >= CTFT_MAXTURRETS_PER_TEAM;
+}
+
+int CTFT_TeamDispensersNum( int team )
 {
     int ii = 0;
     for ( int i = 0; i < MAX_DISPENSERS; i++ )
@@ -104,11 +105,12 @@ bool CTFT_IsMaxDispensersReached( int team )
             ii++;
         }
     }
+    return ii;
+}
 
-    if( ii >= CTFT_MAXDISPENSERS_PER_TEAM )
-        return true;
-    else
-        return false;
+bool CTFT_IsMaxDispensersReached( int team )
+{
+    return CTFT_TeamDispensersNum( team ) >= CTFT_MAXDISPENSERS_PER_TEAM;
 }
 
 bool CTFT_RemoveItemsByName( String type )

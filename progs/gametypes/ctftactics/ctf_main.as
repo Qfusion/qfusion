@@ -466,6 +466,104 @@ void CTFT_UpdateBotsExtraGoals()
     }
 }
 
+bool CTFT_ShouldNotPlantItem( const Entity @originEntity, float radius )
+{
+    array<Entity @> @nearbyEntities = @G_FindInRadius( originEntity.origin, radius );
+
+    for ( uint i = 0; i < nearbyEntities.size(); ++i )
+    {
+        Entity @nearby = nearbyEntities[i];
+
+        // Do this cheap test first
+
+        if ( @nearby.client != null )
+            continue;     
+
+        // Do not plant a turret or a dispenser if there are nearby entities of this class (entity team is ignored)
+
+        // Do cheap solid tests first
+
+        if ( nearby.solid == SOLID_YES )
+        {
+        
+            if ( nearby.classname == "turret_body" )
+                return true;
+
+            if ( nearby.classname == "dispenser_body" )
+                return true;
+        }
+        else if ( nearby.solid == SOLID_TRIGGER )
+        {
+            if ( nearby.classname == "bomb_body" )
+                return true;
+
+            if ( nearby.classname == "team_CTF_alphaflag" )
+                return true;
+
+            if ( nearby.classname == "team_CTF_betaflag" )
+                return true;
+        }
+    }
+    return false;
+}
+
+void CTFT_UpdateEngineerExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @goal )
+{
+    // Skip entities that are not plant spots quickly
+
+    if ( goal.team != ent.team )
+        return;
+
+    if ( ( goal.svflags & SVF_NOCLIENT ) == 0 )
+        return; 
+
+    if ( goal.solid != SOLID_TRIGGER )
+        return;
+
+    if ( goal.classname != "ai_planting_spot" )
+        return;
+
+    // Set zero weight for the common case.
+    // Even if an entity is a planting spot, its weight should be reset unless it needs planting and the bot should do it.
+    bot.setExternalEntityWeight( goal, 0.0f );
+
+    // Do not try to plant turrets carrying a flag 
+    if ( ( ent.effects & EF_CARRIER ) != 0 )
+        return;
+
+    // Both turret and dispencer have this cost
+    if ( ent.client.armor < CTFT_TURRET_AP_COST )
+        return;
+
+    if ( player.isEngineerCooldown() )
+        return;
+
+    // If the bot is not assigned as a defender
+    if ( bot.defenceSpotId < 0 )
+    {
+        // Bother about planting an item only if the bot is occasionally close to a planting spot
+        if ( ent.origin.distance( goal.origin ) > 200 )
+            return;
+    }
+
+    // Plant quickly only a minimal number of enities sufficient for defense purposes.
+    // Humans in a team (if any) should finish planting.
+
+    // Bots should not plant more than 3 turrets
+    if ( CTFT_TeamTurretsNum( ent.team ) > 3 )
+        return;
+
+    // Bots should plant only a single dispenser
+    if ( CTFT_TeamDispensersNum( ent.team ) > 1 )
+        return;
+
+    if ( CTFT_ShouldNotPlantItem( goal, 192.0f ) )
+        return;
+
+    // Set a huge value to override the value of defence spot entity
+    bot.setExternalEntityWeight( goal, 999.0f );
+}
+
 void CTFT_UpdateBotExtraGoals( Entity @ent )
 {
     Entity @goal;
@@ -477,6 +575,8 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
     @bot = @ent.client.getBot();
     if ( @bot == null )
         return;
+
+    cPlayer @player = GetPlayer( ent.client );
 
     float offensiveness = bot.getEffectiveOffensiveness();
 
@@ -576,6 +676,11 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
             }
 
             continue;
+        }
+
+        if ( player.playerClass.tag == PLAYERCLASS_ENGINEER )
+        {
+            CTFT_UpdateEngineerExtraGoal( ent, bot, player, goal );
         }
     }
 }

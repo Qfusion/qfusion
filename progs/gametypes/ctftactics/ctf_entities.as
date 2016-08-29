@@ -70,14 +70,7 @@ class cFlagBase
 
         this.owner.linkEntity();
 
-        // ctf:tactics flag is always instant, so it should be reached at touch as an ordinary item
-		AI::AddNavEntity( spawner, AI_NAV_REACH_AT_TOUCH );
-        // identify spots by id (set defence/offence spot id to team id)
-        // add a defence spot for the team
-        AI::AddDefenceSpot( this.team, this.team, spawner, 768.0f );
-        AI::EnableDefenceSpotAutoAlert( this.team, this.team );    
-        // add an offence spot for the enemy team
-        AI::AddOffenceSpot( this.enemyTeam, this.team, spawner ); 
+        setupAIGoalProperties( spawner );
 
         // drop to floor
         Trace tr;
@@ -139,6 +132,39 @@ class cFlagBase
         }
 
         this.owner.linkEntity();
+    }
+
+    void setupAIGoalProperties( Entity @spawner )
+    {
+        // ctf:tactics flag is always instant, so it should be reached at touch as an ordinary item
+		AI::AddNavEntity( spawner, AI_NAV_REACH_AT_TOUCH );
+        // identify spots by id (set defence/offence spot id to team id)
+        // add a defence spot for the team
+        AI::AddDefenceSpot( this.team, this.team, spawner, 768.0f );
+        AI::EnableDefenceSpotAutoAlert( this.team, this.team );    
+        // add an offence spot for the enemy team
+        AI::AddOffenceSpot( this.enemyTeam, this.team, spawner ); 
+
+        setupAIPlantingSpots( spawner );      
+    }
+
+    void setupAIPlantingSpots( Entity @spawner )
+    {
+        array<Vec3> @spotOrigins = AI::SuggestDefencePlantingSpots( spawner, 1024.0f, 8 );
+        for ( uint i = 0; i < spotOrigins.size(); ++i )
+        {
+            Entity @goal = G_SpawnEntity( "ai_planting_spot" );
+            goal.type = ET_GENERIC;
+            goal.svflags |= uint(SVF_NOCLIENT);
+            goal.origin = spotOrigins[i];
+            goal.setSize( Vec3( -8, -8, -16 ), Vec3( +8, +8, +32 ) );
+            goal.solid = SOLID_TRIGGER;
+            goal.clipMask = MASK_PLAYERSOLID;
+            @goal.touch = ai_planting_spot_touch;
+            goal.team = spawner.team;
+            goal.linkEntity();
+            AI::AddNavEntity( goal, AI_NAV_REACH_AT_TOUCH );
+        }
     }
 
     void resetFlag()
@@ -566,6 +592,44 @@ void flag_minimap_icon_think( Entity @ent )
     }
 
     ent.nextThink = levelTime + 1;
+}
+
+void ai_planting_spot_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags )
+{
+    if ( @other == null )
+        return;
+
+    Client @client = other.client;
+    if ( @client == null )
+        return;
+
+    Bot @bot = client.getBot();
+    if ( @bot == null )
+        return;
+
+    cPlayer player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_ENGINEER )
+        return;
+    
+    // Reset goal weight immediately
+    bot.setExternalEntityWeight( ent, 0.0f );
+    
+    // Things might have changed since last goal assignation
+
+    if ( player.isEngineerCooldown() )
+        return;
+
+    if ( CTFT_ShouldNotPlantItem( other, 192.0f ) )
+        return;
+
+    if ( CTFT_TeamTurretsNum( ent.team ) < 3 )
+    {
+        CTFT_DropTurret( client, AMMO_BULLETS );
+    }
+    else if ( CTFT_TeamDispensersNum( ent.team ) < 1 )
+    {
+        CTFT_DropDispenser( client );
+    }
 }
 
 void ctf_flag_die( Entity @ent, Entity @inflictor, Entity @attacker )
