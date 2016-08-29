@@ -95,6 +95,7 @@ private:
     int lowestWeightTravelTimeBounds;
     float ledgePenalty;
     float wallPenalty;
+    float spotProximityThreshold;
     bool checkToAndBackReachability;
 
     struct AreaAndScore
@@ -171,6 +172,7 @@ public:
         minHeightAdvantage = 0.0f;
         ledgePenalty = 0.33f;
         wallPenalty = 0.33f;
+        spotProximityThreshold = 64.0f;
         checkToAndBackReachability = false;
     }
 
@@ -203,6 +205,8 @@ public:
     inline void SetLedgePenalty(float howMuchWorse) { ledgePenalty = 1.0f / howMuchWorse; }
 
     inline void SetWallPenalty(float howMuchWorse) { wallPenalty = 1.0f / howMuchWorse; }
+
+    inline void SetSpotProximityThreshold(float radius) { spotProximityThreshold = std::max(0.0f, radius); }
 
     int FindPositionalAdvantageSpots(const OriginParams &originParams, const AdvantageProblemParams &problemParams,
                                      vec3_t *spots, int maxSpots);

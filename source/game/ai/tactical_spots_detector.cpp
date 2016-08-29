@@ -12,15 +12,61 @@ int TacticalSpotsDetector::FindBBoxAreas(const OriginParams &originParams, int *
 
 int TacticalSpotsDetector::CopyResults(const TraceCheckedAreas &results, vec3_t *spots, int maxSpots)
 {
+    if (maxSpots == 0 || results.empty())
+        return 0;
+
     const aas_area_t *worldAreas = AiAasWorld::Instance()->Areas();
-    const int numResultAreas = std::min(maxSpots, (int)results.size());
-    for (int i = 0; i < numResultAreas; ++i)
+
+    // Its a common case so give it an optimized branch
+    if (maxSpots == 1)
     {
-        const aas_area_t &area = worldAreas[results[i].areaNum];
-        VectorCopy(area.center, spots[i]);
-        spots[i][2] = area.mins[2] + 16.0f;
+        VectorCopy(worldAreas[results[0].areaNum].center, spots[0]);
+        spots[0][2] = 16.0f + worldAreas[results[0].areaNum].mins[2];
+        return 1;
     }
-    return numResultAreas;
+
+    bool isAreaExcluded[results.capacity()];
+    memset(isAreaExcluded, 0, sizeof(bool) * results.capacity());
+
+    int numSpots = 0;
+    unsigned keptAreaIndex = 0;
+    for (;;)
+    {
+        if (keptAreaIndex >= results.size())
+            return numSpots;
+        if (numSpots >= maxSpots)
+            return numSpots;
+
+        // Areas are sorted by score.
+        // So first area not marked as excluded yet has higher priority and should be kept.
+
+        const aas_area_t &keptArea = worldAreas[results[keptAreaIndex].areaNum];
+        Vec3 keptAreaPoint(keptArea.center);
+        keptAreaPoint.Z() = 16.0f + keptArea.mins[2];
+
+        VectorCopy(keptAreaPoint.Data(), spots[numSpots]);
+        ++numSpots;
+
+        // Exclude all next (i.e. lower score) areas that are too close to kept area.
+
+        unsigned testedAreaIndex = keptAreaIndex + 1;
+        keptAreaIndex = 999999;
+        for (; testedAreaIndex < results.size(); testedAreaIndex++)
+        {
+            // Skip already excluded areas
+            if (isAreaExcluded[testedAreaIndex])
+                continue;
+
+            const aas_area_t &testedArea = worldAreas[results[testedAreaIndex].areaNum];
+            Vec3 testedAreaPoint(testedArea.center);
+            testedAreaPoint.Z() = 16.0f + testedArea.mins[2];
+
+            if ((testedAreaPoint - keptAreaPoint).SquaredLength() < spotProximityThreshold * spotProximityThreshold)
+                isAreaExcluded[testedAreaIndex] = true;
+            else if (keptAreaIndex > testedAreaIndex)
+                keptAreaIndex = testedAreaIndex;
+        }
+    }
 }
 
 void TacticalSpotsDetector::FindReachCheckedAreas(const OriginParams &originParams, ReachCheckedAreas &result)
@@ -361,4 +407,3 @@ bool TacticalSpotsDetector::LooksLikeACoverArea(const aas_area_t &area, const Co
 
     return true;
 }
-
