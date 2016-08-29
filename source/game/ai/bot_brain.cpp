@@ -1875,8 +1875,8 @@ bool BotBrain::MayNotBeFeasibleEnemy(const edict_t *ent) const
     // Skip ghosting entities
     if (G_ISGHOSTING(ent))
         return true;
-    // Skip chatting or notarget entities
-    if (ent->flags & (FL_NOTARGET|FL_BUSY))
+    // Skip chatting or notarget entities except carriers
+    if ((ent->flags & (FL_NOTARGET|FL_BUSY)) && !(ent->s.effects & EF_CARRIER))
         return true;
     // Skip teammates. Note that team overrides attitude
     if (GS_TeamBasedGametype() && ent->s.team == self->s.team)
