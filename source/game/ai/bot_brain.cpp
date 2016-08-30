@@ -2,6 +2,7 @@
 #include "ai_ground_trace_cache.h"
 #include "ai_squad_based_team_brain.h"
 #include "bot_brain.h"
+#include "tactical_spots_detector.h"
 #include <algorithm>
 #include <limits>
 #include <stdarg.h>
@@ -193,8 +194,7 @@ void BotBrain::Think()
         TryFindNewCombatTask();
     }
 
-    if (!specialGoal && !combatTask.Empty())
-        CheckTacticalPosition();
+    CheckTacticalPosition();
 }
 
 void BotBrain::OnEnemyViewed(const edict_t *enemy)
@@ -506,6 +506,83 @@ void BotBrain::SetSpecialGoalFromEntity(edict_t *entity, const AiFrameAwareUpdat
 
 void BotBrain::CheckTacticalPosition()
 {
+    if (combatTask.Empty())
+        return;
+
+    if (specialGoal)
+        return;
+
+    if (HasMoreImportantTasksThanEnemies() && !combatTask.retreat)
+        return;
+
+    if (combatTask.advance)
+        return;
+
+    vec3_t newTacticalSpot;
+    bool hasFoundNewSpot = false;
+    unsigned spotTimeout = 300;
+
+    // A hack to save performance
+    float searchRadiusScale = 1.0f;
+    searchRadiusScale *= 1.0f - BoundedFraction(game.numBots, 12);
+    searchRadiusScale *= 1.0f - BoundedFraction(AiAasWorld::Instance()->NumAreas(), 25000);
+
+    bool beAwareOfExplosives = combatTask.enemy->RocketsReadyToFireCount() > 0;
+
+    if (combatTask.retreat)
+    {
+        if (SuggestCoverSpot(newTacticalSpot, 128.0f + 192.0f * searchRadiusScale, beAwareOfExplosives))
+        {
+            hasFoundNewSpot = true;
+            combatTask.inhibit = true;
+        }
+    }
+    else
+    {
+        if (SuggestPositionalAdvantageSpot(newTacticalSpot, 128.0f + 352.0f * searchRadiusScale, beAwareOfExplosives))
+        {
+            hasFoundNewSpot = true;
+            spotTimeout += (unsigned)DistanceFast(self->s.origin, newTacticalSpot);
+        }
+        else if (ShouldEstablishVisualContact(newTacticalSpot))
+        {
+            hasFoundNewSpot = true;
+            spotTimeout += 450;
+        }
+    }
+
+    if (hasFoundNewSpot)
+    {
+        combatTask.instanceId = NextCombatTaskInstanceId();
+        SetTacticalSpot(Vec3(newTacticalSpot), spotTimeout);
+    }
+}
+
+bool BotBrain::SuggestPositionalAdvantageSpot(vec3_t newSpotOrigin, float searchRadius, bool beAwareOfExplosives)
+{
+    TacticalSpotsDetector tacticalSpotsDetector;
+    tacticalSpotsDetector.SetDistanceInfluence(0.7f);
+    tacticalSpotsDetector.SetWeightFalloffDistanceRatio(0.0f);
+    tacticalSpotsDetector.SetTravelTimeInfluence(0.8f);
+    tacticalSpotsDetector.SetHeightInfluence(1.0f);
+    tacticalSpotsDetector.SetMinHeightAdvantage(-playerbox_stand_mins[2] + 16.0f);
+    tacticalSpotsDetector.SetCheckToAndBackReachability(false);
+    tacticalSpotsDetector.SetWallPenalty(beAwareOfExplosives ? 10.0f : 1.0f);
+    tacticalSpotsDetector.SetLedgePenalty(5.0f);
+
+    TacticalSpotsDetector::OriginParams originParams(self, searchRadius, RouteCache());
+    TacticalSpotsDetector::AdvantageProblemParams problemParams(combatTask.EnemyEnt());
+
+    vec3_t *spots = reinterpret_cast<vec3_t *>(newSpotOrigin);
+    return tacticalSpotsDetector.FindPositionalAdvantageSpots(originParams, problemParams, spots, 1) != 0;
+}
+
+bool BotBrain::ShouldEstablishVisualContact(vec_t *newSpotOrigin)
+{
+    // This method is likely to be called in squad-based gametypes
+    // when some bots of a squad cannot see the enemy,
+    // but an enemy is valid since some bot sees it
+
     trace_t trace;
 
     // First, trace whether a bot may hit an enemy from current position
@@ -516,7 +593,7 @@ void BotBrain::CheckTacticalPosition()
 
     // Bot may hit from the current position
     if (trace.fraction == 1.0f || game.edicts + trace.ent == combatTask.TraceKey())
-        return;
+        return false;
 
     // Avoid another trace call by doing a cheap velocity test first
     // (Predicting origin makes sense for relatively high speed, otherwise the origin is almost the same)
@@ -532,12 +609,30 @@ void BotBrain::CheckTacticalPosition()
 
         // Bot would be able to hit
         if (trace.fraction == 1.0f || game.edicts + trace.ent == combatTask.TraceKey())
-            return;
+            return false;
     }
 
-    combatTask.inhibit = true;
-    combatTask.instanceId = NextCombatTaskInstanceId();
-    SetTacticalSpot(combatTask.EnemyOrigin(), 350 + (unsigned)(250 * GetBaseOffensiveness()));
+    VectorCopy(combatTask.EnemyOrigin().Data(), newSpotOrigin);
+    return true;
+}
+
+bool BotBrain::SuggestCoverSpot(vec3_t newSpotOrigin, float searchRadius, bool beAwareOfExplosives)
+{
+    TacticalSpotsDetector tacticalSpotsDetector;
+    tacticalSpotsDetector.SetDistanceInfluence(0.7f);
+    tacticalSpotsDetector.SetWeightFalloffDistanceRatio(0.0f);
+    tacticalSpotsDetector.SetTravelTimeInfluence(0.9f);
+    tacticalSpotsDetector.SetHeightInfluence(0.3f);
+    tacticalSpotsDetector.SetMinHeightAdvantage(-16.0f + playerbox_stand_mins[2]);
+    tacticalSpotsDetector.SetCheckToAndBackReachability(false);
+    tacticalSpotsDetector.SetWallPenalty(beAwareOfExplosives ? 10.0f : 1.0f);
+    tacticalSpotsDetector.SetLedgePenalty(2.0f);
+
+    TacticalSpotsDetector::OriginParams originParams(self, searchRadius, RouteCache());
+    TacticalSpotsDetector::CoverProblemParams problemParams(combatTask.EnemyEnt(), beAwareOfExplosives ? 96.0f : 32.0f);
+
+    vec3_t *spots = reinterpret_cast<vec3_t *>(newSpotOrigin);
+    return tacticalSpotsDetector.FindCoverSpots(originParams, problemParams, spots, 1) != 0;
 }
 
 void BotBrain::UpdateBlockedAreasStatus()
