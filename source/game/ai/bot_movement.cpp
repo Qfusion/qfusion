@@ -1540,7 +1540,16 @@ void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
         ucmd->sidemove = combatMovePushes[1];
         ucmd->upmove = combatMovePushes[2];
         if (!(ucmd->buttons & BUTTON_SPECIAL))
+        {
             ApplyCheatingGroundAcceleration(ucmd);
+
+            const float maxGroundSpeed = self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED];
+            const float squareGroundSpeed = VectorLengthSquared(self->velocity);
+
+            // If bot would not dash, do at least a jump
+            if (squareGroundSpeed > 0.64f * maxGroundSpeed * maxGroundSpeed)
+                ucmd->upmove = 1;
+        }
     }
     else
     {
