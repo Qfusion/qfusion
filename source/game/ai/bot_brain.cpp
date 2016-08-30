@@ -163,25 +163,22 @@ void BotBrain::Frame()
         baseOffensiveness = 0.5f;
 
     botEnemyPool.Update();
+
+    // If a weapon switch action has been selected
+    if (CheckFastWeaponSwitchAction())
+    {
+        // Defer regular target/weapon selection for a Think() cycle
+        if (nextTargetChoiceAt <= level.time + 64)
+            nextTargetChoiceAt += 64 + 1;
+        if (nextWeaponChoiceAt <= level.time + 64)
+            nextWeaponChoiceAt += 64 + 1;
+    }
 }
 
 void BotBrain::Think()
 {
     // Call superclass method first
     AiBaseBrain::Think();
-
-    if (nextFastWeaponSwitchActionCheckAt <= level.time)
-    {
-        if (CheckFastWeaponSwitchAction())
-        {
-            nextFastWeaponSwitchActionCheckAt = level.time + 500;
-            if (nextTargetChoiceAt <= level.time + 64)
-                nextTargetChoiceAt += 64 + 1;
-            if (nextWeaponChoiceAt <= level.time + 64)
-                nextWeaponChoiceAt += 64 + 1;
-            return;
-        }
-    }
 
     if (combatTask.enemy && (level.time - combatTask.enemy->LastSeenAt()) > reactionTime)
     {
@@ -287,6 +284,9 @@ void BotBrain::UpdateKeptCurrentCombatTask()
 
 bool BotBrain::CheckFastWeaponSwitchAction()
 {
+    if (nextFastWeaponSwitchActionCheckAt > level.time)
+        return false;
+
     if (!combatTask.enemy)
         return false;
 
@@ -296,6 +296,14 @@ bool BotBrain::CheckFastWeaponSwitchAction()
     // Easy bots do not perform fast weapon switch actions
     if (BotSkill() < 0.33f)
         return false;
+
+    if (BotSkill() < 0.66f)
+    {
+        // Mid-skill bots do these actions in non-think frames occasionally
+        if (ShouldSkipThinkFrame() && random() > BotSkill())
+            return false;
+    }
+
 
     const Enemy &enemy = *combatTask.enemy;
     CombatDisposition disposition = GetCombatDisposition(*combatTask.enemy);
@@ -328,6 +336,8 @@ bool BotBrain::CheckFastWeaponSwitchAction()
     {
         combatTask.suggestedWeapon = chosenWeapon;
         combatTask.importantShot = true;
+        // We have selected a weapon switch action
+        nextFastWeaponSwitchActionCheckAt = level.time + 750;
         return true;
     }
 
