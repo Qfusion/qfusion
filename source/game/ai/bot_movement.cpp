@@ -1554,18 +1554,18 @@ void Bot::ApplyCheatingGroundAcceleration(const usercmd_t *ucmd)
 {
     vec3_t forward, right;
     AngleVectors(self->s.angles, forward, right, nullptr);
-    
-    float factor = 500.0f * game.frametime * Skill();
-    VectorScale(forward, factor * ucmd->forwardmove, forward);
-    VectorScale(right, factor * ucmd->sidemove, right);
-    
-    VectorAdd(self->velocity, forward, self->velocity);
-    VectorAdd(self->velocity, right, self->velocity);
+
+    float speedGainPerSecond = 500.0f * Skill();
+    float frameTimeSeconds = 0.0001f * game.frametime;
+    float factor = speedGainPerSecond * frameTimeSeconds;
+
+    VectorMA(self->velocity, factor * ucmd->forwardmove, forward, self->velocity);
+    VectorMA(self->velocity, factor * ucmd->sidemove, right, self->velocity);
 
     float squareSpeed = VectorLengthSquared(self->velocity);
     if (squareSpeed > 1)
     {
-        float speed = 1.09f / Q_RSqrt(squareSpeed);
+        float speed = 1.0f / Q_RSqrt(squareSpeed);
         float maxGroundSpeed = self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED];
         if (speed > maxGroundSpeed)
         {
