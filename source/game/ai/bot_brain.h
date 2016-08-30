@@ -269,6 +269,10 @@ class BotBrain: public AiBaseBrain
     virtual bool ShouldCancelSpecialGoalBySpecificReasons() override;
 
     void CheckTacticalPosition();
+    bool SuggestPositionalAdvantageSpot(vec3_t newSpotOrigin, float searchRadius, bool beAwareOfExplosives);
+    bool ShouldEstablishVisualContact(vec3_t newSpotOrigin);
+    bool SuggestCoverSpot(vec3_t newSpotOrigin, float searchRaidus, bool beAwareOfExplosives);
+
     void UpdateBlockedAreasStatus();
 
     inline bool HasSpecialGoal() const { return specialGoal != nullptr; }
