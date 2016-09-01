@@ -104,7 +104,6 @@ CENTER PRINTING
 */
 
 char scr_centerstring[1024];
-float scr_centertime_start;   // for slow victory printing
 float scr_centertime_off;
 int scr_center_lines;
 int scr_erase_center;
@@ -122,7 +121,6 @@ void CG_CenterPrint( const char *str )
 
 	Q_strncpyz( scr_centerstring, CG_TranslateColoredString( str, l10n_buffer, sizeof( l10n_buffer ) ), sizeof( scr_centerstring ) );
 	scr_centertime_off = cg_centerTime->value;
-	scr_centertime_start = cg.time;
 
 	// count the number of lines for centering
 	scr_center_lines = 1;
