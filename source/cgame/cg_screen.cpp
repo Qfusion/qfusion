@@ -666,19 +666,26 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 	trap_SCR_DrawString( x, y, align, string, font, color );
 }
 
-static unsigned int point_remove_time;
-static int pointed_health;
-static int pointed_armor;
+/*
+* CG_ClearPointedNum
+*/
+void CG_ClearPointedNum( void )
+{
+	cg.pointedNum = 0;
+	cg.pointRemoveTime = 0;
+	cg.pointedHealth = 0;
+	cg.pointedArmor = 0;
+}
 
 /*
 * CG_UpdatePointedNum
 */
-void CG_UpdatePointedNum( void )
+static void CG_UpdatePointedNum( void )
 {
 	// disable cases
 	if( CG_IsScoreboardShown() || cg.view.thirdperson || cg.view.type != VIEWDEF_PLAYERVIEW || !cg_showPointedPlayer->integer )
 	{
-		cg.pointedNum = 0;
+		CG_ClearPointedNum();
 		return;
 	}
 
@@ -687,26 +694,26 @@ void CG_UpdatePointedNum( void )
 		bool mega = false;
 
 		cg.pointedNum = cg.predictedPlayerState.stats[STAT_POINTED_PLAYER];
-		point_remove_time = cg.time + 150;
+		cg.pointRemoveTime = cg.time + 150;
 
-		pointed_health = 3.2 * ( cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER] &0x1F );
+		cg.pointedHealth = 3.2 * ( cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER] &0x1F );
 		mega = cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER]&0x20 ? true : false;
-		pointed_armor = 5 * ( cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER]>>6 &0x3F );
+		cg.pointedArmor = 5 * ( cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER]>>6 &0x3F );
 		if( mega )
 		{
-			pointed_health += 100;
-			if( pointed_health > 200 )
-				pointed_health = 200;
+			cg.pointedHealth += 100;
+			if( cg.pointedHealth > 200 )
+				cg.pointedHealth = 200;
 		}
 	}
 
-	if( point_remove_time <= cg.time )
-		cg.pointedNum = 0;
+	if( cg.pointRemoveTime <= cg.time )
+		CG_ClearPointedNum();
 
 	if( cg.pointedNum && cg_showPointedPlayer->integer == 2 )
 	{
 		if( cg_entities[cg.pointedNum].current.team != cg.predictedPlayerState.stats[STAT_TEAM] )
-			cg.pointedNum = 0;
+			CG_ClearPointedNum();
 	}
 }
 
@@ -735,6 +742,8 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color )
 
 	for( i = 0; i < gs.maxclients; i++ )
 	{
+		int pointed_health, pointed_armor;
+
 		if( !cgs.clientInfo[i].name[0] || ISVIEWERENTITY( i + 1 ) )
 			continue;
 
@@ -777,7 +786,7 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color )
 		}
 		else
 		{
-			fadeFrac = (float)( point_remove_time - cg.time ) / 150.0f;
+			fadeFrac = (float)( cg.pointRemoveTime - cg.time ) / 150.0f;
 			clamp( fadeFrac, 0.0f, 1.0f );
 
 			tmpcolor[3] = color[3] * fadeFrac;
@@ -802,6 +811,9 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color )
 		// if not the pointed player we are done
 		if( cent->current.number != cg.pointedNum )
 			continue;
+
+		pointed_health = cg.pointedHealth;
+		pointed_armor = cg.pointedArmor;
 
 		// pointed player hasn't a health value to be drawn, so skip adding the bars
 		if( pointed_health && cg_showPlayerNames_barWidth->integer > 0 )
