@@ -1145,6 +1145,13 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 #define AWARDS_OVERSHOOT_FREQUENCY 6.0f
 #define AWARDS_OVERSHOOT_DECAY 10.0f
 
+void CG_ClearAwards( void )
+{
+    // reset awards
+    cg.award_head = 0;
+    memset( cg.award_times, 0, sizeof( cg.award_times ) );
+}
+
 static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, vec4_t color )
 {
 	int i, count, current;
