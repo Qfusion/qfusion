@@ -71,6 +71,14 @@ typedef enum
 	AI_NAV_MOVABLE = 0x4000
 } ai_nav_entity_flags;
 
+typedef enum
+{
+	AI_WEAPON_AIM_TYPE_INSTANT_HIT,
+	AI_WEAPON_AIM_TYPE_PREDICTION,
+	AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE,
+	AI_WEAPON_AIM_TYPE_DROP
+} ai_weapon_aim_type;
+
 // Should be called before static entities spawn
 void AI_InitLevel( void );
 // Should be called before level and entities data cleanup
@@ -173,6 +181,26 @@ void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt )
 // Note that offence and defence score are not complementary but independent.
 float GT_asPlayerOffenciveAbilitiesScore(const gclient_t *client);
 float GT_asPlayerDefenciveAbilitiesScore(const gclient_t *client);
+
+typedef struct ai_script_weapon_def_s
+{
+	int weaponNum;
+	int tier;
+	float minRange;
+	float maxRange;
+	float bestRange;
+	float projectileSpeed;
+	float splashRadius;
+	float maxSelfDamage;
+	ai_weapon_aim_type aimType;
+	bool isContinuousFire;
+} ai_script_weapon_def_t;
+
+int GT_asGetScriptWeaponsNum(const gclient_t *client);
+bool GT_asGetScriptWeaponDef(const gclient_t *client, int scriptWeaponNum, ai_script_weapon_def_t *weaponDef);
+int GT_asGetScriptWeaponCooldown(const gclient_t *client, int scriptWeaponNum);
+bool GT_asSelectScriptWeapon(gclient_t *client, int scriptWeaponNum);
+bool GT_asFireScriptWeapon(gclient_t *client, int scriptWeaponNum);
 
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );

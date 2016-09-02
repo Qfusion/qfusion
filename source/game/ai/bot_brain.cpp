@@ -334,7 +334,7 @@ bool BotBrain::CheckFastWeaponSwitchAction()
 
     if (chosenWeapon != WEAP_NONE)
     {
-        combatTask.suggestedWeapon = chosenWeapon;
+        combatTask.suggestedBuiltinWeapon = chosenWeapon;
         combatTask.importantShot = true;
         // We have selected a weapon switch action
         nextFastWeaponSwitchActionCheckAt = level.time + 750;
@@ -391,7 +391,7 @@ bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
     // Extrapolate last seen position using last seen velocity and not seen duration in seconds
     estimatedPos += (notSeenDuration / 1000.0f) * lastSeenVelocityDir;
 
-    float turnSpeedMultiplier = 0.55f + 0.55f * BotSkill();
+    float turnSpeedMultiplier = 0.55f + 0.95f * BotSkill();
     bot->ai->botRef->SetPendingLookAtPoint(estimatedPos, turnSpeedMultiplier, 750);
 
     return true;
@@ -754,7 +754,7 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 
     if (GS_Instagib())
     {
-        task->suggestedWeapon = SuggestInstagibWeapon(enemy);
+        task->suggestedBuiltinWeapon = SuggestInstagibWeapon(enemy);
         return;
     }
 
@@ -762,8 +762,8 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
 
     if (BotHasPowerups())
     {
-        task->suggestedWeapon = SuggestQuadBearerWeapon(enemy);
-        if (!BotIsCarrier() && task->suggestedWeapon != WEAP_GUNBLADE)
+        task->suggestedBuiltinWeapon = SuggestQuadBearerWeapon(enemy);
+        if (!BotIsCarrier() && task->suggestedBuiltinWeapon != WEAP_GUNBLADE)
         {
             task->advance = true;
             task->retreat = false;
@@ -789,8 +789,8 @@ void BotBrain::SuggestAimWeaponAndTactics(CombatTask *task)
     else
         SuggestCloseRangeWeaponAndTactics(task, disposition);
 
-    if (task->suggestedWeapon == WEAP_NONE)
-        task->suggestedWeapon = WEAP_GUNBLADE;
+    if (task->suggestedBuiltinWeapon == WEAP_NONE)
+        task->suggestedBuiltinWeapon = WEAP_GUNBLADE;
 
     bool oldAdvance = task->advance;
     bool oldRetreat = task->retreat;
@@ -886,7 +886,17 @@ void BotBrain::SuggestSniperRangeWeaponAndTactics(CombatTask *task, const Combat
 
     Debug("(sniper range)... : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
-    task->suggestedWeapon = chosenWeapon;
+    task->suggestedBuiltinWeapon = chosenWeapon;
+
+    int scriptWeaponTier;
+    if (const auto *scriptWeaponDef = SuggestScriptWeapon(enemy, disposition, &scriptWeaponTier))
+    {
+        task->suggestedScriptWeapon = scriptWeaponDef->weaponNum;
+        if (scriptWeaponTier > 3)
+            task->preferBuiltinWeapon = false;
+        else if (scriptWeaponTier > 1)
+            task->preferBuiltinWeapon = (chosenWeapon == WEAP_ELECTROBOLT);
+    }
 }
 
 float BotBrain::GetCloakingAttackChanceDelta(bool hasImportantGoals, float enemyTargetFactor)
@@ -1114,7 +1124,17 @@ void BotBrain::SuggestFarRangeWeaponAndTactics(CombatTask *task, const CombatDis
         }
     }
 
-    task->suggestedWeapon = chosenWeapon;
+    task->suggestedBuiltinWeapon = chosenWeapon;
+
+    int scriptWeaponTier;
+    if (const auto *scriptWeaponDef = SuggestScriptWeapon(enemy, disposition, &scriptWeaponTier))
+    {
+        task->suggestedScriptWeapon = scriptWeaponDef->weaponNum;
+        if (scriptWeaponTier > 3)
+            task->preferBuiltinWeapon = false;
+        else if (scriptWeaponTier > 1)
+            task->preferBuiltinWeapon = (chosenWeapon == WEAP_ELECTROBOLT);
+    }
 }
 
 void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
@@ -1194,6 +1214,15 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
     weaponScores[GL].score *= targetEnvironment.factor;
 
     chosenWeapon = ChooseWeaponByScores(weaponScores, weaponScores + 6);
+
+    int scriptWeaponTier = 0;
+    if (const auto *scriptWeaponDef = SuggestScriptWeapon(enemy, disposition, &scriptWeaponTier))
+    {
+        task->suggestedScriptWeapon = scriptWeaponDef->weaponNum;
+        task->preferBuiltinWeapon = scriptWeaponTier < BuiltinWeaponTier(chosenWeapon);
+        if (scriptWeaponTier > 3 && !task->retreat)
+            task->advance = true;
+    }
 
     // Correct tactics aposteriori based on weapons choice
     switch (chosenWeapon)
@@ -1321,7 +1350,7 @@ void BotBrain::SuggestMiddleRangeWeaponAndTactics(CombatTask *task, const Combat
         }
     }
 
-    task->suggestedWeapon = chosenWeapon;
+    task->suggestedBuiltinWeapon = chosenWeapon;
 }
 
 void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition)
@@ -1412,6 +1441,18 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
 
     Debug("(close range) : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
+    int scriptWeaponTier;
+    if (const auto *scriptWeaponDef = SuggestScriptWeapon(*task->enemy, disposition, &scriptWeaponTier))
+    {
+        task->suggestedScriptWeapon = scriptWeaponDef->weaponNum;
+        if (scriptWeaponTier > 3)
+            task->advance = true;
+        else if (scriptWeaponTier > 2)
+            task->advance = !task->retreat;
+
+        task->preferBuiltinWeapon = scriptWeaponTier < BuiltinWeaponTier(chosenWeapon);
+    }
+
     // If bot offensiveness is less than the default one
     if (disposition.offensiveness < 0.5f)
     {
@@ -1445,7 +1486,67 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
         }
     }
 
-    task->suggestedWeapon = chosenWeapon;
+    task->suggestedBuiltinWeapon = chosenWeapon;
+}
+
+const ai_script_weapon_def_t *BotBrain::SuggestScriptWeapon(const Enemy &enemy, const CombatDisposition &disposition,
+                                                            int *effectiveTier)
+{
+    const auto &scriptWeaponDefs = bot->ai->botRef->scriptWeaponDefs;
+    const auto &scriptWeaponCooldown = bot->ai->botRef->scriptWeaponCooldown;
+
+    const ai_script_weapon_def_t *bestWeapon = nullptr;
+    float bestScore = 0.000001f;
+
+    for (unsigned i = 0; i < scriptWeaponDefs.size(); ++i)
+    {
+        const auto &weaponDef = scriptWeaponDefs[i];
+        int cooldown = scriptWeaponCooldown[i];
+        if (cooldown >= 1000)
+            continue;
+
+        if (disposition.distance > weaponDef.maxRange)
+            continue;
+        if (disposition.distance < weaponDef.minRange)
+            continue;
+
+        float score = 1.0f;
+
+        score *= 1.0f - BoundedFraction(cooldown, 1000.0f);
+
+        if (GS_SelfDamage())
+        {
+            float estimatedSelfDamage = 0.0f;
+            estimatedSelfDamage = weaponDef.maxSelfDamage;
+            estimatedSelfDamage *= (1.0f - BoundedFraction(disposition.distance, weaponDef.splashRadius));
+            if (estimatedSelfDamage > 100.0f)
+                continue;
+            if (disposition.damageToBeKilled < estimatedSelfDamage)
+                continue;
+            score *= 1.0f - BoundedFraction(estimatedSelfDamage, 100.0f);
+        }
+
+        // We assume that maximum ordinary tier is 3
+        score *= weaponDef.tier / 3.0f;
+
+        // Treat points in +/- 192 units of best range as in best range too
+        float bestRangeLowerBounds = weaponDef.bestRange - std::min(192.0f, weaponDef.bestRange - weaponDef.minRange);
+        float bestRangeUpperBounds = weaponDef.bestRange + std::min(192.0f, weaponDef.maxRange - weaponDef.bestRange);
+
+        if (disposition.distance < bestRangeLowerBounds)
+            score *= disposition.distance / bestRangeLowerBounds;
+        else if (disposition.distance > bestRangeUpperBounds)
+            score *= (disposition.distance - bestRangeUpperBounds) / (weaponDef.maxRange - bestRangeLowerBounds);
+
+        if (score > bestScore)
+        {
+            bestScore = score;
+            bestWeapon = &scriptWeaponDefs[i];
+            *effectiveTier = (int)(score * 3.0f + 0.99f);
+        }
+    }
+
+    return bestWeapon;
 }
 
 int BotBrain::SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition)

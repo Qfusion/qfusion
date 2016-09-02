@@ -4,20 +4,41 @@
 #include "ai_objective_based_team_brain.h"
 #include "tactical_spots_detector.h"
 
-AiWeaponAimType WeaponAimType(int weapon)
+ai_weapon_aim_type BuiltinWeaponAimType(int builtinWeapon)
 {
-    switch (weapon)
+    switch (builtinWeapon)
     {
         case WEAP_GUNBLADE:
-            return AiWeaponAimType::PREDICTION_EXPLOSIVE;
+            return AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE;
         case WEAP_GRENADELAUNCHER:
-            return AiWeaponAimType::DROP;
+            return AI_WEAPON_AIM_TYPE_DROP;
         case WEAP_ROCKETLAUNCHER:
-            return AiWeaponAimType::PREDICTION_EXPLOSIVE;
+            return AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE;
         case WEAP_PLASMAGUN:
-            return AiWeaponAimType::PREDICTION;
+            return AI_WEAPON_AIM_TYPE_PREDICTION;
         default:
-            return AiWeaponAimType::INSTANT_HIT;
+            return AI_WEAPON_AIM_TYPE_INSTANT_HIT;
+    }
+}
+
+int BuiltinWeaponTier(int builtinWeapon)
+{
+    switch (builtinWeapon)
+    {
+        case WEAP_INSTAGUN:
+            return 4;
+        case WEAP_ELECTROBOLT:
+        case WEAP_LASERGUN:
+        case WEAP_PLASMAGUN:
+        case WEAP_ROCKETLAUNCHER:
+            return 3;
+        case WEAP_MACHINEGUN:
+        case WEAP_RIOTGUN:
+            return 2;
+        case WEAP_GRENADELAUNCHER:
+            return 1;
+        default:
+            return 0;
     }
 }
 

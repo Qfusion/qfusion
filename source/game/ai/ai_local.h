@@ -66,15 +66,14 @@ constexpr int AI_GOAL_SR_LR_MILLIS = 1500;
 
 constexpr auto MASK_AISOLID = CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP;
 
-enum class AiWeaponAimType
-{
-	INSTANT_HIT,
-	PREDICTION,
-	PREDICTION_EXPLOSIVE,
-	DROP
-};
+ai_weapon_aim_type BuiltinWeaponAimType(int builtinWeapon);
 
-AiWeaponAimType WeaponAimType(int weapon);
+inline bool IsBuiltinWeaponContinuousFire(int builtinWeapon)
+{
+	return builtinWeapon == WEAP_LASERGUN || builtinWeapon == WEAP_PLASMAGUN || builtinWeapon == WEAP_MACHINEGUN;
+}
+
+int BuiltinWeaponTier(int builtinWeapon);
 
 #include "ai_aas_world.h"
 #include "vec3.h"

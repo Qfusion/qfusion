@@ -608,6 +608,16 @@ static const asEnumVal_t asNavEntityFlagsEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const asEnumVal_t asWeaponAimTypeEnumVals[] =
+{
+	ASLIB_ENUM_VAL( AI_WEAPON_AIM_TYPE_INSTANT_HIT ),
+	ASLIB_ENUM_VAL( AI_WEAPON_AIM_TYPE_PREDICTION ),
+	ASLIB_ENUM_VAL( AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE ),
+	ASLIB_ENUM_VAL( AI_WEAPON_AIM_TYPE_DROP ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 static const asEnumVal_t asMiscelaneaEnumVals[] =
 {
 	ASLIB_ENUM_VAL_NULL
@@ -647,6 +657,7 @@ static const asEnum_t asEnums[] =
 	{ "takedamage_e", asDamageEnumVals },
 	{ "keyicon_e", asKeyiconEnumVals },
 	{ "nav_entity_flags_e", asNavEntityFlagsEnumVals },
+	{ "weapon_aim_type_e", asWeaponAimTypeEnumVals },
 	{ "miscelanea_e", asMiscelaneaEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
@@ -1482,6 +1493,52 @@ static const asClassDescriptor_t asScoreStatsClassDescriptor =
 	scorestats_Properties,		/* properties */
 
 	NULL, NULL					/* string factory hack */
+};
+
+//=======================================================================
+
+static const asFuncdef_t asScriptWeaponDef_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static const asBehavior_t asScriptWeaponDef_ObjectBehaviors[] =
+{
+	ASLIB_BEHAVIOR_NULL
+};
+
+static const asMethod_t asScriptWeaponDef_ObjectMethods[] =
+{
+	ASLIB_METHOD_NULL
+};
+
+static const asProperty_t asScriptWeaponDef_Properties[] =
+{
+	{ ASLIB_PROPERTY_DECL(int, weaponNum), ASLIB_FOFFSET(ai_script_weapon_def_t, weaponNum) },
+	{ ASLIB_PROPERTY_DECL(int, tier), ASLIB_FOFFSET(ai_script_weapon_def_t, tier) },
+	{ ASLIB_PROPERTY_DECL(float, minRange), ASLIB_FOFFSET(ai_script_weapon_def_t, minRange) },
+	{ ASLIB_PROPERTY_DECL(float, maxRange), ASLIB_FOFFSET(ai_script_weapon_def_t, maxRange) },
+	{ ASLIB_PROPERTY_DECL(float, bestRange), ASLIB_FOFFSET(ai_script_weapon_def_t, bestRange) },
+	{ ASLIB_PROPERTY_DECL(float, projectileSpeed), ASLIB_FOFFSET(ai_script_weapon_def_t, projectileSpeed) },
+	{ ASLIB_PROPERTY_DECL(float, splashRadius), ASLIB_FOFFSET(ai_script_weapon_def_t, splashRadius) },
+	{ ASLIB_PROPERTY_DECL(float, maxSelfDamage), ASLIB_FOFFSET(ai_script_weapon_def_t, maxSelfDamage) },
+	{ ASLIB_PROPERTY_DECL(weapon_aim_type_e, aimType), ASLIB_FOFFSET(ai_script_weapon_def_t, aimType) },
+	{ ASLIB_PROPERTY_DECL(bool, isContinuousFire), ASLIB_FOFFSET(ai_script_weapon_def_t, isContinuousFire) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const asClassDescriptor_t asScriptWeaponDefClassDescriptor =
+{
+	"ScriptWeaponDef",		             /* name */
+	asOBJ_VALUE|asOBJ_POD,	             /* object type flags */
+	sizeof(ai_script_weapon_def_t),	     /* size */
+	asScriptWeaponDef_Funcdefs,			 /* funcdefs */
+	asScriptWeaponDef_ObjectBehaviors,	 /* object behaviors */
+	asScriptWeaponDef_ObjectMethods,	 /* methods */
+	asScriptWeaponDef_Properties,		 /* properties */
+
+	NULL, NULL					         /* string factory hack */
 };
 
 //=======================================================================
@@ -2610,6 +2667,7 @@ static const asClassDescriptor_t * const asClassesDescriptors[] =
 	&asGametypeClassDescriptor,
 	&asTeamListClassDescriptor,
 	&asScoreStatsClassDescriptor,
+	&asScriptWeaponDefClassDescriptor,
 	&asBotClassDescriptor,
 	&asGameClientDescriptor,
 	&asGameEntityClassDescriptor,
@@ -2689,7 +2747,7 @@ static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 				if( !objProperty->declaration )
 					break;
 
-				asEngine->RegisterObjectProperty( cDescr->name, 
+				asEngine->RegisterObjectProperty( cDescr->name,
 					objProperty->declaration, objProperty->offset );
 			}
 		}

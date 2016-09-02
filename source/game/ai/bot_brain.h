@@ -5,7 +5,6 @@
 #include "ai_base_ai.h"
 #include "ai_base_brain.h"
 #include "ai_base_enemy_pool.h"
-#include "bot.h"
 
 class CombatTask
 {
@@ -13,8 +12,9 @@ class CombatTask
     // If it is not null, it is a chosen target for shooting.
     const Enemy *enemy;
 
-    int suggestedWeapon;
-    int suggestedSpamWeapon;
+    int suggestedBuiltinWeapon;
+    int suggestedScriptWeapon;
+    bool preferBuiltinWeapon;
 #ifndef _MSC_VER
     inline void FailWith(const char *message) const __attribute__ ((noreturn))
 #else
@@ -60,8 +60,9 @@ public:
     {
         enemy = nullptr;
         instanceId = 0;
-        suggestedWeapon = WEAP_NONE;
-        suggestedSpamWeapon = WEAP_NONE;
+        suggestedBuiltinWeapon = WEAP_NONE;
+        suggestedScriptWeapon = -1;
+        preferBuiltinWeapon = true;
         advance = false;
         retreat = false;
         inhibit = false;
@@ -123,10 +124,33 @@ public:
         return std::numeric_limits<unsigned>::max();
     }
 
-    int Weapon() const
+    inline bool CanUseBuiltinWeapon() const { return suggestedBuiltinWeapon != WEAP_NONE; }
+    inline bool CanUseScriptWeapon() const { return suggestedScriptWeapon != -1; }
+
+    // If true, aim angles should be adjusted for a builtin weapon.
+    // Script weapon may be used occasionally when aim angles are suitable for firing a script weapon too.
+    inline bool ShouldPreferBuiltinWeapon() const { return preferBuiltinWeapon; }
+
+    int BuiltinWeapon() const
     {
-        if (enemy) return suggestedWeapon;
-        FailWith("Weapon(): combat task is empty\n");
+        if (enemy)
+        {
+            if (CanUseBuiltinWeapon())
+                return suggestedBuiltinWeapon;
+            FailWith("BuiltinWeapon(): builtin weapon has not been chosen");
+        }
+        FailWith("BuiltinWeapon(): combat task is empty\n");
+    }
+
+    int ScriptWeapon() const
+    {
+        if (enemy)
+        {
+            if (CanUseScriptWeapon())
+                return suggestedScriptWeapon;
+            FailWith("ScriptWeapon(): script weapon has not been chosen");
+        }
+        FailWith("BuiltinWeapon(): combat task is empty\n");
     }
 
     const edict_t *TraceKey() const { return enemy ? enemy->ent : nullptr; }
@@ -234,6 +258,8 @@ class BotBrain: public AiBaseBrain
     void SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatDisposition &disposition);
     int SuggestInstagibWeapon(const Enemy &enemy);
     int SuggestFinishWeapon(const Enemy &enemy, const CombatDisposition &disposition);
+    const ai_script_weapon_def_t *SuggestScriptWeapon(const Enemy &enemy, const CombatDisposition &disposition,
+                                                      int *effectiveTier);
     bool IsEnemyEscaping(const Enemy &enemy, const CombatDisposition &disposition,
                          bool *botMovesFast, bool *enemyMovesFast);
     int SuggestHitEscapingEnemyWeapon(const Enemy &enemy, const CombatDisposition &disposition,

@@ -17,6 +17,7 @@ class Bot: public Ai
     friend class BotBrain;
     friend class AiSquad;
     friend class AiBaseEnemyPool;
+    friend class FireTargetCache;
 public:
     static constexpr auto PREFERRED_TRAVEL_FLAGS =
         TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR | TFL_TELEPORT | TFL_JUMPPAD;
@@ -31,8 +32,9 @@ public:
 
     void Move(usercmd_t *ucmd, bool beSilent);
     void LookAround();
-    bool ChangeWeapon(int weapon);
-    bool FireWeapon();
+    void ChangeWeapon(const CombatTask &combatTask);
+    void ChangeWeapon(int weapon);
+    bool FireWeapon(bool *didBuiltinAttack);
     void Pain(const edict_t *enemy, float kick, int damage)
     {
         botBrain.OnPain(enemy, kick, damage);
@@ -170,6 +172,13 @@ protected:
     virtual void Frame() override;
     virtual void Think() override;
 
+    virtual void PreFrame() override
+    {
+        // We should update weapons status each frame since script weapons may be changed each frame.
+        // These statuses are used by firing methods, so actual weapon statuses are required.
+        UpdateScriptWeaponsStatus();
+    }
+
     virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) override;
     virtual void TouchedJumppad(const edict_t *jumppad) override;
 private:
@@ -223,10 +232,6 @@ private:
     unsigned pendingLookAtPointTimeoutAt;
     bool hasPendingLookAtPoint;
     float lookAtPointTurnSpeedMultiplier;
-
-    Vec3 cachedPredictedTargetOrigin;
-    unsigned cachedPredictedTargetValidUntil;
-    unsigned cachedPredictedTargetInstanceId;
 
     // If it is set, the bot should stay on a spot defined by campingSpotOrigin
     bool hasCampingSpot;
@@ -283,6 +288,12 @@ private:
     StaticVector<AlertSpot, MAX_ALERT_SPOTS> alertSpots;
 
     void CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTargets);
+
+    static constexpr unsigned MAX_SCRIPT_WEAPONS = 3;
+    StaticVector<ai_script_weapon_def_t, MAX_SCRIPT_WEAPONS> scriptWeaponDefs;
+    StaticVector<int, MAX_SCRIPT_WEAPONS> scriptWeaponCooldown;
+
+    void UpdateScriptWeaponsStatus();
 
     void SetCampingSpot(const Vec3 &spotOrigin, float spotRadius, float alertness = 0.5f);
     void SetCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRaduis, float alertness = 0.5f);
@@ -359,32 +370,123 @@ private:
     Vec3 MakeEvadeDirection(const Danger &danger);
     void ApplyCheatingGroundAcceleration(const usercmd_t *ucmd);
 
-    void SetupCoarseFireTarget(vec3_t fire_origin, vec3_t target);
-    // Returns true if current look angle worth pressing attack
-    bool CheckShot(const vec3_t fire_origin, const vec3_t target, bool continuousFire);
-    // All these methods return suggested accuracy
-    float AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target);
-    float AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
-    float AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
-    float AdjustDropAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
-    float AdjustInstantAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target);
-
-    // Returns true is a shootable environment for inflicting a splash damage has been found
-    bool AdjustTargetByEnvironment(const firedef_t *firedef, const vec3_t fire_origin, vec3_t target);
-    bool AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire_origin, vec3_t target);
-    bool AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire_origin, vec3_t target, int targetAreaNum);
-
-    inline bool HasCachedTargetOrigin() const
+    class GenericFireDef
     {
-        return EnemyInstanceId() == cachedPredictedTargetInstanceId && cachedPredictedTargetValidUntil > level.time;
-    }
+        const firedef_t *builtinFireDef;
+        const ai_script_weapon_def_t *scriptWeaponDef;
+        int weaponNum;
 
-    void GetPredictedTargetOrigin(const vec3_t fireOrigin, float projSpeed, vec3_t target);
-    void PredictProjectileShot(
-        const vec3_t fireOrigin, float projSpeed, vec3_t target, const vec3_t targetVelocity, bool applyTargetGravity);
+    public:
+        GenericFireDef(int weaponNum, const firedef_t *builtinFireDef, const ai_script_weapon_def_t *scriptWeaponDef)
+        {
+            this->builtinFireDef = builtinFireDef;
+            this->scriptWeaponDef = scriptWeaponDef;
+            this->weaponNum = weaponNum;
+        }
 
-    void LookAtEnemy(float wfac, const vec3_t fire_origin, vec3_t target);
-    bool TryPressAttack();
+        inline int WeaponNum() const { return weaponNum; }
+        inline bool IsBuiltin() const { return builtinFireDef != nullptr; }
+
+        inline ai_weapon_aim_type AimType() const
+        {
+            return builtinFireDef ? BuiltinWeaponAimType(weaponNum) : scriptWeaponDef->aimType;
+        }
+        inline float ProjectileSpeed() const
+        {
+            return builtinFireDef ? builtinFireDef->speed : scriptWeaponDef->projectileSpeed;
+        }
+        inline float SplashRadius() const
+        {
+            return builtinFireDef ? builtinFireDef->splash_radius : scriptWeaponDef->splashRadius;
+        }
+        inline bool IsContinuousFire() const
+        {
+            return builtinFireDef ? IsBuiltinWeaponContinuousFire(weaponNum) : scriptWeaponDef->isContinuousFire;
+        }
+    };
+
+    struct AimParams
+    {
+        vec3_t fireOrigin;
+        vec3_t fireTarget;
+        float suggestedBaseAccuracy;
+
+        float EffectiveAccuracy(float skill, bool importantShot) const
+        {
+            float accuracy = suggestedBaseAccuracy;
+            accuracy *= (1.0f - 0.75f * skill);
+            if (importantShot && skill > 0.33f)
+                accuracy *= (1.13f - skill);
+
+            return accuracy;
+        }
+    };
+
+    class FireTargetCache
+    {
+        struct CachedFireTarget
+        {
+            Vec3 origin;
+            unsigned combatTaskInstanceId;
+            unsigned invalidAt;
+
+            CachedFireTarget()
+                : origin(0, 0, 0), combatTaskInstanceId(0), invalidAt(0) {}
+
+            inline bool IsValidFor(const CombatTask &combatTask) const
+            {
+                return combatTaskInstanceId == combatTask.instanceId && invalidAt > level.time;
+            }
+
+            inline void SetFor(const CombatTask &combatTask, const vec3_t origin)
+            {
+                VectorCopy(origin, this->origin.Data());
+            }
+
+            inline void SetFor(const CombatTask &combatTask, const Vec3 &origin)
+            {
+                this->origin = origin;
+            }
+        };
+
+        CachedFireTarget cachedFireTarget;
+        const edict_t *bot;
+
+        void SetupCoarseFireTarget(const CombatTask &combatTask, vec3_t fire_origin, vec3_t target);
+
+        void AdjustPredictionExplosiveAimTypeParams(const CombatTask &combatTask, const GenericFireDef &fireDef,
+                                                    AimParams *aimParams);
+        void AdjustPredictionAimTypeParams(const CombatTask &combatTask, const GenericFireDef &fireDef,
+                                           AimParams *aimParams);
+        void AdjustDropAimTypeParams(const CombatTask &combatTask, const GenericFireDef &fireDef,
+                                     AimParams *aimParams);
+        void AdjustInstantAimTypeParams(const CombatTask &combatTask, const GenericFireDef &fireDef,
+                                        AimParams *aimParams);
+
+        // Returns true if a shootable environment for inflicting a splash damage has been found
+        bool AdjustTargetByEnvironment(const CombatTask &combatTask, float splashRadius, AimParams *aimParams);
+        bool AdjustTargetByEnvironmentTracing(const CombatTask &combatTask, float splashRadius, AimParams *aimParams);
+        bool AdjustTargetByEnvironmentWithAAS(const CombatTask &combatTask, float splashRadius, int areaNum,
+                                              AimParams *aimParams);
+
+        void GetPredictedTargetOrigin(const CombatTask &combatTask, float projectileSpeed, AimParams *aimParams);
+        void PredictProjectileShot(const CombatTask &combatTask, float projectileSpeed, AimParams *aimParams,
+                                   bool applyTargetGravity);
+    public:
+        FireTargetCache(const edict_t *bot) : bot(bot) {}
+
+        void AdjustAimParams(const CombatTask &combatTask, const GenericFireDef &fireDef, AimParams *aimParams);
+    };
+
+    FireTargetCache builtinFireTargetCache;
+    FireTargetCache scriptFireTargetCache;
+
+    // Returns true if current look angle worth pressing attack
+    bool CheckShot(const vec3_t fire_origin, const vec3_t target, const GenericFireDef *fireDef);
+
+    void LookAtEnemy(float accuracy, const vec3_t fire_origin, vec3_t target);
+    bool TryPressAttack(const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
+                        const GenericFireDef *scriptFireDef, bool *didBuiltinAttack);
 
     inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
     inline bool IsEnemyAStaticSpot() const { return botBrain.combatTask.IsTargetAStaticSpot(); }
