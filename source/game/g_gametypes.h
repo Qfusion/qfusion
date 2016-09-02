@@ -146,6 +146,12 @@ typedef struct
 	void *onBotTouchedGoalFunc;
 	void *onBotReachedGoalRadiusFunc;
 
+	void *getScriptWeaponsNumFunc;
+	void *getScriptWeaponDefFunc;
+	void *getScriptWeaponCooldownFunc;
+	void *selectScriptWeaponFunc;
+	void *fireScriptWeaponFunc;
+
 	int spawnableItemsMask;
 	int respawnableItemsMask;
 	int dropableItemsMask;

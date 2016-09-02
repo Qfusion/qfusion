@@ -56,32 +56,34 @@ bool PredictProjectileNoClip(const Vec3 &fireOrigin, float projectileSpeed, vec3
     return true;
 }
 
-void Bot::GetPredictedTargetOrigin(const vec3_t fireOrigin, float projSpeed, vec_t *target)
+void Bot::FireTargetCache::GetPredictedTargetOrigin(const CombatTask &combatTask, float projectileSpeed,
+                                                      AimParams *aimParams)
 {
-    if (Skill() < 0.33f || IsEnemyAStaticSpot())
+    if (bot->ai->botRef->Skill() < 0.33f || combatTask.IsTargetAStaticSpot())
         return;
 
     // Check whether we are shooting the same enemy and cached predicted origin is not outdated
-    if (!HasCachedTargetOrigin())
+    if (cachedFireTarget.IsValidFor(combatTask))
     {
-        PredictProjectileShot(fireOrigin, projSpeed, target, EnemyVelocity().Data(), true);
-        cachedPredictedTargetInstanceId = EnemyInstanceId();
-        cachedPredictedTargetValidUntil = level.time + 66;
+        VectorCopy(cachedFireTarget.origin.Data(), aimParams->fireTarget);
+    }
+    else
+    {
+        PredictProjectileShot(combatTask, projectileSpeed, aimParams, true);
+        cachedFireTarget.origin = Vec3(aimParams->fireTarget);
+        cachedFireTarget.combatTaskInstanceId = combatTask.instanceId;
+        cachedFireTarget.invalidAt = level.time + 66;
     }
 }
 
-//==========================================
-// BOT_DMclass_PredictProjectileShot
-// predict target movement
-//==========================================
-void Bot::PredictProjectileShot(
-    const vec3_t fire_origin, float projectileSpeed, vec3_t target, const vec3_t targetVelocity, bool applyTargetGravity)
+void Bot::FireTargetCache::PredictProjectileShot(const CombatTask &combatTask, float projectileSpeed,
+                                                   AimParams *aimParams, bool applyTargetGravity)
 {
     if (projectileSpeed <= 0.0f)
         return;
 
     // Copy for convenience
-    Vec3 fireOrigin(fire_origin);
+    Vec3 fireOrigin(aimParams->fireOrigin);
 
     if (applyTargetGravity)
     {
@@ -93,18 +95,20 @@ void Bot::PredictProjectileShot(
 
         constexpr float TIME_STEP = 0.15f; // Time is in seconds
 
-        Vec3 currPoint(target);
+        Vec3 currPoint(aimParams->fireTarget);
         float currTime = 0.0f;
         float nextTime = TIME_STEP;
 
         trace_t trace;
-        edict_t *traceKey = const_cast<edict_t*>(EnemyTraceKey());
+        edict_t *traceKey = const_cast<edict_t*>(combatTask.TraceKey());
 
-        const int maxSegments = 2 + (int)(2.1 * Skill());
+        const int maxSegments = 2 + (int)(2.1 * bot->ai->botRef->Skill());
+
+        const float *targetVelocity = combatTask.EnemyVelocity().Data();
 
         for (int i = 0; i < maxSegments; ++i)
         {
-            Vec3 nextPoint(target);
+            Vec3 nextPoint(aimParams->fireTarget);
             nextPoint.X() += targetVelocity[0] * nextTime;
             nextPoint.Y() += targetVelocity[1] * nextTime;
             nextPoint.Z() += targetVelocity[2] * nextTime - 0.5f * level.gravity * nextTime * nextTime;
@@ -134,12 +138,12 @@ void Bot::PredictProjectileShot(
                 if (trace.fraction == 1.0f)
                 {
                     // Target may be hit in air
-                    VectorCopy(predictedTarget.Data(), target);
+                    VectorCopy(predictedTarget.Data(), aimParams->fireTarget);
                 }
                 else
                 {
                     // Segment from currPoint to predictedTarget hits solid, use trace end as a predicted target
-                    VectorCopy(trace.endpos, target);
+                    VectorCopy(trace.endpos, aimParams->fireTarget);
                 }
                 return;
             }
@@ -150,7 +154,7 @@ void Bot::PredictProjectileShot(
                 if (trace.fraction != 1.0f)
                 {
                     // Trajectory segment hits solid, use trace end as a predicted target point and return
-                    VectorCopy(trace.endpos, target);
+                    VectorCopy(trace.endpos, aimParams->fireTarget);
                     return;
                 }
             }
@@ -173,99 +177,205 @@ void Bot::PredictProjectileShot(
 
         G_Trace(&trace, currPoint.Data(), nullptr, nullptr, predictedTarget.Data(), traceKey, MASK_AISOLID);
         if (trace.fraction == 1.0f)
-            VectorCopy(predictedTarget.Data(), target);
+            VectorCopy(predictedTarget.Data(), aimParams->fireTarget);
         else
-            VectorCopy(trace.endpos, target);
+            VectorCopy(trace.endpos, aimParams->fireTarget);
     }
     else
     {
-        Vec3 predictedTarget(target);
-        if (!PredictProjectileNoClip(Vec3(fireOrigin), projectileSpeed, predictedTarget.Data(), Vec3(targetVelocity)))
+        Vec3 predictedTarget(aimParams->fireTarget);
+        if (!PredictProjectileNoClip(Vec3(fireOrigin), projectileSpeed, predictedTarget.Data(), combatTask.EnemyVelocity()))
             return;
 
         trace_t trace;
-        edict_t *traceKey = const_cast<edict_t *>(EnemyTraceKey());
-        G_Trace(&trace, target, nullptr, nullptr, predictedTarget.Data(), traceKey, MASK_AISOLID);
+        edict_t *traceKey = const_cast<edict_t *>(combatTask.TraceKey());
+        G_Trace(&trace, aimParams->fireTarget, nullptr, nullptr, predictedTarget.Data(), traceKey, MASK_AISOLID);
         if (trace.fraction == 1.0f)
-            VectorCopy(predictedTarget.Data(), target);
+            VectorCopy(predictedTarget.Data(), aimParams->fireTarget);
         else
-            VectorCopy(trace.endpos, target);
+            VectorCopy(trace.endpos, aimParams->fireTarget);
     }
+}
+
+inline bool operator!=(const ai_script_weapon_def_t &first, const ai_script_weapon_def_t &second)
+{
+    return memcmp(&first, &second, sizeof(ai_script_weapon_def_t)) != 0;
+}
+
+void Bot::UpdateScriptWeaponsStatus()
+{
+    int scriptWeaponsNum = GT_asGetScriptWeaponsNum(self->r.client);
+
+    if ((int)scriptWeaponDefs.size() != scriptWeaponsNum)
+    {
+        scriptWeaponDefs.clear();
+        scriptWeaponCooldown.clear();
+
+        for (int weaponNum = 0; weaponNum < scriptWeaponsNum; ++weaponNum)
+        {
+            ai_script_weapon_def_t weaponDef;
+            if (GT_asGetScriptWeaponDef(self->r.client, weaponNum, &weaponDef))
+            {
+                scriptWeaponDefs.emplace_back(std::move(weaponDef));
+                scriptWeaponCooldown.push_back(GT_asGetScriptWeaponCooldown(self->r.client, weaponNum));
+            }
+        }
+
+        botBrain.ResetCombatTask();
+        return;
+    }
+
+    bool hasStatusChanged = false;
+    for (int weaponNum = 0; weaponNum < scriptWeaponsNum; ++weaponNum)
+    {
+        ai_script_weapon_def_t actualWeaponDef;
+        // Try to retrieve the weapon def
+        if (!GT_asGetScriptWeaponDef(self->r.client, weaponNum, &actualWeaponDef))
+        {
+            // If weapon def retrieval failed, treat the weapon as unavailable by setting a huge cooldown
+            scriptWeaponCooldown[weaponNum] = std::numeric_limits<int>::max();
+            hasStatusChanged = true;
+            continue;
+        }
+
+        if (actualWeaponDef != scriptWeaponDefs[weaponNum])
+        {
+            scriptWeaponDefs[weaponNum] = actualWeaponDef;
+            hasStatusChanged = true;
+        }
+
+        int cooldown = GT_asGetScriptWeaponCooldown(self->r.client, weaponNum);
+        // A weapon became unavailable
+        if (cooldown > scriptWeaponCooldown[weaponNum])
+        {
+            hasStatusChanged = true;
+        }
+        else
+        {
+            for (int thresholdMillis = 1000; thresholdMillis >= 0; thresholdMillis -= 500)
+            {
+                if (scriptWeaponCooldown[weaponNum] > thresholdMillis && cooldown <= thresholdMillis)
+                    hasStatusChanged = true;
+            }
+        }
+        scriptWeaponCooldown[weaponNum] = cooldown;
+    }
+
+    if (hasStatusChanged)
+        botBrain.ResetCombatTask();
 }
 
 constexpr float WFAC_GENERIC_PROJECTILE = 300.0f;
 constexpr float WFAC_GENERIC_INSTANT = 150.0f;
 
-//==========================================
-// BOT_DMclass_FireWeapon
-// Fire if needed
-//==========================================
-bool Bot::FireWeapon()
+bool Bot::FireWeapon(bool *didBuiltinAttack)
 {
-    const bool importantShot = botBrain.combatTask.importantShot;
+    CombatTask &combatTask = botBrain.combatTask;
+
+    const bool importantShot = combatTask.importantShot;
     // Reset shot importance, it is for a single flick shot and the task is for many frames
-    botBrain.combatTask.importantShot = false;
+    combatTask.importantShot = false;
 
-    if (botBrain.combatTask.Empty())
-        return false;
+    int builtinWeapon = self->s.weapon;
+    if (builtinWeapon < 0 || builtinWeapon >= WEAP_TOTAL)
+        builtinWeapon = 0;
 
-    bool continuousFire = false;
-    if (self->s.weapon == WEAP_LASERGUN || self->s.weapon == WEAP_PLASMAGUN || self->s.weapon == WEAP_MACHINEGUN)
-        continuousFire = true;
+    firedef_t *playerStateFireDef = GS_FiredefForPlayerState(&self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON]);
 
-    const firedef_t *firedef = GS_FiredefForPlayerState(&self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON]);
+    StaticVector<GenericFireDef, 2> fireDefHolder;
 
-    int weapon = self->s.weapon;
-    if (weapon < 0 || weapon >= WEAP_TOTAL)
-        weapon = 0;
+    const GenericFireDef *builtinFireDef = nullptr;
+    const GenericFireDef *scriptFireDef = nullptr;
 
-    if (!firedef)
-        return false;
+    if (botBrain.combatTask.CanUseBuiltinWeapon())
+    {
+        fireDefHolder.emplace_back(GenericFireDef(builtinWeapon, playerStateFireDef, nullptr));
+        builtinFireDef = &fireDefHolder.back();
+    }
 
-    // Always try to to track enemy with a "crosshair" like a human does
+    if (botBrain.combatTask.CanUseScriptWeapon())
+    {
+        int scriptWeapon = combatTask.ScriptWeapon();
+        fireDefHolder.emplace_back(GenericFireDef(scriptWeapon, nullptr, &scriptWeaponDefs[scriptWeapon]));
+        scriptFireDef = &fireDefHolder.back();
+    }
 
-    vec3_t target, fire_origin;
-    SetupCoarseFireTarget(fire_origin, target);
+    AimParams builtinWeaponAimParams;
+    AimParams scriptWeaponAimParams;
 
-    // AdjustTarget() uses caching, so it is not expensive to call it each frame
-    float wfac = AdjustTarget(weapon, firedef, fire_origin, target);
-    wfac = 25 + wfac * (1.0f - 0.75f * Skill());
-    if (importantShot && Skill() > 0.33f)
-        wfac *= (1.13f - Skill());
+    if (builtinFireDef)
+        builtinFireTargetCache.AdjustAimParams(combatTask, *builtinFireDef, &builtinWeaponAimParams);
+
+    if (scriptFireDef)
+        scriptFireTargetCache.AdjustAimParams(combatTask, *scriptFireDef, &scriptWeaponAimParams);
+
+    // Select a weapon that has a priority in adjusting view angles for it
+    float accuracy;
+    float *fireOrigin, *fireTarget;
+    const GenericFireDef *primaryFireDef = nullptr;
+    const GenericFireDef *secondaryFireDef = nullptr;
+    if (combatTask.ShouldPreferBuiltinWeapon())
+    {
+        accuracy = builtinWeaponAimParams.EffectiveAccuracy(Skill(), importantShot);
+        fireOrigin = builtinWeaponAimParams.fireOrigin;
+        fireTarget = builtinWeaponAimParams.fireTarget;
+        primaryFireDef = builtinFireDef;
+        if (scriptFireDef)
+            secondaryFireDef = scriptFireDef;
+    }
+    else
+    {
+        accuracy = scriptWeaponAimParams.EffectiveAccuracy(Skill(), importantShot);
+        fireOrigin = scriptWeaponAimParams.fireOrigin;
+        fireTarget = scriptWeaponAimParams.fireTarget;
+        primaryFireDef = scriptFireDef;
+        if (builtinFireDef)
+            secondaryFireDef = builtinFireDef;
+    }
 
     // Always track enemy with a "crosshair" like a human does in each frame
-    LookAtEnemy(wfac, fire_origin, target);
+    LookAtEnemy(accuracy, fireOrigin, fireTarget);
 
     // Attack only in Think() frames unless a continuousFire is required
-    if (!continuousFire && ShouldSkipThinkFrame())
-        return false;
+    if (ShouldSkipThinkFrame())
+    {
+        if (!primaryFireDef->IsContinuousFire())
+        {
+            if (!secondaryFireDef || !secondaryFireDef->IsContinuousFire())
+                return false;
+        }
+    }
 
-    if (CheckShot(fire_origin, target, continuousFire))
-        return TryPressAttack();
+    bool didPrimaryAttack = false;
+    bool didSecondaryAttack = false;
 
-    return false;
+    if (CheckShot(fireOrigin, fireTarget, primaryFireDef))
+        didPrimaryAttack = TryPressAttack(primaryFireDef, builtinFireDef, scriptFireDef, didBuiltinAttack);
+
+    if (secondaryFireDef)
+    {
+        // Check whether view angles adjusted for the primary weapon are suitable for firing secondary weapon too
+        if (CheckShot(fireOrigin, fireTarget, secondaryFireDef))
+            didSecondaryAttack = TryPressAttack(secondaryFireDef, builtinFireDef, scriptFireDef, didBuiltinAttack);
+    }
+
+    return didPrimaryAttack || didSecondaryAttack;
 }
 
-void Bot::SetupCoarseFireTarget(vec_t *fire_origin, vec_t *target)
+void Bot::FireTargetCache::SetupCoarseFireTarget(const CombatTask &combatTask, vec_t *fire_origin, vec_t *target)
 {
-    VectorCopy(EnemyOrigin().Data(), target);
-    VectorAdd(target, (0.5f * (EnemyMins() + EnemyMaxs())).Data(), target);
+    VectorCopy(combatTask.EnemyOrigin().Data(), target);
+    VectorAdd(target, (0.5f * (combatTask.EnemyMins() + combatTask.EnemyMaxs())).Data(), target);
 
-    fire_origin[0] = self->s.origin[0];
-    fire_origin[1] = self->s.origin[1];
-    fire_origin[2] = self->s.origin[2] + self->viewheight;
+    fire_origin[0] = bot->s.origin[0];
+    fire_origin[1] = bot->s.origin[1];
+    fire_origin[2] = bot->s.origin[2] + bot->viewheight;
 }
 
-bool Bot::TryPressAttack()
+void Bot::LookAtEnemy(float accuracy, const vec_t *fire_origin, vec_t *target)
 {
-    const auto weapState = self->r.client->ps.weaponState;
-    return weapState == WEAPON_STATE_READY || weapState == WEAPON_STATE_REFIRE || weapState == WEAPON_STATE_REFIRESTRONG;
-}
-
-void Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
-{
-    target[0] += (random() - 0.5f) * wfac;
-    target[1] += (random() - 0.5f) * wfac;
+    target[0] += (random() - 0.5f) * accuracy;
+    target[1] += (random() - 0.5f) * accuracy;
 
     // TODO: Cancel pending turn?
     if (!hasPendingLookAtPoint)
@@ -277,7 +387,22 @@ void Bot::LookAtEnemy(float wfac, const vec_t *fire_origin, vec_t *target)
     }
 }
 
-bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, bool continuousFire)
+bool Bot::TryPressAttack(const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
+                         const GenericFireDef *scriptFireDef, bool *didBuiltinAttack)
+{
+    if (fireDef == scriptFireDef)
+        return GT_asFireScriptWeapon(self->r.client, fireDef->WeaponNum());
+
+    auto weapState = self->r.client->ps.weaponState;
+    *didBuiltinAttack = false;
+    *didBuiltinAttack |= weapState == WEAPON_STATE_READY;
+    *didBuiltinAttack |= weapState == WEAPON_STATE_REFIRE;
+    *didBuiltinAttack |= weapState == WEAPON_STATE_REFIRESTRONG;
+
+    return *didBuiltinAttack;
+}
+
+bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, const GenericFireDef *fireDef)
 {
     // Do not shoot enemies that are far from "crosshair" except they are very close
     Vec3 newLookDir(0, 0, 0);
@@ -297,7 +422,7 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, bool continuo
         directionDistanceFactor += BoundedFraction(distance, 450.0f);
     }
 
-    if (continuousFire)
+    if (fireDef->IsContinuousFire())
     {
         if (toTargetDotLookDir < 0.8f * directionDistanceFactor)
             return false;
@@ -316,7 +441,7 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, bool continuo
     if (tr.fraction == 1.0f)
         return true;
 
-    if (!continuousFire)
+    if (!fireDef->IsContinuousFire())
     {
         if (tr.ent < 1 || !game.edicts[tr.ent].takedamage || game.edicts[tr.ent].movetype == MOVETYPE_PUSH)
             return false;
@@ -330,43 +455,48 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, bool continuo
     return hitToTargetDist < 30.0f + 500.0f * proximityDistanceFactor;
 }
 
-float Bot::AdjustTarget(int weapon, const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
+void Bot::FireTargetCache::AdjustAimParams(const CombatTask &combatTask, const GenericFireDef &fireDef,
+                                             AimParams *aimParams)
 {
-    switch (WeaponAimType(weapon))
+    SetupCoarseFireTarget(combatTask, aimParams->fireOrigin, aimParams->fireTarget);
+
+    switch (fireDef.AimType())
     {
-        case AiWeaponAimType::PREDICTION_EXPLOSIVE:
-            return AdjustPredictionExplosiveAimStyleTarget(firedef, fire_origin, target);
-        case AiWeaponAimType::PREDICTION:
-            return AdjustPredictionAimStyleTarget(firedef, fire_origin, target);
-        case AiWeaponAimType::DROP:
-            return AdjustDropAimStyleTarget(firedef, fire_origin, target);
+        case AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE:
+            AdjustPredictionExplosiveAimTypeParams(combatTask, fireDef, aimParams);
+        case AI_WEAPON_AIM_TYPE_PREDICTION:
+            AdjustPredictionAimTypeParams(combatTask, fireDef, aimParams);
+        case AI_WEAPON_AIM_TYPE_DROP:
+            AdjustDropAimTypeParams(combatTask, fireDef, aimParams);
         default:
-            return AdjustInstantAimStyleTarget(firedef, fire_origin, target);
+            AdjustInstantAimTypeParams(combatTask, fireDef, aimParams);
     }
 }
 
-bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire_origin, vec3_t target)
+bool Bot::FireTargetCache::AdjustTargetByEnvironmentTracing(const CombatTask &combatTask, float splashRadius,
+                                                              AimParams *aimParams)
 {
     trace_t trace;
 
     float minSqDistance = 999999.0f;
     vec_t nearestPoint[3] = { NAN, NAN, NAN };  // Avoid an "uninitialized" compiler/inspection warning
 
-    edict_t *traceKey = const_cast<edict_t *>(EnemyTraceKey());
-    float *firePoint = const_cast<float*>(fire_origin);
+    edict_t *traceKey = const_cast<edict_t *>(combatTask.TraceKey());
+    float *firePoint = const_cast<float*>(aimParams->fireOrigin);
 
-    if (IsEnemyOnGround())
+    if (combatTask.IsOnGround())
     {
-        Vec3 groundPoint(target);
+        Vec3 groundPoint(aimParams->fireTarget);
         groundPoint.Z() += playerbox_stand_maxs[2];
         // Check whether shot to this point is not blocked
-        G_Trace(&trace, firePoint, nullptr, nullptr, groundPoint.Data(), self, MASK_AISOLID);
-        if (trace.fraction > 0.999f || EnemyTraceKey() == game.edicts + trace.ent)
+        G_Trace(&trace, firePoint, nullptr, nullptr, groundPoint.Data(), const_cast<edict_t*>(bot), MASK_AISOLID);
+        if (trace.fraction > 0.999f || combatTask.TraceKey() == game.edicts + trace.ent)
         {
+            float skill = bot->ai->botRef->Skill();
             // For mid-skill bots it may be enough. Do not waste cycles.
-            if (Skill() < 0.66f && random() < (1.0f - Skill()))
+            if (skill < 0.66f && random() < (1.0f - skill))
             {
-                target[2] += playerbox_stand_mins[2];
+                aimParams->fireTarget[2] += playerbox_stand_mins[2];
                 return true;
             }
 
@@ -375,8 +505,8 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
         }
     }
 
-    Vec3 toTargetDir(target);
-    toTargetDir -= fire_origin;
+    Vec3 toTargetDir(aimParams->fireTarget);
+    toTargetDir -= aimParams->fireOrigin;
     float sqDistanceToTarget = toTargetDir.SquaredLength();
     // Not only prevent division by zero, but keep target as-is when it is colliding with bot
     if (sqDistanceToTarget < 16 * 16)
@@ -384,22 +514,22 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
 
     // Normalize to target dir
     toTargetDir *= Q_RSqrt(sqDistanceToTarget);
-    Vec3 traceEnd = Vec3(target) + splashRadius * toTargetDir;
+    Vec3 traceEnd = Vec3(aimParams->fireTarget) + splashRadius * toTargetDir;
 
     // We hope this function will be called rarely only when somebody wants to load a stripped Q3 AAS.
     // Just trace an environment behind the bot, it is better than it used to be anyway.
-    G_Trace(&trace, target, nullptr, nullptr, traceEnd.Data(), traceKey, MASK_AISOLID);
+    G_Trace(&trace, aimParams->fireTarget, nullptr, nullptr, traceEnd.Data(), traceKey, MASK_AISOLID);
     if (trace.fraction != 1.0f)
     {
         // First check whether an explosion in the point behind may damage the target to cut a trace quickly
-        float sqDistance = DistanceSquared(target, trace.endpos);
+        float sqDistance = DistanceSquared(aimParams->fireTarget, trace.endpos);
         if (sqDistance < minSqDistance)
         {
             // trace.endpos will be overwritten
             Vec3 pointBehind(trace.endpos);
             // Check whether shot to this point is not blocked
-            G_Trace(&trace, firePoint, nullptr, nullptr, pointBehind.Data(), self, MASK_AISOLID);
-            if (trace.fraction > 0.999f || EnemyTraceKey() == game.edicts + trace.ent)
+            G_Trace(&trace, firePoint, nullptr, nullptr, pointBehind.Data(), const_cast<edict_t*>(bot), MASK_AISOLID);
+            if (trace.fraction > 0.999f || combatTask.TraceKey() == game.edicts + trace.ent)
             {
                 minSqDistance = sqDistance;
                 VectorCopy(pointBehind.Data(), nearestPoint);
@@ -410,7 +540,7 @@ bool Bot::AdjustTargetByEnvironmentTracing(float splashRadius, const vec3_t fire
     // Modify `target` if we have found some close solid point
     if (minSqDistance <= splashRadius)
     {
-        VectorCopy(nearestPoint, target);
+        VectorCopy(nearestPoint, aimParams->fireTarget);
         return true;
     }
     return false;
@@ -619,7 +749,8 @@ static void FindClosestAreasFacesPoints(float splashRadius, const vec3_t target,
     std::sort(closestPoints.begin(), closestPoints.end());
 }
 
-bool Bot::AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire_origin, vec3_t target, int areaNum)
+bool Bot::FireTargetCache::AdjustTargetByEnvironmentWithAAS(const CombatTask &combatTask, float splashRadius,
+                                                              int areaNum, AimParams *aimParams)
 {
     // We can't just get a closest point from AAS world, it may be blocked for shooting.
     // Also we can't check each potential point for being blocked, tracing is very expensive.
@@ -627,7 +758,7 @@ bool Bot::AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire
     // We hope at least a single point will not be blocked.
 
     StaticVector<PointAndDistance, MAX_CLOSEST_FACE_POINTS + 1> closestAreaFacePoints;
-    FindClosestAreasFacesPoints(splashRadius, target, areaNum, closestAreaFacePoints);
+    FindClosestAreasFacesPoints(splashRadius, aimParams->fireTarget, areaNum, closestAreaFacePoints);
 
     trace_t trace;
 
@@ -636,12 +767,12 @@ bool Bot::AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire
     for (const PointAndDistance &pointAndDistance: closestAreaFacePoints)
     {
         float *traceEnd = const_cast<float*>(pointAndDistance.point.Data());
-        float *traceStart = const_cast<float*>(fire_origin);
-        G_Trace(&trace, traceStart, nullptr, nullptr, traceEnd, self, MASK_AISOLID);
+        edict_t *passent = const_cast<edict_t*>(bot);
+        G_Trace(&trace, aimParams->fireOrigin, nullptr, nullptr, traceEnd, passent, MASK_AISOLID);
 
-        if (trace.fraction > 0.999f || EnemyTraceKey() == game.edicts + trace.ent)
+        if (trace.fraction > 0.999f || combatTask.TraceKey() == game.edicts + trace.ent)
         {
-            VectorCopy(traceEnd, target);
+            VectorCopy(traceEnd, aimParams->fireTarget);
             return true;
         }
     }
@@ -649,63 +780,66 @@ bool Bot::AdjustTargetByEnvironmentWithAAS(float splashRadius, const vec3_t fire
     return false;
 }
 
-bool Bot::AdjustTargetByEnvironment(const firedef_t *firedef, const vec3_t fire_origin, vec3_t target)
+bool Bot::FireTargetCache::AdjustTargetByEnvironment(const CombatTask &combatTask, float splashRaidus,
+                                                       AimParams *aimParams)
 {
     int targetAreaNum = 0;
     // Reject AAS worlds that look like stripped
-    if (aasWorld->NumFaces() > 512)
-        targetAreaNum = aasWorld->FindAreaNum(target);
+    if (AiAasWorld::Instance()->NumFaces() > 512)
+        targetAreaNum = AiAasWorld::Instance()->FindAreaNum(aimParams->fireTarget);
 
     if (targetAreaNum)
-        return AdjustTargetByEnvironmentWithAAS(firedef->splash_radius, fire_origin, target, targetAreaNum);
+        return AdjustTargetByEnvironmentWithAAS(combatTask, splashRaidus, targetAreaNum, aimParams);
 
-    return AdjustTargetByEnvironmentTracing(firedef->splash_radius, fire_origin, target);
+    return AdjustTargetByEnvironmentTracing(combatTask, splashRaidus, aimParams);
 }
 
-float Bot::AdjustPredictionExplosiveAimStyleTarget(const firedef_t *firedef, vec3_t fire_origin, vec3_t target)
+void Bot::FireTargetCache::AdjustPredictionExplosiveAimTypeParams(const CombatTask &combatTask,
+                                                                    const GenericFireDef &fireDef,
+                                                                    AimParams *aimParams)
 {
-    bool wasCached = HasCachedTargetOrigin();
-    GetPredictedTargetOrigin(fire_origin, firedef->speed, target);
+    bool wasCached = cachedFireTarget.IsValidFor(combatTask);
+    GetPredictedTargetOrigin(combatTask, fireDef.ProjectileSpeed(), aimParams);
     // If new generic predicted target origin has been computed, adjust it for target environment
     if (!wasCached)
     {
         // First, modify temporary `target` value
-        AdjustTargetByEnvironment(firedef, fire_origin, target);
+        AdjustTargetByEnvironment(combatTask, fireDef.SplashRadius(), aimParams);
         // Copy modified `target` value to cached value
-        cachedPredictedTargetOrigin = Vec3(target);
+        cachedFireTarget.origin = Vec3(aimParams->fireTarget);
     }
     // Accuracy for air rockets is worse anyway (movement prediction in gravity field is approximate)
-    return 1.3f * (1.01f - Skill()) * WFAC_GENERIC_PROJECTILE;
+    aimParams->suggestedBaseAccuracy = 1.3f * (1.01f - bot->ai->botRef->Skill()) * WFAC_GENERIC_PROJECTILE;
 }
 
-float Bot::AdjustPredictionAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
+void Bot::FireTargetCache::AdjustPredictionAimTypeParams(const CombatTask &combatTask,
+                                                           const GenericFireDef &fireDef, AimParams *aimParams)
 {
-    float wfac;
-    if (self->s.weapon == WEAP_PLASMAGUN)
-        wfac = 0.5f * WFAC_GENERIC_PROJECTILE * (1.0f - Skill());
+    if (fireDef.IsBuiltin() && fireDef.WeaponNum() == WEAP_PLASMAGUN)
+        aimParams->suggestedBaseAccuracy = 0.5f * WFAC_GENERIC_PROJECTILE * (1.0f - bot->ai->botRef->Skill());
     else
-        wfac = WFAC_GENERIC_PROJECTILE;
+        aimParams->suggestedBaseAccuracy = WFAC_GENERIC_PROJECTILE;
 
-    GetPredictedTargetOrigin(fire_origin, firedef->speed, target);
-    return wfac;
+    GetPredictedTargetOrigin(combatTask, fireDef.ProjectileSpeed(), aimParams);
 }
 
-float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
+void Bot::FireTargetCache::AdjustDropAimTypeParams(const CombatTask &combatTask,
+                                                     const GenericFireDef &fireDef, AimParams *aimParams)
 {
-    bool wasCached = HasCachedTargetOrigin();
-    GetPredictedTargetOrigin(fire_origin, firedef->speed, target);
+    bool wasCached = cachedFireTarget.IsValidFor(combatTask);
+    GetPredictedTargetOrigin(combatTask, fireDef.ProjectileSpeed(), aimParams);
     // If new generic predicted target origin has been computed, adjust it for gravity (changes will be cached)
     if (!wasCached)
     {
         // It is not very accurate but satisfactory
-        Vec3 fireOriginToTarget = Vec3(target) - fire_origin;
+        Vec3 fireOriginToTarget = Vec3(aimParams->fireTarget) - aimParams->fireOrigin;
         Vec3 fireOriginToTarget2D(fireOriginToTarget.X(), fireOriginToTarget.Y(), 0);
         float squareDistance2D = fireOriginToTarget2D.SquaredLength();
         if (squareDistance2D > 0)
         {
             Vec3 velocity2DVec(fireOriginToTarget);
             velocity2DVec.NormalizeFast();
-            velocity2DVec *= firedef->speed;
+            velocity2DVec *= fireDef.ProjectileSpeed();
             velocity2DVec.Z() = 0;
             float squareVelocity2D = velocity2DVec.SquaredLength();
             if (squareVelocity2D > 0)
@@ -715,23 +849,28 @@ float Bot::AdjustDropAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin
                 float time = distance2D / velocity2D;
                 float height = std::max(0.0f, 0.5f * level.gravity * time * time - 32.0f);
                 // Modify both cached and temporary values
-                cachedPredictedTargetOrigin.Z() += height;
-                target[2] += height;
+                cachedFireTarget.origin.Z() += height;
+                aimParams->fireTarget[2] += height;
             }
         }
     }
 
     // This kind of weapons is not precise by its nature, do not add any more noise.
-    return 0.3f * (1.01f - Skill()) * WFAC_GENERIC_PROJECTILE;
+    aimParams->suggestedBaseAccuracy = 0.3f * (1.01f - bot->ai->botRef->Skill()) * WFAC_GENERIC_PROJECTILE;
 }
 
-float Bot::AdjustInstantAimStyleTarget(const firedef_t *firedef, vec_t *fire_origin, vec_t *target)
+void Bot::FireTargetCache::AdjustInstantAimTypeParams(const CombatTask &combatTask,
+                                                      const GenericFireDef &fireDef, AimParams *aimParams)
 {
-    if( self->s.weapon == WEAP_ELECTROBOLT )
-        return WFAC_GENERIC_INSTANT;
-    // It is affected by bot view latency (lastSeenPosition() + finite yaw/pitch speed) enough, decrease aim error
-    if( self->s.weapon == WEAP_LASERGUN )
-        return 0.33f * WFAC_GENERIC_INSTANT * (1.0f - Skill());
+    if (fireDef.IsBuiltin())
+    {
+        float skill = bot->ai->botRef->Skill();
+        // It is affected by bot view latency (lastSeenPosition() + finite yaw/pitch speed) enough, decrease aim error
+        if (fireDef.WeaponNum() == WEAP_ELECTROBOLT)
+            aimParams->suggestedBaseAccuracy = (1.0f - skill) * WFAC_GENERIC_INSTANT;
+        else if (fireDef.WeaponNum() == WEAP_LASERGUN)
+            aimParams->suggestedBaseAccuracy = 0.33f * WFAC_GENERIC_INSTANT * (1.0f - skill);
+    }
 
-    return WFAC_GENERIC_INSTANT;
+    aimParams->suggestedBaseAccuracy = WFAC_GENERIC_INSTANT;
 }

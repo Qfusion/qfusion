@@ -46,6 +46,12 @@ static void GT_ResetScriptData( void )
 	level.gametype.playerDefenciveAbilitiesScoreFunc = NULL;
 	level.gametype.onBotTouchedGoalFunc = NULL;
 	level.gametype.onBotReachedGoalRadiusFunc = NULL;
+
+	level.gametype.getScriptWeaponsNumFunc = NULL;
+	level.gametype.getScriptWeaponDefFunc = NULL;
+	level.gametype.getScriptWeaponCooldownFunc = NULL;
+	level.gametype.selectScriptWeaponFunc = NULL;
+	level.gametype.fireScriptWeaponFunc = NULL;
 }
 
 void GT_asShutdownScript( void )
@@ -541,6 +547,96 @@ void GT_asBotReachedGoalRadius(const ai_handle_t *bot, const edict_t *goalEnt)
 	CallBotGoalCallbackFunc(bot, goalEnt, level.gametype.onBotReachedGoalRadiusFunc);
 }
 
+int GT_asGetScriptWeaponsNum(const gclient_t *client)
+{
+	if (!level.gametype.getScriptWeaponsNumFunc || !angelExport)
+		return 0;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction*>(level.gametype.getScriptWeaponsNumFunc));
+	if (error < 0)
+		return 0;
+
+	ctx->SetArgObject(0, const_cast<gclient_t*>(client));
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+	{
+		GT_asShutdownScript();
+		return 0;
+	}
+
+	return ctx->GetReturnDWord();
+}
+
+bool GT_asGetScriptWeaponDef(const gclient_t *client, int scriptWeaponNum, ai_script_weapon_def_t *weaponDef)
+{
+	if (!level.gametype.getScriptWeaponDefFunc || !angelExport)
+		return false;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction*>(level.gametype.getScriptWeaponDefFunc));
+	if (error < 0)
+		return 0;
+
+	ctx->SetArgObject(0, const_cast<gclient_t *>(client));
+	ctx->SetArgDWord(1, scriptWeaponNum);
+	ctx->SetArgObject(2, weaponDef);
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+	{
+		GT_asShutdownScript();
+		return false;
+	}
+
+	return ctx->GetReturnByte() != 0;
+}
+
+static asIScriptContext *CallClientScriptWeaponFunc(const gclient_t *client, int scriptWeaponNum, void *func)
+{
+	if (!func || !angelExport)
+		return nullptr;
+
+	auto ctx = angelExport->asAcquireContext(GAME_AS_ENGINE());
+	int error = ctx->Prepare(static_cast<asIScriptFunction*>(func));
+	if (error < 0)
+		return nullptr;
+
+	ctx->SetArgObject(0, const_cast<gclient_t *>(client));
+	ctx->SetArgDWord(1, scriptWeaponNum);
+
+	error = ctx->Execute();
+	if (G_ExecutionErrorReport(error))
+	{
+		GT_asShutdownScript();
+		return nullptr;
+	}
+
+	return ctx;
+}
+
+int GT_asGetScriptWeaponCooldown(const gclient_t *client, int scriptWeaponNum)
+{
+	if (auto ctx = CallClientScriptWeaponFunc(client, scriptWeaponNum, level.gametype.getScriptWeaponCooldownFunc))
+		return ctx->GetReturnDWord();
+	return INT_MAX;
+}
+
+bool GT_asSelectScriptWeapon(gclient_t *client, int scriptWeaponNum)
+{
+	if (auto ctx = CallClientScriptWeaponFunc(client, scriptWeaponNum, level.gametype.selectScriptWeaponFunc))
+		return ctx->GetReturnByte() != 0;
+	return false;
+}
+
+bool GT_asFireScriptWeapon(gclient_t *client, int scriptWeaponNum)
+{
+	if (auto ctx = CallClientScriptWeaponFunc(client, scriptWeaponNum, level.gametype.fireScriptWeaponFunc))
+		return ctx->GetReturnByte() != 0;
+	return false;
+}
+
 static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 {
 	int error;
@@ -734,6 +830,56 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	fdeclstr = "float GT_PlayerDefenciveAbilitiesScore( Client @client )";
 	level.gametype.playerDefenciveAbilitiesScoreFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if ( !level.gametype.playerDefenciveAbilitiesScoreFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "int GT_GetScriptWeaponsNum( const Client @client )";
+	level.gametype.getScriptWeaponsNumFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.getScriptWeaponsNumFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "bool GT_GetScriptWeaponDef( const Client @client, int scriptWeaponNum, ScriptWeaponDef &out weaponDef )";
+	level.gametype.getScriptWeaponDefFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.getScriptWeaponDefFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "int GT_GetScriptWeaponCooldown( const Client @client, int scriptWeaponNum )";
+	level.gametype.getScriptWeaponCooldownFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.getScriptWeaponCooldownFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "bool GT_SelectScriptWeapon( Client @client, int scriptWeaponNum )";
+	level.gametype.selectScriptWeaponFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.selectScriptWeaponFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
+	}
+	else
+		funcCount++;
+
+	fdeclstr = "bool GT_FireScriptWeapon( Client @client, int scriptWeaponNum )";
+	level.gametype.fireScriptWeaponFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if ( !level.gametype.fireScriptWeaponFunc )
 	{
 		if( developer->integer || sv_cheats->integer )
 			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );

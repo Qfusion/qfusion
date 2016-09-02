@@ -31,9 +31,6 @@ Bot::Bot(edict_t *self, float skillLevel)
       pendingLookAtPointTimeoutAt(0),
       hasPendingLookAtPoint(false),
       lookAtPointTurnSpeedMultiplier(0.5f),
-      cachedPredictedTargetOrigin(INFINITY, INFINITY, INFINITY),
-      cachedPredictedTargetValidUntil(0),
-      cachedPredictedTargetInstanceId(0),
       hasCampingSpot(false),
       hasCampingLookAtPoint(false),
       campingSpotRadius(INFINITY),
@@ -46,7 +43,9 @@ Bot::Bot(edict_t *self, float skillLevel)
       isWaitingForItemSpawn(false),
       isInSquad(false),
       defenceSpotId(-1),
-      offenceSpotId(-1)
+      offenceSpotId(-1),
+      builtinFireTargetCache(self),
+      scriptFireTargetCache(self)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;
@@ -66,7 +65,7 @@ void Bot::LookAround()
     RegisterVisibleEnemies();
 
     if (!botBrain.combatTask.Empty())
-        ChangeWeapon(botBrain.combatTask.Weapon());
+        ChangeWeapon(botBrain.combatTask);
 }
 
 void Bot::SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier, unsigned int timeoutDuration)
@@ -325,21 +324,17 @@ void Bot::CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTar
     }
 }
 
-//==========================================
-// BOT_DMClass_ChangeWeapon
-//==========================================
-bool Bot::ChangeWeapon(int weapon)
+void Bot::ChangeWeapon(const CombatTask &combatTask)
 {
-    if( weapon == self->r.client->ps.stats[STAT_PENDING_WEAPON] )
-        return false;
+    if (combatTask.CanUseBuiltinWeapon())
+        self->r.client->ps.stats[STAT_PENDING_WEAPON] = combatTask.BuiltinWeapon();
+    if (combatTask.CanUseScriptWeapon())
+        GT_asSelectScriptWeapon(self->r.client, combatTask.ScriptWeapon());
+}
 
-    if( !GS_CheckAmmoInWeapon( &self->r.client->ps , weapon ) )
-        return false;
-
-    // Change to this weapon
+void Bot::ChangeWeapon(int weapon)
+{
     self->r.client->ps.stats[STAT_PENDING_WEAPON] = weapon;
-
-    return true;
 }
 
 //==========================================
@@ -623,13 +618,13 @@ void Bot::Frame()
             inhibitCombatMove = true;
     }
 
-    // Do not modify the ucmd in FireWeapon(), it will be overwritten by MoveFrame()
+    // ucmd modification in FireWeapon() will be overwritten by MoveFrame()
     bool fireButtonPressed = false;
     if (!inhibitShooting)
     {
         SetCloakEnabled(false);
-        if (FireWeapon())
-            fireButtonPressed = true;
+        // If bot fired builtin or script weapon, save builtin fire button status
+        FireWeapon(&fireButtonPressed);
     }
     else
     {
