@@ -455,6 +455,114 @@ float GT_PlayerDefenciveAbilitiesScore( Client @client )
     return 0.5f;
 }
 
+int GT_GetScriptWeaponsNum( const Client @client )
+{
+    if ( @client == null )
+        return 0;
+
+    if ( GetPlayer( client ).playerClass.tag != PLAYERCLASS_GRUNT )
+        return 0;
+
+    return 1;
+}
+
+bool GT_GetScriptWeaponDef( const Client @client, int weaponNum, ScriptWeaponDef &out weaponDef )
+{
+    if ( @client == null )
+        return false;
+
+    if ( GetPlayer( client ).playerClass.tag != PLAYERCLASS_GRUNT )
+        return false;
+
+    if ( weaponNum != 0 )
+        return false;
+
+    weaponDef.weaponNum = 0;
+    weaponDef.tier = 4;
+    weaponDef.minRange = 250.0f;
+    weaponDef.maxRange = 1200.0f;
+    weaponDef.bestRange = 600.0f;
+    weaponDef.projectileSpeed = 750.0f;
+    weaponDef.splashRadius = 250.0f;
+    weaponDef.maxSelfDamage = 400.0f;
+    weaponDef.aimType = AI_WEAPON_AIM_TYPE_DROP;
+    weaponDef.isContinuousFire = false;
+
+    return true;
+}
+
+int GT_GetScriptWeaponCooldown( const Client @client, int weaponNum )
+{
+    if ( @client == null )
+        return 999999;
+
+    if ( client.getEnt().isGhosting() )
+        return 999999;
+    
+    cPlayer @player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_GRUNT )
+        return 999999;
+
+    if ( weaponNum != 0 )
+        return 999999;
+
+    // If a bomb has been already thrown
+    if ( @player.bomb != null && @player.bomb.bombEnt != null )
+        return 999999;
+
+    if ( client.armor < CTFT_TURRET_AP_COST )
+        return 999999;
+
+    if ( levelTime >= player.bombCooldownTime )
+        return 0;
+
+    return player.bombCooldownTime - levelTime;
+}
+
+bool GT_SelectScriptWeapon( Client @client, int weaponNum )
+{
+    if ( @client == null )
+        return false;
+
+    if ( client.getEnt().isGhosting() )
+        return false;
+
+    cPlayer @player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_GRUNT )
+        return false;
+
+    if ( weaponNum != 0 )
+        return false;
+
+    return !player.isBombCooldown();
+}
+
+bool GT_FireScriptWeapon( Client @client, int weaponNum )
+{
+    if ( @client == null )
+        return false;
+
+    if ( client.getEnt().isGhosting() )
+        return false;
+
+    // Do not fire in countdown state
+    
+    cPlayer @player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_GRUNT )
+        return false;
+
+    if ( weaponNum != 0 )
+        return false;
+
+    // If a bomb has been already thrown
+    if ( @player.bomb != null && @player.bomb.bombEnt != null )
+        return false;
+
+    CTFT_DropBomb( client );
+
+    return @player.bomb != null && @player.bomb.bombEnt != null;
+}
+
 void CTFT_UpdateBotsExtraGoals() 
 {
     Entity @ent;
@@ -576,6 +684,26 @@ void CTFT_UpdateMedicExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @
         bot.setExternalEntityWeight( goal, 5.0f );
     else
         bot.setExternalEntityWeight( goal, 1.5f );
+}
+
+void CTFT_UpdateGruntExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @goal )
+{
+    if ( @player.bomb == null )
+        return;
+
+    if ( @player.bomb.bombEnt != @goal )
+        return;
+
+    if ( !player.bomb.botShouldPickup )
+    {
+        bot.setExternalEntityWeight( goal, 0.0f );
+        return;
+    }    
+
+    if ( ( ent.effects & EF_CARRIER ) == 0 )
+        bot.setExternalEntityWeight( goal, 999.0f );
+    else
+        bot.setExternalEntityWeight( goal, 0.5f );
 }
 
 void CTFT_UpdateBotExtraGoals( Entity @ent )
@@ -710,6 +838,10 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
         else if ( player.playerClass.tag == PLAYERCLASS_MEDIC )
         {
             CTFT_UpdateMedicExtraGoal( ent, bot, player, goal );
+        } 
+        else if ( player.playerClass.tag == PLAYERCLASS_GRUNT )
+        {
+            CTFT_UpdateGruntExtraGoal( ent, bot, player, goal );
         }
     }
 }
