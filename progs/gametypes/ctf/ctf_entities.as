@@ -123,6 +123,13 @@ class cFlagBase
 
     ~cFlagBase()
     {
+        if ( @this.carrier != @this.owner )
+            return;
+        
+        AI::DisableDefenceSpotAutoAlert( this.team, this.aiSpotId );
+        AI::RemoveDefenceSpot( this.team, this.aiSpotId );
+        AI::RemoveOffenceSpot( this.enemyTeam, this.aiSpotId );
+        // ( AI::RemoveNavEntity will be called automatically in G_Free() )
     }
 
     void setupAIGoalProperties( Entity @spawner )
