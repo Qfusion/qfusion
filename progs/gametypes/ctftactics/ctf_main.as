@@ -767,12 +767,42 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
             bot.setExternalEntityWeight( teamBase.carrier, 9.0f );
     } 
 
+    // CTF:T addition: 
+    // Usually there are 1 defender (if flag spot is not in alert state) and 5 attackers in team.
+    // These roles are assigned by native code based on status of defence/offense spots.
+    // Other bots has no order spots and are roaming (grabbing items on the map and fragging enemies).
+    // There are rarely any items in CTF:T except flags, so roaming bots feel lost.
+    // Thus roaming bots should attack enemy base (even if enemy flag is stolen). 
+        
     cFlagBase @enemyBase = @CTF_getBaseForTeam( enemyTeam );
     if ( @enemyBase != null )
-    {
-        // it's team flag, dropped somewhere
+    { 
         if ( @enemyBase.carrier != @enemyBase.owner && @enemyBase.carrier.client == null )
             bot.setExternalEntityWeight( enemyBase.carrier, 9.0f );
+
+        if ( @enemyBase.carrier != @enemyBase.owner )
+        {
+            // it's team flag, dropped somewhere
+            if ( @enemyBase.carrier.client == null )
+            {
+                bot.setExternalEntityWeight( enemyBase.carrier, 9.0f );
+            }
+            // If the bot is roaming
+            else if ( bot.defenceSpotId == -1 && bot.offenceSpotId == -1 )
+            {
+                // Attack the enemy base (but no flag spot itself).
+                float botToEnemyBaseDist = enemyBase.owner.origin.distance( ent.origin );
+                if ( botToEnemyBaseDist < 384.0f )
+                    bot.setExternalEntityWeight( enemyBase.owner, 0.0f );
+                else
+                    bot.setExternalEntityWeight( enemyBase.owner, 9.0f );
+            }
+        }
+        else if ( bot.defenceSpotId == -1 && bot.offenceSpotId == -1 )
+        {
+            // Roaming bots should get the enemy flag, but its weight is lower than for attackers
+            bot.setExternalEntityWeight( enemyBase.owner, 3.5f );
+        }
     }
 
     for ( int i = maxClients + 1; i < numEntities; ++i )
