@@ -420,12 +420,12 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
             // it's my flag, dropped somewhere
             if ( goal.team == ent.team )
             {
-                bot.setExternalEntityWeight( goal, 9.0f * baseFactor );
+                bot.setExternalEntityWeight( goal, 9.0f );
             }
             // it's enemy flag, dropped somewhere
             else if ( goal.team != ent.team )
             {
-                bot.setExternalEntityWeight( goal, 9.0f * offensiveness );
+                bot.setExternalEntityWeight( goal, 9.0f );
             }
 
             continue;
