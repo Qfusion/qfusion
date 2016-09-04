@@ -482,7 +482,7 @@ private:
     FireTargetCache scriptFireTargetCache;
 
     // Returns true if current look angle worth pressing attack
-    bool CheckShot(const vec3_t fire_origin, const vec3_t target, const GenericFireDef *fireDef);
+    bool CheckShot(const AimParams &aimParams, const CombatTask &combatTask, const GenericFireDef &fireDef);
 
     void LookAtEnemy(float accuracy, const vec3_t fire_origin, vec3_t target);
     bool TryPressAttack(const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,

@@ -310,31 +310,26 @@ bool Bot::FireWeapon(bool *didBuiltinAttack)
         scriptFireTargetCache.AdjustAimParams(combatTask, *scriptFireDef, &scriptWeaponAimParams);
 
     // Select a weapon that has a priority in adjusting view angles for it
-    float accuracy;
-    float *fireOrigin, *fireTarget;
     const GenericFireDef *primaryFireDef = nullptr;
     const GenericFireDef *secondaryFireDef = nullptr;
+    AimParams *aimParams;
     if (combatTask.ShouldPreferBuiltinWeapon())
     {
-        accuracy = builtinWeaponAimParams.EffectiveAccuracy(Skill(), importantShot);
-        fireOrigin = builtinWeaponAimParams.fireOrigin;
-        fireTarget = builtinWeaponAimParams.fireTarget;
+        aimParams = &builtinWeaponAimParams;
         primaryFireDef = builtinFireDef;
         if (scriptFireDef)
             secondaryFireDef = scriptFireDef;
     }
     else
     {
-        accuracy = scriptWeaponAimParams.EffectiveAccuracy(Skill(), importantShot);
-        fireOrigin = scriptWeaponAimParams.fireOrigin;
-        fireTarget = scriptWeaponAimParams.fireTarget;
+        aimParams = &scriptWeaponAimParams;
         primaryFireDef = scriptFireDef;
         if (builtinFireDef)
             secondaryFireDef = builtinFireDef;
     }
 
     // Always track enemy with a "crosshair" like a human does in each frame
-    LookAtEnemy(accuracy, fireOrigin, fireTarget);
+    LookAtEnemy(aimParams->EffectiveAccuracy(Skill(), importantShot), aimParams->fireOrigin, aimParams->fireTarget);
 
     // Attack only in Think() frames unless a continuousFire is required
     if (ShouldSkipThinkFrame())
@@ -349,13 +344,13 @@ bool Bot::FireWeapon(bool *didBuiltinAttack)
     bool didPrimaryAttack = false;
     bool didSecondaryAttack = false;
 
-    if (CheckShot(fireOrigin, fireTarget, primaryFireDef))
+    if (CheckShot(*aimParams, combatTask, *primaryFireDef))
         didPrimaryAttack = TryPressAttack(primaryFireDef, builtinFireDef, scriptFireDef, didBuiltinAttack);
 
     if (secondaryFireDef)
     {
         // Check whether view angles adjusted for the primary weapon are suitable for firing secondary weapon too
-        if (CheckShot(fireOrigin, fireTarget, secondaryFireDef))
+        if (CheckShot(*aimParams, combatTask, *secondaryFireDef))
             didSecondaryAttack = TryPressAttack(secondaryFireDef, builtinFireDef, scriptFireDef, didBuiltinAttack);
     }
 
@@ -402,14 +397,15 @@ bool Bot::TryPressAttack(const GenericFireDef *fireDef, const GenericFireDef *bu
     return *didBuiltinAttack;
 }
 
-bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, const GenericFireDef *fireDef)
+bool Bot::CheckShot(const AimParams &aimParams, const CombatTask &combatTask, const GenericFireDef &fireDef)
 {
     // Do not shoot enemies that are far from "crosshair" except they are very close
     Vec3 newLookDir(0, 0, 0);
     AngleVectors(self->s.angles, newLookDir.Data(), nullptr, nullptr);
 
-    Vec3 toTarget(target);
-    toTarget -= fire_origin;
+
+    Vec3 toTarget(aimParams.fireTarget);
+    toTarget -= aimParams.fireOrigin;
     toTarget.NormalizeFast();
     float toTargetDotLookDir = toTarget.Dot(newLookDir);
 
@@ -422,14 +418,22 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, const Generic
         directionDistanceFactor += BoundedFraction(distance, 450.0f);
     }
 
-    if (fireDef->IsContinuousFire())
+    // Precache this result, it is not just a value getter
+    const auto aimType = fireDef.AimType();
+
+    if (fireDef.IsContinuousFire())
     {
         if (toTargetDotLookDir < 0.8f * directionDistanceFactor)
             return false;
     }
-    else
+    else if (aimType != AI_WEAPON_AIM_TYPE_DROP)
     {
         if (toTargetDotLookDir < 0.6f * directionDistanceFactor)
+            return false;
+    }
+    else
+    {
+        if (toTargetDotLookDir < 0)
             return false;
     }
 
@@ -437,22 +441,85 @@ bool Bot::CheckShot(const vec3_t fire_origin, const vec3_t target, const Generic
     // We test directions factor first because it is cheaper to calculate
 
     trace_t tr;
-    G_Trace(&tr, const_cast<float*>(fire_origin), nullptr, nullptr, (99999.0f * newLookDir + fire_origin).Data(), self, MASK_AISOLID);
-    if (tr.fraction == 1.0f)
-        return true;
-
-    if (!fireDef->IsContinuousFire())
+    if (aimType != AI_WEAPON_AIM_TYPE_DROP)
     {
-        if (tr.ent < 1 || !game.edicts[tr.ent].takedamage || game.edicts[tr.ent].movetype == MOVETYPE_PUSH)
-            return false;
+        Vec3 traceEnd(newLookDir);
+        traceEnd *= 999999.0f;
+        traceEnd += aimParams.fireOrigin;
+        G_Trace(&tr, const_cast<float*>(aimParams.fireOrigin), nullptr, nullptr, traceEnd.Data(), self, MASK_AISOLID);
+        if (tr.fraction == 1.0f)
+            return true;
     }
+    else
+    {
+        // For drop aim type weapons (a gravity is applied to a projectile) split projectile trajectory in segments
+        vec3_t segmentStart;
+        vec3_t segmentEnd;
+        VectorCopy(aimParams.fireOrigin, segmentEnd);
+
+        Vec3 projectileVelocity(newLookDir);
+        projectileVelocity *= fireDef.ProjectileSpeed();
+
+        const int numSegments = (int)(2 + 4 * Skill());
+        // Predict for 1 second
+        const float timeStep = 1.0f / numSegments;
+        const float halfGravity = 0.5f * level.gravity;
+        const float *fireOrigin = aimParams.fireOrigin;
+
+        float currTime = timeStep;
+        for (int i = 0; i < numSegments; ++i)
+        {
+            VectorCopy(segmentEnd, segmentStart);
+            segmentEnd[0] = fireOrigin[0] + projectileVelocity.X() * currTime;
+            segmentEnd[1] = fireOrigin[1] + projectileVelocity.Y() * currTime;
+            segmentEnd[2] = fireOrigin[2] + projectileVelocity.Z() * currTime - halfGravity * currTime * currTime;
+
+            G_Trace(&tr, segmentStart, nullptr, nullptr, segmentEnd, self, MASK_AISOLID);
+            if (tr.fraction != 1.0f)
+                break;
+
+            currTime += timeStep;
+        }
+        // If hit point has not been found for predicted for 1 second trajectory
+        if (tr.fraction == 1.0f)
+        {
+            // Check a trace from the last segment end to an infinite point
+            VectorCopy(segmentEnd, segmentStart);
+            currTime = 999.0f;
+            segmentEnd[0] = fireOrigin[0] + projectileVelocity.X() * currTime;
+            segmentEnd[1] = fireOrigin[1] + projectileVelocity.Y() * currTime;
+            segmentEnd[2] = fireOrigin[2] + projectileVelocity.Z() * currTime - halfGravity * currTime * currTime;
+            G_Trace(&tr, segmentStart, nullptr, nullptr, segmentEnd, self, MASK_AISOLID);
+            if (tr.fraction == 1.0f)
+                return true;
+        }
+    }
+
     if (game.edicts[tr.ent].s.team == self->s.team && GS_TeamBasedGametype())
         return false;
 
-    // CheckShot() checks whether we are looking straight on the target, we test just proximity of hit point to the target
-    float hitToTargetDist = (Vec3(target) - tr.endpos).LengthFast();
-    float proximityDistanceFactor = BoundedFraction(Q_RSqrt(squareDistanceToTarget), 2000.0f);
-    return hitToTargetDist < 30.0f + 500.0f * proximityDistanceFactor;
+    float hitToTargetDist = DistanceFast(combatTask.EnemyOrigin().Data(), tr.endpos);
+    float hitToBotDist = DistanceFast(self->s.origin, tr.endpos);
+    float proximityDistanceFactor = BoundedFraction(hitToBotDist, 2000.0f);
+    float hitToTargetMissThreshold = 30.0f + 500.0f * proximityDistanceFactor;
+
+    if (hitToBotDist < hitToTargetDist && !fireDef.IsContinuousFire())
+        return false;
+
+    if (aimType == AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE)
+        return hitToTargetDist < std::max(hitToTargetMissThreshold, 0.85f * fireDef.SplashRadius());
+
+    // Trajectory prediction is not accurate, also this adds some randomization in grenade spamming.
+    if (aimType == AI_WEAPON_AIM_TYPE_DROP)
+    {
+        // Allow shooting grenades in vertical walls
+        if (DotProduct(tr.plane.normal, &axis_identity[AXIS_UP]) < -0.1f)
+            return false;
+
+        return hitToTargetDist < std::max(hitToTargetMissThreshold, 1.15f * fireDef.SplashRadius());
+    }
+
+    return hitToTargetDist < std::max(32.0f, 0.33f * hitToTargetMissThreshold);
 }
 
 void Bot::FireTargetCache::AdjustAimParams(const CombatTask &combatTask, const GenericFireDef &fireDef,
