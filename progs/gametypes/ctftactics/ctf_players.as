@@ -48,6 +48,9 @@ class cPlayer
     cPlayer @deadcamMedic;
     uint deadcamMedicScanTime;
 
+    int botPendingClass;
+    uint botPendingClassAssignedAt;
+    
     cPlayer()
     {
         // initialize all as grunt
@@ -55,6 +58,8 @@ class cPlayer
         @this.reviver = null;
         @this.bomb = null;
         this.resetTimers();
+        botPendingClass = -1;
+        botPendingClassAssignedAt = levelTime;
     }
 
     ~cPlayer() {}
@@ -251,7 +256,7 @@ class cPlayer
         if ( class_tag < 0 || class_tag >= PLAYERCLASS_TOTAL )
             return;
 
-        @this.playerClass = @cPlayerClassInfos[class_tag];
+        assignClass( class_tag );
     }
 
     bool setPlayerClass( String @className )
@@ -264,7 +269,7 @@ class cPlayer
             {
                 if ( cPlayerClassInfos[i].name == className )
                 {
-                    @this.playerClass = @cPlayerClassInfos[i];
+                    assignClass( i );
                     success = true;
                     break;
                 }
@@ -272,9 +277,15 @@ class cPlayer
         }
 
         if ( !success && @this.playerClass == null ) // never be null
-            @this.playerClass = @cPlayerClassInfos[PLAYERCLASS_GRUNT];
+            assignClass( PLAYERCLASS_GRUNT );
 
         return success;
+    }
+
+    void assignClass( int classTag )
+    {
+        @this.playerClass = @cPlayerClassInfos[classTag];
+        playerClasses[client.playerNum] = classTag;
     }
 
     void setPlayerClassCommand( String &argsString )

@@ -846,6 +846,87 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
     }
 }
 
+uint lastClassesUpdate = 0;
+bool lastClassesUpdateTeamIsAlpha = false;
+
+void CTFT_UpdateBotsClasses()
+{
+    if ( levelTime - lastClassesUpdate < 64 )
+        return;
+
+    CTFT_UpdateTeamBotsClasses( lastClassesUpdateTeamIsAlpha ? TEAM_BETA : TEAM_ALPHA );
+    
+    lastClassesUpdateTeamIsAlpha = !lastClassesUpdateTeamIsAlpha;
+    lastClassesUpdate = levelTime;
+}
+
+void CTFT_UpdateTeamBotsClasses( int teamNum )
+{
+    // Get number of player for each class in team.
+    // Also, reset bot pending classes.
+    Team @team = G_GetTeam( teamNum );
+    int[] numClassPlayers( PLAYERCLASS_TOTAL );
+    for ( int i = 0; i < team.numPlayers; ++i )
+    {
+        Client @client = team.ent( i ).client;
+        int classTag = playerClasses[client.playerNum];
+        numClassPlayers[classTag]++;
+        if ( @client.getBot() != null )
+            gtPlayers[client.playerNum].botPendingClass = -1;
+    }
+
+    int numTeamTurrets = CTFT_TeamTurretsNum( teamNum );
+
+    // Now we have released bot player class slots.
+    // Try to assign a pending class if there are no enough players of this class.
+
+    for ( int classTag = 0; classTag < PLAYERCLASS_TOTAL; ++classTag )
+    {
+        int numPlayersToAssign = 1;
+        if ( classTag == PLAYERCLASS_ENGINEER && numTeamTurrets < 2 )
+            numPlayersToAssign += 2 - numTeamTurrets;
+
+        if ( numClassPlayers[classTag] < numPlayersToAssign )
+        {
+            for ( int i = 0; i < team.numPlayers && numPlayersToAssign > 0; ++i )
+            {
+                Client @client = team.ent( i ).client;
+                cPlayer @player = @gtPlayers[client.playerNum];
+                
+                if ( @client.getBot() == null )
+                {
+                    if ( player.playerClass.tag == classTag )
+                        numPlayersToAssign--;
+
+                    continue;
+                }                
+   
+                // Player already has this pending class
+                if ( player.botPendingClass == classTag )
+                {
+                    numPlayersToAssign--;
+                    // Touch bot pending class
+                    player.botPendingClassAssignedAt = levelTime;
+                    continue;
+                }
+
+                // Skip just assigned players
+                if ( player.botPendingClassAssignedAt == levelTime )
+                    continue;
+                
+                player.botPendingClass = classTag;
+                player.botPendingClassAssignedAt = levelTime;
+                numPlayersToAssign--;
+                continue;
+            }
+        }
+    }
+    
+    // For each class a single mandatory player might have been assigned.
+    // (for engineers class up to 3 mandatory players might have been assigned for fast turrets planting).
+    // Other bots (that have pendingClass == -1) will spawn with random class.
+}
+
 // select a spawning point for a player
 Entity @GT_SelectSpawnPoint( Entity @self )
 {
@@ -1050,17 +1131,39 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
         // show the class selection menu
         if ( old_team == TEAM_SPECTATOR )
         {
-            if ( @client.getBot() != null )
-            {
-                player.setPlayerClass( rand() % PLAYERCLASS_TOTAL );
-            }
-            else
+            if ( @client.getBot() == null )
                 client.execGameCommand( "mecu \"Select class\" Grunt \"class grunt\" Medic \"class medic\" Runner \"class runner\" Engineer \"class engineer\"" );
         }
 
         // Set newly joined players to respawn queue
         if ( new_team == TEAM_ALPHA || new_team == TEAM_BETA )
             player.respawnTime = levelTime + CTFT_RESPAWN_TIME;
+    }
+
+    if ( @client.getBot() != null )
+    {
+        // If bot class might have been reset, weights are invalid.
+        // Since external entity weights are not managed by bot code,
+        // they should be cleaned up manually.
+        client.getBot().clearExternalEntityWeights();
+        if ( player.botPendingClass != -1 )
+        {
+            player.setPlayerClass( player.botPendingClass );
+        }        
+        else 
+        {
+            // Never spawn engineers randomly.
+            // This means there are no engineer bots at match start and humans are free to use engineer abilities
+            // (bots will not exhaust team turrets limit by planting turrets in wrong place).
+            // Also, slightly prefer runners or medics (these classes suit a bot better) over grunts.
+            float random01 = random();
+            if ( random01 < 0.35f )
+                player.setPlayerClass( PLAYERCLASS_MEDIC );
+            else if ( random01 < 0.70f )
+                player.setPlayerClass( PLAYERCLASS_RUNNER );
+            else
+                player.setPlayerClass( PLAYERCLASS_GRUNT );
+        }
     }
 
     if ( ent.isGhosting() )
@@ -1227,6 +1330,8 @@ void GT_ThinkRules()
     }
 
     CTFT_UpdateBotsExtraGoals();
+
+    CTFT_UpdateBotsClasses();
 }
 
 // The game has detected the end of the match state, but it
