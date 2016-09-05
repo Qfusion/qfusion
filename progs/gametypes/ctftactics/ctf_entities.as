@@ -621,6 +621,9 @@ void ai_planting_spot_touch( Entity @ent, Entity @other, const Vec3 planeNormal,
 {
     if ( @other == null )
         return;
+    
+    if ( ent.team != other.team )
+        return;
 
     Client @client = other.client;
     if ( @client == null )
