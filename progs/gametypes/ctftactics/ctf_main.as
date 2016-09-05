@@ -563,15 +563,21 @@ bool GT_FireScriptWeapon( Client @client, int weaponNum )
     return @player.bomb != null && @player.bomb.bombEnt != null;
 }
 
+int lastBotGoalUpdateClientNum = 0;
+
 void CTFT_UpdateBotsExtraGoals() 
-{
-    Entity @ent;
-    for ( int i = 1; i <= maxClients; ++i )
-    {
-        @ent = @G_GetEntity( i );
-        if ( @ent != null )
-            CTFT_UpdateBotExtraGoals( ent );
-    }
+{   
+    // Limit bot extra goals updates to a single client per frame. (is it a bot or not), its notoriously slow.
+    int clientNum = lastBotGoalUpdateClientNum + 1;
+    // maxClients might be modified since last update
+    if ( clientNum > maxClients )
+        clientNum = 1;
+
+    Entity @ent = G_GetEntity( clientNum );
+    if ( @ent != null )
+        CTFT_UpdateBotExtraGoals( ent );
+    
+    lastBotGoalUpdateClientNum = clientNum;
 }
 
 bool CTFT_ShouldNotPlantItem( const Entity @originEntity, float radius )
