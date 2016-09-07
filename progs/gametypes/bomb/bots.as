@@ -17,79 +17,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-void BOMB_UpdateBotsExtraGoals()
+void BOMB_SetEntityGoalWeightForTeam( int teamNum, Entity @goal, float weight )
 {
-    Entity @ent;
-    for ( int i = 1; i <= maxClients; ++i )
+    Team @team = @G_GetTeam( teamNum );
+    for ( int i = 0; i < team.numPlayers; ++i )
     {
-        @ent = G_GetEntity( i );
-        if ( ent.inuse )
-            BOMB_UpdateBotExtraGoals( ent );
-    }
-}
-
-void BOMB_UpdateBotExtraGoals( Entity @self )
-{
-    Entity @goal;
-    Bot @bot;
-
-    @bot = @self.client.getBot();
-    if ( @bot == null )
-        return;
-   
-    // TODO: Do not iterate over all non-player entities but check only needed ones
-    for ( int i = maxClients + 1; i < numEntities; ++i )
-    {
-        @goal = @G_GetEntity( i );
-
-		if( @bombCarrier != null && @bombCarrier == @self )
-		{
-			if( goal.classname == "capture_indicator_model" )
-			{
-				if( @BOMB_BOTS_SITE != null && @BOMB_BOTS_SITE.model == @goal )
-					bot.setExternalEntityWeight( goal, 5.0f );
-				else
-					bot.setExternalEntityWeight( goal, 2.0f );
-
-				continue;
-			}
-		}
-		
-		// a goal has been assigned by the round start
-		if( @self.owner != null && @self.owner == @goal )
-		{
-			if( self.team == defendingTeam )
-			{
-				bot.setExternalEntityWeight( goal, 3.0f );
-			}
-			else
-			{
-				bot.setExternalEntityWeight( goal, random() );
-			}
-			
-			@self.owner = null;
-			continue;
-		}
-
-		if( @bombModel != null && @bombModel == @goal )
-		{
-			if( ( bombState == BOMBSTATE_PLANTED ) || ( bombState == BOMBSTATE_DROPPED ) )
-			{
-				if( self.team == attackingTeam )
-				{
-					bot.setExternalEntityWeight( goal, 3.0f );
-					continue;
-				}
-			}
-			else if( bombState == BOMBSTATE_ARMED )
-			{
-				if( self.team == defendingTeam )
-				{
-					bot.setExternalEntityWeight( goal, 2.0f );
-					continue;
-				}
-			}
-		}
+        Bot @bot = team.ent( i ).client.getBot();
+        if ( @bot != null )
+            bot.setExternalEntityWeight( goal, weight );
     }
 }
 
@@ -109,40 +44,78 @@ cBombSite @BOMB_PickRandomTargetSite( )
 	return null;
 }
 
-// assign a random site as initial moving goal
-void BOMB_assignRandomDenfenseStart( )
+void BOMB_SetupNewBotsRound()
 {
-	cBombSite @site;
-	Entity @ent;
-	Team @team = @G_GetTeam( defendingTeam );
-	
-	for ( int i = 0; @team.ent( i ) != null; i++ )
-	{
-		@ent = @team.ent( i );
-		@ent.owner = null;
+    // Remove old defence spots
+    switch ( oldBombState )
+    {
+        // Defence spots have not been added. Do nothing.
+        case BOMBSTATE_IDLE:
+            break;
+        
+        // Defence spots have been added and were valid.
+        // Since all entities have been invalidated, 
+        // we should invalidate old defence spots based on these entities.
+        case BOMBSTATE_CARRIED:
+        case BOMBSTATE_DROPPING:
+            BOMB_RemoveDefenceSpotsForSites();
+            break;
 
-		if ( !ent.client.isBot() )
-			continue;
+        // Defenders had a defence spot, it should be removed
+        case BOMBSTATE_DROPPED:
+        case BOMBSTATE_PLANTING:
+        case BOMBSTATE_PLANTED:
+            AI::RemoveDefenceSpot( oldDefendingTeam, 0 );
+            break;
 
-		@site = @BOMB_PickRandomTargetSite();
-		
-		if( @site != null )
-			@ent.owner = @site.model;
-	}
-	
-	@team = @G_GetTeam( attackingTeam );
-	
-	for ( int i = 0; @team.ent( i ) != null; i++ )
-	{
-		@ent = @team.ent( i );
-		@ent.owner = null;
+        // Attackers had a defence spot, it should be removed
+        case BOMBSTATE_ARMED:
+        case BOMBSTATE_EXPLODING_ANIM:
+        case BOMBSTATE_EXPLODING:
+            AI::RemoveDefenceSpot( oldAttackingTeam, 0 );
+            break;
+    }
+    
+    // Setup initial defence spots for current defenders
+    BOMB_AddDefenceSpotsForSites();
 
-		if ( !ent.client.isBot() )
-			continue;
-
-		@site = @BOMB_PickRandomTargetSite();
-		
-		if( @site != null )
-			@ent.owner = @site.model;
-	}
+    // Clear all external entity weights
+    for ( int i = 0; i < maxClients; ++i )
+    {
+        Bot @bot = G_GetClient( i ).getBot();
+        if ( @bot != null )
+            bot.clearExternalEntityWeights();
+    }
+    
+    @BOMB_BOTS_SITE = @BOMB_PickRandomTargetSite();
 }
+
+// Defence spots have these id's:
+// 0 - special defence spot that corresponds to the bomb model
+// 1, ... - spots that correspond to sites
+
+void BOMB_AddDefenceSpotsForSites()
+{    
+    int spotId = 1;
+	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next )
+    {
+        AI::AddDefenceSpot( defendingTeam, spotId, site.indicator, 768.0f );
+        AI::EnableDefenceSpotAutoAlert( defendingTeam, spotId );
+        // Force all defenders available for the spot to reach the spot
+        AI::DefenceSpotAlert( defendingTeam, spotId, 0.5f, uint(5000) );
+        spotId++;
+    }
+}
+
+void BOMB_RemoveDefenceSpotsForSites()
+{    
+    int spotId = 1;
+	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next )
+    {
+        AI::DisableDefenceSpotAutoAlert( defendingTeam, spotId );
+        AI::RemoveDefenceSpot( defendingTeam, spotId );
+        spotId++;
+    }
+}
+
+
