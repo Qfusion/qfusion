@@ -2,10 +2,10 @@
 #define QFUSION_AI_BASE_ENEMY_POOL_H
 
 #include "ai_frame_aware_updatable.h"
+#include "static_deque.h"
 #include "static_vector.h"
 #include "vec3.h"
 #include "../../gameshared/q_comref.h"
-#include <deque>
 #include <limits>
 
 template <int Weapon> struct WeaponAmmo
@@ -168,11 +168,11 @@ public:
 
     // TODO: Fuse in a single array of some struct
     // Array of last seen timestamps
-    std::deque<unsigned> lastSeenTimestamps;
+    StaticDeque<unsigned, MAX_TRACKED_POSITIONS> lastSeenTimestamps;
     // Array of last seen positions
-    std::deque<Vec3> lastSeenPositions;
+    StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenPositions;
     // Array of last seen enemy velocities
-    std::deque<Vec3> lastSeenVelocities;
+    StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenVelocities;
 private:
     // Same as front() of lastSeenPositions, used for faster access
     Vec3 lastSeenPosition;
