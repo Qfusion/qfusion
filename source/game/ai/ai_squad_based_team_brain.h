@@ -46,6 +46,8 @@ private:
     // and not restored to this timestamps, squad should be invalidated.
     unsigned brokenConnectivityTimeoutAt;
 
+    bool botsDetached;
+
     BotsList bots;
 
     CachedTravelTimesMatrix &travelTimesMatrix;
