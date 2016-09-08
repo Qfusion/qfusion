@@ -127,16 +127,21 @@ void AiManager::UnlinkAi(ai_handle_t *ai)
     ai_handle_t *prev = ai->prev;
     ai->next = nullptr;
     ai->prev = nullptr;
-    if (prev)
+    // If the cell is not the last in chain
+    if (next)
     {
-        prev->next = next;
-        if (next)
-            next->prev = prev;
+        next->prev = prev;
+        if (prev)
+            prev->next = next;
     }
     else
     {
-        if (next)
-            next->prev = nullptr;
+        // A cell before the last in chain should become the last one
+        if (prev)
+        {
+            prev->next = nullptr;
+            last = prev;
+        }
         else
             last = nullptr;
     }
