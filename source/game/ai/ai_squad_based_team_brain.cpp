@@ -185,6 +185,7 @@ AiSquad::AiSquad(CachedTravelTimesMatrix &travelTimesMatrix)
     : isValid(false),
       inUse(false),
       brokenConnectivityTimeoutAt(0),
+      botsDetached(false),
       travelTimesMatrix(travelTimesMatrix)
 {
     std::fill_n(lastDroppedByBotTimestamps, MAX_SIZE, 0);
@@ -204,6 +205,7 @@ AiSquad::AiSquad(AiSquad &&that)
     canFightTogether = that.canFightTogether;
     canMoveTogether = that.canMoveTogether;
     brokenConnectivityTimeoutAt = that.brokenConnectivityTimeoutAt;
+    botsDetached = that.botsDetached;
     for (Bot *bot: that.bots)
         bots.push_back(bot);
 
@@ -236,8 +238,9 @@ void AiSquad::OnBotRemoved(Bot *bot)
     {
         if (*it == bot)
         {
-            bots.erase(it);
+            // First detach bots (if not called yet), erase bot only then
             Invalidate();
+            bots.erase(it);
             return;
         }
     }
@@ -245,9 +248,14 @@ void AiSquad::OnBotRemoved(Bot *bot)
 
 void AiSquad::Invalidate()
 {
-    for (Bot *bot: bots)
-        bot->OnDetachedFromSquad(this);
-
+    if (!botsDetached)
+    {
+        for (Bot *bot: bots)
+        {
+            bot->OnDetachedFromSquad(this);
+        }
+        botsDetached = true;
+    }
     isValid = false;
 }
 
@@ -966,6 +974,7 @@ void AiSquad::PrepareToAddBots()
     canFightTogether = false;
     canMoveTogether = false;
     brokenConnectivityTimeoutAt = level.time + 1;
+    botsDetached = false;
     bots.clear();
 }
 
