@@ -84,6 +84,9 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
 
     typedef StaticVector<BotAndScore, MAX_CLIENTS> Candidates;
 
+    void ResetBotOrders(Bot *bot);
+    void ResetAllBotsOrders();
+
     void FindAllCandidates(Candidates &candidates);
     void AssignDefenders(Candidates &candidates);
     void ComputeDefenceRawScore(Candidates &candidates);

@@ -37,6 +37,7 @@ inline void AiObjectiveBasedTeamBrain::RemoveItem(const char *name, Container &c
         {
             onRemoved(&c[i]);
             c.erase(c.begin() + i);
+            ResetAllBotsOrders();
             return;
         }
     }
@@ -225,6 +226,8 @@ void AiObjectiveBasedTeamBrain::OnBotRemoved(Bot *bot)
 {
     AiSquadBasedTeamBrain::OnBotRemoved(bot);
 
+    ResetBotOrders(bot);
+
     for (const auto &spot: defenceSpots)
         if (spot.usesAutoAlert)
             bot->DisableAutoAlert(spot.id);
@@ -240,17 +243,7 @@ void AiObjectiveBasedTeamBrain::Think()
 
     // First reset all candidates statuses to default values
     for (auto &botAndScore: candidates)
-    {
-        Bot *bot = botAndScore.bot->ai->botRef;
-        bot->ClearDefenceAndOffenceSpots();
-        for (const auto &defenceSpot: defenceSpots)
-            bot->SetExternalEntityWeight(defenceSpot.entity, 0.0f);
-        for (const auto &offenceSpot: offenceSpots)
-            bot->SetExternalEntityWeight(offenceSpot.entity, 0.0f);
-        bot->SetBaseOffensiveness(0.5f);
-        for (int i = 1; i <= gs.maxclients; ++i)
-            bot->SetExternalEntityWeight(game.edicts + i, 0.0f);
-    }
+        ResetBotOrders(botAndScore.bot->ai->botRef);
 
     AssignDefenders(candidates);
     AssignAttackers(candidates);
@@ -264,6 +257,29 @@ void AiObjectiveBasedTeamBrain::Think()
     // Other candidates should support a carrier
     if (const edict_t *carrier = FindCarrier())
         SetSupportCarrierOrders(carrier, candidates);
+}
+
+void AiObjectiveBasedTeamBrain::ResetBotOrders(Bot *bot)
+{
+    bot->ClearDefenceAndOffenceSpots();
+    for (const auto &defenceSpot: defenceSpots)
+        bot->SetExternalEntityWeight(defenceSpot.entity, 0.0f);
+    for (const auto &offenceSpot: offenceSpots)
+        bot->SetExternalEntityWeight(offenceSpot.entity, 0.0f);
+    bot->SetBaseOffensiveness(0.5f);
+    for (int i = 1; i <= gs.maxclients; ++i)
+        bot->SetExternalEntityWeight(game.edicts + i, 0.0f);
+}
+
+void AiObjectiveBasedTeamBrain::ResetAllBotsOrders()
+{
+    for (int i = 0; i <= gs.maxclients; ++i)
+    {
+        edict_t *ent = game.edicts + i;
+        if (!ent->r.inuse || !ent->ai || !ent->ai->botRef)
+            continue;
+        ResetBotOrders(ent->ai->botRef);
+    }
 }
 
 void AiObjectiveBasedTeamBrain::FindAllCandidates(Candidates &candidates)
