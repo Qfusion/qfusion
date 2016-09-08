@@ -870,8 +870,11 @@ bool Bot::CheckPendingLandingDashTimedOut()
 
 void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSilent)
 {
-    if (TryApplyPendingLandingDash(ucmd))
+    if (hasPendingLandingDash)
+    {
+        TryApplyPendingLandingDash(ucmd);
         return;
+    }
 
     // TryRocketJumpShortcut() is expensive, call it only in Think() frames
     if (!beSilent && !ShouldSkipThinkFrame() && TryRocketJumpShortcut(ucmd))
@@ -976,6 +979,14 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
                     // Prevent blocking if neither forwardmove, not sidemove has been chosen
                     if (!ucmd->forwardmove && !ucmd->sidemove)
                         ucmd->forwardmove = -1;
+                }
+                else if (velocityToTarget2DDot < 0.1f)
+                {
+                    if (!beSilent && (movementFeatures & PMFEAT_DASH) && !self->groundentity)
+                    {
+                        SetPendingLandingDash(ucmd);
+                        return;
+                    }
                 }
             }
 
