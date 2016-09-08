@@ -1726,7 +1726,7 @@ bool G_Visible( edict_t *self, edict_t *other )
 	G_Trace( &trace, spot1, vec3_origin, vec3_origin, spot2, self, MASK_OPAQUE );
 	//trace = gi.trace( spot1, vec3_origin, vec3_origin, spot2, self, MASK_OPAQUE );
 
-	if( trace.fraction == 1.0 )
+	if( trace.fraction == 1.0f || ENTNUM(other) == trace.ent )
 		return true;
 	return false;
 }
