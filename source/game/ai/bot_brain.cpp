@@ -537,7 +537,7 @@ void BotBrain::CheckTacticalPosition()
             combatTask.inhibit = true;
         }
     }
-    else
+    else if (GetEffectiveOffensiveness() > 0.3f)
     {
         if (SuggestPositionalAdvantageSpot(newTacticalSpot, 128.0f + 352.0f * searchRadiusScale, beAwareOfExplosives))
         {
