@@ -9,11 +9,6 @@ Bot::Bot(edict_t *self, float skillLevel)
       skillLevel(skillLevel),
       nextBlockedEscapeAttemptAt(0),
       blockedEscapeGoalOrigin(INFINITY, INFINITY, INFINITY),
-      hasTouchedJumppad(false),
-      hasEnteredJumppad(false),
-      jumppadTarget(INFINITY, INFINITY, INFINITY),
-      jumppadMoveTimeout(0),
-      jumppadLandingAreasCount(0),
       hasTriggeredRocketJump(false),
       hasCorrectedRocketJump(false),
       wasTriggeredRocketJumpPrevFrame(false),
@@ -154,9 +149,9 @@ void Bot::TouchedJumppad(const edict_t *jumppad)
     }
     // Otherwise (for some weird jumppad that pushes dow) start to find landing area immediately
 
-    jumppadMoveTimeout = level.time + (unsigned)(1000.0f * relaxedFlightSeconds);
-    hasTouchedJumppad = true;
-    jumppadTarget = Vec3(jumppad->target_ent->s.origin);
+    jumppadMovementState.jumppadMoveTimeout = level.time + (unsigned)(1000.0f * relaxedFlightSeconds);
+    jumppadMovementState.hasTouchedJumppad = true;
+    jumppadMovementState.jumppadTarget = Vec3(jumppad->target_ent->s.origin);
 }
 
 void Bot::EnableAutoAlert(int id, const Vec3 &spotOrigin, float spotRadius, AlertCallback callback, void *receiver)
@@ -686,7 +681,7 @@ void Bot::Frame()
     ucmd.serverTimeStamp = game.serverTime;
 
     // If this value is modified by ClientThink() callbacks, it will be kept until next frame reaches this line
-    hasTouchedJumppad = false;
+    jumppadMovementState.hasTouchedJumppad = false;
 
     ClientThink( self, &ucmd, 0 );
     self->nextThink = level.time + 1;

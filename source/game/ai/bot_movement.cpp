@@ -7,7 +7,7 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
     isOnGroundThisFrame = self->groundentity != nullptr;
 
     // These triggered actions should be processed
-    if (hasTouchedJumppad || hasEnteredJumppad || hasTriggeredRocketJump || hasPendingLandingDash)
+    if (jumppadMovementState.IsActive() || hasTriggeredRocketJump || hasPendingLandingDash)
     {
         Move(ucmd, beSilent);
     }
@@ -74,11 +74,11 @@ void Bot::Move(usercmd_t *ucmd, bool beSilent)
     {
         MoveOnLadder(&intendedLookVec, ucmd);
     }
-    else if (hasTouchedJumppad)
+    else if (jumppadMovementState.hasTouchedJumppad)
     {
         MoveEnteringJumppad(&intendedLookVec, ucmd);
     }
-    else if (hasEnteredJumppad)
+    else if (jumppadMovementState.hasEnteredJumppad)
     {
         MoveRidingJummpad(&intendedLookVec, ucmd);
     }
@@ -212,7 +212,7 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     ucmd->sidemove = 0;
     ucmd->forwardmove = 0;
 
-    if (hasEnteredJumppad)
+    if (jumppadMovementState.hasEnteredJumppad)
         return;
 
     if (!botBrain.HasGoal())
@@ -222,6 +222,11 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
     // Cache reference to avoid indirections
     const aas_area_t *aasWorldAreas = aasWorld->Areas();
+
+    constexpr auto MAX_LANDING_AREAS = jumppadMovementState.MAX_LANDING_AREAS;
+    int &jumppadLandingAreasCount = jumppadMovementState.landingAreasCount;
+    int *jumppadLandingAreas = jumppadMovementState.landingAreas;
+    const Vec3 &jumppadTarget = jumppadMovementState.jumppadTarget;
 
     jumppadLandingAreasCount = 0;
     // Estimate distance (we may use bot origin as approximate jumppad origin since bot has just triggered it)
@@ -285,7 +290,7 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
         jumppadLandingAreas[jumppadLandingAreasCount++] = areasAndTravelTimes[i].areaNum;
 
     ucmd->forwardmove = 1;
-    hasEnteredJumppad = true;
+    jumppadMovementState.hasEnteredJumppad = true;
 }
 
 void Bot::MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd)
@@ -293,7 +298,7 @@ void Bot::MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     // First check whether bot finally landed to some area
     if (self->groundentity)
     {
-        hasEnteredJumppad = false;
+        jumppadMovementState.hasEnteredJumppad = false;
         ucmd->forwardmove = 1;
         return;
     }
@@ -302,8 +307,10 @@ void Bot::MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     ucmd->sidemove = 0;
     ucmd->forwardmove = 0;
 
-    if (jumppadMoveTimeout <= level.time)
+    if (jumppadMovementState.jumppadMoveTimeout <= level.time)
     {
+        int jumppadLandingAreasCount = jumppadMovementState.landingAreasCount;
+        const int *jumppadLandingAreas = jumppadMovementState.landingAreas;
         if (jumppadLandingAreasCount)
         {
             // `jumppadLandingAreas` is assumed to be sorted, best areas first
