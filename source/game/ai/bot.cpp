@@ -12,15 +12,6 @@ Bot::Bot(edict_t *self, float skillLevel)
       rocketJumpMovementState(self),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
-      hasCampingSpot(false),
-      hasCampingLookAtPoint(false),
-      campingSpotRadius(INFINITY),
-      campingAlertness(INFINITY),
-      campingSpotOrigin(INFINITY, INFINITY, INFINITY),
-      campingSpotLookAtPoint(INFINITY, INFINITY, INFINITY),
-      campingSpotStrafeDir(INFINITY, INFINITY, INFINITY),
-      campingSpotStrafeTimeout(0),
-      campingSpotLookAtPointTimeout(0),
       isWaitingForItemSpawn(false),
       isInSquad(false),
       defenceSpotId(-1),
@@ -61,39 +52,6 @@ void Bot::ApplyPendingTurnToLookAtPoint()
     ChangeAngle(toPointDir, pendingLookAtPointState.EffectiveTurnSpeedMultiplier(1.0f));
 }
 
-void Bot::SetCampingSpot(const Vec3 &spotOrigin, float spotRadius, float alertness)
-{
-    hasCampingSpot = true;
-    hasCampingLookAtPoint = false;
-    campingSpotRadius = spotRadius;
-    campingAlertness = alertness;
-    campingSpotOrigin = spotOrigin;
-    campingSpotStrafeTimeout = 0;
-    // Select some random look-at-point on first call of MoveCampingASpot()
-    campingSpotLookAtPointTimeout = 0;
-}
-
-void Bot::SetCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRaduis, float alertness)
-{
-    hasCampingSpot = true;
-    hasCampingLookAtPoint = true;
-    campingSpotRadius = spotRaduis;
-    campingAlertness = alertness;
-    campingSpotOrigin = spotOrigin;
-    campingSpotLookAtPoint = lookAtPoint;
-    campingSpotStrafeTimeout = 0;
-}
-
-void Bot::ClearCampingSpot()
-{
-    hasCampingSpot = false;
-    hasCampingLookAtPoint = false;
-    campingSpotRadius = INFINITY;
-    campingAlertness = INFINITY;
-    campingSpotOrigin = Vec3(INFINITY, INFINITY, INFINITY);
-    campingSpotLookAtPoint = Vec3(INFINITY, INFINITY, INFINITY);
-}
-
 void Bot::TouchedGoal(const edict_t *goalUnderlyingEntity)
 {
     if (botBrain.HandleGoalTouch(goalUnderlyingEntity))
@@ -101,7 +59,7 @@ void Bot::TouchedGoal(const edict_t *goalUnderlyingEntity)
         // Stop camping a spawn point if the bot did it
         if (isWaitingForItemSpawn)
         {
-            ClearCampingSpot();
+            campingSpotState.Invalidate();
             isWaitingForItemSpawn = false;
         }
     }
