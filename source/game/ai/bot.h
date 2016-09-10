@@ -523,6 +523,7 @@ private:
     }
     void OnGoalCleanedUp(const Goal *goal);
 
+    bool MaySetPendingLandingDash();
     void SetPendingLandingDash(usercmd_t *ucmd);
     void ApplyPendingLandingDash(usercmd_t *ucmd);
 

@@ -829,6 +829,42 @@ void Bot::SetLookVecToPendingReach(Vec3 *intendedLookVec)
     *intendedLookVec = Vec3(16 * linkVec + nextReaches.front().start) - self->s.origin;
 }
 
+bool Bot::MaySetPendingLandingDash()
+{
+    // A bot is on ground
+    if (self->groundentity)
+        return false;
+
+    // Can't dash
+    if (!(self->r.client->ps.stats[PM_STAT_FEATURES] & PMFEAT_DASH))
+        return false;
+
+    // Set a pending landing dash only being in middle of large area.
+    // Many small areas may provide enough space to do a pending dash,
+    // but in this case its likely that the intended movement vector will change its direction too quickly.
+    if (!aasWorld->AreaGrounded(droppedToFloorAasAreaNum))
+        return false;
+    const aas_area_t &area = aasWorld->Areas()[droppedToFloorAasAreaNum];
+    if (area.maxs[0] - self->s.origin[0] < 40.0f || self->s.origin[0] - area.mins[0] < 40.0f)
+        return false;
+    if (area.maxs[1] - self->s.origin[1] < 40.0f || self->s.origin[1] - area.mins[1] < 40.0f)
+        return false;
+
+    float traceDepth = -playerbox_stand_mins[2] + AI_JUMPABLE_HEIGHT;
+    trace_t trace;
+    AiGroundTraceCache::Instance()->GetGroundTrace(self, traceDepth, &trace);
+    // A bot is too high in air, so area assumptions are unlikely to be valid
+    if (trace.fraction == 1.0f)
+        return false;
+
+    float distanceToGround = traceDepth * trace.fraction + playerbox_stand_maxs[2];
+    // A bot will not be able to turn view to the desired direction to the moment of landing
+    if (distanceToGround < 6.0f && self->velocity[2] < 0.0f)
+        return false;
+
+    return true;
+}
+
 void Bot::SetPendingLandingDash(usercmd_t *ucmd)
 {
     ucmd->forwardmove = 0;
@@ -965,7 +1001,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
                 }
                 else if (velocityToTarget2DDot < 0.1f)
                 {
-                    if (!beSilent && (movementFeatures & PMFEAT_DASH) && !self->groundentity)
+                    if (!beSilent && MaySetPendingLandingDash())
                     {
                         SetPendingLandingDash(ucmd);
                         return;
