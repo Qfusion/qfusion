@@ -373,7 +373,7 @@ void Bot::LookAtEnemy(float accuracy, const vec_t *fire_origin, vec_t *target)
     target[1] += (random() - 0.5f) * accuracy;
 
     // TODO: Cancel pending turn?
-    if (!hasPendingLookAtPoint)
+    if (!pendingLookAtPointState.IsActive())
     {
         Vec3 lookAtVector(target);
         lookAtVector -= fire_origin;

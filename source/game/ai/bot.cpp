@@ -12,10 +12,6 @@ Bot::Bot(edict_t *self, float skillLevel)
       rocketJumpMovementState(self),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
-      pendingLookAtPoint(0, 0, 0),
-      pendingLookAtPointTimeoutAt(0),
-      hasPendingLookAtPoint(false),
-      lookAtPointTurnSpeedMultiplier(0.5f),
       hasCampingSpot(false),
       hasCampingLookAtPoint(false),
       campingSpotRadius(INFINITY),
@@ -53,27 +49,16 @@ void Bot::LookAround()
         ChangeWeapon(botBrain.combatTask);
 }
 
-void Bot::SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier, unsigned int timeoutDuration)
-{
-    pendingLookAtPoint = point;
-    pendingLookAtPointTimeoutAt = level.time + timeoutDuration;
-    hasPendingLookAtPoint = true;
-    lookAtPointTurnSpeedMultiplier = turnSpeedMultiplier;
-}
-
 void Bot::ApplyPendingTurnToLookAtPoint()
 {
-    if (!hasPendingLookAtPoint)
+    if (!pendingLookAtPointState.IsActive())
         return;
 
-    Vec3 toPointDir(pendingLookAtPoint);
+    Vec3 toPointDir(pendingLookAtPointState.lookAtPoint);
     toPointDir -= self->s.origin;
     toPointDir.NormalizeFast();
 
-    ChangeAngle(toPointDir, lookAtPointTurnSpeedMultiplier);
-
-    if (pendingLookAtPointTimeoutAt <= level.time)
-        hasPendingLookAtPoint = false;
+    ChangeAngle(toPointDir, pendingLookAtPointState.EffectiveTurnSpeedMultiplier(1.0f));
 }
 
 void Bot::SetCampingSpot(const Vec3 &spotOrigin, float spotRadius, float alertness)

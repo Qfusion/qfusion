@@ -60,7 +60,7 @@ void BotBrain::OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable
         toEnemyDir *= distance;
         if (toEnemyDir.Dot(botLookDir) < 0)
         {
-            if (!self->ai->botRef->hasPendingLookAtPoint)
+            if (!self->ai->botRef->HasPendingLookAtPoint())
             {
                 // Try to guess enemy origin
                 toEnemyDir.X() += -0.25f + 0.50f * random();
@@ -362,7 +362,7 @@ void BotBrain::TryFindNewCombatTask()
 
     if (oldCombatTask.enemy)
     {
-        if (bot->ai->botRef->hasPendingLookAtPoint)
+        if (bot->ai->botRef->HasPendingLookAtPoint())
         {
             Debug("TryFindNewCombatTask(): bot is already turning to some look-at-point, defer target assignment\n");
         }
