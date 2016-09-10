@@ -19,7 +19,7 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
         bool hasToEvade = false;
         if (Skill() >= 0.33f && !ShouldSkipThinkFrame())
             hasToEvade = dangersDetector.FindDangers();
-        if (!hasToEvade && (inhibitCombat || hasCampingSpot))
+        if (!hasToEvade && (inhibitCombat || campingSpotState.IsActive()))
             Move(ucmd, beSilent);
         else
             CombatMovement(ucmd, hasToEvade);
@@ -422,20 +422,19 @@ void Bot::MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     // If hasCampingLookAtPoint is false and this function has not been called yet since last camping spot setting,
     // campingSpotLookAtPoint contains a junk, so it need to be overwritten
-    Vec3 lookAtPoint(campingSpotLookAtPoint);
+    Vec3 lookAtPoint(campingSpotState.lookAtPoint);
     // If the camping action does not have a defined look direction, choose some random one
-    if (!hasCampingLookAtPoint)
+    if (!campingSpotState.hasLookAtPoint)
     {
         // If the previously chosen look at point has timed out, choose a new one
-        if (campingSpotLookAtPointTimeout <= level.time)
+        if (campingSpotState.lookAtPointTimeoutAt <= level.time)
         {
             // Choose some random point to look at
-            campingSpotLookAtPoint.X() = self->s.origin[0] - 50.0f + 100.0f * random();
-            campingSpotLookAtPoint.Y() = self->s.origin[1] - 50.0f + 100.0f * random();
-            campingSpotLookAtPoint.Z() = self->s.origin[2] - 15.0f + 30.0f * random();
-            campingSpotLookAtPointTimeout = level.time + 1500 - (unsigned)(1250.0f * campingAlertness);
+            campingSpotState.lookAtPoint.X() = self->s.origin[0] - 50.0f + 100.0f * random();
+            campingSpotState.lookAtPoint.Y() = self->s.origin[1] - 50.0f + 100.0f * random();
+            campingSpotState.lookAtPoint.Z() = self->s.origin[2] - 15.0f + 30.0f * random();
+            campingSpotState.lookAtPointTimeoutAt = level.time + 1500 - (unsigned)(1250.0f * campingSpotState.alertness);
         }
-        lookAtPoint = campingSpotLookAtPoint;
     }
     MoveCampingASpotWithGivenLookAtPoint(lookAtPoint, intendedLookVec, ucmd);
 }
@@ -464,10 +463,10 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *in
     vec3_t actualLookDir, actualRightDir;
     AngleVectors(self->s.angles, actualLookDir, actualRightDir, nullptr);
 
-    Vec3 botToSpot = campingSpotOrigin - self->s.origin;
+    Vec3 botToSpot = campingSpotState.spotOrigin - self->s.origin;
     float distance = botToSpot.Length();
 
-    if (distance / campingSpotRadius > 2.0f)
+    if (distance / campingSpotState.spotRadius > 2.0f)
     {
         // Bot should return to a point
         ucmd->forwardmove = 1;
@@ -483,14 +482,14 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *in
         return;
     }
 
-    Vec3 expectedLookDir = lookAtPoint - campingSpotOrigin;
+    Vec3 expectedLookDir = lookAtPoint - campingSpotState.spotOrigin;
     expectedLookDir.NormalizeFast();
 
     if (expectedLookDir.Dot(actualLookDir) < 0.85)
     {
         if (!HasPendingLookAtPoint())
         {
-            SetPendingLookAtPoint(campingSpotLookAtPoint, 1.1f);
+            SetPendingLookAtPoint(campingSpotState.lookAtPoint, 1.1f);
             ucmd->forwardmove = 0;
             ucmd->sidemove = 0;
             ucmd->upmove = 0;
@@ -502,28 +501,29 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *in
     // Keep actual look dir as-is, adjust position by keys only
     *intendedLookVec = Vec3(actualLookDir);
 
-    if (campingSpotStrafeTimeout < level.time)
+    if (campingSpotState.strafeTimeoutAt < level.time)
     {
         // This means we may strafe randomly
-        if (distance / campingSpotRadius < 0.7f)
+        if (distance / campingSpotState.spotRadius < 0.7f)
         {
-            campingSpotStrafeDir.X() = -0.5f + random();
-            campingSpotStrafeDir.Y() = -0.5f + random();
-            campingSpotStrafeDir.Z() = 0.0f;
-            campingSpotStrafeTimeout = level.time + 500 + (unsigned)(100.0f * random() - 250.0f * campingAlertness);
+            campingSpotState.strafeDir.X() = -0.5f + random();
+            campingSpotState.strafeDir.Y() = -0.5f + random();
+            campingSpotState.strafeDir.Z() = 0.0f;
+            campingSpotState.strafeTimeoutAt = level.time + 500;
+            campingSpotState.strafeTimeoutAt += (unsigned)(100.0f * random() - 250.0f * campingSpotState.alertness);
         }
         else
         {
-            campingSpotStrafeDir = botToSpot;
+            campingSpotState.strafeDir = botToSpot;
         }
-        campingSpotStrafeDir.NormalizeFast();
+        campingSpotState.strafeDir.NormalizeFast();
     }
 
-    Vec3 strafeMoveVec = campingSpotStrafeDir;
+    Vec3 strafeMoveVec = campingSpotState.strafeDir;
 
     KeyMoveVecToUcmd(strafeMoveVec, actualLookDir, actualRightDir, ucmd);
 
-    if (random() > campingAlertness * 0.75f)
+    if (random() > campingSpotState.alertness * 0.75f)
         ucmd->buttons |= BUTTON_WALK;
 }
 
@@ -1421,7 +1421,7 @@ void Bot::CheckTargetProximity()
         // If the bot was waiting for item spawn and for example has been pushed from the goal, stop camping a goal
         if (isWaitingForItemSpawn)
         {
-            ClearCampingSpot();
+            campingSpotState.Invalidate();
             isWaitingForItemSpawn = false;
         }
         return;
@@ -1438,7 +1438,7 @@ void Bot::CheckTargetProximity()
         {
             if (!isWaitingForItemSpawn)
             {
-                SetCampingSpot(botBrain.ClosestGoalOrigin(), 36.0f, 0.75f);
+                campingSpotState.SetWithoutDirection(botBrain.ClosestGoalOrigin(), 36.0f, 0.75f);
                 isWaitingForItemSpawn = true;
             }
         }
@@ -1449,7 +1449,7 @@ void Bot::OnGoalCleanedUp(const Goal *goal)
 {
     if (isWaitingForItemSpawn)
     {
-        ClearCampingSpot();
+        campingSpotState.Invalidate();
         isWaitingForItemSpawn = false;
     }
 }

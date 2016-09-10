@@ -370,22 +370,70 @@ private:
 
     PendingLookAtPointState pendingLookAtPointState;
 
-    // If it is set, the bot should stay on a spot defined by campingSpotOrigin
-    bool hasCampingSpot;
-    // If it is set, the bot should prefer to look at the campingSpotLookAtPoint while camping
-    // Otherwise the bot should spin view randomly
-    bool hasCampingLookAtPoint;
-    // Maximum bot origin deviation from campingSpotOrigin while strafing when camping a spot
-    float campingSpotRadius;
-    // 0..1, greater values result in frequent and hectic strafing/camera rotating
-    float campingAlertness;
-    Vec3 campingSpotOrigin;
-    Vec3 campingSpotLookAtPoint;
-    Vec3 campingSpotStrafeDir;
-    // When to change chosen strafe dir
-    unsigned campingSpotStrafeTimeout;
-    // When to change randomly chosen look-at-point (if the point is not initially specified)
-    unsigned campingSpotLookAtPointTimeout;
+    struct CampingSpotState
+    {
+        bool isTriggered;
+        // If it is set, the bot should prefer to look at the campingSpotLookAtPoint while camping
+        // Otherwise the bot should spin view randomly
+        bool hasLookAtPoint;
+        // Maximum bot origin deviation from campingSpotOrigin while strafing when camping a spot
+        float spotRadius;
+        // 0..1, greater values result in frequent and hectic strafing/camera rotating
+        float alertness;
+        Vec3 spotOrigin;
+        Vec3 lookAtPoint;
+        Vec3 strafeDir;
+        // When to change chosen strafe dir
+        unsigned strafeTimeoutAt;
+        // When to change randomly chosen look-at-point (if the point is not initially specified)
+        unsigned lookAtPointTimeoutAt;
+
+        inline CampingSpotState()
+            : isTriggered(false),
+              hasLookAtPoint(false),
+              spotRadius(INFINITY),
+              alertness(INFINITY),
+              spotOrigin(INFINITY, INFINITY, INFINITY),
+              lookAtPoint(INFINITY, INFINITY, INFINITY),
+              strafeDir(INFINITY, INFINITY, INFINITY),
+              strafeTimeoutAt(0),
+              lookAtPointTimeoutAt(0) {}
+
+        inline bool IsActive() const
+        {
+            return isTriggered;
+        }
+
+        inline void SetWithoutDirection(const Vec3 &spotOrigin, float spotRadius, float alertness)
+        {
+            isTriggered = true;
+            hasLookAtPoint = false;
+            this->spotOrigin = spotOrigin;
+            this->spotRadius = spotRadius;
+            this->alertness = alertness;
+            strafeTimeoutAt = 0;
+            lookAtPointTimeoutAt = 0;
+        }
+
+        inline void SetDirectional(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRadius, float alertness)
+        {
+            isTriggered = true;
+            hasLookAtPoint = true;
+            this->spotOrigin = spotOrigin;
+            this->lookAtPoint = lookAtPoint;
+            this->spotRadius = spotRadius;
+            this->alertness = alertness;
+            strafeTimeoutAt = 0;
+            lookAtPointTimeoutAt = 0;
+        }
+
+        inline void Invalidate()
+        {
+            isTriggered = false;
+        }
+    };
+
+    CampingSpotState campingSpotState;
 
     bool isWaitingForItemSpawn;
 
@@ -431,10 +479,6 @@ private:
     StaticVector<int, MAX_SCRIPT_WEAPONS> scriptWeaponCooldown;
 
     void UpdateScriptWeaponsStatus();
-
-    void SetCampingSpot(const Vec3 &spotOrigin, float spotRadius, float alertness = 0.5f);
-    void SetCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRaduis, float alertness = 0.5f);
-    void ClearCampingSpot();
 
     inline bool HasPendingLookAtPoint() const
     {
