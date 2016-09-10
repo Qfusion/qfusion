@@ -7,7 +7,7 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
     isOnGroundThisFrame = self->groundentity != nullptr;
 
     // These triggered actions should be processed
-    if (jumppadMovementState.IsActive() || hasTriggeredRocketJump || hasPendingLandingDash)
+    if (jumppadMovementState.IsActive() || rocketJumpMovementState.IsActive() || hasPendingLandingDash)
     {
         Move(ucmd, beSilent);
     }
@@ -27,18 +27,14 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
     CheckTargetProximity();
 
     wasOnGroundPrevFrame = isOnGroundThisFrame;
-    wasTriggeredRocketJumpPrevFrame = hasTriggeredRocketJump;
+    rocketJumpMovementState.wasTriggeredPrevFrame = rocketJumpMovementState.hasTriggeredRocketJump;
 }
 
 void Bot::Move(usercmd_t *ucmd, bool beSilent)
 {
     CheckPendingLandingDashTimedOut();
 
-    if (hasTriggeredRocketJump)
-    {
-        if (self->groundentity || (rocketJumpTarget - self->s.origin).SquaredLength() < 48 * 48)
-            hasTriggeredRocketJump = false;
-    }
+    rocketJumpMovementState.TryInvalidate();
 
     if (currAasAreaNum == 0)
         return;
@@ -86,7 +82,7 @@ void Bot::Move(usercmd_t *ucmd, bool beSilent)
     {
         MoveOnPlatform(&intendedLookVec, ucmd);
     }
-    else if (hasTriggeredRocketJump)
+    else if (rocketJumpMovementState.IsActive())
     {
         MoveTriggeredARocketJump(&intendedLookVec, ucmd);
     }
@@ -106,8 +102,7 @@ void Bot::Move(usercmd_t *ucmd, bool beSilent)
         }
     }
 
-    bool hasJustTriggeredRocketJump = hasTriggeredRocketJump && !wasTriggeredRocketJumpPrevFrame;
-    if (!hasPendingLookAtPoint && !hasJustTriggeredRocketJump)
+    if (!hasPendingLookAtPoint && !rocketJumpMovementState.HasBeenJustTriggered())
     {
         float turnSpeedMultiplier = requestedViewTurnSpeedMultiplier;
         if (HasEnemy())
@@ -168,15 +163,15 @@ void Bot::MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd)
 
 void Bot::MoveTriggeredARocketJump(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
-    *intendedLookVec = rocketJumpTarget - self->s.origin;
+    *intendedLookVec = rocketJumpMovementState.jumpTarget - self->s.origin;
 
     ucmd->forwardmove = 0;
     ucmd->upmove = 0;
     ucmd->sidemove = 0;
 
-    if (!hasCorrectedRocketJump)
+    if (!rocketJumpMovementState.hasCorrectedRocketJump)
     {
-        Vec3 newVelocity(rocketJumpFireTarget);
+        Vec3 newVelocity(rocketJumpMovementState.fireTarget);
         newVelocity -= self->s.origin;
         float squareCorrectedDirLen = newVelocity.SquaredLength();
         if (squareCorrectedDirLen > 1)
@@ -186,9 +181,9 @@ void Bot::MoveTriggeredARocketJump(Vec3 *intendedLookVec, usercmd_t *ucmd)
             newVelocity *= speed;
             VectorCopy(newVelocity.Data(), self->velocity);
         }
-        hasCorrectedRocketJump = true;
+        rocketJumpMovementState.hasCorrectedRocketJump = true;
     }
-    else if (rocketJumpTimeoutAt - level.time < 300)
+    else if (rocketJumpMovementState.timeoutAt - level.time < 300)
     {
         ucmd->forwardmove = 1;
         // Bounce off walls
@@ -1430,11 +1425,7 @@ void Bot::TriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec
     ucmd->upmove = 1;
     ucmd->buttons |= (BUTTON_ATTACK|BUTTON_SPECIAL);
 
-    rocketJumpTarget = targetOrigin;
-    rocketJumpFireTarget = fireTarget;
-    hasTriggeredRocketJump = true;
-    hasCorrectedRocketJump = false;
-    rocketJumpTimeoutAt = level.time + 750;
+    rocketJumpMovementState.SetTriggered(targetOrigin, fireTarget, 750);
 }
 
 void Bot::CheckTargetProximity()
