@@ -278,11 +278,58 @@ private:
 
     RocketJumpMovementState rocketJumpMovementState;
 
-    bool hasPendingLandingDash;
-    bool isOnGroundThisFrame;
-    bool wasOnGroundPrevFrame;
-    unsigned pendingLandingDashTimeout;
-    float requestedViewTurnSpeedMultiplier;
+    struct PendingLandingDashState
+    {
+        bool isTriggered;
+        bool isOnGroundThisFrame;
+        bool wasOnGroundPrevFrame;
+        unsigned timeoutAt;
+
+        inline PendingLandingDashState()
+            : isTriggered(false),
+              isOnGroundThisFrame(false),
+              wasOnGroundPrevFrame(false),
+              timeoutAt(0) {}
+
+        inline bool IsActive() const
+        {
+            return isTriggered;
+        }
+
+        inline bool MayApplyDash() const
+        {
+            return !wasOnGroundPrevFrame && isOnGroundThisFrame;
+        }
+
+        inline void Invalidate()
+        {
+            isTriggered = false;
+        }
+
+        void TryInvalidate()
+        {
+            if (IsActive())
+            {
+                if (timeoutAt < level.time)
+                    Invalidate();
+                else if (isOnGroundThisFrame && wasOnGroundPrevFrame)
+                    Invalidate();
+            }
+        }
+
+        inline void SetTriggered(unsigned timeoutPeriod)
+        {
+            isTriggered = true;
+            timeoutAt = level.time + timeoutPeriod;
+        }
+
+        inline float EffectiveTurnSpeedMultiplier(float baseTurnSpeedMultiplier) const
+        {
+            return isTriggered ? 1.35f : baseTurnSpeedMultiplier;
+        }
+    };
+
+    PendingLandingDashState pendingLandingDashState;
 
     unsigned combatMovePushTimeout;
     int combatMovePushes[3];
@@ -398,9 +445,7 @@ private:
     void OnGoalCleanedUp(const Goal *goal);
 
     void SetPendingLandingDash(usercmd_t *ucmd);
-    bool TryApplyPendingLandingDash(usercmd_t *ucmd);
-    // Returns true if a pending landing dash has timed out
-    bool CheckPendingLandingDashTimedOut();
+    void ApplyPendingLandingDash(usercmd_t *ucmd);
 
     bool TryRocketJumpShortcut(usercmd_t *ucmd);
     // A bot should aim to fireTarget while doing a RJ

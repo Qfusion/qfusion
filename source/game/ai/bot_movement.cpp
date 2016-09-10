@@ -4,10 +4,13 @@
 
 void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
 {
-    isOnGroundThisFrame = self->groundentity != nullptr;
+    pendingLandingDashState.isOnGroundThisFrame = self->groundentity != nullptr;
+
+    pendingLandingDashState.TryInvalidate();
+    rocketJumpMovementState.TryInvalidate();
 
     // These triggered actions should be processed
-    if (jumppadMovementState.IsActive() || rocketJumpMovementState.IsActive() || hasPendingLandingDash)
+    if (jumppadMovementState.IsActive() || rocketJumpMovementState.IsActive() || pendingLandingDashState.IsActive())
     {
         Move(ucmd, beSilent);
     }
@@ -26,16 +29,12 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
 
     CheckTargetProximity();
 
-    wasOnGroundPrevFrame = isOnGroundThisFrame;
+    pendingLandingDashState.wasOnGroundPrevFrame = pendingLandingDashState.isOnGroundThisFrame;
     rocketJumpMovementState.wasTriggeredPrevFrame = rocketJumpMovementState.hasTriggeredRocketJump;
 }
 
 void Bot::Move(usercmd_t *ucmd, bool beSilent)
 {
-    CheckPendingLandingDashTimedOut();
-
-    rocketJumpMovementState.TryInvalidate();
-
     if (currAasAreaNum == 0)
         return;
 
@@ -104,7 +103,7 @@ void Bot::Move(usercmd_t *ucmd, bool beSilent)
 
     if (!hasPendingLookAtPoint && !rocketJumpMovementState.HasBeenJustTriggered())
     {
-        float turnSpeedMultiplier = requestedViewTurnSpeedMultiplier;
+        float turnSpeedMultiplier = pendingLandingDashState.EffectiveTurnSpeedMultiplier(1.0f);
         if (HasEnemy())
         {
             intendedLookVec.NormalizeFast();
@@ -832,49 +831,31 @@ void Bot::SetLookVecToPendingReach(Vec3 *intendedLookVec)
 
 void Bot::SetPendingLandingDash(usercmd_t *ucmd)
 {
-    if (isOnGroundThisFrame)
-        return;
-
     ucmd->forwardmove = 0;
     ucmd->sidemove = 0;
     ucmd->upmove = 0;
-    hasPendingLandingDash = true;
-    pendingLandingDashTimeout = level.time + 700;
-    requestedViewTurnSpeedMultiplier = 1.35f;
+
+    pendingLandingDashState.SetTriggered(700);
 }
 
-bool Bot::TryApplyPendingLandingDash(usercmd_t *ucmd)
+void Bot::ApplyPendingLandingDash(usercmd_t *ucmd)
 {
-    if (!hasPendingLandingDash)
-        return false;
-    if (!isOnGroundThisFrame || wasOnGroundPrevFrame)
-        return false;
+    if (!pendingLandingDashState.MayApplyDash())
+        return;
 
     ucmd->forwardmove = 1;
     ucmd->sidemove = 0;
     ucmd->upmove = 0;
     ucmd->buttons |= BUTTON_SPECIAL;
-    hasPendingLandingDash = false;
-    requestedViewTurnSpeedMultiplier = 1.0f;
-    return true;
-}
 
-bool Bot::CheckPendingLandingDashTimedOut()
-{
-    if (hasPendingLandingDash && pendingLandingDashTimeout <= level.time)
-    {
-        hasPendingLandingDash = false;
-        requestedViewTurnSpeedMultiplier = 1.0f;
-        return true;
-    }
-    return false;
+    pendingLandingDashState.Invalidate();
 }
 
 void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSilent)
 {
-    if (hasPendingLandingDash)
+    if (pendingLandingDashState.IsActive())
     {
-        TryApplyPendingLandingDash(ucmd);
+        ApplyPendingLandingDash(ucmd);
         return;
     }
 
