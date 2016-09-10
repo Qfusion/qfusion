@@ -31,17 +31,11 @@ void AiShutdownHooksHolder::RegisterHook(uint64_t tag, const std::function<void(
 
 void AiShutdownHooksHolder::UnregisterHook(uint64_t tag)
 {
-    for (int i = 0; i < taggedHooks.size(); ++i)
+    for (auto it = taggedHooks.begin(), end = taggedHooks.end(); it != end; ++it)
     {
-        // Duplicated tags are not allowed by RegisterHook()
-        if (taggedHooks[i].first == tag)
+        if ((*it).first == tag)
         {
-            // Remove i-th hook. TODO: Extract StaticVector method
-            for (int j = i; j < taggedHooks.size() - 1; ++i)
-            {
-                taggedHooks[j] = taggedHooks[j + 1];
-            }
-            taggedHooks.pop_back();
+            taggedHooks.erase(it);
             return;
         }
     }
