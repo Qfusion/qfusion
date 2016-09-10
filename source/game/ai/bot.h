@@ -194,21 +194,38 @@ private:
     unsigned nextBlockedEscapeAttemptAt;
     Vec3 blockedEscapeGoalOrigin;
 
-    // Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
-    // It gets processed by movement code in next frame
-    bool hasTouchedJumppad;
-    // If this flag is set, bot is in "jumppad" movement state
-    bool hasEnteredJumppad;
-    // This timeout is computed and set in Bot::TouchedJumppad().
-    // Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
-    // If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
-    unsigned jumppadMoveTimeout;
-    // Next reach. cache is lost in air.
-    // Thus we have to store next areas starting a jumppad movement and try to prefer these areas for landing
-    static constexpr int MAX_LANDING_AREAS = 16;
-    int jumppadLandingAreas[MAX_LANDING_AREAS];
-    int jumppadLandingAreasCount;
-    Vec3 jumppadTarget;
+    struct JumppadMovementState
+    {
+        // Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
+        // It gets processed by movement code in next frame
+        bool hasTouchedJumppad;
+        // If this flag is set, bot is in "jumppad" movement state
+        bool hasEnteredJumppad;
+        // This timeout is computed and set in Bot::TouchedJumppad().
+        // Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
+        // If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
+        unsigned jumppadMoveTimeout;
+        // Next reach. cache is lost in air.
+        // Thus we have to store next areas starting a jumppad movement and try to prefer these areas for landing
+        static constexpr int MAX_LANDING_AREAS = 16;
+        int landingAreas[MAX_LANDING_AREAS];
+        int landingAreasCount;
+        Vec3 jumppadTarget;
+
+        inline JumppadMovementState()
+            : hasTouchedJumppad(false),
+              hasEnteredJumppad(false),
+              jumppadMoveTimeout(0),
+              landingAreasCount(0),
+              jumppadTarget(INFINITY, INFINITY, INFINITY) {}
+
+        inline bool IsActive() const
+        {
+            return hasTouchedJumppad || hasEnteredJumppad;
+        }
+    };
+
+    JumppadMovementState jumppadMovementState;
 
     Vec3 rocketJumpTarget;
     Vec3 rocketJumpFireTarget;
