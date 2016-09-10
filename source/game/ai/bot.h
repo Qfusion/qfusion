@@ -227,12 +227,56 @@ private:
 
     JumppadMovementState jumppadMovementState;
 
-    Vec3 rocketJumpTarget;
-    Vec3 rocketJumpFireTarget;
-    bool hasTriggeredRocketJump;
-    bool hasCorrectedRocketJump;
-    bool wasTriggeredRocketJumpPrevFrame;
-    unsigned rocketJumpTimeoutAt;
+    struct RocketJumpMovementState
+    {
+        const edict_t *self;
+
+        Vec3 jumpTarget;
+        Vec3 fireTarget;
+        bool hasTriggeredRocketJump;
+        bool hasCorrectedRocketJump;
+        bool wasTriggeredPrevFrame;
+        unsigned timeoutAt;
+
+        RocketJumpMovementState(const edict_t *self)
+            : self(self),
+              jumpTarget(INFINITY, INFINITY, INFINITY),
+              fireTarget(INFINITY, INFINITY, INFINITY),
+              hasTriggeredRocketJump(false),
+              hasCorrectedRocketJump(false),
+              wasTriggeredPrevFrame(false),
+              timeoutAt(0) {}
+
+        inline bool IsActive() const
+        {
+            return hasTriggeredRocketJump;
+        }
+
+        inline bool HasBeenJustTriggered() const
+        {
+            return hasTriggeredRocketJump && !wasTriggeredPrevFrame;
+        }
+
+        void TryInvalidate()
+        {
+            if (hasTriggeredRocketJump)
+            {
+                if (self->groundentity || (jumpTarget - self->s.origin).SquaredLength() < 48 * 48)
+                    hasTriggeredRocketJump = false;
+            }
+        }
+
+        void SetTriggered(const Vec3 &jumpTarget, const Vec3 &fireTarget, unsigned timeoutPeriod)
+        {
+            this->jumpTarget = jumpTarget;
+            this->fireTarget = fireTarget;
+            hasTriggeredRocketJump = true;
+            hasCorrectedRocketJump = false;
+            timeoutAt = level.time + timeoutPeriod;
+        }
+    };
+
+    RocketJumpMovementState rocketJumpMovementState;
 
     bool hasPendingLandingDash;
     bool isOnGroundThisFrame;
