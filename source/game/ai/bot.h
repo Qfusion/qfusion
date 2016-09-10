@@ -336,10 +336,39 @@ private:
 
     unsigned vsayTimeout;
 
-    Vec3 pendingLookAtPoint;
-    unsigned pendingLookAtPointTimeoutAt;
-    bool hasPendingLookAtPoint;
-    float lookAtPointTurnSpeedMultiplier;
+    struct PendingLookAtPointState
+    {
+        Vec3 lookAtPoint;
+        unsigned timeoutAt;
+        float turnSpeedMultiplier;
+        bool isTriggered;
+
+        inline PendingLookAtPointState()
+            : lookAtPoint(INFINITY, INFINITY, INFINITY),
+              timeoutAt(0),
+              turnSpeedMultiplier(1.0f),
+              isTriggered(false) {}
+
+        inline bool IsActive() const
+        {
+            return isTriggered && timeoutAt > level.time;
+        }
+
+        inline void SetTriggered(const Vec3 &lookAtPoint, float turnSpeedMultiplier = 0.5f, unsigned timeoutPeriod = 500)
+        {
+            this->lookAtPoint = lookAtPoint;
+            this->turnSpeedMultiplier = turnSpeedMultiplier;
+            this->timeoutAt = level.time + timeoutPeriod;
+            this->isTriggered = true;
+        }
+
+        inline float EffectiveTurnSpeedMultiplier(float baseTurnSpeedMultiplier) const
+        {
+            return isTriggered ? turnSpeedMultiplier : baseTurnSpeedMultiplier;
+        }
+    };
+
+    PendingLookAtPointState pendingLookAtPointState;
 
     // If it is set, the bot should stay on a spot defined by campingSpotOrigin
     bool hasCampingSpot;
@@ -407,8 +436,14 @@ private:
     void SetCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRaduis, float alertness = 0.5f);
     void ClearCampingSpot();
 
-    void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutDuration = 500);
-
+    inline bool HasPendingLookAtPoint() const
+    {
+        return pendingLookAtPointState.IsActive();
+    }
+    inline void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutPeriod = 500)
+    {
+        pendingLookAtPointState.SetTriggered(point, turnSpeedMultiplier, timeoutPeriod);
+    }
     void ApplyPendingTurnToLookAtPoint();
 
     // Must be called on each frame

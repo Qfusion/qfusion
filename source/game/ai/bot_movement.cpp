@@ -101,7 +101,7 @@ void Bot::Move(usercmd_t *ucmd, bool beSilent)
         }
     }
 
-    if (!hasPendingLookAtPoint && !rocketJumpMovementState.HasBeenJustTriggered())
+    if (!HasPendingLookAtPoint() && !rocketJumpMovementState.HasBeenJustTriggered())
     {
         float turnSpeedMultiplier = pendingLandingDashState.EffectiveTurnSpeedMultiplier(1.0f);
         if (HasEnemy())
@@ -140,7 +140,7 @@ void Bot::TryEscapeIfBlocked(usercmd_t *ucmd)
         return;
 
     // Already turning
-    if (hasPendingLookAtPoint)
+    if (HasPendingLookAtPoint())
         return;
 
     // Let the bot do a suicide, its better than he will hop on the same point randomly trying to escape
@@ -488,7 +488,7 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, Vec3 *in
 
     if (expectedLookDir.Dot(actualLookDir) < 0.85)
     {
-        if (!hasPendingLookAtPoint)
+        if (!HasPendingLookAtPoint())
         {
             SetPendingLookAtPoint(campingSpotLookAtPoint, 1.1f);
             ucmd->forwardmove = 0;
