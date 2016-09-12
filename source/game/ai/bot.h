@@ -690,6 +690,7 @@ private:
     inline unsigned EnemyInstanceId() const { return botBrain.combatTask.instanceId; }
 
     bool MayKeepRunningInCombat() const;
+    void SetCombatInhibitionFlags(bool *inhibitShooting, bool *inhibitCombatMove);
 
     inline bool HasSpecialGoal() const { return botBrain.HasSpecialGoal(); }
     inline bool IsSpecialGoalSetBy(const AiFrameAwareUpdatable *setter) const
