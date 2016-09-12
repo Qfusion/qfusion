@@ -15,7 +15,9 @@ Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
       distanceToNextReachStart(std::numeric_limits<float>::infinity()),
       blockedTimeout(level.time + 15000),
       aiYawSpeed(0.0f),
-      aiPitchSpeed(0.0f)
+      aiPitchSpeed(0.0f),
+      oldYawAbsDiff(0.0f),
+      oldPitchAbsDiff(0.0f)
 {
 }
 
@@ -386,7 +388,20 @@ bool Ai::IsStep(edict_t *ent)
     return true;
 }
 
-void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*= 1.0f*/)
+static constexpr float ANGLE_DIFF_PRECISION_THRESHOLD = 10.0f;
+
+static inline float ComputeAngularSpeedScale(float currAngleDiff, float oldAngleDiff, float frametime)
+{
+    // The angle difference has the largest influence on angular speed.
+    float scale = 0.0001f + 0.15f * (currAngleDiff / ANGLE_DIFF_PRECISION_THRESHOLD);
+    float absDiffAccel = (currAngleDiff - oldAngleDiff) * frametime / 16.6f;
+    // If the angle difference grew up, increase angular speed proportionally
+    if (absDiffAccel > 0)
+        scale *= 1.0f + 0.55f * std::min(1.0f, absDiffAccel / 3.0f);
+    return scale;
+}
+
+void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*= 1.0f*/, bool extraPrecision /*= false*/)
 {
     const float currentYaw = anglemod(self->s.angles[YAW]);
     const float currentPitch = anglemod(self->s.angles[PITCH]);
@@ -400,14 +415,28 @@ void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*
     aiYawSpeed *= angularSpeedMultiplier;
     aiPitchSpeed *= angularSpeedMultiplier;
 
-    if (fabsf(currentYaw - ideal_yaw) < 10)
+    float yawAbsDiff = fabsf(currentYaw - ideal_yaw);
+    float pitchAbsDiff = fabsf(currentPitch - ideal_pitch);
+
+    if (extraPrecision)
     {
-        aiYawSpeed *= 0.5;
+        if (yawAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD)
+            aiYawSpeed *= ComputeAngularSpeedScale(yawAbsDiff, oldYawAbsDiff, game.frametime);
+
+        if (pitchAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD)
+            aiPitchSpeed *= ComputeAngularSpeedScale(pitchAbsDiff, oldPitchAbsDiff, game.frametime);
     }
-    if (fabsf(currentPitch - ideal_pitch) < 10)
+    else
     {
-        aiPitchSpeed *= 0.5;
+        if (yawAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD)
+            aiYawSpeed *= 0.5f;
+
+        if (pitchAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD)
+            aiPitchSpeed *= 0.5f;
     }
+
+    oldYawAbsDiff = yawAbsDiff;
+    oldPitchAbsDiff = pitchAbsDiff;
 
     ChangeAxisAngle(currentYaw, ideal_yaw, self->yaw_speed, &aiYawSpeed, &self->s.angles[YAW]);
     ChangeAxisAngle(currentPitch, ideal_pitch, self->yaw_speed, &aiPitchSpeed, &self->s.angles[PITCH]);
@@ -417,41 +446,37 @@ void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*
 
 void Ai::ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle)
 {
-    float angleMove, speed;
-    if (fabsf(currAngle - idealAngle) > 1)
+    float angleMove = idealAngle - currAngle;
+    float speed = edictAngleSpeed * FRAMETIME;
+    if( idealAngle > currAngle )
     {
-        angleMove = idealAngle - currAngle;
-        speed = edictAngleSpeed * FRAMETIME;
-        if( idealAngle > currAngle )
-        {
-            if (angleMove >= 180)
-                angleMove -= 360;
-        }
-        else
-        {
-            if (angleMove <= -180)
-                angleMove += 360;
-        }
-        if (angleMove > 0)
-        {
-            if (*aiAngleSpeed > speed)
-                *aiAngleSpeed = speed;
-            if (angleMove < 3)
-                *aiAngleSpeed += AI_YAW_ACCEL/4.0;
-            else
-                *aiAngleSpeed += AI_YAW_ACCEL;
-        }
-        else
-        {
-            if (*aiAngleSpeed < -speed)
-                *aiAngleSpeed = -speed;
-            if (angleMove > -3)
-                *aiAngleSpeed -= AI_YAW_ACCEL/4.0;
-            else
-                *aiAngleSpeed -= AI_YAW_ACCEL;
-        }
-
-        angleMove = *aiAngleSpeed;
-        *changedAngle = anglemod(currAngle + angleMove);
+        if (angleMove >= 180)
+            angleMove -= 360;
     }
+    else
+    {
+        if (angleMove <= -180)
+            angleMove += 360;
+    }
+    if (angleMove > 0)
+    {
+        if (*aiAngleSpeed > speed)
+            *aiAngleSpeed = speed;
+        if (angleMove < 3)
+            *aiAngleSpeed += AI_YAW_ACCEL/4.0;
+        else
+            *aiAngleSpeed += AI_YAW_ACCEL;
+    }
+    else
+    {
+        if (*aiAngleSpeed < -speed)
+            *aiAngleSpeed = -speed;
+        if (angleMove > -3)
+            *aiAngleSpeed -= AI_YAW_ACCEL;
+        else
+            *aiAngleSpeed -= AI_YAW_ACCEL/4.0;
+    }
+
+    angleMove = *aiAngleSpeed;
+    *changedAngle = anglemod(currAngle + angleMove);
 }

@@ -331,8 +331,8 @@ bool Bot::FireWeapon(bool *didBuiltinAttack)
     // Always track enemy with a "crosshair" like a human does in each frame
     LookAtEnemy(aimParams->EffectiveAccuracy(Skill(), importantShot), aimParams->fireOrigin, aimParams->fireTarget);
 
-    // Attack only in Think() frames unless a continuousFire is required
-    if (ShouldSkipThinkFrame())
+    // Attack only in Think() frames unless a continuousFire is required or the bot has hard skill
+    if (ShouldSkipThinkFrame() && Skill() < 0.66f)
     {
         if (!primaryFireDef->IsContinuousFire())
         {
@@ -359,7 +359,12 @@ bool Bot::FireWeapon(bool *didBuiltinAttack)
 
 void Bot::FireTargetCache::SetupCoarseFireTarget(const CombatTask &combatTask, vec_t *fire_origin, vec_t *target)
 {
-    VectorCopy(combatTask.EnemyOrigin().Data(), target);
+    // For hard bots use actual enemy origin
+    // (last seen one may be outdated up to 3 frames, and it matter a lot for fast-moving enemies)
+    if (bot->ai->botRef->Skill() < 0.66f)
+        VectorCopy(combatTask.LastSeenEnemyOrigin().Data(), target);
+    else
+        VectorCopy(combatTask.ActualEnemyOrigin().Data(), target);
     VectorAdd(target, (0.5f * (combatTask.EnemyMins() + combatTask.EnemyMaxs())).Data(), target);
 
     fire_origin[0] = bot->s.origin[0];
@@ -378,7 +383,8 @@ void Bot::LookAtEnemy(float accuracy, const vec_t *fire_origin, vec_t *target)
         Vec3 lookAtVector(target);
         lookAtVector -= fire_origin;
         float angularSpeedMultiplier = 0.5f + 0.5f * Skill();
-        ChangeAngle(lookAtVector, angularSpeedMultiplier);
+        bool extraPrecision = DistanceSquared(fire_origin, target) > 1100.0f * 1100.0f;
+        ChangeAngle(lookAtVector, angularSpeedMultiplier, extraPrecision);
     }
 }
 
@@ -498,10 +504,10 @@ bool Bot::CheckShot(const AimParams &aimParams, const CombatTask &combatTask, co
     if (game.edicts[tr.ent].s.team == self->s.team && GS_TeamBasedGametype())
         return false;
 
-    float hitToTargetDist = DistanceFast(combatTask.EnemyOrigin().Data(), tr.endpos);
+    float hitToTargetDist = DistanceFast(combatTask.LastSeenEnemyOrigin().Data(), tr.endpos);
     float hitToBotDist = DistanceFast(self->s.origin, tr.endpos);
     float proximityDistanceFactor = BoundedFraction(hitToBotDist, 2000.0f);
-    float hitToTargetMissThreshold = 30.0f + 500.0f * proximityDistanceFactor;
+    float hitToTargetMissThreshold = 30.0f + 300.0f * proximityDistanceFactor;
 
     if (hitToBotDist < hitToTargetDist && !fireDef.IsContinuousFire())
         return false;
@@ -519,7 +525,19 @@ bool Bot::CheckShot(const AimParams &aimParams, const CombatTask &combatTask, co
         return hitToTargetDist < std::max(hitToTargetMissThreshold, 1.15f * fireDef.SplashRadius());
     }
 
-    return hitToTargetDist < std::max(32.0f, 0.33f * hitToTargetMissThreshold);
+    // For one-shot instant-hit weapons each shot is important, so check against a player bounding box
+    Vec3 absMins(aimParams.fireTarget);
+    Vec3 absMaxs(aimParams.fireTarget);
+    absMins += playerbox_stand_mins;
+    absMaxs += playerbox_stand_maxs;
+    float factor = 0.33f;
+    // Extra hack for EB/IG, otherwise they miss too lot due to premature firing
+    if (fireDef.IsBuiltin())
+    {
+        if (fireDef.WeaponNum() == WEAP_ELECTROBOLT || fireDef.WeaponNum() == WEAP_INSTAGUN)
+            factor *= std::max(0.0f, 0.66f - Skill());
+    }
+    return BoundsAndSphereIntersect(absMins.Data(), absMaxs.Data(), tr.endpos, 1.0f + factor * hitToTargetMissThreshold);
 }
 
 void Bot::FireTargetCache::AdjustAimParams(const CombatTask &combatTask, const GenericFireDef &fireDef,
@@ -929,15 +947,5 @@ void Bot::FireTargetCache::AdjustDropAimTypeParams(const CombatTask &combatTask,
 void Bot::FireTargetCache::AdjustInstantAimTypeParams(const CombatTask &combatTask,
                                                       const GenericFireDef &fireDef, AimParams *aimParams)
 {
-    if (fireDef.IsBuiltin())
-    {
-        float skill = bot->ai->botRef->Skill();
-        // It is affected by bot view latency (lastSeenPosition() + finite yaw/pitch speed) enough, decrease aim error
-        if (fireDef.WeaponNum() == WEAP_ELECTROBOLT)
-            aimParams->suggestedBaseAccuracy = (1.0f - skill) * WFAC_GENERIC_INSTANT;
-        else if (fireDef.WeaponNum() == WEAP_LASERGUN)
-            aimParams->suggestedBaseAccuracy = 0.33f * WFAC_GENERIC_INSTANT * (1.0f - skill);
-    }
-
-    aimParams->suggestedBaseAccuracy = WFAC_GENERIC_INSTANT;
+    aimParams->suggestedBaseAccuracy = WFAC_GENERIC_INSTANT * (1.0f - bot->ai->botRef->Skill());
 }

@@ -681,7 +681,7 @@ private:
     inline bool IsEnemyAStaticSpot() const { return botBrain.combatTask.IsTargetAStaticSpot(); }
     inline const edict_t *EnemyTraceKey() const { return botBrain.combatTask.TraceKey(); }
     inline const bool IsEnemyOnGround() const { return botBrain.combatTask.IsOnGround(); }
-    inline Vec3 EnemyOrigin() const { return botBrain.combatTask.EnemyOrigin(); }
+    inline Vec3 EnemyOrigin() const { return botBrain.combatTask.LastSeenEnemyOrigin(); }
     inline Vec3 EnemyLookDir() const { return botBrain.combatTask.EnemyLookDir(); }
     inline unsigned EnemyFireDelay() const { return botBrain.combatTask.EnemyFireDelay(); }
     inline Vec3 EnemyVelocity() const { return botBrain.combatTask.EnemyVelocity(); }

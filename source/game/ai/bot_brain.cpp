@@ -589,7 +589,7 @@ bool BotBrain::ShouldEstablishVisualContact(vec_t *newSpotOrigin)
     // (Do a trace from bot origin to enemy origin)
     Vec3 fireOrigin(self->s.origin);
     fireOrigin.Z() += self->viewheight;
-    G_Trace(&trace, fireOrigin.Data(), nullptr, nullptr, combatTask.EnemyOrigin().Data(), self, MASK_AISOLID);
+    G_Trace(&trace, fireOrigin.Data(), nullptr, nullptr, combatTask.LastSeenEnemyOrigin().Data(), self, MASK_AISOLID);
 
     // Bot may hit from the current position
     if (trace.fraction == 1.0f || game.edicts + trace.ent == combatTask.TraceKey())
@@ -605,14 +605,14 @@ bool BotBrain::ShouldEstablishVisualContact(vec_t *newSpotOrigin)
         // TODO: Check ground trace
         if (!self->groundentity)
             fireOrigin.Z() -= 0.5f * level.gravity * t * t;
-        G_Trace(&trace, fireOrigin.Data(), nullptr, nullptr, combatTask.EnemyOrigin().Data(), self, MASK_AISOLID);
+        G_Trace(&trace, fireOrigin.Data(), nullptr, nullptr, combatTask.LastSeenEnemyOrigin().Data(), self, MASK_AISOLID);
 
         // Bot would be able to hit
         if (trace.fraction == 1.0f || game.edicts + trace.ent == combatTask.TraceKey())
             return false;
     }
 
-    VectorCopy(combatTask.EnemyOrigin().Data(), newSpotOrigin);
+    VectorCopy(combatTask.LastSeenEnemyOrigin().Data(), newSpotOrigin);
     return true;
 }
 

@@ -77,6 +77,7 @@ protected:
     unsigned blockedTimeout;
 
     float aiYawSpeed, aiPitchSpeed;
+    float oldYawAbsDiff, oldPitchAbsDiff;
 
     void SetFrameAffinity(unsigned modulo, unsigned offset) override;
 
@@ -103,7 +104,7 @@ public:
     inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
     inline int AllowedTravelFlags() const { return allowedAasTravelFlags; }
 
-    void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f);
+    void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f, bool extraPrecision = false);
     static bool IsStep(edict_t *ent);
     // Accepts a touched entity and its old solid before touch
     void TouchedEntity(edict_t *ent);

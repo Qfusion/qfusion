@@ -579,7 +579,7 @@ bool Bot::ShouldBeSilent(bool inhibitShooting) const
     if (combatTask.Empty())
         return false;
 
-    if ((combatTask.EnemyOrigin() - self->s.origin).SquaredLength() < 384.0f * 384.0f)
+    if ((combatTask.LastSeenEnemyOrigin() - self->s.origin).SquaredLength() < 384.0f * 384.0f)
     {
         if (CanAndWouldCloak())
             return true;
@@ -588,7 +588,7 @@ bool Bot::ShouldBeSilent(bool inhibitShooting) const
         if (botBrain.activeEnemyPool->ActiveEnemies().size() < 2)
         {
             Vec3 enemyToBot(self->s.origin);
-            enemyToBot -= combatTask.EnemyOrigin();
+            enemyToBot -= combatTask.LastSeenEnemyOrigin();
             enemyToBot.NormalizeFast();
             if (enemyToBot.Dot(EnemyLookDir()) < -0)
                 return true;
