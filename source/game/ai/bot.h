@@ -46,6 +46,7 @@ public:
     virtual void OnBlockedTimeout() override;
     void SayVoiceMessages();
     void GhostingFrame();
+    void ActiveFrame();
 
     void OnRespawn();
 
