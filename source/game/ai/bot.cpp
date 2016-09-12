@@ -523,31 +523,8 @@ void Bot::ActiveFrame()
 
     const CombatTask &combatTask = botBrain.combatTask;
 
-    bool inhibitShooting = combatTask.Empty() || combatTask.inhibit;
-    bool inhibitCombatMove = inhibitShooting;
-    if (!inhibitCombatMove)
-    {
-        if (botBrain.HasGoal() && currAasAreaNum != GoalAreaNum() && !nextReaches.empty())
-        {
-            if (IsCloseToReachStart())
-            {
-                int travelType = nextReaches.front().traveltype;
-                if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
-                    inhibitCombatMove = true;
-                else if (travelType == TRAVEL_CROUCH)
-                    inhibitCombatMove = true;
-                else if (travelType == TRAVEL_LADDER)
-                    inhibitCombatMove = inhibitShooting = true;
-            }
-            else if (aasWorld->AreaCrouch(currAasAreaNum))
-                inhibitCombatMove = true;
-        }
-        // Try to move bunnying instead of dodging on ground
-        // if the enemy is not looking to bot being able to hit him
-        // and the bot is able to hit while moving without changing angle significantly
-        if (!inhibitCombatMove && MayKeepRunningInCombat())
-            inhibitCombatMove = true;
-    }
+    bool inhibitShooting, inhibitCombatMove;
+    SetCombatInhibitionFlags(&inhibitShooting, &inhibitCombatMove);
 
     // ucmd modification in FireWeapon() will be overwritten by MoveFrame()
     bool fireButtonPressed = false;
@@ -610,6 +587,40 @@ void Bot::ActiveFrame()
     CallActiveClientThink(&ucmd);
 
     SayVoiceMessages();
+}
+
+void Bot::SetCombatInhibitionFlags(bool *inhibitShootingRef, bool *inhibitCombatMoveRef)
+{
+    // Make reference aliases to avoid pointer/boolean confusing errors
+    bool &inhibitCombatMove = *inhibitCombatMoveRef;
+    bool &inhibitShooting = *inhibitShootingRef;
+
+    const CombatTask &combatTask = botBrain.combatTask;
+    inhibitShooting = combatTask.Empty() || combatTask.inhibit;
+    inhibitCombatMove = inhibitShooting;
+    if (inhibitCombatMove)
+        return;
+
+    if (botBrain.HasGoal() && currAasAreaNum != GoalAreaNum() && !nextReaches.empty())
+    {
+        if (IsCloseToReachStart())
+        {
+            int travelType = nextReaches.front().traveltype;
+            if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
+                inhibitCombatMove = true;
+            else if (travelType == TRAVEL_CROUCH)
+                inhibitCombatMove = true;
+            else if (travelType == TRAVEL_LADDER)
+                inhibitCombatMove = inhibitShooting = true;
+        }
+        else if (aasWorld->AreaCrouch(currAasAreaNum))
+            inhibitCombatMove = true;
+    }
+    // Try to move bunnying instead of dodging on ground
+    // if the enemy is not looking to bot being able to hit him
+    // and the bot is able to hit while moving without changing angle significantly
+    if (!inhibitCombatMove && MayKeepRunningInCombat())
+        inhibitCombatMove = true;
 }
 
 void Bot::CallActiveClientThink(usercmd_t *ucmd)
