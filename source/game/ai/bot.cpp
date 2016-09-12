@@ -555,26 +555,7 @@ void Bot::ActiveFrame()
         }
     }
 
-    bool beSilent = false;
-    if (inhibitShooting && !combatTask.Empty())
-    {
-        if ((combatTask.EnemyOrigin() - self->s.origin).SquaredLength() < 384.0f * 384.0f)
-        {
-            if (CanAndWouldCloak())
-            {
-                beSilent = true;
-            }
-            // When there is only a single enemy
-            else if (botBrain.activeEnemyPool->ActiveEnemies().size() < 2)
-            {
-                Vec3 enemyToBot(self->s.origin);
-                enemyToBot -= combatTask.EnemyOrigin();
-                enemyToBot.NormalizeFast();
-                if (enemyToBot.Dot(EnemyLookDir()) < -0)
-                    beSilent = true;
-            }
-        }
-    }
+    bool beSilent = ShouldBeSilent(inhibitShooting);
 
     // Do not modify pmove features by beSilent value, features may be changed dynamically by script.
     usercmd_t ucmd;
@@ -587,6 +568,34 @@ void Bot::ActiveFrame()
     CallActiveClientThink(&ucmd);
 
     SayVoiceMessages();
+}
+
+bool Bot::ShouldBeSilent(bool inhibitShooting) const
+{
+    const CombatTask &combatTask = botBrain.combatTask;
+    if (!inhibitShooting)
+        return false;
+    // Do not be silent if no enemy has been detected
+    if (combatTask.Empty())
+        return false;
+
+    if ((combatTask.EnemyOrigin() - self->s.origin).SquaredLength() < 384.0f * 384.0f)
+    {
+        if (CanAndWouldCloak())
+            return true;
+
+        // When there is only a single enemy
+        if (botBrain.activeEnemyPool->ActiveEnemies().size() < 2)
+        {
+            Vec3 enemyToBot(self->s.origin);
+            enemyToBot -= combatTask.EnemyOrigin();
+            enemyToBot.NormalizeFast();
+            if (enemyToBot.Dot(EnemyLookDir()) < -0)
+                return true;
+        }
+    }
+
+    return false;
 }
 
 void Bot::SetCombatInhibitionFlags(bool *inhibitShootingRef, bool *inhibitCombatMoveRef)

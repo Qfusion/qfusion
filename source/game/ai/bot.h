@@ -691,6 +691,7 @@ private:
 
     bool MayKeepRunningInCombat() const;
     void SetCombatInhibitionFlags(bool *inhibitShooting, bool *inhibitCombatMove);
+    bool ShouldBeSilent(bool inhibitShooting) const;
 
     inline bool HasSpecialGoal() const { return botBrain.HasSpecialGoal(); }
     inline bool IsSpecialGoalSetBy(const AiFrameAwareUpdatable *setter) const
