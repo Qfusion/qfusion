@@ -1556,15 +1556,17 @@ void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
         UpdateCombatMovePushes();
     }
 
+    ucmd->forwardmove = combatMovePushes[0];
+    ucmd->sidemove = combatMovePushes[1];
+    ucmd->upmove = combatMovePushes[2];
+
     // Dash is a single-frame event not affected by friction, so it should be checked each frame
     if (MayApplyCombatDash())
         ucmd->buttons |= BUTTON_SPECIAL;
 
     if (self->groundentity)
     {
-        ucmd->forwardmove = combatMovePushes[0];
-        ucmd->sidemove = combatMovePushes[1];
-        ucmd->upmove = combatMovePushes[2];
+
         if (!(ucmd->buttons & BUTTON_SPECIAL))
         {
             ApplyCheatingGroundAcceleration(ucmd);
