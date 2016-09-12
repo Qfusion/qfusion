@@ -75,10 +75,16 @@ public:
 
     bool IsOnGround() const { return enemy && enemy->ent->groundentity; }
 
-    Vec3 EnemyOrigin() const
+    Vec3 LastSeenEnemyOrigin() const
     {
         if (enemy) return enemy->LastSeenPosition();
-        FailWith("EnemyOrigin(): combat task is empty\n");
+        FailWith("LastSeenEnemyOrigin(): combat task is empty\n");
+    }
+
+    Vec3 ActualEnemyOrigin() const
+    {
+        if (enemy) return Vec3(enemy->ent->s.origin);
+        FailWith("ActualEnemyOrigin(): combat task is empty\n");
     }
 
     Vec3 EnemyVelocity() const
