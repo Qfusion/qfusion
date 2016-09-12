@@ -515,9 +515,6 @@ void Bot::Frame()
 
 void Bot::ActiveFrame()
 {
-    usercmd_t ucmd;
-    memset(&ucmd, 0, sizeof(ucmd));
-
     //get ready if in the game
     if(GS_MatchState() <= MATCH_STATE_WARMUP && !IsReady() && self->r.client->teamstate.timeStamp + 4000 < level.time)
         G_Match_Ready(self);
@@ -603,7 +600,8 @@ void Bot::ActiveFrame()
     }
 
     // Do not modify pmove features by beSilent value, features may be changed dynamically by script.
-
+    usercmd_t ucmd;
+    memset(&ucmd, 0, sizeof(ucmd));
     MoveFrame(&ucmd, inhibitCombatMove, beSilent);
 
     if (fireButtonPressed)
