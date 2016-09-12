@@ -385,6 +385,9 @@ void Bot::GhostingFrame()
 {
     usercmd_t ucmd;
 
+    botBrain.oldCombatTask.Clear();
+    botBrain.combatTask.Clear();
+
     Ai::ClearAllGoals();
 
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
@@ -500,15 +503,13 @@ void Bot::Frame()
     Ai::Frame();
 
     if (IsGhosting())
-    {
-        botBrain.oldCombatTask.Clear();
-        botBrain.combatTask.Clear();
-
         GhostingFrame();
+    else
+        ActiveFrame();
+}
 
-        return;
-    }
-
+void Bot::ActiveFrame()
+{
     usercmd_t ucmd;
     memset(&ucmd, 0, sizeof(ucmd));
 
