@@ -413,16 +413,21 @@ void Bot::GhostingFrame()
 
     memset( &ucmd, 0, sizeof( ucmd ) );
 
-    // set approximate ping and show values
-    ucmd.serverTimeStamp = game.serverTime;
-    ucmd.msec = game.frametime;
-    self->r.client->r.ping = 0;
-
     // ask for respawn if the minimum bot respawning time passed
     if( level.time > self->deathTimeStamp + 3000 )
         ucmd.buttons = BUTTON_ATTACK;
 
-    ClientThink( self, &ucmd, 0 );
+    CallGhostingClientThink(&ucmd);
+}
+
+void Bot::CallGhostingClientThink(usercmd_t *ucmd)
+{
+    // set approximate ping and show values
+    ucmd->serverTimeStamp = game.serverTime;
+    ucmd->msec = game.frametime;
+    self->r.client->r.ping = 0;
+
+    ClientThink( self, ucmd, 0 );
 }
 
 void Bot::OnRespawn()
@@ -604,23 +609,28 @@ void Bot::ActiveFrame()
     if (fireButtonPressed)
         ucmd.buttons |= BUTTON_ATTACK;
 
+    CallActiveClientThink(&ucmd);
+
+    SayVoiceMessages();
+}
+
+void Bot::CallActiveClientThink(usercmd_t *ucmd)
+{
     //set up for pmove
     for (int i = 0; i < 3; i++)
-        ucmd.angles[i] = ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
+        ucmd->angles[i] = ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
 
     VectorSet(self->r.client->ps.pmove.delta_angles, 0, 0, 0);
 
     // set approximate ping and show values
-    ucmd.msec = game.frametime;
-    ucmd.serverTimeStamp = game.serverTime;
+    ucmd->msec = game.frametime;
+    ucmd->serverTimeStamp = game.serverTime;
 
     // If this value is modified by ClientThink() callbacks, it will be kept until next frame reaches this line
     jumppadMovementState.hasTouchedJumppad = false;
 
-    ClientThink( self, &ucmd, 0 );
+    ClientThink( self, ucmd, 0 );
     self->nextThink = level.time + 1;
-
-    SayVoiceMessages();
 }
 
 

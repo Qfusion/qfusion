@@ -47,6 +47,8 @@ public:
     void SayVoiceMessages();
     void GhostingFrame();
     void ActiveFrame();
+    void CallGhostingClientThink(usercmd_t *ucmd);
+    void CallActiveClientThink(usercmd_t *ucmd);
 
     void OnRespawn();
 
