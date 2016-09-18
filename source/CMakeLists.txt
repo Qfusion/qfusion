@@ -66,7 +66,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../libsrcs/libvorbis"
         "../libsrcs/libtheora"
         "../libsrcs/libcurl/include"
-        "../libsrcs/angelscript/sdk/angelscript"
+        "../third-party/angelscript/sdk/angelscript"
         "../libsrcs/zlib"
         "../libsrcs/libfreetype"
         "../libsrcs/libpng"
@@ -200,7 +200,7 @@ endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     # On Linux we build angelscript from source
-    set(ANGELSCRIPT_DIR ${CMAKE_HOME_DIRECTORY}/../libsrcs/angelscript/sdk/angelscript)
+    set(ANGELSCRIPT_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/angelscript/sdk/angelscript)
     if (MINGW)
         set(ANGELSCRIPT_PROJECT_DIR ${ANGELSCRIPT_DIR}/projects/mingw)
     else()

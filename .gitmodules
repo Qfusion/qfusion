@@ -1,3 +1,6 @@
 [submodule "third-party/libRocket"]
 	path = third-party/libRocket
 	url = https://github.com/Qfusion/libRocket
+[submodule "third-party/angelscript"]
+	path = third-party/angelscript
+	url = https://github.com/Qfusion/angelscript.git
