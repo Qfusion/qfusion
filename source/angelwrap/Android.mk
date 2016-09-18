@@ -3,7 +3,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := angelwrap
 LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 
-LOCAL_C_INCLUDES := $(QFUSION_PATH)/libsrcs/angelscript/sdk/add_on/scriptarray
+LOCAL_C_INCLUDES := $(QFUSION_PATH)/third-party/angelscript/sdk/add_on/scriptarray
 
 LOCAL_STATIC_LIBRARIES := angelscript
 
