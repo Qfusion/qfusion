@@ -1,0 +1,3 @@
+[submodule "third-party/libRocket"]
+	path = third-party/libRocket
+	url = https://github.com/Qfusion/libRocket
