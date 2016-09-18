@@ -2461,7 +2461,7 @@ static void Mod_Q1LoadTexinfo( const lump_t *l )
 	for( i = 0; i < count; i++, in++, out++ )
 	{
 		j = LittleLong( in->miptex );
-		if( j < 0 || j >= loadbmodel->numMiptex )
+		if( j >= loadbmodel->numMiptex )
 			ri.Com_Error( ERR_DROP, "Mod_Q1LoadTexinfo: bad miptex num in %s", loadmodel->name );
 		miptex = (q1mmiptex_t *)loadbmodel->mipTex + j;
 
