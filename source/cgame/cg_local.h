@@ -586,6 +586,9 @@ typedef struct
 	unsigned int multiviewPlayerNum;       // for multipov chasing, takes effect on next snap
 
 	int pointedNum;
+	unsigned int pointRemoveTime;
+	int pointedHealth;
+	int pointedArmor;
 
 	//
 	// all cyclic walking effects
@@ -772,6 +775,8 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color );
 
 void CG_GameMenu_f( void );
 
+void CG_ClearPointedNum( void );
+
 /**
  * Sends current quick menu string to the UI.
  */
@@ -846,6 +851,7 @@ void CG_UpdateHUDPostDraw( void );
 void CG_UpdateHUDPostTouch( void );
 void CG_ShowWeaponCross( void );
 void CG_ClearHUDInputState( void );
+void CG_ClearAwards( void );
 
 //
 // cg_damage_indicator.c

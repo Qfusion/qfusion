@@ -1119,8 +1119,14 @@ void CG_Reset( void )
 
 	CG_ClearInputState();
 
+	CG_ClearPointedNum();
+
+	CG_ClearAwards();
+
 	cg.time = 0;
 	cg.realTime = 0;
+	cg.helpmessage_time = 0;
+	cg.motd_time = 0;
 
 	chaseCam.cmd_mode_delay = 0; // cg.time
 
