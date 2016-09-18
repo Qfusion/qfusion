@@ -76,7 +76,7 @@ script:
   - if [[ "$QF_ARCH" == "x86_64" ]]; then export SDL2DIR="$HOME/.deps/$QF_ARCH" && cmake . && make; fi
   - if [[ "$QF_ARCH" == "x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.cmake -DGAME_MODULES_ONLY=1 . && make game cgame; fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then cmake -G Xcode . && xcodebuild -project qfusion.xcodeproj/ -configuration Release -target ALL_BUILD; fi
-  - if [[ "$QF_ARCH" == "android" ]]; then mkdir -p build/libs && cd ../platforms/android/projects/qfusion/jni && ln -s ../../../../../libsrcs libsrcs && ln -s ../../../../../source source && ln -s ../../../../../icons icons && ndk-build && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
+  - if [[ "$QF_ARCH" == "android" ]]; then mkdir -p build/libs && cd ../platforms/android/projects/qfusion/jni && ln -s ../../../../../libsrcs libsrcs && ln -s ../../../../../third-party third-party && ln -s ../../../../../source source && ln -s ../../../../../icons icons && ndk-build && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
 
 before_deploy:
   - cd build
