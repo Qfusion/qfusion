@@ -71,7 +71,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../libsrcs/libfreetype"
         "../libsrcs/libpng"
         "../libsrcs/libjpeg"
-        "../libsrcs/libRocket/libRocket/Include"
+        "../third-party/libRocket/Include"
         "../libsrcs/SDL2/include"
     )
 
@@ -231,7 +231,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
 endif()
 
 # We build libRocket from source
-set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../libsrcs/libRocket/libRocket)
+set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/libRocket)
 set(LIBROCKET_INCLUDE_DIR ${LIBROCKET_DIR}/Include)
 set(LIBROCKET_SOURCE_DIR ${LIBROCKET_DIR}/Source)
 
