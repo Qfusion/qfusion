@@ -17,8 +17,8 @@ include $(QFUSION_PATH)/source/android/libs/png.mk
 include $(QFUSION_PATH)/source/android/libs/theora.mk
 include $(QFUSION_PATH)/source/android/libs/vorbis.mk
 
-include $(QFUSION_PATH)/libsrcs/libRocket/libRocket/Build/android/Controls.mk
-include $(QFUSION_PATH)/libsrcs/libRocket/libRocket/Build/android/Core.mk
+include $(QFUSION_PATH)/third-party/libRocket/Build/android/Controls.mk
+include $(QFUSION_PATH)/third-party/libRocket/Build/android/Core.mk
 
 include $(QFUSION_PATH)/source/angelwrap/Android.mk
 include $(QFUSION_PATH)/source/cin/Android.mk
