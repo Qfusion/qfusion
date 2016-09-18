@@ -4,10 +4,6 @@ source/build*/
 source/*/Debug
 source/*/Release
 source/ipch
-libsrcs/angelscript/sdk/angelscript/lib/
-libsrcs/angelscript/sdk/angelscript/projects/gnuc/obj/
-libsrcs/libRocket/libRocket/lib/
-libsrcs/libRocket/libRocket/Build/obj/
 *.sdf
 *.opensdf
 *.vcxproj.user
