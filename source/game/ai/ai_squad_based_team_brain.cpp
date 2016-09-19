@@ -620,8 +620,9 @@ bool AiSquad::ShouldNotDropItemsNow() const
 
     // First reject enemies by distance
     StaticVector<PotentialStealer, AiBaseEnemyPool::MAX_TRACKED_ENEMIES> potentialStealers;
-    for (const Enemy &enemy: squadEnemyPool->TrackedEnemies())
+    for (unsigned i = 0, end = squadEnemyPool->TrackedEnemiesBufferSize(); i < end; ++i)
     {
+        const Enemy &enemy = squadEnemyPool->TrackedEnemiesBuffer()[i];
         // Check whether an enemy has been invalidated and invalidation is not processed yet to prevent crash
         if (!enemy.IsValid() || G_ISGHOSTING(enemy.ent))
             continue;

@@ -264,7 +264,7 @@ private:
     unsigned decisionRandomUpdateAt;
 
     // All known (viewed and not forgotten) enemies
-    StaticVector<Enemy, MAX_TRACKED_ENEMIES> trackedEnemies;
+    Enemy trackedEnemies[MAX_TRACKED_ENEMIES];
     // Active enemies (potential targets) in order of importance
     StaticVector<Enemy *, MAX_ACTIVE_ENEMIES> activeEnemies;
     // Scores of active enemies updated during enemies assignation
@@ -335,7 +335,8 @@ public:
 
     inline unsigned MaxTrackedEnemies() const { return maxTrackedEnemies; }
     // Note that enemies in this array should be validated by IsValid() before access to their properties
-    inline const StaticVector<Enemy, MAX_TRACKED_ENEMIES> &TrackedEnemies() const { return trackedEnemies; };
+    inline const Enemy *TrackedEnemiesBuffer() const { return trackedEnemies; };
+    inline unsigned TrackedEnemiesBufferSize() const { return maxTrackedEnemies; }
     inline const StaticVector<Enemy*, MAX_ACTIVE_ENEMIES> &ActiveEnemies() const { return activeEnemies; };
 
     virtual void Frame() override;
