@@ -23,6 +23,7 @@ class alignas(16) StaticDeque
 
 private:
     // Disable moving, and, implicitly, copying
+    StaticDeque(StaticDeque<T, N> &&that) = delete;
 
     static constexpr size_type RealChunkSize()
     {

@@ -86,9 +86,6 @@ AiBaseEnemyPool::AiBaseEnemyPool(float avgSkill)
         FailWith("skill %f: maxTrackedTargets %d + 2 > maxTrackedEnemies %d\n", AvgSkill(), maxTrackedTargets, maxEnemies);
 
     // Initialize empty slots
-    for (unsigned i = 0; i < maxTrackedEnemies; ++i)
-        trackedEnemies.push_back(Enemy());
-
     for (unsigned i = 0; i < maxTrackedAttackers; ++i)
         attackers.push_back(AttackStats());
 
@@ -551,7 +548,7 @@ void AiBaseEnemyPool::OnEnemyViewed(const edict_t *enemy)
         return;
 
     int freeSlot = -1;
-    for (unsigned i = 0; i < trackedEnemies.size(); ++i)
+    for (unsigned i = 0; i < maxTrackedEnemies; ++i)
     {
         // Use first free slot for faster access and to avoid confusion
         if (!trackedEnemies[i].ent && freeSlot < 0)
@@ -583,7 +580,7 @@ void AiBaseEnemyPool::Forget(const edict_t *enemy)
     if (!enemy)
         return;
 
-    for (unsigned i = 0; i < trackedEnemies.size(); ++i)
+    for (unsigned i = 0; i < maxTrackedEnemies; ++i)
     {
         if (trackedEnemies[i].ent == enemy)
         {
