@@ -433,7 +433,7 @@ void R_DrawShadowmaps( void )
 		rn.renderTarget = shadowmap->fbo;
 		rn.farClip = farClip;
 		rn.renderFlags = RF_SHADOWMAPVIEW|RF_FLIPFRONTFACE;
-		if( ( !shadowmap->flags & IT_DEPTH ) ) {
+		if( !( shadowmap->flags & IT_DEPTH ) ) {
 			rn.renderFlags |= RF_SHADOWMAPVIEW_RGB;
 		}
 		rn.clipFlags |= 16; // clip by far plane too
