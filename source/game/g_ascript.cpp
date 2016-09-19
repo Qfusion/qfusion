@@ -25,96 +25,6 @@ angelwrap_api_t *angelExport = NULL;
 
 //=======================================================================
 
-typedef struct
-{
-	const char * name;
-	int value;
-} asEnumVal_t;
-
-typedef struct
-{
-	const char * name;
-	const asEnumVal_t * values;
-} asEnum_t;
-
-typedef struct
-{
-	const char * declaration;
-} asFuncdef_t;
-
-typedef struct asBehavior_s
-{
-	asEBehaviours behavior;
-	const char * declaration;
-	asSFuncPtr funcPointer;
-	asECallConvTypes callConv;
-} asBehavior_t;
-
-typedef struct
-{
-	const char * declaration;
-	asSFuncPtr funcPointer;
-	asECallConvTypes callConv;
-} asMethod_t;
-
-typedef struct
-{
-	const char * declaration;
-	unsigned int offset;
-} asProperty_t;
-
-typedef struct
-{
-	const char * name;
-	asDWORD typeFlags; 
-	size_t size;
-	const asFuncdef_t * funcdefs;
-	const asBehavior_t * objBehaviors;
-	const asMethod_t * objMethods;
-	const asProperty_t * objProperties;
-	const void * stringFactory;
-	const void * stringFactory_asGeneric;
-} asClassDescriptor_t;
-
-typedef struct
-{
-	const char *declaration;
-	asSFuncPtr pointer;
-	void **asFuncPtr;
-} asglobfuncs_t;
-
-typedef struct
-{
-	const char *declaration;
-	void *pointer;
-} asglobproperties_t;
-
-//=======================================================================
-
-static void asnullfunc(void) {}
-
-#define ASLIB_LOCAL_CLASS_DESCR(x)
-
-#define ASLIB_FOFFSET(s,m)						offsetof(s,m)
-
-#define ASLIB_ENUM_VAL(name)					{ #name,(int)name }
-#define ASLIB_ENUM_VAL_NULL						{ NULL, 0 }
-
-#define ASLIB_ENUM_NULL							{ NULL, NULL }
-
-#define ASLIB_FUNCTION_DECL(type,name,params)	(#type " " #name #params)
-
-#define ASLIB_PROPERTY_DECL(type,name)			#type " " #name
-
-#define ASLIB_FUNCTION_NULL						NULL
-#define ASLIB_FUNCDEF_NULL						{ ASLIB_FUNCTION_NULL }
-#define ASLIB_BEHAVIOR_NULL						{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), asCALL_CDECL }
-#define ASLIB_METHOD_NULL						{ ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), asCALL_CDECL }
-#define ASLIB_PROPERTY_NULL						{ NULL, 0 }
-
-#define ASLIB_Malloc(s)							(aslib_import.Mem_Alloc(s,__FILE__,__LINE__))
-#define ASLIB_Free(x)							(aslib_import.Mem_Free(x,__FILE__,__LINE__))
-
 static const asEnumVal_t asConfigstringEnumVals[] =
 {
 	ASLIB_ENUM_VAL( CS_MODMANIFEST ),
@@ -595,29 +505,6 @@ static const asEnumVal_t asKeyiconEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
-static const asEnumVal_t asNavEntityFlagsEnumVals[] =
-{
-	ASLIB_ENUM_VAL( AI_NAV_REACH_AT_TOUCH ),
-	ASLIB_ENUM_VAL( AI_NAV_REACH_AT_RADIUS ),
-	ASLIB_ENUM_VAL( AI_NAV_REACH_ON_EVENT ),
-	ASLIB_ENUM_VAL( AI_NAV_REACH_IN_GROUP ),
-	ASLIB_ENUM_VAL( AI_NAV_DROPPED ),
-	ASLIB_ENUM_VAL( AI_NAV_MOVABLE ),
-	ASLIB_ENUM_VAL( AI_NAV_NOTIFY_SCRIPT ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
-static const asEnumVal_t asWeaponAimTypeEnumVals[] =
-{
-	ASLIB_ENUM_VAL( AI_WEAPON_AIM_TYPE_INSTANT_HIT ),
-	ASLIB_ENUM_VAL( AI_WEAPON_AIM_TYPE_PREDICTION ),
-	ASLIB_ENUM_VAL( AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE ),
-	ASLIB_ENUM_VAL( AI_WEAPON_AIM_TYPE_DROP ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
 static const asEnumVal_t asMiscelaneaEnumVals[] =
 {
 	ASLIB_ENUM_VAL_NULL
@@ -656,8 +543,6 @@ static const asEnum_t asEnums[] =
 	{ "meaningsofdeath_e", asMeaningsOfDeathEnumVals },
 	{ "takedamage_e", asDamageEnumVals },
 	{ "keyicon_e", asKeyiconEnumVals },
-	{ "nav_entity_flags_e", asNavEntityFlagsEnumVals },
-	{ "weapon_aim_type_e", asWeaponAimTypeEnumVals },
 	{ "miscelanea_e", asMiscelaneaEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
@@ -666,7 +551,7 @@ static const asEnum_t asEnums[] =
 /*
 * G_asRegisterEnums
 */
-static void G_asRegisterEnums( asIScriptEngine *asEngine )
+static void G_asRegisterEnums( asIScriptEngine *asEngine, const asEnum_t *asEnums )
 {
 	int i, j;
 	const asEnum_t *asEnum;
@@ -1495,99 +1380,7 @@ static const asClassDescriptor_t asScoreStatsClassDescriptor =
 	NULL, NULL					/* string factory hack */
 };
 
-//=======================================================================
 
-static const asFuncdef_t asScriptWeaponDef_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const asBehavior_t asScriptWeaponDef_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
-static const asMethod_t asScriptWeaponDef_ObjectMethods[] =
-{
-	ASLIB_METHOD_NULL
-};
-
-static const asProperty_t asScriptWeaponDef_Properties[] =
-{
-	{ ASLIB_PROPERTY_DECL(int, weaponNum), ASLIB_FOFFSET(ai_script_weapon_def_t, weaponNum) },
-	{ ASLIB_PROPERTY_DECL(int, tier), ASLIB_FOFFSET(ai_script_weapon_def_t, tier) },
-	{ ASLIB_PROPERTY_DECL(float, minRange), ASLIB_FOFFSET(ai_script_weapon_def_t, minRange) },
-	{ ASLIB_PROPERTY_DECL(float, maxRange), ASLIB_FOFFSET(ai_script_weapon_def_t, maxRange) },
-	{ ASLIB_PROPERTY_DECL(float, bestRange), ASLIB_FOFFSET(ai_script_weapon_def_t, bestRange) },
-	{ ASLIB_PROPERTY_DECL(float, projectileSpeed), ASLIB_FOFFSET(ai_script_weapon_def_t, projectileSpeed) },
-	{ ASLIB_PROPERTY_DECL(float, splashRadius), ASLIB_FOFFSET(ai_script_weapon_def_t, splashRadius) },
-	{ ASLIB_PROPERTY_DECL(float, maxSelfDamage), ASLIB_FOFFSET(ai_script_weapon_def_t, maxSelfDamage) },
-	{ ASLIB_PROPERTY_DECL(weapon_aim_type_e, aimType), ASLIB_FOFFSET(ai_script_weapon_def_t, aimType) },
-	{ ASLIB_PROPERTY_DECL(bool, isContinuousFire), ASLIB_FOFFSET(ai_script_weapon_def_t, isContinuousFire) },
-
-	ASLIB_PROPERTY_NULL
-};
-
-static const asClassDescriptor_t asScriptWeaponDefClassDescriptor =
-{
-	"ScriptWeaponDef",		             /* name */
-	asOBJ_VALUE|asOBJ_POD,	             /* object type flags */
-	sizeof(ai_script_weapon_def_t),	     /* size */
-	asScriptWeaponDef_Funcdefs,			 /* funcdefs */
-	asScriptWeaponDef_ObjectBehaviors,	 /* object behaviors */
-	asScriptWeaponDef_ObjectMethods,	 /* methods */
-	asScriptWeaponDef_Properties,		 /* properties */
-
-	NULL, NULL					         /* string factory hack */
-};
-
-//=======================================================================
-
-// CLASS: Bot
-
-static const asFuncdef_t asbot_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const asBehavior_t asbot_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
-static const asMethod_t asbot_Methods[] =
-{
-	{ ASLIB_FUNCTION_DECL(float, getEffectiveOffensiveness, ()), asFUNCTION(AI_GetBotEffectiveOffensiveness), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(void, setBaseOffensiveness, (float baseOffensiveness)), asFUNCTION(AI_SetBotBaseOffensiveness), asCALL_CDECL_OBJFIRST },
-
-	{ ASLIB_FUNCTION_DECL(void, setAttitude, (Entity @ent, int attitude)), asFUNCTION(AI_SetBotAttitude), asCALL_CDECL_OBJFIRST },
-
-	{ ASLIB_FUNCTION_DECL(void, clearExternalEntityWeights, ()), asFUNCTION(AI_ClearBotExternalEntityWeights), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(void, setExternalEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_SetBotExternalEntityWeight), asCALL_CDECL_OBJFIRST },
-
-	{ ASLIB_FUNCTION_DECL(int, get_defenceSpotId, () const), asFUNCTION(AI_BotDefenceSpotId), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(int, get_offenceSpotId, () const), asFUNCTION(AI_BotOffenceSpotId), asCALL_CDECL_OBJFIRST },
-
-	ASLIB_METHOD_NULL
-};
-
-static const asProperty_t asbot_Properties[] =
-{
-	ASLIB_PROPERTY_NULL
-};
-
-static const asClassDescriptor_t asBotClassDescriptor =
-{
-	"Bot",						/* name */
-	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
-	ai_handle_size,				/* size */
-	asbot_Funcdefs,				/* funcdefs */
-	asbot_ObjectBehaviors,		/* object behaviors */
-	asbot_Methods,				/* methods */
-	asbot_Properties,			/* properties */
-
-	NULL, NULL					/* string factory hack */
-};
 
 //=======================================================================
 
@@ -2667,29 +2460,32 @@ static const asClassDescriptor_t * const asClassesDescriptors[] =
 	&asGametypeClassDescriptor,
 	&asTeamListClassDescriptor,
 	&asScoreStatsClassDescriptor,
-	&asScriptWeaponDefClassDescriptor,
-	&asBotClassDescriptor,
 	&asGameClientDescriptor,
 	&asGameEntityClassDescriptor,
 
 	NULL
 };
 
-/*
-* G_asRegisterObjectClasses
-*/
-static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
+static void G_asRegisterObjectClassNames( asIScriptEngine *asEngine, const asClassDescriptor_t *const *asClassesDescriptors )
 {
-	int i, j;
+	int i;
 	const asClassDescriptor_t *cDescr;
 
-	// first register all class names so methods using custom classes work
 	for( i = 0; ; i++ )
 	{
 		if( !(cDescr = asClassesDescriptors[i]) )
 			break;
 		asEngine->RegisterObjectType( cDescr->name, cDescr->size, cDescr->typeFlags );
 	}
+}
+
+/*
+* G_asRegisterObjectClasses
+*/
+static void G_asRegisterObjectClasses( asIScriptEngine *asEngine, const asClassDescriptor_t *const *asClassesDescriptors )
+{
+	int i, j;
+	const asClassDescriptor_t *cDescr;
 
 	// now register object and global behaviors, then methods and properties
 	for( i = 0; ; i++ )
@@ -3479,53 +3275,6 @@ static const asglobfuncs_t asGlobFuncs[] =
 
 // ============================================================================
 
-static CScriptArrayInterface *asFunc_AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float radius, int maxSpots)
-{
-	if (maxSpots > 8)
-	{
-		G_Printf(S_COLOR_YELLOW "AI_SuggestDefencePlantingSpots(): maxSpots value %d will be limited to 8\n", maxSpots);
-		maxSpots = 8;
-	}
-
-	vec3_t spots[8];
-	unsigned numSpots = (unsigned)AI_SuggestDefencePlantingSpots(defendedEntity, radius, spots, maxSpots);
-
-	auto *ctx = angelExport->asGetActiveContext();
-	auto *engine = ctx->GetEngine();
-	auto *arrayObjectType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<Vec3>"));
-
-	CScriptArrayInterface *result = angelExport->asCreateArrayCpp( numSpots, arrayObjectType );
-	for (unsigned i = 0; i < numSpots; ++i)
-	{
-		asvec3_t *dst = (asvec3_t *)result->At( i );
-		VectorCopy(spots[i], dst->v);
-	}
-	return result;
-}
-
-static const asglobfuncs_t asAIGlobFuncs[] =
-{
-	{ "void AddNavEntity( Entity @ent, int flags )", asFUNCTION(AI_AddNavEntity), NULL },
-	{ "void RemoveNavEntity( Entity @ent )", asFUNCTION(AI_RemoveNavEntity), NULL },
-	{ "void NavEntityReached( Entity @ent )", asFUNCTION(AI_NavEntityReached), NULL },
-
-	{ "void AddDefenceSpot(int team, int id, Entity @ent, float radius)", asFUNCTION(AI_AddDefenceSpot), NULL },
-	{ "void RemoveDefenceSpot(int team, int id)", asFUNCTION(AI_RemoveDefenceSpot), NULL },
-
-	{ "void DefenceSpotAlert(int team, int id, float level, uint timeoutPeriod)", asFUNCTION(AI_DefenceSpotAlert), NULL },
-	{ "void EnableDefenceSpotAutoAlert(int team, int id)", asFUNCTION(AI_EnableDefenceSpotAutoAlert), NULL },
-	{ "void DisableDefenceSpotAutoAlert(int team, int id)", asFUNCTION(AI_DisableDefenceSpotAutoAlert), NULL },
-
-	{ "void AddOffenceSpot(int team, int id, Entity @ent)", asFUNCTION(AI_AddOffenceSpot), NULL },
-	{ "void RemoveOffenceSpot(int team, int id)", asFUNCTION(AI_RemoveOffenceSpot), NULL },
-
-	{ "array<Vec3> @SuggestDefencePlantingSpots(Entity @defendedEntity, float radius, int maxSpots)", asFUNCTION(asFunc_AI_SuggestDefencePlantingSpots), NULL },
-
-	{ NULL }
-};
-
-// ============================================================================
-
 static const asglobproperties_t asGlobProps[] =
 {
 	{ "const uint levelTime", &level.time },
@@ -4064,10 +3813,16 @@ static void G_InitializeGameModuleSyntax( asIScriptEngine *asEngine )
 	G_Printf( "* Initializing Game module syntax\n" );
 
 	// register global variables
-	G_asRegisterEnums( asEngine );
+	G_asRegisterEnums( asEngine, asEnums );
+	G_asRegisterEnums( asEngine, asAIEnums );
+
+	// first register all class names so methods using custom classes work
+	G_asRegisterObjectClassNames( asEngine, asClassesDescriptors );
+	G_asRegisterObjectClassNames( asEngine, asAIClassesDescriptors );
 
 	// register classes
-	G_asRegisterObjectClasses( asEngine );
+	G_asRegisterObjectClasses( asEngine, asClassesDescriptors );
+	G_asRegisterObjectClasses( asEngine, asAIClassesDescriptors );
 
 	// register global functions
 	G_asRegisterGlobalFunctions( asEngine, asGlobFuncs, "" );
@@ -4175,117 +3930,121 @@ static void G_asDumpAPIToFile( const char *path )
 	char string[1024];
 
 	// dump class definitions, containing methods, behaviors and properties
-	for( i = 0; ; i++ )
-	{
-		if( !(cDescr = asClassesDescriptors[i]) )
-			break;
+	const asClassDescriptor_t *const *allDescriptors[] = { asClassesDescriptors, asAIClassesDescriptors };
+    for ( const asClassDescriptor_t *const *descriptors: allDescriptors )
+    {
+        for (i = 0;; i++)
+        {
+            if (!(cDescr = descriptors[i]))
+                break;
 
-		name = cDescr->name;
-		if( strlen( path ) + strlen( name ) + 2 >= filename_size )
-		{
-			if( filename_size )
-				G_Free( filename );
-			filename_size = (strlen( path ) + strlen( name ) + 2) * 2 + 1;
-			filename = ( char * )G_Malloc( filename_size );
-		}
+            name = cDescr->name;
+            if (strlen(path) + strlen(name) + 2 >= filename_size)
+            {
+                if (filename_size)
+                    G_Free(filename);
+                filename_size = (strlen(path) + strlen(name) + 2) * 2 + 1;
+                filename = (char *) G_Malloc(filename_size);
+            }
 
-		Q_snprintfz( filename, filename_size, "%s%s.h", path, name, ".h" );
-		if( trap_FS_FOpenFile( filename, &file, FS_WRITE ) == -1 )
-		{
-			G_Printf( "G_asDumpAPIToFile: Couldn't write %s.\n", filename );
-			return;
-		}
+            Q_snprintfz(filename, filename_size, "%s%s.h", path, name, ".h");
+            if (trap_FS_FOpenFile(filename, &file, FS_WRITE) == -1)
+            {
+                G_Printf("G_asDumpAPIToFile: Couldn't write %s.\n", filename);
+                return;
+            }
 
-		// funcdefs
-		if( cDescr->funcdefs )
-		{
-			Q_snprintfz( string, sizeof( string ), "/* funcdefs */\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
+            // funcdefs
+            if (cDescr->funcdefs)
+            {
+                Q_snprintfz(string, sizeof(string), "/* funcdefs */\r\n");
+                trap_FS_Write(string, strlen(string), file);
 
-			for( j = 0; ; j++ )
-			{
-				const asFuncdef_t *funcdef = &cDescr->funcdefs[j];
-				if( !funcdef->declaration )
-					break;
+                for (j = 0;; j++)
+                {
+                    const asFuncdef_t *funcdef = &cDescr->funcdefs[j];
+                    if (!funcdef->declaration)
+                        break;
 
-				Q_snprintfz( string, sizeof( string ), "funcdef %s;\r\n", funcdef->declaration );
-				trap_FS_Write( string, strlen( string ), file );
-			}
+                    Q_snprintfz(string, sizeof(string), "funcdef %s;\r\n", funcdef->declaration);
+                    trap_FS_Write(string, strlen(string), file);
+                }
 
-			Q_snprintfz( string, sizeof( string ), "\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
-		}
+                Q_snprintfz(string, sizeof(string), "\r\n");
+                trap_FS_Write(string, strlen(string), file);
+            }
 
-		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", cDescr->name );
-		trap_FS_Write( string, strlen( string ), file );
+            Q_snprintfz(string, sizeof(string), "/**\r\n * %s\r\n */\r\n", cDescr->name);
+            trap_FS_Write(string, strlen(string), file);
 
-		Q_snprintfz( string, sizeof( string ), "class %s\r\n{\r\npublic:", cDescr->name );
-		trap_FS_Write( string, strlen( string ), file );
+            Q_snprintfz(string, sizeof(string), "class %s\r\n{\r\npublic:", cDescr->name);
+            trap_FS_Write(string, strlen(string), file);
 
-		// object properties
-		if( cDescr->objProperties )
-		{
-			Q_snprintfz( string, sizeof( string ), "\r\n\t/* object properties */\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
+            // object properties
+            if (cDescr->objProperties)
+            {
+                Q_snprintfz(string, sizeof(string), "\r\n\t/* object properties */\r\n");
+                trap_FS_Write(string, strlen(string), file);
 
-			for( j = 0; ; j++ )
-			{
-				const asProperty_t *objProperty = &cDescr->objProperties[j];
-				if( !objProperty->declaration )
-					break;
+                for (j = 0;; j++)
+                {
+                    const asProperty_t *objProperty = &cDescr->objProperties[j];
+                    if (!objProperty->declaration)
+                        break;
 
-				Q_snprintfz( string, sizeof( string ), "\t%s;\r\n", objProperty->declaration );
-				trap_FS_Write( string, strlen( string ), file );
-			}
-		}
+                    Q_snprintfz(string, sizeof(string), "\t%s;\r\n", objProperty->declaration);
+                    trap_FS_Write(string, strlen(string), file);
+                }
+            }
 
-		// object behaviors
-		if( cDescr->objBehaviors )
-		{
-			Q_snprintfz( string, sizeof( string ), "\r\n\t/* object behaviors */\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
+            // object behaviors
+            if (cDescr->objBehaviors)
+            {
+                Q_snprintfz(string, sizeof(string), "\r\n\t/* object behaviors */\r\n");
+                trap_FS_Write(string, strlen(string), file);
 
-			for( j = 0; ; j++ )
-			{
-				const asBehavior_t *objBehavior = &cDescr->objBehaviors[j];
-				if( !objBehavior->declaration )
-					break;
+                for (j = 0;; j++)
+                {
+                    const asBehavior_t *objBehavior = &cDescr->objBehaviors[j];
+                    if (!objBehavior->declaration)
+                        break;
 
-				// ignore add/remove reference behaviors as they can not be used explicitly anyway
-				if( objBehavior->behavior == asBEHAVE_ADDREF || objBehavior->behavior == asBEHAVE_RELEASE )
-					continue;
+                    // ignore add/remove reference behaviors as they can not be used explicitly anyway
+                    if (objBehavior->behavior == asBEHAVE_ADDREF || objBehavior->behavior == asBEHAVE_RELEASE)
+                        continue;
 
-				Q_snprintfz( string, sizeof( string ), "\t%s;%s\r\n", objBehavior->declaration,
-					( objBehavior->behavior == asBEHAVE_FACTORY ? " /* factory */ " : "" )
-					);
-				trap_FS_Write( string, strlen( string ), file );
-			}
-		}
+                    Q_snprintfz(string, sizeof(string), "\t%s;%s\r\n", objBehavior->declaration,
+                                (objBehavior->behavior == asBEHAVE_FACTORY ? " /* factory */ " : "")
+                    );
+                    trap_FS_Write(string, strlen(string), file);
+                }
+            }
 
-		// object methods
-		if( cDescr->objMethods )
-		{
-			Q_snprintfz( string, sizeof( string ), "\r\n\t/* object methods */\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
+            // object methods
+            if (cDescr->objMethods)
+            {
+                Q_snprintfz(string, sizeof(string), "\r\n\t/* object methods */\r\n");
+                trap_FS_Write(string, strlen(string), file);
 
-			for( j = 0; ; j++ )
-			{
-				const asMethod_t *objMethod = &cDescr->objMethods[j];
-				if( !objMethod->declaration )
-					break;
+                for (j = 0;; j++)
+                {
+                    const asMethod_t *objMethod = &cDescr->objMethods[j];
+                    if (!objMethod->declaration)
+                        break;
 
-				Q_snprintfz( string, sizeof( string ), "\t%s;\r\n", objMethod->declaration );
-				trap_FS_Write( string, strlen( string ), file );
-			}
-		}
+                    Q_snprintfz(string, sizeof(string), "\t%s;\r\n", objMethod->declaration);
+                    trap_FS_Write(string, strlen(string), file);
+                }
+            }
 
-		Q_snprintfz( string, sizeof( string ), "};\r\n\r\n" );
-		trap_FS_Write( string, strlen( string ), file );
+            Q_snprintfz(string, sizeof(string), "};\r\n\r\n");
+            trap_FS_Write(string, strlen(string), file);
 
-		trap_FS_FCloseFile( file );
+            trap_FS_FCloseFile(file);
 
-		G_Printf( "Wrote %s\n", filename );
-	}
+            G_Printf("Wrote %s\n", filename);
+        }
+    }
 
 	// globals
 	name = "globals";
@@ -4312,19 +4071,23 @@ static void G_asDumpAPIToFile( const char *path )
 		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Enums" );
 		trap_FS_Write( string, strlen( string ), file );
 
-		for( i = 0, asEnum = asEnums; asEnum->name != NULL; i++, asEnum++ )
+		const asEnum_t *const allEnumsLists[] = { asEnums, asAIEnums };
+		for ( const asEnum_t *const enumsList: allEnumsLists )
 		{
-			Q_snprintfz( string, sizeof( string ), "typedef enum\r\n{\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
-
-			for( j = 0, asEnumVal = asEnum->values; asEnumVal->name != NULL; j++, asEnumVal++ )
+			for (i = 0, asEnum = enumsList; asEnum->name != NULL; i++, asEnum++)
 			{
-				Q_snprintfz( string, sizeof( string ), "\t%s = 0x%x,\r\n", asEnumVal->name, asEnumVal->value );
-				trap_FS_Write( string, strlen( string ), file );
-			}
+				Q_snprintfz(string, sizeof(string), "typedef enum\r\n{\r\n");
+				trap_FS_Write(string, strlen(string), file);
 
-			Q_snprintfz( string, sizeof( string ), "} %s;\r\n\r\n", asEnum->name );
-			trap_FS_Write( string, strlen( string ), file );
+				for (j = 0, asEnumVal = asEnum->values; asEnumVal->name != NULL; j++, asEnumVal++)
+				{
+					Q_snprintfz(string, sizeof(string), "\t%s = 0x%x,\r\n", asEnumVal->name, asEnumVal->value);
+					trap_FS_Write(string, strlen(string), file);
+				}
+
+				Q_snprintfz(string, sizeof(string), "} %s;\r\n\r\n", asEnum->name);
+				trap_FS_Write(string, strlen(string), file);
+			}
 		}
 	}
 
@@ -4349,13 +4112,17 @@ static void G_asDumpAPIToFile( const char *path )
 	{
 		const asglobfuncs_t *func;
 
-		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Global functions" );
-		trap_FS_Write( string, strlen( string ), file );
+		Q_snprintfz(string, sizeof(string), "/**\r\n * %s\r\n */\r\n", "Global functions");
+		trap_FS_Write(string, strlen(string), file);
 
-		for( func = asGlobFuncs; func->declaration; func++ )
+		const asglobfuncs_t *const allFuncsList[] = { asGlobFuncs, asAIGlobFuncs };
+		for (const asglobfuncs_t *funcsList: allFuncsList)
 		{
-			Q_snprintfz( string, sizeof( string ), "%s;\r\n", func->declaration );
-			trap_FS_Write( string, strlen( string ), file );
+			for (func = funcsList; func->declaration; func++)
+			{
+				Q_snprintfz(string, sizeof(string), "%s;\r\n", func->declaration);
+				trap_FS_Write(string, strlen(string), file);
+			}
 		}
 
 		Q_snprintfz( string, sizeof( string ), "\r\n" );

@@ -36,7 +36,10 @@ typedef enum
 } ai_type;
 
 typedef struct ai_handle_s ai_handle_t;
-extern const size_t ai_handle_size;
+
+extern const struct asEnum_s asAIEnums[];
+extern const struct asClassDescriptor_s *asAIClassesDescriptors[];
+extern const struct asglobfuncs_s asAIGlobFuncs[];
 
 typedef enum
 {
@@ -71,14 +74,6 @@ typedef enum
 	AI_NAV_MOVABLE = 0x4000
 } ai_nav_entity_flags;
 
-typedef enum
-{
-	AI_WEAPON_AIM_TYPE_INSTANT_HIT,
-	AI_WEAPON_AIM_TYPE_PREDICTION,
-	AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE,
-	AI_WEAPON_AIM_TYPE_DROP
-} ai_weapon_aim_type;
-
 // Should be called before static entities spawn
 void AI_InitLevel( void );
 // Should be called before level and entities data cleanup
@@ -92,7 +87,8 @@ void AI_CommonFrame( void );
 // Should be called when an AI joins a team
 void AI_JoinedTeam( edict_t *ent, int team );
 
-// These functions are exported to the script API
+void AI_InitGametypeScript(class asIScriptModule *module);
+void AI_ResetGametypeScript();
 
 // Should be called when a static item is spawned or a dropped item stopped its movement
 void AI_AddNavEntity( edict_t *ent, ai_nav_entity_flags flags );
@@ -115,11 +111,6 @@ void AI_DisableDefenceSpotAutoAlert( int team, int id );
 
 void AI_AddOffenceSpot( int team, int id, edict_t *ent );
 void AI_RemoveOffenceSpot( int team, int id );
-
-// Used for GT-specific defence subgoals scripting like planting turrets.
-// It looks like a too low-level for scripts but this allows handling these subgoals entirely in scripts.
-// Other approaches to implement these subgoals are much more uglier.
-int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float searchRadius, vec3_t *spots, int maxSpots);
 
 // Bot methods accessible from scripts
 
@@ -161,46 +152,6 @@ void AI_SetBotExternalEntityWeight( ai_handle_t *ai, edict_t *ent, float weight 
 // or a negative value if bot does not have that order.
 int AI_BotDefenceSpotId( const ai_handle_t *ai );
 int AI_BotOffenceSpotId( const ai_handle_t *ai );
-
-bool GT_asBotWouldDropHealth( const gclient_t *client );
-void GT_asBotDropHealth( gclient_t *client );
-bool GT_asBotWouldDropArmor( const gclient_t *client );
-void GT_asBotDropArmor( gclient_t *client );
-
-bool GT_asBotWouldCloak( const gclient_t *client );
-void GT_asSetBotCloakEnabled( gclient_t *client, bool enabled );
-// Useful for testing any entity for cloaking
-bool GT_asIsEntityCloaking( const edict_t *ent );
-
-void GT_asBotTouchedGoal( const ai_handle_t *bot, const edict_t *goalEnt );
-void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt );
-
-// These functions return a score in range [0, 1].
-// Default score should be 0.5f, and it should be returned
-// when a GT script does not provide these function counterparts.
-// Note that offence and defence score are not complementary but independent.
-float GT_asPlayerOffenciveAbilitiesScore(const gclient_t *client);
-float GT_asPlayerDefenciveAbilitiesScore(const gclient_t *client);
-
-typedef struct ai_script_weapon_def_s
-{
-	int weaponNum;
-	int tier;
-	float minRange;
-	float maxRange;
-	float bestRange;
-	float projectileSpeed;
-	float splashRadius;
-	float maxSelfDamage;
-	ai_weapon_aim_type aimType;
-	bool isContinuousFire;
-} ai_script_weapon_def_t;
-
-int GT_asGetScriptWeaponsNum(const gclient_t *client);
-bool GT_asGetScriptWeaponDef(const gclient_t *client, int scriptWeaponNum, ai_script_weapon_def_t *weaponDef);
-int GT_asGetScriptWeaponCooldown(const gclient_t *client, int scriptWeaponNum);
-bool GT_asSelectScriptWeapon(gclient_t *client, int scriptWeaponNum);
-bool GT_asFireScriptWeapon(gclient_t *client, int scriptWeaponNum);
 
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );

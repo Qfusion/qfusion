@@ -134,24 +134,6 @@ typedef struct
 	void *clientCommandFunc;
 	void *shutdownFunc;
 
-	void *botWouldDropHealthFunc;
-	void *botDropHealthFunc;
-	void *botWouldDropArmorFunc;
-	void *botDropArmorFunc;
-	void *botWouldCloakFunc;
-	void *setBotCloakEnabledFunc;
-	void *isEntityCloakingFunc;
-	void *playerOffenciveAbilitiesScoreFunc;
-	void *playerDefenciveAbilitiesScoreFunc;
-	void *onBotTouchedGoalFunc;
-	void *onBotReachedGoalRadiusFunc;
-
-	void *getScriptWeaponsNumFunc;
-	void *getScriptWeaponDefFunc;
-	void *getScriptWeaponCooldownFunc;
-	void *selectScriptWeaponFunc;
-	void *fireScriptWeaponFunc;
-
 	int spawnableItemsMask;
 	int respawnableItemsMask;
 	int dropableItemsMask;
