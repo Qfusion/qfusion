@@ -4,3 +4,6 @@
 [submodule "third-party/angelscript"]
 	path = third-party/angelscript
 	url = https://github.com/Qfusion/angelscript.git
+[submodule "libsrcs"]
+	path = libsrcs
+	url = https://github.com/Qfusion/qfusion-libsrcs.git
