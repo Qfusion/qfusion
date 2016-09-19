@@ -66,6 +66,14 @@ constexpr int AI_GOAL_SR_LR_MILLIS = 1500;
 
 constexpr auto MASK_AISOLID = CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP;
 
+typedef enum
+{
+	AI_WEAPON_AIM_TYPE_INSTANT_HIT,
+	AI_WEAPON_AIM_TYPE_PREDICTION,
+	AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE,
+	AI_WEAPON_AIM_TYPE_DROP
+} ai_weapon_aim_type;
+
 ai_weapon_aim_type BuiltinWeaponAimType(int builtinWeapon);
 
 inline bool IsBuiltinWeaponContinuousFire(int builtinWeapon)
@@ -74,6 +82,46 @@ inline bool IsBuiltinWeaponContinuousFire(int builtinWeapon)
 }
 
 int BuiltinWeaponTier(int builtinWeapon);
+
+bool GT_asBotWouldDropHealth( const gclient_t *client );
+void GT_asBotDropHealth( gclient_t *client );
+bool GT_asBotWouldDropArmor( const gclient_t *client );
+void GT_asBotDropArmor( gclient_t *client );
+
+bool GT_asBotWouldCloak( const gclient_t *client );
+void GT_asSetBotCloakEnabled( gclient_t *client, bool enabled );
+// Useful for testing any entity for cloaking
+bool GT_asIsEntityCloaking( const edict_t *ent );
+
+void GT_asBotTouchedGoal( const ai_handle_t *bot, const edict_t *goalEnt );
+void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt );
+
+// These functions return a score in range [0, 1].
+// Default score should be 0.5f, and it should be returned
+// when a GT script does not provide these function counterparts.
+// Note that offence and defence score are not complementary but independent.
+float GT_asPlayerOffenciveAbilitiesScore(const gclient_t *client);
+float GT_asPlayerDefenciveAbilitiesScore(const gclient_t *client);
+
+typedef struct ai_script_weapon_def_s
+{
+    int weaponNum;
+    int tier;
+    float minRange;
+    float maxRange;
+    float bestRange;
+    float projectileSpeed;
+    float splashRadius;
+    float maxSelfDamage;
+    ai_weapon_aim_type aimType;
+    bool isContinuousFire;
+} ai_script_weapon_def_t;
+
+int GT_asGetScriptWeaponsNum(const gclient_t *client);
+bool GT_asGetScriptWeaponDef(const gclient_t *client, int scriptWeaponNum, ai_script_weapon_def_t *weaponDef);
+int GT_asGetScriptWeaponCooldown(const gclient_t *client, int scriptWeaponNum);
+bool GT_asSelectScriptWeapon(gclient_t *client, int scriptWeaponNum);
+bool GT_asFireScriptWeapon(gclient_t *client, int scriptWeaponNum);
 
 #include "ai_aas_world.h"
 #include "vec3.h"
