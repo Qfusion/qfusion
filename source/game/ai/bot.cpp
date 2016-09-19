@@ -146,7 +146,8 @@ void Bot::RegisterVisibleEnemies()
     // It may cause data loss (far enemies may have higher logical priority),
     // but in a common good case (when there are few visible enemies) it preserves data,
     // and in the worst case mentioned above it does not act weird from player POV and prevents server hang up.
-    StaticVector<EntAndDistance, MAX_CLIENTS> candidateTargets;
+    // Note: non-client entities also may be candidate targets.
+    StaticVector<EntAndDistance, MAX_EDICTS> candidateTargets;
 
     for (int i = 1; i < game.numentities; ++i)
     {
@@ -175,6 +176,8 @@ void Bot::RegisterVisibleEnemies()
     // Select inPVS/visible targets first to aid instruction cache, do not call callbacks in loop
     StaticVector<edict_t *, MAX_CLIENTS> targetsInPVS;
     StaticVector<edict_t *, MAX_CLIENTS> visibleTargets;
+
+    static_assert(AiBaseEnemyPool::MAX_TRACKED_ENEMIES <= MAX_CLIENTS, "targetsInPVS capacity may be exceeded");
 
     for (int i = 0, end = std::min(candidateTargets.size(), botBrain.MaxTrackedEnemies()); i < end; ++i)
     {
