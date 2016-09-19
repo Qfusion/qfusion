@@ -54,7 +54,7 @@ protected:
     // These weights completely override internal weights
     // (If an external weight != 0, the external weight is used).
     // Weights may be negative (in this case an entity will be excluded from potential goals).
-    float externalEntityWeights[MAX_EDICTS];
+    float overriddenEntityWeights[MAX_EDICTS];
 
     AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
 
@@ -96,7 +96,7 @@ protected:
     }
     inline bool IsGoalATopTierItem(const Goal *goal) const
     {
-        return goal && goal->IsTopTierItem(externalEntityWeights);
+        return goal && goal->IsTopTierItem(overriddenEntityWeights);
     }
 
     int GoalAasAreaNum() const;
@@ -148,15 +148,14 @@ public:
         return longTermGoal || shortTermGoal || specialGoal;
     }
 
-    void ClearExternalEntityWeights()
+    void ClearOverriddenEntityWeights()
     {
-        memset(externalEntityWeights, 0, sizeof(externalEntityWeights));
+        memset(overriddenEntityWeights, 0, sizeof(overriddenEntityWeights));
     }
-    // Sets an external entity weight.
     // This weight overrides internal one computed by this brain itself.
-    void SetExternalEntityWeight(const edict_t *ent, float weight)
+    void OverrideEntityWeight(const edict_t *ent, float weight)
     {
-        externalEntityWeights[ENTNUM(const_cast<edict_t*>(ent))] = weight;
+        overriddenEntityWeights[ENTNUM(const_cast<edict_t*>(ent))] = weight;
     }
 
     void ClearAllGoals();

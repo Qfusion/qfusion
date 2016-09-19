@@ -32,7 +32,7 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowed
     ClearInternalEntityWeights();
     // External weights are cleared by AI code only once in this constructor.
     // Their values are completely managed by external code.
-    ClearExternalEntityWeights();
+    ClearOverriddenEntityWeights();
 }
 
 bool AiBaseBrain::IsCloseToGoal(const Goal *goal, float proximityThreshold) const
@@ -105,10 +105,10 @@ void AiBaseBrain::UpdatePotentialGoalsWeights() { }
 
 float AiBaseBrain::GetEntityWeight(int entNum) const
 {
-    float externalWeight = externalEntityWeights[entNum];
+    float overriddenWeight = overriddenEntityWeights[entNum];
     // Note: a negative value of an external weight overrides corresponding internal weight too.
-    if (externalWeight != 0.0f)
-        return externalWeight;
+    if (overriddenWeight != 0.0f)
+        return overriddenWeight;
     return internalEntityWeights[entNum];
 }
 

@@ -100,8 +100,8 @@ void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt )
 // Default score should be 0.5f, and it should be returned
 // when a GT script does not provide these function counterparts.
 // Note that offence and defence score are not complementary but independent.
-float GT_asPlayerOffenciveAbilitiesScore(const gclient_t *client);
-float GT_asPlayerDefenciveAbilitiesScore(const gclient_t *client);
+float GT_asPlayerOffensiveAbilitiesRating(const gclient_t *client);
+float GT_asPlayerDefenciveAbilitiesRating(const gclient_t *client);
 
 typedef struct ai_script_weapon_def_s
 {

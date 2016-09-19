@@ -139,12 +139,12 @@ void AI_SetBotAttitude( ai_handle_t *ai, edict_t *ent, int attitude );
 // Clears all external entity weights for a bot that are used in search for a goal.
 // This means all internal weights are not overridden by external weights anymore.
 // Note that internal weights are not affected by this call.
-void AI_ClearBotExternalEntityWeights( ai_handle_t *ai );
+void AI_ClearBotOverriddenEntityWeights( ai_handle_t *ai );
 // Sets a weight for the ent that is used in search for a goal.
 // Note that if there is no nav entity corresponding to the ent, this function has no effect.
 // If a zero weight is set, an internal weight computed by hardcoded bot logic is used.
 // If a weight is negative, the ent will be ignored in search for a goal.
-void AI_SetBotExternalEntityWeight( ai_handle_t *ai, edict_t *ent, float weight );
+void AI_OverrideBotEntityWeight( ai_handle_t *ai, edict_t *ent, float weight );
 
 // Useful for checking whether a bot is a defender or an attacker.
 // Note that bot may be neither defender not attacker.

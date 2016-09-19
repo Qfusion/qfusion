@@ -98,8 +98,8 @@ static const asMethod_t asbot_Methods[] =
 
     { ASLIB_FUNCTION_DECL(void, setAttitude, (Entity @ent, int attitude)), asFUNCTION(AI_SetBotAttitude), asCALL_CDECL_OBJFIRST },
 
-    { ASLIB_FUNCTION_DECL(void, clearExternalEntityWeights, ()), asFUNCTION(AI_ClearBotExternalEntityWeights), asCALL_CDECL_OBJFIRST },
-    { ASLIB_FUNCTION_DECL(void, setExternalEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_SetBotExternalEntityWeight), asCALL_CDECL_OBJFIRST },
+    { ASLIB_FUNCTION_DECL(void, clearOverriddenEntityWeights, ()), asFUNCTION(AI_ClearBotOverriddenEntityWeights), asCALL_CDECL_OBJFIRST },
+    { ASLIB_FUNCTION_DECL(void, overrideEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_OverrideBotEntityWeight), asCALL_CDECL_OBJFIRST },
 
     { ASLIB_FUNCTION_DECL(int, get_defenceSpotId, () const), asFUNCTION(AI_BotDefenceSpotId), asCALL_CDECL_OBJFIRST },
     { ASLIB_FUNCTION_DECL(int, get_offenceSpotId, () const), asFUNCTION(AI_BotOffenceSpotId), asCALL_CDECL_OBJFIRST },
@@ -214,16 +214,16 @@ void AI_SetBotAttitude(ai_handle_t *ai, edict_t *ent, int attitude)
         ai->botRef->SetAttitude(ent, attitude);
 }
 
-void AI_ClearBotExternalEntityWeights(ai_handle_t *ai)
+void AI_ClearBotOverriddenEntityWeights(ai_handle_t *ai)
 {
     if (ai)
-        ai->botRef->ClearExternalEntityWeights();
+        ai->botRef->ClearOverriddenEntityWeights();
 }
 
-void AI_SetBotExternalEntityWeight(ai_handle_t *ai, edict_t *ent, float weight)
+void AI_OverrideBotEntityWeight(ai_handle_t *ai, edict_t *ent, float weight)
 {
     if (ai && ent)
-        ai->botRef->SetExternalEntityWeight(ent, weight);
+        ai->botRef->OverrideEntityWeight(ent, weight);
 }
 
 int AI_BotDefenceSpotId(const ai_handle_t *ai)
@@ -615,7 +615,7 @@ void AI_ResetGametypeScript()
 }
 
 static auto botWouldDropHealthFunc =
-    gtAIFunctionsRegistry.Function1<bool, const gclient_t*>("bool GT_BotWouldDropHealth( Client @client )", false);
+    gtAIFunctionsRegistry.Function1<bool, const gclient_t*>("bool GT_BotWouldDropHealth( const Client @client )", false);
 
 bool GT_asBotWouldDropHealth(const gclient_t *client)
 {
@@ -631,7 +631,7 @@ void GT_asBotDropHealth( gclient_t *client )
 }
 
 static auto botWouldDropArmorFunc =
-    gtAIFunctionsRegistry.Function1<bool, const gclient_t*>("bool GT_BotWouldDropArmor( Client @client )", false);
+    gtAIFunctionsRegistry.Function1<bool, const gclient_t*>("bool GT_BotWouldDropArmor( const Client @client )", false);
 
 bool GT_asBotWouldDropArmor( const gclient_t *client )
 {
@@ -647,7 +647,7 @@ void GT_asBotDropArmor( gclient_t *client )
 }
 
 static auto botWouldCloakFunc =
-    gtAIFunctionsRegistry.Function1<bool, const gclient_t*>("bool GT_BotWouldCloak( Client @client )", false);
+    gtAIFunctionsRegistry.Function1<bool, const gclient_t*>("bool GT_BotWouldCloak( const Client @client )", false);
 
 bool GT_asBotWouldCloak( const gclient_t *client )
 {
@@ -664,7 +664,7 @@ void GT_asSetBotCloakEnabled(gclient_t *client, bool enabled)
 }
 
 static auto isEntityCloakingFunc =
-    gtAIFunctionsRegistry.Function1<bool, const edict_t*>("bool GT_IsEntityCloaking( Entity @ent )", false);
+    gtAIFunctionsRegistry.Function1<bool, const edict_t*>("bool GT_IsEntityCloaking( const Entity @ent )", false);
 
 bool GT_asIsEntityCloaking(const edict_t *ent)
 {
@@ -689,22 +689,22 @@ void GT_asBotReachedGoalRadius(const ai_handle_t *bot, const edict_t *goalEnt)
     botReachedGoalRadiusFunc(bot, goalEnt);
 }
 
-static auto playerOffenciveAbilitiesScoreFunc =
+static auto playerOffensiveAbilitiesRatingFunc =
     gtAIFunctionsRegistry.Function1<float, const gclient_t*>(
-        "float GT_PlayerOffenciveAbilitiesScore( Client @client )", 0.5f);
+        "float GT_PlayerOffensiveAbilitiesRating( const Client @client )", 0.5f);
 
-float GT_asPlayerOffenciveAbilitiesScore(const gclient_t *client)
+float GT_asPlayerOffensiveAbilitiesRating(const gclient_t *client)
 {
-    return playerOffenciveAbilitiesScoreFunc(client);
+    return playerOffensiveAbilitiesRatingFunc(client);
 }
 
-static auto playerDefenciveAbilitiesScoreFunc =
+static auto playerDefenciveAbilitiesRatingFunc =
     gtAIFunctionsRegistry.Function1<float, const gclient_t*>(
-        "float GT_PlayerDefenciveAbilitiesScore( Client @client )", 0.5f);
+        "float GT_PlayerDefenciveAbilitiesRating( const Client @client )", 0.5f);
 
-float GT_asPlayerDefenciveAbilitiesScore(const gclient_t *client)
+float GT_asPlayerDefenciveAbilitiesRating(const gclient_t *client)
 {
-    return playerDefenciveAbilitiesScoreFunc(client);
+    return playerDefenciveAbilitiesRatingFunc(client);
 }
 
 static auto getScriptWeaponsNumFunc =
