@@ -467,7 +467,6 @@ int RFB_GetSamples( int object )
 void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt )
 {
 	int bits;
-	int error;
 	int destObj;
 	int dx, dy, dw, dh;
 	r_fbo_t *fbo;
@@ -559,8 +558,7 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
 #endif
 
-	error = qglGetError();
-	assert( error == GL_NO_ERROR );
+	assert( qglGetError() == GL_NO_ERROR );
 }
 
 /*
