@@ -1499,8 +1499,10 @@ static void Mod_Q2LoadTexinfo( const lump_t *l )
 		Q_snprintfz( out->texture, sizeof( out->texture ), "textures/%s", in->texture );
 		COM_StripExtension( out->texture );
 
-		for( j = 0; j < 8; j++ )
+		for( j = 0; j < 4; j++ ) {
 			out->vecs[0][j] = LittleFloat( in->vecs[0][j] );
+			out->vecs[1][j] = LittleFloat( in->vecs[1][j] );
+		}
 
 		out->numframes = 1;
 		out->flags = LittleLong( in->flags );
@@ -2470,8 +2472,10 @@ static void Mod_Q1LoadTexinfo( const lump_t *l )
 
 		Q_snprintfz( out->texture, sizeof( out->texture ), miptex->texture );
 
-		for( j = 0; j < 8; j++ )
+		for( j = 0; j < 4; j++ ) {
 			out->vecs[0][j] = LittleFloat( in->vecs[0][j] );
+			out->vecs[1][j] = LittleFloat( in->vecs[1][j] );
+		}
 
 		out->flags = miptex->flags;
 		out->numframes = 1;
