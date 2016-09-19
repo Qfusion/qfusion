@@ -74,7 +74,7 @@ void AiObjectiveBasedTeamBrain::ClearExternalEntityWeights(const edict_t *ent)
             continue;
         if (player->r.client->team != this->team)
             continue;
-        player->ai->botRef->SetExternalEntityWeight(ent, 0.0f);
+        player->ai->botRef->OverrideEntityWeight(ent, 0.0f);
     }
 }
 
@@ -263,12 +263,12 @@ void AiObjectiveBasedTeamBrain::ResetBotOrders(Bot *bot)
 {
     bot->ClearDefenceAndOffenceSpots();
     for (const auto &defenceSpot: defenceSpots)
-        bot->SetExternalEntityWeight(defenceSpot.entity, 0.0f);
+        bot->OverrideEntityWeight(defenceSpot.entity, 0.0f);
     for (const auto &offenceSpot: offenceSpots)
-        bot->SetExternalEntityWeight(offenceSpot.entity, 0.0f);
+        bot->OverrideEntityWeight(offenceSpot.entity, 0.0f);
     bot->SetBaseOffensiveness(0.5f);
     for (int i = 1; i <= gs.maxclients; ++i)
-        bot->SetExternalEntityWeight(game.edicts + i, 0.0f);
+        bot->OverrideEntityWeight(game.edicts + i, 0.0f);
 }
 
 void AiObjectiveBasedTeamBrain::ResetAllBotsOrders()
@@ -382,7 +382,7 @@ void AiObjectiveBasedTeamBrain::ComputeDefenceRawScore(Candidates &candidates)
         weaponScore = 1.0f / Q_RSqrt(weaponScore + 0.001f);
 
         botAndScore.rawScore = resistanceScore * weaponScore *
-            botAndScore.bot->ai->botRef->PlayerDefenciveAbilitiesScore();
+            botAndScore.bot->ai->botRef->PlayerDefenciveAbilitiesRating();
     }
 }
 
@@ -446,7 +446,7 @@ void AiObjectiveBasedTeamBrain::ComputeOffenceRawScore(Candidates &candidates)
             score *= 4.0f;
         if (HasQuad(botAndScore.bot))
             score *= 4.0f;
-        score *= botAndScore.bot->ai->botRef->PlayerOffenciveAbilitiesScore();
+        score *= botAndScore.bot->ai->botRef->PlayerOffenciveAbilitiesRating();
         botAndScore.rawScore = score;
     }
 }
@@ -479,7 +479,7 @@ void AiObjectiveBasedTeamBrain::UpdateDefendersStatus(unsigned defenceSpotNum)
             else
                 distanceFactor = distance / spot.radius;
         }
-        bot->ai->botRef->SetExternalEntityWeight(spot.entity, 12.0f * distanceFactor);
+        bot->ai->botRef->OverrideEntityWeight(spot.entity, 12.0f * distanceFactor);
         bot->ai->botRef->SetBaseOffensiveness(1.0f - distanceFactor);
     }
 }
@@ -494,9 +494,9 @@ void AiObjectiveBasedTeamBrain::UpdateAttackersStatus(unsigned offenceSpotNum)
         // If bot is not in squad, set an offence spot weight to a value of an ordinary valuable item.
         // Thus bots will not attack alone and will grab some items instead in order to prepare to attack.
         if (bot->ai->botRef->IsInSquad())
-            bot->ai->botRef->SetExternalEntityWeight(spotEnt, 9.0f);
+            bot->ai->botRef->OverrideEntityWeight(spotEnt, 9.0f);
         else
-            bot->ai->botRef->SetExternalEntityWeight(spotEnt, 3.0f);
+            bot->ai->botRef->OverrideEntityWeight(spotEnt, 3.0f);
         bot->ai->botRef->SetBaseOffensiveness(0.0f);
     }
 }
@@ -537,9 +537,9 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier, 
             float squareDistance = DistanceSquared(botOrigin, carrierOrigin);
             // The carrier is too far, hurry up to support it
             if (squareDistance > 768.0f * 768.0f)
-                botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 9.0f);
+                botAndScore.bot->ai->botRef->OverrideEntityWeight(carrier, 9.0f);
             else
-                botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 4.5f);
+                botAndScore.bot->ai->botRef->OverrideEntityWeight(carrier, 4.5f);
         }
         return;
     }
@@ -553,7 +553,7 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier, 
         // The carrier is too far, hurry up to support it
         if (squareDistance > 768.0f * 768.0f)
         {
-            botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 9.0f);
+            botAndScore.bot->ai->botRef->OverrideEntityWeight(carrier, 9.0f);
             continue;
         }
         trace_t trace;
@@ -561,19 +561,19 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier, 
         // The carrier is not visible, hurry up to support it
         if (trace.fraction != 1.0f && carrier != game.edicts + trace.ent)
         {
-            botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 4.5f);
+            botAndScore.bot->ai->botRef->OverrideEntityWeight(carrier, 4.5f);
             continue;
         }
         Vec3 groundedBotOrigin(botOrigin);
         if (!groundTraceCache->TryDropToFloor(botAndScore.bot, 64.0f, groundedBotOrigin.Data()))
         {
-            botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 4.5f);
+            botAndScore.bot->ai->botRef->OverrideEntityWeight(carrier, 4.5f);
             continue;
         }
         int botAreaNum = aasWorld->FindAreaNum(groundedBotOrigin);
         if (!botAreaNum)
         {
-            botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 4.5f);
+            botAndScore.bot->ai->botRef->OverrideEntityWeight(carrier, 4.5f);
             continue;
         }
         int travelTime = routeCache->TravelTimeToGoalArea(botAreaNum, groundedBotOrigin, carrierAreaNum,
@@ -582,7 +582,7 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier, 
         // AAS travel time is given in seconds^-2 and lowest feasible value is 1
         if (!travelTime || travelTime > 250)
         {
-            botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 4.5f);
+            botAndScore.bot->ai->botRef->OverrideEntityWeight(carrier, 4.5f);
             continue;
         };
         // Decrease carrier weight if bot is already close to it
@@ -590,7 +590,7 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders(const edict_t *carrier, 
         float distanceFactor = distance / 768.0f;
         if (distanceFactor < 0.25f)
             distanceFactor = 0.0f;
-        botAndScore.bot->ai->botRef->SetExternalEntityWeight(carrier, 4.5f * distanceFactor);
+        botAndScore.bot->ai->botRef->OverrideEntityWeight(carrier, 4.5f * distanceFactor);
     }
 }
 

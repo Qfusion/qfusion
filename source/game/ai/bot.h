@@ -88,13 +88,13 @@ public:
     {
         botBrain.SetAttitude(ent, attitude);
     }
-    inline void ClearExternalEntityWeights()
+    inline void ClearOverriddenEntityWeights()
     {
-        botBrain.ClearExternalEntityWeights();
+        botBrain.ClearOverriddenEntityWeights();
     }
-    inline void SetExternalEntityWeight(const edict_t *ent, float weight)
+    inline void OverrideEntityWeight(const edict_t *ent, float weight)
     {
-        botBrain.SetExternalEntityWeight(ent, weight);
+        botBrain.OverrideEntityWeight(ent, weight);
     }
 
     inline float GetBaseOffensiveness() const { return botBrain.GetBaseOffensiveness(); }
@@ -146,13 +146,13 @@ public:
     {
         return GT_asIsEntityCloaking(self);
     }
-    inline float PlayerDefenciveAbilitiesScore() const
+    inline float PlayerDefenciveAbilitiesRating() const
     {
-        return GT_asPlayerDefenciveAbilitiesScore(self->r.client);
+        return GT_asPlayerDefenciveAbilitiesRating(self->r.client);
     }
-    inline float PlayerOffenciveAbilitiesScore() const
+    inline float PlayerOffenciveAbilitiesRating() const
     {
-        return GT_asPlayerOffenciveAbilitiesScore(self->r.client);
+        return GT_asPlayerOffensiveAbilitiesRating(self->r.client);
     }
     inline int DefenceSpotId() const { return defenceSpotId; }
     inline int OffenceSpotId() const { return offenceSpotId; }
