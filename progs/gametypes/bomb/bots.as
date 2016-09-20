@@ -24,7 +24,7 @@ void BOMB_SetEntityGoalWeightForTeam( int teamNum, Entity @goal, float weight )
     {
         Bot @bot = team.ent( i ).client.getBot();
         if ( @bot != null )
-            bot.setExternalEntityWeight( goal, weight );
+            bot.overrideEntityWeight( goal, weight );
     }
 }
 
@@ -84,7 +84,7 @@ void BOMB_SetupNewBotsRound()
     {
         Bot @bot = G_GetClient( i ).getBot();
         if ( @bot != null )
-            bot.clearExternalEntityWeights();
+            bot.clearOverriddenEntityWeights();
     }
     
     @BOMB_BOTS_SITE = @BOMB_PickRandomTargetSite();

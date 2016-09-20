@@ -629,7 +629,7 @@ class cTurret
         if ( GetPlayer( this.client ).playerClass.tag != PLAYERCLASS_ENGINEER )
             return;
 
-        bot.setExternalEntityWeight( this.bodyEnt, 0.0f );
+        bot.overrideEntityWeight( this.bodyEnt, 0.0f );
         
         if ( levelTime - this.lastPainTime > 4000 )
             return;
@@ -648,7 +648,7 @@ class cTurret
         }       
     
         // Investigate what's up
-        bot.setExternalEntityWeight( this.bodyEnt, 12.0f );
+        bot.overrideEntityWeight( this.bodyEnt, 12.0f );
     }
 }
 

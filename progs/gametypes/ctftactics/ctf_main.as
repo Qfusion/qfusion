@@ -325,7 +325,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-bool GT_BotWouldDropHealth( Client @client )
+bool GT_BotWouldDropHealth( const Client @client )
 {
     if ( @client == null )
         return false;
@@ -347,7 +347,7 @@ void GT_BotDropHealth( Client @client )
         CTFT_DropHealth( client );
 }
 
-bool GT_BotWouldDropArmor( Client @client )
+bool GT_BotWouldDropArmor( const Client @client )
 {
     if ( @client == null )
         return false;
@@ -369,7 +369,7 @@ void GT_BotDropArmor( Client @client )
         CTFT_DropArmor( client, "Yellow Armor" );
 }
 
-bool GT_BotWouldCloak( Client @client )
+bool GT_BotWouldCloak( const Client @client )
 {
     if ( @client == null )
         return false;
@@ -390,7 +390,7 @@ bool GT_BotWouldCloak( Client @client )
     return true;
 }
 
-bool GT_IsEntityCloaking( Entity @ent )
+bool GT_IsEntityCloaking( const Entity @ent )
 {
     if ( @ent == null || @ent.client == null )
         return false;
@@ -417,7 +417,7 @@ void GT_SetBotCloakEnabled( Client @client, bool enabled )
         player.deactivateInvisibility();
 }
 
-float GT_PlayerOffenciveAbilitiesScore( Client @client )
+float GT_PlayerOffensiveAbilitiesRating( const Client @client )
 {
     if ( @client != null )
     {
@@ -436,7 +436,7 @@ float GT_PlayerOffenciveAbilitiesScore( Client @client )
     return 0.5f;
 }
 
-float GT_PlayerDefenciveAbilitiesScore( Client @client )
+float GT_PlayerDefenciveAbilitiesRating( const Client @client )
 {
     if ( @client != null )
     {
@@ -639,7 +639,7 @@ void CTFT_UpdateEngineerExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entit
 
     // Set zero weight for the common case.
     // Even if an entity is a planting spot, its weight should be reset unless it needs planting and the bot should do it.
-    bot.setExternalEntityWeight( goal, 0.0f );
+    bot.overrideEntityWeight( goal, 0.0f );
 
     // Do not try to plant turrets carrying a flag 
     if ( ( ent.effects & EF_CARRIER ) != 0 )
@@ -675,7 +675,7 @@ void CTFT_UpdateEngineerExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entit
         return;
 
     // Set a huge value to override the value of defence spot entity
-    bot.setExternalEntityWeight( goal, 999.0f );
+    bot.overrideEntityWeight( goal, 999.0f );
 }
 
 void CTFT_UpdateMedicExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @goal )
@@ -687,9 +687,9 @@ void CTFT_UpdateMedicExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @
         return;
 
     if ( ( ent.effects & EF_CARRIER ) == 0 )
-        bot.setExternalEntityWeight( goal, 5.0f );
+        bot.overrideEntityWeight( goal, 5.0f );
     else
-        bot.setExternalEntityWeight( goal, 1.5f );
+        bot.overrideEntityWeight( goal, 1.5f );
 }
 
 void CTFT_UpdateGruntExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @goal )
@@ -702,14 +702,14 @@ void CTFT_UpdateGruntExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @
 
     if ( !player.bomb.botShouldPickup )
     {
-        bot.setExternalEntityWeight( goal, 0.0f );
+        bot.overrideEntityWeight( goal, 0.0f );
         return;
     }    
 
     if ( ( ent.effects & EF_CARRIER ) == 0 )
-        bot.setExternalEntityWeight( goal, 999.0f );
+        bot.overrideEntityWeight( goal, 999.0f );
     else
-        bot.setExternalEntityWeight( goal, 0.5f );
+        bot.overrideEntityWeight( goal, 0.5f );
 }
 
 void CTFT_UpdateBotExtraGoals( Entity @ent )
@@ -748,7 +748,7 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
                 // the flag is at our base, return to the base
                 if ( ( teamBase.owner.effects & EF_CARRIER ) != 0 )
                 {
-                    bot.setExternalEntityWeight( teamBase.owner, 9.0f );
+                    bot.overrideEntityWeight( teamBase.owner, 9.0f );
                 }
                 // our flag is stolen    
                 else
@@ -757,12 +757,12 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
                     // return to our base
                     if ( botToHomeBaseDist > 768.0f )
                     {
-                        bot.setExternalEntityWeight( teamBase.owner, 9.0f );
+                        bot.overrideEntityWeight( teamBase.owner, 9.0f );
                     }
                     // do not camp at our flag spot, hide somewhere else
                     else 
                     {      
-                        bot.setExternalEntityWeight( teamBase.owner, 9.0f * ( botToHomeBaseDist / 768.0f ) );
+                        bot.overrideEntityWeight( teamBase.owner, 9.0f * ( botToHomeBaseDist / 768.0f ) );
                     }
                 }
             }
@@ -770,7 +770,7 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
 
         // it's team flag, dropped somewhere
         if ( @teamBase.carrier != @teamBase.owner && @teamBase.carrier.client == null )
-            bot.setExternalEntityWeight( teamBase.carrier, 9.0f );
+            bot.overrideEntityWeight( teamBase.carrier, 9.0f );
     } 
 
     // CTF:T addition: 
@@ -784,14 +784,14 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
     if ( @enemyBase != null )
     { 
         if ( @enemyBase.carrier != @enemyBase.owner && @enemyBase.carrier.client == null )
-            bot.setExternalEntityWeight( enemyBase.carrier, 9.0f );
+            bot.overrideEntityWeight( enemyBase.carrier, 9.0f );
 
         if ( @enemyBase.carrier != @enemyBase.owner )
         {
             // it's team flag, dropped somewhere
             if ( @enemyBase.carrier.client == null )
             {
-                bot.setExternalEntityWeight( enemyBase.carrier, 9.0f );
+                bot.overrideEntityWeight( enemyBase.carrier, 9.0f );
             }
             // If the bot is roaming
             else if ( bot.defenceSpotId == -1 && bot.offenceSpotId == -1 )
@@ -799,15 +799,15 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
                 // Attack the enemy base (but no flag spot itself).
                 float botToEnemyBaseDist = enemyBase.owner.origin.distance( ent.origin );
                 if ( botToEnemyBaseDist < 384.0f )
-                    bot.setExternalEntityWeight( enemyBase.owner, 0.0f );
+                    bot.overrideEntityWeight( enemyBase.owner, 0.0f );
                 else
-                    bot.setExternalEntityWeight( enemyBase.owner, 9.0f );
+                    bot.overrideEntityWeight( enemyBase.owner, 9.0f );
             }
         }
         else if ( bot.defenceSpotId == -1 && bot.offenceSpotId == -1 )
         {
             // Roaming bots should get the enemy flag, but its weight is lower than for attackers
-            bot.setExternalEntityWeight( enemyBase.owner, 3.5f );
+            bot.overrideEntityWeight( enemyBase.owner, 3.5f );
         }
     }
 
@@ -821,9 +821,9 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
                 continue;
             
             if ( CTFT_isDispenserCooldown( ent ) )
-                bot.setExternalEntityWeight( goal, 0.0f );
+                bot.overrideEntityWeight( goal, 0.0f );
             else
-                bot.setExternalEntityWeight( goal, 1.0f );
+                bot.overrideEntityWeight( goal, 1.0f );
         }
 
         if ( player.playerClass.tag == PLAYERCLASS_ENGINEER )
@@ -1140,7 +1140,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
         // If bot class might have been reset, weights are invalid.
         // Since external entity weights are not managed by bot code,
         // they should be cleaned up manually.
-        client.getBot().clearExternalEntityWeights();
+        client.getBot().clearOverriddenEntityWeights();
         if ( player.botPendingClass != -1 )
         {
             player.setPlayerClass( player.botPendingClass );

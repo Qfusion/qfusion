@@ -638,7 +638,7 @@ void ai_planting_spot_touch( Entity @ent, Entity @other, const Vec3 planeNormal,
         return;
     
     // Reset goal weight immediately
-    bot.setExternalEntityWeight( ent, 0.0f );
+    bot.overrideEntityWeight( ent, 0.0f );
     
     // Things might have changed since last goal assignation
 

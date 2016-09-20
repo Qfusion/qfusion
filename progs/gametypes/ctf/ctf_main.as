@@ -353,7 +353,7 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
                 // the flag is at our base, return to the base
                 if ( ( teamBase.owner.effects & EF_CARRIER ) != 0 )
                 {
-                    bot.setExternalEntityWeight( teamBase.owner, 9.0f );
+                    bot.overrideEntityWeight( teamBase.owner, 9.0f );
                 }
                 // our flag is stolen    
                 else
@@ -362,12 +362,12 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
                     // return to our base
                     if ( botToHomeBaseDist > 768.0f )
                     {
-                        bot.setExternalEntityWeight( teamBase.owner, 9.0f );
+                        bot.overrideEntityWeight( teamBase.owner, 9.0f );
                     }
                     // do not camp at our flag spot, hide somewhere else
                     else 
                     {      
-                        bot.setExternalEntityWeight( teamBase.owner, 9.0f * ( botToHomeBaseDist / 768.0f ) );
+                        bot.overrideEntityWeight( teamBase.owner, 9.0f * ( botToHomeBaseDist / 768.0f ) );
                     }
                 }
             }
@@ -375,7 +375,7 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
 
         // it's team flag, dropped somewhere
         if ( @teamBase.carrier != @teamBase.owner && @teamBase.carrier.client == null )
-            bot.setExternalEntityWeight( teamBase.carrier, 9.0f );
+            bot.overrideEntityWeight( teamBase.carrier, 9.0f );
     } 
 
     cFlagBase @enemyBase = @CTF_getBaseForTeam( enemyTeam );
@@ -383,7 +383,7 @@ void CTF_UpdateBotExtraGoals( Entity @ent )
     {
         // it's team flag, dropped somewhere
         if ( @enemyBase.carrier != @enemyBase.owner && @enemyBase.carrier.client == null )
-            bot.setExternalEntityWeight( enemyBase.carrier, 9.0f );
+            bot.overrideEntityWeight( enemyBase.carrier, 9.0f );
     }
 }
 

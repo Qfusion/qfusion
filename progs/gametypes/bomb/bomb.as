@@ -192,7 +192,7 @@ void bombSetCarrier( Entity @ent )
             // Set a huge site weight for the carrier        
             Bot @botCarrier = ent.client.getBot();
             if ( @botCarrier != null )
-                botCarrier.setExternalEntityWeight( BOMB_BOTS_SITE.indicator, 12.0f );
+                botCarrier.overrideEntityWeight( BOMB_BOTS_SITE.indicator, 12.0f );
         }
     }
 
