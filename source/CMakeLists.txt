@@ -53,6 +53,10 @@ endif()
 option(USE_SDL2 "Build using SDL2" OFF)
 option(GAME_MODULES_ONLY "Only build game modules" OFF)
 
+set(ANGELSCRIPT_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/angelscript/sdk/angelscript)
+set(ANGELSCRIPT_INCLUDE_DIR ${ANGELSCRIPT_DIR}/include/)
+add_subdirectory(${ANGELSCRIPT_DIR}/projects/cmake ${ANGELSCRIPT_DIR}/lib/)
+
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(QFUSION_WINDOWS_ARCH "x86")
@@ -197,10 +201,6 @@ if (NOT GAME_MODULES_ONLY)
         add_definitions(-DUSE_SDL2)
     endif()
 endif()
-
-set(ANGELSCRIPT_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/angelscript/sdk/angelscript)
-set(ANGELSCRIPT_INCLUDE_DIR ${ANGELSCRIPT_DIR}/include/)
-add_subdirectory(${ANGELSCRIPT_DIR}/projects/cmake ${ANGELSCRIPT_DIR}/lib/)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
