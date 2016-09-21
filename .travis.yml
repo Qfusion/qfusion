@@ -33,6 +33,8 @@ matrix:
             - cmake
             - build-essential
             - gcc-4.9-multilib
+            - g++-4.9-multilib
+            - gcc-multilib
     - os: linux
       language: c++
       compiler: gcc-4.9
