@@ -2,6 +2,11 @@ project(qfusion)
 
 cmake_minimum_required(VERSION 2.8.12)
 
+message(status "CMAKE_SYSTEM: " ${CMAKE_SYSTEM})
+message(status "CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME})
+message(status "CMAKE_SYSTEM_VERSION: " ${CMAKE_SYSTEM_VERSION})
+message(status "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
+
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 include(QfusionUtils)
 
