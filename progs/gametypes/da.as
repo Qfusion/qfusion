@@ -506,6 +506,9 @@ void DA_SetUpWarmup()
         gametype.setTeamSpawnsystem( team, SPAWNSYSTEM_INSTANT, 0, 0, false );
 
     gametype.readyAnnouncementEnabled = true;
+
+    // Add dummy goals for bots
+    GENERIC_AddBotroamGoals();
 }
 
 void DA_SetUpCountdown()
@@ -757,6 +760,9 @@ void GT_ThinkRules()
 	GENERIC_Think();
 
     daRound.think();
+
+    // Add dummy goals for bots
+    GENERIC_UpdateBotroamGoalsWeights();
 }
 
 // The game has detected the end of the match state, but it
