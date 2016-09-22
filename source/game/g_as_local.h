@@ -18,12 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#if defined ( __APPLE__ )
-#include "angelscript/angelscript.h"
-#else
 #include "angelscript.h"
-#endif
-
 #include "../gameshared/q_angeliface.h"
 
 #define G_AsMalloc								G_LevelMalloc
