@@ -99,10 +99,16 @@ void BOMB_AddDefenceSpotsForSites()
     int spotId = 1;
 	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next )
     {
-        AI::AddDefenceSpot( defendingTeam, spotId, site.indicator, 768.0f );
-        AI::EnableDefenceSpotAutoAlert( defendingTeam, spotId );
+        AIDefenceSpot defenceSpot( spotId, site.indicator, 768.0f );
+        // Allow to leave the spot to defend the one being attacked now.        
+        defenceSpot.minDefenders = 0;
+        // This value will be clamped to a maximum supported one.
+        defenceSpot.maxDefenders = 999;
+        defenceSpot.regularEnemyAlertScale = 1.5f;
+        defenceSpot.carrierEnemyAlertScale = 5.0f;
+        AI::AddDefenceSpot( defendingTeam, defenceSpot );
         // Force all defenders available for the spot to reach the spot
-        AI::DefenceSpotAlert( defendingTeam, spotId, 0.5f, uint(5000) );
+        AI::DefenceSpotAlert( defendingTeam, spotId, 0.5f, uint(15000) );
         spotId++;
     }
 }
@@ -112,7 +118,6 @@ void BOMB_RemoveDefenceSpotsForSites()
     int spotId = 1;
 	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next )
     {
-        AI::DisableDefenceSpotAutoAlert( defendingTeam, spotId );
         AI::RemoveDefenceSpot( defendingTeam, spotId );
         spotId++;
     }

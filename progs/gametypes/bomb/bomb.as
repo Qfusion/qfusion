@@ -386,7 +386,10 @@ void bombPlant( cBombSite @site )
     // Remove old defending team defence spots
     BOMB_RemoveDefenceSpotsForSites();
     // Defending team should defend the bomb model
-    AI::AddDefenceSpot( defendingTeam, 0, bombModel, 768.0f );
+    AIDefenceSpot defenceSpot( 0, bombModel, 768.0f );
+    defenceSpot.minDefenders = 5;
+    defenceSpot.maxDefenders = 999;
+    AI::AddDefenceSpot( defendingTeam, defenceSpot );
     // Force all defenders to reach the defence spot
     AI::DefenceSpotAlert( defendingTeam, 0, 1.0f, uint(15000) );
 }
@@ -425,7 +428,10 @@ void bombArm(array<Entity @> @nearby)
     // Remove a defence spot for defending team
     AI::RemoveDefenceSpot( defendingTeam, 0 );
     // Add a defence spot for attacking team
-    AI::AddDefenceSpot( attackingTeam, 0, bombModel, 768.0f );
+    AIDefenceSpot defenceSpot( 0, bombModel, 768.0f );
+    defenceSpot.minDefenders = 5;
+    defenceSpot.maxDefenders = 999;    
+    AI::AddDefenceSpot( attackingTeam, defenceSpot );
     // Force all attackers to reach the spot
     AI::DefenceSpotAlert( attackingTeam, 0, 1.0f, uint(15000) );
     // Set bomb model weight for defenders
@@ -1041,7 +1047,10 @@ void dynamite_stop( Entity @ent )
         // The bomb location is known, stop defend the spots
         BOMB_RemoveDefenceSpotsForSites();    
         // Defending team should protect the bomb from being picked up
-        AI::AddDefenceSpot( defendingTeam, 0, bombModel, 768.0f );
+        AIDefenceSpot defenceSpot( 0, bombModel, 768.0f );
+        defenceSpot.minDefenders = 5;
+        defenceSpot.maxDefenders = 999;
+        AI::AddDefenceSpot( defendingTeam, defenceSpot );
         // Force all defenders to reach the spot
         AI::DefenceSpotAlert( defendingTeam, 0, 1.0f, uint(15000) );
 	}

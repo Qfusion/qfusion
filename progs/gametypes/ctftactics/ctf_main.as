@@ -466,7 +466,7 @@ int GT_GetScriptWeaponsNum( const Client @client )
     return 1;
 }
 
-bool GT_GetScriptWeaponDef( const Client @client, int weaponNum, ScriptWeaponDef &out weaponDef )
+bool GT_GetScriptWeaponDef( const Client @client, int weaponNum, AIScriptWeaponDef &out weaponDef )
 {
     if ( @client == null )
         return false;
@@ -794,7 +794,7 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
                 bot.overrideEntityWeight( enemyBase.carrier, 9.0f );
             }
             // If the bot is roaming
-            else if ( bot.defenceSpotId == -1 && bot.offenceSpotId == -1 )
+            else if ( bot.defenceSpotId == -1 && bot.offenseSpotId == -1 )
             {
                 // Attack the enemy base (but no flag spot itself).
                 float botToEnemyBaseDist = enemyBase.owner.origin.distance( ent.origin );
@@ -804,7 +804,7 @@ void CTFT_UpdateBotExtraGoals( Entity @ent )
                     bot.overrideEntityWeight( enemyBase.owner, 9.0f );
             }
         }
-        else if ( bot.defenceSpotId == -1 && bot.offenceSpotId == -1 )
+        else if ( bot.defenceSpotId == -1 && bot.offenseSpotId == -1 )
         {
             // Roaming bots should get the enemy flag, but its weight is lower than for attackers
             bot.overrideEntityWeight( enemyBase.owner, 3.5f );

@@ -126,9 +126,8 @@ class cFlagBase
         if ( @this.carrier != @this.owner )
             return;
         
-        AI::DisableDefenceSpotAutoAlert( this.team, this.aiSpotId );
         AI::RemoveDefenceSpot( this.team, this.aiSpotId );
-        AI::RemoveOffenceSpot( this.enemyTeam, this.aiSpotId );
+        AI::RemoveOffenseSpot( this.enemyTeam, this.aiSpotId );
         // ( AI::RemoveNavEntity will be called automatically in G_Free() )
     }
 
@@ -139,9 +138,8 @@ class cFlagBase
         this.aiSpotId = spawner.team;
 
         AI::AddNavEntity( spawner, AI_NAV_REACH_ON_EVENT | AI_NAV_REACH_IN_GROUP );
-        AI::AddDefenceSpot( this.team, this.aiSpotId, spawner, 768.0f );
-        AI::EnableDefenceSpotAutoAlert( this.team, this.aiSpotId );
-        AI::AddOffenceSpot( this.enemyTeam, this.aiSpotId, spawner ); 
+        AI::AddDefenceSpot( this.team, AIDefenceSpot( this.aiSpotId, spawner, 768.0f ) );
+        AI::AddOffenseSpot( this.enemyTeam, AIOffenseSpot( this.aiSpotId, spawner ) ); 
     }
 
     void notifyAIOfNewCarrier( Entity @oldCarrier, Entity @newCarrier )
@@ -149,16 +147,14 @@ class cFlagBase
         // The flag is returned to the base
         if ( @newCarrier == @this.owner )
         {
-            AI::AddDefenceSpot( this.team, this.aiSpotId, this.owner, 768.0f );
-            AI::EnableDefenceSpotAutoAlert( this.team, this.aiSpotId );
-            AI::AddOffenceSpot( this.enemyTeam, this.aiSpotId, this.owner );
+            AI::AddDefenceSpot( this.team, AIDefenceSpot( this.aiSpotId, this.owner, 768.0f ) );
+            AI::AddOffenseSpot( this.enemyTeam, AIOffenseSpot( this.aiSpotId, this.owner ) );
         }
         // The flag is stolen from a base by a player
         else if ( @newCarrier.client != null && @oldCarrier == @this.owner ) 
         {
-            AI::DisableDefenceSpotAutoAlert( this.team, this.aiSpotId );
             AI::RemoveDefenceSpot( this.team, this.aiSpotId );
-            AI::RemoveOffenceSpot( this.enemyTeam, this.aiSpotId );
+            AI::RemoveOffenseSpot( this.enemyTeam, this.aiSpotId );
         }
         
         // Dropping a flag and picking up a dropped flag do not affect AI order spots status       
