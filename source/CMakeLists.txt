@@ -82,6 +82,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../libsrcs/libjpeg"
         "../third-party/libRocket/Include"
         "../libsrcs/SDL2/include"
+		"../libsrcs/OpenAL-MOB/include/AL"
     )
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
@@ -195,6 +196,7 @@ if (NOT GAME_MODULES_ONLY)
     find_package(Freetype REQUIRED)
     find_package(JPEG REQUIRED)
     find_package(PNG REQUIRED)
+	find_package(OpenAL)
 
     # We need SDL only on non-Windows platforms or when with SDL2-backend
     if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))

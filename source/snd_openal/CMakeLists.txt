@@ -1,10 +1,6 @@
 project(snd_openal)
 
-include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR} "../snd_common" ".")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    include_directories("../win32/include") # For al.h
-endif()
+include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR} ${OPENAL_INCLUDE_DIR} "../snd_common" ".")
 
 file(GLOB SND_OPENAL_HEADERS
     "*.h"
