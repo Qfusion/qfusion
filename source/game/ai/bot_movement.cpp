@@ -839,6 +839,10 @@ bool Bot::MaySetPendingLandingDash()
     if (!(self->r.client->ps.stats[PM_STAT_FEATURES] & PMFEAT_DASH))
         return false;
 
+    // 2D speed is too low
+    if (self->velocity[0] * self->velocity[0] + self->velocity[1] * self->velocity[1] < 600.0f * 600.0f)
+        return false;
+
     // Set a pending landing dash only being in middle of large area.
     // Many small areas may provide enough space to do a pending dash,
     // but in this case its likely that the intended movement vector will change its direction too quickly.
