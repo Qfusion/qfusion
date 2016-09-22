@@ -98,61 +98,6 @@ void AI_RemoveNavEntity(edict_t *ent);
 // (A corresponding nav entity should be added with a AI_NAV_REACH_ON_EVENT flag)
 void AI_NavEntityReached( edict_t *ent );
 
-void AI_AddDefenceSpot( int team, int id, edict_t *ent, float radius );
-void AI_RemoveDefenceSpot( int team, int id );
-
-void AI_DefenceSpotAlert( int team, int id, float alertLevel, unsigned timeoutPeriod );
-
-// If bots of a team see an enemy in defence spot bounds, they call an alert.
-// Enemy detection uses "fair" vision of bots, it does not cheat with wallhacking.
-// Bots will decide what alert level and timeout should be used.
-void AI_EnableDefenceSpotAutoAlert( int team, int id );
-void AI_DisableDefenceSpotAutoAlert( int team, int id );
-
-void AI_AddOffenceSpot( int team, int id, edict_t *ent );
-void AI_RemoveOffenceSpot( int team, int id );
-
-// Bot methods accessible from scripts
-
-// An offensiveness is a value in range [0.0f, 1.0f].
-// An offensiveness affects whether and when a bot will pursue enemies, ignore enemies or retreat from enemies.
-// Base offensiveness may be modified by provided setter.
-// For example, bots on its own flag base should have high offensiveness to pursue an invader,
-// and a flag base invader should have low offensiveness to prefer stealing a flag rather than fighting.
-// If a value set is outside of the valid offensiveness range, it will be clamped.
-// Effective offensiveness is computed based on the base offensiveness and carrier/supporter bot status.
-// (a carrier automatically obtain zero offensiveness, and its supporters get a maximal one)
-// Effective offensiveness cannot be overridden but may be retrieved using the provided getter.
-// Base offensiveness is reset to its default value 0.5f on each death.
-float AI_GetBotBaseOffensiveness( ai_handle_t *ai );
-float AI_GetBotEffectiveOffensiveness( ai_handle_t *ai );
-void AI_SetBotBaseOffensiveness( ai_handle_t *ai, float baseOffensiveness );
-
-// Negative attitude means that the ent is an enemy.
-// Positive attitude means that the ent is a mate.
-// Zero attitude means bot should ignore the ent.
-// A magnitude of an attitude is currently ignored.
-// Note that attitude cannot override game teams (setting non-positive attitude in a team-based GT will be ignored).
-// This function is useful for masking potential enemies for custom GTs like "headhunt" or "hot potato".
-void AI_SetBotAttitude( ai_handle_t *ai, edict_t *ent, int attitude );
-
-// Clears all external entity weights for a bot that are used in search for a goal.
-// This means all internal weights are not overridden by external weights anymore.
-// Note that internal weights are not affected by this call.
-void AI_ClearBotOverriddenEntityWeights( ai_handle_t *ai );
-// Sets a weight for the ent that is used in search for a goal.
-// Note that if there is no nav entity corresponding to the ent, this function has no effect.
-// If a zero weight is set, an internal weight computed by hardcoded bot logic is used.
-// If a weight is negative, the ent will be ignored in search for a goal.
-void AI_OverrideBotEntityWeight( ai_handle_t *ai, edict_t *ent, float weight );
-
-// Useful for checking whether a bot is a defender or an attacker.
-// Note that bot may be neither defender not attacker.
-// Returns a value of the corresponding team order spot for the order,
-// or a negative value if bot does not have that order.
-int AI_BotDefenceSpotId( const ai_handle_t *ai );
-int AI_BotOffenceSpotId( const ai_handle_t *ai );
-
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );
 void        G_SpawnAI( edict_t *ent, float skillLevel = 0.1f );

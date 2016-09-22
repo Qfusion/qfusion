@@ -1489,13 +1489,13 @@ void BotBrain::SuggestCloseRangeWeaponAndTactics(CombatTask *task, const CombatD
     task->suggestedBuiltinWeapon = chosenWeapon;
 }
 
-const ai_script_weapon_def_t *BotBrain::SuggestScriptWeapon(const Enemy &enemy, const CombatDisposition &disposition,
-                                                            int *effectiveTier)
+const AiScriptWeaponDef *BotBrain::SuggestScriptWeapon(const Enemy &enemy, const CombatDisposition &disposition,
+                                                       int *effectiveTier)
 {
     const auto &scriptWeaponDefs = bot->ai->botRef->scriptWeaponDefs;
     const auto &scriptWeaponCooldown = bot->ai->botRef->scriptWeaponCooldown;
 
-    const ai_script_weapon_def_t *bestWeapon = nullptr;
+    const AiScriptWeaponDef *bestWeapon = nullptr;
     float bestScore = 0.000001f;
 
     for (unsigned i = 0; i < scriptWeaponDefs.size(); ++i)

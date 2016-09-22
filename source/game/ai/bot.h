@@ -10,6 +10,26 @@
 class AiSquad;
 class AiBaseEnemyPool;
 
+struct AiAlertSpot
+{
+    int id;
+    Vec3 origin;
+    float radius;
+    float regularEnemyInfluenceScale;
+    float carrierEnemyInfluenceScale;
+
+    AiAlertSpot(int id,
+                Vec3 origin,
+                float radius,
+                float regularEnemyInfluenceScale = 1.0f,
+                float carrierEnemyInfluenceScale = 1.0f)
+        : id(id),
+          origin(origin),
+          radius(radius),
+          regularEnemyInfluenceScale(regularEnemyInfluenceScale),
+          carrierEnemyInfluenceScale(carrierEnemyInfluenceScale) {}
+};
+
 class Bot: public Ai
 {
     friend class AiManager;
@@ -107,7 +127,8 @@ public:
     inline const int *Inventory() const { return self->r.client->ps.inventory; }
 
     typedef void (*AlertCallback)(void *receiver, Bot *bot, int id, float alertLevel);
-    void EnableAutoAlert(int id, const Vec3 &spotOrigin, float spotRadius, AlertCallback callback, void *receiver);
+
+    void EnableAutoAlert(const AiAlertSpot &alertSpot, AlertCallback callback, void *receiver);
     void DisableAutoAlert(int id);
 
     inline int Health() const
@@ -155,21 +176,21 @@ public:
         return GT_asPlayerOffensiveAbilitiesRating(self->r.client);
     }
     inline int DefenceSpotId() const { return defenceSpotId; }
-    inline int OffenceSpotId() const { return offenceSpotId; }
+    inline int OffenseSpotId() const { return offenseSpotId; }
     inline void ClearDefenceAndOffenceSpots()
     {
         defenceSpotId = -1;
-        offenceSpotId = -1;
+        offenseSpotId = -1;
     }
     inline void SetDefenceSpotId(int spotId)
     {
         defenceSpotId = spotId;
-        offenceSpotId = -1;
+        offenseSpotId = -1;
     }
-    inline void SetOffenceSpotId(int spotId)
+    inline void SetOffenseSpotId(int spotId)
     {
         defenceSpotId = -1;
-        offenceSpotId = spotId;
+        offenseSpotId = spotId;
     }
 protected:
     virtual void Frame() override;
@@ -443,22 +464,17 @@ private:
     bool isInSquad;
 
     int defenceSpotId;
-    int offenceSpotId;
+    int offenseSpotId;
 
-    struct AlertSpot
+    struct AlertSpot: public AiAlertSpot
     {
-        Vec3 origin;
-        int id;
-        float radius;
         unsigned lastReportedAt;
         float lastReportedScore;
         AlertCallback callback;
         void *receiver;
 
-        AlertSpot(const Vec3 &origin, int id, float radius, AlertCallback callback, void *receiver)
-            : origin(origin),
-              id(id),
-              radius(radius),
+        AlertSpot(const AiAlertSpot &spot, AlertCallback callback, void *receiver)
+            : AiAlertSpot(spot),
               lastReportedAt(0),
               lastReportedScore(0.0f),
               callback(callback),
@@ -478,7 +494,8 @@ private:
     void CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTargets);
 
     static constexpr unsigned MAX_SCRIPT_WEAPONS = 3;
-    StaticVector<ai_script_weapon_def_t, MAX_SCRIPT_WEAPONS> scriptWeaponDefs;
+
+    StaticVector<AiScriptWeaponDef, MAX_SCRIPT_WEAPONS> scriptWeaponDefs;
     StaticVector<int, MAX_SCRIPT_WEAPONS> scriptWeaponCooldown;
 
     void UpdateScriptWeaponsStatus();
@@ -562,11 +579,11 @@ private:
     class GenericFireDef
     {
         const firedef_t *builtinFireDef;
-        const ai_script_weapon_def_t *scriptWeaponDef;
+        const AiScriptWeaponDef *scriptWeaponDef;
         int weaponNum;
 
     public:
-        GenericFireDef(int weaponNum, const firedef_t *builtinFireDef, const ai_script_weapon_def_t *scriptWeaponDef)
+        GenericFireDef(int weaponNum, const firedef_t *builtinFireDef, const AiScriptWeaponDef *scriptWeaponDef)
         {
             this->builtinFireDef = builtinFireDef;
             this->scriptWeaponDef = scriptWeaponDef;

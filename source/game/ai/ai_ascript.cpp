@@ -37,48 +37,155 @@ const asEnum_t asAIEnums[] =
     ASLIB_ENUM_VAL_NULL
 };
 
-static const asFuncdef_t asScriptWeaponDef_Funcdefs[] =
+static const asFuncdef_t asAiScriptWeaponDef_Funcdefs[] =
 {
     ASLIB_FUNCDEF_NULL
 };
 
-static const asBehavior_t asScriptWeaponDef_ObjectBehaviors[] =
+static const asBehavior_t asAiScriptWeaponDef_ObjectBehaviors[] =
 {
     ASLIB_BEHAVIOR_NULL
 };
 
-static const asMethod_t asScriptWeaponDef_ObjectMethods[] =
+static const asMethod_t asAiScriptWeaponDef_ObjectMethods[] =
 {
     ASLIB_METHOD_NULL
 };
 
-static const asProperty_t asScriptWeaponDef_Properties[] =
+static const asProperty_t asAiScriptWeaponDef_Properties[] =
 {
-    { ASLIB_PROPERTY_DECL(int, weaponNum), ASLIB_FOFFSET(ai_script_weapon_def_t, weaponNum) },
-    { ASLIB_PROPERTY_DECL(int, tier), ASLIB_FOFFSET(ai_script_weapon_def_t, tier) },
-    { ASLIB_PROPERTY_DECL(float, minRange), ASLIB_FOFFSET(ai_script_weapon_def_t, minRange) },
-    { ASLIB_PROPERTY_DECL(float, maxRange), ASLIB_FOFFSET(ai_script_weapon_def_t, maxRange) },
-    { ASLIB_PROPERTY_DECL(float, bestRange), ASLIB_FOFFSET(ai_script_weapon_def_t, bestRange) },
-    { ASLIB_PROPERTY_DECL(float, projectileSpeed), ASLIB_FOFFSET(ai_script_weapon_def_t, projectileSpeed) },
-    { ASLIB_PROPERTY_DECL(float, splashRadius), ASLIB_FOFFSET(ai_script_weapon_def_t, splashRadius) },
-    { ASLIB_PROPERTY_DECL(float, maxSelfDamage), ASLIB_FOFFSET(ai_script_weapon_def_t, maxSelfDamage) },
-    { ASLIB_PROPERTY_DECL(weapon_aim_type_e, aimType), ASLIB_FOFFSET(ai_script_weapon_def_t, aimType) },
-    { ASLIB_PROPERTY_DECL(bool, isContinuousFire), ASLIB_FOFFSET(ai_script_weapon_def_t, isContinuousFire) },
+    { ASLIB_PROPERTY_DECL(int, weaponNum), ASLIB_FOFFSET(AiScriptWeaponDef, weaponNum) },
+    { ASLIB_PROPERTY_DECL(int, tier), ASLIB_FOFFSET(AiScriptWeaponDef, tier) },
+    { ASLIB_PROPERTY_DECL(float, minRange), ASLIB_FOFFSET(AiScriptWeaponDef, minRange) },
+    { ASLIB_PROPERTY_DECL(float, maxRange), ASLIB_FOFFSET(AiScriptWeaponDef, maxRange) },
+    { ASLIB_PROPERTY_DECL(float, bestRange), ASLIB_FOFFSET(AiScriptWeaponDef, bestRange) },
+    { ASLIB_PROPERTY_DECL(float, projectileSpeed), ASLIB_FOFFSET(AiScriptWeaponDef, projectileSpeed) },
+    { ASLIB_PROPERTY_DECL(float, splashRadius), ASLIB_FOFFSET(AiScriptWeaponDef, splashRadius) },
+    { ASLIB_PROPERTY_DECL(float, maxSelfDamage), ASLIB_FOFFSET(AiScriptWeaponDef, maxSelfDamage) },
+    { ASLIB_PROPERTY_DECL(weapon_aim_type_e, aimType), ASLIB_FOFFSET(AiScriptWeaponDef, aimType) },
+    { ASLIB_PROPERTY_DECL(bool, isContinuousFire), ASLIB_FOFFSET(AiScriptWeaponDef, isContinuousFire) },
 
     ASLIB_PROPERTY_NULL
 };
 
-static const asClassDescriptor_t asScriptWeaponDefClassDescriptor =
+static const asClassDescriptor_t asAiScriptWeaponDefClassDescriptor =
 {
-    "ScriptWeaponDef",		             /* name */
+    "AIScriptWeaponDef",		         /* name */
     asOBJ_VALUE|asOBJ_POD,	             /* object type flags */
-    sizeof(ai_script_weapon_def_t),	     /* size */
-    asScriptWeaponDef_Funcdefs,			 /* funcdefs */
-    asScriptWeaponDef_ObjectBehaviors,	 /* object behaviors */
-    asScriptWeaponDef_ObjectMethods,	 /* methods */
-    asScriptWeaponDef_Properties,		 /* properties */
+    sizeof(AiScriptWeaponDef),	         /* size */
+    asAiScriptWeaponDef_Funcdefs,		 /* funcdefs */
+    asAiScriptWeaponDef_ObjectBehaviors, /* object behaviors */
+    asAiScriptWeaponDef_ObjectMethods,	 /* methods */
+    asAiScriptWeaponDef_Properties,		 /* properties */
 
     NULL, NULL					         /* string factory hack */
+};
+
+static const asFuncdef_t asAiDefenceSpot_Funcdefs[] =
+{
+    ASLIB_FUNCDEF_NULL
+};
+
+static constexpr auto DEFAULT_MAX_DEFENDERS = 5;
+static constexpr auto DEFAULT_MAX_ATTACKERS = 5;
+
+static void objectAiDefenceSpot_Constructor( AiDefenceSpot *spot, int id, const edict_t *entity, float radius )
+{
+    spot->id = id;
+    spot->entity = entity;
+    spot->radius = radius;
+    spot->usesAutoAlert = true;
+    spot->minDefenders = 1;
+    spot->maxDefenders = DEFAULT_MAX_DEFENDERS;
+    spot->regularEnemyAlertScale = 1.0f;
+    spot->carrierEnemyAlertScale = 1.0f;
+}
+
+static const asBehavior_t asAiDefenceSpot_ObjectBehaviors[] =
+{
+    { asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL(void, f, (int id, const Entity @entity, float radius)), asFUNCTION(objectAiDefenceSpot_Constructor), asCALL_CDECL_OBJFIRST },
+
+    ASLIB_BEHAVIOR_NULL
+};
+
+static const asMethod_t asAiDefenceSpot_Methods[] =
+{
+    ASLIB_METHOD_NULL
+};
+
+static const asProperty_t asAiDefenceSpot_Properties[] =
+{
+    { ASLIB_PROPERTY_DECL(int, id), ASLIB_FOFFSET(AiDefenceSpot, id) },
+    { ASLIB_PROPERTY_DECL(const Entity @, entity), ASLIB_FOFFSET(AiDefenceSpot, entity) },
+    { ASLIB_PROPERTY_DECL(float, radius), ASLIB_FOFFSET(AiDefenceSpot, radius) },
+    { ASLIB_PROPERTY_DECL(bool, usesAutoAlert), ASLIB_FOFFSET(AiDefenceSpot, usesAutoAlert) },
+    { ASLIB_PROPERTY_DECL(uint, minDefenders), ASLIB_FOFFSET(AiDefenceSpot, minDefenders) },
+    { ASLIB_PROPERTY_DECL(uint, maxDefenders), ASLIB_FOFFSET(AiDefenceSpot, maxDefenders) },
+    { ASLIB_PROPERTY_DECL(float, regularEnemyAlertScale), ASLIB_FOFFSET(AiDefenceSpot, regularEnemyAlertScale) },
+    { ASLIB_PROPERTY_DECL(float, carrierEnemyAlertScale), ASLIB_FOFFSET(AiDefenceSpot, carrierEnemyAlertScale) },
+
+    ASLIB_PROPERTY_NULL
+};
+
+static const asClassDescriptor_t asAiDefenceSpotClassDescriptor =
+{
+    "AIDefenceSpot",
+    asOBJ_VALUE|asOBJ_POD,
+    sizeof(AiDefenceSpot),
+    asAiDefenceSpot_Funcdefs,
+    asAiDefenceSpot_ObjectBehaviors,
+    asAiDefenceSpot_Methods,
+    asAiDefenceSpot_Properties,
+
+    NULL, NULL
+};
+
+static const asFuncdef_t asAiOffenseSpot_Funcdefs[] =
+{
+    ASLIB_FUNCDEF_NULL
+};
+
+static void objectAiOffenseSpot_Constructor( AiOffenseSpot *spot, int id, const edict_t *entity )
+{
+    spot->id = id;
+    spot->entity = entity;
+    spot->minAttackers = 1;
+    spot->maxAttackers = DEFAULT_MAX_ATTACKERS;
+}
+
+static const asBehavior_t asAiOffenseSpot_ObjectBehaviors[] =
+{
+    { asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL(void, f, (int id, const Entity @entity)), asFUNCTION(objectAiOffenseSpot_Constructor), asCALL_CDECL_OBJFIRST },
+
+    ASLIB_BEHAVIOR_NULL
+};
+
+static const asMethod_t asAiOffenseSpot_Methods[] =
+{
+    ASLIB_METHOD_NULL
+};
+
+static const asProperty_t asAiOffenseSpot_Properties[] =
+{
+    { ASLIB_PROPERTY_DECL(int, id), ASLIB_FOFFSET(AiOffenseSpot, id) },
+    { ASLIB_PROPERTY_DECL(const Entity @, entity), ASLIB_FOFFSET(AiOffenseSpot, entity) },
+    { ASLIB_PROPERTY_DECL(uint, minAttackers), ASLIB_FOFFSET(AiOffenseSpot, minAttackers) },
+    { ASLIB_PROPERTY_DECL(uint, maxAttackers), ASLIB_FOFFSET(AiOffenseSpot, maxAttackers) },
+
+    ASLIB_PROPERTY_NULL
+};
+
+static const asClassDescriptor_t asAiOffenseSpotClassDescriptor =
+{
+    "AIOffenseSpot",
+    asOBJ_VALUE|asOBJ_POD,
+    sizeof(AiOffenseSpot),
+    asAiOffenseSpot_Funcdefs,
+    asAiOffenseSpot_ObjectBehaviors,
+    asAiOffenseSpot_Methods,
+    asAiOffenseSpot_Properties,
+
+    NULL, NULL
 };
 
 static const asFuncdef_t asbot_Funcdefs[] =
@@ -91,113 +198,7 @@ static const asBehavior_t asbot_ObjectBehaviors[] =
     ASLIB_BEHAVIOR_NULL
 };
 
-static const asMethod_t asbot_Methods[] =
-{
-    { ASLIB_FUNCTION_DECL(float, getEffectiveOffensiveness, ()), asFUNCTION(AI_GetBotEffectiveOffensiveness), asCALL_CDECL_OBJFIRST },
-    { ASLIB_FUNCTION_DECL(void, setBaseOffensiveness, (float baseOffensiveness)), asFUNCTION(AI_SetBotBaseOffensiveness), asCALL_CDECL_OBJFIRST },
-
-    { ASLIB_FUNCTION_DECL(void, setAttitude, (Entity @ent, int attitude)), asFUNCTION(AI_SetBotAttitude), asCALL_CDECL_OBJFIRST },
-
-    { ASLIB_FUNCTION_DECL(void, clearOverriddenEntityWeights, ()), asFUNCTION(AI_ClearBotOverriddenEntityWeights), asCALL_CDECL_OBJFIRST },
-    { ASLIB_FUNCTION_DECL(void, overrideEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_OverrideBotEntityWeight), asCALL_CDECL_OBJFIRST },
-
-    { ASLIB_FUNCTION_DECL(int, get_defenceSpotId, () const), asFUNCTION(AI_BotDefenceSpotId), asCALL_CDECL_OBJFIRST },
-    { ASLIB_FUNCTION_DECL(int, get_offenceSpotId, () const), asFUNCTION(AI_BotOffenceSpotId), asCALL_CDECL_OBJFIRST },
-
-    ASLIB_METHOD_NULL
-};
-
-static const asProperty_t asbot_Properties[] =
-{
-    ASLIB_PROPERTY_NULL
-};
-
-static const asClassDescriptor_t asBotClassDescriptor =
-{
-    "Bot",						/* name */
-    asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
-    sizeof(ai_handle_t),		/* size */
-    asbot_Funcdefs,				/* funcdefs */
-    asbot_ObjectBehaviors,		/* object behaviors */
-    asbot_Methods,				/* methods */
-    asbot_Properties,			/* properties */
-
-    NULL, NULL					/* string factory hack */
-};
-
-const asClassDescriptor_t *asAIClassesDescriptors[] =
-{
-    &asScriptWeaponDefClassDescriptor,
-    &asBotClassDescriptor,
-
-    NULL
-};
-
-static inline AiObjectiveBasedTeamBrain *GetObjectiveBasedTeamBrain(const char *caller, int team)
-{
-    // Make sure that AiBaseTeamBrain::GetBrainForTeam() will not crash for illegal team
-    if (team != TEAM_ALPHA && team != TEAM_BETA)
-    {
-        G_Printf(S_COLOR_RED "%s: illegal team %d\n", caller, team);
-        return nullptr;
-    }
-
-    AiBaseTeamBrain *baseTeamBrain = AiBaseTeamBrain::GetBrainForTeam(team);
-    if (auto *objectiveBasedTeamBrain = dynamic_cast<AiObjectiveBasedTeamBrain*>(baseTeamBrain))
-        return objectiveBasedTeamBrain;
-
-    G_Printf(S_COLOR_RED "%s: can't be used in not objective based gametype\n", caller);
-    return nullptr;
-}
-
-void AI_AddDefenceSpot( int team, int id, edict_t *ent, float radius )
-{
-    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
-        objectiveBasedTeamBrain->AddDefenceSpot(id, ent, radius);
-}
-
-void AI_RemoveDefenceSpot( int team, int id )
-{
-    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
-        objectiveBasedTeamBrain->RemoveDefenceSpot(id);
-}
-
-void AI_DefenceSpotAlert( int team, int id, float alertLevel, unsigned timeoutPeriod )
-{
-    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
-        objectiveBasedTeamBrain->SetDefenceSpotAlert(id, alertLevel, timeoutPeriod);
-}
-
-void AI_EnableDefenceSpotAutoAlert( int team, int id )
-{
-    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
-        objectiveBasedTeamBrain->EnableDefenceSpotAutoAlert( id );
-}
-
-void AI_DisableDefenceSpotAutoAlert( int team, int id )
-{
-    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
-        objectiveBasedTeamBrain->DisableDefenceSpotAutoAlert( id );
-}
-
-void AI_AddOffenceSpot( int team, int id, edict_t *ent )
-{
-    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
-        objectiveBasedTeamBrain->AddOffenceSpot(id, ent);
-}
-
-void AI_RemoveOffenceSpot( int team, int id )
-{
-    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
-        objectiveBasedTeamBrain->RemoveOffenceSpot(id);
-}
-
-float AI_GetBotBaseOffensiveness(ai_handle_t *ai)
-{
-    return ai ? ai->botRef->GetBaseOffensiveness() : 0.0f;
-}
-
-float AI_GetBotEffectiveOffensiveness(ai_handle_t *ai)
+float AI_GetBotEffectiveOffensiveness(const ai_handle_t *ai)
 {
     return ai ? ai->botRef->GetEffectiveOffensiveness() : 0.0f;
 }
@@ -231,9 +232,100 @@ int AI_BotDefenceSpotId(const ai_handle_t *ai)
     return ai && ai->botRef ? ai->botRef->DefenceSpotId() : -1;
 }
 
-int AI_BotOffenceSpotId(const ai_handle_t *ai)
+int AI_BotOffenseSpotId(const ai_handle_t *ai)
 {
-    return ai && ai->botRef ? ai->botRef->OffenceSpotId() : -1;
+    return ai && ai->botRef ? ai->botRef->OffenseSpotId() : -1;
+}
+
+static const asMethod_t asbot_Methods[] =
+{
+    { ASLIB_FUNCTION_DECL(float, getEffectiveOffensiveness, () const), asFUNCTION(AI_GetBotEffectiveOffensiveness), asCALL_CDECL_OBJFIRST },
+    { ASLIB_FUNCTION_DECL(void, setBaseOffensiveness, (float baseOffensiveness)), asFUNCTION(AI_SetBotBaseOffensiveness), asCALL_CDECL_OBJFIRST },
+
+    { ASLIB_FUNCTION_DECL(void, setAttitude, (Entity @ent, int attitude)), asFUNCTION(AI_SetBotAttitude), asCALL_CDECL_OBJFIRST },
+
+    { ASLIB_FUNCTION_DECL(void, clearOverriddenEntityWeights, ()), asFUNCTION(AI_ClearBotOverriddenEntityWeights), asCALL_CDECL_OBJFIRST },
+    { ASLIB_FUNCTION_DECL(void, overrideEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_OverrideBotEntityWeight), asCALL_CDECL_OBJFIRST },
+
+    { ASLIB_FUNCTION_DECL(int, get_defenceSpotId, () const), asFUNCTION(AI_BotDefenceSpotId), asCALL_CDECL_OBJFIRST },
+    { ASLIB_FUNCTION_DECL(int, get_offenseSpotId, () const), asFUNCTION(AI_BotOffenseSpotId), asCALL_CDECL_OBJFIRST },
+
+    ASLIB_METHOD_NULL
+};
+
+static const asProperty_t asbot_Properties[] =
+{
+    ASLIB_PROPERTY_NULL
+};
+
+static const asClassDescriptor_t asBotClassDescriptor =
+{
+    "Bot",						/* name */
+    asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
+    sizeof(ai_handle_t),		/* size */
+    asbot_Funcdefs,				/* funcdefs */
+    asbot_ObjectBehaviors,		/* object behaviors */
+    asbot_Methods,				/* methods */
+    asbot_Properties,			/* properties */
+
+    NULL, NULL					/* string factory hack */
+};
+
+const asClassDescriptor_t *asAIClassesDescriptors[] =
+{
+    &asAiScriptWeaponDefClassDescriptor,
+    &asAiDefenceSpotClassDescriptor,
+    &asAiOffenseSpotClassDescriptor,
+    &asBotClassDescriptor,
+
+    NULL
+};
+
+static inline AiObjectiveBasedTeamBrain *GetObjectiveBasedTeamBrain(const char *caller, int team)
+{
+    // Make sure that AiBaseTeamBrain::GetBrainForTeam() will not crash for illegal team
+    if (team != TEAM_ALPHA && team != TEAM_BETA)
+    {
+        G_Printf(S_COLOR_RED "%s: illegal team %d\n", caller, team);
+        return nullptr;
+    }
+
+    AiBaseTeamBrain *baseTeamBrain = AiBaseTeamBrain::GetBrainForTeam(team);
+    if (auto *objectiveBasedTeamBrain = dynamic_cast<AiObjectiveBasedTeamBrain*>(baseTeamBrain))
+        return objectiveBasedTeamBrain;
+
+    G_Printf(S_COLOR_RED "%s: can't be used in not objective based gametype\n", caller);
+    return nullptr;
+}
+
+void AI_AddDefenceSpot( int team, const AiDefenceSpot *spot )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->AddDefenceSpot(*spot);
+}
+
+void AI_RemoveDefenceSpot( int team, int id )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->RemoveDefenceSpot(id);
+}
+
+void AI_DefenceSpotAlert( int team, int id, float alertLevel, unsigned timeoutPeriod )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->SetDefenceSpotAlert(id, alertLevel, timeoutPeriod);
+}
+
+void AI_AddOffenseSpot( int team, const AiOffenseSpot *spot )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->AddOffenseSpot(*spot);
+}
+
+void AI_RemoveOffenseSpot( int team, int id )
+{
+    if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
+        objectiveBasedTeamBrain->RemoveOffenseSpot(id);
 }
 
 static int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float searchRadius, vec3_t *spots, int maxSpots)
@@ -292,14 +384,12 @@ const asglobfuncs_t asAIGlobFuncs[] =
     { "void RemoveNavEntity( Entity @ent )", asFUNCTION(AI_RemoveNavEntity), NULL },
     { "void NavEntityReached( Entity @ent )", asFUNCTION(AI_NavEntityReached), NULL },
 
-    { "void AddDefenceSpot(int team, int id, Entity @ent, float radius)", asFUNCTION(AI_AddDefenceSpot), NULL },
-    { "void AddOffenceSpot(int team, int id, Entity @ent)", asFUNCTION(AI_AddOffenceSpot), NULL },
+    { "void AddDefenceSpot(int team, const AIDefenceSpot &in spot )", asFUNCTION(AI_AddDefenceSpot), NULL },
+    { "void AddOffenseSpot(int team, const AIOffenseSpot &in spot )", asFUNCTION(AI_AddOffenseSpot), NULL },
     { "void RemoveDefenceSpot(int team, int id)", asFUNCTION(AI_RemoveDefenceSpot), NULL },
-    { "void RemoveOffenceSpot(int team, int id)", asFUNCTION(AI_RemoveOffenceSpot), NULL },
+    { "void RemoveOffenseSpot(int team, int id)", asFUNCTION(AI_RemoveOffenseSpot), NULL },
 
     { "void DefenceSpotAlert(int team, int id, float level, uint timeoutPeriod)", asFUNCTION(AI_DefenceSpotAlert), NULL },
-    { "void EnableDefenceSpotAutoAlert(int team, int id)", asFUNCTION(AI_EnableDefenceSpotAutoAlert), NULL },
-    { "void DisableDefenceSpotAutoAlert(int team, int id)", asFUNCTION(AI_DisableDefenceSpotAutoAlert), NULL },
 
     { "array<Vec3> @SuggestDefencePlantingSpots(Entity @defendedEntity, float radius, int maxSpots)", asFUNCTION(asFunc_AI_SuggestDefencePlantingSpots), NULL },
 
@@ -717,10 +807,10 @@ int GT_asGetScriptWeaponsNum(const gclient_t *client)
 }
 
 static auto getScriptWeaponDefFunc =
-    gtAIFunctionsRegistry.Function3<bool, const gclient_t*, int, ai_script_weapon_def_t *>(
-        "bool GT_GetScriptWeaponDef( const Client @client, int weaponNum, ScriptWeaponDef &out weaponDef )", false);
+    gtAIFunctionsRegistry.Function3<bool, const gclient_t*, int, AiScriptWeaponDef *>(
+        "bool GT_GetScriptWeaponDef( const Client @client, int weaponNum, AiScriptWeaponDef &out weaponDef )", false);
 
-bool GT_asGetScriptWeaponDef(const gclient_t *client, int weaponNum, ai_script_weapon_def_t *weaponDef)
+bool GT_asGetScriptWeaponDef(const gclient_t *client, int weaponNum, AiScriptWeaponDef *weaponDef)
 {
     return getScriptWeaponDefFunc(client, weaponNum, weaponDef);
 }
