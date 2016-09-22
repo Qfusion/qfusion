@@ -58,9 +58,15 @@ endif()
 option(USE_SDL2 "Build using SDL2" OFF)
 option(GAME_MODULES_ONLY "Only build game modules" OFF)
 
+# We build angelscript and libRocket from source
+
 set(ANGELSCRIPT_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/angelscript/sdk/angelscript)
 set(ANGELSCRIPT_INCLUDE_DIR ${ANGELSCRIPT_DIR}/include/)
 add_subdirectory(${ANGELSCRIPT_DIR}/projects/cmake ${ANGELSCRIPT_DIR}/lib/)
+
+set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/libRocket)
+set(LIBROCKET_INCLUDE_DIR ${LIBROCKET_DIR}/Include)
+set(LIBROCKET_SOURCE_DIR ${LIBROCKET_DIR}/Source)
 
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -75,12 +81,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../libsrcs/libvorbis"
         "../libsrcs/libtheora"
         "../libsrcs/libcurl/include"
-        "../third-party/angelscript/sdk/angelscript"
         "../libsrcs/zlib"
         "../libsrcs/libfreetype"
         "../libsrcs/libpng"
         "../libsrcs/libjpeg"
-        "../third-party/libRocket/Include"
         "../libsrcs/SDL2/include"
 		"../libsrcs/OpenAL-MOB/include/AL"
     )
@@ -223,11 +227,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
 	add_custom_target(tar_gz COMMAND ${CMAKE_COMMAND} -E tar "cfvz" ${TAR_GZ_DIST} "${CMAKE_HOME_DIRECTORY}/build/")
 	add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} game ${QFUSION_SERVER_NAME} ${QFUSION_TVSERVER_NAME})
 endif()
-
-# We build libRocket from source
-set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/libRocket)
-set(LIBROCKET_INCLUDE_DIR ${LIBROCKET_DIR}/Include)
-set(LIBROCKET_SOURCE_DIR ${LIBROCKET_DIR}/Source)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXECUTABLE_SUFFIX "_${QFUSION_WINDOWS_ARCH}${CMAKE_EXECUTABLE_SUFFIX}")
