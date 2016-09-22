@@ -3,69 +3,99 @@
 
 #include "ai_squad_based_team_brain.h"
 
+// Visible for script
+struct AiDefenceSpot
+{
+    int id;
+    const edict_t *entity;
+    float radius;
+    bool usesAutoAlert;
+    unsigned minDefenders;
+    unsigned maxDefenders;
+    float regularEnemyAlertScale;
+    float carrierEnemyAlertScale;
+};
+
+// Visible for script
+struct AiOffenseSpot
+{
+    int id;
+    const edict_t *entity;
+    unsigned minAttackers;
+    unsigned maxAttackers;
+};
+
 class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
 {
-    struct DefenceSpot
+    static constexpr unsigned MAX_SPOT_ATTACKERS = 16;
+    static constexpr unsigned MAX_SPOT_DEFENDERS = 16;
+
+    // Extended definition based on one visible for script
+    struct DefenceSpot: public AiDefenceSpot
     {
-        int id;
-        const edict_t *entity;
-        float radius;
         float weight;
         float alertLevel;
         unsigned alertTimeoutAt;
-        bool usesAutoAlert;
 
-        // Weight may be set automatically or on event (bomb plant)
-
-        DefenceSpot(int id, const edict_t *entity, float radius)
-            : id(id),
-              entity(entity),
-              radius(radius),
+        DefenceSpot(const AiDefenceSpot &spot)
+            : AiDefenceSpot(spot),
               weight(0.0f),
               alertLevel(0.0f),
-              alertTimeoutAt(0),
-              usesAutoAlert(false) {}
+              alertTimeoutAt(0)
+        {
+            clamp_low(radius, 16.0f);
+            clamp(regularEnemyAlertScale, 0.0f, 1.0f);
+            clamp(carrierEnemyAlertScale, 0.0f, 1.0f);
+            clamp_high(minDefenders, MAX_SPOT_DEFENDERS);
+            clamp(maxDefenders, 1, MAX_SPOT_DEFENDERS);
+            if (minDefenders > maxDefenders)
+                minDefenders = maxDefenders;
+        }
+
+        class AiAlertSpot ToAlertSpot() const;
     };
 
-    struct OffenceSpot
+    // Extended definition based on one visible for script
+    struct OffenseSpot: public AiOffenseSpot
     {
-        int id;
-        const edict_t *entity;
         float weight;
 
-        // Weight may be set automatically or on event (bomb plant)
-
-        OffenceSpot(int id, const edict_t *entity)
-            : id(id), entity(entity), weight(0.0f) {}
+        OffenseSpot(const AiOffenseSpot &spot)
+            : AiOffenseSpot(spot), weight(0.0f)
+        {
+            clamp_high(minAttackers, MAX_SPOT_ATTACKERS);
+            clamp(maxAttackers, 1, MAX_SPOT_ATTACKERS);
+            if (minAttackers > maxAttackers)
+                minAttackers = maxAttackers;
+        }
     };
 
     // This value is chosen having the domination GT in mind
     static constexpr unsigned MAX_DEFENCE_SPOTS = 3;
-    static constexpr unsigned MAX_OFFENCE_SPOTS = 3;
+    static constexpr unsigned MAX_OFFENSE_SPOTS = 3;
 
-    // This value is chosen having the bomb GT in mind
-    static constexpr unsigned MAX_SPOT_ATTACKERS = 5;
-    static constexpr unsigned MAX_SPOT_DEFENDERS = 5;
-
-    StaticVector<edict_t *, MAX_SPOT_ATTACKERS> attackers[MAX_OFFENCE_SPOTS];
+    StaticVector<edict_t *, MAX_SPOT_ATTACKERS> attackers[MAX_OFFENSE_SPOTS];
     StaticVector<edict_t *, MAX_SPOT_DEFENDERS> defenders[MAX_DEFENCE_SPOTS];
 
     StaticVector<DefenceSpot, MAX_DEFENCE_SPOTS> defenceSpots;
-    StaticVector<OffenceSpot, MAX_OFFENCE_SPOTS> offenceSpots;
+    StaticVector<OffenseSpot, MAX_OFFENSE_SPOTS> offenseSpots;
 
     template <typename Container, typename T>
-    inline void AddItem(const char *name, Container &c, T&& item);
+    inline int AddItem(const char *name, Container &c, T&& item);
 
     template <typename Container, typename OnRemoved>
-    inline void RemoveItem(const char *name, Container &c, int id, OnRemoved onRemoved);
+    inline int RemoveItem(const char *name, Container &c, int id, OnRemoved onRemoved);
 
     inline void OnDefenceSpotRemoved(DefenceSpot *defenceSpot)
     {
         ClearExternalEntityWeights(defenceSpot->entity);
+        if (defenceSpot->usesAutoAlert)
+            DisableDefenceSpotAutoAlert(defenceSpot);
     }
-    inline void OnOffenceSpotRemoved(OffenceSpot *offenceSpot)
+
+    inline void OnOffenseSpotRemoved(OffenseSpot *offenseSpot)
     {
-        ClearExternalEntityWeights(offenceSpot->entity);
+        ClearExternalEntityWeights(offenseSpot->entity);
     }
 
     void ClearExternalEntityWeights(const edict_t *ent);
@@ -110,16 +140,13 @@ public:
     AiObjectiveBasedTeamBrain(int team): AiSquadBasedTeamBrain(team) {}
     virtual ~AiObjectiveBasedTeamBrain() override {}
 
-    void AddDefenceSpot(int id, const edict_t *entity, float radius);
+    void AddDefenceSpot(const AiDefenceSpot &spot);
     void RemoveDefenceSpot(int id);
 
     void SetDefenceSpotAlert(int id, float alertLevel, unsigned timeoutPeriod);
 
-    void EnableDefenceSpotAutoAlert(int id);
-    void DisableDefenceSpotAutoAlert(int id);
-
-    void AddOffenceSpot(int id, const edict_t *entity);
-    void RemoveOffenceSpot(int id);
+    void AddOffenseSpot(const AiOffenseSpot &spot);
+    void RemoveOffenseSpot(int id);
 
     virtual void OnBotAdded(Bot *bot) override;
     virtual void OnBotRemoved(Bot *bot) override;

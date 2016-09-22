@@ -197,9 +197,9 @@ void Bot::FireTargetCache::PredictProjectileShot(const CombatTask &combatTask, f
     }
 }
 
-inline bool operator!=(const ai_script_weapon_def_t &first, const ai_script_weapon_def_t &second)
+inline bool operator!=(const AiScriptWeaponDef &first, const AiScriptWeaponDef &second)
 {
-    return memcmp(&first, &second, sizeof(ai_script_weapon_def_t)) != 0;
+    return memcmp(&first, &second, sizeof(AiScriptWeaponDef)) != 0;
 }
 
 void Bot::UpdateScriptWeaponsStatus()
@@ -213,7 +213,7 @@ void Bot::UpdateScriptWeaponsStatus()
 
         for (int weaponNum = 0; weaponNum < scriptWeaponsNum; ++weaponNum)
         {
-            ai_script_weapon_def_t weaponDef;
+            AiScriptWeaponDef weaponDef;
             if (GT_asGetScriptWeaponDef(self->r.client, weaponNum, &weaponDef))
             {
                 scriptWeaponDefs.emplace_back(std::move(weaponDef));
@@ -228,7 +228,7 @@ void Bot::UpdateScriptWeaponsStatus()
     bool hasStatusChanged = false;
     for (int weaponNum = 0; weaponNum < scriptWeaponsNum; ++weaponNum)
     {
-        ai_script_weapon_def_t actualWeaponDef;
+        AiScriptWeaponDef actualWeaponDef;
         // Try to retrieve the weapon def
         if (!GT_asGetScriptWeaponDef(self->r.client, weaponNum, &actualWeaponDef))
         {

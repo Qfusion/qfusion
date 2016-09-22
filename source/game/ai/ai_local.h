@@ -103,7 +103,7 @@ void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt )
 float GT_asPlayerOffensiveAbilitiesRating(const gclient_t *client);
 float GT_asPlayerDefenciveAbilitiesRating(const gclient_t *client);
 
-typedef struct ai_script_weapon_def_s
+struct AiScriptWeaponDef
 {
     int weaponNum;
     int tier;
@@ -115,10 +115,10 @@ typedef struct ai_script_weapon_def_s
     float maxSelfDamage;
     ai_weapon_aim_type aimType;
     bool isContinuousFire;
-} ai_script_weapon_def_t;
+};
 
 int GT_asGetScriptWeaponsNum(const gclient_t *client);
-bool GT_asGetScriptWeaponDef(const gclient_t *client, int scriptWeaponNum, ai_script_weapon_def_t *weaponDef);
+bool GT_asGetScriptWeaponDef(const gclient_t *client, int scriptWeaponNum, AiScriptWeaponDef *weaponDef);
 int GT_asGetScriptWeaponCooldown(const gclient_t *client, int scriptWeaponNum);
 bool GT_asSelectScriptWeapon(gclient_t *client, int scriptWeaponNum);
 bool GT_asFireScriptWeapon(gclient_t *client, int scriptWeaponNum);

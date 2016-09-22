@@ -15,7 +15,7 @@ Bot::Bot(edict_t *self, float skillLevel)
       isWaitingForItemSpawn(false),
       isInSquad(false),
       defenceSpotId(-1),
-      offenceSpotId(-1),
+      offenseSpotId(-1),
       builtinFireTargetCache(self),
       scriptFireTargetCache(self)
 {
@@ -87,19 +87,19 @@ void Bot::TouchedJumppad(const edict_t *jumppad)
     jumppadMovementState.jumppadTarget = Vec3(jumppad->target_ent->s.origin);
 }
 
-void Bot::EnableAutoAlert(int id, const Vec3 &spotOrigin, float spotRadius, AlertCallback callback, void *receiver)
+void Bot::EnableAutoAlert(const AiAlertSpot &alertSpot, AlertCallback callback, void *receiver)
 {
     // First check duplicate ids. Fail on error since callers of this method are internal.
     for (unsigned i = 0; i < alertSpots.size(); ++i)
     {
-        if (alertSpots[i].id == id)
-            FailWith("Duplicated alert spot (id=%d)\n", id);
+        if (alertSpots[i].id == alertSpot.id)
+            FailWith("Duplicated alert spot (id=%d)\n", alertSpot.id);
     }
 
     if (alertSpots.size() == alertSpots.capacity())
-        FailWith("Can't add an alert spot (id=%d)\n: too many spots", id);
+        FailWith("Can't add an alert spot (id=%d)\n: too many spots", alertSpot.id);
 
-    alertSpots.emplace_back(AlertSpot(spotOrigin, id, spotRadius, callback, receiver));
+    alertSpots.emplace_back(AlertSpot(alertSpot, callback, receiver));
 }
 
 void Bot::DisableAutoAlert(int id)
@@ -217,8 +217,11 @@ void Bot::CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTar
                 continue;
             float distance = Q_RSqrt(squareDistance + 0.001f);
             score += 1.0f - distance * invRadius;
-            if (HasPowerups(ent))
-                score *= 4.0f;
+            // Put likely case first
+            if (!(ent->s.effects & EF_CARRIER))
+                score *= alertSpot.regularEnemyInfluenceScale;
+            else
+                score *= alertSpot.carrierEnemyInfluenceScale;
         }
         // Clamp score by a max value
         clamp_high(score, 3.0f);
