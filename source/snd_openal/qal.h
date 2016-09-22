@@ -29,15 +29,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ALC_NO_PROTOTYPES
 #endif
 
-#if defined ( _WIN32 ) 
-#include <al.h>
-#include <alc.h>
-#elif defined ( __MACOSX__ )
+#if defined ( __MACOSX__ )
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #else
-#include <AL/al.h>
-#include <AL/alc.h>
+#include <al.h>
+#include <alc.h>
 #endif
 
 #ifdef OPENAL_RUNTIME
