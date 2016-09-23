@@ -1,4 +1,4 @@
-LOCAL_PATH := $(QFUSION_PATH)/libsrcs/OpenAL-MOB
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/src/OpenAL-MOB
 include $(CLEAR_VARS)
 LOCAL_MODULE := OpenAL-MOB
 

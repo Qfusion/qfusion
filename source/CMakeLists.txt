@@ -77,29 +77,29 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif()
 
     set(CMAKE_INCLUDE_PATH
-        "../libsrcs/libogg"
-        "../libsrcs/libvorbis"
-        "../libsrcs/libtheora"
-        "../libsrcs/libcurl/include"
-        "../libsrcs/zlib"
-        "../libsrcs/libfreetype"
-        "../libsrcs/libpng"
-        "../libsrcs/libjpeg"
-        "../libsrcs/SDL2/include"
-		"../libsrcs/OpenAL-MOB/include/AL"
+        "../libsrcs/src/libogg"
+        "../libsrcs/src/libvorbis"
+        "../libsrcs/src/libtheora"
+        "../libsrcs/src/libcurl/include"
+        "../libsrcs/src/zlib"
+        "../libsrcs/src/libfreetype"
+        "../libsrcs/src/libpng"
+        "../libsrcs/src/libjpeg"
+        "../libsrcs/src/SDL2/include"
+        "../libsrcs/src/OpenAL-MOB/include/AL"
     )
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
 
     if (MSVC)
-        set(CMAKE_LIBRARY_PATH "win32/${QFUSION_WINDOWS_ARCH}/lib/debug")
+        set(CMAKE_LIBRARY_PATH "../libsrcs/lib/win32/${QFUSION_WINDOWS_ARCH}/debug")
     else()
-        set(CMAKE_LIBRARY_PATH "win32/${QFUSION_WINDOWS_ARCH}/lib/mingw")
+        set(CMAKE_LIBRARY_PATH "../libsrcs/lib/win32/${QFUSION_WINDOWS_ARCH}/mingw")
     endif()
 
     if (MSVC)
         add_release_link_flags("/LTCG")
-        
+
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /W4 /Ob1 /GL /Ot")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /W4")
         set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MD /W4 /Ob1 /GL /Ot")
@@ -200,7 +200,7 @@ if (NOT GAME_MODULES_ONLY)
     find_package(Freetype REQUIRED)
     find_package(JPEG REQUIRED)
     find_package(PNG REQUIRED)
-	find_package(OpenAL)
+    find_package(OpenAL)
 
     # We need SDL only on non-Windows platforms or when with SDL2-backend
     if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
@@ -214,18 +214,18 @@ if (NOT GAME_MODULES_ONLY)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
-	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		STRING(TOLOWER "win32_${QFUSION_WINDOWS_ARCH}.tar.gz" TAR_GZ_NAME)
-	else()
-		STRING(TOLOWER "${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}.tar.gz" TAR_GZ_NAME)
-	endif()
-	if (NOT QFUSION_TAR_GZ_OUTPUT_DIRECTORY)
-		set(TAR_GZ_DIST "${QFUSION_CLIENT_NAME}_${TAR_GZ_NAME}")
-	else()
-		set(TAR_GZ_DIST "${QFUSION_TAR_GZ_OUTPUT_DIRECTORY}/${QFUSION_CLIENT_NAME}_${TAR_GZ_NAME}")
-	endif()
-	add_custom_target(tar_gz COMMAND ${CMAKE_COMMAND} -E tar "cfvz" ${TAR_GZ_DIST} "${CMAKE_HOME_DIRECTORY}/build/")
-	add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} game ${QFUSION_SERVER_NAME} ${QFUSION_TVSERVER_NAME})
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        STRING(TOLOWER "win32_${QFUSION_WINDOWS_ARCH}.tar.gz" TAR_GZ_NAME)
+    else()
+        STRING(TOLOWER "${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}.tar.gz" TAR_GZ_NAME)
+    endif()
+    if (NOT QFUSION_TAR_GZ_OUTPUT_DIRECTORY)
+        set(TAR_GZ_DIST "${QFUSION_CLIENT_NAME}_${TAR_GZ_NAME}")
+    else()
+        set(TAR_GZ_DIST "${QFUSION_TAR_GZ_OUTPUT_DIRECTORY}/${QFUSION_CLIENT_NAME}_${TAR_GZ_NAME}")
+    endif()
+    add_custom_target(tar_gz COMMAND ${CMAKE_COMMAND} -E tar "cfvz" ${TAR_GZ_DIST} "${CMAKE_HOME_DIRECTORY}/build/")
+    add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} game ${QFUSION_SERVER_NAME} ${QFUSION_TVSERVER_NAME})
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

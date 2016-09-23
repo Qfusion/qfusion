@@ -1,4 +1,4 @@
-LOCAL_PATH := $(QFUSION_PATH)/libsrcs/openssl
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/src/openssl
 include $(CLEAR_VARS)
 LOCAL_MODULE := ssl
 

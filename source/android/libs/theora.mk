@@ -1,4 +1,4 @@
-LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libtheora
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/src/libtheora
 include $(CLEAR_VARS)
 LOCAL_MODULE := theora
 

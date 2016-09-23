@@ -1,4 +1,4 @@
-LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libvorbis
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/src/libvorbis
 include $(CLEAR_VARS)
 LOCAL_MODULE := vorbis
 
