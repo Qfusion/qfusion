@@ -385,53 +385,34 @@ void G_FreeAI( edict_t *ent )
 
     AiManager::Instance()->UnlinkAi(ent->ai);
 
-    // Invoke an appropriate destructor based on ai instance type, then free memory.
-    // It is enough to call G_Free(ent->ai->aiRef), since botRef (if it is present)
-    // points to the same block as aiRef does, but to avoid confusion we free pointer aliases explicitly.
-    if (ent->ai->botRef)
-    {
-        AiManager::Instance()->OnBotDropped(ent);
-        ent->ai->botRef->~Bot();
-        G_Free(ent->ai->botRef);
-    }
-    else
-    {
-        ent->ai->aiRef->~Ai();
-        G_Free(ent->ai->aiRef);
-    }
-    ent->ai->aiRef = nullptr;
-    ent->ai->botRef = nullptr;
+    // Perform virtual destructor call
+    ent->ai->aiRef->~Ai();
 
     G_Free(ent->ai);
     ent->ai = nullptr;
 }
 
-//==========================================
-// G_SpawnAI
-// allocate ai_handle_t for this entity
-//==========================================
 void G_SpawnAI( edict_t *ent, float skillLevel )
 {
-    if (!ent->ai)
-        ent->ai = ( ai_handle_t * )G_Malloc( sizeof( ai_handle_t ) );
-    else
-        memset( &ent->ai, 0, sizeof( ai_handle_t ) );
+    if (ent->ai)
+        AI_FailWith("G_SpawnAI()", "Entity AI has been already initialized\n");
 
-    if( ent->r.svflags & SVF_FAKECLIENT )
-    {
-        ent->ai->type = AI_ISBOT;
-        void *mem = G_Malloc( sizeof(Bot) );
-        ent->ai->botRef = new(mem) Bot( ent, skillLevel );
-        ent->ai->aiRef = ent->ai->botRef;
-    }
-    else
-    {
-        // TODO: Monster brain is not implemented! This is just a stub!
-        ent->ai->type = AI_ISMONSTER;
-        void *mem = G_Malloc( sizeof(Ai) );
-        ent->ai->botRef = nullptr;
-        ent->ai->aiRef = new(mem) Ai( ent, TFL_DEFAULT, TFL_DEFAULT );
-    }
+    if (!(ent->r.svflags & SVF_FAKECLIENT))
+        AI_FailWith("G_SpawnAI()", "Only fake clients are supported\n");
+
+    size_t memSize = sizeof(ai_handle_t) + sizeof(Bot);
+    size_t alignmentBytes = 0;
+    if (sizeof(ai_handle_t) % 16)
+        alignmentBytes = 16 - sizeof(ai_handle_t) % 16;
+    memSize += alignmentBytes;
+
+    char *mem = (char *)G_Malloc(memSize);
+    ent->ai = (ai_handle_t *)mem;
+    ent->ai->type = AI_ISBOT;
+
+    char *botMem = mem + sizeof(ai_handle_t) + alignmentBytes;
+    ent->ai->botRef = new(botMem) Bot(ent, skillLevel);
+    ent->ai->aiRef = ent->ai->botRef;
 
     AiManager::Instance()->LinkAi(ent->ai);
 }
