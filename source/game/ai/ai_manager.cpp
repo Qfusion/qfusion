@@ -115,7 +115,10 @@ void AiManager::LinkAi(ai_handle_t *ai)
 {
     ai->next = nullptr;
     if (last != nullptr)
+    {
         ai->prev = last;
+        last->next = ai;
+    }
     else
         ai->prev = nullptr;
     last = ai;
@@ -125,6 +128,7 @@ void AiManager::UnlinkAi(ai_handle_t *ai)
 {
     ai_handle_t *next = ai->next;
     ai_handle_t *prev = ai->prev;
+
     ai->next = nullptr;
     ai->prev = nullptr;
     // If the cell is not the last in chain
@@ -315,6 +319,7 @@ void AiManager::RemoveBot(const char *name)
         if (!Q_stricmp(ent->r.client->netname, name))
         {
             trap_DropClient(ent, DROP_TYPE_GENERAL, nullptr);
+            OnBotDropped(ent);
             G_FreeAI(ent);
             game.numBots--;
             return;
@@ -332,6 +337,7 @@ void AiManager::RemoveBots()
             continue;
 
         trap_DropClient(ent, DROP_TYPE_GENERAL, nullptr);
+        OnBotDropped(ent);
         G_FreeAI(ent);
         game.numBots--;
     }

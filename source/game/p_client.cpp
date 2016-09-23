@@ -1417,8 +1417,6 @@ void ClientDisconnect( edict_t *ent, const char *reason )
 	// let the gametype scripts know this client just disconnected
 	G_Gametype_ScoreEvent( ent->r.client, "disconnect", NULL );
 
-	G_FreeAI( ent );
-
 	ent->r.inuse = false;
 	ent->r.svflags = SVF_NOCLIENT;
 
