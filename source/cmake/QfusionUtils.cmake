@@ -29,11 +29,11 @@ macro(capitalize s)
 endmacro()
 
 macro(find_windows_release_libs libs)
-	# workaround cmake confusing debug and release libs for zlib and png
-	set(${libs}_RELEASE NOTFOUND)
+    # workaround cmake confusing debug and release libs for zlib and png
+    set(${libs}_RELEASE NOTFOUND)
 
     foreach (lib_name ${${libs}})
-        string(REPLACE "lib/debug" "lib/release" release_lib_name ${lib_name})
+        string(REPLACE "/debug" "/release" release_lib_name ${lib_name})
         if (${libs}_DEBUG)
             set(${libs}_DEBUG ${${libs}_DEBUG} debug ${lib_name})
         else()
