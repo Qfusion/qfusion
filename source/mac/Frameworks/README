@@ -1,5 +1,0 @@
-Notes on Framework update process.
-
-Frameworks are build using libraries from libsrc subdirectory of top-level directory.
-Please specify the oldest possible OSX SDK (for XCode 6.0 it is v. 9), standard architecture - 
-64-bit Intel.

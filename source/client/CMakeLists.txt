@@ -131,7 +131,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CLIENT_BINARY_TYPE MACOSX_BUNDLE)
 
     set(BUNDLE_RESOURCES
-        ../mac/Frameworks
+        ../../libsrcs/lib/mac/Frameworks
         ${QFUSION_MAC_ICON}
     )
 	if (QFUSION_DATA_DIR)
