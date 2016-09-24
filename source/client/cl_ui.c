@@ -248,6 +248,7 @@ void CL_UIModule_Init( void )
 	import.R_ClearScene = re.ClearScene;
 	import.R_AddEntityToScene = re.AddEntityToScene;
 	import.R_AddLightToScene = re.AddLightToScene;
+	import.R_AddLightStyleToScene = re.AddLightStyleToScene;
 	import.R_AddPolyToScene = re.AddPolyToScene;
 	import.R_RenderScene = re.RenderScene;
 	import.R_EndFrame = re.EndFrame;

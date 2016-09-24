@@ -680,48 +680,19 @@ void G_PrecacheMedia( void )
 	//
 	// LIGHTSTYLES
 	//
-
-	// light animation tables. 'a' is total darkness, 'z' is doublebright.
-
-	// 0 normal
-	trap_ConfigString( CS_LIGHTS+0, "m" );
-
-	// 1 FLICKER (first variety)
-	trap_ConfigString( CS_LIGHTS+1, "mmnmmommommnonmmonqnmmo" );
-
-	// 2 SLOW STRONG PULSE
-	trap_ConfigString( CS_LIGHTS+2, "abcdefghijklmnopqrstuvwxyzyxwvutsrqponmlkjihgfedcba" );
-
-	// 3 CANDLE (first variety)
-	trap_ConfigString( CS_LIGHTS+3, "mmmmmaaaaammmmmaaaaaabcdefgabcdefg" );
-
-	// 4 FAST STROBE
-	trap_ConfigString( CS_LIGHTS+4, "mamamamamama" );
-
-	// 5 GENTLE PULSE 1
-	trap_ConfigString( CS_LIGHTS+5, "jklmnopqrstuvwxyzyxwvutsrqponmlkj" );
-
-	// 6 FLICKER (second variety)
-	trap_ConfigString( CS_LIGHTS+6, "nmonqnmomnmomomno" );
-
-	// 7 CANDLE (second variety)
-	trap_ConfigString( CS_LIGHTS+7, "mmmaaaabcdefgmmmmaaaammmaamm" );
-
-	// 8 CANDLE (third variety)
-	trap_ConfigString( CS_LIGHTS+8, "mmmaaammmaaammmabcdefaaaammmmabcdefmmmaaaa" );
-
-	// 9 SLOW STROBE (fourth variety)
-	trap_ConfigString( CS_LIGHTS+9, "aaaaaaaazzzzzzzz" );
-
-	// 10 FLUORESCENT FLICKER
-	trap_ConfigString( CS_LIGHTS+10, "mmamammmmammamamaaamammma" );
-
-	// 11 SLOW PULSE NOT FADE TO BLACK
-	trap_ConfigString( CS_LIGHTS+11, "abcdefghijklmnopqrrqponmlkjihgfedcba" );
-
+	trap_ConfigString( CS_LIGHTS+0, LS_NORMAL );
+	trap_ConfigString( CS_LIGHTS+1, LS_FLICKER1 );
+	trap_ConfigString( CS_LIGHTS+2, LS_SLOW_STRONG_PULSE );
+	trap_ConfigString( CS_LIGHTS+3, LS_CANDLE1 );
+	trap_ConfigString( CS_LIGHTS+4, LS_FAST_STROBE );
+	trap_ConfigString( CS_LIGHTS+5, LS_GENTLE_PULSE_1 );
+	trap_ConfigString( CS_LIGHTS+6, LS_FLICKER2 );
+	trap_ConfigString( CS_LIGHTS+7, LS_CANDLE2 );
+	trap_ConfigString( CS_LIGHTS+8, LS_CANDLE3 );
+	trap_ConfigString( CS_LIGHTS+9, LS_SLOW_STROBE );
+	trap_ConfigString( CS_LIGHTS+10, LS_FLUORESCENT_FLICKER );
+	trap_ConfigString( CS_LIGHTS+11, LS_SLOW_PULSE_NOT_FADE );
 	// styles 32-62 are assigned by the light program for switchable lights
-
-	// 63 testing
 	trap_ConfigString( CS_LIGHTS+63, "a" );
 }
 

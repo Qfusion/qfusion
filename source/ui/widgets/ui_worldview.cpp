@@ -49,6 +49,7 @@ private:
 	String colorCorrection;
 	struct shader_s *colorCorrectionShader;
 	bool Initialized;
+	String lightStyles[MAX_LIGHTSTYLES];
 
 public:
 	UI_WorldviewWidget( const String &tag )
@@ -71,6 +72,8 @@ public:
 		Matrix3_Copy( axis_identity, refdef.viewaxis );
 		fovX = 100.0f;
 		mouseSensitivity = 0.0f;
+
+		InitLightStyles();
 	}
 
 	virtual void OnRender()
@@ -146,6 +149,8 @@ public:
 		refdef.colorCorrection = colorCorrectionShader;
 
 		trap::R_ClearScene();
+
+		AddLightStylesToScene();
 
 		trap::R_RenderScene( &refdef );
 
@@ -285,6 +290,61 @@ public:
 	{
 		if( evt == "invalidate" ) {
 			Initialized = false;
+		}
+	}
+
+	void InitLightStyles( void )
+	{
+		for( int i = 0; i < MAX_LIGHTSTYLES; i++ ) {
+			lightStyles[i] = "";
+		}
+
+		// this is constructed to match G_PrecacheMedia in g_spawn.cpp
+		lightStyles[0] = LS_NORMAL;
+		lightStyles[1] = LS_FLICKER1;
+		lightStyles[2] = LS_SLOW_STRONG_PULSE;
+		lightStyles[3] = LS_CANDLE1;
+		lightStyles[4] = LS_FAST_STROBE;
+		lightStyles[5] = LS_GENTLE_PULSE_1;
+		lightStyles[6] = LS_FLICKER2;
+		lightStyles[7] = LS_CANDLE2;
+		lightStyles[8] = LS_CANDLE3;
+		lightStyles[9] = LS_SLOW_STROBE;
+		lightStyles[10] = LS_FLUORESCENT_FLICKER;
+		lightStyles[11] = LS_SLOW_PULSE_NOT_FADE;
+		// styles 32-62 are assigned by the light program for switchable lights
+		lightStyles[63] = "a";
+	}
+
+	// Interpolates lightstyles and adds them to the scene
+	void AddLightStylesToScene( void )
+	{
+		float f;
+		int ofs;
+		const RefreshState &state = UI_Main::Get()->getRefreshState();
+
+		f = float( state.time ) / 100.0f;
+		ofs = (int)floor( f );
+		f = f - float( ofs );
+
+		for( int i = 0; i < MAX_LIGHTSTYLES; i++ ) {
+			const String &ls = lightStyles[i];
+
+			auto len = ls.Length();
+			if( len == 0 ) {
+				trap::R_AddLightStyleToScene( i, 0, 0, 0 );
+				continue;
+			}
+
+			auto charToIntensity = [](char c) -> float { 
+				return (float)( c-'a' ) / (float)( 'm'-'a' );
+			};
+
+			auto l1 = charToIntensity( ls[ofs % len] );
+			auto l2 = charToIntensity( ls[(ofs - 1) % len] );
+			auto l = l1 * f + ( 1 - f ) * l2;
+
+			trap::R_AddLightStyleToScene( i, l, l, l );
 		}
 	}
 

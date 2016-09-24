@@ -64,6 +64,10 @@ namespace trap
 			UI_IMPORT.R_AddLightToScene( org, intensity, r, g, b );
 		}
 
+		inline void R_AddLightStyleToScene( int style, float r, float g, float b ) {
+			UI_IMPORT.R_AddLightStyleToScene( style, r, g, b );
+		}
+
 		inline void R_AddPolyToScene( poly_t *poly ) {
 			UI_IMPORT.R_AddPolyToScene( poly );
 		}
