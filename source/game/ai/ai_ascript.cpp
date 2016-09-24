@@ -808,7 +808,7 @@ int GT_asGetScriptWeaponsNum(const gclient_t *client)
 
 static auto getScriptWeaponDefFunc =
     gtAIFunctionsRegistry.Function3<bool, const gclient_t*, int, AiScriptWeaponDef *>(
-        "bool GT_GetScriptWeaponDef( const Client @client, int weaponNum, AiScriptWeaponDef &out weaponDef )", false);
+        "bool GT_GetScriptWeaponDef( const Client @client, int weaponNum, AIScriptWeaponDef &out weaponDef )", false);
 
 bool GT_asGetScriptWeaponDef(const gclient_t *client, int weaponNum, AiScriptWeaponDef *weaponDef)
 {
