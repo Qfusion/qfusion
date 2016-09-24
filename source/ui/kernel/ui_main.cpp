@@ -628,17 +628,18 @@ void UI_Main::gamepadCursorMove( void )
 
 void UI_Main::mouseMove( int contextId, int x, int y, bool absolute, bool showCursor )
 {
+	int oldmousex, oldmousey;
+
+	oldmousex = mousex;
+	oldmousey = mousey;
+
 	// change the delta to window coordinates.
 	if( absolute ) {
 		mousex = x;
 		mousey = y;
-		mousedx = 0;
-		mousedy = 0;
 	} else {
 		mousex += x;
 		mousey += y;
-		mousedx = x;
-		mousedy = y;
 	}
 
 	if( mousex < 0 )
@@ -649,6 +650,15 @@ void UI_Main::mouseMove( int contextId, int x, int y, bool absolute, bool showCu
 		mousey = 0;
 	else if( mousey > refreshState.height )
 		mousey = refreshState.height;
+
+	if( absolute ) {
+		mousedx = 0;
+		mousedy = 0;
+	}
+	else {
+		mousedx = mousex - oldmousex;
+		mousedy = mousey - oldmousey;
+	}
 
 	rocketModule->mouseMove( contextId, mousex, mousey );
 
