@@ -35,23 +35,23 @@ public:
 	// Directories have their own tag <dirtype> with the only possible class "back" for ".." directories.
 	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data )
 	{
-		const Rocket::Core::String &name = raw_data[0];
-		if( name == ".." ) {
+		const Rocket::Core::String &fname = raw_data[0];
+		if( fname == ".." ) {
 			formatted_data = "<dirtype class=\"back\">..</dirtype>";
 		}
 		else {
-			Rocket::Core::String::size_type nameLength = name.Length();
-			Rocket::Core::String::size_type delimPos = name.RFind( "/" );
-			if ( delimPos != name.npos && delimPos + 1 == nameLength ) {
-				formatted_data = String("<dirtype>") + name.Substring( 0, nameLength - 1 ) + "</dirtype>";
+			Rocket::Core::String::size_type nameLength = fname.Length();
+			Rocket::Core::String::size_type delimPos = fname.RFind( "/" );
+			if ( delimPos != fname.npos && delimPos + 1 == nameLength ) {
+				formatted_data = String("<dirtype>") + fname.Substring( 0, nameLength - 1 ) + "</dirtype>";
 			}
 			else {
-				delimPos = name.RFind( "." );
-				if( delimPos != name.npos ) {
-					formatted_data = String("<filetype class=\"") + name.Substring( delimPos + 1 ) + "\">" + name + "</filetype>";
+				delimPos = fname.RFind( "." );
+				if( delimPos != fname.npos ) {
+					formatted_data = String("<filetype class=\"") + fname.Substring( delimPos + 1 ) + "\">" + fname + "</filetype>";
 				}
 				else {
-					formatted_data = String("<filetype>") + name + "</filetype>";
+					formatted_data = String("<filetype>") + fname + "</filetype>";
 				}
 			}
 		}
