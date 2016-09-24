@@ -42,6 +42,9 @@ private:
 	vec3_t aWavePhase;
 	vec3_t aWaveFrequency;
 	float fovX;
+	float mouseSensitivity;
+	vec3_t anglesMove;
+	vec3_t anglesClamp;
 	String mapName;
 	String colorCorrection;
 	struct shader_s *colorCorrectionShader;
@@ -61,15 +64,22 @@ public:
 		VectorClear( aWavePhase );
 		VectorClear( aWaveFrequency );
 
+		VectorClear( anglesMove );
+		VectorClear( anglesClamp );
+
 		// Some default values
 		Matrix3_Copy( axis_identity, refdef.viewaxis );
 		fovX = 100.0f;
+		mouseSensitivity = 0.0f;
 	}
 
 	virtual void OnRender()
 	{
 		bool firstRender = false;
 		Rocket::Core::Dictionary parameters;
+		auto *ui_main = UI_Main::Get();
+		int mousedx, mousedy;
+		vec3_t viewAngles;
 
 		Element::OnRender();
 
@@ -92,6 +102,8 @@ public:
 			this->DispatchEvent( "registerworldmodel", parameters, false );
 		}
 
+		ui_main->getMouseMoveDelta( &mousedx, &mousedy );
+
 		// refdef setup
 		Rocket::Core::Vector2f box = GetBox().GetSize(Rocket::Core::Box::CONTENT);
 		refdef.width = box.x;
@@ -99,13 +111,25 @@ public:
 		refdef.fov_x = fovX;
 		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
 		AdjustFov( &refdef.fov_x, &refdef.fov_y, refdef.width, refdef.height, false );
-		refdef.time = UI_Main::Get()->getRefreshState().time;
+		refdef.time = ui_main->getRefreshState().time;
 
-		vec3_t viewAngles;
+		anglesMove[PITCH] += mousedy * mouseSensitivity * 0.022;
+		anglesMove[YAW] -= mousedx * mouseSensitivity * 0.022;
+
+		// angular movement for camera
 		for( int i = 0; i < 3; i++ ) {
-			viewAngles[i] = baseAngles[i] + aWaveAmplitude[i] * 
-				sin( aWavePhase[i] + refdef.time * 0.001 * aWaveFrequency[i] * M_TWOPI );
+			float delta = anglesMove[i] + aWaveAmplitude[i] * sin( aWavePhase[i] + refdef.time * 0.001 * aWaveFrequency[i] * M_TWOPI );
+			if( anglesClamp[i] ) {
+				if( delta < -anglesClamp[i] ) {
+					delta = -anglesClamp[i];
+				}
+				if( delta >  anglesClamp[i] ) {
+					delta =  anglesClamp[i];
+				}
+			}
+			viewAngles[i] = baseAngles[i] + delta;
 		}
+
 		AnglesToAxis( viewAngles, refdef.viewaxis );
 
 		Rocket::Core::Vector2f offset = GetAbsoluteOffset(Rocket::Core::Box::CONTENT);
@@ -159,7 +183,6 @@ public:
 			{
 				baseAngles[ROLL] = atof( GetProperty(*it)->Get<String>().CString() );
 			}
-
 			else if (*it == "wave-pitch-amplitude")
 			{
 				aWaveAmplitude[PITCH] = atof( GetProperty(*it)->Get<String>().CString() );
@@ -172,7 +195,6 @@ public:
 			{
 				aWaveAmplitude[ROLL] = atof( GetProperty(*it)->Get<String>().CString() );
 			}
-
 			else if (*it == "wave-pitch-phase")
 			{
 				aWavePhase[PITCH] = atof( GetProperty(*it)->Get<String>().CString() ) / 360.0f * M_TWOPI;
@@ -185,7 +207,6 @@ public:
 			{
 				aWavePhase[ROLL] = atof( GetProperty(*it)->Get<String>().CString() ) / 360.0f * M_TWOPI;
 			}
-
 			else if (*it == "wave-pitch-frequency")
 			{
 				aWaveFrequency[PITCH] = atof( GetProperty(*it)->Get<String>().CString() );
@@ -198,15 +219,29 @@ public:
 			{
 				aWaveFrequency[ROLL] = atof( GetProperty(*it)->Get<String>().CString() );
 			}
-
 			else if (*it == "fov")
 			{
 				fovX = atof( GetProperty(*it)->Get<String>().CString() );
 			}
-
 			else if (*it == "color-correction")
 			{
 				colorCorrection = GetProperty(*it)->Get<String>();
+			}
+			else if (*it == "mouse-sensitivity")
+			{
+				mouseSensitivity = atof( GetProperty(*it)->Get<String>().CString() );
+			}
+			else if (*it == "viewangle-pitch-clamp")
+			{
+				anglesClamp[0] = atof( GetProperty(*it)->Get<String>().CString() );
+			}
+			else if (*it == "viewangle-yaw-clamp")
+			{
+				anglesClamp[1] = atof( GetProperty(*it)->Get<String>().CString() );
+			}
+			else if (*it == "viewangle-roll-clamp")
+			{
+				anglesClamp[2] = atof( GetProperty(*it)->Get<String>().CString() );
 			}
 			else if (*it == "blur")
 			{
@@ -289,6 +324,12 @@ public:
 		StyleSheetSpecification::RegisterProperty( "wave-roll-phase", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "wave-roll-frequency", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterShorthand( "wave-roll", "wave-roll-amplitude, wave-roll-phase, wave-roll-frequency" );
+
+		StyleSheetSpecification::RegisterProperty( "mouse-sensitivity", "0", false ).AddParser( "number" );
+		StyleSheetSpecification::RegisterProperty( "viewangle-pitch-clamp", "0", false ).AddParser( "number" );
+		StyleSheetSpecification::RegisterProperty( "viewangle-yaw-clamp", "0", false ).AddParser( "number" );
+		StyleSheetSpecification::RegisterProperty( "viewangle-roll-clamp", "0", false ).AddParser( "number" );
+		StyleSheetSpecification::RegisterShorthand( "viewangle-clamp", "viewangle-pitch-clamp, viewangle-yaw-clamp, viewangle-roll-clamp" );
 
 		StyleSheetSpecification::RegisterProperty( "fov", "100", false ).AddParser( "number" );
 

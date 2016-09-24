@@ -632,9 +632,13 @@ void UI_Main::mouseMove( int contextId, int x, int y, bool absolute, bool showCu
 	if( absolute ) {
 		mousex = x;
 		mousey = y;
+		mousedx = 0;
+		mousedy = 0;
 	} else {
 		mousex += x;
 		mousey += y;
+		mousedx = x;
+		mousedy = y;
 	}
 
 	if( mousex < 0 )
@@ -679,6 +683,12 @@ bool UI_Main::isTouchDown( int contextId, int id )
 void UI_Main::cancelTouches( int contextId )
 {
 	rocketModule->cancelTouches( contextId );
+}
+
+void UI_Main::getMouseMoveDelta( int *dx, int *dy )
+{
+	*dx = mousedx;
+	*dy = mousedy;
 }
 
 void UI_Main::addToServerList(const char *adr, const char *info)
@@ -803,6 +813,9 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 
 	// stuff we need to render without using rocket
 	customRender();
+
+	mousedx = 0;
+	mousedy = 0;
 }
 
 //==================================

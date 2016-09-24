@@ -75,6 +75,7 @@ public:
 	bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
 	bool isTouchDown( int contextId, int id );
 	void cancelTouches( int contextId );
+	void getMouseMoveDelta( int *dx, int *dy );
 
 	// Commands (these could be private)
 	static void ReloadUI_Cmd_f( void );
@@ -216,6 +217,8 @@ private:
 	RefreshState refreshState;
 
 	int mousex, mousey;
+	int mousedx, mousedy; // relative mouse movement for this frame
+
 	int gameProtocol;
 	bool menuVisible;
 	bool quickMenuVisible;
