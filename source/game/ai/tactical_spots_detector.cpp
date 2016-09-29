@@ -156,7 +156,7 @@ void TacticalSpotsDetector::SelectCandidateAreas(const OriginParams &originParam
 void TacticalSpotsDetector::CheckAreasReachFromOrigin(const OriginParams &originParams,
                                                       const CandidateAreas &candidateAreas, ReachCheckedAreas &result)
 {
-    AiAasRouteCache *routeCache = AiAasRouteCache::Shared();
+    AiAasRouteCache *routeCache = originParams.routeCache;
     const aas_area_t *areas = AiAasWorld::Instance()->Areas();
 
     int originAreaNum = originParams.originAreaNum;
@@ -190,7 +190,7 @@ void TacticalSpotsDetector::CheckAreasReachFromOriginAndBack(const OriginParams 
                                                              const CandidateAreas &candidateAreas,
                                                              ReachCheckedAreas &result)
 {
-    AiAasRouteCache *routeCache = AiAasRouteCache::Shared();
+    AiAasRouteCache *routeCache = originParams.routeCache;
     const aas_area_t *areas = AiAasWorld::Instance()->Areas();
 
     int originAreaNum = originParams.originAreaNum;
@@ -343,13 +343,15 @@ int TacticalSpotsDetector::FindCoverSpots(const OriginParams &originParams, cons
     FindReachCheckedAreas(originParams, reachCheckedAreas);
 
     TraceCheckedAreas coverAreas;
-    SelectAreasForCover(problemParams, reachCheckedAreas, coverAreas);
+    SelectAreasForCover(originParams, problemParams, reachCheckedAreas, coverAreas);
 
     return CopyResults(coverAreas, spots, maxSpots);
 }
 
-void TacticalSpotsDetector::SelectAreasForCover(const CoverProblemParams &problemParams,
-                                                ReachCheckedAreas &candidateAreas, TraceCheckedAreas &result)
+void TacticalSpotsDetector::SelectAreasForCover(const OriginParams &originParams,
+                                                const CoverProblemParams &problemParams,
+                                                ReachCheckedAreas &candidateAreas,
+                                                TraceCheckedAreas &result)
 {
     const aas_area_t *worldAreas = AiAasWorld::Instance()->Areas();
 
@@ -357,7 +359,7 @@ void TacticalSpotsDetector::SelectAreasForCover(const CoverProblemParams &proble
     for (unsigned i = 0, end = std::min(candidateAreas.size(), result.capacity()); i < end; ++i)
     {
         const aas_area_t &area = worldAreas[candidateAreas[i].areaNum];
-        if (!LooksLikeACoverArea(area, problemParams))
+        if (!LooksLikeACoverArea(area, originParams, problemParams))
             continue;
 
         // Prefer larger areas
@@ -371,11 +373,13 @@ void TacticalSpotsDetector::SelectAreasForCover(const CoverProblemParams &proble
     std::sort(result.begin(), result.end());
 }
 
-bool TacticalSpotsDetector::LooksLikeACoverArea(const aas_area_t &area, const CoverProblemParams &problemParams)
+bool TacticalSpotsDetector::LooksLikeACoverArea(const aas_area_t &area, const OriginParams &originParams, 
+                                                const CoverProblemParams &problemParams)
 {
     edict_t *passent = const_cast<edict_t *>(problemParams.attackerEntity);
     float *attackerOrigin = const_cast<float *>(problemParams.attackerOrigin);
     float *areaCenter = const_cast<float *>(area.center);
+    const edict_t *doNotHitEntity = originParams.originEntity;
 
     trace_t trace;
     G_Trace(&trace, attackerOrigin, nullptr, nullptr, areaCenter, passent, MASK_AISOLID);
@@ -401,7 +405,7 @@ bool TacticalSpotsDetector::LooksLikeACoverArea(const aas_area_t &area, const Co
         traceEnd[1] = bounds[(i >> 1) & 1][1];
         traceEnd[2] = bounds[(i >> 0) & 1][2];
         G_Trace(&trace, attackerOrigin, nullptr, nullptr, traceEnd, passent, MASK_AISOLID);
-        if (trace.fraction == 1.0f)
+        if (trace.fraction == 1.0f || game.edicts + trace.ent == doNotHitEntity)
             return false;
     }
 

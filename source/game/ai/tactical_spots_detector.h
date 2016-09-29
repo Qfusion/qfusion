@@ -129,10 +129,11 @@ private:
     void SortByVisAndOtherFactors(const OriginParams &params, TraceCheckedAreas &areas);
 
     // Specific for cover spots
-    void SelectAreasForCover(const CoverProblemParams &problemParams, ReachCheckedAreas &candidateAreas,
-                             TraceCheckedAreas &result);
+    void SelectAreasForCover(const OriginParams &originParams, const CoverProblemParams &problemParams, 
+                             ReachCheckedAreas &candidateAreas, TraceCheckedAreas &result);
 
-    bool LooksLikeACoverArea(const aas_area_t &area, const CoverProblemParams &problemParams);
+    bool LooksLikeACoverArea(const aas_area_t &area, const OriginParams &originParams, 
+                             const CoverProblemParams &problemParams);
 
     inline float ComputeDistanceFactor(const vec3_t v1, const vec3_t v2, float searchRadius)
     {
