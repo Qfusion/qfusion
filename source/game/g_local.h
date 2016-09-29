@@ -392,7 +392,7 @@ bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent );
 void G_Teams_SetTeam( edict_t *ent, int team );
 
 void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood );
-void G_Say_Team( edict_t *who, char *msg, bool checkflood );
+void G_Say_Team( edict_t *who, const char *inmsg, bool checkflood );
 
 void G_Match_Ready( edict_t *ent );
 void G_Match_NotReady( edict_t *ent );
