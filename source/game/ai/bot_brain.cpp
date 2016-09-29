@@ -105,8 +105,8 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       nextWeaponScoreRandomUpdate(level.time),
       decisionRandom(0.5f),
       nextDecisionRandomUpdate(level.time),
-      botEnemyPool(bot, this, BotSkill()),
-      specialGoalCombatTaskId(0)
+      specialGoalCombatTaskId(0),
+      botEnemyPool(bot, this, BotSkill())
 {
     memset(&localNavEntity, 0, sizeof(NavEntity));
     squad = nullptr;
