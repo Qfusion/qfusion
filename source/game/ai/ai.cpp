@@ -75,7 +75,6 @@ void AI_Debugv(const char *nick, const char *format, va_list va)
     char outputBuffer[2048];
     EscapePercent(concatBuffer, outputBuffer, 2048);
     G_Printf(outputBuffer);
-    printf(outputBuffer);
 }
 
 void AI_FailWith(const char *tag, const char *format, ...)
