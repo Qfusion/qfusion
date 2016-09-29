@@ -397,16 +397,16 @@ const asglobfuncs_t asAIGlobFuncs[] =
 };
 
 // Forward declarations of ASFunctionsRegistry methods result types
-template <typename R> class ASFunction0;
-template <typename R, typename T1> class ASFunction1;
-template <typename R, typename T1, typename T2> class ASFunction2;
-template <typename R, typename T1, typename T2, typename T3> class ASFunction3;
+template <typename R> struct ASFunction0;
+template <typename R, typename T1> struct ASFunction1;
+template <typename R, typename T1, typename T2> struct ASFunction2;
+template <typename R, typename T1, typename T2, typename T3> struct ASFunction3;
 
 class ASFunctionsRegistry
 {
-    friend class ASUntypedFunction;
+    friend struct ASUntypedFunction;
 
-    StaticVector<class ASUntypedFunction *, 32> functions;
+    StaticVector<struct ASUntypedFunction *, 32> functions;
 
     inline void Register(class ASUntypedFunction &function)
     {
