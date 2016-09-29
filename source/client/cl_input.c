@@ -260,7 +260,7 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 		// original patch by Gabriel Schnoering and TTimo
 		if( m_accelStyle->integer == 1 )
 		{
-			float rate[2];
+			float base[2];
 			float power[2];
 
 			// sensitivity remains pretty much unchanged at low speeds
@@ -268,10 +268,10 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 			// m_accelOffset is the rate for which the acceleration will have doubled the non accelerated amplification
 			// NOTE: decouple the config cvars for independent acceleration setup along X and Y?
 
-			rate[0] = (float) (abs(mx)) / (float) mouse_frame_time;
-			rate[1] = (float) (abs(my)) / (float) mouse_frame_time;
-			power[0] = powf(rate[0] / m_accelOffset->value, m_accel->value);
-			power[1] = powf(rate[1] / m_accelOffset->value, m_accel->value);
+			base[0] = (float) (abs(mx)) / (float) mouse_frame_time;
+			base[1] = (float) (abs(my)) / (float) mouse_frame_time;
+			power[0] = powf(base[0] / m_accelOffset->value, m_accel->value);
+			power[1] = powf(base[1] / m_accelOffset->value, m_accel->value);
 
 			mouse_x = (mouse_x + ((mouse_x < 0) ? -power[0] : power[0]) * m_accelOffset->value);
 			mouse_y = (mouse_y + ((mouse_y < 0) ? -power[1] : power[1]) * m_accelOffset->value);

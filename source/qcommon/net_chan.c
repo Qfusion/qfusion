@@ -80,7 +80,7 @@ unacknowledged reliable
 
 // application level protocol port number, to differentiate multiple clients
 // from the same IP address, and still work even if client's UDP port number suddenly changes
-static int game_port;
+static int local_game_port;
 
 static cvar_t *showpackets;
 static cvar_t *showdrop;
@@ -320,7 +320,7 @@ bool Netchan_TransmitNextFragment( netchan_t *chan )
 
 	// send the game port if we are a client
 	if( !chan->socket->server )
-		MSG_WriteShort( &send, game_port );
+		MSG_WriteShort( &send, local_game_port );
 
 	// copy the reliable message to the packet first
 	if( chan->unsentFragmentStart + FRAGMENT_SIZE > chan->unsentLength )
@@ -431,7 +431,7 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg )
 
 	// send the game port if we are a client
 	if( !chan->socket->server )
-		MSG_WriteShort( &send, game_port );
+		MSG_WriteShort( &send, local_game_port );
 
 	MSG_CopyData( &send, msg->data, msg->cursize );
 
@@ -646,7 +646,7 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 */
 int Netchan_GamePort( void )
 {
-	return game_port;
+	return local_game_port;
 }
 
 /*
@@ -655,7 +655,7 @@ int Netchan_GamePort( void )
 void Netchan_Init( void )
 {
 	// pick a game port value that should be nice and random
-	game_port = Sys_Milliseconds() & 0xffff;
+	local_game_port = Sys_Milliseconds() & 0xffff;
 
 	showpackets = Cvar_Get( "showpackets", "0", 0 );
 	showdrop = Cvar_Get( "showdrop", "0", 0 );

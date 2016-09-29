@@ -51,9 +51,9 @@ const bool DemoInfo::isValid( void ) const
 	return !name.empty();
 }
 
-void DemoInfo::setName( const std::string & name )
+void DemoInfo::setName( const std::string & newName )
 {
-	this->name = name;
+	this->name = newName;
 	this->directory.clear();
 	this->hasMetaData = false;
 	this->time = 0;
@@ -105,9 +105,9 @@ void DemoInfo::Stop( void ) const
 	}
 }
 
-void DemoInfo::Jump( unsigned int time ) const
+void DemoInfo::Jump( unsigned int jtime ) const
 {
-	std::string jumpcmd = std::string( "demojump \"" ) + WSWUI::toString( time ) + "\"";
+	std::string jumpcmd = std::string( "demojump \"" ) + WSWUI::toString( jtime ) + "\"";
 	trap::Cmd_ExecuteText( EXEC_NOW, jumpcmd.c_str() );
 }
 

@@ -54,14 +54,14 @@ void Irc_Logic_Connect(const char *server, unsigned short port) {
 	bool connected = false;
 	if (!Irc_Proto_Connect(server, port)) {
 		// connected to server, send NICK and USER commands
-		cvar_t * const irc_user = IRC_IMPORT.Cvar_Get("irc_user", APPLICATION "User", CVAR_ARCHIVE);
-		cvar_t * const irc_nick = IRC_IMPORT.Cvar_Get("irc_nick", APPLICATION "Player", CVAR_ARCHIVE);
-		cvar_t * const irc_password = IRC_IMPORT.Cvar_Get("irc_password", "", CVAR_ARCHIVE);
-		const char * const pass = Cvar_GetStringValue(irc_password);
-		const char * const user = Cvar_GetStringValue(irc_user);
+		cvar_t * const _irc_user = IRC_IMPORT.Cvar_Get("irc_user", APPLICATION "User", CVAR_ARCHIVE);
+		cvar_t * const _irc_nick = IRC_IMPORT.Cvar_Get("irc_nick", APPLICATION "Player", CVAR_ARCHIVE);
+		cvar_t * const _irc_password = IRC_IMPORT.Cvar_Get("irc_password", "", CVAR_ARCHIVE);
+		const char * const pass = Cvar_GetStringValue(_irc_password);
+		const char * const user = Cvar_GetStringValue(_irc_user);
 		if (strlen(pass))
 			Irc_Proto_Password(pass);
-		Irc_Proto_Nick(Cvar_GetStringValue(irc_nick));
+		Irc_Proto_Nick(Cvar_GetStringValue(_irc_nick));
 		Irc_Proto_User(user, IRC_INVISIBLE, user);
 		connected = !Irc_Proto_Flush();
 	}
@@ -358,23 +358,23 @@ static void Irc_Logic_CmdMode_f(irc_command_t cmd, const char *prefix, const cha
 					case IRC_MODE_VOICE:
 						{
 							// expect nick or hostmask
-							char nick[256];
+							char tnick[256];
 							irc_nick_prefix_t ignored_prefix;
 							irc_nick_prefix_t *old_prefix;
-							Irc_ParseName(p, nick, &ignored_prefix);
-							if (IRC_IMPORT.Trie_Find(channel->names, nick, TRIE_EXACT_MATCH, (void**) &old_prefix) == TRIE_OK) {
+							Irc_ParseName(p, tnick, &ignored_prefix);
+							if (IRC_IMPORT.Trie_Find(channel->names, tnick, TRIE_EXACT_MATCH, (void**) &old_prefix) == TRIE_OK) {
 								if (modes[j].plus) {
 									// add prefix
 									switch(modes[j].flag) {
 										case IRC_MODE_OP:
 											// make op
 											if (*old_prefix != IRC_NICK_PREFIX_OP)
-												IRC_IMPORT.Trie_Replace(channel->names, nick, (void*) Irc_GetStaticPrefix(IRC_NICK_PREFIX_OP), (void**) &old_prefix);
+												IRC_IMPORT.Trie_Replace(channel->names, tnick, (void*) Irc_GetStaticPrefix(IRC_NICK_PREFIX_OP), (void**) &old_prefix);
 											break;
 										case IRC_MODE_VOICE:
 											// give voice
 											if (*old_prefix == IRC_NICK_PREFIX_NONE)
-												IRC_IMPORT.Trie_Replace(channel->names, nick, (void*) Irc_GetStaticPrefix(IRC_NICK_PREFIX_VOICE), (void**) &old_prefix);
+												IRC_IMPORT.Trie_Replace(channel->names, tnick, (void*) Irc_GetStaticPrefix(IRC_NICK_PREFIX_VOICE), (void**) &old_prefix);
 											break;
 										default:
 											// ignored
@@ -386,12 +386,12 @@ static void Irc_Logic_CmdMode_f(irc_command_t cmd, const char *prefix, const cha
 										case IRC_MODE_OP:
 											// remove op
 											if (*old_prefix == IRC_NICK_PREFIX_OP)
-												IRC_IMPORT.Trie_Replace(channel->names, nick, (void*) Irc_GetStaticPrefix(IRC_NICK_PREFIX_NONE), (void**) &old_prefix);
+												IRC_IMPORT.Trie_Replace(channel->names, tnick, (void*) Irc_GetStaticPrefix(IRC_NICK_PREFIX_NONE), (void**) &old_prefix);
 											break;
 										case IRC_MODE_VOICE:
 											// remove voice
 											if (*old_prefix == IRC_NICK_PREFIX_VOICE)
-												IRC_IMPORT.Trie_Replace(channel->names, nick, (void*) Irc_GetStaticPrefix(IRC_NICK_PREFIX_NONE), (void**) &old_prefix);
+												IRC_IMPORT.Trie_Replace(channel->names, tnick, (void*) Irc_GetStaticPrefix(IRC_NICK_PREFIX_NONE), (void**) &old_prefix);
 											break;
 										default:
 											// ignored

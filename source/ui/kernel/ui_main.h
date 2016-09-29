@@ -119,9 +119,11 @@ public:
 
 	const RefreshState &getRefreshState( void ) { return refreshState; }
 
-	std::string getServerName( void ) const { return serverName; }
-	std::string getRejectMessage( void ) const { return rejectMessage; }
-	const DownloadInfo *getDownloadInfo ( void ) const { return &downloadInfo; }
+	const std::string &getServerName( void ) const { return connectInfo.serverName; }
+	const std::string &getRejectMessage( void ) const { return connectInfo.rejectMessage; }
+	const DownloadInfo *getDownloadInfo ( void ) const { return &connectInfo.downloadInfo; }
+	unsigned int getConnectCount( void ) const { return connectInfo.connectCount; }
+
 	static int getGameProtocol( void );
 
 	bool debugOn( void );
@@ -129,8 +131,6 @@ public:
 	void clearShaderCache( void );
 	void touchAllCachedShaders( void );
 	void flushAjaxCache( void );
-
-	unsigned int getConnectCount( void ) const { return connectCount; }
 
 	NavigationStack *createStack( int contextId );
 
@@ -226,13 +226,16 @@ private:
 	bool showNavigationStack;
 
 	DemoInfo demoInfo;
-	DownloadInfo downloadInfo;
 
-	std::string serverName;
-	std::string rejectMessage;
+	struct {
+		std::string serverName;
+		std::string rejectMessage;
+		unsigned int connectCount;
+		DownloadInfo downloadInfo;
+	} connectInfo;
+
 	std::string demoExtension;
 
-	unsigned int connectCount;
 	bool invalidateAjaxCache;
 
 	vec4_t colorWhite;
