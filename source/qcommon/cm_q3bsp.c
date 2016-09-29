@@ -263,19 +263,19 @@ static void CM_CreatePatch( cmodel_state_t *cms, cface_t *patch, cshaderref_t *s
 
 	if( patch->numfacets )
 	{
-		uint8_t *data;
+		uint8_t *fdata;
 
-		data = Mem_Alloc( cms->mempool, patch->numfacets * sizeof( cbrush_t ) + totalsides * ( sizeof( cbrushside_t ) + sizeof( cplane_t ) ) );
+		fdata = Mem_Alloc( cms->mempool, patch->numfacets * sizeof( cbrush_t ) + totalsides * ( sizeof( cbrushside_t ) + sizeof( cplane_t ) ) );
 
-		patch->facets = ( cbrush_t * )data; data += patch->numfacets * sizeof( cbrush_t );
+		patch->facets = ( cbrush_t * )fdata; fdata += patch->numfacets * sizeof( cbrush_t );
 		memcpy( patch->facets, facets, patch->numfacets * sizeof( cbrush_t ) );
 		for( i = 0, k = 0, facet = patch->facets; i < patch->numfacets; i++, facet++ )
 		{
 			cplane_t *planes;
 			cbrushside_t *s;
 
-			facet->brushsides = ( cbrushside_t * )data; data += facet->numsides * sizeof( cbrushside_t );
-			planes = ( cplane_t * )data; data += facet->numsides * sizeof( cplane_t );
+			facet->brushsides = ( cbrushside_t * )fdata; fdata += facet->numsides * sizeof( cbrushside_t );
+			planes = ( cplane_t * )fdata; fdata += facet->numsides * sizeof( cplane_t );
 
 			for( j = 0, s = facet->brushsides; j < facet->numsides; j++, s++ )
 			{

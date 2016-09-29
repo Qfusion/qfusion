@@ -39,15 +39,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Param1 : Number of lines
 
 
-HANDLE heventDone;
-HANDLE hfileBuffer;
-HANDLE heventChildSend;
-HANDLE heventParentSend;
-HANDLE hStdout;
-HANDLE hStdin;
+static HANDLE heventDone;
+static HANDLE hfileBuffer;
+static HANDLE heventChildSend;
+static HANDLE heventParentSend;
+static HANDLE hStdout;
+static HANDLE hStdin;
 
 static unsigned WINAPI RequestProc( void *arg );
-static LPVOID GetMappedBuffer( HANDLE hfileBuffer );
+static LPVOID GetMappedBuffer( HANDLE hBuffer );
 static void ReleaseMappedBuffer( LPVOID pBuffer );
 static BOOL GetScreenBufferLines( int *piLines );
 static BOOL SetScreenBufferLines( int iLines );
@@ -56,8 +56,8 @@ static BOOL WriteText( LPCTSTR szText );
 static int CharToCode( char c );
 static BOOL SetConsoleCXCY( HANDLE hStdout, int cx, int cy );
 
-int ccom_argc;
-char **ccom_argv;
+static int ccom_argc;
+static char **ccom_argv;
 
 /*
 * CCheckParm
@@ -224,11 +224,11 @@ static unsigned WINAPI RequestProc( void *arg )
 }
 
 
-static LPVOID GetMappedBuffer( HANDLE hfileBuffer )
+static LPVOID GetMappedBuffer( HANDLE hBuffer )
 {
 	LPVOID pBuffer;
 
-	pBuffer = MapViewOfFile( hfileBuffer,
+	pBuffer = MapViewOfFile( hBuffer,
 		FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0 );
 
 	return pBuffer;
@@ -357,12 +357,12 @@ static int CharToCode( char c )
 }
 
 
-static BOOL SetConsoleCXCY( HANDLE hStdout, int cx, int cy )
+static BOOL SetConsoleCXCY( HANDLE hStdout_, int cx, int cy )
 {
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	COORD coordMax;
 
-	coordMax = GetLargestConsoleWindowSize( hStdout );
+	coordMax = GetLargestConsoleWindowSize( hStdout_ );
 
 	if( cy > coordMax.Y )
 		cy = coordMax.Y;
@@ -370,7 +370,7 @@ static BOOL SetConsoleCXCY( HANDLE hStdout, int cx, int cy )
 	if( cx > coordMax.X )
 		cx = coordMax.X;
 
-	if( !GetConsoleScreenBufferInfo( hStdout, &info ) )
+	if( !GetConsoleScreenBufferInfo( hStdout_, &info ) )
 		return FALSE;
 
 	// height
@@ -381,26 +381,26 @@ static BOOL SetConsoleCXCY( HANDLE hStdout, int cx, int cy )
 
 	if( cy < info.dwSize.Y )
 	{
-		if( !SetConsoleWindowInfo( hStdout, TRUE, &info.srWindow ) )
+		if( !SetConsoleWindowInfo( hStdout_, TRUE, &info.srWindow ) )
 			return FALSE;
 
 		info.dwSize.Y = (SHORT) cy;
 
-		if( !SetConsoleScreenBufferSize( hStdout, info.dwSize ) )
+		if( !SetConsoleScreenBufferSize( hStdout_, info.dwSize ) )
 			return FALSE;
 	}
 	else if( cy > info.dwSize.Y )
 	{
 		info.dwSize.Y = (SHORT) cy;
 
-		if( !SetConsoleScreenBufferSize( hStdout, info.dwSize ) )
+		if( !SetConsoleScreenBufferSize( hStdout_, info.dwSize ) )
 			return FALSE;
 
-		if( !SetConsoleWindowInfo( hStdout, TRUE, &info.srWindow ) )
+		if( !SetConsoleWindowInfo( hStdout_, TRUE, &info.srWindow ) )
 			return FALSE;
 	}
 
-	if( !GetConsoleScreenBufferInfo( hStdout, &info ) )
+	if( !GetConsoleScreenBufferInfo( hStdout_, &info ) )
 		return FALSE;
 
 	// width
@@ -411,22 +411,22 @@ static BOOL SetConsoleCXCY( HANDLE hStdout, int cx, int cy )
 
 	if( cx < info.dwSize.X )
 	{
-		if( !SetConsoleWindowInfo( hStdout, TRUE, &info.srWindow ) )
+		if( !SetConsoleWindowInfo( hStdout_, TRUE, &info.srWindow ) )
 			return FALSE;
 
 		info.dwSize.X = (SHORT) cx;
 
-		if( !SetConsoleScreenBufferSize( hStdout, info.dwSize ) )
+		if( !SetConsoleScreenBufferSize( hStdout_, info.dwSize ) )
 			return FALSE;
 	}
 	else if( cx > info.dwSize.X )
 	{
 		info.dwSize.X = (SHORT) cx;
 
-		if( !SetConsoleScreenBufferSize( hStdout, info.dwSize ) )
+		if( !SetConsoleScreenBufferSize( hStdout_, info.dwSize ) )
 			return FALSE;
 
-		if( !SetConsoleWindowInfo( hStdout, TRUE, &info.srWindow ) )
+		if( !SetConsoleWindowInfo( hStdout_, TRUE, &info.srWindow ) )
 			return FALSE;
 	}
 

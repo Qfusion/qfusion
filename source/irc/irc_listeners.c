@@ -217,13 +217,13 @@ void Irc_Proto_CallListeners(irc_command_t cmd, const char *prefix, const char *
 	immutable_listeners = false;
 	// perform pending concurrent removals
 	if (removed_listeners) {
-		irc_removed_listener_node_t *prev = NULL, *n = removed_listeners;
+		irc_removed_listener_node_t *rprev = NULL, *rn = removed_listeners;
 		do {
-			Irc_Proto_RemoveListener(n->cmd, n->listener);
-			prev = n;
-			n = n->next;
-			Irc_MemFree(prev);
-		} while (n);
+			Irc_Proto_RemoveListener(rn->cmd, rn->listener);
+			rprev = rn;
+			rn = rn->next;
+			Irc_MemFree(rprev);
+		} while (rn);
 		removed_listeners = NULL;
 	}
 }

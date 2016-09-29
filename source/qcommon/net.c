@@ -1578,14 +1578,14 @@ void NET_SetErrorString( const char *format, ... )
 */
 void NET_SetErrorStringFromLastError( const char *function )
 {
-	const char* errorstring = GetLastErrorString();
+	const char* lasterrorstring = GetLastErrorString();
 	if( function )
 	{
-		NET_SetErrorString( "%s: %s", function, errorstring );
+		NET_SetErrorString( "%s: %s", function, lasterrorstring );
 	}
 	else
 	{
-		NET_SetErrorString( "%s", errorstring );
+		NET_SetErrorString( "%s", lasterrorstring );
 	}
 }
 

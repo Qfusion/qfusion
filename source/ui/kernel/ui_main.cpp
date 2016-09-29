@@ -58,8 +58,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	quickMenuURL(""),
 	mousex(0), mousey(0), gameProtocol(protocol),
 	menuVisible(false), forceMenu(false), showNavigationStack(false),
-	serverName(""), rejectMessage(""), demoExtension(demoExtension),
-	connectCount(0), invalidateAjaxCache(false),
+	demoExtension(demoExtension), invalidateAjaxCache(false),
 	ui_basepath(nullptr), ui_cursor(nullptr), ui_developer(nullptr), ui_preload(nullptr)
 {
 	// instance
@@ -82,6 +81,10 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	refreshState.height = vidHeight;
 	refreshState.pixelRatio = pixelRatio;
 	refreshState.drawBackground = true;
+
+	connectInfo.serverName = "";
+	connectInfo.rejectMessage = "";
+	connectInfo.connectCount = 0;
 
 	demoInfo.setPlaying( false );
 
@@ -345,7 +348,6 @@ void UI_Main::clearShaderCache( void )
 	if( rocketModule != NULL ) {
 		rocketModule->clearShaderCache();
 	}
-	this->connectCount++;
 }
 
 void UI_Main::touchAllCachedShaders( void )
@@ -498,9 +500,10 @@ void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessa
 	dlinfo.setPercent( downloadPercent );
 	dlinfo.setSpeed( downloadSpeed );
 
-	this->serverName = serverName ? serverName : "";
-	this->rejectMessage = rejectMessage ? rejectMessage : "";
-	this->downloadInfo = dlinfo;
+	connectInfo.serverName = serverName ? serverName : "";
+	connectInfo.rejectMessage = rejectMessage ? rejectMessage : "";
+	connectInfo.downloadInfo = dlinfo;
+	connectInfo.connectCount = connectCount;
 
 	UI_Navigation &navigation = navigations[UI_CONTEXT_MAIN];
 	NavigationStack *navigator = navigation.front();

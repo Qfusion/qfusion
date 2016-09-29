@@ -120,10 +120,10 @@ namespace WSWUI
 		}
 
 		// decorator instancer implementation
-		virtual Decorator* InstanceDecorator( const String& name, const PropertyDictionary& properties )
+		virtual Decorator* InstanceDecorator( const String& name, const PropertyDictionary& _properties )
 		{
 			// Com_Printf("decorator instancer decorator instanced %s\n", name.CString() );
-			return __new__( GradientDecorator )( properties );
+			return __new__( GradientDecorator )( _properties );
 		}
 
 		virtual void ReleaseDecorator( Decorator* decorator )

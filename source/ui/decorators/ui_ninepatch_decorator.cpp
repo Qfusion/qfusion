@@ -34,12 +34,14 @@ namespace WSWUI
 		PropertyDictionary properties;
 
 	public:
-		bool Initialise( const PropertyDictionary &properties )
+		bool Initialise( const PropertyDictionary &_properties )
 		{
-			const Property *property = properties.GetProperty( "src" );
+			const Property *property = _properties.GetProperty( "src" );
 			texture_index = LoadTexture( property->Get< String >(), property->source );
 			if( texture_index < 0 )
 				return false;
+
+			properties = _properties;
 
 			property = properties.GetProperty( "coords-left" );
 			coords[0].x = Math::Max( 0.0f, property->Get< float >() );
@@ -53,8 +55,6 @@ namespace WSWUI
 			property = properties.GetProperty( "coords-bottom" );
 			coords[1].y = Math::Max( 0.0f, property->Get< float >() );
 			coords_absolute[1][1] = ( property->unit == Property::PX );
-
-			this->properties = properties;
 
 			return true;
 		}
@@ -307,10 +307,10 @@ namespace WSWUI
 			RegisterShorthand( "size", "size-top, size-right, size-bottom, size-left" );
 		}
 
-		virtual Decorator *InstanceDecorator( const String &name, const PropertyDictionary &properties )
+		virtual Decorator *InstanceDecorator( const String &name, const PropertyDictionary &_properties )
 		{
 			NinePatchDecorator *decorator = __new__( NinePatchDecorator );
-			if( decorator->Initialise( properties ) )
+			if( decorator->Initialise( _properties ) )
 				return decorator;
 
 			decorator->RemoveReference();

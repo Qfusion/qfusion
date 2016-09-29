@@ -234,7 +234,7 @@ void Dynvar_CallListeners(
 	// perform pending removals
 	if( dynvar->to_remove )
 	{
-		dynvar_listener_node_t *n, *prev = NULL;
+		dynvar_listener_node_t *prev = NULL;
 		for( n = dynvar->to_remove; n; n = n->next )
 		{
 			Dynvar_RemoveListener( dynvar, n->listener );

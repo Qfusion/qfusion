@@ -115,9 +115,9 @@ static void Irc_Client_DrawWindow(
 
 	// print the last irc_windowLines lines in chat history
 	while (n && i < lines) {
-		int x = 8;
-		int y = vskip - i * font_height;
-		const int linesDrawn = Irc_Client_DrawLine(lines - i, 0, &x, &y, n->line, font, font_height, IRC_WINDOW_TXT_COLOR, -1);
+		int _x = x + 8;
+		int _y = y + vskip - i * font_height;
+		const int linesDrawn = Irc_Client_DrawLine(lines - i, 0, &_x, &_y, n->line, font, font_height, IRC_WINDOW_TXT_COLOR, -1);
 		if (linesDrawn > 0) {
 			i += linesDrawn;
 			n = n->next;
