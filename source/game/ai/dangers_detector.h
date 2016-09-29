@@ -7,16 +7,8 @@
 struct Danger
 {
     Danger(const Vec3 &hitPoint, const Vec3 &direction, float damage, const edict_t *attacker = nullptr, bool splash = false)
-        : hitPoint(hitPoint), direction(direction), damage(damage), attacker(attacker), splash(splash) {
-#ifdef _DEBUG
-        float len = direction.LengthFast();
-        if (fabsf(len - 1.0f) > 0.1f)
-        {
-            printf("Denormalized danger direction: |%f %f %f| = %f\n", direction.x(), direction.y(), direction.z(), len);
-            abort();
-        }
-#endif
-    }
+        : hitPoint(hitPoint), direction(direction), damage(damage), attacker(attacker), splash(splash)
+    {}
 
     // Sorting by this operator is fast but should be used only
     // to prepare most dangerous entities of the same type.
