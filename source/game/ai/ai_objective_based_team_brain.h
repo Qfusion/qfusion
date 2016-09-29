@@ -52,7 +52,7 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
                 minDefenders = maxDefenders;
         }
 
-        class AiAlertSpot ToAlertSpot() const;
+        struct AiAlertSpot ToAlertSpot() const;
     };
 
     // Extended definition based on one visible for script

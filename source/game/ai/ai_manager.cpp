@@ -45,7 +45,7 @@ void AiManager::ClearGoals(const NavEntity *canceledGoal, const Ai *goalGrabber)
     }
 }
 
-void AiManager::ClearGoals(const Goal *canceledGoal, const struct Ai *goalGrabber)
+void AiManager::ClearGoals(const Goal *canceledGoal, const Ai *goalGrabber)
 {
     if (!canceledGoal)
         return;
