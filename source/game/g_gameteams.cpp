@@ -1287,10 +1287,11 @@ static void Say_Team_Drop_Location( edict_t *who, char *buf, int buflen, const c
 	}
 }
 
-void G_Say_Team( edict_t *who, char *msg, bool checkflood )
+void G_Say_Team( edict_t *who, const char *inmsg, bool checkflood )
 {
+	char *msg;
+	char msgbuf[256];
 	char outmsg[256];
-	char buf[256];
 	char *p;
 	char current_color[3];
 
@@ -1306,6 +1307,9 @@ void G_Say_Team( edict_t *who, char *msg, bool checkflood )
 			return;
 	}
 
+	Q_strncpyz( msgbuf, inmsg, sizeof( msgbuf ) );
+
+	msg = msgbuf;
 	if( *msg == '\"' )
 	{
 		msg[strlen( msg ) - 1] = 0;
@@ -1348,6 +1352,7 @@ void G_Say_Team( edict_t *who, char *msg, bool checkflood )
 	{
 		if( *msg == '%' )
 		{
+			char buf[256];
 			buf[0] = 0;
 			switch( *++msg )
 			{
