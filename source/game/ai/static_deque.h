@@ -17,6 +17,7 @@ class alignas(16) StaticDeque
     friend class iterator;
     friend class const_iterator;
 
+public:
     typedef unsigned size_type;
     typedef T &reference;
     typedef const T &const_reference;
@@ -165,11 +166,11 @@ public:
         {
             return !(*this == that);
         }
-        inline StaticDeque<T, N>::reference operator*()
+        inline typename StaticDeque<T, N>::reference operator*()
         {
             return deque.basePointer[index];
         };
-        inline StaticDeque<T, N>::const_reference operator*() const
+        inline typename StaticDeque<T, N>::const_reference operator*() const
         {
             return deque.basePointer[index];
         };
@@ -219,7 +220,7 @@ public:
         {
             return !(*this == that);
         }
-        inline StaticDeque<T, N>::const_reference operator*() const
+        inline typename StaticDeque<T, N>::const_reference operator*() const
         {
             return deque.basePointer[index];
         };
