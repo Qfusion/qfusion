@@ -217,7 +217,7 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     // Cache reference to avoid indirections
     const aas_area_t *aasWorldAreas = aasWorld->Areas();
 
-    constexpr auto MAX_LANDING_AREAS = jumppadMovementState.MAX_LANDING_AREAS;
+    constexpr auto MAX_LANDING_AREAS = JumppadMovementState::MAX_LANDING_AREAS;
     int &jumppadLandingAreasCount = jumppadMovementState.landingAreasCount;
     int *jumppadLandingAreas = jumppadMovementState.landingAreas;
     const Vec3 &jumppadTarget = jumppadMovementState.jumppadTarget;
