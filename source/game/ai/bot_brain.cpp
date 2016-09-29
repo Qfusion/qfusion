@@ -373,8 +373,8 @@ void BotBrain::TryFindNewCombatTask()
         return;
     }
 
-    if (!HasMoreImportantTasksThanEnemies());
-    SuggestPursuitTask(&combatTask);
+    if (!HasMoreImportantTasksThanEnemies())
+        SuggestPursuitTask(&combatTask);
 }
 
 bool BotBrain::SuggestPointToTurnToWhenEnemyIsLost(const Enemy *oldEnemy)
