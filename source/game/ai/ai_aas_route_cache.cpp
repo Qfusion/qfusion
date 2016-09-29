@@ -867,7 +867,7 @@ struct RoutingUpdateRef
     inline RoutingUpdateRef(int index, unsigned short tmpTravelTime)
         : index(index), tmpTravelTime(tmpTravelTime) {}
 
-    inline bool operator<(const RoutingUpdateRef &that)
+    inline bool operator<(const RoutingUpdateRef &that) const
     {
         return tmpTravelTime > that.tmpTravelTime;
     }
