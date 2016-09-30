@@ -1695,12 +1695,6 @@ void Bot::UpdateCombatMovePushes()
 void Bot::MakeEvadeMovePushes(usercmd_t *ucmd)
 {
     Vec3 evadeDir = MakeEvadeDirection(*dangersDetector.primaryDanger);
-#ifdef _DEBUG
-    Vec3 drawnDirStart(self->s.origin);
-    drawnDirStart.Z() += 32;
-    Vec3 drawnDirEnd = drawnDirStart + 64.0f * evadeDir;
-    AITools_DrawLine(drawnDirStart.Data(), drawnDirEnd.Data());
-#endif
 
     int walkingEvades = 0;
     int walkingMovePushes[3] = {0, 0, 0};
