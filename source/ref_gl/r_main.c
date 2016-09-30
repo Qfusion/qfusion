@@ -1034,11 +1034,14 @@ static void R_SetupViewMatrices( void )
 */
 static void R_Clear( int bitMask )
 {
+	int fbo;
 	int bits;
 	vec4_t envColor;
 	bool clearColor = false;
 	bool rgbShadow = ( rn.renderFlags & (RF_SHADOWMAPVIEW|RF_SHADOWMAPVIEW_RGB) ) == (RF_SHADOWMAPVIEW|RF_SHADOWMAPVIEW_RGB);
 	bool depthPortal = ( rn.renderFlags & (RF_MIRRORVIEW|RF_PORTALVIEW) ) != 0 && ( rn.renderFlags & RF_PORTAL_CAPTURE ) == 0;
+
+	fbo = RB_BoundFrameBufferObject();
 
 	if( rgbShadow ) {
 		clearColor = true;
@@ -1060,7 +1063,7 @@ static void R_Clear( int bitMask )
 		bits |= GL_DEPTH_BUFFER_BIT;
 	if( clearColor )
 		bits |= GL_COLOR_BUFFER_BIT;
-	if( glConfig.stencilBits )
+	if( RFB_HasStencilRenderBuffer( fbo ) )
 		bits |= GL_STENCIL_BUFFER_BIT;
 
 	bits &= bitMask;
