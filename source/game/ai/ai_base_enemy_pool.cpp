@@ -533,8 +533,6 @@ const Enemy *AiBaseEnemyPool::ChooseHiddenEnemy(const edict_t *challenger)
 
 void AiBaseEnemyPool::OnEnemyViewed(const edict_t *enemy)
 {
-    CheckIsInThinkFrame(__FUNCTION__);
-
     if (!enemy)
         return;
 
