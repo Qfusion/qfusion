@@ -547,6 +547,7 @@ bool		RFB_AttachTextureToObject( int object, bool depth, int target, image_t *te
 image_t		*RFB_GetObjectTextureAttachment( int object, bool depth, int target );
 bool		RFB_HasColorRenderBuffer( int object );
 bool		RFB_HasDepthRenderBuffer( int object );
+bool		RFB_HasStencilRenderBuffer( int object );
 int			RFB_GetSamples( int object );
 void		RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt );
 bool		RFB_CheckObjectStatus( void );

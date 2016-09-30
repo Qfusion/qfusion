@@ -414,8 +414,11 @@ bool RFB_HasColorRenderBuffer( int object )
 	int i;
 	r_fbo_t *fbo;
 
-	assert( object > 0 && object <= r_num_framebuffer_objects );
-	if( object <= 0 || object > r_num_framebuffer_objects ) {
+	assert( object >= 0 && object <= r_num_framebuffer_objects );
+	if( object == 0 ) {
+		return true;
+	}
+	if( object < 0 || object > r_num_framebuffer_objects ) {
 		return false;
 	}
 	fbo = r_framebuffer_objects + object - 1;
@@ -435,12 +438,35 @@ bool RFB_HasDepthRenderBuffer( int object )
 {
 	r_fbo_t *fbo;
 
-	assert( object > 0 && object <= r_num_framebuffer_objects );
-	if( object <= 0 || object > r_num_framebuffer_objects ) {
+	assert( object >= 0 && object <= r_num_framebuffer_objects );
+	if( object == 0 ) {
+		return true;
+	}
+	if( object < 0 || object > r_num_framebuffer_objects ) {
 		return false;
 	}
+
 	fbo = r_framebuffer_objects + object - 1;
 	return fbo->depthRenderBuffer != 0 || fbo->depthTexture != NULL;
+}
+
+/*
+* RFB_HasStencilRenderBuffer
+*/
+bool RFB_HasStencilRenderBuffer( int object )
+{
+	r_fbo_t *fbo;
+
+	assert( object >= 0 && object <= r_num_framebuffer_objects );
+	if( object == 0 ) {
+		return glConfig.stencilBits != 0;
+	}
+	if( object < 0 || object > r_num_framebuffer_objects ) {
+		return false;
+	}
+
+	fbo = r_framebuffer_objects + object - 1;
+	return fbo->stencilRenderBuffer != 0;
 }
 
 /*
