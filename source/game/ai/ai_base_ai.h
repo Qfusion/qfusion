@@ -91,7 +91,7 @@ protected:
     virtual void Frame() override;
     virtual void Think() override;
 public:
-    Ai(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
+    Ai(edict_t *self_, int preferredAasTravelFlags_, int allowedAasTravelFlags_);
     virtual ~Ai() override {};
 
     inline bool IsGhosting() const { return G_ISGHOSTING(self); }
@@ -133,7 +133,7 @@ protected:
     void TestClosePlace();
     ClosePlaceProps closeAreaProps;
 private:
-    void TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3_t forward) const;
+    void TestMove(MoveTestResult *moveTestResult, int currAasAreaNum_, const vec3_t forward) const;
 };
 
 #endif

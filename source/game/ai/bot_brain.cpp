@@ -17,18 +17,18 @@ void BotBrain::EnemyPool::OnNewThreat(const edict_t *newThreat)
     bot->ai->botRef->botBrain.OnNewThreat(newThreat, this);
 }
 
-void BotBrain::OnAttachedToSquad(AiSquad *squad)
+void BotBrain::OnAttachedToSquad(AiSquad *squad_)
 {
-    this->squad = squad;
-    activeEnemyPool = squad->EnemyPool();
+    this->squad = squad_;
+    activeEnemyPool = squad_->EnemyPool();
     ResetCombatTask();
 }
 
-void BotBrain::OnDetachedFromSquad(AiSquad *squad)
+void BotBrain::OnDetachedFromSquad(AiSquad *squad_)
 {
-    if (this->squad != squad)
+    if (this->squad != squad_)
     {
-        FailWith("was not attached to squad %s", squad ? squad->Tag() : "???");
+        FailWith("was not attached to squad %s", squad_ ? squad_->Tag() : "???");
     }
     this->squad = nullptr;
     activeEnemyPool = &botEnemyPool;
@@ -84,11 +84,11 @@ void BotBrain::OnEnemyRemoved(const Enemy *enemy)
     }
 }
 
-BotBrain::BotBrain(edict_t *bot, float skillLevel)
-    : AiBaseBrain(bot, Bot::PREFERRED_TRAVEL_FLAGS, Bot::ALLOWED_TRAVEL_FLAGS),
-      bot(bot),
+BotBrain::BotBrain(edict_t *bot_, float skillLevel_)
+    : AiBaseBrain(bot_, Bot::PREFERRED_TRAVEL_FLAGS, Bot::ALLOWED_TRAVEL_FLAGS),
+      bot(bot_),
       baseOffensiveness(0.5f),
-      skillLevel(skillLevel),
+      skillLevel(skillLevel_),
       reactionTime(320 - From0UpToMax(300, BotSkill())),
       aimTargetChoicePeriod(1000 - From0UpToMax(900, BotSkill())),
       idleTargetChoicePeriod(1333 - From0UpToMax(500, BotSkill())),
@@ -106,7 +106,7 @@ BotBrain::BotBrain(edict_t *bot, float skillLevel)
       decisionRandom(0.5f),
       nextDecisionRandomUpdate(level.time),
       specialGoalCombatTaskId(0),
-      botEnemyPool(bot, this, BotSkill())
+      botEnemyPool(bot_, this, BotSkill())
 {
     memset(&localNavEntity, 0, sizeof(NavEntity));
     squad = nullptr;
@@ -921,10 +921,10 @@ struct WeaponAndScore
 {
     int weapon;
     float score;
-    WeaponAndScore(int weapon = WEAP_NONE, float score = 0.0f)
+    WeaponAndScore(int weapon_ = WEAP_NONE, float score_ = 0.0f)
     {
-        this->weapon = weapon;
-        this->score = score;
+        this->weapon = weapon_;
+        this->score = score_;
     }
 };
 
@@ -2042,13 +2042,13 @@ void BotBrain::TestTargetEnvironment(const Vec3 &botOrigin, const Vec3 &targetOr
     targetEnvironment.factor = std::min(1.0f, factor / 6.0f);
 }
 
-void BotBrain::SetAttitude(const edict_t *ent, int attitude)
+void BotBrain::SetAttitude(const edict_t *ent, int attitude_)
 {
     int entNum = ENTNUM(const_cast<edict_t*>(ent));
     oldAttitude[entNum] = this->attitude[entNum];
-    this->attitude[entNum] = (signed char)attitude;
+    this->attitude[entNum] = (signed char)attitude_;
 
-    if (oldAttitude[entNum] < 0 && attitude >= 0)
+    if (oldAttitude[entNum] < 0 && attitude_ >= 0)
     {
         botEnemyPool.Forget(ent);
         if (squad)

@@ -65,16 +65,16 @@ void Enemy::OnViewed()
     lastSeenTimestamps.push_front(lastSeenAt);
 }
 
-AiBaseEnemyPool::AiBaseEnemyPool(float avgSkill)
-    : avgSkill(avgSkill),
+AiBaseEnemyPool::AiBaseEnemyPool(float avgSkill_)
+    : avgSkill(avgSkill_),
       decisionRandom(0.5f),
       decisionRandomUpdateAt(0),
       trackedEnemiesCount(0),
-      maxTrackedEnemies(3 + From0UpToMax(MAX_TRACKED_ENEMIES-3, avgSkill)),
-      maxTrackedAttackers(From1UpToMax(MAX_TRACKED_ATTACKERS, avgSkill)),
-      maxTrackedTargets(From1UpToMax(MAX_TRACKED_TARGETS, avgSkill)),
-      maxActiveEnemies(From1UpToMax(MAX_ACTIVE_ENEMIES, avgSkill)),
-      reactionTime(320 - From0UpToMax(300, avgSkill))
+      maxTrackedEnemies(3 + From0UpToMax(MAX_TRACKED_ENEMIES-3, avgSkill_)),
+      maxTrackedAttackers(From1UpToMax(MAX_TRACKED_ATTACKERS, avgSkill_)),
+      maxTrackedTargets(From1UpToMax(MAX_TRACKED_TARGETS, avgSkill_)),
+      maxActiveEnemies(From1UpToMax(MAX_ACTIVE_ENEMIES, avgSkill_)),
+      reactionTime(320 - From0UpToMax(300, avgSkill_))
 {
     unsigned maxEnemies = maxTrackedEnemies;
     // Ensure we always will have at least 2 free slots for new enemies
@@ -186,20 +186,11 @@ float AiBaseEnemyPool::ComputeRawEnemyWeight(const edict_t *enemy)
 
     constexpr float maxDamageToKill = 350.0f;
 
-    bool hasQuad = this->HasQuad();
-    bool hasShell = this->HasShell();
-
     float damageToKill = DamageToKill(enemy);
     if (hasQuad)
         damageToKill /= 4;
     if (::HasShell(enemy))
         damageToKill *= 4;
-
-    float damageToBeKilled = DamageToBeKilled();
-    if (hasShell)
-        damageToBeKilled *= 4;
-    if (::HasQuad(enemy))
-        damageToBeKilled /= 4;
 
     // abs(damageToBeKilled - damageToKill) / maxDamageToKill may be > 1
     weight += (damageToBeKilled - damageToKill) / maxDamageToKill;
@@ -412,7 +403,7 @@ struct EnemyAndScore
 {
     Enemy *enemy;
     float score;
-    EnemyAndScore(Enemy *enemy, float score): enemy(enemy), score(score) {}
+    EnemyAndScore(Enemy *enemy_, float score_): enemy(enemy_), score(score_) {}
     bool operator<(const EnemyAndScore &that) const { return score > that.score; }
 };
 

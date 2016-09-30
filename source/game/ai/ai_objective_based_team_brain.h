@@ -105,7 +105,7 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
         edict_t *bot;
         float rawScore;
         float effectiveScore;
-        BotAndScore(edict_t *bot): bot(bot), rawScore(0), effectiveScore(0) {}
+        BotAndScore(edict_t *bot_): bot(bot_), rawScore(0), effectiveScore(0) {}
         bool operator<(const BotAndScore &that) const
         {
             return this->effectiveScore < that.effectiveScore;
@@ -137,7 +137,7 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
 
     void OnAlertReported(Bot *bot, int id, float alertLevel);
 public:
-    AiObjectiveBasedTeamBrain(int team): AiSquadBasedTeamBrain(team) {}
+    AiObjectiveBasedTeamBrain(int team_): AiSquadBasedTeamBrain(team_) {}
     virtual ~AiObjectiveBasedTeamBrain() override {}
 
     void AddDefenceSpot(const AiDefenceSpot &spot);

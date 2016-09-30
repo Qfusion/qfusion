@@ -2,16 +2,16 @@
 #include "ai_base_brain.h"
 #include "ai_ground_trace_cache.h"
 
-Ai::Ai(edict_t *self, int allowedAasTravelFlags, int preferredAasTravelFlags)
-    : EdictRef(self),
+Ai::Ai(edict_t *self_, int allowedAasTravelFlags_, int preferredAasTravelFlags_)
+    : EdictRef(self_),
       aiBaseBrain(nullptr), // Must be set in a subclass constructor
       routeCache(nullptr), // Must be set in a subclass constructor
       aasWorld(AiAasWorld::Instance()),
       currAasAreaNum(0),
       droppedToFloorAasAreaNum(0),
       droppedToFloorOrigin(0, 0, 0),
-      allowedAasTravelFlags(allowedAasTravelFlags),
-      preferredAasTravelFlags(preferredAasTravelFlags),
+      allowedAasTravelFlags(allowedAasTravelFlags_),
+      preferredAasTravelFlags(preferredAasTravelFlags_),
       distanceToNextReachStart(std::numeric_limits<float>::infinity()),
       blockedTimeout(level.time + 15000),
       aiYawSpeed(0.0f),
@@ -251,7 +251,7 @@ void Ai::Think()
     }
 }
 
-void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3_t forward) const
+void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum_, const vec3_t forward) const
 {
     // These values will be returned by default
     moveTestResult->canWalk = 0;
@@ -259,7 +259,7 @@ void Ai::TestMove(MoveTestResult *moveTestResult, int currAasAreaNum, const vec3
     moveTestResult->canJump = 0;
     moveTestResult->fallDepth = 0;
 
-    if (!aasWorld->AreaGrounded(currAasAreaNum))
+    if (!aasWorld->AreaGrounded(currAasAreaNum_))
         return;
 
     if (!currAasAreaNum)

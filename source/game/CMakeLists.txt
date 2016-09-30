@@ -20,4 +20,3 @@ target_link_libraries(game PRIVATE)
 add_dependencies(game angelwrap)
 set_property(TARGET game PROPERTY CXX_STANDARD 11)
 qf_set_output_dir(game ${QFUSION_GAME_DIR})
-

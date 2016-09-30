@@ -327,7 +327,7 @@ protected:
 
     void TryPushEnemyOfSingleBot(const edict_t *bot, const edict_t *enemy);
 public:
-    AiBaseEnemyPool(float avgSkill);
+    AiBaseEnemyPool(float avgSkill_);
     virtual ~AiBaseEnemyPool() {}
 
     // If a weight is set > 0, this bot requires reinforcements

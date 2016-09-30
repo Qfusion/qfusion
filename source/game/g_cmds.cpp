@@ -478,14 +478,14 @@ static void Cmd_PlayersExt_f( edict_t *ent, bool onlyspecs )
 	{
 		if( trap_GetClientState( i ) >= CS_SPAWNED )
 		{
-			edict_t *clent = &game.edicts[i+1];
+			edict_t *clientEnt = &game.edicts[i+1];
 			gclient_t *cl;
 			const char *login;
 
-			if( onlyspecs && clent->s.team != TEAM_SPECTATOR )
+			if( onlyspecs && clientEnt->s.team != TEAM_SPECTATOR )
 				continue;
 
-			cl = clent->r.client;
+			cl = clientEnt->r.client;
 
 			login = NULL;
 			if( cl->mm_session > 0 ) {

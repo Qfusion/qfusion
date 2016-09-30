@@ -75,9 +75,9 @@ protected:
     static constexpr unsigned MAX_TAG_LEN = 128;
     char tag[MAX_TAG_LEN];
 
-    void SetTag(const char *tag)
+    void SetTag(const char *tag_)
     {
-        Q_strncpyz(this->tag, tag, MAX_TAG_LEN);
+        Q_strncpyz(this->tag, tag_, MAX_TAG_LEN);
     }
 public:
     AiFrameAwareUpdatable(): frameAffinityModulo(0), frameAffinityOffset(0)

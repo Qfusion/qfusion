@@ -121,18 +121,18 @@ Goal::~Goal()
     }
 }
 
-void Goal::SetToNavEntity(NavEntity *navEntity, const AiFrameAwareUpdatable *setter)
+void Goal::SetToNavEntity(NavEntity *navEntity_, const AiFrameAwareUpdatable *setter_)
 {
-    this->navEntity = navEntity;
-    this->name = navEntity->Name();
-    this->setter = setter;
+    this->navEntity = navEntity_;
+    this->name = navEntity_->Name();
+    this->setter = setter_;
 }
 
-void Goal::SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter)
+void Goal::SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter_)
 {
     this->navEntity = nullptr;
     this->name = nullptr;
-    this->setter = setter;
+    this->setter = setter_;
     this->flags = GoalFlags::REACH_ON_RADIUS | GoalFlags::TACTICAL_SPOT;
     // If area num is zero, this goal will be canceled on its reevaluation
     this->explicitAasAreaNum = AiAasWorld::Instance()->FindAreaNum(origin);

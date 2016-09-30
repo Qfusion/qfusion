@@ -56,7 +56,7 @@ protected:
     // Weights may be negative (in this case an entity will be excluded from potential goals).
     float overriddenEntityWeights[MAX_EDICTS];
 
-    AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags);
+    AiBaseBrain(edict_t *self_, int preferredAasTravelFlags_, int allowedAasTravelFlags_);
 
     int FindAasParamToGoalArea(int goalAreaNum, int (AiAasRouteCache::*pathFindingMethod)(int, int, int) const) const;
 
@@ -121,7 +121,7 @@ private:
     {
         NavEntity *goal;
         float weight;
-        inline NavEntityAndWeight(NavEntity *goal, float weight): goal(goal), weight(weight) {}
+        inline NavEntityAndWeight(NavEntity *goal_, float weight_): goal(goal_), weight(weight_) {}
         // For sorting in descending by weight order operator < is negated
         inline bool operator<(const NavEntityAndWeight &that) const { return weight > that.weight; }
     };

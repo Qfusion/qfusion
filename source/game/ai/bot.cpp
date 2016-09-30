@@ -2,22 +2,22 @@
 #include "ai_aas_world.h"
 #include <algorithm>
 
-Bot::Bot(edict_t *self, float skillLevel)
-    : Ai(self, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
-      dangersDetector(self),
-      botBrain(self, skillLevel),
-      skillLevel(skillLevel),
+Bot::Bot(edict_t *self_, float skillLevel_)
+    : Ai(self_, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
+      dangersDetector(self_),
+      botBrain(self_, skillLevel_),
+      skillLevel(skillLevel_),
       nextBlockedEscapeAttemptAt(0),
       blockedEscapeGoalOrigin(INFINITY, INFINITY, INFINITY),
-      rocketJumpMovementState(self),
+      rocketJumpMovementState(self_),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
       isWaitingForItemSpawn(false),
       isInSquad(false),
       defenceSpotId(-1),
       offenseSpotId(-1),
-      builtinFireTargetCache(self),
-      scriptFireTargetCache(self)
+      builtinFireTargetCache(self_),
+      scriptFireTargetCache(self_)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;
@@ -135,7 +135,7 @@ void Bot::RegisterVisibleEnemies()
         int entNum;
         float distance;
 
-        EntAndDistance(int entNum, float distance): entNum(entNum), distance(distance) {}
+        EntAndDistance(int entNum_, float distance_): entNum(entNum_), distance(distance_) {}
         bool operator<(const EntAndDistance &that) const { return distance < that.distance; }
     };
 

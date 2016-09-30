@@ -113,7 +113,7 @@ private:
         float GetAdditionalEnemyWeight(const edict_t *bot, const edict_t *enemy) const override;
         void OnBotEnemyAssigned(const edict_t *bot, const Enemy *enemy) override;
     public:
-        SquadEnemyPool(AiSquad *squad, float skill);
+        SquadEnemyPool(AiSquad *squad_, float skill);
         virtual ~SquadEnemyPool() override {}
     };
 
@@ -128,7 +128,7 @@ protected:
         squadEnemyPool->SetFrameAffinity(modulo, offset);
     }
 public:
-    AiSquad(CachedTravelTimesMatrix &travelTimesMatrix);
+    AiSquad(CachedTravelTimesMatrix &travelTimesMatrix_);
     AiSquad(AiSquad &&that);
     virtual ~AiSquad() override;
 
@@ -192,7 +192,7 @@ protected:
 
     static AiSquadBasedTeamBrain *InstantiateTeamBrain(int team, const char *gametype);
 public:
-    AiSquadBasedTeamBrain(int team): AiBaseTeamBrain(team) {}
+    AiSquadBasedTeamBrain(int team_): AiBaseTeamBrain(team_) {}
     virtual ~AiSquadBasedTeamBrain() override {};
 
     virtual void Frame() override;
