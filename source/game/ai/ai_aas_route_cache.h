@@ -204,7 +204,7 @@ class AiAasRouteCache
     class alignas(8) ChunksCache
     {
         static constexpr unsigned CHUNK_SIZE = 8192 - sizeof(FreelistPool::ChunkHeader);
-        static constexpr unsigned MAX_CHUNKS = 384;
+        static constexpr unsigned MAX_CHUNKS = 640; // 512+128
 
         alignas(8) char buffer[MAX_CHUNKS * (CHUNK_SIZE + sizeof(FreelistPool::ChunkHeader))];
 
