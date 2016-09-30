@@ -638,7 +638,7 @@ bool BotBrain::SuggestCoverSpot(vec3_t newSpotOrigin, float searchRadius, bool b
 void BotBrain::UpdateBlockedAreasStatus()
 {
     // (advance and retreat flags are not mutual exclusive, and retreat flag has higher priority)
-    if (combatTask.advance && !combatTask.retreat)
+    if (combatTask.Empty() || (combatTask.advance && !combatTask.retreat))
     {
         // Reset all possibly blocked areas
         RouteCache()->SetDisabledRegions(nullptr, nullptr, 0, droppedToFloorAasAreaNum);
