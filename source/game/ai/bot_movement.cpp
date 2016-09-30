@@ -42,6 +42,8 @@ void Bot::Move(usercmd_t *ucmd, bool beSilent)
         return;
 
     const int goalAasAreaNum = GoalAreaNum();
+    if (nextReaches.empty() && currAasAreaNum != goalAasAreaNum)
+        return;
 
     Vec3 intendedLookVec(self->velocity);  // Use as a default one
     if (currAasAreaNum != goalAasAreaNum)
@@ -1077,18 +1079,21 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
     }
 
     // Skip dash and WJ near triggers to prevent missing a trigger
-    switch (nextReaches.front().traveltype)
+    if (!nextReaches.empty())
     {
-        case TRAVEL_TELEPORT:
-        case TRAVEL_JUMPPAD:
-        case TRAVEL_ELEVATOR:
-        case TRAVEL_LADDER:
-        case TRAVEL_BARRIERJUMP:
-            ucmd->buttons &= ~BUTTON_SPECIAL;
-        default:
-            // If has other goal than special goal (that always has a highest prioriy)
-            if (!HasSpecialGoal() && IsCloseToAnyGoal())
+        switch (nextReaches.front().traveltype)
+        {
+            case TRAVEL_TELEPORT:
+            case TRAVEL_JUMPPAD:
+            case TRAVEL_ELEVATOR:
+            case TRAVEL_LADDER:
+            case TRAVEL_BARRIERJUMP:
                 ucmd->buttons &= ~BUTTON_SPECIAL;
+            default:
+                // If has other goal than special goal (that always has a highest prioriy)
+                if (!HasSpecialGoal() && IsCloseToAnyGoal())
+                    ucmd->buttons &= ~BUTTON_SPECIAL;
+        }
     }
 
     if (beSilent)
