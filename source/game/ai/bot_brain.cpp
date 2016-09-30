@@ -682,7 +682,11 @@ void BotBrain::UpdateBlockedAreasStatus()
         }
     }
 
-    RouteCache()->SetDisabledRegions(&mins[0], &maxs[0], mins.size(), droppedToFloorAasAreaNum);
+    // getting mins[0] address for an empty vector in debug will trigger an assertion
+    if (!mins.empty())
+        RouteCache()->SetDisabledRegions(&mins[0], &maxs[0], mins.size(), droppedToFloorAasAreaNum);
+    else
+        RouteCache()->SetDisabledRegions(nullptr, nullptr, 0, droppedToFloorAasAreaNum);
 }
 
 static constexpr float CLOSE_RANGE = 150.0f;
