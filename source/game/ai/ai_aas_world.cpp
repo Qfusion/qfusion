@@ -123,7 +123,7 @@ typedef struct aas_tracestack_s
     int nodenum;		//node found after splitting with planenum
 } aas_tracestack_t;
 
-int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec3_t *points, int maxareas) const
+int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas_, vec3_t *points, int maxareas) const
 {
     if (!loaded)
         return 0;
@@ -132,8 +132,8 @@ int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec
     aas_tracestack_t tracestack[127];
     aas_tracestack_t *tstack_p;
 
-    int numareas = 0;
-    areas[0] = 0;
+    int numAreas = 0;
+    areas_[0] = 0;
 
     tstack_p = tracestack;
     //we start with the whole line on the stack
@@ -151,19 +151,19 @@ int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec
         //if the trace stack is empty (ended up with a piece of the
         //line to be traced in an area)
         if (tstack_p < tracestack)
-            return numareas;
+            return numAreas;
 
         //number of the current node to test the line against
         int nodenum = tstack_p->nodenum;
         //if it is an area
         if (nodenum < 0)
         {
-            areas[numareas] = -nodenum;
+            areas_[numAreas] = -nodenum;
             if (points)
-                VectorCopy(tstack_p->start, points[numareas]);
-            numareas++;
-            if (numareas >= maxareas)
-                return numareas;
+                VectorCopy(tstack_p->start, points[numAreas]);
+            numAreas++;
+            if (numAreas >= maxareas)
+                return numAreas;
             continue;
         }
         //if it is a solid leaf
@@ -193,7 +193,7 @@ int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec
             if (tstack_p >= &tracestack[127])
             {
                 G_Printf(S_COLOR_RED "AiAasWorld::TraceAreas(): stack overflow\n");
-                return numareas;
+                return numAreas;
             }
         }
         //if the whole to be traced line is totally at the back of this node
@@ -207,7 +207,7 @@ int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec
             if (tstack_p >= &tracestack[127])
             {
                 G_Printf(S_COLOR_RED "AiAasWorld::TraceAreas(): stack overflow\n");
-                return numareas;
+                return numAreas;
             }
         }
             //go down the tree both at the front and back of the node
@@ -244,7 +244,7 @@ int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec
             if (tstack_p >= &tracestack[127])
             {
                 G_Printf(S_COLOR_RED "AiAasWorld::TraceAreas(): stack overflow\n");
-                return numareas;
+                return numAreas;
             }
             //now put the part near the start of the line on the stack so we will
             //continue with thats part first. This way we'll find the first
@@ -257,13 +257,13 @@ int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec
             if (tstack_p >= &tracestack[127])
             {
                 G_Printf(S_COLOR_RED "AiAasWorld::TraceAreas(): stack overflow\n");
-                return numareas;
+                return numAreas;
             }
         }
     }
 }
 
-int AiAasWorld::BBoxAreasNonConst(const vec3_t absmins, const vec3_t absmaxs, int *areas, int maxareas)
+int AiAasWorld::BBoxAreasNonConst(const vec3_t absmins, const vec3_t absmaxs, int *areas_, int maxareas)
 {
     if (!loaded)
         return 0;
@@ -272,7 +272,7 @@ int AiAasWorld::BBoxAreasNonConst(const vec3_t absmins, const vec3_t absmaxs, in
     int num = 0;
     for (aas_link_t *link = linkedareas; link; link = link->next_area)
     {
-        areas[num] = link->areanum;
+        areas_[num] = link->areanum;
         num++;
         if (num >= maxareas)
             break;
@@ -291,7 +291,7 @@ AiAasWorld::aas_link_t *AiAasWorld::LinkEntity(const vec3_t absmins, const vec3_
     aas_linkstack_t linkstack[128];
     aas_linkstack_t *lstack_p;
 
-    aas_link_t *areas = nullptr;
+    aas_link_t *linkedAreas = nullptr;
     //
     lstack_p = linkstack;
     //we start with the whole line on the stack
@@ -326,16 +326,16 @@ AiAasWorld::aas_link_t *AiAasWorld::LinkEntity(const vec3_t absmins, const vec3_
 
             link = AllocLink();
             if (!link)
-                return areas;
+                return linkedAreas;
 
             link->entnum = entnum;
             link->areanum = -nodenum;
             //put the link into the double linked area list of the entity
             link->prev_area = nullptr;
-            link->next_area = areas;
-            if (areas)
-                areas->prev_area = link;
-            areas = link;
+            link->next_area = linkedAreas;
+            if (linkedAreas)
+                linkedAreas->prev_area = link;
+            linkedAreas = link;
             //put the link into the double linked entity list of the area
             link->prev_ent = nullptr;
             link->next_ent = arealinkedentities[-nodenum];
@@ -378,13 +378,13 @@ AiAasWorld::aas_link_t *AiAasWorld::LinkEntity(const vec3_t absmins, const vec3_
             break;
         }
     }
-    return areas;
+    return linkedAreas;
 }
 
-void AiAasWorld::UnlinkFromAreas(aas_link_t *areas)
+void AiAasWorld::UnlinkFromAreas(aas_link_t *linkedAreas)
 {
     aas_link_t *link, *nextlink;
-    for (link = areas; link; link = nextlink)
+    for (link = linkedAreas; link; link = nextlink)
     {
         //next area the entity is linked in
         nextlink = link->next_area;

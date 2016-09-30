@@ -343,12 +343,12 @@ class BotBrain: public AiBaseBrain
         float ComputeDamageToBeKilled() const override { return DamageToKill(bot); }
         void OnEnemyRemoved(const Enemy *enemy) override;
         void TryPushNewEnemy(const edict_t *enemy) override { TryPushEnemyOfSingleBot(bot, enemy); }
-        void SetBotRoleWeight(const edict_t *bot, float weight) override {}
-        float GetAdditionalEnemyWeight(const edict_t *bot, const edict_t *enemy) const override { return 0; }
-        void OnBotEnemyAssigned(const edict_t *bot, const Enemy *enemy) override {}
+        void SetBotRoleWeight(const edict_t *bot_, float weight) override {}
+        float GetAdditionalEnemyWeight(const edict_t *bot_, const edict_t *enemy) const override { return 0; }
+        void OnBotEnemyAssigned(const edict_t *bot_, const Enemy *enemy) override {}
     public:
-        EnemyPool(edict_t *bot, BotBrain *botBrain, float skill)
-            : AiBaseEnemyPool(skill), bot(bot), botBrain(botBrain)
+        EnemyPool(edict_t *bot_, BotBrain *botBrain_, float skill_)
+            : AiBaseEnemyPool(skill_), bot(bot_), botBrain(botBrain_)
         {
             SetTag(va("BotBrain(%s)::EnemyPool", bot->r.client->netname));
         }
@@ -375,15 +375,15 @@ protected:
 public:
     CombatTask combatTask;
 
-    BotBrain(edict_t *bot, float skillLevel);
+    BotBrain(edict_t *bot_, float skillLevel_);
 
     virtual void Frame() override;
     virtual void Think() override;
     virtual void PreThink() override;
     virtual void PostThink() override;
 
-    void OnAttachedToSquad(AiSquad *squad);
-    void OnDetachedFromSquad(AiSquad *squad);
+    void OnAttachedToSquad(AiSquad *squad_);
+    void OnDetachedFromSquad(AiSquad *squad_);
 
     void OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable *threatDetector);
     void OnEnemyRemoved(const Enemy *enemy);
@@ -411,16 +411,16 @@ public:
         return combatTask.enemy && combatTask.enemy->ent == enemy;
     }
 
-    void SetAttitude(const edict_t *ent, int attitude);
+    void SetAttitude(const edict_t *ent, int attitude_);
 
     inline float GetBaseOffensiveness() const { return baseOffensiveness; }
 
     float GetEffectiveOffensiveness() const;
 
-    inline void SetBaseOffensiveness(float baseOffensiveness)
+    inline void SetBaseOffensiveness(float baseOffensiveness_)
     {
-        this->baseOffensiveness = baseOffensiveness;
-        clamp(baseOffensiveness, 0.0f, 1.0f);
+        this->baseOffensiveness = baseOffensiveness_;
+        clamp(this->baseOffensiveness, 0.0f, 1.0f);
     }
 
     // Helps to reject non-feasible enemies quickly.

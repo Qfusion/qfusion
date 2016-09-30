@@ -284,14 +284,14 @@ class AiAasWorld
     void FreeLinkedEntities();
 
     aas_link_t *LinkEntity(const vec3_t absmins, const vec3_t absmaxs, int entnum);
-    void UnlinkFromAreas(aas_link_t *areas);
+    void UnlinkFromAreas(aas_link_t *linkedAreas);
     aas_link_t *AllocLink();
     void DeAllocLink(aas_link_t *link);
 
     int BoxOnPlaneSide2(const vec3_t absmins, const vec3_t absmaxs, const aas_plane_t *p);
 
     int FindAreaNum(const vec3_t mins, const vec3_t maxs) const;
-    int BBoxAreasNonConst(const vec3_t absmins, const vec3_t absmaxs, int *areas, int maxareas);
+    int BBoxAreasNonConst(const vec3_t absmins, const vec3_t absmaxs, int *areas_, int maxareas);
 public:
     AiAasWorld(AiAasWorld &&that);
     ~AiAasWorld();
@@ -306,27 +306,27 @@ public:
 
     void Frame();
 
-    inline int TraceAreas(const Vec3 &start, const Vec3 &end, int *areas, int maxareas) const
+    inline int TraceAreas(const Vec3 &start, const Vec3 &end, int *areas_, int maxareas) const
     {
-        return TraceAreas(start.Data(), end.Data(), areas, nullptr, maxareas);
+        return TraceAreas(start.Data(), end.Data(), areas_, nullptr, maxareas);
     }
-    inline int TraceAreas(const vec3_t start, const vec3_t end, int *areas, int maxareas) const
+    inline int TraceAreas(const vec3_t start, const vec3_t end, int *areas_, int maxareas) const
     {
-        return TraceAreas(start, end, areas, nullptr, maxareas);
+        return TraceAreas(start, end, areas_, nullptr, maxareas);
     }
 
     //stores the areas the trace went through and returns the number of passed areas
-    int TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec3_t *points, int maxareas) const;
+    int TraceAreas(const vec3_t start, const vec3_t end, int *areas_, vec3_t *points, int maxareas) const;
 
-    inline int BBoxAreas(const Vec3 &absmins, const Vec3 &absmaxs, int *areas, int maxareas) const
+    inline int BBoxAreas(const Vec3 &absmins, const Vec3 &absmaxs, int *areas_, int maxareas) const
     {
-        return BBoxAreas(absmins.Data(), absmaxs.Data(), areas, maxareas);
+        return BBoxAreas(absmins.Data(), absmaxs.Data(), areas_, maxareas);
     }
 
     //returns the areas the bounding box is in
-    int BBoxAreas(const vec3_t absmins, const vec3_t absmaxs, int *areas, int maxareas) const
+    int BBoxAreas(const vec3_t absmins, const vec3_t absmaxs, int *areas_, int maxareas) const
     {
-        return (const_cast<AiAasWorld*>(this))->BBoxAreasNonConst(absmins, absmaxs, areas, maxareas);
+        return (const_cast<AiAasWorld*>(this))->BBoxAreasNonConst(absmins, absmaxs, areas_, maxareas);
     }
 
     //returns the area the point is in

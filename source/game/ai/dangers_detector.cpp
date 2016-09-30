@@ -183,7 +183,7 @@ class PlasmaBeamsBuilder
 
     const edict_t *bot;
 public:
-    PlasmaBeamsBuilder(const edict_t *bot): bot(bot) {}
+    PlasmaBeamsBuilder(const edict_t *bot_): bot(bot_) {}
 
     void AddProjectile(const edict_t *projectile)
     {

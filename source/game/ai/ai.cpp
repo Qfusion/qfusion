@@ -180,7 +180,7 @@ static void FindHubAreas()
     struct AreaAndReachCount
     {
         int area, reachCount;
-        AreaAndReachCount(int area, int reachCount): area(area), reachCount(reachCount) {}
+        AreaAndReachCount(int area_, int reachCount_): area(area_), reachCount(reachCount_) {}
         // Ensure that area with lowest reachCount will be evicted in pop_heap(), so use >
         bool operator<(const AreaAndReachCount &that) const { return reachCount > that.reachCount; }
     };

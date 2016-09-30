@@ -182,7 +182,7 @@ class AiAasRouteCache
         unsigned chunksInUse;
     public:
 
-        FreelistPool(void *buffer, unsigned bufferSize, unsigned chunkSize);
+        FreelistPool(void *buffer_, unsigned bufferSize, unsigned chunkSize_);
         virtual ~FreelistPool() {}
 
         void *Alloc(int size);
@@ -269,9 +269,9 @@ class AiAasRouteCache
     void UnlinkAreaRoutingCache(aas_routingcache_t *cache);
     void UnlinkPortalRoutingCache(aas_routingcache_t *cache);
 
-    void UpdateAreaRoutingCache(aas_routingcache_t *areacache);
+    void UpdateAreaRoutingCache(aas_routingcache_t *areaCache);
     aas_routingcache_t *GetAreaRoutingCache(int clusternum, int areanum, int travelflags);
-    void UpdatePortalRoutingCache(aas_routingcache_t *portalcache);
+    void UpdatePortalRoutingCache(aas_routingcache_t *portalCache);
     aas_routingcache_t *GetPortalRoutingCache(int clusternum, int areanum, int travelflags);
     unsigned short AreaTravelTime(int areanum, const vec3_t start, const vec3_t end);
 
@@ -292,7 +292,7 @@ class AiAasRouteCache
     bool RoutingResultToGoalArea(int fromAreaNum, const vec3_t origin, int toAreaNum, int travelFlags, RoutingResult *result) const;
 
     bool RouteToGoalArea(const RoutingRequest &request, RoutingResult *result);
-    bool RouteToGoalPortal(const RoutingRequest &request, aas_routingcache_t *portalcache, RoutingResult *result);
+    bool RouteToGoalPortal(const RoutingRequest &request, aas_routingcache_t *portalCache, RoutingResult *result);
 
     int PortalMaxTravelTime(int portalnum);
 
@@ -310,7 +310,7 @@ class AiAasRouteCache
     void FreeAllPortalCache();
 
     // Should be used only for shared route cache initialization
-    AiAasRouteCache(const AiAasWorld &aasWorld);
+    AiAasRouteCache(const AiAasWorld &aasWorld_);
     // Should be used for creation of new instances based on shared one
     AiAasRouteCache(AiAasRouteCache *parent);
 

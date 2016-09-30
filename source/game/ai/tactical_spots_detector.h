@@ -19,18 +19,18 @@ public:
         AiAasRouteCache *routeCache;
         int originAreaNum;
     public:
-        OriginParams(const edict_t *originEntity, float searchRadius, AiAasRouteCache *routeCache)
-            : originEntity(originEntity), searchRadius(searchRadius), routeCache(routeCache)
+        OriginParams(const edict_t *originEntity_, float searchRadius_, AiAasRouteCache *routeCache_)
+            : originEntity(originEntity_), searchRadius(searchRadius_), routeCache(routeCache_)
         {
-            VectorCopy(originEntity->s.origin, this->origin);
+            VectorCopy(originEntity_->s.origin, this->origin);
             const AiAasWorld *aasWorld = AiAasWorld::Instance();
             originAreaNum = aasWorld->IsLoaded() ? aasWorld->FindAreaNum(originEntity) : 0;
         }
 
-        OriginParams(const vec3_t origin, float searchRadius, AiAasRouteCache *routeCache)
-            : originEntity(nullptr), searchRadius(searchRadius), routeCache(routeCache)
+        OriginParams(const vec3_t origin_, float searchRadius_, AiAasRouteCache *routeCache_)
+            : originEntity(nullptr), searchRadius(searchRadius_), routeCache(routeCache_)
         {
-            VectorCopy(origin, this->origin);
+            VectorCopy(origin_, this->origin);
             const AiAasWorld *aasWorld = AiAasWorld::Instance();
             originAreaNum = aasWorld->IsLoaded() ? aasWorld->FindAreaNum(origin) : 0;
         }
@@ -53,16 +53,16 @@ public:
         const edict_t *keepVisibleEntity;
         vec3_t keepVisibleOrigin;
     public:
-        AdvantageProblemParams(const edict_t *keepVisibleEntity)
-            : keepVisibleEntity(keepVisibleEntity)
+        AdvantageProblemParams(const edict_t *keepVisibleEntity_)
+            : keepVisibleEntity(keepVisibleEntity_)
         {
             VectorCopy(keepVisibleEntity->s.origin, this->keepVisibleOrigin);
         }
 
-        AdvantageProblemParams(const vec3_t keepVisibleOrigin)
+        AdvantageProblemParams(const vec3_t keepVisibleOrigin_)
             : keepVisibleEntity(nullptr)
         {
-            VectorCopy(keepVisibleOrigin, this->keepVisibleOrigin);
+            VectorCopy(keepVisibleOrigin_, this->keepVisibleOrigin);
         }
     };
 
@@ -74,16 +74,16 @@ public:
         vec3_t attackerOrigin;
         float harmfulRayThickness;
     public:
-        CoverProblemParams(const edict_t *attackerEntity, float harmfulRayThickness)
-            : attackerEntity(attackerEntity), harmfulRayThickness(harmfulRayThickness)
+        CoverProblemParams(const edict_t *attackerEntity_, float harmfulRayThickness_)
+            : attackerEntity(attackerEntity_), harmfulRayThickness(harmfulRayThickness_)
         {
-            VectorCopy(attackerEntity->s.origin, this->attackerOrigin);
+            VectorCopy(attackerEntity_->s.origin, this->attackerOrigin);
         }
 
-        CoverProblemParams(const vec3_t attackerOrigin, float harmfulRayThickness)
-            : attackerEntity(nullptr), harmfulRayThickness(harmfulRayThickness)
+        CoverProblemParams(const vec3_t attackerOrigin_, float harmfulRayThickness_)
+            : attackerEntity(nullptr), harmfulRayThickness(harmfulRayThickness_)
         {
-            VectorCopy(attackerOrigin, this->attackerOrigin);
+            VectorCopy(attackerOrigin_, this->attackerOrigin);
         }
     };
 private:
@@ -102,7 +102,7 @@ private:
     {
         int areaNum;
         float score;
-        AreaAndScore(int areaNum, float score): areaNum(areaNum), score(score) {}
+        AreaAndScore(int areaNum_, float score_): areaNum(areaNum_), score(score_) {}
         bool operator<(const AreaAndScore &that) const { return score > that.score; }
     };
 

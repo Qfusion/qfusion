@@ -129,7 +129,7 @@ public:
         StaticDeque<T, N> &deque;
         unsigned index;
 
-        iterator(StaticDeque<T, N> &deque, unsigned index): deque(deque), index(index) {}
+        iterator(StaticDeque<T, N> &deque_, unsigned index_): deque(deque_), index(index_) {}
 
     public:
         inline iterator &operator++()
@@ -183,7 +183,7 @@ public:
         const StaticDeque<T, N> &deque;
         unsigned index;
 
-        const_iterator(const StaticDeque<T, N> &deque, unsigned index): deque(deque), index(index) {}
+        const_iterator(const StaticDeque<T, N> &deque_, unsigned index_): deque(deque_), index(index_) {}
 
     public:
         inline const_iterator &operator++()

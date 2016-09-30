@@ -512,7 +512,7 @@ static const asEnumVal_t asMiscelaneaEnumVals[] =
 
 //=======================================================================
 
-static const asEnum_t asEnums[] =
+static const asEnum_t asGameEnums[] =
 {
 	{ "configstrings_e", asConfigstringEnumVals },
 	{ "state_effects_e", asEffectEnumVals },
@@ -2452,7 +2452,7 @@ static const asClassDescriptor_t asGameEntityClassDescriptor =
 
 //=======================================================================
 
-static const asClassDescriptor_t * const asClassesDescriptors[] = 
+static const asClassDescriptor_t * const asGameClassesDescriptors[] =
 {
 	&asTraceClassDescriptor,
 	&asItemClassDescriptor,
@@ -3179,7 +3179,7 @@ static int asFunc_G_GetDefaultColorCorrection( void )
 	return level.colorCorrection;
 }
 
-static const asglobfuncs_t asGlobFuncs[] =
+static const asglobfuncs_t asGameGlobFuncs[] =
 {
 	{ "Entity @G_SpawnEntity( const String &in )", asFUNCTION(asFunc_G_Spawn), NULL },
 	{ "const String @G_SpawnTempValue( const String &in )", asFUNCTION(asFunc_G_SpawnTempValue), NULL },
@@ -3813,19 +3813,19 @@ static void G_InitializeGameModuleSyntax( asIScriptEngine *asEngine )
 	G_Printf( "* Initializing Game module syntax\n" );
 
 	// register global variables
-	G_asRegisterEnums( asEngine, asEnums );
+	G_asRegisterEnums( asEngine, asGameEnums );
 	G_asRegisterEnums( asEngine, asAIEnums );
 
 	// first register all class names so methods using custom classes work
-	G_asRegisterObjectClassNames( asEngine, asClassesDescriptors );
+	G_asRegisterObjectClassNames( asEngine, asGameClassesDescriptors );
 	G_asRegisterObjectClassNames( asEngine, asAIClassesDescriptors );
 
 	// register classes
-	G_asRegisterObjectClasses( asEngine, asClassesDescriptors );
+	G_asRegisterObjectClasses( asEngine, asGameClassesDescriptors );
 	G_asRegisterObjectClasses( asEngine, asAIClassesDescriptors );
 
 	// register global functions
-	G_asRegisterGlobalFunctions( asEngine, asGlobFuncs, "" );
+	G_asRegisterGlobalFunctions( asEngine, asGameGlobFuncs, "" );
 	G_asRegisterGlobalFunctions( asEngine, asAIGlobFuncs, "AI" );
 
 	// register global properties
@@ -3930,7 +3930,7 @@ static void G_asDumpAPIToFile( const char *path )
 	char string[1024];
 
 	// dump class definitions, containing methods, behaviors and properties
-	const asClassDescriptor_t *const *allDescriptors[] = { asClassesDescriptors, asAIClassesDescriptors };
+	const asClassDescriptor_t *const *allDescriptors[] = { asGameClassesDescriptors, asAIClassesDescriptors };
     for ( const asClassDescriptor_t *const *descriptors: allDescriptors )
     {
         for (i = 0;; i++)
@@ -4071,7 +4071,7 @@ static void G_asDumpAPIToFile( const char *path )
 		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Enums" );
 		trap_FS_Write( string, strlen( string ), file );
 
-		const asEnum_t *const allEnumsLists[] = { asEnums, asAIEnums };
+		const asEnum_t *const allEnumsLists[] = { asGameEnums, asAIEnums };
 		for ( const asEnum_t *const enumsList: allEnumsLists )
 		{
 			for (i = 0, asEnum = enumsList; asEnum->name != NULL; i++, asEnum++)
@@ -4115,7 +4115,7 @@ static void G_asDumpAPIToFile( const char *path )
 		Q_snprintfz(string, sizeof(string), "/**\r\n * %s\r\n */\r\n", "Global functions");
 		trap_FS_Write(string, strlen(string), file);
 
-		const asglobfuncs_t *const allFuncsList[] = { asGlobFuncs, asAIGlobFuncs };
+		const asglobfuncs_t *const allFuncsList[] = { asGameGlobFuncs, asAIGlobFuncs };
 		for (const asglobfuncs_t *funcsList: allFuncsList)
 		{
 			for (func = funcsList; func->declaration; func++)

@@ -23,7 +23,7 @@ class UntypedCachingGameAllocator
     void *AllocDirect();
 
 public:
-    UntypedCachingGameAllocator(size_t chunkSize, const char *tag = nullptr, unsigned limit = 32, unsigned initialCacheSize = 8);
+    UntypedCachingGameAllocator(size_t chunkSize_, const char *tag_ = nullptr, unsigned limit_ = 32, unsigned initialCacheSize = 8);
     ~UntypedCachingGameAllocator();
 
     void *Alloc();
@@ -38,8 +38,8 @@ class CachingGameBufferAllocator: UntypedCachingGameAllocator
         return (sizeof(T) % alignof(T)) ? sizeof(T) + alignof(T) - (sizeof(T) % alignof(T)) : sizeof(T);
     }
 public:
-    CachingGameBufferAllocator(const char *tag, size_t limit = 32, int initialCacheSize = 8)
-        : UntypedCachingGameAllocator(alignedElemSize() * N, tag, limit, initialCacheSize) {}
+    CachingGameBufferAllocator(const char *tag_, size_t limit_ = 32, int initialCacheSize = 8)
+        : UntypedCachingGameAllocator(alignedElemSize() * N, tag_, limit_, (unsigned)initialCacheSize) {}
 
     inline T *Alloc()
     {

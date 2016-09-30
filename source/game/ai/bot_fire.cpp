@@ -638,9 +638,9 @@ private:
     uint32_t *words; // Actual bits data. We are limited 32-bit words to work fast on 32-bit processors.
 
 public:
-    FixedBitVector(unsigned size): size(size)
+    FixedBitVector(unsigned size_): size(size_)
     {
-        words = (uint32_t *)(G_Malloc(size / 8 + 4));
+        words = (uint32_t *)(G_Malloc(size_ / 8 + 4));
         Clear();
     }
 
@@ -700,16 +700,16 @@ private:
 public:
     BitVectorHolder(): size(std::numeric_limits<unsigned>::max()), hasRegisteredShutdownHook(false) {}
 
-    FixedBitVector &Get(unsigned size)
+    FixedBitVector &Get(unsigned size_)
     {
-        if (this->size != size)
+        if (this->size != size_)
             vectorHolder.clear();
 
-        this->size = size;
+        this->size = size_;
 
         if (vectorHolder.empty())
         {
-            vectorHolder.emplace_back(FixedBitVector(size));
+            vectorHolder.emplace_back(FixedBitVector(size_));
         }
 
         if (!hasRegisteredShutdownHook)
@@ -731,7 +731,7 @@ struct PointAndDistance
 {
     Vec3 point;
     float distance;
-    inline PointAndDistance(const Vec3 &point, float distance): point(point), distance(distance) {}
+    inline PointAndDistance(const Vec3 &point_, float distance_): point(point_), distance(distance_) {}
     inline bool operator<(const PointAndDistance &that) const { return distance < that.distance; }
 };
 

@@ -196,7 +196,7 @@ template <typename T> struct AttributedArea
     int areaNum;
     T attr;
     AttributedArea() {}
-    AttributedArea(int areaNum, T attr): areaNum(areaNum), attr(attr) {}
+    AttributedArea(int areaNum_, T attr_): areaNum(areaNum_), attr(attr_) {}
     bool operator<(const AttributedArea &that) const { return attr < that.attr; }
 };
 

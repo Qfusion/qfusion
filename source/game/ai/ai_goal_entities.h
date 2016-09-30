@@ -164,14 +164,14 @@ public:
 
     // Instead of cleaning the goal completely set a "setter" of this action
     // (otherwise a null setter cannot release the goal ownership)
-    void ResetWithSetter(const class AiFrameAwareUpdatable *setter)
+    void ResetWithSetter(const class AiFrameAwareUpdatable *setter_)
     {
         Clear();
-        this->setter = setter;
+        this->setter = setter_;
     }
 
-    void SetToNavEntity(NavEntity *navEntity, const AiFrameAwareUpdatable *setter);
-    void SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter);
+    void SetToNavEntity(NavEntity *navEntity_, const AiFrameAwareUpdatable *setter_);
+    void SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter_);
 
     inline int AasAreaNum() const
     {
@@ -191,9 +191,9 @@ public:
         return navEntity ? navEntity->IsBasedOnEntity(ent) : false;
     }
 
-    inline bool IsBasedOnNavEntity(const NavEntity *navEntity) const
+    inline bool IsBasedOnNavEntity(const NavEntity *navEntity_) const
     {
-        return navEntity && this->navEntity == navEntity;
+        return navEntity_ && this->navEntity == navEntity_;
     }
 
     inline bool IsBasedOnSomeEntity() const { return navEntity != nullptr; }
@@ -324,7 +324,7 @@ public:
     {
         friend class NavEntitiesRegistry;
         NavEntity *currEntity;
-        inline GoalEntitiesIterator(NavEntity *currEntity): currEntity(currEntity) {}
+        inline GoalEntitiesIterator(NavEntity *currEntity_): currEntity(currEntity_) {}
     public:
         inline NavEntity *operator*() { return currEntity; }
         inline const NavEntity *operator*() const { return currEntity; }

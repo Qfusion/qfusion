@@ -18,16 +18,16 @@ struct AiAlertSpot
     float regularEnemyInfluenceScale;
     float carrierEnemyInfluenceScale;
 
-    AiAlertSpot(int id,
-                Vec3 origin,
-                float radius,
-                float regularEnemyInfluenceScale = 1.0f,
-                float carrierEnemyInfluenceScale = 1.0f)
-        : id(id),
-          origin(origin),
-          radius(radius),
-          regularEnemyInfluenceScale(regularEnemyInfluenceScale),
-          carrierEnemyInfluenceScale(carrierEnemyInfluenceScale) {}
+    AiAlertSpot(int id_,
+                Vec3 origin_,
+                float radius_,
+                float regularEnemyInfluenceScale_ = 1.0f,
+                float carrierEnemyInfluenceScale_ = 1.0f)
+        : id(id_),
+          origin(origin_),
+          radius(radius_),
+          regularEnemyInfluenceScale(regularEnemyInfluenceScale_),
+          carrierEnemyInfluenceScale(carrierEnemyInfluenceScale_) {}
 };
 
 class Bot: public Ai
@@ -44,7 +44,7 @@ public:
     static constexpr auto ALLOWED_TRAVEL_FLAGS =
         PREFERRED_TRAVEL_FLAGS | TFL_WATER | TFL_WATERJUMP | TFL_SWIM | TFL_LADDER | TFL_ELEVATOR;
 
-    Bot(edict_t *self, float skillLevel);
+    Bot(edict_t *self_, float skillLevel_);
     virtual ~Bot() override
     {
         AiAasRouteCache::ReleaseInstance(routeCache);
@@ -262,8 +262,8 @@ private:
         bool wasTriggeredPrevFrame;
         unsigned timeoutAt;
 
-        RocketJumpMovementState(const edict_t *self)
-            : self(self),
+        RocketJumpMovementState(const edict_t *self_)
+            : self(self_),
               jumpTarget(INFINITY, INFINITY, INFINITY),
               fireTarget(INFINITY, INFINITY, INFINITY),
               hasTriggeredRocketJump(false),
@@ -290,10 +290,10 @@ private:
             }
         }
 
-        void SetTriggered(const Vec3 &jumpTarget, const Vec3 &fireTarget, unsigned timeoutPeriod)
+        void SetTriggered(const Vec3 &jumpTarget_, const Vec3 &fireTarget_, unsigned timeoutPeriod)
         {
-            this->jumpTarget = jumpTarget;
-            this->fireTarget = fireTarget;
+            this->jumpTarget = jumpTarget_;
+            this->fireTarget = fireTarget_;
             hasTriggeredRocketJump = true;
             hasCorrectedRocketJump = false;
             timeoutAt = level.time + timeoutPeriod;
@@ -378,10 +378,10 @@ private:
             return isTriggered && timeoutAt > level.time;
         }
 
-        inline void SetTriggered(const Vec3 &lookAtPoint, float turnSpeedMultiplier = 0.5f, unsigned timeoutPeriod = 500)
+        inline void SetTriggered(const Vec3 &lookAtPoint_, float turnSpeedMultiplier_ = 0.5f, unsigned timeoutPeriod = 500)
         {
-            this->lookAtPoint = lookAtPoint;
-            this->turnSpeedMultiplier = turnSpeedMultiplier;
+            this->lookAtPoint = lookAtPoint_;
+            this->turnSpeedMultiplier = turnSpeedMultiplier_;
             this->timeoutAt = level.time + timeoutPeriod;
             this->isTriggered = true;
         }
@@ -428,25 +428,25 @@ private:
             return isTriggered;
         }
 
-        inline void SetWithoutDirection(const Vec3 &spotOrigin, float spotRadius, float alertness)
+        inline void SetWithoutDirection(const Vec3 &spotOrigin_, float spotRadius_, float alertness_)
         {
             isTriggered = true;
             hasLookAtPoint = false;
-            this->spotOrigin = spotOrigin;
-            this->spotRadius = spotRadius;
-            this->alertness = alertness;
+            this->spotOrigin = spotOrigin_;
+            this->spotRadius = spotRadius_;
+            this->alertness = alertness_;
             strafeTimeoutAt = 0;
             lookAtPointTimeoutAt = 0;
         }
 
-        inline void SetDirectional(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRadius, float alertness)
+        inline void SetDirectional(const Vec3 &spotOrigin_, const Vec3 &lookAtPoint_, float spotRadius_, float alertness_)
         {
             isTriggered = true;
             hasLookAtPoint = true;
-            this->spotOrigin = spotOrigin;
-            this->lookAtPoint = lookAtPoint;
-            this->spotRadius = spotRadius;
-            this->alertness = alertness;
+            this->spotOrigin = spotOrigin_;
+            this->lookAtPoint = lookAtPoint_;
+            this->spotRadius = spotRadius_;
+            this->alertness = alertness_;
             strafeTimeoutAt = 0;
             lookAtPointTimeoutAt = 0;
         }
@@ -473,12 +473,12 @@ private:
         AlertCallback callback;
         void *receiver;
 
-        AlertSpot(const AiAlertSpot &spot, AlertCallback callback, void *receiver)
+        AlertSpot(const AiAlertSpot &spot, AlertCallback callback_, void *receiver_)
             : AiAlertSpot(spot),
               lastReportedAt(0),
               lastReportedScore(0.0f),
-              callback(callback),
-              receiver(receiver) {};
+              callback(callback_),
+              receiver(receiver_) {};
 
         inline void Alert(Bot *bot, float score)
         {
@@ -583,11 +583,11 @@ private:
         int weaponNum;
 
     public:
-        GenericFireDef(int weaponNum, const firedef_t *builtinFireDef, const AiScriptWeaponDef *scriptWeaponDef)
+        GenericFireDef(int weaponNum_, const firedef_t *builtinFireDef_, const AiScriptWeaponDef *scriptWeaponDef_)
         {
-            this->builtinFireDef = builtinFireDef;
-            this->scriptWeaponDef = scriptWeaponDef;
-            this->weaponNum = weaponNum;
+            this->builtinFireDef = builtinFireDef_;
+            this->scriptWeaponDef = scriptWeaponDef_;
+            this->weaponNum = weaponNum_;
         }
 
         inline int WeaponNum() const { return weaponNum; }
@@ -644,14 +644,14 @@ private:
                 return combatTaskInstanceId == combatTask.instanceId && invalidAt > level.time;
             }
 
-            inline void SetFor(const CombatTask &combatTask, const vec3_t origin)
+            inline void SetFor(const CombatTask &combatTask, const vec3_t origin_)
             {
-                VectorCopy(origin, this->origin.Data());
+                VectorCopy(origin_, this->origin.Data());
             }
 
-            inline void SetFor(const CombatTask &combatTask, const Vec3 &origin)
+            inline void SetFor(const CombatTask &combatTask, const Vec3 &origin_)
             {
-                this->origin = origin;
+                this->origin = origin_;
             }
         };
 
@@ -679,7 +679,7 @@ private:
         void PredictProjectileShot(const CombatTask &combatTask, float projectileSpeed, AimParams *aimParams,
                                    bool applyTargetGravity);
     public:
-        FireTargetCache(const edict_t *bot) : bot(bot) {}
+        FireTargetCache(const edict_t *bot_) : bot(bot_) {}
 
         void AdjustAimParams(const CombatTask &combatTask, const GenericFireDef &fireDef, AimParams *aimParams);
     };

@@ -221,7 +221,7 @@ public:
             oldVal.~T();
         }
         // Construct new elements before the shifted ones
-        for (ptrdiff_t i = position - cbegin(), end = position - cbegin() + n; i < end; ++i)
+        for (ptrdiff_t i = position - cbegin(), endIndex = position - cbegin() + n; i < endIndex; ++i)
             new (basePointer + i)T(val);
         count += n;
         return basePointer + (position - cbegin());

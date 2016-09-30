@@ -4,8 +4,10 @@
 
 #define FANCY_TAG "CachedGameAllocator\"%s\"::"
 
-UntypedCachingGameAllocator::UntypedCachingGameAllocator(size_t elemSize, const char *tag, unsigned limit, unsigned initialCacheSize)
-    : chunkSize(elemSize), limit(limit), tag(tag ? tag : "unknown tag")
+UntypedCachingGameAllocator::UntypedCachingGameAllocator(size_t elemSize_,
+                                                         const char *tag_,
+                                                         unsigned limit_, unsigned initialCacheSize)
+    : chunkSize(elemSize_), limit(limit_), tag(tag_ ? tag_ : "unknown tag")
 {
     isCleared = false;
     isInitialized = false;

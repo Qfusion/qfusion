@@ -6,8 +6,16 @@
 
 struct Danger
 {
-    Danger(const Vec3 &hitPoint, const Vec3 &direction, float damage, const edict_t *attacker = nullptr, bool splash = false)
-        : hitPoint(hitPoint), direction(direction), damage(damage), attacker(attacker), splash(splash)
+    Danger(const Vec3 &hitPoint_,
+           const Vec3 &direction_,
+           float damage_,
+           const edict_t *attacker_ = nullptr,
+           bool splash_ = false)
+        : hitPoint(hitPoint_),
+          direction(direction_),
+          damage(damage_),
+          attacker(attacker_),
+          splash(splash_)
     {}
 
     // Sorting by this operator is fast but should be used only

@@ -462,7 +462,7 @@ protected:
         return nullptr;
     }
 public:
-    inline ASUntypedFunction(const char *decl, ASFunctionsRegistry &registry): decl(decl)
+    inline ASUntypedFunction(const char *decl_, ASFunctionsRegistry &registry): decl(decl_)
     {
         registry.Register(*this);
     }
@@ -541,8 +541,8 @@ struct ASTypedResultFunction: public ASUntypedFunction
 {
     R defaultResult;
 
-    ASTypedResultFunction(const char *decl, R defaultResult, ASFunctionsRegistry &registry)
-        : ASUntypedFunction(decl, registry), defaultResult(defaultResult) {}
+    ASTypedResultFunction(const char *decl_, R defaultResult_, ASFunctionsRegistry &registry)
+        : ASUntypedFunction(decl_, registry), defaultResult(defaultResult_) {}
 
 protected:
     inline R CallForResult(asIScriptContext *preparedContext)
@@ -601,8 +601,8 @@ template<> struct ArgSetter<int>
 template<typename R>
 struct ASFunction0: public ASTypedResultFunction<R>
 {
-    ASFunction0(const char *decl, R defaultResult, ASFunctionsRegistry &registry)
-        : ASTypedResultFunction<R>(decl, defaultResult, registry) {}
+    ASFunction0(const char *decl_, R defaultResult_, ASFunctionsRegistry &registry)
+        : ASTypedResultFunction<R>(decl_, defaultResult_, registry) {}
 
     R operator()()
     {
@@ -617,8 +617,8 @@ struct ASFunction0: public ASTypedResultFunction<R>
 template<typename R, typename T1>
 struct ASFunction1: public ASTypedResultFunction<R>
 {
-    ASFunction1(const char *decl, R defaultResult, ASFunctionsRegistry &registry)
-        : ASTypedResultFunction<R>(decl, defaultResult, registry) {}
+    ASFunction1(const char *decl_, R defaultResult_, ASFunctionsRegistry &registry)
+        : ASTypedResultFunction<R>(decl_, defaultResult_, registry) {}
 
     R operator()(T1 arg1)
     {
@@ -634,8 +634,8 @@ struct ASFunction1: public ASTypedResultFunction<R>
 template<typename R, typename T1, typename T2>
 struct ASFunction2: public ASTypedResultFunction<R>
 {
-    ASFunction2(const char *decl, R defaultResult, ASFunctionsRegistry &registry)
-        : ASTypedResultFunction<R>(decl, defaultResult, registry) {}
+    ASFunction2(const char *decl_, R defaultResult_, ASFunctionsRegistry &registry)
+        : ASTypedResultFunction<R>(decl_, defaultResult_, registry) {}
 
     R operator()(T1 arg1, T2 arg2)
     {
@@ -652,8 +652,8 @@ struct ASFunction2: public ASTypedResultFunction<R>
 template<typename R, typename T1, typename T2, typename T3>
 struct ASFunction3: public ASTypedResultFunction<R>
 {
-    ASFunction3(const char *decl, R defaultResult, ASFunctionsRegistry &registry)
-        : ASTypedResultFunction<R>(decl, defaultResult, registry) {}
+    ASFunction3(const char *decl_, R defaultResult_, ASFunctionsRegistry &registry)
+        : ASTypedResultFunction<R>(decl_, defaultResult_, registry) {}
 
     R operator()(T1 arg1, T2 arg2, T3 arg3)
     {

@@ -36,7 +36,7 @@ class AiBaseTeamBrain: public AiFrameAwareUpdatable
     // Instantiates appropriate kind of team brain for a current gametype.
     static AiBaseTeamBrain *InstantiateTeamBrain(int team, const char *gametype);
 protected:
-    AiBaseTeamBrain(int team);
+    AiBaseTeamBrain(int team_);
     virtual ~AiBaseTeamBrain() override {}
 
     const int team;

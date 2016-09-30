@@ -7,8 +7,8 @@
 #include "static_vector.h"
 #include "../../gameshared/q_collision.h"
 
-AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowedAasTravelFlags)
-    : self(self),
+AiBaseBrain::AiBaseBrain(edict_t *self_, int preferredAasTravelFlags_, int allowedAasTravelFlags_)
+    : self(self_),
       localLongTermGoal(this),
       longTermGoal(nullptr),
       localShortTermGoal(this),
@@ -26,8 +26,8 @@ AiBaseBrain::AiBaseBrain(edict_t *self, int preferredAasTravelFlags, int allowed
       currAasAreaNum(0),
       droppedToFloorAasAreaNum(0),
       droppedToFloorOrigin(NAN, NAN, NAN),
-      preferredAasTravelFlags(preferredAasTravelFlags),
-      allowedAasTravelFlags(allowedAasTravelFlags)
+      preferredAasTravelFlags(preferredAasTravelFlags_),
+      allowedAasTravelFlags(allowedAasTravelFlags_)
 {
     ClearInternalEntityWeights();
     // External weights are cleared by AI code only once in this constructor.

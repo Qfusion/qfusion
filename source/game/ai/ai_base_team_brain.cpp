@@ -6,8 +6,8 @@
 // May be instantiated dynamically in future by subclasses
 static AiBaseTeamBrain *teamBrains[GS_MAX_TEAMS - 1];
 
-AiBaseTeamBrain::AiBaseTeamBrain(int team)
-    : team(team)
+AiBaseTeamBrain::AiBaseTeamBrain(int team_)
+    : team(team_)
 {
     svFps = -1;
     svSkill = -1;

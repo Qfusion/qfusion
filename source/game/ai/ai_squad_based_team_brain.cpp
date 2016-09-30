@@ -66,8 +66,8 @@ int CachedTravelTimesMatrix::FindAASTravelTime(const edict_t *client1, const edi
     return 0;
 }
 
-AiSquad::SquadEnemyPool::SquadEnemyPool(AiSquad *squad, float skill)
-    : AiBaseEnemyPool(skill), squad(squad)
+AiSquad::SquadEnemyPool::SquadEnemyPool(AiSquad *squad_, float skill)
+    : AiBaseEnemyPool(skill), squad(squad_)
 {
     std::fill_n(botRoleWeights, AiSquad::MAX_SIZE, 0.0f);
     std::fill_n(botEnemies, AiSquad::MAX_SIZE, nullptr);
@@ -181,12 +181,12 @@ void AiSquad::SquadEnemyPool::OnBotEnemyAssigned(const edict_t *bot, const Enemy
     botEnemies[GetBotSlot(bot->ai->botRef)] = enemy;
 }
 
-AiSquad::AiSquad(CachedTravelTimesMatrix &travelTimesMatrix)
+AiSquad::AiSquad(CachedTravelTimesMatrix &travelTimesMatrix_)
     : isValid(false),
       inUse(false),
       brokenConnectivityTimeoutAt(0),
       botsDetached(false),
-      travelTimesMatrix(travelTimesMatrix)
+      travelTimesMatrix(travelTimesMatrix_)
 {
     std::fill_n(lastDroppedByBotTimestamps, MAX_SIZE, 0);
     std::fill_n(lastDroppedForBotTimestamps, MAX_SIZE, 0);
@@ -406,7 +406,7 @@ static void InitWeaponDefHelpers()
     {
         int weapon, tier;
         WeaponAndTier() {}
-        WeaponAndTier(int weapon, int tier): weapon(weapon), tier(tier) {}
+        WeaponAndTier(int weapon_, int tier_): weapon(weapon_), tier(tier_) {}
         bool operator<(const WeaponAndTier &that) const { return tier > that.tier; }
     };
 
@@ -608,8 +608,8 @@ bool AiSquad::ShouldNotDropItemsNow() const
     {
         const Enemy *enemy;
         Vec3 extrapolatedOrigin;
-        PotentialStealer(const Enemy *enemy, const Vec3 &extrapolatedOrigin)
-            : enemy(enemy), extrapolatedOrigin(extrapolatedOrigin) {}
+        PotentialStealer(const Enemy *enemy_, const Vec3 &extrapolatedOrigin_)
+            : enemy(enemy_), extrapolatedOrigin(extrapolatedOrigin_) {}
 
         // Recently seen stealers should be first in a sorted list
         bool operator<(const PotentialStealer &that) const
@@ -705,7 +705,7 @@ void AiSquad::FindSupplierCandidates(unsigned botNum, StaticVector<unsigned, AiS
     {
         unsigned botNum;
         float score;
-        BotAndScore(unsigned botNum, float score): botNum(botNum), score(score) {}
+        BotAndScore(unsigned botNum_, float score_): botNum(botNum_), score(score_) {}
         bool operator<(const BotAndScore &that) const { return score > that.score; }
     };
 
@@ -1114,8 +1114,8 @@ struct NearbyBotProps
     NearbyMatesList *botMates;
     float distance;
 
-    NearbyBotProps(Bot *bot, unsigned botOrphanIndex, NearbyMatesList *botMates, float distance)
-        : bot(bot), botOrphanIndex(botOrphanIndex), botMates(botMates), distance(distance) {}
+    NearbyBotProps(Bot *bot_, unsigned botOrphanIndex_, NearbyMatesList *botMates_, float distance_)
+        : bot(bot_), botOrphanIndex(botOrphanIndex_), botMates(botMates_), distance(distance_) {}
 
     bool operator<(const NearbyBotProps &that) const { return distance < that.distance; }
 };
