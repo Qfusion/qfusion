@@ -385,9 +385,6 @@ bool PlasmaBeamsBuilder::FindMostDangerousBeams(StaticVector<Danger, N> &dangers
             beamDir.NormalizeFast();
             tracedBeamEnd += 108.0f * beamDir;
 
-#ifdef _DEBUG
-            AITools_DrawColorLine(tracedBeamStart.Data(), tracedBeamEnd.Data(), COLOR_RGB(144, 0, 0), 0);
-#endif
             trace_t trace = Trace(tracedBeamStart, beamMins, beamMaxs, tracedBeamEnd, beam->owner);
             if (trace.fraction < 1.0f)
             {
