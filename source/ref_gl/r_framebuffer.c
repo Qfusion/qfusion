@@ -320,6 +320,7 @@ bool RFB_AttachTextureToObject( int object, bool depth, int target, image_t *tex
 	fbo = r_framebuffer_objects + object - 1;
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
+bind:
 	if( depth ) {
 		attachment = GL_DEPTH_ATTACHMENT_EXT;
 
@@ -373,6 +374,15 @@ bool RFB_AttachTextureToObject( int object, bool depth, int target, image_t *tex
 		}
 	}
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_objectID ? r_bound_framebuffer_object->objectID : 0 );
+
+	// check framebuffer status and unbind if failed
+	if( !RFB_CheckObjectStatus() ) {
+		if( texture ) {
+			texture = NULL;
+			goto bind;
+		}
+		return false;
+	}
 
 	if( depth ) {
 		fbo->depthTexture = texture;
