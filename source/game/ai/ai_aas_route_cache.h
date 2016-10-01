@@ -171,20 +171,6 @@ class AiAasRouteCache
         // Actual chunks data
         char *buffer;
 
-#ifdef _MSC_VER
-#pragma warning(push)
-// warning C4200: nonstandard extension used: zero-sized array in struct/union
-#pragma warning(disable:4200)
-#endif
-        struct Chunk
-        {
-            ChunkHeader header;
-            char data[0];
-        };
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
         // An actual chunk data size and a maximal count of chunks.
         const unsigned chunkSize, maxChunks;
         unsigned chunksInUse;

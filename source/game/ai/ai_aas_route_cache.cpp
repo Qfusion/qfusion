@@ -551,18 +551,18 @@ AiAasRouteCache::FreelistPool::FreelistPool(void *buffer_, unsigned bufferSize, 
         // Next chunk has this offset in bytes from previous one:
         unsigned stride = chunkSize + sizeof(ChunkHeader);
         char *nextChunkPtr = this->buffer + stride;
-        Chunk *currChunk = (Chunk *)this->buffer;
-        freeChunk = &currChunk->header;
+        ChunkHeader *currChunk = (ChunkHeader *)this->buffer;
+        freeChunk = currChunk;
         for (unsigned i = 0; i < maxChunks - 1; ++i)
         {
-            Chunk *nextChunk = (Chunk *)(nextChunkPtr);
-            currChunk->header.prev = nullptr;
-            currChunk->header.next = &nextChunk->header;
+            ChunkHeader *nextChunk = (ChunkHeader *)(nextChunkPtr);
+            currChunk->prev = nullptr;
+            currChunk->next = nextChunk;
             currChunk = nextChunk;
             nextChunkPtr += stride;
         }
-        currChunk->header.prev = nullptr;
-        currChunk->header.next = nullptr;
+        currChunk->prev = nullptr;
+        currChunk->next = nullptr;
     }
     headChunk.next = &headChunk;
     headChunk.prev = &headChunk;
@@ -587,6 +587,7 @@ void *AiAasRouteCache::FreelistPool::Alloc(int size)
     newChunk->prev->next = newChunk;
 
     ++chunksInUse;
+    // Return a pointer to a datum after the chunk header
     return newChunk + 1;
 }
 
