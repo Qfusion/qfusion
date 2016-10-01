@@ -823,7 +823,7 @@ static void Mod_ApplySuperStylesToFace( const q2msurface_t *in, msurface_t *out 
 	{
 		lightmaps[j] = in->lightmapnum[j];
 
-		if( lightmaps[j] < 0 || in->styles[j] == 255 )
+		if( lightmaps[j] < 0 || in->styles[j] == 255 || (j > 0 && lightmaps[j-1] < 0) )
 		{
 			lmRects[j] = NULL;
 			lightmaps[j] = -1;
@@ -1682,7 +1682,7 @@ static void Mod_Q2LoadFaces( const lump_t *l )
 		{
 			lightmaps[j] = out->lightmapnum[j];
 
-			if( lightmaps[j] < 0 )
+			if( lightmaps[j] < 0 || (j > 0 && lightmaps[j-1] < 0) )
 			{
 				lmRects[j] = NULL;
 				lightmaps[j] = -1;
@@ -2580,7 +2580,7 @@ static void Mod_Q1LoadFaces( const lump_t *l )
 		{
 			lightmaps[j] = out->lightmapnum[j];
 
-			if( lightmaps[j] < 0 )
+			if( lightmaps[j] < 0 || (j > 0 && lightmaps[j-1] < 0) )
 			{
 				lmRects[j] = NULL;
 				lightmaps[j] = -1;

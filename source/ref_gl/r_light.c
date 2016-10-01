@@ -841,15 +841,12 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
 			sls->stOffset[j][0] = 0;
 		}
 
-		if( j )
+		if( lightmapStyles[j] != 255 )
 		{
-			// bit0 is set in the shader
-			if( lightmapStyles[j] != 255 )
-				sls->vattribs |= ( VATTRIB_LMCOORDS1_BIT << (j-1) );
+			sls->vattribs |= ( VATTRIB_LMCOORDS0_BIT << j );
+			if( mapConfig.lightmapArrays && !( j & 3 ) )
+				sls->vattribs |= VATTRIB_LMLAYERS0123_BIT << ( j >> 2 );
 		}
-
-		if( mapConfig.lightmapArrays && !( j & 3 ) && ( lightmapStyles[j] != 255 ) )
-			sls->vattribs |= VATTRIB_LMLAYERS0123_BIT << ( j >> 2 );
 	}
 
 	return sls;

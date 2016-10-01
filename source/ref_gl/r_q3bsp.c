@@ -323,7 +323,7 @@ static void Mod_LoadFaces( const lump_t *l )
 			lightmapStyles[j] = in->lightmapStyles[j];
 			vertexStyles[j] = in->vertexStyles[j];
 
-			if( in->lightmapStyles[j] == 255 || lightmaps[j] >= loadmodel_numlightmaps )
+			if( in->lightmapStyles[j] == 255 || lightmaps[j] >= loadmodel_numlightmaps || (j > 0 && lightmaps[j-1] < 0) )
 			{
 				lmRects[j] = NULL;
 				lightmaps[j] = -1;
@@ -332,8 +332,8 @@ static void Mod_LoadFaces( const lump_t *l )
 			else
 			{
 				lmRects[j] = &loadmodel_lightmapRects[lightmaps[j]];
-				lightmaps[j] = lmRects[j]->texNum;			
-			}			
+				lightmaps[j] = lmRects[j]->texNum;
+			}
 		}
 
 		// load shader
@@ -1606,7 +1606,7 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out )
 	{
 		lightmaps[j] = LittleLong( in->lm_texnum[j] );
 
-		if( in->lightmapStyles[j] == 255 || lightmaps[j] >= loadmodel_numlightmaps || !mesh )
+		if( in->lightmapStyles[j] == 255 || lightmaps[j] >= loadmodel_numlightmaps || !mesh || (j > 0 && lightmaps[j-1] < 0) )
 		{
 			lmRects[j] = NULL;
 			lightmaps[j] = -1;
