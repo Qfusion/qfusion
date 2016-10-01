@@ -191,9 +191,6 @@ typedef struct aas_node_s
 class AiAasWorld
 {
     bool loaded = false;
-    //current time
-    float time;
-    int numframes;
 
     //bounding boxes
     int numbboxes;
