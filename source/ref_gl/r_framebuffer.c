@@ -67,28 +67,21 @@ void RFB_Init( void )
 static void RFB_DeleteObject( r_fbo_t *fbo )
 {
 	if( fbo->depthRenderBuffer )
-	{
 		qglDeleteRenderbuffersEXT( 1, &fbo->depthRenderBuffer );
-		fbo->depthRenderBuffer = 0;
-	}
 
-	if( fbo->stencilRenderBuffer )
-	{
+	if( fbo->stencilRenderBuffer && ( fbo->stencilRenderBuffer != fbo->depthRenderBuffer ) )
 		qglDeleteRenderbuffersEXT( 1, &fbo->stencilRenderBuffer );
-		fbo->stencilRenderBuffer = 0;
-	}
 
 	if( fbo->colorRenderBuffer )
-	{
 		qglDeleteRenderbuffersEXT( 1, &fbo->colorRenderBuffer );
-		fbo->colorRenderBuffer = 0;
-	}
 
 	if( fbo->objectID )
-	{
 		qglDeleteFramebuffersEXT( 1, &fbo->objectID );
-		fbo->objectID = 0;
-	}
+
+	fbo->depthRenderBuffer = 0;
+	fbo->stencilRenderBuffer = 0;
+	fbo->colorRenderBuffer = 0;
+	fbo->objectID = 0;
 }
 
 /*
@@ -193,6 +186,9 @@ found:
 		else
 #endif
 			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
+
+		if( stencilRB )
+			fbo->stencilRenderBuffer = rbID;
 	}
 
 	if( rbID )
@@ -202,8 +198,8 @@ found:
 		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, fbo->colorRenderBuffer );
 	if( fbo->depthRenderBuffer )
 		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->depthRenderBuffer );
-	if( stencilRB && fbo->depthRenderBuffer )
-		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->depthRenderBuffer );
+	if( fbo->stencilRenderBuffer )
+		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->stencilRenderBuffer );
 
 	if( colorRB && depthRB ) {
 		if( !RFB_CheckObjectStatus() ) {
