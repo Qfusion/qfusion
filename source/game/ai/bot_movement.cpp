@@ -1120,8 +1120,8 @@ bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
         return false;
 
     bool canRefillHealthAndArmor = true;
-    canRefillHealthAndArmor &= level.gametype.spawnableItemsMask & IT_HEALTH;
-    canRefillHealthAndArmor &= level.gametype.spawnableItemsMask & IT_ARMOR;
+    canRefillHealthAndArmor &= (level.gametype.spawnableItemsMask & IT_HEALTH) != 0;
+    canRefillHealthAndArmor &= (level.gametype.spawnableItemsMask & IT_ARMOR) != 0;
 
     // This means a bot would inflict himself a damage (he can't switch to a safe gun)
     if (GS_SelfDamage() && !Inventory()[WEAP_INSTAGUN])
