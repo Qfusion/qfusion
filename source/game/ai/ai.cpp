@@ -115,9 +115,7 @@ void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, i
     GClip_LinkEntity( event );
 }
 
-const size_t ai_handle_size = sizeof( ai_handle_t );
-
-StaticVector<int, 16> hubAreas;
+static StaticVector<int, 16> hubAreas;
 
 //==========================================
 // AI_InitLevel

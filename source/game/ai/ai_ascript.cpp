@@ -408,7 +408,7 @@ class ASFunctionsRegistry
 
     StaticVector<struct ASUntypedFunction *, 32> functions;
 
-    inline void Register(class ASUntypedFunction &function)
+    inline void Register(struct ASUntypedFunction &function)
     {
         functions.push_back(&function);
     }
