@@ -792,7 +792,7 @@ void G_FreeEdict( edict_t *ed )
 
 	GClip_UnlinkEntity( ed );   // unlink from world
 
-	AI_RemoveGoalEntity( ed );
+	AI_RemoveNavEntity( ed );
 	G_FreeAI( ed );
 
 	G_asReleaseEntityBehaviors( ed );
@@ -1074,6 +1074,9 @@ void G_CallStop( edict_t *self )
 */
 void G_CallPain( edict_t *ent, edict_t *attacker, float kick, float damage )
 {
+	if ( ent->ai )
+		AI_Pain( ent, attacker, kick, damage );
+
 	if( ent->pain )
 		ent->pain( ent, attacker, kick, damage );
 	else if( ent->scriptSpawned && ent->asPainFunc )
@@ -1723,7 +1726,7 @@ bool G_Visible( edict_t *self, edict_t *other )
 	G_Trace( &trace, spot1, vec3_origin, vec3_origin, spot2, self, MASK_OPAQUE );
 	//trace = gi.trace( spot1, vec3_origin, vec3_origin, spot2, self, MASK_OPAQUE );
 
-	if( trace.fraction == 1.0 )
+	if( trace.fraction == 1.0f || ENTNUM(other) == trace.ent )
 		return true;
 	return false;
 }

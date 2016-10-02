@@ -25,96 +25,6 @@ angelwrap_api_t *angelExport = NULL;
 
 //=======================================================================
 
-typedef struct
-{
-	const char * name;
-	int value;
-} asEnumVal_t;
-
-typedef struct
-{
-	const char * name;
-	const asEnumVal_t * values;
-} asEnum_t;
-
-typedef struct
-{
-	const char * declaration;
-} asFuncdef_t;
-
-typedef struct asBehavior_s
-{
-	asEBehaviours behavior;
-	const char * declaration;
-	asSFuncPtr funcPointer;
-	asECallConvTypes callConv;
-} asBehavior_t;
-
-typedef struct
-{
-	const char * declaration;
-	asSFuncPtr funcPointer;
-	asECallConvTypes callConv;
-} asMethod_t;
-
-typedef struct
-{
-	const char * declaration;
-	unsigned int offset;
-} asProperty_t;
-
-typedef struct
-{
-	const char * name;
-	asDWORD typeFlags; 
-	size_t size;
-	const asFuncdef_t * funcdefs;
-	const asBehavior_t * objBehaviors;
-	const asMethod_t * objMethods;
-	const asProperty_t * objProperties;
-	const void * stringFactory;
-	const void * stringFactory_asGeneric;
-} asClassDescriptor_t;
-
-typedef struct
-{
-	const char *declaration;
-	asSFuncPtr pointer;
-	void **asFuncPtr;
-} asglobfuncs_t;
-
-typedef struct
-{
-	const char *declaration;
-	void *pointer;
-} asglobproperties_t;
-
-//=======================================================================
-
-static void asnullfunc(void) {}
-
-#define ASLIB_LOCAL_CLASS_DESCR(x)
-
-#define ASLIB_FOFFSET(s,m)						offsetof(s,m)
-
-#define ASLIB_ENUM_VAL(name)					{ #name,(int)name }
-#define ASLIB_ENUM_VAL_NULL						{ NULL, 0 }
-
-#define ASLIB_ENUM_NULL							{ NULL, NULL }
-
-#define ASLIB_FUNCTION_DECL(type,name,params)	(#type " " #name #params)
-
-#define ASLIB_PROPERTY_DECL(type,name)			#type " " #name
-
-#define ASLIB_FUNCTION_NULL						NULL
-#define ASLIB_FUNCDEF_NULL						{ ASLIB_FUNCTION_NULL }
-#define ASLIB_BEHAVIOR_NULL						{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), asCALL_CDECL }
-#define ASLIB_METHOD_NULL						{ ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), asCALL_CDECL }
-#define ASLIB_PROPERTY_NULL						{ NULL, 0 }
-
-#define ASLIB_Malloc(s)							(aslib_import.Mem_Alloc(s,__FILE__,__LINE__))
-#define ASLIB_Free(x)							(aslib_import.Mem_Free(x,__FILE__,__LINE__))
-
 static const asEnumVal_t asConfigstringEnumVals[] =
 {
 	ASLIB_ENUM_VAL( CS_MODMANIFEST ),
@@ -602,7 +512,7 @@ static const asEnumVal_t asMiscelaneaEnumVals[] =
 
 //=======================================================================
 
-static const asEnum_t asEnums[] =
+static const asEnum_t asGameEnums[] =
 {
 	{ "configstrings_e", asConfigstringEnumVals },
 	{ "state_effects_e", asEffectEnumVals },
@@ -641,7 +551,7 @@ static const asEnum_t asEnums[] =
 /*
 * G_asRegisterEnums
 */
-static void G_asRegisterEnums( asIScriptEngine *asEngine )
+static void G_asRegisterEnums( asIScriptEngine *asEngine, const asEnum_t *asEnums )
 {
 	int i, j;
 	const asEnum_t *asEnum;
@@ -1470,53 +1380,7 @@ static const asClassDescriptor_t asScoreStatsClassDescriptor =
 	NULL, NULL					/* string factory hack */
 };
 
-//=======================================================================
 
-// CLASS: Bot
-
-static const asFuncdef_t asbot_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const asBehavior_t asbot_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
-static const asMethod_t asbot_Methods[] =
-{
-	{ ASLIB_FUNCTION_DECL(void, clearGoalWeights, ()), asFUNCTION(AI_ClearWeights), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(void, resetGoalWeights, ()), asFUNCTION(AI_ResetWeights), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(void, setGoalWeight, ( int i, float weight )), asFUNCTION(AI_SetGoalWeight), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(float, getItemWeight, ( const Item @item ) const), asFUNCTION(AI_GetItemWeight), asCALL_CDECL_OBJFIRST },
-
-	// character
-	{ ASLIB_FUNCTION_DECL(float, get_reactionTime, () const), asFUNCTION(AI_GetCharacterReactionTime), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(float, get_offensiveness, () const), asFUNCTION(AI_GetCharacterOffensiveness), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(float, get_campiness, () const), asFUNCTION(AI_GetCharacterCampiness), asCALL_CDECL_OBJFIRST },
-	{ ASLIB_FUNCTION_DECL(float, get_firerate, () const), asFUNCTION(AI_GetCharacterFirerate), asCALL_CDECL_OBJFIRST },
-
-	ASLIB_METHOD_NULL
-};
-
-static const asProperty_t asbot_Properties[] =
-{
-	ASLIB_PROPERTY_NULL
-};
-
-static const asClassDescriptor_t asBotClassDescriptor =
-{
-	"Bot",						/* name */
-	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
-	ai_handle_size,				/* size */
-	asbot_Funcdefs,				/* funcdefs */
-	asbot_ObjectBehaviors,		/* object behaviors */
-	asbot_Methods,				/* methods */
-	asbot_Properties,			/* properties */
-
-	NULL, NULL					/* string factory hack */
-};
 
 //=======================================================================
 
@@ -2548,6 +2412,8 @@ static const asProperty_t gedict_Properties[] =
 	{ ASLIB_PROPERTY_DECL(int, mass), ASLIB_FOFFSET(edict_t, mass) },
 	{ ASLIB_PROPERTY_DECL(uint, timeStamp), ASLIB_FOFFSET(edict_t, timeStamp) },
 
+	{ ASLIB_PROPERTY_DECL(float, aiIntrinsicEnemyWeight), ASLIB_FOFFSET(edict_t, aiIntrinsicEnemyWeight) },
+
 	{ ASLIB_PROPERTY_DECL(entThink @, think), ASLIB_FOFFSET(edict_t, asThinkFunc ) },
 	{ ASLIB_PROPERTY_DECL(entTouch @, touch), ASLIB_FOFFSET(edict_t, asTouchFunc ) },
 	{ ASLIB_PROPERTY_DECL(entUse @, use), ASLIB_FOFFSET(edict_t, asUseFunc ) },
@@ -2586,7 +2452,7 @@ static const asClassDescriptor_t asGameEntityClassDescriptor =
 
 //=======================================================================
 
-static const asClassDescriptor_t * const asClassesDescriptors[] = 
+static const asClassDescriptor_t * const asGameClassesDescriptors[] =
 {
 	&asTraceClassDescriptor,
 	&asItemClassDescriptor,
@@ -2594,28 +2460,32 @@ static const asClassDescriptor_t * const asClassesDescriptors[] =
 	&asGametypeClassDescriptor,
 	&asTeamListClassDescriptor,
 	&asScoreStatsClassDescriptor,
-	&asBotClassDescriptor,
 	&asGameClientDescriptor,
 	&asGameEntityClassDescriptor,
 
 	NULL
 };
 
-/*
-* G_asRegisterObjectClasses
-*/
-static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
+static void G_asRegisterObjectClassNames( asIScriptEngine *asEngine, const asClassDescriptor_t *const *asClassesDescriptors )
 {
-	int i, j;
+	int i;
 	const asClassDescriptor_t *cDescr;
 
-	// first register all class names so methods using custom classes work
 	for( i = 0; ; i++ )
 	{
 		if( !(cDescr = asClassesDescriptors[i]) )
 			break;
 		asEngine->RegisterObjectType( cDescr->name, cDescr->size, cDescr->typeFlags );
 	}
+}
+
+/*
+* G_asRegisterObjectClasses
+*/
+static void G_asRegisterObjectClasses( asIScriptEngine *asEngine, const asClassDescriptor_t *const *asClassesDescriptors )
+{
+	int i, j;
+	const asClassDescriptor_t *cDescr;
 
 	// now register object and global behaviors, then methods and properties
 	for( i = 0; ; i++ )
@@ -2673,7 +2543,7 @@ static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 				if( !objProperty->declaration )
 					break;
 
-				asEngine->RegisterObjectProperty( cDescr->name, 
+				asEngine->RegisterObjectProperty( cDescr->name,
 					objProperty->declaration, objProperty->offset );
 			}
 		}
@@ -3309,7 +3179,7 @@ static int asFunc_G_GetDefaultColorCorrection( void )
 	return level.colorCorrection;
 }
 
-static const asglobfuncs_t asGlobFuncs[] =
+static const asglobfuncs_t asGameGlobFuncs[] =
 {
 	{ "Entity @G_SpawnEntity( const String &in )", asFUNCTION(asFunc_G_Spawn), NULL },
 	{ "const String @G_SpawnTempValue( const String &in )", asFUNCTION(asFunc_G_SpawnTempValue), NULL },
@@ -3399,30 +3269,6 @@ static const asglobfuncs_t asGlobFuncs[] =
 	// color correction
 	{ "void G_SetColorCorrection( int index )", asFUNCTION(asFunc_G_SetColorCorrection), NULL },
 	{ "int G_GetDefaultColorCorrection()", asFUNCTION(asFunc_G_GetDefaultColorCorrection), NULL },
-
-	{ NULL }
-};
-
-// ============================================================================
-
-static void asFunc_AI_AddGoal( edict_t *self, bool customReach )
-{
-	if( customReach )
-		AI_AddGoalEntityCustom( self );
-	else
-		AI_AddGoalEntity( self );
-}
-
-static const asglobfuncs_t asAIGlobFuncs[] =
-{
-	{ "int GetRootGoal()", asFUNCTION(AI_GetRootGoalEnt), NULL },
-	{ "int GetNextGoal( int index )", asFUNCTION(AI_GetNextGoalEnt), NULL },
-	{ "Entity @GetGoalEntity( int index )", asFUNCTION(AI_GetGoalEntity), NULL },
-
-	{ "void AddGoal( Entity @ent )", asFUNCTION(AI_AddGoalEntity), NULL },
-	{ "void AddGoal( Entity @ent, bool customReach )", asFUNCTION(asFunc_AI_AddGoal), NULL },
-	{ "void RemoveGoal( Entity @ent )", asFUNCTION(AI_RemoveGoalEntity), NULL },
-	{ "void ReachedGoal( Entity @ent )", asFUNCTION(AI_ReachedEntity), NULL },
 
 	{ NULL }
 };
@@ -3967,13 +3813,19 @@ static void G_InitializeGameModuleSyntax( asIScriptEngine *asEngine )
 	G_Printf( "* Initializing Game module syntax\n" );
 
 	// register global variables
-	G_asRegisterEnums( asEngine );
+	G_asRegisterEnums( asEngine, asGameEnums );
+	G_asRegisterEnums( asEngine, asAIEnums );
+
+	// first register all class names so methods using custom classes work
+	G_asRegisterObjectClassNames( asEngine, asGameClassesDescriptors );
+	G_asRegisterObjectClassNames( asEngine, asAIClassesDescriptors );
 
 	// register classes
-	G_asRegisterObjectClasses( asEngine );
+	G_asRegisterObjectClasses( asEngine, asGameClassesDescriptors );
+	G_asRegisterObjectClasses( asEngine, asAIClassesDescriptors );
 
 	// register global functions
-	G_asRegisterGlobalFunctions( asEngine, asGlobFuncs, "" );
+	G_asRegisterGlobalFunctions( asEngine, asGameGlobFuncs, "" );
 	G_asRegisterGlobalFunctions( asEngine, asAIGlobFuncs, "AI" );
 
 	// register global properties
@@ -4078,117 +3930,121 @@ static void G_asDumpAPIToFile( const char *path )
 	char string[1024];
 
 	// dump class definitions, containing methods, behaviors and properties
-	for( i = 0; ; i++ )
-	{
-		if( !(cDescr = asClassesDescriptors[i]) )
-			break;
+	const asClassDescriptor_t *const *allDescriptors[] = { asGameClassesDescriptors, asAIClassesDescriptors };
+    for ( const asClassDescriptor_t *const *descriptors: allDescriptors )
+    {
+        for (i = 0;; i++)
+        {
+            if (!(cDescr = descriptors[i]))
+                break;
 
-		name = cDescr->name;
-		if( strlen( path ) + strlen( name ) + 2 >= filename_size )
-		{
-			if( filename_size )
-				G_Free( filename );
-			filename_size = (strlen( path ) + strlen( name ) + 2) * 2 + 1;
-			filename = ( char * )G_Malloc( filename_size );
-		}
+            name = cDescr->name;
+            if (strlen(path) + strlen(name) + 2 >= filename_size)
+            {
+                if (filename_size)
+                    G_Free(filename);
+                filename_size = (strlen(path) + strlen(name) + 2) * 2 + 1;
+                filename = (char *) G_Malloc(filename_size);
+            }
 
-		Q_snprintfz( filename, filename_size, "%s%s.h", path, name, ".h" );
-		if( trap_FS_FOpenFile( filename, &file, FS_WRITE ) == -1 )
-		{
-			G_Printf( "G_asDumpAPIToFile: Couldn't write %s.\n", filename );
-			return;
-		}
+            Q_snprintfz(filename, filename_size, "%s%s.h", path, name, ".h");
+            if (trap_FS_FOpenFile(filename, &file, FS_WRITE) == -1)
+            {
+                G_Printf("G_asDumpAPIToFile: Couldn't write %s.\n", filename);
+                return;
+            }
 
-		// funcdefs
-		if( cDescr->funcdefs )
-		{
-			Q_snprintfz( string, sizeof( string ), "/* funcdefs */\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
+            // funcdefs
+            if (cDescr->funcdefs)
+            {
+                Q_snprintfz(string, sizeof(string), "/* funcdefs */\r\n");
+                trap_FS_Write(string, strlen(string), file);
 
-			for( j = 0; ; j++ )
-			{
-				const asFuncdef_t *funcdef = &cDescr->funcdefs[j];
-				if( !funcdef->declaration )
-					break;
+                for (j = 0;; j++)
+                {
+                    const asFuncdef_t *funcdef = &cDescr->funcdefs[j];
+                    if (!funcdef->declaration)
+                        break;
 
-				Q_snprintfz( string, sizeof( string ), "funcdef %s;\r\n", funcdef->declaration );
-				trap_FS_Write( string, strlen( string ), file );
-			}
+                    Q_snprintfz(string, sizeof(string), "funcdef %s;\r\n", funcdef->declaration);
+                    trap_FS_Write(string, strlen(string), file);
+                }
 
-			Q_snprintfz( string, sizeof( string ), "\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
-		}
+                Q_snprintfz(string, sizeof(string), "\r\n");
+                trap_FS_Write(string, strlen(string), file);
+            }
 
-		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", cDescr->name );
-		trap_FS_Write( string, strlen( string ), file );
+            Q_snprintfz(string, sizeof(string), "/**\r\n * %s\r\n */\r\n", cDescr->name);
+            trap_FS_Write(string, strlen(string), file);
 
-		Q_snprintfz( string, sizeof( string ), "class %s\r\n{\r\npublic:", cDescr->name );
-		trap_FS_Write( string, strlen( string ), file );
+            Q_snprintfz(string, sizeof(string), "class %s\r\n{\r\npublic:", cDescr->name);
+            trap_FS_Write(string, strlen(string), file);
 
-		// object properties
-		if( cDescr->objProperties )
-		{
-			Q_snprintfz( string, sizeof( string ), "\r\n\t/* object properties */\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
+            // object properties
+            if (cDescr->objProperties)
+            {
+                Q_snprintfz(string, sizeof(string), "\r\n\t/* object properties */\r\n");
+                trap_FS_Write(string, strlen(string), file);
 
-			for( j = 0; ; j++ )
-			{
-				const asProperty_t *objProperty = &cDescr->objProperties[j];
-				if( !objProperty->declaration )
-					break;
+                for (j = 0;; j++)
+                {
+                    const asProperty_t *objProperty = &cDescr->objProperties[j];
+                    if (!objProperty->declaration)
+                        break;
 
-				Q_snprintfz( string, sizeof( string ), "\t%s;\r\n", objProperty->declaration );
-				trap_FS_Write( string, strlen( string ), file );
-			}
-		}
+                    Q_snprintfz(string, sizeof(string), "\t%s;\r\n", objProperty->declaration);
+                    trap_FS_Write(string, strlen(string), file);
+                }
+            }
 
-		// object behaviors
-		if( cDescr->objBehaviors )
-		{
-			Q_snprintfz( string, sizeof( string ), "\r\n\t/* object behaviors */\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
+            // object behaviors
+            if (cDescr->objBehaviors)
+            {
+                Q_snprintfz(string, sizeof(string), "\r\n\t/* object behaviors */\r\n");
+                trap_FS_Write(string, strlen(string), file);
 
-			for( j = 0; ; j++ )
-			{
-				const asBehavior_t *objBehavior = &cDescr->objBehaviors[j];
-				if( !objBehavior->declaration )
-					break;
+                for (j = 0;; j++)
+                {
+                    const asBehavior_t *objBehavior = &cDescr->objBehaviors[j];
+                    if (!objBehavior->declaration)
+                        break;
 
-				// ignore add/remove reference behaviors as they can not be used explicitly anyway
-				if( objBehavior->behavior == asBEHAVE_ADDREF || objBehavior->behavior == asBEHAVE_RELEASE )
-					continue;
+                    // ignore add/remove reference behaviors as they can not be used explicitly anyway
+                    if (objBehavior->behavior == asBEHAVE_ADDREF || objBehavior->behavior == asBEHAVE_RELEASE)
+                        continue;
 
-				Q_snprintfz( string, sizeof( string ), "\t%s;%s\r\n", objBehavior->declaration,
-					( objBehavior->behavior == asBEHAVE_FACTORY ? " /* factory */ " : "" )
-					);
-				trap_FS_Write( string, strlen( string ), file );
-			}
-		}
+                    Q_snprintfz(string, sizeof(string), "\t%s;%s\r\n", objBehavior->declaration,
+                                (objBehavior->behavior == asBEHAVE_FACTORY ? " /* factory */ " : "")
+                    );
+                    trap_FS_Write(string, strlen(string), file);
+                }
+            }
 
-		// object methods
-		if( cDescr->objMethods )
-		{
-			Q_snprintfz( string, sizeof( string ), "\r\n\t/* object methods */\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
+            // object methods
+            if (cDescr->objMethods)
+            {
+                Q_snprintfz(string, sizeof(string), "\r\n\t/* object methods */\r\n");
+                trap_FS_Write(string, strlen(string), file);
 
-			for( j = 0; ; j++ )
-			{
-				const asMethod_t *objMethod = &cDescr->objMethods[j];
-				if( !objMethod->declaration )
-					break;
+                for (j = 0;; j++)
+                {
+                    const asMethod_t *objMethod = &cDescr->objMethods[j];
+                    if (!objMethod->declaration)
+                        break;
 
-				Q_snprintfz( string, sizeof( string ), "\t%s;\r\n", objMethod->declaration );
-				trap_FS_Write( string, strlen( string ), file );
-			}
-		}
+                    Q_snprintfz(string, sizeof(string), "\t%s;\r\n", objMethod->declaration);
+                    trap_FS_Write(string, strlen(string), file);
+                }
+            }
 
-		Q_snprintfz( string, sizeof( string ), "};\r\n\r\n" );
-		trap_FS_Write( string, strlen( string ), file );
+            Q_snprintfz(string, sizeof(string), "};\r\n\r\n");
+            trap_FS_Write(string, strlen(string), file);
 
-		trap_FS_FCloseFile( file );
+            trap_FS_FCloseFile(file);
 
-		G_Printf( "Wrote %s\n", filename );
-	}
+            G_Printf("Wrote %s\n", filename);
+        }
+    }
 
 	// globals
 	name = "globals";
@@ -4215,19 +4071,23 @@ static void G_asDumpAPIToFile( const char *path )
 		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Enums" );
 		trap_FS_Write( string, strlen( string ), file );
 
-		for( i = 0, asEnum = asEnums; asEnum->name != NULL; i++, asEnum++ )
+		const asEnum_t *const allEnumsLists[] = { asGameEnums, asAIEnums };
+		for ( const asEnum_t *const enumsList: allEnumsLists )
 		{
-			Q_snprintfz( string, sizeof( string ), "typedef enum\r\n{\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
-
-			for( j = 0, asEnumVal = asEnum->values; asEnumVal->name != NULL; j++, asEnumVal++ )
+			for (i = 0, asEnum = enumsList; asEnum->name != NULL; i++, asEnum++)
 			{
-				Q_snprintfz( string, sizeof( string ), "\t%s = 0x%x,\r\n", asEnumVal->name, asEnumVal->value );
-				trap_FS_Write( string, strlen( string ), file );
-			}
+				Q_snprintfz(string, sizeof(string), "typedef enum\r\n{\r\n");
+				trap_FS_Write(string, strlen(string), file);
 
-			Q_snprintfz( string, sizeof( string ), "} %s;\r\n\r\n", asEnum->name );
-			trap_FS_Write( string, strlen( string ), file );
+				for (j = 0, asEnumVal = asEnum->values; asEnumVal->name != NULL; j++, asEnumVal++)
+				{
+					Q_snprintfz(string, sizeof(string), "\t%s = 0x%x,\r\n", asEnumVal->name, asEnumVal->value);
+					trap_FS_Write(string, strlen(string), file);
+				}
+
+				Q_snprintfz(string, sizeof(string), "} %s;\r\n\r\n", asEnum->name);
+				trap_FS_Write(string, strlen(string), file);
+			}
 		}
 	}
 
@@ -4252,13 +4112,17 @@ static void G_asDumpAPIToFile( const char *path )
 	{
 		const asglobfuncs_t *func;
 
-		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Global functions" );
-		trap_FS_Write( string, strlen( string ), file );
+		Q_snprintfz(string, sizeof(string), "/**\r\n * %s\r\n */\r\n", "Global functions");
+		trap_FS_Write(string, strlen(string), file);
 
-		for( func = asGlobFuncs; func->declaration; func++ )
+		const asglobfuncs_t *const allFuncsList[] = { asGameGlobFuncs, asAIGlobFuncs };
+		for (const asglobfuncs_t *funcsList: allFuncsList)
 		{
-			Q_snprintfz( string, sizeof( string ), "%s;\r\n", func->declaration );
-			trap_FS_Write( string, strlen( string ), file );
+			for (func = funcsList; func->declaration; func++)
+			{
+				Q_snprintfz(string, sizeof(string), "%s;\r\n", func->declaration);
+				trap_FS_Write(string, strlen(string), file);
+			}
 		}
 
 		Q_snprintfz( string, sizeof( string ), "\r\n" );

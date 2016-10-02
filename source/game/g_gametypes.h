@@ -132,7 +132,6 @@ typedef struct
 	void *scoreboardMessageFunc;
 	void *selectSpawnPointFunc;
 	void *clientCommandFunc;
-	void *botStatusFunc;
 	void *shutdownFunc;
 
 	int spawnableItemsMask;

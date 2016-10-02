@@ -230,7 +230,7 @@ static bool Pickup_Ammo( edict_t *other, const gsitem_t *item, int count, const 
 	return true;
 }
 
-static void Drop_Ammo( edict_t *ent, const gsitem_t *item )
+static edict_t *Drop_Ammo( edict_t *ent, const gsitem_t *item )
 {
 	edict_t	*dropped;
 	int index;
@@ -246,6 +246,7 @@ static void Drop_Ammo( edict_t *ent, const gsitem_t *item )
 
 		ent->r.client->ps.inventory[index] -= dropped->count;
 	}
+	return dropped;
 }
 
 
@@ -451,6 +452,11 @@ static void drop_make_touchable( edict_t *ent )
 	}
 }
 
+static void AI_AddDroppedItem( edict_t *ent )
+{
+	AI_AddNavEntity( ent, (ai_nav_entity_flags)(AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED) );
+}
+
 edict_t *Drop_Item( edict_t *ent, const gsitem_t *item )
 {
 	edict_t	*dropped;
@@ -469,7 +475,7 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item )
 	dropped->r.solid = SOLID_TRIGGER;
 	dropped->movetype = MOVETYPE_TOSS;
 	dropped->touch = drop_temp_touch;
-	dropped->stop = AI_AddGoalEntity;
+	dropped->stop = AI_AddDroppedItem;
 	dropped->r.owner = ent;
 	dropped->r.svflags &= ~SVF_NOCLIENT;
 	dropped->s.team = ent->s.team;
@@ -642,35 +648,39 @@ bool G_PickupItem( edict_t *other, const gsitem_t *it, int flags, int count, con
 	return taken;
 }
 
-static void Drop_General( edict_t *ent, const gsitem_t *item )
+static edict_t *Drop_General( edict_t *ent, const gsitem_t *item )
 {
-	Drop_Item( ent, item );
-	if( ent->r.client && ent->r.client->ps.inventory[item->tag] > 0 )
-		ent->r.client->ps.inventory[item->tag]--;
+	edict_t *dropped = Drop_Item( ent, item );
+	if( dropped )
+	{
+		if( ent->r.client && ent->r.client->ps.inventory[item->tag] > 0 )
+			ent->r.client->ps.inventory[item->tag]--;
+	}
+	return dropped;
 }
 
 /*
 * G_DropItem
 */
-void G_DropItem( edict_t *ent, const gsitem_t *it )
+edict_t *G_DropItem( edict_t *ent, const gsitem_t *it )
 {
 	if( !it || !( it->flags & ITFLAG_DROPABLE ) )
-		return;
+		return NULL;
 
 	if( !G_Gametype_CanDropItem( it, false ) )
-		return;
+		return NULL;
 
 	if( it->type & IT_WEAPON )
 	{
-		Drop_Weapon( ent, it );
+		return Drop_Weapon( ent, it );
 	}
 	else if( it->type & IT_AMMO )
 	{
-		Drop_Ammo( ent, it );
+		return Drop_Ammo( ent, it );
 	}
 	else
 	{
-		Drop_General( ent, it );
+		return Drop_General( ent, it );
 	}
 }
 
@@ -943,7 +953,7 @@ static void Finish_SpawningItem( edict_t *ent )
 
 	GClip_LinkEntity( ent );
 
-	AI_AddGoalEntity( ent );
+	AI_AddNavEntity( ent, AI_NAV_REACH_AT_TOUCH );
 }
 
 #define MAX_IMPORTANT_ITEMS_THRESHOLD	5

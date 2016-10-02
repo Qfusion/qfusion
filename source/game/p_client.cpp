@@ -657,7 +657,7 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 	client->ps.stats[STAT_TIME_ALPHA] = STAT_NOTSET;
 	client->ps.stats[STAT_TIME_BETA] = STAT_NOTSET;
 
-	BOT_Respawn( self );
+	AI_Respawn(self);
 
 	self->r.client->level.respawnCount++;
 
@@ -789,8 +789,6 @@ void ClientBegin( edict_t *ent )
 
 	// schedule the next scoreboard update
 	client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime%scoreboardInterval );
-
-	AI_EnemyAdded( ent );
 
 	G_ClientEndSnapFrame( ent ); // make sure all view stuff is valid
 
@@ -1418,9 +1416,6 @@ void ClientDisconnect( edict_t *ent, const char *reason )
 
 	// let the gametype scripts know this client just disconnected
 	G_Gametype_ScoreEvent( ent->r.client, "disconnect", NULL );
-
-	G_FreeAI( ent );
-	AI_EnemyRemoved( ent );
 
 	ent->r.inuse = false;
 	ent->r.svflags = SVF_NOCLIENT;

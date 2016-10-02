@@ -343,6 +343,8 @@ void G_Gametype_GENERIC_PlayerKilled( edict_t *targ, edict_t *attacker, edict_t 
 
 static void G_Gametype_GENERIC_PlayerDamaged( edict_t *targ, edict_t *attacker, int damage )
 {
+	if (attacker->ai)
+		AI_DamagedEntity( attacker, targ, damage );
 }
 
 void G_Gametype_GENERIC_ScoreEvent( gclient_t *client, const char *score_event, const char *args )
@@ -1650,7 +1652,7 @@ static void G_CheckNumBots( void )
 				continue;
 			if( AI_GetType( ent->ai ) == AI_ISBOT )
 			{
-				trap_DropClient( ent, DROP_TYPE_GENERAL, NULL );
+				AI_RemoveBot(ent->r.client->netname);
 				break;
 			}
 		}
@@ -1662,7 +1664,7 @@ static void G_CheckNumBots( void )
 		for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients && game.numBots < desiredNumBots; ent++ )
 		{
 			if( !ent->r.inuse && trap_GetClientState( PLAYERNUM( ent ) ) == CS_FREE )
-				BOT_SpawnBot( NULL );
+                AI_SpawnBot(NULL);
 		}
 	}
 }
@@ -2012,5 +2014,8 @@ void G_Gametype_Init( void )
 	// ch : if new gametype has been initialized, transfer the
 	// client-specific ratings to gametype-specific list
 	if( changed )
+	{
 		G_TransferRatings();
+		AI_GametypeChanged(g_gametype->string);
+	}
 }

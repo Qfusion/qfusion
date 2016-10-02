@@ -33,11 +33,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_VERSION_MINOR
-#define APP_VERSION_MINOR				1
+#define APP_VERSION_MINOR				0
 #endif
 
 #ifndef APP_VERSION_UPDATE
-#define APP_VERSION_UPDATE				0
+#define APP_VERSION_UPDATE				1
 #endif
 
 #ifndef APP_VERSION
@@ -45,15 +45,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef PUBLIC_BUILD
-#define APP_PROTOCOL_VERSION			22
+#define APP_PROTOCOL_VERSION			21
 #else
-#define APP_PROTOCOL_VERSION			2200
+#define APP_PROTOCOL_VERSION			6075
 #endif
 
 #ifdef PUBLIC_BUILD
 #define APP_DEMO_PROTOCOL_VERSION		20
 #else
-#define APP_DEMO_PROTOCOL_VERSION		20
+#define APP_DEMO_PROTOCOL_VERSION		6096
 #endif
 
 #ifndef APP_URL

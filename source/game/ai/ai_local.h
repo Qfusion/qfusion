@@ -24,384 +24,192 @@ in NO WAY supported by Steve Yeager.
 */
 
 //==========================================================
+#ifndef QFUSION_AI_LOCAL_H
+#define QFUSION_AI_LOCAL_H
 
-#define AI_VERSION_STRING "A0059"
+#include "../g_local.h"
+#include "../../gameshared/q_collision.h"
 
-//bot debug_chase options
-extern cvar_t *bot_showpath;
-extern cvar_t *bot_showcombat;
-extern cvar_t *bot_showsrgoal;
-extern cvar_t *bot_showlrgoal;
-extern cvar_t *bot_dummy;
-extern cvar_t *sv_botpersonality;
+#ifdef max
+#undef max
+#endif
 
-//----------------------------------------------------------
+#ifdef min
+#undef min
+#endif
 
-#define AI_STATUS_TIMEOUT	150
-#define AI_LONG_RANGE_GOAL_DELAY 2000
-#define AI_SHORT_RANGE_GOAL_DELAY 250
-#define AI_SHORT_RANGE_GOAL_DELAY_IDLE 25
+#include <algorithm>
+#include <utility>
+#include <stdarg.h>
 
-#define AI_DEFAULT_YAW_SPEED	( self->ai->pers.cha.default_yaw_speed )
-#define AI_REACTION_TIME	( self->ai->pers.cha.reaction_time )
-#define AI_COMBATMOVE_TIMEOUT	( self->ai->pers.cha.combatmove_timeout )
-#define AI_YAW_ACCEL		( self->ai->pers.cha.yaw_accel * FRAMETIME )
-#define AI_CHAR_OFFENSIVNESS ( self->ai->pers.cha.offensiveness )
-#define AI_CHAR_CAMPINESS ( self->ai->pers.cha.campiness )
+constexpr auto AI_DEFAULT_YAW_SPEED = 35 * 5;
 
 // Platform states:
-#define	STATE_TOP	    0
-#define	STATE_BOTTOM	    1
-#define STATE_UP	    2
-#define STATE_DOWN	    3
+constexpr auto STATE_TOP    = 0;
+constexpr auto STATE_BOTTOM = 1;
+constexpr auto STATE_UP     = 2;
+constexpr auto STATE_DOWN   = 3;
 
-#define BOT_MOVE_LEFT		0
-#define BOT_MOVE_RIGHT		1
-#define BOT_MOVE_FORWARD	2
-#define BOT_MOVE_BACK		3
+constexpr auto MAX_NAVENTS = MAX_EDICTS;
 
-//=============================================================
-//	NAVIGATION DATA
-//=============================================================
+constexpr auto AI_STEPSIZE          = STEPSIZE; // 18
+constexpr auto AI_JUMPABLE_HEIGHT   = 50;
+constexpr auto AI_JUMPABLE_DISTANCE	= 360;
+constexpr auto AI_WATERJUMP_HEIGHT  = 24;
+constexpr auto AI_MIN_RJ_HEIGHT	    = 128;
+constexpr auto AI_MAX_RJ_HEIGHT	    = 512;
+constexpr auto AI_GOAL_SR_RADIUS    = 200;
+constexpr auto AI_GOAL_SR_LR_RADIUS = 600;
 
-#define MAX_GOALENTS 1024
-#define MAX_NODES 2048        //jalToDo: needs dynamic alloc (big terrain maps)
-#define NODE_INVALID  -1
-#define NODE_DENSITY 128         // Density setting for nodes
-#define NODE_TIMEOUT 1500 // (milli)seconds to reach the next node
-#define NODE_REACH_RADIUS 36
-#define NODE_WIDE_REACH_RADIUS 92
-#define	NODES_MAX_PLINKS 16
-#define	NAV_FILE_VERSION 10
-#define NAV_FILE_EXTENSION "nav"
-#define NAV_FILE_FOLDER "navigation"
+constexpr int AI_GOAL_SR_MILLIS    = 750;
+constexpr int AI_GOAL_SR_LR_MILLIS = 1500;
 
-#define	AI_STEPSIZE	STEPSIZE    // 18
-#define AI_JUMPABLE_HEIGHT		50
-#define AI_JUMPABLE_DISTANCE	360
-#define AI_WATERJUMP_HEIGHT		24
-#define AI_MIN_RJ_HEIGHT		128
-#define AI_MAX_RJ_HEIGHT		512
-#define AI_GOAL_SR_RADIUS		200
-#define AI_GOAL_SR_LR_RADIUS	600
+constexpr auto MASK_AISOLID = CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP;
 
-#define MASK_NODESOLID      ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_MONSTERCLIP )
-#define MASK_AISOLID        ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP )
-
-// node flags
-#define	NODEFLAGS_WATER 0x00000001
-#define	NODEFLAGS_LADDER 0x00000002
-#define NODEFLAGS_SERVERLINK 0x00000004  // plats, doors, teles. Only server can link 2 nodes with this flag
-#define	NODEFLAGS_FLOAT 0x00000008  // don't drop node to floor ( air & water )
-#define	NODEFLAGS_DONOTENTER 0x00000010
-#define	NODEFLAGS_BOTROAM 0x00000020
-#define NODEFLAGS_JUMPPAD 0x00000040
-#define NODEFLAGS_JUMPPAD_LAND 0x00000080
-#define	NODEFLAGS_PLATFORM 0x00000100
-#define	NODEFLAGS_TELEPORTER_IN 0x00000200
-#define NODEFLAGS_TELEPORTER_OUT 0x00000400
-#define NODEFLAGS_REACHATTOUCH 0x00000800
-#define NODEFLAGS_ENTITYREACH 0x00001000 // never reachs on it's own, the entity has to declare itself reached
-
-#define NODE_ALL 0xFFFFFFFF
-
-#define NODE_MASK_SERVERFLAGS ( NODEFLAGS_SERVERLINK|NODEFLAGS_BOTROAM|NODEFLAGS_JUMPPAD|NODEFLAGS_JUMPPAD_LAND|NODEFLAGS_PLATFORM|NODEFLAGS_TELEPORTER_IN|NODEFLAGS_TELEPORTER_OUT|NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH )
-#define NODE_MASK_NOREUSE ( NODEFLAGS_LADDER|NODEFLAGS_JUMPPAD|NODEFLAGS_JUMPPAD_LAND|NODEFLAGS_PLATFORM|NODEFLAGS_TELEPORTER_IN|NODEFLAGS_TELEPORTER_OUT|NODEFLAGS_ENTITYREACH )
-
-// links types (movetypes required to run node links)
-#define	LINK_MOVE 0x00000001
-#define	LINK_STAIRS 0x00000002
-#define LINK_FALL 0x00000004
-#define	LINK_CLIMB 0x00000008
-#define	LINK_TELEPORT 0x00000010
-#define	LINK_PLATFORM 0x00000020
-#define LINK_JUMPPAD 0x00000040
-#define LINK_WATER 0x00000080
-#define	LINK_WATERJUMP 0x00000100
-#define	LINK_LADDER	0x00000200
-#define LINK_JUMP 0x00000400
-#define LINK_CROUCH 0x00000800
-#define LINK_ROCKETJUMP 0x00002000
-#define LINK_DOOR 0x00004000
-
-#define LINK_INVALID 0x00001000
-
-typedef struct nav_plink_s
+typedef enum
 {
-	int numLinks;
-	int nodes[NODES_MAX_PLINKS];
-	int dist[NODES_MAX_PLINKS];
-	int moveType[NODES_MAX_PLINKS];
+	AI_WEAPON_AIM_TYPE_INSTANT_HIT,
+	AI_WEAPON_AIM_TYPE_PREDICTION,
+	AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE,
+	AI_WEAPON_AIM_TYPE_DROP
+} ai_weapon_aim_type;
 
-} nav_plink_t;
+ai_weapon_aim_type BuiltinWeaponAimType(int builtinWeapon);
 
-typedef struct nav_node_s
+inline bool IsBuiltinWeaponContinuousFire(int builtinWeapon)
 {
-	vec3_t origin;
-	int flags;
-	int area;
+	return builtinWeapon == WEAP_LASERGUN || builtinWeapon == WEAP_PLASMAGUN || builtinWeapon == WEAP_MACHINEGUN;
+}
 
-} nav_node_t;
+int BuiltinWeaponTier(int builtinWeapon);
 
-typedef struct nav_ents_s
+bool GT_asBotWouldDropHealth( const gclient_t *client );
+void GT_asBotDropHealth( gclient_t *client );
+bool GT_asBotWouldDropArmor( const gclient_t *client );
+void GT_asBotDropArmor( gclient_t *client );
+
+bool GT_asBotWouldCloak( const gclient_t *client );
+void GT_asSetBotCloakEnabled( gclient_t *client, bool enabled );
+// Useful for testing any entity for cloaking
+bool GT_asIsEntityCloaking( const edict_t *ent );
+
+void GT_asBotTouchedGoal( const ai_handle_t *bot, const edict_t *goalEnt );
+void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt );
+
+// These functions return a score in range [0, 1].
+// Default score should be 0.5f, and it should be returned
+// when a GT script does not provide these function counterparts.
+// Note that offence and defence score are not complementary but independent.
+float GT_asPlayerOffensiveAbilitiesRating(const gclient_t *client);
+float GT_asPlayerDefenciveAbilitiesRating(const gclient_t *client);
+
+struct AiScriptWeaponDef
 {
-	int id;
-	edict_t	*ent;
-	int node;
-	struct nav_ents_s *prev, *next;
-} nav_ents_t;
-
-typedef struct nav_path_s
-{
-	int next;   // next node
-	int cost;
-	int moveTypes; // type of movements required to run along this path (flags)
-
-} nav_path_t;
-
-extern nav_plink_t pLinks[MAX_NODES];      // pLinks array
-extern nav_node_t nodes[MAX_NODES];        // nodes array
-
-typedef struct
-{
-	bool loaded;
-	bool editmode;
-	bool debugMode;
-
-	int num_nodes;          // total number of nodes
-	int serverNodesStart;
-
-	nav_ents_t goalEnts[MAX_GOALENTS]; // entities which are potential goals
-	nav_ents_t goalEntsHeadnode;
-	nav_ents_t *goalEntsFree;
-	nav_ents_t *entsGoals[MAX_EDICTS]; // entities to goals map
-
-	int num_navigableEnts;
-	nav_ents_t navigableEnts[MAX_GOALENTS]; // plats, etc
-} ai_navigation_t;
-
-#define FOREACH_GOALENT(goalEnt) for( goalEnt = nav.goalEntsHeadnode.prev; goalEnt != &nav.goalEntsHeadnode; goalEnt = goalEnt->prev )
-
-extern ai_navigation_t	nav;
-
-//=============================================================
-//	WEAPON DECISSIONS DATA
-//=============================================================
-
-enum
-{
-	AI_AIMSTYLE_INSTANTHIT,
-	AI_AIMSTYLE_PREDICTION,
-	AI_AIMSTYLE_PREDICTION_EXPLOSIVE,
-	AI_AIMSTYLE_DROP,
-
-	AIWEAP_AIM_TYPES
+    int weaponNum;
+    int tier;
+    float minRange;
+    float maxRange;
+    float bestRange;
+    float projectileSpeed;
+    float splashRadius;
+    float maxSelfDamage;
+    ai_weapon_aim_type aimType;
+    bool isContinuousFire;
 };
 
-enum
-{
-	AIWEAP_MELEE_RANGE,
-	AIWEAP_SHORT_RANGE,
-	AIWEAP_MEDIUM_RANGE,
-	AIWEAP_LONG_RANGE,
+int GT_asGetScriptWeaponsNum(const gclient_t *client);
+bool GT_asGetScriptWeaponDef(const gclient_t *client, int scriptWeaponNum, AiScriptWeaponDef *weaponDef);
+int GT_asGetScriptWeaponCooldown(const gclient_t *client, int scriptWeaponNum);
+bool GT_asSelectScriptWeapon(gclient_t *client, int scriptWeaponNum);
+bool GT_asFireScriptWeapon(gclient_t *client, int scriptWeaponNum);
 
-	AIWEAP_RANGES
-};
-
-typedef struct
-{
-	int aimType;
-	float RangeWeight[AIWEAP_RANGES];
-} ai_weapon_t;
-
-extern ai_weapon_t AIWeapons[WEAP_TOTAL];
-
-//----------------------------------------------------------
-
-typedef struct
-{
-	unsigned int moveTypesMask; // moves the bot can perform at this moment
-	float entityWeights[MAX_GOALENTS];
-} ai_status_t;
-
-typedef struct
-{
-	const char *name;
-	float default_yaw_speed;
-	float reaction_time;		
-	float combatmove_timeout;
-	float yaw_accel;
-	float offensiveness;
-	float campiness;
-	float firerate;
-	float armor_grabber;
-	float health_grabber;
-
-	float weapon_affinity[WEAP_TOTAL];
-} ai_character;
-
-typedef struct
-{
-	const char *netname;
-	float skillLevel;       // Affects AIM and fire rate (fraction of 1)
-	unsigned int moveTypesMask;      // bot can perform these moves, to check against required moves for a given path
-	float inventoryWeights[MAX_ITEMS];
-
-	//class based functions
-	void ( *UpdateStatus )( edict_t *ent );
-	void ( *RunFrame )( edict_t *ent );
-	void ( *blockedTimeout )( edict_t *ent );
-
-	ai_character cha;
-} ai_pers_t;
+#include "ai_aas_world.h"
+#include "vec3.h"
 
 typedef struct ai_handle_s
 {
-	ai_pers_t pers;         // persistant definition (class?)
-	ai_status_t status;     //player (bot, NPC) status for AI frame
-
 	ai_type	type;
-
-	unsigned int state_combat_timeout;
-
-	// movement
-	vec3_t move_vector;
-	unsigned int blocked_timeout;
-	unsigned int changeweapon_timeout;
-	unsigned int statusUpdateTimeout;
-	edict_t *last_attacker;
-
-	unsigned int combatmovepush_timeout;
-	int combatmovepushes[3];
-
-	// nodes
-	int current_node;
-	int goal_node;
-	int next_node;
-	unsigned int node_timeout;
-	struct nav_ents_s *goalEnt;
-
-	unsigned int longRangeGoalTimeout;
-	unsigned int shortRangeGoalTimeout;
-	int tries;
-
-	struct astarpath_s path; //jabot092
-
-	int nearest_node_tries;     //for increasing radius of search with each try
-
-	//vsay
-	unsigned int vsay_timeout;
-	edict_t	*vsay_goalent;
-
-	edict_t	*latched_enemy;
-	int enemyReactionDelay;
-	//int				rethinkEnemyDelay;
-	bool rj_triggered;
-	bool dont_jump;
-	bool camp_item;
-	bool rush_item;
-	float speed_yaw, speed_pitch;
-	bool is_bunnyhop;
 
 	int asFactored, asRefCount;
 
+	ai_handle_t *prev, *next;
+
+	class Ai *aiRef;
+	class Bot *botRef;
 } ai_handle_t;
+
+#ifndef _MSC_VER
+void AI_Debug(const char *tag, const char *format, ...) __attribute__((format(printf, 2, 3)));
+void AI_Debugv(const char *tag, const char *format, va_list va);
+void AI_FailWith(const char *tag, const char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((noreturn));
+void AI_FailWithv(const char *tag, const char *format, va_list va) __attribute__((noreturn));
+#else
+void AI_Debug(const char *tag, _Printf_format_string_ const char *format, ...);
+void AI_Debugv(const char *tag, const char *format, va_list va);
+__declspec(noreturn) void AI_FailWith(const char *tag, _Printf_format_string_ const char *format, ...);
+__declspec(noreturn) void AI_FailWithv(const char *tag, const char *format, va_list va);
+#endif
+
+inline float Clamp(float value)
+{
+	clamp(value, 0.0f, 1.0f);
+	return value;
+}
+
+inline float Clamp(float value, float minValue, float maxValue)
+{
+	clamp(value, minValue, maxValue);
+	return value;
+}
+
+inline float BoundedFraction(float value, float bound)
+{
+	return std::min(value, bound) / bound;
+}
+
+inline unsigned From0UpToMax(unsigned maxValue, float ratio)
+{
+//#ifdef _DEBUG
+	if (ratio < 0 || ratio > 1)
+	{
+		AI_FailWith("From0UpToMax()", "ratio %f is out of valid [0,1] bounds", ratio);
+	}
+//#endif
+	return (unsigned)(maxValue * ratio);
+}
+
+inline unsigned From1UpToMax(unsigned maxValue, float ratio)
+{
+//#ifdef _DEBUG
+	if (!maxValue)
+	{
+		AI_FailWith("From1UpToMax()", "maxValue is 0");
+	}
+//#endif
+	return 1 + From0UpToMax(maxValue - 1, ratio);
+}
+
+inline const char *Nick(const edict_t *ent)
+{
+	if (!ent)
+		return "???";
+	if (ent->r.client)
+		return ent->r.client->netname;
+	return ent->classname;
+}
+
+inline const char *WeapName(int weapon)
+{
+	return GS_GetWeaponDef(weapon)->name;
+}
 
 //----------------------------------------------------------
 
 //game
 //----------------------------------------------------------
-void	    Use_Plat( edict_t *ent, edict_t *other, edict_t *activator );
+void Use_Plat( edict_t *ent, edict_t *other, edict_t *activator );
 
+void AITools_DrawLine( const vec3_t origin, const vec3_t dest );
+void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, int parm );
 
-// ai_main.c
-//----------------------------------------------------------
-nav_ents_t *AI_GetGoalentForEnt( edict_t *target );
-void	    AI_PickLongRangeGoal( edict_t *ent );
-void	    AI_Frame( edict_t *self, usercmd_t *ucmd );
-void AI_ClearGoal( edict_t *self );
-void	    AI_ResetNavigation( edict_t *ent );
-void	    AI_CategorizePosition( edict_t *ent );
-void AI_UpdateStatus( edict_t *self );
-
-
-// ai_items.c
-//----------------------------------------------------------
-//float	    AI_ItemWeight( edict_t *ent, edict_t *item );
-bool    AI_ShortRangeReachable( edict_t *self, vec3_t goal );
-
-
-// ai_movement.c
-//----------------------------------------------------------
-int	AI_ChangeAngle( edict_t *ent );
-bool    AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd );
-bool    AI_SpecialMove( edict_t *self, usercmd_t *ucmd );
-bool    AI_CanMove( edict_t *self, int direction );
-bool    AI_IsLadder( vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent );
-bool    AI_IsStep( edict_t *ent );
-
-// ai_navigation.c
-//----------------------------------------------------------
-int	    AI_FindCost( int from, int to, int movetypes );
-int	    AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, unsigned int flagsmask );
-int	    AI_FindClosestNode( vec3_t origin, float mindist, int range, unsigned int flagsmask );
-void	    AI_SetGoal( edict_t *self, int goal_node );
-void AI_NodeReached( edict_t *self );
-int AI_GetNodeFlags( int node );
-void AI_GetNodeOrigin( int node, vec3_t origin );
-bool AI_NodeHasTimedOut( edict_t *self );
-
-
-// ai_nodes.c
-//----------------------------------------------------------
-
-void AI_InitNavigationData( bool silent );
-void AI_SaveNavigation( void );
-int	    AI_FlagsForNode( vec3_t origin, edict_t *passent );
-bool    AI_LoadPLKFile( char *mapname );
-void AI_DeleteNode( int node );
-
-
-// ai_tools.c
-//----------------------------------------------------------
-void	    AITools_DrawPath( edict_t *self, int node_to );
-void	    AITools_DrawLine( vec3_t origin, vec3_t dest );
-void	    AITools_DrawColorLine( vec3_t origin, vec3_t dest, int color, int parm );
-void	    AITools_InitEditnodes( void );
-void	    AITools_InitMakenodes( void );
-
-// ai_links.c
-//----------------------------------------------------------
-bool    AI_VisibleOrigins( vec3_t spot1, vec3_t spot2 );
-int	    AI_LinkCloseNodes( void );
-int	    AI_FindLinkType( int n1, int n2 );
-bool    AI_AddLink( int n1, int n2, int linkType );
-bool    AI_PlinkExists( int n1, int n2 );
-int	    AI_PlinkMoveType( int n1, int n2 );
-int	    AI_findNodeInRadius( int from, vec3_t org, float rad, bool ignoreHeight );
-const char *AI_LinkString( int linktype );
-int	    AI_GravityBoxToLink( int n1, int n2 );
-int	    AI_LinkCloseNodes_JumpPass( int start );
-int		AI_LinkCloseNodes_RocketJumpPass( int start );
-void AI_LinkNavigationFile( bool silent );
-
-
-//bot_classes
-//----------------------------------------------------------
-void	    BOT_DMclass_InitPersistant( edict_t *self );
-
-//ai_common.c
-//----------------------------------------------------------
-bool    AI_DropNodeOriginToFloor( vec3_t origin, edict_t *passent );
-bool    AI_visible( edict_t *self, edict_t *other );
-bool    AI_infront( edict_t *self, edict_t *other );
-bool	AI_infront2D( vec3_t lookDir, vec3_t origin, vec3_t point, float accuracy );
-void	    AI_NewEnemyInView( edict_t *self, edict_t *enemy );
-unsigned int AI_CurrentLinkType( edict_t *self );
-
-//ai_class_dmbot.c
-//----------------------------------------------------------
-void BOT_DMclass_FindEnemy( edict_t *self );
-void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd );
-void BOT_DMclass_MoveWander( edict_t *self, usercmd_t *ucmd );
-void BOT_DMclass_Move( edict_t *self, usercmd_t *ucmd );
+#endif

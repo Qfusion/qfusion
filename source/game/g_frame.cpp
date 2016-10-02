@@ -600,8 +600,6 @@ void G_SnapFrame( void )
 		return;
 	}
 
-	AITools_Frame(); //MbotGame //give think time to AI debug tools
-
 	// finish snap
 	G_SnapClients(); // build the playerstate_t structures for all players
 	G_SnapEntities(); // add effects based on accumulated info along the frame
@@ -812,6 +810,7 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 
 	// run the world
 	G_asCallMapPreThink();
+	AI_CommonFrame();
 	G_RunClients();
 	G_RunEntities();
 	G_RunGametype();

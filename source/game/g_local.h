@@ -587,13 +587,13 @@ void Touch_ItemSound( edict_t *other, const gsitem_t *item );
 void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags );
 bool G_PickupItem( edict_t *other, const gsitem_t *it, int flags, int count, const int *invpack );
 void G_UseItem( struct edict_s *ent, const gsitem_t *item );
-void G_DropItem( struct edict_s *ent, const gsitem_t *item );
+edict_t *G_DropItem( struct edict_s *ent, const gsitem_t *item );
 bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 
 //
 // g_utils.c
 //
-#define G_LEVELPOOL_BASE_SIZE	5 * 1024 * 1024
+#define G_LEVELPOOL_BASE_SIZE	15 * 1024 * 1024
 
 bool KillBox( edict_t *ent );
 float LookAtKillerYAW( edict_t *self, edict_t *inflictor, edict_t *attacker );
@@ -822,7 +822,7 @@ edict_t	*W_Fire_Lasergun_Weak( edict_t *self, vec3_t start, vec3_t end, float da
 void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int stun, int radius, int range, int mod, int timeDelta );
 
 bool Pickup_Weapon( edict_t *other, const gsitem_t *item, int flags, int ammo_count );
-void Drop_Weapon( edict_t *ent, const gsitem_t *item );
+edict_t *Drop_Weapon( edict_t *ent, const gsitem_t *item );
 void Use_Weapon( edict_t *ent, const gsitem_t *item );
 
 //
@@ -1412,6 +1412,7 @@ struct edict_s
 	moveinfo_t moveinfo;        // func movers movement
 
 	ai_handle_t *ai;     //MbotGame
+	float aiIntrinsicEnemyWeight;
 
 	snap_edict_t snap; // information that is cleared each frame snap
 

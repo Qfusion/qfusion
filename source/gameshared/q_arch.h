@@ -92,7 +92,7 @@ extern "C" {
 #endif
 
 #pragma warning( disable : 4838 )       // conversion from 'double' to whatever requires a narrowing conversion
-
+#pragma warning( disable : 4324 )       // structure was padded due to alignment specifier
 #endif
 
 #if defined(_MSC_VER) && defined(_I64_MAX)

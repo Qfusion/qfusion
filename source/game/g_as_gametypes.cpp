@@ -33,8 +33,9 @@ static void GT_ResetScriptData( void )
 	level.gametype.scoreboardMessageFunc = NULL;
 	level.gametype.selectSpawnPointFunc = NULL;
 	level.gametype.clientCommandFunc = NULL;
-	level.gametype.botStatusFunc = NULL;
 	level.gametype.shutdownFunc = NULL;
+
+	AI_ResetGametypeScript();
 }
 
 void GT_asShutdownScript( void )
@@ -317,32 +318,6 @@ bool GT_asCallGameCommand( gclient_t *client, const char *cmd, const char *args,
 	return ctx->GetReturnByte() == 0 ? false : true;
 }
 
-//"bool GT_UpdateBotStatus( Entity @ent )"
-bool GT_asCallBotStatus( edict_t *ent )
-{
-	int error;
-	asIScriptContext *ctx;
-
-	if( !level.gametype.botStatusFunc )
-		return false; // should have a hardcoded backup
-
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
-
-	error = ctx->Prepare( static_cast<asIScriptFunction *>(level.gametype.botStatusFunc) );
-	if( error < 0 ) 
-		return false;
-
-	// Now we need to pass the parameters to the script function.
-	ctx->SetArgObject( 0, ent );
-
-	error = ctx->Execute();
-	if( G_ExecutionErrorReport( error ) )
-		GT_asShutdownScript();
-
-	// Retrieve the return from the context
-	return ctx->GetReturnByte() == 0 ? false : true;
-}
-
 //"void GT_Shutdown()"
 void GT_asCallShutdown( void )
 {
@@ -473,16 +448,6 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "bool GT_UpdateBotStatus( Entity @ent )";
-	level.gametype.botStatusFunc = asModule->GetFunctionByDecl( fdeclstr );
-	if( !level.gametype.botStatusFunc )
-	{
-		if( developer->integer || sv_cheats->integer )
-			G_Printf( "* The function '%s' was not present in the script.\n", fdeclstr );
-	}
-	else
-		funcCount++;
-
 	fdeclstr = "void GT_Shutdown()";
 	level.gametype.shutdownFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.shutdownFunc )
@@ -492,6 +457,11 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	}
 	else
 		funcCount++;
+
+	//
+	// Initialize AI gametype exports
+	//
+	AI_InitGametypeScript(asModule);
 
 	//
 	// execute the GT_InitGametype function

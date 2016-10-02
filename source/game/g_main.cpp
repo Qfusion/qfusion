@@ -59,14 +59,6 @@ cvar_t *g_floodprotection_penalty;
 
 cvar_t *g_inactivity_maxtime;
 
-//MBotGame [start]
-cvar_t *bot_showpath;
-cvar_t *bot_showcombat;
-cvar_t *bot_showsrgoal;
-cvar_t *bot_showlrgoal;
-cvar_t *bot_dummy;
-//[end]
-
 cvar_t *g_projectile_touch_owner;
 cvar_t *g_projectile_prestep;
 cvar_t *g_numbots;
@@ -403,7 +395,7 @@ void G_Shutdown( void )
 
 	trap_Cvar_ForceSet( "nextmap", va( "map \"%s\"", G_SelectNextMapName() ) );
 
-	BOT_RemoveBot( "all" );
+	AI_Shutdown();
 
 	G_RemoveCommands();
 
@@ -665,7 +657,7 @@ void G_ExitLevel( void )
 
 	if( loadmap )
 	{
-		BOT_RemoveBot( "all" ); // MbotGame (Disconnect all bots before changing map)
+        AI_RemoveBots();
 		Q_snprintfz( command, sizeof( command ), "gamemap \"%s\"\n", nextmapname );
 		trap_Cmd_ExecuteText( EXEC_APPEND, command );
 	}
