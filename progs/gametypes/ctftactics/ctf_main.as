@@ -325,161 +325,601 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-// When this function is called the weights of items have been reset to their default values,
-// this means, the weights *are set*, and what this function does is scaling them depending
-// on the current bot status.
-// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
-// unless a weight is assigned here.
-bool GT_UpdateBotStatus( Entity @ent )
+bool GT_BotWouldDropHealth( const Client @client )
 {
-    Entity @goal;
-    Bot @bot;
-    float baseFactor;
-    float alphaDist, betaDist, homeDist;
-
-    @bot = @ent.client.getBot();
-    if ( @bot == null )
+    if ( @client == null )
         return false;
 
-    float offensiveStatus = GENERIC_OffensiveStatus( ent );
+    Entity @ent = G_GetEntity( client.playerNum + 1 );
 
-    // play defensive when being a flag carrier
     if ( ( ent.effects & EF_CARRIER ) != 0 )
-        offensiveStatus = 0.33f;
+        return false;
 
-    cFlagBase @alphaBase = @CTF_getBaseForTeam( TEAM_ALPHA );
-    cFlagBase @betaBase = @CTF_getBaseForTeam( TEAM_BETA );
+    if ( GetPlayer( ent.client ).playerClass.tag != PLAYERCLASS_MEDIC )
+        return false;
 
-    // for carriers, find the raw distance to base
-    if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
+    return ent.health > 95;
+}
+
+void GT_BotDropHealth( Client @client )
+{
+    if ( @client != null )
+        CTFT_DropHealth( client );
+}
+
+bool GT_BotWouldDropArmor( const Client @client )
+{
+    if ( @client == null )
+        return false;
+
+    Entity @ent = G_GetEntity( client.playerNum + 1 );
+
+    if ( ( ent.effects & EF_CARRIER ) != 0 )
+        return false;
+
+    if ( GetPlayer( client ).playerClass.tag != PLAYERCLASS_GRUNT )
+        return false;
+
+    return client.armor > 65;
+}
+
+void GT_BotDropArmor( Client @client )
+{
+    if ( @client != null )
+        CTFT_DropArmor( client, "Yellow Armor" );
+}
+
+bool GT_BotWouldCloak( const Client @client )
+{
+    if ( @client == null )
+        return false;
+     
+    cPlayer @player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_RUNNER )
+        return false;
+
+    if ( player.isInvisibilityCooldown() )
+        return false;
+
+    if ( ( player.ent.effects & EF_CARRIER ) != 0 )
+        return false;
+
+    if ( client.inventoryCount( POWERUP_SHELL ) > 0 )
+        return false;
+
+    return true;
+}
+
+bool GT_IsEntityCloaking( const Entity @ent )
+{
+    if ( @ent == null || @ent.client == null )
+        return false;
+
+    return GetPlayer( ent.client ).invisibilityEnabled;
+}
+
+void GT_SetBotCloakEnabled( Client @client, bool enabled )
+{
+    if ( @client == null )
+        return;
+
+    cPlayer @player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_RUNNER )
+        return;
+
+    // Calls of this function must be idempotent. Prevent invisibility toggling.
+    if ( enabled )
     {
-        if ( ent.team == TEAM_ALPHA )
-            homeDist = ent.origin.distance( alphaBase.owner.origin );
-        else
-            homeDist = ent.origin.distance( betaBase.owner.origin );
+        if ( !player.invisibilityEnabled )
+            player.activateInvisibility();
+    }    
+    else if ( player.invisibilityEnabled )
+        player.deactivateInvisibility();
+}
+
+float GT_PlayerOffensiveAbilitiesRating( const Client @client )
+{
+    if ( @client != null )
+    {
+        switch ( GetPlayer( client ).playerClass.tag )
+        {
+            case PLAYERCLASS_GRUNT:
+                return 0.3f;
+            case PLAYERCLASS_MEDIC:
+                return 0.7f;
+            case PLAYERCLASS_RUNNER:
+                return 1.0f;
+            case PLAYERCLASS_ENGINEER:
+                return 0.0f;
+        }
+    }
+    return 0.5f;
+}
+
+float GT_PlayerDefenciveAbilitiesRating( const Client @client )
+{
+    if ( @client != null )
+    {
+        switch ( GetPlayer( client ).playerClass.tag )
+        {
+            case PLAYERCLASS_GRUNT:
+                return 0.9f;
+            case PLAYERCLASS_MEDIC:
+                return 0.5f;
+            case PLAYERCLASS_RUNNER:
+                return 0.0f;
+            case PLAYERCLASS_ENGINEER:
+                return 1.0f;
+        }
+    }
+    return 0.5f;
+}
+
+int GT_GetScriptWeaponsNum( const Client @client )
+{
+    if ( @client == null )
+        return 0;
+
+    if ( GetPlayer( client ).playerClass.tag != PLAYERCLASS_GRUNT )
+        return 0;
+
+    return 1;
+}
+
+bool GT_GetScriptWeaponDef( const Client @client, int weaponNum, AIScriptWeaponDef &out weaponDef )
+{
+    if ( @client == null )
+        return false;
+
+    if ( GetPlayer( client ).playerClass.tag != PLAYERCLASS_GRUNT )
+        return false;
+
+    if ( weaponNum != 0 )
+        return false;
+
+    weaponDef.weaponNum = 0;
+    weaponDef.tier = 4;
+    weaponDef.minRange = 250.0f;
+    weaponDef.maxRange = 1200.0f;
+    weaponDef.bestRange = 600.0f;
+    weaponDef.projectileSpeed = 750.0f;
+    weaponDef.splashRadius = 250.0f;
+    weaponDef.maxSelfDamage = 400.0f;
+    weaponDef.aimType = AI_WEAPON_AIM_TYPE_DROP;
+    weaponDef.isContinuousFire = false;
+
+    return true;
+}
+
+int GT_GetScriptWeaponCooldown( const Client @client, int weaponNum )
+{
+    if ( @client == null )
+        return 999999;
+
+    if ( client.getEnt().isGhosting() )
+        return 999999;
+    
+    cPlayer @player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_GRUNT )
+        return 999999;
+
+    if ( weaponNum != 0 )
+        return 999999;
+
+    // If a bomb has been already thrown
+    if ( @player.bomb != null && @player.bomb.bombEnt != null )
+        return 999999;
+
+    if ( client.armor < CTFT_TURRET_AP_COST )
+        return 999999;
+
+    if ( levelTime >= player.bombCooldownTime )
+        return 0;
+
+    return player.bombCooldownTime - levelTime;
+}
+
+bool GT_SelectScriptWeapon( Client @client, int weaponNum )
+{
+    if ( @client == null )
+        return false;
+
+    if ( client.getEnt().isGhosting() )
+        return false;
+
+    cPlayer @player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_GRUNT )
+        return false;
+
+    if ( weaponNum != 0 )
+        return false;
+
+    return !player.isBombCooldown();
+}
+
+bool GT_FireScriptWeapon( Client @client, int weaponNum )
+{
+    if ( @client == null )
+        return false;
+
+    if ( client.getEnt().isGhosting() )
+        return false;
+
+    // Do not fire in countdown state
+    
+    cPlayer @player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_GRUNT )
+        return false;
+
+    if ( weaponNum != 0 )
+        return false;
+
+    // If a bomb has been already thrown
+    if ( @player.bomb != null && @player.bomb.bombEnt != null )
+        return false;
+
+    CTFT_DropBomb( client );
+
+    return @player.bomb != null && @player.bomb.bombEnt != null;
+}
+
+int lastBotGoalUpdateClientNum = 0;
+
+void CTFT_UpdateBotsExtraGoals() 
+{   
+    // Limit bot extra goals updates to a single client per frame. (is it a bot or not), its notoriously slow.
+    int clientNum = lastBotGoalUpdateClientNum + 1;
+    // maxClients might be modified since last update
+    if ( clientNum > maxClients )
+        clientNum = 1;
+
+    Entity @ent = G_GetEntity( clientNum );
+    if ( @ent != null )
+        CTFT_UpdateBotExtraGoals( ent );
+    
+    lastBotGoalUpdateClientNum = clientNum;
+}
+
+bool CTFT_ShouldNotPlantItem( const Entity @originEntity, float radius )
+{
+    array<Entity @> @nearbyEntities = @G_FindInRadius( originEntity.origin, radius );
+
+    for ( uint i = 0; i < nearbyEntities.size(); ++i )
+    {
+        Entity @nearby = nearbyEntities[i];
+
+        // Do this cheap test first
+
+        if ( @nearby.client != null )
+            continue;     
+
+        // Do not plant a turret or a dispenser if there are nearby entities of this class (entity team is ignored)
+
+        // Do cheap solid tests first
+
+        if ( nearby.solid == SOLID_YES )
+        {
+        
+            if ( nearby.classname == "turret_body" )
+                return true;
+
+            if ( nearby.classname == "dispenser_body" )
+                return true;
+        }
+        else if ( nearby.solid == SOLID_TRIGGER )
+        {
+            if ( nearby.classname == "bomb_body" )
+                return true;
+
+            if ( nearby.classname == "team_CTF_alphaflag" )
+                return true;
+
+            if ( nearby.classname == "team_CTF_betaflag" )
+                return true;
+        }
+    }
+    return false;
+}
+
+void CTFT_UpdateEngineerExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @goal )
+{
+    // Skip entities that are not plant spots quickly
+
+    if ( goal.team != ent.team )
+        return;
+
+    if ( ( goal.svflags & SVF_NOCLIENT ) == 0 )
+        return; 
+
+    if ( goal.solid != SOLID_TRIGGER )
+        return;
+
+    if ( goal.classname != "ai_planting_spot" )
+        return;
+
+    // Set zero weight for the common case.
+    // Even if an entity is a planting spot, its weight should be reset unless it needs planting and the bot should do it.
+    bot.overrideEntityWeight( goal, 0.0f );
+
+    // Do not try to plant turrets carrying a flag 
+    if ( ( ent.effects & EF_CARRIER ) != 0 )
+        return;
+
+    // Both turret and dispencer have this cost
+    if ( ent.client.armor < CTFT_TURRET_AP_COST )
+        return;
+
+    if ( player.isEngineerCooldown() )
+        return;
+
+    // If the bot is not assigned as a defender
+    if ( bot.defenceSpotId < 0 )
+    {
+        // Bother about planting an item only if the bot is occasionally close to a planting spot
+        if ( ent.origin.distance( goal.origin ) > 200 )
+            return;
     }
 
-    // loop all the goal entities
-    for ( int i = AI::GetNextGoal( AI::GetRootGoal() ); i != AI::GetRootGoal(); i = AI::GetNextGoal( i ) )
+    // Plant quickly only a minimal number of enities sufficient for defense purposes.
+    // Humans in a team (if any) should finish planting.
+
+    // Bots should not plant more than 3 turrets
+    if ( CTFT_TeamTurretsNum( ent.team ) > 3 )
+        return;
+
+    // Bots should plant only a single dispenser
+    if ( CTFT_TeamDispensersNum( ent.team ) > 1 )
+        return;
+
+    if ( CTFT_ShouldNotPlantItem( goal, 192.0f ) )
+        return;
+
+    // Set a huge value to override the value of defence spot entity
+    bot.overrideEntityWeight( goal, 999.0f );
+}
+
+void CTFT_UpdateMedicExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @goal )
+{
+    if ( goal.team != ent.team )
+        return;
+
+    if ( goal.classname != "reviver" )
+        return;
+
+    if ( ( ent.effects & EF_CARRIER ) == 0 )
+        bot.overrideEntityWeight( goal, 5.0f );
+    else
+        bot.overrideEntityWeight( goal, 1.5f );
+}
+
+void CTFT_UpdateGruntExtraGoal( Entity @ent, Bot @bot, cPlayer @player, Entity @goal )
+{
+    if ( @player.bomb == null )
+        return;
+
+    if ( @player.bomb.bombEnt != @goal )
+        return;
+
+    if ( !player.bomb.botShouldPickup )
     {
-        @goal = @AI::GetGoalEntity( i );
+        bot.overrideEntityWeight( goal, 0.0f );
+        return;
+    }    
 
-        // by now, always full-ignore not solid entities
-        if ( goal.solid == SOLID_NOT )
+    if ( ( ent.effects & EF_CARRIER ) == 0 )
+        bot.overrideEntityWeight( goal, 999.0f );
+    else
+        bot.overrideEntityWeight( goal, 0.5f );
+}
+
+void CTFT_UpdateBotExtraGoals( Entity @ent )
+{
+    Bot @bot = @ent.client.getBot();
+    if ( @bot == null )
+        return;
+
+    int enemyTeam;
+    if ( ent.team == TEAM_ALPHA )
+        enemyTeam = TEAM_BETA;
+    else if ( ent.team == TEAM_BETA )
+        enemyTeam = TEAM_ALPHA;
+    else 
+        return;
+
+    cPlayer @player = GetPlayer( ent.client );
+
+    // Flags defence/offence/carrier support is managed by native code
+    // using provided status of defence/offence spots.
+
+    // The only thing should be managed in scripts is returning to a base.
+    // (Carrier behaviour differs for custom gametypes).
+
+    // Also dropped flags are managed here too.
+
+    cFlagBase @teamBase = @CTF_getBaseForTeam( ent.team );
+
+    if ( @teamBase != null )
+    {
+        // The bot is a carrier, so it should return to the team base
+        if ( ( ent.effects & EF_CARRIER ) != 0 )
         {
-            bot.setGoalWeight( i, 0 );
-            continue;
+            if ( @teamBase.owner != null )
+            {
+                // the flag is at our base, return to the base
+                if ( ( teamBase.owner.effects & EF_CARRIER ) != 0 )
+                {
+                    bot.overrideEntityWeight( teamBase.owner, 9.0f );
+                }
+                // our flag is stolen    
+                else
+                {
+                    float botToHomeBaseDist = teamBase.owner.origin.distance( ent.origin );
+                    // return to our base
+                    if ( botToHomeBaseDist > 768.0f )
+                    {
+                        bot.overrideEntityWeight( teamBase.owner, 9.0f );
+                    }
+                    // do not camp at our flag spot, hide somewhere else
+                    else 
+                    {      
+                        bot.overrideEntityWeight( teamBase.owner, 9.0f * ( botToHomeBaseDist / 768.0f ) );
+                    }
+                }
+            }
         }
 
-        if ( @goal.client != null )
+        // it's team flag, dropped somewhere
+        if ( @teamBase.carrier != @teamBase.owner && @teamBase.carrier.client == null )
+            bot.overrideEntityWeight( teamBase.carrier, 9.0f );
+    } 
+
+    // CTF:T addition: 
+    // Usually there are 1 defender (if flag spot is not in alert state) and 5 attackers in team.
+    // These roles are assigned by native code based on status of defence/offense spots.
+    // Other bots has no order spots and are roaming (grabbing items on the map and fragging enemies).
+    // There are rarely any items in CTF:T except flags, so roaming bots feel lost.
+    // Thus roaming bots should attack enemy base (even if enemy flag is stolen). 
+        
+    cFlagBase @enemyBase = @CTF_getBaseForTeam( enemyTeam );
+    if ( @enemyBase != null )
+    { 
+        if ( @enemyBase.carrier != @enemyBase.owner && @enemyBase.carrier.client == null )
+            bot.overrideEntityWeight( enemyBase.carrier, 9.0f );
+
+        if ( @enemyBase.carrier != @enemyBase.owner )
         {
-            bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * offensiveStatus );
-            continue;
+            // it's team flag, dropped somewhere
+            if ( @enemyBase.carrier.client == null )
+            {
+                bot.overrideEntityWeight( enemyBase.carrier, 9.0f );
+            }
+            // If the bot is roaming
+            else if ( bot.defenceSpotId == -1 && bot.offenseSpotId == -1 )
+            {
+                // Attack the enemy base (but no flag spot itself).
+                float botToEnemyBaseDist = enemyBase.owner.origin.distance( ent.origin );
+                if ( botToEnemyBaseDist < 384.0f )
+                    bot.overrideEntityWeight( enemyBase.owner, 0.0f );
+                else
+                    bot.overrideEntityWeight( enemyBase.owner, 9.0f );
+            }
         }
-
-        // when being a flag carrier have a tendency to stay around your own base
-        baseFactor = 1.0f;
-
-        if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
+        else if ( bot.defenceSpotId == -1 && bot.offenseSpotId == -1 )
         {
-            alphaDist = goal.origin.distance( alphaBase.owner.origin );
-            betaDist = goal.origin.distance( betaBase.owner.origin );
+            // Roaming bots should get the enemy flag, but its weight is lower than for attackers
+            bot.overrideEntityWeight( enemyBase.owner, 3.5f );
+        }
+    }
 
-            if ( ( ent.team == TEAM_ALPHA ) && ( alphaDist + 64 < betaDist || alphaDist < homeDist + 128 ) )
-                baseFactor = 5.0f;
-            else if ( ( ent.team == TEAM_BETA ) && ( betaDist + 64 < alphaDist || betaDist < homeDist + 128 ) )
-                baseFactor = 5.0f;
+    for ( int i = maxClients + 1; i < numEntities; ++i )
+    {
+        Entity @goal = @G_GetEntity(i);
+
+        if ( goal.classname == "dispenser_body" )
+        {
+            if ( goal.team != ent.team )
+                continue;
+            
+            if ( CTFT_isDispenserCooldown( ent ) )
+                bot.overrideEntityWeight( goal, 0.0f );
             else
-                baseFactor = 0.5f;
+                bot.overrideEntityWeight( goal, 1.0f );
         }
 
-        if ( @goal.item != null )
+        if ( player.playerClass.tag == PLAYERCLASS_ENGINEER )
         {
-            // all the following entities are items
-            if ( ( goal.item.type & IT_WEAPON ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_WeaponWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_AMMO ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_AmmoWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_ARMOR ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_ArmorWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_HEALTH ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_HealthWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_POWERUP ) != 0 )
-            {
-                bot.setGoalWeight( i, bot.getItemWeight( goal.item ) * offensiveStatus * baseFactor );
-            }
-
-            continue;
+            CTFT_UpdateEngineerExtraGoal( ent, bot, player, goal );
         }
-
-        // the entities spawned from scripts never have linked items,
-        // so the flags are weighted here
-
-        cFlagBase @flagBase = @CTF_getBaseForOwner( goal );
-
-        if ( @flagBase != null && @flagBase.owner != null )
+        else if ( player.playerClass.tag == PLAYERCLASS_MEDIC )
         {
-            // enemy or team?
-
-            if ( flagBase.owner.team != ent.team ) // enemy base
-            {
-                if ( @flagBase.owner == @flagBase.carrier ) // enemy flag is at base
-                {
-                    bot.setGoalWeight( i, 12.0f * offensiveStatus );
-                }
-                else
-                {
-                    bot.setGoalWeight( i, 0 );
-                }
-            }
-            else // team
-            {
-                // flag is at base and this bot has the enemy flag
-                if ( ( ent.effects & EF_CARRIER ) != 0 && ( goal.effects & EF_CARRIER ) != 0 )
-                {
-                    bot.setGoalWeight( i, 3.5f * baseFactor );
-                }
-                else
-                {
-                    bot.setGoalWeight( i, 0 );
-                }
-            }
-
-            continue;
-        }
-
-        if ( goal.classname == "ctf_flag" )
+            CTFT_UpdateMedicExtraGoal( ent, bot, player, goal );
+        } 
+        else if ( player.playerClass.tag == PLAYERCLASS_GRUNT )
         {
-            // ** please, note, no item has a weight above 1.0 **
-            // ** these are really huge weights **
-
-            // it's my flag, dropped somewhere
-            if ( goal.team == ent.team )
-            {
-                bot.setGoalWeight( i, 5.0f * baseFactor );
-            }
-            // it's enemy flag, dropped somewhere
-            else if ( goal.team != ent.team )
-            {
-                bot.setGoalWeight( i, 3.5f * offensiveStatus * baseFactor );
-            }
-
-            continue;
+            CTFT_UpdateGruntExtraGoal( ent, bot, player, goal );
         }
+    }
+}
 
-        // we don't know what entity is this, so ignore it
-        bot.setGoalWeight( i, 0 );
+uint lastClassesUpdate = 0;
+bool lastClassesUpdateTeamIsAlpha = false;
+
+void CTFT_UpdateBotsClasses()
+{
+    if ( levelTime - lastClassesUpdate < 64 )
+        return;
+
+    CTFT_UpdateTeamBotsClasses( lastClassesUpdateTeamIsAlpha ? TEAM_BETA : TEAM_ALPHA );
+    
+    lastClassesUpdateTeamIsAlpha = !lastClassesUpdateTeamIsAlpha;
+    lastClassesUpdate = levelTime;
+}
+
+void CTFT_UpdateTeamBotsClasses( int teamNum )
+{
+    // Get number of player for each class in team.
+    // Also, reset bot pending classes.
+    Team @team = G_GetTeam( teamNum );
+    int[] numClassPlayers( PLAYERCLASS_TOTAL );
+    for ( int i = 0; i < team.numPlayers; ++i )
+    {
+        Client @client = team.ent( i ).client;
+        int classTag = playerClasses[client.playerNum];
+        numClassPlayers[classTag]++;
+        if ( @client.getBot() != null )
+            gtPlayers[client.playerNum].botPendingClass = -1;
     }
 
-    return true; // handled by the script
+    int numTeamTurrets = CTFT_TeamTurretsNum( teamNum );
+
+    // Now we have released bot player class slots.
+    // Try to assign a pending class if there are no enough players of this class.
+
+    for ( int classTag = 0; classTag < PLAYERCLASS_TOTAL; ++classTag )
+    {
+        int numPlayersToAssign = 1;
+        if ( classTag == PLAYERCLASS_ENGINEER && numTeamTurrets < 2 )
+            numPlayersToAssign += 2 - numTeamTurrets;
+
+        if ( numClassPlayers[classTag] < numPlayersToAssign )
+        {
+            for ( int i = 0; i < team.numPlayers && numPlayersToAssign > 0; ++i )
+            {
+                Client @client = team.ent( i ).client;
+                cPlayer @player = @gtPlayers[client.playerNum];
+                
+                if ( @client.getBot() == null )
+                {
+                    if ( player.playerClass.tag == classTag )
+                        numPlayersToAssign--;
+
+                    continue;
+                }                
+   
+                // Player already has this pending class
+                if ( player.botPendingClass == classTag )
+                {
+                    numPlayersToAssign--;
+                    // Touch bot pending class
+                    player.botPendingClassAssignedAt = levelTime;
+                    continue;
+                }
+
+                // Skip just assigned players
+                if ( player.botPendingClassAssignedAt == levelTime )
+                    continue;
+                
+                player.botPendingClass = classTag;
+                player.botPendingClassAssignedAt = levelTime;
+                numPlayersToAssign--;
+                continue;
+            }
+        }
+    }
+    
+    // For each class a single mandatory player might have been assigned.
+    // (for engineers class up to 3 mandatory players might have been assigned for fast turrets planting).
+    // Other bots (that have pendingClass == -1) will spawn with random class.
 }
 
 // select a spawning point for a player
@@ -686,17 +1126,39 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
         // show the class selection menu
         if ( old_team == TEAM_SPECTATOR )
         {
-            if ( @client.getBot() != null )
-            {
-                player.setPlayerClass( rand() % PLAYERCLASS_TOTAL );
-            }
-            else
+            if ( @client.getBot() == null )
                 client.execGameCommand( "mecu \"Select class\" Grunt \"class grunt\" Medic \"class medic\" Runner \"class runner\" Engineer \"class engineer\"" );
         }
 
         // Set newly joined players to respawn queue
         if ( new_team == TEAM_ALPHA || new_team == TEAM_BETA )
             player.respawnTime = levelTime + CTFT_RESPAWN_TIME;
+    }
+
+    if ( @client.getBot() != null )
+    {
+        // If bot class might have been reset, weights are invalid.
+        // Since external entity weights are not managed by bot code,
+        // they should be cleaned up manually.
+        client.getBot().clearOverriddenEntityWeights();
+        if ( player.botPendingClass != -1 )
+        {
+            player.setPlayerClass( player.botPendingClass );
+        }        
+        else 
+        {
+            // Never spawn engineers randomly.
+            // This means there are no engineer bots at match start and humans are free to use engineer abilities
+            // (bots will not exhaust team turrets limit by planting turrets in wrong place).
+            // Also, slightly prefer runners or medics (these classes suit a bot better) over grunts.
+            float random01 = random();
+            if ( random01 < 0.35f )
+                player.setPlayerClass( PLAYERCLASS_MEDIC );
+            else if ( random01 < 0.70f )
+                player.setPlayerClass( PLAYERCLASS_RUNNER );
+            else
+                player.setPlayerClass( PLAYERCLASS_GRUNT );
+        }
     }
 
     if ( ent.isGhosting() )
@@ -861,6 +1323,10 @@ void GT_ThinkRules()
         player.watchWarshell();
         player.updateHUDstats();
     }
+
+    CTFT_UpdateBotsExtraGoals();
+
+    CTFT_UpdateBotsClasses();
 }
 
 // The game has detected the end of the match state, but it

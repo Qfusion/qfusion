@@ -368,12 +368,18 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-// When this function is called the weights of items have been reset to their default values,
-// this means, the weights *are set*, and what this function does is scaling them depending
-// on the current bot status.
-// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
-// unless a weight is assigned here.
-bool GT_UpdateBotStatus( Entity @ent )
+void HEADHUNT_UpdateBotsExtraGoals()
+{
+    Entity @ent;
+    for ( int i = 1; i <= maxClients; ++i )
+    {
+        @ent = @G_GetEntity( i );
+        if ( @ent != null )
+            HEADHUNT_UpdateBotExtraGoals( @ent );
+    }
+}
+
+void HEADHUNT_UpdateBotExtraGoals( Entity @ent )
 {
     Entity @goal;
     Bot @bot;
@@ -381,21 +387,30 @@ bool GT_UpdateBotStatus( Entity @ent )
     @bot = @ent.client.getBot();
 
     if ( @bot == null )
-        return false;
+        return;
 
-    float offensiveStatus = GENERIC_OffensiveStatus( ent );
+    // Note: Setting any attitude to itself has no effect.
 
-    // loop all the goal entities
-    for ( int i = AI::GetNextGoal( AI::GetRootGoal() ); i != AI::GetRootGoal(); i = AI::GetNextGoal( i ) )
+    // If bot is tagged itself, it needs special rules
+    if ( ent.client.playerNum == hhTaggedPlayer )
     {
-        @goal = @AI::GetGoalEntity( i );
-
-        // by now, always full-ignore not solid entities
-        if ( goal.solid == SOLID_NOT )
+        for ( int i = 1; i <= maxClients; ++i )
         {
-            bot.setGoalWeight( i, 0 );
-            continue;
+            @goal = @G_GetEntity( i );
+            
+            if ( @goal.client != null ) 
+            {
+                // Attack any player
+                bot.setAttitude( @goal, -1 );
+            }
         }
+        return;
+    }
+
+
+    for ( int i = 1; i <= maxClients; ++i )
+    {
+        @goal = @G_GetEntity( i );
 
         if ( @goal.client != null )
         {
@@ -404,23 +419,22 @@ bool GT_UpdateBotStatus( Entity @ent )
             {
                 if ( goal.client.playerNum == hhTaggedPlayer )
                 {
-                    bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * offensiveStatus );
+                    // Attack the tagged player
+                    bot.setAttitude( @goal, -1 );
                 }
                 else
                 {
-                    bot.setGoalWeight( i, 0 );
+                    // Ignore all other players
+                    bot.setAttitude( @goal, 0 );
                 }
             }
-
-            // No one is tagged, default attack mode
-            if ( hhTaggedPlayer == 999 )
+            else
             {
-                bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * offensiveStatus );
+                // Attack any player
+                bot.setAttitude( @goal, -1 );
             }
         }
     }
-
-    return true;
 }
 
 // select a spawning point for a player
@@ -663,6 +677,8 @@ void GT_ThinkRules()
     {
         HEADHUNT_clearState();
     }
+
+    HEADHUNT_UpdateBotsExtraGoals();
 }
 
 // The game has detected the end of the match state, but it

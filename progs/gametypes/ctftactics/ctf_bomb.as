@@ -33,6 +33,9 @@ class cBomb
     Entity @bombEnt;
     cPlayer @player;
 
+    uint spawnedAt;
+    bool botShouldPickup;
+
     void Init()
     {
         // set up with default values
@@ -40,6 +43,8 @@ class cBomb
         @this.player = null;
 		this.explodeTime = 0;
 		this.bombAlarmSoundIndex = G_SoundIndex( "sounds/misc/timer_bip_bip" );
+        this.spawnedAt = levelTime;
+        this.botShouldPickup = false;
     }
 
     cBomb()
@@ -202,7 +207,6 @@ void bomb_body_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int su
             }
         }
     }
-
 }
 
 void bomb_body_die( Entity @self, Entity @inflictor, Entity @attacker )
@@ -229,7 +233,154 @@ void bomb_body_think( Entity @self )
 		}
 	}
 
-    self.nextThink = levelTime + 25; // no need to check this every frame
+    // Hack for bots. 
+    // Bot code may activate throw bomb action since it is exposed as a script weapon.
+    // Handling bomb actions on a thrown bomb is a burden of script code.
+
+    cBomb @bomb = gtBombs[self.count];        
+
+    if ( @bomb.player.client.getBot() == null )
+    {
+        self.nextThink = levelTime + 25; // no need to check this every frame
+        return;
+    }
+
+    ApplyBotsBombActions( self, bomb );
+}
+
+void ApplyBotsBombActions( Entity @self, cBomb @bomb )
+{
+    bomb.botShouldPickup = false;
+
+    //if ( @bomb.player == null )
+    //    return;
+
+    array<Entity @> nearbyEntities = G_FindInRadius( self.origin, 350.0f );
+    if ( nearbyEntities.size() == 0 )
+    {
+        bomb.botShouldPickup = true;
+    }   
+    else
+    {
+        if ( self.moveType == MOVETYPE_TOSS )
+            TryExplodeBotsBombInAir( self, bomb, nearbyEntities );
+        else
+            TryExplodeBotsBombOnGround( self, bomb, nearbyEntities );
+    }
+    
+    self.nextThink = levelTime + 60;
+}
+
+void TryExplodeBotsBombOnGround( Entity @self, cBomb @bomb, array<Entity @> &nearbyEntities )
+{
+    int numVisibleEnemies = 0;
+    bool mightSuicide = false;
+    
+    // Check whether a bot may really see an enemy to detonate it with intention.
+    // Otherwise it is a cheating (a bomb starts working as a proximty mine).
+
+    Entity @playerEnt = bomb.player.ent;
+
+    Vec3 botLookDir, r, u;
+    playerEnt.angles.angleVectors( botLookDir, r, u );
+
+    for ( uint i = 0; i < nearbyEntities.size(); ++i )
+    {
+        Entity @ent = nearbyEntities[i];
+        
+        if ( ( @ent.client == null ) && ( ent.aiIntrinsicEnemyWeight == 0.0f ) )
+            continue;
+        
+        if ( ent.isGhosting() )
+            continue;
+
+        if ( ent.team == self.team )
+            continue;
+
+        if ( @ent == @playerEnt )
+        {
+            mightSuicide = true;
+            continue;
+        }
+
+        // Skip tracing by doing a dot product check first
+
+        Vec3 botToEnemyDir = ent.origin - playerEnt.origin;
+        botToEnemyDir.normalize();
+
+        if ( botToEnemyDir * botLookDir < 0.1f )
+            continue;
+
+        cPlayer @enemyPlayer = GetPlayer( ent.client );
+        // may be null for turrets
+        if ( @enemyPlayer != null )
+        {
+            if ( enemyPlayer.playerClass.tag == PLAYERCLASS_RUNNER && enemyPlayer.invisibilityEnabled )
+                continue;
+        }
+
+        Trace trace;
+        trace.doTrace( playerEnt.origin, vec3Origin, vec3Origin, ent.origin, playerEnt.entNum, MASK_SOLID );
+        if ( trace.fraction != 1.0f && trace.entNum != ent.entNum )
+            continue;
+
+        numVisibleEnemies++;         
+    }
+
+    if ( ShouldExplodeBotsBomb( bomb, numVisibleEnemies, mightSuicide ) && bomb.explodeTime < levelTime )
+        bomb.setExplode();
+}
+
+void TryExplodeBotsBombInAir( Entity @self, cBomb @bomb, array<Entity @> &nearbyEntities )
+{
+    int numEnemies = 0;
+    bool mightSuicide = false;
+
+    // A bot has just fired the bomb, so if the bomb get exploded 
+    // to hit an invisible enemy it does not look like cheating    
+
+    for ( uint i = 0; i < nearbyEntities.size(); ++i )
+    {
+        Entity @ent = nearbyEntities[i];
+        
+        if ( ( @ent.client == null ) && ( ent.aiIntrinsicEnemyWeight == 0.0f ) )
+            continue;
+        
+        if ( ent.isGhosting() )
+            continue;
+
+        if ( ent.team == self.team )
+            continue;
+
+        if ( @ent == @bomb.player.ent )
+        {
+            mightSuicide = true;
+            continue;
+        }
+
+        numEnemies++;         
+    }
+
+    if ( ShouldExplodeBotsBomb( bomb, numEnemies, mightSuicide ) && bomb.explodeTime < levelTime )
+        bomb.setExplode();
+}
+
+bool ShouldExplodeBotsBomb( cBomb @bomb, int numEnemies, bool mightSuicide )
+{
+    // Bots do not pickup a bomb often, so detonate it on timeout
+    if ( numEnemies < 1 )
+        return !mightSuicide && levelTime - bomb.spawnedAt > 3000;      
+
+    if ( !mightSuicide )
+        return true;
+    
+    if ( ( bomb.player.ent.effects & EF_CARRIER ) != 0 )
+        return false;
+    
+    if ( numEnemies > 1 )
+        return true;
+    
+    return bomb.player.ent.health < 35 && bomb.player.client.armor < 25;   
 }
 
 cBomb @ClientDropBomb( Client @client )

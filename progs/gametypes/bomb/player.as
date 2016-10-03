@@ -277,17 +277,16 @@ class cPlayer
 		return label + " " + getWeaponIcon( this.weapSecondary );
 	}
 
-
 	void showPrimarySelection()
 	{
 		// this code shouldn't be reachable in insta
 		assert( !gametype.isInstagib, "player.as showPrimarySelection: insta" );
 
-		if ( this.client.team == TEAM_SPECTATOR || @this.client.getBot() != null )
+		if ( this.client.team == TEAM_SPECTATOR || @this.client.getBot() != null ) 
 		{
 			return;
 		}
-
+        
 		String command = "mecu \"Primary weapons\""
 			+ " \"EB + RL\" \"weapselect eb; gametypemenu2\""
 			+ " \"RL + LG\" \"weapselect rl; gametypemenu2\""
@@ -342,6 +341,39 @@ class cPlayer
 	{
 		this.pendingSecondary = weapon;
 	}
+
+    void selectRandomBotWeapons() 
+    {
+        // Prefer EB + LG
+        if ( random() < 0.7f )
+        {
+            this.pendingPrimary = PRIMARY_EBLG;
+            // Choose RG to compensate lack of RL
+            if ( random() < 0.7f )
+                this.pendingSecondary = SECONDARY_RG;
+            else if ( random() < 0.7f )
+                this.pendingSecondary = SECONDARY_PG;
+            else 
+                this.pendingSecondary = SECONDARY_GL;
+        }        
+        // Otherwise prefer EB + RL
+        else if ( random() < 0.7f )
+        {
+            this.pendingPrimary = PRIMARY_EBRL;
+            // Choose PG to compensate lack of continous fire weapons
+            if ( random() < 0.7f )            
+                this.pendingSecondary = SECONDARY_PG;
+            else
+                this.pendingSecondary = SECONDARY_MG;    
+        }
+        // RL + LG
+        else    
+        {
+            this.pendingPrimary = PRIMARY_RLLG;
+            // Choose MG to compensate lack of long-range weapons 
+            this.pendingSecondary = SECONDARY_MG;
+        }
+    }
 
 	void selectWeapon( String &weapon )
 	{

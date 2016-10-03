@@ -66,6 +66,7 @@ class cBombSite
 		this.indicator.solid = SOLID_TRIGGER;
 		this.indicator.nextThink = levelTime + 1;
 		this.indicator.team = 0;
+        AI::AddNavEntity( this.indicator, AI_NAV_REACH_ON_EVENT );
 		this.indicator.linkEntity();
 
 		Vec3 origin = this.indicator.origin;
@@ -80,7 +81,6 @@ class cBombSite
 		this.model.modelindex = modelIndicator;
 		this.model.svflags &= ~SVF_NOCLIENT;
 		this.model.effects = EF_ROTATE_AND_BOB;
-		AI::AddGoal( this.model, true ); // bases are special 
 		this.model.linkEntity();
 
 		@this.sprite = @G_SpawnEntity( "capture_indicator_sprite" );

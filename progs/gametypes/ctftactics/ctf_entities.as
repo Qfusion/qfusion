@@ -32,6 +32,9 @@ class cFlagBase
     bool handDropped;
     uint droppedTime;
     cFlagBase @next;
+    int team;
+    int enemyTeam;
+    int aiSpotId;
 
     void Initialize( Entity @spawner )
     {
@@ -42,7 +45,7 @@ class cFlagBase
 		this.checkBlockages = 0;
         @this.next = @fbHead;
         @fbHead = @this;
-
+       
         @this.owner = @spawner;
         @this.carrier = @spawner;
 
@@ -65,7 +68,8 @@ class cFlagBase
             this.owner.moveType = MOVETYPE_TOSS;
 
         this.owner.linkEntity();
-		AI::AddGoal( this.owner ); // bases are special because of the timers, use custom reachability checks
+
+        setupAIGoalProperties( spawner );
 
         // drop to floor
         Trace tr;
@@ -96,6 +100,12 @@ class cFlagBase
 
     ~cFlagBase()
     {
+        if ( @this.carrier != @this.owner )
+            return;
+        
+        AI::RemoveDefenceSpot( this.team, this.aiSpotId );
+        AI::RemoveOffenseSpot( this.enemyTeam, this.aiSpotId );
+        // ( AI::RemoveNavEntity will be called automatically in G_Free() )
     }
 
     void setCarrier( Entity @ent )
@@ -103,6 +113,7 @@ class cFlagBase
         if ( @this.carrier != @ent )
         {
             this.carrier.effects &= ~uint( EF_CARRIER|EF_FLAG_TRAIL );
+            notifyAIOfNewCarrier( this.carrier, ent );
         }
 
         @this.carrier = @ent;
@@ -121,6 +132,58 @@ class cFlagBase
         }
 
         this.owner.linkEntity();
+    }
+
+    void setupAIGoalProperties( Entity @spawner )
+    {
+        this.team = spawner.team;
+        this.enemyTeam = spawner.team == TEAM_ALPHA ? TEAM_BETA : TEAM_ALPHA;
+        this.aiSpotId = spawner.team;
+
+        // ctf:tactics flag is always instant, so it should be reached at touch as an ordinary item
+		AI::AddNavEntity( spawner, AI_NAV_REACH_AT_TOUCH );
+   
+        AI::AddDefenceSpot( this.team, AIDefenceSpot( this.aiSpotId, spawner, 768.0f ) );
+        AI::AddOffenseSpot( this.enemyTeam, AIOffenseSpot( this.aiSpotId, spawner ) ); 
+
+        setupAIPlantingSpots( spawner );      
+    }
+
+    void setupAIPlantingSpots( Entity @spawner )
+    {
+        array<Vec3> @spotOrigins = AI::SuggestDefencePlantingSpots( spawner, 1024.0f, 8 );
+        for ( uint i = 0; i < spotOrigins.size(); ++i )
+        {
+            Entity @goal = G_SpawnEntity( "ai_planting_spot" );
+            goal.type = ET_GENERIC;
+            goal.svflags |= uint(SVF_NOCLIENT);
+            goal.origin = spotOrigins[i];
+            goal.setSize( Vec3( -8, -8, -16 ), Vec3( +8, +8, +32 ) );
+            goal.solid = SOLID_TRIGGER;
+            goal.clipMask = MASK_PLAYERSOLID;
+            @goal.touch = ai_planting_spot_touch;
+            goal.team = spawner.team;
+            goal.linkEntity();
+            AI::AddNavEntity( goal, AI_NAV_REACH_AT_TOUCH );
+        }
+    }
+
+    void notifyAIOfNewCarrier( Entity @oldCarrier, Entity @newCarrier )
+    {
+        // The flag is returned to the base
+        if ( @newCarrier == @this.owner )
+        {
+            AI::AddDefenceSpot( this.team, AIDefenceSpot( this.aiSpotId, this.owner, 768.0f ) );
+            AI::AddOffenseSpot( this.enemyTeam, AIOffenseSpot( this.aiSpotId, this.owner ) );
+        }
+        // The flag is stolen from a base by a player
+        else if ( @newCarrier.client != null && @oldCarrier == @this.owner ) 
+        {
+            AI::RemoveDefenceSpot( this.team, this.aiSpotId );
+            AI::RemoveOffenseSpot( this.enemyTeam, this.aiSpotId );
+        }
+        
+        // Dropping a flag and picking up a dropped flag do not affect AI order spots status       
     }
 
     void resetFlag()
@@ -162,8 +225,6 @@ class cFlagBase
             this.flagCaptured( activator );
             this.owner.linkEntity();
 
-			AI::ReachedGoal( this.owner ); // let bots know their mission was completed
-
             return;
         }
 
@@ -171,8 +232,6 @@ class cFlagBase
         {
             this.flagStolen( activator );
             this.owner.linkEntity();
-
-			AI::ReachedGoal( this.owner ); // let bots know their mission was completed
 
             return;
         }
@@ -554,6 +613,47 @@ void flag_minimap_icon_think( Entity @ent )
     ent.nextThink = levelTime + 1;
 }
 
+void ai_planting_spot_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags )
+{
+    if ( @other == null )
+        return;
+    
+    if ( ent.team != other.team )
+        return;
+
+    Client @client = other.client;
+    if ( @client == null )
+        return;
+
+    Bot @bot = client.getBot();
+    if ( @bot == null )
+        return;
+
+    cPlayer player = GetPlayer( client );
+    if ( player.playerClass.tag != PLAYERCLASS_ENGINEER )
+        return;
+    
+    // Reset goal weight immediately
+    bot.overrideEntityWeight( ent, 0.0f );
+    
+    // Things might have changed since last goal assignation
+
+    if ( player.isEngineerCooldown() )
+        return;
+
+    if ( CTFT_ShouldNotPlantItem( other, 192.0f ) )
+        return;
+
+    if ( CTFT_TeamTurretsNum( ent.team ) < 3 )
+    {
+        CTFT_DropTurret( client, AMMO_BULLETS );
+    }
+    else if ( CTFT_TeamDispensersNum( ent.team ) < 1 )
+    {
+        CTFT_DropDispenser( client );
+    }
+}
+
 void ctf_flag_die( Entity @ent, Entity @inflictor, Entity @attacker )
 {
     ctf_flag_think( ent );
@@ -588,7 +688,7 @@ void ctf_flag_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
 // the flag is dropped in motion, add it to AI goals when it stops
 void ctf_flag_stop( Entity @ent )
 {
-	AI::AddGoal( ent );
+	AI::AddNavEntity( ent, AI_NAV_REACH_AT_TOUCH );
 }
 
 void ctf_flag_think( Entity @ent )

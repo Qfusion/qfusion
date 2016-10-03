@@ -317,11 +317,6 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 	return false;
 }
 
-bool GT_UpdateBotStatus( Entity @ent )
-{
-	return BOMB_UpdateBotStatus( @ent );
-}
-
 Entity @GT_SelectSpawnPoint( Entity @self )
 {
 	if ( self.team == attackingTeam )
@@ -605,7 +600,10 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
 		if ( !gametype.isInstagib )
 		{
-			player.showPrimarySelection();
+			if ( @client.getBot() == null )
+                player.showPrimarySelection();
+            else 
+                player.selectRandomBotWeapons();
 		}
 
 		if ( matchState == MATCH_STATE_PLAYTIME )
@@ -680,6 +678,9 @@ void GT_ThinkRules()
 
 	if ( match.getState() < MATCH_STATE_PLAYTIME )
 	{
+        if ( match.getState() == MATCH_STATE_WARMUP )
+            GENERIC_UpdateBotroamGoalsWeights();
+
 		return;
 	}
 
@@ -769,6 +770,9 @@ void GT_MatchStateStarted()
 				gametype.setTeamSpawnsystem( t, SPAWNSYSTEM_INSTANT, 0, 0, false );
 			}
 
+            // Add dummy goals for bots in warmup
+            GENERIC_AddBotroamGoals();
+
 			break;
 
 		case MATCH_STATE_COUNTDOWN:		
@@ -779,6 +783,8 @@ void GT_MatchStateStarted()
 			//      matter cause there aren't any
 			GENERIC_SetUpCountdown();
 			
+            GENERIC_RemoveBotroamGoals();
+
 			break;
 
 		case MATCH_STATE_PLAYTIME:

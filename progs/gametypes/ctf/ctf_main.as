@@ -308,161 +308,83 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-// When this function is called the weights of items have been reset to their default values,
-// this means, the weights *are set*, and what this function does is scaling them depending
-// on the current bot status.
-// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
-// unless a weight is assigned here.
-bool GT_UpdateBotStatus( Entity @ent )
+void CTF_UpdateBotsExtraGoals()
 {
-    Entity @goal;
-    Bot @bot;
-    float baseFactor;
-    float alphaDist, betaDist, homeDist;
+    Entity @ent;
+    for ( int i = 1; i <= maxClients; ++i )
+    {
+        @ent = @G_GetEntity( i );
+        CTF_UpdateBotExtraGoals( ent );
+    }
+}
 
-    @bot = @ent.client.getBot();
+
+void CTF_UpdateBotExtraGoals( Entity @ent )
+{
+    Bot @bot = @ent.client.getBot();
     if ( @bot == null )
-        return false;
+        return;
 
-    float offensiveStatus = GENERIC_OffensiveStatus( ent );
+    int enemyTeam;
+    if ( ent.team == TEAM_ALPHA )
+        enemyTeam = TEAM_BETA;
+    else if ( ent.team == TEAM_BETA )
+        enemyTeam = TEAM_ALPHA;
+    else 
+        return;
+    
+    // Flags defence/offence/carrier support is managed by native code
+    // using provided status of defence/offence spots.
 
-    // play defensive when being a flag carrier
-    if ( ( ent.effects & EF_CARRIER ) != 0 )
-        offensiveStatus = 0.33f;
+    // The only thing should be managed in scripts is returning to a base.
+    // (Carrier behaviour differs for custom gametypes).
 
-    cFlagBase @alphaBase = @CTF_getBaseForTeam( TEAM_ALPHA );
-    cFlagBase @betaBase = @CTF_getBaseForTeam( TEAM_BETA );
+    // Also dropped flags are managed here too.
 
-    // for carriers, find the raw distance to base
-    if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
+    cFlagBase @teamBase = @CTF_getBaseForTeam( ent.team );
+
+    if ( @teamBase != null )
     {
-        if ( ent.team == TEAM_ALPHA )
-            homeDist = ent.origin.distance( alphaBase.owner.origin );
-        else
-            homeDist = ent.origin.distance( betaBase.owner.origin );
-    }
-
-    // loop all the goal entities
-    for ( int i = AI::GetNextGoal( AI::GetRootGoal() ); i != AI::GetRootGoal(); i = AI::GetNextGoal( i ) )
-    {
-        @goal = @AI::GetGoalEntity( i );
-
-        // by now, always full-ignore not solid entities
-        if ( goal.solid == SOLID_NOT )
+        // The bot is a carrier, so it should return to the team base
+        if ( ( ent.effects & EF_CARRIER ) != 0 )
         {
-            bot.setGoalWeight( i, 0 );
-            continue;
-        }
-
-        if ( @goal.client != null )
-        {
-            bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * offensiveStatus );
-            continue;
-        }
-
-        // when being a flag carrier have a tendency to stay around your own base
-        baseFactor = 1.0f;
-
-        if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
-        {
-            alphaDist = goal.origin.distance( alphaBase.owner.origin );
-            betaDist = goal.origin.distance( betaBase.owner.origin );
-
-            if ( ( ent.team == TEAM_ALPHA ) && ( alphaDist + 64 < betaDist || alphaDist < homeDist + 128 ) )
-                baseFactor = 5.0f;
-            else if ( ( ent.team == TEAM_BETA ) && ( betaDist + 64 < alphaDist || betaDist < homeDist + 128 ) )
-                baseFactor = 5.0f;
-            else
-                baseFactor = 0.5f;
-        }
-
-        if ( @goal.item != null )
-        {
-            // all the following entities are items
-            if ( ( goal.item.type & IT_WEAPON ) != 0 )
+            if ( @teamBase.owner != null )
             {
-                bot.setGoalWeight( i, GENERIC_WeaponWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_AMMO ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_AmmoWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_ARMOR ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_ArmorWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_HEALTH ) != 0 )
-            {
-                bot.setGoalWeight( i, GENERIC_HealthWeight( ent, goal ) * baseFactor );
-            }
-            else if ( ( goal.item.type & IT_POWERUP ) != 0 )
-            {
-                bot.setGoalWeight( i, bot.getItemWeight( goal.item ) * offensiveStatus * baseFactor );
-            }
-
-            continue;
-        }
-
-        // the entities spawned from scripts never have linked items,
-        // so the flags are weighted here
-
-        cFlagBase @flagBase = @CTF_getBaseForOwner( goal );
-
-        if ( @flagBase != null && @flagBase.owner != null )
-        {
-            // enemy or team?
-
-            if ( flagBase.owner.team != ent.team ) // enemy base
-            {
-                if ( @flagBase.owner == @flagBase.carrier ) // enemy flag is at base
+                // the flag is at our base, return to the base
+                if ( ( teamBase.owner.effects & EF_CARRIER ) != 0 )
                 {
-                    bot.setGoalWeight( i, 12.0f * offensiveStatus );
+                    bot.overrideEntityWeight( teamBase.owner, 9.0f );
                 }
+                // our flag is stolen    
                 else
                 {
-                    bot.setGoalWeight( i, 0 );
+                    float botToHomeBaseDist = teamBase.owner.origin.distance( ent.origin );
+                    // return to our base
+                    if ( botToHomeBaseDist > 768.0f )
+                    {
+                        bot.overrideEntityWeight( teamBase.owner, 9.0f );
+                    }
+                    // do not camp at our flag spot, hide somewhere else
+                    else 
+                    {      
+                        bot.overrideEntityWeight( teamBase.owner, 9.0f * ( botToHomeBaseDist / 768.0f ) );
+                    }
                 }
             }
-            else // team
-            {
-                // flag is at base and this bot has the enemy flag
-                if ( ( ent.effects & EF_CARRIER ) != 0 && ( goal.effects & EF_CARRIER ) != 0 )
-                {
-                    bot.setGoalWeight( i, 3.5f * baseFactor );
-                }
-                else
-                {
-                    bot.setGoalWeight( i, 0 );
-                }
-            }
-
-            continue;
         }
 
-        if ( goal.classname == "ctf_flag" )
-        {
-            // ** please, note, no item has a weight above 1.0 **
-            // ** these are really huge weights **
+        // it's team flag, dropped somewhere
+        if ( @teamBase.carrier != @teamBase.owner && @teamBase.carrier.client == null )
+            bot.overrideEntityWeight( teamBase.carrier, 9.0f );
+    } 
 
-            // it's my flag, dropped somewhere
-            if ( goal.team == ent.team )
-            {
-                bot.setGoalWeight( i, 5.0f * baseFactor );
-            }
-            // it's enemy flag, dropped somewhere
-            else if ( goal.team != ent.team )
-            {
-                bot.setGoalWeight( i, 3.5f * offensiveStatus * baseFactor );
-            }
-
-            continue;
-        }
-
-        // we don't know what entity is this, so ignore it
-        bot.setGoalWeight( i, 0 );
+    cFlagBase @enemyBase = @CTF_getBaseForTeam( enemyTeam );
+    if ( @enemyBase != null )
+    {
+        // it's team flag, dropped somewhere
+        if ( @enemyBase.carrier != @enemyBase.owner && @enemyBase.carrier.client == null )
+            bot.overrideEntityWeight( enemyBase.carrier, 9.0f );
     }
-
-    return true; // handled by the script
 }
 
 // select a spawning point for a player
@@ -854,6 +776,8 @@ void GT_ThinkRules()
                 ent.client.setHUDStat( STAT_PROGRESS_BETA, betaStatCap );
         }
     }
+
+    CTF_UpdateBotsExtraGoals();
 }
 
 // The game has detected the end of the match state, but it
