@@ -44,6 +44,8 @@ class Ai: public EdictRef, public AiFrameAwareUpdatable
     friend class AiManager;
     friend class AiBaseTeamBrain;
     friend class AiBaseBrain;
+    friend class AiBaseAction;
+    friend class AiBaseGoal;
 protected:
     // Must be set in a subclass constructor. A subclass manages memory for its brain
     // (it either has it as an intrusive member of allocates it on heap)
@@ -81,10 +83,8 @@ protected:
 
     void SetFrameAffinity(unsigned modulo, unsigned offset) override;
 
-    void ClearAllGoals();
-
-    // Called by brain via self->ai->aiRef when long-term or short-term goals are set
-    void OnGoalSet(Goal *goal);
+    void OnNavTargetSet(NavTarget *navTarget);
+    void OnNavTargetReset();
 
     void UpdateReachCache(int reachedAreaNum);
 
@@ -98,8 +98,8 @@ public:
 
     inline int CurrAreaNum() const { return currAasAreaNum; }
     inline int DroppedToFloorAreaNum() const { return droppedToFloorAasAreaNum; }
-    int GoalAreaNum() const;
-    Vec3 GoalOrigin() const;
+    int NavTargetAasAreaNum() const;
+    Vec3 NavTargetOrigin() const;
 
     inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
     inline int AllowedTravelFlags() const { return allowedAasTravelFlags; }
@@ -108,6 +108,10 @@ public:
     static bool IsStep(edict_t *ent);
     // Accepts a touched entity and its old solid before touch
     void TouchedEntity(edict_t *ent);
+
+    // TODO: Remove this, check item spawn time instead
+    virtual void OnNavEntityReachedBy(const NavEntity *navEntity, const Ai *grabber) {}
+    virtual void OnEntityReachedSignal(const edict_t *entity) {}
 
     void ResetNavigation();
     void CategorizePosition();
@@ -124,7 +128,7 @@ protected:
         return self->r.client ? self->r.client->netname : self->classname;
     }
 
-    virtual void TouchedGoal(const edict_t *goalUnderlyingEntity) {};
+    virtual void TouchedNavEntity(const edict_t *underlyingEntity) {};
     virtual void TouchedJumppad(const edict_t *jumppad) {};
 
     void CheckReachedArea();

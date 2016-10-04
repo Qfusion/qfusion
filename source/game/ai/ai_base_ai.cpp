@@ -47,14 +47,14 @@ void Ai::SetFrameAffinity(unsigned modulo, unsigned offset)
 
 // These getters cannot be defined in headers due to incomplete AiBaseBrain class definition
 
-int Ai::GoalAreaNum() const
+int Ai::NavTargetAasAreaNum() const
 {
-    return aiBaseBrain->GoalAasAreaNum();
+    return aiBaseBrain->NavTargetAasAreaNum();
 }
 
-Vec3 Ai::GoalOrigin() const
+Vec3 Ai::NavTargetOrigin() const
 {
-    return aiBaseBrain->CurrentGoalOrigin();
+    return aiBaseBrain->NavTargetOrigin();
 }
 
 void Ai::ResetNavigation()
@@ -64,16 +64,15 @@ void Ai::ResetNavigation()
     currAasAreaNum = aasWorld->FindAreaNum(self);
     nextReaches.clear();
 
-    aiBaseBrain->ClearAllGoals();
-
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
 }
 
 void Ai::UpdateReachCache(int reachedAreaNum)
 {
-    if (!aiBaseBrain->HasGoal())
+    if (!aiBaseBrain->HasNavTarget())
         return;
-    const int goalAreaNum = GoalAreaNum();
+
+    const int goalAreaNum = NavTargetAasAreaNum();
     // First skip reaches to reached area
     unsigned i = 0;
     for (i = 0; i < nextReaches.size(); ++i)
@@ -169,14 +168,7 @@ void Ai::CategorizePosition()
     self->is_step = stepping;
 }
 
-void Ai::ClearAllGoals()
-{
-    // This clears short-term goal too
-    aiBaseBrain->ClearAllGoals();
-    nextReaches.clear();
-}
-
-void Ai::OnGoalSet(Goal *goalEnt)
+void Ai::OnNavTargetSet(NavTarget *navTarget)
 {
     if (!currAasAreaNum)
     {
@@ -191,15 +183,19 @@ void Ai::OnGoalSet(Goal *goalEnt)
     UpdateReachCache(currAasAreaNum);
 }
 
+void Ai::OnNavTargetReset()
+{
+    nextReaches.clear();
+}
+
 void Ai::TouchedEntity(edict_t *ent)
 {
-    if (aiBaseBrain->HandleGoalTouch(ent))
+    if (aiBaseBrain->HandleNavTargetTouch(ent))
     {
-        TouchedGoal(ent);
         // Clear goal area num to ensure bot will not repeatedly try to reach that area even if he has no goals.
         // Usually it gets overwritten in this or next frame, when bot picks up next goal,
         // but sometimes there are no other goals to pick up.
-        nextReaches.clear();
+        OnNavTargetReset();
         return;
     }
 
@@ -231,12 +227,6 @@ void Ai::Think()
     if (!G_ISGHOSTING(self))
     {
         CategorizePosition();
-
-        // Update currAasAreaNum value of AiBaseBrain
-        // Ai::Think() returns to Ai::Frame()
-        // Ai::Frame() calls AiBaseBrain::Frame()
-        // AiBaseBrain::Frame() calls AiBaseBrain::Think() in this frame
-        aiBaseBrain->currAasAreaNum = currAasAreaNum;
 
         // TODO: Check whether we are camping/holding a spot
         if (VectorLengthFast(self->velocity) > 37)

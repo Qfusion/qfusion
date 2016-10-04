@@ -37,9 +37,8 @@ public:
     static void OnGametypeChanged(const char *gametype);
     // May return some of subtypes of this class depending on a gametype in future
     static inline AiManager *Instance() { return instance; }
-    void ClearGoals(const NavEntity *canceledGoal, const class Ai *goalGrabber);
-    void ClearGoals(const Goal *canceledGoal, const class Ai *goalGrabber);
-    void NavEntityReached(const edict_t *ent);
+    void NavEntityReachedBy(const NavEntity *canceledGoal, const class Ai *goalGrabber);
+    void NavEntityReachedSignal(const edict_t *ent);
     void OnBotJoinedTeam(edict_t *ent, int team);
 
     void SpawnBot(const char *teamName);

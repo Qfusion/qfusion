@@ -5,19 +5,18 @@
 Bot::Bot(edict_t *self_, float skillLevel_)
     : Ai(self_, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
       dangersDetector(self_),
-      botBrain(self_, skillLevel_),
+      botBrain(this, skillLevel_),
       skillLevel(skillLevel_),
-      nextBlockedEscapeAttemptAt(0),
-      blockedEscapeGoalOrigin(INFINITY, INFINITY, INFINITY),
+      weaponsSelector(self_),
+      builtinFireTargetCache(self_),
+      scriptFireTargetCache(self_),
       rocketJumpMovementState(self_),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
       isWaitingForItemSpawn(false),
       isInSquad(false),
       defenceSpotId(-1),
-      offenseSpotId(-1),
-      builtinFireTargetCache(self_),
-      scriptFireTargetCache(self_)
+      offenseSpotId(-1)
 {
     // Set the base brain reference in Ai class, it is mandatory
     this->aiBaseBrain = &botBrain;
@@ -36,8 +35,8 @@ void Bot::LookAround()
 
     RegisterVisibleEnemies();
 
-    if (!botBrain.combatTask.Empty())
-        ChangeWeapon(botBrain.combatTask);
+    if (selectedWeapons.AreValid())
+        ChangeWeapons(selectedWeapons);
 }
 
 void Bot::ApplyPendingTurnToLookAtPoint()
@@ -50,19 +49,6 @@ void Bot::ApplyPendingTurnToLookAtPoint()
     toPointDir.NormalizeFast();
 
     ChangeAngle(toPointDir, pendingLookAtPointState.EffectiveTurnSpeedMultiplier(1.0f));
-}
-
-void Bot::TouchedGoal(const edict_t *goalUnderlyingEntity)
-{
-    if (botBrain.HandleGoalTouch(goalUnderlyingEntity))
-    {
-        // Stop camping a spawn point if the bot did it
-        if (isWaitingForItemSpawn)
-        {
-            campingSpotState.Invalidate();
-            isWaitingForItemSpawn = false;
-        }
-    }
 }
 
 void Bot::TouchedJumppad(const edict_t *jumppad)
@@ -258,12 +244,12 @@ void Bot::CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTar
     }
 }
 
-void Bot::ChangeWeapon(const CombatTask &combatTask)
+void Bot::ChangeWeapons(const SelectedWeapons &selectedWeapons)
 {
-    if (combatTask.CanUseBuiltinWeapon())
-        self->r.client->ps.stats[STAT_PENDING_WEAPON] = combatTask.BuiltinWeapon();
-    if (combatTask.CanUseScriptWeapon())
-        GT_asSelectScriptWeapon(self->r.client, combatTask.ScriptWeapon());
+    if (selectedWeapons.BuiltinFireDef() != nullptr)
+        self->r.client->ps.stats[STAT_PENDING_WEAPON] = selectedWeapons.BuiltinWeaponNum();
+    if (selectedWeapons.ScriptFireDef() != nullptr)
+        GT_asSelectScriptWeapon(self->r.client, selectedWeapons.ScriptWeaponNum());
 }
 
 void Bot::ChangeWeapon(int weapon)
@@ -391,10 +377,10 @@ void Bot::GhostingFrame()
 {
     usercmd_t ucmd;
 
-    botBrain.oldCombatTask.Clear();
-    botBrain.combatTask.Clear();
+    selectedEnemies.Invalidate();
+    selectedWeapons.Invalidate();
 
-    Ai::ClearAllGoals();
+    botBrain.ClearPlan();
 
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->nextThink = level.time + 100;
@@ -452,56 +438,24 @@ void Bot::Think()
         return;
 
     LookAround();
+
+    weaponsSelector.Think(botBrain.recentWorldState);
 }
 
-bool Bot::MayKeepRunningInCombat() const
+bool Bot::MayHitWhileRunning() const
 {
     if (!HasEnemy())
-        FailWith("MayKeepRunningInCombat(): there is no enemy");
+        FailWith("MayHitWhileRunning(): there is no enemy");
 
-    Vec3 enemyToBotDir = Vec3(self->s.origin) - EnemyOrigin();
-    bool enemyMayHit = true;
-    if (IsEnemyAStaticSpot())
-    {
-        enemyMayHit = false;
-    }
-    else if (EnemyFireDelay() > 300)
-    {
-        enemyMayHit = false;
-    }
-    else
-    {
-        Vec3 enemyLookDir = EnemyLookDir();
-        float squaredDistance = enemyToBotDir.SquaredLength();
-        if (squaredDistance > 1)
-        {
-            float distance = 1.0f / Q_RSqrt(squaredDistance);
-            enemyToBotDir *= 1.0f / distance;
-            // Compute a cosine of angle between enemy look dir and enemy to bot dir
-            float cosPhi = enemyLookDir.Dot(enemyToBotDir);
-            // Be aware of RL splash on this range
-            if (distance < 150.0f)
-                enemyMayHit = cosPhi > 0.3;
-            else if (cosPhi <= 0.3)
-                enemyMayHit = false;
-            else
-            {
-                float cotPhi = Q_RSqrt((1.0f / (cosPhi * cosPhi)) - 1);
-                float sideMiss = distance / cotPhi;
-                // Use hitbox height plus a bit as a worst case
-                float hitboxLargestSectionSide = 8.0f + playerbox_stand_maxs[2] - playerbox_stand_mins[2];
-                enemyMayHit = sideMiss < hitboxLargestSectionSide;
-            }
-        }
-    }
-
-    if (enemyMayHit)
-        return false;
+    Vec3 botToEnemyDir(EnemyOrigin());
+    botToEnemyDir -= self->s.origin;
+    // We are sure it has non-zero length (enemies collide with the bot)
+    botToEnemyDir.NormalizeFast();
 
     vec3_t botLookDir;
     AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
     // Check whether the bot may hit while running
-    return ((-enemyToBotDir).Dot(botLookDir) > 0.99);
+    return (botToEnemyDir.Dot(botLookDir) > 0.99);
 }
 
 //==========================================
@@ -525,48 +479,23 @@ void Bot::ActiveFrame()
     if(GS_MatchState() <= MATCH_STATE_WARMUP && !IsReady() && self->r.client->teamstate.timeStamp + 4000 < level.time)
         G_Match_Ready(self);
 
+    weaponsSelector.Frame(botBrain.recentWorldState);
+
     ApplyPendingTurnToLookAtPoint();
 
-    const CombatTask &combatTask = botBrain.combatTask;
-
-    bool inhibitShooting, inhibitCombatMove;
-    SetCombatInhibitionFlags(&inhibitShooting, &inhibitCombatMove);
+    SetCloakEnabled(ShouldCloak());
 
     // ucmd modification in FireWeapon() will be overwritten by MoveFrame()
     bool fireButtonPressed = false;
-    if (!inhibitShooting)
+    if (ShouldAttack())
     {
-        SetCloakEnabled(false);
-        // If bot fired builtin or script weapon, save builtin fire button status
         FireWeapon(&fireButtonPressed);
     }
-    else
-    {
-        if (!combatTask.Empty())
-        {
-            SetCloakEnabled(true);
-        }
-        else if (botBrain.HasGoal())
-        {
-            if (botBrain.IsCloseToAnyGoal(768.0f, true))
-                SetCloakEnabled(true);
-            else if (botBrain.IsCloseToAnyGoal(384.0f, false))
-                SetCloakEnabled(true);
-            else
-                SetCloakEnabled(false);
-        }
-        else
-        {
-            SetCloakEnabled(false);
-        }
-    }
-
-    bool beSilent = ShouldBeSilent(inhibitShooting);
 
     // Do not modify pmove features by beSilent value, features may be changed dynamically by script.
     usercmd_t ucmd;
     memset(&ucmd, 0, sizeof(ucmd));
-    MoveFrame(&ucmd, inhibitCombatMove, beSilent);
+    MoveFrame(&ucmd);
 
     if (fireButtonPressed)
         ucmd.buttons |= BUTTON_ATTACK;
@@ -574,68 +503,6 @@ void Bot::ActiveFrame()
     CallActiveClientThink(&ucmd);
 
     SayVoiceMessages();
-}
-
-bool Bot::ShouldBeSilent(bool inhibitShooting) const
-{
-    const CombatTask &combatTask = botBrain.combatTask;
-    if (!inhibitShooting)
-        return false;
-    // Do not be silent if no enemy has been detected
-    if (combatTask.Empty())
-        return false;
-
-    if ((combatTask.LastSeenEnemyOrigin() - self->s.origin).SquaredLength() < 384.0f * 384.0f)
-    {
-        if (CanAndWouldCloak())
-            return true;
-
-        // When there is only a single enemy
-        if (botBrain.activeEnemyPool->ActiveEnemies().size() < 2)
-        {
-            Vec3 enemyToBot(self->s.origin);
-            enemyToBot -= combatTask.LastSeenEnemyOrigin();
-            enemyToBot.NormalizeFast();
-            if (enemyToBot.Dot(EnemyLookDir()) < -0)
-                return true;
-        }
-    }
-
-    return false;
-}
-
-void Bot::SetCombatInhibitionFlags(bool *inhibitShootingRef, bool *inhibitCombatMoveRef)
-{
-    // Make reference aliases to avoid pointer/boolean confusing errors
-    bool &inhibitCombatMove = *inhibitCombatMoveRef;
-    bool &inhibitShooting = *inhibitShootingRef;
-
-    const CombatTask &combatTask = botBrain.combatTask;
-    inhibitShooting = combatTask.Empty() || combatTask.inhibit;
-    inhibitCombatMove = inhibitShooting;
-    if (inhibitCombatMove)
-        return;
-
-    if (botBrain.HasGoal() && currAasAreaNum != GoalAreaNum() && !nextReaches.empty())
-    {
-        if (IsCloseToReachStart())
-        {
-            int travelType = nextReaches.front().traveltype;
-            if (travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD)
-                inhibitCombatMove = true;
-            else if (travelType == TRAVEL_CROUCH)
-                inhibitCombatMove = true;
-            else if (travelType == TRAVEL_LADDER)
-                inhibitCombatMove = inhibitShooting = true;
-        }
-        else if (aasWorld->AreaCrouch(currAasAreaNum))
-            inhibitCombatMove = true;
-    }
-    // Try to move bunnying instead of dodging on ground
-    // if the enemy is not looking to bot being able to hit him
-    // and the bot is able to hit while moving without changing angle significantly
-    if (!inhibitCombatMove && MayKeepRunningInCombat())
-        inhibitCombatMove = true;
 }
 
 void Bot::CallActiveClientThink(usercmd_t *ucmd)

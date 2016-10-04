@@ -26,28 +26,9 @@ void AiManager::OnGametypeChanged(const char *gametype)
     AiBaseTeamBrain::OnGametypeChanged(gametype);
 }
 
-void AiManager::ClearGoals(const NavEntity *canceledGoal, const Ai *goalGrabber)
+void AiManager::NavEntityReachedBy(const NavEntity *navEntity, const Ai *grabber)
 {
-    if (!canceledGoal)
-        return;
-
-    // find all bots which have this node as goal and tell them their goal is reached
-    for (ai_handle_t *ai = last; ai; ai = ai->prev)
-    {
-        if (ai->aiRef == goalGrabber)
-            continue;
-
-        AiBaseBrain *aiBrain = ai->aiRef->aiBaseBrain;
-        if (aiBrain->longTermGoal && aiBrain->longTermGoal->IsBasedOnNavEntity(canceledGoal))
-            aiBrain->ClearAllGoals();
-        else if (aiBrain->shortTermGoal && aiBrain->shortTermGoal->IsBasedOnNavEntity(canceledGoal))
-            aiBrain->ClearAllGoals();
-    }
-}
-
-void AiManager::ClearGoals(const Goal *canceledGoal, const Ai *goalGrabber)
-{
-    if (!canceledGoal)
+    if (!navEntity)
         return;
 
     // find all bots which have this node as goal and tell them their goal is reached
@@ -56,18 +37,11 @@ void AiManager::ClearGoals(const Goal *canceledGoal, const Ai *goalGrabber)
         if (ai->type == AI_INACTIVE)
             continue;
 
-        if (ai->aiRef == goalGrabber)
-            continue;
-
-        AiBaseBrain *aiBrain = ai->aiRef->aiBaseBrain;
-        if (aiBrain->longTermGoal == canceledGoal)
-            aiBrain->ClearAllGoals();
-        else if (aiBrain->shortTermGoal == canceledGoal)
-            aiBrain->ClearAllGoals();
+        ai->aiRef->OnNavEntityReachedBy(navEntity, grabber);
     }
 }
 
-void AiManager::NavEntityReached(const edict_t *ent)
+void AiManager::NavEntityReachedSignal(const edict_t *ent)
 {
     if (!last)
         return;
@@ -78,13 +52,7 @@ void AiManager::NavEntityReached(const edict_t *ent)
         if (ai->type == AI_INACTIVE)
             continue;
 
-        AiBaseBrain *aiBrain = ai->aiRef->aiBaseBrain;
-        if (aiBrain->specialGoal && aiBrain->specialGoal->IsBasedOnEntity(ent))
-            aiBrain->OnSpecialGoalReached();
-        else if (aiBrain->longTermGoal && aiBrain->longTermGoal->IsBasedOnEntity(ent))
-            aiBrain->OnLongTermGoalReached();
-        else if (aiBrain->shortTermGoal && aiBrain->shortTermGoal->IsBasedOnEntity(ent))
-            aiBrain->OnShortTermGoalReached();
+        ai->aiRef->OnEntityReachedSignal(ent);
     }
 }
 

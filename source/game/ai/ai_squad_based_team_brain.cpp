@@ -554,8 +554,9 @@ void AiSquad::CheckMembersInventory()
             continue;
 
         // Bot already has a some special goal that the squad owns
-        if (bots[botNum]->HasSpecialGoal() && bots[botNum]->IsSpecialGoalSetBy(this))
-            continue;
+        // TODO: Needs special method for check since special goals have gone
+        // if (bots[botNum]->HasSpecialGoal() && bots[botNum]->IsSpecialGoalSetBy(this))
+        //    continue;
 
         bool needsWeapon = maxBotWeaponTiers[botNum] <= 2;
         // TODO: Check player class abilities
@@ -765,7 +766,10 @@ void AiSquad::SetDroppedEntityAsBotGoal(edict_t *ent)
         AI_FailWith(tag, "Squad is not set");
 
     // Force dropped item as a special goal for the suppliant
-    bot->ai->botRef->SetSpecialGoalFromEntity(ent, squad);
+    // TODO: Bot should be waiting for this entity (if he has interrupt its curr motion for this)
+    // TODO: Just notify bot brain
+    // TODO: This should be handled via goal BotPickupDroppedItem goal that should have high priority
+    // bot->ai->botRef->SetSpecialGoalFromEntity(ent, squad);
     // Allow other bots (and itself) to grab this item too
     // (But the suppliant has a priority since the goal has been set immediately)
     AI_AddNavEntity(ent, (ai_nav_entity_flags)(AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED));

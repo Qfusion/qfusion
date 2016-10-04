@@ -2,7 +2,7 @@
 #include "ai_aas_world.h"
 #include "ai_ground_trace_cache.h"
 
-void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
+void Bot::MoveFrame(usercmd_t *ucmd)
 {
     pendingLandingDashState.isOnGroundThisFrame = self->groundentity != nullptr;
 
@@ -12,17 +12,14 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
     // These triggered actions should be processed
     if (jumppadMovementState.IsActive() || rocketJumpMovementState.IsActive() || pendingLandingDashState.IsActive())
     {
-        Move(ucmd, beSilent);
+        Move(ucmd);
     }
     else
     {
-        bool hasToEvade = false;
-        if (Skill() >= 0.33f && !ShouldSkipThinkFrame())
-            hasToEvade = dangersDetector.FindDangers();
-        if (!hasToEvade && (inhibitCombat || campingSpotState.IsActive()))
-            Move(ucmd, beSilent);
+        if (!selectedEnemies.AreValid() || !ShouldKeepXhairOnEnemy() || MayHitWhileRunning())
+            Move(ucmd);
         else
-            CombatMovement(ucmd, hasToEvade);
+            CombatMovement(ucmd);
     }
 
     TryEscapeIfBlocked(ucmd);
@@ -33,15 +30,15 @@ void Bot::MoveFrame(usercmd_t *ucmd, bool inhibitCombat, bool beSilent)
     rocketJumpMovementState.wasTriggeredPrevFrame = rocketJumpMovementState.hasTriggeredRocketJump;
 }
 
-void Bot::Move(usercmd_t *ucmd, bool beSilent)
+void Bot::Move(usercmd_t *ucmd)
 {
     if (currAasAreaNum == 0)
         return;
 
-    if (!botBrain.HasGoal())
+    if (!botBrain.HasNavTarget())
         return;
 
-    const int goalAasAreaNum = GoalAreaNum();
+    const int goalAasAreaNum = NavTargetAasAreaNum();
     if (nextReaches.empty() && currAasAreaNum != goalAasAreaNum)
         return;
 
@@ -64,7 +61,7 @@ void Bot::Move(usercmd_t *ucmd, bool beSilent)
     }
     else
     {
-        intendedLookVec = Vec3(self->s.origin) - GoalOrigin();
+        intendedLookVec = Vec3(self->s.origin) - NavTargetOrigin();
     }
 
     if (self->is_ladder)
@@ -99,7 +96,7 @@ void Bot::Move(usercmd_t *ucmd, bool beSilent)
         }
         else
         {
-            MoveGenericRunning(&intendedLookVec, ucmd, beSilent);
+            MoveGenericRunning(&intendedLookVec, ucmd);
         }
     }
 
@@ -211,10 +208,10 @@ void Bot::MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd)
     if (jumppadMovementState.hasEnteredJumppad)
         return;
 
-    if (!botBrain.HasGoal())
+    if (!botBrain.HasNavTarget())
         return;
 
-    const int goalAasAreaNum = GoalAreaNum();
+    const int goalAasAreaNum = NavTargetAasAreaNum();
 
     // Cache reference to avoid indirections
     const aas_area_t *aasWorldAreas = aasWorld->Areas();
@@ -535,7 +532,7 @@ void Bot::MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd)
     {
         case STATE_TOP:
             // Start bunnying off the platform
-            MoveGenericRunning(intendedLookVec, ucmd, false);
+            MoveGenericRunning(intendedLookVec, ucmd);
             break;
         default:
             // Its poor but platforms are not widely used.
@@ -641,14 +638,14 @@ bool Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
 {
     if (nextReaches.empty())
     {
-        if (currAasAreaNum != GoalAreaNum())
+        if (currAasAreaNum != NavTargetAasAreaNum())
         {
             // Looks like we are in air above a ground, keep as is waiting for landing.
             VectorCopy(self->velocity, intendedLookVec->Data());
             return false;
         }
         // Move to a goal origin
-        *intendedLookVec = GoalOrigin() - self->s.origin;
+        *intendedLookVec = NavTargetOrigin() - self->s.origin;
         return true;
     }
 
@@ -693,10 +690,10 @@ bool Bot::TryStraightenLookVec(Vec3 *intendedLookVec)
     if (i == nextReaches.size())
     {
         // If a reachablities chain contains goal area, goal area is last in the chain
-        if (nextReaches[i - 1].areanum == GoalAreaNum())
+        if (nextReaches[i - 1].areanum == NavTargetAasAreaNum())
         {
             traceStraightenedPath = true;
-            lookAtPoint = GoalOrigin();
+            lookAtPoint = NavTargetOrigin();
         }
     }
     else
@@ -893,7 +890,7 @@ void Bot::ApplyPendingLandingDash(usercmd_t *ucmd)
     pendingLandingDashState.Invalidate();
 }
 
-void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSilent)
+void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
 {
     if (pendingLandingDashState.IsActive())
     {
@@ -902,7 +899,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
     }
 
     // TryRocketJumpShortcut() is expensive, call it only in Think() frames
-    if (!beSilent && !ShouldSkipThinkFrame() && TryRocketJumpShortcut(ucmd))
+    if (!ShouldBeSilent() && !ShouldSkipThinkFrame() && TryRocketJumpShortcut(ucmd))
         return;
 
     Vec3 velocityVec(self->velocity);
@@ -975,7 +972,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
                         VectorCopy(newVelocity.Data(), self->velocity);
                     }
                 }
-                else if (IsCloseToAnyGoal())
+                else if (IsCloseToNavTarget())
                 {
                     // velocity and forwardLookDir may mismatch, retrieve these actual look dirs
                     vec3_t forwardLookDir, rightLookDir;
@@ -1007,7 +1004,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
                 }
                 else if (velocityToTarget2DDot < 0.1f)
                 {
-                    if (!beSilent && MaySetPendingLandingDash())
+                    if (!ShouldBeSilent() && MaySetPendingLandingDash())
                     {
                         SetPendingLandingDash(ucmd);
                         return;
@@ -1019,7 +1016,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
             constexpr float accelDotThreshold = 0.9f;
             if (velocityToTarget2DDot > accelDotThreshold)
             {
-                if (!self->groundentity && !hasObstacles && !IsCloseToAnyGoal() && Skill() > 0.33f)
+                if (!self->groundentity && !hasObstacles && !IsCloseToNavTarget() && Skill() > 0.33f)
                 {
                     float runSpeed = movementSettings[PM_STAT_MAXSPEED];
                     if (speed > runSpeed) // Avoid division by zero and logic errors
@@ -1052,7 +1049,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
             }
 
             // Prevent bending except in air (where it is useful to push a bot to a goal)
-            if (self->groundentity || !IsCloseToAnyGoal())
+            if (self->groundentity || !IsCloseToNavTarget())
                 intendedLookVec->Z() *= Z_NO_BEND_SCALE;
         }
     }
@@ -1090,13 +1087,12 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSile
             case TRAVEL_BARRIERJUMP:
                 ucmd->buttons &= ~BUTTON_SPECIAL;
             default:
-                // If has other goal than special goal (that always has a highest prioriy)
-                if (!HasSpecialGoal() && IsCloseToAnyGoal())
+                if (IsCloseToNavTarget())
                     ucmd->buttons &= ~BUTTON_SPECIAL;
         }
     }
 
-    if (beSilent)
+    if (ShouldBeSilent())
     {
         ucmd->upmove = 0;
         ucmd->buttons &= ~BUTTON_SPECIAL;
@@ -1107,13 +1103,13 @@ bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
 {
     // Try to do coarse cheap checks first to prevent wasting CPU cycles in G_Trace()
 
-    if (!botBrain.HasGoal())
+    if (!botBrain.HasNavTarget())
         return false;
     // No need for that
-    if (currAasAreaNum == GoalAreaNum())
+    if (currAasAreaNum == NavTargetAasAreaNum())
         return false;
 
-    float squareDistanceToGoal = DistanceSquared(self->s.origin, botBrain.ClosestGoalOrigin().Data());
+    float squareDistanceToGoal = DistanceSquared(self->s.origin, NavTargetOrigin().Data());
 
     // Too close to the goal
     if (squareDistanceToGoal < 128.0f * 128.0f)
@@ -1126,11 +1122,6 @@ bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
     // This means a bot would inflict himself a damage (he can't switch to a safe gun)
     if (GS_SelfDamage() && !Inventory()[WEAP_INSTAGUN])
     {
-        // A target does not worth a weapon jump
-        // (if target is a top tier item, not only direct jumps to a goal but path shortcuts are worth doing)
-        if (!botBrain.IsGoalATopTierItem())
-            return false;
-
         float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
         if (HasQuad(self))
             damageToBeKilled /= 4.0f;
@@ -1162,12 +1153,6 @@ bool Bot::TryRocketJumpShortcut(usercmd_t *ucmd)
     Vec3 fireTarget(0, 0, 0);
     if (squareDistanceToGoal < 750.0f * 750.0f)
     {
-        // Do not do rocketjumps to non-urgent goals
-        unsigned goalSpawnTime = botBrain.GoalSpawnTime();
-        // Avoid unsigned overflows
-        if (goalSpawnTime && goalSpawnTime > level.time && goalSpawnTime - level.time > 3000)
-            return false;
-
         if (!AdjustDirectRocketJumpToAGoalTarget(&targetOrigin, &fireTarget))
             return false;
     }
@@ -1269,7 +1254,7 @@ bool Bot::AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarg
     Vec3 &targetOriginRef = *targetOrigin;
     Vec3 &fireTargetRef = *fireTarget;
 
-    targetOriginRef = botBrain.ClosestGoalOrigin();
+    targetOriginRef = NavTargetOrigin();
 
     // Check target height for feasibility
     float height = targetOriginRef.Z() - self->s.origin[2];
@@ -1325,7 +1310,7 @@ bool Bot::AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarg
 
 int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botToGoalDist2D) const
 {
-    const int goalAreaNum = GoalAreaNum();
+    const int goalAreaNum = NavTargetAasAreaNum();
     const aas_area_t &targetArea = aasWorld->Areas()[goalAreaNum];
     Vec3 targetOrigin(targetArea.center);
     targetOrigin.Z() = targetArea.mins[2] + 16.0f;
@@ -1456,46 +1441,27 @@ void Bot::TriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec
 
 void Bot::CheckTargetProximity()
 {
-    if (!botBrain.HasGoal())
+    if (!botBrain.HasNavTarget())
         return;
 
-    // This is the only action related to reach-at-touch items that may be performed here.
-    // Other actions for that kind of goals are performed in Ai::TouchedEntity, Ai/Bot::TouchedNotSolidTriggerEntity
-    if (currAasAreaNum != GoalAreaNum())
+    if (campingSpotState.IsActive())
     {
-        // If the bot was waiting for item spawn and for example has been pushed from the goal, stop camping a goal
-        if (isWaitingForItemSpawn)
+        // Check whether a bot is too far from the spot origin so it should be invalidated
+        const float distanceThreshold = 1.5f * campingSpotState.spotRadius * campingSpotState.spotRadius;
+        if (DistanceSquared(campingSpotState.spotOrigin.Data(), self->s.origin) > distanceThreshold)
         {
             campingSpotState.Invalidate();
-            isWaitingForItemSpawn = false;
+            botBrain.ClearPlan();
         }
-        return;
     }
 
-    if (botBrain.IsCloseToAnyGoal())
+    if (botBrain.IsCloseToNavTarget(128.0f))
     {
-        if (botBrain.TryReachGoalByProximity())
+        if (botBrain.TryReachNavTargetByProximity())
         {
-            nextReaches.clear();
+            OnNavTargetReset();
             return;
         }
-        if (botBrain.ShouldWaitForGoal())
-        {
-            if (!isWaitingForItemSpawn)
-            {
-                campingSpotState.SetWithoutDirection(botBrain.ClosestGoalOrigin(), 36.0f, 0.75f);
-                isWaitingForItemSpawn = true;
-            }
-        }
-    }
-}
-
-void Bot::OnGoalCleanedUp(const Goal *goal)
-{
-    if (isWaitingForItemSpawn)
-    {
-        campingSpotState.Invalidate();
-        isWaitingForItemSpawn = false;
     }
 }
 
@@ -1553,13 +1519,9 @@ Vec3 Bot::MakeEvadeDirection(const Danger &danger)
 
 constexpr auto AI_COMBATMOVE_TIMEOUT = 400;
 
-void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
+void Bot::CombatMovement(usercmd_t *ucmd)
 {
-    if (hasToEvade)
-    {
-        MakeEvadeMovePushes(ucmd);
-    }
-    else if (combatMovePushTimeout <= level.time)
+    if (combatMovePushTimeout <= level.time)
     {
         combatMovePushTimeout = level.time + AI_COMBATMOVE_TIMEOUT;
         UpdateCombatMovePushes();
@@ -1575,7 +1537,6 @@ void Bot::CombatMovement(usercmd_t *ucmd, bool hasToEvade)
 
     if (self->groundentity)
     {
-
         if (!(ucmd->buttons & BUTTON_SPECIAL))
         {
             ApplyCheatingGroundAcceleration(ucmd);
@@ -1631,7 +1592,7 @@ void Bot::UpdateCombatMovePushes()
     // In roaming movement we keep forward pressed and align view to look vec
     // In combat movement we keep view as-is (it set by aiming ai part) and move to goal using appropriate keys
     Vec3 intendedMoveVec(0, 0, 0);
-    if (botBrain.HasGoal())
+    if (botBrain.HasNavTarget())
     {
         StraightenOrInterpolateLookVec(&intendedMoveVec, (float) VectorLength(self->velocity));
     }
@@ -1652,30 +1613,19 @@ void Bot::UpdateCombatMovePushes()
     Vec3 toEnemyDir = EnemyOrigin() - self->s.origin;
     toEnemyDir.NormalizeFast();
 
-    float forwardBackRandomness = 0.2f;
-    float rightLeftRandomness = 0.2f;
-    // Increase randomness for directions perpendicular to enemy
-    if (fabsf(toEnemyDir.Dot(forward)) < 0.3f)
-        forwardBackRandomness += 0.15f;
-    if (fabsf(toEnemyDir.Dot(right)) < 0.3f)
-        rightLeftRandomness += 0.15f;
-
-    // Choose direction randomly but leaning to intendedMoveVec direction
-    // Do not cache random() call to make choices independent
-
     if (moveDotForward > 0.3f)
-        combatMovePushes[0] = random() > forwardBackRandomness ? 1 : -1;
+        combatMovePushes[0] = +1;
     else if (moveDotForward < -0.3f)
-        combatMovePushes[0] = random() > forwardBackRandomness ? -1 : 1;
+        combatMovePushes[0] = -1;
     else if (random() > 0.85f)
         combatMovePushes[0] = Q_sign(random() - 0.5f);
 
     if (moveDotRight > 0.3f)
-        combatMovePushes[1] = random() > rightLeftRandomness ? 1 : -1;
+        combatMovePushes[1] = +1;
     else if (moveDotRight < -0.3f)
-        combatMovePushes[1] = random() > rightLeftRandomness ? -1 : 1;
+        combatMovePushes[1] = -1;
     else if (random() > 0.85f)
-        combatMovePushes[1] = Q_sign(random() - 0.5f);
+        combatMovePushes[0] = Q_sign(random() - 0.5f);
 
     // If neither forward-back, nor left-right direction has been chosen, chose directions randomly
     if (!combatMovePushes[0] && !combatMovePushes[1])
@@ -1690,90 +1640,6 @@ void Bot::UpdateCombatMovePushes()
     // Otherwise do these moves sparingly only to surprise enemy sometimes
     else
         combatMovePushes[2] = random() > 0.9f ? Q_sign(random() - 0.5f) : 0;
-}
-
-void Bot::MakeEvadeMovePushes(usercmd_t *ucmd)
-{
-    Vec3 evadeDir = MakeEvadeDirection(*dangersDetector.primaryDanger);
-
-    int walkingEvades = 0;
-    int walkingMovePushes[3] = {0, 0, 0};
-    int jumpingEvades = 0;
-    int jumpingMovePushes[3] = {0, 0, 0};
-
-    if (evadeDir.X())
-    {
-        if ((evadeDir.X() < 0))
-        {
-            if (closeAreaProps.backTest.CanWalkOrFallQuiteSafely())
-            {
-                walkingMovePushes[0] = -1;
-                ++walkingEvades;
-            }
-            else if (closeAreaProps.backTest.CanJump())
-            {
-                jumpingMovePushes[0] = -1;
-                ++jumpingEvades;
-            }
-        }
-        else if ((evadeDir.X() > 0))
-        {
-            if (closeAreaProps.frontTest.CanWalkOrFallQuiteSafely())
-            {
-                walkingMovePushes[0] = 1;
-                ++walkingEvades;
-            }
-            else if (closeAreaProps.frontTest.CanJump())
-            {
-                jumpingMovePushes[0] = 1;
-                ++jumpingEvades;
-            }
-        }
-    }
-    if (evadeDir.Y())
-    {
-        if ((evadeDir.Y() < 0))
-        {
-            if (closeAreaProps.leftTest.CanWalkOrFallQuiteSafely())
-            {
-                walkingMovePushes[1] = -1;
-                ++walkingEvades;
-            }
-            else if (closeAreaProps.leftTest.CanJump())
-            {
-                jumpingMovePushes[1] = -1;
-                ++jumpingEvades;
-            }
-        }
-        else if ((evadeDir.Y() > 0))
-        {
-            if (closeAreaProps.rightTest.CanWalkOrFallQuiteSafely())
-            {
-                walkingMovePushes[1] = 1;
-                ++walkingEvades;
-            }
-            else if (closeAreaProps.rightTest.CanJump())
-            {
-                jumpingMovePushes[1] = 1;
-                ++jumpingEvades;
-            }
-        }
-    }
-
-    // Walked evades involve dashes, so they are more important
-    if (walkingEvades > jumpingEvades)
-    {
-        VectorCopy(walkingMovePushes, combatMovePushes);
-        if (Skill() > 0.85f || (random() < (Skill() - 0.25f)))
-        {
-            ucmd->buttons |= BUTTON_SPECIAL;
-        }
-    }
-    else if (jumpingEvades > 0)
-    {
-        jumpingMovePushes[2] = 1;
-        VectorCopy(jumpingMovePushes, combatMovePushes);
-    }
 }
 
 bool Bot::MayApplyCombatDash()

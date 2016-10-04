@@ -362,13 +362,13 @@ void AI_RemoveNavEntity(edict_t *ent)
     if (!navEntity)
         return;
 
-    AiManager::Instance()->ClearGoals(navEntity, nullptr);
+    AiManager::Instance()->NavEntityReachedBy(navEntity, nullptr);
     NavEntitiesRegistry::Instance()->RemoveNavEntity(navEntity);
 }
 
 void AI_NavEntityReached(edict_t *ent)
 {
-    AiManager::Instance()->NavEntityReached(ent);
+    AiManager::Instance()->NavEntityReachedSignal(ent);
 }
 
 //==========================================

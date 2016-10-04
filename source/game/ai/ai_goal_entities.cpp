@@ -103,58 +103,6 @@ unsigned NavEntity::Timeout() const
     return std::numeric_limits<unsigned>::max();
 }
 
-Goal::Goal(const AiFrameAwareUpdatable *initialSetter)
-    : explicitOrigin(INFINITY, INFINITY, INFINITY)
-{
-    ResetWithSetter(initialSetter);
-}
-
-Goal::~Goal()
-{
-    if (name)
-    {
-        // If name does not refer to NavEntity::Name()
-        if (navEntity && navEntity->Name() != name)
-        {
-            G_Free(const_cast<char*>(name));
-        }
-    }
-}
-
-void Goal::SetToNavEntity(NavEntity *navEntity_, const AiFrameAwareUpdatable *setter_)
-{
-    this->navEntity = navEntity_;
-    this->name = navEntity_->Name();
-    this->setter = setter_;
-}
-
-void Goal::SetToTacticalSpot(const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter_)
-{
-    this->navEntity = nullptr;
-    this->name = nullptr;
-    this->setter = setter_;
-    this->flags = GoalFlags::REACH_ON_RADIUS | GoalFlags::TACTICAL_SPOT;
-    // If area num is zero, this goal will be canceled on its reevaluation
-    this->explicitAasAreaNum = AiAasWorld::Instance()->FindAreaNum(origin);
-    this->explicitOrigin = origin;
-    this->explicitSpawnTime = 1;
-    this->explicitTimeout = level.time + timeout;
-    this->explicitRadius = 48.0f;
-}
-
-void Goal::Clear()
-{
-    navEntity = nullptr;
-    setter = nullptr;
-    flags = GoalFlags::NONE;
-    VectorSet(explicitOrigin.Data(), INFINITY, INFINITY, INFINITY);
-    explicitAasAreaNum = 0;
-    explicitSpawnTime = 0;
-    explicitRadius = 0;
-    explicitTimeout = 0;
-    name = nullptr;
-}
-
 NavEntitiesRegistry NavEntitiesRegistry::instance;
 
 void NavEntitiesRegistry::Init()
