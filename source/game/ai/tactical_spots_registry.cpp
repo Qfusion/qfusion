@@ -59,14 +59,10 @@ bool TacticalSpotsRegistry::Load(const char *mapname)
     trap_FS_Read(nodesBuffer, sizeof(nav_node_s) * numNodes, filenum);
     trap_FS_FCloseFile(filenum);
 
-    char *mem = (char *)G_LevelMalloc(sizeof(TacticalSpot) * numNodes + numNodes * numNodes);
-
-    spots = (TacticalSpot *)mem;
-    spotVisibilityTable = (unsigned char *)(mem + sizeof(TacticalSpot) * numNodes);
+    spots = (TacticalSpot *)G_LevelMalloc(sizeof(TacticalSpot) * numNodes);
 
     const AiAasWorld *aasWorld = AiAasWorld::Instance();
 
-    // TODO: Compute real spot bounds based on AAS info and tracing
     const vec3_t mins = { -24, -24, 0 };
     const vec3_t maxs = { +24, +24, 72 };
 
@@ -89,7 +85,8 @@ bool TacticalSpotsRegistry::Load(const char *mapname)
         }
     }
 
-    ComputeMutualSpotsVisibility();
+    SetupMutualSpotsVisibility();
+    SetupSpotsGrid();
 
     return numSpots > 0;
 }
@@ -98,13 +95,31 @@ void TacticalSpotsRegistry::Shutdown()
 {
     instance.numSpots = 0;
     if (instance.spots)
+    {
         G_LevelFree(instance.spots);
-    instance.spots = nullptr;
-    instance.spotVisibilityTable = nullptr;
+        instance.spots = nullptr;
+    }
+    if (instance.spotVisibilityTable)
+    {
+        G_LevelFree(instance.spotVisibilityTable);
+        instance.spotVisibilityTable = nullptr;
+    }
+    if (instance.gridListOffsets)
+    {
+        G_LevelFree(instance.gridListOffsets);
+        instance.gridListOffsets = nullptr;
+    }
+    if (instance.gridSpotsLists)
+    {
+        G_LevelFree(instance.gridSpotsLists);
+        instance.gridSpotsLists = nullptr;
+    }
 }
 
-void TacticalSpotsRegistry::ComputeMutualSpotsVisibility()
+void TacticalSpotsRegistry::SetupMutualSpotsVisibility()
 {
+    spotVisibilityTable = (unsigned char *)G_LevelMalloc(numSpots * numSpots);
+
     trace_t trace;
     for (unsigned i = 0; i < numSpots; ++i)
     {
@@ -164,27 +179,134 @@ void TacticalSpotsRegistry::ComputeMutualSpotsVisibility()
     }
 }
 
-uint16_t TacticalSpotsRegistry::FindBBoxSpots(const OriginParams &originParams, unsigned short *spotNums) const
+void TacticalSpotsRegistry::SetupSpotsGrid()
 {
-    if (!numSpots) abort();
+    SetupGridParams();
 
-    // TODO: Use octree
+    unsigned totalNumCells = gridNumCells[0] * gridNumCells[1] * gridNumCells[2];
+    gridListOffsets = (unsigned *)G_LevelMalloc(sizeof(unsigned) * totalNumCells);
+    // For each cell at least 1 short value is used to store spots count.
+    // Also totalNumCells short values are required to store spot nums
+    // assuming that each spot belongs to a single cell.
+    gridSpotsLists = (uint16_t *)G_LevelMalloc(sizeof(uint16_t) * (totalNumCells + numSpots));
 
-    uint16_t numBBoxSpots = 0;
-    for (uint16_t spotNum = 0; spotNum < MAX_SPOTS; ++spotNum)
+    uint16_t *listPtr = gridSpotsLists;
+    // For each cell of all possible cells
+    for (unsigned cellNum = 0; cellNum < totalNumCells; ++cellNum)
     {
-        const auto &spot = spots[spotNum];
-        if (originParams.origin[0] < spot.absMins[0] || originParams.origin[0] > spot.absMaxs[0])
-            continue;
-        if (originParams.origin[1] < spot.absMins[1] || originParams.origin[1] > spot.absMaxs[1])
-            continue;
-        if (originParams.origin[2] < spot.absMins[2] || originParams.origin[2] > spot.absMaxs[2])
-            continue;
+        // Store offset of the cell spots list
+        gridListOffsets[cellNum] = (unsigned)(listPtr - gridSpotsLists);
+        // Use a reference to cell spots list head that contains number of spots in the cell
+        uint16_t &listSize = listPtr[0];
+        listSize = 0;
+        // Skip list head
+        ++listPtr;
+        // For each loaded spot
+        for (uint16_t spotNum = 0; spotNum < numSpots; ++spotNum)
+        {
+            auto pointCellNum = PointGridCellNum(spots[spotNum].origin);
+            // If the spot belongs to the cell
+            if (pointCellNum == cellNum)
+            {
+                *listPtr = spotNum;
+                ++listPtr;
+                listSize++;
+            }
+        }
+    }
+}
 
-        spotNums[numBBoxSpots++] = spotNum;
+void TacticalSpotsRegistry::SetupGridParams()
+{
+    // Get world bounds
+    trap_CM_InlineModelBounds(trap_CM_InlineModel(0), worldMins, worldMaxs);
+
+    vec3_t worldDims;
+    VectorSubtract(worldMaxs, worldMins, worldDims);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        unsigned roundedDimension = (unsigned)worldDims[i];
+        if (roundedDimension > MIN_GRID_CELL_SIDE * MAX_GRID_DIMENSION)
+        {
+            gridCellSize[i] = roundedDimension / MAX_GRID_DIMENSION;
+            gridNumCells[i] = MAX_GRID_DIMENSION;
+        }
+        else
+        {
+            gridCellSize[i] = MIN_GRID_CELL_SIDE;
+            gridNumCells[i] = (roundedDimension / MIN_GRID_CELL_SIDE) + 1;
+        }
+    }
+}
+
+uint16_t TacticalSpotsRegistry::FindSpotsInRadius(const OriginParams &originParams, unsigned short *spotNums) const
+{
+    if (!IsLoaded()) abort();
+
+    vec3_t boxMins, boxMaxs;
+    VectorCopy(originParams.origin, boxMins);
+    VectorCopy(originParams.origin, boxMaxs);
+    const float radius = originParams.searchRadius;
+    vec3_t radiusBounds = { radius, radius, radius };
+    VectorSubtract(boxMins, radiusBounds, boxMins);
+    VectorAdd(boxMaxs, radiusBounds, boxMaxs);
+
+    // Find loop bounds for each dimension
+    unsigned minCellDimIndex[3];
+    unsigned maxCellDimIndex[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        // Clamp box bounds by world bounds
+        clamp(boxMins[i], worldMins[i], worldMaxs[i]);
+        clamp(boxMaxs[i], worldMins[i], worldMaxs[i]);
+
+        // Convert box bounds to relative
+        boxMins[i] -= worldMins[i];
+        boxMaxs[i] -= worldMins[i];
+
+        minCellDimIndex[i] = (unsigned)(boxMins[i] / gridCellSize[i]);
+        maxCellDimIndex[i] = (unsigned)(boxMaxs[i] / gridCellSize[i]);
     }
 
-    return numBBoxSpots;
+    uint16_t numSpotsInRadius = 0;
+    const float squareRadius = originParams.searchRadius * originParams.searchRadius;
+
+    // For each index for X dimension in the query bounding box
+    for (unsigned i = minCellDimIndex[0]; i <= maxCellDimIndex[0]; ++i)
+    {
+        unsigned indexIOffset = i * (gridNumCells[1] * gridNumCells[2]);
+        // For each index for Y dimension in the query bounding box
+        for (unsigned j = minCellDimIndex[1]; j <= maxCellDimIndex[1]; ++j)
+        {
+            unsigned indexJOffset = j * gridNumCells[2];
+            // For each index for Z dimension in the query bounding box
+            for (unsigned k = minCellDimIndex[2]; k <= maxCellDimIndex[2]; ++k)
+            {
+                // The cell is at this offset from the beginning of a linear cells array
+                unsigned cellIndex = indexIOffset + indexJOffset + k;
+                // Get the offset of the list of spot nums for the cell
+                unsigned gridListOffset = gridListOffsets[cellIndex];
+                uint16_t *spotsList = gridSpotsLists + gridListOffset;
+                // List head contains the count of spots (spot numbers)
+                uint16_t numGridSpots = spotsList[0];
+                // Skip list head
+                spotsList++;
+                // For each spot number fetch a spot and test against the problem params
+                for (uint16_t spotNumIndex = 0; spotNumIndex < numGridSpots; ++spotNumIndex)
+                {
+                    uint16_t spotNum = spotsList[spotNumIndex];
+                    const TacticalSpot &spot = spots[spotNum];
+                    if (DistanceSquared(spot.origin, originParams.origin) < squareRadius)
+                    {
+                        spotNums[numSpotsInRadius++] = spotNum;
+                    }
+                }
+            }
+        }
+    }
+
+    return numSpotsInRadius;
 }
 
 int TacticalSpotsRegistry::CopyResults(const TraceCheckedSpots &results,
@@ -246,7 +368,7 @@ void TacticalSpotsRegistry::FindReachCheckedSpots(const OriginParams &originPara
                                                   ReachCheckedSpots &result) const
 {
     uint16_t boundsSpots[MAX_SPOTS];
-    uint16_t numSpotsInBounds = FindBBoxSpots(originParams, boundsSpots);
+    uint16_t numSpotsInBounds = FindSpotsInRadius(originParams, boundsSpots);
 
     CandidateSpots candidateSpots;
     SelectCandidateSpots(originParams, problemParams, boundsSpots, numSpotsInBounds, candidateSpots);
@@ -264,12 +386,12 @@ int TacticalSpotsRegistry::FindPositionalAdvantageSpots(const OriginParams &orig
     ReachCheckedSpots reachCheckedSpots;
     FindReachCheckedSpots(originParams, problemParams, reachCheckedSpots);
 
-    TraceCheckedSpots traceCheckedAreas;
-    CheckSpotsVisibleOriginTrace(problemParams, reachCheckedSpots, traceCheckedAreas);
+    TraceCheckedSpots traceCheckedSpots;
+    CheckSpotsVisibleOriginTrace(problemParams, reachCheckedSpots, traceCheckedSpots);
 
-    SortByVisAndOtherFactors(originParams, problemParams, traceCheckedAreas);
+    SortByVisAndOtherFactors(originParams, problemParams, traceCheckedSpots);
 
-    return CopyResults(traceCheckedAreas, problemParams, spotOrigins, maxSpots);
+    return CopyResults(traceCheckedSpots, problemParams, spotOrigins, maxSpots);
 }
 
 void TacticalSpotsRegistry::SelectCandidateSpots(const OriginParams &originParams,
@@ -409,6 +531,8 @@ void TacticalSpotsRegistry::SortByVisAndOtherFactors(const OriginParams &originP
     const float heightInfluence = problemParams.heightInfluence;
 
     const unsigned resultSpotsSize = result.size();
+    if (resultSpotsSize <= 1)
+        return;
 
     for (unsigned i = 0; i < resultSpotsSize; ++i)
     {
@@ -444,28 +568,26 @@ int TacticalSpotsRegistry::FindCoverSpots(const OriginParams &originParams,
                                           const CoverProblemParams &problemParams,
                                           vec3_t *spotOrigins, int maxSpots) const
 {
-    ReachCheckedSpots reachCheckedAreas;
-    FindReachCheckedSpots(originParams, problemParams, reachCheckedAreas);
+    ReachCheckedSpots reachCheckedSpots;
+    FindReachCheckedSpots(originParams, problemParams, reachCheckedSpots);
 
-    TraceCheckedSpots coverAreas;
-    SelectSpotsForCover(originParams, problemParams, reachCheckedAreas, coverAreas);
+    TraceCheckedSpots coverSpots;
+    SelectSpotsForCover(originParams, problemParams, reachCheckedSpots, coverSpots);
 
-    return CopyResults(coverAreas, problemParams, spotOrigins, maxSpots);
+    return CopyResults(coverSpots, problemParams, spotOrigins, maxSpots);
 }
 
 void TacticalSpotsRegistry::SelectSpotsForCover(const OriginParams &originParams,
                                                 const CoverProblemParams &problemParams,
-                                                ReachCheckedSpots &candidateAreas,
+                                                ReachCheckedSpots &candidateSpots,
                                                 TraceCheckedSpots &result) const
 {
     // Do not do more than result.capacity() iterations
-    for (unsigned i = 0, end = std::min(candidateAreas.size(), result.capacity()); i < end; ++i)
+    for (unsigned i = 0, end = std::min(candidateSpots.size(), result.capacity()); i < end; ++i)
     {
-        const SpotAndScore &spotAndScore = candidateAreas[i];
-        if (!LooksLikeACoverSpot(spotAndScore.spotNum, originParams, problemParams))
-            continue;
-
-        result.push_back(spotAndScore);
+        const SpotAndScore &spotAndScore = candidateSpots[i];
+        if (LooksLikeACoverSpot(spotAndScore.spotNum, originParams, problemParams))
+            result.push_back(spotAndScore);
     };
 }
 

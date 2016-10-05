@@ -140,6 +140,8 @@ public:
     };
 private:
     static constexpr uint16_t MAX_SPOTS = 2048;
+    static constexpr uint16_t MIN_GRID_CELL_SIDE = 512;
+    static constexpr uint16_t MAX_GRID_DIMENSION = 32;
 
     struct TacticalSpot
     {
@@ -149,8 +151,21 @@ private:
         int aasAreaNum;
     };
 
+    // i-th element contains a spot for i=spotNum
     TacticalSpot *spots;
+    // i-th element contains a visibility for i=spotNum
     unsigned char *spotVisibilityTable;
+    // i-th element contains an offset of a grid cell spot nums list for i=cellNum
+    unsigned *gridListOffsets;
+    // Contains packed lists of grid cell spot nums.
+    // Each list starts by number of spot nums followed by spot nums.
+    uint16_t *gridSpotsLists;
+
+    vec3_t worldMins;
+    vec3_t worldMaxs;
+
+    unsigned gridCellSize[3];
+    unsigned gridNumCells[3];
 
     unsigned numSpots;
 
@@ -172,13 +187,29 @@ private:
     TacticalSpotsRegistry()
         : spots(nullptr),
           spotVisibilityTable(nullptr),
+          gridListOffsets(nullptr),
+          gridSpotsLists(nullptr),
           numSpots(0) {}
 
     bool Load(const char *mapname);
 
-    void ComputeMutualSpotsVisibility();
+    void SetupMutualSpotsVisibility();
+    void SetupSpotsGrid();
+    void SetupGridParams();
 
-    unsigned short FindBBoxSpots(const OriginParams &originParams, uint16_t *spotNums) const;
+    inline unsigned PointGridCellNum(const vec3_t point)
+    {
+        vec3_t offset;
+        VectorSubtract(point, worldMins, offset);
+
+        unsigned i = (unsigned)(offset[0] / gridCellSize[0]);
+        unsigned j = (unsigned)(offset[1] / gridCellSize[1]);
+        unsigned k = (unsigned)(offset[2] / gridCellSize[2]);
+
+        return i * (gridNumCells[1] * gridNumCells[2]) + j * gridNumCells[2] + k;
+    }
+
+    unsigned short FindSpotsInRadius(const OriginParams &originParams, uint16_t *spotNums) const;
 
     void SelectCandidateSpots(const OriginParams &originParams, const CommonProblemParams &problemParams,
                               const uint16_t *spotNums, uint16_t numSpots, CandidateSpots &result) const;
