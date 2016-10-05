@@ -3,6 +3,7 @@
 #include "ai_base_team_brain.h"
 #include "ai_shutdown_hooks_holder.h"
 #include "bot.h"
+#include "tactical_spots_registry.h"
 
 // Class static variable declaration
 AiManager *AiManager::instance = nullptr;
@@ -217,7 +218,7 @@ bool AiManager::CheckCanSpawnBots()
     if (level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities)
         return false;
 
-    if (!AiAasWorld::Instance()->IsLoaded())
+    if (!AiAasWorld::Instance()->IsLoaded() || !TacticalSpotsRegistry::Instance()->IsLoaded())
     {
         Com_Printf("AI: Can't spawn bots without a valid navigation file\n");
         if( g_numbots->integer )

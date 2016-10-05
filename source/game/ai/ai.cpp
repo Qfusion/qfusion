@@ -2,7 +2,7 @@
 #include "ai_shutdown_hooks_holder.h"
 #include "ai_manager.h"
 #include "ai_objective_based_team_brain.h"
-#include "tactical_spots_detector.h"
+#include "tactical_spots_registry.h"
 
 ai_weapon_aim_type BuiltinWeaponAimType(int builtinWeapon)
 {
@@ -125,6 +125,7 @@ void AI_InitLevel( void )
 {
     AiAasWorld::Init(level.mapname);
     AiAasRouteCache::Init(*AiAasWorld::Instance());
+    TacticalSpotsRegistry::Init(level.mapname);
 
     NavEntitiesRegistry::Instance()->Init();
 }
@@ -141,6 +142,8 @@ void AI_Shutdown( void )
 void AI_UnloadLevel()
 {
     AI_RemoveBots();
+
+    TacticalSpotsRegistry::Shutdown();
     AiAasRouteCache::Shutdown();
     AiAasWorld::Shutdown();
 }

@@ -3,7 +3,7 @@
 #include "ai_aas_route_cache.h"
 #include "ai_objective_based_team_brain.h"
 #include "bot.h"
-#include "tactical_spots_detector.h"
+#include "tactical_spots_registry.h"
 #include "../g_as_local.h"
 
 static const asEnumVal_t asNavEntityFlagsEnumVals[] =
@@ -330,28 +330,28 @@ void AI_RemoveOffenseSpot( int team, int id )
 
 static int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float searchRadius, vec3_t *spots, int maxSpots)
 {
-    TacticalSpotsDetector tacticalSpotsDetector;
+    const TacticalSpotsRegistry *tacticalSpotsRegistry = TacticalSpotsRegistry::Instance();
+    if (!tacticalSpotsRegistry)
+        return 0;
+
+    TacticalSpotsRegistry::OriginParams originParams(defendedEntity, searchRadius, AiAasRouteCache::Shared());
+    TacticalSpotsRegistry::AdvantageProblemParams problemParams(defendedEntity);
+
     // A reachability to a spot from an entity will be checked.
     // Checking a reachability from a planting spot to an entity does not make sense.
-    tacticalSpotsDetector.SetCheckToAndBackReachability(false);
-    tacticalSpotsDetector.SetDistanceInfluence(0.9f);
+    problemParams.SetCheckToAndBackReachability(false);
+    problemParams.SetDistanceInfluence(0.9f);
     // This means weight never falls off and farther spots have greater weight.
-    tacticalSpotsDetector.SetWeightFalloffDistanceRatio(1.0f);
+    problemParams.SetWeightFalloffDistanceRatio(1.0f);
     // Travel time should not affect it significantly (spots planting is a "background task" for bots).
-    tacticalSpotsDetector.SetTravelTimeInfluence(0.2f);
-    // Avoid planting near ledges (a bot may miss and drop an item from a ledge trying to plant it).
-    tacticalSpotsDetector.SetLedgePenalty(10.0f);
-    // Avoid planting near walls (enemies can destroy planted items easily using explosives).
-    tacticalSpotsDetector.SetWallPenalty(5.0f);
+    problemParams.SetTravelTimeInfluence(0.2f);
     // Allow planting on ground and a bit below if there are no elevated areas
-    tacticalSpotsDetector.SetMinHeightAdvantage(-64.0f);
+    problemParams.SetMinHeightAdvantage(-64.0f);
     // Prefer elevated areas
-    tacticalSpotsDetector.SetHeightInfluence(0.9f);
+    problemParams.SetHeightInfluence(0.9f);
     // Prevent selection of spots that are too close to each other
-    tacticalSpotsDetector.SetSpotProximityThreshold(128.0f);
-    TacticalSpotsDetector::OriginParams originParams(defendedEntity, searchRadius, AiAasRouteCache::Shared());
-    TacticalSpotsDetector::AdvantageProblemParams problemParams(defendedEntity);
-    return tacticalSpotsDetector.FindPositionalAdvantageSpots(originParams, problemParams, spots, maxSpots);
+    problemParams.SetSpotProximityThreshold(128.0f);
+    return tacticalSpotsRegistry->FindPositionalAdvantageSpots(originParams, problemParams, spots, maxSpots);
 }
 
 static CScriptArrayInterface *asFunc_AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float radius, int maxSpots)
