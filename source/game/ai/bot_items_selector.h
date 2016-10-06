@@ -31,7 +31,13 @@ class BotItemsSelector
     float ComputeHealthWeight(const gsitem_t *item) const;
     float ComputePowerupWeight(const gsitem_t *item) const;
 
-    void Debug(const char *format, ...);
+    inline void Debug(const char *format, ...)
+    {
+        va_list va;
+        va_start(va, format);
+        AI_Debugv(self->r.client->netname, format, va);
+        va_end(va);
+    }
 public:
     inline BotItemsSelector(edict_t *self_): self(self_) {}
 

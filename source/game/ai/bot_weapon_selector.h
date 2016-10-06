@@ -278,7 +278,13 @@ public:
     void Frame(const WorldState &recentWorldState);
     void Think(const WorldState &currentWorldState);
 private:
-    void Debug(const char *format, ...);
+    inline void Debug(const char *format, ...)
+    {
+        va_list va;
+        va_start(va, format);
+        AI_Debugv(self->r.client->netname, format, va);
+        va_end(va);
+    }
 
     inline bool BotHasQuad() const { return ::HasQuad(self); }
     inline bool BotHasShell() const { return ::HasShell(self); }
