@@ -21,23 +21,6 @@ Ai::Ai(edict_t *self_, int allowedAasTravelFlags_, int preferredAasTravelFlags_)
 {
 }
 
-void Ai::Debug(const char *format, ...) const
-{
-    va_list va;
-    va_start(va, format);
-    AI_Debugv(Nick(), format, va);
-    va_end(va);
-}
-
-void Ai::FailWith(const char *format, ...) const
-{
-    va_list va;
-    va_start(va, format);
-    AI_Debugv(Nick(), format, va);
-    va_end(va);
-    abort();
-}
-
 void Ai::SetFrameAffinity(unsigned modulo, unsigned offset)
 {
     frameAffinityModulo = modulo;

@@ -120,9 +120,6 @@ public:
 
     static constexpr unsigned BLOCKED_TIMEOUT = 15000;
 protected:
-    void Debug(const char *format, ...) const;
-    void FailWith(const char *format, ...) const;
-
     const char *Nick() const
     {
         return self->r.client ? self->r.client->netname : self->classname;
