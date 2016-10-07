@@ -1,0 +1,11 @@
+/shared/constants.as;
+/shared/utils.as;
+/shared/files.as;
+
+generic/quickmenu.as;
+generic/playerclasses.as;
+generic/matchstates.as;
+generic/bots.as;
+generic/awards.as;
+
+rekt.as;
