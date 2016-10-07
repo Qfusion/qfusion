@@ -7,25 +7,181 @@
 #include "static_vector.h"
 #include "../../gameshared/q_collision.h"
 
-inline void PoolBase::Link(short itemIndex, short *listHead)
+// Use this macro so one have to write condition that matches the corresponding case and not its negation
+#define TEST_OR_FAIL(condition)  \
+do                               \
+{                                \
+    if (!(condition))            \
+        return false;            \
+}                                \
+while (0)
+
+#define TEST_GENERIC_CMP_SATISFY_OP(ops, values)                          \
+switch (ops[i])                                                           \
+{                                                                         \
+    case SatisfyOp::EQ: TEST_OR_FAIL(values[i] == that.values[i]); break; \
+    case SatisfyOp::NE: TEST_OR_FAIL(values[i] != that.values[i]); break; \
+    case SatisfyOp::GT: TEST_OR_FAIL(values[i] > that.values[i]); break;  \
+    case SatisfyOp::GE: TEST_OR_FAIL(values[i] >= that.values[i]); break; \
+    case SatisfyOp::LS: TEST_OR_FAIL(values[i] < that.values[i]); break;  \
+    case SatisfyOp::LE: TEST_OR_FAIL(values[i] <= that.values[i]); break; \
+}
+
+bool WorldState::IsSatisfiedBy(const WorldState &that) const
 {
-    PoolItem &item = ItemAt(itemIndex);
-    if (*listHead >= 0)
+    // Test bool vars first since it is cheaper and would reject non-matching `that`state quickly
+    for (int i = 0; i < NUM_BOOL_VARS; ++i)
     {
-        PoolItem &headItem = ItemAt(*listHead);
+        if (boolVarsIgnoreFlags[i])
+            continue;
+
+        if (that.boolVarsIgnoreFlags[i])
+            return false;
+
+        if (boolVarsValues[i] != that.boolVarsValues[i])
+            return false;
+    }
+
+    for (int i = 0; i < NUM_UNSIGNED_VARS; ++i)
+    {
+        if (unsignedVarsIgnoreFlags[i])
+            continue;
+
+        if (that.unsignedVarsIgnoreFlags[i])
+            return false;
+
+        TEST_GENERIC_CMP_SATISFY_OP(unsignedVarsSatisfyOps, unsignedVarsValues);
+    }
+
+    for (int i = 0; i < NUM_FLOAT_VARS; ++i)
+    {
+        if (floatVarsIgnoreFlags[i])
+            continue;
+
+        if (that.floatVarsIgnoreFlags[i])
+            return false;
+
+        TEST_GENERIC_CMP_SATISFY_OP(floatVarsSatisfyOps, floatVarsValues);
+    }
+
+    for (int i = 0; i < NUM_SHORT_VARS; ++i)
+    {
+        if (shortVarsIgnoreFlags[i])
+            continue;
+
+        if (that.shortVarsIgnoreFlags[i])
+            return false;
+
+        TEST_GENERIC_CMP_SATISFY_OP(shortVarsSatisfyOps, shortVarsValues);
+    }
+
+    return true;
+}
+
+uint32_t WorldState::Hash() const
+{
+    uint32_t result = 37;
+
+    for (int i = 0; i < NUM_UNSIGNED_VARS; ++i)
+    {
+        if (!(unsignedVarsIgnoreFlags[i]))
+        {
+            result = result * 17 + unsignedVarsValues[i];
+            result = result * 17 + (unsigned)unsignedVarsSatisfyOps[i] + 1;
+        }
+    }
+
+    for (int i = 0; i < NUM_FLOAT_VARS; ++i)
+    {
+        if (!(floatVarsIgnoreFlags[i]))
+        {
+            result = result * 17 + *((uint32_t *)(&floatVarsValues[i]));
+            result = result * 17 + (unsigned)floatVarsSatisfyOps[i] + 1;
+        }
+    }
+
+    for (int i = 0; i < NUM_SHORT_VARS; ++i)
+    {
+        if (!(shortVarsIgnoreFlags[i]))
+        {
+            result = result * 17 + shortVarsValues[i];
+            result = result * 17 + (unsigned)shortVarsSatisfyOps[i] + 1;
+        }
+    }
+
+    for (int i = 0; i < NUM_BOOL_VARS; ++i)
+    {
+        if (!(boolVarsIgnoreFlags[i]))
+        {
+            result = result * 17 + (unsigned)boolVarsValues[i] + 1;
+        }
+    }
+
+    return result;
+}
+
+#define TEST_VARS_TYPE(numVars, ignoreMask, values, ops)          \
+for (int i = 0; i < numVars; ++i)                                 \
+{                                                                 \
+    if (!(ignoreMask[i]))                                         \
+    {                                                             \
+        if (that.ignoreMask[i])                                   \
+            return false;                                         \
+        if (values[i] != that.values[i] || ops[i] != that.ops[i]) \
+            return false;                                         \
+    }                                                             \
+    else if (that.ignoreMask[i])                                  \
+        return false;                                             \
+}
+
+bool WorldState::operator==(const WorldState &that) const
+{
+    // Test bool vars first since it is cheaper and would reject non-matching `that` state quickly
+    for (int i = 0; i < NUM_BOOL_VARS; ++i)
+    {
+        if (!(boolVarsIgnoreFlags[i]))
+        {
+            if (that.boolVarsIgnoreFlags[i])
+                return false;
+            if (boolVarsValues[i] != that.boolVarsValues[i])
+                return false;
+        }
+        else if (that.boolVarsIgnoreFlags[i])
+            return false;
+    }
+
+    TEST_VARS_TYPE(NUM_UNSIGNED_VARS, unsignedVarsIgnoreFlags, unsignedVarsValues, unsignedVarsSatisfyOps);
+    TEST_VARS_TYPE(NUM_FLOAT_VARS, floatVarsIgnoreFlags, floatVarsValues, floatVarsSatisfyOps);
+    TEST_VARS_TYPE(NUM_SHORT_VARS, shortVarsIgnoreFlags, shortVarsValues, shortVarsSatisfyOps);
+
+    return true;
+}
+
+inline void PoolBase::Link(short itemIndex, short listIndex)
+{
+#ifdef _DEBUG
+    Debug("Link(): About to link item at index %d in %s list\n", itemIndex, ListName(listIndex));
+#endif
+    PoolItem &item = ItemAt(itemIndex);
+    if (listFirst[listIndex] >= 0)
+    {
+        PoolItem &headItem = ItemAt(listFirst[listIndex]);
         headItem.prevInList = itemIndex;
-        item.nextInList = *listHead;
+        item.nextInList = listFirst[listIndex];
     }
     else
     {
         item.nextInList = -1;
     }
     item.prevInList = -1;
-    *listHead = itemIndex;
+    listFirst[listIndex] = itemIndex;
 }
 
-inline void PoolBase::Unlink(short itemIndex, short *listHead)
+inline void PoolBase::Unlink(short itemIndex, short listIndex)
 {
+#ifdef _DEBUG
+    Debug("Unlink(): About to unlink item at index %d from %s list\n", itemIndex, ListName(listIndex));
+#endif
     PoolItem &item = ItemAt(itemIndex);
     if (item.prevInList >= 0)
     {
@@ -39,28 +195,28 @@ inline void PoolBase::Unlink(short itemIndex, short *listHead)
     }
     else // An item is a list head
     {
-        if (*listHead != itemIndex) abort();
+        if (listFirst[listIndex] != itemIndex) abort();
         if (item.nextInList >= 0)
         {
             PoolItem &nextItem = ItemAt(item.nextInList);
             nextItem.prevInList = -1;
-            *listHead = item.nextInList;
+            listFirst[listIndex] = item.nextInList;
         }
         else
-            *listHead = -1;
+            listFirst[listIndex] = -1;
     }
 }
 
 void *PoolBase::Alloc()
 {
-    if (firstFree < 0)
+    if (listFirst[FREE_LIST] < 0)
         return nullptr;
 
-    short freeItemIndex = firstFree;
+    short freeItemIndex = listFirst[FREE_LIST];
     // Unlink from free items list
-    Unlink(freeItemIndex, &firstFree);
+    Unlink(freeItemIndex, FREE_LIST);
     // Link to used items list
-    Link(freeItemIndex, &firstUsed);
+    Link(freeItemIndex, USED_LIST);
     return &ItemAt(freeItemIndex);
 }
 
@@ -68,16 +224,16 @@ void PoolBase::Free(PoolItem *item)
 {
     short itemIndex = IndexOf(item);
     // Unlink from used
-    Unlink(itemIndex, &firstUsed);
+    Unlink(itemIndex, USED_LIST);
     // Link to free
-    Link(itemIndex, &firstFree);
+    Link(itemIndex, FREE_LIST);
 }
 
-PoolBase::PoolBase(char *basePtr_, unsigned itemSize_, unsigned itemsCount)
-    : basePtr(basePtr_), itemSize(itemSize_)
+PoolBase::PoolBase(char *basePtr_, const char *tag_, unsigned itemSize_, unsigned itemsCount)
+    : basePtr(basePtr_), tag(tag_), itemSize(itemSize_)
 {
-    firstFree = 0;
-    firstUsed = -1;
+    listFirst[FREE_LIST] = 0;
+    listFirst[USED_LIST] = -1;
 
     // Link all items to the free list
     short lastIndex = (short)(itemsCount - 1);
@@ -94,7 +250,7 @@ PoolBase::PoolBase(char *basePtr_, unsigned itemSize_, unsigned itemsCount)
 
 void PoolBase::Clear()
 {
-    short itemIndex = firstUsed;
+    short itemIndex = listFirst[USED_LIST];
     while (itemIndex >= 0)
     {
         auto &item = ItemAt(itemIndex);
@@ -103,20 +259,16 @@ void PoolBase::Clear()
     }
 }
 
-void AiBaseGoal::Register(edict_t *owner, AiBaseGoal *self)
-{
-    owner->ai->aiRef->aiBaseBrain->goals.push_back(self);
-}
-
-void AiBaseAction::Register(edict_t *owner, AiBaseAction *self)
-{
-    owner->ai->aiRef->aiBaseBrain->actions.push_back(self);
-}
-
 AiBaseBrain::AiBaseBrain(edict_t *self_)
     : self(self_),
+      navTarget(nullptr),
+      planHead(nullptr),
+      lastReachedNavTarget(nullptr),
+      lastNavTargetReachedAt(0),
+      prevThinkAt(0),
       decisionRandom(0.5f),
-      nextDecisionRandomUpdateAt(0)
+      nextDecisionRandomUpdateAt(0),
+      plannerNodesPool("PlannerNodesPool")
 {
     // Set a negative attitude to other entities
     std::fill_n(attitude, MAX_EDICTS, -1);
@@ -176,7 +328,8 @@ struct PlannerNodesHashSet
 {
     PlannerNode *bins[N];
 
-    void RemoveNode(PlannerNode *node, unsigned binIndex)
+    // Returns PlannerNode::heapArrayIndex of the removed node
+    unsigned RemoveNode(PlannerNode *node, unsigned binIndex)
     {
         // Node is not a head bin node
         if (node->prevInHashBin)
@@ -197,8 +350,16 @@ struct PlannerNodesHashSet
             else
                 bins[binIndex] = nullptr;
         }
+        unsigned result = node->heapArrayIndex;
+        node->DeleteSelf();
+        return result;
     }
 public:
+    inline PlannerNodesHashSet()
+    {
+        std::fill_n(bins, N, nullptr);
+    }
+
     bool ContainsSameWorldState(const PlannerNode *node) const
     {
         for (PlannerNode *binNode = bins[node->worldStateHash % N]; binNode; binNode = binNode->nextInHashBin)
@@ -228,7 +389,8 @@ public:
         bins[binIndex] = node;
     }
 
-    void RemoveBySameWorldState(PlannerNode *node)
+    // Returns PlannerNode::heapArrayIndex of the removed node
+    unsigned RemoveBySameWorldState(PlannerNode *node)
     {
         unsigned binIndex = node->worldStateHash % N;
         for (PlannerNode *binNode = bins[binIndex]; binNode; binNode = binNode->nextInHashBin)
@@ -238,9 +400,9 @@ public:
             if (!(binNode->worldState == node->worldState))
                 continue;
 
-            RemoveNode(binNode, binIndex);
-            return;
+            return RemoveNode(binNode, binIndex);
         }
+        AI_FailWith("PlannerNodesHashSet::RemoveBySameWorldState()", "Can't find a node that has same world state");
     }
 };
 
@@ -284,9 +446,31 @@ class PlannerNodesHeap
         }
     }
 
+    void CheckIndices()
+    {
+#ifdef _DEBUG
+        bool checkPassed = true;
+        for (unsigned i = 0; i < array.size(); ++i)
+        {
+            if (array[i]->heapArrayIndex != i)
+            {
+                const char *format = "PlannerNodesHeap::CheckIndices(): node at index %d has heap array index %d\n";
+                G_Printf(format, i, array[i]->heapArrayIndex);
+                checkPassed = false;
+            }
+        }
+        if (!checkPassed)
+            AI_FailWith("PlannerNodesHeap::CheckIndices()", "There was indices mismatch");
+#endif
+    }
 public:
     void Push(PlannerNode *node)
     {
+#ifdef _DEBUG
+        if (array.size() == array.capacity())
+            AI_FailWith("PlannerNodesHeap::Push()", "Capacity overflow");
+#endif
+
         array.push_back(node);
         unsigned child = array.size() - 1;
         array.back()->heapArrayIndex = child;
@@ -302,6 +486,8 @@ public:
                 break;
             child = parent;
         }
+
+        CheckIndices();
     }
 
     PlannerNode *Pop()
@@ -314,31 +500,41 @@ public:
         array.front()->heapArrayIndex = 0;
         array.pop_back();
         BubbleDown(0);
+        CheckIndices();
         return result;
     }
 
-    void Remove(PlannerNode *node)
+    void Remove(unsigned nodeIndex)
     {
-        unsigned nodeIndex = node->heapArrayIndex;
+#ifdef _DEBUG
+        if (nodeIndex > array.size())
+        {
+            const char *format = "Attempt to remove node by index %d that is greater than the nodes heap size %d\n";
+            AI_FailWith("PlannerNodesHeap::Remove()", format, nodeIndex, array.size());
+        }
+#endif
         array[nodeIndex] = array.back();
         array[nodeIndex]->heapArrayIndex = nodeIndex;
         array.pop_back();
         BubbleDown(nodeIndex);
+        CheckIndices();
     }
 };
 
 AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &currWorldState)
 {
     PlannerNode *startNode = plannerNodesPool.New();
+    startNode->worldState = currWorldState;
+    startNode->worldStateHash = startNode->worldState.Hash();
     startNode->transitionCost = 0.0f;
     startNode->costSoFar = 0.0f;
     startNode->heapCost = 0.0f;
-    startNode->nextInPlan = nullptr;
+    startNode->parent = nullptr;
     startNode->nextTransition = nullptr;
     startNode->actionRecord = nullptr;
 
-    goal->GetDesiredWorldState(&startNode->worldState);
-    const WorldState *goalWorldState = &startNode->worldState;
+    WorldState goalWorldState;
+    goal->GetDesiredWorldState(&goalWorldState);
 
     // Use prime numbers as hash bins count parameters
     PlannerNodesHashSet<389> closedNodesSet;
@@ -349,10 +545,11 @@ AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &c
 
     while (PlannerNode *currNode = openNodesHeap.Pop())
     {
-        if (goalWorldState->IsSatisfiedBy(currNode->worldState))
+        if (goalWorldState.IsSatisfiedBy(currNode->worldState))
         {
+            AiBaseActionRecord *plan = ReconstructPlan(currNode);
             plannerNodesPool.Clear();
-            return ReconstructPlan(startNode);
+            return plan;
         }
 
         closedNodesSet.Add(currNode);
@@ -361,27 +558,51 @@ AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &c
         for (PlannerNode *transition = firstTransition; transition; transition = transition->nextTransition)
         {
             float cost = currNode->costSoFar + transition->transitionCost;
-            bool transitionIsInOpen = openNodesSet.ContainsSameWorldState(transition);
-            if (cost < transition->costSoFar && transitionIsInOpen)
+            bool isInOpen = openNodesSet.ContainsSameWorldState(transition);
+            bool isInClosed = closedNodesSet.ContainsSameWorldState(transition);
+
+            // Check this assertion first before removal of the transition from sets
+            // (make an implicit crash due to violation of node indices properties explicit)
+            if (isInOpen && isInClosed)
+                abort();
+
+            const bool wasInOpen = isInOpen;
+            const bool wasInClosed = isInClosed;
+
+            if (cost < transition->costSoFar && isInOpen)
             {
-                openNodesSet.RemoveBySameWorldState(transition);
-                openNodesHeap.Remove(transition);
-                transitionIsInOpen = false;
+                unsigned nodeHeapIndex = openNodesSet.RemoveBySameWorldState(transition);
+                openNodesHeap.Remove(nodeHeapIndex);
+                isInOpen = false;
             }
-            bool transitionIsInClosed = closedNodesSet.ContainsSameWorldState(transition);
-            if (cost < transition->costSoFar && transitionIsInClosed)
+            if (cost < transition->costSoFar && isInClosed)
             {
                 closedNodesSet.RemoveBySameWorldState(transition);
-                transitionIsInClosed = false;
+                isInClosed = false;
             }
-            if (!transitionIsInOpen && !transitionIsInClosed)
+
+            if (!isInOpen && !isInClosed)
             {
                 transition->costSoFar = cost;
                 transition->heapCost = cost;
-                currNode->nextInPlan = transition;
-                transition->nextInPlan = nullptr;
+                // Save a reference to parent (the nodes order will be reversed on plan reconstruction)
+                transition->parent = currNode;
                 openNodesSet.Add(transition);
                 openNodesHeap.Push(transition);
+            }
+            else
+            {
+                // If the same world state node has been kept in OPEN or CLOSED set, the new node should be released
+                if (isInOpen)
+                {
+                    if (wasInOpen)
+                        transition->DeleteSelf();
+                }
+                else // if (isInClosed) = if (true)
+                {
+                    if (wasInClosed)
+                        transition->DeleteSelf();
+                }
             }
         }
     }
@@ -397,43 +618,76 @@ PlannerNode *AiBaseBrain::GetWorldStateTransitions(const WorldState &fromWorldSt
     {
         if (PlannerNode *actionNode = action->TryApply(fromWorldState))
         {
-            if (firstTransition != nullptr)
-                actionNode->nextTransition = firstTransition;
-            else
-                actionNode->nextTransition = nullptr;
-
+            actionNode->nextTransition = firstTransition;
             firstTransition = actionNode;
         }
     }
     return firstTransition;
 }
 
-AiBaseActionRecord *AiBaseBrain::ReconstructPlan(PlannerNode *startNode) const
+AiBaseActionRecord *AiBaseBrain::ReconstructPlan(PlannerNode *lastNode) const
 {
-    AiBaseActionRecord *firstInPlan = startNode->actionRecord;
-    AiBaseActionRecord *lastInPlan = startNode->actionRecord;
-    lastInPlan->nextInPlan = nullptr;
-    // Release actionRecord ownership
-    startNode->actionRecord = nullptr;
+    AiBaseActionRecord *recordsStack[MAX_PLANNER_NODES];
+    int numNodes = 0;
 
-    for (PlannerNode *node = startNode->nextInPlan; node != nullptr; node = node->nextInPlan)
+    // Start node does not have an associated action record (actions are transitions from parent nodes)
+    for (PlannerNode *node = lastNode; node && node->parent; node = node->parent)
     {
-        lastInPlan->nextInPlan = node->actionRecord;
-        lastInPlan = lastInPlan->nextInPlan;
-        lastInPlan->nextInPlan = nullptr;
-        // Release actionRecord ownership
+        recordsStack[numNodes++] = node->actionRecord;
+        // Release action record ownership (otherwise the action record will be delete by the planner node destructor)
         node->actionRecord = nullptr;
     }
+
+    if (!numNodes)
+    {
+        Debug("Warning: goal world state is already satisfied by a current one, can't find a plan\n");
+        return nullptr;
+    }
+
+    AiBaseActionRecord *firstInPlan = recordsStack[numNodes - 1];
+    AiBaseActionRecord *lastInPlan = recordsStack[numNodes - 1];
+    G_Printf("Plan is %s", firstInPlan->Name());
+    for (int i = numNodes - 2; i >= 0; --i)
+    {
+        lastInPlan->nextInPlan = recordsStack[i];
+        lastInPlan = recordsStack[i];
+        G_Printf("->%s", recordsStack[i]->Name());
+    }
+    G_Printf("\n");
+
+    lastInPlan->nextInPlan = nullptr;
     return firstInPlan;
+}
+
+void AiBaseBrain::SetPlan(AiBaseActionRecord *planHead_)
+{
+    if (this->planHead)
+    {
+        Debug("SetPlan(): current plan is still present\n");
+    }
+    if (!planHead_)
+    {
+        Debug("SetPlan(): attempt to set a null plan\n");
+    }
+    this->planHead = planHead_;
+    this->planHead->Activate();
 }
 
 void AiBaseBrain::ClearPlan()
 {
     if (planHead)
+    {
+        Debug("ClearPlan(): Should deactivate plan head\n");
         planHead->Deactivate();
 
-    for (AiBaseActionRecord *actionRecord = planHead; actionRecord; actionRecord = actionRecord->nextInPlan)
-        actionRecord->nextInPlan->DeleteSelf();
+        AiBaseActionRecord *currRecord = planHead;
+        while (currRecord)
+        {
+            AiBaseActionRecord *nextRecord = currRecord->nextInPlan;
+            currRecord->DeleteSelf();
+            currRecord = nextRecord;
+        }
+    }
 
     planHead = nullptr;
 }
@@ -525,16 +779,31 @@ void AiBaseBrain::PreThink()
 
 void AiBaseBrain::Think()
 {
+    if (G_ISGHOSTING(self))
+        return;
+
     // Prepare current world state for planner
     WorldState currWorldState;
     PrepareCurrWorldState(&currWorldState);
 
     if (planHead)
     {
-        if (planHead->CheckStatus(currWorldState) == AiBaseActionRecord::Status::INVALID)
+        AiBaseActionRecord::Status status = planHead->CheckStatus(currWorldState);
+        if (status == AiBaseActionRecord::INVALID)
         {
+            Debug("Plan head %s CheckStatus() returned INVALID status\n", planHead->Name());
             ClearPlan();
             UpdateGoalsAndPlan(currWorldState);
+        }
+        else if (status == AiBaseActionRecord::COMPLETED)
+        {
+            Debug("Plan head %s CheckStatus() returned COMPLETED status\n", planHead->Name());
+            AiBaseActionRecord *oldPlanHead = planHead;
+            planHead = planHead->nextInPlan;
+            oldPlanHead->Deactivate();
+            oldPlanHead->DeleteSelf();
+            if (planHead)
+                planHead->Activate();
         }
     }
     else
@@ -555,8 +824,9 @@ bool AiBaseBrain::HandleNavTargetTouch(const edict_t *ent)
     if (!navTarget->ShouldBeReachedAtTouch())
         return false;
 
-    // TODO: Register touch event record
-    abort();
+    lastReachedNavTarget = navTarget;
+    lastNavTargetReachedAt = level.time;
+    return true;
 }
 
 constexpr float GOAL_PROXIMITY_THRESHOLD = 40.0f * 40.0f;
@@ -572,7 +842,8 @@ bool AiBaseBrain::TryReachNavTargetByProximity()
     float goalRadius = navTarget->RadiusOrDefault(GOAL_PROXIMITY_THRESHOLD);
     if ((navTarget->Origin() - self->s.origin).SquaredLength() < goalRadius * goalRadius)
     {
-        // TODO: Register entity reached event
+        lastReachedNavTarget = navTarget;
+        lastNavTargetReachedAt = level.time;
         return true;
     }
 

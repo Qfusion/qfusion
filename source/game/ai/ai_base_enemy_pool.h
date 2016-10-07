@@ -92,18 +92,12 @@ inline bool IsCarrier(const edict_t *ent)
 
 float DamageToKill(const edict_t *ent, float armorProtection, float armorDegradation);
 
+float DamageToKill(float health, float armor, float armorProtection, float armorDegradation);
+
 class Enemy
 {
-public:
-
-    Enemy() : ent(nullptr), lastSeenPosition(NAN, NAN, NAN), lastSeenVelocity(NAN, NAN, NAN)
-    {
-        Clear();
-    }
-
-    const edict_t *ent;  // If null, the enemy slot is unused
-
-    static constexpr unsigned MAX_TRACKED_POSITIONS = 16;
+    friend class AiBaseEnemyPool;
+    class AiBaseEnemyPool *parent;
 
     float weight;
     float avgPositiveWeight;
@@ -111,6 +105,23 @@ public:
     unsigned positiveWeightsCount;
 
     unsigned registeredAt;
+
+    // Same as front() of lastSeenPositions, used for faster access
+    Vec3 lastSeenPosition;
+    // Same as front() of lastSeenVelocities, used for faster access
+    Vec3 lastSeenVelocity;
+    // Same as front() of lastSeenTimestamps, used for faster access
+    unsigned lastSeenAt;
+public:
+    const edict_t *ent;  // If null, the enemy slot is unused
+
+    inline Enemy()
+        : parent(nullptr), lastSeenPosition(NAN, NAN, NAN), lastSeenVelocity(NAN, NAN, NAN), ent(nullptr)
+    {
+        Clear();
+    }
+
+    static constexpr unsigned MAX_TRACKED_POSITIONS = 16;
 
     void Clear();
     void OnViewed();
@@ -155,6 +166,8 @@ public:
     inline const Vec3 &LastSeenPosition() const { return lastSeenPosition; }
     inline const Vec3 &LastSeenVelocity() const { return lastSeenVelocity; }
 
+    inline unsigned LastAttackedByTime() const;
+
     inline bool IsValid() const { return ent != nullptr; }
 
     inline Vec3 LookDir() const
@@ -173,13 +186,6 @@ public:
     StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenPositions;
     // Array of last seen enemy velocities
     StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenVelocities;
-private:
-    // Same as front() of lastSeenPositions, used for faster access
-    Vec3 lastSeenPosition;
-    // Same as front() of lastSeenVelocities, used for faster access
-    Vec3 lastSeenVelocity;
-    // Same as front() of lastSeenTimestamps, used for faster access
-    unsigned lastSeenAt;
 };
 
 class AttackStats
@@ -368,5 +374,7 @@ public:
     unsigned LastAttackedByTime(const edict_t *ent) const;
     unsigned LastTargetTime(const edict_t *ent) const;
 };
+
+inline unsigned Enemy::LastAttackedByTime() const { return parent->LastAttackedByTime(ent); }
 
 #endif

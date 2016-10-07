@@ -63,18 +63,13 @@ void BotBrain::OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable
         toEnemyDir *= distance;
         if (toEnemyDir.Dot(botLookDir) < 0)
         {
-            if (!self->ai->botRef->HasPendingLookAtPoint())
-            {
-                // Try to guess enemy origin
-                toEnemyDir.X() += -0.25f + 0.50f * random();
-                toEnemyDir.Y() += -0.10f + 0.20f * random();
-                toEnemyDir.NormalizeFast();
-                Vec3 threatPoint(self->s.origin);
-                threatPoint += distance * toEnemyDir;
-                //self->ai->botRef->SetPendingLookAtPoint(threatPoint, 1.0f);
-                // TODO: Just register threat event and request replan
-                abort();
-            }
+            // Try to guess enemy origin
+            toEnemyDir.X() += -0.25f + 0.50f * random();
+            toEnemyDir.Y() += -0.10f + 0.20f * random();
+            toEnemyDir.NormalizeFast();
+            VectorCopy(self->s.origin, threatPossibleOrigin.Data());
+            threatPossibleOrigin += distance * toEnemyDir;
+            threatDetectedAt = level.time;
         }
     }
 }
@@ -100,9 +95,10 @@ BotBrain::BotBrain(Bot *bot, float skillLevel_)
       nextTargetChoiceAt(level.time),
       targetChoicePeriod(800 - From0UpToMax(300, BotSkill())),
       itemsSelector(bot->self),
-      prevThinkLevelTime(level.time),
-      armorProtection(g_armor_protection->value),
-      armorDegradation(g_armor_degradation->value),
+      selectedNavEntity(nullptr, std::numeric_limits<float>::max(), 0),
+      prevSelectedNavEntity(nullptr),
+      threatPossibleOrigin(NAN, NAN, NAN),
+      threatDetectedAt(0),
       botEnemyPool(bot->self, this, skillLevel_),
       selectedEnemies(bot->selectedEnemies),
       selectedWeapons(bot->selectedWeapons)
@@ -110,13 +106,6 @@ BotBrain::BotBrain(Bot *bot, float skillLevel_)
     squad = nullptr;
     activeEnemyPool = &botEnemyPool;
     SetTag(bot->self->r.client->netname);
-}
-
-void BotBrain::PostThink()
-{
-    AiBaseBrain::PostThink();
-
-    prevThinkLevelTime = level.time;
 }
 
 void BotBrain::Frame()
@@ -133,16 +122,17 @@ void BotBrain::Frame()
 
 void BotBrain::Think()
 {
-    bool hasValidEnemies = true;
     if (selectedEnemies.AreValid())
     {
         if (level.time - selectedEnemies.LastSeenAt() >= reactionTime)
-            hasValidEnemies = false;
+        {
+            selectedEnemies.Invalidate();
+            UpdateSelectedEnemies();
+            UpdateBlockedAreasStatus();
+        }
     }
-
-    if (hasValidEnemies)
+    else
     {
-        ClearPlan();
         UpdateSelectedEnemies();
         UpdateBlockedAreasStatus();
     }
@@ -244,19 +234,64 @@ void BotBrain::UpdateBlockedAreasStatus()
         RouteCache()->SetDisabledRegions(nullptr, nullptr, 0, DroppedToFloorAasAreaNum());
 }
 
-static constexpr float CLOSE_RANGE = 150.0f;
-
-inline float GetLaserRange()
-{
-    const auto lgDef = GS_GetWeaponDef(WEAP_LASERGUN);
-    return (lgDef->firedef.timeout + lgDef->firedef.timeout) / 2.0f;
-}
-
 void BotBrain::PrepareCurrWorldState(WorldState *worldState)
 {
-    recentWorldState = *worldState;
+    worldState->SetIgnoreAll(false);
 
-    abort();
+    if (selectedEnemies.AreValid())
+    {
+        worldState->HasEnemy().SetValue(true);
+        worldState->HasThreateningEnemy().SetValue(selectedEnemies.AreThreatening());
+        worldState->RawDamageToKill().SetValue((short)selectedEnemies.DamageToKill());
+        worldState->EnemyHasQuad().SetValue(selectedEnemies.HaveQuad());
+        float distanceToEnemy = DistanceFast(self->s.origin, selectedEnemies.LastSeenOrigin().Data());
+        worldState->DistanceToEnemy().SetValue(distanceToEnemy);
+    }
+    else
+    {
+        worldState->HasEnemy().SetValue(false);
+        worldState->HasThreateningEnemy().SetValue(false);
+        worldState->RawDamageToKill().SetIgnore(true);
+        worldState->EnemyHasQuad().SetIgnore(true);
+        worldState->DistanceToEnemy().SetIgnore(true);
+    }
+
+    worldState->Health().SetValue((short)HEALTH_TO_INT(self->health));
+    worldState->Armor().SetValue(self->r.client->ps.stats[STAT_ARMOR]);
+
+    worldState->HasQuad().SetValue(::HasQuad(self));
+    worldState->HasShell().SetValue(::HasShell(self));
+
+    const SelectedNavEntity &currSelectedNavEntity = GetOrUpdateSelectedNavEntity();
+    if (currSelectedNavEntity.IsEmpty())
+    {
+        worldState->HasGoalItemNavTarget().SetIgnore(true);
+        worldState->DistanceToGoalItemNavTarget().SetIgnore(true);
+        worldState->GoalItemWaitTime().SetIgnore(true);
+    }
+    else
+    {
+        worldState->HasGoalItemNavTarget().SetValue(true);
+        const NavEntity *navEntity = currSelectedNavEntity.GetNavEntity();
+        float distanceToNavTarget = DistanceFast(self->s.origin, navEntity->Origin().Data());
+        worldState->DistanceToGoalItemNavTarget().SetValue(distanceToNavTarget);
+        // Find a travel time to the goal itme nav entity in milliseconds
+        // We hope this router call gets cached by AAS subsystem
+        unsigned travelTime = 10U * FindTravelTimeToGoalArea(navEntity->AasAreaNum());
+        // AAS returns 1 seconds^-2 as a lowest feasible value
+        if (travelTime <= 10)
+            travelTime = 0;
+        unsigned spawnTime = navEntity->SpawnTime();
+        // If the goal item spawns before the moment when it gets reached
+        if (level.time + travelTime >= spawnTime)
+            worldState->GoalItemWaitTime().SetValue(0);
+        else
+            worldState->GoalItemWaitTime().SetValue(spawnTime - level.time - travelTime);
+    }
+
+    worldState->HasJustPickedGoalItem().SetValue(HasJustPickedGoalItem());
+
+    recentWorldState = *worldState;
 }
 
 float BotBrain::GetEffectiveOffensiveness() const

@@ -14,6 +14,11 @@ float DamageToKill(const edict_t *ent, float armorProtection, float armorDegrada
     float health = ent->r.client->ps.stats[STAT_HEALTH];
     float armor = ent->r.client->ps.stats[STAT_ARMOR];
 
+    return DamageToKill(health, armor, armorProtection, armorDegradation);
+}
+
+float DamageToKill(float health, float armor, float armorProtection, float armorDegradation)
+{
     if (!armor)
         return health;
     if (armorProtection == 1.0f)
@@ -86,6 +91,9 @@ AiBaseEnemyPool::AiBaseEnemyPool(float avgSkill_)
         FailWith("skill %f: maxTrackedTargets %d + 2 > maxTrackedEnemies %d\n", AvgSkill(), maxTrackedTargets, maxEnemies);
 
     // Initialize empty slots
+    for (unsigned i = 0; i < maxTrackedEnemies; ++i)
+        trackedEnemies->parent = this;
+
     for (unsigned i = 0; i < maxTrackedAttackers; ++i)
         attackers.push_back(AttackStats());
 

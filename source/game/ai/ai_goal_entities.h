@@ -103,13 +103,13 @@ public:
 
     const char *Name() const { return name; }
 
-    inline void NotifyTouchedByBot(const edict_t *bot)
+    inline void NotifyTouchedByBot(const edict_t *bot) const
     {
         if (ShouldNotifyScript())
             GT_asBotTouchedGoal(bot->ai, ent);
     }
 
-    inline void NotifyBotReachedRadius(const edict_t *bot)
+    inline void NotifyBotReachedRadius(const edict_t *bot) const
     {
         if (ShouldNotifyScript())
             GT_asBotReachedGoalRadius(bot->ai, ent);
@@ -132,6 +132,10 @@ public:
 // A NavTarget may be based on a NavEntity (an item with attributes) or may be an "artificial" spot
 class NavTarget
 {
+    friend class BotGenericRunActionRecord;
+    friend class BotPickupItemActionRecord;
+    friend class BotWaitForItemActionRecord;
+
     Vec3 explicitOrigin;
     NavTargetFlags explicitFlags;
     int explicitAasAreaNum;
@@ -139,7 +143,7 @@ class NavTarget
     unsigned explicitTimeout;
     float explicitRadius;
 
-    NavEntity *navEntity;
+    const NavEntity *navEntity;
 
     const char *name;
 
@@ -147,11 +151,21 @@ class NavTarget
     {
         return NavTargetFlags::NONE != (this->explicitFlags & flag);
     }
-public:
 
-    void SetToNavEntity(NavEntity *_navEntity)
+    NavTarget()
+        : explicitOrigin(NAN, NAN, NAN),
+          explicitFlags(NavTargetFlags::NONE),
+          explicitAasAreaNum(0),
+          explicitSpawnTime(0),
+          explicitTimeout(0),
+          explicitRadius(0),
+          navEntity(nullptr),
+          name(nullptr) {}
+
+public:
+    void SetToNavEntity(const NavEntity *navEntity_)
     {
-        this->navEntity = _navEntity;
+        this->navEntity = navEntity_;
     }
 
     void SetToTacticalSpot(const Vec3 &origin)

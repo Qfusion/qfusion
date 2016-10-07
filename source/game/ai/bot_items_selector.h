@@ -5,6 +5,46 @@
 #include "ai_goal_entities.h"
 #include "static_vector.h"
 
+class SelectedNavEntity
+{
+    friend class BotBrain;
+    friend class BotItemsSelector;
+
+    const NavEntity *navEntity;
+    float cost;
+    unsigned selectedAt;
+    unsigned timeoutAt;
+
+    inline SelectedNavEntity(const NavEntity *navEntity_, float cost_, unsigned timeoutAt_)
+        : navEntity(navEntity_), cost(cost_), selectedAt(level.time), timeoutAt(timeoutAt_) {}
+
+    inline void CheckValid() const
+    {
+        if (!IsValid()) abort();
+    }
+public:
+    inline bool IsEmpty() const { return navEntity == nullptr; }
+    // Empty one is considered valid (until it times out)
+    inline bool IsValid() const { return timeoutAt > level.time; }
+    inline void Invalidate()
+    {
+        navEntity = nullptr;
+        cost = std::numeric_limits<float>::max();
+        timeoutAt = level.time;
+    }
+    // Avoid class/method name clash by using Get prefix
+    inline const NavEntity *GetNavEntity() const
+    {
+        CheckValid();
+        return navEntity;
+    }
+    inline float GetCost() const
+    {
+        CheckValid();
+        return cost;
+    }
+};
+
 class BotItemsSelector
 {
     edict_t *self;
@@ -52,7 +92,7 @@ public:
         overriddenEntityWeights[ENTNUM(const_cast<edict_t*>(ent))] = weight;
     }
 
-    const NavEntity *SuggestGoalNavEntity(const NavEntity *currGoalNavEntity);
+    SelectedNavEntity SuggestGoalNavEntity(const SelectedNavEntity &currSelectedNavEntity);
 };
 
 #endif

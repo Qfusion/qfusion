@@ -188,6 +188,20 @@ public:
         return Vec3(primaryEnemy->ent->s.angles);
     }
 
+    float DamageToKill() const
+    {
+        CheckValid(__FUNCTION__);
+        float result = 0.0f;
+        for (const Enemy *enemy: activeEnemies)
+        {
+            float damageToKill = ::DamageToKill(enemy->ent, g_armor_protection->value, g_armor_degradation->value);
+            if (enemy->HasShell())
+                damageToKill *= 4.0f;
+            result += damageToKill;
+        }
+        return result;
+    }
+
     int PendingWeapon() const
     {
         if (primaryEnemy && primaryEnemy->ent && primaryEnemy->ent->r.client)
@@ -258,6 +272,16 @@ public:
 
     inline const Enemy **begin() const { return (const Enemy **)activeEnemies.cbegin(); }
     inline const Enemy **end() const { return (const Enemy **)activeEnemies.cend(); }
+
+    inline bool AreThreatening() const
+    {
+        CheckValid(__FUNCTION__);
+        for (const Enemy *activeEnemy: activeEnemies)
+            if (level.time - activeEnemy->LastAttackedByTime() < 1000)
+                return true;
+
+        return false;
+    }
 };
 
 class BotWeaponSelector
@@ -273,12 +297,24 @@ class BotWeaponSelector
     unsigned nextFastWeaponSwitchActionCheckAt;
     const unsigned weaponChoicePeriod;
 public:
-    BotWeaponSelector(edict_t *self_);
+    BotWeaponSelector(edict_t *self_,
+                      const SelectedEnemies &selectedEnemies_,
+                      SelectedWeapons &selectedWeapons_,
+                      unsigned weaponChoicePeriod_)
+        : self(self_),
+          selectedWeapons(selectedWeapons_),
+          selectedEnemies(selectedEnemies_),
+          nextFastWeaponSwitchActionCheckAt(0),
+          weaponChoicePeriod(weaponChoicePeriod_) {}
 
     void Frame(const WorldState &recentWorldState);
     void Think(const WorldState &currentWorldState);
 private:
-    inline void Debug(const char *format, ...)
+#ifndef _MSC_VER
+    inline void Debug(const char *format, ...) const __attribute__((format(printf, 2, 3)))
+#else
+    inline void Debug(_Printf_format_string_ const char *format) const
+#endif
     {
         va_list va;
         va_start(va, format);

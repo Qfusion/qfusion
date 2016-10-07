@@ -13,6 +13,13 @@ class BotBrain: public AiBaseBrain
     friend class Bot;
     friend class BotItemsSelector;
 
+    friend class BotGenericRunAction;
+    friend class BotGenericRunActionRecord;
+    friend class BotPickupItemAction;
+    friend class BotPickupItemActionRecord;
+    friend class BotWaitForItemAction;
+    friend class BotWaitForItemActionRecord;
+
     edict_t *bot;
 
     float baseOffensiveness;
@@ -24,22 +31,11 @@ class BotBrain: public AiBaseBrain
 
     BotItemsSelector itemsSelector;
 
-    unsigned prevThinkLevelTime;
-
-    // These values are loaded from cvars for fast access
-    const float armorProtection;
-    const float armorDegradation;
-
     inline bool BotHasQuad() const { return ::HasQuad(bot); }
     inline bool BotHasShell() const { return ::HasShell(bot); }
     inline bool BotHasPowerups() const { return ::HasPowerups(bot); }
     inline bool BotIsCarrier() const { return ::IsCarrier(bot); }
     float BotSkill() const { return skillLevel; }
-
-    inline float DamageToKill(const edict_t *client) const
-    {
-        return ::DamageToKill(client, armorProtection, armorDegradation);
-    }
 
     inline const int *Inventory() const { return bot->r.client->ps.inventory; }
 
@@ -58,17 +54,83 @@ class BotBrain: public AiBaseBrain
     inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
     inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
 
-    inline bool WillAdvance() const { abort(); }
-    inline bool WillRetreat() const { abort(); }
+    struct SelectedTactics
+    {
+        bool willAdvance;
+        bool willRetreat;
 
-    inline bool ShouldCloak() const { abort(); }
-    inline bool ShouldBeSilent() const { abort(); }
-    inline bool ShouldAttack() const { abort(); }
+        bool shouldCloak;
+        bool shouldBeSilent;
+        bool shouldMoveCarefully;
 
-    inline bool ShouldKeepXhairOnEnemy() const { abort(); }
+        bool shouldAttack;
+        bool shouldKeepXhairOnEnemy;
 
-    inline bool WillAttackMelee() const { abort(); }
-    inline bool ShouldRushHeadless() const { abort(); }
+        bool willAttackMelee;
+        bool shouldRushHeadless;
+
+        inline SelectedTactics() { Clear(); };
+
+        inline void Clear()
+        {
+            willAdvance = false;
+            willRetreat = true;
+
+            shouldCloak = false;
+            shouldBeSilent = false;
+            shouldMoveCarefully = false;
+
+            shouldAttack = false;
+            shouldKeepXhairOnEnemy = false;
+
+            willAttackMelee = false;
+            shouldRushHeadless = false;
+        }
+    };
+
+    SelectedTactics selectedTactics;
+
+    inline bool WillAdvance() const { return selectedTactics.willAdvance; }
+    inline bool WillRetreat() const { return selectedTactics.willRetreat; }
+
+    inline bool ShouldCloak() const { return selectedTactics.shouldCloak; }
+    inline bool ShouldBeSilent() const { return selectedTactics.shouldBeSilent; }
+    inline bool ShouldMoveCarefully() const { return selectedTactics.shouldMoveCarefully; }
+
+    inline bool ShouldAttack() const { return selectedTactics.shouldAttack; }
+    inline bool ShouldKeepXhairOnEnemy() const { return selectedTactics.shouldKeepXhairOnEnemy; }
+
+    inline bool WillAttackMelee() const { return selectedTactics.willAttackMelee; }
+    inline bool ShouldRushHeadless() const { return selectedTactics.shouldRushHeadless; }
+
+    SelectedNavEntity selectedNavEntity;
+    // For tracking picked up items
+    const NavEntity *prevSelectedNavEntity;
+
+    Vec3 threatPossibleOrigin;
+    unsigned threatDetectedAt;
+
+    inline const SelectedNavEntity &GetOrUpdateSelectedNavEntity()
+    {
+        if (!selectedNavEntity.IsValid())
+        {
+            // Use direct access to the field to skip assertion
+            prevSelectedNavEntity = selectedNavEntity.navEntity;
+            selectedNavEntity = itemsSelector.SuggestGoalNavEntity(selectedNavEntity);
+        }
+        return selectedNavEntity;
+    }
+
+    inline bool HasJustPickedGoalItem() const
+    {
+        if (lastNavTargetReachedAt < prevThinkAt)
+            return false;
+        if (!lastReachedNavTarget)
+            return false;
+        if (!lastReachedNavTarget->IsBasedOnNavEntity(prevSelectedNavEntity))
+            return false;
+        return true;
+    }
 
     void UpdateBlockedAreasStatus();
 
@@ -127,7 +189,6 @@ public:
 
     virtual void Frame() override;
     virtual void Think() override;
-    virtual void PostThink() override;
 
     void OnAttachedToSquad(AiSquad *squad_);
     void OnDetachedFromSquad(AiSquad *squad_);

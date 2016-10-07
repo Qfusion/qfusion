@@ -10,6 +10,9 @@
 #include "bot_weapon_selector.h"
 #include "bot_fire_target_cache.h"
 
+#include "bot_goals.h"
+#include "bot_actions.h"
+
 class AiSquad;
 class AiBaseEnemyPool;
 
@@ -43,6 +46,13 @@ class Bot: public Ai
     friend class BotFireTargetCache;
     friend class BotItemsSelector;
     friend class BotWeaponSelector;
+
+    friend class BotGenericRunAction;
+    friend class BotGenericRunActionRecord;
+    friend class BotPickupItemAction;
+    friend class BotPickupItemActionRecord;
+    friend class BotWaitForItemAction;
+    friend class BotWaitForItemActionRecord;
 public:
     static constexpr auto PREFERRED_TRAVEL_FLAGS =
         TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR | TFL_TELEPORT | TFL_JUMPPAD;
@@ -217,6 +227,12 @@ private:
 
     BotFireTargetCache builtinFireTargetCache;
     BotFireTargetCache scriptFireTargetCache;
+
+    BotGrabItemGoal grabItemGoal;
+
+    BotGenericRunAction genericRunAction;
+    BotPickupItemAction pickupItemAction;
+    BotWaitForItemAction waitForItemAction;
 
     struct JumppadMovementState
     {
@@ -615,9 +631,11 @@ private:
 
     inline bool ShouldCloak() const { return botBrain.ShouldCloak(); }
     inline bool ShouldBeSilent() const { return botBrain.ShouldBeSilent(); }
-    inline bool ShouldAttack() const { return botBrain.ShouldAttack(); }
+    inline bool ShouldMoveCarefully() const { return botBrain.ShouldMoveCarefully(); }
 
+    inline bool ShouldAttack() const { return botBrain.ShouldAttack(); }
     inline bool ShouldKeepXhairOnEnemy() const { return botBrain.ShouldKeepXhairOnEnemy(); }
+
     inline bool WillAttackMelee() const { return botBrain.WillAttackMelee(); }
     inline bool ShouldRushHeadless() const { return botBrain.ShouldRushHeadless(); }
 };

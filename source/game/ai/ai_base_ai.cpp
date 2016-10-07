@@ -2,10 +2,14 @@
 #include "ai_base_brain.h"
 #include "ai_ground_trace_cache.h"
 
-Ai::Ai(edict_t *self_, int allowedAasTravelFlags_, int preferredAasTravelFlags_)
+Ai::Ai(edict_t *self_,
+       AiBaseBrain *aiBaseBrain_,
+       AiAasRouteCache *routeCache_,
+       int allowedAasTravelFlags_,
+       int preferredAasTravelFlags_)
     : EdictRef(self_),
-      aiBaseBrain(nullptr), // Must be set in a subclass constructor
-      routeCache(nullptr), // Must be set in a subclass constructor
+      aiBaseBrain(aiBaseBrain_),
+      routeCache(routeCache_),
       aasWorld(AiAasWorld::Instance()),
       currAasAreaNum(0),
       droppedToFloorAasAreaNum(0),

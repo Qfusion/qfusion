@@ -972,7 +972,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
                         VectorCopy(newVelocity.Data(), self->velocity);
                     }
                 }
-                else if (IsCloseToNavTarget())
+                else if (ShouldMoveCarefully())
                 {
                     // velocity and forwardLookDir may mismatch, retrieve these actual look dirs
                     vec3_t forwardLookDir, rightLookDir;
@@ -1016,7 +1016,7 @@ void Bot::MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd)
             constexpr float accelDotThreshold = 0.9f;
             if (velocityToTarget2DDot > accelDotThreshold)
             {
-                if (!self->groundentity && !hasObstacles && !IsCloseToNavTarget() && Skill() > 0.33f)
+                if (!self->groundentity && !hasObstacles && !ShouldMoveCarefully() && Skill() > 0.33f)
                 {
                     float runSpeed = movementSettings[PM_STAT_MAXSPEED];
                     if (speed > runSpeed) // Avoid division by zero and logic errors
@@ -1443,17 +1443,6 @@ void Bot::CheckTargetProximity()
 {
     if (!botBrain.HasNavTarget())
         return;
-
-    if (campingSpotState.IsActive())
-    {
-        // Check whether a bot is too far from the spot origin so it should be invalidated
-        const float distanceThreshold = 1.5f * campingSpotState.spotRadius * campingSpotState.spotRadius;
-        if (DistanceSquared(campingSpotState.spotOrigin.Data(), self->s.origin) > distanceThreshold)
-        {
-            campingSpotState.Invalidate();
-            botBrain.ClearPlan();
-        }
-    }
 
     if (botBrain.IsCloseToNavTarget(128.0f))
     {

@@ -45,6 +45,7 @@ class Ai: public EdictRef, public AiFrameAwareUpdatable
     friend class AiBaseTeamBrain;
     friend class AiBaseBrain;
     friend class AiBaseAction;
+    friend class AiBaseActionRecord;
     friend class AiBaseGoal;
 protected:
     // Must be set in a subclass constructor. A subclass manages memory for its brain
@@ -91,7 +92,12 @@ protected:
     virtual void Frame() override;
     virtual void Think() override;
 public:
-    Ai(edict_t *self_, int preferredAasTravelFlags_, int allowedAasTravelFlags_);
+    Ai(edict_t *self_,
+       AiBaseBrain *aiBaseBrain_,
+       AiAasRouteCache *routeCache_,
+       int preferredAasTravelFlags_,
+       int allowedAasTravelFlags_);
+
     virtual ~Ai() override {};
 
     inline bool IsGhosting() const { return G_ISGHOSTING(self); }

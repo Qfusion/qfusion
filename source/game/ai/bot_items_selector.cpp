@@ -160,8 +160,10 @@ struct NavEntityAndWeight
     inline bool operator<(const NavEntityAndWeight &that) const { return weight > that.weight; }
 };
 
-const NavEntity *BotItemsSelector::SuggestGoalNavEntity(const NavEntity *currGoalNavEntity)
+SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity &currSelectedNavEntity)
 {
+    UpdateInternalItemsWeights();
+
     StaticVector<NavEntityAndWeight, MAX_NAVENTS> rawWeightCandidates;
     FOREACH_NAVENT(navEnt)
     {
@@ -194,9 +196,12 @@ const NavEntity *BotItemsSelector::SuggestGoalNavEntity(const NavEntity *currGoa
     // Sort all pre-selected candidates by their raw weights
     std::sort(rawWeightCandidates.begin(), rawWeightCandidates.end());
 
+    const NavEntity *currGoalNavEntity = currSelectedNavEntity.navEntity;
     float currGoalEntWeight = 0.0f;
+    float currGoalEntCost = 0.0f;
     const NavEntity *bestNavEnt = nullptr;
     float bestWeight = 0.000001f;
+    float bestNavEntCost = 0.0f;
     // Test not more than 16 best pre-selected by raw weight candidates.
     // (We try to avoid too many expensive FindTravelTimeToGoalArea() calls,
     // thats why we start from the best item to avoid wasting these calls for low-priority items)
@@ -239,25 +244,32 @@ const NavEntity *BotItemsSelector::SuggestGoalNavEntity(const NavEntity *currGoa
         if (waitDuration > navEnt->MaxWaitDuration())
             continue;
 
-        float cost = 0.0001f + MOVE_TIME_WEIGHT * moveDuration + WAIT_TIME_WEIGHT * waitDuration;
+        float moveCost = MOVE_TIME_WEIGHT * moveDuration * navEnt->CostInfluence();
+        float cost = 0.0001f + moveCost + WAIT_TIME_WEIGHT * waitDuration * navEnt->CostInfluence();
 
-        weight = (1000 * weight) / (cost * navEnt->CostInfluence()); // Check against cost of getting there
+        weight = (1000 * weight) / cost;
 
         // Store current weight of the current goal entity
         if (currGoalNavEntity == navEnt)
+        {
             currGoalEntWeight = weight;
+            // Waiting time is handled by the planner for wait actions separately.
+            currGoalEntCost = moveCost;
+        }
 
         if (weight > bestWeight)
         {
             bestNavEnt = navEnt;
             bestWeight = weight;
+            // Waiting time is handled by the planner for wait actions separately.
+            bestNavEntCost = moveCost;
         }
     }
 
     if (!bestNavEnt)
     {
         Debug("Can't find a feasible long-term goal nav. entity\n");
-        return nullptr;
+        return SelectedNavEntity(nullptr, std::numeric_limits<float>::max(), level.time + 200);
     }
 
     // If it is time to pick a new goal (not just re-evaluate current one), do not be too sticky to the current goal
@@ -267,7 +279,7 @@ const NavEntity *BotItemsSelector::SuggestGoalNavEntity(const NavEntity *currGoa
     {
         constexpr const char *format = "current goal entity %s is kept as still having best weight %.3f\n";
         Debug(format, currGoalNavEntity->Name(), bestWeight);
-        return currGoalNavEntity;
+        return SelectedNavEntity(bestNavEnt, bestNavEntCost, level.time + 500);
     }
     else if (currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold)
     {
@@ -275,7 +287,7 @@ const NavEntity *BotItemsSelector::SuggestGoalNavEntity(const NavEntity *currGoa
             "current goal entity %s is kept as having weight %.3f good enough to not consider picking another one\n";
         // If currGoalEntWeight > 0, currLongTermGoalEnt is guaranteed to be non-null
         Debug(format, currGoalNavEntity->Name(), currGoalEntWeight);
-        return currGoalNavEntity;
+        return SelectedNavEntity(currGoalNavEntity, currGoalEntCost, level.time + 300);
     }
     else
     {
@@ -288,6 +300,6 @@ const NavEntity *BotItemsSelector::SuggestGoalNavEntity(const NavEntity *currGoa
         {
             Debug("suggested %s weighted %.3f as a new long-term goal\n", bestNavEnt->Name(), bestWeight);
         }
-        return bestNavEnt;
+        return SelectedNavEntity(bestNavEnt, bestNavEntCost, level.time + 400);
     }
 }

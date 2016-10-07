@@ -1,14 +1,6 @@
 #include "bot_weapon_selector.h"
 #include "bot.h"
 
-BotWeaponSelector::BotWeaponSelector(edict_t *self_)
-    : self(self_),
-      selectedWeapons(self_->ai->botRef->selectedWeapons),
-      selectedEnemies(self_->ai->botRef->selectedEnemies),
-      nextFastWeaponSwitchActionCheckAt(0),
-      weaponChoicePeriod(600 - From0UpToMax(300, self_->ai->botRef->Skill()))
-{}
-
 void BotWeaponSelector::Frame(const WorldState &recentWorldState)
 {
     if (nextFastWeaponSwitchActionCheckAt > level.time)
@@ -659,7 +651,8 @@ int BotWeaponSelector::SuggestHitEscapingEnemyWeapon(const WorldState &currWorld
 {
     if (currWorldState.DistanceToEnemy() < CLOSE_RANGE)
     {
-        Debug("(hit escaping) too small distance %.1f to change weapon, too risky\n", currWorldState.DistanceToEnemy());
+        constexpr const char *format = "(hit escaping) too small distance %.1f to change weapon, too risky\n";
+        Debug(format, currWorldState.DistanceToEnemy().Value());
         return WEAP_NONE;
     }
 

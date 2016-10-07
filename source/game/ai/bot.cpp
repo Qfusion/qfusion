@@ -3,13 +3,17 @@
 #include <algorithm>
 
 Bot::Bot(edict_t *self_, float skillLevel_)
-    : Ai(self_, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
+    : Ai(self_, &botBrain, AiAasRouteCache::NewInstance(), PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
       dangersDetector(self_),
       botBrain(this, skillLevel_),
       skillLevel(skillLevel_),
-      weaponsSelector(self_),
+      weaponsSelector(self_, selectedEnemies, selectedWeapons, 600 - From0UpToMax(300, skillLevel_)),
       builtinFireTargetCache(self_),
       scriptFireTargetCache(self_),
+      grabItemGoal(this),
+      genericRunAction(this),
+      pickupItemAction(this),
+      waitForItemAction(this),
       rocketJumpMovementState(self_),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
@@ -18,11 +22,6 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       defenceSpotId(-1),
       offenseSpotId(-1)
 {
-    // Set the base brain reference in Ai class, it is mandatory
-    this->aiBaseBrain = &botBrain;
-    // Set the route cache reference in Ai class, it is mandatory
-    // Use a separate instance of a route cache
-    this->routeCache = AiAasRouteCache::NewInstance();
     self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;
     SetTag(self->r.client->netname);
 }
