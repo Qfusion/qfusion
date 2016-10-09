@@ -31,7 +31,6 @@ struct android_app *sys_android_app;
 
 char sys_android_internalDataPath[PATH_MAX];
 
-JNIEnv *sys_android_jniEnv;
 jclass sys_android_activityClass;
 jmethodID sys_android_getSystemService;
 
