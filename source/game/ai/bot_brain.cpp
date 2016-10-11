@@ -21,7 +21,7 @@ void BotBrain::OnAttachedToSquad(AiSquad *squad_)
 {
     this->squad = squad_;
     activeEnemyPool = squad_->EnemyPool();
-    ClearPlan();
+    ClearGoalAndPlan();
 }
 
 void BotBrain::OnDetachedFromSquad(AiSquad *squad_)
@@ -32,7 +32,7 @@ void BotBrain::OnDetachedFromSquad(AiSquad *squad_)
     }
     this->squad = nullptr;
     activeEnemyPool = &botEnemyPool;
-    ClearPlan();
+    ClearGoalAndPlan();
 }
 
 void BotBrain::OnAttitudeChanged(const edict_t *ent, int oldAttitude_, int newAttitude_)
@@ -81,7 +81,7 @@ void BotBrain::OnEnemyRemoved(const Enemy *enemy)
         if (selectedEnemies.Contain(enemy))
         {
             selectedEnemies.Invalidate();
-            ClearPlan();
+            ClearGoalAndPlan();
         }
     }
 }

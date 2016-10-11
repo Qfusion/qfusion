@@ -225,11 +225,14 @@ class AiBaseGoal
     static inline void Register(Ai *ai, AiBaseGoal *goal);
 protected:
     edict_t *self;
+    const char *name;
+    const unsigned updatePeriod;
 
     float weight;
 public:
     // Don't pass self as a constructor argument (self->ai ptr might not been set yet)
-    inline AiBaseGoal(Ai *ai) : self(ai->self), weight(0.0f)
+    inline AiBaseGoal(Ai *ai, const char *name_, unsigned updatePeriod_)
+        : self(ai->self), name(name_), updatePeriod(updatePeriod_), weight(0.0f)
     {
         Register(ai, this);
     }
@@ -246,6 +249,9 @@ public:
     {
         return this->weight > that.weight;
     }
+
+    inline const char *Name() const { return name; }
+    inline unsigned UpdatePeriod() const { return updatePeriod; }
 };
 
 class alignas(8) PoolBase
@@ -510,6 +516,8 @@ protected:
 
     NavTarget *navTarget;
     AiBaseActionRecord *planHead;
+    AiBaseGoal *activeGoal;
+    unsigned nextActiveGoalUpdateAt;
 
     const NavTarget *lastReachedNavTarget;
     unsigned lastNavTargetReachedAt;
@@ -547,7 +555,9 @@ protected:
 
     virtual void PrepareCurrWorldState(WorldState *worldState) = 0;
 
-    void UpdateGoalsAndPlan(const WorldState &currWorldState);
+    bool UpdateGoalAndPlan(const WorldState &currWorldState);
+
+    bool FindNewGoalAndPlan(const WorldState &currWorldState);
 
     AiBaseActionRecord *BuildPlan(AiBaseGoal *goal, const WorldState &startWorldState);
 
@@ -555,7 +565,7 @@ protected:
 
     AiBaseActionRecord *ReconstructPlan(PlannerNode *lastNode) const;
 
-    void SetPlan(AiBaseActionRecord *planHead_);
+    void SetGoalAndPlan(AiBaseGoal *goal_, AiBaseActionRecord *planHead_);
 
     inline void SetNavTarget(NavTarget *navTarget)
     {
@@ -594,7 +604,9 @@ public:
 
     inline bool HasPlan() const { return planHead != nullptr; }
 
-    void ClearPlan();
+    void ClearGoalAndPlan();
+
+    void DeletePlan(AiBaseActionRecord *head);
 
     bool IsCloseToNavTarget(float proximityThreshold) const
     {

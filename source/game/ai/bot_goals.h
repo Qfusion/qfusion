@@ -6,7 +6,7 @@
 class BotGrabItemGoal: public AiBaseGoal
 {
 public:
-    BotGrabItemGoal(Ai *ai_): AiBaseGoal(ai_) {}
+    BotGrabItemGoal(Ai *ai_): AiBaseGoal(ai_, "BotGrabItemGoal", 1500) {}
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;

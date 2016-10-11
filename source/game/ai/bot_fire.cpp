@@ -25,7 +25,8 @@ void Bot::UpdateScriptWeaponsStatus()
             }
         }
 
-        botBrain.ClearPlan();
+        selectedWeapons.Invalidate();
+        botBrain.ClearGoalAndPlan();
         return;
     }
 
@@ -66,7 +67,10 @@ void Bot::UpdateScriptWeaponsStatus()
     }
 
     if (hasStatusChanged)
-        botBrain.ClearPlan();
+    {
+        selectedWeapons.Invalidate();
+        botBrain.ClearGoalAndPlan();
+    }
 }
 
 bool Bot::FireWeapon(bool *didBuiltinAttack)

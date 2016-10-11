@@ -379,7 +379,7 @@ void Bot::GhostingFrame()
     selectedEnemies.Invalidate();
     selectedWeapons.Invalidate();
 
-    botBrain.ClearPlan();
+    botBrain.ClearGoalAndPlan();
 
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->nextThink = level.time + 100;

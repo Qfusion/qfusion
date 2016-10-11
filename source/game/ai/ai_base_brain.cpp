@@ -294,9 +294,12 @@ struct GoalRef
     bool operator<(const GoalRef &that) const { return *this->goal < *that.goal; }
 };
 
-void AiBaseBrain::UpdateGoalsAndPlan(const WorldState &currWorldState)
+bool AiBaseBrain::FindNewGoalAndPlan(const WorldState &currWorldState)
 {
-    if (HasPlan()) abort();
+    if (planHead)
+        FailWith("FindNewGoalAndPlan(): an active plan is present\n");
+    if (activeGoal)
+        FailWith("FindNewGoalAndPlan(): an active goal is present\n");
 
     // Update goals weights based for the current world state before sorting
     for (AiBaseGoal *goal: goals)
@@ -308,19 +311,132 @@ void AiBaseBrain::UpdateGoalsAndPlan(const WorldState &currWorldState)
         if (goal->IsRelevant())
             relevantGoals.push_back(GoalRef(goal));
 
+    if (relevantGoals.empty())
+    {
+        Debug("There are no relevant goals\n");
+        return false;
+    }
+
     // Sort goals so most relevant goals are first
     std::sort(relevantGoals.begin(), relevantGoals.end());
 
     // For each relevant goal try find a plan that satisfies it
-    for (const GoalRef &goalPtr: relevantGoals)
+    for (const GoalRef &goalRef: relevantGoals)
     {
-        if (AiBaseActionRecord *planHead = BuildPlan(goalPtr.goal, currWorldState))
+        if (AiBaseActionRecord *newPlanHead = BuildPlan(goalRef.goal, currWorldState))
         {
-            SetPlan(planHead);
-            return;
+            Debug("About to set new goal %s as an active one\n", goalRef.goal->Name());
+            SetGoalAndPlan(goalRef.goal, newPlanHead);
+            return true;
         }
-        // TODO: Log planning failure
+        Debug("Can't find a plan that satisfies an relevant goal %s\n", goalRef.goal->Name());
     }
+
+    Debug("Can't find any goal that has a satisfying it plan\n");
+    return false;
+}
+
+bool AiBaseBrain::UpdateGoalAndPlan(const WorldState &currWorldState)
+{
+    if (!planHead)
+        FailWith("UpdateGoalAndPlan(): there is no active plan\n");
+    if (!activeGoal)
+        FailWith("UpdateGoalAndPlan(): there is no active goal\n");
+
+    for (AiBaseGoal *goal: goals)
+        goal->UpdateWeight(currWorldState);
+
+    AiBaseGoal *activeRelevantGoal = nullptr;
+    // Filter relevant goals and mark whether the active goal is relevant
+    StaticVector<GoalRef, MAX_GOALS> relevantGoals;
+    for (AiBaseGoal *goal: goals)
+    {
+        if (goal->IsRelevant())
+        {
+            if (goal == activeGoal)
+                activeRelevantGoal = goal;
+
+            relevantGoals.push_back(goal);
+        }
+    }
+
+    if (relevantGoals.empty())
+    {
+        Debug("There are no relevant goals\n");
+        return false;
+    }
+
+    // Sort goals so most relevant goals are first
+    std::sort(relevantGoals.begin(), relevantGoals.end());
+
+    // The active goal is no relevant anymore
+    if (!activeRelevantGoal)
+    {
+        Debug("Old goal %s is not relevant anymore\n", activeGoal->Name());
+        ClearGoalAndPlan();
+
+        for (const GoalRef &goalRef: relevantGoals)
+        {
+            if (AiBaseActionRecord *newPlanHead = BuildPlan(goalRef.goal, currWorldState))
+            {
+                Debug("About to set goal %s as an active one\n", goalRef.goal->Name());
+                SetGoalAndPlan(goalRef.goal, newPlanHead);
+                return true;
+            }
+        }
+
+        Debug("Can't find any goal that has a satisfying it plan\n");
+        return false;
+    }
+
+    AiBaseActionRecord *newActiveGoalPlan = BuildPlan(activeRelevantGoal, currWorldState);
+    if (!newActiveGoalPlan)
+    {
+        Debug("There is no a plan that satisfies current goal %s anymore\n", activeGoal->Name());
+        ClearGoalAndPlan();
+
+        for (const GoalRef &goalRef: relevantGoals)
+        {
+            // Skip already tested for new plan existence active goal
+            if (goalRef.goal != activeRelevantGoal)
+            {
+                if (AiBaseActionRecord *newPlanHead = BuildPlan(goalRef.goal, currWorldState))
+                {
+                    Debug("About to set goal %s as an active one\n", goalRef.goal->Name());
+                    SetGoalAndPlan(goalRef.goal, newPlanHead);
+                    return true;
+                }
+            }
+        }
+
+        Debug("Can't find any goal that has a satisfying it plan\n");
+        return false;
+    }
+
+    constexpr auto KEEP_CURR_GOAL_WEIGHT_THRESHOLD = 0.3f;
+    // For each goal that has weight greater than the current one's weight (+ some threshold)
+    for (const GoalRef &goalRef: relevantGoals)
+    {
+        if (goalRef.goal->weight < activeGoal->weight + KEEP_CURR_GOAL_WEIGHT_THRESHOLD)
+            break;
+
+        if (AiBaseActionRecord *newPlanHead = BuildPlan(goalRef.goal, currWorldState))
+        {
+            // Release the new current active goal plan that is not going to be used to prevent leaks
+            DeletePlan(newActiveGoalPlan);
+            const char *format = "About to set goal %s instead of current one %s that is less relevant at the moment\n";
+            Debug(format, goalRef.goal->Name(), activeRelevantGoal->Name());
+            ClearGoalAndPlan();
+            SetGoalAndPlan(goalRef.goal, newPlanHead);
+            return true;
+        }
+    }
+
+    Debug("About to update a plan for the kept current goal %s\n", activeGoal->Name());
+    ClearGoalAndPlan();
+    SetGoalAndPlan(activeRelevantGoal, newActiveGoalPlan);
+
+    return true;
 }
 
 template <unsigned N>
@@ -659,37 +775,46 @@ AiBaseActionRecord *AiBaseBrain::ReconstructPlan(PlannerNode *lastNode) const
     return firstInPlan;
 }
 
-void AiBaseBrain::SetPlan(AiBaseActionRecord *planHead_)
+void AiBaseBrain::SetGoalAndPlan(AiBaseGoal *activeGoal_, AiBaseActionRecord *planHead_)
 {
     if (this->planHead)
-    {
-        Debug("SetPlan(): current plan is still present\n");
-    }
+        FailWith("SetGoalAndPlan(): current plan is still present\n");
+    if (this->activeGoal)
+        FailWith("SetGoalAndPlan(): active goal is still present\n");
+
     if (!planHead_)
-    {
-        Debug("SetPlan(): attempt to set a null plan\n");
-    }
+        FailWith("SetGoalAndPlan(): attempt to set a null plan\n");
+    if (!activeGoal_)
+        FailWith("SetGoalAndPlan(): attempt to set a null goal\n");
+
+    this->activeGoal = activeGoal_;
+
     this->planHead = planHead_;
     this->planHead->Activate();
 }
 
-void AiBaseBrain::ClearPlan()
+void AiBaseBrain::ClearGoalAndPlan()
 {
     if (planHead)
     {
-        Debug("ClearPlan(): Should deactivate plan head\n");
+        Debug("ClearGoalAndPlan(): Should deactivate plan head\n");
         planHead->Deactivate();
-
-        AiBaseActionRecord *currRecord = planHead;
-        while (currRecord)
-        {
-            AiBaseActionRecord *nextRecord = currRecord->nextInPlan;
-            currRecord->DeleteSelf();
-            currRecord = nextRecord;
-        }
+        DeletePlan(planHead);
     }
 
     planHead = nullptr;
+    activeGoal = nullptr;
+}
+
+void AiBaseBrain::DeletePlan(AiBaseActionRecord *head)
+{
+    AiBaseActionRecord *currRecord = head;
+    while (currRecord)
+    {
+        AiBaseActionRecord *nextRecord = currRecord->nextInPlan;
+        currRecord->DeleteSelf();
+        currRecord = nextRecord;
+    }
 }
 
 int AiBaseBrain::FindAasParamToGoalArea(int goalAreaNum, int (AiAasRouteCache::*pathFindingMethod)(int, int, int) const) const
@@ -786,28 +911,52 @@ void AiBaseBrain::Think()
     WorldState currWorldState;
     PrepareCurrWorldState(&currWorldState);
 
-    if (planHead)
+    // If there is no active plan (the active plan was not assigned or has been completed in previous think frame)
+    if (!planHead)
     {
-        AiBaseActionRecord::Status status = planHead->CheckStatus(currWorldState);
-        if (status == AiBaseActionRecord::INVALID)
-        {
-            Debug("Plan head %s CheckStatus() returned INVALID status\n", planHead->Name());
-            ClearPlan();
-            UpdateGoalsAndPlan(currWorldState);
-        }
-        else if (status == AiBaseActionRecord::COMPLETED)
-        {
-            Debug("Plan head %s CheckStatus() returned COMPLETED status\n", planHead->Name());
-            AiBaseActionRecord *oldPlanHead = planHead;
-            planHead = planHead->nextInPlan;
-            oldPlanHead->Deactivate();
-            oldPlanHead->DeleteSelf();
-            if (planHead)
-                planHead->Activate();
-        }
+        // Reset an active goal (looks like its plan has been completed)
+        if (activeGoal)
+            activeGoal = nullptr;
+
+        // If some goal and plan for it have been found schedule goal and plan update
+        if (FindNewGoalAndPlan(currWorldState))
+            nextActiveGoalUpdateAt = level.time + activeGoal->UpdatePeriod();
+
+        return;
     }
-    else
-        UpdateGoalsAndPlan(currWorldState);
+
+    AiBaseActionRecord::Status status = planHead->CheckStatus(currWorldState);
+    if (status == AiBaseActionRecord::INVALID)
+    {
+        Debug("Plan head %s CheckStatus() returned INVALID status\n", planHead->Name());
+        ClearGoalAndPlan();
+        if (FindNewGoalAndPlan(currWorldState))
+            nextActiveGoalUpdateAt = level.time + activeGoal->UpdatePeriod();
+
+        return;
+    }
+
+    if (status == AiBaseActionRecord::COMPLETED)
+    {
+        Debug("Plan head %s CheckStatus() returned COMPLETED status\n", planHead->Name());
+        AiBaseActionRecord *oldPlanHead = planHead;
+        planHead = planHead->nextInPlan;
+        oldPlanHead->Deactivate();
+        oldPlanHead->DeleteSelf();
+        if (planHead)
+            planHead->Activate();
+
+        // Do not check for goal update when action has been completed, defer it to the next think frame
+        return;
+    }
+
+    // Goals that should not be updated during their execution have huge update period,
+    // so this condition is never satisfied for the mentioned kind of goals
+    if (nextActiveGoalUpdateAt <= level.time)
+    {
+        if (UpdateGoalAndPlan(currWorldState))
+            nextActiveGoalUpdateAt = level.time + activeGoal->UpdatePeriod();
+    }
 }
 
 bool AiBaseBrain::HandleNavTargetTouch(const edict_t *ent)
