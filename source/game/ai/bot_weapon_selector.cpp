@@ -1,5 +1,104 @@
 #include "bot_weapon_selector.h"
 #include "bot.h"
+#include "../../gameshared/q_collision.h"
+
+bool SelectedEnemies::CanHit(const edict_t *ent) const
+{
+    CheckValid(__FUNCTION__);
+
+    edict_t *targetEnt = const_cast<edict_t *>(ent);
+    trace_t trace;
+    for (const Enemy *activeEnemy: activeEnemies)
+    {
+        edict_t *enemyEnt = const_cast<edict_t *>(activeEnemy->ent);
+        Vec3 traceStart(enemyEnt->s.origin);
+        if (enemyEnt->r.client)
+        {
+            // Put likely case (not crouching) first
+            if (enemyEnt->r.client->ps.stats[PM_STAT_CROUCHTIME] == 0)
+                traceStart.Z() += playerbox_stand_viewheight;
+            else
+                traceStart.Z() += playerbox_crouch_viewheight;
+        }
+        G_Trace(&trace, traceStart.Data(), nullptr, nullptr, targetEnt->s.origin, enemyEnt, MASK_AISOLID);
+        if (trace.fraction != 1.0f && game.edicts + trace.ent == targetEnt)
+            return true;
+
+        vec3_t bounds[2];
+        VectorCopy(ent->r.absmin, bounds[0]);
+        VectorCopy(ent->r.absmax, bounds[1]);
+        for (int i = 0; i < 8; ++i)
+        {
+            vec3_t traceEnd = { bounds[(i >> 2) & 1][0], bounds[(i >> 1) & 1][0], bounds[(i >> 0) & 1][2] };
+            G_Trace(&trace, traceStart.Data(), nullptr, nullptr, traceEnd, enemyEnt, MASK_AISOLID);
+            if (trace.fraction != 1.0f && game.edicts + trace.ent == targetEnt)
+                return true;
+        }
+    }
+    return false;
+}
+
+bool SelectedEnemies::HaveGoodSniperRangeWeapons() const
+{
+    CheckValid(__FUNCTION__);
+    for (const Enemy *activeEnemy: activeEnemies)
+    {
+        if (activeEnemy->BoltsReadyToFireCount())
+            return true;
+        if (activeEnemy->BulletsReadyToFireCount())
+            return true;
+    }
+    return false;
+}
+
+bool SelectedEnemies::HaveGoodFarRangeWeapons() const
+{
+    CheckValid(__FUNCTION__);
+    for (const Enemy *activeEnemy: activeEnemies)
+    {
+        if (activeEnemy->BoltsReadyToFireCount())
+            return true;
+        if (activeEnemy->BulletsReadyToFireCount())
+            return true;
+        if (activeEnemy->PlasmasReadyToFireCount())
+            return true;
+    }
+    return false;
+}
+
+bool SelectedEnemies::HaveGoodMiddleRangeWeapons() const
+{
+    CheckValid(__FUNCTION__);
+    for (const Enemy *activeEnemy: activeEnemies)
+    {
+        if (activeEnemy->RocketsReadyToFireCount())
+            return true;
+        if (activeEnemy->LasersReadyToFireCount())
+            return true;
+        if (activeEnemy->PlasmasReadyToFireCount())
+            return true;
+        if (activeEnemy->BulletsReadyToFireCount())
+            return true;
+        if (activeEnemy->ShellsReadyToFireCount())
+            return true;
+    }
+    return false;
+}
+
+bool SelectedEnemies::HaveGoodCloseRangeWeapons() const
+{
+    CheckValid(__FUNCTION__);
+    for (const Enemy *activeEnemy: activeEnemies)
+    {
+        if (activeEnemy->RocketsReadyToFireCount())
+            return true;
+        if (activeEnemy->PlasmasReadyToFireCount())
+            return true;
+        if (activeEnemy->ShellsReadyToFireCount())
+            return true;
+    }
+    return false;
+}
 
 void BotWeaponSelector::Frame(const WorldState &recentWorldState)
 {
@@ -652,7 +751,7 @@ int BotWeaponSelector::SuggestHitEscapingEnemyWeapon(const WorldState &currWorld
     if (currWorldState.DistanceToEnemy() < CLOSE_RANGE)
     {
         constexpr const char *format = "(hit escaping) too small distance %.1f to change weapon, too risky\n";
-        Debug(format, currWorldState.DistanceToEnemy().Value());
+        Debug(format, currWorldState.DistanceToEnemy());
         return WEAP_NONE;
     }
 

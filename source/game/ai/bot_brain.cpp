@@ -95,13 +95,14 @@ BotBrain::BotBrain(Bot *bot, float skillLevel_)
       nextTargetChoiceAt(level.time),
       targetChoicePeriod(800 - From0UpToMax(300, BotSkill())),
       itemsSelector(bot->self),
-      selectedNavEntity(nullptr, std::numeric_limits<float>::max(), 0),
+      selectedNavEntity(nullptr, std::numeric_limits<float>::max(), 0, 0),
       prevSelectedNavEntity(nullptr),
       threatPossibleOrigin(NAN, NAN, NAN),
       threatDetectedAt(0),
       botEnemyPool(bot->self, this, skillLevel_),
       selectedEnemies(bot->selectedEnemies),
-      selectedWeapons(bot->selectedWeapons)
+      selectedWeapons(bot->selectedWeapons),
+      recentWorldState(bot->self)
 {
     squad = nullptr;
     activeEnemyPool = &botEnemyPool;
@@ -136,6 +137,8 @@ void BotBrain::Think()
         UpdateSelectedEnemies();
         UpdateBlockedAreasStatus();
     }
+
+    self->ai->botRef->tacticalSpotsCache.Clear();
 
     // This call will try to find a plan if it is not present
     AiBaseBrain::Think();
@@ -238,43 +241,72 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
 {
     worldState->SetIgnoreAll(false);
 
+    worldState->BotOriginVar().SetValue(self->s.origin);
+
     if (selectedEnemies.AreValid())
     {
-        worldState->HasEnemy().SetValue(true);
-        worldState->HasThreateningEnemy().SetValue(selectedEnemies.AreThreatening());
-        worldState->RawDamageToKill().SetValue((short)selectedEnemies.DamageToKill());
-        worldState->EnemyHasQuad().SetValue(selectedEnemies.HaveQuad());
-        float distanceToEnemy = DistanceFast(self->s.origin, selectedEnemies.LastSeenOrigin().Data());
-        worldState->DistanceToEnemy().SetValue(distanceToEnemy);
+        worldState->EnemyOriginVar().SetValue(selectedEnemies.LastSeenOrigin());
+        worldState->HasThreateningEnemyVar().SetValue(selectedEnemies.AreThreatening());
+        worldState->RawDamageToKillVar().SetValue((short)selectedEnemies.DamageToKill());
+        worldState->EnemyHasQuadVar().SetValue(selectedEnemies.HaveQuad());
+        worldState->EnemyHasGoodSniperRangeWeaponsVar().SetValue(selectedEnemies.HaveGoodSniperRangeWeapons());
+        worldState->EnemyHasGoodFarRangeWeaponsVar().SetValue(selectedEnemies.HaveGoodFarRangeWeapons());
+        worldState->EnemyHasGoodMiddleRangeWeaponsVar().SetValue(selectedEnemies.HaveGoodMiddleRangeWeapons());
+        worldState->EnemyHasGoodCloseRangeWeaponsVar().SetValue(selectedEnemies.HaveGoodCloseRangeWeapons());
+        worldState->EnemyCanHitVar().SetValue(selectedEnemies.CanHit(self));
     }
     else
     {
-        worldState->HasEnemy().SetValue(false);
-        worldState->HasThreateningEnemy().SetValue(false);
-        worldState->RawDamageToKill().SetIgnore(true);
-        worldState->EnemyHasQuad().SetIgnore(true);
-        worldState->DistanceToEnemy().SetIgnore(true);
+        worldState->EnemyOriginVar().SetIgnore(true);
+        worldState->HasThreateningEnemyVar().SetIgnore(true);
+        worldState->RawDamageToKillVar().SetIgnore(true);
+        worldState->EnemyHasQuadVar().SetIgnore(true);
+        worldState->EnemyHasGoodSniperRangeWeaponsVar().SetIgnore(true);
+        worldState->EnemyHasGoodFarRangeWeaponsVar().SetIgnore(true);
+        worldState->EnemyHasGoodMiddleRangeWeaponsVar().SetIgnore(true);
+        worldState->EnemyHasGoodCloseRangeWeaponsVar().SetIgnore(true);
+        worldState->EnemyCanHitVar().SetIgnore(true);
     }
 
-    worldState->Health().SetValue((short)HEALTH_TO_INT(self->health));
-    worldState->Armor().SetValue(self->r.client->ps.stats[STAT_ARMOR]);
+    worldState->HealthVar().SetValue((short)HEALTH_TO_INT(self->health));
+    worldState->ArmorVar().SetValue(self->r.client->ps.stats[STAT_ARMOR]);
 
-    worldState->HasQuad().SetValue(::HasQuad(self));
-    worldState->HasShell().SetValue(::HasShell(self));
+    worldState->HasQuadVar().SetValue(::HasQuad(self));
+    worldState->HasShellVar().SetValue(::HasShell(self));
+
+    bool hasGoodSniperRangeWeapons = false;
+    bool hasGoodFarRangeWeapons = false;
+    bool hasGoodMiddleRangeWeapons = false;
+    bool hasGoodCloseRangeWeapons = false;
+
+    if (BoltsReadyToFireCount() || BulletsReadyToFireCount())
+        hasGoodSniperRangeWeapons = true;
+    if (BoltsReadyToFireCount() || BulletsReadyToFireCount() || PlasmasReadyToFireCount())
+        hasGoodFarRangeWeapons = true;
+    if (RocketsReadyToFireCount() || LasersReadyToFireCount() || PlasmasReadyToFireCount() ||
+        BulletsReadyToFireCount() || ShellsReadyToFireCount())
+        hasGoodMiddleRangeWeapons = true;
+    if (RocketsReadyToFireCount() || PlasmasReadyToFireCount() || ShellsReadyToFireCount())
+        hasGoodCloseRangeWeapons = true;
+
+    worldState->HasGoodSniperRangeWeaponsVar().SetValue(hasGoodSniperRangeWeapons);
+    worldState->HasGoodFarRangeWeaponsVar().SetValue(hasGoodFarRangeWeapons);
+    worldState->HasGoodMiddleRangeWeaponsVar().SetValue(hasGoodMiddleRangeWeapons);
+    worldState->HasGoodCloseRangeWeaponsVar().SetValue(hasGoodCloseRangeWeapons);
+
+    worldState->HasQuadVar().SetValue(::HasQuad(self));
+    worldState->HasShellVar().SetValue(::HasShell(self));
 
     const SelectedNavEntity &currSelectedNavEntity = GetOrUpdateSelectedNavEntity();
     if (currSelectedNavEntity.IsEmpty())
     {
-        worldState->HasGoalItemNavTarget().SetIgnore(true);
-        worldState->DistanceToGoalItemNavTarget().SetIgnore(true);
-        worldState->GoalItemWaitTime().SetIgnore(true);
+        worldState->GoalItemOriginVar().SetIgnore(true);
+        worldState->GoalItemWaitTimeVar().SetIgnore(true);
     }
     else
     {
-        worldState->HasGoalItemNavTarget().SetValue(true);
         const NavEntity *navEntity = currSelectedNavEntity.GetNavEntity();
-        float distanceToNavTarget = DistanceFast(self->s.origin, navEntity->Origin().Data());
-        worldState->DistanceToGoalItemNavTarget().SetValue(distanceToNavTarget);
+        worldState->GoalItemOriginVar().SetValue(navEntity->Origin());
         // Find a travel time to the goal itme nav entity in milliseconds
         // We hope this router call gets cached by AAS subsystem
         unsigned travelTime = 10U * FindTravelTimeToGoalArea(navEntity->AasAreaNum());
@@ -284,12 +316,19 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
         unsigned spawnTime = navEntity->SpawnTime();
         // If the goal item spawns before the moment when it gets reached
         if (level.time + travelTime >= spawnTime)
-            worldState->GoalItemWaitTime().SetValue(0);
+            worldState->GoalItemWaitTimeVar().SetValue(0);
         else
-            worldState->GoalItemWaitTime().SetValue(spawnTime - level.time - travelTime);
+            worldState->GoalItemWaitTimeVar().SetValue(spawnTime - level.time - travelTime);
     }
 
-    worldState->HasJustPickedGoalItem().SetValue(HasJustPickedGoalItem());
+    worldState->HasJustPickedGoalItemVar().SetValue(HasJustPickedGoalItem());
+
+    worldState->HasPositionalAdvantageVar().SetValue(false);
+    worldState->CanHitEnemyVar().SetValue(true);
+
+    worldState->HasJustKilledEnemyVar().SetValue(false);
+
+    worldState->ResetTacticalSpots();
 
     recentWorldState = *worldState;
 }

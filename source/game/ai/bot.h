@@ -9,6 +9,7 @@
 
 #include "bot_weapon_selector.h"
 #include "bot_fire_target_cache.h"
+#include "bot_tactical_spots_cache.h"
 
 #include "bot_goals.h"
 #include "bot_actions.h"
@@ -46,13 +47,10 @@ class Bot: public Ai
     friend class BotFireTargetCache;
     friend class BotItemsSelector;
     friend class BotWeaponSelector;
-
-    friend class BotGenericRunAction;
-    friend class BotGenericRunActionRecord;
-    friend class BotPickupItemAction;
-    friend class BotPickupItemActionRecord;
-    friend class BotWaitForItemAction;
-    friend class BotWaitForItemActionRecord;
+    friend class BotBaseGoal;
+    friend class BotGutsActionsAccessor;
+    friend class BotTacticalSpotsCache;
+    friend class WorldState;
 public:
     static constexpr auto PREFERRED_TRAVEL_FLAGS =
         TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR | TFL_TELEPORT | TFL_JUMPPAD;
@@ -225,14 +223,26 @@ private:
 
     BotWeaponSelector weaponsSelector;
 
+    BotTacticalSpotsCache tacticalSpotsCache;
+
     BotFireTargetCache builtinFireTargetCache;
     BotFireTargetCache scriptFireTargetCache;
 
     BotGrabItemGoal grabItemGoal;
+    BotKillEnemyGoal killEnemyGoal;
+    BotRunAwayGoal runAwayGoal;
 
     BotGenericRunAction genericRunAction;
     BotPickupItemAction pickupItemAction;
     BotWaitForItemAction waitForItemAction;
+
+    BotKillEnemyAction killEnemyAction;
+    BotAdvanceToGoodPositionAction advanceToGoodPositionAction;
+    BotRetreatToGoodPositionAction retreatToGoodPositionAction;
+    BotSteadyCombatAction steadyCombatAction;
+    BotGotoAvailableGoodPositionAction gotoAvailableGoodPositionAction;
+
+    BotRetreatToCoverAction retreatToCoverAction;
 
     struct JumppadMovementState
     {

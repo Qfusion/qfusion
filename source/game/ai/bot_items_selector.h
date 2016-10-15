@@ -12,11 +12,12 @@ class SelectedNavEntity
 
     const NavEntity *navEntity;
     float cost;
+    float rawWeight;
     unsigned selectedAt;
     unsigned timeoutAt;
 
-    inline SelectedNavEntity(const NavEntity *navEntity_, float cost_, unsigned timeoutAt_)
-        : navEntity(navEntity_), cost(cost_), selectedAt(level.time), timeoutAt(timeoutAt_) {}
+    inline SelectedNavEntity(const NavEntity *navEntity_, float cost_, float rawWeight_, unsigned timeoutAt_)
+        : navEntity(navEntity_), cost(cost_), rawWeight(rawWeight_), selectedAt(level.time), timeoutAt(timeoutAt_) {}
 
     inline void CheckValid() const
     {
@@ -30,6 +31,7 @@ public:
     {
         navEntity = nullptr;
         cost = std::numeric_limits<float>::max();
+        rawWeight = 0;
         timeoutAt = level.time;
     }
     // Avoid class/method name clash by using Get prefix
@@ -42,6 +44,11 @@ public:
     {
         CheckValid();
         return cost;
+    }
+    inline float GetRawWeight() const
+    {
+        CheckValid();
+        return rawWeight;
     }
 };
 

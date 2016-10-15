@@ -340,15 +340,15 @@ static int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float s
     // A reachability to a spot from an entity will be checked.
     // Checking a reachability from a planting spot to an entity does not make sense.
     problemParams.SetCheckToAndBackReachability(false);
-    problemParams.SetDistanceInfluence(0.9f);
+    problemParams.SetOriginDistanceInfluence(0.9f);
     // This means weight never falls off and farther spots have greater weight.
-    problemParams.SetWeightFalloffDistanceRatio(1.0f);
+    problemParams.SetOriginWeightFalloffDistanceRatio(1.0f);
     // Travel time should not affect it significantly (spots planting is a "background task" for bots).
     problemParams.SetTravelTimeInfluence(0.2f);
     // Allow planting on ground and a bit below if there are no elevated areas
-    problemParams.SetMinHeightAdvantage(-64.0f);
+    problemParams.SetMinHeightAdvantageOverOrigin(-64.0f);
     // Prefer elevated areas
-    problemParams.SetHeightInfluence(0.9f);
+    problemParams.SetHeightOverOriginInfluence(0.9f);
     // Prevent selection of spots that are too close to each other
     problemParams.SetSpotProximityThreshold(128.0f);
     return tacticalSpotsRegistry->FindPositionalAdvantageSpots(originParams, problemParams, spots, maxSpots);

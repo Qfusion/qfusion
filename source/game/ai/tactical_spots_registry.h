@@ -50,21 +50,21 @@ public:
     {
         friend class TacticalSpotsRegistry;
     protected:
-        float minHeightAdvantage;
-        float weightFalloffDistanceRatio;
-        float distanceInfluence;
+        float minHeightAdvantageOverOrigin;
+        float originWeightFalloffDistanceRatio;
+        float originDistanceInfluence;
         float travelTimeInfluence;
-        float heightInfluence;
+        float heightOverOriginInfluence;
         int lowestWeightTravelTimeBounds;
         float spotProximityThreshold;
         bool checkToAndBackReachability;
     public:
         CommonProblemParams()
-            : minHeightAdvantage(0.0f),
-              weightFalloffDistanceRatio(0.0f),
-              distanceInfluence(0.9f),
+            : minHeightAdvantageOverOrigin(0.0f),
+              originWeightFalloffDistanceRatio(0.0f),
+              originDistanceInfluence(0.9f),
               travelTimeInfluence(0.9f),
-              heightInfluence(0.9f),
+              heightOverOriginInfluence(0.9f),
               lowestWeightTravelTimeBounds(5000),
               spotProximityThreshold(64.0f),
               checkToAndBackReachability(false) {}
@@ -74,14 +74,14 @@ public:
             this->checkToAndBackReachability = checkToAndBack;
         }
 
-        inline void SetWeightFalloffDistanceRatio(float ratio)
+        inline void SetOriginWeightFalloffDistanceRatio(float ratio)
         {
-            weightFalloffDistanceRatio = Clamp(ratio);
+            originWeightFalloffDistanceRatio = Clamp(ratio);
         }
 
-        inline void SetMinHeightAdvantage(float minHeight)
+        inline void SetMinHeightAdvantageOverOrigin(float minHeight)
         {
-            minHeightAdvantage = minHeight;
+            minHeightAdvantageOverOrigin = minHeight;
         }
 
         inline void SetLowestWeightTravelTimeBounds(int millis)
@@ -89,11 +89,11 @@ public:
             lowestWeightTravelTimeBounds = std::min(1, millis);
         }
 
-        inline void SetDistanceInfluence(float influence) { distanceInfluence = Clamp(influence); }
+        inline void SetOriginDistanceInfluence(float influence) { originDistanceInfluence = Clamp(influence); }
 
         inline void SetTravelTimeInfluence(float influence) { travelTimeInfluence = Clamp(influence); }
 
-        inline void SetHeightInfluence(float influence) { heightInfluence = Clamp(influence); }
+        inline void SetHeightOverOriginInfluence(float influence) { heightOverOriginInfluence = Clamp(influence); }
 
         inline void SetSpotProximityThreshold(float radius) { spotProximityThreshold = std::max(0.0f, radius); }
     };
@@ -104,18 +104,41 @@ public:
 
         const edict_t *keepVisibleEntity;
         vec3_t keepVisibleOrigin;
+        float minSpotDistanceToEntity;
+        float maxSpotDistanceToEntity;
+        float entityDistanceInfluence;
+        float entityWeightFalloffDistanceRatio;
+        float minHeightAdvantageOverEntity;
+        float heightOverEntityInfluence;
     public:
         AdvantageProblemParams(const edict_t *keepVisibleEntity_)
-            : keepVisibleEntity(keepVisibleEntity_)
+            : keepVisibleEntity(keepVisibleEntity_),
+              minSpotDistanceToEntity(0),
+              maxSpotDistanceToEntity(999999.0f),
+              entityDistanceInfluence(0.5f),
+              entityWeightFalloffDistanceRatio(0),
+              minHeightAdvantageOverEntity(-999999.0f),
+              heightOverEntityInfluence(0.5f)
         {
             VectorCopy(keepVisibleEntity->s.origin, this->keepVisibleOrigin);
         }
 
         AdvantageProblemParams(const vec3_t keepVisibleOrigin_)
-            : keepVisibleEntity(nullptr)
+            : keepVisibleEntity(nullptr),
+              minSpotDistanceToEntity(0),
+              maxSpotDistanceToEntity(999999.0f),
+              minHeightAdvantageOverEntity(-999999.0f),
+              heightOverEntityInfluence(0.5f)
         {
             VectorCopy(keepVisibleOrigin_, this->keepVisibleOrigin);
         }
+
+        inline void SetMinSpotDistanceToEntity(float distance) { minSpotDistanceToEntity = distance; }
+        inline void SetMaxSpotDistanceToEntity(float distance) { maxSpotDistanceToEntity = distance; }
+        inline void SetEntityDistanceInfluence(float influence) { entityDistanceInfluence = influence; }
+        inline void SetEntityWeightFalloffDistanceRatio(float ratio) { entityWeightFalloffDistanceRatio = Clamp(ratio); }
+        inline void SetMinHeightAdvantageOverEntity(float height) { minHeightAdvantageOverEntity = height; }
+        inline void SetHeightOverEntityInfluence(float influence) { heightOverEntityInfluence = Clamp(influence); }
     };
 
     class CoverProblemParams: public CommonProblemParams
@@ -214,21 +237,21 @@ private:
     void SelectCandidateSpots(const OriginParams &originParams, const CommonProblemParams &problemParams,
                               const uint16_t *spotNums, uint16_t numSpots, CandidateSpots &result) const;
 
+    void SelectCandidateSpots(const OriginParams &originParams, const AdvantageProblemParams &problemParams,
+                              const uint16_t *spotNums, uint16_t numSpots, CandidateSpots &result) const;
+
     void CheckSpotsReachFromOrigin(const OriginParams &originParams, const CommonProblemParams &problemParams,
                                    const CandidateSpots &candidateSpots, ReachCheckedSpots &result) const;
 
     void CheckSpotsReachFromOriginAndBack(const OriginParams &originParams, const CommonProblemParams &problemParams,
                                           const CandidateSpots &candidateSpots, ReachCheckedSpots &result) const;
 
-    void FindReachCheckedSpots(const OriginParams &originParams, const CommonProblemParams &problemParams,
-                               ReachCheckedSpots &result) const;
-
     int CopyResults(const TraceCheckedSpots &results, const CommonProblemParams &problemParams,
                     vec3_t *spotOrigins, int maxSpots) const;
 
     // Specific for positional advantage spots
-    void CheckSpotsVisibleOriginTrace(const AdvantageProblemParams &params, const ReachCheckedSpots &candidateSpots,
-                                      TraceCheckedSpots &result) const;
+    void CheckSpotsVisibleOriginTrace(const OriginParams &originParams, const AdvantageProblemParams &params,
+                                      const ReachCheckedSpots &candidateSpots, TraceCheckedSpots &result) const;
     void SortByVisAndOtherFactors(const OriginParams &originParams, const AdvantageProblemParams &problemParams,
                                   TraceCheckedSpots &spots) const;
 
@@ -242,13 +265,17 @@ private:
     inline static float ComputeDistanceFactor(const vec3_t v1, const vec3_t v2,
                                               float weightFalloffDistanceRatio, float searchRadius)
     {
-        float weightFalloffRadius = weightFalloffDistanceRatio * searchRadius;
-
         float squareDistance = DistanceSquared(v1, v2);
         float distance = 1.0f;
         if (squareDistance >= 1.0f)
             distance = 1.0f / Q_RSqrt(squareDistance);
 
+        return ComputeDistanceFactor(distance, weightFalloffDistanceRatio, searchRadius);
+    }
+
+    inline static float ComputeDistanceFactor(float distance, float weightFalloffDistanceRatio, float searchRadius)
+    {
+        float weightFalloffRadius = weightFalloffDistanceRatio * searchRadius;
         if (distance < weightFalloffRadius)
             return distance / weightFalloffRadius;
 

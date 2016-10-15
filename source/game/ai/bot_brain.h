@@ -8,17 +8,46 @@
 #include "bot_items_selector.h"
 #include "bot_weapon_selector.h"
 
+struct SelectedTactics
+{
+    bool willAdvance;
+    bool willRetreat;
+
+    bool shouldCloak;
+    bool shouldBeSilent;
+    bool shouldMoveCarefully;
+
+    bool shouldAttack;
+    bool shouldKeepXhairOnEnemy;
+
+    bool willAttackMelee;
+    bool shouldRushHeadless;
+
+    inline SelectedTactics() { Clear(); };
+
+    inline void Clear()
+    {
+        willAdvance = false;
+        willRetreat = true;
+
+        shouldCloak = false;
+        shouldBeSilent = false;
+        shouldMoveCarefully = false;
+
+        shouldAttack = false;
+        shouldKeepXhairOnEnemy = false;
+
+        willAttackMelee = false;
+        shouldRushHeadless = false;
+    }
+};
+
 class BotBrain: public AiBaseBrain
 {
     friend class Bot;
     friend class BotItemsSelector;
-
-    friend class BotGenericRunAction;
-    friend class BotGenericRunActionRecord;
-    friend class BotPickupItemAction;
-    friend class BotPickupItemActionRecord;
-    friend class BotWaitForItemAction;
-    friend class BotWaitForItemActionRecord;
+    friend class BotBaseGoal;
+    friend class BotGutsActionsAccessor;
 
     edict_t *bot;
 
@@ -53,40 +82,6 @@ class BotBrain: public AiBaseBrain
     inline int BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
     inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
     inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
-
-    struct SelectedTactics
-    {
-        bool willAdvance;
-        bool willRetreat;
-
-        bool shouldCloak;
-        bool shouldBeSilent;
-        bool shouldMoveCarefully;
-
-        bool shouldAttack;
-        bool shouldKeepXhairOnEnemy;
-
-        bool willAttackMelee;
-        bool shouldRushHeadless;
-
-        inline SelectedTactics() { Clear(); };
-
-        inline void Clear()
-        {
-            willAdvance = false;
-            willRetreat = true;
-
-            shouldCloak = false;
-            shouldBeSilent = false;
-            shouldMoveCarefully = false;
-
-            shouldAttack = false;
-            shouldKeepXhairOnEnemy = false;
-
-            willAttackMelee = false;
-            shouldRushHeadless = false;
-        }
-    };
 
     SelectedTactics selectedTactics;
 

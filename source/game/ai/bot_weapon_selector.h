@@ -282,6 +282,13 @@ public:
 
         return false;
     }
+
+    bool CanHit(const edict_t *ent) const;
+
+    bool HaveGoodSniperRangeWeapons() const;
+    bool HaveGoodFarRangeWeapons() const;
+    bool HaveGoodMiddleRangeWeapons() const;
+    bool HaveGoodCloseRangeWeapons() const;
 };
 
 class BotWeaponSelector

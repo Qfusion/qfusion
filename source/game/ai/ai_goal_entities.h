@@ -132,10 +132,6 @@ public:
 // A NavTarget may be based on a NavEntity (an item with attributes) or may be an "artificial" spot
 class NavTarget
 {
-    friend class BotGenericRunActionRecord;
-    friend class BotPickupItemActionRecord;
-    friend class BotWaitForItemActionRecord;
-
     Vec3 explicitOrigin;
     NavTargetFlags explicitFlags;
     int explicitAasAreaNum;
@@ -163,6 +159,8 @@ class NavTarget
           name(nullptr) {}
 
 public:
+    static inline NavTarget Dummy() { return NavTarget(); }
+
     void SetToNavEntity(const NavEntity *navEntity_)
     {
         this->navEntity = navEntity_;

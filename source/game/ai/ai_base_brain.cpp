@@ -7,156 +7,6 @@
 #include "static_vector.h"
 #include "../../gameshared/q_collision.h"
 
-// Use this macro so one have to write condition that matches the corresponding case and not its negation
-#define TEST_OR_FAIL(condition)  \
-do                               \
-{                                \
-    if (!(condition))            \
-        return false;            \
-}                                \
-while (0)
-
-#define TEST_GENERIC_CMP_SATISFY_OP(ops, values)                          \
-switch (ops[i])                                                           \
-{                                                                         \
-    case SatisfyOp::EQ: TEST_OR_FAIL(values[i] == that.values[i]); break; \
-    case SatisfyOp::NE: TEST_OR_FAIL(values[i] != that.values[i]); break; \
-    case SatisfyOp::GT: TEST_OR_FAIL(values[i] > that.values[i]); break;  \
-    case SatisfyOp::GE: TEST_OR_FAIL(values[i] >= that.values[i]); break; \
-    case SatisfyOp::LS: TEST_OR_FAIL(values[i] < that.values[i]); break;  \
-    case SatisfyOp::LE: TEST_OR_FAIL(values[i] <= that.values[i]); break; \
-}
-
-bool WorldState::IsSatisfiedBy(const WorldState &that) const
-{
-    // Test bool vars first since it is cheaper and would reject non-matching `that`state quickly
-    for (int i = 0; i < NUM_BOOL_VARS; ++i)
-    {
-        if (boolVarsIgnoreFlags[i])
-            continue;
-
-        if (that.boolVarsIgnoreFlags[i])
-            return false;
-
-        if (boolVarsValues[i] != that.boolVarsValues[i])
-            return false;
-    }
-
-    for (int i = 0; i < NUM_UNSIGNED_VARS; ++i)
-    {
-        if (unsignedVarsIgnoreFlags[i])
-            continue;
-
-        if (that.unsignedVarsIgnoreFlags[i])
-            return false;
-
-        TEST_GENERIC_CMP_SATISFY_OP(unsignedVarsSatisfyOps, unsignedVarsValues);
-    }
-
-    for (int i = 0; i < NUM_FLOAT_VARS; ++i)
-    {
-        if (floatVarsIgnoreFlags[i])
-            continue;
-
-        if (that.floatVarsIgnoreFlags[i])
-            return false;
-
-        TEST_GENERIC_CMP_SATISFY_OP(floatVarsSatisfyOps, floatVarsValues);
-    }
-
-    for (int i = 0; i < NUM_SHORT_VARS; ++i)
-    {
-        if (shortVarsIgnoreFlags[i])
-            continue;
-
-        if (that.shortVarsIgnoreFlags[i])
-            return false;
-
-        TEST_GENERIC_CMP_SATISFY_OP(shortVarsSatisfyOps, shortVarsValues);
-    }
-
-    return true;
-}
-
-uint32_t WorldState::Hash() const
-{
-    uint32_t result = 37;
-
-    for (int i = 0; i < NUM_UNSIGNED_VARS; ++i)
-    {
-        if (!(unsignedVarsIgnoreFlags[i]))
-        {
-            result = result * 17 + unsignedVarsValues[i];
-            result = result * 17 + (unsigned)unsignedVarsSatisfyOps[i] + 1;
-        }
-    }
-
-    for (int i = 0; i < NUM_FLOAT_VARS; ++i)
-    {
-        if (!(floatVarsIgnoreFlags[i]))
-        {
-            result = result * 17 + *((uint32_t *)(&floatVarsValues[i]));
-            result = result * 17 + (unsigned)floatVarsSatisfyOps[i] + 1;
-        }
-    }
-
-    for (int i = 0; i < NUM_SHORT_VARS; ++i)
-    {
-        if (!(shortVarsIgnoreFlags[i]))
-        {
-            result = result * 17 + shortVarsValues[i];
-            result = result * 17 + (unsigned)shortVarsSatisfyOps[i] + 1;
-        }
-    }
-
-    for (int i = 0; i < NUM_BOOL_VARS; ++i)
-    {
-        if (!(boolVarsIgnoreFlags[i]))
-        {
-            result = result * 17 + (unsigned)boolVarsValues[i] + 1;
-        }
-    }
-
-    return result;
-}
-
-#define TEST_VARS_TYPE(numVars, ignoreMask, values, ops)          \
-for (int i = 0; i < numVars; ++i)                                 \
-{                                                                 \
-    if (!(ignoreMask[i]))                                         \
-    {                                                             \
-        if (that.ignoreMask[i])                                   \
-            return false;                                         \
-        if (values[i] != that.values[i] || ops[i] != that.ops[i]) \
-            return false;                                         \
-    }                                                             \
-    else if (that.ignoreMask[i])                                  \
-        return false;                                             \
-}
-
-bool WorldState::operator==(const WorldState &that) const
-{
-    // Test bool vars first since it is cheaper and would reject non-matching `that` state quickly
-    for (int i = 0; i < NUM_BOOL_VARS; ++i)
-    {
-        if (!(boolVarsIgnoreFlags[i]))
-        {
-            if (that.boolVarsIgnoreFlags[i])
-                return false;
-            if (boolVarsValues[i] != that.boolVarsValues[i])
-                return false;
-        }
-        else if (that.boolVarsIgnoreFlags[i])
-            return false;
-    }
-
-    TEST_VARS_TYPE(NUM_UNSIGNED_VARS, unsignedVarsIgnoreFlags, unsignedVarsValues, unsignedVarsSatisfyOps);
-    TEST_VARS_TYPE(NUM_FLOAT_VARS, floatVarsIgnoreFlags, floatVarsValues, floatVarsSatisfyOps);
-    TEST_VARS_TYPE(NUM_SHORT_VARS, shortVarsIgnoreFlags, shortVarsValues, shortVarsSatisfyOps);
-
-    return true;
-}
-
 inline void PoolBase::Link(short itemIndex, short listIndex)
 {
 #ifdef _DEBUG
@@ -639,7 +489,7 @@ public:
 
 AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &currWorldState)
 {
-    PlannerNode *startNode = plannerNodesPool.New();
+    PlannerNode *startNode = plannerNodesPool.New(self);
     startNode->worldState = currWorldState;
     startNode->worldStateHash = startNode->worldState.Hash();
     startNode->transitionCost = 0.0f;
@@ -649,7 +499,7 @@ AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &c
     startNode->nextTransition = nullptr;
     startNode->actionRecord = nullptr;
 
-    WorldState goalWorldState;
+    WorldState goalWorldState(self);
     goal->GetDesiredWorldState(&goalWorldState);
 
     // Use prime numbers as hash bins count parameters
@@ -908,7 +758,7 @@ void AiBaseBrain::Think()
         return;
 
     // Prepare current world state for planner
-    WorldState currWorldState;
+    WorldState currWorldState(self);
     PrepareCurrWorldState(&currWorldState);
 
     // If there is no active plan (the active plan was not assigned or has been completed in previous think frame)

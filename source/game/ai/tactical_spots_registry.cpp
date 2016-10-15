@@ -18,6 +18,17 @@ bool TacticalSpotsRegistry::Init(const char *mapname)
     return instance.Load(mapname);
 }
 
+// Cached tactical spot origins are rounded up to 4 units.
+// We want tactical spot origins to match spot origins exactly.
+// Otherwise an original tactical spot may pass reachability check
+// and one restored from packed values may not,
+// and it happens quite often (blame AAS for it).
+inline void CopyVec3RoundedForPacking(const float *from, float *to)
+{
+    for (int i = 0; i < 3; ++i)
+        to[i] = 4.0f * ((short)(((int)from[i]) / 4));
+}
+
 bool TacticalSpotsRegistry::Load(const char *mapname)
 {
     char filename[MAX_QPATH];
@@ -63,25 +74,32 @@ bool TacticalSpotsRegistry::Load(const char *mapname)
 
     const AiAasWorld *aasWorld = AiAasWorld::Instance();
 
-    const vec3_t mins = { -24, -24, 0 };
-    const vec3_t maxs = { +24, +24, 72 };
+    // Its good idea to make mins/maxs rounded too as was mentioned above
+    constexpr int mins[] = { -24, -24, 0 };
+    constexpr int maxs[] = { +24, +24, 72 };
+    static_assert(mins[0] % 4 == 0 && mins[1] % 4 == 0 && mins[2] % 4 == 0, "");
+    static_assert(maxs[0] % 4 == 0 && maxs[1] % 4 == 0 && maxs[2] % 4 == 0, "");
 
     for (int i = 0; i < numNodes; ++i)
     {
-        if (int aasAreaNum = aasWorld->FindAreaNum(nodesBuffer[i].origin))
+        const float *fileOrigin = nodesBuffer[i].origin;
+        vec3_t roundedOrigin;
+        CopyVec3RoundedForPacking(fileOrigin, roundedOrigin);
+        if (int aasAreaNum = aasWorld->FindAreaNum(roundedOrigin))
         {
-            spots[numSpots].aasAreaNum = aasAreaNum;
-            VectorCopy(nodesBuffer[i].origin, spots[numSpots].origin);
-            VectorCopy(nodesBuffer[i].origin, spots[numSpots].absMins);
-            VectorAdd(spots[numSpots].absMins, mins, spots[numSpots].absMins);
-            VectorCopy(nodesBuffer[i].origin, spots[numSpots].absMaxs);
-            VectorAdd(spots[numSpots].absMaxs, maxs, spots[numSpots].absMaxs);
-            instance.numSpots++;
+            TacticalSpot &spot = spots[numSpots];
+            spot.aasAreaNum = aasAreaNum;
+            VectorCopy(roundedOrigin, spot.origin);
+            VectorCopy(roundedOrigin, spot.absMins);
+            VectorCopy(roundedOrigin, spot.absMaxs);
+            VectorAdd(spot.absMins, mins, spot.absMins);
+            VectorAdd(spot.absMaxs, maxs, spot.absMaxs);
+            numSpots++;
         }
         else
         {
-            float x = nodesBuffer[i].origin[0], y = nodesBuffer[i].origin[1], z = nodesBuffer[i].origin[2];
-            G_Printf(S_COLOR_YELLOW "Can't find AAS area num for spot @ %f %f %f\n", x, y, z);
+            const char *format = S_COLOR_YELLOW "Can't find AAS area num for spot @ %f %f %f (rounded to 4 units)\n";
+            G_Printf(format, fileOrigin[0], fileOrigin[1], fileOrigin[2]);
         }
     }
 
@@ -363,9 +381,9 @@ int TacticalSpotsRegistry::CopyResults(const TraceCheckedSpots &results,
     }
 }
 
-void TacticalSpotsRegistry::FindReachCheckedSpots(const OriginParams &originParams,
-                                                  const CommonProblemParams &problemParams,
-                                                  ReachCheckedSpots &result) const
+int TacticalSpotsRegistry::FindPositionalAdvantageSpots(const OriginParams &originParams,
+                                                        const AdvantageProblemParams &problemParams,
+                                                        vec3_t *spotOrigins, int maxSpots) const
 {
     uint16_t boundsSpots[MAX_SPOTS];
     uint16_t numSpotsInBounds = FindSpotsInRadius(originParams, boundsSpots);
@@ -373,21 +391,14 @@ void TacticalSpotsRegistry::FindReachCheckedSpots(const OriginParams &originPara
     CandidateSpots candidateSpots;
     SelectCandidateSpots(originParams, problemParams, boundsSpots, numSpotsInBounds, candidateSpots);
 
-    if (problemParams.checkToAndBackReachability)
-        CheckSpotsReachFromOriginAndBack(originParams, problemParams, candidateSpots, result);
-    else
-        CheckSpotsReachFromOrigin(originParams, problemParams, candidateSpots, result);
-}
-
-int TacticalSpotsRegistry::FindPositionalAdvantageSpots(const OriginParams &originParams,
-                                                        const AdvantageProblemParams &problemParams,
-                                                        vec3_t *spotOrigins, int maxSpots) const
-{
     ReachCheckedSpots reachCheckedSpots;
-    FindReachCheckedSpots(originParams, problemParams, reachCheckedSpots);
+    if (problemParams.checkToAndBackReachability)
+        CheckSpotsReachFromOriginAndBack(originParams, problemParams, candidateSpots, reachCheckedSpots);
+    else
+        CheckSpotsReachFromOrigin(originParams, problemParams, candidateSpots, reachCheckedSpots);
 
     TraceCheckedSpots traceCheckedSpots;
-    CheckSpotsVisibleOriginTrace(problemParams, reachCheckedSpots, traceCheckedSpots);
+    CheckSpotsVisibleOriginTrace(originParams, problemParams, reachCheckedSpots, traceCheckedSpots);
 
     SortByVisAndOtherFactors(originParams, problemParams, traceCheckedSpots);
 
@@ -399,21 +410,82 @@ void TacticalSpotsRegistry::SelectCandidateSpots(const OriginParams &originParam
                                                  const uint16_t *spotNums,
                                                  uint16_t numSpots, CandidateSpots &result) const
 {
-    const float minHeightAdvantage = problemParams.minHeightAdvantage;
-    const float heightInfluence = problemParams.heightInfluence;
+    const float minHeightAdvantageOverOrigin = problemParams.minHeightAdvantageOverOrigin;
+    const float heightOverOriginInfluence = problemParams.heightOverOriginInfluence;
+    const float searchRadius = originParams.searchRadius;
+    const float originZ = originParams.origin[2];
+    // Copy to stack for faster access
+    Vec3 origin(originParams.origin);
 
     for (unsigned i = 0; i < numSpots && result.size() < result.capacity(); ++i)
     {
         const TacticalSpot &spot = spots[spotNums[i]];
 
-        float height = spot.absMins[2] - originParams.origin[2];
-        if (height < minHeightAdvantage)
+        float heightOverOrigin = spot.absMins[2] - originZ;
+        if (heightOverOrigin < minHeightAdvantageOverOrigin)
+            continue;
+
+        float squareDistanceToOrigin = DistanceSquared(origin.Data(), spot.origin);
+        if (squareDistanceToOrigin > searchRadius * searchRadius)
             continue;
 
         float score = 1.0f;
-        // Increase score for higher areas
-        float heightFactor = BoundedFraction(height - minHeightAdvantage, originParams.searchRadius);
-        score = ApplyFactor(score, heightFactor, heightInfluence);
+        float factor = BoundedFraction(heightOverOrigin - minHeightAdvantageOverOrigin, searchRadius);
+        score = ApplyFactor(score, factor, heightOverOriginInfluence);
+
+        result.push_back(SpotAndScore(spotNums[i], score));
+    }
+
+    // Sort result so best score areas are first
+    std::sort(result.begin(), result.end());
+}
+
+void TacticalSpotsRegistry::SelectCandidateSpots(const OriginParams &originParams,
+                                                 const AdvantageProblemParams &problemParams,
+                                                 const uint16_t *spotNums,
+                                                 uint16_t numSpots, CandidateSpots &result) const
+{
+    const float minHeightAdvantageOverOrigin = problemParams.minHeightAdvantageOverOrigin;
+    const float minHeightAdvantageOverEntity = problemParams.minHeightAdvantageOverEntity;
+    const float heightOverOriginInfluence = problemParams.heightOverOriginInfluence;
+    const float heightOverEntityInfluence = problemParams.heightOverEntityInfluence;
+    const float minSquareDistanceToEntity = problemParams.minSpotDistanceToEntity * problemParams.minSpotDistanceToEntity;
+    const float maxSquareDistanceToEntity = problemParams.maxSpotDistanceToEntity * problemParams.maxSpotDistanceToEntity;
+    const float searchRadius = originParams.searchRadius;
+    const float originZ = originParams.origin[2];
+    const float entityZ = problemParams.keepVisibleOrigin[2];
+    // Copy to stack for faster access
+    Vec3 origin(originParams.origin);
+    Vec3 entityOrigin(problemParams.keepVisibleOrigin);
+
+    for (unsigned i = 0; i < numSpots && result.size() < result.capacity(); ++i)
+    {
+        const TacticalSpot &spot = spots[spotNums[i]];
+
+        float heightOverOrigin = spot.absMins[2] - originZ;
+        if (heightOverOrigin < minHeightAdvantageOverOrigin)
+            continue;
+
+        float heightOverEntity = spot.absMins[2] - entityZ;
+        if (heightOverEntity < minHeightAdvantageOverEntity)
+            continue;
+
+        float squareDistanceToOrigin = DistanceSquared(origin.Data(), spot.origin);
+        if (squareDistanceToOrigin > searchRadius * searchRadius)
+            continue;
+
+        float squareDistanceToEntity = DistanceSquared(entityOrigin.Data(), spot.origin);
+        if (squareDistanceToEntity < minSquareDistanceToEntity)
+            continue;
+        if (squareDistanceToEntity > maxSquareDistanceToEntity)
+            continue;
+
+        float score = 1.0f;
+        float factor;
+        factor = BoundedFraction(heightOverOrigin - minHeightAdvantageOverOrigin, searchRadius);
+        score = ApplyFactor(score, factor, heightOverOriginInfluence);
+        factor = BoundedFraction(heightOverEntity - minHeightAdvantageOverEntity, searchRadius);
+        score = ApplyFactor(score, factor, heightOverEntityInfluence);
 
         result.push_back(SpotAndScore(spotNums[i], score));
     }
@@ -432,8 +504,8 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOrigin(const OriginParams &origin
     const float *origin = originParams.origin;
     const float searchRadius = originParams.searchRadius;
     const float lowestWeightTravelTimeBounds = problemParams.lowestWeightTravelTimeBounds;
-    const float weightFalloffDistanceRatio = problemParams.weightFalloffDistanceRatio;
-    const float distanceInfluence = problemParams.distanceInfluence;
+    const float weightFalloffDistanceRatio = problemParams.originWeightFalloffDistanceRatio;
+    const float distanceInfluence = problemParams.originDistanceInfluence;
     const float travelTimeInfluence = problemParams.travelTimeInfluence;
 
     // Do not more than result.capacity() iterations.
@@ -470,8 +542,8 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack(const OriginParams 
     const float *origin = originParams.origin;
     const float searchRadius = originParams.searchRadius;
     const float lowestWeightTravelTimeBounds = problemParams.lowestWeightTravelTimeBounds;
-    const float weightFalloffDistanceRatio = problemParams.weightFalloffDistanceRatio;
-    const float distanceInfluence = problemParams.distanceInfluence;
+    const float weightFalloffDistanceRatio = problemParams.originWeightFalloffDistanceRatio;
+    const float distanceInfluence = problemParams.originDistanceInfluence;
     const float travelTimeInfluence = problemParams.travelTimeInfluence;
 
     // Do not more than result.capacity() iterations.
@@ -502,21 +574,31 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack(const OriginParams 
     std::sort(result.begin(), result.end());
 }
 
-void TacticalSpotsRegistry::CheckSpotsVisibleOriginTrace(const AdvantageProblemParams &problemParams,
+void TacticalSpotsRegistry::CheckSpotsVisibleOriginTrace(const OriginParams &originParams,
+                                                         const AdvantageProblemParams &problemParams,
                                                          const ReachCheckedSpots &candidateSpots,
                                                          TraceCheckedSpots &result) const
 {
-    edict_t *passent = const_cast<edict_t*>(problemParams.keepVisibleEntity);
-    float *origin = const_cast<float *>(problemParams.keepVisibleOrigin);
-    trace_t trace;
+    edict_t *passent = const_cast<edict_t*>(originParams.originEntity);
+    edict_t *keepVisibleEntity = const_cast<edict_t *>(problemParams.keepVisibleEntity);
+    Vec3 entityOrigin(problemParams.keepVisibleOrigin);
+    // If not only origin but an entity too is supplied
+    if (keepVisibleEntity)
+    {
+        // Its a good idea to add some offset from the ground
+        entityOrigin.Z() += 0.66f * keepVisibleEntity->r.maxs[2];
+    }
+    // Copy to locals for faster access
+    const edict_t *gameEdicts = game.edicts;
 
+    trace_t trace;
     // Do not more than result.capacity() iterations
     // (do not do more than result.capacity() traces even if it may cause loose of feasible areas).
     for (unsigned i = 0, end = std::min(candidateSpots.size(), result.capacity()); i < end; ++i)
     {
         const SpotAndScore &spotAndScore = candidateSpots[i];
-        G_Trace(&trace, spots[spotAndScore.spotNum].origin, nullptr, nullptr, origin, passent, MASK_AISOLID);
-        if (trace.fraction == 1.0f)
+        G_Trace(&trace, spots[spotAndScore.spotNum].origin, nullptr, nullptr, entityOrigin.Data(), passent, MASK_AISOLID);
+        if (trace.fraction == 1.0f || gameEdicts + trace.ent == keepVisibleEntity)
             result.push_back(spotAndScore);
     }
 }
@@ -525,10 +607,21 @@ void TacticalSpotsRegistry::SortByVisAndOtherFactors(const OriginParams &originP
                                                      const AdvantageProblemParams &problemParams,
                                                      TraceCheckedSpots &result) const
 {
+    const Vec3 origin(originParams.origin);
+    const Vec3 entityOrigin(problemParams.keepVisibleOrigin);
     const float originZ = originParams.origin[2];
+    const float entityZ = problemParams.keepVisibleOrigin[2];
     const float searchRadius = originParams.searchRadius;
-    const float minHeightAdvantage = problemParams.minHeightAdvantage;
-    const float heightInfluence = problemParams.heightInfluence;
+    const float minHeightAdvantageOverOrigin = problemParams.minHeightAdvantageOverOrigin;
+    const float heightOverOriginInfluence = problemParams.heightOverOriginInfluence;
+    const float minHeightAdvantageOverEntity = problemParams.minHeightAdvantageOverEntity;
+    const float heightOverEntityInfluence = problemParams.heightOverEntityInfluence;
+    const float originWeightFalloffDistanceRatio = problemParams.originWeightFalloffDistanceRatio;
+    const float originDistanceInfluence = problemParams.originDistanceInfluence;
+    const float entityWeightFalloffDistanceRatio = problemParams.entityWeightFalloffDistanceRatio;
+    const float entityDistanceInfluence = problemParams.entityDistanceInfluence;
+    const float minSpotDistanceToEntity = problemParams.minSpotDistanceToEntity;
+    const float entityDistanceRange = problemParams.maxSpotDistanceToEntity - problemParams.minSpotDistanceToEntity;
 
     const unsigned resultSpotsSize = result.size();
     if (resultSpotsSize <= 1)
@@ -549,15 +642,34 @@ void TacticalSpotsRegistry::SortByVisAndOtherFactors(const OriginParams &originP
         for (unsigned j = i + 1; j < resultSpotsSize; ++j)
             visibilitySum += spotVisibilityForSpotNum[j];
 
+        const TacticalSpot &testedSpot = spots[testedSpotNum];
+        float score = result[i].score;
+
         // The maximum possible visibility score for a pair of spots is 255
         float visFactor = visibilitySum / ((result.size() - 1) * 255);
         visFactor = 1.0f / Q_RSqrt(visFactor);
-        result[i].score *= visFactor;
+        score *= visFactor;
 
-        const TacticalSpot &testedSpot = spots[testedSpotNum];
-        float height = testedSpot.absMins[2] - originZ - minHeightAdvantage;
-        float heightFactor = BoundedFraction(height, searchRadius - minHeightAdvantage);
-        result[i].score = ApplyFactor(result[i].score, heightFactor, heightInfluence);
+        float heightOverOrigin = testedSpot.absMins[2] - originZ - minHeightAdvantageOverOrigin;
+        float heightOverOriginFactor = BoundedFraction(heightOverOrigin, searchRadius - minHeightAdvantageOverOrigin);
+        score = ApplyFactor(score, heightOverOriginFactor, heightOverOriginInfluence);
+
+        float heightOverEntity = testedSpot.absMins[2] - entityZ - minHeightAdvantageOverEntity;
+        float heightOverEntityFactor = BoundedFraction(heightOverEntity, searchRadius - minHeightAdvantageOverEntity);
+        score = ApplyFactor(score, heightOverEntityFactor, heightOverEntityInfluence);
+
+        float originDistance = 1.0f / Q_RSqrt(0.001f + DistanceSquared(testedSpot.origin, origin.Data()));
+        float originDistanceFactor = ComputeDistanceFactor(originDistance, originWeightFalloffDistanceRatio, searchRadius);
+        score = ApplyFactor(score, originDistanceFactor, originDistanceInfluence);
+
+        float entityDistance = 1.0f / Q_RSqrt(0.001f + DistanceSquared(testedSpot.origin, entityOrigin.Data()));
+        entityDistance -= minSpotDistanceToEntity;
+        float entityDistanceFactor = ComputeDistanceFactor(entityDistance,
+                                                           entityWeightFalloffDistanceRatio,
+                                                           entityDistanceRange);
+        score = ApplyFactor(score, entityDistanceFactor, entityDistanceInfluence);
+
+        result[i].score = score;
     }
 
     // Sort results so best score spots are first
@@ -568,8 +680,17 @@ int TacticalSpotsRegistry::FindCoverSpots(const OriginParams &originParams,
                                           const CoverProblemParams &problemParams,
                                           vec3_t *spotOrigins, int maxSpots) const
 {
+    uint16_t boundsSpots[MAX_SPOTS];
+    uint16_t numSpotsInBounds = FindSpotsInRadius(originParams, boundsSpots);
+
+    CandidateSpots candidateSpots;
+    SelectCandidateSpots(originParams, problemParams, boundsSpots, numSpotsInBounds, candidateSpots);
+
     ReachCheckedSpots reachCheckedSpots;
-    FindReachCheckedSpots(originParams, problemParams, reachCheckedSpots);
+    if (problemParams.checkToAndBackReachability)
+        CheckSpotsReachFromOriginAndBack(originParams, problemParams, candidateSpots, reachCheckedSpots);
+    else
+        CheckSpotsReachFromOrigin(originParams, problemParams, candidateSpots, reachCheckedSpots);
 
     TraceCheckedSpots coverSpots;
     SelectSpotsForCover(originParams, problemParams, reachCheckedSpots, coverSpots);

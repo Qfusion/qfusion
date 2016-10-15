@@ -198,9 +198,11 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
 
     const NavEntity *currGoalNavEntity = currSelectedNavEntity.navEntity;
     float currGoalEntWeight = 0.0f;
+    float currGoalEntRawWeight = 0.0f;
     float currGoalEntCost = 0.0f;
     const NavEntity *bestNavEnt = nullptr;
     float bestWeight = 0.000001f;
+    float bestNavEntRawWeight = 0.0f;
     float bestNavEntCost = 0.0f;
     // Test not more than 16 best pre-selected by raw weight candidates.
     // (We try to avoid too many expensive FindTravelTimeToGoalArea() calls,
@@ -247,12 +249,14 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
         float moveCost = MOVE_TIME_WEIGHT * moveDuration * navEnt->CostInfluence();
         float cost = 0.0001f + moveCost + WAIT_TIME_WEIGHT * waitDuration * navEnt->CostInfluence();
 
+        float rawWeight = weight;
         weight = (1000 * weight) / cost;
 
         // Store current weight of the current goal entity
         if (currGoalNavEntity == navEnt)
         {
             currGoalEntWeight = weight;
+            currGoalEntRawWeight = rawWeight;
             // Waiting time is handled by the planner for wait actions separately.
             currGoalEntCost = moveCost;
         }
@@ -261,6 +265,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
         {
             bestNavEnt = navEnt;
             bestWeight = weight;
+            bestNavEntRawWeight = rawWeight;
             // Waiting time is handled by the planner for wait actions separately.
             bestNavEntCost = moveCost;
         }
@@ -269,7 +274,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
     if (!bestNavEnt)
     {
         Debug("Can't find a feasible long-term goal nav. entity\n");
-        return SelectedNavEntity(nullptr, std::numeric_limits<float>::max(), level.time + 200);
+        return SelectedNavEntity(nullptr, std::numeric_limits<float>::max(), 0.0f, level.time + 200);
     }
 
     // If it is time to pick a new goal (not just re-evaluate current one), do not be too sticky to the current goal
@@ -279,7 +284,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
     {
         constexpr const char *format = "current goal entity %s is kept as still having best weight %.3f\n";
         Debug(format, currGoalNavEntity->Name(), bestWeight);
-        return SelectedNavEntity(bestNavEnt, bestNavEntCost, level.time + 500);
+        return SelectedNavEntity(bestNavEnt, bestNavEntCost, bestNavEntRawWeight, level.time + 500);
     }
     else if (currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold)
     {
@@ -287,7 +292,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
             "current goal entity %s is kept as having weight %.3f good enough to not consider picking another one\n";
         // If currGoalEntWeight > 0, currLongTermGoalEnt is guaranteed to be non-null
         Debug(format, currGoalNavEntity->Name(), currGoalEntWeight);
-        return SelectedNavEntity(currGoalNavEntity, currGoalEntCost, level.time + 300);
+        return SelectedNavEntity(currGoalNavEntity, currGoalEntCost, currGoalEntRawWeight, level.time + 300);
     }
     else
     {
@@ -300,6 +305,6 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
         {
             Debug("suggested %s weighted %.3f as a new long-term goal\n", bestNavEnt->Name(), bestWeight);
         }
-        return SelectedNavEntity(bestNavEnt, bestNavEntCost, level.time + 400);
+        return SelectedNavEntity(bestNavEnt, bestNavEntCost, bestNavEntRawWeight, level.time + 400);
     }
 }

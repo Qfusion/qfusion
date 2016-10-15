@@ -7,215 +7,7 @@
 #include "static_vector.h"
 #include "ai_aas_route_cache.h"
 #include "ai_base_ai.h"
-
-float DamageToKill(float health, float armor, float armorProtection, float armorDegradation);
-
-inline float DamageToKill(float health, float armor)
-{
-    return DamageToKill(health, armor, g_armor_protection->value, g_armor_degradation->value);
-}
-
-class WorldState
-{
-    friend class FloatVar;
-    friend class BoolVar;
-public:
-    enum class SatisfyOp: unsigned char
-    {
-        EQ,
-        NE,
-        GT,
-        GE,
-        LS,
-        LE
-    };
-private:
-    // WorldState operations such as copying and testing for satisfaction must be fast,
-    // so vars components are stored in separate arrays for tight data packing.
-    // Var types visible for external code are just thin wrappers around pointers to these values.
-
-    static constexpr auto NUM_UNSIGNED_VARS = 1;
-    static constexpr auto NUM_FLOAT_VARS = 2;
-    static constexpr auto NUM_SHORT_VARS = 3;
-    static constexpr auto NUM_BOOL_VARS = 7;
-
-    unsigned unsignedVarsValues[NUM_UNSIGNED_VARS];
-    float floatVarsValues[NUM_FLOAT_VARS];
-    short shortVarsValues[NUM_SHORT_VARS];
-    bool boolVarsValues[NUM_BOOL_VARS];
-
-    SatisfyOp unsignedVarsSatisfyOps[NUM_UNSIGNED_VARS];
-    SatisfyOp floatVarsSatisfyOps[NUM_FLOAT_VARS];
-    SatisfyOp shortVarsSatisfyOps[NUM_SHORT_VARS];
-
-    bool unsignedVarsIgnoreFlags[NUM_UNSIGNED_VARS];
-    bool floatVarsIgnoreFlags[NUM_FLOAT_VARS];
-    bool shortVarsIgnoreFlags[NUM_SHORT_VARS];
-    bool boolVarsIgnoreFlags[NUM_BOOL_VARS];
-public:
-
-#define DECLARE_VAR_BASE_CLASS(className, type, values, mask)                     \
-    class className##Base                                                         \
-    {                                                                             \
-    protected:                                                                    \
-        WorldState *parent;                                                       \
-        short index;                                                              \
-        className##Base(const WorldState *parent_, short index_)                  \
-            : parent(const_cast<WorldState *>(parent_)), index(index_) {}         \
-    public:                                                                       \
-        inline const type &Value() const { return parent->values[index]; }        \
-        inline className##Base &SetValue(type value)                              \
-        {                                                                         \
-            parent->values[index] = value; return *this;                          \
-        }                                                                         \
-        inline operator type() const { return parent->values[index]; }            \
-        inline bool Ignore() const { return parent->mask[index]; }                \
-        inline className##Base &SetIgnore(bool ignore)                            \
-        {                                                                         \
-            parent->mask[index] = ignore; return *this;                           \
-        }                                                                         \
-    }
-
-#define DECLARE_VAR_CLASS_SATISFY_OPS(className, type, values, ops)  \
-    inline WorldState::SatisfyOp SatisfyOp() const                   \
-    {                                                                \
-        return parent->ops[index];                                   \
-    }                                                                \
-    inline className &SetSatisfyOp(WorldState::SatisfyOp op)         \
-    {                                                                \
-        parent->ops[index] = op; return *this;                       \
-    }                                                                \
-    inline bool IsSatisfiedBy(type value) const                      \
-    {                                                                \
-        switch (parent->ops[index])                                  \
-        {                                                            \
-            case WorldState::SatisfyOp::EQ: return Value() == value; \
-            case WorldState::SatisfyOp::NE: return Value() != value; \
-            case WorldState::SatisfyOp::GT: return Value() > value;  \
-            case WorldState::SatisfyOp::GE: return Value() >= value; \
-            case WorldState::SatisfyOp::LS: return Value() < value;  \
-            case WorldState::SatisfyOp::LE: return Value() <= value; \
-        }                                                            \
-    }
-
-    DECLARE_VAR_BASE_CLASS(UnsignedVar, unsigned, unsignedVarsValues, unsignedVarsIgnoreFlags);
-
-    class UnsignedVar: public UnsignedVarBase
-    {
-        friend class WorldState;
-        UnsignedVar(const WorldState *parent_, short index_): UnsignedVarBase(parent_, index_) {}
-    public:
-        DECLARE_VAR_CLASS_SATISFY_OPS(UnsignedVar, unsigned, unsignedVarsValues, unsignedVarsSatisfyOps);
-    };
-
-    DECLARE_VAR_BASE_CLASS(FloatVar, float, floatVarsValues, floatVarsIgnoreFlags);
-
-    class FloatVar: public FloatVarBase
-    {
-        friend class WorldState;
-        FloatVar(const WorldState *parent_, short index_): FloatVarBase(parent_, index_) {}
-    public:
-        DECLARE_VAR_CLASS_SATISFY_OPS(FloatVar, float, floatVarsValues, floatVarsSatisfyOps)
-    };
-
-    DECLARE_VAR_BASE_CLASS(ShortVar, short, shortVarsValues, shortVarsIgnoreFlags);
-
-    class ShortVar: public ShortVarBase
-    {
-        friend class WorldState;
-        ShortVar(const WorldState *parent_, short index_): ShortVarBase(parent_, index_) {}
-    public:
-        DECLARE_VAR_CLASS_SATISFY_OPS(ShortVar, short, shortVarsValues, shortVarsSatisfyOps)
-    };
-
-    DECLARE_VAR_BASE_CLASS(BoolVar, bool, boolVarsValues, boolVarsIgnoreFlags);
-
-    class BoolVar: public BoolVarBase
-    {
-        friend class WorldState;
-        BoolVar(const WorldState *parent_, short index_): BoolVarBase(parent_, index_) {}
-
-    public:
-        inline bool IsSatisfiedBy(bool value) const
-        {
-            return Value() == value;
-        }
-    };
-
-    bool IsSatisfiedBy(const WorldState &that) const;
-
-    uint32_t Hash() const;
-    bool operator==(const WorldState &that) const;
-
-    inline void SetIgnoreAll(bool ignore)
-    {
-        std::fill_n(unsignedVarsIgnoreFlags, NUM_UNSIGNED_VARS, ignore);
-        std::fill_n(floatVarsIgnoreFlags, NUM_FLOAT_VARS, ignore);
-        std::fill_n(shortVarsIgnoreFlags, NUM_SHORT_VARS, ignore);
-        std::fill_n(boolVarsIgnoreFlags, NUM_BOOL_VARS, ignore);
-    }
-
-    inline FloatVar DistanceToEnemy() const { return FloatVar(this, 0); }
-    inline FloatVar DistanceToGoalItemNavTarget() const { return FloatVar(this, 1); }
-
-    inline UnsignedVar GoalItemWaitTime() const { return UnsignedVar(this, 0); }
-
-    inline ShortVar Health() const { return ShortVar(this, 0); }
-    inline ShortVar Armor() const { return ShortVar(this, 1); }
-    inline ShortVar RawDamageToKill() const { return ShortVar(this, 2); }
-
-    inline BoolVar HasQuad() const { return BoolVar(this, 0); }
-    inline BoolVar HasShell() const { return BoolVar(this, 1); }
-    inline BoolVar HasEnemy() const { return BoolVar(this, 2); }
-    inline BoolVar EnemyHasQuad() const { return BoolVar(this, 3); }
-    inline BoolVar HasThreateningEnemy() const { return BoolVar(this, 4); }
-    inline BoolVar HasJustPickedGoalItem() const { return BoolVar(this, 5); }
-    inline BoolVar HasGoalItemNavTarget() const { return BoolVar(this, 6); }
-
-    constexpr static float FAR_RANGE_MAX = 2.5f * 900.0f;
-    constexpr static float MIDDLE_RANGE_MAX = 900.0f;
-    constexpr static float CLOSE_RANGE_MAX = 175.0f;
-
-    inline bool EnemyIsOnSniperRange() const
-    {
-        return DistanceToEnemy() > FAR_RANGE_MAX;
-    }
-    inline bool EnemyIsOnFarRange() const
-    {
-        return DistanceToEnemy() > MIDDLE_RANGE_MAX && DistanceToEnemy() <= FAR_RANGE_MAX;
-    }
-    inline bool EnemyIsOnMiddleRange() const
-    {
-        return DistanceToEnemy() > CLOSE_RANGE_MAX && DistanceToEnemy() <= MIDDLE_RANGE_MAX;
-    }
-    inline bool EnemyIsOnCloseRange() const
-    {
-        return DistanceToEnemy() <= CLOSE_RANGE_MAX;
-    }
-
-    inline float DamageToBeKilled() const
-    {
-        float damageToBeKilled = ::DamageToKill(Health(), Armor());
-        if (HasShell())
-            damageToBeKilled *= 4.0f;
-        if (EnemyHasQuad())
-            damageToBeKilled /= 4.0f;
-        return damageToBeKilled;
-    }
-
-    inline float DamageToKill() const
-    {
-        float damageToKill = RawDamageToKill();
-        if (HasQuad())
-            damageToKill /= 4.0f;
-        return damageToKill;
-    }
-
-    inline float KillToBeKilledDamageRatio() const
-    {
-        return DamageToKill() / DamageToBeKilled();
-    }
-};
+#include "world_state.h"
 
 class AiBaseGoal
 {
@@ -378,6 +170,14 @@ public:
             return new(mem) Item(this, arg1, arg2, arg3, arg4);
         return nullptr;
     };
+
+    template <typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5>
+    inline Item *New(Arg1 arg1, Arg2 arg2, Arg3 arg3, Arg4 arg4, Arg5 arg5)
+    {
+        if (void *mem = Alloc())
+            return new(mem) Item(this, arg1, arg2, arg3, arg4, arg5);
+        return nullptr;
+    };
 };
 
 class AiBaseActionRecord: public PoolItem
@@ -452,7 +252,8 @@ struct PlannerNode: PoolItem
     PlannerNode *nextInHashBin;
     uint32_t worldStateHash;
 
-    inline PlannerNode(PoolBase *pool): PoolItem(pool) {}
+    inline PlannerNode(PoolBase *pool, edict_t *self)
+        : PoolItem(pool), worldState(self) {}
 
     ~PlannerNode() override
     {
@@ -490,7 +291,31 @@ protected:
         va_end(va);
     }
 
-    inline PlannerNode *NewPlannerNode();
+    class PlannerNodePtr
+    {
+        PlannerNode *node;
+        PlannerNodePtr(const PlannerNodePtr &that) = delete;
+        PlannerNodePtr &operator=(const PlannerNodePtr &that) = delete;
+    public:
+        inline explicit PlannerNodePtr(PlannerNode *node_): node(node_) {}
+        inline PlannerNodePtr(PlannerNodePtr &&that): node(that.node)
+        {
+            that.node = nullptr;
+        }
+        inline PlannerNodePtr &operator=(PlannerNodePtr &&that)
+        {
+            node = that.node;
+            that.node = nullptr;
+            return *this;
+        }
+        inline ~PlannerNodePtr();
+        inline PlannerNode *PrepareActionResult();
+        inline class WorldState &WorldState();
+        inline float &Cost();
+        inline operator bool() const { return node != nullptr; }
+    };
+
+    inline PlannerNodePtr NewNodeForRecord(AiBaseActionRecord *record);
 public:
     // Don't pass self as a constructor argument (self->ai ptr might not been set yet)
     inline AiBaseAction(Ai *ai, const char *name_): self(ai->self), name(name_)
@@ -511,6 +336,7 @@ class AiBaseBrain: public AiFrameAwareUpdatable
     friend class AiBaseGoal;
     friend class AiBaseAction;
     friend class AiBaseActionRecord;
+    friend class BotGutsActionsAccessor;
 protected:
     edict_t *self;
 
@@ -635,9 +461,51 @@ inline void AiBaseAction::Register(Ai *ai, AiBaseAction *action)
     ai->aiBaseBrain->actions.push_back(action);
 }
 
-inline PlannerNode *AiBaseAction::NewPlannerNode()
+inline AiBaseAction::PlannerNodePtr::~PlannerNodePtr()
 {
-    return self->ai->aiRef->aiBaseBrain->plannerNodesPool.New();
+    if (this->node)
+        this->node->DeleteSelf();
+}
+
+inline PlannerNode *AiBaseAction::PlannerNodePtr::PrepareActionResult()
+{
+    PlannerNode *result = this->node;
+    this->node = nullptr;
+    // Compute modified world state hash
+    // This computation have been put here to avoid error-prone copy-pasting.
+    // Another approach is to use lazy hash code computation but it adds branching on each hash code access
+    result->worldStateHash = result->worldState.Hash();
+    return result;
+}
+
+inline WorldState &AiBaseAction::PlannerNodePtr::WorldState()
+{
+    return node->worldState;
+}
+
+inline float &AiBaseAction::PlannerNodePtr::Cost()
+{
+    return node->transitionCost;
+}
+
+inline AiBaseAction::PlannerNodePtr AiBaseAction::NewNodeForRecord(AiBaseActionRecord *record)
+{
+    if (!record)
+    {
+        Debug("Can't allocate an action record\n");
+        return PlannerNodePtr(nullptr);
+    }
+
+    PlannerNode *node = self->ai->aiRef->aiBaseBrain->plannerNodesPool.New(self);
+    if (!node)
+    {
+        Debug("Can't allocate a planner node\n");
+        record->DeleteSelf();
+        return PlannerNodePtr(nullptr);
+    }
+
+    node->actionRecord = record;
+    return PlannerNodePtr(node);
 }
 
 #endif
