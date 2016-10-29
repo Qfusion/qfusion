@@ -9,74 +9,63 @@ do                               \
 }                                \
 while (0)
 
-#define TEST_GENERIC_CMP_SATISFY_OP(ops, values)                          \
-switch (ops[i])                                                           \
-{                                                                         \
-    case SatisfyOp::EQ: TEST_OR_FAIL(values[i] == that.values[i]); break; \
-    case SatisfyOp::NE: TEST_OR_FAIL(values[i] != that.values[i]); break; \
-    case SatisfyOp::GT: TEST_OR_FAIL(values[i] > that.values[i]); break;  \
-    case SatisfyOp::GE: TEST_OR_FAIL(values[i] >= that.values[i]); break; \
-    case SatisfyOp::LS: TEST_OR_FAIL(values[i] < that.values[i]); break;  \
-    case SatisfyOp::LE: TEST_OR_FAIL(values[i] <= that.values[i]); break; \
+template <typename T>
+static inline bool TestCareFlags(T thisFlags, T thatFlags)
+{
+    T careMask = thisFlags ^ std::numeric_limits<T>::max();
+    T thatCareMask = thatFlags ^ std::numeric_limits<T>::max();
+    // There are vars that this world state cares about and that one do not
+    if (careMask & ~thatCareMask)
+        return false;
+
+    return true;
 }
+
+#define TEST_GENERIC_COMPARABLE_VARS_SATISFACTION(values, flags, ops)             \
+do                                                                                \
+{                                                                                 \
+    if (!TestCareFlags(flags, that.flags)) return false;                          \
+    decltype(flags) mask = 1;                                                     \
+    for (auto i = 0; i < sizeof(values) / sizeof(values[0]); ++i, mask <<= 1)     \
+    {                                                                             \
+        if (flags & mask) continue;                                               \
+        switch (this->GetVarSatisfyOp(ops, i))                                    \
+        {                                                                         \
+            case SatisfyOp::EQ: TEST_OR_FAIL(values[i] == that.values[i]); break; \
+            case SatisfyOp::NE: TEST_OR_FAIL(values[i] != that.values[i]); break; \
+            case SatisfyOp::GT: TEST_OR_FAIL(values[i] > that.values[i]); break;  \
+            case SatisfyOp::GE: TEST_OR_FAIL(values[i] >= that.values[i]); break; \
+            case SatisfyOp::LS: TEST_OR_FAIL(values[i] < that.values[i]); break;  \
+            case SatisfyOp::LE: TEST_OR_FAIL(values[i] <= that.values[i]); break; \
+        }                                                                         \
+    }                                                                             \
+} while (0)
 
 bool WorldState::IsSatisfiedBy(const WorldState &that) const
 {
     // Test bool vars first since it is cheaper and would reject non-matching `that`state quickly
-    for (int i = 0; i < NUM_BOOL_VARS; ++i)
-    {
-        if (boolVarsIgnoreFlags[i])
-            continue;
+    if (!TestCareFlags(boolVarsIgnoreFlags, that.boolVarsIgnoreFlags))
+        return false;
 
-        if (that.boolVarsIgnoreFlags[i])
-            return false;
+    auto boolVarsCareMask = boolVarsIgnoreFlags ^ std::numeric_limits<decltype(boolVarsIgnoreFlags)>::max();
+    // If values masked for this ignore flags do not match
+    if ((boolVarsValues & boolVarsCareMask) != (that.boolVarsValues & boolVarsCareMask))
+        return false;
 
-        if (boolVarsValues[i] != that.boolVarsValues[i])
-            return false;
-    }
-
-    for (int i = 0; i < NUM_UNSIGNED_VARS; ++i)
-    {
-        if (unsignedVarsIgnoreFlags[i])
-            continue;
-
-        if (that.unsignedVarsIgnoreFlags[i])
-            return false;
-
-        TEST_GENERIC_CMP_SATISFY_OP(unsignedVarsSatisfyOps, unsignedVarsValues);
-    }
-
-    for (int i = 0; i < NUM_FLOAT_VARS; ++i)
-    {
-        if (floatVarsIgnoreFlags[i])
-            continue;
-
-        if (that.floatVarsIgnoreFlags[i])
-            return false;
-
-        TEST_GENERIC_CMP_SATISFY_OP(floatVarsSatisfyOps, floatVarsValues);
-    }
-
-    for (int i = 0; i < NUM_SHORT_VARS; ++i)
-    {
-        if (shortVarsIgnoreFlags[i])
-            continue;
-
-        if (that.shortVarsIgnoreFlags[i])
-            return false;
-
-        TEST_GENERIC_CMP_SATISFY_OP(shortVarsSatisfyOps, shortVarsValues);
-    }
+    TEST_GENERIC_COMPARABLE_VARS_SATISFACTION(unsignedVarsValues, unsignedVarsIgnoreFlags, unsignedVarsSatisfyOps);
+    TEST_GENERIC_COMPARABLE_VARS_SATISFACTION(floatVarsValues, floatVarsIgnoreFlags, floatVarsSatisfyOps);
+    TEST_GENERIC_COMPARABLE_VARS_SATISFACTION(shortVarsValues, shortVarsIgnoreFlags, shortVarsSatisfyOps);
 
     for (int i = 0, offset = 0; i < NUM_ORIGIN_VARS; ++i, offset += 4)
     {
-        if (originVarsIgnoreFlags[i])
-            continue;
+        const OriginVar::PackedFields &packed = *(OriginVar::PackedFields *)(&originVarsData[offset + 3]);
+        const OriginVar::PackedFields &thatPacked = *(OriginVar::PackedFields *)(&that.originVarsData[offset + 3]);
 
-        if (that.originVarsIgnoreFlags[i])
+        if (packed.ignore)
+            continue;
+        if (thatPacked.ignore)
             return false;
 
-        const OriginVar::PackedFields &packed = *(OriginVar::PackedFields *)(&originVarsData[offset + 3]);
         const unsigned short epsilon = packed.epsilon;
         const short *thisOriginData = originVarsData + offset;
         const short *thatOriginData = that.originVarsData + offset;
@@ -114,44 +103,41 @@ uint32_t WorldState::Hash() const
 {
     uint32_t result = 37;
 
-    for (int i = 0; i < NUM_UNSIGNED_VARS; ++i)
+    decltype(unsignedVarsIgnoreFlags) unsignedVarsMask = 1;
+    for (int i = 0; i < NUM_UNSIGNED_VARS; ++i, unsignedVarsMask <<= 1)
     {
-        if (!(unsignedVarsIgnoreFlags[i]))
-        {
-            result = result * 17 + unsignedVarsValues[i];
-            result = result * 17 + (unsigned)unsignedVarsSatisfyOps[i] + 1;
-        }
+        if (unsignedVarsIgnoreFlags & unsignedVarsMask)
+            continue;
+        result = result * 17 + unsignedVarsValues[i];
+        result = result * 17 + (unsigned)GetVarSatisfyOp(unsignedVarsSatisfyOps, i) + 1;
     }
 
+    decltype(floatVarsIgnoreFlags) floatVarsMask = 1;
     for (int i = 0; i < NUM_FLOAT_VARS; ++i)
     {
-        if (!(floatVarsIgnoreFlags[i]))
-        {
-            result = result * 17 + *((uint32_t *)(&floatVarsValues[i]));
-            result = result * 17 + (unsigned)floatVarsSatisfyOps[i] + 1;
-        }
+        if (floatVarsIgnoreFlags & floatVarsMask)
+            continue;
+        result = result * 17 + *((uint32_t *)(&floatVarsValues[i]));
+        result = result * 17 + (unsigned)GetVarSatisfyOp(floatVarsSatisfyOps, i) + 1;
     }
 
+    decltype(shortVarsIgnoreFlags) shortVarsMask = 1;
     for (int i = 0; i < NUM_SHORT_VARS; ++i)
     {
-        if (!(shortVarsIgnoreFlags[i]))
+        if (shortVarsIgnoreFlags & shortVarsMask)
         {
             result = result * 17 + shortVarsValues[i];
-            result = result * 17 + (unsigned)shortVarsSatisfyOps[i] + 1;
+            result = result * 17 + (unsigned)GetVarSatisfyOp(shortVarsSatisfyOps, i) + 1;
         }
     }
 
-    for (int i = 0; i < NUM_BOOL_VARS; ++i)
-    {
-        if (!(boolVarsIgnoreFlags[i]))
-        {
-            result = result * 17 + (unsigned)boolVarsValues[i] + 1;
-        }
-    }
+    result = result * 17;
+    result += boolVarsValues & (boolVarsIgnoreFlags ^ std::numeric_limits<decltype(boolVarsIgnoreFlags)>::max());
 
     for (int i = 0; i < NUM_ORIGIN_VARS; ++i)
     {
-        if (!(originVarsIgnoreFlags[i]))
+        const auto &packed = *(OriginVar::PackedFields *)&originVarsData[i * 4 + 3];
+        if (!(packed.ignore))
         {
             for (int j = 0; j < 4; ++j)
                 result = result * 17 + originVarsData[i * 4 + j];
@@ -167,53 +153,57 @@ uint32_t WorldState::Hash() const
     return result;
 }
 
-#define TEST_VARS_TYPE(numVars, ignoreMask, values, ops)          \
-for (int i = 0; i < numVars; ++i)                                 \
-{                                                                 \
-    if (!(ignoreMask[i]))                                         \
-    {                                                             \
-        if (that.ignoreMask[i])                                   \
-            return false;                                         \
-        if (values[i] != that.values[i] || ops[i] != that.ops[i]) \
-            return false;                                         \
-    }                                                             \
-    else if (that.ignoreMask[i])                                  \
-        return false;                                             \
-}
+#define TEST_VARS_EQUALITY(values, flags, ops)                           \
+do                                                                       \
+{                                                                        \
+    if (flags != that.flags)                                             \
+        return false;                                                    \
+    decltype(flags) mask = 1;                                            \
+    for (int i = 0; i < sizeof(values) / sizeof(values[0]); ++i)         \
+    {                                                                    \
+        if (!(flags & mask))                                             \
+        {                                                                \
+            if (values[i] != that.values[i])                             \
+                return false;                                            \
+            if (GetVarSatisfyOp(ops, i) != GetVarSatisfyOp(that.ops, i)) \
+                return false;                                            \
+        }                                                                \
+        mask <<= 1;                                                      \
+    }                                                                    \
+}                                                                        \
+while (0)
 
 bool WorldState::operator==(const WorldState &that) const
 {
     // Test bool vars first since it is cheaper and would reject non-matching `that` state quickly
-    for (int i = 0; i < NUM_BOOL_VARS; ++i)
-    {
-        if (!(boolVarsIgnoreFlags[i]))
-        {
-            if (that.boolVarsIgnoreFlags[i])
-                return false;
-            if (boolVarsValues[i] != that.boolVarsValues[i])
-                return false;
-        }
-        else if (that.boolVarsIgnoreFlags[i])
-            return false;
-    }
 
-    TEST_VARS_TYPE(NUM_UNSIGNED_VARS, unsignedVarsIgnoreFlags, unsignedVarsValues, unsignedVarsSatisfyOps);
-    TEST_VARS_TYPE(NUM_FLOAT_VARS, floatVarsIgnoreFlags, floatVarsValues, floatVarsSatisfyOps);
-    TEST_VARS_TYPE(NUM_SHORT_VARS, shortVarsIgnoreFlags, shortVarsValues, shortVarsSatisfyOps);
+    if (boolVarsIgnoreFlags != that.boolVarsIgnoreFlags)
+        return false;
 
-    for (int i = 0; i < NUM_ORIGIN_VARS; ++i)
+    auto boolVarsCareFlags = boolVarsIgnoreFlags ^ std::numeric_limits<decltype(boolVarsIgnoreFlags)>::max();
+    if ((boolVarsValues & boolVarsCareFlags) != (that.boolVarsValues & boolVarsCareFlags))
+        return false;
+
+    TEST_VARS_EQUALITY(unsignedVarsValues, unsignedVarsIgnoreFlags, unsignedVarsSatisfyOps);
+    TEST_VARS_EQUALITY(floatVarsValues, floatVarsIgnoreFlags, floatVarsSatisfyOps);
+    TEST_VARS_EQUALITY(shortVarsValues, shortVarsIgnoreFlags, shortVarsSatisfyOps);
+
+    for (int i = 0, offset = 0; i < NUM_ORIGIN_VARS; ++i, offset += 4)
     {
-        if (!(originVarsIgnoreFlags[i]))
+        const auto &packed = *((OriginVar::PackedFields *)&originVarsData[offset + 3]);
+        const auto &thatPacked = *((OriginVar::PackedFields *)&that.originVarsData[offset + 3]);
+        if (!packed.ignore)
         {
-            if (that.originVarsIgnoreFlags[i])
+            if (thatPacked.ignore)
                 return false;
+
             for (int j = 0; j < 4; ++j)
             {
-                if (originVarsData[i * 4 + j] != that.originVarsData[i * 4 + j])
+                if (originVarsData[offset + j] != that.originVarsData[offset + j])
                     return false;
             }
         }
-        else if (!that.originVarsIgnoreFlags[i])
+        else if (!thatPacked.ignore)
             return false;
     }
 

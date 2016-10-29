@@ -12,7 +12,7 @@ inline float DamageToKill(float health, float armor)
 
 class WorldState
 {
-    friend class FloatVar;
+    friend class FloatBaseVar;
     friend class BoolVar;
 public:
     enum class SatisfyOp: unsigned char
@@ -97,23 +97,60 @@ private:
         NUM_ORIGIN_LAZY_VARS
     };
 
+    uint32_t boolVarsValues;
+    static_assert(8 * sizeof(decltype(boolVarsValues)) >= NUM_BOOL_VARS, "Values capacity overflow");
+
     unsigned unsignedVarsValues[NUM_UNSIGNED_VARS];
     float floatVarsValues[NUM_FLOAT_VARS];
     short shortVarsValues[NUM_SHORT_VARS];
-    bool boolVarsValues[NUM_BOOL_VARS];
     short originVarsData[NUM_ORIGIN_VARS * 4];
     short originLazyVarsData[NUM_ORIGIN_LAZY_VARS * 4];
 
-    SatisfyOp unsignedVarsSatisfyOps[NUM_UNSIGNED_VARS];
-    SatisfyOp floatVarsSatisfyOps[NUM_FLOAT_VARS];
-    SatisfyOp shortVarsSatisfyOps[NUM_SHORT_VARS];
+    uint32_t boolVarsIgnoreFlags;
+    uint8_t unsignedVarsIgnoreFlags;
+    uint8_t floatVarsIgnoreFlags;
+    uint8_t shortVarsIgnoreFlags;
 
-    bool unsignedVarsIgnoreFlags[NUM_UNSIGNED_VARS];
-    bool floatVarsIgnoreFlags[NUM_FLOAT_VARS];
-    bool shortVarsIgnoreFlags[NUM_SHORT_VARS];
-    bool boolVarsIgnoreFlags[NUM_BOOL_VARS];
-    bool originVarsIgnoreFlags[NUM_ORIGIN_VARS];
-    bool originLazyVarsIgnoreFlags[NUM_ORIGIN_LAZY_VARS];
+    static_assert(8 * (sizeof(decltype(boolVarsIgnoreFlags))) >= NUM_BOOL_VARS, "Flags capacity overflow");
+    static_assert(8 * (sizeof(decltype(unsignedVarsIgnoreFlags))) >= NUM_UNSIGNED_VARS, "Flags capacity overflow");
+    static_assert(8 * (sizeof(decltype(floatVarsIgnoreFlags))) >= NUM_FLOAT_VARS, "Flags capacity overflow");
+    static_assert(8 * (sizeof(decltype(shortVarsIgnoreFlags))) >= NUM_SHORT_VARS, "Flags capacity overflow");
+
+    // 4 bits for a SatisfyOp is enough, pack ops for two vars in a single byte
+    uint8_t unsignedVarsSatisfyOps[NUM_UNSIGNED_VARS / 2 + 1];
+    uint8_t floatVarsSatisfyOps[NUM_FLOAT_VARS / 2 + 1];
+    uint8_t shortVarsSatisfyOps[NUM_SHORT_VARS / 2 + 1];
+
+    inline SatisfyOp GetVarSatisfyOp(const uint8_t *ops, int varIndex) const
+    {
+        const uint8_t &byte = ops[varIndex / 2];
+        // Try to avoid branches, use shift to select hi or lo part of a byte
+        auto shift = (varIndex % 2) * 4;
+        // Do a left-shift to move the part value to rightmost 4 bits, then apply a mask for these 4 bits
+        return (SatisfyOp)((byte >> shift) & 0xF);
+    }
+
+    inline void SetVarSatisfyOp(uint8_t *ops, int varIndex, SatisfyOp value)
+    {
+        uint8_t &byte = ops[varIndex / 2];
+        auto varShift = (varIndex % 2) * 4;
+        // The other packed op (hi or lo part) should be preserved.
+        // If varShift is 4, complementaryShift is 0 and vice versa.
+        auto complementaryShift = (((varIndex % 2) + 1) % 2) * 4;
+
+#ifdef _DEBUG
+        if (((0xF << varShift) | (0xF << complementaryShift)) != 0xFF)
+            abort();
+#endif
+
+        // This mask allows to extract the kept part of a byte
+        uint8_t keptPartMask = (uint8_t)(0xF << complementaryShift);
+        //
+        uint8_t keptPart = ((byte << complementaryShift) & keptPartMask);
+        uint8_t newPart = (unsigned char)value << varShift;
+        // Combine parts
+        byte = keptPart | newPart;
+    }
 
     inline const short *BotOriginData() const { return originVarsData + BotOrigin * 4; }
     inline const short *EnemyOriginData() const { return originVarsData + EnemyOrigin * 4; }
@@ -126,91 +163,90 @@ private:
 public:
     WorldState(edict_t *self_): self(self_) {}
 
-#define DECLARE_VAR_BASE_CLASS(className, type, values, mask)                     \
-    class className##Base                                                         \
-    {                                                                             \
-    protected:                                                                    \
-        WorldState *parent;                                                       \
-        short index;                                                              \
-        className##Base(const WorldState *parent_, short index_)                  \
-            : parent(const_cast<WorldState *>(parent_)), index(index_) {}         \
-    public:                                                                       \
-        inline const type &Value() const { return parent->values[index]; }        \
-        inline className##Base &SetValue(type value)                              \
-        {                                                                         \
-            parent->values[index] = value; return *this;                          \
-        }                                                                         \
-        inline operator type() const { return parent->values[index]; }            \
-        inline bool Ignore() const { return parent->mask[index]; }                \
-        inline className##Base &SetIgnore(bool ignore)                            \
-        {                                                                         \
-            parent->mask[index] = ignore; return *this;                           \
-        }                                                                         \
+#define DECLARE_COMPARABLE_VAR_CLASS(className, type)                               \
+    class className                                                                 \
+    {                                                                               \
+        friend class WorldState;                                                    \
+    protected:                                                                      \
+        WorldState *parent;                                                         \
+        short index;                                                                \
+        className(const WorldState *parent_, short index_)                          \
+            : parent(const_cast<WorldState *>(parent_)), index(index_) {}           \
+    public:                                                                         \
+        inline const type &Value() const                                            \
+        {                                                                           \
+            return parent->type##VarsValues[index];                                 \
+        }                                                                           \
+        inline className &SetValue(type value)                                      \
+        {                                                                           \
+            parent->type##VarsValues[index] = value; return *this;                  \
+        }                                                                           \
+        inline operator type() const { return parent->type##VarsValues[index]; }    \
+        inline bool Ignore() const                                                  \
+        {                                                                           \
+            return (parent->type##VarsIgnoreFlags & (1 << index)) != 0;             \
+        }                                                                           \
+        inline className &SetIgnore(bool ignore)                                    \
+        {                                                                           \
+            if (ignore)                                                             \
+                parent->type##VarsIgnoreFlags |= 1 << index;                        \
+            else                                                                    \
+                parent->type##VarsIgnoreFlags &= ~(1 << index);                     \
+            return *this;                                                           \
+        }                                                                           \
+        inline WorldState::SatisfyOp SatisfyOp() const                              \
+        {                                                                           \
+            return parent->GetVarSatisfyOp(parent->type##VarsSatisfyOps, index);    \
+        }                                                                           \
+        inline className &SetSatisfyOp(WorldState::SatisfyOp op)                    \
+        {                                                                           \
+            parent->SetVarSatisfyOp(parent->type##VarsSatisfyOps, index, op);       \
+            return *this;                                                           \
+        }                                                                           \
+        inline bool IsSatisfiedBy(type value) const                                 \
+        {                                                                           \
+            switch (parent->GetVarSatisfyOp(parent->type##VarsSatisfyOps, index))   \
+            {                                                                       \
+                case WorldState::SatisfyOp::EQ: return Value() == value;            \
+                case WorldState::SatisfyOp::NE: return Value() != value;            \
+                case WorldState::SatisfyOp::GT: return Value() > value;             \
+                case WorldState::SatisfyOp::GE: return Value() >= value;            \
+                case WorldState::SatisfyOp::LS: return Value() < value;             \
+                case WorldState::SatisfyOp::LE: return Value() <= value;            \
+            }                                                                       \
+        }                                                                           \
     }
 
-#define DECLARE_VAR_CLASS_SATISFY_OPS(className, type, values, ops)  \
-    inline WorldState::SatisfyOp SatisfyOp() const                   \
-    {                                                                \
-        return parent->ops[index];                                   \
-    }                                                                \
-    inline className &SetSatisfyOp(WorldState::SatisfyOp op)         \
-    {                                                                \
-        parent->ops[index] = op; return *this;                       \
-    }                                                                \
-    inline bool IsSatisfiedBy(type value) const                      \
-    {                                                                \
-        switch (parent->ops[index])                                  \
-        {                                                            \
-            case WorldState::SatisfyOp::EQ: return Value() == value; \
-            case WorldState::SatisfyOp::NE: return Value() != value; \
-            case WorldState::SatisfyOp::GT: return Value() > value;  \
-            case WorldState::SatisfyOp::GE: return Value() >= value; \
-            case WorldState::SatisfyOp::LS: return Value() < value;  \
-            case WorldState::SatisfyOp::LE: return Value() <= value; \
-        }                                                            \
-    }
+    DECLARE_COMPARABLE_VAR_CLASS(UnsignedVar, unsigned);
 
-    DECLARE_VAR_BASE_CLASS(UnsignedVar, unsigned, unsignedVarsValues, unsignedVarsIgnoreFlags);
+    DECLARE_COMPARABLE_VAR_CLASS(FloatVar, float);
 
-    class UnsignedVar: public UnsignedVarBase
+    DECLARE_COMPARABLE_VAR_CLASS(ShortVar, short);
+
+    class BoolVar
     {
         friend class WorldState;
-        UnsignedVar(const WorldState *parent_, short index_): UnsignedVarBase(parent_, index_) {}
+        WorldState *parent;
+        short index;
+        BoolVar(const WorldState *parent_, short index_)
+            : parent(const_cast<WorldState *>(parent_)), index(index_) {}
     public:
-        DECLARE_VAR_CLASS_SATISFY_OPS(UnsignedVar, unsigned, unsignedVarsValues, unsignedVarsSatisfyOps);
-    };
-
-    DECLARE_VAR_BASE_CLASS(FloatVar, float, floatVarsValues, floatVarsIgnoreFlags);
-
-    class FloatVar: public FloatVarBase
-    {
-        friend class WorldState;
-        FloatVar(const WorldState *parent_, short index_): FloatVarBase(parent_, index_) {}
-    public:
-        DECLARE_VAR_CLASS_SATISFY_OPS(FloatVar, float, floatVarsValues, floatVarsSatisfyOps)
-    };
-
-    DECLARE_VAR_BASE_CLASS(ShortVar, short, shortVarsValues, shortVarsIgnoreFlags);
-
-    class ShortVar: public ShortVarBase
-    {
-        friend class WorldState;
-        ShortVar(const WorldState *parent_, short index_): ShortVarBase(parent_, index_) {}
-    public:
-        DECLARE_VAR_CLASS_SATISFY_OPS(ShortVar, short, shortVarsValues, shortVarsSatisfyOps)
-    };
-
-    DECLARE_VAR_BASE_CLASS(BoolVar, bool, boolVarsValues, boolVarsIgnoreFlags);
-
-    class BoolVar: public BoolVarBase
-    {
-        friend class WorldState;
-        BoolVar(const WorldState *parent_, short index_): BoolVarBase(parent_, index_) {}
-
-    public:
+        inline bool Value() const { return (parent->boolVarsValues & (1 << index)) != 0; }
+        inline BoolVar &SetValue(bool value)
+        {
+            value ? parent->boolVarsValues |= (1 << index) : parent->boolVarsValues &= ~(1 << index);
+            return *this;
+        }
+        inline operator bool() const { return Value(); }
         inline bool IsSatisfiedBy(bool value) const
         {
             return Value() == value;
+        }
+        inline bool Ignore() const { return (parent->boolVarsIgnoreFlags & (1 << index)) != 0; }
+        inline BoolVar SetIgnore(bool ignore)
+        {
+            ignore ? parent->boolVarsIgnoreFlags |= (1 << index) : parent->boolVarsIgnoreFlags &= ~(1 << index);
+            return *this;
         }
     };
 
@@ -228,7 +264,8 @@ public:
 
         struct PackedFields
         {
-            unsigned short satisfyOp: 6;
+            bool ignore: 1;
+            unsigned char satisfyOp: 5;
             unsigned short epsilon: 10;
 
             bool operator==(const PackedFields &that) const
@@ -294,11 +331,11 @@ public:
         }
         inline bool Ignore() const
         {
-            return parent->originVarsIgnoreFlags[index];
+            return Packed().ignore;
         }
         inline OriginVar &SetIgnore(bool ignore)
         {
-            parent->originVarsIgnoreFlags[index] = ignore;
+            Packed().ignore = ignore;
             return *this;
         }
         inline OriginVar SetSatisfyOp(WorldState::SatisfyOp op, float epsilon)
@@ -311,7 +348,7 @@ public:
 #endif
             // Up to 10 bits
             unsigned short packedEpsilon = (unsigned short)((unsigned)epsilon / 4);
-            unsigned short packedOp = (unsigned char)op;
+            unsigned char packedOp = (unsigned char)op;
             Packed().epsilon = packedEpsilon;
             Packed().satisfyOp = packedOp;
             return *this;
@@ -329,17 +366,17 @@ public:
 
         inline bool operator!=(const OriginVar &that) const
         {
-            if (!parent->originVarsIgnoreFlags[index])
+            if (!Packed().ignore)
             {
-                if (that.parent->originVarsIgnoreFlags[index])
+                if (!(Packed() == that.Packed()))
                     return true;
 
                 const short *thisData = &parent->originVarsData[index * 4];
                 const short *thatData = &that.parent->originVarsData[index * 4];
-                return !VectorCompare(thisData, thatData) || !(Packed() == that.Packed());
+                return !VectorCompare(thisData, thatData);
             }
 
-            return !that.parent->originVarsIgnoreFlags[index];
+            return !that.Packed().ignore;
         }
     };
 
@@ -362,8 +399,9 @@ public:
 
         struct PackedFields
         {
-            unsigned short stateBits: 5;
-            unsigned short satisfyOp: 1;
+            bool ignore: 1;
+            unsigned short stateBits: 4;
+            unsigned char satisfyOp: 1;
             unsigned short epsilon: 10;
 
             bool operator==(const PackedFields &that) const
@@ -436,11 +474,11 @@ public:
 
         inline bool Ignore() const
         {
-            return parent->originLazyVarsIgnoreFlags[index];
+            return Packed().ignore;
         }
         inline OriginLazyVar &SetIgnore(bool ignore)
         {
-            parent->originLazyVarsIgnoreFlags[index] = ignore;
+            Packed().ignore = ignore;
             return *this;
         }
         inline bool IgnoreOrAbsent() const
@@ -459,7 +497,7 @@ public:
             // Up to 10 bits
             unsigned short packedEpsilon = (unsigned short)((unsigned)epsilon / 4);
             // A single bit
-            unsigned short packedOp = (unsigned short)op;
+            unsigned char packedOp = (unsigned char)op;
             static_assert((unsigned short)WorldState::SatisfyOp::EQ == 0, "SatisfyOp can't be packed in a single bit");
             static_assert((unsigned short)WorldState::SatisfyOp::NE == 1, "SatisfyOp can't be packed in a single bit");
             unsigned short opVals = (packedOp << 10) | packedEpsilon;
@@ -484,9 +522,9 @@ public:
             if (this->index != that.index)
                 AI_FailWith("OriginLazyVar", "IsSatisfiedBy(): vars index mismatch\n");
 #endif
-            if (!parent->originLazyVarsIgnoreFlags[index])
+            if (!Packed().ignore)
             {
-                if (that.parent->originLazyVarsIgnoreFlags[index])
+                if (that.Packed().ignore)
                     return false;
                 auto stateBits = StateBits();
                 if (stateBits != that.StateBits())
@@ -503,7 +541,7 @@ public:
                 return VectorCompare(thisVarsData, thatVarsData);
             }
             // `that` should be ignored too
-            return that.parent->originLazyVarsIgnoreFlags[index];
+            return that.Packed().ignore;
         }
 
         inline bool operator!=(const OriginLazyVar &that) { return !(*this == that); }
@@ -523,9 +561,9 @@ public:
             if (this->index != that.index)
                 AI_FailWith("OriginLazyVar", "IsSatisfiedBy(): vars index mismatch\n");
 #endif
-            if (parent->originLazyVarsIgnoreFlags[index])
+            if (Packed().ignore)
                 return true;
-            if (that.parent->originLazyVarsIgnoreFlags[index])
+            if (that.Packed().ignore)
                 return false;
 
             auto stateBits = this->StateBits();
@@ -591,12 +629,26 @@ public:
 
     inline void SetIgnoreAll(bool ignore)
     {
-        std::fill_n(unsignedVarsIgnoreFlags, NUM_UNSIGNED_VARS, ignore);
-        std::fill_n(floatVarsIgnoreFlags, NUM_FLOAT_VARS, ignore);
-        std::fill_n(shortVarsIgnoreFlags, NUM_SHORT_VARS, ignore);
-        std::fill_n(boolVarsIgnoreFlags, NUM_BOOL_VARS, ignore);
-        std::fill_n(originVarsIgnoreFlags, NUM_ORIGIN_VARS, ignore);
-        std::fill_n(originLazyVarsIgnoreFlags, NUM_ORIGIN_LAZY_VARS, ignore);
+        if (ignore)
+        {
+            unsignedVarsIgnoreFlags = std::numeric_limits<decltype(unsignedVarsIgnoreFlags)>::max();
+            floatVarsIgnoreFlags = std::numeric_limits<decltype(floatVarsIgnoreFlags)>::max();
+            shortVarsIgnoreFlags = std::numeric_limits<decltype(shortVarsIgnoreFlags)>::max();
+            boolVarsIgnoreFlags = std::numeric_limits<decltype(boolVarsIgnoreFlags)>::max();
+        }
+        else
+        {
+            unsignedVarsIgnoreFlags = 0;
+            floatVarsIgnoreFlags = 0;
+            shortVarsIgnoreFlags = 0;
+            boolVarsIgnoreFlags = 0;
+        }
+
+        for (unsigned i = 0; i < NUM_ORIGIN_VARS; ++i)
+            ((OriginVar::PackedFields *)&originVarsData[i * 4 + 3])->ignore = ignore;
+
+        for (unsigned i = 0; i < NUM_ORIGIN_LAZY_VARS; ++i)
+            ((OriginLazyVar::PackedFields *)&originLazyVarsData[i * 4 + 3])->ignore = ignore;
     }
 
     DECLARE_UNSIGNED_VAR(GoalItemWaitTime)
