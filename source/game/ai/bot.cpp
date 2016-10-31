@@ -14,7 +14,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       grabItemGoal(this),
       killEnemyGoal(this),
       runAwayGoal(this),
-      genericRunAction(this),
+      genericRunToItemAction(this),
       pickupItemAction(this),
       waitForItemAction(this),
       killEnemyAction(this),
@@ -22,14 +22,26 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       retreatToGoodPositionAction(this),
       steadyCombatAction(this),
       gotoAvailableGoodPositionAction(this),
-      retreatToCoverAction(this),
+      genericRunAvoidingCombatAction(this),
+      startGotoCoverAction(this),
+      takeCoverAction(this),
+      startGotoRunAwayTeleportAction(this),
+      doRunAwayViaTeleportAction(this),
+      startGotoRunAwayJumppadAction(this),
+      doRunAwayViaJumppadAction(this),
+      startGotoRunAwayElevatorAction(this),
+      doRunAwayViaElevatorAction(this),
+      stopRunningAwayAction(this),
       rocketJumpMovementState(self_),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
       isWaitingForItemSpawn(false),
       isInSquad(false),
       defenceSpotId(-1),
-      offenseSpotId(-1)
+      offenseSpotId(-1),
+      lastTouchedTeleportAt(0),
+      lastTouchedJumppadAt(0),
+      lastTouchedElevatorAt(0)
 {
     self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;
     SetTag(self->r.client->netname);
@@ -57,6 +69,40 @@ void Bot::ApplyPendingTurnToLookAtPoint()
     toPointDir.NormalizeFast();
 
     ChangeAngle(toPointDir, pendingLookAtPointState.EffectiveTurnSpeedMultiplier(1.0f));
+}
+
+void Bot::TouchedOtherEntity(const edict_t *entity)
+{
+    if (!entity->classname)
+        return;
+
+    // Cut off string comparisons by doing these cheap tests first
+
+    // Only triggers are interesting for following code
+    if (entity->r.solid != SOLID_TRIGGER)
+        return;
+    // Items should be handled by TouchedNavEntity() or skipped (if it is not a current nav entity)
+    if (entity->item)
+        return;
+
+    if (!Q_stricmp(entity->classname, "trigger_push"))
+    {
+        lastTouchedJumppadAt = level.time;
+        TouchedJumppad(entity);
+        return;
+    }
+
+    if (!Q_stricmp(entity->classname, "trigger_teleport"))
+    {
+        lastTouchedTeleportAt = level.time;
+        return;
+    }
+
+    if (!Q_stricmp(entity->classname, "func_plat"))
+    {
+        lastTouchedElevatorAt = level.time;
+        return;
+    }
 }
 
 void Bot::TouchedJumppad(const edict_t *jumppad)

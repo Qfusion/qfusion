@@ -242,6 +242,7 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
     worldState->SetIgnoreAll(false);
 
     worldState->BotOriginVar().SetValue(self->s.origin);
+    worldState->PendingOriginVar().SetIgnore(true);
 
     if (selectedEnemies.AreValid())
     {
@@ -300,13 +301,13 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
     const SelectedNavEntity &currSelectedNavEntity = GetOrUpdateSelectedNavEntity();
     if (currSelectedNavEntity.IsEmpty())
     {
-        worldState->GoalItemOriginVar().SetIgnore(true);
+        worldState->NavTargetOriginVar().SetIgnore(true);
         worldState->GoalItemWaitTimeVar().SetIgnore(true);
     }
     else
     {
         const NavEntity *navEntity = currSelectedNavEntity.GetNavEntity();
-        worldState->GoalItemOriginVar().SetValue(navEntity->Origin());
+        worldState->NavTargetOriginVar().SetValue(navEntity->Origin());
         // Find a travel time to the goal itme nav entity in milliseconds
         // We hope this router call gets cached by AAS subsystem
         unsigned travelTime = 10U * FindTravelTimeToGoalArea(navEntity->AasAreaNum());
@@ -328,9 +329,36 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
 
     worldState->HasJustKilledEnemyVar().SetValue(false);
 
+    // If methods corresponding to these comparisons are extracted, their names will be confusing
+    // (they are useful for filling world state only as not always corresponding to what a human caller expect).
+    worldState->HasJustTeleportedVar().SetValue(level.time - self->ai->botRef->lastTouchedTeleportAt < 64 + 1);
+    worldState->HasJustTouchedJumppadVar().SetValue(level.time - self->ai->botRef->lastTouchedJumppadAt < 64 + 1);
+    worldState->HasJustEnteredElevatorVar().SetValue(level.time - self->ai->botRef->lastTouchedElevatorAt < 64 + 1);
+
+    worldState->HasPendingCoverSpotVar().SetIgnore(true);
+    worldState->HasPendingRunAwayTeleportVar().SetIgnore(true);
+    worldState->HasPendingRunAwayJumppadVar().SetIgnore(true);
+    worldState->HasPendingRunAwayElevatorVar().SetIgnore(true);
+
+    worldState->IsRunningAwayVar().SetIgnore(true);
+    worldState->HasRunAwayVar().SetIgnore(true);
+
     worldState->ResetTacticalSpots();
 
     recentWorldState = *worldState;
+}
+
+bool BotBrain::ShouldSkipPlanning() const
+{
+    // Skip planning moving on a jumppad
+    if (self->ai->botRef->jumppadMovementState.IsActive())
+        return true;
+
+    // Skip planning moving on an elevator
+    if (self->groundentity && self->groundentity->use == Use_Plat && self->groundentity->moveinfo.state != STATE_TOP)
+        return true;
+
+    return false;
 }
 
 float BotBrain::GetEffectiveOffensiveness() const

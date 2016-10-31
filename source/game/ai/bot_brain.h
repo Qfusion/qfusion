@@ -131,6 +131,8 @@ class BotBrain: public AiBaseBrain
 
     void PrepareCurrWorldState(WorldState *worldState) override;
 
+    bool ShouldSkipPlanning() const override;
+
     BotBrain() = delete;
     // Disable copying and moving
     BotBrain(BotBrain &&that) = delete;

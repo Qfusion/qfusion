@@ -207,7 +207,8 @@ protected:
     {
         botBrain.HandleNavTargetTouch(underlyingEntity);
     }
-    virtual void TouchedJumppad(const edict_t *jumppad) override;
+    virtual void TouchedOtherEntity(const edict_t *entity) override;
+    void TouchedJumppad(const edict_t *jumppad);
 private:
     void RegisterVisibleEnemies();
 
@@ -232,7 +233,7 @@ private:
     BotKillEnemyGoal killEnemyGoal;
     BotRunAwayGoal runAwayGoal;
 
-    BotGenericRunAction genericRunAction;
+    BotGenericRunToItemAction genericRunToItemAction;
     BotPickupItemAction pickupItemAction;
     BotWaitForItemAction waitForItemAction;
 
@@ -242,7 +243,17 @@ private:
     BotSteadyCombatAction steadyCombatAction;
     BotGotoAvailableGoodPositionAction gotoAvailableGoodPositionAction;
 
-    BotRetreatToCoverAction retreatToCoverAction;
+    BotGenericRunAvoidingCombatAction genericRunAvoidingCombatAction;
+    BotStartGotoCoverAction startGotoCoverAction;
+    BotTakeCoverAction takeCoverAction;
+
+    BotStartGotoRunAwayTeleportAction startGotoRunAwayTeleportAction;
+    BotDoRunAwayViaTeleportAction doRunAwayViaTeleportAction;
+    BotStartGotoRunAwayJumppadAction startGotoRunAwayJumppadAction;
+    BotDoRunAwayViaJumppadAction doRunAwayViaJumppadAction;
+    BotStartGotoRunAwayElevatorAction startGotoRunAwayElevatorAction;
+    BotDoRunAwayViaElevatorAction doRunAwayViaElevatorAction;
+    BotStopRunningAwayAction stopRunningAwayAction;
 
     struct JumppadMovementState
     {
@@ -523,6 +534,10 @@ private:
 
     StaticVector<AiScriptWeaponDef, MAX_SCRIPT_WEAPONS> scriptWeaponDefs;
     StaticVector<int, MAX_SCRIPT_WEAPONS> scriptWeaponCooldown;
+
+    unsigned lastTouchedTeleportAt;
+    unsigned lastTouchedJumppadAt;
+    unsigned lastTouchedElevatorAt;
 
     void UpdateScriptWeaponsStatus();
 

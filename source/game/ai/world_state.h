@@ -64,6 +64,18 @@ private:
         EnemyCanHit,
         HasJustKilledEnemy,
 
+        IsRunningAway,
+        HasRunAway,
+
+        HasJustTeleported,
+        HasJustTouchedJumppad,
+        HasJustEnteredElevator,
+
+        HasPendingCoverSpot,
+        HasPendingRunAwayTeleport,
+        HasPendingRunAwayJumppad,
+        HasPendingRunAwayElevator,
+
         HasGoodSniperRangeWeapons,
         HasGoodFarRangeWeapons,
         HasGoodMiddleRangeWeapons,
@@ -81,7 +93,8 @@ private:
     {
         BotOrigin,
         EnemyOrigin,
-        GoalItemOrigin,
+        NavTargetOrigin,
+        PendingOrigin,
 
         NUM_ORIGIN_VARS
     };
@@ -97,14 +110,26 @@ private:
         NUM_ORIGIN_LAZY_VARS
     };
 
+    enum
+    {
+        RunAwayTeleportOrigin,
+        RunAwayJumppadOrigin,
+        RunAwayElevatorOrigin,
+
+        NUM_DUAL_ORIGIN_LAZY_VARS
+    };
+
     uint32_t boolVarsValues;
     static_assert(8 * sizeof(decltype(boolVarsValues)) >= NUM_BOOL_VARS, "Values capacity overflow");
 
     unsigned unsignedVarsValues[NUM_UNSIGNED_VARS];
     float floatVarsValues[NUM_FLOAT_VARS];
     short shortVarsValues[NUM_SHORT_VARS];
+    // Each origin (lazy) var needs a room for value (3 array cells) and misc packed data (1 cell)
     short originVarsData[NUM_ORIGIN_VARS * 4];
     short originLazyVarsData[NUM_ORIGIN_LAZY_VARS * 4];
+    // Each dual origin var needs a room for value (3 array cells), misc packed data (1 cell), value 2 (3 cells)
+    short dualOriginLazyVarsData[NUM_DUAL_ORIGIN_LAZY_VARS * 7];
 
     uint32_t boolVarsIgnoreFlags;
     uint8_t unsignedVarsIgnoreFlags;
@@ -160,6 +185,10 @@ private:
     const short *GetMiddleRangeTacticalSpot();
     const short *GetCloseRangeTacticalSpot();
     const short *GetCoverSpot();
+
+    const short *GetRunAwayTeleportOrigin();
+    const short *GetRunAwayJumppadOrigin();
+    const short *GetRunAwayElevatorOrigin();
 public:
     WorldState(edict_t *self_): self(self_) {}
 
@@ -228,8 +257,16 @@ public:
         friend class WorldState;
         WorldState *parent;
         short index;
-        BoolVar(const WorldState *parent_, short index_)
-            : parent(const_cast<WorldState *>(parent_)), index(index_) {}
+#ifdef _DEBUG
+        const char *name;
+#endif
+        BoolVar(const WorldState *parent_, short index_, const char *name_)
+            : parent(const_cast<WorldState *>(parent_)), index(index_)
+        {
+#ifdef _DEBUG
+            name = _name;
+#endif
+        }
     public:
         inline bool Value() const { return (parent->boolVarsValues & (1 << index)) != 0; }
         inline BoolVar &SetValue(bool value)
@@ -279,12 +316,12 @@ public:
 
         inline PackedFields &Packed()
         {
-            return *(PackedFields *)&parent->originLazyVarsData[index * 4 + 3];
+            return *(PackedFields *)&Data()[3];
         }
 
         inline const PackedFields &Packed() const
         {
-            return *(const PackedFields *)&parent->originLazyVarsData[index * 4 + 3];
+            return *(const PackedFields *)&Data()[3];
         }
 
         inline float DistanceTo(const OriginVar &that) const
@@ -364,38 +401,45 @@ public:
             return (unsigned short)(Packed().epsilon);
         }
 
-        inline bool operator!=(const OriginVar &that) const
+        inline bool operator==(const OriginVar &that) const
         {
             if (!Packed().ignore)
             {
                 if (!(Packed() == that.Packed()))
-                    return true;
+                    return false;
 
-                const short *thisData = &parent->originVarsData[index * 4];
-                const short *thatData = &that.parent->originVarsData[index * 4];
-                return !VectorCompare(thisData, thatData);
+                return VectorCompare(Data(), that.Data());
             }
 
-            return !that.Packed().ignore;
+            return that.Packed().ignore;
         }
+
+        inline bool operator!=(const OriginVar &that) const { return !(*this == that); }
     };
 
-    class OriginLazyVar
+    class OriginLazyVarBase
     {
         friend class OriginVar;
     public:
         typedef const short *(WorldState::*ValueSupplier)();
-    private:
+    protected:
         friend class WorldState;
         WorldState *parent;
         ValueSupplier supplier;
+        short *varsData;
         short index;
 
-        OriginLazyVar(const WorldState *parent_, short index_, ValueSupplier supplier_)
-            : parent(const_cast<WorldState *>(parent_)), supplier(supplier_), index(index_) {}
+        inline OriginLazyVarBase(const WorldState *parent_,
+                                 short index_,
+                                 ValueSupplier supplier_,
+                                 const short *varsData_)
+            : parent(const_cast<WorldState *>(parent_)),
+              supplier(supplier_),
+              varsData(const_cast<short *>(varsData_)),
+              index(index_) {}
 
-        inline short *Data() { return &parent->originLazyVarsData[index * 4]; }
-        inline const short *Data() const { return &parent->originLazyVarsData[index * 4]; }
+        inline short *Data() { return &varsData[index * 4]; }
+        inline const short *Data() const { return &varsData[index * 4]; }
 
         struct PackedFields
         {
@@ -415,11 +459,11 @@ public:
 
         inline PackedFields &Packed()
         {
-            return *(PackedFields *)&parent->originLazyVarsData[index * 4 + 3];
+            return *(PackedFields *)&varsData[index * 4 + 3];
         }
         inline const PackedFields &Packed() const
         {
-            return *(const PackedFields *)&parent->originLazyVarsData[index * 4 + 3];
+            return *(const PackedFields *)&varsData[index * 4 + 3];
         }
 
         inline unsigned char StateBits() const
@@ -429,7 +473,7 @@ public:
         // It gets called from a const function, thats why it is const too
         inline void SetStateBits(unsigned char stateBits) const
         {
-            const_cast<OriginLazyVar *>(this)->Packed().stateBits = stateBits;
+            const_cast<OriginLazyVarBase *>(this)->Packed().stateBits = stateBits;
         }
 
         // This values are chosen in this way to allow zero-cost conversion to bool from ABSENT/PRESENT state.
@@ -449,44 +493,24 @@ public:
             AI_FailWith("OriginLazyVar", "Attempt to get a value of var #%hd which is not in PRESENT state\n", index);
         }
 
-        inline bool IsPresent() const
-        {
-            unsigned char stateBits = StateBits();
-            if (stateBits != PENDING)
-                return stateBits;
-
-            const short *packedValues = (parent->*supplier)();
-            if (packedValues)
-            {
-                short *data = const_cast<short*>(Data());
-                VectorCopy(packedValues, data);
-                SetStateBits(PRESENT);
-                return true;
-            }
-            SetStateBits(ABSENT);
-            return false;
-        }
-
         inline void Reset()
         {
             SetStateBits(PENDING);
+            Packed().ignore = false;
         }
 
         inline bool Ignore() const
         {
             return Packed().ignore;
         }
-        inline OriginLazyVar &SetIgnore(bool ignore)
+
+        inline OriginLazyVarBase &SetIgnore(bool ignore)
         {
             Packed().ignore = ignore;
             return *this;
         }
-        inline bool IgnoreOrAbsent() const
-        {
-            return Ignore() || !IsPresent();
-        }
 
-        inline OriginLazyVar SetSatisfyOp(SatisfyOp op, float epsilon)
+        inline OriginLazyVarBase SetSatisfyOp(SatisfyOp op, float epsilon)
         {
 #ifdef _DEBUG
             if (op != WorldState::SatisfyOp::EQ && op != WorldState::SatisfyOp::NE)
@@ -516,6 +540,55 @@ public:
             return Packed().epsilon;
         }
 
+        inline float DistanceTo(const OriginVar &that) const
+        {
+#ifdef _DEBUG
+            if (this->Ignore())
+                AI_FailWith("OriginLazyVar::GetDistance(const OriginVar &)", "`this` var is ignored\n");
+            if (that.Ignore())
+                AI_FailWith("OriginLazyVar::GetDistance(const OriginVar &)", "`that` var is ignored\n");
+            if (this->parent != that.parent)
+                AI_FailWith("OriginLazyVar::GetDistance(const OriginVar &)", "vars belong to different world states\n");
+#endif
+            vec3_t unpackedThis, unpackedThat;
+            VectorCopy(Data(), unpackedThis);
+            VectorCopy(that.Data(), unpackedThat);
+            VectorScale(unpackedThis, 4.0f, unpackedThis);
+            VectorScale(unpackedThat, 4.0f, unpackedThat);
+            return DistanceFast(unpackedThis, unpackedThat);
+        }
+    };
+
+    class OriginLazyVar: public OriginLazyVarBase
+    {
+        friend class WorldState;
+    private:
+        OriginLazyVar(const WorldState *parent_, short index_, ValueSupplier supplier_)
+            : OriginLazyVarBase(parent_, index_, supplier_, parent_->originLazyVarsData) {}
+    public:
+        inline bool IsPresent() const
+        {
+            unsigned char stateBits = StateBits();
+            if (stateBits != PENDING)
+                return stateBits;
+
+            const short *packedValues = (parent->*supplier)();
+            if (packedValues)
+            {
+                short *data = const_cast<short*>(Data());
+                VectorCopy(packedValues, data);
+                SetStateBits(PRESENT);
+                return true;
+            }
+            SetStateBits(ABSENT);
+            return false;
+        }
+
+        inline bool IgnoreOrAbsent() const
+        {
+            return Ignore() || !IsPresent();
+        }
+
         inline bool operator==(const OriginLazyVar &that) const
         {
 #ifdef _DEBUG
@@ -535,10 +608,7 @@ public:
                 if (!(Packed() == that.Packed()))
                     return false;
 
-                const int offset = index * 4;
-                const short *thisVarsData = parent->originLazyVarsData + offset;
-                const short *thatVarsData = that.parent->originLazyVarsData + offset;
-                return VectorCompare(thisVarsData, thatVarsData);
+                return VectorCompare(Data(), that.Data());
             }
             // `that` should be ignored too
             return that.Packed().ignore;
@@ -573,17 +643,15 @@ public:
             if (stateBits != PRESENT)
                 return true;
 
-            const short *thisVarsData = parent->originLazyVarsData + index * 4;
-            const short *thatVarsData = that.parent->originLazyVarsData + index * 4;
             unsigned short epsilon = SatisfyEpsilon();
             switch (SatisfyOp())
             {
                 case WorldState::SatisfyOp::EQ:
-                    if (DistanceSquared(thisVarsData, thatVarsData) > epsilon * epsilon)
+                    if (DistanceSquared(Data(), that.Data()) > epsilon * epsilon)
                         return false;
                     break;
                 case WorldState::SatisfyOp::NE:
-                    if (DistanceSquared(thisVarsData, thatVarsData) < epsilon * epsilon)
+                    if (DistanceSquared(Data(), that.Data()) < epsilon * epsilon)
                         return false;
                     break;
                 default:
@@ -591,25 +659,124 @@ public:
             }
             return true;
         }
+    };
 
-        inline float DistanceTo(const OriginVar &that) const
+    class DualOriginLazyVar: public OriginLazyVarBase
+    {
+        friend class WorldState;
+    private:
+        DualOriginLazyVar(const WorldState *parent_, short index_, ValueSupplier supplier_)
+            : OriginLazyVarBase(parent_, index_, supplier_, parent_->dualOriginLazyVarsData) {}
+
+        inline short *Data2() { return Data() + 4; }
+        inline const short *Data2() const { return Data() + 4; }
+    public:
+        inline Vec3 Value2() const
+        {
+            if (StateBits() == PRESENT)
+                return Vec3(Data2()[0], Data2()[1], Data2()[2]);
+
+            AI_FailWith("OriginLazyVar", "Attempt to get a 2nd value of var #%hd which is not in PRESENT state\n", index);
+        }
+
+        inline bool IsPresent() const
+        {
+            unsigned char stateBits = StateBits();
+            if (stateBits != PENDING)
+                return stateBits;
+
+            const short *packedValues = (parent->*supplier)();
+            if (packedValues)
+            {
+                short *data = const_cast<short*>(Data());
+                short *data2 = const_cast<short*>(Data2());
+                VectorCopy(packedValues, data);
+                VectorCopy(packedValues + 3, data2);
+                SetStateBits(PRESENT);
+                return true;
+            }
+            SetStateBits(ABSENT);
+            return false;
+        }
+
+        inline bool IgnoreOrAbsent() const
+        {
+            return Ignore() || !IsPresent();
+        }
+
+        inline bool operator==(const DualOriginLazyVar &that) const
         {
 #ifdef _DEBUG
-            if (this->Ignore())
-                AI_FailWith("OriginLazyVar::GetDistance(const OriginVar &)", "`this` var is ignored\n");
-            if (that.Ignore())
-                AI_FailWith("OriginLazyVar::GetDistance(const OriginVar &)", "`that` var is ignored\n");
-            if (!this->IsPresent())
-                AI_FailWith("OriginLazyVar::GetDistance(const OriginVar &)", "`this` var is not present\n");
-            if (this->parent != that.parent)
-                AI_FailWith("OriginLazyVar::GetDistance(const OriginVar &)", "vars belong to different world states\n");
+            if (this->index != that.index)
+                AI_FailWith("OriginLazyVar", "IsSatisfiedBy(): vars index mismatch\n");
 #endif
-            vec3_t unpackedThis, unpackedThat;
-            VectorCopy(Data(), unpackedThis);
-            VectorCopy(that.Data(), unpackedThat);
-            VectorScale(unpackedThis, 4.0f, unpackedThis);
-            VectorScale(unpackedThat, 4.0f, unpackedThat);
-            return DistanceFast(unpackedThis, unpackedThat);
+            if (!Packed().ignore)
+            {
+                if (that.Packed().ignore)
+                    return false;
+                auto stateBits = StateBits();
+                if (stateBits != that.StateBits())
+                    return false;
+                if (stateBits != PRESENT)
+                    return true;
+                return VectorCompare(Data(), that.Data()) && VectorCompare(Data2(), that.Data2());
+            }
+            // `that` should be ignored too
+            return that.Packed().ignore;
+        }
+
+        inline bool operator!=(const DualOriginLazyVar &that) { return !(*this == that); }
+
+        inline uint32_t Hash() const
+        {
+            auto stateBits = StateBits();
+            if (stateBits != PRESENT)
+                return stateBits;
+            unsigned originHash = (17U * Data()[0] + (Data()[1] | (Data()[2] << 16)));
+            unsigned originHash2 = (17U * Data2()[0] + (Data2()[1] | (Data2()[2] << 16)));
+            return 17U * (*(short *)&Packed()) + originHash ^ originHash2;
+        }
+
+        inline bool IsSatisfiedBy(const DualOriginLazyVar &that) const
+        {
+#ifdef _DEBUG
+            if (this->index != that.index)
+                AI_FailWith("OriginLazyVar", "IsSatisfiedBy(): vars index mismatch\n");
+#endif
+            if (Packed().ignore)
+                return true;
+            if (that.Packed().ignore)
+                return false;
+
+            auto stateBits = this->StateBits();
+            // Do not force a lazy value to be computed
+            if (stateBits != that.StateBits())
+                return false;
+            if (stateBits != PRESENT)
+                return true;
+
+            if (!(Packed() == that.Packed()))
+                return false;
+
+            unsigned short epsilon = SatisfyEpsilon();
+            switch (SatisfyOp())
+            {
+                case WorldState::SatisfyOp::EQ:
+                    if (DistanceSquared(Data(), that.Data()) > epsilon * epsilon)
+                        return false;
+                    if (DistanceSquared(Data2(), that.Data2()) > epsilon * epsilon)
+                        return false;
+                    break;
+                case WorldState::SatisfyOp::NE:
+                    if (DistanceSquared(Data(), that.Data()) < epsilon * epsilon)
+                        return false;
+                    if (DistanceSquared(Data2(), that.Data2()) < epsilon * epsilon)
+                        return false;
+                    break;
+                default:
+                    abort();
+            }
+            return true;
         }
     };
 
@@ -620,6 +787,10 @@ public:
 #define DECLARE_ORIGIN_LAZY_VAR(varName) OriginLazyVar varName##Var() const \
 {                                                                           \
     return OriginLazyVar(this, varName, &WorldState::Get##varName);         \
+}
+#define DECLARE_DUAL_ORIGIN_LAZY_VAR(varName) DualOriginLazyVar varName##Var() const \
+{                                                                                    \
+    return DualOriginLazyVar(this, varName, &WorldState::Get##varName);              \
 }
 
     bool IsSatisfiedBy(const WorldState &that) const;
@@ -649,6 +820,9 @@ public:
 
         for (unsigned i = 0; i < NUM_ORIGIN_LAZY_VARS; ++i)
             ((OriginLazyVar::PackedFields *)&originLazyVarsData[i * 4 + 3])->ignore = ignore;
+
+        for (unsigned i = 0; i < NUM_DUAL_ORIGIN_LAZY_VARS; ++i)
+            ((DualOriginLazyVar::PackedFields *)&dualOriginLazyVarsData[i * 4 + 3])->ignore = ignore;
     }
 
     DECLARE_UNSIGNED_VAR(GoalItemWaitTime)
@@ -662,6 +836,18 @@ public:
     DECLARE_BOOL_VAR(EnemyHasQuad)
     DECLARE_BOOL_VAR(HasThreateningEnemy)
     DECLARE_BOOL_VAR(HasJustPickedGoalItem)
+
+    DECLARE_BOOL_VAR(IsRunningAway)
+    DECLARE_BOOL_VAR(HasRunAway)
+
+    DECLARE_BOOL_VAR(HasJustTeleported)
+    DECLARE_BOOL_VAR(HasJustTouchedJumppad)
+    DECLARE_BOOL_VAR(HasJustEnteredElevator)
+
+    DECLARE_BOOL_VAR(HasPendingCoverSpot)
+    DECLARE_BOOL_VAR(HasPendingRunAwayTeleport)
+    DECLARE_BOOL_VAR(HasPendingRunAwayJumppad)
+    DECLARE_BOOL_VAR(HasPendingRunAwayElevator)
 
     DECLARE_BOOL_VAR(HasPositionalAdvantage)
     DECLARE_BOOL_VAR(CanHitEnemy)
@@ -680,7 +866,8 @@ public:
 
     DECLARE_ORIGIN_VAR(BotOrigin)
     DECLARE_ORIGIN_VAR(EnemyOrigin)
-    DECLARE_ORIGIN_VAR(GoalItemOrigin)
+    DECLARE_ORIGIN_VAR(NavTargetOrigin)
+    DECLARE_ORIGIN_VAR(PendingOrigin)
 
     DECLARE_ORIGIN_LAZY_VAR(SniperRangeTacticalSpot)
     DECLARE_ORIGIN_LAZY_VAR(FarRangeTacticalSpot)
@@ -688,8 +875,19 @@ public:
     DECLARE_ORIGIN_LAZY_VAR(CloseRangeTacticalSpot)
     DECLARE_ORIGIN_LAZY_VAR(CoverSpot)
 
+    DECLARE_DUAL_ORIGIN_LAZY_VAR(RunAwayTeleportOrigin)
+    DECLARE_DUAL_ORIGIN_LAZY_VAR(RunAwayJumppadOrigin)
+    DECLARE_DUAL_ORIGIN_LAZY_VAR(RunAwayElevatorOrigin)
+
+#undef DECLARE_UNSIGNED_VAR
+#undef DECLARE_SHORT_VAR
+#undef DECLARE_BOOL_VAR
+#undef DECLARE_ORIGIN_VAR
+#undef DECLARE_ORIGIN_LAZY_VAR
+#undef DECLARE_DUAL_ORIGIN_LAZY_VAR
+
     inline float DistanceToEnemy() const { return BotOriginVar().DistanceTo(EnemyOriginVar()); }
-    inline float DistanceToGoalItem() const { return BotOriginVar().DistanceTo(GoalItemOriginVar()); }
+    inline float DistanceToNavTarget() const { return BotOriginVar().DistanceTo(NavTargetOriginVar()); }
 
     inline float DistanceToSniperRangeTacticalSpot() const
     {
@@ -719,6 +917,10 @@ public:
         MiddleRangeTacticalSpotVar().Reset();
         CloseRangeTacticalSpotVar().Reset();
         CoverSpotVar().Reset();
+
+        RunAwayTeleportOriginVar().Reset();
+        RunAwayJumppadOriginVar().Reset();
+        RunAwayElevatorOriginVar().Reset();
     }
 
     constexpr static float FAR_RANGE_MAX = 2.5f * 900.0f;

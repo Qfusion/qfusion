@@ -185,12 +185,7 @@ void Ai::TouchedEntity(edict_t *ent)
         OnNavTargetReset();
         return;
     }
-
-    if (ent->classname && !Q_stricmp(ent->classname, "trigger_push"))
-    {
-        TouchedJumppad(ent);
-        return;
-    }
+    TouchedOtherEntity(ent);
 }
 
 void Ai::Frame()

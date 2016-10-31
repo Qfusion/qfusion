@@ -151,6 +151,9 @@ bool AiBaseBrain::FindNewGoalAndPlan(const WorldState &currWorldState)
     if (activeGoal)
         FailWith("FindNewGoalAndPlan(): an active goal is present\n");
 
+    if (ShouldSkipPlanning())
+        return false;
+
     // Update goals weights based for the current world state before sorting
     for (AiBaseGoal *goal: goals)
         goal->UpdateWeight(currWorldState);
@@ -192,6 +195,9 @@ bool AiBaseBrain::UpdateGoalAndPlan(const WorldState &currWorldState)
         FailWith("UpdateGoalAndPlan(): there is no active plan\n");
     if (!activeGoal)
         FailWith("UpdateGoalAndPlan(): there is no active goal\n");
+
+    if (ShouldSkipPlanning())
+        return false;
 
     for (AiBaseGoal *goal: goals)
         goal->UpdateWeight(currWorldState);

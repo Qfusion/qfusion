@@ -381,6 +381,8 @@ protected:
 
     virtual void PrepareCurrWorldState(WorldState *worldState) = 0;
 
+    virtual bool ShouldSkipPlanning() const = 0;
+
     bool UpdateGoalAndPlan(const WorldState &currWorldState);
 
     bool FindNewGoalAndPlan(const WorldState &currWorldState);

@@ -73,5 +73,5 @@ void BotRunAwayGoal::GetDesiredWorldState(WorldState *worldState)
 {
     worldState->SetIgnoreAll(true);
 
-    worldState->EnemyCanHitVar().SetValue(false).SetIgnore(false);
+    worldState->HasRunAwayVar().SetValue(true).SetIgnore(false);
 }

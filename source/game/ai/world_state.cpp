@@ -96,6 +96,13 @@ bool WorldState::IsSatisfiedBy(const WorldState &that) const
     if (!CoverSpotVar().IsSatisfiedBy(that.CoverSpotVar()))
         return false;
 
+    if (!RunAwayTeleportOriginVar().IsSatisfiedBy(that.RunAwayTeleportOriginVar()))
+        return false;
+    if (!RunAwayJumppadOriginVar().IsSatisfiedBy(that.RunAwayJumppadOriginVar()))
+        return false;
+    if (!RunAwayElevatorOriginVar().IsSatisfiedBy(that.RunAwayElevatorOriginVar()))
+        return false;
+
     return true;
 }
 
@@ -149,6 +156,10 @@ uint32_t WorldState::Hash() const
     result = result * 17 + MiddleRangeTacticalSpotVar().Hash();
     result = result * 17 + CloseRangeTacticalSpotVar().Hash();
     result = result * 17 + CoverSpotVar().Hash();
+
+    result = result * 17 + RunAwayTeleportOriginVar().Hash();
+    result = result * 17 + RunAwayJumppadOriginVar().Hash();
+    result = result * 17 + RunAwayElevatorOriginVar().Hash();
 
     return result;
 }
@@ -216,6 +227,13 @@ bool WorldState::operator==(const WorldState &that) const
     if (CloseRangeTacticalSpotVar() != that.CloseRangeTacticalSpotVar())
         return false;
     if (CoverSpotVar() != that.CoverSpotVar())
+        return false;
+
+    if (RunAwayTeleportOriginVar() != that.RunAwayTeleportOriginVar())
+        return false;
+    if (RunAwayJumppadOriginVar() != that.RunAwayJumppadOriginVar())
+        return false;
+    if (RunAwayElevatorOriginVar() != that.RunAwayElevatorOriginVar())
         return false;
 
     return true;

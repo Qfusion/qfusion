@@ -132,7 +132,7 @@ protected:
     }
 
     virtual void TouchedNavEntity(const edict_t *underlyingEntity) {};
-    virtual void TouchedJumppad(const edict_t *jumppad) {};
+    virtual void TouchedOtherEntity(const edict_t *entity) {}
 
     void CheckReachedArea();
     void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);
