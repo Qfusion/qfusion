@@ -238,3 +238,130 @@ bool WorldState::operator==(const WorldState &that) const
 
     return true;
 }
+
+void WorldState::DebugPrint(const char *tag) const
+{
+    // We have to list all vars manually
+    // A list of vars does not (and should not) exist
+    // since vars instances do not (and should not) exist in optimized by a compiler code
+    // (WorldState members are accessed directly instead)
+
+    GoalItemWaitTimeVar().DebugPrint(tag);
+
+    HealthVar().DebugPrint(tag);
+    ArmorVar().DebugPrint(tag);
+    RawDamageToKillVar().DebugPrint(tag);
+
+    BotOriginVar().DebugPrint(tag);
+    EnemyOriginVar().DebugPrint(tag);
+    NavTargetOriginVar().DebugPrint(tag);
+    PendingOriginVar().DebugPrint(tag);
+
+    HasQuadVar().DebugPrint(tag);
+    HasShellVar().DebugPrint(tag);
+    EnemyHasQuadVar().DebugPrint(tag);
+    HasThreateningEnemyVar().DebugPrint(tag);
+    HasJustPickedGoalItemVar().DebugPrint(tag);
+
+    HasPositionalAdvantageVar().DebugPrint(tag);
+    CanHitEnemyVar().DebugPrint(tag);
+    EnemyCanHitVar().DebugPrint(tag);
+    HasJustKilledEnemyVar().DebugPrint(tag);
+
+    IsRunningAwayVar().DebugPrint(tag);
+    HasRunAwayVar().DebugPrint(tag);
+
+    HasJustTeleportedVar().DebugPrint(tag);
+    HasJustTouchedJumppadVar().DebugPrint(tag);
+    HasJustEnteredElevatorVar().DebugPrint(tag);
+
+    HasPendingCoverSpotVar().DebugPrint(tag);
+    HasPendingRunAwayTeleportVar().DebugPrint(tag);
+    HasPendingRunAwayJumppadVar().DebugPrint(tag);
+    HasPendingRunAwayElevatorVar().DebugPrint(tag);
+
+    HasGoodSniperRangeWeaponsVar().DebugPrint(tag);
+    HasGoodFarRangeWeaponsVar().DebugPrint(tag);
+    HasGoodMiddleRangeWeaponsVar().DebugPrint(tag);
+    HasGoodCloseRangeWeaponsVar().DebugPrint(tag);
+
+    EnemyHasGoodSniperRangeWeaponsVar().DebugPrint(tag);
+    EnemyHasGoodFarRangeWeaponsVar().DebugPrint(tag);
+    EnemyHasGoodMiddleRangeWeaponsVar().DebugPrint(tag);
+    EnemyHasGoodCloseRangeWeaponsVar().DebugPrint(tag);
+
+    SniperRangeTacticalSpotVar().DebugPrint(tag);
+    FarRangeTacticalSpotVar().DebugPrint(tag);
+    MiddleRangeTacticalSpotVar().DebugPrint(tag);
+    CloseRangeTacticalSpotVar().DebugPrint(tag);
+
+    RunAwayTeleportOriginVar().DebugPrint(tag);
+    RunAwayJumppadOriginVar().DebugPrint(tag);
+    RunAwayElevatorOriginVar().DebugPrint(tag);
+}
+
+#define PRINT_DIFF(varName)                             \
+do                                                      \
+{                                                       \
+    if (this->varName##Var() != that.varName##Var())    \
+    {                                                   \
+        this->varName##Var().DebugPrint(oldTag);        \
+        that.varName##Var().DebugPrint(newTag);         \
+    }                                                   \
+} while (0)
+
+void WorldState::DebugPrintDiff(const WorldState &that, const char *oldTag, const char *newTag) const
+{
+    PRINT_DIFF(GoalItemWaitTime);
+
+    PRINT_DIFF(Health);
+    PRINT_DIFF(Armor);
+    PRINT_DIFF(RawDamageToKill);
+
+    PRINT_DIFF(BotOrigin);
+    PRINT_DIFF(EnemyOrigin);
+    PRINT_DIFF(NavTargetOrigin);
+    PRINT_DIFF(PendingOrigin);
+
+    PRINT_DIFF(HasQuad);
+    PRINT_DIFF(HasShell);
+    PRINT_DIFF(EnemyHasQuad);
+    PRINT_DIFF(HasThreateningEnemy);
+    PRINT_DIFF(HasJustPickedGoalItem);
+
+    PRINT_DIFF(HasPositionalAdvantage);
+    PRINT_DIFF(CanHitEnemy);
+    PRINT_DIFF(EnemyCanHit);
+    PRINT_DIFF(HasJustKilledEnemy);
+
+    PRINT_DIFF(IsRunningAway);
+    PRINT_DIFF(HasRunAway);
+
+    PRINT_DIFF(HasJustTeleported);
+    PRINT_DIFF(HasJustTouchedJumppad);
+    PRINT_DIFF(HasJustEnteredElevator);
+
+    PRINT_DIFF(HasPendingCoverSpot);
+    PRINT_DIFF(HasPendingRunAwayTeleport);
+    PRINT_DIFF(HasPendingRunAwayJumppad);
+    PRINT_DIFF(HasPendingRunAwayElevator);
+
+    PRINT_DIFF(HasGoodSniperRangeWeapons);
+    PRINT_DIFF(HasGoodFarRangeWeapons);
+    PRINT_DIFF(HasGoodSniperRangeWeapons);
+    PRINT_DIFF(HasGoodCloseRangeWeapons);
+
+    PRINT_DIFF(EnemyHasGoodSniperRangeWeapons);
+    PRINT_DIFF(EnemyHasGoodFarRangeWeapons);
+    PRINT_DIFF(EnemyHasGoodSniperRangeWeapons);
+    PRINT_DIFF(EnemyHasGoodCloseRangeWeapons);
+
+    PRINT_DIFF(SniperRangeTacticalSpot);
+    PRINT_DIFF(FarRangeTacticalSpot);
+    PRINT_DIFF(MiddleRangeTacticalSpot);
+    PRINT_DIFF(CloseRangeTacticalSpot);
+
+    PRINT_DIFF(RunAwayTeleportOrigin);
+    PRINT_DIFF(RunAwayJumppadOrigin);
+    PRINT_DIFF(RunAwayElevatorOrigin);
+}

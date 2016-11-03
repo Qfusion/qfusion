@@ -1389,7 +1389,10 @@ PlannerNode *BotStartGotoCoverAction::TryApply(const WorldState &worldState)
 #ifdef _DEBUG
     // Sanity check
     if (!worldState.HasPendingCoverSpotVar().Ignore() && worldState.HasPendingCoverSpotVar())
-        abort();
+    {
+        worldState.DebugPrint("Given WS");
+        AI_FailWith(this->name, "Pending cover spot is already present in the given world state\n");
+    }
 #endif
 
     if (worldState.CoverSpotVar().Ignore())
@@ -1479,11 +1482,17 @@ PlannerNode *BotTakeCoverAction::TryApply(const WorldState &worldState)
 #ifdef _DEBUG
     // Sanity check
     if (worldState.PendingOriginVar().Ignore())
-        AI_FailWith("BotTakeCoverAction", "PendingOriginVar() is ignored\n");
+    {
+        worldState.DebugPrint("Given WS");
+        AI_FailWith("BotTakeCoverAction", "PendingOriginVar() is ignored in the given world state\n");
+    }
 
     constexpr float distanceError = WorldState::OriginVar::MAX_ROUNDING_SQUARE_DISTANCE_ERROR;
     if ((worldState.PendingOriginVar().Value() - navTargetOrigin).SquaredLength() > distanceError)
-        AI_FailWith("BotTakeCoverAction", "PendingOrigin and NavTargetOrigin differ\n");
+    {
+        worldState.DebugPrint("Given WS");
+        AI_FailWith("BotTakeCoverAction", "PendingOrigin and NavTargetOrigin differ in the given world state\n");
+    }
 #endif
 
     if (worldState.DistanceToNavTarget() > GOAL_PICKUP_ACTION_RADIUS)
@@ -1583,13 +1592,18 @@ PlannerNode *BotDoRunAwayViaTeleportAction::TryApply(const WorldState &worldStat
         return nullptr;
     }
 
-#ifndef _DEBUG
+#ifdef _DEBUG
     // Sanity check
     if (worldState.NavTargetOriginVar().Ignore())
+    {
+        worldState.DebugPrint("Goal WS");
         AI_FailWith(this->name, "Nav target origin is ignored in the given world state\n");
-
+    }
     if (worldState.PendingOriginVar().Ignore())
+    {
+        worldState.DebugPrint("Goal WS");
         AI_FailWith(this->name, "Pending origin is ignored in the given world state\n");
+    }
 #endif
 
     if (worldState.DistanceToNavTarget() > GOAL_PICKUP_ACTION_RADIUS)
@@ -1768,10 +1782,15 @@ PlannerNode *BotDoRunAwayViaJumppadAction::TryApply(const WorldState &worldState
 #ifdef _DEBUG
     // Sanity check
     if (worldState.NavTargetOriginVar().Ignore())
+    {
+        worldState.DebugPrint("Goal WS");
         AI_FailWith(this->name, "Nav target origin is ignored in the given world state\n");
-
+    }
     if (worldState.PendingOriginVar().Ignore())
+    {
+        worldState.DebugPrint("Goal WS");
         AI_FailWith(this->name, "Pending origin is ignored in the given world state\n");
+    }
 #endif
 
     if (worldState.DistanceToNavTarget() > GOAL_PICKUP_ACTION_RADIUS)
@@ -1921,10 +1940,15 @@ PlannerNode *BotDoRunAwayViaElevatorAction::TryApply(const WorldState &worldStat
 #ifdef _DEBUG
     // Sanity check
     if (worldState.NavTargetOriginVar().Ignore())
+    {
+        worldState.DebugPrint("Given WS");
         AI_FailWith(this->name, "Nav target origin is ignored in the given world state\n");
-
+    }
     if (worldState.PendingOriginVar().Ignore())
+    {
+        worldState.DebugPrint("Given WS");
         AI_FailWith(this->name, "Pending origin is ignored in the given world state\n");
+    }
 #endif
 
     if (worldState.DistanceToNavTarget() > GOAL_PICKUP_ACTION_RADIUS)

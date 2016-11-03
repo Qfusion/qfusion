@@ -312,8 +312,10 @@ struct PlannerNodesHashSet
         }
         else
         {
-            if (bins[binIndex] != node) abort();
-
+#ifndef PUBLIC_BUILD
+            if (bins[binIndex] != node)
+                abort();
+#endif
             if (node->nextInHashBin)
             {
                 node->nextInHashBin->prevInHashBin = nullptr;
@@ -326,6 +328,19 @@ struct PlannerNodesHashSet
         node->DeleteSelf();
         return result;
     }
+
+    PlannerNode *SameWorldStateNode(const PlannerNode *node) const
+    {
+        for (PlannerNode *binNode = bins[node->worldStateHash % N]; binNode; binNode = binNode->nextInHashBin)
+        {
+            if (binNode->worldStateHash != node->worldStateHash)
+                continue;
+            if (!(binNode->worldState == node->worldState))
+                continue;
+            return binNode;
+        }
+        return nullptr;
+    }
 public:
     inline PlannerNodesHashSet()
     {
@@ -334,22 +349,22 @@ public:
 
     bool ContainsSameWorldState(const PlannerNode *node) const
     {
-        for (PlannerNode *binNode = bins[node->worldStateHash % N]; binNode; binNode = binNode->nextInHashBin)
-        {
-            if (binNode->worldStateHash != node->worldStateHash)
-                continue;
-            if (!(binNode->worldState == node->worldState))
-                continue;
-            return true;
-        }
-        return false;
+        return SameWorldStateNode(node) != nullptr;
     }
 
     void Add(PlannerNode *node)
     {
-#ifdef _DEBUG
-        if (ContainsSameWorldState(node))
-            AI_FailWith("PlannerNodesHashSet::Add()", "A node that contains same world state is already present");
+#ifndef _DEBUG
+        if (PlannerNode *sameWorldStateNode = SameWorldStateNode(node))
+        {
+            AI_Debug("PlannerNodesHashSet::Add()", "A node that contains same world state is already present");
+            // This helps to discover broken equality operators
+            node->worldState.DebugPrint("Arg node");
+            sameWorldStateNode->worldState.DebugPrint("Same WS Node");
+            AI_Debug("PlannerNodesHashSet::Add()", "Arg node tho the same WS node diff is:");
+            node->worldState.DebugPrintDiff(sameWorldStateNode->worldState, "Node", "Same WS Node");
+            abort();
+        }
 #endif
         unsigned binIndex = node->worldStateHash % N;
         PlannerNode *headBinNode = bins[binIndex];
@@ -374,7 +389,9 @@ public:
 
             return RemoveNode(binNode, binIndex);
         }
-        AI_FailWith("PlannerNodesHashSet::RemoveBySameWorldState()", "Can't find a node that has same world state");
+        AI_Debug("PlannerNodesHashSet::RemoveBySameWorldState()", "Can't find a node that has same world state");
+        node->worldState.DebugPrint("Arg node");
+        abort();
     }
 };
 
@@ -536,7 +553,11 @@ AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &c
             // Check this assertion first before removal of the transition from sets
             // (make an implicit crash due to violation of node indices properties explicit)
             if (isInOpen && isInClosed)
+            {
+                Debug("A world state was in OPEN and CLOSED sets simultaneously\n");
+                currNode->worldState.DebugPrint("WorldState");
                 abort();
+            }
 
             const bool wasInOpen = isInOpen;
             const bool wasInClosed = isInClosed;

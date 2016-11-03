@@ -190,7 +190,6 @@ private:
     const short *GetRunAwayJumppadOrigin();
     const short *GetRunAwayElevatorOrigin();
 public:
-    WorldState(edict_t *self_): self(self_) {}
 
 #define DECLARE_COMPARABLE_VAR_CLASS(className, type)                               \
     class className                                                                 \
@@ -198,9 +197,11 @@ public:
         friend class WorldState;                                                    \
     protected:                                                                      \
         WorldState *parent;                                                         \
+        const char *name;                                                           \
         short index;                                                                \
-        className(const WorldState *parent_, short index_)                          \
-            : parent(const_cast<WorldState *>(parent_)), index(index_) {}           \
+        className(const WorldState *parent_, short index_, const char *name_)       \
+            : parent(const_cast<WorldState *>(parent_)), name(name_), index(index_) \
+        {}                                                                          \
     public:                                                                         \
         inline const type &Value() const                                            \
         {                                                                           \
@@ -244,6 +245,7 @@ public:
                 case WorldState::SatisfyOp::LE: return Value() <= value;            \
             }                                                                       \
         }                                                                           \
+        inline void DebugPrint(const char *tag) const;                              \
     }
 
     DECLARE_COMPARABLE_VAR_CLASS(UnsignedVar, unsigned);
@@ -252,21 +254,16 @@ public:
 
     DECLARE_COMPARABLE_VAR_CLASS(ShortVar, short);
 
+#define VAR_NAME_FORMAT "%-32.32s"
+
     class BoolVar
     {
         friend class WorldState;
         WorldState *parent;
-        short index;
-#ifdef _DEBUG
         const char *name;
-#endif
+        short index;
         BoolVar(const WorldState *parent_, short index_, const char *name_)
-            : parent(const_cast<WorldState *>(parent_)), index(index_)
-        {
-#ifdef _DEBUG
-            name = _name;
-#endif
-        }
+            : parent(const_cast<WorldState *>(parent_)), name(name_), index(index_) {}
     public:
         inline bool Value() const { return (parent->boolVarsValues & (1 << index)) != 0; }
         inline BoolVar &SetValue(bool value)
@@ -285,6 +282,13 @@ public:
             ignore ? parent->boolVarsIgnoreFlags |= (1 << index) : parent->boolVarsIgnoreFlags &= ~(1 << index);
             return *this;
         }
+        inline void DebugPrint(const char *tag) const
+        {
+            if (Ignore())
+                AI_Debug(tag, VAR_NAME_FORMAT ": (ignored)\n", name);
+            else
+                AI_Debug(tag, VAR_NAME_FORMAT ": %s\n", name, Value() ? "true" : "false");
+        }
     };
 
     // Stores a 3-dimensional world space origin vector. Dimensions are rounded up to 4 units.
@@ -292,9 +296,10 @@ public:
     {
         friend class WorldState;
         WorldState *parent;
+        const char *name;
         short index;
-        OriginVar(const WorldState *parent_, short index_)
-            : parent(const_cast<WorldState *>(parent_)), index(index_) {}
+        OriginVar(const WorldState *parent_, short index_, const char *name_)
+            : parent(const_cast<WorldState *>(parent_)), name(name_), index(index_) {}
 
         inline short *Data() { return &parent->originVarsData[index * 4]; }
         inline const short *Data() const { return &parent->originVarsData[index * 4]; }
@@ -415,6 +420,17 @@ public:
         }
 
         inline bool operator!=(const OriginVar &that) const { return !(*this == that); }
+
+        inline void DebugPrint(const char *tag) const
+        {
+            if (Ignore())
+            {
+                AI_Debug(tag, VAR_NAME_FORMAT ": (ignored)\n", name);
+                return;
+            }
+            Vec3 value(Value());
+            AI_Debug(tag, VAR_NAME_FORMAT ": %f %f %f\n", name, value.X(), value.Y(), value.Z());
+        }
     };
 
     class OriginLazyVarBase
@@ -425,6 +441,7 @@ public:
     protected:
         friend class WorldState;
         WorldState *parent;
+        const char *name;
         ValueSupplier supplier;
         short *varsData;
         short index;
@@ -432,8 +449,10 @@ public:
         inline OriginLazyVarBase(const WorldState *parent_,
                                  short index_,
                                  ValueSupplier supplier_,
-                                 const short *varsData_)
+                                 const short *varsData_,
+                                 const char *name_)
             : parent(const_cast<WorldState *>(parent_)),
+              name(name_),
               supplier(supplier_),
               varsData(const_cast<short *>(varsData_)),
               index(index_) {}
@@ -563,8 +582,8 @@ public:
     {
         friend class WorldState;
     private:
-        OriginLazyVar(const WorldState *parent_, short index_, ValueSupplier supplier_)
-            : OriginLazyVarBase(parent_, index_, supplier_, parent_->originLazyVarsData) {}
+        OriginLazyVar(const WorldState *parent_, short index_, ValueSupplier supplier_, const char *name_)
+            : OriginLazyVarBase(parent_, index_, supplier_, parent_->originLazyVarsData, name_) {}
     public:
         inline bool IsPresent() const
         {
@@ -659,14 +678,36 @@ public:
             }
             return true;
         }
+
+        inline void DebugPrint(const char *tag)
+        {
+            if (Ignore())
+            {
+                AI_Debug(tag, VAR_NAME_FORMAT ": (ignored)\n", name);
+                return;
+            }
+            switch (StateBits())
+            {
+                case PENDING:
+                    AI_Debug(tag, VAR_NAME_FORMAT ": (pending)\n", name);
+                    break;
+                case ABSENT:
+                    AI_Debug(tag, VAR_NAME_FORMAT ": (absent)\n", name);
+                    break;
+                case PRESENT:
+                    Vec3 value(Value());
+                    AI_Debug(tag, VAR_NAME_FORMAT ": %f %f %f\n", name, value.X(), value.Y(), value.Z());
+                    break;
+            }
+        }
     };
 
     class DualOriginLazyVar: public OriginLazyVarBase
     {
         friend class WorldState;
     private:
-        DualOriginLazyVar(const WorldState *parent_, short index_, ValueSupplier supplier_)
-            : OriginLazyVarBase(parent_, index_, supplier_, parent_->dualOriginLazyVarsData) {}
+        DualOriginLazyVar(const WorldState *parent_, short index_, ValueSupplier supplier_, const char *name_)
+            : OriginLazyVarBase(parent_, index_, supplier_, parent_->dualOriginLazyVarsData, name_) {}
 
         inline short *Data2() { return Data() + 4; }
         inline const short *Data2() const { return Data() + 4; }
@@ -778,20 +819,76 @@ public:
             }
             return true;
         }
+
+        inline void DebugPrint(const char *tag)
+        {
+            if (Ignore())
+            {
+                AI_Debug(tag, VAR_NAME_FORMAT ": (ignored)\n", name);
+                return;
+            }
+            switch (StateBits())
+            {
+                case PENDING:
+                    AI_Debug(tag, VAR_NAME_FORMAT ": (pending)\n", name);
+                    break;
+                case ABSENT:
+                    AI_Debug(tag, VAR_NAME_FORMAT ": (absent)\n", name);
+                    break;
+                case PRESENT:
+                    Vec3 v(Value()), v2(Value2());
+                    constexpr const char *format = VAR_NAME_FORMAT ": %f %f %f, %f %f %f\n";
+                    AI_Debug(tag, format, name, v.X(), v.Y(), v.Z(), v2.X(), v2.Y(), v2.Z());
+                    break;
+            }
+        }
     };
 
-#define DECLARE_UNSIGNED_VAR(varName) UnsignedVar varName##Var() const { return UnsignedVar(this, varName); }
-#define DECLARE_SHORT_VAR(varName) ShortVar varName##Var() const { return ShortVar(this, varName); }
-#define DECLARE_BOOL_VAR(varName) BoolVar varName##Var() const { return BoolVar(this, varName); }
-#define DECLARE_ORIGIN_VAR(varName) OriginVar varName##Var() const { return OriginVar(this, varName); }
-#define DECLARE_ORIGIN_LAZY_VAR(varName) OriginLazyVar varName##Var() const \
-{                                                                           \
-    return OriginLazyVar(this, varName, &WorldState::Get##varName);         \
+#define DECLARE_UNSIGNED_VAR(varName) UnsignedVar varName##Var() const { return UnsignedVar(this, varName, #varName); }
+#define DECLARE_SHORT_VAR(varName) ShortVar varName##Var() const { return ShortVar(this, varName, #varName); }
+#define DECLARE_BOOL_VAR(varName) BoolVar varName##Var() const { return BoolVar(this, varName, #varName); }
+#define DECLARE_ORIGIN_VAR(varName) OriginVar varName##Var() const { return OriginVar(this, varName, #varName); }
+#define DECLARE_ORIGIN_LAZY_VAR(varName) OriginLazyVar varName##Var() const   \
+{                                                                             \
+    return OriginLazyVar(this, varName, &WorldState::Get##varName, #varName); \
 }
 #define DECLARE_DUAL_ORIGIN_LAZY_VAR(varName) DualOriginLazyVar varName##Var() const \
 {                                                                                    \
-    return DualOriginLazyVar(this, varName, &WorldState::Get##varName);              \
+    return DualOriginLazyVar(this, varName, &WorldState::Get##varName, #varName);    \
 }
+
+    WorldState(edict_t *self_): self(self_)
+    {
+        // If state bits are not initialized, vars often does not get printed in debug output.
+        // This is useful for release non-public builds too, not only for debug ones.
+#ifndef PUBLIC_BUILD
+        for (unsigned i = 0; i < NUM_ORIGIN_VARS; ++i)
+        {
+            auto *packedFields = (OriginVar::PackedFields *)&originVarsData[i * 4 + 3];
+            packedFields->ignore = true;
+            packedFields->epsilon = 1;
+            packedFields->satisfyOp = (unsigned char)SatisfyOp::EQ;
+        }
+
+        for (unsigned i = 0; i < NUM_ORIGIN_LAZY_VARS; ++i)
+        {
+            auto *packedFields = (OriginLazyVarBase::PackedFields * )&originLazyVarsData[i * 4 + 3];
+            packedFields->stateBits = OriginLazyVarBase::PENDING;
+            packedFields->ignore = true;
+            packedFields->epsilon = 1;
+            packedFields->satisfyOp = (unsigned char)SatisfyOp::EQ;
+        }
+
+        for (unsigned i = 0; i < NUM_DUAL_ORIGIN_LAZY_VARS; ++i)
+        {
+            auto *packedFields = (DualOriginLazyVar::PackedFields * )&dualOriginLazyVarsData[i * 4 + 3];
+            packedFields->stateBits = OriginLazyVarBase::PENDING;
+            packedFields->ignore = true;
+            packedFields->epsilon = 1;
+            packedFields->satisfyOp = (unsigned char)SatisfyOp::EQ;
+        };
+#endif
+    }
 
     bool IsSatisfiedBy(const WorldState &that) const;
 
@@ -966,6 +1063,36 @@ public:
     {
         return DamageToKill() / DamageToBeKilled();
     }
+
+    void DebugPrint(const char *tag) const;
+
+    void DebugPrintDiff(const WorldState &that, const char *oldTag, const char *newTag) const;
 };
+
+inline void WorldState::UnsignedVar::DebugPrint(const char *tag) const
+{
+    if (Ignore())
+        AI_Debug(tag, VAR_NAME_FORMAT ": (ignored)\n", name);
+    else
+        AI_Debug(tag, VAR_NAME_FORMAT ": %u\n", name, Value());
+}
+
+inline void WorldState::FloatVar::DebugPrint(const char *tag) const
+{
+    if (Ignore())
+        AI_Debug(tag, VAR_NAME_FORMAT ": (ignored)\n", name);
+    else
+        AI_Debug(tag, VAR_NAME_FORMAT ": %f\n", name, Value());
+}
+
+inline void WorldState::ShortVar::DebugPrint(const char *tag) const
+{
+    if (Ignore())
+        AI_Debug(tag, VAR_NAME_FORMAT ": (ignored)\n", name);
+    else
+        AI_Debug(tag, VAR_NAME_FORMAT ": %hi\n", name, Value());
+}
+
+#undef VAR_NAME_FORMAT
 
 #endif
