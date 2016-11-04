@@ -1,5 +1,67 @@
 #include "world_state.h"
 
+#ifndef PUBLIC_BUILD
+
+WorldState::WorldState(edict_t *self_): self(self_)
+{
+    // If state bits are not initialized, vars often does not get printed in debug output.
+    // This is useful for release non-public builds too, not only for debug ones.
+    for (unsigned i = 0; i < NUM_ORIGIN_VARS; ++i)
+    {
+        auto *packedFields = (OriginVar::PackedFields *)&originVarsData[i * 4 + 3];
+        packedFields->ignore = true;
+        packedFields->epsilon = 1;
+        packedFields->satisfyOp = (unsigned char)SatisfyOp::EQ;
+    }
+
+    for (unsigned i = 0; i < NUM_ORIGIN_LAZY_VARS; ++i)
+    {
+        auto *packedFields = (OriginLazyVarBase::PackedFields * )&originLazyVarsData[i * 4 + 3];
+        packedFields->stateBits = OriginLazyVarBase::PENDING;
+        packedFields->ignore = true;
+        packedFields->epsilon = 1;
+        packedFields->satisfyOp = (unsigned char)SatisfyOp::EQ;
+    }
+
+    for (unsigned i = 0; i < NUM_DUAL_ORIGIN_LAZY_VARS; ++i)
+    {
+        auto *packedFields = (DualOriginLazyVar::PackedFields * )&dualOriginLazyVarsData[i * 4 + 3];
+        packedFields->stateBits = OriginLazyVarBase::PENDING;
+        packedFields->ignore = true;
+        packedFields->epsilon = 1;
+        packedFields->satisfyOp = (unsigned char)SatisfyOp::EQ;
+    };
+}
+
+#endif
+
+void WorldState::SetIgnoreAll(bool ignore)
+{
+    if (ignore)
+    {
+        unsignedVarsIgnoreFlags = std::numeric_limits<decltype(unsignedVarsIgnoreFlags)>::max();
+        floatVarsIgnoreFlags = std::numeric_limits<decltype(floatVarsIgnoreFlags)>::max();
+        shortVarsIgnoreFlags = std::numeric_limits<decltype(shortVarsIgnoreFlags)>::max();
+        boolVarsIgnoreFlags = std::numeric_limits<decltype(boolVarsIgnoreFlags)>::max();
+    }
+    else
+    {
+        unsignedVarsIgnoreFlags = 0;
+        floatVarsIgnoreFlags = 0;
+        shortVarsIgnoreFlags = 0;
+        boolVarsIgnoreFlags = 0;
+    }
+
+    for (unsigned i = 0; i < NUM_ORIGIN_VARS; ++i)
+        ((OriginVar::PackedFields *)&originVarsData[i * 4 + 3])->ignore = ignore;
+
+    for (unsigned i = 0; i < NUM_ORIGIN_LAZY_VARS; ++i)
+        ((OriginLazyVar::PackedFields *)&originLazyVarsData[i * 4 + 3])->ignore = ignore;
+
+    for (unsigned i = 0; i < NUM_DUAL_ORIGIN_LAZY_VARS; ++i)
+        ((DualOriginLazyVar::PackedFields *)&dualOriginLazyVarsData[i * 4 + 3])->ignore = ignore;
+}
+
 // Use this macro so one have to write condition that matches the corresponding case and not its negation
 #define TEST_OR_FAIL(condition)  \
 do                               \
