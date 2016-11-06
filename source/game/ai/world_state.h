@@ -90,6 +90,13 @@ private:
     enum
     {
         GoalItemWaitTime,
+        // Used to make a distinction between world states that are similar (has all other vars matching)
+        // but not really identical from human logic point of view
+        // (there are some other factors that are not reflected in this world state)
+        // Usually these world states are terminal for some other (non-active) goal,
+        // and there are many action chains that lead to these world states.
+        // A planner would fail on duplicated world states without introduction of this var.
+        SimilarWorldStateInstanceId,
 
         NUM_UNSIGNED_VARS
     };
@@ -539,6 +546,7 @@ public:
     void SetIgnoreAll(bool ignore);
 
     DECLARE_UNSIGNED_VAR(GoalItemWaitTime)
+    DECLARE_UNSIGNED_VAR(SimilarWorldStateInstanceId)
 
     DECLARE_SHORT_VAR(Health)
     DECLARE_SHORT_VAR(Armor)

@@ -142,6 +142,11 @@ int BotGutsActionsAccessor::TravelTimeMillis(const Vec3& from, const Vec3 &to, b
     AI_FailWith("BotGutsActionsAccessor::TravelTimeMillis()", "Can't find travel time %d->%d\n", fromAreaNum, toAreaNum);
 }
 
+inline unsigned BotGutsActionsAccessor::NextSimilarWorldStateInstanceId()
+{
+    return ent->ai->botRef->NextSimilarWorldStateInstanceId();
+}
+
 void BotBaseActionRecord::Activate()
 {
     AiBaseActionRecord::Activate();
@@ -1204,7 +1209,11 @@ PlannerNode *BotKillEnemyAction::TryApply(const WorldState &worldState)
     plannerNode.Cost() = 1.0f;
 
     plannerNode.WorldState() = worldState;
+
     plannerNode.WorldState().HasJustKilledEnemyVar().SetValue(true).SetIgnore(false);
+
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(NextSimilarWorldStateInstanceId());
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
 }
@@ -1423,6 +1432,9 @@ PlannerNode *BotStartGotoCoverAction::TryApply(const WorldState &worldState)
     plannerNode.WorldState().PendingOriginVar().SetValue(spotOrigin);
     plannerNode.WorldState().PendingOriginVar().SetSatisfyOp(SatisfyOp::EQ, GOAL_PICKUP_ACTION_RADIUS);
     plannerNode.WorldState().PendingOriginVar().SetIgnore(false);
+
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(NextSimilarWorldStateInstanceId());
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
 }
@@ -2016,6 +2028,9 @@ PlannerNode *BotStopRunningAwayAction::TryApply(const WorldState &worldState)
 
     plannerNode.WorldState().IsRunningAwayVar().SetValue(false).SetIgnore(false);
     plannerNode.WorldState().HasRunAwayVar().SetValue(true).SetIgnore(false);
+
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(NextSimilarWorldStateInstanceId());
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
 }

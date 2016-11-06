@@ -31,6 +31,8 @@ protected:
     inline void InvalidateCampingSpot();
 
     int TravelTimeMillis(const Vec3 &from, const Vec3 &to, bool allowUnreachable = false);
+
+    inline unsigned NextSimilarWorldStateInstanceId();
 };
 
 class BotBaseActionRecord: public AiBaseActionRecord, protected BotGutsActionsAccessor

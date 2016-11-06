@@ -309,6 +309,7 @@ void WorldState::DebugPrint(const char *tag) const
     // (WorldState members are accessed directly instead)
 
     GoalItemWaitTimeVar().DebugPrint(tag);
+    SimilarWorldStateInstanceIdVar().DebugPrint(tag);
 
     HealthVar().DebugPrint(tag);
     ArmorVar().DebugPrint(tag);
@@ -375,6 +376,7 @@ do                                                      \
 void WorldState::DebugPrintDiff(const WorldState &that, const char *oldTag, const char *newTag) const
 {
     PRINT_DIFF(GoalItemWaitTime);
+    PRINT_DIFF(SimilarWorldStateInstanceId);
 
     PRINT_DIFF(Health);
     PRINT_DIFF(Armor);

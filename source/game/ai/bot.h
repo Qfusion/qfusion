@@ -539,6 +539,13 @@ private:
     unsigned lastTouchedJumppadAt;
     unsigned lastTouchedElevatorAt;
 
+    unsigned similarWorldStateInstanceId;
+
+    inline unsigned NextSimilarWorldStateInstanceId()
+    {
+        return ++similarWorldStateInstanceId;
+    }
+
     void UpdateScriptWeaponsStatus();
 
     void Move(usercmd_t *ucmd);

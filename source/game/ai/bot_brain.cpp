@@ -345,6 +345,8 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
 
     worldState->ResetTacticalSpots();
 
+    worldState->SimilarWorldStateInstanceIdVar().SetIgnore(true);
+
     recentWorldState = *worldState;
 }
 
