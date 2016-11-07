@@ -4,6 +4,10 @@
 
 WorldState::WorldState(edict_t *self_): self(self_)
 {
+#ifdef _DEBUG
+    isCopiedFromOtherWorldState = false;
+#endif
+
     // If state bits are not initialized, vars often does not get printed in debug output.
     // This is useful for release non-public builds too, not only for debug ones.
     for (unsigned i = 0; i < NUM_ORIGIN_VARS; ++i)

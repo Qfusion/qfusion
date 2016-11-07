@@ -83,6 +83,11 @@ public:
     };
 private:
     edict_t *self;
+
+#ifdef _DEBUG
+    bool isCopiedFromOtherWorldState;
+#endif
+
     // WorldState operations such as copying and testing for satisfaction must be fast,
     // so vars components are stored in separate arrays for tight data packing.
     // Var types visible for external code are just thin wrappers around pointers to these values.
@@ -227,6 +232,23 @@ private:
     const short *GetRunAwayJumppadOrigin();
     const short *GetRunAwayElevatorOrigin();
 public:
+#ifdef _DEBUG
+    inline bool IsCopiedFromOtherWorldState() const
+    {
+        return isCopiedFromOtherWorldState;
+    }
+    inline WorldState &operator=(const WorldState &that)
+    {
+        memcpy(this, &that, sizeof(WorldState));
+        isCopiedFromOtherWorldState = true;
+        return *this;
+    }
+    inline WorldState(const WorldState &that)
+    {
+        memcpy(this, &that, sizeof(WorldState));
+        isCopiedFromOtherWorldState = true;
+    }
+#endif
 
     DECLARE_COMPARABLE_VAR_CLASS(UnsignedVar, unsigned);
 
@@ -533,7 +555,11 @@ public:
 }
 
 #ifdef PUBLIC_BUILD
+#ifdef _DEBUG
     WorldState(edict_t *self_): self(self_) {}
+#else
+    WorldState(edict_t *self_): self(self_), isCopiedFromOtherWorldState(false) {}
+#endif
 #else
     WorldState(edict_t *self_);
 #endif

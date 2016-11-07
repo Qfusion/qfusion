@@ -473,6 +473,12 @@ inline PlannerNode *AiBaseAction::PlannerNodePtr::PrepareActionResult()
 {
     PlannerNode *result = this->node;
     this->node = nullptr;
+
+#ifdef _DEBUG
+    if (!result->worldState.IsCopiedFromOtherWorldState())
+        AI_FailWith("PlannerNodePtr::PrepareActionResult()", "World state has not been copied from parent one");
+#endif
+
     // Compute modified world state hash
     // This computation have been put here to avoid error-prone copy-pasting.
     // Another approach is to use lazy hash code computation but it adds branching on each hash code access
