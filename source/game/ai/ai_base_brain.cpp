@@ -543,7 +543,7 @@ AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &c
 
         closedNodesSet.Add(currNode);
 
-        PlannerNode *firstTransition = GetWorldStateTransitions(currNode->worldState);
+        PlannerNode *firstTransition = GetWorldStateTransitions(currNode->worldState, goal);
         for (PlannerNode *transition = firstTransition; transition; transition = transition->nextTransition)
         {
             float cost = currNode->costSoFar + transition->transitionCost;
@@ -604,15 +604,15 @@ AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &c
     return nullptr;
 }
 
-PlannerNode *AiBaseBrain::GetWorldStateTransitions(const WorldState &fromWorldState) const
+PlannerNode *AiBaseBrain::GetWorldStateTransitions(const WorldState &fromWorldState, const AiBaseGoal *goal) const
 {
     PlannerNode *firstTransition = nullptr;
     for (AiBaseAction *action: actions)
     {
-        if (PlannerNode *actionNode = action->TryApply(fromWorldState))
+        if (PlannerNode *currTransition = action->TryApply(fromWorldState))
         {
-            actionNode->nextTransition = firstTransition;
-            firstTransition = actionNode;
+            currTransition->nextTransition = firstTransition;
+            firstTransition = currTransition;
         }
     }
     return firstTransition;

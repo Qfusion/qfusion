@@ -363,6 +363,67 @@ bool BotBrain::ShouldSkipPlanning() const
     return false;
 }
 
+#define TRY_APPLY_ACTION(actionName)                          \
+do {                                                          \
+    if ((currTransition = botRef->actionName.TryApply(from))) \
+    {                                                         \
+        currTransition->nextTransition = firstTransition;     \
+        firstTransition = currTransition;                     \
+    }                                                         \
+} while (0)
+
+PlannerNode *BotBrain::GetWorldStateTransitions(const WorldState &from, const AiBaseGoal *goal) const
+{
+    PlannerNode *firstTransition = nullptr;
+    PlannerNode *currTransition = nullptr;
+    Bot *botRef = self->ai->botRef;
+
+    // Cut-offs to eliminate apriori not-applicable actions for each goals are implemented
+    // This also helps to avoid duplicated world states producing by applying such actions that crash the planner.
+
+    if (goal == &botRef->grabItemGoal)
+    {
+        TRY_APPLY_ACTION(genericRunToItemAction);
+
+        TRY_APPLY_ACTION(pickupItemAction);
+        TRY_APPLY_ACTION(waitForItemAction);
+
+        return firstTransition;
+    }
+    if (goal == &botRef->killEnemyGoal)
+    {
+        TRY_APPLY_ACTION(advanceToGoodPositionAction);
+        TRY_APPLY_ACTION(retreatToGoodPositionAction);
+        TRY_APPLY_ACTION(steadyCombatAction);
+        TRY_APPLY_ACTION(gotoAvailableGoodPositionAction);
+
+        TRY_APPLY_ACTION(killEnemyAction);
+
+        return firstTransition;
+    }
+    if (goal == &botRef->runAwayGoal)
+    {
+        TRY_APPLY_ACTION(genericRunAvoidingCombatAction);
+
+        TRY_APPLY_ACTION(startGotoCoverAction);
+        TRY_APPLY_ACTION(takeCoverAction);
+
+        TRY_APPLY_ACTION(startGotoRunAwayTeleportAction);
+        TRY_APPLY_ACTION(doRunAwayViaTeleportAction);
+
+        TRY_APPLY_ACTION(startGotoRunAwayJumppadAction);
+        TRY_APPLY_ACTION(doRunAwayViaJumppadAction);
+
+        TRY_APPLY_ACTION(startGotoRunAwayElevatorAction);
+        TRY_APPLY_ACTION(doRunAwayViaElevatorAction);
+
+        TRY_APPLY_ACTION(stopRunningAwayAction);
+
+        return firstTransition;
+    }
+    return nullptr;
+}
+
 float BotBrain::GetEffectiveOffensiveness() const
 {
     if (!squad)

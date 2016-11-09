@@ -73,7 +73,7 @@ class actionName: public BotBaseAction                                          
     Pool<actionName##Record, poolSize> pool;                                                     \
 public:                                                                                          \
     actionName(Ai *ai_): BotBaseAction(ai_, #actionName), pool("Pool<" #actionName "Record>") {} \
-    PlannerNode *TryApply(const WorldState &worldState) override;                                \
+    PlannerNode *TryApply(const WorldState &worldState) override final;                          \
 }
 
 #define DECLARE_INHERITED_ACTION(actionName, baseActionName, poolSize)                            \
@@ -82,7 +82,7 @@ class actionName: public baseActionName                                         
     Pool<actionName##Record, poolSize> pool;                                                      \
 public:                                                                                           \
     actionName(Ai *ai_): baseActionName(ai_, #actionName), pool("Pool<" #actionName "Record>") {} \
-    PlannerNode *TryApply(const WorldState &worldState) override;                                 \
+    PlannerNode *TryApply(const WorldState &worldState) override final;                           \
 }
 
 DECLARE_ACTION(BotGenericRunToItemAction, 3);

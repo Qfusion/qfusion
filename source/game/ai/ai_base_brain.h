@@ -387,9 +387,11 @@ protected:
 
     bool FindNewGoalAndPlan(const WorldState &currWorldState);
 
-    AiBaseActionRecord *BuildPlan(AiBaseGoal *goal, const WorldState &startWorldState);
+    // Allowed to be overridden in a subclass for class-specific optimization purposes
+    virtual AiBaseActionRecord *BuildPlan(AiBaseGoal *goal, const WorldState &startWorldState);
 
-    PlannerNode *GetWorldStateTransitions(const WorldState &from) const;
+    // Allowed to be overridden in a subclass for class-specific optimization purposes
+    virtual PlannerNode *GetWorldStateTransitions(const WorldState &from, const AiBaseGoal *goal) const;
 
     AiBaseActionRecord *ReconstructPlan(PlannerNode *lastNode) const;
 
