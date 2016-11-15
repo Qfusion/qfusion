@@ -486,46 +486,44 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 	return false;
 }
 
-// When this function is called the weights of items have been reset to their default values,
-// this means, the weights *are set*, and what this function does is scaling them depending
-// on the current bot status.
-// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
-// unless a weight is assigned here.
-bool GT_UpdateBotStatus( Entity @ent )
+void REKT_UpdateBotsExtraGoals()
 {
+    Entity @ent;
 	Entity @goal;
 	Bot @bot;
 
-	@bot = @ent.client.getBot();
-	if ( @bot == null )
-		return false;
-
-	float offensiveStatus = GENERIC_OffensiveStatus( ent );
-
-	// loop all the goal entities
-	for ( int i = AI::GetNextGoal( AI::GetRootGoal() ); i != AI::GetRootGoal(); i = AI::GetNextGoal( i ) )
-	{
-		@goal = @AI::GetGoalEntity( i );
-
-		// by now, always full-ignore not solid entities
-		if ( goal.solid == SOLID_NOT )
-		{
-			bot.setGoalWeight( i, 0 );
+    for ( int i = 1; i <= maxClients; ++i )
+    {
+        @ent = @G_GetEntity( i );
+        if ( @ent.client == null )
 			continue;
-		}
 
-		if ( @goal.client != null )
-		{
-			if( !goal.client.isBot() )
-				bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * 2.5 * offensiveStatus );
+		@bot = @ent.client.getBot();
+		if ( @bot == null )
 			continue;
-		}
 
-		// ignore it
-		bot.setGoalWeight( i, 0 );
-	}
+        for ( int j = 1; j <= maxClients; ++j )
+		{
+			if ( i == j )
+				continue;
 
-	return true; // handled by the script
+			@goal = @G_GetEntity( j );
+			if ( @goal.client == null )
+				continue;
+
+			// If a client is not a bot
+			if ( @goal.client.getBot() == null )
+			{
+				// Attack players
+				bot.setAttitude( @goal, -1 );
+			}
+			else
+			{
+				// Ignore other bots
+				bot.setAttitude( @goal, 0 );
+			}
+        }
+    }
 }
 
 // select a spawning point for a player
@@ -614,6 +612,8 @@ void GT_ThinkRules()
 		return;
 
 	enduranceMatch.think();
+
+	REKT_UpdateBotsExtraGoals();
 }
 
 // The game has detected the end of the match state, but it
