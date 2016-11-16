@@ -2,7 +2,7 @@
 #include "ai_shutdown_hooks_holder.h"
 #include "ai_manager.h"
 #include "ai_objective_based_team_brain.h"
-#include "tactical_spots_detector.h"
+#include "ai_tactical_spots_detector.h"
 
 ai_weapon_aim_type BuiltinWeaponAimType(int builtinWeapon)
 {

@@ -1,4 +1,4 @@
-#include "tactical_spots_detector.h"
+#include "ai_tactical_spots_detector.h"
 #include "bot.h"
 
 int TacticalSpotsDetector::FindBBoxAreas(const OriginParams &originParams, int *areas)

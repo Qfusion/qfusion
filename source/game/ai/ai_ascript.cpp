@@ -3,7 +3,7 @@
 #include "ai_aas_route_cache.h"
 #include "ai_objective_based_team_brain.h"
 #include "bot.h"
-#include "tactical_spots_detector.h"
+#include "ai_tactical_spots_detector.h"
 #include "../g_as_local.h"
 
 static const asEnumVal_t asNavEntityFlagsEnumVals[] =

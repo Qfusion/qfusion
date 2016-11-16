@@ -2,7 +2,7 @@
 #include "ai_ground_trace_cache.h"
 #include "ai_squad_based_team_brain.h"
 #include "bot_brain.h"
-#include "tactical_spots_detector.h"
+#include "ai_tactical_spots_detector.h"
 #include <algorithm>
 #include <limits>
 #include <stdarg.h>

@@ -2016,6 +2016,6 @@ void G_Gametype_Init( void )
 	if( changed )
 	{
 		G_TransferRatings();
-		AI_GametypeChanged(g_gametype->string);
+		AI_GametypeChanged( g_gametype->string );
 	}
 }
