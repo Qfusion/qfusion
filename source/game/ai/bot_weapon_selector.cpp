@@ -2,6 +2,83 @@
 #include "bot.h"
 #include "../../gameshared/q_collision.h"
 
+bool SelectedEnemies::AreValid() const
+{
+    for (const Enemy *enemy: activeEnemies)
+        if (!enemy->IsValid())
+            return false;
+
+    return timeoutAt > level.time;
+}
+
+float SelectedEnemies::DamageToKill() const
+{
+    CheckValid(__FUNCTION__);
+    float result = 0.0f;
+    for (const Enemy *enemy: activeEnemies)
+    {
+        float damageToKill = ::DamageToKill(enemy->ent, g_armor_protection->value, g_armor_degradation->value);
+        if (enemy->HasShell())
+            damageToKill *= 4.0f;
+        result += damageToKill;
+    }
+
+    return result;
+}
+
+unsigned SelectedEnemies::FireDelay() const
+{
+    if (primaryEnemy && primaryEnemy->ent)
+    {
+        if (!primaryEnemy->ent->r.client)
+            return 0;
+        return (unsigned)primaryEnemy->ent->r.client->ps.stats[STAT_WEAPON_TIME];
+    }
+    return std::numeric_limits<unsigned>::max();
+}
+
+bool SelectedEnemies::HaveQuad() const
+{
+    CheckValid(__FUNCTION__);
+    for (const Enemy *enemy: activeEnemies)
+        if (enemy->HasQuad())
+            return true;
+
+    return false;
+}
+
+bool SelectedEnemies::HaveCarrier() const
+{
+    CheckValid(__FUNCTION__);
+    for (const Enemy *enemy: activeEnemies)
+        if (enemy->IsCarrier())
+            return true;
+
+    return false;
+}
+
+bool SelectedEnemies::Contain(const Enemy *enemy) const
+{
+    CheckValid(__FUNCTION__);
+    for (const Enemy *activeEnemy: activeEnemies)
+        if (activeEnemy == enemy)
+            return true;
+
+    return false;
+}
+
+bool SelectedEnemies::AreThreatening() const
+{
+    CheckValid(__FUNCTION__);
+    for (const Enemy *activeEnemy: activeEnemies)
+    {
+        if (level.time - activeEnemy->LastAttackedByTime() < 1000)
+            return true;
+    }
+
+    return false;
+}
+
 bool SelectedEnemies::CanHit(const edict_t *ent) const
 {
     CheckValid(__FUNCTION__);

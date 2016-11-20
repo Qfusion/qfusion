@@ -100,20 +100,16 @@ class SelectedEnemies
     unsigned instanceId;
     unsigned timeoutAt;
 
-    // TODO: Add secondary enemies
-
     inline void CheckValid(const char *function) const
     {
-        for (const Enemy *enemy: activeEnemies)
-            if (!enemy->IsValid())
-                AI_FailWith(function, "An enemy is no longer valid");
+#ifdef _DEBUG
+        if (!AreValid())
+            AI_FailWith("SelectedEnemies", "::%s(): Selected enemies are invalid\n", function);
+#endif
     }
 
 public:
-    inline bool AreValid() const
-    {
-        return primaryEnemy && primaryEnemy->IsValid() && timeoutAt > level.time;
-    }
+    bool AreValid() const;
 
     inline void Invalidate()
     {
@@ -188,19 +184,7 @@ public:
         return Vec3(primaryEnemy->ent->s.angles);
     }
 
-    float DamageToKill() const
-    {
-        CheckValid(__FUNCTION__);
-        float result = 0.0f;
-        for (const Enemy *enemy: activeEnemies)
-        {
-            float damageToKill = ::DamageToKill(enemy->ent, g_armor_protection->value, g_armor_degradation->value);
-            if (enemy->HasShell())
-                damageToKill *= 4.0f;
-            result += damageToKill;
-        }
-        return result;
-    }
+    float DamageToKill() const;
 
     int PendingWeapon() const
     {
@@ -209,16 +193,7 @@ public:
         return -1;
     }
 
-    unsigned FireDelay() const
-    {
-        if (primaryEnemy && primaryEnemy->ent)
-        {
-            if (!primaryEnemy->ent->r.client)
-                return 0;
-            return (unsigned)primaryEnemy->ent->r.client->ps.stats[STAT_WEAPON_TIME];
-        }
-        return std::numeric_limits<unsigned>::max();
-    }
+    unsigned FireDelay() const;
 
     inline bool IsStaticSpot() const
     {
@@ -243,45 +218,14 @@ public:
         return primaryEnemy->ent->groundentity != nullptr;
     }
 
-    inline bool HaveQuad() const
-    {
-        CheckValid(__FUNCTION__);
-        for (const Enemy *enemy: activeEnemies)
-            if (enemy->HasQuad())
-                return true;
-        return false;
-    }
+    bool HaveQuad() const;
+    bool HaveCarrier() const;
+    bool Contain(const Enemy *enemy) const;
+    bool AreThreatening() const;
 
-    inline bool HaveCarrier() const
-    {
-        CheckValid(__FUNCTION__);
-        for (const Enemy *enemy: activeEnemies)
-            if (enemy->IsCarrier())
-                return true;
-        return false;
-    }
-
-    inline bool Contain(const Enemy *enemy)
-    {
-        CheckValid(__FUNCTION__);
-        for (const Enemy *activeEnemy: activeEnemies)
-            if (activeEnemy == enemy)
-                return true;
-        return false;
-    }
-
-    inline const Enemy **begin() const { return (const Enemy **)activeEnemies.cbegin(); }
-    inline const Enemy **end() const { return (const Enemy **)activeEnemies.cend(); }
-
-    inline bool AreThreatening() const
-    {
-        CheckValid(__FUNCTION__);
-        for (const Enemy *activeEnemy: activeEnemies)
-            if (level.time - activeEnemy->LastAttackedByTime() < 1000)
-                return true;
-
-        return false;
-    }
+    typedef const Enemy **EnemiesIterator;
+    inline EnemiesIterator begin() const { return (EnemiesIterator)activeEnemies.cbegin(); }
+    inline EnemiesIterator end() const { return (EnemiesIterator)activeEnemies.cend(); }
 
     bool CanHit(const edict_t *ent) const;
 
