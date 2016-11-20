@@ -258,8 +258,8 @@ public:
           nextFastWeaponSwitchActionCheckAt(0),
           weaponChoicePeriod(weaponChoicePeriod_) {}
 
-    void Frame(const WorldState &recentWorldState);
-    void Think(const WorldState &currentWorldState);
+    void Frame(const WorldState &cachedWorldState);
+    void Think(const WorldState &cachedWorldState);
 private:
 #ifndef _MSC_VER
     inline void Debug(const char *format, ...) const __attribute__((format(printf, 2, 3)))
@@ -300,25 +300,25 @@ private:
     inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
     inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
 
-    bool CheckFastWeaponSwitchAction(const WorldState &recentWorldState);
+    bool CheckFastWeaponSwitchAction(const WorldState &worldState);
 
-    void SuggestAimWeapon(const WorldState &currWorldState);
-    void SuggestSniperRangeWeapon(const WorldState &currWorldState);
-    void SuggestFarRangeWeapon(const WorldState &currWorldState);
+    void SuggestAimWeapon(const WorldState &worldState);
+    void SuggestSniperRangeWeapon(const WorldState &worldState);
+    void SuggestFarRangeWeapon(const WorldState &worldState);
     void SuggestMiddleRangeWeapon(const WorldState &worldState);
     void SuggestCloseRangeWeapon(const WorldState &worldState);
 
-    int SuggestInstagibWeapon(const WorldState &currWorldState);
-    int SuggestFinishWeapon(const WorldState &currWorldState);
+    int SuggestInstagibWeapon(const WorldState &worldState);
+    int SuggestFinishWeapon(const WorldState &worldState);
 
-    const AiScriptWeaponDef *SuggestScriptWeapon(const WorldState &currWorldState, int *effectiveTier);
-    bool IsEnemyEscaping(const WorldState &currWorldState, bool *botMovesFast, bool *enemyMovesFast);
+    const AiScriptWeaponDef *SuggestScriptWeapon(const WorldState &worldState, int *effectiveTier);
+    bool IsEnemyEscaping(const WorldState &worldState, bool *botMovesFast, bool *enemyMovesFast);
 
-    int SuggestHitEscapingEnemyWeapon(const WorldState &currWorldState, bool botMovesFast, bool enemyMovesFast);
+    int SuggestHitEscapingEnemyWeapon(const WorldState &worldState, bool botMovesFast, bool enemyMovesFast);
 
-    bool CheckForShotOfDespair(const WorldState &currWorldState);
-    int SuggestShotOfDespairWeapon(const WorldState &currWorldState);
-    int SuggestQuadBearerWeapon(const WorldState &currWorldState);
+    bool CheckForShotOfDespair(const WorldState &worldState);
+    int SuggestShotOfDespairWeapon(const WorldState &worldState);
+    int SuggestQuadBearerWeapon(const WorldState &worldState);
 
     int ChooseWeaponByScores(struct WeaponAndScore *begin, struct WeaponAndScore *end);
 

@@ -494,7 +494,7 @@ void Bot::Think()
 
     LookAround();
 
-    weaponsSelector.Think(botBrain.recentWorldState);
+    weaponsSelector.Think(botBrain.cachedWorldState);
 }
 
 bool Bot::MayHitWhileRunning() const
@@ -534,7 +534,7 @@ void Bot::ActiveFrame()
     if(GS_MatchState() <= MATCH_STATE_WARMUP && !IsReady() && self->r.client->teamstate.timeStamp + 4000 < level.time)
         G_Match_Ready(self);
 
-    weaponsSelector.Frame(botBrain.recentWorldState);
+    weaponsSelector.Frame(botBrain.cachedWorldState);
 
     ApplyPendingTurnToLookAtPoint();
 

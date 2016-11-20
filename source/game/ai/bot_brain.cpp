@@ -102,7 +102,7 @@ BotBrain::BotBrain(Bot *bot, float skillLevel_)
       botEnemyPool(bot->self, this, skillLevel_),
       selectedEnemies(bot->selectedEnemies),
       selectedWeapons(bot->selectedWeapons),
-      recentWorldState(bot->self)
+      cachedWorldState(bot->self)
 {
     squad = nullptr;
     activeEnemyPool = &botEnemyPool;
@@ -347,7 +347,7 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
 
     worldState->SimilarWorldStateInstanceIdVar().SetIgnore(true);
 
-    recentWorldState = *worldState;
+    cachedWorldState = *worldState;
 }
 
 bool BotBrain::ShouldSkipPlanning() const

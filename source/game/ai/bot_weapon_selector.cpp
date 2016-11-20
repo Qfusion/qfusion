@@ -177,7 +177,7 @@ bool SelectedEnemies::HaveGoodCloseRangeWeapons() const
     return false;
 }
 
-void BotWeaponSelector::Frame(const WorldState &recentWorldState)
+void BotWeaponSelector::Frame(const WorldState &cachedWorldState)
 {
     if (nextFastWeaponSwitchActionCheckAt > level.time)
         return;
@@ -185,16 +185,24 @@ void BotWeaponSelector::Frame(const WorldState &recentWorldState)
     if (!self->ai->botRef->selectedEnemies.AreValid())
         return;
 
-    if (CheckFastWeaponSwitchAction(recentWorldState))
+    // cachedWorldState is cached for Think() period and might be out of sync with selectedEnemies
+    if (cachedWorldState.EnemyOriginVar().Ignore())
+        return;
+
+    if (CheckFastWeaponSwitchAction(cachedWorldState))
         nextFastWeaponSwitchActionCheckAt = level.time + 750;
 }
 
-void BotWeaponSelector::Think(const WorldState &currentWorldState)
+void BotWeaponSelector::Think(const WorldState &cachedWorldState)
 {
     if (selectedWeapons.AreValid())
         return;
 
     if (!self->ai->botRef->selectedEnemies.AreValid())
+        return;
+
+    // cachedWorldState is cached for Think() period and might be out of sync with selectedEnemies
+    if (cachedWorldState.EnemyOriginVar().Ignore())
         return;
 
     if (weaponChoiceRandomTimeoutAt <= level.time)
@@ -203,10 +211,10 @@ void BotWeaponSelector::Think(const WorldState &currentWorldState)
         weaponChoiceRandomTimeoutAt = level.time + 2000;
     }
 
-    SuggestAimWeapon(currentWorldState);
+    SuggestAimWeapon(cachedWorldState);
 }
 
-bool BotWeaponSelector::CheckFastWeaponSwitchAction(const WorldState &recentWorldState)
+bool BotWeaponSelector::CheckFastWeaponSwitchAction(const WorldState &worldState)
 {
     if (self->r.client->ps.stats[STAT_WEAPON_TIME] >= 64)
         return false;
@@ -225,14 +233,14 @@ bool BotWeaponSelector::CheckFastWeaponSwitchAction(const WorldState &recentWorl
     bool botMovesFast, enemyMovesFast;
 
     int chosenWeapon = WEAP_NONE;
-    if (recentWorldState.DamageToKill() < 75)
-        chosenWeapon = SuggestFinishWeapon(recentWorldState);
+    if (worldState.DamageToKill() < 75)
+        chosenWeapon = SuggestFinishWeapon(worldState);
     // Try to hit escaping enemies hard in a single shot
-    else if (IsEnemyEscaping(recentWorldState, &botMovesFast, &enemyMovesFast))
-        chosenWeapon = SuggestHitEscapingEnemyWeapon(recentWorldState, botMovesFast, enemyMovesFast);
+    else if (IsEnemyEscaping(worldState, &botMovesFast, &enemyMovesFast))
+        chosenWeapon = SuggestHitEscapingEnemyWeapon(worldState, botMovesFast, enemyMovesFast);
     // Try to hit enemy hard in a single shot before death
-    else if (CheckForShotOfDespair(recentWorldState))
-        chosenWeapon = SuggestShotOfDespairWeapon(recentWorldState);
+    else if (CheckForShotOfDespair(worldState))
+        chosenWeapon = SuggestShotOfDespairWeapon(worldState);
 
     if (chosenWeapon != WEAP_NONE)
     {
@@ -254,7 +262,7 @@ inline float GetLaserRange()
     return (lgDef->firedef.timeout + lgDef->firedef.timeout) / 2.0f;
 }
 
-void BotWeaponSelector::SuggestAimWeapon(const WorldState &currWorldState)
+void BotWeaponSelector::SuggestAimWeapon(const WorldState &worldState)
 {
     Vec3 botOrigin(self->s.origin);
     TestTargetEnvironment(botOrigin, selectedEnemies.LastSeenOrigin(), selectedEnemies.Ent());
@@ -262,28 +270,28 @@ void BotWeaponSelector::SuggestAimWeapon(const WorldState &currWorldState)
     if (GS_Instagib())
     {
         // TODO: Select script weapon too
-        SetSelectedWeapons(SuggestInstagibWeapon(currWorldState), -1, true, weaponChoicePeriod);
+        SetSelectedWeapons(SuggestInstagibWeapon(worldState), -1, true, weaponChoicePeriod);
         return;
     }
 
     if (BotHasPowerups())
     {
         // TODO: Select script weapon too
-        SetSelectedWeapons(SuggestQuadBearerWeapon(currWorldState), -1, true, weaponChoicePeriod);
+        SetSelectedWeapons(SuggestQuadBearerWeapon(worldState), -1, true, weaponChoicePeriod);
         return;
     }
 
-    if (currWorldState.EnemyIsOnSniperRange())
-        SuggestSniperRangeWeapon(currWorldState);
-    else if (currWorldState.EnemyIsOnFarRange())
-        SuggestFarRangeWeapon(currWorldState);
-    else if (currWorldState.EnemyIsOnMiddleRange())
-        SuggestMiddleRangeWeapon(currWorldState);
+    if (worldState.EnemyIsOnSniperRange())
+        SuggestSniperRangeWeapon(worldState);
+    else if (worldState.EnemyIsOnFarRange())
+        SuggestFarRangeWeapon(worldState);
+    else if (worldState.EnemyIsOnMiddleRange())
+        SuggestMiddleRangeWeapon(worldState);
     else
-        SuggestCloseRangeWeapon(currWorldState);
+        SuggestCloseRangeWeapon(worldState);
 }
 
-void BotWeaponSelector::SuggestSniperRangeWeapon(const WorldState &currWorldState)
+void BotWeaponSelector::SuggestSniperRangeWeapon(const WorldState &worldState)
 {
     int chosenWeapon = WEAP_NONE;
 
@@ -295,7 +303,7 @@ void BotWeaponSelector::SuggestSniperRangeWeapon(const WorldState &currWorldStat
     }
     if (chosenWeapon == WEAP_NONE)
     {
-        if (currWorldState.DamageToKill() > 50.0f)
+        if (worldState.DamageToKill() > 50.0f)
         {
             if (BoltsReadyToFireCount())
                 chosenWeapon = WEAP_ELECTROBOLT;
@@ -313,7 +321,7 @@ void BotWeaponSelector::SuggestSniperRangeWeapon(const WorldState &currWorldStat
     // Still not chosen
     if (chosenWeapon == WEAP_NONE)
     {
-        if (currWorldState.DamageToKill() < 25.0f && ShellsReadyToFireCount())
+        if (worldState.DamageToKill() < 25.0f && ShellsReadyToFireCount())
             chosenWeapon = WEAP_RIOTGUN;
         else
             chosenWeapon = WEAP_GUNBLADE;
@@ -322,7 +330,7 @@ void BotWeaponSelector::SuggestSniperRangeWeapon(const WorldState &currWorldStat
     Debug("(sniper range)... : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
     int scriptWeaponTier;
-    if (const auto *scriptWeaponDef = SuggestScriptWeapon(currWorldState, &scriptWeaponTier))
+    if (const auto *scriptWeaponDef = SuggestScriptWeapon(worldState, &scriptWeaponTier))
     {
         bool preferBuiltinWeapon = true;
         if (scriptWeaponTier > 3)
@@ -398,7 +406,7 @@ int BotWeaponSelector::ChooseWeaponByScores(struct WeaponAndScore *begin, struct
     return weapon;
 }
 
-void BotWeaponSelector::SuggestFarRangeWeapon(const WorldState &currWorldState)
+void BotWeaponSelector::SuggestFarRangeWeapon(const WorldState &worldState)
 {
     // First, try to choose a long range weapon of EB, MG, PG and RG
     enum { EB, MG, PG, RG };
@@ -471,7 +479,7 @@ void BotWeaponSelector::SuggestFarRangeWeapon(const WorldState &currWorldState)
     Debug("(far range)... chose %s\n", GS_GetWeaponDef(chosenWeapon)->name);
 
     int scriptWeaponTier;
-    if (const auto *scriptWeaponDef = SuggestScriptWeapon(currWorldState, &scriptWeaponTier))
+    if (const auto *scriptWeaponDef = SuggestScriptWeapon(worldState, &scriptWeaponTier))
     {
         bool preferBuiltinWeapon = true;
         if (scriptWeaponTier > 3)
@@ -484,13 +492,13 @@ void BotWeaponSelector::SuggestFarRangeWeapon(const WorldState &currWorldState)
         SetSelectedWeapons(chosenWeapon, -1, true, weaponChoicePeriod);
 }
 
-void BotWeaponSelector::SuggestMiddleRangeWeapon(const WorldState &currWorldState)
+void BotWeaponSelector::SuggestMiddleRangeWeapon(const WorldState &worldState)
 {
     const float lgRange = GetLaserRange();
     // Should be equal to max mid range distance - min mid range distance
     const float midRangeLen = lgRange - CLOSE_RANGE;
     // Relative distance from min mid range distance
-    const float midRangeDistance = currWorldState.DistanceToEnemy() - CLOSE_RANGE;
+    const float midRangeDistance = worldState.DistanceToEnemy() - CLOSE_RANGE;
 
     int chosenWeapon = WEAP_NONE;
 
@@ -535,7 +543,7 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon(const WorldState &currWorldStat
     }
 
     // 1 on mid range bound, 0 on close range bound
-    float distanceFactor = (currWorldState.DistanceToEnemy() - CLOSE_RANGE) / (lgRange - CLOSE_RANGE);
+    float distanceFactor = (worldState.DistanceToEnemy() - CLOSE_RANGE) / (lgRange - CLOSE_RANGE);
 
     weaponScores[RL].score *= 1.0f - distanceFactor;
     weaponScores[LG].score *= 0.7f + 0.3f * distanceFactor;
@@ -557,7 +565,7 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon(const WorldState &currWorldStat
         chosenWeapon = WEAP_GUNBLADE;
 
     int scriptWeaponTier = 0;
-    if (const auto *scriptWeaponDef = SuggestScriptWeapon(currWorldState, &scriptWeaponTier))
+    if (const auto *scriptWeaponDef = SuggestScriptWeapon(worldState, &scriptWeaponTier))
     {
         bool preferBuiltinWeapon = scriptWeaponTier < BuiltinWeaponTier(chosenWeapon);
         SetSelectedWeapons(chosenWeapon, scriptWeaponDef->weaponNum, preferBuiltinWeapon, weaponChoicePeriod);
@@ -566,7 +574,7 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon(const WorldState &currWorldStat
         SetSelectedWeapons(chosenWeapon, -1, true, weaponChoicePeriod);
 }
 
-void BotWeaponSelector::SuggestCloseRangeWeapon(const WorldState &currWorldState)
+void BotWeaponSelector::SuggestCloseRangeWeapon(const WorldState &worldState)
 {
     int chosenWeapon = WEAP_NONE;
 
@@ -574,15 +582,15 @@ void BotWeaponSelector::SuggestCloseRangeWeapon(const WorldState &currWorldState
     int rocketsCount = RocketsReadyToFireCount();
     int plasmasCount = PlasmasReadyToFireCount();
 
-    float distanceFactor = BoundedFraction(currWorldState.DistanceToEnemy(), CLOSE_RANGE);
+    float distanceFactor = BoundedFraction(worldState.DistanceToEnemy(), CLOSE_RANGE);
 
     if (g_allow_selfdamage->integer)
     {
-        if (ShellsReadyToFireCount() && (currWorldState.DamageToKill() < 90 || weaponChoiceRandom < 0.4))
+        if (ShellsReadyToFireCount() && (worldState.DamageToKill() < 90 || weaponChoiceRandom < 0.4))
             chosenWeapon = WEAP_RIOTGUN;
-        else if (rocketsCount > 0 && currWorldState.DamageToBeKilled() > 100.0f - 75.0f * distanceFactor)
+        else if (rocketsCount > 0 && worldState.DamageToBeKilled() > 100.0f - 75.0f * distanceFactor)
             chosenWeapon = WEAP_ROCKETLAUNCHER;
-        else if (plasmasCount > 10 && currWorldState.DamageToBeKilled() > 75.0f - 50.0f * distanceFactor)
+        else if (plasmasCount > 10 && worldState.DamageToBeKilled() > 75.0f - 50.0f * distanceFactor)
             chosenWeapon = WEAP_PLASMAGUN;
         else if (lasersCount > 10)
             chosenWeapon = WEAP_LASERGUN;
@@ -616,7 +624,7 @@ void BotWeaponSelector::SuggestCloseRangeWeapon(const WorldState &currWorldState
     Debug("(close range) : chose %s \n", GS_GetWeaponDef(chosenWeapon)->name);
 
     int scriptWeaponTier;
-    if (const auto *scriptWeaponDef = SuggestScriptWeapon(currWorldState, &scriptWeaponTier))
+    if (const auto *scriptWeaponDef = SuggestScriptWeapon(worldState, &scriptWeaponTier))
     {
         bool preferBuiltinWeapon = scriptWeaponTier < BuiltinWeaponTier(chosenWeapon);
         SetSelectedWeapons(chosenWeapon, scriptWeaponDef->weaponNum, preferBuiltinWeapon, weaponChoicePeriod);
@@ -625,7 +633,7 @@ void BotWeaponSelector::SuggestCloseRangeWeapon(const WorldState &currWorldState
         SetSelectedWeapons(chosenWeapon, -1, true, weaponChoicePeriod);
 }
 
-const AiScriptWeaponDef *BotWeaponSelector::SuggestScriptWeapon(const WorldState &currWorldState, int *effectiveTier)
+const AiScriptWeaponDef *BotWeaponSelector::SuggestScriptWeapon(const WorldState &worldState, int *effectiveTier)
 {
     const auto &scriptWeaponDefs = self->ai->botRef->scriptWeaponDefs;
     const auto &scriptWeaponCooldown = self->ai->botRef->scriptWeaponCooldown;
@@ -633,7 +641,7 @@ const AiScriptWeaponDef *BotWeaponSelector::SuggestScriptWeapon(const WorldState
     const AiScriptWeaponDef *bestWeapon = nullptr;
     float bestScore = 0.000001f;
 
-    const float distanceToEnemy = currWorldState.DistanceToEnemy();
+    const float distanceToEnemy = worldState.DistanceToEnemy();
 
     for (unsigned i = 0; i < scriptWeaponDefs.size(); ++i)
     {
@@ -655,10 +663,10 @@ const AiScriptWeaponDef *BotWeaponSelector::SuggestScriptWeapon(const WorldState
         {
             float estimatedSelfDamage = 0.0f;
             estimatedSelfDamage = weaponDef.maxSelfDamage;
-            estimatedSelfDamage *= (1.0f - BoundedFraction(currWorldState.DistanceToEnemy(), weaponDef.splashRadius));
+            estimatedSelfDamage *= (1.0f - BoundedFraction(worldState.DistanceToEnemy(), weaponDef.splashRadius));
             if (estimatedSelfDamage > 100.0f)
                 continue;
-            if (currWorldState.DistanceToEnemy() < estimatedSelfDamage)
+            if (worldState.DistanceToEnemy() < estimatedSelfDamage)
                 continue;
             score *= 1.0f - BoundedFraction(estimatedSelfDamage, 100.0f);
         }
@@ -686,13 +694,13 @@ const AiScriptWeaponDef *BotWeaponSelector::SuggestScriptWeapon(const WorldState
     return bestWeapon;
 }
 
-int BotWeaponSelector::SuggestFinishWeapon(const WorldState &currWorldState)
+int BotWeaponSelector::SuggestFinishWeapon(const WorldState &worldState)
 {
-    const float distance = currWorldState.DistanceToEnemy();
-    const float damageToBeKilled = currWorldState.DamageToBeKilled();
-    const float damageToKill = currWorldState.DamageToKill();
+    const float distance = worldState.DistanceToEnemy();
+    const float damageToBeKilled = worldState.DamageToBeKilled();
+    const float damageToKill = worldState.DamageToKill();
 
-    if (currWorldState.DistanceToEnemy() < CLOSE_RANGE)
+    if (worldState.DistanceToEnemy() < CLOSE_RANGE)
     {
         if (g_allow_selfdamage->integer && damageToBeKilled < 75)
         {
@@ -714,11 +722,11 @@ int BotWeaponSelector::SuggestFinishWeapon(const WorldState &currWorldState)
                 return WEAP_ROCKETLAUNCHER;
             if (ShellsReadyToFireCount())
                 return WEAP_RIOTGUN;
-            if (PlasmasReadyToFireCount() > currWorldState.DamageToKill() * 0.3f * 14)
+            if (PlasmasReadyToFireCount() > worldState.DamageToKill() * 0.3f * 14)
                 return WEAP_PLASMAGUN;
-            if (LasersReadyToFireCount() > currWorldState.DamageToKill() * 0.3f * 14)
+            if (LasersReadyToFireCount() > worldState.DamageToKill() * 0.3f * 14)
                 return WEAP_LASERGUN;
-            if (BulletsReadyToFireCount() > currWorldState.DamageToKill() * 0.3f * 10)
+            if (BulletsReadyToFireCount() > worldState.DamageToKill() * 0.3f * 10)
                 return WEAP_MACHINEGUN;
         }
         return WEAP_GUNBLADE;
@@ -778,7 +786,7 @@ static bool IsEscapingFromStandingEntity(const edict_t *escaping, const edict_t 
     return escapingToStandingDir.Dot(escapingVelocityDir) < -0.5f;
 }
 
-bool BotWeaponSelector::IsEnemyEscaping(const WorldState &currWorldState, bool *botMovesFast, bool *enemyMovesFast)
+bool BotWeaponSelector::IsEnemyEscaping(const WorldState &worldState, bool *botMovesFast, bool *enemyMovesFast)
 {
     // Very basic. Todo: Check env. behind an enemy or the bot, is it really tries to escape or just pushed on a wall
 
@@ -823,16 +831,16 @@ bool BotWeaponSelector::IsEnemyEscaping(const WorldState &currWorldState, bool *
     return false;
 }
 
-int BotWeaponSelector::SuggestHitEscapingEnemyWeapon(const WorldState &currWorldState, bool botMovesFast, bool enemyMovesFast)
+int BotWeaponSelector::SuggestHitEscapingEnemyWeapon(const WorldState &worldState, bool botMovesFast, bool enemyMovesFast)
 {
-    if (currWorldState.DistanceToEnemy() < CLOSE_RANGE)
+    if (worldState.DistanceToEnemy() < CLOSE_RANGE)
     {
         constexpr const char *format = "(hit escaping) too small distance %.1f to change weapon, too risky\n";
-        Debug(format, currWorldState.DistanceToEnemy());
+        Debug(format, worldState.DistanceToEnemy());
         return WEAP_NONE;
     }
 
-    if (currWorldState.DistanceToEnemy() < GetLaserRange())
+    if (worldState.DistanceToEnemy() < GetLaserRange())
     {
         // If target will be lost out of sight, its worth to do a fast weapon switching
         // Extrapolate bot origin for 0.5 seconds
@@ -900,9 +908,9 @@ int BotWeaponSelector::SuggestHitEscapingEnemyWeapon(const WorldState &currWorld
     if (botMovesFast)
         weaponScores[GB].score += 0.33f;
 
-    weaponScores[EB].score *= 0.3f + 0.7f * BoundedFraction(currWorldState.DistanceToEnemy(), 2000.0f);
-    weaponScores[RL].score *= 1.0f - BoundedFraction(currWorldState.DistanceToEnemy(), 1500.0f);
-    weaponScores[GB].score *= 1.0f - 0.3f * BoundedFraction(currWorldState.DistanceToEnemy(), 2500.0f);
+    weaponScores[EB].score *= 0.3f + 0.7f * BoundedFraction(worldState.DistanceToEnemy(), 2000.0f);
+    weaponScores[RL].score *= 1.0f - BoundedFraction(worldState.DistanceToEnemy(), 1500.0f);
+    weaponScores[GB].score *= 1.0f - 0.3f * BoundedFraction(worldState.DistanceToEnemy(), 2500.0f);
 
     // We are sure that weapon switch not only costs nothing, but even is intended, so do not call ChooseWeaponByScore()
     int weapon = WEAP_NONE;
@@ -922,7 +930,7 @@ int BotWeaponSelector::SuggestHitEscapingEnemyWeapon(const WorldState &currWorld
     return weapon;
 }
 
-bool BotWeaponSelector::CheckForShotOfDespair(const WorldState &currWorldState)
+bool BotWeaponSelector::CheckForShotOfDespair(const WorldState &worldState)
 {
     if (BotHasPowerups())
         return false;
@@ -931,16 +939,16 @@ bool BotWeaponSelector::CheckForShotOfDespair(const WorldState &currWorldState)
     if (self->r.client->ps.stats[STAT_WEAPON_TIME] > 16)
         return false;
 
-    float adjustedDamageToBeKilled = currWorldState.DamageToBeKilled() * (selectedEnemies.HaveQuad() ? 0.25f : 1.0f);
+    float adjustedDamageToBeKilled = worldState.DamageToBeKilled() * (selectedEnemies.HaveQuad() ? 0.25f : 1.0f);
     if (adjustedDamageToBeKilled > 25)
         return false;
 
-    if (currWorldState.DamageToKill() < 35)
+    if (worldState.DamageToKill() < 35)
         return false;
 
     const float lgRange = GetLaserRange();
 
-    if (currWorldState.DistanceToEnemy() > lgRange)
+    if (worldState.DistanceToEnemy() > lgRange)
         return false;
 
     switch (selectedEnemies.PendingWeapon())
@@ -948,9 +956,9 @@ bool BotWeaponSelector::CheckForShotOfDespair(const WorldState &currWorldState)
         case WEAP_LASERGUN:
             return true;
         case WEAP_PLASMAGUN:
-            return random() > currWorldState.DistanceToEnemy() / lgRange;
+            return random() > worldState.DistanceToEnemy() / lgRange;
         case WEAP_ROCKETLAUNCHER:
-            return random() > currWorldState.DistanceToEnemy() / lgRange;
+            return random() > worldState.DistanceToEnemy() / lgRange;
         case WEAP_MACHINEGUN:
             return true;
         default:
@@ -958,7 +966,7 @@ bool BotWeaponSelector::CheckForShotOfDespair(const WorldState &currWorldState)
     }
 }
 
-int BotWeaponSelector::SuggestShotOfDespairWeapon(const WorldState &currWorldState)
+int BotWeaponSelector::SuggestShotOfDespairWeapon(const WorldState &worldState)
 {
     // Prevent negative scores from self-damage suicide.
     int score = self->r.client->ps.stats[STAT_SCORE];
@@ -995,18 +1003,18 @@ int BotWeaponSelector::SuggestShotOfDespairWeapon(const WorldState &currWorldSta
     scores[GB].score *= 0.5f + 0.5f * targetEnvironment.factor;
 
     // Since shots of despair are done in LG range, do not touch GB
-    scores[RL].score *= 1.0f - 0.750f * currWorldState.DistanceToEnemy() / lgRange;
-    scores[GL].score *= 1.0f - 0.999f * currWorldState.DistanceToEnemy() / lgRange;
+    scores[RL].score *= 1.0f - 0.750f * worldState.DistanceToEnemy() / lgRange;
+    scores[GL].score *= 1.0f - 0.999f * worldState.DistanceToEnemy() / lgRange;
 
     // Add extra scores for very close shots (we are not going to prevent bot suicide)
-    if (currWorldState.DistanceToEnemy() < 150)
+    if (worldState.DistanceToEnemy() < 150)
     {
         scores[RL].score *= 2.0f;
         scores[GL].score *= 2.0f;
     }
 
     // Prioritize EB for relatively far shots
-    if (currWorldState.DistanceToEnemy() > lgRange * 0.66)
+    if (worldState.DistanceToEnemy() > lgRange * 0.66)
         scores[EB].score *= 1.5f;
 
     // Counteract some weapons with their antipodes
@@ -1039,7 +1047,7 @@ int BotWeaponSelector::SuggestShotOfDespairWeapon(const WorldState &currWorldSta
     return bestWeapon;
 }
 
-int BotWeaponSelector::SuggestQuadBearerWeapon(const WorldState &currWorldState)
+int BotWeaponSelector::SuggestQuadBearerWeapon(const WorldState &worldState)
 {
     float distance = (selectedEnemies.LastSeenOrigin() - self->s.origin).LengthFast();
     auto lgDef = GS_GetWeaponDef(WEAP_LASERGUN);

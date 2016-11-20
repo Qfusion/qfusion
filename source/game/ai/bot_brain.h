@@ -181,7 +181,7 @@ public:
     SelectedWeapons &selectedWeapons;
 
     // A WorldState cached from the moment of last world state update
-    WorldState recentWorldState;
+    WorldState cachedWorldState;
 
     // Note: saving references to Bot members is the only valid access kind to Bot in this call
     BotBrain(class Bot *bot, float skillLevel_);
