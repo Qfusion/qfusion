@@ -92,7 +92,7 @@ AiBaseEnemyPool::AiBaseEnemyPool(float avgSkill_)
 
     // Initialize empty slots
     for (unsigned i = 0; i < maxTrackedEnemies; ++i)
-        trackedEnemies->parent = this;
+        trackedEnemies[i].parent = this;
 
     for (unsigned i = 0; i < maxTrackedAttackers; ++i)
         attackers.push_back(AttackStats());
