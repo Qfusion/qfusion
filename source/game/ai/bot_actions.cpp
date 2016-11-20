@@ -169,7 +169,6 @@ void BotGenericRunToItemActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
     ResetNavTarget();
-    Tactics().Clear();
 }
 
 constexpr float GOAL_PICKUP_ACTION_RADIUS = 72.0f;
@@ -672,8 +671,7 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply(const WorldState &worldSta
 
 void BotRetreatToGoodPositionActionRecord::Activate()
 {
-    AiBaseActionRecord::Activate();
-    Tactics().Clear();
+    BotBaseActionRecord::Activate();
     Tactics().shouldAttack = true;
     Tactics().shouldKeepXhairOnEnemy = true;
     // Set a hint for weapon selection
@@ -683,8 +681,7 @@ void BotRetreatToGoodPositionActionRecord::Activate()
 
 void BotRetreatToGoodPositionActionRecord::Deactivate()
 {
-    AiBaseActionRecord::Deactivate();
-    Tactics().Clear();
+    BotBaseActionRecord::Deactivate();
     ResetNavTarget();
 }
 
@@ -839,8 +836,7 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply(const WorldState &worldSta
 
 void BotSteadyCombatActionRecord::Activate()
 {
-    AiBaseActionRecord::Activate();
-    Tactics().Clear();
+    BotBaseActionRecord::Activate();
     Tactics().shouldAttack = true;
     Tactics().shouldKeepXhairOnEnemy = true;
     SetNavTarget(&navTarget);
@@ -848,8 +844,7 @@ void BotSteadyCombatActionRecord::Activate()
 
 void BotSteadyCombatActionRecord::Deactivate()
 {
-    AiBaseActionRecord::Deactivate();
-    Tactics().Clear();
+    BotBaseActionRecord::Deactivate();
     ResetNavTarget();
 }
 
@@ -1025,8 +1020,7 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
 
 void BotGotoAvailableGoodPositionActionRecord::Activate()
 {
-    AiBaseActionRecord::Activate();
-    Tactics().Clear();
+    BotBaseActionRecord::Activate();
     // Enable attacking if view angles fit
     Tactics().shouldAttack = true;
     // Do not try to track enemy by crosshair, adjust view for movement
@@ -1037,8 +1031,7 @@ void BotGotoAvailableGoodPositionActionRecord::Activate()
 
 void BotGotoAvailableGoodPositionActionRecord::Deactivate()
 {
-    AiBaseActionRecord::Deactivate();
-    Tactics().Clear();
+    BotBaseActionRecord::Deactivate();
     ResetNavTarget();
 }
 
@@ -1735,7 +1728,7 @@ void BotDoRunAwayViaJumppadActionRecord::Activate()
 
 void BotDoRunAwayViaJumppadActionRecord::Deactivate()
 {
-    AiBaseActionRecord::Deactivate();
+    BotBaseActionRecord::Deactivate();
     ResetNavTarget();
 }
 
