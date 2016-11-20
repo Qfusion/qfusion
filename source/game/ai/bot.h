@@ -629,8 +629,6 @@ private:
     // Make sure you have selected an appropriate weapon and its ready to fire before you call it.
     void TriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget);
 
-    void TryEscapeIfBlocked(usercmd_t *ucmd);
-
     void CombatMovement(usercmd_t *ucmd);
     void UpdateCombatMovePushes();
     void MakeEvadeMovePushes(usercmd_t *ucmd);

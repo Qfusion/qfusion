@@ -22,8 +22,6 @@ void Bot::MoveFrame(usercmd_t *ucmd)
             CombatMovement(ucmd);
     }
 
-    TryEscapeIfBlocked(ucmd);
-
     CheckTargetProximity();
 
     pendingLandingDashState.wasOnGroundPrevFrame = pendingLandingDashState.isOnGroundThisFrame;
@@ -130,26 +128,6 @@ void Bot::Move(usercmd_t *ucmd)
         }
         ChangeAngle(intendedLookVec, turnSpeedMultiplier);
     }
-}
-
-void Bot::TryEscapeIfBlocked(usercmd_t *ucmd)
-{
-    // Make sure that blocked timeout start counting down and the bot is blocked for at least 500 millis
-    if (blockedTimeout - level.time > BLOCKED_TIMEOUT - 500)
-        return;
-
-    // Already turning
-    if (HasPendingLookAtPoint())
-        return;
-
-    // Let the bot do a suicide, its better than he will hop on the same point randomly trying to escape
-    if (!currAasAreaNum)
-        return;
-
-    // Way to this point should not be blocked
-    SetPendingLookAtPoint(Vec3(aasWorld->Areas()[currAasAreaNum].center), 1.5f);
-    ucmd->forwardmove = 1;
-    ucmd->buttons |= BUTTON_SPECIAL;
 }
 
 void Bot::MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd)
