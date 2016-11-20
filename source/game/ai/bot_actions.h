@@ -163,7 +163,10 @@ public:
                           unsigned selectedEnemiesInstanceId)
         : BotBaseActionRecord(pool_, self_, name_),
           navTarget(NavTarget::Dummy()),
-          selectedEnemiesInstanceId(selectedEnemiesInstanceId) {}
+          selectedEnemiesInstanceId(selectedEnemiesInstanceId)
+    {
+        navTarget.SetToTacticalSpot(tacticalSpotOrigin);
+    }
 };
 
 #define DECLARE_COMBAT_ACTION_RECORD(recordName)                                                                     \
