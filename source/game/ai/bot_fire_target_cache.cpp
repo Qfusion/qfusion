@@ -208,7 +208,7 @@ static void FindClosestAreasFacesPoints(float splashRadius, const vec3_t target,
 void BotFireTargetCache::AdjustAimParams(const SelectedEnemies &selectedEnemies, const SelectedWeapons &selectedWeapons,
                                          const GenericFireDef &fireDef, AimParams *aimParams)
 {
-    SetupCoarseFireTarget(selectedEnemies, aimParams->fireOrigin, aimParams->fireTarget);
+    SetupCoarseFireTarget(selectedEnemies, fireDef, aimParams->fireOrigin, aimParams->fireTarget);
 
     switch (fireDef.AimType())
     {
@@ -422,15 +422,68 @@ void BotFireTargetCache::AdjustInstantAimTypeParams(const SelectedEnemies &selec
     aimParams->suggestedBaseAccuracy = WFAC_GENERIC_INSTANT * (1.0f - bot->ai->botRef->Skill());
 }
 
-void BotFireTargetCache::SetupCoarseFireTarget(const SelectedEnemies &selectedEnemies, vec_t *fire_origin, vec_t *target)
+void BotFireTargetCache::SetupCoarseFireTarget(const SelectedEnemies &selectedEnemies,
+                                               const GenericFireDef &fireDef,
+                                               vec_t *fire_origin, vec_t *target)
 {
+    const float skill = bot->ai->botRef->Skill();
     // For hard bots use actual enemy origin
     // (last seen one may be outdated up to 3 frames, and it matter a lot for fast-moving enemies)
-    if (bot->ai->botRef->Skill() < 0.66f)
+    if (skill < 0.66f)
         VectorCopy(selectedEnemies.LastSeenOrigin().Data(), target);
     else
         VectorCopy(selectedEnemies.ActualOrigin().Data(), target);
-    VectorAdd(target, (0.5f * (selectedEnemies.Mins() + selectedEnemies.Maxs())).Data(), target);
+
+    // For hitscan weapons we try to imitate a human-like aiming.
+    // We get a weighted last seen enemy origin/velocity and extrapolate origin a bit.
+    // Do not add extra aiming error for other aim styles (these aim styles are not precise by their nature).
+    if (fireDef.AimType() == AI_WEAPON_AIM_TYPE_INSTANT_HIT)
+    {
+        vec3_t velocity;
+        if (skill < 0.66f)
+            VectorCopy(selectedEnemies.LastSeenVelocity().Data(), velocity);
+        else
+            VectorCopy(selectedEnemies.ActualVelocity().Data(), velocity);
+
+        const auto &snapshots = selectedEnemies.LastSeenSnapshots();
+        const unsigned levelTime = level.time;
+        // Skilled bots have this value lesser (this means target will be closer to an actual origin)
+        const unsigned maxTimeDelta = (unsigned)(500 - 400 * skill);
+        const float weightTimeDeltaScale = 1.0f / maxTimeDelta;
+        float weightsSum = 1.0f;
+        for (auto iter = snapshots.begin(), end = snapshots.end(); iter != end; ++iter)
+        {
+            const auto &snapshot = *iter;
+            unsigned timeDelta = levelTime - snapshot.timestamp;
+            // If snapshot is too outdated, stop accumulation
+            if (timeDelta > maxTimeDelta)
+                break;
+
+            // Recent snapshots have greater weight
+            float weight = 1.0f - timeDelta * weightTimeDeltaScale;
+            const float *originData = snapshot.origin.Data();
+            const float *velocityData = snapshot.velocity.Data();
+            // Accumulate snapshot target origin using the weight
+            VectorMA(target, weight, originData, target);
+            // Accumulate snapshot target velocity using the weight
+            VectorMA(velocity, weight, velocityData, velocity);
+            weightsSum += weight;
+        }
+        float invWeightsSum = 1.0f / weightsSum;
+        // Make `target` contain a weighted sum of enemy snapshot origin
+        VectorScale(target, invWeightsSum, target);
+        // Make `velocity` contain a weighted sum of enemy snapshot velocities
+        VectorScale(velocity, invWeightsSum, velocity);
+
+        if (extrapolationRandomTimeoutAt < levelTime)
+        {
+            extrapolationRandom = random();
+            extrapolationRandomTimeoutAt = levelTime + 500;
+        }
+        float extrapolationTimeSeconds = 0.0001f * (500 - 300 * skill) * extrapolationRandom;
+        // Add some extrapolated target movement
+        VectorMA(target, extrapolationTimeSeconds, velocity, target);
+    }
 
     fire_origin[0] = bot->s.origin[0];
     fire_origin[1] = bot->s.origin[1];

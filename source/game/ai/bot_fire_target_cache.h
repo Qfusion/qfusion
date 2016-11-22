@@ -56,8 +56,13 @@ class BotFireTargetCache
 
     CachedFireTarget cachedFireTarget;
     const edict_t *bot;
+    // Contains a value in range [0, 1] used for extrapolation of enemy origin for imitation of human-like aiming
+    float extrapolationRandom;
+    unsigned extrapolationRandomTimeoutAt;
 
-    void SetupCoarseFireTarget(const SelectedEnemies &selectedEnemies, vec3_t fire_origin, vec3_t target);
+    void SetupCoarseFireTarget(const SelectedEnemies &selectedEnemies,
+                               const GenericFireDef &fireDef,
+                               vec3_t fire_origin, vec3_t target);
 
     void AdjustPredictionExplosiveAimTypeParams(const SelectedEnemies &selectedEnemies,
                                                 const SelectedWeapons &selectedWeapons,
@@ -85,7 +90,8 @@ class BotFireTargetCache
     void PredictProjectileShot(const SelectedEnemies &selectedEnemies, float projectileSpeed, AimParams *aimParams,
                                bool applyTargetGravity);
 public:
-    BotFireTargetCache(const edict_t *bot_) : bot(bot_) {}
+    BotFireTargetCache(const edict_t *bot_)
+        : bot(bot_), extrapolationRandom(0.0f), extrapolationRandomTimeoutAt(0) {}
 
     void AdjustAimParams(const SelectedEnemies &selectedEnemies, const SelectedWeapons &selectedWeapons,
                          const GenericFireDef &fireDef, AimParams *aimParams);

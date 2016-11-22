@@ -141,8 +141,8 @@ void Bot::FireWeapon(BotInput *input)
 
 void Bot::LookAtEnemy(float accuracy, const vec_t *fire_origin, vec_t *target, BotInput *input)
 {
-    target[0] += (random() - 0.5f) * accuracy;
-    target[1] += (random() - 0.5f) * accuracy;
+    for (int i = 0; i < 3; ++i)
+        target[i] += (aimingRandomHolder.GetCoordRandom(i) - 0.5f) * accuracy;
 
     Vec3 toTargetVec(target);
     toTargetVec -= fire_origin;

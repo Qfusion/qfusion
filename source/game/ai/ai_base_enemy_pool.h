@@ -179,13 +179,18 @@ public:
 
     inline Vec3 Angles() const { return Vec3(ent->s.angles); }
 
-    // TODO: Fuse in a single array of some struct
-    // Array of last seen timestamps
-    StaticDeque<unsigned, MAX_TRACKED_POSITIONS> lastSeenTimestamps;
-    // Array of last seen positions
-    StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenPositions;
-    // Array of last seen enemy velocities
-    StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenVelocities;
+    struct Snapshot
+    {
+        const Vec3 origin;
+        const Vec3 velocity;
+        unsigned timestamp;
+
+        Snapshot(const vec3_t origin_, const vec3_t velocity_, unsigned timestamp_)
+            : origin(origin_), velocity(velocity_), timestamp(timestamp_) {}
+    };
+
+    typedef StaticDeque<Snapshot, MAX_TRACKED_POSITIONS> SnapshotsQueue;
+    SnapshotsQueue lastSeenSnapshots;
 };
 
 class AttackStats

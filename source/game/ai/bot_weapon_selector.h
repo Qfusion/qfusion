@@ -152,6 +152,13 @@ public:
         return primaryEnemy->LastSeenAt();
     }
 
+    typedef Enemy::SnapshotsQueue SnapshotsQueue;
+    const SnapshotsQueue &LastSeenSnapshots() const
+    {
+        CheckValid(__FUNCTION__);
+        return primaryEnemy->lastSeenSnapshots;
+    }
+
     Vec3 ActualVelocity() const
     {
         CheckValid(__FUNCTION__);

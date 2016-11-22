@@ -46,28 +46,21 @@ void Enemy::Clear()
     maxPositiveWeight = 0.0f;
     positiveWeightsCount = 0;
     registeredAt = 0;
-    lastSeenPositions.clear();
-    lastSeenTimestamps.clear();
-    lastSeenVelocities.clear();
+    lastSeenSnapshots.clear();
     lastSeenAt = 0;
 }
 
 void Enemy::OnViewed()
 {
-    if (lastSeenPositions.size() == MAX_TRACKED_POSITIONS)
-    {
-        lastSeenPositions.pop_back();
-        lastSeenTimestamps.pop_back();
-        lastSeenVelocities.pop_back();
-    }
+    if (lastSeenSnapshots.size() == MAX_TRACKED_POSITIONS)
+        lastSeenSnapshots.pop_front();
+
     // Set members for faster access
     VectorCopy(ent->s.origin, lastSeenPosition.Data());
     VectorCopy(ent->velocity, lastSeenVelocity.Data());
     lastSeenAt = level.time;
     // Store in a queue then for history
-    lastSeenPositions.push_front(lastSeenPosition);
-    lastSeenVelocities.push_front(lastSeenVelocity);
-    lastSeenTimestamps.push_front(lastSeenAt);
+    lastSeenSnapshots.emplace_back(Snapshot(ent->s.origin, ent->velocity, level.time));
 }
 
 AiBaseEnemyPool::AiBaseEnemyPool(float avgSkill_)
@@ -372,9 +365,9 @@ bool AiBaseEnemyPool::WillAssignAimEnemy() const
         if (enemy.LastSeenAt() == level.time)
         {
             // Check whether we may react
-            for (unsigned seenTimestamp: enemy.lastSeenTimestamps)
+            for (const auto &snapshot: enemy.lastSeenSnapshots)
             {
-                if (seenTimestamp + reactionTime <= level.time)
+                if (snapshot.timestamp + reactionTime <= level.time)
                     return true;
             }
         }

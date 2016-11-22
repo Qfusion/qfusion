@@ -619,6 +619,29 @@ private:
         return ++similarWorldStateInstanceId;
     }
 
+    class AimingRandomHolder
+    {
+        unsigned valuesTimeoutAt[3];
+        float values[3];
+    public:
+        inline AimingRandomHolder()
+        {
+            std::fill_n(valuesTimeoutAt, 3, 0);
+            std::fill_n(values, 3, 0.5f);
+        }
+        inline float GetCoordRandom(int coordNum)
+        {
+            if (valuesTimeoutAt[coordNum] <= level.time)
+            {
+                values[coordNum] = random();
+                valuesTimeoutAt[coordNum] = level.time + 128 + From0UpToMax(256, random());
+            }
+            return values[coordNum];
+        }
+    };
+
+    AimingRandomHolder aimingRandomHolder;
+
     void UpdateScriptWeaponsStatus();
 
     void Move(BotInput *input);
