@@ -6,7 +6,9 @@ Ai::Ai(edict_t *self_,
        AiBaseBrain *aiBaseBrain_,
        AiAasRouteCache *routeCache_,
        int allowedAasTravelFlags_,
-       int preferredAasTravelFlags_)
+       int preferredAasTravelFlags_,
+       float yawSpeed,
+       float pitchSpeed)
     : EdictRef(self_),
       aiBaseBrain(aiBaseBrain_),
       routeCache(routeCache_),
@@ -17,12 +19,11 @@ Ai::Ai(edict_t *self_,
       allowedAasTravelFlags(allowedAasTravelFlags_),
       preferredAasTravelFlags(preferredAasTravelFlags_),
       distanceToNextReachStart(std::numeric_limits<float>::infinity()),
-      blockedTimeout(level.time + 15000),
-      aiYawSpeed(0.0f),
-      aiPitchSpeed(0.0f),
-      oldYawAbsDiff(0.0f),
-      oldPitchAbsDiff(0.0f)
+      blockedTimeout(level.time + 15000)
 {
+    angularViewSpeed[YAW] = yawSpeed;
+    angularViewSpeed[PITCH] = pitchSpeed;
+    angularViewSpeed[ROLL] = 999999.0f;
 }
 
 void Ai::SetFrameAffinity(unsigned modulo, unsigned offset)
@@ -360,95 +361,46 @@ bool Ai::IsStep(edict_t *ent)
     return true;
 }
 
-static constexpr float ANGLE_DIFF_PRECISION_THRESHOLD = 10.0f;
-
-static inline float ComputeAngularSpeedScale(float currAngleDiff, float oldAngleDiff, float frametime)
+float Ai::GetChangedAngle(float oldAngle, float desiredAngle, float angulasSpeedMultiplier, int angleIndex)
 {
-    // The angle difference has the largest influence on angular speed.
-    float scale = 0.0001f + 0.15f * (currAngleDiff / ANGLE_DIFF_PRECISION_THRESHOLD);
-    float absDiffAccel = (currAngleDiff - oldAngleDiff) * frametime / 16.6f;
-    // If the angle difference grew up, increase angular speed proportionally
-    if (absDiffAccel > 0)
-        scale *= 1.0f + 0.55f * std::min(1.0f, absDiffAccel / 3.0f);
-    return scale;
+    if (oldAngle == desiredAngle)
+        return oldAngle;
+
+    float maxAngularMove = angulasSpeedMultiplier * angularViewSpeed[angleIndex] * FRAMETIME;
+    float angularMove = AngleNormalize180(desiredAngle - oldAngle);
+    if (angularMove < -maxAngularMove)
+        angularMove = -maxAngularMove;
+    else if (angularMove > maxAngularMove)
+        angularMove = maxAngularMove;
+
+    return AngleNormalize180(oldAngle + angularMove);
 }
 
-void Ai::ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier /*= 1.0f*/, bool extraPrecision /*= false*/)
+Vec3 Ai::GetNewViewAngles(const vec3_t oldAngles, const Vec3 &desiredDirection, float angularSpeedMultiplier)
 {
-    const float currentYaw = anglemod(self->s.angles[YAW]);
-    const float currentPitch = anglemod(self->s.angles[PITCH]);
+    // Based on turret script code
 
-    vec3_t idealAngle;
-    VecToAngles(idealDirection.Data(), idealAngle);
+    // For those trying to learn working with angles
+    // Vec3.x is the PITCH angle (up and down rotation)
+    // Vec3.y is the YAW angle (left and right rotation)
+    // Vec3.z is the ROLL angle (left and right inclination)
 
-    const float ideal_yaw = anglemod(idealAngle[YAW]);
-    const float ideal_pitch = anglemod(idealAngle[PITCH]);
+    vec3_t newAngles, desiredAngles;
+    VecToAngles(desiredDirection.Data(), desiredAngles);
 
-    aiYawSpeed *= angularSpeedMultiplier;
-    aiPitchSpeed *= angularSpeedMultiplier;
-
-    float yawAbsDiff = fabsf(currentYaw - ideal_yaw);
-    float pitchAbsDiff = fabsf(currentPitch - ideal_pitch);
-
-    if (extraPrecision)
+    // Normalize180 all angles so they can be compared
+    for (int i = 0; i < 3; ++i)
     {
-        if (yawAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD)
-            aiYawSpeed *= ComputeAngularSpeedScale(yawAbsDiff, oldYawAbsDiff, game.frametime);
-
-        if (pitchAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD)
-            aiPitchSpeed *= ComputeAngularSpeedScale(pitchAbsDiff, oldPitchAbsDiff, game.frametime);
-    }
-    else
-    {
-        if (yawAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD)
-            aiYawSpeed *= 0.5f;
-
-        if (pitchAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD)
-            aiPitchSpeed *= 0.5f;
+        newAngles[i] = AngleNormalize180(oldAngles[i]);
+        desiredAngles[i] = AngleNormalize180(desiredAngles[i]);
     }
 
-    oldYawAbsDiff = yawAbsDiff;
-    oldPitchAbsDiff = pitchAbsDiff;
-
-    ChangeAxisAngle(currentYaw, ideal_yaw, self->yaw_speed, &aiYawSpeed, &self->s.angles[YAW]);
-    ChangeAxisAngle(currentPitch, ideal_pitch, self->yaw_speed, &aiPitchSpeed, &self->s.angles[PITCH]);
-}
-
-#define AI_YAW_ACCEL ( 95 * FRAMETIME )
-
-void Ai::ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle)
-{
-    float angleMove = idealAngle - currAngle;
-    float speed = edictAngleSpeed * FRAMETIME;
-    if( idealAngle > currAngle )
+    // Rotate the entity angles to the desired angles
+    if (!VectorCompare(newAngles, desiredAngles))
     {
-        if (angleMove >= 180)
-            angleMove -= 360;
-    }
-    else
-    {
-        if (angleMove <= -180)
-            angleMove += 360;
-    }
-    if (angleMove > 0)
-    {
-        if (*aiAngleSpeed > speed)
-            *aiAngleSpeed = speed;
-        if (angleMove < 3)
-            *aiAngleSpeed += AI_YAW_ACCEL/4.0;
-        else
-            *aiAngleSpeed += AI_YAW_ACCEL;
-    }
-    else
-    {
-        if (*aiAngleSpeed < -speed)
-            *aiAngleSpeed = -speed;
-        if (angleMove > -3)
-            *aiAngleSpeed -= AI_YAW_ACCEL;
-        else
-            *aiAngleSpeed -= AI_YAW_ACCEL/4.0;
+        newAngles[YAW] = GetChangedAngle(newAngles[YAW], desiredAngles[YAW], angularSpeedMultiplier, YAW);
+        newAngles[PITCH] = GetChangedAngle(newAngles[PITCH], desiredAngles[PITCH], angularSpeedMultiplier, PITCH);
     }
 
-    angleMove = *aiAngleSpeed;
-    *changedAngle = anglemod(currAngle + angleMove);
+    return Vec3(newAngles);
 }

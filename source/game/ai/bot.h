@@ -37,6 +37,81 @@ struct AiAlertSpot
           carrierEnemyInfluenceScale(carrierEnemyInfluenceScale_) {}
 };
 
+struct BotInput
+{
+    usercmd_t ucmd;
+    Vec3 intendedLookVec;
+    // A copy of self->s.angles for modification
+    // We do not want to do deeply hidden angles update in the aiming functions,
+    // the BotInput should be only mutable thing in the related code.
+    // Should be copied back to self->s.angles if it has been modified when the BotInput gets applied.
+    Vec3 alreadyComputedAngles;
+    bool fireScriptWeapon;
+    bool isUcmdSet;
+    bool isLookVecSet;
+    bool hasAlreadyComputedAngles;
+    bool canOverrideUcmd;
+    bool shouldOverrideUcmd;
+    bool canOverrideLookVec;
+    bool shouldOverrideLookVec;
+    bool canOverridePitch;
+    bool applyExtraViewPrecision;
+    float turnSpeedMultiplier;
+
+    inline BotInput(const edict_t *self)
+        : intendedLookVec(NAN, NAN, NAN),
+          alreadyComputedAngles(self->s.angles),
+          fireScriptWeapon(false),
+          isUcmdSet(false),
+          isLookVecSet(false),
+          hasAlreadyComputedAngles(false),
+          canOverrideUcmd(false),
+          shouldOverrideUcmd(false),
+          canOverrideLookVec(false),
+          shouldOverrideLookVec(false),
+          canOverridePitch(false),
+          applyExtraViewPrecision(false),
+          turnSpeedMultiplier(1.0f)
+    {
+        memset(&ucmd, 0, sizeof(ucmd));
+    }
+
+    inline void SetButton(int button, bool isSet)
+    {
+        if (isSet)
+            ucmd.buttons |= button;
+        else
+            ucmd.buttons &= ~button;
+    }
+
+    inline bool IsButtonSet(int button) const { return (ucmd.buttons & button) != 0; }
+
+    inline void SetAttackButton(bool isSet) { SetButton(BUTTON_ATTACK, isSet); }
+    inline void SetSpecialButton(bool isSet) { SetButton(BUTTON_SPECIAL, isSet); }
+    inline void SetWalkButton(bool isSet) { SetButton(BUTTON_WALK, isSet); }
+
+    inline bool IsAttackButtonSet() const { return IsButtonSet(BUTTON_ATTACK); }
+    inline bool IsSpecialButtonSet() const { return IsButtonSet(BUTTON_SPECIAL); }
+    inline bool IsWalkButtonSet() const { return IsButtonSet(BUTTON_WALK); }
+
+    inline int ForwardMovement() const { return (int)ucmd.forwardmove; }
+    inline int RightMovement() const { return (int)ucmd.sidemove; }
+    inline int UpMovement() const { return (int)ucmd.upmove; }
+
+    inline bool IsCrouching() const { return ucmd.upmove < 0; }
+
+    inline void SetForwardMovement(int movement) { ucmd.forwardmove = movement; }
+    inline void SetRightMovement(int movement) { ucmd.sidemove = movement; }
+    inline void SetUpMovement(int movement) { ucmd.upmove = movement; }
+
+    inline void ClearMovementDirections()
+    {
+        ucmd.forwardmove = 0;
+        ucmd.sidemove = 0;
+        ucmd.upmove = 0;
+    }
+};
+
 class Bot: public Ai
 {
     friend class AiManager;
@@ -496,8 +571,6 @@ private:
 
     CampingSpotState campingSpotState;
 
-    bool isWaitingForItemSpawn;
-
     bool isInSquad;
 
     int defenceSpotId;
@@ -548,17 +621,17 @@ private:
 
     void UpdateScriptWeaponsStatus();
 
-    void Move(usercmd_t *ucmd);
+    void Move(BotInput *input);
     void LookAround();
     void ChangeWeapons(const SelectedWeapons &selectedWeapons);
     void ChangeWeapon(int weapon);
-    bool FireWeapon(bool *didBuiltinAttack);
+    void FireWeapon(BotInput *input);
     virtual void OnBlockedTimeout() override;
     void SayVoiceMessages();
     void GhostingFrame();
     void ActiveFrame();
-    void CallGhostingClientThink(usercmd_t *ucmd);
-    void CallActiveClientThink(usercmd_t *ucmd);
+    void CallGhostingClientThink(BotInput *input);
+    void CallActiveClientThink(BotInput *input);
 
     void OnRespawn();
 
@@ -570,21 +643,22 @@ private:
     {
         pendingLookAtPointState.SetTriggered(point, turnSpeedMultiplier, timeoutPeriod);
     }
-    void ApplyPendingTurnToLookAtPoint();
+    void ApplyPendingTurnToLookAtPoint(BotInput *input);
+    void ApplyInput(BotInput *input);
 
     // Must be called on each frame
-    void MoveFrame(usercmd_t *ucmd);
+    void MoveFrame(BotInput *input);
 
-    void MoveOnLadder(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveEnteringJumppad(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveRidingJummpad(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveTriggeredARocketJump(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveOnPlatform(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveCampingASpot(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveSwimming(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    void MoveGenericRunning(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    bool CheckAndTryAvoidObstacles(Vec3 *intendedLookVec, usercmd_t *ucmd, float speed);
+    void MoveOnLadder(BotInput *input);
+    void MoveEnteringJumppad(BotInput *input);
+    void MoveRidingJummpad(BotInput *input);
+    void MoveTriggeredARocketJump(BotInput *input);
+    void MoveOnPlatform(BotInput *input);
+    void MoveCampingASpot(BotInput *input);
+    void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, BotInput *input);
+    void MoveSwimming(BotInput *input);
+    void MoveGenericRunning(BotInput *input);
+    bool CheckAndTryAvoidObstacles(BotInput *input, float speed);
     // Tries to straighten look vec first.
     // If the straightening failed, tries to interpolate it.
     // Also, handles case of empty reachabilities chain in goal area and outside it.
@@ -595,9 +669,8 @@ private:
     bool TryStraightenLookVec(Vec3 *intendedLookVec);
     // Interpolates intendedLookVec for the pending areas chain
     void InterpolateLookVec(Vec3 *intendedLookVec, float speed);
-    void SetLookVecToPendingReach(Vec3 *intendedLookVec);
-    void TryLandOnNearbyAreas(Vec3 *intendedLookVec, usercmd_t *ucmd);
-    bool TryLandOnArea(int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd);
+    void TryLandOnNearbyAreas(BotInput *input);
+    bool TryLandOnArea(int areaNum, BotInput *input);
     void CheckTargetProximity();
 
     inline bool IsCloseToNavTarget()
@@ -606,10 +679,10 @@ private:
     }
 
     bool MaySetPendingLandingDash();
-    void SetPendingLandingDash(usercmd_t *ucmd);
-    void ApplyPendingLandingDash(usercmd_t *ucmd);
+    void SetPendingLandingDash(BotInput *input);
+    void ApplyPendingLandingDash(BotInput *input);
 
-    bool TryRocketJumpShortcut(usercmd_t *ucmd);
+    bool TryRocketJumpShortcut(BotInput *input);
     // A bot should aim to fireTarget while doing a RJ
     // A bot should look on targetOrigin in flight
     // Return false if targets can't be adjusted (and a RJ should be rejected).
@@ -623,27 +696,28 @@ private:
     // Tries to select an appropriate weapon and trigger a rocketjump.
     // Assumes that targetOrigin and fireTarget are checked.
     // Returns false if a rocketjump cannot be triggered.
-    bool TryTriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget);
+    bool TryTriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec3 &fireTarget);
     // Triggers a jump/dash and fire actions, and schedules trajectory correction to fireTarget to a next frame.
     // Assumes that targetOrigin and fireTarget are checked.
     // Make sure you have selected an appropriate weapon and its ready to fire before you call it.
-    void TriggerWeaponJump(usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget);
+    void TriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec3 &fireTarget);
 
-    void CombatMovement(usercmd_t *ucmd);
+    void CombatMovement(BotInput *input);
     void UpdateCombatMovePushes();
-    void MakeEvadeMovePushes(usercmd_t *ucmd);
     bool MayApplyCombatDash();
     Vec3 MakeEvadeDirection(const Danger &danger);
-    void ApplyCheatingGroundAcceleration(const usercmd_t *ucmd);
+    void ApplyCheatingGroundAcceleration(const BotInput *input);
 
     // Returns true if current look angle worth pressing attack
-    bool CheckShot(const AimParams &aimParams, const SelectedEnemies &selectedEnemies, const GenericFireDef &fireDef);
+    bool CheckShot(const AimParams &aimParams, const BotInput *input,
+                   const SelectedEnemies &selectedEnemies, const GenericFireDef &fireDef);
 
-    void LookAtEnemy(float accuracy, const vec3_t fire_origin, vec3_t target);
-    bool TryPressAttack(const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
-                        const GenericFireDef *scriptFireDef, bool *didBuiltinAttack);
+    void LookAtEnemy(float accuracy, const vec3_t fire_origin, vec3_t target, BotInput *input);
+    void PressAttack(const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
+                     const GenericFireDef *scriptFireDef, BotInput *input);
 
     bool MayHitWhileRunning() const;
+    void CheckTurnToBackwardsMovement(BotInput *input) const;
 
     inline bool HasEnemy() const { return selectedEnemies.AreValid(); }
     inline bool IsEnemyAStaticSpot() const { return selectedEnemies.IsStaticSpot(); }

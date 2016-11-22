@@ -243,9 +243,7 @@ void AiManager::SetupClientBot(edict_t *ent)
     ent->nextThink = level.time + 1;
     ent->ai->type = AI_ISBOT;
     ent->classname = "bot";
-    ent->yaw_speed = AI_DEFAULT_YAW_SPEED;
     ent->die = player_die;
-    ent->yaw_speed -= 20 * (1.0f - skillLevel);
 
     G_Printf("%s skill %i\n", ent->r.client->netname, (int) (skillLevel * 100));
 }

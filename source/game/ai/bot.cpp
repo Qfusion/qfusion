@@ -35,7 +35,6 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       rocketJumpMovementState(self_),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
-      isWaitingForItemSpawn(false),
       isInSquad(false),
       defenceSpotId(-1),
       offenseSpotId(-1),
@@ -60,7 +59,7 @@ void Bot::LookAround()
         ChangeWeapons(selectedWeapons);
 }
 
-void Bot::ApplyPendingTurnToLookAtPoint()
+void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput)
 {
     if (!pendingLookAtPointState.IsActive())
         return;
@@ -69,7 +68,23 @@ void Bot::ApplyPendingTurnToLookAtPoint()
     toPointDir -= self->s.origin;
     toPointDir.NormalizeFast();
 
-    ChangeAngle(toPointDir, pendingLookAtPointState.EffectiveTurnSpeedMultiplier(1.0f));
+    botInput->intendedLookVec = toPointDir;
+    botInput->isLookVecSet = true;
+    botInput->canOverrideLookVec = false;
+    botInput->canOverridePitch = false;
+}
+
+void Bot::ApplyInput(BotInput *input)
+{
+    // It is legal (there are no enemies and no nav targets in some moments))
+    if (!input->isUcmdSet || !input->isLookVecSet)
+        return;
+
+    if (!input->hasAlreadyComputedAngles)
+        input->alreadyComputedAngles = GetNewViewAngles(self->s.angles, input->intendedLookVec, input->turnSpeedMultiplier);
+
+    // Set entity angles
+    VectorCopy(input->alreadyComputedAngles.Data(), self->s.angles);
 }
 
 void Bot::TouchedOtherEntity(const edict_t *entity)
@@ -430,8 +445,6 @@ void Bot::OnBlockedTimeout()
 //==========================================
 void Bot::GhostingFrame()
 {
-    usercmd_t ucmd;
-
     selectedEnemies.Invalidate();
     selectedWeapons.Invalidate();
 
@@ -458,23 +471,23 @@ void Bot::GhostingFrame()
         return;
     }
 
-    memset( &ucmd, 0, sizeof( ucmd ) );
-
+    BotInput botInput(self);
+    botInput.isUcmdSet = true;
     // ask for respawn if the minimum bot respawning time passed
     if( level.time > self->deathTimeStamp + 3000 )
-        ucmd.buttons = BUTTON_ATTACK;
+        botInput.SetAttackButton(true);
 
-    CallGhostingClientThink(&ucmd);
+    CallGhostingClientThink(&botInput);
 }
 
-void Bot::CallGhostingClientThink(usercmd_t *ucmd)
+void Bot::CallGhostingClientThink(BotInput *input)
 {
     // set approximate ping and show values
-    ucmd->serverTimeStamp = game.serverTime;
-    ucmd->msec = game.frametime;
+    input->ucmd.serverTimeStamp = game.serverTime;
+    input->ucmd.msec = (uint8_t)game.frametime;
     self->r.client->r.ping = 0;
 
-    ClientThink( self, ucmd, 0 );
+    ClientThink(self, &input->ucmd, 0);
 }
 
 void Bot::OnRespawn()
@@ -536,46 +549,38 @@ void Bot::ActiveFrame()
 
     weaponsSelector.Frame(botBrain.cachedWorldState);
 
-    ApplyPendingTurnToLookAtPoint();
+    BotInput botInput(self);
+    ApplyPendingTurnToLookAtPoint(&botInput);
 
     SetCloakEnabled(ShouldCloak());
 
-    // ucmd modification in FireWeapon() will be overwritten by MoveFrame()
-    bool fireButtonPressed = false;
+    MoveFrame(&botInput);
     if (ShouldAttack())
-    {
-        FireWeapon(&fireButtonPressed);
-    }
+        FireWeapon(&botInput);
 
-    // Do not modify pmove features by beSilent value, features may be changed dynamically by script.
-    usercmd_t ucmd;
-    memset(&ucmd, 0, sizeof(ucmd));
-    MoveFrame(&ucmd);
+    ApplyInput(&botInput);
 
-    if (fireButtonPressed)
-        ucmd.buttons |= BUTTON_ATTACK;
-
-    CallActiveClientThink(&ucmd);
+    CallActiveClientThink(&botInput);
 
     SayVoiceMessages();
 }
 
-void Bot::CallActiveClientThink(usercmd_t *ucmd)
+void Bot::CallActiveClientThink(BotInput *input)
 {
     //set up for pmove
     for (int i = 0; i < 3; i++)
-        ucmd->angles[i] = ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
+        input->ucmd.angles[i] = (short)ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
 
     VectorSet(self->r.client->ps.pmove.delta_angles, 0, 0, 0);
 
     // set approximate ping and show values
-    ucmd->msec = game.frametime;
-    ucmd->serverTimeStamp = game.serverTime;
+    input->ucmd.msec = (uint8_t)game.frametime;
+    input->ucmd.serverTimeStamp = game.serverTime;
 
     // If this value is modified by ClientThink() callbacks, it will be kept until next frame reaches this line
     jumppadMovementState.hasTouchedJumppad = false;
 
-    ClientThink( self, ucmd, 0 );
+    ClientThink(self, &input->ucmd, 0);
     self->nextThink = level.time + 1;
 }
 

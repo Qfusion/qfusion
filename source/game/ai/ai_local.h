@@ -42,8 +42,6 @@ in NO WAY supported by Steve Yeager.
 #include <utility>
 #include <stdarg.h>
 
-constexpr auto AI_DEFAULT_YAW_SPEED = 35 * 5;
-
 // Platform states:
 constexpr auto STATE_TOP    = 0;
 constexpr auto STATE_BOTTOM = 1;

@@ -73,13 +73,13 @@ void Bot::UpdateScriptWeaponsStatus()
     }
 }
 
-bool Bot::FireWeapon(bool *didBuiltinAttack)
+void Bot::FireWeapon(BotInput *input)
 {
     if (!selectedEnemies.AreValid())
-        return false;
+        return;
 
     if (!selectedWeapons.AreValid())
-        return false;
+        return;
 
     const GenericFireDef *builtinFireDef = selectedWeapons.BuiltinFireDef();
     const GenericFireDef *scriptFireDef = selectedWeapons.ScriptFireDef();
@@ -113,7 +113,7 @@ bool Bot::FireWeapon(bool *didBuiltinAttack)
     }
 
     // Always track enemy with a "crosshair" like a human does in each frame
-    LookAtEnemy(aimParams->EffectiveAccuracy(Skill()), aimParams->fireOrigin, aimParams->fireTarget);
+    LookAtEnemy(aimParams->EffectiveAccuracy(Skill()), aimParams->fireOrigin, aimParams->fireTarget, input);
 
     // Attack only in Think() frames unless a continuousFire is required or the bot has hard skill
     if (ShouldSkipThinkFrame() && Skill() < 0.66f)
@@ -121,63 +121,80 @@ bool Bot::FireWeapon(bool *didBuiltinAttack)
         if (!primaryFireDef->IsContinuousFire())
         {
             if (!secondaryFireDef || !secondaryFireDef->IsContinuousFire())
-                return false;
+                return;
         }
     }
 
-    bool didPrimaryAttack = false;
-    bool didSecondaryAttack = false;
-
-    if (CheckShot(*aimParams, selectedEnemies, *primaryFireDef))
-        didPrimaryAttack = TryPressAttack(primaryFireDef, builtinFireDef, scriptFireDef, didBuiltinAttack);
+    if (CheckShot(*aimParams, input, selectedEnemies, *primaryFireDef))
+        PressAttack(primaryFireDef, builtinFireDef, scriptFireDef, input);
 
     if (secondaryFireDef)
     {
         // Check whether view angles adjusted for the primary weapon are suitable for firing secondary weapon too
-        if (CheckShot(*aimParams, selectedEnemies, *secondaryFireDef))
-            didSecondaryAttack = TryPressAttack(secondaryFireDef, builtinFireDef, scriptFireDef, didBuiltinAttack);
+        if (CheckShot(*aimParams, input, selectedEnemies, *secondaryFireDef))
+            PressAttack(secondaryFireDef, builtinFireDef, scriptFireDef, input);
     }
 
-    return didPrimaryAttack || didSecondaryAttack;
+    if (input->fireScriptWeapon)
+        GT_asFireScriptWeapon(self->r.client, scriptFireDef->WeaponNum());
 }
 
-void Bot::LookAtEnemy(float accuracy, const vec_t *fire_origin, vec_t *target)
+void Bot::LookAtEnemy(float accuracy, const vec_t *fire_origin, vec_t *target, BotInput *input)
 {
     target[0] += (random() - 0.5f) * accuracy;
     target[1] += (random() - 0.5f) * accuracy;
 
-    // TODO: Cancel pending turn?
-    if (!pendingLookAtPointState.IsActive())
+    Vec3 toTargetVec(target);
+    toTargetVec -= fire_origin;
+    float angularSpeedMultiplier = 0.5f + 0.5f * Skill();
+    // If there is no look vec set or it can be completely overridden
+    if (!input->isLookVecSet || input->canOverrideLookVec)
     {
-        Vec3 lookAtVector(target);
-        lookAtVector -= fire_origin;
-        float angularSpeedMultiplier = 0.5f + 0.5f * Skill();
-        bool extraPrecision = DistanceSquared(fire_origin, target) > 1100.0f * 1100.0f;
-        ChangeAngle(lookAtVector, angularSpeedMultiplier, extraPrecision);
+        input->intendedLookVec = toTargetVec;
+        input->alreadyComputedAngles = GetNewViewAngles(self->s.angles, toTargetVec, angularSpeedMultiplier);
     }
+    // (in case when XY view movement is exactly specified and Z view movement can vary)
+    else if (input->canOverridePitch)
+    {
+        // These angles can be intended by the already set look vec (can be = not always ideal due to limited view speed).
+        Vec3 intendedAngles = GetNewViewAngles(self->s.angles, input->intendedLookVec, angularSpeedMultiplier);
+        // These angles can be required to hit the target
+        Vec3 targetAimAngles = GetNewViewAngles(self->s.angles, toTargetVec, angularSpeedMultiplier);
+        // Override pitch in hope this will be sufficient for hitting a target
+        intendedAngles.Data()[PITCH] = targetAimAngles.Data()[PITCH];
+        input->hasAlreadyComputedAngles = true;
+    }
+    // Otherwise do not modify already set look vec (a shot can be made if it is occasionally sufficient for it).
+
+    input->isLookVecSet = true;
+    input->canOverrideLookVec = false;
+    input->canOverridePitch = false;
 }
 
-bool Bot::TryPressAttack(const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
-                         const GenericFireDef *scriptFireDef, bool *didBuiltinAttack)
+void Bot::PressAttack(const GenericFireDef *fireDef,
+                      const GenericFireDef *builtinFireDef,
+                      const GenericFireDef *scriptFireDef,
+                      BotInput *input)
 {
     if (fireDef == scriptFireDef)
-        return GT_asFireScriptWeapon(self->r.client, fireDef->WeaponNum());
+    {
+        input->fireScriptWeapon = true;
+        return;
+    }
 
     auto weapState = self->r.client->ps.weaponState;
-    *didBuiltinAttack = false;
-    *didBuiltinAttack |= weapState == WEAPON_STATE_READY;
-    *didBuiltinAttack |= weapState == WEAPON_STATE_REFIRE;
-    *didBuiltinAttack |= weapState == WEAPON_STATE_REFIRESTRONG;
-
-    return *didBuiltinAttack;
+    if (weapState == WEAPON_STATE_READY || weapState == WEAPON_STATE_REFIRE || weapState == WEAPON_STATE_REFIRESTRONG)
+        input->SetAttackButton(true);
 }
 
-bool Bot::CheckShot(const AimParams &aimParams, const SelectedEnemies &selectedEnemies, const GenericFireDef &fireDef)
+bool Bot::CheckShot(const AimParams &aimParams,
+                    const BotInput *input,
+                    const SelectedEnemies &selectedEnemies,
+                    const GenericFireDef &fireDef)
 {
-    // Do not shoot enemies that are far from "crosshair" except they are very close
+    // Convert modified angles to direction back (due to limited view speed it rarely will match given direction)
     Vec3 newLookDir(0, 0, 0);
-    AngleVectors(self->s.angles, newLookDir.Data(), nullptr, nullptr);
-
+    AngleVectors(input->alreadyComputedAngles.Data(), newLookDir.Data(), nullptr, nullptr);
 
     Vec3 toTarget(aimParams.fireTarget);
     toTarget -= aimParams.fireOrigin;

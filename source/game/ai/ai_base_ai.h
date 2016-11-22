@@ -79,8 +79,7 @@ protected:
 
     unsigned blockedTimeout;
 
-    float aiYawSpeed, aiPitchSpeed;
-    float oldYawAbsDiff, oldPitchAbsDiff;
+    vec3_t angularViewSpeed;
 
     void SetFrameAffinity(unsigned modulo, unsigned offset) override;
 
@@ -96,7 +95,9 @@ public:
        AiBaseBrain *aiBaseBrain_,
        AiAasRouteCache *routeCache_,
        int preferredAasTravelFlags_,
-       int allowedAasTravelFlags_);
+       int allowedAasTravelFlags_,
+       float yawSpeed = 180.0f,
+       float pitchSpeed = 140.0f);
 
     virtual ~Ai() override {};
 
@@ -110,7 +111,6 @@ public:
     inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
     inline int AllowedTravelFlags() const { return allowedAasTravelFlags; }
 
-    void ChangeAngle(const Vec3 &idealDirection, float angularSpeedMultiplier = 1.0f, bool extraPrecision = false);
     static bool IsStep(edict_t *ent);
     // Accepts a touched entity and its old solid before touch
     void TouchedEntity(edict_t *ent);
@@ -135,11 +135,21 @@ protected:
     virtual void TouchedOtherEntity(const edict_t *entity) {}
 
     void CheckReachedArea();
-    void ChangeAxisAngle(float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle);
 
     void TestClosePlace();
     ClosePlaceProps closeAreaProps;
+
+    // This function produces very basic but reliable results.
+    // Imitation of human-like aiming should be a burden of callers that prepare the desiredDirection.
+    inline Vec3 GetNewViewAngles(const Vec3 &oldAngles, const Vec3 &desiredDirection,
+                                 float angularSpeedMultiplier = 1.0f, bool extraPrecision = false)
+    {
+        return GetNewViewAngles(oldAngles.Data(), desiredDirection, angularSpeedMultiplier);
+    }
+    Vec3 GetNewViewAngles(const vec3_t oldAngles, const Vec3 &desiredDirection, float angularSpeedMultiplier = 1.0f);
 private:
+    float GetChangedAngle(float oldAngle, float desiredAngle, float angulasSpeedMultiplier, int angleIndex);
+
     void TestMove(MoveTestResult *moveTestResult, int currAasAreaNum_, const vec3_t forward) const;
 };
 
