@@ -644,7 +644,7 @@ private:
 
     void UpdateScriptWeaponsStatus();
 
-    void Move(BotInput *input);
+    void Move(BotInput *input, bool mayHitWhileRunning);
     void LookAround();
     void ChangeWeapons(const SelectedWeapons &selectedWeapons);
     void ChangeWeapon(int weapon);
@@ -675,12 +675,15 @@ private:
     void MoveOnLadder(BotInput *input);
     void MoveEnteringJumppad(BotInput *input);
     void MoveRidingJummpad(BotInput *input);
-    void MoveTriggeredARocketJump(BotInput *input);
+    void MoveTriggeredARocketJump(BotInput *input, bool mayHitWhileMoving);
     void MoveOnPlatform(BotInput *input);
     void MoveCampingASpot(BotInput *input);
     void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, BotInput *input);
     void MoveSwimming(BotInput *input);
-    void MoveGenericRunning(BotInput *input);
+    void MoveGenericRunning(BotInput *input, bool mayHitWhileRunning);
+    Vec3 GetCheatingAcceleratedVelocity(float velocity2DDirDotToTarget2DDir, bool hasObstacles) const;
+    Vec3 GetCheatingCorrectedVelocity(float velocity2DDirDotToTarget2DDir, Vec3 toTargetDir2D) const;
+    bool CanFlyAboveGroundRelaxed() const;
     bool CheckAndTryAvoidObstacles(BotInput *input, float speed);
     // Tries to straighten look vec first.
     // If the straightening failed, tries to interpolate it.

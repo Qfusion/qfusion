@@ -12,12 +12,16 @@ void Bot::MoveFrame(BotInput *input)
     // These triggered actions should be processed
     if (jumppadMovementState.IsActive() || rocketJumpMovementState.IsActive() || pendingLandingDashState.IsActive())
     {
-        Move(input);
+        Move(input, false);
     }
     else
     {
-        if (!selectedEnemies.AreValid() || !ShouldKeepXhairOnEnemy() || MayHitWhileRunning())
-            Move(input);
+        if (!selectedEnemies.AreValid())
+            Move(input, false);
+        else if (!ShouldKeepXhairOnEnemy())
+            Move(input, MayHitWhileRunning());
+        else if (MayHitWhileRunning())
+            Move(input, true);
         else
             CombatMovement(input);
     }
@@ -28,7 +32,37 @@ void Bot::MoveFrame(BotInput *input)
     rocketJumpMovementState.wasTriggeredPrevFrame = rocketJumpMovementState.hasTriggeredRocketJump;
 }
 
-void Bot::Move(BotInput *input)
+constexpr float STRAIGHT_MOVEMENT_DOT_THRESHOLD = 0.8f;
+
+bool Bot::MayHitWhileRunning() const
+{
+    if (!HasEnemy())
+        FailWith("MayHitWhileRunning(): there is no enemy");
+
+    Vec3 botToEnemyDir(EnemyOrigin());
+    botToEnemyDir -= self->s.origin;
+    // We are sure it has non-zero length (enemies collide with the bot)
+    botToEnemyDir.NormalizeFast();
+
+    vec3_t botLookDir;
+    AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
+    // Check whether the bot may hit while running
+    if (botToEnemyDir.Dot(botLookDir) > STRAIGHT_MOVEMENT_DOT_THRESHOLD)
+        return true;
+
+    // Check whether we can change pitch
+    botLookDir[2] = botToEnemyDir.Z();
+    // Normalize again
+    float lookDirSquareLength = VectorLengthSquared(botLookDir);
+    if (lookDirSquareLength < 0.000001f)
+        return false;
+
+    float lookDirInvLength = Q_RSqrt(lookDirSquareLength);
+    VectorScale(botLookDir, lookDirInvLength, botLookDir);
+    return botToEnemyDir.Dot(botLookDir) > STRAIGHT_MOVEMENT_DOT_THRESHOLD;
+}
+
+void Bot::Move(BotInput *input, bool mayHitWhileRunning)
 {
     input->ClearMovementDirections();
     input->isUcmdSet = false;
@@ -86,7 +120,7 @@ void Bot::Move(BotInput *input)
     }
     else if (rocketJumpMovementState.IsActive())
     {
-        MoveTriggeredARocketJump(input);
+        MoveTriggeredARocketJump(input, mayHitWhileRunning);
     }
     else // standard movement
     {
@@ -100,7 +134,7 @@ void Bot::Move(BotInput *input)
         }
         else
         {
-            MoveGenericRunning(input);
+            MoveGenericRunning(input, mayHitWhileRunning);
         }
     }
 
@@ -112,7 +146,7 @@ void Bot::CheckTurnToBackwardsMovement(BotInput *input) const
     if (!HasPendingLookAtPoint() && !rocketJumpMovementState.HasBeenJustTriggered())
     {
         input->turnSpeedMultiplier = pendingLandingDashState.EffectiveTurnSpeedMultiplier(1.0f);
-        if (HasEnemy())
+        if (HasEnemy() && ShouldAttack())
         {
             input->intendedLookVec.NormalizeFast();
             Vec3 toEnemy(EnemyOrigin());
@@ -146,12 +180,15 @@ void Bot::MoveOnLadder(BotInput *input)
     input->SetForwardMovement(1);
     input->SetUpMovement(1);
     input->SetRightMovement(0);
+    input->canOverrideLookVec = false;
+    input->canOverridePitch = false;
 }
 
-void Bot::MoveTriggeredARocketJump(BotInput *input)
+void Bot::MoveTriggeredARocketJump(BotInput *input, bool mayHitWhileMoving)
 {
     input->intendedLookVec = rocketJumpMovementState.jumpTarget - self->s.origin;
-
+    input->canOverrideLookVec = mayHitWhileMoving;
+    input->canOverridePitch = false;
     input->ClearMovementDirections();
 
     if (!rocketJumpMovementState.hasCorrectedRocketJump)
@@ -167,6 +204,7 @@ void Bot::MoveTriggeredARocketJump(BotInput *input)
             VectorCopy(newVelocity.Data(), self->velocity);
         }
         rocketJumpMovementState.hasCorrectedRocketJump = true;
+        input->canOverrideLookVec = false;
     }
     else if (rocketJumpMovementState.timeoutAt - level.time < 300)
     {
@@ -174,6 +212,12 @@ void Bot::MoveTriggeredARocketJump(BotInput *input)
         // Bounce off walls
         if (!closeAreaProps.leftTest.CanWalk() || !closeAreaProps.rightTest.CanWalk())
             input->SetSpecialButton(true);
+
+        if (ShouldAttack())
+        {
+            input->canOverrideLookVec = true;
+            input->SetForwardMovement(0);
+        }
     }
 }
 
@@ -188,6 +232,8 @@ template <typename T> struct AttributedArea
 
 void Bot::MoveEnteringJumppad(BotInput *input)
 {
+    input->canOverrideLookVec = false;
+    input->canOverridePitch = false;
     input->ClearMovementDirections();
 
     if (jumppadMovementState.hasEnteredJumppad)
@@ -281,6 +327,7 @@ void Bot::MoveRidingJummpad(BotInput *input)
         return;
     }
 
+    input->canOverrideLookVec = true;
     input->ClearMovementDirections();
 
     if (jumppadMovementState.jumppadMoveTimeout <= level.time)
@@ -402,6 +449,7 @@ bool Bot::TryLandOnArea(int areaNum, BotInput *input)
 
 void Bot::MoveCampingASpot(BotInput *input)
 {
+    input->canOverrideLookVec = true;
     // If hasCampingLookAtPoint is false and this function has not been called yet since last camping spot setting,
     // campingSpotLookAtPoint contains a junk, so it need to be overwritten
     Vec3 lookAtPoint(campingSpotState.lookAtPoint);
@@ -421,21 +469,25 @@ void Bot::MoveCampingASpot(BotInput *input)
     MoveCampingASpotWithGivenLookAtPoint(lookAtPoint, input);
 }
 
-void KeyMoveVecToBotInput(const Vec3 &keyMoveVec, const vec3_t actualLookDir, const vec3_t actualRightDir, BotInput *input)
+void DirToKeyInput(const Vec3 &desiredDir, const vec3_t actualForwardDir, const vec3_t actualRightDir, BotInput *input)
 {
     input->ClearMovementDirections();
 
-    float dotForward = keyMoveVec.Dot(actualLookDir);
+    float dotForward = desiredDir.Dot(actualForwardDir);
     if (dotForward > 0.3)
         input->SetForwardMovement(1);
     else if (dotForward < -0.3)
         input->SetForwardMovement(-1);
 
-    float dotRight = keyMoveVec.Dot(actualRightDir);
+    float dotRight = desiredDir.Dot(actualRightDir);
     if (dotRight > 0.3)
         input->SetRightMovement(1);
     else if (dotRight < -0.3)
         input->SetRightMovement(-1);
+
+    // Prevent being blocked
+    if (!input->ForwardMovement() && !input->RightMovement())
+        input->SetForwardMovement(1);
 }
 
 void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput *input)
@@ -500,23 +552,23 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput
 
     Vec3 strafeMoveVec = campingSpotState.strafeDir;
 
-    KeyMoveVecToBotInput(strafeMoveVec, actualLookDir, actualRightDir, input);
+    DirToKeyInput(strafeMoveVec, actualLookDir, actualRightDir, input);
 
     input->SetWalkButton(random() > campingSpotState.alertness * 0.75f);
 }
 
 void Bot::MoveOnPlatform(BotInput *input)
 {
+    input->canOverrideLookVec = true;
     switch (self->groundentity->moveinfo.state)
     {
         case STATE_TOP:
             // Start bunnying off the platform
-            MoveGenericRunning(input);
+            MoveGenericRunning(input, true);
             break;
         default:
             // Its poor but platforms are not widely used.
             input->isLookVecSet = false;
-            input->canOverrideLookVec = true;
             input->canOverrideUcmd = false;
             input->shouldOverrideUcmd = false;
             input->ClearMovementDirections();
@@ -528,6 +580,7 @@ void Bot::MoveOnPlatform(BotInput *input)
 
 void Bot::MoveSwimming(BotInput *input)
 {
+    input->canOverrideLookVec = true;
     input->SetForwardMovement(1);
 
     // TODO: Check reachibility, if we are close, exit water
@@ -866,7 +919,7 @@ void Bot::ApplyPendingLandingDash(BotInput *input)
         return;
 
     input->isLookVecSet = false;
-    input->canOverrideLookVec = true;
+    input->canOverrideLookVec = false;
     input->canOverrideUcmd = false;
     input->SetForwardMovement(1);
     input->SetRightMovement(0);
@@ -876,7 +929,7 @@ void Bot::ApplyPendingLandingDash(BotInput *input)
     pendingLandingDashState.Invalidate();
 }
 
-void Bot::MoveGenericRunning(BotInput *input)
+void Bot::MoveGenericRunning(BotInput *input, bool mayHitWhileRunning)
 {
     if (pendingLandingDashState.IsActive())
     {
@@ -891,7 +944,7 @@ void Bot::MoveGenericRunning(BotInput *input)
     Vec3 velocityVec(self->velocity);
     float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
 
-    bool lookingOnImportantItem = StraightenOrInterpolateLookVec(&input->intendedLookVec, speed);
+    StraightenOrInterpolateLookVec(&input->intendedLookVec, speed);
     bool hasObstacles = CheckAndTryAvoidObstacles(input, speed);
 
     Vec3 toTargetDir2D(input->intendedLookVec);
@@ -911,6 +964,8 @@ void Bot::MoveGenericRunning(BotInput *input)
         velocityDir2D *= Q_RSqrt(speed2DSquared);
 
         input->SetForwardMovement(1);
+        input->canOverrideLookVec = mayHitWhileRunning;
+        input->canOverridePitch = true;
 
         if (movementFeatures & PMFEAT_DASH)
         {
@@ -936,101 +991,25 @@ void Bot::MoveGenericRunning(BotInput *input)
         {
             toTargetDir2D *= Q_RSqrt(toTargetDir2DSqLen);
 
-            float velocityToTarget2DDot = velocityDir2D.Dot(toTargetDir2D);
-            if (velocityToTarget2DDot < 0.99)
+            float velocityDir2DDotToTargetDir2D = velocityDir2D.Dot(toTargetDir2D);
+            if (velocityDir2DDotToTargetDir2D > STRAIGHT_MOVEMENT_DOT_THRESHOLD)
             {
-                // Correct trajectory using cheating aircontrol
-                if (velocityToTarget2DDot > 0)
-                {
-                    if (movementFeatures & PMFEAT_AIRCONTROL)
-                    {
-                        // Make correction less effective for large angles multiplying it
-                        // by the dot product to avoid a weird-looking cheating movement
-                        float controlMultiplier = 0.005f + velocityToTarget2DDot * 0.05f;
-                        if (lookingOnImportantItem)
-                            controlMultiplier += 0.33f;
-                        Vec3 newVelocity(velocityVec);
-                        newVelocity *= 1.0f / speed;
-                        newVelocity += controlMultiplier * toTargetDir2D;
-                        // Preserve velocity magnitude
-                        newVelocity.NormalizeFast();
-                        newVelocity *= speed;
-                        VectorCopy(newVelocity.Data(), self->velocity);
-                    }
-                }
-                else if (ShouldMoveCarefully())
-                {
-                    // velocity and forwardLookDir may mismatch, retrieve these actual look dirs
-                    vec3_t forwardLookDir, rightLookDir;
-                    AngleVectors(self->s.angles, forwardLookDir, rightLookDir, nullptr);
-
-                    // Stop bunnying and move to goal using only keys
-                    input->SetUpMovement(0);
-                    input->SetSpecialButton(false);
-
-                    input->SetForwardMovement(0);
-                    input->SetRightMovement(0);
-
-                    float targetDirDotForward = toTargetDir2D.Dot(forwardLookDir);
-                    float targetDirDotRight = toTargetDir2D.Dot(rightLookDir);
-
-                    if (targetDirDotForward > 0.3f)
-                        input->SetForwardMovement(1);
-                    else if (targetDirDotForward < -0.3f)
-                        input->SetForwardMovement(-1);
-
-                    if (targetDirDotRight > 0.3f)
-                        input->SetRightMovement(1);
-                    else if (targetDirDotRight > 0.3f)
-                        input->SetRightMovement(-1);
-
-                    // Prevent blocking if neither forwardmove, not sidemove has been chosen
-                    if (!input->ForwardMovement() && !input->RightMovement())
-                        input->SetForwardMovement(-1);
-                }
-                else if (velocityToTarget2DDot < 0.1f)
-                {
-                    if (!ShouldBeSilent() && MaySetPendingLandingDash())
-                    {
-                        SetPendingLandingDash(input);
-                        return;
-                    }
-                }
+                // Apply cheating acceleration
+                Vec3 newVelocity = GetCheatingAcceleratedVelocity(velocityDir2DDotToTargetDir2D, hasObstacles);
+                VectorCopy(newVelocity.Data(), self->velocity);
             }
-
-            // Apply cheating acceleration if bot is moving quite straight to a target
-            constexpr float accelDotThreshold = 0.9f;
-            if (velocityToTarget2DDot > accelDotThreshold)
+            // Correct trajectory using cheating aircontrol
+            else if (velocityDir2DDotToTargetDir2D > 0)
             {
-                if (!self->groundentity && !hasObstacles && !ShouldMoveCarefully() && Skill() > 0.33f)
+                Vec3 newVelocity = GetCheatingCorrectedVelocity(velocityDir2DDotToTargetDir2D, toTargetDir2D);
+                VectorCopy(newVelocity.Data(), self->velocity);
+            }
+            else
+            {
+                if (!ShouldBeSilent() && MaySetPendingLandingDash())
                 {
-                    float runSpeed = movementSettings[PM_STAT_MAXSPEED];
-                    if (speed > runSpeed) // Avoid division by zero and logic errors
-                    {
-                        // Max accel is measured in units per second and decreases with speed
-                        // For speed of runSpeed maxAccel is 180
-                        // For speed of 900 and greater maxAccel is 0
-                        // This means cheating acceleration is not applied for speeds greater than 900 ups
-                        // However the bot may reach greater speed since builtin GS_NEWBUNNY forward accel is enabled
-                        float maxAccel = 180.0f * (1.0f - BoundedFraction(speed - runSpeed, 900.0f - runSpeed));
-
-                        // Modify maxAccel to respect player class movement limitations
-                        maxAccel *= movementSettings[PM_STAT_MAXSPEED] / 320.0f;
-
-                        // Accel contains of constant and directional parts
-                        // If velocity dir exactly matches target dir, accel = maxAccel
-                        float accel = 0.5f;
-                        accel += 0.5f * (velocityToTarget2DDot - accelDotThreshold) / (1.0f - accelDotThreshold);
-                        accel *= maxAccel;
-
-                        Vec3 velocityBoost(self->velocity);
-                        // Normalize velocity direction
-                        velocityBoost *= 1.0f / speed;
-                        // Multiply by accel and frame time in millis
-                        velocityBoost *= accel * 0.001f * game.frametime;
-                        // Modify bot entity velocity
-                        VectorAdd(self->velocity, velocityBoost.Data(), self->velocity);
-                    }
+                    SetPendingLandingDash(input);
+                    return;
                 }
             }
 
@@ -1039,17 +1018,25 @@ void Bot::MoveGenericRunning(BotInput *input)
                 input->intendedLookVec.Z() *= Z_NO_BEND_SCALE;
         }
     }
-    else
+    // Looks like the bot is in air falling vertically
+    else if (!self->groundentity)
     {
-        // Looks like we are falling on target or being pushed up through it
-        input->ClearMovementDirections();
+        // Allow aiming in flight as described below
+        if (HasEnemy() && ShouldAttack() && CanFlyAboveGroundRelaxed())
+        {
+            input->ClearMovementDirections();
+            input->canOverrideLookVec = true;
+        }
+        return;
     }
 
+    bool allowAimingInFlight = !ShouldMoveCarefully();
     // Prevent falling by switching to a cautious move style
     if (closeAreaProps.frontTest.CanFall() || closeAreaProps.leftTest.CanFall() || closeAreaProps.rightTest.CanFall())
     {
         input->SetSpecialButton(false);
         input->SetUpMovement(0);
+        allowAimingInFlight = false;
     }
     // If there is a side wall
     else if (!closeAreaProps.leftTest.CanWalk() || !closeAreaProps.rightTest.CanWalk())
@@ -1071,9 +1058,13 @@ void Bot::MoveGenericRunning(BotInput *input)
             case TRAVEL_LADDER:
             case TRAVEL_BARRIERJUMP:
                 input->SetSpecialButton(false);
+                allowAimingInFlight = false;
             default:
                 if (IsCloseToNavTarget())
+                {
                     input->SetSpecialButton(false);
+                    allowAimingInFlight = false;
+                }
         }
     }
 
@@ -1081,7 +1072,112 @@ void Bot::MoveGenericRunning(BotInput *input)
     {
         input->SetUpMovement(0);
         input->SetSpecialButton(false);
+        allowAimingInFlight = false;
     }
+
+    // If all these conditions are met, the bot can release all buttons in air and aim in arbitrary direction
+    if (allowAimingInFlight && HasEnemy() && ShouldAttack() && CanFlyAboveGroundRelaxed())
+    {
+        input->ClearMovementDirections();
+        input->canOverrideLookVec = true;
+        return;
+    }
+
+    // prevent blocking after all
+    if (!input->ForwardMovement() && !input->RightMovement() && !input->UpMovement() && !input->IsSpecialButtonSet())
+        input->SetForwardMovement(1);
+}
+
+bool Bot::CanFlyAboveGroundRelaxed() const
+{
+    // Test this first to cut off expensive trace computation
+    if (self->groundentity)
+        return false;
+
+    trace_t trace;
+    float playerEntHeightOffset = -playerbox_stand_mins[2];
+    float desiredHeightAboveGround = 0.3f * AI_JUMPABLE_HEIGHT;
+    float traceHeight = 8.0f + desiredHeightAboveGround + playerEntHeightOffset;
+    AiGroundTraceCache::Instance()->GetGroundTrace(self, traceHeight, &trace);
+    if (trace.fraction == 1.0f)
+        return true;
+
+    return trace.fraction * traceHeight - playerEntHeightOffset >= desiredHeightAboveGround;
+}
+
+Vec3 Bot::GetCheatingAcceleratedVelocity(float velocity2DDirDotToTarget2DDir, bool hasObstacles) const
+{
+    // Apply cheating acceleration if bot is moving quite straight to a target
+    if (velocity2DDirDotToTarget2DDir <= STRAIGHT_MOVEMENT_DOT_THRESHOLD)
+        return Vec3(self->velocity);
+
+    if (self->groundentity)
+        return Vec3(self->velocity);
+
+    if (hasObstacles)
+        return Vec3(self->velocity);
+
+    if (Skill() <= 0.33f)
+        return Vec3(self->velocity);
+
+    const float squareSpeed = VectorLengthSquared(self->velocity);
+    const float runSpeed = self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED];
+
+    // Avoid division by zero and logic errors
+    if (squareSpeed < runSpeed * runSpeed)
+        return Vec3(self->velocity);
+
+    const float speed = 1.0f / Q_RSqrt(squareSpeed);
+
+    // Max accel is measured in units per second and decreases with speed
+    // For speed of runSpeed maxAccel is 180
+    // For speed of 900 and greater maxAccel is 0
+    // This means cheating acceleration is not applied for speeds greater than 900 ups
+    // However the bot may reach greater speed since builtin GS_NEWBUNNY forward accel is enabled
+    float maxAccel = 180.0f * (1.0f - BoundedFraction(speed - runSpeed, 900.0f - runSpeed));
+
+    // Modify maxAccel to respect player class movement limitations
+    maxAccel *= runSpeed / 320.0f;
+
+    // Accel contains of constant and directional parts
+    // If velocity dir exactly matches target dir, accel = maxAccel
+    float accelStrength = 0.0f;
+    accelStrength += velocity2DDirDotToTarget2DDir - STRAIGHT_MOVEMENT_DOT_THRESHOLD;
+    accelStrength /= (1.0f - STRAIGHT_MOVEMENT_DOT_THRESHOLD);
+    accelStrength += 0.5f;
+
+    Vec3 velocityBoost(self->velocity);
+    // Normalize velocity direction
+    velocityBoost *= 1.0f / speed;
+    // Multiply by accel and frame time in millis
+    velocityBoost *= accelStrength * maxAccel * 0.001f * game.frametime;
+    // Return resulting velocity
+    return velocityBoost + self->velocity;
+}
+
+Vec3 Bot::GetCheatingCorrectedVelocity(float velocity2DDirDotToTarget2DDir, Vec3 toTargetDir2D) const
+{
+    if (!(self->r.client->ps.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL))
+        return Vec3(self->velocity);
+
+    // Make correction less effective for large angles multiplying it
+    // by the dot product to avoid a weird-looking cheating movement
+    float controlMultiplier = 0.01f + velocity2DDirDotToTarget2DDir * 0.10f;
+    if (ShouldMoveCarefully())
+        controlMultiplier += 0.25f;
+
+    float squareSpeed = VectorLengthSquared(self->velocity);
+    if (squareSpeed < 1)
+        return Vec3(self->velocity);
+
+    float speed = 1.0f / Q_RSqrt(squareSpeed);
+    Vec3 newVelocity(self->velocity);
+    newVelocity *= 1.0f / speed;
+    newVelocity += controlMultiplier * toTargetDir2D;
+    // Preserve velocity magnitude
+    newVelocity.NormalizeFast();
+    newVelocity *= speed;
+    return newVelocity;
 }
 
 bool Bot::TryRocketJumpShortcut(BotInput *input)
@@ -1420,6 +1516,8 @@ void Bot::TriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec
     input->SetUpMovement(1);
     input->SetAttackButton(true);
     input->SetSpecialButton(true);
+    input->canOverrideLookVec = false;
+    input->canOverridePitch = false;
 
     rocketJumpMovementState.SetTriggered(targetOrigin, fireTarget, 750);
 }

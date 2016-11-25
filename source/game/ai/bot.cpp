@@ -510,22 +510,6 @@ void Bot::Think()
     weaponsSelector.Think(botBrain.cachedWorldState);
 }
 
-bool Bot::MayHitWhileRunning() const
-{
-    if (!HasEnemy())
-        FailWith("MayHitWhileRunning(): there is no enemy");
-
-    Vec3 botToEnemyDir(EnemyOrigin());
-    botToEnemyDir -= self->s.origin;
-    // We are sure it has non-zero length (enemies collide with the bot)
-    botToEnemyDir.NormalizeFast();
-
-    vec3_t botLookDir;
-    AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
-    // Check whether the bot may hit while running
-    return (botToEnemyDir.Dot(botLookDir) > 0.99);
-}
-
 //==========================================
 // BOT_DMclass_RunFrame
 // States Machine & call client movement
