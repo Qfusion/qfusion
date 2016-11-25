@@ -516,7 +516,7 @@ void AiBaseBrain::PickLongTermGoal( const Goal *currLongTermGoal ) {
 	}
 
 	NavEntity *bestNavEnt = nullptr;
-	float bestWeight;
+	float bestWeight = 0;
 
 	for( auto &goalAndWeight: goalCandidates ) {
 		if( !MayNotBeFeasibleGoal( goalAndWeight.goal ) ) {

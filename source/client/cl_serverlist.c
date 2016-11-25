@@ -519,18 +519,18 @@ static void CL_MasterAddressCache_Init( void ) {
 	int numMasters;
 	const char *ptr;
 	const char *masterAddress;
-	const char *masterList;
+	const char *masterServers;
 	masterserver_t *master;
 	int i;
 
-	masterList = Cvar_String( "masterservers" );
-	if( !*masterList ) {
+	masterServers = Cvar_String( "masterservers" );
+	if( !*masterServers ) {
 		return;
 	}
 
 	// count the number of master servers
 	numMasters = 0;
-	for( ptr = masterList; ptr; ) {
+	for( ptr = masterServers; ptr; ) {
 		masterAddress = COM_Parse( &ptr );
 		if( !*masterAddress ) {
 			break;

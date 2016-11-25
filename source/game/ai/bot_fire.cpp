@@ -424,6 +424,8 @@ bool Bot::CheckShot( const AimParams &aimParams, const CombatTask &combatTask, c
 	// We test directions factor first because it is cheaper to calculate
 
 	trace_t tr;
+	memset( &tr, 0, sizeof( tr ) );
+
 	if( aimType != AI_WEAPON_AIM_TYPE_DROP ) {
 		Vec3 traceEnd( newLookDir );
 		traceEnd *= 999999.0f;

@@ -152,7 +152,7 @@ void mumble_set_context( const unsigned char* context, size_t len ) {
 		return;
 	}
 	len = MIN( sizeof( lm->context ), len );
-	lm->context_len = len;
+	lm->context_len = (uint32_t)len;
 	memcpy( lm->context, context, len );
 }
 

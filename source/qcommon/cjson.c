@@ -54,8 +54,8 @@ static int cJSON_strcasecmp( const char *s1,const char *s2 ) {
 	return tolower( *(const unsigned char *)s1 ) - tolower( *(const unsigned char *)s2 );
 }
 
-static void *(*cJSON_malloc)( size_t sz ) = malloc;
-static void (*cJSON_free)( void *ptr ) = free;
+static void *(*cJSON_malloc)( size_t sz ) = NULL;
+static void (*cJSON_free)( void *ptr ) = NULL;
 
 static char* cJSON_strdup( const char* str ) {
 	size_t len;
@@ -467,7 +467,8 @@ static const char *parse_array( cJSON *item,const char *value ) {
 /* Render an array to text */
 static char *print_array( cJSON *item,int depth,int fmt ) {
 	char **entries;
-	char *out = 0,*ptr,*ret; int len = 5;
+	char *out = 0,*ptr,*ret;
+	size_t len = 5;
 	cJSON *child = item->child;
 	int numentries = 0,i = 0,fail = 0;
 
@@ -595,7 +596,8 @@ static const char *parse_object( cJSON *item,const char *value ) {
 /* Render an object to text. */
 static char *print_object( cJSON *item,int depth,int fmt ) {
 	char **entries = 0,**names = 0;
-	char *out = 0,*ptr,*ret,*str; int len = 7,i = 0,j;
+	char *out = 0,*ptr,*ret,*str; int i = 0,j;
+	size_t len = 7;
 	cJSON *child = item->child;
 	int numentries = 0,fail = 0;
 	/* Count the number of entries. */

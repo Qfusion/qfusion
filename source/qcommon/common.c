@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "steam.h"
 #include "../qalgo/glob.h"
 #include "../qalgo/md5.h"
+#include "../qcommon/cjson.h"
 #include "../matchmaker/mm_common.h"
 #include "compression.h"
 
@@ -827,6 +828,9 @@ void Qcommon_Init( int argc, char **argv ) {
 	if( setjmp( abortframe ) ) {
 		Sys_Error( "Error during initialization: %s", com_errormsg );
 	}
+
+	// reset hooks to malloc and free
+	cJSON_InitHooks( NULL );
 
 	QThreads_Init();
 
