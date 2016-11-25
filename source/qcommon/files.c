@@ -4724,6 +4724,7 @@ void FS_Shutdown( void )
 	Cmd_RemoveCommand( "fs_search" );
 	Cmd_RemoveCommand( "fs_checksum" );
 	Cmd_RemoveCommand( "fs_mtime" );
+	Cmd_RemoveCommand( "fs_untoched" );
 
 	FS_FreeSearchFiles();
 	FS_Free( fs_searchfiles );
