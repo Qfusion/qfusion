@@ -25,10 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "as/asui.h"
 #include "as/asui_local.h"
 
-namespace ASUI {
-
-static const asstring_t *L10n_TranslateString( const asstring_t &input )
+namespace ASUI
 {
+
+static const asstring_t *L10n_TranslateString( const asstring_t &input ) {
 	const char *translation;
 
 	translation = trap::L10n_TranslateString( input.buffer );
@@ -38,22 +38,19 @@ static const asstring_t *L10n_TranslateString( const asstring_t &input )
 	return ASSTR( translation );
 }
 
-static const asstring_t *L10n_GetUserLanguage( void )
-{
+static const asstring_t *L10n_GetUserLanguage( void ) {
 	return ASSTR( trap::L10n_GetUserLanguage() );
 }
 
-void PrebindL10n( ASInterface *as )
-{
+void PrebindL10n( ASInterface *as ) {
 	(void)as;
 }
 
-void BindL10n( ASInterface *as )
-{
+void BindL10n( ASInterface *as ) {
 	ASBind::Global( as->getEngine() )
-		.function( &L10n_TranslateString, "TranslateString" )
-		.function( &L10n_TranslateString, "_T" )
-		.function( &L10n_GetUserLanguage, "GetUserLanguage" )
+	.function( &L10n_TranslateString, "TranslateString" )
+	.function( &L10n_TranslateString, "_T" )
+	.function( &L10n_GetUserLanguage, "GetUserLanguage" )
 	;
 }
 

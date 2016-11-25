@@ -26,14 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static bool dynvar_initialized = false;
 static bool dynvar_preinitialized = false;
 
-typedef struct dynvar_listener_node_s
-{
+typedef struct dynvar_listener_node_s {
 	dynvar_listener_f listener;
 	struct dynvar_listener_node_s *next;
 } dynvar_listener_node_t;
 
-struct dynvar_s
-{
+struct dynvar_s {
 	const char *name;               // name of the dynvar in dictionary
 	const bool console;         // accessible from console
 	dynvar_getter_f getter;         // getter function
@@ -57,16 +55,16 @@ static const char DYNVAR_NOT_FOUND_MSG[] = "no such dynvar: %s\n";
 // forward declarations of internal implementation
 
 static dynvar_t *Dynvar_NewDynvar(
-        const char *name,
-        bool console,
-        dynvar_getter_f getter,
-        dynvar_setter_f setter
-);
+	const char *name,
+	bool console,
+	dynvar_getter_f getter,
+	dynvar_setter_f setter
+	);
 
 static dynvar_listener_node_t *Dynvar_NewListener(
-        dynvar_listener_f listener,
-        dynvar_listener_node_t *next
-);
+	dynvar_listener_f listener,
+	dynvar_listener_node_t *next
+	);
 
 static void Dynvar_FreeDynvar( dynvar_t *dynvar );
 
@@ -79,8 +77,7 @@ static void Dynvar_Set_f( void );
 
 // implementation of externalized functions
 
-void Dynvar_PreInit( void )
-{
+void Dynvar_PreInit( void ) {
 	assert( !dynvar_initialized );
 	assert( !dynvar_preinitialized );
 
@@ -92,8 +89,7 @@ void Dynvar_PreInit( void )
 
 // externalized functions
 
-void Dynvar_Init( void )
-{
+void Dynvar_Init( void ) {
 	assert( !dynvar_initialized );
 	assert( dynvar_preinitialized );
 
@@ -104,10 +100,8 @@ void Dynvar_Init( void )
 	dynvar_initialized = true;
 }
 
-void Dynvar_Shutdown( void )
-{
-	if( dynvar_initialized )
-	{
+void Dynvar_Shutdown( void ) {
+	if( dynvar_initialized ) {
 		struct trie_dump_s *dump;
 		unsigned int i;
 
@@ -117,8 +111,7 @@ void Dynvar_Shutdown( void )
 		Cmd_RemoveCommand( "setdyn" );
 
 		Trie_Dump( dynvar_trie, "", TRIE_DUMP_VALUES, &dump );
-		for( i = 0; i < dump->size; i++ )
-		{
+		for( i = 0; i < dump->size; i++ ) {
 			Dynvar_Destroy( (dynvar_t *)dump->key_value_vector[i].value );
 		}
 		Trie_FreeDump( dump );
@@ -126,8 +119,7 @@ void Dynvar_Shutdown( void )
 		dynvar_initialized = false;
 	}
 
-	if( dynvar_preinitialized )
-	{
+	if( dynvar_preinitialized ) {
 		assert( dynvar_trie );
 
 		Trie_Destroy( dynvar_trie );
@@ -138,28 +130,26 @@ void Dynvar_Shutdown( void )
 }
 
 dynvar_t *Dynvar_Create(
-        const char *name,
-        bool console,
-        dynvar_getter_f getter,
-        dynvar_setter_f setter
-)
-{
+	const char *name,
+	bool console,
+	dynvar_getter_f getter,
+	dynvar_setter_f setter
+	) {
 	assert( dynvar_trie );
-	if( name && getter && setter )
-	{
+	if( name && getter && setter ) {
 		dynvar_t *dynvar = Dynvar_NewDynvar( name, console, getter, setter );
-		if( Trie_Insert( dynvar_trie, name, dynvar ) == TRIE_OK )
+		if( Trie_Insert( dynvar_trie, name, dynvar ) == TRIE_OK ) {
 			return dynvar;
-		else
+		} else {
 			Dynvar_FreeDynvar( dynvar );
+		}
 	}
 	return NULL;
 }
 
 void Dynvar_Destroy(
-        dynvar_t *dynvar
-)
-{
+	dynvar_t *dynvar
+	) {
 	dynvar_t *old;
 #if defined ( DEBUG ) || defined ( _DEBUG )
 	trie_error_t status;
@@ -175,9 +165,8 @@ void Dynvar_Destroy(
 }
 
 dynvar_t *Dynvar_Lookup(
-        const char *name
-)
-{
+	const char *name
+	) {
 	dynvar_t *dynvar;
 	assert( dynvar_trie );
 	Trie_Find( dynvar_trie, name, TRIE_EXACT_MATCH, (void **)&dynvar );
@@ -185,58 +174,52 @@ dynvar_t *Dynvar_Lookup(
 }
 
 const char *Dynvar_GetName(
-        dynvar_t *dynvar
-)
-{
+	dynvar_t *dynvar
+	) {
 	assert( dynvar );
 	return dynvar->name;
 }
 
 dynvar_get_status_t Dynvar_GetValue(
-        dynvar_t *dynvar,
-        void **value
-)
-{
+	dynvar_t *dynvar,
+	void **value
+	) {
 	assert( dynvar );
 	assert( dynvar->getter );
 	return dynvar->getter( value );
 }
 
 dynvar_set_status_t Dynvar_SetValue(
-        dynvar_t *dynvar,
-        void *value
-)
-{
+	dynvar_t *dynvar,
+	void *value
+	) {
 	dynvar_set_status_t status;
 	assert( dynvar );
 	assert( dynvar->setter );
 	assert( !dynvar->listeners_immutable );
 	status = dynvar->setter( value );
-	if( status == DYNVAR_SET_OK )
+	if( status == DYNVAR_SET_OK ) {
 		Dynvar_CallListeners( dynvar, value );
+	}
 	return status;
 }
 
 void Dynvar_CallListeners(
-        dynvar_t *dynvar,
-        void *value
-)
-{
+	dynvar_t *dynvar,
+	void *value
+	) {
 	dynvar_listener_node_t *n;
 	dynvar->listeners_immutable = true; // protect against concurrent Dynvar_RemoveListener
 	// call listeners
-	for( n = dynvar->listeners; n; n = n->next )
-	{
+	for( n = dynvar->listeners; n; n = n->next ) {
 		assert( n->listener );
 		n->listener( value );
 	}
 	dynvar->listeners_immutable = false; // allow Dynvar_RemoveListener to modify dynvar->listeners
 	// perform pending removals
-	if( dynvar->to_remove )
-	{
+	if( dynvar->to_remove ) {
 		dynvar_listener_node_t *prev = NULL;
-		for( n = dynvar->to_remove; n; n = n->next )
-		{
+		for( n = dynvar->to_remove; n; n = n->next ) {
 			Dynvar_RemoveListener( dynvar, n->listener );
 			Mem_ZoneFree( prev );
 			prev = n;
@@ -247,19 +230,15 @@ void Dynvar_CallListeners(
 }
 
 void Dynvar_AddListener(
-        dynvar_t *dynvar,
-        dynvar_listener_f listener
-)
-{
+	dynvar_t *dynvar,
+	dynvar_listener_f listener
+	) {
 	assert( dynvar );
 	assert( listener );
-	if( !dynvar->listeners )
-	{
+	if( !dynvar->listeners ) {
 		// no listeners yet, create list head
 		dynvar->listeners = Dynvar_NewListener( listener, NULL );
-	}
-	else
-	{
+	} else {
 		// append listener
 		dynvar_listener_node_t *n;
 		for( n = dynvar->listeners; n->next; n = n->next )
@@ -271,29 +250,22 @@ void Dynvar_AddListener(
 }
 
 void Dynvar_RemoveListener(
-        dynvar_t *dynvar,
-        dynvar_listener_f listener
-)
-{
+	dynvar_t *dynvar,
+	dynvar_listener_f listener
+	) {
 	assert( dynvar );
 	assert( listener );
-	if( !dynvar->listeners_immutable )
-	{
+	if( !dynvar->listeners_immutable ) {
 		// modification of dynvar->listeners allowed
 		dynvar_listener_node_t *cur, *prev;
 		prev = NULL;
 		cur = dynvar->listeners;
-		while( cur )
-		{
-			if( cur->listener == listener )
-			{
-				if( prev )
-				{
+		while( cur ) {
+			if( cur->listener == listener ) {
+				if( prev ) {
 					// remove middle or tail node
 					prev->next = cur->next;
-				}
-				else
-				{
+				} else {
 					// remove head node
 					assert( cur == dynvar->listeners );
 					dynvar->listeners = cur->next;
@@ -304,29 +276,26 @@ void Dynvar_RemoveListener(
 			prev = cur;
 			cur = cur->next;
 		}
-	}
-	else
-	{
+	} else {
 		// do not modify dynvar->listeners, but prepend to dynvar->to_remove for deferred removal
 		dynvar->to_remove = Dynvar_NewListener( listener, dynvar->to_remove );
 	}
 }
 
 int Dynvar_CompleteCountPossible(
-        const char *partial
-)
-{
+	const char *partial
+	) {
 	unsigned int matches = 0;
 	assert( partial );
-	if( *partial )
+	if( *partial ) {
 		Trie_NoOfMatchesIf( dynvar_trie, partial, Dynvar_Console, NULL, &matches );
+	}
 	return matches;
 }
 
 const char **Dynvar_CompleteBuildList(
-        const char *partial
-)
-{
+	const char *partial
+	) {
 	struct trie_dump_s *dump = NULL;
 	const char **buf;
 	unsigned int i;
@@ -343,76 +312,67 @@ const char **Dynvar_CompleteBuildList(
 }
 
 const char *Dynvar_CompleteDynvar(
-        const char *partial
-)
-{
+	const char *partial
+	) {
 	assert( partial );
-	if( *partial )
-	{
+	if( *partial ) {
 		dynvar_t *dynvar;
-		if( Trie_FindIf( dynvar_trie, partial, TRIE_PREFIX_MATCH, Dynvar_Console, NULL, (void **)&dynvar ) == TRIE_OK )
+		if( Trie_FindIf( dynvar_trie, partial, TRIE_PREFIX_MATCH, Dynvar_Console, NULL, (void **)&dynvar ) == TRIE_OK ) {
 			return Dynvar_GetName( dynvar );
+		}
 	}
 	return NULL;
 }
 
-bool Dynvar_Command( void )
-{
+bool Dynvar_Command( void ) {
 	dynvar_t *dynvar = Dynvar_Lookup( Cmd_Argv( 0 ) );
-	if( dynvar && dynvar->console )
-	{
+	if( dynvar && dynvar->console ) {
 		// dynvar exists and is console-accessible
-		if( Cmd_Argc() == 1 )
-		{
+		if( Cmd_Argc() == 1 ) {
 			void *value;
 			dynvar_get_status_t status = Dynvar_GetValue( dynvar, &value );
-			switch( status )
-			{
-			case DYNVAR_GET_OK:
-				Com_Printf( "\"%s\" is \"%s\"\n", Dynvar_GetName( dynvar ), (char *) value );
-				break;
-			case DYNVAR_GET_WRITEONLY:
-				Com_Printf( (char *) DYNVAR_GET_WRITEONLY_MSG, Dynvar_GetName( dynvar ) );
-				break;
-			case DYNVAR_GET_TRANSIENT:
-				Com_Printf( (char *) DYNVAR_TRANSIENT_MSG, Dynvar_GetName( dynvar ) );
-				break;
+			switch( status ) {
+				case DYNVAR_GET_OK:
+					Com_Printf( "\"%s\" is \"%s\"\n", Dynvar_GetName( dynvar ), (char *) value );
+					break;
+				case DYNVAR_GET_WRITEONLY:
+					Com_Printf( (char *) DYNVAR_GET_WRITEONLY_MSG, Dynvar_GetName( dynvar ) );
+					break;
+				case DYNVAR_GET_TRANSIENT:
+					Com_Printf( (char *) DYNVAR_TRANSIENT_MSG, Dynvar_GetName( dynvar ) );
+					break;
 			}
-		}
-		else
-		{
+		} else {
 			dynvar_set_status_t status = Dynvar_SetValue( dynvar, Cmd_Argv( 1 ) );
-			switch( status )
-			{
-			case DYNVAR_SET_OK:
-				break;
-			case DYNVAR_SET_READONLY:
-				Com_Printf( (char *) DYNVAR_SET_READONLY_MSG, Dynvar_GetName( dynvar ) );
-				break;
-			case DYNVAR_SET_INVALID:
-				Com_Printf( (char *) DYNVAR_SET_INVALID_MSG, Cmd_Argv( 1 ), Dynvar_GetName( dynvar ) );
-				break;
-			case DYNVAR_SET_TRANSIENT:
-				Com_Printf( (char *) DYNVAR_TRANSIENT_MSG, Dynvar_GetName( dynvar ) );
-				break;
+			switch( status ) {
+				case DYNVAR_SET_OK:
+					break;
+				case DYNVAR_SET_READONLY:
+					Com_Printf( (char *) DYNVAR_SET_READONLY_MSG, Dynvar_GetName( dynvar ) );
+					break;
+				case DYNVAR_SET_INVALID:
+					Com_Printf( (char *) DYNVAR_SET_INVALID_MSG, Cmd_Argv( 1 ), Dynvar_GetName( dynvar ) );
+					break;
+				case DYNVAR_SET_TRANSIENT:
+					Com_Printf( (char *) DYNVAR_TRANSIENT_MSG, Dynvar_GetName( dynvar ) );
+					break;
 			}
 		}
 		return true;
-	}
-	else
+	} else {
 		// dynvar does not exist or is inaccessible
 		return false;
+	}
 }
 
 // internal implementation
 
 static dynvar_t *Dynvar_NewDynvar(
-        const char *name,
-        bool console,
-        dynvar_getter_f getter,
-        dynvar_setter_f setter
-)
-{
+	const char *name,
+	bool console,
+	dynvar_getter_f getter,
+	dynvar_setter_f setter
+	) {
 	dynvar_t *dynvar = (dynvar_t *) Mem_ZoneMalloc( sizeof( dynvar_t ) );
 	dynvar->name = (char *) Mem_ZoneMalloc( strlen( name ) + 1 );
 	strcpy( (char *) dynvar->name, name );
@@ -425,22 +385,19 @@ static dynvar_t *Dynvar_NewDynvar(
 }
 
 static dynvar_listener_node_t *Dynvar_NewListener(
-        dynvar_listener_f listener,
-        dynvar_listener_node_t *next
-)
-{
+	dynvar_listener_f listener,
+	dynvar_listener_node_t *next
+	) {
 	dynvar_listener_node_t *n = (dynvar_listener_node_t *) Mem_ZoneMalloc( sizeof( dynvar_listener_node_t ) );
 	n->listener = listener;
 	n->next = next;
 	return n;
 }
 
-static void Dynvar_FreeDynvar( dynvar_t *dynvar )
-{
+static void Dynvar_FreeDynvar( dynvar_t *dynvar ) {
 	dynvar_listener_node_t *next, *cur;
 	cur = dynvar->listeners;
-	for( cur = dynvar->listeners; cur; cur = next )
-	{
+	for( cur = dynvar->listeners; cur; cur = next ) {
 		next = cur->next;
 		Mem_ZoneFree( cur );
 	}
@@ -448,37 +405,34 @@ static void Dynvar_FreeDynvar( dynvar_t *dynvar )
 	Mem_ZoneFree( dynvar );
 }
 
-static int Dynvar_Console( void *dynvar, void *pattern )
-{
+static int Dynvar_Console( void *dynvar, void *pattern ) {
 	const dynvar_t *const var = ( (dynvar_t *) dynvar );
 	assert( var );
 	return var->console &&
-	       ( !pattern || Com_GlobMatch( (const char *) pattern, var->name, false ) );
+		   ( !pattern || Com_GlobMatch( (const char *) pattern, var->name, false ) );
 }
 
-void Dynvar_List_f( void )
-{
+void Dynvar_List_f( void ) {
 	struct trie_dump_s *dump = NULL;
 	unsigned int i, size;
 	char *pattern;
 
 	Trie_GetSize( dynvar_trie, &size );
-	if( !size )
-	{
+	if( !size ) {
 		Com_Printf( "No dynvars\n" );
 		return;
 	}
 
-	if( Cmd_Argc() == 1 )
+	if( Cmd_Argc() == 1 ) {
 		pattern = NULL; // no wildcard
-	else
+	} else {
 		pattern = Cmd_Args();
+	}
 
 	Com_Printf( "\nDynvars:\n" );
 	assert( dynvar_trie );
 	Trie_DumpIf( dynvar_trie, "", TRIE_DUMP_VALUES, Dynvar_Console, pattern, &dump );
-	for( i = 0; i < dump->size; ++i )
-	{
+	for( i = 0; i < dump->size; ++i ) {
 		dynvar_t *const dynvar = (dynvar_t *) dump->key_value_vector[i].value;
 		Com_Printf( "%s\n", Dynvar_GetName( dynvar ) );
 	}
@@ -486,49 +440,42 @@ void Dynvar_List_f( void )
 	Com_Printf( "%i dynvars\n", i );
 }
 
-static void Dynvar_Set_f( void )
-{
-	if( Cmd_Argc() == 3 )
-	{
+static void Dynvar_Set_f( void ) {
+	if( Cmd_Argc() == 3 ) {
 		dynvar_t *dynvar;
 		dynvar = Dynvar_Lookup( Cmd_Argv( 1 ) );
-		if( dynvar )
-		{
-			if( dynvar->console )
-			{
+		if( dynvar ) {
+			if( dynvar->console ) {
 				dynvar_set_status_t status = Dynvar_SetValue( dynvar, Cmd_Argv( 2 ) );
-				switch( status )
-				{
-				case DYNVAR_SET_OK:
-					break;
-				case DYNVAR_SET_READONLY:
-					Com_Printf( (char *) DYNVAR_SET_READONLY_MSG, Dynvar_GetName( dynvar ) );
-					break;
-				case DYNVAR_SET_INVALID:
-					Com_Printf( (char *) DYNVAR_SET_INVALID_MSG, Cmd_Argv( 2 ), Dynvar_GetName( dynvar ) );
-					break;
-				case DYNVAR_SET_TRANSIENT:
-					Com_Printf( (char *) DYNVAR_TRANSIENT_MSG, Dynvar_GetName( dynvar ) );
-					break;
+				switch( status ) {
+					case DYNVAR_SET_OK:
+						break;
+					case DYNVAR_SET_READONLY:
+						Com_Printf( (char *) DYNVAR_SET_READONLY_MSG, Dynvar_GetName( dynvar ) );
+						break;
+					case DYNVAR_SET_INVALID:
+						Com_Printf( (char *) DYNVAR_SET_INVALID_MSG, Cmd_Argv( 2 ), Dynvar_GetName( dynvar ) );
+						break;
+					case DYNVAR_SET_TRANSIENT:
+						Com_Printf( (char *) DYNVAR_TRANSIENT_MSG, Dynvar_GetName( dynvar ) );
+						break;
 				}
-			}
-			else
+			} else {
 				Com_Printf( (char *) DYNVAR_NOT_FOUND_MSG, Dynvar_GetName( dynvar ) );
-		}
-		else
+			}
+		} else {
 			Com_Printf( (char *) DYNVAR_NOT_FOUND_MSG, Cmd_Argv( 1 ) );
-	}
-	else
+		}
+	} else {
 		Com_Printf( "usage: setdyn <dynvar> <value>\n" );
+	}
 }
 
-static dynvar_get_status_t Dynvar_WriteOnly_f( void **val )
-{
+static dynvar_get_status_t Dynvar_WriteOnly_f( void **val ) {
 	return DYNVAR_GET_WRITEONLY;
 }
 
-static dynvar_set_status_t Dynvar_ReadOnly_f( void *val )
-{
+static dynvar_set_status_t Dynvar_ReadOnly_f( void *val ) {
 	return DYNVAR_SET_READONLY;
 }
 

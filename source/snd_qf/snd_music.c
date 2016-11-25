@@ -20,14 +20,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "snd_local.h"
 
-#define BACKGROUND_TRACK_PRELOAD_MSEC		200
-#define BACKGROUND_TRACK_BUFFERING_SIZE		MAX_RAW_SAMPLES*4+4000
-#define BACKGROUND_TRACK_BUFFERING_TIMEOUT	5000
+#define BACKGROUND_TRACK_PRELOAD_MSEC       200
+#define BACKGROUND_TRACK_BUFFERING_SIZE     MAX_RAW_SAMPLES * 4 + 4000
+#define BACKGROUND_TRACK_BUFFERING_TIMEOUT  5000
 
 bgTrack_t *s_bgTrack;
 bgTrack_t *s_bgTrackHead;
 static bool s_bgTrackPaused = false;  // the track is manually paused
-static int s_bgTrackLocked = 0;		  // the track is blocked by the game (e.g. the window's minimized)
+static int s_bgTrackLocked = 0;       // the track is blocked by the game (e.g. the window's minimized)
 static bool s_bgTrackMuted = false;
 static volatile bool s_bgTrackBuffering = false;
 static volatile bool s_bgTrackLoading = false; // unset by s_bgOpenThread when finished loading
@@ -36,39 +36,41 @@ static struct qthread_s *s_bgOpenThread;
 /*
 * S_BackgroundTrack_FindNextChunk
 */
-static bool S_BackgroundTrack_FindNextChunk( char *name, int *last_chunk, int file )
-{
+static bool S_BackgroundTrack_FindNextChunk( char *name, int *last_chunk, int file ) {
 	char chunkName[4];
 	int iff_chunk_len;
 
-	while( 1 )
-	{
+	while( 1 ) {
 		trap_FS_Seek( file, *last_chunk, FS_SEEK_SET );
 
-		if( trap_FS_Eof( file ) )
+		if( trap_FS_Eof( file ) ) {
 			return false; // didn't find the chunk
 
+		}
 		trap_FS_Seek( file, 4, FS_SEEK_CUR );
-		if( trap_FS_Read( &iff_chunk_len, sizeof( iff_chunk_len ), file ) < 4 )
+		if( trap_FS_Read( &iff_chunk_len, sizeof( iff_chunk_len ), file ) < 4 ) {
 			return false;
+		}
 		iff_chunk_len = LittleLong( iff_chunk_len );
-		if( iff_chunk_len < 0 )
+		if( iff_chunk_len < 0 ) {
 			return false; // didn't find the chunk
 
+		}
 		trap_FS_Seek( file, -8, FS_SEEK_CUR );
 		*last_chunk = trap_FS_Tell( file ) + 8 + ( ( iff_chunk_len + 1 ) & ~1 );
-		if( trap_FS_Read( chunkName, 4, file ) < 4 )
+		if( trap_FS_Read( chunkName, 4, file ) < 4 ) {
 			return false;
-		if( !strncmp( chunkName, name, 4 ) )
+		}
+		if( !strncmp( chunkName, name, 4 ) ) {
 			return true;
+		}
 	}
 }
 
 /*
 * S_BackgroundTrack_GetWavinfo
 */
-static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info )
-{
+static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info ) {
 	short t;
 	int samples, file;
 	int iff_data, last_chunk;
@@ -78,19 +80,18 @@ static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info )
 	memset( info, 0, sizeof( wavinfo_t ) );
 
 	trap_FS_FOpenFile( name, &file, FS_READ );
-	if( !file )
+	if( !file ) {
 		return 0;
+	}
 
 	// find "RIFF" chunk
-	if( !S_BackgroundTrack_FindNextChunk( "RIFF", &last_chunk, file ) )
-	{
+	if( !S_BackgroundTrack_FindNextChunk( "RIFF", &last_chunk, file ) ) {
 		//Com_Printf( "Missing RIFF chunk\n" );
 		return 0;
 	}
 
 	trap_FS_Read( chunkName, 4, file );
-	if( !strncmp( chunkName, "WAVE", 4 ) )
-	{
+	if( !strncmp( chunkName, "WAVE", 4 ) ) {
 		Com_Printf( "Missing WAVE chunk\n" );
 		return 0;
 	}
@@ -98,8 +99,7 @@ static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info )
 	// get "fmt " chunk
 	iff_data = trap_FS_Tell( file ) + 4;
 	last_chunk = iff_data;
-	if( !S_BackgroundTrack_FindNextChunk( "fmt ", &last_chunk, file ) )
-	{
+	if( !S_BackgroundTrack_FindNextChunk( "fmt ", &last_chunk, file ) ) {
 		Com_Printf( "Missing fmt chunk\n" );
 		return 0;
 	}
@@ -107,8 +107,7 @@ static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info )
 	trap_FS_Read( chunkName, 4, file );
 
 	trap_FS_Read( &t, sizeof( t ), file );
-	if( LittleShort( t ) != 1 )
-	{
+	if( LittleShort( t ) != 1 ) {
 		Com_Printf( "Microsoft PCM format only\n" );
 		return 0;
 	}
@@ -128,8 +127,7 @@ static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info )
 
 	// find data chunk
 	last_chunk = iff_data;
-	if( !S_BackgroundTrack_FindNextChunk( "data", &last_chunk, file ) )
-	{
+	if( !S_BackgroundTrack_FindNextChunk( "data", &last_chunk, file ) ) {
 		Com_Printf( "Missing data chunk\n" );
 		return 0;
 	}
@@ -145,15 +143,16 @@ static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info )
 /*
 * S_BackgroundTrack_OpenWav
 */
-static bool S_BackgroundTrack_OpenWav( struct bgTrack_s *track, bool *delay )
-{
-	if( delay )
+static bool S_BackgroundTrack_OpenWav( struct bgTrack_s *track, bool *delay ) {
+	if( delay ) {
 		*delay = false;
-	if( track->isUrl )
+	}
+	if( track->isUrl ) {
 		return false;
+	}
 
 	track->file = S_BackgroundTrack_GetWavinfo( track->filename, &track->info );
-	return (track->file != 0);
+	return ( track->file != 0 );
 }
 
 // =================================
@@ -161,13 +160,12 @@ static bool S_BackgroundTrack_OpenWav( struct bgTrack_s *track, bool *delay )
 /*
 * S_AllocTrack
 */
-static bgTrack_t *S_AllocTrack( const char *filename )
-{
+static bgTrack_t *S_AllocTrack( const char *filename ) {
 	bgTrack_t *track;
 
 	track = S_Malloc( sizeof( *track ) + strlen( filename ) + 1 );
 	track->ignore = false;
-	track->filename = (char *)((uint8_t *)track + sizeof( *track ));
+	track->filename = (char *)( (uint8_t *)track + sizeof( *track ) );
 	strcpy( track->filename, filename );
 	track->isUrl = trap_FS_IsUrl( track->filename );
 	track->muteOnPause = track->isUrl;
@@ -180,40 +178,40 @@ static bgTrack_t *S_AllocTrack( const char *filename )
 /*
 * S_ValidMusicFile
 */
-static bool S_ValidMusicFile( bgTrack_t *track )
-{
-	return (track->file && (!track->isUrl || !trap_FS_Eof( track->file )));
+static bool S_ValidMusicFile( bgTrack_t *track ) {
+	return ( track->file && ( !track->isUrl || !trap_FS_Eof( track->file ) ) );
 }
 
 /*
 * S_CloseMusicTrack
 */
-static void S_CloseMusicTrack( bgTrack_t *track )
-{
-	if( !track->file )
+static void S_CloseMusicTrack( bgTrack_t *track ) {
+	if( !track->file ) {
 		return;
+	}
 
-	if( track->close )
+	if( track->close ) {
 		track->close( track );
-	else
+	} else {
 		trap_FS_FCloseFile( track->file );
+	}
 	track->file = 0;
 }
 
 /*
 * S_OpenMusicTrack
 */
-static bool S_OpenMusicTrack( bgTrack_t *track, bool *buffering )
-{
-	if( track->ignore )
+static bool S_OpenMusicTrack( bgTrack_t *track, bool *buffering ) {
+	if( track->ignore ) {
 		return false;
+	}
 
 mark0:
-	if( buffering )
+	if( buffering ) {
 		*buffering = false;
+	}
 
-	if( !track->file )
-	{
+	if( !track->file ) {
 		bool opened, delay = false;
 
 		memset( &track->info, 0, sizeof( track->info ) );
@@ -223,32 +221,29 @@ mark0:
 		opened = track->open( track, &delay );
 
 		// try wav
-		if( !opened )
-		{
+		if( !opened ) {
 			track->open = S_BackgroundTrack_OpenWav;
 			opened = track->open( track, &delay );
 		}
 
-		if( opened && delay )
-		{
+		if( opened && delay ) {
 			// let the background track buffer for a while
 			// Com_Printf( "S_OpenMusicTrack: buffering %s...\n", track->filename );
-			if( buffering )
+			if( buffering ) {
 				*buffering = true;
+			}
 		}
-	}
-	else
-	{
+	} else {
 		int seek;
 
-		if( track->seek )
+		if( track->seek ) {
 			seek = track->seek( track, 0 );
-		else
+		} else {
 			seek = trap_FS_Seek( track->file, track->info.dataofs, FS_SEEK_SET );
+		}
 
 		// if seeking failed for whatever reason (stream?), try reopening again
-		if( seek )
-		{
+		if( seek ) {
 			S_CloseMusicTrack( track );
 			goto mark0;
 		}
@@ -260,16 +255,17 @@ mark0:
 /*
 * S_PrevMusicTrack
 */
-static bgTrack_t *S_PrevMusicTrack( bgTrack_t *track )
-{
+static bgTrack_t *S_PrevMusicTrack( bgTrack_t *track ) {
 	bgTrack_t *prev;
 
 	prev = track ? track->prev : NULL;
-	if( prev ) track = prev->next; // HACK to prevent endless loops where original 'track' comes from stack
-	while( prev && prev != track )
-	{
-		if( !prev->ignore )
+	if( prev ) {
+		track = prev->next;        // HACK to prevent endless loops where original 'track' comes from stack
+	}
+	while( prev && prev != track ) {
+		if( !prev->ignore ) {
 			break;
+		}
 		prev = prev->next;
 	}
 
@@ -279,16 +275,17 @@ static bgTrack_t *S_PrevMusicTrack( bgTrack_t *track )
 /*
 * S_NextMusicTrack
 */
-static bgTrack_t *S_NextMusicTrack( bgTrack_t *track )
-{
+static bgTrack_t *S_NextMusicTrack( bgTrack_t *track ) {
 	bgTrack_t *next;
 
 	next = track ? track->next : NULL;
-	if( next ) track = next->prev; // HACK to prevent endless loops where original 'track' comes from stack
-	while( next && next != track )
-	{
-		if( !next->ignore )
+	if( next ) {
+		track = next->prev;        // HACK to prevent endless loops where original 'track' comes from stack
+	}
+	while( next && next != track ) {
+		if( !next->ignore ) {
 			break;
+		}
 		next = next->next;
 	}
 
@@ -298,8 +295,7 @@ static bgTrack_t *S_NextMusicTrack( bgTrack_t *track )
 // =================================
 
 #define MAX_PLAYLIST_ITEMS 1024
-typedef struct playlistItem_s
-{
+typedef struct playlistItem_s {
 	bgTrack_t *track;
 	int order;
 } playlistItem_t;
@@ -307,25 +303,24 @@ typedef struct playlistItem_s
 /*
 * R_SortPlaylistItems
 */
-static int R_PlaylistItemCmp( const playlistItem_t *i1, const playlistItem_t *i2 )
-{
-	if( i1->order > i2->order )
+static int R_PlaylistItemCmp( const playlistItem_t *i1, const playlistItem_t *i2 ) {
+	if( i1->order > i2->order ) {
 		return 1;
-	if( i2->order > i1->order )
+	}
+	if( i2->order > i1->order ) {
 		return -1;
+	}
 	return 0;
 }
 
-void R_SortPlaylistItems( int numItems, playlistItem_t *items )
-{
-	qsort( items, numItems, sizeof( *items ), (int (*)(const void *, const void *))R_PlaylistItemCmp );
+void R_SortPlaylistItems( int numItems, playlistItem_t *items ) {
+	qsort( items, numItems, sizeof( *items ), ( int ( * )( const void *, const void * ) )R_PlaylistItemCmp );
 }
 
 /*
 * S_ReadPlaylistFile
 */
-static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool loop )
-{
+static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool loop ) {
 	int filenum, length;
 	char *tmpname = 0;
 	size_t tmpname_size = 0;
@@ -334,8 +329,9 @@ static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool l
 	int i, numItems = 0;
 
 	length = trap_FS_FOpenFile( filename, &filenum, FS_READ );
-	if( length < 0 )
+	if( length < 0 ) {
 		return NULL;
+	}
 
 	// load the playlist into memory
 	data = S_Malloc( length + 1 );
@@ -344,17 +340,16 @@ static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool l
 
 	srand( time( NULL ) );
 
-	while( *data )
-	{
+	while( *data ) {
 		size_t s;
 
 		entry = data;
 
 		// read the whole line
-		for( line = data; *line != '\0' && *line != '\n'; line++ );
+		for( line = data; *line != '\0' && *line != '\n'; line++ ) ;
 
 		// continue reading from the next character, if possible
-		data = (*line == '\0' ? line : line + 1);
+		data = ( *line == '\0' ? line : line + 1 );
 
 		*line = '\0';
 
@@ -362,21 +357,19 @@ static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool l
 		entry = Q_trim( entry );
 
 		// special M3U entry or comment
-		if( !*entry || *entry == '#' )
+		if( !*entry || *entry == '#' ) {
 			continue;
-
-		if( trap_FS_IsUrl( entry ) )
-		{
-			items[numItems].track = S_AllocTrack( entry );
 		}
-		else
-		{
+
+		if( trap_FS_IsUrl( entry ) ) {
+			items[numItems].track = S_AllocTrack( entry );
+		} else {
 			// append the entry name to playlist path
 			s = strlen( filename ) + 1 + strlen( entry ) + 1;
-			if( s > tmpname_size )
-			{
-				if( tmpname )
+			if( s > tmpname_size ) {
+				if( tmpname ) {
 					S_Free( tmpname );
+				}
 				tmpname_size = s;
 				tmpname = S_Malloc( tmpname_size );
 			}
@@ -390,35 +383,35 @@ static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool l
 			items[numItems].track = S_AllocTrack( tmpname );
 		}
 
-		if( ++numItems == MAX_PLAYLIST_ITEMS )
+		if( ++numItems == MAX_PLAYLIST_ITEMS ) {
 			break;
+		}
 	}
 
-	if( tmpname )
-	{
+	if( tmpname ) {
 		S_Free( tmpname );
 		tmpname = NULL;
 	}
 
-	if( !numItems )
+	if( !numItems ) {
 		return NULL;
+	}
 
 	// set the playing order
 	for( i = 0; i < numItems; i++ )
-		items[i].order = (shuffle ? (rand() % numItems) : i);
+		items[i].order = ( shuffle ? ( rand() % numItems ) : i );
 
 	// sort the playlist
 	R_SortPlaylistItems( numItems, items );
 
 	// link the playlist
-	for( i = 1; i < numItems; i++ )
-	{
-		items[i-1].track->next = items[i].track;
-		items[i].track->prev = items[i-1].track;
+	for( i = 1; i < numItems; i++ ) {
+		items[i - 1].track->next = items[i].track;
+		items[i].track->prev = items[i - 1].track;
 		items[i].track->loop = loop;
 	}
-	items[numItems-1].track->next = items[0].track;
-	items[0].track->prev = items[numItems-1].track;
+	items[numItems - 1].track->next = items[0].track;
+	items[0].track->prev = items[numItems - 1].track;
 	items[0].track->loop = loop;
 
 	return items[0].track;
@@ -429,8 +422,7 @@ static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool l
 /*
 * S_OpenBackgroundTrackProc
 */
-static void *S_OpenBackgroundTrackProc( void *ptrack )
-{
+static void *S_OpenBackgroundTrackProc( void *ptrack ) {
 	bgTrack_t *track = ptrack;
 	unsigned start;
 	bool buffering;
@@ -440,15 +432,13 @@ static void *S_OpenBackgroundTrackProc( void *ptrack )
 	s_bgTrackBuffering = buffering;
 
 	start = trap_Milliseconds();
-	while( s_bgTrackBuffering )
-	{
+	while( s_bgTrackBuffering ) {
 		if( trap_Milliseconds() > start + BACKGROUND_TRACK_BUFFERING_TIMEOUT ) {
-		}
-		else if( trap_FS_Eof( track->file ) ) {
-		}
-		else {
-			if( trap_FS_Seek( track->file, BACKGROUND_TRACK_BUFFERING_SIZE, FS_SEEK_SET ) < 0 )
+		} else if( trap_FS_Eof( track->file ) ) {
+		} else {
+			if( trap_FS_Seek( track->file, BACKGROUND_TRACK_BUFFERING_SIZE, FS_SEEK_SET ) < 0 ) {
 				continue;
+			}
 			trap_FS_Seek( track->file, 0, FS_SEEK_SET );
 		}
 
@@ -468,8 +458,7 @@ static void *S_OpenBackgroundTrackProc( void *ptrack )
 /*
 * S_OpenBackgroundTrackTask
 */
-static void S_OpenBackgroundTrackTask( bgTrack_t *track )
-{
+static void S_OpenBackgroundTrackTask( bgTrack_t *track ) {
 	s_bgTrackLoading = true;
 	s_bgTrackBuffering = false;
 	s_bgOpenThread = trap_Thread_Create( S_OpenBackgroundTrackProc, track );
@@ -478,8 +467,7 @@ static void S_OpenBackgroundTrackTask( bgTrack_t *track )
 /*
 * S_CloseBackgroundTrackTask
 */
-static void S_CloseBackgroundTrackTask( void )
-{
+static void S_CloseBackgroundTrackTask( void ) {
 	s_bgTrackBuffering = false;
 	trap_Thread_Join( s_bgOpenThread );
 	s_bgOpenThread = NULL;
@@ -488,32 +476,30 @@ static void S_CloseBackgroundTrackTask( void )
 /*
 * S_StartBackgroundTrack
 */
-void S_StartBackgroundTrack( const char *intro, const char *loop, int mode )
-{
+void S_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {
 	const char *ext;
 	bgTrack_t *introTrack, *loopTrack;
 	bgTrack_t *firstTrack = NULL;
 
 	S_StopBackgroundTrack();
 
-	if( !intro || !intro[0] )
+	if( !intro || !intro[0] ) {
 		return;
+	}
 
 	s_bgTrackMuted = false;
 	s_bgTrackPaused = false;
 
 	ext = COM_FileExtension( intro );
-	if( ext && !Q_stricmp( ext, ".m3u" ) )
-	{
+	if( ext && !Q_stricmp( ext, ".m3u" ) ) {
 		// mode bits:
 		// 1 - shuffle
 		// 2 - loop the selected track
 		// 4 - stream (even if muted)
 
-		firstTrack = S_ReadPlaylistFile( intro, 
-			mode & 1 ? true : false, mode & 2 ? true : false );
-		if( firstTrack )
-		{
+		firstTrack = S_ReadPlaylistFile( intro,
+										 mode & 1 ? true : false, mode & 2 ? true : false );
+		if( firstTrack ) {
 			goto start_playback;
 		}
 	}
@@ -524,11 +510,9 @@ void S_StartBackgroundTrack( const char *intro, const char *loop, int mode )
 	introTrack->next = introTrack->prev = introTrack;
 	introTrack->muteOnPause = introTrack->isUrl || mode & 4 ? true : false;
 
-	if( loop && loop[0] && Q_stricmp( intro, loop ) )
-	{
+	if( loop && loop[0] && Q_stricmp( intro, loop ) ) {
 		loopTrack = S_AllocTrack( loop );
-		if( S_OpenMusicTrack( loopTrack, NULL ) )
-		{
+		if( S_OpenMusicTrack( loopTrack, NULL ) ) {
 			S_CloseMusicTrack( loopTrack );
 
 			introTrack->next = introTrack->prev = loopTrack;
@@ -544,8 +528,7 @@ void S_StartBackgroundTrack( const char *intro, const char *loop, int mode )
 
 start_playback:
 
-	if( !firstTrack || firstTrack->ignore )
-	{
+	if( !firstTrack || firstTrack->ignore ) {
 		S_StopBackgroundTrack();
 		return;
 	}
@@ -556,14 +539,12 @@ start_playback:
 /*
 * S_StopBackgroundTrack
 */
-void S_StopBackgroundTrack( void )
-{
+void S_StopBackgroundTrack( void ) {
 	bgTrack_t *next;
 
 	S_CloseBackgroundTrackTask();
 
-	while( s_bgTrackHead )
-	{
+	while( s_bgTrackHead ) {
 		next = s_bgTrackHead->anext;
 
 		S_CloseMusicTrack( s_bgTrackHead );
@@ -582,17 +563,16 @@ void S_StopBackgroundTrack( void )
 /*
 * S_AdvanceBackgroundTrack
 */
-static bool S_AdvanceBackgroundTrack( int n )
-{
+static bool S_AdvanceBackgroundTrack( int n ) {
 	bgTrack_t *track;
 
-	if( n < 0 )
+	if( n < 0 ) {
 		track = S_PrevMusicTrack( s_bgTrack );
-	else
+	} else {
 		track = S_NextMusicTrack( s_bgTrack );
+	}
 
-	if( track && track != s_bgTrack )
-	{
+	if( track && track != s_bgTrack ) {
 		S_CloseBackgroundTrackTask();
 		S_CloseMusicTrack( s_bgTrack );
 		S_OpenBackgroundTrackTask( track );
@@ -605,24 +585,21 @@ static bool S_AdvanceBackgroundTrack( int n )
 /*
 * S_PrevBackgroundTrack
 */
-void S_PrevBackgroundTrack( void )
-{
+void S_PrevBackgroundTrack( void ) {
 	S_AdvanceBackgroundTrack( -1 );
 }
 
 /*
 * S_NextBackgroundTrack
 */
-void S_NextBackgroundTrack( void )
-{
+void S_NextBackgroundTrack( void ) {
 	S_AdvanceBackgroundTrack(  1 );
 }
 
 /*
 * S_PauseBackgroundTrack
 */
-void S_PauseBackgroundTrack( void )
-{
+void S_PauseBackgroundTrack( void ) {
 	if( !s_bgTrack ) {
 		return;
 	}
@@ -640,12 +617,12 @@ void S_PauseBackgroundTrack( void )
 /*
 * S_LockBackgroundTrack
 */
-void S_LockBackgroundTrack( bool lock )
-{
+void S_LockBackgroundTrack( bool lock ) {
 	if( s_bgTrack && !s_bgTrack->isUrl ) {
 		s_bgTrackLocked += lock ? 1 : -1;
-		if( s_bgTrackLocked < 0 )
+		if( s_bgTrackLocked < 0 ) {
 			s_bgTrackLocked = 0;
+		}
 	} else {
 		s_bgTrackLocked = 0;
 	}
@@ -657,18 +634,20 @@ void S_LockBackgroundTrack( bool lock )
 * byteSwapRawSamples
 * Medar: untested
 */
-static void byteSwapRawSamples( int samples, int width, int channels, const uint8_t *data )
-{
+static void byteSwapRawSamples( int samples, int width, int channels, const uint8_t *data ) {
 	int i;
 
-	if( LittleShort( 256 ) == 256 )
+	if( LittleShort( 256 ) == 256 ) {
 		return;
+	}
 
-	if( width != 2 )
+	if( width != 2 ) {
 		return;
+	}
 
-	if( channels == 2 )
+	if( channels == 2 ) {
 		samples <<= 1;
+	}
 
 	for( i = 0; i < samples; i++ )
 		( (short *)data )[i] = BigShort( ( (short *)data )[i] );
@@ -677,22 +656,23 @@ static void byteSwapRawSamples( int samples, int width, int channels, const uint
 /*
 * S_UpdateBackgroundTrack
 */
-void S_UpdateBackgroundTrack( void )
-{
+void S_UpdateBackgroundTrack( void ) {
 	int samples, maxSamples;
 	int read, maxRead, total;
 	float scale;
-	uint8_t data[MAX_RAW_SAMPLES*4];
+	uint8_t data[MAX_RAW_SAMPLES * 4];
 
-	if( !s_bgTrack )
+	if( !s_bgTrack ) {
 		return;
-	if( !s_musicvolume->value && !s_bgTrack->muteOnPause )
+	}
+	if( !s_musicvolume->value && !s_bgTrack->muteOnPause ) {
 		return;
-	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked > 0 )
+	}
+	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked > 0 ) {
 		return;
+	}
 
-	if( !s_bgTrack->info.channels || ! s_bgTrack->info.width )
-	{
+	if( !s_bgTrack->info.channels || !s_bgTrack->info.width ) {
 		s_bgTrack->ignore = true;
 		S_AdvanceBackgroundTrack( 1 );
 		return;
@@ -701,42 +681,40 @@ void S_UpdateBackgroundTrack( void )
 	scale = (float)s_bgTrack->info.rate / dma.speed;
 	maxSamples = sizeof( data ) / s_bgTrack->info.channels / s_bgTrack->info.width;
 
-	while( 1 )
-	{
+	while( 1 ) {
 		unsigned int rawSamplesLength;
 
 		rawSamplesLength = S_GetRawSamplesLength();
-		if( rawSamplesLength >= BACKGROUND_TRACK_PRELOAD_MSEC )
+		if( rawSamplesLength >= BACKGROUND_TRACK_PRELOAD_MSEC ) {
 			return;
+		}
 
 		samples = BACKGROUND_TRACK_PRELOAD_MSEC - rawSamplesLength;
 		samples = (float)samples / 1000.0 * s_bgTrack->info.rate / scale;
 
-		if( samples > maxSamples )
+		if( samples > maxSamples ) {
 			samples = maxSamples;
-		if( samples > MAX_RAW_SAMPLES )
+		}
+		if( samples > MAX_RAW_SAMPLES ) {
 			samples = MAX_RAW_SAMPLES;
+		}
 
 		maxRead = samples * s_bgTrack->info.channels * s_bgTrack->info.width;
 
 		total = 0;
-		while( total < maxRead )
-		{
+		while( total < maxRead ) {
 			int seek;
 
-			if( s_bgTrack->read )
+			if( s_bgTrack->read ) {
 				read = s_bgTrack->read( s_bgTrack, data + total, maxRead - total );
-			else
+			} else {
 				read = trap_FS_Read( data + total, maxRead - total, s_bgTrack->file );
+			}
 
-			if( !read )
-			{
-				if( !s_bgTrack->loop )
-				{
-					if( !S_AdvanceBackgroundTrack( 1 ) )
-					{
-						if( !S_ValidMusicFile( s_bgTrack ) )
-						{
+			if( !read ) {
+				if( !s_bgTrack->loop ) {
+					if( !S_AdvanceBackgroundTrack( 1 ) ) {
+						if( !S_ValidMusicFile( s_bgTrack ) ) {
 							S_StopBackgroundTrack();
 							return;
 						}
@@ -746,12 +724,12 @@ void S_UpdateBackgroundTrack( void )
 					}
 				}
 
-				if( s_bgTrack->seek )
+				if( s_bgTrack->seek ) {
 					seek = s_bgTrack->seek( s_bgTrack, s_bgTrack->info.dataofs );
-				else
+				} else {
 					seek = trap_FS_Seek( s_bgTrack->file, s_bgTrack->info.dataofs, FS_SEEK_SET );
-				if( seek )
-				{
+				}
+				if( seek ) {
 					// if the seek have failed we're going to loop here forever unless
 					// we stop now
 					S_StopBackgroundTrack();
@@ -762,10 +740,10 @@ void S_UpdateBackgroundTrack( void )
 			total += read;
 		}
 
-		byteSwapRawSamples( samples, s_bgTrack->info.width, 
-			s_bgTrack->info.channels, data );
+		byteSwapRawSamples( samples, s_bgTrack->info.width,
+							s_bgTrack->info.channels, data );
 
-		S_RawSamples2( samples, s_bgTrack->info.rate, s_bgTrack->info.width, 
-			s_bgTrack->info.channels, data, s_bgTrackMuted ? 0 : s_musicvolume->value * 255 );
+		S_RawSamples2( samples, s_bgTrack->info.rate, s_bgTrack->info.width,
+					   s_bgTrack->info.channels, data, s_bgTrackMuted ? 0 : s_musicvolume->value * 255 );
 	}
 }

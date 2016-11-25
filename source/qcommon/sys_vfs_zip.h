@@ -24,12 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "sys_fs.h"
 
-void		Sys_VFS_Zip_Init( int numvfs, const char * const *vfsnames );
-char		**Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles, bool listFiles, bool listDirs );
-void		*Sys_VFS_Zip_FindFile( const char *filename );
-const char	*Sys_VFS_Zip_VFSName( void *handle );
-unsigned	Sys_VFS_Zip_FileOffset( void *handle );
-unsigned	Sys_VFS_Zip_FileSize( void *handle );
-void		Sys_VFS_Zip_Shutdown( void );
+void        Sys_VFS_Zip_Init( int numvfs, const char * const *vfsnames );
+char        **Sys_VFS_Zip_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles, bool listFiles, bool listDirs );
+void        *Sys_VFS_Zip_FindFile( const char *filename );
+const char  *Sys_VFS_Zip_VFSName( void *handle );
+unsigned    Sys_VFS_Zip_FileOffset( void *handle );
+unsigned    Sys_VFS_Zip_FileSize( void *handle );
+void        Sys_VFS_Zip_Shutdown( void );
 
 #endif // __SYS_VFS_ZIP_H

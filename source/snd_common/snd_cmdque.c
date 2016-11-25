@@ -26,16 +26,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * S_CreateSoundCmdPipe
 */
-sndCmdPipe_t *S_CreateSoundCmdPipe( void )
-{
+sndCmdPipe_t *S_CreateSoundCmdPipe( void ) {
 	return trap_BufPipe_Create( SND_COMMANDS_BUFSIZE, 0 );
 }
 
 /*
 * S_DestroySoundCmdPipe
 */
-void S_DestroySoundCmdPipe( sndCmdPipe_t **pqueue )
-{
+void S_DestroySoundCmdPipe( sndCmdPipe_t **pqueue ) {
 	trap_BufPipe_Destroy( pqueue );
 }
 
@@ -45,24 +43,21 @@ void S_DestroySoundCmdPipe( sndCmdPipe_t **pqueue )
 * Blocks until the reader thread handles all commands
 * or terminates with an error.
 */
-void S_FinishSoundCmdPipe( sndCmdPipe_t *queue )
-{
+void S_FinishSoundCmdPipe( sndCmdPipe_t *queue ) {
 	trap_BufPipe_Finish( queue );
 }
 
 /*
 * S_EnqueueCmd
 */
-static void S_EnqueueCmd( sndCmdPipe_t *queue, const void *cmd, unsigned cmd_size )
-{
+static void S_EnqueueCmd( sndCmdPipe_t *queue, const void *cmd, unsigned cmd_size ) {
 	trap_BufPipe_WriteCmd( queue, cmd, cmd_size );
 }
 
 /*
 * S_IssueInitCmd
 */
-void S_IssueInitCmd( sndCmdPipe_t *queue, void *hwnd, int maxents, bool verbose )
-{
+void S_IssueInitCmd( sndCmdPipe_t *queue, void *hwnd, int maxents, bool verbose ) {
 	sndCmdInit_t cmd;
 	cmd.id = SND_CMD_INIT;
 	cmd.hwnd = hwnd;
@@ -74,8 +69,7 @@ void S_IssueInitCmd( sndCmdPipe_t *queue, void *hwnd, int maxents, bool verbose 
 /*
 * S_IssueShutdownCmd
 */
-void S_IssueShutdownCmd( sndCmdPipe_t *queue, bool verbose )
-{
+void S_IssueShutdownCmd( sndCmdPipe_t *queue, bool verbose ) {
 	sndCmdShutdown_t cmd;
 	cmd.id = SND_CMD_SHUTDOWN;
 	cmd.verbose = verbose == true ? 1 : 0;
@@ -85,8 +79,7 @@ void S_IssueShutdownCmd( sndCmdPipe_t *queue, bool verbose )
 /*
 * S_IssueClearCmd
 */
-void S_IssueClearCmd( sndCmdPipe_t *queue )
-{
+void S_IssueClearCmd( sndCmdPipe_t *queue ) {
 	sndCmdClear_t cmd;
 	cmd.id = SND_CMD_CLEAR;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
@@ -95,8 +88,7 @@ void S_IssueClearCmd( sndCmdPipe_t *queue )
 /*
 * S_IssueStopAllSoundsCmd
 */
-void S_IssueStopAllSoundsCmd( sndCmdPipe_t *queue, bool clear, bool stopMusic )
-{
+void S_IssueStopAllSoundsCmd( sndCmdPipe_t *queue, bool clear, bool stopMusic ) {
 	sndCmdStop_t cmd;
 	cmd.id = SND_CMD_STOP_ALL_SOUNDS;
 	cmd.clear = clear;
@@ -107,8 +99,7 @@ void S_IssueStopAllSoundsCmd( sndCmdPipe_t *queue, bool clear, bool stopMusic )
 /*
 * S_IssueFreeSfxCmd
 */
-void S_IssueFreeSfxCmd( sndCmdPipe_t *queue, int sfx )
-{
+void S_IssueFreeSfxCmd( sndCmdPipe_t *queue, int sfx ) {
 	sndCmdFreeSfx_t cmd;
 	cmd.id = SND_CMD_FREE_SFX;
 	cmd.sfx = sfx;
@@ -118,8 +109,7 @@ void S_IssueFreeSfxCmd( sndCmdPipe_t *queue, int sfx )
 /*
 * S_IssueLoadSfxCmd
 */
-void S_IssueLoadSfxCmd( sndCmdPipe_t *queue, int sfx )
-{
+void S_IssueLoadSfxCmd( sndCmdPipe_t *queue, int sfx ) {
 	sndCmdLoadSfx_t cmd;
 	cmd.id = SND_CMD_LOAD_SFX;
 	cmd.sfx = sfx;
@@ -129,9 +119,8 @@ void S_IssueLoadSfxCmd( sndCmdPipe_t *queue, int sfx )
 /*
 * S_IssueSetAttenuationCmd
 */
-void S_IssueSetAttenuationCmd( sndCmdPipe_t *queue, int model, 
-	float maxdistance, float refdistance )
-{
+void S_IssueSetAttenuationCmd( sndCmdPipe_t *queue, int model,
+							   float maxdistance, float refdistance ) {
 	sndCmdSetAttenuationModel_t cmd;
 	cmd.id = SND_CMD_SET_ATTENUATION_MODEL;
 	cmd.model = model;
@@ -143,8 +132,7 @@ void S_IssueSetAttenuationCmd( sndCmdPipe_t *queue, int model,
 /*
 * S_IssueSetEntitySpatializationCmd
 */
-void S_IssueSetEntitySpatializationCmd( sndCmdPipe_t *queue, const smdCmdSpatialization_t *spat )
-{
+void S_IssueSetEntitySpatializationCmd( sndCmdPipe_t *queue, const smdCmdSpatialization_t *spat ) {
 	unsigned i;
 
 	sndCmdSetEntitySpatialization_t cmd;
@@ -161,9 +149,8 @@ void S_IssueSetEntitySpatializationCmd( sndCmdPipe_t *queue, const smdCmdSpatial
 /*
 * S_IssueSetListenerCmd
 */
-void S_IssueSetListenerCmd( sndCmdPipe_t *queue, const vec3_t origin, 
-	const vec3_t velocity, const mat3_t axis, bool avidump )
-{
+void S_IssueSetListenerCmd( sndCmdPipe_t *queue, const vec3_t origin,
+							const vec3_t velocity, const mat3_t axis, bool avidump ) {
 	unsigned i;
 
 	sndCmdSetListener_t cmd;
@@ -183,8 +170,7 @@ void S_IssueSetListenerCmd( sndCmdPipe_t *queue, const vec3_t origin,
 /*
 * S_IssueStartLocalSoundCmd
 */
-void S_IssueStartLocalSoundCmd( sndCmdPipe_t *queue, int sfx )
-{
+void S_IssueStartLocalSoundCmd( sndCmdPipe_t *queue, int sfx ) {
 	sndCmdStartLocalSound_t cmd;
 	cmd.id = SND_CMD_START_LOCAL_SOUND;
 	cmd.sfx = sfx;
@@ -195,8 +181,7 @@ void S_IssueStartLocalSoundCmd( sndCmdPipe_t *queue, int sfx )
 * S_IssueStartFixedSoundCmd
 */
 void S_IssueStartFixedSoundCmd( sndCmdPipe_t *queue, int sfx, const vec3_t origin,
-	int channel, float fvol, float attenuation )
-{
+								int channel, float fvol, float attenuation ) {
 	unsigned i;
 
 	sndCmdStartFixedSound_t cmd;
@@ -215,9 +200,8 @@ void S_IssueStartFixedSoundCmd( sndCmdPipe_t *queue, int sfx, const vec3_t origi
 /*
 * S_IssueStartGlobalSoundCmd
 */
-void S_IssueStartGlobalSoundCmd( sndCmdPipe_t *queue, int sfx, int channel, 
-	float fvol )
-{
+void S_IssueStartGlobalSoundCmd( sndCmdPipe_t *queue, int sfx, int channel,
+								 float fvol ) {
 	sndCmdStartGlobalSound_t cmd;
 	cmd.id = SND_CMD_START_GLOBAL_SOUND;
 	cmd.sfx = sfx;
@@ -229,9 +213,8 @@ void S_IssueStartGlobalSoundCmd( sndCmdPipe_t *queue, int sfx, int channel,
 /*
 * S_IssueStartRelativeSoundCmd
 */
-void S_IssueStartRelativeSoundCmd( sndCmdPipe_t *queue, int sfx, int entnum, 
-	int channel, float fvol, float attenuation )
-{
+void S_IssueStartRelativeSoundCmd( sndCmdPipe_t *queue, int sfx, int entnum,
+								   int channel, float fvol, float attenuation ) {
 	sndCmdStartRelativeSound_t cmd;
 	cmd.id = SND_CMD_START_RELATIVE_SOUND;
 	cmd.sfx = sfx;
@@ -246,10 +229,9 @@ void S_IssueStartRelativeSoundCmd( sndCmdPipe_t *queue, int sfx, int entnum,
 * S_IssueStartBackgroundTrackCmd
 */
 void S_IssueStartBackgroundTrackCmd( sndCmdPipe_t *queue, const char *intro,
-	const char *loop, int mode )
-{
+									 const char *loop, int mode ) {
 	sndCmdStartBackgroundTrack_t cmd;
-	
+
 	cmd.id = SND_CMD_START_BACKGROUND_TRACK;
 	Q_strncpyz( cmd.intro, intro ? intro : "", sizeof( cmd.intro ) );
 	Q_strncpyz( cmd.loop, loop ? loop : "", sizeof( cmd.loop ) );
@@ -261,8 +243,7 @@ void S_IssueStartBackgroundTrackCmd( sndCmdPipe_t *queue, const char *intro,
 /*
 * S_IssueStopBackgroundTrackCmd
 */
-void S_IssueStopBackgroundTrackCmd( sndCmdPipe_t *queue )
-{
+void S_IssueStopBackgroundTrackCmd( sndCmdPipe_t *queue ) {
 	sndCmdStopBackgroundTrack_t cmd;
 	cmd.id = SND_CMD_STOP_BACKGROUND_TRACK;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
@@ -271,8 +252,7 @@ void S_IssueStopBackgroundTrackCmd( sndCmdPipe_t *queue )
 /*
 * S_IssueLockBackgroundTrackCmd
 */
-void S_IssueLockBackgroundTrackCmd( sndCmdPipe_t *queue, bool lock )
-{
+void S_IssueLockBackgroundTrackCmd( sndCmdPipe_t *queue, bool lock ) {
 	sndCmdLockBackgroundTrack_t cmd;
 	cmd.id = SND_CMD_LOCK_BACKGROUND_TRACK;
 	cmd.lock = lock == true ? 1 : 0;
@@ -283,8 +263,7 @@ void S_IssueLockBackgroundTrackCmd( sndCmdPipe_t *queue, bool lock )
 * S_IssueAddLoopSoundCmd
 */
 void S_IssueAddLoopSoundCmd( sndCmdPipe_t *queue, int sfx, int entnum,
-	float fvol, float attenuation )
-{
+							 float fvol, float attenuation ) {
 	sndAddLoopSoundCmd_t cmd;
 	cmd.id = SND_CMD_ADD_LOOP_SOUND;
 	cmd.sfx = sfx;
@@ -297,8 +276,7 @@ void S_IssueAddLoopSoundCmd( sndCmdPipe_t *queue, int sfx, int entnum,
 /*
 * S_IssueAdvanceBackgroundTrackCmd
 */
-void S_IssueAdvanceBackgroundTrackCmd( sndCmdPipe_t *queue, int val )
-{
+void S_IssueAdvanceBackgroundTrackCmd( sndCmdPipe_t *queue, int val ) {
 	sndAdvanceBackgroundTrackCmd_t cmd;
 	cmd.id = SND_CMD_ADVANCE_BACKGROUND_TRACK;
 	cmd.val = val;
@@ -308,8 +286,7 @@ void S_IssueAdvanceBackgroundTrackCmd( sndCmdPipe_t *queue, int val )
 /*
 * S_IssuePauseBackgroundTrackCmd
 */
-void S_IssuePauseBackgroundTrackCmd( sndCmdPipe_t *queue )
-{
+void S_IssuePauseBackgroundTrackCmd( sndCmdPipe_t *queue ) {
 	sndPauseBackgroundTrackCmd_t cmd;
 	cmd.id = SND_CMD_PAUSE_BACKGROUND_TRACK;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
@@ -318,8 +295,7 @@ void S_IssuePauseBackgroundTrackCmd( sndCmdPipe_t *queue )
 /*
 * S_IssueActivateCmd
 */
-void S_IssueActivateCmd( sndCmdPipe_t *queue, bool active )
-{
+void S_IssueActivateCmd( sndCmdPipe_t *queue, bool active ) {
 	sndActivateCmd_t cmd;
 	cmd.id = SND_CMD_ACTIVATE;
 	cmd.active = active == true ? 1 : 0;
@@ -329,8 +305,7 @@ void S_IssueActivateCmd( sndCmdPipe_t *queue, bool active )
 /*
 * S_IssueAviDemoCmd
 */
-void S_IssueAviDemoCmd( sndCmdPipe_t *queue, bool begin )
-{
+void S_IssueAviDemoCmd( sndCmdPipe_t *queue, bool begin ) {
 	sndAviDemo_t cmd;
 	cmd.id = SND_CMD_AVI_DEMO;
 	cmd.begin = begin ? 1 : 0;
@@ -340,10 +315,9 @@ void S_IssueAviDemoCmd( sndCmdPipe_t *queue, bool begin )
 /*
 * S_IssueRawSamplesCmd
 */
-void S_IssueRawSamplesCmd( sndCmdPipe_t *queue, unsigned int samples, 
-	unsigned int rate, unsigned short width, unsigned short channels, 
-	uint8_t *data, bool music )
-{
+void S_IssueRawSamplesCmd( sndCmdPipe_t *queue, unsigned int samples,
+						   unsigned int rate, unsigned short width, unsigned short channels,
+						   uint8_t *data, bool music ) {
 	sndRawSamplesCmd_t cmd;
 	cmd.id = SND_CMD_RAW_SAMPLES;
 	cmd.samples = samples;
@@ -358,10 +332,9 @@ void S_IssueRawSamplesCmd( sndCmdPipe_t *queue, unsigned int samples,
 /*
 * S_IssuePositionedRawSamplesCmd
 */
-void S_IssuePositionedRawSamplesCmd( sndCmdPipe_t *queue, int entnum, 
-	float fvol, float attenuation, unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, uint8_t *data )
-{
+void S_IssuePositionedRawSamplesCmd( sndCmdPipe_t *queue, int entnum,
+									 float fvol, float attenuation, unsigned int samples, unsigned int rate,
+									 unsigned short width, unsigned short channels, uint8_t *data ) {
 	sndPositionedRawSamplesCmd_t cmd;
 	cmd.id = SND_CMD_POSITIONED_RAW_SAMPLES;
 	cmd.entnum = entnum;
@@ -378,8 +351,7 @@ void S_IssuePositionedRawSamplesCmd( sndCmdPipe_t *queue, int entnum,
 /*
 * S_IssueStuffCmd
 */
-void S_IssueStuffCmd( sndCmdPipe_t *queue, const char *text )
-{
+void S_IssueStuffCmd( sndCmdPipe_t *queue, const char *text ) {
 	sndStuffCmd_t cmd;
 	cmd.id = SND_CMD_STUFFCMD;
 	Q_strncpyz( cmd.text, text, sizeof( cmd.text ) );
@@ -390,18 +362,18 @@ void S_IssueStuffCmd( sndCmdPipe_t *queue, const char *text )
 * S_IssueSetMulEntitySpatializationCmd
 */
 void S_IssueSetMulEntitySpatializationCmd( sndCmdPipe_t *queue, unsigned numEnts,
-	const smdCmdSpatialization_t *spat )
-{
+										   const smdCmdSpatialization_t *spat ) {
 	unsigned i, j;
 
-	for( j = 0; j < numEnts;   )
-	{
+	for( j = 0; j < numEnts; ) {
 		unsigned n;
 		sndCmdSetMulEntitySpatialization_t cmd;
 
 		cmd.id = SND_CMD_SET_MUL_ENTITY_SPATIALIZATION;
 		cmd.numents = numEnts - j;
-		if( cmd.numents > SND_SPATIALIZE_ENTS_MAX ) cmd.numents = SND_SPATIALIZE_ENTS_MAX;
+		if( cmd.numents > SND_SPATIALIZE_ENTS_MAX ) {
+			cmd.numents = SND_SPATIALIZE_ENTS_MAX;
+		}
 
 		for( n = 0; n < cmd.numents; n++ ) {
 			cmd.entnum[n] = spat[n].entnum;
@@ -420,16 +392,14 @@ void S_IssueSetMulEntitySpatializationCmd( sndCmdPipe_t *queue, unsigned numEnts
 /*
 * S_ReadEnqueuedCmds
 */
-int S_ReadEnqueuedCmds( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandlers )
-{
+int S_ReadEnqueuedCmds( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandlers ) {
 	return trap_BufPipe_ReadCmds( queue, cmdHandlers );
 }
 
 /*
 * S_WaitEnqueuedCmds
 */
-void S_WaitEnqueuedCmds( sndCmdPipe_t *queue, int (*read)( sndCmdPipe_t *, unsigned( ** )(const void *), bool ), 
-	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec )
-{
+void S_WaitEnqueuedCmds( sndCmdPipe_t *queue, int ( *read )( sndCmdPipe_t *, unsigned( ** )( const void * ), bool ),
+						 unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec ) {
 	trap_BufPipe_Wait( queue, read, cmdHandlers, timeout_msec );
 }

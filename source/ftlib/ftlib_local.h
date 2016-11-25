@@ -42,23 +42,22 @@ typedef struct shader_s shader_t;
 #define FTLIB_FreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
 #define FTLIB_EmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
 
-#define FTLIB_REPLACEMENT_GLYPH			'?'
+#define FTLIB_REPLACEMENT_GLYPH         '?'
 
-#define FTLIB_FIRST_ASCII_CHAR			' '
-#define FTLIB_LAST_ASCII_CHAR			'~'
-#define FTLIB_NUM_ASCII_CHARS			(FTLIB_LAST_ASCII_CHAR-FTLIB_FIRST_ASCII_CHAR)
+#define FTLIB_FIRST_ASCII_CHAR          ' '
+#define FTLIB_LAST_ASCII_CHAR           '~'
+#define FTLIB_NUM_ASCII_CHARS           ( FTLIB_LAST_ASCII_CHAR - FTLIB_FIRST_ASCII_CHAR )
 
-#define FTLIB_FONT_MAX_IMAGE_WIDTH		1024
-#define FTLIB_FONT_IMAGE_HEIGHT_SMALL	128
-#define FTLIB_FONT_IMAGE_HEIGHT_MEDIUM	256
-#define FTLIB_FONT_IMAGE_HEIGHT_LARGE	512
+#define FTLIB_FONT_MAX_IMAGE_WIDTH      1024
+#define FTLIB_FONT_IMAGE_HEIGHT_SMALL   128
+#define FTLIB_FONT_IMAGE_HEIGHT_MEDIUM  256
+#define FTLIB_FONT_IMAGE_HEIGHT_LARGE   512
 
 struct qglyph_s;
 struct qfontface_s;
 struct qfontfamily_s;
 
-typedef struct
-{
+typedef struct {
 	unsigned short width, height;
 	unsigned short x_advance;
 	short x_offset, y_offset;
@@ -69,8 +68,7 @@ typedef struct
 typedef void ( *renderString_f )( struct qfontface_s *qfont, const char *str );
 typedef int ( *getKerning_f )( struct qfontface_s *qfont,  qglyph_t *g1, qglyph_t *g2 );
 
-typedef struct qfontface_funcs_s
-{
+typedef struct qfontface_funcs_s {
 	// allocates an array of glyphs
 	void *( *allocGlyphs )( struct qfontface_s *qfont, wchar_t first, unsigned int count );
 
@@ -87,8 +85,7 @@ typedef struct qfontface_funcs_s
 	void ( *setFallback )( struct qfontface_s *qfont, struct qfontfamily_s *qfamily );
 } qfontface_funcs_t;
 
-typedef struct qfontface_s
-{
+typedef struct qfontface_s {
 	struct qfontfamily_s *family;
 
 	int style;
@@ -119,8 +116,7 @@ typedef struct qfontface_s
 	struct qfontface_s *next;
 } qfontface_t;
 
-typedef struct qfontfamily_funcs_s
-{
+typedef struct qfontfamily_funcs_s {
 	// method which the loader needs to call to load specific font face
 	qfontface_t *( *loadFace )( struct qfontfamily_s *family, unsigned int size );
 
@@ -131,8 +127,7 @@ typedef struct qfontfamily_funcs_s
 	void ( *unloadFamily )( struct qfontfamily_s *family );
 } qfontfamily_funcs_t;
 
-typedef struct qfontfamily_s
-{
+typedef struct qfontfamily_s {
 	char *name;
 
 	bool fallback;

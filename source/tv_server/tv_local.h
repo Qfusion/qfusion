@@ -27,14 +27,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct upstream_s upstream_t;
 
-typedef struct ginfo_s
-{
+typedef struct ginfo_s {
 	struct edict_s *edicts;
 	struct client_s *clients;
 	int edict_size;
 	int num_edicts;         // current number, <= max_edicts
 	int max_edicts;
-	int max_clients;		// <= sv_maxclients, <= max_edicts
+	int max_clients;        // <= sv_maxclients, <= max_edicts
 
 	struct edict_s *local_edicts;
 	int local_edict_size;
@@ -42,22 +41,19 @@ typedef struct ginfo_s
 	int local_max_edicts;
 } ginfo_t;
 
-struct gclient_s
-{
+struct gclient_s {
 	player_state_t ps;  // communicated by server to clients
-	client_shared_t	r;
+	client_shared_t r;
 };
 
-struct edict_s
-{
+struct edict_s {
 	entity_state_t s;
-	entity_shared_t	r;
+	entity_shared_t r;
 };
 
 #ifdef TCP_ALLOW_TVCONNECT
 #define MAX_INCOMING_CONNECTIONS 256
-typedef struct
-{
+typedef struct {
 	bool active;
 	unsigned int time;      // for timeout
 	socket_t socket;
@@ -65,9 +61,8 @@ typedef struct
 } incoming_t;
 #endif
 
-#define	MAX_CHALLENGES	1024
-typedef struct
-{
+#define MAX_CHALLENGES  1024
+typedef struct {
 	netadr_t adr;
 	int challenge;
 	int time;
@@ -77,8 +72,7 @@ typedef struct
 // to be sent to a client into a snap. It's used for finding size of the backup storage
 #define MAX_SNAP_ENTITIES 64
 
-typedef struct
-{
+typedef struct {
 	char *name;
 	uint8_t *data;            // file being downloaded
 	int size;               // total bytes (can't use EOF because of paks)
@@ -86,8 +80,7 @@ typedef struct
 	// if client omits sending success or failure message
 } client_download_t;
 
-typedef struct
-{
+typedef struct {
 	bool allentities;
 	bool multipov;
 	bool relay;
@@ -107,39 +100,35 @@ typedef struct
 
 typedef enum { RD_NONE, RD_PACKET } redirect_t;
 
-#define	TV_OUTPUTBUF_LENGTH ( MAX_MSGLEN - 16 )
+#define TV_OUTPUTBUF_LENGTH ( MAX_MSGLEN - 16 )
 extern char tv_outputbuf[TV_OUTPUTBUF_LENGTH];
 
-typedef struct
-{
+typedef struct {
 	const socket_t *socket;
 	const netadr_t *address;
 } flush_params_t;
 
 void TV_FlushRedirect( int sv_redirected, const char *outputbuf, const void *extra );
 
-typedef struct
-{
+typedef struct {
 	unsigned int framenum;
 	char command[MAX_STRING_CHARS];
 } game_command_t;
 
 #define MAX_FLOOD_MESSAGES 32
-typedef struct
-{
+typedef struct {
 	unsigned int locktill;           // locked from talking
 	unsigned int when[MAX_FLOOD_MESSAGES];           // when messages were said
 	int whenhead;             // head pointer for when said
 } client_flood_t;
 
-#define	LATENCY_COUNTS	16
-typedef struct client_s
-{
+#define LATENCY_COUNTS  16
+typedef struct client_s {
 	sv_client_state_t state;
 
 	char userinfo[MAX_INFO_STRING];             // name, etc
 
-	relay_t	*relay;
+	relay_t *relay;
 
 	bool reliable;                  // no need for acks, upstream is reliable
 	bool mv;                        // send multiview data to the client
@@ -151,7 +140,7 @@ typedef struct client_s
 	unsigned int reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
 	unsigned int reliableAcknowledge;   // last acknowledged reliable message
 	unsigned int reliableSent;          // last sent reliable message, not necesarily acknowledged yet
-	int suppressCount;					// number of messages rate suppressed
+	int suppressCount;                  // number of messages rate suppressed
 
 	game_command_t gameCommands[MAX_RELIABLE_COMMANDS];
 	int gameCommandCurrent;             // position in the gameCommands table
@@ -175,7 +164,7 @@ typedef struct client_s
 
 	int frame_latency[LATENCY_COUNTS];
 	int ping;
-	edict_t	*edict;                     // EDICT_NUM(clientnum+1)
+	edict_t *edict;                     // EDICT_NUM(clientnum+1)
 	char name[MAX_INFO_VALUE];          // extracted from userinfo, high bits masked
 
 	// The sounds datagram is written to by multicasted sound commands
@@ -194,8 +183,7 @@ typedef struct client_s
 	netchan_t netchan;
 } client_t;
 
-typedef struct
-{
+typedef struct {
 	int spawncount;
 	unsigned int next_heartbeat;
 	unsigned int framenum;
@@ -203,8 +191,7 @@ typedef struct
 	unsigned int snapFrameTime;
 } tv_lobby_t;
 
-typedef struct
-{
+typedef struct {
 	unsigned int realtime;
 
 	tv_lobby_t lobby;

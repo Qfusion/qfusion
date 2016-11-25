@@ -21,42 +21,35 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qcommon/qcommon.h"
 
-void Sys_VFS_Init( void )
-{
+void Sys_VFS_Init( void ) {
 }
 
-void Sys_VFS_TouchGamePath( const char *gamedir, bool initial )
-{
+void Sys_VFS_TouchGamePath( const char *gamedir, bool initial ) {
 }
 
-char **Sys_VFS_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles, bool listFiles, bool listDirs )
-{
-	if( numFiles )
+char **Sys_VFS_ListFiles( const char *pattern, const char *prependBasePath, int *numFiles, bool listFiles, bool listDirs ) {
+	if( numFiles ) {
 		*numFiles = 0;
+	}
 
 	return NULL;
 }
 
-void *Sys_VFS_FindFile( const char *filename )
-{
+void *Sys_VFS_FindFile( const char *filename ) {
 	return NULL;
 }
 
-const char *Sys_VFS_VFSName( void *handle )
-{
+const char *Sys_VFS_VFSName( void *handle ) {
 	return NULL;
 }
 
-unsigned Sys_VFS_FileOffset( void *handle )
-{
+unsigned Sys_VFS_FileOffset( void *handle ) {
 	return 0;
 }
 
-unsigned Sys_VFS_FileSize( void *handle )
-{
+unsigned Sys_VFS_FileSize( void *handle ) {
 	return 0;
 }
 
-void Sys_VFS_Shutdown( void )
-{
+void Sys_VFS_Shutdown( void ) {
 }

@@ -43,17 +43,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * Sys_NET_GetLastError
 */
-net_error_t Sys_NET_GetLastError( void )
-{
+net_error_t Sys_NET_GetLastError( void ) {
 	int _errno = errno == EAGAIN ? EWOULDBLOCK : errno;
 
-	switch( _errno )
-	{
-	case 0:				return NET_ERR_NONE;
-	case ECONNREFUSED:	return NET_ERR_CONNRESET;
-	case EWOULDBLOCK:	return NET_ERR_WOULDBLOCK;
-	case EINPROGRESS:	return NET_ERR_INPROGRESS;
-	default:			return NET_ERR_UNKNOWN;
+	switch( _errno ) {
+		case 0:             return NET_ERR_NONE;
+		case ECONNREFUSED:  return NET_ERR_CONNRESET;
+		case EWOULDBLOCK:   return NET_ERR_WOULDBLOCK;
+		case EINPROGRESS:   return NET_ERR_INPROGRESS;
+		default:            return NET_ERR_UNKNOWN;
 	}
 }
 
@@ -62,24 +60,21 @@ net_error_t Sys_NET_GetLastError( void )
 /*
 * Sys_NET_SocketClose
 */
-void Sys_NET_SocketClose( socket_handle_t handle )
-{
+void Sys_NET_SocketClose( socket_handle_t handle ) {
 	close( handle );
 }
 
 /*
 * Sys_NET_SocketIoctl
 */
-int Sys_NET_SocketIoctl( socket_handle_t handle, long request, ioctl_param_t* param )
-{
+int Sys_NET_SocketIoctl( socket_handle_t handle, long request, ioctl_param_t* param ) {
 	return ioctl( handle, request, param );
 }
 
 /*
 * Sys_NET_SendFile
 */
-int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, size_t count )
-{
+int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, size_t count ) {
 	off_t len;
 	off_t _offset = offset;
 #if defined ( __APPLE__ )
@@ -101,13 +96,11 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, siz
 /*
 * Sys_NET_Init
 */
-void Sys_NET_Init( void )
-{
+void Sys_NET_Init( void ) {
 }
 
 /*
 * Sys_NET_Shutdown
 */
-void Sys_NET_Shutdown( void )
-{
+void Sys_NET_Shutdown( void ) {
 }

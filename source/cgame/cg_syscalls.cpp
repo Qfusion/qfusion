@@ -24,10 +24,10 @@ cgame_import_t CGAME_IMPORT;
 
 /*
 * GetCGameAPI
-* 
+*
 * Returns a pointer to the structure with all entry points
 */
-extern "C" QF_DLL_EXPORT cgame_export_t *GetCGameAPI( cgame_import_t *import )
+extern "C" QF_DLL_EXPORT cgame_export_t * GetCGameAPI( cgame_import_t * import )
 {
 	static cgame_export_t globals;
 
@@ -66,8 +66,7 @@ extern "C" QF_DLL_EXPORT cgame_export_t *GetCGameAPI( cgame_import_t *import )
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( CGAME_HARD_LINKED )
-int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
-{
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved ) {
 	return 1;
 }
 #endif

@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "tv_local.h"
 
-#define	MAX_MASTERS 16 // max recipients for heartbeat packets
-#define	HEARTBEAT_SECONDS 300
+#define MAX_MASTERS 16 // max recipients for heartbeat packets
+#define HEARTBEAT_SECONDS 300
 
 void TV_Downstream_Msg( client_t *client, relay_t *relay, client_t *who, bool chat, const char *format, ... );
 void TV_Downstream_ClientResetCommandBuffers( client_t *client, bool resetReliable );

@@ -23,8 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * Cmd_ConsoleSay_f
 */
-static void Cmd_ConsoleSay_f( void )
-{
+static void Cmd_ConsoleSay_f( void ) {
 	G_ChatMsg( NULL, NULL, false, "%s", trap_Cmd_Args() );
 }
 
@@ -32,19 +31,16 @@ static void Cmd_ConsoleSay_f( void )
 /*
 * Cmd_ConsoleKick_f
 */
-static void Cmd_ConsoleKick_f( void )
-{
+static void Cmd_ConsoleKick_f( void ) {
 	edict_t *ent;
 
-	if( trap_Cmd_Argc() != 2 )
-	{
+	if( trap_Cmd_Argc() != 2 ) {
 		Com_Printf( "Usage: kick <id or name>\n" );
 		return;
 	}
 
 	ent = G_PlayerForText( trap_Cmd_Argv( 1 ) );
-	if( !ent )
-	{
+	if( !ent ) {
 		Com_Printf( "No such player\n" );
 		return;
 	}
@@ -56,33 +52,27 @@ static void Cmd_ConsoleKick_f( void )
 /*
 * Cmd_Match_f
 */
-static void Cmd_Match_f( void )
-{
+static void Cmd_Match_f( void ) {
 	const char *cmd;
 
-	if( trap_Cmd_Argc() != 2 )
-	{
+	if( trap_Cmd_Argc() != 2 ) {
 		Com_Printf( "Usage: match <option: restart|advance|status>\n" );
 		return;
 	}
 
 	cmd = trap_Cmd_Argv( 1 );
-	if( !Q_stricmp( cmd, "restart" ) )
-	{
+	if( !Q_stricmp( cmd, "restart" ) ) {
 		level.exitNow = false;
 		level.hardReset = false;
 		Q_strncpyz( level.forcemap, level.mapname, sizeof( level.mapname ) );
 		G_EndMatch();
-	}
-	else if( !Q_stricmp( cmd, "advance" ) )
-	{
+	} else if( !Q_stricmp( cmd, "advance" ) ) {
 		level.exitNow = false;
 		level.hardReset = true;
+
 		//		level.forcemap[0] = 0;
 		G_EndMatch();
-	}
-	else if( !Q_stricmp( cmd, "status" ) )
-	{
+	} else if( !Q_stricmp( cmd, "status" ) ) {
 		trap_Cmd_ExecuteText( EXEC_APPEND, "status" );
 	}
 }
@@ -122,7 +112,7 @@ typedef struct
 	unsigned timeout;
 } ipfilter_t;
 
-#define	MAX_IPFILTERS	1024
+#define MAX_IPFILTERS   1024
 
 static ipfilter_t ipfilters[MAX_IPFILTERS];
 static int numipfilters;
@@ -130,39 +120,36 @@ static int numipfilters;
 /*
 * StringToFilter
 */
-static bool StringToFilter( char *s, ipfilter_t *f )
-{
+static bool StringToFilter( char *s, ipfilter_t *f ) {
 	char num[128];
 	int i, j;
 	uint8_t b[4];
 	uint8_t m[4];
 
-	for( i = 0; i < 4; i++ )
-	{
+	for( i = 0; i < 4; i++ ) {
 		b[i] = 0;
 		m[i] = 0;
 	}
 
-	for( i = 0; i < 4; i++ )
-	{
-		if( *s < '0' || *s > '9' )
-		{
+	for( i = 0; i < 4; i++ ) {
+		if( *s < '0' || *s > '9' ) {
 			G_Printf( "Bad filter address: %s\n", s );
 			return false;
 		}
 
 		j = 0;
-		while( *s >= '0' && *s <= '9' )
-		{
+		while( *s >= '0' && *s <= '9' ) {
 			num[j++] = *s++;
 		}
 		num[j] = 0;
 		b[i] = atoi( num );
-		if( b[i] != 0 )
+		if( b[i] != 0 ) {
 			m[i] = 255;
+		}
 
-		if( !*s || *s == ':' )
+		if( !*s || *s == ':' ) {
 			break;
+		}
 		s++;
 	}
 
@@ -175,8 +162,7 @@ static bool StringToFilter( char *s, ipfilter_t *f )
 /*
 * SV_ResetPacketFiltersTimeouts
 */
-void SV_ResetPacketFiltersTimeouts( void )
-{
+void SV_ResetPacketFiltersTimeouts( void ) {
 	int i;
 
 	for( i = 0; i < MAX_IPFILTERS; i++ )
@@ -186,28 +172,27 @@ void SV_ResetPacketFiltersTimeouts( void )
 /*
 * SV_FilterPacket
 */
-bool SV_FilterPacket( char *from )
-{
+bool SV_FilterPacket( char *from ) {
 	int i;
 	unsigned in;
 	uint8_t m[4];
 	char *p;
 
-	if( !filterban->integer )
+	if( !filterban->integer ) {
 		return false;
+	}
 
 	i = 0;
 	p = from;
-	while( *p && i < 4 )
-	{
+	while( *p && i < 4 ) {
 		m[i] = 0;
-		while( *p >= '0' && *p <= '9' )
-		{
-			m[i] = m[i]*10 + ( *p - '0' );
+		while( *p >= '0' && *p <= '9' ) {
+			m[i] = m[i] * 10 + ( *p - '0' );
 			p++;
 		}
-		if( !*p || *p == ':' )
+		if( !*p || *p == ':' ) {
 			break;
+		}
 		i++, p++;
 	}
 
@@ -215,8 +200,9 @@ bool SV_FilterPacket( char *from )
 
 	for( i = 0; i < numipfilters; i++ )
 		if( ( in & ipfilters[i].mask ) == ipfilters[i].compare
-			&& (!ipfilters[i].timeout || ipfilters[i].timeout > game.serverTime) )
+			&& ( !ipfilters[i].timeout || ipfilters[i].timeout > game.serverTime ) ) {
 			return true;
+		}
 
 	return false;
 }
@@ -224,9 +210,8 @@ bool SV_FilterPacket( char *from )
 /*
 * SV_ReadIPList
 */
-void SV_ReadIPList( void )
-{
-	SV_ResetPacketFiltersTimeouts ();
+void SV_ReadIPList( void ) {
+	SV_ResetPacketFiltersTimeouts();
 
 	trap_Cmd_ExecuteText( EXEC_APPEND, "exec listip.cfg silent\n" );
 }
@@ -234,8 +219,7 @@ void SV_ReadIPList( void )
 /*
 * SV_WriteIPList
 */
-void SV_WriteIPList( void )
-{
+void SV_WriteIPList( void ) {
 	int file;
 	char name[MAX_QPATH];
 	char string[MAX_STRING_CHARS];
@@ -246,8 +230,7 @@ void SV_WriteIPList( void )
 
 	//G_Printf( "Writing %s.\n", name );
 
-	if( trap_FS_FOpenFile( name, &file, FS_WRITE ) == -1 )
-	{
+	if( trap_FS_FOpenFile( name, &file, FS_WRITE ) == -1 ) {
 		G_Printf( "Couldn't open %s\n", name );
 		return;
 	}
@@ -255,15 +238,16 @@ void SV_WriteIPList( void )
 	Q_snprintfz( string, sizeof( string ), "set filterban %d\r\n", filterban->integer );
 	trap_FS_Write( string, strlen( string ), file );
 
-	for( i = 0; i < numipfilters; i++ )
-	{
-		if (ipfilters[i].timeout && ipfilters[i].timeout <= game.serverTime)
+	for( i = 0; i < numipfilters; i++ ) {
+		if( ipfilters[i].timeout && ipfilters[i].timeout <= game.serverTime ) {
 			continue;
+		}
 		*(unsigned *)b = ipfilters[i].compare;
-		if( ipfilters[i].timeout )
-			Q_snprintfz( string, sizeof( string ), "addip %i.%i.%i.%i %.2f\r\n", b[0], b[1], b[2], b[3], (ipfilters[i].timeout - game.serverTime)/(1000.0f*60.0f) );
-		else
+		if( ipfilters[i].timeout ) {
+			Q_snprintfz( string, sizeof( string ), "addip %i.%i.%i.%i %.2f\r\n", b[0], b[1], b[2], b[3], ( ipfilters[i].timeout - game.serverTime ) / ( 1000.0f * 60.0f ) );
+		} else {
 			Q_snprintfz( string, sizeof( string ), "addip %i.%i.%i.%i\r\n", b[0], b[1], b[2], b[3] );
+		}
 		trap_FS_Write( string, strlen( string ), file );
 	}
 
@@ -273,23 +257,20 @@ void SV_WriteIPList( void )
 /*
 * Cmd_AddIP_f
 */
-static void Cmd_AddIP_f( void )
-{
+static void Cmd_AddIP_f( void ) {
 	int i;
 
-	if( trap_Cmd_Argc() < 2 )
-	{
+	if( trap_Cmd_Argc() < 2 ) {
 		G_Printf( "Usage: addip <ip-mask> [time-mins]\n" );
 		return;
 	}
 
 	for( i = 0; i < numipfilters; i++ )
-		if( ipfilters[i].compare == 0xffffffff || (ipfilters[i].timeout && ipfilters[i].timeout <= game.serverTime) )
-			break; // free spot
-	if( i == numipfilters )
-	{
-		if( numipfilters == MAX_IPFILTERS )
-		{
+		if( ipfilters[i].compare == 0xffffffff || ( ipfilters[i].timeout && ipfilters[i].timeout <= game.serverTime ) ) {
+			break;
+		}          // free spot
+	if( i == numipfilters ) {
+		if( numipfilters == MAX_IPFILTERS ) {
 			G_Printf( "IP filter list is full\n" );
 			return;
 		}
@@ -297,80 +278,76 @@ static void Cmd_AddIP_f( void )
 	}
 
 	ipfilters[i].timeout = 0;
-	if( !StringToFilter( trap_Cmd_Argv( 1 ), &ipfilters[i] ) )
+	if( !StringToFilter( trap_Cmd_Argv( 1 ), &ipfilters[i] ) ) {
 		ipfilters[i].compare = 0xffffffff;
-	else if( trap_Cmd_Argc() == 3 )
-		ipfilters[i].timeout = game.serverTime + atof( trap_Cmd_Argv(2) )*60*1000;
+	} else if( trap_Cmd_Argc() == 3 ) {
+		ipfilters[i].timeout = game.serverTime + atof( trap_Cmd_Argv( 2 ) ) * 60 * 1000;
+	}
 }
 
 /*
 * Cmd_RemoveIP_f
 */
-static void Cmd_RemoveIP_f( void )
-{
+static void Cmd_RemoveIP_f( void ) {
 	ipfilter_t f;
 	int i, j;
 
-	if( trap_Cmd_Argc() < 2 )
-	{
+	if( trap_Cmd_Argc() < 2 ) {
 		G_Printf( "Usage: removeip <ip-mask>\n" );
 		return;
 	}
 
-	if( !StringToFilter( trap_Cmd_Argv( 1 ), &f ) )
+	if( !StringToFilter( trap_Cmd_Argv( 1 ), &f ) ) {
 		return;
+	}
 
 	for( i = 0; i < numipfilters; i++ )
 		if( ipfilters[i].mask == f.mask
-			&& ipfilters[i].compare == f.compare )
-		{
-			for( j = i+1; j < numipfilters; j++ )
-				ipfilters[j-1] = ipfilters[j];
+			&& ipfilters[i].compare == f.compare ) {
+			for( j = i + 1; j < numipfilters; j++ )
+				ipfilters[j - 1] = ipfilters[j];
 			numipfilters--;
 			G_Printf( "Removed.\n" );
 			return;
 		}
-		G_Printf( "Didn't find %s.\n", trap_Cmd_Argv( 1 ) );
+	G_Printf( "Didn't find %s.\n", trap_Cmd_Argv( 1 ) );
 }
 
 /*
 * Cmd_ListIP_f
 */
-static void Cmd_ListIP_f( void )
-{
+static void Cmd_ListIP_f( void ) {
 	int i;
 	uint8_t b[4];
 
 	G_Printf( "Filter list:\n" );
-	for( i = 0; i < numipfilters; i++ )
-	{
+	for( i = 0; i < numipfilters; i++ ) {
 		*(unsigned *)b = ipfilters[i].compare;
-		if( ipfilters[i].timeout && ipfilters[i].timeout > game.serverTime )
+		if( ipfilters[i].timeout && ipfilters[i].timeout > game.serverTime ) {
 			G_Printf( "%3i.%3i.%3i.%3i %.2f\n", b[0], b[1], b[2], b[3],
-			(float)(ipfilters[i].timeout-game.serverTime)/(60*1000.0f) );
-		else if( !ipfilters[i].timeout )
+					  (float)( ipfilters[i].timeout - game.serverTime ) / ( 60 * 1000.0f ) );
+		} else if( !ipfilters[i].timeout ) {
 			G_Printf( "%3i.%3i.%3i.%3i\n", b[0], b[1], b[2], b[3] );
+		}
 	}
 }
 
 /*
 * Cmd_WriteIP_f
 */
-static void Cmd_WriteIP_f( void )
-{
-	SV_WriteIPList ();
+static void Cmd_WriteIP_f( void ) {
+	SV_WriteIPList();
 }
 
 /*
 * Cmd_ListLocations_f
 */
-static void Cmd_ListLocations_f( void )
-{
+static void Cmd_ListLocations_f( void ) {
 	int i;
 
 	for( i = 0; i < MAX_LOCATIONS; i++ ) {
-		const char *cs = trap_GetConfigString(CS_LOCATIONS + i);
-		if( !cs[0] ) { 
+		const char *cs = trap_GetConfigString( CS_LOCATIONS + i );
+		if( !cs[0] ) {
 			break;
 		}
 		G_Printf( "%2d %s\n", i, cs );
@@ -380,10 +357,10 @@ static void Cmd_ListLocations_f( void )
 /*
 * G_AddCommands
 */
-void G_AddServerCommands( void )
-{
-	if( dedicated->integer )
+void G_AddServerCommands( void ) {
+	if( dedicated->integer ) {
 		trap_Cmd_AddCommand( "say", Cmd_ConsoleSay_f );
+	}
 	trap_Cmd_AddCommand( "kick", Cmd_ConsoleKick_f );
 
 	// match controls
@@ -406,10 +383,10 @@ void G_AddServerCommands( void )
 /*
 * G_RemoveCommands
 */
-void G_RemoveCommands( void )
-{
-	if( dedicated->integer )
+void G_RemoveCommands( void ) {
+	if( dedicated->integer ) {
 		trap_Cmd_RemoveCommand( "say" );
+	}
 	trap_Cmd_RemoveCommand( "kick" );
 
 	// match controls

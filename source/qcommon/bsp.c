@@ -69,27 +69,27 @@ const bspFormatDesc_t q3BSPFormats[] =
 /*
 * Com_FindBSPFormat
 */
-const bspFormatDesc_t *Q_FindBSPFormat( const bspFormatDesc_t *formats, const char *header, int version )
-{
+const bspFormatDesc_t *Q_FindBSPFormat( const bspFormatDesc_t *formats, const char *header, int version ) {
 	int j;
 	const bspFormatDesc_t *bspFormat;
 
 	// check whether any of passed formats matches the header/version combo
-	for( bspFormat = formats; bspFormat->header; bspFormat++ )
-	{
-		if( strlen( bspFormat->header ) && strncmp( header, bspFormat->header, strlen( bspFormat->header ) ) )
+	for( bspFormat = formats; bspFormat->header; bspFormat++ ) {
+		if( strlen( bspFormat->header ) && strncmp( header, bspFormat->header, strlen( bspFormat->header ) ) ) {
 			continue;
+		}
 
 		// check versions listed for this header
-		for( j = 0; bspFormat->versions[j]; j++ )
-		{
-			if( version == bspFormat->versions[j] )
+		for( j = 0; bspFormat->versions[j]; j++ ) {
+			if( version == bspFormat->versions[j] ) {
 				break;
+			}
 		}
 
 		// found a match
-		if( bspFormat->versions[j] )
+		if( bspFormat->versions[j] ) {
 			return bspFormat;
+		}
 	}
 
 	return NULL;
@@ -98,31 +98,28 @@ const bspFormatDesc_t *Q_FindBSPFormat( const bspFormatDesc_t *formats, const ch
 /*
 * Com_FindFormatDescriptor
 */
-const modelFormatDescr_t *Q_FindFormatDescriptor( const modelFormatDescr_t *formats, const uint8_t *buf, const bspFormatDesc_t **bspFormat )
-{
+const modelFormatDescr_t *Q_FindFormatDescriptor( const modelFormatDescr_t *formats, const uint8_t *buf, const bspFormatDesc_t **bspFormat ) {
 	int i;
 	const modelFormatDescr_t *descr;
 
 	// search for a matching header
-	for( i = 0, descr = formats; descr->header; i++, descr++ )
-	{
-		if( descr->header[0] == '*' )
-		{
+	for( i = 0, descr = formats; descr->header; i++, descr++ ) {
+		if( descr->header[0] == '*' ) {
 			const char *header;
 			int version;
 
 			header = ( const char * )buf;
-			version = LittleLong( *((int *)((uint8_t *)buf + descr->headerLen)) );
+			version = LittleLong( *( (int *)( (uint8_t *)buf + descr->headerLen ) ) );
 
 			// check whether any of specified formats matches the header/version combo
 			*bspFormat = Q_FindBSPFormat( descr->bspFormats, header, version );
-			if( *bspFormat )
+			if( *bspFormat ) {
 				return descr;
-		}
-		else
-		{
-			if( !strncmp( (const char *)buf, descr->header, descr->headerLen ) )
+			}
+		} else {
+			if( !strncmp( (const char *)buf, descr->header, descr->headerLen ) ) {
 				return descr;
+			}
 		}
 	}
 

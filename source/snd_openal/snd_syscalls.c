@@ -24,11 +24,10 @@ sound_import_t SOUND_IMPORT;
 
 /*
 * GetCGameAPI
-* 
+*
 * Returns a pointer to the structure with all entry points
 */
-QF_DLL_EXPORT sound_export_t *GetSoundAPI( sound_import_t *import )
-{
+QF_DLL_EXPORT sound_export_t *GetSoundAPI( sound_import_t *import ) {
 	static sound_export_t globals;
 
 	SOUND_IMPORT = *import;

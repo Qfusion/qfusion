@@ -52,18 +52,18 @@ static char *gs_teamSkinsNames[] =
 /*
 * GS_TeamName
 */
-const char *GS_TeamName( int team )
-{
-	if( team < 0 && team >= GS_MAX_TEAMS )
+const char *GS_TeamName( int team ) {
+	if( team < 0 && team >= GS_MAX_TEAMS ) {
 		return NULL;
+	}
 
 	return module_GetConfigString( CS_TEAM_SPECTATOR_NAME + team );
 }
 
-const char *GS_DefaultTeamName( int team )
-{
-	if( team < 0 && team >= GS_MAX_TEAMS )
+const char *GS_DefaultTeamName( int team ) {
+	if( team < 0 && team >= GS_MAX_TEAMS ) {
 		return NULL;
+	}
 
 	return gs_teamNames[team];
 }
@@ -71,10 +71,10 @@ const char *GS_DefaultTeamName( int team )
 /*
 * GS_TeamSkinName
 */
-const char *GS_TeamSkinName( int team )
-{
-	if( team < 0 && team >= GS_MAX_TEAMS )
+const char *GS_TeamSkinName( int team ) {
+	if( team < 0 && team >= GS_MAX_TEAMS ) {
 		return NULL;
+	}
 
 	return gs_teamSkinsNames[team];
 }
@@ -82,23 +82,24 @@ const char *GS_TeamSkinName( int team )
 /*
 * GS_Teams_TeamFromName
 */
-int GS_Teams_TeamFromName( const char *teamname )
-{
+int GS_Teams_TeamFromName( const char *teamname ) {
 	const char *s;
 	int i;
 
-	if( !teamname || !teamname[0] )
+	if( !teamname || !teamname[0] ) {
 		return -1; // invalid
 
-	for( i = 0; i < GS_MAX_TEAMS; i++ )
-	{
+	}
+	for( i = 0; i < GS_MAX_TEAMS; i++ ) {
 		s = gs_teamNames[i];
-		if( !Q_stricmp( s, teamname ) )
+		if( !Q_stricmp( s, teamname ) ) {
 			return i;
+		}
 
 		s = module_GetConfigString( CS_TEAM_SPECTATOR_NAME + i );
-		if( s && !Q_stricmp( s, teamname ) )
+		if( s && !Q_stricmp( s, teamname ) ) {
 			return i;
+		}
 	}
 
 	return -1; // invalid
@@ -107,17 +108,18 @@ int GS_Teams_TeamFromName( const char *teamname )
 /*
 * GS_IsTeamDamage
 */
-bool GS_IsTeamDamage( entity_state_t *targ, entity_state_t *attacker )
-{
-	if( !GS_TeamBasedGametype() )
+bool GS_IsTeamDamage( entity_state_t *targ, entity_state_t *attacker ) {
+	if( !GS_TeamBasedGametype() ) {
 		return false;
+	}
 
 	assert( targ && attacker );
 
 	if( targ->team && attacker->team &&
 		targ->team == attacker->team &&
-		targ->number != attacker->number )
+		targ->number != attacker->number ) {
 		return true;
+	}
 
 	return false;
 }

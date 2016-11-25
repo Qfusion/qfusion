@@ -34,8 +34,7 @@ bool vid_ref_modified;
    ==========================================================================
  */
 
-void VID_NewWindow( int width, int height )
-{
+void VID_NewWindow( int width, int height ) {
 	viddef.width = width;
 	viddef.height = height;
 }
@@ -43,8 +42,7 @@ void VID_NewWindow( int width, int height )
 /*
 ** VID_GetModeInfo
 */
-typedef struct vidmode_s
-{
+typedef struct vidmode_s {
 	const char *description;
 	int width, height;
 	int mode;
@@ -68,10 +66,10 @@ vidmode_t vid_modes[] =
 };
 #define VID_NUM_MODES ( sizeof( vid_modes ) / sizeof( vid_modes[0] ) )
 
-bool VID_GetModeInfo( int *width, int *height, int mode )
-{
-	if( mode < 0 || mode >= VID_NUM_MODES )
+bool VID_GetModeInfo( int *width, int *height, int mode ) {
+	if( mode < 0 || mode >= VID_NUM_MODES ) {
 		return false;
+	}
 
 	*width  = vid_modes[mode].width;
 	*height = vid_modes[mode].height;
@@ -79,13 +77,11 @@ bool VID_GetModeInfo( int *width, int *height, int mode )
 	return true;
 }
 
-static void VID_Restart_f( void )
-{
-	VID_Restart( (Cmd_Argc() >= 2 ? true : false) );
+static void VID_Restart_f( void ) {
+	VID_Restart( ( Cmd_Argc() >= 2 ? true : false ) );
 }
 
-void VID_Init( void )
-{
+void VID_Init( void ) {
 	viddef.width = 320;
 	viddef.height = 240;
 
@@ -97,10 +93,8 @@ void VID_Init( void )
 	VID_CheckChanges();
 }
 
-void VID_Shutdown( void )
-{
-	if( vid_ref_active )
-	{
+void VID_Shutdown( void ) {
+	if( vid_ref_active ) {
 		R_Shutdown();
 		vid_ref_active = false;
 	}
@@ -108,25 +102,22 @@ void VID_Shutdown( void )
 	Cmd_RemoveCommand( "vid_restart" );
 }
 
-void VID_CheckChanges( void )
-{
-	if( vid_ref_modified )
-	{
-		if( vid_ref_active )
-		{
+void VID_CheckChanges( void ) {
+	if( vid_ref_modified ) {
+		if( vid_ref_active ) {
 			R_Shutdown();
 			vid_ref_active = false;
 		}
 
-		if( R_Init( NULL, NULL, NULL, 0, 0, 0, 0, false ) == -1 )
+		if( R_Init( NULL, NULL, NULL, 0, 0, 0, 0, false ) == -1 ) {
 			Com_Error( ERR_FATAL, "Couldn't start refresh" );
+		}
 
 		vid_ref_active = true;
 		vid_ref_modified = false;
 	}
 }
 
-void VID_Restart( void )
-{
+void VID_Restart( void ) {
 	vid_ref_modified = true;
 }

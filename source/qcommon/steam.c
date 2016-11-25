@@ -32,11 +32,10 @@ typedef void ( *com_error_t )( int code, const char *format, ... );
 /*
 * Steam_LoadLibrary
 */
-void Steam_LoadLibrary( void )
-{
+void Steam_LoadLibrary( void ) {
 	static steamlib_import_t import;
 	dllfunc_t funcs[2];
-	void *( *GetSteamLibAPI )(void *);
+	void *( *GetSteamLibAPI )( void * );
 
 	assert( !steamlib_libhandle );
 
@@ -52,27 +51,21 @@ void Steam_LoadLibrary( void )
 	funcs[1].name = NULL;
 	steamlib_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "steamlib_" ARCH LIB_SUFFIX, funcs );
 
-	if( steamlib_libhandle )
-	{
+	if( steamlib_libhandle ) {
 		// load succeeded
 		int api_version;
 
 		steamlib_export = GetSteamLibAPI( &import );
 		api_version = steamlib_export->API();
 
-		if( api_version != STEAMLIB_API_VERSION )
-		{
+		if( api_version != STEAMLIB_API_VERSION ) {
 			// wrong version
 			Com_Printf( "Wrong version: %i, not %i.\n", api_version, STEAMLIB_API_VERSION );
 			Steam_UnloadLibrary();
-		}
-		else
-		{
+		} else {
 			Com_Printf( "Success.\n" );
 		}
-	}
-	else
-	{
+	} else {
 		Com_Printf( "Not found.\n" );
 	}
 }
@@ -80,8 +73,7 @@ void Steam_LoadLibrary( void )
 /*
 * Steam_UnloadLibrary
 */
-void Steam_UnloadLibrary( void )
-{
+void Steam_UnloadLibrary( void ) {
 	if( steamlib_libhandle ) {
 		steamlib_export->Shutdown();
 
@@ -98,8 +90,7 @@ void Steam_UnloadLibrary( void )
 /*
 * Steam_Init
 */
-void Steam_Init( void )
-{
+void Steam_Init( void ) {
 	if( steamlib_export ) {
 		if( !steamlib_export->Init() ) {
 			Com_Printf( "Steam initialization failed.\n" );
@@ -112,8 +103,7 @@ void Steam_Init( void )
 /*
 * Steam_RunFrame
 */
-void Steam_RunFrame( void )
-{
+void Steam_RunFrame( void ) {
 	if( steamlib_initialized ) {
 		steamlib_export->RunFrame();
 	}
@@ -122,8 +112,7 @@ void Steam_RunFrame( void )
 /*
 * Steam_Shutdown
 */
-void Steam_Shutdown( void )
-{
+void Steam_Shutdown( void ) {
 	if( steamlib_initialized ) {
 		steamlib_export->Shutdown();
 	}
@@ -132,8 +121,7 @@ void Steam_Shutdown( void )
 /*
 * Steam_GetSteamID
 */
-uint64_t Steam_GetSteamID( void )
-{
+uint64_t Steam_GetSteamID( void ) {
 	if( steamlib_initialized ) {
 		return steamlib_export->GetSteamID();
 	}
@@ -143,8 +131,7 @@ uint64_t Steam_GetSteamID( void )
 /*
 * Steam_GetAuthSessionTicket
 */
-int Steam_GetAuthSessionTicket( void (*callback)( void *, size_t ) )
-{
+int Steam_GetAuthSessionTicket( void ( *callback )( void *, size_t ) ) {
 	if( steamlib_initialized ) {
 		return steamlib_export->GetAuthSessionTicket( callback );
 	}
@@ -154,8 +141,7 @@ int Steam_GetAuthSessionTicket( void (*callback)( void *, size_t ) )
 /*
 * Steam_AdvertiseGame
 */
-void Steam_AdvertiseGame( const uint8_t *ip, unsigned short port )
-{
+void Steam_AdvertiseGame( const uint8_t *ip, unsigned short port ) {
 	if( steamlib_initialized ) {
 		steamlib_export->AdvertiseGame( ip, port );
 	}
@@ -164,8 +150,7 @@ void Steam_AdvertiseGame( const uint8_t *ip, unsigned short port )
 /*
 * Steam_GetPersonaName
 */
-void Steam_GetPersonaName( char *name, size_t namesize )
-{
+void Steam_GetPersonaName( char *name, size_t namesize ) {
 	if( !namesize ) {
 		return;
 	}

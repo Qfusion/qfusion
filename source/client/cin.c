@@ -28,67 +28,59 @@ static mempool_t *cin_mempool;
 /*
 * CL_CinModule_Error
 */
-static void CL_CinModule_Error( const char *msg )
-{
+static void CL_CinModule_Error( const char *msg ) {
 	Com_Error( ERR_FATAL, "%s", msg );
 }
 
 /*
 * CL_CinModule_Print
 */
-static void CL_CinModule_Print( const char *msg )
-{
+static void CL_CinModule_Print( const char *msg ) {
 	Com_Printf( "%s", msg );
 }
 
 /*
 * CL_CinModule_MemAlloc
 */
-static void *CL_CinModule_MemAlloc( mempool_t *pool, size_t size, const char *filename, int fileline )
-{
+static void *CL_CinModule_MemAlloc( mempool_t *pool, size_t size, const char *filename, int fileline ) {
 	return _Mem_Alloc( pool, size, MEMPOOL_CINMODULE, 0, filename, fileline );
 }
 
 /*
 * CL_CinModule_MemFree
 */
-static void CL_CinModule_MemFree( void *data, const char *filename, int fileline )
-{
+static void CL_CinModule_MemFree( void *data, const char *filename, int fileline ) {
 	_Mem_Free( data, MEMPOOL_CINMODULE, 0, filename, fileline );
 }
 
 /*
 * CL_CinModule_MemAllocPool
 */
-static mempool_t *CL_CinModule_MemAllocPool( const char *name, const char *filename, int fileline )
-{
+static mempool_t *CL_CinModule_MemAllocPool( const char *name, const char *filename, int fileline ) {
 	return _Mem_AllocPool( cin_mempool, name, MEMPOOL_CINMODULE, filename, fileline );
 }
 
 /*
 * CL_CinModule_MemFreePool
 */
-static void CL_CinModule_MemFreePool( mempool_t **pool, const char *filename, int fileline )
-{
+static void CL_CinModule_MemFreePool( mempool_t **pool, const char *filename, int fileline ) {
 	_Mem_FreePool( pool, MEMPOOL_CINMODULE, 0, filename, fileline );
 }
 
 /*
 * CL_CinModule_MemEmptyPool
 */
-static void CL_CinModule_MemEmptyPool( mempool_t *pool, const char *filename, int fileline )
-{
+static void CL_CinModule_MemEmptyPool( mempool_t *pool, const char *filename, int fileline ) {
 	_Mem_EmptyPool( pool, MEMPOOL_CINMODULE, 0, filename, fileline );
 }
 
 /*
 * CIN_LoadLibrary
 */
-void CIN_LoadLibrary( bool verbose )
-{
+void CIN_LoadLibrary( bool verbose ) {
 	static cin_import_t import;
 	dllfunc_t funcs[2];
-	void *( *GetCinematicsAPI )(void *);
+	void *( *GetCinematicsAPI )( void * );
 
 	assert( !cin_libhandle );
 
@@ -148,8 +140,7 @@ void CIN_LoadLibrary( bool verbose )
 	funcs[1].name = NULL;
 	cin_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "cin_" ARCH LIB_SUFFIX, funcs );
 
-	if( cin_libhandle )
-	{
+	if( cin_libhandle ) {
 		// load succeeded
 		int api_version;
 
@@ -158,16 +149,12 @@ void CIN_LoadLibrary( bool verbose )
 
 		api_version = cin_export->API();
 
-		if( api_version == CIN_API_VERSION )
-		{
-			if( cin_export->Init( verbose ) )
-			{
+		if( api_version == CIN_API_VERSION ) {
+			if( cin_export->Init( verbose ) ) {
 				if( verbose ) {
 					Com_Printf( "...Success.\n" );
 				}
-			}
-			else
-			{
+			} else {
 				// initialization failed
 				Mem_FreePool( &cin_mempool );
 				if( verbose ) {
@@ -175,9 +162,7 @@ void CIN_LoadLibrary( bool verbose )
 				}
 				CIN_UnloadLibrary( verbose );
 			}
-		}
-		else
-		{
+		} else {
 			// wrong version
 			Mem_FreePool( &cin_mempool );
 			if( verbose ) {
@@ -185,9 +170,7 @@ void CIN_LoadLibrary( bool verbose )
 			}
 			CIN_UnloadLibrary( verbose );
 		}
-	}
-	else
-	{
+	} else {
 		if( verbose ) {
 			Com_Printf( "...Not found.\n" );
 		}
@@ -199,8 +182,7 @@ void CIN_LoadLibrary( bool verbose )
 /*
 * CIN_UnloadLibrary
 */
-void CIN_UnloadLibrary( bool verbose )
-{
+void CIN_UnloadLibrary( bool verbose ) {
 	if( cin_export != NULL ) {
 		cin_export->Shutdown( verbose );
 		cin_export = NULL;
@@ -221,77 +203,69 @@ void CIN_UnloadLibrary( bool verbose )
 	}
 }
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
-	int flags, bool *yuv, float *framerate )
-{
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time,
+							   int flags, bool *yuv, float *framerate ) {
 	if( cin_export ) {
 		return cin_export->Open( name, start_time, flags, yuv, framerate );
 	}
 	return NULL;
 }
 
-bool CIN_HasOggAudio( struct cinematics_s *cin )
-{
+bool CIN_HasOggAudio( struct cinematics_s *cin ) {
 	if( cin_export ) {
 		return cin_export->HasOggAudio( cin );
 	}
 	return false;
 }
 
-const char *CIN_FileName( struct cinematics_s *cin )
-{
+const char *CIN_FileName( struct cinematics_s *cin ) {
 	if( cin_export ) {
 		return cin_export->FileName( cin );
 	}
 	return NULL;
 }
 
-bool CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime )
-{
+bool CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime ) {
 	if( cin_export ) {
 		return cin_export->NeedNextFrame( cin, curtime );
 	}
 	return false;
 }
 
-uint8_t *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, 
-	int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw )
-{
+uint8_t *CIN_ReadNextFrame( struct cinematics_s *cin, int *width,
+							int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw ) {
 	if( cin_export ) {
-		return cin_export->ReadNextFrame( cin, width, height, 
-			aspect_numerator, aspect_denominator, redraw );
+		return cin_export->ReadNextFrame( cin, width, height,
+										  aspect_numerator, aspect_denominator, redraw );
 	}
 	return NULL;
 }
 
-ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, 
-	int *width, int *height, int *aspect_numerator, int *aspect_denominator, 
-	bool *redraw )
-{
+ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin,
+								 int *width, int *height, int *aspect_numerator, int *aspect_denominator,
+								 bool *redraw ) {
 	if( cin_export ) {
-		return ( ref_yuv_t * )cin_export->ReadNextFrameYUV( cin, width, height, 
-			aspect_numerator, aspect_denominator, redraw );
+		return ( ref_yuv_t * )cin_export->ReadNextFrameYUV( cin, width, height,
+															aspect_numerator, aspect_denominator, redraw );
 	}
 	return NULL;
 }
 
-bool CIN_AddRawSamplesListener( struct cinematics_s *cin, void *listener, 
-	cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs ) {
+bool CIN_AddRawSamplesListener( struct cinematics_s *cin, void *listener,
+								cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs ) {
 	if( cin_export ) {
 		return cin_export->AddRawSamplesListener( cin, listener, rs, grs );
 	}
 	return false;
 }
 
-void CIN_Reset( struct cinematics_s *cin, unsigned int cur_time )
-{
+void CIN_Reset( struct cinematics_s *cin, unsigned int cur_time ) {
 	if( cin_export ) {
 		cin_export->Reset( cin, cur_time );
 	}
 }
 
-void CIN_Close( struct cinematics_s *cin )
-{
+void CIN_Close( struct cinematics_s *cin ) {
 	if( cin_export ) {
 		cin_export->Close( cin );
 	}

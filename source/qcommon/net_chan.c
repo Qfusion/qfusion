@@ -88,11 +88,10 @@ static cvar_t *net_showfragments;
 
 /*
 * Netchan_OutOfBand
-* 
+*
 * Sends an out-of-band datagram
 */
-void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t length, const uint8_t *data )
-{
+void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t length, const uint8_t *data ) {
 	msg_t send;
 	uint8_t send_buf[MAX_PACKETLEN];
 
@@ -103,18 +102,18 @@ void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t 
 	MSG_WriteData( &send, data, length );
 
 	// send the datagram
-	if( !NET_SendPacket( socket, send.data, send.cursize, address ) )
+	if( !NET_SendPacket( socket, send.data, send.cursize, address ) ) {
 		Com_Printf( "NET_SendPacket: Error: %s\n", NET_ErrorString() );
+	}
 }
 
 /*
 * Netchan_OutOfBandPrint
-* 
+*
 * Sends a text message in an out-of-band datagram
 */
-void Netchan_OutOfBandPrint( const socket_t *socket, const netadr_t *address, const char *format, ... )
-{
-	va_list	argptr;
+void Netchan_OutOfBandPrint( const socket_t *socket, const netadr_t *address, const char *format, ... ) {
+	va_list argptr;
 	static char string[MAX_PACKETLEN - 4];
 
 	va_start( argptr, format );
@@ -126,11 +125,10 @@ void Netchan_OutOfBandPrint( const socket_t *socket, const netadr_t *address, co
 
 /*
 * Netchan_Setup
-* 
+*
 * called to open a channel to a remote system
 */
-void Netchan_Setup( netchan_t *chan, const socket_t *socket, const netadr_t *address, int game_port )
-{
+void Netchan_Setup( netchan_t *chan, const socket_t *socket, const netadr_t *address, int game_port ) {
 	memset( chan, 0, sizeof( *chan ) );
 
 	chan->socket = socket;
@@ -150,64 +148,60 @@ static uint8_t msg_process_data[MAX_MSGLEN];
 #include "compression.h"
 
 static int Netchan_ZLibCompressChunk( const uint8_t *source, unsigned long sourceLen, uint8_t *dest, unsigned long destLen,
-									 int level, int wbits )
-{
+									  int level, int wbits ) {
 	int result, zlerror;
 
 	zlerror = qzcompress2( dest, &destLen, source, sourceLen, level );
-	switch( zlerror )
-	{
-	case Z_OK:
-		result = destLen; // returns the new length into destLen
-		break;
-	case Z_MEM_ERROR:
-		Com_DPrintf( "ZLib data error! Z_MEM_ERROR on compress.\n" );
-		result = -1;
-		break;
-	case Z_BUF_ERROR:
-		Com_DPrintf( "ZLib data error! Z_BUF_ERROR on compress.\n" );
-		result = -1;
-		break;
-	case Z_STREAM_ERROR:
-		Com_DPrintf( "ZLib data error! Z_STREAM_ERROR on compress.\n" );
-		result = -1;
-		break;
-	default:
-		Com_DPrintf( "ZLib data error! Error code %i on compress.\n", zlerror );
-		result = -1;
-		break;
+	switch( zlerror ) {
+		case Z_OK:
+			result = destLen; // returns the new length into destLen
+			break;
+		case Z_MEM_ERROR:
+			Com_DPrintf( "ZLib data error! Z_MEM_ERROR on compress.\n" );
+			result = -1;
+			break;
+		case Z_BUF_ERROR:
+			Com_DPrintf( "ZLib data error! Z_BUF_ERROR on compress.\n" );
+			result = -1;
+			break;
+		case Z_STREAM_ERROR:
+			Com_DPrintf( "ZLib data error! Z_STREAM_ERROR on compress.\n" );
+			result = -1;
+			break;
+		default:
+			Com_DPrintf( "ZLib data error! Error code %i on compress.\n", zlerror );
+			result = -1;
+			break;
 	}
 
 	return result;
 }
 
 static int Netchan_ZLibDecompressChunk( const uint8_t *source, unsigned long sourceLen, uint8_t *dest, unsigned long destLen,
-									   int wbits )
-{
+										int wbits ) {
 	int result, zlerror;
 
 	zlerror = qzuncompress( dest, &destLen, source, sourceLen );
-	switch( zlerror )
-	{
-	case Z_OK:
-		result = destLen; // returns the new length into destLen
-		break;
-	case Z_MEM_ERROR:
-		Com_DPrintf( "ZLib data error! Z_MEM_ERROR on decompress.\n" );
-		result = -1;
-		break;
-	case Z_BUF_ERROR:
-		Com_DPrintf( "ZLib data error! Z_BUF_ERROR on decompress.\n" );
-		result = -1;
-		break;
-	case Z_DATA_ERROR:
-		Com_DPrintf( "ZLib data error! Z_DATA_ERROR on decompress.\n" );
-		result = -1;
-		break;
-	default:
-		Com_DPrintf( "ZLib data error! Error code %i on decompress.\n", zlerror );
-		result = -1;
-		break;
+	switch( zlerror ) {
+		case Z_OK:
+			result = destLen; // returns the new length into destLen
+			break;
+		case Z_MEM_ERROR:
+			Com_DPrintf( "ZLib data error! Z_MEM_ERROR on decompress.\n" );
+			result = -1;
+			break;
+		case Z_BUF_ERROR:
+			Com_DPrintf( "ZLib data error! Z_BUF_ERROR on decompress.\n" );
+			result = -1;
+			break;
+		case Z_DATA_ERROR:
+			Com_DPrintf( "ZLib data error! Z_DATA_ERROR on decompress.\n" );
+			result = -1;
+			break;
+		default:
+			Com_DPrintf( "ZLib data error! Error code %i on decompress.\n", zlerror );
+			result = -1;
+			break;
 	}
 
 	return result;
@@ -216,25 +210,25 @@ static int Netchan_ZLibDecompressChunk( const uint8_t *source, unsigned long sou
 /*
 * Netchan_CompressMessage
 */
-int Netchan_CompressMessage( msg_t *msg )
-{
+int Netchan_CompressMessage( msg_t *msg ) {
 	int length;
 
-	if( msg == NULL || !msg->data )
+	if( msg == NULL || !msg->data ) {
 		return 0;
+	}
 
 	// zero-fill our buffer
 	length = 0;
 	memset( msg_process_data, 0, sizeof( msg_process_data ) );
 
 	//compress the message
-	length = Netchan_ZLibCompressChunk( msg->data, msg->cursize, 
-		msg_process_data, sizeof( msg_process_data ), Z_BEST_COMPRESSION, -MAX_WBITS );
-	if( length < 0 )  // failed to compress, return the error
+	length = Netchan_ZLibCompressChunk( msg->data, msg->cursize,
+										msg_process_data, sizeof( msg_process_data ), Z_BEST_COMPRESSION, -MAX_WBITS );
+	if( length < 0 ) { // failed to compress, return the error
 		return length;
+	}
 
-	if( (size_t)length >= msg->cursize || length >= MAX_MSGLEN )
-	{
+	if( (size_t)length >= msg->cursize || length >= MAX_MSGLEN ) {
 		return 0; // compressed was bigger. Send uncompressed
 	}
 
@@ -249,22 +243,23 @@ int Netchan_CompressMessage( msg_t *msg )
 /*
 * Netchan_DecompressMessage
 */
-int Netchan_DecompressMessage( msg_t *msg )
-{
+int Netchan_DecompressMessage( msg_t *msg ) {
 	int length;
 
-	if( msg == NULL || !msg->data )
+	if( msg == NULL || !msg->data ) {
 		return 0;
+	}
 
-	if( msg->compressed == false )
+	if( msg->compressed == false ) {
 		return 0;
+	}
 
 	length = Netchan_ZLibDecompressChunk( msg->data + msg->readcount, msg->cursize - msg->readcount, msg_process_data, ( sizeof( msg_process_data ) - msg->readcount ), -MAX_WBITS );
-	if( length < 0 )
+	if( length < 0 ) {
 		return length;
+	}
 
-	if( ( msg->readcount + length ) >= msg->maxsize )
-	{
+	if( ( msg->readcount + length ) >= msg->maxsize ) {
 		Com_Printf( "Netchan_DecompressMessage: Packet too big\n" );
 		return -1;
 	}
@@ -279,13 +274,11 @@ int Netchan_DecompressMessage( msg_t *msg )
 
 /*
 * Netchan_DropAllFragments
-* 
+*
 * Send all remaining fragments at once
 */
-static void Netchan_DropAllFragments( netchan_t *chan )
-{
-	if( chan->unsentFragments )
-	{
+static void Netchan_DropAllFragments( netchan_t *chan ) {
+	if( chan->unsentFragments ) {
 		chan->outgoingSequence++;
 		chan->unsentFragments = false;
 	}
@@ -293,11 +286,10 @@ static void Netchan_DropAllFragments( netchan_t *chan )
 
 /*
 * Netchan_TransmitNextFragment
-* 
+*
 * Send one fragment of the current message
 */
-bool Netchan_TransmitNextFragment( netchan_t *chan )
-{
+bool Netchan_TransmitNextFragment( netchan_t *chan ) {
 	msg_t send;
 	uint8_t send_buf[MAX_PACKETLEN];
 	int fragmentLength;
@@ -307,30 +299,30 @@ bool Netchan_TransmitNextFragment( netchan_t *chan )
 	MSG_Init( &send, send_buf, sizeof( send_buf ) );
 	MSG_Clear( &send );
 
-	if( net_showfragments->integer )
+	if( net_showfragments->integer ) {
 		Com_Printf( "Transmit fragment (%s) (id:%i)\n", NET_SocketToString( chan->socket ), chan->outgoingSequence );
+	}
 
 	MSG_WriteLong( &send, chan->outgoingSequence | FRAGMENT_BIT );
 	// wsw : jal : by now our header sends incoming ack too (q3 doesn't)
 	// wsw : also add compressed bit if it's compressed
-	if( chan->unsentIsCompressed )
+	if( chan->unsentIsCompressed ) {
 		MSG_WriteLong( &send, chan->incomingSequence | FRAGMENT_BIT );
-	else
+	} else {
 		MSG_WriteLong( &send, chan->incomingSequence );
+	}
 
 	// send the game port if we are a client
-	if( !chan->socket->server )
+	if( !chan->socket->server ) {
 		MSG_WriteShort( &send, local_game_port );
+	}
 
 	// copy the reliable message to the packet first
-	if( chan->unsentFragmentStart + FRAGMENT_SIZE > chan->unsentLength )
-	{
+	if( chan->unsentFragmentStart + FRAGMENT_SIZE > chan->unsentLength ) {
 		fragmentLength = chan->unsentLength - chan->unsentFragmentStart;
 		last = true;
-	}
-	else
-	{
-		fragmentLength = ceil( ( chan->unsentLength - chan->unsentFragmentStart )*1.0 / ceil( ( chan->unsentLength - chan->unsentFragmentStart )*1.0 / FRAGMENT_SIZE ) );
+	} else {
+		fragmentLength = ceil( ( chan->unsentLength - chan->unsentFragmentStart ) * 1.0 / ceil( ( chan->unsentLength - chan->unsentFragmentStart ) * 1.0 / FRAGMENT_SIZE ) );
 		last = false;
 	}
 
@@ -339,16 +331,14 @@ bool Netchan_TransmitNextFragment( netchan_t *chan )
 	MSG_CopyData( &send, chan->unsentBuffer + chan->unsentFragmentStart, fragmentLength );
 
 	// send the datagram
-	if( !NET_SendPacket( chan->socket, send.data, send.cursize, &chan->remoteAddress ) )
-	{
+	if( !NET_SendPacket( chan->socket, send.data, send.cursize, &chan->remoteAddress ) ) {
 		Netchan_DropAllFragments( chan );
 		return false;
 	}
 
-	if( showpackets->integer )
-	{
+	if( showpackets->integer ) {
 		Com_Printf( "%s send %4i : s=%i fragment=%i,%i\n", NET_SocketToString( chan->socket ), send.cursize,
-			chan->outgoingSequence, chan->unsentFragmentStart, fragmentLength );
+					chan->outgoingSequence, chan->unsentFragmentStart, fragmentLength );
 	}
 
 	chan->unsentFragmentStart += fragmentLength;
@@ -357,8 +347,7 @@ bool Netchan_TransmitNextFragment( netchan_t *chan )
 	// that is exactly the fragment length still needs to send
 	// a second packet of zero length so that the other side
 	// can tell there aren't more to follow
-	if( chan->unsentFragmentStart == chan->unsentLength && fragmentLength != FRAGMENT_SIZE )
-	{
+	if( chan->unsentFragmentStart == chan->unsentLength && fragmentLength != FRAGMENT_SIZE ) {
 		chan->outgoingSequence++;
 		chan->unsentFragments = false;
 	}
@@ -368,15 +357,14 @@ bool Netchan_TransmitNextFragment( netchan_t *chan )
 
 /*
 * Netchan_PushAllFragments
-* 
+*
 * Send all remaining fragments at once
 */
-bool Netchan_PushAllFragments( netchan_t *chan )
-{
-	while( chan->unsentFragments )
-	{
-		if( !Netchan_TransmitNextFragment( chan ) )
+bool Netchan_PushAllFragments( netchan_t *chan ) {
+	while( chan->unsentFragments ) {
+		if( !Netchan_TransmitNextFragment( chan ) ) {
 			return false;
+		}
 	}
 
 	return true;
@@ -384,19 +372,17 @@ bool Netchan_PushAllFragments( netchan_t *chan )
 
 /*
 * Netchan_Transmit
-* 
+*
 * Sends a message to a connection, fragmenting if necessary
 * A 0 length will still generate a packet.
 */
-bool Netchan_Transmit( netchan_t *chan, msg_t *msg )
-{
+bool Netchan_Transmit( netchan_t *chan, msg_t *msg ) {
 	msg_t send;
 	uint8_t send_buf[MAX_PACKETLEN];
 
 	assert( msg );
 
-	if( msg->cursize > MAX_MSGLEN )
-	{
+	if( msg->cursize > MAX_MSGLEN ) {
 		Com_Error( ERR_DROP, "Netchan_Transmit: Excessive length = %i", msg->cursize );
 		return false;
 	}
@@ -404,8 +390,7 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg )
 	chan->unsentIsCompressed = false;
 
 	// fragment large reliable messages
-	if( msg->cursize >= FRAGMENT_SIZE )
-	{
+	if( msg->cursize >= FRAGMENT_SIZE ) {
 		chan->unsentFragments = true;
 		chan->unsentLength = msg->cursize;
 		chan->unsentIsCompressed = msg->compressed;
@@ -422,27 +407,29 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg )
 	MSG_WriteLong( &send, chan->outgoingSequence );
 	// wsw : jal : by now our header sends incoming ack too (q3 doesn't)
 	// wsw : jal : also add compressed information if it's compressed
-	if( msg->compressed )
+	if( msg->compressed ) {
 		MSG_WriteLong( &send, chan->incomingSequence | FRAGMENT_BIT );
-	else
+	} else {
 		MSG_WriteLong( &send, chan->incomingSequence );
+	}
 
 	chan->outgoingSequence++;
 
 	// send the game port if we are a client
-	if( !chan->socket->server )
+	if( !chan->socket->server ) {
 		MSG_WriteShort( &send, local_game_port );
+	}
 
 	MSG_CopyData( &send, msg->data, msg->cursize );
 
 	// send the datagram
-	if( !NET_SendPacket( chan->socket, send.data, send.cursize, &chan->remoteAddress ) )
+	if( !NET_SendPacket( chan->socket, send.data, send.cursize, &chan->remoteAddress ) ) {
 		return false;
+	}
 
-	if( showpackets->integer )
-	{
+	if( showpackets->integer ) {
 		Com_Printf( "%s send %4i : s=%i ack=%i\n", NET_SocketToString( chan->socket ), send.cursize,
-			chan->outgoingSequence - 1, chan->incomingSequence );
+					chan->outgoingSequence - 1, chan->incomingSequence );
 	}
 
 	return true;
@@ -450,16 +437,15 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg )
 
 /*
 * Netchan_Process
-* 
+*
 * Returns false if the message should not be processed due to being
 * out of order or a fragment.
-* 
+*
 * Msg must be large enough to hold MAX_MSGLEN, because if this is the
 * final fragment of a multi-part message, the entire thing will be
 * copied out.
 */
-bool Netchan_Process( netchan_t *chan, msg_t *msg )
-{
+bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 	int sequence, sequence_ack;
 	int game_port = -1;
 	int fragmentStart, fragmentLength;
@@ -474,58 +460,49 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 	sequence_ack = MSG_ReadLong( msg ); // wsw : jal : by now our header sends incoming ack too (q3 doesn't)
 
 	// check for fragment information
-	if( sequence & FRAGMENT_BIT )
-	{
+	if( sequence & FRAGMENT_BIT ) {
 		sequence &= ~FRAGMENT_BIT;
 		fragmented = true;
 
-		if( net_showfragments->integer )
+		if( net_showfragments->integer ) {
 			Com_Printf( "Process fragmented packet (%s) (id:%i)\n", NET_SocketToString( chan->socket ), sequence );
-	}
-	else
-	{
+		}
+	} else {
 		fragmented = false;
 	}
 
 	// wsw : jal : check for compressed information
-	if( sequence_ack & FRAGMENT_BIT )
-	{
+	if( sequence_ack & FRAGMENT_BIT ) {
 		sequence_ack &= ~FRAGMENT_BIT;
 		compressed = true;
-		if( !fragmented )
+		if( !fragmented ) {
 			msg->compressed = true;
+		}
 	}
 
 	// read the game port if we are a server
-	if( chan->socket->server )
+	if( chan->socket->server ) {
 		game_port = MSG_ReadShort( msg );
+	}
 
 	// read the fragment information
-	if( fragmented )
-	{
+	if( fragmented ) {
 		fragmentStart = MSG_ReadShort( msg );
 		fragmentLength = MSG_ReadShort( msg );
-		if( fragmentLength & FRAGMENT_LAST )
-		{
+		if( fragmentLength & FRAGMENT_LAST ) {
 			lastfragment = true;
 			fragmentLength &= ~FRAGMENT_LAST;
 		}
-	}
-	else
-	{
+	} else {
 		fragmentStart = 0; // stop warning message
 		fragmentLength = 0;
 	}
 
-	if( showpackets->integer )
-	{
-		if( fragmented )
-		{
+	if( showpackets->integer ) {
+		if( fragmented ) {
 			Com_Printf( "%s recv %4i : s=%i fragment=%i,%i\n", NET_SocketToString( chan->socket ), msg->cursize,
-				sequence, fragmentStart, fragmentLength );
-		}
-		else
-		{
+						sequence, fragmentStart, fragmentLength );
+		} else {
 			Com_Printf( "%s recv %4i : s=%i\n", NET_SocketToString( chan->socket ), msg->cursize, sequence );
 		}
 	}
@@ -533,12 +510,10 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 	//
 	// discard out of order or duplicated packets
 	//
-	if( sequence <= chan->incomingSequence )
-	{
-		if( showdrop->integer || showpackets->integer )
-		{
+	if( sequence <= chan->incomingSequence ) {
+		if( showdrop->integer || showpackets->integer ) {
 			Com_Printf( "%s:Out of order packet %i at %i\n", NET_AddressToString( &chan->remoteAddress ), sequence,
-				chan->incomingSequence );
+						chan->incomingSequence );
 		}
 		return false;
 	}
@@ -546,13 +521,11 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 	//
 	// dropped packets don't keep the message from being used
 	//
-	chan->dropped = sequence - ( chan->incomingSequence+1 );
-	if( chan->dropped > 0 )
-	{
-		if( showdrop->integer || showpackets->integer )
-		{
+	chan->dropped = sequence - ( chan->incomingSequence + 1 );
+	if( chan->dropped > 0 ) {
+		if( showdrop->integer || showpackets->integer ) {
 			Com_Printf( "%s:Dropped %i packets at %i\n", NET_AddressToString( &chan->remoteAddress ), chan->dropped,
-				sequence );
+						sequence );
 		}
 	}
 
@@ -560,24 +533,20 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 	// if this is the final framgent of a reliable message,
 	// bump incoming_reliable_sequence
 	//
-	if( fragmented )
-	{
+	if( fragmented ) {
 		// TTimo
 		// make sure we add the fragments in correct order
 		// either a packet was dropped, or we received this one too soon
 		// we don't reconstruct the fragments. we will wait till this fragment gets to us again
 		// (NOTE: we could probably try to rebuild by out of order chunks if needed)
-		if( sequence != chan->fragmentSequence )
-		{
+		if( sequence != chan->fragmentSequence ) {
 			chan->fragmentSequence = sequence;
 			chan->fragmentLength = 0;
 		}
 
 		// if we missed a fragment, dump the message
-		if( fragmentStart != (int) chan->fragmentLength )
-		{
-			if( showdrop->integer || showpackets->integer )
-			{
+		if( fragmentStart != (int) chan->fragmentLength ) {
+			if( showdrop->integer || showpackets->integer ) {
 				Com_Printf( "%s:Dropped a message fragment\n", NET_AddressToString( &chan->remoteAddress ), sequence );
 			}
 			// we can still keep the part that we have so far,
@@ -587,10 +556,8 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 
 		// copy the fragment to the fragment buffer
 		if( fragmentLength < 0 || msg->readcount + fragmentLength > msg->cursize ||
-			chan->fragmentLength + fragmentLength > sizeof( chan->fragmentBuffer ) )
-		{
-			if( showdrop->integer || showpackets->integer )
-			{
+			chan->fragmentLength + fragmentLength > sizeof( chan->fragmentBuffer ) ) {
+			if( showdrop->integer || showpackets->integer ) {
 				Com_Printf( "%s:illegal fragment length\n", NET_AddressToString( &chan->remoteAddress ) );
 			}
 			return false;
@@ -601,15 +568,13 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 		chan->fragmentLength += fragmentLength;
 
 		// if this wasn't the last fragment, don't process anything
-		if( !lastfragment )
-		{
+		if( !lastfragment ) {
 			return false;
 		}
 
-		if( chan->fragmentLength > msg->maxsize )
-		{
+		if( chan->fragmentLength > msg->maxsize ) {
 			Com_Printf( "%s:fragmentLength %i > msg->maxsize\n", NET_AddressToString( &chan->remoteAddress ),
-				chan->fragmentLength );
+						chan->fragmentLength );
 			return false;
 		}
 
@@ -618,8 +583,9 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 		MSG_Clear( msg );
 		MSG_WriteLong( msg, sequence );
 		MSG_WriteLong( msg, sequence_ack );
-		if( chan->socket->server )
+		if( chan->socket->server ) {
 			MSG_WriteShort( msg, game_port );
+		}
 
 		msg->compressed = compressed;
 
@@ -644,16 +610,14 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg )
 /*
 * Netchan_GamePort
 */
-int Netchan_GamePort( void )
-{
+int Netchan_GamePort( void ) {
 	return local_game_port;
 }
 
 /*
 * Netchan_Init
 */
-void Netchan_Init( void )
-{
+void Netchan_Init( void ) {
 	// pick a game port value that should be nice and random
 	local_game_port = Sys_Milliseconds() & 0xffff;
 
@@ -665,6 +629,5 @@ void Netchan_Init( void )
 /*
 * Netchan_Shutdown
 */
-void Netchan_Shutdown( void )
-{
+void Netchan_Shutdown( void ) {
 }

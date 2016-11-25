@@ -24,8 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * Sys_Android_Microseconds
 */
-uint64_t Sys_Android_Microseconds( void )
-{
+uint64_t Sys_Android_Microseconds( void ) {
 	struct timespec now;
 	clock_gettime( CLOCK_MONOTONIC, &now );
 	return now.tv_sec * ( ( uint64_t )1000000 ) + now.tv_nsec / ( ( uint64_t )1000 );
@@ -34,15 +33,15 @@ uint64_t Sys_Android_Microseconds( void )
 /*
 * Sys_Microseconds
 */
-uint64_t Sys_Microseconds( void )
-{
+uint64_t Sys_Microseconds( void ) {
 	static uint64_t base;
 	uint64_t now;
 
 	now = Sys_Android_Microseconds();
 
-	if( !base )
+	if( !base ) {
 		base = now;
+	}
 
 	return now - base;
 }
@@ -50,7 +49,6 @@ uint64_t Sys_Microseconds( void )
 /*
 * Sys_Milliseconds
 */
-unsigned int Sys_Milliseconds( void )
-{
+unsigned int Sys_Milliseconds( void ) {
 	return Sys_Microseconds() / ( ( uint64_t )1000 );
 }

@@ -21,32 +21,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ui_precompiled.h"
 #include "ui_parsersound.h"
 
-PropertyParserSound::PropertyParserSound()
-{
+PropertyParserSound::PropertyParserSound() {
 }
 
-PropertyParserSound::~PropertyParserSound()
-{
+PropertyParserSound::~PropertyParserSound() {
 }
 
 // Called to parse a RCSS string declaration.
-bool PropertyParserSound::ParseValue(Rocket::Core::Property& property, 
-	const Rocket::Core::String& value, 
-	const Rocket::Core::ParameterMap& ROCKET_UNUSED_PARAMETER(parameters)) const
-{
-	property.value = Rocket::Core::Variant(value);
+bool PropertyParserSound::ParseValue( Rocket::Core::Property& property,
+									  const Rocket::Core::String& value,
+									  const Rocket::Core::ParameterMap& ROCKET_UNUSED_PARAMETER( parameters ) ) const {
+	property.value = Rocket::Core::Variant( value );
 	property.unit = Rocket::Core::Property::STRING;
 
 	if( !value.Empty() ) {
 		// skip the '/' at the start of the path
-		trap::S_RegisterSound( value.CString()+1 );
+		trap::S_RegisterSound( value.CString() + 1 );
 	}
 
 	return true;
 }
 
 // Destroys the parser.
-void PropertyParserSound::Release()
-{
+void PropertyParserSound::Release() {
 	delete this;
 }

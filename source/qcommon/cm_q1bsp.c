@@ -22,13 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 #include "cm_local.h"
 
-typedef struct chull_s
-{
-	cnode_t			*clipnodes;
-	int				firstclipnode;
-	int				lastclipnode;
-	vec3_t			clip_mins;
-	vec3_t			clip_maxs;
+typedef struct chull_s {
+	cnode_t         *clipnodes;
+	int firstclipnode;
+	int lastclipnode;
+	vec3_t clip_mins;
+	vec3_t clip_maxs;
 } chull_t;
 
 //=========================================================
@@ -36,16 +35,14 @@ typedef struct chull_s
 /*
 * CMod_SurfaceFlags
 */
-static int CMod_SurfaceFlags( int oldcontents )
-{
-	switch( oldcontents )
-	{
+static int CMod_SurfaceFlags( int oldcontents ) {
+	switch( oldcontents ) {
 		case Q1_CONTENTS_WATER:
 		case Q1_CONTENTS_SLIME:
 		case Q1_CONTENTS_LAVA:
 			return SURF_NOMARKS;
 		case Q1_CONTENTS_SKY:
-			return SURF_SKY|SURF_NOIMPACT|SURF_NOMARKS|SURF_NODLIGHT;
+			return SURF_SKY | SURF_NOIMPACT | SURF_NOMARKS | SURF_NODLIGHT;
 	}
 
 	return 0;
@@ -54,10 +51,8 @@ static int CMod_SurfaceFlags( int oldcontents )
 /*
 * CMod_SurfaceContents
 */
-static int CMod_SurfaceContents( int oldcontents )
-{
-	switch( oldcontents )
-	{
+static int CMod_SurfaceContents( int oldcontents ) {
+	switch( oldcontents ) {
 		case Q1_CONTENTS_EMPTY:
 			return 0;
 		case Q1_CONTENTS_SOLID:
@@ -88,8 +83,7 @@ HULL BOXES
 *
 * Returns a hull that can be used for testing or clipping an object of mins/maxs size.
 */
-static chull_t *CM_HullForBSP( cmodel_state_t *cms, cmodel_t *cmodel, const vec3_t mins, const vec3_t maxs )
-{
+static chull_t *CM_HullForBSP( cmodel_state_t *cms, cmodel_t *cmodel, const vec3_t mins, const vec3_t maxs ) {
 	vec3_t size;
 	int hullindex;
 
@@ -101,18 +95,19 @@ static chull_t *CM_HullForBSP( cmodel_state_t *cms, cmodel_t *cmodel, const vec3
 	}
 
 	hullindex *= cms->nummaphulls;
-	if( size[0] < 3 )
-		return &cms->map_hulls[hullindex+0];
-	if( size[0] <= 32 )
-		return &cms->map_hulls[hullindex+1];
-	return &cms->map_hulls[hullindex+2];
+	if( size[0] < 3 ) {
+		return &cms->map_hulls[hullindex + 0];
+	}
+	if( size[0] <= 32 ) {
+		return &cms->map_hulls[hullindex + 1];
+	}
+	return &cms->map_hulls[hullindex + 2];
 }
 
 /*
 * CM_HullSizeForBBox
 */
-void CM_HullSizeForBBox( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, cmodel_t *cmodel )
-{
+void CM_HullSizeForBBox( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, cmodel_t *cmodel ) {
 	chull_t *hull;
 
 	assert( mins && maxs );
@@ -125,23 +120,22 @@ void CM_HullSizeForBBox( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, cmodel_t
 /*
 * CM_HullPointContents
 */
-static int CM_HullPointContents( cmodel_state_t *cms, chull_t *hull, int num, vec3_t p )
-{
-	float		d;
-	cnode_t		*node;
-	cplane_t	*plane;
+static int CM_HullPointContents( cmodel_state_t *cms, chull_t *hull, int num, vec3_t p ) {
+	float d;
+	cnode_t     *node;
+	cplane_t    *plane;
 
 	c_pointcontents++;
 
-	while( num >= 0 )
-	{
-		if( num < hull->firstclipnode || num > hull->lastclipnode )
+	while( num >= 0 ) {
+		if( num < hull->firstclipnode || num > hull->lastclipnode ) {
 			Com_Error( ERR_DROP, "CM_HullPointContents: bad node number" );
+		}
 
 		node = hull->clipnodes + num;
 		plane = node->plane;
 		d = PlaneDiff( p, plane );
-		num = node->children[(d < 0)];
+		num = node->children[( d < 0 )];
 	}
 
 	return num;
@@ -153,8 +147,7 @@ static int CM_HullPointContents( cmodel_state_t *cms, chull_t *hull, int num, ve
 * Handles offseting and rotation of the end points for moving and
 * rotating entities
 */
-static int CM_TransformedHullContents( cmodel_state_t *cms, vec3_t p, cmodel_t *cmodel, vec3_t origin, vec3_t angles )
-{
+static int CM_TransformedHullContents( cmodel_state_t *cms, vec3_t p, cmodel_t *cmodel, vec3_t origin, vec3_t angles ) {
 	vec3_t p_l;
 	vec3_t offset;
 	chull_t *hull;
@@ -167,8 +160,7 @@ static int CM_TransformedHullContents( cmodel_state_t *cms, vec3_t p, cmodel_t *
 	// rotate start and end into the models frame of reference
 	if( ( angles[0] || angles[1] || angles[2] )
 		&& ( cmodel != cms->box_cmodel )
-		)
-	{
+		) {
 		vec3_t temp;
 		mat3_t axis;
 
@@ -189,7 +181,7 @@ LINE TESTING IN HULLS
 */
 
 // 1/32 epsilon to keep floating point happy
-#define	DIST_EPSILON	(0.03125)
+#define DIST_EPSILON    ( 0.03125 )
 
 #define HULLCHECKSTATE_EMPTY 0
 #define HULLCHECKSTATE_SOLID 1
@@ -203,43 +195,40 @@ static int trace_contents;
 /*
 * CM_RecursiveHullCheck
 */
-static int CM_RecursiveHullCheck( cmodel_state_t *cms, chull_t *hull, int nodenum, float p1f, float p2f, vec3_t p1, vec3_t p2 )
-{
-	cnode_t		*node;
-	cplane_t	*plane;
-	float		t1, t2;
-	float		frac;
-	vec3_t		mid;
-	int			side;
-	int			ret;
-	float		midf;
+static int CM_RecursiveHullCheck( cmodel_state_t *cms, chull_t *hull, int nodenum, float p1f, float p2f, vec3_t p1, vec3_t p2 ) {
+	cnode_t     *node;
+	cplane_t    *plane;
+	float t1, t2;
+	float frac;
+	vec3_t mid;
+	int side;
+	int ret;
+	float midf;
 
 start:
 	// check for empty
-	if( nodenum < 0 )
-	{
+	if( nodenum < 0 ) {
 		int contents;
 
 		contents = CMod_SurfaceContents( nodenum );
-		if( trace_contents & contents )
-		{
+		if( trace_contents & contents ) {
 			c_brush_traces++;
 
 			trace_trace->contents = contents;
 			trace_trace->surfFlags = CMod_SurfaceFlags( nodenum );
-			if( trace_trace->allsolid )
+			if( trace_trace->allsolid ) {
 				trace_trace->startsolid = true;
+			}
 			return HULLCHECKSTATE_SOLID;
-		}
-		else
-		{
+		} else {
 			trace_trace->allsolid = false;
 			return HULLCHECKSTATE_EMPTY;
 		}
 	}
 
-	if( nodenum < hull->firstclipnode || nodenum > hull->lastclipnode )
+	if( nodenum < hull->firstclipnode || nodenum > hull->lastclipnode ) {
 		Com_Error( ERR_DROP, "SV_RecursiveHullCheck: bad node number" );
+	}
 
 	// find the point distances
 	node = hull->clipnodes + nodenum;
@@ -248,21 +237,19 @@ start:
 	t1 = PlaneDiff( p1, plane );
 	t2 = PlaneDiff( p2, plane );
 
-	if( t1 >= 0 && t2 >= 0 )
-	{
-		nodenum = node->children[0];	// go down the front side
+	if( t1 >= 0 && t2 >= 0 ) {
+		nodenum = node->children[0];    // go down the front side
 		goto start;
 	}
-	if( t1 < 0 && t2 < 0 )
-	{
-		nodenum = node->children[1];	// go down the back side
+	if( t1 < 0 && t2 < 0 ) {
+		nodenum = node->children[1];    // go down the back side
 		goto start;
 	}
 
 	// find the intersection point
-	frac = t1 / (t1 - t2);
+	frac = t1 / ( t1 - t2 );
 	frac = bound( 0, frac, 1 );
-	midf = p1f + (p2f - p1f) * frac;
+	midf = p1f + ( p2f - p1f ) * frac;
 	VectorLerp( p1, frac, p2, mid );
 	side = t1 < 0;
 
@@ -270,32 +257,32 @@ start:
 
 	ret = CM_RecursiveHullCheck( cms, hull, node->children[side], p1f, midf, p1, mid );
 	// if this side is not empty, return what it is (solid or done)
-	if (ret != HULLCHECKSTATE_EMPTY)
+	if( ret != HULLCHECKSTATE_EMPTY ) {
 		return ret;
+	}
 
-	ret = CM_RecursiveHullCheck( cms, hull, node->children[side^1], midf, p2f, mid, p2 );
+	ret = CM_RecursiveHullCheck( cms, hull, node->children[side ^ 1], midf, p2f, mid, p2 );
 	// if other side is not solid, return what it is (empty or done)
-	if (ret != HULLCHECKSTATE_SOLID)
+	if( ret != HULLCHECKSTATE_SOLID ) {
 		return ret;
+	}
 
 	// the other side of the node is solid, this is the impact point
-	if( !side )
-	{
+	if( !side ) {
 		trace_trace->plane = *plane;
-	}
-	else
-	{
+	} else {
 		VectorNegate( plane->normal, trace_trace->plane.normal );
 		trace_trace->plane.dist = -plane->dist;
 		CategorizePlane( &trace_trace->plane );
 	}
 
 	// put the crosspoint DIST_EPSILON pixels on the near side
-	if( side )
-		frac = (t1 + DIST_EPSILON) / (t1 - t2);
-	else
-		frac = (t1 - DIST_EPSILON) / (t1 - t2);
-	midf = p1f + (p2f - p1f) * bound( 0, frac, 1 );
+	if( side ) {
+		frac = ( t1 + DIST_EPSILON ) / ( t1 - t2 );
+	} else {
+		frac = ( t1 - DIST_EPSILON ) / ( t1 - t2 );
+	}
+	midf = p1f + ( p2f - p1f ) * bound( 0, frac, 1 );
 
 	trace_trace->fraction = bound( 0, midf, 1 );
 	VectorLerp( p1, frac, p2, trace_trace->endpos );
@@ -310,8 +297,7 @@ start:
 * rotating entities
 */
 static void CM_TransformedHullTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs,
-                             cmodel_t *cmodel, int brushmask, vec3_t origin, vec3_t angles )
-{
+									 cmodel_t *cmodel, int brushmask, vec3_t origin, vec3_t angles ) {
 	chull_t *hull;
 	vec3_t offset;
 	vec3_t start_l, end_l;
@@ -319,8 +305,9 @@ static void CM_TransformedHullTrace( cmodel_state_t *cms, trace_t *tr, vec3_t st
 	mat3_t axis;
 	bool rotated;
 
-	if( !tr )
+	if( !tr ) {
 		return;
+	}
 
 	cms->checkcount++;  // for multi-check avoidance
 	c_traces++;     // for statistics, may be zeroed
@@ -329,8 +316,9 @@ static void CM_TransformedHullTrace( cmodel_state_t *cms, trace_t *tr, vec3_t st
 	memset( tr, 0, sizeof( *tr ) );
 	tr->fraction = 1;
 
-	if( !cms->numnodes )  // map not loaded
+	if( !cms->numnodes ) { // map not loaded
 		return;
+	}
 
 	// subtract origin offset
 	hull = CM_HullForBSP( cms, cmodel, mins, maxs );
@@ -346,17 +334,17 @@ static void CM_TransformedHullTrace( cmodel_state_t *cms, trace_t *tr, vec3_t st
 	VectorCopy( end_l, trace_end );
 
 	// rotate start and end into the models frame of reference
-	if( ( angles[0] || angles[1] || angles[2] ) 
+	if( ( angles[0] || angles[1] || angles[2] )
 #ifndef CM_ALLOW_ROTATED_BBOXES
 		&& ( cmodel != cms->box_cmodel )
 #endif
-		 )
+		) {
 		rotated = true;
-	else
+	} else {
 		rotated = false;
+	}
 
-	if( rotated )
-	{
+	if( rotated ) {
 		AnglesToAxis( angles, axis );
 
 		VectorCopy( start_l, temp );
@@ -370,20 +358,17 @@ static void CM_TransformedHullTrace( cmodel_state_t *cms, trace_t *tr, vec3_t st
 	CM_RecursiveHullCheck( cms, hull, hull->firstclipnode, 0, 1, start_l, end_l );
 
 	// check for position test special case
-	if( VectorCompare( start, end ) )
-	{
+	if( VectorCompare( start, end ) ) {
 		VectorCopy( start, trace_trace->endpos );
 		return;
 	}
 
-	if( tr->fraction == 1 )
-	{
+	if( tr->fraction == 1 ) {
 		VectorCopy( end, tr->endpos );
 		return;
 	}
 
-	if( rotated )
-	{
+	if( rotated ) {
 		VectorNegate( angles, a );
 		AnglesToAxis( a, axis );
 
@@ -395,8 +380,9 @@ static void CM_TransformedHullTrace( cmodel_state_t *cms, trace_t *tr, vec3_t st
 	VectorAdd( tr->endpos, offset, tr->endpos );
 
 #ifdef TRACE_NOAXIAL
-	if( PlaneTypeForNormal( tr->plane.normal ) == PLANE_NONAXIAL )
+	if( PlaneTypeForNormal( tr->plane.normal ) == PLANE_NONAXIAL ) {
 		VectorMA( tr->endpos, TRACE_NOAXIAL_SAFETY_OFFSET, tr->plane.normal, tr->endpos );
+	}
 #endif
 }
 
@@ -411,26 +397,26 @@ MAP LOADING
 /*
 * CMod_LoadClipnodes
 */
-void CMod_LoadClipnodes( cmodel_state_t *cms, lump_t *l )
-{
-	int				i;
-	int				count;
-	q1dclipnode_t	*in;
-	cnode_t			*out;
+void CMod_LoadClipnodes( cmodel_state_t *cms, lump_t *l ) {
+	int i;
+	int count;
+	q1dclipnode_t   *in;
+	cnode_t         *out;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
-	if( l->filelen % sizeof( *in) )
+	if( l->filelen % sizeof( *in ) ) {
 		Com_Error( ERR_DROP, "CM_LoadClipnodes: funny lump size" );
+	}
 
 	count = l->filelen / sizeof( *in );
-	if( count < 1 )
+	if( count < 1 ) {
 		Com_Error( ERR_DROP, "Map with no clipnodes" );
+	}
 
 	out = cms->map_clipnodes = Mem_Alloc( cms->mempool, count * sizeof( *out ) );
 	cms->numclipnodes = count;
 
-	for( i = 0; i < count; i++, in++, out++ )
-	{
+	for( i = 0; i < count; i++, in++, out++ ) {
 		out->plane = cms->map_planes + LittleLong( in->planenum );
 		out->children[0] = LittleShort( in->children[0] );
 		out->children[1] = LittleShort( in->children[1] );
@@ -442,24 +428,25 @@ void CMod_LoadClipnodes( cmodel_state_t *cms, lump_t *l )
 *
 * Returns number of clusters (visleafs of world model)
 */
-static int CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l )
-{
-	int			i, j;
-	int			numvisleafs;
-	int			child;
-	cnode_t		*node, *clipnode;
-	int			count;
-	int			headnode;
-	q1dmodel_t	*in;
-	cmodel_t	*out;
-	chull_t		*hull;
+static int CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l ) {
+	int i, j;
+	int numvisleafs;
+	int child;
+	cnode_t     *node, *clipnode;
+	int count;
+	int headnode;
+	q1dmodel_t  *in;
+	cmodel_t    *out;
+	chull_t     *hull;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
-	if( l->filelen % sizeof( *in ) )
+	if( l->filelen % sizeof( *in ) ) {
 		Com_Error( ERR_DROP, "CMod_LoadSubmodels: funny lump size" );
+	}
 	count = l->filelen / sizeof( *in );
-	if( count < 1 )
+	if( count < 1 ) {
 		Com_Error( ERR_DROP, "Map with no models" );
+	}
 
 	// allocate and initialize clipping hulls
 	cms->nummaphulls = Q1_MAX_MAP_HULLS;
@@ -468,40 +455,39 @@ static int CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l )
 	// initialize the clipping hull for world submodel
 
 	// duplicate the drawing hull structure as a clipping hull for hull0
-	hull = &cms->map_hulls[0+0];
+	hull = &cms->map_hulls[0 + 0];
 	hull->clipnodes = Mem_Alloc( cms->mempool, cms->numnodes * sizeof( *hull->clipnodes ) );
 	hull->firstclipnode = 0;
-	hull->lastclipnode = cms->numnodes-1;
+	hull->lastclipnode = cms->numnodes - 1;
 	VectorSet( hull->clip_mins, 0, 0, 0 );
 	VectorSet( hull->clip_maxs, 0, 0, 0 );
 
 	clipnode = hull->clipnodes;
 	node = cms->map_nodes;
-	for( i = 0; i < cms->numnodes; i++, node++, clipnode++ )
-	{
+	for( i = 0; i < cms->numnodes; i++, node++, clipnode++ ) {
 		clipnode->plane = node->plane;
 
-		for( j = 0; j < 2; j++ )
-		{
+		for( j = 0; j < 2; j++ ) {
 			child = node->children[j];
-			if( child < 0 )
+			if( child < 0 ) {
 				clipnode->children[j] = cms->map_leafs[-child - 1].contents;
-			else
+			} else {
 				clipnode->children[j] = child;
+			}
 		}
 	}
 
-	hull = &cms->map_hulls[0+1];
+	hull = &cms->map_hulls[0 + 1];
 	hull->clipnodes = cms->map_clipnodes;
 	hull->firstclipnode = 0;
-	hull->lastclipnode = cms->numclipnodes-1;
+	hull->lastclipnode = cms->numclipnodes - 1;
 	VectorSet( hull->clip_mins, -16, -16, -24 );
 	VectorSet( hull->clip_maxs, 16, 16, 32 );
 
-	hull = &cms->map_hulls[0+2];
+	hull = &cms->map_hulls[0 + 2];
 	hull->clipnodes = cms->map_clipnodes;
 	hull->firstclipnode = 0;
-	hull->lastclipnode = cms->numclipnodes-1;
+	hull->lastclipnode = cms->numclipnodes - 1;
 	VectorSet( hull->clip_mins, -32, -32, -24 );
 	VectorSet( hull->clip_maxs, 32, 32, 64 );
 
@@ -514,20 +500,18 @@ static int CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l )
 	numvisleafs = LittleLong( in->visleafs );
 
 	hull = cms->map_hulls;
-	for( i = 0; i < count; i++, in++, out++ )
-	{
-		for( j = 0; j < cms->nummaphulls; j++, hull++ )
-		{
+	for( i = 0; i < count; i++, in++, out++ ) {
+		for( j = 0; j < cms->nummaphulls; j++, hull++ ) {
 			// if not world, copy hull from world submodel
-			if( i )
-				*hull = cms->map_hulls[0+j];
+			if( i ) {
+				*hull = cms->map_hulls[0 + j];
+			}
 
 			headnode = LittleLong( in->headnode[j] );
 			hull->firstclipnode = headnode;
 		}
 
-		for( j = 0; j < 3; j++ )
-		{
+		for( j = 0; j < 3; j++ ) {
 			// spread the mins / maxs by a pixel
 			out->mins[j] = LittleFloat( in->mins[j] ) - 1;
 			out->maxs[j] = LittleFloat( in->maxs[j] ) + 1;
@@ -540,21 +524,21 @@ static int CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l )
 /*
 * CMod_LoadMiptex
 */
-static void CMod_LoadMiptex( cmodel_state_t *cms, lump_t *l )
-{
-	int			i;
-	int			count, ofs;
-	q1miptex_t	*in;
-	q1dmiptexlump_t	*miptex_lump;
-	char		texture[MAX_QPATH];
+static void CMod_LoadMiptex( cmodel_state_t *cms, lump_t *l ) {
+	int i;
+	int count, ofs;
+	q1miptex_t  *in;
+	q1dmiptexlump_t *miptex_lump;
+	char texture[MAX_QPATH];
 	cshaderref_t *out;
-	size_t		len, bufLen, bufSize;
-	char		*buffer;
+	size_t len, bufLen, bufSize;
+	char        *buffer;
 
 	miptex_lump = ( void * )( cms->cmod_base + l->fileofs );
 	count = LittleLong( miptex_lump->nummiptex );
-	if( count < 1 )
+	if( count < 1 ) {
 		Com_Error( ERR_DROP, "Map has no miptex" );
+	}
 
 	out = cms->map_shaderrefs = Mem_Alloc( cms->mempool, count * sizeof( *out ) );
 	cms->numshaderrefs = count;
@@ -562,45 +546,44 @@ static void CMod_LoadMiptex( cmodel_state_t *cms, lump_t *l )
 	buffer = NULL;
 	bufLen = bufSize = 0;
 
-	for( i = 0; i < count; i++, out++, bufLen += len + 1 )
-	{
+	for( i = 0; i < count; i++, out++, bufLen += len + 1 ) {
 		ofs = LittleLong( miptex_lump->dataofs[i] );
-		if( ofs < 0 )
+		if( ofs < 0 ) {
 			in = NULL;
-		else
-			in = ( q1miptex_t * )(( uint8_t * )miptex_lump + ofs);
-
-		if( !in || !in->name[0] )
-		{
-			Q_snprintfz( texture, sizeof( texture ), "textures/unnamed%d", i );
+		} else {
+			in = ( q1miptex_t * )( ( uint8_t * )miptex_lump + ofs );
 		}
-		else
-		{
+
+		if( !in || !in->name[0] ) {
+			Q_snprintfz( texture, sizeof( texture ), "textures/unnamed%d", i );
+		} else {
 			Q_snprintfz( texture, sizeof( texture ), "textures/%s", in->name );
 			COM_StripExtension( texture );
 		}
 
 		len = strlen( texture );
-		if( bufLen + len >= bufSize )
-		{
+		if( bufLen + len >= bufSize ) {
 			bufSize = bufLen + len + 128;
-			if( buffer )
+			if( buffer ) {
 				buffer = Mem_Realloc( buffer, bufSize );
-			else
+			} else {
 				buffer = Mem_Alloc( cms->mempool, bufSize );
+			}
 		}
 
 		out->flags = 0;
 		out->name = ( char * )( ( void * )bufLen );
 		strcpy( buffer + bufLen, texture );
 
-		if( !in || !in->name[0] )
+		if( !in || !in->name[0] ) {
 			continue;
+		}
 
-		if( in->name[0] == '*' )
+		if( in->name[0] == '*' ) {
 			out->flags |= Q2_SURF_WARP;
-		else if( !Q_strnicmp( in->name, "sky", 3 ) )
+		} else if( !Q_strnicmp( in->name, "sky", 3 ) ) {
 			out->flags |= Q2_SURF_SKY;
+		}
 	}
 
 	for( i = 0; i < count; i++ )
@@ -610,31 +593,30 @@ static void CMod_LoadMiptex( cmodel_state_t *cms, lump_t *l )
 /*
 * CMod_LoadNodes
 */
-static void CMod_LoadNodes( cmodel_state_t *cms, lump_t *l )
-{
-	int			i;
-	int			count;
-	q1dnode_t	*in;
-	cnode_t		*out;
+static void CMod_LoadNodes( cmodel_state_t *cms, lump_t *l ) {
+	int i;
+	int count;
+	q1dnode_t   *in;
+	cnode_t     *out;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
-	if( l->filelen % sizeof( *in ) )
+	if( l->filelen % sizeof( *in ) ) {
 		Com_Error( ERR_DROP, "CMod_LoadNodes: funny lump size" );
+	}
 	count = l->filelen / sizeof( *in );
-	if( count < 1 )
+	if( count < 1 ) {
 		Com_Error( ERR_DROP, "Map has no nodes" );
+	}
 
 	out = cms->map_nodes = Mem_Alloc( cms->mempool, count * sizeof( *out ) );
 	cms->numnodes = count;
 
-	for( i = 0; i < 3; i++ )
-	{
+	for( i = 0; i < 3; i++ ) {
 		cms->world_mins[i] = (float)LittleShort( in->mins[i] );
 		cms->world_maxs[i] = (float)LittleShort( in->maxs[i] );
 	}
 
-	for( i = 0; i < count; i++, out++, in++ )
-	{
+	for( i = 0; i < count; i++, out++, in++ ) {
 		out->plane = cms->map_planes + LittleLong( in->planenum );
 		out->children[0] = LittleShort( in->children[0] );
 		out->children[1] = LittleShort( in->children[1] );
@@ -644,29 +626,30 @@ static void CMod_LoadNodes( cmodel_state_t *cms, lump_t *l )
 /*
 * CMod_LoadLeafs
 */
-static void CMod_LoadLeafs( cmodel_state_t *cms, lump_t *l )
-{
-	int			i;
-	int			count;
-	cleaf_t		*out;
-	q1dleaf_t	*in;
+static void CMod_LoadLeafs( cmodel_state_t *cms, lump_t *l ) {
+	int i;
+	int count;
+	cleaf_t     *out;
+	q1dleaf_t   *in;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
-	if( l->filelen % sizeof( *in ) )
+	if( l->filelen % sizeof( *in ) ) {
 		Com_Error( ERR_DROP, "CMod_LoadLeafs: funny lump size" );
+	}
 	count = l->filelen / sizeof( *in );
-	if( count < 1 )
+	if( count < 1 ) {
 		Com_Error( ERR_DROP, "Map with no leafs" );
+	}
 
 	out = cms->map_leafs = Mem_Alloc( cms->mempool, count * sizeof( *out ) );
 	cms->numleafs = count;
 
-	for( i = 0; i < count; i++, in++, out++ )
-	{
+	for( i = 0; i < count; i++, in++, out++ ) {
 		out->contents = LittleLong( in->contents );
 		out->cluster = LittleLong( in->visofs );
-		if( out->cluster < 0 )
+		if( out->cluster < 0 ) {
 			out->cluster = -1;
+		}
 		out->area = 0;
 	}
 
@@ -676,35 +659,36 @@ static void CMod_LoadLeafs( cmodel_state_t *cms, lump_t *l )
 /*
 * CMod_LoadPlanes
 */
-static void CMod_LoadPlanes( cmodel_state_t *cms, lump_t *l )
-{
-	int			i, j;
-	int			count;
-	cplane_t	*out;
-	q1dplane_t	*in;
+static void CMod_LoadPlanes( cmodel_state_t *cms, lump_t *l ) {
+	int i, j;
+	int count;
+	cplane_t    *out;
+	q1dplane_t  *in;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
-	if( l->filelen % sizeof( *in ) )
+	if( l->filelen % sizeof( *in ) ) {
 		Com_Error( ERR_DROP, "CMod_LoadPlanes: funny lump size" );
+	}
 	count = l->filelen / sizeof( *in );
-	if( count < 1 )
+	if( count < 1 ) {
 		Com_Error( ERR_DROP, "Map with no planes" );
+	}
 
 	out = cms->map_planes = Mem_Alloc( cms->mempool, count * sizeof( *out ) );
 	cms->numplanes = count;
 
-	for( i = 0; i < count; i++, in++, out++ )
-	{
+	for( i = 0; i < count; i++, in++, out++ ) {
 		out->signbits = 0;
 		out->type = PLANE_NONAXIAL;
 
-		for( j = 0; j < 3; j++ )
-		{
+		for( j = 0; j < 3; j++ ) {
 			out->normal[j] = LittleFloat( in->normal[j] );
-			if( out->normal[j] < 0 )
+			if( out->normal[j] < 0 ) {
 				out->signbits |= ( 1 << j );
-			if( out->normal[j] == 1.0f )
+			}
+			if( out->normal[j] == 1.0f ) {
 				out->type = j;
+			}
 		}
 
 		out->dist = LittleFloat( in->dist );
@@ -713,25 +697,23 @@ static void CMod_LoadPlanes( cmodel_state_t *cms, lump_t *l )
 
 /*
 * CMod_LoadVisibility
-* 
+*
 * Decompresses PVS data, sets proper cluster values for leafs
 */
-static void CMod_LoadVisibility( cmodel_state_t *cms, lump_t *l, int numvisleafs )
-{
-	int			i;
-	int			rowsize, numclusters;
-	int			visofs;
-	uint8_t		*in;
-	cleaf_t		*leaf;
+static void CMod_LoadVisibility( cmodel_state_t *cms, lump_t *l, int numvisleafs ) {
+	int i;
+	int rowsize, numclusters;
+	int visofs;
+	uint8_t     *in;
+	cleaf_t     *leaf;
 
 	cms->map_visdatasize = l->filelen;
-	if( !cms->map_visdatasize )
-	{
+	if( !cms->map_visdatasize ) {
 		// reset clusters for leafs
-		for( i = 0, leaf = cms->map_leafs; i < cms->numleafs; i++, leaf++ )
-		{
-			if( leaf->cluster >= 0 )
+		for( i = 0, leaf = cms->map_leafs; i < cms->numleafs; i++, leaf++ ) {
+			if( leaf->cluster >= 0 ) {
 				leaf->cluster = 0;
+			}
 		}
 		cms->map_pvs = NULL;
 		return;
@@ -740,24 +722,20 @@ static void CMod_LoadVisibility( cmodel_state_t *cms, lump_t *l, int numvisleafs
 	in = ( void * )( cms->cmod_base + l->fileofs );
 
 	numclusters = numvisleafs;
-	rowsize = (numclusters + 7)>>3;
-	cms->map_visdatasize = sizeof( *(cms->map_pvs) ) + numclusters * (((numclusters+63)&~63)>>3);
+	rowsize = ( numclusters + 7 ) >> 3;
+	cms->map_visdatasize = sizeof( *( cms->map_pvs ) ) + numclusters * ( ( ( numclusters + 63 ) & ~63 ) >> 3 );
 
 	cms->map_pvs = Mem_Alloc( cms->mempool, cms->map_visdatasize );
 	cms->map_pvs->numclusters = numclusters;
 	cms->map_pvs->rowsize = rowsize;
 
-	for( i = 0, leaf = cms->map_leafs; i < cms->numleafs; i++, leaf++ )
-	{
+	for( i = 0, leaf = cms->map_leafs; i < cms->numleafs; i++, leaf++ ) {
 		visofs = leaf->cluster;
-		if( visofs >= 0 && (i > 0 && i < numclusters + 1) )
-		{
+		if( visofs >= 0 && ( i > 0 && i < numclusters + 1 ) ) {
 			// cluster == visofs at this point
 			leaf->cluster = i - 1;
 			CM_DecompressVis( in + visofs, rowsize, cms->map_pvs->data + leaf->cluster * rowsize );
-		}
-		else
-		{
+		} else {
 			leaf->cluster = -1;
 		}
 	}
@@ -766,11 +744,11 @@ static void CMod_LoadVisibility( cmodel_state_t *cms, lump_t *l, int numvisleafs
 /*
 * CMod_LoadEntityString
 */
-static void CMod_LoadEntityString( cmodel_state_t *cms, lump_t *l )
-{
+static void CMod_LoadEntityString( cmodel_state_t *cms, lump_t *l ) {
 	cms->numentitychars = l->filelen;
-	if( !l->filelen )
+	if( !l->filelen ) {
 		return;
+	}
 
 	cms->map_entitystring = Mem_Alloc( cms->mempool, cms->numentitychars );
 	memcpy( cms->map_entitystring, cms->cmod_base + l->fileofs, l->filelen );
@@ -779,8 +757,7 @@ static void CMod_LoadEntityString( cmodel_state_t *cms, lump_t *l )
 /*
 * CM_LoadQ1BrushModel
 */
-void CM_LoadQ1BrushModel( cmodel_state_t *cms, void *parent, void *buf, bspFormatDesc_t *format )
-{
+void CM_LoadQ1BrushModel( cmodel_state_t *cms, void *parent, void *buf, bspFormatDesc_t *format ) {
 	int i;
 	int numvisleafs;
 	q1dheader_t header;

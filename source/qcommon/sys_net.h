@@ -23,14 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qcommon/qcommon.h"
 
-void	    Sys_NET_Init( void );
-void	    Sys_NET_Shutdown( void );
+void        Sys_NET_Init( void );
+void        Sys_NET_Shutdown( void );
 
-net_error_t	Sys_NET_GetLastError( void );
+net_error_t Sys_NET_GetLastError( void );
 
-void	    Sys_NET_SocketClose( socket_handle_t handle );
-int			Sys_NET_SocketIoctl( socket_handle_t handle, long request, ioctl_param_t* param );
+void        Sys_NET_SocketClose( socket_handle_t handle );
+int         Sys_NET_SocketIoctl( socket_handle_t handle, long request, ioctl_param_t* param );
 
-int64_t		Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, size_t count );
+int64_t     Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, size_t count );
 
 #endif // __SYS_NET_H

@@ -48,7 +48,7 @@ void CM_InlineModelBounds( cmodel_state_t *cms, struct cmodel_s *cmodel, vec3_t 
 int CM_TransformedPointContents( cmodel_state_t *cms, vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
 
 void CM_TransformedBoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs,
-                             struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
+							 struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
 
 void CM_RoundUpToHullSize( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 

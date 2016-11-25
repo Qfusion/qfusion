@@ -8,9 +8,11 @@
 #ifndef KEY_CONVERTER_H_
 #define KEY_CONVERTER_H_
 
-namespace WSWUI {
+namespace WSWUI
+{
 
-class KeyConverter {
+class KeyConverter
+{
 public:
 	static int fromRocketKey( int key );
 	static int fromRocketWheel( int wheel );

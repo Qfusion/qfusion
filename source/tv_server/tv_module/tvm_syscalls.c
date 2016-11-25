@@ -33,11 +33,10 @@ tv_module_import_t TV_MODULE_IMPORT;
 
 /*
 * GetTVModuleAPI
-* 
+*
 * Returns a pointer to the structure with all entry points
 */
-tv_module_export_t *GetTVModuleAPI( tv_module_import_t *import )
-{
+tv_module_export_t *GetTVModuleAPI( tv_module_import_t *import ) {
 	static tv_module_export_t globals;
 
 	TV_MODULE_IMPORT = *import;
@@ -76,8 +75,7 @@ tv_module_export_t *GetTVModuleAPI( tv_module_import_t *import )
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( TV_MODULE_HARD_LINKED )
-int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
-{
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved ) {
 	return 1;
 }
 #endif

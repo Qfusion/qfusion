@@ -22,8 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * G_Chase_SetChaseActive
 */
-static void G_Chase_SetChaseActive( edict_t *ent, bool active )
-{
+static void G_Chase_SetChaseActive( edict_t *ent, bool active ) {
 	ent->r.client->resp.chase.active = active;
 	G_UpdatePlayerMatchMsg( ent );
 }
@@ -31,34 +30,38 @@ static void G_Chase_SetChaseActive( edict_t *ent, bool active )
 /*
 * G_Chase_IsValidTarget
 */
-static bool G_Chase_IsValidTarget( edict_t *ent, edict_t *target, bool teamonly )
-{
-	if( !ent || !target )
+static bool G_Chase_IsValidTarget( edict_t *ent, edict_t *target, bool teamonly ) {
+	if( !ent || !target ) {
 		return false;
+	}
 
-	if( !target->r.inuse || !target->r.client || trap_GetClientState( PLAYERNUM( target ) ) < CS_SPAWNED )
+	if( !target->r.inuse || !target->r.client || trap_GetClientState( PLAYERNUM( target ) ) < CS_SPAWNED ) {
 		return false;
+	}
 
-	if( target->s.team < TEAM_PLAYERS || target->s.team >= GS_MAX_TEAMS || target == ent )
+	if( target->s.team < TEAM_PLAYERS || target->s.team >= GS_MAX_TEAMS || target == ent ) {
 		return false;
+	}
 
-	if( teamonly && !ent->r.client->teamstate.is_coach && G_ISGHOSTING( target ) )
+	if( teamonly && !ent->r.client->teamstate.is_coach && G_ISGHOSTING( target ) ) {
 		return false;
+	}
 
-	if( teamonly && target->s.team != ent->s.team )
+	if( teamonly && target->s.team != ent->s.team ) {
 		return false;
+	}
 
-	if( G_ISGHOSTING( target ) && !target->deadflag && target->s.team != TEAM_SPECTATOR )
+	if( G_ISGHOSTING( target ) && !target->deadflag && target->s.team != TEAM_SPECTATOR ) {
 		return false; // ghosts that are neither dead, nor speccing (probably originating from gt-specific rules)
 
+	}
 	return true;
 }
 
 /*
 * G_Chase_FindFollowPOV
 */
-static int G_Chase_FindFollowPOV( edict_t *ent )
-{
+static int G_Chase_FindFollowPOV( edict_t *ent ) {
 	int i, j;
 	int quad, warshell, regen, scorelead;
 	int maxteam;
@@ -72,8 +75,9 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 	static unsigned int pwupswitchTime = 0;
 #define CARRIERSWITCHDELAY 8000
 
-	if( !ent->r.client || !ent->r.client->resp.chase.active || !ent->r.client->resp.chase.followmode )
+	if( !ent->r.client || !ent->r.client->resp.chase.active || !ent->r.client->resp.chase.followmode ) {
 		return newpov;
+	}
 
 	// follow killer, with a small delay
 	if( ( ent->r.client->resp.chase.followmode & 8 ) ) {
@@ -94,49 +98,54 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 
 	// find what players have what
 	score_best = -999999999;
-	if( level.gametype.inverseScore )
+	if( level.gametype.inverseScore ) {
 		score_best *= -1;
+	}
 	quad = warshell = regen = scorelead = -1;
 	memset( flags, -1, sizeof( flags ) );
 	newctfpov = newpoweruppov = -1;
 	maxteam = 0;
 
-	for( i = 1; PLAYERNUM( (game.edicts+i) ) < gs.maxclients; i++ )
-	{
+	for( i = 1; PLAYERNUM( ( game.edicts + i ) ) < gs.maxclients; i++ ) {
 		target = game.edicts + i;
 
-		if( !target->r.inuse || trap_GetClientState( PLAYERNUM( target ) ) < CS_SPAWNED )
-		{
+		if( !target->r.inuse || trap_GetClientState( PLAYERNUM( target ) ) < CS_SPAWNED ) {
 			// check if old targets are still valid
-			if( ctfpov == ENTNUM( target ) )
+			if( ctfpov == ENTNUM( target ) ) {
 				ctfpov = -1;
-			if( poweruppov == ENTNUM( target ) )
+			}
+			if( poweruppov == ENTNUM( target ) ) {
 				poweruppov = -1;
+			}
 			continue;
 		}
-		if( target->s.team <= 0 || target->s.team >= (int)(sizeof( flags ) / sizeof( flags[0] )) )
+		if( target->s.team <= 0 || target->s.team >= (int)( sizeof( flags ) / sizeof( flags[0] ) ) ) {
 			continue;
-		if( ent->r.client->resp.chase.teamonly && ent->s.team != target->s.team )
+		}
+		if( ent->r.client->resp.chase.teamonly && ent->s.team != target->s.team ) {
 			continue;
+		}
 
-		if( target->s.effects & EF_QUAD )
+		if( target->s.effects & EF_QUAD ) {
 			quad = ENTNUM( target );
-		if( target->s.effects & EF_SHELL )
+		}
+		if( target->s.effects & EF_SHELL ) {
 			warshell = ENTNUM( target );
-		if( target->s.effects & EF_REGEN )
+		}
+		if( target->s.effects & EF_REGEN ) {
 			regen = ENTNUM( target );
+		}
 
-		if( target->s.team && (target->s.effects & EF_CARRIER) )
-		{
-			if( target->s.team > maxteam )
+		if( target->s.team && ( target->s.effects & EF_CARRIER ) ) {
+			if( target->s.team > maxteam ) {
 				maxteam = target->s.team;
-			flags[target->s.team-1] = ENTNUM( target );
+			}
+			flags[target->s.team - 1] = ENTNUM( target );
 		}
 
 		// find the scoring leader
 		if( ( !level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] > score_best )
-				|| ( level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] < score_best ) )
-		{
+			|| ( level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] < score_best ) ) {
 			score_best = target->r.client->ps.stats[STAT_SCORE];
 			scorelead = ENTNUM( target );
 		}
@@ -144,37 +153,35 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 
 	// do some categorization
 
-	for( i = 0; i < maxteam; i++ )
-	{
-		if( flags[i] == -1 )
+	for( i = 0; i < maxteam; i++ ) {
+		if( flags[i] == -1 ) {
 			continue;
+		}
 
 		// default new ctfpov to the first flag carrier
-		if( newctfpov == -1 )
+		if( newctfpov == -1 ) {
 			newctfpov = flags[i];
-		else
+		} else {
 			break;
+		}
 	}
 
 	// do we have more than one flag carrier?
-	if( i < maxteam )
-	{
+	if( i < maxteam ) {
 		// default to old ctfpov
-		if( ctfpov >= 0 )
+		if( ctfpov >= 0 ) {
 			newctfpov = ctfpov;
-		if( ctfpov < 0 || level.time > flagswitchTime )
-		{
+		}
+		if( ctfpov < 0 || level.time > flagswitchTime ) {
 			// alternate between flag carriers
-			for( i = 0; i < maxteam; i++ )
-			{
-				if( flags[i] != ctfpov )
+			for( i = 0; i < maxteam; i++ ) {
+				if( flags[i] != ctfpov ) {
 					continue;
+				}
 
-				for( j = 0; j < maxteam-1; j++ )
-				{
-					if( flags[(i+j+1)%maxteam] != -1 )
-					{
-						newctfpov = flags[(i+j+1)%maxteam];
+				for( j = 0; j < maxteam - 1; j++ ) {
+					if( flags[( i + j + 1 ) % maxteam] != -1 ) {
+						newctfpov = flags[( i + j + 1 ) % maxteam];
 						break;
 					}
 				}
@@ -182,59 +189,55 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 			}
 		}
 
-		if( newctfpov != ctfpov )
-		{
+		if( newctfpov != ctfpov ) {
 			ctfpov = newctfpov;
 			flagswitchTime = level.time + CARRIERSWITCHDELAY;
 		}
-	}
-	else
-	{
+	} else {
 		ctfpov = newctfpov;
 		flagswitchTime = 0;
 	}
 
-	if( quad != -1 && warshell != -1 && quad != warshell )
-	{
+	if( quad != -1 && warshell != -1 && quad != warshell ) {
 		// default to old powerup
-		if( poweruppov >= 0 )
+		if( poweruppov >= 0 ) {
 			newpoweruppov = poweruppov;
-		if( poweruppov < 0 || level.time > pwupswitchTime )
-		{
-			if( poweruppov == quad )
+		}
+		if( poweruppov < 0 || level.time > pwupswitchTime ) {
+			if( poweruppov == quad ) {
 				newpoweruppov = warshell;
-			else if( poweruppov == warshell )
+			} else if( poweruppov == warshell ) {
 				newpoweruppov = quad;
-			else 
+			} else {
 				newpoweruppov = ( rand() & 1 ) ? quad : warshell;
+			}
 		}
 
-		if( poweruppov != newpoweruppov )
-		{
+		if( poweruppov != newpoweruppov ) {
 			poweruppov = newpoweruppov;
 			pwupswitchTime = level.time + CARRIERSWITCHDELAY;
 		}
-	}
-	else
-	{
-		if( quad != -1 )
+	} else {
+		if( quad != -1 ) {
 			newpoweruppov = quad;
-		else if( warshell != -1 )
+		} else if( warshell != -1 ) {
 			newpoweruppov = warshell;
-		else if( regen != -1 )
+		} else if( regen != -1 ) {
 			newpoweruppov = regen;
+		}
 
 		poweruppov = newpoweruppov;
 		pwupswitchTime = 0;
 	}
 
 	// so, we got all, select what we prefer to show
-	if( ctfpov != -1 && ( ent->r.client->resp.chase.followmode & 4 ) )
+	if( ctfpov != -1 && ( ent->r.client->resp.chase.followmode & 4 ) ) {
 		newpov = ctfpov;
-	else if( poweruppov != -1 && ( ent->r.client->resp.chase.followmode & 2 ) )
+	} else if( poweruppov != -1 && ( ent->r.client->resp.chase.followmode & 2 ) ) {
 		newpov = poweruppov;
-	else if( scorelead != -1 && ( ent->r.client->resp.chase.followmode & 1 ) )
+	} else if( scorelead != -1 && ( ent->r.client->resp.chase.followmode & 1 ) ) {
 		newpov = scorelead;
+	}
 
 	return newpov;
 #undef CARRIERSWITCHDELAY
@@ -243,38 +246,41 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 /*
 * G_EndFrame_UpdateChaseCam
 */
-static void G_EndFrame_UpdateChaseCam( edict_t *ent )
-{
+static void G_EndFrame_UpdateChaseCam( edict_t *ent ) {
 	edict_t *targ;
 	int followpov;
 
 	// not in chasecam
-	if( !ent->r.client->resp.chase.active )
+	if( !ent->r.client->resp.chase.active ) {
 		return;
+	}
 
-	if( ( followpov = G_Chase_FindFollowPOV( ent ) ) != -1 )
+	if( ( followpov = G_Chase_FindFollowPOV( ent ) ) != -1 ) {
 		ent->r.client->resp.chase.target = followpov;
+	}
 
 	// is our chase target gone?
 	targ = &game.edicts[ent->r.client->resp.chase.target];
 
-	if( !G_Chase_IsValidTarget( ent, targ, ent->r.client->resp.chase.teamonly ) )
-	{
-		if( game.realtime < ent->r.client->resp.chase.timeout ) // wait for timeout
+	if( !G_Chase_IsValidTarget( ent, targ, ent->r.client->resp.chase.teamonly ) ) {
+		if( game.realtime < ent->r.client->resp.chase.timeout ) { // wait for timeout
 			return;
+		}
 
 		ent->r.client->resp.chase.timeout = game.realtime + 1500; // update timeout
 
 		G_ChasePlayer( ent, NULL, ent->r.client->resp.chase.teamonly, ent->r.client->resp.chase.followmode );
 		targ = &game.edicts[ent->r.client->resp.chase.target];
-		if( !G_Chase_IsValidTarget( ent, targ, ent->r.client->resp.chase.teamonly ) )
+		if( !G_Chase_IsValidTarget( ent, targ, ent->r.client->resp.chase.teamonly ) ) {
 			return;
+		}
 	}
 
 	ent->r.client->resp.chase.timeout = game.realtime + 1500; // update timeout
 
-	if( targ == ent )
+	if( targ == ent ) {
 		return;
+	}
 
 	// free our psev buffer when in chasecam
 	G_ClearPlayerStateEvents( ent->r.client );
@@ -290,21 +296,24 @@ static void G_EndFrame_UpdateChaseCam( edict_t *ent )
 	ent->r.client->ps.stats[STAT_LAYOUTS] &= ~STAT_LAYOUT_SPECTEAMONLY;
 	ent->r.client->ps.stats[STAT_LAYOUTS] &= ~STAT_LAYOUT_INSTANTRESPAWN;
 
-	if( ent->r.client->resp.chase.teamonly )
-	{
+	if( ent->r.client->resp.chase.teamonly ) {
 		ent->r.client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_SPECTEAMONLY;
-		if( !ent->r.client->teamstate.is_coach )
+		if( !ent->r.client->teamstate.is_coach ) {
 			ent->r.client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_SPECDEAD; // show deadcam effect
+		}
 	}
 
-	if( ent->r.client->level.showscores || GS_MatchState() >= MATCH_STATE_POSTMATCH )
+	if( ent->r.client->level.showscores || GS_MatchState() >= MATCH_STATE_POSTMATCH ) {
 		ent->r.client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_SCOREBOARD; // show the scoreboard
 
-	if( GS_HasChallengers() && ent->r.client->queueTimeStamp )
+	}
+	if( GS_HasChallengers() && ent->r.client->queueTimeStamp ) {
 		ent->r.client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_CHALLENGER;
+	}
 
-	if( GS_MatchState() <= MATCH_STATE_WARMUP && level.ready[PLAYERNUM( ent )] )
+	if( GS_MatchState() <= MATCH_STATE_WARMUP && level.ready[PLAYERNUM( ent )] ) {
 		ent->r.client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_READY;
+	}
 
 	// chasecam uses PM_CHASECAM
 	ent->r.client->ps.pmove.pm_type = PM_CHASECAM;
@@ -318,19 +327,15 @@ static void G_EndFrame_UpdateChaseCam( edict_t *ent )
 /*
 * G_EndServerFrames_UpdateChaseCam
 */
-void G_EndServerFrames_UpdateChaseCam( void )
-{
+void G_EndServerFrames_UpdateChaseCam( void ) {
 	int i, team;
-	edict_t	*ent;
+	edict_t *ent;
 
 	// do it by teams, so spectators can copy the chasecam information from players
-	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
-	{
-		for( i = 0; i < teamlist[team].numplayers; i++ )
-		{
+	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ ) {
+		for( i = 0; i < teamlist[team].numplayers; i++ ) {
 			ent = game.edicts + teamlist[team].playerIndices[i];
-			if( trap_GetClientState( PLAYERNUM(ent) ) < CS_SPAWNED )
-			{
+			if( trap_GetClientState( PLAYERNUM( ent ) ) < CS_SPAWNED ) {
 				G_Chase_SetChaseActive( ent, false );
 				continue;
 			}
@@ -341,11 +346,9 @@ void G_EndServerFrames_UpdateChaseCam( void )
 
 	// Do spectators last
 	team = TEAM_SPECTATOR;
-	for( i = 0; i < teamlist[team].numplayers; i++ )
-	{
+	for( i = 0; i < teamlist[team].numplayers; i++ ) {
 		ent = game.edicts + teamlist[team].playerIndices[i];
-		if( trap_GetClientState( PLAYERNUM(ent) ) < CS_SPAWNED )
-		{
+		if( trap_GetClientState( PLAYERNUM( ent ) ) < CS_SPAWNED ) {
 			G_Chase_SetChaseActive( ent, false );
 			continue;
 		}
@@ -357,8 +360,7 @@ void G_EndServerFrames_UpdateChaseCam( void )
 /*
 * G_ChasePlayer
 */
-void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmode )
-{
+void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmode ) {
 	int i;
 	edict_t *e;
 	gclient_t *client;
@@ -371,70 +373,68 @@ void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmod
 
 	oldTarget = client->resp.chase.target;
 
-	if( teamonly && !client->teamstate.is_coach )
+	if( teamonly && !client->teamstate.is_coach ) {
 		can_follow = false;
+	}
 
-	if( !can_follow && followmode )
-	{
+	if( !can_follow && followmode ) {
 		G_PrintMsg( ent, "Chasecam follow mode unavailable\n" );
 		followmode = false;
 	}
 
-	if( ent->r.client->resp.chase.followmode && !followmode )
+	if( ent->r.client->resp.chase.followmode && !followmode ) {
 		G_PrintMsg( ent, "Disabling chasecam follow mode\n" );
+	}
 
 	// always disable chasing as a start
 	memset( &client->resp.chase, 0, sizeof( chasecam_t ) );
 
 	// locate the requested target
-	if( name && name[0] )
-	{
+	if( name && name[0] ) {
 		// find it by player names
-		for( e = game.edicts + 1; PLAYERNUM( e ) < gs.maxclients; e++ )
-		{
-			if( !G_Chase_IsValidTarget( ent, e, teamonly ) )
+		for( e = game.edicts + 1; PLAYERNUM( e ) < gs.maxclients; e++ ) {
+			if( !G_Chase_IsValidTarget( ent, e, teamonly ) ) {
 				continue;
+			}
 
-			Q_strncpyz( colorlessname, COM_RemoveColorTokens( e->r.client->netname ), sizeof(colorlessname) );
+			Q_strncpyz( colorlessname, COM_RemoveColorTokens( e->r.client->netname ), sizeof( colorlessname ) );
 
-			if( !Q_stricmp( COM_RemoveColorTokens( name ), colorlessname ) )
-			{
+			if( !Q_stricmp( COM_RemoveColorTokens( name ), colorlessname ) ) {
 				targetNum = PLAYERNUM( e );
 				break;
 			}
 		}
 
 		// didn't find it by name, try by numbers
-		if( targetNum == -1 )
-		{
+		if( targetNum == -1 ) {
 			i = atoi( name );
-			if( i >= 0 && i < gs.maxclients )
-			{
+			if( i >= 0 && i < gs.maxclients ) {
 				e = game.edicts + 1 + i;
-				if( G_Chase_IsValidTarget( ent, e, teamonly ) )
+				if( G_Chase_IsValidTarget( ent, e, teamonly ) ) {
 					targetNum = PLAYERNUM( e );
+				}
 			}
 		}
 
-		if( targetNum == -1 )
+		if( targetNum == -1 ) {
 			G_PrintMsg( ent, "Requested chasecam target is not available\n" );
+		}
 	}
 
 	// try to reuse old target if we didn't find a valid one
-	if( targetNum == -1 && oldTarget > 0 && oldTarget < gs.maxclients )
-	{
+	if( targetNum == -1 && oldTarget > 0 && oldTarget < gs.maxclients ) {
 		e = game.edicts + 1 + oldTarget;
-		if( G_Chase_IsValidTarget( ent, e, teamonly ) )
+		if( G_Chase_IsValidTarget( ent, e, teamonly ) ) {
 			targetNum = PLAYERNUM( e );
+		}
 	}
 
 	// if we still don't have a target, just pick the first valid one
-	if( targetNum == -1 )
-	{
-		for( e = game.edicts + 1; PLAYERNUM( e ) < gs.maxclients; e++ )
-		{
-			if( !G_Chase_IsValidTarget( ent, e, teamonly ) )
+	if( targetNum == -1 ) {
+		for( e = game.edicts + 1; PLAYERNUM( e ) < gs.maxclients; e++ ) {
+			if( !G_Chase_IsValidTarget( ent, e, teamonly ) ) {
 				continue;
+			}
 
 			targetNum = PLAYERNUM( e );
 			break;
@@ -443,19 +443,17 @@ void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmod
 
 	// make the client a ghost
 	G_GhostClient( ent );
-	if( targetNum != -1 )
-	{
+	if( targetNum != -1 ) {
 		// we found a target, set up the chasecam
 		client->resp.chase.target = targetNum + 1;
 		client->resp.chase.teamonly = teamonly;
 		client->resp.chase.followmode = followmode;
 		G_Chase_SetChaseActive( ent, true );
-	}
-	else
-	{
+	} else {
 		// stay as observer
-		if( !teamonly )
+		if( !teamonly ) {
 			ent->movetype = MOVETYPE_NOCLIP;
+		}
 		client->level.showscores = false;
 		G_Chase_SetChaseActive( ent, false );
 		G_CenterPrintMsg( ent, "No one to chase" );
@@ -465,8 +463,7 @@ void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmod
 /*
 * ChaseStep
 */
-void G_ChaseStep( edict_t *ent, int step )
-{
+void G_ChaseStep( edict_t *ent, int step ) {
 	int i, j, team;
 	bool player_found;
 	int actual;
@@ -475,93 +472,93 @@ void G_ChaseStep( edict_t *ent, int step )
 
 	assert( step == -1 || step == 0 || step == 1 );
 
-	if( !ent->r.client->resp.chase.active )
+	if( !ent->r.client->resp.chase.active ) {
 		return;
+	}
 
 	start = ent->r.client->resp.chase.target;
 	i = -1;
 	player_found = false; // needed to prevent an infinite loop if there are no players
 	// find the team of the previously chased player and his index in the sorted teamlist
-	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
-	{
-		for( j = 0; j < teamlist[team].numplayers; j++ )
-		{
+	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ ) {
+		for( j = 0; j < teamlist[team].numplayers; j++ ) {
 			player_found = true;
-			if( teamlist[team].playerIndices[j] == start )
-			{
+			if( teamlist[team].playerIndices[j] == start ) {
 				i = j;
 				break;
 			}
 		}
-		if( j != teamlist[team].numplayers )
+		if( j != teamlist[team].numplayers ) {
 			break;
+		}
 	}
 
-	if( step == 0 )
-	{
+	if( step == 0 ) {
 		// keep chasing the current player if possible
-		if( i >= 0 && G_Chase_IsValidTarget( ent, game.edicts + start, ent->r.client->resp.chase.teamonly ) )
+		if( i >= 0 && G_Chase_IsValidTarget( ent, game.edicts + start, ent->r.client->resp.chase.teamonly ) ) {
 			newtarget = game.edicts + start;
-		else
+		} else {
 			step = 1;
+		}
 	}
 
-	if( !newtarget && player_found )
-	{
+	if( !newtarget && player_found ) {
 		// reset the team if the previously chased player was not found
-		if( team == GS_MAX_TEAMS )
+		if( team == GS_MAX_TEAMS ) {
 			team = TEAM_PLAYERS;
-		for( j = 0; j < gs.maxclients; j++ )
-		{
+		}
+		for( j = 0; j < gs.maxclients; j++ ) {
 			// at this point step is -1 or 1
 			i += step;
+
 			// change to the previous team if we skipped before the start of this one
 			// the loop assures empty teams before this team are skipped as well
-			while( i < 0 )
-			{
+			while( i < 0 ) {
 				team--;
-				if( team < TEAM_PLAYERS )
+				if( team < TEAM_PLAYERS ) {
 					team = GS_MAX_TEAMS - 1;
+				}
 				i = teamlist[team].numplayers - 1;
 			}
+
 			// similarly, change to the next team if we skipped past the end of this one
-			while( i >= teamlist[team].numplayers )
-			{
+			while( i >= teamlist[team].numplayers ) {
 				team++;
-				if( team == GS_MAX_TEAMS )
+				if( team == GS_MAX_TEAMS ) {
 					team = TEAM_PLAYERS;
+				}
 				i = 0;
 			}
 			actual = teamlist[team].playerIndices[i];
-			if( actual == start )
+			if( actual == start ) {
 				break; // back at the original player, no need to waste time
-			if( G_Chase_IsValidTarget( ent, game.edicts + actual, ent->r.client->resp.chase.teamonly ) )
-			{
+			}
+			if( G_Chase_IsValidTarget( ent, game.edicts + actual, ent->r.client->resp.chase.teamonly ) ) {
 				newtarget = game.edicts + actual;
 				break;
 			}
+
 			// make another step if this player is not valid
 		}
 	}
 
-	if( newtarget )
+	if( newtarget ) {
 		G_ChasePlayer( ent, va( "%i", PLAYERNUM( newtarget ) ), ent->r.client->resp.chase.teamonly, ent->r.client->resp.chase.followmode );
+	}
 }
 
 /*
 * Cmd_ChaseCam_f
 */
-void Cmd_ChaseCam_f( edict_t *ent )
-{
+void Cmd_ChaseCam_f( edict_t *ent ) {
 	bool team_only;
 	const char *arg1;
 
-	if( ent->s.team != TEAM_SPECTATOR && !ent->r.client->teamstate.is_coach )
-	{
+	if( ent->s.team != TEAM_SPECTATOR && !ent->r.client->teamstate.is_coach ) {
 		G_Teams_JoinTeam( ent, TEAM_SPECTATOR );
-		if( !CheckFlood( ent, false )) { // prevent 'joined spectators' spam
+		if( !CheckFlood( ent, false ) ) { // prevent 'joined spectators' spam
 			G_PrintMsg( NULL, "%s%s joined the %s%s team.\n", ent->r.client->netname,
-				S_COLOR_WHITE, GS_TeamName( ent->s.team ), S_COLOR_WHITE );
+						S_COLOR_WHITE, GS_TeamName( ent->s.team ), S_COLOR_WHITE );
 		}
 	}
 
@@ -570,49 +567,35 @@ void Cmd_ChaseCam_f( edict_t *ent )
 	// & 4 = objectives
 	// & 8 = fragger
 
-	if( ent->r.client->teamstate.is_coach && GS_TeamBasedGametype() )
+	if( ent->r.client->teamstate.is_coach && GS_TeamBasedGametype() ) {
 		team_only = true;
-	else 
+	} else {
 		team_only = false;
+	}
 
 	arg1 = trap_Cmd_Argv( 1 );
 
-	if( trap_Cmd_Argc() < 2 )
-	{
+	if( trap_Cmd_Argc() < 2 ) {
 		G_ChasePlayer( ent, NULL, team_only, 0 );
-	}
-	else if( !Q_stricmp( arg1, "auto" ) )
-	{
+	} else if( !Q_stricmp( arg1, "auto" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'auto'. It will follow the score leader when no powerup nor flag is carried.\n" );
 		G_ChasePlayer( ent, NULL, team_only, 7 );
-	}
-	else if( !Q_stricmp( arg1, "carriers" ) )
-	{
+	} else if( !Q_stricmp( arg1, "carriers" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'carriers'. It will switch to flag or powerup carriers when any of these items is picked up.\n" );
 		G_ChasePlayer( ent, NULL, team_only, 6 );
-	}
-	else if( !Q_stricmp( arg1, "powerups" ) )
-	{
+	} else if( !Q_stricmp( arg1, "powerups" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'powerups'. It will switch to powerup carriers when any of these items is picked up.\n" );
 		G_ChasePlayer( ent, NULL, team_only, 2 );
-	}
-	else if( !Q_stricmp( arg1, "objectives" ) )
-	{
+	} else if( !Q_stricmp( arg1, "objectives" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'objectives'. It will switch to objectives carriers when any of these items is picked up.\n" );
 		G_ChasePlayer( ent, NULL, team_only, 4 );
-	}
-	else if( !Q_stricmp( arg1, "score" ) )
-	{
+	} else if( !Q_stricmp( arg1, "score" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'score'. It will always follow the player with the best score.\n" );
 		G_ChasePlayer( ent, NULL, team_only, 1 );
-	}
-	else if( !Q_stricmp( arg1, "fragger" ) )
-	{
+	} else if( !Q_stricmp( arg1, "fragger" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'fragger'. The last fragging player will be followed.\n" );
 		G_ChasePlayer( ent, NULL, team_only, 8 );
-	}
-	else if( !Q_stricmp( arg1, "help" ) )
-	{
+	} else if( !Q_stricmp( arg1, "help" ) ) {
 		G_PrintMsg( ent, "Chasecam modes:\n" );
 		G_PrintMsg( ent, "- 'auto': Chase the score leader unless there's an objective carrier or a powerup carrier.\n" );
 		G_PrintMsg( ent, "- 'carriers': User has pov control unless there's an objective carrier or a powerup carrier.\n" );
@@ -621,9 +604,7 @@ void Cmd_ChaseCam_f( edict_t *ent )
 		G_PrintMsg( ent, "- 'score': Always follow the score leader. User has no pov control.\n" );
 		G_PrintMsg( ent, "- 'none': Disable chasecam.\n" );
 		return;
-	}
-	else
-	{
+	} else {
 		G_ChasePlayer( ent, arg1, team_only, 0 );
 	}
 
@@ -633,19 +614,16 @@ void Cmd_ChaseCam_f( edict_t *ent )
 /*
 * G_SpectatorMode
 */
-void G_SpectatorMode( edict_t *ent )
-{
+void G_SpectatorMode( edict_t *ent ) {
 	// join spectator team
-	if( ent->s.team != TEAM_SPECTATOR )
-	{
+	if( ent->s.team != TEAM_SPECTATOR ) {
 		G_Teams_JoinTeam( ent, TEAM_SPECTATOR );
 		G_PrintMsg( NULL, "%s%s joined the %s%s team.\n", ent->r.client->netname,
-			S_COLOR_WHITE, GS_TeamName( ent->s.team ), S_COLOR_WHITE );
+					S_COLOR_WHITE, GS_TeamName( ent->s.team ), S_COLOR_WHITE );
 	}
 
 	// was in chasecam
-	if( ent->r.client->resp.chase.active )
-	{
+	if( ent->r.client->resp.chase.active ) {
 		ent->r.client->level.showscores = false;
 		G_Chase_SetChaseActive( ent, false );
 
@@ -661,10 +639,8 @@ void G_SpectatorMode( edict_t *ent )
 /*
 * Cmd_Spec_f
 */
-void Cmd_Spec_f( edict_t *ent )
-{
-	if( ent->s.team == TEAM_SPECTATOR && !ent->r.client->queueTimeStamp )
-	{
+void Cmd_Spec_f( edict_t *ent ) {
+	if( ent->s.team == TEAM_SPECTATOR && !ent->r.client->queueTimeStamp ) {
 		G_PrintMsg( ent, "You are already a spectator.\n" );
 		return;
 	}
@@ -676,14 +652,11 @@ void Cmd_Spec_f( edict_t *ent )
 /*
 * Cmd_SwitchChaseCamMode_f
 */
-void Cmd_SwitchChaseCamMode_f( edict_t *ent )
-{
-	if( ent->s.team == TEAM_SPECTATOR )
-	{
-		if( ent->r.client->resp.chase.active )
+void Cmd_SwitchChaseCamMode_f( edict_t *ent ) {
+	if( ent->s.team == TEAM_SPECTATOR ) {
+		if( ent->r.client->resp.chase.active ) {
 			G_SpectatorMode( ent );
-		else
-		{
+		} else {
 			G_Chase_SetChaseActive( ent, true );
 			G_ChaseStep( ent, 0 );
 		}

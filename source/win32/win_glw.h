@@ -24,10 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __GLW_WIN_H__
 #define __GLW_WIN_H__
 
-#define WINDOW_CLASSNAME_SIZE	120
+#define WINDOW_CLASSNAME_SIZE   120
 
-typedef struct
-{
+typedef struct {
 	HINSTANCE hInstance;
 	void *wndproc;
 
@@ -35,7 +34,7 @@ typedef struct
 	WCHAR *applicationNameW;
 	HDC hDC;                    // handle to device context
 	HWND hWnd;                  // handle to window
-	HWND parenthWnd;			// handle to parent window
+	HWND parenthWnd;            // handle to parent window
 	HGLRC hGLRC;                // handle to GL rendering context
 	int applicationIconResourceID;
 

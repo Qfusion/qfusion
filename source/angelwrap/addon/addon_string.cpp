@@ -24,11 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string>
 #include <algorithm>
 
-#define CONST_STRING_BITFLAG	(1<<31)
+#define CONST_STRING_BITFLAG    ( 1 << 31 )
 #define ENABLE_STRING_IMPLICIT_CASTS
 
-static inline asstring_t *objectString_Alloc( void )
-{
+static inline asstring_t *objectString_Alloc( void ) {
 	static asstring_t *object;
 
 	object = new asstring_t;
@@ -36,12 +35,11 @@ static inline asstring_t *objectString_Alloc( void )
 	return object;
 }
 
-asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length )
-{
+asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length ) {
 	asstring_t *object;
-	unsigned int size = (length + 1) & ~CONST_STRING_BITFLAG;
+	unsigned int size = ( length + 1 ) & ~CONST_STRING_BITFLAG;
 
-	length = size-1;
+	length = size - 1;
 	object = objectString_Alloc();
 	object->buffer = new char[size];
 	object->len = length;
@@ -49,19 +47,17 @@ asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length 
 	if( buffer ) {
 		memcpy( object->buffer, buffer, length );
 		object->buffer[length] = '\0';
-	}
-	else {
+	} else {
 		object->len = 0;
 		object->buffer[0] = '\0';
 	}
 	return object;
 }
 
-const asstring_t *objectString_ConstFactoryBuffer( const char *buffer, unsigned int length )
-{
+const asstring_t *objectString_ConstFactoryBuffer( const char *buffer, unsigned int length ) {
 	asstring_t *object;
 	uint8_t *rawmem;
-	unsigned int size = (length + 1) & ~CONST_STRING_BITFLAG;
+	unsigned int size = ( length + 1 ) & ~CONST_STRING_BITFLAG;
 
 	length = size - 1;
 	rawmem = new uint8_t[sizeof( asstring_t ) + size];
@@ -76,15 +72,13 @@ const asstring_t *objectString_ConstFactoryBuffer( const char *buffer, unsigned 
 	return object;
 }
 
-asstring_t *objectString_AssignString( asstring_t *self, const char *string, size_t strlen_ )
-{
+asstring_t *objectString_AssignString( asstring_t *self, const char *string, size_t strlen_ ) {
 	unsigned int size;
 
-	if( strlen_ >= self->size )
-	{
+	if( strlen_ >= self->size ) {
 		delete[] self->buffer;
 
-		size = (strlen_ + 1) & ~CONST_STRING_BITFLAG;
+		size = ( strlen_ + 1 ) & ~CONST_STRING_BITFLAG;
 		self->size = size;
 		self->buffer = new char[size];
 		strlen_ = size - 1;
@@ -97,9 +91,8 @@ asstring_t *objectString_AssignString( asstring_t *self, const char *string, siz
 	return self;
 }
 
-static asstring_t *objectString_AssignPattern( asstring_t *self, const char *pattern, ... )
-{
-	va_list	argptr;
+static asstring_t *objectString_AssignPattern( asstring_t *self, const char *pattern, ... ) {
+	va_list argptr;
 	static char buf[4096];
 
 	va_start( argptr, pattern );
@@ -109,13 +102,11 @@ static asstring_t *objectString_AssignPattern( asstring_t *self, const char *pat
 	return objectString_AssignString( self, buf, strlen( buf ) );
 }
 
-static asstring_t *objectString_AddAssignString( asstring_t *self, const char *string, size_t strlen_ )
-{
-	if( strlen_ )
-	{
+static asstring_t *objectString_AddAssignString( asstring_t *self, const char *string, size_t strlen_ ) {
+	if( strlen_ ) {
 		char *tem = self->buffer;
 		unsigned int length = strlen_ + self->len;
-		unsigned int size = (length + 1) & ~CONST_STRING_BITFLAG;
+		unsigned int size = ( length + 1 ) & ~CONST_STRING_BITFLAG;
 
 		length = size - 1;
 		self->len = length;
@@ -130,9 +121,8 @@ static asstring_t *objectString_AddAssignString( asstring_t *self, const char *s
 	return self;
 }
 
-static asstring_t *objectString_AddAssignPattern( asstring_t *self, const char *pattern, ... )
-{
-	va_list	argptr;
+static asstring_t *objectString_AddAssignPattern( asstring_t *self, const char *pattern, ... ) {
+	va_list argptr;
 	static char buf[4096];
 
 	va_start( argptr, pattern );
@@ -142,8 +132,7 @@ static asstring_t *objectString_AddAssignPattern( asstring_t *self, const char *
 	return objectString_AddAssignString( self, buf, strlen( buf ) );
 }
 
-static asstring_t *objectString_AddString( asstring_t *first, const char *second, size_t seclen )
-{
+static asstring_t *objectString_AddString( asstring_t *first, const char *second, size_t seclen ) {
 	asstring_t *self = objectString_FactoryBuffer( NULL, first->len + seclen );
 
 	Q_snprintfz( self->buffer, self->size, "%s%s", first->buffer, second );
@@ -151,9 +140,8 @@ static asstring_t *objectString_AddString( asstring_t *first, const char *second
 	return self;
 }
 
-static asstring_t *objectString_AddPattern( asstring_t *first, const char *pattern, ... )
-{
-	va_list	argptr;
+static asstring_t *objectString_AddPattern( asstring_t *first, const char *pattern, ... ) {
+	va_list argptr;
 	static char buf[4096];
 
 	va_start( argptr, pattern );
@@ -163,32 +151,27 @@ static asstring_t *objectString_AddPattern( asstring_t *first, const char *patte
 	return objectString_AddString( first, buf, strlen( buf ) );
 }
 
-static asstring_t *objectString_Factory( void )
-{
+static asstring_t *objectString_Factory( void ) {
 	return objectString_FactoryBuffer( NULL, 0 );
 }
 
-static asstring_t *objectString_FactoryCopy( const asstring_t *other )
-{
+static asstring_t *objectString_FactoryCopy( const asstring_t *other ) {
 	return objectString_FactoryBuffer( other->buffer, other->len );
 }
 
-static asstring_t *objectString_FactoryFromInt( int other )
-{
+static asstring_t *objectString_FactoryFromInt( int other ) {
 	asstring_t *obj;
 	obj = objectString_FactoryBuffer( NULL, 0 );
 	return objectString_AssignPattern( obj, "%i", other );
 }
 
-static asstring_t *objectString_FactoryFromFloat( float other )
-{
+static asstring_t *objectString_FactoryFromFloat( float other ) {
 	asstring_t *obj;
 	obj = objectString_FactoryBuffer( NULL, 0 );
 	return objectString_AssignPattern( obj, "%f", other );
 }
 
-static asstring_t *objectString_FactoryFromDouble( double other )
-{
+static asstring_t *objectString_FactoryFromDouble( double other ) {
 	asstring_t *obj;
 	obj = objectString_FactoryBuffer( NULL, 0 );
 	return objectString_AssignPattern( obj, "%g", other );
@@ -196,40 +179,31 @@ static asstring_t *objectString_FactoryFromDouble( double other )
 
 static void objectString_Addref( asstring_t *obj ) { obj->asRefCount++; }
 
-void objectString_Release( asstring_t *obj )
-{
+void objectString_Release( asstring_t *obj ) {
 	obj->asRefCount--;
 	clamp_low( obj->asRefCount, 0 );
 
-	if( !obj->asRefCount )
-	{
-		if( ( obj->size & CONST_STRING_BITFLAG ) == 0 )
-		{
+	if( !obj->asRefCount ) {
+		if( ( obj->size & CONST_STRING_BITFLAG ) == 0 ) {
 			delete[] obj->buffer;
 			delete obj;
-		}
-		else
-		{
+		} else {
 			uint8_t *rawmem = ( uint8_t * )obj;
 			delete[] rawmem;
 		}
 	}
 }
 
-static asstring_t *StringFactory( unsigned int length, const char *s )
-{
+static asstring_t *StringFactory( unsigned int length, const char *s ) {
 	return objectString_FactoryBuffer( s, length );
 }
 
-static const asstring_t *ConstStringFactory( unsigned int length, const char *s )
-{
+static const asstring_t *ConstStringFactory( unsigned int length, const char *s ) {
 	return objectString_ConstFactoryBuffer( s, length );
 }
 
-static char *objectString_Index( unsigned int i, asstring_t *self )
-{
-	if( i > self->len )
-	{
+static char *objectString_Index( unsigned int i, asstring_t *self ) {
+	if( i > self->len ) {
 		assert( i > self->len );
 		return NULL;
 	}
@@ -237,106 +211,88 @@ static char *objectString_Index( unsigned int i, asstring_t *self )
 	return &self->buffer[i];
 }
 
-static asstring_t *objectString_AssignBehaviour( asstring_t *other, asstring_t *self )
-{
+static asstring_t *objectString_AssignBehaviour( asstring_t *other, asstring_t *self ) {
 	return objectString_AssignString( self, other->buffer, other->len );
 }
 
-static asstring_t *objectString_AssignBehaviourI( int other, asstring_t *self )
-{
+static asstring_t *objectString_AssignBehaviourI( int other, asstring_t *self ) {
 	return objectString_AssignPattern( self, "%i", other );
 }
 
-static asstring_t *objectString_AssignBehaviourD( double other, asstring_t *self )
-{
+static asstring_t *objectString_AssignBehaviourD( double other, asstring_t *self ) {
 	return objectString_AssignPattern( self, "%g", other );
 }
 
-static asstring_t *objectString_AssignBehaviourF( float other, asstring_t *self )
-{
+static asstring_t *objectString_AssignBehaviourF( float other, asstring_t *self ) {
 	return objectString_AssignPattern( self, "%f", other );
 }
 
-static asstring_t *objectString_AddAssignBehaviourSS( asstring_t *other, asstring_t *self )
-{
+static asstring_t *objectString_AddAssignBehaviourSS( asstring_t *other, asstring_t *self ) {
 	return objectString_AddAssignString( self, other->buffer, other->len );
 }
 
-static asstring_t *objectString_AddAssignBehaviourSI( int other, asstring_t *self )
-{
+static asstring_t *objectString_AddAssignBehaviourSI( int other, asstring_t *self ) {
 	return objectString_AddAssignPattern( self, "%i", other );
 }
 
-static asstring_t *objectString_AddAssignBehaviourSD( double other, asstring_t *self )
-{
+static asstring_t *objectString_AddAssignBehaviourSD( double other, asstring_t *self ) {
 	return objectString_AddAssignPattern( self, "%g", other );
 }
 
-static asstring_t *objectString_AddAssignBehaviourSF( float other, asstring_t *self )
-{
+static asstring_t *objectString_AddAssignBehaviourSF( float other, asstring_t *self ) {
 	return objectString_AddAssignPattern( self, "%f", other );
 }
 
-static asstring_t *objectString_AddBehaviourSS( asstring_t *first, asstring_t *second )
-{
+static asstring_t *objectString_AddBehaviourSS( asstring_t *first, asstring_t *second ) {
 	return objectString_AddString( first, second->buffer, second->len );
 }
 
-static asstring_t *objectString_AddBehaviourSI( asstring_t *first, int second )
-{
+static asstring_t *objectString_AddBehaviourSI( asstring_t *first, int second ) {
 	return objectString_AddPattern( first, "%i", second );
 }
 
-static asstring_t *objectString_AddBehaviourIS( int first, asstring_t *second )
-{
+static asstring_t *objectString_AddBehaviourIS( int first, asstring_t *second ) {
 	asstring_t *res = objectString_Factory();
 	return objectString_AssignPattern( res, "%i%s", first, second->buffer );
 }
 
-static asstring_t *objectString_AddBehaviourSD( asstring_t *first, double second )
-{
+static asstring_t *objectString_AddBehaviourSD( asstring_t *first, double second ) {
 	return objectString_AddPattern( first, "%g", second );
 }
 
-static asstring_t *objectString_AddBehaviourDS( double first, asstring_t *second )
-{
+static asstring_t *objectString_AddBehaviourDS( double first, asstring_t *second ) {
 	asstring_t *res = objectString_FactoryBuffer( NULL, 0 );
 	return objectString_AssignPattern( res, "%g%s", first, second->buffer );
 }
 
-static asstring_t *objectString_AddBehaviourSF( asstring_t *first, float second )
-{
+static asstring_t *objectString_AddBehaviourSF( asstring_t *first, float second ) {
 	return objectString_AddPattern( first, "%f", second );
 }
 
-static asstring_t *objectString_AddBehaviourFS( float first, asstring_t *second )
-{
+static asstring_t *objectString_AddBehaviourFS( float first, asstring_t *second ) {
 	asstring_t *res = objectString_FactoryBuffer( NULL, 0 );
 	return objectString_AssignPattern( res, "%f%s", first, second->buffer );
 }
 
-static bool objectString_EqualBehaviour( asstring_t *first, asstring_t *second )
-{
-	if( !first->len && !second->len )
+static bool objectString_EqualBehaviour( asstring_t *first, asstring_t *second ) {
+	if( !first->len && !second->len ) {
 		return true;
+	}
 
 	return ( Q_stricmp( first->buffer, second->buffer ) == 0 );
 }
 
 #ifdef ENABLE_STRING_IMPLICIT_CASTS
 
-static int objectString_CastToInt( asstring_t *self )
-{
+static int objectString_CastToInt( asstring_t *self ) {
 	return atoi( self->buffer );
 }
 
-static float objectString_CastToFloat( asstring_t *self )
-{
+static float objectString_CastToFloat( asstring_t *self ) {
 	return atof( self->buffer );
 }
 
-static double objectString_CastToDouble( asstring_t *self )
-{
+static double objectString_CastToDouble( asstring_t *self ) {
 	return atof( self->buffer );
 }
 
@@ -344,42 +300,39 @@ static double objectString_CastToDouble( asstring_t *self )
 
 // ==================================================================================
 
-static int objectString_Len( asstring_t *self )
-{
+static int objectString_Len( asstring_t *self ) {
 	return self->len;
 }
 
-static bool objectString_Empty( asstring_t *self )
-{
+static bool objectString_Empty( asstring_t *self ) {
 	return self->len == 0;
 }
 
-static asstring_t *objectString_ToLower( asstring_t *self )
-{
+static asstring_t *objectString_ToLower( asstring_t *self ) {
 	asstring_t *string = objectString_FactoryBuffer( self->buffer, self->len );
-	if( string->len )
+	if( string->len ) {
 		Q_strlwr( string->buffer );
+	}
 	return string;
 }
 
-static asstring_t *objectString_ToUpper( asstring_t *self )
-{
+static asstring_t *objectString_ToUpper( asstring_t *self ) {
 	asstring_t *string = objectString_FactoryBuffer( self->buffer, self->len );
-	if( string->len )
+	if( string->len ) {
 		Q_strupr( string->buffer );
+	}
 	return string;
 }
 
-static asstring_t *objectString_Trim( asstring_t *self )
-{
+static asstring_t *objectString_Trim( asstring_t *self ) {
 	asstring_t *string = objectString_FactoryBuffer( self->buffer, self->len );
-	if( string->len )
+	if( string->len ) {
 		Q_trim( string->buffer );
+	}
 	return string;
 }
 
-static unsigned int objectString_Locate( asstring_t *substr, unsigned int skip, asstring_t *self )
-{
+static unsigned int objectString_Locate( asstring_t *substr, unsigned int skip, asstring_t *self ) {
 	unsigned int i;
 	char *p, *s;
 
@@ -391,10 +344,10 @@ static unsigned int objectString_Locate( asstring_t *substr, unsigned int skip, 
 	}
 
 	p = NULL;
-	for( i = 0, s = self->buffer; i <= skip; i++, s = p + substr->len )
-	{
-		if( !(p = strstr( s, substr->buffer )) )
+	for( i = 0, s = self->buffer; i <= skip; i++, s = p + substr->len ) {
+		if( !( p = strstr( s, substr->buffer ) ) ) {
 			break;
+		}
 	}
 
 	if( p ) {
@@ -403,129 +356,122 @@ static unsigned int objectString_Locate( asstring_t *substr, unsigned int skip, 
 	return self->len;
 }
 
-static asstring_t *objectString_Substring( int start, int length, asstring_t *self )
-{
-	if( start < 0 || length <= 0 )
+static asstring_t *objectString_Substring( int start, int length, asstring_t *self ) {
+	if( start < 0 || length <= 0 ) {
 		return objectString_FactoryBuffer( NULL, 0 );
-	if( start >= (int)self->len )
+	}
+	if( start >= (int)self->len ) {
 		return objectString_FactoryBuffer( NULL, 0 );
+	}
 
 	return objectString_FactoryBuffer( self->buffer + start, std::min( length, (int)self->len - start ) );
 }
 
-static asstring_t *objectString_Substring2( int start, asstring_t *self )
-{
-	if( start < 0 || start >= (int)self->len )
+static asstring_t *objectString_Substring2( int start, asstring_t *self ) {
+	if( start < 0 || start >= (int)self->len ) {
 		return objectString_FactoryBuffer( NULL, 0 );
+	}
 
 	return objectString_FactoryBuffer( self->buffer + start, (int)self->len - start );
 }
 
-static bool objectString_IsAlpha( asstring_t *self )
-{
+static bool objectString_IsAlpha( asstring_t *self ) {
 	size_t i;
 
-	for( i = 0; i < self->len; i++ )
-	{
-		if( !isalpha( self->buffer[i] ) )
+	for( i = 0; i < self->len; i++ ) {
+		if( !isalpha( self->buffer[i] ) ) {
 			return false;
+		}
 	}
 	return true;
 }
 
-static bool objectString_IsNumeric( asstring_t *self )
-{
+static bool objectString_IsNumeric( asstring_t *self ) {
 	size_t i;
 
-	if( !self->buffer[0] )
+	if( !self->buffer[0] ) {
 		return false;
+	}
 
-	for( i = 0; i < self->len; i++ )
-	{
-		if( !isdigit( self->buffer[i] ) )
+	for( i = 0; i < self->len; i++ ) {
+		if( !isdigit( self->buffer[i] ) ) {
 			return false;
+		}
 	}
 	return true;
 }
 
-static bool objectString_IsAlphaNumerical( asstring_t *self )
-{
+static bool objectString_IsAlphaNumerical( asstring_t *self ) {
 	size_t i;
 
-	for( i = 0; i < self->len; i++ )
-	{
-		if( !isalnum( self->buffer[i] ) )
+	for( i = 0; i < self->len; i++ ) {
+		if( !isalnum( self->buffer[i] ) ) {
 			return false;
+		}
 	}
 	return true;
 }
 
-static asstring_t *objectString_RemoveColorTokens( asstring_t *self )
-{
+static asstring_t *objectString_RemoveColorTokens( asstring_t *self ) {
 	const char *s;
 
-	if( !self->len )
+	if( !self->len ) {
 		return objectString_FactoryBuffer( NULL, 0 );
+	}
 
 	s = COM_RemoveColorTokens( self->buffer );
-	return objectString_FactoryBuffer( s, strlen(s) );
+	return objectString_FactoryBuffer( s, strlen( s ) );
 }
 
-static int objectString_toInt( asstring_t *self )
-{
+static int objectString_toInt( asstring_t *self ) {
 	return strtol( self->buffer, NULL, 0 );
 }
 
-static float objectString_toFloat( asstring_t *self )
-{
+static float objectString_toFloat( asstring_t *self ) {
 	return atof( self->buffer );
 }
 
-static asstring_t *objectString_getToken( unsigned int index, asstring_t *self )
-{
+static asstring_t *objectString_getToken( unsigned int index, asstring_t *self ) {
 	unsigned int i;
 	char *s;
 	const char *token = "";
 
 	s = self->buffer;
 
-	for( i = 0; i <= index; i++ )
-	{
+	for( i = 0; i <= index; i++ ) {
 		token = COM_Parse( &s );
-		if( !token[0] ) // string finished before finding the token
+		if( !token[0] ) { // string finished before finding the token
 			break;
+		}
 	}
 
 	return objectString_FactoryBuffer( token, strlen( token ) );
 }
 
-static asstring_t *objectString_Replace( const asstring_t &assearch, const asstring_t &asreplace, asstring_t *self )
-{
-	std::string search(assearch.buffer);
-	std::string replace(asreplace.buffer);
-	std::string subject(self->buffer);
+static asstring_t *objectString_Replace( const asstring_t &assearch, const asstring_t &asreplace, asstring_t *self ) {
+	std::string search( assearch.buffer );
+	std::string replace( asreplace.buffer );
+	std::string subject( self->buffer );
 
 	size_t pos = 0;
-	while ((pos = subject.find(search, pos)) != std::string::npos) {
-		subject.replace(pos, search.length(), replace);
+	while( ( pos = subject.find( search, pos ) ) != std::string::npos ) {
+		subject.replace( pos, search.length(), replace );
 		pos += replace.length();
 	}
 
 	return objectString_FactoryBuffer( subject.c_str(), subject.size() );
 }
 
-void PreRegisterStringAddon( asIScriptEngine *engine )
-{
+void PreRegisterStringAddon( asIScriptEngine *engine ) {
 	int r;
 
 	// register the string type
 	r = engine->RegisterObjectType( "String", sizeof( asstring_t ), asOBJ_REF ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }
 
-void RegisterStringAddon( asIScriptEngine *engine )
-{
+void RegisterStringAddon( asIScriptEngine *engine ) {
 	int r;
 
 	// register the string factory
@@ -603,5 +549,5 @@ void RegisterStringAddon( asIScriptEngine *engine )
 	r = engine->RegisterObjectMethod( "String", "bool isNumeric() const", asFUNCTION( objectString_IsNumeric ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "String", "bool isAlphaNumerical() const", asFUNCTION( objectString_IsAlphaNumerical ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }

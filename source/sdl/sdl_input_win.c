@@ -4,8 +4,7 @@
 /**
  * IN_GetInputLanguage
  */
-void IN_GetInputLanguage( char *dest, size_t size )
-{
+void IN_GetInputLanguage( char *dest, size_t size ) {
 	char lang[16];
 
 	lang[0] = '\0';

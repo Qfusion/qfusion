@@ -23,13 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon_time.h"
 
 // CLASS: Time
-void objectTime_DefaultConstructor( astime_t *self )
-{
+void objectTime_DefaultConstructor( astime_t *self ) {
 	self->time = 0;
 }
 
-void objectTime_ConstructorUInt64( time_t time, astime_t *self )
-{
+void objectTime_ConstructorUInt64( time_t time, astime_t *self ) {
 	self->time = time;
 
 	if( time ) {
@@ -39,36 +37,31 @@ void objectTime_ConstructorUInt64( time_t time, astime_t *self )
 	}
 }
 
-void objectTime_CopyConstructor( astime_t *other, astime_t *self )
-{
+void objectTime_CopyConstructor( astime_t *other, astime_t *self ) {
 	self->time = other->time;
 	self->localtime = other->localtime;
 }
 
-static astime_t *objectTime_AssignBehaviour( astime_t *other, astime_t *self )
-{
+static astime_t *objectTime_AssignBehaviour( astime_t *other, astime_t *self ) {
 	self->time = other->time;
-	memcpy( &(self->localtime), &(other->localtime), sizeof( struct tm ) );
+	memcpy( &( self->localtime ), &( other->localtime ), sizeof( struct tm ) );
 	return self;
 }
 
-static bool objectTime_EqualBehaviour( astime_t *first, astime_t *second )
-{
-	return (first->time == second->time);
+static bool objectTime_EqualBehaviour( astime_t *first, astime_t *second ) {
+	return ( first->time == second->time );
 }
 
-void PreRegisterTimeAddon( asIScriptEngine *engine )
-{
+void PreRegisterTimeAddon( asIScriptEngine *engine ) {
 	int r;
 
 	// register the time type
 	r = engine->RegisterObjectType( "Time", sizeof( astime_t ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLINTS ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }
 
-void RegisterTimeAddon( asIScriptEngine *engine )
-{
+void RegisterTimeAddon( asIScriptEngine *engine ) {
 	int r;
 
 	// register object behaviours
@@ -96,5 +89,5 @@ void RegisterTimeAddon( asIScriptEngine *engine )
 	r = engine->RegisterObjectProperty( "Time", "const int yday", asOFFSET( astime_t, localtime.tm_yday ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Time", "const int isdst", asOFFSET( astime_t, localtime.tm_isdst ) ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }

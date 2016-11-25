@@ -133,6 +133,7 @@ cvar_t *cg_teamBETAcolor;
 cvar_t *cg_forceMyTeamAlpha;
 cvar_t *cg_teamColoredBeams;
 cvar_t *cg_teamColoredInstaBeams;
+
 //cvar_t *cg_teamColorBeamMinimum;
 
 cvar_t *cg_ebbeam_old;
@@ -153,17 +154,15 @@ cvar_t *cg_viewBob;
 /*
 * CG_API
 */
-int CG_API( void )
-{
+int CG_API( void ) {
 	return CGAME_API_VERSION;
 }
 
 /*
 * CG_Error
 */
-void CG_Error( const char *format, ... )
-{
-	va_list	argptr;
+void CG_Error( const char *format, ... ) {
+	va_list argptr;
 	char msg[1024];
 
 	va_start( argptr, format );
@@ -176,9 +175,8 @@ void CG_Error( const char *format, ... )
 /*
 * CG_Printf
 */
-void CG_Printf( const char *format, ... )
-{
-	va_list	argptr;
+void CG_Printf( const char *format, ... ) {
+	va_list argptr;
 	char msg[1024];
 
 	va_start( argptr, format );
@@ -191,9 +189,8 @@ void CG_Printf( const char *format, ... )
 /*
 * CG_LocalPrint
 */
-void CG_LocalPrint( const char *format, ... )
-{
-	va_list	argptr;
+void CG_LocalPrint( const char *format, ... ) {
+	va_list argptr;
 	char msg[GAMECHAT_STRING_SIZE];
 
 	va_start( argptr, format );
@@ -210,15 +207,14 @@ typedef struct
 	char *buf;
 	size_t buf_size;
 	void *privatep;
-	void (*done_cb)(int status, const char *resp);
+	void ( *done_cb )( int status, const char *resp );
 } cg_asyncrequest_t;
 
 /*
 * CG_AsyncGetRequest_ReadCb
 */
-static size_t CG_AsyncGetRequest_ReadCb( const void *buf, size_t numb, float percentage, 
-	int status, const char *contentType, void *privatep )
-{
+static size_t CG_AsyncGetRequest_ReadCb( const void *buf, size_t numb, float percentage,
+										 int status, const char *contentType, void *privatep ) {
 	char *newbuf;
 	cg_asyncrequest_t *req = ( cg_asyncrequest_t * )privatep;
 
@@ -241,8 +237,7 @@ static size_t CG_AsyncGetRequest_ReadCb( const void *buf, size_t numb, float per
 /*
 * CG_AsyncGetRequest_DoneCb
 */
-static void CG_AsyncGetRequest_DoneCb( int status, const char *contentType, void *privatep )
-{
+static void CG_AsyncGetRequest_DoneCb( int status, const char *contentType, void *privatep ) {
 	cg_asyncrequest_t *req = ( cg_asyncrequest_t * )privatep;
 
 	req->done_cb( status, req->buf );
@@ -254,11 +249,10 @@ static void CG_AsyncGetRequest_DoneCb( int status, const char *contentType, void
 /*
 * CG_AsyncGetRequest
 */
-int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const char *resp), void *privatep )
-{
+int CG_AsyncGetRequest( const char *resource, void ( *done_cb )( int status, const char *resp ), void *privatep ) {
 	char url[1024];
 	cg_asyncrequest_t *req;
-	
+
 	trap_GetBaseServerURL( url, sizeof( url ) );
 	Q_strncatz( url, resource, sizeof( url ) );
 
@@ -268,9 +262,9 @@ int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const 
 	*req->buf = '\0';
 	req->privatep = privatep;
 	req->done_cb = done_cb;
-	
-	return trap_AsyncStream_PerformRequest( url, "GET", "", 10, 
-		CG_AsyncGetRequest_ReadCb, CG_AsyncGetRequest_DoneCb, (void *)req );
+
+	return trap_AsyncStream_PerformRequest( url, "GET", "", 10,
+											CG_AsyncGetRequest_ReadCb, CG_AsyncGetRequest_DoneCb, (void *)req );
 }
 
 /*
@@ -278,8 +272,7 @@ int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const 
 *
 * Used only for gameshared linking
 */
-static void *CG_GS_Malloc( size_t size )
-{
+static void *CG_GS_Malloc( size_t size ) {
 	return CG_Malloc( size );
 }
 
@@ -288,16 +281,14 @@ static void *CG_GS_Malloc( size_t size )
 *
 * Used only for gameshared linking
 */
-static void CG_GS_Free( void *data )
-{
+static void CG_GS_Free( void *data ) {
 	CG_Free( data );
 }
 
 /*
 * CG_GS_Trace
 */
-static void CG_GS_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta )
-{
+static void CG_GS_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta ) {
 	assert( !timeDelta );
 	CG_Trace( t, start, mins, maxs, end, ignore, contentmask );
 }
@@ -305,8 +296,7 @@ static void CG_GS_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec
 /*
 * CG_GS_PointContents
 */
-static int CG_GS_PointContents( vec3_t point, int timeDelta )
-{
+static int CG_GS_PointContents( vec3_t point, int timeDelta ) {
 	assert( !timeDelta );
 	return CG_PointContents( point );
 }
@@ -314,36 +304,36 @@ static int CG_GS_PointContents( vec3_t point, int timeDelta )
 /*
 * CG_GS_RoundUpToHullSize
 */
-static void CG_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs )
-{
+static void CG_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs ) {
 	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
 }
 
 /*
 * CG_GS_GetEntityState
 */
-static entity_state_t *CG_GS_GetEntityState( int entNum, int deltaTime )
-{
+static entity_state_t *CG_GS_GetEntityState( int entNum, int deltaTime ) {
 	centity_t *cent;
 
-	if( entNum == -1 )
+	if( entNum == -1 ) {
 		return NULL;
+	}
 
 	assert( entNum >= 0 && entNum < MAX_EDICTS );
 	cent = &cg_entities[entNum];
 
-	if( cent->serverFrame != cg.frame.serverFrame )
+	if( cent->serverFrame != cg.frame.serverFrame ) {
 		return NULL;
+	}
 	return &cent->current;
 }
 
 /*
 * CG_GS_GetConfigString
 */
-static const char *CG_GS_GetConfigString( int index )
-{
-	if( index < 0 || index >= MAX_CONFIGSTRINGS )
+static const char *CG_GS_GetConfigString( int index ) {
+	if( index < 0 || index >= MAX_CONFIGSTRINGS ) {
 		return NULL;
+	}
 
 	return cgs.configStrings[ index ];
 }
@@ -353,16 +343,16 @@ static const char *CG_GS_GetConfigString( int index )
 *
 * Give gameshared access to some utilities
 */
-static void CG_InitGameShared( void )
-{
+static void CG_InitGameShared( void ) {
 	char cstring[MAX_CONFIGSTRING_CHARS];
 
 	memset( &gs, 0, sizeof( gs_state_t ) );
 	gs.module = GS_MODULE_CGAME;
 	trap_GetConfigString( CS_MAXCLIENTS, cstring, MAX_CONFIGSTRING_CHARS );
 	gs.maxclients = atoi( cstring );
-	if( gs.maxclients < 1 || gs.maxclients > MAX_CLIENTS )
+	if( gs.maxclients < 1 || gs.maxclients > MAX_CLIENTS ) {
 		gs.maxclients = MAX_CLIENTS;
+	}
 
 	module_PredictedEvent = CG_PredictedEvent;
 	module_Error = CG_Error;
@@ -382,8 +372,7 @@ static void CG_InitGameShared( void )
 /*
 * CG_CopyString
 */
-char *_CG_CopyString( const char *in, const char *filename, int fileline )
-{
+char *_CG_CopyString( const char *in, const char *filename, int fileline ) {
 	char *out;
 
 	out = ( char * )trap_MemAlloc( strlen( in ) + 1, filename, fileline );
@@ -394,15 +383,14 @@ char *_CG_CopyString( const char *in, const char *filename, int fileline )
 /*
 * CG_InitL10n
 */
-static void CG_InitL10n( void )
-{
-	char mapl10n[10+MAX_CONFIGSTRING_CHARS];
+static void CG_InitL10n( void ) {
+	char mapl10n[10 + MAX_CONFIGSTRING_CHARS];
 
 	trap_L10n_ClearDomain();
 	trap_L10n_LoadLangPOFile( "l10n/cgame" );
 
 	Q_strncpyz( mapl10n, "l10n/", sizeof( mapl10n ) );
-	Q_strncpyz( mapl10n+5, cgs.configStrings[CS_WORLDMODEL], sizeof( mapl10n ) - 5 );
+	Q_strncpyz( mapl10n + 5, cgs.configStrings[CS_WORLDMODEL], sizeof( mapl10n ) - 5 );
 	COM_StripExtension( mapl10n );
 
 	if( mapl10n[0] ) {
@@ -413,8 +401,7 @@ static void CG_InitL10n( void )
 /*
 * CG_TranslateString
 */
-const char *CG_TranslateString( const char *string )
-{
+const char *CG_TranslateString( const char *string ) {
 	const char *translation;
 
 	translation = trap_L10n_TranslateString( string );
@@ -427,14 +414,14 @@ const char *CG_TranslateString( const char *string )
 /*
 * CG_TranslateColoredString
 */
-const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size )
-{
+const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size ) {
 	char c;
 	int colorindex = -1;
 	const char *l10n, *tmp;
 
-	if( dst_size < 3 )
+	if( dst_size < 3 ) {
 		return string;
+	}
 
 	tmp = string;
 	if( Q_GrabCharFromColorString( &tmp, &c, &colorindex ) == GRABCHAR_COLOR ) {
@@ -463,36 +450,35 @@ const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst
 /*
 * CG_RegisterWeaponModels
 */
-static void CG_RegisterWeaponModels( void )
-{
+static void CG_RegisterWeaponModels( void ) {
 	int i;
 
 	for( i = 0; i < cgs.numWeaponModels; i++ )
 		cgs.weaponInfos[i] = CG_RegisterWeaponModel( cgs.weaponModels[i], i );
 
 	// special case for weapon 0. Must always load the animation script
-	if( !cgs.weaponInfos[0] )
+	if( !cgs.weaponInfos[0] ) {
 		cgs.weaponInfos[0] = CG_CreateWeaponZeroModel( cgs.weaponModels[0] );
+	}
 }
 
 /*
 * CG_RegisterModels
 */
-static void CG_RegisterModels( void )
-{
+static void CG_RegisterModels( void ) {
 	int i;
 	const char *name;
 
-	if( cgs.precacheModelsStart == MAX_MODELS )
+	if( cgs.precacheModelsStart == MAX_MODELS ) {
 		return;
+	}
 
-	if( cgs.precacheModelsStart == 0 )
-	{
+	if( cgs.precacheModelsStart == 0 ) {
 		name = cgs.configStrings[CS_WORLDMODEL];
-		if( name[0] )
-		{
-			if( !CG_LoadingItemName( name ) )
+		if( name[0] ) {
+			if( !CG_LoadingItemName( name ) ) {
 				return;
+			}
 			CG_LoadingString( name );
 			trap_R_RegisterWorldModel( name );
 		}
@@ -505,9 +491,8 @@ static void CG_RegisterModels( void )
 		cgs.precacheModelsStart = 1;
 	}
 
-	for( i = cgs.precacheModelsStart; i < MAX_MODELS; i++ )
-	{
-		name = cgs.configStrings[CS_MODELS+i];
+	for( i = cgs.precacheModelsStart; i < MAX_MODELS; i++ ) {
+		name = cgs.configStrings[CS_MODELS + i];
 
 		if( !name[0] ) {
 			cgs.precacheModelsStart = MAX_MODELS;
@@ -516,36 +501,37 @@ static void CG_RegisterModels( void )
 
 		cgs.precacheModelsStart = i;
 
-		if( name[0] == '#' )
-		{
+		if( name[0] == '#' ) {
 			// special player weapon model
-			if( cgs.numWeaponModels >= WEAP_TOTAL )
+			if( cgs.numWeaponModels >= WEAP_TOTAL ) {
 				continue;
+			}
 
-			if( !CG_LoadingItemName( name ) )
+			if( !CG_LoadingItemName( name ) ) {
 				return;
+			}
 
-			Q_strncpyz( cgs.weaponModels[cgs.numWeaponModels], name+1, sizeof( cgs.weaponModels[cgs.numWeaponModels] ) );
+			Q_strncpyz( cgs.weaponModels[cgs.numWeaponModels], name + 1, sizeof( cgs.weaponModels[cgs.numWeaponModels] ) );
 			cgs.numWeaponModels++;
-		}
-		else if( name[0] == '$' )
-		{
-			if( !CG_LoadingItemName( name ) )
+		} else if( name[0] == '$' ) {
+			if( !CG_LoadingItemName( name ) ) {
 				return;
+			}
+
 			// indexed pmodel
-			cgs.pModelsIndex[i] = CG_RegisterPlayerModel( name+1 );
-		}
-		else
-		{
-			if( !CG_LoadingItemName( name ) )
+			cgs.pModelsIndex[i] = CG_RegisterPlayerModel( name + 1 );
+		} else {
+			if( !CG_LoadingItemName( name ) ) {
 				return;
+			}
 			cgs.modelDraw[i] = CG_RegisterModel( name );
 		}
 	}
 
-	if( cgs.precacheModelsStart != MAX_MODELS )
+	if( cgs.precacheModelsStart != MAX_MODELS ) {
 		return;
-	
+	}
+
 	CG_RegisterMediaModels();
 	CG_RegisterBasePModel(); // never before registering the weapon models
 	CG_RegisterWeaponModels();
@@ -562,13 +548,13 @@ static void CG_RegisterModels( void )
 /*
 * CG_RegisterSounds
 */
-static void CG_RegisterSounds( void )
-{
+static void CG_RegisterSounds( void ) {
 	int i;
 	const char *name;
 
-	if( cgs.precacheSoundsStart == MAX_SOUNDS )
+	if( cgs.precacheSoundsStart == MAX_SOUNDS ) {
 		return;
+	}
 
 	if( !cgs.precacheSoundsStart ) {
 		CG_LoadingString( "sounds" );
@@ -576,26 +562,26 @@ static void CG_RegisterSounds( void )
 		cgs.precacheSoundsStart = 1;
 	}
 
-	for( i = cgs.precacheSoundsStart; i < MAX_SOUNDS; i++ )
-	{
-		name = cgs.configStrings[CS_SOUNDS+i];
+	for( i = cgs.precacheSoundsStart; i < MAX_SOUNDS; i++ ) {
+		name = cgs.configStrings[CS_SOUNDS + i];
 		if( !name[0] ) {
 			cgs.precacheSoundsStart = MAX_SOUNDS;
 			break;
 		}
-		
+
 		cgs.precacheSoundsStart = i;
 
-		if( name[0] != '*' )
-		{
-			if( !CG_LoadingItemName( name ) )
+		if( name[0] != '*' ) {
+			if( !CG_LoadingItemName( name ) ) {
 				return;
+			}
 			cgs.soundPrecache[i] = trap_S_RegisterSound( name );
 		}
 	}
 
-	if( cgs.precacheSoundsStart != MAX_SOUNDS )
+	if( cgs.precacheSoundsStart != MAX_SOUNDS ) {
 		return;
+	}
 
 	CG_RegisterMediaSounds();
 }
@@ -603,13 +589,13 @@ static void CG_RegisterSounds( void )
 /*
 * CG_RegisterShaders
 */
-static void CG_RegisterShaders( void )
-{
+static void CG_RegisterShaders( void ) {
 	int i;
 	const char *name;
 
-	if( cgs.precacheShadersStart == MAX_IMAGES )
+	if( cgs.precacheShadersStart == MAX_IMAGES ) {
 		return;
+	}
 
 	if( !cgs.precacheShadersStart ) {
 		CG_LoadingString( "shaders" );
@@ -617,9 +603,8 @@ static void CG_RegisterShaders( void )
 		cgs.precacheShadersStart = 1;
 	}
 
-	for( i = cgs.precacheShadersStart; i < MAX_IMAGES; i++ )
-	{
-		name = cgs.configStrings[CS_IMAGES+i];
+	for( i = cgs.precacheShadersStart; i < MAX_IMAGES; i++ ) {
+		name = cgs.configStrings[CS_IMAGES + i];
 		if( !name[0] ) {
 			cgs.precacheShadersStart = MAX_IMAGES;
 			break;
@@ -627,17 +612,20 @@ static void CG_RegisterShaders( void )
 
 		cgs.precacheShadersStart = i;
 
-		if( !CG_LoadingItemName( name ) )
+		if( !CG_LoadingItemName( name ) ) {
 			return;
+		}
 
-		if( strstr( name, "correction/" ) ) // HACK HACK HACK -- for color correction LUTs
+		if( strstr( name, "correction/" ) ) { // HACK HACK HACK -- for color correction LUTs
 			cgs.imagePrecache[i] = trap_R_RegisterLinearPic( name );
-		else
+		} else {
 			cgs.imagePrecache[i] = trap_R_RegisterPic( name );
+		}
 	}
 
-	if( cgs.precacheShadersStart != MAX_IMAGES )
+	if( cgs.precacheShadersStart != MAX_IMAGES ) {
 		return;
+	}
 
 	CG_RegisterMediaShaders();
 }
@@ -645,13 +633,13 @@ static void CG_RegisterShaders( void )
 /*
 * CG_RegisterSkinfiles
 */
-static void CG_RegisterSkinFiles( void )
-{
+static void CG_RegisterSkinFiles( void ) {
 	int i;
 	const char *name;
 
-	if( cgs.precacheSkinsStart == MAX_SKINFILES )
+	if( cgs.precacheSkinsStart == MAX_SKINFILES ) {
 		return;
+	}
 
 	if( !cgs.precacheSkinsStart ) {
 		CG_LoadingString( "skins" );
@@ -659,18 +647,18 @@ static void CG_RegisterSkinFiles( void )
 		cgs.precacheSkinsStart = 1;
 	}
 
-	for( i = cgs.precacheSkinsStart; i < MAX_SKINFILES; i++ )
-	{
-		name = cgs.configStrings[CS_SKINFILES+i];
+	for( i = cgs.precacheSkinsStart; i < MAX_SKINFILES; i++ ) {
+		name = cgs.configStrings[CS_SKINFILES + i];
 		if( !name[0] ) {
 			cgs.precacheSkinsStart = MAX_SKINFILES;
 			break;
 		}
 
-		cgs.precacheSkinsStart = i; 
+		cgs.precacheSkinsStart = i;
 
-		if( !CG_LoadingItemName( name ) )
+		if( !CG_LoadingItemName( name ) ) {
 			return;
+		}
 
 		cgs.skinPrecache[i] = trap_R_RegisterSkinFile( name );
 	}
@@ -681,26 +669,28 @@ static void CG_RegisterSkinFiles( void )
 /*
 * CG_RegisterClients
 */
-static void CG_RegisterClients( void )
-{
+static void CG_RegisterClients( void ) {
 	int i;
 	const char *name;
 
-	if( cgs.precacheClientsStart == MAX_CLIENTS )
+	if( cgs.precacheClientsStart == MAX_CLIENTS ) {
 		return;
+	}
 
-	if( !cgs.precacheClientsStart )
+	if( !cgs.precacheClientsStart ) {
 		CG_LoadingString( "clients" );
+	}
 
-	for( i = cgs.precacheClientsStart; i < MAX_CLIENTS; i++ )
-	{
-		name = cgs.configStrings[CS_PLAYERINFOS+i];
+	for( i = cgs.precacheClientsStart; i < MAX_CLIENTS; i++ ) {
+		name = cgs.configStrings[CS_PLAYERINFOS + i];
 		cgs.precacheClientsStart = i;
 
-		if( !name[0] )
+		if( !name[0] ) {
 			continue;
-		if( !CG_LoadingItemName( name ) )
+		}
+		if( !CG_LoadingItemName( name ) ) {
 			return;
+		}
 
 		CG_LoadClientInfo( &cgs.clientInfo[i], name, i );
 	}
@@ -711,16 +701,15 @@ static void CG_RegisterClients( void )
 /*
 * CG_RegisterLightStyles
 */
-static void CG_RegisterLightStyles( void )
-{
+static void CG_RegisterLightStyles( void ) {
 	int i;
 	const char *name;
 
-	for( i = 0; i < MAX_LIGHTSTYLES; i++ )
-	{
-		name = cgs.configStrings[CS_LIGHTS+i];
-		if( !name[0] )
+	for( i = 0; i < MAX_LIGHTSTYLES; i++ ) {
+		name = cgs.configStrings[CS_LIGHTS + i];
+		if( !name[0] ) {
 			continue;
+		}
 
 		CG_SetLightStyle( i );
 	}
@@ -729,101 +718,101 @@ static void CG_RegisterLightStyles( void )
 /*
 * CG_RegisterVariables
 */
-static void CG_RegisterVariables( void )
-{
-	cg_predict =	    trap_Cvar_Get( "cg_predict", "1", 0 );
+static void CG_RegisterVariables( void ) {
+	cg_predict =        trap_Cvar_Get( "cg_predict", "1", 0 );
 	cg_predict_optimize = trap_Cvar_Get( "cg_predict_optimize", "1", 0 );
-	cg_showMiss =	    trap_Cvar_Get( "cg_showMiss", "0", 0 );
+	cg_showMiss =       trap_Cvar_Get( "cg_showMiss", "0", 0 );
 
-	cg_debugPlayerModels =	trap_Cvar_Get( "cg_debugPlayerModels", "0", CVAR_CHEAT|CVAR_ARCHIVE );
-	cg_debugWeaponModels =	trap_Cvar_Get( "cg_debugWeaponModels", "0", CVAR_CHEAT|CVAR_ARCHIVE );
+	cg_debugPlayerModels =  trap_Cvar_Get( "cg_debugPlayerModels", "0", CVAR_CHEAT | CVAR_ARCHIVE );
+	cg_debugWeaponModels =  trap_Cvar_Get( "cg_debugWeaponModels", "0", CVAR_CHEAT | CVAR_ARCHIVE );
 
-	cg_model =		    trap_Cvar_Get( "model", DEFAULT_PLAYERMODEL, CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_skin =		    trap_Cvar_Get( "skin", DEFAULT_PLAYERSKIN, CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_hand =		    trap_Cvar_Get( "hand", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_handicap =		trap_Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_clan =		    trap_Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_movementStyle =	trap_Cvar_Get( "cg_movementStyle", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_noAutohop =	trap_Cvar_Get( "cg_noAutohop", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_fov =	    trap_Cvar_Get( "fov", "100", CVAR_ARCHIVE );
-	cg_zoomfov =	trap_Cvar_Get( "zoomfov", "30", CVAR_ARCHIVE );
+	cg_model =          trap_Cvar_Get( "model", DEFAULT_PLAYERMODEL, CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_skin =           trap_Cvar_Get( "skin", DEFAULT_PLAYERSKIN, CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_hand =           trap_Cvar_Get( "hand", "0", CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_handicap =       trap_Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_clan =           trap_Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_movementStyle =  trap_Cvar_Get( "cg_movementStyle", "0", CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_noAutohop =  trap_Cvar_Get( "cg_noAutohop", "0", CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_fov =        trap_Cvar_Get( "fov", "100", CVAR_ARCHIVE );
+	cg_zoomfov =    trap_Cvar_Get( "zoomfov", "30", CVAR_ARCHIVE );
 
-	cg_addDecals =	    trap_Cvar_Get( "cg_decals", "1", CVAR_ARCHIVE );
+	cg_addDecals =      trap_Cvar_Get( "cg_decals", "1", CVAR_ARCHIVE );
+
 	//cg_footSteps =	    trap_Cvar_Get( "cg_footSteps", "1", 0 );
 
-	cg_thirdPerson =	trap_Cvar_Get( "cg_thirdPerson", "0", CVAR_CHEAT );
-	cg_thirdPersonAngle =	trap_Cvar_Get( "cg_thirdPersonAngle", "0", 0 );
-	cg_thirdPersonRange =	trap_Cvar_Get( "cg_thirdPersonRange", "90", 0 );
+	cg_thirdPerson =    trap_Cvar_Get( "cg_thirdPerson", "0", CVAR_CHEAT );
+	cg_thirdPersonAngle =   trap_Cvar_Get( "cg_thirdPersonAngle", "0", 0 );
+	cg_thirdPersonRange =   trap_Cvar_Get( "cg_thirdPersonRange", "90", 0 );
 
 	cg_colorCorrection = trap_Cvar_Get( "cg_colorCorrection", "1", CVAR_ARCHIVE );
 
-	cg_gun =		trap_Cvar_Get( "cg_gun", "1", CVAR_ARCHIVE );
-	cg_gunx =		trap_Cvar_Get( "cg_gunx", "0", CVAR_ARCHIVE );
-	cg_guny =		trap_Cvar_Get( "cg_guny", "0", CVAR_ARCHIVE );
-	cg_gunz =		trap_Cvar_Get( "cg_gunz", "0", CVAR_ARCHIVE );
-	cg_gunbob =		trap_Cvar_Get( "cg_gunbob", "1", CVAR_ARCHIVE );
+	cg_gun =        trap_Cvar_Get( "cg_gun", "1", CVAR_ARCHIVE );
+	cg_gunx =       trap_Cvar_Get( "cg_gunx", "0", CVAR_ARCHIVE );
+	cg_guny =       trap_Cvar_Get( "cg_guny", "0", CVAR_ARCHIVE );
+	cg_gunz =       trap_Cvar_Get( "cg_gunz", "0", CVAR_ARCHIVE );
+	cg_gunbob =     trap_Cvar_Get( "cg_gunbob", "1", CVAR_ARCHIVE );
 
-	cg_gun_fov =		trap_Cvar_Get( "cg_gun_fov", "75", CVAR_ARCHIVE );
-	cg_gun_alpha =		trap_Cvar_Get( "cg_gun_alpha", "1", CVAR_ARCHIVE );
-	cg_weaponFlashes =	trap_Cvar_Get( "cg_weaponFlashes", "2", CVAR_ARCHIVE );
+	cg_gun_fov =        trap_Cvar_Get( "cg_gun_fov", "75", CVAR_ARCHIVE );
+	cg_gun_alpha =      trap_Cvar_Get( "cg_gun_alpha", "1", CVAR_ARCHIVE );
+	cg_weaponFlashes =  trap_Cvar_Get( "cg_weaponFlashes", "2", CVAR_ARCHIVE );
 
 	// wsw
-	cg_volume_players =	trap_Cvar_Get( "cg_volume_players", "1.0", CVAR_ARCHIVE );
-	cg_volume_effects =	trap_Cvar_Get( "cg_volume_effects", "1.0", CVAR_ARCHIVE );
-	cg_volume_announcer =	trap_Cvar_Get( "cg_volume_announcer", "1.0", CVAR_ARCHIVE );
-	cg_volume_hitsound =	trap_Cvar_Get( "cg_volume_hitsound", "1.0", CVAR_ARCHIVE );
-	cg_volume_voicechats =	trap_Cvar_Get( "cg_volume_voicechats", "1.0", CVAR_ARCHIVE );
-	cg_handOffset =		trap_Cvar_Get( "cg_handOffset", "5", CVAR_ARCHIVE );
-	cg_projectileTrail =	trap_Cvar_Get( "cg_projectileTrail", "60", CVAR_ARCHIVE );
-	cg_projectileFireTrail =	trap_Cvar_Get( "cg_projectileFireTrail", "90", CVAR_ARCHIVE );
-	cg_bloodTrail =		trap_Cvar_Get( "cg_bloodTrail", "10", CVAR_ARCHIVE );
-	cg_showBloodTrail =	trap_Cvar_Get( "cg_showBloodTrail", "1", CVAR_ARCHIVE );
-	cg_projectileFireTrailAlpha =	trap_Cvar_Get( "cg_projectileFireTrailAlpha", "0.45", CVAR_ARCHIVE );
-	cg_bloodTrailAlpha =	trap_Cvar_Get( "cg_bloodTrailAlpha", "1.0", CVAR_ARCHIVE );
-	cg_explosionsRing =	trap_Cvar_Get( "cg_explosionsRing", "0", CVAR_ARCHIVE );
+	cg_volume_players = trap_Cvar_Get( "cg_volume_players", "1.0", CVAR_ARCHIVE );
+	cg_volume_effects = trap_Cvar_Get( "cg_volume_effects", "1.0", CVAR_ARCHIVE );
+	cg_volume_announcer =   trap_Cvar_Get( "cg_volume_announcer", "1.0", CVAR_ARCHIVE );
+	cg_volume_hitsound =    trap_Cvar_Get( "cg_volume_hitsound", "1.0", CVAR_ARCHIVE );
+	cg_volume_voicechats =  trap_Cvar_Get( "cg_volume_voicechats", "1.0", CVAR_ARCHIVE );
+	cg_handOffset =     trap_Cvar_Get( "cg_handOffset", "5", CVAR_ARCHIVE );
+	cg_projectileTrail =    trap_Cvar_Get( "cg_projectileTrail", "60", CVAR_ARCHIVE );
+	cg_projectileFireTrail =    trap_Cvar_Get( "cg_projectileFireTrail", "90", CVAR_ARCHIVE );
+	cg_bloodTrail =     trap_Cvar_Get( "cg_bloodTrail", "10", CVAR_ARCHIVE );
+	cg_showBloodTrail = trap_Cvar_Get( "cg_showBloodTrail", "1", CVAR_ARCHIVE );
+	cg_projectileFireTrailAlpha =   trap_Cvar_Get( "cg_projectileFireTrailAlpha", "0.45", CVAR_ARCHIVE );
+	cg_bloodTrailAlpha =    trap_Cvar_Get( "cg_bloodTrailAlpha", "1.0", CVAR_ARCHIVE );
+	cg_explosionsRing = trap_Cvar_Get( "cg_explosionsRing", "0", CVAR_ARCHIVE );
 	cg_explosionsDust =    trap_Cvar_Get( "cg_explosionsDust", "0", CVAR_ARCHIVE );
-	cg_gibs =		trap_Cvar_Get( "cg_gibs", "1", CVAR_ARCHIVE );
-	cg_outlineModels =	trap_Cvar_Get( "cg_outlineModels", "0", CVAR_ARCHIVE );
-	cg_outlineWorld =	trap_Cvar_Get( "cg_outlineWorld", "0", CVAR_ARCHIVE );
-	cg_outlinePlayers =	trap_Cvar_Get( "cg_outlinePlayers", "0", CVAR_ARCHIVE );
-	cg_drawEntityBoxes =	trap_Cvar_Get( "cg_drawEntityBoxes", "0", CVAR_DEVELOPER );
-	cg_showObituaries =	trap_Cvar_Get( "cg_showObituaries", va( "%i", CG_OBITUARY_HUD|CG_OBITUARY_CENTER ), CVAR_ARCHIVE );
-	cg_autoaction_demo =	trap_Cvar_Get( "cg_autoaction_demo", "0", CVAR_ARCHIVE );
+	cg_gibs =       trap_Cvar_Get( "cg_gibs", "1", CVAR_ARCHIVE );
+	cg_outlineModels =  trap_Cvar_Get( "cg_outlineModels", "0", CVAR_ARCHIVE );
+	cg_outlineWorld =   trap_Cvar_Get( "cg_outlineWorld", "0", CVAR_ARCHIVE );
+	cg_outlinePlayers = trap_Cvar_Get( "cg_outlinePlayers", "0", CVAR_ARCHIVE );
+	cg_drawEntityBoxes =    trap_Cvar_Get( "cg_drawEntityBoxes", "0", CVAR_DEVELOPER );
+	cg_showObituaries = trap_Cvar_Get( "cg_showObituaries", va( "%i", CG_OBITUARY_HUD | CG_OBITUARY_CENTER ), CVAR_ARCHIVE );
+	cg_autoaction_demo =    trap_Cvar_Get( "cg_autoaction_demo", "0", CVAR_ARCHIVE );
 	cg_autoaction_screenshot =  trap_Cvar_Get( "cg_autoaction_screenshot", "0", CVAR_ARCHIVE );
-	cg_autoaction_stats =	trap_Cvar_Get( "cg_autoaction_stats", "0", CVAR_ARCHIVE );
+	cg_autoaction_stats =   trap_Cvar_Get( "cg_autoaction_stats", "0", CVAR_ARCHIVE );
 	cg_autoaction_spectator = trap_Cvar_Get( "cg_autoaction_spectator", "0", CVAR_ARCHIVE );
-	cg_simpleItems =	trap_Cvar_Get( "cg_simpleItems", "0", CVAR_ARCHIVE );
-	cg_simpleItemsSize =	trap_Cvar_Get( "cg_simpleItemsSize", "16", CVAR_ARCHIVE );
-	cg_particles =		trap_Cvar_Get( "cg_particles", "1", CVAR_ARCHIVE );
-	cg_showhelp =		trap_Cvar_Get( "cg_showhelp", "1", CVAR_ARCHIVE );
-	cg_predictLaserBeam =	trap_Cvar_Get( "cg_predictLaserBeam", "1", CVAR_ARCHIVE );
-	cg_showSelfShadow =	trap_Cvar_Get( "cg_showSelfShadow", "0", CVAR_ARCHIVE );
+	cg_simpleItems =    trap_Cvar_Get( "cg_simpleItems", "0", CVAR_ARCHIVE );
+	cg_simpleItemsSize =    trap_Cvar_Get( "cg_simpleItemsSize", "16", CVAR_ARCHIVE );
+	cg_particles =      trap_Cvar_Get( "cg_particles", "1", CVAR_ARCHIVE );
+	cg_showhelp =       trap_Cvar_Get( "cg_showhelp", "1", CVAR_ARCHIVE );
+	cg_predictLaserBeam =   trap_Cvar_Get( "cg_predictLaserBeam", "1", CVAR_ARCHIVE );
+	cg_showSelfShadow = trap_Cvar_Get( "cg_showSelfShadow", "0", CVAR_ARCHIVE );
 
-	cg_cartoonEffects =		trap_Cvar_Get( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
-	cg_cartoonHitEffect =	trap_Cvar_Get( "cg_cartoonHitEffect", "1", CVAR_ARCHIVE );
+	cg_cartoonEffects =     trap_Cvar_Get( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
+	cg_cartoonHitEffect =   trap_Cvar_Get( "cg_cartoonHitEffect", "1", CVAR_ARCHIVE );
 
-	cg_damage_indicator =	trap_Cvar_Get( "cg_damage_indicator", "1", CVAR_ARCHIVE );
-	cg_damage_indicator_time =	trap_Cvar_Get( "cg_damage_indicator_time", "25", CVAR_ARCHIVE );
-	cg_pickup_flash =	trap_Cvar_Get( "cg_pickup_flash", "0", CVAR_ARCHIVE );
+	cg_damage_indicator =   trap_Cvar_Get( "cg_damage_indicator", "1", CVAR_ARCHIVE );
+	cg_damage_indicator_time =  trap_Cvar_Get( "cg_damage_indicator_time", "25", CVAR_ARCHIVE );
+	cg_pickup_flash =   trap_Cvar_Get( "cg_pickup_flash", "0", CVAR_ARCHIVE );
 
-	cg_weaponAutoSwitch =	trap_Cvar_Get( "cg_weaponAutoSwitch", "2", CVAR_ARCHIVE );
+	cg_weaponAutoSwitch =   trap_Cvar_Get( "cg_weaponAutoSwitch", "2", CVAR_ARCHIVE );
 
-	cg_voiceChats =		trap_Cvar_Get( "cg_voiceChats", "1", CVAR_ARCHIVE );
-	cg_shadows =		trap_Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
+	cg_voiceChats =     trap_Cvar_Get( "cg_voiceChats", "1", CVAR_ARCHIVE );
+	cg_shadows =        trap_Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
 
 	cg_laserBeamSubdivisions = trap_Cvar_Get( "cg_laserBeamSubdivisions", "10", CVAR_ARCHIVE );
 	cg_projectileAntilagOffset = trap_Cvar_Get( "cg_projectileAntilagOffset", "1.0", CVAR_ARCHIVE );
 
-	cg_raceGhosts =		trap_Cvar_Get( "cg_raceGhosts", "0", CVAR_ARCHIVE );
-	cg_raceGhostsAlpha =	trap_Cvar_Get( "cg_raceGhostsAlpha", "0.25", CVAR_ARCHIVE );
+	cg_raceGhosts =     trap_Cvar_Get( "cg_raceGhosts", "0", CVAR_ARCHIVE );
+	cg_raceGhostsAlpha =    trap_Cvar_Get( "cg_raceGhostsAlpha", "0.25", CVAR_ARCHIVE );
 
-	cg_chatBeep =		trap_Cvar_Get( "cg_chatBeep", "1", CVAR_ARCHIVE );
-	cg_chatFilter =		trap_Cvar_Get( "cg_chatFilter", "0", CVAR_ARCHIVE );
-	cg_chatFilterTV =	trap_Cvar_Get( "cg_chatFilterTV", "2", CVAR_ARCHIVE );
+	cg_chatBeep =       trap_Cvar_Get( "cg_chatBeep", "1", CVAR_ARCHIVE );
+	cg_chatFilter =     trap_Cvar_Get( "cg_chatFilter", "0", CVAR_ARCHIVE );
+	cg_chatFilterTV =   trap_Cvar_Get( "cg_chatFilterTV", "2", CVAR_ARCHIVE );
 
 	// developer cvars
-	developer =		trap_Cvar_Get( "developer", "0", CVAR_CHEAT );
-	cg_showClamp =		trap_Cvar_Get( "cg_showClamp", "0", CVAR_DEVELOPER );
+	developer =     trap_Cvar_Get( "developer", "0", CVAR_CHEAT );
+	cg_showClamp =      trap_Cvar_Get( "cg_showClamp", "0", CVAR_DEVELOPER );
 
 	//team models
 	cg_teamPLAYERSmodel = trap_Cvar_Get( "cg_teamPLAYERSmodel", DEFAULT_PLAYERMODEL, CVAR_ARCHIVE );
@@ -907,16 +896,17 @@ static void CG_RegisterVariables( void )
 *
 * Compares name and tag against the itemlist to make sure cgame and game lists match
 */
-void CG_ValidateItemDef( int tag, char *name )
-{
+void CG_ValidateItemDef( int tag, char *name ) {
 	gsitem_t *item;
 
 	item = GS_FindItemByName( name );
-	if( !item )
+	if( !item ) {
 		CG_Error( "Client/Server itemlist missmatch (Game and Cgame version/mod differs). Item '%s' not found\n", name );
+	}
 
-	if( item->tag != tag )
+	if( item->tag != tag ) {
 		CG_Error( "Client/Server itemlist missmatch (Game and Cgame version/mod differs).\n" );
+	}
 }
 
 /*
@@ -924,96 +914,100 @@ void CG_ValidateItemDef( int tag, char *name )
 *
 * Compares name and tag against the itemlist to make sure cgame and game lists match
 */
-void CG_OverrideWeapondef( int index, const char *cstring )
-{
+void CG_OverrideWeapondef( int index, const char *cstring ) {
 	int weapon, i;
 	int firemode = FIRE_MODE_WEAK;
 	gs_weapon_definition_t *weapondef;
 	firedef_t *firedef;
 
 	weapon = index;
-	if( index >= (MAX_WEAPONDEFS / 2) )
-	{
-		weapon -= (MAX_WEAPONDEFS / 2);
+	if( index >= ( MAX_WEAPONDEFS / 2 ) ) {
+		weapon -= ( MAX_WEAPONDEFS / 2 );
 		firemode = FIRE_MODE_STRONG;
 	}
 
 	weapondef = GS_GetWeaponDef( weapon );
-	if( !weapondef )
+	if( !weapondef ) {
 		CG_Error( "CG_OverrideWeapondef: Invalid weapon index\n" );
+	}
 
 	firedef = ( firemode == FIRE_MODE_STRONG ) ? &weapondef->firedef : &weapondef->firedef_weak;
 
 	i = sscanf( cstring, "%7i %7i %7u %7u %7u %7u %7u %7i %7i %7i",
-		&firedef->usage_count,
-		&firedef->projectile_count,
-		&firedef->weaponup_time,
-		&firedef->weapondown_time,
-		&firedef->reload_time,
-		&firedef->cooldown_time,
-		&firedef->timeout,
-		&firedef->speed,
-		&firedef->spread,
-		&firedef->v_spread
-	);
+				&firedef->usage_count,
+				&firedef->projectile_count,
+				&firedef->weaponup_time,
+				&firedef->weapondown_time,
+				&firedef->reload_time,
+				&firedef->cooldown_time,
+				&firedef->timeout,
+				&firedef->speed,
+				&firedef->spread,
+				&firedef->v_spread
+				);
 
-	if( i != 10 )
+	if( i != 10 ) {
 		CG_Error( "CG_OverrideWeapondef: Bad configstring: %s \"%s\" (%i)\n", weapondef->name, cstring, i );
+	}
 }
 
 /*
 * CG_ValidateItemList
 */
-static void CG_ValidateItemList( void )
-{
+static void CG_ValidateItemList( void ) {
 	int i;
 	int cs;
 
-	for( i = 0; i < MAX_ITEMS; i++ )
-	{
+	for( i = 0; i < MAX_ITEMS; i++ ) {
 		cs = CS_ITEMS + i;
-		if( cgs.configStrings[cs][0] )
+		if( cgs.configStrings[cs][0] ) {
 			CG_ValidateItemDef( i, cgs.configStrings[cs] );
+		}
 	}
 
-	for( i = 0; i < MAX_WEAPONDEFS; i++ )
-	{
+	for( i = 0; i < MAX_WEAPONDEFS; i++ ) {
 		cs = CS_WEAPONDEFS + i;
-		if( cgs.configStrings[cs][0] )
+		if( cgs.configStrings[cs][0] ) {
 			CG_OverrideWeapondef( i, cgs.configStrings[cs] );
+		}
 	}
 }
 
 /*
 * CG_Precache
 */
-void CG_Precache( void )
-{
-	if( cgs.precacheDone )
+void CG_Precache( void ) {
+	if( cgs.precacheDone ) {
 		return;
+	}
 
 	cgs.precacheStart = cgs.precacheCount;
 	cgs.precacheStartMsec = trap_Milliseconds();
 
 	CG_RegisterModels();
-	if( cgs.precacheModelsStart < MAX_MODELS )
+	if( cgs.precacheModelsStart < MAX_MODELS ) {
 		return;
+	}
 
 	CG_RegisterSounds();
-	if( cgs.precacheSoundsStart < MAX_SOUNDS )
+	if( cgs.precacheSoundsStart < MAX_SOUNDS ) {
 		return;
+	}
 
 	CG_RegisterShaders();
-	if( cgs.precacheShadersStart < MAX_IMAGES )
+	if( cgs.precacheShadersStart < MAX_IMAGES ) {
 		return;
+	}
 
 	CG_RegisterSkinFiles();
-	if( cgs.precacheSkinsStart < MAX_SKINFILES )
+	if( cgs.precacheSkinsStart < MAX_SKINFILES ) {
 		return;
+	}
 
 	CG_RegisterClients();
-	if( cgs.precacheClientsStart < MAX_CLIENTS )
+	if( cgs.precacheClientsStart < MAX_CLIENTS ) {
 		return;
+	}
 
 	cgs.precacheDone = true;
 }
@@ -1021,31 +1015,28 @@ void CG_Precache( void )
 /*
 * CG_UpdateTVServerString
 */
-void CG_UpdateTVServerString( void )
-{
+void CG_UpdateTVServerString( void ) {
 	// if we got the server settings configstring, update our local copy of the data
-	if( cgs.configStrings[CS_TVSERVER][0] )
-	{
+	if( cgs.configStrings[CS_TVSERVER][0] ) {
 		char *settings = cgs.configStrings[CS_TVSERVER];
 
 		cgs.tv = atoi( COM_Parse( &settings ) ) == 0 ? false : true;
-		if( cgs.demoPlaying )
-			cgs.tv = false;		// ignore the TV bit in demos
+		if( cgs.demoPlaying ) {
+			cgs.tv = false;     // ignore the TV bit in demos
+		}
 	}
 }
 
 /*
 * CG_RegisterConfigStrings
 */
-static void CG_RegisterConfigStrings( void )
-{
+static void CG_RegisterConfigStrings( void ) {
 	int i;
 	const char *cs;
 
 	cgs.precacheCount = cgs.precacheTotal = 0;
 
-	for( i = 0; i < MAX_CONFIGSTRINGS; i++ )
-	{
+	for( i = 0; i < MAX_CONFIGSTRINGS; i++ ) {
 		trap_GetConfigString( i, cgs.configStrings[i], MAX_CONFIGSTRING_CHARS );
 
 		cs = cgs.configStrings[i];
@@ -1053,18 +1044,19 @@ static void CG_RegisterConfigStrings( void )
 			continue;
 		}
 
-		if( i == CS_WORLDMODEL )
+		if( i == CS_WORLDMODEL ) {
 			cgs.precacheTotal++;
-		else if( i >= CS_MODELS && i < CS_MODELS + MAX_MODELS )
+		} else if( i >= CS_MODELS && i < CS_MODELS + MAX_MODELS ) {
 			cgs.precacheTotal++;
-		else if( i >= CS_SOUNDS && i < CS_SOUNDS + MAX_SOUNDS )
+		} else if( i >= CS_SOUNDS && i < CS_SOUNDS + MAX_SOUNDS ) {
 			cgs.precacheTotal++;
-		else if( i >= CS_IMAGES && i < CS_IMAGES + MAX_IMAGES )
+		} else if( i >= CS_IMAGES && i < CS_IMAGES + MAX_IMAGES ) {
 			cgs.precacheTotal++;
-		else if( i >= CS_SKINFILES && i < CS_SKINFILES + MAX_SKINFILES )
+		} else if( i >= CS_SKINFILES && i < CS_SKINFILES + MAX_SKINFILES ) {
 			cgs.precacheTotal++;
-		else if( i >= CS_PLAYERINFOS && i < CS_PLAYERINFOS + MAX_CLIENTS )
+		} else if( i >= CS_PLAYERINFOS && i < CS_PLAYERINFOS + MAX_CLIENTS ) {
 			cgs.precacheTotal++;
+		}
 	}
 
 	// if we got the server settings configstring, update our local copy of the data
@@ -1080,8 +1072,7 @@ static void CG_RegisterConfigStrings( void )
 /*
 * CG_StartBackgroundTrack
 */
-void CG_StartBackgroundTrack( void )
-{
+void CG_StartBackgroundTrack( void ) {
 	char *string;
 	char intro[MAX_QPATH], loop[MAX_QPATH];
 
@@ -1089,17 +1080,17 @@ void CG_StartBackgroundTrack( void )
 	Q_strncpyz( intro, COM_Parse( &string ), sizeof( intro ) );
 	Q_strncpyz( loop, COM_Parse( &string ), sizeof( loop ) );
 
-	if( intro[0] )
+	if( intro[0] ) {
 		trap_S_StartBackgroundTrack( intro, loop, 0 );
-	else if( cg_playList->string[0] )
+	} else if( cg_playList->string[0] ) {
 		trap_S_StartBackgroundTrack( cg_playList->string, NULL, cg_playListShuffle->integer ? 1 : 0 );
+	}
 }
 
 /*
 * CG_Reset
 */
-void CG_Reset( void )
-{
+void CG_Reset( void ) {
 	CG_ResetPModels();
 
 	CG_ResetKickAngles();
@@ -1140,11 +1131,10 @@ void CG_Reset( void )
 * CG_Init
 */
 void CG_Init( const char *serverName, unsigned int playerNum,
-			 int vidWidth, int vidHeight, float pixelRatio,
-			 bool demoplaying, const char *demoName, bool pure, 
-			 unsigned int snapFrameTime, int protocol, const char *demoExtension,
-			 int sharedSeed, bool gameStart )
-{
+			  int vidWidth, int vidHeight, float pixelRatio,
+			  bool demoplaying, const char *demoName, bool pure,
+			  unsigned int snapFrameTime, int protocol, const char *demoExtension,
+			  int sharedSeed, bool gameStart ) {
 	CG_InitGameShared();
 
 	memset( &cg, 0, sizeof( cg_state_t ) );
@@ -1152,7 +1142,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	memset( cg_entities, 0, sizeof( cg_entities ) );
 #ifdef PURE_CHEAT
-	CG_Printf( S_COLOR_MAGENTA"Hi, I'm an unpure bitch 7\n" );
+	CG_Printf( S_COLOR_MAGENTA "Hi, I'm an unpure bitch 7\n" );
 #endif
 
 	srand( time( NULL ) );
@@ -1229,7 +1219,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	// start up announcer events queue from clean
 	CG_ClearAnnouncerEvents();
 
-	cgs.demoTutorial = cgs.demoPlaying && (strstr( cgs.demoName, "tutorials/" ) != NULL);
+	cgs.demoTutorial = cgs.demoPlaying && ( strstr( cgs.demoName, "tutorials/" ) != NULL );
 
 	cg.firstFrame = true; // think of the next frame in CG_NewFrameSnap as of the first one
 
@@ -1242,8 +1232,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 /*
 * CG_Shutdown
 */
-void CG_Shutdown( void )
-{
+void CG_Shutdown( void ) {
 	CG_FreeLocalEntities();
 	CG_DemocamShutdown();
 	CG_ScreenShutdown();
@@ -1254,10 +1243,10 @@ void CG_Shutdown( void )
 //======================================================================
 
 #ifndef CGAME_HARD_LINKED
+
 // this is only here so the functions in q_shared.c and q_math.c can link
-void Sys_Error( const char *format, ... )
-{
-	va_list	argptr;
+void Sys_Error( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -1267,9 +1256,8 @@ void Sys_Error( const char *format, ... )
 	trap_Error( msg );
 }
 
-void Com_Printf( const char *format, ... )
-{
-	va_list	argptr;
+void Com_Printf( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );

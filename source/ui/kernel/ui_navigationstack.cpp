@@ -4,7 +4,8 @@
 #include "kernel/ui_eventlistener.h"
 #include "kernel/ui_documentloader.h"
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 namespace Core = Rocket::Core;
 
@@ -12,40 +13,35 @@ namespace Core = Rocket::Core;
 
 // DocumentCache
 
-DocumentCache::DocumentCache(int contextId) : contextId(contextId), loader(contextId)
-{
+DocumentCache::DocumentCache( int contextId ) : contextId( contextId ), loader( contextId ) {
 
 }
 
-DocumentCache::~DocumentCache()
-{
+DocumentCache::~DocumentCache() {
 
 }
 
 // load or fetch document
-Document *DocumentCache::getDocument( const std::string &name, NavigationStack *stack )
-{
+Document *DocumentCache::getDocument( const std::string &name, NavigationStack *stack ) {
 	Document *document = 0;
 
 	// we need to use fake Document for comparison
 	Document match( name );
 	DocumentSet::iterator it = documentSet.find( &match );
 
-	if( it == documentSet.end() )
-	{
+	if( it == documentSet.end() ) {
 		// load it up, and keep the reference for the stack
-		document = loader.loadDocument(name.c_str(), stack);
-		if( !document )
+		document = loader.loadDocument( name.c_str(), stack );
+		if( !document ) {
 			return 0;
+		}
 
 		documentSet.insert( document );
 
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "DocumentCache::getDocument, fully loaded document %s (refcount %d)\n", name.c_str(), document->getReference() );
 		}
-	}
-	else
-	{
+	} else {
 		document = *it;
 
 		if( UI_Main::Get()->debugOn() ) {
@@ -57,8 +53,7 @@ Document *DocumentCache::getDocument( const std::string &name, NavigationStack *
 }
 
 // release document
-DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::iterator it )
-{
+DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::iterator it ) {
 	Document *doc = *it;
 	DocumentSet::iterator next = it;
 	++next;
@@ -73,17 +68,15 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 		documentSet.erase( it );
 		doc->removeReference();
 	}
-	
+
 	return next;
 }
 
 // release document
-void DocumentCache::purgeDocument( Document *doc )
-{
+void DocumentCache::purgeDocument( Document *doc ) {
 	DocumentSet::iterator it = documentSet.find( doc );
-	if( it == documentSet.end() )
-	{
-		Com_Printf("Warning: DocumentCache::purgeDocument couldn't find document %s\n", doc->getName().c_str() );
+	if( it == documentSet.end() ) {
+		Com_Printf( "Warning: DocumentCache::purgeDocument couldn't find document %s\n", doc->getName().c_str() );
 		return;
 	}
 
@@ -93,10 +86,9 @@ void DocumentCache::purgeDocument( Document *doc )
 // release all documents
 // TODO: should we clear the whole cache and just leave the reference'd
 // ones to float around?
-void DocumentCache::purgeAllDocuments()
-{
+void DocumentCache::purgeAllDocuments() {
 	if( UI_Main::Get()->debugOn() ) {
-		Com_Printf("DocumentCache::purgeAllDocument\n");
+		Com_Printf( "DocumentCache::purgeAllDocument\n" );
 	}
 
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ) {
@@ -106,27 +98,26 @@ void DocumentCache::purgeAllDocuments()
 	// DEBUG
 	if( UI_Main::Get()->debugOn() ) {
 		if( !documentSet.empty() ) {
-			Com_Printf("Warning: DocumentCache::purgeAllDocuments: still have %d documents in the cache\n", documentSet.size() );
+			Com_Printf( "Warning: DocumentCache::purgeAllDocuments: still have %d documents in the cache\n", documentSet.size() );
 			for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
-				Com_Printf("    %s (refcount %d)\n", (*it)->getName().c_str(), (*it)->getReference() );
+				Com_Printf( "    %s (refcount %d)\n", ( *it )->getName().c_str(), ( *it )->getReference() );
 		}
 	}
 }
 
 // as above but will force destroy all documents
-void DocumentCache::clearCaches()
-{
+void DocumentCache::clearCaches() {
 	if( UI_Main::Get()->debugOn() ) {
-		Com_Printf("DocumentCache::clearCaches\n");
+		Com_Printf( "DocumentCache::clearCaches\n" );
 	}
 
 	// force destroy all documents
 	purgeAllDocuments();
 
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
-		if( (*it)->getRocketDocument() ) {
-			(*it)->removeReference();
-			loader.closeDocument( (*it) );
+		if( ( *it )->getRocketDocument() ) {
+			( *it )->removeReference();
+			loader.closeDocument( ( *it ) );
 		}
 	}
 
@@ -135,22 +126,21 @@ void DocumentCache::clearCaches()
 	// here we also do this
 	Rocket::Core::Factory::ClearStyleSheetCache();
 	Rocket::Core::Factory::ClearTemplateCache();
+
 	// and if in the future Rocket offers more cache-cleaning functions, call 'em
 }
 
 // DEBUG
-void DocumentCache::printCache()
-{
-	for(DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
-		Com_Printf("  %s (%d references)\n", (*it)->getName().c_str(), (*it)->getReference() );
+void DocumentCache::printCache() {
+	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
+		Com_Printf( "  %s (%d references)\n", ( *it )->getName().c_str(), ( *it )->getReference() );
 }
 
 // send "invalidate" event to all documents
 // elements that reference engine assets (models, shaders, sounds, etc)
 // must attach themselves to the event as listeneres to either touch
 // the assets or invalidate them
-void DocumentCache::invalidateAssets(void)
-{
+void DocumentCache::invalidateAssets( void ) {
 	Rocket::Core::Dictionary parameters;
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
 		( *it )->getRocketDocument()->DispatchEvent( "invalidate", parameters, true );
@@ -161,19 +151,16 @@ void DocumentCache::invalidateAssets(void)
 
 // NavigationStack
 
-NavigationStack::NavigationStack( int contextId ) : cache( contextId ), modalTop( false ), stackLocked( false )
-{
+NavigationStack::NavigationStack( int contextId ) : cache( contextId ), modalTop( false ), stackLocked( false ) {
 	documentStack.clear();
 }
 
-NavigationStack::~NavigationStack()
-{
+NavigationStack::~NavigationStack() {
 
 }
 
 // stack operations
-Document *NavigationStack::pushDocument(const std::string &name, bool modal, bool show)
-{
+Document *NavigationStack::pushDocument( const std::string &name, bool modal, bool show ) {
 	if( modalTop || !name.length() ) {
 		return nullptr;
 	}
@@ -199,21 +186,22 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	if( top && !top->IsViewed() ) {
 		_popDocument( false );
 		top = !documentStack.empty() ? documentStack.back() : nullptr;
-	}
-	else {
+	} else {
 		// if modal, dont hide previous, else hide it
-		if( !modal && top )
+		if( !modal && top ) {
 			top->Hide();
+		}
 	}
 
 	// cache has reserved a ref for us
 	Document *doc = cache.getDocument( documentRealname, this );
-	if( doc == nullptr || !doc->getRocketDocument() )
+	if( doc == nullptr || !doc->getRocketDocument() ) {
 		return nullptr;
+	}
 
 	doc->setStack( this );
 
-	// the loading document might have pushed another document onto the stack 
+	// the loading document might have pushed another document onto the stack
 	// in the onload event, pushing ourselves on top of it now is going to fuck up the order
 	Document *new_top = !documentStack.empty() ? documentStack.back() : nullptr;
 	if( top != new_top ) {
@@ -237,27 +225,26 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 		doc->FocusFirstTabElement();
 
 		if( UI_Main::Get()->debugOn() ) {
-			Com_Printf("NavigationStack::pushDocument returning %s with refcount %d\n",
-					documentRealname.c_str(), doc->getReference() );
+			Com_Printf( "NavigationStack::pushDocument returning %s with refcount %d\n",
+						documentRealname.c_str(), doc->getReference() );
 		}
 	}
 
 	return doc;
 }
 
-Document *NavigationStack::preloadDocument(const std::string &name)
-{
+Document *NavigationStack::preloadDocument( const std::string &name ) {
 	std::string documentRealname = getFullpath( name );
 
 	Document *doc = cache.getDocument( documentRealname );
-	if( doc == nullptr || !doc->getRocketDocument() )
+	if( doc == nullptr || !doc->getRocketDocument() ) {
 		return nullptr;
+	}
 
 	return doc;
 }
 
-void NavigationStack::_popDocument(bool focusOnNext)
-{
+void NavigationStack::_popDocument( bool focusOnNext ) {
 	modalTop = false;
 
 	Document *doc = documentStack.back();
@@ -268,8 +255,8 @@ void NavigationStack::_popDocument(bool focusOnNext)
 	doc->Hide();
 
 	if( UI_Main::Get()->debugOn() ) {
-		Com_Printf("NavigationStack::popDocument popping %s with refcount %d\n",
-				doc->getName().c_str(), doc->getReference() );
+		Com_Printf( "NavigationStack::popDocument popping %s with refcount %d\n",
+					doc->getName().c_str(), doc->getReference() );
 	}
 
 	// attach to the next document on stack
@@ -296,13 +283,11 @@ void NavigationStack::_popDocument(bool focusOnNext)
 	}
 }
 
-void NavigationStack::popDocument()
-{
+void NavigationStack::popDocument() {
 	_popDocument( true );
 }
 
-void NavigationStack::popAllDocuments(void)
-{
+void NavigationStack::popAllDocuments( void ) {
 	// ensure no documents cripple in, say, onshow even
 	// otherwise we can actually loop endlessly
 	stackLocked = true;
@@ -315,13 +300,11 @@ void NavigationStack::popAllDocuments(void)
 	stackLocked = false;
 }
 
-void NavigationStack::invalidateAssets(void)
-{
+void NavigationStack::invalidateAssets( void ) {
 	cache.invalidateAssets();
 }
 
-void NavigationStack::attachMainEventListenerToTop( Document *prev )
-{
+void NavigationStack::attachMainEventListenerToTop( Document *prev ) {
 	if( !hasDocuments() ) {
 		return;
 	}
@@ -347,8 +330,7 @@ void NavigationStack::attachMainEventListenerToTop( Document *prev )
 	}
 }
 
-void NavigationStack::markTopAsViewed(void)
-{
+void NavigationStack::markTopAsViewed( void ) {
 	Document *modal = nullptr;
 
 	// mark the top document as viewed
@@ -376,68 +358,65 @@ void NavigationStack::markTopAsViewed(void)
 	}
 }
 
-bool NavigationStack::hasDocuments(void) const
-{
+bool NavigationStack::hasDocuments( void ) const {
 	return !documentStack.empty();
 }
 
-bool NavigationStack::hasAtLeastTwoDocuments(void) const
-{
+bool NavigationStack::hasAtLeastTwoDocuments( void ) const {
 	return documentStack.size() >= 2;
 }
 
-size_t NavigationStack::getStackSize(void) const
-{
+size_t NavigationStack::getStackSize( void ) const {
 	return documentStack.size();
 }
 
-DocumentCache *NavigationStack::getCache(void)
-{
+DocumentCache *NavigationStack::getCache( void ) {
 	return &cache;
 }
 
-void NavigationStack::setDefaultPath( const std::string &path )
-{
+void NavigationStack::setDefaultPath( const std::string &path ) {
 	// ensure path begins and ends with slash
-	if( !path.length() )
+	if( !path.length() ) {
 		defaultPath = '/';
-	else if( path[0] != '/' )
+	} else if( path[0] != '/' ) {
 		defaultPath = '/' + path;
-	else
+	} else {
 		defaultPath = path;
+	}
 
-	if( defaultPath[defaultPath.length()-1] != '/' )
+	if( defaultPath[defaultPath.length() - 1] != '/' ) {
 		defaultPath += '/';
+	}
 }
 
-const std::string &NavigationStack::getDefaultPath( void )
-{
+const std::string &NavigationStack::getDefaultPath( void ) {
 	return defaultPath;
 }
 
-std::string NavigationStack::getFullpath( const std::string &name )
-{
+std::string NavigationStack::getFullpath( const std::string &name ) {
 	// if name is absolute, return name
-	if( !name.length() || name[0] == '/' )
+	if( !name.length() || name[0] == '/' ) {
 		return name;
+	}
+
 	// prepend with default path and return
 	return defaultPath + name;
 }
 
 // TEMP TEMP
-void NavigationStack::showStack(bool show)
-{
-	if( documentStack.empty() )
-		return;		// Warn?
+void NavigationStack::showStack( bool show ) {
+	if( documentStack.empty() ) {
+		return;     // Warn?
 
+	}
 #if 0
-	if( modalTop )
-	{
+	if( modalTop ) {
 		// also show the one below the top
 		Document *top = documentStack.back();
 		documentStack.pop_back();
-		if( !documentStack.empty() )
+		if( !documentStack.empty() ) {
 			documentStack.back()->Show( show );
+		}
 		documentStack.push_back( top );
 	}
 #endif
@@ -446,16 +425,14 @@ void NavigationStack::showStack(bool show)
 }
 
 // TEMP TEMP
-void NavigationStack::hideStack()
-{
-	showStack(false);
+void NavigationStack::hideStack() {
+	showStack( false );
 }
 
 // DEBUG
-void NavigationStack::printStack()
-{
-	for(DocumentStack::iterator it = documentStack.begin(); it != documentStack.end(); ++it )
-		Com_Printf("  %d %s\n", std::distance( documentStack.begin(), it ), (*it)->getName().c_str() );
+void NavigationStack::printStack() {
+	for( DocumentStack::iterator it = documentStack.begin(); it != documentStack.end(); ++it )
+		Com_Printf( "  %d %s\n", std::distance( documentStack.begin(), it ), ( *it )->getName().c_str() );
 }
 
 }

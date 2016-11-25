@@ -27,14 +27,13 @@ ref_import_t ri;
 /*
 * GetRefAPIVersion
 */
-static int GetRefAPIVersion( void )
-{
+static int GetRefAPIVersion( void ) {
 	return REF_API_VERSION;
 }
 
 /*
 * GetRefAPI
-* 
+*
 * Returns a pointer to the structure with all entry points
 */
 #ifdef __cplusplus
@@ -42,8 +41,7 @@ extern "C"
 {
 #endif
 
-QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
-{
+QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
 	static ref_export_t globals;
 
 	ri = *import;
@@ -78,7 +76,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.SetCustomColor = RF_SetCustomColor;
 	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
 	globals.Finish = RF_Finish;
-	
+
 	globals.GetShaderForOrigin = RF_GetShaderForOrigin;
 	globals.GetShaderCinematic = RF_GetShaderCinematic;
 
@@ -92,7 +90,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.BeginAviDemo = RF_BeginAviDemo;
 	globals.WriteAviFrame = RF_WriteAviFrame;
 	globals.StopAviDemo = RF_StopAviDemo;
-	
+
 	globals.RegisterWorldModel = RF_RegisterWorldModel;
 	globals.RegisterModel = R_RegisterModel;
 	globals.RegisterPic = R_RegisterPic;
@@ -106,13 +104,13 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.RemapShader = R_RemapShader;
 	globals.GetShaderDimensions = R_GetShaderDimensions;
-	
+
 	globals.SkeletalGetBoneInfo = R_SkeletalGetBoneInfo;
 	globals.SkeletalGetBonePose = R_SkeletalGetBonePose;
 	globals.SkeletalGetNumBones = R_SkeletalGetNumBones;
-	
+
 	globals.GetClippedFragments = R_GetClippedFragments;
-	
+
 	globals.ModelBounds = R_ModelBounds;
 	globals.ModelFrameBounds = R_ModelFrameBounds;
 
@@ -126,9 +124,8 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 #ifndef REF_HARD_LINKED
 
 // this is only here so the functions in q_shared.c and q_math.c can link
-void Sys_Error( const char *format, ... )
-{
-	va_list	argptr;
+void Sys_Error( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -138,9 +135,8 @@ void Sys_Error( const char *format, ... )
 	ri.Com_Error( ERR_FATAL, "%s", msg );
 }
 
-void Com_Printf( const char *format, ... )
-{
-	va_list	argptr;
+void Com_Printf( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -150,9 +146,8 @@ void Com_Printf( const char *format, ... )
 	ri.Com_Printf( "%s", msg );
 }
 
-void Com_DPrintf( const char *format, ... )
-{
-	va_list	argptr;
+void Com_DPrintf( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -164,9 +159,8 @@ void Com_DPrintf( const char *format, ... )
 
 #endif
 
-#if defined(HAVE_DLLMAIN) && !defined(REF_HARD_LINKED)
-int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
-{
+#if defined( HAVE_DLLMAIN ) && !defined( REF_HARD_LINKED )
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved ) {
 	return 1;
 }
 #endif

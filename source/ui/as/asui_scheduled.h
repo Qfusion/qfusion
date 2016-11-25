@@ -5,74 +5,75 @@
 
 #include "as/asui_local.h"
 
-namespace ASUI {
-	class FunctionCallScheduler;
+namespace ASUI
+{
+class FunctionCallScheduler;
 
-	// Intervalled or timeouted function
+// Intervalled or timeouted function
 
-	class ScheduledFunction
-	{
-	public:
-		friend class FunctionCallScheduler;
+class ScheduledFunction
+{
+public:
+	friend class FunctionCallScheduler;
 
-		ScheduledFunction( void );
-		ScheduledFunction( asIScriptFunction *func, unsigned int _delay, bool _intervalled, CScriptAnyInterface *any, FunctionCallScheduler *_sched );
-		~ScheduledFunction();
+	ScheduledFunction( void );
+	ScheduledFunction( asIScriptFunction *func, unsigned int _delay, bool _intervalled, CScriptAnyInterface *any, FunctionCallScheduler *_sched );
+	~ScheduledFunction();
 
-		// returns false if function should be removed
-		bool run();
+	// returns false if function should be removed
+	bool run();
 
-	private:
-		// TODO: additional parameter?
-		ASBind::FunctionPtr<bool()> funcPtr;
-		ASBind::FunctionPtr<bool( CScriptAnyInterface *)> funcPtr2;
-		CScriptAnyInterface *any;
+private:
+	// TODO: additional parameter?
+	ASBind::FunctionPtr<bool()> funcPtr;
+	ASBind::FunctionPtr<bool( CScriptAnyInterface *)> funcPtr2;
+	CScriptAnyInterface *any;
 
-		FunctionCallScheduler *sched;
-		unsigned int start, delay;
-		bool intervalled;
-	};
+	FunctionCallScheduler *sched;
+	unsigned int start, delay;
+	bool intervalled;
+};
 
-	// Actual scheduler
+// Actual scheduler
 
-	class FunctionCallScheduler
-	{
-	public:
-		friend class ScheduledFunction;
+class FunctionCallScheduler
+{
+public:
+	friend class ScheduledFunction;
 
-		FunctionCallScheduler( ASInterface *asmodule = 0 );
-		~FunctionCallScheduler( void );
+	FunctionCallScheduler( ASInterface *asmodule = 0 );
+	~FunctionCallScheduler( void );
 
-		// runs all active functions
-		void init( ASInterface *as );
-		void update( void );
-		void shutdown( void  );
+	// runs all active functions
+	void init( ASInterface *as );
+	void update( void );
+	void shutdown( void  );
 
-		int setTimeout( asIScriptFunction *func, unsigned int ms );
-		int setTimeout( asIScriptFunction *func, unsigned int ms, CScriptAnyInterface &any );
+	int setTimeout( asIScriptFunction *func, unsigned int ms );
+	int setTimeout( asIScriptFunction *func, unsigned int ms, CScriptAnyInterface &any );
 
-		int setInterval( asIScriptFunction *func, unsigned int ms );
-		int setInterval( asIScriptFunction *func, unsigned int ms, CScriptAnyInterface &any );
+	int setInterval( asIScriptFunction *func, unsigned int ms );
+	int setInterval( asIScriptFunction *func, unsigned int ms, CScriptAnyInterface &any );
 
-		void clearTimeout( int id );
-		void clearInterval( int id );
+	void clearTimeout( int id );
+	void clearInterval( int id );
 
-		ASInterface *getAS() { return asmodule; }
+	ASInterface *getAS() { return asmodule; }
 
-		// this is merely a typedef'ed protopype function for AS funcdef binding
-		static bool ASFuncdef() { return false; }
-		static bool ASFuncdef2(CScriptAnyInterface &any) { return false; }
+	// this is merely a typedef'ed protopype function for AS funcdef binding
+	static bool ASFuncdef() { return false; }
+	static bool ASFuncdef2( CScriptAnyInterface &any ) { return false; }
 
-	private:
-		void removeFunction( int id );
+private:
+	void removeFunction( int id );
 
-		ASInterface *asmodule;
-		int counter;
+	ASInterface *asmodule;
+	int counter;
 
-		typedef std::map<int, ScheduledFunction *>  FunctionMap;
-		FunctionMap functions;
+	typedef std::map<int, ScheduledFunction *>  FunctionMap;
+	FunctionMap functions;
 
-	};
+};
 }
 
 ASBIND_TYPE( ASUI::FunctionCallScheduler, FunctionCallScheduler );

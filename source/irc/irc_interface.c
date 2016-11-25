@@ -12,19 +12,19 @@ cvar_t *irc_perform;
 cvar_t *irc_defaultChannel;
 
 // the functions in irc_export_t
-int Irc_If_API(void);
-bool Irc_If_Init(void);
-void Irc_If_Shutdown(void);
-bool Irc_If_Connect(void);
-bool Irc_If_Disconnect(void);
-size_t Irc_If_HistorySize(void);
-size_t Irc_If_HistoryTotalSize(void);
-const char *Irc_If_GetHistoryNodeLine(const irc_chat_history_node_t *n);
-const irc_chat_history_node_t *Irc_If_GetHistoryHeadNode(void);
-const irc_chat_history_node_t *Irc_If_GetNextHistoryNode(const irc_chat_history_node_t *n);
-const irc_chat_history_node_t *Irc_If_GetPrevHistoryNode(const irc_chat_history_node_t *n);
+int Irc_If_API( void );
+bool Irc_If_Init( void );
+void Irc_If_Shutdown( void );
+bool Irc_If_Connect( void );
+bool Irc_If_Disconnect( void );
+size_t Irc_If_HistorySize( void );
+size_t Irc_If_HistoryTotalSize( void );
+const char *Irc_If_GetHistoryNodeLine( const irc_chat_history_node_t *n );
+const irc_chat_history_node_t *Irc_If_GetHistoryHeadNode( void );
+const irc_chat_history_node_t *Irc_If_GetNextHistoryNode( const irc_chat_history_node_t *n );
+const irc_chat_history_node_t *Irc_If_GetPrevHistoryNode( const irc_chat_history_node_t *n );
 
-irc_export_t *GetIrcAPI(const irc_import_t *imports) {
+irc_export_t *GetIrcAPI( const irc_import_t *imports ) {
 	static irc_export_t exports;
 	IRC_IMPORT = *imports;
 	exports.API = Irc_If_API;
@@ -44,69 +44,69 @@ irc_export_t *GetIrcAPI(const irc_import_t *imports) {
 	return &exports;
 }
 
-int Irc_If_API(void) {
+int Irc_If_API( void ) {
 	return IRC_API_VERSION;
 }
 
-bool Irc_If_Init(void) {
-	irc_connected = IRC_IMPORT.Dynvar_Lookup("irc_connected");
-	irc_server = IRC_IMPORT.Cvar_Get("irc_server", "", 0);
-	irc_port = IRC_IMPORT.Cvar_Get("irc_port", "", 0);
-	irc_nick = IRC_IMPORT.Cvar_Get("irc_nick", "", 0);
-	irc_perform = IRC_IMPORT.Cvar_Get("irc_perform", "exec irc_perform.cfg\n", 0);
-	irc_defaultChannel = IRC_IMPORT.Cvar_Get("irc_defaultChannel", "", 0);
-	assert(irc_connected);
+bool Irc_If_Init( void ) {
+	irc_connected = IRC_IMPORT.Dynvar_Lookup( "irc_connected" );
+	irc_server = IRC_IMPORT.Cvar_Get( "irc_server", "", 0 );
+	irc_port = IRC_IMPORT.Cvar_Get( "irc_port", "", 0 );
+	irc_nick = IRC_IMPORT.Cvar_Get( "irc_nick", "", 0 );
+	irc_perform = IRC_IMPORT.Cvar_Get( "irc_perform", "exec irc_perform.cfg\n", 0 );
+	irc_defaultChannel = IRC_IMPORT.Cvar_Get( "irc_defaultChannel", "", 0 );
+	assert( irc_connected );
 	Irc_Proto_InitListeners();
-	IRC_IMPORT.Dynvar_AddListener(irc_connected, Irc_Logic_Connected_f);
-	IRC_IMPORT.Dynvar_AddListener(irc_connected, Irc_Client_Connected_f);
-	IRC_IMPORT.Dynvar_AddListener(irc_connected, Irc_Rcon_Connected_f);
+	IRC_IMPORT.Dynvar_AddListener( irc_connected, Irc_Logic_Connected_f );
+	IRC_IMPORT.Dynvar_AddListener( irc_connected, Irc_Client_Connected_f );
+	IRC_IMPORT.Dynvar_AddListener( irc_connected, Irc_Rcon_Connected_f );
 	return true;
 }
 
-void Irc_If_Shutdown(void) {
-	IRC_IMPORT.Dynvar_RemoveListener(irc_connected, Irc_Client_Connected_f);
-	IRC_IMPORT.Dynvar_RemoveListener(irc_connected, Irc_Logic_Connected_f);
-	IRC_IMPORT.Dynvar_RemoveListener(irc_connected, Irc_Rcon_Connected_f);
-	Irc_Proto_TeardownListeners();					// remove remaining listeners (if any)
-	Irc_ClearHistory();								// clear history buffer
+void Irc_If_Shutdown( void ) {
+	IRC_IMPORT.Dynvar_RemoveListener( irc_connected, Irc_Client_Connected_f );
+	IRC_IMPORT.Dynvar_RemoveListener( irc_connected, Irc_Logic_Connected_f );
+	IRC_IMPORT.Dynvar_RemoveListener( irc_connected, Irc_Rcon_Connected_f );
+	Irc_Proto_TeardownListeners();                  // remove remaining listeners (if any)
+	Irc_ClearHistory();                             // clear history buffer
 }
 
-size_t Irc_If_HistorySize(void) {
+size_t Irc_If_HistorySize( void ) {
 	return Irc_HistorySize();
 }
 
-size_t Irc_If_HistoryTotalSize(void) {
+size_t Irc_If_HistoryTotalSize( void ) {
 	return Irc_HistoryTotalSize();
 }
 
-const irc_chat_history_node_t *Irc_If_GetHistoryHeadNode(void) {
+const irc_chat_history_node_t *Irc_If_GetHistoryHeadNode( void ) {
 	return irc_chat_history;
 }
 
-const irc_chat_history_node_t *Irc_If_GetNextHistoryNode(const irc_chat_history_node_t *n) {
+const irc_chat_history_node_t *Irc_If_GetNextHistoryNode( const irc_chat_history_node_t *n ) {
 	return n ? n->next : NULL;
 }
 
-const irc_chat_history_node_t *Irc_If_GetPrevHistoryNode(const irc_chat_history_node_t *n) {
+const irc_chat_history_node_t *Irc_If_GetPrevHistoryNode( const irc_chat_history_node_t *n ) {
 	return n ? n->prev : NULL;
 }
 
-const char *Irc_If_GetHistoryNodeLine(const irc_chat_history_node_t *n) {
+const char *Irc_If_GetHistoryNodeLine( const irc_chat_history_node_t *n ) {
 	return n ? n->line : NULL;
 }
 
-bool Irc_If_Connect(void) {
-	const char * const server = Cvar_GetStringValue(irc_server);
-	const unsigned short port = Cvar_GetIntegerValue(irc_port);
+bool Irc_If_Connect( void ) {
+	const char * const server = Cvar_GetStringValue( irc_server );
+	const unsigned short port = Cvar_GetIntegerValue( irc_port );
 	bool *c;
-	Irc_Logic_Connect(server, port);						// try to connect
-	IRC_IMPORT.Dynvar_GetValue(irc_connected, (void**) &c);	// get connection status
+	Irc_Logic_Connect( server, port );                        // try to connect
+	IRC_IMPORT.Dynvar_GetValue( irc_connected, (void**) &c ); // get connection status
 	return !*c;
 }
 
-bool Irc_If_Disconnect(void) {
+bool Irc_If_Disconnect( void ) {
 	bool *c;
-	IRC_IMPORT.Dynvar_GetValue(irc_connected, (void**) &c);	// get connection status
-	Irc_Logic_Disconnect("");								// disconnect if connected
-	return false;											// always succeed
+	IRC_IMPORT.Dynvar_GetValue( irc_connected, (void**) &c ); // get connection status
+	Irc_Logic_Disconnect( "" );                               // disconnect if connected
+	return false;                                           // always succeed
 }

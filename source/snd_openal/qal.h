@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #if defined ( __MACOSX__ )
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
-#elif defined(__ANDROID__)
+#elif defined( __ANDROID__ )
 #include <AL/al.h>
 #include <AL/alc.h>
 #else

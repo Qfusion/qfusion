@@ -40,7 +40,7 @@ static inline int PF_CM_TransformedPointContents( vec3_t p, struct cmodel_s *cmo
 }
 
 static inline void PF_CM_TransformedBoxTrace( trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs,
-struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles ) {
+											  struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles ) {
 	CM_TransformedBoxTrace( svs.cms, tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
 }
 
@@ -93,23 +93,25 @@ static inline int PF_CM_LeafArea( int leafnum ) {
 /*
 * PF_DropClient
 */
-static void PF_DropClient( edict_t *ent, int type, const char *message )
-{
+static void PF_DropClient( edict_t *ent, int type, const char *message ) {
 	int p;
 	client_t *drop;
 
-	if( !ent )
+	if( !ent ) {
 		return;
+	}
 
 	p = NUM_FOR_EDICT( ent );
-	if( p < 1 || p > sv_maxclients->integer )
+	if( p < 1 || p > sv_maxclients->integer ) {
 		return;
+	}
 
-	drop = svs.clients + ( p-1 );
-	if( message )
+	drop = svs.clients + ( p - 1 );
+	if( message ) {
 		SV_DropClient( drop, type, "%s", message );
-	else
+	} else {
 		SV_DropClient( drop, type, NULL );
+	}
 }
 
 /*
@@ -117,10 +119,10 @@ static void PF_DropClient( edict_t *ent, int type, const char *message )
 *
 * Game code asks for the state of this client
 */
-static int PF_GetClientState( int numClient )
-{
-	if( numClient < 0 || numClient >= sv_maxclients->integer )
+static int PF_GetClientState( int numClient ) {
+	if( numClient < 0 || numClient >= sv_maxclients->integer ) {
 		return -1;
+	}
 	return svs.clients[numClient].state;
 }
 
@@ -130,32 +132,31 @@ static int PF_GetClientState( int numClient )
 * Sends the server command to clients.
 * If ent is NULL the command will be sent to all connected clients
 */
-static void PF_GameCmd( edict_t *ent, const char *cmd )
-{
+static void PF_GameCmd( edict_t *ent, const char *cmd ) {
 	int i;
 	client_t *client;
 
-	if( !cmd || !cmd[0] )
+	if( !cmd || !cmd[0] ) {
 		return;
+	}
 
-	if( !ent )
-	{
-		for( i = 0, client = svs.clients; i < sv_maxclients->integer; i++, client++ )
-		{
-			if( client->state < CS_SPAWNED )
+	if( !ent ) {
+		for( i = 0, client = svs.clients; i < sv_maxclients->integer; i++, client++ ) {
+			if( client->state < CS_SPAWNED ) {
 				continue;
+			}
 			SV_AddGameCommand( client, cmd );
 		}
-	}
-	else
-	{
+	} else {
 		i = NUM_FOR_EDICT( ent );
-		if( i < 1 || i > sv_maxclients->integer )
+		if( i < 1 || i > sv_maxclients->integer ) {
 			return;
+		}
 
 		client = svs.clients + ( i - 1 );
-		if( client->state < CS_SPAWNED )
+		if( client->state < CS_SPAWNED ) {
 			return;
+		}
 
 		SV_AddGameCommand( client, cmd );
 	}
@@ -166,31 +167,30 @@ static void PF_GameCmd( edict_t *ent, const char *cmd )
 *
 * Debug print to server console
 */
-static void PF_dprint( const char *msg )
-{
+static void PF_dprint( const char *msg ) {
 	char copy[MAX_PRINTMSG], *end = copy + sizeof( copy );
 	char *out = copy;
 	const char *in = msg;
 
-	if( !msg )
+	if( !msg ) {
 		return;
+	}
 
 	// don't allow control chars except for \n
-	if( sv_highchars && sv_highchars->integer )
-	{
+	if( sv_highchars && sv_highchars->integer ) {
 		for( ; *in && out < end - 1; in++ )
-			if ( ( unsigned char )*in >= ' ' || *in == '\n' )
+			if( ( unsigned char )*in >= ' ' || *in == '\n' ) {
 				*out++ = *in;
-	}
-	else
-	{	// also convert highchars to ascii by stripping high bit
+			}
+	} else {   // also convert highchars to ascii by stripping high bit
 		for( ; *in && out < end - 1; in++ )
-			if ( ( signed char )*in >= ' ' || *in == '\n' )
+			if( ( signed char )*in >= ' ' || *in == '\n' ) {
 				*out++ = *in;
-			else if( ( unsigned char )*in > 128 ) // 128 is not allowed
+			} else if( ( unsigned char )*in > 128 ) { // 128 is not allowed
 				*out++ = *in & 127;
-			else if( ( unsigned char )*in == 128 )
+			} else if( ( unsigned char )*in == 128 ) {
 				*out++ = '?';
+			}
 	}
 	*out = '\0';
 
@@ -202,20 +202,18 @@ static void PF_dprint( const char *msg )
 *
 * Abort the server with a game error
 */
-static void PF_error( const char *msg )
-{
+static void PF_error( const char *msg ) {
 	int i;
 	char copy[MAX_PRINTMSG];
 
-	if( !msg )
-	{
+	if( !msg ) {
 		Com_Error( ERR_DROP, "Game Error: unknown error" );
 		return;
 	}
 
 	// mask off high bits and colored strings
-	for( i = 0; i < sizeof( copy )-1 && msg[i]; i++ )
-		copy[i] = msg[i]&127;
+	for( i = 0; i < sizeof( copy ) - 1 && msg[i]; i++ )
+		copy[i] = msg[i] & 127;
 	copy[i] = 0;
 
 	Com_Error( ERR_DROP, "Game Error: %s", copy );
@@ -224,50 +222,50 @@ static void PF_error( const char *msg )
 /*
 * PF_Configstring
 */
-static void PF_ConfigString( int index, const char *val )
-{
+static void PF_ConfigString( int index, const char *val ) {
 	size_t len;
 
-	if( !val )
+	if( !val ) {
 		return;
+	}
 
-	if( index < 0 || index >= MAX_CONFIGSTRINGS )
+	if( index < 0 || index >= MAX_CONFIGSTRINGS ) {
 		Com_Error( ERR_DROP, "configstring: bad index %i", index );
+	}
 
-	if( index < SERVER_PROTECTED_CONFIGSTRINGS )
-	{
+	if( index < SERVER_PROTECTED_CONFIGSTRINGS ) {
 		Com_Printf( "WARNING: 'PF_Configstring', configstring %i is server protected\n", index );
 		return;
 	}
 
 	len = strlen( val );
-	if( len >= sizeof( sv.configstrings[0] ) )
-	{
+	if( len >= sizeof( sv.configstrings[0] ) ) {
 		Com_Printf( "WARNING: 'PF_Configstring', configstring %i overflowed (%i)\n", index, strlen( val ) );
 		len = sizeof( sv.configstrings[0] ) - 1;
 	}
 
-	if( !COM_ValidateConfigstring( val ) )
-	{
+	if( !COM_ValidateConfigstring( val ) ) {
 		Com_Printf( "WARNING: 'PF_Configstring' invalid configstring %i: %s\n", index, val );
 		return;
 	}
 
 	// ignore if no changes
-	if( !strncmp( sv.configstrings[index], val, len ) && sv.configstrings[index][len] == '\0' )
+	if( !strncmp( sv.configstrings[index], val, len ) && sv.configstrings[index][len] == '\0' ) {
 		return;
+	}
 
 	// change the string in sv
 	Q_strncpyz( sv.configstrings[index], val, sizeof( sv.configstrings[index] ) );
 
-	if( sv.state != ss_loading )
+	if( sv.state != ss_loading ) {
 		SV_SendServerCommand( NULL, "cs %i \"%s\"", index, val );
+	}
 }
 
-static const char *PF_GetConfigString( int index )
-{
-	if( index < 0 || index >= MAX_CONFIGSTRINGS )
+static const char *PF_GetConfigString( int index ) {
+	if( index < 0 || index >= MAX_CONFIGSTRINGS ) {
 		return NULL;
+	}
 
 	return sv.configstrings[ index ];
 }
@@ -275,24 +273,25 @@ static const char *PF_GetConfigString( int index )
 /*
 * PF_PureSound
 */
-static void PF_PureSound( const char *name )
-{
+static void PF_PureSound( const char *name ) {
 	const char *extension;
 	char tempname[MAX_CONFIGSTRING_CHARS];
 
-	if( sv.state != ss_loading )
+	if( sv.state != ss_loading ) {
 		return;
+	}
 
-	if( !name || !name[0] || strlen( name ) >= MAX_CONFIGSTRING_CHARS )
+	if( !name || !name[0] || strlen( name ) >= MAX_CONFIGSTRING_CHARS ) {
 		return;
+	}
 
 	Q_strncpyz( tempname, name, sizeof( tempname ) );
 
-	if( !COM_FileExtension( tempname ) )
-	{
+	if( !COM_FileExtension( tempname ) ) {
 		extension = FS_FirstExtension( tempname, SOUND_EXTENSIONS, NUM_SOUND_EXTENSIONS );
-		if( !extension )
+		if( !extension ) {
 			return;
+		}
 
 		COM_ReplaceExtension( tempname, extension, sizeof( tempname ) );
 	}
@@ -305,26 +304,27 @@ static void PF_PureSound( const char *name )
 *
 * FIXME: For now we don't parse shaders, but simply assume that it uses the same name .tga or .jpg
 */
-static void SV_AddPureShader( const char *name )
-{
+static void SV_AddPureShader( const char *name ) {
 	const char *extension;
 	char tempname[MAX_CONFIGSTRING_CHARS];
 
-	if( !name || !name[0] )
+	if( !name || !name[0] ) {
 		return;
+	}
 
 	assert( name && name[0] && strlen( name ) < MAX_CONFIGSTRING_CHARS );
 
-	if( !Q_strnicmp( name, "textures/common/", strlen( "textures/common/" ) ) )
+	if( !Q_strnicmp( name, "textures/common/", strlen( "textures/common/" ) ) ) {
 		return;
+	}
 
 	Q_strncpyz( tempname, name, sizeof( tempname ) );
 
-	if( !COM_FileExtension( tempname ) )
-	{
+	if( !COM_FileExtension( tempname ) ) {
 		extension = FS_FirstExtension( tempname, IMAGE_EXTENSIONS, NUM_IMAGE_EXTENSIONS );
-		if( !extension )
+		if( !extension ) {
 			return;
+		}
 
 		COM_ReplaceExtension( tempname, extension, sizeof( tempname ) );
 	}
@@ -335,8 +335,7 @@ static void SV_AddPureShader( const char *name )
 /*
 * SV_AddPureBSP
 */
-static void SV_AddPureBSP( void )
-{
+static void SV_AddPureBSP( void ) {
 	int i;
 	const char *shader;
 
@@ -348,20 +347,19 @@ static void SV_AddPureBSP( void )
 /*
 * PF_PureModel
 */
-static void PF_PureModel( const char *name )
-{
-	if( sv.state != ss_loading )
+static void PF_PureModel( const char *name ) {
+	if( sv.state != ss_loading ) {
 		return;
-	if( !name || !name[0] || strlen( name ) >= MAX_CONFIGSTRING_CHARS )
-		return;
-
-	if( name[0] == '*' )
-	{                       // inline model
-		if( !strcmp( name, "*0" ) )
-			SV_AddPureBSP(); // world
 	}
-	else
-	{
+	if( !name || !name[0] || strlen( name ) >= MAX_CONFIGSTRING_CHARS ) {
+		return;
+	}
+
+	if( name[0] == '*' ) {  // inline model
+		if( !strcmp( name, "*0" ) ) {
+			SV_AddPureBSP(); // world
+		}
+	} else {
 		SV_AddPureFile( name );
 	}
 }
@@ -392,15 +390,14 @@ static void PF_MemFree( void *data, const char *filename, int fileline ) {
 *
 * Overrides CreateQuery entry with proxy function.
 */
-static stat_query_api_t *PF_StatQuery_GetAPI( void )
-{
+static stat_query_api_t *PF_StatQuery_GetAPI( void ) {
 	static stat_query_api_t api;
 	stat_query_api_t *p;
-	
+
 	p = StatQuery_GetAPI();
 	api = *p;
 	api.CreateQuery = SV_MM_CreateQuery;
-	
+
 	return &api;
 }
 
@@ -412,10 +409,10 @@ static stat_query_api_t *PF_StatQuery_GetAPI( void )
 * Called when either the entire server is being killed, or
 * it is changing to a different game directory.
 */
-void SV_ShutdownGameProgs( void )
-{
-	if( !ge )
+void SV_ShutdownGameProgs( void ) {
+	if( !ge ) {
 		return;
+	}
 
 	ge->Shutdown();
 	Mem_FreePool( &sv_gameprogspool );
@@ -426,10 +423,10 @@ void SV_ShutdownGameProgs( void )
 /*
 * SV_LocateEntities
 */
-static void SV_LocateEntities( struct edict_s *edicts, int edict_size, int num_edicts, int max_edicts )
-{
-	if( !edicts || edict_size < sizeof( entity_shared_t ) )
+static void SV_LocateEntities( struct edict_s *edicts, int edict_size, int num_edicts, int max_edicts ) {
+	if( !edicts || edict_size < sizeof( entity_shared_t ) ) {
 		Com_Error( ERR_DROP, "SV_LocateEntities: bad edicts" );
+	}
 
 	sv.gi.edicts = edicts;
 	sv.gi.clients = svs.clients;
@@ -444,11 +441,10 @@ static void SV_LocateEntities( struct edict_s *edicts, int edict_size, int num_e
 *
 * Init the game subsystem for a new map
 */
-void SV_InitGameProgs( void )
-{
+void SV_InitGameProgs( void ) {
 	int apiversion;
 	game_import_t import;
-	void *( *builtinAPIfunc )(void *) = NULL;
+	void *( *builtinAPIfunc )( void * ) = NULL;
 	char manifest[MAX_INFO_STRING];
 
 #ifdef GAME_HARD_LINKED
@@ -456,8 +452,9 @@ void SV_InitGameProgs( void )
 #endif
 
 	// unload anything we have now
-	if( ge )
+	if( ge ) {
 		SV_ShutdownGameProgs();
+	}
 
 	sv_gameprogspool = _Mem_AllocPool( NULL, "Game Progs", MEMPOOL_GAMEPROGS, __FILE__, __LINE__ );
 
@@ -563,18 +560,17 @@ void SV_InitGameProgs( void )
 
 	if( builtinAPIfunc ) {
 		ge = builtinAPIfunc( &import );
-	}
-	else {
+	} else {
 		ge = (game_export_t *)Com_LoadGameLibrary( "game", "GetGameAPI", &module_handle, &import, false, manifest );
 	}
-	if( !ge )
+	if( !ge ) {
 		Com_Error( ERR_DROP, "Failed to load game DLL" );
+	}
 
-	AC_LoadLibrary( (void *) &import, (void *) ge, ANTICHEAT_SERVER );	// impulZ: Refire AC Init
+	AC_LoadLibrary( (void *) &import, (void *) ge, ANTICHEAT_SERVER );  // impulZ: Refire AC Init
 
 	apiversion = ge->API();
-	if( apiversion != GAME_API_VERSION )
-	{
+	if( apiversion != GAME_API_VERSION ) {
 		Com_UnloadGameLibrary( &module_handle );
 		Mem_FreePool( &sv_gameprogspool );
 		ge = NULL;

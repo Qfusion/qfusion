@@ -65,11 +65,10 @@ cvar_t *tv_floodprotection_penalty;
 
 /*
 * TV_Init
-* 
+*
 * Only called at plat.exe startup, not for each game
 */
-void TV_Init( void )
-{
+void TV_Init( void ) {
 	Com_Printf( "Initializing " APPLICATION " TV server\n" );
 
 	tv_mempool = Mem_AllocPool( NULL, "TV" );
@@ -119,84 +118,66 @@ void TV_Init( void )
 	tv_floodprotection_penalty = Cvar_Get( "tv_floodprotection_delay", "20", 0 );
 	tv_floodprotection_penalty->modified = true;
 
-	if( tv_maxclients->integer < 0 )
+	if( tv_maxclients->integer < 0 ) {
 		Cvar_ForceSet( "tv_maxclients", "0" );
-
-	if( tv_maxclients->integer )
-	{
-		tvs.clients = ( client_t * )Mem_Alloc( tv_mempool, sizeof( client_t ) * tv_maxclients->integer );
 	}
-	else
-	{
+
+	if( tv_maxclients->integer ) {
+		tvs.clients = ( client_t * )Mem_Alloc( tv_mempool, sizeof( client_t ) * tv_maxclients->integer );
+	} else {
 		tvs.clients = NULL;
 	}
 	tvs.lobby.spawncount = rand();
 	tvs.lobby.snapFrameTime = 100;
 
 	// IPv4
-	if( !NET_StringToAddress( tv_ip->string, &tvs.address ) )
+	if( !NET_StringToAddress( tv_ip->string, &tvs.address ) ) {
 		Com_Error( ERR_FATAL, "Couldn't understand address of tv_ip cvar: %s\n", NET_ErrorString() );
+	}
 	NET_SetAddressPort( &tvs.address, tv_port->integer );
 
-	if( tv_udp->integer )
-	{
-		if( !NET_OpenSocket( &tvs.socket_udp, SOCKET_UDP, &tvs.address, true ) )
-		{
+	if( tv_udp->integer ) {
+		if( !NET_OpenSocket( &tvs.socket_udp, SOCKET_UDP, &tvs.address, true ) ) {
 			Com_Printf( "Error: Couldn't open UDP socket: %s\n", NET_ErrorString() );
 			Cvar_ForceSet( tv_udp->name, "0" );
 		}
 	}
 
 	// IPv6
-	if( !NET_StringToAddress( tv_ip6->string, &tvs.addressIPv6 ) )
+	if( !NET_StringToAddress( tv_ip6->string, &tvs.addressIPv6 ) ) {
 		Com_Error( ERR_FATAL, "Couldn't understand address of tv_ip6 cvar: %s\n", NET_ErrorString() );
+	}
 	NET_SetAddressPort( &tvs.addressIPv6, tv_port6->integer );
 
-	if( tvs.addressIPv6.type != NA_NOTRANSMIT )
-	{
-		if( !NET_OpenSocket( &tvs.socket_udp6, SOCKET_UDP, &tvs.addressIPv6, true ) )
-		{
+	if( tvs.addressIPv6.type != NA_NOTRANSMIT ) {
+		if( !NET_OpenSocket( &tvs.socket_udp6, SOCKET_UDP, &tvs.addressIPv6, true ) ) {
 			Com_Printf( "Error: Couldn't open UDP6 socket: %s\n", NET_ErrorString() );
 		}
 	}
 
 #ifdef TCP_ALLOW_TVCONNECT
-	if( tv_tcp->integer )
-	{
+	if( tv_tcp->integer ) {
 		bool err = true;
 
-		if( !NET_OpenSocket( &tvs.socket_tcp, SOCKET_TCP, &tvs.address, true ) )
-		{
+		if( !NET_OpenSocket( &tvs.socket_tcp, SOCKET_TCP, &tvs.address, true ) ) {
 			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
-		}
-		else
-		{
+		} else {
 			NET_SetSocketNoDelay( &tvs.socket_tcp, 1 );
-			if( !NET_Listen( &tvs.socket_tcp ) )
-			{
+			if( !NET_Listen( &tvs.socket_tcp ) ) {
 				Com_Printf( "Error: Couldn't listen to TCP socket: %s\n", NET_ErrorString() );
-			}
-			else
-			{
+			} else {
 				err = false;
 			}
 		}
 
-		if( tvs.addressIPv6.type != NA_NOTRANSMIT )
-		{
-			if( !NET_OpenSocket( &tvs.socket_tcp6, SOCKET_TCP, &tvs.addressIPv6, true ) )
-			{
+		if( tvs.addressIPv6.type != NA_NOTRANSMIT ) {
+			if( !NET_OpenSocket( &tvs.socket_tcp6, SOCKET_TCP, &tvs.addressIPv6, true ) ) {
 				Com_Printf( "Error: Couldn't open TCP6 socket: %s\n", NET_ErrorString() );
-			}
-			else
-			{
+			} else {
 				NET_SetSocketNoDelay( &tvs.socket_tcp6, 1 );
-				if( !NET_Listen( &tvs.socket_tcp6 ) )
-				{
+				if( !NET_Listen( &tvs.socket_tcp6 ) ) {
 					Com_Printf( "Error: Couldn't listen to TCP6 socket: %s\n", NET_ErrorString() );
-				}
-				else
-				{
+				} else {
 					err = false;
 				}
 			}
@@ -214,21 +195,21 @@ void TV_Init( void )
 /*
 * TV_Frame
 */
-void TV_Frame( int realmsec, int gamemsec )
-{
+void TV_Frame( int realmsec, int gamemsec ) {
 	int i;
 
 	tvs.realtime += realmsec;
 
 	TV_Lobby_Run();
 
-	for( i = 0; i < tvs.numupstreams; i++ )
-	{
-		if( !tvs.upstreams[i] )
+	for( i = 0; i < tvs.numupstreams; i++ ) {
+		if( !tvs.upstreams[i] ) {
 			continue;
+		}
 
-		if( userinfo_modified )
+		if( userinfo_modified ) {
 			tvs.upstreams[i]->userinfo_modified = true;
+		}
 
 		TV_Upstream_Run( tvs.upstreams[i], realmsec );
 	}
@@ -249,16 +230,15 @@ void TV_Frame( int realmsec, int gamemsec )
 /*
 * TV_Shutdown
 */
-void TV_Shutdown( const char *finalmsg )
-{
+void TV_Shutdown( const char *finalmsg ) {
 	int i;
 
 	TV_Downstream_MasterSendQuit();
 
-	for( i = 0; i < tvs.numupstreams; i++ )
-	{
-		if( !tvs.upstreams[i] )
+	for( i = 0; i < tvs.numupstreams; i++ ) {
+		if( !tvs.upstreams[i] ) {
 			continue;
+		}
 
 		TV_Upstream_Shutdown( tvs.upstreams[i], "Quit: %s", finalmsg );
 	}
@@ -271,11 +251,10 @@ void TV_Shutdown( const char *finalmsg )
 
 /*
 * TV_ShutdownGame
-* 
+*
 * ERR_DROP thrown, we will upgrade it to ERR_FATAL
 */
-void TV_ShutdownGame( const char *finalmsg, bool reconnect )
-{
+void TV_ShutdownGame( const char *finalmsg, bool reconnect ) {
 	Com_Error( ERR_FATAL, "%s", finalmsg );
 }
 
@@ -283,22 +262,18 @@ void TV_ShutdownGame( const char *finalmsg, bool reconnect )
 * Just some renaming so we can call the functions above TV not SV
 */
 
-void SV_Init( void )
-{
+void SV_Init( void ) {
 	TV_Init();
 }
 
-void SV_Shutdown( const char *finalmsg )
-{
+void SV_Shutdown( const char *finalmsg ) {
 	TV_Shutdown( finalmsg );
 }
 
-void SV_ShutdownGame( const char *finalmsg, bool reconnect )
-{
+void SV_ShutdownGame( const char *finalmsg, bool reconnect ) {
 }
 
-void SV_Frame( int realmsec, int gamemsec )
-{
+void SV_Frame( int realmsec, int gamemsec ) {
 	TV_Frame( realmsec, gamemsec );
 }
 
@@ -309,20 +284,17 @@ void SV_Frame( int realmsec, int gamemsec )
 //=============================================================================
 
 char tv_outputbuf[TV_OUTPUTBUF_LENGTH];
-void TV_FlushRedirect( int tv_redirected, const char *outputbuf, const void *extra )
-{
+void TV_FlushRedirect( int tv_redirected, const char *outputbuf, const void *extra ) {
 	const flush_params_t *params = ( flush_params_t * )extra;
 
-	if( tv_redirected == RD_PACKET )
-	{
+	if( tv_redirected == RD_PACKET ) {
 		Netchan_OutOfBandPrint( params->socket, params->address, "print\n%s", outputbuf );
 	}
 }
 
 //============================================================================
 
-char *_TVCopyString_Pool( mempool_t *pool, const char *in, const char *filename, int fileline )
-{
+char *_TVCopyString_Pool( mempool_t *pool, const char *in, const char *filename, int fileline ) {
 	char *out;
 
 	out = _Mem_Alloc( pool, sizeof( char ) * ( strlen( in ) + 1 ), 0, 0, filename, fileline );

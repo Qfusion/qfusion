@@ -30,16 +30,14 @@ drawList_t r_portallist, r_skyportallist;
 /*
 * R_InitDrawList
 */
-void R_InitDrawList( drawList_t *list )
-{
+void R_InitDrawList( drawList_t *list ) {
 	memset( list, 0, sizeof( *list ) );
 }
 
 /*
 * R_InitDrawLists
 */
-void R_InitDrawLists( void )
-{
+void R_InitDrawLists( void ) {
 	R_InitDrawList( &r_worldlist );
 	R_InitDrawList( &r_portalmasklist );
 	R_InitDrawList( &r_portallist );
@@ -50,8 +48,7 @@ void R_InitDrawLists( void )
 /*
 * R_ClearDrawList
 */
-void R_ClearDrawList( drawList_t *list )
-{
+void R_ClearDrawList( drawList_t *list ) {
 	if( !list ) {
 		return;
 	}
@@ -71,8 +68,7 @@ void R_ClearDrawList( drawList_t *list )
 /*
 * R_ReserveDrawSurfaces
 */
-static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes )
-{
+static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes ) {
 	int oldSize, newSize;
 	sortedDrawSurf_t *newDs;
 	sortedDrawSurf_t *ds = list->drawSurfs;
@@ -86,7 +82,7 @@ static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes )
 		memcpy( newDs, ds, oldSize * sizeof( sortedDrawSurf_t ) );
 		R_Free( ds );
 	}
-	
+
 	list->drawSurfs = newDs;
 	list->maxDrawSurfs = newSize;
 }
@@ -94,31 +90,28 @@ static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes )
 /*
 * R_PackDistKey
 */
-static unsigned int R_PackDistKey( int shaderSort, int dist, int order )
-{
-	return (shaderSort << 26) | ((max(0x400 - dist, 0) << 5) & 0x7FFF) << 11 | min( order, 0x7FF );
+static unsigned int R_PackDistKey( int shaderSort, int dist, int order ) {
+	return ( shaderSort << 26 ) | ( ( max( 0x400 - dist, 0 ) << 5 ) & 0x7FFF ) << 11 | min( order, 0x7FF );
 }
 
 /*
 * R_PackSortKey
 */
-static unsigned int R_PackSortKey( unsigned int shaderNum, int fogNum, 
-	int portalNum, unsigned int entNum )
-{
-	return (shaderNum & 0x7FF) << 21 | (entNum & 0x7FF) << 10 | 
-		(((portalNum+1) & 0x1F) << 5) | ((unsigned int)(fogNum+1) & 0x1F);
+static unsigned int R_PackSortKey( unsigned int shaderNum, int fogNum,
+								   int portalNum, unsigned int entNum ) {
+	return ( shaderNum & 0x7FF ) << 21 | ( entNum & 0x7FF ) << 10 |
+		   ( ( ( portalNum + 1 ) & 0x1F ) << 5 ) | ( (unsigned int)( fogNum + 1 ) & 0x1F );
 }
 
 /*
 * R_UnpackSortKey
 */
-static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int *fogNum, 
-	int *portalNum, unsigned int *entNum )
-{
-	*shaderNum = (sortKey >> 21) & 0x7FF;
-	*entNum = (sortKey >> 10) & 0x7FF;
-	*portalNum = (signed int)((sortKey >> 5) & 0x1F) - 1;
-	*fogNum = (signed int)(sortKey & 0x1F) - 1;
+static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int *fogNum,
+							 int *portalNum, unsigned int *entNum ) {
+	*shaderNum = ( sortKey >> 21 ) & 0x7FF;
+	*entNum = ( sortKey >> 10 ) & 0x7FF;
+	*portalNum = (signed int)( ( sortKey >> 5 ) & 0x1F ) - 1;
+	*fogNum = (signed int)( sortKey & 0x1F ) - 1;
 }
 
 /*
@@ -126,8 +119,7 @@ static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int 
 *
 * Returns sort order for opaque objects.
 */
-unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool lightmap, bool dlight )
-{
+unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool lightmap, bool dlight ) {
 	int order = 0;
 
 	// shader order
@@ -136,27 +128,29 @@ unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool ligh
 	}
 
 	// group by lightmap
-	if( lightmap )
+	if( lightmap ) {
 		order |= 0x40;
+	}
 	// group by dlight
-	if( dlight )
+	if( dlight ) {
 		order |= 0x80;
+	}
 	// draw game objects after the world
-	if( e != rsc.worldent )
+	if( e != rsc.worldent ) {
 		order |= 0x100;
+	}
 
 	return order;
 }
 
 /*
 * R_AddSurfToDrawList
-* 
+*
 * Calculate sortkey and store info used for batching and sorting.
 * All 3D-geometry passes this function.
 */
-void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader, 
-	float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf )
-{
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader,
+						   float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf ) {
 	sortedDrawSurf_t *sds;
 	int shaderSort;
 	bool depthWrite;
@@ -170,7 +164,7 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 	}
 
 	shaderSort = shader->sort;
-	depthWrite = (shader->flags & SHADER_DEPTHWRITE) ? true : false;
+	depthWrite = ( shader->flags & SHADER_DEPTHWRITE ) ? true : false;
 	renderFx = e->renderfx;
 
 	if( shader->cin ) {
@@ -196,16 +190,14 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 			// reorder the mesh to be drawn after everything else
 			// but before the blend-pass for the weapon
 			shaderSort = SHADER_SORT_WEAPON;
-		}
-		else if( renderFx & RF_ALPHAHACK ) {
+		} else if( renderFx & RF_ALPHAHACK ) {
 			// blend-pass for the weapon:
 			// meshes that do not write to depth, are rendered as additives,
 			// meshes that were previously added as SHADER_SORT_WEAPON (see above)
 			// are now added to the very end of the list
 			shaderSort = depthWrite ? SHADER_SORT_WEAPON2 : SHADER_SORT_ADDITIVE;
 		}
-	}
-	else if( renderFx & RF_ALPHAHACK ) {
+	} else if( renderFx & RF_ALPHAHACK ) {
 		// force shader sort to additive
 		shaderSort = SHADER_SORT_ADDITIVE;
 	}
@@ -218,7 +210,7 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 	sds = &list->drawSurfs[list->numDrawSurfs++];
 	sds->distKey = R_PackDistKey( shaderSort, (int)dist, order );
 	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - rsh.worldBrushModel->fogs : -1,
-		portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM(e) );
+								  portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM( e ) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
 
 	return sds;
@@ -230,10 +222,9 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 * Updates sorting order for pre-added draw surface. Does nothing after R_SortDrawList is called.
 * Theoretically, should only update the dlightbit.
 */
-void R_UpdateDrawListSurf( void *psds, unsigned order )
-{
+void R_UpdateDrawListSurf( void *psds, unsigned order ) {
 	sortedDrawSurf_t *sds = psds;
-	sds->distKey |= (order & 0x7FF);
+	sds->distKey |= ( order & 0x7FF );
 }
 
 /*
@@ -241,17 +232,20 @@ void R_UpdateDrawListSurf( void *psds, unsigned order )
 *
 * Comparison callback function for R_SortDrawList
 */
-static int R_DrawSurfCompare( const sortedDrawSurf_t *sbs1, const sortedDrawSurf_t *sbs2 )
-{
-	if( sbs1->distKey > sbs2->distKey )
+static int R_DrawSurfCompare( const sortedDrawSurf_t *sbs1, const sortedDrawSurf_t *sbs2 ) {
+	if( sbs1->distKey > sbs2->distKey ) {
 		return 1;
-	if( sbs2->distKey > sbs1->distKey )
+	}
+	if( sbs2->distKey > sbs1->distKey ) {
 		return -1;
+	}
 
-	if( sbs1->sortKey > sbs2->sortKey )
+	if( sbs1->sortKey > sbs2->sortKey ) {
 		return 1;
-	if( sbs2->sortKey > sbs1->sortKey )
+	}
+	if( sbs2->sortKey > sbs1->sortKey ) {
 		return -1;
+	}
 
 	return 0;
 }
@@ -263,13 +257,12 @@ static int R_DrawSurfCompare( const sortedDrawSurf_t *sbs1, const sortedDrawSurf
 * you probably want to set distance or draw order to prevent flickering
 * due to quicksort's unstable nature.
 */
-void R_SortDrawList( drawList_t *list )
-{
+void R_SortDrawList( drawList_t *list ) {
 	if( r_draworder->integer ) {
 		return;
 	}
-	qsort( list->drawSurfs, list->numDrawSurfs, sizeof( sortedDrawSurf_t ), 
-		(int (*)(const void *, const void *))R_DrawSurfCompare );
+	qsort( list->drawSurfs, list->numDrawSurfs, sizeof( sortedDrawSurf_t ),
+		   ( int ( * )( const void *, const void * ) )R_DrawSurfCompare );
 }
 
 /*
@@ -278,8 +271,7 @@ void R_SortDrawList( drawList_t *list )
 * Ensures there's enough space to store the minSlices amount of slices
 * plus some more.
 */
-static void R_ReserveVBOSlices( drawList_t *list, unsigned int minSlices )
-{
+static void R_ReserveVBOSlices( drawList_t *list, unsigned int minSlices ) {
 	unsigned int oldSize, newSize;
 	vboSlice_t *slices, *newSlices;
 
@@ -300,9 +292,8 @@ static void R_ReserveVBOSlices( drawList_t *list, unsigned int minSlices )
 /*
 * R_AddVBOSlice
 */
-void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems, 
-	unsigned int firstVert, unsigned int firstElem )
-{
+void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems,
+					unsigned int firstVert, unsigned int firstElem ) {
 	drawList_t *list = rn.meshlist;
 	vboSlice_t *slice;
 
@@ -321,8 +312,7 @@ void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numE
 		slice->firstElem = firstElem;
 		slice->numVerts = numVerts;
 		slice->numElems = numElems;
-	}
-	else {
+	} else {
 		list->numSliceVertsReal -= slice->numVerts;
 		list->numSliceElemsReal -= slice->numElems;
 
@@ -349,8 +339,7 @@ void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numE
 /*
 * R_GetVBOSlice
 */
-vboSlice_t *R_GetVBOSlice( unsigned int index )
-{
+vboSlice_t *R_GetVBOSlice( unsigned int index ) {
 	drawList_t *list = rn.meshlist;
 
 	if( index >= list->maxVboSlices ) {
@@ -364,13 +353,13 @@ static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 	/* ST_NONE */
 	NULL,
 	/* ST_BSP */
-	(drawSurf_cb)&R_DrawBSPSurf,
+	( drawSurf_cb ) & R_DrawBSPSurf,
 	/* ST_SKY */
-	(drawSurf_cb)&R_DrawSkySurf,
+	( drawSurf_cb ) & R_DrawSkySurf,
 	/* ST_ALIAS */
-	(drawSurf_cb)&R_DrawAliasSurf,
+	( drawSurf_cb ) & R_DrawAliasSurf,
 	/* ST_SKELETAL */
-	(drawSurf_cb)&R_DrawSkeletalSurf,
+	( drawSurf_cb ) & R_DrawSkeletalSurf,
 	/* ST_SPRITE */
 	NULL,
 	/* ST_POLY */
@@ -378,7 +367,7 @@ static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 	/* ST_CORONA */
 	NULL,
 	/* ST_NULLMODEL */
-	(drawSurf_cb)&R_DrawNullSurf,
+	( drawSurf_cb ) & R_DrawNullSurf,
 };
 
 static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
@@ -394,11 +383,11 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 	/* ST_SKELETAL */
 	NULL,
 	/* ST_SPRITE */
-	(batchDrawSurf_cb)&R_BatchSpriteSurf,
+	( batchDrawSurf_cb ) & R_BatchSpriteSurf,
 	/* ST_POLY */
-	(batchDrawSurf_cb)&R_BatchPolySurf,
+	( batchDrawSurf_cb ) & R_BatchPolySurf,
 	/* ST_CORONA */
-	(batchDrawSurf_cb)&R_BatchCoronaSurf,
+	( batchDrawSurf_cb ) & R_BatchCoronaSurf,
 	/* ST_NULLMODEL */
 	NULL,
 };
@@ -406,8 +395,7 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 /*
 * R_DrawSurfaces
 */
-static void _R_DrawSurfaces( drawList_t *list )
-{
+static void _R_DrawSurfaces( drawList_t *list ) {
 	unsigned int i;
 	unsigned int sortKey;
 	unsigned int shaderNum = 0, prevShaderNum = MAX_SHADERS;
@@ -453,16 +441,16 @@ static void _R_DrawSurfaces( drawList_t *list )
 		R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &portalNum, &entNum );
 
 		shader = R_ShaderById( shaderNum );
-		entity = R_NUM2ENT(entNum);
+		entity = R_NUM2ENT( entNum );
 		fog = fogNum >= 0 ? rsh.worldBrushModel->fogs + fogNum : NULL;
 		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 		entityFX = entity->renderfx;
 		depthWrite = shader->flags & SHADER_DEPTHWRITE ? true : false;
 
 		// see if we need to reset mesh properties in the backend
-		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum || 
+		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum ||
 			portalNum != prevPortalNum ||
-			( entNum != prevEntNum && !(shader->flags & SHADER_ENTITY_MERGABLE) ) || 
+			( entNum != prevEntNum && !( shader->flags & SHADER_ENTITY_MERGABLE ) ) ||
 			entityFX != prevEntityFX ) {
 
 			if( prevBatchDrawSurf && !batchDrawSurf ) {
@@ -501,7 +489,7 @@ static void _R_DrawSurfaces( drawList_t *list )
 
 			// sky and things that don't use depth test use infinite projection matrix
 			// to not pollute the farclip
-			infiniteProj = entity->renderfx & RF_NODEPTHTEST ? true : (shader->flags & SHADER_SKY ? true : false);
+			infiniteProj = entity->renderfx & RF_NODEPTHTEST ? true : ( shader->flags & SHADER_SKY ? true : false );
 			if( infiniteProj != prevInfiniteProj ) {
 				RB_FlushDynamicMeshes();
 				batchFlushed = true;
@@ -509,8 +497,7 @@ static void _R_DrawSurfaces( drawList_t *list )
 					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
 					Matrix4_PerspectiveProjectionToInfinity( Z_NEAR, projectionMatrix, glConfig.depthEpsilon );
 					RB_LoadProjectionMatrix( projectionMatrix );
-				}
-				else {
+				} else {
 					RB_LoadProjectionMatrix( rn.projectionMatrix );
 				}
 			}
@@ -544,13 +531,13 @@ static void _R_DrawSurfaces( drawList_t *list )
 				if( !prevBatchDrawSurf ) {
 					RB_LoadObjectMatrix( mat4x4_identity );
 				}
-			}
-			else {
+			} else {
 				if( ( entNum != prevEntNum ) || prevBatchDrawSurf ) {
-					if( shader->flags & SHADER_AUTOSPRITE ) 
+					if( shader->flags & SHADER_AUTOSPRITE ) {
 						R_TranslateForEntity( entity );
-					else
+					} else {
 						R_TransformForEntity( entity );
+					}
 				}
 			}
 
@@ -600,10 +587,9 @@ static void _R_DrawSurfaces( drawList_t *list )
 /*
 * R_DrawSurfaces
 */
-void R_DrawSurfaces( drawList_t *list )
-{
+void R_DrawSurfaces( drawList_t *list ) {
 	bool triOutlines;
-	
+
 	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
 		// do not recurse into normal mode when rendering triangle outlines
@@ -615,14 +601,14 @@ void R_DrawSurfaces( drawList_t *list )
 /*
 * R_DrawOutlinedSurfaces
 */
-void R_DrawOutlinedSurfaces( drawList_t *list )
-{
+void R_DrawOutlinedSurfaces( drawList_t *list ) {
 	bool triOutlines;
-	
-	if( rn.renderFlags & RF_SHADOWMAPVIEW )
-		return;
 
-	// properly store and restore the state, as the 
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		return;
+	}
+
+	// properly store and restore the state, as the
 	// R_DrawOutlinedSurfaces calls can be nested
 	triOutlines = RB_EnableTriangleOutlines( true );
 	_R_DrawSurfaces( list );
@@ -632,8 +618,7 @@ void R_DrawOutlinedSurfaces( drawList_t *list )
 /*
 * R_CopyOffsetElements
 */
-void R_CopyOffsetElements( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems )
-{
+void R_CopyOffsetElements( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems ) {
 	int i;
 
 	for( i = 0; i < numElems; i++, inelems++, outelems++ ) {
@@ -644,8 +629,7 @@ void R_CopyOffsetElements( const elem_t *inelems, int numElems, int vertsOffset,
 /*
 * R_CopyOffsetTriangles
 */
-void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems )
-{
+void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems ) {
 	int i;
 	int numTris = numElems / 3;
 
@@ -659,8 +643,7 @@ void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset
 /*
 * R_BuildTrifanElements
 */
-void R_BuildTrifanElements( int vertsOffset, int numVerts, elem_t *elems )
-{
+void R_BuildTrifanElements( int vertsOffset, int numVerts, elem_t *elems ) {
 	int i;
 
 	for( i = 2; i < numVerts; i++, elems += 3 ) {
@@ -673,9 +656,8 @@ void R_BuildTrifanElements( int vertsOffset, int numVerts, elem_t *elems )
 /*
 * R_BuildTangentVectors
 */
-void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsArray, 
-	vec2_t *stArray, int numTris, elem_t *elems, vec4_t *sVectorsArray )
-{
+void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsArray,
+							vec2_t *stArray, int numTris, elem_t *elems, vec4_t *sVectorsArray ) {
 	int i, j;
 	float d, *v[3], *tc[3];
 	vec_t *s, *t, *n;
@@ -683,20 +665,19 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 	vec3_t stackTVectorsArray[128];
 	vec3_t *tVectorsArray;
 
-	if( numVertexes > sizeof( stackTVectorsArray )/sizeof( stackTVectorsArray[0] ) )
-		tVectorsArray = R_Malloc( sizeof( vec3_t )*numVertexes );
-	else
+	if( numVertexes > sizeof( stackTVectorsArray ) / sizeof( stackTVectorsArray[0] ) ) {
+		tVectorsArray = R_Malloc( sizeof( vec3_t ) * numVertexes );
+	} else {
 		tVectorsArray = stackTVectorsArray;
+	}
 
 	// assuming arrays have already been allocated
 	// this also does some nice precaching
 	memset( sVectorsArray, 0, numVertexes * sizeof( *sVectorsArray ) );
 	memset( tVectorsArray, 0, numVertexes * sizeof( *tVectorsArray ) );
 
-	for( i = 0; i < numTris; i++, elems += 3 )
-	{
-		for( j = 0; j < 3; j++ )
-		{
+	for( i = 0; i < numTris; i++, elems += 3 ) {
+		for( j = 0; j < 3; j++ ) {
 			v[j] = ( float * )( xyzArray + elems[j] );
 			tc[j] = ( float * )( stArray + elems[j] );
 		}
@@ -708,8 +689,7 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 		// we have two edge directions, we can calculate the normal then
 		CrossProduct( stvec[1], stvec[0], cross );
 
-		for( j = 0; j < 3; j++ )
-		{
+		for( j = 0; j < 3; j++ ) {
 			stvec[0][j] = ( ( tc[1][1] - tc[0][1] ) * ( v[2][j] - v[0][j] ) - ( tc[2][1] - tc[0][1] ) * ( v[1][j] - v[0][j] ) );
 			stvec[1][j] = ( ( tc[1][0] - tc[0][0] ) * ( v[2][j] - v[0][j] ) - ( tc[2][0] - tc[0][0] ) * ( v[1][j] - v[0][j] ) );
 		}
@@ -717,22 +697,19 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 		// inverse tangent vectors if their cross product goes in the opposite
 		// direction to triangle normal
 		CrossProduct( stvec[1], stvec[0], stvec[2] );
-		if( DotProduct( stvec[2], cross ) < 0 )
-		{
+		if( DotProduct( stvec[2], cross ) < 0 ) {
 			VectorInverse( stvec[0] );
 			VectorInverse( stvec[1] );
 		}
 
-		for( j = 0; j < 3; j++ )
-		{
+		for( j = 0; j < 3; j++ ) {
 			VectorAdd( sVectorsArray[elems[j]], stvec[0], sVectorsArray[elems[j]] );
 			VectorAdd( tVectorsArray[elems[j]], stvec[1], tVectorsArray[elems[j]] );
 		}
 	}
 
 	// normalize
-	for( i = 0, s = *sVectorsArray, t = *tVectorsArray, n = *normalsArray; i < numVertexes; i++, s += 4, t += 3, n += 4 )
-	{
+	for( i = 0, s = *sVectorsArray, t = *tVectorsArray, n = *normalsArray; i < numVertexes; i++, s += 4, t += 3, n += 4 ) {
 		// keep s\t vectors perpendicular
 		d = -DotProduct( s, n );
 		VectorMA( s, d, n, s );
@@ -743,12 +720,14 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 
 		// store polarity of t-vector in the 4-th coordinate of s-vector
 		CrossProduct( n, s, cross );
-		if( DotProduct( cross, t ) < 0 )
+		if( DotProduct( cross, t ) < 0 ) {
 			s[3] = -1;
-		else
+		} else {
 			s[3] = 1;
+		}
 	}
 
-	if( tVectorsArray != stackTVectorsArray )
+	if( tVectorsArray != stackTVectorsArray ) {
 		R_Free( tVectorsArray );
+	}
 }

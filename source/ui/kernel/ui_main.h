@@ -59,12 +59,12 @@ public:
 
 	virtual ~UI_Main();
 
-	void refreshScreen( unsigned int time, int clientState, int serverState, 
-		bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
-		bool backGround, bool showCursor );
-	void drawConnectScreen( const char *serverName, const char *rejectmessage, 
-		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
-		int connectCount, bool backGround );
+	void refreshScreen( unsigned int time, int clientState, int serverState,
+						bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime,
+						bool backGround, bool showCursor );
+	void drawConnectScreen( const char *serverName, const char *rejectmessage,
+							int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed,
+							int connectCount, bool backGround );
 
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
@@ -86,7 +86,7 @@ public:
 	static void M_Menu_Modal_f( void );
 	static void M_Menu_Tv_f( void );
 	static void M_Menu_DemoPlay_f( void );
-	static void M_Menu_Close_f( void );	
+	static void M_Menu_Close_f( void );
 	static void M_Menu_AddTVChannel_f( void );
 	static void M_Menu_RemoveTVChannel_f( void );
 
@@ -95,10 +95,10 @@ public:
 
 	// DEBUG
 	static void PrintDocuments_Cmd( void );
-	
+
 	// Other static functions
 	static UI_Main *Instance( int vidWidth, int vidHeight, float pixelRatio,
-		int protocol, const char *demoExtension, const char *basePath );
+							  int protocol, const char *demoExtension, const char *basePath );
 	static UI_Main *Get( void );
 	static void Destroy( void );
 	static bool preloadEnabled( void );
@@ -121,7 +121,7 @@ public:
 
 	const std::string &getServerName( void ) const { return connectInfo.serverName; }
 	const std::string &getRejectMessage( void ) const { return connectInfo.rejectMessage; }
-	const DownloadInfo *getDownloadInfo ( void ) const { return &connectInfo.downloadInfo; }
+	const DownloadInfo *getDownloadInfo( void ) const { return &connectInfo.downloadInfo; }
 	unsigned int getConnectCount( void ) const { return connectInfo.connectCount; }
 
 	static int getGameProtocol( void );
@@ -136,7 +136,7 @@ public:
 
 private:
 	UI_Main( int vidWidth, int vidHeight, float pixelRatio,
-		int protocol, const char *demoExtension, const char *basePath );
+			 int protocol, const char *demoExtension, const char *basePath );
 
 	//// METHODS
 	bool initAS( void );
@@ -181,7 +181,7 @@ private:
 
 	void customRender( void );
 
-	static UI_Main *self;	// for static functions
+	static UI_Main *self;   // for static functions
 
 	// modules
 	ASUI::ASInterface *asmodule;

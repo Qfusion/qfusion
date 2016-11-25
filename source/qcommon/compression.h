@@ -22,27 +22,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef ZLIB_RUNTIME
 
-#define qzinflateInit2(strm, windowBits) \
-        qzinflateInit2_((strm), (windowBits), ZLIB_VERSION, \
-                      (int)sizeof(z_stream))
+#define qzinflateInit2( strm, windowBits ) \
+	qzinflateInit2_( ( strm ), ( windowBits ), ZLIB_VERSION, \
+					 (int)sizeof( z_stream ) )
 
-extern int (ZEXPORT *qzcompress)(Bytef *dest,   uLongf *destLen, const Bytef *source, uLong sourceLen);
-extern int (ZEXPORT *qzcompress2)(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen, int level);
-extern int (ZEXPORT *qzuncompress)(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen);
-extern int (ZEXPORT *qzinflateInit2_)(z_streamp strm, int  windowBits, const char *version, int stream_size);
-extern int (ZEXPORT *qzinflate)(z_streamp strm, int flush);
-extern int (ZEXPORT *qzinflateEnd)(z_streamp strm);
-extern int (ZEXPORT *qzinflateReset)(z_streamp strm);
-extern gzFile (ZEXPORT *qgzopen)(const char *file, const char *mode);
-extern z_off_t (ZEXPORT *qgzseek)(gzFile, z_off_t, int);
-extern z_off_t (ZEXPORT *qgztell)(gzFile);
-extern int (ZEXPORT *qgzread)(gzFile file, voidp buf, unsigned len);
-extern int (ZEXPORT *qgzwrite)(gzFile file, voidpc buf, unsigned len);
-extern int (ZEXPORT *qgzclose)(gzFile file);
-extern int (ZEXPORT *qgzeof)(gzFile file);
-extern int (ZEXPORT *qgzflush)(gzFile file, int flush);
-extern int (ZEXPORT *qgzsetparams)(gzFile file, int level, int strategy);
-extern int (ZEXPORT *qgzbuffer)(gzFile file, unsigned size);
+extern int( ZEXPORT * qzcompress )( Bytef * dest,   uLongf * destLen, const Bytef * source, uLong sourceLen );
+extern int( ZEXPORT * qzcompress2 )( Bytef * dest, uLongf * destLen, const Bytef * source, uLong sourceLen, int level );
+extern int( ZEXPORT * qzuncompress )( Bytef * dest, uLongf * destLen, const Bytef * source, uLong sourceLen );
+extern int( ZEXPORT * qzinflateInit2_ )( z_streamp strm, int windowBits, const char *version, int stream_size );
+extern int( ZEXPORT * qzinflate )( z_streamp strm, int flush );
+extern int( ZEXPORT * qzinflateEnd )( z_streamp strm );
+extern int( ZEXPORT * qzinflateReset )( z_streamp strm );
+extern gzFile( ZEXPORT * qgzopen )( const char *file, const char *mode );
+extern z_off_t( ZEXPORT * qgzseek )( gzFile, z_off_t, int );
+extern z_off_t( ZEXPORT * qgztell )( gzFile );
+extern int( ZEXPORT * qgzread )( gzFile file, voidp buf, unsigned len );
+extern int( ZEXPORT * qgzwrite )( gzFile file, voidpc buf, unsigned len );
+extern int( ZEXPORT * qgzclose )( gzFile file );
+extern int( ZEXPORT * qgzeof )( gzFile file );
+extern int( ZEXPORT * qgzflush )( gzFile file, int flush );
+extern int( ZEXPORT * qgzsetparams )( gzFile file, int level, int strategy );
+extern int( ZEXPORT * qgzbuffer )( gzFile file, unsigned size );
 
 #else
 

@@ -51,12 +51,13 @@ static void CL_UIModule_Error( const char *msg ) {
 /*
 * CL_UIModule_GetConfigString
 */
-static void CL_UIModule_GetConfigString( int i, char *str, int size )
-{
-	if( i < 0 || i >= MAX_CONFIGSTRINGS )
+static void CL_UIModule_GetConfigString( int i, char *str, int size ) {
+	if( i < 0 || i >= MAX_CONFIGSTRINGS ) {
 		Com_Error( ERR_DROP, "CL_UIModule_GetConfigString: i > MAX_CONFIGSTRINGS" );
-	if( !str || size <= 0 )
+	}
+	if( !str || size <= 0 ) {
 		Com_Error( ERR_DROP, "CL_UIModule_GetConfigString: NULL string" );
+	}
 
 	Q_strncpyz( str, cl.configstrings[i], size );
 }
@@ -81,33 +82,30 @@ static void CL_UIModule_MemFree( void *data, const char *filename, int fileline 
 /*
 * CL_UIModule_AsyncStream_Init
 */
-static void CL_UIModule_AsyncStream_Init( void )
-{
+static void CL_UIModule_AsyncStream_Init( void ) {
 	ui_async_stream = AsyncStream_InitModule( "UI", CL_UIModule_MemAlloc, CL_UIModule_MemFree );
 }
 
 /*
 * CL_UIModule_AsyncStream_PerformRequest
 */
-static int CL_UIModule_AsyncStream_PerformRequest( const char *url, const char *method, 
-	const char *data, int timeout,
-	ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep )
-{
+static int CL_UIModule_AsyncStream_PerformRequest( const char *url, const char *method,
+												   const char *data, int timeout,
+												   ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep ) {
 	const char *headers[] = { NULL, NULL, NULL, NULL, NULL };
 
 	assert( ui_async_stream );
-	
+
 	CL_AddSessionHttpRequestHeaders( url, headers );
 
-	return AsyncStream_PerformRequestExt( ui_async_stream, url, method, data, headers, timeout, 
-		0, read_cb, done_cb, NULL, privatep );
+	return AsyncStream_PerformRequestExt( ui_async_stream, url, method, data, headers, timeout,
+										  0, read_cb, done_cb, NULL, privatep );
 }
 
 /*
 * CL_UIModule_AsyncStream_Shutdown
 */
-static void CL_UIModule_AsyncStream_Shutdown( void )
-{
+static void CL_UIModule_AsyncStream_Shutdown( void ) {
 	AsyncStream_ShutdownModule( ui_async_stream );
 	ui_async_stream = NULL;
 }
@@ -119,37 +117,33 @@ static void CL_UIModule_R_RegisterWorldModel( const char *model ) {
 	re.RegisterWorldModel( model, NULL );
 }
 
-#define UI_L10N_DOMAIN	"ui"
+#define UI_L10N_DOMAIN  "ui"
 
 /*
 * CL_UIModule_L10n_LoadLangPOFile
 */
-static void CL_UIModule_L10n_LoadLangPOFile( const char *filepath )
-{
+static void CL_UIModule_L10n_LoadLangPOFile( const char *filepath ) {
 	L10n_LoadLangPOFile( UI_L10N_DOMAIN, filepath );
 }
 
 /*
 * CL_UIModule_L10n_TranslateString
 */
-static const char *CL_UIModule_L10n_TranslateString( const char *string )
-{
+static const char *CL_UIModule_L10n_TranslateString( const char *string ) {
 	return L10n_TranslateString( UI_L10N_DOMAIN, string );
 }
 
 /*
 * CL_UIModule_L10n_ClearDomain
 */
-static void CL_UIModule_L10n_ClearDomain( void )
-{
+static void CL_UIModule_L10n_ClearDomain( void ) {
 	L10n_ClearDomain( UI_L10N_DOMAIN );
 }
 
 /*
 * CL_UIModule_PlayerNum
 */
-static int CL_UIModule_PlayerNum( void )
-{
+static int CL_UIModule_PlayerNum( void ) {
 	if( cls.state < CA_CONNECTED ) {
 		return -1;
 	}
@@ -161,13 +155,12 @@ static int CL_UIModule_PlayerNum( void )
 /*
 * CL_UIModule_Init
 */
-void CL_UIModule_Init( void )
-{
+void CL_UIModule_Init( void ) {
 	int apiversion;
 	ui_import_t import;
 	dllfunc_t funcs[2];
 #ifndef UI_HARD_LINKED
-	void *( *GetUIAPI )(void *) = NULL;
+	void *( *GetUIAPI )( void * ) = NULL;
 #endif
 
 	CL_UIModule_Shutdown();
@@ -341,8 +334,7 @@ void CL_UIModule_Init( void )
 	funcs[0].funcPointer = ( void ** ) &GetUIAPI;
 	funcs[1].name = NULL;
 	module_handle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "ui_" ARCH LIB_SUFFIX, funcs );
-	if( !module_handle )
-	{
+	if( !module_handle ) {
 		Mem_FreePool( &ui_mempool );
 		Com_Error( ERR_FATAL, "Failed to load UI dll" );
 		uie = NULL;
@@ -352,17 +344,14 @@ void CL_UIModule_Init( void )
 
 	uie = GetUIAPI( &import );
 	apiversion = uie->API();
-	if( apiversion == UI_API_VERSION )
-	{
+	if( apiversion == UI_API_VERSION ) {
 		CL_UIModule_AsyncStream_Init();
 
 		uie->Init( viddef.width, viddef.height, VID_GetPixelRatio(),
-			APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
+				   APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
 
 		uie->ShowQuickMenu( cls.quickmenu );
-	}
-	else
-	{
+	} else {
 		// wrong version
 		uie = NULL;
 		Com_UnloadLibrary( &module_handle );
@@ -376,10 +365,10 @@ void CL_UIModule_Init( void )
 /*
 * CL_UIModule_Shutdown
 */
-void CL_UIModule_Shutdown( void )
-{
-	if( !uie )
+void CL_UIModule_Shutdown( void ) {
+	if( !uie ) {
 		return;
+	}
 
 	CL_UIModule_AsyncStream_Shutdown();
 
@@ -394,44 +383,42 @@ void CL_UIModule_Shutdown( void )
 /*
 * CL_UIModule_TouchAllAssets
 */
-void CL_UIModule_TouchAllAssets( void )
-{
-	if( uie )
+void CL_UIModule_TouchAllAssets( void ) {
+	if( uie ) {
 		uie->TouchAllAssets();
+	}
 }
 
 /*
 * CL_UIModule_Refresh
 */
-void CL_UIModule_Refresh( bool backGround, bool showCursor )
-{
-	if( uie )
-		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(), 
-			cls.demo.playing, cls.demo.name, cls.demo.paused, Q_rint(cls.demo.time/1000.0f), 
-			backGround, showCursor );
+void CL_UIModule_Refresh( bool backGround, bool showCursor ) {
+	if( uie ) {
+		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(),
+					  cls.demo.playing, cls.demo.name, cls.demo.paused, Q_rint( cls.demo.time / 1000.0f ),
+					  backGround, showCursor );
+	}
 }
 
 /*
 * CL_UIModule_UpdateConnectScreen
 */
-void CL_UIModule_UpdateConnectScreen( bool backGround )
-{
-	if( uie )
-	{
+void CL_UIModule_UpdateConnectScreen( bool backGround ) {
+	if( uie ) {
 		int downloadType, downloadSpeed;
 
-		if( cls.download.web )
+		if( cls.download.web ) {
 			downloadType = DOWNLOADTYPE_WEB;
-		else if( cls.download.filenum )
+		} else if( cls.download.filenum ) {
 			downloadType = DOWNLOADTYPE_SERVER;
-		else
+		} else {
 			downloadType = DOWNLOADTYPE_NONE;
+		}
 
-		if( downloadType )
-		{
+		if( downloadType ) {
 #if 0
 #define DLSAMPLESCOUNT 32
-#define DLSSAMPLESMASK ( DLSAMPLESCOUNT-1 )
+#define DLSSAMPLESMASK ( DLSAMPLESCOUNT - 1 )
 			int i, samples;
 			size_t downloadedSize;
 			unsigned int downloadTime;
@@ -441,12 +428,12 @@ void CL_UIModule_UpdateConnectScreen( bool backGround )
 
 			downloadedSize = (size_t)( cls.download.size * cls.download.percent ) - cls.download.baseoffset;
 			downloadTime = Sys_Milliseconds() - cls.download.timestart;
-			if( downloadTime > 200 )
-			{
+			if( downloadTime > 200 ) {
 				downloadSpeed = ( downloadedSize / 1024.0f ) / ( downloadTime * 0.001f );
 
-				if( cls.framecount > lastFrameCount + DLSAMPLESCOUNT )
+				if( cls.framecount > lastFrameCount + DLSAMPLESCOUNT ) {
 					frameCount = 0;
+				}
 				lastFrameCount = cls.framecount;
 
 				downloadSpeeds[frameCount & DLSSAMPLESMASK] = downloadSpeed;
@@ -458,9 +445,7 @@ void CL_UIModule_UpdateConnectScreen( bool backGround )
 
 				avDownloadSpeed /= samples;
 				downloadSpeed = (int)avDownloadSpeed;
-			}
-			else
-			{
+			} else {
 				lastFrameCount = -1;
 				downloadSpeed = 0;
 			}
@@ -473,72 +458,70 @@ void CL_UIModule_UpdateConnectScreen( bool backGround )
 
 			downloadSpeed = downloadTime ? ( downloadedSize / 1024.0f ) / ( downloadTime * 0.001f ) : 0;
 #endif
-		}
-		else
-		{
+		} else {
 			downloadSpeed = 0;
 		}
 
 		uie->UpdateConnectScreen( cls.servername, cls.rejected ? cls.rejectmessage : NULL,
-			downloadType, cls.download.name, cls.download.percent * 100.0f, downloadSpeed,
-			cls.connect_count, backGround );
+								  downloadType, cls.download.name, cls.download.percent * 100.0f, downloadSpeed,
+								  cls.connect_count, backGround );
 
-		CL_UIModule_Refresh( backGround, false );	
+		CL_UIModule_Refresh( backGround, false );
 	}
 }
 
 /*
 * CL_UIModule_Keydown
 */
-void CL_UIModule_Keydown( int key )
-{
-	if( uie )
+void CL_UIModule_Keydown( int key ) {
+	if( uie ) {
 		uie->Keydown( UI_CONTEXT_MAIN, key );
+	}
 }
 
 /*
 * CL_UIModule_Keyup
 */
-void CL_UIModule_Keyup( int key )
-{
-	if( uie )
+void CL_UIModule_Keyup( int key ) {
+	if( uie ) {
 		uie->Keyup( UI_CONTEXT_MAIN, key );
+	}
 }
 
 /*
 * CL_UIModule_KeydownQuick
 */
-void CL_UIModule_KeydownQuick( int key )
-{
-	if( uie )
+void CL_UIModule_KeydownQuick( int key ) {
+	if( uie ) {
 		uie->Keydown( UI_CONTEXT_QUICK, key );
+	}
 }
 
 /*
 * CL_UIModule_KeyupQuick
 */
-void CL_UIModule_KeyupQuick( int key )
-{
-	if( uie )
+void CL_UIModule_KeyupQuick( int key ) {
+	if( uie ) {
 		uie->Keyup( UI_CONTEXT_QUICK, key );
+	}
 }
 
 /*
 * CL_UIModule_CharEvent
 */
-void CL_UIModule_CharEvent( wchar_t key )
-{
-	if( uie )
+void CL_UIModule_CharEvent( wchar_t key ) {
+	if( uie ) {
 		uie->CharEvent( UI_CONTEXT_MAIN, key );
+	}
 }
 
 /*
 * CL_UIModule_TouchEvent
 */
-bool CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y )
-{
-	if( uie )
+bool CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y ) {
+	if( uie ) {
 		return uie->TouchEvent( UI_CONTEXT_MAIN, id, type, x, y );
+	}
 
 	return false;
 }
@@ -546,10 +529,10 @@ bool CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y )
 /*
 * CL_UIModule_TouchEventQuick
 */
-bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y )
-{
-	if( uie )
+bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y ) {
+	if( uie ) {
 		return uie->TouchEvent( UI_CONTEXT_QUICK, id, type, x, y );
+	}
 
 	return false;
 }
@@ -557,10 +540,10 @@ bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y )
 /*
 * CL_UIModule_IsTouchDown
 */
-bool CL_UIModule_IsTouchDown( int id )
-{
-	if( uie )
+bool CL_UIModule_IsTouchDown( int id ) {
+	if( uie ) {
 		return uie->IsTouchDown( UI_CONTEXT_MAIN, id );
+	}
 
 	return false;
 }
@@ -568,10 +551,10 @@ bool CL_UIModule_IsTouchDown( int id )
 /*
 * CL_UIModule_IsTouchDownQuick
 */
-bool CL_UIModule_IsTouchDownQuick( int id )
-{
-	if( uie )
+bool CL_UIModule_IsTouchDownQuick( int id ) {
+	if( uie ) {
 		return uie->IsTouchDown( UI_CONTEXT_QUICK, id );
+	}
 
 	return false;
 }
@@ -579,8 +562,7 @@ bool CL_UIModule_IsTouchDownQuick( int id )
 /*
 * CL_UIModule_CancelTouches
 */
-void CL_UIModule_CancelTouches( void )
-{
+void CL_UIModule_CancelTouches( void ) {
 	if( uie ) {
 		uie->CancelTouches( UI_CONTEXT_QUICK );
 		uie->CancelTouches( UI_CONTEXT_MAIN );
@@ -590,63 +572,63 @@ void CL_UIModule_CancelTouches( void )
 /*
 * CL_UIModule_ForceMenuOn
 */
-void CL_UIModule_ForceMenuOn( void )
-{
-	if( uie )
+void CL_UIModule_ForceMenuOn( void ) {
+	if( uie ) {
 		Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
+	}
 }
 
 /*
 * CL_UIModule_ForceMenuOff
 */
-void CL_UIModule_ForceMenuOff( void )
-{
-	if( uie )
+void CL_UIModule_ForceMenuOff( void ) {
+	if( uie ) {
 		uie->ForceMenuOff();
+	}
 }
 
 /*
 * CL_UIModule_ShowQuickMenu
 */
-void CL_UIModule_ShowQuickMenu( bool show )
-{
-	if( uie )
+void CL_UIModule_ShowQuickMenu( bool show ) {
+	if( uie ) {
 		uie->ShowQuickMenu( show );
+	}
 }
 
 /*
 * CL_UIModule_HaveQuickMenu
 */
-bool CL_UIModule_HaveQuickMenu( void )
-{
-	if( uie )
+bool CL_UIModule_HaveQuickMenu( void ) {
+	if( uie ) {
 		return uie->HaveQuickMenu();
+	}
 	return false;
 }
 
 /*
 * CL_UIModule_AddToServerList
 */
-void CL_UIModule_AddToServerList( const char *adr, const char *info )
-{
-	if( uie )
+void CL_UIModule_AddToServerList( const char *adr, const char *info ) {
+	if( uie ) {
 		uie->AddToServerList( adr, info );
+	}
 }
 
 /*
 * CL_UIModule_MouseMove
 */
-void CL_UIModule_MouseMove( int dx, int dy )
-{
-	if( uie )
+void CL_UIModule_MouseMove( int dx, int dy ) {
+	if( uie ) {
 		uie->MouseMove( UI_CONTEXT_MAIN, dx, dy );
+	}
 }
 
 /*
 * CL_UIModule_MouseSet
 */
-void CL_UIModule_MouseSet( int mx, int my, bool showCursor )
-{
-	if( uie )
+void CL_UIModule_MouseSet( int mx, int my, bool showCursor ) {
+	if( uie ) {
 		uie->MouseSet( UI_CONTEXT_MAIN, mx, my, showCursor );
+	}
 }

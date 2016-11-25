@@ -6,8 +6,7 @@
 
 namespace WSWUI
 {
-struct TVChannel
-{
+struct TVChannel {
 	int id;
 	std::string name;
 	std::string realname;
@@ -17,12 +16,11 @@ struct TVChannel
 	std::string matchname;
 	std::string address;
 
-	TVChannel() : id(0), 
-		name(""), realname(""), 
-		numPlayers(0), numSpecs(0),
-		gametype(""), mapname(""), matchname(""),
-		address("")
-	{
+	TVChannel() : id( 0 ),
+		name( "" ), realname( "" ),
+		numPlayers( 0 ), numSpecs( 0 ),
+		gametype( "" ), mapname( "" ), matchname( "" ),
+		address( "" ) {
 	}
 };
 

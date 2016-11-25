@@ -26,16 +26,14 @@ struct mempool_s *cinPool;
 /*
 * CIN_API
 */
-int CIN_API( void )
-{
+int CIN_API( void ) {
 	return CIN_API_VERSION;
 }
 
 /*
 * CIN_Init
 */
-bool CIN_Init( bool verbose )
-{
+bool CIN_Init( bool verbose ) {
 	cinPool = CIN_AllocPool( "Generic pool" );
 
 	Theora_LoadTheoraLibraries();
@@ -46,8 +44,7 @@ bool CIN_Init( bool verbose )
 /*
 * CIN_Shutdown
 */
-void CIN_Shutdown( bool verbose )
-{
+void CIN_Shutdown( bool verbose ) {
 	Theora_UnloadTheoraLibraries();
 
 	CIN_FreePool( &cinPool );
@@ -56,8 +53,7 @@ void CIN_Shutdown( bool verbose )
 /*
 * CIN_CopyString
 */
-char *CIN_CopyString( const char *in )
-{
+char *CIN_CopyString( const char *in ) {
 	char *out;
 
 	out = ( char* )CIN_Alloc( cinPool, sizeof( char ) * ( strlen( in ) + 1 ) );
@@ -69,9 +65,8 @@ char *CIN_CopyString( const char *in )
 #ifndef CIN_HARD_LINKED
 
 // this is only here so the functions in q_shared.c and q_math.c can link
-void Sys_Error( const char *format, ... )
-{
-	va_list	argptr;
+void Sys_Error( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -81,9 +76,8 @@ void Sys_Error( const char *format, ... )
 	trap_Error( msg );
 }
 
-void Com_Printf( const char *format, ... )
-{
-	va_list	argptr;
+void Com_Printf( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -94,16 +88,15 @@ void Com_Printf( const char *format, ... )
 }
 
 
-void Com_DPrintf( const char *format, ... )
-{
-	va_list	argptr;
+void Com_DPrintf( const char *format, ... ) {
+	va_list argptr;
 	char msg[1024];
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
 
-	if( trap_Cvar_Value("developer") > 0 ) {
+	if( trap_Cvar_Value( "developer" ) > 0 ) {
 		trap_Print( msg );
 	}
 }

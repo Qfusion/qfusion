@@ -22,10 +22,8 @@
 
 #include "../qcommon/qcommon.h"
 
-void CM_Init( void )
-{
+void CM_Init( void ) {
 }
 
-void CM_Shutdown( void )
-{
+void CM_Shutdown( void ) {
 }

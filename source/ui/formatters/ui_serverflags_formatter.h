@@ -30,10 +30,9 @@ namespace WSWUI
 class ServerFlagsFormatter : public Rocket::Controls::DataFormatter
 {
 public:
-	ServerFlagsFormatter() : Rocket::Controls::DataFormatter("serverflags") {}
+	ServerFlagsFormatter() : Rocket::Controls::DataFormatter( "serverflags" ) {}
 
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data )
-	{
+	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
 		formatted_data = "";
 
 		const String &flags = raw_data[0];

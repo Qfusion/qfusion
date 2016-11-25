@@ -30,7 +30,7 @@ cvar_t *cl_ucmdTimeNudge;
 
 extern cvar_t *cl_maxfps;
 
-extern unsigned	sys_frame_time;
+extern unsigned sys_frame_time;
 static unsigned ucmd_frame_time;
 
 /*
@@ -49,9 +49,9 @@ extern cvar_t *m_accelOffset;
 extern cvar_t *m_accelPow;
 extern cvar_t *m_sensCap;
 
-#define M_FILTER_NONE		0
-#define M_FILTER_INTERPOLATE	1
-#define M_FILTER_EXTRAPOLATE	2
+#define M_FILTER_NONE       0
+#define M_FILTER_INTERPOLATE    1
+#define M_FILTER_EXTRAPOLATE    2
 
 #define M_STRINGIFY( x ) # x
 #define M_DOUBLEQUOTE( x ) M_STRINGIFY( x )
@@ -66,8 +66,7 @@ static float buf_decay = 0.5;
 /*
 * CL_MouseFilterBufferSizeGet_f
 */
-static dynvar_get_status_t CL_MouseFilterBufferSizeGet_f( void **size )
-{
+static dynvar_get_status_t CL_MouseFilterBufferSizeGet_f( void **size ) {
 	static char sizeStr[16];
 	sprintf( sizeStr, "%u", buf_size );
 	*size = sizeStr;
@@ -77,16 +76,15 @@ static dynvar_get_status_t CL_MouseFilterBufferSizeGet_f( void **size )
 /*
 * CL_MouseFilterBufferSizeSet_f
 */
-static dynvar_set_status_t CL_MouseFilterBufferSizeSet_f( void *size )
-{
+static dynvar_set_status_t CL_MouseFilterBufferSizeSet_f( void *size ) {
 	static const unsigned int MIN_SIZE = 1;
 	static const unsigned int MAX_SIZE = 32; // more is pointless (probably anything more than 5)
 	const unsigned int desiredSize = atoi( (char *) size );
-	if( desiredSize >= MIN_SIZE && desiredSize <= MAX_SIZE )
-	{
+	if( desiredSize >= MIN_SIZE && desiredSize <= MAX_SIZE ) {
 		// reallocate buffer
-		if( m_filter->integer != M_FILTER_EXTRAPOLATE )
+		if( m_filter->integer != M_FILTER_EXTRAPOLATE ) {
 			Com_Printf( "Warning: \"m_filterBufferSize\" has no effect unless \"m_filter " M_DOUBLEQUOTE( M_FILTER_EXTRAPOLATE ) "\" is set.\n" );
+		}
 		Mem_ZoneFree( buf_x );
 		Mem_ZoneFree( buf_y );
 		buf_x = (float *) Mem_ZoneMalloc( sizeof( float ) * desiredSize );
@@ -96,9 +94,7 @@ static dynvar_set_status_t CL_MouseFilterBufferSizeSet_f( void *size )
 		memset( buf_y, 0, sizeof( float ) * desiredSize );
 		buf_size = desiredSize;
 		return DYNVAR_SET_OK;
-	}
-	else
-	{
+	} else {
 		Com_Printf( "\"m_filterBufferSize\" must be between \"%d\" and \"%d\".\n", MIN_SIZE, MAX_SIZE );
 		return DYNVAR_SET_INVALID;
 	}
@@ -107,8 +103,7 @@ static dynvar_set_status_t CL_MouseFilterBufferSizeSet_f( void *size )
 /*
 * CL_MouseFilterBufferDecayGet_f
 */
-static dynvar_get_status_t CL_MouseFilterBufferDecayGet_f( void **decay )
-{
+static dynvar_get_status_t CL_MouseFilterBufferDecayGet_f( void **decay ) {
 	static char decayStr[16];
 	sprintf( decayStr, "%f", buf_decay );
 	*decay = decayStr;
@@ -118,20 +113,17 @@ static dynvar_get_status_t CL_MouseFilterBufferDecayGet_f( void **decay )
 /*
 * CL_MouseFilterBufferDecaySet_f
 */
-static dynvar_set_status_t CL_MouseFilterBufferDecaySet_f( void *decay )
-{
+static dynvar_set_status_t CL_MouseFilterBufferDecaySet_f( void *decay ) {
 	static const float MIN_DECAY = 0.0;
 	static const float MAX_DECAY = 1.0;
 	const float desiredDecay = atof( decay );
-	if( desiredDecay >= MIN_DECAY && desiredDecay <= MAX_DECAY )
-	{
-		if( m_filter->integer != M_FILTER_EXTRAPOLATE )
+	if( desiredDecay >= MIN_DECAY && desiredDecay <= MAX_DECAY ) {
+		if( m_filter->integer != M_FILTER_EXTRAPOLATE ) {
 			Com_Printf( "Warning: \"m_filterBufferDecay\" has no effect unless \"m_filter " M_DOUBLEQUOTE( M_FILTER_EXTRAPOLATE ) "\" is set.\n" );
+		}
 		buf_decay = desiredDecay;
 		return DYNVAR_SET_OK;
-	}
-	else
-	{
+	} else {
 		Com_Printf( "\"m_filterBufferDecay\" must be between \"%f\" and \"%f\".\n", MIN_DECAY, MAX_DECAY );
 		return DYNVAR_SET_INVALID;
 	}
@@ -141,8 +133,7 @@ static dynvar_set_status_t CL_MouseFilterBufferDecaySet_f( void *decay )
 * CL_MouseExtrapolate
 * asymptotic extrapolation function
 */
-static void CL_MouseExtrapolate( int mx, int my, float *extra_x, float *extra_y )
-{
+static void CL_MouseExtrapolate( int mx, int my, float *extra_x, float *extra_y ) {
 
 	static unsigned int frameNo = 0;
 	static float sub_x = 0, sub_y = 0;
@@ -155,8 +146,9 @@ static void CL_MouseExtrapolate( int mx, int my, float *extra_x, float *extra_y 
 	unsigned int i;
 
 	int64_t micros;
-	if( !lastMicros )
+	if( !lastMicros ) {
 		lastMicros = Sys_Microseconds() - 10000;    // start at 100 FPS
+	}
 	micros = Sys_Microseconds();                        // get current time in us
 	avgMicros = ( avgMicros + ( micros - lastMicros ) ) / 2; // calc running avg of us per frame
 
@@ -169,9 +161,8 @@ static void CL_MouseExtrapolate( int mx, int my, float *extra_x, float *extra_y 
 
 	// calculate asymptotically weighted sum of movement over the last few frames
 	assert( buf_decay >= 0.0 );
-	for( i = 0; i < buf_size; ++i )
-	{
-		const unsigned int f = ( frameNo-i ) % buf_size;
+	for( i = 0; i < buf_size; ++i ) {
+		const unsigned int f = ( frameNo - i ) % buf_size;
 		assert( f <= buf_size );
 		add_x += buf_x[f] * decay;
 		add_y += buf_y[f] * decay;
@@ -196,45 +187,45 @@ static void CL_MouseExtrapolate( int mx, int my, float *extra_x, float *extra_y 
 /*
 * CL_MouseMove
 */
-void CL_MouseMove( usercmd_t *cmd, int mx, int my )
-{
+void CL_MouseMove( usercmd_t *cmd, int mx, int my ) {
 	static unsigned int mouse_time = 0, old_mouse_time = 0xFFFFFFFF;
 	static float mouse_x = 0, mouse_y = 0;
 	static float old_mouse_x = 0, old_mouse_y = 0;
 	float accelSensitivity;
-	float	rate;
-	float	accelOffset, accelPow;
+	float rate;
+	float accelOffset, accelPow;
 
 	old_mouse_time = mouse_time;
 	mouse_time = Sys_Milliseconds();
-	if( old_mouse_time >= mouse_time )
+	if( old_mouse_time >= mouse_time ) {
 		old_mouse_time = mouse_time - 1;
+	}
 
 	mouse_frame_time = mouse_time - old_mouse_time;
 
-	if( cls.key_dest == key_menu )
-	{
+	if( cls.key_dest == key_menu ) {
 		CL_UIModule_MouseMove( mx, my );
 		return;
 	}
 
-	if( ( cls.key_dest == key_console ) && !in_grabinconsole->integer )
+	if( ( cls.key_dest == key_console ) && !in_grabinconsole->integer ) {
 		return;
+	}
 
-	if( cls.state < CA_ACTIVE )
+	if( cls.state < CA_ACTIVE ) {
 		return;
+	}
 
 	// mouse filtering
-	switch( m_filter->integer )
-	{
-	case M_FILTER_INTERPOLATE:
+	switch( m_filter->integer ) {
+		case M_FILTER_INTERPOLATE:
 		{
 			mouse_x = ( mx + old_mouse_x ) * 0.5;
 			mouse_y = ( my + old_mouse_y ) * 0.5;
 		}
 		break;
 
-	case M_FILTER_EXTRAPOLATE:
+		case M_FILTER_EXTRAPOLATE:
 		{
 			float extra_x, extra_y;
 			CL_MouseExtrapolate( mx, my, &extra_x, &extra_y );
@@ -243,10 +234,10 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 		}
 		break;
 
-	default: // no filtering
-		mouse_x = mx;
-		mouse_y = my;
-		break;
+		default: // no filtering
+			mouse_x = mx;
+			mouse_y = my;
+			break;
 	}
 
 	old_mouse_x = mx;
@@ -254,12 +245,10 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 
 	accelSensitivity = sensitivity->value;
 
-	if( m_accel->value != 0.0f && mouse_frame_time != 0.0f )
-	{
+	if( m_accel->value != 0.0f && mouse_frame_time != 0.0f ) {
 		// QuakeLive-style mouse acceleration, ported from ioquake3
 		// original patch by Gabriel Schnoering and TTimo
-		if( m_accelStyle->integer == 1 )
-		{
+		if( m_accelStyle->integer == 1 ) {
 			float base[2];
 			float power[2];
 
@@ -268,16 +257,14 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 			// m_accelOffset is the rate for which the acceleration will have doubled the non accelerated amplification
 			// NOTE: decouple the config cvars for independent acceleration setup along X and Y?
 
-			base[0] = (float) (abs(mx)) / (float) mouse_frame_time;
-			base[1] = (float) (abs(my)) / (float) mouse_frame_time;
-			power[0] = powf(base[0] / m_accelOffset->value, m_accel->value);
-			power[1] = powf(base[1] / m_accelOffset->value, m_accel->value);
+			base[0] = (float) ( abs( mx ) ) / (float) mouse_frame_time;
+			base[1] = (float) ( abs( my ) ) / (float) mouse_frame_time;
+			power[0] = powf( base[0] / m_accelOffset->value, m_accel->value );
+			power[1] = powf( base[1] / m_accelOffset->value, m_accel->value );
 
-			mouse_x = (mouse_x + ((mouse_x < 0) ? -power[0] : power[0]) * m_accelOffset->value);
-			mouse_y = (mouse_y + ((mouse_y < 0) ? -power[1] : power[1]) * m_accelOffset->value);
-		}
-		else if( m_accelStyle->integer == 2 )
-		{
+			mouse_x = ( mouse_x + ( ( mouse_x < 0 ) ? -power[0] : power[0] ) * m_accelOffset->value );
+			mouse_y = ( mouse_y + ( ( mouse_y < 0 ) ? -power[1] : power[1] ) * m_accelOffset->value );
+		} else if( m_accelStyle->integer == 2 ) {
 			// ch : similar to normal acceleration with offset and variable pow mechanisms
 
 			// sanitize values
@@ -286,17 +273,17 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 
 			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)mouse_frame_time;
 			rate -= accelOffset;
-			if( rate < 0 )
+			if( rate < 0 ) {
 				rate = 0.0;
+			}
 			// ch : TODO sens += pow( rate * m_accel->value, m_accelPow->value - 1.0 )
 			accelSensitivity += pow( rate * m_accel->value, accelPow - 1.0 );
 
 			// TODO : move this outside of this branch?
-			if( m_sensCap->value > 0 && accelSensitivity > m_sensCap->value )
+			if( m_sensCap->value > 0 && accelSensitivity > m_sensCap->value ) {
 				accelSensitivity = m_sensCap->value;
-		}
-		else
-		{
+			}
+		} else {
 			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)mouse_frame_time;
 			accelSensitivity += rate * m_accel->value;
 		}
@@ -307,11 +294,12 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 	mouse_x *= accelSensitivity;
 	mouse_y *= accelSensitivity;
 
-	if( !mouse_x && !mouse_y )
+	if( !mouse_x && !mouse_y ) {
 		return;
+	}
 
 	// add mouse X/Y movement to cmd
-	cl.viewangles[YAW] -= ( m_yaw->value * mouse_x ) * (cl_flip->integer ? -1.0 : 1.0);
+	cl.viewangles[YAW] -= ( m_yaw->value * mouse_x ) * ( cl_flip->integer ? -1.0 : 1.0 );
 	cl.viewangles[PITCH] += ( m_pitch->value * mouse_y );
 }
 
@@ -321,10 +309,10 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 * Mouse input for systems with basic mouse support (without centering
 * and possibly without toggleable cursor).
 */
-void CL_MouseSet( int mx, int my, bool showCursor )
-{
-	if( cls.key_dest == key_menu )
+void CL_MouseSet( int mx, int my, bool showCursor ) {
+	if( cls.key_dest == key_menu ) {
 		CL_UIModule_MouseSet( mx, my, showCursor );
+	}
 }
 
 /*
@@ -362,38 +350,40 @@ kbutton_t in_zoom;
 /*
 * KeyDown
 */
-static void KeyDown( kbutton_t *b )
-{
+static void KeyDown( kbutton_t *b ) {
 	int k;
 	char *c;
 
 	c = Cmd_Argv( 1 );
-	if( c[0] )
+	if( c[0] ) {
 		k = atoi( c );
-	else
+	} else {
 		k = -1; // typed manually at the console for continuous down
 
-	if( k == b->down[0] || k == b->down[1] )
+	}
+	if( k == b->down[0] || k == b->down[1] ) {
 		return; // repeating key
 
-	if( !b->down[0] )
+	}
+	if( !b->down[0] ) {
 		b->down[0] = k;
-	else if( !b->down[1] )
+	} else if( !b->down[1] ) {
 		b->down[1] = k;
-	else
-	{
+	} else {
 		Com_Printf( "Three keys down for a button!\n" );
 		return;
 	}
 
-	if( b->state & 1 )
+	if( b->state & 1 ) {
 		return; // still down
 
+	}
 	// save timestamp
 	c = Cmd_Argv( 2 );
 	b->downtime = atoi( c );
-	if( !b->downtime )
+	if( !b->downtime ) {
 		b->downtime = sys_frame_time - 100;
+	}
 
 	b->state |= 1 + 2; // down + impulse down
 }
@@ -401,41 +391,43 @@ static void KeyDown( kbutton_t *b )
 /*
 * KeyUp
 */
-static void KeyUp( kbutton_t *b )
-{
+static void KeyUp( kbutton_t *b ) {
 	int k;
 	char *c;
 	unsigned uptime;
 
 	c = Cmd_Argv( 1 );
-	if( c[0] )
+	if( c[0] ) {
 		k = atoi( c );
-	else
-	{ // typed manually at the console, assume for unsticking, so clear all
+	} else { // typed manually at the console, assume for unsticking, so clear all
 		b->down[0] = b->down[1] = 0;
 		b->state = 4; // impulse up
 		return;
 	}
 
-	if( b->down[0] == k )
+	if( b->down[0] == k ) {
 		b->down[0] = 0;
-	else if( b->down[1] == k )
+	} else if( b->down[1] == k ) {
 		b->down[1] = 0;
-	else
+	} else {
 		return; // key up without corresponding down (menu pass through)
-	if( b->down[0] || b->down[1] )
+	}
+	if( b->down[0] || b->down[1] ) {
 		return; // some other key is still holding it down
 
-	if( !( b->state & 1 ) )
+	}
+	if( !( b->state & 1 ) ) {
 		return; // still up (this should not happen)
 
+	}
 	// save timestamp
 	c = Cmd_Argv( 2 );
 	uptime = atoi( c );
-	if( uptime )
+	if( uptime ) {
 		b->msec += uptime - b->downtime;
-	else
+	} else {
 		b->msec += 10;
+	}
 
 	b->state &= ~1; // now up
 	b->state |= 4;  // impulse up
@@ -480,8 +472,7 @@ static void IN_ZoomUp( void ) { KeyUp( &in_zoom ); }
 /*
 * CL_KeyState
 */
-static float CL_KeyState( kbutton_t *key )
-{
+static float CL_KeyState( kbutton_t *key ) {
 	float val;
 	int msec;
 
@@ -490,8 +481,7 @@ static float CL_KeyState( kbutton_t *key )
 	msec = key->msec;
 	key->msec = 0;
 
-	if( key->state )
-	{
+	if( key->state ) {
 		// still down
 		msec += sys_frame_time - key->downtime;
 		key->downtime = sys_frame_time;
@@ -513,34 +503,34 @@ TOUCHSCREEN
 /*
 * CL_TouchEvent
 */
-void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
-{
-	switch( cls.key_dest )
-	{
+void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time ) {
+	switch( cls.key_dest ) {
 		case key_game:
-			{
-				bool toQuickMenu = false;
+		{
+			bool toQuickMenu = false;
 
-				if( SCR_IsQuickMenuShown() && !CL_GameModule_IsTouchDown( id ) )
-				{
-					if( CL_UIModule_IsTouchDownQuick( id ) )
-						toQuickMenu = true;
-
-					// if the quick menu has consumed the touch event, don't send the event to the game
-					toQuickMenu |= CL_UIModule_TouchEventQuick( id, type, x, y );
+			if( SCR_IsQuickMenuShown() && !CL_GameModule_IsTouchDown( id ) ) {
+				if( CL_UIModule_IsTouchDownQuick( id ) ) {
+					toQuickMenu = true;
 				}
 
-				if( !toQuickMenu )
-					CL_GameModule_TouchEvent( id, type, x, y, time );
+				// if the quick menu has consumed the touch event, don't send the event to the game
+				toQuickMenu |= CL_UIModule_TouchEventQuick( id, type, x, y );
 			}
-			break;
+
+			if( !toQuickMenu ) {
+				CL_GameModule_TouchEvent( id, type, x, y, time );
+			}
+		}
+		break;
 
 		case key_console:
 		case key_message:
-			if( id == 0 )
+			if( id == 0 ) {
 				Con_TouchEvent( ( type != TOUCH_UP ) ? true : false, x, y );
+			}
 			break;
-		
+
 		case key_menu:
 			CL_UIModule_TouchEvent( id, type, x, y );
 			break;
@@ -560,60 +550,65 @@ cvar_t *cl_anglespeedkey;
 /*
 * CL_AddButtonBits
 */
-static void CL_AddButtonBits( uint8_t *buttons )
-{
+static void CL_AddButtonBits( uint8_t *buttons ) {
 	// figure button bits
 
-	if( in_attack.state & 3 )
+	if( in_attack.state & 3 ) {
 		*buttons |= BUTTON_ATTACK;
+	}
 	in_attack.state &= ~2;
 
-	if( in_special.state & 3 )
+	if( in_special.state & 3 ) {
 		*buttons |= BUTTON_SPECIAL;
+	}
 	in_special.state &= ~2;
 
-	if( in_use.state & 3 )
+	if( in_use.state & 3 ) {
 		*buttons |= BUTTON_USE;
+	}
 	in_use.state &= ~2;
 
 	// we use this bit for a different flag, sorry!
-	if( anykeydown && cls.key_dest == key_game )
+	if( anykeydown && cls.key_dest == key_game ) {
 		*buttons |= BUTTON_ANY;
+	}
 
-	if( ( in_speed.state & 1 ) ^ !cl_run->integer )
+	if( ( in_speed.state & 1 ) ^ !cl_run->integer ) {
 		*buttons |= BUTTON_WALK;
+	}
 
 	// add chat/console/ui icon as a button
-	if( cls.key_dest != key_game )
+	if( cls.key_dest != key_game ) {
 		*buttons |= BUTTON_BUSYICON;
+	}
 
-	if( in_zoom.state & 3 )
+	if( in_zoom.state & 3 ) {
 		*buttons |= BUTTON_ZOOM;
+	}
 	in_zoom.state &= ~2;
 
-	if( cls.key_dest == key_game )
+	if( cls.key_dest == key_game ) {
 		*buttons |= CL_GameModule_GetButtonBits();
+	}
 }
 
 /*
 * CL_AddAnglesFromKeys
 */
-static void CL_AddAnglesFromKeys( int frametime )
-{
+static void CL_AddAnglesFromKeys( int frametime ) {
 	float speed;
 
-	if( in_speed.state & 1 )
+	if( in_speed.state & 1 ) {
 		speed = ( (float)frametime * 0.001f ) * cl_anglespeedkey->value;
-	else
+	} else {
 		speed = (float)frametime * 0.001f;
+	}
 
-	if( !( in_strafe.state & 1 ) )
-	{
+	if( !( in_strafe.state & 1 ) ) {
 		cl.viewangles[YAW] -= speed * cl_yawspeed->value * CL_KeyState( &in_right );
 		cl.viewangles[YAW] += speed * cl_yawspeed->value * CL_KeyState( &in_left );
 	}
-	if( in_klook.state & 1 )
-	{
+	if( in_klook.state & 1 ) {
 		cl.viewangles[PITCH] -= speed * cl_pitchspeed->value * CL_KeyState( &in_forward );
 		cl.viewangles[PITCH] += speed * cl_pitchspeed->value * CL_KeyState( &in_back );
 	}
@@ -625,12 +620,10 @@ static void CL_AddAnglesFromKeys( int frametime )
 /*
 * CL_AddMovementFromKeys
 */
-static void CL_AddMovementFromKeys( vec3_t movement )
-{
+static void CL_AddMovementFromKeys( vec3_t movement ) {
 	float down;
 
-	if( in_strafe.state & 1 )
-	{
+	if( in_strafe.state & 1 ) {
 		movement[0] += CL_KeyState( &in_right );
 		movement[0] -= CL_KeyState( &in_left );
 	}
@@ -638,54 +631,55 @@ static void CL_AddMovementFromKeys( vec3_t movement )
 	movement[0] += CL_KeyState( &in_moveright );
 	movement[0] -= CL_KeyState( &in_moveleft );
 
-	if( !( in_klook.state & 1 ) )
-	{
+	if( !( in_klook.state & 1 ) ) {
 		movement[1] += CL_KeyState( &in_forward );
 		movement[1] -= CL_KeyState( &in_back );
 	}
 
 	movement[2] += CL_KeyState( &in_up );
 	down = CL_KeyState( &in_down );
-	if( down > movement[2] )
+	if( down > movement[2] ) {
 		movement[2] -= down;
+	}
 }
 
 /*
 * CL_UpdateCommandInput
 */
-void CL_UpdateCommandInput( void )
-{
+void CL_UpdateCommandInput( void ) {
 	static unsigned old_ucmd_frame_time;
 	usercmd_t *cmd = &cl.cmds[cls.ucmdHead & CMD_MASK];
 
-	if( cl.inputRefreshed )
+	if( cl.inputRefreshed ) {
 		return;
+	}
 
 	ucmd_frame_time = sys_frame_time - old_ucmd_frame_time;
 
 	// always let the mouse refresh cl.viewangles
 	IN_MouseMove( cmd );
 	CL_AddButtonBits( &cmd->buttons );
-	if( cls.key_dest == key_game )
+	if( cls.key_dest == key_game ) {
 		CL_GameModule_AddViewAngles( cl.viewangles, cls.realframetime, cl_flip->integer != 0 );
+	}
 
-	if( ucmd_frame_time )
-	{
+	if( ucmd_frame_time ) {
 		cmd->msec += ucmd_frame_time;
 		CL_AddAnglesFromKeys( ucmd_frame_time );
 		old_ucmd_frame_time = sys_frame_time;
 	}
 
-	if( cmd->msec )
-	{
+	if( cmd->msec ) {
 		vec3_t movement;
 
 		VectorSet( movement, 0.0f, 0.0f, 0.0f );
 
-		if( ucmd_frame_time )
+		if( ucmd_frame_time ) {
 			CL_AddMovementFromKeys( movement );
-		if( cls.key_dest == key_game )
+		}
+		if( cls.key_dest == key_game ) {
 			CL_GameModule_AddMovement( movement );
+		}
 
 		cmd->sidemove = bound( -1.0f, movement[0], 1.0f ) * ( cl_flip->integer ? -1.0f : 1.0f );
 		cmd->forwardmove = bound( -1.0f, movement[1], 1.0f );
@@ -702,10 +696,8 @@ void CL_UpdateCommandInput( void )
 /*
 * IN_CenterView
 */
-void IN_CenterView( void )
-{
-	if( cl.currentSnapNum > 0 )
-	{
+void IN_CenterView( void ) {
+	if( cl.currentSnapNum > 0 ) {
 		player_state_t *playerState;
 		playerState = &cl.snapShots[cl.currentSnapNum & UPDATE_MASK].playerState;
 		cl.viewangles[PITCH] = -SHORT2ANGLE( playerState->pmove.delta_angles[PITCH] );
@@ -715,14 +707,12 @@ void IN_CenterView( void )
 /*
 * IN_ClearState
 */
-void IN_ClearState( void )
-{
+void IN_ClearState( void ) {
 	IN_ShowSoftKeyboard( false );
 
 	Key_ClearStates();
 
-	switch( cls.key_dest )
-	{
+	switch( cls.key_dest ) {
 		case key_game:
 			CL_GameModule_ClearInputState();
 			break;
@@ -742,10 +732,10 @@ static bool in_initialized = false;
 /*
 * CL_InitInput
 */
-void CL_InitInput( void )
-{
-	if( in_initialized )
+void CL_InitInput( void ) {
+	if( in_initialized ) {
 		return;
+	}
 
 	Cmd_AddCommand( "in_restart", IN_Restart );
 
@@ -788,17 +778,17 @@ void CL_InitInput( void )
 	Cmd_AddCommand( "+zoom", IN_ZoomDown );
 	Cmd_AddCommand( "-zoom", IN_ZoomUp );
 
-	cl_ucmdMaxResend =	Cvar_Get( "cl_ucmdMaxResend", "3", CVAR_ARCHIVE );
-	cl_ucmdFPS =		Cvar_Get( "cl_ucmdFPS", "62", CVAR_DEVELOPER );
+	cl_ucmdMaxResend =  Cvar_Get( "cl_ucmdMaxResend", "3", CVAR_ARCHIVE );
+	cl_ucmdFPS =        Cvar_Get( "cl_ucmdFPS", "62", CVAR_DEVELOPER );
 
 #ifdef UCMDTIMENUDGE
-	cl_ucmdTimeNudge =	Cvar_Get( "cl_ucmdTimeNudge", "0", CVAR_USERINFO|CVAR_DEVELOPER );
-	if( abs( cl_ucmdTimeNudge->integer ) > MAX_UCMD_TIMENUDGE )
-	{
-		if( cl_ucmdTimeNudge->integer < -MAX_UCMD_TIMENUDGE )
+	cl_ucmdTimeNudge =  Cvar_Get( "cl_ucmdTimeNudge", "0", CVAR_USERINFO | CVAR_DEVELOPER );
+	if( abs( cl_ucmdTimeNudge->integer ) > MAX_UCMD_TIMENUDGE ) {
+		if( cl_ucmdTimeNudge->integer < -MAX_UCMD_TIMENUDGE ) {
 			Cvar_SetValue( "cl_ucmdTimeNudge", -MAX_UCMD_TIMENUDGE );
-		else if( cl_ucmdTimeNudge->integer > MAX_UCMD_TIMENUDGE )
+		} else if( cl_ucmdTimeNudge->integer > MAX_UCMD_TIMENUDGE ) {
 			Cvar_SetValue( "cl_ucmdTimeNudge", MAX_UCMD_TIMENUDGE );
+		}
 	}
 #endif
 
@@ -808,8 +798,7 @@ void CL_InitInput( void )
 /*
 * CL_InitInputDynvars
 */
-void CL_InitInputDynvars( void )
-{
+void CL_InitInputDynvars( void ) {
 	Dynvar_Create( "m_filterBufferSize", true, CL_MouseFilterBufferSizeGet_f, CL_MouseFilterBufferSizeSet_f );
 	Dynvar_Create( "m_filterBufferDecay", true, CL_MouseFilterBufferDecayGet_f, CL_MouseFilterBufferDecaySet_f );
 	// we could simply call Dynvar_SetValue(m_filterBufferSize, "5") here, but then the user would get a warning in the console if m_filter was != M_FILTER_EXTRAPOLATE
@@ -823,10 +812,10 @@ void CL_InitInputDynvars( void )
 /*
 * CL_ShutdownInput
 */
-void CL_ShutdownInput( void )
-{
-	if( !in_initialized )
+void CL_ShutdownInput( void ) {
+	if( !in_initialized ) {
 		return;
+	}
 
 	Cmd_RemoveCommand( "in_restart" );
 
@@ -885,8 +874,7 @@ void CL_ShutdownInput( void )
 /*
 * CL_UserInputFrame
 */
-void CL_UserInputFrame( void )
-{
+void CL_UserInputFrame( void ) {
 	// let the mouse activate or deactivate
 	IN_Frame();
 
@@ -903,8 +891,7 @@ void CL_UserInputFrame( void )
 /*
 * CL_WriteUcmdsToMessage
 */
-void CL_WriteUcmdsToMessage( msg_t *msg )
-{
+void CL_WriteUcmdsToMessage( msg_t *msg ) {
 	usercmd_t *cmd;
 	usercmd_t *oldcmd;
 	usercmd_t nullcmd;
@@ -913,39 +900,46 @@ void CL_WriteUcmdsToMessage( msg_t *msg )
 	unsigned int ucmdFirst;
 	unsigned int ucmdHead;
 
-	if( !msg || cls.state < CA_ACTIVE || cls.demo.playing )
+	if( !msg || cls.state < CA_ACTIVE || cls.demo.playing ) {
 		return;
+	}
 
 	// find out what ucmds we have to send
 	ucmdFirst = cls.ucmdAcknowledged + 1;
 	ucmdHead = cl.cmdNum + 1;
 
-	if( cl_ucmdMaxResend->integer > CMD_BACKUP * 0.5 )
+	if( cl_ucmdMaxResend->integer > CMD_BACKUP * 0.5 ) {
 		Cvar_SetValue( "cl_ucmdMaxResend", CMD_BACKUP * 0.5 );
-	else if( cl_ucmdMaxResend->integer < 1 )
+	} else if( cl_ucmdMaxResend->integer < 1 ) {
 		Cvar_SetValue( "cl_ucmdMaxResend", 1 );
+	}
 
 	// find what is our resend count (resend doesn't include the newly generated ucmds)
 	// and move the start back to the resend start
-	if( ucmdFirst <= cls.ucmdSent + 1 )
+	if( ucmdFirst <= cls.ucmdSent + 1 ) {
 		resendCount = 0;
-	else
+	} else {
 		resendCount = ( cls.ucmdSent + 1 ) - ucmdFirst;
-	if( resendCount > (unsigned int)cl_ucmdMaxResend->integer )
+	}
+	if( resendCount > (unsigned int)cl_ucmdMaxResend->integer ) {
 		resendCount = (unsigned int)cl_ucmdMaxResend->integer;
+	}
 
-	if( ucmdFirst > ucmdHead )
+	if( ucmdFirst > ucmdHead ) {
 		ucmdFirst = ucmdHead;
+	}
 
 	// if this happens, the player is in a freezing lag. Send him the less possible data
-	if( ( ucmdHead - ucmdFirst ) + resendCount > CMD_MASK * 0.5 )
+	if( ( ucmdHead - ucmdFirst ) + resendCount > CMD_MASK * 0.5 ) {
 		resendCount = 0;
+	}
 
 	// move the start backwards to the resend point
 	ucmdFirst = ( ucmdFirst > resendCount ) ? ucmdFirst - resendCount : ucmdFirst;
 
-	if( ( ucmdHead - ucmdFirst ) > CMD_MASK ) // ran out of updates, seduce the send to try to recover activity
+	if( ( ucmdHead - ucmdFirst ) > CMD_MASK ) { // ran out of updates, seduce the send to try to recover activity
 		ucmdFirst = ucmdHead - 3;
+	}
 
 	// begin a client move command
 	MSG_WriteByte( msg, clc_move );
@@ -953,10 +947,11 @@ void CL_WriteUcmdsToMessage( msg_t *msg )
 	// (acknowledge server frame snap)
 	// let the server know what the last frame we
 	// got was, so the next message can be delta compressed
-	if( cl.receivedSnapNum <= 0 )
+	if( cl.receivedSnapNum <= 0 ) {
 		MSG_WriteLong( msg, -1 );
-	else
+	} else {
 		MSG_WriteLong( msg, cl.snapShots[cl.receivedSnapNum & UPDATE_MASK].serverFrame );
+	}
 
 	// Write the actual ucmds
 
@@ -965,18 +960,14 @@ void CL_WriteUcmdsToMessage( msg_t *msg )
 	MSG_WriteByte( msg, (uint8_t)( ucmdHead - ucmdFirst ) );
 
 	// write the ucmds
-	for( i = ucmdFirst; i < ucmdHead; i++ )
-	{
-		if( i == ucmdFirst ) // first one isn't delta-compressed
-		{
+	for( i = ucmdFirst; i < ucmdHead; i++ ) {
+		if( i == ucmdFirst ) { // first one isn't delta-compressed
 			cmd = &cl.cmds[i & CMD_MASK];
 			memset( &nullcmd, 0, sizeof( nullcmd ) );
 			MSG_WriteDeltaUsercmd( msg, &nullcmd, cmd );
-		}
-		else // delta compress to previous written
-		{
+		} else {   // delta compress to previous written
 			cmd = &cl.cmds[i & CMD_MASK];
-			oldcmd = &cl.cmds[( i-1 ) & CMD_MASK];
+			oldcmd = &cl.cmds[( i - 1 ) & CMD_MASK];
 			MSG_WriteDeltaUsercmd( msg, oldcmd, cmd );
 		}
 	}
@@ -987,50 +978,47 @@ void CL_WriteUcmdsToMessage( msg_t *msg )
 /*
 * CL_NextUserCommandTimeReached
 */
-static bool CL_NextUserCommandTimeReached( int realmsec )
-{
+static bool CL_NextUserCommandTimeReached( int realmsec ) {
 	static int minMsec = 1, allMsec = 0, extraMsec = 0;
 	static float roundingMsec = 0.0f;
 	float maxucmds;
 
-	if( cls.state < CA_ACTIVE )
+	if( cls.state < CA_ACTIVE ) {
 		maxucmds = 10; // reduce ratio while connecting
-	else
+	} else {
 		maxucmds = cl_ucmdFPS->value;
+	}
 
 	// the cvar is developer only
 	//clamp( maxucmds, 10, 90 ); // don't let people abuse cl_ucmdFPS
 
-	if( cls.demo.playing )
-	{
+	if( cls.demo.playing ) {
 		minMsec = 1;
-	}
-	else
-	{
+	} else {
 		minMsec = ( 1000.0f / maxucmds );
 		roundingMsec += ( 1000.0f / maxucmds ) - minMsec;
 	}
 
-	if( roundingMsec >= 1.0f )
-	{
+	if( roundingMsec >= 1.0f ) {
 		minMsec += (int)roundingMsec;
 		roundingMsec -= (int)roundingMsec;
 	}
 
-	if( minMsec > extraMsec )  // remove, from min frametime, the extra time we spent in last frame
+	if( minMsec > extraMsec ) { // remove, from min frametime, the extra time we spent in last frame
 		minMsec -= extraMsec;
+	}
 
 	allMsec += realmsec;
-	if( allMsec < minMsec )
-	{
+	if( allMsec < minMsec ) {
 		//if( !cls.netchan.unsentFragments ) {
 		//	NET_Sleep( minMsec - allMsec );
 		return false;
 	}
 
 	extraMsec = allMsec - minMsec;
-	if( extraMsec > minMsec )
+	if( extraMsec > minMsec ) {
 		extraMsec = minMsec - 1;
+	}
 
 	allMsec = 0;
 
@@ -1041,15 +1029,16 @@ static bool CL_NextUserCommandTimeReached( int realmsec )
 /*
 * CL_NewUserCommand
 */
-void CL_NewUserCommand( int realmsec )
-{
+void CL_NewUserCommand( int realmsec ) {
 	usercmd_t *ucmd;
 
-	if( !CL_NextUserCommandTimeReached( realmsec ) )
+	if( !CL_NextUserCommandTimeReached( realmsec ) ) {
 		return;
+	}
 
-	if( cls.state < CA_ACTIVE )
+	if( cls.state < CA_ACTIVE ) {
 		return;
+	}
 
 	cl.cmdNum = cls.ucmdHead;
 	ucmd = &cl.cmds[cl.cmdNum & CMD_MASK];
@@ -1061,13 +1050,15 @@ void CL_NewUserCommand( int realmsec )
 	ucmd->sidemove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->sidemove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
 	ucmd->upmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->upmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
 
-	if( cl.cmdNum > 0 )
-		ucmd->msec = ucmd->serverTimeStamp - cl.cmds[( cl.cmdNum-1 ) & CMD_MASK].serverTimeStamp;
-	else
+	if( cl.cmdNum > 0 ) {
+		ucmd->msec = ucmd->serverTimeStamp - cl.cmds[( cl.cmdNum - 1 ) & CMD_MASK].serverTimeStamp;
+	} else {
 		ucmd->msec = 20;
+	}
 
-	if( ucmd->msec < 1 )
+	if( ucmd->msec < 1 ) {
 		ucmd->msec = 1;
+	}
 
 	// advance head and init the new command
 	cls.ucmdHead++;

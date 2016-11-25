@@ -16,7 +16,8 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library.
 */
 
-namespace WSWSTEAM {
+namespace WSWSTEAM
+{
 
 steamlib_import_t *GetSteamImport( void );
 

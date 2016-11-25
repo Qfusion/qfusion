@@ -33,12 +33,11 @@ static bool mm_initialized = false;
 //==================================================
 
 // returns static internal string
-static const char *MM_PasswordFilename( const char *user )
-{
+static const char *MM_PasswordFilename( const char *user ) {
 	static char filename[MAX_STRING_CHARS];
 	char *user64;
 
-	user64 = (char*)base64_encode( (unsigned char*)user, strlen(user), NULL );
+	user64 = (char*)base64_encode( (unsigned char*)user, strlen( user ), NULL );
 
 	Q_snprintfz( filename, sizeof( filename ), "%s.profile", user64 );
 
@@ -48,8 +47,7 @@ static const char *MM_PasswordFilename( const char *user )
 }
 
 // returns static string of md5 contents
-const char *MM_PasswordRead( const char *user )
-{
+const char *MM_PasswordRead( const char *user ) {
 	static char buffer[MAX_STRING_CHARS];
 	const char *filename;
 	int filenum;
@@ -58,33 +56,31 @@ const char *MM_PasswordRead( const char *user )
 	Com_DPrintf( "MM_PasswordRead %s\n", user );
 
 	filename = MM_PasswordFilename( user );
-	if( FS_FOpenFile( filename, &filenum, FS_READ|FS_SECURE ) == -1 )
-	{
-		Com_Printf( "MM_PasswordRead: Couldnt open file %s\n", filename);
+	if( FS_FOpenFile( filename, &filenum, FS_READ | FS_SECURE ) == -1 ) {
+		Com_Printf( "MM_PasswordRead: Couldnt open file %s\n", filename );
 		return NULL;
 	}
 
-	bytes = FS_Read(buffer, sizeof( buffer ) - 1,  filenum );
+	bytes = FS_Read( buffer, sizeof( buffer ) - 1,  filenum );
 	FS_FCloseFile( filenum );
 
-	if( bytes == 0 || bytes >= sizeof(buffer) - 1 )
+	if( bytes == 0 || bytes >= sizeof( buffer ) - 1 ) {
 		return NULL;
+	}
 
 	buffer[bytes] = '\0';
 
 	return buffer;
 }
 
-void MM_PasswordWrite( const char *user, const char *password )
-{
+void MM_PasswordWrite( const char *user, const char *password ) {
 	const char *filename;
 	int filenum;
 
 	Com_DPrintf( "MM_PasswordWrite: %s %s\n", user, password );
 
 	filename = MM_PasswordFilename( user );
-	if( FS_FOpenFile( filename, &filenum, FS_WRITE|FS_SECURE ) == -1 )
-	{
+	if( FS_FOpenFile( filename, &filenum, FS_WRITE | FS_SECURE ) == -1 ) {
 		Com_Printf( "MM_PasswordWrite: Failed to open %s for writing\n", filename );
 		return;
 	}
@@ -99,67 +95,69 @@ void MM_PasswordWrite( const char *user, const char *password )
 
 // returns list of tokens and sets *argc into number of tokens
 // you need to Mem_TempFree( ret[0] ) ; Mem_TempFree( ret )
-char ** MM_ParseResponse( wswcurl_req *req, int *argc )
-{
+char ** MM_ParseResponse( wswcurl_req *req, int *argc ) {
 	size_t respSize;
 	char *buffer, *realBuffer, *p, *end, **tokens;
 	int numTokens, startOfs, endToken;
 
-	if( argc )
+	if( argc ) {
 		*argc = 0;
+	}
 
 	wswcurl_getsize( req, &respSize );
-	if( !respSize )
+	if( !respSize ) {
 		return 0;
+	}
 
 	// read the response string
-	buffer = Mem_TempMalloc( respSize + 1);
+	buffer = Mem_TempMalloc( respSize + 1 );
 	respSize = wswcurl_read( req, buffer, respSize );
 	buffer[respSize] = '\0';
 
-	Com_DPrintf("MM_ParseResponse: Parsing string\n%s\n", buffer );
+	Com_DPrintf( "MM_ParseResponse: Parsing string\n%s\n", buffer );
 
 	// count the number of tokens (could this be done in 1 pass?)
 	p = buffer;
 	end = buffer + respSize;
 	numTokens = 0;
 	startOfs = 0;
-	while( p < end )
-	{
+	while( p < end ) {
 		// skip whitespace
-		while( p < end && *p <= ' ')
+		while( p < end && *p <= ' ' )
 			p++;
 
-		if( p >= end )
+		if( p >= end ) {
 			break;
+		}
 
-		if( !numTokens )
+		if( !numTokens ) {
 			startOfs = p - buffer;
+		}
 
 		numTokens++;
 
 		// skip the token
-		while( p < end && *p > ' ')
+		while( p < end && *p > ' ' )
 			p++;
 	}
 
 	// fail
-	if( !numTokens )
-	{
-		if( argc )
+	if( !numTokens ) {
+		if( argc ) {
 			*argc = 0;
+		}
 		Mem_TempFree( buffer );
 		return NULL;
 	}
 
-	if( argc )
+	if( argc ) {
 		*argc = numTokens;
-	tokens = Mem_TempMalloc( (numTokens + 1) * sizeof( char* ) );
+	}
+	tokens = Mem_TempMalloc( ( numTokens + 1 ) * sizeof( char* ) );
 
 	// allocate the actual buffer that we are going to return
-	if( startOfs > 0 )
-	{
-		realBuffer = Mem_TempMalloc( (respSize - startOfs) + 1 );
+	if( startOfs > 0 ) {
+		realBuffer = Mem_TempMalloc( ( respSize - startOfs ) + 1 );
 		memcpy( realBuffer, buffer + startOfs, respSize - startOfs );
 		Mem_TempFree( buffer );
 		buffer = realBuffer;
@@ -172,51 +170,48 @@ char ** MM_ParseResponse( wswcurl_req *req, int *argc )
 	end = buffer + respSize;
 	endToken = numTokens;
 	numTokens = 0;
-	while( p < end && numTokens < endToken )
-	{
+	while( p < end && numTokens < endToken ) {
 		// we made the buffer point into the first character
 		// so we can shuffle this loop a little
 		tokens[numTokens++] = p;
 
 		// skip the token
-		while( p < end && *p > ' ')
+		while( p < end && *p > ' ' )
 			p++;
 
-		if( p >= end )
+		if( p >= end ) {
 			break;
+		}
 
 		// skip whitespace
-		while( p < end && *p <= ' ')
+		while( p < end && *p <= ' ' )
 			*p++ = '\0';
 
-		Com_DPrintf("MM_ParseResponse: parsed token %s\n", tokens[numTokens-1]);
+		Com_DPrintf( "MM_ParseResponse: parsed token %s\n", tokens[numTokens - 1] );
 	}
-	*p = '\0';	// we left room for 1 character
+	*p = '\0';  // we left room for 1 character
 	tokens[numTokens] = 0;
 
 	return tokens;
 }
 
 // free the result from mm_parseResponse2
-void MM_FreeResponse( char **argv )
-{
-	if( argv )
-	{
-		if( argv[0] )
+void MM_FreeResponse( char **argv ) {
+	if( argv ) {
+		if( argv[0] ) {
 			Mem_TempFree( argv[0] );
+		}
 		Mem_TempFree( argv );
 	}
 }
 
 //==================================
 
-void MM_Frame( const int realmsec )
-{
+void MM_Frame( const int realmsec ) {
 
 }
 
-void MM_Init( void )
-{
+void MM_Init( void ) {
 	mm_initialized = false;
 
 	mm_url = Cvar_Get( "mm_url", APP_MATCHMAKER_URL, CVAR_ARCHIVE | CVAR_NOSET );
@@ -224,8 +219,7 @@ void MM_Init( void )
 	mm_initialized = true;
 }
 
-void MM_Shutdown( void )
-{
+void MM_Shutdown( void ) {
 	mm_url = NULL;
 	mm_initialized = false;
 }

@@ -21,12 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <android/log.h>
 #include "../qcommon/qcommon.h"
 
-char *Sys_ConsoleInput( void )
-{
+char *Sys_ConsoleInput( void ) {
 	return NULL;
 }
 
-void Sys_ConsoleOutput( char *string )
-{
+void Sys_ConsoleOutput( char *string ) {
 	__android_log_write( ANDROID_LOG_INFO, "Qfusion", string );
 }

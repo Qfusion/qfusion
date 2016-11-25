@@ -35,31 +35,27 @@ static struct qmutex_s *snddma_android_mutex = NULL;
 static int snddma_android_pos;
 static int snddma_android_size;
 
-void S_Activate( bool active )
-{
-	if( active )
-	{
+void S_Activate( bool active ) {
+	if( active ) {
 		memset( dma.buffer, ( dma.samplebits == 8 ) ? 128 : 0, snddma_android_size * 2 );
-		(*snddma_android_bufferQueue)->Enqueue( snddma_android_bufferQueue, dma.buffer, snddma_android_size );
-		(*snddma_android_play)->SetPlayState( snddma_android_play, SL_PLAYSTATE_PLAYING );
-	}
-	else
-	{
-		if( s_globalfocus->integer )
+		( *snddma_android_bufferQueue )->Enqueue( snddma_android_bufferQueue, dma.buffer, snddma_android_size );
+		( *snddma_android_play )->SetPlayState( snddma_android_play, SL_PLAYSTATE_PLAYING );
+	} else {
+		if( s_globalfocus->integer ) {
 			return;
-		(*snddma_android_play)->SetPlayState( snddma_android_play, SL_PLAYSTATE_STOPPED );
-		(*snddma_android_bufferQueue)->Clear( snddma_android_bufferQueue );
+		}
+		( *snddma_android_play )->SetPlayState( snddma_android_play, SL_PLAYSTATE_STOPPED );
+		( *snddma_android_bufferQueue )->Clear( snddma_android_bufferQueue );
 	}
 }
 
-static void SNDDMA_Android_Callback( SLBufferQueueItf bq, void *context )
-{
+static void SNDDMA_Android_Callback( SLBufferQueueItf bq, void *context ) {
 	uint8_t *buffer2;
 
 	trap_Mutex_Lock( snddma_android_mutex );
 
 	buffer2 = ( uint8_t * )dma.buffer + snddma_android_size;
-	(*bq)->Enqueue( bq, buffer2, snddma_android_size );
+	( *bq )->Enqueue( bq, buffer2, snddma_android_size );
 	memcpy( buffer2, dma.buffer, snddma_android_size );
 	memset( dma.buffer, ( dma.samplebits == 8 ) ? 128 : 0, snddma_android_size );
 	snddma_android_pos += dma.samples;
@@ -67,8 +63,7 @@ static void SNDDMA_Android_Callback( SLBufferQueueItf bq, void *context )
 	trap_Mutex_Unlock( snddma_android_mutex );
 }
 
-static const char *SNDDMA_Android_Init( void )
-{
+static const char *SNDDMA_Android_Init( void ) {
 	SLresult result;
 
 	SLEngineItf engine;
@@ -88,23 +83,34 @@ static const char *SNDDMA_Android_Init( void )
 	int samples;
 
 	result = slCreateEngine( &snddma_android_engine, 0, NULL, 0, NULL, NULL );
-	if( result != SL_RESULT_SUCCESS ) return "slCreateEngine";
-	result = (*snddma_android_engine)->Realize( snddma_android_engine, SL_BOOLEAN_FALSE );
-	if( result != SL_RESULT_SUCCESS ) return "engine->Realize";
-	result = (*snddma_android_engine)->GetInterface( snddma_android_engine, SL_IID_ENGINE, &engine );
-	if( result != SL_RESULT_SUCCESS ) return "engine->GetInterface(ENGINE)";
+	if( result != SL_RESULT_SUCCESS ) {
+		return "slCreateEngine";
+	}
+	result = ( *snddma_android_engine )->Realize( snddma_android_engine, SL_BOOLEAN_FALSE );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "engine->Realize";
+	}
+	result = ( *snddma_android_engine )->GetInterface( snddma_android_engine, SL_IID_ENGINE, &engine );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "engine->GetInterface(ENGINE)";
+	}
 
-	result = (*engine)->CreateOutputMix( engine, &snddma_android_outputMix, 0, NULL, NULL );
-	if( result != SL_RESULT_SUCCESS ) return "engine->CreateOutputMix";
-	result = (*snddma_android_outputMix)->Realize( snddma_android_outputMix, SL_BOOLEAN_FALSE );
-	if( result != SL_RESULT_SUCCESS ) return "outputMix->Realize";
+	result = ( *engine )->CreateOutputMix( engine, &snddma_android_outputMix, 0, NULL, NULL );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "engine->CreateOutputMix";
+	}
+	result = ( *snddma_android_outputMix )->Realize( snddma_android_outputMix, SL_BOOLEAN_FALSE );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "outputMix->Realize";
+	}
 
-	if( s_khz->integer >= 44 )
+	if( s_khz->integer >= 44 ) {
 		freq = 44100;
-	else if( s_khz->integer >= 22 )
+	} else if( s_khz->integer >= 22 ) {
 		freq = 22050;
-	else
+	} else {
 		freq = 11025;
+	}
 
 	sourceLocator.locatorType = SL_DATALOCATOR_BUFFERQUEUE;
 	sourceLocator.numBuffers = 2;
@@ -113,7 +119,7 @@ static const char *SNDDMA_Android_Init( void )
 	sourceFormat.samplesPerSec = freq * 1000;
 	sourceFormat.bitsPerSample = ( ( s_bits->integer >= 16 ) ? 16 : 8 );
 	sourceFormat.containerSize = sourceFormat.bitsPerSample;
-	sourceFormat.channelMask = ( ( sourceFormat.numChannels == 2 ) ? SL_SPEAKER_FRONT_LEFT|SL_SPEAKER_FRONT_RIGHT : SL_SPEAKER_FRONT_CENTER );
+	sourceFormat.channelMask = ( ( sourceFormat.numChannels == 2 ) ? SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT : SL_SPEAKER_FRONT_CENTER );
 	sourceFormat.endianness = SL_BYTEORDER_LITTLEENDIAN;
 	source.pLocator = &sourceLocator;
 	source.pFormat = &sourceFormat;
@@ -123,23 +129,34 @@ static const char *SNDDMA_Android_Init( void )
 	sink.pLocator = &sinkLocator;
 	sink.pFormat = NULL;
 
-	result = (*engine)->CreateAudioPlayer( engine, &snddma_android_player, &source, &sink, 1, audioPlayerInterfaceIDs, audioPlayerInterfacesRequired );
-	if( result != SL_RESULT_SUCCESS ) return "engine->CreateAudioPlayer";
-	result = (*snddma_android_player)->Realize( snddma_android_player, SL_BOOLEAN_FALSE );
-	if( result != SL_RESULT_SUCCESS ) return "player->Realize";
-	result = (*snddma_android_player)->GetInterface( snddma_android_player, SL_IID_BUFFERQUEUE, &snddma_android_bufferQueue );
-	if( result != SL_RESULT_SUCCESS ) return "player->GetInterface(BUFFERQUEUE)";
-	result = (*snddma_android_player)->GetInterface( snddma_android_player, SL_IID_PLAY, &snddma_android_play );
-	if( result != SL_RESULT_SUCCESS ) return "player->GetInterface(PLAY)";
-	result = (*snddma_android_bufferQueue)->RegisterCallback( snddma_android_bufferQueue, SNDDMA_Android_Callback, NULL );
-	if( result != SL_RESULT_SUCCESS ) return "bufferQueue->RegisterCallback";
+	result = ( *engine )->CreateAudioPlayer( engine, &snddma_android_player, &source, &sink, 1, audioPlayerInterfaceIDs, audioPlayerInterfacesRequired );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "engine->CreateAudioPlayer";
+	}
+	result = ( *snddma_android_player )->Realize( snddma_android_player, SL_BOOLEAN_FALSE );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "player->Realize";
+	}
+	result = ( *snddma_android_player )->GetInterface( snddma_android_player, SL_IID_BUFFERQUEUE, &snddma_android_bufferQueue );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "player->GetInterface(BUFFERQUEUE)";
+	}
+	result = ( *snddma_android_player )->GetInterface( snddma_android_player, SL_IID_PLAY, &snddma_android_play );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "player->GetInterface(PLAY)";
+	}
+	result = ( *snddma_android_bufferQueue )->RegisterCallback( snddma_android_bufferQueue, SNDDMA_Android_Callback, NULL );
+	if( result != SL_RESULT_SUCCESS ) {
+		return "bufferQueue->RegisterCallback";
+	}
 
-	if( freq <= 11025 )
+	if( freq <= 11025 ) {
 		samples = 1024;
-	else if( freq <= 22050 )
+	} else if( freq <= 22050 ) {
 		samples = 2048;
-	else
+	} else {
 		samples = 4096;
+	}
 
 	dma.channels = sourceFormat.numChannels;
 	dma.samples = samples * sourceFormat.numChannels;
@@ -149,7 +166,9 @@ static const char *SNDDMA_Android_Init( void )
 	dma.msec_per_sample = 1000.0 / freq;
 	snddma_android_size = dma.samples * ( sourceFormat.bitsPerSample >> 3 );
 	dma.buffer = malloc( snddma_android_size * 2 );
-	if( !dma.buffer ) return "malloc";
+	if( !dma.buffer ) {
+		return "malloc";
+	}
 
 	snddma_android_mutex = trap_Mutex_Create();
 
@@ -160,78 +179,72 @@ static const char *SNDDMA_Android_Init( void )
 	return NULL;
 }
 
-bool SNDDMA_Init( void *hwnd, bool verbose )
-{
+bool SNDDMA_Init( void *hwnd, bool verbose ) {
 	const char *initError;
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "OpenSL ES audio device initializing...\n" );
+	}
 
-	if( !s_bits )
-	{
-		s_bits = trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE|CVAR_LATCH_SOUND );
-		s_channels = trap_Cvar_Get( "s_channels", "2", CVAR_ARCHIVE|CVAR_LATCH_SOUND );
+	if( !s_bits ) {
+		s_bits = trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
+		s_channels = trap_Cvar_Get( "s_channels", "2", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
 	}
 
 	initError = SNDDMA_Android_Init();
-	if( initError )
-	{
+	if( initError ) {
 		Com_Printf( "SNDDMA_Init: %s failed.\n", initError );
 		SNDDMA_Shutdown( verbose );
 		return false;
 	}
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "OpenSL ES audio initialized.\n" );
+	}
 
 	return true;
 }
 
-int SNDDMA_GetDMAPos( void )
-{
+int SNDDMA_GetDMAPos( void ) {
 	return snddma_android_pos;
 }
 
-void SNDDMA_Shutdown( bool verbose )
-{
-	if( verbose )
+void SNDDMA_Shutdown( bool verbose ) {
+	if( verbose ) {
 		Com_Printf( "Closing OpenSL ES audio device...\n" );
+	}
 
-	if( snddma_android_player )
-	{
-		(*snddma_android_player)->Destroy( snddma_android_player );
+	if( snddma_android_player ) {
+		( *snddma_android_player )->Destroy( snddma_android_player );
 		snddma_android_player = NULL;
 	}
-	if( snddma_android_outputMix )
-	{
-		(*snddma_android_outputMix)->Destroy( snddma_android_outputMix );
+	if( snddma_android_outputMix ) {
+		( *snddma_android_outputMix )->Destroy( snddma_android_outputMix );
 		snddma_android_outputMix = NULL;
 	}
-	if( snddma_android_engine )
-	{
-		(*snddma_android_engine)->Destroy( snddma_android_engine );
+	if( snddma_android_engine ) {
+		( *snddma_android_engine )->Destroy( snddma_android_engine );
 		snddma_android_engine = NULL;
 	}
 
-	if( dma.buffer )
-	{
+	if( dma.buffer ) {
 		free( dma.buffer );
 		dma.buffer = NULL;
 	}
 
-	if( snddma_android_mutex )
+	if( snddma_android_mutex ) {
 		trap_Mutex_Destroy( &snddma_android_mutex );
+	}
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "OpenSL ES audio device shut down.\n" );
+	}
 }
 
-void SNDDMA_Submit( void )
-{
+void SNDDMA_Submit( void ) {
 	trap_Mutex_Unlock( snddma_android_mutex );
 }
 
-void SNDDMA_BeginPainting( void )
-{
+void SNDDMA_BeginPainting( void ) {
 	trap_Mutex_Lock( snddma_android_mutex );
 }

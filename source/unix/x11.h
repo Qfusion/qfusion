@@ -11,8 +11,7 @@
 
 #include <GL/glx.h>
 
-typedef struct x11display_s
-{
+typedef struct x11display_s {
 	Display *dpy;
 	int scr;
 	Window root, win, gl_win, old_win;
@@ -32,7 +31,7 @@ typedef struct x11display_s
 	unsigned int win_width, win_height;
 } x11display_t;
 
-typedef int (* x11wndproc_t)(void *, int, int, int);
+typedef int (* x11wndproc_t)( void *, int, int, int );
 
 // defined by glx_imp.c, used also by in_x11.c
 extern x11display_t x11display;

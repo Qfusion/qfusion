@@ -25,8 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "tv_relay.h"
 
-struct upstream_s
-{
+struct upstream_s {
 	connstate_t state;
 
 	packet_t *packetqueue;
@@ -107,10 +106,10 @@ struct upstream_s
 	char *audiotrack;
 
 	// relays
-	relay_t	relay;
+	relay_t relay;
 };
 
-#define TV_Upstream_CopyString( upstream,in ) _TVCopyString_Pool( (upstream)->mempool, in, __FILE__, __LINE__ )
+#define TV_Upstream_CopyString( upstream,in ) _TVCopyString_Pool( ( upstream )->mempool, in, __FILE__, __LINE__ )
 bool TV_UpstreamForText( const char *text, upstream_t **upstream );
 void TV_Upstream_UpdateReliableCommandsToServer( upstream_t *upstream, msg_t *msg );
 void TV_Upstream_Error( upstream_t *upstream, const char *format, ... );

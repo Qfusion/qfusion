@@ -28,21 +28,20 @@ STANDARD PROJECTIVE SHADOW MAPS (SSM)
 =============================================================
 */
 
-#define SHADOWMAP_ORTHO_NUDGE			8
-#define SHADOWMAP_MIN_VIEWPORT_SIZE		16
-#define SHADOWMAP_MAX_LOD				15
-#define SHADOWMAP_LODBIAS				1
+#define SHADOWMAP_ORTHO_NUDGE           8
+#define SHADOWMAP_MIN_VIEWPORT_SIZE     16
+#define SHADOWMAP_MAX_LOD               15
+#define SHADOWMAP_LODBIAS               1
 
 //static bool r_shadowGroups_sorted;
 
-#define SHADOWGROUPS_HASH_SIZE	8
+#define SHADOWGROUPS_HASH_SIZE  8
 static shadowGroup_t *r_shadowGroups_hash[SHADOWGROUPS_HASH_SIZE];
 
 /*
 * R_ClearShadowGroups
 */
-void R_ClearShadowGroups( void )
-{
+void R_ClearShadowGroups( void ) {
 	rsc.numShadowGroups = 0;
 	memset( rsc.entShadowGroups, 0, sizeof( *rsc.entShadowGroups ) * MAX_REF_ENTITIES );
 	memset( rsc.entShadowBits, 0, sizeof( *rsc.entShadowBits ) * MAX_REF_ENTITIES );
@@ -52,8 +51,7 @@ void R_ClearShadowGroups( void )
 /*
 * R_AddLightOccluder
 */
-bool R_AddLightOccluder( const entity_t *ent )
-{
+bool R_AddLightOccluder( const entity_t *ent ) {
 	int i;
 	float maxSide;
 	vec3_t origin;
@@ -63,42 +61,45 @@ bool R_AddLightOccluder( const entity_t *ent )
 	vec3_t mins, maxs, bbox[8];
 	bool bmodelRotated = false;
 
-	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
+	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		return false;
-	if( !ent->model || ent->model->type == mod_brush )
+	}
+	if( !ent->model || ent->model->type == mod_brush ) {
 		return false;
+	}
 
 	VectorCopy( ent->lightingOrigin, origin );
-	if( ent->model->type == mod_brush )
-	{
+	if( ent->model->type == mod_brush ) {
 		vec3_t t;
 		VectorAdd( ent->model->mins, ent->model->maxs, t );
 		VectorMA( ent->origin, 0.5, t, origin );
 	}
 
-	if( VectorCompare( origin, vec3_origin ) )
+	if( VectorCompare( origin, vec3_origin ) ) {
 		return false;
+	}
 
 	// find lighting group containing entities with same lightingOrigin as ours
 	hash_key = (unsigned int)( origin[0] * 7 + origin[1] * 5 + origin[2] * 3 );
-	hash_key &= ( SHADOWGROUPS_HASH_SIZE-1 );
+	hash_key &= ( SHADOWGROUPS_HASH_SIZE - 1 );
 
-	for( group = r_shadowGroups_hash[hash_key]; group; group = group->hashNext )
-	{
-		if( VectorCompare( group->origin, origin ) )
+	for( group = r_shadowGroups_hash[hash_key]; group; group = group->hashNext ) {
+		if( VectorCompare( group->origin, origin ) ) {
 			goto add; // found an existing one, add
+		}
 	}
 
-	if( rsc.numShadowGroups == MAX_SHADOWGROUPS )
+	if( rsc.numShadowGroups == MAX_SHADOWGROUPS ) {
 		return false; // no free groups
 
+	}
 	leaf = Mod_PointInLeaf( origin, rsh.worldModel );
 
 	// start a new group
 	group = &rsc.shadowGroups[rsc.numShadowGroups];
 	memset( group, 0, sizeof( *group ) );
 	group->id = group - rsc.shadowGroups + 1;
-	group->bit = ( 1<<rsc.numShadowGroups );
+	group->bit = ( 1 << rsc.numShadowGroups );
 	group->vis = Mod_ClusterPVS( leaf->cluster, rsh.worldModel );
 	group->useOrtho = true;
 	group->alpha = r_shadows_alpha->value;
@@ -115,19 +116,21 @@ bool R_AddLightOccluder( const entity_t *ent )
 	rsc.numShadowGroups++;
 add:
 	// get model bounds
-	if( ent->model->type == mod_alias )
+	if( ent->model->type == mod_alias ) {
 		R_AliasModelBBox( ent, mins, maxs );
-	else if( ent->model->type == mod_skeletal )
+	} else if( ent->model->type == mod_skeletal ) {
 		R_SkeletalModelBBox( ent, mins, maxs );
-	else if( ent->model->type == mod_brush )
+	} else if( ent->model->type == mod_brush ) {
 		R_BrushModelBBox( ent, mins, maxs, &bmodelRotated );
-	else
+	} else {
 		ClearBounds( mins, maxs );
+	}
 
 	maxSide = 0;
 	for( i = 0; i < 3; i++ ) {
-		if( mins[i] >= maxs[i] )
+		if( mins[i] >= maxs[i] ) {
 			return false;
+		}
 		maxSide = max( maxSide, maxs[i] - mins[i] );
 	}
 
@@ -136,17 +139,15 @@ add:
 		return false;
 	}
 
-	rsc.entShadowGroups[R_ENT2NUM(ent)] = group->id;
-	if( ent->flags & RF_WEAPONMODEL )
+	rsc.entShadowGroups[R_ENT2NUM( ent )] = group->id;
+	if( ent->flags & RF_WEAPONMODEL ) {
 		return true;
+	}
 
-	if( ent->model->type == mod_brush )
-	{
+	if( ent->model->type == mod_brush ) {
 		VectorCopy( mins, group->mins );
 		VectorCopy( maxs, group->maxs );
-	}
-	else
-	{
+	} else {
 		// rotate local bounding box and compute the full bounding box for this group
 		R_TransformBounds( ent->origin, ent->axis, mins, maxs, bbox );
 		for( i = 0; i < 8; i++ ) {
@@ -166,8 +167,7 @@ add:
 /*
 * R_ComputeShadowmapBounds
 */
-static void R_ComputeShadowmapBounds( void )
-{
+static void R_ComputeShadowmapBounds( void ) {
 	unsigned int i;
 	vec3_t lightDir;
 	vec4_t lightDiffuse;
@@ -210,8 +210,7 @@ static void R_ComputeShadowmapBounds( void )
 /*
 * R_BuildShadowGroups
 */
-void R_BuildShadowGroups( void )
-{
+void R_BuildShadowGroups( void ) {
 	R_ComputeShadowmapBounds();
 }
 
@@ -220,8 +219,7 @@ void R_BuildShadowGroups( void )
 *
 * returns farclip value
 */
-static float R_FitOccluder( const shadowGroup_t *group, refdef_t *refdef )
-{
+static float R_FitOccluder( const shadowGroup_t *group, refdef_t *refdef ) {
 	int i;
 	float x1, x2, y1, y2, z1, z2;
 	int ix1, ix2, iy1, iy2, iz1, iz2;
@@ -234,12 +232,11 @@ static float R_FitOccluder( const shadowGroup_t *group, refdef_t *refdef )
 
 	// use current view settings for first approximation
 	if( useOrtho ) {
-		Matrix4_OrthogonalProjection( -refdef->ortho_x, refdef->ortho_x, -refdef->ortho_y, refdef->ortho_y, 
-			-group->projDist, group->projDist, projectionMatrix );
-	}
-	else {
-		Matrix4_PerspectiveProjection( refdef->fov_x, refdef->fov_y, 
-			Z_NEAR, group->projDist, rf.cameraSeparation, projectionMatrix );
+		Matrix4_OrthogonalProjection( -refdef->ortho_x, refdef->ortho_x, -refdef->ortho_y, refdef->ortho_y,
+									  -group->projDist, group->projDist, projectionMatrix );
+	} else {
+		Matrix4_PerspectiveProjection( refdef->fov_x, refdef->fov_y,
+									   Z_NEAR, group->projDist, rf.cameraSeparation, projectionMatrix );
 	}
 
 	Matrix4_Multiply( projectionMatrix, cameraMatrix, cameraProjectionMatrix );
@@ -249,8 +246,7 @@ static float R_FitOccluder( const shadowGroup_t *group, refdef_t *refdef )
 	// note that it's suboptimal to use bbox calculated in worldspace (FIXME)
 	x1 = y1 = z1 = 999999;
 	x2 = y2 = z2 = -999999;
-	for( i = 0; i < 8; i++ )
-	{
+	for( i = 0; i < 8; i++ ) {
 		// compute and rotate a full bounding box
 		vec3_t v;
 		vec4_t temp, temp2;
@@ -299,20 +295,20 @@ static float R_FitOccluder( const shadowGroup_t *group, refdef_t *refdef )
 /*
 * R_SetupShadowmapView
 */
-static float R_SetupShadowmapView( shadowGroup_t *group, refdef_t *refdef, int lod )
-{
+static float R_SetupShadowmapView( shadowGroup_t *group, refdef_t *refdef, int lod ) {
 	int width, height;
 	float farClip;
 	image_t *shadowmap;
 
 	// clamp LOD to a sane value
 	clamp( lod, 0, SHADOWMAP_MAX_LOD );
-	
+
 	shadowmap = group->shadowmap;
 	width = shadowmap->upload_width >> lod;
 	height = shadowmap->upload_height >> lod;
-	if( !width || !height )
+	if( !width || !height ) {
 		return 0.0f;
+	}
 
 	refdef->x = 0;
 	refdef->y = 0;
@@ -348,8 +344,7 @@ static float R_SetupShadowmapView( shadowGroup_t *group, refdef_t *refdef, int l
 /*
 * R_DrawShadowmaps
 */
-void R_DrawShadowmaps( void )
-{
+void R_DrawShadowmaps( void ) {
 	unsigned int i;
 	image_t *shadowmap;
 	int textureWidth, textureHeight;
@@ -363,14 +358,18 @@ void R_DrawShadowmaps( void )
 	float farClip;
 	float dist;
 
-	if( !rsc.numShadowGroups )
+	if( !rsc.numShadowGroups ) {
 		return;
-	if( rn.renderFlags & RF_SHADOWMAPVIEW )
+	}
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		return;
-	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
+	}
+	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		return;
-	if( !shadowBits )
+	}
+	if( !shadowBits ) {
 		return;
+	}
 
 	if( !R_PushRefInst() ) {
 		return;
@@ -383,8 +382,7 @@ void R_DrawShadowmaps( void )
 	refdef = rn.refdef;
 
 	// find lighting group containing entities with same lightingOrigin as ours
-	for( i = 0; i < rsc.numShadowGroups; i++ )
-	{
+	for( i = 0; i < rsc.numShadowGroups; i++ ) {
 		if( !shadowBits ) {
 			break;
 		}
@@ -402,7 +400,7 @@ void R_DrawShadowmaps( void )
 
 		// calculate LOD for shadowmap
 		dist = DistanceFast( group->origin, lodOrigin );
-		lod = (int)(dist * lodScale) / group->projDist - SHADOWMAP_LODBIAS;
+		lod = (int)( dist * lodScale ) / group->projDist - SHADOWMAP_LODBIAS;
 		if( lod < 0 ) {
 			lod = 0;
 		}
@@ -432,7 +430,7 @@ void R_DrawShadowmaps( void )
 
 		rn.renderTarget = shadowmap->fbo;
 		rn.farClip = farClip;
-		rn.renderFlags = RF_SHADOWMAPVIEW|RF_FLIPFRONTFACE;
+		rn.renderFlags = RF_SHADOWMAPVIEW | RF_FLIPFRONTFACE;
 		if( !( shadowmap->flags & IT_DEPTH ) ) {
 			rn.renderFlags |= RF_SHADOWMAPVIEW_RGB;
 		}

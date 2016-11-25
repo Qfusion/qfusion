@@ -30,35 +30,38 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * TVM_SnapClients
 * It's time to send a new snap, so set the world up for sending
 */
-static void TVM_SnapClients( tvm_relay_t *relay )
-{
+static void TVM_SnapClients( tvm_relay_t *relay ) {
 	int i;
-	edict_t	*ent;
+	edict_t *ent;
 
 	// normal clients
-	for( i = 0; i < relay->local_maxclients; i++ )
-	{
+	for( i = 0; i < relay->local_maxclients; i++ ) {
 		ent = relay->local_edicts + i;
-		if( !ent->r.inuse || !ent->r.client )
+		if( !ent->r.inuse || !ent->r.client ) {
 			continue;
-		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED )
+		}
+		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED ) {
 			continue;
-		if( ent->r.client->chase.active )
+		}
+		if( ent->r.client->chase.active ) {
 			continue;
+		}
 
 		TVM_ClientEndSnapFrame( ent );
 	}
 
 	// chasers
-	for( i = 0; i < relay->local_maxclients; i++ )
-	{
+	for( i = 0; i < relay->local_maxclients; i++ ) {
 		ent = relay->local_edicts + i;
-		if( !ent->r.inuse || !ent->r.client )
+		if( !ent->r.inuse || !ent->r.client ) {
 			continue;
-		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED )
+		}
+		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED ) {
 			continue;
-		if( !ent->r.client->chase.active )
+		}
+		if( !ent->r.client->chase.active ) {
 			continue;
+		}
 
 		TVM_ChaseClientEndSnapFrame( ent );
 	}
@@ -66,11 +69,10 @@ static void TVM_SnapClients( tvm_relay_t *relay )
 
 /*
 * TVM_GetGameState
-* 
+*
 * The server asks for the match state data
 */
-game_state_t *TVM_GetGameState( tvm_relay_t *relay )
-{
+game_state_t *TVM_GetGameState( tvm_relay_t *relay ) {
 	return &relay->gameState;
 }
 
@@ -78,20 +80,17 @@ game_state_t *TVM_GetGameState( tvm_relay_t *relay )
 * TVM_SnapFrame
 * It's time to send a new snap, so set the world up for sending
 */
-void TVM_SnapFrame( tvm_relay_t *relay )
-{
-	edict_t	*ent;
+void TVM_SnapFrame( tvm_relay_t *relay ) {
+	edict_t *ent;
 
 	// finish snap
 	TVM_SnapClients( relay ); // build the playerstate_t structures for all players
 
 	// set entity bits (prepare entities for being sent in the snap)
-	for( ent = &relay->edicts[0]; ENTNUM( ent ) < relay->numentities; ent++ )
-	{
+	for( ent = &relay->edicts[0]; ENTNUM( ent ) < relay->numentities; ent++ ) {
 		assert( ent->s.number == ENTNUM( ent ) );
 
-		if( !ent->r.inuse )
-		{
+		if( !ent->r.inuse ) {
 			ent->r.svflags |= SVF_NOCLIENT;
 			continue;
 		}
@@ -103,14 +102,13 @@ void TVM_SnapFrame( tvm_relay_t *relay )
 * We just run SnapFrame, the server just sent the snap to the clients,
 * it's now time to clean up snap specific data to start the next snap from clean.
 */
-void TVM_ClearSnap( tvm_relay_t *relay )
-{
+void TVM_ClearSnap( tvm_relay_t *relay ) {
 	edict_t *ent;
 
-	for( ent = &relay->local_edicts[0]; ENTNUM( ent ) < relay->local_numentities; ent++ )
-	{
-		if( !ent->r.inuse )
+	for( ent = &relay->local_edicts[0]; ENTNUM( ent ) < relay->local_numentities; ent++ ) {
+		if( !ent->r.inuse ) {
 			continue;
+		}
 
 		// clear the snap temp info
 		memset( &ent->snap, 0, sizeof( ent->snap ) );

@@ -31,28 +31,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 /*
  * Probability calculation
-		Given player A with [skill Sa, uncertainity Ca] and player B with [skill Sb, uncertainity Cb] and T factor (see above)
-		we calculate the probability P with this formula
+        Given player A with [skill Sa, uncertainity Ca] and player B with [skill Sb, uncertainity Cb] and T factor (see above)
+        we calculate the probability P with this formula
 
-			x = Sa - Sb
-			d = T + T * Ca + T * Cb
-			P = 1.0 / ( 1.0 + exp( -x*1.666666 / d ) )
+            x = Sa - Sb
+            d = T + T * Ca + T * Cb
+            P = 1.0 / ( 1.0 + exp( -x*1.666666 / d ) )
 
-		x is the skill difference, d is the normalization factor that includes uncertainity. The value of d specifies the
-		"deepness" of the probability curve, larger d produces curve that is more flat in the vertical axis and smaller d
-		gives a sharper transition thus showing that with smaller uncertainity the probability curve is more "sure"
-		about the estimation.
+        x is the skill difference, d is the normalization factor that includes uncertainity. The value of d specifies the
+        "deepness" of the probability curve, larger d produces curve that is more flat in the vertical axis and smaller d
+        gives a sharper transition thus showing that with smaller uncertainity the probability curve is more "sure"
+        about the estimation.
  */
 #if 0
-static float * rating_getExpectedList( clientRating_t *list, int listSize )
-{
+static float * rating_getExpectedList( clientRating_t *list, int listSize ) {
 	return NULL;
 }
 #endif
 
 // returns the given rating or NULL
-clientRating_t *Rating_Find( clientRating_t *ratings, const char *gametype )
-{
+clientRating_t *Rating_Find( clientRating_t *ratings, const char *gametype ) {
 	clientRating_t *cr = ratings;
 
 	while( cr != NULL && strcmp( gametype, cr->gametype ) != 0 )
@@ -62,8 +60,7 @@ clientRating_t *Rating_Find( clientRating_t *ratings, const char *gametype )
 }
 
 // as above but find with an ID
-clientRating_t *Rating_FindId( clientRating_t *ratings, int id )
-{
+clientRating_t *Rating_FindId( clientRating_t *ratings, int id ) {
 	clientRating_t *cr = ratings;
 
 	while( cr != NULL && cr->uuid != id )
@@ -74,25 +71,25 @@ clientRating_t *Rating_FindId( clientRating_t *ratings, int id )
 
 // detaches given rating from the list, returns the element and sets the ratings argument
 // to point to the new root. Returns NULL if gametype wasn't found
-clientRating_t *Rating_Detach( clientRating_t **list, const char *gametype )
-{
+clientRating_t *Rating_Detach( clientRating_t **list, const char *gametype ) {
 	clientRating_t *cr = *list, *prev = NULL;
 
-	while( cr != NULL && strcmp( gametype, cr->gametype ) != 0 )
-	{
+	while( cr != NULL && strcmp( gametype, cr->gametype ) != 0 ) {
 		prev = cr;
 		cr = cr->next;
 	}
 
-	if( cr == NULL )
+	if( cr == NULL ) {
 		return NULL;
+	}
 
-	if( prev == NULL )
+	if( prev == NULL ) {
 		// detaching the root element
 		*list = cr->next;
-	else
+	} else {
 		// detaching it from the middle
 		prev->next = cr->next;
+	}
 
 	cr->next = NULL;
 	return cr;
@@ -100,33 +97,32 @@ clientRating_t *Rating_Detach( clientRating_t **list, const char *gametype )
 
 // detaches given rating from the list, returns the element and sets the ratings argument
 // to point to the new root. Returns NULL if gametype wasn't found
-clientRating_t *Rating_DetachId( clientRating_t **list, int id )
-{
+clientRating_t *Rating_DetachId( clientRating_t **list, int id ) {
 	clientRating_t *cr = *list, *prev = NULL;
 
-	while( cr != NULL && cr->uuid != id )
-	{
+	while( cr != NULL && cr->uuid != id ) {
 		prev = cr;
 		cr = cr->next;
 	}
 
-	if( cr == NULL )
+	if( cr == NULL ) {
 		return NULL;
+	}
 
-	if( prev == NULL )
+	if( prev == NULL ) {
 		// detaching the root element
 		*list = cr->next;
-	else
+	} else {
 		// detaching it from the middle
 		prev->next = cr->next;
+	}
 
 	cr->next = NULL;
 	return cr;
 }
 
 // head-on probability
-float Rating_GetProbabilitySingle( clientRating_t *single, clientRating_t *other )
-{
+float Rating_GetProbabilitySingle( clientRating_t *single, clientRating_t *other ) {
 	float x, d;
 
 	x = single->rating - other->rating;
@@ -137,23 +133,22 @@ float Rating_GetProbabilitySingle( clientRating_t *single, clientRating_t *other
 
 // returns a value between 0-1 for single clientRating against list of other clientRatings
 // if single is on the list, it is ignored for the calculation
-float Rating_GetProbability( clientRating_t *single, clientRating_t *list )
-{
+float Rating_GetProbability( clientRating_t *single, clientRating_t *list ) {
 	float accum;
 	int count;
 
 	accum = 0.0;
 	count = 0;
 
-	while( list )
-	{
+	while( list ) {
 		accum += Rating_GetProbabilitySingle( single, list );
 		count++;
 		list = list->next;
 	}
 
-	if( count )
+	if( count ) {
 		accum = accum / (float)count;
+	}
 
 	return accum;
 }
@@ -164,29 +159,24 @@ float Rating_GetProbability( clientRating_t *single, clientRating_t *list )
 // TODO: find best pairs
 
 // create an average clientRating out of list of clientRatings
-void Rating_AverageRating( clientRating_t *out, clientRating_t *list )
-{
+void Rating_AverageRating( clientRating_t *out, clientRating_t *list ) {
 	float raccum, daccum;
 	int count;
 
 	raccum = daccum = 0.0;
 	count = 0;
 
-	while( list )
-	{
+	while( list ) {
 		raccum += list->rating;
 		daccum += list->deviation;
 		count++;
 		list = list->next;
 	}
 
-	if( count )
-	{
+	if( count ) {
 		out->rating = raccum / (float)count;
 		out->deviation = daccum / (float)count;
-	}
-	else
-	{
+	} else {
 		out->rating = MM_RATING_DEFAULT;
 		out->deviation = MM_DEVIATION_DEFAULT;
 	}

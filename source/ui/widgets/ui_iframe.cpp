@@ -25,28 +25,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "widgets/ui_idiv.h"
 #include "formatters/ui_colorcode_formatter.h"
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 using namespace Rocket::Core;
 
 class IFrameWidget : public Element, EventListener
 {
 public:
-	IFrameWidget( const String &tag ) : Element( tag ), framed_document( NULL )
-	{
+	IFrameWidget( const String &tag ) : Element( tag ), framed_document( NULL ) {
 		SetProperty( "display", "inline-block" );
 		SetProperty( "overflow", "auto" );
 	}
 
-	virtual ~IFrameWidget()
-	{
+	virtual ~IFrameWidget() {
 		DetachFromOwnerDocument();
 	}
-	
+
 	// Called when attributes on the element are changed.
-	void OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes )
-	{
-		Element::OnAttributeChange(changed_attributes);
+	void OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+		Element::OnAttributeChange( changed_attributes );
 
 		AttributeNameList::const_iterator it;
 
@@ -58,38 +56,33 @@ public:
 		}
 	}
 
-	virtual void ProcessEvent( Event &ev )
-	{
+	virtual void ProcessEvent( Event &ev ) {
 		if( framed_document != NULL ) {
 			if( ev.GetTargetElement() == GetOwnerDocument() ) {
 				if( ev.GetType() == "hide" ) {
 					framed_document->Hide();
-				}
-				else if( ev.GetType() == "show" ) {
+				} else if( ev.GetType() == "show" ) {
 					framed_document->Show();
 				}
 			}
 		}
 	}
 
-	virtual void OnChildAdd( Element *child )
-	{
+	virtual void OnChildAdd( Element *child ) {
 		if( this == child ) {
 			LoadSource();
 		}
 	}
 
-	virtual void OnChildRemove( Element *child )
-	{
+	virtual void OnChildRemove( Element *child ) {
 		if( this == child ) {
 			DetachFromOwnerDocument();
 		}
 	}
 
 private:
-	void LoadSource()
-	{
-		String source = GetAttribute< String >("src", "");
+	void LoadSource() {
+		String source = GetAttribute< String >( "src", "" );
 
 		WSWUI::NavigationStack *stack = NULL;
 
@@ -98,6 +91,7 @@ private:
 
 			if( framed_document ) {
 				stack = framed_document->getStack();
+
 				//framed_document->RemoveReference();
 				if( stack ) {
 					stack->popAllDocuments();
@@ -127,8 +121,7 @@ private:
 		AttachToOwnerDocument();
 	}
 
-	void AttachToOwnerDocument( void )
-	{
+	void AttachToOwnerDocument( void ) {
 		ElementDocument *doc = GetOwnerDocument();
 		if( doc ) {
 			doc->AddEventListener( "show", this );
@@ -136,8 +129,7 @@ private:
 		}
 	}
 
-	void DetachFromOwnerDocument( void )
-	{
+	void DetachFromOwnerDocument( void ) {
 		ElementDocument *doc = GetOwnerDocument();
 		if( doc ) {
 			doc->RemoveEventListener( "show", this );
@@ -150,8 +142,7 @@ private:
 
 //==============================================================
 
-ElementInstancer *GetIFrameWidgetInstancer( void )
-{
+ElementInstancer *GetIFrameWidgetInstancer( void ) {
 	return __new__( GenericElementInstancer<IFrameWidget> )();
 }
 

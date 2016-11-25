@@ -30,8 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /**
  * Custom looper data IDs.
  */
-enum
-{
+enum {
 	LOOPER_ID_USER_CLIENT = LOOPER_ID_USER
 };
 

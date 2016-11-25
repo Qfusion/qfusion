@@ -44,8 +44,7 @@ typedef int ( *DECODER_TELL )( snd_stream_t *stream );
 typedef int ( *DECODER_SEEK )( snd_stream_t *stream, int offset, int whence );
 
 // Codec data structure
-struct snd_decoder_s
-{
+struct snd_decoder_s {
 	char *ext;
 	DECODER_LOAD load;
 	DECODER_OPEN open;

@@ -22,27 +22,21 @@
 
 #include "../qcommon/qcommon.h"
 
-void SV_Init( void )
-{
+void SV_Init( void ) {
 }
 
-void SV_Shutdown( const char *finalmsg )
-{
+void SV_Shutdown( const char *finalmsg ) {
 }
 
-void SV_ShutdownGame( const char *finalmsg, bool reconnect )
-{
+void SV_ShutdownGame( const char *finalmsg, bool reconnect ) {
 }
 
-void SV_Frame( int realmsec, int gamemsec )
-{
+void SV_Frame( int realmsec, int gamemsec ) {
 }
 
-bool SV_SendMessageToClient( struct client_s *client, msg_t *msg )
-{
+bool SV_SendMessageToClient( struct client_s *client, msg_t *msg ) {
 	return true;
 }
 
-void SV_ParseClientMessage( struct client_s *client, msg_t *msg )
-{
+void SV_ParseClientMessage( struct client_s *client, msg_t *msg ) {
 }

@@ -25,23 +25,23 @@ static void *zLibrary;
 
 #ifdef ZLIB_RUNTIME
 
-int (ZEXPORT *qzcompress)(Bytef *dest,uLongf *destLen, const Bytef *source, uLong sourceLen);
-int (ZEXPORT *qzcompress2)(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen, int level);
-int (ZEXPORT *qzuncompress)(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen);
-int (ZEXPORT *qzinflateInit2_)(z_streamp strm, int  windowBits, const char *version, int stream_size);
-int (ZEXPORT *qzinflate)(z_streamp strm, int flush);
-int (ZEXPORT *qzinflateEnd)(z_streamp strm);
-int (ZEXPORT *qzinflateReset)(z_streamp strm);
-gzFile (ZEXPORT *qgzopen)(const char *, const char *);
-z_off_t (ZEXPORT *qgzseek)(gzFile, z_off_t, int);
-z_off_t (ZEXPORT *qgztell)(gzFile);
-int (ZEXPORT *qgzread)(gzFile file, voidp buf, unsigned len);
-int (ZEXPORT *qgzwrite)(gzFile file, voidpc buf, unsigned len);
-int (ZEXPORT *qgzclose)(gzFile file);
-int (ZEXPORT *qgzeof)(gzFile file);
-int (ZEXPORT *qgzflush)(gzFile file, int flush);
-int (ZEXPORT *qgzsetparams)(gzFile file, int level, int strategy);
-int (ZEXPORT *qgzbuffer)(gzFile file, unsigned size);
+int( ZEXPORT * qzcompress )( Bytef * dest,uLongf * destLen, const Bytef * source, uLong sourceLen );
+int( ZEXPORT * qzcompress2 )( Bytef * dest, uLongf * destLen, const Bytef * source, uLong sourceLen, int level );
+int( ZEXPORT * qzuncompress )( Bytef * dest, uLongf * destLen, const Bytef * source, uLong sourceLen );
+int( ZEXPORT * qzinflateInit2_ )( z_streamp strm, int windowBits, const char *version, int stream_size );
+int( ZEXPORT * qzinflate )( z_streamp strm, int flush );
+int( ZEXPORT * qzinflateEnd )( z_streamp strm );
+int( ZEXPORT * qzinflateReset )( z_streamp strm );
+gzFile( ZEXPORT * qgzopen )( const char *, const char * );
+z_off_t( ZEXPORT * qgzseek )( gzFile, z_off_t, int );
+z_off_t( ZEXPORT * qgztell )( gzFile );
+int( ZEXPORT * qgzread )( gzFile file, voidp buf, unsigned len );
+int( ZEXPORT * qgzwrite )( gzFile file, voidpc buf, unsigned len );
+int( ZEXPORT * qgzclose )( gzFile file );
+int( ZEXPORT * qgzeof )( gzFile file );
+int( ZEXPORT * qgzflush )( gzFile file, int flush );
+int( ZEXPORT * qgzsetparams )( gzFile file, int level, int strategy );
+int( ZEXPORT * qgzbuffer )( gzFile file, unsigned size );
 
 static dllfunc_t zlibfuncs[] =
 {
@@ -70,11 +70,11 @@ static dllfunc_t zlibfuncs[] =
 /*
 * ZLib_UnloadLibrary
 */
-void ZLib_UnloadLibrary( void )
-{
+void ZLib_UnloadLibrary( void ) {
 #ifdef ZLIB_RUNTIME
-	if( zLibrary )
+	if( zLibrary ) {
 		Com_UnloadLibrary( &zLibrary );
+	}
 #endif
 	zLibrary = NULL;
 }
@@ -82,14 +82,14 @@ void ZLib_UnloadLibrary( void )
 /*
 * ZLib_LoadLibrary
 */
-void ZLib_LoadLibrary( void )
-{
+void ZLib_LoadLibrary( void ) {
 	ZLib_UnloadLibrary();
 
 #ifdef ZLIB_RUNTIME
 	zLibrary = Com_LoadSysLibrary( LIBZ_LIBNAME, zlibfuncs );
-	if( !zLibrary )
+	if( !zLibrary ) {
 		Com_Error( ERR_FATAL, "Failed to load %s", LIBZ_LIBNAME );
+	}
 #else
 	zLibrary = (void *)1;
 #endif
@@ -98,15 +98,13 @@ void ZLib_LoadLibrary( void )
 /*
 * Com_LoadCompressionLibraries
 */
-void Com_LoadCompressionLibraries( void )
-{
+void Com_LoadCompressionLibraries( void ) {
 	ZLib_LoadLibrary();
 }
 
 /*
 * Com_UnloadCompressionLibraries
 */
-void Com_UnloadCompressionLibraries( void )
-{
+void Com_UnloadCompressionLibraries( void ) {
 	ZLib_UnloadLibrary();
 }

@@ -40,16 +40,14 @@ typedef struct qfontface_s qfontface_t;
 #define MAX_TIMEDELTAS_BACKUP 8
 #define MASK_TIMEDELTAS_BACKUP ( MAX_TIMEDELTAS_BACKUP - 1 )
 
-typedef struct
-{
+typedef struct {
 	int frames;
 	unsigned int startTime;
 	unsigned int lastTime;
 	int counts[100];
 } cl_timedemo_t;
 
-typedef struct
-{
+typedef struct {
 	void *h;
 	int width, height;
 	bool keepRatio;
@@ -70,23 +68,22 @@ typedef struct
 // the client_state_t structure is wiped completely at every
 // server map change
 //
-typedef struct
-{
+typedef struct {
 	int timeoutcount;
 
 	cl_timedemo_t timedemo;
 
-	int cmdNum;						// current cmd
-	usercmd_t *cmds;				// [CMD_BACKUP] each mesage will send several old cmds
-	int *cmd_time;					// [CMD_BACKUP] time sent, for calculating pings
+	int cmdNum;                     // current cmd
+	usercmd_t *cmds;                // [CMD_BACKUP] each mesage will send several old cmds
+	int *cmd_time;                  // [CMD_BACKUP] time sent, for calculating pings
 	bool inputRefreshed;
 
 	int receivedSnapNum;
 	int pendingSnapNum;
 	int currentSnapNum;
 	int previousSnapNum;
-	int suppressCount;				// number of messages rate suppressed
-	snapshot_t *snapShots;			// [CMD_BACKUP]
+	int suppressCount;              // number of messages rate suppressed
+	snapshot_t *snapShots;          // [CMD_BACKUP]
 	uint8_t *frames_areabits;
 
 	cmodel_state_t *cms;
@@ -99,9 +96,9 @@ typedef struct
 	vec3_t viewangles;
 
 	int serverTimeDeltas[MAX_TIMEDELTAS_BACKUP];
-	int newServerTimeDelta;			// the time difference with the server time, or at least our best guess about it
-	int serverTimeDelta;			// the time difference with the server time, or at least our best guess about it
-	unsigned int serverTime;		// the best match we can guess about current time in the server
+	int newServerTimeDelta;         // the time difference with the server time, or at least our best guess about it
+	int serverTimeDelta;            // the time difference with the server time, or at least our best guess about it
+	unsigned int serverTime;        // the best match we can guess about current time in the server
 	unsigned int snapFrameTime;
 
 	//
@@ -132,14 +129,12 @@ of server connections
 
 typedef struct download_list_s download_list_t;
 
-struct download_list_s
-{
+struct download_list_s {
 	char *filename;
-	download_list_t	*next;
+	download_list_t *next;
 };
 
-typedef struct
-{
+typedef struct {
 	// for request
 	char *requestname;              // file we requested from the server (NULL if none requested)
 	bool requestnext;           // whether to request next download after this, for precaching
@@ -149,47 +144,46 @@ typedef struct
 
 	// both downloads
 	char *name;                     // name of the file in download, relative to base path
-	char *origname;					// name of the file in download as originally passed by the server
+	char *origname;                 // name of the file in download as originally passed by the server
 	char *tempname;                 // temporary location, relative to base path
 	size_t size;
 	unsigned checksum;
 
 	double percent;
 	int successCount;               // so we know to restart media
-	download_list_t	*list;          // list of all tried downloads, so we don't request same pk3 twice
+	download_list_t *list;          // list of all tried downloads, so we don't request same pk3 twice
 
 	// server download
 	int filenum;
 	size_t offset;
 	int retries;
-	size_t baseoffset;				// for download speed calculation when resuming downloads
+	size_t baseoffset;              // for download speed calculation when resuming downloads
 
 	// web download
 	bool web;
 	bool web_official;
 	bool web_official_only;
-	char *web_url;					// download URL, passed by the server
+	char *web_url;                  // download URL, passed by the server
 	bool web_local_http;
 
 	bool disconnect;            // set when user tries to disconnect, to allow cleaning up webdownload
-	bool pending_reconnect;		// set when we ignored a map change command to avoid stopping the download
-	bool cancelled;				// to allow cleaning up of temporary download file
+	bool pending_reconnect;     // set when we ignored a map change command to avoid stopping the download
+	bool cancelled;             // to allow cleaning up of temporary download file
 } download_t;
 
-typedef struct
-{
+typedef struct {
 	char *name;
 
 	bool recording;
-	bool waiting;		// don't record until a non-delta message is received
+	bool waiting;       // don't record until a non-delta message is received
 	bool playing;
-	bool paused;		// A boolean to test if demo is paused -- PLX
+	bool paused;        // A boolean to test if demo is paused -- PLX
 
 	int file;
 	char *filename;
 
-	time_t localtime;		// time of day of demo recording
-	unsigned int time;		// milliseconds passed since the start of the demo
+	time_t localtime;       // time of day of demo recording
+	unsigned int time;      // milliseconds passed since the start of the demo
 	unsigned int duration, basetime;
 
 	bool play_jump;
@@ -209,8 +203,7 @@ typedef struct
 
 typedef cl_demo_t demorec_t;
 
-typedef struct
-{
+typedef struct {
 	connstate_t state;          // only set through CL_SetClientState
 	keydest_t key_dest;
 	keydest_t old_key_dest;
@@ -416,9 +409,9 @@ size_t CL_GetBaseServerURL( char *buffer, size_t buffer_size );
 
 int CL_AddSessionHttpRequestHeaders( const char *url, const char **headers );
 void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, int resumeFrom,
-	size_t (*read_cb)(const void *, size_t, float, int, const char *, void *), 
-	void (*done_cb)(int, const char *, void *), 
-	void (*header_cb)(const char *, void *), void *privatep, bool urlencodeUnsafe );
+							size_t ( *read_cb )( const void *, size_t, float, int, const char *, void * ),
+							void ( *done_cb )( int, const char *, void * ),
+							void ( *header_cb )( const char *, void * ), void *privatep, bool urlencodeUnsafe );
 
 //
 // cl_game.c
@@ -459,11 +452,11 @@ void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int chann
 void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
 void CL_SoundModule_StartLocalSound( const char *s );
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
-void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data, bool music );
-void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation, 
-	unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data );
+void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate,
+								unsigned short width, unsigned short channels, const uint8_t *data, bool music );
+void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation,
+										  unsigned int samples, unsigned int rate,
+										  unsigned short width, unsigned short channels, const uint8_t *data );
 unsigned int CL_SoundModule_GetRawSamplesLength( void );
 unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum );
 void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, int mode );
@@ -522,8 +515,7 @@ void CL_ShutDownServerList( void );
 //
 // cl_input.c
 //
-typedef struct
-{
+typedef struct {
 	int down[2];            // key nums holding it down
 	unsigned downtime;      // msec timestamp
 	unsigned msec;          // msec down this frame
@@ -571,13 +563,13 @@ void CL_BeginDemoAviDump( void );
 size_t CL_ReadDemoMetaData( const char *demopath, char *meta_data, size_t meta_data_size );
 char **CL_DemoComplete( const char *partial );
 #define CL_WriteAvi() ( cls.demo.avi && cls.state == CA_ACTIVE && cls.demo.playing && !cls.demo.play_jump )
-#define CL_SetDemoMetaKeyValue(k,v) cls.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue(cls.demo.meta_data, sizeof(cls.demo.meta_data), cls.demo.meta_data_realsize, k, v)
+#define CL_SetDemoMetaKeyValue( k,v ) cls.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue( cls.demo.meta_data, sizeof( cls.demo.meta_data ), cls.demo.meta_data_realsize, k, v )
 
 //
 // cl_parse.c
 //
 void CL_ParseServerMessage( msg_t *msg );
-#define SHOWNET(msg,s) _SHOWNET(msg,s,cl_shownet->integer);
+#define SHOWNET( msg,s ) _SHOWNET( msg,s,cl_shownet->integer );
 
 void CL_FreeDownloadList( void );
 bool CL_CheckOrDownloadFile( const char *filename );
@@ -634,7 +626,7 @@ void CL_AddNetgraph( void );
 extern float scr_con_current;
 extern float scr_conlines;       // lines of console to display
 
-extern ref_export_t re;		// interface to refresh .dll
+extern ref_export_t re;     // interface to refresh .dll
 
 //
 // cl_mm.c

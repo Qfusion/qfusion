@@ -22,19 +22,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 
 //#define UNSAFE_EXIT
-#define MAX_MASTER_SERVERS					4
+#define MAX_MASTER_SERVERS                  4
 
 #ifdef PUBLIC_BUILD
-#define SERVERBROWSER_PROTOCOL_VERSION		APP_PROTOCOL_VERSION
+#define SERVERBROWSER_PROTOCOL_VERSION      APP_PROTOCOL_VERSION
 #else
-#define SERVERBROWSER_PROTOCOL_VERSION		APP_PROTOCOL_VERSION
+#define SERVERBROWSER_PROTOCOL_VERSION      APP_PROTOCOL_VERSION
 //#define SERVERBROWSER_PROTOCOL_VERSION	12
 #endif
 
 //=========================================================
 
-typedef struct serverlist_s
-{
+typedef struct serverlist_s {
 	char address[48];
 	unsigned int pingTimeStamp;
 	unsigned int lastValidPing;
@@ -53,8 +52,7 @@ static unsigned int masterServerUpdateSeq;
 
 static unsigned int localQueryTimeStamp = 0;
 
-typedef struct masterserver_s
-{
+typedef struct masterserver_s {
 	char addressString[MAX_TOKEN_CHARS];
 	netadr_t address;
 	qthread_t *resolverThread;
@@ -70,12 +68,10 @@ int numMasterServers;
 /*
 * CL_FreeServerlist
 */
-static void CL_FreeServerlist( serverlist_t **serversList )
-{
+static void CL_FreeServerlist( serverlist_t **serversList ) {
 	serverlist_t *ptr;
 
-	while( *serversList )
-	{
+	while( *serversList ) {
 		ptr = *serversList;
 		*serversList = ptr->pnext;
 		Mem_ZoneFree( ptr );
@@ -85,16 +81,15 @@ static void CL_FreeServerlist( serverlist_t **serversList )
 /*
 * CL_ServerIsInList
 */
-static serverlist_t *CL_ServerFindInList( serverlist_t *serversList, char *adr )
-{
+static serverlist_t *CL_ServerFindInList( serverlist_t *serversList, char *adr ) {
 
 	serverlist_t *server;
 
 	server = serversList;
-	while( server )
-	{
-		if( !Q_stricmp( server->address, adr ) )
+	while( server ) {
+		if( !Q_stricmp( server->address, adr ) ) {
 			return server;
+		}
 		server = server->pnext;
 	}
 
@@ -104,16 +99,17 @@ static serverlist_t *CL_ServerFindInList( serverlist_t *serversList, char *adr )
 /*
 * CL_AddServerToList
 */
-static bool CL_AddServerToList( serverlist_t **serversList, char *adr, unsigned int days )
-{
+static bool CL_AddServerToList( serverlist_t **serversList, char *adr, unsigned int days ) {
 	serverlist_t *newserv;
 	netadr_t nadr;
 
-	if( !adr || !strlen( adr ) )
+	if( !adr || !strlen( adr ) ) {
 		return false;
+	}
 
-	if( !NET_StringToAddress( adr, &nadr ) )
+	if( !NET_StringToAddress( adr, &nadr ) ) {
 		return false;
+	}
 
 	newserv = CL_ServerFindInList( *serversList, adr );
 	if( newserv ) {
@@ -130,10 +126,11 @@ static bool CL_AddServerToList( serverlist_t **serversList, char *adr, unsigned 
 	newserv = (serverlist_t *)Mem_ZoneMalloc( sizeof( serverlist_t ) );
 	Q_strncpyz( newserv->address, adr, sizeof( newserv->address ) );
 	newserv->pingTimeStamp = 0;
-	if( days == 0 )
+	if( days == 0 ) {
 		newserv->lastValidPing = Com_DaysSince1900();
-	else
+	} else {
 		newserv->lastValidPing = days;
+	}
 	newserv->lastUpdatedByMasterServer = Sys_Milliseconds();
 	newserv->masterServerUpdateSeq = masterServerUpdateSeq;
 	newserv->pnext = *serversList;
@@ -147,15 +144,13 @@ static bool CL_AddServerToList( serverlist_t **serversList, char *adr, unsigned 
 /*
 * CL_WriteServerCache
 */
-void CL_WriteServerCache( void )
-{
+void CL_WriteServerCache( void ) {
 	serverlist_t *server;
 	int filehandle;
 	char str[256];
 	netadr_t adr;
 
-	if( FS_FOpenFile( SERVERSFILE, &filehandle, FS_WRITE ) == -1 )
-	{
+	if( FS_FOpenFile( SERVERSFILE, &filehandle, FS_WRITE ) == -1 ) {
 		Com_Printf( "CL_WriteServerList: Couldn't create the cache file\n" );
 		return;
 	}
@@ -165,12 +160,9 @@ void CL_WriteServerCache( void )
 
 	FS_Print( filehandle, "master\n" );
 	server = masterList;
-	while( server )
-	{
-		if( !server->isLocal && server->lastValidPing + 7 > Com_DaysSince1900() )
-		{
-			if( NET_StringToAddress( server->address, &adr ) )
-			{
+	while( server ) {
+		if( !server->isLocal && server->lastValidPing + 7 > Com_DaysSince1900() ) {
+			if( NET_StringToAddress( server->address, &adr ) ) {
 				Q_snprintfz( str, sizeof( str ), "%s %i\n", server->address, (int)server->lastValidPing );
 				FS_Print( filehandle, str );
 			}
@@ -181,12 +173,9 @@ void CL_WriteServerCache( void )
 
 	FS_Print( filehandle, "favorites\n" );
 	server = favoritesList;
-	while( server )
-	{
-		if( !server->isLocal && server->lastValidPing + 7 > Com_DaysSince1900() )
-		{
-			if( NET_StringToAddress( server->address, &adr ) )
-			{
+	while( server ) {
+		if( !server->isLocal && server->lastValidPing + 7 > Com_DaysSince1900() ) {
+			if( NET_StringToAddress( server->address, &adr ) ) {
 				Q_snprintfz( str, sizeof( str ), "%s %i\n", server->address, (int)server->lastValidPing );
 				FS_Print( filehandle, str );
 			}
@@ -201,8 +190,7 @@ void CL_WriteServerCache( void )
 /*
 * CL_ReadServerCache
 */
-void CL_ReadServerCache( void )
-{
+void CL_ReadServerCache( void ) {
 	int filelen, filehandle;
 	uint8_t *buf = NULL;
 	char *ptr, *token;
@@ -211,50 +199,47 @@ void CL_ReadServerCache( void )
 	bool favorite = false;
 
 	filelen = FS_FOpenFile( SERVERSFILE, &filehandle, FS_READ );
-	if( !filehandle || filelen < 1 )
-	{
+	if( !filehandle || filelen < 1 ) {
 		FS_FCloseFile( filehandle );
-	}
-	else
-	{
+	} else {
 		buf = Mem_TempMalloc( filelen + 1 );
 		filelen = FS_Read( buf, filelen, filehandle );
 		FS_FCloseFile( filehandle );
 	}
 
-	if( !buf )
+	if( !buf ) {
 		return;
+	}
 
 	ptr = ( char * )buf;
-	while( ptr )
-	{
+	while( ptr ) {
 		token = COM_ParseExt( &ptr, true );
-		if( !token[0] )
+		if( !token[0] ) {
 			break;
+		}
 
-		if( !Q_stricmp( token, "master" ) )
-		{
+		if( !Q_stricmp( token, "master" ) ) {
 			favorite = false;
 			continue;
 		}
 
-		if( !Q_stricmp( token, "favorites" ) )
-		{
+		if( !Q_stricmp( token, "favorites" ) ) {
 			favorite = true;
 			continue;
 		}
 
-		if( NET_StringToAddress( token, &adr ) )
-		{
+		if( NET_StringToAddress( token, &adr ) ) {
 			Q_strncpyz( adrString, token, sizeof( adrString ) );
 			token = COM_ParseExt( &ptr, false );
-			if( !token[0] )
+			if( !token[0] ) {
 				continue;
+			}
 
-			if( favorite )
+			if( favorite ) {
 				CL_AddServerToList( &favoritesList, adrString, (unsigned int)atoi( token ) );
-			else
+			} else {
 				CL_AddServerToList( &masterList, adrString, (unsigned int)atoi( token ) );
+			}
 		}
 	}
 
@@ -266,8 +251,7 @@ void CL_ReadServerCache( void )
 *
 * Handle a server responding to a detailed info broadcast
 */
-void CL_ParseGetInfoResponse( const socket_t *socket, const netadr_t *address, msg_t *msg )
-{
+void CL_ParseGetInfoResponse( const socket_t *socket, const netadr_t *address, msg_t *msg ) {
 	char *s = MSG_ReadString( msg );
 	Com_DPrintf( "%s\n", s );
 }
@@ -277,8 +261,7 @@ void CL_ParseGetInfoResponse( const socket_t *socket, const netadr_t *address, m
 *
 * Handle a server responding to a detailed info broadcast
 */
-void CL_ParseGetStatusResponse( const socket_t *socket, const netadr_t *address, msg_t *msg )
-{
+void CL_ParseGetStatusResponse( const socket_t *socket, const netadr_t *address, msg_t *msg ) {
 	char *s = MSG_ReadString( msg );
 	Com_DPrintf( "%s\n", s );
 }
@@ -287,15 +270,13 @@ void CL_ParseGetStatusResponse( const socket_t *socket, const netadr_t *address,
 /*
 * CL_QueryGetInfoMessage
 */
-static void CL_QueryGetInfoMessage( const char *cmdname )
-{
+static void CL_QueryGetInfoMessage( const char *cmdname ) {
 	netadr_t adr;
 	char *server;
 
 	//get what master
 	server = Cmd_Argv( 1 );
-	if( !server || !( *server ) )
-	{
+	if( !server || !( *server ) ) {
 		Com_Printf( "%s: no address provided %s...\n", Cmd_Argv( 0 ), server ? server : "" );
 		return;
 	}
@@ -303,18 +284,16 @@ static void CL_QueryGetInfoMessage( const char *cmdname )
 	// send a broadcast packet
 	Com_DPrintf( "querying %s...\n", server );
 
-	if( NET_StringToAddress( server, &adr ) )
-	{
+	if( NET_StringToAddress( server, &adr ) ) {
 		socket_t *socket;
 
-		if( NET_GetAddressPort( &adr ) == 0 )
+		if( NET_GetAddressPort( &adr ) == 0 ) {
 			NET_SetAddressPort( &adr, PORT_SERVER );
+		}
 
 		socket = ( adr.type == NA_IP6 ? &cls.socket_udp6 : &cls.socket_udp );
 		Netchan_OutOfBandPrint( socket, &adr, "%s", cmdname );
-	}
-	else
-	{
+	} else {
 		Com_Printf( "Bad address: %s\n", server );
 	}
 }
@@ -323,8 +302,7 @@ static void CL_QueryGetInfoMessage( const char *cmdname )
 /*
 * CL_QueryGetInfoMessage_f - getinfo 83.97.146.17:27911
 */
-void CL_QueryGetInfoMessage_f( void )
-{
+void CL_QueryGetInfoMessage_f( void ) {
 	CL_QueryGetInfoMessage( "getinfo" );
 }
 
@@ -332,45 +310,48 @@ void CL_QueryGetInfoMessage_f( void )
 /*
 * CL_QueryGetStatusMessage_f - getstatus 83.97.146.17:27911
 */
-void CL_QueryGetStatusMessage_f( void )
-{
+void CL_QueryGetStatusMessage_f( void ) {
 	CL_QueryGetInfoMessage( "getstatus" );
 }
 
 /*
 * CL_PingServer_f
 */
-void CL_PingServer_f( void )
-{
+void CL_PingServer_f( void ) {
 	char *address_string;
 	char requestString[64];
 	netadr_t adr;
 	serverlist_t *pingserver;
 	socket_t *socket;
 
-	if( Cmd_Argc() < 2 )
+	if( Cmd_Argc() < 2 ) {
 		Com_Printf( "Usage: pingserver [ip:port]\n" );
+	}
 
 	address_string = Cmd_Argv( 1 );
 
-	if( !NET_StringToAddress( address_string, &adr ) )
+	if( !NET_StringToAddress( address_string, &adr ) ) {
 		return;
+	}
 
 	pingserver = CL_ServerFindInList( masterList, address_string );
-	if( !pingserver )
+	if( !pingserver ) {
 		pingserver = CL_ServerFindInList( favoritesList, address_string );
-	if( !pingserver )
+	}
+	if( !pingserver ) {
 		return;
+	}
 
 	// never request a second ping while awaiting for a ping reply
-	if( pingserver->pingTimeStamp + SERVER_PINGING_TIMEOUT > Sys_Milliseconds() )
+	if( pingserver->pingTimeStamp + SERVER_PINGING_TIMEOUT > Sys_Milliseconds() ) {
 		return;
+	}
 
 	pingserver->pingTimeStamp = Sys_Milliseconds();
 
 	Q_snprintfz( requestString, sizeof( requestString ), "info %i %s %s", SERVERBROWSER_PROTOCOL_VERSION,
-		filter_allow_full ? "full" : "",
-		filter_allow_empty ? "empty" : "" );
+				 filter_allow_full ? "full" : "",
+				 filter_allow_empty ? "empty" : "" );
 
 	socket = ( adr.type == NA_IP6 ? &cls.socket_udp6 : &cls.socket_udp );
 	Netchan_OutOfBandPrint( socket, &adr, "%s", requestString );
@@ -380,8 +361,7 @@ void CL_PingServer_f( void )
 * CL_ParseStatusMessage
 * Handle a reply from a ping
 */
-void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg_t *msg )
-{
+void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg_t *msg ) {
 	char *s = MSG_ReadString( msg );
 	serverlist_t *pingserver;
 	char adrString[64];
@@ -392,11 +372,11 @@ void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg
 
 	// ping response
 	pingserver = CL_ServerFindInList( masterList, adrString );
-	if( !pingserver )
+	if( !pingserver ) {
 		pingserver = CL_ServerFindInList( favoritesList, adrString );
+	}
 
-	if( pingserver && pingserver->pingTimeStamp ) // valid ping
-	{
+	if( pingserver && pingserver->pingTimeStamp ) { // valid ping
 		unsigned int ping = Sys_Milliseconds() - pingserver->pingTimeStamp;
 		CL_UIModule_AddToServerList( adrString, va( "\\\\ping\\\\%i%s", ping, s ) );
 		pingserver->pingTimeStamp = 0;
@@ -419,8 +399,7 @@ void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg
 * CL_ParseGetServersResponseMessage
 * Handle a reply from getservers message to master server
 */
-static void CL_ParseGetServersResponseMessage( msg_t *msg, bool extended )
-{
+static void CL_ParseGetServersResponseMessage( msg_t *msg, bool extended ) {
 	const char *header;
 	char adrString[64];
 	uint8_t addr[16];
@@ -432,53 +411,47 @@ static void CL_ParseGetServersResponseMessage( msg_t *msg, bool extended )
 
 	//jump over the command name
 	header = ( extended ? "getserversExtResponse" : "getserversResponse" );
-	if( !MSG_SkipData( msg, strlen( header ) ) )
-	{
+	if( !MSG_SkipData( msg, strlen( header ) ) ) {
 		Com_Printf( "Invalid master packet ( missing %s )\n", header );
 		return;
 	}
 
-	while( msg->readcount + 7 <= msg->cursize )
-	{
+	while( msg->readcount + 7 <= msg->cursize ) {
 		char prefix = MSG_ReadChar( msg );
 
-		switch( prefix )
-		{
-		case '\\':
-			MSG_ReadData( msg, addr, 4 );
-			port = ShortSwap( MSG_ReadShort( msg ) ); // both endians need this swapped.
-			Q_snprintfz( adrString, sizeof( adrString ), "%u.%u.%u.%u:%u", addr[0], addr[1], addr[2], addr[3], port );
-			break;
-
-		case '/':
-			if( extended )
-			{
-				MSG_ReadData( msg, addr, 16 );
+		switch( prefix ) {
+			case '\\':
+				MSG_ReadData( msg, addr, 4 );
 				port = ShortSwap( MSG_ReadShort( msg ) ); // both endians need this swapped.
-				Q_snprintfz( adrString, sizeof( adrString ), "[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]:%hu",
-								addr[ 0], addr[ 1], addr[ 2], addr[ 3], addr[ 4], addr[ 5], addr[ 6], addr[ 7],
-								addr[ 8], addr[ 9], addr[10], addr[11], addr[12], addr[13], addr[14], addr[15],
-								port );
-			}
-			else
-			{
-				Com_Printf( "Invalid master packet ( IPv6 prefix in a non-extended response )\n" );
+				Q_snprintfz( adrString, sizeof( adrString ), "%u.%u.%u.%u:%u", addr[0], addr[1], addr[2], addr[3], port );
+				break;
+
+			case '/':
+				if( extended ) {
+					MSG_ReadData( msg, addr, 16 );
+					port = ShortSwap( MSG_ReadShort( msg ) ); // both endians need this swapped.
+					Q_snprintfz( adrString, sizeof( adrString ), "[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]:%hu",
+								 addr[ 0], addr[ 1], addr[ 2], addr[ 3], addr[ 4], addr[ 5], addr[ 6], addr[ 7],
+								 addr[ 8], addr[ 9], addr[10], addr[11], addr[12], addr[13], addr[14], addr[15],
+								 port );
+				} else {
+					Com_Printf( "Invalid master packet ( IPv6 prefix in a non-extended response )\n" );
+					return;
+				}
+
+				break;
+
+			default:
+				Com_Printf( "Invalid master packet ( missing separator )\n" );
 				return;
-			}
+		}
 
-			break;
-
-		default:
-			Com_Printf( "Invalid master packet ( missing separator )\n" );
+		if( port == 0 ) { // last server seen
 			return;
 		}
 
-		if( port == 0 )  // last server seen
-			return;
-
 		Com_DPrintf( "%s\n", adrString );
-		if( !NET_StringToAddress( adrString, &adr ) )
-		{
+		if( !NET_StringToAddress( adrString, &adr ) ) {
 			Com_Printf( "Bad address: %s\n", adrString );
 			continue;
 		}
@@ -491,8 +464,7 @@ static void CL_ParseGetServersResponseMessage( msg_t *msg, bool extended )
 * CL_ParseGetServersResponse
 * Handle a reply from getservers message to master server
 */
-void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address, msg_t *msg, bool extended )
-{
+void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address, msg_t *msg, bool extended ) {
 	serverlist_t *server;
 	netadr_t adr;
 
@@ -510,12 +482,12 @@ void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address
 
 	// dump servers we just received an update on from the master server
 	server = masterList;
-	while( server )
-	{
-		if( server->masterServerUpdateSeq == masterServerUpdateSeq 
-			&& !(server->isLocal && Com_ServerState())
-			&& NET_StringToAddress( server->address, &adr ) )
+	while( server ) {
+		if( server->masterServerUpdateSeq == masterServerUpdateSeq
+			&& !( server->isLocal && Com_ServerState() )
+			&& NET_StringToAddress( server->address, &adr ) ) {
 			CL_UIModule_AddToServerList( server->address, "\\\\EOT" );
+		}
 
 		server = server->pnext;
 	}
@@ -524,8 +496,7 @@ void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address
 /*
 * CL_MasterResolverThreadFunc
 */
-static void *CL_MasterResolverThreadFunc( void *param )
-{
+static void *CL_MasterResolverThreadFunc( void *param ) {
 	masterserver_t *master = param;
 
 	NET_StringToAddress( master->addressString, &master->address );
@@ -544,8 +515,7 @@ static void *CL_MasterResolverThreadFunc( void *param )
 /*
 * CL_MasterAddressCache_Init
 */
-static void CL_MasterAddressCache_Init( void )
-{
+static void CL_MasterAddressCache_Init( void ) {
 	int numMasters;
 	const char *ptr;
 	const char *masterAddress;
@@ -569,32 +539,33 @@ static void CL_MasterAddressCache_Init( void )
 	}
 
 	// don't allow too many as each will spawn its own resolver thread
-	if( numMasters > MAX_MASTER_SERVERS )
+	if( numMasters > MAX_MASTER_SERVERS ) {
 		numMasters = MAX_MASTER_SERVERS;
+	}
 
 	numMasterServers = 0;
-	for( i = 0, ptr = masterList, master = masterServers; i < numMasters && ptr; i++, master++ )
-	{
+	for( i = 0, ptr = masterList, master = masterServers; i < numMasters && ptr; i++, master++ ) {
 		masterAddress = COM_Parse( &ptr );
-		if( !*masterAddress )
+		if( !*masterAddress ) {
 			break;
+		}
 
 		numMasterServers++;
 		Q_strncpyz( master->addressString, masterAddress, sizeof( master->addressString ) );
 		master->address.type = NA_NOTRANSMIT;
 		master->resolverActive = true;
 		master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
-		if( !master->resolverThread )
+		if( !master->resolverThread ) {
 			master->resolverActive = false;
+		}
 	}
 }
 
 /*
 * CL_MasterAddressCache_Shutdown
 */
-static void CL_MasterAddressCache_Shutdown( void )
-{
-#if defined(UNSAFE_EXIT) && defined(Q_THREADS_HAVE_CANCEL)
+static void CL_MasterAddressCache_Shutdown( void ) {
+#if defined( UNSAFE_EXIT ) && defined( Q_THREADS_HAVE_CANCEL )
 	int i;
 
 	for( i = 0; i < numMasterServers; i++ ) {
@@ -621,27 +592,23 @@ static void CL_MasterAddressCache_Shutdown( void )
 /*
 * CL_SendMasterServerQuery
 */
-static void CL_SendMasterServerQuery( netadr_t *adr, const char *modname )
-{
+static void CL_SendMasterServerQuery( netadr_t *adr, const char *modname ) {
 	const char *cmdname;
 	socket_t *socket;
 	const char *requeststring;
 
-	if ( adr->type == NA_IP )
-	{
+	if( adr->type == NA_IP ) {
 		cmdname = "getservers";
 		socket = &cls.socket_udp;
-	}
-	else
-	{
+	} else {
 		cmdname = "getserversExt";
 		socket = &cls.socket_udp6;
 	}
 
 	// create the message
-	requeststring = va( "%s %c%s %i %s %s", cmdname, toupper( modname[0] ), modname+1, SERVERBROWSER_PROTOCOL_VERSION,
-		filter_allow_full ? "full" : "",
-		filter_allow_empty ? "empty" : "" );
+	requeststring = va( "%s %c%s %i %s %s", cmdname, toupper( modname[0] ), modname + 1, SERVERBROWSER_PROTOCOL_VERSION,
+						filter_allow_full ? "full" : "",
+						filter_allow_empty ? "empty" : "" );
 
 	Com_DPrintf( "Querying %s: %s\n", NET_AddressToString( adr ), requeststring );
 
@@ -651,8 +618,7 @@ static void CL_SendMasterServerQuery( netadr_t *adr, const char *modname )
 /*
 * CL_GetServers_f
 */
-void CL_GetServers_f( void )
-{
+void CL_GetServers_f( void ) {
 	const char *requeststring;
 	int i;
 	const char *modname, *masterAddress;
@@ -660,17 +626,17 @@ void CL_GetServers_f( void )
 
 	filter_allow_full = false;
 	filter_allow_empty = false;
-	for( i = 2; i < Cmd_Argc(); i++ )
-	{
-		if( !Q_stricmp( "full", Cmd_Argv( i ) ) )
+	for( i = 2; i < Cmd_Argc(); i++ ) {
+		if( !Q_stricmp( "full", Cmd_Argv( i ) ) ) {
 			filter_allow_full = true;
+		}
 
-		if( !Q_stricmp( "empty", Cmd_Argv( i ) ) )
+		if( !Q_stricmp( "empty", Cmd_Argv( i ) ) ) {
 			filter_allow_empty = true;
+		}
 	}
 
-	if( !Q_stricmp( Cmd_Argv( 1 ), "local" ) )
-	{
+	if( !Q_stricmp( Cmd_Argv( 1 ), "local" ) ) {
 		if( localQueryTimeStamp + LAN_SERVER_PINGING_TIMEOUT > Sys_Milliseconds() ) {
 			return;
 		}
@@ -683,11 +649,10 @@ void CL_GetServers_f( void )
 		// erm... modname isn't sent in local queries?
 
 		requeststring = va( "info %i %s %s", SERVERBROWSER_PROTOCOL_VERSION,
-			filter_allow_full ? "full" : "",
-			filter_allow_empty ? "empty" : "" );
+							filter_allow_full ? "full" : "",
+							filter_allow_empty ? "empty" : "" );
 
-		for( i = 0; i < NUM_BROADCAST_PORTS; i++ )
-		{
+		for( i = 0; i < NUM_BROADCAST_PORTS; i++ ) {
 			netadr_t broadcastAddress;
 			NET_BroadcastAddress( &broadcastAddress, PORT_SERVER + i );
 			Netchan_OutOfBandPrint( &cls.socket_udp, &broadcastAddress, "%s", requeststring );
@@ -697,48 +662,47 @@ void CL_GetServers_f( void )
 
 	//get what master
 	masterAddress = Cmd_Argv( 2 );
-	if( !masterAddress || !( *masterAddress ) )
+	if( !masterAddress || !( *masterAddress ) ) {
 		return;
+	}
 
 	modname = Cmd_Argv( 3 );
 	// never allow anyone to use DEFAULT_BASEGAME as mod name
-	if( !modname || !modname[0] || !Q_stricmp( modname, DEFAULT_BASEGAME ) )
+	if( !modname || !modname[0] || !Q_stricmp( modname, DEFAULT_BASEGAME ) ) {
 		modname = APPLICATION;
+	}
 	assert( modname[0] );
 
 	// check memory cache
-	for( i = 0; i < numMasterServers; i++ )
-	{
-		if( !Q_stricmp( masterServers[i].addressString, masterAddress ) )
-		{
+	for( i = 0; i < numMasterServers; i++ ) {
+		if( !Q_stricmp( masterServers[i].addressString, masterAddress ) ) {
 			master = &masterServers[i];
 			break;
 		}
 	}
 
-	if( !master )
-	{
+	if( !master ) {
 		Com_Printf( "Address is not in master servers list: %s\n", masterAddress );
 		return;
 	}
 
-	if( !master->resolverActive )
-	{
-		if( master->address.type == NA_IP || master->address.type == NA_IP6 )
-		{
+	if( !master->resolverActive ) {
+		if( master->address.type == NA_IP || master->address.type == NA_IP6 ) {
 			CL_SendMasterServerQuery( &master->address, modname );
 			return;
 		}
 
 		Com_DPrintf( "Resolving master server address: %s\n", master->addressString );
 
-		if( master->resolverThread )
+		if( master->resolverThread ) {
 			QThread_Join( master->resolverThread );
+		}
 
 		master->resolverActive = true;
 		master->resolverThread = QThread_Create( CL_MasterResolverThreadFunc, master );
-		if( !master->resolverThread )
+		if( !master->resolverThread ) {
 			master->resolverActive = false;
+		}
 
 	}
 
@@ -748,8 +712,7 @@ void CL_GetServers_f( void )
 /*
 * CL_ServerListFrame
 */
-void CL_ServerListFrame( void )
-{
+void CL_ServerListFrame( void ) {
 	int i;
 	masterserver_t *master;
 
@@ -768,8 +731,7 @@ void CL_ServerListFrame( void )
 /*
 * CL_InitServerList
 */
-void CL_InitServerList( void )
-{
+void CL_InitServerList( void ) {
 	CL_FreeServerlist( &masterList );
 	CL_FreeServerlist( &favoritesList );
 
@@ -781,8 +743,7 @@ void CL_InitServerList( void )
 /*
 * CL_ShutDownServerList
 */
-void CL_ShutDownServerList( void )
-{
+void CL_ShutDownServerList( void ) {
 //	CL_WriteServerCache();
 
 	CL_FreeServerlist( &masterList );

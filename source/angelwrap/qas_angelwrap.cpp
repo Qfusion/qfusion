@@ -31,13 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <list>
 
-static void *qasAlloc( size_t size )
-{
+static void *qasAlloc( size_t size ) {
 	return QAS_Malloc( size );
 }
 
-static void qasFree( void *mem )
-{
+static void qasFree( void *mem ) {
 	QAS_Free( mem );
 }
 
@@ -53,12 +51,10 @@ qasEngineContextMap contexts;
 
 // ============================================================================
 
-static void qasMessageCallback( const asSMessageInfo *msg )
-{
+static void qasMessageCallback( const asSMessageInfo *msg ) {
 	const char *msg_type;
 
-	switch( msg->type )
-	{
+	switch( msg->type ) {
 		case asMSGTYPE_ERROR:
 			msg_type = S_COLOR_RED "ERROR: ";
 			break;
@@ -74,8 +70,7 @@ static void qasMessageCallback( const asSMessageInfo *msg )
 	Com_Printf( "%s%s %d:%d: %s\n", msg_type, msg->section, msg->row, msg->col, msg->message );
 }
 
-static void qasExceptionCallback( asIScriptContext *ctx )
-{
+static void qasExceptionCallback( asIScriptContext *ctx ) {
 	int line, col;
 	asIScriptFunction *func;
 	const char *sectionName, *exceptionString, *funcDecl;
@@ -88,8 +83,7 @@ static void qasExceptionCallback( asIScriptContext *ctx )
 	Com_Printf( S_COLOR_RED "ASModule::ExceptionCallback:\n%s %d:%d %s: %s\n", sectionName, line, col, funcDecl, exceptionString );
 }
 
-asIScriptEngine *qasCreateEngine( bool *asMaxPortability )
-{
+asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	asIScriptEngine *engine;
 
 	// register the global memory allocation and deallocation functions
@@ -99,11 +93,11 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability )
 
 	// ask for angelscript initialization and script engine creation
 	engine = asCreateScriptEngine( ANGELSCRIPT_VERSION );
-	if( !engine )
+	if( !engine ) {
 		return NULL;
+	}
 
-	if( strstr( asGetLibraryOptions(), "AS_MAX_PORTABILITY" ) )
-	{
+	if( strstr( asGetLibraryOptions(), "AS_MAX_PORTABILITY" ) ) {
 		QAS_Printf( "* angelscript library with AS_MAX_PORTABILITY detected\n" );
 		engine->Release();
 		return NULL;
@@ -138,15 +132,14 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability )
 	return engine;
 }
 
-void qasReleaseEngine( asIScriptEngine *engine )
-{
-	if( !engine )
+void qasReleaseEngine( asIScriptEngine *engine ) {
+	if( !engine ) {
 		return;
+	}
 
 	// release all contexts linked to this engine
 	qasContextList &ctxList = contexts[engine];
-	for( qasContextList::iterator it = ctxList.begin(); it != ctxList.end(); it++ )
-	{
+	for( qasContextList::iterator it = ctxList.begin(); it != ctxList.end(); it++ ) {
 		asIScriptContext *ctx = *it;
 		ctx->Release();
 	}
@@ -160,28 +153,28 @@ void qasReleaseEngine( asIScriptEngine *engine )
 	engine->Release();
 }
 
-static asIScriptContext *qasCreateContext( asIScriptEngine *engine )
-{
+static asIScriptContext *qasCreateContext( asIScriptEngine *engine ) {
 	asIScriptContext *ctx;
 	int error;
 
-	if( engine == NULL )
+	if( engine == NULL ) {
 		return NULL;
+	}
 
 	// always new
 	ctx = engine->CreateContext();
-	if( !ctx )
+	if( !ctx ) {
 		return NULL;
+	}
 
 	// We don't want to allow the script to hang the application, e.g. with an
 	// infinite loop, so we'll use the line callback function to set a timeout
-	// that will abort the script after a certain time. Before executing the 
-	// script the timeOut variable will be set to the time when the script must 
-	// stop executing. 
+	// that will abort the script after a certain time. Before executing the
+	// script the timeOut variable will be set to the time when the script must
+	// stop executing.
 
-	error = ctx->SetExceptionCallback( asFUNCTION(qasExceptionCallback), NULL, asCALL_CDECL );
-	if( error < 0 )
-	{
+	error = ctx->SetExceptionCallback( asFUNCTION( qasExceptionCallback ), NULL, asCALL_CDECL );
+	if( error < 0 ) {
 		ctx->Release();
 		return NULL;
 	}
@@ -192,10 +185,10 @@ static asIScriptContext *qasCreateContext( asIScriptEngine *engine )
 	return ctx;
 }
 
-void qasReleaseContext( asIScriptContext *ctx )
-{
-	if( !ctx )
+void qasReleaseContext( asIScriptContext *ctx ) {
+	if( !ctx ) {
 		return;
+	}
 
 	asIScriptEngine *engine = ctx->GetEngine();
 	qasContextList &ctxList = contexts[engine];
@@ -204,26 +197,25 @@ void qasReleaseContext( asIScriptContext *ctx )
 	ctx->Release();
 }
 
-asIScriptContext *qasAcquireContext( asIScriptEngine *engine )
-{
-	if( !engine )
+asIScriptContext *qasAcquireContext( asIScriptEngine *engine ) {
+	if( !engine ) {
 		return NULL;
+	}
 
 	// try to reuse any context linked to this engine
 	qasContextList &ctxList = contexts[engine];
-	for( qasContextList::iterator it = ctxList.begin(); it != ctxList.end(); it++ )
-	{
+	for( qasContextList::iterator it = ctxList.begin(); it != ctxList.end(); it++ ) {
 		asIScriptContext *ctx = *it;
-		if( ctx->GetState() == asEXECUTION_FINISHED )
+		if( ctx->GetState() == asEXECUTION_FINISHED ) {
 			return ctx;
+		}
 	}
 
 	// if no context was available, create a new one
 	return qasCreateContext( engine );
 }
 
-asIScriptContext *qasGetActiveContext( void )
-{
+asIScriptContext *qasGetActiveContext( void ) {
 	return asGetActiveContext();
 }
 
@@ -231,13 +223,11 @@ asIScriptContext *qasGetActiveContext( void )
 * Array tools
 **************************************/
 
-CScriptArrayInterface *qasCreateArrayCpp( unsigned int length, void *ot )
-{
-	return QAS_NEW(CScriptArray)( length, static_cast<asIObjectType *>( ot ) );
+CScriptArrayInterface *qasCreateArrayCpp( unsigned int length, void *ot ) {
+	return QAS_NEW( CScriptArray )( length, static_cast<asIObjectType *>( ot ) );
 }
 
-void qasReleaseArrayCpp( CScriptArrayInterface *arr )
-{
+void qasReleaseArrayCpp( CScriptArrayInterface *arr ) {
 	arr->Release();
 }
 
@@ -245,18 +235,15 @@ void qasReleaseArrayCpp( CScriptArrayInterface *arr )
 * Strings
 **************************************/
 
-asstring_t *qasStringFactoryBuffer( const char *buffer, unsigned int length )
-{
+asstring_t *qasStringFactoryBuffer( const char *buffer, unsigned int length ) {
 	return objectString_FactoryBuffer( buffer, length );
 }
 
-void qasStringRelease( asstring_t *str )
-{
+void qasStringRelease( asstring_t *str ) {
 	objectString_Release( str );
 }
 
-asstring_t *qasStringAssignString( asstring_t *self, const char *string, unsigned int strlen )
-{
+asstring_t *qasStringAssignString( asstring_t *self, const char *string, unsigned int strlen ) {
 	return objectString_AssignString( self, string, strlen );
 }
 
@@ -264,13 +251,11 @@ asstring_t *qasStringAssignString( asstring_t *self, const char *string, unsigne
 * Dictionary
 **************************************/
 
-CScriptDictionaryInterface *qasCreateDictionaryCpp( asIScriptEngine *engine )
-{
-	return QAS_NEW(CScriptDictionary)( engine );
+CScriptDictionaryInterface *qasCreateDictionaryCpp( asIScriptEngine *engine ) {
+	return QAS_NEW( CScriptDictionary )( engine );
 }
 
-void qasReleaseDictionaryCpp( CScriptDictionaryInterface *dict )
-{
+void qasReleaseDictionaryCpp( CScriptDictionaryInterface *dict ) {
 	dict->Release();
 }
 
@@ -278,12 +263,10 @@ void qasReleaseDictionaryCpp( CScriptDictionaryInterface *dict )
 * Any
 **************************************/
 
-CScriptAnyInterface *qasCreateAnyCpp( asIScriptEngine *engine )
-{
-	return QAS_NEW(CScriptAny)( engine );
+CScriptAnyInterface *qasCreateAnyCpp( asIScriptEngine *engine ) {
+	return QAS_NEW( CScriptAny )( engine );
 }
 
-void qasReleaseAnyCpp( CScriptAnyInterface *any )
-{
+void qasReleaseAnyCpp( CScriptAnyInterface *any ) {
 	any->Release();
 }

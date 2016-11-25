@@ -27,18 +27,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <Rocket/Controls.h>
 #include <Rocket/Controls/DataFormatter.h>
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 using namespace Rocket::Core;
 
-ElementField::ElementField( const String &tag ) : Element(tag), data_formatter(NULL)
-{
+ElementField::ElementField( const String &tag ) : Element( tag ), data_formatter( NULL ) {
 }
 
 // Called when attributes on the element are changed.
-void ElementField::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes )
-{
-	Element::OnAttributeChange(changed_attributes);
+void ElementField::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+	Element::OnAttributeChange( changed_attributes );
 
 	AttributeNameList::const_iterator it;
 
@@ -47,18 +46,16 @@ void ElementField::OnAttributeChange( const Rocket::Core::AttributeNameList& cha
 	// Check for formatter change.
 	it = changed_attributes.find( "formatter" );
 	if( it != changed_attributes.end() ) {
-		String formatter = GetAttribute< String >("formatter", "");
+		String formatter = GetAttribute< String >( "formatter", "" );
 
 		if( formatter.Empty() ) {
 			data_formatter = NULL;
 			formatterChanged = true;
-		}
-		else {
+		} else {
 			data_formatter = Rocket::Controls::DataFormatter::GetDataFormatter( formatter );
 			if( !data_formatter ) {
 				Com_Printf( S_COLOR_YELLOW "WARNING: Unable to find data formatter named '%s', formatting skipped.", formatter.CString() );
-			}
-			else {
+			} else {
 				formatterChanged = true;
 			}
 		}
@@ -67,7 +64,7 @@ void ElementField::OnAttributeChange( const Rocket::Core::AttributeNameList& cha
 	// Check for value change. Apply formatter.
 	it = changed_attributes.find( "value" );
 	if( it != changed_attributes.end() || formatterChanged ) {
-		String value = GetAttribute< String >("value", "");
+		String value = GetAttribute< String >( "value", "" );
 
 		if( data_formatter ) {
 			String formatted = "";
@@ -78,8 +75,7 @@ void ElementField::OnAttributeChange( const Rocket::Core::AttributeNameList& cha
 			data_formatter->FormatData( formatted, raw_data );
 
 			SetInnerRML( formatted );
-		}
-		else {
+		} else {
 			SetInnerRML( value );
 		}
 	}
@@ -87,8 +83,7 @@ void ElementField::OnAttributeChange( const Rocket::Core::AttributeNameList& cha
 
 //==============================================================
 
-ElementInstancer *GetElementFieldInstancer( void )
-{
+ElementInstancer *GetElementFieldInstancer( void ) {
 	return __new__( GenericElementInstancer<ElementField> )();
 }
 

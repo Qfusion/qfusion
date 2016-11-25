@@ -25,8 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // client data that stays across multiple level loads
 // reseted only on connect
-typedef struct
-{
+typedef struct {
 	char userinfo[MAX_INFO_STRING];
 	char netname[MAX_INFO_VALUE];
 
@@ -38,8 +37,7 @@ typedef struct
 	short cmd_angles[3];            // angles sent over in the last command
 } client_persistant_t;
 
-typedef struct
-{
+typedef struct {
 	bool active;                // so target can remember the position when not chasing
 	bool teamonly;
 	int target;
@@ -48,11 +46,10 @@ typedef struct
 	int followmode;
 } chasecam_t;
 
-struct gclient_s
-{
+struct gclient_s {
 	// known to server
 	player_state_t ps;          // communicated by server to clients
-	client_shared_t	r;
+	client_shared_t r;
 
 	// DO NOT MODIFY ANYTHING ABOVE THIS, THE SERVER
 	// EXPECTS THE FIELDS IN THAT ORDER!

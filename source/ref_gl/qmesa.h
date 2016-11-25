@@ -53,9 +53,8 @@ typedef union { GLfloat f; GLint i; GLuint u; } fi_type;
 /**
  * Convert float to int by rounding to nearest integer, away from zero.
  */
-static inline int _mesa_IROUND(float f)
-{
-   return (int) ((f >= 0.0F) ? (f + 0.5F) : (f - 0.5F));
+static inline int _mesa_IROUND( float f ) {
+	return (int) ( ( f >= 0.0F ) ? ( f + 0.5F ) : ( f - 0.5F ) );
 }
 
 /* Using C99 rounding functions for roundToEven() implementation is
@@ -65,16 +64,16 @@ static inline int _mesa_IROUND(float f)
  * rounds away from 0 on n + 0.5.
  */
 static inline int
-_mesa_round_to_even(float val)
-{
-   int rounded = _mesa_IROUND(val);
+_mesa_round_to_even( float val ) {
+	int rounded = _mesa_IROUND( val );
 
-   if (val - floor(val) == 0.5) {
-      if (rounded % 2 != 0)
-         rounded += val > 0 ? -1 : 1;
-   }
+	if( val - floor( val ) == 0.5 ) {
+		if( rounded % 2 != 0 ) {
+			rounded += val > 0 ? -1 : 1;
+		}
+	}
 
-   return rounded;
+	return rounded;
 }
 
 /**
@@ -96,78 +95,71 @@ _mesa_round_to_even(float val)
  *     result in the same value as if the expression were executed on the GPU.
  */
 static inline GLhalfARB
-_mesa_float_to_half(float val)
-{
-   const fi_type fi = {val};
-   const int flt_m = fi.i & 0x7fffff;
-   const int flt_e = (fi.i >> 23) & 0xff;
-   const int flt_s = (fi.i >> 31) & 0x1;
-   int s, e, m = 0;
-   GLhalfARB result;
-   
-   /* sign bit */
-   s = flt_s;
+_mesa_float_to_half( float val ) {
+	const fi_type fi = {val};
+	const int flt_m = fi.i & 0x7fffff;
+	const int flt_e = ( fi.i >> 23 ) & 0xff;
+	const int flt_s = ( fi.i >> 31 ) & 0x1;
+	int s, e, m = 0;
+	GLhalfARB result;
 
-   /* handle special cases */
-   if ((flt_e == 0) && (flt_m == 0)) {
-      /* zero */
-      /* m = 0; - already set */
-      e = 0;
-   }
-   else if ((flt_e == 0) && (flt_m != 0)) {
-      /* denorm -- denorm float maps to 0 half */
-      /* m = 0; - already set */
-      e = 0;
-   }
-   else if ((flt_e == 0xff) && (flt_m == 0)) {
-      /* infinity */
-      /* m = 0; - already set */
-      e = 31;
-   }
-   else if ((flt_e == 0xff) && (flt_m != 0)) {
-      /* NaN */
-      m = 1;
-      e = 31;
-   }
-   else {
-      /* regular number */
-      const int new_exp = flt_e - 127;
-      if (new_exp < -14) {
-         /* The float32 lies in the range (0.0, min_normal16) and is rounded
-          * to a nearby float16 value. The result will be either zero, subnormal,
-          * or normal.
-          */
-         e = 0;
-         m = _mesa_round_to_even((1 << 24) * fabsf(fi.f));
-      }
-      else if (new_exp > 15) {
-         /* map this value to infinity */
-         /* m = 0; - already set */
-         e = 31;
-      }
-      else {
-         /* The float32 lies in the range
-          *   [min_normal16, max_normal16 + max_step16)
-          * and is rounded to a nearby float16 value. The result will be
-          * either normal or infinite.
-          */
-         e = new_exp + 15;
-         m = _mesa_round_to_even(flt_m / (float) (1 << 13));
-      }
-   }
+	/* sign bit */
+	s = flt_s;
 
-   assert(0 <= m && m <= 1024);
-   if (m == 1024) {
-      /* The float32 was rounded upwards into the range of the next exponent,
-       * so bump the exponent. This correctly handles the case where f32
-       * should be rounded up to float16 infinity.
-       */
-      ++e;
-      m = 0;
-   }
+	/* handle special cases */
+	if( ( flt_e == 0 ) && ( flt_m == 0 ) ) {
+		/* zero */
+		/* m = 0; - already set */
+		e = 0;
+	} else if( ( flt_e == 0 ) && ( flt_m != 0 ) ) {
+		/* denorm -- denorm float maps to 0 half */
+		/* m = 0; - already set */
+		e = 0;
+	} else if( ( flt_e == 0xff ) && ( flt_m == 0 ) ) {
+		/* infinity */
+		/* m = 0; - already set */
+		e = 31;
+	} else if( ( flt_e == 0xff ) && ( flt_m != 0 ) ) {
+		/* NaN */
+		m = 1;
+		e = 31;
+	} else {
+		/* regular number */
+		const int new_exp = flt_e - 127;
+		if( new_exp < -14 ) {
+			/* The float32 lies in the range (0.0, min_normal16) and is rounded
+			 * to a nearby float16 value. The result will be either zero, subnormal,
+			 * or normal.
+			 */
+			e = 0;
+			m = _mesa_round_to_even( ( 1 << 24 ) * fabsf( fi.f ) );
+		} else if( new_exp > 15 ) {
+			/* map this value to infinity */
+			/* m = 0; - already set */
+			e = 31;
+		} else {
+			/* The float32 lies in the range
+			 *   [min_normal16, max_normal16 + max_step16)
+			 * and is rounded to a nearby float16 value. The result will be
+			 * either normal or infinite.
+			 */
+			e = new_exp + 15;
+			m = _mesa_round_to_even( flt_m / (float) ( 1 << 13 ) );
+		}
+	}
 
-   result = (s << 15) | (e << 10) | m;
-   return result;
+	assert( 0 <= m && m <= 1024 );
+	if( m == 1024 ) {
+		/* The float32 was rounded upwards into the range of the next exponent,
+		 * so bump the exponent. This correctly handles the case where f32
+		 * should be rounded up to float16 infinity.
+		 */
+		++e;
+		m = 0;
+	}
+
+	result = ( s << 15 ) | ( e << 10 ) | m;
+	return result;
 }
 
 
@@ -177,49 +169,44 @@ _mesa_float_to_half(float val)
  * http://www.opengl.org/discussion_boards/ubb/Forum3/HTML/008786.html
  */
 static inline float
-_mesa_half_to_float(GLhalfARB val)
-{
-   /* XXX could also use a 64K-entry lookup table */
-   const int m = val & 0x3ff;
-   const int e = (val >> 10) & 0x1f;
-   const int s = (val >> 15) & 0x1;
-   int flt_m, flt_e, flt_s;
-   fi_type fi;
-   float result;
+_mesa_half_to_float( GLhalfARB val ) {
+	/* XXX could also use a 64K-entry lookup table */
+	const int m = val & 0x3ff;
+	const int e = ( val >> 10 ) & 0x1f;
+	const int s = ( val >> 15 ) & 0x1;
+	int flt_m, flt_e, flt_s;
+	fi_type fi;
+	float result;
 
-   /* sign bit */
-   flt_s = s;
+	/* sign bit */
+	flt_s = s;
 
-   /* handle special cases */
-   if ((e == 0) && (m == 0)) {
-      /* zero */
-      flt_m = 0;
-      flt_e = 0;
-   }
-   else if ((e == 0) && (m != 0)) {
-      /* denorm -- denorm half will fit in non-denorm single */
-      const float half_denorm = 1.0f / 16384.0f; /* 2^-14 */
-      float mantissa = ((float) (m)) / 1024.0f;
-      float sign = s ? -1.0f : 1.0f;
-      return sign * mantissa * half_denorm;
-   }
-   else if ((e == 31) && (m == 0)) {
-      /* infinity */
-      flt_e = 0xff;
-      flt_m = 0;
-   }
-   else if ((e == 31) && (m != 0)) {
-      /* NaN */
-      flt_e = 0xff;
-      flt_m = 1;
-   }
-   else {
-      /* regular */
-      flt_e = e + 112;
-      flt_m = m << 13;
-   }
+	/* handle special cases */
+	if( ( e == 0 ) && ( m == 0 ) ) {
+		/* zero */
+		flt_m = 0;
+		flt_e = 0;
+	} else if( ( e == 0 ) && ( m != 0 ) ) {
+		/* denorm -- denorm half will fit in non-denorm single */
+		const float half_denorm = 1.0f / 16384.0f; /* 2^-14 */
+		float mantissa = ( (float) ( m ) ) / 1024.0f;
+		float sign = s ? -1.0f : 1.0f;
+		return sign * mantissa * half_denorm;
+	} else if( ( e == 31 ) && ( m == 0 ) ) {
+		/* infinity */
+		flt_e = 0xff;
+		flt_m = 0;
+	} else if( ( e == 31 ) && ( m != 0 ) ) {
+		/* NaN */
+		flt_e = 0xff;
+		flt_m = 1;
+	} else {
+		/* regular */
+		flt_e = e + 112;
+		flt_m = m << 13;
+	}
 
-   fi.i = (flt_s << 31) | (flt_e << 23) | flt_m;
-   result = fi.f;
-   return result;
+	fi.i = ( flt_s << 31 ) | ( flt_e << 23 ) | flt_m;
+	result = fi.f;
+	return result;
 }

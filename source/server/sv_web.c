@@ -24,26 +24,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef HTTP_SUPPORT
 
-#define MAX_INCOMING_HTTP_CONNECTIONS			48
-#define MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR	3
+#define MAX_INCOMING_HTTP_CONNECTIONS           48
+#define MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR  3
 
-#define MAX_INCOMING_CONTENT_LENGTH				0x2800
+#define MAX_INCOMING_CONTENT_LENGTH             0x2800
 
-#define INCOMING_HTTP_CONNECTION_RECV_TIMEOUT	5 // seconds
-#define INCOMING_HTTP_CONNECTION_SEND_TIMEOUT	15 // seconds
+#define INCOMING_HTTP_CONNECTION_RECV_TIMEOUT   5 // seconds
+#define INCOMING_HTTP_CONNECTION_SEND_TIMEOUT   15 // seconds
 
-#define HTTP_SERVER_SLEEP_TIME					50 // milliseconds
+#define HTTP_SERVER_SLEEP_TIME                  50 // milliseconds
 
-typedef enum
-{
+typedef enum {
 	HTTP_CONN_STATE_NONE = 0,
 	HTTP_CONN_STATE_RECV = 1,
 	HTTP_CONN_STATE_RESP = 2,
 	HTTP_CONN_STATE_SEND = 3
 } sv_http_connstate_t;
 
-typedef enum
-{
+typedef enum {
 	CONTENT_STATE_DEFAULT = 0,
 	CONTENT_STATE_AWAITING = 1,
 	CONTENT_STATE_RECEIVED = 2,
@@ -104,8 +102,7 @@ typedef struct {
 	char *filename;
 } sv_http_response_t;
 
-typedef struct sv_http_connection_s
-{
+typedef struct sv_http_connection_s {
 	bool open;
 	sv_http_connstate_t state;
 	bool close_after_resp;
@@ -123,8 +120,7 @@ typedef struct sv_http_connection_s
 	struct sv_http_connection_s *next, *prev;
 } sv_http_connection_t;
 
-typedef struct
-{
+typedef struct {
 	int clientNum;
 	char session[16];               // session id for HTTP requests
 	netadr_t remoteAddress;
@@ -160,15 +156,14 @@ static void *SV_Web_ThreadProc( void *param );
 /*
 * SV_Web_ResetStream
 */
-static void SV_Web_ResetStream( sv_http_stream_t *stream )
-{
+static void SV_Web_ResetStream( sv_http_stream_t *stream ) {
 	stream->header_done = false;
 	stream->header_length = 0;
 	stream->header_buf_p = 0;
 
-	if( stream->content && 
-		( stream->content < stream->header_buf 
-			|| stream->content >= stream->header_buf + sizeof( stream->header_buf ) ) ) {
+	if( stream->content &&
+		( stream->content < stream->header_buf
+		  || stream->content >= stream->header_buf + sizeof( stream->header_buf ) ) ) {
 		Mem_Free( stream->content );
 	}
 
@@ -182,8 +177,7 @@ static void SV_Web_ResetStream( sv_http_stream_t *stream )
 /*
 * SV_Web_ResetRequest
 */
-static void SV_Web_ResetRequest( sv_http_request_t *request )
-{
+static void SV_Web_ResetRequest( sv_http_request_t *request ) {
 	if( request->method_str ) {
 		Mem_Free( request->method_str );
 		request->method_str = NULL;
@@ -204,7 +198,7 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 
 	request->query_string = "";
 	SV_Web_ResetStream( &request->stream );
-	
+
 	NET_InitAddress( &request->realAddr, NA_NOTRANSMIT );
 
 	request->id = 0;
@@ -218,16 +212,14 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 /*
 * SV_Web_GetNewRequestId
 */
-static uint64_t SV_Web_GetNewRequestId( void )
-{
+static uint64_t SV_Web_GetNewRequestId( void ) {
 	return sv_http_request_autoicr++;
 }
 
 /*
 * SV_Web_ResetResponse
 */
-static void SV_Web_ResetResponse( sv_http_response_t *response )
-{
+static void SV_Web_ResetResponse( sv_http_response_t *response ) {
 	if( response->filename ) {
 		Mem_Free( response->filename );
 		response->filename = NULL;
@@ -255,18 +247,14 @@ static void SV_Web_ResetResponse( sv_http_response_t *response )
 /*
 * SV_Web_AllocConnection
 */
-static sv_http_connection_t *SV_Web_AllocConnection( void )
-{
+static sv_http_connection_t *SV_Web_AllocConnection( void ) {
 	sv_http_connection_t *con;
 
-	if( sv_free_http_connections )
-	{
+	if( sv_free_http_connections ) {
 		// take a free connection if possible
 		con = sv_free_http_connections;
 		sv_free_http_connections = con->next;
-	}
-	else
-	{
+	} else {
 		return NULL;
 	}
 
@@ -284,8 +272,7 @@ static sv_http_connection_t *SV_Web_AllocConnection( void )
 /*
 * SV_Web_FreeConnection
 */
-static void SV_Web_FreeConnection( sv_http_connection_t *con )
-{
+static void SV_Web_FreeConnection( sv_http_connection_t *con ) {
 	SV_Web_ResetRequest( &con->request );
 	SV_Web_ResetResponse( &con->response );
 
@@ -303,8 +290,7 @@ static void SV_Web_FreeConnection( sv_http_connection_t *con )
 /*
 * SV_Web_InitConnections
 */
-static void SV_Web_InitConnections( void )
-{
+static void SV_Web_InitConnections( void ) {
 	unsigned int i;
 
 	memset( sv_http_connections, 0, sizeof( sv_http_connections ) );
@@ -314,21 +300,19 @@ static void SV_Web_InitConnections( void )
 	sv_http_connection_headnode.prev = &sv_http_connection_headnode;
 	sv_http_connection_headnode.next = &sv_http_connection_headnode;
 	for( i = 0; i < MAX_INCOMING_HTTP_CONNECTIONS - 2; i++ ) {
-		sv_http_connections[i].next = &sv_http_connections[i+1];
+		sv_http_connections[i].next = &sv_http_connections[i + 1];
 	}
 }
 
 /*
 * SV_Web_ShutdownConnections
 */
-static void SV_Web_ShutdownConnections( void )
-{
+static void SV_Web_ShutdownConnections( void ) {
 	sv_http_connection_t *con, *next, *hnode;
 
 	// close dead connections
 	hnode = &sv_http_connection_headnode;
-	for( con = hnode->prev; con != hnode; con = next )
-	{
+	for( con = hnode->prev; con != hnode; con = next ) {
 		next = con->prev;
 		if( con->open ) {
 			NET_CloseSocket( &con->socket );
@@ -340,8 +324,7 @@ static void SV_Web_ShutdownConnections( void )
 /*
 * SV_Web_AddGameClient
 */
-bool SV_Web_AddGameClient( const char *session, int clientNum, const netadr_t *netAdr )
-{
+bool SV_Web_AddGameClient( const char *session, int clientNum, const netadr_t *netAdr ) {
 	http_game_client_t *client;
 	trie_error_t trie_error;
 
@@ -373,8 +356,7 @@ bool SV_Web_AddGameClient( const char *session, int clientNum, const netadr_t *n
 /*
 * SV_Web_RemoveGameClient
 */
-void SV_Web_RemoveGameClient( const char *session )
-{
+void SV_Web_RemoveGameClient( const char *session ) {
 	http_game_client_t *client;
 	trie_error_t trie_error;
 
@@ -396,8 +378,7 @@ void SV_Web_RemoveGameClient( const char *session )
 /*
 * SV_Web_FindGameClientBySession
 */
-static bool SV_Web_FindGameClientBySession( const char *session, int clientNum )
-{
+static bool SV_Web_FindGameClientBySession( const char *session, int clientNum ) {
 	http_game_client_t *client;
 	trie_error_t trie_error;
 
@@ -427,8 +408,7 @@ static bool SV_Web_FindGameClientBySession( const char *session, int clientNum )
 *
 * Performs lookup for game client in trie by network address. Terribly inefficient.
 */
-static bool SV_Web_FindGameClientByAddress( const netadr_t *netadr )
-{
+static bool SV_Web_FindGameClientByAddress( const netadr_t *netadr ) {
 	unsigned int i;
 	struct trie_dump_s *dump;
 	bool valid_address;
@@ -454,8 +434,7 @@ static bool SV_Web_FindGameClientByAddress( const netadr_t *netadr )
 /*
 * SV_Web_ConnectionLimitReached
 */
-static unsigned SV_Web_ConnectionLimitReached( const netadr_t *addr )
-{
+static unsigned SV_Web_ConnectionLimitReached( const netadr_t *addr ) {
 	unsigned cnt;
 	const sv_http_connection_t *con, *next;
 	const sv_http_connection_t *hnode = &sv_http_connection_headnode;
@@ -465,8 +444,7 @@ static unsigned SV_Web_ConnectionLimitReached( const netadr_t *addr )
 	}
 
 	cnt = 0;
-	for( con = hnode->prev; con != hnode; con = next )
-	{
+	for( con = hnode->prev; con != hnode; con = next ) {
 		next = con->prev;
 		if( NET_CompareAddress( addr, &con->address ) ) {
 			if( cnt >= MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
@@ -481,8 +459,7 @@ static unsigned SV_Web_ConnectionLimitReached( const netadr_t *addr )
 /*
 * SV_Web_Get
 */
-static int SV_Web_Get( sv_http_connection_t *con, void *recvbuf, size_t recvbuf_size )
-{
+static int SV_Web_Get( sv_http_connection_t *con, void *recvbuf, size_t recvbuf_size ) {
 	int read;
 
 	read = NET_Get( &con->socket, NULL, recvbuf, recvbuf_size - 1 );
@@ -496,8 +473,7 @@ static int SV_Web_Get( sv_http_connection_t *con, void *recvbuf, size_t recvbuf_
 /*
 * SV_Web_Send
 */
-static int SV_Web_Send( sv_http_connection_t *con, void *sendbuf, size_t sendbuf_size )
-{
+static int SV_Web_Send( sv_http_connection_t *con, void *sendbuf, size_t sendbuf_size ) {
 	int sent;
 
 	sent = NET_Send( &con->socket, sendbuf, sendbuf_size, &con->address );
@@ -511,8 +487,7 @@ static int SV_Web_Send( sv_http_connection_t *con, void *sendbuf, size_t sendbuf
 /*
 * SV_Web_SendFile
 */
-static int64_t SV_Web_SendFile( sv_http_connection_t *con, int fileno, size_t fileOffset, size_t *pos, size_t count )
-{
+static int64_t SV_Web_SendFile( sv_http_connection_t *con, int fileno, size_t fileOffset, size_t *pos, size_t count ) {
 	int sent;
 
 	assert( pos != NULL );
@@ -524,8 +499,7 @@ static int64_t SV_Web_SendFile( sv_http_connection_t *con, int fileno, size_t fi
 	if( sent < 0 ) {
 		Com_DPrintf( "HTTP file transmission error to %s\n", NET_AddressToString( &con->address ) );
 		con->open = false;
-	}
-	else {
+	} else {
 		*pos += sent;
 	}
 	return sent;
@@ -535,18 +509,15 @@ static int64_t SV_Web_SendFile( sv_http_connection_t *con, int fileno, size_t fi
 // Inter-threading communication
 // Passes queries and responses from the web thread to the main thread and back.
 
-enum
-{
+enum {
 	CMD_QUERY_IN
 };
 
-enum
-{
+enum {
 	CMD_QUERY_OUT
 };
 
-typedef struct
-{
+typedef struct {
 	int id;
 	void *response;
 	uint64_t request_id;
@@ -555,8 +526,7 @@ typedef struct
 	char *query_string;
 } queryInCmd_t;
 
-typedef struct
-{
+typedef struct {
 	int id;
 	void *response;
 	uint64_t request_id;
@@ -568,8 +538,7 @@ typedef struct
 /*
 * SV_Web_IssueQueryInCmd
 */
-static void SV_Web_IssueQueryInCmd( sv_http_response_t *response, http_query_method_t method, const char *resource, const char *query_string )
-{
+static void SV_Web_IssueQueryInCmd( sv_http_response_t *response, http_query_method_t method, const char *resource, const char *query_string ) {
 	queryInCmd_t cmd;
 	cmd.id = CMD_QUERY_IN;
 	cmd.response = response;
@@ -583,8 +552,7 @@ static void SV_Web_IssueQueryInCmd( sv_http_response_t *response, http_query_met
 /*
 * SV_Web_IssueQueryOutCmd
 */
-static void SV_Web_IssueQueryOutCmd( void *response, uint64_t request_id, http_response_code_t code, char *content, size_t content_length )
-{
+static void SV_Web_IssueQueryOutCmd( void *response, uint64_t request_id, http_response_code_t code, char *content, size_t content_length ) {
 	queryOutCmd_t cmd;
 	cmd.id = CMD_QUERY_OUT;
 	cmd.response = response;
@@ -600,8 +568,7 @@ static void SV_Web_IssueQueryOutCmd( void *response, uint64_t request_id, http_r
 *
 * Handle incoming web query. Pass the query to the game module.
 */
-unsigned SV_Web_HandleInQueryCmd( void *pcmd )
-{
+unsigned SV_Web_HandleInQueryCmd( void *pcmd ) {
 	queryInCmd_t *cmd = pcmd;
 	char *content = NULL;
 	size_t content_length = 0;
@@ -618,8 +585,7 @@ unsigned SV_Web_HandleInQueryCmd( void *pcmd )
 /*
 * SV_Web_HandleOutQueryCmd
 */
-unsigned SV_Web_HandleOutQueryCmd( void *pcmd )
-{
+unsigned SV_Web_HandleOutQueryCmd( void *pcmd ) {
 	queryOutCmd_t *cmd = pcmd;
 	sv_http_response_t *response = cmd->response;
 
@@ -645,9 +611,8 @@ unsigned SV_Web_HandleOutQueryCmd( void *pcmd )
 *
 * Called from the main thread. Passing incoming HTTP queries to the game module.
 */
-static void SV_Web_ReadIncomingQueueCmds( http_game_query_cb cb )
-{
-	queueCmdHandler_t cmdHandlers[1] = 
+static void SV_Web_ReadIncomingQueueCmds( http_game_query_cb cb ) {
+	queueCmdHandler_t cmdHandlers[1] =
 	{
 		(queueCmdHandler_t)SV_Web_HandleInQueryCmd
 	};
@@ -664,9 +629,8 @@ static void SV_Web_ReadIncomingQueueCmds( http_game_query_cb cb )
 *
 * Called from the web server thread. Passes responses from the game module to clients.
 */
-static void SV_Web_ReadOutgoingQueueCmds( void )
-{
-	queueCmdHandler_t cmdHandlers[1] = 
+static void SV_Web_ReadOutgoingQueueCmds( void ) {
+	queueCmdHandler_t cmdHandlers[1] =
 	{
 		(queueCmdHandler_t)SV_Web_HandleOutQueryCmd
 	};
@@ -680,8 +644,7 @@ static void SV_Web_ReadOutgoingQueueCmds( void )
 /*
 * SV_Web_InitQueues
 */
-static void SV_Web_InitQueues( void )
-{
+static void SV_Web_InitQueues( void ) {
 	sv_http_incoming_queue = QBufPipe_Create( 0x10000, 1 );
 	sv_http_outgoing_queue = QBufPipe_Create( 0x10000, 1 );
 }
@@ -689,8 +652,7 @@ static void SV_Web_InitQueues( void )
 /*
 * SV_Web_DestroyQueues
 */
-static void SV_Web_DestroyQueues( void )
-{
+static void SV_Web_DestroyQueues( void ) {
 	QBufPipe_Destroy( &sv_http_incoming_queue );
 	QBufPipe_Destroy( &sv_http_outgoing_queue );
 }
@@ -700,8 +662,7 @@ static void SV_Web_DestroyQueues( void )
 /*
 * SV_Web_ParseStartLine
 */
-static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
-{
+static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line ) {
 	char *ptr;
 	char *token, *delim;
 
@@ -759,7 +720,7 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 	// check for HTTP/1.1 and greater
 	if( strncmp( request->http_ver, "HTTP/", 5 ) ) {
 		request->error = HTTP_RESP_BAD_REQUEST;
-	} else if( (int)(atof( request->http_ver + 5 )*10) < 11 ) {
+	} else if( (int)( atof( request->http_ver + 5 ) * 10 ) < 11 ) {
 		request->error = HTTP_RESP_BAD_REQUEST;
 	}
 }
@@ -767,8 +728,7 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 /*
 * SV_Web_AnalyzeHeader
 */
-static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, const char *value )
-{
+static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, const char *value ) {
 	sv_http_stream_t *stream = &request->stream;
 
 	//
@@ -778,33 +738,30 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 		if( stream->content_length > MAX_INCOMING_CONTENT_LENGTH ) {
 			request->error = HTTP_RESP_REQUEST_TOO_LARGE;
 		}
-	}
-	else if( !Q_stricmp( key, "Connection" ) ) {
+	} else if( !Q_stricmp( key, "Connection" ) ) {
 		if( !Q_stricmp( value, "close" ) ) {
 			request->close_after_resp = true;
 		}
-	}
-	else if( !Q_stricmp( key, "Host" ) ) {
+	} else if( !Q_stricmp( key, "Host" ) ) {
 		// valid HTTP 1.1 request must contain Host header
-		if ( !value || !*value ) {
+		if( !value || !*value ) {
 			request->error = HTTP_RESP_BAD_REQUEST;
 		}
-	}
-	else if( !Q_stricmp( key, "Range" ) 
-		&& ( request->method == HTTP_METHOD_GET || request->method == HTTP_METHOD_HEAD ) ) {
+	} else if( !Q_stricmp( key, "Range" )
+			   && ( request->method == HTTP_METHOD_GET || request->method == HTTP_METHOD_HEAD ) ) {
 		const char *delim = strchr( value, '-' );
 
 		if( Q_strnicmp( value, "bytes=", 6 ) || !delim ) {
 			request->error = HTTP_RESP_BAD_REQUEST;
-		}
-		else {
+		} else {
 			bool neg_end = false;
 			const char *p = value;
 
 			// first byte pos
 			while( *p && p < delim ) {
-				if( *p >= '0' && *p <= '9' )
-					stream->content_range.begin = stream->content_range.begin*10 + *p - '0';
+				if( *p >= '0' && *p <= '9' ) {
+					stream->content_range.begin = stream->content_range.begin * 10 + *p - '0';
+				}
 				p++;
 			}
 			p++;
@@ -819,8 +776,9 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 				p++;
 			}
 			while( *p ) {
-				if( *p >= '0' && *p <= '9' )
-				stream->content_range.end = stream->content_range.end*10 + *p++ - '0';
+				if( *p >= '0' && *p <= '9' ) {
+					stream->content_range.end = stream->content_range.end * 10 + *p++ - '0';
+				}
 			}
 
 			// partial content request
@@ -831,7 +789,7 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 			} else if( stream->content_range.end >= stream->content_range.begin ) {
 				// bytes=200-300
 				request->partial = true;
-			} else if( stream->content_range.begin >= 0 && *(delim+1) == '\0' ) {
+			} else if( stream->content_range.begin >= 0 && *( delim + 1 ) == '\0' ) {
 				// bytes=200-
 				request->partial = true;
 			}
@@ -854,8 +812,7 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 *
 * Parses and splits the header line into key-value pair
 */
-static void SV_Web_ParseHeaderLine( sv_http_request_t *request, char *line )
-{
+static void SV_Web_ParseHeaderLine( sv_http_request_t *request, char *line ) {
 	char *value;
 	size_t offset;
 	const char *colon;
@@ -885,38 +842,35 @@ static void SV_Web_ParseHeaderLine( sv_http_request_t *request, char *line )
 /*
 * SV_Web_ParseHeaders
 */
-static size_t SV_Web_ParseHeaders( sv_http_request_t *request, char *data )
-{
+static size_t SV_Web_ParseHeaders( sv_http_request_t *request, char *data ) {
 	char *line, *p;
 
 	line = data;
-	while( (p = strstr( line, "\r\n" )) != NULL ) {
+	while( ( p = strstr( line, "\r\n" ) ) != NULL ) {
 		if( p == line ) {
 			line = p + 2;
 			request->stream.header_done = true;
 			break;
 		}
 
-		*p = *(p+1) = '\0';
+		*p = *( p + 1 ) = '\0';
 
 		if( request->got_start_line ) {
 			SV_Web_ParseHeaderLine( request, line );
-		}
-		else {
+		} else {
 			SV_Web_ParseStartLine( request, line );
 			request->got_start_line = true;
 		}
 
 		line = p + 2;
 	}
-	return (line - data);
+	return ( line - data );
 }
 
 /*
 * SV_Web_ReceiveRequest
 */
-static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
-{
+static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con ) {
 	int ret = 0;
 	char *recvbuf;
 	size_t recvbuf_size;
@@ -942,7 +896,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 		ret = SV_Web_Get( con, recvbuf, recvbuf_size - 1 );
 		if( ret <= 0 ) {
 			if( total_received == 0 ) {
-				// no data on the socket after select() call, 
+				// no data on the socket after select() call,
 				// the connection has probably been closed on the other end
 				con->open = false;
 				return;
@@ -960,7 +914,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 		}
 
 		end = request->stream.header_buf + advance;
-		rem = (request->stream.header_buf_p + ret) - advance;
+		rem = ( request->stream.header_buf_p + ret ) - advance;
 		memmove( request->stream.header_buf, end, rem );
 		request->stream.header_buf_p = rem;
 		request->stream.header_length += advance;
@@ -972,11 +926,10 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 		// request must come from a connected client with a valid session id
 		if( !request->error && request->stream.header_done ) {
 			// check real IP header value for upstream HTTP connections
-			if( con->is_upstream && 
-				(request->realAddr.type == NA_NOTRANSMIT || SV_Web_ConnectionLimitReached( &request->realAddr )) ) {
+			if( con->is_upstream &&
+				( request->realAddr.type == NA_NOTRANSMIT || SV_Web_ConnectionLimitReached( &request->realAddr ) ) ) {
 				request->error = HTTP_RESP_SERVICE_UNAVAILABLE;
-			}
-			else if( !SV_Web_FindGameClientBySession( request->clientSession, request->clientNum ) ) {
+			} else if( !SV_Web_FindGameClientBySession( request->clientSession, request->clientNum ) ) {
 				request->error = HTTP_RESP_FORBIDDEN;
 			}
 		}
@@ -992,8 +945,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 				if( request->stream.content_length < sizeof( request->stream.header_buf ) ) {
 					request->stream.content = request->stream.header_buf;
 					request->stream.content_p = request->stream.header_buf_p;
-				}
-				else {
+				} else {
 					request->stream.content = Mem_ZoneMallocExt( request->stream.content_length + 1, 0 );
 					request->stream.content[request->stream.content_length] = 0;
 					memcpy( request->stream.content, request->stream.header_buf, request->stream.header_buf_p );
@@ -1035,8 +987,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 	if( request->error ) {
 		con->close_after_resp = true;
 		con->state = HTTP_CONN_STATE_RESP;
-	}
-	else if( request->stream.header_done && request->stream.content_p >= request->stream.content_length ) {
+	} else if( request->stream.header_done && request->stream.content_p >= request->stream.content_length ) {
 		// yay, fully got the request
 		con->state = HTTP_CONN_STATE_RESP;
 	}
@@ -1052,8 +1003,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 /*
 * SV_Web_ResponseCodeMessage
 */
-static const char *SV_Web_ResponseCodeMessage( http_response_code_t code )
-{
+static const char *SV_Web_ResponseCodeMessage( http_response_code_t code ) {
 	switch( code ) {
 		case HTTP_RESP_OK: return "OK";
 		case HTTP_RESP_PARTIAL_CONTENT: return "Partial Content";
@@ -1070,9 +1020,8 @@ static const char *SV_Web_ResponseCodeMessage( http_response_code_t code )
 /*
 * SV_Web_RouteRequest
 */
-static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_response_t *response, 
-	char **content, size_t *content_length )
-{
+static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_response_t *response,
+								 char **content, size_t *content_length ) {
 	const char *resource = request->resource;
 	const char *query_string = request->query_string;
 
@@ -1082,17 +1031,16 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 	response->request_id = request->id;
 	if( !resource ) {
 		response->code = HTTP_RESP_BAD_REQUEST;
-	}
-	else if( !Q_strnicmp( resource, "game/", 5 ) ) {
+	} else if( !Q_strnicmp( resource, "game/", 5 ) ) {
 		// request to game module
 		response->content_state = CONTENT_STATE_AWAITING;
 		SV_Web_IssueQueryInCmd( response, request->method, resource + 5, query_string );
 	} else if( !Q_strnicmp( resource, "files/", 6 ) ) {
 		const char *filename, *extension;
-		
+
 		filename = resource + 6;
 		response->filename = ZoneCopyString( filename );
-		
+
 		if( request->method == HTTP_METHOD_GET || request->method == HTTP_METHOD_HEAD ) {
 			// check for malicious URL's
 			if( !sv_uploads_http->integer || !COM_ValidateRelativeFilename( filename ) ) {
@@ -1102,8 +1050,8 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 
 			// only serve GET requests for pack and demo files
 			extension = COM_FileExtension( filename );
-			if( !extension || 
-				!(FS_CheckPakExtension( filename ) || !Q_stricmp( extension, APP_DEMO_EXTENSION_STR ) ) ) {
+			if( !extension ||
+				!( FS_CheckPakExtension( filename ) || !Q_stricmp( extension, APP_DEMO_EXTENSION_STR ) ) ) {
 				response->code = HTTP_RESP_FORBIDDEN;
 				return;
 			}
@@ -1116,16 +1064,13 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 			if( response->fileno == -1 ) {
 				response->code = HTTP_RESP_NOT_FOUND;
 				*content_length = 0;
-			}
-			else {
+			} else {
 				response->code = HTTP_RESP_OK;
 			}
-		}
-		else {
+		} else {
 			response->code = HTTP_RESP_BAD_REQUEST;
 		}
-	}
-	else {
+	} else {
 		response->code = HTTP_RESP_NOT_FOUND;
 	}
 }
@@ -1133,8 +1078,7 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 /*
 * SV_Web_RespondToQuery
 */
-static void SV_Web_RespondToQuery( sv_http_connection_t *con )
-{
+static void SV_Web_RespondToQuery( sv_http_connection_t *con ) {
 	char vastr[1024];
 	char err_body[1024];
 	char *content = NULL;
@@ -1146,15 +1090,12 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 
 	if( request->error ) {
 		response->code = request->error;
-	}
-	else if( response->content_state == CONTENT_STATE_AWAITING ) {
+	} else if( response->content_state == CONTENT_STATE_AWAITING ) {
 		return;
-	}
-	else if( response->content_state == CONTENT_STATE_RECEIVED ) {
+	} else if( response->content_state == CONTENT_STATE_RECEIVED ) {
 		content = response->content;
 		content_length = response->content_length;
-	}
-	else {
+	} else {
 		SV_Web_RouteRequest( request, response, &content, &content_length );
 
 		if( response->content_state == CONTENT_STATE_AWAITING ) {
@@ -1170,11 +1111,11 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 		// serve range requests
 		if( request->partial && response->file ) {
 			// seek to first byte pos and clamp the last byte pos to content length
-			if( request->partial_content_range.begin > 0 ) { 
+			if( request->partial_content_range.begin > 0 ) {
 				FS_Seek( response->file, request->partial_content_range.begin, FS_SEEK_SET );
 				// range.end may be set to 0 for 'bytes=100-' style requests
-				response->stream.content_range.end = request->partial_content_range.end 
-					? request->partial_content_range.end : content_length;
+				response->stream.content_range.end = request->partial_content_range.end
+													 ? request->partial_content_range.end : content_length;
 
 			} else if( request->partial_content_range.end < 0 ) {
 				// seek to N last bytes in the file
@@ -1197,12 +1138,12 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 
 	con->state = HTTP_CONN_STATE_SEND;
 
-	Q_snprintfz( resp_stream->header_buf, sizeof( resp_stream->header_buf ), 
-		"%s %i %s\r\nServer: " APPLICATION " v" APP_VERSION_STR "\r\n", 
-		request->http_ver, response->code, SV_Web_ResponseCodeMessage( response->code ) );
+	Q_snprintfz( resp_stream->header_buf, sizeof( resp_stream->header_buf ),
+				 "%s %i %s\r\nServer: " APPLICATION " v" APP_VERSION_STR "\r\n",
+				 request->http_ver, response->code, SV_Web_ResponseCodeMessage( response->code ) );
 
-	Q_strncatz( resp_stream->header_buf, "Accept-Ranges: bytes\r\n", 
-			sizeof( resp_stream->header_buf ) );
+	Q_strncatz( resp_stream->header_buf, "Accept-Ranges: bytes\r\n",
+				sizeof( resp_stream->header_buf ) );
 
 	if( response->code == HTTP_RESP_REQUESTED_RANGE_NOT_SATISFIABLE ) {
 		int file_length = FS_FOpenBaseFile( request->resource, NULL, FS_READ );
@@ -1211,16 +1152,14 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 		// specifying the length of the resource
 		if( file_length < 0 ) {
 			Q_strncatz( resp_stream->header_buf, "Content-Range: bytes */*\r\n",
-				sizeof( resp_stream->header_buf ) );
-		}
-		else {
+						sizeof( resp_stream->header_buf ) );
+		} else {
 			Q_snprintfz( vastr, sizeof( vastr ), "Content-Range: bytes */%i\r\n", content_length );
 			Q_strncatz( resp_stream->header_buf, vastr, sizeof( resp_stream->header_buf ) );
 		}
-	}
-	else if( response->code == HTTP_RESP_PARTIAL_CONTENT ) {
-		Q_snprintfz( vastr, sizeof( vastr ), "Content-Range: bytes %i-%i/%i\r\n", 
-			response->stream.content_range.begin, response->stream.content_range.end, content_length );
+	} else if( response->code == HTTP_RESP_PARTIAL_CONTENT ) {
+		Q_snprintfz( vastr, sizeof( vastr ), "Content-Range: bytes %i-%i/%i\r\n",
+					 response->stream.content_range.begin, response->stream.content_range.end, content_length );
 		Q_strncatz( resp_stream->header_buf, vastr, sizeof( resp_stream->header_buf ) );
 		content_length = response->stream.content_range.end - response->stream.content_range.begin;
 	}
@@ -1228,21 +1167,21 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 	if( response->code >= HTTP_RESP_BAD_REQUEST || !content_length ) {
 		// error response or empty response: just return response code + description
 		Q_strncatz( resp_stream->header_buf, "Content-Type: text/plain\r\n",
-				sizeof( resp_stream->header_buf ) );
+					sizeof( resp_stream->header_buf ) );
 
-		Q_snprintfz( err_body, sizeof( err_body ), "%i %s\n", 
-			response->code, SV_Web_ResponseCodeMessage( response->code ) );
+		Q_snprintfz( err_body, sizeof( err_body ), "%i %s\n",
+					 response->code, SV_Web_ResponseCodeMessage( response->code ) );
 		content = err_body;
 		content_length = strlen( err_body );
 	}
 
 	// resource length
 	Q_strncatz( resp_stream->header_buf, va( "Content-Length: %i\r\n", content_length ),
-			sizeof( resp_stream->header_buf ) );
+				sizeof( resp_stream->header_buf ) );
 
 	if( response->file ) {
-		Q_snprintfz( vastr, sizeof( vastr ), "Content-Disposition: attachment; filename=\"%s\"\r\n", 
-			COM_FileBase( response->filename ) );
+		Q_snprintfz( vastr, sizeof( vastr ), "Content-Disposition: attachment; filename=\"%s\"\r\n",
+					 COM_FileBase( response->filename ) );
 		Q_strncatz( resp_stream->header_buf, vastr, sizeof( resp_stream->header_buf ) );
 	}
 
@@ -1252,8 +1191,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 	if( content && content_length ) {
 		if( content_length + header_length < sizeof( resp_stream->header_buf ) ) {
 			resp_stream->content = resp_stream->header_buf + header_length;
-		}
-		else {
+		} else {
 			resp_stream->content = Mem_ZoneMallocExt( content_length, 0 );
 		}
 		memcpy( resp_stream->content, content, content_length );
@@ -1265,8 +1203,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 /*
 * SV_Web_SendResponse
 */
-static size_t SV_Web_SendResponse( sv_http_connection_t *con )
-{
+static size_t SV_Web_SendResponse( sv_http_connection_t *con ) {
 	int sent;
 	char *sendbuf;
 	size_t sendbuf_size;
@@ -1296,11 +1233,10 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 			if( response->file ) {
 				sendbuf_size = stream->content_length - stream->content_p;
 				sent = SV_Web_SendFile( con, response->fileno, response->file_data_offset, &response->file_send_pos, sendbuf_size );
-			}
-			else {
+			} else {
 				if( !stream->content ) {
 					break;
-				}				
+				}
 				sendbuf = stream->content + stream->content_p;
 				sendbuf_size = stream->content_length - stream->content_p;
 				sent = SV_Web_Send( con, sendbuf, sendbuf_size );
@@ -1320,8 +1256,8 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 	}
 
 	// if done sending content body, make the transition to recieving state
-	if( stream->header_done 
-		&& (!stream->content_length || stream->content_p >= stream->content_length) ) {
+	if( stream->header_done
+		&& ( !stream->content_length || stream->content_p >= stream->content_length ) ) {
 		con->state = HTTP_CONN_STATE_RECV;
 	}
 
@@ -1331,8 +1267,7 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 /*
 * SV_Web_WriteResponse
 */
-static void SV_Web_WriteResponse( socket_t *socket, sv_http_connection_t *con )
-{
+static void SV_Web_WriteResponse( socket_t *socket, sv_http_connection_t *con ) {
 	if( !sv_http_running ) {
 		return;
 	}
@@ -1345,7 +1280,7 @@ static void SV_Web_WriteResponse( socket_t *socket, sv_http_connection_t *con )
 			if( con->state != HTTP_CONN_STATE_SEND ) {
 				break;
 			}
-			// fallthrough
+		// fallthrough
 		case HTTP_CONN_STATE_SEND:
 			SV_Web_SendResponse( con );
 
@@ -1353,8 +1288,7 @@ static void SV_Web_WriteResponse( socket_t *socket, sv_http_connection_t *con )
 				SV_Web_ResetResponse( &con->response );
 				if( con->close_after_resp ) {
 					con->open = false;
-				}
-				else {
+				} else {
 					SV_Web_ResetRequest( &con->request );
 				}
 			}
@@ -1369,8 +1303,7 @@ static void SV_Web_WriteResponse( socket_t *socket, sv_http_connection_t *con )
 /*
 * SV_Web_InitSocket
 */
-static void SV_Web_InitSocket( const char *addrstr, netadrtype_t adrtype, socket_t *socket )
-{
+static void SV_Web_InitSocket( const char *addrstr, netadrtype_t adrtype, socket_t *socket ) {
 	netadr_t address;
 
 	address.type = NA_NOTRANSMIT;
@@ -1378,19 +1311,13 @@ static void SV_Web_InitSocket( const char *addrstr, netadrtype_t adrtype, socket
 	NET_StringToAddress( addrstr, &address );
 	NET_SetAddressPort( &address, sv_http_port->integer );
 
-	if( address.type == adrtype )
-	{
-		if( !NET_OpenSocket( socket, SOCKET_TCP, &address, true ) )
-		{
+	if( address.type == adrtype ) {
+		if( !NET_OpenSocket( socket, SOCKET_TCP, &address, true ) ) {
 			Com_Printf( "Error: Couldn't open TCP socket: %s", NET_ErrorString() );
-		}
-		else if( !NET_Listen( socket ) )
-		{
+		} else if( !NET_Listen( socket ) ) {
 			Com_Printf( "Error: Couldn't listen to TCP socket: %s", NET_ErrorString() );
 			NET_CloseSocket( socket );
-		}
-		else
-		{
+		} else {
 			Com_Printf( "Web server started on %s\n", NET_AddressToString( &address ) );
 		}
 	}
@@ -1399,38 +1326,34 @@ static void SV_Web_InitSocket( const char *addrstr, netadrtype_t adrtype, socket
 /*
 * SV_Web_Listen
 */
-static void SV_Web_Listen( socket_t *socket )
-{
+static void SV_Web_Listen( socket_t *socket ) {
 	int ret;
 	socket_t newsocket;
 	netadr_t newaddress;
 	sv_http_connection_t *con;
 
 	// accept new connections
-	while( ( ret = NET_Accept( socket, &newsocket, &newaddress ) ) )
-	{
+	while( ( ret = NET_Accept( socket, &newsocket, &newaddress ) ) ) {
 		bool block;
 		bool is_upstream;
 
-		if( ret == -1 )
-		{
+		if( ret == -1 ) {
 			Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
 			continue;
 		}
 
-		is_upstream = sv_web_upstream_addr.type != NA_NOTRANSMIT 
-			&& NET_CompareBaseAddress( &newaddress, &sv_web_upstream_addr );
+		is_upstream = sv_web_upstream_addr.type != NA_NOTRANSMIT
+					  && NET_CompareBaseAddress( &newaddress, &sv_web_upstream_addr );
 		block = false;
 
-		if( !NET_IsLocalAddress( &newaddress ) && !is_upstream )
-		{
+		if( !NET_IsLocalAddress( &newaddress ) && !is_upstream ) {
 			// only accept connections from connected clients
 			block = SV_Web_FindGameClientByAddress( &newaddress ) == false;
 			if( !block ) {
 				block = SV_Web_ConnectionLimitReached( &newaddress );
 			}
 		}
-		
+
 		if( !block ) {
 			Com_DPrintf( "HTTP connection accepted from %s\n", NET_AddressToString( &newaddress ) );
 			con = SV_Web_AllocConnection();
@@ -1454,8 +1377,7 @@ static void SV_Web_Listen( socket_t *socket )
 /*
 * SV_Web_Init
 */
-void SV_Web_Init( void )
-{
+void SV_Web_Init( void ) {
 	sv_http_initialized = false;
 	sv_http_running = false;
 	sv_http_request_autoicr = 1;
@@ -1469,7 +1391,7 @@ void SV_Web_Init( void )
 	SV_Web_InitSocket( sv_http_ip->string[0] == '\0' ? sv_ip->string : sv_http_ip->string, NA_IP, &sv_socket_http );
 	SV_Web_InitSocket( sv_http_ipv6->string[0] == '\0' ? sv_ip6->string : sv_http_ipv6->string, NA_IP6, &sv_socket_http6 );
 
-	sv_http_initialized = (sv_socket_http.address.type == NA_IP || sv_socket_http6.address.type == NA_IP6);
+	sv_http_initialized = ( sv_socket_http.address.type == NA_IP || sv_socket_http6.address.type == NA_IP6 );
 
 	if( !sv_http_initialized ) {
 		return;
@@ -1487,10 +1409,9 @@ void SV_Web_Init( void )
 /*
 * SV_Web_Frame
 */
-static void SV_Web_Frame( void )
-{
+static void SV_Web_Frame( void ) {
 	sv_http_connection_t *con, *next, *hnode = &sv_http_connection_headnode;
-	socket_t *sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
+	socket_t *sockets[MAX_INCOMING_HTTP_CONNECTIONS + 1];
 	void *connections[MAX_INCOMING_HTTP_CONNECTIONS];
 	int num_sockets = 0;
 	bool upstream_is_set;
@@ -1500,18 +1421,15 @@ static void SV_Web_Frame( void )
 	}
 
 	upstream_is_set = sv_http_upstream_ip->string[0] != '\0' && sv_http_upstream_baseurl->string[0] != '\0';
-	if( upstream_is_set )
-	{
-		if( sv_http_upstream_ip->modified )
-		{
+	if( upstream_is_set ) {
+		if( sv_http_upstream_ip->modified ) {
 			NET_StringToAddress( sv_http_upstream_ip->string, &sv_web_upstream_addr );
 			sv_http_upstream_ip->modified = false;
 		}
-	}
-	else
-	{
-		if( sv_web_upstream_addr.type != NA_NOTRANSMIT )
+	} else {
+		if( sv_web_upstream_addr.type != NA_NOTRANSMIT ) {
 			NET_InitAddress( &sv_web_upstream_addr, NA_NOTRANSMIT );
+		}
 	}
 
 	// accept new connections
@@ -1524,8 +1442,7 @@ static void SV_Web_Frame( void )
 
 	// handle incoming data
 	num_sockets = 0;
-	for( con = hnode->prev; con != hnode; con = next )
-	{
+	for( con = hnode->prev; con != hnode; con = next ) {
 		next = con->prev;
 		switch( con->state ) {
 			case HTTP_CONN_STATE_RECV:
@@ -1546,11 +1463,10 @@ static void SV_Web_Frame( void )
 
 	if( num_sockets != 0 ) {
 		NET_Monitor( HTTP_SERVER_SLEEP_TIME, sockets,
-			(void (*)(socket_t *, void*))SV_Web_ReceiveRequest,
-			(void (*)(socket_t *, void*))SV_Web_WriteResponse,
-			NULL, connections );
-	}
-	else {
+					 ( void ( * )( socket_t *, void* ) )SV_Web_ReceiveRequest,
+					 ( void ( * )( socket_t *, void* ) )SV_Web_WriteResponse,
+					 NULL, connections );
+	} else {
 		// sleep on network sockets if got nothing else to do
 		if( sv_socket_http.address.type == NA_IP ) {
 			sockets[num_sockets++] = &sv_socket_http;
@@ -1563,8 +1479,7 @@ static void SV_Web_Frame( void )
 	}
 
 	// close dead connections
-	for( con = hnode->prev; con != hnode; con = next )
-	{
+	for( con = hnode->prev; con != hnode; con = next ) {
 		next = con->prev;
 		if( !sv_http_running ) {
 			return;
@@ -1585,7 +1500,7 @@ static void SV_Web_Frame( void )
 					break;
 			}
 
-			if( Sys_Milliseconds() > con->last_active + timeout*1000 ) {
+			if( Sys_Milliseconds() > con->last_active + timeout * 1000 ) {
 				con->open = false;
 				Com_DPrintf( "HTTP connection timeout from %s\n", NET_AddressToString( &con->address ) );
 			}
@@ -1601,24 +1516,21 @@ static void SV_Web_Frame( void )
 /*
 * SV_Web_Running
 */
-bool SV_Web_Running( void )
-{
+bool SV_Web_Running( void ) {
 	return sv_http_running;
 }
 
 /*
 * SV_Web_GameFrame
 */
-void SV_Web_GameFrame( http_game_query_cb cb )
-{
+void SV_Web_GameFrame( http_game_query_cb cb ) {
 	SV_Web_ReadIncomingQueueCmds( cb );
 }
 
 /*
 * SV_Web_ThreadProc
 */
-static void *SV_Web_ThreadProc( void *param )
-{
+static void *SV_Web_ThreadProc( void *param ) {
 	while( sv_http_running ) {
 		SV_Web_Frame();
 	}
@@ -1630,8 +1542,7 @@ static void *SV_Web_ThreadProc( void *param )
 /*
 * SV_Web_Shutdown
 */
-void SV_Web_Shutdown( void )
-{
+void SV_Web_Shutdown( void ) {
 	if( !sv_http_initialized ) {
 		return;
 	}
@@ -1650,8 +1561,7 @@ void SV_Web_Shutdown( void )
 /*
 * SV_Web_UpstreamBaseUrl
 */
-const char *SV_Web_UpstreamBaseUrl( void )
-{
+const char *SV_Web_UpstreamBaseUrl( void ) {
 	return sv_http_upstream_baseurl->string;
 }
 
@@ -1660,37 +1570,32 @@ const char *SV_Web_UpstreamBaseUrl( void )
 /*
 * SV_Web_Init
 */
-void SV_Web_Init( void )
-{
+void SV_Web_Init( void ) {
 }
 
 /*
 * SV_Web_GameFrame
 */
-void SV_Web_GameFrame( http_game_query_cb cb )
-{
+void SV_Web_GameFrame( http_game_query_cb cb ) {
 }
 
 /*
 * SV_Web_Shutdown
 */
-void SV_Web_Shutdown( void )
-{
+void SV_Web_Shutdown( void ) {
 }
 
 /*
 * SV_Web_Running
 */
-bool SV_Web_Running( void )
-{
+bool SV_Web_Running( void ) {
 	return false;
 }
 
 /*
 * SV_Web_UpstreamBaseUrl
 */
-const char *SV_Web_UpstreamBaseUrl( void )
-{
+const char *SV_Web_UpstreamBaseUrl( void ) {
 	return "";
 }
 

@@ -24,13 +24,11 @@ static bool bugged_rawXevents = false;
 #if defined( __APPLE__ )
 void IN_SetMouseScalingEnabled( bool isRestore );
 #else
-void IN_SetMouseScalingEnabled( bool isRestore )
-{
+void IN_SetMouseScalingEnabled( bool isRestore ) {
 }
 #endif
 
-void IN_Commands( void )
-{
+void IN_Commands( void ) {
 	IN_SDL_JoyCommands();
 }
 
@@ -38,8 +36,7 @@ void IN_Commands( void )
  * Function which is called whenever the mouse is moved.
  * @param ev the SDL event object containing the mouse position et all
  */
-static void mouse_motion_event( SDL_MouseMotionEvent *event )
-{
+static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
 	if( !mouse_active ) {
 		return;
 	}
@@ -52,9 +49,10 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event )
 		static Uint32 last_which;
 		static Sint32 last_xrel, last_yrel;
 
-		if (last_timestamp == event->timestamp && last_which == event->which 
-			&& last_xrel == event->xrel && last_yrel == event->yrel)
+		if( last_timestamp == event->timestamp && last_which == event->which
+			&& last_xrel == event->xrel && last_yrel == event->yrel ) {
 			return;
+		}
 
 		last_timestamp = event->timestamp;
 		last_which = event->which;
@@ -71,8 +69,7 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event )
  * @param ev the SDL event object containing the button number et all
  * @param state either true if it is a keydown event or false otherwise
  */
-static void mouse_button_event( SDL_MouseButtonEvent *event, bool state )
-{
+static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 	Uint8 button = event->button;
 
 	if( !mouse_active ) {
@@ -93,12 +90,14 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state )
 				Key_MouseEvent( K_MOUSE2, state, Sys_Milliseconds() );
 				break;
 			case 4:
-				if( in_mousehack->integer )
+				if( in_mousehack->integer ) {
 					Key_MouseEvent( K_MOUSE6, state, Sys_Milliseconds() );
+				}
 				break;
 			case 5:
-				if( in_mousehack->integer )
+				if( in_mousehack->integer ) {
 					Key_MouseEvent( K_MOUSE7, state, Sys_Milliseconds() );
+				}
 				break;
 			case 6:
 				Key_MouseEvent( K_MOUSE6, state, Sys_Milliseconds() );
@@ -116,12 +115,12 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state )
 				Key_MouseEvent( K_MOUSE8, state, Sys_Milliseconds() );
 				break;
 		}
-	} else
+	} else {
 		Com_Printf( "sdl_input.c: Unsupported mouse button (button = %u)\n", button );
+	}
 }
 
-static void mouse_wheel_event( SDL_MouseWheelEvent *event )
-{
+static void mouse_wheel_event( SDL_MouseWheelEvent *event ) {
 	int key = event->y > 0 ? K_MWHEELUP : K_MWHEELDOWN;
 	unsigned sys_msg_time = Sys_Milliseconds();
 
@@ -133,17 +132,15 @@ static void mouse_wheel_event( SDL_MouseWheelEvent *event )
 	Key_Event( key, false, sys_msg_time );
 }
 
-static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
-{
+static wchar_t TranslateSDLScancode( SDL_Scancode scancode ) {
 	wchar_t charkey = 0;
-	
-	switch(scancode)
-	{
-		case SDL_SCANCODE_TAB:          charkey = K_TAB;		break;
-		case SDL_SCANCODE_RETURN:       charkey = K_ENTER;		break;
-		case SDL_SCANCODE_ESCAPE:       charkey = K_ESCAPE;		break;
-		case SDL_SCANCODE_SPACE:        charkey = K_SPACE;		break;
-		case SDL_SCANCODE_CAPSLOCK:     charkey = K_CAPSLOCK;	break;
+
+	switch( scancode ) {
+		case SDL_SCANCODE_TAB:          charkey = K_TAB;        break;
+		case SDL_SCANCODE_RETURN:       charkey = K_ENTER;      break;
+		case SDL_SCANCODE_ESCAPE:       charkey = K_ESCAPE;     break;
+		case SDL_SCANCODE_SPACE:        charkey = K_SPACE;      break;
+		case SDL_SCANCODE_CAPSLOCK:     charkey = K_CAPSLOCK;   break;
 		case SDL_SCANCODE_SCROLLLOCK:   charkey = K_SCROLLLOCK; break;
 		case SDL_SCANCODE_NUMLOCKCLEAR: charkey = K_NUMLOCK;    break;
 		case SDL_SCANCODE_BACKSPACE:    charkey = K_BACKSPACE;  break;
@@ -184,77 +181,77 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_HOME:         charkey = K_HOME;       break;
 		case SDL_SCANCODE_END:          charkey = K_END;        break;
 		case SDL_SCANCODE_GRAVE:        charkey = '~';          break;
-		case SDL_SCANCODE_NONUSBACKSLASH:charkey= '<';          break;
+		case SDL_SCANCODE_NONUSBACKSLASH: charkey = '<';          break;
 		case SDL_SCANCODE_LGUI:
 		case SDL_SCANCODE_RGUI:         charkey = K_COMMAND;    break;
-			
-			
-		case SDL_SCANCODE_A:			charkey = 'a';			break;
-		case SDL_SCANCODE_B:			charkey = 'b';			break;
-		case SDL_SCANCODE_C:			charkey = 'c';			break;
-		case SDL_SCANCODE_D:			charkey = 'd';			break;
-		case SDL_SCANCODE_E:			charkey = 'e';			break;
-		case SDL_SCANCODE_F:			charkey = 'f';			break;
-		case SDL_SCANCODE_G:			charkey = 'g';			break;
-		case SDL_SCANCODE_H:			charkey = 'h';			break;
-		case SDL_SCANCODE_I:			charkey = 'i';			break;
-		case SDL_SCANCODE_J:			charkey = 'j';			break;
-		case SDL_SCANCODE_K:			charkey = 'k';			break;
-		case SDL_SCANCODE_L:			charkey = 'l';			break;
-		case SDL_SCANCODE_M:			charkey = 'm';			break;
-		case SDL_SCANCODE_N:			charkey = 'n';			break;
-		case SDL_SCANCODE_O:			charkey = 'o';			break;
-		case SDL_SCANCODE_P:			charkey = 'p';			break;
-		case SDL_SCANCODE_Q:			charkey = 'q';			break;
-		case SDL_SCANCODE_R:			charkey = 'r';			break;
-		case SDL_SCANCODE_S:			charkey = 's';			break;
-		case SDL_SCANCODE_T:			charkey = 't';			break;
-		case SDL_SCANCODE_U:			charkey = 'u';			break;
-		case SDL_SCANCODE_V:			charkey = 'v';			break;
-		case SDL_SCANCODE_W:			charkey = 'w';			break;
-		case SDL_SCANCODE_X:			charkey = 'x';			break;
-		case SDL_SCANCODE_Y:			charkey = 'y';			break;
-		case SDL_SCANCODE_Z:			charkey = 'z';			break;
-			
-		case SDL_SCANCODE_1:			charkey = '1';			break;
-		case SDL_SCANCODE_2:			charkey = '2';			break;
-		case SDL_SCANCODE_3:			charkey = '3';			break;
-		case SDL_SCANCODE_4:			charkey = '4';			break;
-		case SDL_SCANCODE_5:			charkey = '5';			break;
-		case SDL_SCANCODE_6:			charkey = '6';			break;
-		case SDL_SCANCODE_7:			charkey = '7';			break;
-		case SDL_SCANCODE_8:			charkey = '8';			break;
-		case SDL_SCANCODE_9:			charkey = '9';			break;
-		case SDL_SCANCODE_0:			charkey = '0';			break;
 
-		case SDL_SCANCODE_MINUS:		charkey = '-';			break;
-		case SDL_SCANCODE_EQUALS:		charkey = '=';			break;
-		case SDL_SCANCODE_BACKSLASH:		charkey = '\\';			break;
-		case SDL_SCANCODE_COMMA:		charkey = ',';			break;
-		case SDL_SCANCODE_PERIOD:		charkey = '.';			break;
-		case SDL_SCANCODE_SLASH:		charkey = '/';			break;
-		case SDL_SCANCODE_LEFTBRACKET:		charkey = '[';			break;
-		case SDL_SCANCODE_RIGHTBRACKET:		charkey = ']';			break;
-		case SDL_SCANCODE_SEMICOLON:		charkey = ';';			break;
-		case SDL_SCANCODE_APOSTROPHE:		charkey = '\'';			break;
 
-		case SDL_SCANCODE_KP_0:			charkey = KP_INS;		break;
-		case SDL_SCANCODE_KP_1:			charkey = KP_END;		break;
-		case SDL_SCANCODE_KP_2:			charkey = KP_DOWNARROW;		break;
-		case SDL_SCANCODE_KP_3:			charkey = KP_PGDN;		break;
-		case SDL_SCANCODE_KP_4:			charkey = KP_LEFTARROW;		break;
-		case SDL_SCANCODE_KP_5:			charkey = KP_5;			break;
-		case SDL_SCANCODE_KP_6:			charkey = KP_RIGHTARROW;	break;
-		case SDL_SCANCODE_KP_7:			charkey = KP_HOME;		break;
-		case SDL_SCANCODE_KP_8:			charkey = KP_UPARROW;		break;
-		case SDL_SCANCODE_KP_9:			charkey = KP_PGUP;		break;
-		case SDL_SCANCODE_KP_ENTER:		charkey = KP_ENTER;		break;
-		case SDL_SCANCODE_KP_PERIOD:		charkey = KP_DEL;		break;
-		case SDL_SCANCODE_KP_PLUS:		charkey = KP_PLUS;		break;
-		case SDL_SCANCODE_KP_MINUS:		charkey = KP_MINUS;		break;
-		case SDL_SCANCODE_KP_DIVIDE:		charkey = KP_SLASH;		break;
-		case SDL_SCANCODE_KP_MULTIPLY:		charkey = KP_STAR;		break;
-		case SDL_SCANCODE_KP_EQUALS:		charkey = KP_EQUAL;		break;
+		case SDL_SCANCODE_A:            charkey = 'a';          break;
+		case SDL_SCANCODE_B:            charkey = 'b';          break;
+		case SDL_SCANCODE_C:            charkey = 'c';          break;
+		case SDL_SCANCODE_D:            charkey = 'd';          break;
+		case SDL_SCANCODE_E:            charkey = 'e';          break;
+		case SDL_SCANCODE_F:            charkey = 'f';          break;
+		case SDL_SCANCODE_G:            charkey = 'g';          break;
+		case SDL_SCANCODE_H:            charkey = 'h';          break;
+		case SDL_SCANCODE_I:            charkey = 'i';          break;
+		case SDL_SCANCODE_J:            charkey = 'j';          break;
+		case SDL_SCANCODE_K:            charkey = 'k';          break;
+		case SDL_SCANCODE_L:            charkey = 'l';          break;
+		case SDL_SCANCODE_M:            charkey = 'm';          break;
+		case SDL_SCANCODE_N:            charkey = 'n';          break;
+		case SDL_SCANCODE_O:            charkey = 'o';          break;
+		case SDL_SCANCODE_P:            charkey = 'p';          break;
+		case SDL_SCANCODE_Q:            charkey = 'q';          break;
+		case SDL_SCANCODE_R:            charkey = 'r';          break;
+		case SDL_SCANCODE_S:            charkey = 's';          break;
+		case SDL_SCANCODE_T:            charkey = 't';          break;
+		case SDL_SCANCODE_U:            charkey = 'u';          break;
+		case SDL_SCANCODE_V:            charkey = 'v';          break;
+		case SDL_SCANCODE_W:            charkey = 'w';          break;
+		case SDL_SCANCODE_X:            charkey = 'x';          break;
+		case SDL_SCANCODE_Y:            charkey = 'y';          break;
+		case SDL_SCANCODE_Z:            charkey = 'z';          break;
+
+		case SDL_SCANCODE_1:            charkey = '1';          break;
+		case SDL_SCANCODE_2:            charkey = '2';          break;
+		case SDL_SCANCODE_3:            charkey = '3';          break;
+		case SDL_SCANCODE_4:            charkey = '4';          break;
+		case SDL_SCANCODE_5:            charkey = '5';          break;
+		case SDL_SCANCODE_6:            charkey = '6';          break;
+		case SDL_SCANCODE_7:            charkey = '7';          break;
+		case SDL_SCANCODE_8:            charkey = '8';          break;
+		case SDL_SCANCODE_9:            charkey = '9';          break;
+		case SDL_SCANCODE_0:            charkey = '0';          break;
+
+		case SDL_SCANCODE_MINUS:        charkey = '-';          break;
+		case SDL_SCANCODE_EQUALS:       charkey = '=';          break;
+		case SDL_SCANCODE_BACKSLASH:        charkey = '\\';         break;
+		case SDL_SCANCODE_COMMA:        charkey = ',';          break;
+		case SDL_SCANCODE_PERIOD:       charkey = '.';          break;
+		case SDL_SCANCODE_SLASH:        charkey = '/';          break;
+		case SDL_SCANCODE_LEFTBRACKET:      charkey = '[';          break;
+		case SDL_SCANCODE_RIGHTBRACKET:     charkey = ']';          break;
+		case SDL_SCANCODE_SEMICOLON:        charkey = ';';          break;
+		case SDL_SCANCODE_APOSTROPHE:       charkey = '\'';         break;
+
+		case SDL_SCANCODE_KP_0:         charkey = KP_INS;       break;
+		case SDL_SCANCODE_KP_1:         charkey = KP_END;       break;
+		case SDL_SCANCODE_KP_2:         charkey = KP_DOWNARROW;     break;
+		case SDL_SCANCODE_KP_3:         charkey = KP_PGDN;      break;
+		case SDL_SCANCODE_KP_4:         charkey = KP_LEFTARROW;     break;
+		case SDL_SCANCODE_KP_5:         charkey = KP_5;         break;
+		case SDL_SCANCODE_KP_6:         charkey = KP_RIGHTARROW;    break;
+		case SDL_SCANCODE_KP_7:         charkey = KP_HOME;      break;
+		case SDL_SCANCODE_KP_8:         charkey = KP_UPARROW;       break;
+		case SDL_SCANCODE_KP_9:         charkey = KP_PGUP;      break;
+		case SDL_SCANCODE_KP_ENTER:     charkey = KP_ENTER;     break;
+		case SDL_SCANCODE_KP_PERIOD:        charkey = KP_DEL;       break;
+		case SDL_SCANCODE_KP_PLUS:      charkey = KP_PLUS;      break;
+		case SDL_SCANCODE_KP_MINUS:     charkey = KP_MINUS;     break;
+		case SDL_SCANCODE_KP_DIVIDE:        charkey = KP_SLASH;     break;
+		case SDL_SCANCODE_KP_MULTIPLY:      charkey = KP_STAR;      break;
+		case SDL_SCANCODE_KP_EQUALS:        charkey = KP_EQUAL;     break;
 
 		default: break;
 	}
@@ -266,8 +263,7 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
  * @param event the SDL event object containing the keysym et all
  * @param state either true if it is a keydown event or false otherwise
  */
-static void key_event( const SDL_KeyboardEvent *event, const bool state )
-{
+static void key_event( const SDL_KeyboardEvent *event, const bool state ) {
 	wchar_t charkey = TranslateSDLScancode( event->keysym.scancode );
 
 	if( charkey >= 0 && charkey <= 255 ) {
@@ -277,15 +273,13 @@ static void key_event( const SDL_KeyboardEvent *event, const bool state )
 
 /*****************************************************************************/
 
-static void AppActivate( bool active )
-{
+static void AppActivate( bool active ) {
 	SCR_PauseCinematic( !active );
 	CL_SoundModule_Activate( active );
 	VID_AppActivate( active, false );
 }
 
-static void IN_HandleEvents( void )
-{
+static void IN_HandleEvents( void ) {
 	Uint16 *wtext = NULL;
 	SDL_PumpEvents();
 	SDL_Event event;
@@ -301,13 +295,12 @@ static void IN_HandleEvents( void )
 				#else
 					#define KEYBOARD_COPY_PASTE_MODIFIER KMOD_CTRL
 				#endif
-				
+
 				if( event.key.keysym.sym == SDLK_c ) {
 					if( event.key.keysym.mod & KEYBOARD_COPY_PASTE_MODIFIER ) {
 						Key_CharEvent( KC_CTRLC, KC_CTRLC );
 					}
-				}
-				else if( event.key.keysym.sym == SDLK_v ) {
+				} else if( event.key.keysym.sym == SDLK_v ) {
 					if( event.key.keysym.mod & KEYBOARD_COPY_PASTE_MODIFIER ) {
 						Key_CharEvent( KC_CTRLV, KC_CTRLV );
 					}
@@ -392,16 +385,14 @@ static void IN_HandleEvents( void )
  * We need to ignore the movement event generated when
  * mouse cursor is warped to window centre for the first time.
  */
-static void IN_SkipRelativeMouseMove( void )
-{
+static void IN_SkipRelativeMouseMove( void ) {
 	if( mouse_relative ) {
 		SDL_GetRelativeMouseState( &mx, &my );
 		mx = my = 0;
 	}
 }
 
-static void IN_WarpMouseToCenter( int *pcenter_x, int *pcenter_y )
-{
+static void IN_WarpMouseToCenter( int *pcenter_x, int *pcenter_y ) {
 	int center_x, center_y;
 
 	SDL_GetWindowSize( sdl_window, &center_x, &center_y );
@@ -419,8 +410,7 @@ static void IN_WarpMouseToCenter( int *pcenter_x, int *pcenter_y )
 	}
 }
 
-void IN_MouseMove( usercmd_t *cmd )
-{
+void IN_MouseMove( usercmd_t *cmd ) {
 	if( mouse_active ) {
 		if( !mouse_relative ) {
 			if( mx || my ) {
@@ -443,12 +433,12 @@ void IN_MouseMove( usercmd_t *cmd )
 	mx = my = 0;
 }
 
-void IN_Init()
-{
+void IN_Init() {
 	SDL_version linked;
 
-	if( input_inited )
+	if( input_inited ) {
 		return;
+	}
 
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
@@ -458,8 +448,8 @@ void IN_Init()
 
 	SDL_ShowCursor( SDL_DISABLE );
 
-#if SDL_VERSION_ATLEAST(2, 0, 2)
-	
+#if SDL_VERSION_ATLEAST( 2, 0, 2 )
+
 	{
 		cvar_t *m_raw = Cvar_Get( "m_raw", "1", CVAR_ARCHIVE );
 		SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, m_raw->integer ? "0" : "1" );
@@ -469,8 +459,7 @@ void IN_Init()
 	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
 	if( mouse_relative ) {
 		IN_SetMouseScalingEnabled( false );
-	}
-	else {
+	} else {
 		IN_WarpMouseToCenter( NULL, NULL );
 	}
 
@@ -488,10 +477,10 @@ void IN_Init()
 /**
  * Shutdown input subsystem.
  */
-void IN_Shutdown()
-{
-	if( !input_inited )
+void IN_Shutdown() {
+	if( !input_inited ) {
 		return;
+	}
 
 	input_inited = false;
 	SDL_SetRelativeMouseMode( SDL_FALSE );
@@ -502,8 +491,7 @@ void IN_Shutdown()
 /**
  * Restart the input subsystem.
  */
-void IN_Restart( void )
-{
+void IN_Restart( void ) {
 	IN_Shutdown();
 	IN_Init();
 }
@@ -512,15 +500,15 @@ void IN_Restart( void )
  * This function is called for every frame and gives us some time to poll
  * for events that occured at our input devices.
  */
-void IN_Frame()
-{
-	if( !input_inited )
+void IN_Frame() {
+	if( !input_inited ) {
 		return;
+	}
 
 	if( !input_focus || ( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer ) ) {
 		if( mouse_active ) {
 			if( mouse_relative ) {
-				mouse_relative = !(SDL_SetRelativeMouseMode( SDL_FALSE ) == 0);
+				mouse_relative = !( SDL_SetRelativeMouseMode( SDL_FALSE ) == 0 );
 				if( !mouse_relative ) {
 					IN_SetMouseScalingEnabled( true );
 				}
@@ -536,8 +524,7 @@ void IN_Frame()
 			mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
 			if( mouse_relative ) {
 				IN_SetMouseScalingEnabled( false );
-			}
-			else {
+			} else {
 				IN_WarpMouseToCenter( NULL, NULL );
 			}
 			IN_SkipRelativeMouseMove();
@@ -552,43 +539,44 @@ void IN_Frame()
 /**
  * The input devices supported by the system.
  */
-unsigned int IN_SupportedDevices( void )
-{
+unsigned int IN_SupportedDevices( void ) {
 	return IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE | IN_DEVICE_JOYSTICK;
 }
 
 /**
  * Stub for showing an on-screen keyboard.
  */
-void IN_ShowSoftKeyboard( bool show )
-{
+void IN_ShowSoftKeyboard( bool show ) {
 }
 
 /**
  * Stubs for the IME until it's implemented through SDL and/or Cocoa.
  */
-void IN_IME_Enable( bool enable )
-{
+void IN_IME_Enable( bool enable ) {
 }
 
-size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen )
-{
-	if( str && strSize )
+size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen ) {
+	if( str && strSize ) {
 		str[0] = '\0';
-	if( cursorPos )
+	}
+	if( cursorPos ) {
 		*cursorPos = 0;
-	if( convStart )
+	}
+	if( convStart ) {
 		*convStart = 0;
-	if( convLen )
+	}
+	if( convLen ) {
 		*convLen = 0;
+	}
 	return 0;
 }
 
-unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands, int *selected, int *firstKey )
-{
-	if( selected )
+unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands, int *selected, int *firstKey ) {
+	if( selected ) {
 		*selected = -1;
-	if( firstKey )
+	}
+	if( firstKey ) {
 		*firstKey = 1;
+	}
 	return 0;
 }

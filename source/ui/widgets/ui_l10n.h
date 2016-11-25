@@ -28,31 +28,31 @@ namespace Rocket
 {
 namespace Controls
 {
-	class DataFormatter;
+class DataFormatter;
 }
 }
 
 namespace WSWUI
 {
-	// this element does nothing but formatting its "value" with specified "formatter"
-	// and the emitting the output as text
-	class ElementL10n : public Rocket::Core::Element
-	{
-	public:
-		ElementL10n(const Rocket::Core::String& tag);
-		virtual ~ElementL10n(){}
+// this element does nothing but formatting its "value" with specified "formatter"
+// and the emitting the output as text
+class ElementL10n : public Rocket::Core::Element
+{
+public:
+	ElementL10n( const Rocket::Core::String& tag );
+	virtual ~ElementL10n() {}
 
-		/// Checks for changes to source address.
-		virtual void OnAttributeChange(const Rocket::Core::AttributeNameList&);
+	/// Checks for changes to source address.
+	virtual void OnAttributeChange( const Rocket::Core::AttributeNameList& );
 
-	private:
-		Rocket::Controls::DataFormatter *data_formatter;
-		Rocket::Core::String format;
-		unsigned int num_args;
+private:
+	Rocket::Controls::DataFormatter *data_formatter;
+	Rocket::Core::String format;
+	unsigned int num_args;
 
 
-		static const unsigned int max_args = 8;
-	};
+	static const unsigned int max_args = 8;
+};
 }
 
 #endif // __UI_FIELD_H__

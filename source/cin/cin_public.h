@@ -24,10 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cin_public.h -- cinematics playback as a separate dll, making the engine
 // container- and format- agnostic
 
-#define	CIN_API_VERSION				8
+#define CIN_API_VERSION             8
 
-#define CIN_LOOP					1
-#define CIN_NOAUDIO					2
+#define CIN_LOOP                    1
+#define CIN_NOAUDIO                 2
 
 //===============================================================
 
@@ -39,7 +39,7 @@ typedef struct {
 
 	// the width of this plane
 	// note that row data has to be continous
-	// so for planes where stride != image_width, 
+	// so for planes where stride != image_width,
 	// the width should be max (stride, image_width)
 	int width;
 
@@ -70,15 +70,14 @@ typedef struct {
 	//===============================
 } cin_yuv_t;
 
-typedef void (*cin_raw_samples_cb_t)(void*,unsigned int, unsigned int, 
-	unsigned short, unsigned short, const uint8_t *);
-typedef unsigned int (*cin_get_raw_samples_cb_t)(void*);
+typedef void (*cin_raw_samples_cb_t)( void*,unsigned int, unsigned int,
+									  unsigned short, unsigned short, const uint8_t * );
+typedef unsigned int (*cin_get_raw_samples_cb_t)( void* );
 
 //
 // functions provided by the main engine
 //
-typedef struct
-{
+typedef struct {
 	// drops to console a client game error
 	void ( *Error )( const char *msg );
 
@@ -125,7 +124,7 @@ typedef struct
 	unsigned int ( *Sys_Milliseconds )( void );
 	uint64_t ( *Sys_Microseconds )( void );
 
-	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t *funcs );
+	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t * funcs );
 	void ( *Sys_UnloadLibrary )( void **lib );
 
 	// managed memory allocation
@@ -139,8 +138,7 @@ typedef struct
 //
 // functions exported by the cinematics subsystem
 //
-typedef struct
-{
+typedef struct {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
 

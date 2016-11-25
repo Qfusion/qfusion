@@ -28,8 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * TV_Lobby_WriteFrameSnapToClient
 */
-static void TV_Lobby_WriteFrameSnapToClient( client_t *client, msg_t *msg )
-{
+static void TV_Lobby_WriteFrameSnapToClient( client_t *client, msg_t *msg ) {
 	ginfo_t gi;
 
 	memset( &gi, 0, sizeof( ginfo_t ) );
@@ -40,8 +39,7 @@ static void TV_Lobby_WriteFrameSnapToClient( client_t *client, msg_t *msg )
 /*
 * TV_Lobby_SendClientDatagram
 */
-static bool TV_Lobby_SendClientDatagram( client_t *client )
-{
+static bool TV_Lobby_SendClientDatagram( client_t *client ) {
 	uint8_t msg_buf[MAX_MSGLEN];
 	msg_t msg;
 
@@ -59,27 +57,25 @@ static bool TV_Lobby_SendClientDatagram( client_t *client )
 /*
 * TV_Lobby_SendClientMessages
 */
-static void TV_Lobby_SendClientMessages( void )
-{
+static void TV_Lobby_SendClientMessages( void ) {
 	int i;
 	client_t *client;
 
 	// send a message to each connected client
-	for( i = 0, client = tvs.clients; i < tv_maxclients->integer; i++, client++ )
-	{
-		if( client->state != CS_SPAWNED )
+	for( i = 0, client = tvs.clients; i < tv_maxclients->integer; i++, client++ ) {
+		if( client->state != CS_SPAWNED ) {
 			continue;
+		}
 
-		if( client->relay )
+		if( client->relay ) {
 			continue;
+		}
 
-		if( !TV_Lobby_SendClientDatagram( client ) )
-		{
+		if( !TV_Lobby_SendClientDatagram( client ) ) {
 			Com_Printf( "%s" S_COLOR_WHITE ": Error sending message: %s\n", client->name, NET_ErrorString() );
-			if( client->reliable )
-			{
+			if( client->reliable ) {
 				TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "Error sending message: %s\n",
-					NET_ErrorString() );
+										  NET_ErrorString() );
 			}
 		}
 	}
@@ -88,10 +84,10 @@ static void TV_Lobby_SendClientMessages( void )
 /*
 * TV_Lobby_RunSnap
 */
-static bool TV_Lobby_RunSnap( void )
-{
-	if( tvs.lobby.lastrun + tvs.lobby.snapFrameTime > tvs.realtime )
+static bool TV_Lobby_RunSnap( void ) {
+	if( tvs.lobby.lastrun + tvs.lobby.snapFrameTime > tvs.realtime ) {
 		return false;
+	}
 
 	tvs.lobby.framenum++;
 	return true;
@@ -100,8 +96,7 @@ static bool TV_Lobby_RunSnap( void )
 /*
 * TV_Lobby_ClientBegin
 */
-void TV_Lobby_ClientBegin( client_t *client )
-{
+void TV_Lobby_ClientBegin( client_t *client ) {
 	assert( client );
 	assert( !client->relay );
 }
@@ -109,32 +104,26 @@ void TV_Lobby_ClientBegin( client_t *client )
 /*
 * TV_Lobby_ClientDisconnect
 */
-void TV_Lobby_ClientDisconnect( client_t *client )
-{
+void TV_Lobby_ClientDisconnect( client_t *client ) {
 	assert( client );
 }
 
 /*
 * TV_Lobby_CanConnect
 */
-bool TV_Lobby_CanConnect( client_t *client, char *userinfo )
-{
+bool TV_Lobby_CanConnect( client_t *client, char *userinfo ) {
 	char *value;
 
 	assert( client );
 
 	// check for a password
 	value = Info_ValueForKey( userinfo, "password" );
-	if( ( *tv_password->string && ( !value || strcmp( tv_password->string, value ) ) ) )
-	{
+	if( ( *tv_password->string && ( !value || strcmp( tv_password->string, value ) ) ) ) {
 		Info_SetValueForKey( userinfo, "rejtype", va( "%i", DROP_TYPE_PASSWORD ) );
 		Info_SetValueForKey( userinfo, "rejflag", va( "%i", 0 ) );
-		if( value && value[0] )
-		{
+		if( value && value[0] ) {
 			Info_SetValueForKey( userinfo, "rejmsg", "Incorrect password" );
-		}
-		else
-		{
+		} else {
 			Info_SetValueForKey( userinfo, "rejmsg", "Password required" );
 		}
 		return false;
@@ -146,8 +135,7 @@ bool TV_Lobby_CanConnect( client_t *client, char *userinfo )
 /*
 * TV_Lobby_ClientConnect
 */
-void TV_Lobby_ClientConnect( client_t *client )
-{
+void TV_Lobby_ClientConnect( client_t *client ) {
 	assert( client );
 
 	client->edict = NULL;
@@ -157,10 +145,8 @@ void TV_Lobby_ClientConnect( client_t *client )
 /*
 * TV_Lobby_Run
 */
-void TV_Lobby_Run( void )
-{
-	if( TV_Lobby_RunSnap() )
-	{
+void TV_Lobby_Run( void ) {
+	if( TV_Lobby_RunSnap() ) {
 		tvs.lobby.lastrun = tvs.realtime;
 		TV_Lobby_SendClientMessages();
 	}

@@ -24,8 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "tv_upstream.h"
 
-typedef struct
-{
+typedef struct {
 	char *name;
 	void ( *func )( upstream_t *upstream, msg_t *msg );
 } upstreamless_cmd_t;
@@ -33,13 +32,13 @@ typedef struct
 /*
 * TV_Upstream_Challenge
 */
-static void TV_Upstream_Challenge_f( upstream_t *upstream, msg_t *msg )
-{
+static void TV_Upstream_Challenge_f( upstream_t *upstream, msg_t *msg ) {
 	assert( upstream );
 
 	// ignore if we get in the wrong time
-	if( upstream->state != CA_CONNECTING )
+	if( upstream->state != CA_CONNECTING ) {
 		return;
+	}
 
 	upstream->challenge = atoi( Cmd_Argv( 1 ) );
 	upstream->connect_time = tvs.realtime;
@@ -50,10 +49,10 @@ static void TV_Upstream_Challenge_f( upstream_t *upstream, msg_t *msg )
 * TV_Upstream_ClientConnectPacket
 * ClientConnect in client code
 */
-static void TV_Upstream_ClientConnectPacket( upstream_t *upstream, msg_t *msg )
-{
-	if( upstream->state != CA_CONNECTING )
+static void TV_Upstream_ClientConnectPacket( upstream_t *upstream, msg_t *msg ) {
+	if( upstream->state != CA_CONNECTING ) {
 		return;
+	}
 
 	Netchan_Setup( &upstream->netchan, upstream->socket, &upstream->serveraddress, Netchan_GamePort() );
 	upstream->state = CA_HANDSHAKE;
@@ -65,24 +64,25 @@ static void TV_Upstream_ClientConnectPacket( upstream_t *upstream, msg_t *msg )
 /*
 * TV_Upstream_Reject
 */
-static void TV_Upstream_Reject_f( upstream_t *upstream, msg_t *msg )
-{
+static void TV_Upstream_Reject_f( upstream_t *upstream, msg_t *msg ) {
 	int rejecttype, rejectflag;
 	char rejectmessage[MAX_STRING_CHARS];
 
 	rejecttype = atoi( MSG_ReadStringLine( msg ) );
-	if( rejecttype < 0 || rejecttype >= DROP_TYPE_TOTAL )
+	if( rejecttype < 0 || rejecttype >= DROP_TYPE_TOTAL ) {
 		rejecttype = DROP_TYPE_GENERAL;
+	}
 
 	rejectflag = atoi( MSG_ReadStringLine( msg ) );
 
 	Q_strncpyz( rejectmessage, MSG_ReadStringLine( msg ), sizeof( rejectmessage ) );
 
 	Com_Printf( "%s" S_COLOR_WHITE ": Upstream refused: %s\n", upstream->name, rejectmessage );
-	if( rejectflag & DROP_FLAG_AUTORECONNECT )
+	if( rejectflag & DROP_FLAG_AUTORECONNECT ) {
 		Com_Printf( "Automatic reconnecting allowed.\n" );
-	else
+	} else {
 		Com_Printf( "Automatic reconnecting not allowed.\n" );
+	}
 
 	TV_Upstream_Error( upstream, "Upstream refused: %s", rejectmessage );
 }
@@ -101,8 +101,7 @@ static upstreamless_cmd_t upstream_upstreamless_cmds[] =
 /*
 * TV_Upstream_ConnectionlessPacket
 */
-void TV_Upstream_ConnectionlessPacket( upstream_t *upstream, msg_t *msg )
-{
+void TV_Upstream_ConnectionlessPacket( upstream_t *upstream, msg_t *msg ) {
 	upstreamless_cmd_t *cmd;
 	char *s, *c;
 
@@ -113,10 +112,8 @@ void TV_Upstream_ConnectionlessPacket( upstream_t *upstream, msg_t *msg )
 	Cmd_TokenizeString( s );
 	c = Cmd_Argv( 0 );
 
-	for( cmd = upstream_upstreamless_cmds; cmd->name; cmd++ )
-	{
-		if( !strcmp( c, cmd->name ) )
-		{
+	for( cmd = upstream_upstreamless_cmds; cmd->name; cmd++ ) {
+		if( !strcmp( c, cmd->name ) ) {
 			cmd->func( upstream, msg );
 			return;
 		}

@@ -50,7 +50,7 @@ FIXME:  This will be remidied once a native Mac port is complete
 #include "../qcommon/qcommon.h"
 #include "glob.h"
 
-#if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+#if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )
 
 unsigned sys_frame_time;
 
@@ -64,44 +64,36 @@ uid_t saved_euid;
 extern void CL_Shutdown( void );
 #endif
 
-static void sigusr_handler( int sig )
-{
-	if( sig == SIGUSR1 )
-	{
+static void sigusr_handler( int sig ) {
+	if( sig == SIGUSR1 ) {
 		Com_DeferConsoleLogReopen();
 	}
 	return;
 }
 
-static void signal_handler( int sig )
-{
+static void signal_handler( int sig ) {
 	static int try = 0;
 
-	switch( try++ )
-	{
-	case 0:
-		if( sig == SIGINT || sig == SIGTERM )
-		{
+	switch( try++ ) {
+		case 0:
+			if( sig == SIGINT || sig == SIGTERM ) {
+				printf( "Received signal %d, exiting...\n", sig );
+			} else {
+				fprintf( stderr, "Received signal %d\n", sig );
+			}
+			Com_DeferQuit();
+			break;
+		case 1:
 			printf( "Received signal %d, exiting...\n", sig );
-		}
-		else
-		{
-			fprintf( stderr, "Received signal %d\n", sig );
-		}
-		Com_DeferQuit();
-		break;
-	case 1:
-		printf( "Received signal %d, exiting...\n", sig );
-		_exit( 1 );
-		break;
-	default:
-		_exit( 2 );
-		break;
+			_exit( 1 );
+			break;
+		default:
+			_exit( 2 );
+			break;
 	}
 }
 
-static void catchsig( int sig, void (*handler)(int) )
-{
+static void catchsig( int sig, void ( *handler )( int ) ) {
 	struct sigaction new_action, old_action;
 	new_action.sa_handler = handler;
 	sigemptyset( &new_action.sa_mask );
@@ -109,8 +101,7 @@ static void catchsig( int sig, void (*handler)(int) )
 	sigaction( sig, &new_action, &old_action );
 }
 
-static void InitSig( void )
-{
+static void InitSig( void ) {
 	catchsig( SIGHUP, signal_handler );
 	catchsig( SIGQUIT, signal_handler );
 	catchsig( SIGILL, signal_handler );
@@ -128,8 +119,7 @@ static void InitSig( void )
 /*
 * Sys_Quit
 */
-void Sys_Quit( void )
-{
+void Sys_Quit( void ) {
 	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) & ~O_NONBLOCK );
 
 	Qcommon_Shutdown();
@@ -140,22 +130,19 @@ void Sys_Quit( void )
 /*
 * Sys_Init
 */
-void Sys_Init( void )
-{
+void Sys_Init( void ) {
 }
 
 /*
 * Sys_InitDynvars
 */
-void Sys_InitDynvars( void )
-{
+void Sys_InitDynvars( void ) {
 }
 
 /*
 * Sys_Error
 */
-void Sys_Error( const char *format, ... )
-{
+void Sys_Error( const char *format, ... ) {
 	va_list argptr;
 	char string[1024];
 
@@ -174,8 +161,7 @@ void Sys_Error( const char *format, ... )
 /*
 * Sys_Sleep
 */
-void Sys_Sleep( unsigned int millis )
-{
+void Sys_Sleep( unsigned int millis ) {
 	usleep( millis * 1000 );
 }
 
@@ -183,18 +169,16 @@ void Sys_Sleep( unsigned int millis )
 * Sys_GetSymbol
 */
 #ifdef SYS_SYMBOL
-void *Sys_GetSymbol( const char *moduleName, const char *symbolName )
-{
+void *Sys_GetSymbol( const char *moduleName, const char *symbolName ) {
 	// FIXME: Does not work on Debian64 for unknown reasons (dlsym always returns NULL)
 	void *const module = dlopen( moduleName, RTLD_NOW );
-	if( module )
-	{
+	if( module ) {
 		void *const symbol = dlsym( module, symbolName );
 		dlclose( module );
 		return symbol;
-	}
-	else
+	} else {
 		return NULL;
+	}
 }
 #endif // SYS_SYMBOL
 
@@ -203,15 +187,13 @@ void *Sys_GetSymbol( const char *moduleName, const char *symbolName )
 /*
 * Sys_AppActivate
 */
-void Sys_AppActivate( void )
-{
+void Sys_AppActivate( void ) {
 }
 
 /*
 * Sys_SendKeyEvents
 */
-void Sys_SendKeyEvents( void )
-{
+void Sys_SendKeyEvents( void ) {
 	// grab frame time
 	sys_frame_time = Sys_Milliseconds();
 }
@@ -225,37 +207,33 @@ void Sys_SendKeyEvents( void )
 * in mac_sys.m.
 */
 
-bool Sys_IsBrowserAvailable( void )
-{
+bool Sys_IsBrowserAvailable( void ) {
 	return true;
 }
 
-void Sys_OpenURLInBrowser( const char *url )
-{
-    int r;
+void Sys_OpenURLInBrowser( const char *url ) {
+	int r;
 
-    r = system( va( "xdg-open \"%s\"", url ) );
-    if( r == 0 ) {
+	r = system( va( "xdg-open \"%s\"", url ) );
+	if( r == 0 ) {
 		// FIXME: XIconifyWindow does minimize the window, however
 		// it seems that FocusIn even which follows grabs the input afterwards
 		// XIconifyWindow( x11display.dpy, x11display.win, x11display.scr );
-    }
+	}
 }
 #endif
 
 /*
 * Sys_GetCurrentProcessId
 */
-int Sys_GetCurrentProcessId( void )
-{
+int Sys_GetCurrentProcessId( void ) {
 	return getpid();
 }
 
 /*
 * Sys_GetPreferredLanguage
 */
-const char *Sys_GetPreferredLanguage( void )
-{
+const char *Sys_GetPreferredLanguage( void ) {
 	static char lang[10];
 	const char *locale;
 	char *p;
@@ -263,12 +241,14 @@ const char *Sys_GetPreferredLanguage( void )
 	setlocale( LC_ALL, "" );
 	locale = setlocale( LC_ALL, NULL );
 
-	Q_strncpyz( lang, locale, sizeof( lang ) ); 
+	Q_strncpyz( lang, locale, sizeof( lang ) );
 
 	setlocale( LC_ALL, "C" );
 
 	p = strchr( lang, '.' );
-	if( p ) { *p = '\0'; }
+	if( p ) {
+		*p = '\0';
+	}
 
 	if( !lang[0] ) {
 		return APP_DEFAULT_LANGUAGE;
@@ -279,36 +259,33 @@ const char *Sys_GetPreferredLanguage( void )
 	return Q_strlwr( lang );
 }
 
-#if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+#if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )
 
 /*
 * Sys_AcquireWakeLock
 */
-void *Sys_AcquireWakeLock( void )
-{
+void *Sys_AcquireWakeLock( void ) {
 	return NULL;
 }
 
 /*
 * Sys_ReleaseWakeLock
 */
-void Sys_ReleaseWakeLock( void *wl )
-{
+void Sys_ReleaseWakeLock( void *wl ) {
 }
 
 /*****************************************************************************/
 
-int main( int argc, char **argv )
-{
+int main( int argc, char **argv ) {
 	unsigned int oldtime, newtime, time;
 
 	InitSig();
 
-#if defined ( __MACOSX__ ) && !defined (DEDICATED_ONLY)
+#if defined ( __MACOSX__ ) && !defined ( DEDICATED_ONLY )
 	char resourcesPath[MAXPATHLEN];
-	CFURLGetFileSystemRepresentation(CFBundleCopyResourcesDirectoryURL(CFBundleGetMainBundle()), 1, (UInt8 *)resourcesPath, MAXPATHLEN);
-	chdir(resourcesPath);
-	
+	CFURLGetFileSystemRepresentation( CFBundleCopyResourcesDirectoryURL( CFBundleGetMainBundle() ), 1, (UInt8 *)resourcesPath, MAXPATHLEN );
+	chdir( resourcesPath );
+
 	SDL_Init( SDL_INIT_VIDEO );
 #endif
 
@@ -317,25 +294,23 @@ int main( int argc, char **argv )
 	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | O_NONBLOCK );
 
 	oldtime = Sys_Milliseconds();
-	while( true )
-	{
+	while( true ) {
 		// find time spent rendering last frame
-		do
-		{
+		do {
 			newtime = Sys_Milliseconds();
 			time = newtime - oldtime;
-			if( time > 0 )
+			if( time > 0 ) {
 				break;
+			}
 #ifdef PUTCPU2SLEEP
 			Sys_Sleep( 0 );
 #endif
-		}
-		while( 1 );
+		} while( 1 );
 		oldtime = newtime;
 
 		Qcommon_Frame( time );
 	}
-#if defined ( __MACOSX__ ) && !defined (DEDICATED_ONLY)
+#if defined ( __MACOSX__ ) && !defined ( DEDICATED_ONLY )
 	SDL_Quit();
 #endif
 }

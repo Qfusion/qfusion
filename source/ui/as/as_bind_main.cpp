@@ -6,12 +6,12 @@
 #include "as/asui.h"
 #include "as/asui_local.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 //==============================================================
 
-void BindAPI( ASInterface *as )
-{
+void BindAPI( ASInterface *as ) {
 	PrebindURL( as );
 	PrebindEvent( as );
 	PrebindEventListener( as );
@@ -48,8 +48,7 @@ void BindAPI( ASInterface *as )
 }
 
 // This needs to be called after globals are instantiated
-void BindGlobals( ASInterface *as )
-{
+void BindGlobals( ASInterface *as ) {
 	// globals
 	BindWindowGlobal( as );
 	BindServerbrowserGlobal( as );
@@ -60,15 +59,13 @@ void BindGlobals( ASInterface *as )
 }
 
 // update function for bound api
-void BindFrame( ASInterface *as )
-{
+void BindFrame( ASInterface *as ) {
 	RunMatchMakerFrame();
 	RunWindowFrame();
 }
 
 // release bound resources (funcdefs, etc)
-void BindShutdown( ASInterface *as )
-{
+void BindShutdown( ASInterface *as ) {
 	UnbindWindow();
 	UnbindMatchMaker();
 }

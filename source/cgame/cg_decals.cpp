@@ -19,13 +19,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "cg_local.h"
 
-#define MAX_DECALS			512
-#define MAX_DECAL_VERTS		64
-#define MAX_DECAL_FRAGMENTS	64
+#define MAX_DECALS          512
+#define MAX_DECAL_VERTS     64
+#define MAX_DECAL_FRAGMENTS 64
 
 typedef struct cdecal_s
 {
-	struct cdecal_s	*prev, *next;
+	struct cdecal_s *prev, *next;
 
 	unsigned int die;                   // remove after this time
 	unsigned int fadetime;
@@ -33,13 +33,13 @@ typedef struct cdecal_s
 	bool fadealpha;
 
 	float color[4];
-	struct shader_s	*shader;
+	struct shader_s *shader;
 
 	poly_t *poly;
 } cdecal_t;
 
-static cdecal_t	cg_decals[MAX_DECALS];
-static cdecal_t	cg_decals_headnode, *cg_free_decals;
+static cdecal_t cg_decals[MAX_DECALS];
+static cdecal_t cg_decals_headnode, *cg_free_decals;
 
 static poly_t cg_decal_polys[MAX_DECALS];
 static vec4_t cg_decal_verts[MAX_DECALS][MAX_DECAL_VERTS];
@@ -50,8 +50,7 @@ static byte_vec4_t cg_decal_colors[MAX_DECALS][MAX_DECAL_VERTS];
 /*
 * CG_ClearDecals
 */
-void CG_ClearDecals( void )
-{
+void CG_ClearDecals( void ) {
 	int i;
 
 	memset( cg_decals, 0, sizeof( cg_decals ) );
@@ -60,10 +59,10 @@ void CG_ClearDecals( void )
 	cg_free_decals = cg_decals;
 	cg_decals_headnode.prev = &cg_decals_headnode;
 	cg_decals_headnode.next = &cg_decals_headnode;
-	for( i = 0; i < MAX_DECALS; i++ )
-	{
-		if( i < MAX_DECALS - 1 )
-			cg_decals[i].next = &cg_decals[i+1];
+	for( i = 0; i < MAX_DECALS; i++ ) {
+		if( i < MAX_DECALS - 1 ) {
+			cg_decals[i].next = &cg_decals[i + 1];
+		}
 
 		cg_decals[i].poly = &cg_decal_polys[i];
 		cg_decals[i].poly->verts = cg_decal_verts[i];
@@ -75,21 +74,17 @@ void CG_ClearDecals( void )
 
 /*
 * CG_AllocDecal
-* 
+*
 * Returns either a free decal or the oldest one
 */
-static cdecal_t *CG_AllocDecal( void )
-{
+static cdecal_t *CG_AllocDecal( void ) {
 	cdecal_t *dl;
 
-	if( cg_free_decals )
-	{
+	if( cg_free_decals ) {
 		// take a free decal if possible
 		dl = cg_free_decals;
 		cg_free_decals = dl->next;
-	}
-	else
-	{
+	} else {
 		// grab the oldest one otherwise
 		dl = cg_decals_headnode.prev;
 		dl->prev->next = dl->next;
@@ -108,8 +103,7 @@ static cdecal_t *CG_AllocDecal( void )
 /*
 * CG_FreeDecal
 */
-static void CG_FreeDecal( cdecal_t *dl )
-{
+static void CG_FreeDecal( cdecal_t *dl ) {
 	// remove from linked active list
 	dl->prev->next = dl->next;
 	dl->next->prev = dl->prev;
@@ -123,8 +117,7 @@ static void CG_FreeDecal( cdecal_t *dl )
 * CG_SpawnDecal
 */
 int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float radius,
-				   float r, float g, float b, float a, float die, float fadetime, bool fadealpha, struct shader_s *shader )
-{
+				   float r, float g, float b, float a, float die, float fadetime, bool fadealpha, struct shader_s *shader ) {
 	int i, j;
 	cdecal_t *dl;
 	poly_t *poly;
@@ -137,12 +130,14 @@ int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float ra
 	float dietime, fadefreq;
 
 	// invalid decal
-	if( radius <= 0 || VectorCompare( dir, vec3_origin ) )
+	if( radius <= 0 || VectorCompare( dir, vec3_origin ) ) {
 		return 0;
+	}
 
 	// we don't spawn decals if too far away (we could move there, but players won't notice there should be a decal by then)
-	if( DistanceFast( origin, cg.view.origin ) * cg.view.fracDistFOV > 2048 )
+	if( DistanceFast( origin, cg.view.origin ) * cg.view.fracDistFOV > 2048 ) {
 		return 0;
+	}
 
 	// calculate orientation matrix
 	VectorNormalize2( dir, axis[0] );
@@ -151,20 +146,46 @@ int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float ra
 	CrossProduct( axis[0], axis[2], axis[1] );
 
 	numfragments = trap_R_GetClippedFragments( origin, radius, axis, // clip it
-		MAX_DECAL_VERTS, verts, MAX_DECAL_FRAGMENTS, fragments );
+											   MAX_DECAL_VERTS, verts, MAX_DECAL_FRAGMENTS, fragments );
 
 	// no valid fragments
-	if( !numfragments )
+	if( !numfragments ) {
 		return 0;
+	}
 
-	if( !cg_addDecals->integer )
+	if( !cg_addDecals->integer ) {
 		return numfragments;
+	}
 
 	// clamp and scale colors
-	if( r < 0 ) r = 0;else if( r > 1 ) r = 255;else r *= 255;
-	if( g < 0 ) g = 0;else if( g > 1 ) g = 255;else g *= 255;
-	if( b < 0 ) b = 0;else if( b > 1 ) b = 255;else b *= 255;
-	if( a < 0 ) a = 0;else if( a > 1 ) a = 255;else a *= 255;
+	if( r < 0 ) {
+		r = 0;
+	} else if( r > 1 ) {
+		r = 255;
+	} else {
+		r *= 255;
+	}
+	if( g < 0 ) {
+		g = 0;
+	} else if( g > 1 ) {
+		g = 255;
+	} else {
+		g *= 255;
+	}
+	if( b < 0 ) {
+		b = 0;
+	} else if( b > 1 ) {
+		b = 255;
+	} else {
+		b *= 255;
+	}
+	if( a < 0 ) {
+		a = 0;
+	} else if( a > 1 ) {
+		a = 255;
+	} else {
+		a *= 255;
+	}
 
 	color[0] = ( uint8_t )( r );
 	color[1] = ( uint8_t )( g );
@@ -179,12 +200,12 @@ int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float ra
 	fadefreq = 0.001f / min( fadetime, die );
 	fadetime = cg.time + ( die - min( fadetime, die ) ) * 1000;
 
-	for( i = 0, fr = fragments; i < numfragments; i++, fr++ )
-	{
-		if( fr->numverts > MAX_DECAL_VERTS )
+	for( i = 0, fr = fragments; i < numfragments; i++, fr++ ) {
+		if( fr->numverts > MAX_DECAL_VERTS ) {
 			return numfragments;
-		else if( fr->numverts <= 0 )
+		} else if( fr->numverts <= 0 ) {
 			continue;
+		}
 
 		// allocate decal
 		dl = CG_AllocDecal();
@@ -204,9 +225,8 @@ int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float ra
 		poly->numverts = fr->numverts;
 		poly->fognum = fr->fognum;
 
-		for( j = 0; j < fr->numverts; j++ )
-		{
-			Vector4Copy( verts[fr->firstvert+j], poly->verts[j] );
+		for( j = 0; j < fr->numverts; j++ ) {
+			Vector4Copy( verts[fr->firstvert + j], poly->verts[j] );
 			VectorCopy( fr->normal, poly->normals[j] ); poly->normals[j][3] = 0;
 			VectorSubtract( poly->verts[j], origin, v );
 			poly->stcoords[j][0] = DotProduct( v, axis[1] ) + 0.5f;
@@ -221,8 +241,7 @@ int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float ra
 /*
 * CG_AddDecals
 */
-void CG_AddDecals( void )
-{
+void CG_AddDecals( void ) {
 	int i;
 	float fade;
 	cdecal_t *dl, *next, *hnode;
@@ -231,32 +250,26 @@ void CG_AddDecals( void )
 
 	// add decals in first-spawed - first-drawn order
 	hnode = &cg_decals_headnode;
-	for( dl = hnode->prev; dl != hnode; dl = next )
-	{
+	for( dl = hnode->prev; dl != hnode; dl = next ) {
 		next = dl->prev;
 
 		// it's time to DIE
-		if( dl->die <= cg.time )
-		{
+		if( dl->die <= cg.time ) {
 			CG_FreeDecal( dl );
 			continue;
 		}
 		poly = dl->poly;
 
 		// fade out
-		if( dl->fadetime < cg.time )
-		{
+		if( dl->fadetime < cg.time ) {
 			fade = ( dl->die - cg.time ) * dl->fadefreq;
 
-			if( dl->fadealpha )
-			{
+			if( dl->fadealpha ) {
 				color[0] = ( uint8_t )( dl->color[0] );
 				color[1] = ( uint8_t )( dl->color[1] );
 				color[2] = ( uint8_t )( dl->color[2] );
 				color[3] = ( uint8_t )( dl->color[3] * fade );
-			}
-			else
-			{
+			} else {
 				color[0] = ( uint8_t )( dl->color[0] * fade );
 				color[1] = ( uint8_t )( dl->color[1] * fade );
 				color[2] = ( uint8_t )( dl->color[2] * fade );

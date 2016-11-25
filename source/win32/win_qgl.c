@@ -84,10 +84,10 @@ static const char *_qglGetGLWExtensionsStringInit( void );
 **
 ** Unloads the specified DLL then nulls out all the proc pointers.
 */
-void QGL_Shutdown( void )
-{
-	if( glw_state.hinstOpenGL )
+void QGL_Shutdown( void ) {
+	if( glw_state.hinstOpenGL ) {
 		FreeLibrary( glw_state.hinstOpenGL );
+	}
 	glw_state.hinstOpenGL = NULL;
 
 	qglGetGLWExtensionsString = NULL;
@@ -122,8 +122,7 @@ void QGL_Shutdown( void )
 **
 ** Returns information about the GL DLL.
 */
-const qgl_driverinfo_t *QGL_GetDriverInfo( void )
-{
+const qgl_driverinfo_t *QGL_GetDriverInfo( void ) {
 	static const qgl_driverinfo_t driver =
 	{
 		"opengl32.dll",
@@ -142,22 +141,17 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 ** might be.
 **
 */
-qgl_initerr_t QGL_Init( const char *dllname )
-{
-	if( ( glw_state.hinstOpenGL = LoadLibrary( dllname ) ) == 0 )
-	{
+qgl_initerr_t QGL_Init( const char *dllname ) {
+	if( ( glw_state.hinstOpenGL = LoadLibrary( dllname ) ) == 0 ) {
 		char *buf;
 
 		buf = NULL;
 		FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ), (LPTSTR) &buf, 0, NULL );
-		if( buf )
-		{
+		if( buf ) {
 			Com_Printf( "%s\n", buf );
 			MessageBox( NULL, va( "QGL_Init: Failed to load %s: %s\n", dllname, buf ), "Error", 0 /* MB_OK */ );
 			LocalFree( buf );
-		}
-		else
-		{
+		} else {
 			MessageBox( NULL, va( "QGL_Init: Failed to load %s\n", dllname ), "Error", 0 /* MB_OK */ );
 		}
 		return qgl_initerr_invalid_driver;
@@ -195,24 +189,22 @@ qgl_initerr_t QGL_Init( const char *dllname )
 /*
 ** qglGetProcAddress
 */
-void *qglGetProcAddress( const GLubyte *procName )
-{
+void *qglGetProcAddress( const GLubyte *procName ) {
 	return (void *)qwglGetProcAddress( (LPCSTR)procName );
 }
 
 /*
 ** qglGetGLWExtensionsString
 */
-static const char *_qglGetGLWExtensionsStringInit( void )
-{
+static const char *_qglGetGLWExtensionsStringInit( void ) {
 	qwglGetExtensionsStringEXT = ( void * )qglGetProcAddress( (const GLubyte *)"wglGetExtensionsStringEXT" );
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsString;
 	return qglGetGLWExtensionsString();
 }
 
-static const char *_qglGetGLWExtensionsString( void )
-{
-	if( qwglGetExtensionsStringEXT )
+static const char *_qglGetGLWExtensionsString( void ) {
+	if( qwglGetExtensionsStringEXT ) {
 		return qwglGetExtensionsStringEXT();
+	}
 	return NULL;
 }

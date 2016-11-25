@@ -25,13 +25,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define POOLNAMESIZE 128
 
-#define MEMHEADER_SENTINEL1			0xDEADF00D
-#define MEMHEADER_SENTINEL2			0xDF
+#define MEMHEADER_SENTINEL1         0xDEADF00D
+#define MEMHEADER_SENTINEL2         0xDF
 
-#define MEMALIGNMENT_DEFAULT		16
+#define MEMALIGNMENT_DEFAULT        16
 
-typedef struct memheader_s
-{
+typedef struct memheader_s {
 	// address returned by malloc (may be significantly before this header to satisify alignment)
 	void *baseaddress;
 
@@ -57,8 +56,7 @@ typedef struct memheader_s
 	// immediately followed by data, which is followed by a MEMHEADER_SENTINEL2 byte
 } memheader_t;
 
-struct mempool_s
-{
+struct mempool_s {
 	// should always be MEMHEADER_SENTINEL1
 	unsigned int sentinel1;
 
@@ -116,9 +114,8 @@ static qmutex_t *memMutex;
 static bool memory_initialized = false;
 static bool commands_initialized = false;
 
-static void _Mem_Error( const char *format, ... )
-{
-	va_list	argptr;
+static void _Mem_Error( const char *format, ... ) {
+	va_list argptr;
 	char msg[1024];
 
 	va_start( argptr, format );
@@ -128,30 +125,35 @@ static void _Mem_Error( const char *format, ... )
 	Sys_Error( msg );
 }
 
-void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int musthave, int canthave, const char *filename, int fileline )
-{
+void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int musthave, int canthave, const char *filename, int fileline ) {
 	void *base;
 	size_t realsize;
 	memheader_t *mem;
 
-	if( size <= 0 )
+	if( size <= 0 ) {
 		return NULL;
+	}
 
 	// default to 16-bytes alignment
-	if( !alignment )
+	if( !alignment ) {
 		alignment = MEMALIGNMENT_DEFAULT;
+	}
 
 	assert( pool != NULL );
 
-	if( pool == NULL )
+	if( pool == NULL ) {
 		_Mem_Error( "Mem_Alloc: pool == NULL (alloc at %s:%i)", filename, fileline );
-	if( musthave && ( ( pool->flags & musthave ) != musthave ) )
+	}
+	if( musthave && ( ( pool->flags & musthave ) != musthave ) ) {
 		_Mem_Error( "Mem_Alloc: bad pool flags (musthave) (alloc at %s:%i)", filename, fileline );
-	if( canthave && ( pool->flags & canthave ) )
+	}
+	if( canthave && ( pool->flags & canthave ) ) {
 		_Mem_Error( "Mem_Alloc: bad pool flags (canthave) (alloc at %s:%i)", filename, fileline );
+	}
 
-	if( developerMemory && developerMemory->integer )
+	if( developerMemory && developerMemory->integer ) {
 		Com_DPrintf( "Mem_Alloc: pool %s, file %s:%i, size %i bytes\n", pool->name, filename, fileline, size );
+	}
 
 	QMutex_Lock( memMutex );
 
@@ -161,11 +163,12 @@ void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int 
 	pool->realsize += realsize;
 
 	base = malloc( realsize );
-	if( base == NULL )
+	if( base == NULL ) {
 		_Mem_Error( "Mem_Alloc: out of memory (alloc at %s:%i)", filename, fileline );
+	}
 
 	// calculate address that aligns the end of the memheader_t to the specified alignment
-	mem = ( memheader_t * )((((size_t)base + sizeof( memheader_t ) + (alignment-1)) & ~(alignment-1)) - sizeof( memheader_t ));
+	mem = ( memheader_t * )( ( ( (size_t)base + sizeof( memheader_t ) + ( alignment - 1 ) ) & ~( alignment - 1 ) ) - sizeof( memheader_t ) );
 	mem->baseaddress = base;
 	mem->filename = filename;
 	mem->fileline = fileline;
@@ -181,39 +184,40 @@ void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int 
 	mem->next = pool->chain;
 	mem->prev = NULL;
 	pool->chain = mem;
-	if( mem->next )
+	if( mem->next ) {
 		mem->next->prev = mem;
+	}
 
 	QMutex_Unlock( memMutex );
 
-	if( z )
+	if( z ) {
 		memset( (void *)( (uint8_t *) mem + sizeof( memheader_t ) ), 0, mem->size );
+	}
 
 	return (void *)( (uint8_t *) mem + sizeof( memheader_t ) );
 }
 
-void *_Mem_Alloc( mempool_t *pool, size_t size, int musthave, int canthave, const char *filename, int fileline )
-{
+void *_Mem_Alloc( mempool_t *pool, size_t size, int musthave, int canthave, const char *filename, int fileline ) {
 	return _Mem_AllocExt( pool, size, 0, 1, musthave, canthave, filename, fileline );
 }
 
 // FIXME: rewrite this?
-void *_Mem_Realloc( void *data, size_t size, const char *filename, int fileline )
-{
+void *_Mem_Realloc( void *data, size_t size, const char *filename, int fileline ) {
 	void *newdata;
 	memheader_t *mem;
 
-	if( data == NULL )
+	if( data == NULL ) {
 		_Mem_Error( "Mem_Realloc: data == NULL (called at %s:%i)", filename, fileline );
-	if( size <= 0 )
-	{
+	}
+	if( size <= 0 ) {
 		Mem_Free( data );
 		return NULL;
 	}
 
 	mem = ( memheader_t * )( (uint8_t *) data - sizeof( memheader_t ) );
-	if( size <= mem->size )
+	if( size <= mem->size ) {
 		return data;
+	}
 
 	newdata = Mem_AllocExt( mem->pool, size, 0 );
 	memcpy( newdata, data, mem->size );
@@ -223,8 +227,7 @@ void *_Mem_Realloc( void *data, size_t size, const char *filename, int fileline 
 	return newdata;
 }
 
-char *_Mem_CopyString( mempool_t *pool, const char *in, const char *filename, int fileline )
-{
+char *_Mem_CopyString( mempool_t *pool, const char *in, const char *filename, int fileline ) {
 	char *out;
 	size_t num_chars = strlen( in ) + 1;
 	size_t str_size = sizeof( char ) * num_chars;
@@ -235,47 +238,55 @@ char *_Mem_CopyString( mempool_t *pool, const char *in, const char *filename, in
 	return out;
 }
 
-void _Mem_Free( void *data, int musthave, int canthave, const char *filename, int fileline )
-{
+void _Mem_Free( void *data, int musthave, int canthave, const char *filename, int fileline ) {
 	void *base;
 	memheader_t *mem;
 	mempool_t *pool;
 
-	if( data == NULL )
+	if( data == NULL ) {
 		//_Mem_Error( "Mem_Free: data == NULL (called at %s:%i)", filename, fileline );
 		return;
+	}
 
 	mem = ( memheader_t * )( (uint8_t *) data - sizeof( memheader_t ) );
 
 	assert( mem->sentinel1 == MEMHEADER_SENTINEL1 );
 	assert( *( (uint8_t *) mem + sizeof( memheader_t ) + mem->size ) == MEMHEADER_SENTINEL2 );
 
-	if( mem->sentinel1 != MEMHEADER_SENTINEL1 )
+	if( mem->sentinel1 != MEMHEADER_SENTINEL1 ) {
 		_Mem_Error( "Mem_Free: trashed header sentinel 1 (alloc at %s:%i, free at %s:%i)", mem->filename, mem->fileline, filename, fileline );
-	if( *( (uint8_t *)mem + sizeof( memheader_t ) + mem->size ) != MEMHEADER_SENTINEL2 )
+	}
+	if( *( (uint8_t *)mem + sizeof( memheader_t ) + mem->size ) != MEMHEADER_SENTINEL2 ) {
 		_Mem_Error( "Mem_Free: trashed header sentinel 2 (alloc at %s:%i, free at %s:%i)", mem->filename, mem->fileline, filename, fileline );
+	}
 
 	pool = mem->pool;
-	if( musthave && ( ( pool->flags & musthave ) != musthave ) )
+	if( musthave && ( ( pool->flags & musthave ) != musthave ) ) {
 		_Mem_Error( "Mem_Free: bad pool flags (musthave) (alloc at %s:%i)", filename, fileline );
-	if( canthave && ( pool->flags & canthave ) )
+	}
+	if( canthave && ( pool->flags & canthave ) ) {
 		_Mem_Error( "Mem_Free: bad pool flags (canthave) (alloc at %s:%i)", filename, fileline );
+	}
 
-	if( developerMemory && developerMemory->integer )
+	if( developerMemory && developerMemory->integer ) {
 		Com_DPrintf( "Mem_Free: pool %s, alloc %s:%i, free %s:%i, size %i bytes\n", pool->name, mem->filename, mem->fileline, filename, fileline, mem->size );
+	}
 
 	QMutex_Lock( memMutex );
 
 	// unlink memheader from doubly linked list
-	if( ( mem->prev ? mem->prev->next != mem : pool->chain != mem ) || ( mem->next && mem->next->prev != mem ) )
+	if( ( mem->prev ? mem->prev->next != mem : pool->chain != mem ) || ( mem->next && mem->next->prev != mem ) ) {
 		_Mem_Error( "Mem_Free: not allocated or double freed (free at %s:%i)", filename, fileline );
+	}
 
-	if( mem->prev )
+	if( mem->prev ) {
 		mem->prev->next = mem->next;
-	else
+	} else {
 		pool->chain = mem->next;
-	if( mem->next )
+	}
+	if( mem->next ) {
 		mem->next->prev = mem->prev;
+	}
 
 	// memheader has been unlinked, do the actual free now
 	pool->totalsize -= mem->size;
@@ -292,18 +303,20 @@ void _Mem_Free( void *data, int musthave, int canthave, const char *filename, in
 	free( base );
 }
 
-mempool_t *_Mem_AllocPool( mempool_t *parent, const char *name, int flags, const char *filename, int fileline )
-{
+mempool_t *_Mem_AllocPool( mempool_t *parent, const char *name, int flags, const char *filename, int fileline ) {
 	mempool_t *pool;
 
-	if( parent && ( parent->flags & MEMPOOL_TEMPORARY ) )
+	if( parent && ( parent->flags & MEMPOOL_TEMPORARY ) ) {
 		_Mem_Error( "Mem_AllocPool: nested temporary pools are not allowed (allocpool at %s:%i)", filename, fileline );
-	if( flags & MEMPOOL_TEMPORARY )
+	}
+	if( flags & MEMPOOL_TEMPORARY ) {
 		_Mem_Error( "Mem_AllocPool: tried to allocate temporary pool, use Mem_AllocTempPool instead (allocpool at %s:%i)", filename, fileline );
+	}
 
 	pool = ( mempool_t* )malloc( sizeof( mempool_t ) );
-	if( pool == NULL )
+	if( pool == NULL ) {
 		_Mem_Error( "Mem_AllocPool: out of memory (allocpool at %s:%i)", filename, fileline );
+	}
 
 	memset( pool, 0, sizeof( mempool_t ) );
 	pool->sentinel1 = MEMHEADER_SENTINEL1;
@@ -318,13 +331,10 @@ mempool_t *_Mem_AllocPool( mempool_t *parent, const char *name, int flags, const
 	pool->realsize = sizeof( mempool_t );
 	Q_strncpyz( pool->name, name, sizeof( pool->name ) );
 
-	if( parent )
-	{
+	if( parent ) {
 		pool->next = parent->child;
 		parent->child = pool;
-	}
-	else
-	{
+	} else {
 		pool->next = poolChain;
 		poolChain = pool;
 	}
@@ -332,8 +342,7 @@ mempool_t *_Mem_AllocPool( mempool_t *parent, const char *name, int flags, const
 	return pool;
 }
 
-mempool_t *_Mem_AllocTempPool( const char *name, const char *filename, int fileline )
-{
+mempool_t *_Mem_AllocTempPool( const char *name, const char *filename, int fileline ) {
 	mempool_t *pool;
 
 	pool = _Mem_AllocPool( NULL, name, 0, filename, fileline );
@@ -342,19 +351,21 @@ mempool_t *_Mem_AllocTempPool( const char *name, const char *filename, int filel
 	return pool;
 }
 
-void _Mem_FreePool( mempool_t **pool, int musthave, int canthave, const char *filename, int fileline )
-{
+void _Mem_FreePool( mempool_t **pool, int musthave, int canthave, const char *filename, int fileline ) {
 	mempool_t **chainAddress;
 #ifdef SHOW_NONFREED
 	memheader_t *mem;
 #endif
 
-	if( !( *pool ) )
+	if( !( *pool ) ) {
 		return;
-	if( musthave && ( ( ( *pool )->flags & musthave ) != musthave ) )
+	}
+	if( musthave && ( ( ( *pool )->flags & musthave ) != musthave ) ) {
 		_Mem_Error( "Mem_FreePool: bad pool flags (musthave) (alloc at %s:%i)", filename, fileline );
-	if( canthave && ( ( *pool )->flags & canthave ) )
+	}
+	if( canthave && ( ( *pool )->flags & canthave ) ) {
 		_Mem_Error( "Mem_FreePool: bad pool flags (canthave) (alloc at %s:%i)", filename, fileline );
+	}
 
 	// recurse into children
 	// note that children will be freed no matter if their flags
@@ -367,28 +378,32 @@ void _Mem_FreePool( mempool_t **pool, int musthave, int canthave, const char *fi
 	assert( ( *pool )->sentinel1 == MEMHEADER_SENTINEL1 );
 	assert( ( *pool )->sentinel2 == MEMHEADER_SENTINEL1 );
 
-	if( ( *pool )->sentinel1 != MEMHEADER_SENTINEL1 )
+	if( ( *pool )->sentinel1 != MEMHEADER_SENTINEL1 ) {
 		_Mem_Error( "Mem_FreePool: trashed pool sentinel 1 (allocpool at %s:%i, freepool at %s:%i)", ( *pool )->filename, ( *pool )->fileline, filename, fileline );
-	if( ( *pool )->sentinel2 != MEMHEADER_SENTINEL1 )
+	}
+	if( ( *pool )->sentinel2 != MEMHEADER_SENTINEL1 ) {
 		_Mem_Error( "Mem_FreePool: trashed pool sentinel 2 (allocpool at %s:%i, freepool at %s:%i)", ( *pool )->filename, ( *pool )->fileline, filename, fileline );
+	}
 
 #ifdef SHOW_NONFREED
-	if( ( *pool )->chain )
+	if( ( *pool )->chain ) {
 		Com_Printf( "Warning: Memory pool %s has resources that weren't freed:\n", ( *pool )->name );
-	for( mem = ( *pool )->chain; mem; mem = mem->next )
-	{
+	}
+	for( mem = ( *pool )->chain; mem; mem = mem->next ) {
 		Com_Printf( "%10i bytes allocated at %s:%i\n", mem->size, mem->filename, mem->fileline );
 	}
 #endif
 
 	// unlink pool from chain
-	if( ( *pool )->parent )
+	if( ( *pool )->parent ) {
 		for( chainAddress = &( *pool )->parent->child; *chainAddress && *chainAddress != *pool; chainAddress = &( ( *chainAddress )->next ) ) ;
-	else
+	} else {
 		for( chainAddress = &poolChain; *chainAddress && *chainAddress != *pool; chainAddress = &( ( *chainAddress )->next ) ) ;
+	}
 
-	if( *chainAddress != *pool )
+	if( *chainAddress != *pool ) {
 		_Mem_Error( "Mem_FreePool: pool already free (freepool at %s:%i)", filename, fileline );
+	}
 
 	while( ( *pool )->chain )  // free memory owned by the pool
 		Mem_Free( (void *)( (uint8_t *)( *pool )->chain + sizeof( memheader_t ) ) );
@@ -403,25 +418,25 @@ void _Mem_FreePool( mempool_t **pool, int musthave, int canthave, const char *fi
 	*pool = NULL;
 }
 
-void _Mem_EmptyPool( mempool_t *pool, int musthave, int canthave, const char *filename, int fileline )
-{
+void _Mem_EmptyPool( mempool_t *pool, int musthave, int canthave, const char *filename, int fileline ) {
 	mempool_t *child, *next;
 #ifdef SHOW_NONFREED
 	memheader_t *mem;
 #endif
 
-	if( pool == NULL )
+	if( pool == NULL ) {
 		_Mem_Error( "Mem_EmptyPool: pool == NULL (emptypool at %s:%i)", filename, fileline );
-	if( musthave && ( ( pool->flags & musthave ) != musthave ) )
+	}
+	if( musthave && ( ( pool->flags & musthave ) != musthave ) ) {
 		_Mem_Error( "Mem_EmptyPool: bad pool flags (musthave) (alloc at %s:%i)", filename, fileline );
-	if( canthave && ( pool->flags & canthave ) )
+	}
+	if( canthave && ( pool->flags & canthave ) ) {
 		_Mem_Error( "Mem_EmptyPool: bad pool flags (canthave) (alloc at %s:%i)", filename, fileline );
+	}
 
 	// recurse into children
-	if( pool->child )
-	{
-		for( child = pool->child; child; child = next )
-		{
+	if( pool->child ) {
+		for( child = pool->child; child; child = next ) {
 			next = child->next;
 			_Mem_EmptyPool( child, 0, 0, filename, fileline );
 		}
@@ -430,16 +445,18 @@ void _Mem_EmptyPool( mempool_t *pool, int musthave, int canthave, const char *fi
 	assert( pool->sentinel1 == MEMHEADER_SENTINEL1 );
 	assert( pool->sentinel2 == MEMHEADER_SENTINEL1 );
 
-	if( pool->sentinel1 != MEMHEADER_SENTINEL1 )
+	if( pool->sentinel1 != MEMHEADER_SENTINEL1 ) {
 		_Mem_Error( "Mem_EmptyPool: trashed pool sentinel 1 (allocpool at %s:%i, emptypool at %s:%i)", pool->filename, pool->fileline, filename, fileline );
-	if( pool->sentinel2 != MEMHEADER_SENTINEL1 )
+	}
+	if( pool->sentinel2 != MEMHEADER_SENTINEL1 ) {
 		_Mem_Error( "Mem_EmptyPool: trashed pool sentinel 2 (allocpool at %s:%i, emptypool at %s:%i)", pool->filename, pool->fileline, filename, fileline );
+	}
 
 #ifdef SHOW_NONFREED
-	if( pool->chain )
+	if( pool->chain ) {
 		Com_Printf( "Warning: Memory pool %s has resources that weren't freed:\n", pool->name );
-	for( mem = pool->chain; mem; mem = mem->next )
-	{
+	}
+	for( mem = pool->chain; mem; mem = mem->next ) {
 		Com_Printf( "%10i bytes allocated at %s:%i\n", mem->size, mem->filename, mem->fileline );
 	}
 #endif
@@ -447,39 +464,38 @@ void _Mem_EmptyPool( mempool_t *pool, int musthave, int canthave, const char *fi
 		Mem_Free( (void *)( (uint8_t *) pool->chain + sizeof( memheader_t ) ) );
 }
 
-size_t Mem_PoolTotalSize( mempool_t *pool )
-{
+size_t Mem_PoolTotalSize( mempool_t *pool ) {
 	assert( pool != NULL );
 
 	return pool->totalsize;
 }
 
-void _Mem_CheckSentinels( void *data, const char *filename, int fileline )
-{
+void _Mem_CheckSentinels( void *data, const char *filename, int fileline ) {
 	memheader_t *mem;
 
-	if( data == NULL )
+	if( data == NULL ) {
 		_Mem_Error( "Mem_CheckSentinels: data == NULL (sentinel check at %s:%i)", filename, fileline );
+	}
 
 	mem = (memheader_t *)( (uint8_t *) data - sizeof( memheader_t ) );
 
 	assert( mem->sentinel1 == MEMHEADER_SENTINEL1 );
 	assert( *( (uint8_t *) mem + sizeof( memheader_t ) + mem->size ) == MEMHEADER_SENTINEL2 );
 
-	if( mem->sentinel1 != MEMHEADER_SENTINEL1 )
+	if( mem->sentinel1 != MEMHEADER_SENTINEL1 ) {
 		_Mem_Error( "Mem_CheckSentinels: trashed header sentinel 1 (block allocated at %s:%i, sentinel check at %s:%i)", mem->filename, mem->fileline, filename, fileline );
-	if( *( (uint8_t *) mem + sizeof( memheader_t ) + mem->size ) != MEMHEADER_SENTINEL2 )
+	}
+	if( *( (uint8_t *) mem + sizeof( memheader_t ) + mem->size ) != MEMHEADER_SENTINEL2 ) {
 		_Mem_Error( "Mem_CheckSentinels: trashed header sentinel 2 (block allocated at %s:%i, sentinel check at %s:%i)", mem->filename, mem->fileline, filename, fileline );
+	}
 }
 
-static void _Mem_CheckSentinelsPool( mempool_t *pool, const char *filename, int fileline )
-{
+static void _Mem_CheckSentinelsPool( mempool_t *pool, const char *filename, int fileline ) {
 	memheader_t *mem;
 	mempool_t *child;
 
 	// recurse into children
-	if( pool->child )
-	{
+	if( pool->child ) {
 		for( child = pool->child; child; child = child->next )
 			_Mem_CheckSentinelsPool( child, filename, fileline );
 	}
@@ -487,44 +503,45 @@ static void _Mem_CheckSentinelsPool( mempool_t *pool, const char *filename, int 
 	assert( pool->sentinel1 == MEMHEADER_SENTINEL1 );
 	assert( pool->sentinel2 == MEMHEADER_SENTINEL1 );
 
-	if( pool->sentinel1 != MEMHEADER_SENTINEL1 )
+	if( pool->sentinel1 != MEMHEADER_SENTINEL1 ) {
 		_Mem_Error( "_Mem_CheckSentinelsPool: trashed pool sentinel 1 (allocpool at %s:%i, sentinel check at %s:%i)", pool->filename, pool->fileline, filename, fileline );
-	if( pool->sentinel2 != MEMHEADER_SENTINEL1 )
+	}
+	if( pool->sentinel2 != MEMHEADER_SENTINEL1 ) {
 		_Mem_Error( "_Mem_CheckSentinelsPool: trashed pool sentinel 2 (allocpool at %s:%i, sentinel check at %s:%i)", pool->filename, pool->fileline, filename, fileline );
+	}
 
 	for( mem = pool->chain; mem; mem = mem->next )
 		_Mem_CheckSentinels( (void *)( (uint8_t *) mem + sizeof( memheader_t ) ), filename, fileline );
 }
 
-void _Mem_CheckSentinelsGlobal( const char *filename, int fileline )
-{
+void _Mem_CheckSentinelsGlobal( const char *filename, int fileline ) {
 	mempool_t *pool;
 
 	for( pool = poolChain; pool; pool = pool->next )
 		_Mem_CheckSentinelsPool( pool, filename, fileline );
 }
 
-static void Mem_CountPoolStats( mempool_t *pool, int *count, int *size, int *realsize )
-{
+static void Mem_CountPoolStats( mempool_t *pool, int *count, int *size, int *realsize ) {
 	mempool_t *child;
 
 	// recurse into children
-	if( pool->child )
-	{
+	if( pool->child ) {
 		for( child = pool->child; child; child = child->next )
 			Mem_CountPoolStats( child, count, size, realsize );
 	}
 
-	if( count )
+	if( count ) {
 		( *count )++;
-	if( size )
+	}
+	if( size ) {
 		( *size ) += pool->totalsize;
-	if( realsize )
+	}
+	if( realsize ) {
 		( *realsize ) += pool->realsize;
+	}
 }
 
-static void Mem_PrintStats( void )
-{
+static void Mem_PrintStats( void ) {
 	int count, size, real;
 	int total, totalsize, realsize;
 	mempool_t *pool;
@@ -532,23 +549,20 @@ static void Mem_PrintStats( void )
 
 	Mem_CheckSentinelsGlobal();
 
-	for( total = 0, totalsize = 0, realsize = 0, pool = poolChain; pool; pool = pool->next )
-	{
+	for( total = 0, totalsize = 0, realsize = 0, pool = poolChain; pool; pool = pool->next ) {
 		count = 0; size = 0; real = 0;
 		Mem_CountPoolStats( pool, &count, &size, &real );
 		total += count; totalsize += size; realsize += real;
 	}
 
 	Com_Printf( "%i memory pools, totalling %i bytes (%.3fMB), %i bytes (%.3fMB) actual\n", total, totalsize, totalsize / 1048576.0,
-		realsize, realsize / 1048576.0 );
+				realsize, realsize / 1048576.0 );
 
 	// temporary pools are not nested
-	for( pool = poolChain; pool; pool = pool->next )
-	{
-		if( ( pool->flags & MEMPOOL_TEMPORARY ) && pool->chain )
-		{
+	for( pool = poolChain; pool; pool = pool->next ) {
+		if( ( pool->flags & MEMPOOL_TEMPORARY ) && pool->chain ) {
 			Com_Printf( "%i bytes (%.3fMB) (%i bytes (%.3fMB actual)) of temporary memory still allocated (Leak!)\n", pool->totalsize, pool->totalsize / 1048576.0,
-				pool->realsize, pool->realsize / 1048576.0 );
+						pool->realsize, pool->realsize / 1048576.0 );
 			Com_Printf( "listing temporary memory allocations for %s:\n", pool->name );
 
 			for( mem = tempMemPool->chain; mem; mem = mem->next )
@@ -557,49 +571,43 @@ static void Mem_PrintStats( void )
 	}
 }
 
-static void Mem_PrintPoolStats( mempool_t *pool, int listchildren, int listallocations )
-{
+static void Mem_PrintPoolStats( mempool_t *pool, int listchildren, int listallocations ) {
 	mempool_t *child;
 	memheader_t *mem;
 	int totalsize = 0, realsize = 0;
 
 	Mem_CountPoolStats( pool, NULL, &totalsize, &realsize );
 
-	if( pool->parent )
-	{
-		if( pool->lastchecksize != 0 && totalsize != pool->lastchecksize )
+	if( pool->parent ) {
+		if( pool->lastchecksize != 0 && totalsize != pool->lastchecksize ) {
 			Com_Printf( "%6ik (%6ik actual) %s:%s (%i byte change)\n", ( totalsize + 1023 ) / 1024, ( realsize + 1023 ) / 1024, pool->parent->name, pool->name, totalsize - pool->lastchecksize );
-		else
+		} else {
 			Com_Printf( "%6ik (%6ik actual) %s:%s\n", ( totalsize + 1023 ) / 1024, ( realsize + 1023 ) / 1024, pool->parent->name, pool->name );
-	}
-	else
-	{
-		if( pool->lastchecksize != 0 && totalsize != pool->lastchecksize )
+		}
+	} else {
+		if( pool->lastchecksize != 0 && totalsize != pool->lastchecksize ) {
 			Com_Printf( "%6ik (%6ik actual) %s (%i byte change)\n", ( totalsize + 1023 ) / 1024, ( realsize + 1023 ) / 1024, pool->name, totalsize - pool->lastchecksize );
-		else
+		} else {
 			Com_Printf( "%6ik (%6ik actual) %s\n", ( totalsize + 1023 ) / 1024, ( realsize + 1023 ) / 1024, pool->name );
+		}
 	}
 
 	pool->lastchecksize = totalsize;
 
-	if( listallocations )
-	{
+	if( listallocations ) {
 		for( mem = pool->chain; mem; mem = mem->next )
 			Com_Printf( "%10i bytes allocated at %s:%i\n", mem->size, mem->filename, mem->fileline );
 	}
 
-	if( listchildren )
-	{
-		if( pool->child )
-		{
+	if( listchildren ) {
+		if( pool->child ) {
 			for( child = pool->child; child; child = child->next )
 				Mem_PrintPoolStats( child, listchildren, listallocations );
 		}
 	}
 }
 
-static void Mem_PrintList( int listchildren, int listallocations )
-{
+static void Mem_PrintList( int listchildren, int listallocations ) {
 	mempool_t *pool;
 
 	Mem_CheckSentinelsGlobal();
@@ -610,35 +618,30 @@ static void Mem_PrintList( int listchildren, int listallocations )
 		Mem_PrintPoolStats( pool, listchildren, listallocations );
 }
 
-static void MemList_f( void )
-{
+static void MemList_f( void ) {
 	mempool_t *pool;
 	const char *name = "";
 
-	switch( Cmd_Argc() )
-	{
-	case 1:
-		Mem_PrintList( true, false );
-		Mem_PrintStats();
-		return;
-	case 2:
-		if( !Q_stricmp( Cmd_Argv( 1 ), "all" ) )
-		{
-			Mem_PrintList( true, true );
+	switch( Cmd_Argc() ) {
+		case 1:
+			Mem_PrintList( true, false );
 			Mem_PrintStats();
+			return;
+		case 2:
+			if( !Q_stricmp( Cmd_Argv( 1 ), "all" ) ) {
+				Mem_PrintList( true, true );
+				Mem_PrintStats();
+				break;
+			}
+			name = Cmd_Argv( 1 );
 			break;
-		}
-		name = Cmd_Argv( 1 );
-		break;
-	default:
-		name = Cmd_Args();
-		break;
+		default:
+			name = Cmd_Args();
+			break;
 	}
 
-	for( pool = poolChain; pool; pool = pool->next )
-	{
-		if( !Q_stricmp( pool->name, name ) )
-		{
+	for( pool = poolChain; pool; pool = pool->next ) {
+		if( !Q_stricmp( pool->name, name ) ) {
 			Com_Printf( "memory pool list:\n" "size    name\n" );
 			Mem_PrintPoolStats( pool, true, true );
 			return;
@@ -648,8 +651,7 @@ static void MemList_f( void )
 	Com_Printf( "MemList_f: unknown pool name '%s'. Usage: [all|pool]\n", name, Cmd_Argv( 0 ) );
 }
 
-static void MemStats_f( void )
-{
+static void MemStats_f( void ) {
 	Mem_CheckSentinelsGlobal();
 	Mem_PrintStats();
 }
@@ -658,8 +660,7 @@ static void MemStats_f( void )
 /*
 * Memory_Init
 */
-void Memory_Init( void )
-{
+void Memory_Init( void ) {
 	assert( !memory_initialized );
 
 	memMutex = QMutex_Create();
@@ -673,8 +674,7 @@ void Memory_Init( void )
 /*
 * Memory_InitCommands
 */
-void Memory_InitCommands( void )
-{
+void Memory_InitCommands( void ) {
 	assert( !commands_initialized );
 
 	developerMemory = Cvar_Get( "developerMemory", "0", 0 );
@@ -687,15 +687,15 @@ void Memory_InitCommands( void )
 
 /*
 * Memory_Shutdown
-* 
+*
 * NOTE: Should be the last called function before shutdown!
 */
-void Memory_Shutdown( void )
-{
+void Memory_Shutdown( void ) {
 	mempool_t *pool, *next;
 
-	if( !memory_initialized )
+	if( !memory_initialized ) {
 		return;
+	}
 
 	// set the cvar to NULL so nothing is printed to non-existing console
 	developerMemory = NULL;
@@ -705,8 +705,7 @@ void Memory_Shutdown( void )
 	Mem_FreePool( &zoneMemPool );
 	Mem_FreePool( &tempMemPool );
 
-	for( pool = poolChain; pool; pool = next )
-	{
+	for( pool = poolChain; pool; pool = next ) {
 		// do it here, because pool is to be freed
 		// and the chain will be broken
 		next = pool->next;
@@ -724,10 +723,10 @@ void Memory_Shutdown( void )
 /*
 * Memory_ShutdownCommands
 */
-void Memory_ShutdownCommands( void )
-{
-	if( !commands_initialized )
+void Memory_ShutdownCommands( void ) {
+	if( !commands_initialized ) {
 		return;
+	}
 
 	Cmd_RemoveCommand( "memlist" );
 	Cmd_RemoveCommand( "memstats" );

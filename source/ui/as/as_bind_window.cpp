@@ -27,30 +27,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "as/asui_url.h"
 #include "as/asui_scheduled.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 typedef WSWUI::RefreshState RefreshState;
 
 class ASWindow : public EventListener
 {
 public:
-	ASWindow( ASInterface *asmodule ) : 
-		EventListener(), 
+	ASWindow( ASInterface *asmodule ) :
+		EventListener(),
 		suspendedContext( NULL ),
 		attachedModalDocument( NULL ),
 		modalValue( 0 ),
-		backgroundTrackPlaying( false )
-	{
+		backgroundTrackPlaying( false ) {
 		schedulers.clear();
 	}
 
-	~ASWindow()
-	{
+	~ASWindow() {
 		shutdown();
 	}
 
-	void shutdown()
-	{
+	void shutdown() {
 		shuttingDown = true;
 
 		// detatch itself from the possibly opened modal window
@@ -71,8 +69,7 @@ public:
 	}
 
 	/// Loads document from the passed URL.
-	ElementDocument *open( const asstring_t &location )
-	{
+	ElementDocument *open( const asstring_t &location ) {
 		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack == NULL ) {
 			return NULL;
@@ -87,14 +84,13 @@ public:
 		WSWUI::Document *ui_document = new_stack->pushDocument( location.buffer );
 		if( !ui_document ) {
 			return NULL;
-		
+
 		}
 		ui_document->addReference();
 		return ui_document->getRocketDocument();
 	}
 
-	void preload( const asstring_t &location )
-	{
+	void preload( const asstring_t &location ) {
 		if( !UI_Main::preloadEnabled() ) {
 			return;
 		}
@@ -108,8 +104,7 @@ public:
 
 	/// Loads modal document from the URL.
 	/// FIXME: move to window.
-	void modal( const asstring_t &location, int defaultCode = -1 )
-	{
+	void modal( const asstring_t &location, int defaultCode = -1 ) {
 		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 
 		// default return value when modal window is not closed via window.close()
@@ -119,7 +114,7 @@ public:
 			return;
 		}
 
-		// suspend active context, we're going to resume it when 
+		// suspend active context, we're going to resume it when
 		// the modal dialog is closed
 		suspendActiveContext();
 
@@ -135,15 +130,13 @@ public:
 	}
 
 	/// Returns exit code of the last opened modal document.
-	int getModalValue( void ) const
-	{
+	int getModalValue( void ) const {
 		return modalValue;
 	}
 
 	/// Closes the current document if there's more than one on the stack.
 	/// Stores exit code to be passed to suspended context if modal.
-	void close( int code = 0 )
-	{
+	void close( int code = 0 ) {
 		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack == NULL ) {
 			return;
@@ -161,8 +154,7 @@ public:
 		if( isModal ) {
 			modalValue = code;
 			stack->popDocument();
-		}
-		else if( stack->getContextId() == UI_CONTEXT_MAIN ) {
+		} else if( stack->getContextId() == UI_CONTEXT_MAIN ) {
 			// not really a modal window, clear the stack
 			UI_Main::Get()->showUI( false );
 		}
@@ -170,8 +162,7 @@ public:
 
 	/// Run all currently active schedulers.
 	/// If we're the only reference holder to a document, release the document and its scheduler
-	void update( void )
-	{
+	void update( void ) {
 		SchedulerMap::iterator it = schedulers.begin();
 		while( it != schedulers.end() ) {
 			FunctionCallScheduler *scheduler = it->second;
@@ -185,7 +176,7 @@ public:
 			return;
 		}
 
-		ElementDocument *doc = dynamic_cast<ElementDocument *>(element);
+		ElementDocument *doc = dynamic_cast<ElementDocument *>( element );
 		SchedulerMap::iterator it = schedulers.find( doc );
 		if( it == schedulers.end() ) {
 			// FIXME
@@ -201,23 +192,20 @@ public:
 		schedulers.erase( it );
 	}
 
-	ElementDocument *getDocument( void ) const
-	{
+	ElementDocument *getDocument( void ) const {
 		ElementDocument *document = GetCurrentUIDocument();
 		assert( document != NULL );
 		document->AddReference();
 		return document;
 	}
 
-	asstring_t *getLocation( void ) const
-	{
+	asstring_t *getLocation( void ) const {
 		ElementDocument *document = GetCurrentUIDocument();
 		assert( document != NULL );
 		return ASSTR( document->GetSourceURL().CString() );
 	}
 
-	void setLocation( const asstring_t &location )
-	{
+	void setLocation( const asstring_t &location ) {
 		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack == NULL ) {
 			return;
@@ -225,38 +213,32 @@ public:
 		stack->pushDocument( location.buffer );
 	}
 
-	unsigned int getTime( void ) const
-	{
+	unsigned int getTime( void ) const {
 		const RefreshState &state = UI_Main::Get()->getRefreshState();
 		return state.time;
 	}
 
-	bool getDrawBackground( void ) const
-	{
+	bool getDrawBackground( void ) const {
 		const RefreshState &state = UI_Main::Get()->getRefreshState();
 		return state.drawBackground;
 	}
 
-	int getWidth( void ) const
-	{
+	int getWidth( void ) const {
 		const RefreshState &state = UI_Main::Get()->getRefreshState();
 		return state.width;
 	}
 
-	int getHeight( void ) const
-	{
+	int getHeight( void ) const {
 		const RefreshState &state = UI_Main::Get()->getRefreshState();
 		return state.height;
 	}
 
-	float getPixelRatio( void ) const
-	{
+	float getPixelRatio( void ) const {
 		const RefreshState &state = UI_Main::Get()->getRefreshState();
 		return state.pixelRatio;
 	}
 
-	unsigned int historySize( void ) const
-	{
+	unsigned int historySize( void ) const {
 		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack != NULL ) {
 			return stack->getStackSize();
@@ -264,98 +246,81 @@ public:
 		return 0;
 	}
 
-	void historyBack( void ) const
-	{
+	void historyBack( void ) const {
 		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack != NULL && stack->hasAtLeastTwoDocuments() && !stack->isTopModal() ) {
 			stack->popDocument();
 		}
 	}
 
-	int setTimeout( asIScriptFunction *func, unsigned int ms )
-	{
+	int setTimeout( asIScriptFunction *func, unsigned int ms ) {
 		return getSchedulerForCurrentUIDocument()->setTimeout( func, ms );
 	}
 
-	int setTimeout( asIScriptFunction *func, unsigned int ms, CScriptAnyInterface &any )
-	{
+	int setTimeout( asIScriptFunction *func, unsigned int ms, CScriptAnyInterface &any ) {
 		return getSchedulerForCurrentUIDocument()->setTimeout( func, ms, any );
 	}
 
-	int setInterval( asIScriptFunction *func, unsigned int ms )
-	{
+	int setInterval( asIScriptFunction *func, unsigned int ms ) {
 		return getSchedulerForCurrentUIDocument()->setInterval( func, ms );
 	}
 
-	int setInterval( asIScriptFunction *func, unsigned int ms, CScriptAnyInterface &any )
-	{
+	int setInterval( asIScriptFunction *func, unsigned int ms, CScriptAnyInterface &any ) {
 		return getSchedulerForCurrentUIDocument()->setInterval( func, ms, any );
 	}
 
-	void clearTimeout( int id )
-	{
+	void clearTimeout( int id ) {
 		getSchedulerForCurrentUIDocument()->clearTimeout( id );
 	}
 
-	void clearInterval( int id )
-	{
+	void clearInterval( int id ) {
 		getSchedulerForCurrentUIDocument()->clearInterval( id );
 	}
 
-	void ProcessEvent( Event &event )
-	{
+	void ProcessEvent( Event &event ) {
 		if( suspendedContext && event.GetTargetElement() == attachedModalDocument ) {
 			detachAsEventListener();
 			resumeSuspendedContext();
 		}
 	}
 
-	void startLocalSound( const asstring_t &s )
-	{
+	void startLocalSound( const asstring_t &s ) {
 		trap::S_StartLocalSound( s.buffer );
 	}
 
-	void startBackgroundTrack( const asstring_t &intro, const asstring_t &loop, bool stopIfPlaying )
-	{
+	void startBackgroundTrack( const asstring_t &intro, const asstring_t &loop, bool stopIfPlaying ) {
 		if( stopIfPlaying || !backgroundTrackPlaying ) {
 			trap::S_StartBackgroundTrack( intro.buffer, loop.buffer, 3 );
 			backgroundTrackPlaying = true;
 		}
 	}
 
-	void stopBackgroundTrack( void )
-	{
+	void stopBackgroundTrack( void ) {
 		trap::S_StopBackgroundTrack();
 		backgroundTrackPlaying = false;
 	}
 
-	void flash( unsigned int count )
-	{
+	void flash( unsigned int count ) {
 		trap::VID_FlashWindow( count );
 	}
 
-	int getConnectCount( void )
-	{
+	int getConnectCount( void ) {
 		return UI_Main::Get()->getConnectCount();
 	}
 
-	unsigned int getSupportedInputDevices( void )
-	{
+	unsigned int getSupportedInputDevices( void ) {
 		return trap::IN_SupportedDevices();
 	}
 
-	void showSoftKeyboard( bool show )
-	{
+	void showSoftKeyboard( bool show ) {
 		trap::IN_ShowSoftKeyboard( show ? true : false );
 	}
 
-	bool isBrowserAvailable( void )
-	{
+	bool isBrowserAvailable( void ) {
 		return trap::CL_IsBrowserAvailable();
 	}
 
-	asstring_t *getOSName( void ) const
-	{
+	asstring_t *getOSName( void ) const {
 		return ASSTR( OSNAME );
 	}
 
@@ -364,21 +329,18 @@ private:
 	SchedulerMap schedulers;
 
 	/// Suspend active Angelscript execution context
-	void suspendActiveContext( void )
-	{
+	void suspendActiveContext( void ) {
 		suspendedContext = UI_Main::Get()->getAS()->getActiveContext();
 		suspendedContext->Suspend();
 	}
 
 	/// Resume previously suspended AngelScript execution context
-	void resumeSuspendedContext( void )
-	{
+	void resumeSuspendedContext( void ) {
 		suspendedContext->Execute();
 		suspendedContext = NULL;
 	}
 
-	static ElementDocument *GetCurrentUIDocument( void )
-	{
+	static ElementDocument *GetCurrentUIDocument( void ) {
 		// note that this method can be called outside the AS execution context!
 		asIScriptModule *m = UI_Main::Get()->getAS()->getActiveModule();
 		if( !m ) {
@@ -388,8 +350,7 @@ private:
 		return ui_document ? ui_document->getRocketDocument() : NULL;
 	}
 
-	static WSWUI::NavigationStack *GetCurrentUIStack( void )
-	{
+	static WSWUI::NavigationStack *GetCurrentUIStack( void ) {
 		// note that this method can be called outside the AS execution context!
 		asIScriptModule *m = UI_Main::Get()->getAS()->getActiveModule();
 		if( !m ) {
@@ -399,8 +360,7 @@ private:
 		return ui_document ? ui_document->getStack() : NULL;
 	}
 
-	void detachAsEventListener( void )
-	{
+	void detachAsEventListener( void ) {
 		if( attachedModalDocument ) {
 			attachedModalDocument->RemoveEventListener( "hide", this );
 			attachedModalDocument = NULL;
@@ -408,8 +368,7 @@ private:
 	}
 
 	/// finds or creates new scheduler for the document currently on AS-stack
-	FunctionCallScheduler *getSchedulerForCurrentUIDocument( void )
-	{
+	FunctionCallScheduler *getSchedulerForCurrentUIDocument( void ) {
 		ElementDocument *doc = GetCurrentUIDocument();
 
 		assert( doc != NULL );
@@ -425,15 +384,14 @@ private:
 			scheduler->init( UI_Main::Get()->getAS() );
 
 			schedulers[doc] = scheduler;
-		}
-		else {
+		} else {
 			scheduler = it->second;
 		}
 		return scheduler;
 	}
 
 	// context we've suspended to popup the modal document
-	// we're going to resume it as soon as the document 
+	// we're going to resume it as soon as the document
 	// is closed with document.close call in the script
 	asIScriptContext *suspendedContext;
 
@@ -453,17 +411,16 @@ static ASWindow *asWindow;
 
 /// This makes AS aware of this class so other classes may reference
 /// it in their properties and methods
-void PrebindWindow( ASInterface *as )
-{
+void PrebindWindow( ASInterface *as ) {
 	ASBind::Class<ASWindow, ASBind::class_singleref>( as->getEngine() );
 }
 
-void BindWindow( ASInterface *as )
-{
+void BindWindow( ASInterface *as ) {
 	ASBind::Global( as->getEngine() )
-		// setTimeout and setInterval callback funcdefs
-		.funcdef( &FunctionCallScheduler::ASFuncdef, "TimerCallback" )
-		.funcdef( &FunctionCallScheduler::ASFuncdef2, "TimerCallback2" )
+
+	// setTimeout and setInterval callback funcdefs
+	.funcdef( &FunctionCallScheduler::ASFuncdef, "TimerCallback" )
+	.funcdef( &FunctionCallScheduler::ASFuncdef2, "TimerCallback2" )
 	;
 
 	ASBind::Enum( as->getEngine(), "eInputDeviceMask" )
@@ -475,81 +432,80 @@ void BindWindow( ASInterface *as )
 	;
 
 	ASBind::GetClass<ASWindow>( as->getEngine() )
-		.method( &ASWindow::open, "open" )
-		.method2( &ASWindow::close, "void close( int code = 0 )" )
-		.method2( &ASWindow::modal, "void modal( const String &location, int defaultCode = -1 )" )
-		.method( &ASWindow::getModalValue, "getModalValue" )
-		.method( &ASWindow::preload, "preload" )
+	.method( &ASWindow::open, "open" )
+	.method2( &ASWindow::close, "void close( int code = 0 )" )
+	.method2( &ASWindow::modal, "void modal( const String &location, int defaultCode = -1 )" )
+	.method( &ASWindow::getModalValue, "getModalValue" )
+	.method( &ASWindow::preload, "preload" )
 
-		.method( &ASWindow::getDocument, "get_document" )
+	.method( &ASWindow::getDocument, "get_document" )
 
-		.method( &ASWindow::getLocation, "get_location" )
-		.method( &ASWindow::setLocation, "set_location" )
+	.method( &ASWindow::getLocation, "get_location" )
+	.method( &ASWindow::setLocation, "set_location" )
 
-		.method( &ASWindow::getTime, "get_time" )
-		.method( &ASWindow::getDrawBackground, "get_drawBackground" )
-		.method( &ASWindow::getWidth, "get_width" )
-		.method( &ASWindow::getHeight, "get_height" )
-		.method( &ASWindow::getPixelRatio, "get_pixelRatio" )
+	.method( &ASWindow::getTime, "get_time" )
+	.method( &ASWindow::getDrawBackground, "get_drawBackground" )
+	.method( &ASWindow::getWidth, "get_width" )
+	.method( &ASWindow::getHeight, "get_height" )
+	.method( &ASWindow::getPixelRatio, "get_pixelRatio" )
 
-		.method( &ASWindow::historySize, "history_size" )
-		.method( &ASWindow::historyBack, "history_back" )
+	.method( &ASWindow::historySize, "history_size" )
+	.method( &ASWindow::historyBack, "history_back" )
 
-		.constmethod( &ASWindow::startLocalSound, "startLocalSound" )
-		.method2( &ASWindow::startBackgroundTrack, "void startBackgroundTrack( String &in intro, String &in loop, bool stopIfPlaying = true ) const" )
-		.constmethod( &ASWindow::stopBackgroundTrack, "stopBackgroundTrack" )
+	.constmethod( &ASWindow::startLocalSound, "startLocalSound" )
+	.method2( &ASWindow::startBackgroundTrack, "void startBackgroundTrack( String &in intro, String &in loop, bool stopIfPlaying = true ) const" )
+	.constmethod( &ASWindow::stopBackgroundTrack, "stopBackgroundTrack" )
 
-		.method2<int (ASWindow::*)(asIScriptFunction *, unsigned int)>
-			( &ASWindow::setTimeout, "int setTimeout (TimerCallback @, uint)" )
-		.method2<int (ASWindow::*)(asIScriptFunction *, unsigned int)>
-			( &ASWindow::setInterval, "int setInterval (TimerCallback @, uint)" )
+	.method2<int ( ASWindow::* )( asIScriptFunction *, unsigned int )>
+		( &ASWindow::setTimeout, "int setTimeout (TimerCallback @, uint)" )
+	.method2<int ( ASWindow::* )( asIScriptFunction *, unsigned int )>
+		( &ASWindow::setInterval, "int setInterval (TimerCallback @, uint)" )
 
-		.method2<int (ASWindow::*)(asIScriptFunction *, unsigned int, CScriptAnyInterface &)>
-			( &ASWindow::setTimeout, "int setTimeout (TimerCallback2 @, uint, any &in)" )
-		.method2<int (ASWindow::*)(asIScriptFunction *, unsigned int, CScriptAnyInterface &)>
-			( &ASWindow::setInterval, "int setInterval (TimerCallback2 @, uint, any &in)" )
+	.method2<int ( ASWindow::* )( asIScriptFunction *, unsigned int, CScriptAnyInterface & )>
+		( &ASWindow::setTimeout, "int setTimeout (TimerCallback2 @, uint, any &in)" )
+	.method2<int ( ASWindow::* )( asIScriptFunction *, unsigned int, CScriptAnyInterface & )>
+		( &ASWindow::setInterval, "int setInterval (TimerCallback2 @, uint, any &in)" )
 
-		.method( &ASWindow::clearTimeout, "clearTimeout" )
-		.method( &ASWindow::clearInterval, "clearInterval" )
+	.method( &ASWindow::clearTimeout, "clearTimeout" )
+	.method( &ASWindow::clearInterval, "clearInterval" )
 
-		.method( &ASWindow::flash, "flash" )
+	.method( &ASWindow::flash, "flash" )
 
-		.method( &ASWindow::getConnectCount, "get_connectCount" )
+	.method( &ASWindow::getConnectCount, "get_connectCount" )
 
-		.method( &ASWindow::getSupportedInputDevices, "get_supportedInputDevices" )
+	.method( &ASWindow::getSupportedInputDevices, "get_supportedInputDevices" )
 
-		.method( &ASWindow::showSoftKeyboard, "showSoftKeyboard" )
+	.method( &ASWindow::showSoftKeyboard, "showSoftKeyboard" )
 
-		.method( &ASWindow::isBrowserAvailable, "get_browserAvailable" )
+	.method( &ASWindow::isBrowserAvailable, "get_browserAvailable" )
 
-		.method( &ASWindow::getOSName, "get_osName" )
+	.method( &ASWindow::getOSName, "get_osName" )
 	;
 }
 
-void BindWindowGlobal( ASInterface *as )
-{
+void BindWindowGlobal( ASInterface *as ) {
 	assert( asWindow == NULL );
 
 	// set the AS module for scheduler
 	asWindow = __new__( ASWindow )( as );
 
 	ASBind::Global( as->getEngine() )
-		// global variable
-		.var( asWindow, "window" )
+
+	// global variable
+	.var( asWindow, "window" )
 	;
 }
 
-void RunWindowFrame( void )
-{
+void RunWindowFrame( void ) {
 	assert( asWindow != NULL );
 
 	asWindow->update();
 }
 
-void UnbindWindow( void )
-{
-	if( asWindow )
+void UnbindWindow( void ) {
+	if( asWindow ) {
 		__delete__( asWindow );
+	}
 	asWindow = NULL;
 }
 

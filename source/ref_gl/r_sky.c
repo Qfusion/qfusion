@@ -25,34 +25,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #define SIDE_SIZE   9
-#define POINTS_LEN  ( SIDE_SIZE*SIDE_SIZE )
-#define ELEM_LEN    ( ( SIDE_SIZE-1 )*( SIDE_SIZE-1 )*6 )
+#define POINTS_LEN  ( SIDE_SIZE * SIDE_SIZE )
+#define ELEM_LEN    ( ( SIDE_SIZE - 1 ) * ( SIDE_SIZE - 1 ) * 6 )
 
 #define SPHERE_RAD  10.0
 #define EYE_RAD     9.0
 
-#define SCALE_S	    4.0  // Arbitrary (?) texture scaling factors
-#define SCALE_T	    4.0
+#define SCALE_S     4.0  // Arbitrary (?) texture scaling factors
+#define SCALE_T     4.0
 
 #define BOX_SIZE    1.0f
-#define BOX_STEP    BOX_SIZE / ( SIDE_SIZE-1 ) * 2.0f
+#define BOX_STEP    BOX_SIZE / ( SIDE_SIZE - 1 ) * 2.0f
 
 #define SKYDOME_VATTRIBS ( VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT )
 
-typedef struct visSkySide_s
-{
+typedef struct visSkySide_s {
 	int index;
 	int firstVert, numVerts;
 	int firstElem, numElems;
 } visSkySide_t;
 
-typedef struct skydome_s
-{
-	mesh_t				*meshes;
-	vec2_t				*sphereStCoords[6];
-	mesh_vbo_t 			*sphereVbos[6];
-	vec2_t				*linearStCoords[6];
-	mesh_vbo_t 			*linearVbos[6];
+typedef struct skydome_s {
+	mesh_t              *meshes;
+	vec2_t              *sphereStCoords[6];
+	mesh_vbo_t          *sphereVbos[6];
+	vec2_t              *linearStCoords[6];
+	mesh_vbo_t          *linearVbos[6];
 } skydome_t;
 
 static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow, vec3_t dcol );
@@ -60,10 +58,9 @@ static void Gen_Box( skydome_t *skydome );
 
 static void MakeSkyVec( float x, float y, float z, int axis, vec3_t v );
 
-typedef struct
-{
+typedef struct {
 	drawSurfaceType_t type;
-	unsigned int visFrame;			// should be drawn when node is crossed
+	unsigned int visFrame;          // should be drawn when node is crossed
 } drawSurfaceSky_t;
 
 static drawSurfaceSky_t r_skySurf = { ST_SKY, 0 };
@@ -71,24 +68,22 @@ static drawSurfaceSky_t r_skySurf = { ST_SKY, 0 };
 /*
 * R_CreateSkydome
 */
-skydome_t *R_CreateSkydome( model_t *model )
-{
+skydome_t *R_CreateSkydome( model_t *model ) {
 	int i, size;
 	mesh_t *mesh;
 	skydome_t *skydome;
 	uint8_t *buffer;
 
 	size = sizeof( skydome_t ) + sizeof( mesh_t ) * 6 +
-		sizeof( elem_t ) * ELEM_LEN * 6 +
-		sizeof( vec4_t ) * POINTS_LEN * 6 + sizeof( vec4_t ) * POINTS_LEN * 6 +
-		sizeof( vec2_t ) * POINTS_LEN * 11;
+		   sizeof( elem_t ) * ELEM_LEN * 6 +
+		   sizeof( vec4_t ) * POINTS_LEN * 6 + sizeof( vec4_t ) * POINTS_LEN * 6 +
+		   sizeof( vec2_t ) * POINTS_LEN * 11;
 	buffer = Mod_Malloc( model, size );
 
 	skydome = ( skydome_t * )buffer; buffer += sizeof( skydome_t );
 	skydome->meshes = ( mesh_t * )buffer; buffer += sizeof( mesh_t ) * 6;
 
-	for( i = 0, mesh = skydome->meshes; i < 6; i++, mesh++ )
-	{
+	for( i = 0, mesh = skydome->meshes; i < 6; i++, mesh++ ) {
 		mesh->numElems = ELEM_LEN;
 		mesh->elems = ( elem_t * )buffer; buffer += sizeof( elem_t ) * ELEM_LEN;
 
@@ -99,12 +94,12 @@ skydome_t *R_CreateSkydome( model_t *model )
 		if( i != 5 ) {
 			skydome->sphereStCoords[i] = ( vec2_t * )buffer; buffer += sizeof( vec2_t ) * POINTS_LEN;
 			skydome->sphereVbos[i] = R_CreateMeshVBO( mesh, mesh->numVerts, mesh->numElems, 0,
-				SKYDOME_VATTRIBS, VBO_TAG_WORLD, 0 );
+													  SKYDOME_VATTRIBS, VBO_TAG_WORLD, 0 );
 		}
 
 		skydome->linearStCoords[i] = ( vec2_t * )buffer; buffer += sizeof( vec2_t ) * POINTS_LEN;
 		skydome->linearVbos[i] = R_CreateMeshVBO( mesh, mesh->numVerts, mesh->numElems, 0,
-			SKYDOME_VATTRIBS, VBO_TAG_WORLD, 0 );
+												  SKYDOME_VATTRIBS, VBO_TAG_WORLD, 0 );
 	}
 
 	Gen_Box( skydome );
@@ -115,30 +110,28 @@ skydome_t *R_CreateSkydome( model_t *model )
 /*
 * R_TouchSkydome
 */
-void R_TouchSkydome( skydome_t *skydome )
-{
+void R_TouchSkydome( skydome_t *skydome ) {
 	int i;
 	mesh_t *mesh;
 
-	for( i = 0, mesh = skydome->meshes; i < 6; i++, mesh++ )
-	{
-		if( skydome->sphereVbos[i] )
+	for( i = 0, mesh = skydome->meshes; i < 6; i++, mesh++ ) {
+		if( skydome->sphereVbos[i] ) {
 			R_TouchMeshVBO( skydome->sphereVbos[i] );
-		if( skydome->linearVbos[i] )
+		}
+		if( skydome->linearVbos[i] ) {
 			R_TouchMeshVBO( skydome->linearVbos[i] );
+		}
 	}
 }
 
 /*
 * Gen_Box
 */
-static void Gen_Box( skydome_t *skydome )
-{
+static void Gen_Box( skydome_t *skydome ) {
 	int axis;
 	vec3_t orig, drow, dcol;
 
-	for( axis = 0; axis < 6; axis++ )
-	{
+	for( axis = 0; axis < 6; axis++ ) {
 		MakeSkyVec( -BOX_SIZE, -BOX_SIZE, BOX_SIZE, axis, orig );
 		MakeSkyVec( 0, BOX_STEP, 0, axis, drow );
 		MakeSkyVec( BOX_STEP, 0, 0, axis, dcol );
@@ -149,15 +142,14 @@ static void Gen_Box( skydome_t *skydome )
 
 /*
 * Gen_BoxSide
-* 
+*
 * I don't know exactly what Q3A does for skybox texturing, but
 * this is at least fairly close.  We tile the texture onto the
 * inside of a large sphere, and put the camera near the top of
 * the sphere. We place the box around the camera, and cast rays
 * through the box verts to the sphere to find the texture coordinates.
 */
-static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow, vec3_t dcol )
-{
+static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow, vec3_t dcol ) {
 	vec3_t pos, w, row, norm;
 	float *v, *n, *st = NULL, *st2;
 	int r, c;
@@ -165,7 +157,7 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 	elem_t *elem;
 	mesh_t *mesh = &( skydome->meshes[side] );
 
-	s = 1.0 / ( SIDE_SIZE-1 );
+	s = 1.0 / ( SIDE_SIZE - 1 );
 	d = EYE_RAD; // sphere center to camera distance
 	d2 = d * d;
 	b = SPHERE_RAD; // sphere radius
@@ -175,8 +167,9 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 
 	v = mesh->xyzArray[0];
 	n = mesh->normalsArray[0];
-	if( side != 5 )
+	if( side != 5 ) {
 		st = skydome->sphereStCoords[side][0];
+	}
 	st2 = skydome->linearStCoords[side][0];
 
 	VectorCopy( orig, row );
@@ -185,11 +178,9 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 //	VectorNormalize( norm );
 	VectorClear( norm );
 
-	for( r = 0; r < SIDE_SIZE; r++ )
-	{
+	for( r = 0; r < SIDE_SIZE; r++ ) {
 		VectorCopy( row, pos );
-		for( c = 0; c < SIDE_SIZE; c++ )
-		{
+		for( c = 0; c < SIDE_SIZE; c++ ) {
 			// pos points from eye to vertex on box
 			VectorCopy( pos, v );
 			VectorCopy( pos, w );
@@ -202,8 +193,7 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 			w[0] *= t;
 			w[1] *= t;
 
-			if( st )
-			{
+			if( st ) {
 				// use x and y on sphere as s and t
 				// minus is here so skies scoll in correct (Q3A's) direction
 				st[0] = -w[0] * q[0];
@@ -225,7 +215,9 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 
 			v += 4;
 			n += 4;
-			if( st ) st += 2;
+			if( st ) {
+				st += 2;
+			}
 			st2 += 2;
 		}
 
@@ -234,10 +226,8 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 
 	// elements in tristrip order
 	elem = mesh->elems;
-	for( r = 0; r < SIDE_SIZE - 1; r++ )
-	{
-		for( c = 0; c < SIDE_SIZE - 1; c++ )
-		{
+	for( r = 0; r < SIDE_SIZE - 1; r++ ) {
+		for( c = 0; c < SIDE_SIZE - 1; c++ ) {
 			elem[0] = r * SIDE_SIZE + c;
 			elem[1] = elem[4] = elem[0] + SIDE_SIZE;
 			elem[2] = elem[3] = elem[0] + 1;
@@ -245,7 +235,7 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 			elem += 6;
 		}
 	}
-	
+
 	// upload two static VBO's for each side except for the bottom one
 	// which only has 1 side for skybox
 	if( side != 5 ) {
@@ -262,14 +252,14 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 /*
 * R_DrawSkyBoxSide
 */
-static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visSide, const shader_t *skyShader, 
-	const shader_t *skyboxShader, const mfog_t *fog, int imageIndex )
-{
+static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visSide, const shader_t *skyShader,
+							  const shader_t *skyboxShader, const mfog_t *fog, int imageIndex ) {
 	int side = visSide->index;
 
 	if( rn.skyMins[0][side] >= rn.skyMaxs[0][side] ||
-		rn.skyMins[1][side] >= rn.skyMaxs[1][side] )
+		rn.skyMins[1][side] >= rn.skyMaxs[1][side] ) {
 		return;
+	}
 
 	RB_BindShader( rsc.skyent, skyShader, fog );
 
@@ -285,9 +275,8 @@ static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visS
 /*
 * R_DrawSkyBox
 */
-static void R_DrawSkyBox( const skydome_t *skydome, const visSkySide_t *visSides, const shader_t *skyShader, 
-	const shader_t *skyboxShader, const mfog_t *fog )
-{
+static void R_DrawSkyBox( const skydome_t *skydome, const visSkySide_t *visSides, const shader_t *skyShader,
+						  const shader_t *skyboxShader, const mfog_t *fog ) {
 	int i;
 	const int skytexorder[6] = { SKYBOX_RIGHT, SKYBOX_FRONT, SKYBOX_LEFT, SKYBOX_BACK, SKYBOX_TOP, SKYBOX_BOTTOM };
 
@@ -297,17 +286,17 @@ static void R_DrawSkyBox( const skydome_t *skydome, const visSkySide_t *visSides
 
 /*
 * R_DrawBlackBottom
-* 
+*
 * Draw dummy skybox side to prevent the HOM effect
 */
-static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *visSides, const mfog_t *fog )
-{
+static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *visSides, const mfog_t *fog ) {
 	int side = 5;
 	const visSkySide_t *visSide = visSides + side;
 
 	if( rn.skyMins[0][side] >= rn.skyMaxs[0][side] ||
-		rn.skyMins[1][side] >= rn.skyMaxs[1][side] )
+		rn.skyMins[1][side] >= rn.skyMaxs[1][side] ) {
 		return;
+	}
 
 	RB_BindShader( rsc.skyent, rsh.envShader, fog );
 
@@ -319,8 +308,7 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 /*
 * R_DrawSkySurf
 */
-void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceBSP_t *drawSurf )
-{
+void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceBSP_t *drawSurf ) {
 	int i;
 	int numVisSides;
 	visSkySide_t visSkySides[6];
@@ -329,80 +317,80 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	bool skyportal = portalSurface != NULL && portalSurface->skyPortal;
 	skydome_t *skydome = rsh.worldBrushModel->skydome;
 
-	if( !skydome )
+	if( !skydome ) {
 		return;
-	if( skyportal && !fog )
+	}
+	if( skyportal && !fog ) {
 		return;
+	}
 
 	numVisSides = 0;
 	ClearBounds( mins, maxs );
 
 	memset( visSkySides, 0, sizeof( visSkySides ) );
 
-	for( i = 0; i < 6; i++ )
-	{
+	for( i = 0; i < 6; i++ ) {
 		if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
-			rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
+			rn.skyMins[1][i] >= rn.skyMaxs[1][i] ) {
 			continue;
+		}
 
 		// increase the visible sides counter
 		numVisSides++;
 
-		umin = (int)( ( rn.skyMins[0][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) );
-		umax = (int)( ( rn.skyMaxs[0][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) ) + 1;
-		vmin = (int)( ( rn.skyMins[1][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) );
-		vmax = (int)( ( rn.skyMaxs[1][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) ) + 1;
+		umin = (int)( ( rn.skyMins[0][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) );
+		umax = (int)( ( rn.skyMaxs[0][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) ) + 1;
+		vmin = (int)( ( rn.skyMins[1][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) );
+		vmax = (int)( ( rn.skyMaxs[1][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) ) + 1;
 
-		clamp( umin, 0, SIDE_SIZE-1 );
-		clamp( umax, 0, SIDE_SIZE-1 );
-		clamp( vmin, 0, SIDE_SIZE-1 );
-		clamp( vmax, 0, SIDE_SIZE-1 );
+		clamp( umin, 0, SIDE_SIZE - 1 );
+		clamp( umax, 0, SIDE_SIZE - 1 );
+		clamp( vmin, 0, SIDE_SIZE - 1 );
+		clamp( vmax, 0, SIDE_SIZE - 1 );
 
 		visSkySides[i].index = i;
 		visSkySides[i].firstVert = vmin * SIDE_SIZE + umin;
-		visSkySides[i].numVerts = (vmax - vmin) * SIDE_SIZE + (umax - umin) + 1;
-		visSkySides[i].firstElem = (vmin * (SIDE_SIZE-2) + umin) * 6;
-		visSkySides[i].numElems = ((vmax - vmin) * (SIDE_SIZE-2) + (umax - umin)) * 6;
+		visSkySides[i].numVerts = ( vmax - vmin ) * SIDE_SIZE + ( umax - umin ) + 1;
+		visSkySides[i].firstElem = ( vmin * ( SIDE_SIZE - 2 ) + umin ) * 6;
+		visSkySides[i].numElems = ( ( vmax - vmin ) * ( SIDE_SIZE - 2 ) + ( umax - umin ) ) * 6;
 
-		clamp( visSkySides[i].firstVert, 0, POINTS_LEN-1 );
+		clamp( visSkySides[i].firstVert, 0, POINTS_LEN - 1 );
 		clamp( visSkySides[i].numVerts, 0, POINTS_LEN );
 
-		clamp( visSkySides[i].firstElem, 0, ELEM_LEN-1 );
+		clamp( visSkySides[i].firstElem, 0, ELEM_LEN - 1 );
 		clamp( visSkySides[i].numElems, 0, ELEM_LEN );
 
 		skydome->meshes[i].numElems = visSkySides[i].numElems;
 	}
 
 	// no sides are truly visible, ignore
-	if( !numVisSides )
+	if( !numVisSides ) {
 		return;
+	}
 
 	// center skydome on camera to give the illusion of a larger space
 	rsc.skyent->scale = shader->skyHeight;
 	VectorCopy( rn.viewOrigin, rsc.skyent->origin );
 	R_TransformForEntity( rsc.skyent );
 
-	if( skyportal )
-	{
+	if( skyportal ) {
 		// render fake fogged skybox
 		R_DrawSkyBox( skydome, visSkySides, rsh.emptyFogShader, shader, fog );
-	}
-	else
-	{
-		if( shader->skyboxImages[0] )
+	} else {
+		if( shader->skyboxImages[0] ) {
 			R_DrawSkyBox( skydome, visSkySides, rsh.skyShader, shader, fog );
-		else
+		} else {
 			R_DrawBlackBottom( skydome, visSkySides, fog );
+		}
 
-		if( shader->numpasses )
-		{
-			for( i = 0; i < 5; i++ )
-			{
+		if( shader->numpasses ) {
+			for( i = 0; i < 5; i++ ) {
 				const visSkySide_t *visSide = visSkySides + i;
 
 				if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
-					rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
+					rn.skyMins[1][i] >= rn.skyMaxs[1][i] ) {
 					continue;
+				}
 
 				RB_BindShader( rsc.skyent, shader, NULL ); // must be called for every side to reset backend state
 
@@ -419,7 +407,7 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 //===================================================================
 
 static const msurface_t *r_warpFace;
-static bool	r_warpFaceVis;
+static bool r_warpFaceVis;
 static int r_warpFaceAxis;
 
 vec3_t skyclip[6] = {
@@ -460,8 +448,7 @@ int vec_to_st[6][3] =
 /*
 * DrawSkyPolygon
 */
-static void DrawSkyPolygon( int nump, vec3_t vecs )
-{
+static void DrawSkyPolygon( int nump, vec3_t vecs ) {
 	int i, j;
 	vec3_t v, av;
 	float s, t, dv;
@@ -478,51 +465,55 @@ static void DrawSkyPolygon( int nump, vec3_t vecs )
 	av[1] = fabs( v[1] );
 	av[2] = fabs( v[2] );
 
-	if( ( av[0] > av[1] ) && ( av[0] > av[2] ) )
+	if( ( av[0] > av[1] ) && ( av[0] > av[2] ) ) {
 		axis = ( v[0] < 0 ) ? 1 : 0;
-	else if( ( av[1] > av[2] ) && ( av[1] > av[0] ) )
+	} else if( ( av[1] > av[2] ) && ( av[1] > av[0] ) ) {
 		axis = ( v[1] < 0 ) ? 3 : 2;
-	else
+	} else {
 		axis = ( v[2] < 0 ) ? 5 : 4;
+	}
 
 	r_warpFaceVis = true;
 	r_warpFaceAxis = axis;
 
 	// project new texture coords
-	for( i = 0; i < nump; i++, vecs += 3 )
-	{
+	for( i = 0; i < nump; i++, vecs += 3 ) {
 		j = vec_to_st[axis][2];
 		dv = ( j > 0 ) ? vecs[j - 1] : -vecs[-j - 1];
 
-		if( dv < 0.001 )
+		if( dv < 0.001 ) {
 			continue; // don't divide by zero
 
+		}
 		dv = 1.0f / dv;
 
 		j = vec_to_st[axis][0];
-		s = ( j < 0 ) ? -vecs[-j -1] * dv : vecs[j-1] * dv;
+		s = ( j < 0 ) ? -vecs[-j - 1] * dv : vecs[j - 1] * dv;
 
 		j = vec_to_st[axis][1];
-		t = ( j < 0 ) ? -vecs[-j -1] * dv : vecs[j-1] * dv;
+		t = ( j < 0 ) ? -vecs[-j - 1] * dv : vecs[j - 1] * dv;
 
-		if( s < rn.skyMins[0][axis] )
+		if( s < rn.skyMins[0][axis] ) {
 			rn.skyMins[0][axis] = s;
-		if( t < rn.skyMins[1][axis] )
+		}
+		if( t < rn.skyMins[1][axis] ) {
 			rn.skyMins[1][axis] = t;
-		if( s > rn.skyMaxs[0][axis] )
+		}
+		if( s > rn.skyMaxs[0][axis] ) {
 			rn.skyMaxs[0][axis] = s;
-		if( t > rn.skyMaxs[1][axis] )
+		}
+		if( t > rn.skyMaxs[1][axis] ) {
 			rn.skyMaxs[1][axis] = t;
+		}
 	}
 }
 
-#define	MAX_CLIP_VERTS	64
+#define MAX_CLIP_VERTS  64
 
 /*
 * ClipSkyPolygon
 */
-void ClipSkyPolygon( int nump, vec3_t vecs, int stage )
-{
+void ClipSkyPolygon( int nump, vec3_t vecs, int stage ) {
 	float *norm;
 	float *v;
 	bool front, back;
@@ -533,12 +524,12 @@ void ClipSkyPolygon( int nump, vec3_t vecs, int stage )
 	int newc[2];
 	int i, j;
 
-	if( nump > MAX_CLIP_VERTS )
+	if( nump > MAX_CLIP_VERTS ) {
 		ri.Com_Error( ERR_DROP, "ClipSkyPolygon: MAX_CLIP_VERTS" );
+	}
 
 loc1:
-	if( stage == 6 )
-	{
+	if( stage == 6 ) {
 		// fully clipped, so draw it
 		DrawSkyPolygon( nump, vecs );
 		return;
@@ -546,28 +537,21 @@ loc1:
 
 	front = back = false;
 	norm = skyclip[stage];
-	for( i = 0, v = vecs; i < nump; i++, v += 3 )
-	{
+	for( i = 0, v = vecs; i < nump; i++, v += 3 ) {
 		d = DotProduct( v, norm );
-		if( d > ON_EPSILON )
-		{
+		if( d > ON_EPSILON ) {
 			front = true;
 			sides[i] = SIDE_FRONT;
-		}
-		else if( d < -ON_EPSILON )
-		{
+		} else if( d < -ON_EPSILON ) {
 			back = true;
 			sides[i] = SIDE_BACK;
-		}
-		else
-		{
+		} else {
 			sides[i] = SIDE_ON;
 		}
 		dists[i] = d;
 	}
 
-	if( !front || !back )
-	{	// not clipped
+	if( !front || !back ) { // not clipped
 		stage++;
 		goto loc1;
 	}
@@ -575,36 +559,34 @@ loc1:
 	// clip it
 	sides[i] = sides[0];
 	dists[i] = dists[0];
-	VectorCopy( vecs, ( vecs+( i*3 ) ) );
+	VectorCopy( vecs, ( vecs + ( i * 3 ) ) );
 	newc[0] = newc[1] = 0;
 
-	for( i = 0, v = vecs; i < nump; i++, v += 3 )
-	{
-		switch( sides[i] )
-		{
-		case SIDE_FRONT:
-			VectorCopy( v, newv[0][newc[0]] );
-			newc[0]++;
-			break;
-		case SIDE_BACK:
-			VectorCopy( v, newv[1][newc[1]] );
-			newc[1]++;
-			break;
-		case SIDE_ON:
-			VectorCopy( v, newv[0][newc[0]] );
-			newc[0]++;
-			VectorCopy( v, newv[1][newc[1]] );
-			newc[1]++;
-			break;
+	for( i = 0, v = vecs; i < nump; i++, v += 3 ) {
+		switch( sides[i] ) {
+			case SIDE_FRONT:
+				VectorCopy( v, newv[0][newc[0]] );
+				newc[0]++;
+				break;
+			case SIDE_BACK:
+				VectorCopy( v, newv[1][newc[1]] );
+				newc[1]++;
+				break;
+			case SIDE_ON:
+				VectorCopy( v, newv[0][newc[0]] );
+				newc[0]++;
+				VectorCopy( v, newv[1][newc[1]] );
+				newc[1]++;
+				break;
 		}
 
-		if( sides[i] == SIDE_ON || sides[i+1] == SIDE_ON || sides[i+1] == sides[i] )
+		if( sides[i] == SIDE_ON || sides[i + 1] == SIDE_ON || sides[i + 1] == sides[i] ) {
 			continue;
+		}
 
-		d = dists[i] / ( dists[i] - dists[i+1] );
-		for( j = 0; j < 3; j++ )
-		{
-			e = v[j] + d * ( v[j+3] - v[j] );
+		d = dists[i] / ( dists[i] - dists[i + 1] );
+		for( j = 0; j < 3; j++ ) {
+			e = v[j] + d * ( v[j + 3] - v[j] );
 			newv[0][newc[0]][j] = e;
 			newv[1][newc[1]][j] = e;
 		}
@@ -620,11 +602,10 @@ loc1:
 /*
 * R_ClipSkySurface
 */
-bool R_ClipSkySurface( const msurface_t *surf )
-{
+bool R_ClipSkySurface( const msurface_t *surf ) {
 	int i;
 	vec4_t *vert;
-	elem_t	*elem;
+	elem_t  *elem;
 	mesh_t *mesh;
 	vec3_t verts[4];
 
@@ -635,8 +616,7 @@ bool R_ClipSkySurface( const msurface_t *surf )
 	mesh = surf->mesh;
 	elem = mesh->elems;
 	vert = mesh->xyzArray;
-	for( i = 0; i < mesh->numElems; i += 3, elem += 3 )
-	{
+	for( i = 0; i < mesh->numElems; i += 3, elem += 3 ) {
 		VectorSubtract( vert[elem[0]], rn.viewOrigin, verts[0] );
 		VectorSubtract( vert[elem[1]], rn.viewOrigin, verts[1] );
 		VectorSubtract( vert[elem[2]], rn.viewOrigin, verts[2] );
@@ -649,8 +629,7 @@ bool R_ClipSkySurface( const msurface_t *surf )
 /*
 * R_AddSkySurfToDrawList
 */
-bool R_AddSkySurfToDrawList( const msurface_t *surf, const portalSurface_t *portalSurf )
-{
+bool R_AddSkySurfToDrawList( const msurface_t *surf, const portalSurface_t *portalSurf ) {
 	mfog_t *fog = surf->fog;
 	shader_t *shader = surf->shader;
 
@@ -670,19 +649,16 @@ bool R_AddSkySurfToDrawList( const msurface_t *surf, const portalSurface_t *port
 /*
 * R_ClearSky
 */
-void R_ClearSky( void )
-{
+void R_ClearSky( void ) {
 	int i;
 
-	for( i = 0; i < 6; i++ )
-	{
+	for( i = 0; i < 6; i++ ) {
 		rn.skyMins[0][i] = rn.skyMins[1][i] = 9999999;
 		rn.skyMaxs[0][i] = rn.skyMaxs[1][i] = -9999999;
 	}
 }
 
-static void MakeSkyVec( float x, float y, float z, int axis, vec3_t v )
-{
+static void MakeSkyVec( float x, float y, float z, int axis, vec3_t v ) {
 	int j, k;
 	vec3_t b;
 
@@ -690,12 +666,12 @@ static void MakeSkyVec( float x, float y, float z, int axis, vec3_t v )
 	b[1] = y;
 	b[2] = z;
 
-	for( j = 0; j < 3; j++ )
-	{
+	for( j = 0; j < 3; j++ ) {
 		k = st_to_vec[axis][j];
-		if( k < 0 )
+		if( k < 0 ) {
 			v[j] = -b[-k - 1];
-		else
+		} else {
 			v[j] = b[k - 1];
+		}
 	}
 }

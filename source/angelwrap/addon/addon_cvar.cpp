@@ -26,152 +26,145 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#define CVAR_FORCESET
 
 // CLASS: Cvar
-void objectCVar_Constructor( asstring_t *name, asstring_t *value, unsigned int flags, ascvar_t *self )
-{
+void objectCVar_Constructor( asstring_t *name, asstring_t *value, unsigned int flags, ascvar_t *self ) {
 	self->cvar = trap_Cvar_Get( name->buffer, value->buffer, flags );
 }
 
-void objectCVar_CopyConstructor( ascvar_t *other, ascvar_t *self )
-{
+void objectCVar_CopyConstructor( ascvar_t *other, ascvar_t *self ) {
 	self->cvar = other->cvar;
 }
 
-static void objectCVar_Reset( ascvar_t *self )
-{
-	if( !self->cvar )
+static void objectCVar_Reset( ascvar_t *self ) {
+	if( !self->cvar ) {
 		return;
+	}
 
 	trap_Cvar_Set( self->cvar->name, self->cvar->dvalue );
 }
 
-static void objectCVar_setS( asstring_t *str, ascvar_t *self )
-{
-	if( !str || !self->cvar )
+static void objectCVar_setS( asstring_t *str, ascvar_t *self ) {
+	if( !str || !self->cvar ) {
 		return;
+	}
 
 	trap_Cvar_Set( self->cvar->name, str->buffer );
 }
 
-static void objectCVar_setF( float value, ascvar_t *self )
-{
-	if( !self->cvar )
+static void objectCVar_setF( float value, ascvar_t *self ) {
+	if( !self->cvar ) {
 		return;
+	}
 
 	trap_Cvar_SetValue( self->cvar->name, value );
 }
 
-static void objectCVar_setI( int value, ascvar_t *self )
-{
+static void objectCVar_setI( int value, ascvar_t *self ) {
 	objectCVar_setF( (float)value, self );
 }
 
-static void objectCVar_setD( double value, ascvar_t *self )
-{
+static void objectCVar_setD( double value, ascvar_t *self ) {
 	objectCVar_setF( (float)value, self );
 }
 
 #ifdef CVAR_FORCESET
-static void objectCVar_forceSetS( asstring_t *str, ascvar_t *self )
-{
-	if( !str || !self->cvar )
+static void objectCVar_forceSetS( asstring_t *str, ascvar_t *self ) {
+	if( !str || !self->cvar ) {
 		return;
+	}
 
 	trap_Cvar_ForceSet( self->cvar->name, str->buffer );
 }
 
-static void objectCVar_forceSetF( float value, ascvar_t *self )
-{
-	if( !self->cvar )
+static void objectCVar_forceSetF( float value, ascvar_t *self ) {
+	if( !self->cvar ) {
 		return;
+	}
 
 	trap_Cvar_ForceSet( self->cvar->name, va( "%f", value ) );
 }
 
-static void objectCVar_forceSetI( int value, ascvar_t *self )
-{
+static void objectCVar_forceSetI( int value, ascvar_t *self ) {
 	objectCVar_forceSetF( (float)value, self );
 }
 
-static void objectCVar_forceSetD( double value, ascvar_t *self )
-{
+static void objectCVar_forceSetD( double value, ascvar_t *self ) {
 	objectCVar_forceSetF( (float)value, self );
 }
 #endif
 
-static bool objectCVar_getBool( ascvar_t *self )
-{
-	if( !self->cvar )
+static bool objectCVar_getBool( ascvar_t *self ) {
+	if( !self->cvar ) {
 		return false;
+	}
 
 	return ( self->cvar->integer != 0 );
 }
 
-static bool objectCVar_getModified( ascvar_t *self )
-{
-	if( !self->cvar )
+static bool objectCVar_getModified( ascvar_t *self ) {
+	if( !self->cvar ) {
 		return false;
+	}
 
 	return self->cvar->modified == true;
 }
 
-static int objectCVar_getInteger( ascvar_t *self )
-{
-	if( !self->cvar )
+static int objectCVar_getInteger( ascvar_t *self ) {
+	if( !self->cvar ) {
 		return 0;
+	}
 
 	return self->cvar->integer;
 }
 
-static float objectCVar_getValue( ascvar_t *self )
-{
-	if( !self->cvar )
+static float objectCVar_getValue( ascvar_t *self ) {
+	if( !self->cvar ) {
 		return 0;
+	}
 
 	return self->cvar->value;
 }
 
-static bool objectCVar_setModified( bool modified, ascvar_t *self )
-{
-	if( !self->cvar )
+static bool objectCVar_setModified( bool modified, ascvar_t *self ) {
+	if( !self->cvar ) {
 		return false;
+	}
 
-	return self->cvar->modified == (modified ? true : false);
+	return self->cvar->modified == ( modified ? true : false );
 }
 
-static const asstring_t *objectCVar_getName( ascvar_t *self )
-{
-	if( !self->cvar || !self->cvar->name )
+static const asstring_t *objectCVar_getName( ascvar_t *self ) {
+	if( !self->cvar || !self->cvar->name ) {
 		return objectString_ConstFactoryBuffer( NULL, 0 );
+	}
 
 	return objectString_ConstFactoryBuffer( self->cvar->name, strlen( self->cvar->name ) );
 }
 
-static const asstring_t *objectCVar_getString( ascvar_t *self )
-{
-	if( !self->cvar || !self->cvar->string )
+static const asstring_t *objectCVar_getString( ascvar_t *self ) {
+	if( !self->cvar || !self->cvar->string ) {
 		return objectString_ConstFactoryBuffer( NULL, 0 );
+	}
 
 	return objectString_ConstFactoryBuffer( self->cvar->string, strlen( self->cvar->string ) );
 }
 
-static const asstring_t *objectCVar_getDefaultString( ascvar_t *self )
-{
-	if( !self->cvar || !self->cvar->dvalue )
+static const asstring_t *objectCVar_getDefaultString( ascvar_t *self ) {
+	if( !self->cvar || !self->cvar->dvalue ) {
 		return objectString_ConstFactoryBuffer( NULL, 0 );
+	}
 
 	return objectString_ConstFactoryBuffer( self->cvar->dvalue, strlen( self->cvar->dvalue ) );
 }
 
-static const asstring_t *objectCVar_getLatchedString( ascvar_t *self )
-{
-	if( !self->cvar || !self->cvar->latched_string )
+static const asstring_t *objectCVar_getLatchedString( ascvar_t *self ) {
+	if( !self->cvar || !self->cvar->latched_string ) {
 		return objectString_ConstFactoryBuffer( NULL, 0 );
+	}
 
 	return objectString_ConstFactoryBuffer( self->cvar->latched_string, strlen( self->cvar->latched_string ) );
 }
 
-void PreRegisterCvarAddon( asIScriptEngine *engine )
-{
+void PreRegisterCvarAddon( asIScriptEngine *engine ) {
 	int r;
 
 	// register the vector type
@@ -180,11 +173,10 @@ void PreRegisterCvarAddon( asIScriptEngine *engine )
 	// register the cvar flags enum
 	r = engine->RegisterEnum( "eCvarFlag" ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }
 
-void RegisterCvarAddon( asIScriptEngine *engine )
-{
+void RegisterCvarAddon( asIScriptEngine *engine ) {
 	int r;
 
 	// register object behaviours
@@ -226,5 +218,5 @@ void RegisterCvarAddon( asIScriptEngine *engine )
 	r = engine->RegisterEnumValue( "eCvarFlag", "CVAR_CHEAT", CVAR_CHEAT ); assert( r >= 0 );
 	r = engine->RegisterEnumValue( "eCvarFlag", "CVAR_READONLY", CVAR_READONLY ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }

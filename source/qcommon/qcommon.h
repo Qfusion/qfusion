@@ -52,8 +52,7 @@ struct fatvis_s;
 
 //============================================================================
 
-typedef struct
-{
+typedef struct {
 	uint8_t *data;
 	size_t maxsize;
 	size_t cursize;
@@ -80,7 +79,7 @@ void MSG_WriteInt3( msg_t *sb, int c );
 void MSG_WriteLong( msg_t *sb, int c );
 void MSG_WriteFloat( msg_t *sb, float f );
 void MSG_WriteString( msg_t *sb, const char *s );
-#define MSG_WriteCoord( sb, f ) ( MSG_WriteInt3( ( sb ), Q_rint( ( f*PM_VECTOR_SNAP ) ) ) )
+#define MSG_WriteCoord( sb, f ) ( MSG_WriteInt3( ( sb ), Q_rint( ( f * PM_VECTOR_SNAP ) ) ) )
 #define MSG_WritePos( sb, pos ) ( MSG_WriteCoord( ( sb ), ( pos )[0] ), MSG_WriteCoord( sb, ( pos )[1] ), MSG_WriteCoord( sb, ( pos )[2] ) )
 #define MSG_WriteAngle( sb, f ) ( MSG_WriteByte( ( sb ), ANGLE2BYTE( ( f ) ) ) )
 #define MSG_WriteAngle16( sb, f ) ( MSG_WriteShort( ( sb ), ANGLE2SHORT( ( f ) ) ) )
@@ -100,7 +99,7 @@ int MSG_ReadLong( msg_t *sb );
 float MSG_ReadFloat( msg_t *sb );
 char *MSG_ReadString( msg_t *sb );
 char *MSG_ReadStringLine( msg_t *sb );
-#define MSG_ReadCoord( sb ) ( (float)MSG_ReadInt3( ( sb ) )*( 1.0/PM_VECTOR_SNAP ) )
+#define MSG_ReadCoord( sb ) ( (float)MSG_ReadInt3( ( sb ) ) * ( 1.0 / PM_VECTOR_SNAP ) )
 #define MSG_ReadPos( sb, pos ) ( ( pos )[0] = MSG_ReadCoord( ( sb ) ), ( pos )[1] = MSG_ReadCoord( ( sb ) ), ( pos )[2] = MSG_ReadCoord( ( sb ) ) )
 #define MSG_ReadAngle( sb ) ( BYTE2ANGLE( MSG_ReadByte( ( sb ) ) ) )
 #define MSG_ReadAngle16( sb ) ( SHORT2ANGLE( MSG_ReadShort( ( sb ) ) ) )
@@ -115,8 +114,7 @@ int MSG_SkipData( msg_t *sb, size_t length );
 
 //============================================================================
 
-typedef struct purelist_s
-{
+typedef struct purelist_s {
 	char *filename;
 	unsigned checksum;
 	struct purelist_s *next;
@@ -129,39 +127,39 @@ void Com_FreePureList( purelist_t **purelist );
 
 //============================================================================
 
-#define SNAP_INVENTORY_LONGS			((MAX_ITEMS + 31) / 32)
-#define SNAP_STATS_LONGS				((PS_MAX_STATS + 31) / 32)
+#define SNAP_INVENTORY_LONGS            ( ( MAX_ITEMS + 31 ) / 32 )
+#define SNAP_STATS_LONGS                ( ( PS_MAX_STATS + 31 ) / 32 )
 
-#define SNAP_MAX_DEMO_META_DATA_SIZE	16*1024
+#define SNAP_MAX_DEMO_META_DATA_SIZE    16 * 1024
 
 // define this 0 to disable compression of demo files
-#define SNAP_DEMO_GZ					FS_GZ
+#define SNAP_DEMO_GZ                    FS_GZ
 
 void SNAP_ParseBaseline( msg_t *msg, entity_state_t *baselines );
 void SNAP_SkipFrame( msg_t *msg, struct snapshot_s *header );
 struct snapshot_s *SNAP_ParseFrame( msg_t *msg, struct snapshot_s *lastFrame, int *suppressCount, struct snapshot_s *backup, entity_state_t *baselines, int showNet );
 
 void SNAP_WriteFrameSnapToClient( struct ginfo_s *gi, struct client_s *client, msg_t *msg, unsigned int frameNum, unsigned int gameTime,
-								 entity_state_t *baselines, struct client_entities_s *client_entities,
-								 int numcmds, gcommand_t *commands, const char *commandsData );
+								  entity_state_t *baselines, struct client_entities_s *client_entities,
+								  int numcmds, gcommand_t *commands, const char *commandsData );
 
 void SNAP_BuildClientFrameSnap( struct cmodel_state_s *cms, struct ginfo_s *gi, unsigned int frameNum, unsigned int timeStamp,
-							   struct fatvis_s *fatvis, struct client_s *client, 
-							   game_state_t *gameState, struct client_entities_s *client_entities,
-							   bool relay, struct mempool_s *mempool );
+								struct fatvis_s *fatvis, struct client_s *client,
+								game_state_t *gameState, struct client_entities_s *client_entities,
+								bool relay, struct mempool_s *mempool );
 
 void SNAP_FreeClientFrames( struct client_s *client );
 
 void SNAP_RecordDemoMessage( int demofile, msg_t *msg, int offset );
 int SNAP_ReadDemoMessage( int demofile, msg_t *msg );
-void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned int snapFrameTime, 
-								const char *sv_name, unsigned int sv_bitflags, purelist_t *purelist, 
-								char *configstrings, entity_state_t *baselines );
+void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned int snapFrameTime,
+							  const char *sv_name, unsigned int sv_bitflags, purelist_t *purelist,
+							  char *configstrings, entity_state_t *baselines );
 void SNAP_StopDemoRecording( int demofile );
 void SNAP_WriteDemoMetaData( const char *filename, const char *meta_data, size_t meta_data_realsize );
 size_t SNAP_ClearDemoMeta( char *meta_data, size_t meta_data_max_size );
 size_t SNAP_SetDemoMetaKeyValue( char *meta_data, size_t meta_data_max_size, size_t meta_data_realsize,
-							  const char *key, const char *value );
+								 const char *key, const char *value );
 size_t SNAP_ReadDemoMetaData( int demofile, char *meta_data, size_t meta_data_size );
 
 //============================================================================
@@ -207,20 +205,20 @@ PROTOCOL
 
 //=========================================
 
-#define	PORT_MASTER			27950
-#define	PORT_MASTER_STEAM	27011
-#define	PORT_SERVER			44400
-#define	PORT_HTTP_SERVER	44444
-#define PORT_TV_SERVER		44440
-#define PORT_MATCHMAKER		46002
-#define	NUM_BROADCAST_PORTS 5
+#define PORT_MASTER         27950
+#define PORT_MASTER_STEAM   27011
+#define PORT_SERVER         44400
+#define PORT_HTTP_SERVER    44444
+#define PORT_TV_SERVER      44440
+#define PORT_MATCHMAKER     46002
+#define NUM_BROADCAST_PORTS 5
 
 //=========================================
 
-#define	UPDATE_BACKUP	32  // copies of entity_state_t to keep buffered
-                            // must be power of two
+#define UPDATE_BACKUP   32  // copies of entity_state_t to keep buffered
+// must be power of two
 
-#define	UPDATE_MASK	( UPDATE_BACKUP-1 )
+#define UPDATE_MASK ( UPDATE_BACKUP - 1 )
 
 //==================
 // the svc_strings[] array in snapshot.c should mirror this
@@ -231,8 +229,7 @@ void _SHOWNET( msg_t *msg, const char *s, int shownet );
 //
 // server to client
 //
-enum svc_ops_e
-{
+enum svc_ops_e {
 	svc_bad,
 
 	// the rest are private to the client and server
@@ -246,10 +243,10 @@ enum svc_ops_e
 	svc_gamecommands,
 	svc_match,
 	svc_clcack,
-	svc_servercs,			//tmp jalfixme : send reliable commands as unreliable
+	svc_servercs,           //tmp jalfixme : send reliable commands as unreliable
 	svc_frame,
 	svc_demoinfo,
-	svc_extension			// for future expansion
+	svc_extension           // for future expansion
 };
 
 //==============================================
@@ -257,11 +254,10 @@ enum svc_ops_e
 //
 // client to server
 //
-enum clc_ops_e
-{
+enum clc_ops_e {
 	clc_bad,
 	clc_nop,
-	clc_move,				// [[usercmd_t]
+	clc_move,               // [[usercmd_t]
 	clc_svcack,
 	clc_clientcommand,      // [string] message
 	clc_extension
@@ -270,51 +266,51 @@ enum clc_ops_e
 //==============================================
 
 // serverdata flags
-#define SV_BITFLAGS_PURE			( 1<<0 )
-#define SV_BITFLAGS_RELIABLE		( 1<<1 )
-#define SV_BITFLAGS_TVSERVER		( 1<<2 )
-#define SV_BITFLAGS_HTTP			( 1<<3 )
-#define SV_BITFLAGS_HTTP_BASEURL	( 1<<4 )
+#define SV_BITFLAGS_PURE            ( 1 << 0 )
+#define SV_BITFLAGS_RELIABLE        ( 1 << 1 )
+#define SV_BITFLAGS_TVSERVER        ( 1 << 2 )
+#define SV_BITFLAGS_HTTP            ( 1 << 3 )
+#define SV_BITFLAGS_HTTP_BASEURL    ( 1 << 4 )
 
 // framesnap flags
-#define FRAMESNAP_FLAG_DELTA		( 1<<0 )
-#define FRAMESNAP_FLAG_ALLENTITIES	( 1<<1 )
-#define FRAMESNAP_FLAG_MULTIPOV		( 1<<2 )
+#define FRAMESNAP_FLAG_DELTA        ( 1 << 0 )
+#define FRAMESNAP_FLAG_ALLENTITIES  ( 1 << 1 )
+#define FRAMESNAP_FLAG_MULTIPOV     ( 1 << 2 )
 
 // plyer_state_t communication
 
-#define	PS_M_TYPE	    ( 1<<0 )
-#define	PS_M_ORIGIN0	( 1<<1 )
-#define	PS_M_ORIGIN1	( 1<<2 )
-#define	PS_M_ORIGIN2	( 1<<3 )
-#define	PS_M_VELOCITY0	( 1<<4 )
-#define	PS_M_VELOCITY1	( 1<<5 )
-#define	PS_M_VELOCITY2	( 1<<6 )
-#define PS_MOREBITS1	( 1<<7 )
+#define PS_M_TYPE       ( 1 << 0 )
+#define PS_M_ORIGIN0    ( 1 << 1 )
+#define PS_M_ORIGIN1    ( 1 << 2 )
+#define PS_M_ORIGIN2    ( 1 << 3 )
+#define PS_M_VELOCITY0  ( 1 << 4 )
+#define PS_M_VELOCITY1  ( 1 << 5 )
+#define PS_M_VELOCITY2  ( 1 << 6 )
+#define PS_MOREBITS1    ( 1 << 7 )
 
-#define	PS_M_TIME	    ( 1<<8 )
-#define	PS_EVENT	    ( 1<<9 )
-#define	PS_EVENT2	    ( 1<<10 )
-#define	PS_WEAPONSTATE	( 1<<11 )
-#define PS_INVENTORY	( 1<<12 )
-#define	PS_FOV		    ( 1<<13 )
-#define	PS_VIEWANGLES	( 1<<14 )
-#define PS_MOREBITS2	( 1<<15 )
+#define PS_M_TIME       ( 1 << 8 )
+#define PS_EVENT        ( 1 << 9 )
+#define PS_EVENT2       ( 1 << 10 )
+#define PS_WEAPONSTATE  ( 1 << 11 )
+#define PS_INVENTORY    ( 1 << 12 )
+#define PS_FOV          ( 1 << 13 )
+#define PS_VIEWANGLES   ( 1 << 14 )
+#define PS_MOREBITS2    ( 1 << 15 )
 
-#define	PS_POVNUM	    ( 1<<16 )
-#define	PS_VIEWHEIGHT	( 1<<17 )
-#define PS_PMOVESTATS	( 1<<18 )
-#define	PS_M_FLAGS	    ( 1<<19 )
-#define PS_PLRKEYS	    ( 1<<20 )
-#define	PS_M_SKIM	    ( 1<<21 )
+#define PS_POVNUM       ( 1 << 16 )
+#define PS_VIEWHEIGHT   ( 1 << 17 )
+#define PS_PMOVESTATS   ( 1 << 18 )
+#define PS_M_FLAGS      ( 1 << 19 )
+#define PS_PLRKEYS      ( 1 << 20 )
+#define PS_M_SKIM       ( 1 << 21 )
 //...
-#define PS_MOREBITS3	( 1<<23 )
+#define PS_MOREBITS3    ( 1 << 23 )
 
-#define	PS_M_GRAVITY	    ( 1<<24 )
-#define	PS_M_DELTA_ANGLES0  ( 1<<25 )
-#define	PS_M_DELTA_ANGLES1  ( 1<<26 )
-#define	PS_M_DELTA_ANGLES2  ( 1<<27 )
-#define	PS_PLAYERNUM	    ( 1<<28 )
+#define PS_M_GRAVITY        ( 1 << 24 )
+#define PS_M_DELTA_ANGLES0  ( 1 << 25 )
+#define PS_M_DELTA_ANGLES1  ( 1 << 26 )
+#define PS_M_DELTA_ANGLES2  ( 1 << 27 )
+#define PS_PLAYERNUM        ( 1 << 28 )
 
 
 
@@ -326,56 +322,56 @@ enum clc_ops_e
 //#define CMD_MASK		(CMD_BACKUP-1)
 
 // ms and light always sent, the others are optional
-#define	CM_ANGLE1   ( 1<<0 )
-#define	CM_ANGLE2   ( 1<<1 )
-#define	CM_ANGLE3   ( 1<<2 )
-#define	CM_FORWARD  ( 1<<3 )
-#define	CM_SIDE	    ( 1<<4 )
-#define	CM_UP	    ( 1<<5 )
-#define	CM_BUTTONS  ( 1<<6 )
+#define CM_ANGLE1   ( 1 << 0 )
+#define CM_ANGLE2   ( 1 << 1 )
+#define CM_ANGLE3   ( 1 << 2 )
+#define CM_FORWARD  ( 1 << 3 )
+#define CM_SIDE     ( 1 << 4 )
+#define CM_UP       ( 1 << 5 )
+#define CM_BUTTONS  ( 1 << 6 )
 
 //==============================================
 
 // entity_state_t communication
 
 // try to pack the common update flags into the first byte
-#define	U_ORIGIN1	( 1<<0 )
-#define	U_ORIGIN2	( 1<<1 )
-#define	U_ORIGIN3	( 1<<2 )
-#define	U_ANGLE1	( 1<<3 )
-#define	U_ANGLE2	( 1<<4 )
-#define	U_EVENT		( 1<<5 )
-#define	U_REMOVE	( 1<<6 )      // REMOVE this entity, don't add it
-#define	U_MOREBITS1	( 1<<7 )      // read one additional byte
+#define U_ORIGIN1   ( 1 << 0 )
+#define U_ORIGIN2   ( 1 << 1 )
+#define U_ORIGIN3   ( 1 << 2 )
+#define U_ANGLE1    ( 1 << 3 )
+#define U_ANGLE2    ( 1 << 4 )
+#define U_EVENT     ( 1 << 5 )
+#define U_REMOVE    ( 1 << 6 )      // REMOVE this entity, don't add it
+#define U_MOREBITS1 ( 1 << 7 )      // read one additional byte
 
 // second byte
-#define	U_NUMBER16	( 1<<8 )      // NUMBER8 is implicit if not set
-#define	U_FRAME8	( 1<<9 )      // frame is a byte
-#define	U_SVFLAGS	( 1<<10 )
-#define	U_MODEL		( 1<<11 )
-#define U_TYPE		( 1<<12 )
-#define	U_OTHERORIGIN	( 1<<13 )     // FIXME: get rid of this
-#define U_SKIN8		( 1<<14 )
-#define	U_MOREBITS2	( 1<<15 )     // read one additional byte
+#define U_NUMBER16  ( 1 << 8 )      // NUMBER8 is implicit if not set
+#define U_FRAME8    ( 1 << 9 )      // frame is a byte
+#define U_SVFLAGS   ( 1 << 10 )
+#define U_MODEL     ( 1 << 11 )
+#define U_TYPE      ( 1 << 12 )
+#define U_OTHERORIGIN   ( 1 << 13 )     // FIXME: get rid of this
+#define U_SKIN8     ( 1 << 14 )
+#define U_MOREBITS2 ( 1 << 15 )     // read one additional byte
 
 // third byte
-#define	U_EFFECTS8	( 1<<16 )     // autorotate, trails, etc
-#define U_WEAPON	( 1<<17 )
-#define	U_SOUND		( 1<<18 )
-#define	U_MODEL2	( 1<<19 )     // weapons, flags, etc
-#define U_LIGHT		( 1<<20 )
-#define	U_SOLID		( 1<<21 )     // angles are short if bmodel (precise)
-#define	U_EVENT2	( 1<<22 )
-#define	U_MOREBITS3	( 1<<23 )     // read one additional byte
+#define U_EFFECTS8  ( 1 << 16 )     // autorotate, trails, etc
+#define U_WEAPON    ( 1 << 17 )
+#define U_SOUND     ( 1 << 18 )
+#define U_MODEL2    ( 1 << 19 )     // weapons, flags, etc
+#define U_LIGHT     ( 1 << 20 )
+#define U_SOLID     ( 1 << 21 )     // angles are short if bmodel (precise)
+#define U_EVENT2    ( 1 << 22 )
+#define U_MOREBITS3 ( 1 << 23 )     // read one additional byte
 
 // fourth byte
-#define	U_SKIN16	( 1<<24 )
-#define	U_ANGLE3	( 1<<25 )     // for multiview, info need for culling
-#define	U_ATTENUATION	( 1<<26 )
-#define	U_EFFECTS16	( 1<<27 )
-#define U_____UNUSED2	( 1<<28 )
-#define	U_FRAME16	( 1<<29 )     // frame is a short
-#define	U_TEAM		( 1<<30 )     // gameteam. Will rarely change
+#define U_SKIN16    ( 1 << 24 )
+#define U_ANGLE3    ( 1 << 25 )     // for multiview, info need for culling
+#define U_ATTENUATION   ( 1 << 26 )
+#define U_EFFECTS16 ( 1 << 27 )
+#define U_____UNUSED2   ( 1 << 28 )
+#define U_FRAME16   ( 1 << 29 )     // frame is a short
+#define U_TEAM      ( 1 << 30 )     // gameteam. Will rarely change
 
 /*
 ==============================================================
@@ -388,9 +384,9 @@ Dynamic library loading
 */
 
 #ifdef __cplusplus
-#define EXTERN_API_FUNC	   extern "C"
+#define EXTERN_API_FUNC    extern "C"
 #else
-#define EXTERN_API_FUNC	   extern
+#define EXTERN_API_FUNC    extern
 #endif
 
 // qcommon/library.c
@@ -402,7 +398,7 @@ void *Com_LoadSysLibrary( const char *name, dllfunc_t *funcs ); // NULL-terminat
 void *Com_LibraryProcAddress( void *lib, const char *name );
 
 void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void **handle, void *parms,
-                           bool pure, char *manifest );
+						   bool pure, char *manifest );
 void Com_UnloadGameLibrary( void **handle );
 
 /*
@@ -424,14 +420,14 @@ servers can also send across commands and entire text files can be execed.
 The + command line options are also added to the command buffer.
 */
 
-void	    Cbuf_Init( void );
-void	    Cbuf_Shutdown( void );
-void	    Cbuf_AddText( const char *text );
-void	    Cbuf_InsertText( const char *text );
-void	    Cbuf_ExecuteText( int exec_when, const char *text );
-void	    Cbuf_AddEarlyCommands( bool clear );
+void        Cbuf_Init( void );
+void        Cbuf_Shutdown( void );
+void        Cbuf_AddText( const char *text );
+void        Cbuf_InsertText( const char *text );
+void        Cbuf_ExecuteText( int exec_when, const char *text );
+void        Cbuf_AddEarlyCommands( bool clear );
 bool    Cbuf_AddLateCommands( void );
-void	    Cbuf_Execute( void );
+void        Cbuf_Execute( void );
 
 
 //===========================================================================
@@ -446,27 +442,27 @@ then searches for a command or variable that matches the first token.
 typedef void ( *xcommand_t )( void );
 typedef char ** ( *xcompletionf_t )( const char *partial );
 
-void	    Cmd_PreInit( void );
-void	    Cmd_Init( void );
-void	    Cmd_Shutdown( void );
-void	    Cmd_AddCommand( const char *cmd_name, xcommand_t function );
-void	    Cmd_RemoveCommand( const char *cmd_name );
+void        Cmd_PreInit( void );
+void        Cmd_Init( void );
+void        Cmd_Shutdown( void );
+void        Cmd_AddCommand( const char *cmd_name, xcommand_t function );
+void        Cmd_RemoveCommand( const char *cmd_name );
 bool    Cmd_Exists( const char *cmd_name );
-bool	Cmd_CheckForCommand( char *text );
-void	    Cmd_WriteAliases( int file );
-int			Cmd_CompleteAliasCountPossible( const char *partial );
-char		**Cmd_CompleteAliasBuildList( const char *partial );
-int			Cmd_CompleteCountPossible( const char *partial );
-char		**Cmd_CompleteBuildList( const char *partial );
-char		**Cmd_CompleteBuildArgList( const char *partial );
-char		**Cmd_CompleteBuildArgListExt( const char *command, const char *arguments );
-char		**Cmd_CompleteFileList( const char *partial, const char *basedir, const char *extension, bool subdirectories );
-int			Cmd_Argc( void );
-char		*Cmd_Argv( int arg );
-char		*Cmd_Args( void );
-void	    Cmd_TokenizeString( const char *text );
-void	    Cmd_ExecuteString( const char *text );
-void		Cmd_SetCompletionFunc( const char *cmd_name, xcompletionf_t completion_func );
+bool    Cmd_CheckForCommand( char *text );
+void        Cmd_WriteAliases( int file );
+int         Cmd_CompleteAliasCountPossible( const char *partial );
+char        **Cmd_CompleteAliasBuildList( const char *partial );
+int         Cmd_CompleteCountPossible( const char *partial );
+char        **Cmd_CompleteBuildList( const char *partial );
+char        **Cmd_CompleteBuildArgList( const char *partial );
+char        **Cmd_CompleteBuildArgListExt( const char *command, const char *arguments );
+char        **Cmd_CompleteFileList( const char *partial, const char *basedir, const char *extension, bool subdirectories );
+int         Cmd_Argc( void );
+char        *Cmd_Argv( int arg );
+char        *Cmd_Args( void );
+void        Cmd_TokenizeString( const char *text );
+void        Cmd_ExecuteString( const char *text );
+void        Cmd_SetCompletionFunc( const char *cmd_name, xcompletionf_t completion_func );
 
 /*
 ==============================================================
@@ -504,10 +500,10 @@ dynvar_set_status_t Irc_SetConnected_f( void *connected );
 bool Irc_IsConnected( void );
 size_t Irc_HistorySize( void );
 size_t Irc_HistoryTotalSize( void );
-const struct irc_chat_history_node_s *Irc_GetHistoryHeadNode(void);
-const struct irc_chat_history_node_s *Irc_GetNextHistoryNode(const struct irc_chat_history_node_s *n);
-const struct irc_chat_history_node_s *Irc_GetPrevHistoryNode(const struct irc_chat_history_node_s *n);
-const char *Irc_GetHistoryNodeLine(const struct irc_chat_history_node_s *n);
+const struct irc_chat_history_node_s *Irc_GetHistoryHeadNode( void );
+const struct irc_chat_history_node_s *Irc_GetNextHistoryNode( const struct irc_chat_history_node_s *n );
+const struct irc_chat_history_node_s *Irc_GetPrevHistoryNode( const struct irc_chat_history_node_s *n );
+const char *Irc_GetHistoryNodeLine( const struct irc_chat_history_node_s *n );
 
 /*
 ==============================================================
@@ -529,50 +525,44 @@ NET
 
 // net.h -- quake's interface to the networking layer
 
-#define	PACKET_HEADER			10          // two ints, and a short
+#define PACKET_HEADER           10          // two ints, and a short
 
-#define	MAX_RELIABLE_COMMANDS	64          // max string commands buffered for restransmit
-#define	MAX_PACKETLEN			1400        // max size of a network packet
-#define	MAX_MSGLEN				32768       // max length of a message, which may be fragmented into multiple packets
+#define MAX_RELIABLE_COMMANDS   64          // max string commands buffered for restransmit
+#define MAX_PACKETLEN           1400        // max size of a network packet
+#define MAX_MSGLEN              32768       // max length of a message, which may be fragmented into multiple packets
 
 // wsw: Medar: doubled the MSGLEN as a temporary solution for multiview on bigger servers
-#define	FRAGMENT_SIZE			( MAX_PACKETLEN - 96 )
-#define	FRAGMENT_LAST		(	 1<<14 )
-#define	FRAGMENT_BIT			( 1<<31 )
+#define FRAGMENT_SIZE           ( MAX_PACKETLEN - 96 )
+#define FRAGMENT_LAST       (    1 << 14 )
+#define FRAGMENT_BIT            ( 1 << 31 )
 
-typedef enum
-{
+typedef enum {
 	NA_NOTRANSMIT,      // wsw : jal : fakeclients
 	NA_LOOPBACK,
 	NA_IP,
 	NA_IP6,
 } netadrtype_t;
 
-typedef struct netadr_ipv4_s
-{
+typedef struct netadr_ipv4_s {
 	uint8_t ip [4];
 	unsigned short port;
 } netadr_ipv4_t;
 
-typedef struct netadr_ipv6_s
-{
+typedef struct netadr_ipv6_s {
 	uint8_t ip [16];
 	unsigned short port;
 	unsigned long scope_id;
 } netadr_ipv6_t;
 
-typedef struct netadr_s
-{
+typedef struct netadr_s {
 	netadrtype_t type;
-	union
-	{
+	union {
 		netadr_ipv4_t ipv4;
 		netadr_ipv6_t ipv6;
 	} address;
 } netadr_t;
 
-typedef enum
-{
+typedef enum {
 	SOCKET_LOOPBACK,
 	SOCKET_UDP
 #ifdef TCP_SUPPORT
@@ -580,8 +570,7 @@ typedef enum
 #endif
 } socket_type_t;
 
-typedef struct
-{
+typedef struct {
 	bool open;
 
 	socket_type_t type;
@@ -596,15 +585,13 @@ typedef struct
 	socket_handle_t handle;
 } socket_t;
 
-typedef enum
-{
+typedef enum {
 	CONNECTION_FAILED = -1,
 	CONNECTION_INPROGRESS = 0,
 	CONNECTION_SUCCEEDED = 1
 } connection_status_t;
 
-typedef enum
-{
+typedef enum {
 	NET_ERR_UNKNOWN = -1,
 	NET_ERR_NONE = 0,
 
@@ -615,57 +602,56 @@ typedef enum
 	NET_ERR_UNSUPPORTED,
 } net_error_t;
 
-void	    NET_Init( void );
-void	    NET_Shutdown( void );
+void        NET_Init( void );
+void        NET_Shutdown( void );
 
-bool		NET_OpenSocket( socket_t *socket, socket_type_t type, const netadr_t *address, bool server );
-void	    NET_CloseSocket( socket_t *socket );
+bool        NET_OpenSocket( socket_t *socket, socket_type_t type, const netadr_t *address, bool server );
+void        NET_CloseSocket( socket_t *socket );
 
 #ifdef TCP_SUPPORT
-connection_status_t		NET_Connect( socket_t *socket, const netadr_t *address );
-connection_status_t		NET_CheckConnect( socket_t *socket );
-bool		NET_Listen( const socket_t *socket );
-int			NET_Accept( const socket_t *socket, socket_t *newsocket, netadr_t *address );
+connection_status_t     NET_Connect( socket_t *socket, const netadr_t *address );
+connection_status_t     NET_CheckConnect( socket_t *socket );
+bool        NET_Listen( const socket_t *socket );
+int         NET_Accept( const socket_t *socket, socket_t *newsocket, netadr_t *address );
 #endif
 
-int			NET_GetPacket( const socket_t *socket, netadr_t *address, msg_t *message );
-bool		NET_SendPacket( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
+int         NET_GetPacket( const socket_t *socket, netadr_t *address, msg_t *message );
+bool        NET_SendPacket( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
 
-int			NET_Get( const socket_t *socket, netadr_t *address, void *data, size_t length );
+int         NET_Get( const socket_t *socket, netadr_t *address, void *data, size_t length );
 int         NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
-int64_t		NET_SendFile( const socket_t *socket, int file, size_t offset, size_t count, const netadr_t *address );
+int64_t     NET_SendFile( const socket_t *socket, int file, size_t offset, size_t count, const netadr_t *address );
 
-void	    NET_Sleep( int msec, socket_t *sockets[] );
-int         NET_Monitor( int msec, socket_t *sockets[], 
-				void (*read_cb)(socket_t *socket, void*), 
-				void (*write_cb)(socket_t *socket, void*), 
-				void (*exception_cb)(socket_t *socket, void*), void *privatep[] );
+void        NET_Sleep( int msec, socket_t *sockets[] );
+int         NET_Monitor( int msec, socket_t *sockets[],
+						 void ( *read_cb )( socket_t *socket, void* ),
+						 void ( *write_cb )( socket_t *socket, void* ),
+						 void ( *exception_cb )( socket_t *socket, void* ), void *privatep[] );
 const char *NET_ErrorString( void );
-void	    NET_SetErrorString( const char *format, ... );
-void		NET_SetErrorStringFromLastError( const char *function );
-void	    NET_ShowIP( void );
-int			NET_SetSocketNoDelay( socket_t *socket, int nodelay );
+void        NET_SetErrorString( const char *format, ... );
+void        NET_SetErrorStringFromLastError( const char *function );
+void        NET_ShowIP( void );
+int         NET_SetSocketNoDelay( socket_t *socket, int nodelay );
 
 const char *NET_SocketTypeToString( socket_type_t type );
 const char *NET_SocketToString( const socket_t *socket );
-char	   *NET_AddressToString( const netadr_t *address );
-bool		NET_StringToAddress( const char *s, netadr_t *address );
+char       *NET_AddressToString( const netadr_t *address );
+bool        NET_StringToAddress( const char *s, netadr_t *address );
 
-unsigned short	NET_GetAddressPort( const netadr_t *address );
-void			NET_SetAddressPort( netadr_t *address, unsigned short port );
+unsigned short  NET_GetAddressPort( const netadr_t *address );
+void            NET_SetAddressPort( netadr_t *address, unsigned short port );
 
 bool    NET_CompareAddress( const netadr_t *a, const netadr_t *b );
 bool    NET_CompareBaseAddress( const netadr_t *a, const netadr_t *b );
 bool    NET_IsLANAddress( const netadr_t *address );
 bool    NET_IsLocalAddress( const netadr_t *address );
 bool    NET_IsAnyAddress( const netadr_t *address );
-void	NET_InitAddress( netadr_t *address, netadrtype_t type );
-void	NET_BroadcastAddress( netadr_t *address, int port );
+void    NET_InitAddress( netadr_t *address, netadrtype_t type );
+void    NET_BroadcastAddress( netadr_t *address, int port );
 
 //============================================================================
 
-typedef struct
-{
+typedef struct {
 	const socket_t *socket;
 
 	int dropped;                // between last packet and previous
@@ -694,7 +680,7 @@ typedef struct
 	bool fatal_error;
 } netchan_t;
 
-extern netadr_t	net_from;
+extern netadr_t net_from;
 
 
 void Netchan_Init( void );
@@ -718,22 +704,22 @@ FILESYSTEM
 ==============================================================
 */
 
-#define FS_NOTIFY_NEWPAKS	0x01
+#define FS_NOTIFY_NEWPAKS   0x01
 
-typedef void (*fs_read_cb)(int filenum, const void *buf, size_t numb, float progress, void *customp);
-typedef void (*fs_done_cb)(int filenum, int status, void *customp);
+typedef void (*fs_read_cb)( int filenum, const void *buf, size_t numb, float progress, void *customp );
+typedef void (*fs_done_cb)( int filenum, int status, void *customp );
 
-void	    FS_Init( void );
-int			FS_Rescan( void );
-void	    FS_Frame( void );
-void	    FS_Shutdown( void );
+void        FS_Init( void );
+int         FS_Rescan( void );
+void        FS_Frame( void );
+void        FS_Shutdown( void );
 
 const char *FS_GameDirectory( void );
 const char *FS_BaseGameDirectory( void );
-bool		FS_SetGameDirectory( const char *dir, bool force );
-int			FS_GetGameDirectoryList( char *buf, size_t bufsize );
-int			FS_GetExplicitPurePakList( char ***paknames );
-bool		FS_IsExplicitPurePak( const char *pakname, bool *wrongver );
+bool        FS_SetGameDirectory( const char *dir, bool force );
+int         FS_GetGameDirectoryList( char *buf, size_t bufsize );
+int         FS_GetExplicitPurePakList( char ***paknames );
+bool        FS_IsExplicitPurePak( const char *pakname, bool *wrongver );
 
 // handling of absolute filenames
 // only to be used if necessary (library not supporting custom file handling functions etc.)
@@ -743,51 +729,51 @@ const char *FS_SecureDirectory( void );
 const char *FS_MediaDirectory( fs_mediatype_t type );
 const char *FS_DownloadsDirectory( void );
 const char *FS_RuntimeDirectory( void );
-void	    FS_CreateAbsolutePath( const char *path );
+void        FS_CreateAbsolutePath( const char *path );
 const char *FS_AbsoluteNameForFile( const char *filename );
 const char *FS_AbsoluteNameForBaseFile( const char *filename );
 
 // // game and base files
 // file streaming
-int	    FS_FOpenFile( const char *filename, int *filenum, int mode );
-int	    FS_FOpenBaseFile( const char *filename, int *filenum, int mode );
-int		FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode );
-void	FS_FCloseFile( int file );
+int     FS_FOpenFile( const char *filename, int *filenum, int mode );
+int     FS_FOpenBaseFile( const char *filename, int *filenum, int mode );
+int     FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode );
+void    FS_FCloseFile( int file );
 
-int	    FS_Read( void *buffer, size_t len, int file );
-int	    FS_Print( int file, const char *msg );
-int	    FS_Printf( int file, const char *format, ... );
-int	    FS_Write( const void *buffer, size_t len, int file );
-int	    FS_Tell( int file );
-int	    FS_Seek( int file, int offset, int whence );
-int	    FS_Eof( int file );
-int	    FS_Flush( int file );
-bool	FS_IsUrl( const char *url );
-int		FS_FileNo( int file, size_t *offset );
+int     FS_Read( void *buffer, size_t len, int file );
+int     FS_Print( int file, const char *msg );
+int     FS_Printf( int file, const char *format, ... );
+int     FS_Write( const void *buffer, size_t len, int file );
+int     FS_Tell( int file );
+int     FS_Seek( int file, int offset, int whence );
+int     FS_Eof( int file );
+int     FS_Flush( int file );
+bool    FS_IsUrl( const char *url );
+int     FS_FileNo( int file, size_t *offset );
 
-void	FS_SetCompressionLevel( int file, int level );
-int		FS_GetCompressionLevel( int file );
+void    FS_SetCompressionLevel( int file, int level );
+int     FS_GetCompressionLevel( int file );
 
 // file loading
-int	    FS_LoadFileExt( const char *path, int flags, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );
-int	    FS_LoadBaseFileExt( const char *path, int flags, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );
-void	FS_FreeFile( void *buffer );
-void	FS_FreeBaseFile( void *buffer );
-#define FS_LoadFile(path,buffer,stack,stacksize) FS_LoadFileExt(path,0,buffer,stack,stacksize,__FILE__,__LINE__)
-#define FS_LoadBaseFile(path,buffer,stack,stacksize) FS_LoadBaseFileExt(path,0,buffer,stack,stacksize,__FILE__,__LINE__)
-#define FS_LoadCacheFile(path,buffer,stack,stacksize) FS_LoadFileExt(path,FS_CACHE,buffer,stack,stacksize,__FILE__,__LINE__)
+int     FS_LoadFileExt( const char *path, int flags, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );
+int     FS_LoadBaseFileExt( const char *path, int flags, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );
+void    FS_FreeFile( void *buffer );
+void    FS_FreeBaseFile( void *buffer );
+#define FS_LoadFile( path,buffer,stack,stacksize ) FS_LoadFileExt( path,0,buffer,stack,stacksize,__FILE__,__LINE__ )
+#define FS_LoadBaseFile( path,buffer,stack,stacksize ) FS_LoadBaseFileExt( path,0,buffer,stack,stacksize,__FILE__,__LINE__ )
+#define FS_LoadCacheFile( path,buffer,stack,stacksize ) FS_LoadFileExt( path,FS_CACHE,buffer,stack,stacksize,__FILE__,__LINE__ )
 
 /**
-* Maps an existing file on disk for reading. 
+* Maps an existing file on disk for reading.
 * Does *not* work for compressed virtual files.
 *
 * @return mapped pointer to data on disk or NULL if mapping failed or passed size is 0.
 */
-void	*FS_MMapBaseFile( int file, size_t size, size_t offset );
-void	FS_UnMMapBaseFile( int file, void *data );
+void    *FS_MMapBaseFile( int file, size_t size, size_t offset );
+void    FS_UnMMapBaseFile( int file, void *data );
 
-int		FS_GetNotifications( void );
-int		FS_RemoveNotifications( int bitmask );
+int     FS_GetNotifications( void );
+int     FS_RemoveNotifications( int bitmask );
 
 // util functions
 bool    FS_CopyFile( const char *src, const char *dst );
@@ -804,11 +790,11 @@ bool    FS_RemoveBaseDirectory( const char *dirname );
 bool    FS_RemoveAbsoluteDirectory( const char *dirname );
 unsigned    FS_ChecksumAbsoluteFile( const char *filename );
 unsigned    FS_ChecksumBaseFile( const char *filename, bool ignorePakChecksum );
-bool	FS_CheckPakExtension( const char *filename );
-bool	FS_PakFileExists( const char *packfilename );
+bool    FS_CheckPakExtension( const char *filename );
+bool    FS_PakFileExists( const char *packfilename );
 
-time_t		FS_FileMTime( const char *filename );
-time_t		FS_BaseFileMTime( const char *filename );
+time_t      FS_FileMTime( const char *filename );
+time_t      FS_BaseFileMTime( const char *filename );
 
 // // only for game files
 const char *FS_FirstExtension( const char *filename, const char *extensions[], int num_extensions );
@@ -817,15 +803,15 @@ bool    FS_IsPureFile( const char *pakname );
 const char *FS_FileManifest( const char *filename );
 const char *FS_BaseNameForFile( const char *filename );
 
-int			FS_GetFileList( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
-int			FS_GetFileListExt( const char *dir, const char *extension, char *buf, size_t *bufsize, int start, int end );
+int         FS_GetFileList( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
+int         FS_GetFileListExt( const char *dir, const char *extension, char *buf, size_t *bufsize, int start, int end );
 
 // // only for base files
 bool    FS_IsPakValid( const char *filename, unsigned *checksum );
 bool    FS_AddPurePak( unsigned checksum );
-void	FS_RemovePurePaks( void );
+void    FS_RemovePurePaks( void );
 
-void	FS_AddFileToMedia( const char *filename );
+void    FS_AddFileToMedia( const char *filename );
 
 /*
 ==============================================================
@@ -835,28 +821,28 @@ MISC
 ==============================================================
 */
 
-#define MAX_PRINTMSG	3072
+#define MAX_PRINTMSG    3072
 
-void	    Com_BeginRedirect( int target, char *buffer, int buffersize, 
-				void ( *flush )(int, const char*, const void*), const void *extra );
-void	    Com_EndRedirect( void );
-void 	    Com_DeferConsoleLogReopen( void );
-void	    Com_Printf( const char *format, ... );
-void	    Com_DPrintf( const char *format, ... );
-void	    Com_Error( com_error_code_t code, const char *format, ... );
-void		Com_DeferQuit( void );
-void	    Com_Quit( void );
+void        Com_BeginRedirect( int target, char *buffer, int buffersize,
+							   void ( *flush )( int, const char*, const void* ), const void *extra );
+void        Com_EndRedirect( void );
+void        Com_DeferConsoleLogReopen( void );
+void        Com_Printf( const char *format, ... );
+void        Com_DPrintf( const char *format, ... );
+void        Com_Error( com_error_code_t code, const char *format, ... );
+void        Com_DeferQuit( void );
+void        Com_Quit( void );
 
-int			Com_ClientState( void );        // this should have just been a cvar...
-void	    Com_SetClientState( int state );
+int         Com_ClientState( void );        // this should have just been a cvar...
+void        Com_SetClientState( int state );
 
 bool    Com_DemoPlaying( void );
-void	    Com_SetDemoPlaying( bool state );
+void        Com_SetDemoPlaying( bool state );
 
-int			Com_ServerState( void );        // this should have just been a cvar...
-void	    Com_SetServerState( int state );
+int         Com_ServerState( void );        // this should have just been a cvar...
+void        Com_SetServerState( int state );
 struct cmodel_state_s *Com_ServerCM( unsigned *checksum );
-void		Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum );
+void        Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum );
 
 unsigned int Com_DaysSince1900( void );
 
@@ -883,15 +869,15 @@ MEMORY MANAGEMENT
 struct mempool_s;
 typedef struct mempool_s mempool_t;
 
-#define MEMPOOL_TEMPORARY			1
-#define MEMPOOL_GAMEPROGS			2
-#define MEMPOOL_USERINTERFACE		4
-#define MEMPOOL_CLIENTGAME			8
-#define MEMPOOL_SOUND				16
-#define MEMPOOL_DB					32
-#define MEMPOOL_ANGELSCRIPT			64
-#define MEMPOOL_CINMODULE			128
-#define MEMPOOL_REFMODULE			256
+#define MEMPOOL_TEMPORARY           1
+#define MEMPOOL_GAMEPROGS           2
+#define MEMPOOL_USERINTERFACE       4
+#define MEMPOOL_CLIENTGAME          8
+#define MEMPOOL_SOUND               16
+#define MEMPOOL_DB                  32
+#define MEMPOOL_ANGELSCRIPT         64
+#define MEMPOOL_CINMODULE           128
+#define MEMPOOL_REFMODULE           256
 
 void Memory_Init( void );
 void Memory_InitCommands( void );
@@ -966,32 +952,32 @@ NON-PORTABLE SYSTEM SERVICES
 #define SFF_SUBDIR  0x08
 #define SFF_SYSTEM  0x10
 
-void	Sys_Init( void );
-void	Sys_InitDynvars( void );
+void    Sys_Init( void );
+void    Sys_InitDynvars( void );
 
-void	Sys_AppActivate( void );
+void    Sys_AppActivate( void );
 
-unsigned int	Sys_Milliseconds( void );
-uint64_t		Sys_Microseconds( void );
-void		Sys_Sleep( unsigned int millis );
+unsigned int    Sys_Milliseconds( void );
+uint64_t        Sys_Microseconds( void );
+void        Sys_Sleep( unsigned int millis );
 
-char	*Sys_ConsoleInput( void );
-void	Sys_ConsoleOutput( char *string );
-void	Sys_SendKeyEvents( void );
-void	Sys_Error( const char *error, ... );
-void	Sys_Quit( void );
-char	*Sys_GetClipboardData( void );
+char    *Sys_ConsoleInput( void );
+void    Sys_ConsoleOutput( char *string );
+void    Sys_SendKeyEvents( void );
+void    Sys_Error( const char *error, ... );
+void    Sys_Quit( void );
+char    *Sys_GetClipboardData( void );
 bool Sys_SetClipboardData( const char *data );
-void	Sys_FreeClipboardData( char *data );
+void    Sys_FreeClipboardData( char *data );
 const char *Sys_GetPreferredLanguage( void );
 
-bool	Sys_IsBrowserAvailable( void );
-void	Sys_OpenURLInBrowser( const char *url );
+bool    Sys_IsBrowserAvailable( void );
+void    Sys_OpenURLInBrowser( const char *url );
 
-void	*Sys_AcquireWakeLock( void );
-void	Sys_ReleaseWakeLock( void *wl );
+void    *Sys_AcquireWakeLock( void );
+void    Sys_ReleaseWakeLock( void *wl );
 
-int 	Sys_GetCurrentProcessId( void );
+int     Sys_GetCurrentProcessId( void );
 
 /*
 ==============================================================
@@ -1001,13 +987,13 @@ CPU FEATURES
 ==============================================================
 */
 
-#define QCPU_HAS_RDTSC		0x00000001
-#define QCPU_HAS_MMX		0x00000002
-#define QCPU_HAS_MMXEXT		0x00000004
-#define QCPU_HAS_3DNOW		0x00000010
-#define QCPU_HAS_3DNOWEXT	0x00000020
-#define QCPU_HAS_SSE		0x00000040
-#define QCPU_HAS_SSE2		0x00000080
+#define QCPU_HAS_RDTSC      0x00000001
+#define QCPU_HAS_MMX        0x00000002
+#define QCPU_HAS_MMXEXT     0x00000004
+#define QCPU_HAS_3DNOW      0x00000010
+#define QCPU_HAS_3DNOWEXT   0x00000020
+#define QCPU_HAS_SSE        0x00000040
+#define QCPU_HAS_SSE2       0x00000080
 
 unsigned int COM_CPUFeatures( void );
 
@@ -1044,8 +1030,8 @@ ANTICHEAT
 ==============================================================
 */
 
-#define ANTICHEAT_CLIENT	0x01
-#define ANTICHEAT_SERVER	0x02
+#define ANTICHEAT_CLIENT    0x01
+#define ANTICHEAT_SERVER    0x02
 
 bool AC_LoadLibrary( void *imports, void *exports, unsigned int flags );
 
@@ -1112,7 +1098,7 @@ AUTOMATIC UPDATES
 ==============================================================
 */
 void Com_Autoupdate_Init( void );
-void Com_Autoupdate_Run( bool checkOnly, void (*newfiles_cb)(void) );
+void Com_Autoupdate_Run( bool checkOnly, void ( *newfiles_cb )( void ) );
 void Com_Autoupdate_Cancel( void );
 void Com_Autoupdate_Shutdown( void );
 

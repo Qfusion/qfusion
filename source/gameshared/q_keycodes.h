@@ -24,12 +24,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // these are the key numbers that should be passed to Key_Event
 //
-typedef enum
-{
+typedef enum {
 	K_TAB = 9,
 	K_ENTER = 13,
 	K_ESCAPE = 27,
-	K_SPACE	= 32,
+	K_SPACE = 32,
 
 	// normal keys should be passed as lowercased ascii
 
@@ -75,8 +74,8 @@ typedef enum
 
 	K_WIN,
 	K_MENU,
-	K_COMMAND,		// Mac - different keycode from K_WIN
-	K_OPTION,		// Mac - different keycode from K_ALT
+	K_COMMAND,      // Mac - different keycode from K_WIN
+	K_OPTION,       // Mac - different keycode from K_ALT
 
 	//
 	// Keypad stuff..
@@ -104,8 +103,8 @@ typedef enum
 	KP_DEL,
 	KP_ENTER,
 
-	KP_MULT,		// Mac
-	KP_EQUAL,		// Mac
+	KP_MULT,        // Mac
+	KP_EQUAL,       // Mac
 
 	//
 	// mouse buttons generate virtual keys

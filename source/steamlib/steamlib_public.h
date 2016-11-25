@@ -24,15 +24,14 @@ License along with this library.
 
 // steamlib_public.h - steam integration subsystem
 
-#define	STEAMLIB_API_VERSION 3
+#define STEAMLIB_API_VERSION 3
 
 //===============================================================
 
 //
 // functions provided by the main engine
 //
-typedef struct
-{
+typedef struct {
 	// halts the application or drops to console
 	void ( *Com_Error )( int code, const char *format, ... );
 
@@ -47,8 +46,7 @@ typedef struct
 //
 // functions exported by the steam integration subsystem
 //
-typedef struct
-{
+typedef struct {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
 
@@ -57,7 +55,7 @@ typedef struct
 	void ( *Shutdown )( void );
 
 	uint64_t ( *GetSteamID )( void );
-	int ( *GetAuthSessionTicket )( void (*callback)( void *, size_t ) );
+	int ( *GetAuthSessionTicket )( void ( *callback )( void *, size_t ) );
 
 	void ( *AdvertiseGame )( const uint8_t *ip, unsigned short port );
 

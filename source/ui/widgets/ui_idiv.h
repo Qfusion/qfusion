@@ -27,28 +27,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace WSWUI
 {
-	class InlineDiv : public Rocket::Core::Element
-	{
-	public:
-		InlineDiv(const Rocket::Core::String& tag);
-		virtual ~InlineDiv(){}
+class InlineDiv : public Rocket::Core::Element
+{
+public:
+	InlineDiv( const Rocket::Core::String& tag );
+	virtual ~InlineDiv() {}
 
-		/// Checks for changes to source address.
-		virtual void OnAttributeChange(const Rocket::Core::AttributeNameList&);
-		virtual void OnChildAdd( Element* element );
+	/// Checks for changes to source address.
+	virtual void OnAttributeChange( const Rocket::Core::AttributeNameList& );
+	virtual void OnChildAdd( Element* element );
 
-		// streaming callbacks
-		static void CacheRead( const char *fileName, void *privatep );
-		void ReadFromFile( const char *fileName );
+	// streaming callbacks
+	static void CacheRead( const char *fileName, void *privatep );
+	void ReadFromFile( const char *fileName );
 
-	protected:
-		// Loads contents of element's source
-		void LoadSource();
+protected:
+	// Loads contents of element's source
+	void LoadSource();
 
-		int timeout;
-		bool onAddLoad;
-		bool loading;
-	};
+	int timeout;
+	bool onAddLoad;
+	bool loading;
+};
 }
 
 #endif // __UI_IDIV_H__

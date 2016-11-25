@@ -1,4 +1,4 @@
- /*
+/*
 Copyright (C) 2002-2011 Victor Luchits
 
 This program is free software; you can redistribute it and/or
@@ -41,14 +41,13 @@ IQM MODELS
 
 /*
 * Mod_SkeletalBuildStaticVBOForMesh
-* 
+*
 * Builds a static vertex buffer object for given skeletal model mesh
 */
-static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh )
-{
+static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh ) {
 	mesh_t skmmesh;
 	vattribmask_t vattribs;
-	
+
 	vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
 	if( glConfig.maxGLSLBones > 0 ) {
 		vattribs |= VATTRIB_BONES_BITS;
@@ -57,8 +56,8 @@ static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh )
 		vattribs |= mesh->skin.shader->vattribs;
 	}
 
-	mesh->vbo = R_CreateMeshVBO( ( void * )mesh, 
-		mesh->numverts, mesh->numtris * 3, 0, vattribs, VBO_TAG_MODEL, vattribs );
+	mesh->vbo = R_CreateMeshVBO( ( void * )mesh,
+								 mesh->numverts, mesh->numtris * 3, 0, vattribs, VBO_TAG_MODEL, vattribs );
 
 	if( !mesh->vbo ) {
 		return;
@@ -78,15 +77,14 @@ static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh )
 	skmmesh.blendIndices = mesh->blendIndices;
 	skmmesh.blendWeights = mesh->blendWeights;
 
-	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &skmmesh ); 
+	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &skmmesh );
 	R_UploadVBOElemData( mesh->vbo, 0, 0, &skmmesh );
 }
 
 /*
 * Mod_TouchSkeletalModel
 */
-static void Mod_TouchSkeletalModel( model_t *mod )
-{
+static void Mod_TouchSkeletalModel( model_t *mod ) {
 	unsigned int i;
 	mskmesh_t *mesh;
 	mskskin_t *skin;
@@ -108,19 +106,18 @@ static void Mod_TouchSkeletalModel( model_t *mod )
 
 /*
 * Mod_SkeletalModel_AddBlend
-* 
+*
 * If there's only one influencing bone, return its index early.
 * Otherwise lookup identical blending combination.
 */
-static int Mod_SkeletalModel_AddBlend( mskmodel_t *model, const mskblend_t *newblend )
-{
+static int Mod_SkeletalModel_AddBlend( mskmodel_t *model, const mskblend_t *newblend ) {
 	unsigned int i, j;
 	mskblend_t t;
 	mskblend_t *blends;
 
 	t = *newblend;
 
-	// sort influences in descending order	
+	// sort influences in descending order
 	for( i = 0; i < SKM_MAX_WEIGHTS; i++ ) {
 		for( j = i + 1; j < SKM_MAX_WEIGHTS; j++ ) {
 			if( t.weights[i] < t.weights[j] ) {
@@ -154,8 +151,7 @@ static int Mod_SkeletalModel_AddBlend( mskmodel_t *model, const mskblend_t *newb
 /*
 * Mod_LoadSkeletalModel
 */
-void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, bspFormatDesc_t *unused )
-{
+void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, bspFormatDesc_t *unused ) {
 	unsigned int i, j, k;
 	size_t filesize;
 	uint8_t *pbase;
@@ -195,7 +191,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	}
 
 	// byteswap header
-#define H_SWAP(s) (header->s = LittleLong( header->s ))
+#define H_SWAP( s ) ( header->s = LittleLong( header->s ) )
 	H_SWAP( filesize );
 	H_SWAP( flags );
 	H_SWAP( num_text );
@@ -267,7 +263,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	// load text
 	texts = Mod_Malloc( mod, header->num_text + 1 );
 	if( header->ofs_text ) {
-		memcpy( texts, (const char *)(pbase + header->ofs_text), header->num_text );
+		memcpy( texts, (const char *)( pbase + header->ofs_text ), header->num_text );
 	}
 	texts[header->num_text] = '\0';
 
@@ -293,8 +289,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		va.size = LittleLong( va.size );
 		va.offset = LittleLong( va.offset );
 
-		vsize = header->num_vertexes*va.size;
-		switch( va.format ) { 
+		vsize = header->num_vertexes * va.size;
+		switch( va.format ) {
 			case IQM_FLOAT:
 				vsize *= sizeof( float );
 				break;
@@ -336,22 +332,22 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 				}
 				break;
 			case IQM_BLENDINDEXES:
-				if( va.size != SKM_MAX_WEIGHTS )
+				if( va.size != SKM_MAX_WEIGHTS ) {
 					break;
+				}
 				if( va.format == IQM_BYTE || va.format == IQM_UBYTE ) {
 					vblendindices_byte = ( uint8_t * )( pbase + va.offset );
-				}
-				else if( va.format == IQM_INT || va.format == IQM_UINT ) {
+				} else if( va.format == IQM_INT || va.format == IQM_UINT ) {
 					vblendindexes_int = ( int * )( pbase + va.offset );
 				}
 				break;
 			case IQM_BLENDWEIGHTS:
-				if( va.size != SKM_MAX_WEIGHTS )
+				if( va.size != SKM_MAX_WEIGHTS ) {
 					break;
+				}
 				if( va.format == IQM_UBYTE ) {
 					vblendweights_byte = ( uint8_t * )( pbase + va.offset );
-				}
-				else if( va.format == IQM_FLOAT ) {
+				} else if( va.format == IQM_FLOAT ) {
 					vblendweights_float = ( float * )( pbase + va.offset );
 				}
 				break;
@@ -360,9 +356,9 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		}
 	}
 
-	if( !vposition || !vtexcoord 
-		|| !(vblendindices_byte || vblendindexes_int) 
-		|| !(vblendweights_byte || vblendweights_float) ) {
+	if( !vposition || !vtexcoord
+		|| !( vblendindices_byte || vblendindexes_int )
+		|| !( vblendweights_byte || vblendweights_float ) ) {
 		ri.Com_Printf( S_COLOR_RED "ERROR: %s is missing vertex array data\n", mod->name );
 		goto error;
 	}
@@ -410,8 +406,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 		// reconstruct invserse bone pose
 
-		if( joint.parent >= 0 )
-		{
+		if( joint.parent >= 0 ) {
 			bonepose_t bp, *pbp;
 			bp = baseposes[i];
 			pbp = &baseposes[joint.parent];
@@ -463,7 +458,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 			fdsize = 0;
 			for( k = 0; k < 7; k++ ) {
-				fdsize += (pose.mask >> k) & 1;
+				fdsize += ( pose.mask >> k ) & 1;
 			}
 			memcpy( fd, framedata, sizeof( unsigned short ) * fdsize );
 			for( k = 0; k < fdsize; k++ ) {
@@ -472,23 +467,43 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 			pfd = fd;
 			framedata += fdsize;
 
-			translate[0] = pose.channeloffset[0]; if( pose.mask & 0x01 ) translate[0] += *(pfd++) * pose.channelscale[0];
-			translate[1] = pose.channeloffset[1]; if( pose.mask & 0x02 ) translate[1] += *(pfd++) * pose.channelscale[1];
-			translate[2] = pose.channeloffset[2]; if( pose.mask & 0x04 ) translate[2] += *(pfd++) * pose.channelscale[2];
+			translate[0] = pose.channeloffset[0]; if( pose.mask & 0x01 ) {
+				translate[0] += *( pfd++ ) * pose.channelscale[0];
+			}
+			translate[1] = pose.channeloffset[1]; if( pose.mask & 0x02 ) {
+				translate[1] += *( pfd++ ) * pose.channelscale[1];
+			}
+			translate[2] = pose.channeloffset[2]; if( pose.mask & 0x04 ) {
+				translate[2] += *( pfd++ ) * pose.channelscale[2];
+			}
 
-			rotate[0] = pose.channeloffset[3]; if( pose.mask & 0x08 ) rotate[0] += *(pfd++) * pose.channelscale[3];
-			rotate[1] = pose.channeloffset[4]; if( pose.mask & 0x10 ) rotate[1] += *(pfd++) * pose.channelscale[4];
-			rotate[2] = pose.channeloffset[5]; if( pose.mask & 0x20 ) rotate[2] += *(pfd++) * pose.channelscale[5];
-			rotate[3] = pose.channeloffset[6]; if( pose.mask & 0x40 ) rotate[3] += *(pfd++) * pose.channelscale[6];
+			rotate[0] = pose.channeloffset[3]; if( pose.mask & 0x08 ) {
+				rotate[0] += *( pfd++ ) * pose.channelscale[3];
+			}
+			rotate[1] = pose.channeloffset[4]; if( pose.mask & 0x10 ) {
+				rotate[1] += *( pfd++ ) * pose.channelscale[4];
+			}
+			rotate[2] = pose.channeloffset[5]; if( pose.mask & 0x20 ) {
+				rotate[2] += *( pfd++ ) * pose.channelscale[5];
+			}
+			rotate[3] = pose.channeloffset[6]; if( pose.mask & 0x40 ) {
+				rotate[3] += *( pfd++ ) * pose.channelscale[6];
+			}
 			if( rotate[3] > 0 ) {
 				Vector4Inverse( rotate );
 			}
 			Vector4Normalize( rotate );
 
 			// scale is unused
-			if( pose.mask & 0x80  ) framedata++;
-			if( pose.mask & 0x100 ) framedata++;
-			if( pose.mask & 0x200 ) framedata++;
+			if( pose.mask & 0x80  ) {
+				framedata++;
+			}
+			if( pose.mask & 0x100 ) {
+				framedata++;
+			}
+			if( pose.mask & 0x200 ) {
+				framedata++;
+			}
 
 			DualQuat_FromQuatAndVector( rotate, translate, pbp->dualquat );
 		}
@@ -503,7 +518,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	poutmodel->numtris = header->num_triangles;
 	poutmodel->elems = ( elem_t * )pmem; pmem += sizeof( *outelems ) * header->num_triangles * 3;
 
-	inelems = ( const int * )(pbase + header->ofs_triangles);
+	inelems = ( const int * )( pbase + header->ofs_triangles );
 	outelems = poutmodel->elems;
 
 	for( i = 0; i < header->num_triangles; i++ ) {
@@ -519,7 +534,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	// load vertices
 	memsize = 0;
-	memsize += sizeof( *poutmodel->sVectorsArray ) * header->num_vertexes;	// 16-bytes aligned
+	memsize += sizeof( *poutmodel->sVectorsArray ) * header->num_vertexes;  // 16-bytes aligned
 	memsize += sizeof( *poutmodel->xyzArray ) * header->num_vertexes;
 	memsize += sizeof( *poutmodel->normalsArray ) * header->num_vertexes;
 	memsize += sizeof( *poutmodel->stArray ) * header->num_vertexes;
@@ -575,8 +590,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	if( !vtangent ) {
 		// if the loaded file is missing precomputed S-vectors, compute them now
-		R_BuildTangentVectors( poutmodel->numverts, poutmodel->xyzArray, poutmodel->normalsArray, poutmodel->stArray, 
-			poutmodel->numtris, poutmodel->elems, poutmodel->sVectorsArray );
+		R_BuildTangentVectors( poutmodel->numverts, poutmodel->xyzArray, poutmodel->normalsArray, poutmodel->stArray,
+							   poutmodel->numtris, poutmodel->elems, poutmodel->sVectorsArray );
 	}
 
 	// blend indices
@@ -598,8 +613,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	poutmodel->blendWeights = ( uint8_t * )pmem; pmem += sizeof( *poutmodel->blendWeights ) * header->num_vertexes * SKM_MAX_WEIGHTS;
 	if( vblendweights_byte ) {
 		memcpy( poutmodel->blendWeights, vblendweights_byte, sizeof( uint8_t ) * header->num_vertexes * SKM_MAX_WEIGHTS );
-	}
-	else if( vblendweights_float ) {
+	} else if( vblendweights_float ) {
 		float bw[SKM_MAX_WEIGHTS];
 		uint8_t *pbw = poutmodel->blendWeights;
 		for( j = 0; j < header->num_vertexes; j++ ) {
@@ -646,7 +660,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	poutmodel->nummeshes = header->num_meshes;
 	poutmodel->meshes = ( mskmesh_t * )pmem; pmem += sizeof( *poutmodel->meshes ) * header->num_meshes;
 
-	inmeshes = ( iqmmesh_t * )(pbase + header->ofs_meshes);
+	inmeshes = ( iqmmesh_t * )( pbase + header->ofs_meshes );
 	for( i = 0; i < header->num_meshes; i++ ) {
 		memcpy( &inmesh, &inmeshes[i], sizeof( iqmmesh_t ) );
 
@@ -690,7 +704,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 		vblendweights_byte = poutmodel->meshes[i].blendWeights;
 		for( j = 0; j < poutmodel->meshes[i].numverts; j++ ) {
-			for( k = 1; k < SKM_MAX_WEIGHTS && vblendweights_byte[k]; k++ );
+			for( k = 1; k < SKM_MAX_WEIGHTS && vblendweights_byte[k]; k++ ) ;
 
 			if( k > poutmodel->meshes[i].maxWeights ) {
 				poutmodel->meshes[i].maxWeights = k;
@@ -722,7 +736,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	// bounds
 	ClearBounds( mod->mins, mod->maxs );
 
-	inbounds = ( iqmbounds_t * )(pbase + header->ofs_bounds);
+	inbounds = ( iqmbounds_t * )( pbase + header->ofs_bounds );
 	for( i = 0; i < header->num_frames; i++ ) {
 		memcpy( &inbound, &inbounds[i], sizeof( iqmbounds_t ) );
 
@@ -759,105 +773,109 @@ error:
 /*
 * R_SkeletalGetNumBones
 */
-int R_SkeletalGetNumBones( const model_t *mod, int *numFrames )
-{
+int R_SkeletalGetNumBones( const model_t *mod, int *numFrames ) {
 	mskmodel_t *skmodel;
 
-	if( !mod || mod->type != mod_skeletal )
+	if( !mod || mod->type != mod_skeletal ) {
 		return 0;
+	}
 
 	skmodel = ( mskmodel_t * )mod->extradata;
-	if( numFrames )
+	if( numFrames ) {
 		*numFrames = skmodel->numframes;
+	}
 	return skmodel->numbones;
 }
 
 /*
 * R_SkeletalGetBoneInfo
 */
-int R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags )
-{
+int R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags ) {
 	const mskbone_t *bone;
 	const mskmodel_t *skmodel;
 
-	if( !mod || mod->type != mod_skeletal )
+	if( !mod || mod->type != mod_skeletal ) {
 		return 0;
+	}
 
 	skmodel = ( mskmodel_t * )mod->extradata;
-	if( (unsigned int)bonenum >= (int)skmodel->numbones )
+	if( (unsigned int)bonenum >= (int)skmodel->numbones ) {
 		ri.Com_Error( ERR_DROP, "R_SkeletalGetBone: bad bone number" );
+	}
 
 	bone = &skmodel->bones[bonenum];
-	if( name && name_size )
+	if( name && name_size ) {
 		Q_strncpyz( name, bone->name, name_size );
-	if( flags )
+	}
+	if( flags ) {
 		*flags = bone->flags;
+	}
 	return bone->parent;
 }
 
 /*
 * R_SkeletalGetBonePose
 */
-void R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose )
-{
+void R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose ) {
 	const mskmodel_t *skmodel;
 
-	if( !mod || mod->type != mod_skeletal )
+	if( !mod || mod->type != mod_skeletal ) {
 		return;
+	}
 
 	skmodel = ( mskmodel_t * )mod->extradata;
-	if( bonenum < 0 || bonenum >= (int)skmodel->numbones )
+	if( bonenum < 0 || bonenum >= (int)skmodel->numbones ) {
 		ri.Com_Error( ERR_DROP, "R_SkeletalGetBonePose: bad bone number" );
-	if( frame < 0 || frame >= (int)skmodel->numframes )
+	}
+	if( frame < 0 || frame >= (int)skmodel->numframes ) {
 		ri.Com_Error( ERR_DROP, "R_SkeletalGetBonePose: bad frame number" );
+	}
 
-	if( bonepose )
+	if( bonepose ) {
 		*bonepose = skmodel->frames[frame].boneposes[bonenum];
+	}
 }
 
 /*
 * R_SkeletalModelLOD
 */
-static model_t *R_SkeletalModelLOD( const entity_t *e )
-{
+static model_t *R_SkeletalModelLOD( const entity_t *e ) {
 	int lod;
 
-	if( !e->model->numlods || ( e->flags & RF_FORCENOLOD ) )
+	if( !e->model->numlods || ( e->flags & RF_FORCENOLOD ) ) {
 		return e->model;
+	}
 
 	lod = R_LODForSphere( e->origin, e->model->radius );
 
-	if( lod < 1 )
+	if( lod < 1 ) {
 		return e->model;
-	return e->model->lods[min( lod, e->model->numlods )-1];
+	}
+	return e->model->lods[min( lod, e->model->numlods ) - 1];
 }
 
 /*
 * R_SkeletalModelLerpBBox
 */
-static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t mins, vec3_t maxs )
-{
+static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t mins, vec3_t maxs ) {
 	int i;
 	int frame = e->frame, oldframe = e->oldframe;
 	mskframe_t *pframe, *poldframe;
 	float *thismins, *oldmins, *thismaxs, *oldmaxs;
 	mskmodel_t *skmodel = ( mskmodel_t * )mod->extradata;
 
-	if( !skmodel->nummeshes )
-	{
+	if( !skmodel->nummeshes ) {
 		ClearBounds( mins, maxs );
 		return 0;
 	}
 
-	if( frame < 0 || frame >= (int)skmodel->numframes )
-	{
+	if( frame < 0 || frame >= (int)skmodel->numframes ) {
 #ifndef PUBLIC_BUILD
 		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such frame %i\n", mod->name, frame );
 #endif
 		frame = 0;
 	}
-	if( oldframe < 0 || oldframe >= (int)skmodel->numframes )
-	{
+	if( oldframe < 0 || oldframe >= (int)skmodel->numframes ) {
 #ifndef PUBLIC_BUILD
 		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such oldframe %i\n", mod->name, oldframe );
 #endif
@@ -870,24 +888,20 @@ static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec
 	poldframe = skmodel->frames + oldframe;
 
 	// compute axially aligned mins and maxs
-	if( pframe == poldframe )
-	{
+	if( pframe == poldframe ) {
 		VectorCopy( pframe->mins, mins );
 		VectorCopy( pframe->maxs, maxs );
 		if( e->scale == 1 ) {
 			return pframe->radius;
 		}
-	}
-	else
-	{
+	} else {
 		thismins = pframe->mins;
 		thismaxs = pframe->maxs;
 
 		oldmins = poldframe->mins;
 		oldmaxs = poldframe->maxs;
 
-		for( i = 0; i < 3; i++ )
-		{
+		for( i = 0; i < 3; i++ ) {
 			mins[i] = min( thismins[i], oldmins[i] );
 			maxs[i] = max( thismaxs[i], oldmaxs[i] );
 		}
@@ -900,8 +914,7 @@ static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec
 
 //=======================================================================
 
-typedef struct skmcacheentry_s
-{
+typedef struct skmcacheentry_s {
 	size_t size;
 	uint8_t *data;
 	struct skmcacheentry_s *next;
@@ -909,17 +922,16 @@ typedef struct skmcacheentry_s
 
 mempool_t *r_skmcachepool;
 
-static skmcacheentry_t *r_skmcache_head;	// actual entries are linked to this
-static skmcacheentry_t *r_skmcache_free;	// actual entries are linked to this
-static skmcacheentry_t *r_skmcachekeys[MAX_REF_ENTITIES*(MOD_MAX_LODS+1)];		// entities linked to cache entries
+static skmcacheentry_t *r_skmcache_head;    // actual entries are linked to this
+static skmcacheentry_t *r_skmcache_free;    // actual entries are linked to this
+static skmcacheentry_t *r_skmcachekeys[MAX_REF_ENTITIES * ( MOD_MAX_LODS + 1 )];      // entities linked to cache entries
 
-#define R_SKMCacheAlloc(size) R_MallocExt(r_skmcachepool, (size), 16, 1)
+#define R_SKMCacheAlloc( size ) R_MallocExt( r_skmcachepool, ( size ), 16, 1 )
 
 /*
 * R_InitSkeletalCache
 */
-void R_InitSkeletalCache( void )
-{
+void R_InitSkeletalCache( void ) {
 	r_skmcachepool = R_AllocPool( r_mempool, "SKM Cache" );
 
 	r_skmcache_head = NULL;
@@ -929,11 +941,10 @@ void R_InitSkeletalCache( void )
 /*
 * R_GetSkeletalCache
 */
-static uint8_t *R_GetSkeletalCache( int entNum, int lodNum )
-{
+static uint8_t *R_GetSkeletalCache( int entNum, int lodNum ) {
 	skmcacheentry_t *cache;
-	
-	cache = r_skmcachekeys[entNum*(MOD_MAX_LODS+1) + lodNum];
+
+	cache = r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum];
 	if( !cache ) {
 		return NULL;
 	}
@@ -942,14 +953,13 @@ static uint8_t *R_GetSkeletalCache( int entNum, int lodNum )
 
 /*
 * R_AllocSkeletalDataCache
-* 
+*
 * Allocates or reuses a memory chunk and links it to entity+LOD num pair. The chunk
 * is then linked to other chunks allocated in the same frame. At the end of the frame
-* all of the entries in the "allocation" list are moved to the "free" list, to be reused in the 
+* all of the entries in the "allocation" list are moved to the "free" list, to be reused in the
 * later function calls.
 */
-static uint8_t *R_AllocSkeletalDataCache( int entNum, int lodNum, size_t size )
-{
+static uint8_t *R_AllocSkeletalDataCache( int entNum, int lodNum, size_t size ) {
 	size_t best_size;
 	skmcacheentry_t *cache, *prev;
 	skmcacheentry_t *best_prev, *best;
@@ -958,7 +968,7 @@ static uint8_t *R_AllocSkeletalDataCache( int entNum, int lodNum, size_t size )
 	best_prev = NULL;
 	best_size = 0;
 
-	assert( !r_skmcachekeys[entNum * (MOD_MAX_LODS+1) + lodNum] );
+	assert( !r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] );
 
 	// scan the list of free cache entries to see if there's a suitable candidate
 	prev = NULL;
@@ -1003,19 +1013,18 @@ static uint8_t *R_AllocSkeletalDataCache( int entNum, int lodNum, size_t size )
 	// and link it to the allocation list
 	best->next = r_skmcache_head;
 	r_skmcache_head = best;
-	r_skmcachekeys[entNum * (MOD_MAX_LODS+1) + lodNum] = best;
+	r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] = best;
 
 	return best->data;
 }
 
 /*
 * R_ClearSkeletalCache
-* 
+*
 * Remove entries from the "allocation" list to the "free" list.
 * FIXME: this can probably be optimized a bit better.
 */
-void R_ClearSkeletalCache( void )
-{
+void R_ClearSkeletalCache( void ) {
 	skmcacheentry_t *next, *cache;
 
 	cache = r_skmcache_head;
@@ -1035,10 +1044,10 @@ void R_ClearSkeletalCache( void )
 /*
 * R_ShutdownSkeletalCache
 */
-void R_ShutdownSkeletalCache( void )
-{
-	if( !r_skmcachepool )
+void R_ShutdownSkeletalCache( void ) {
+	if( !r_skmcachepool ) {
 		return;
+	}
 
 	R_FreePool( &r_skmcachepool );
 
@@ -1052,14 +1061,13 @@ void R_ShutdownSkeletalCache( void )
 #if defined ( _WIN32 ) && ( _MSC_VER >= 1400 ) && defined( NDEBUG )
 # pragma float_control(except, off, push)
 # pragma float_control(precise, off, push)
-# pragma fp_contract(on)		// this line is needed on Itanium processors
+# pragma fp_contract(on)        // this line is needed on Itanium processors
 #endif
 
 /*
 * R_SkeletalBlendPoses
 */
-static void R_SkeletalBlendPoses( unsigned int numblends, mskblend_t *blends, unsigned int numbones, mat4_t *relbonepose )
-{
+static void R_SkeletalBlendPoses( unsigned int numblends, mskblend_t *blends, unsigned int numbones, mat4_t *relbonepose ) {
 	unsigned int i, j, k;
 	float *pose;
 	mskblend_t *blend;
@@ -1070,7 +1078,7 @@ static void R_SkeletalBlendPoses( unsigned int numblends, mskblend_t *blends, un
 		pose = relbonepose[j];
 
 		b = relbonepose[blend->indices[0]];
-		f = blend->weights[0] * (1.0 / 255.0);
+		f = blend->weights[0] * ( 1.0 / 255.0 );
 
 		pose[ 0] = f * b[ 0]; pose[ 1] = f * b[ 1]; pose[ 2] = f * b[ 2];
 		pose[ 4] = f * b[ 4]; pose[ 5] = f * b[ 5]; pose[ 6] = f * b[ 6];
@@ -1079,7 +1087,7 @@ static void R_SkeletalBlendPoses( unsigned int numblends, mskblend_t *blends, un
 
 		for( k = 1; k < SKM_MAX_WEIGHTS && blend->weights[k]; k++ ) {
 			b = relbonepose[blend->indices[k]];
-			f = blend->weights[k] * (1.0 / 255.0);
+			f = blend->weights[k] * ( 1.0 / 255.0 );
 
 			pose[ 0] += f * b[ 0]; pose[ 1] += f * b[ 1]; pose[ 2] += f * b[ 2];
 			pose[ 4] += f * b[ 4]; pose[ 5] += f * b[ 5]; pose[ 6] += f * b[ 6];
@@ -1092,8 +1100,7 @@ static void R_SkeletalBlendPoses( unsigned int numblends, mskblend_t *blends, un
 /*
 * R_SkeletalTransformVerts
 */
-static void R_SkeletalTransformVerts( int numverts, const unsigned int *blends, mat4_t *relbonepose, const vec_t *v, vec_t *ov )
-{
+static void R_SkeletalTransformVerts( int numverts, const unsigned int *blends, mat4_t *relbonepose, const vec_t *v, vec_t *ov ) {
 	const float *pose;
 
 	for( ; numverts; numverts--, v += 4, ov += 4, blends++ ) {
@@ -1109,8 +1116,7 @@ static void R_SkeletalTransformVerts( int numverts, const unsigned int *blends, 
 /*
 * R_SkeletalTransformNormals
 */
-static void R_SkeletalTransformNormals( int numverts, const unsigned int *blends, mat4_t *relbonepose, const vec_t *v, vec_t *ov )
-{
+static void R_SkeletalTransformNormals( int numverts, const unsigned int *blends, mat4_t *relbonepose, const vec_t *v, vec_t *ov ) {
 	const float *pose;
 
 	for( ; numverts; numverts--, v += 4, ov += 4, blends++ ) {
@@ -1126,8 +1132,7 @@ static void R_SkeletalTransformNormals( int numverts, const unsigned int *blends
 /*
 * R_SkeletalTransformNormalsAndSVecs
 */
-static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int *blends, mat4_t *relbonepose, const vec_t *v, vec_t *ov, const vec_t *sv, vec_t *osv )
-{
+static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int *blends, mat4_t *relbonepose, const vec_t *v, vec_t *ov, const vec_t *sv, vec_t *osv ) {
 	const float *pose;
 
 	for( ; numverts; numverts--, v += 4, ov += 4, sv += 4, osv += 4, blends++ ) {
@@ -1149,7 +1154,7 @@ static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int
 #if defined ( _WIN32 ) && ( _MSC_VER >= 1400 ) && defined( NDEBUG )
 # pragma float_control(pop)
 # pragma float_control(pop)
-# pragma fp_contract(off)	// this line is needed on Itanium processors
+# pragma fp_contract(off)   // this line is needed on Itanium processors
 #endif
 
 //=======================================================================
@@ -1157,8 +1162,7 @@ static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int
 /*
 * R_DrawSkeletalSurf
 */
-void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceSkeletal_t *drawSurf )
-{
+void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceSkeletal_t *drawSurf ) {
 	unsigned int i, j;
 	int framenum = e->frame;
 	int oldframenum = e->oldframe;
@@ -1184,29 +1188,24 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	oldbp = e->oldboneposes;
 
 	// not sure if it's really needed
-	if( bp == skmodel->frames[0].boneposes )
-	{
+	if( bp == skmodel->frames[0].boneposes ) {
 		bp = NULL;
 		framenum = oldframenum = 0;
 	}
 
 	// choose boneposes for lerping
-	if( bp )
-	{
-		if( !oldbp )
+	if( bp ) {
+		if( !oldbp ) {
 			oldbp = bp;
-	}
-	else
-	{
-		if( ( framenum >= (int)skmodel->numframes ) || ( framenum < 0 ) )
-		{
+		}
+	} else {
+		if( ( framenum >= (int)skmodel->numframes ) || ( framenum < 0 ) ) {
 #ifndef PUBLIC_BUILD
 			ri.Com_DPrintf( "R_DrawBonesFrameLerp %s: no such frame %d\n", mod->name, framenum );
 #endif
 			framenum = 0;
 		}
-		if( ( oldframenum >= (int)skmodel->numframes ) || ( oldframenum < 0 ) )
-		{
+		if( ( oldframenum >= (int)skmodel->numframes ) || ( oldframenum < 0 ) ) {
 #ifndef PUBLIC_BUILD
 			ri.Com_DPrintf( "R_DrawBonesFrameLerp %s: no such oldframe %d\n", mod->name, oldframenum );
 #endif
@@ -1221,8 +1220,8 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 		// fastpath: render static frame 0 as is
 		RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
 
-		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3, 
-			0, skmesh->numverts, 0, skmesh->numtris * 3 );
+		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3,
+						 0, skmesh->numverts, 0, skmesh->numtris * 3 );
 
 		return;
 	}
@@ -1231,29 +1230,23 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	vattribs = RB_GetVertexAttribs();
 
 	// cache size
-	bonePoseRelativeMatSize = sizeof( mat4_t ) * (skmodel->numbones + skmodel->numblends);
+	bonePoseRelativeMatSize = sizeof( mat4_t ) * ( skmodel->numbones + skmodel->numblends );
 	bonePoseRelativeDQSize = sizeof( dualquat_t ) * skmodel->numbones;
 
 	// fetch bones tranforms from cache (both matrices and dual quaternions)
 	bonePoseRelativeDQ = ( dualquat_t * )R_GetSkeletalCache( R_ENT2NUM( e ), mod->lodnum );
 	if( bonePoseRelativeDQ ) {
-		bonePoseRelativeMat = ( mat4_t * )(( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize);
-	}
-	else {
+		bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize );
+	} else {
 		// lerp boneposes and store results in cache
 
 		lerpedbonepose = tempbonepose;
-		if( bp == oldbp || frontlerp == 1 )
-		{
-			if( e->boneposes )
-			{
+		if( bp == oldbp || frontlerp == 1 ) {
+			if( e->boneposes ) {
 				// assume that parent transforms have already been applied
 				lerpedbonepose = bp;
-			}
-			else
-			{
-				for( i = 0; i < skmodel->numbones; i++ )
-				{
+			} else {
+				for( i = 0; i < skmodel->numbones; i++ ) {
 					j = i;
 					out = tempbonepose + j;
 					bonepose = bp + j;
@@ -1261,28 +1254,20 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 
 					if( bone->parent >= 0 ) {
 						DualQuat_Multiply( tempbonepose[bone->parent].dualquat, bonepose->dualquat, out->dualquat );
-					}
-					else {
+					} else {
 						DualQuat_Copy( bonepose->dualquat, out->dualquat );
 					}
 				}
 			}
-		}
-		else
-		{
-			if( e->boneposes )
-			{
+		} else {
+			if( e->boneposes ) {
 				// lerp, assume that parent transforms have already been applied
-				for( i = 0, out = tempbonepose, bonepose = bp, oldbonepose = oldbp, bone = skmodel->bones; i < skmodel->numbones; i++, out++, bonepose++, oldbonepose++, bone++ )
-				{
+				for( i = 0, out = tempbonepose, bonepose = bp, oldbonepose = oldbp, bone = skmodel->bones; i < skmodel->numbones; i++, out++, bonepose++, oldbonepose++, bone++ ) {
 					DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
 				}
-			}
-			else
-			{
+			} else {
 				// lerp and transform
-				for( i = 0; i < skmodel->numbones; i++ )
-				{
+				for( i = 0; i < skmodel->numbones; i++ ) {
 					j = i;
 					out = tempbonepose + j;
 					bonepose = bp + j;
@@ -1299,8 +1284,8 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 			}
 		}
 
-		bonePoseRelativeDQ = ( dualquat_t * )R_AllocSkeletalDataCache( R_ENT2NUM( e ), mod->lodnum, 
-			bonePoseRelativeDQSize + bonePoseRelativeMatSize );
+		bonePoseRelativeDQ = ( dualquat_t * )R_AllocSkeletalDataCache( R_ENT2NUM( e ), mod->lodnum,
+																	   bonePoseRelativeDQSize + bonePoseRelativeMatSize );
 
 		// generate dual quaternions for all bones
 		for( i = 0; i < skmodel->numbones; i++ ) {
@@ -1310,7 +1295,7 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 
 		// CPU transforms
 		if( !hardwareTransform ) {
-			bonePoseRelativeMat = ( mat4_t * )(( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize);
+			bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize );
 
 			// generate matrices for all bones
 			for( i = 0; i < skmodel->numbones; i++ ) {
@@ -1322,15 +1307,12 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 		}
 	}
 
-	if( hardwareTransform )
-	{
+	if( hardwareTransform ) {
 		RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
 		RB_SetBonesData( skmodel->numbones, bonePoseRelativeDQ, skmesh->maxWeights );
-		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3, 
-			0, skmesh->numverts, 0, skmesh->numtris * 3 );
-	}
-	else
-	{
+		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3,
+						 0, skmesh->numverts, 0, skmesh->numtris * 3 );
+	} else {
 		mesh_t dynamicMesh;
 
 		memset( &dynamicMesh, 0, sizeof( dynamicMesh ) );
@@ -1340,19 +1322,19 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 		dynamicMesh.numVerts = skmesh->numverts;
 
 		R_GetTransformBufferForMesh( &dynamicMesh, true,
-			( vattribs & ( VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT ) ) ? true : false,
-			( vattribs & VATTRIB_SVECTOR_BIT ) ? true : false );
+									 ( vattribs & ( VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT ) ) ? true : false,
+									 ( vattribs & VATTRIB_SVECTOR_BIT ) ? true : false );
 
 		R_SkeletalTransformVerts( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-			( vec_t * )skmesh->xyzArray[0], ( vec_t * )( dynamicMesh.xyzArray ) );
+								  ( vec_t * )skmesh->xyzArray[0], ( vec_t * )( dynamicMesh.xyzArray ) );
 
 		if( vattribs & VATTRIB_SVECTOR_BIT ) {
 			R_SkeletalTransformNormalsAndSVecs( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-				( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ),
-				( vec_t * )skmesh->sVectorsArray[0], ( vec_t * )( dynamicMesh.sVectorsArray ) );
+												( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ),
+												( vec_t * )skmesh->sVectorsArray[0], ( vec_t * )( dynamicMesh.sVectorsArray ) );
 		} else if( vattribs & VATTRIB_NORMAL_BIT ) {
 			R_SkeletalTransformNormals( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-				( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ) );
+										( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ) );
 		}
 
 		dynamicMesh.stArray = skmesh->stArray;
@@ -1366,35 +1348,31 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 /*
 * R_SkeletalModelLerpTag
 */
-bool R_SkeletalModelLerpTag( orientation_t *orient, const mskmodel_t *skmodel, int oldframenum, int framenum, float lerpfrac, const char *name )
-{
+bool R_SkeletalModelLerpTag( orientation_t *orient, const mskmodel_t *skmodel, int oldframenum, int framenum, float lerpfrac, const char *name ) {
 	unsigned i;
 	dualquat_t dq;
 	const bonepose_t *bp, *oldbp;
 
 	// find the appropriate tag
-	for( i = 0; i < skmodel->numbones; i++ )
-	{
-		if( skmodel->bones[i].parent < 0 && !Q_stricmp( skmodel->bones[i].name, name ) )
+	for( i = 0; i < skmodel->numbones; i++ ) {
+		if( skmodel->bones[i].parent < 0 && !Q_stricmp( skmodel->bones[i].name, name ) ) {
 			break;
+		}
 	}
 
-	if( i == skmodel->numbones )
-	{
+	if( i == skmodel->numbones ) {
 		//ri.Com_DPrintf ("R_SkeletalModelLerpTag: no such tag %s\n", name );
 		return false;
 	}
 
 	// ignore invalid frames
-	if( ( framenum >= (int)skmodel->numframes ) || ( framenum < 0 ) )
-	{
+	if( ( framenum >= (int)skmodel->numframes ) || ( framenum < 0 ) ) {
 #ifndef PUBLIC_BUILD
 		ri.Com_DPrintf( "R_SkeletalModelLerpTag %s: no such oldframe %i\n", name, framenum );
 #endif
 		framenum = 0;
 	}
-	if( ( oldframenum >= (int)skmodel->numframes ) || ( oldframenum < 0 ) )
-	{
+	if( ( oldframenum >= (int)skmodel->numframes ) || ( oldframenum < 0 ) ) {
 #ifndef PUBLIC_BUILD
 		ri.Com_DPrintf( "R_SkeletalModelLerpTag %s: no such oldframe %i\n", name, oldframenum );
 #endif
@@ -1414,13 +1392,13 @@ bool R_SkeletalModelLerpTag( orientation_t *orient, const mskmodel_t *skmodel, i
 /*
 * R_SkeletalModelBBox
 */
-float R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs )
-{
-	model_t	*mod;
+float R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs ) {
+	model_t *mod;
 
 	mod = R_SkeletalModelLOD( e );
-	if( !mod )
+	if( !mod ) {
 		return 0;
+	}
 
 	return R_SkeletalModelLerpBBox( e, mod, mins, maxs );
 }
@@ -1428,19 +1406,16 @@ float R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs )
 /*
 * R_SkeletalModelFrameBounds
 */
-void R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs )
-{
+void R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs ) {
 	mskframe_t *pframe;
 	mskmodel_t *skmodel = ( mskmodel_t * )mod->extradata;
 
-	if( !skmodel->nummeshes )
-	{
+	if( !skmodel->nummeshes ) {
 		ClearBounds( mins, maxs );
 		return;
 	}
 
-	if( ( frame >= (int)skmodel->numframes ) || ( frame < 0 ) )
-	{
+	if( ( frame >= (int)skmodel->numframes ) || ( frame < 0 ) ) {
 #ifndef PUBLIC_BUILD
 		ri.Com_DPrintf( "R_SkeletalModelFrameBounds %s: no such frame %d\n", mod->name, frame );
 #endif
@@ -1456,8 +1431,7 @@ void R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec
 /*
 * R_AddSkeletalModelToDrawList
 */
-bool R_AddSkeletalModelToDrawList( const entity_t *e )
-{
+bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
 	int i;
 	const mfog_t *fog;
 	const model_t *mod;
@@ -1470,20 +1444,22 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e )
 	int clipped;
 
 	mod = R_SkeletalModelLOD( e );
-	if( !( skmodel = ( ( mskmodel_t * )mod->extradata ) ) || !skmodel->nummeshes )
+	if( !( skmodel = ( ( mskmodel_t * )mod->extradata ) ) || !skmodel->nummeshes ) {
 		return false;
+	}
 
 	radius = R_SkeletalModelLerpBBox( e, mod, mins, maxs );
 	clipped = R_CullModelEntity( e, mins, maxs, radius, true, true );
-	if( clipped )
+	if( clipped ) {
 		return false;
+	}
 
 	// never render weapon models or non-occluders into shadowmaps
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		if( e->renderfx & RF_WEAPONMODEL ) {
 			return true;
 		}
-		if( rsc.entShadowGroups[R_ENT2NUM(e)] != rn.shadowGroup->id ) {
+		if( rsc.entShadowGroups[R_ENT2NUM( e )] != rn.shadowGroup->id ) {
 			return true;
 		}
 	}
@@ -1491,23 +1467,21 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e )
 	// make sure weapon model is always closest to the viewer
 	if( e->renderfx & RF_WEAPONMODEL ) {
 		distance = 0;
-	}
-	else {
+	} else {
 		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
 
 	fog = R_FogForSphere( e->origin, radius );
 #if 0
-	if( !( e->flags & RF_WEAPONMODEL ) && fog )
-	{
+	if( !( e->flags & RF_WEAPONMODEL ) && fog ) {
 		R_SkeletalModelLerpBBox( e, mod );
-		if( R_CompletelyFogged( fog, e->origin, skm_radius ) )
+		if( R_CompletelyFogged( fog, e->origin, skm_radius ) ) {
 			return false;
+		}
 	}
 #endif
 
-	for( i = 0, mesh = skmodel->meshes; i < (int)skmodel->nummeshes; i++, mesh++ )
-	{
+	for( i = 0, mesh = skmodel->meshes; i < (int)skmodel->nummeshes; i++, mesh++ ) {
 		shader = NULL;
 		if( e->customSkin ) {
 			shader = R_FindShaderForSkinFile( e->customSkin, mesh->name );

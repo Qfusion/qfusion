@@ -27,18 +27,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <Rocket/Controls.h>
 #include <Rocket/Controls/DataFormatter.h>
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 using namespace Rocket::Core;
 
-ElementL10n::ElementL10n( const String &tag ) : Element(tag), data_formatter(NULL), num_args(0)
-{
+ElementL10n::ElementL10n( const String &tag ) : Element( tag ), data_formatter( NULL ), num_args( 0 ) {
 }
 
 // Called when attributes on the element are changed.
-void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes )
-{
-	Element::OnAttributeChange(changed_attributes);
+void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+	Element::OnAttributeChange( changed_attributes );
 
 	AttributeNameList::const_iterator it;
 
@@ -47,18 +46,16 @@ void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& chan
 	// Check for formatter change.
 	it = changed_attributes.find( "formatter" );
 	if( it != changed_attributes.end() ) {
-		String formatter = GetAttribute< String >("formatter", "");
+		String formatter = GetAttribute< String >( "formatter", "" );
 
 		if( formatter.Empty() ) {
 			data_formatter = NULL;
 			updateRML = true;
-		}
-		else {
+		} else {
 			data_formatter = Rocket::Controls::DataFormatter::GetDataFormatter( formatter );
 			if( !data_formatter ) {
 				Com_Printf( S_COLOR_YELLOW "WARNING: Unable to find data formatter named '%s', formatting skipped.", formatter.CString() );
-			}
-			else {
+			} else {
 				updateRML = true;
 			}
 		}
@@ -67,13 +64,13 @@ void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& chan
 	it = changed_attributes.find( "format" );
 	if( it != changed_attributes.end() ) {
 		num_args = 0;
-		format = GetAttribute< String >("format", "");
+		format = GetAttribute< String >( "format", "" );
 
 		const char *l10n = trap::L10n_TranslateString( format.CString() );
 		if( l10n ) {
 			format = l10n;
 		}
-		
+
 		String::size_type n = 0;
 		while( true ) {
 			n = format.Find( "%s", n );
@@ -88,7 +85,7 @@ void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& chan
 	}
 
 	for( unsigned i = 0; !updateRML && i < num_args; i++ ) {
-		it = changed_attributes.find( String( 20, "arg%d", i+1 ) );
+		it = changed_attributes.find( String( 20, "arg%d", i + 1 ) );
 		if( it != changed_attributes.end() ) {
 			updateRML = true;
 		}
@@ -102,45 +99,45 @@ void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& chan
 				localized = format;
 				break;
 			case 1:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >("arg1", "").CString() );
+				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString() );
 				break;
 			case 2:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >("arg1", "").CString(),
-					GetAttribute< String >("arg2", "").CString() );
+				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
+										GetAttribute< String >( "arg2", "" ).CString() );
 				break;
 			case 3:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >("arg1", "").CString(),
-					GetAttribute< String >("arg2", "").CString(), GetAttribute< String >("arg3", "").CString() );
+				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
+										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString() );
 				break;
 			case 4:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >("arg1", "").CString(),
-					GetAttribute< String >("arg2", "").CString(), GetAttribute< String >("arg3", "").CString(),
-					GetAttribute< String >("arg4", "").CString());
+				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
+										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
+										GetAttribute< String >( "arg4", "" ).CString() );
 				break;
 			case 5:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >("arg1", "").CString(),
-					GetAttribute< String >("arg2", "").CString(), GetAttribute< String >("arg3", "").CString(),
-					GetAttribute< String >("arg4", "").CString(), GetAttribute< String >("arg5", "").CString());
+				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
+										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
+										GetAttribute< String >( "arg4", "" ).CString(), GetAttribute< String >( "arg5", "" ).CString() );
 				break;
 			case 6:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >("arg1", "").CString(),
-					GetAttribute< String >("arg2", "").CString(), GetAttribute< String >("arg3", "").CString(),
-					GetAttribute< String >("arg4", "").CString(), GetAttribute< String >("arg5", "").CString(),
-					GetAttribute< String >("arg6", "").CString());
+				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
+										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
+										GetAttribute< String >( "arg4", "" ).CString(), GetAttribute< String >( "arg5", "" ).CString(),
+										GetAttribute< String >( "arg6", "" ).CString() );
 				break;
 			case 7:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >("arg1", "").CString(),
-					GetAttribute< String >("arg2", "").CString(), GetAttribute< String >("arg3", "").CString(),
-					GetAttribute< String >("arg4", "").CString(), GetAttribute< String >("arg5", "").CString(),
-					GetAttribute< String >("arg6", "").CString(), GetAttribute< String >("arg7", "").CString());
+				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
+										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
+										GetAttribute< String >( "arg4", "" ).CString(), GetAttribute< String >( "arg5", "" ).CString(),
+										GetAttribute< String >( "arg6", "" ).CString(), GetAttribute< String >( "arg7", "" ).CString() );
 				break;
 			default:
 			case 8:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >("arg1", "").CString(),
-					GetAttribute< String >("arg2", "").CString(), GetAttribute< String >("arg3", "").CString(),
-					GetAttribute< String >("arg4", "").CString(), GetAttribute< String >("arg5", "").CString(),
-					GetAttribute< String >("arg6", "").CString(), GetAttribute< String >("arg7", "").CString(),
-					GetAttribute< String >("arg8", "").CString());
+				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
+										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
+										GetAttribute< String >( "arg4", "" ).CString(), GetAttribute< String >( "arg5", "" ).CString(),
+										GetAttribute< String >( "arg6", "" ).CString(), GetAttribute< String >( "arg7", "" ).CString(),
+										GetAttribute< String >( "arg8", "" ).CString() );
 				break;
 		}
 
@@ -153,8 +150,7 @@ void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& chan
 			data_formatter->FormatData( formatted, raw_data );
 
 			SetInnerRML( formatted );
-		}
-		else {
+		} else {
 			SetInnerRML( localized );
 		}
 	}
@@ -162,8 +158,7 @@ void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& chan
 
 //==============================================================
 
-ElementInstancer *GetElementL10nInstancer( void )
-{
+ElementInstancer *GetElementL10nInstancer( void ) {
 	return __new__( GenericElementInstancer<ElementL10n> )();
 }
 

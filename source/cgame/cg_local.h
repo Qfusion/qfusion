@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cg_public.h"
 #include "cg_syscalls.h"
 
-#define CG_OBITUARY_HUD	    1
+#define CG_OBITUARY_HUD     1
 #define CG_OBITUARY_CENTER  2
 #define CG_OBITUARY_CONSOLE 4
 
@@ -42,13 +42,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define FLAG_TRAIL_DROP_DELAY 300
 #define HEADICON_TIMEOUT 4000
 
-#define GAMECHAT_STRING_SIZE	1024
-#define GAMECHAT_STACK_SIZE		20
+#define GAMECHAT_STRING_SIZE    1024
+#define GAMECHAT_STACK_SIZE     20
 
 #define CG_MAX_TOUCHES 10
 
-enum
-{
+enum {
 	LOCALEFFECT_EV_PLAYER_TELEPORT_IN
 	, LOCALEFFECT_EV_PLAYER_TELEPORT_OUT
 	, LOCALEFFECT_VSAY_HEADICON
@@ -64,13 +63,11 @@ enum
 	, MAX_LOCALEFFECTS = 64
 };
 
-typedef struct
-{
+typedef struct {
 	int x, y, width, height;
 } vrect_t;
 
-typedef struct
-{
+typedef struct {
 	entity_state_t current;
 	entity_state_t prev;        // will always be valid, but might just be a copy of current
 
@@ -96,7 +93,7 @@ typedef struct
 	//vec3_t prevExtrapolatedOrigin;
 	//vec3_t extrapolatedOrigin;
 
-	gsitem_t	*item;
+	gsitem_t    *item;
 
 	//effects
 	vec3_t trailOrigin;         // for particle trails
@@ -133,17 +130,15 @@ typedef struct
 
 #include "cg_pmodels.h"
 
-typedef struct cgs_media_handle_s
-{
+typedef struct cgs_media_handle_s {
 	char *name;
 	void *data;
 	struct cgs_media_handle_s *next;
 } cgs_media_handle_t;
 
-#define STAT_MINUS				10  // num frame for '-' stats digit
+#define STAT_MINUS              10  // num frame for '-' stats digit
 
-typedef struct
-{
+typedef struct {
 	// sounds
 	cgs_media_handle_t *sfxChat;
 
@@ -203,7 +198,7 @@ typedef struct
 	cgs_media_handle_t *sfxLasergunStrongQuadHum;
 	cgs_media_handle_t *sfxLasergunStrongStop;
 	cgs_media_handle_t *sfxLasergunHit[3];
-	
+
 	cgs_media_handle_t *sfxElectroboltHit;
 
 	cgs_media_handle_t *sfxQuadFireSound;
@@ -316,15 +311,13 @@ typedef struct
 	cgs_media_handle_t *shaderVSayIcon[VSAY_TOTAL];
 } cgs_media_t;
 
-typedef struct bonenode_s
-{
+typedef struct bonenode_s {
 	int bonenum;
 	int numbonechildren;
 	struct bonenode_s **bonechildren;
 } bonenode_t;
 
-typedef struct cg_tagmask_s
-{
+typedef struct cg_tagmask_s {
 	char tagname[64];
 	char bonename[64];
 	int bonenum;
@@ -333,16 +326,14 @@ typedef struct cg_tagmask_s
 	vec3_t rotate;
 } cg_tagmask_t;
 
-typedef struct
-{
+typedef struct {
 	char name[MAX_QPATH];
 	int flags;
 	int parent;
 	struct bonenode_s *node;
 } cgs_bone_t;
 
-typedef struct cgs_skeleton_s
-{
+typedef struct cgs_skeleton_s {
 	struct model_s *model;
 
 	int numBones;
@@ -361,15 +352,13 @@ typedef struct cgs_skeleton_s
 
 #include "cg_boneposes.h"
 
-typedef struct cg_sexedSfx_s
-{
+typedef struct cg_sexedSfx_s {
 	char *name;
 	struct sfx_s *sfx;
 	struct cg_sexedSfx_s *next;
 } cg_sexedSfx_t;
 
-typedef struct
-{
+typedef struct {
 	char name[MAX_QPATH];
 	char cleanname[MAX_QPATH];
 	int hand;
@@ -379,8 +368,7 @@ typedef struct
 
 #define MAX_ANGLES_KICKS 3
 
-typedef struct
-{
+typedef struct {
 	unsigned int timestamp;
 	unsigned int kicktime;
 	float v_roll, v_pitch;
@@ -388,8 +376,7 @@ typedef struct
 
 #define MAX_COLORBLENDS 3
 
-typedef struct
-{
+typedef struct {
 	unsigned int timestamp;
 	unsigned int blendtime;
 	float blend[4];
@@ -400,16 +387,14 @@ typedef struct
 #define MAX_AWARD_DISPLAYTIME 5000
 
 // view types
-enum
-{
+enum {
 	VIEWDEF_CAMERA,
 	VIEWDEF_PLAYERVIEW,
 
 	VIEWDEF_MAXTYPES
 };
 
-typedef struct
-{
+typedef struct {
 	int type;
 	int POVent;
 	bool thirdperson;
@@ -428,15 +413,14 @@ typedef struct
 #include "cg_democams.h"
 
 // this is not exactly "static" but still...
-typedef struct
-{
+typedef struct {
 	const char *serverName;
 	const char *demoName;
 	unsigned int playerNum;
 
 	// shaders
-	struct shader_s	*shaderWhite;
-	struct shader_s	*shaderMiniMap;
+	struct shader_s *shaderWhite;
+	struct shader_s *shaderMiniMap;
 
 	// fonts
 	char fontSystemFamily[MAX_QPATH];
@@ -480,7 +464,7 @@ typedef struct
 	weaponinfo_t *weaponInfos[WEAP_TOTAL];    // indexed list of weapon model infos
 	orientation_t weaponItemTag;
 
-	cg_clientInfo_t	clientInfo[MAX_CLIENTS];
+	cg_clientInfo_t clientInfo[MAX_CLIENTS];
 
 	struct model_s *modelDraw[MAX_MODELS];
 
@@ -494,7 +478,7 @@ typedef struct
 	int teamColor[GS_MAX_TEAMS];
 
 	struct sfx_s *soundPrecache[MAX_SOUNDS];
-	struct shader_s	*imagePrecache[MAX_IMAGES];
+	struct shader_s *imagePrecache[MAX_IMAGES];
 	struct skinfile_s *skinPrecache[MAX_SKINFILES];
 
 	int precacheModelsStart;
@@ -509,14 +493,12 @@ typedef struct
 	unsigned precacheStartMsec;
 } cg_static_t;
 
-typedef struct
-{
+typedef struct {
 	unsigned int time;
 	char text[GAMECHAT_STRING_SIZE];
 } cg_gamemessage_t;
 
-typedef struct
-{
+typedef struct {
 	unsigned int nextMsg;
 	unsigned int lastMsgTime;
 	bool lastActive;
@@ -527,8 +509,7 @@ typedef struct
 
 #define MAX_HELPMESSAGE_CHARS 4096
 
-typedef struct
-{
+typedef struct {
 	unsigned int time;
 	float delay;
 
@@ -557,7 +538,7 @@ typedef struct
 	unsigned int predictedEventTimes[PREDICTABLE_EVENTS_MAX];
 	vec3_t predictionError;
 	player_state_t predictedPlayerState;     // current in use, predicted or interpolated
-	int predictedWeaponSwitch;				// inhibit shooting prediction while a weapon change is expected
+	int predictedWeaponSwitch;              // inhibit shooting prediction while a weapon change is expected
 	int predictedGroundEntity;
 	gs_laserbeamtrail_t weaklaserTrail;
 
@@ -603,7 +584,7 @@ typedef struct
 	// kick angles and color blend effects
 	//
 
-	cg_kickangles_t	kickangles[MAX_ANGLES_KICKS];
+	cg_kickangles_t kickangles[MAX_ANGLES_KICKS];
 	cg_viewblend_t colorblends[MAX_COLORBLENDS];
 	unsigned int damageBlends[4];
 	unsigned int fallEffectTime;
@@ -642,8 +623,8 @@ extern cg_state_t cg;
 #define ISVIEWERENTITY( entNum )  ( ( cg.predictedPlayerState.POVnum > 0 ) && ( (int)cg.predictedPlayerState.POVnum == entNum ) && ( cg.view.type == VIEWDEF_PLAYERVIEW ) )
 #define ISBRUSHMODEL( x ) ( ( ( x > 0 ) && ( (int)x < trap_CM_NumInlineModels() ) ) ? true : false )
 
-#define ISREALSPECTATOR()		(cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR)
-#define SPECSTATECHANGED()		((cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR) != (cg.oldFrame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR))
+#define ISREALSPECTATOR()       ( cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR )
+#define SPECSTATECHANGED()      ( ( cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR ) != ( cg.oldFrame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR ) )
 
 extern centity_t cg_entities[MAX_EDICTS];
 
@@ -792,8 +773,7 @@ void CG_ShowQuickMenu( int state );
 /**
  * Touch area ID namespaces.
  */
-enum
-{
+enum {
 	TOUCHAREA_NONE,
 	TOUCHAREA_HUD
 	// next would be 0x101, 0x201... until 0xf01
@@ -819,8 +799,7 @@ bool CG_IsTouchDown( int id );
 void CG_TouchFrame( float frametime );
 void CG_CancelTouches( void );
 
-enum
-{
+enum {
 	TOUCHPAD_MOVE,
 	TOUCHPAD_VIEW,
 
@@ -957,7 +936,7 @@ extern cvar_t *cg_flashWindowCount;
 #define CG_Free( data ) trap_MemFree( data, __FILE__, __LINE__ )
 
 int CG_API( void );
-void CG_Init(	const char *serverName, unsigned int playerNum,
+void CG_Init(   const char *serverName, unsigned int playerNum,
 				int vidWidth, int vidHeight, float pixelRatio,
 				bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime,
 				int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
@@ -982,7 +961,7 @@ void CG_OverrideWeapondef( int index, const char *cstring );
 void CG_StartBackgroundTrack( void );
 void CG_LocalPrint( const char *format, ... );
 
-int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const char *resp), void *privatep );
+int CG_AsyncGetRequest( const char *resource, void ( *done_cb )( int status, const char *resp ), void *privatep );
 
 const char *CG_TranslateString( const char *string );
 const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size );
@@ -1012,15 +991,13 @@ uint8_t *CG_PlayerColorForEntity( int entNum, byte_vec4_t color );
 //
 // cg_view.c
 //
-enum
-{
+enum {
 	CAM_INEYES,
 	CAM_THIRDPERSON,
 	CAM_MODES
 };
 
-typedef struct
-{
+typedef struct {
 	int mode;
 	unsigned int cmd_mode_delay;
 } cg_chasecam_t;
@@ -1082,9 +1059,9 @@ void CG_BladeImpact( const vec3_t pos, const vec3_t dir );
 void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius );
 void CG_PModel_SpawnTeleportEffect( centity_t *cent );
 void CG_SpawnSprite( const vec3_t origin, const vec3_t velocity, const vec3_t accel,
-					float radius, int time, int bounce, bool expandEffect, bool shrinkEffect,
-					float r, float g, float b, float a,
-					float light, float lr, float lg, float lb, struct shader_s *shader );
+					 float radius, int time, int bounce, bool expandEffect, bool shrinkEffect,
+					 float r, float g, float b, float a,
+					 float light, float lr, float lg, float lb, struct shader_s *shader );
 void CG_LaserGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color );
 
 void CG_Dash( const entity_state_t *state );
@@ -1100,7 +1077,7 @@ extern cvar_t *cg_addDecals;
 
 void CG_ClearDecals( void );
 int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float radius,
-                    float r, float g, float b, float a, float die, float fadetime, bool fadealpha, struct shader_s *shader );
+				   float r, float g, float b, float a, float die, float fadetime, bool fadealpha, struct shader_s *shader );
 void CG_AddDecals( void );
 
 //
@@ -1139,7 +1116,7 @@ void CG_AddLightStyles( void );
 
 void CG_ClearFragmentedDecals( void );
 void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radius,
-							 float r, float g, float b, float a, struct shader_s *shader );
+							float r, float g, float b, float a, struct shader_s *shader );
 
 void CG_AddParticles( void );
 void CG_ParticleEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count );
@@ -1196,7 +1173,7 @@ void CG_LaserBeamEffect( centity_t *cent );
 void CG_InitChat( cg_gamechat_t *chat );
 void CG_StackChatString( cg_gamechat_t *chat, const char *str );
 void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, int fontSize,
-				 int width, int height, int padding_x, int padding_y, vec4_t backColor, struct shader_s *backShader );
+				  int width, int height, int padding_x, int padding_y, vec4_t backColor, struct shader_s *backShader );
 
 //
 // cg_input.cpp

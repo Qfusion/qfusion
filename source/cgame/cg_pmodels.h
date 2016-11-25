@@ -35,8 +35,7 @@ extern cvar_t *cg_gunbob;
 extern cvar_t *cg_gun_fov;
 extern cvar_t *cg_handOffset;
 
-enum
-{
+enum {
 	WEAPMODEL_NOANIM,
 	WEAPMODEL_STANDBY,
 	WEAPMODEL_ATTACK_WEAK,
@@ -50,12 +49,11 @@ enum
 #define WEAPONINFO_MAX_FIRE_SOUNDS 4
 
 //equivalent to pmodelinfo_t. Shared by different players, etc.
-typedef struct weaponinfo_s
-{
+typedef struct weaponinfo_s {
 	char name[MAX_QPATH];
 	bool inuse;
 
-	struct	model_s	*model[WEAPMODEL_PARTS]; //one weapon consists of several models
+	struct  model_s *model[WEAPMODEL_PARTS]; //one weapon consists of several models
 
 	int firstframe[VWEAP_MAXANIMS];         //animation script
 	int lastframe[VWEAP_MAXANIMS];
@@ -94,12 +92,11 @@ extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
 
 //pmodelinfo_t is the playermodel structure as originally readed
 //Consider it static 'read-only', cause it is shared by different players
-typedef struct pmodelinfo_s
-{
+typedef struct pmodelinfo_s {
 	char *name;
 	int sex;
 
-	struct	model_s	*model;
+	struct  model_s *model;
 	struct cg_sexedSfx_s *sexedSfx;
 
 	int numRotators[PMODEL_PARTS];
@@ -111,8 +108,7 @@ typedef struct pmodelinfo_s
 	struct pmodelinfo_s *next;
 } pmodelinfo_t;
 
-typedef struct
-{
+typedef struct {
 	//static data
 	pmodelinfo_t *pmodelinfo;
 	struct skinfile_s *skin;
@@ -131,7 +127,7 @@ typedef struct
 
 } pmodel_t;
 
-extern pmodel_t	cg_entPModels[MAX_EDICTS];      //a pmodel handle for each cg_entity
+extern pmodel_t cg_entPModels[MAX_EDICTS];      //a pmodel handle for each cg_entity
 
 //
 // cg_pmodels.c
@@ -142,12 +138,12 @@ void CG_AddShellEffects( entity_t *ent, int effects );
 bool CG_GrabTag( orientation_t *tag, entity_t *ent, const char *tagname );
 void CG_PlaceModelOnTag( entity_t *ent, entity_t *dest, orientation_t *tag );
 void CG_PlaceRotatedModelOnTag( entity_t *ent, entity_t *dest, orientation_t *tag );
-void CG_MoveToTag( vec3_t move_origin, 
-	mat3_t move_axis, 
-	const vec3_t space_origin, 
-	const mat3_t space_axis, 
-	const vec3_t tag_origin, 
-	const mat3_t tag_axis );
+void CG_MoveToTag( vec3_t move_origin,
+				   mat3_t move_axis,
+				   const vec3_t space_origin,
+				   const mat3_t space_axis,
+				   const vec3_t tag_origin,
+				   const mat3_t tag_axis );
 
 //pmodels
 void CG_PModelsInit( void );
@@ -173,8 +169,7 @@ struct weaponinfo_s *CG_GetWeaponInfo( int currentweapon );
 //				VIEW WEAPON
 //=================================================
 
-typedef struct
-{
+typedef struct {
 	entity_t ent;
 
 	unsigned int POVnum;
@@ -189,4 +184,3 @@ typedef struct
 	// other effects
 	orientation_t projectionSource;
 } cg_viewweapon_t;
-

@@ -5,22 +5,22 @@
 
 class AiGroundTraceCache
 {
-    // In order to prevent inclusion of g_local.h declare an untyped pointer
-    void *data;
-    AiGroundTraceCache();
-    AiGroundTraceCache(const AiGroundTraceCache &that) = delete;
-    AiGroundTraceCache &operator=(const AiGroundTraceCache &that) = delete;
-public:
-    AiGroundTraceCache(AiGroundTraceCache &&that)
-    {
-        data = that.data;
-        that.data = nullptr;
-    }
-    ~AiGroundTraceCache();
-    static AiGroundTraceCache *Instance();
+	// In order to prevent inclusion of g_local.h declare an untyped pointer
+	void *data;
+	AiGroundTraceCache();
+	AiGroundTraceCache( const AiGroundTraceCache &that ) = delete;
+	AiGroundTraceCache &operator=( const AiGroundTraceCache &that ) = delete;
 
-    void GetGroundTrace(const struct edict_s *ent, float depth, trace_t *trace, unsigned maxMillisAgo = 0);
-    bool TryDropToFloor(const struct edict_s *ent, float depth, vec3_t result, unsigned maxMillisAgo = 0);
+public:
+	AiGroundTraceCache( AiGroundTraceCache &&that ) {
+		data = that.data;
+		that.data = nullptr;
+	}
+	~AiGroundTraceCache();
+	static AiGroundTraceCache *Instance();
+
+	void GetGroundTrace( const struct edict_s *ent, float depth, trace_t *trace, unsigned maxMillisAgo = 0 );
+	bool TryDropToFloor( const struct edict_s *ent, float depth, vec3_t result, unsigned maxMillisAgo = 0 );
 };
 
 #endif

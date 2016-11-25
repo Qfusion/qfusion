@@ -3,25 +3,22 @@
 #include "kernel/ui_utils.h"
 #include "datasources/ui_models_datasource.h"
 
-#define MODELS_SOURCE	"models"
-#define TABLE_NAME		"list"
-#define FIELDS			"name"
+#define MODELS_SOURCE   "models"
+#define TABLE_NAME      "list"
+#define FIELDS          "name"
 
 namespace WSWUI
 {
 
 ModelsDataSource::ModelsDataSource( void ) :
-	Rocket::Controls::DataSource( MODELS_SOURCE )
-{
+	Rocket::Controls::DataSource( MODELS_SOURCE ) {
 	UpdateModelsList();
 }
 
-ModelsDataSource::~ModelsDataSource( void )
-{
+ModelsDataSource::~ModelsDataSource( void ) {
 }
 
-void ModelsDataSource::UpdateModelsList( void )
-{
+void ModelsDataSource::UpdateModelsList( void ) {
 	// clear the list
 	modelsList.clear();
 
@@ -55,8 +52,7 @@ void ModelsDataSource::UpdateModelsList( void )
 	NotifyRowAdd( TABLE_NAME, 0, modelsList.size() );
 }
 
-void ModelsDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns )
-{
+void ModelsDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns ) {
 	if( row_index < 0 || (size_t)row_index >= modelsList.size() ) {
 		return;
 	}
@@ -73,8 +69,7 @@ void ModelsDataSource::GetRow( StringList &row, const String &table, int row_ind
 	}
 }
 
-int ModelsDataSource::GetNumRows( const String &table )
-{
+int ModelsDataSource::GetNumRows( const String &table ) {
 	return modelsList.size();
 }
 }

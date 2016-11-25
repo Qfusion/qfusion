@@ -30,10 +30,9 @@ namespace WSWUI
 class EmptyFormatter : public Rocket::Controls::DataFormatter
 {
 public:
-	EmptyFormatter() : Rocket::Controls::DataFormatter("empty") {}
+	EmptyFormatter() : Rocket::Controls::DataFormatter( "empty" ) {}
 
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data )
-	{
+	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
 		formatted_data = "&nbsp;";
 	}
 };

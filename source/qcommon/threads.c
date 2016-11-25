@@ -24,8 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * QMutex_Create
 */
-qmutex_t *QMutex_Create( void )
-{
+qmutex_t *QMutex_Create( void ) {
 	int ret;
 	qmutex_t *mutex;
 
@@ -39,8 +38,7 @@ qmutex_t *QMutex_Create( void )
 /*
 * QMutex_Destroy
 */
-void QMutex_Destroy( qmutex_t **pmutex )
-{
+void QMutex_Destroy( qmutex_t **pmutex ) {
 	assert( pmutex != NULL );
 	if( pmutex && *pmutex ) {
 		Sys_Mutex_Destroy( *pmutex );
@@ -51,8 +49,7 @@ void QMutex_Destroy( qmutex_t **pmutex )
 /*
 * QMutex_Lock
 */
-void QMutex_Lock( qmutex_t *mutex )
-{
+void QMutex_Lock( qmutex_t *mutex ) {
 	assert( mutex != NULL );
 	Sys_Mutex_Lock( mutex );
 }
@@ -60,8 +57,7 @@ void QMutex_Lock( qmutex_t *mutex )
 /*
 * QMutex_Unlock
 */
-void QMutex_Unlock( qmutex_t *mutex )
-{
+void QMutex_Unlock( qmutex_t *mutex ) {
 	assert( mutex != NULL );
 	Sys_Mutex_Unlock( mutex );
 }
@@ -69,8 +65,7 @@ void QMutex_Unlock( qmutex_t *mutex )
 /*
 * QCondVar_Create
 */
-qcondvar_t *QCondVar_Create( void )
-{
+qcondvar_t *QCondVar_Create( void ) {
 	int ret;
 	qcondvar_t *cond;
 
@@ -84,8 +79,7 @@ qcondvar_t *QCondVar_Create( void )
 /*
 * QCondVar_Destroy
 */
-void QCondVar_Destroy( qcondvar_t **pcond )
-{
+void QCondVar_Destroy( qcondvar_t **pcond ) {
 	assert( pcond != NULL );
 	if( pcond && *pcond ) {
 		Sys_CondVar_Destroy( *pcond );
@@ -96,24 +90,21 @@ void QCondVar_Destroy( qcondvar_t **pcond )
 /*
 * QCondVar_Wait
 */
-bool QCondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec )
-{
+bool QCondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec ) {
 	return Sys_CondVar_Wait( cond, mutex, timeout_msec );
 }
 
 /*
 * QCondVar_Wake
 */
-void QCondVar_Wake( qcondvar_t *cond )
-{
+void QCondVar_Wake( qcondvar_t *cond ) {
 	Sys_CondVar_Wake( cond );
 }
 
 /*
 * QThread_Create
 */
-qthread_t *QThread_Create( void *(*routine) (void*), void *param )
-{
+qthread_t *QThread_Create( void *( *routine )( void* ), void *param ) {
 	int ret;
 	qthread_t *thread;
 
@@ -127,37 +118,32 @@ qthread_t *QThread_Create( void *(*routine) (void*), void *param )
 /*
 * QThread_Join
 */
-void QThread_Join( qthread_t *thread )
-{
+void QThread_Join( qthread_t *thread ) {
 	Sys_Thread_Join( thread );
 }
 
 /*
 * QThread_Yield
 */
-void QThread_Yield( void )
-{
+void QThread_Yield( void ) {
 	Sys_Thread_Yield();
 }
 
 /*
 * QThreads_Init
 */
-void QThreads_Init( void )
-{
+void QThreads_Init( void ) {
 }
 
 /*
 * QThreads_Shutdown
 */
-void QThreads_Shutdown( void )
-{
+void QThreads_Shutdown( void ) {
 }
 
 // ============================================================================
 
-typedef struct qbufPipe_s
-{
+typedef struct qbufPipe_s {
 	int blockWrite;
 	volatile int terminated;
 	unsigned write_pos;
@@ -173,12 +159,11 @@ typedef struct qbufPipe_s
 /*
 * QBufPipe_Create
 */
-qbufPipe_t *QBufPipe_Create( size_t bufSize, int flags )
-{
+qbufPipe_t *QBufPipe_Create( size_t bufSize, int flags ) {
 	qbufPipe_t *pipe = malloc( sizeof( *pipe ) + bufSize );
 	memset( pipe, 0, sizeof( *pipe ) );
 	pipe->blockWrite = flags & 1;
-	pipe->buf = (char *)(pipe + 1);
+	pipe->buf = (char *)( pipe + 1 );
 	pipe->bufSize = bufSize;
 	pipe->cmdbuf_mutex = QMutex_Create();
 	pipe->nonempty_condvar = QCondVar_Create();
@@ -189,8 +174,7 @@ qbufPipe_t *QBufPipe_Create( size_t bufSize, int flags )
 /*
 * QBufPipe_Destroy
 */
-void QBufPipe_Destroy( qbufPipe_t **ppipe )
-{
+void QBufPipe_Destroy( qbufPipe_t **ppipe ) {
 	qbufPipe_t *pipe;
 
 	assert( ppipe != NULL );
@@ -212,8 +196,7 @@ void QBufPipe_Destroy( qbufPipe_t **ppipe )
 *
 * Signals the waiting thread to wake up.
 */
-static void QBufPipe_Wake( qbufPipe_t *pipe )
-{
+static void QBufPipe_Wake( qbufPipe_t *pipe ) {
 	QCondVar_Wake( pipe->nonempty_condvar );
 }
 
@@ -223,8 +206,7 @@ static void QBufPipe_Wake( qbufPipe_t *pipe )
 * Blocks until the reader thread handles all commands
 * or terminates with an error.
 */
-void QBufPipe_Finish( qbufPipe_t *pipe )
-{
+void QBufPipe_Finish( qbufPipe_t *pipe ) {
 	while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0, pipe->cmdbuf_mutex ) == false && !pipe->terminated ) {
 		QMutex_Lock( pipe->nonempty_mutex );
 		QBufPipe_Wake( pipe );
@@ -236,8 +218,7 @@ void QBufPipe_Finish( qbufPipe_t *pipe )
 /*
 * QBufPipe_AllocCmd
 */
-static void *QBufPipe_AllocCmd( qbufPipe_t *pipe, unsigned cmd_size )
-{
+static void *QBufPipe_AllocCmd( qbufPipe_t *pipe, unsigned cmd_size ) {
 	void *buf = &pipe->buf[pipe->write_pos];
 	pipe->write_pos += cmd_size;
 	return buf;
@@ -246,8 +227,7 @@ static void *QBufPipe_AllocCmd( qbufPipe_t *pipe, unsigned cmd_size )
 /*
 * QBufPipe_BufLenAdd
 */
-static void QBufPipe_BufLenAdd( qbufPipe_t *pipe, int val )
-{
+static void QBufPipe_BufLenAdd( qbufPipe_t *pipe, int val ) {
 	Sys_Atomic_Add( &pipe->cmdbuf_len, val, pipe->cmdbuf_mutex );
 }
 
@@ -260,12 +240,11 @@ static void QBufPipe_BufLenAdd( qbufPipe_t *pipe, int val )
 * Note that there are race conditions here but in the worst case we're going
 * to erroneously drop cmd's instead of stepping on the reader's toes.
 */
-void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *pcmd, unsigned cmd_size )
-{
+void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *pcmd, unsigned cmd_size ) {
 	void *buf;
 	unsigned write_remains;
 	bool was_empty;
-	
+
 	if( !pipe ) {
 		return;
 	}
@@ -310,9 +289,7 @@ void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *pcmd, unsigned cmd_size )
 
 		QBufPipe_BufLenAdd( pipe, sizeof( *cmd ) + write_remains ); // atomic
 		pipe->write_pos = 0;
-	}
-	else
-	{
+	} else {
 		while( pipe->cmdbuf_len + cmd_size > pipe->bufSize ) {
 			if( pipe->blockWrite ) {
 				QThread_Yield();
@@ -337,8 +314,7 @@ void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *pcmd, unsigned cmd_size )
 /*
 * QBufPipe_ReadCmds
 */
-int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned (**cmdHandlers)( const void * ) )
-{
+int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned( **cmdHandlers )( const void * ) ) {
 	int read = 0;
 
 	if( !pipe ) {
@@ -349,7 +325,7 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned (**cmdHandlers)( const void * 
 		int cmd;
 		int cmd_size;
 		int read_remains;
-	
+
 		assert( pipe->bufSize >= pipe->read_pos );
 		if( pipe->bufSize < pipe->read_pos ) {
 			pipe->read_pos = 0;
@@ -363,22 +339,22 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned (**cmdHandlers)( const void * 
 			QBufPipe_BufLenAdd( pipe, -read_remains );
 		}
 
-		cmd = *((int *)(pipe->buf + pipe->read_pos));
+		cmd = *( (int *)( pipe->buf + pipe->read_pos ) );
 		if( cmd == -1 ) {
 			// this cmd is special
 			pipe->read_pos = 0;
-			QBufPipe_BufLenAdd( pipe, -((int)(sizeof(int) + read_remains)) ); // atomic
+			QBufPipe_BufLenAdd( pipe, -( (int)( sizeof( int ) + read_remains ) ) ); // atomic
 			continue;
 		}
 
-		cmd_size = cmdHandlers[cmd](pipe->buf + pipe->read_pos);
+		cmd_size = cmdHandlers[cmd]( pipe->buf + pipe->read_pos );
 		read++;
 
 		if( !cmd_size ) {
 			pipe->terminated = 1;
 			return -1;
 		}
-		
+
 		if( cmd_size > pipe->cmdbuf_len ) {
 			assert( 0 );
 			pipe->terminated = 1;
@@ -395,9 +371,8 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned (**cmdHandlers)( const void * 
 /*
 * QBufPipe_Wait
 */
-void QBufPipe_Wait( qbufPipe_t *pipe, int (*read)( qbufPipe_t *, unsigned( ** )(const void *), bool ), 
-	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec )
-{
+void QBufPipe_Wait( qbufPipe_t *pipe, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ), bool ),
+					unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec ) {
 	while( !pipe->terminated ) {
 		int res;
 		bool timeout = false;

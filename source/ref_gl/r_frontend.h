@@ -26,44 +26,43 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // sync-to-async frontend adapter
 typedef struct {
-	void			*owner;				// pointer to parent ref_frontend_t
+	void            *owner;             // pointer to parent ref_frontend_t
 	void            *GLcontext;
-	unsigned		frameNum;
-	uint32_t 		frameId;
+	unsigned frameNum;
+	uint32_t frameId;
 	volatile uint32_t readFrameId;
-	qthread_t		*thread;
-	qmutex_t		*frameLock;
-	ref_cmdpipe_t	*cmdPipe;
-	volatile bool 	shutdown;
-	volatile int 	maxfps;
-	bool			lastForceVsync;
+	qthread_t       *thread;
+	qmutex_t        *frameLock;
+	ref_cmdpipe_t   *cmdPipe;
+	volatile bool shutdown;
+	volatile int maxfps;
+	bool lastForceVsync;
 } ref_frontendAdapter_t;
 
-typedef struct
-{
-	unsigned		frameNum; 			// wrapped
-	unsigned		lastFrameNum;
-	uint32_t 		frameId;
+typedef struct {
+	unsigned frameNum;                  // wrapped
+	unsigned lastFrameNum;
+	uint32_t frameId;
 
-	ref_cmdbuf_t	*frames[3];			// triple-buffered
-	ref_cmdbuf_t	*frame; 			// current frontend frame
+	ref_cmdbuf_t    *frames[3];         // triple-buffered
+	ref_cmdbuf_t    *frame;             // current frontend frame
 
 	void            *auxGLContext;
 
 	ref_frontendAdapter_t adapter;
 
 	// these fields serve as the frontend cache which can also queried by the public API
-	int 			scissor[4];
-	float			cameraSeparation;
-	byte_vec4_t		customColors[NUM_CUSTOMCOLORS];
+	int scissor[4];
+	float cameraSeparation;
+	byte_vec4_t customColors[NUM_CUSTOMCOLORS];
 } ref_frontend_t;
 
 // public API
 rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-	int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
+				 int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
 rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless );
 void RF_AppActivate( bool active, bool destroy );
-rserr_t	RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
+rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 void RF_Shutdown( bool verbose );
 void RF_SurfaceChangePending( void );
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS );
@@ -77,14 +76,14 @@ void RF_AddLightToScene( const vec3_t org, float intensity, float r, float g, fl
 void RF_AddPolyToScene( const poly_t *poly );
 void RF_AddLightStyleToScene( int style, float r, float g, float b );
 void RF_RenderScene( const refdef_t *fd );
-void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
-	const vec4_t color, const shader_t *shader );
-void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, 
-	const vec4_t color, const shader_t *shader );
-void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
-	float s1, float t1, float s2, float t2, uint8_t *data );
-void RF_DrawStretchRawYUV( int x, int y, int w, int h, 
-	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
+void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
+						const vec4_t color, const shader_t *shader );
+void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle,
+							   const vec4_t color, const shader_t *shader );
+void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
+						float s1, float t1, float s2, float t2, uint8_t *data );
+void RF_DrawStretchRawYUV( int x, int y, int w, int h,
+						   float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
 void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
 void RF_SetScissor( int x, int y, int w, int h );
 void RF_GetScissor( int *x, int *y, int *w, int *h );

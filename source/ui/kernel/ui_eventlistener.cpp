@@ -20,16 +20,13 @@ static const String SOUND_CLICK = "sound-click";
 
 using namespace Rocket::Core;
 
-BaseEventListener::BaseEventListener()
-{
+BaseEventListener::BaseEventListener() {
 }
 
-BaseEventListener::~BaseEventListener()
-{
+BaseEventListener::~BaseEventListener() {
 }
 
-void BaseEventListener::ProcessEvent( Event &event )
-{
+void BaseEventListener::ProcessEvent( Event &event ) {
 	if( event.GetPhase() != Rocket::Core::Event::PHASE_TARGET ) {
 		return;
 	}
@@ -39,14 +36,12 @@ void BaseEventListener::ProcessEvent( Event &event )
 	/* ch : CSS sound properties are handled here */
 	if( event.GetType() == "mouseover" ) {
 		StartTargetPropertySound( target, SOUND_HOVER );
-	}
-	else if( event.GetType() == "click" ) {
+	} else if( event.GetType() == "click" ) {
 		StartTargetPropertySound( target, SOUND_CLICK );
 	}
 }
 
-void BaseEventListener::StartTargetPropertySound( Element *target, const String &property )
-{
+void BaseEventListener::StartTargetPropertySound( Element *target, const String &property ) {
 	String sound = target->GetProperty<String>( property );
 	if( sound.Empty() ) {
 		return;
@@ -65,13 +60,12 @@ void BaseEventListener::StartTargetPropertySound( Element *target, const String 
 		}
 	}
 
-	trap::S_StartLocalSound( sound.CString()+1 );
+	trap::S_StartLocalSound( sound.CString() + 1 );
 }
 
 static BaseEventListener ui_baseEventListener;
 
-Rocket::Core::EventListener * GetBaseEventListener( void )
-{
+Rocket::Core::EventListener * GetBaseEventListener( void ) {
 	return &ui_baseEventListener;
 }
 
@@ -80,21 +74,19 @@ Rocket::Core::EventListener * GetBaseEventListener( void )
 class UI_MainListener : public EventListener
 {
 public:
-	virtual void ProcessEvent( Event &event )
-	{
+	virtual void ProcessEvent( Event &event ) {
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "EventListener: Event %s, target %s, phase %i\n",
-				event.GetType().CString(),
-				event.GetTargetElement()->GetTagName().CString(),
-				event.GetPhase() );
+						event.GetType().CString(),
+						event.GetTargetElement()->GetTagName().CString(),
+						event.GetPhase() );
 		}
 
-		if( event.GetType() == "keydown" && 
-			( event.GetPhase() == Rocket::Core::Event::PHASE_TARGET || event.GetPhase() == Rocket::Core::Event::PHASE_BUBBLE ) )
-		{
+		if( event.GetType() == "keydown" &&
+			( event.GetPhase() == Rocket::Core::Event::PHASE_TARGET || event.GetPhase() == Rocket::Core::Event::PHASE_BUBBLE ) ) {
 			int key = event.GetParameter<int>( "key_identifier", 0 );
 			ElementDocument *document = event.GetTargetElement()->GetOwnerDocument();
-			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetScriptObject());
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>( document->GetScriptObject() );
 			WSWUI::NavigationStack *stack = ui_document ? ui_document->getStack() : NULL;
 
 			if( key == Input::KI_ESCAPE ) {
@@ -102,29 +94,26 @@ public:
 					if( stack->isTopModal() ) {
 						// pop the top document
 						stack->popDocument();
-					}
-					else if( stack->getContextId() == UI_CONTEXT_MAIN ) {
+					} else if( stack->getContextId() == UI_CONTEXT_MAIN ) {
 						// hide all documents
 						UI_Main::Get()->showUI( false );
 					}
 				}
 				event.StopPropagation();
-			}
-			else if( key == Rocket::Core::Input::KI_BROWSER_BACK || key == Rocket::Core::Input::KI_BACK ) {
+			} else if( key == Rocket::Core::Input::KI_BROWSER_BACK || key == Rocket::Core::Input::KI_BACK ) {
 				// act as history.back()
 				if( stack && stack->hasAtLeastTwoDocuments() ) {
 					stack->popDocument();
 					event.StopPropagation();
 				}
 			}
-		}
-		else if( event.GetType() == "change" && ( event.GetPhase() == Rocket::Core::Event::PHASE_BUBBLE ) ) {
+		} else if( event.GetType() == "change" && ( event.GetPhase() == Rocket::Core::Event::PHASE_BUBBLE ) ) {
 			bool linebreak = event.GetParameter<int>( "linebreak", 0 ) != 0;
 			if( linebreak ) {
 				// form submission
 				String inputType;
 				Element *target = event.GetTargetElement();
-				Rocket::Controls::ElementFormControl *input = dynamic_cast<Rocket::Controls::ElementFormControl *>(target);
+				Rocket::Controls::ElementFormControl *input = dynamic_cast<Rocket::Controls::ElementFormControl *>( target );
 
 				if( event.GetPhase() != Rocket::Core::Event::PHASE_BUBBLE ) {
 					return;
@@ -152,7 +141,7 @@ public:
 				Element *parent = target->GetParentNode();
 				Rocket::Controls::ElementForm *form = NULL;
 				while( parent ) {
-					form = dynamic_cast<Rocket::Controls::ElementForm *>(parent);
+					form = dynamic_cast<Rocket::Controls::ElementForm *>( parent );
 					if( form != NULL ) {
 						// not a form, go up the tree
 						break;
@@ -174,7 +163,7 @@ public:
 				parent->GetElementsByTagName( controls, "input" );
 				for( size_t i = 0; i < controls.size(); i++ ) {
 					Rocket::Controls::ElementFormControl *control =
-						dynamic_cast< Rocket::Controls::ElementFormControl* >(controls[i]);
+						dynamic_cast< Rocket::Controls::ElementFormControl* >( controls[i] );
 
 					if( !control ) {
 						continue;
@@ -202,7 +191,7 @@ public:
 				}
 
 				// finally submit the form
-				form->Submit( submit->GetAttribute< Rocket::Core::String >("name", ""), submit->GetAttribute< Rocket::Core::String >("value", "") );
+				form->Submit( submit->GetAttribute< Rocket::Core::String >( "name", "" ), submit->GetAttribute< Rocket::Core::String >( "value", "" ) );
 			}
 		}
 	}
@@ -210,8 +199,7 @@ public:
 
 static UI_MainListener ui_mainListener;
 
-EventListener *UI_GetMainListener( void )
-{
+EventListener *UI_GetMainListener( void ) {
 	return &ui_mainListener;
 }
 
@@ -220,20 +208,22 @@ EventListener *UI_GetMainListener( void )
 class UI_SoftKeyboardListener : public EventListener
 {
 public:
-	virtual void ProcessEvent( Event &event )
-	{
-		if( event.GetPhase() != Rocket::Core::Event::PHASE_TARGET )
+	virtual void ProcessEvent( Event &event ) {
+		if( event.GetPhase() != Rocket::Core::Event::PHASE_TARGET ) {
 			return;
+		}
 
 		Rocket::Controls::ElementFormControl *input =
 			dynamic_cast< Rocket::Controls::ElementFormControl * >( event.GetTargetElement() );
-		if( !input || input->IsDisabled() )
+		if( !input || input->IsDisabled() ) {
 			return;
+		}
 
 		String inputType = input->GetAttribute< String >( "type", "" );
 		if( ( inputType != "text" ) && ( inputType != "password" ) &&
-			!dynamic_cast< Rocket::Controls::ElementFormControlTextArea * >( input ) )
+			!dynamic_cast< Rocket::Controls::ElementFormControlTextArea * >( input ) ) {
 			return;
+		}
 
 		trap::IN_ShowSoftKeyboard( ( event.GetType() == "click" ) ? true : false );
 	}
@@ -242,8 +232,7 @@ public:
 
 static UI_SoftKeyboardListener ui_softKeyboardListener;
 
-EventListener *UI_GetSoftKeyboardListener( void )
-{
+EventListener *UI_GetSoftKeyboardListener( void ) {
 	return &ui_softKeyboardListener;
 }
 

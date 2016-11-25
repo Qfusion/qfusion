@@ -132,8 +132,8 @@ cvar_t *gl_driver;
 cvar_t *gl_cull;
 cvar_t *r_multithreading;
 
-static bool	r_verbose;
-static bool	r_postinit;
+static bool r_verbose;
+static bool r_postinit;
 
 static void R_FinalizeGLExtensions( void );
 static void R_GfxInfo_f( void );
@@ -143,247 +143,245 @@ static void R_DestroyVolatileAssets( void );
 
 //=======================================================================
 
-#define	GLINF_FOFS(x) offsetof(glextinfo_t,x)
-#define	GLINF_EXMRK() GLINF_FOFS(_extMarker)
-#define	GLINF_FROM(from,ofs) (*((char *)from + ofs))
+#define GLINF_FOFS( x ) offsetof( glextinfo_t,x )
+#define GLINF_EXMRK() GLINF_FOFS( _extMarker )
+#define GLINF_FROM( from,ofs ) ( *( (char *)from + ofs ) )
 
-typedef struct
-{
-	const char *name;				// constant pointer to constant string
-	void **pointer;					// constant pointer to function's pointer (function itself)
+typedef struct {
+	const char *name;               // constant pointer to constant string
+	void **pointer;                 // constant pointer to function's pointer (function itself)
 } gl_extension_func_t;
 
-typedef struct
-{
-	const char * prefix;			// constant pointer to constant string
+typedef struct {
+	const char * prefix;            // constant pointer to constant string
 	const char * name;
 	const char * cvar_default;
 	bool cvar_readonly;
 	bool mandatory;
-	gl_extension_func_t *funcs;		// constant pointer to array of functions
-	size_t offset;					// offset to respective variable
-	size_t depOffset;				// offset to required pre-initialized variable
+	gl_extension_func_t *funcs;     // constant pointer to array of functions
+	size_t offset;                  // offset to respective variable
+	size_t depOffset;               // offset to required pre-initialized variable
 } gl_extension_t;
 
-#define GL_EXTENSION_FUNC_EXT(name,func) { name, (void ** const)func }
-#define GL_EXTENSION_FUNC(name) GL_EXTENSION_FUNC_EXT("gl"#name,&(qgl##name))
+#define GL_EXTENSION_FUNC_EXT( name,func ) { name, (void ** const)func }
+#define GL_EXTENSION_FUNC( name ) GL_EXTENSION_FUNC_EXT( "gl"#name,&( qgl ## name ) )
 
 #ifndef GL_ES_VERSION_2_0
 
 /* GL_ARB_multitexture */
 static const gl_extension_func_t gl_ext_multitexture_ARB_funcs[] =
 {
-	 GL_EXTENSION_FUNC(ActiveTextureARB)
-	,GL_EXTENSION_FUNC(ClientActiveTextureARB)
+	GL_EXTENSION_FUNC( ActiveTextureARB )
+	,GL_EXTENSION_FUNC( ClientActiveTextureARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_vertex_buffer_object */
 static const gl_extension_func_t gl_ext_vertex_buffer_object_ARB_funcs[] =
 {
-	 GL_EXTENSION_FUNC(BindBufferARB)
-	,GL_EXTENSION_FUNC(DeleteBuffersARB)
-	,GL_EXTENSION_FUNC(GenBuffersARB)
-	,GL_EXTENSION_FUNC(BufferDataARB)
-	,GL_EXTENSION_FUNC(BufferSubDataARB)
+	GL_EXTENSION_FUNC( BindBufferARB )
+	,GL_EXTENSION_FUNC( DeleteBuffersARB )
+	,GL_EXTENSION_FUNC( GenBuffersARB )
+	,GL_EXTENSION_FUNC( BufferDataARB )
+	,GL_EXTENSION_FUNC( BufferSubDataARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_EXT_draw_range_elements */
 static const gl_extension_func_t gl_ext_draw_range_elements_EXT_funcs[] =
 {
-	 GL_EXTENSION_FUNC(DrawRangeElementsEXT)
-	,GL_EXTENSION_FUNC_EXT("glDrawRangeElements",&qglDrawRangeElementsEXT)
+	GL_EXTENSION_FUNC( DrawRangeElementsEXT )
+	,GL_EXTENSION_FUNC_EXT( "glDrawRangeElements",&qglDrawRangeElementsEXT )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_GLSL (meta extension) */
 static const gl_extension_func_t gl_ext_GLSL_ARB_funcs[] =
 {
-	 GL_EXTENSION_FUNC(DeleteObjectARB)
-	,GL_EXTENSION_FUNC(DetachObjectARB)
-	,GL_EXTENSION_FUNC(CreateShaderObjectARB)
-	,GL_EXTENSION_FUNC(ShaderSourceARB)
-	,GL_EXTENSION_FUNC(CompileShaderARB)
-	,GL_EXTENSION_FUNC(CreateProgramObjectARB)
-	,GL_EXTENSION_FUNC(AttachObjectARB)
-	,GL_EXTENSION_FUNC(LinkProgramARB)
-	,GL_EXTENSION_FUNC(UseProgramObjectARB)
-	,GL_EXTENSION_FUNC(ValidateProgramARB)
-	,GL_EXTENSION_FUNC(Uniform1fARB)
-	,GL_EXTENSION_FUNC(Uniform2fARB)
-	,GL_EXTENSION_FUNC(Uniform3fARB)
-	,GL_EXTENSION_FUNC(Uniform4fARB)
-	,GL_EXTENSION_FUNC(Uniform1iARB)
-	,GL_EXTENSION_FUNC(Uniform2iARB)
-	,GL_EXTENSION_FUNC(Uniform3iARB)
-	,GL_EXTENSION_FUNC(Uniform4iARB)
-	,GL_EXTENSION_FUNC(Uniform1fvARB)
-	,GL_EXTENSION_FUNC(Uniform2fvARB)
-	,GL_EXTENSION_FUNC(Uniform3fvARB)
-	,GL_EXTENSION_FUNC(Uniform4fvARB)
-	,GL_EXTENSION_FUNC(Uniform1ivARB)
-	,GL_EXTENSION_FUNC(Uniform2ivARB)
-	,GL_EXTENSION_FUNC(Uniform3ivARB)
-	,GL_EXTENSION_FUNC(Uniform4ivARB)
-	,GL_EXTENSION_FUNC(UniformMatrix2fvARB)
-	,GL_EXTENSION_FUNC(UniformMatrix3fvARB)
-	,GL_EXTENSION_FUNC(UniformMatrix4fvARB)
-	,GL_EXTENSION_FUNC(GetObjectParameterivARB)
-	,GL_EXTENSION_FUNC(GetInfoLogARB)
-	,GL_EXTENSION_FUNC(GetAttachedObjectsARB)
-	,GL_EXTENSION_FUNC(GetUniformLocationARB)
-	,GL_EXTENSION_FUNC(GetActiveUniformARB)
-	,GL_EXTENSION_FUNC(GetUniformfvARB)
-	,GL_EXTENSION_FUNC(GetUniformivARB)
-	,GL_EXTENSION_FUNC(GetShaderSourceARB)
+	GL_EXTENSION_FUNC( DeleteObjectARB )
+	,GL_EXTENSION_FUNC( DetachObjectARB )
+	,GL_EXTENSION_FUNC( CreateShaderObjectARB )
+	,GL_EXTENSION_FUNC( ShaderSourceARB )
+	,GL_EXTENSION_FUNC( CompileShaderARB )
+	,GL_EXTENSION_FUNC( CreateProgramObjectARB )
+	,GL_EXTENSION_FUNC( AttachObjectARB )
+	,GL_EXTENSION_FUNC( LinkProgramARB )
+	,GL_EXTENSION_FUNC( UseProgramObjectARB )
+	,GL_EXTENSION_FUNC( ValidateProgramARB )
+	,GL_EXTENSION_FUNC( Uniform1fARB )
+	,GL_EXTENSION_FUNC( Uniform2fARB )
+	,GL_EXTENSION_FUNC( Uniform3fARB )
+	,GL_EXTENSION_FUNC( Uniform4fARB )
+	,GL_EXTENSION_FUNC( Uniform1iARB )
+	,GL_EXTENSION_FUNC( Uniform2iARB )
+	,GL_EXTENSION_FUNC( Uniform3iARB )
+	,GL_EXTENSION_FUNC( Uniform4iARB )
+	,GL_EXTENSION_FUNC( Uniform1fvARB )
+	,GL_EXTENSION_FUNC( Uniform2fvARB )
+	,GL_EXTENSION_FUNC( Uniform3fvARB )
+	,GL_EXTENSION_FUNC( Uniform4fvARB )
+	,GL_EXTENSION_FUNC( Uniform1ivARB )
+	,GL_EXTENSION_FUNC( Uniform2ivARB )
+	,GL_EXTENSION_FUNC( Uniform3ivARB )
+	,GL_EXTENSION_FUNC( Uniform4ivARB )
+	,GL_EXTENSION_FUNC( UniformMatrix2fvARB )
+	,GL_EXTENSION_FUNC( UniformMatrix3fvARB )
+	,GL_EXTENSION_FUNC( UniformMatrix4fvARB )
+	,GL_EXTENSION_FUNC( GetObjectParameterivARB )
+	,GL_EXTENSION_FUNC( GetInfoLogARB )
+	,GL_EXTENSION_FUNC( GetAttachedObjectsARB )
+	,GL_EXTENSION_FUNC( GetUniformLocationARB )
+	,GL_EXTENSION_FUNC( GetActiveUniformARB )
+	,GL_EXTENSION_FUNC( GetUniformfvARB )
+	,GL_EXTENSION_FUNC( GetUniformivARB )
+	,GL_EXTENSION_FUNC( GetShaderSourceARB )
 
-	,GL_EXTENSION_FUNC(VertexAttribPointerARB)
-	,GL_EXTENSION_FUNC(EnableVertexAttribArrayARB)
-	,GL_EXTENSION_FUNC(DisableVertexAttribArrayARB)
-	,GL_EXTENSION_FUNC(BindAttribLocationARB)
-	,GL_EXTENSION_FUNC(GetActiveAttribARB)
-	,GL_EXTENSION_FUNC(GetAttribLocationARB)
+	,GL_EXTENSION_FUNC( VertexAttribPointerARB )
+	,GL_EXTENSION_FUNC( EnableVertexAttribArrayARB )
+	,GL_EXTENSION_FUNC( DisableVertexAttribArrayARB )
+	,GL_EXTENSION_FUNC( BindAttribLocationARB )
+	,GL_EXTENSION_FUNC( GetActiveAttribARB )
+	,GL_EXTENSION_FUNC( GetAttribLocationARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_GLSL_core (meta extension) */
 static const gl_extension_func_t gl_ext_GLSL_core_ARB_funcs[] =
 {
-	 GL_EXTENSION_FUNC(DeleteProgram)
-	,GL_EXTENSION_FUNC(DeleteShader)
-	,GL_EXTENSION_FUNC(DetachShader)
-	,GL_EXTENSION_FUNC(CreateShader)
-	,GL_EXTENSION_FUNC(CreateProgram)
-	,GL_EXTENSION_FUNC(AttachShader)
-	,GL_EXTENSION_FUNC(UseProgram)
-	,GL_EXTENSION_FUNC(GetProgramiv)
-	,GL_EXTENSION_FUNC(GetShaderiv)
-	,GL_EXTENSION_FUNC(GetProgramInfoLog)
-	,GL_EXTENSION_FUNC(GetShaderInfoLog)
-	,GL_EXTENSION_FUNC(GetAttachedShaders)
+	GL_EXTENSION_FUNC( DeleteProgram )
+	,GL_EXTENSION_FUNC( DeleteShader )
+	,GL_EXTENSION_FUNC( DetachShader )
+	,GL_EXTENSION_FUNC( CreateShader )
+	,GL_EXTENSION_FUNC( CreateProgram )
+	,GL_EXTENSION_FUNC( AttachShader )
+	,GL_EXTENSION_FUNC( UseProgram )
+	,GL_EXTENSION_FUNC( GetProgramiv )
+	,GL_EXTENSION_FUNC( GetShaderiv )
+	,GL_EXTENSION_FUNC( GetProgramInfoLog )
+	,GL_EXTENSION_FUNC( GetShaderInfoLog )
+	,GL_EXTENSION_FUNC( GetAttachedShaders )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_GLSL130 (meta extension) */
 static const gl_extension_func_t gl_ext_GLSL130_ARB_funcs[] =
 {
-	GL_EXTENSION_FUNC(BindFragDataLocation)
+	GL_EXTENSION_FUNC( BindFragDataLocation )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_draw_instanced */
 static const gl_extension_func_t gl_ext_draw_instanced_ARB_funcs[] =
 {
-	 GL_EXTENSION_FUNC(DrawArraysInstancedARB)
-	,GL_EXTENSION_FUNC(DrawElementsInstancedARB)
+	GL_EXTENSION_FUNC( DrawArraysInstancedARB )
+	,GL_EXTENSION_FUNC( DrawElementsInstancedARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_instanced_arrays */
 static const gl_extension_func_t gl_ext_instanced_arrays_ARB_funcs[] =
 {
-	 GL_EXTENSION_FUNC(VertexAttribDivisorARB)
+	GL_EXTENSION_FUNC( VertexAttribDivisorARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_get_program_binary */
 static const gl_extension_func_t gl_ext_get_program_binary_ARB_funcs[] =
 {
-	 GL_EXTENSION_FUNC(ProgramParameteri)
-	,GL_EXTENSION_FUNC(GetProgramBinary)
-	,GL_EXTENSION_FUNC(ProgramBinary)
+	GL_EXTENSION_FUNC( ProgramParameteri )
+	,GL_EXTENSION_FUNC( GetProgramBinary )
+	,GL_EXTENSION_FUNC( ProgramBinary )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_EXT_framebuffer_object */
 static const gl_extension_func_t gl_ext_framebuffer_object_EXT_funcs[] =
 {
-	 GL_EXTENSION_FUNC(IsRenderbufferEXT)
- 	,GL_EXTENSION_FUNC(BindRenderbufferEXT)
- 	,GL_EXTENSION_FUNC(DeleteRenderbuffersEXT)
- 	,GL_EXTENSION_FUNC(GenRenderbuffersEXT)
- 	,GL_EXTENSION_FUNC(RenderbufferStorageEXT)
- 	,GL_EXTENSION_FUNC(GetRenderbufferParameterivEXT)
- 	,GL_EXTENSION_FUNC(IsFramebufferEXT)
- 	,GL_EXTENSION_FUNC(BindFramebufferEXT)
- 	,GL_EXTENSION_FUNC(DeleteFramebuffersEXT)
- 	,GL_EXTENSION_FUNC(GenFramebuffersEXT)
-	,GL_EXTENSION_FUNC(CheckFramebufferStatusEXT)
-	,GL_EXTENSION_FUNC(FramebufferTexture1DEXT)
-	,GL_EXTENSION_FUNC(FramebufferTexture2DEXT)
-	,GL_EXTENSION_FUNC(FramebufferRenderbufferEXT)
-	,GL_EXTENSION_FUNC(GetFramebufferAttachmentParameterivEXT)
-	,GL_EXTENSION_FUNC(GenerateMipmapEXT)
+	GL_EXTENSION_FUNC( IsRenderbufferEXT )
+	,GL_EXTENSION_FUNC( BindRenderbufferEXT )
+	,GL_EXTENSION_FUNC( DeleteRenderbuffersEXT )
+	,GL_EXTENSION_FUNC( GenRenderbuffersEXT )
+	,GL_EXTENSION_FUNC( RenderbufferStorageEXT )
+	,GL_EXTENSION_FUNC( GetRenderbufferParameterivEXT )
+	,GL_EXTENSION_FUNC( IsFramebufferEXT )
+	,GL_EXTENSION_FUNC( BindFramebufferEXT )
+	,GL_EXTENSION_FUNC( DeleteFramebuffersEXT )
+	,GL_EXTENSION_FUNC( GenFramebuffersEXT )
+	,GL_EXTENSION_FUNC( CheckFramebufferStatusEXT )
+	,GL_EXTENSION_FUNC( FramebufferTexture1DEXT )
+	,GL_EXTENSION_FUNC( FramebufferTexture2DEXT )
+	,GL_EXTENSION_FUNC( FramebufferRenderbufferEXT )
+	,GL_EXTENSION_FUNC( GetFramebufferAttachmentParameterivEXT )
+	,GL_EXTENSION_FUNC( GenerateMipmapEXT )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_EXT_framebuffer_blit */
 static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 {
-	GL_EXTENSION_FUNC(BlitFramebufferEXT)
+	GL_EXTENSION_FUNC( BlitFramebufferEXT )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_EXT_framebuffer_multisample */
 static const gl_extension_func_t gl_ext_framebuffer_multisample_EXT_funcs[] =
 {
-	GL_EXTENSION_FUNC(RenderbufferStorageMultisampleEXT)
+	GL_EXTENSION_FUNC( RenderbufferStorageMultisampleEXT )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_texture_compression */
 static const gl_extension_func_t gl_ext_texture_compression_ARB_funcs[] =
 {
-	 GL_EXTENSION_FUNC(CompressedTexImage2DARB)
-	,GL_EXTENSION_FUNC(CompressedTexSubImage2DARB)
+	GL_EXTENSION_FUNC( CompressedTexImage2DARB )
+	,GL_EXTENSION_FUNC( CompressedTexSubImage2DARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_EXT_blend_func_separate */
 static const gl_extension_func_t gl_ext_blend_func_separate_EXT_funcs[] =
 {
-	 GL_EXTENSION_FUNC(BlendFuncSeparateEXT)
+	GL_EXTENSION_FUNC( BlendFuncSeparateEXT )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_EXT_texture3D */
 static const gl_extension_func_t gl_ext_texture3D_EXT_funcs[] =
 {
-	 GL_EXTENSION_FUNC(TexImage3DEXT)
-	,GL_EXTENSION_FUNC(TexSubImage3DEXT)
+	GL_EXTENSION_FUNC( TexImage3DEXT )
+	,GL_EXTENSION_FUNC( TexSubImage3DEXT )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_draw_buffers */
 static const gl_extension_func_t gl_ext_draw_buffers_ARB_funcs[] =
 {
-	GL_EXTENSION_FUNC(DrawBuffersARB)
+	GL_EXTENSION_FUNC( DrawBuffersARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_ARB_multisample */
 static const gl_extension_func_t gl_ext_multisample_ARB_funcs[] =
 {
-	GL_EXTENSION_FUNC(SampleCoverageARB)
+	GL_EXTENSION_FUNC( SampleCoverageARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 #else // GL_ES_VERSION_2_0
@@ -391,35 +389,35 @@ static const gl_extension_func_t gl_ext_multisample_ARB_funcs[] =
 /* GL_ANGLE_framebuffer_blit */
 static const gl_extension_func_t gl_ext_framebuffer_blit_ANGLE_funcs[] =
 {
-	GL_EXTENSION_FUNC(BlitFramebufferANGLE)
+	GL_EXTENSION_FUNC( BlitFramebufferANGLE )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_NV_framebuffer_blit */
 static const gl_extension_func_t gl_ext_framebuffer_blit_NV_funcs[] =
 {
-	GL_EXTENSION_FUNC(BlitFramebufferNV)
+	GL_EXTENSION_FUNC( BlitFramebufferNV )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_OES_get_program_binary */
 static const gl_extension_func_t gl_ext_get_program_binary_OES_funcs[] =
 {
-	 GL_EXTENSION_FUNC(GetProgramBinaryOES)
-	,GL_EXTENSION_FUNC(ProgramBinaryOES)
+	GL_EXTENSION_FUNC( GetProgramBinaryOES )
+	,GL_EXTENSION_FUNC( ProgramBinaryOES )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* GL_OES_texture_3D */
 static const gl_extension_func_t gl_ext_texture_3D_OES_funcs[] =
 {
-	 GL_EXTENSION_FUNC(TexImage3DOES)
-	,GL_EXTENSION_FUNC(TexSubImage3DOES)
+	GL_EXTENSION_FUNC( TexImage3DOES )
+	,GL_EXTENSION_FUNC( TexSubImage3DOES )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 #endif // GL_ES_VERSION_2_0
@@ -431,17 +429,17 @@ static const gl_extension_func_t gl_ext_texture_3D_OES_funcs[] =
 /* WGL_EXT_swap_interval */
 static const gl_extension_func_t wgl_ext_swap_interval_EXT_funcs[] =
 {
-	 GL_EXTENSION_FUNC_EXT("wglSwapIntervalEXT",&qwglSwapIntervalEXT)
+	GL_EXTENSION_FUNC_EXT( "wglSwapIntervalEXT",&qwglSwapIntervalEXT )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 /* WGL_ARB_pixel_format */
 static const gl_extension_func_t wgl_ext_pixel_format_ARB_funcs[] =
 {
-	GL_EXTENSION_FUNC_EXT("wglChoosePixelFormatARB",&qwglChoosePixelFormatARB)
+	GL_EXTENSION_FUNC_EXT( "wglChoosePixelFormatARB",&qwglChoosePixelFormatARB )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 #endif
@@ -451,9 +449,9 @@ static const gl_extension_func_t wgl_ext_pixel_format_ARB_funcs[] =
 /* GLX_SGI_swap_control */
 static const gl_extension_func_t glx_ext_swap_control_SGI_funcs[] =
 {
-	 GL_EXTENSION_FUNC_EXT("glXSwapIntervalSGI",&qglXSwapIntervalSGI)
+	GL_EXTENSION_FUNC_EXT( "glXSwapIntervalSGI",&qglXSwapIntervalSGI )
 
-	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
 #endif
@@ -465,8 +463,8 @@ static const gl_extension_func_t glx_ext_swap_control_SGI_funcs[] =
 
 //=======================================================================
 
-#define GL_EXTENSION_EXT(pre,name,val,ro,mnd,funcs,dep) { #pre, #name, #val, ro, mnd, (gl_extension_func_t * const)funcs, GLINF_FOFS(name), GLINF_FOFS(dep) }
-#define GL_EXTENSION(pre,name,ro,mnd,funcs) GL_EXTENSION_EXT(pre,name,1,ro,mnd,funcs,_extMarker)
+#define GL_EXTENSION_EXT( pre,name,val,ro,mnd,funcs,dep ) { #pre, #name, #val, ro, mnd, (gl_extension_func_t * const)funcs, GLINF_FOFS( name ), GLINF_FOFS( dep ) }
+#define GL_EXTENSION( pre,name,ro,mnd,funcs ) GL_EXTENSION_EXT( pre,name,1,ro,mnd,funcs,_extMarker )
 
 //
 // OpenGL extensions list
@@ -477,7 +475,7 @@ static const gl_extension_t gl_extensions_decl[] =
 {
 #ifndef GL_ES_VERSION_2_0
 	// extensions required by meta-extension gl_ext_GLSL
-	 GL_EXTENSION( ARB, multitexture, true, true, &gl_ext_multitexture_ARB_funcs )
+	GL_EXTENSION( ARB, multitexture, true, true, &gl_ext_multitexture_ARB_funcs )
 	,GL_EXTENSION( ARB, vertex_buffer_object, true, true, &gl_ext_vertex_buffer_object_ARB_funcs )
 	,GL_EXTENSION_EXT( ARB, vertex_shader, 1, true, true, NULL, multitexture )
 	,GL_EXTENSION_EXT( ARB, fragment_shader, 1, true, true, NULL, vertex_shader )
@@ -522,7 +520,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ATI, meminfo, true, false, NULL )
 
 #else
-	 GL_EXTENSION( NV, framebuffer_blit, false, false, &gl_ext_framebuffer_blit_NV_funcs )
+	GL_EXTENSION( NV, framebuffer_blit, false, false, &gl_ext_framebuffer_blit_NV_funcs )
 	,GL_EXTENSION( ANGLE, framebuffer_blit, false, false, &gl_ext_framebuffer_blit_ANGLE_funcs )
 	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( EXT, shadow_samplers, 1, false, false, NULL, depth_texture )
@@ -564,8 +562,7 @@ static const int num_gl_extensions = sizeof( gl_extensions_decl ) / sizeof( gl_e
 /*
 * R_RegisterGLExtensions
 */
-static bool R_RegisterGLExtensions( void )
-{
+static bool R_RegisterGLExtensions( void ) {
 	int i;
 	char *var, name[128];
 	cvar_t *cvar;
@@ -575,12 +572,11 @@ static bool R_RegisterGLExtensions( void )
 
 	memset( &glConfig.ext, 0, sizeof( glextinfo_t ) );
 
-	for( i = 0, extension = gl_extensions_decl; i < num_gl_extensions; i++, extension++ )
-	{
+	for( i = 0, extension = gl_extensions_decl; i < num_gl_extensions; i++, extension++ ) {
 		Q_snprintfz( name, sizeof( name ), "gl_ext_%s", extension->name );
 
 		// register a cvar and check if this extension is explicitly disabled
-		cvar_flags = CVAR_ARCHIVE|CVAR_LATCH_VIDEO;
+		cvar_flags = CVAR_ARCHIVE | CVAR_LATCH_VIDEO;
 #ifdef PUBLIC_BUILD
 		if( extension->cvar_readonly ) {
 			cvar_flags |= CVAR_READONLY;
@@ -588,55 +584,57 @@ static bool R_RegisterGLExtensions( void )
 #endif
 
 		cvar = ri.Cvar_Get( name, extension->cvar_default ? extension->cvar_default : "0", cvar_flags );
-		if( !cvar->integer )
+		if( !cvar->integer ) {
 			continue;
+		}
 
 		// an alternative extension of higher priority is available so ignore this one
-		var = &(GLINF_FROM( &glConfig.ext, extension->offset ));
-		if( *var )
+		var = &( GLINF_FROM( &glConfig.ext, extension->offset ) );
+		if( *var ) {
 			continue;
+		}
 
 		// required extension is not available, ignore
-		if( extension->depOffset != GLINF_EXMRK() && !GLINF_FROM( &glConfig.ext, extension->depOffset ) ) 
+		if( extension->depOffset != GLINF_EXMRK() && !GLINF_FROM( &glConfig.ext, extension->depOffset ) ) {
 			continue;
+		}
 
 		// let's see what the driver's got to say about this...
-		if( *extension->prefix )
-		{
+		if( *extension->prefix ) {
 			const char *extstring = ( !strncmp( extension->prefix, "WGL", 3 ) ||
-				!strncmp( extension->prefix, "GLX", 3 ) ||
-				!strncmp( extension->prefix, "EGL", 3 ) ) ? glConfig.glwExtensionsString : glConfig.extensionsString;
+									  !strncmp( extension->prefix, "GLX", 3 ) ||
+									  !strncmp( extension->prefix, "EGL", 3 ) ) ? glConfig.glwExtensionsString : glConfig.extensionsString;
 
 			Q_snprintfz( name, sizeof( name ), "%s_%s", extension->prefix, extension->name );
-			if( !strstr( extstring, name ) )
+			if( !strstr( extstring, name ) ) {
 				continue;
+			}
 		}
 
 		// initialize function pointers
 		func = extension->funcs;
-		if( func )
-		{
+		if( func ) {
 			do {
-				*(func->pointer) = ( void * )qglGetProcAddress( (const GLubyte *)func->name );
-				if( !*(func->pointer) )
+				*( func->pointer ) = ( void * )qglGetProcAddress( (const GLubyte *)func->name );
+				if( !*( func->pointer ) ) {
 					break;
-			} while( (++func)->name );
+				}
+			} while( ( ++func )->name );
 
 			// some function is missing
-			if( func->name )
-			{
+			if( func->name ) {
 				gl_extension_func_t *func2 = extension->funcs;
 
 				// whine about buggy driver
 				if( *extension->prefix ) {
-					Com_Printf( "R_RegisterGLExtensions: broken %s support, contact your video card vendor\n", 
-						cvar->name );
+					Com_Printf( "R_RegisterGLExtensions: broken %s support, contact your video card vendor\n",
+								cvar->name );
 				}
 
 				// reset previously initialized functions back to NULL
 				do {
-					*(func2->pointer) = NULL;
-				} while( (++func2)->name && func2 != func );
+					*( func2->pointer ) = NULL;
+				} while( ( ++func2 )->name && func2 != func );
 
 				continue;
 			}
@@ -647,38 +645,34 @@ static bool R_RegisterGLExtensions( void )
 
 	}
 
-	for( i = 0, extension = gl_extensions_decl; i < num_gl_extensions; i++, extension++ )
-	{
+	for( i = 0, extension = gl_extensions_decl; i < num_gl_extensions; i++, extension++ ) {
 		if( !extension->mandatory ) {
 			continue;
 		}
-		
-		var = &(GLINF_FROM( &glConfig.ext, extension->offset ));
+
+		var = &( GLINF_FROM( &glConfig.ext, extension->offset ) );
 
 		if( !*var ) {
-			Sys_Error( "R_RegisterGLExtensions: '%s_%s' is not available, aborting\n", 
-				extension->prefix, extension->name );
+			Sys_Error( "R_RegisterGLExtensions: '%s_%s' is not available, aborting\n",
+					   extension->prefix, extension->name );
 			return false;
 		}
 	}
 
-	R_FinalizeGLExtensions ();
+	R_FinalizeGLExtensions();
 	return true;
 }
 
 /*
 * R_PrintGLExtensionsInfo
 */
-static void R_PrintGLExtensionsInfo( void )
-{
+static void R_PrintGLExtensionsInfo( void ) {
 	int i;
 	size_t lastOffset;
 	const gl_extension_t *extension;
 
-	for( i = 0, lastOffset = 0, extension = gl_extensions_decl; i < num_gl_extensions; i++, extension++ )
-	{
-		if( lastOffset != extension->offset )
-		{
+	for( i = 0, lastOffset = 0, extension = gl_extensions_decl; i < num_gl_extensions; i++, extension++ ) {
+		if( lastOffset != extension->offset ) {
 			lastOffset = extension->offset;
 			Com_Printf( "%s: %s\n", extension->name, GLINF_FROM( &glConfig.ext, lastOffset ) ? "enabled" : "disabled" );
 		}
@@ -688,26 +682,21 @@ static void R_PrintGLExtensionsInfo( void )
 /*
 * R_PrintGLExtensionsString
 */
-static void R_PrintGLExtensionsString( const char *name, const char *str )
-{
+static void R_PrintGLExtensionsString( const char *name, const char *str ) {
 	size_t len, p;
 
 	Com_Printf( "%s: ", name );
 
-	if( str && *str )
-	{
-		for( len = strlen( str ), p = 0; p < len;  )
-		{
+	if( str && *str ) {
+		for( len = strlen( str ), p = 0; p < len; ) {
 			char chunk[512];
 
 			Q_snprintfz( chunk, sizeof( chunk ), "%s", str + p );
 			p += strlen( chunk );
-			
+
 			Com_Printf( "%s", chunk );
 		}
-	}
-	else
-	{
+	} else {
 		Com_Printf( "none" );
 	}
 
@@ -717,8 +706,7 @@ static void R_PrintGLExtensionsString( const char *name, const char *str )
 /*
 * R_PrintMemoryInfo
 */
-static void R_PrintMemoryInfo( void )
-{
+static void R_PrintMemoryInfo( void ) {
 	int mem[12];
 
 	Com_Printf( "\n" );
@@ -727,43 +715,40 @@ static void R_PrintMemoryInfo( void )
 	if( glConfig.ext.gpu_memory_info ) {
 		// NV
 		qglGetIntegerv( GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, mem );
-		Com_Printf( "total: %i MB\n", mem[0] >>10 );
+		Com_Printf( "total: %i MB\n", mem[0] >> 10 );
 
 		qglGetIntegerv( GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, mem );
-		Com_Printf( "dedicated: %i MB\n", mem[0] >>10 );
+		Com_Printf( "dedicated: %i MB\n", mem[0] >> 10 );
 
 		qglGetIntegerv( GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, mem );
-		Com_Printf( "available: %i MB\n", mem[0] >>10 );
+		Com_Printf( "available: %i MB\n", mem[0] >> 10 );
 
 		qglGetIntegerv( GPU_MEMORY_INFO_EVICTION_COUNT_NVX, mem );
 		Com_Printf( "eviction count: %i MB\n", mem[0] >> 10 );
 
 		qglGetIntegerv( GPU_MEMORY_INFO_EVICTED_MEMORY_NVX, mem );
-		Com_Printf( "totally evicted: %i MB\n", mem[0] >>10 );
-	}
-	else if( glConfig.ext.meminfo ) {
+		Com_Printf( "totally evicted: %i MB\n", mem[0] >> 10 );
+	} else if( glConfig.ext.meminfo ) {
 		// ATI
 		qglGetIntegerv( VBO_FREE_MEMORY_ATI, mem );
-		qglGetIntegerv( TEXTURE_FREE_MEMORY_ATI, mem+4 );
-		qglGetIntegerv( RENDERBUFFER_FREE_MEMORY_ATI, mem+8 );
+		qglGetIntegerv( TEXTURE_FREE_MEMORY_ATI, mem + 4 );
+		qglGetIntegerv( RENDERBUFFER_FREE_MEMORY_ATI, mem + 8 );
 
 		Com_Printf( "total memory free in the pool: (VBO:%i, Tex:%i, RBuf:%i) MB\n", mem[0] >> 10, mem[4] >> 10, mem[8] >> 10 );
 		Com_Printf( "largest available free block in the pool: (V:%i, Tex:%i, RBuf:%i) MB\n", mem[5] >> 10, mem[4] >> 10, mem[9] >> 10 );
 		Com_Printf( "total auxiliary memory free: (VBO:%i, Tex:%i, RBuf:%i) MB\n", mem[2] >> 10, mem[6] >> 10, mem[10] >> 10 );
 		Com_Printf( "largest auxiliary free block: (VBO:%i, Tex:%i, RBuf:%i) MB\n", mem[3] >> 10, mem[7] >> 10, mem[11] >> 10 );
-	}
-	else {
+	} else {
 		Com_Printf( "not available\n" );
 	}
 }
 
 /*
 * R_FinalizeGLExtensions
-* 
+*
 * Verify correctness of values provided by the driver, init some variables
 */
-static void R_FinalizeGLExtensions( void )
-{
+static void R_FinalizeGLExtensions( void ) {
 	int versionMajor, versionMinor;
 	int val;
 	cvar_t *cvar;
@@ -791,29 +776,28 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.GLSL = true;
 	glConfig.ext.GLSL_core = true;
 	glConfig.ext.blend_func_separate = true;
-	if( glConfig.version >= 300 )
-	{
-#define GL_OPTIONAL_CORE_EXTENSION(name) \
-	( glConfig.ext.name = ( ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? true : false ) )
-#define GL_OPTIONAL_CORE_EXTENSION_DEP(name,dep) \
-	( glConfig.ext.name = ( ( glConfig.ext.dep && ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ) ? true : false ) )
+	if( glConfig.version >= 300 ) {
+#define GL_OPTIONAL_CORE_EXTENSION( name ) \
+	( glConfig.ext.name = ( ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO )->integer ? true : false ) )
+#define GL_OPTIONAL_CORE_EXTENSION_DEP( name,dep ) \
+	( glConfig.ext.name = ( ( glConfig.ext.dep && ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO )->integer ) ? true : false ) )
 		glConfig.ext.ES3_compatibility = true;
 		glConfig.ext.GLSL130 = true;
 		glConfig.ext.rgb8_rgba8 = true;
-		GL_OPTIONAL_CORE_EXTENSION(depth24);
-		GL_OPTIONAL_CORE_EXTENSION(depth_texture);
-		GL_OPTIONAL_CORE_EXTENSION(draw_instanced);
-		GL_OPTIONAL_CORE_EXTENSION(draw_range_elements);
-		GL_OPTIONAL_CORE_EXTENSION(framebuffer_blit);
-		GL_OPTIONAL_CORE_EXTENSION(get_program_binary);
-		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);
-		GL_OPTIONAL_CORE_EXTENSION(texture_3D);
-		GL_OPTIONAL_CORE_EXTENSION(texture_array);
-		GL_OPTIONAL_CORE_EXTENSION(texture_lod);
-		GL_OPTIONAL_CORE_EXTENSION(texture_npot);
-		GL_OPTIONAL_CORE_EXTENSION(vertex_half_float);
-		GL_OPTIONAL_CORE_EXTENSION_DEP(packed_depth_stencil, depth24);
-		GL_OPTIONAL_CORE_EXTENSION_DEP(shadow_samplers, depth_texture);
+		GL_OPTIONAL_CORE_EXTENSION( depth24 );
+		GL_OPTIONAL_CORE_EXTENSION( depth_texture );
+		GL_OPTIONAL_CORE_EXTENSION( draw_instanced );
+		GL_OPTIONAL_CORE_EXTENSION( draw_range_elements );
+		GL_OPTIONAL_CORE_EXTENSION( framebuffer_blit );
+		GL_OPTIONAL_CORE_EXTENSION( get_program_binary );
+		GL_OPTIONAL_CORE_EXTENSION( instanced_arrays );
+		GL_OPTIONAL_CORE_EXTENSION( texture_3D );
+		GL_OPTIONAL_CORE_EXTENSION( texture_array );
+		GL_OPTIONAL_CORE_EXTENSION( texture_lod );
+		GL_OPTIONAL_CORE_EXTENSION( texture_npot );
+		GL_OPTIONAL_CORE_EXTENSION( vertex_half_float );
+		GL_OPTIONAL_CORE_EXTENSION_DEP( packed_depth_stencil, depth24 );
+		GL_OPTIONAL_CORE_EXTENSION_DEP( shadow_samplers, depth_texture );
 #undef GL_OPTIONAL_CORE_EXTENSION_DEP
 #undef GL_OPTIONAL_CORE_EXTENSION
 	}
@@ -825,8 +809,9 @@ static void R_FinalizeGLExtensions( void )
 
 	glConfig.maxTextureSize = 0;
 	qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
-	if( glConfig.maxTextureSize <= 0 )
+	if( glConfig.maxTextureSize <= 0 ) {
 		glConfig.maxTextureSize = 256;
+	}
 	glConfig.maxTextureSize = 1 << Q_log2( glConfig.maxTextureSize );
 
 	ri.Cvar_Get( "gl_max_texture_size", "0", CVAR_READONLY );
@@ -834,8 +819,7 @@ static void R_FinalizeGLExtensions( void )
 
 	/* GL_ARB_GLSL_core (meta extension) */
 #ifndef GL_ES_VERSION_2_0
-	if( !glConfig.ext.GLSL_core )
-	{
+	if( !glConfig.ext.GLSL_core ) {
 		qglDeleteProgram = qglDeleteObjectARB;
 		qglDeleteShader = qglDeleteObjectARB;
 		qglDetachShader = qglDetachObjectARB;
@@ -865,31 +849,32 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.maxRenderbufferSize = 0;
 	qglGetIntegerv( GL_MAX_RENDERBUFFER_SIZE_EXT, &glConfig.maxRenderbufferSize );
 	glConfig.maxRenderbufferSize = 1 << Q_log2( glConfig.maxRenderbufferSize );
-	if( glConfig.maxRenderbufferSize > glConfig.maxTextureSize )
+	if( glConfig.maxRenderbufferSize > glConfig.maxTextureSize ) {
 		glConfig.maxRenderbufferSize = glConfig.maxTextureSize;
+	}
 
 	/* GL_EXT_texture_filter_anisotropic */
 	glConfig.maxTextureFilterAnisotropic = 0;
-	if( strstr( glConfig.extensionsString, "GL_EXT_texture_filter_anisotropic" ) )
+	if( strstr( glConfig.extensionsString, "GL_EXT_texture_filter_anisotropic" ) ) {
 		qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureFilterAnisotropic );
+	}
 
 	/* GL_EXT_framebuffer_blit */
 #ifdef GL_ES_VERSION_2_0
-	if( glConfig.ext.framebuffer_blit && !qglBlitFramebufferEXT )
-	{
-		if( qglBlitFramebufferNV )
+	if( glConfig.ext.framebuffer_blit && !qglBlitFramebufferEXT ) {
+		if( qglBlitFramebufferNV ) {
 			qglBlitFramebufferEXT = qglBlitFramebufferNV;
-		else if( qglBlitFramebufferANGLE )
+		} else if( qglBlitFramebufferANGLE ) {
 			qglBlitFramebufferEXT = qglBlitFramebufferANGLE;
-		else
+		} else {
 			glConfig.ext.framebuffer_blit = false;
+		}
 	}
 #endif
 
 	/* GL_ARB_get_program_binary */
 #ifdef GL_ES_VERSION_2_0
-	if( glConfig.version < 300 )
-	{
+	if( glConfig.version < 300 ) {
 		qglGetProgramBinary = qglGetProgramBinaryOES;
 		qglProgramBinary = qglProgramBinaryOES;
 	}
@@ -898,13 +883,14 @@ static void R_FinalizeGLExtensions( void )
 	/* GL_EXT_texture3D and GL_EXT_texture_array */
 	glConfig.maxTexture3DSize = 0;
 	glConfig.maxTextureLayers = 0;
-	if( glConfig.ext.texture3D )
+	if( glConfig.ext.texture3D ) {
 		qglGetIntegerv( GL_MAX_3D_TEXTURE_SIZE_EXT, &glConfig.maxTexture3DSize );
-	if( glConfig.ext.texture_array )
+	}
+	if( glConfig.ext.texture_array ) {
 		qglGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS_EXT, &glConfig.maxTextureLayers );
+	}
 #ifdef GL_ES_VERSION_2_0
-	if( glConfig.version >= 300 )
-	{
+	if( glConfig.version >= 300 ) {
 		qglTexImage3DEXT = qglTexImage3D;
 		qglTexSubImage3DEXT = qglTexSubImage3D;
 	}
@@ -914,25 +900,27 @@ static void R_FinalizeGLExtensions( void )
 	 * This extension has been withdrawn and some drivers don't expose it anymore,
 	 * so it's not on the list and is activated here instead. */
 #ifdef GL_ES_VERSION_2_0
-	if( ri.Cvar_Get( "gl_ext_fragment_precision_high", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer )
-	{
+	if( ri.Cvar_Get( "gl_ext_fragment_precision_high", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO )->integer ) {
 		int range[2] = { 0 }, precision = 0;
 		qglGetShaderPrecisionFormat( GL_FRAGMENT_SHADER_ARB, GL_HIGH_FLOAT, range, &precision );
-		if( range[0] && range[1] && precision )
+		if( range[0] && range[1] && precision ) {
 			glConfig.ext.fragment_precision_high = true;
+		}
 	}
 #endif
 
 	/* GL_EXT_packed_depth_stencil
 	 * Many OpenGL implementation don't support separate depth and stencil renderbuffers. */
-	if( !glConfig.ext.packed_depth_stencil )
+	if( !glConfig.ext.packed_depth_stencil ) {
 		glConfig.stencilBits = 0;
+	}
 
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
 	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d", &versionMajor, &versionMinor );
-	if( !versionMajor )
+	if( !versionMajor ) {
 		sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL %d.%d", &versionMajor, &versionMinor );
+	}
 #else
 	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
 #endif
@@ -977,43 +965,41 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.shadingLanguageVersion >= 120 ) {
 		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
 		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
-	}
-	else {
+	} else {
 		glConfig.maxGLSLBones = 0;
 	}
 #endif
 
 #ifndef GL_ES_VERSION_2_0
-	if( glConfig.ext.texture_non_power_of_two )
-	{
+	if( glConfig.ext.texture_non_power_of_two ) {
 		// blacklist this extension on Radeon X1600-X1950 hardware (they support it only with certain filtering/repeat modes)
 		val = 0;
 
 		// LordHavoc: this is blocked on Mac OS X because the drivers claim support but often can't accelerate it or crash when used.
 #ifndef __APPLE__
-		if( glConfig.ext.vertex_shader )
+		if( glConfig.ext.vertex_shader ) {
 			qglGetIntegerv( GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &val );
+		}
 #endif
 
-		if( val <= 0 )
+		if( val <= 0 ) {
 			glConfig.ext.texture_non_power_of_two = false;
+		}
 	}
 #endif
 
 	if( glConfig.ext.depth24 ) {
-		glConfig.depthEpsilon = 1.0 / (1<<22);
-	}
-	else {
-		glConfig.depthEpsilon = 1.0 / (1<<14);
+		glConfig.depthEpsilon = 1.0 / ( 1 << 22 );
+	} else {
+		glConfig.depthEpsilon = 1.0 / ( 1 << 14 );
 	}
 
 	// require both texture_sRGB and texture_float for sRGB rendering as 8bit framebuffers
 	// run out of precision for linear colors in darker areas
 	glConfig.sSRGB = r_sRGB->integer && glConfig.ext.texture_sRGB && glConfig.ext.texture_float;
 
-	cvar = ri.Cvar_Get( "gl_ext_vertex_buffer_object_hack", "0", CVAR_ARCHIVE|CVAR_NOSET );
-	if( cvar && !cvar->integer ) 
-	{
+	cvar = ri.Cvar_Get( "gl_ext_vertex_buffer_object_hack", "0", CVAR_ARCHIVE | CVAR_NOSET );
+	if( cvar && !cvar->integer ) {
 		ri.Cvar_ForceSet( cvar->name, "1" );
 		ri.Cvar_ForceSet( "gl_ext_vertex_buffer_object", "1" );
 	}
@@ -1021,24 +1007,28 @@ static void R_FinalizeGLExtensions( void )
 #ifdef GL_ES_VERSION_2_0
 	// Use 32-bit framebuffers on PowerVR instead of 24-bit with the alpha cleared to 1
 	// because blending incorrectly assumes alpha 0 when an RGB FB is used there, not 1.
-	if( !strcmp( glConfig.vendorString, "Imagination Technologies" ) )
+	if( !strcmp( glConfig.vendorString, "Imagination Technologies" ) ) {
 		glConfig.forceRGBAFramebuffers = true;
+	}
 #endif
 
-	if( glConfig.ext.framebuffer_multisample )
+	if( glConfig.ext.framebuffer_multisample ) {
 		qglGetIntegerv( GL_MAX_SAMPLES_EXT, &glConfig.maxFramebufferSamples );
+	}
 
 	ri.Cvar_Get( "r_texturefilter_max", "0", CVAR_READONLY );
 	ri.Cvar_ForceSet( "r_texturefilter_max", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureFilterAnisotropic ) );
 
 	ri.Cvar_Get( "r_soft_particles_available", "0", CVAR_READONLY );
-	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit )
+	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit ) {
 		ri.Cvar_ForceSet( "r_soft_particles_available", "1" );
+	}
 
 	// don't allow too high values for lightmap block size as they negatively impact performance
 	if( r_lighting_maxlmblocksize->integer > glConfig.maxTextureSize / 4 &&
-		!(glConfig.maxTextureSize / 4 < min(QF_LIGHTMAP_WIDTH,QF_LIGHTMAP_HEIGHT)*2) )
+		!( glConfig.maxTextureSize / 4 < min( QF_LIGHTMAP_WIDTH,QF_LIGHTMAP_HEIGHT ) * 2 ) ) {
 		ri.Cvar_ForceSet( "r_lighting_maxlmblocksize", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureSize / 4 ) );
+	}
 }
 
 /*
@@ -1046,13 +1036,11 @@ static void R_FinalizeGLExtensions( void )
 *
 * Fills the window with a color during the initialization.
 */
-static void R_FillStartupBackgroundColor( float r, float g, float b )
-{
+static void R_FillStartupBackgroundColor( float r, float g, float b ) {
 	qglClearColor( r, g, b, 1.0 );
 	GLimp_BeginFrame();
 #ifndef GL_ES_VERSION_2_0
-	if( glConfig.stereoEnabled )
-	{
+	if( glConfig.stereoEnabled ) {
 		qglDrawBuffer( GL_BACK_LEFT );
 		qglClear( GL_COLOR_BUFFER_BIT );
 		qglDrawBuffer( GL_BACK_RIGHT );
@@ -1065,12 +1053,11 @@ static void R_FillStartupBackgroundColor( float r, float g, float b )
 	GLimp_EndFrame();
 }
 
-static void R_Register( const char *screenshotsPrefix )
-{
+static void R_Register( const char *screenshotsPrefix ) {
 	char tmp[128];
 	const qgl_driverinfo_t *driver;
 
-    r_maxfps = ri.Cvar_Get( "r_maxfps", "250", CVAR_ARCHIVE );
+	r_maxfps = ri.Cvar_Get( "r_maxfps", "250", CVAR_ARCHIVE );
 	r_norefresh = ri.Cvar_Get( "r_norefresh", "0", 0 );
 	r_fullbright = ri.Cvar_Get( "r_fullbright", "0", CVAR_LATCH_VIDEO );
 	r_lightmap = ri.Cvar_Get( "r_lightmap", "0", 0 );
@@ -1085,38 +1072,38 @@ static void R_Register( const char *screenshotsPrefix )
 	r_leafvis = ri.Cvar_Get( "r_leafvis", "0", CVAR_CHEAT );
 	r_lockpvs = ri.Cvar_Get( "r_lockpvs", "0", CVAR_CHEAT );
 	r_nobind = ri.Cvar_Get( "r_nobind", "0", 0 );
-	r_picmip = ri.Cvar_Get( "r_picmip", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_skymip = ri.Cvar_Get( "r_skymip", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_picmip = ri.Cvar_Get( "r_picmip", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
+	r_skymip = ri.Cvar_Get( "r_skymip", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_polyblend = ri.Cvar_Get( "r_polyblend", "1", 0 );
 
 	r_brightness = ri.Cvar_Get( "r_brightness", "0", CVAR_ARCHIVE );
-	r_sRGB = ri.Cvar_Get( "r_sRGB", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_sRGB = ri.Cvar_Get( "r_sRGB", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
 	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "1", CVAR_ARCHIVE );
 
 	r_dynamiclight = ri.Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
 	r_coronascale = ri.Cvar_Get( "r_coronascale", "0.4", 0 );
-	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_shownormals = ri.Cvar_Get( "r_shownormals", "0", CVAR_CHEAT );
 	r_draworder = ri.Cvar_Get( "r_draworder", "0", CVAR_CHEAT );
 
 	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
 	r_portalonly = ri.Cvar_Get( "r_portalonly", "0", 0 );
-	r_portalmaps = ri.Cvar_Get( "r_portalmaps", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_portalmaps = ri.Cvar_Get( "r_portalmaps", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_portalmaps_maxtexsize = ri.Cvar_Get( "r_portalmaps_maxtexsize", "1024", CVAR_ARCHIVE );
 
-	r_lighting_deluxemapping = ri.Cvar_Get( "r_lighting_deluxemapping", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_lighting_specular = ri.Cvar_Get( "r_lighting_specular", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_lighting_deluxemapping = ri.Cvar_Get( "r_lighting_deluxemapping", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
+	r_lighting_specular = ri.Cvar_Get( "r_lighting_specular", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_glossintensity = ri.Cvar_Get( "r_lighting_glossintensity", "1.5", CVAR_ARCHIVE );
 	r_lighting_glossexponent = ri.Cvar_Get( "r_lighting_glossexponent", "24", CVAR_ARCHIVE );
 	r_lighting_ambientscale = ri.Cvar_Get( "r_lighting_ambientscale", "1", 0 );
 	r_lighting_directedscale = ri.Cvar_Get( "r_lighting_directedscale", "1", 0 );
 
-	r_lighting_packlightmaps = ri.Cvar_Get( "r_lighting_packlightmaps", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_lighting_packlightmaps = ri.Cvar_Get( "r_lighting_packlightmaps", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
+	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
+	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "16", CVAR_ARCHIVE );
-	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
 
 	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
@@ -1159,14 +1146,14 @@ static void R_Register( const char *screenshotsPrefix )
 	r_texturemode = ri.Cvar_Get( "r_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE );
 	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
 	r_texturecompression = ri.Cvar_Get( "r_texturecompression", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
 	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );
 	r_screenshot_jpeg_quality = ri.Cvar_Get( "r_screenshot_jpeg_quality", "90", CVAR_ARCHIVE );
 	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", screenshotsPrefix ), CVAR_ARCHIVE );
 
-#if defined(GLX_VERSION) && !defined(USE_SDL2)
-	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+#if defined( GLX_VERSION ) && !defined( USE_SDL2 )
+	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 #else
 	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE );
 #endif
@@ -1188,16 +1175,17 @@ static void R_Register( const char *screenshotsPrefix )
 
 	r_maxglslbones = ri.Cvar_Get( "r_maxglslbones", STR_TOSTR( MAX_GLSL_UNIFORM_BONES ), CVAR_LATCH_VIDEO );
 
-	r_multithreading = ri.Cvar_Get( "r_multithreading", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_multithreading = ri.Cvar_Get( "r_multithreading", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
 	gl_cull = ri.Cvar_Get( "gl_cull", "1", 0 );
 	gl_drawbuffer = ri.Cvar_Get( "gl_drawbuffer", "GL_BACK", 0 );
 
 	driver = QGL_GetDriverInfo();
-	if( driver && driver->dllcvarname )
-		gl_driver = ri.Cvar_Get( driver->dllcvarname, driver->dllname, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	else
+	if( driver && driver->dllcvarname ) {
+		gl_driver = ri.Cvar_Get( driver->dllcvarname, driver->dllname, CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
+	} else {
 		gl_driver = NULL;
+	}
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
 	ri.Cmd_AddCommand( "shaderlist", R_ShaderList_f );
@@ -1213,8 +1201,7 @@ static void R_Register( const char *screenshotsPrefix )
 /*
 * R_GfxInfo_f
 */
-static void R_GfxInfo_f( void )
-{
+static void R_GfxInfo_f( void ) {
 	Com_Printf( "\n" );
 	Com_Printf( "GL_VENDOR: %s\n", glConfig.vendorString );
 	Com_Printf( "GL_RENDERER: %s\n", glConfig.rendererString );
@@ -1227,12 +1214,15 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "GL_MAX_TEXTURE_SIZE: %i\n", glConfig.maxTextureSize );
 	Com_Printf( "GL_MAX_TEXTURE_IMAGE_UNITS: %i\n", glConfig.maxTextureUnits );
 	Com_Printf( "GL_MAX_CUBE_MAP_TEXTURE_SIZE: %i\n", glConfig.maxTextureCubemapSize );
-	if( glConfig.ext.texture3D )
+	if( glConfig.ext.texture3D ) {
 		Com_Printf( "GL_MAX_3D_TEXTURE_SIZE: %i\n", glConfig.maxTexture3DSize );
-	if( glConfig.ext.texture_array )
+	}
+	if( glConfig.ext.texture_array ) {
 		Com_Printf( "GL_MAX_ARRAY_TEXTURE_LAYERS: %i\n", glConfig.maxTextureLayers );
-	if( glConfig.ext.texture_filter_anisotropic )
+	}
+	if( glConfig.ext.texture_filter_anisotropic ) {
 		Com_Printf( "GL_MAX_TEXTURE_MAX_ANISOTROPY: %i\n", glConfig.maxTextureFilterAnisotropic );
+	}
 	Com_Printf( "GL_MAX_RENDERBUFFER_SIZE: %i\n", glConfig.maxRenderbufferSize );
 	Com_Printf( "GL_MAX_VARYING_FLOATS: %i\n", glConfig.maxVaryingFloats );
 	Com_Printf( "GL_MAX_VERTEX_UNIFORM_COMPONENTS: %i\n", glConfig.maxVertexUniformComponents );
@@ -1242,7 +1232,7 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "\n" );
 
 	Com_Printf( "mode: %ix%i%s\n", glConfig.width, glConfig.height,
-		glConfig.fullScreen ? ", fullscreen" : ", windowed" );
+				glConfig.fullScreen ? ", fullscreen" : ", windowed" );
 	Com_Printf( "picmip: %i\n", r_picmip->integer );
 	Com_Printf( "texturemode: %s\n", r_texturemode->string );
 	Com_Printf( "anisotropic filtering: %i\n", r_texturefilter->integer );
@@ -1257,16 +1247,15 @@ static void R_GfxInfo_f( void )
 /*
 * R_GLVersionHash
 */
-static unsigned R_GLVersionHash( const char *vendorString, 
-	const char *rendererString, const char *versionString )
-{
+static unsigned R_GLVersionHash( const char *vendorString,
+								 const char *rendererString, const char *versionString ) {
 	uint8_t *tmp;
 	size_t csize;
 	size_t tmp_size, pos;
 	unsigned hash;
 
 	tmp_size = strlen( vendorString ) + strlen( rendererString ) +
-		strlen( versionString ) + strlen( ARCH ) + 1;
+			   strlen( versionString ) + strlen( ARCH ) + 1;
 
 	pos = 0;
 	tmp = R_Malloc( tmp_size );
@@ -1299,10 +1288,9 @@ static unsigned R_GLVersionHash( const char *vendorString,
 * R_Init
 */
 rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-	int iconResource, const int *iconXPM,
-	void *hinstance, void *wndproc, void *parenthWnd, 
-	bool verbose )
-{
+				int iconResource, const int *iconXPM,
+				void *hinstance, void *wndproc, void *parenthWnd,
+				bool verbose ) {
 	const qgl_driverinfo_t *driver;
 	const char *dllname = NULL;
 	qgl_initerr_t initerr;
@@ -1313,26 +1301,29 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int s
 
 	r_postinit = true;
 
-	if( !applicationName ) applicationName = "Qfusion";
-	if( !screenshotPrefix ) screenshotPrefix = "";
+	if( !applicationName ) {
+		applicationName = "Qfusion";
+	}
+	if( !screenshotPrefix ) {
+		screenshotPrefix = "";
+	}
 
 	R_Register( screenshotPrefix );
 
-	memset( &glConfig, 0, sizeof(glConfig) );
+	memset( &glConfig, 0, sizeof( glConfig ) );
 
 	// initialize our QGL dynamic bindings
 	driver = QGL_GetDriverInfo();
-	if( driver )
+	if( driver ) {
 		dllname = driver->dllname;
+	}
 init_qgl:
 	initerr = QGL_Init( gl_driver ? gl_driver->string : dllname );
-	if( initerr != qgl_initerr_ok )
-	{
+	if( initerr != qgl_initerr_ok ) {
 		QGL_Shutdown();
 		Com_Printf( "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver ? gl_driver->string : dllname );
 
-		if( ( initerr == qgl_initerr_invalid_driver ) && gl_driver && strcmp( gl_driver->string, dllname ) )
-		{
+		if( ( initerr == qgl_initerr_invalid_driver ) && gl_driver && strcmp( gl_driver->string, dllname ) ) {
 			ri.Cvar_ForceSet( gl_driver->name, dllname );
 			goto init_qgl;
 		}
@@ -1341,8 +1332,7 @@ init_qgl:
 	}
 
 	// initialize OS-specific parts of OpenGL
-	if( !GLimp_Init( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM ) )
-	{
+	if( !GLimp_Init( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM ) ) {
 		QGL_Shutdown();
 		return rserr_unknown;
 	}
@@ -1358,14 +1348,14 @@ init_qgl:
 /*
 * R_PostInit
 */
-static rserr_t R_PostInit( void )
-{
+static rserr_t R_PostInit( void ) {
 	int i;
 	GLenum glerr;
 
 	glConfig.hwGamma = GLimp_GetGammaRamp( GAMMARAMP_STRIDE, &glConfig.gammaRampSize, glConfig.originalGammaRamp );
-	if( glConfig.hwGamma )
+	if( glConfig.hwGamma ) {
 		r_gamma->modified = true;
+	}
 
 	/*
 	** get our various GL strings
@@ -1374,18 +1364,30 @@ static rserr_t R_PostInit( void )
 	glConfig.rendererString = (const char *)qglGetString( GL_RENDERER );
 	glConfig.versionString = (const char *)qglGetString( GL_VERSION );
 	glConfig.extensionsString = (const char *)qglGetString( GL_EXTENSIONS );
-	glConfig.glwExtensionsString = (const char *)qglGetGLWExtensionsString ();
+	glConfig.glwExtensionsString = (const char *)qglGetGLWExtensionsString();
 	glConfig.shadingLanguageVersionString = (const char *)qglGetString( GL_SHADING_LANGUAGE_VERSION_ARB );
 
-	if( !glConfig.vendorString ) glConfig.vendorString = "";
-	if( !glConfig.rendererString ) glConfig.rendererString = "";
-	if( !glConfig.versionString ) glConfig.versionString = "";
-	if( !glConfig.extensionsString ) glConfig.extensionsString = "";
-	if( !glConfig.glwExtensionsString ) glConfig.glwExtensionsString = "";
-	if( !glConfig.shadingLanguageVersionString ) glConfig.shadingLanguageVersionString = "";
+	if( !glConfig.vendorString ) {
+		glConfig.vendorString = "";
+	}
+	if( !glConfig.rendererString ) {
+		glConfig.rendererString = "";
+	}
+	if( !glConfig.versionString ) {
+		glConfig.versionString = "";
+	}
+	if( !glConfig.extensionsString ) {
+		glConfig.extensionsString = "";
+	}
+	if( !glConfig.glwExtensionsString ) {
+		glConfig.glwExtensionsString = "";
+	}
+	if( !glConfig.shadingLanguageVersionString ) {
+		glConfig.shadingLanguageVersionString = "";
+	}
 
 	glConfig.versionHash = R_GLVersionHash( glConfig.vendorString, glConfig.rendererString,
-		glConfig.versionString );
+											glConfig.versionString );
 	glConfig.multithreading = r_multithreading->integer != 0 && !strstr( glConfig.vendorString, "nouveau" );
 
 	memset( &rsh, 0, sizeof( rsh ) );
@@ -1399,8 +1401,8 @@ static rserr_t R_PostInit( void )
 	for( i = 0; i < 256; i++ )
 		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
 
-    rf.swapInterval = -1;
-    rf.speedsMsgLock = ri.Mutex_Create();
+	rf.swapInterval = -1;
+	rf.speedsMsgLock = ri.Mutex_Create();
 	rf.debugSurfaceLock = ri.Mutex_Create();
 
 	RJ_Init();
@@ -1414,15 +1416,16 @@ static rserr_t R_PostInit( void )
 
 	R_SetSwapInterval( 0, -1 );
 
-    R_FillStartupBackgroundColor( COLOR_R( glConfig.startupColor ) / 255.0f,
-		COLOR_G( glConfig.startupColor ) / 255.0f, COLOR_B( glConfig.startupColor ) / 255.0f );
+	R_FillStartupBackgroundColor( COLOR_R( glConfig.startupColor ) / 255.0f,
+								  COLOR_G( glConfig.startupColor ) / 255.0f, COLOR_B( glConfig.startupColor ) / 255.0f );
 
 	R_TextureMode( r_texturemode->string );
 
 	R_AnisotropicFilter( r_texturefilter->integer );
 
-	if ( r_verbose )
+	if( r_verbose ) {
 		R_GfxInfo_f();
+	}
 
 	// load and compile GLSL programs
 	RP_Init();
@@ -1446,8 +1449,9 @@ static rserr_t R_PostInit( void )
 	R_ClearRefInstStack();
 
 	glerr = qglGetError();
-	if( glerr != GL_NO_ERROR )
+	if( glerr != GL_NO_ERROR ) {
 		Com_Printf( "glGetError() = 0x%x\n", glerr );
+	}
 
 	return rserr_ok;
 }
@@ -1455,19 +1459,16 @@ static rserr_t R_PostInit( void )
 /*
 * R_SetMode
 */
-rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless )
-{
+rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless ) {
 	rserr_t err;
-	
+
 	err = GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo, borderless );
-	if( err != rserr_ok )
-	{
+	if( err != rserr_ok ) {
 		Com_Printf( "Could not GLimp_SetMode()\n" );
 		return err;
 	}
 
-	if( r_postinit )
-	{
+	if( r_postinit ) {
 		err = R_PostInit();
 		r_postinit = false;
 	}
@@ -1478,8 +1479,7 @@ rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bo
 /*
 * R_InitVolatileAssets
 */
-static void R_InitVolatileAssets( void )
-{
+static void R_InitVolatileAssets( void ) {
 	// init volatile data
 	R_InitSkeletalCache();
 	R_InitCoronas();
@@ -1492,15 +1492,13 @@ static void R_InitVolatileAssets( void )
 
 	if( !rsh.nullVBO ) {
 		rsh.nullVBO = R_InitNullModelVBO();
-	}
-	else {
+	} else {
 		R_TouchMeshVBO( rsh.nullVBO );
 	}
 
 	if( !rsh.postProcessingVBO ) {
 		rsh.postProcessingVBO = R_InitPostProcessingVBO();
-	}
-	else {
+	} else {
 		R_TouchMeshVBO( rsh.postProcessingVBO );
 	}
 }
@@ -1508,8 +1506,7 @@ static void R_InitVolatileAssets( void )
 /*
 * R_DestroyVolatileAssets
 */
-static void R_DestroyVolatileAssets( void )
-{
+static void R_DestroyVolatileAssets( void ) {
 	// kill volatile data
 	R_ShutdownCustomColors();
 	R_ShutdownCoronas();
@@ -1519,8 +1516,7 @@ static void R_DestroyVolatileAssets( void )
 /*
 * R_BeginRegistration
 */
-void R_BeginRegistration( void )
-{
+void R_BeginRegistration( void ) {
 	R_FinishLoadingImages();
 
 	R_DestroyVolatileAssets();
@@ -1529,7 +1525,7 @@ void R_BeginRegistration( void )
 	if( !rsh.registrationSequence ) {
 		// make sure assumption that an asset is free it its registrationSequence is 0
 		// since rsh.registrationSequence never equals 0
-		rsh.registrationSequence = 1; 
+		rsh.registrationSequence = 1;
 	}
 	rsh.registrationOpen = true;
 
@@ -1543,8 +1539,7 @@ void R_BeginRegistration( void )
 /*
 * R_EndRegistration
 */
-void R_EndRegistration( void )
-{
+void R_EndRegistration( void ) {
 	if( rsh.registrationOpen == false ) {
 		return;
 	}
@@ -1568,8 +1563,7 @@ void R_EndRegistration( void )
 /*
 * R_Shutdown
 */
-void R_Shutdown( bool verbose )
-{
+void R_Shutdown( bool verbose ) {
 	ri.Cmd_RemoveCommand( "modellist" );
 	ri.Cmd_RemoveCommand( "screenshot" );
 	ri.Cmd_RemoveCommand( "envshot" );
@@ -1600,10 +1594,11 @@ void R_Shutdown( bool verbose )
 	RP_Shutdown();
 
 	// restore original gamma
-	if( glConfig.hwGamma )
+	if( glConfig.hwGamma ) {
 		GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, glConfig.originalGammaRamp );
+	}
 
-    ri.Mutex_Destroy( &rf.speedsMsgLock );
+	ri.Mutex_Destroy( &rf.speedsMsgLock );
 	ri.Mutex_Destroy( &rf.debugSurfaceLock );
 
 	RJ_Shutdown();

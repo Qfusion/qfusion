@@ -24,7 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <time.h>
 #include "kernel/ui_common.h"
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 typedef std::map<std::string, std::string> DemoMetaData;
 
@@ -39,7 +40,7 @@ public:
 	DemoInfo( const DemoInfo &other ) { *this = other; }
 
 	/// Assignment operator, required by the AS.
-	DemoInfo & operator = ( const DemoInfo &other );
+	DemoInfo & operator =( const DemoInfo &other );
 
 	// whether playable at all
 	const bool isValid( void ) const;

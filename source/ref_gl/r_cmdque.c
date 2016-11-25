@@ -34,122 +34,108 @@ FRAME COMMANDS BUFFER
 
 #define REF_CMD_BUF_SIZE 0x400000
 
-enum
-{
+enum {
 	REF_CMD_BEGIN_FRAME,
 	REF_CMD_END_FRAME,
-	
+
 	REF_CMD_DRAW_STRETCH_PIC,
 	REF_CMD_DRAW_STRETCH_POLY,
-	
+
 	REF_CMD_CLEAR_SCENE,
 	REF_CMD_ADD_ENTITY_TO_SCENE,
 	REF_CMD_ADD_LIGHT_TO_SCENE,
 	REF_CMD_ADD_POLY_TO_SCENE,
 	REF_CMD_ADD_LIGHT_STYLE_TO_SCENE,
 	REF_CMD_RENDER_SCENE,
-	
+
 	REF_CMD_SET_SCISSOR,
 	REF_CMD_RESET_SCISSOR,
-	
+
 	REF_CMD_DRAW_STRETCH_RAW,
 	REF_CMD_DRAW_STRETCH_RAW_YUV,
 
 	NUM_REF_CMDS
 };
 
-typedef struct
-{
-	int             id;
-	float           cameraSeparation;
-	bool            forceClear;
-	int             swapInterval;
+typedef struct {
+	int id;
+	float cameraSeparation;
+	bool forceClear;
+	int swapInterval;
 } refCmdBeginFrame_t;
 
-typedef struct
-{
-	int             id;
+typedef struct {
+	int id;
 } refCmdEndFrame_t;
 
-typedef struct
-{
-	int             id;
-	int             x, y, w, h;
-	float           s1, t1, s2, t2;
-	float           angle;
-	vec4_t          color;
+typedef struct {
+	int id;
+	int x, y, w, h;
+	float s1, t1, s2, t2;
+	float angle;
+	vec4_t color;
 	void            *shader;
 } refCmdDrawStretchPic_t;
 
-typedef struct
-{
-	int             id;
-	unsigned        length;
-	float           x_offset, y_offset;
-	poly_t          poly;
+typedef struct {
+	int id;
+	unsigned length;
+	float x_offset, y_offset;
+	poly_t poly;
 } refCmdDrawStretchOrScenePoly_t;
 
-typedef struct
-{
-	int             id;
+typedef struct {
+	int id;
 } refCmdClearScene_t;
 
-typedef struct
-{
-	int             id;
-	unsigned        length;
-	entity_t        entity;
-	int             numBoneposes;
+typedef struct {
+	int id;
+	unsigned length;
+	entity_t entity;
+	int numBoneposes;
 	bonepose_t      *boneposes;
 	bonepose_t      *oldboneposes;
 } refCmdAddEntityToScene_t;
 
-typedef struct
-{
-	int             id;
-	vec3_t          origin;
-	float           intensity;
-	float           r, g, b;
+typedef struct {
+	int id;
+	vec3_t origin;
+	float intensity;
+	float r, g, b;
 } refCmdAddLightToScene_t;
 
-typedef struct
-{
-	int             id;
-	int             style;
-	float           r, g, b;
+typedef struct {
+	int id;
+	int style;
+	float r, g, b;
 } refCmdAddLightStyleToScene_t;
 
-typedef struct
-{
-	int             id;
-	unsigned        length;
-	int             registrationSequence;
-	int             worldModelSequence;
-	refdef_t        refdef;
+typedef struct {
+	int id;
+	unsigned length;
+	int registrationSequence;
+	int worldModelSequence;
+	refdef_t refdef;
 	uint8_t         *areabits;
 } refCmdRenderScene_t;
 
-typedef struct
-{
-	int             id;
-	int             x, y, w, h;
+typedef struct {
+	int id;
+	int x, y, w, h;
 } refCmdSetScissor_t;
 
-typedef struct
-{
-	int             id;
+typedef struct {
+	int id;
 } refCmdResetScissor_t;
 
-typedef struct
-{
-	int             id;
+typedef struct {
+	int id;
 } refCmdSync_t;
 
-typedef struct
-{
-	int             id;
-	int             x, y, w, h;
-	float           s1, t1, s2, t2;
+typedef struct {
+	int id;
+	int x, y, w, h;
+	float s1, t1, s2, t2;
 } refCmdDrawStretchRaw_t;
 
 typedef unsigned (*refCmdHandler_t)( const void * );
@@ -188,72 +174,62 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 	(refCmdHandler_t)R_HandleDrawStretchRawYUVCmd,
 };
 
-static unsigned R_HandleBeginFrameCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleBeginFrameCmd( uint8_t *pcmd ) {
 	refCmdBeginFrame_t *cmd = (void *)pcmd;
 	R_BeginFrame( cmd->cameraSeparation, cmd->forceClear, cmd->swapInterval );
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleEndFrameCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleEndFrameCmd( uint8_t *pcmd ) {
 	refCmdEndFrame_t *cmd = (void *)pcmd;
 	R_EndFrame();
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleDrawStretchPicCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleDrawStretchPicCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchPic_t *cmd = (void *)pcmd;
 	R_DrawRotatedStretchPic( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2,
-		cmd->angle, cmd->color, cmd->shader );
+							 cmd->angle, cmd->color, cmd->shader );
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleDrawStretchPolyCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleDrawStretchPolyCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchOrScenePoly_t *cmd = (void *)pcmd;
 	R_DrawStretchPoly( &cmd->poly, cmd->x_offset, cmd->y_offset );
 	return cmd->length;
 }
 
-static unsigned R_HandleClearSceneCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleClearSceneCmd( uint8_t *pcmd ) {
 	refCmdClearScene_t *cmd = (void *)pcmd;
 	R_ClearScene();
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleAddEntityToSceneCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleAddEntityToSceneCmd( uint8_t *pcmd ) {
 	refCmdAddEntityToScene_t *cmd = (void *)pcmd;
 	R_AddEntityToScene( &cmd->entity );
 	return cmd->length;
 }
 
-static unsigned R_HandleAddLightToSceneCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleAddLightToSceneCmd( uint8_t *pcmd ) {
 	refCmdAddLightToScene_t *cmd = (void *)pcmd;
 	R_AddLightToScene( cmd->origin, cmd->intensity, cmd->r, cmd->g, cmd->b );
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleAddPolyToSceneCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleAddPolyToSceneCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchOrScenePoly_t *cmd = (void *)pcmd;
 	R_AddPolyToScene( &cmd->poly );
 	return cmd->length;
 }
 
-static unsigned R_HandleAddLightStyleToSceneCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleAddLightStyleToSceneCmd( uint8_t *pcmd ) {
 	refCmdAddLightStyleToScene_t *cmd = (void *)pcmd;
 	R_AddLightStyleToScene( cmd->style, cmd->r, cmd->g, cmd->b );
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleRenderSceneCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleRenderSceneCmd( uint8_t *pcmd ) {
 	refCmdRenderScene_t *cmd = (void *)pcmd;
 
 	// ignore scene render calls issued during registration
@@ -268,29 +244,25 @@ static unsigned R_HandleRenderSceneCmd( uint8_t *pcmd )
 	return cmd->length;
 }
 
-static unsigned R_HandleSetScissorCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleSetScissorCmd( uint8_t *pcmd ) {
 	refCmdSetScissor_t *cmd = (void *)pcmd;
 	R_Scissor( cmd->x, cmd->y, cmd->w, cmd->h );
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleResetScissorCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleResetScissorCmd( uint8_t *pcmd ) {
 	refCmdResetScissor_t *cmd = (void *)pcmd;
 	R_ResetScissor();
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleDrawStretchRawCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleDrawStretchRawCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchRaw_t *cmd = (void *)pcmd;
 	R_DrawStretchRaw( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *pcmd )
-{
+static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchRaw_t *cmd = (void *)pcmd;
 	R_DrawStretchRawYUV( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
 	return sizeof( *cmd );
@@ -298,22 +270,21 @@ static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *pcmd )
 
 // ============================================================================
 
-static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_len, size_t cmd_len )
-{
+static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_len, size_t cmd_len ) {
 	if( cmdbuf->sync ) {
-		int id = *((int *)cmd);
+		int id = *( (int *)cmd );
 		refCmdHandlers[id]( (uint8_t *)cmd );
 		return;
 	}
 
-	if( cmdbuf->len + cmd_len > cmdbuf->buf_size )
+	if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
 		return;
+	}
 	memcpy( cmdbuf->buf + cmdbuf->len, cmd, struct_len );
 	cmdbuf->len += cmd_len;
 }
 
-static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval )
-{
+static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval ) {
 	refCmdBeginFrame_t cmd;
 
 	cmd.id = REF_CMD_BEGIN_FRAME;
@@ -325,16 +296,14 @@ static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation,
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-static void RF_IssueEndFrameCmd( ref_cmdbuf_t *cmdbuf )
-{
+static void RF_IssueEndFrameCmd( ref_cmdbuf_t *cmdbuf ) {
 	refCmdEndFrame_t cmd = { REF_CMD_END_FRAME };
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
 static void RF_IssueDrawRotatedStretchPicCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h,
-	float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader )
-{
+											  float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader ) {
 	refCmdDrawStretchPic_t cmd;
 
 	cmd.id = REF_CMD_DRAW_STRETCH_PIC;
@@ -354,39 +323,45 @@ static void RF_IssueDrawRotatedStretchPicCmd( ref_cmdbuf_t *cmdbuf, int x, int y
 }
 
 static void RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, int id, const poly_t *poly,
-	float x_offset, float y_offset )
-{
+														float x_offset, float y_offset ) {
 	refCmdDrawStretchOrScenePoly_t cmd;
 	size_t cmd_len = sizeof( cmd );
 	int numverts;
 	uint8_t *pcmd;
 
 	numverts = poly->numverts;
-	if( !numverts || !poly->shader )
+	if( !numverts || !poly->shader ) {
 		return;
+	}
 
 	cmd.id = id;
 	cmd.poly = *poly;
 	cmd.x_offset = x_offset;
 	cmd.y_offset = y_offset;
 
-	if( poly->verts )
+	if( poly->verts ) {
 		cmd_len += numverts * sizeof( vec4_t );
-	if( poly->stcoords )
+	}
+	if( poly->stcoords ) {
 		cmd_len += numverts * sizeof( vec2_t );
-	if( poly->normals )
+	}
+	if( poly->normals ) {
 		cmd_len += numverts * sizeof( vec4_t );
-	if( poly->colors )
+	}
+	if( poly->colors ) {
 		cmd_len += numverts * sizeof( byte_vec4_t );
-	if( poly->elems )
+	}
+	if( poly->elems ) {
 		cmd_len += poly->numelems * sizeof( elem_t );
+	}
 	cmd_len = ALIGN( cmd_len, sizeof( float ) );
 
 	cmd.length = cmd_len;
 
 	if( !cmdbuf->sync ) {
-		if( cmdbuf->len + cmd_len > cmdbuf->buf_size )
+		if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
 			return;
+		}
 
 		pcmd = cmdbuf->buf + cmdbuf->len;
 		pcmd += sizeof( cmd );
@@ -421,19 +396,16 @@ static void RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, in
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
 }
 
-static void RF_IssueDrawStretchPolyCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly, float x_offset, float y_offset )
-{
+static void RF_IssueDrawStretchPolyCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly, float x_offset, float y_offset ) {
 	RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( cmdbuf, REF_CMD_DRAW_STRETCH_POLY, poly, x_offset, y_offset );
 }
 
-static void RF_IssueClearSceneCmd( ref_cmdbuf_t *cmdbuf )
-{
+static void RF_IssueClearSceneCmd( ref_cmdbuf_t *cmdbuf ) {
 	refCmdClearScene_t cmd = { REF_CMD_CLEAR_SCENE };
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-static void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *cmdbuf, const entity_t *ent )
-{
+static void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *cmdbuf, const entity_t *ent ) {
 	refCmdAddEntityToScene_t cmd;
 	size_t cmd_len = sizeof( cmd );
 	uint8_t *pcmd;
@@ -453,8 +425,9 @@ static void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *cmdbuf, const entity_t *e
 	cmd.length = cmd_len;
 
 	if( !cmdbuf->sync ) {
-		if( cmdbuf->len + cmd_len > cmdbuf->buf_size )
+		if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
 			return;
+		}
 
 		pcmd = cmdbuf->buf + cmdbuf->len;
 		pcmd += sizeof( cmd );
@@ -475,8 +448,7 @@ static void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *cmdbuf, const entity_t *e
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
 }
 
-static void RF_IssueAddLightToSceneCmd( ref_cmdbuf_t *cmdbuf, const vec3_t org, float intensity, float r, float g, float b )
-{
+static void RF_IssueAddLightToSceneCmd( ref_cmdbuf_t *cmdbuf, const vec3_t org, float intensity, float r, float g, float b ) {
 	refCmdAddLightToScene_t cmd;
 
 	cmd.id = REF_CMD_ADD_LIGHT_TO_SCENE;
@@ -489,13 +461,11 @@ static void RF_IssueAddLightToSceneCmd( ref_cmdbuf_t *cmdbuf, const vec3_t org, 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-static void RF_IssueAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly )
-{
+static void RF_IssueAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly ) {
 	RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( cmdbuf, REF_CMD_ADD_POLY_TO_SCENE, poly, 0.0f, 0.0f );
 }
 
-static void RF_IssueAddLightStyleToSceneCmd( ref_cmdbuf_t *cmdbuf, int style, float r, float g, float b )
-{
+static void RF_IssueAddLightStyleToSceneCmd( ref_cmdbuf_t *cmdbuf, int style, float r, float g, float b ) {
 	refCmdAddLightStyleToScene_t cmd;
 
 	cmd.id = REF_CMD_ADD_LIGHT_STYLE_TO_SCENE;
@@ -507,8 +477,7 @@ static void RF_IssueAddLightStyleToSceneCmd( ref_cmdbuf_t *cmdbuf, int style, fl
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd )
-{
+static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd ) {
 	refCmdRenderScene_t cmd;
 	size_t cmd_len = sizeof( cmd );
 	uint8_t *pcmd;
@@ -520,7 +489,7 @@ static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd )
 	cmd.worldModelSequence = rsh.worldModelSequence;
 
 	if( fd->areabits && rsh.worldBrushModel ) {
-		areabytes = ((rsh.worldBrushModel->numareas+7)/8);
+		areabytes = ( ( rsh.worldBrushModel->numareas + 7 ) / 8 );
 #ifdef AREAPORTALS_MATRIX
 		areabytes *= rsh.worldBrushModel->numareas;
 #endif
@@ -530,8 +499,9 @@ static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd )
 	cmd.length = cmd_len;
 
 	if( !cmdbuf->sync ) {
-		if( cmdbuf->len + cmd_len > cmdbuf->buf_size )
+		if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
 			return;
+		}
 
 		pcmd = cmdbuf->buf + cmdbuf->len;
 		pcmd += sizeof( cmd );
@@ -545,8 +515,7 @@ static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd )
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
 }
 
-static void RF_IssueSetScissorCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h )
-{
+static void RF_IssueSetScissorCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h ) {
 	refCmdSetScissor_t cmd;
 
 	cmd.id = REF_CMD_SET_SCISSOR;
@@ -558,14 +527,12 @@ static void RF_IssueSetScissorCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, in
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-static void RF_IssueResetScissorCmd( ref_cmdbuf_t *cmdbuf )
-{
+static void RF_IssueResetScissorCmd( ref_cmdbuf_t *cmdbuf ) {
 	refCmdResetScissor_t cmd = { REF_CMD_RESET_SCISSOR };
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-static void RF_IssueDrawStretchRawOrRawYUVCmd( ref_cmdbuf_t *cmdbuf, int id, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
-{
+static void RF_IssueDrawStretchRawOrRawYUVCmd( ref_cmdbuf_t *cmdbuf, int id, int x, int y, int w, int h, float s1, float t1, float s2, float t2 ) {
 	refCmdDrawStretchRaw_t cmd;
 
 	cmd.id = id;
@@ -581,69 +548,65 @@ static void RF_IssueDrawStretchRawOrRawYUVCmd( ref_cmdbuf_t *cmdbuf, int id, int
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-static void RF_IssueDrawStretchRawCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
-{
+static void RF_IssueDrawStretchRawCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 ) {
 	RF_IssueDrawStretchRawOrRawYUVCmd( cmdbuf, REF_CMD_DRAW_STRETCH_RAW, x, y, w, h, s1, t1, s2, t2 );
 }
 
-static void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
-{
+static void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 ) {
 	RF_IssueDrawStretchRawOrRawYUVCmd( cmdbuf, REF_CMD_DRAW_STRETCH_RAW_YUV, x, y, w, h, s1, t1, s2, t2 );
 }
 
 // ============================================================================
 
-static void RF_RunCmdBufProc( ref_cmdbuf_t *cmdbuf )
-{
+static void RF_RunCmdBufProc( ref_cmdbuf_t *cmdbuf ) {
 	size_t t, e;
 
-	if( cmdbuf->sync )
+	if( cmdbuf->sync ) {
 		return;
+	}
 
 	assert( cmdbuf->len <= cmdbuf->buf_size );
 
 	e = cmdbuf->len;
-	if( e > cmdbuf->buf_size )
+	if( e > cmdbuf->buf_size ) {
 		e = cmdbuf->buf_size;
+	}
 
 	for( t = 0; t < e; ) {
 		uint8_t *cmd = cmdbuf->buf + t;
 		int id = *(int *)cmd;
-			
-		if( id < 0 || id >= NUM_REF_CMDS )
+
+		if( id < 0 || id >= NUM_REF_CMDS ) {
 			break;
-			
+		}
+
 		size_t len = refCmdHandlers[id]( cmd );
-		
-		if( len == 0 )
+
+		if( len == 0 ) {
 			break;
-			
+		}
+
 		t += len;
 	}
 }
 
-static void RF_ClearCmdBuf( ref_cmdbuf_t *cmdbuf )
-{
+static void RF_ClearCmdBuf( ref_cmdbuf_t *cmdbuf ) {
 	cmdbuf->len = 0;
 }
 
-static void RF_SetCmdBufFrameId( ref_cmdbuf_t *cmdbuf, unsigned frameId )
-{
+static void RF_SetCmdBufFrameId( ref_cmdbuf_t *cmdbuf, unsigned frameId ) {
 	cmdbuf->frameId = frameId;
 }
 
-static unsigned RF_GetCmdBufFrameId( ref_cmdbuf_t *cmdbuf )
-{
+static unsigned RF_GetCmdBufFrameId( ref_cmdbuf_t *cmdbuf ) {
 	return cmdbuf->frameId;
 }
 
-static bool RF_GetCmdBufForceVsync( ref_cmdbuf_t *cmdbuf )
-{
+static bool RF_GetCmdBufForceVsync( ref_cmdbuf_t *cmdbuf ) {
 	return cmdbuf->forceVsync;
 }
 
-ref_cmdbuf_t *RF_CreateCmdBuf( bool sync )
-{
+ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
 	ref_cmdbuf_t *cmdbuf;
 
 	cmdbuf = R_Malloc( sizeof( *cmdbuf ) );
@@ -678,12 +641,12 @@ ref_cmdbuf_t *RF_CreateCmdBuf( bool sync )
 	return cmdbuf;
 }
 
-void RF_DestroyCmdBuf( ref_cmdbuf_t **pcmdbuf )
-{
+void RF_DestroyCmdBuf( ref_cmdbuf_t **pcmdbuf ) {
 	ref_cmdbuf_t *cmdbuf;
 
-	if( !pcmdbuf || !*pcmdbuf )
+	if( !pcmdbuf || !*pcmdbuf ) {
 		return;
+	}
 
 	cmdbuf = *pcmdbuf;
 	*pcmdbuf = NULL;
@@ -702,8 +665,7 @@ INTER-FRAME COMMANDS PIPE
 
 #define REF_PIPE_CMD_BUF_SIZE 0x100000
 
-enum
-{
+enum {
 	REF_PIPE_CMD_INIT,
 	REF_PIPE_CMD_SHUTDOWN,
 	REF_PIPE_CMD_SURFACE_CHANGE,
@@ -712,10 +674,10 @@ enum
 
 	REF_PIPE_CMD_BEGIN_REGISTRATION,
 	REF_PIPE_CMD_END_REGISTRATION,
-	
+
 	REF_PIPE_CMD_SET_CUSTOM_COLOR,
 	REF_PIPE_CMD_SET_WALL_FLOOR_COLORS,
-	
+
 	REF_PIPE_CMD_SET_DRAWBUFFER,
 	REF_PIPE_CMD_SET_TEXTURE_MODE,
 	REF_PIPE_CMD_SET_TEXTURE_FILTER,
@@ -725,74 +687,63 @@ enum
 	NUM_REF_PIPE_CMDS
 };
 
-typedef struct
-{
-	int             id;
+typedef struct {
+	int id;
 } refReliableCmdInitShutdown_t;
 
-typedef struct
-{
-	int             id;
+typedef struct {
+	int id;
 } refReliableCmdSurfaceChange_t;
 
-typedef struct
-{
-	int             id;
-	unsigned        pixels;
-	bool            silent;
-	bool            media;
-	int             x, y, w, h;
-	char			fmtstring[64];
-	char            path[512];
-	char            name[512];
+typedef struct {
+	int id;
+	unsigned pixels;
+	bool silent;
+	bool media;
+	int x, y, w, h;
+	char fmtstring[64];
+	char path[512];
+	char name[512];
 } refReliableCmdScreenShot_t;
 
-typedef struct
-{
-	int             id;
+typedef struct {
+	int id;
 } refReliableCmdBeginEndRegistration_t;
 
-typedef struct
-{
-	int             id;
-	int             num;
-	int             r, g, b;
+typedef struct {
+	int id;
+	int num;
+	int r, g, b;
 } refReliableCmdSetCustomColor_t;
 
-typedef struct
-{
-	int				id;
-	vec3_t			wall, floor;
+typedef struct {
+	int id;
+	vec3_t wall, floor;
 } refReliableCmdSetWallFloorColors_t;
 
-typedef struct
-{
-	int             id;
-	char			drawbuffer[32];
+typedef struct {
+	int id;
+	char drawbuffer[32];
 } refReliableCmdSetDrawBuffer_t;
 
-typedef struct
-{
-	int             id;
-	char			texturemode[32];
+typedef struct {
+	int id;
+	char texturemode[32];
 } refReliableCmdSetTextureMode_t;
 
-typedef struct
-{
-	int             id;
-	char			filter;
+typedef struct {
+	int id;
+	char filter;
 } refReliableCmdSetTextureFilter_t;
 
-typedef struct
-{
-	int             id;
-	float			gamma;
+typedef struct {
+	int id;
+	float gamma;
 } refReliableCmdSetGamma_t;
 
 // dummy cmd used for syncing with the frontend
-typedef struct
-{
-	int             id;
+typedef struct {
+	int id;
 } refReliableCmdFence_t;
 
 typedef unsigned (*refPipeCmdHandler_t)( const void * );
@@ -830,8 +781,7 @@ static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 	(refPipeCmdHandler_t)R_HandleFenceReliableCmd,
 };
 
-static unsigned R_HandleInitReliableCmd( void *pcmd )
-{
+static unsigned R_HandleInitReliableCmd( void *pcmd ) {
 	refReliableCmdInitShutdown_t *cmd = pcmd;
 
 	RB_Init();
@@ -845,8 +795,7 @@ static unsigned R_HandleInitReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleShutdownReliableCmd( void *pcmd )
-{
+static unsigned R_HandleShutdownReliableCmd( void *pcmd ) {
 	refReliableCmdInitShutdown_t *cmd = pcmd;
 
 	R_ReleaseBuiltinScreenImages();
@@ -858,8 +807,7 @@ static unsigned R_HandleShutdownReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd )
-{
+static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd ) {
 	refReliableCmdSurfaceChange_t *cmd = pcmd;
 
 	GLimp_UpdatePendingWindowSurface();
@@ -867,8 +815,7 @@ static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleScreenShotReliableCmd( void *pcmd )
-{
+static unsigned R_HandleScreenShotReliableCmd( void *pcmd ) {
 	refReliableCmdScreenShot_t *cmd = pcmd;
 
 	R_TakeScreenShot( cmd->path, cmd->name, cmd->fmtstring, cmd->x, cmd->y, cmd->w, cmd->h, cmd->silent, cmd->media );
@@ -876,8 +823,7 @@ static unsigned R_HandleScreenShotReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleEnvShotReliableCmd( void *pcmd )
-{
+static unsigned R_HandleEnvShotReliableCmd( void *pcmd ) {
 	refReliableCmdScreenShot_t *cmd = pcmd;
 
 	R_TakeEnvShot( cmd->path, cmd->name, cmd->pixels );
@@ -885,8 +831,7 @@ static unsigned R_HandleEnvShotReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleBeginRegistrationReliableCmd( void *pcmd )
-{
+static unsigned R_HandleBeginRegistrationReliableCmd( void *pcmd ) {
 	refReliableCmdBeginEndRegistration_t *cmd = pcmd;
 
 	RB_BeginRegistration();
@@ -894,8 +839,7 @@ static unsigned R_HandleBeginRegistrationReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleEndRegistrationReliableCmd( void *pcmd )
-{
+static unsigned R_HandleEndRegistrationReliableCmd( void *pcmd ) {
 	refReliableCmdBeginEndRegistration_t *cmd = pcmd;
 
 	RB_EndRegistration();
@@ -905,8 +849,7 @@ static unsigned R_HandleEndRegistrationReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleSetCustomColorReliableCmd( void *pcmd )
-{
+static unsigned R_HandleSetCustomColorReliableCmd( void *pcmd ) {
 	refReliableCmdSetCustomColor_t *cmd = pcmd;
 
 	R_SetCustomColor( cmd->num, cmd->r, cmd->g, cmd->b );
@@ -914,35 +857,31 @@ static unsigned R_HandleSetCustomColorReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleSetWallFloorColorsReliableCmd( void *pcmd )
-{
+static unsigned R_HandleSetWallFloorColorsReliableCmd( void *pcmd ) {
 	refReliableCmdSetWallFloorColors_t *cmd = pcmd;
-	
+
 	R_SetWallFloorColors( cmd->wall, cmd->floor );
-	
+
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleSetDrawBufferReliableCmd( void *pcmd )
-{
+static unsigned R_HandleSetDrawBufferReliableCmd( void *pcmd ) {
 	refReliableCmdSetDrawBuffer_t *cmd = pcmd;
-	
+
 	R_SetDrawBuffer( cmd->drawbuffer );
 
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleSetTextureModeReliableCmd( void *pcmd )
-{
+static unsigned R_HandleSetTextureModeReliableCmd( void *pcmd ) {
 	refReliableCmdSetTextureMode_t *cmd = pcmd;
-	
+
 	R_TextureMode( cmd->texturemode );
-	
+
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd )
-{
+static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd ) {
 	refReliableCmdSetTextureFilter_t *cmd = pcmd;
 
 	R_AnisotropicFilter( cmd->filter );
@@ -950,8 +889,7 @@ static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleSetGammaReliableCmd( void *pcmd )
-{
+static unsigned R_HandleSetGammaReliableCmd( void *pcmd ) {
 	refReliableCmdSetGamma_t *cmd = pcmd;
 
 	R_SetGamma( cmd->gamma );
@@ -959,8 +897,7 @@ static unsigned R_HandleSetGammaReliableCmd( void *pcmd )
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleFenceReliableCmd( void *pcmd )
-{
+static unsigned R_HandleFenceReliableCmd( void *pcmd ) {
 	refReliableCmdFence_t *cmd = pcmd;
 
 	return sizeof( *cmd );
@@ -968,10 +905,9 @@ static unsigned R_HandleFenceReliableCmd( void *pcmd )
 
 // ============================================================================
 
-static void RF_IssueAbstractReliableCmd( ref_cmdpipe_t *cmdpipe, void *cmd, size_t cmd_len )
-{
+static void RF_IssueAbstractReliableCmd( ref_cmdpipe_t *cmdpipe, void *cmd, size_t cmd_len ) {
 	if( cmdpipe->sync ) {
-		int id = *((int *)cmd);
+		int id = *( (int *)cmd );
 		refPipeCmdHandlers[id]( cmd );
 		return;
 	}
@@ -979,27 +915,23 @@ static void RF_IssueAbstractReliableCmd( ref_cmdpipe_t *cmdpipe, void *cmd, size
 	ri.BufPipe_WriteCmd( cmdpipe->pipe, cmd, cmd_len );
 }
 
-static void RF_IssueInitReliableCmd( ref_cmdpipe_t *cmdpipe )
-{
+static void RF_IssueInitReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdInitShutdown_t cmd = { REF_PIPE_CMD_INIT };
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueShutdownReliableCmd( ref_cmdpipe_t *cmdpipe )
-{
+static void RF_IssueShutdownReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdInitShutdown_t cmd = { REF_PIPE_CMD_SHUTDOWN };
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSurfaceChangeReliableCmd( ref_cmdpipe_t *cmdpipe )
-{
+static void RF_IssueSurfaceChangeReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdSurfaceChange_t cmd = { REF_PIPE_CMD_SURFACE_CHANGE };
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
 static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, const char *path, const char *name,
-	const char *fmtstring, int x, int y, int w, int h, unsigned pixels, bool silent, bool media )
-{
+											  const char *fmtstring, int x, int y, int w, int h, unsigned pixels, bool silent, bool media ) {
 	refReliableCmdScreenShot_t cmd = { 0 };
 
 	cmd.id = id;
@@ -1017,23 +949,19 @@ static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, co
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent )
-{
+static void RF_IssueScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent ) {
 	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, fmtstring, 0, 0, glConfig.width, glConfig.height, 0, silent, true );
 }
 
-static void RF_IssueEnvShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, unsigned pixels )
-{
+static void RF_IssueEnvShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, unsigned pixels ) {
 	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_ENV_SHOT, path, name, "", 0, 0, glConfig.width, glConfig.height, pixels, false, false );
 }
 
-static void RF_IssueAviShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, int x, int y, int w, int h )
-{
+static void RF_IssueAviShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, int x, int y, int w, int h ) {
 	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, "", x, y, w, h, 0, true, false );
 }
 
-static void RF_IssueBeginRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe )
-{
+static void RF_IssueBeginRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdBeginEndRegistration_t cmd = { REF_PIPE_CMD_BEGIN_REGISTRATION };
 
 	R_DeferDataSync();
@@ -1042,8 +970,7 @@ static void RF_IssueBeginRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe )
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueEndRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe )
-{
+static void RF_IssueEndRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdBeginEndRegistration_t cmd = { REF_PIPE_CMD_END_REGISTRATION };
 
 	R_DeferDataSync();
@@ -1052,23 +979,21 @@ static void RF_IssueEndRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe )
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSetCustomColorReliableCmd( ref_cmdpipe_t *cmdpipe, int num, int r, int g, int b )
-{
+static void RF_IssueSetCustomColorReliableCmd( ref_cmdpipe_t *cmdpipe, int num, int r, int g, int b ) {
 	refReliableCmdSetCustomColor_t cmd;
-	
+
 	cmd.id = REF_PIPE_CMD_SET_CUSTOM_COLOR;
 	cmd.num = num;
 	cmd.r = r;
 	cmd.g = g;
 	cmd.b = b;
-	
+
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSetWallFloorColorsReliableCmd( ref_cmdpipe_t *cmdpipe, const vec3_t wallColor, const vec3_t floorColor )
-{
+static void RF_IssueSetWallFloorColorsReliableCmd( ref_cmdpipe_t *cmdpipe, const vec3_t wallColor, const vec3_t floorColor ) {
 	refReliableCmdSetWallFloorColors_t cmd;
-	
+
 	cmd.id = REF_PIPE_CMD_SET_WALL_FLOOR_COLORS;
 	VectorCopy( wallColor, cmd.wall );
 	VectorCopy( floorColor, cmd.floor );
@@ -1076,48 +1001,43 @@ static void RF_IssueSetWallFloorColorsReliableCmd( ref_cmdpipe_t *cmdpipe, const
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSetDrawBufferReliableCmd( ref_cmdpipe_t *cmdpipe, const char *drawbuffer )
-{
+static void RF_IssueSetDrawBufferReliableCmd( ref_cmdpipe_t *cmdpipe, const char *drawbuffer ) {
 	refReliableCmdSetDrawBuffer_t cmd;
-	
+
 	cmd.id = REF_PIPE_CMD_SET_DRAWBUFFER;
 	Q_strncpyz( cmd.drawbuffer, drawbuffer, sizeof( cmd.drawbuffer ) );
 
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSetTextureModeReliableCmd( ref_cmdpipe_t *cmdpipe, const char *texturemode )
-{
+static void RF_IssueSetTextureModeReliableCmd( ref_cmdpipe_t *cmdpipe, const char *texturemode ) {
 	refReliableCmdSetTextureMode_t cmd;
-	
+
 	cmd.id = REF_PIPE_CMD_SET_TEXTURE_MODE;
 	Q_strncpyz( cmd.texturemode, texturemode, sizeof( cmd.texturemode ) );
 
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSetTextureFilterReliableCmd( ref_cmdpipe_t *cmdpipe, int filter )
-{
+static void RF_IssueSetTextureFilterReliableCmd( ref_cmdpipe_t *cmdpipe, int filter ) {
 	refReliableCmdSetTextureFilter_t cmd;
-	
+
 	cmd.id = REF_PIPE_CMD_SET_TEXTURE_FILTER;
 	cmd.filter = filter;
 
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSetGammaReliableCmd( ref_cmdpipe_t *cmdpipe, float gamma )
-{
+static void RF_IssueSetGammaReliableCmd( ref_cmdpipe_t *cmdpipe, float gamma ) {
 	refReliableCmdSetGamma_t cmd;
-	
+
 	cmd.id = REF_PIPE_CMD_SET_GAMMA;
 	cmd.gamma = gamma;
 
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueFenceReliableCmd( ref_cmdpipe_t *cmdpipe )
-{
+static void RF_IssueFenceReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdFence_t cmd;
 
 	cmd.id = REF_PIPE_CMD_FENCE;
@@ -1127,35 +1047,33 @@ static void RF_IssueFenceReliableCmd( ref_cmdpipe_t *cmdpipe )
 
 // ============================================================================
 
-static int RF_CmdPipeWaiter( qbufPipe_t *queue, refPipeCmdHandler_t *cmdHandlers, bool timeout )
-{
+static int RF_CmdPipeWaiter( qbufPipe_t *queue, refPipeCmdHandler_t *cmdHandlers, bool timeout ) {
 	ri.BufPipe_ReadCmds( queue, cmdHandlers );
 	return -1;
 }
 
-static int RF_RunCmdPipeProc( ref_cmdpipe_t *cmdpipe )
-{
-	if( cmdpipe->sync )
+static int RF_RunCmdPipeProc( ref_cmdpipe_t *cmdpipe ) {
+	if( cmdpipe->sync ) {
 		return 0;
+	}
 	return ri.BufPipe_ReadCmds( cmdpipe->pipe, refPipeCmdHandlers );
 }
 
-static void RF_WaitForCmdPipeProc( ref_cmdpipe_t *cmdpipe, unsigned timeout )
-{
-	if( cmdpipe->sync )
+static void RF_WaitForCmdPipeProc( ref_cmdpipe_t *cmdpipe, unsigned timeout ) {
+	if( cmdpipe->sync ) {
 		return;
+	}
 	ri.BufPipe_Wait( cmdpipe->pipe, RF_CmdPipeWaiter, refPipeCmdHandlers, timeout );
 }
 
-static void RF_FinishCmdPipeProc( ref_cmdpipe_t *cmdpipe )
-{
-	if( cmdpipe->sync )
+static void RF_FinishCmdPipeProc( ref_cmdpipe_t *cmdpipe ) {
+	if( cmdpipe->sync ) {
 		return;
+	}
 	ri.BufPipe_Finish( cmdpipe->pipe );
 }
 
-ref_cmdpipe_t *RF_CreateCmdPipe( bool sync )
-{
+ref_cmdpipe_t *RF_CreateCmdPipe( bool sync ) {
 	ref_cmdpipe_t *cmdpipe;
 
 	cmdpipe = R_Malloc( sizeof( *cmdpipe ) );
@@ -1188,12 +1106,12 @@ ref_cmdpipe_t *RF_CreateCmdPipe( bool sync )
 	return cmdpipe;
 }
 
-void RF_DestroyCmdPipe( ref_cmdpipe_t **pcmdpipe )
-{
+void RF_DestroyCmdPipe( ref_cmdpipe_t **pcmdpipe ) {
 	ref_cmdpipe_t *cmdpipe;
 
-	if( !pcmdpipe || !*pcmdpipe )
+	if( !pcmdpipe || !*pcmdpipe ) {
 		return;
+	}
 
 	cmdpipe = *pcmdpipe;
 	*pcmdpipe = NULL;

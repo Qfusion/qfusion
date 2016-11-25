@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // snd_public.h -- sound dll information visible to engine
 
-#define	SOUND_API_VERSION   39
+#define SOUND_API_VERSION   39
 
-#define	ATTN_NONE 0
+#define ATTN_NONE 0
 
 //===============================================================
 
@@ -34,8 +34,7 @@ typedef struct qbufPipe_s qbufPipe_t;
 //
 // functions provided by the main engine
 //
-typedef struct
-{
+typedef struct {
 	// drops to console a client game error
 	void ( *Error )( const char *msg );
 
@@ -81,7 +80,7 @@ typedef struct
 	unsigned int ( *Sys_Milliseconds )( void );
 	void ( *Sys_Sleep )( unsigned int milliseconds );
 
-	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t *funcs );
+	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t * funcs );
 	void ( *Sys_UnloadLibrary )( void **lib );
 
 	// managed memory allocation
@@ -94,7 +93,7 @@ typedef struct
 	void ( *GetEntitySpatilization )( int entnum, vec3_t origin, vec3_t velocity );
 
 	// multithreading
-	struct qthread_s *( *Thread_Create )( void *(*routine) (void*), void *param );
+	struct qthread_s *( *Thread_Create )( void *( *routine )( void* ), void *param );
 	void ( *Thread_Join )( struct qthread_s *thread );
 	void ( *Thread_Yield )( void );
 	struct qmutex_s *( *Mutex_Create )( void );
@@ -106,16 +105,15 @@ typedef struct
 	void ( *BufPipe_Destroy )( qbufPipe_t **pqueue );
 	void ( *BufPipe_Finish )( qbufPipe_t *queue );
 	void ( *BufPipe_WriteCmd )( qbufPipe_t *queue, const void *cmd, unsigned cmd_size );
-	int ( *BufPipe_ReadCmds )( qbufPipe_t *queue, unsigned (**cmdHandlers)( const void * ) );
-	void ( *BufPipe_Wait )( qbufPipe_t *queue, int (*read)( qbufPipe_t *, unsigned( ** )(const void *), bool ), 
-		unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec );
+	int ( *BufPipe_ReadCmds )( qbufPipe_t *queue, unsigned( **cmdHandlers )( const void * ) );
+	void ( *BufPipe_Wait )( qbufPipe_t *queue, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ), bool ),
+							unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec );
 } sound_import_t;
 
 //
 // functions exported by the sound subsystem
 //
-typedef struct
-{
+typedef struct {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
 
@@ -145,9 +143,9 @@ typedef struct
 
 	// cinema
 	void ( *RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data, bool music );
-	void ( *PositionedRawSamples )( int entnum, float fvol, float attenuation, 
-		unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const uint8_t *data );
+	void ( *PositionedRawSamples )( int entnum, float fvol, float attenuation,
+									unsigned int samples, unsigned int rate,
+									unsigned short width, unsigned short channels, const uint8_t *data );
 	unsigned int ( *GetRawSamplesLength )( void );
 	unsigned int ( *GetPositionedRawSamplesLength )( int entnum );
 

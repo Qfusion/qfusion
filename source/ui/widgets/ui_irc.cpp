@@ -5,15 +5,15 @@
 #include "widgets/ui_idiv.h"
 #include "formatters/ui_colorcode_formatter.h"
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 using namespace Rocket::Core;
 
 class IrcLogWidget : public Element
 {
 public:
-	IrcLogWidget( const String &tag ) : Element(tag), history_size( 0 )
-	{
+	IrcLogWidget( const String &tag ) : Element( tag ), history_size( 0 ) {
 		Rocket::Core::XMLAttributes attr;
 
 		formatter = new ColorCodeFormatter();
@@ -21,7 +21,7 @@ public:
 		SetProperty( "display", "block" );
 		SetProperty( "overflow-y", "auto" );
 
-		body = Factory::InstanceElement( this, "*", "irclogbody", attr);
+		body = Factory::InstanceElement( this, "*", "irclogbody", attr );
 		AppendChild( body );
 		body->RemoveReference();
 	}
@@ -29,12 +29,11 @@ public:
 	virtual ~IrcLogWidget()
 	{}
 
-	void OnRender()
-	{
+	void OnRender() {
 		Element::OnRender();
 
 		bool scrollDown = true;
-		if( GetScrollTop() > 0 && fabs( GetScrollTop() - (GetScrollHeight() - GetClientHeight()) ) > 1.0f ) {
+		if( GetScrollTop() > 0 && fabs( GetScrollTop() - ( GetScrollHeight() - GetClientHeight() ) ) > 1.0f ) {
 			// do not scroll, if not at the bottom or at the top
 			scrollDown = false;
 		}
@@ -46,7 +45,7 @@ public:
 			String line, text = "";
 			StringList list;
 
-			// add IRC history lines one by one, converting 
+			// add IRC history lines one by one, converting
 			// warsow color codes and HTML special chars to RML code
 			const struct irc_chat_history_node_s *n = trap::Irc_GetHistoryHeadNode();
 			while( n ) {
@@ -81,8 +80,7 @@ private:
 
 //==============================================================
 
-ElementInstancer *GetIrcLogWidgetInstancer( void )
-{
+ElementInstancer *GetIrcLogWidgetInstancer( void ) {
 	return __new__( GenericElementInstancer<IrcLogWidget> )();
 }
 

@@ -24,8 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /**
  * Client commands from the UI thread.
  */
-enum
-{
+enum {
 	CL_SYS_ANDROID_EVENT_CHAR
 };
 
@@ -41,21 +40,21 @@ static int cl_sys_android_pipe[2];
  * @param app    the Native App Glue app
  * @param source the looper poll source
  */
-static void CL_Sys_Android_ProcessUserEvent( struct android_app *app, struct android_poll_source *source )
-{
+static void CL_Sys_Android_ProcessUserEvent( struct android_app *app, struct android_poll_source *source ) {
 	int fd = cl_sys_android_pipe[0];
 	uint8_t event;
 
-	if( read( fd, &event, sizeof( event ) ) != sizeof( event ) )
+	if( read( fd, &event, sizeof( event ) ) != sizeof( event ) ) {
 		return;
+	}
 
-	switch( event )
-	{
-	case CL_SYS_ANDROID_EVENT_CHAR:
+	switch( event ) {
+		case CL_SYS_ANDROID_EVENT_CHAR:
 		{
 			uint16_t charkey;
-			if( read( fd, &charkey, sizeof( charkey ) ) == sizeof( charkey ) )
+			if( read( fd, &charkey, sizeof( charkey ) ) == sizeof( charkey ) ) {
 				IN_Android_CharEvent( charkey );
+			}
 		}
 		break;
 	}
@@ -68,24 +67,24 @@ static void CL_Sys_Android_ProcessUserEvent( struct android_app *app, struct and
  * @param obj     the activity Java object
  * @param charkey the character code
  */
-JNIEXPORT void JNICALL Java_net_qfusion_engine_QfusionActivity_dispatchCharEvent( JNIEnv *env, jobject obj, jchar charkey )
-{
+JNIEXPORT void JNICALL Java_net_qfusion_engine_QfusionActivity_dispatchCharEvent( JNIEnv *env, jobject obj, jchar charkey ) {
 	uint8_t event[1 + sizeof( uint16_t )];
 
-	if( !cl_sys_android_pipe[1] )
+	if( !cl_sys_android_pipe[1] ) {
 		return;
+	}
 
 	event[0] = CL_SYS_ANDROID_EVENT_CHAR;
 	memcpy( event + 1, &charkey, sizeof( uint16_t ) );
 	write( cl_sys_android_pipe[1], event, sizeof( event ) );
 }
 
-void CL_Sys_Init( void )
-{
+void CL_Sys_Init( void ) {
 	struct android_app *app = sys_android_app;
 
-	if( pipe( cl_sys_android_pipe ) )
+	if( pipe( cl_sys_android_pipe ) ) {
 		Sys_Error( "Failed to create the pipe for client events" );
+	}
 
 	cl_sys_android_pollSource.id = LOOPER_ID_USER_CLIENT;
 	cl_sys_android_pollSource.app = app;
@@ -93,31 +92,28 @@ void CL_Sys_Init( void )
 	ALooper_addFd( app->looper, cl_sys_android_pipe[0], LOOPER_ID_USER_CLIENT, ALOOPER_EVENT_INPUT, NULL, &cl_sys_android_pollSource );
 }
 
-void CL_Sys_Shutdown( void )
-{
+void CL_Sys_Shutdown( void ) {
 	close( cl_sys_android_pipe[0] );
 	close( cl_sys_android_pipe[1] );
 	cl_sys_android_pipe[0] = cl_sys_android_pipe[1] = 0;
 }
 
-void CL_Sys_Android_OnAppCmd( struct android_app *app, int32_t cmd )
-{
-	switch( cmd )
-	{
-	case APP_CMD_INIT_WINDOW:
-	case APP_CMD_START:
-		VID_Android_SetWindow( app->window );
-		break;
-	case APP_CMD_TERM_WINDOW:
-	case APP_CMD_STOP:
-		VID_Android_SetWindow( NULL );
-		break;
-	case APP_CMD_RESUME:
-		CL_SoundModule_Activate( true );
-		break;
-	case APP_CMD_PAUSE:
-		CL_SoundModule_Activate( false );
-		IN_ShowSoftKeyboard( false );
-		break;
+void CL_Sys_Android_OnAppCmd( struct android_app *app, int32_t cmd ) {
+	switch( cmd ) {
+		case APP_CMD_INIT_WINDOW:
+		case APP_CMD_START:
+			VID_Android_SetWindow( app->window );
+			break;
+		case APP_CMD_TERM_WINDOW:
+		case APP_CMD_STOP:
+			VID_Android_SetWindow( NULL );
+			break;
+		case APP_CMD_RESUME:
+			CL_SoundModule_Activate( true );
+			break;
+		case APP_CMD_PAUSE:
+			CL_SoundModule_Activate( false );
+			IN_ShowSoftKeyboard( false );
+			break;
 	}
 }

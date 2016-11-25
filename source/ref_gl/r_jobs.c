@@ -1,37 +1,35 @@
 /*
 Copyright (C) 2016 Victor Luchits
- 
+
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
- 
+
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- 
+
 See the GNU General Public License for more details.
- 
+
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- 
+
 */
 
 #include "r_local.h"
 
 typedef void (*queueCmdHandler_t)( const void * );
 
-enum
-{
+enum {
 	CMD_JOB_TAKE,
 	CMD_JOB_QUIT,
 
 	NUM_JOB_CMDS
 };
 
-typedef struct
-{
+typedef struct {
 	int id;
 	unsigned first;
 	unsigned items;
@@ -50,8 +48,7 @@ static void *R_JobThreadProc( void *param );
 /*
 * RJ_IssueJobCmd
 */
-void RJ_Init( void )
-{
+void RJ_Init( void ) {
 	int i;
 
 	job_count = 0;
@@ -65,15 +62,15 @@ void RJ_Init( void )
 /*
 * RJ_IssueJobCmd
 */
-void RJ_ScheduleJob( jobfunc_t job, jobarg_t *arg, unsigned items )
-{
+void RJ_ScheduleJob( jobfunc_t job, jobarg_t *arg, unsigned items ) {
 	unsigned first;
-	const unsigned block = (items + NUM_JOB_THREADS - 1) / NUM_JOB_THREADS;
+	const unsigned block = ( items + NUM_JOB_THREADS - 1 ) / NUM_JOB_THREADS;
 
 	for( first = 0; first < items; ) {
 		unsigned last = first + block;
-		if( last > items )
+		if( last > items ) {
 			last = items;
+		}
 
 		RJ_IssueJobTakeCmd( job_count % NUM_JOB_THREADS, job, arg, first, last - first );
 		job_count++;
@@ -85,10 +82,9 @@ void RJ_ScheduleJob( jobfunc_t job, jobarg_t *arg, unsigned items )
 /*
 * RJ_IssueJobCmd
 */
-void RJ_CompleteJobs( void )
-{
+void RJ_CompleteJobs( void ) {
 	int i;
-	
+
 	for( i = 0; i < NUM_JOB_THREADS; i++ )
 		ri.BufPipe_Finish( job_queue[i] );
 }
@@ -96,10 +92,9 @@ void RJ_CompleteJobs( void )
 /*
 * RJ_IssueJobCmd
 */
-void RJ_Shutdown( void )
-{
+void RJ_Shutdown( void ) {
 	int i;
-	
+
 	for( i = 0; i < NUM_JOB_THREADS; i++ ) {
 		RJ_IssueJobQuitCmd( i );
 	}
@@ -121,8 +116,7 @@ void RJ_Shutdown( void )
 /*
 * RJ_IssueJobTakeCmd
 */
-static void RJ_IssueJobTakeCmd( unsigned thread, jobfunc_t job, jobarg_t *arg, unsigned first, unsigned items )
-{
+static void RJ_IssueJobTakeCmd( unsigned thread, jobfunc_t job, jobarg_t *arg, unsigned first, unsigned items ) {
 	jobTakeCmd_t cmd;
 	cmd.id = CMD_JOB_TAKE;
 	cmd.job = job;
@@ -135,8 +129,7 @@ static void RJ_IssueJobTakeCmd( unsigned thread, jobfunc_t job, jobarg_t *arg, u
 /*
  * RJ_IssueJobQuitCmd
  */
-static void RJ_IssueJobQuitCmd( unsigned thread )
-{
+static void RJ_IssueJobQuitCmd( unsigned thread ) {
 	int cmd = CMD_JOB_QUIT;
 	ri.BufPipe_WriteCmd( job_queue[thread], &cmd, sizeof( cmd ) );
 }
@@ -144,45 +137,41 @@ static void RJ_IssueJobQuitCmd( unsigned thread )
 /*
 * R_HandleJobTakeCmd
 */
-static unsigned R_HandleJobTakeCmd( void *pcmd )
-{
+static unsigned R_HandleJobTakeCmd( void *pcmd ) {
 	jobTakeCmd_t *cmd = pcmd;
-	
+
 	cmd->job( cmd->first, cmd->items, &cmd->job_arg );
-	
+
 	return sizeof( *cmd );
 }
 
 /*
 * R_HandleJobQuitCmd
 */
-static unsigned R_HandleJobQuitCmd( void *pcmd )
-{
+static unsigned R_HandleJobQuitCmd( void *pcmd ) {
 	return 0;
 }
 
 /*
 * R_JobCmdsWaiter
 */
-static int R_JobCmdsWaiter( qbufPipe_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout )
-{
+static int R_JobCmdsWaiter( qbufPipe_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout ) {
 	return ri.BufPipe_ReadCmds( queue, (void *)cmdHandlers );
 }
 
 /*
 * R_JobThreadProc
 */
-static void *R_JobThreadProc( void *param )
-{
+static void *R_JobThreadProc( void *param ) {
 	qbufPipe_t *cmdQueue = param;
 	queueCmdHandler_t cmdHandlers[NUM_JOB_CMDS] =
 	{
 		(queueCmdHandler_t)R_HandleJobTakeCmd,
 		(queueCmdHandler_t)R_HandleJobQuitCmd,
-		
+
 	};
-	
+
 	ri.BufPipe_Wait( cmdQueue, (void*)&R_JobCmdsWaiter, (void*)cmdHandlers, Q_THREADS_WAIT_INFINITE );
- 
+
 	return NULL;
 }

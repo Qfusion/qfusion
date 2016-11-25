@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 angelwrap_import_t ANGELWRAP_IMPORT;
 
-extern "C" QF_DLL_EXPORT angelwrap_export_t *GetAngelwrapAPI( angelwrap_import_t *import )
+extern "C" QF_DLL_EXPORT angelwrap_export_t * GetAngelwrapAPI( angelwrap_import_t * import )
 {
 	static angelwrap_export_t globals;
 
@@ -38,8 +38,7 @@ extern "C" QF_DLL_EXPORT angelwrap_export_t *GetAngelwrapAPI( angelwrap_import_t
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( ANGELWRAP_HARD_LINKED )
-int _stdcall DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
-{
+int _stdcall DLLMain( void *hinstDll, unsigned long dwReason, void *reserved ) {
 	return 1;
 }
 #endif

@@ -24,38 +24,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static angelwrap_export_t *ae;
 static mempool_t *com_scriptmodulepool;
 
-static void Com_ScriptModule_Error( const char *msg )
-{
+static void Com_ScriptModule_Error( const char *msg ) {
 	Com_Error( ERR_DROP, "%s", msg );
 }
 
-static void Com_ScriptModule_Print( const char *msg )
-{
+static void Com_ScriptModule_Print( const char *msg ) {
 	Com_Printf( "%s", msg );
 }
 
-static void *Com_ScriptModule_MemAlloc( mempool_t *pool, size_t size, const char *filename, int fileline )
-{
+static void *Com_ScriptModule_MemAlloc( mempool_t *pool, size_t size, const char *filename, int fileline ) {
 	return _Mem_Alloc( pool, size, MEMPOOL_ANGELSCRIPT, 0, filename, fileline );
 }
 
-static void Com_ScriptModule_MemFree( void *data, const char *filename, int fileline )
-{
+static void Com_ScriptModule_MemFree( void *data, const char *filename, int fileline ) {
 	_Mem_Free( data, MEMPOOL_ANGELSCRIPT, 0, filename, fileline );
 }
 
-static mempool_t *Com_ScriptModule_MemAllocPool( const char *name, const char *filename, int fileline )
-{
+static mempool_t *Com_ScriptModule_MemAllocPool( const char *name, const char *filename, int fileline ) {
 	return _Mem_AllocPool( com_scriptmodulepool, name, MEMPOOL_ANGELSCRIPT, filename, fileline );
 }
 
-static void Com_ScriptModule_MemFreePool( mempool_t **pool, const char *filename, int fileline )
-{
+static void Com_ScriptModule_MemFreePool( mempool_t **pool, const char *filename, int fileline ) {
 	_Mem_FreePool( pool, MEMPOOL_ANGELSCRIPT, 0, filename, fileline );
 }
 
-static void Com_ScriptModule_MemEmptyPool( mempool_t *pool, const char *filename, int fileline )
-{
+static void Com_ScriptModule_MemEmptyPool( mempool_t *pool, const char *filename, int fileline ) {
 	_Mem_EmptyPool( pool, MEMPOOL_ANGELSCRIPT, 0, filename, fileline );
 }
 
@@ -65,23 +58,22 @@ static void *script_library = NULL;
 /*
 * Com_UnloadScriptLibrary
 */
-static void Com_UnloadScriptLibrary( void )
-{
+static void Com_UnloadScriptLibrary( void ) {
 	Com_UnloadLibrary( &script_library );
 }
 
 /*
 * Com_LoadScriptLibrary
 */
-static void *Com_LoadScriptLibrary( const char *basename, void *parms )
-{
+static void *Com_LoadScriptLibrary( const char *basename, void *parms ) {
 	size_t file_size;
 	char *file;
-	void *( *GetAngelwrapAPI )(void *);
+	void *( *GetAngelwrapAPI )( void * );
 	dllfunc_t funcs[2];
 
-	if( script_library )
+	if( script_library ) {
 		Com_Error( ERR_FATAL, "Com_LoadScriptLibrary without Com_UnloadScriptLibrary" );
+	}
 
 	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( basename ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
 	file = ( char* )Mem_TempMalloc( file_size );
@@ -94,15 +86,16 @@ static void *Com_LoadScriptLibrary( const char *basename, void *parms )
 
 	Mem_TempFree( file );
 
-	if( script_library )
+	if( script_library ) {
 		return GetAngelwrapAPI( parms );
+	}
 	return NULL;
 }
 
-void Com_ScriptModule_Shutdown( void )
-{
-	if( !ae )
+void Com_ScriptModule_Shutdown( void ) {
+	if( !ae ) {
 		return;
+	}
 
 	ae->Shutdown();
 
@@ -111,30 +104,26 @@ void Com_ScriptModule_Shutdown( void )
 	ae = NULL;
 }
 
-static bool Com_ScriptModule_Load( const char *name, angelwrap_import_t *import )
-{
+static bool Com_ScriptModule_Load( const char *name, angelwrap_import_t *import ) {
 	int apiversion;
 
 	Com_Printf( "Loading %s module.\n", name );
 
 	ae = (angelwrap_export_t *)Com_LoadScriptLibrary( name, import );
-	if( !ae )
-	{
+	if( !ae ) {
 		Com_Printf( "Loading %s failed\n", name );
 		return false;
 	}
 
 	apiversion = ae->API();
-	if( apiversion != ANGELWRAP_API_VERSION )
-	{
+	if( apiversion != ANGELWRAP_API_VERSION ) {
 		Com_UnloadScriptLibrary();
 		ae = NULL;
 		Com_Printf( "Wrong module version for %s: %i, not %i\n", name, apiversion, ANGELWRAP_API_VERSION );
 		return false;
 	}
 
-	if( !ae->Init() )
-	{
+	if( !ae->Init() ) {
 		Com_UnloadScriptLibrary();
 		ae = NULL;
 		Com_Printf( "Initialization of %s failed\n", name );
@@ -146,8 +135,7 @@ static bool Com_ScriptModule_Load( const char *name, angelwrap_import_t *import 
 	return true;
 }
 
-void Com_ScriptModule_Init( void )
-{
+void Com_ScriptModule_Init( void ) {
 	angelwrap_import_t import;
 	static const char *name = "angelwrap";
 
@@ -194,8 +182,7 @@ void Com_ScriptModule_Init( void )
 	import.Mem_EmptyPool = Com_ScriptModule_MemEmptyPool;
 
 	// load the actual library
-	if( !Com_ScriptModule_Load( name, &import ) )
-	{
+	if( !Com_ScriptModule_Load( name, &import ) ) {
 		Mem_FreePool( &com_scriptmodulepool );
 		ae = NULL;
 		return;
@@ -211,10 +198,10 @@ void Com_ScriptModule_Init( void )
 * Com_asGetAngelExport
 * Fixme: This should be improved to include some kind of API validation
 */
-struct angelwrap_api_s *Com_asGetAngelExport( void )
-{
-	if( !ae )
+struct angelwrap_api_s *Com_asGetAngelExport( void ) {
+	if( !ae ) {
 		return NULL;
+	}
 
 	return ae->asGetAngelExport();
 }

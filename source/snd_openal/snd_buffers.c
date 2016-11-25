@@ -31,8 +31,7 @@ static bool buffers_inited = false;
 * Local helper functions
 */
 
-void * stereo_mono( void *data, snd_info_t *info )
-{
+void * stereo_mono( void *data, snd_info_t *info ) {
 	int i, interleave, gain;
 	void *outdata;
 
@@ -41,32 +40,25 @@ void * stereo_mono( void *data, snd_info_t *info )
 	gain = s_stereo2mono->integer;
 	clamp( gain, -1, 1 );
 
-	if( info->width == 2 )
-	{
+	if( info->width == 2 ) {
 		short *pin, *pout;
 
 		pin = (short*)data;
 		pout = (short*)outdata;
 
-		for( i = 0; i < info->size; i += interleave, pin += info->channels, pout++ )
-		{
-			*pout = ((1-gain) * pin[0] + (1+gain) * pin[1]) / 2;
+		for( i = 0; i < info->size; i += interleave, pin += info->channels, pout++ ) {
+			*pout = ( ( 1 - gain ) * pin[0] + ( 1 + gain ) * pin[1] ) / 2;
 		}
-	}
-	else if( info->width == 1 )
-	{
+	} else if( info->width == 1 ) {
 		char *pin, *pout;
 
 		pin = (char*)data;
 		pout = (char*)outdata;
 
-		for( i = 0; i < info->size; i += interleave, pin += info->channels, pout++ )
-		{
-			*pout = ((1-gain) * pin[0] + (1+gain) * pin[1]) / 2;
+		for( i = 0; i < info->size; i += interleave, pin += info->channels, pout++ ) {
+			*pout = ( ( 1 - gain ) * pin[0] + ( 1 + gain ) * pin[1] ) / 2;
 		}
-	}
-	else
-	{
+	} else {
 		S_Free( outdata );
 		return NULL;
 	}
@@ -77,41 +69,38 @@ void * stereo_mono( void *data, snd_info_t *info )
 	return outdata;
 }
 
-static sfx_t *buffer_find_free( void )
-{
+static sfx_t *buffer_find_free( void ) {
 	int i;
 
-	for( i = 0; i < MAX_SFX; i++ )
-	{
-		if( knownSfx[i].filename[0] == '\0' )
+	for( i = 0; i < MAX_SFX; i++ ) {
+		if( knownSfx[i].filename[0] == '\0' ) {
 			return &knownSfx[i];
+		}
 	}
 
 	S_Error( "Sound Limit Exceeded.\n" );
 	return NULL;
 }
 
-sfx_t *S_GetBufferById( int id )
-{
+sfx_t *S_GetBufferById( int id ) {
 	if( id < 0 || id >= MAX_SFX ) {
 		return NULL;
 	}
 	return knownSfx + id;
 }
 
-bool S_UnloadBuffer( sfx_t *sfx )
-{
+bool S_UnloadBuffer( sfx_t *sfx ) {
 	ALenum error;
 
 	if( !sfx ) {
 		return false;
 	}
-	if( sfx->filename[0] == '\0' || sfx->isLocked || !sfx->inMemory )
+	if( sfx->filename[0] == '\0' || sfx->isLocked || !sfx->inMemory ) {
 		return false;
+	}
 
 	qalDeleteBuffers( 1, &sfx->buffer );
-	if( ( error = qalGetError() ) != AL_NO_ERROR )
-	{
+	if( ( error = qalGetError() ) != AL_NO_ERROR ) {
 		Com_Printf( "Couldn't delete sound buffer for %s (%s)", sfx->filename, S_ErrorMessage( error ) );
 		sfx->isLocked = true;
 		return false;
@@ -123,34 +112,30 @@ bool S_UnloadBuffer( sfx_t *sfx )
 }
 
 // Remove the least recently used sound effect from memory
-static bool buffer_evict()
-{
+static bool buffer_evict() {
 	int i;
 	int candinate = -1;
 	int candinate_value = trap_Milliseconds();
 
-	for( i = 0; i < MAX_SFX; i++ )
-	{
-		if( knownSfx[i].filename[0] == '\0' || !knownSfx[i].inMemory || knownSfx[i].isLocked )
+	for( i = 0; i < MAX_SFX; i++ ) {
+		if( knownSfx[i].filename[0] == '\0' || !knownSfx[i].inMemory || knownSfx[i].isLocked ) {
 			continue;
+		}
 
-		if( knownSfx[i].used < candinate_value )
-		{
+		if( knownSfx[i].used < candinate_value ) {
 			candinate = i;
 			candinate_value = knownSfx[i].used;
 		}
 	}
 
-	if( candinate != -1 )
-	{
+	if( candinate != -1 ) {
 		return S_UnloadBuffer( &knownSfx[candinate] );
 	}
 
 	return false;
 }
 
-bool S_LoadBuffer( sfx_t *sfx )
-{
+bool S_LoadBuffer( sfx_t *sfx ) {
 	ALenum error;
 	void *data;
 	snd_info_t info;
@@ -159,23 +144,22 @@ bool S_LoadBuffer( sfx_t *sfx )
 	if( !sfx ) {
 		return false;
 	}
-	if( sfx->filename[0] == '\0' || sfx->inMemory )
+	if( sfx->filename[0] == '\0' || sfx->inMemory ) {
 		return false;
-	if( trap_FS_IsUrl( sfx->filename ) )
+	}
+	if( trap_FS_IsUrl( sfx->filename ) ) {
 		return false;
+	}
 
 	data = S_LoadSound( sfx->filename, &info );
-	if( !data )
-	{
+	if( !data ) {
 		//Com_DPrintf( "Couldn't load %s\n", sfx->filename );
 		return false;
 	}
 
-	if( info.channels > 1 )
-	{
+	if( info.channels > 1 ) {
 		void *temp = stereo_mono( data, &info );
-		if( temp )
-		{
+		if( temp ) {
 			S_Free( data );
 			data = temp;
 		}
@@ -184,8 +168,7 @@ bool S_LoadBuffer( sfx_t *sfx )
 	format = S_SoundFormat( info.width, info.channels );
 
 	qalGenBuffers( 1, &sfx->buffer );
-	if( ( error = qalGetError() ) != AL_NO_ERROR )
-	{
+	if( ( error = qalGetError() ) != AL_NO_ERROR ) {
 		S_Free( data );
 		Com_Printf( "Couldn't create a sound buffer for %s (%s)\n", sfx->filename, S_ErrorMessage( error ) );
 		return false;
@@ -195,10 +178,8 @@ bool S_LoadBuffer( sfx_t *sfx )
 	error = qalGetError();
 
 	// If we ran out of memory, start evicting the least recently used sounds
-	while( error == AL_OUT_OF_MEMORY )
-	{
-		if( !buffer_evict() )
-		{
+	while( error == AL_OUT_OF_MEMORY ) {
+		if( !buffer_evict() ) {
 			S_Free( data );
 			Com_Printf( "Out of memory loading %s\n", sfx->filename );
 			return false;
@@ -211,8 +192,7 @@ bool S_LoadBuffer( sfx_t *sfx )
 	}
 
 	// Some other error condition
-	if( error != AL_NO_ERROR )
-	{
+	if( error != AL_NO_ERROR ) {
 		S_Free( data );
 		Com_Printf( "Couldn't fill sound buffer for %s (%s)", sfx->filename, S_ErrorMessage( error ) );
 		return false;
@@ -229,15 +209,14 @@ bool S_LoadBuffer( sfx_t *sfx )
 */
 
 // Find a sound effect if loaded, set up a handle otherwise
-sfx_t *S_FindBuffer( const char *filename )
-{
+sfx_t *S_FindBuffer( const char *filename ) {
 	sfx_t *sfx;
 	int i;
 
-	for( i = 0; i < MAX_SFX; i++ )
-	{
-		if( !Q_stricmp( knownSfx[i].filename, filename ) )
+	for( i = 0; i < MAX_SFX; i++ ) {
+		if( !Q_stricmp( knownSfx[i].filename, filename ) ) {
 			return &knownSfx[i];
+		}
 	}
 
 	sfx = buffer_find_free();
@@ -249,41 +228,40 @@ sfx_t *S_FindBuffer( const char *filename )
 	return sfx;
 }
 
-void S_MarkBufferFree( sfx_t *sfx )
-{
+void S_MarkBufferFree( sfx_t *sfx ) {
 	sfx->filename[0] = '\0';
 	sfx->registration_sequence = 0;
 	sfx->used = 0;
 }
 
-void S_ForEachBuffer( void (*callback)(sfx_t *sfx) )
-{
+void S_ForEachBuffer( void ( *callback )( sfx_t *sfx ) ) {
 	int i;
 
-	if( !buffers_inited )
+	if( !buffers_inited ) {
 		return;
+	}
 
 	for( i = 0; i < MAX_SFX; i++ ) {
 		callback( knownSfx + i );
 	}
 }
 
-void S_InitBuffers( void )
-{
-	if( buffers_inited )
+void S_InitBuffers( void ) {
+	if( buffers_inited ) {
 		return;
+	}
 
 	memset( knownSfx, 0, sizeof( knownSfx ) );
 
 	buffers_inited = true;
 }
 
-void S_ShutdownBuffers( void )
-{
+void S_ShutdownBuffers( void ) {
 	int i;
 
-	if( !buffers_inited )
+	if( !buffers_inited ) {
 		return;
+	}
 
 	for( i = 0; i < MAX_SFX; i++ )
 		S_UnloadBuffer( &knownSfx[i] );
@@ -292,42 +270,41 @@ void S_ShutdownBuffers( void )
 	buffers_inited = false;
 }
 
-void S_SoundList_f( void )
-{
+void S_SoundList_f( void ) {
 	int i;
 
-	for( i = 0; i < MAX_SFX; i++ )
-	{
-		if( knownSfx[i].filename[0] != '\0' )
-		{
-			if( knownSfx[i].isLocked )
+	for( i = 0; i < MAX_SFX; i++ ) {
+		if( knownSfx[i].filename[0] != '\0' ) {
+			if( knownSfx[i].isLocked ) {
 				Com_Printf( "L" );
-			else
+			} else {
 				Com_Printf( " " );
+			}
 
-			if( knownSfx[i].inMemory )
+			if( knownSfx[i].inMemory ) {
 				Com_Printf( "M" );
-			else
+			} else {
 				Com_Printf( " " );
+			}
 
 			Com_Printf( " : %s\n", knownSfx[i].filename );
 		}
 	}
 }
 
-void S_UseBuffer( sfx_t *sfx )
-{
-	if( sfx->filename[0] == '\0' )
+void S_UseBuffer( sfx_t *sfx ) {
+	if( sfx->filename[0] == '\0' ) {
 		return;
+	}
 
-	if( !sfx->inMemory )
+	if( !sfx->inMemory ) {
 		S_LoadBuffer( sfx );
+	}
 
 	sfx->used = trap_Milliseconds();
 }
 
-ALuint S_GetALBuffer( const sfx_t *sfx )
-{
+ALuint S_GetALBuffer( const sfx_t *sfx ) {
 	return sfx->buffer;
 }
 
@@ -335,12 +312,10 @@ ALuint S_GetALBuffer( const sfx_t *sfx )
 * Global functions (sound.h)
 */
 
-void S_FreeSounds()
-{
+void S_FreeSounds() {
 	S_ShutdownBuffers();
 	S_InitBuffers();
 }
 
-void S_Clear()
-{
+void S_Clear() {
 }

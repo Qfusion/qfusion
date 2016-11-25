@@ -20,8 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_SURFACE_H
 #define R_SURFACE_H
 
-typedef enum
-{
+typedef enum {
 	ST_NONE,
 	ST_BSP,
 	ST_SKY,
@@ -34,15 +33,14 @@ typedef enum
 
 	ST_MAX_TYPES,
 
-	ST_END = INT_MAX		// ensures that sizeof( surfaceType_t ) == sizeof( int )
+	ST_END = INT_MAX        // ensures that sizeof( surfaceType_t ) == sizeof( int )
 } drawSurfaceType_t;
 
-typedef struct
-{
+typedef struct {
 	drawSurfaceType_t type;
 
-	unsigned int visFrame;			// should be drawn when node is crossed
-	void *listSurf;					// only valid if visFrame == rf.frameCount
+	unsigned int visFrame;          // should be drawn when node is crossed
+	void *listSurf;                 // only valid if visFrame == rf.frameCount
 
 	struct mesh_vbo_s *vbo;
 	unsigned int firstVboVert, firstVboElem;
@@ -62,8 +60,7 @@ typedef struct
 	unsigned int numElems;
 } drawSurfaceBSP_t;
 
-typedef struct
-{
+typedef struct {
 	drawSurfaceType_t type;
 
 	struct maliasmesh_s *mesh;
@@ -71,8 +68,7 @@ typedef struct
 	struct model_s *model;
 } drawSurfaceAlias_t;
 
-typedef struct
-{
+typedef struct {
 	drawSurfaceType_t type;
 
 	struct mskmesh_s *mesh;
@@ -80,18 +76,17 @@ typedef struct
 	struct model_s *model;
 } drawSurfaceSkeletal_t;
 
-typedef struct
-{
+typedef struct {
 	drawSurfaceType_t type;
 
-	int	numVerts;
+	int numVerts;
 	vec4_t *xyzArray;
 	vec4_t *normalsArray;
 	vec2_t *stArray;
 	byte_vec4_t *colorsArray;
 	int numElems;
 	elem_t *elems;
-	struct shader_s	*shader;
+	struct shader_s *shader;
 	int fogNum;
 } drawSurfacePoly_t;
 

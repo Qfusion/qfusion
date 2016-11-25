@@ -5,8 +5,8 @@
 
 #include <stdio.h>
 
-#define STRINGIFY(x) #x
-#define DOUBLEQUOTE(x) STRINGIFY(x)
+#define STRINGIFY( x ) #x
+#define DOUBLEQUOTE( x ) STRINGIFY( x )
 
 cvar_t *irc_messageBucketSize = NULL;
 cvar_t *irc_messageBucketBurst = NULL;
@@ -22,54 +22,54 @@ typedef struct irc_bucket_message_s {
 } irc_bucket_message_t;
 
 typedef struct irc_bucket_s {
-	irc_bucket_message_t *first_msg;	// pointer to first message in queue
-	unsigned int message_size;			// number of messages in bucket
-	unsigned int character_size;		// number of characters in bucket
-	uint64_t last_refill;				// last refill timestamp
+	irc_bucket_message_t *first_msg;    // pointer to first message in queue
+	unsigned int message_size;          // number of messages in bucket
+	unsigned int character_size;        // number of characters in bucket
+	uint64_t last_refill;               // last refill timestamp
 	double message_token;
 	double character_token;
 } irc_bucket_t;
 
-static bool Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_server_msg_t *msg);
+static bool Irc_Proto_ParseServerMsg( const char *txt, size_t txt_len, irc_server_msg_t *msg );
 
-static bool Irc_Proto_Enqueue(const char *msg, size_t msg_len);
-static void Irc_Proto_RefillBucket(void);
-static bool Irc_Proto_DrainBucket(void);
+static bool Irc_Proto_Enqueue( const char *msg, size_t msg_len );
+static void Irc_Proto_RefillBucket( void );
+static bool Irc_Proto_DrainBucket( void );
 
 static irc_bucket_t irc_bucket;
 static irc_socket_t irc_sock;
 
-bool Irc_Proto_Connect(const char *host, unsigned short port) {
-	const bool status = Irc_Net_Connect(host, port, &irc_sock);
-	if (!status) {
-		if (!irc_messageBucketSize) {
-			irc_messageBucketSize = IRC_IMPORT.Cvar_Get("irc_messageBucketSize", DOUBLEQUOTE(IRC_DEFAULT_MESSAGE_BUCKET_SIZE), CVAR_ARCHIVE);
-			irc_messageBucketBurst = IRC_IMPORT.Cvar_Get("irc_messageBucketBurst", DOUBLEQUOTE(IRC_DEFAULT_MESSAGE_BUCKET_BURST), CVAR_ARCHIVE);
-			irc_messageBucketRate = IRC_IMPORT.Cvar_Get("irc_messageBucketRate", DOUBLEQUOTE(IRC_DEFAULT_MESSAGE_BUCKET_RATE), CVAR_ARCHIVE);
-			irc_characterBucketSize = IRC_IMPORT.Cvar_Get("irc_characterBucketSize", DOUBLEQUOTE(IRC_DEFAULT_CHARACTER_BUCKET_SIZE), CVAR_ARCHIVE);
-			irc_characterBucketBurst = IRC_IMPORT.Cvar_Get("irc_characterBucketBurst", DOUBLEQUOTE(IRC_DEFAULT_CHARACTER_BUCKET_BURST), CVAR_ARCHIVE);
-			irc_characterBucketRate = IRC_IMPORT.Cvar_Get("irc_characterBucketRate", DOUBLEQUOTE(IRC_DEFAULT_CHARACTER_BUCKET_RATE), CVAR_ARCHIVE);
+bool Irc_Proto_Connect( const char *host, unsigned short port ) {
+	const bool status = Irc_Net_Connect( host, port, &irc_sock );
+	if( !status ) {
+		if( !irc_messageBucketSize ) {
+			irc_messageBucketSize = IRC_IMPORT.Cvar_Get( "irc_messageBucketSize", DOUBLEQUOTE( IRC_DEFAULT_MESSAGE_BUCKET_SIZE ), CVAR_ARCHIVE );
+			irc_messageBucketBurst = IRC_IMPORT.Cvar_Get( "irc_messageBucketBurst", DOUBLEQUOTE( IRC_DEFAULT_MESSAGE_BUCKET_BURST ), CVAR_ARCHIVE );
+			irc_messageBucketRate = IRC_IMPORT.Cvar_Get( "irc_messageBucketRate", DOUBLEQUOTE( IRC_DEFAULT_MESSAGE_BUCKET_RATE ), CVAR_ARCHIVE );
+			irc_characterBucketSize = IRC_IMPORT.Cvar_Get( "irc_characterBucketSize", DOUBLEQUOTE( IRC_DEFAULT_CHARACTER_BUCKET_SIZE ), CVAR_ARCHIVE );
+			irc_characterBucketBurst = IRC_IMPORT.Cvar_Get( "irc_characterBucketBurst", DOUBLEQUOTE( IRC_DEFAULT_CHARACTER_BUCKET_BURST ), CVAR_ARCHIVE );
+			irc_characterBucketRate = IRC_IMPORT.Cvar_Get( "irc_characterBucketRate", DOUBLEQUOTE( IRC_DEFAULT_CHARACTER_BUCKET_RATE ), CVAR_ARCHIVE );
 		}
 		irc_bucket.first_msg = NULL;
 		irc_bucket.message_size = 0;
 		irc_bucket.character_size = 0;
 		irc_bucket.last_refill = IRC_IMPORT.Sys_Microseconds();
-		irc_bucket.message_token = Cvar_GetFloatValue(irc_messageBucketBurst);
-		irc_bucket.character_token = Cvar_GetFloatValue(irc_characterBucketBurst);
+		irc_bucket.message_token = Cvar_GetFloatValue( irc_messageBucketBurst );
+		irc_bucket.character_token = Cvar_GetFloatValue( irc_characterBucketBurst );
 	}
 	return status;
 }
 
-bool Irc_Proto_Disconnect(void) {
-	const bool status = Irc_Net_Disconnect(irc_sock);
-	if (!status) {
+bool Irc_Proto_Disconnect( void ) {
+	const bool status = Irc_Net_Disconnect( irc_sock );
+	if( !status ) {
 		irc_bucket_message_t *msg = irc_bucket.first_msg;
 		irc_bucket_message_t *prev;
-		while (msg) {
+		while( msg ) {
 			prev = msg;
 			msg = msg->next;
-			Irc_MemFree(prev->msg);
-			Irc_MemFree(prev);
+			Irc_MemFree( prev->msg );
+			Irc_MemFree( prev );
 		}
 		irc_bucket.first_msg = NULL;
 		irc_bucket.message_size = 0;
@@ -78,135 +78,135 @@ bool Irc_Proto_Disconnect(void) {
 	return status;
 }
 
-bool Irc_Proto_Quit(const char *quitmsg) {
+bool Irc_Proto_Quit( const char *quitmsg ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "QUIT %s\r\n", quitmsg);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Net_Send(irc_sock, msg, msg_len);	// send immediately
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "QUIT %s\r\n", quitmsg );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Net_Send( irc_sock, msg, msg_len );    // send immediately
 }
 
-bool Irc_Proto_Nick(const char *nick) {
+bool Irc_Proto_Nick( const char *nick ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "NICK %s\r\n", nick);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "NICK %s\r\n", nick );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_User(const char *user, bool invisible, const char *name) {
+bool Irc_Proto_User( const char *user, bool invisible, const char *name ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "USER %s %c * :%s\r\n", user, invisible ? '8' : '0', name);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "USER %s %c * :%s\r\n", user, invisible ? '8' : '0', name );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Password(const char *password) {
+bool Irc_Proto_Password( const char *password ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "PASS %s\r\n", password);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "PASS %s\r\n", password );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Join(const char *channel, const char *password) {
+bool Irc_Proto_Join( const char *channel, const char *password ) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = password
-		? snprintf(msg, sizeof(msg) - 1, "JOIN %s %s\r\n", channel, password)
-		: snprintf(msg, sizeof(msg) - 1, "JOIN %s\r\n", channel);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+						? snprintf( msg, sizeof( msg ) - 1, "JOIN %s %s\r\n", channel, password )
+						: snprintf( msg, sizeof( msg ) - 1, "JOIN %s\r\n", channel );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Part(const char *channel) {
+bool Irc_Proto_Part( const char *channel ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "PART %s\r\n", channel);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "PART %s\r\n", channel );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Mode(const char *target, const char *modes, const char *params) {
+bool Irc_Proto_Mode( const char *target, const char *modes, const char *params ) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = params
-		? snprintf(msg, sizeof(msg) - 1, "MODE %s %s %s\r\n", target, modes, params)
-		: snprintf(msg, sizeof(msg) - 1, "MODE %s %s\r\n", target, modes);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+						? snprintf( msg, sizeof( msg ) - 1, "MODE %s %s %s\r\n", target, modes, params )
+						: snprintf( msg, sizeof( msg ) - 1, "MODE %s %s\r\n", target, modes );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Topic(const char *channel, const char *topic) {
+bool Irc_Proto_Topic( const char *channel, const char *topic ) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = topic
-		? snprintf(msg, sizeof(msg) - 1, "TOPIC %s :%s\r\n", channel, topic)
-		: snprintf(msg, sizeof(msg) - 1, "TOPIC %s\r\n", channel);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+						? snprintf( msg, sizeof( msg ) - 1, "TOPIC %s :%s\r\n", channel, topic )
+						: snprintf( msg, sizeof( msg ) - 1, "TOPIC %s\r\n", channel );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Msg(const char *target, const char *text) {
+bool Irc_Proto_Msg( const char *target, const char *text ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "PRIVMSG %s :%s\r\n", target, text);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "PRIVMSG %s :%s\r\n", target, text );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Notice(const char *target, const char *text) {
+bool Irc_Proto_Notice( const char *target, const char *text ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "NOTICE %s :%s\r\n", target, text);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "NOTICE %s :%s\r\n", target, text );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Pong(const char *nick, const char *server, const char *cookie) {
+bool Irc_Proto_Pong( const char *nick, const char *server, const char *cookie ) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = cookie
-		? snprintf(msg, sizeof(msg) - 1, "PONG %s %s :%s\r\n", nick, server, cookie)
-		: snprintf(msg, sizeof(msg) - 1, "PONG %s %s\r\n", nick, server);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Net_Send(irc_sock, msg, msg_len);	// send immediately
+						? snprintf( msg, sizeof( msg ) - 1, "PONG %s %s :%s\r\n", nick, server, cookie )
+						: snprintf( msg, sizeof( msg ) - 1, "PONG %s %s\r\n", nick, server );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Net_Send( irc_sock, msg, msg_len );    // send immediately
 }
 
-bool Irc_Proto_Kick(const char *channel, const char *nick, const char *reason) {
+bool Irc_Proto_Kick( const char *channel, const char *nick, const char *reason ) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = reason
-		? snprintf(msg, sizeof(msg) - 1, "KICK %s %s :%s\r\n", channel, nick, reason)
-		: snprintf(msg, sizeof(msg) - 1, "KICK %s %s :%s\r\n", channel, nick, nick);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+						? snprintf( msg, sizeof( msg ) - 1, "KICK %s %s :%s\r\n", channel, nick, reason )
+						: snprintf( msg, sizeof( msg ) - 1, "KICK %s %s :%s\r\n", channel, nick, nick );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Who(const char *nick) {
+bool Irc_Proto_Who( const char *nick ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "WHO %s\r\n", nick);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "WHO %s\r\n", nick );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Whois(const char *nick) {
+bool Irc_Proto_Whois( const char *nick ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "WHOIS %s\r\n", nick);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "WHOIS %s\r\n", nick );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Whowas(const char *nick) {
+bool Irc_Proto_Whowas( const char *nick ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "WHOWAS %s\r\n", nick);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "WHOWAS %s\r\n", nick );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_Quote(const char *message) {
+bool Irc_Proto_Quote( const char *message ) {
 	char msg[IRC_SEND_BUF_SIZE];
-	const int msg_len = snprintf(msg, sizeof(msg) - 1, "%s\r\n", message);
-	msg[sizeof(msg) - 1] = '\0';
-	return Irc_Proto_Enqueue(msg, msg_len);
+	const int msg_len = snprintf( msg, sizeof( msg ) - 1, "%s\r\n", message );
+	msg[sizeof( msg ) - 1] = '\0';
+	return Irc_Proto_Enqueue( msg, msg_len );
 }
 
-bool Irc_Proto_PollServerMsg(irc_server_msg_t *msg, bool *msg_complete) {
+bool Irc_Proto_PollServerMsg( irc_server_msg_t *msg, bool *msg_complete ) {
 	static char buf[IRC_RECV_BUF_SIZE];
 	static char *last = buf;
 	int recvd;
 	*msg_complete = false;
 	// recv packet
-	if (Irc_Net_Receive(irc_sock, last, sizeof(buf) - (last - buf) - 1, &recvd)) {
+	if( Irc_Net_Receive( irc_sock, last, sizeof( buf ) - ( last - buf ) - 1, &recvd ) ) {
 		// receive failed
 		return true;
 	} else {
@@ -214,34 +214,35 @@ bool Irc_Proto_PollServerMsg(irc_server_msg_t *msg, bool *msg_complete) {
 		const char * const begin = buf;
 		last += recvd;
 		*last = '\0';
-		if (last != begin) {
+		if( last != begin ) {
 			// buffer not empty;
-			const char * const end = strstr(begin, "\r\n");
-			if (end) {
+			const char * const end = strstr( begin, "\r\n" );
+			if( end ) {
 				// complete command in buffer, parse
 				const size_t cmd_len = end + 2 - begin;
-				if (!Irc_Proto_ParseServerMsg(begin, cmd_len, msg)) {
+				if( !Irc_Proto_ParseServerMsg( begin, cmd_len, msg ) ) {
 					// parsing successful
 					// move succeeding commands to begin of buffer
-					memmove(buf, end + 2, sizeof(buf) - cmd_len);
+					memmove( buf, end + 2, sizeof( buf ) - cmd_len );
 					last -= cmd_len;
 					*msg_complete = true;
 				} else {
 					// parsing failure, fatal
-					strcpy(IRC_ERROR_MSG, "Received invalid packet from server");
+					strcpy( IRC_ERROR_MSG, "Received invalid packet from server" );
 					return true;
 				}
 			}
-		} else
+		} else {
 			*msg_complete = false;
+		}
 		return false;
 	}
 }
 
-bool Irc_Proto_ProcessServerMsg(const irc_server_msg_t *msg) {
+bool Irc_Proto_ProcessServerMsg( const irc_server_msg_t *msg ) {
 	irc_command_t cmd;
 	cmd.type = msg->type;
-	switch (cmd.type) {
+	switch( cmd.type ) {
 		case IRC_COMMAND_NUMERIC:
 			cmd.numeric = msg->numeric;
 			break;
@@ -249,21 +250,21 @@ bool Irc_Proto_ProcessServerMsg(const irc_server_msg_t *msg) {
 			cmd.string = msg->string;
 			break;
 	}
-	Irc_Proto_CallListeners(cmd, msg->prefix, msg->params, msg->trailing);
+	Irc_Proto_CallListeners( cmd, msg->prefix, msg->params, msg->trailing );
 	return false;
 }
 
-static bool Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_server_msg_t *msg) {
+static bool Irc_Proto_ParseServerMsg( const char *txt, size_t txt_len, irc_server_msg_t *msg ) {
 	const char *c = txt;
 	const char *end = txt + txt_len;
-	*(msg->prefix) = '\0';
-	*(msg->params) = '\0';
-	*(msg->trailing) = '\0';
-	if (c < end && *c == ':') {
+	*( msg->prefix ) = '\0';
+	*( msg->params ) = '\0';
+	*( msg->trailing ) = '\0';
+	if( c < end && *c == ':' ) {
 		// parse prefix
 		char *prefix = msg->prefix;
 		++c;
-		while (c < end && *c != '\r' && *c != ' ') {
+		while( c < end && *c != '\r' && *c != ' ' ) {
 			*prefix = *c;
 			++prefix;
 			++c;
@@ -271,60 +272,63 @@ static bool Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_server
 		*prefix = '\0';
 		++c;
 	}
-	if (c < end && *c != '\r') {
+	if( c < end && *c != '\r' ) {
 		// parse command
-		if (c < end && *c >= '0' && *c <= '9') {
+		if( c < end && *c >= '0' && *c <= '9' ) {
 			// numeric command
 			char command[4];
 			int i;
-			for (i = 0; i < 3; ++i) {
-				if (c < end && *c >= '0' && *c <= '9') {
+			for( i = 0; i < 3; ++i ) {
+				if( c < end && *c >= '0' && *c <= '9' ) {
 					command[i] = *c;
 					++c;
-				} else
+				} else {
 					return true;
+				}
 			}
 			command[3] = '\0';
 			msg->type = IRC_COMMAND_NUMERIC;
-			msg->numeric = atoi(command);
-		} else if (c < end && *c != '\r') {
+			msg->numeric = atoi( command );
+		} else if( c < end && *c != '\r' ) {
 			// string command
 			char *command = msg->string;
-			while (c < end && *c != '\r' && *c != ' ') {
+			while( c < end && *c != '\r' && *c != ' ' ) {
 				*command = *c;
 				++command;
 				++c;
 			}
 			*command = '\0';
 			msg->type = IRC_COMMAND_STRING;
-		} else
+		} else {
 			return true;
-		if (c < end && *c == ' ') {
+		}
+		if( c < end && *c == ' ' ) {
 			// parse params and trailing
 			char *params = msg->params;
 			++c;
-			while (c < end && *c != '\r' && *c != ':') {
+			while( c < end && *c != '\r' && *c != ':' ) {
 				// parse params
-				while (c < end && *c != '\r' && *c != ' ') {
+				while( c < end && *c != '\r' && *c != ' ' ) {
 					// parse single param
 					*params = *c;
 					++params;
 					++c;
 				}
-				if (c + 1 < end && *c == ' ' && *(c+1) != ':') {
+				if( c + 1 < end && *c == ' ' && *( c + 1 ) != ':' ) {
 					// more params
 					*params = ' ';
 					++params;
 				}
-				if (*c == ' ')
+				if( *c == ' ' ) {
 					++c;
+				}
 			}
 			*params = '\0';
-			if (c < end && *c == ':') {
+			if( c < end && *c == ':' ) {
 				// parse trailing
 				char *trailing = msg->trailing;
 				++c;
-				while (c < end && *c != '\r') {
+				while( c < end && *c != '\r' ) {
 					*trailing = *c;
 					++trailing;
 					++c;
@@ -336,85 +340,86 @@ static bool Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_server
 	return false;
 }
 
-bool Irc_Proto_Flush(void) {
-	Irc_Proto_RefillBucket();		// first refill token
-	return Irc_Proto_DrainBucket();	// then send messages (if allowed)
+bool Irc_Proto_Flush( void ) {
+	Irc_Proto_RefillBucket();       // first refill token
+	return Irc_Proto_DrainBucket(); // then send messages (if allowed)
 }
 
-static bool Irc_Proto_Enqueue(const char *msg, size_t msg_len) {
+static bool Irc_Proto_Enqueue( const char *msg, size_t msg_len ) {
 	// create message node
-	const double messageBucketSize = Cvar_GetFloatValue(irc_messageBucketSize);
-	const double characterBucketSize = Cvar_GetFloatValue(irc_characterBucketSize);
-	irc_bucket_message_t * const m = (irc_bucket_message_t*) Irc_MemAlloc(sizeof(irc_bucket_message_t));
+	const double messageBucketSize = Cvar_GetFloatValue( irc_messageBucketSize );
+	const double characterBucketSize = Cvar_GetFloatValue( irc_characterBucketSize );
+	irc_bucket_message_t * const m = (irc_bucket_message_t*) Irc_MemAlloc( sizeof( irc_bucket_message_t ) );
 	irc_bucket_message_t * n = irc_bucket.first_msg;
-	if (irc_bucket.message_size + 1 <= messageBucketSize && irc_bucket.character_size + msg_len <= characterBucketSize) {
-		m->msg = (char*) Irc_MemAlloc(msg_len);
-		memcpy(m->msg, msg, msg_len);
+	if( irc_bucket.message_size + 1 <= messageBucketSize && irc_bucket.character_size + msg_len <= characterBucketSize ) {
+		m->msg = (char*) Irc_MemAlloc( msg_len );
+		memcpy( m->msg, msg, msg_len );
 		m->msg_len = msg_len;
 		m->next = NULL;
 		// append message node
-		if (n) {
-			while (n->next)
+		if( n ) {
+			while( n->next )
 				n = n->next;
 			n->next = m;
-		} else
+		} else {
 			irc_bucket.first_msg = m;
+		}
 		// update bucket sizes
 		++irc_bucket.message_size;
 		irc_bucket.character_size += msg_len;
 		return false;
 	} else {
-		strcpy(IRC_ERROR_MSG, "Bucket(s) full. Could not enqueue message.");
+		strcpy( IRC_ERROR_MSG, "Bucket(s) full. Could not enqueue message." );
 		return true;
 	}
 }
 
-static void Irc_Proto_RefillBucket(void) {
+static void Irc_Proto_RefillBucket( void ) {
 	// calculate token refill
-	const double messageBucketSize = Cvar_GetFloatValue(irc_messageBucketSize);
-	const double characterBucketSize = Cvar_GetFloatValue(irc_characterBucketSize);
-	const double messageBucketRate = Cvar_GetFloatValue(irc_messageBucketRate);
-	const double characterBucketRate = Cvar_GetFloatValue(irc_characterBucketRate);
+	const double messageBucketSize = Cvar_GetFloatValue( irc_messageBucketSize );
+	const double characterBucketSize = Cvar_GetFloatValue( irc_characterBucketSize );
+	const double messageBucketRate = Cvar_GetFloatValue( irc_messageBucketRate );
+	const double characterBucketRate = Cvar_GetFloatValue( irc_characterBucketRate );
 	const uint64_t micros = IRC_IMPORT.Sys_Microseconds();
 	const uint64_t micros_delta = micros - irc_bucket.last_refill;
-	const double msg_delta = (micros_delta * messageBucketRate) / 1000000;
+	const double msg_delta = ( micros_delta * messageBucketRate ) / 1000000;
 	const double msg_new = irc_bucket.message_token + msg_delta;
-	const double char_delta = (micros_delta * characterBucketRate) / 1000000;
+	const double char_delta = ( micros_delta * characterBucketRate ) / 1000000;
 	const double char_new = irc_bucket.character_token + char_delta;
 	// refill token (but do not exceed maximum)
-	irc_bucket.message_token = min(msg_new, messageBucketSize);
-	irc_bucket.character_token = min(char_new, characterBucketSize);
+	irc_bucket.message_token = min( msg_new, messageBucketSize );
+	irc_bucket.character_token = min( char_new, characterBucketSize );
 	// set timestamp so next refill can calculate delta
 	irc_bucket.last_refill = micros;
 }
 
-static bool Irc_Proto_DrainBucket(void) {
-	const double characterBucketBurst = Cvar_GetFloatValue(irc_characterBucketBurst);
+static bool Irc_Proto_DrainBucket( void ) {
+	const double characterBucketBurst = Cvar_GetFloatValue( irc_characterBucketBurst );
 	bool status = false;
 	irc_bucket_message_t *msg;
 	// remove messages whose size exceed our burst size (we can not send them)
-	for (
+	for(
 		msg = irc_bucket.first_msg;
 		msg && msg->msg_len > characterBucketBurst;
 		msg = irc_bucket.first_msg
-	) {
+		) {
 		irc_bucket_message_t * const next = msg->next;
 		// update bucket sizes
 		--irc_bucket.message_size;
 		irc_bucket.character_size -= msg->msg_len;
 		// free message
-		Irc_MemFree(msg->msg);
+		Irc_MemFree( msg->msg );
 		// dequeue message
 		irc_bucket.first_msg = next;
 	}
 	// send burst of remaining messages
-	for (
+	for(
 		msg = irc_bucket.first_msg;
 		msg && !status && irc_bucket.message_token >= 1.0 && msg->msg_len <= irc_bucket.character_token;
 		msg = irc_bucket.first_msg
-	) {
+		) {
 		// send message
-		status = Irc_Net_Send(irc_sock, msg->msg, msg->msg_len);
+		status = Irc_Net_Send( irc_sock, msg->msg, msg->msg_len );
 		--irc_bucket.message_token;
 		irc_bucket.character_token -= msg->msg_len;
 		// dequeue message
@@ -423,8 +428,8 @@ static bool Irc_Proto_DrainBucket(void) {
 		--irc_bucket.message_size;
 		irc_bucket.character_size -= msg->msg_len;
 		// free message
-		Irc_MemFree(msg->msg);
-		Irc_MemFree(msg);
+		Irc_MemFree( msg->msg );
+		Irc_MemFree( msg );
 	}
 	return status;
 }

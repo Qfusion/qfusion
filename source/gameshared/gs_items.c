@@ -42,17 +42,17 @@ vec3_t item_box_maxs = { 16.0f, 16.0f, 40.0f };
 #define ARMOR_RA_PICKUP 100
 #define ARMOR_RA_MAX 150
 
-#define SHELL_TIME	30
-#define QUAD_TIME	30
-#define REGEN_TIME	30
+#define SHELL_TIME  30
+#define QUAD_TIME   30
+#define REGEN_TIME  30
 
 /*
-* 
+*
 * ITEM DEFS
-* 
+*
 */
 
-gsitem_t	itemdefs[] =
+gsitem_t itemdefs[] =
 {
 	{
 		NULL
@@ -71,7 +71,7 @@ gsitem_t	itemdefs[] =
 		"weapon_gunblade",          // entity name
 		WEAP_GUNBLADE, // item tag, weapon model for weapons
 		IT_WEAPON,                  // item type
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_STAY_COOP, // game flags
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_STAY_COOP, // game flags
 
 		{ PATH_GUNBLADE_MODEL, 0 }, // models 1 and 2
 		PATH_GUNBLADE_ICON,         // icon
@@ -96,13 +96,13 @@ gsitem_t	itemdefs[] =
 		"weapon_machinegun",
 		WEAP_MACHINEGUN,
 		IT_WEAPON,
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_DROPABLE|ITFLAG_STAY_COOP,
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
 
 		{ PATH_MACHINEGUN_MODEL, PATH_MACHINEGUN_BARREL_MODEL },
 		PATH_MACHINEGUN_ICON,
 		PATH_MACHINEGUN_SIMPLEITEM,
 		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Machinegun", "MG", S_COLOR_GREY,
 		1,
@@ -118,13 +118,13 @@ gsitem_t	itemdefs[] =
 		"weapon_riotgun",
 		WEAP_RIOTGUN,
 		IT_WEAPON,
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_DROPABLE|ITFLAG_STAY_COOP,
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
 
 		{ PATH_RIOTGUN_MODEL, 0 },
 		PATH_RIOTGUN_ICON,
 		PATH_RIOTGUN_SIMPLEITEM,
 		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Riotgun", "RG", S_COLOR_ORANGE,
 		1,
@@ -140,13 +140,13 @@ gsitem_t	itemdefs[] =
 		"weapon_grenadelauncher",
 		WEAP_GRENADELAUNCHER,
 		IT_WEAPON,
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_DROPABLE|ITFLAG_STAY_COOP,
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
 
 		{ PATH_GRENADELAUNCHER_MODEL, PATH_GRENADELAUNCHER_BARREL_MODEL },
 		PATH_GRENADELAUNCHER_ICON,
 		PATH_GRENADELAUNCHER_SIMPLEITEM,
 		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Grenade Launcher", "GL", S_COLOR_BLUE,
 		1,
@@ -163,13 +163,13 @@ gsitem_t	itemdefs[] =
 		"weapon_rocketlauncher",
 		WEAP_ROCKETLAUNCHER,
 		IT_WEAPON,
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_DROPABLE|ITFLAG_STAY_COOP,
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
 
 		{ PATH_ROCKETLAUNCHER_MODEL, 0 },
 		PATH_ROCKETLAUNCHER_ICON,
 		PATH_ROCKETLAUNCHER_SIMPLEITEM,
 		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Rocket Launcher", "RL", S_COLOR_RED,
 		1,
@@ -187,13 +187,13 @@ gsitem_t	itemdefs[] =
 		"weapon_plasmagun",
 		WEAP_PLASMAGUN,
 		IT_WEAPON,
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_DROPABLE|ITFLAG_STAY_COOP,
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
 
 		{ PATH_PLASMAGUN_MODEL, 0 },
 		PATH_PLASMAGUN_ICON,
 		PATH_PLASMAGUN_SIMPLEITEM,
 		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Plasmagun", "PG", S_COLOR_GREEN,
 		1,
@@ -211,13 +211,13 @@ gsitem_t	itemdefs[] =
 		"weapon_lasergun",
 		WEAP_LASERGUN,
 		IT_WEAPON,
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_DROPABLE|ITFLAG_STAY_COOP,
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
 
 		{ PATH_LASERGUN_MODEL, 0 },
 		PATH_LASERGUN_ICON,
 		PATH_LASERGUN_SIMPLEITEM,
 		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Lasergun", "LG", S_COLOR_YELLOW,
 		1,
@@ -227,9 +227,9 @@ gsitem_t	itemdefs[] =
 		NULL,
 		NULL,
 		S_WEAPON_LASERGUN_S_HUM " " S_WEAPON_LASERGUN_W_HUM " "
-			S_WEAPON_LASERGUN_S_QUAD_HUM " " S_WEAPON_LASERGUN_W_QUAD_HUM " "
-			S_WEAPON_LASERGUN_S_STOP " " S_WEAPON_LASERGUN_W_STOP " "
-			S_WEAPON_LASERGUN_HIT_0 " " S_WEAPON_LASERGUN_HIT_1 " " S_WEAPON_LASERGUN_HIT_2,
+		S_WEAPON_LASERGUN_S_QUAD_HUM " " S_WEAPON_LASERGUN_W_QUAD_HUM " "
+		S_WEAPON_LASERGUN_S_STOP " " S_WEAPON_LASERGUN_W_STOP " "
+		S_WEAPON_LASERGUN_HIT_0 " " S_WEAPON_LASERGUN_HIT_1 " " S_WEAPON_LASERGUN_HIT_2,
 		NULL
 	},
 
@@ -238,13 +238,13 @@ gsitem_t	itemdefs[] =
 		"weapon_electrobolt",
 		WEAP_ELECTROBOLT,
 		IT_WEAPON,
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_DROPABLE|ITFLAG_STAY_COOP,
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
 
 		{ PATH_ELECTROBOLT_MODEL, 0 },
 		PATH_ELECTROBOLT_ICON,
 		PATH_ELECTROBOLT_SIMPLEITEM,
 		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Electrobolt", "EB", S_COLOR_CYAN,
 		1,
@@ -252,7 +252,7 @@ gsitem_t	itemdefs[] =
 		AMMO_BOLTS,
 		AMMO_WEAK_BOLTS,
 		NULL,
-		/*PATH_ELECTROBOLT_WEAK_MODEL*/NULL,
+		/*PATH_ELECTROBOLT_WEAK_MODEL*/ NULL,
 		S_WEAPON_ELECTROBOLT_HIT,
 		NULL
 	},
@@ -262,13 +262,13 @@ gsitem_t	itemdefs[] =
 		"weapon_instagun",
 		WEAP_INSTAGUN,
 		IT_WEAPON,
-		ITFLAG_PICKABLE|ITFLAG_USABLE|ITFLAG_DROPABLE|ITFLAG_STAY_COOP,
+		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
 
 		{ PATH_INSTAGUN_MODEL, 0 },
 		PATH_INSTAGUN_ICON,
 		PATH_INSTAGUN_SIMPLEITEM,
 		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Instagun", "IG", S_COLOR_MAGENTA,
 		1,
@@ -297,7 +297,7 @@ gsitem_t	itemdefs[] =
 		PATH_GUNBLADE_AMMO_ICON,
 		PATH_GUNBLADE_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Cells", "cells", S_COLOR_YELLOW,
 		0, // actual value comes from weapondefs instead
@@ -319,7 +319,7 @@ gsitem_t	itemdefs[] =
 		PATH_MACHINEGUN_AMMO_ICON,
 		PATH_MACHINEGUN_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Bullets", "bullets", S_COLOR_GREY,
 		0, // actual value comes from weapondefs instead
@@ -335,13 +335,13 @@ gsitem_t	itemdefs[] =
 		"ammo_riotgun",
 		AMMO_SHELLS,
 		IT_AMMO,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
 		PATH_RIOTGUN_AMMO_ICON,
 		PATH_RIOTGUN_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Shells", "shells", S_COLOR_ORANGE,
 		0, // actual value comes from weapondefs instead
@@ -357,13 +357,13 @@ gsitem_t	itemdefs[] =
 		"ammo_grenadelauncher",
 		AMMO_GRENADES,
 		IT_AMMO,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
 		PATH_GRENADELAUNCHER_AMMO_ICON,
 		PATH_GRENADELAUNCHER_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Grenades", "grens", S_COLOR_BLUE,
 		0, // actual value comes from weapondefs instead
@@ -379,13 +379,13 @@ gsitem_t	itemdefs[] =
 		"ammo_rocketlauncher",
 		AMMO_ROCKETS,
 		IT_AMMO,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
 		PATH_ROCKETLAUNCHER_AMMO_ICON,
 		PATH_ROCKETLAUNCHER_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Rockets", "rockets", S_COLOR_RED,
 		0, // actual value comes from weapondefs instead
@@ -401,13 +401,13 @@ gsitem_t	itemdefs[] =
 		"ammo_plasmagun",
 		AMMO_PLASMA,
 		IT_AMMO,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
 		PATH_PLASMAGUN_AMMO_ICON,
 		PATH_PLASMAGUN_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Plasma", "plasma", S_COLOR_GREEN,
 		0, // actual value comes from weapondefs instead
@@ -423,13 +423,13 @@ gsitem_t	itemdefs[] =
 		"ammo_lasergun",
 		AMMO_LASERS,
 		IT_AMMO,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
 		PATH_LASERGUN_AMMO_ICON,
 		PATH_LASERGUN_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Lasers", "lasers", S_COLOR_YELLOW,
 		0, // actual value comes from weapondefs instead
@@ -445,13 +445,13 @@ gsitem_t	itemdefs[] =
 		"ammo_electrobolt",
 		AMMO_BOLTS,
 		IT_AMMO,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
 		PATH_ELECTROBOLT_AMMO_ICON,
 		PATH_ELECTROBOLT_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Bolts", "bolts", S_COLOR_CYAN,
 		0, // actual value comes from weapondefs instead
@@ -466,13 +466,13 @@ gsitem_t	itemdefs[] =
 		"ammo_instagun",
 		AMMO_INSTAS,
 		IT_AMMO,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
 		PATH_INSTAGUN_AMMO_ICON,
 		PATH_INSTAGUN_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Instas", "instas", S_COLOR_CYAN,
 		0, // actual value comes from weapondefs instead
@@ -514,13 +514,13 @@ gsitem_t	itemdefs[] =
 		"ammo_machinegun_weak",
 		AMMO_WEAK_BULLETS,
 		IT_AMMO,
-		0,				// NOT SPAWNABLE
+		0,              // NOT SPAWNABLE
 
 		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
 		PATH_MACHINEGUN_AMMO_ICON,
 		PATH_MACHINEGUN_AMMO_ICON,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
+		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Weak bullets", "11mm", S_COLOR_GREY,
 		0, // actual value comes from weapondefs instead
@@ -699,7 +699,7 @@ gsitem_t	itemdefs[] =
 		PATH_GA_ICON,
 		PATH_GA_SIMPLEITEM,
 		S_PICKUP_ARMOR_GA,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Green Armor", "GA", S_COLOR_GREEN,
 		ARMOR_GA_PICKUP,
@@ -721,7 +721,7 @@ gsitem_t	itemdefs[] =
 		PATH_YA_ICON,
 		PATH_YA_SIMPLEITEM,
 		S_PICKUP_ARMOR_YA,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Yellow Armor", "YA", S_COLOR_YELLOW,
 		ARMOR_YA_PICKUP,
@@ -743,7 +743,7 @@ gsitem_t	itemdefs[] =
 		PATH_RA_ICON,
 		PATH_RA_SIMPLEITEM,
 		S_PICKUP_ARMOR_RA,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Red Armor", "RA", S_COLOR_RED,
 		ARMOR_RA_PICKUP,
@@ -765,7 +765,7 @@ gsitem_t	itemdefs[] =
 		PATH_SHARD_ICON,
 		PATH_SHARD_SIMPLEITEM,
 		S_PICKUP_ARMOR_SHARD,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Armor Shard", "shard", S_COLOR_GREEN,
 		ARMOR_SHARD_PICKUP,
@@ -899,13 +899,13 @@ gsitem_t	itemdefs[] =
 		"item_quad",
 		POWERUP_QUAD,
 		IT_POWERUP,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_QUAD_MODEL, PATH_QUAD_LIGHT_MODEL },
 		PATH_QUAD_ICON,
 		PATH_QUAD_SIMPLEITEM,
 		S_PICKUP_QUAD,
-		EF_OUTLINE|EF_ROTATE_AND_BOB,
+		EF_OUTLINE | EF_ROTATE_AND_BOB,
 
 		"Quad Damage", "QUAD", NULL,
 		QUAD_TIME,
@@ -924,13 +924,13 @@ gsitem_t	itemdefs[] =
 		"item_warshell",
 		POWERUP_SHELL,
 		IT_POWERUP,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_WARSHELL_BELT_MODEL, PATH_WARSHELL_SPHERE_MODEL },
 		PATH_SHELL_ICON,
 		PATH_SHELL_SIMPLEITEM,
 		S_PICKUP_SHELL,
-		EF_OUTLINE|EF_ROTATE_AND_BOB,
+		EF_OUTLINE | EF_ROTATE_AND_BOB,
 
 		"WarShell", "Shell", NULL,
 		SHELL_TIME,
@@ -949,13 +949,13 @@ gsitem_t	itemdefs[] =
 		"item_regen",
 		POWERUP_REGEN,
 		IT_POWERUP,
-		ITFLAG_PICKABLE|ITFLAG_DROPABLE,
+		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
 
 		{ PATH_REGEN_MODEL },
 		PATH_REGEN_ICON,
 		PATH_REGEN_SIMPLEITEM,
 		S_PICKUP_REGEN,
-		EF_OUTLINE|EF_ROTATE_AND_BOB,
+		EF_OUTLINE | EF_ROTATE_AND_BOB,
 
 		"Regeneration", "Regen", NULL,
 		REGEN_TIME,
@@ -979,7 +979,7 @@ gsitem_t	itemdefs[] =
 		PATH_AMMOPACK_ICON,
 		PATH_AMMOPACK_SIMPLEITEM,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Ammo Pack Weak", "weakpack", NULL,
 		1,
@@ -1001,7 +1001,7 @@ gsitem_t	itemdefs[] =
 		PATH_AMMOPACK_ICON,
 		PATH_AMMOPACK_SIMPLEITEM,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Ammo Pack Strong", "strongpack", NULL,
 		1,
@@ -1023,7 +1023,7 @@ gsitem_t	itemdefs[] =
 		PATH_AMMOPACK_ICON,
 		PATH_AMMOPACK_SIMPLEITEM,
 		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB|EF_OUTLINE,
+		EF_ROTATE_AND_BOB | EF_OUTLINE,
 
 		"Ammo Pack", "pack", NULL,
 		1,
@@ -1043,17 +1043,17 @@ gsitem_t	itemdefs[] =
 /*
 * GS_FindItemByTag
 */
-gsitem_t *GS_FindItemByTag( int tag )
-{
-	gsitem_t	*it;
+gsitem_t *GS_FindItemByTag( int tag ) {
+	gsitem_t    *it;
 
-	if( tag <= 0 || tag >= GS_MAX_ITEM_TAGS )
+	if( tag <= 0 || tag >= GS_MAX_ITEM_TAGS ) {
 		return NULL;
+	}
 
-	for( it = &itemdefs[1]; it->classname; it++ )
-	{
-		if( tag == it->tag )
+	for( it = &itemdefs[1]; it->classname; it++ ) {
+		if( tag == it->tag ) {
 			return it;
+		}
 	}
 
 	return NULL;
@@ -1062,17 +1062,17 @@ gsitem_t *GS_FindItemByTag( int tag )
 /*
 * GS_FindItemByClassname
 */
-gsitem_t *GS_FindItemByClassname( const char *classname )
-{
-	gsitem_t	*it;
+gsitem_t *GS_FindItemByClassname( const char *classname ) {
+	gsitem_t    *it;
 
-	if( !classname )
+	if( !classname ) {
 		return NULL;
+	}
 
-	for( it = &itemdefs[1]; it->classname; it++ )
-	{
-		if( !Q_stricmp( classname, it->classname ) )
+	for( it = &itemdefs[1]; it->classname; it++ ) {
+		if( !Q_stricmp( classname, it->classname ) ) {
 			return it;
+		}
 	}
 
 	return NULL;
@@ -1081,17 +1081,17 @@ gsitem_t *GS_FindItemByClassname( const char *classname )
 /*
 * GS_FindItemByName
 */
-gsitem_t *GS_FindItemByName( const char *name )
-{
-	gsitem_t	*it;
+gsitem_t *GS_FindItemByName( const char *name ) {
+	gsitem_t    *it;
 
-	if( !name )
+	if( !name ) {
 		return NULL;
+	}
 
-	for( it = &itemdefs[1]; it->classname; it++ )
-	{
-		if( !Q_stricmp( name, it->name ) || !Q_stricmp( name, it->shortname ) )
+	for( it = &itemdefs[1]; it->classname; it++ ) {
+		if( !Q_stricmp( name, it->name ) || !Q_stricmp( name, it->shortname ) ) {
 			return it;
+		}
 	}
 
 	return NULL;
@@ -1100,66 +1100,70 @@ gsitem_t *GS_FindItemByName( const char *name )
 /*
 * GS_Cmd_UseItem
 */
-gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int typeMask )
-{
+gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int typeMask ) {
 	gsitem_t *item = NULL;
 
 	assert( playerState );
 
-	if( playerState->pmove.pm_type >= PM_SPECTATOR )
+	if( playerState->pmove.pm_type >= PM_SPECTATOR ) {
 		return NULL;
+	}
 
-	if( !string || !string[0] )
+	if( !string || !string[0] ) {
 		return NULL;
+	}
 
-	if( Q_isdigit( string ) )
-	{
+	if( Q_isdigit( string ) ) {
 		int tag = atoi( string );
 		item = GS_FindItemByTag( tag );
-	}
-	else
+	} else {
 		item = GS_FindItemByName( string );
+	}
 
-	if( !item )
+	if( !item ) {
 		return NULL;
+	}
 
-	if( typeMask && !( item->type & typeMask ) )
+	if( typeMask && !( item->type & typeMask ) ) {
 		return NULL;
+	}
 
 	// we don't have this item in the inventory
-	if( !playerState->inventory[item->tag] )
-	{
-		if( gs.module == GS_MODULE_CGAME && !( item->type & IT_WEAPON ) )
+	if( !playerState->inventory[item->tag] ) {
+		if( gs.module == GS_MODULE_CGAME && !( item->type & IT_WEAPON ) ) {
 			module_Printf( "Item %s is not in inventory\n", item->name );
+		}
 		return NULL;
 	}
 
 	// see if we can use it
 
-	if( !(item->flags & ITFLAG_USABLE) )
+	if( !( item->flags & ITFLAG_USABLE ) ) {
 		return NULL;
+	}
 
-	if( item->type & IT_WEAPON )
-	{
-		if( !( playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_WEAPONSWITCH ) )
+	if( item->type & IT_WEAPON ) {
+		if( !( playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_WEAPONSWITCH ) ) {
 			return NULL;
+		}
 
-		if( item->tag == playerState->stats[STAT_PENDING_WEAPON] )  // it's already being loaded
+		if( item->tag == playerState->stats[STAT_PENDING_WEAPON] ) { // it's already being loaded
 			return NULL;
+		}
 
 		// check for need of any kind of ammo/fuel/whatever
-		if( item->ammo_tag != AMMO_NONE && item->weakammo_tag != AMMO_NONE )
-		{
+		if( item->ammo_tag != AMMO_NONE && item->weakammo_tag != AMMO_NONE ) {
 			gs_weapon_definition_t *weapondef = GS_GetWeaponDef( item->tag );
 
-			if( weapondef )
-			{	
+			if( weapondef ) {
 				// do we have any of these ammos ?
-				if( playerState->inventory[item->weakammo_tag] >= weapondef->firedef_weak.usage_count )
+				if( playerState->inventory[item->weakammo_tag] >= weapondef->firedef_weak.usage_count ) {
 					return item;
+				}
 
-				if( playerState->inventory[item->ammo_tag] >= weapondef->firedef.usage_count )
+				if( playerState->inventory[item->ammo_tag] >= weapondef->firedef.usage_count ) {
 					return item;
+				}
 			}
 
 			return NULL;
@@ -1168,14 +1172,17 @@ gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int t
 		return item; // one of the weapon modes doesn't require ammo to be fired
 	}
 
-	if( item->type & IT_AMMO )
+	if( item->type & IT_AMMO ) {
 		return item;
+	}
 
-	if( item->type & IT_HEALTH )
+	if( item->type & IT_HEALTH ) {
 		return item;
+	}
 
-	if( item->type & IT_POWERUP )
+	if( item->type & IT_POWERUP ) {
 		return item;
+	}
 
 	return NULL;
 }
@@ -1183,41 +1190,45 @@ gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int t
 /*
 * GS_Cmd_UseWeaponStep_f
 */
-static gsitem_t *GS_Cmd_UseWeaponStep_f( player_state_t *playerState, int step, int predictedWeaponSwitch )
-{
+static gsitem_t *GS_Cmd_UseWeaponStep_f( player_state_t *playerState, int step, int predictedWeaponSwitch ) {
 	gsitem_t *item;
 	int curSlot, newSlot;
 
 	assert( playerState );
 
-	if( playerState->pmove.pm_type >= PM_SPECTATOR )
+	if( playerState->pmove.pm_type >= PM_SPECTATOR ) {
 		return NULL;
+	}
 
-	if( !( playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_WEAPONSWITCH ) )
+	if( !( playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_WEAPONSWITCH ) ) {
 		return NULL;
+	}
 
-	if( step != -1 && step != 1 )
+	if( step != -1 && step != 1 ) {
 		step = 1;
+	}
 
-	if( predictedWeaponSwitch && predictedWeaponSwitch != playerState->stats[STAT_PENDING_WEAPON] )
+	if( predictedWeaponSwitch && predictedWeaponSwitch != playerState->stats[STAT_PENDING_WEAPON] ) {
 		curSlot = predictedWeaponSwitch;
-	else
+	} else {
 		curSlot = playerState->stats[STAT_PENDING_WEAPON];
+	}
 
 	clamp( curSlot, 0, WEAP_TOTAL - 1 );
 	newSlot = curSlot;
-	do
-	{
+	do {
 		newSlot += step;
-		if( newSlot >= WEAP_TOTAL )
+		if( newSlot >= WEAP_TOTAL ) {
 			newSlot = 0;
-		if( newSlot < 0 )
+		}
+		if( newSlot < 0 ) {
 			newSlot = WEAP_TOTAL - 1;
+		}
 
-		if( ( item = GS_Cmd_UseItem( playerState, va( "%i", newSlot ), IT_WEAPON ) ) != NULL )
+		if( ( item = GS_Cmd_UseItem( playerState, va( "%i", newSlot ), IT_WEAPON ) ) != NULL ) {
 			return item;
-	}
-	while( newSlot != curSlot );
+		}
+	} while( newSlot != curSlot );
 
 	return NULL;
 }
@@ -1225,16 +1236,14 @@ static gsitem_t *GS_Cmd_UseWeaponStep_f( player_state_t *playerState, int step, 
 /*
 * GS_Cmd_NextWeapon_f
 */
-gsitem_t *GS_Cmd_NextWeapon_f( player_state_t *playerState, int predictedWeaponSwitch )
-{
+gsitem_t *GS_Cmd_NextWeapon_f( player_state_t *playerState, int predictedWeaponSwitch ) {
 	return GS_Cmd_UseWeaponStep_f( playerState, 1, predictedWeaponSwitch );
 }
 
 /*
 * GS_Cmd_PrevWeapon_f
 */
-gsitem_t *GS_Cmd_PrevWeapon_f( player_state_t *playerState, int predictedWeaponSwitch )
-{
+gsitem_t *GS_Cmd_PrevWeapon_f( player_state_t *playerState, int predictedWeaponSwitch ) {
 	return GS_Cmd_UseWeaponStep_f( playerState, -1, predictedWeaponSwitch );
 }
 
@@ -1242,32 +1251,34 @@ gsitem_t *GS_Cmd_PrevWeapon_f( player_state_t *playerState, int predictedWeaponS
 //		ARMOR TYPES
 //=====================================
 
-int GS_Armor_TagForCount( float armorcount )
-{
+int GS_Armor_TagForCount( float armorcount ) {
 	int count = ARMOR_TO_INT( armorcount );
 
-	if( count > GS_FindItemByTag( ARMOR_YA )->inventory_max )
+	if( count > GS_FindItemByTag( ARMOR_YA )->inventory_max ) {
 		return ARMOR_RA;
-	if( count > GS_FindItemByTag( ARMOR_GA )->inventory_max )
+	}
+	if( count > GS_FindItemByTag( ARMOR_GA )->inventory_max ) {
 		return ARMOR_YA;
-	if( count )
+	}
+	if( count ) {
 		return ARMOR_GA;
+	}
 
 	return ARMOR_NONE;
 }
 
-int GS_Armor_MaxCountForTag( int tag )
-{
+int GS_Armor_MaxCountForTag( int tag ) {
 	gsitem_t *item = GS_FindItemByTag( tag );
-	if( item )
+	if( item ) {
 		return item->inventory_max;
+	}
 	return 255;
 }
 
-int GS_Armor_PickupCountForTag( int tag )
-{
+int GS_Armor_PickupCountForTag( int tag ) {
 	gsitem_t *item = GS_FindItemByTag( tag );
-	if( item )
+	if( item ) {
 		return item->quantity;
+	}
 	return 0;
 }

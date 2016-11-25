@@ -37,15 +37,13 @@ extern "C" {
 struct dynvar_s;
 typedef struct dynvar_s dynvar_t;
 
-typedef enum dynvar_get_status_t
-{
+typedef enum dynvar_get_status_t {
 	DYNVAR_GET_OK,
 	DYNVAR_GET_WRITEONLY,
 	DYNVAR_GET_TRANSIENT
 } dynvar_get_status_t;
 
-typedef enum dynvar_set_status_t
-{
+typedef enum dynvar_set_status_t {
 	DYNVAR_SET_OK,
 	DYNVAR_SET_READONLY,
 	DYNVAR_SET_INVALID,
@@ -69,4 +67,3 @@ typedef void ( *dynvar_listener_f )( void *val );
 #endif
 
 #endif // GAME_QDYNVAR_H
-

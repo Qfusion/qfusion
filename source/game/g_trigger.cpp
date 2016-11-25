@@ -22,32 +22,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 /*
 * G_TriggerWait
-* 
+*
 * Called always when using a trigger that supports wait flag
 * Returns true if the trigger shouldn't be activated
 */
-static bool G_TriggerWait( edict_t *ent, edict_t *other )
-{
-	if( GS_RaceGametype() )
-	{
-		if( other->trigger_entity == ent && other->trigger_timeout && other->trigger_timeout >= level.time )
+static bool G_TriggerWait( edict_t *ent, edict_t *other ) {
+	if( GS_RaceGametype() ) {
+		if( other->trigger_entity == ent && other->trigger_timeout && other->trigger_timeout >= level.time ) {
 			return true;
+		}
 
 		other->trigger_entity = ent;
 		other->trigger_timeout = level.time + 1000 * ent->wait;
 		return false;
 	}
 
-	if( ent->timeStamp >= level.time )
+	if( ent->timeStamp >= level.time ) {
 		return true;
+	}
 
 	// the wait time has passed, so set back up for another activation
 	ent->timeStamp = level.time + ( ent->wait * 1000 );
 	return false;
 }
 
-static void InitTrigger( edict_t *self )
-{
+static void InitTrigger( edict_t *self ) {
 	self->r.solid = SOLID_TRIGGER;
 	self->movetype = MOVETYPE_NONE;
 	GClip_SetBrushModel( self, self->model );
@@ -58,15 +57,14 @@ static void InitTrigger( edict_t *self )
 // the trigger was just activated
 // ent->activator should be set to the activator so it can be held through a delay
 // so wait for the delay time before firing
-static void multi_trigger( edict_t *ent )
-{
-	if( G_TriggerWait( ent, ent->activator ) )
-		return;		// already been triggered
+static void multi_trigger( edict_t *ent ) {
+	if( G_TriggerWait( ent, ent->activator ) ) {
+		return;     // already been triggered
 
+	}
 	G_UseTargets( ent, ent->activator );
 
-	if( ent->wait <= 0 )
-	{
+	if( ent->wait <= 0 ) {
 		// we can't just remove (self) here, because this is a touch function
 		// called while looping through area links...
 		ent->touch = NULL;
@@ -75,24 +73,23 @@ static void multi_trigger( edict_t *ent )
 	}
 }
 
-static void Use_Multi( edict_t *ent, edict_t *other, edict_t *activator )
-{
+static void Use_Multi( edict_t *ent, edict_t *other, edict_t *activator ) {
 	ent->activator = activator;
 	multi_trigger( ent );
 }
 
-static void Touch_Multi( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
-{
-	if( other->r.client )
-	{
-		if( self->spawnflags & 2 )
+static void Touch_Multi( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
+	if( other->r.client ) {
+		if( self->spawnflags & 2 ) {
 			return;
+		}
+	} else {
+		return;
 	}
-	else
-		return;
 
-	if( self->s.team && self->s.team != other->s.team )
+	if( self->s.team && self->s.team != other->s.team ) {
 		return;
+	}
 
 	self->activator = other;
 	multi_trigger( self );
@@ -118,44 +115,40 @@ static void Touch_Multi( edict_t *self, edict_t *other, cplane_t *plane, int sur
 //-------- NOTES --------
 //message is untested
 
-static void trigger_enable( edict_t *self, edict_t *other, edict_t *activator )
-{
+static void trigger_enable( edict_t *self, edict_t *other, edict_t *activator ) {
 	self->r.solid = SOLID_TRIGGER;
 	self->use = Use_Multi;
 	GClip_LinkEntity( self );
 }
 
-void SP_trigger_multiple( edict_t *ent )
-{
+void SP_trigger_multiple( edict_t *ent ) {
 	GClip_SetBrushModel( ent, ent->model );
 	G_PureModel( ent->model );
 
-	if( st.noise )
-	{
+	if( st.noise ) {
 		ent->noise_index = trap_SoundIndex( st.noise );
 		G_PureSound( st.noise );
 	}
 
 	// gameteam field from editor
-	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS )
+	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS ) {
 		ent->s.team = st.gameteam;
-	else
+	} else {
 		ent->s.team = TEAM_SPECTATOR;
+	}
 
-	if( !ent->wait )
+	if( !ent->wait ) {
 		ent->wait = 0.2f;
+	}
 
 	ent->touch = Touch_Multi;
 	ent->movetype = MOVETYPE_NONE;
 	ent->r.svflags |= SVF_NOCLIENT;
 
-	if( ent->spawnflags & 4 )
-	{
+	if( ent->spawnflags & 4 ) {
 		ent->r.solid = SOLID_NOT;
 		ent->use = trigger_enable;
-	}
-	else
-	{
+	} else {
 		ent->r.solid = SOLID_TRIGGER;
 		ent->use = Use_Multi;
 	}
@@ -182,8 +175,7 @@ void SP_trigger_multiple( edict_t *ent )
 //-------- NOTES --------
 //Wait key will be ignored. message is untested
 
-void SP_trigger_once( edict_t *ent )
-{
+void SP_trigger_once( edict_t *ent ) {
 	ent->wait = -1;
 	SP_trigger_multiple( ent );
 }
@@ -199,13 +191,11 @@ void SP_trigger_once( edict_t *ent )
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 //-------- NOTES --------
 //Trigger_relay is a tool for use in entities meccanos. It's of no use by itself, and can only be used as an intermediary between events. Wait key will be ignored.
-static void trigger_relay_use( edict_t *self, edict_t *other, edict_t *activator )
-{
+static void trigger_relay_use( edict_t *self, edict_t *other, edict_t *activator ) {
 	G_UseTargets( self, activator );
 }
 
-void SP_trigger_relay( edict_t *self )
-{
+void SP_trigger_relay( edict_t *self ) {
 	self->use = trigger_relay_use;
 }
 
@@ -232,37 +222,40 @@ void SP_trigger_relay( edict_t *self )
 //NOSOUNDS : &2 if not set, it will try to play the noise_start and noise_stop sounds
 //-------- NOTES --------
 //Sounds like this one should be a target and not a trigger, but well...
-static void trigger_counter_use( edict_t *self, edict_t *other, edict_t *activator )
-{
-	if( self->count == 0 )
+static void trigger_counter_use( edict_t *self, edict_t *other, edict_t *activator ) {
+	if( self->count == 0 ) {
 		return;
+	}
 
 	self->count--;
 
-	if( self->count )
-	{
-		if( !( self->spawnflags & 1 ) )
+	if( self->count ) {
+		if( !( self->spawnflags & 1 ) ) {
 			G_CenterPrintFormatMsg( activator, "%s more to go...", va( "%i", self->count ), NULL );
-		if( !( self->spawnflags & 2 ) )
+		}
+		if( !( self->spawnflags & 2 ) ) {
 			G_Sound( activator, CHAN_AUTO, self->moveinfo.sound_start, ATTN_NORM );
+		}
 
 		return;
 	}
 
-	if( !( self->spawnflags & 1 ) )
+	if( !( self->spawnflags & 1 ) ) {
 		G_CenterPrintMsg( activator, "Sequence completed!" );
-	if( !( self->spawnflags & 2 ) )
+	}
+	if( !( self->spawnflags & 2 ) ) {
 		G_Sound( activator, CHAN_AUTO, self->moveinfo.sound_end, ATTN_NORM );
+	}
 
 	self->activator = activator;
 	multi_trigger( self );
 }
 
-void SP_trigger_counter( edict_t *self )
-{
+void SP_trigger_counter( edict_t *self ) {
 	self->wait = -1;
-	if( !self->count )
+	if( !self->count ) {
 		self->count = 2;
+	}
 
 	G_AssignMoverSounds( self, NULL, NULL, NULL );
 
@@ -286,17 +279,16 @@ void SP_trigger_counter( edict_t *self )
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 
-static void trigger_always_think( edict_t *ent )
-{
+static void trigger_always_think( edict_t *ent ) {
 	G_UseTargets( ent, ent );
 	G_FreeEdict( ent );
 }
 
-void SP_trigger_always( edict_t *ent )
-{
+void SP_trigger_always( edict_t *ent ) {
 	// we must have some delay to make sure our use targets are present
-	if( ent->delay < 0.3f )
+	if( ent->delay < 0.3f ) {
 		ent->delay = 0.3f;
+	}
 
 	ent->think = trigger_always_think;
 	ent->nextThink = level.time + 1000 * ent->delay;
@@ -326,16 +318,17 @@ void SP_trigger_always( edict_t *ent )
 //To make a jump pad or launch ramp, place the target_position/info_notnull entity at the highest point of the jump and target it with this entity.
 
 
-static void G_JumpPadSound( edict_t *ent )
-{
+static void G_JumpPadSound( edict_t *ent ) {
 	vec3_t org;
 	edict_t *sound;
 
-	if( !ent->s.modelindex )
+	if( !ent->s.modelindex ) {
 		return;
+	}
 
-	if( !ent->moveinfo.sound_start )
+	if( !ent->moveinfo.sound_start ) {
 		return;
+	}
 
 	org[0] = ent->s.origin[0] + 0.5 * ( ent->r.mins[0] + ent->r.maxs[0] );
 	org[1] = ent->s.origin[1] + 0.5 * ( ent->r.mins[1] + ent->r.maxs[1] );
@@ -349,29 +342,29 @@ static void G_JumpPadSound( edict_t *ent )
 	}
 }
 
-#define PUSH_ONCE	1
+#define PUSH_ONCE   1
 #define MIN_TRIGGER_PUSH_REBOUNCE_TIME 100
 
-static void trigger_push_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
-{
-	if( self->s.team && self->s.team != other->s.team )
+static void trigger_push_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
+	if( self->s.team && self->s.team != other->s.team ) {
 		return;
+	}
 
-	if( G_TriggerWait( self, other ) )
+	if( G_TriggerWait( self, other ) ) {
 		return;
+	}
 
 	// add an event
-	if( other->r.client )
-	{
+	if( other->r.client ) {
 		GS_TouchPushTrigger( &other->r.client->ps, &self->s );
-	}
-	else
-	{  
+	} else {
 		// pushing of non-clients
-		if( other->movetype != MOVETYPE_BOUNCEGRENADE )
+		if( other->movetype != MOVETYPE_BOUNCEGRENADE ) {
 			return;
+		}
 
 #if 0
+
 		// grenades have more air friction than players (weird, isn't it?), so we need some extra velocity
 		//VectorScale( self->s.origin2, 1.25, other->velocity );
 #else
@@ -383,33 +376,29 @@ static void trigger_push_touch( edict_t *self, edict_t *other, cplane_t *plane, 
 	G_JumpPadSound( self ); // play jump pad sound
 
 	// self removal
-	if( self->spawnflags & PUSH_ONCE )
-	{
+	if( self->spawnflags & PUSH_ONCE ) {
 		self->touch = NULL;
 		self->nextThink = level.time + 1;
 		self->think = G_FreeEdict;
 	}
 }
 
-static void trigger_push_setup( edict_t *self )
-{
+static void trigger_push_setup( edict_t *self ) {
 	vec3_t origin, velocity;
 	float height, time;
 	float dist;
-	edict_t	*target;
+	edict_t *target;
 
-	if( !self->target )
-	{
+	if( !self->target ) {
 		vec3_t movedir;
 
 		G_SetMovedir( self->s.angles, movedir );
-		VectorScale( movedir, (self->speed ? self->speed : 1000) * 10, self->s.origin2 );
+		VectorScale( movedir, ( self->speed ? self->speed : 1000 ) * 10, self->s.origin2 );
 		return;
 	}
 
 	target = G_PickTarget( self->target );
-	if( !target )
-	{
+	if( !target ) {
 		G_FreeEdict( self );
 		return;
 	}
@@ -420,8 +409,7 @@ static void trigger_push_setup( edict_t *self )
 
 	height = target->s.origin[2] - origin[2];
 	time = sqrt( height / ( 0.5 * level.gravity ) );
-	if( !time )
-	{
+	if( !time ) {
 		G_FreeEdict( self );
 		return;
 	}
@@ -434,26 +422,24 @@ static void trigger_push_setup( edict_t *self )
 	VectorCopy( velocity, self->s.origin2 );
 }
 
-void SP_trigger_push( edict_t *self )
-{
+void SP_trigger_push( edict_t *self ) {
 	InitTrigger( self );
 
-	if( st.noise && Q_stricmp( st.noise, "default" ) )
-	{
-		if( Q_stricmp( st.noise, "silent" ) )
-		{
+	if( st.noise && Q_stricmp( st.noise, "default" ) ) {
+		if( Q_stricmp( st.noise, "silent" ) ) {
 			self->moveinfo.sound_start = trap_SoundIndex( st.noise );
 			G_PureSound( st.noise );
 		}
-	}
-	else
+	} else {
 		self->moveinfo.sound_start = trap_SoundIndex( S_JUMPPAD );
+	}
 
 	// gameteam field from editor
-	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS )
+	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS ) {
 		self->s.team = st.gameteam;
-	else
+	} else {
 		self->s.team = TEAM_SPECTATOR;
+	}
 
 	self->touch = trigger_push_touch;
 	self->think = trigger_push_setup;
@@ -463,8 +449,9 @@ void SP_trigger_push( edict_t *self )
 	self->r.svflags |= SVF_TRANSMITORIGIN2;
 	GClip_LinkEntity( self ); // ET_PUSH_TRIGGER gets exceptions at linking so it's added for prediction
 	self->timeStamp = level.time;
-	if( !self->wait )
+	if( !self->wait ) {
 		self->wait = MIN_TRIGGER_PUSH_REBOUNCE_TIME * 0.001f;
+	}
 }
 
 //==============================================================================
@@ -494,25 +481,24 @@ void SP_trigger_push( edict_t *self )
 //-------- NOTES --------
 //The invulnerability power-up (item_enviro) does not protect the player from damage caused by this entity regardless of whether the NO_PROTECTION spawnflag is set or not. Triggering a trigger_hurt will have no effect if the START_OFF spawnflag is not set. A trigger_hurt always starts on in the game.
 
-static void hurt_use( edict_t *self, edict_t *other, edict_t *activator )
-{
-	if( self->r.solid == SOLID_NOT )
+static void hurt_use( edict_t *self, edict_t *other, edict_t *activator ) {
+	if( self->r.solid == SOLID_NOT ) {
 		self->r.solid = SOLID_TRIGGER;
-	else
+	} else {
 		self->r.solid = SOLID_NOT;
+	}
 	GClip_LinkEntity( self );
 
-	if( !( self->spawnflags & 2 ) )
+	if( !( self->spawnflags & 2 ) ) {
 		self->use = NULL;
+	}
 }
 
-static void hurt_delayer_think( edict_t *self )
-{
+static void hurt_delayer_think( edict_t *self ) {
 	edict_t *target = &game.edicts[self->s.ownerNum];
-	float damage = target->health + (-GIB_HEALTH) + 1;
+	float damage = target->health + ( -GIB_HEALTH ) + 1;
 
-	if( target->r.client && target->r.client->resp.timeStamp == self->deathTimeStamp )
-	{
+	if( target->r.client && target->r.client->resp.timeStamp == self->deathTimeStamp ) {
 		target->takedamage = true;
 		G_Damage( target, target, world, vec3_origin, vec3_origin, target->s.origin, damage, 0, 0, DAMAGE_NO_PROTECTION, MOD_TRIGGER_HURT );
 	}
@@ -520,124 +506,119 @@ static void hurt_delayer_think( edict_t *self )
 	G_FreeEdict( self );
 }
 
-static void hurt_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
-{
+static void hurt_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
 	int dflags;
 	int damage;
 
-	if( !other->takedamage || G_IsDead( other ) )
+	if( !other->takedamage || G_IsDead( other ) ) {
 		return;
+	}
 
-	if( self->s.team && self->s.team != other->s.team )
+	if( self->s.team && self->s.team != other->s.team ) {
 		return;
+	}
 
-	if( G_TriggerWait( self, other ) )
+	if( G_TriggerWait( self, other ) ) {
 		return;
+	}
 
 	damage = self->dmg;
-	if( self->spawnflags & (32|64) )
-		damage = other->health + (-GIB_HEALTH) + 1;
+	if( self->spawnflags & ( 32 | 64 ) ) {
+		damage = other->health + ( -GIB_HEALTH ) + 1;
+	}
 
-	if( self->spawnflags & 8 )
+	if( self->spawnflags & 8 ) {
 		dflags = DAMAGE_NO_PROTECTION;
-	else
+	} else {
 		dflags = 0;
+	}
 
-	if( self->spawnflags & (32|64) ) // KILL, FALL
-	{
+	if( self->spawnflags & ( 32 | 64 ) ) { // KILL, FALL
 		int diedelay;
 
 		// not that the delay is primarly needed for the sexed sound to be played correctly
 		// if a player is gibbed on the same frame, his/her model info is reset and the default
 		// (male) sound will be played instead
-		if( other->r.client )
-		{
+		if( other->r.client ) {
 			diedelay = game.snapFrameTime + 1;
 			other->r.client->ps.pmove.stats[PM_STAT_NOUSERCONTROL] = level.time + diedelay + 25;
-		}
-		else
-		{
+		} else {
 			diedelay = 0;
 		}
 
-		if( diedelay )
-		{
+		if( diedelay ) {
 			edict_t *delayer = G_Spawn();
 			delayer->s.ownerNum = ENTNUM( other );
 			delayer->think = hurt_delayer_think;
 			delayer->nextThink = level.time + diedelay;
-			if( other->r.client )
+			if( other->r.client ) {
 				delayer->deathTimeStamp = other->r.client->resp.timeStamp;
+			}
 
 			// make it be dead so it doesn't touch the trigger again
 			other->takedamage = false;
 		}
 
 		// play the death sound
-		if( self->noise_index )
-		{
-			G_Sound( other, CHAN_AUTO|CHAN_FIXED, self->noise_index, ATTN_NORM );
+		if( self->noise_index ) {
+			G_Sound( other, CHAN_AUTO | CHAN_FIXED, self->noise_index, ATTN_NORM );
 			other->pain_debounce_time = level.time + diedelay + 25;
 		}
 
-		if( diedelay )
+		if( diedelay ) {
 			return;
-	}
-	else if( !( self->spawnflags & 4 ) && self->noise_index )
-	{
-		if( (int)( level.time * 0.001 ) & 1 )
-			G_Sound( other, CHAN_AUTO|CHAN_FIXED, self->noise_index, ATTN_NORM );
+		}
+	} else if( !( self->spawnflags & 4 ) && self->noise_index ) {
+		if( (int)( level.time * 0.001 ) & 1 ) {
+			G_Sound( other, CHAN_AUTO | CHAN_FIXED, self->noise_index, ATTN_NORM );
+		}
 	}
 
 	G_Damage( other, self, world, vec3_origin, vec3_origin, other->s.origin, damage, damage, 0, dflags, MOD_TRIGGER_HURT );
 }
 
-void SP_trigger_hurt( edict_t *self )
-{
+void SP_trigger_hurt( edict_t *self ) {
 	InitTrigger( self );
 
-	if( self->dmg > 300 ) // HACK: force KILL spawnflag for big damages
+	if( self->dmg > 300 ) { // HACK: force KILL spawnflag for big damages
 		self->spawnflags |= 32;
-
-	if( self->spawnflags & 4 ) // SILENT
-	{   
-		self->noise_index = 0;
 	}
-	else if( st.noise )
-	{
+
+	if( self->spawnflags & 4 ) { // SILENT
+		self->noise_index = 0;
+	} else if( st.noise ) {
 		self->noise_index = trap_SoundIndex( st.noise );
 		G_PureSound( st.noise );
-	}
-	else
-	{
+	} else {
 		self->noise_index = 0;
 	}
 
 	// gameteam field from editor
-	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS )
-	{
+	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS ) {
 		self->s.team = st.gameteam;
-	}
-	else
-	{
+	} else {
 		self->s.team = TEAM_SPECTATOR;
 	}
 
 	self->touch = hurt_touch;
 
-	if( !self->dmg )
+	if( !self->dmg ) {
 		self->dmg = 5;
+	}
 
-	if( self->spawnflags & 16 || !self->wait )
+	if( self->spawnflags & 16 || !self->wait ) {
 		self->wait = 0.1f;
+	}
 
-	if( self->spawnflags & 1 )
+	if( self->spawnflags & 1 ) {
 		self->r.solid = SOLID_NOT;
-	else
+	} else {
 		self->r.solid = SOLID_TRIGGER;
+	}
 
-	if( self->spawnflags & 2 )
+	if( self->spawnflags & 2 ) {
 		self->use = hurt_use;
+	}
 }
 
 //==============================================================================
@@ -656,31 +637,27 @@ void SP_trigger_hurt( edict_t *self )
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 //-------- NOTES --------
 //Changes the touching entites gravity to the value of "gravity".  1.0 is standard gravity for the level.
-static void trigger_gravity_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
-{
-	if( self->s.team && self->s.team != other->s.team )
+static void trigger_gravity_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
+	if( self->s.team && self->s.team != other->s.team ) {
 		return;
+	}
 
 	other->gravity = self->gravity;
 }
 
-void SP_trigger_gravity( edict_t *self )
-{
-	if( st.gravity == 0 )
-	{
-		if( developer->integer )
+void SP_trigger_gravity( edict_t *self ) {
+	if( st.gravity == 0 ) {
+		if( developer->integer ) {
 			G_Printf( "trigger_gravity without gravity set at %s\n", vtos( self->s.origin ) );
+		}
 		G_FreeEdict( self );
 		return;
 	}
 
 	// gameteam field from editor
-	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS )
-	{
+	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS ) {
 		self->s.team = st.gameteam;
-	}
-	else
-	{
+	} else {
 		self->s.team = TEAM_SPECTATOR;
 	}
 
@@ -706,45 +683,46 @@ void SP_trigger_gravity( edict_t *self )
 //-------- NOTES --------
 //Target it to a misc_teleporter_dest.
 
-static void old_teleporter_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
-{
-	edict_t	*dest;
+static void old_teleporter_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
+	edict_t *dest;
 
-	if( !G_PlayerCanTeleport( other ) )
+	if( !G_PlayerCanTeleport( other ) ) {
 		return;
+	}
 
-	if( ( self->s.team != TEAM_SPECTATOR ) && ( self->s.team != other->s.team ) )
+	if( ( self->s.team != TEAM_SPECTATOR ) && ( self->s.team != other->s.team ) ) {
 		return;
-	if( self->spawnflags & 1 && other->r.client->ps.pmove.pm_type != PM_SPECTATOR )
+	}
+	if( self->spawnflags & 1 && other->r.client->ps.pmove.pm_type != PM_SPECTATOR ) {
 		return;
+	}
 
 	// wait delay
-	if( self->timeStamp > level.time )
+	if( self->timeStamp > level.time ) {
 		return;
+	}
 
 	self->timeStamp = level.time + ( self->wait * 1000 );
 
 	dest = G_Find( NULL, FOFS( targetname ), self->target );
-	if( !dest )
-	{
-		if( developer->integer )
+	if( !dest ) {
+		if( developer->integer ) {
 			G_Printf( "Couldn't find destination.\n" );
+		}
 		return;
 	}
 
 	// play custom sound if any (played from the teleporter entrance)
-	if( self->noise_index )
-	{
+	if( self->noise_index ) {
 		vec3_t org;
 
-		if( self->s.modelindex )
-		{
+		if( self->s.modelindex ) {
 			org[0] = self->s.origin[0] + 0.5 * ( self->r.mins[0] + self->r.maxs[0] );
 			org[1] = self->s.origin[1] + 0.5 * ( self->r.mins[1] + self->r.maxs[1] );
 			org[2] = self->s.origin[2] + 0.5 * ( self->r.mins[2] + self->r.maxs[2] );
-		}
-		else
+		} else {
 			VectorCopy( self->s.origin, org );
+		}
 
 		G_PositionedSound( org, CHAN_AUTO, self->noise_index, ATTN_NORM );
 	}
@@ -752,29 +730,24 @@ static void old_teleporter_touch( edict_t *self, edict_t *other, cplane_t *plane
 	G_TeleportPlayer( other, dest );
 }
 
-void SP_trigger_teleport( edict_t *ent )
-{
-	if( !ent->target )
-	{
-		if( developer->integer )
+void SP_trigger_teleport( edict_t *ent ) {
+	if( !ent->target ) {
+		if( developer->integer ) {
 			G_Printf( "teleporter without a target.\n" );
+		}
 		G_FreeEdict( ent );
 		return;
 	}
 
-	if( st.noise )
-	{
+	if( st.noise ) {
 		ent->noise_index = trap_SoundIndex( st.noise );
 		G_PureSound( st.noise );
 	}
 
 	// gameteam field from editor
-	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS )
-	{
+	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS ) {
 		ent->s.team = st.gameteam;
-	}
-	else
-	{
+	} else {
 		ent->s.team = TEAM_SPECTATOR;
 	}
 
@@ -791,8 +764,7 @@ void SP_trigger_teleport( edict_t *ent )
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 
-void SP_info_teleport_destination( edict_t *ent )
-{
+void SP_info_teleport_destination( edict_t *ent ) {
 	ent->s.origin[2] += 16;
 
 	GS_SnapInitialPosition( ent->s.origin, playerbox_stand_mins, playerbox_stand_maxs, ent->s.number, MASK_PLAYERSOLID );

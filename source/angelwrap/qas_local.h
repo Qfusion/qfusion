@@ -57,11 +57,11 @@ extern struct mempool_s *angelwrappool;
 #define QAS_Malloc( size ) QAS_MemAlloc( angelwrappool, size )
 #define QAS_Free( data ) QAS_MemFree( data )
 
-#define QAS_NEW(x)        new(QAS_Malloc(sizeof(x))) (x)
-#define QAS_DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); QAS_Free(tmp);}
+#define QAS_NEW( x )        new( QAS_Malloc( sizeof( x ) ) )( x )
+#define QAS_DELETE( ptr,x ) {void *tmp = ptr; ( ptr )->~x(); QAS_Free( tmp );}
 
-#define QAS_NEWARRAY(x,cnt)  (x*)QAS_Malloc(sizeof(x)*cnt)
-#define QAS_DELETEARRAY(ptr) QAS_Free(ptr)
+#define QAS_NEWARRAY( x,cnt )  (x*)QAS_Malloc( sizeof( x ) * cnt )
+#define QAS_DELETEARRAY( ptr ) QAS_Free( ptr )
 
 int QAS_API( void );
 int QAS_Init( void );

@@ -24,42 +24,40 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string.h>
 #include "android_sys.h"
 
-char *Sys_GetClipboardData( void )
-{
+char *Sys_GetClipboardData( void ) {
 	JNIEnv *env = Sys_Android_GetJNIEnv();
 	jmethodID getClipboardData;
 	jstring textJS;
 	const char *textUTF;
 	char *text;
 
-	getClipboardData = (*env)->GetMethodID( env, sys_android_activityClass, "getClipboardData", "()Ljava/lang/String;" );
-	textJS = (*env)->CallObjectMethod( env, sys_android_app->activity->clazz, getClipboardData );
-	if( !textJS )
+	getClipboardData = ( *env )->GetMethodID( env, sys_android_activityClass, "getClipboardData", "()Ljava/lang/String;" );
+	textJS = ( *env )->CallObjectMethod( env, sys_android_app->activity->clazz, getClipboardData );
+	if( !textJS ) {
 		return NULL;
+	}
 
-	textUTF = (*env)->GetStringUTFChars( env, textJS, NULL );
+	textUTF = ( *env )->GetStringUTFChars( env, textJS, NULL );
 	text = Q_malloc( strlen( textUTF ) + 1 );
 	strcpy( text, textUTF );
-	(*env)->ReleaseStringUTFChars( env, textJS, textUTF );
-	(*env)->DeleteLocalRef( env, textJS );
+	( *env )->ReleaseStringUTFChars( env, textJS, textUTF );
+	( *env )->DeleteLocalRef( env, textJS );
 	return text;
 }
 
-bool Sys_SetClipboardData( const char *data )
-{
+bool Sys_SetClipboardData( const char *data ) {
 	JNIEnv *env = Sys_Android_GetJNIEnv();
 	jmethodID setClipboardData;
 	jstring textJS;
 
-	setClipboardData = (*env)->GetMethodID( env, sys_android_activityClass, "setClipboardData", "(Ljava/lang/CharSequence;)V" );
-	textJS = (*env)->NewStringUTF( env, data );
-	(*env)->CallVoidMethod( env, sys_android_app->activity->clazz, setClipboardData, textJS );
-	(*env)->DeleteLocalRef( env, textJS );
+	setClipboardData = ( *env )->GetMethodID( env, sys_android_activityClass, "setClipboardData", "(Ljava/lang/CharSequence;)V" );
+	textJS = ( *env )->NewStringUTF( env, data );
+	( *env )->CallVoidMethod( env, sys_android_app->activity->clazz, setClipboardData, textJS );
+	( *env )->DeleteLocalRef( env, textJS );
 
 	return true;
 }
 
-void Sys_FreeClipboardData( char *data )
-{
+void Sys_FreeClipboardData( char *data ) {
 	Q_free( data );
 }

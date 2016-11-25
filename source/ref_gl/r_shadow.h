@@ -22,40 +22,39 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_SHADOWGROUPS    32
 
-typedef struct shadowGroup_s
-{
-	unsigned int		id;
-	unsigned int		bit;
-	image_t				*shadowmap;
+typedef struct shadowGroup_s {
+	unsigned int id;
+	unsigned int bit;
+	image_t             *shadowmap;
 
-	int					viewportSize[2];
-	int					textureSize[2];
+	int viewportSize[2];
+	int textureSize[2];
 
-	vec3_t				origin;
-	float				radius;
-	uint8_t				*vis;
+	vec3_t origin;
+	float radius;
+	uint8_t             *vis;
 
-	vec3_t				lightDir;
-	vec4_t				lightAmbient;
+	vec3_t lightDir;
+	vec4_t lightAmbient;
 
-	float				alpha;
+	float alpha;
 
-	float				projDist;
-	vec3_t				mins, maxs;
-	vec3_t				visMins, visMaxs;
-	float				visRadius;
-	vec3_t				visOrigin;
+	float projDist;
+	vec3_t mins, maxs;
+	vec3_t visMins, visMaxs;
+	float visRadius;
+	vec3_t visOrigin;
 
-	bool			useOrtho;
-	mat4_t			cameraProjectionMatrix;
+	bool useOrtho;
+	mat4_t cameraProjectionMatrix;
 	struct shadowGroup_s *hashNext;
 } shadowGroup_t;
 
 extern drawList_t r_shadowlist;
 
-void		R_ClearShadowGroups( void );
-bool	R_AddLightOccluder( const entity_t *ent );
-void		R_BuildShadowGroups( void );
-void		R_DrawShadowmaps( void );
+void        R_ClearShadowGroups( void );
+bool    R_AddLightOccluder( const entity_t *ent );
+void        R_BuildShadowGroups( void );
+void        R_DrawShadowmaps( void );
 
 #endif // R_SHADOW_H

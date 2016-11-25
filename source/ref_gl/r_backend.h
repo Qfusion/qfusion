@@ -20,12 +20,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_BACKEND_H
 #define R_BACKEND_H
 
-enum
-{
-	RB_VBO_STREAM_COMPACT		= -2, // bind RB_VBO_STREAM instead
-	RB_VBO_STREAM				= -1,
-	RB_VBO_NONE					= 0,
-	RB_VBO_NUM_STREAMS			= -RB_VBO_STREAM_COMPACT
+enum {
+	RB_VBO_STREAM_COMPACT       = -2, // bind RB_VBO_STREAM instead
+	RB_VBO_STREAM               = -1,
+	RB_VBO_NONE                 = 0,
+	RB_VBO_NUM_STREAMS          = -RB_VBO_STREAM_COMPACT
 };
 
 //===================================================================
@@ -72,15 +71,15 @@ void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int fil
 void RB_BindVBO( int id, int primitive );
 
 void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
-	const struct mfog_s *fog, const struct portalSurface_s *portalSurface, unsigned int shadowBits,
-	const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
+						const struct mfog_s *fog, const struct portalSurface_s *portalSurface, unsigned int shadowBits,
+						const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
 void RB_FlushDynamicMeshes( void );
 
 void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
-	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems );
+					  int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems );
 void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems,
-	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
-	int numInstances, instancePoint_t *instances );
+							   int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
+							   int numInstances, instancePoint_t *instances );
 
 void RB_FlushTextureCache( void );
 

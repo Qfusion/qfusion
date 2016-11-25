@@ -29,8 +29,7 @@ extern cvar_t *g_disable_vote_gametype;
 /*
 * G_Timeout_Reset
 */
-void G_Timeout_Reset( void )
-{
+void G_Timeout_Reset( void ) {
 	int i;
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_PAUSED, false );
@@ -43,29 +42,27 @@ void G_Timeout_Reset( void )
 
 /*
 * G_Timeout_Update
-* 
+*
 * Updates the timeout struct and informs clients about the status of the pause
 */
-static void G_Timeout_Update( unsigned int msec )
-{
+static void G_Timeout_Update( unsigned int msec ) {
 	static int timeout_printtime = 0;
 	static int timeout_last_endtime = 0;
 	static int countdown_set = 1;
 
-	if( !GS_MatchPaused() )
+	if( !GS_MatchPaused() ) {
 		return;
+	}
 
 	game.frametime = 0;
 
-	if( timeout_last_endtime != level.timeout.endtime ) // force print when endtime is changed
-	{
+	if( timeout_last_endtime != level.timeout.endtime ) { // force print when endtime is changed
 		timeout_printtime = 0;
 		timeout_last_endtime = level.timeout.endtime;
 	}
 
 	level.timeout.time += msec;
-	if( level.timeout.endtime && level.timeout.time >= level.timeout.endtime )
-	{
+	if( level.timeout.endtime && level.timeout.time >= level.timeout.endtime ) {
 		level.timeout.time = 0;
 		level.timeout.caller = -1;
 		GS_GamestatSetFlag( GAMESTAT_FLAG_PAUSED, false );
@@ -73,36 +70,29 @@ static void G_Timeout_Update( unsigned int msec )
 		timeout_printtime = 0;
 		timeout_last_endtime = -1;
 
-		G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_TIMEOUT_MATCH_RESUMED_1_to_2, ( rand()&1 )+1 ) ),
-			GS_MAX_TEAMS, true, NULL );
+		G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_TIMEOUT_MATCH_RESUMED_1_to_2, ( rand() & 1 ) + 1 ) ),
+						  GS_MAX_TEAMS, true, NULL );
 		G_CenterPrintMsg( NULL, "Match resumed" );
 		G_PrintMsg( NULL, "Match resumed\n" );
-	}
-	else if( timeout_printtime == 0 || level.timeout.time - timeout_printtime >= 1000 )
-	{
-		if( level.timeout.endtime )
-		{
+	} else if( timeout_printtime == 0 || level.timeout.time - timeout_printtime >= 1000 ) {
+		if( level.timeout.endtime ) {
 			int seconds_left = (int)( ( level.timeout.endtime - level.timeout.time ) / 1000.0 + 0.5 );
 
-			if( seconds_left == ( TIMEIN_TIME * 2 ) / 1000 )
-			{
-				G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_COUNTDOWN_READY_1_to_2, ( rand()&1 )+1 ) ),
-					GS_MAX_TEAMS, false, NULL );
-				countdown_set = ( rand()&1 )+1;
-			}
-			else if( seconds_left >= 1 && seconds_left <= 3 )
-			{
+			if( seconds_left == ( TIMEIN_TIME * 2 ) / 1000 ) {
+				G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_COUNTDOWN_READY_1_to_2, ( rand() & 1 ) + 1 ) ),
+								  GS_MAX_TEAMS, false, NULL );
+				countdown_set = ( rand() & 1 ) + 1;
+			} else if( seconds_left >= 1 && seconds_left <= 3 ) {
 				G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_COUNTDOWN_COUNT_1_to_3_SET_1_to_2, seconds_left,
-					countdown_set ) ), GS_MAX_TEAMS, false, NULL );
+															 countdown_set ) ), GS_MAX_TEAMS, false, NULL );
 			}
 
-			if( seconds_left > 1 )
+			if( seconds_left > 1 ) {
 				G_CenterPrintFormatMsg( NULL, "Match will resume in %s seconds", va( "%i", seconds_left ), NULL );
-			else
+			} else {
 				G_CenterPrintMsg( NULL, "Match will resume in 1 second" );
-		}
-		else
-		{
+			}
+		} else {
 			G_CenterPrintMsg( NULL, "Match paused" );
 		}
 
@@ -114,65 +104,56 @@ static void G_Timeout_Update( unsigned int msec )
 * G_UpdateServerInfo
 * update the cvars which show the match state at server browsers
 */
-static void G_UpdateServerInfo( void )
-{
+static void G_UpdateServerInfo( void ) {
 	// g_match_time
-	if( GS_MatchState() <= MATCH_STATE_WARMUP )
-	{
+	if( GS_MatchState() <= MATCH_STATE_WARMUP ) {
 		trap_Cvar_ForceSet( "g_match_time", "Warmup" );
-	}
-	else if( GS_MatchState() == MATCH_STATE_COUNTDOWN )
-	{
+	} else if( GS_MatchState() == MATCH_STATE_COUNTDOWN ) {
 		trap_Cvar_ForceSet( "g_match_time", "Countdown" );
-	}
-	else if( GS_MatchState() == MATCH_STATE_PLAYTIME )
-	{
+	} else if( GS_MatchState() == MATCH_STATE_PLAYTIME ) {
 		// partly from G_GetMatchState
 		char extra[MAX_INFO_VALUE];
 		int clocktime, timelimit, mins, secs;
 
-		if( GS_MatchDuration() )
+		if( GS_MatchDuration() ) {
 			timelimit = ( ( GS_MatchDuration() ) * 0.001 ) / 60;
-		else
+		} else {
 			timelimit = 0;
+		}
 
 		clocktime = (float)( game.serverTime - GS_MatchStartTime() ) * 0.001f;
 
-		if( clocktime <= 0 )
-		{
+		if( clocktime <= 0 ) {
 			mins = 0;
 			secs = 0;
-		}
-		else
-		{
+		} else {
 			mins = clocktime / 60;
 			secs = clocktime - mins * 60;
 		}
 
 		extra[0] = 0;
-		if( GS_MatchExtended() )
-		{
-			if( timelimit )
+		if( GS_MatchExtended() ) {
+			if( timelimit ) {
 				Q_strncatz( extra, " overtime", sizeof( extra ) );
-			else
+			} else {
 				Q_strncatz( extra, " suddendeath", sizeof( extra ) );
+			}
 		}
-		if( GS_MatchPaused() )
+		if( GS_MatchPaused() ) {
 			Q_strncatz( extra, " (in timeout)", sizeof( extra ) );
+		}
 
-		if( timelimit )
+		if( timelimit ) {
 			trap_Cvar_ForceSet( "g_match_time", va( "%02i:%02i / %02i:00%s", mins, secs, timelimit, extra ) );
-		else
+		} else {
 			trap_Cvar_ForceSet( "g_match_time", va( "%02i:%02i%s", mins, secs, extra ) );
-	}
-	else
-	{
+		}
+	} else {
 		trap_Cvar_ForceSet( "g_match_time", "Finished" );
 	}
 
 	// g_match_score
-	if( GS_MatchState() >= MATCH_STATE_PLAYTIME && GS_TeamBasedGametype() )
-	{
+	if( GS_MatchState() >= MATCH_STATE_PLAYTIME && GS_TeamBasedGametype() ) {
 		char score[MAX_INFO_STRING];
 
 		score[0] = 0;
@@ -184,35 +165,25 @@ static void G_UpdateServerInfo( void )
 			score[0] = '\0';
 		}
 		trap_Cvar_ForceSet( "g_match_score", score );
-	}
-	else
-	{
+	} else {
 		trap_Cvar_ForceSet( "g_match_score", "" );
 	}
 
 	// g_needpass
-	if( password->modified )
-	{
-		if( password->string && strlen( password->string ) )
-		{
+	if( password->modified ) {
+		if( password->string && strlen( password->string ) ) {
 			trap_Cvar_ForceSet( "g_needpass", "1" );
-		}
-		else
-		{
+		} else {
 			trap_Cvar_ForceSet( "g_needpass", "0" );
 		}
 		password->modified = false;
 	}
 
 	// g_gametypes_available
-	if( g_votable_gametypes->modified || g_disable_vote_gametype->modified )
-	{
-		if( g_disable_vote_gametype->integer || !g_votable_gametypes->string || !strlen( g_votable_gametypes->string ) )
-		{
+	if( g_votable_gametypes->modified || g_disable_vote_gametype->modified ) {
+		if( g_disable_vote_gametype->integer || !g_votable_gametypes->string || !strlen( g_votable_gametypes->string ) ) {
 			trap_Cvar_ForceSet( "g_gametypes_available", "" );
-		}
-		else
-		{
+		} else {
 			char *votable;
 			char *name;
 			size_t len;
@@ -220,20 +191,18 @@ static void G_UpdateServerInfo( void )
 
 			len = 0;
 
-			for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ )
-			{
-				if( G_Gametype_IsVotable( name ) )
+			for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
+				if( G_Gametype_IsVotable( name ) ) {
 					len += strlen( name ) + 1;
+				}
 			}
 
 			len++;
 			votable = ( char * )G_Malloc( len );
 			votable[0] = 0;
 
-			for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ )
-			{
-				if( G_Gametype_IsVotable( name ) )
-				{
+			for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
+				if( G_Gametype_IsVotable( name ) ) {
 					Q_strncatz( votable, name, len );
 					Q_strncatz( votable, " ", len );
 				}
@@ -250,8 +219,7 @@ static void G_UpdateServerInfo( void )
 
 	if( GS_RaceGametype() ) {
 		trap_Cvar_ForceSet( "g_race_gametype", "1" );
-	}
-	else {
+	} else {
 		trap_Cvar_ForceSet( "g_race_gametype", "0" );
 	}
 }
@@ -260,62 +228,56 @@ static void G_UpdateServerInfo( void )
 * G_CheckCvars
 * Check for cvars that have been modified and need the game to be updated
 */
-void G_CheckCvars( void )
-{
-	if( g_antilag_maxtimedelta->modified )
-	{
-		if( g_antilag_maxtimedelta->integer < 0 )
+void G_CheckCvars( void ) {
+	if( g_antilag_maxtimedelta->modified ) {
+		if( g_antilag_maxtimedelta->integer < 0 ) {
 			trap_Cvar_SetValue( "g_antilag_maxtimedelta", abs( g_antilag_maxtimedelta->integer ) );
+		}
 		g_antilag_maxtimedelta->modified = false;
 		g_antilag_timenudge->modified = true;
 	}
 
-	if( g_antilag_timenudge->modified )
-	{
-		if( g_antilag_timenudge->integer > g_antilag_maxtimedelta->integer )
+	if( g_antilag_timenudge->modified ) {
+		if( g_antilag_timenudge->integer > g_antilag_maxtimedelta->integer ) {
 			trap_Cvar_SetValue( "g_antilag_timenudge", g_antilag_maxtimedelta->integer );
-		else if( g_antilag_timenudge->integer < -g_antilag_maxtimedelta->integer )
+		} else if( g_antilag_timenudge->integer < -g_antilag_maxtimedelta->integer ) {
 			trap_Cvar_SetValue( "g_antilag_timenudge", -g_antilag_maxtimedelta->integer );
+		}
 		g_antilag_timenudge->modified = false;
 	}
 
-	if( g_warmup_timelimit->modified )
-	{
+	if( g_warmup_timelimit->modified ) {
 		// if we are inside timelimit period, update the endtime
-		if( GS_MatchState() == MATCH_STATE_WARMUP )
-		{
+		if( GS_MatchState() == MATCH_STATE_WARMUP ) {
 			gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_warmup_timelimit->integer );
 		}
 		g_warmup_timelimit->modified = false;
 	}
 
-	if( g_timelimit->modified )
-	{
+	if( g_timelimit->modified ) {
 		// if we are inside timelimit period, update the endtime
 		if( GS_MatchState() == MATCH_STATE_PLAYTIME &&
-			!GS_MatchExtended() )
-		{
-			if( g_timelimit->value )
+			!GS_MatchExtended() ) {
+			if( g_timelimit->value ) {
 				gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_timelimit->value );
-			else
+			} else {
 				gs.gameState.longstats[GAMELONG_MATCHDURATION] = 0;
+			}
 		}
 		g_timelimit->modified = false;
 	}
 
-	if( g_match_extendedtime->modified )
-	{
+	if( g_match_extendedtime->modified ) {
 		// if we are inside extended_time period, update the endtime
-		if( GS_MatchExtended() )
-		{
-			if( g_match_extendedtime->integer )
+		if( GS_MatchExtended() ) {
+			if( g_match_extendedtime->integer ) {
 				gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( 60 * 1000 * g_match_extendedtime->value );
+			}
 		}
 		g_match_extendedtime->modified = false;
 	}
 
-	if( g_allow_falldamage->modified )
-	{
+	if( g_allow_falldamage->modified ) {
 		g_allow_falldamage->modified = false;
 	}
 
@@ -356,26 +318,26 @@ static bool g_snapStarted = false;
 /*
 * G_SnapClients
 */
-void G_SnapClients( void )
-{
+void G_SnapClients( void ) {
 	int i;
-	edict_t	*ent;
+	edict_t *ent;
 
 	// calc the player views now that all pushing and damage has been added
-	for( i = 0; i < gs.maxclients; i++ )
-	{
+	for( i = 0; i < gs.maxclients; i++ ) {
 		ent = game.edicts + 1 + i;
-		if( !ent->r.inuse || !ent->r.client )
+		if( !ent->r.inuse || !ent->r.client ) {
 			continue;
+		}
 
 		G_Client_InactivityRemove( ent->r.client );
 
 		G_ClientEndSnapFrame( ent );
 
-		if( ent->s.effects & EF_BUSYICON )
+		if( ent->s.effects & EF_BUSYICON ) {
 			ent->flags |= FL_BUSY;
-		else
+		} else {
 			ent->flags &= ~FL_BUSY;
+		}
 	}
 
 	G_EndServerFrames_UpdateChaseCam();
@@ -385,19 +347,17 @@ void G_SnapClients( void )
 * G_EdictsAddSnapEffects
 * add effects based on accumulated info along the server frame
 */
-static void G_SnapEntities( void )
-{
+static void G_SnapEntities( void ) {
 	edict_t *ent;
 	int i;
 	vec3_t dir, origin;
 
-	for( i = 0, ent = &game.edicts[0]; i < game.numentities; i++, ent++ )
-	{
-		if( !ent->r.inuse || ( ent->r.svflags & SVF_NOCLIENT ) )
+	for( i = 0, ent = &game.edicts[0]; i < game.numentities; i++, ent++ ) {
+		if( !ent->r.inuse || ( ent->r.svflags & SVF_NOCLIENT ) ) {
 			continue;
+		}
 
-		if( ent->s.type == ET_PARTICLES ) // particles use a special configuration
-		{
+		if( ent->s.type == ET_PARTICLES ) { // particles use a special configuration
 			ent->s.frame = ent->particlesInfo.speed;
 			ent->s.modelindex = ent->particlesInfo.shaderIndex;
 			ent->s.modelindex2 = ent->particlesInfo.spread;
@@ -405,95 +365,92 @@ static void G_SnapEntities( void )
 			ent->s.weapon = ent->particlesInfo.frequency;
 
 			ent->s.effects = ent->particlesInfo.size & 0xFF;
-			if( ent->particlesInfo.spherical )
-				ent->s.effects |= ( 1<<8 );
-			if( ent->particlesInfo.bounce )
-				ent->s.effects |= ( 1<<9 );
-			if( ent->particlesInfo.gravity )
-				ent->s.effects |= ( 1<<10 );
-			if( ent->particlesInfo.expandEffect )
-				ent->s.effects |= ( 1<<11 );
-			if( ent->particlesInfo.shrinkEffect )
-				ent->s.effects |= ( 1<<11 );
+			if( ent->particlesInfo.spherical ) {
+				ent->s.effects |= ( 1 << 8 );
+			}
+			if( ent->particlesInfo.bounce ) {
+				ent->s.effects |= ( 1 << 9 );
+			}
+			if( ent->particlesInfo.gravity ) {
+				ent->s.effects |= ( 1 << 10 );
+			}
+			if( ent->particlesInfo.expandEffect ) {
+				ent->s.effects |= ( 1 << 11 );
+			}
+			if( ent->particlesInfo.shrinkEffect ) {
+				ent->s.effects |= ( 1 << 11 );
+			}
 
 			GClip_LinkEntity( ent );
 
 			continue;
 		}
 
-		if( ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE )
-		{
+		if( ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE ) {
 			// this is pretty hackish. We exploit the fact that 0.5 servers *do not* transmit
 			// origin2/old_origin for ET_PLAYER/ET_CORPSE entities, and we use it for sending the player velocity
-			if( !G_ISGHOSTING( ent ) )
-			{
+			if( !G_ISGHOSTING( ent ) ) {
 				ent->r.svflags |= SVF_TRANSMITORIGIN2;
 				VectorCopy( ent->velocity, ent->s.origin2 );
-			}
-			else
+			} else {
 				ent->r.svflags &= ~SVF_TRANSMITORIGIN2;
+			}
 		}
 
-		if( ISEVENTENTITY( ent ) || G_ISGHOSTING( ent ) || !ent->takedamage )
+		if( ISEVENTENTITY( ent ) || G_ISGHOSTING( ent ) || !ent->takedamage ) {
 			continue;
+		}
 
 		// types which can have accumulated damage effects
-		if( ( ent->s.type == ET_GENERIC || ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE ) ) // doors don't bleed
-		{
+		if( ( ent->s.type == ET_GENERIC || ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE ) ) { // doors don't bleed
 			// Until we get a proper damage saved effect, we accumulate both into the blood fx
 			// so, at least, we don't send 2 entities where we can send one
 			ent->snap.damage_taken += ent->snap.damage_saved;
+
 			//ent->snap.damage_saved = 0;
 
 			//spawn accumulated damage
-			if( ent->snap.damage_taken && !( ent->flags & FL_GODMODE ) && HEALTH_TO_INT( ent->health ) > 0 )
-			{
+			if( ent->snap.damage_taken && !( ent->flags & FL_GODMODE ) && HEALTH_TO_INT( ent->health ) > 0 ) {
 				edict_t *event;
 				float damage = ent->snap.damage_taken;
-				if( damage > 120 )
+				if( damage > 120 ) {
 					damage = 120;
+				}
 
 				VectorCopy( ent->snap.damage_dir, dir );
 				VectorNormalize( dir );
 				VectorAdd( ent->s.origin, ent->snap.damage_at, origin );
 
-				if( ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE )
-				{
+				if( ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE ) {
 					event = G_SpawnEvent( EV_BLOOD, DirToByte( dir ), origin );
 					event->s.damage = HEALTH_TO_INT( damage );
 					event->s.ownerNum = i; // set owner
 
 					// ET_PLAYERS can also spawn sound events
-					if( ent->s.type == ET_PLAYER )
-					{
+					if( ent->s.type == ET_PLAYER ) {
 						// play an apropriate pain sound
-						if( level.time >= ent->pain_debounce_time )
-						{
+						if( level.time >= ent->pain_debounce_time ) {
 							// see if it should pain for a FALL or for damage received
-							if( ent->snap.damage_fall )
-							{
+							if( ent->snap.damage_fall ) {
 								ent->pain_debounce_time = level.time + 200;
-							}
-							else if( !G_IsDead( ent ) )
-							{
-								if( ent->r.client->ps.inventory[POWERUP_SHELL] > 0 )
+							} else if( !G_IsDead( ent ) ) {
+								if( ent->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_WARSHELL, true );
-								else if( ent->health <= 20 )
+								} else if( ent->health <= 20 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_20, true );
-								else if( ent->health <= 35 )
+								} else if( ent->health <= 35 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_30, true );
-								else if( ent->health <= 60 )
+								} else if( ent->health <= 60 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_60, true );
-								else
+								} else {
 									G_AddEvent( ent, EV_PAIN, PAIN_100, true );
+								}
 
 								ent->pain_debounce_time = level.time + 400;
 							}
 						}
 					}
-				}
-				else
-				{
+				} else {
 					event = G_SpawnEvent( EV_SPARKS, DirToByte( dir ), origin );
 					event->s.damage = HEALTH_TO_INT( damage );
 				}
@@ -506,8 +463,7 @@ static void G_SnapEntities( void )
 * G_StartFrameSnap
 * a snap was just sent, set up for new one
 */
-static void G_StartFrameSnap( void )
-{
+static void G_StartFrameSnap( void ) {
 	g_snapStarted = true;
 }
 
@@ -519,9 +475,8 @@ static int entity_sound_backup[MAX_EDICTS];
 * We just run G_SnapFrame, the server just sent the snap to the clients,
 * it's now time to clean up snap specific data to start the next snap from clean.
 */
-void G_ClearSnap( void )
-{
-	edict_t	*ent;
+void G_ClearSnap( void ) {
+	edict_t *ent;
 
 	game.realtime = trap_Milliseconds(); // level.time etc. might not be real time
 
@@ -529,10 +484,8 @@ void G_ClearSnap( void )
 	gs.gameState.longstats[GAMELONG_CLOCKOVERRIDE] = 0;
 
 	// clear all events in the snap
-	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ )
-	{
-		if( ISEVENTENTITY( &ent->s ) )  // events do not persist after a snapshot
-		{
+	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ ) {
+		if( ISEVENTENTITY( &ent->s ) ) { // events do not persist after a snapshot
 			G_FreeEdict( ent );
 			continue;
 		}
@@ -545,28 +498,27 @@ void G_ClearSnap( void )
 		ent->s.teleported = false; // remove teleported bit.
 
 		// remove effect bits that are (most likely) added from gametypes
-		ent->s.effects = ( ent->s.effects & (EF_TAKEDAMAGE|EF_CARRIER|EF_FLAG_TRAIL|EF_ROTATE_AND_BOB|EF_STRONG_WEAPON|EF_GHOST) );
+		ent->s.effects = ( ent->s.effects & ( EF_TAKEDAMAGE | EF_CARRIER | EF_FLAG_TRAIL | EF_ROTATE_AND_BOB | EF_STRONG_WEAPON | EF_GHOST ) );
 	}
 
 	// recover some info, let players respawn and finally clear the snap structures
-	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ )
-	{
-		if( !GS_MatchPaused() )
-		{
+	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ ) {
+		if( !GS_MatchPaused() ) {
 			// copy origin to old origin ( this old_origin is for snaps )
-			if( !( ent->r.svflags & SVF_TRANSMITORIGIN2 ) )
+			if( !( ent->r.svflags & SVF_TRANSMITORIGIN2 ) ) {
 				VectorCopy( ent->s.origin, ent->s.old_origin );
+			}
 
 			G_CheckClientRespawnClick( ent );
 		}
 
-		if( GS_MatchPaused() )
+		if( GS_MatchPaused() ) {
 			ent->s.sound = entity_sound_backup[ENTNUM( ent )];
+		}
 
 		// clear the snap temp info
 		memset( &ent->snap, 0, sizeof( ent->snap ) );
-		if( ent->r.client && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED )
-		{
+		if( ent->r.client && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED ) {
 			memset( &ent->r.client->resp.snap, 0, sizeof( ent->r.client->resp.snap ) );
 
 			// set race stats to invisible
@@ -585,17 +537,15 @@ void G_ClearSnap( void )
 * G_SnapFrame
 * It's time to send a new snap, so set the world up for sending
 */
-void G_SnapFrame( void )
-{
-	edict_t	*ent;
+void G_SnapFrame( void ) {
+	edict_t *ent;
 	game.realtime = trap_Milliseconds(); // level.time etc. might not be real time
 
 	//others
 	G_UpdateServerInfo();
 
 	// exit level
-	if( level.exitNow )
-	{
+	if( level.exitNow ) {
 		G_ExitLevel();
 		return;
 	}
@@ -605,44 +555,40 @@ void G_SnapFrame( void )
 	G_SnapEntities(); // add effects based on accumulated info along the frame
 
 	// set entity bits (prepare entities for being sent in the snap)
-	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ )
-	{
-		if( ent->s.number != ENTNUM( ent ) )
-		{
-			if( developer->integer )
+	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ ) {
+		if( ent->s.number != ENTNUM( ent ) ) {
+			if( developer->integer ) {
 				G_Printf( "fixing ent->s.number (etype:%i, classname:%s)\n", ent->s.type, ent->classname ? ent->classname : "noclassname" );
+			}
 			ent->s.number = ENTNUM( ent );
 		}
 
 		// temporary filter (Q2 system to ensure reliability)
 		// ignore ents without visible models unless they have an effect
-		if( !ent->r.inuse )
-		{
+		if( !ent->r.inuse ) {
 			ent->r.svflags |= SVF_NOCLIENT;
 			continue;
-		}
-		else if( ent->s.type >= ET_TOTAL_TYPES || ent->s.type < 0 )
-		{
-			if( developer->integer )
+		} else if( ent->s.type >= ET_TOTAL_TYPES || ent->s.type < 0 ) {
+			if( developer->integer ) {
 				G_Printf( "'G_SnapFrame': Inhibiting invalid entity type %i\n", ent->s.type );
+			}
 			ent->r.svflags |= SVF_NOCLIENT;
 			continue;
-		}
-		else if( !( ent->r.svflags & SVF_NOCLIENT ) && !ent->s.modelindex && !ent->s.effects 
-			&& !ent->s.sound && !ISEVENTENTITY( &ent->s ) && !ent->s.light && !ent->r.client )
-		{
-			if( developer->integer )
+		} else if( !( ent->r.svflags & SVF_NOCLIENT ) && !ent->s.modelindex && !ent->s.effects
+				   && !ent->s.sound && !ISEVENTENTITY( &ent->s ) && !ent->s.light && !ent->r.client ) {
+			if( developer->integer ) {
 				G_Printf( "'G_SnapFrame': fixing missing SVF_NOCLIENT flag (no effect)\n" );
+			}
 			ent->r.svflags |= SVF_NOCLIENT;
 			continue;
 		}
 
 		ent->s.effects &= ~EF_TAKEDAMAGE;
-		if( ent->takedamage )
+		if( ent->takedamage ) {
 			ent->s.effects |= EF_TAKEDAMAGE;
+		}
 
-		if( GS_MatchPaused() )
-		{
+		if( GS_MatchPaused() ) {
 			// when in timeout, we don't send entity sounds
 			entity_sound_backup[ENTNUM( ent )] = ent->s.sound;
 			ent->s.sound = 0;
@@ -657,8 +603,7 @@ void G_SnapFrame( void )
 /*
 * G_UpdateFrameTime
 */
-static void G_UpdateFrameTime( unsigned int msec )
-{
+static void G_UpdateFrameTime( unsigned int msec ) {
 	game.frametime = msec;
 	G_Timeout_Update( msec );
 	game.realtime = trap_Milliseconds(); // level.time etc. might not be real time
@@ -669,69 +614,67 @@ static void G_UpdateFrameTime( unsigned int msec )
 * treat each object in turn
 * even the world and clients get a chance to think
 */
-static void G_RunEntities( void )
-{
-	edict_t	*ent;
+static void G_RunEntities( void ) {
+	edict_t *ent;
 
-	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ )
-	{
-		if( !ent->r.inuse )
+	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ ) {
+		if( !ent->r.inuse ) {
 			continue;
-		if( ISEVENTENTITY( &ent->s ) )
+		}
+		if( ISEVENTENTITY( &ent->s ) ) {
 			continue; // events do not think
 
+		}
 		level.current_entity = ent;
 
 		// backup oldstate ( for world frame ).
 		ent->olds = ent->s;
 
 		// if the ground entity moved, make sure we are still on it
-		if( !ent->r.client )
-		{
-			if( ( ent->groundentity ) && ( ent->groundentity->linkcount != ent->groundentity_linkcount ) )
+		if( !ent->r.client ) {
+			if( ( ent->groundentity ) && ( ent->groundentity->linkcount != ent->groundentity_linkcount ) ) {
 				G_CheckGround( ent );
+			}
 		}
 
 		G_RunEntity( ent );
 
-		if( ent->takedamage )
+		if( ent->takedamage ) {
 			ent->s.effects |= EF_TAKEDAMAGE;
-		else
+		} else {
 			ent->s.effects &= ~EF_TAKEDAMAGE;
+		}
 	}
 }
 
 /*
 * G_RunClients
 */
-static void G_RunClients( void )
-{
+static void G_RunClients( void ) {
 	int i, step;
 	edict_t *ent;
 
-	if( level.framenum & 1 )
-	{
+	if( level.framenum & 1 ) {
 		i = gs.maxclients - 1;
 		step = -1;
-	}
-	else
-	{
+	} else {
 		i = 0;
 		step = 1;
 	}
 
-	for( ; i < gs.maxclients && i >= 0; i += step )
-	{
+	for( ; i < gs.maxclients && i >= 0; i += step ) {
 		ent = game.edicts + 1 + i;
-		if( !ent->r.inuse )
+		if( !ent->r.inuse ) {
 			continue;
+		}
 
 		G_ClientThink( ent );
 
-		if( ent->takedamage )
+		if( ent->takedamage ) {
 			ent->s.effects |= EF_TAKEDAMAGE;
-		else
+		} else {
 			ent->s.effects &= ~EF_TAKEDAMAGE;
+		}
 	}
 }
 
@@ -739,8 +682,7 @@ static void G_RunClients( void )
 * G_GetNextThinkClient
 * Cycles between connected clients
 */
-static edict_t *G_GetNextThinkClient( edict_t *current )
-{
+static edict_t *G_GetNextThinkClient( edict_t *current ) {
 	edict_t *check, *start;
 	edict_t *first, *last;
 
@@ -767,8 +709,7 @@ static edict_t *G_GetNextThinkClient( edict_t *current )
 * G_RunFrame
 * Advances the world
 */
-void G_RunFrame( unsigned int msec, unsigned int serverTime )
-{
+void G_RunFrame( unsigned int msec, unsigned int serverTime ) {
 	G_CheckCvars();
 
 	game.localTime = time( NULL );
@@ -777,19 +718,19 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 	game.serverTime = serverTime;
 	G_UpdateFrameTime( msec );
 
-	if( !g_snapStarted )
+	if( !g_snapStarted ) {
 		G_StartFrameSnap();
+	}
 
 	G_CallVotes_Think();
 
-	if( GS_MatchPaused() )
-	{
+	if( GS_MatchPaused() ) {
 		// freeze match clock and linear projectiles
 		gs.gameState.longstats[GAMELONG_MATCHSTART] += serverTimeDelta;
-		for( edict_t *ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ )
-		{
-			if( ent->s.linearMovement )
+		for( edict_t *ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ ) {
+			if( ent->s.linearMovement ) {
 				ent->s.linearMovementTimeStamp += serverTimeDelta;
+			}
 		}
 
 		G_RunClients();
@@ -799,8 +740,9 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 	}
 
 	// reset warmup clock if not enough players
-	if( GS_MatchWaiting() )
+	if( GS_MatchWaiting() ) {
 		gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
+	}
 
 	level.framenum++;
 	level.time += msec;

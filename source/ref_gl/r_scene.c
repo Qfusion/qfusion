@@ -20,8 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
-enum
-{
+enum {
 	PPFX_SOFT_PARTICLES,
 	PPFX_TONE_MAPPING,
 	PPFX_COLOR_CORRECTION,
@@ -31,8 +30,7 @@ enum
 	PPFX_BLUR,
 };
 
-enum
-{
+enum {
 	PPFX_BIT_SOFT_PARTICLES = RF_BIT( PPFX_SOFT_PARTICLES ),
 	PPFX_BIT_TONE_MAPPING = RF_BIT( PPFX_TONE_MAPPING ),
 	PPFX_BIT_COLOR_CORRECTION = RF_BIT( PPFX_COLOR_CORRECTION ),
@@ -48,8 +46,7 @@ static void R_RenderDebugBounds( void );
 /*
 * R_ClearScene
 */
-void R_ClearScene( void )
-{
+void R_ClearScene( void ) {
 	rsc.numLocalEntities = 0;
 	rsc.numDlights = 0;
 	rsc.numPolys = 0;
@@ -89,19 +86,19 @@ void R_ClearScene( void )
 /*
 * R_AddEntityToScene
 */
-void R_AddEntityToScene( const entity_t *ent )
-{
-	if( !r_drawentities->integer )
+void R_AddEntityToScene( const entity_t *ent ) {
+	if( !r_drawentities->integer ) {
 		return;
+	}
 
-	if( ( ( rsc.numEntities - rsc.numLocalEntities ) < MAX_ENTITIES ) && ent )
-	{
+	if( ( ( rsc.numEntities - rsc.numLocalEntities ) < MAX_ENTITIES ) && ent ) {
 		int eNum = rsc.numEntities;
-		entity_t *de = R_NUM2ENT(eNum);
+		entity_t *de = R_NUM2ENT( eNum );
 
 		*de = *ent;
-		if( r_outlines_scale->value <= 0 )
+		if( r_outlines_scale->value <= 0 ) {
 			de->outlineHeight = 0;
+		}
 		rsc.entShadowBits[eNum] = 0;
 		rsc.entShadowGroups[eNum] = 0;
 
@@ -109,11 +106,10 @@ void R_AddEntityToScene( const entity_t *ent )
 			if( de->model && de->model->type == mod_brush ) {
 				rsc.bmodelEntities[rsc.numBmodelEntities++] = de;
 			}
-			if( !(de->renderfx & RF_NOSHADOW) ) {
+			if( !( de->renderfx & RF_NOSHADOW ) ) {
 				R_AddLightOccluder( de ); // build groups and mark shadow casters
 			}
-		}
-		else if( de->rtype == RT_SPRITE ) {
+		} else if( de->rtype == RT_SPRITE ) {
 			// simplifies further checks
 			de->model = NULL;
 		}
@@ -127,10 +123,10 @@ void R_AddEntityToScene( const entity_t *ent )
 		rsc.numEntities++;
 
 		// add invisible fake entity for depth write
-		if( (de->renderfx & (RF_WEAPONMODEL|RF_ALPHAHACK)) == (RF_WEAPONMODEL|RF_ALPHAHACK) ) {
+		if( ( de->renderfx & ( RF_WEAPONMODEL | RF_ALPHAHACK ) ) == ( RF_WEAPONMODEL | RF_ALPHAHACK ) ) {
 			entity_t tent = *ent;
 			tent.renderfx &= ~RF_ALPHAHACK;
-			tent.renderfx |= RF_NOCOLORWRITE|RF_NOSHADOW;
+			tent.renderfx |= RF_NOCOLORWRITE | RF_NOSHADOW;
 			R_AddEntityToScene( &tent );
 		}
 	}
@@ -139,10 +135,8 @@ void R_AddEntityToScene( const entity_t *ent )
 /*
 * R_AddLightToScene
 */
-void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b )
-{
-	if( ( rsc.numDlights < MAX_DLIGHTS ) && intensity && ( r != 0 || g != 0 || b != 0 ) )
-	{
+void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
+	if( ( rsc.numDlights < MAX_DLIGHTS ) && intensity && ( r != 0 || g != 0 || b != 0 ) ) {
 		dlight_t *dl = &rsc.dlights[rsc.numDlights];
 
 		VectorCopy( org, dl->origin );
@@ -163,12 +157,10 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 /*
 * R_AddPolyToScene
 */
-void R_AddPolyToScene( const poly_t *poly )
-{
+void R_AddPolyToScene( const poly_t *poly ) {
 	assert( sizeof( *poly->elems ) == sizeof( elem_t ) );
 
-	if( ( rsc.numPolys < MAX_POLYS ) && poly && poly->numverts )
-	{
+	if( ( rsc.numPolys < MAX_POLYS ) && poly && poly->numverts ) {
 		drawSurfacePoly_t *dp = &rsc.polys[rsc.numPolys];
 
 		assert( poly->shader != NULL );
@@ -200,7 +192,7 @@ void R_AddPolyToScene( const poly_t *poly )
 			}
 
 			fog = R_FogForBounds( dpmins, dpmaxs );
-			dp->fogNum = (fog ? fog - rsh.worldBrushModel->fogs + 1 : -1);
+			dp->fogNum = ( fog ? fog - rsh.worldBrushModel->fogs + 1 : -1 );
 		}
 
 		rsc.numPolys++;
@@ -210,12 +202,12 @@ void R_AddPolyToScene( const poly_t *poly )
 /*
 * R_AddLightStyleToScene
 */
-void R_AddLightStyleToScene( int style, float r, float g, float b )
-{
+void R_AddLightStyleToScene( int style, float r, float g, float b ) {
 	lightstyle_t *ls;
 
-	if( style < 0 || style >= MAX_LIGHTSTYLES )
+	if( style < 0 || style >= MAX_LIGHTSTYLES ) {
 		ri.Com_Error( ERR_DROP, "R_AddLightStyleToScene: bad light style %i", style );
+	}
 
 	ls = &rsc.lightStyles[style];
 	ls->rgb[0] = max( 0, r );
@@ -226,10 +218,9 @@ void R_AddLightStyleToScene( int style, float r, float g, float b )
 /*
 * R_BlitTextureToScrFbo
 */
-static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo, 
-	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages, 
-	int iParam0 )
-{
+static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
+								   int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages,
+								   int iParam0 ) {
 	int x, y;
 	int w, h, fw, fh;
 	static char s_name[] = "$builtinpostprocessing";
@@ -240,8 +231,9 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	mat4_t m;
 
 	assert( rsh.postProcessingVBO );
-	if( numShaderImages >= MAX_SHADER_IMAGES )
+	if( numShaderImages >= MAX_SHADER_IMAGES ) {
 		numShaderImages = MAX_SHADER_IMAGES;
+	}
 
 	// blit + flip using a static mesh to avoid redundant buffer uploads
 	// (also using custom PP effects like FXAA with the stream VBO causes
@@ -261,8 +253,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		h = fh = fd->height;
 		RB_Viewport( 0, 0, glConfig.width, glConfig.height );
 		RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
-	}
-	else {
+	} else {
 		// aux framebuffer
 		// set the viewport to full resolution of the framebuffer (without the NPOT padding if there's one)
 		// draw quad on the whole framebuffer texture
@@ -280,7 +271,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		RB_Scissor( 0, 0, glConfig.width, glConfig.height );
 	}
 
-	s.vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
+	s.vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT;
 	s.sort = SHADER_SORT_NEAREST;
 	s.numpasses = 1;
 	s.name = s_name;
@@ -291,8 +282,9 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	p.tcgen = TC_GEN_NONE;
 	p.images[0] = image;
 	for( i = 1; i < numShaderImages + 1; i++ ) {
-		if( i >= MAX_SHADER_IMAGES )
+		if( i >= MAX_SHADER_IMAGES ) {
 			break;
+		}
 		p.images[i] = shaderImages[i - 1];
 	}
 	for( ; i < MAX_SHADER_IMAGES; i++ )
@@ -309,8 +301,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		tcmod.args[5] = ( float )( image->upload_height - h - y ) / ( float )( image->upload_height );
 		p.numtcmods = 1;
 		p.tcmods = &tcmod;
-	}
-	else {
+	} else {
 		p.numtcmods = 0;
 	}
 
@@ -336,15 +327,14 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 * Performs Kawase blur which approximates standard Gaussian blur in multiple passes.
 * Supposedly performs better on high resolution inputs.
 */
-static image_t *R_BlurTextureToScrFbo( const refdef_t *fd, image_t *image, image_t *otherImage )
-{
+static image_t *R_BlurTextureToScrFbo( const refdef_t *fd, image_t *image, image_t *otherImage ) {
 	unsigned i;
 	image_t *images[2];
-	const int kernel35x35[] = 
-		{ 0, 1, 2, 2, 3 }; //  equivalent to 35x35 kernel
+	const int kernel35x35[] =
+	{ 0, 1, 2, 2, 3 };     //  equivalent to 35x35 kernel
 	;
-	const int kernel63x63[] = 
-		{ 0, 1, 2, 3, 4, 4, 5 } // equivalent to 63x63 kernel
+	const int kernel63x63[] =
+	{ 0, 1, 2, 3, 4, 4, 5 }     // equivalent to 63x63 kernel
 	;
 	const int *kernel;
 	unsigned numPasses;
@@ -352,8 +342,7 @@ static image_t *R_BlurTextureToScrFbo( const refdef_t *fd, image_t *image, image
 	if( true ) {
 		kernel = kernel63x63;
 		numPasses = sizeof( kernel63x63 ) / sizeof( kernel63x63[0] );
-	}
-	else {
+	} else {
 		kernel = kernel35x35;
 		numPasses = sizeof( kernel35x35 ) / sizeof( kernel35x35[0] );
 	}
@@ -361,17 +350,16 @@ static image_t *R_BlurTextureToScrFbo( const refdef_t *fd, image_t *image, image
 	images[0] = image;
 	images[1] = otherImage;
 	for( i = 0; i < numPasses; i++ ) {
-		R_BlitTextureToScrFbo( fd, images[i&1], images[(i + 1)&1]->fbo, GLSL_PROGRAM_TYPE_KAWASE_BLUR, colorWhite, 0, 0, NULL, kernel[i] );
+		R_BlitTextureToScrFbo( fd, images[i & 1], images[( i + 1 ) & 1]->fbo, GLSL_PROGRAM_TYPE_KAWASE_BLUR, colorWhite, 0, 0, NULL, kernel[i] );
 	}
 
-	return images[(i + 1)&1];
+	return images[( i + 1 ) & 1];
 }
 
 /*
 * R_RenderScene
 */
-void R_RenderScene( const refdef_t *fd )
-{
+void R_RenderScene( const refdef_t *fd ) {
 	int l;
 	int fbFlags = 0;
 	int ppFrontBuffer = 0;
@@ -380,15 +368,17 @@ void R_RenderScene( const refdef_t *fd )
 	shader_t *cc;
 	image_t *bloomTex[NUM_BLOOM_LODS];
 
-	if( r_norefresh->integer )
+	if( r_norefresh->integer ) {
 		return;
+	}
 
 	R_Set2DMode( false );
 
 	RB_SetTime( fd->time );
 
-	if( !( fd->rdflags & RDF_NOWORLDMODEL ) )
+	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
 		rsc.refdef = *fd;
+	}
 
 	rn.refdef = *fd;
 	if( !rn.refdef.minLight ) {
@@ -401,8 +391,9 @@ void R_RenderScene( const refdef_t *fd )
 
 	rn.farClip = R_DefaultFarClip();
 	rn.clipFlags = 15;
-	if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog )
+	if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ) {
 		rn.clipFlags |= 16;
+	}
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
 	rn.shadowBits = 0;
@@ -435,17 +426,17 @@ void R_RenderScene( const refdef_t *fd )
 			int width, height;
 			R_GetRenderBufferSize( glConfig.width, glConfig.height, 0, IT_SPECIAL, &width, &height );
 
-			if( rn.st->multisampleTarget )
+			if( rn.st->multisampleTarget ) {
 				RFB_UnregisterObject( rn.st->multisampleTarget );
-			rn.st->multisampleTarget = RFB_RegisterObject( width, height, true, true, glConfig.stencilBits != 0, true, 
-				samples, rn.st == &rsh.stf );
+			}
+			rn.st->multisampleTarget = RFB_RegisterObject( width, height, true, true, glConfig.stencilBits != 0, true,
+														   samples, rn.st == &rsh.stf );
 		}
 
 		// ignore r_samples values below 2 or if we failed to allocate the multisample fb
 		if( samples > 1 && rn.st->multisampleTarget != 0 ) {
 			rn.renderTarget = rn.st->multisampleTarget;
-		}
-		else {
+		} else {
 			samples = 0;
 		}
 
@@ -462,7 +453,7 @@ void R_RenderScene( const refdef_t *fd )
 			int oldFlags = fbFlags;
 
 			if( rn.st == &rsh.stf ) {
-				fbFlags |= PPFX_BIT_TONE_MAPPING|PPFX_BIT_COLOR_CORRECTION;
+				fbFlags |= PPFX_BIT_TONE_MAPPING | PPFX_BIT_COLOR_CORRECTION;
 			}
 			if( cc ) {
 				fbFlags |= PPFX_BIT_COLOR_CORRECTION;
@@ -470,8 +461,8 @@ void R_RenderScene( const refdef_t *fd )
 			if( r_fxaa->integer ) {
 				fbFlags |= PPFX_BIT_FXAA;
 			}
-			if( r_bloom->integer && rn.st == &rsh.stf && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS-1][1] ) {
-				fbFlags |= PPFX_BIT_OVERBRIGHT_TARGET|PPFX_BIT_COLOR_CORRECTION;
+			if( r_bloom->integer && rn.st == &rsh.stf && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS - 1][1] ) {
+				fbFlags |= PPFX_BIT_OVERBRIGHT_TARGET | PPFX_BIT_COLOR_CORRECTION;
 			}
 			if( fd->rdflags & RDF_BLURRED ) {
 				fbFlags |= PPFX_BIT_BLUR;
@@ -515,11 +506,11 @@ void R_RenderScene( const refdef_t *fd )
 	}
 
 	// blit and blend framebuffers in proper order
-	
+
 	// resolve the multisample framebuffer
 	if( samples > 0 ) {
 		int bits = GL_COLOR_BUFFER_BIT;
-		
+
 		if( !rn.multisampleDepthResolved ) {
 			bits |= GL_DEPTH_BUFFER_BIT;
 			rn.multisampleDepthResolved = true;
@@ -527,12 +518,12 @@ void R_RenderScene( const refdef_t *fd )
 
 		RB_BlitFrameBufferObject( rn.renderTarget, rn.st->screenTexCopy->fbo, bits, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
 		ppSource = rn.st->screenTexCopy;
-	}
-	else {
-		if( rn.renderTarget )
+	} else {
+		if( rn.renderTarget ) {
 			ppSource = RFB_GetObjectTextureAttachment( rn.renderTarget, false, 0 );
-		else
+		} else {
 			ppSource = NULL;
+		}
 	}
 
 	if( fbFlags == PPFX_BIT_SOFT_PARTICLES ) {
@@ -540,10 +531,10 @@ void R_RenderScene( const refdef_t *fd )
 		// otherwise use the soft particles FBO as the base texture on the next layer
 		// to avoid wasting time on resolves and the fragment shader to blit to a temp texture
 		R_BlitTextureToScrFbo( fd,
-			ppSource, 0,
-			GLSL_PROGRAM_TYPE_NONE,
-			colorWhite, 0,
-			0, NULL, 0 );
+							   ppSource, 0,
+							   GLSL_PROGRAM_TYPE_NONE,
+							   colorWhite, 0,
+							   0, NULL, 0 );
 		return;
 	}
 
@@ -563,8 +554,7 @@ void R_RenderScene( const refdef_t *fd )
 
 			if( !RFB_AttachTextureToObject( dest->fbo, false, 1, rsh.st.screenOverbrightTex ) ) {
 				dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // re-evaluate
-			}
-			else {
+			} else {
 				fbFlags |= PPFX_BIT_BLOOM;
 			}
 		}
@@ -572,8 +562,7 @@ void R_RenderScene( const refdef_t *fd )
 		if( fbFlags & PPFX_BIT_BLOOM ) {
 			images[1] = rsh.st.screenOverbrightTex;
 			numImages = 2;
-		}
-		else if( cc ) {
+		} else if( cc ) {
 			images[0] = cc->passes[0].images[0];
 			numImages = 2;
 			fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
@@ -582,10 +571,10 @@ void R_RenderScene( const refdef_t *fd )
 		}
 
 		R_BlitTextureToScrFbo( fd,
-			ppSource, dest ? dest->fbo : 0,
-			GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
-			colorWhite, 0,
-			numImages, images, 0 );
+							   ppSource, dest ? dest->fbo : 0,
+							   GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
+							   colorWhite, 0,
+							   numImages, images, 0 );
 
 		ppFrontBuffer ^= 1;
 		ppSource = dest;
@@ -605,10 +594,10 @@ void R_RenderScene( const refdef_t *fd )
 		for( l = 0; l < NUM_BLOOM_LODS; l++ ) {
 			// halve the resolution
 			R_BlitTextureToScrFbo( fd,
-				src, rsh.st.screenBloomLodTex[l][0]->fbo,
-				GLSL_PROGRAM_TYPE_NONE,
-				colorWhite, 0,
-				0, NULL, 0 );
+								   src, rsh.st.screenBloomLodTex[l][0]->fbo,
+								   GLSL_PROGRAM_TYPE_NONE,
+								   colorWhite, 0,
+								   0, NULL, 0 );
 
 			src = R_BlurTextureToScrFbo( fd, rsh.st.screenBloomLodTex[l][0], rsh.st.screenBloomLodTex[l][1] );
 			bloomTex[l] = src;
@@ -631,10 +620,10 @@ void R_RenderScene( const refdef_t *fd )
 
 		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL;
 		R_BlitTextureToScrFbo( fd,
-			ppSource, dest ? dest->fbo : 0,
-			GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
-			colorWhite, 0,
-			numImages, images, 0 );
+							   ppSource, dest ? dest->fbo : 0,
+							   GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
+							   colorWhite, 0,
+							   numImages, images, 0 );
 
 		ppFrontBuffer ^= 1;
 		ppSource = dest;
@@ -644,20 +633,20 @@ void R_RenderScene( const refdef_t *fd )
 	if( fbFlags & PPFX_BIT_FXAA ) {
 		// not that FXAA only works on LDR input
 		R_BlitTextureToScrFbo( fd,
-			ppSource, 0,
-			GLSL_PROGRAM_TYPE_FXAA,
-			colorWhite, 0,
-			0, NULL, 0 );
+							   ppSource, 0,
+							   GLSL_PROGRAM_TYPE_FXAA,
+							   colorWhite, 0,
+							   0, NULL, 0 );
 		return;
 	}
 
 	if( fbFlags & PPFX_BIT_BLUR ) {
 		ppSource = R_BlurTextureToScrFbo( fd, ppSource, rsh.st.screenPPCopies[ppFrontBuffer] );
 		R_BlitTextureToScrFbo( fd,
-			ppSource, 0,
-			GLSL_PROGRAM_TYPE_NONE,
-			colorWhite, 0,
-			0, NULL, 0 );
+							   ppSource, 0,
+							   GLSL_PROGRAM_TYPE_NONE,
+							   colorWhite, 0,
+							   0, NULL, 0 );
 	}
 }
 
@@ -669,8 +658,7 @@ BOUNDING BOXES
 =============================================================================
 */
 
-typedef struct
-{
+typedef struct {
 	vec3_t mins;
 	vec3_t maxs;
 	byte_vec4_t color;
@@ -683,28 +671,26 @@ static r_debug_bound_t *r_debug_bounds;
 /*
 * R_ClearDebugBounds
 */
-static void R_ClearDebugBounds( void )
-{
+static void R_ClearDebugBounds( void ) {
 	r_num_debug_bounds = 0;
 }
 
 /*
 * R_AddDebugBounds
 */
-void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color )
-{
+void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color ) {
 	unsigned i;
 
 	i = r_num_debug_bounds;
 	r_num_debug_bounds++;
 
-	if( r_num_debug_bounds > r_debug_bounds_current_size )
-	{
+	if( r_num_debug_bounds > r_debug_bounds_current_size ) {
 		r_debug_bounds_current_size = ALIGN( r_num_debug_bounds, 256 );
-		if( r_debug_bounds )
+		if( r_debug_bounds ) {
 			r_debug_bounds = R_Realloc( r_debug_bounds, r_debug_bounds_current_size * sizeof( r_debug_bound_t ) );
-		else
+		} else {
 			r_debug_bounds = R_Malloc( r_debug_bounds_current_size * sizeof( r_debug_bound_t ) );
+		}
 	}
 
 	VectorCopy( mins, r_debug_bounds[i].mins );
@@ -715,8 +701,7 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t c
 /*
 * R_RenderDebugBounds
 */
-static void R_RenderDebugBounds( void )
-{
+static void R_RenderDebugBounds( void ) {
 	unsigned i, j;
 	const vec_t *mins, *maxs;
 	const uint8_t *color;
@@ -730,8 +715,9 @@ static void R_RenderDebugBounds( void )
 		4, 5, 5, 7, 7, 6, 6, 4
 	};
 
-	if( !r_num_debug_bounds )
+	if( !r_num_debug_bounds ) {
 		return;
+	}
 
 	memset( &mesh, 0, sizeof( mesh ) );
 	mesh.numVerts = 8;
@@ -742,14 +728,12 @@ static void R_RenderDebugBounds( void )
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
-	for( i = 0; i < r_num_debug_bounds; i++ )
-	{
+	for( i = 0; i < r_num_debug_bounds; i++ ) {
 		mins = r_debug_bounds[i].mins;
 		maxs = r_debug_bounds[i].maxs;
 		color = r_debug_bounds[i].color;
 
-		for( j = 0; j < 8; j++ )
-		{
+		for( j = 0; j < 8; j++ ) {
 			verts[j][0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
 			verts[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
 			verts[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );

@@ -26,14 +26,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "as/asui.h"
 #include "as/asui_local.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 // dummy cGame class, single referenced, sorta like 'window' JS
-class Game 
+class Game
 {
 public:
-	Game()
-	{
+	Game() {
 	}
 };
 
@@ -44,48 +44,39 @@ static Game dummyGame;
 
 // =====================================================================================
 
-void PrebindGame( ASInterface *as )
-{
+void PrebindGame( ASInterface *as ) {
 	ASBind::Class<Game, ASBind::class_singleref>( as->getEngine() );
 }
 
-static const DemoInfo & Game_GetDemoInfo( Game *game )
-{
+static const DemoInfo & Game_GetDemoInfo( Game *game ) {
 	return *UI_Main::Get()->getDemoInfo();
 }
 
-static asstring_t *Game_Name( Game *game )
-{
+static asstring_t *Game_Name( Game *game ) {
 	return ASSTR( trap::Cvar_String( "gamename" ) );
 }
 
-static asstring_t *Game_Version( Game *game )
-{
+static asstring_t *Game_Version( Game *game ) {
 	return ASSTR( trap::Cvar_String( "version" ) );
 }
 
-static asstring_t *Game_Revision( Game *game )
-{
+static asstring_t *Game_Revision( Game *game ) {
 	return ASSTR( trap::Cvar_String( "revision" ) );
 }
 
-static asstring_t *Game_ServerName( Game *game )
-{
+static asstring_t *Game_ServerName( Game *game ) {
 	return ASSTR( UI_Main::Get()->getServerName() );
 }
 
-static asstring_t *Game_RejectMessage( Game *game )
-{
+static asstring_t *Game_RejectMessage( Game *game ) {
 	return ASSTR( UI_Main::Get()->getRejectMessage() );
 }
 
-static const DownloadInfo & Game_GetDownloadInfo( Game *game )
-{
+static const DownloadInfo & Game_GetDownloadInfo( Game *game ) {
 	return *UI_Main::Get()->getDownloadInfo();
 }
 
-static asstring_t *Game_ConfigString( Game *game, int cs )
-{
+static asstring_t *Game_ConfigString( Game *game, int cs ) {
 	char configstring[MAX_CONFIGSTRING_CHARS];
 
 	if( cs < 0 || cs >= MAX_CONFIGSTRINGS ) {
@@ -97,38 +88,31 @@ static asstring_t *Game_ConfigString( Game *game, int cs )
 	return ASSTR( configstring );
 }
 
-static int Game_ClientState( Game *game )
-{
+static int Game_ClientState( Game *game ) {
 	return UI_Main::Get()->getRefreshState().clientState;
 }
 
-static int Game_ServerState( Game *game )
-{
+static int Game_ServerState( Game *game ) {
 	return UI_Main::Get()->getRefreshState().serverState;
 }
 
-static void Game_Exec( Game *game, const asstring_t &cmd )
-{
+static void Game_Exec( Game *game, const asstring_t &cmd ) {
 	trap::Cmd_ExecuteText( EXEC_NOW, cmd.buffer );
 }
 
-static void Game_ExecAppend( Game *game, const asstring_t &cmd )
-{
+static void Game_ExecAppend( Game *game, const asstring_t &cmd ) {
 	trap::Cmd_ExecuteText( EXEC_APPEND, cmd.buffer );
 }
 
-static void Game_ExecInsert( Game *game, const asstring_t &cmd )
-{
+static void Game_ExecInsert( Game *game, const asstring_t &cmd ) {
 	trap::Cmd_ExecuteText( EXEC_INSERT, cmd.buffer );
 }
 
-static int Game_PlayerNum( Game *game )
-{
+static int Game_PlayerNum( Game *game ) {
 	return trap::CL_PlayerNum();
 }
 
-static bool Game_isTV( Game *game )
-{
+static bool Game_isTV( Game *game ) {
 	char tv[MAX_CONFIGSTRING_CHARS];
 
 	trap::GetConfigString( CS_TVSERVER, tv, sizeof( tv ) );
@@ -136,8 +120,7 @@ static bool Game_isTV( Game *game )
 	return atoi( tv ) != 0;
 }
 
-void BindGame( ASInterface *as )
-{
+void BindGame( ASInterface *as ) {
 	ASBind::Enum( as->getEngine(), "eConfigString" )
 		( "CS_TVSERVER", CS_TVSERVER )
 		( "CS_MODMANIFEST", CS_MODMANIFEST )
@@ -172,54 +155,55 @@ void BindGame( ASInterface *as )
 		( "DROP_REASON_CONNFAILED", DROP_REASON_CONNFAILED )
 		( "DROP_REASON_CONNTERMINATED", DROP_REASON_CONNTERMINATED )
 		( "DROP_REASON_CONNERROR", DROP_REASON_CONNERROR )
-		;
+	;
 
 	ASBind::Enum( as->getEngine(), "eDropType" )
 		( "DROP_TYPE_GENERAL", DROP_TYPE_GENERAL )
 		( "DROP_TYPE_PASSWORD", DROP_TYPE_PASSWORD )
 		( "DROP_TYPE_NORECONNECT", DROP_TYPE_NORECONNECT )
 		( "DROP_TYPE_TOTAL", DROP_TYPE_TOTAL )
-		;
+	;
 
 	ASBind::Enum( as->getEngine(), "eDownloadType" )
 		( "DOWNLOADTYPE_NONE", DOWNLOADTYPE_NONE )
 		( "DOWNLOADTYPE_SERVER", DOWNLOADTYPE_SERVER )
 		( "DOWNLOADTYPE_WEB", DOWNLOADTYPE_WEB )
-		;
+	;
 
 	ASBind::GetClass<Game>( as->getEngine() )
-		// gives access to properties and controls of the currently playing demo instance
-		.constmethod( Game_GetDemoInfo, "get_demo", true )
 
-		.constmethod( Game_Name, "get_name", true )
-		.constmethod( Game_Version, "get_version", true )
-		.constmethod( Game_Revision, "get_revision", true )
+	// gives access to properties and controls of the currently playing demo instance
+	.constmethod( Game_GetDemoInfo, "get_demo", true )
 
-		.constmethod( Game_ConfigString, "configString", true )
-		.constmethod( Game_ConfigString, "cs", true )
+	.constmethod( Game_Name, "get_name", true )
+	.constmethod( Game_Version, "get_version", true )
+	.constmethod( Game_Revision, "get_revision", true )
 
-		.constmethod( Game_PlayerNum, "get_playerNum", true )
+	.constmethod( Game_ConfigString, "configString", true )
+	.constmethod( Game_ConfigString, "cs", true )
 
-		.constmethod( Game_ClientState, "get_clientState", true )
-		.constmethod( Game_ServerState, "get_serverState", true )
+	.constmethod( Game_PlayerNum, "get_playerNum", true )
 
-		.constmethod( Game_Exec, "exec", true )
-		.constmethod( Game_ExecAppend, "execAppend", true )
-		.constmethod( Game_ExecInsert, "execInsert", true )
+	.constmethod( Game_ClientState, "get_clientState", true )
+	.constmethod( Game_ServerState, "get_serverState", true )
 
-		.constmethod( Game_ServerName, "get_serverName", true )
-		.constmethod( Game_RejectMessage, "get_rejectMessage", true )
-		.constmethod( Game_GetDownloadInfo, "get_download", true )
+	.constmethod( Game_Exec, "exec", true )
+	.constmethod( Game_ExecAppend, "execAppend", true )
+	.constmethod( Game_ExecInsert, "execInsert", true )
 
-		.constmethod( Game_isTV, "get_isTV", true )
+	.constmethod( Game_ServerName, "get_serverName", true )
+	.constmethod( Game_RejectMessage, "get_rejectMessage", true )
+	.constmethod( Game_GetDownloadInfo, "get_download", true )
+
+	.constmethod( Game_isTV, "get_isTV", true )
 	;
 }
 
-void BindGameGlobal( ASInterface *as )
-{
+void BindGameGlobal( ASInterface *as ) {
 	ASBind::Global( as->getEngine() )
-		// global variable
-		.var( &dummyGame, "game" )
+
+	// global variable
+	.var( &dummyGame, "game" )
 	;
 }
 
