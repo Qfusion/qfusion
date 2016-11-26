@@ -7,12 +7,10 @@
 UntypedCachingGameAllocator::UntypedCachingGameAllocator( size_t elemSize,
 														  const char *tag,
 														  size_t limit, unsigned initialCacheSize )
-	: chunkSize( elemSize ), limit( limit ), tag( tag ? tag : "unknown tag" ) {
-	isCleared = false;
-	isInitialized = false;
-
-	cachedChunksCount = initialCacheSize;
-	usedChunksCount = 0;
+	: chunkSize( elemSize ), limit( limit ), tag( tag ), isCleared( false ), isInitialized( false ), 
+		cachedChunksCount( initialCacheSize ), usedChunksCount( 0 ) {
+	if( this->tag == NULL )
+		this->tag = "unknown tag";
 }
 
 void UntypedCachingGameAllocator::Init() {
