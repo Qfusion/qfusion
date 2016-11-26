@@ -176,8 +176,17 @@ private:
 
     // i-th element contains a spot for i=spotNum
     TacticalSpot *spots;
-    // i-th element contains a visibility for i=spotNum
+    // For i-th spot element # i * numSpots + j contains a mutual visibility between spots i-th and j-th spot:
+    // 0 if spot origins and bounds are completely invisible for each other
+    // ...
+    // 255 if spot origins and bounds are completely visible for each other
     unsigned char *spotVisibilityTable;
+    // For i-th spot element # i * numSpots + j contains AAS travel time to j-th spot.
+    // If the value is zero, j-th spot is not reachable from i-th one (we conform to AAS time encoding).
+    // Non-zero value is a travel time in seconds^-2 (we conform to AAS time encoding).
+    // Non-zero does not guarantee the spot is reachable for some picked bot
+    // (these values are calculated using shared AI route cache and bots have individual one for blocked paths handling).
+    int *spotTravelTimeTable;
     // i-th element contains an offset of a grid cell spot nums list for i=cellNum
     unsigned *gridListOffsets;
     // Contains packed lists of grid cell spot nums.
@@ -217,6 +226,7 @@ private:
     bool Load(const char *mapname);
 
     void SetupMutualSpotsVisibility();
+    void SetupMutualSpotsReachability();
     void SetupSpotsGrid();
     void SetupGridParams();
 
@@ -232,7 +242,7 @@ private:
         return i * (gridNumCells[1] * gridNumCells[2]) + j * gridNumCells[2] + k;
     }
 
-    unsigned short FindSpotsInRadius(const OriginParams &originParams, uint16_t *spotNums) const;
+    uint16_t FindSpotsInRadius(const OriginParams &originParams, uint16_t *spotNums, uint16_t *insideSpotNum) const;
 
     void SelectCandidateSpots(const OriginParams &originParams, const CommonProblemParams &problemParams,
                               const uint16_t *spotNums, uint16_t numSpots, CandidateSpots &result) const;
@@ -240,60 +250,38 @@ private:
     void SelectCandidateSpots(const OriginParams &originParams, const AdvantageProblemParams &problemParams,
                               const uint16_t *spotNums, uint16_t numSpots, CandidateSpots &result) const;
 
-    void CheckSpotsReachFromOrigin(const OriginParams &originParams, const CommonProblemParams &problemParams,
-                                   const CandidateSpots &candidateSpots, ReachCheckedSpots &result) const;
+    void CheckSpotsReachFromOrigin(const OriginParams &originParams,
+                                   const CommonProblemParams &problemParams,
+                                   const CandidateSpots &candidateSpots,
+                                   uint16_t insideSpotNum,
+                                   ReachCheckedSpots &result) const;
 
-    void CheckSpotsReachFromOriginAndBack(const OriginParams &originParams, const CommonProblemParams &problemParams,
-                                          const CandidateSpots &candidateSpots, ReachCheckedSpots &result) const;
+    void CheckSpotsReachFromOriginAndBack(const OriginParams &originParams,
+                                          const CommonProblemParams &problemParams,
+                                          const CandidateSpots &candidateSpots,
+                                          uint16_t insideSpotNum,
+                                          ReachCheckedSpots &result) const;
 
     int CopyResults(const TraceCheckedSpots &results, const CommonProblemParams &problemParams,
                     vec3_t *spotOrigins, int maxSpots) const;
 
     // Specific for positional advantage spots
-    void CheckSpotsVisibleOriginTrace(const OriginParams &originParams, const AdvantageProblemParams &params,
-                                      const ReachCheckedSpots &candidateSpots, TraceCheckedSpots &result) const;
+    void CheckSpotsVisibleOriginTrace(const OriginParams &originParams,
+                                      const AdvantageProblemParams &params,
+                                      const ReachCheckedSpots &candidateSpots,
+                                      TraceCheckedSpots &result) const;
+
     void SortByVisAndOtherFactors(const OriginParams &originParams, const AdvantageProblemParams &problemParams,
                                   TraceCheckedSpots &spots) const;
 
     // Specific for cover spots
-    void SelectSpotsForCover(const OriginParams &originParams, const CoverProblemParams &problemParams,
-                             ReachCheckedSpots &candidateSpots, TraceCheckedSpots &result) const;
+    void SelectSpotsForCover(const OriginParams &originParams,
+                             const CoverProblemParams &problemParams,
+                             const ReachCheckedSpots &candidateSpots,
+                             TraceCheckedSpots &result) const;
 
     bool LooksLikeACoverSpot(uint16_t spotNum, const OriginParams &originParams,
                              const CoverProblemParams &problemParams) const;
-
-    inline static float ComputeDistanceFactor(const vec3_t v1, const vec3_t v2,
-                                              float weightFalloffDistanceRatio, float searchRadius)
-    {
-        float squareDistance = DistanceSquared(v1, v2);
-        float distance = 1.0f;
-        if (squareDistance >= 1.0f)
-            distance = 1.0f / Q_RSqrt(squareDistance);
-
-        return ComputeDistanceFactor(distance, weightFalloffDistanceRatio, searchRadius);
-    }
-
-    inline static float ComputeDistanceFactor(float distance, float weightFalloffDistanceRatio, float searchRadius)
-    {
-        float weightFalloffRadius = weightFalloffDistanceRatio * searchRadius;
-        if (distance < weightFalloffRadius)
-            return distance / weightFalloffRadius;
-
-        return 1.0f - ((distance - weightFalloffRadius) / (0.000001f + searchRadius - weightFalloffRadius));
-    }
-
-    inline static float ComputeTravelTimeFactor(int travelTimeMillis, float lowestWeightTravelTimeBounds)
-    {
-        float factor = 1.0f - BoundedFraction(travelTimeMillis, lowestWeightTravelTimeBounds);
-        return 1.0f / Q_RSqrt(0.0001f + factor);
-    }
-
-    inline static float ApplyFactor(float value, float factor, float factorInfluence)
-    {
-        float keptPart = value * (1.0f - factorInfluence);
-        float modifiedPart = value * factor * factorInfluence;
-        return keptPart + modifiedPart;
-    }
 public:
     // TacticalSpotsRegistry should be init and shut down explicitly
     // (a game library is not unloaded when a map changes)

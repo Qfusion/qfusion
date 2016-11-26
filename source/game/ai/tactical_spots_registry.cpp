@@ -104,6 +104,7 @@ bool TacticalSpotsRegistry::Load(const char *mapname)
     }
 
     SetupMutualSpotsVisibility();
+    SetupMutualSpotsReachability();
     SetupSpotsGrid();
 
     return numSpots > 0;
@@ -121,6 +122,11 @@ void TacticalSpotsRegistry::Shutdown()
     {
         G_LevelFree(instance.spotVisibilityTable);
         instance.spotVisibilityTable = nullptr;
+    }
+    if (instance.spotTravelTimeTable)
+    {
+        G_LevelFree(instance.spotTravelTimeTable);
+        instance.spotTravelTimeTable = nullptr;
     }
     if (instance.gridListOffsets)
     {
@@ -197,6 +203,29 @@ void TacticalSpotsRegistry::SetupMutualSpotsVisibility()
     }
 }
 
+void TacticalSpotsRegistry::SetupMutualSpotsReachability()
+{
+    spotTravelTimeTable = (int *)G_LevelMalloc(sizeof(int) * numSpots * numSpots);
+    const int flags = Bot::ALLOWED_TRAVEL_FLAGS;
+    AiAasRouteCache *routeCache = AiAasRouteCache::Shared();
+    for (unsigned i = 0; i < numSpots; ++i)
+    {
+        const int currAreaNum = spots[i].aasAreaNum;
+        for (unsigned j = 0; j < i; ++j)
+        {
+            const int testedAreaNum = spots[j].aasAreaNum;
+            spotTravelTimeTable[i * numSpots + j] = routeCache->TravelTimeToGoalArea(currAreaNum, testedAreaNum, flags);
+        }
+        // Set the lowest feasible travel time value for traveling from the curr spot to the curr spot itself.
+        spotTravelTimeTable[i * numSpots + i] = 1;
+        for (unsigned j = i + 1; j < numSpots; ++j)
+        {
+            const int testedAreaNum = spots[j].aasAreaNum;
+            spotTravelTimeTable[i * numSpots + j] = routeCache->TravelTimeToGoalArea(currAreaNum, testedAreaNum, flags);
+        }
+    }
+}
+
 void TacticalSpotsRegistry::SetupSpotsGrid()
 {
     SetupGridParams();
@@ -258,7 +287,9 @@ void TacticalSpotsRegistry::SetupGridParams()
     }
 }
 
-uint16_t TacticalSpotsRegistry::FindSpotsInRadius(const OriginParams &originParams, unsigned short *spotNums) const
+uint16_t TacticalSpotsRegistry::FindSpotsInRadius(const OriginParams &originParams,
+                                                  unsigned short *spotNums,
+                                                  unsigned short *insideSpotNum) const
 {
     if (!IsLoaded()) abort();
 
@@ -287,9 +318,14 @@ uint16_t TacticalSpotsRegistry::FindSpotsInRadius(const OriginParams &originPara
         maxCellDimIndex[i] = (unsigned)(boxMaxs[i] / gridCellSize[i]);
     }
 
-    uint16_t numSpotsInRadius = 0;
-    const float squareRadius = originParams.searchRadius * originParams.searchRadius;
+    // Avoid unsigned wrapping
+    static_assert(MAX_SPOTS < std::numeric_limits<uint16_t>::max(), "");
+    *insideSpotNum = MAX_SPOTS + 1;
 
+    // Copy to locals for faster access
+    const Vec3 searchOrigin(originParams.origin);
+    const float squareRadius = originParams.searchRadius * originParams.searchRadius;
+    uint16_t numSpotsInRadius = 0;
     // For each index for X dimension in the query bounding box
     for (unsigned i = minCellDimIndex[0]; i <= maxCellDimIndex[0]; ++i)
     {
@@ -315,9 +351,18 @@ uint16_t TacticalSpotsRegistry::FindSpotsInRadius(const OriginParams &originPara
                 {
                     uint16_t spotNum = spotsList[spotNumIndex];
                     const TacticalSpot &spot = spots[spotNum];
-                    if (DistanceSquared(spot.origin, originParams.origin) < squareRadius)
+                    if (DistanceSquared(spot.origin, searchOrigin.Data()) < squareRadius)
                     {
                         spotNums[numSpotsInRadius++] = spotNum;
+                        // Test whether search origin is inside the spot
+                        if (searchOrigin.X() < spot.absMins[0] || searchOrigin.X() > spot.absMaxs[0])
+                            continue;
+                        if (searchOrigin.Y() < spot.absMins[1] || searchOrigin.Y() > spot.absMaxs[1])
+                            continue;
+                        if (searchOrigin.Z() < spot.absMins[2] || searchOrigin.Z() > spot.absMaxs[2])
+                            continue;
+                        // Spots should not overlap. But if spots overlap, last matching spot will be returned
+                        *insideSpotNum = spotNum;
                     }
                 }
             }
@@ -381,21 +426,54 @@ int TacticalSpotsRegistry::CopyResults(const TraceCheckedSpots &results,
     }
 }
 
+inline float ComputeDistanceFactor(float distance, float weightFalloffDistanceRatio, float searchRadius)
+{
+    float weightFalloffRadius = weightFalloffDistanceRatio * searchRadius;
+    if (distance < weightFalloffRadius)
+        return distance / weightFalloffRadius;
+
+    return 1.0f - ((distance - weightFalloffRadius) / (0.000001f + searchRadius - weightFalloffRadius));
+}
+
+inline float ComputeDistanceFactor(const vec3_t v1, const vec3_t v2, float weightFalloffDistanceRatio, float searchRadius)
+{
+    float squareDistance = DistanceSquared(v1, v2);
+    float distance = 1.0f;
+    if (squareDistance >= 1.0f)
+        distance = 1.0f / Q_RSqrt(squareDistance);
+
+    return ComputeDistanceFactor(distance, weightFalloffDistanceRatio, searchRadius);
+}
+
+inline float ComputeTravelTimeFactor(int travelTimeMillis, float lowestWeightTravelTimeBounds)
+{
+    float factor = 1.0f - BoundedFraction(travelTimeMillis, lowestWeightTravelTimeBounds);
+    return 1.0f / Q_RSqrt(0.0001f + factor);
+}
+
+inline float ApplyFactor(float value, float factor, float factorInfluence)
+{
+    float keptPart = value * (1.0f - factorInfluence);
+    float modifiedPart = value * factor * factorInfluence;
+    return keptPart + modifiedPart;
+}
+
 int TacticalSpotsRegistry::FindPositionalAdvantageSpots(const OriginParams &originParams,
                                                         const AdvantageProblemParams &problemParams,
                                                         vec3_t *spotOrigins, int maxSpots) const
 {
     uint16_t boundsSpots[MAX_SPOTS];
-    uint16_t numSpotsInBounds = FindSpotsInRadius(originParams, boundsSpots);
+    uint16_t insideSpotNum;
+    uint16_t numSpotsInBounds = FindSpotsInRadius(originParams, boundsSpots, &insideSpotNum);
 
     CandidateSpots candidateSpots;
     SelectCandidateSpots(originParams, problemParams, boundsSpots, numSpotsInBounds, candidateSpots);
 
     ReachCheckedSpots reachCheckedSpots;
     if (problemParams.checkToAndBackReachability)
-        CheckSpotsReachFromOriginAndBack(originParams, problemParams, candidateSpots, reachCheckedSpots);
+        CheckSpotsReachFromOriginAndBack(originParams, problemParams, candidateSpots,  insideSpotNum, reachCheckedSpots);
     else
-        CheckSpotsReachFromOrigin(originParams, problemParams, candidateSpots, reachCheckedSpots);
+        CheckSpotsReachFromOrigin(originParams, problemParams, candidateSpots, insideSpotNum, reachCheckedSpots);
 
     TraceCheckedSpots traceCheckedSpots;
     CheckSpotsVisibleOriginTrace(originParams, problemParams, reachCheckedSpots, traceCheckedSpots);
@@ -497,6 +575,7 @@ void TacticalSpotsRegistry::SelectCandidateSpots(const OriginParams &originParam
 void TacticalSpotsRegistry::CheckSpotsReachFromOrigin(const OriginParams &originParams,
                                                       const CommonProblemParams &problemParams,
                                                       const CandidateSpots &candidateSpots,
+                                                      uint16_t insideSpotNum,
                                                       ReachCheckedSpots &result) const
 {
     AiAasRouteCache *routeCache = originParams.routeCache;
@@ -511,21 +590,49 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOrigin(const OriginParams &origin
     // Do not more than result.capacity() iterations.
     // Some feasible areas in candidateAreas tai that pass test may be skipped,
     // but this is intended to reduce performance drops (do not more than result.capacity() pathfinder calls).
-    for (unsigned i = 0, end = std::min(candidateSpots.size(), result.capacity()); i < end; ++i)
+    if (insideSpotNum < MAX_SPOTS)
     {
-        const SpotAndScore &spotAndScore = candidateSpots[i];
-        const TacticalSpot &spot = spots[spotAndScore.spotNum];
-        int travelTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
-        if (!travelTime)
-            continue;
+        const int *travelTimeTable = this->spotTravelTimeTable;
+        const auto tableRowOffset = insideSpotNum * this->numSpots;
+        for (unsigned i = 0, end = std::min(candidateSpots.size(), result.capacity()); i < end; ++i)
+        {
+            const SpotAndScore &spotAndScore = candidateSpots[i];
+            const TacticalSpot &spot = spots[spotAndScore.spotNum];
+            // If zero, the spotNum spot is not reachable from insideSpotNum
+            int tableTravelTime = travelTimeTable[tableRowOffset + spotAndScore.spotNum];
+            if (!tableTravelTime || tableTravelTime > lowestWeightTravelTimeBounds)
+                continue;
 
-        // AAS time is in seconds^-2
-        float travelTimeFactor = 1.0f - ComputeTravelTimeFactor(travelTime * 10, lowestWeightTravelTimeBounds);
-        float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
-        float newScore = spotAndScore.score;
-        newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
-        newScore = ApplyFactor(newScore, travelTimeFactor, travelTimeInfluence);
-        result.push_back(SpotAndScore(spotAndScore.spotNum, newScore));
+            // Get an actual travel time (non-zero table value does not guarantee reachability)
+            int travelTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
+            if (!travelTime || travelTime > lowestWeightTravelTimeBounds)
+                continue;
+
+            float travelTimeFactor = 1.0f - ComputeTravelTimeFactor(travelTime * 10, lowestWeightTravelTimeBounds);
+            float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
+            float newScore = spotAndScore.score;
+            newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
+            newScore = ApplyFactor(newScore, travelTimeFactor, travelTimeInfluence);
+            result.push_back(SpotAndScore(spotAndScore.spotNum, newScore));
+        }
+    }
+    else
+    {
+        for (unsigned i = 0, end = std::min(candidateSpots.size(), result.capacity()); i < end; ++i)
+        {
+            const SpotAndScore &spotAndScore = candidateSpots[i];
+            const TacticalSpot &spot = spots[spotAndScore.spotNum];
+            int travelTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
+            if (!travelTime || travelTime > lowestWeightTravelTimeBounds)
+                continue;
+
+            float travelTimeFactor = 1.0f - ComputeTravelTimeFactor(travelTime * 10, lowestWeightTravelTimeBounds);
+            float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
+            float newScore = spotAndScore.score;
+            newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
+            newScore = ApplyFactor(newScore, travelTimeFactor, travelTimeInfluence);
+            result.push_back(SpotAndScore(spotAndScore.spotNum, newScore));
+        }
     }
 
     // Sort result so best score areas are first
@@ -535,6 +642,7 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOrigin(const OriginParams &origin
 void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack(const OriginParams &originParams,
                                                              const CommonProblemParams &problemParams,
                                                              const CandidateSpots &candidateSpots,
+                                                             uint16_t insideSpotNum,
                                                              ReachCheckedSpots &result) const
 {
     AiAasRouteCache *routeCache = originParams.routeCache;
@@ -549,25 +657,66 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack(const OriginParams 
     // Do not more than result.capacity() iterations.
     // Some feasible areas in candidateAreas tai that pass test may be skipped,
     // but it is intended to reduce performance drops (do not more than 2 * result.capacity() pathfinder calls).
-    for (unsigned i = 0, end = std::min(candidateSpots.size(), result.capacity()); i < end; ++i)
+    if (insideSpotNum < MAX_SPOTS)
     {
-        const SpotAndScore &spotAndScore = candidateSpots[i];
-        const TacticalSpot &spot = spots[spotAndScore.spotNum];
-        int toSpotTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
-        if (!toSpotTime)
-            continue;
-        int toEntityTime = routeCache->TravelTimeToGoalArea(spot.aasAreaNum, originAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
-        if (!toEntityTime)
-            continue;
+        const int *travelTimeTable = this->spotTravelTimeTable;
+        const auto numSpots = this->numSpots;
+        for (unsigned i = 0, end = std::min(candidateSpots.size(), result.capacity()); i < end; ++i)
+        {
+            const SpotAndScore &spotAndScore = candidateSpots[i];
+            const TacticalSpot &spot = spots[spotAndScore.spotNum];
 
-        // AAS time is in seconds^-2
-        int totalTravelTimeMillis = 10 * (toSpotTime + toEntityTime);
-        float travelTimeFactor = ComputeTravelTimeFactor(totalTravelTimeMillis, lowestWeightTravelTimeBounds);
-        float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
-        float newScore = spotAndScore.score;
-        newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
-        newScore = ApplyFactor(newScore, travelTimeFactor, travelTimeInfluence);
-        result.push_back(SpotAndScore(spotAndScore.spotNum, newScore));
+            // If the table element i * numSpots + j is zero, j-th spot is not reachable from i-th one.
+            int tableToTravelTime = travelTimeTable[insideSpotNum * numSpots + spotAndScore.spotNum];
+            if (!tableToTravelTime)
+                continue;
+            int tableBackTravelTime = travelTimeTable[spotAndScore.spotNum * numSpots + insideSpotNum];
+            if (!tableBackTravelTime)
+                continue;
+            if (tableToTravelTime + tableBackTravelTime > lowestWeightTravelTimeBounds)
+                continue;
+
+            // Get an actual travel time (non-zero table values do not guarantee reachability)
+            int toTravelTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
+            // If `to` travel time is apriori greater than maximum allowed one (and thus the sum would be), reject early.
+            if (!toTravelTime || toTravelTime > lowestWeightTravelTimeBounds)
+                continue;
+            int backTimeTravelTime = routeCache->TravelTimeToGoalArea(spot.aasAreaNum, originAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
+            if (!backTimeTravelTime || toTravelTime + backTimeTravelTime > lowestWeightTravelTimeBounds)
+                continue;
+
+            // AAS time is in seconds^-2
+            int totalTravelTimeMillis = 10 * (toTravelTime + backTimeTravelTime);
+            float travelTimeFactor = ComputeTravelTimeFactor(totalTravelTimeMillis, lowestWeightTravelTimeBounds);
+            float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
+            float newScore = spotAndScore.score;
+            newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
+            newScore = ApplyFactor(newScore, travelTimeFactor, travelTimeInfluence);
+            result.push_back(SpotAndScore(spotAndScore.spotNum, newScore));
+        }
+    }
+    else
+    {
+        for (unsigned i = 0, end = std::min(candidateSpots.size(), result.capacity()); i < end; ++i)
+        {
+            const SpotAndScore &spotAndScore = candidateSpots[i];
+            const TacticalSpot &spot = spots[spotAndScore.spotNum];
+            int toSpotTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
+            if (!toSpotTime)
+                continue;
+            int toEntityTime = routeCache->TravelTimeToGoalArea(spot.aasAreaNum, originAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
+            if (!toEntityTime)
+                continue;
+
+            // AAS time is in seconds^-2
+            int totalTravelTimeMillis = 10 * (toSpotTime + toEntityTime);
+            float travelTimeFactor = ComputeTravelTimeFactor(totalTravelTimeMillis, lowestWeightTravelTimeBounds);
+            float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
+            float newScore = spotAndScore.score;
+            newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
+            newScore = ApplyFactor(newScore, travelTimeFactor, travelTimeInfluence);
+            result.push_back(SpotAndScore(spotAndScore.spotNum, newScore));
+        }
     }
 
     // Sort result so best score areas are first
@@ -681,16 +830,17 @@ int TacticalSpotsRegistry::FindCoverSpots(const OriginParams &originParams,
                                           vec3_t *spotOrigins, int maxSpots) const
 {
     uint16_t boundsSpots[MAX_SPOTS];
-    uint16_t numSpotsInBounds = FindSpotsInRadius(originParams, boundsSpots);
+    uint16_t insideSpotNum;
+    uint16_t numSpotsInBounds = FindSpotsInRadius(originParams, boundsSpots, &insideSpotNum);
 
     CandidateSpots candidateSpots;
     SelectCandidateSpots(originParams, problemParams, boundsSpots, numSpotsInBounds, candidateSpots);
 
     ReachCheckedSpots reachCheckedSpots;
     if (problemParams.checkToAndBackReachability)
-        CheckSpotsReachFromOriginAndBack(originParams, problemParams, candidateSpots, reachCheckedSpots);
+        CheckSpotsReachFromOriginAndBack(originParams, problemParams, candidateSpots, insideSpotNum, reachCheckedSpots);
     else
-        CheckSpotsReachFromOrigin(originParams, problemParams, candidateSpots, reachCheckedSpots);
+        CheckSpotsReachFromOrigin(originParams, problemParams, candidateSpots, insideSpotNum, reachCheckedSpots);
 
     TraceCheckedSpots coverSpots;
     SelectSpotsForCover(originParams, problemParams, reachCheckedSpots, coverSpots);
@@ -700,7 +850,7 @@ int TacticalSpotsRegistry::FindCoverSpots(const OriginParams &originParams,
 
 void TacticalSpotsRegistry::SelectSpotsForCover(const OriginParams &originParams,
                                                 const CoverProblemParams &problemParams,
-                                                ReachCheckedSpots &candidateSpots,
+                                                const ReachCheckedSpots &candidateSpots,
                                                 TraceCheckedSpots &result) const
 {
     // Do not do more than result.capacity() iterations
