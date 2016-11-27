@@ -1,6 +1,7 @@
 #include "ai_aas_route_cache.h"
 #include "static_vector.h"
-#include "../g_local.h"
+#include "ai_local.h"
+
 #undef min
 #undef max
 #include <stdlib.h>
@@ -343,6 +344,8 @@ void AiAasRouteCache::SetDisabledRegions(const Vec3 *mins, const Vec3 *maxs, int
         }
         RemoveAllPortalsCache();
     }
+
+    resultCache.Clear();
 }
 
 int AiAasRouteCache::GetAreaContentsTravelFlags(int areanum)
@@ -533,7 +536,7 @@ void AiAasRouteCache::InitPortalMaxTravelTimes(void)
 AiAasRouteCache::FreelistPool::FreelistPool(void *buffer_, unsigned bufferSize, unsigned chunkSize_)
     : buffer((char *)buffer_),
       chunkSize(chunkSize_),
-      maxChunks(bufferSize / (chunkSize_ + sizeof(ChunkHeader))),
+      maxChunks(bufferSize / (chunkSize_ + sizeof(AreaAndPortalCacheChunkHeader))),
       chunksInUse(0)
 {
 #ifdef _DEBUG
@@ -549,13 +552,13 @@ AiAasRouteCache::FreelistPool::FreelistPool(void *buffer_, unsigned bufferSize, 
     {
         // We can't use array access on Chunk * pointer since real chunk size is not a sizeof(Chunk).
         // Next chunk has this offset in bytes from previous one:
-        unsigned stride = chunkSize + sizeof(ChunkHeader);
+        unsigned stride = chunkSize + sizeof(AreaAndPortalCacheChunkHeader);
         char *nextChunkPtr = this->buffer + stride;
-        ChunkHeader *currChunk = (ChunkHeader *)this->buffer;
+        AreaAndPortalCacheChunkHeader *currChunk = (AreaAndPortalCacheChunkHeader *)this->buffer;
         freeChunk = currChunk;
         for (unsigned i = 0; i < maxChunks - 1; ++i)
         {
-            ChunkHeader *nextChunk = (ChunkHeader *)(nextChunkPtr);
+            AreaAndPortalCacheChunkHeader *nextChunk = (AreaAndPortalCacheChunkHeader *)(nextChunkPtr);
             currChunk->prev = nullptr;
             currChunk->next = nextChunk;
             currChunk = nextChunk;
@@ -578,7 +581,7 @@ void *AiAasRouteCache::FreelistPool::Alloc(int size)
         abort();
 #endif
 
-    ChunkHeader *newChunk = freeChunk;
+    AreaAndPortalCacheChunkHeader *newChunk = freeChunk;
     freeChunk = newChunk->next;
 
     newChunk->prev = &headChunk;
@@ -598,7 +601,7 @@ void AiAasRouteCache::FreelistPool::Free(void *ptr)
         abort();
 #endif
 
-    ChunkHeader *oldChunk = ((ChunkHeader *)ptr) - 1;
+    AreaAndPortalCacheChunkHeader *oldChunk = ((AreaAndPortalCacheChunkHeader *)ptr) - 1;
     oldChunk->prev->next = oldChunk->next;
     oldChunk->next->prev = oldChunk->prev;
     oldChunk->next = freeChunk;
@@ -606,12 +609,12 @@ void AiAasRouteCache::FreelistPool::Free(void *ptr)
     --chunksInUse;
 }
 
-AiAasRouteCache::ChunksCache::ChunksCache()
+AiAasRouteCache::AreaAndPortalChunksCache::AreaAndPortalChunksCache()
     : pooledChunks(buffer, sizeof(buffer), CHUNK_SIZE), heapMemoryUsed(0)
 {
 }
 
-void *AiAasRouteCache::ChunksCache::Alloc(int size)
+void *AiAasRouteCache::AreaAndPortalChunksCache::Alloc(int size)
 {
     // Likely case first
     if ((unsigned)size <= CHUNK_SIZE && !pooledChunks.IsFull())
@@ -624,7 +627,7 @@ void *AiAasRouteCache::ChunksCache::Alloc(int size)
     return envelope + 1;
 }
 
-void AiAasRouteCache::ChunksCache::Free(void *ptr)
+void AiAasRouteCache::AreaAndPortalChunksCache::Free(void *ptr)
 {
     // Likely case first
     if (pooledChunks.MayOwn(ptr))
@@ -636,6 +639,164 @@ void AiAasRouteCache::ChunksCache::Free(void *ptr)
     Envelope *envelope = ((Envelope *)ptr) - 1;
     heapMemoryUsed -= envelope->realSize;
     G_Free(envelope);
+}
+
+void AiAasRouteCache::ResultCache::Clear()
+{
+    nodes[0].prevInList = nullptr;
+    nodes[0].nextInList = &nodes[1];
+
+    for (unsigned i = 1; i < MAX_CACHED_RESULTS - 1; ++i)
+    {
+        nodes[i].prevInList = &nodes[i - 1];
+        nodes[i].nextInList = &nodes[i + 1];
+    }
+
+    nodes[MAX_CACHED_RESULTS - 1].prevInList = &nodes[MAX_CACHED_RESULTS - 2];
+    nodes[MAX_CACHED_RESULTS - 1].nextInList = nullptr;
+
+    freeNode = &nodes[0];
+    newestUsedNode = nullptr;
+    oldestUsedNode = nullptr;
+
+    memset(bins, 0, NUM_HASH_BINS * sizeof(bins[0]));
+}
+
+inline void AiAasRouteCache::ResultCache::LinkToHashBin(uint32_t hash, Node *node)
+{
+    node->hash = hash;
+    unsigned binIndex = hash % NUM_HASH_BINS;
+    node->binIndex = binIndex;
+    // Link the result node to its hash bin
+    if (bins[binIndex])
+    {
+        node->nextInBin = bins[binIndex];
+        bins[binIndex]->prevInBin = node;
+    }
+    node->nextInBin = nullptr;
+    bins[binIndex] = node;
+}
+
+inline void AiAasRouteCache::ResultCache::LinkToUsedList(Node *node)
+{
+    // Newest used nodes are always linked to the `next` pointer.
+    // Thus, newest used node must always have a zero `next` pointer
+    if (newestUsedNode)
+    {
+#ifdef _DEBUG
+        if (newestUsedNode->nextInList)
+            AI_FailWith("AiAasRouteCache::ResultCache::LinkToUsedList()", "newestUsedNode->nextInList is present");
+#endif
+
+        newestUsedNode->nextInList = node;
+        node->prevInList = newestUsedNode;
+    }
+    else
+        node->prevInList = nullptr;
+
+    newestUsedNode = node;
+    newestUsedNode->nextInList = nullptr;
+
+    // If there is no oldestUsedNode, set the node as it.
+    if (!oldestUsedNode)
+        oldestUsedNode = node;
+}
+
+inline void AiAasRouteCache::ResultCache::UnlinkOldestUsedNodeFromBin()
+{
+    // Unlink last used node from bin
+    if (oldestUsedNode->nextInBin)
+        oldestUsedNode->nextInBin->prevInBin = oldestUsedNode->prevInBin;
+
+    if (oldestUsedNode->prevInBin)
+    {
+        oldestUsedNode->prevInBin->nextInBin = oldestUsedNode->nextInBin;
+        return;
+    }
+
+#ifdef _DEBUG
+    // If node.prevInBin is null, the node must be a bin head
+    if (bins[oldestUsedNode->binIndex] != oldestUsedNode)
+        AI_FailWith("AiAasRouteCache::ResultCache::UnlinkOldestUsedNodeFromBin()", "The node is not a bin head");
+#endif
+    bins[oldestUsedNode->binIndex] = oldestUsedNode->nextInBin;
+}
+
+inline void AiAasRouteCache::ResultCache::UnlinkOldestUsedNodeFromList()
+{
+#ifdef _DEBUG
+    // Oldest used node must always have a zero `prev` pointer
+    if (oldestUsedNode->prevInList)
+        AI_FailWith("AiAasRouteCache::ResultCache::UnlinkOldestUsedNodeFromBin()", "oldestUsedNode->prevInList is present");
+#endif
+
+    if (oldestUsedNode->nextInList)
+    {
+        oldestUsedNode = oldestUsedNode->nextInList;
+        oldestUsedNode->prevInList = nullptr;
+    }
+    else
+        oldestUsedNode = nullptr;
+}
+
+inline AiAasRouteCache::ResultCache::Node *AiAasRouteCache::ResultCache::UnlinkOldestUsedNode()
+{
+    Node *result = oldestUsedNode;
+    UnlinkOldestUsedNodeFromBin();
+    UnlinkOldestUsedNodeFromList();
+    return result;
+}
+
+AiAasRouteCache::ResultCache::Node *
+AiAasRouteCache::ResultCache::GetCachedResultForHash(uint32_t hash, const vec3_t fromOrigin, int fromAreaNum,
+                                                     int toAreaNum, int travelFlags) const
+{
+    unsigned binNum = hash % NUM_HASH_BINS;
+    for (auto *node = bins[binNum]; node; node = node->nextInBin)
+    {
+        if (node->hash != hash)
+            continue;
+        if (node->fromAreaNum != fromAreaNum)
+            continue;
+        if (node->toAreaNum != toAreaNum)
+            continue;
+        if (node->travelFlags != travelFlags)
+            continue;
+        // The origin is set to dummy value in most cases (when it is not specified by the routing params).
+        // Thats why this gets compared last to reject early by other values comparison.
+        if (!VectorCompare(node->fromOrigin, fromOrigin))
+            continue;
+
+        return node;
+    }
+    return nullptr;
+}
+
+AiAasRouteCache::ResultCache::Node *
+AiAasRouteCache::ResultCache::AllocAndRegisterForHash(uint32_t hash, const vec3_t fromOrigin, int fromAreaNum,
+                                                      int toAreaNum, int travelFlags)
+{
+    Node *result;
+    if (freeNode)
+    {
+        // Unlink the node from free list
+        result = freeNode;
+        freeNode = freeNode->nextInList;
+        LinkToHashBin(hash, result);
+        LinkToUsedList(result);
+    }
+    else
+    {
+        result = UnlinkOldestUsedNode();
+        LinkToHashBin(hash, result);
+        LinkToUsedList(result);
+        return result;
+    }
+    VectorCopy(fromOrigin, result->fromOrigin);
+    result->fromAreaNum = fromAreaNum;
+    result->toAreaNum = toAreaNum;
+    result->travelFlags = travelFlags;
+    return result;
 }
 
 void *AiAasRouteCache::GetClearedMemory(int size)
@@ -1190,12 +1351,59 @@ bool AiAasRouteCache::RoutingResultToGoalArea(int fromAreaNum, const vec_t *orig
     if (aasWorld.AreaDoNotEnter(fromAreaNum) || aasWorld.AreaDoNotEnter(toAreaNum))
         travelFlags |= TFL_DONOTENTER;
 
-    RoutingRequest request;
-    request.areanum = fromAreaNum;
-    request.origin = origin;
-    request.goalareanum = toAreaNum;
-    request.travelflags = travelFlags;
-    return const_cast<AiAasRouteCache *>(this)->RouteToGoalArea(request, result);
+    AiAasRouteCache *nonConstThis = const_cast<AiAasRouteCache *>(this);
+    const float *cachedOrigin = origin ? origin : vec3_origin;
+
+    uint32_t hash = ResultCache::Hash(cachedOrigin, fromAreaNum, toAreaNum, travelFlags);
+    if (auto *cacheNode = resultCache.GetCachedResultForHash(hash, cachedOrigin, fromAreaNum, toAreaNum, travelFlags))
+    {
+#ifdef _DEBUG
+        RoutingRequest request(fromAreaNum, origin, toAreaNum, travelFlags);
+        constexpr const char *tag = "AiAasRouteCache::RoutingResultToGoalArea()";
+        // Check for corrupt cache results
+        G_Printf("Cached: reach %d time %d\n", cacheNode->reachability, cacheNode->travelTime);
+        if ((cacheNode->reachability != 0) ^ (cacheNode->travelTime != 0))
+        {
+            const char *format = "Reachability and travel time valid status must be tied. Reachability: %d, time: %d";
+            AI_FailWith(tag, format, cacheNode->reachability, cacheNode->travelTime);
+        }
+        if (!nonConstThis->RouteToGoalArea(request, result))
+        {
+            if (!cacheNode->reachability)
+                return false;
+
+            const char *format = "Can't find an actual route %d -> %d (flags = %X) while cached one exists (and is valid)";
+            AI_FailWith(tag, format, fromAreaNum, toAreaNum, travelFlags);
+        }
+        G_Printf("Actual: reach %d time %d\n", result->reachnum, result->traveltime);
+        if (result->reachnum != cacheNode->reachability)
+        {
+            const char *format = "Route %d -> %d (flags = %X): actual reach num %d, cached one %d";
+            AI_FailWith(tag, format, fromAreaNum, toAreaNum, travelFlags, result->reachnum, cacheNode->reachability);
+        }
+        if (result->traveltime != cacheNode->travelTime)
+        {
+            const char *format = "Route %d -> %d (flags = %X): actual travel time %d, cached one %d";
+            AI_FailWith(tag, format, fromAreaNum, toAreaNum, travelFlags, result->reachnum, cacheNode->reachability);
+        }
+#endif
+
+        result->reachnum = cacheNode->reachability;
+        result->traveltime = cacheNode->travelTime;
+        return cacheNode->reachability != 0;
+    }
+
+    auto *cacheNode = nonConstThis->resultCache.AllocAndRegisterForHash(hash, cachedOrigin, fromAreaNum, toAreaNum, travelFlags);
+    RoutingRequest request(fromAreaNum, origin, toAreaNum, travelFlags);
+    if (nonConstThis->RouteToGoalArea(request, result))
+    {
+        cacheNode->reachability = result->reachnum;
+        cacheNode->travelTime = result->traveltime;
+        return true;
+    }
+    cacheNode->reachability = 0;
+    cacheNode->travelTime = 0;
+    return false;
 }
 
 bool AiAasRouteCache::RouteToGoalArea(const RoutingRequest &request, RoutingResult *result)

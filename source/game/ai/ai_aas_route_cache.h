@@ -158,16 +158,16 @@ class AiAasRouteCache
     class FreelistPool
     {
     public:
-        struct ChunkHeader
+        struct AreaAndPortalCacheChunkHeader
         {
-            ChunkHeader *prev;
-            ChunkHeader *next;
+            AreaAndPortalCacheChunkHeader *prev;
+            AreaAndPortalCacheChunkHeader *next;
         };
     private:
         // Freelist head
-        ChunkHeader headChunk;
+        AreaAndPortalCacheChunkHeader headChunk;
         // Freelist free item
-        ChunkHeader *freeChunk;
+        AreaAndPortalCacheChunkHeader *freeChunk;
         // Actual chunks data
         char *buffer;
 
@@ -186,7 +186,7 @@ class AiAasRouteCache
         // False result guarantees that the pool does not own the pointer.
         inline bool MayOwn(const void *ptr)
         {
-            return ptr >= buffer && ptr < buffer + maxChunks * (chunkSize + sizeof(ChunkHeader));
+            return ptr >= buffer && ptr < buffer + maxChunks * (chunkSize + sizeof(AreaAndPortalCacheChunkHeader));
         }
         inline bool IsFull() const { return freeChunk == nullptr; }
         inline unsigned Size() const { return chunksInUse; }
@@ -195,12 +195,13 @@ class AiAasRouteCache
 
     // The enclosing class is either allocated via G_Malloc() that should be at least 8-byte aligned,
     // or stored in a StaticVector that has 16-byte alignment.
-    class alignas(8) ChunksCache
+    class alignas(8) AreaAndPortalChunksCache
     {
-        static constexpr unsigned CHUNK_SIZE = 8192 - sizeof(FreelistPool::ChunkHeader);
-        static constexpr unsigned MAX_CHUNKS = 640; // 512+128
+        static constexpr unsigned CHUNK_SIZE = 8192 - sizeof(FreelistPool::AreaAndPortalCacheChunkHeader);
+        // Since the real results cache has been implemented we can reduce chunks count
+        static constexpr unsigned MAX_CHUNKS = 384;
 
-        alignas(8) char buffer[MAX_CHUNKS * (CHUNK_SIZE + sizeof(FreelistPool::ChunkHeader))];
+        alignas(8) char buffer[MAX_CHUNKS * (CHUNK_SIZE + sizeof(FreelistPool::AreaAndPortalCacheChunkHeader))];
 
         FreelistPool pooledChunks;
         unsigned heapMemoryUsed;
@@ -212,7 +213,7 @@ class AiAasRouteCache
             uint64_t realSize;
         };
     public:
-        ChunksCache();
+        AreaAndPortalChunksCache();
 
         void *Alloc(int size);
         void Free(void *ptr);
@@ -225,7 +226,69 @@ class AiAasRouteCache
         }
     };
 
-    ChunksCache chunksCache;
+    AreaAndPortalChunksCache areaAndPortalChunksCache;
+
+    class ResultCache
+    {
+    public:
+        static constexpr unsigned MAX_CACHED_RESULTS = 512;
+        // A prime number
+        static constexpr unsigned NUM_HASH_BINS = 797;
+
+        struct Node
+        {
+            Node *prevInBin;
+            Node *nextInBin;
+            Node *prevInList;
+            Node *nextInList;
+            vec3_t fromOrigin;
+            int fromAreaNum;
+            int toAreaNum;
+            int travelFlags;
+            int reachability;
+            int travelTime;
+            uint32_t hash;
+            unsigned binIndex;
+        };
+
+        static inline uint32_t Hash(const vec3_t fromOrigin, int fromAreaNum, int toAreaNum, int travelFlags)
+        {
+            uint32_t result = 31;
+            result = result * 17 + *reinterpret_cast<const uint32_t *>(fromOrigin + 0);
+            result = result * 17 + *reinterpret_cast<const uint32_t *>(fromOrigin + 1);
+            result = result * 17 + *reinterpret_cast<const uint32_t *>(fromOrigin + 2);
+            result = result * 17 + fromAreaNum;
+            result = result * 17 + toAreaNum;
+            result = result * 17 + travelFlags;
+            return result;
+        }
+    private:
+        Node nodes[MAX_CACHED_RESULTS];
+        Node *freeNode;
+        Node *newestUsedNode;
+        Node *oldestUsedNode;
+
+        Node *bins[NUM_HASH_BINS];
+
+
+        inline void LinkToHashBin(uint32_t hash, Node *node);
+        inline void LinkToUsedList(Node *node);
+        inline Node *UnlinkOldestUsedNode();
+        inline void UnlinkOldestUsedNodeFromBin();
+        inline void UnlinkOldestUsedNodeFromList();
+    public:
+        inline ResultCache() { Clear(); }
+
+        void Clear();
+
+        // The hash must be computed by callers using Hash(). This is a bit ugly but encourages efficient usage patterns.
+        Node *GetCachedResultForHash(uint32_t hash, const vec3_t fromOrigin, int fromAreaNum,
+                                     int toAreaNum, int travelFlags) const;
+        Node *AllocAndRegisterForHash(uint32_t hash, const vec3_t fromOrigin, int fromAreaNum,
+                                      int toAreaNum, int travelFlags);
+    };
+
+    ResultCache resultCache;
 
     inline int ClusterAreaNum(int cluster, int areanum);
     void InitTravelFlagFromType();
@@ -243,15 +306,15 @@ class AiAasRouteCache
 
     inline void *AllocPooledChunk(int size)
     {
-        return chunksCache.Alloc(size);
+        return areaAndPortalChunksCache.Alloc(size);
     }
     inline void FreePooledChunk(void *ptr)
     {
-        return chunksCache.Free(ptr);
+        return areaAndPortalChunksCache.Free(ptr);
     }
     inline bool ShouldDrainCache()
     {
-        return chunksCache.NeedsCleanup();
+        return areaAndPortalChunksCache.NeedsCleanup();
     }
 
     void *GetClearedMemory(int size);
@@ -275,6 +338,9 @@ class AiAasRouteCache
         const float *origin;
         int goalareanum;
         int travelflags;
+
+        inline RoutingRequest(int areaNum_, const float *origin_, int goalAreaNum_, int travelFlags_)
+            : areanum(areaNum_), origin(origin_), goalareanum(goalAreaNum_), travelflags(travelFlags_) {}
     };
 
     struct RoutingResult
