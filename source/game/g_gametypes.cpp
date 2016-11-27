@@ -1839,7 +1839,7 @@ void G_Gametype_Init( void ) {
 	}
 
 	g_gametype = trap_Cvar_Get( "g_gametype", "dm", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
-	g_gametype_generic = trap_Cvar_Get( "g_gametype_generic", "1",  CVAR_ARCHIVE | CVAR_LATCH );
+	g_gametype_generic = trap_Cvar_Get( "g_gametype_generic", "1", CVAR_ARCHIVE | CVAR_LATCH );
 
 	//get the match cvars too
 	g_warmup_timelimit = trap_Cvar_Get( "g_warmup_timelimit", "5", CVAR_ARCHIVE );
@@ -1907,9 +1907,9 @@ void G_Gametype_Init( void ) {
 
 	// Init the current gametype
 	if( !GT_asLoadScript( g_gametype->string ) ) {
-		if( g_gametype_generic->integer )
-			G_Gametype_GENERIC_Init();
-		else
+		//if( g_gametype_generic->integer )
+		//	G_Gametype_GENERIC_Init();
+		//else
 			G_Error( "Failed to load %s", g_gametype->string );
 	}
 

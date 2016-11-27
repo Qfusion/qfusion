@@ -3581,7 +3581,7 @@ static asIScriptModule *G_BuildGameScript( const char *moduleName, const char *d
 
 	error = asModule->Build();
 	if( error ) {
-		G_Printf( S_COLOR_RED "* Failed to build the script '%s'\n", scriptName );
+		G_Printf( S_COLOR_RED "* Failed to build script '%s'\n", scriptName );
 		asEngine->DiscardModule( moduleName );
 		return NULL;
 	}
