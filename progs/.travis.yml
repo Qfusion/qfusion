@@ -1,0 +1,45 @@
+sudo: false
+install: true
+notifications:
+  email: false
+  
+matrix:
+  include:
+    - os: linux
+      language: c++
+      compiler: gcc-4.9
+      env: QF_ARCH=x86_64
+      addons:
+        apt:
+          sources:
+            - kubuntu-backports
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-4.9
+            - g++-4.9
+            - cmake
+            - build-essential
+            - zlib1g
+            - zlib1g-dev
+            - libcurl4-gnutls-dev
+
+install:
+  - export CC=gcc-4.9 CXX=g++-4.9 && cd $HOME && git clone --depth 1 https://github.com/Qfusion/qfusion.git && cd qfusion && git submodule update --init --recursive && cd source && cmake -DSERVER_ONLY=1 . && make
+  
+script:
+  - cd $HOME/qfusion/source/build && ln -s $TRAVIS_BUILD_DIR base/progs && cp ../../maps/map_box.pk3 base/map_box.pk3 && mkdir -p base/configs/server/gametypes
+  - echo "echo -e \"set g_gametype \$1\\nmap box\" > base/dedicated_autoexec_postinit.cfg && echo -e \"wait\\nwait\\nquit\" >base/configs/server/gametypes/\$1.cfg" > init_gt.sh && chmod +x ./init_gt.sh
+  - echo "./qfusion_server.x86_64 +set developer 1 +set logconsole console.log" > ./run_srv.sh && chmod +x ./run_srv.sh
+  - ./init_gt.sh bomb && ./run_srv.sh
+  - ./init_gt.sh ca && ./run_srv.sh
+  - ./init_gt.sh ctf && ./run_srv.sh
+  - ./init_gt.sh ctftactics && ./run_srv.sh
+  - ./init_gt.sh da && ./run_srv.sh
+  - ./init_gt.sh dm && ./run_srv.sh
+  - ./init_gt.sh duel && ./run_srv.sh
+  - ./init_gt.sh ffa && ./run_srv.sh
+  - ./init_gt.sh headhunt && ./run_srv.sh
+  - ./init_gt.sh race && ./run_srv.sh
+  - ./init_gt.sh rekt && ./run_srv.sh
+  - ./init_gt.sh tdm && ./run_srv.sh
+  - ./init_gt.sh tutorial && ./run_srv.sh
