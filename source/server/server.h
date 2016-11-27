@@ -346,9 +346,6 @@ extern cvar_t *sv_uploads_demos_baseurl;
 extern cvar_t *sv_pure;
 extern cvar_t *sv_pure_forcemodulepk3;
 
-// wsw : automated testing
-extern cvar_t *sv_exit_on_game_error;
-
 // MOTD: 0=disable MOTD
 //       1=Enable MOTD
 extern cvar_t *sv_MOTD;

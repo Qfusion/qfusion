@@ -1908,9 +1908,9 @@ void G_Gametype_Init( void ) {
 	// Init the current gametype
 	if( !GT_asLoadScript( g_gametype->string ) ) {
 		if( g_gametype_generic->integer )
-			G_Error( "Failed to load %s", g_gametype->string );
-		else
 			G_Gametype_GENERIC_Init();
+		else
+			G_Error( "Failed to load %s", g_gametype->string );
 	}
 
 	trap_ConfigString( CS_GAMETYPENAME, g_gametype->string );

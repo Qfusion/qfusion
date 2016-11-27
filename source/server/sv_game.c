@@ -217,9 +217,6 @@ static void PF_error( const char *msg ) {
 		copy[i] = msg[i] & 127;
 	copy[i] = 0;
 
-	if( sv_exit_on_game_error->integer )
-		code = ERR_FATAL;
-
 	Com_Error( code, "Game Error: %s", copy );
 }
 
