@@ -23,6 +23,8 @@ const int DA_ROUNDSTATE_ROUND = 2;
 const int DA_ROUNDSTATE_ROUNDFINISHED = 3;
 const int DA_ROUNDSTATE_POSTROUND = 4;
 
+TEST
+
 class cDARound
 {
     int state;
