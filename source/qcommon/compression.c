@@ -61,7 +61,9 @@ static dllfunc_t zlibfuncs[] =
 	{ "gzeof", ( void **)&qgzeof },
 	{ "gzflush", ( void **)&qgzflush },
 	{ "gzsetparams", ( void **)&qgzsetparams },
+#if ZLIB_VER_MAJOR >= 1 && ZLIB_VER_MINOR >= 2 && ZLIB_VER_REVISION >= 4
 	{ "gzbuffer", ( void **)&qgzbuffer },
+#endif
 	{ NULL, NULL },
 };
 

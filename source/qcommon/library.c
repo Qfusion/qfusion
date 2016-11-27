@@ -73,7 +73,7 @@ void *Com_LoadLibraryExt( const char *name, dllfunc_t *funcs, bool sys ) {
 		if( !( *( func->funcPointer ) ) ) {
 			Com_UnloadLibrary( &lib );
 			if( sys ) {
-				Com_DPrintf( "%s: Sys_GetProcAddress failed for %s", fullname, func->name );
+				Com_DPrintf( "%s: Sys_GetProcAddress failed for %s\n", fullname, func->name );
 				return NULL;
 			}
 			Com_Error( ERR_FATAL, "%s: Sys_GetProcAddress failed for %s", fullname, func->name );
