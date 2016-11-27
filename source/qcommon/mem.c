@@ -97,7 +97,7 @@ struct mempool_s {
 
 //#define SHOW_NONFREED
 
-cvar_t *developerMemory;
+cvar_t *developer_memory;
 
 static mempool_t *poolChain = NULL;
 
@@ -151,7 +151,7 @@ void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int 
 		_Mem_Error( "Mem_Alloc: bad pool flags (canthave) (alloc at %s:%i)", filename, fileline );
 	}
 
-	if( developerMemory && developerMemory->integer ) {
+	if( developer_memory && developer_memory->integer ) {
 		Com_DPrintf( "Mem_Alloc: pool %s, file %s:%i, size %i bytes\n", pool->name, filename, fileline, size );
 	}
 
@@ -268,7 +268,7 @@ void _Mem_Free( void *data, int musthave, int canthave, const char *filename, in
 		_Mem_Error( "Mem_Free: bad pool flags (canthave) (alloc at %s:%i)", filename, fileline );
 	}
 
-	if( developerMemory && developerMemory->integer ) {
+	if( developer_memory && developer_memory->integer ) {
 		Com_DPrintf( "Mem_Free: pool %s, alloc %s:%i, free %s:%i, size %i bytes\n", pool->name, mem->filename, mem->fileline, filename, fileline, mem->size );
 	}
 
@@ -677,7 +677,7 @@ void Memory_Init( void ) {
 void Memory_InitCommands( void ) {
 	assert( !commands_initialized );
 
-	developerMemory = Cvar_Get( "developerMemory", "0", 0 );
+	developer_memory = Cvar_Get( "developer_memory", "0", 0 );
 
 	Cmd_AddCommand( "memlist", MemList_f );
 	Cmd_AddCommand( "memstats", MemStats_f );
@@ -698,7 +698,7 @@ void Memory_Shutdown( void ) {
 	}
 
 	// set the cvar to NULL so nothing is printed to non-existing console
-	developerMemory = NULL;
+	developer_memory = NULL;
 
 	Mem_CheckSentinelsGlobal();
 

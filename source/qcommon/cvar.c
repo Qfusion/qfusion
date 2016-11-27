@@ -872,7 +872,7 @@ void Cvar_Shutdown( void ) {
 	if( cvar_initialized ) {
 		unsigned int i;
 		struct trie_dump_s *dump;
-		extern cvar_t *developer, *developerMemory;
+		extern cvar_t *developer, *developer_memory;
 #ifndef DEDICATED_ONLY
 		extern cvar_t *con_printText;
 #endif
@@ -883,7 +883,7 @@ void Cvar_Shutdown( void ) {
 		// the memory pointers after the data has already been freed but before we
 		// reset the pointers to NULL
 		developer = NULL;
-		developerMemory = NULL;
+		developer_memory = NULL;
 		dedicated = NULL;
 #ifndef DEDICATED_ONLY
 		con_printText = NULL;
