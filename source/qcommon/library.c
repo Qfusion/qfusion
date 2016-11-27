@@ -61,6 +61,8 @@ void *Com_LoadLibraryExt( const char *name, dllfunc_t *funcs, bool sys ) {
 	if( !lib ) {
 		if( !sys ) {
 			Com_Printf( "LoadLibrary (%s):(%s)\n", fullname, Sys_Library_ErrorString() );
+		} else {
+			Com_DPrintf( "LoadLibrary (%s):(%s)\n", fullname, Sys_Library_ErrorString() );
 		}
 		return NULL;
 	}
@@ -71,6 +73,7 @@ void *Com_LoadLibraryExt( const char *name, dllfunc_t *funcs, bool sys ) {
 		if( !( *( func->funcPointer ) ) ) {
 			Com_UnloadLibrary( &lib );
 			if( sys ) {
+				Com_DPrintf( "%s: Sys_GetProcAddress failed for %s", fullname, func->name );
 				return NULL;
 			}
 			Com_Error( ERR_FATAL, "%s: Sys_GetProcAddress failed for %s", fullname, func->name );
