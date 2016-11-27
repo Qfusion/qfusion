@@ -434,6 +434,7 @@ cvar_t *g_votable_gametypes;
 cvar_t *g_scorelimit;
 cvar_t *g_timelimit;
 cvar_t *g_gametype;
+cvar_t *g_gametype_generic;
 cvar_t *g_gametypes_list;
 
 void G_MatchSendReport( void );
@@ -1838,6 +1839,7 @@ void G_Gametype_Init( void ) {
 	}
 
 	g_gametype = trap_Cvar_Get( "g_gametype", "dm", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+	g_gametype_generic = trap_Cvar_Get( "g_gametype_generic", "1",  CVAR_ARCHIVE | CVAR_LATCH );
 
 	//get the match cvars too
 	g_warmup_timelimit = trap_Cvar_Get( "g_warmup_timelimit", "5", CVAR_ARCHIVE );
@@ -1905,7 +1907,10 @@ void G_Gametype_Init( void ) {
 
 	// Init the current gametype
 	if( !GT_asLoadScript( g_gametype->string ) ) {
-		G_Gametype_GENERIC_Init();
+		if( g_gametype_generic->integer )
+			G_Error( "Failed to load %s", g_gametype->string );
+		else
+			G_Gametype_GENERIC_Init();
 	}
 
 	trap_ConfigString( CS_GAMETYPENAME, g_gametype->string );
