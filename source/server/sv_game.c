@@ -205,6 +205,7 @@ static void PF_dprint( const char *msg ) {
 static void PF_error( const char *msg ) {
 	int i;
 	char copy[MAX_PRINTMSG];
+	com_error_code_t code = ERR_DROP;
 
 	if( !msg ) {
 		Com_Error( ERR_DROP, "Game Error: unknown error" );
@@ -216,7 +217,10 @@ static void PF_error( const char *msg ) {
 		copy[i] = msg[i] & 127;
 	copy[i] = 0;
 
-	Com_Error( ERR_DROP, "Game Error: %s", copy );
+	if( sv_exit_on_game_error->integer )
+		code = ERR_FATAL;
+
+	Com_Error( code, "Game Error: %s", copy );
 }
 
 /*

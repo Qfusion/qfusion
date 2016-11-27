@@ -98,6 +98,8 @@ cvar_t *sv_lastAutoUpdate;
 
 cvar_t *sv_demodir;
 
+cvar_t *sv_exit_on_game_error;
+
 //============================================================================
 
 /*
@@ -944,6 +946,8 @@ void SV_Init( void ) {
 	sv_reconnectlimit =     Cvar_Get( "sv_reconnectlimit", "3", CVAR_ARCHIVE );
 	sv_maxclients =         Cvar_Get( "sv_maxclients", "16", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH );
 	sv_maxmvclients =       Cvar_Get( "sv_maxmvclients", "4", CVAR_ARCHIVE | CVAR_SERVERINFO );
+
+	sv_exit_on_game_error = Cvar_Get( "sv_exit_on_game_error", "0", CVAR_DEVELOPER );
 
 	Cvar_Get( "sv_modmanifest", "", CVAR_READONLY );
 	Cvar_ForceSet( "sv_modmanifest", "" );
