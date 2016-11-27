@@ -889,6 +889,7 @@ void Qcommon_Init( int argc, char **argv ) {
 #else
 	dedicated =     Cvar_Get( "dedicated", "0", CVAR_NOSET );
 #endif
+	developer =     Cvar_Get( "developer", "0", 0 );
 
 	Com_LoadCompressionLibraries();
 
@@ -915,7 +916,6 @@ void Qcommon_Init( int argc, char **argv ) {
 	Qcommon_InitCommands();
 
 	host_speeds =       Cvar_Get( "host_speeds", "0", 0 );
-	developer =     Cvar_Get( "developer", "0", 0 );
 	timescale =     Cvar_Get( "timescale", "1.0", CVAR_CHEAT );
 	fixedtime =     Cvar_Get( "fixedtime", "0", CVAR_CHEAT );
 	if( tv_server->integer ) {
