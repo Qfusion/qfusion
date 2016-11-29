@@ -75,7 +75,7 @@ protected:
 
     float distanceToNextReachStart;
 
-    inline bool IsCloseToReachStart() { return distanceToNextReachStart < 24.0f; };
+    inline bool IsCloseToReachStart() const { return distanceToNextReachStart < 24.0f; };
 
     unsigned blockedTimeout;
 

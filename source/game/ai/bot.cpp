@@ -138,8 +138,13 @@ void Bot::TouchedJumppad(const edict_t *jumppad)
     }
     // Otherwise (for some weird jumppad that pushes dow) start to find landing area immediately
 
-    jumppadMovementState.jumppadMoveTimeout = level.time + (unsigned)(1000.0f * relaxedFlightSeconds);
+    jumppadMovementState.startLandingAt = level.time + (unsigned)(1000.0f * relaxedFlightSeconds);
     jumppadMovementState.hasTouchedJumppad = true;
+    // A bot might have just touched jumppad (it occurs quite often when a jumppad trigger is large).
+    // Resetting this flag is very important (otherwise bot movement will be broken forever).
+    // We might use timeout for this too but it is be error-prone
+    // (what timeout value to choose?), use the reliable approach.
+    jumppadMovementState.hasEnteredJumppad = false;
     jumppadMovementState.jumppadTarget = Vec3(jumppad->target_ent->s.origin);
 }
 
@@ -450,6 +455,12 @@ void Bot::GhostingFrame()
 
     botBrain.ClearGoalAndPlan();
 
+    jumppadMovementState.Invalidate();
+    rocketJumpMovementState.Invalidate();
+    pendingLandingDashState.Invalidate();
+    pendingLookAtPointState.Invalidate();
+    campingSpotState.Invalidate();
+
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->nextThink = level.time + 100;
 
@@ -560,9 +571,6 @@ void Bot::CallActiveClientThink(BotInput *input)
     // set approximate ping and show values
     input->ucmd.msec = (uint8_t)game.frametime;
     input->ucmd.serverTimeStamp = game.serverTime;
-
-    // If this value is modified by ClientThink() callbacks, it will be kept until next frame reaches this line
-    jumppadMovementState.hasTouchedJumppad = false;
 
     ClientThink(self, &input->ucmd, 0);
     self->nextThink = level.time + 1;

@@ -64,44 +64,6 @@ bool Bot::MayHitWhileRunning() const
 
 void Bot::Move(BotInput *input, bool mayHitWhileRunning)
 {
-    input->ClearMovementDirections();
-    input->isUcmdSet = false;
-
-    if (currAasAreaNum == 0)
-        return;
-
-    if (!botBrain.HasNavTarget())
-        return;
-
-    const int goalAasAreaNum = NavTargetAasAreaNum();
-    if (nextReaches.empty() && currAasAreaNum != goalAasAreaNum)
-        return;
-
-    // Set default intended look vec
-    if (currAasAreaNum != goalAasAreaNum)
-    {
-        if (!nextReaches.empty())
-        {
-            const auto &nextReach = nextReaches.front();
-            if (!IsCloseToReachStart())
-                input->intendedLookVec = Vec3(nextReach.start) - self->s.origin;
-            else
-            {
-                Vec3 linkVec(nextReach.end);
-                linkVec -= nextReach.start;
-                linkVec.NormalizeFast();
-                input->intendedLookVec = (16.0f * linkVec + nextReach.end) - self->s.origin;
-            }
-        }
-    }
-    else
-    {
-        input->intendedLookVec = Vec3(self->s.origin) - NavTargetOrigin();
-    }
-    input->isLookVecSet = true;
-    input->canOverrideLookVec = true;
-    input->isUcmdSet = true;
-
     if (self->is_ladder)
     {
         MoveOnLadder(input);
@@ -175,11 +137,49 @@ void Bot::CheckTurnToBackwardsMovement(BotInput *input) const
     }
 }
 
+void Bot::SetDefaultBotInput(BotInput *input) const
+{
+    input->ClearMovementDirections();
+    input->SetSpecialButton(false);
+    input->SetWalkButton(false);
+    input->isLookVecSet = true;
+    input->isUcmdSet = true;
+    input->canOverrideLookVec = true;
+    input->canOverrideUcmd = true;
+
+    // Set default values for cases when there is no (temporarily) nav target or it is (temporarily) unreachable
+    if (!currAasAreaNum || !botBrain.HasNavTarget() || (currAasAreaNum != NavTargetAasAreaNum() && nextReaches.empty()))
+    {
+        if (VectorLengthSquared(self->velocity) > 1)
+            VectorCopy(self->velocity, input->intendedLookVec.Data());
+        else
+            AngleVectors(self->s.angles, input->intendedLookVec.Data(), nullptr, nullptr);
+
+        return;
+    }
+
+    if (NavTargetAasAreaNum() != currAasAreaNum)
+    {
+        const auto &nextReach = nextReaches.front();
+        if (IsCloseToReachStart())
+        {
+            Vec3 linkVec(nextReach.end);
+            linkVec -= nextReach.start;
+            linkVec.NormalizeFast();
+            input->intendedLookVec = (16.0f * linkVec + nextReach.end) - self->s.origin;
+        }
+        else
+            input->intendedLookVec = Vec3(nextReach.start) - self->s.origin;
+    }
+    else
+        input->intendedLookVec = Vec3(self->s.origin) - NavTargetOrigin();
+}
+
 void Bot::MoveOnLadder(BotInput *input)
 {
+    SetDefaultBotInput(input);
     input->SetForwardMovement(1);
     input->SetUpMovement(1);
-    input->SetRightMovement(0);
     input->canOverrideLookVec = false;
     input->canOverridePitch = false;
 }
@@ -187,9 +187,11 @@ void Bot::MoveOnLadder(BotInput *input)
 void Bot::MoveTriggeredARocketJump(BotInput *input, bool mayHitWhileMoving)
 {
     input->intendedLookVec = rocketJumpMovementState.jumpTarget - self->s.origin;
+    input->isLookVecSet = true;
     input->canOverrideLookVec = mayHitWhileMoving;
     input->canOverridePitch = false;
     input->ClearMovementDirections();
+    input->isUcmdSet = true;
 
     if (!rocketJumpMovementState.hasCorrectedRocketJump)
     {
@@ -232,12 +234,17 @@ template <typename T> struct AttributedArea
 
 void Bot::MoveEnteringJumppad(BotInput *input)
 {
-    input->canOverrideLookVec = false;
-    input->canOverridePitch = false;
-    input->ClearMovementDirections();
-
     if (jumppadMovementState.hasEnteredJumppad)
         return;
+
+    SetDefaultBotInput(input);
+    input->canOverrideLookVec = false;
+    input->canOverridePitch = false;
+
+    // Set these flags before the following early return (they must be set always in this method).
+    // The early return when the nav target is absent is quite common (bots lose target in air).
+    jumppadMovementState.hasEnteredJumppad = true;
+    jumppadMovementState.hasTouchedJumppad = false;
 
     if (!botBrain.HasNavTarget())
         return;
@@ -314,23 +321,26 @@ void Bot::MoveEnteringJumppad(BotInput *input)
         jumppadLandingAreas[jumppadLandingAreasCount++] = areasAndTravelTimes[i].areaNum;
 
     input->SetForwardMovement(1);
-    jumppadMovementState.hasEnteredJumppad = true;
 }
 
 void Bot::MoveRidingJummpad(BotInput *input)
 {
-    // First check whether bot finally landed to some area
-    if (self->groundentity)
+    SetDefaultBotInput(input);
+
+    // First check whether bot finally landed to some area.
+    // Prevent leaving the state prematurely (when the bot got stuck on the trigger or a ground nearby trigger)
+    if (self->groundentity && level.time - lastTouchedJumppadAt > 192)
     {
-        jumppadMovementState.hasEnteredJumppad = false;
-        input->SetForwardMovement(1);
-        return;
+        const int solid = self->groundentity->s.solid;
+        if (ENTNUM(self->groundentity) == 0 || (solid == SOLID_YES || solid == SOLID_BMODEL))
+        {
+            jumppadMovementState.Invalidate();
+            input->SetForwardMovement(1);
+            return;
+        }
     }
 
-    input->canOverrideLookVec = true;
-    input->ClearMovementDirections();
-
-    if (jumppadMovementState.jumppadMoveTimeout <= level.time)
+    if (jumppadMovementState.ShouldPerformLanding())
     {
         int jumppadLandingAreasCount = jumppadMovementState.landingAreasCount;
         const int *jumppadLandingAreas = jumppadMovementState.landingAreas;
@@ -449,7 +459,6 @@ bool Bot::TryLandOnArea(int areaNum, BotInput *input)
 
 void Bot::MoveCampingASpot(BotInput *input)
 {
-    input->canOverrideLookVec = true;
     // If hasCampingLookAtPoint is false and this function has not been called yet since last camping spot setting,
     // campingSpotLookAtPoint contains a junk, so it need to be overwritten
     Vec3 lookAtPoint(campingSpotState.lookAtPoint);
@@ -492,6 +501,8 @@ void DirToKeyInput(const Vec3 &desiredDir, const vec3_t actualForwardDir, const 
 
 void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput *input)
 {
+    SetDefaultBotInput(input);
+
     vec3_t actualLookDir, actualRightDir;
     AngleVectors(self->s.angles, actualLookDir, actualRightDir, nullptr);
 
@@ -528,10 +539,6 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput
 
     // Keep actual look dir as-is, adjust position by keys only
     VectorCopy(actualLookDir, input->intendedLookVec.Data());
-    input->isLookVecSet = true;
-    // Allow to override it (for aiming if there is a threatening enemy)
-    input->canOverrideLookVec = true;
-
     if (campingSpotState.strafeTimeoutAt < level.time)
     {
         // This means we may strafe randomly
@@ -559,7 +566,7 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput
 
 void Bot::MoveOnPlatform(BotInput *input)
 {
-    input->canOverrideLookVec = true;
+    SetDefaultBotInput(input);
     switch (self->groundentity->moveinfo.state)
     {
         case STATE_TOP:
@@ -568,10 +575,8 @@ void Bot::MoveOnPlatform(BotInput *input)
             break;
         default:
             // Its poor but platforms are not widely used.
-            input->isLookVecSet = false;
             input->canOverrideUcmd = false;
             input->shouldOverrideUcmd = false;
-            input->ClearMovementDirections();
             // Prevent treating standing on the same point as being blocked
             blockedTimeout += game.frametime;
             break;
@@ -939,6 +944,11 @@ void Bot::MoveGenericRunning(BotInput *input, bool mayHitWhileRunning)
 
     // TryRocketJumpShortcut() is expensive, call it only in Think() frames
     if (!ShouldBeSilent() && !ShouldSkipThinkFrame() && TryRocketJumpShortcut(input))
+        return;
+
+    SetDefaultBotInput(input);
+    // Nothing to do in these cases, just hope that area num / nav target will be updated soon
+    if (!currAasAreaNum || !botBrain.HasNavTarget())
         return;
 
     Vec3 velocityVec(self->velocity);

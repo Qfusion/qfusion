@@ -340,7 +340,7 @@ private:
         // This timeout is computed and set in Bot::TouchedJumppad().
         // Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
         // If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
-        unsigned jumppadMoveTimeout;
+        unsigned startLandingAt;
         // Next reach. cache is lost in air.
         // Thus we have to store next areas starting a jumppad movement and try to prefer these areas for landing
         static constexpr int MAX_LANDING_AREAS = 16;
@@ -351,13 +351,24 @@ private:
         inline JumppadMovementState()
             : hasTouchedJumppad(false),
               hasEnteredJumppad(false),
-              jumppadMoveTimeout(0),
+              startLandingAt(0),
               landingAreasCount(0),
               jumppadTarget(INFINITY, INFINITY, INFINITY) {}
 
         inline bool IsActive() const
         {
             return hasTouchedJumppad || hasEnteredJumppad;
+        }
+
+        inline bool ShouldPerformLanding() const
+        {
+            return startLandingAt <= level.time;
+        }
+
+        inline void Invalidate()
+        {
+            hasTouchedJumppad = false;
+            hasEnteredJumppad = false;
         }
     };
 
@@ -398,8 +409,14 @@ private:
             if (hasTriggeredRocketJump)
             {
                 if (self->groundentity || (jumpTarget - self->s.origin).SquaredLength() < 48 * 48)
-                    hasTriggeredRocketJump = false;
+                    Invalidate();
             }
+        }
+
+        void Invalidate()
+        {
+            hasTriggeredRocketJump = false;
+            hasCorrectedRocketJump = false;
         }
 
         void SetTriggered(const Vec3 &jumpTarget_, const Vec3 &fireTarget_, unsigned timeoutPeriod)
@@ -501,6 +518,12 @@ private:
         inline float EffectiveTurnSpeedMultiplier(float baseTurnSpeedMultiplier) const
         {
             return isTriggered ? turnSpeedMultiplier : baseTurnSpeedMultiplier;
+        }
+
+        inline void Invalidate()
+        {
+            isTriggered = false;
+            timeoutAt = 0;
         }
     };
 
@@ -744,6 +767,7 @@ private:
 
     bool MayHitWhileRunning() const;
     void CheckTurnToBackwardsMovement(BotInput *input) const;
+    void SetDefaultBotInput(BotInput *input) const;
 
     inline bool HasEnemy() const { return selectedEnemies.AreValid(); }
     inline bool IsEnemyAStaticSpot() const { return selectedEnemies.IsStaticSpot(); }
