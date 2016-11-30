@@ -476,6 +476,18 @@ typedef int socket_handle_t;
 #define STR_TO_POINTER( str ) (void *)strtol( str,NULL,0 )
 #endif
 
+// The `malloc' attribute is used to tell the compiler that a function
+// may be treated as if it were the malloc function.  The compiler
+// assumes that calls to malloc result in a pointers that cannot
+// alias anything.  This will often improve optimization.
+#if defined ( __GNUC__ )
+#define ATTRIBUTE_MALLOC __attribute__( ( malloc ) )
+#elif defined ( _MSC_VER )
+#define ATTRIBUTE_MALLOC __declspec( noalias )
+#else
+#define ATTRIBUTE_MALLOC
+#endif
+
 // Generic helper definitions for shared library support
 #if defined _WIN32 || defined __CYGWIN__
 # define QF_DLL_IMPORT __declspec( dllimport )
