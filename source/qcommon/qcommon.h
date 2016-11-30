@@ -884,8 +884,8 @@ void Memory_InitCommands( void );
 void Memory_Shutdown( void );
 void Memory_ShutdownCommands( void );
 
-void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t aligment, int z, int musthave, int canthave, const char *filename, int fileline );
-void *_Mem_Alloc( mempool_t *pool, size_t size, int musthave, int canthave, const char *filename, int fileline );
+ATTRIBUTE_MALLOC void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t aligment, int z, int musthave, int canthave, const char *filename, int fileline );
+ATTRIBUTE_MALLOC void *_Mem_Alloc( mempool_t *pool, size_t size, int musthave, int canthave, const char *filename, int fileline );
 void *_Mem_Realloc( void *data, size_t size, const char *filename, int fileline );
 void _Mem_Free( void *data, int musthave, int canthave, const char *filename, int fileline );
 mempool_t *_Mem_AllocPool( mempool_t *parent, const char *name, int flags, const char *filename, int fileline );

@@ -125,7 +125,7 @@ static void _Mem_Error( const char *format, ... ) {
 	Sys_Error( msg );
 }
 
-void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int musthave, int canthave, const char *filename, int fileline ) {
+ATTRIBUTE_MALLOC void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int musthave, int canthave, const char *filename, int fileline ) {
 	void *base;
 	size_t realsize;
 	memheader_t *mem;
@@ -197,7 +197,7 @@ void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int 
 	return (void *)( (uint8_t *) mem + sizeof( memheader_t ) );
 }
 
-void *_Mem_Alloc( mempool_t *pool, size_t size, int musthave, int canthave, const char *filename, int fileline ) {
+ATTRIBUTE_MALLOC void *_Mem_Alloc( mempool_t *pool, size_t size, int musthave, int canthave, const char *filename, int fileline ) {
 	return _Mem_AllocExt( pool, size, 0, 1, musthave, canthave, filename, fileline );
 }
 
