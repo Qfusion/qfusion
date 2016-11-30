@@ -17,7 +17,7 @@ protected:
 class BotGrabItemGoal: public BotBaseGoal
 {
 public:
-    BotGrabItemGoal(Ai *ai_): BotBaseGoal(ai_, "BotGrabItemGoal", 1500) {}
+    BotGrabItemGoal(Ai *ai_): BotBaseGoal(ai_, "BotGrabItemGoal", 500) {}
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
@@ -26,7 +26,7 @@ public:
 class BotKillEnemyGoal: public BotBaseGoal
 {
 public:
-    BotKillEnemyGoal(Ai *ai_): BotBaseGoal(ai_, "BotKillEnemyGoal", 750) {}
+    BotKillEnemyGoal(Ai *ai_): BotBaseGoal(ai_, "BotKillEnemyGoal", 400) {}
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
@@ -35,7 +35,7 @@ public:
 class BotRunAwayGoal: public BotBaseGoal
 {
 public:
-    BotRunAwayGoal(Ai *ai_): BotBaseGoal(ai_, "BotRunAwayGoal", 750) {}
+    BotRunAwayGoal(Ai *ai_): BotBaseGoal(ai_, "BotRunAwayGoal", 550) {}
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
