@@ -228,16 +228,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		ri.Com_Printf( S_COLOR_RED "ERROR: %s has too many vertices\n", mod->name );
 		goto error;
 	}
-	if( header->num_frames < 1 || header->num_anims < 1 ) {
-		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no animations\n", mod->name );
-		goto error;
-	}
 	if( header->num_joints != header->num_poses ) {
 		ri.Com_Printf( S_COLOR_RED "ERROR: %s has an invalid number of poses: %i vs %i\n", mod->name, header->num_joints, header->num_poses );
-		goto error;
-	}
-	if( !header->ofs_bounds ) {
-		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no frame bounds\n", mod->name );
 		goto error;
 	}
 
@@ -356,9 +348,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		}
 	}
 
-	if( !vposition || !vtexcoord
-		|| !( vblendindices_byte || vblendindexes_int )
-		|| !( vblendweights_byte || vblendweights_float ) ) {
+	if( !vposition || !vtexcoord ) {
 		ri.Com_Printf( S_COLOR_RED "ERROR: %s is missing vertex array data\n", mod->name );
 		goto error;
 	}
@@ -626,29 +616,31 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 
 	// blends
-	memsize = 0;
-	memsize += poutmodel->numverts * ( sizeof( mskblend_t ) + sizeof( unsigned int ) );
-	pmem = Mod_Malloc( mod, memsize );
+	if( header->num_joints ) {
+		memsize = 0;
+		memsize += poutmodel->numverts * ( sizeof( mskblend_t ) + sizeof( unsigned int ) );
+		pmem = Mod_Malloc( mod, memsize );
 
-	poutmodel->numblends = 0;
-	poutmodel->blends = ( mskblend_t * )pmem; pmem += sizeof( *poutmodel->blends ) * poutmodel->numverts;
-	poutmodel->vertexBlends = ( unsigned int * )pmem;
+		poutmodel->numblends = 0;
+		poutmodel->blends = ( mskblend_t * )pmem; pmem += sizeof( *poutmodel->blends ) * poutmodel->numverts;
+		poutmodel->vertexBlends = ( unsigned int * )pmem;
 
-	vblendindices_byte = poutmodel->blendIndices;
-	vblendweights_byte = poutmodel->blendWeights;
+		vblendindices_byte = poutmodel->blendIndices;
+		vblendweights_byte = poutmodel->blendWeights;
 
-	for( i = 0; i < poutmodel->numverts; i++ ) {
-		mskblend_t blend;
+		for( i = 0; i < poutmodel->numverts; i++ ) {
+			mskblend_t blend;
 
-		for( j = 0; j < SKM_MAX_WEIGHTS; j++ ) {
-			blend.indices[j] = vblendindices_byte[j];
-			blend.weights[j] = vblendweights_byte[j];
+			for( j = 0; j < SKM_MAX_WEIGHTS; j++ ) {
+				blend.indices[j] = vblendindices_byte[j];
+				blend.weights[j] = vblendweights_byte[j];
+			}
+
+			poutmodel->vertexBlends[i] = Mod_SkeletalModel_AddBlend( poutmodel, &blend );
+
+			vblendindices_byte += SKM_MAX_WEIGHTS;
+			vblendweights_byte += SKM_MAX_WEIGHTS;
 		}
-
-		poutmodel->vertexBlends[i] = Mod_SkeletalModel_AddBlend( poutmodel, &blend );
-
-		vblendindices_byte += SKM_MAX_WEIGHTS;
-		vblendweights_byte += SKM_MAX_WEIGHTS;
 	}
 
 	// meshes
@@ -686,10 +678,14 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		poutmodel->meshes[i].stArray = poutmodel->stArray + inmesh.first_vertex;
 		poutmodel->meshes[i].sVectorsArray = poutmodel->sVectorsArray + inmesh.first_vertex;
 
-		poutmodel->meshes[i].blendIndices = poutmodel->blendIndices + inmesh.first_vertex * SKM_MAX_WEIGHTS;
-		poutmodel->meshes[i].blendWeights = poutmodel->blendWeights + inmesh.first_vertex * SKM_MAX_WEIGHTS;
+		if( poutmodel->blendIndices && poutmodel->blendWeights ) {
+			poutmodel->meshes[i].blendIndices = poutmodel->blendIndices + inmesh.first_vertex * SKM_MAX_WEIGHTS;
+			poutmodel->meshes[i].blendWeights = poutmodel->blendWeights + inmesh.first_vertex * SKM_MAX_WEIGHTS;
+		}
 
-		poutmodel->meshes[i].vertexBlends = poutmodel->vertexBlends + inmesh.first_vertex;
+		if( poutmodel->vertexBlends ) {
+			poutmodel->meshes[i].vertexBlends = poutmodel->vertexBlends + inmesh.first_vertex;
+		}
 
 		// elements are always offset to start vertex 0 for each mesh
 		outelems = poutmodel->meshes[i].elems;
@@ -700,19 +696,21 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 			outelems += 3;
 		}
 
-		poutmodel->meshes[i].maxWeights = 1;
+		if( poutmodel->blendIndices && poutmodel->blendWeights ) {
+			poutmodel->meshes[i].maxWeights = 1;
 
-		vblendweights_byte = poutmodel->meshes[i].blendWeights;
-		for( j = 0; j < poutmodel->meshes[i].numverts; j++ ) {
-			for( k = 1; k < SKM_MAX_WEIGHTS && vblendweights_byte[k]; k++ ) ;
+			vblendweights_byte = poutmodel->meshes[i].blendWeights;
+			for( j = 0; j < poutmodel->meshes[i].numverts; j++ ) {
+				for( k = 1; k < SKM_MAX_WEIGHTS && vblendweights_byte[k]; k++ ) ;
 
-			if( k > poutmodel->meshes[i].maxWeights ) {
-				poutmodel->meshes[i].maxWeights = k;
-				if( k == SKM_MAX_WEIGHTS ) {
-					break;
+				if( k > poutmodel->meshes[i].maxWeights ) {
+					poutmodel->meshes[i].maxWeights = k;
+					if( k == SKM_MAX_WEIGHTS ) {
+						break;
+					}
 				}
+				vblendweights_byte += SKM_MAX_WEIGHTS;
 			}
-			vblendweights_byte += SKM_MAX_WEIGHTS;
 		}
 	}
 
@@ -736,23 +734,31 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	// bounds
 	ClearBounds( mod->mins, mod->maxs );
 
-	inbounds = ( iqmbounds_t * )( pbase + header->ofs_bounds );
-	for( i = 0; i < header->num_frames; i++ ) {
-		memcpy( &inbound, &inbounds[i], sizeof( iqmbounds_t ) );
+	if( header->num_frames ) {
+		inbounds = ( iqmbounds_t * )( pbase + header->ofs_bounds );
+		for( i = 0; i < header->num_frames; i++ ) {
+			memcpy( &inbound, &inbounds[i], sizeof( iqmbounds_t ) );
 
-		for( j = 0; j < 3; j++ ) {
-			inbound.bbmin[j] = LittleFloat( inbound.bbmin[j] );
-			inbound.bbmax[j] = LittleFloat( inbound.bbmax[j] );
+			for( j = 0; j < 3; j++ ) {
+				inbound.bbmin[j] = LittleFloat( inbound.bbmin[j] );
+				inbound.bbmax[j] = LittleFloat( inbound.bbmax[j] );
+			}
+			inbound.radius = LittleFloat( inbound.radius );
+			inbound.xyradius = LittleFloat( inbound.xyradius );
+
+			VectorCopy( inbound.bbmin, poutmodel->frames[i].mins );
+			VectorCopy( inbound.bbmax, poutmodel->frames[i].maxs );
+			poutmodel->frames[i].radius = inbound.radius;
+
+			AddPointToBounds( poutmodel->frames[i].mins, mod->mins, mod->maxs );
+			AddPointToBounds( poutmodel->frames[i].maxs, mod->mins, mod->maxs );
 		}
-		inbound.radius = LittleFloat( inbound.radius );
-		inbound.xyradius = LittleFloat( inbound.xyradius );
-
-		VectorCopy( inbound.bbmin, poutmodel->frames[i].mins );
-		VectorCopy( inbound.bbmax, poutmodel->frames[i].maxs );
-		poutmodel->frames[i].radius = inbound.radius;
-
-		AddPointToBounds( poutmodel->frames[i].mins, mod->mins, mod->maxs );
-		AddPointToBounds( poutmodel->frames[i].maxs, mod->mins, mod->maxs );
+	} else {
+		for( i = 0; i < header->num_meshes; i++ ) {
+			for( j = 0; j < poutmodel->meshes[i].numverts; j++ ) {
+				AddPointToBounds( poutmodel->meshes[i].xyzArray[j], mod->mins, mod->maxs );
+			}
+		}
 	}
 
 	mod->radius = RadiusFromBounds( mod->mins, mod->maxs );
@@ -888,7 +894,13 @@ static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec
 	poldframe = skmodel->frames + oldframe;
 
 	// compute axially aligned mins and maxs
-	if( pframe == poldframe ) {
+	if( pframe == NULL ) {
+		VectorCopy( mod->mins, mins );
+		VectorCopy( mod->maxs, maxs );
+		if( e->scale == 1 ) {
+			return mod->radius;
+		}
+	} if( pframe == poldframe ) {
 		VectorCopy( pframe->mins, mins );
 		VectorCopy( pframe->maxs, maxs );
 		if( e->scale == 1 ) {
@@ -1178,7 +1190,7 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	const model_t *mod = drawSurf->model;
 	const mskmodel_t *skmodel = ( const mskmodel_t * )mod->extradata;
 	const mskmesh_t *skmesh = drawSurf->mesh;
-	bool hardwareTransform = skmesh->vbo != NULL && glConfig.maxGLSLBones > 0 ? true : false;
+	bool hardwareTransform = skmesh->vbo != NULL && (skmodel->numbones == 0 || glConfig.maxGLSLBones > 0) ? true : false;
 	vattribmask_t vattribs;
 
 	bonePoseRelativeMat = NULL;
@@ -1188,13 +1200,16 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	oldbp = e->oldboneposes;
 
 	// not sure if it's really needed
-	if( bp == skmodel->frames[0].boneposes ) {
+	if( !skmodel->numframes || bp == skmodel->frames[0].boneposes ) {
 		bp = NULL;
 		framenum = oldframenum = 0;
 	}
 
 	// choose boneposes for lerping
-	if( bp ) {
+	if( !skmodel->numframes || !skmodel->numbones ) {
+		framenum = 0;
+		bp = oldbp = NULL;
+	} else if( bp ) {
 		if( !oldbp ) {
 			oldbp = bp;
 		}
@@ -1230,80 +1245,82 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	vattribs = RB_GetVertexAttribs();
 
 	// cache size
-	bonePoseRelativeMatSize = sizeof( mat4_t ) * ( skmodel->numbones + skmodel->numblends );
-	bonePoseRelativeDQSize = sizeof( dualquat_t ) * skmodel->numbones;
+	if( skmodel->numbones ) {
+		bonePoseRelativeMatSize = sizeof( mat4_t ) * ( skmodel->numbones + skmodel->numblends );
+		bonePoseRelativeDQSize = sizeof( dualquat_t ) * skmodel->numbones;
 
-	// fetch bones tranforms from cache (both matrices and dual quaternions)
-	bonePoseRelativeDQ = ( dualquat_t * )R_GetSkeletalCache( R_ENT2NUM( e ), mod->lodnum );
-	if( bonePoseRelativeDQ ) {
-		bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize );
-	} else {
-		// lerp boneposes and store results in cache
-
-		lerpedbonepose = tempbonepose;
-		if( bp == oldbp || frontlerp == 1 ) {
-			if( e->boneposes ) {
-				// assume that parent transforms have already been applied
-				lerpedbonepose = bp;
-			} else {
-				for( i = 0; i < skmodel->numbones; i++ ) {
-					j = i;
-					out = tempbonepose + j;
-					bonepose = bp + j;
-					bone = skmodel->bones + j;
-
-					if( bone->parent >= 0 ) {
-						DualQuat_Multiply( tempbonepose[bone->parent].dualquat, bonepose->dualquat, out->dualquat );
-					} else {
-						DualQuat_Copy( bonepose->dualquat, out->dualquat );
-					}
-				}
-			}
-		} else {
-			if( e->boneposes ) {
-				// lerp, assume that parent transforms have already been applied
-				for( i = 0, out = tempbonepose, bonepose = bp, oldbonepose = oldbp, bone = skmodel->bones; i < skmodel->numbones; i++, out++, bonepose++, oldbonepose++, bone++ ) {
-					DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
-				}
-			} else {
-				// lerp and transform
-				for( i = 0; i < skmodel->numbones; i++ ) {
-					j = i;
-					out = tempbonepose + j;
-					bonepose = bp + j;
-					oldbonepose = oldbp + j;
-					bone = skmodel->bones + j;
-
-					DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
-
-					if( bone->parent >= 0 ) {
-						DualQuat_Copy( out->dualquat, tp.dualquat );
-						DualQuat_Multiply( tempbonepose[bone->parent].dualquat, tp.dualquat, out->dualquat );
-					}
-				}
-			}
-		}
-
-		bonePoseRelativeDQ = ( dualquat_t * )R_AllocSkeletalDataCache( R_ENT2NUM( e ), mod->lodnum,
-																	   bonePoseRelativeDQSize + bonePoseRelativeMatSize );
-
-		// generate dual quaternions for all bones
-		for( i = 0; i < skmodel->numbones; i++ ) {
-			DualQuat_Multiply( lerpedbonepose[i].dualquat, skmodel->invbaseposes[i].dualquat, bonePoseRelativeDQ[i] );
-			DualQuat_Normalize( bonePoseRelativeDQ[i] );
-		}
-
-		// CPU transforms
-		if( !hardwareTransform ) {
+		// fetch bones tranforms from cache (both matrices and dual quaternions)
+		bonePoseRelativeDQ = ( dualquat_t * )R_GetSkeletalCache( R_ENT2NUM( e ), mod->lodnum );
+		if( bonePoseRelativeDQ ) {
 			bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize );
+		} else {
+			// lerp boneposes and store results in cache
 
-			// generate matrices for all bones
-			for( i = 0; i < skmodel->numbones; i++ ) {
-				Matrix4_FromDualQuaternion( bonePoseRelativeDQ[i], bonePoseRelativeMat[i] );
+			lerpedbonepose = tempbonepose;
+			if( bp == oldbp || frontlerp == 1 ) {
+				if( e->boneposes ) {
+					// assume that parent transforms have already been applied
+					lerpedbonepose = bp;
+				} else {
+					for( i = 0; i < skmodel->numbones; i++ ) {
+						j = i;
+						out = tempbonepose + j;
+						bonepose = bp + j;
+						bone = skmodel->bones + j;
+
+						if( bone->parent >= 0 ) {
+							DualQuat_Multiply( tempbonepose[bone->parent].dualquat, bonepose->dualquat, out->dualquat );
+						} else {
+							DualQuat_Copy( bonepose->dualquat, out->dualquat );
+						}
+					}
+				}
+			} else {
+				if( e->boneposes ) {
+					// lerp, assume that parent transforms have already been applied
+					for( i = 0, out = tempbonepose, bonepose = bp, oldbonepose = oldbp, bone = skmodel->bones; i < skmodel->numbones; i++, out++, bonepose++, oldbonepose++, bone++ ) {
+						DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
+					}
+				} else {
+					// lerp and transform
+					for( i = 0; i < skmodel->numbones; i++ ) {
+						j = i;
+						out = tempbonepose + j;
+						bonepose = bp + j;
+						oldbonepose = oldbp + j;
+						bone = skmodel->bones + j;
+
+						DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
+
+						if( bone->parent >= 0 ) {
+							DualQuat_Copy( out->dualquat, tp.dualquat );
+							DualQuat_Multiply( tempbonepose[bone->parent].dualquat, tp.dualquat, out->dualquat );
+						}
+					}
+				}
 			}
 
-			// generate matrices for all blend combinations
-			R_SkeletalBlendPoses( skmodel->numblends, skmodel->blends, skmodel->numbones, bonePoseRelativeMat );
+			bonePoseRelativeDQ = ( dualquat_t * )R_AllocSkeletalDataCache( R_ENT2NUM( e ), mod->lodnum,
+																		   bonePoseRelativeDQSize + bonePoseRelativeMatSize );
+
+			// generate dual quaternions for all bones
+			for( i = 0; i < skmodel->numbones; i++ ) {
+				DualQuat_Multiply( lerpedbonepose[i].dualquat, skmodel->invbaseposes[i].dualquat, bonePoseRelativeDQ[i] );
+				DualQuat_Normalize( bonePoseRelativeDQ[i] );
+			}
+
+			// CPU transforms
+			if( !hardwareTransform ) {
+				bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize );
+
+				// generate matrices for all bones
+				for( i = 0; i < skmodel->numbones; i++ ) {
+					Matrix4_FromDualQuaternion( bonePoseRelativeDQ[i], bonePoseRelativeMat[i] );
+				}
+
+				// generate matrices for all blend combinations
+				R_SkeletalBlendPoses( skmodel->numblends, skmodel->blends, skmodel->numbones, bonePoseRelativeMat );
+			}
 		}
 	}
 
@@ -1325,16 +1342,27 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 									 ( vattribs & ( VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT ) ) ? true : false,
 									 ( vattribs & VATTRIB_SVECTOR_BIT ) ? true : false );
 
-		R_SkeletalTransformVerts( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-								  ( vec_t * )skmesh->xyzArray[0], ( vec_t * )( dynamicMesh.xyzArray ) );
+		if( bonePoseRelativeMat ) {
+			R_SkeletalTransformVerts( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
+									  ( vec_t * )skmesh->xyzArray[0], ( vec_t * )( dynamicMesh.xyzArray ) );
 
-		if( vattribs & VATTRIB_SVECTOR_BIT ) {
-			R_SkeletalTransformNormalsAndSVecs( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-												( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ),
-												( vec_t * )skmesh->sVectorsArray[0], ( vec_t * )( dynamicMesh.sVectorsArray ) );
-		} else if( vattribs & VATTRIB_NORMAL_BIT ) {
-			R_SkeletalTransformNormals( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-										( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ) );
+			if( vattribs & VATTRIB_SVECTOR_BIT ) {
+				R_SkeletalTransformNormalsAndSVecs( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
+													( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ),
+													( vec_t * )skmesh->sVectorsArray[0], ( vec_t * )( dynamicMesh.sVectorsArray ) );
+			} else if( vattribs & VATTRIB_NORMAL_BIT ) {
+				R_SkeletalTransformNormals( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
+											( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ) );
+			}
+		} else {
+			memcpy( ( vec_t * )( dynamicMesh.xyzArray ), ( vec_t * )skmesh->xyzArray[0], sizeof( vec4_t ) * skmesh->numverts );
+
+			if( vattribs & VATTRIB_SVECTOR_BIT ) {
+				memcpy( ( vec_t * )( dynamicMesh.normalsArray ), ( vec_t * )skmesh->normalsArray[0], sizeof( vec4_t ) * skmesh->numverts );
+				memcpy( ( vec_t * )( dynamicMesh.sVectorsArray ), ( vec_t * )skmesh->sVectorsArray[0], sizeof( vec4_t ) * skmesh->numverts );
+			} else if( vattribs & VATTRIB_NORMAL_BIT ) {
+				memcpy( ( vec_t * )( dynamicMesh.normalsArray ), ( vec_t * )skmesh->normalsArray[0], sizeof( vec4_t ) * skmesh->numverts );
+			}
 		}
 
 		dynamicMesh.stArray = skmesh->stArray;
