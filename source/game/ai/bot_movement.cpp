@@ -1188,8 +1188,12 @@ Vec3 Bot::GetCheatingCorrectedVelocity(float velocity2DDirDotToTarget2DDir, Vec3
     // Make correction less effective for large angles multiplying it
     // by the dot product to avoid a weird-looking cheating movement
     float controlMultiplier = 0.01f + velocity2DDirDotToTarget2DDir * 0.10f;
+    // Use lots of correction near items
     if (ShouldMoveCarefully())
         controlMultiplier += 0.25f;
+    // Use a high correction on the ground (it does not look weird because ground acceleration >> air one)
+    else if (self->groundentity)
+        controlMultiplier += 0.66f;
 
     float squareSpeed = VectorLengthSquared(self->velocity);
     if (squareSpeed < 1)
