@@ -29,7 +29,6 @@ void Bot::MoveFrame(BotInput *input)
     CheckTargetProximity();
 
     pendingLandingDashState.wasOnGroundPrevFrame = pendingLandingDashState.isOnGroundThisFrame;
-    rocketJumpMovementState.wasTriggeredPrevFrame = rocketJumpMovementState.hasTriggeredRocketJump;
 }
 
 constexpr float STRAIGHT_MOVEMENT_DOT_THRESHOLD = 0.8f;
@@ -82,7 +81,7 @@ void Bot::Move(BotInput *input, bool mayHitWhileRunning)
     }
     else if (rocketJumpMovementState.IsActive())
     {
-        MoveTriggeredARocketJump(input, mayHitWhileRunning);
+        MoveInRocketJumpState(input, mayHitWhileRunning);
     }
     else // standard movement
     {
@@ -105,7 +104,7 @@ void Bot::Move(BotInput *input, bool mayHitWhileRunning)
 
 void Bot::CheckTurnToBackwardsMovement(BotInput *input) const
 {
-    if (!HasPendingLookAtPoint() && !rocketJumpMovementState.HasBeenJustTriggered())
+    if (!HasPendingLookAtPoint() && !rocketJumpMovementState.hasCorrectedRocketJump)
     {
         input->turnSpeedMultiplier = pendingLandingDashState.EffectiveTurnSpeedMultiplier(1.0f);
         if (HasEnemy() && ShouldAttack())
@@ -184,14 +183,24 @@ void Bot::MoveOnLadder(BotInput *input)
     input->canOverridePitch = false;
 }
 
-void Bot::MoveTriggeredARocketJump(BotInput *input, bool mayHitWhileMoving)
+void Bot::MoveInRocketJumpState(BotInput *input, bool mayHitWhileMoving)
 {
-    input->intendedLookVec = rocketJumpMovementState.jumpTarget - self->s.origin;
-    input->isLookVecSet = true;
-    input->canOverrideLookVec = mayHitWhileMoving;
-    input->canOverridePitch = false;
-    input->ClearMovementDirections();
-    input->isUcmdSet = true;
+    SetDefaultBotInput(input);
+
+    if (rocketJumpMovementState.hasPendingRocketJump)
+    {
+        // Wait for weapon switch
+        if (self->r.client->ps.stats[STAT_WEAPON] != self->r.client->ps.stats[STAT_PENDING_WEAPON])
+            return;
+        if (self->r.client->ps.stats[STAT_WEAPON_TIME])
+            return;
+
+        TriggerWeaponJump(input, rocketJumpMovementState.jumpTarget, rocketJumpMovementState.fireTarget);
+        rocketJumpMovementState.hasPendingRocketJump = false;
+        rocketJumpMovementState.hasTriggeredRocketJump = true;
+        rocketJumpMovementState.hasCorrectedRocketJump = false;
+        return;
+    }
 
     if (!rocketJumpMovementState.hasCorrectedRocketJump)
     {
@@ -205,10 +214,16 @@ void Bot::MoveTriggeredARocketJump(BotInput *input, bool mayHitWhileMoving)
             newVelocity *= speed;
             VectorCopy(newVelocity.Data(), self->velocity);
         }
+        rocketJumpMovementState.hasPendingRocketJump = false;
+        rocketJumpMovementState.hasTriggeredRocketJump = false;
         rocketJumpMovementState.hasCorrectedRocketJump = true;
         input->canOverrideLookVec = false;
+        return;
     }
-    else if (rocketJumpMovementState.timeoutAt - level.time < 300)
+
+    input->canOverrideLookVec = mayHitWhileMoving;
+    input->canOverridePitch = false;
+    if (rocketJumpMovementState.timeoutAt - level.time < 300)
     {
         input->SetForwardMovement(1);
         // Bounce off walls
@@ -1255,7 +1270,7 @@ bool Bot::TryRocketJumpShortcut(BotInput *input)
             return false;
     }
 
-    return TryTriggerWeaponJump(input, targetOrigin, fireTarget);
+    return TrySetPendingWeaponJump(targetOrigin, fireTarget);
 }
 
 bool Bot::AdjustRocketJumpTargetForPathShortcut(Vec3 *targetOrigin, Vec3 *fireTarget) const
@@ -1449,7 +1464,7 @@ int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botT
     return 0;
 }
 
-bool Bot::TryTriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec3 &fireTarget)
+bool Bot::TrySetPendingWeaponJump(const Vec3 &targetOrigin, const Vec3 &fireTarget)
 {
     // Update values for adjusted target
     float originDistance = DistanceFast(self->s.origin, targetOrigin.Data());
@@ -1504,12 +1519,10 @@ bool Bot::TryTriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const 
     }
 
     ChangeWeapon(weapon);
-    if (self->r.client->ps.stats[STAT_WEAPON] != weapon)
-        return false;
-    if (self->r.client->ps.stats[STAT_WEAPON_TIME])
+    if (self->r.client->ps.stats[STAT_WEAPON_TIME] > 192)
         return false;
 
-    TriggerWeaponJump(input, targetOrigin, fireTarget);
+    rocketJumpMovementState.SetPending(targetOrigin, fireTarget, 750);
     return true;
 }
 
@@ -1528,8 +1541,6 @@ void Bot::TriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec
     input->SetSpecialButton(true);
     input->canOverrideLookVec = false;
     input->canOverridePitch = false;
-
-    rocketJumpMovementState.SetTriggered(targetOrigin, fireTarget, 750);
 }
 
 void Bot::CheckTargetProximity()

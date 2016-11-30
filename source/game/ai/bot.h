@@ -380,33 +380,28 @@ private:
 
         Vec3 jumpTarget;
         Vec3 fireTarget;
+        bool hasPendingRocketJump;
         bool hasTriggeredRocketJump;
         bool hasCorrectedRocketJump;
-        bool wasTriggeredPrevFrame;
         unsigned timeoutAt;
 
         RocketJumpMovementState(const edict_t *self_)
             : self(self_),
               jumpTarget(INFINITY, INFINITY, INFINITY),
               fireTarget(INFINITY, INFINITY, INFINITY),
+              hasPendingRocketJump(false),
               hasTriggeredRocketJump(false),
               hasCorrectedRocketJump(false),
-              wasTriggeredPrevFrame(false),
               timeoutAt(0) {}
 
         inline bool IsActive() const
         {
-            return hasTriggeredRocketJump;
+            return hasPendingRocketJump || hasTriggeredRocketJump || hasCorrectedRocketJump;
         }
 
-        inline bool HasBeenJustTriggered() const
+        inline void TryInvalidate()
         {
-            return hasTriggeredRocketJump && !wasTriggeredPrevFrame;
-        }
-
-        void TryInvalidate()
-        {
-            if (hasTriggeredRocketJump)
+            if (IsActive())
             {
                 if (self->groundentity || (jumpTarget - self->s.origin).SquaredLength() < 48 * 48)
                     Invalidate();
@@ -415,15 +410,17 @@ private:
 
         void Invalidate()
         {
+            hasPendingRocketJump = false;
             hasTriggeredRocketJump = false;
             hasCorrectedRocketJump = false;
         }
 
-        void SetTriggered(const Vec3 &jumpTarget_, const Vec3 &fireTarget_, unsigned timeoutPeriod)
+        void SetPending(const Vec3 &jumpTarget_, const Vec3 &fireTarget_, unsigned timeoutPeriod)
         {
             this->jumpTarget = jumpTarget_;
             this->fireTarget = fireTarget_;
-            hasTriggeredRocketJump = true;
+            hasPendingRocketJump = true;
+            hasTriggeredRocketJump = false;
             hasCorrectedRocketJump = false;
             timeoutAt = level.time + timeoutPeriod;
         }
@@ -698,7 +695,7 @@ private:
     void MoveOnLadder(BotInput *input);
     void MoveEnteringJumppad(BotInput *input);
     void MoveRidingJummpad(BotInput *input);
-    void MoveTriggeredARocketJump(BotInput *input, bool mayHitWhileMoving);
+    void MoveInRocketJumpState(BotInput *input, bool mayHitWhileMoving);
     void MoveOnPlatform(BotInput *input);
     void MoveCampingASpot(BotInput *input);
     void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, BotInput *input);
@@ -742,11 +739,11 @@ private:
     // but direct rocketjump to a goal is blocked by obstacles.
     // Returns area num of found area (if any)
     int TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botToGoalDist2D) const;
-    // Tries to select an appropriate weapon and trigger a rocketjump.
+    // Tries to select an appropriate weapon and schedule a pending rocketjump.
     // Assumes that targetOrigin and fireTarget are checked.
     // Returns false if a rocketjump cannot be triggered.
-    bool TryTriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec3 &fireTarget);
-    // Triggers a jump/dash and fire actions, and schedules trajectory correction to fireTarget to a next frame.
+    bool TrySetPendingWeaponJump(const Vec3 &targetOrigin, const Vec3 &fireTarget);
+    // Triggers a jump/dash and fire actions. It is assumed to be called from MoveInRocketJumpState()
     // Assumes that targetOrigin and fireTarget are checked.
     // Make sure you have selected an appropriate weapon and its ready to fire before you call it.
     void TriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec3 &fireTarget);
