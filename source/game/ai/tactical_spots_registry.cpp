@@ -447,9 +447,10 @@ inline float ComputeDistanceFactor(const vec3_t v1, const vec3_t v2, float weigh
     return ComputeDistanceFactor(distance, weightFalloffDistanceRatio, searchRadius);
 }
 
-inline float ComputeTravelTimeFactor(int travelTimeMillis, float lowestWeightTravelTimeBounds)
+// Units of travelTime and maxFeasibleTravelTime must match!
+inline float ComputeTravelTimeFactor(int travelTime, float maxFeasibleTravelTime)
 {
-    float factor = 1.0f - BoundedFraction(travelTimeMillis, lowestWeightTravelTimeBounds);
+    float factor = 1.0f - BoundedFraction(travelTime, maxFeasibleTravelTime);
     return 1.0f / Q_RSqrt(0.0001f + factor);
 }
 
@@ -584,7 +585,8 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOrigin(const OriginParams &origin
     const int originAreaNum = originParams.originAreaNum;
     const float *origin = originParams.origin;
     const float searchRadius = originParams.searchRadius;
-    const float lowestWeightTravelTimeBounds = problemParams.lowestWeightTravelTimeBounds;
+    // AAS uses travel time in centiseconds
+    const int maxFeasibleTravelTimeCentis = problemParams.maxFeasibleTravelTimeMillis / 10;
     const float weightFalloffDistanceRatio = problemParams.originWeightFalloffDistanceRatio;
     const float distanceInfluence = problemParams.originDistanceInfluence;
     const float travelTimeInfluence = problemParams.travelTimeInfluence;
@@ -602,15 +604,15 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOrigin(const OriginParams &origin
             const TacticalSpot &spot = spots[spotAndScore.spotNum];
             // If zero, the spotNum spot is not reachable from insideSpotNum
             int tableTravelTime = travelTimeTable[tableRowOffset + spotAndScore.spotNum];
-            if (!tableTravelTime || tableTravelTime > lowestWeightTravelTimeBounds)
+            if (!tableTravelTime || tableTravelTime > maxFeasibleTravelTimeCentis)
                 continue;
 
             // Get an actual travel time (non-zero table value does not guarantee reachability)
             int travelTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
-            if (!travelTime || travelTime > lowestWeightTravelTimeBounds)
+            if (!travelTime || travelTime > maxFeasibleTravelTimeCentis)
                 continue;
 
-            float travelTimeFactor = 1.0f - ComputeTravelTimeFactor(travelTime * 10, lowestWeightTravelTimeBounds);
+            float travelTimeFactor = 1.0f - ComputeTravelTimeFactor(travelTime, maxFeasibleTravelTimeCentis);
             float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
             float newScore = spotAndScore.score;
             newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
@@ -625,10 +627,10 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOrigin(const OriginParams &origin
             const SpotAndScore &spotAndScore = candidateSpots[i];
             const TacticalSpot &spot = spots[spotAndScore.spotNum];
             int travelTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
-            if (!travelTime || travelTime > lowestWeightTravelTimeBounds)
+            if (!travelTime || travelTime > maxFeasibleTravelTimeCentis)
                 continue;
 
-            float travelTimeFactor = 1.0f - ComputeTravelTimeFactor(travelTime * 10, lowestWeightTravelTimeBounds);
+            float travelTimeFactor = 1.0f - ComputeTravelTimeFactor(travelTime, maxFeasibleTravelTimeCentis);
             float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
             float newScore = spotAndScore.score;
             newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
@@ -651,7 +653,8 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack(const OriginParams 
     const int originAreaNum = originParams.originAreaNum;
     const float *origin = originParams.origin;
     const float searchRadius = originParams.searchRadius;
-    const float lowestWeightTravelTimeBounds = problemParams.lowestWeightTravelTimeBounds;
+    // AAS uses time in centiseconds
+    const int maxFeasibleTravelTimeCentis = problemParams.maxFeasibleTravelTimeMillis / 10;
     const float weightFalloffDistanceRatio = problemParams.originWeightFalloffDistanceRatio;
     const float distanceInfluence = problemParams.originDistanceInfluence;
     const float travelTimeInfluence = problemParams.travelTimeInfluence;
@@ -675,21 +678,20 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack(const OriginParams 
             int tableBackTravelTime = travelTimeTable[spotAndScore.spotNum * numSpots + insideSpotNum];
             if (!tableBackTravelTime)
                 continue;
-            if (tableToTravelTime + tableBackTravelTime > lowestWeightTravelTimeBounds)
+            if (tableToTravelTime + tableBackTravelTime > maxFeasibleTravelTimeCentis)
                 continue;
 
             // Get an actual travel time (non-zero table values do not guarantee reachability)
             int toTravelTime = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
             // If `to` travel time is apriori greater than maximum allowed one (and thus the sum would be), reject early.
-            if (!toTravelTime || toTravelTime > lowestWeightTravelTimeBounds)
+            if (!toTravelTime || toTravelTime > maxFeasibleTravelTimeCentis)
                 continue;
             int backTimeTravelTime = routeCache->TravelTimeToGoalArea(spot.aasAreaNum, originAreaNum, Bot::ALLOWED_TRAVEL_FLAGS);
-            if (!backTimeTravelTime || toTravelTime + backTimeTravelTime > lowestWeightTravelTimeBounds)
+            if (!backTimeTravelTime || toTravelTime + backTimeTravelTime > maxFeasibleTravelTimeCentis)
                 continue;
 
-            // AAS time is in seconds^-2
-            int totalTravelTimeMillis = 10 * (toTravelTime + backTimeTravelTime);
-            float travelTimeFactor = ComputeTravelTimeFactor(totalTravelTimeMillis, lowestWeightTravelTimeBounds);
+            int totalTravelTimeCentis = toTravelTime + backTimeTravelTime;
+            float travelTimeFactor = ComputeTravelTimeFactor(totalTravelTimeCentis, maxFeasibleTravelTimeCentis);
             float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
             float newScore = spotAndScore.score;
             newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);
@@ -710,9 +712,8 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack(const OriginParams 
             if (!toEntityTime)
                 continue;
 
-            // AAS time is in seconds^-2
-            int totalTravelTimeMillis = 10 * (toSpotTime + toEntityTime);
-            float travelTimeFactor = ComputeTravelTimeFactor(totalTravelTimeMillis, lowestWeightTravelTimeBounds);
+            int totalTravelTimeCentis = 10 * (toSpotTime + toEntityTime);
+            float travelTimeFactor = ComputeTravelTimeFactor(totalTravelTimeCentis, maxFeasibleTravelTimeCentis);
             float distanceFactor = ComputeDistanceFactor(spot.origin, origin, weightFalloffDistanceRatio, searchRadius);
             float newScore = spotAndScore.score;
             newScore = ApplyFactor(newScore, distanceFactor, distanceInfluence);

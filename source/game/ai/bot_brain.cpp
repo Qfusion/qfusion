@@ -252,7 +252,7 @@ bool BotBrain::FindDodgeDangerSpot(const Danger &danger, vec3_t spotOrigin)
     problemParams.SetMinHeightAdvantageOverOrigin(-64.0f);
     // Influence values are quite low because evade direction factor must be primary
     problemParams.SetHeightOverOriginInfluence(0.2f);
-    problemParams.SetLowestWeightTravelTimeBounds(2500);
+    problemParams.SetMaxFeasibleTravelTimeMillis(2500);
     problemParams.SetOriginDistanceInfluence(0.4f);
     problemParams.SetOriginWeightFalloffDistanceRatio(0.9f);
     problemParams.SetTravelTimeInfluence(0.2f);

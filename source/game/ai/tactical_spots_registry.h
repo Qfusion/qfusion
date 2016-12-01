@@ -55,7 +55,7 @@ public:
         float originDistanceInfluence;
         float travelTimeInfluence;
         float heightOverOriginInfluence;
-        int lowestWeightTravelTimeBounds;
+        int maxFeasibleTravelTimeMillis;
         float spotProximityThreshold;
         bool checkToAndBackReachability;
     public:
@@ -65,7 +65,7 @@ public:
               originDistanceInfluence(0.9f),
               travelTimeInfluence(0.9f),
               heightOverOriginInfluence(0.9f),
-              lowestWeightTravelTimeBounds(5000),
+              maxFeasibleTravelTimeMillis(5000),
               spotProximityThreshold(64.0f),
               checkToAndBackReachability(false) {}
 
@@ -84,9 +84,9 @@ public:
             minHeightAdvantageOverOrigin = minHeight;
         }
 
-        inline void SetLowestWeightTravelTimeBounds(int millis)
+        inline void SetMaxFeasibleTravelTimeMillis(int millis)
         {
-            lowestWeightTravelTimeBounds = std::min(1, millis);
+            maxFeasibleTravelTimeMillis = std::max(1, millis);
         }
 
         inline void SetOriginDistanceInfluence(float influence) { originDistanceInfluence = Clamp(influence); }
