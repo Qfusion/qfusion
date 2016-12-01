@@ -116,6 +116,7 @@ private:
         Health,
         Armor,
         RawDamageToKill,
+        PotentialDangerDamage,
 
         NUM_SHORT_VARS
     };
@@ -135,6 +136,8 @@ private:
 
         IsRunningAway,
         HasRunAway,
+
+        HasReactedToDanger,
 
         HasJustTeleported,
         HasJustTouchedJumppad,
@@ -164,6 +167,12 @@ private:
         EnemyOrigin,
         NavTargetOrigin,
         PendingOrigin,
+
+        DangerHitPoint,
+        DangerDirection,
+        // There are no reasons to make it lazy since it always gets computed
+        // if a danger is present because ReactToDanger is a very high priority goal
+        DodgeDangerSpot,
 
         NUM_ORIGIN_VARS
     };
@@ -577,6 +586,7 @@ public:
     DECLARE_SHORT_VAR(Health)
     DECLARE_SHORT_VAR(Armor)
     DECLARE_SHORT_VAR(RawDamageToKill)
+    DECLARE_SHORT_VAR(PotentialDangerDamage)
 
     DECLARE_BOOL_VAR(HasQuad)
     DECLARE_BOOL_VAR(HasShell)
@@ -586,6 +596,8 @@ public:
 
     DECLARE_BOOL_VAR(IsRunningAway)
     DECLARE_BOOL_VAR(HasRunAway)
+
+    DECLARE_BOOL_VAR(HasReactedToDanger)
 
     DECLARE_BOOL_VAR(HasJustTeleported)
     DECLARE_BOOL_VAR(HasJustTouchedJumppad)
@@ -615,6 +627,10 @@ public:
     DECLARE_ORIGIN_VAR(EnemyOrigin)
     DECLARE_ORIGIN_VAR(NavTargetOrigin)
     DECLARE_ORIGIN_VAR(PendingOrigin)
+
+    DECLARE_ORIGIN_VAR(DangerHitPoint)
+    DECLARE_ORIGIN_VAR(DangerDirection)
+    DECLARE_ORIGIN_VAR(DodgeDangerSpot)
 
     DECLARE_ORIGIN_LAZY_VAR(SniperRangeTacticalSpot)
     DECLARE_ORIGIN_LAZY_VAR(FarRangeTacticalSpot)

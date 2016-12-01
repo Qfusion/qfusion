@@ -129,6 +129,13 @@ class BotBrain: public AiBaseBrain
 
     void UpdateBlockedAreasStatus();
 
+    bool FindDodgeDangerSpot(const Danger &danger, vec3_t spotOrigin);
+
+    void CheckNewActiveDanger();
+
+    Danger triggeredPlanningDanger;
+    Danger actualDanger;
+
     void PrepareCurrWorldState(WorldState *worldState) override;
 
     bool ShouldSkipPlanning() const override;

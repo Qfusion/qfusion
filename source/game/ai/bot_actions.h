@@ -281,4 +281,24 @@ DECLARE_INHERITED_ACTION(BotStopRunningAwayAction, BotRunAwayAction, 5);
 #undef DEFINE_COMBAT_ACTION_RECORD
 #undef DEFINE_RUN_AWAY_ACTION_RECORD
 
+class BotDodgeToSpotActionRecord: public BotBaseActionRecord
+{
+    NavTarget navTarget;
+    unsigned timeoutAt;
+public:
+    BotDodgeToSpotActionRecord(PoolBase *pool_, edict_t *self_, const Vec3 &spotOrigin)
+        : BotBaseActionRecord(pool_, self_, "BotDodgeToSpotActionRecord"),
+          navTarget(NavTarget::Dummy()),
+          timeoutAt((unsigned)-1)
+    {
+        navTarget.SetToTacticalSpot(spotOrigin);
+    }
+
+    void Activate() override;
+    void Deactivate() override;
+    Status CheckStatus(const WorldState &currWorldState) const override;
+};
+
+DECLARE_ACTION(BotDodgeToSpotAction, 1);
+
 #endif

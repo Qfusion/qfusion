@@ -372,30 +372,32 @@ uint16_t TacticalSpotsRegistry::FindSpotsInRadius(const OriginParams &originPara
     return numSpotsInRadius;
 }
 
-int TacticalSpotsRegistry::CopyResults(const TraceCheckedSpots &results,
+int TacticalSpotsRegistry::CopyResults(const SpotAndScore *spotsBegin,
+                                       const SpotAndScore *spotsEnd,
                                        const CommonProblemParams &problemParams,
                                        vec3_t *spotOrigins, int maxSpots) const
 {
-    if (maxSpots == 0 || results.empty())
+    const unsigned resultsSize = (unsigned)(spotsEnd - spotsBegin);
+    if (maxSpots == 0 || resultsSize == 0)
         return 0;
 
     // Its a common case so give it an optimized branch
     if (maxSpots == 1)
     {
-        VectorCopy(spots[results[0].spotNum].origin, spotOrigins[0]);
+        VectorCopy(spots[spotsBegin->spotNum].origin, spotOrigins[0]);
         return 1;
     }
 
     const float spotProximityThreshold = problemParams.spotProximityThreshold;
 
-    bool isSpotExcluded[results.capacity()];
-    memset(isSpotExcluded, 0, sizeof(bool) * results.capacity());
+    bool isSpotExcluded[CandidateSpots::capacity()];
+    memset(isSpotExcluded, 0, sizeof(bool) * CandidateSpots::capacity());
 
     int numSpots = 0;
     unsigned keptSpotIndex = 0;
     for (;;)
     {
-        if (keptSpotIndex >= results.size())
+        if (keptSpotIndex >= resultsSize)
             return numSpots;
         if (numSpots >= maxSpots)
             return numSpots;
@@ -403,7 +405,7 @@ int TacticalSpotsRegistry::CopyResults(const TraceCheckedSpots &results,
         // Spots are sorted by score.
         // So first spot not marked as excluded yet has higher priority and should be kept.
 
-        const TacticalSpot &keptSpot = spots[results[keptSpotIndex].spotNum];
+        const TacticalSpot &keptSpot = spots[spotsBegin[keptSpotIndex].spotNum];
         VectorCopy(keptSpot.origin, spotOrigins[numSpots]);
         ++numSpots;
 
@@ -411,13 +413,13 @@ int TacticalSpotsRegistry::CopyResults(const TraceCheckedSpots &results,
 
         unsigned testedSpotIndex = keptSpotIndex + 1;
         keptSpotIndex = 999999;
-        for (; testedSpotIndex < results.size(); testedSpotIndex++)
+        for (; testedSpotIndex < resultsSize; testedSpotIndex++)
         {
             // Skip already excluded areas
             if (isSpotExcluded[testedSpotIndex])
                 continue;
 
-            const TacticalSpot &testedSpot = spots[results[testedSpotIndex].spotNum];
+            const TacticalSpot &testedSpot = spots[spotsBegin[testedSpotIndex].spotNum];
             if (DistanceSquared(keptSpot.origin, testedSpot.origin) < spotProximityThreshold * spotProximityThreshold)
                 isSpotExcluded[testedSpotIndex] = true;
             else if (keptSpotIndex > testedSpotIndex)
@@ -480,7 +482,7 @@ int TacticalSpotsRegistry::FindPositionalAdvantageSpots(const OriginParams &orig
 
     SortByVisAndOtherFactors(originParams, problemParams, traceCheckedSpots);
 
-    return CopyResults(traceCheckedSpots, problemParams, spotOrigins, maxSpots);
+    return CopyResults(traceCheckedSpots.begin(), traceCheckedSpots.end(), problemParams, spotOrigins, maxSpots);
 }
 
 void TacticalSpotsRegistry::SelectCandidateSpots(const OriginParams &originParams,
@@ -822,7 +824,7 @@ void TacticalSpotsRegistry::SortByVisAndOtherFactors(const OriginParams &originP
     }
 
     // Sort results so best score spots are first
-    std::sort(result.begin(), result.end());
+    std::stable_sort(result.begin(), result.end());
 }
 
 int TacticalSpotsRegistry::FindCoverSpots(const OriginParams &originParams,
@@ -845,7 +847,7 @@ int TacticalSpotsRegistry::FindCoverSpots(const OriginParams &originParams,
     TraceCheckedSpots coverSpots;
     SelectSpotsForCover(originParams, problemParams, reachCheckedSpots, coverSpots);
 
-    return CopyResults(coverSpots, problemParams, spotOrigins, maxSpots);
+    return CopyResults(coverSpots.begin(), coverSpots.end(), problemParams, spotOrigins, maxSpots);
 }
 
 void TacticalSpotsRegistry::SelectSpotsForCover(const OriginParams &originParams,
@@ -901,4 +903,162 @@ bool TacticalSpotsRegistry::LooksLikeACoverSpot(uint16_t spotNum, const OriginPa
     }
 
     return true;
+}
+
+int TacticalSpotsRegistry::FindEvadeDangerSpots(const OriginParams &originParams,
+                                                const DodgeDangerProblemParams &problemParams,
+                                                vec3_t *spotOrigins, int maxSpots) const
+{
+    uint16_t boundsSpots[MAX_SPOTS];
+    uint16_t insideSpotNum;
+    uint16_t numSpotsInBounds = FindSpotsInRadius(originParams, boundsSpots, &insideSpotNum);
+
+    CandidateSpots candidateSpots;
+    SelectPotentialDodgeSpots(originParams, problemParams, boundsSpots, numSpotsInBounds, candidateSpots);
+
+    ReachCheckedSpots reachCheckedSpots;
+    if (problemParams.checkToAndBackReachability)
+        CheckSpotsReachFromOriginAndBack(originParams, problemParams, candidateSpots, insideSpotNum, reachCheckedSpots);
+    else
+        CheckSpotsReachFromOrigin(originParams, problemParams, candidateSpots, insideSpotNum, reachCheckedSpots);
+
+    return CopyResults(reachCheckedSpots.begin(), reachCheckedSpots.end(), problemParams, spotOrigins, maxSpots);
+}
+
+void TacticalSpotsRegistry::SelectPotentialDodgeSpots(const OriginParams &originParams,
+                                                      const DodgeDangerProblemParams &problemParams,
+                                                      const uint16_t *spotNums,
+                                                      uint16_t numSpots,
+                                                      CandidateSpots &result) const
+{
+    bool mightNegateDodgeDir = false;
+    Vec3 dodgeDir = MakeDodgeDangerDir(originParams, problemParams, &mightNegateDodgeDir);
+
+    const float searchRadius = originParams.searchRadius;
+    const float minHeightAdvantageOverOrigin = problemParams.minHeightAdvantageOverOrigin;
+    const float heightOverOriginInfluence = problemParams.heightOverOriginInfluence;
+    const float originZ = originParams.origin[2];
+    // Copy to stack for faster access
+    Vec3 origin(originParams.origin);
+
+    if (mightNegateDodgeDir)
+    {
+        for (unsigned i = 0; i < numSpots && result.size() < result.capacity(); ++i)
+        {
+            const TacticalSpot &spot = spots[spotNums[i]];
+
+            float heightOverOrigin = spot.absMins[2] - originZ;
+            if (heightOverOrigin < minHeightAdvantageOverOrigin)
+                continue;
+
+            Vec3 toSpotDir(spot.origin);
+            toSpotDir -= origin;
+            float squaredDistanceToSpot = toSpotDir.SquaredLength();
+            if (squaredDistanceToSpot < 1)
+                continue;
+
+            toSpotDir *= Q_RSqrt(squaredDistanceToSpot);
+            float dot = toSpotDir.Dot(dodgeDir);
+            if (dot < 0.2f)
+                continue;
+
+            heightOverOrigin -= minHeightAdvantageOverOrigin;
+            float heightOverOriginFactor = BoundedFraction(heightOverOrigin, searchRadius - minHeightAdvantageOverOrigin);
+            float score = ApplyFactor(dot, heightOverOriginFactor, heightOverOriginInfluence);
+
+            result.push_back(SpotAndScore(spotNums[i], score));
+        }
+    }
+    else
+    {
+        for (unsigned i = 0; i < numSpots && result.size() < result.capacity(); ++i)
+        {
+            const TacticalSpot &spot = spots[spotNums[i]];
+
+            float heightOverOrigin = spot.absMins[2] - originZ;
+            if (heightOverOrigin < minHeightAdvantageOverOrigin)
+                continue;
+
+            Vec3 toSpotDir(spot.origin);
+            toSpotDir -= origin;
+            float squaredDistanceToSpot = toSpotDir.SquaredLength();
+            if (squaredDistanceToSpot < 1)
+                continue;
+
+            toSpotDir *= Q_RSqrt(squaredDistanceToSpot);
+            float absDot = fabsf(toSpotDir.Dot(dodgeDir));
+            if (absDot < 0.2f)
+                continue;
+
+            heightOverOrigin -= minHeightAdvantageOverOrigin;
+            float heightOverOriginFactor = BoundedFraction(heightOverOrigin, searchRadius - minHeightAdvantageOverOrigin);
+            float score = ApplyFactor(absDot, heightOverOriginFactor, heightOverOriginInfluence);
+
+            result.push_back(SpotAndScore(spotNums[i], score));
+        }
+    }
+
+    // Sort result so best score areas are first
+    std::sort(result.begin(), result.end());
+}
+
+Vec3 TacticalSpotsRegistry::MakeDodgeDangerDir(const OriginParams &originParams,
+                                               const DodgeDangerProblemParams &problemParams,
+                                               bool *mightNegateDodgeDir) const
+{
+    *mightNegateDodgeDir = false;
+    if (problemParams.avoidSplashDamage)
+    {
+        Vec3 result(0, 0, 0);
+        Vec3 originToHitDir = problemParams.dangerHitPoint - originParams.origin;
+        float degrees = originParams.originEntity ? -originParams.originEntity->s.angles[YAW] : -90;
+        RotatePointAroundVector(result.Data(), &axis_identity[AXIS_UP], originToHitDir.Data(), degrees);
+        result.NormalizeFast();
+
+        if (fabs(result.X()) < 0.3)
+            result.X() = 0;
+        if (fabs(result.Y()) < 0.3)
+            result.Y() = 0;
+        result.Z() = 0;
+        result.X() *= -1.0f;
+        result.Y() *= -1.0f;
+        return result;
+    }
+
+    Vec3 selfToHitPoint = problemParams.dangerHitPoint - originParams.origin;
+    selfToHitPoint.Z() = 0;
+    // If bot is not hit in its center, try pick a direction that is opposite to a vector from bot center to hit point
+    if (selfToHitPoint.SquaredLength() > 4 * 4)
+    {
+        selfToHitPoint.NormalizeFast();
+        // Check whether this direction really helps to dodge the danger
+        // (the less is the abs. value of the dot product, the closer is the chosen direction to a perpendicular one)
+        if (fabs(selfToHitPoint.Dot(originParams.origin)) < 0.5f)
+        {
+            if (fabs(selfToHitPoint.X()) < 0.3)
+                selfToHitPoint.X() = 0;
+            if (fabs(selfToHitPoint.Y()) < 0.3)
+                selfToHitPoint.Y() = 0;
+            return -selfToHitPoint;
+        }
+    }
+
+    *mightNegateDodgeDir = true;
+    // Otherwise just pick a direction that is perpendicular to the danger direction
+    float maxCrossSqLen = 0.0f;
+    Vec3 result(0, 1, 0);
+    for (int i = 0; i < 3; ++i)
+    {
+        Vec3 cross = problemParams.dangerDirection.Cross(&axis_identity[i * 3]);
+        cross.Z() = 0;
+        float crossSqLen = cross.SquaredLength();
+        if (crossSqLen > maxCrossSqLen)
+        {
+            maxCrossSqLen = crossSqLen;
+            float invLen = Q_RSqrt(crossSqLen);
+            result.X() = cross.X() * invLen;
+            result.Y() = cross.Y() * invLen;
+        }
+    }
+    return result;
 }

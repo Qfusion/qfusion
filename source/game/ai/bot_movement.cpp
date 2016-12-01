@@ -1562,58 +1562,6 @@ void Bot::CheckTargetProximity()
     }
 }
 
-Vec3 Bot::MakeEvadeDirection(const Danger &danger)
-{
-    if (danger.splash)
-    {
-        Vec3 result(0, 0, 0);
-        Vec3 selfToHitDir = danger.hitPoint - self->s.origin;
-        RotatePointAroundVector(result.Data(), &axis_identity[AXIS_UP], selfToHitDir.Data(), -self->s.angles[YAW]);
-        result.NormalizeFast();
-
-        if (fabs(result.X()) < 0.3) result.X() = 0;
-        if (fabs(result.Y()) < 0.3) result.Y() = 0;
-        result.Z() = 0;
-        result.X() *= -1.0f;
-        result.Y() *= -1.0f;
-        return result;
-    }
-
-    Vec3 selfToHitPoint = danger.hitPoint - self->s.origin;
-    selfToHitPoint.Z() = 0;
-    // If bot is not hit in its center, try pick a direction that is opposite to a vector from bot center to hit point
-    if (selfToHitPoint.SquaredLength() > 4 * 4)
-    {
-        selfToHitPoint.NormalizeFast();
-        // Check whether this direction really helps to evade the danger
-        // (the less is the abs. value of the dot product, the closer is the chosen direction to a perpendicular one)
-        if (fabs(selfToHitPoint.Dot(danger.direction)) < 0.5f)
-        {
-            if (fabs(selfToHitPoint.X()) < 0.3) selfToHitPoint.X() = 0;
-            if (fabs(selfToHitPoint.Y()) < 0.3) selfToHitPoint.Y() = 0;
-            return -selfToHitPoint;
-        }
-    }
-
-    // Otherwise just pick a direction that is perpendicular to the danger direction
-    float maxCrossSqLen = 0.0f;
-    Vec3 result(0, 1, 0);
-    for (int i = 0; i < 3; ++i)
-    {
-        Vec3 cross = danger.direction.Cross(&axis_identity[i * 3]);
-        cross.Z() = 0;
-        float crossSqLen = cross.SquaredLength();
-        if (crossSqLen > maxCrossSqLen)
-        {
-            maxCrossSqLen = crossSqLen;
-            float invLen = Q_RSqrt(crossSqLen);
-            result.X() = cross.X() * invLen;
-            result.Y() = cross.Y() * invLen;
-        }
-    }
-    return result;
-}
-
 constexpr auto AI_COMBATMOVE_TIMEOUT = 400;
 
 void Bot::CombatMovement(BotInput *input)

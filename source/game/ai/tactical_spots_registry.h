@@ -161,6 +161,18 @@ public:
             VectorCopy(attackerOrigin_, this->attackerOrigin);
         }
     };
+
+    class DodgeDangerProblemParams: public CommonProblemParams
+    {
+        friend class TacticalSpotsRegistry;
+
+        const Vec3 &dangerHitPoint;
+        const Vec3 &dangerDirection;
+        const bool avoidSplashDamage;
+    public:
+        DodgeDangerProblemParams(const Vec3 &dangerHitPoint_, const Vec3 &dangerDirection_, bool avoidSplashDamage_)
+            : dangerHitPoint(dangerHitPoint_), dangerDirection(dangerDirection_), avoidSplashDamage(avoidSplashDamage_) {}
+    };
 private:
     static constexpr uint16_t MAX_SPOTS = 2048;
     static constexpr uint16_t MIN_GRID_CELL_SIDE = 512;
@@ -262,7 +274,9 @@ private:
                                           uint16_t insideSpotNum,
                                           ReachCheckedSpots &result) const;
 
-    int CopyResults(const TraceCheckedSpots &results, const CommonProblemParams &problemParams,
+    int CopyResults(const SpotAndScore *spotsBegin,
+                    const SpotAndScore *spotsEnd,
+                    const CommonProblemParams &problemParams,
                     vec3_t *spotOrigins, int maxSpots) const;
 
     // Specific for positional advantage spots
@@ -282,6 +296,16 @@ private:
 
     bool LooksLikeACoverSpot(uint16_t spotNum, const OriginParams &originParams,
                              const CoverProblemParams &problemParams) const;
+
+    Vec3 MakeDodgeDangerDir(const OriginParams &originParams,
+                            const DodgeDangerProblemParams &problemParams,
+                            bool *mightNegateDodgeDir) const;
+
+    void SelectPotentialDodgeSpots(const OriginParams &originParams,
+                                   const DodgeDangerProblemParams &problemParams,
+                                   const uint16_t *spotNums,
+                                   uint16_t numSpots,
+                                   CandidateSpots &result) const;
 public:
     // TacticalSpotsRegistry should be init and shut down explicitly
     // (a game library is not unloaded when a map changes)
@@ -300,6 +324,9 @@ public:
 
     int FindCoverSpots(const OriginParams &originParams, const CoverProblemParams &problemParams,
                        vec3_t *spotOrigins, int maxSpots) const;
+
+    int FindEvadeDangerSpots(const OriginParams &originParams, const DodgeDangerProblemParams &problemParams,
+                             vec3_t *spotOrigins, int maxSpots) const;
 };
 
 #endif

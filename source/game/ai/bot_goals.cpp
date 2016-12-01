@@ -75,3 +75,25 @@ void BotRunAwayGoal::GetDesiredWorldState(WorldState *worldState)
 
     worldState->HasRunAwayVar().SetValue(true).SetIgnore(false);
 }
+
+void BotReactToDangerGoal::GetDesiredWorldState(WorldState *worldState)
+{
+    worldState->SetIgnoreAll(true);
+
+    worldState->HasReactedToDangerVar().SetIgnore(false).SetValue(true);
+}
+
+void BotReactToDangerGoal::UpdateWeight(const WorldState &currWorldState)
+{
+    this->weight = 0.0f;
+
+    if (currWorldState.PotentialDangerDamageVar().Ignore())
+        return;
+
+    float weight = 0.15f + 1.75f * currWorldState.PotentialDangerDamageVar() / currWorldState.DamageToBeKilled();
+    if (weight > 3.0f)
+        weight = 3.0f;
+    weight /= 3.0f;
+    weight = 3.0f / Q_RSqrt(weight);
+    this->weight = weight;
+}

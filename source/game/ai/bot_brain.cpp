@@ -99,6 +99,9 @@ BotBrain::BotBrain(Bot *bot, float skillLevel_)
       prevSelectedNavEntity(nullptr),
       threatPossibleOrigin(NAN, NAN, NAN),
       threatDetectedAt(0),
+      triggeredPlanningDanger(Vec3(vec3_origin), Vec3(vec3_origin), 0),
+      actualDanger(Vec3(vec3_origin), Vec3(vec3_origin), 0),
+      squad(nullptr),
       botEnemyPool(bot->self, this, skillLevel_),
       selectedEnemies(bot->selectedEnemies),
       selectedWeapons(bot->selectedWeapons),
@@ -123,6 +126,8 @@ void BotBrain::Frame()
 
 void BotBrain::Think()
 {
+    // It is important to do all these actions before AiBaseBrain::Think() to trigger a plan update if needed
+
     if (selectedEnemies.AreValid())
     {
         if (level.time - selectedEnemies.LastSeenAt() >= reactionTime)
@@ -139,6 +144,8 @@ void BotBrain::Think()
     }
 
     self->ai->botRef->tacticalSpotsCache.Clear();
+
+    CheckNewActiveDanger();
 
     // This call will try to find a plan if it is not present
     AiBaseBrain::Think();
@@ -235,6 +242,55 @@ void BotBrain::UpdateBlockedAreasStatus()
         RouteCache()->SetDisabledRegions(&mins[0], &maxs[0], mins.size(), DroppedToFloorAasAreaNum());
     else
         RouteCache()->SetDisabledRegions(nullptr, nullptr, 0, DroppedToFloorAasAreaNum());
+}
+
+bool BotBrain::FindDodgeDangerSpot(const Danger &danger, vec3_t spotOrigin)
+{
+    TacticalSpotsRegistry::OriginParams originParams(self, 128.0f + 192.0f * BotSkill(), RouteCache());
+    TacticalSpotsRegistry::DodgeDangerProblemParams problemParams(danger.hitPoint, danger.direction, danger.splash);
+    problemParams.SetCheckToAndBackReachability(false);
+    problemParams.SetMinHeightAdvantageOverOrigin(-64.0f);
+    // Influence values are quite low because evade direction factor must be primary
+    problemParams.SetHeightOverOriginInfluence(0.2f);
+    problemParams.SetLowestWeightTravelTimeBounds(2500);
+    problemParams.SetOriginDistanceInfluence(0.4f);
+    problemParams.SetOriginWeightFalloffDistanceRatio(0.9f);
+    problemParams.SetTravelTimeInfluence(0.2f);
+    return (bool)TacticalSpotsRegistry::Instance()->FindEvadeDangerSpots(originParams, problemParams, (vec3_t *)spotOrigin, 1);
+}
+
+void BotBrain::CheckNewActiveDanger()
+{
+    if (BotSkill() <= 0.33f)
+        return;
+
+    if (!self->ai->botRef->dangersDetector.FindDangers())
+        return;
+
+    actualDanger = *self->ai->botRef->dangersDetector.primaryDanger;
+    bool needsUrgentReplanning = false;
+    // The old danger has timed out
+    if (!triggeredPlanningDanger.IsValid())
+        needsUrgentReplanning = true;
+    // The old danger is about to time out
+    else if (level.time - triggeredPlanningDanger.timeoutAt < Danger::TIMEOUT / 3)
+        needsUrgentReplanning = true;
+    else if (actualDanger.splash != triggeredPlanningDanger.splash)
+        needsUrgentReplanning = true;
+    else if (actualDanger.attacker != triggeredPlanningDanger.attacker)
+        needsUrgentReplanning = true;
+    else if (actualDanger.damage - triggeredPlanningDanger.damage > 10)
+        needsUrgentReplanning = true;
+    else if ((actualDanger.hitPoint - triggeredPlanningDanger.hitPoint).SquaredLength() > 32 * 32)
+        needsUrgentReplanning = true;
+    else if (actualDanger.direction.Dot(triggeredPlanningDanger.direction) < 0.9)
+        needsUrgentReplanning = true;
+
+    if (needsUrgentReplanning)
+    {
+        triggeredPlanningDanger = actualDanger;
+        nextActiveGoalUpdateAt = level.time;
+    }
 }
 
 void BotBrain::PrepareCurrWorldState(WorldState *worldState)
@@ -343,6 +399,26 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
     worldState->IsRunningAwayVar().SetIgnore(true);
     worldState->HasRunAwayVar().SetIgnore(true);
 
+    worldState->HasReactedToDangerVar().SetValue(false);
+    if (BotSkill() > 0.33f && actualDanger.IsValid())
+    {
+        worldState->PotentialDangerDamageVar().SetValue((short)actualDanger.damage);
+        worldState->DangerHitPointVar().SetValue(actualDanger.hitPoint);
+        worldState->DangerDirectionVar().SetValue(actualDanger.direction);
+        vec3_t dodgeDangerSpot;
+        if (FindDodgeDangerSpot(actualDanger, dodgeDangerSpot))
+            worldState->DodgeDangerSpotVar().SetValue(dodgeDangerSpot);
+        else
+            worldState->DodgeDangerSpotVar().SetIgnore(true);
+    }
+    else
+    {
+        worldState->PotentialDangerDamageVar().SetIgnore(true);
+        worldState->DangerHitPointVar().SetIgnore(true);
+        worldState->DangerDirectionVar().SetIgnore(true);
+        worldState->DodgeDangerSpotVar().SetIgnore(true);
+    }
+
     worldState->ResetTacticalSpots();
 
     worldState->SimilarWorldStateInstanceIdVar().SetIgnore(true);
@@ -418,6 +494,12 @@ PlannerNode *BotBrain::GetWorldStateTransitions(const WorldState &from, const Ai
         TRY_APPLY_ACTION(doRunAwayViaElevatorAction);
 
         TRY_APPLY_ACTION(stopRunningAwayAction);
+
+        return firstTransition;
+    }
+    if (goal == &botRef->reactToDangerGoal)
+    {
+        TRY_APPLY_ACTION(dodgeToSpotAction);
 
         return firstTransition;
     }

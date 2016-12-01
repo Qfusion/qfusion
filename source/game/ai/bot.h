@@ -307,6 +307,7 @@ private:
     BotGrabItemGoal grabItemGoal;
     BotKillEnemyGoal killEnemyGoal;
     BotRunAwayGoal runAwayGoal;
+    BotReactToDangerGoal reactToDangerGoal;
 
     BotGenericRunToItemAction genericRunToItemAction;
     BotPickupItemAction pickupItemAction;
@@ -329,6 +330,8 @@ private:
     BotStartGotoRunAwayElevatorAction startGotoRunAwayElevatorAction;
     BotDoRunAwayViaElevatorAction doRunAwayViaElevatorAction;
     BotStopRunningAwayAction stopRunningAwayAction;
+
+    BotDodgeToSpotAction dodgeToSpotAction;
 
     struct JumppadMovementState
     {
@@ -751,7 +754,6 @@ private:
     void CombatMovement(BotInput *input);
     void UpdateCombatMovePushes();
     bool MayApplyCombatDash();
-    Vec3 MakeEvadeDirection(const Danger &danger);
     void ApplyCheatingGroundAcceleration(const BotInput *input);
 
     // Returns true if current look angle worth pressing attack
