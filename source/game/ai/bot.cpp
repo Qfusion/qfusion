@@ -15,6 +15,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       killEnemyGoal(this),
       runAwayGoal(this),
       reactToDangerGoal(this),
+      reactToThreatGoal(this),
       genericRunToItemAction(this),
       pickupItemAction(this),
       waitForItemAction(this),
@@ -34,6 +35,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       doRunAwayViaElevatorAction(this),
       stopRunningAwayAction(this),
       dodgeToSpotAction(this),
+      turnToThreatOriginAction(this),
       rocketJumpMovementState(self_),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
@@ -72,6 +74,10 @@ void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput)
 
     botInput->intendedLookVec = toPointDir;
     botInput->isLookVecSet = true;
+
+    botInput->alreadyComputedAngles = GetNewViewAngles(self->s.angles, toPointDir, botInput->turnSpeedMultiplier);
+    botInput->hasAlreadyComputedAngles = true;
+
     botInput->canOverrideLookVec = false;
     botInput->canOverridePitch = false;
 }

@@ -97,3 +97,28 @@ void BotReactToDangerGoal::UpdateWeight(const WorldState &currWorldState)
     weight = 3.0f / Q_RSqrt(weight);
     this->weight = weight;
 }
+
+void BotReactToThreatGoal::UpdateWeight(const WorldState &currWorldState)
+{
+    this->weight = 0.0f;
+
+    if (currWorldState.ThreatPossibleOriginVar().Ignore())
+        return;
+
+    float weight = 0.15f + 3.25f * currWorldState.ThreatInflictedDamageVar() / currWorldState.DamageToBeKilled();
+    float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
+    if (offensiveness >= 0.5f)
+        weight *= (1.0f + (offensiveness - 0.5f));
+    if (weight > 1.75f)
+        weight = 1.75f;
+    weight /= 1.75f;
+    weight = 1.75f / Q_RSqrt(weight);
+    this->weight = weight;
+}
+
+void BotReactToThreatGoal::GetDesiredWorldState(WorldState *worldState)
+{
+    worldState->SetIgnoreAll(true);
+
+    worldState->HasReactedToThreatVar().SetIgnore(false).SetValue(true);
+}

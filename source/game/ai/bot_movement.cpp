@@ -141,8 +141,13 @@ void Bot::SetDefaultBotInput(BotInput *input) const
     input->ClearMovementDirections();
     input->SetSpecialButton(false);
     input->SetWalkButton(false);
-    input->isLookVecSet = true;
     input->isUcmdSet = true;
+
+    // A pending look at point is being applied
+    if (input->hasAlreadyComputedAngles)
+        return;
+
+    input->isLookVecSet = true;
     input->canOverrideLookVec = true;
     input->canOverrideUcmd = true;
 

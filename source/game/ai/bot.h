@@ -308,6 +308,7 @@ private:
     BotKillEnemyGoal killEnemyGoal;
     BotRunAwayGoal runAwayGoal;
     BotReactToDangerGoal reactToDangerGoal;
+    BotReactToThreatGoal reactToThreatGoal;
 
     BotGenericRunToItemAction genericRunToItemAction;
     BotPickupItemAction pickupItemAction;
@@ -332,6 +333,8 @@ private:
     BotStopRunningAwayAction stopRunningAwayAction;
 
     BotDodgeToSpotAction dodgeToSpotAction;
+
+    BotTurnToThreatOriginAction turnToThreatOriginAction;
 
     struct JumppadMovementState
     {

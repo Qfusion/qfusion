@@ -53,6 +53,18 @@ void BotBrain::OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable
     if (squad && threatDetector == &this->botEnemyPool)
         return;
 
+    bool hadValidThreat = activeThreat.IsValidFor(self);
+    float totalInflictedDamage = activeEnemyPool->TotalDamageInflictedBy(self);
+    if (hadValidThreat)
+    {
+        // The active threat is more dangerous than a new one
+        if (activeThreat.totalDamage > totalInflictedDamage)
+            return;
+        // The active threat has the same inflictor
+        if (activeThreat.inflictor == newThreat)
+            return;
+    }
+
     vec3_t botLookDir;
     AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
     Vec3 toEnemyDir = Vec3(newThreat->s.origin) - self->s.origin;
@@ -60,16 +72,20 @@ void BotBrain::OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable
     if (squareDistance > 1)
     {
         float distance = 1.0f / Q_RSqrt(squareDistance);
-        toEnemyDir *= distance;
+        toEnemyDir *= 1.0f / distance;
         if (toEnemyDir.Dot(botLookDir) < 0)
         {
             // Try to guess enemy origin
             toEnemyDir.X() += -0.25f + 0.50f * random();
             toEnemyDir.Y() += -0.10f + 0.20f * random();
             toEnemyDir.NormalizeFast();
-            VectorCopy(self->s.origin, threatPossibleOrigin.Data());
-            threatPossibleOrigin += distance * toEnemyDir;
-            threatDetectedAt = level.time;
+            activeThreat.inflictor = newThreat;
+            activeThreat.lastHitTimestamp = level.time;
+            activeThreat.possibleOrigin = distance * toEnemyDir + self->s.origin;
+            activeThreat.totalDamage = totalInflictedDamage;
+            // Force replanning on new threat
+            if (!hadValidThreat)
+                nextActiveGoalUpdateAt = level.time;
         }
     }
 }
@@ -97,8 +113,6 @@ BotBrain::BotBrain(Bot *bot, float skillLevel_)
       itemsSelector(bot->self),
       selectedNavEntity(nullptr, std::numeric_limits<float>::max(), 0, 0),
       prevSelectedNavEntity(nullptr),
-      threatPossibleOrigin(NAN, NAN, NAN),
-      threatDetectedAt(0),
       triggeredPlanningDanger(Vec3(vec3_origin), Vec3(vec3_origin), 0),
       actualDanger(Vec3(vec3_origin), Vec3(vec3_origin), 0),
       squad(nullptr),
@@ -293,6 +307,31 @@ void BotBrain::CheckNewActiveDanger()
     }
 }
 
+bool BotBrain::Threat::IsValidFor(const edict_t *self) const
+{
+    if (level.time - lastHitTimestamp > 350)
+        return false;
+
+    // Check whether the inflictor entity is no longer valid
+
+    if (!inflictor->r.inuse)
+        return false;
+
+    if (!inflictor->r.client && inflictor->aiIntrinsicEnemyWeight <= 0)
+        return false;
+
+    if (G_ISGHOSTING(inflictor))
+        return false;
+
+    // It is not cheap to call so do it after all other tests have passed
+    vec3_t lookDir;
+    AngleVectors(self->s.origin, lookDir, nullptr, nullptr);
+    Vec3 toThreat(inflictor->s.origin);
+    toThreat -= self->s.origin;
+    toThreat.NormalizeFast();
+    return toThreat.Dot(lookDir) < 0;
+}
+
 void BotBrain::PrepareCurrWorldState(WorldState *worldState)
 {
     worldState->SetIgnoreAll(false);
@@ -419,6 +458,18 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
         worldState->DodgeDangerSpotVar().SetIgnore(true);
     }
 
+    worldState->HasReactedToThreatVar().SetValue(false);
+    if (activeThreat.IsValidFor(self))
+    {
+        worldState->ThreatInflictedDamageVar().SetValue((short)activeThreat.totalDamage);
+        worldState->ThreatPossibleOriginVar().SetValue(activeThreat.possibleOrigin);
+    }
+    else
+    {
+        worldState->ThreatInflictedDamageVar().SetIgnore(true);
+        worldState->ThreatPossibleOriginVar().SetIgnore(true);
+    }
+
     worldState->ResetTacticalSpots();
 
     worldState->SimilarWorldStateInstanceIdVar().SetIgnore(true);
@@ -500,6 +551,12 @@ PlannerNode *BotBrain::GetWorldStateTransitions(const WorldState &from, const Ai
     if (goal == &botRef->reactToDangerGoal)
     {
         TRY_APPLY_ACTION(dodgeToSpotAction);
+
+        return firstTransition;
+    }
+    if (goal == &botRef->reactToThreatGoal)
+    {
+        TRY_APPLY_ACTION(turnToThreatOriginAction);
 
         return firstTransition;
     }

@@ -97,6 +97,23 @@ inline void BotGutsActionsAccessor::InvalidateCampingSpot()
     ent->ai->botRef->campingSpotState.Invalidate();
 }
 
+inline void BotGutsActionsAccessor::SetPendingLookAtPoint(const Vec3 &lookAtPoint,
+                                                          float turnSpeedMultiplier,
+                                                          unsigned timeoutPeriod)
+{
+    ent->ai->botRef->pendingLookAtPointState.SetTriggered(lookAtPoint, turnSpeedMultiplier, timeoutPeriod);
+}
+
+inline bool BotGutsActionsAccessor::IsPendingLookAtPointValid() const
+{
+    return ent->ai->botRef->pendingLookAtPointState.IsActive();
+}
+
+inline void BotGutsActionsAccessor::InvalidatePendingLookAtPoint()
+{
+    ent->ai->botRef->pendingLookAtPointState.timeoutAt = 0;
+}
+
 int BotGutsActionsAccessor::TravelTimeMillis(const Vec3& from, const Vec3 &to, bool allowUnreachable)
 {
     const AiAasWorld *aasWorld = AiAasWorld::Instance();
@@ -2101,6 +2118,67 @@ PlannerNode *BotDodgeToSpotAction::TryApply(const WorldState &worldState)
     plannerNode.WorldState().DangerHitPointVar().SetIgnore(true);
     plannerNode.WorldState().DangerDirectionVar().SetIgnore(true);
     plannerNode.WorldState().HasReactedToDangerVar().SetIgnore(false).SetValue(true);
+
+    return plannerNode.PrepareActionResult();
+}
+
+void BotTurnToThreatOriginActionRecord::Activate()
+{
+    BotBaseActionRecord::Activate();
+    SetPendingLookAtPoint(threatPossibleOrigin, 3.0f, 350);
+}
+
+void BotTurnToThreatOriginActionRecord::Deactivate()
+{
+    BotBaseActionRecord::Deactivate();
+    InvalidatePendingLookAtPoint();
+}
+
+AiBaseActionRecord::Status BotTurnToThreatOriginActionRecord::CheckStatus(const WorldState &currWorldState) const
+{
+    vec3_t lookDir;
+    AngleVectors(self->s.angles, lookDir, nullptr, nullptr);
+
+    Vec3 toThreatDir(threatPossibleOrigin);
+    toThreatDir -= self->s.origin;
+    toThreatDir.NormalizeFast();
+
+    if (toThreatDir.Dot(lookDir) > 0.3f)
+        return COMPLETED;
+
+    return IsPendingLookAtPointValid() ? VALID: INVALID;
+}
+
+PlannerNode *BotTurnToThreatOriginAction::TryApply(const WorldState &worldState)
+{
+    if (worldState.ThreatPossibleOriginVar().Ignore())
+    {
+        Debug("Threat possible origin is ignored in the given world state\n");
+        return nullptr;
+    }
+    if (!worldState.HasReactedToThreatVar().Ignore() && worldState.HasReactedToThreatVar())
+    {
+        Debug("Bot has already reacted to threat in the given world state\n");
+        return nullptr;
+    }
+
+    constexpr float squareDistanceError = WorldState::OriginVar::MAX_ROUNDING_SQUARE_DISTANCE_ERROR;
+    if ((worldState.BotOriginVar().Value() - self->s.origin).SquaredLength() > squareDistanceError)
+    {
+        Debug("The action can be applied only to the current bot origin\n");
+        return nullptr;
+    }
+
+    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, worldState.ThreatPossibleOriginVar().Value())));
+    if (!plannerNode)
+        return nullptr;
+
+    plannerNode.Cost() = 500;
+    plannerNode.WorldState() = worldState;
+    plannerNode.WorldState().ThreatPossibleOriginVar().SetIgnore(true);
+    // If a bot has reacted to threat, he can't hit current enemy (if any)
+    plannerNode.WorldState().CanHitEnemyVar().SetValue(false);
+    plannerNode.WorldState().HasReactedToThreatVar().SetValue(true).SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
 }

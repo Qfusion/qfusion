@@ -378,6 +378,8 @@ public:
     // Returns zero if ent not found
     unsigned LastAttackedByTime(const edict_t *ent) const;
     unsigned LastTargetTime(const edict_t *ent) const;
+
+    float TotalDamageInflictedBy(const edict_t *ent) const;
 };
 
 inline unsigned Enemy::LastAttackedByTime() const { return parent->LastAttackedByTime(ent); }

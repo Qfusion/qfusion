@@ -30,6 +30,10 @@ protected:
     inline void SetDirectionalCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRadius);
     inline void InvalidateCampingSpot();
 
+    inline void SetPendingLookAtPoint(const Vec3 &lookAtPoint, float turnSpeedMultiplier, unsigned timeoutPeriod);
+    inline bool IsPendingLookAtPointValid() const;
+    inline void InvalidatePendingLookAtPoint();
+
     int TravelTimeMillis(const Vec3 &from, const Vec3 &to, bool allowUnreachable = false);
 
     inline unsigned NextSimilarWorldStateInstanceId();
@@ -300,5 +304,20 @@ public:
 };
 
 DECLARE_ACTION(BotDodgeToSpotAction, 1);
+
+class BotTurnToThreatOriginActionRecord: public BotBaseActionRecord
+{
+    Vec3 threatPossibleOrigin;
+public:
+    BotTurnToThreatOriginActionRecord(PoolBase *pool_, edict_t *self_, const Vec3 &threatPossibleOrigin_)
+        : BotBaseActionRecord(pool_, self_, "BotTurnToThreatOriginActionRecord"),
+          threatPossibleOrigin(threatPossibleOrigin_) {}
+
+    void Activate() override;
+    void Deactivate() override;
+    Status CheckStatus(const WorldState &currWorldState) const override;
+};
+
+DECLARE_ACTION(BotTurnToThreatOriginAction, 1);
 
 #endif

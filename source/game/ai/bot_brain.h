@@ -102,9 +102,6 @@ class BotBrain: public AiBaseBrain
     // For tracking picked up items
     const NavEntity *prevSelectedNavEntity;
 
-    Vec3 threatPossibleOrigin;
-    unsigned threatDetectedAt;
-
     inline const SelectedNavEntity &GetOrUpdateSelectedNavEntity()
     {
         if (!selectedNavEntity.IsValid())
@@ -135,6 +132,22 @@ class BotBrain: public AiBaseBrain
 
     Danger triggeredPlanningDanger;
     Danger actualDanger;
+
+    struct Threat
+    {
+        const edict_t *inflictor;
+        Vec3 possibleOrigin;
+        float totalDamage;
+        unsigned lastHitTimestamp;
+
+        // Initialize the inflictor by the world entity (it is never valid as one).
+        // This helps to avoid extra branching from testing for nullity.
+        Threat(): inflictor(world), possibleOrigin(NAN, NAN, NAN), totalDamage(0.0f), lastHitTimestamp(0) {}
+
+        bool IsValidFor(const edict_t *self) const;
+    };
+
+    Threat activeThreat;
 
     void PrepareCurrWorldState(WorldState *worldState) override;
 

@@ -50,4 +50,13 @@ public:
     void GetDesiredWorldState(WorldState *worldState) override;
 };
 
+class BotReactToThreatGoal: public BotBaseGoal
+{
+public:
+    BotReactToThreatGoal(Ai *ai_): BotBaseGoal(ai_, "BotReactToThreatGoal", 350) {}
+
+    void UpdateWeight(const WorldState &currWorldState) override;
+    void GetDesiredWorldState(WorldState *worldState) override;
+};
+
 #endif

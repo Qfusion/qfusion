@@ -256,6 +256,15 @@ unsigned AiBaseEnemyPool::LastTargetTime(const edict_t *ent) const
     return 0;
 }
 
+float AiBaseEnemyPool::TotalDamageInflictedBy(const edict_t *ent) const
+{
+    for (const AttackStats &attackStats: attackers)
+        if (ent && attackStats.ent == ent)
+            return attackStats.totalDamage;
+
+    return 0;
+}
+
 int AiBaseEnemyPool::EnqueueAttacker(const edict_t *attacker, int damage)
 {
     if (!attacker)
