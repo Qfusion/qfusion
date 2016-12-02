@@ -483,7 +483,7 @@ typedef int socket_handle_t;
 #if defined ( __GNUC__ )
 #define ATTRIBUTE_MALLOC __attribute__( ( malloc ) )
 #elif defined ( _MSC_VER )
-#define ATTRIBUTE_MALLOC __declspec( noalias )
+#define ATTRIBUTE_MALLOC __declspec( noalias ) __declspec( restrict )
 #else
 #define ATTRIBUTE_MALLOC
 #endif
