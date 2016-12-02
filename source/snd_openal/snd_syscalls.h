@@ -146,7 +146,7 @@ static inline struct mempool_s *trap_MemAllocPool( const char *name, const char 
 	return SOUND_IMPORT.Mem_AllocPool( name, filename, fileline );
 }
 
-static inline void *trap_MemAlloc( struct mempool_s *pool, size_t size, const char *filename, int fileline ) {
+static inline ATTRIBUTE_MALLOC void *trap_MemAlloc( struct mempool_s *pool, size_t size, const char *filename, int fileline ) {
 	return SOUND_IMPORT.Mem_Alloc( pool, size, filename, fileline );
 }
 

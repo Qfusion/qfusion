@@ -469,7 +469,7 @@ inline char *Cmd_Args( void ) {
 	return UI_IMPORT.Cmd_Args();
 }
 
-inline void *Mem_Alloc( size_t size, const char *filename, int fileline ) {
+inline ATTRIBUTE_MALLOC void *Mem_Alloc( size_t size, const char *filename, int fileline ) {
 	return UI_IMPORT.Mem_Alloc( size, filename, fileline );
 }
 

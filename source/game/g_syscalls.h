@@ -126,7 +126,7 @@ static inline int trap_CM_LeafArea( int leafnum ) {
 	return GAME_IMPORT.CM_LeafArea( leafnum );
 }
 
-static inline void *trap_MemAlloc( size_t size, const char *filename, int fileline ) {
+static inline ATTRIBUTE_MALLOC void *trap_MemAlloc( size_t size, const char *filename, int fileline ) {
 	return GAME_IMPORT.Mem_Alloc( size, filename, fileline );
 }
 

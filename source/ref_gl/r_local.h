@@ -575,13 +575,14 @@ void        R_ShutdownCoronas( void );
 
 extern mempool_t *r_mempool;
 
-#define R_Malloc( size ) ri.Mem_AllocExt( r_mempool, size, 16, 1, __FILE__, __LINE__ )
+#define R_Malloc( size ) R_Malloc_( size, __FILE__, __LINE__ )
 #define R_Realloc( data, size ) ri.Mem_Realloc( data, size, __FILE__, __LINE__ )
 #define R_Free( data ) ri.Mem_Free( data, __FILE__, __LINE__ )
 #define R_AllocPool( parent, name ) ri.Mem_AllocPool( parent, name, __FILE__, __LINE__ )
 #define R_FreePool( pool ) ri.Mem_FreePool( pool, __FILE__, __LINE__ )
 #define R_MallocExt( pool,size,align,z ) ri.Mem_AllocExt( pool,size,align,z,__FILE__,__LINE__ )
 
+ATTRIBUTE_MALLOC void * R_Malloc_( size_t size, const char *filename, int fileline );
 char        *R_CopyString_( const char *in, const char *filename, int fileline );
 #define     R_CopyString( in ) R_CopyString_( in,__FILE__,__LINE__ )
 

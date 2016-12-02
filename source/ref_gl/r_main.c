@@ -1710,6 +1710,13 @@ void R_LatLongToNorm( const uint8_t latlong[2], vec3_t out ) {
 /*
 * R_CopyString
 */
+ATTRIBUTE_MALLOC void *R_Malloc_( size_t size, const char *filename, int fileline ) {
+	return ri.Mem_AllocExt( r_mempool, size, 16, 1, filename, fileline );
+}
+
+/*
+* R_CopyString
+*/
 char *R_CopyString_( const char *in, const char *filename, int fileline ) {
 	char *out;
 
