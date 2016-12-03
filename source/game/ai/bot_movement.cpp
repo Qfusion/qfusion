@@ -1022,14 +1022,14 @@ void Bot::MoveGenericRunning(BotInput *input, bool mayHitWhileRunning)
             toTargetDir2D *= Q_RSqrt(toTargetDir2DSqLen);
 
             float velocityDir2DDotToTargetDir2D = velocityDir2D.Dot(toTargetDir2D);
-            if (velocityDir2DDotToTargetDir2D > STRAIGHT_MOVEMENT_DOT_THRESHOLD)
+            if (velocityDir2DDotToTargetDir2D > STRAIGHT_MOVEMENT_DOT_THRESHOLD && !ShouldMoveCarefully())
             {
                 // Apply cheating acceleration
                 Vec3 newVelocity = GetCheatingAcceleratedVelocity(velocityDir2DDotToTargetDir2D, hasObstacles);
                 VectorCopy(newVelocity.Data(), self->velocity);
             }
             // Correct trajectory using cheating aircontrol
-            else if (velocityDir2DDotToTargetDir2D > 0)
+            else if (velocityDir2DDotToTargetDir2D > -0.3f)
             {
                 Vec3 newVelocity = GetCheatingCorrectedVelocity(velocityDir2DDotToTargetDir2D, toTargetDir2D);
                 VectorCopy(newVelocity.Data(), self->velocity);
@@ -1139,6 +1139,9 @@ Vec3 Bot::GetCheatingAcceleratedVelocity(float velocity2DDirDotToTarget2DDir, bo
 {
     // Apply cheating acceleration if bot is moving quite straight to a target
     if (velocity2DDirDotToTarget2DDir <= STRAIGHT_MOVEMENT_DOT_THRESHOLD)
+        return Vec3(self->velocity);
+
+    if (ShouldMoveCarefully())
         return Vec3(self->velocity);
 
     if (self->groundentity)
