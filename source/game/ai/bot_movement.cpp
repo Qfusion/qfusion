@@ -1588,7 +1588,13 @@ void Bot::CombatMovement(BotInput *input)
 
     if (self->groundentity)
     {
-        if (!input->IsSpecialButtonSet())
+        if (input->IsSpecialButtonSet())
+        {
+            // If both forward/backward and side movement keys are set, reset forward/backward keys to force side dash
+            if (input->ForwardMovement() && input->RightMovement())
+                input->SetForwardMovement(0);
+        }
+        else
         {
             ApplyCheatingGroundAcceleration(input);
 
