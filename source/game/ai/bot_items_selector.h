@@ -12,12 +12,19 @@ class SelectedNavEntity
 
     const NavEntity *navEntity;
     float cost;
-    float rawWeight;
+    float pickupGoalWeight;
     unsigned selectedAt;
     unsigned timeoutAt;
 
-    inline SelectedNavEntity(const NavEntity *navEntity_, float cost_, float rawWeight_, unsigned timeoutAt_)
-        : navEntity(navEntity_), cost(cost_), rawWeight(rawWeight_), selectedAt(level.time), timeoutAt(timeoutAt_) {}
+    inline SelectedNavEntity(const NavEntity *navEntity_,
+                             float cost_,
+                             float pickupGoalWeight_,
+                             unsigned timeoutAt_)
+        : navEntity(navEntity_),
+          cost(cost_),
+          pickupGoalWeight(pickupGoalWeight_),
+          selectedAt(level.time),
+          timeoutAt(timeoutAt_) {}
 
     inline void CheckValid() const
     {
@@ -31,7 +38,6 @@ public:
     {
         navEntity = nullptr;
         cost = std::numeric_limits<float>::max();
-        rawWeight = 0;
         timeoutAt = level.time;
     }
     // Avoid class/method name clash by using Get prefix
@@ -45,10 +51,10 @@ public:
         CheckValid();
         return cost;
     }
-    inline float GetRawWeight() const
+    inline float PickupGoalWeight() const
     {
         CheckValid();
-        return rawWeight;
+        return pickupGoalWeight;
     }
 };
 
@@ -59,24 +65,52 @@ class BotItemsSelector
     float internalEntityWeights[MAX_EDICTS];
     float overriddenEntityWeights[MAX_EDICTS];
 
+    // For each item contains a goal weight that would a corresponding AI pickup goal have.
+    float internalPickupGoalWeights[MAX_EDICTS];
+
     inline float GetEntityWeight(int entNum)
     {
-        float overriddenWeight = overriddenEntityWeights[entNum];
-        if (overriddenWeight != 0)
-            return overriddenWeight;
+        float overriddenEntityWeight = overriddenEntityWeights[entNum];
+        if (overriddenEntityWeight != 0)
+            return overriddenEntityWeight;
         return internalEntityWeights[entNum];
+    }
+
+    inline float GetGoalWeight(int entNum)
+    {
+        float overriddenEntityWeight = overriddenEntityWeights[entNum];
+        // Make goal weight based on overridden entity weight
+        if (overriddenEntityWeight != 0)
+        {
+            float goalWeight = BoundedFraction(overriddenEntityWeight, 10.0f);
+            if (goalWeight > 0)
+                goalWeight = 1.0f / Q_RSqrt(goalWeight);
+            // High weight items would have 2.0f goal weight
+            goalWeight *= 2.0f;
+            return goalWeight;
+        }
+        return internalPickupGoalWeights[entNum];
     }
 
     inline const int *Inventory() const { return self->r.client->ps.inventory; }
 
-    void UpdateInternalItemsWeights();
+    void UpdateInternalItemAndGoalWeights();
 
-    float ComputeItemWeight(const gsitem_t *item, bool onlyGotGB) const;
-    float ComputeWeaponWeight(const gsitem_t *item, bool onlyGotGB) const;
-    float ComputeAmmoWeight(const gsitem_t *item) const;
-    float ComputeArmorWeight(const gsitem_t *item) const;
-    float ComputeHealthWeight(const gsitem_t *item) const;
-    float ComputePowerupWeight(const gsitem_t *item) const;
+    struct ItemAndGoalWeights
+    {
+        float itemWeight;
+        float goalWeight;
+
+        ItemAndGoalWeights(float itemWeight_, float goalWeight_)
+            : itemWeight(itemWeight_), goalWeight(goalWeight_) {}
+    };
+
+    ItemAndGoalWeights ComputeItemWeights(const gsitem_t *item, bool onlyGotGB) const;
+    ItemAndGoalWeights ComputeWeaponWeights(const gsitem_t *item, bool onlyGotGB) const;
+    ItemAndGoalWeights ComputeAmmoWeights(const gsitem_t *item) const;
+    ItemAndGoalWeights ComputeArmorWeights(const gsitem_t *item) const;
+    ItemAndGoalWeights ComputeHealthWeights(const gsitem_t *item) const;
+    ItemAndGoalWeights ComputePowerupWeights(const gsitem_t *item) const;
 
     inline void Debug(const char *format, ...)
     {

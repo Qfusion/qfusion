@@ -20,13 +20,7 @@ void BotGrabItemGoal::UpdateWeight(const WorldState &currWorldState)
     if (SelectedNavEntity().IsEmpty())
         return;
 
-    float entRawWeight = SelectedNavEntity().GetRawWeight();
-    if (entRawWeight <= 0.0f)
-        return;
-
-    float goalWeight = 1.5f * BoundedFraction(entRawWeight, 5.0f);
-
-    this->weight = goalWeight;
+    this->weight = SelectedNavEntity().PickupGoalWeight();
 }
 
 void BotGrabItemGoal::GetDesiredWorldState(WorldState *worldState)

@@ -1,8 +1,11 @@
 #include "bot_items_selector.h"
 #include "bot.h"
 
-void BotItemsSelector::UpdateInternalItemsWeights()
+void BotItemsSelector::UpdateInternalItemAndGoalWeights()
 {
+    memset(internalEntityWeights, 0, sizeof(internalEntityWeights));
+    memset(internalPickupGoalWeights, 0, sizeof(internalPickupGoalWeights));
+
     // Compute it once, not on each loop step
     bool onlyGotGB = true;
     for (int weapon = WEAP_GUNBLADE + 1; weapon < WEAP_TOTAL; ++weapon)
@@ -14,8 +17,6 @@ void BotItemsSelector::UpdateInternalItemsWeights()
         }
     }
 
-    // Weights are set to zero by caller code.
-    // Only non-zero weights should be set.
     FOREACH_NAVENT(goalEnt)
     {
         // Picking clients as goal entities is currently disabled
@@ -23,41 +24,52 @@ void BotItemsSelector::UpdateInternalItemsWeights()
             continue;
 
         if (goalEnt->Item())
-            internalEntityWeights[goalEnt->Id()] = ComputeItemWeight(goalEnt->Item(), onlyGotGB);
+        {
+            ItemAndGoalWeights weights = ComputeItemWeights(goalEnt->Item(), onlyGotGB);
+            internalEntityWeights[goalEnt->Id()] = weights.itemWeight;
+            internalPickupGoalWeights[goalEnt->Id()] = weights.goalWeight;
+        }
     }
 }
 
-float BotItemsSelector::ComputeItemWeight(const gsitem_t *item, bool onlyGotGB) const
+BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputeItemWeights(const gsitem_t *item, bool onlyGotGB) const
 {
     switch (item->type)
     {
-        case IT_WEAPON: return ComputeWeaponWeight(item, onlyGotGB);
-        case IT_AMMO: return ComputeAmmoWeight(item);
-        case IT_HEALTH: return ComputeHealthWeight(item);
-        case IT_ARMOR: return ComputeArmorWeight(item);
-        case IT_POWERUP: return ComputePowerupWeight(item);
+        case IT_WEAPON: return ComputeWeaponWeights(item, onlyGotGB);
+        case IT_AMMO: return ComputeAmmoWeights(item);
+        case IT_HEALTH: return ComputeHealthWeights(item);
+        case IT_ARMOR: return ComputeArmorWeights(item);
+        case IT_POWERUP: return ComputePowerupWeights(item);
     }
-    return 0;
+    return ItemAndGoalWeights(0, 0);
 }
 
-float BotItemsSelector::ComputeWeaponWeight(const gsitem_t *item, bool onlyGotGB) const
+BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputeWeaponWeights(const gsitem_t *item, bool onlyGotGB) const
 {
     if (Inventory()[item->tag])
     {
         // TODO: Precache
         const gsitem_t *ammo = GS_FindItemByTag(item->ammo_tag);
         if (Inventory()[ammo->tag] >= ammo->inventory_max)
-            return 0;
+            return ItemAndGoalWeights(0, 0);
 
         float ammoQuantityFactor = 1.0f - Inventory()[ammo->tag] / (float)ammo->inventory_max;
+        if (ammoQuantityFactor > 0)
+            ammoQuantityFactor = 1.0f / Q_RSqrt(ammoQuantityFactor);
 
         switch (item->tag)
         {
-            case WEAP_ELECTROBOLT: return ammoQuantityFactor;
-            case WEAP_LASERGUN: return ammoQuantityFactor * 1.1f;
-            case WEAP_PLASMAGUN: return ammoQuantityFactor * 1.1f;
-            case WEAP_ROCKETLAUNCHER: return ammoQuantityFactor;
-            default: return 0.5f * ammoQuantityFactor;
+            case WEAP_ELECTROBOLT:
+                return ItemAndGoalWeights(ammoQuantityFactor, 0.5f * ammoQuantityFactor);
+            case WEAP_LASERGUN:
+                return ItemAndGoalWeights(ammoQuantityFactor * 1.1f, 0.6f * ammoQuantityFactor);
+            case WEAP_PLASMAGUN:
+                return ItemAndGoalWeights(ammoQuantityFactor * 1.1f, 0.6f * ammoQuantityFactor);
+            case WEAP_ROCKETLAUNCHER:
+                return ItemAndGoalWeights(ammoQuantityFactor, 0.5f * ammoQuantityFactor);
+            default:
+                return ItemAndGoalWeights(0.75f * ammoQuantityFactor, 0.75f * ammoQuantityFactor);
         }
     }
 
@@ -75,17 +87,22 @@ float BotItemsSelector::ComputeWeaponWeight(const gsitem_t *item, bool onlyGotGB
     for (int i = 0; i < 4; ++i)
     {
         if (topTierWeapons[i] == item->tag)
-            return (onlyGotGB ? 1.5f : 0.9f) + (topTierWeaponGreed - 1.0f) / 3.0f;
+        {
+            float weight = (onlyGotGB ? 1.5f : 0.9f) + (topTierWeaponGreed - 1.0f) / 3.0f;
+            return ItemAndGoalWeights(weight, weight);
+        }
     }
 
-    return onlyGotGB ? 1.5f : 0.7f;
+    return onlyGotGB ? ItemAndGoalWeights(1.5f, 1.5f) : ItemAndGoalWeights(0.75f, 0.75f);
 }
 
-float BotItemsSelector::ComputeAmmoWeight(const gsitem_t *item) const
+BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputeAmmoWeights(const gsitem_t *item) const
 {
     if (Inventory()[item->tag] < item->inventory_max)
     {
         float quantityFactor = 1.0f - Inventory()[item->tag] / (float)item->inventory_max;
+        if (quantityFactor > 0)
+            quantityFactor = 1.0f / Q_RSqrt(quantityFactor);
 
         for (int weapon = WEAP_GUNBLADE; weapon < WEAP_TOTAL; weapon++)
         {
@@ -97,55 +114,63 @@ float BotItemsSelector::ComputeAmmoWeight(const gsitem_t *item) const
                 {
                     switch (weaponItem->tag)
                     {
-                        case WEAP_ELECTROBOLT: return quantityFactor;
-                        case WEAP_LASERGUN: return quantityFactor * 1.1f;
-                        case WEAP_PLASMAGUN: return quantityFactor * 1.1f;
-                        case WEAP_ROCKETLAUNCHER: return quantityFactor;
-                        default: return 0.5f * quantityFactor;
+                        case WEAP_ELECTROBOLT:
+                            return ItemAndGoalWeights(quantityFactor, quantityFactor);
+                        case WEAP_LASERGUN:
+                            return ItemAndGoalWeights(quantityFactor * 1.1f, quantityFactor);
+                        case WEAP_PLASMAGUN:
+                            return ItemAndGoalWeights(quantityFactor * 1.1f, quantityFactor);
+                        case WEAP_ROCKETLAUNCHER:
+                            return ItemAndGoalWeights(quantityFactor, quantityFactor);
+                        default:
+                            return ItemAndGoalWeights(0.5f * quantityFactor, quantityFactor);
                     }
                 }
-                return quantityFactor * 0.33f;
+                return ItemAndGoalWeights(quantityFactor * 0.33f, quantityFactor * 0.5f);
             }
         }
     }
-    return 0.0;
+    return ItemAndGoalWeights(0.0, 0.0f);
 }
 
-float BotItemsSelector::ComputeHealthWeight(const gsitem_t *item) const
+BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputeHealthWeights(const gsitem_t *item) const
 {
     if (item->tag == HEALTH_MEGA || item->tag == HEALTH_ULTRA)
-        return 2.5f;
+        return ItemAndGoalWeights(2.5f, 1.5f);
 
+    // Always set low goal weight for small health bubbles
     if (item->tag == HEALTH_SMALL)
-        return 0.2f + 0.3f * (1.0f - self->health / (float)self->max_health);
+        return ItemAndGoalWeights(0.2f + 0.3f * (1.0f - self->health / (float) self->max_health), 0.05f);
 
-    return std::max(0.0f, 1.0f - self->health / (float)self->max_health);
+    float healthFactor = std::max(0.0f, 1.0f - self->health / (float)self->max_health);
+    return ItemAndGoalWeights(healthFactor, healthFactor);
 }
 
-float BotItemsSelector::ComputeArmorWeight(const gsitem_t *item) const
+BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputeArmorWeights(const gsitem_t *item) const
 {
     float currArmor = self->r.client->resp.armor;
     switch (item->tag)
     {
         case ARMOR_RA:
-            return currArmor < 150.0f ? 2.0f : 0.0f;
+            return currArmor < 150.0f ? ItemAndGoalWeights(2.0f, 1.0f) : ItemAndGoalWeights(0, 0);
         case ARMOR_YA:
-            return currArmor < 125.0f ? 1.7f : 0.0f;
+            return currArmor < 125.0f ? ItemAndGoalWeights(1.7f, 1.0f) : ItemAndGoalWeights(0, 0);
         case ARMOR_GA:
-            return currArmor < 100.0f ? 1.4f : 0.0f;
+            return currArmor < 100.0f ? ItemAndGoalWeights(1.4f, 1.0f) : ItemAndGoalWeights(0, 0);
         case ARMOR_SHARD:
         {
+            // Always set low goal weight for shards
             if (currArmor < 25 || currArmor >= 150)
-                return 0.4f;
-            return 0.25f;
+                return ItemAndGoalWeights(0.4f, 0.10f);
+            return ItemAndGoalWeights(0.25f, 0.05f);
         }
     }
-    return 0;
+    return ItemAndGoalWeights(0, 0);
 }
 
-float BotItemsSelector::ComputePowerupWeight(const gsitem_t *item) const
+BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputePowerupWeights(const gsitem_t *item) const
 {
-    return 3.5f;
+    return ItemAndGoalWeights(3.5f, 2.00f);
 }
 
 constexpr float MOVE_TIME_WEIGHT = 1.0f;
@@ -162,7 +187,7 @@ struct NavEntityAndWeight
 
 SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity &currSelectedNavEntity)
 {
-    UpdateInternalItemsWeights();
+    UpdateInternalItemAndGoalWeights();
 
     StaticVector<NavEntityAndWeight, MAX_NAVENTS> rawWeightCandidates;
     FOREACH_NAVENT(navEnt)
@@ -198,11 +223,9 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
 
     const NavEntity *currGoalNavEntity = currSelectedNavEntity.navEntity;
     float currGoalEntWeight = 0.0f;
-    float currGoalEntRawWeight = 0.0f;
     float currGoalEntCost = 0.0f;
     const NavEntity *bestNavEnt = nullptr;
     float bestWeight = 0.000001f;
-    float bestNavEntRawWeight = 0.0f;
     float bestNavEntCost = 0.0f;
     // Test not more than 16 best pre-selected by raw weight candidates.
     // (We try to avoid too many expensive FindTravelTimeToGoalArea() calls,
@@ -249,14 +272,12 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
         float moveCost = MOVE_TIME_WEIGHT * moveDuration * navEnt->CostInfluence();
         float cost = 0.0001f + moveCost + WAIT_TIME_WEIGHT * waitDuration * navEnt->CostInfluence();
 
-        float rawWeight = weight;
         weight = (1000 * weight) / cost;
 
         // Store current weight of the current goal entity
         if (currGoalNavEntity == navEnt)
         {
             currGoalEntWeight = weight;
-            currGoalEntRawWeight = rawWeight;
             // Waiting time is handled by the planner for wait actions separately.
             currGoalEntCost = moveCost;
         }
@@ -265,7 +286,6 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
         {
             bestNavEnt = navEnt;
             bestWeight = weight;
-            bestNavEntRawWeight = rawWeight;
             // Waiting time is handled by the planner for wait actions separately.
             bestNavEntCost = moveCost;
         }
@@ -284,7 +304,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
     {
         constexpr const char *format = "current goal entity %s is kept as still having best weight %.3f\n";
         Debug(format, currGoalNavEntity->Name(), bestWeight);
-        return SelectedNavEntity(bestNavEnt, bestNavEntCost, bestNavEntRawWeight, level.time + 500);
+        return SelectedNavEntity(bestNavEnt, bestNavEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 500);
     }
     else if (currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold)
     {
@@ -292,7 +312,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
             "current goal entity %s is kept as having weight %.3f good enough to not consider picking another one\n";
         // If currGoalEntWeight > 0, currLongTermGoalEnt is guaranteed to be non-null
         Debug(format, currGoalNavEntity->Name(), currGoalEntWeight);
-        return SelectedNavEntity(currGoalNavEntity, currGoalEntCost, currGoalEntRawWeight, level.time + 300);
+        return SelectedNavEntity(currGoalNavEntity, currGoalEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 300);
     }
     else
     {
@@ -305,6 +325,6 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
         {
             Debug("suggested %s weighted %.3f as a new long-term goal\n", bestNavEnt->Name(), bestWeight);
         }
-        return SelectedNavEntity(bestNavEnt, bestNavEntCost, bestNavEntRawWeight, level.time + 400);
+        return SelectedNavEntity(bestNavEnt, bestNavEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 400);
     }
 }
