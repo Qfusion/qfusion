@@ -103,7 +103,7 @@ public:
 
     void Activate() override;
     void Deactivate() override;
-    Status CheckStatus(const WorldState &currWorldState) const;
+    Status CheckStatus(const WorldState &currWorldState) const override;
 };
 
 DECLARE_ACTION(BotPickupItemAction, 3);
@@ -120,7 +120,7 @@ public:
 
     void Activate() override;
     void Deactivate() override;
-    Status CheckStatus(const WorldState &currWorldState) const;
+    Status CheckStatus(const WorldState &currWorldState) const override;
 };
 
 DECLARE_ACTION(BotWaitForItemAction, 3);
@@ -136,7 +136,7 @@ public:
 
     void Activate() override { BotBaseActionRecord::Activate(); }
     void Deactivate() override { BotBaseActionRecord::Deactivate(); }
-    Status CheckStatus(const WorldState &currWorldState) const
+    Status CheckStatus(const WorldState &currWorldState) const override
     {
         Debug("This is a dummy action, should move to next one or replan\n");
         return COMPLETED;
