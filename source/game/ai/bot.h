@@ -123,6 +123,12 @@ class Bot: public Ai
     friend class BotItemsSelector;
     friend class BotWeaponSelector;
     friend class BotBaseGoal;
+    friend class BotGrabItemGoal;
+    friend class BotKillEnemyGoal;
+    friend class BotRunAwayGoal;
+    friend class BotReactToDangerGoal;
+    friend class BotReactToThreatGoal;
+    friend class BotReactToEnemyLostGoal;
     friend class BotGutsActionsAccessor;
     friend class BotTacticalSpotsCache;
     friend class WorldState;

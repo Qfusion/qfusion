@@ -9,6 +9,7 @@ public:
     BotBaseGoal(Ai *ai_, const char *name_, unsigned updatePeriod_)
         : AiBaseGoal(ai_, name_, updatePeriod_) {}
 
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 protected:
     inline const class SelectedNavEntity &SelectedNavEntity() const;
     inline const class SelectedEnemies &SelectedEnemies() const;
@@ -21,6 +22,7 @@ public:
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 };
 
 class BotKillEnemyGoal: public BotBaseGoal
@@ -30,6 +32,7 @@ public:
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 };
 
 class BotRunAwayGoal: public BotBaseGoal
@@ -39,6 +42,7 @@ public:
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 };
 
 class BotReactToDangerGoal: public BotBaseGoal
@@ -48,6 +52,7 @@ public:
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 };
 
 class BotReactToThreatGoal: public BotBaseGoal
@@ -57,6 +62,7 @@ public:
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 };
 
 class BotReactToEnemyLostGoal: public BotBaseGoal
@@ -66,6 +72,7 @@ public:
 
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 };
 
 #endif

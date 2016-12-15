@@ -33,6 +33,7 @@ public:
 
     virtual void UpdateWeight(const WorldState &worldState) = 0;
     virtual void GetDesiredWorldState(WorldState *worldState) = 0;
+    virtual struct PlannerNode *GetWorldStateTransitions(const WorldState &worldState) = 0;
 
     inline bool IsRelevant() const { return weight > 0; }
 
@@ -389,9 +390,6 @@ protected:
 
     // Allowed to be overridden in a subclass for class-specific optimization purposes
     virtual AiBaseActionRecord *BuildPlan(AiBaseGoal *goal, const WorldState &startWorldState);
-
-    // Allowed to be overridden in a subclass for class-specific optimization purposes
-    virtual PlannerNode *GetWorldStateTransitions(const WorldState &from, const AiBaseGoal *goal) const;
 
     AiBaseActionRecord *ReconstructPlan(PlannerNode *lastNode) const;
 

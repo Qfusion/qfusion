@@ -153,8 +153,6 @@ class BotBrain: public AiBaseBrain
 
     bool ShouldSkipPlanning() const override;
 
-    PlannerNode *GetWorldStateTransitions(const WorldState &from, const AiBaseGoal *goal) const override;
-
     BotBrain() = delete;
     // Disable copying and moving
     BotBrain(BotBrain &&that) = delete;
