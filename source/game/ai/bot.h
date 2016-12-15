@@ -525,11 +525,6 @@ private:
             this->isTriggered = true;
         }
 
-        inline float EffectiveTurnSpeedMultiplier(float baseTurnSpeedMultiplier) const
-        {
-            return isTriggered ? turnSpeedMultiplier : baseTurnSpeedMultiplier;
-        }
-
         inline void Invalidate()
         {
             isTriggered = false;

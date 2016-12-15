@@ -79,7 +79,8 @@ void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput)
     botInput->intendedLookVec = toPointDir;
     botInput->isLookVecSet = true;
 
-    botInput->alreadyComputedAngles = GetNewViewAngles(self->s.angles, toPointDir, botInput->turnSpeedMultiplier);
+    Vec3 newAngles = GetNewViewAngles(self->s.angles, toPointDir, pendingLookAtPointState.turnSpeedMultiplier);
+    botInput->alreadyComputedAngles = newAngles;
     botInput->hasAlreadyComputedAngles = true;
 
     botInput->canOverrideLookVec = false;
