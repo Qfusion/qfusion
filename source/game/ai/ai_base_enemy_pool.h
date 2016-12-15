@@ -133,6 +133,9 @@ public:
         return ent->r.client ? ent->r.client->netname : ent->classname;
     }
 
+    inline float AvgWeight() const { return avgPositiveWeight; }
+    inline float MaxWeight() const { return maxPositiveWeight; }
+
     inline bool HasQuad() const { return ::HasQuad(ent); }
     inline bool HasShell() const { return ::HasShell(ent); }
     inline bool HasPowerups() const { return ::HasPowerups(ent); }
@@ -367,8 +370,8 @@ public:
     bool WillAssignAimEnemy() const;
 
     // Note that these methods modify this object state
-    const Enemy *ChooseAimEnemy(const edict_t *challenger);
-    const Enemy *ChooseHiddenEnemy(const edict_t *challenger);
+    const Enemy *ChooseVisibleEnemy(const edict_t *challenger);
+    const Enemy *ChooseLostOrHiddenEnemy(const edict_t *challenger);
 
     void OnPain(const edict_t *bot, const edict_t *enemy, float kick, int damage);
     void OnEnemyDamaged(const edict_t *bot, const edict_t *target, int damage);

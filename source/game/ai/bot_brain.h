@@ -198,6 +198,7 @@ protected:
     virtual void OnAttitudeChanged(const edict_t *ent, int oldAttitude_, int newAttitude_) override;
 public:
     SelectedEnemies &selectedEnemies;
+    SelectedEnemies lostEnemies;
     SelectedWeapons &selectedWeapons;
 
     // A WorldState cached from the moment of last world state update

@@ -267,6 +267,8 @@ public:
         defenceSpotId = -1;
         offenseSpotId = spotId;
     }
+    inline float Fov() const { return 110.0f + 69.0f * Skill(); }
+    inline float FovDotFactor() const { return cosf((float)DEG2RAD(Fov() / 2)); }
 protected:
     virtual void Frame() override;
     virtual void Think() override;
@@ -309,6 +311,7 @@ private:
     BotRunAwayGoal runAwayGoal;
     BotReactToDangerGoal reactToDangerGoal;
     BotReactToThreatGoal reactToThreatGoal;
+    BotReactToEnemyLostGoal reactToEnemyLostGoal;
 
     BotGenericRunToItemAction genericRunToItemAction;
     BotPickupItemAction pickupItemAction;
@@ -335,6 +338,10 @@ private:
     BotDodgeToSpotAction dodgeToSpotAction;
 
     BotTurnToThreatOriginAction turnToThreatOriginAction;
+
+    BotTurnToLostEnemyAction turnToLostEnemyAction;
+    BotStartLostEnemyPursuitAction startLostEnemyPursuitAction;
+    BotStopLostEnemyPursuitAction stopLostEnemyPursuitAction;
 
     struct JumppadMovementState
     {

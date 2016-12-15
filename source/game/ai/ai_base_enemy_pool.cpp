@@ -417,7 +417,7 @@ struct EnemyAndScore
     bool operator<(const EnemyAndScore &that) const { return score > that.score; }
 };
 
-const Enemy *AiBaseEnemyPool::ChooseAimEnemy(const edict_t *challenger)
+const Enemy *AiBaseEnemyPool::ChooseVisibleEnemy(const edict_t *challenger)
 {
     Vec3 botOrigin(challenger->s.origin);
     vec3_t forward;
@@ -492,7 +492,7 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy(const edict_t *challenger)
     return candidates.front().enemy;
 }
 
-const Enemy *AiBaseEnemyPool::ChooseHiddenEnemy(const edict_t *challenger)
+const Enemy *AiBaseEnemyPool::ChooseLostOrHiddenEnemy(const edict_t *challenger)
 {
     if (AvgSkill() < 0.33f)
         return nullptr;

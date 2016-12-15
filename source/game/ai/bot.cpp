@@ -16,6 +16,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       runAwayGoal(this),
       reactToDangerGoal(this),
       reactToThreatGoal(this),
+      reactToEnemyLostGoal(this),
       genericRunToItemAction(this),
       pickupItemAction(this),
       waitForItemAction(this),
@@ -36,6 +37,9 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       stopRunningAwayAction(this),
       dodgeToSpotAction(this),
       turnToThreatOriginAction(this),
+      turnToLostEnemyAction(this),
+      startLostEnemyPursuitAction(this),
+      stopLostEnemyPursuitAction(this),
       rocketJumpMovementState(self_),
       combatMovePushTimeout(0),
       vsayTimeout(level.time + 10000),
@@ -196,8 +200,7 @@ void Bot::RegisterVisibleEnemies()
     vec3_t lookDir;
     AngleVectors(self->s.angles, lookDir, nullptr, nullptr);
 
-    float fov = 110.0f + 69.0f * Skill();
-    float dotFactor = cosf((float)DEG2RAD(fov / 2));
+    const float dotFactor = FovDotFactor();
 
     struct EntAndDistance
     {

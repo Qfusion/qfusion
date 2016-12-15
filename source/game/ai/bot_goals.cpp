@@ -116,3 +116,20 @@ void BotReactToThreatGoal::GetDesiredWorldState(WorldState *worldState)
 
     worldState->HasReactedToThreatVar().SetIgnore(false).SetValue(true);
 }
+
+void BotReactToEnemyLostGoal::UpdateWeight(const WorldState &currWorldState)
+{
+    this->weight = 0.0f;
+
+    if (currWorldState.LostEnemyLastSeenOriginVar().Ignore())
+        return;
+
+    this->weight = 1.5f * self->ai->botRef->GetEffectiveOffensiveness();
+}
+
+void BotReactToEnemyLostGoal::GetDesiredWorldState(WorldState *worldState)
+{
+    worldState->SetIgnoreAll(true);
+
+    worldState->HasReactedToEnemyLostVar().SetIgnore(false).SetValue(true);
+}

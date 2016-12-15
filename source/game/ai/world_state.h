@@ -141,6 +141,10 @@ private:
         HasReactedToDanger,
         HasReactedToThreat,
 
+        IsReactingToEnemyLost,
+        HasReactedToEnemyLost,
+        MightSeeLostEnemyAfterTurn,
+
         HasJustTeleported,
         HasJustTouchedJumppad,
         HasJustEnteredElevator,
@@ -176,6 +180,7 @@ private:
         // if a danger is present because ReactToDanger is a very high priority goal
         DodgeDangerSpot,
         ThreatPossibleOrigin,
+        LostEnemyLastSeenOrigin,
 
         NUM_ORIGIN_VARS
     };
@@ -347,12 +352,12 @@ public:
         {
             return *(const PackedFields *)&Data()[3];
         }
-
-        inline float DistanceTo(const OriginVar &that) const;
     public:
         // Each coordinate is rounded up to 4 units
         // Thus maximal rounding distance error = sqrt(dx*dx + dy*dy + dz*dz) = sqrt(4*4 + 4*4 + 4*4)
         static constexpr float MAX_ROUNDING_SQUARE_DISTANCE_ERROR = 3 * 4 * 4;
+
+        inline float DistanceTo(const OriginVar &that) const;
 
         inline Vec3 Value() const
         {
@@ -604,6 +609,10 @@ public:
     DECLARE_BOOL_VAR(HasReactedToDanger)
     DECLARE_BOOL_VAR(HasReactedToThreat)
 
+    DECLARE_BOOL_VAR(IsReactingToEnemyLost)
+    DECLARE_BOOL_VAR(HasReactedToEnemyLost)
+    DECLARE_BOOL_VAR(MightSeeLostEnemyAfterTurn)
+
     DECLARE_BOOL_VAR(HasJustTeleported)
     DECLARE_BOOL_VAR(HasJustTouchedJumppad)
     DECLARE_BOOL_VAR(HasJustEnteredElevator)
@@ -637,6 +646,7 @@ public:
     DECLARE_ORIGIN_VAR(DangerDirection)
     DECLARE_ORIGIN_VAR(DodgeDangerSpot)
     DECLARE_ORIGIN_VAR(ThreatPossibleOrigin)
+    DECLARE_ORIGIN_VAR(LostEnemyLastSeenOrigin)
 
     DECLARE_ORIGIN_LAZY_VAR(SniperRangeTacticalSpot)
     DECLARE_ORIGIN_LAZY_VAR(FarRangeTacticalSpot)

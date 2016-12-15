@@ -113,8 +113,15 @@ public:
 
     inline void Invalidate()
     {
-        timeoutAt = level.time;
+        timeoutAt = 0;
+        primaryEnemy = nullptr;
+        activeEnemies.clear();
     }
+
+    void Set(const Enemy *primaryEnemy_,
+             unsigned timeoutPeriod,
+             const Enemy *const *activeEnemiesBegin,
+             const Enemy *const *activeEnemiesEnd);
 
     inline unsigned InstanceId() const { return instanceId; }
 

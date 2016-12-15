@@ -320,4 +320,37 @@ public:
 
 DECLARE_ACTION(BotTurnToThreatOriginAction, 1);
 
+class BotTurnToLostEnemyActionRecord: public BotBaseActionRecord
+{
+    Vec3 lastSeenEnemyOrigin;
+public:
+    BotTurnToLostEnemyActionRecord(PoolBase *pool_, edict_t *self_, const Vec3 &lastSeenEnemyOrigin_)
+        : BotBaseActionRecord(pool_, self_, "BotTurnToLostEnemyActionRecord"),
+          lastSeenEnemyOrigin(lastSeenEnemyOrigin_) {}
+
+    void Activate() override;
+    void Deactivate() override;
+    Status CheckStatus(const WorldState &currWorldState) const override;
+};
+
+DECLARE_ACTION(BotTurnToLostEnemyAction, 1);
+
+class BotStartLostEnemyPursuitActionRecord: public BotDummyActionRecord
+{
+public:
+    BotStartLostEnemyPursuitActionRecord(PoolBase *pool_, edict_t *self_)
+        : BotDummyActionRecord(pool_, self_, "BotStartLostEnemyPursuitActionRecord") {}
+};
+
+DECLARE_ACTION(BotStartLostEnemyPursuitAction, 1);
+
+class BotStopLostEnemyPursuitActionRecord: public BotDummyActionRecord
+{
+public:
+    BotStopLostEnemyPursuitActionRecord(PoolBase *pool_, edict_t *self_)
+        : BotDummyActionRecord(pool_, self_, "BotStopLostEnemyPursuitActionRecord") {}
+};
+
+DECLARE_ACTION(BotStopLostEnemyPursuitAction, 1);
+
 #endif

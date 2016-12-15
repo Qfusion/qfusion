@@ -11,6 +11,23 @@ bool SelectedEnemies::AreValid() const
     return timeoutAt > level.time;
 }
 
+void SelectedEnemies::Set(const Enemy *primaryEnemy_,
+                          unsigned timeoutPeriod,
+                          const Enemy * const *activeEnemiesBegin,
+                          const Enemy * const *activeEnemiesEnd)
+{
+    this->primaryEnemy = primaryEnemy_;
+    this->timeoutAt = level.time + timeoutPeriod;
+
+#ifndef _DEBUG
+    if (!activeEnemies.empty())
+        AI_FailWith("SelectedEnemies::Set()", "activeEnemies.size() %d > 0", activeEnemies.size());
+#endif
+
+    for (const Enemy *const *iter = activeEnemiesBegin; iter != activeEnemiesEnd; ++iter)
+        this->activeEnemies.push_back(*iter);
+}
+
 float SelectedEnemies::DamageToKill() const
 {
     CheckValid(__FUNCTION__);

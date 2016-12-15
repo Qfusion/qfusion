@@ -167,15 +167,26 @@ void BotBrain::Think()
 
 void BotBrain::UpdateSelectedEnemies()
 {
-    selectedEnemies.primaryEnemy = nullptr;
-    selectedEnemies.activeEnemies.clear();
-    selectedEnemies.timeoutAt = level.time;
-    if (const Enemy *primaryEnemy = activeEnemyPool->ChooseAimEnemy(self))
+    selectedEnemies.Invalidate();
+    lostEnemies.Invalidate();
+    float visibleEnemyWeight = 0.0f;
+    if (const Enemy *visibleEnemy = activeEnemyPool->ChooseVisibleEnemy(self))
     {
-        selectedEnemies.primaryEnemy = primaryEnemy;
-        for (const Enemy *activeEnemy: activeEnemyPool->ActiveEnemies())
-            selectedEnemies.activeEnemies.push_back(activeEnemy);
-        selectedEnemies.timeoutAt += targetChoicePeriod;
+        const auto &activeEnemies = activeEnemyPool->ActiveEnemies();
+        selectedEnemies.Set(visibleEnemy, targetChoicePeriod, activeEnemies.begin(), activeEnemies.end());
+        visibleEnemyWeight = 0.5f * (visibleEnemy->AvgWeight() + visibleEnemy->MaxWeight());
+    }
+    if (const Enemy *lostEnemy = activeEnemyPool->ChooseLostOrHiddenEnemy(self))
+    {
+        float lostEnemyWeight = 0.5f * (lostEnemy->AvgWeight() + lostEnemy->MaxWeight());
+        // If there is a lost or hidden enemy of higher weight, store it
+        if (lostEnemyWeight > visibleEnemyWeight)
+        {
+            // Provide a pair of iterators to the Set call:
+            // lostEnemies.activeEnemies must contain the lostEnemy.
+            const Enemy *enemies[] = { lostEnemy };
+            lostEnemies.Set(lostEnemy, targetChoicePeriod, enemies, enemies + 1);
+        }
     }
 }
 
@@ -362,6 +373,28 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
         worldState->EnemyHasGoodMiddleRangeWeaponsVar().SetIgnore(true);
         worldState->EnemyHasGoodCloseRangeWeaponsVar().SetIgnore(true);
         worldState->EnemyCanHitVar().SetIgnore(true);
+    }
+
+    if (lostEnemies.AreValid())
+    {
+        worldState->IsReactingToEnemyLostVar().SetValue(false);
+        worldState->HasReactedToEnemyLostVar().SetValue(false);
+        worldState->LostEnemyLastSeenOriginVar().SetValue(lostEnemies.LastSeenOrigin());
+        trace_t trace;
+        G_Trace(&trace, self->s.origin, nullptr, nullptr, lostEnemies.ActualOrigin().Data(), self, MASK_AISOLID);
+        if (trace.fraction == 1.0f)
+            worldState->MightSeeLostEnemyAfterTurnVar().SetValue(true);
+        else if (game.edicts + trace.ent == lostEnemies.TraceKey())
+            worldState->MightSeeLostEnemyAfterTurnVar().SetValue(true);
+        else
+            worldState->MightSeeLostEnemyAfterTurnVar().SetValue(false);
+    }
+    else
+    {
+        worldState->IsReactingToEnemyLostVar().SetIgnore(true);
+        worldState->HasReactedToEnemyLostVar().SetIgnore(true);
+        worldState->LostEnemyLastSeenOriginVar().SetIgnore(true);
+        worldState->MightSeeLostEnemyAfterTurnVar().SetIgnore(true);
     }
 
     worldState->HealthVar().SetValue((short)HEALTH_TO_INT(self->health));
@@ -557,6 +590,15 @@ PlannerNode *BotBrain::GetWorldStateTransitions(const WorldState &from, const Ai
     if (goal == &botRef->reactToThreatGoal)
     {
         TRY_APPLY_ACTION(turnToThreatOriginAction);
+
+        return firstTransition;
+    }
+    if (goal == &botRef->reactToEnemyLostGoal)
+    {
+        TRY_APPLY_ACTION(turnToLostEnemyAction);
+        TRY_APPLY_ACTION(startLostEnemyPursuitAction);
+        TRY_APPLY_ACTION(genericRunAvoidingCombatAction);
+        TRY_APPLY_ACTION(stopLostEnemyPursuitAction);
 
         return firstTransition;
     }
