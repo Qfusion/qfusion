@@ -673,7 +673,6 @@ private:
     void UpdateScriptWeaponsStatus();
 
     void Move(BotInput *input, bool mayHitWhileRunning);
-    void LookAround();
     void ChangeWeapons(const SelectedWeapons &selectedWeapons);
     void ChangeWeapon(int weapon);
     void FireWeapon(BotInput *input);

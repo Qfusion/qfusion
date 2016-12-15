@@ -55,18 +55,6 @@ Bot::Bot(edict_t *self_, float skillLevel_)
     SetTag(self->r.client->netname);
 }
 
-void Bot::LookAround()
-{
-    CheckIsInThinkFrame(__FUNCTION__);
-
-    TestClosePlace();
-
-    RegisterVisibleEnemies();
-
-    if (selectedWeapons.AreValid())
-        ChangeWeapons(selectedWeapons);
-}
-
 void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput)
 {
     if (!pendingLookAtPointState.IsActive())
@@ -528,9 +516,16 @@ void Bot::Think()
     if (IsGhosting())
         return;
 
-    LookAround();
+    TestClosePlace();
 
-    weaponsSelector.Think(botBrain.cachedWorldState);
+    RegisterVisibleEnemies();
+
+    // Disable weapon switching if there is a pending rocket jump
+    if (!rocketJumpMovementState.IsActive() || rocketJumpMovementState.hasCorrectedRocketJump)
+    {
+        weaponsSelector.Think(botBrain.cachedWorldState);
+        ChangeWeapons(selectedWeapons);
+    }
 }
 
 //==========================================
