@@ -1413,6 +1413,7 @@ struct edict_s
 
 	ai_handle_t *ai;     //MbotGame
 	float aiIntrinsicEnemyWeight;
+	float aiVisibilityDistance;
 
 	snap_edict_t snap; // information that is cleared each frame snap
 

@@ -711,10 +711,6 @@ int AiBaseBrain::FindTravelTimeToGoalArea(int goalAreaNum) const
     return FindAasParamToGoalArea(goalAreaNum, &AiAasRouteCache::TravelTimeToGoalArea);
 }
 
-// TODO: Move to AiManager and compute once per frame for all items?
-static bool entitiesCloakingStatus[MAX_EDICTS];
-static unsigned entitiesCloakingStatusCheckedAt[MAX_EDICTS];
-
 bool AiBaseBrain::MayNotBeFeasibleEnemy(const edict_t *ent) const
 {
     if (!ent->r.inuse)
@@ -736,24 +732,8 @@ bool AiBaseBrain::MayNotBeFeasibleEnemy(const edict_t *ent) const
     const int entNum = ENTNUM(const_cast<edict_t*>(ent));
     if (attitude[entNum] >= 0)
         return true;
-    // Skip the bot itself
-    if (ent == self)
-        return true;
 
-    // Cloaking status is not cheap to check since it requires a script call.
-    // Thus entities cloaking status is cached and shared for all bots.
-    // Branching and memory IO has some cost, but this is the last condition to check anyway, so it is often cut off.
-
-    // Cloaking entities are considered visible up to a distance of 192 units
-    if (DistanceSquared(ent->s.origin, self->s.origin) < 192 * 192)
-        return false;
-
-    if (entitiesCloakingStatusCheckedAt[entNum] < level.time)
-    {
-        entitiesCloakingStatusCheckedAt[entNum] = level.time;
-        entitiesCloakingStatus[entNum] = GT_asIsEntityCloaking(ent);
-    }
-    return entitiesCloakingStatus[entNum];
+    return self == ent;
 }
 
 void AiBaseBrain::PreThink()

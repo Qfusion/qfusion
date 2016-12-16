@@ -13,7 +13,6 @@ struct SelectedTactics
     bool willAdvance;
     bool willRetreat;
 
-    bool shouldCloak;
     bool shouldBeSilent;
     bool shouldMoveCarefully;
 
@@ -30,7 +29,6 @@ struct SelectedTactics
         willAdvance = false;
         willRetreat = true;
 
-        shouldCloak = false;
         shouldBeSilent = false;
         shouldMoveCarefully = false;
 
@@ -88,7 +86,6 @@ class BotBrain: public AiBaseBrain
     inline bool WillAdvance() const { return selectedTactics.willAdvance; }
     inline bool WillRetreat() const { return selectedTactics.willRetreat; }
 
-    inline bool ShouldCloak() const { return selectedTactics.shouldCloak; }
     inline bool ShouldBeSilent() const { return selectedTactics.shouldBeSilent; }
     inline bool ShouldMoveCarefully() const { return selectedTactics.shouldMoveCarefully; }
 

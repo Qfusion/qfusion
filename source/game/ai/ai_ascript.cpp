@@ -736,31 +736,6 @@ void GT_asBotDropArmor( gclient_t *client )
     botDropArmorFunc(client);
 }
 
-static auto botWouldCloakFunc =
-    gtAIFunctionsRegistry.Function1<bool, const gclient_t*>("bool GT_BotWouldCloak( const Client @client )", false);
-
-bool GT_asBotWouldCloak( const gclient_t *client )
-{
-    return botWouldCloakFunc(client);
-}
-
-static auto setBotCloakEnabledFunc =
-    gtAIFunctionsRegistry.Function2<Void, gclient_t*, bool>(
-        "void GT_SetBotCloakEnabled( Client @client, bool enabled )", Void::VALUE);
-
-void GT_asSetBotCloakEnabled(gclient_t *client, bool enabled)
-{
-    setBotCloakEnabledFunc(client, enabled);
-}
-
-static auto isEntityCloakingFunc =
-    gtAIFunctionsRegistry.Function1<bool, const edict_t*>("bool GT_IsEntityCloaking( const Entity @ent )", false);
-
-bool GT_asIsEntityCloaking(const edict_t *ent)
-{
-    return isEntityCloakingFunc(ent);
-}
-
 static auto botTouchedGoalFunc =
     gtAIFunctionsRegistry.Function2<Void, const ai_handle_t *, const edict_t *>(
         "void GT_BotTouchedGoal( const Bot @bot, const Entity @goalEnt )", Void::VALUE);

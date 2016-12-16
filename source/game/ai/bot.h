@@ -236,18 +236,6 @@ public:
     {
         GT_asBotDropArmor(self->r.client);
     }
-    inline bool CanAndWouldCloak() const
-    {
-        return GT_asBotWouldCloak(self->r.client);
-    }
-    inline void SetCloakEnabled(bool enabled)
-    {
-        GT_asSetBotCloakEnabled(self->r.client, enabled);
-    }
-    inline bool IsCloaking() const
-    {
-        return GT_asIsEntityCloaking(self);
-    }
     inline float PlayerDefenciveAbilitiesRating() const
     {
         return GT_asPlayerDefenciveAbilitiesRating(self->r.client);
@@ -793,7 +781,6 @@ private:
     inline bool WillAdvance() const { return botBrain.WillAdvance(); }
     inline bool WillRetreat() const { return botBrain.WillRetreat(); }
 
-    inline bool ShouldCloak() const { return botBrain.ShouldCloak(); }
     inline bool ShouldBeSilent() const { return botBrain.ShouldBeSilent(); }
     inline bool ShouldMoveCarefully() const { return botBrain.ShouldMoveCarefully(); }
 

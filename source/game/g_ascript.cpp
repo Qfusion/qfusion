@@ -2413,6 +2413,7 @@ static const asProperty_t gedict_Properties[] =
 	{ ASLIB_PROPERTY_DECL(uint, timeStamp), ASLIB_FOFFSET(edict_t, timeStamp) },
 
 	{ ASLIB_PROPERTY_DECL(float, aiIntrinsicEnemyWeight), ASLIB_FOFFSET(edict_t, aiIntrinsicEnemyWeight) },
+	{ ASLIB_PROPERTY_DECL(float, aiVisibilityDistance), ASLIB_FOFFSET(edict_t, aiVisibilityDistance) },
 
 	{ ASLIB_PROPERTY_DECL(entThink @, think), ASLIB_FOFFSET(edict_t, asThinkFunc ) },
 	{ ASLIB_PROPERTY_DECL(entTouch @, touch), ASLIB_FOFFSET(edict_t, asTouchFunc ) },

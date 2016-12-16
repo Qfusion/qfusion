@@ -828,6 +828,10 @@ void G_InitEdict( edict_t *e )
 
 	G_asResetEntityBehaviors( e );
 
+	// Reset AI intrinsic properties
+	e->aiIntrinsicEnemyWeight = 0.0f;
+	e->aiVisibilityDistance = 999999.9f;
+
 	//mark all entities to not be sent by default
 	if( e->r.svflags & SVF_FAKECLIENT )
 		e->r.svflags = SVF_NOCLIENT|SVF_FAKECLIENT;

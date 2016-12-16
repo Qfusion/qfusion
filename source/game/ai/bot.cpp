@@ -223,6 +223,9 @@ void Bot::RegisterVisibleEnemies()
         float squareDistance = toTarget.SquaredLength();
         if (squareDistance < 1)
             continue;
+        if (squareDistance > ent->aiVisibilityDistance * ent->aiVisibilityDistance)
+            continue;
+
         float invDistance = Q_RSqrt(squareDistance);
         toTarget *= invDistance;
         if (toTarget.Dot(lookDir) < dotFactor)
@@ -554,8 +557,6 @@ void Bot::ActiveFrame()
 
     BotInput botInput(self);
     ApplyPendingTurnToLookAtPoint(&botInput);
-
-    SetCloakEnabled(ShouldCloak());
 
     MoveFrame(&botInput);
     if (ShouldAttack())
