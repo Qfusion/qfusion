@@ -328,6 +328,7 @@ private:
     BotRetreatToGoodPositionAction retreatToGoodPositionAction;
     BotSteadyCombatAction steadyCombatAction;
     BotGotoAvailableGoodPositionAction gotoAvailableGoodPositionAction;
+    BotAttackFromCurrentPositionAction attackFromCurrentPositionAction;
 
     BotGenericRunAvoidingCombatAction genericRunAvoidingCombatAction;
     BotStartGotoCoverAction startGotoCoverAction;

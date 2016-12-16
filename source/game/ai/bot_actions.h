@@ -196,6 +196,9 @@ DECLARE_ACTION(BotSteadyCombatAction, 2);
 DECLARE_COMBAT_ACTION_RECORD(BotGotoAvailableGoodPositionActionRecord);
 DECLARE_ACTION(BotGotoAvailableGoodPositionAction, 2);
 
+DECLARE_COMBAT_ACTION_RECORD(BotAttackFromCurrentPositionActionRecord);
+DECLARE_ACTION(BotAttackFromCurrentPositionAction, 2);
+
 class BotRunAwayActionRecord: public BotBaseActionRecord
 {
 protected:

@@ -25,6 +25,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       retreatToGoodPositionAction(this),
       steadyCombatAction(this),
       gotoAvailableGoodPositionAction(this),
+      attackFromCurrentPositionAction(this),
       genericRunAvoidingCombatAction(this),
       startGotoCoverAction(this),
       takeCoverAction(this),

@@ -514,6 +514,11 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply(const WorldState &worldSta
         Debug("Enemy is ignored in the given world state\n");
         return nullptr;
     }
+    if (!worldState.HasPositionalAdvantageVar().Ignore() && worldState.HasPositionalAdvantageVar())
+    {
+        Debug("Bot already has a positional advantage in the given world state\n");
+        return nullptr;
+    }
     if (worldState.HealthVar().Ignore() || worldState.ArmorVar().Ignore())
     {
         Debug("Health or armor are ignored in the given world state\n");
@@ -720,6 +725,11 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply(const WorldState &worldSta
         Debug("Enemy is ignored in the given world state\n");
         return nullptr;
     }
+    if (!worldState.HasPositionalAdvantageVar().Ignore() && worldState.HasPositionalAdvantageVar())
+    {
+        Debug("Bot already has a positional advantage in the given world state\n");
+        return nullptr;
+    }
     if (worldState.HealthVar().Ignore() || worldState.ArmorVar().Ignore())
     {
         Debug("Health or armor are ignored in the given world state\n");
@@ -888,7 +898,11 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
         Debug("Enemy is ignored in the given world state\n");
         return nullptr;
     }
-
+    if (!worldState.HasPositionalAdvantageVar().Ignore() && worldState.HasPositionalAdvantageVar())
+    {
+        Debug("Bot already has a positional advantage in the given world state\n");
+        return nullptr;
+    }
     if (worldState.HealthVar().Ignore() || worldState.ArmorVar().Ignore())
     {
         Debug("Health or armor are ignored in the given world state\n");
@@ -1070,6 +1084,11 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply(const WorldState &worl
         Debug("Enemy is ignored in the given world state\n");
         return nullptr;
     }
+    if (!worldState.HasPositionalAdvantageVar().Ignore() && worldState.HasPositionalAdvantageVar())
+    {
+        Debug("Bot already has a positional advantage in the given world state\n");
+        return nullptr;
+    }
     if (worldState.HealthVar().Ignore() || worldState.ArmorVar().Ignore())
     {
         Debug("Health or armor are ignored in the given world state\n");
@@ -1170,6 +1189,154 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply(const WorldState &worl
     plannerNode.WorldState().ResetTacticalSpots();
     // Satisfy conditions for BotKillEnemyGoal
     plannerNode.WorldState().CanHitEnemyVar().SetValue(true).SetIgnore(false);
+    plannerNode.WorldState().HasPositionalAdvantageVar().SetValue(true).SetIgnore(false);
+    // Otherwise an another identical world state might be yield leading to the planner logic violation
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(NextSimilarWorldStateInstanceId()).SetIgnore(false);
+
+    return plannerNode.PrepareActionResult();
+}
+
+void BotAttackFromCurrentPositionActionRecord::Activate()
+{
+    BotBaseActionRecord::Activate();
+    Tactics().shouldAttack = true;
+    Tactics().shouldKeepXhairOnEnemy = true;
+    SetNavTarget(&navTarget);
+}
+
+void BotAttackFromCurrentPositionActionRecord::Deactivate()
+{
+    BotBaseActionRecord::Deactivate();
+    ResetNavTarget();
+}
+
+AiBaseActionRecord::Status BotAttackFromCurrentPositionActionRecord::CheckStatus(const WorldState &currWorldState) const
+{
+    if (!CheckCommonCombatConditions(currWorldState))
+        return INVALID;
+
+    // This action is likely to be deactivate on goal search/reevaluation, do not do extra tests.
+    return VALID;
+}
+
+PlannerNode *BotAttackFromCurrentPositionAction::TryApply(const WorldState &worldState)
+{
+    // Use the same criteria as for BotSteadyCombatAction (with the exception that tactical spots must be absent)
+
+    if (worldState.EnemyOriginVar().Ignore())
+    {
+        Debug("Enemy is ignored in the given world state\n");
+        return nullptr;
+    }
+    if (!worldState.HasPositionalAdvantageVar().Ignore() && worldState.HasPositionalAdvantageVar())
+    {
+        Debug("Bot already has a positional advantage in the given world state\n");
+        return nullptr;
+    }
+    if (worldState.HealthVar().Ignore() || worldState.ArmorVar().Ignore())
+    {
+        Debug("Health or armor are ignored in the given world state\n");
+        return nullptr;
+    }
+
+    if (worldState.EnemyIsOnSniperRange())
+    {
+        if (!worldState.HasGoodSniperRangeWeaponsVar())
+            return nullptr;
+
+        if (worldState.EnemyHasGoodSniperRangeWeaponsVar())
+        {
+            if (worldState.DamageToBeKilled() < 80.0f && worldState.KillToBeKilledDamageRatio() > 1)
+                return nullptr;
+        }
+
+        // Put this condition last to avoid forcing tactical spot to be computed.
+        // Test cheap conditions first for early action rejection.
+        if (worldState.SniperRangeTacticalSpotVar().IsPresent())
+        {
+            Debug("Sniper range tactical spot is present\n");
+            return nullptr;
+        }
+    }
+    else if (worldState.EnemyIsOnFarRange())
+    {
+        if (!worldState.HasGoodFarRangeWeaponsVar())
+            return nullptr;
+
+        if (worldState.EnemyHasGoodFarRangeWeaponsVar())
+        {
+            if (worldState.KillToBeKilledDamageRatio() > 1.5f)
+                return nullptr;
+        }
+
+        // Put this condition last to avoid forcing tactical spot to be computed.
+        // Test cheap conditions first for early action rejection.
+        if (worldState.FarRangeTacticalSpotVar().IsPresent())
+        {
+            Debug("Far range tactical spot is present\n");
+            return nullptr;
+        }
+    }
+    else if (worldState.EnemyIsOnMiddleRange())
+    {
+        if (!worldState.HasGoodMiddleRangeWeaponsVar())
+            return nullptr;
+
+        if (worldState.EnemyHasGoodMiddleRangeWeaponsVar())
+        {
+            if (worldState.KillToBeKilledDamageRatio() > 1)
+                return nullptr;
+        }
+
+        // Put this condition last to avoid forcing tactical spot to be computed.
+        // Test cheap conditions first for early action rejection.
+        if (worldState.MiddleRangeTacticalSpotVar().IsPresent())
+        {
+            Debug("Middle range tactical spot is present\n");
+            return nullptr;
+        }
+    }
+    else
+    {
+        if (!worldState.HasGoodCloseRangeWeaponsVar())
+        {
+            Debug("Bot does not have good close range weapons\n");
+            return nullptr;
+        }
+        if (worldState.EnemyHasGoodCloseRangeWeaponsVar())
+        {
+            if (worldState.KillToBeKilledDamageRatio() > 0.8f)
+                return nullptr;
+        }
+        else
+        {
+            if (worldState.KillToBeKilledDamageRatio() > 1.3f)
+                return nullptr;
+        }
+
+        // Put this condition last to avoid forcing tactical spot to be computed.
+        // Test cheap conditions first for early action rejection.
+        if (worldState.CloseRangeTacticalSpotVar().IsPresent())
+        {
+            Debug("Close range tactical spot is present\n");
+            return nullptr;
+        }
+    }
+
+    Vec3 navTargetOrigin(worldState.BotOriginVar().Value());
+    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, navTargetOrigin, Enemies().InstanceId())));
+    if (!plannerNode)
+        return nullptr;
+
+    // Set a huge penalty from attacking from a current position and not from a found tactical spot
+    plannerNode.Cost() = 999999.0f;
+
+    plannerNode.WorldState() = worldState;
+    plannerNode.WorldState().NavTargetOriginVar().SetValue(navTargetOrigin);
+    plannerNode.WorldState().NavTargetOriginVar().SetSatisfyOp(SatisfyOp::EQ, TACTICAL_SPOT_RADIUS);
+    plannerNode.WorldState().NavTargetOriginVar().SetIgnore(false);
+    // Setting this is required to satisfy the BotKillEnemyAction preconditions
+    // (even they are not really met from human point of view).
     plannerNode.WorldState().HasPositionalAdvantageVar().SetValue(true).SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
