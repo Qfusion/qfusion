@@ -1,4 +1,5 @@
 sudo: false
+dist: trusty
 install: true
 cache: 
   apt: true
