@@ -62,8 +62,8 @@ matrix:
       jdk: oraclejdk8
       android:
         components:
-          - build-tools-21.0.2
-          - android-19
+          - build-tools-22.0.1
+          - android-22
 
 before_install:
 
