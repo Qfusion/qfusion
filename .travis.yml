@@ -1,5 +1,4 @@
 sudo: false
-dist: trusty
 install: true
 cache: 
   apt: true
@@ -59,11 +58,11 @@ matrix:
             - libcurl4-gnutls-dev
     - language: android
       env: QF_ARCH=android
-      jdk: oraclejdk8
+      jdk: oraclejdk7
       android:
         components:
-          - build-tools-22.0.1
-          - android-22
+          - build-tools-21.0.2
+          - android-19
 
 before_install:
 
