@@ -59,7 +59,7 @@ matrix:
             - libcurl4-gnutls-dev
     - language: android
       env: QF_ARCH=android
-      jdk: oraclejdk7
+      jdk: oraclejdk8
       android:
         components:
           - build-tools-21.0.2
