@@ -369,54 +369,6 @@ void GT_BotDropArmor( Client @client )
         CTFT_DropArmor( client, "Yellow Armor" );
 }
 
-bool GT_BotWouldCloak( const Client @client )
-{
-    if ( @client == null )
-        return false;
-     
-    cPlayer @player = GetPlayer( client );
-    if ( player.playerClass.tag != PLAYERCLASS_RUNNER )
-        return false;
-
-    if ( player.isInvisibilityCooldown() )
-        return false;
-
-    if ( ( player.ent.effects & EF_CARRIER ) != 0 )
-        return false;
-
-    if ( client.inventoryCount( POWERUP_SHELL ) > 0 )
-        return false;
-
-    return true;
-}
-
-bool GT_IsEntityCloaking( const Entity @ent )
-{
-    if ( @ent == null || @ent.client == null )
-        return false;
-
-    return GetPlayer( ent.client ).invisibilityEnabled;
-}
-
-void GT_SetBotCloakEnabled( Client @client, bool enabled )
-{
-    if ( @client == null )
-        return;
-
-    cPlayer @player = GetPlayer( client );
-    if ( player.playerClass.tag != PLAYERCLASS_RUNNER )
-        return;
-
-    // Calls of this function must be idempotent. Prevent invisibility toggling.
-    if ( enabled )
-    {
-        if ( !player.invisibilityEnabled )
-            player.activateInvisibility();
-    }    
-    else if ( player.invisibilityEnabled )
-        player.deactivateInvisibility();
-}
-
 float GT_PlayerOffensiveAbilitiesRating( const Client @client )
 {
     if ( @client != null )
