@@ -678,9 +678,6 @@ void GT_ThinkRules()
 
 	if ( match.getState() < MATCH_STATE_PLAYTIME )
 	{
-        if ( match.getState() == MATCH_STATE_WARMUP )
-            GENERIC_UpdateBotroamGoalsWeights();
-
 		return;
 	}
 
@@ -770,9 +767,6 @@ void GT_MatchStateStarted()
 				gametype.setTeamSpawnsystem( t, SPAWNSYSTEM_INSTANT, 0, 0, false );
 			}
 
-            // Add dummy goals for bots in warmup
-            GENERIC_AddBotroamGoals();
-
 			break;
 
 		case MATCH_STATE_COUNTDOWN:		
@@ -782,8 +776,6 @@ void GT_MatchStateStarted()
 			//      didn't respawn all items, but that doesn't
 			//      matter cause there aren't any
 			GENERIC_SetUpCountdown();
-			
-            GENERIC_RemoveBotroamGoals();
 
 			break;
 
