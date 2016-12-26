@@ -24,7 +24,7 @@ matrix:
 
 install:
   - export CC=gcc-4.9 CXX=g++-4.9 && cd $HOME && git clone --depth 1 https://github.com/Qfusion/rapid.git && cd rapid/sdk/source && git submodule update --init --recursive && cd source && cmake -DSERVER_ONLY=1 . && make
-  - cd $HOME/rapid/sdk/source/source/build && ln -s $TRAVIS_BUILD_DIR base/progs && cp ../../../../base/map_box.pk3 base/map_box.pk3 && mkdir -p base/configs/server/gametypes
+  - cd $HOME/rapid/sdk/source/source/build && ln -s $TRAVIS_BUILD_DIR base/progs && cp ../../../../game/base/map_box.pk3 base/map_box.pk3 && mkdir -p base/configs/server/gametypes
   - echo "echo -e \"set g_gametype_generic 0\\nset g_gametype \$1\\nmap box\" > base/dedicated_autoexec_postinit.cfg && echo -e \"wait\\nwait\\nquit\" >base/configs/server/gametypes/\$1.cfg" > init_gt.sh && chmod +x ./init_gt.sh
   - echo "./qfusion_server.x86_64 +set developer 1" > ./run_srv.sh && chmod +x ./run_srv.sh
   
