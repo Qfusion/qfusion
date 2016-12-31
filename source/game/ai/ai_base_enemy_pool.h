@@ -68,6 +68,12 @@ template<> struct WeaponAmmo<WEAP_ELECTROBOLT>
     static constexpr int weakAmmoTag = AMMO_WEAK_BOLTS;
 };
 
+template<> struct WeaponAmmo<WEAP_INSTAGUN>
+{
+    static constexpr int strongAmmoTag = AMMO_INSTAS;
+    static constexpr int weakAmmoTag = AMMO_WEAK_INSTAS;
+};
+
 inline bool HasQuad(const edict_t *ent)
 {
     return ent && ent->r.client && ent->r.client->ps.inventory[POWERUP_QUAD];
@@ -158,6 +164,7 @@ public:
     inline int BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
     inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
     inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
+    inline int InstasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_INSTAGUN>(); }
 
     inline int PendingWeapon() const
     {

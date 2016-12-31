@@ -426,12 +426,12 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
     bool hasGoodMiddleRangeWeapons = false;
     bool hasGoodCloseRangeWeapons = false;
 
-    if (BoltsReadyToFireCount() || BulletsReadyToFireCount())
+    if (BoltsReadyToFireCount() || BulletsReadyToFireCount() || InstasReadyToFireCount())
         hasGoodSniperRangeWeapons = true;
-    if (BoltsReadyToFireCount() || BulletsReadyToFireCount() || PlasmasReadyToFireCount())
+    if (BoltsReadyToFireCount() || BulletsReadyToFireCount() || PlasmasReadyToFireCount() || InstasReadyToFireCount())
         hasGoodFarRangeWeapons = true;
     if (RocketsReadyToFireCount() || LasersReadyToFireCount() || PlasmasReadyToFireCount() ||
-        BulletsReadyToFireCount() || ShellsReadyToFireCount())
+        BulletsReadyToFireCount() || ShellsReadyToFireCount() || InstasReadyToFireCount())
         hasGoodMiddleRangeWeapons = true;
     if (RocketsReadyToFireCount() || PlasmasReadyToFireCount() || ShellsReadyToFireCount())
         hasGoodCloseRangeWeapons = true;

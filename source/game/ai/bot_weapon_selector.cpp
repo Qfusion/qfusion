@@ -141,6 +141,8 @@ bool SelectedEnemies::HaveGoodSniperRangeWeapons() const
             return true;
         if (activeEnemy->BulletsReadyToFireCount())
             return true;
+        if (activeEnemy->InstasReadyToFireCount())
+            return true;
     }
     return false;
 }
@@ -155,6 +157,8 @@ bool SelectedEnemies::HaveGoodFarRangeWeapons() const
         if (activeEnemy->BulletsReadyToFireCount())
             return true;
         if (activeEnemy->PlasmasReadyToFireCount())
+            return true;
+        if (activeEnemy->InstasReadyToFireCount())
             return true;
     }
     return false;
@@ -174,6 +178,8 @@ bool SelectedEnemies::HaveGoodMiddleRangeWeapons() const
         if (activeEnemy->BulletsReadyToFireCount())
             return true;
         if (activeEnemy->ShellsReadyToFireCount())
+            return true;
+        if (activeEnemy->InstasReadyToFireCount())
             return true;
     }
     return false;
