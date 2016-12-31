@@ -7,8 +7,15 @@
 #include "ai_base_enemy_pool.h"
 #include "bot_items_selector.h"
 #include "bot_weapon_selector.h"
+#include "bot_actions.h"
+#include "bot_goals.h"
 
-struct SelectedTactics
+// This can be represented as an enum but feels better in the following form.
+// Many values that affect bot behaviour already are not boolean
+// (such as nav targets and special movement states like camping spots),
+// and thus controlling a bot by a single flags field already is not possible.
+// This struct is likely to be extended by non-boolean values later.
+struct SelectedMiscTactics
 {
     bool willAdvance;
     bool willRetreat;
@@ -22,7 +29,7 @@ struct SelectedTactics
     bool willAttackMelee;
     bool shouldRushHeadless;
 
-    inline SelectedTactics() { Clear(); };
+    inline SelectedMiscTactics() { Clear(); };
 
     inline void Clear()
     {
@@ -37,6 +44,18 @@ struct SelectedTactics
 
         willAttackMelee = false;
         shouldRushHeadless = false;
+    }
+
+    inline void PreferAttackRatherThanRun()
+    {
+        shouldAttack = true;
+        shouldKeepXhairOnEnemy = true;
+    }
+
+    inline void PreferRunRatherThanAttack()
+    {
+        shouldAttack = true;
+        shouldKeepXhairOnEnemy = true;
     }
 };
 
@@ -57,6 +76,15 @@ class BotBrain: public AiBaseBrain
     const unsigned targetChoicePeriod;
 
     BotItemsSelector itemsSelector;
+
+    StaticVector<BotScriptGoal, MAX_GOALS> scriptGoals;
+    StaticVector<BotScriptAction, MAX_ACTIONS> scriptActions;
+
+    BotBaseGoal *GetGoalByName(const char *name);
+    BotBaseAction *GetActionByName(const char *name);
+
+    inline BotScriptGoal *AllocScriptGoal() { return scriptGoals.unsafe_grow_back(); }
+    inline BotScriptAction *AllocScriptAction() { return scriptActions.unsafe_grow_back(); }
 
     inline bool BotHasQuad() const { return ::HasQuad(bot); }
     inline bool BotHasShell() const { return ::HasShell(bot); }
@@ -81,7 +109,7 @@ class BotBrain: public AiBaseBrain
     inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
     inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
 
-    SelectedTactics selectedTactics;
+    SelectedMiscTactics selectedTactics;
 
     inline bool WillAdvance() const { return selectedTactics.willAdvance; }
     inline bool WillRetreat() const { return selectedTactics.willRetreat; }
@@ -181,7 +209,6 @@ class BotBrain: public AiBaseBrain
     class AiSquad *squad;
     EnemyPool botEnemyPool;
     AiBaseEnemyPool *activeEnemyPool;
-
 protected:
     virtual void SetFrameAffinity(unsigned modulo, unsigned offset) override
     {

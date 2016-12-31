@@ -479,20 +479,21 @@ bool Bot::TryLandOnArea(int areaNum, BotInput *input)
 
 void Bot::MoveCampingASpot(BotInput *input)
 {
+    AiCampingSpot &campingSpot = campingSpotState.campingSpot;
     // If hasCampingLookAtPoint is false and this function has not been called yet since last camping spot setting,
     // campingSpotLookAtPoint contains a junk, so it need to be overwritten
-    Vec3 lookAtPoint(campingSpotState.lookAtPoint);
+    Vec3 lookAtPoint(campingSpot.lookAtPoint);
     // If the camping action does not have a defined look direction, choose some random one
-    if (!campingSpotState.hasLookAtPoint)
+    if (!campingSpot.hasLookAtPoint)
     {
         // If the previously chosen look at point has timed out, choose a new one
         if (campingSpotState.lookAtPointTimeoutAt <= level.time)
         {
             // Choose some random point to look at
-            campingSpotState.lookAtPoint.X() = self->s.origin[0] - 50.0f + 100.0f * random();
-            campingSpotState.lookAtPoint.Y() = self->s.origin[1] - 50.0f + 100.0f * random();
-            campingSpotState.lookAtPoint.Z() = self->s.origin[2] - 15.0f + 30.0f * random();
-            campingSpotState.lookAtPointTimeoutAt = level.time + 1500 - (unsigned)(1250.0f * campingSpotState.alertness);
+            campingSpot.lookAtPoint.X() = self->s.origin[0] - 50.0f + 100.0f * random();
+            campingSpot.lookAtPoint.Y() = self->s.origin[1] - 50.0f + 100.0f * random();
+            campingSpot.lookAtPoint.Z() = self->s.origin[2] - 15.0f + 30.0f * random();
+            campingSpotState.lookAtPointTimeoutAt = level.time + 1500 - (unsigned)(1250.0f * campingSpot.alertness);
         }
     }
     MoveCampingASpotWithGivenLookAtPoint(lookAtPoint, input);
@@ -526,10 +527,10 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput
     vec3_t actualLookDir, actualRightDir;
     AngleVectors(self->s.angles, actualLookDir, actualRightDir, nullptr);
 
-    Vec3 botToSpot = campingSpotState.spotOrigin - self->s.origin;
+    Vec3 botToSpot = campingSpotState.Origin() - self->s.origin;
     float distance = botToSpot.Length();
 
-    if (distance / campingSpotState.spotRadius > 2.0f)
+    if (distance / campingSpotState.campingSpot.radius > 2.0f)
     {
         // Bot should return to a point
         input->ClearMovementDirections();
@@ -543,14 +544,14 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput
         return;
     }
 
-    Vec3 expectedLookDir = lookAtPoint - campingSpotState.spotOrigin;
+    Vec3 expectedLookDir = lookAtPoint - campingSpotState.Origin();
     expectedLookDir.NormalizeFast();
 
     if (expectedLookDir.Dot(actualLookDir) < 0.85)
     {
         if (!HasPendingLookAtPoint())
         {
-            SetPendingLookAtPoint(campingSpotState.lookAtPoint, 1.1f);
+            SetPendingLookAtPoint(campingSpotState.LookAtPoint(), 300);
             input->ClearMovementDirections();
             input->SetWalkButton(true);
             return;
@@ -562,13 +563,12 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput
     if (campingSpotState.strafeTimeoutAt < level.time)
     {
         // This means we may strafe randomly
-        if (distance / campingSpotState.spotRadius < 0.7f)
+        if (distance / campingSpotState.Radius() < 0.7f)
         {
             campingSpotState.strafeDir.X() = -0.5f + random();
             campingSpotState.strafeDir.Y() = -0.5f + random();
             campingSpotState.strafeDir.Z() = 0.0f;
-            campingSpotState.strafeTimeoutAt = level.time + 500;
-            campingSpotState.strafeTimeoutAt += (unsigned)(100.0f * random() - 250.0f * campingSpotState.alertness);
+            campingSpotState.SetStrafeDirTimeout();
         }
         else
         {
@@ -581,7 +581,7 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput
 
     DirToKeyInput(strafeMoveVec, actualLookDir, actualRightDir, input);
 
-    input->SetWalkButton(random() > campingSpotState.alertness * 0.75f);
+    input->SetWalkButton(random() > campingSpotState.Alertness() * 0.75f);
 }
 
 void Bot::MoveOnPlatform(BotInput *input)

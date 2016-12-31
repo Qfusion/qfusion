@@ -108,6 +108,9 @@ public:
     int NavTargetAasAreaNum() const;
     Vec3 NavTargetOrigin() const;
 
+    // Exposed for native and script actions
+    int CheckTravelTimeMillis(const Vec3 &from, const Vec3 &to, bool allowUnreachable = true);
+
     inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
     inline int AllowedTravelFlags() const { return allowedAasTravelFlags; }
 

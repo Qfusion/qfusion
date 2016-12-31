@@ -7,6 +7,24 @@
 #include <limits>
 #include <stdarg.h>
 
+BotBaseGoal *BotBrain::GetGoalByName(const char *name)
+{
+    for (unsigned i = 0; i < scriptGoals.size(); ++i)
+        if (!Q_stricmp(name, scriptGoals[i].Name()))
+            return &scriptGoals[i];
+
+    return nullptr;
+}
+
+BotBaseAction *BotBrain::GetActionByName(const char *name)
+{
+    for (unsigned i = 0; i < scriptActions.size(); ++i)
+        if (!Q_stricmp(name, scriptActions[i].Name()))
+            return &scriptActions[i];
+
+    return nullptr;
+}
+
 void BotBrain::EnemyPool::OnEnemyRemoved(const Enemy *enemy)
 {
     bot->ai->botRef->OnEnemyRemoved(enemy);

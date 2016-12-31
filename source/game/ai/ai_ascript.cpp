@@ -5,6 +5,33 @@
 #include "bot.h"
 #include "tactical_spots_registry.h"
 #include "../g_as_local.h"
+#include "../../angelwrap/addon/addon_any.h"
+#include "ai_manager.h"
+
+// We have to declare a prototype first (GCC cannot apply attributes to a definition)
+#ifndef _MSC_VER
+static void ApiError(const char *func, const char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((noreturn));
+#else
+__declspec(noreturn) static void ApiError(const char *func, _Printf_format_string_ const char *format, ...);
+#endif
+
+static void ApiError(const char *func, const char *format, ...)
+{
+    char formatBuffer[1024];
+    char messageBuffer[2048];
+    va_list va;
+    va_start(va, format);
+    Q_snprintfz(formatBuffer, sizeof(formatBuffer), "%s: %s\n", func, format);
+    Q_vsnprintfz(messageBuffer, sizeof(messageBuffer), formatBuffer, va);
+    va_end(va);
+    G_Error(messageBuffer);
+}
+
+#define API_ERROR(message) ApiError(__FUNCTION__, message)
+#define API_ERRORV(message, ...) ApiError(__FUNCTION__, message, __VA_ARGS__)
+
+// Debugging scripts is harder than debugging a native code, use these checks excessively
+#define CHECK_ARG(arg) (((arg) == nullptr) ? ( API_ERROR( #arg " is null"), (arg) ) : (arg))
 
 static const asEnumVal_t asNavEntityFlagsEnumVals[] =
 {
@@ -29,27 +56,615 @@ static const asEnumVal_t asWeaponAimTypeEnumVals[] =
     ASLIB_ENUM_VAL_NULL
 };
 
-const asEnum_t asAIEnums[] =
+#define DECLARE_ACTION_RECORD_STATUS_ENUM_VAL(value) { "AI_ACTION_RECORD_STATUS_" #value, (int)AiBaseActionRecord::value }
+
+static const asEnumVal_t asActionRecordStatusEnumVals[] =
 {
-    { "nav_entity_flags_e", asNavEntityFlagsEnumVals },
-    { "weapon_aim_type_e", asWeaponAimTypeEnumVals },
+    DECLARE_ACTION_RECORD_STATUS_ENUM_VAL(COMPLETED),
+    DECLARE_ACTION_RECORD_STATUS_ENUM_VAL(VALID),
+    DECLARE_ACTION_RECORD_STATUS_ENUM_VAL(INVALID),
 
     ASLIB_ENUM_VAL_NULL
 };
 
-static const asFuncdef_t asAiScriptWeaponDef_Funcdefs[] =
+#define DECLARE_VAR_SATISFY_OP_ENUM_VALUE(value) { "AI_VAR_SATISFY_" #value, (int)WorldState::SatisfyOp::value }
+
+static const asEnumVal_t asVarSatisfyOpEnumVals[] =
 {
-    ASLIB_FUNCDEF_NULL
+    DECLARE_VAR_SATISFY_OP_ENUM_VALUE(EQ),
+    DECLARE_VAR_SATISFY_OP_ENUM_VALUE(NE),
+    DECLARE_VAR_SATISFY_OP_ENUM_VALUE(LS),
+    DECLARE_VAR_SATISFY_OP_ENUM_VALUE(LE),
+    DECLARE_VAR_SATISFY_OP_ENUM_VALUE(GT),
+    DECLARE_VAR_SATISFY_OP_ENUM_VALUE(GE),
+
+    ASLIB_ENUM_VAL_NULL
 };
 
-static const asBehavior_t asAiScriptWeaponDef_ObjectBehaviors[] =
+const asEnum_t asAIEnums[] =
 {
-    ASLIB_BEHAVIOR_NULL
+    { "nav_entity_flags_e", asNavEntityFlagsEnumVals },
+    { "weapon_aim_type_e", asWeaponAimTypeEnumVals },
+    { "action_record_status_e", asActionRecordStatusEnumVals },
+    { "var_satisfy_op_e", asVarSatisfyOpEnumVals },
+
+    ASLIB_ENUM_VAL_NULL
 };
 
-static const asMethod_t asAiScriptWeaponDef_ObjectMethods[] =
+static const asFuncdef_t EMPTY_FUNCDEFS[] = { ASLIB_FUNCDEF_NULL };
+static const asBehavior_t EMPTY_BEHAVIORS[] = { ASLIB_BEHAVIOR_NULL };
+static const asProperty_t EMPTY_PROPERTIES[] = { ASLIB_PROPERTY_NULL };
+static const asMethod_t EMPTY_METHODS[] = { ASLIB_METHOD_NULL };
+
+static PlannerNode *objectPlannerNode_prepareActionResult(PlannerNode *node)
 {
+    CHECK_ARG(node);
+    node->worldStateHash = node->worldState.Hash();
+    return node;
+}
+
+// Cannot be declared as a property due to offsetof() being invalid for PlannerNode
+static WorldState *objectPlannerNode_worldState(PlannerNode *plannerNode)
+{
+    return &CHECK_ARG(plannerNode)->worldState;
+}
+static BotScriptActionRecord *objectPlannerNode_nativeActionRecord(PlannerNode *plannerNode)
+{
+    return (BotScriptActionRecord *)CHECK_ARG(plannerNode)->actionRecord;
+}
+
+#define DECLARE_METHOD(type, name, params, nativeFunc) \
+    { ASLIB_FUNCTION_DECL(type, name, params), asFUNCTION(nativeFunc), asCALL_CDECL_OBJFIRST }
+
+static const asMethod_t asAiPlannerNode_ObjectMethods[] =
+{
+    DECLARE_METHOD(AIWorldState &, get_worldState, (), objectPlannerNode_worldState),
+    DECLARE_METHOD(AIActionRecord &, get_nativeActionRecord, (), objectPlannerNode_nativeActionRecord),
+    DECLARE_METHOD(AIPlannerNode &, prepareActionResult, (), objectPlannerNode_prepareActionResult),
+
     ASLIB_METHOD_NULL
+};
+
+static const asClassDescriptor_t asAiPlannerNodeClassDescriptor =
+{
+    "AIPlannerNode",		             /* name */
+    asOBJ_REF|asOBJ_NOCOUNT,	         /* object type flags */
+    sizeof(PlannerNode),	             /* size */
+    EMPTY_FUNCDEFS,		                 /* funcdefs */
+    EMPTY_BEHAVIORS,                     /* object behaviors */
+    asAiPlannerNode_ObjectMethods,	     /* methods */
+    EMPTY_PROPERTIES,		             /* properties */
+
+    NULL, NULL					         /* string factory hack */
+};
+
+#define DEFINE_NATIVE_VAR_VALUE_ACCESSORS(varName, type)                                               \
+static type object##varName##_value(WorldState::varName *var) { return var->Value(); }                 \
+static void object##varName##_setValue(WorldState::varName *var, type value) { var->SetValue(value); }
+
+#define DEFINE_NATIVE_VAR_IGNORE_ACCESSORS(varName)                                                        \
+static bool object##varName##_ignore(WorldState::varName *var) { return var->Ignore(); }                   \
+static void object##varName##_setIgnore(WorldState::varName *var, bool ignore) { var->SetIgnore(ignore); }
+
+#define DEFINE_NATIVE_VAR_SATISFY_OP_ACCESSORS(varName)                      \
+static void object##varName##_setSatisfyOp(WorldState::varName *var, int op) \
+{                                                                            \
+    var->SetSatisfyOp((WorldState::SatisfyOp)op);                            \
+}
+
+#define DEFINE_NATIVE_VAR_BASE_ACCESSORS(varName, type) \
+    DEFINE_NATIVE_VAR_IGNORE_ACCESSORS(varName)         \
+    DEFINE_NATIVE_VAR_VALUE_ACCESSORS(varName, type)    \
+    DEFINE_NATIVE_VAR_SATISFY_OP_ACCESSORS(varName)
+
+#define DECLARE_SCRIPT_VAR_BASE_ACCESSOR_METHODS_LIST(varName, scriptType)          \
+    DECLARE_METHOD(scriptType, value, () const, object##varName##_value),           \
+    DECLARE_METHOD(void, setValue, (scriptType value), object##varName##_setValue), \
+    DECLARE_METHOD(bool, ignore, () const, object##varName##_ignore),               \
+    DECLARE_METHOD(void, setIgnore, (bool ignore), object##varName##_setIgnore)     \
+
+#define DEFINE_WS_VAR_CLASS_DESCRIPTOR(varName)                           \
+static const asClassDescriptor_t asAi##varName##ClassDescriptor =         \
+{                                                                         \
+    "AI"#varName,		                     /* name */                   \
+    asOBJ_VALUE|asOBJ_POD|asOBJ_APP_CLASS_C, /* object type flags */      \
+    sizeof(WorldState::varName),	         /* size */                   \
+    EMPTY_FUNCDEFS,		                     /* funcdefs */               \
+    EMPTY_BEHAVIORS,                         /* object behaviors */       \
+    asAi##varName##_ObjectMethods,	         /* methods */                \
+    EMPTY_PROPERTIES,		                 /* properties */             \
+    NULL, NULL					             /* string factory hack */    \
+};
+
+DEFINE_NATIVE_VAR_BASE_ACCESSORS(UnsignedVar, unsigned);
+
+static const asMethod_t asAiUnsignedVar_ObjectMethods[] =
+{
+    DECLARE_SCRIPT_VAR_BASE_ACCESSOR_METHODS_LIST(UnsignedVar, uint),
+
+    ASLIB_METHOD_NULL
+};
+
+DEFINE_WS_VAR_CLASS_DESCRIPTOR(UnsignedVar);
+
+DEFINE_NATIVE_VAR_BASE_ACCESSORS(FloatVar, float);
+
+static const asMethod_t asAiFloatVar_ObjectMethods[] =
+{
+    DECLARE_SCRIPT_VAR_BASE_ACCESSOR_METHODS_LIST(FloatVar, float),
+
+    ASLIB_METHOD_NULL
+};
+
+DEFINE_WS_VAR_CLASS_DESCRIPTOR(FloatVar);
+
+DEFINE_NATIVE_VAR_BASE_ACCESSORS(ShortVar, short);
+
+static const asMethod_t asAiShortVar_ObjectMethods[] =
+{
+    DECLARE_SCRIPT_VAR_BASE_ACCESSOR_METHODS_LIST(ShortVar, int16),
+
+    ASLIB_METHOD_NULL
+};
+
+DEFINE_WS_VAR_CLASS_DESCRIPTOR(ShortVar);
+
+DEFINE_NATIVE_VAR_VALUE_ACCESSORS(BoolVar, bool);
+DEFINE_NATIVE_VAR_IGNORE_ACCESSORS(BoolVar);
+
+static const asMethod_t asAiBoolVar_ObjectMethods[] =
+{
+    DECLARE_SCRIPT_VAR_BASE_ACCESSOR_METHODS_LIST(BoolVar, bool),
+
+    ASLIB_METHOD_NULL
+};
+
+DEFINE_WS_VAR_CLASS_DESCRIPTOR(BoolVar);
+
+#define DEFINE_NATIVE_ORIGIN_VAR_VALUE_ACCESSORS(varName)         \
+static asvec3_t object##varName##_value(WorldState::varName *var) \
+{                                                                 \
+    Vec3 value(var->Value());                                     \
+    asvec3_t result;                                              \
+    VectorCopy(value.Data(), result.v);                           \
+    return result;                                                \
+}                                                                 \
+
+#define DEFINE_NATIVE_ORIGIN_VAR_SATISFY_OP_ACCESSORS(varName)                              \
+static void object##varName##_setSatisfyOp(WorldState::varName *var, int op, float epsilon) \
+{                                                                                           \
+    var->SetSatisfyOp((WorldState::SatisfyOp)op, epsilon);                                  \
+}
+
+DEFINE_NATIVE_VAR_IGNORE_ACCESSORS(OriginVar);
+DEFINE_NATIVE_ORIGIN_VAR_VALUE_ACCESSORS(OriginVar);
+DEFINE_NATIVE_ORIGIN_VAR_SATISFY_OP_ACCESSORS(OriginVar);
+
+static void objectOriginVar_setValue(WorldState::OriginVar *var, asvec3_t *value)
+{
+    var->SetValue(value->v);
+}
+
+static const asMethod_t asAiOriginVar_ObjectMethods[] =
+{
+    DECLARE_METHOD(Vec3, value, () const, objectOriginVar_value),
+    DECLARE_METHOD(void, setValue, (const Vec3 &in value), objectOriginVar_setValue),
+    DECLARE_METHOD(bool, ignore, () const, objectOriginVar_ignore),
+    DECLARE_METHOD(void, setIgnore, (bool ignore), objectOriginVar_setIgnore),
+    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op, float epsilon), objectOriginVar_setSatisfyOp),
+
+    ASLIB_METHOD_NULL
+};
+
+DEFINE_WS_VAR_CLASS_DESCRIPTOR(OriginVar);
+
+#define DEFINE_NATIVE_LAZY_VAR_STATUS_ACCESSORS(varName) \
+static bool object##varName##_isPresent(WorldState::varName *var) { return var->IsPresent(); } \
+static bool object##varName##_ignoreOrAbsent(WorldState::varName *var) { return var->IgnoreOrAbsent(); }
+
+DEFINE_NATIVE_VAR_IGNORE_ACCESSORS(OriginLazyVar);
+DEFINE_NATIVE_ORIGIN_VAR_VALUE_ACCESSORS(OriginLazyVar);
+DEFINE_NATIVE_ORIGIN_VAR_SATISFY_OP_ACCESSORS(OriginLazyVar);
+DEFINE_NATIVE_LAZY_VAR_STATUS_ACCESSORS(OriginLazyVar);
+
+static const asMethod_t asAiOriginLazyVar_ObjectMethods[] =
+{
+    DECLARE_METHOD(Vec3, value, () const, objectOriginLazyVar_value),
+    DECLARE_METHOD(bool, ignore, () const, objectOriginLazyVar_ignore),
+    DECLARE_METHOD(void, setIgnore, (bool ignore), objectOriginLazyVar_setIgnore),
+    DECLARE_METHOD(bool, isPresent, () const, objectOriginLazyVar_isPresent),
+    DECLARE_METHOD(bool, ignoreOrAbsent, () const, objectOriginLazyVar_ignoreOrAbsent),
+    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op, float epsilon), objectOriginVar_setSatisfyOp),
+
+    ASLIB_METHOD_NULL
+};
+
+DEFINE_WS_VAR_CLASS_DESCRIPTOR(OriginLazyVar);
+
+DEFINE_NATIVE_VAR_IGNORE_ACCESSORS(DualOriginLazyVar);
+DEFINE_NATIVE_ORIGIN_VAR_VALUE_ACCESSORS(DualOriginLazyVar);
+DEFINE_NATIVE_ORIGIN_VAR_SATISFY_OP_ACCESSORS(DualOriginLazyVar);
+DEFINE_NATIVE_LAZY_VAR_STATUS_ACCESSORS(DualOriginLazyVar);
+
+static asvec3_t objectDualOriginLazyVar_value2(WorldState::DualOriginLazyVar *var)
+{
+    Vec3 value2(var->Value2());
+    asvec3_t result;
+    VectorCopy(value2.Data(), result.v);
+    return result;
+}
+
+static const asMethod_t asAiDualOriginLazyVar_ObjectMethods[] =
+{
+    DECLARE_METHOD(Vec3, value, () const, objectDualOriginLazyVar_value),
+    DECLARE_METHOD(Vec3, value2, () const, objectDualOriginLazyVar_value2),
+    DECLARE_METHOD(bool, ignore, () const, objectDualOriginLazyVar_ignore),
+    DECLARE_METHOD(void, setIgnore, (bool ignore), objectDualOriginLazyVar_setIgnore),
+    DECLARE_METHOD(bool, isPresent, () const, objectDualOriginLazyVar_isPresent),
+    DECLARE_METHOD(bool, ignoreOrAbsent, () const, objectDualOriginLazyVar_ignoreOrAbsent),
+    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op, float epsilon), objectOriginVar_setSatisfyOp),
+
+    ASLIB_METHOD_NULL
+};
+
+DEFINE_WS_VAR_CLASS_DESCRIPTOR(DualOriginLazyVar);
+
+#define DEFINE_NATIVE_WS_VAR_GETTER(type, scriptPrefix, nativePrefix, restOfTheName)            \
+static WorldState::type objectWorldState_##scriptPrefix##restOfTheName(WorldState *worldState)  \
+{                                                                                               \
+    return CHECK_ARG(worldState)->nativePrefix##restOfTheName();                                \
+}
+
+DEFINE_NATIVE_WS_VAR_GETTER(UnsignedVar, goal, Goal, ItemWaitTimeVar);
+DEFINE_NATIVE_WS_VAR_GETTER(UnsignedVar, similar, Similar, WorldStateInstanceIdVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(ShortVar, health, Health, Var);
+DEFINE_NATIVE_WS_VAR_GETTER(ShortVar, armor, Armor, Var);
+DEFINE_NATIVE_WS_VAR_GETTER(ShortVar, raw, Raw, DamageToKillVar);
+DEFINE_NATIVE_WS_VAR_GETTER(ShortVar, potential, Potential, DangerDamageVar);
+DEFINE_NATIVE_WS_VAR_GETTER(ShortVar, threat, Threat, InflictedDamageVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, QuadVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, ShellVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, enemy, Enemy, HasQuadVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, ThreateningEnemyVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, JustPickedGoalItemVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, is, Is, RunningAwayVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, RunAwayVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, ReactedToDangerVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, ReactedToThreatVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, is, Is, ReactingToEnemyLostVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, ReactedToEnemyLostVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, might, Might, SeeLostEnemyAfterTurnVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, JustTeleportedVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, JustTouchedJumppadVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, JustEnteredElevatorVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, PendingCoverSpotVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, PendingRunAwayTeleportVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, PendingRunAwayJumppadVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, PendingRunAwayElevatorVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, PositionalAdvantageVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, can, Can, HitEnemyVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, enemy, Enemy, CanHitVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, JustKilledEnemyVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, GoodSniperRangeWeaponsVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, GoodFarRangeWeaponsVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, GoodMiddleRangeWeaponsVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, has, Has, GoodCloseRangeWeaponsVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, enemy, Enemy, HasGoodSniperRangeWeaponsVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, enemy, Enemy, HasGoodFarRangeWeaponsVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, enemy, Enemy, HasGoodMiddleRangeWeaponsVar);
+DEFINE_NATIVE_WS_VAR_GETTER(BoolVar, enemy, Enemy, HasGoodCloseRangeWeaponsVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, bot, Bot, OriginVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, enemy, Enemy, OriginVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, nav, Nav, TargetOriginVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, pending, Pending, OriginVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, danger, Danger, HitPointVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, danger, Danger, DirectionVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, dodge, Dodge, DangerSpotVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, threat, Threat, PossibleOriginVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginVar, lost, Lost, EnemyLastSeenOriginVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(OriginLazyVar, sniper, Sniper, RangeTacticalSpotVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginLazyVar, far, Far, RangeTacticalSpotVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginLazyVar, middle, Middle, RangeTacticalSpotVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginLazyVar, close, Close, RangeTacticalSpotVar);
+DEFINE_NATIVE_WS_VAR_GETTER(OriginLazyVar, cover, Cover, SpotVar);
+
+DEFINE_NATIVE_WS_VAR_GETTER(DualOriginLazyVar, run, Run, AwayTeleportOriginVar);
+DEFINE_NATIVE_WS_VAR_GETTER(DualOriginLazyVar, run, Run, AwayJumppadOriginVar);
+DEFINE_NATIVE_WS_VAR_GETTER(DualOriginLazyVar, run, Run, AwayElevatorOriginVar);
+
+static void objectWorldState_setIgnoreAll(WorldState *worldState, bool ignore)
+{
+    CHECK_ARG(worldState)->SetIgnoreAll(ignore);
+}
+
+#define DECLARE_SCRIPT_WS_GETTER(type, scriptPrefix, nativePrefix, restOfTheName) \
+    DECLARE_METHOD(AI##type, get_##scriptPrefix##restOfTheName, (), objectWorldState_##scriptPrefix##restOfTheName)
+
+static const asMethod_t asAiWorldState_ObjectMethods[] =
+{
+    DECLARE_SCRIPT_WS_GETTER(UnsignedVar, goal, Goal, ItemWaitTimeVar),
+    DECLARE_SCRIPT_WS_GETTER(UnsignedVar, similar, Similar, WorldStateInstanceIdVar),
+
+    DECLARE_SCRIPT_WS_GETTER(ShortVar, health, Health, Var),
+    DECLARE_SCRIPT_WS_GETTER(ShortVar, armor, Armor, Var),
+    DECLARE_SCRIPT_WS_GETTER(ShortVar, raw, Raw, DamageToKillVar),
+    DECLARE_SCRIPT_WS_GETTER(ShortVar, potential, Potential, DangerDamageVar),
+    DECLARE_SCRIPT_WS_GETTER(ShortVar, threat, Threat, InflictedDamageVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, QuadVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, ShellVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, enemy, Enemy, HasQuadVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, ThreateningEnemyVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, JustPickedGoalItemVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, is, Is, RunningAwayVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, RunAwayVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, ReactedToDangerVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, ReactedToThreatVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, is, Is, ReactingToEnemyLostVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, ReactedToEnemyLostVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, might, Might, SeeLostEnemyAfterTurnVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, JustTeleportedVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, JustTouchedJumppadVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, JustEnteredElevatorVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, PendingCoverSpotVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, PendingRunAwayTeleportVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, PendingRunAwayJumppadVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, PendingRunAwayElevatorVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, PositionalAdvantageVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, can, Can, HitEnemyVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, enemy, Enemy, CanHitVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, JustKilledEnemyVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, GoodSniperRangeWeaponsVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, GoodFarRangeWeaponsVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, GoodMiddleRangeWeaponsVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, has, Has, GoodCloseRangeWeaponsVar),
+
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, enemy, Enemy, HasGoodSniperRangeWeaponsVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, enemy, Enemy, HasGoodFarRangeWeaponsVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, enemy, Enemy, HasGoodMiddleRangeWeaponsVar),
+    DECLARE_SCRIPT_WS_GETTER(BoolVar, enemy, Enemy, HasGoodCloseRangeWeaponsVar),
+
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, bot, Bot, OriginVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, enemy, Enemy, OriginVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, nav, Nav, TargetOriginVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, pending, Pending, OriginVar),
+
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, danger, Danger, HitPointVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, danger, Danger, DirectionVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, dodge, Dodge, DangerSpotVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, threat, Threat, PossibleOriginVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginVar, lost, Lost, EnemyLastSeenOriginVar),
+
+    DECLARE_SCRIPT_WS_GETTER(OriginLazyVar, sniper, Sniper, RangeTacticalSpotVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginLazyVar, far, Far, RangeTacticalSpotVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginLazyVar, middle, Middle, RangeTacticalSpotVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginLazyVar, close, Close, RangeTacticalSpotVar),
+    DECLARE_SCRIPT_WS_GETTER(OriginLazyVar, cover, Cover, SpotVar),
+
+    DECLARE_SCRIPT_WS_GETTER(DualOriginLazyVar, run, Run, AwayTeleportOriginVar),
+    DECLARE_SCRIPT_WS_GETTER(DualOriginLazyVar, run, Run, AwayJumppadOriginVar),
+    DECLARE_SCRIPT_WS_GETTER(DualOriginLazyVar, run, Run, AwayElevatorOriginVar),
+
+    DECLARE_METHOD(void, setIgnoreAll, (bool ignore), objectWorldState_setIgnoreAll),
+
+    ASLIB_METHOD_NULL
+};
+
+static const asClassDescriptor_t asAiWorldStateClassDescriptor =
+{
+    "AIWorldState",		           /* name */
+    asOBJ_REF|asOBJ_NOCOUNT,	   /* NOTE: this is really a value type but this semantics is hidden from script */
+    sizeof(WorldState),	           /* size */
+    EMPTY_FUNCDEFS,		           /* funcdefs */
+    EMPTY_BEHAVIORS,               /* object behaviors */
+    asAiWorldState_ObjectMethods,  /* methods */
+    EMPTY_PROPERTIES,		       /* properties */
+
+    NULL, NULL					   /* string factory hack */
+};
+
+// These getters are redundant but convenient and save consequent native calls
+#define DEFINE_NATIVE_ENTITY_GETTERS(paramName, nativeName, scriptName)                                      \
+static edict_t *object##scriptName##_self(nativeName *paramName) { return paramName->Self(); }               \
+static gclient_t *object##scriptName##_client(nativeName *paramName) { return paramName->Self()->r.client; } \
+static ai_handle_t *object##scriptName##_bot(nativeName *paramName) { return paramName->Self()->ai; }
+
+// Use dummy format string to avoid a warning when a format string cannot be analyzed
+#define DEFINE_NATIVE_DEBUG_OUTPUT_METHOD(nativeName, scriptName)              \
+void object##scriptName##_debug(const nativeName *obj, const asstring_t *name) \
+{                                                                              \
+    CHECK_ARG(obj);                                                            \
+    CHECK_ARG(name);                                                           \
+    if (name->len > 0 && name->buffer[name->len - 1] == '\n')                  \
+        obj->Debug("%s", name->buffer);                                        \
+    else                                                                       \
+        obj->Debug("%s\n", name->buffer);                                      \
+}
+
+#define DECLARE_SCRIPT_ENTITY_GETTERS_LIST(scriptName)                              \
+DECLARE_METHOD(Entity @, get_self, (), object##scriptName##_self),                  \
+DECLARE_METHOD(const Entity @, get_self, () const, object##scriptName##_self),      \
+DECLARE_METHOD(Client @, get_client, (), object##scriptName##_client),              \
+DECLARE_METHOD(const Client @, get_client, () const, object##scriptName##_client),  \
+DECLARE_METHOD(Bot @, get_bot, (), object##scriptName##_bot),                       \
+DECLARE_METHOD(const Bot @, get_bot, () const, object##scriptName##_bot)
+
+DEFINE_NATIVE_ENTITY_GETTERS(goal, BotScriptGoal, Goal)
+
+static const asMethod_t asAiGoal_ObjectMethods[] =
+{
+    DECLARE_SCRIPT_ENTITY_GETTERS_LIST(Goal),
+
+    ASLIB_METHOD_NULL
+};
+
+static const asClassDescriptor_t asAiGoalClassDescriptor =
+{
+    "AIGoal",		                /* name */
+    asOBJ_REF|asOBJ_NOCOUNT,	    /* object type flags */
+    sizeof(BotScriptGoal),	        /* size */
+    EMPTY_FUNCDEFS,		            /* funcdefs */
+    EMPTY_BEHAVIORS,                /* object behaviors */
+    asAiGoal_ObjectMethods,         /* methods */
+    EMPTY_PROPERTIES,		        /* properties */
+
+    NULL, NULL					    /* string factory hack */
+};
+
+DEFINE_NATIVE_ENTITY_GETTERS(actionRecord, BotScriptActionRecord, ActionRecord)
+DEFINE_NATIVE_DEBUG_OUTPUT_METHOD(BotScriptActionRecord, ActionRecord)
+
+#define DECLARE_SCRIPT_DEBUG_OUTPUT_METHOD(nativeName) \
+DECLARE_METHOD(void, debug, (const String &in message), object##nativeName##_debug)
+
+static const asMethod_t asAiActionRecord_ObjectMethods[] =
+{
+    DECLARE_SCRIPT_ENTITY_GETTERS_LIST(ActionRecord),
+    DECLARE_SCRIPT_DEBUG_OUTPUT_METHOD(ActionRecord),
+
+    ASLIB_METHOD_NULL
+};
+
+static const asClassDescriptor_t asAiActionRecordClassDescriptor =
+{
+    "AIActionRecord",	                   /* name */
+    asOBJ_REF|asOBJ_NOCOUNT,	           /* object type flags */
+    sizeof(BotScriptActionRecord),	       /* size */
+    EMPTY_FUNCDEFS,		                   /* funcdefs */
+    EMPTY_BEHAVIORS,                       /* object behaviors */
+    asAiActionRecord_ObjectMethods,        /* methods */
+    EMPTY_PROPERTIES,		               /* properties */
+
+    NULL, NULL					           /* string factory hack */
+};
+
+// We bypass the stock CScriptAny::Retrieve() method and access the value object pointer directly
+// to avoid extra performance issues/leaks due to operations on the object ref count performed in the method.
+// However this raw object pointer is not all what we need.
+// Scripts can pass a pointer to an object of a wrong type in the `any` container leading to an app crash.
+// We want to control this and thus implement a custom type checker for a value passed in the `any` container.
+// We can use CScriptAny::GetTypeId(), asIScriptEngine::GetObjectTypeById() and so on, but this is a rather slow approach.
+// All subtypes of a needed type are known after script loading.
+// We store ids of all these types and check an actual value type id against these ids.
+// Considering that there are usually few subtypes of a needed type in the script code, this approach is very fast.
+class TypeHolderAndChecker
+{
+    const char *name;
+    StaticVector<int, 24> subtypesIds;
+public:
+    TypeHolderAndChecker(const char *name_): name(name_) {}
+
+    void Load(asIScriptModule *module)
+    {
+        asIObjectType *baseType = module->GetObjectTypeByDecl(name);
+        if (!baseType)
+            API_ERRORV("Can't find %s type in the module", name);
+
+        for (unsigned i = 0, end = module->GetObjectTypeCount(); i < end; ++i)
+        {
+            asIObjectType *type = module->GetObjectTypeByIndex(i);
+            if (!type->DerivesFrom(baseType))
+                continue;
+
+            if (subtypesIds.size() < subtypesIds.capacity())
+                subtypesIds.push_back(type->GetTypeId());
+            else
+                API_ERRORV("Too many subtypes for type %s\n", name);
+        }
+    }
+
+    void Unload() { subtypesIds.clear(); }
+
+    void *GetValueRef(CScriptAny *anyRef)
+    {
+        int actualTypeId = anyRef->GetTypeId();
+        if (!(actualTypeId & asTYPEID_OBJHANDLE))
+            API_ERROR("A value stored in `any` container is not a script handle\n");
+
+        // Clear additional flags, keep only potential registered type part
+        int maskedTypeId = actualTypeId;
+        maskedTypeId &= ~asTYPEID_OBJHANDLE;
+        maskedTypeId &= asTYPEID_MASK_OBJECT | asTYPEID_MASK_SEQNBR;
+        if (anyRef->value.valueObj)
+        {
+            if (std::find(subtypesIds.begin(), subtypesIds.end(), maskedTypeId) != subtypesIds.end())
+                return anyRef->value.valueObj;
+        }
+
+        const char *actualTypeName = (GAME_AS_ENGINE())->GetObjectTypeById(actualTypeId)->GetName();
+        int baseTypeId = (GAME_AS_ENGINE())->GetObjectTypeByDecl(name)->GetTypeId();
+        const char *format = "A value of type %s (id=%d) stored in `any` container is not of type %s (id=%d)\n";
+        API_ERRORV(format, actualTypeName, actualTypeId, name, baseTypeId);
+    }
+};
+
+static TypeHolderAndChecker scriptGoalFactoryTypeHolder("AIScriptGoalFactory");
+static TypeHolderAndChecker scriptActionFactoryTypeHolder("AIScriptActionFactory");
+static TypeHolderAndChecker scriptActionRecordTypeHolder("AIScriptActionRecord");
+
+// AS does not have forward class declarations, and script AIScriptActionRecord class
+// cannot be registered to the moment of the base engine script initialization.
+// We have to pass a reference to a script action record in the `any` container class.
+static PlannerNode *objectAction_newNodeForRecord(BotScriptAction *action, CScriptAny *scriptRecordAnyRef, float cost, WorldState *worldState)
+{
+    CHECK_ARG(action);
+    CHECK_ARG(scriptRecordAnyRef);
+    CHECK_ARG(worldState);
+
+    void *scriptRecord = scriptActionRecordTypeHolder.GetValueRef(scriptRecordAnyRef);
+    if (PlannerNode *node = action->NewNodeForRecord(scriptRecord))
+    {
+        node->worldState = *worldState;
+        node->heapCost = cost;
+        return node;
+    }
+    return nullptr;
+}
+
+DEFINE_NATIVE_ENTITY_GETTERS(action, BotScriptAction, Action)
+DEFINE_NATIVE_DEBUG_OUTPUT_METHOD(BotScriptAction, Action)
+
+static const asMethod_t asAiAction_ObjectMethods[] =
+{
+    DECLARE_SCRIPT_ENTITY_GETTERS_LIST(Action),
+    DECLARE_SCRIPT_DEBUG_OUTPUT_METHOD(Action),
+
+    DECLARE_METHOD(AIPlannerNode @, newNodeForRecord, (any &scriptRecord, float cost, AIWorldState &worldState), objectAction_newNodeForRecord),
+
+    ASLIB_METHOD_NULL
+};
+
+static const asClassDescriptor_t asAiActionClassDescriptor =
+{
+    "AIAction",		                 /* name */
+    asOBJ_REF|asOBJ_NOCOUNT,	     /* object type flags */
+    sizeof(BotScriptAction),	     /* size */
+    EMPTY_FUNCDEFS,		             /* funcdefs */
+    EMPTY_BEHAVIORS,                 /* object behaviors */
+    asAiAction_ObjectMethods,        /* methods */
+    EMPTY_PROPERTIES,		         /* properties */
+
+    NULL, NULL					     /* string factory hack */
 };
 
 static const asProperty_t asAiScriptWeaponDef_Properties[] =
@@ -73,23 +688,18 @@ static const asClassDescriptor_t asAiScriptWeaponDefClassDescriptor =
     "AIScriptWeaponDef",		         /* name */
     asOBJ_VALUE|asOBJ_POD,	             /* object type flags */
     sizeof(AiScriptWeaponDef),	         /* size */
-    asAiScriptWeaponDef_Funcdefs,		 /* funcdefs */
-    asAiScriptWeaponDef_ObjectBehaviors, /* object behaviors */
-    asAiScriptWeaponDef_ObjectMethods,	 /* methods */
+    EMPTY_FUNCDEFS,		                 /* funcdefs */
+    EMPTY_BEHAVIORS,                     /* object behaviors */
+    EMPTY_METHODS,	                     /* methods */
     asAiScriptWeaponDef_Properties,		 /* properties */
 
     NULL, NULL					         /* string factory hack */
 };
 
-static const asFuncdef_t asAiDefenceSpot_Funcdefs[] =
-{
-    ASLIB_FUNCDEF_NULL
-};
-
 static constexpr auto DEFAULT_MAX_DEFENDERS = 5;
 static constexpr auto DEFAULT_MAX_ATTACKERS = 5;
 
-static void objectAiDefenceSpot_Constructor( AiDefenceSpot *spot, int id, const edict_t *entity, float radius )
+static void objectAiDefenceSpot_constructor( AiDefenceSpot *spot, int id, const edict_t *entity, float radius )
 {
     spot->id = id;
     spot->entity = entity;
@@ -101,16 +711,14 @@ static void objectAiDefenceSpot_Constructor( AiDefenceSpot *spot, int id, const 
     spot->carrierEnemyAlertScale = 1.0f;
 }
 
+#define DECLARE_CONSTRUCTOR(params, nativeFunc) \
+    { asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL(void, f, params), asFUNCTION(nativeFunc), asCALL_CDECL_OBJFIRST }
+
 static const asBehavior_t asAiDefenceSpot_ObjectBehaviors[] =
 {
-    { asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL(void, f, (int id, const Entity @entity, float radius)), asFUNCTION(objectAiDefenceSpot_Constructor), asCALL_CDECL_OBJFIRST },
+    DECLARE_CONSTRUCTOR((int id, const Entity @entity, float radius), objectAiDefenceSpot_constructor),
 
     ASLIB_BEHAVIOR_NULL
-};
-
-static const asMethod_t asAiDefenceSpot_Methods[] =
-{
-    ASLIB_METHOD_NULL
 };
 
 static const asProperty_t asAiDefenceSpot_Properties[] =
@@ -132,20 +740,15 @@ static const asClassDescriptor_t asAiDefenceSpotClassDescriptor =
     "AIDefenceSpot",
     asOBJ_VALUE|asOBJ_POD,
     sizeof(AiDefenceSpot),
-    asAiDefenceSpot_Funcdefs,
+    EMPTY_FUNCDEFS,
     asAiDefenceSpot_ObjectBehaviors,
-    asAiDefenceSpot_Methods,
+    EMPTY_METHODS,
     asAiDefenceSpot_Properties,
 
     NULL, NULL
 };
 
-static const asFuncdef_t asAiOffenseSpot_Funcdefs[] =
-{
-    ASLIB_FUNCDEF_NULL
-};
-
-static void objectAiOffenseSpot_Constructor( AiOffenseSpot *spot, int id, const edict_t *entity )
+static void objectAiOffenseSpot_constructor( AiOffenseSpot *spot, int id, const edict_t *entity )
 {
     spot->id = id;
     spot->entity = entity;
@@ -155,14 +758,9 @@ static void objectAiOffenseSpot_Constructor( AiOffenseSpot *spot, int id, const 
 
 static const asBehavior_t asAiOffenseSpot_ObjectBehaviors[] =
 {
-    { asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL(void, f, (int id, const Entity @entity)), asFUNCTION(objectAiOffenseSpot_Constructor), asCALL_CDECL_OBJFIRST },
+    DECLARE_CONSTRUCTOR((int id, const Entity @entity), objectAiOffenseSpot_constructor),
 
     ASLIB_BEHAVIOR_NULL
-};
-
-static const asMethod_t asAiOffenseSpot_Methods[] =
-{
-    ASLIB_METHOD_NULL
 };
 
 static const asProperty_t asAiOffenseSpot_Properties[] =
@@ -180,82 +778,402 @@ static const asClassDescriptor_t asAiOffenseSpotClassDescriptor =
     "AIOffenseSpot",
     asOBJ_VALUE|asOBJ_POD,
     sizeof(AiOffenseSpot),
-    asAiOffenseSpot_Funcdefs,
+    EMPTY_FUNCDEFS,
     asAiOffenseSpot_ObjectBehaviors,
-    asAiOffenseSpot_Methods,
+    EMPTY_METHODS,
     asAiOffenseSpot_Properties,
 
     NULL, NULL
 };
 
-static const asFuncdef_t asbot_Funcdefs[] =
+static void objectCampingSpot_constructor1( AiCampingSpot *obj, const asvec3_t *origin, float radius, float alertness)
 {
-    ASLIB_FUNCDEF_NULL
-};
+    new(CHECK_ARG(obj))AiCampingSpot(CHECK_ARG(origin)->v, radius, alertness);
+}
 
-static const asBehavior_t asbot_ObjectBehaviors[] =
+static void objectCampingSpot_constructor2( AiCampingSpot *obj, const asvec3_t *origin, const asvec3_t *lookAtPoint, float radius, float alertness)
 {
+    new(CHECK_ARG(obj))AiCampingSpot(CHECK_ARG(origin)->v, CHECK_ARG(lookAtPoint)->v, radius, alertness);
+}
+
+static const asBehavior_t asAiCampingSpot_ObjectBehaviors[] =
+{
+    DECLARE_CONSTRUCTOR((const Vec3 &in radius, float radius, float alertness = 0.75f), objectCampingSpot_constructor1),
+    DECLARE_CONSTRUCTOR((const Vec3 &in radius, const Vec3 &in lookAtPoint, float radius, float alertness = 0.75f), objectCampingSpot_constructor2),
+
     ASLIB_BEHAVIOR_NULL
 };
 
-float AI_GetBotEffectiveOffensiveness(const ai_handle_t *ai)
+static const asProperty_t asAiCampingSpot_Properties[] =
 {
-    return ai ? ai->botRef->GetEffectiveOffensiveness() : 0.0f;
+    { ASLIB_PROPERTY_DECL(Vec3, origin), ASLIB_FOFFSET(AiCampingSpot, origin) },
+    { ASLIB_PROPERTY_DECL(Vec3, lookAtPoint), ASLIB_FOFFSET(AiCampingSpot, lookAtPoint) },
+    { ASLIB_PROPERTY_DECL(float, radius), ASLIB_FOFFSET(AiCampingSpot, radius) },
+    { ASLIB_PROPERTY_DECL(float, alertness), ASLIB_FOFFSET(AiCampingSpot, alertness) },
+    { ASLIB_PROPERTY_DECL(bool, hasLookAtPoint), ASLIB_FOFFSET(AiCampingSpot, hasLookAtPoint) },
+
+    ASLIB_PROPERTY_NULL
+};
+
+static const asClassDescriptor_t asAiCampingSpotClassDescriptor =
+{
+    "AICampingSpot",
+    asOBJ_VALUE|asOBJ_POD,
+    sizeof(AiCampingSpot),
+    EMPTY_FUNCDEFS,
+    asAiCampingSpot_ObjectBehaviors,
+    EMPTY_METHODS,
+    asAiCampingSpot_Properties,
+
+    NULL, NULL
+};
+
+static void objectAiPendingLookAtPoint_constructor( AiPendingLookAtPoint *obj, const asvec3_t *origin, float turnSpeedMultiplier )
+{
+    new (CHECK_ARG(obj))AiPendingLookAtPoint(origin->v, turnSpeedMultiplier);
 }
 
-void AI_SetBotBaseOffensiveness(ai_handle_t *ai, float baseOffensiveness)
+static const asBehavior_t asAiPendingLookAtPoint_ObjectBehaviors[] =
 {
-    if (ai)
-        ai->botRef->SetBaseOffensiveness(baseOffensiveness);
+    DECLARE_CONSTRUCTOR((const Vec3 &in origin, float turnSpeedMultiplier), objectAiPendingLookAtPoint_constructor),
+
+    ASLIB_BEHAVIOR_NULL
+};
+
+static const asProperty_t asAiPendingLookAtPoint_ObjectProperties[] =
+{
+    { ASLIB_PROPERTY_DECL(Vec3, origin), ASLIB_FOFFSET(AiPendingLookAtPoint, origin) },
+    { ASLIB_PROPERTY_DECL(float, turnSpeedMultiplier), ASLIB_FOFFSET(AiPendingLookAtPoint, turnSpeedMultiplier) },
+
+    ASLIB_PROPERTY_NULL
+};
+
+static const asClassDescriptor_t asAiPendingLookAtPointClassDescriptor =
+{
+    "AIPendingLookAtPoint",
+    asOBJ_VALUE|asOBJ_POD,
+    sizeof(AiPendingLookAtPoint),
+    EMPTY_FUNCDEFS,
+    asAiPendingLookAtPoint_ObjectBehaviors,
+    EMPTY_METHODS,
+    asAiPendingLookAtPoint_ObjectProperties,
+
+    NULL, NULL
+};
+
+static bool objectSelectedNavEntity_isValid(const SelectedNavEntity *obj) { return obj->IsValid(); }
+static bool objectSelectedNavEntity_isEmpty(const SelectedNavEntity *obj) { return obj->IsEmpty(); }
+
+static bool objectSelectedNavEntity_isBasedOnEntity(const SelectedNavEntity *obj, const edict_t *ent )
+{
+    return CHECK_ARG(obj)->GetNavEntity()->IsBasedOnEntity(ent);
+}
+static unsigned objectSelectedNavEntity_get_spawnTime(const SelectedNavEntity *obj)
+{
+    return CHECK_ARG(obj)->GetNavEntity()->SpawnTime();
+}
+static unsigned objectSelectedNavEntity_get_timeout(const SelectedNavEntity *obj)
+{
+    return CHECK_ARG(obj)->GetNavEntity()->Timeout();
+}
+static unsigned objectSelectedNavEntity_get_maxWaitDuration(const SelectedNavEntity *obj)
+{
+    return CHECK_ARG(obj)->GetNavEntity()->MaxWaitDuration();
+}
+static float objectSelectedNavEntity_get_cost(const SelectedNavEntity *obj)
+{
+    return CHECK_ARG(obj)->GetCost();
+}
+static float objectSelectedNavEntity_get_pickupGoalWeight(const SelectedNavEntity *obj)
+{
+    return CHECK_ARG(obj)->PickupGoalWeight();
 }
 
-void AI_SetBotAttitude(ai_handle_t *ai, edict_t *ent, int attitude)
+// There are currently no reasons to expose all methods of SelectedNavEntity or underlying NavEntity.
+// Only methods that are required for a basic GOAP support from the script side are provided.
+static const asMethod_t asAiSelectedNavEntity_ObjectMethods[] =
 {
-    if (ai && ent)
-        ai->botRef->SetAttitude(ent, attitude);
-}
-
-void AI_ClearBotOverriddenEntityWeights(ai_handle_t *ai)
-{
-    if (ai)
-        ai->botRef->ClearOverriddenEntityWeights();
-}
-
-void AI_OverrideBotEntityWeight(ai_handle_t *ai, edict_t *ent, float weight)
-{
-    if (ai && ent)
-        ai->botRef->OverrideEntityWeight(ent, weight);
-}
-
-int AI_BotDefenceSpotId(const ai_handle_t *ai)
-{
-    return ai && ai->botRef ? ai->botRef->DefenceSpotId() : -1;
-}
-
-int AI_BotOffenseSpotId(const ai_handle_t *ai)
-{
-    return ai && ai->botRef ? ai->botRef->OffenseSpotId() : -1;
-}
-
-static const asMethod_t asbot_Methods[] =
-{
-    { ASLIB_FUNCTION_DECL(float, getEffectiveOffensiveness, () const), asFUNCTION(AI_GetBotEffectiveOffensiveness), asCALL_CDECL_OBJFIRST },
-    { ASLIB_FUNCTION_DECL(void, setBaseOffensiveness, (float baseOffensiveness)), asFUNCTION(AI_SetBotBaseOffensiveness), asCALL_CDECL_OBJFIRST },
-
-    { ASLIB_FUNCTION_DECL(void, setAttitude, (Entity @ent, int attitude)), asFUNCTION(AI_SetBotAttitude), asCALL_CDECL_OBJFIRST },
-
-    { ASLIB_FUNCTION_DECL(void, clearOverriddenEntityWeights, ()), asFUNCTION(AI_ClearBotOverriddenEntityWeights), asCALL_CDECL_OBJFIRST },
-    { ASLIB_FUNCTION_DECL(void, overrideEntityWeight, (Entity @ent, float weight)), asFUNCTION(AI_OverrideBotEntityWeight), asCALL_CDECL_OBJFIRST },
-
-    { ASLIB_FUNCTION_DECL(int, get_defenceSpotId, () const), asFUNCTION(AI_BotDefenceSpotId), asCALL_CDECL_OBJFIRST },
-    { ASLIB_FUNCTION_DECL(int, get_offenseSpotId, () const), asFUNCTION(AI_BotOffenseSpotId), asCALL_CDECL_OBJFIRST },
+    DECLARE_METHOD(bool, isValid, () const, objectSelectedNavEntity_isValid),
+    DECLARE_METHOD(bool, isEmpty, () const, objectSelectedNavEntity_isEmpty),
+    DECLARE_METHOD(bool, isBasedOnEntity, (const Entity @ent) const, objectSelectedNavEntity_isBasedOnEntity),
+    DECLARE_METHOD(uint, get_spawnTime, () const, objectSelectedNavEntity_get_spawnTime),
+    DECLARE_METHOD(uint, get_timeout, () const, objectSelectedNavEntity_get_timeout),
+    DECLARE_METHOD(uint, get_maxWaitDuration, () const, objectSelectedNavEntity_get_maxWaitDuration),
+    DECLARE_METHOD(uint, get_cost, () const, objectSelectedNavEntity_get_cost),
+    DECLARE_METHOD(uint, get_pickupGoalWeight, () const, objectSelectedNavEntity_get_pickupGoalWeight),
 
     ASLIB_METHOD_NULL
 };
 
-static const asProperty_t asbot_Properties[] =
+static const asClassDescriptor_t asAiSelectedNavEntityClassDescriptor =
 {
-    ASLIB_PROPERTY_NULL
+    "AISelectedNavEntity",
+    asOBJ_REF|asOBJ_NOCOUNT,
+    sizeof(SelectedNavEntity),
+    EMPTY_FUNCDEFS,
+    EMPTY_BEHAVIORS,
+    asAiSelectedNavEntity_ObjectMethods,
+    EMPTY_PROPERTIES,
+
+    NULL, NULL
+};
+
+static bool objectSelectedEnemies_areValid(const SelectedEnemies *obj)
+{
+    return CHECK_ARG(obj)->AreValid();
+}
+static bool objectSelectedEnemies_areThreatening(const SelectedEnemies *obj)
+{
+    return CHECK_ARG(obj)->AreThreatening();
+}
+static unsigned objectSelectedEnemies_get_instanceId(const SelectedEnemies *obj)
+{
+    return CHECK_ARG(obj)->InstanceId();
+}
+static bool objectSelectedEnemies_haveCarrier(const SelectedEnemies *obj)
+{
+    return CHECK_ARG(obj)->HaveCarrier();
+}
+static bool objectSelectedEnemies_haveQuad(const SelectedEnemies *obj)
+{
+    return CHECK_ARG(obj)->HaveQuad();
+}
+
+static inline asvec3_t ToASVector(const vec3_t v)
+{
+    asvec3_t result;
+    VectorCopy(v, result.v);
+    return result;
+}
+
+static inline asvec3_t ToASVector(const Vec3 &v) { return ToASVector(v.Data()); }
+
+static asvec3_t objectSelectedEnemies_get_lastSeenOrigin(const SelectedEnemies *obj)
+{
+    return ToASVector(CHECK_ARG(obj)->LastSeenOrigin());
+}
+static asvec3_t objectSelectedEnemies_get_actualOrigin(const SelectedEnemies *obj)
+{
+    return ToASVector(CHECK_ARG(obj)->ActualOrigin());
+}
+static asvec3_t objectSelectedEnemies_get_lookDir(const SelectedEnemies *obj)
+{
+    return ToASVector(CHECK_ARG(obj)->LookDir());
+}
+static asvec3_t objectSelectedEnemies_get_angles(const SelectedEnemies *obj)
+{
+    return ToASVector(CHECK_ARG(obj)->EnemyAngles());
+}
+
+static bool objectSelectedEnemies_isPrimaryEnemy(const SelectedEnemies *obj, const edict_t *ent)
+{
+    return CHECK_ARG(obj)->IsPrimaryEnemy(CHECK_ARG(ent));
+}
+static bool objectSelectedEnemies_isPrimaryEnemy2(const SelectedEnemies *obj, const gclient_t *client)
+{
+    return CHECK_ARG(obj)->IsPrimaryEnemy(game.edicts + (game.clients - CHECK_ARG(client)) + 1);
+}
+static const edict_t *objectSelectedEnemies_get_traceKey(const SelectedEnemies *obj)
+{
+    return CHECK_ARG(obj)->TraceKey();
+}
+
+static bool objectSelectedEnemies_canHit(const SelectedEnemies *obj, const edict_t *ent)
+{
+    return CHECK_ARG(obj)->CanHit(CHECK_ARG(ent));
+}
+
+// There are currently no reasons to expose all methods of SelectedNavEntity or underlying NavEntity.
+// Only methods that are required for a basic GOAP support from the script side are provided.
+static const asMethod_t asAiSelectedEnemies_ObjectMethods[] =
+{
+    DECLARE_METHOD(bool, areValid, () const, objectSelectedEnemies_areValid),
+    DECLARE_METHOD(bool, areThreatening, () const, objectSelectedEnemies_areThreatening),
+    DECLARE_METHOD(uint, get_instanceId, () const, objectSelectedEnemies_get_instanceId),
+
+    DECLARE_METHOD(bool, haveCarrier, () const, objectSelectedEnemies_haveCarrier),
+    DECLARE_METHOD(bool, haveQuad, () const, objectSelectedEnemies_haveQuad),
+
+    DECLARE_METHOD(Vec3, get_lastSeenOrigin, () const, objectSelectedEnemies_get_lastSeenOrigin),
+    DECLARE_METHOD(Vec3, get_actualOrigin, () const, objectSelectedEnemies_get_actualOrigin),
+
+    DECLARE_METHOD(Vec3, get_lookDir, () const, objectSelectedEnemies_get_lookDir),
+    DECLARE_METHOD(Vec3, get_angles, () const, objectSelectedEnemies_get_angles),
+
+    DECLARE_METHOD(bool, isPrimaryEnemy, (const Entity @ent) const, objectSelectedEnemies_isPrimaryEnemy),
+    DECLARE_METHOD(bool, isPrimaryEnemy, (const Client @client) const, objectSelectedEnemies_isPrimaryEnemy2),
+    DECLARE_METHOD(const Entity @, get_traceKey, () const, objectSelectedEnemies_get_traceKey),
+
+    DECLARE_METHOD(bool, canHit, (const Entity @ent) const, objectSelectedEnemies_canHit),
+
+    ASLIB_METHOD_NULL
+};
+
+static const asClassDescriptor_t asAiSelectedEnemiesClassDescriptor =
+{
+    "AISelectedEnemies",
+    asOBJ_REF|asOBJ_NOCOUNT,
+    sizeof(SelectedEnemies),
+    EMPTY_FUNCDEFS,
+    EMPTY_BEHAVIORS,
+    asAiSelectedEnemies_ObjectMethods,
+    EMPTY_PROPERTIES,
+
+    NULL, NULL
+};
+
+#define CHECK_BOT_HANDLE(ai) ((!(ai) || !(ai)->botRef) ? (API_ERROR("The given bot handle is null\n"), (ai)) : (ai))
+
+float objectBot_getEffectiveOffensiveness(const ai_handle_t *ai)
+{
+    return CHECK_BOT_HANDLE(ai)->botRef->GetEffectiveOffensiveness();
+}
+
+void objectBot_setBaseOffensiveness(ai_handle_t *ai, float baseOffensiveness)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->SetBaseOffensiveness(baseOffensiveness);
+}
+
+void objectBot_setAttitude(ai_handle_t *ai, edict_t *ent, int attitude)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->SetAttitude(CHECK_ARG(ent), attitude);
+}
+
+void objectBot_clearOverriddenEntityWeights(ai_handle_t *ai)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->ClearOverriddenEntityWeights();
+}
+
+void objectBot_overrideEntityWeight(ai_handle_t *ai, edict_t *ent, float weight)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->OverrideEntityWeight(CHECK_ARG(ent), weight);
+}
+
+int objectBot_get_defenceSpotId(const ai_handle_t *ai)
+{
+    return CHECK_BOT_HANDLE(ai)->botRef->DefenceSpotId();
+}
+
+int objectBot_get_offenseSpotId(const ai_handle_t *ai)
+{
+    return CHECK_BOT_HANDLE(ai)->botRef->OffenseSpotId();
+}
+
+void objectBot_setNavTarget(const ai_handle_t *ai, const asvec3_t *navTargetOrigin, float reachRadius)
+{
+    if (reachRadius <= 0.0f)
+        API_ERROR("The given reach radius is negative\n");
+
+    CHECK_BOT_HANDLE(ai)->botRef->SetNavTarget(Vec3(CHECK_ARG(navTargetOrigin)->v), reachRadius);
+}
+
+void objectBot_resetNavTarget(const ai_handle_t *ai)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->ResetNavTarget();
+}
+
+void objectBot_setCampingSpot(const ai_handle_t *ai, const AiCampingSpot *campingSpot)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->SetCampingSpot(*CHECK_ARG(campingSpot));
+}
+
+void objectBot_resetCampingSpot(const ai_handle_t *ai)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->ResetCampingSpot();
+}
+
+void objectBot_setPendingLookAtPoint(const ai_handle_t *ai, const AiPendingLookAtPoint *pendingLookAtPoint, unsigned timeoutPeriod)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->SetPendingLookAtPoint(*CHECK_ARG(pendingLookAtPoint), timeoutPeriod);
+}
+
+void objectBot_resetPendingLookAtPoint(const ai_handle_t *ai)
+{
+    CHECK_BOT_HANDLE(ai)->botRef->ResetPendingLookAtPoint();
+}
+
+unsigned objectBot_nextSimilarWorldStateInstanceId(const ai_handle_t *ai)
+{
+    return CHECK_BOT_HANDLE(ai)->botRef->NextSimilarWorldStateInstanceId();
+}
+
+const SelectedNavEntity *objectBot_get_selectedNavEntity(const ai_handle_t *ai)
+{
+    return &CHECK_BOT_HANDLE(ai)->botRef->GetSelectedNavEntity();
+}
+
+const SelectedEnemies *objectBot_get_selectedEnemies(const ai_handle_t *ai)
+{
+    return &CHECK_BOT_HANDLE(ai)->botRef->GetSelectedEnemies();
+}
+
+int objectBot_checkTravelTimeMillis(const ai_handle_t *ai, const asvec3_t *from, const asvec3_t *to, bool allowUnreachable)
+{
+    return CHECK_BOT_HANDLE(ai)->botRef->CheckTravelTimeMillis(Vec3(from->v), Vec3(to->v), allowUnreachable);
+}
+
+#define DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(lowercasePrefix, uppercasePrefix, restOfTheName) \
+bool objectBot_get##lowercasePrefix##restOfTheName(const ai_handle_t *ai)                         \
+{                                                                                                 \
+    return CHECK_BOT_HANDLE(ai)->botRef->GetMiscTactics().lowercasePrefix##restOfTheName;         \
+}                                                                                                 \
+void objectBot_set##uppercasePrefix##restOfTheName(ai_handle_t *ai, bool value)                   \
+{                                                                                                 \
+    CHECK_BOT_HANDLE(ai)->botRef->GetMiscTactics().lowercasePrefix##restOfTheName = value;        \
+}
+
+DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(will, Will, Advance);
+DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(will, Will, Retreat);
+DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(should, Should, BeSilent);
+DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(should, Should, MoveCarefully);
+DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(should, Should, Attack);
+DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(should, Should, KeepXhairOnEnemy);
+DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(will, Will, AttackMelee);
+DEFINE_NATIVE_BOT_MISC_TACTICS_ACCESSORS(should, Should, RushHeadless);
+
+#define DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(lowercasePrefix, uppercasePrefix, restOfTheName)                     \
+DECLARE_METHOD(bool, get_##lowercasePrefix##restOfTheName, () const, objectBot_get##lowercasePrefix##restOfTheName),   \
+DECLARE_METHOD(void, set_##lowercasePrefix##restOfTheName, (bool value), objectBot_set##uppercasePrefix##restOfTheName)
+
+static const asMethod_t asbot_Methods[] =
+{
+    DECLARE_METHOD(float, getEffectiveOffensiveness, () const, objectBot_getEffectiveOffensiveness),
+    DECLARE_METHOD(void, setBaseOffensiveness, (float baseOffensiveness), objectBot_setBaseOffensiveness),
+
+    DECLARE_METHOD(void, setAttitude, (const Entity @ent, int attitude), objectBot_setAttitude),
+
+    DECLARE_METHOD(void, clearOverriddenEntityWeights, (), objectBot_clearOverriddenEntityWeights),
+    DECLARE_METHOD(void, overrideEntityWeight, (const Entity @ent, float weight), objectBot_overrideEntityWeight),
+
+    DECLARE_METHOD(int, get_defenceSpotId, () const, objectBot_get_defenceSpotId),
+    DECLARE_METHOD(int, get_offenseSpotId, () const, objectBot_get_offenseSpotId),
+
+    DECLARE_METHOD(void, setNavTarget, (const Vec3 &in navTargetOrigin, float reachRadius), objectBot_setNavTarget),
+    DECLARE_METHOD(void, resetNavTarget, (), objectBot_resetNavTarget),
+
+    DECLARE_METHOD(void, setCampingSpot, (const AICampingSpot &in campingSpot), objectBot_setCampingSpot),
+    DECLARE_METHOD(void, resetCampingSpot, (), objectBot_resetCampingSpot),
+
+    DECLARE_METHOD(void, setPendingLookAtPoint, (const AIPendingLookAtPoint &in lookAtPoint, uint timeoutPeriod), objectBot_setPendingLookAtPoint),
+    DECLARE_METHOD(void, resetPendingLookAtPoint, (), objectBot_resetPendingLookAtPoint),
+
+    DECLARE_METHOD(uint, nextSimilarWorldStateInstanceId, (), objectBot_nextSimilarWorldStateInstanceId),
+
+    DECLARE_METHOD(const AISelectedNavEntity @, get_selectedNavEntity, () const, objectBot_get_selectedNavEntity),
+    DECLARE_METHOD(const AISelectedEnemies @, get_selectedEnemies, () const, objectBot_get_selectedEnemies),
+
+    DECLARE_METHOD(int, checkTravelTimeMillis, (const Vec3 &in from, const Vec3 &in to, bool allowUnreachable), objectBot_checkTravelTimeMillis),
+
+    DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(will, Will, Advance),
+    DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(will, Will, Retreat),
+    DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(should, Should, BeSilent),
+    DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(should, Should, MoveCarefully),
+    DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(should, Should, Attack),
+    DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(should, Should, KeepXhairOnEnemy),
+    DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(will, Will, AttackMelee),
+    DECLARE_SCRIPT_BOT_MISC_TACTICS_ACCESSORS(should, Should, RushHeadless),
+
+    ASLIB_METHOD_NULL
 };
 
 static const asClassDescriptor_t asBotClassDescriptor =
@@ -263,10 +1181,10 @@ static const asClassDescriptor_t asBotClassDescriptor =
     "Bot",						/* name */
     asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
     sizeof(ai_handle_t),		/* size */
-    asbot_Funcdefs,				/* funcdefs */
-    asbot_ObjectBehaviors,		/* object behaviors */
+    EMPTY_FUNCDEFS,				/* funcdefs */
+    EMPTY_BEHAVIORS,     		/* object behaviors */
     asbot_Methods,				/* methods */
-    asbot_Properties,			/* properties */
+    EMPTY_PROPERTIES,			/* properties */
 
     NULL, NULL					/* string factory hack */
 };
@@ -276,59 +1194,82 @@ const asClassDescriptor_t *asAIClassesDescriptors[] =
     &asAiScriptWeaponDefClassDescriptor,
     &asAiDefenceSpotClassDescriptor,
     &asAiOffenseSpotClassDescriptor,
+    &asAiCampingSpotClassDescriptor,
+    &asAiPendingLookAtPointClassDescriptor,
+    &asAiSelectedNavEntityClassDescriptor,
+    &asAiSelectedEnemiesClassDescriptor,
     &asBotClassDescriptor,
+    &asAiUnsignedVarClassDescriptor,
+    &asAiFloatVarClassDescriptor,
+    &asAiShortVarClassDescriptor,
+    &asAiBoolVarClassDescriptor,
+    &asAiOriginVarClassDescriptor,
+    &asAiOriginLazyVarClassDescriptor,
+    &asAiDualOriginLazyVarClassDescriptor,
+    &asAiWorldStateClassDescriptor,
+    &asAiGoalClassDescriptor,
+    &asAiActionRecordClassDescriptor,
+    &asAiActionClassDescriptor,
+    &asAiPlannerNodeClassDescriptor,
 
     NULL
 };
 
 static inline AiObjectiveBasedTeamBrain *GetObjectiveBasedTeamBrain(const char *caller, int team)
 {
+    CHECK_ARG(caller);
     // Make sure that AiBaseTeamBrain::GetBrainForTeam() will not crash for illegal team
     if (team != TEAM_ALPHA && team != TEAM_BETA)
-    {
-        G_Printf(S_COLOR_RED "%s: illegal team %d\n", caller, team);
-        return nullptr;
-    }
+        API_ERRORV("%s: illegal team %d\n", caller, team);
 
     AiBaseTeamBrain *baseTeamBrain = AiBaseTeamBrain::GetBrainForTeam(team);
     if (auto *objectiveBasedTeamBrain = dynamic_cast<AiObjectiveBasedTeamBrain*>(baseTeamBrain))
         return objectiveBasedTeamBrain;
 
-    G_Printf(S_COLOR_RED "%s: can't be used in not objective based gametype\n", caller);
-    return nullptr;
+    API_ERRORV("%s: can't be used in not objective based gametype\n", caller);
 }
 
-void AI_AddDefenceSpot( int team, const AiDefenceSpot *spot )
+void asFunc_AddDefenceSpot( int team, const AiDefenceSpot *spot )
 {
     if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
         objectiveBasedTeamBrain->AddDefenceSpot(*spot);
+    else
+        API_ERROR("Defence/offense spots are not supported for this gametype\n");
 }
 
-void AI_RemoveDefenceSpot( int team, int id )
+void asFunc_RemoveDefenceSpot( int team, int id )
 {
     if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
         objectiveBasedTeamBrain->RemoveDefenceSpot(id);
+    else
+        API_ERROR("Defence/offense spots are not supported for this gametype\n");
 }
 
-void AI_DefenceSpotAlert( int team, int id, float alertLevel, unsigned timeoutPeriod )
+void asFunc_DefenceSpotAlert( int team, int id, float alertLevel, unsigned timeoutPeriod )
 {
     if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
         objectiveBasedTeamBrain->SetDefenceSpotAlert(id, alertLevel, timeoutPeriod);
+    else
+        API_ERROR("Defence/offense spots are not supported for this gametype\n");
 }
 
-void AI_AddOffenseSpot( int team, const AiOffenseSpot *spot )
+void asFunc_AddOffenseSpot( int team, const AiOffenseSpot *spot )
 {
     if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
         objectiveBasedTeamBrain->AddOffenseSpot(*spot);
+    else
+        API_ERROR("Defence/offense spots are not supported for this gametype\n");
 }
 
-void AI_RemoveOffenseSpot( int team, int id )
+void asFunc_RemoveOffenseSpot( int team, int id )
 {
     if (auto *objectiveBasedTeamBrain = GetObjectiveBasedTeamBrain(__FUNCTION__, team))
         objectiveBasedTeamBrain->RemoveOffenseSpot(id);
+    else
+        API_ERROR("Defence/offense spots are not supported for this gametype\n");
 }
 
-static int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float searchRadius, vec3_t *spots, int maxSpots)
+static int SuggestDefencePlantingSpots(const edict_t *defendedEntity, float searchRadius, vec3_t *spots, int maxSpots)
 {
     const TacticalSpotsRegistry *tacticalSpotsRegistry = TacticalSpotsRegistry::Instance();
     if (!tacticalSpotsRegistry)
@@ -354,16 +1295,17 @@ static int AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float s
     return tacticalSpotsRegistry->FindPositionalAdvantageSpots(originParams, problemParams, spots, maxSpots);
 }
 
-static CScriptArrayInterface *asFunc_AI_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float radius, int maxSpots)
+static CScriptArrayInterface *asFunc_SuggestDefencePlantingSpots(const edict_t *defendedEntity, float radius, int maxSpots)
 {
+    CHECK_ARG(defendedEntity);
     if (maxSpots > 8)
     {
-        G_Printf(S_COLOR_YELLOW "AI_SuggestDefencePlantingSpots(): maxSpots value %d will be limited to 8\n", maxSpots);
+        G_Printf(S_COLOR_YELLOW "asFunc_SuggestDefencePlantingSpots(): maxSpots value %d will be limited to 8\n", maxSpots);
         maxSpots = 8;
     }
 
     vec3_t spots[8];
-    unsigned numSpots = (unsigned)AI_SuggestDefencePlantingSpots(defendedEntity, radius, spots, maxSpots);
+    unsigned numSpots = (unsigned)SuggestDefencePlantingSpots(defendedEntity, radius, spots, maxSpots);
 
     auto *ctx = angelExport->asGetActiveContext();
     auto *engine = ctx->GetEngine();
@@ -378,20 +1320,55 @@ static CScriptArrayInterface *asFunc_AI_SuggestDefencePlantingSpots(const edict_
     return result;
 }
 
+// AS does not have forward class declarations, and script AIScriptGoalFactory class
+// cannot be registered to the moment of the base engine script initialization.
+// We have to pass a reference to a script goal factory in the `any` container class.
+static void asFunc_RegisterScriptGoal(const asstring_t *name, CScriptAny *factoryObjectAnyRef, unsigned updatePeriod)
+{
+    CHECK_ARG(name);
+    CHECK_ARG(factoryObjectAnyRef);
+
+    void *factoryObject = scriptGoalFactoryTypeHolder.GetValueRef(factoryObjectAnyRef);
+    AiManager::Instance()->RegisterScriptGoal(name->buffer, factoryObject, updatePeriod);
+}
+
+// AS does not have forward class declarations, and script AIScriptActionFactory class
+// cannot be registered to the moment of the base engine script initialization.
+// We have to pass a reference to a script action factory in the `any` container class.
+static void asFunc_RegisterScriptAction(const asstring_t *name, CScriptAny *factoryObjectAnyRef)
+{
+    CHECK_ARG(name);
+    CHECK_ARG(factoryObjectAnyRef);
+
+    void *factoryObject = scriptActionFactoryTypeHolder.GetValueRef(factoryObjectAnyRef);
+    AiManager::Instance()->RegisterScriptAction(name->buffer, factoryObject);
+}
+
+static void asFunc_AddApplicableAction(const asstring_t *goalName, const asstring_t *actionName)
+{
+    AiManager::Instance()->AddApplicableAction(CHECK_ARG(goalName)->buffer, CHECK_ARG(actionName)->buffer);
+}
+
+#define DECLARE_FUNC(signature, nativeFunc) { signature, asFUNCTION(nativeFunc), NULL }
+
 const asglobfuncs_t asAIGlobFuncs[] =
 {
-    { "void AddNavEntity( Entity @ent, int flags )", asFUNCTION(AI_AddNavEntity), NULL },
-    { "void RemoveNavEntity( Entity @ent )", asFUNCTION(AI_RemoveNavEntity), NULL },
-    { "void NavEntityReached( Entity @ent )", asFUNCTION(AI_NavEntityReached), NULL },
+    DECLARE_FUNC("void RegisterScriptGoal( const String &in name, any &scriptGoalFactory )", asFunc_RegisterScriptGoal),
+    DECLARE_FUNC("void RegisterScriptAction( const String &in name, any &scriptActionFactory )", asFunc_RegisterScriptAction),
+    DECLARE_FUNC("void AddApplicableAction( const String &in goalName, const String &in actionName )", asFunc_AddApplicableAction),
 
-    { "void AddDefenceSpot(int team, const AIDefenceSpot &in spot )", asFUNCTION(AI_AddDefenceSpot), NULL },
-    { "void AddOffenseSpot(int team, const AIOffenseSpot &in spot )", asFUNCTION(AI_AddOffenseSpot), NULL },
-    { "void RemoveDefenceSpot(int team, int id)", asFUNCTION(AI_RemoveDefenceSpot), NULL },
-    { "void RemoveOffenseSpot(int team, int id)", asFUNCTION(AI_RemoveOffenseSpot), NULL },
+    DECLARE_FUNC("void AddNavEntity( Entity @ent, int flags )", AI_AddNavEntity),
+    DECLARE_FUNC("void RemoveNavEntity( Entity @ent )", AI_RemoveNavEntity),
+    DECLARE_FUNC("void NavEntityReached( Entity @ent )", AI_NavEntityReached),
 
-    { "void DefenceSpotAlert(int team, int id, float level, uint timeoutPeriod)", asFUNCTION(AI_DefenceSpotAlert), NULL },
+    DECLARE_FUNC("void AddDefenceSpot(int team, const AIDefenceSpot &in spot )", asFunc_AddDefenceSpot),
+    DECLARE_FUNC("void AddOffenseSpot(int team, const AIOffenseSpot &in spot )", asFunc_AddOffenseSpot),
+    DECLARE_FUNC("void RemoveDefenceSpot(int team, int id)", asFunc_RemoveDefenceSpot),
+    DECLARE_FUNC("void RemoveOffenseSpot(int team, int id)", asFunc_RemoveOffenseSpot),
 
-    { "array<Vec3> @SuggestDefencePlantingSpots(Entity @defendedEntity, float radius, int maxSpots)", asFUNCTION(asFunc_AI_SuggestDefencePlantingSpots), NULL },
+    DECLARE_FUNC("void DefenceSpotAlert(int team, int id, float level, uint timeoutPeriod)", asFunc_DefenceSpotAlert),
+
+    DECLARE_FUNC("array<Vec3> @SuggestDefencePlantingSpots(Entity @defendedEntity, float radius, int maxSpots)", asFunc_SuggestDefencePlantingSpots),
 
     { NULL }
 };
@@ -509,6 +1486,11 @@ template <typename R> struct ResultGetter
 template <typename R> struct ResultGetter<const R&>
 {
     static inline const R &Get(asIScriptContext *ctx) { return *((R *)ctx->GetReturnObject()); }
+};
+
+template <typename R> struct ResultGetter<R*>
+{
+    static inline R *Get(asIScriptContext *ctx) { return (R *)ctx->GetReturnObject(); }
 };
 
 template <typename R> struct ResultGetter<const R*>
@@ -697,11 +1679,105 @@ static ASFunctionsRegistry gtAIFunctionsRegistry;
 void AI_InitGametypeScript(asIScriptModule *module)
 {
     gtAIFunctionsRegistry.Load(module);
+
+    scriptGoalFactoryTypeHolder.Load(module);
+    scriptActionFactoryTypeHolder.Load(module);
+    scriptActionRecordTypeHolder.Load(module);
 }
 
 void AI_ResetGametypeScript()
 {
     gtAIFunctionsRegistry.Unload();
+
+    scriptGoalFactoryTypeHolder.Unload();
+    scriptActionFactoryTypeHolder.Unload();
+    scriptActionRecordTypeHolder.Unload();
+
+    // Since the enclosing function might be called on start, the instance might be not constructed yet
+    if (auto aiManagerInstance = AiManager::Instance())
+        aiManagerInstance->UnregisterScriptGoalsAndActions();
+}
+
+static auto instantiateGoalFunc =
+    gtAIFunctionsRegistry.Function3<BotScriptGoal *, void *, edict_t *, void *>(
+        "AIScriptGoal @GENERIC_InstantiateGoal( AIScriptGoalFactory &factory, Entity &owner, AIGoal &goal )", nullptr);
+
+void *GENERIC_asInstantiateGoal(void *factoryObject, edict_t *owner, BotScriptGoal *nativeGoal)
+{
+    return instantiateGoalFunc(factoryObject, owner, nativeGoal);
+}
+
+static auto instantiateActionFunc =
+    gtAIFunctionsRegistry.Function3<BotScriptAction *, void *, edict_t *, void *>(
+        "AIScriptAction @GENERIC_InstantiateAction( AIScriptActionFactory &factory, Entity &owner, AIAction &action )", nullptr);
+
+void *GENERIC_asInstantiateAction(void *factoryObject, edict_t *owner, BotScriptAction *nativeAction)
+{
+    return instantiateActionFunc(factoryObject, owner, nativeAction);
+}
+
+static auto activateScriptActionRecordFunc =
+    gtAIFunctionsRegistry.Function1<Void, void *>(
+        "void GENERIC_ActivateScriptActionRecord( AIScriptActionRecord &record )", Void::VALUE);
+
+void GENERIC_asActivateScriptActionRecord(void *scriptObject)
+{
+    activateScriptActionRecordFunc(scriptObject);
+}
+
+static auto deactivateScriptActionRecordFunc =
+    gtAIFunctionsRegistry.Function1<Void, void *>(
+        "void GENERIC_DeactivateScriptActionRecord( AIScriptActionRecord &record )", Void::VALUE);
+
+void GENERIC_asDeactivateScriptActionRecord(void *scriptObject)
+{
+    deactivateScriptActionRecordFunc(scriptObject);
+}
+
+static auto deleteScriptActionRecordFunc =
+    gtAIFunctionsRegistry.Function1<Void, void *>(
+        "void GENERIC_DeleteScriptActionRecord( AIScriptActionRecord &record )", Void::VALUE);
+
+void GENERIC_asDeleteScriptActionRecord(void *scriptObject)
+{
+    deleteScriptActionRecordFunc(scriptObject);
+}
+
+static auto checkScriptActionRecordStatusFunc =
+    gtAIFunctionsRegistry.Function2<int, void *, const WorldState *>(
+        "int GENERIC_CheckScriptActionRecordStatus( AIScriptActionRecord &record, const AIWorldState &worldState )",
+        (int)AiBaseActionRecord::Status::VALID);
+
+int GENERIC_asCheckScriptActionRecordStatus(void *scriptObject, const WorldState &worldState)
+{
+    return checkScriptActionRecordStatusFunc(scriptObject, &worldState);
+}
+
+static auto tryApplyScriptActionFunc =
+    gtAIFunctionsRegistry.Function2<void *, void *, const WorldState *>(
+        "AIPlannerNode @GENERIC_TryApplyScriptAction( AIScriptAction &action, const AIWorldState &worldState )", nullptr);
+
+void *GENERIC_asTryApplyScriptAction(void *scriptObject, const WorldState &worldState)
+{
+    return tryApplyScriptActionFunc(scriptObject, &worldState);
+}
+
+static auto getScriptGoalNewWeightFunc =
+    gtAIFunctionsRegistry.Function2<float, void *, const WorldState *>(
+        "float GENERIC_GetScriptGoalWeight( AIScriptGoal &goal, const AIWorldState &worldState )", 0.0f);
+
+float GENERIC_asGetScriptGoalWeight(void *scriptObject, const WorldState &worldState)
+{
+    return getScriptGoalNewWeightFunc(scriptObject, &worldState);
+}
+
+static auto getScriptGoalDesiredWorldStateFunc =
+    gtAIFunctionsRegistry.Function2<Void, void *, WorldState *>(
+        "void GENERIC_GetScriptGoalDesiredWorldState( AIScriptGoal &goal, AIWorldState &worldState )", Void::VALUE);
+
+void GENERIC_asGetScriptGoalDesiredWorldState(void *scriptObject, WorldState *worldState)
+{
+    getScriptGoalDesiredWorldStateFunc(scriptObject, worldState);
 }
 
 static auto botWouldDropHealthFunc =

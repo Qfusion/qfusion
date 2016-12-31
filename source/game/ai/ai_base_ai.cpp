@@ -133,6 +133,50 @@ void Ai::CheckReachedArea()
     }
 }
 
+int Ai::CheckTravelTimeMillis(const Vec3& from, const Vec3 &to, bool allowUnreachable)
+{
+    const AiAasWorld *aasWorld = AiAasWorld::Instance();
+
+    // We try to use the same checks the TacticalSpotsRegistry performs to find spots.
+    // If a spot is not reachable, it is an bug,
+    // because a reachability must have been checked by the spots registry first in a few preceeding calls.
+
+    int fromAreaNum;
+    constexpr float squareDistanceError = WorldState::OriginVar::MAX_ROUNDING_SQUARE_DISTANCE_ERROR;
+    if ((from - self->s.origin).SquaredLength() < squareDistanceError)
+        fromAreaNum = aasWorld->FindAreaNum(self);
+    else
+        fromAreaNum = aasWorld->FindAreaNum(from);
+
+    if (!fromAreaNum)
+    {
+        if (allowUnreachable)
+            return 0;
+
+        FailWith("CheckTravelTimeMillis(): Can't find `from` AAS area");
+    }
+
+    const int toAreaNum = aasWorld->FindAreaNum(to.Data());
+    if (!toAreaNum)
+    {
+        if (allowUnreachable)
+            return 0;
+
+        FailWith("CheckTravelTimeMillis(): Can't find `to` AAS area");
+    }
+
+    for (int flags: { self->ai->aiRef->PreferredTravelFlags(), self->ai->aiRef->AllowedTravelFlags() })
+    {
+        if (int aasTravelTime = routeCache->TravelTimeToGoalArea(fromAreaNum, toAreaNum, flags))
+            return 10U * aasTravelTime;
+    }
+
+    if (allowUnreachable)
+        return 0;
+
+    FailWith("CheckTravelTimeMillis(): Can't find travel time %d->%d\n", fromAreaNum, toAreaNum);
+}
+
 void Ai::CategorizePosition()
 {
     CheckReachedArea();

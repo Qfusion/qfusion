@@ -216,7 +216,7 @@ public:
         Debug("About to deactivate\n");
     };
 
-    virtual const char *Name() const { return name; }
+    const char *Name() const { return name; }
 
     enum Status
     {
@@ -309,6 +309,13 @@ protected:
             that.node = nullptr;
             return *this;
         }
+        inline PlannerNode *ReleaseOwnership()
+        {
+            PlannerNode *result = node;
+            // Clear node reference to avoid being deleted in the destructor
+            node = nullptr;
+            return result;
+        }
         inline ~PlannerNodePtr();
         inline PlannerNode *PrepareActionResult();
         inline class WorldState &WorldState();
@@ -326,6 +333,8 @@ public:
 
     virtual ~AiBaseAction() {}
 
+    const char *Name() const { return name; }
+
     virtual PlannerNode *TryApply(const WorldState &worldState) = 0;
 };
 
@@ -338,9 +347,16 @@ class AiBaseBrain: public AiFrameAwareUpdatable
     friend class AiBaseAction;
     friend class AiBaseActionRecord;
     friend class BotGutsActionsAccessor;
+
+public:
+    static constexpr unsigned MAX_GOALS = 12;
+    static constexpr unsigned MAX_ACTIONS = 36;
+
 protected:
     edict_t *self;
 
+    // Its mainly used as a storage for nav targets set by scripts
+    NavTarget localNavTarget;
     NavTarget *navTarget;
     AiBaseActionRecord *planHead;
     AiBaseGoal *activeGoal;
@@ -354,10 +370,7 @@ protected:
     float decisionRandom;
     unsigned nextDecisionRandomUpdateAt;
 
-    static constexpr unsigned MAX_GOALS = 12;
     StaticVector<AiBaseGoal *, MAX_GOALS> goals;
-
-    static constexpr unsigned MAX_ACTIONS = 36;
     StaticVector<AiBaseAction *, MAX_ACTIONS> actions;
 
     static constexpr unsigned MAX_PLANNER_NODES = 384;
@@ -398,7 +411,13 @@ protected:
     inline void SetNavTarget(NavTarget *navTarget)
     {
         this->navTarget = navTarget;
-        self->ai->aiRef->OnNavTargetSet(navTarget);
+        self->ai->aiRef->OnNavTargetSet(this->navTarget);
+    }
+
+    inline void SetNavTarget(const Vec3 &navTargetOrigin, float reachRadius)
+    {
+        localNavTarget.SetToTacticalSpot(navTargetOrigin, reachRadius);
+        self->ai->aiRef->OnNavTargetSet(&localNavTarget);
     }
 
     inline void ResetNavTarget()

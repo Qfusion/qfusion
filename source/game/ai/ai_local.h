@@ -81,6 +81,17 @@ inline bool IsBuiltinWeaponContinuousFire(int builtinWeapon)
 
 int BuiltinWeaponTier(int builtinWeapon);
 
+void *GENERIC_asInstantiateGoal(void *factoryObject, edict_t *owner, class BotScriptGoal *nativeGoal);
+void *GENERIC_asInstantiateAction(void *factoryObject, edict_t *owner, class BotScriptAction *nativeAction);
+
+void GENERIC_asActivateScriptActionRecord(void *scriptObject);
+void GENERIC_asDeactivateScriptActionRecord(void *scriptObject);
+void GENERIC_asDeleteScriptActionRecord(void *scriptObject);
+int GENERIC_asCheckScriptActionRecordStatus(void *scriptObject, const class WorldState &currWorldState);
+void *GENERIC_asTryApplyScriptAction(void *scriptObject, const class WorldState &worldState);
+float GENERIC_asGetScriptGoalWeight(void *scriptObject, const class WorldState &currWorldState);
+void GENERIC_asGetScriptGoalDesiredWorldState(void *scriptObject, class WorldState *worldState);
+
 bool GT_asBotWouldDropHealth( const gclient_t *client );
 void GT_asBotDropHealth( gclient_t *client );
 bool GT_asBotWouldDropArmor( const gclient_t *client );

@@ -46,146 +46,30 @@ const short *WorldState::GetRunAwayElevatorOrigin()
     return self->ai->botRef->tacticalSpotsCache.GetRunAwayElevatorOrigin(BotOriginData(), EnemyOriginData());
 }
 
-inline void BotGutsActionsAccessor::SetNavTarget(NavTarget *navTarget)
-{
-    ent->ai->botRef->botBrain.SetNavTarget(navTarget);
-}
-
-inline void BotGutsActionsAccessor::ResetNavTarget()
-{
-    ent->ai->botRef->botBrain.ResetNavTarget();
-}
-
-inline const SelectedEnemies &BotGutsActionsAccessor::Enemies() const
-{
-    return ent->ai->botRef->selectedEnemies;
-}
-
-inline const SelectedWeapons &BotGutsActionsAccessor::Weapons() const
-{
-    return ent->ai->botRef->selectedWeapons;
-}
-
-inline SelectedTactics &BotGutsActionsAccessor::Tactics()
-{
-    return ent->ai->botRef->botBrain.selectedTactics;
-}
-
-inline const SelectedTactics &BotGutsActionsAccessor::Tactics() const
-{
-    return ent->ai->botRef->botBrain.selectedTactics;
-}
-
-inline const SelectedNavEntity &BotGutsActionsAccessor::GetGoalNavEntity() const
-{
-    return ent->ai->botRef->botBrain.GetOrUpdateSelectedNavEntity();
-}
-
-inline void BotGutsActionsAccessor::SetCampingSpotWithoutDirection(const Vec3 &spotOrigin, float spotRadius)
-{
-    ent->ai->botRef->campingSpotState.SetWithoutDirection(spotOrigin, spotRadius, 0.5f);
-}
-
-inline void BotGutsActionsAccessor::SetDirectionalCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint,
-                                                              float spotRadius)
-{
-    ent->ai->botRef->campingSpotState.SetDirectional(spotOrigin, lookAtPoint, spotRadius, 0.5f);
-}
-
-inline void BotGutsActionsAccessor::InvalidateCampingSpot()
-{
-    ent->ai->botRef->campingSpotState.Invalidate();
-}
-
-inline void BotGutsActionsAccessor::SetPendingLookAtPoint(const Vec3 &lookAtPoint,
-                                                          float turnSpeedMultiplier,
-                                                          unsigned timeoutPeriod)
-{
-    ent->ai->botRef->pendingLookAtPointState.SetTriggered(lookAtPoint, turnSpeedMultiplier, timeoutPeriod);
-}
-
-inline bool BotGutsActionsAccessor::IsPendingLookAtPointValid() const
-{
-    return ent->ai->botRef->pendingLookAtPointState.IsActive();
-}
-
-inline void BotGutsActionsAccessor::InvalidatePendingLookAtPoint()
-{
-    ent->ai->botRef->pendingLookAtPointState.timeoutAt = 0;
-}
-
-int BotGutsActionsAccessor::TravelTimeMillis(const Vec3& from, const Vec3 &to, bool allowUnreachable)
-{
-    const AiAasWorld *aasWorld = AiAasWorld::Instance();
-
-    // We try to use the same checks the TacticalSpotsRegistry performs to find spots.
-    // If a spot is not reachable, it is an bug,
-    // because a reachability must have been checked by the spots registry first in a few preceeding calls.
-
-    int fromAreaNum;
-    constexpr float squareDistanceError = WorldState::OriginVar::MAX_ROUNDING_SQUARE_DISTANCE_ERROR;
-    if ((from - ent->s.origin).SquaredLength() < squareDistanceError)
-        fromAreaNum = aasWorld->FindAreaNum(ent);
-    else
-        fromAreaNum = aasWorld->FindAreaNum(from);
-
-    if (!fromAreaNum)
-    {
-        if (allowUnreachable)
-            return 0;
-
-        AI_FailWith("BotGutsActionsAccessor::TravelTimeMillis()", "Can't find `from` AAS area");
-    }
-
-    const int toAreaNum = aasWorld->FindAreaNum(to.Data());
-    if (!toAreaNum)
-    {
-        if (allowUnreachable)
-            return 0;
-
-        AI_FailWith("BotGutsActionsAccessor::TravelTimeMillis()", "Can't find `to` AAS area");
-    }
-
-    AiAasRouteCache *routeCache = ent->ai->botRef->botBrain.RouteCache();
-    for (int flags: { ent->ai->botRef->PreferredTravelFlags(), ent->ai->botRef->AllowedTravelFlags() })
-    {
-        if (int aasTravelTime = routeCache->TravelTimeToGoalArea(fromAreaNum, toAreaNum, flags))
-            return 10U * aasTravelTime;
-    }
-
-    if (allowUnreachable)
-        return 0;
-
-    AI_FailWith("BotGutsActionsAccessor::TravelTimeMillis()", "Can't find travel time %d->%d\n", fromAreaNum, toAreaNum);
-}
-
-inline unsigned BotGutsActionsAccessor::NextSimilarWorldStateInstanceId()
-{
-    return ent->ai->botRef->NextSimilarWorldStateInstanceId();
-}
-
 void BotBaseActionRecord::Activate()
 {
     AiBaseActionRecord::Activate();
-    Tactics().Clear();
+    self->ai->botRef->GetMiscTactics().Clear();
 }
 
 void BotBaseActionRecord::Deactivate()
 {
     AiBaseActionRecord::Deactivate();
-    Tactics().Clear();
+    self->ai->botRef->GetMiscTactics().Clear();
 }
 
 void BotGenericRunToItemActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    SetNavTarget(&navTarget);
+    // Attack if view angles needed for movement fit aiming
+    self->ai->botRef->GetMiscTactics().PreferRunRatherThanAttack();
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotGenericRunToItemActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 constexpr float GOAL_PICKUP_ACTION_RADIUS = 72.0f;
@@ -193,7 +77,7 @@ constexpr float TACTICAL_SPOT_RADIUS = 40.0f;
 
 AiBaseActionRecord::Status BotGenericRunToItemActionRecord::CheckStatus(const WorldState &currWorldState) const
 {
-    const auto &selectedNavEntity = GetGoalNavEntity();
+    const auto &selectedNavEntity = self->ai->botRef->GetSelectedNavEntity();
     if (!navTarget.IsBasedOnNavEntity(selectedNavEntity.GetNavEntity()))
     {
         Debug("Nav target does no longer match selected nav entity\n");
@@ -238,7 +122,7 @@ PlannerNode *BotGenericRunToItemAction::TryApply(const WorldState &worldState)
         return nullptr;
     }
 
-    const auto &itemNavEntity = GetGoalNavEntity();
+    const auto &itemNavEntity = self->ai->botRef->GetSelectedNavEntity();
 
     PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, itemNavEntity.GetNavEntity()));
     if (!plannerNode)
@@ -257,14 +141,14 @@ PlannerNode *BotGenericRunToItemAction::TryApply(const WorldState &worldState)
 void BotPickupItemActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    Tactics().shouldMoveCarefully = true;
-    SetNavTarget(&navTarget);
+    self->ai->botRef->GetMiscTactics().shouldMoveCarefully = true;
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotPickupItemActionRecord::Deactivate()
 {
     BotBaseActionRecord::Activate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotPickupItemActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -275,7 +159,7 @@ AiBaseActionRecord::Status BotPickupItemActionRecord::CheckStatus(const WorldSta
         return COMPLETED;
     }
 
-    const SelectedNavEntity &currSelectedNavEntity = GetGoalNavEntity();
+    const SelectedNavEntity &currSelectedNavEntity = self->ai->botRef->GetSelectedNavEntity();
     if (!navTarget.IsBasedOnNavEntity(currSelectedNavEntity.GetNavEntity()))
     {
         Debug("Nav target does no longer match current selected nav entity\n");
@@ -341,7 +225,7 @@ PlannerNode *BotPickupItemAction::TryApply(const WorldState &worldState)
         return nullptr;
     }
 
-    const auto &itemNavEntity = GetGoalNavEntity();
+    const auto &itemNavEntity = self->ai->botRef->GetSelectedNavEntity();
     PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, itemNavEntity.GetNavEntity()));
     if (!plannerNode)
         return nullptr;
@@ -361,15 +245,15 @@ PlannerNode *BotPickupItemAction::TryApply(const WorldState &worldState)
 void BotWaitForItemActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    SetNavTarget(&navTarget);
-    SetCampingSpotWithoutDirection(navTarget.Origin(), 0.66f * GOAL_PICKUP_ACTION_RADIUS);
+    self->ai->botRef->SetNavTarget(&navTarget);
+    self->ai->botRef->SetCampingSpot(AiCampingSpot(navTarget.Origin(), 0.66f * GOAL_PICKUP_ACTION_RADIUS));
 }
 
 void BotWaitForItemActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    InvalidateCampingSpot();
-    ResetNavTarget();
+    self->ai->botRef->ResetCampingSpot();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotWaitForItemActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -380,7 +264,7 @@ AiBaseActionRecord::Status BotWaitForItemActionRecord::CheckStatus(const WorldSt
         return COMPLETED;
     }
 
-    const auto &currSelectedNavEntity = GetGoalNavEntity();
+    const auto &currSelectedNavEntity = self->ai->botRef->GetSelectedNavEntity();
     if (!navTarget.IsBasedOnNavEntity(currSelectedNavEntity.GetNavEntity()))
     {
         Debug("Nav target does no longer match current selected nav entity\n");
@@ -449,7 +333,7 @@ PlannerNode *BotWaitForItemAction::TryApply(const WorldState &worldState)
         return nullptr;
     }
 
-    const auto &itemNavEntity = GetGoalNavEntity();
+    const auto &itemNavEntity = self->ai->botRef->GetSelectedNavEntity();
     PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, itemNavEntity.GetNavEntity()));
     if (!plannerNode)
         return nullptr;
@@ -472,7 +356,7 @@ bool BotCombatActionRecord::CheckCommonCombatConditions(const WorldState &currWo
         Debug("Enemy is not specified\n");
         return false;
     }
-    if (Enemies().InstanceId() != selectedEnemiesInstanceId)
+    if (self->ai->botRef->GetSelectedEnemies().InstanceId() != selectedEnemiesInstanceId)
     {
         Debug("New enemies have been selected\n");
         return false;
@@ -483,17 +367,16 @@ bool BotCombatActionRecord::CheckCommonCombatConditions(const WorldState &currWo
 void BotAdvanceToGoodPositionActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    Tactics().shouldAttack = true;
-    Tactics().shouldKeepXhairOnEnemy = true;
+    self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
     // Set a hint for weapon selection
-    Tactics().willAdvance = true;
-    SetNavTarget(&navTarget);
+    self->ai->botRef->GetMiscTactics().willAdvance = true;
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotAdvanceToGoodPositionActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotAdvanceToGoodPositionActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -674,11 +557,19 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply(const WorldState &worldSta
         return nullptr;
     }
 
-    PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, spotOrigin, Enemies().InstanceId()));
+    int travelTimeMillis = self->ai->botRef->CheckTravelTimeMillis(worldState.BotOriginVar().Value(), spotOrigin);
+    if (!travelTimeMillis)
+    {
+        Debug("Warning: can't find travel time from the bot origin to the spot origin in the given world state\n");
+        return nullptr;
+    }
+
+    unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
+    PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, spotOrigin, selectedEnemiesInstanceId));
     if (!plannerNode)
         return nullptr;
 
-    plannerNode.Cost() = TravelTimeMillis(worldState.BotOriginVar().Value(), spotOrigin);
+    plannerNode.Cost() = travelTimeMillis;
     plannerNode.WorldState() = worldState;
 
     plannerNode.WorldState().BotOriginVar().SetValue(spotOrigin).SetSatisfyOp(SatisfyOp::EQ, TACTICAL_SPOT_RADIUS);
@@ -694,17 +585,16 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply(const WorldState &worldSta
 void BotRetreatToGoodPositionActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    Tactics().shouldAttack = true;
-    Tactics().shouldKeepXhairOnEnemy = true;
+    self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
     // Set a hint for weapon selection
-    Tactics().willRetreat = true;
-    SetNavTarget(&navTarget);
+    self->ai->botRef->GetMiscTactics().willRetreat = true;
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotRetreatToGoodPositionActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotRetreatToGoodPositionActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -844,11 +734,19 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply(const WorldState &worldSta
         spotOrigin = worldState.MiddleRangeTacticalSpotVar().Value();
     }
 
-    PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, spotOrigin, Enemies().InstanceId()));
+    int travelTimeMillis = self->ai->botRef->CheckTravelTimeMillis(worldState.BotOriginVar().Value(), spotOrigin);
+    if (!travelTimeMillis)
+    {
+        Debug("Warning: can't find travel time from the bot origin to the spot origin in the given world state\n");
+        return nullptr;
+    }
+
+    unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
+    PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, spotOrigin, selectedEnemiesInstanceId));
     if (!plannerNode)
         return nullptr;
 
-    plannerNode.Cost() = TravelTimeMillis(worldState.BotOriginVar().Value(), spotOrigin);
+    plannerNode.Cost() = travelTimeMillis;
     plannerNode.WorldState() = worldState;
 
     plannerNode.WorldState().BotOriginVar().SetValue(spotOrigin).SetSatisfyOp(SatisfyOp::EQ, TACTICAL_SPOT_RADIUS);
@@ -864,15 +762,14 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply(const WorldState &worldSta
 void BotSteadyCombatActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    Tactics().shouldAttack = true;
-    Tactics().shouldKeepXhairOnEnemy = true;
-    SetNavTarget(&navTarget);
+    self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotSteadyCombatActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotSteadyCombatActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -1030,7 +927,8 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
         spotOrigin = worldState.CloseRangeTacticalSpotVar().Value();
     }
 
-    PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, spotOrigin, Enemies().InstanceId()));
+    unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
+    PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, spotOrigin, selectedEnemiesInstanceId));
     if (!plannerNode)
         return nullptr;
 
@@ -1052,18 +950,15 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
 void BotGotoAvailableGoodPositionActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    // Enable attacking if view angles fit
-    Tactics().shouldAttack = true;
-    // Do not try to track enemy by crosshair, adjust view for movement
-    // TODO: Bot should try if movement is not affected significantly (e.g while flying with released keys)
-    Tactics().shouldKeepXhairOnEnemy = false;
-    SetNavTarget(&navTarget);
+    // Since the combat movement has a decent quality and this action is often triggered in combat, set flags this way.
+    self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotGotoAvailableGoodPositionActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotGotoAvailableGoodPositionActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -1177,12 +1072,19 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply(const WorldState &worl
         spotOrigin = worldState.CloseRangeTacticalSpotVar().Value();
     }
 
-    PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, spotOrigin, Enemies().InstanceId()));
+    int travelTimeMillis = self->ai->botRef->CheckTravelTimeMillis(worldState.BotOriginVar().Value(), spotOrigin);
+    if (!travelTimeMillis)
+    {
+        Debug("Warning: can't find travel time from the bot origin to the spot origin in the given world state\n");
+        return nullptr;
+    }
+
+    unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
+    PlannerNodePtr plannerNode = NewNodeForRecord(pool.New(self, spotOrigin, selectedEnemiesInstanceId));
     if (!plannerNode)
         return nullptr;
 
-    plannerNode.Cost() = TravelTimeMillis(worldState.BotOriginVar().Value(), spotOrigin);
-
+    plannerNode.Cost() = travelTimeMillis;
     plannerNode.WorldState() = worldState;
     plannerNode.WorldState().BotOriginVar().SetValue(spotOrigin);
     plannerNode.WorldState().BotOriginVar().SetSatisfyOp(SatisfyOp::EQ, TACTICAL_SPOT_RADIUS);
@@ -1191,7 +1093,8 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply(const WorldState &worl
     plannerNode.WorldState().CanHitEnemyVar().SetValue(true).SetIgnore(false);
     plannerNode.WorldState().HasPositionalAdvantageVar().SetValue(true).SetIgnore(false);
     // Otherwise an another identical world state might be yield leading to the planner logic violation
-    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(NextSimilarWorldStateInstanceId()).SetIgnore(false);
+    unsigned similarWorldStateInstanceId = self->ai->botRef->NextSimilarWorldStateInstanceId();
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(similarWorldStateInstanceId).SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
 }
@@ -1199,15 +1102,14 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply(const WorldState &worl
 void BotAttackFromCurrentPositionActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    Tactics().shouldAttack = true;
-    Tactics().shouldKeepXhairOnEnemy = true;
-    SetNavTarget(&navTarget);
+    self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotAttackFromCurrentPositionActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotAttackFromCurrentPositionActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -1324,7 +1226,8 @@ PlannerNode *BotAttackFromCurrentPositionAction::TryApply(const WorldState &worl
     }
 
     Vec3 navTargetOrigin(worldState.BotOriginVar().Value());
-    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, navTargetOrigin, Enemies().InstanceId())));
+    unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
+    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, navTargetOrigin, selectedEnemiesInstanceId)));
     if (!plannerNode)
         return nullptr;
 
@@ -1389,8 +1292,8 @@ PlannerNode *BotKillEnemyAction::TryApply(const WorldState &worldState)
 
     plannerNode.WorldState().HasJustKilledEnemyVar().SetValue(true).SetIgnore(false);
 
-    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(NextSimilarWorldStateInstanceId());
-    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetIgnore(false);
+    unsigned similarWorldStateInstanceId = self->ai->botRef->NextSimilarWorldStateInstanceId();
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(similarWorldStateInstanceId).SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
 }
@@ -1492,15 +1395,15 @@ bool BotRunAwayAction::CheckCommonRunAwayPreconditions(const WorldState &worldSt
 void BotGenericRunAvoidingCombatActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    Tactics().shouldAttack = true;
-    Tactics().shouldKeepXhairOnEnemy = false;
-    SetNavTarget(&navTarget);
+    // Since the combat movement has a decent quality and this action is often triggered in combat, set flags this way.
+    self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotGenericRunAvoidingCombatActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotGenericRunAvoidingCombatActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -1527,7 +1430,7 @@ PlannerNode *BotGenericRunAvoidingCombatAction::TryApply(const WorldState &world
     }
 
     const Vec3 navTargetOrigin = worldState.NavTargetOriginVar().Value();
-    const SelectedNavEntity &selectedNavEntity = GetGoalNavEntity();
+    const SelectedNavEntity &selectedNavEntity = self->ai->botRef->GetSelectedNavEntity();
     if (selectedNavEntity.IsValid() && !selectedNavEntity.IsEmpty())
     {
         const Vec3 navEntityOrigin = selectedNavEntity.GetNavEntity()->Origin();
@@ -1543,7 +1446,11 @@ PlannerNode *BotGenericRunAvoidingCombatAction::TryApply(const WorldState &world
     // Combat actions require simple kinds of movement to keep crosshair on enemy.
     // Thus tactical spot should be reachable in common way for combat actions.
     // In case of retreating, some other kinds of movement AAS is not aware of might be used.
-    int travelTimeMillis = TravelTimeMillis(worldState.BotOriginVar().Value(), navTargetOrigin, true);
+    int travelTimeMillis = self->ai->botRef->CheckTravelTimeMillis(worldState.BotOriginVar().Value(), navTargetOrigin);
+    // If the travel time is 0, set it to maximum allowed AAS travel time
+    // (AAS stores time as seconds^-2 in a short value)
+    if (!travelTimeMillis)
+        travelTimeMillis = 10 * std::numeric_limits<short>::max();
 
     PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, navTargetOrigin)));
     if (!plannerNode)
@@ -1610,8 +1517,8 @@ PlannerNode *BotStartGotoCoverAction::TryApply(const WorldState &worldState)
     plannerNode.WorldState().PendingOriginVar().SetSatisfyOp(SatisfyOp::EQ, GOAL_PICKUP_ACTION_RADIUS);
     plannerNode.WorldState().PendingOriginVar().SetIgnore(false);
 
-    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(NextSimilarWorldStateInstanceId());
-    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetIgnore(false);
+    unsigned similarWorldStateInstanceId = self->ai->botRef->NextSimilarWorldStateInstanceId();
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(similarWorldStateInstanceId).SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
 }
@@ -1619,22 +1526,22 @@ PlannerNode *BotStartGotoCoverAction::TryApply(const WorldState &worldState)
 void BotTakeCoverActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    Tactics().shouldAttack = true;
-    Tactics().shouldKeepXhairOnEnemy = true;
-    SetNavTarget(&navTarget);
+    // Since bot should be already close to the nav target, give (a defencive) aiming a higher priority
+    self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotTakeCoverActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotTakeCoverActionRecord::CheckStatus(const WorldState &currWorldState) const
 {
     static_assert(GOAL_PICKUP_ACTION_RADIUS > TACTICAL_SPOT_RADIUS, "");
 
-    if (selectedEnemiesInstanceId != Enemies().InstanceId())
+    if (selectedEnemiesInstanceId != self->ai->botRef->GetSelectedEnemies().InstanceId())
     {
         Debug("New enemies have been selected\n");
         return INVALID;
@@ -1690,7 +1597,8 @@ PlannerNode *BotTakeCoverAction::TryApply(const WorldState &worldState)
         return nullptr;
     }
 
-    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, navTargetOrigin, Enemies().InstanceId())));
+    unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
+    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, navTargetOrigin, selectedEnemiesInstanceId)));
     if (!plannerNode)
         return nullptr;
 
@@ -1756,13 +1664,13 @@ PlannerNode *BotStartGotoRunAwayTeleportAction::TryApply(const WorldState &world
 void BotDoRunAwayViaTeleportActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    SetNavTarget(&navTarget);
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotDoRunAwayViaTeleportActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 PlannerNode *BotDoRunAwayViaTeleportAction::TryApply(const WorldState &worldState)
@@ -1802,7 +1710,8 @@ PlannerNode *BotDoRunAwayViaTeleportAction::TryApply(const WorldState &worldStat
     }
 
     Vec3 teleportOrigin = worldState.NavTargetOriginVar().Value();
-    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, teleportOrigin, Enemies().InstanceId())));
+    const auto &selectedEnemies = self->ai->botRef->GetSelectedEnemies();
+    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, teleportOrigin, selectedEnemies.InstanceId())));
     if (!plannerNode)
         return nullptr;
 
@@ -1847,7 +1756,7 @@ AiBaseActionRecord::Status BotDoRunAwayViaTeleportActionRecord::CheckStatus(cons
         Debug("A threatening enemy is absent\n");
         return INVALID;
     }
-    if (selectedEnemiesInstanceId != Enemies().InstanceId())
+    if (selectedEnemiesInstanceId != self->ai->botRef->GetSelectedEnemies().InstanceId())
     {
         Debug("New enemies have been selected\n");
         return INVALID;
@@ -1907,13 +1816,13 @@ PlannerNode *BotStartGotoRunAwayJumppadAction::TryApply(const WorldState &worldS
 void BotDoRunAwayViaJumppadActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    SetNavTarget(&navTarget);
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotDoRunAwayViaJumppadActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotDoRunAwayViaJumppadActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -1936,7 +1845,7 @@ AiBaseActionRecord::Status BotDoRunAwayViaJumppadActionRecord::CheckStatus(const
         Debug("A threatening enemy is absent\n");
         return INVALID;
     }
-    if (selectedEnemiesInstanceId != Enemies().InstanceId())
+    if (selectedEnemiesInstanceId != self->ai->botRef->GetSelectedEnemies().InstanceId())
     {
         Debug("New enemies have been selected\n");
         return INVALID;
@@ -1989,7 +1898,8 @@ PlannerNode *BotDoRunAwayViaJumppadAction::TryApply(const WorldState &worldState
     }
 
     Vec3 jumppadOrigin = worldState.NavTargetOriginVar().Value();
-    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, jumppadOrigin, Enemies().InstanceId())));
+    unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
+    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, jumppadOrigin, selectedEnemiesInstanceId)));
     if (!plannerNode)
         return nullptr;
 
@@ -2063,13 +1973,13 @@ PlannerNode *BotStartGotoRunAwayElevatorAction::TryApply(const WorldState &world
 void BotDoRunAwayViaElevatorActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    SetNavTarget(&navTarget);
+    self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotDoRunAwayViaElevatorActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotDoRunAwayViaElevatorActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -2093,10 +2003,11 @@ AiBaseActionRecord::Status BotDoRunAwayViaElevatorActionRecord::CheckStatus(cons
     }
 
     // If there are no valid enemies, just keep standing on the platform
-    if (Enemies().AreValid())
+    const auto &selectedEnemies = self->ai->botRef->GetSelectedEnemies();
+    if (selectedEnemies.AreValid())
     {
         trace_t enemyTrace;
-        AiGroundTraceCache::Instance()->GetGroundTrace(Enemies().Ent(), 128.0f, &enemyTrace);
+        AiGroundTraceCache::Instance()->GetGroundTrace(selectedEnemies.Ent(), 128.0f, &enemyTrace);
         if (enemyTrace.fraction != 1.0f && enemyTrace.ent == selfTrace.ent)
         {
             Debug("Enemy is on the same platform!\n");
@@ -2147,7 +2058,8 @@ PlannerNode *BotDoRunAwayViaElevatorAction::TryApply(const WorldState &worldStat
     }
 
     Vec3 elevatorOrigin = worldState.NavTargetOriginVar().Value();
-    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, elevatorOrigin, Enemies().InstanceId())));
+    unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
+    PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, elevatorOrigin, selectedEnemiesInstanceId)));
     if (!plannerNode)
         return nullptr;
 
@@ -2206,8 +2118,8 @@ PlannerNode *BotStopRunningAwayAction::TryApply(const WorldState &worldState)
     plannerNode.WorldState().IsRunningAwayVar().SetValue(false).SetIgnore(false);
     plannerNode.WorldState().HasRunAwayVar().SetValue(true).SetIgnore(false);
 
-    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(NextSimilarWorldStateInstanceId());
-    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetIgnore(false);
+    unsigned similarWorldStateInstanceId = self->ai->botRef->NextSimilarWorldStateInstanceId();
+    plannerNode.WorldState().SimilarWorldStateInstanceIdVar().SetValue(similarWorldStateInstanceId).SetIgnore(false);
 
     return plannerNode.PrepareActionResult();
 }
@@ -2215,16 +2127,16 @@ PlannerNode *BotStopRunningAwayAction::TryApply(const WorldState &worldState)
 void BotDodgeToSpotActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    SetNavTarget(&navTarget);
+    self->ai->botRef->SetNavTarget(&navTarget);
     timeoutAt = level.time + 350;
-    Tactics().shouldAttack = true;
-    Tactics().shouldKeepXhairOnEnemy = true;
+    // Keep aiming at enemy
+    self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
 }
 
 void BotDodgeToSpotActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    ResetNavTarget();
+    self->ai->botRef->ResetNavTarget();
 }
 
 AiBaseActionRecord::Status BotDodgeToSpotActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -2274,11 +2186,18 @@ PlannerNode *BotDodgeToSpotAction::TryApply(const WorldState &worldState)
     }
 
     const Vec3 spotOrigin = worldState.DodgeDangerSpotVar().Value();
+    int travelTimeMillis = self->ai->botRef->CheckTravelTimeMillis(worldState.BotOriginVar().Value(), spotOrigin);
+    if (!travelTimeMillis)
+    {
+        Debug("Warning: can't find travel time from the bot origin to the spot origin in the given world state\n");
+        return nullptr;
+    }
+
     PlannerNodePtr plannerNode(NewNodeForRecord(pool.New(self, spotOrigin)));
     if (!plannerNode)
         return nullptr;
 
-    plannerNode.Cost() = TravelTimeMillis(worldState.BotOriginVar().Value(), spotOrigin);
+    plannerNode.Cost() = travelTimeMillis;
     plannerNode.WorldState() = worldState;
     plannerNode.WorldState().BotOriginVar().SetValue(spotOrigin);
     plannerNode.WorldState().PotentialDangerDamageVar().SetIgnore(true);
@@ -2292,13 +2211,13 @@ PlannerNode *BotDodgeToSpotAction::TryApply(const WorldState &worldState)
 void BotTurnToThreatOriginActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    SetPendingLookAtPoint(threatPossibleOrigin, 3.0f, 350);
+    self->ai->botRef->SetPendingLookAtPoint(AiPendingLookAtPoint(threatPossibleOrigin, 3.0f), 350);
 }
 
 void BotTurnToThreatOriginActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    InvalidatePendingLookAtPoint();
+    self->ai->botRef->ResetPendingLookAtPoint();
 }
 
 AiBaseActionRecord::Status BotTurnToThreatOriginActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -2313,7 +2232,7 @@ AiBaseActionRecord::Status BotTurnToThreatOriginActionRecord::CheckStatus(const 
     if (toThreatDir.Dot(lookDir) > self->ai->botRef->FovDotFactor())
         return COMPLETED;
 
-    return IsPendingLookAtPointValid() ? VALID: INVALID;
+    return self->ai->botRef->HasPendingLookAtPoint() ? VALID: INVALID;
 }
 
 PlannerNode *BotTurnToThreatOriginAction::TryApply(const WorldState &worldState)
@@ -2353,13 +2272,13 @@ PlannerNode *BotTurnToThreatOriginAction::TryApply(const WorldState &worldState)
 void BotTurnToLostEnemyActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
-    SetPendingLookAtPoint(lastSeenEnemyOrigin, 3.0f, 400);
+    self->ai->botRef->SetPendingLookAtPoint(AiPendingLookAtPoint(lastSeenEnemyOrigin, 3.0f), 400);
 }
 
 void BotTurnToLostEnemyActionRecord::Deactivate()
 {
     BotBaseActionRecord::Deactivate();
-    InvalidatePendingLookAtPoint();
+    self->ai->botRef->ResetPendingLookAtPoint();
 }
 
 AiBaseActionRecord::Status BotTurnToLostEnemyActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -2374,7 +2293,7 @@ AiBaseActionRecord::Status BotTurnToLostEnemyActionRecord::CheckStatus(const Wor
     if (toEnemyDir.Dot(lookDir) >= self->ai->botRef->FovDotFactor())
         return COMPLETED;
 
-    return IsPendingLookAtPointValid() ? VALID: INVALID;
+    return self->ai->botRef->HasPendingLookAtPoint() ? VALID: INVALID;
 }
 
 PlannerNode *BotTurnToLostEnemyAction::TryApply(const WorldState &worldState)
@@ -2550,4 +2469,31 @@ PlannerNode *BotStopLostEnemyPursuitAction::TryApply(const WorldState &worldStat
     plannerNode.WorldState().IsReactingToEnemyLostVar().SetValue(false);
 
     return plannerNode.PrepareActionResult();
+}
+
+BotScriptActionRecord::~BotScriptActionRecord()
+{
+    GENERIC_asDeleteScriptActionRecord(scriptObject);
+}
+
+void BotScriptActionRecord::Activate()
+{
+    BotBaseActionRecord::Activate();
+    GENERIC_asActivateScriptActionRecord(scriptObject);
+}
+
+void BotScriptActionRecord::Deactivate()
+{
+    BotBaseActionRecord::Deactivate();
+    GENERIC_asDeactivateScriptActionRecord(scriptObject);
+}
+
+AiBaseActionRecord::Status BotScriptActionRecord::CheckStatus(const WorldState &currWorldState) const
+{
+    return (AiBaseActionRecord::Status)GENERIC_asCheckScriptActionRecordStatus(scriptObject, currWorldState);
+}
+
+PlannerNode *BotScriptAction::TryApply(const WorldState &worldState)
+{
+    return (PlannerNode *)GENERIC_asTryApplyScriptAction(scriptObject, worldState);
 }

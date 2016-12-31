@@ -111,6 +111,7 @@ void PoolBase::Clear()
 
 AiBaseBrain::AiBaseBrain(edict_t *self_)
     : self(self_),
+      localNavTarget(NavTarget::Dummy()),
       navTarget(nullptr),
       planHead(nullptr),
       lastReachedNavTarget(nullptr),

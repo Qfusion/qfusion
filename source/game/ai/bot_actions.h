@@ -3,57 +3,21 @@
 
 #include "ai_base_brain.h"
 
-class BotGutsActionsAccessor
-{
-    // We have to avoid member name collisions in this class children, so use a different name for member
-    edict_t *ent;
-protected:
-    inline BotGutsActionsAccessor(edict_t *self): ent(self)
-    {
-#ifdef _DEBUG
-        if (!self)
-            AI_FailWith("BotGutsActionsAccessor()", "Attempt to initialize using a null self pointer\n");
-#endif
-    }
-    inline void SetNavTarget(NavTarget *navTarget);
-    inline void ResetNavTarget();
-
-    inline const class SelectedEnemies &Enemies() const;
-    inline const class SelectedWeapons &Weapons() const;
-
-    inline struct SelectedTactics &Tactics();
-    inline const struct SelectedTactics &Tactics() const;
-
-    inline const class SelectedNavEntity &GetGoalNavEntity() const;
-
-    inline void SetCampingSpotWithoutDirection(const Vec3 &spotOrigin, float spotRadius);
-    inline void SetDirectionalCampingSpot(const Vec3 &spotOrigin, const Vec3 &lookAtPoint, float spotRadius);
-    inline void InvalidateCampingSpot();
-
-    inline void SetPendingLookAtPoint(const Vec3 &lookAtPoint, float turnSpeedMultiplier, unsigned timeoutPeriod);
-    inline bool IsPendingLookAtPointValid() const;
-    inline void InvalidatePendingLookAtPoint();
-
-    int TravelTimeMillis(const Vec3 &from, const Vec3 &to, bool allowUnreachable = false);
-
-    inline unsigned NextSimilarWorldStateInstanceId();
-};
-
-class BotBaseActionRecord: public AiBaseActionRecord, protected BotGutsActionsAccessor
+class BotBaseActionRecord: public AiBaseActionRecord
 {
 public:
     BotBaseActionRecord(PoolBase *pool_, edict_t *self_, const char *name_)
-        : AiBaseActionRecord(pool_, self_, name_), BotGutsActionsAccessor(self_) {}
+        : AiBaseActionRecord(pool_, self_, name_) {}
 
     void Activate() override;
     void Deactivate() override;
 };
 
-class BotBaseAction: public AiBaseAction, protected BotGutsActionsAccessor
+class BotBaseAction: public AiBaseAction
 {
 public:
     BotBaseAction(Ai *ai, const char *name_)
-        : AiBaseAction(ai, name_), BotGutsActionsAccessor(ai->self) {}
+        : AiBaseAction(ai, name_) {}
 };
 
 class BotGenericRunToItemActionRecord: public BotBaseActionRecord
@@ -355,5 +319,48 @@ public:
 };
 
 DECLARE_ACTION(BotStopLostEnemyPursuitAction, 1);
+
+class BotScriptActionRecord: public BotBaseActionRecord
+{
+    void *scriptObject;
+public:
+    BotScriptActionRecord(PoolBase *pool_, edict_t *self_, const char *name_, void *scriptObject_)
+        : BotBaseActionRecord(pool_, self_, name_),
+          scriptObject(scriptObject_) {}
+
+    ~BotScriptActionRecord() override;
+
+    inline edict_t *Self() { return self; }
+    using BotBaseActionRecord::Debug;
+
+    void Activate() override;
+    void Deactivate() override;
+
+    Status CheckStatus(const WorldState &worldState) const override;
+};
+
+class BotScriptAction: public BotBaseAction
+{
+    Pool<BotScriptActionRecord, 3> pool;
+    void *scriptObject;
+public:
+    BotScriptAction(Ai *ai_, const char *name_, void *scriptObject_)
+        : BotBaseAction(ai_, name_),
+          pool(name_),
+          scriptObject(scriptObject_) {}
+
+    // Exposed for script API
+    inline edict_t *Self() { return self; }
+    using BotBaseAction::Debug;
+
+    inline PlannerNode *NewNodeForRecord(void *scriptRecord)
+    {
+        // Reuse the existing method to ensure that logic and messaging is consistent
+        PlannerNodePtr plannerNodePtr(AiBaseAction::NewNodeForRecord(pool.New(self, name, scriptRecord)));
+        return plannerNodePtr.ReleaseOwnership();
+    }
+
+    PlannerNode *TryApply(const WorldState &worldState) override;
+};
 
 #endif

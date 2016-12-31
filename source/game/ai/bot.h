@@ -26,7 +26,7 @@ struct AiAlertSpot
     float carrierEnemyInfluenceScale;
 
     AiAlertSpot(int id_,
-                Vec3 origin_,
+                const Vec3 &origin_,
                 float radius_,
                 float regularEnemyInfluenceScale_ = 1.0f,
                 float carrierEnemyInfluenceScale_ = 1.0f)
@@ -35,6 +35,47 @@ struct AiAlertSpot
           radius(radius_),
           regularEnemyInfluenceScale(regularEnemyInfluenceScale_),
           carrierEnemyInfluenceScale(carrierEnemyInfluenceScale_) {}
+};
+
+struct AiCampingSpot
+{
+    friend class Bot;
+private:
+    AiCampingSpot(): origin(NAN, NAN, NAN), lookAtPoint(NAN, NAN, NAN) {}
+public:
+    Vec3 origin;
+    Vec3 lookAtPoint;
+    float radius;
+    float alertness;
+    bool hasLookAtPoint;
+
+    AiCampingSpot(const Vec3 &origin_, float radius_, float alertness_ = 0.75f)
+        : origin(origin_), lookAtPoint(NAN, NAN, NAN), radius(radius_), alertness(alertness_), hasLookAtPoint(false) {}
+
+    AiCampingSpot(const vec3_t &origin_, float radius_, float alertness_ = 0.75f)
+        : origin(origin_), lookAtPoint(NAN, NAN, NAN), radius(radius_), alertness(alertness_), hasLookAtPoint(false) {}
+
+    AiCampingSpot(const vec3_t &origin_, const vec3_t &lookAtPoint_, float radius_, float alertness_ = 0.75f)
+        : origin(origin_), lookAtPoint(lookAtPoint_), radius(radius_), alertness(alertness_), hasLookAtPoint(true) {}
+
+    AiCampingSpot(const Vec3 &origin_, const Vec3 &lookAtPoint_, float radius_, float alertness_ = 0.75f)
+        : origin(origin_), lookAtPoint(lookAtPoint_), radius(radius_), alertness(alertness_), hasLookAtPoint(true) {}
+};
+
+struct AiPendingLookAtPoint
+{
+    friend class Bot;
+private:
+    AiPendingLookAtPoint(): origin(NAN, NAN, NAN) {}
+public:
+    Vec3 origin;
+    float turnSpeedMultiplier;
+
+    AiPendingLookAtPoint(const vec3_t origin_, float turnSpeedMultiplier_)
+        : origin(origin_), turnSpeedMultiplier(turnSpeedMultiplier_) {}
+
+    AiPendingLookAtPoint(const Vec3 &origin_, float turnSpeedMultiplier_)
+        : origin(origin_), turnSpeedMultiplier(turnSpeedMultiplier_) {}
 };
 
 struct BotInput
@@ -129,7 +170,6 @@ class Bot: public Ai
     friend class BotReactToDangerGoal;
     friend class BotReactToThreatGoal;
     friend class BotReactToEnemyLostGoal;
-    friend class BotGutsActionsAccessor;
     friend class BotTacticalSpotsCache;
     friend class WorldState;
 public:
@@ -263,6 +303,12 @@ public:
     }
     inline float Fov() const { return 110.0f + 69.0f * Skill(); }
     inline float FovDotFactor() const { return cosf((float)DEG2RAD(Fov() / 2)); }
+
+    inline BotBaseGoal *GetGoalByName(const char *name) { return botBrain.GetGoalByName(name); }
+    inline BotBaseAction *GetActionByName(const char *name) { return botBrain.GetActionByName(name); }
+
+    inline BotScriptGoal *AllocScriptGoal() { return botBrain.AllocScriptGoal(); }
+    inline BotScriptAction *AllocScriptAction() { return botBrain.AllocScriptAction(); }
 protected:
     virtual void Frame() override;
     virtual void Think() override;
@@ -496,33 +542,24 @@ private:
 
     struct PendingLookAtPointState
     {
-        Vec3 lookAtPoint;
+        AiPendingLookAtPoint pendingLookAtPoint;
         unsigned timeoutAt;
-        float turnSpeedMultiplier;
-        bool isTriggered;
 
-        inline PendingLookAtPointState()
-            : lookAtPoint(INFINITY, INFINITY, INFINITY),
-              timeoutAt(0),
-              turnSpeedMultiplier(1.0f),
-              isTriggered(false) {}
+        inline PendingLookAtPointState(): timeoutAt(0) {}
 
         inline bool IsActive() const
         {
-            return isTriggered && timeoutAt > level.time;
+            return timeoutAt > level.time;
         }
 
-        inline void SetTriggered(const Vec3 &lookAtPoint_, float turnSpeedMultiplier_ = 0.5f, unsigned timeoutPeriod = 500)
+        inline void SetTriggered(const AiPendingLookAtPoint &pendingLookAtPoint_, unsigned timeoutPeriod = 500)
         {
-            this->lookAtPoint = lookAtPoint_;
-            this->turnSpeedMultiplier = turnSpeedMultiplier_;
+            this->pendingLookAtPoint = pendingLookAtPoint_;
             this->timeoutAt = level.time + timeoutPeriod;
-            this->isTriggered = true;
         }
 
         inline void Invalidate()
         {
-            isTriggered = false;
             timeoutAt = 0;
         }
     };
@@ -531,16 +568,8 @@ private:
 
     struct CampingSpotState
     {
+        AiCampingSpot campingSpot;
         bool isTriggered;
-        // If it is set, the bot should prefer to look at the campingSpotLookAtPoint while camping
-        // Otherwise the bot should spin view randomly
-        bool hasLookAtPoint;
-        // Maximum bot origin deviation from campingSpotOrigin while strafing when camping a spot
-        float spotRadius;
-        // 0..1, greater values result in frequent and hectic strafing/camera rotating
-        float alertness;
-        Vec3 spotOrigin;
-        Vec3 lookAtPoint;
         Vec3 strafeDir;
         // When to change chosen strafe dir
         unsigned strafeTimeoutAt;
@@ -549,11 +578,6 @@ private:
 
         inline CampingSpotState()
             : isTriggered(false),
-              hasLookAtPoint(false),
-              spotRadius(INFINITY),
-              alertness(INFINITY),
-              spotOrigin(INFINITY, INFINITY, INFINITY),
-              lookAtPoint(INFINITY, INFINITY, INFINITY),
               strafeDir(INFINITY, INFINITY, INFINITY),
               strafeTimeoutAt(0),
               lookAtPointTimeoutAt(0) {}
@@ -563,25 +587,9 @@ private:
             return isTriggered;
         }
 
-        inline void SetWithoutDirection(const Vec3 &spotOrigin_, float spotRadius_, float alertness_)
+        inline void SetTriggered(const AiCampingSpot &campingSpot_)
         {
-            isTriggered = true;
-            hasLookAtPoint = false;
-            this->spotOrigin = spotOrigin_;
-            this->spotRadius = spotRadius_;
-            this->alertness = alertness_;
-            strafeTimeoutAt = 0;
-            lookAtPointTimeoutAt = 0;
-        }
-
-        inline void SetDirectional(const Vec3 &spotOrigin_, const Vec3 &lookAtPoint_, float spotRadius_, float alertness_)
-        {
-            isTriggered = true;
-            hasLookAtPoint = true;
-            this->spotOrigin = spotOrigin_;
-            this->lookAtPoint = lookAtPoint_;
-            this->spotRadius = spotRadius_;
-            this->alertness = alertness_;
+            this->campingSpot = campingSpot_;
             strafeTimeoutAt = 0;
             lookAtPointTimeoutAt = 0;
         }
@@ -589,6 +597,18 @@ private:
         inline void Invalidate()
         {
             isTriggered = false;
+        }
+
+        inline const Vec3 &Origin() const { return campingSpot.origin; }
+        inline float Radius() const { return campingSpot.radius; }
+        inline AiPendingLookAtPoint LookAtPoint() const
+        {
+            return AiPendingLookAtPoint(campingSpot.origin, 0.75f + 1.0f * campingSpot.alertness);
+        }
+        inline float Alertness() const { return campingSpot.alertness; }
+        inline void SetStrafeDirTimeout()
+        {
+            strafeTimeoutAt = level.time + 500 + (unsigned) (100.0f * random() - 250.0f * Alertness());
         }
     };
 
@@ -637,11 +657,6 @@ private:
 
     unsigned similarWorldStateInstanceId;
 
-    inline unsigned NextSimilarWorldStateInstanceId()
-    {
-        return ++similarWorldStateInstanceId;
-    }
-
     class AimingRandomHolder
     {
         unsigned valuesTimeoutAt[3];
@@ -680,14 +695,6 @@ private:
 
     void OnRespawn();
 
-    inline bool HasPendingLookAtPoint() const
-    {
-        return pendingLookAtPointState.IsActive();
-    }
-    inline void SetPendingLookAtPoint(const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutPeriod = 500)
-    {
-        pendingLookAtPointState.SetTriggered(point, turnSpeedMultiplier, timeoutPeriod);
-    }
     void ApplyPendingTurnToLookAtPoint(BotInput *input);
     void ApplyInput(BotInput *input);
 
@@ -777,6 +784,60 @@ private:
     inline Vec3 EnemyVelocity() const { return selectedEnemies.LastSeenVelocity(); }
     inline Vec3 EnemyMins() const { return selectedEnemies.Mins(); }
     inline Vec3 EnemyMaxs() const { return selectedEnemies.Maxs(); }
+
+public:
+    //
+    // Exposed for script API
+    //
+
+    inline unsigned NextSimilarWorldStateInstanceId()
+    {
+        return ++similarWorldStateInstanceId;
+    }
+
+    inline void SetNavTarget(NavTarget *navTarget)
+    {
+        botBrain.SetNavTarget(navTarget);
+    }
+    inline void SetNavTarget(const Vec3 &navTargetOrigin, float reachRadius)
+    {
+        botBrain.SetNavTarget(navTargetOrigin, reachRadius);
+    }
+    inline void ResetNavTarget()
+    {
+        botBrain.ResetNavTarget();
+    }
+    inline void SetCampingSpot(const AiCampingSpot &campingSpot)
+    {
+        campingSpotState.SetTriggered(campingSpot);
+    }
+    inline void ResetCampingSpot()
+    {
+        campingSpotState.Invalidate();
+    }
+    inline bool HasActiveCampingSpot() const
+    {
+        return campingSpotState.IsActive();
+    }
+    inline void SetPendingLookAtPoint(const AiPendingLookAtPoint &lookAtPoint, unsigned timeoutPeriod)
+    {
+        pendingLookAtPointState.SetTriggered(lookAtPoint, timeoutPeriod);
+    }
+    inline void ResetPendingLookAtPoint()
+    {
+        pendingLookAtPointState.Invalidate();
+    }
+    inline bool HasPendingLookAtPoint() const
+    {
+        return pendingLookAtPointState.IsActive();
+    }
+    const SelectedNavEntity &GetSelectedNavEntity() const
+    {
+        return botBrain.selectedNavEntity;
+    }
+    const SelectedEnemies &GetSelectedEnemies() const { return selectedEnemies; }
+    SelectedMiscTactics &GetMiscTactics() { return botBrain.selectedTactics; }
+    const SelectedMiscTactics &GetMiscTactics() const { return botBrain.selectedTactics; }
 
     inline bool WillAdvance() const { return botBrain.WillAdvance(); }
     inline bool WillRetreat() const { return botBrain.WillRetreat(); }

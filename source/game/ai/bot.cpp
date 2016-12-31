@@ -61,14 +61,15 @@ void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput)
     if (!pendingLookAtPointState.IsActive())
         return;
 
-    Vec3 toPointDir(pendingLookAtPointState.lookAtPoint);
+    AiPendingLookAtPoint &pendingLookAtPoint = pendingLookAtPointState.pendingLookAtPoint;
+    Vec3 toPointDir(pendingLookAtPoint.origin);
     toPointDir -= self->s.origin;
     toPointDir.NormalizeFast();
 
     botInput->intendedLookVec = toPointDir;
     botInput->isLookVecSet = true;
 
-    Vec3 newAngles = GetNewViewAngles(self->s.angles, toPointDir, pendingLookAtPointState.turnSpeedMultiplier);
+    Vec3 newAngles = GetNewViewAngles(self->s.angles, toPointDir, pendingLookAtPoint.turnSpeedMultiplier);
     botInput->alreadyComputedAngles = newAngles;
     botInput->hasAlreadyComputedAngles = true;
 

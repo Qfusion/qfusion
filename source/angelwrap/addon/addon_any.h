@@ -54,6 +54,8 @@ protected:
 	mutable bool gcFlag;
 	asIScriptEngine *engine;
 
+	// wsw: Hack to aid fast unsafe access to the values
+public:
 	// The structure for holding the values
     struct valueStruct
     {

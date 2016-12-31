@@ -10,20 +10,105 @@ AiManager *AiManager::instance = nullptr;
 // Actual instance location in memory
 static StaticVector<AiManager, 1> instanceHolder;
 
-void AiManager::OnGametypeChanged(const char *gametype)
+AiManager *AiManager::Instance()
 {
-    // Currently, gametype brain is shared for all gametypes
-    // If gametype brain differs for different gametypes,
-    // delete previous instance and create a suitable new instance.
-
-    // This means that gametype has been set up for first time.
     if (instanceHolder.empty())
     {
-        instanceHolder.emplace_back(AiManager());
-        AiShutdownHooksHolder::Instance()->RegisterHook([&] { instanceHolder.clear(); });
+        new(instanceHolder.unsafe_grow_back())AiManager();
+        auto hook = [&]()
+        {
+            instanceHolder.clear();
+            instance = nullptr;
+        };
+        AiShutdownHooksHolder::Instance()->RegisterHook(hook);
         instance = &instanceHolder.front();
     }
+    return instance;
+}
 
+template <typename T, unsigned N>
+T* AiManager::StringValueMap<T, N>::Get(const char *key)
+{
+    for (std::pair<const char *, T> &pair: keyValuePairs)
+    {
+        if (!Q_stricmp(key, pair.first))
+            return &pair.second;
+    }
+
+    return nullptr;
+}
+
+template <typename T, unsigned N>
+bool AiManager::StringValueMap<T, N>::Insert(const char *key, T &&value)
+{
+    for (std::pair<const char *, T> &pair: keyValuePairs)
+        if (!Q_stricmp(key, pair.first))
+            return false;
+
+    // Caller logic should not allow this. The following code is only an assertion for debug builds.
+#ifdef _DEBUG
+    if (IsFull())
+        AI_FailWith("AiManager::StringValueMap::Insert()", "Capacity has been exceeded\n");
+#endif
+
+    keyValuePairs.emplace_back(std::make_pair(key, std::move(value)));
+    return true;
+}
+
+#define REGISTER_BUILTIN_GOAL(goal) this->RegisterBuiltinGoal(#goal)
+#define REGISTER_BUILTIN_ACTION(action) this->RegisterBuiltinAction(#action)
+
+AiManager::AiManager()
+    : last(nullptr)
+{
+    std::fill_n(teams, MAX_CLIENTS, TEAM_SPECTATOR);
+
+    REGISTER_BUILTIN_GOAL(BotGrabItemGoal);
+    REGISTER_BUILTIN_GOAL(BotKillEnemyGoal);
+    REGISTER_BUILTIN_GOAL(BotRunAwayGoal);
+    REGISTER_BUILTIN_GOAL(BotReactToDangerGoal);
+    REGISTER_BUILTIN_GOAL(BotReactToThreatGoal);
+    REGISTER_BUILTIN_GOAL(BotReactToEnemyLostGoal);
+
+    // Do not clear built-in goals later
+    registeredGoals.MarkClearLimit();
+
+    REGISTER_BUILTIN_ACTION(BotGenericRunToItemAction);
+    REGISTER_BUILTIN_ACTION(BotPickupItemAction);
+    REGISTER_BUILTIN_ACTION(BotWaitForItemAction);
+
+    REGISTER_BUILTIN_ACTION(BotKillEnemyAction);
+    REGISTER_BUILTIN_ACTION(BotAdvanceToGoodPositionAction);
+    REGISTER_BUILTIN_ACTION(BotRetreatToGoodPositionAction);
+    REGISTER_BUILTIN_ACTION(BotSteadyCombatAction);
+    REGISTER_BUILTIN_ACTION(BotGotoAvailableGoodPositionAction);
+    REGISTER_BUILTIN_ACTION(BotAttackFromCurrentPositionAction);
+
+    REGISTER_BUILTIN_ACTION(BotGenericRunAvoidingCombatAction);
+    REGISTER_BUILTIN_ACTION(BotStartGotoCoverAction);
+    REGISTER_BUILTIN_ACTION(BotTakeCoverAction);
+    REGISTER_BUILTIN_ACTION(BotStartGotoRunAwayTeleportAction);
+    REGISTER_BUILTIN_ACTION(BotDoRunAwayViaTeleportAction);
+    REGISTER_BUILTIN_ACTION(BotStartGotoRunAwayJumppadAction);
+    REGISTER_BUILTIN_ACTION(BotDoRunAwayViaJumppadAction);
+    REGISTER_BUILTIN_ACTION(BotStartGotoRunAwayElevatorAction);
+    REGISTER_BUILTIN_ACTION(BotDoRunAwayViaElevatorAction);
+    REGISTER_BUILTIN_ACTION(BotStopRunningAwayAction);
+
+    REGISTER_BUILTIN_ACTION(BotDodgeToSpotAction);
+
+    REGISTER_BUILTIN_ACTION(BotTurnToThreatOriginAction);
+
+    REGISTER_BUILTIN_ACTION(BotTurnToLostEnemyAction);
+    REGISTER_BUILTIN_ACTION(BotStartLostEnemyPursuitAction);
+    REGISTER_BUILTIN_ACTION(BotStopLostEnemyPursuitAction);
+
+    // Do not clear builtin actions later
+    registeredActions.MarkClearLimit();
+}
+
+void AiManager::OnGametypeChanged(const char *gametype)
+{
     AiBaseTeamBrain::OnGametypeChanged(gametype);
 }
 
@@ -273,6 +358,7 @@ void AiManager::SpawnBot(const char *teamName)
             SetupClientBot(ent);
             RespawnBot(ent);
             SetupBotTeam(ent, teamName);
+            SetupBotGoalsAndActions(ent);
             game.numBots++;
         }
     }
@@ -307,6 +393,162 @@ void AiManager::RemoveBots()
         OnBotDropped(ent);
         G_FreeAI(ent);
         game.numBots--;
+    }
+}
+
+// We have to sanitize all input values since these methods are exported to scripts
+
+void AiManager::RegisterScriptGoal(const char *goalName, void *factoryObject, unsigned updatePeriod)
+{
+    if (registeredGoals.IsFull())
+    {
+        Debug(S_COLOR_RED "RegisterScriptGoal(): can't register the %s goal (too many goals)\n", goalName);
+        return;
+    }
+
+    GoalProps goalProps(goalName, factoryObject, updatePeriod);
+    // Ensure map key valid lifetime, use GoalProps::name
+    if (!registeredGoals.Insert(goalProps.name, std::move(goalProps)))
+        Debug(S_COLOR_RED "RegisterScriptGoal(): goal %s is already registered\n", goalName);
+}
+
+void AiManager::RegisterScriptAction(const char *actionName, void *factoryObject)
+{
+    if (registeredActions.IsFull())
+    {
+        Debug(S_COLOR_RED "RegisterScriptAction(): can't register the %s action (too many actions)\n", actionName);
+        return;
+    }
+
+    ActionProps actionProps(actionName, factoryObject);
+    // Ensure map key valid lifetime, user ActionProps::name
+    if (!registeredActions.Insert(actionProps.name, std::move(actionProps)))
+        Debug(S_COLOR_RED "RegisterScriptAction(): action %s is already registered\n", actionName);
+}
+
+void AiManager::AddApplicableAction(const char *goalName, const char *actionName)
+{
+    ActionProps *actionProps = registeredActions.Get(actionName);
+    if (!actionProps)
+    {
+        Debug(S_COLOR_RED "AddApplicableAction(): action %s has not been registered\n", actionName);
+        return;
+    }
+
+    GoalProps *goalProps = registeredGoals.Get(goalName);
+    if (!goalProps)
+    {
+        Debug(S_COLOR_RED "AddApplicableAction(): goal %s has not been registered\n", goalName);
+        return;
+    }
+
+    if (!actionProps->factoryObject && !goalProps->factoryObject)
+    {
+        const char *format = S_COLOR_RED
+            "AddApplicableAction(): both goal %s and action %s are builtin "
+            "(builtin action/goal relations are hardcoded for performance)\n";
+        Debug(format, goalName, actionName);
+        return;
+    }
+
+    if (goalProps->numApplicableActions == MAX_ACTIONS)
+    {
+        Debug(S_COLOR_RED "AddApplicableAction(): too many actions have already been registered\n");
+        return;
+    }
+
+    // Ensure that applicable action name has valid lifetime, use ActionProps::name
+    goalProps->applicableActions[goalProps->numApplicableActions++] = actionProps->name;
+}
+
+void AiManager::RegisterBuiltinGoal(const char *goalName)
+{
+    if (registeredGoals.IsFull())
+        AI_FailWith("AiManager::RegisterBuiltinGoal()", "Too many registered goals");
+
+    GoalProps goalProps(goalName, nullptr, 0);
+    // Ensure map key valid lifetime, user GoalProps::name
+    if (!registeredGoals.Insert(goalProps.name, std::move(goalProps)))
+        AI_FailWith("AiManager::RegisterBuiltinGoal()", "The goal %s is already registered", goalName);
+}
+
+void AiManager::RegisterBuiltinAction(const char *actionName)
+{
+    if (registeredActions.IsFull())
+        AI_FailWith("AiManager::RegisterBuiltinAction()", "Too many registered actions");
+
+    ActionProps actionProps(actionName, nullptr);
+    // Ensure map key valid lifetime, use ActionProps::name.
+    if (!registeredActions.Insert(actionProps.name, std::move(actionProps)))
+        AI_FailWith("AiManager::RegisterBuiltinAction()", "The action %s is already registered", actionName);
+}
+
+void AiManager::SetupBotGoalsAndActions(edict_t *ent)
+{
+#ifdef _DEBUG
+    // Make sure all builtin goals and actions have been registered
+    bool wereErrors = false;
+    for (const auto *goal: ent->ai->botRef->botBrain.goals)
+    {
+        if (!registeredGoals.Get(goal->Name()))
+        {
+            Debug(S_COLOR_RED "Builtin goal %s has not been registered\n", goal->Name());
+            wereErrors = true;
+        }
+    }
+    for (const auto *action: ent->ai->botRef->botBrain.actions)
+    {
+        if (!registeredActions.Get(action->Name()))
+        {
+            Debug(S_COLOR_RED "Builtin action %s has not been registered\n", action->Name());
+            wereErrors = true;
+        }
+    }
+    if (wereErrors)
+        AI_FailWith("AiManager::SetupBotGoalsAndActions()", "There were errors\n");
+#endif
+
+    for (auto &goalPropsAndName: registeredGoals)
+    {
+        GoalProps &goalProps = goalPropsAndName.second;
+        // If the goal is builtin
+        BotBaseGoal *goal;
+        if (!goalProps.factoryObject)
+        {
+            goal = ent->ai->botRef->GetGoalByName(goalProps.name);
+        }
+        else
+        {
+            // Allocate a persistent memory chunk but not initialize it.
+            // GENERIC_asInstantiateGoal() expects a persistent memory address for a native object reference.
+            // BotScriptGoal constructor expects a persistent script object address too.
+            // We defer BotScriptGoal constructor call to break this loop.
+            // GENERIC_asInstantiateGoal() script counterpart be aware that the native object is not constructed yet.
+            // That's why an additional entity argument is provided to access the owner instead of using scriptGoal fields.
+            BotScriptGoal *scriptGoal = ent->ai->botRef->AllocScriptGoal();
+            void *goalObject = GENERIC_asInstantiateGoal(goalProps.factoryObject, ent, scriptGoal);
+            goal = new(scriptGoal)BotScriptGoal(ent->ai->aiRef, goalProps.name, goalProps.updatePeriod, goalObject);
+        }
+
+        for (unsigned i = 0; i < goalProps.numApplicableActions; ++i)
+        {
+            const char *actionName = goalProps.applicableActions[i];
+            ActionProps *actionProps = registeredActions.Get(actionName);
+            BotBaseAction *action;
+            // If the action is builtin
+            if (!actionProps->factoryObject)
+            {
+                action = ent->ai->botRef->GetActionByName(actionProps->name);
+            }
+            else
+            {
+                // See the explanation above related to a script goal, this is a similar case
+                BotScriptAction *scriptAction = ent->ai->botRef->AllocScriptAction();
+                void *actionObject = GENERIC_asInstantiateAction(actionProps->factoryObject, ent, scriptAction);
+                action = new(scriptAction)BotScriptAction(ent->ai->aiRef, goalProps.name, actionObject);
+            }
+            goal->AddExtraApplicableAction(action);
+        }
     }
 }
 

@@ -121,6 +121,17 @@ public:
         count++;
     }
 
+    // Just allocates a memory without initializing it at all.
+    // Should be used if you really want to avoid any copying and initialize an object in-place.
+    inline T *unsafe_grow_back()
+    {
+#ifdef _DEBUG
+        if (count == N)
+            fail_with("unsafe_grow_back(): count == N (%d)", N);
+#endif
+        return basePointer + count++;
+    }
+
     inline void pop_back()
     {
 #ifdef _DEBUG

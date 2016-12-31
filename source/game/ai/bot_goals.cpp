@@ -11,10 +11,9 @@ inline const SelectedEnemies &BotBaseGoal::SelectedEnemies() const
     return self->ai->botRef->selectedEnemies;
 }
 
-PlannerNode *BotBaseGoal::GetWorldStateTransitions(const WorldState &worldState)
+inline PlannerNode *BotBaseGoal::ApplyExtraActions(PlannerNode *firstTransition, const WorldState &worldState)
 {
-    PlannerNode *firstTransition = nullptr;
-    for (AiBaseAction *action: self->ai->botRef->botBrain.actions)
+    for (AiBaseAction *action: extraApplicableActions)
     {
         if (PlannerNode *currTransition = action->TryApply(worldState))
         {
@@ -62,7 +61,7 @@ PlannerNode *BotGrabItemGoal::GetWorldStateTransitions(const WorldState &worldSt
     TRY_APPLY_ACTION(pickupItemAction);
     TRY_APPLY_ACTION(waitForItemAction);
 
-    return firstTransition;
+    return ApplyExtraActions(firstTransition, worldState);
 }
 
 void BotKillEnemyGoal::UpdateWeight(const WorldState &currWorldState)
@@ -96,7 +95,7 @@ PlannerNode *BotKillEnemyGoal::GetWorldStateTransitions(const WorldState &worldS
 
     TRY_APPLY_ACTION(killEnemyAction);
 
-    return firstTransition;
+    return ApplyExtraActions(firstTransition, worldState);
 }
 
 void BotRunAwayGoal::UpdateWeight(const WorldState &currWorldState)
@@ -140,7 +139,7 @@ PlannerNode *BotRunAwayGoal::GetWorldStateTransitions(const WorldState &worldSta
 
     TRY_APPLY_ACTION(stopRunningAwayAction);
 
-    return firstTransition;
+    return ApplyExtraActions(firstTransition, worldState);
 }
 
 void BotReactToDangerGoal::GetDesiredWorldState(WorldState *worldState)
@@ -171,7 +170,7 @@ PlannerNode *BotReactToDangerGoal::GetWorldStateTransitions(const WorldState &wo
 
     TRY_APPLY_ACTION(dodgeToSpotAction);
 
-    return firstTransition;
+    return ApplyExtraActions(firstTransition, worldState);
 }
 
 void BotReactToThreatGoal::UpdateWeight(const WorldState &currWorldState)
@@ -205,7 +204,7 @@ PlannerNode *BotReactToThreatGoal::GetWorldStateTransitions(const WorldState &wo
 
     TRY_APPLY_ACTION(turnToThreatOriginAction);
 
-    return firstTransition;
+    return ApplyExtraActions(firstTransition, worldState);
 }
 
 void BotReactToEnemyLostGoal::UpdateWeight(const WorldState &currWorldState)
@@ -234,5 +233,20 @@ PlannerNode *BotReactToEnemyLostGoal::GetWorldStateTransitions(const WorldState 
     TRY_APPLY_ACTION(genericRunAvoidingCombatAction);
     TRY_APPLY_ACTION(stopLostEnemyPursuitAction);
 
-    return firstTransition;
+    return ApplyExtraActions(firstTransition, worldState);
+}
+
+void BotScriptGoal::UpdateWeight(const WorldState &currWorldState)
+{
+    this->weight = GENERIC_asGetScriptGoalWeight(scriptObject, currWorldState);
+}
+
+void BotScriptGoal::GetDesiredWorldState(WorldState *worldState)
+{
+    GENERIC_asGetScriptGoalDesiredWorldState(scriptObject, worldState);
+}
+
+PlannerNode *BotScriptGoal::GetWorldStateTransitions(const WorldState &worldState)
+{
+    return ApplyExtraActions(nullptr, worldState);
 }

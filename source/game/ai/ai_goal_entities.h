@@ -166,7 +166,7 @@ public:
         this->navEntity = navEntity_;
     }
 
-    void SetToTacticalSpot(const Vec3 &origin)
+    void SetToTacticalSpot(const Vec3 &origin, float reachRadius = 32.0f)
     {
         this->navEntity = nullptr;
         this->explicitOrigin = origin;
@@ -174,7 +174,7 @@ public:
         this->explicitAasAreaNum = AiAasWorld::Instance()->FindAreaNum(origin);
         this->explicitSpawnTime = 0;
         this->explicitTimeout = std::numeric_limits<unsigned>::max();
-        this->explicitRadius = 32.0f;
+        this->explicitRadius = reachRadius;
     }
 
     inline int AasAreaNum() const
