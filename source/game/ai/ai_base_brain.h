@@ -493,7 +493,7 @@ inline PlannerNode *AiBaseAction::PlannerNodePtr::PrepareActionResult()
     PlannerNode *result = this->node;
     this->node = nullptr;
 
-#ifdef _DEBUG
+#ifndef PUBLIC_BUILD
     if (!result->worldState.IsCopiedFromOtherWorldState())
         AI_FailWith("PlannerNodePtr::PrepareActionResult()", "World state has not been copied from parent one");
 #endif

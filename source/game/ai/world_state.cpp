@@ -2,12 +2,8 @@
 
 #ifndef PUBLIC_BUILD
 
-WorldState::WorldState(edict_t *self_): self(self_)
+WorldState::WorldState(edict_t *self_): self(self_), isCopiedFromOtherWorldState(false)
 {
-#ifdef _DEBUG
-    isCopiedFromOtherWorldState = false;
-#endif
-
     // If state bits are not initialized, vars often does not get printed in debug output.
     // This is useful for release non-public builds too, not only for debug ones.
     for (unsigned i = 0; i < NUM_ORIGIN_VARS; ++i)
@@ -35,6 +31,8 @@ WorldState::WorldState(edict_t *self_): self(self_)
         packedFields->epsilon = 1;
         packedFields->satisfyOp = (unsigned char)SatisfyOp::EQ;
     };
+
+    scriptAttachment = GENERIC_asNewScriptWorldStateAttachment(self_);
 }
 
 #endif
@@ -64,6 +62,9 @@ void WorldState::SetIgnoreAll(bool ignore)
 
     for (unsigned i = 0; i < NUM_DUAL_ORIGIN_LAZY_VARS; ++i)
         ((DualOriginLazyVar::PackedFields *)&dualOriginLazyVarsData[i * 4 + 3])->ignore = ignore;
+
+    if (scriptAttachment)
+        GENERIC_asSetScriptWorldStateAttachmentIgnoreAllVars(scriptAttachment, ignore);
 }
 
 // Use this macro so one have to write condition that matches the corresponding case and not its negation
@@ -169,7 +170,10 @@ bool WorldState::IsSatisfiedBy(const WorldState &that) const
     if (!RunAwayElevatorOriginVar().IsSatisfiedBy(that.RunAwayElevatorOriginVar()))
         return false;
 
-    return true;
+    if (!scriptAttachment)
+        return true;
+
+    return GENERIC_asIsScriptWorldStateAttachmentSatisfiedBy(scriptAttachment, that.scriptAttachment);
 }
 
 uint32_t WorldState::Hash() const
@@ -227,7 +231,10 @@ uint32_t WorldState::Hash() const
     result = result * 17 + RunAwayJumppadOriginVar().Hash();
     result = result * 17 + RunAwayElevatorOriginVar().Hash();
 
-    return result;
+    if (!scriptAttachment)
+        return result;
+
+    return result * 17 + (uint32_t)GENERIC_asScriptWorldStateAttachmentHash(scriptAttachment);
 }
 
 #define TEST_VARS_EQUALITY(values, flags, ops)                           \
@@ -302,7 +309,10 @@ bool WorldState::operator==(const WorldState &that) const
     if (RunAwayElevatorOriginVar() != that.RunAwayElevatorOriginVar())
         return false;
 
-    return true;
+    if (!scriptAttachment)
+        return true;
+
+    return GENERIC_asScriptWorldStateAttachmentEquals(scriptAttachment, that.scriptAttachment);
 }
 
 void WorldState::DebugPrint(const char *tag) const
@@ -365,6 +375,9 @@ void WorldState::DebugPrint(const char *tag) const
     RunAwayTeleportOriginVar().DebugPrint(tag);
     RunAwayJumppadOriginVar().DebugPrint(tag);
     RunAwayElevatorOriginVar().DebugPrint(tag);
+
+    if (scriptAttachment)
+        GENERIC_asDebugPrintScriptWorldStateAttachment(scriptAttachment);
 }
 
 #define PRINT_DIFF(varName)                             \
@@ -432,4 +445,7 @@ void WorldState::DebugPrintDiff(const WorldState &that, const char *oldTag, cons
     PRINT_DIFF(RunAwayTeleportOrigin);
     PRINT_DIFF(RunAwayJumppadOrigin);
     PRINT_DIFF(RunAwayElevatorOrigin);
+
+    if (scriptAttachment)
+        GENERIC_asDebugPrintScriptWorldStateAttachmentDiff(scriptAttachment, that.scriptAttachment);
 }

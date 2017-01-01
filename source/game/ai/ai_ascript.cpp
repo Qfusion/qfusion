@@ -390,6 +390,15 @@ static void objectWorldState_setIgnoreAll(WorldState *worldState, bool ignore)
     CHECK_ARG(worldState)->SetIgnoreAll(ignore);
 }
 
+static const void *objectWorldState_get_scriptAttachment_const(const WorldState *worldState)
+{
+    return CHECK_ARG(worldState)->ScriptAttachment();
+}
+static void *objectWorldState_get_scriptAttachment(WorldState *worldState)
+{
+    return CHECK_ARG(worldState)->ScriptAttachment();
+}
+
 #define DECLARE_SCRIPT_WS_GETTER(type, scriptPrefix, nativePrefix, restOfTheName) \
     DECLARE_METHOD(AI##type, get_##scriptPrefix##restOfTheName, (), objectWorldState_##scriptPrefix##restOfTheName)
 
@@ -464,6 +473,11 @@ static const asMethod_t asAiWorldState_ObjectMethods[] =
     DECLARE_SCRIPT_WS_GETTER(DualOriginLazyVar, run, Run, AwayTeleportOriginVar),
     DECLARE_SCRIPT_WS_GETTER(DualOriginLazyVar, run, Run, AwayJumppadOriginVar),
     DECLARE_SCRIPT_WS_GETTER(DualOriginLazyVar, run, Run, AwayElevatorOriginVar),
+
+    // We can't return a value of AIScriptWorldStateAttachment type since the engine is not initialized yet
+    // and the script-defined type is not registered yet, so we have to pass it in the `any` container.
+    DECLARE_METHOD(const any @, get_scriptAttachment, () const, objectWorldState_get_scriptAttachment_const),
+    DECLARE_METHOD(any @, get_scriptAttachment, (), objectWorldState_get_scriptAttachment),
 
     DECLARE_METHOD(void, setIgnoreAll, (bool ignore), objectWorldState_setIgnoreAll),
 
@@ -1508,6 +1522,11 @@ template <> struct ResultGetter<int>
     static inline int Get(asIScriptContext *ctx) { return ctx->GetReturnDWord(); }
 };
 
+template <> struct ResultGetter<unsigned>
+{
+    static inline unsigned Get(asIScriptContext *ctx) { return ctx->GetReturnDWord(); }
+};
+
 template<> struct ResultGetter<float>
 {
     static inline float Get(asIScriptContext *ctx) { return ctx->GetReturnFloat(); }
@@ -1778,6 +1797,98 @@ static auto getScriptGoalDesiredWorldStateFunc =
 void GENERIC_asGetScriptGoalDesiredWorldState(void *scriptObject, WorldState *worldState)
 {
     getScriptGoalDesiredWorldStateFunc(scriptObject, worldState);
+}
+
+static auto newScriptWorldStateAttachmentFunc =
+    gtAIFunctionsRegistry.Function1<void *, const edict_t *>(
+        "any @GENERIC_NewScriptWorldStateAttachment( const Entity @self )", nullptr);
+
+void *GENERIC_asNewScriptWorldStateAttachment(const edict_t *self)
+{
+    return newScriptWorldStateAttachmentFunc(CHECK_ARG(self));
+}
+
+static auto deleteScriptWorldStateAttachmentFunc =
+    gtAIFunctionsRegistry.Function2<Void, const edict_t *, void *>(
+        "void GENERIC_DeleteScriptWorldStateAttachment( const Entity @self, any @attachment )", Void::VALUE);
+
+void GENERIC_asDeleteScriptWorldStateAttachment(const edict_t *self, void *attachment)
+{
+    deleteScriptWorldStateAttachmentFunc(CHECK_ARG(self), CHECK_ARG(attachment));
+}
+
+static auto copyScriptWorldStateAttachmentFunc =
+    gtAIFunctionsRegistry.Function2<void *, const edict_t *, const void *>(
+        "void GENERIC_CopyScriptWorldStateAttachment( const Entity @self, any @attachment )", nullptr);
+
+void *GENERIC_asCopyScriptWorldStateAttachment(const edict_t *self, const void *attachment)
+{
+    return copyScriptWorldStateAttachmentFunc(CHECK_ARG(self), CHECK_ARG(attachment));
+}
+
+static auto setScriptWorldStateAttachmentIgnoreAllVarsFunc =
+    gtAIFunctionsRegistry.Function2<Void, void *, bool>(
+        "void GENERIC_SetScriptWorldStateAttachmentIgnoreAllVars( any @attachment, bool ignore )", Void::VALUE);
+
+void GENERIC_asSetScriptWorldStateAttachmentIgnoreAllVars(void *attachment, bool ignore)
+{
+    setScriptWorldStateAttachmentIgnoreAllVarsFunc(CHECK_ARG(attachment), ignore);
+}
+
+static auto prepareScriptWorldStateAttachmentFunc =
+    gtAIFunctionsRegistry.Function3<Void, const edict_t *, WorldState *, void *>(
+        "void GENERIC_PrepareScriptWorldStateAttachment"
+        "( const Entity @self, AIWorldState @nativeWorldState, any @attachment )",
+        Void::VALUE);
+
+void GENERIC_asPrepareScriptWorldStateAttachment(const edict_t *self, WorldState *worldState, void *attachment)
+{
+    prepareScriptWorldStateAttachmentFunc(CHECK_ARG(self), CHECK_ARG(worldState), CHECK_ARG(attachment));
+}
+
+static auto scriptWorldStateAttachmentHashFunc =
+    gtAIFunctionsRegistry.Function1<unsigned, const void *>(
+        "uint GENERIC_ScriptWorldStateAttachmentHash( any @attachment )", 0U);
+
+unsigned GENERIC_asScriptWorldStateAttachmentHash(const void *attachment)
+{
+    return scriptWorldStateAttachmentHashFunc(CHECK_ARG(attachment));
+}
+
+static auto scriptWorldStateAttachmentEqualsFunc =
+    gtAIFunctionsRegistry.Function2<bool, const void *, const void *>(
+        "bool GENERIC_ScriptWorldStateAttachmentEquals( any @lhs, any @rhs )", true);
+
+bool GENERIC_asScriptWorldStateAttachmentEquals(const void *lhs, const void *rhs)
+{
+    return scriptWorldStateAttachmentEqualsFunc(CHECK_ARG(lhs), CHECK_ARG(rhs));
+}
+
+static auto isScriptWorldStateAttachmentSatisfiedByFunc =
+    gtAIFunctionsRegistry.Function2<bool, const void *, const void *>(
+        "bool GENERIC_IsScriptWorldStateAttachmentSatisfiedBy( any @lhs, any @rhs )", true );
+
+bool GENERIC_asIsScriptWorldStateAttachmentSatisfiedBy(const void *lhs, const void *rhs)
+{
+    return isScriptWorldStateAttachmentSatisfiedByFunc(CHECK_ARG(lhs), CHECK_ARG(rhs));
+}
+
+static auto debugPrintScriptWorldStateAttachmentFunc =
+    gtAIFunctionsRegistry.Function1<Void, const void *>(
+        "void GENERIC_DebugPrintScriptWorldStateAttachment( any @attachment )", Void::VALUE);
+
+void GENERIC_asDebugPrintScriptWorldStateAttachment(const void *attachment)
+{
+    debugPrintScriptWorldStateAttachmentFunc(CHECK_ARG(attachment));
+}
+
+static auto debugPrintScriptWorldStateAttachmentDiffFunc =
+    gtAIFunctionsRegistry.Function2<Void, const void *, const void *>(
+        "void GENERIC_DebugPrintScriptWorldStateAttachmentDiff( any @lhs, any @rhs )", Void::VALUE);
+
+void GENERIC_asDebugPrintScriptWorldStateAttachmentDiff(const void *lhs, const void *rhs)
+{
+    debugPrintScriptWorldStateAttachmentDiffFunc(CHECK_ARG(lhs), CHECK_ARG(rhs));
 }
 
 static auto botWouldDropHealthFunc =
