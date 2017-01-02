@@ -644,6 +644,9 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 
 	self->s.teleported = true;
 
+    self->aiIntrinsicEnemyWeight = 1.0f;
+    self->aiVisibilityDistance = 999999.9f;
+
 	// hold in place briefly
 	client->ps.pmove.pm_flags = PMF_TIME_TELEPORT;
 	client->ps.pmove.pm_time = 14;
