@@ -136,6 +136,7 @@ BotBrain::BotBrain(Bot *bot, float skillLevel_)
       squad(nullptr),
       botEnemyPool(bot->self, this, skillLevel_),
       selectedEnemies(bot->selectedEnemies),
+      lostEnemies(bot->self),
       selectedWeapons(bot->selectedWeapons),
       cachedWorldState(bot->self)
 {

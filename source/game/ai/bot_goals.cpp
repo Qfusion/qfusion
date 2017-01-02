@@ -71,9 +71,9 @@ void BotKillEnemyGoal::UpdateWeight(const WorldState &currWorldState)
     if (!SelectedEnemies().AreValid())
         return;
 
-    this->weight = 1.5f * self->ai->botRef->GetEffectiveOffensiveness();
+    this->weight = 1.75f * self->ai->botRef->GetEffectiveOffensiveness();
     if (currWorldState.HasThreateningEnemyVar())
-        this->weight *= 1.75f;
+        this->weight *= 1.5f;
 }
 
 void BotKillEnemyGoal::GetDesiredWorldState(WorldState *worldState)
@@ -107,9 +107,9 @@ void BotRunAwayGoal::UpdateWeight(const WorldState &currWorldState)
     if (!SelectedEnemies().AreThreatening())
         return;
 
-    this->weight = 1.5f * (1.0f - self->ai->botRef->GetEffectiveOffensiveness());
+    this->weight = 1.75f * (1.0f - self->ai->botRef->GetEffectiveOffensiveness());
     if (currWorldState.HasThreateningEnemyVar())
-        this->weight *= 1.75f;
+        this->weight *= 1.5f;
 }
 
 void BotRunAwayGoal::GetDesiredWorldState(WorldState *worldState)
@@ -138,6 +138,59 @@ PlannerNode *BotRunAwayGoal::GetWorldStateTransitions(const WorldState &worldSta
     TRY_APPLY_ACTION(doRunAwayViaElevatorAction);
 
     TRY_APPLY_ACTION(stopRunningAwayAction);
+
+    return ApplyExtraActions(firstTransition, worldState);
+}
+
+void BotAttackOutOfDespairGoal::UpdateWeight(const WorldState &currWorldState)
+{
+    this->weight = 0.0f;
+
+    if (!SelectedEnemies().AreValid())
+        return;
+
+    if (SelectedEnemies().FireDelay() > 600)
+        return;
+
+    // The bot already has high offensiveness, changing it would have the same effect as using duplicated search.
+    if (self->ai->botRef->GetEffectiveOffensiveness() > 0.9f)
+        return;
+
+    this->weight = currWorldState.HasThreateningEnemyVar() ? 1.2f : 0.5f;
+    this->weight += 1.75f * BoundedFraction(SelectedEnemies().TotalInflictedDamage(), 125);
+}
+
+void BotAttackOutOfDespairGoal::GetDesiredWorldState(WorldState *worldState)
+{
+    worldState->SetIgnoreAll(true);
+
+    worldState->HasJustKilledEnemyVar().SetValue(true).SetIgnore(false);
+}
+
+void BotAttackOutOfDespairGoal::OnPlanBuildingStarted()
+{
+    // Hack: save the bot's base offensiveness and enrage the bot
+    this->oldOffensiveness = self->ai->botRef->GetBaseOffensiveness();
+    self->ai->botRef->SetBaseOffensiveness(1.0f);
+}
+
+void BotAttackOutOfDespairGoal::OnPlanBuildingCompleted(const AiBaseActionRecord *planHead)
+{
+    // Hack: restore the bot's base offensiveness
+    self->ai->botRef->SetBaseOffensiveness(this->oldOffensiveness);
+}
+
+PlannerNode *BotAttackOutOfDespairGoal::GetWorldStateTransitions(const WorldState &worldState)
+{
+    PlannerNode *firstTransition = nullptr;
+
+    TRY_APPLY_ACTION(advanceToGoodPositionAction);
+    TRY_APPLY_ACTION(retreatToGoodPositionAction);
+    TRY_APPLY_ACTION(steadyCombatAction);
+    TRY_APPLY_ACTION(gotoAvailableGoodPositionAction);
+    TRY_APPLY_ACTION(attackFromCurrentPositionAction);
+
+    TRY_APPLY_ACTION(killEnemyAction);
 
     return ApplyExtraActions(firstTransition, worldState);
 }
@@ -214,7 +267,7 @@ void BotReactToEnemyLostGoal::UpdateWeight(const WorldState &currWorldState)
     if (currWorldState.LostEnemyLastSeenOriginVar().Ignore())
         return;
 
-    this->weight = 1.5f * self->ai->botRef->GetEffectiveOffensiveness();
+    this->weight = 1.75f * self->ai->botRef->GetEffectiveOffensiveness();
 }
 
 void BotReactToEnemyLostGoal::GetDesiredWorldState(WorldState *worldState)
@@ -249,4 +302,14 @@ void BotScriptGoal::GetDesiredWorldState(WorldState *worldState)
 PlannerNode *BotScriptGoal::GetWorldStateTransitions(const WorldState &worldState)
 {
     return ApplyExtraActions(nullptr, worldState);
+}
+
+void BotScriptGoal::OnPlanBuildingStarted()
+{
+    GENERIC_asOnScriptGoalPlanBuildingStarted(scriptObject);
+}
+
+void BotScriptGoal::OnPlanBuildingCompleted(const AiBaseActionRecord *planHead)
+{
+    GENERIC_asOnScriptGoalPlanBuildingCompleted(scriptObject, planHead != nullptr);
 }

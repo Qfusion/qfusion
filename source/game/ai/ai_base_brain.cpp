@@ -513,6 +513,8 @@ public:
 
 AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &currWorldState)
 {
+    goal->OnPlanBuildingStarted();
+
     PlannerNode *startNode = plannerNodesPool.New(self);
     startNode->worldState = currWorldState;
     startNode->worldStateHash = startNode->worldState.Hash();
@@ -538,6 +540,7 @@ AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &c
         if (goalWorldState.IsSatisfiedBy(currNode->worldState))
         {
             AiBaseActionRecord *plan = ReconstructPlan(currNode);
+            goal->OnPlanBuildingCompleted(plan);
             plannerNodesPool.Clear();
             return plan;
         }
@@ -601,6 +604,7 @@ AiBaseActionRecord *AiBaseBrain::BuildPlan(AiBaseGoal *goal, const WorldState &c
         }
     }
 
+    goal->OnPlanBuildingCompleted(nullptr);
     plannerNodesPool.Clear();
     return nullptr;
 }

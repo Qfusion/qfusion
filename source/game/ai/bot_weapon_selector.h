@@ -92,7 +92,10 @@ public:
 
 class SelectedEnemies
 {
+    friend class Bot;
     friend class BotBrain;
+
+    const edict_t *self;
 
     const Enemy *primaryEnemy;
     StaticVector<const Enemy *, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> activeEnemies;
@@ -108,6 +111,7 @@ class SelectedEnemies
 #endif
     }
 
+    SelectedEnemies(const edict_t *self_): self(self_) {}
 public:
     bool AreValid() const;
 
@@ -236,6 +240,7 @@ public:
     bool HaveCarrier() const;
     bool Contain(const Enemy *enemy) const;
     bool AreThreatening() const;
+    float TotalInflictedDamage() const;
 
     typedef const Enemy **EnemiesIterator;
     inline EnemiesIterator begin() const { return (EnemiesIterator)activeEnemies.cbegin(); }

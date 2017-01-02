@@ -1489,7 +1489,7 @@ bool Bot::TrySetPendingWeaponJump(const Vec3 &targetOrigin, const Vec3 &fireTarg
     // Select appropriate weapon
     // TODO: Compute actual trajectory
     int weapon = WEAP_GUNBLADE;
-    if (originDistance > 450.0f || originHeight > 240.0f)
+    if (originDistance > 350.0f || originHeight > 200.0f)
     {
         // Should use a powerful weapon. Try to select an IG to prevent damaging itself.
         if (Inventory()[WEAP_INSTAGUN])

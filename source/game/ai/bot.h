@@ -170,6 +170,7 @@ class Bot: public Ai
     friend class BotReactToDangerGoal;
     friend class BotReactToThreatGoal;
     friend class BotReactToEnemyLostGoal;
+    friend class BotAttackOutOfDespairGoal;
     friend class BotTacticalSpotsCache;
     friend class WorldState;
 public:
@@ -352,6 +353,7 @@ private:
     BotReactToDangerGoal reactToDangerGoal;
     BotReactToThreatGoal reactToThreatGoal;
     BotReactToEnemyLostGoal reactToEnemyLostGoal;
+    BotAttackOutOfDespairGoal attackOutOfDespairGoal;
 
     BotGenericRunToItemAction genericRunToItemAction;
     BotPickupItemAction pickupItemAction;

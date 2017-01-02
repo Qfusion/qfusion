@@ -51,6 +51,20 @@ public:
     PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 };
 
+class BotAttackOutOfDespairGoal: public BotBaseGoal
+{
+    float oldOffensiveness;
+public:
+    BotAttackOutOfDespairGoal(Ai *ai_): BotBaseGoal(ai_, "BotAttackOutOfDespairGoal", 400) {}
+
+    void UpdateWeight(const WorldState &currWorldState) override;
+    void GetDesiredWorldState(WorldState *worldState) override;
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
+
+    void OnPlanBuildingStarted() override;
+    void OnPlanBuildingCompleted(const AiBaseActionRecord *planHead) override;
+};
+
 class BotReactToDangerGoal: public BotBaseGoal
 {
 public:
@@ -95,6 +109,9 @@ public:
     void UpdateWeight(const WorldState &currWorldState) override;
     void GetDesiredWorldState(WorldState *worldState) override;
     PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
+
+    void OnPlanBuildingStarted() override;
+    void OnPlanBuildingCompleted(const AiBaseActionRecord *planHead) override;
 };
 
 #endif

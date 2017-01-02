@@ -91,6 +91,8 @@ int GENERIC_asCheckScriptActionRecordStatus(void *scriptObject, const class Worl
 void *GENERIC_asTryApplyScriptAction(void *scriptObject, const class WorldState &worldState);
 float GENERIC_asGetScriptGoalWeight(void *scriptObject, const class WorldState &currWorldState);
 void GENERIC_asGetScriptGoalDesiredWorldState(void *scriptObject, class WorldState *worldState);
+void GENERIC_asOnScriptGoalPlanBuildingStarted(void *scriptObject);
+void GENERIC_asOnScriptGoalPlanBuildingCompleted(void *scriptObject, bool succeeded);
 
 bool GT_asBotWouldDropHealth( const gclient_t *client );
 void GT_asBotDropHealth( gclient_t *client );

@@ -35,6 +35,9 @@ public:
     virtual void GetDesiredWorldState(WorldState *worldState) = 0;
     virtual struct PlannerNode *GetWorldStateTransitions(const WorldState &worldState) = 0;
 
+    virtual void OnPlanBuildingStarted() {}
+    virtual void OnPlanBuildingCompleted(const class AiBaseActionRecord *planHead) {}
+
     inline bool IsRelevant() const { return weight > 0; }
 
     // More important goals are first after sorting goals array

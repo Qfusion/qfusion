@@ -45,13 +45,22 @@ float SelectedEnemies::DamageToKill() const
 
 unsigned SelectedEnemies::FireDelay() const
 {
-    if (primaryEnemy && primaryEnemy->ent)
+    unsigned minDelay = std::numeric_limits<unsigned>::max();
+
+    for (const Enemy *enemy: activeEnemies)
     {
-        if (!primaryEnemy->ent->r.client)
+        if (!enemy->IsValid())
+            return std::numeric_limits<unsigned>::max();
+
+        if (!enemy->ent->r.client)
             return 0;
-        return (unsigned)primaryEnemy->ent->r.client->ps.stats[STAT_WEAPON_TIME];
+
+        unsigned delay = (unsigned)enemy->ent->r.client->ps.stats[STAT_WEAPON_TIME];
+        if (delay < minDelay)
+            minDelay = delay;
     }
-    return std::numeric_limits<unsigned>::max();
+
+    return minDelay;
 }
 
 bool SelectedEnemies::HaveQuad() const
@@ -91,9 +100,43 @@ bool SelectedEnemies::AreThreatening() const
     {
         if (level.time - activeEnemy->LastAttackedByTime() < 1000)
             return true;
+
+        // Try cut off quite expensive AngleVectors() call
+        // TODO: Check environment trace too
+        if (activeEnemy->ent->r.client)
+        {
+            // If an enemy can shoot soon
+            if (activeEnemy->ent->r.client->ps.stats[STAT_WEAPON_TIME] < 300)
+            {
+                Vec3 enemyToBotDir(self->s.origin);
+                enemyToBotDir -= activeEnemy->ent->s.origin;
+                enemyToBotDir.NormalizeFast();
+                if (enemyToBotDir.Dot(activeEnemy->LookDir()) > 0.9f)
+                    return true;
+            }
+        }
+        else
+        {
+            Vec3 enemyToBotDir(self->s.origin);
+            enemyToBotDir -= activeEnemy->ent->s.origin;
+            enemyToBotDir.NormalizeFast();
+            if (enemyToBotDir.Dot(activeEnemy->LookDir()) > 0.9f)
+                return true;
+        }
     }
 
     return false;
+}
+
+float SelectedEnemies::TotalInflictedDamage() const
+{
+    CheckValid(__FUNCTION__);
+
+    float damage = 0;
+    for (const Enemy *activeEnemy: activeEnemies)
+        damage += activeEnemy->TotalInflictedDamage();
+
+    return damage;
 }
 
 bool SelectedEnemies::CanHit(const edict_t *ent) const

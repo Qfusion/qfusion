@@ -1397,7 +1397,7 @@ class ASFunctionsRegistry
 {
     friend struct ASUntypedFunction;
 
-    StaticVector<struct ASUntypedFunction *, 32> functions;
+    StaticVector<struct ASUntypedFunction *, 64> functions;
 
     inline void Register(struct ASUntypedFunction &function)
     {
@@ -1797,6 +1797,24 @@ static auto getScriptGoalDesiredWorldStateFunc =
 void GENERIC_asGetScriptGoalDesiredWorldState(void *scriptObject, WorldState *worldState)
 {
     getScriptGoalDesiredWorldStateFunc(scriptObject, worldState);
+}
+
+static auto onScriptGoalPlanBuildingStartedFunc =
+    gtAIFunctionsRegistry.Function1<Void, void *>(
+        "void GENERIC_OnScriptGoalPlanBuildingStarted( AIScriptGoal &goal )", Void::VALUE);
+
+void GENERIC_asOnScriptGoalPlanBuildingStarted(void *scriptObject)
+{
+    onScriptGoalPlanBuildingStartedFunc(scriptObject);
+}
+
+static auto onScriptGoalPlanBuildingCompletedFunc =
+    gtAIFunctionsRegistry.Function2<Void, void *, bool>(
+        "void GENERIC_OnScriptGoalPlanBuildingCompleted( AIScriptGoal &goal, bool succeeded )", Void::VALUE);
+
+void GENERIC_asOnScriptGoalPlanBuildingCompleted(void *scriptObject, bool succeeded)
+{
+    onScriptGoalPlanBuildingCompletedFunc(scriptObject, succeeded);
 }
 
 static auto newScriptWorldStateAttachmentFunc =

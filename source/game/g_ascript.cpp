@@ -2706,6 +2706,11 @@ static void asFunc_CenterPrintFormatMsg7( edict_t *ent, asstring_t *format, asst
 	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, arg6->buffer, arg7->buffer, NULL );
 }
 
+static void asFunc_Error( const asstring_t *str )
+{
+	G_Error(str && str->buffer ? str->buffer : "");
+}
+
 static void asFunc_G_Sound( edict_t *owner, int channel, int soundindex, float attenuation )
 {
 	G_Sound( owner, channel, soundindex, attenuation );
@@ -3216,6 +3221,7 @@ static const asglobfuncs_t asGameGlobFuncs[] =
 		", const String &in, const String &in, const String &in, const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg6), NULL },
 	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in" 
 		", const String &in, const String &in, const String &in, const String &in, const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg7), NULL },
+	{ "void G_Error( const String &in )", asFUNCTION(asFunc_Error), NULL },
 	{ "void G_Sound( Entity @, int channel, int soundindex, float attenuation )", asFUNCTION(asFunc_G_Sound), NULL },
 	{ "void G_PositionedSound( const Vec3 &in, int channel, int soundindex, float attenuation )", asFUNCTION(asFunc_PositionedSound), NULL },
 	{ "void G_GlobalSound( int channel, int soundindex )", asFUNCTION(asFunc_G_GlobalSound), NULL },

@@ -177,6 +177,7 @@ public:
     inline const Vec3 &LastSeenVelocity() const { return lastSeenVelocity; }
 
     inline unsigned LastAttackedByTime() const;
+    inline float TotalInflictedDamage() const;
 
     inline bool IsValid() const { return ent != nullptr; }
 
@@ -393,5 +394,6 @@ public:
 };
 
 inline unsigned Enemy::LastAttackedByTime() const { return parent->LastAttackedByTime(ent); }
+inline float Enemy::TotalInflictedDamage() const { return parent->TotalDamageInflictedBy(ent); }
 
 #endif
