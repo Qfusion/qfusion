@@ -366,7 +366,7 @@ class EnduranceMatch
 			this.humans.stats.addScore( 1 );
 			this.bots.stats.addScore( -1 );
 
-			if( @attacker.client != null )
+			if( @attacker != null && @attacker.client != null )
 				attacker.client.stats.addScore( 1 );
 
 			if( this.numRounds >= 11 )
