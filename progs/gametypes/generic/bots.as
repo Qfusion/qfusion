@@ -256,3 +256,103 @@ void GENERIC_AddApplicableAction( const String &goalName, const String &actionNa
 {
 	AI::AddApplicableAction( goalName, actionName );
 }
+
+abstract class AIScriptWorldStateAttachment
+{
+	AIScriptWorldStateAttachment @next;
+
+	AIScriptWorldStateAttachment() 
+	{
+		@next = null;
+	}
+
+	void setIgnoreAll( bool ignore ) {}
+
+	uint hash() const 
+	{
+		return 0;
+	}
+
+	bool opEquals( const AIScriptWorldStateAttachment &that ) const
+	{
+		return false;
+	}
+
+	bool isSatisfiedBy( const AIScriptWorldStateAttachment &that ) const
+	{
+		return false;
+	}
+
+	void debugPrint() const {}
+
+	void debugPrintDiff( const AIScriptWorldStateAttachment &that ) const {}
+}
+
+void GENERIC_SetScriptWorldStateAttachmentIgnoreAllVars( any @attachment, bool ignore )
+{
+	AIScriptWorldStateAttachment @value;
+	if ( !attachment.retrieve( value ) )
+		G_Error( "GENERIC_SetScriptWorldStateAttachmentIgnoreAllVars(): `attachment` argument contains a value of an illegal type\n" );
+
+	value.setIgnoreAll( ignore );
+}
+
+uint GENERIC_ScriptWorldStateAttachmentHash( any @attachment )
+{
+	AIScriptWorldStateAttachment @value;
+	if ( !attachment.retrieve( value ) )
+		G_Error( "GENERIC_ScriptWorldStateAttachmentHash(): `attachment` argument contains a value of an illegal type\n" );
+	
+	return value.hash();
+}
+
+bool GENERIC_ScriptWorldStateAttachmentEquals( any @rhs, any @lhs )
+{
+	AIScriptWorldStateAttachment @lhsValue;
+	AIScriptWorldStateAttachment @rhsValue;
+
+	if ( !lhs.retrieve( lhsValue ) )
+		G_Error( "GENERIC_ScriptWorldStateAttachmentEquals(): `lhs` argument contains a value of an illegal type\n" );
+
+	if ( !rhs.retrieve( lhsValue ) )
+		G_Error( "GENERIC_ScriptWorldStateAttachmentEquals(): `rhs` argument contains a value of an illegal type\n" );
+
+	return lhsValue == rhsValue;
+}
+
+bool GENERIC_IsScriptWorldStateAttachmentSatisfiedBy( any @rhs, any @lhs )
+{
+	AIScriptWorldStateAttachment @lhsValue;
+	AIScriptWorldStateAttachment @rhsValue;
+
+	if ( !lhs.retrieve( lhsValue ) )
+		G_Error( "GENERIC_IsScriptWorldStateAttachmentSatisfiedBy(): `lhs` argument contains a value of an illegal type\n" );
+
+	if ( !rhs.retrieve( lhsValue ) )
+		G_Error( "GENERIC_IsScriptWorldStateAttachmentSatisfiedBy(): `rhs` argument contains a value of an illegal type\n" );
+
+	return lhsValue.isSatisfiedBy( rhsValue );
+}
+
+void GENERIC_DebugPrintScriptWorldStateAttachment( any @attachment )
+{
+	AIScriptWorldStateAttachment @value;
+	if ( !attachment.retrieve( value ) )
+		G_Error( "GENERIC_DebugPrintScriptWorldState(): `attachment` argument contains a value of an illegal type\n" );
+
+	value.debugPrint();
+}
+
+void GENERIC_DebugPrintScriptWorldStateAttachmentDiff( any @lhs, any @rhs )
+{
+	AIScriptWorldStateAttachment @lhsValue;
+	AIScriptWorldStateAttachment @rhsValue;
+
+	if ( !lhs.retrieve( lhsValue ) )
+		G_Error( "GENERIC_DebugPrintScriptWorldStateAttachmentDiff(): `lhs` argument contains a value of an illegal type\n" );
+
+	if ( !rhs.retrieve( lhsValue ) )
+		G_Error( "GENERIC_DebugPrintScriptWorldStateAttachmentDiff(): `rhs` argument contains a value of an illegal type\n" );
+
+	lhsValue.debugPrintDiff( rhsValue );
+}
