@@ -164,7 +164,7 @@ void CG_ConfigString( int i, const char *s ) {
 	} else if( i >= CS_ITEMS && i < CS_ITEMS + MAX_ITEMS ) {
 		CG_ValidateItemDef( i - CS_ITEMS, cgs.configStrings[i] );
 	} else if( i >= CS_PLAYERINFOS && i < CS_PLAYERINFOS + MAX_CLIENTS ) {
-		CG_LoadClientInfo( &cgs.clientInfo[i - CS_PLAYERINFOS], cgs.configStrings[i], i - CS_PLAYERINFOS );
+		CG_LoadClientInfo( i - CS_PLAYERINFOS );
 	} else if( i >= CS_GAMECOMMANDS && i < CS_GAMECOMMANDS + MAX_GAMECOMMANDS ) {
 		if( !cgs.demoPlaying ) {
 			trap_Cmd_AddCommand( cgs.configStrings[i], NULL );

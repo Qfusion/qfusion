@@ -171,17 +171,15 @@ void CG_SexedSound( int entnum, int entchannel, const char *name, float fvol, fl
 	}
 }
 
-
 /*
-* CG_LoadClientInfo
+* CG_ParseClientInfo
 */
-void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *info, int client ) {
+static void CG_ParseClientInfo( cg_clientInfo_t *ci, const char *info ) {
 	char *s;
 	int rgbcolor;
 
 	assert( ci );
 	assert( info );
-	assert( client >= 0 && client < gs.maxclients );
 
 	if( !Info_Validate( info ) ) {
 		CG_Error( "Invalid client info" );
@@ -203,5 +201,29 @@ void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *info, int client ) {
 		Vector4Set( ci->color, COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ), 255 );
 	} else {
 		Vector4Set( ci->color, 255, 255, 255, 255 );
+	}
+}
+
+/*
+* CG_LoadClientInfo
+* Updates cached client info from the current CS_PLAYERINFOS configstring value
+*/
+void CG_LoadClientInfo( int client ) {
+	assert( client >= 0 && client < gs.maxclients );
+	CG_ParseClientInfo( &cgs.clientInfo[client], cgs.configStrings[CS_PLAYERINFOS + client] );
+}
+
+/*
+* CG_ResetClientInfos
+*/
+void CG_ResetClientInfos( void ) {
+	int i;
+
+	memset( cgs.clientInfo, 0, sizeof( cgs.clientInfo ) );
+
+	for( i = 0; i < MAX_CLIENTS; i++ ) {
+		if( cgs.configStrings[CS_PLAYERINFOS + i][0] ) {
+			CG_LoadClientInfo( i );
+		}
 	}
 }

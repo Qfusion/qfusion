@@ -692,7 +692,7 @@ static void CG_RegisterClients( void ) {
 			return;
 		}
 
-		CG_LoadClientInfo( &cgs.clientInfo[i], name, i );
+		CG_LoadClientInfo( i );
 	}
 
 	cgs.precacheClientsStart = MAX_CLIENTS;
@@ -1091,6 +1091,8 @@ void CG_StartBackgroundTrack( void ) {
 * CG_Reset
 */
 void CG_Reset( void ) {
+	CG_ResetClientInfos();
+
 	CG_ResetPModels();
 
 	CG_ResetKickAngles();
