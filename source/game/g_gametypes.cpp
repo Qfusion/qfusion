@@ -2012,8 +2012,5 @@ void G_Gametype_Init( void )
 	// ch : if new gametype has been initialized, transfer the
 	// client-specific ratings to gametype-specific list
 	if( changed )
-	{
 		G_TransferRatings();
-		AI_GametypeChanged(g_gametype->string);
-	}
 }

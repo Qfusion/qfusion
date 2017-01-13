@@ -218,4 +218,7 @@ void Use_Plat( edict_t *ent, edict_t *other, edict_t *activator );
 void AITools_DrawLine( const vec3_t origin, const vec3_t dest );
 void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, int parm );
 
+void GetHashAndLength(const char *str, unsigned *hash, unsigned *length);
+unsigned GetHashForLength(const char *str, unsigned length);
+
 #endif

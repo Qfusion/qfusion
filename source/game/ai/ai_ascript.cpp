@@ -116,6 +116,10 @@ static BotScriptActionRecord *objectPlannerNode_nativeActionRecord(PlannerNode *
 #define DECLARE_METHOD(type, name, params, nativeFunc) \
     { ASLIB_FUNCTION_DECL(type, name, params), asFUNCTION(nativeFunc), asCALL_CDECL_OBJFIRST }
 
+#define DECLARE_METHOD_PAIR(type, name, params, nativeFunc)   \
+    DECLARE_METHOD(type, name, params, nativeFunc),           \
+    DECLARE_METHOD(const type, name, params const, nativeFunc)
+
 static const asMethod_t asAiPlannerNode_ObjectMethods[] =
 {
     DECLARE_METHOD(AIWorldState &, get_worldState, (), objectPlannerNode_worldState),
@@ -635,6 +639,8 @@ public:
 static TypeHolderAndChecker scriptGoalFactoryTypeHolder("AIScriptGoalFactory");
 static TypeHolderAndChecker scriptActionFactoryTypeHolder("AIScriptActionFactory");
 static TypeHolderAndChecker scriptActionRecordTypeHolder("AIScriptActionRecord");
+static TypeHolderAndChecker scriptWeightConfigVarTypeHolder("AIScriptWeightConfigVar");
+static TypeHolderAndChecker scriptWeightConfigVarGroupTypeHolder("AIScriptWeightConfigVarGroup");
 
 // AS does not have forward class declarations, and script AIScriptActionRecord class
 // cannot be registered to the moment of the base engine script initialization.
@@ -1036,6 +1042,162 @@ static const asClassDescriptor_t asAiSelectedEnemiesClassDescriptor =
     NULL, NULL
 };
 
+static AiBaseWeightConfigVar *objectWeightConfigVarGroup_get_varsListHead(AiBaseWeightConfigVarGroup *obj)
+{
+    return CHECK_ARG(obj)->VarsListHead();
+}
+
+static AiBaseWeightConfigVarGroup *objectWeightConfigVarGroup_get_groupsListHead(AiBaseWeightConfigVarGroup *obj)
+{
+    return CHECK_ARG(obj)->GroupsListHead();
+}
+
+static AiBaseWeightConfigVarGroup *objectWeightConfigVarGroup_get_next(AiBaseWeightConfigVarGroup *obj)
+{
+    return CHECK_ARG(obj)->Next();
+}
+
+static unsigned objectWeightConfigVarGroup_get_nameHash(const AiBaseWeightConfigVarGroup *obj)
+{
+    return CHECK_ARG(obj)->NameHash();
+}
+
+static const asstring_t *objectWeightConfigVarGroup_get_name(const AiBaseWeightConfigVarGroup *obj)
+{
+    const char *nameData = CHECK_ARG(obj)->Name();
+    return angelExport->asStringFactoryBuffer(nameData, (unsigned)strlen(nameData));
+}
+
+static AiBaseWeightConfigVar *objectWeightConfigVarGroup_getVarByName(AiBaseWeightConfigVarGroup *group, const asstring_t *name, unsigned nameHash)
+{
+    const char *nameData = CHECK_ARG(CHECK_ARG(name)->buffer);
+    return CHECK_ARG(group)->GetVarByName(nameData, nameHash);
+}
+
+static AiBaseWeightConfigVarGroup *objectWeightConfigVarGroup_getGroupByName(AiBaseWeightConfigVarGroup *group, const asstring_t *name, unsigned nameHash)
+{
+    const char *nameData = CHECK_ARG(CHECK_ARG(name)->buffer);
+    return CHECK_ARG(group)->GetGroupByName(nameData, nameHash);
+}
+
+static AiBaseWeightConfigVar *objectWeightConfigVarGroup_getVarByPath(AiBaseWeightConfigVarGroup *group, const asstring_t *name)
+{
+    const char *nameData = CHECK_ARG(CHECK_ARG(name)->buffer);
+    return CHECK_ARG(group)->GetVarByPath(nameData);
+}
+
+static AiBaseWeightConfigVarGroup *objectWeightConfigVarGroup_getGroupByPath(AiBaseWeightConfigVarGroup *group, const asstring_t *name)
+{
+    const char *nameData = CHECK_ARG(CHECK_ARG(name)->buffer);
+    return CHECK_ARG(group)->GetGroupByPath(nameData);
+}
+
+static void objectWeightConfigVarGroup_addScriptVar(AiBaseWeightConfigVarGroup *group, CScriptAny *varObjAnyRef, const asstring_t *name)
+{
+    void *scriptObject = scriptWeightConfigVarTypeHolder.GetValueRef(CHECK_ARG(varObjAnyRef));
+    const char *nameData = CHECK_ARG(CHECK_ARG(name)->buffer);
+    CHECK_ARG(group)->AddScriptVar(nameData, scriptObject);
+}
+
+static void objectWeightConfigVarGroup_addScriptGroup(AiBaseWeightConfigVarGroup *group, CScriptAny *groupObjAnyRef, const asstring_t *name)
+{
+    void *scriptObject = scriptWeightConfigVarGroupTypeHolder.GetValueRef(CHECK_ARG(groupObjAnyRef));
+    const char *nameData = CHECK_ARG(CHECK_ARG(name)->buffer);
+    CHECK_ARG(group)->AddScriptGroup(nameData, scriptObject);
+}
+
+static asMethod_t asAiWeightConfigVarGroup_ObjectMethods[] =
+{
+    DECLARE_METHOD(const String @, get_name, () const, objectWeightConfigVarGroup_get_name),
+    DECLARE_METHOD(uint, get_nameHash, () const, objectWeightConfigVarGroup_get_nameHash),
+
+    DECLARE_METHOD_PAIR(AIWeightConfigVarGroup @, get_next, (), objectWeightConfigVarGroup_get_next),
+
+    DECLARE_METHOD_PAIR(AIWeightConfigVar @, get_varsListHead, (), objectWeightConfigVarGroup_get_varsListHead),
+    DECLARE_METHOD_PAIR(AIWeightConfigVarGroup @, getGroupsListHead, (), objectWeightConfigVarGroup_get_groupsListHead),
+
+    DECLARE_METHOD_PAIR(AIWeightConfigVar @, getVarByName, (const String &in name, uint nameHash), objectWeightConfigVarGroup_getVarByName),
+    DECLARE_METHOD_PAIR(AIWeightConfigVarGroup @, getGroupByName, (const String &in name, uint nameHash), objectWeightConfigVarGroup_getGroupByName),
+    DECLARE_METHOD_PAIR(AIWeightConfigVar @, getVarByPath, (const String &in path), objectWeightConfigVarGroup_getVarByPath),
+    DECLARE_METHOD_PAIR(AIWeightConfigVarGroup @, getGroupByPath, (const String &in path), objectWeightConfigVarGroup_getGroupByPath),
+
+    DECLARE_METHOD(void, addScriptVar, (any @scriptWeightConfigVar, const String &in name), objectWeightConfigVarGroup_addScriptVar),
+    DECLARE_METHOD(void, addScriptGroup, (any @scriptWeightConfigGroup, const String &in name), objectWeightConfigVarGroup_addScriptGroup),
+
+    ASLIB_METHOD_NULL
+};
+
+static const asClassDescriptor_t asAiWeightConfigVarGroupClassDescriptor =
+{
+    "AIWeightConfigVarGroup",
+    asOBJ_REF|asOBJ_NOCOUNT,
+    8,                                   /* use dummy size, only refs of this object are exposed to scripts */
+    EMPTY_FUNCDEFS,
+    EMPTY_BEHAVIORS,
+    asAiWeightConfigVarGroup_ObjectMethods,
+    EMPTY_PROPERTIES,
+
+    NULL, NULL
+};
+
+static AiBaseWeightConfigVar *objectWeightConfigVar_get_next(AiBaseWeightConfigVar *obj)
+{
+    return CHECK_ARG(obj)->Next();
+}
+
+static unsigned objectWeightConfigVar_get_nameHash(const AiBaseWeightConfigVar *obj)
+{
+    return CHECK_ARG(obj)->NameHash();
+}
+
+static const asstring_t *objectWeightConfigVar_get_name(const AiBaseWeightConfigVar *obj)
+{
+    const char *nameData = CHECK_ARG(obj)->Name();
+    return angelExport->asStringFactoryBuffer(nameData, (unsigned)strlen(nameData));
+}
+
+static void objectWeightConfigVar_getValueProps(const AiBaseWeightConfigVar *obj, float *value, float *minValue, float *maxValue, float *defaultValue)
+{
+    CHECK_ARG(obj)->GetValueProps(CHECK_ARG(value), CHECK_ARG(minValue), CHECK_ARG(maxValue), CHECK_ARG(defaultValue));
+}
+
+static void objectWeightConfigVar_setValue(AiBaseWeightConfigVar *obj, float value)
+{
+    CHECK_ARG(obj)->SetValue(value);
+}
+
+static void objectWeightConfigVar_resetToDefaultValues(AiBaseWeightConfigVar *obj)
+{
+    return CHECK_ARG(obj)->ResetToDefaultValues();
+}
+
+static asMethod_t asAiWeightConfigVar_ObjectMethods[] =
+{
+    DECLARE_METHOD(const String @, get_name, () const, objectWeightConfigVar_get_name),
+    DECLARE_METHOD(uint, get_nameHash, () const, objectWeightConfigVar_get_nameHash),
+
+    DECLARE_METHOD_PAIR(AIWeightConfigVar @, get_next, (), objectWeightConfigVar_get_next),
+
+    DECLARE_METHOD(void, getValueProps, (float &out value, float &out minValue, float &out maxValue, float &out defaultValue) const, objectWeightConfigVar_getValueProps),
+    DECLARE_METHOD(void, setValue, (float value), objectWeightConfigVar_setValue),
+    DECLARE_METHOD(void, resetToDefaultValues, (), objectWeightConfigVar_resetToDefaultValues),
+
+    ASLIB_METHOD_NULL
+};
+
+static const asClassDescriptor_t asAiWeightConfigVarClassDescriptor =
+{
+    "AIWeightConfigVar",
+    asOBJ_REF|asOBJ_NOCOUNT,
+    8,                           /* use dummy size, only refs of this object are exposed to scripts */
+    EMPTY_FUNCDEFS,
+    EMPTY_BEHAVIORS,
+    asAiWeightConfigVar_ObjectMethods,
+    EMPTY_PROPERTIES,
+
+    NULL, NULL
+};
+
 #define CHECK_BOT_HANDLE(ai) ((!(ai) || !(ai)->botRef) ? (API_ERROR("The given bot handle is null\n"), (ai)) : (ai))
 
 float objectBot_getEffectiveOffensiveness(const ai_handle_t *ai)
@@ -1212,6 +1374,8 @@ const asClassDescriptor_t *asAIClassesDescriptors[] =
     &asAiPendingLookAtPointClassDescriptor,
     &asAiSelectedNavEntityClassDescriptor,
     &asAiSelectedEnemiesClassDescriptor,
+    &asAiWeightConfigVarGroupClassDescriptor,
+    &asAiWeightConfigVarClassDescriptor,
     &asBotClassDescriptor,
     &asAiUnsignedVarClassDescriptor,
     &asAiFloatVarClassDescriptor,
@@ -1392,6 +1556,7 @@ template <typename R> struct ASFunction0;
 template <typename R, typename T1> struct ASFunction1;
 template <typename R, typename T1, typename T2> struct ASFunction2;
 template <typename R, typename T1, typename T2, typename T3> struct ASFunction3;
+template <typename R, typename T1, typename T2, typename T3, typename T4, typename T5> struct ASFunction5;
 
 class ASFunctionsRegistry
 {
@@ -1418,6 +1583,9 @@ public:
 
     template <typename R, typename T1, typename T2, typename T3>
     inline ASFunction3<R, T1, T2, T3> Function3(const char *name, R defaultResult);
+
+    template <typename R, typename T1, typename T2, typename T3, typename T4, typename T5>
+    inline ASFunction5<R, T1, T2, T3, T4, T5> Function5(const char *name, R defaultResult);
 };
 
 // This class is a common non-template supertype for concrete types.
@@ -1583,6 +1751,15 @@ template <typename Arg> struct ArgSetter<Arg *>
     }
 };
 
+// Hack for this primitive type, set a raw address, do not try to modify reference count of a non-existing object
+template<> struct ArgSetter<float *>
+{
+    static inline void Set(asIScriptContext *ctx, unsigned argNum, float *arg)
+    {
+        ctx->SetArgAddress(argNum, arg);
+    }
+};
+
 template<> struct ArgSetter<bool>
 {
     static inline void Set(asIScriptContext *ctx, unsigned argNum, bool arg)
@@ -1596,6 +1773,14 @@ template<> struct ArgSetter<int>
     static inline void Set(asIScriptContext *ctx, unsigned argNum, int arg)
     {
         ctx->SetArgDWord(argNum, arg);
+    }
+};
+
+template<> struct ArgSetter<float>
+{
+    static inline void Set(asIScriptContext *ctx, unsigned argNum, int arg)
+    {
+        ctx->SetArgFloat(argNum, arg);
     }
 };
 
@@ -1669,6 +1854,27 @@ struct ASFunction3: public ASTypedResultFunction<R>
     }
 };
 
+template<typename R, typename T1, typename T2, typename T3, typename T4, typename T5>
+struct ASFunction5: public ASTypedResultFunction<R>
+{
+    ASFunction5(const char *decl_, R defaultResult_, ASFunctionsRegistry &registry)
+        : ASTypedResultFunction<R>(decl_, defaultResult_, registry) {}
+
+    R operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5)
+    {
+        if (auto preparedContext = this->PrepareContext())
+        {
+            ArgSetter<T1>::Set(preparedContext, 0, arg1);
+            ArgSetter<T2>::Set(preparedContext, 1, arg2);
+            ArgSetter<T3>::Set(preparedContext, 2, arg3);
+            ArgSetter<T4>::Set(preparedContext, 3, arg4);
+            ArgSetter<T5>::Set(preparedContext, 4, arg5);
+            return this->CallForResult(preparedContext);
+        }
+        return this->defaultResult;
+    }
+};
+
 template <typename R>
 ASFunction0<R> ASFunctionsRegistry::Function0(const char *decl, R defaultResult)
 {
@@ -1693,6 +1899,12 @@ ASFunction3<R, T1, T2, T3> ASFunctionsRegistry::Function3(const char *decl, R de
     return ASFunction3<R, T1, T2, T3>(decl, defaultResult, *this);
 };
 
+template <typename R, typename T1, typename T2, typename T3, typename T4, typename T5>
+ASFunction5<R, T1, T2, T3, T4, T5> ASFunctionsRegistry::Function5(const char *decl, R defaultResult)
+{
+    return ASFunction5<R, T1, T2, T3, T4, T5>(decl, defaultResult, *this);
+};
+
 static ASFunctionsRegistry gtAIFunctionsRegistry;
 
 void AI_InitGametypeScript(asIScriptModule *module)
@@ -1702,6 +1914,8 @@ void AI_InitGametypeScript(asIScriptModule *module)
     scriptGoalFactoryTypeHolder.Load(module);
     scriptActionFactoryTypeHolder.Load(module);
     scriptActionRecordTypeHolder.Load(module);
+    scriptWeightConfigVarTypeHolder.Load(module);
+    scriptWeightConfigVarGroupTypeHolder.Load(module);
 }
 
 void AI_ResetGametypeScript()
@@ -1711,6 +1925,8 @@ void AI_ResetGametypeScript()
     scriptGoalFactoryTypeHolder.Unload();
     scriptActionFactoryTypeHolder.Unload();
     scriptActionRecordTypeHolder.Unload();
+    scriptWeightConfigVarTypeHolder.Unload();
+    scriptWeightConfigVarGroupTypeHolder.Unload();
 
     // Since the enclosing function might be called on start, the instance might be not constructed yet
     if (auto aiManagerInstance = AiManager::Instance())
@@ -1907,6 +2123,81 @@ static auto debugPrintScriptWorldStateAttachmentDiffFunc =
 void GENERIC_asDebugPrintScriptWorldStateAttachmentDiff(const void *lhs, const void *rhs)
 {
     debugPrintScriptWorldStateAttachmentDiffFunc(CHECK_ARG(lhs), CHECK_ARG(rhs));
+}
+
+static auto registerScriptWeightConfigFunc =
+    gtAIFunctionsRegistry.Function2<Void, const AiWeightConfig *, const edict_t *>(
+        "void GT_RegisterScriptWeightConfig( const AIWeightConfigVarGroup @nativeGroup, const Entity @owner )",
+        Void::VALUE);
+
+void GT_asRegisterScriptWeightConfig(class AiWeightConfig *weightConfig, const edict_t *configOwner)
+{
+    registerScriptWeightConfigFunc(weightConfig, configOwner);
+}
+
+static auto releaseScriptWeightConfigFunc =
+    gtAIFunctionsRegistry.Function2<Void, const AiWeightConfig *, const edict_t *>(
+        "void GT_ReleaseScriptWeightConfig( const AIWeightConfigVarGroup @nativeGroup, const Entity @owner )",
+        Void::VALUE);
+
+void GT_asReleaseScriptWeightConfig(class AiWeightConfig *weightConfig, const edict_t *configOwner)
+{
+    releaseScriptWeightConfigFunc(weightConfig, configOwner);
+}
+
+static auto getScriptWeightConfigVarValuePropsFunc =
+    gtAIFunctionsRegistry.Function5<Void, const void *, float *, float *, float *, float *>(
+        "void GENERIC_GetScriptWeightConfigVarValueProps( const AIScriptWeightConfigVar @var, "
+        "float &out value, float &out minValue, float &out maxValue, float &defaultValue )",
+        Void::VALUE);
+
+void GENERIC_asGetScriptWeightConfigVarValueProps(const void *scriptObject, float *value, float *minValue, float *maxValue, float *defaultValue)
+{
+    getScriptWeightConfigVarValuePropsFunc(scriptObject, value, minValue, maxValue, defaultValue);
+}
+
+static auto setScriptWeightConfigVarValueFunc =
+    gtAIFunctionsRegistry.Function2<Void, void *, float>(
+        "void GENERIC_SetScriptWeightConfigVarValueProps( AIScriptWeightConfigVar @var, float value )", Void::VALUE);
+
+void GENERIC_asSetScriptWeightConfigVarValue(void *scriptObject, float value)
+{
+    setScriptWeightConfigVarValueFunc(scriptObject, value);
+}
+
+static auto getScriptBotEvolutionManagerFunc =
+    gtAIFunctionsRegistry.Function0<void *>("AIScriptEvolutionManager @GT_GetScriptBotEvolutionManager()", nullptr);
+
+void *GT_asGetScriptBotEvolutionManager()
+{
+    return getScriptBotEvolutionManagerFunc();
+}
+
+static auto setupConnectingBotWeightsFunc =
+    gtAIFunctionsRegistry.Function2<Void, void *, edict_t *>(
+        "GENERIC_SetupConnectingBotWeights( AIScriptEvolutionManager @manager, Entity @ent )", Void::VALUE);
+
+void GENERIC_asSetupConnectingBotWeights(void *scriptEvolutionManager, edict_t *ent)
+{
+    setupConnectingBotWeightsFunc(scriptEvolutionManager, ent);
+}
+
+static auto setupRespawningBotWeightsFunc =
+    gtAIFunctionsRegistry.Function2<Void, void *, edict_t *>(
+        "GENERIC_SetupRespawningBotWeights( AIScriptEvolutionManager @manager, Entity @ent )", Void::VALUE);
+
+void GENERIC_asSetupRespawningBotWeights(void *scriptEvolutionManager, edict_t *ent)
+{
+    setupRespawningBotWeightsFunc(scriptEvolutionManager, ent);
+}
+
+static auto saveEvolutionResultsFunc =
+    gtAIFunctionsRegistry.Function1<Void, void *>(
+        "GENERIC_SaveEvolutionResults( AIScriptEvolutionManager @manager )", Void::VALUE);
+
+void GENERIC_asSaveEvolutionResults(void *scriptEvolutionManager)
+{
+    saveEvolutionResultsFunc(scriptEvolutionManager);
 }
 
 static auto botWouldDropHealthFunc =

@@ -100,7 +100,7 @@ cvar_t *g_asGC_stats;
 cvar_t *g_asGC_interval;
 
 cvar_t *g_skillRating;
-
+cvar_t *g_bot_evolution;
 
 static char *map_rotation_s = NULL;
 static char **map_rotation_p = NULL;
@@ -345,6 +345,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 
 	g_skillRating = trap_Cvar_Get( "sv_skillRating", va("%.0f", MM_RATING_DEFAULT), CVAR_SERVERINFO|CVAR_READONLY );
 	// trap_Cvar_ForceSet( "sv_skillRating", va("%d", MM_RATING_DEFAULT) );
+	g_bot_evolution = trap_Cvar_Get( "g_bot_evolution", "0", CVAR_ARCHIVE|CVAR_LATCH );
 
 	// nextmap
 	trap_Cvar_ForceSet( "nextmap", "match \"advance\"" );
@@ -387,9 +388,13 @@ void G_Shutdown( void )
 	GT_asCallShutdown();
 	G_asCallMapExit();
 
+    AI_BeforeLevelLevelScriptShutdown();
+
 	G_asShutdownMapScript();
 	GT_asShutdownScript();
 	G_asShutdownGameModuleEngine();
+
+    AI_AfterLevelScriptShutdown();
 
 	SV_WriteIPList ();
 
@@ -655,9 +660,10 @@ void G_ExitLevel( void )
 		}
 	}
 
+	AI_RemoveBots();
+
 	if( loadmap )
 	{
-        AI_RemoveBots();
 		Q_snprintfz( command, sizeof( command ), "gamemap \"%s\"\n", nextmapname );
 		trap_Cmd_ExecuteText( EXEC_APPEND, command );
 	}

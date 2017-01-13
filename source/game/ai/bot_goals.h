@@ -19,6 +19,7 @@ protected:
 
     inline const class SelectedNavEntity &SelectedNavEntity() const;
     inline const class SelectedEnemies &SelectedEnemies() const;
+    inline const class BotWeightConfig &WeightConfig() const;
 };
 
 class BotGrabItemGoal: public BotBaseGoal

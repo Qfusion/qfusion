@@ -1,6 +1,7 @@
 #include "ai_manager.h"
 #include "ai_base_brain.h"
 #include "ai_base_team_brain.h"
+#include "bot_evolution_manager.h"
 #include "ai_shutdown_hooks_holder.h"
 #include "bot.h"
 #include "tactical_spots_registry.h"
@@ -10,20 +11,25 @@ AiManager *AiManager::instance = nullptr;
 // Actual instance location in memory
 static StaticVector<AiManager, 1> instanceHolder;
 
-AiManager *AiManager::Instance()
+void AiManager::Init(const char *gametype, const char *mapname)
 {
-    if (instanceHolder.empty())
-    {
-        new(instanceHolder.unsafe_grow_back())AiManager();
-        auto hook = [&]()
-        {
-            instanceHolder.clear();
-            instance = nullptr;
-        };
-        AiShutdownHooksHolder::Instance()->RegisterHook(hook);
-        instance = &instanceHolder.front();
-    }
-    return instance;
+    if (instance)
+        AI_FailWith("AiManager::Init()", "An instance is already present\n");
+
+    new(instanceHolder.unsafe_grow_back())AiManager(gametype, mapname);
+    instance = &instanceHolder.front();
+
+    BotEvolutionManager::Init();
+}
+
+void AiManager::Shutdown()
+{
+    BotEvolutionManager::Shutdown();
+
+    if (instance)
+        instance = nullptr;
+
+    instanceHolder.clear();
 }
 
 template <typename T, unsigned N>
@@ -58,7 +64,7 @@ bool AiManager::StringValueMap<T, N>::Insert(const char *key, T &&value)
 #define REGISTER_BUILTIN_GOAL(goal) this->RegisterBuiltinGoal(#goal)
 #define REGISTER_BUILTIN_ACTION(action) this->RegisterBuiltinAction(#action)
 
-AiManager::AiManager()
+AiManager::AiManager(const char *gametype, const char *mapname)
     : last(nullptr)
 {
     std::fill_n(teams, MAX_CLIENTS, TEAM_SPECTATOR);
@@ -69,6 +75,7 @@ AiManager::AiManager()
     REGISTER_BUILTIN_GOAL(BotReactToDangerGoal);
     REGISTER_BUILTIN_GOAL(BotReactToThreatGoal);
     REGISTER_BUILTIN_GOAL(BotReactToEnemyLostGoal);
+    REGISTER_BUILTIN_GOAL(BotAttackOutOfDespairGoal);
 
     // Do not clear built-in goals later
     registeredGoals.MarkClearLimit();
@@ -105,11 +112,6 @@ AiManager::AiManager()
 
     // Do not clear builtin actions later
     registeredActions.MarkClearLimit();
-}
-
-void AiManager::OnGametypeChanged(const char *gametype)
-{
-    AiBaseTeamBrain::OnGametypeChanged(gametype);
 }
 
 void AiManager::NavEntityReachedBy(const NavEntity *navEntity, const Ai *grabber)
@@ -274,6 +276,8 @@ void AiManager::RespawnBot(edict_t *self)
     if( AI_GetType( self->ai ) != AI_ISBOT )
         return;
 
+    BotEvolutionManager::Instance()->OnBotRespawned(self);
+
     self->ai->botRef->OnRespawn();
 
     VectorClear( self->r.client->ps.pmove.delta_angles );
@@ -318,7 +322,13 @@ bool AiManager::CheckCanSpawnBots()
 void AiManager::SetupClientBot(edict_t *ent)
 {
     // We have to determine skill level early, since G_SpawnAI calls Bot constructor that requires it as a constant
-    float skillLevel = MakeRandomBotSkillByServerSkillLevel();
+    float skillLevel;
+
+    // Always use the same skill for bots that are subject of evolution
+    if (g_bot_evolution->integer)
+        skillLevel = 0.75f;
+    else
+        skillLevel = MakeRandomBotSkillByServerSkillLevel();
 
     // This also does an increment of game.numBots
     G_SpawnAI( ent, skillLevel );
@@ -359,6 +369,7 @@ void AiManager::SpawnBot(const char *teamName)
             RespawnBot(ent);
             SetupBotTeam(ent, teamName);
             SetupBotGoalsAndActions(ent);
+            BotEvolutionManager::Instance()->OnBotConnected(ent);
             game.numBots++;
         }
     }
@@ -381,7 +392,7 @@ void AiManager::RemoveBot(const char *name)
     G_Printf("BOT: %s not found\n", name);
 }
 
-void AiManager::RemoveBots()
+void AiManager::AfterLevelScriptShutdown()
 {
     // Do not iterate over the linked list of bots since it is implicitly modified by these calls
     for (edict_t *ent = game.edicts + gs.maxclients; PLAYERNUM(ent) >= 0; ent--)
@@ -394,6 +405,11 @@ void AiManager::RemoveBots()
         G_FreeAI(ent);
         game.numBots--;
     }
+}
+
+void AiManager::BeforeLevelScriptShutdown()
+{
+    BotEvolutionManager::Instance()->SaveEvolutionResults();
 }
 
 // We have to sanitize all input values since these methods are exported to scripts

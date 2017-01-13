@@ -115,6 +115,39 @@ void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, i
     GClip_LinkEntity( event );
 }
 
+// Almost same as COM_HashKey() but returns length too and does not perform division by hash size
+void GetHashAndLength(const char *str, unsigned *hash, unsigned *length)
+{
+    unsigned i = 0;
+    unsigned v = 0;
+
+    for (; str[i]; i++)
+    {
+        unsigned c = ((unsigned char *)str)[i];
+        if (c == '\\')
+            c = '/';
+        v = ( v + i ) * 37 + tolower( c ); // case insensitivity
+    }
+
+    *hash = v;
+    *length = i;
+}
+
+// A "dual" version of the function GetHashAndLength():
+// accepts the known length instead of computing it and computes a hash for the substring defined by the length.
+unsigned GetHashForLength(const char *str, unsigned length)
+{
+    unsigned v = 0;
+    for (unsigned i = 0; i < length; i++)
+    {
+        unsigned c = ((unsigned char *)str)[i];
+        if( c == '\\' )
+            c = '/';
+        v = ( v + i ) * 37 + tolower( c ); // case insensitivity
+    }
+    return v;
+}
+
 static StaticVector<int, 16> hubAreas;
 
 //==========================================
@@ -127,6 +160,9 @@ void AI_InitLevel( void )
     AiAasRouteCache::Init(*AiAasWorld::Instance());
     TacticalSpotsRegistry::Init(level.mapname);
 
+    AiBaseTeamBrain::OnGametypeChanged(g_gametype->string);
+    AiManager::Init(g_gametype->string, level.mapname);
+
     NavEntitiesRegistry::Instance()->Init();
 }
 
@@ -134,23 +170,28 @@ void AI_Shutdown( void )
 {
     hubAreas.clear();
 
-    AI_UnloadLevel();
+    AI_AfterLevelScriptShutdown();
 
     AiShutdownHooksHolder::Instance()->InvokeHooks();
 }
 
-void AI_UnloadLevel()
+void AI_BeforeLevelLevelScriptShutdown()
 {
-    AI_RemoveBots();
+    if (auto aiManager = AiManager::Instance())
+        aiManager->BeforeLevelScriptShutdown();
+}
+
+void AI_AfterLevelScriptShutdown()
+{
+    if (auto aiManager = AiManager::Instance())
+    {
+        aiManager->AfterLevelScriptShutdown();
+        AiManager::Shutdown();
+    }
 
     TacticalSpotsRegistry::Shutdown();
     AiAasRouteCache::Shutdown();
     AiAasWorld::Shutdown();
-}
-
-void AI_GametypeChanged(const char *gametype)
-{
-    AiManager::OnGametypeChanged(gametype);
 }
 
 void AI_JoinedTeam(edict_t *ent, int team)
@@ -365,7 +406,8 @@ void AI_RemoveNavEntity(edict_t *ent)
     if (!navEntity)
         return;
 
-    AiManager::Instance()->NavEntityReachedBy(navEntity, nullptr);
+    if (AiManager::Instance())
+        AiManager::Instance()->NavEntityReachedBy(navEntity, nullptr);
     NavEntitiesRegistry::Instance()->RemoveNavEntity(navEntity);
 }
 
@@ -467,7 +509,7 @@ void AI_RemoveBot( const char *name )
 
 void AI_RemoveBots()
 {
-    AiManager::Instance()->RemoveBots();
+    AiManager::Instance()->AfterLevelScriptShutdown();
 }
 
 void AI_Cheat_NoTarget( edict_t *ent )

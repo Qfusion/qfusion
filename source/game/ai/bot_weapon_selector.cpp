@@ -139,6 +139,38 @@ float SelectedEnemies::TotalInflictedDamage() const
     return damage;
 }
 
+float SelectedEnemies::MaxDotProductOfBotViewAndDirToEnemy() const
+{
+    vec3_t botViewDir;
+
+    float maxDot = -1.0f;
+    for (const Enemy *enemy: activeEnemies)
+    {
+        Vec3 toEnemyDir(enemy->LastSeenPosition());
+        toEnemyDir -= self->s.origin;
+        toEnemyDir.NormalizeFast();
+        float dot = toEnemyDir.Dot(botViewDir);
+        if (dot > maxDot)
+            maxDot = dot;
+    }
+    return maxDot;
+}
+
+float SelectedEnemies::MaxDotProductOfEnemyViewAndDirToBot() const
+{
+    float maxDot = -1.0f;
+    for (const Enemy *enemy: activeEnemies)
+    {
+        Vec3 toBotDir(self->s.origin);
+        toBotDir -= enemy->LastSeenPosition();
+        toBotDir.NormalizeFast();
+        float dot = toBotDir.Dot(enemy->LookDir());
+        if (dot > maxDot)
+            maxDot = dot;
+    }
+    return maxDot;
+}
+
 bool SelectedEnemies::CanHit(const edict_t *ent) const
 {
     CheckValid(__FUNCTION__);

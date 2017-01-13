@@ -660,8 +660,6 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 	client->ps.stats[STAT_TIME_ALPHA] = STAT_NOTSET;
 	client->ps.stats[STAT_TIME_BETA] = STAT_NOTSET;
 
-	AI_Respawn(self);
-
 	self->r.client->level.respawnCount++;
 
 	G_UseTargets( spawnpoint, self );
@@ -673,6 +671,8 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 		GT_asCallPlayerRespawn( self, old_team, self->s.team );
 	else
 		G_Gametype_GENERIC_ClientRespawn( self, old_team, self->s.team );
+
+	AI_Respawn(self);
 }
 
 /*

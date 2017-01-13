@@ -10,6 +10,7 @@
 #include "bot_weapon_selector.h"
 #include "bot_fire_target_cache.h"
 #include "bot_tactical_spots_cache.h"
+#include "bot_weight_config.h"
 
 #include "bot_goals.h"
 #include "bot_actions.h"
@@ -156,6 +157,7 @@ struct BotInput
 class Bot: public Ai
 {
     friend class AiManager;
+    friend class BotEvolutionManager;
     friend class AiBaseTeamBrain;
     friend class BotBrain;
     friend class AiSquad;
@@ -310,6 +312,9 @@ public:
 
     inline BotScriptGoal *AllocScriptGoal() { return botBrain.AllocScriptGoal(); }
     inline BotScriptAction *AllocScriptAction() { return botBrain.AllocScriptAction(); }
+
+    inline const BotWeightConfig &WeightConfig() const { return weightConfig; }
+    inline BotWeightConfig &WeightConfig() { return weightConfig; }
 protected:
     virtual void Frame() override;
     virtual void Think() override;
@@ -332,6 +337,7 @@ private:
 
     inline bool IsPrimaryAimEnemy(const edict_t *enemy) const { return botBrain.IsPrimaryAimEnemy(enemy); }
 
+    BotWeightConfig weightConfig;
     DangersDetector dangersDetector;
     BotBrain botBrain;
 

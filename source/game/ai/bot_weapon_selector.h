@@ -242,6 +242,9 @@ public:
     bool AreThreatening() const;
     float TotalInflictedDamage() const;
 
+    float MaxDotProductOfBotViewAndDirToEnemy() const;
+    float MaxDotProductOfEnemyViewAndDirToBot() const;
+
     typedef const Enemy **EnemiesIterator;
     inline EnemiesIterator begin() const { return (EnemiesIterator)activeEnemies.cbegin(); }
     inline EnemiesIterator end() const { return (EnemiesIterator)activeEnemies.cend(); }

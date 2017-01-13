@@ -46,6 +46,11 @@ const short *WorldState::GetRunAwayElevatorOrigin()
     return self->ai->botRef->tacticalSpotsCache.GetRunAwayElevatorOrigin(BotOriginData(), EnemyOriginData());
 }
 
+inline const BotWeightConfig &BotBaseAction::WeightConfig() const
+{
+    return self->ai->botRef->WeightConfig();
+}
+
 void BotBaseActionRecord::Activate()
 {
     AiBaseActionRecord::Activate();
@@ -390,6 +395,62 @@ AiBaseActionRecord::Status BotAdvanceToGoodPositionActionRecord::CheckStatus(con
     return VALID;
 }
 
+// Can be applied to each structurally-compatible config group
+template <typename ConfigGroup>
+inline float GoodNmyWeapDmgRatioThreshold(const ConfigGroup &configGroup, float effectiveOffensiveness)
+{
+    float offCoeff = (float)configGroup.baseOffCoeff - (float)configGroup.goodNmyWeapMinusOffCoeff;
+    clamp_low(offCoeff, 0.2f);
+    float dmgRatio = configGroup.baseDmgRatio - configGroup.goodNmyWeapMinusDmgRatio;
+    float result = dmgRatio - offCoeff * effectiveOffensiveness;
+    clamp_low(result, 0.2f);
+    return result;
+}
+
+template <typename ConfigGroup>
+inline float BaseDmgRatioThreshold(const ConfigGroup &configGroup, float effectiveOffensiveness)
+{
+    float result = (float)configGroup.baseDmgRatio - configGroup.baseOffCoeff * effectiveOffensiveness;
+    clamp_low(result, 0.2f);
+    return result;
+}
+
+template <typename ConfigGroup>
+inline float DmgRatioThreshold(const ConfigGroup &configGroup, float effectiveOffensiveness)
+{
+    float result = (float)configGroup.dmgRatio - configGroup.offCoeff;
+    clamp_low(result, 0.2f);
+    return result;
+};
+
+// Do not compare damage ratio directly, use these wrappers to avoid comparison ops confusion.
+// The first argument has non-float type intentionally to avoid confusion of two floats too.
+// Make sure all threshold values are sanitized (we can't guarantee it is done by every caller).
+
+inline bool ShouldAttackWithThisDamageRatio(const WorldState &worldState, float ratioThreshold)
+{
+    clamp_low(ratioThreshold, 0.2f);
+    return worldState.KillToBeKilledDamageRatio() < ratioThreshold;
+}
+
+inline bool ShouldRetreatWithThisDamageRatio(const WorldState &worldState, float ratioThreshold)
+{
+    clamp_low(ratioThreshold, 0.2f);
+    return worldState.KillToBeKilledDamageRatio() > ratioThreshold;
+}
+
+inline bool CanAttackWithThisDamageToBeKilled(const WorldState &worldState, float damageThreshold)
+{
+    clamp_low(damageThreshold, 15);
+    return worldState.DamageToBeKilled() > damageThreshold;
+}
+
+inline bool ShouldRetreatWithThisDamageToBeKilled(const WorldState &worldState, float damageThreshold)
+{
+    clamp_low(damageThreshold, 15);
+    return worldState.DamageToBeKilled() < damageThreshold;
+}
+
 PlannerNode *BotAdvanceToGoodPositionAction::TryApply(const WorldState &worldState)
 {
     if (worldState.EnemyOriginVar().Ignore())
@@ -426,32 +487,34 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply(const WorldState &worldSta
 
         if (worldState.HasThreateningEnemyVar())
         {
-            float minDamageToBeKilled = 75.0f * (1.0f - offensiveness);
-            if (worldState.DamageToBeKilled() < minDamageToBeKilled)
+            auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.sniperRange.hasThreateningEnemy;
+            if (!CanAttackWithThisDamageToBeKilled(worldState, configGroup.baseDmgToBeKilled * (1.0f - offensiveness)))
                 return nullptr;
 
             if (worldState.EnemyHasGoodFarRangeWeaponsVar())
             {
-                if (worldState.KillToBeKilledDamageRatio() > 1.0f + 0.5f * offensiveness)
+                if (!ShouldAttackWithThisDamageRatio(worldState,
+                                                     GoodNmyWeapDmgRatioThreshold(configGroup, offensiveness)))
                     return nullptr;
             }
             else
             {
-                if (worldState.KillToBeKilledDamageRatio() > 1.2f + 0.8f * offensiveness)
+                if (!ShouldAttackWithThisDamageRatio(worldState, BaseDmgRatioThreshold(configGroup, offensiveness)))
                     return nullptr;
             }
         }
         else
         {
+            auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.sniperRange.noThreateningEnemy;
             if (worldState.EnemyHasGoodFarRangeWeaponsVar())
             {
-                if (worldState.KillToBeKilledDamageRatio() > 1.2f + 0.8f * offensiveness)
+                float ratioThreshold = configGroup.goodNmyWeapDmgRatio + configGroup.goodNmyWeapOffCoeff * offensiveness;
+                if (!ShouldAttackWithThisDamageRatio(worldState, ratioThreshold))
                     return nullptr;
             }
             else
             {
-                float minDamageToBeKilled = 40.0f * (1.0f - offensiveness);
-                if (worldState.DamageToBeKilled() < minDamageToBeKilled)
+                if (!CanAttackWithThisDamageToBeKilled(worldState, configGroup.baseDmgToBeKilled * (1.0f - offensiveness)))
                     return nullptr;
             }
         }
@@ -482,22 +545,23 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply(const WorldState &worldSta
 
         if (worldState.HasThreateningEnemyVar())
         {
+            const auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.farRange.hasThreateningEnemy;
             if (worldState.EnemyHasGoodMiddleRangeWeaponsVar())
             {
-                if (worldState.KillToBeKilledDamageRatio() > 0.8f + 0.5f * offensiveness)
+                float damageRatio = configGroup.goodNmyWeapBaseDmgRatio + configGroup.goodNmyWeapOffCoeff * offensiveness;
+                if (!ShouldAttackWithThisDamageRatio(worldState, damageRatio))
                     return nullptr;
             }
             else
             {
-                float minDamageToBeKilled = 100.0f * (1.0f - offensiveness);
-                if (worldState.DamageToBeKilled() < minDamageToBeKilled)
+                if (!CanAttackWithThisDamageToBeKilled(worldState, configGroup.baseDmgToBeKilled * (1.0f - offensiveness)))
                     return nullptr;
             }
         }
         else
         {
-            float minDamageToBeKilled = 75.0f * (1.0f - offensiveness);
-            if (worldState.DamageToBeKilled() < minDamageToBeKilled)
+            const auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.farRange.noThreateningEnemy;
+            if (!CanAttackWithThisDamageToBeKilled(worldState, configGroup.baseDmgToBeKilled * (1.0f - offensiveness)))
                 return nullptr;
         }
 
@@ -525,19 +589,25 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply(const WorldState &worldSta
             return nullptr;
         }
 
-        float damageRatio = worldState.KillToBeKilledDamageRatio();
         if (worldState.HasThreateningEnemyVar())
         {
-            float minDamageToBeKilled = 75.0f * (1.0f - offensiveness);
-            if (worldState.DamageToBeKilled() < minDamageToBeKilled)
+            const auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.middleRange.hasThreateningEnemy;
+            if (!CanAttackWithThisDamageToBeKilled(worldState, configGroup.baseDmgToBeKilled * (1.0f - offensiveness)))
                 return nullptr;
 
-            if (damageRatio > (worldState.EnemyHasGoodCloseRangeWeaponsVar() ? 1.0f : 0.7f) + 0.5f * offensiveness)
+            float ratioThreshold = configGroup.baseDmgRatio + configGroup.offCoeff * offensiveness;
+            if (worldState.EnemyHasGoodCloseRangeWeaponsVar())
+                ratioThreshold -= configGroup.goodNmyWeapMinusDmgRatio;
+            if (!ShouldAttackWithThisDamageRatio(worldState, std::max(0.2f, ratioThreshold)))
                 return nullptr;
         }
         else
         {
-            if (damageRatio > (worldState.EnemyHasGoodCloseRangeWeaponsVar() ? 1.1f : 0.6f) + 0.5f * offensiveness)
+            const auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.middleRange.noThreateningEnemy;
+            float ratioThreshold = configGroup.baseDmgRatio + configGroup.offCoeff * offensiveness;
+            if (worldState.EnemyHasGoodCloseRangeWeaponsVar())
+                ratioThreshold -= configGroup.goodNmyWeapMinusDmgRatio;
+            if (!ShouldAttackWithThisDamageRatio(worldState, std::max(0.2f, ratioThreshold)))
                 return nullptr;
         }
 
@@ -647,16 +717,17 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply(const WorldState &worldSta
             return nullptr;
         }
 
+        auto &configGroup = WeightConfig().nativeActions.retreatToGoodPosition.farRange;
         if (worldState.HasGoodFarRangeWeaponsVar())
         {
             if (worldState.EnemyHasGoodFarRangeWeaponsVar())
             {
-                if (worldState.KillToBeKilledDamageRatio() < 1 + 0.5f * offensiveness)
+                if (!ShouldRetreatWithThisDamageRatio(worldState, GoodNmyWeapDmgRatioThreshold(configGroup, offensiveness)))
                     return nullptr;
             }
             else
             {
-                if (worldState.KillToBeKilledDamageRatio() < 1.5 + 0.8f * offensiveness)
+                if (!ShouldRetreatWithThisDamageRatio(worldState, BaseDmgRatioThreshold(configGroup, offensiveness)))
                     return nullptr;
             }
         }
@@ -694,16 +765,17 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply(const WorldState &worldSta
         }
         else
         {
+            auto &configGroup = WeightConfig().nativeActions.retreatToGoodPosition.middleRange;
             if (worldState.HasGoodMiddleRangeWeaponsVar())
             {
                 if (worldState.EnemyHasGoodMiddleRangeWeaponsVar())
                 {
-                    if (worldState.KillToBeKilledDamageRatio() < 0.9 + 0.3f * offensiveness)
+                    if (!ShouldRetreatWithThisDamageRatio(worldState, GoodNmyWeapDmgRatioThreshold(configGroup, offensiveness)))
                         return nullptr;
                 }
                 else
                 {
-                    if (worldState.KillToBeKilledDamageRatio() < 1.2 + 0.3f * offensiveness)
+                    if (!ShouldRetreatWithThisDamageRatio(worldState, BaseDmgRatioThreshold(configGroup, offensiveness)))
                         return nullptr;
                 }
             }
@@ -817,8 +889,15 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
 
         if (worldState.EnemyHasGoodSniperRangeWeaponsVar())
         {
-            if (worldState.DamageToBeKilled() < 80.0f && worldState.KillToBeKilledDamageRatio() > 1 + 1.0f * offensiveness)
-                return nullptr;
+            auto &configGroup = WeightConfig().nativeActions.steadyCombat.sniperRange;
+            if (worldState.DamageToBeKilled() < 80.0f)
+            {
+                float ratioThreshold = DmgRatioThreshold(configGroup, offensiveness);
+                if (!worldState.HasThreateningEnemyVar())
+                    ratioThreshold -= 0.7f * configGroup.offCoeff * offensiveness;
+                if (!ShouldAttackWithThisDamageRatio(worldState, ratioThreshold))
+                    return nullptr;
+            }
         }
         else
         {
@@ -847,7 +926,11 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
 
         if (worldState.EnemyHasGoodFarRangeWeaponsVar())
         {
-            if (worldState.KillToBeKilledDamageRatio() > 1.25f + 0.75f * offensiveness)
+            auto &configGroup = WeightConfig().nativeActions.steadyCombat.farRange;
+            float ratioThreshold = DmgRatioThreshold(configGroup, offensiveness);
+            if (!worldState.HasThreateningEnemyVar())
+                ratioThreshold -= 0.5f * configGroup.offCoeff * offensiveness;
+            if (!ShouldAttackWithThisDamageRatio(worldState, ratioThreshold))
                 return nullptr;
         }
         else
@@ -875,7 +958,11 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
 
         if (worldState.EnemyHasGoodMiddleRangeWeaponsVar())
         {
-            if (worldState.KillToBeKilledDamageRatio() > 0.75f + 0.5f * offensiveness)
+            auto &configGroup = WeightConfig().nativeActions.steadyCombat.middleRange;
+            float damageRatio = DmgRatioThreshold(configGroup, offensiveness);
+            if (!worldState.HasThreateningEnemyVar())
+                damageRatio -= 0.3f * configGroup.offCoeff;
+            if (!ShouldAttackWithThisDamageRatio(worldState, damageRatio))
                 return nullptr;
         }
         else
@@ -896,6 +983,7 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
     }
     else
     {
+        auto &configGroup = WeightConfig().nativeActions.steadyCombat.closeRange;
         if (!worldState.HasGoodCloseRangeWeaponsVar())
         {
             Debug("Bot does not have good close range weapons\n");
@@ -903,12 +991,18 @@ PlannerNode *BotSteadyCombatAction::TryApply(const WorldState &worldState)
         }
         if (worldState.EnemyHasGoodCloseRangeWeaponsVar())
         {
-            if (worldState.KillToBeKilledDamageRatio() > 0.7f + 0.5f * offensiveness)
+            float damageRatio = configGroup.dmgRatio + configGroup.offCoeff * offensiveness;
+            if (worldState.HasThreateningEnemyVar())
+                damageRatio *= 0.5f;
+            if (!ShouldAttackWithThisDamageRatio(worldState, damageRatio))
                 return nullptr;
         }
         else
         {
-            if (worldState.KillToBeKilledDamageRatio() > 1.3f + 0.5f * offensiveness)
+            float damageRatio = configGroup.dmgRatio + configGroup.offCoeff * offensiveness;
+            if (!worldState.HasThreateningEnemyVar())
+                damageRatio += 0.6f * configGroup.offCoeff * offensiveness;
+            if (!ShouldAttackWithThisDamageRatio(worldState, damageRatio))
                 return nullptr;
         }
 
@@ -1043,9 +1137,17 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply(const WorldState &worl
         }
         if (worldState.HasThreateningEnemyVar())
         {
-            float ratioThreshold = (worldState.EnemyHasGoodMiddleRangeWeaponsVar() ? 1.2f : 1.5f);
-            if (worldState.KillToBeKilledDamageRatio() > ratioThreshold + 0.5f * offensiveness)
-                return nullptr;
+            auto &configGroup = WeightConfig().nativeActions.gotoAvailableGoodPosition.middleRange;
+            if (worldState.EnemyHasGoodMiddleRangeWeaponsVar())
+            {
+                if (!ShouldAttackWithThisDamageRatio(worldState, GoodNmyWeapDmgRatioThreshold(configGroup, offensiveness)))
+                    return nullptr;
+            }
+            else
+            {
+                if (!ShouldAttackWithThisDamageRatio(worldState, BaseDmgRatioThreshold(configGroup, offensiveness)))
+                    return nullptr;
+            }
         }
         if (worldState.MiddleRangeTacticalSpotVar().IgnoreOrAbsent())
         {
@@ -1064,9 +1166,17 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply(const WorldState &worl
         }
         if (worldState.HasThreateningEnemyVar())
         {
-            float ratioThreshold = (worldState.EnemyHasGoodCloseRangeWeaponsVar() ? 1.1f : 1.5f);
-            if (worldState.KillToBeKilledDamageRatio() > ratioThreshold + 0.5f * offensiveness)
-                return nullptr;
+            auto &configGroup = WeightConfig().nativeActions.gotoAvailableGoodPosition.closeRange;
+            if (worldState.EnemyHasGoodMiddleRangeWeaponsVar())
+            {
+                if (!ShouldAttackWithThisDamageRatio(worldState, GoodNmyWeapDmgRatioThreshold(configGroup, offensiveness)))
+                    return nullptr;
+            }
+            else
+            {
+                if (!ShouldAttackWithThisDamageRatio(worldState, BaseDmgRatioThreshold(configGroup, offensiveness)))
+                    return nullptr;
+            }
         }
         if (worldState.CloseRangeTacticalSpotVar().IgnoreOrAbsent())
         {
@@ -1174,9 +1284,10 @@ PlannerNode *BotAttackFromCurrentPositionAction::TryApply(const WorldState &worl
                 return nullptr;
         }
 
+        const auto &configGroup = WeightConfig().nativeActions.attackFromCurrentPosition.farRange;
         if (worldState.EnemyHasGoodFarRangeWeaponsVar())
         {
-            if (worldState.KillToBeKilledDamageRatio() > 1.25f + 4.0f * offensiveness)
+            if (!ShouldAttackWithThisDamageRatio(worldState, DmgRatioThreshold(configGroup, offensiveness)))
                 return nullptr;
         }
 
@@ -1206,9 +1317,10 @@ PlannerNode *BotAttackFromCurrentPositionAction::TryApply(const WorldState &worl
                 return nullptr;
         }
 
+        const auto &configGroup = WeightConfig().nativeActions.attackFromCurrentPosition.middleRange;
         if (worldState.EnemyHasGoodMiddleRangeWeaponsVar())
         {
-            if (worldState.KillToBeKilledDamageRatio() > 1 + 3.5f * offensiveness)
+            if (!ShouldAttackWithThisDamageRatio(worldState, DmgRatioThreshold(configGroup, offensiveness)))
                 return nullptr;
         }
 
@@ -1237,14 +1349,15 @@ PlannerNode *BotAttackFromCurrentPositionAction::TryApply(const WorldState &worl
             else if (offensiveness < 0.90f)
                 return nullptr;
         }
+        const auto &configGroup = WeightConfig().nativeActions.attackFromCurrentPosition.closeRange;
         if (worldState.EnemyHasGoodCloseRangeWeaponsVar())
         {
-            if (worldState.KillToBeKilledDamageRatio() > 0.6f + 2.5f * offensiveness)
+            if (!ShouldAttackWithThisDamageRatio(worldState, GoodNmyWeapDmgRatioThreshold(configGroup, offensiveness)))
                 return nullptr;
         }
         else
         {
-            if (worldState.KillToBeKilledDamageRatio() > 1.0f + 3.5f * offensiveness)
+            if (!ShouldAttackWithThisDamageRatio(worldState, BaseDmgRatioThreshold(configGroup, offensiveness)))
                 return nullptr;
         }
 
@@ -1382,20 +1495,21 @@ bool BotRunAwayAction::CheckCommonRunAwayPreconditions(const WorldState &worldSt
     }
     else if (worldState.EnemyIsOnMiddleRange())
     {
+        const auto &configGroup = WeightConfig().nativeActions.runAway.middleRange;
         if (!worldState.EnemyHasGoodMiddleRangeWeaponsVar())
         {
             if (worldState.HasGoodMiddleRangeWeaponsVar())
             {
-                if (worldState.DamageToBeKilled() > 50)
+                if (!ShouldRetreatWithThisDamageToBeKilled(worldState, configGroup.goodWeapDmgToBeKilled))
                     return false;
-                if (worldState.KillToBeKilledDamageRatio() < 1.3f)
+                if (!ShouldRetreatWithThisDamageRatio(worldState, configGroup.goodWeapDmgRatio))
                     return false;
             }
             else
             {
-                if (worldState.KillToBeKilledDamageRatio() < 1)
+                if (!ShouldRetreatWithThisDamageToBeKilled(worldState, configGroup.baseDmgToBeKilled))
                     return false;
-                if (worldState.DamageToBeKilled() > 100)
+                if (!ShouldRetreatWithThisDamageRatio(worldState, configGroup.baseDmgRatio))
                     return false;
             }
         }
@@ -1412,8 +1526,12 @@ bool BotRunAwayAction::CheckCommonRunAwayPreconditions(const WorldState &worldSt
         }
         else
         {
+            const auto &configGroup = WeightConfig().nativeActions.runAway.closeRange;
             float damageRatio = worldState.KillToBeKilledDamageRatio();
-            if (damageRatio < (worldState.EnemyHasGoodCloseRangeWeaponsVar() ? 0.8f : 1.2f))
+            float ratioThreshold = configGroup.baseDmgRatio;
+            if (worldState.EnemyHasGoodCloseRangeWeaponsVar())
+                ratioThreshold = configGroup.goodNmyWeapDmgRatio;
+            if (!ShouldRetreatWithThisDamageRatio(worldState, ratioThreshold))
             {
                 Debug("Enemy has %f x weaker HP than bot\n", damageRatio);
                 return false;

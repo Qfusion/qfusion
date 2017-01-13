@@ -11,6 +11,11 @@ inline const SelectedEnemies &BotBaseGoal::SelectedEnemies() const
     return self->ai->botRef->selectedEnemies;
 }
 
+inline const BotWeightConfig &BotBaseGoal::WeightConfig() const
+{
+    return self->ai->botRef->WeightConfig();
+}
+
 inline PlannerNode *BotBaseGoal::ApplyExtraActions(PlannerNode *firstTransition, const WorldState &worldState)
 {
     for (AiBaseAction *action: extraApplicableActions)
@@ -33,7 +38,9 @@ void BotGrabItemGoal::UpdateWeight(const WorldState &currWorldState)
     if (SelectedNavEntity().IsEmpty())
         return;
 
-    this->weight = SelectedNavEntity().PickupGoalWeight();
+    const auto &configGroup = WeightConfig().nativeGoals.grabItem;
+    // SelectedNavEntity().PickupGoalWeight() still might need some (minor) tweaking.
+    this->weight = configGroup.baseWeight + configGroup.selectedGoalWeightScale * SelectedNavEntity().PickupGoalWeight();
 }
 
 void BotGrabItemGoal::GetDesiredWorldState(WorldState *worldState)
@@ -71,9 +78,29 @@ void BotKillEnemyGoal::UpdateWeight(const WorldState &currWorldState)
     if (!SelectedEnemies().AreValid())
         return;
 
-    this->weight = 1.75f * self->ai->botRef->GetEffectiveOffensiveness();
+    const auto &configGroup = WeightConfig().nativeGoals.killEnemy;
+
+    this->weight = configGroup.baseWeight;
+    this->weight += configGroup.offCoeff * self->ai->botRef->GetEffectiveOffensiveness();
     if (currWorldState.HasThreateningEnemyVar())
-        this->weight *= 1.5f;
+    {
+        this->weight *= configGroup.nmyThreatCoeff;
+    }
+    else
+    {
+        float maxBotViewDot = SelectedEnemies().MaxDotProductOfBotViewAndDirToEnemy();
+        float maxEnemyViewDot = SelectedEnemies().MaxDotProductOfEnemyViewAndDirToBot();
+        // Do not lower the goal weight if the enemy is looking on the bot straighter than the bot does
+        if (maxEnemyViewDot > 0 && maxEnemyViewDot > maxBotViewDot)
+            return;
+
+        // Convert to [0, 1] range
+        clamp_low(maxBotViewDot, 0.0f);
+        // [0, 1]
+        float offFrac = configGroup.offCoeff / (configGroup.offCoeff.MaxValue() - configGroup.offCoeff.MinValue());
+        if (maxBotViewDot < offFrac)
+            this->weight = 0.001f + this->weight * (maxBotViewDot / offFrac);
+    }
 }
 
 void BotKillEnemyGoal::GetDesiredWorldState(WorldState *worldState)
@@ -107,9 +134,29 @@ void BotRunAwayGoal::UpdateWeight(const WorldState &currWorldState)
     if (!SelectedEnemies().AreThreatening())
         return;
 
-    this->weight = 1.75f * (1.0f - self->ai->botRef->GetEffectiveOffensiveness());
+    const auto &configGroup = WeightConfig().nativeGoals.runAway;
+
+    this->weight = configGroup.baseWeight;
+    this->weight = configGroup.offCoeff * (1.0f - self->ai->botRef->GetEffectiveOffensiveness());
     if (currWorldState.HasThreateningEnemyVar())
-        this->weight *= 1.5f;
+    {
+        this->weight *= configGroup.nmyThreatCoeff;
+    }
+    else
+    {
+        float maxBotViewDot = SelectedEnemies().MaxDotProductOfBotViewAndDirToEnemy();
+        float maxEnemyViewDot = SelectedEnemies().MaxDotProductOfEnemyViewAndDirToBot();
+        // Do not lower the goal weight if the enemy is looking on the bot straighter than the bot does
+        if (maxEnemyViewDot > 0 && maxEnemyViewDot > maxBotViewDot)
+            return;
+
+        // Convert to [0, 1] range
+        clamp_low(maxBotViewDot, 0.0f);
+        // [0, 1]
+        float offFrac = configGroup.offCoeff / (configGroup.offCoeff.MaxValue() - configGroup.offCoeff.MinValue());
+        if (maxBotViewDot < offFrac)
+            this->weight = 0.001f + this->weight * (maxBotViewDot / offFrac);
+    }
 }
 
 void BotRunAwayGoal::GetDesiredWorldState(WorldState *worldState)
@@ -149,15 +196,20 @@ void BotAttackOutOfDespairGoal::UpdateWeight(const WorldState &currWorldState)
     if (!SelectedEnemies().AreValid())
         return;
 
-    if (SelectedEnemies().FireDelay() > 600)
+    const auto &configGroup = WeightConfig().nativeGoals.attackOutOfDespair;
+
+    if (SelectedEnemies().FireDelay() > configGroup.nmyFireDelayThreshold)
         return;
 
     // The bot already has high offensiveness, changing it would have the same effect as using duplicated search.
     if (self->ai->botRef->GetEffectiveOffensiveness() > 0.9f)
         return;
 
-    this->weight = currWorldState.HasThreateningEnemyVar() ? 1.2f : 0.5f;
-    this->weight += 1.75f * BoundedFraction(SelectedEnemies().TotalInflictedDamage(), 125);
+    this->weight = configGroup.baseWeight;
+    if (currWorldState.HasThreateningEnemyVar())
+        this->weight += configGroup.nmyThreatExtraWeight;
+    float damageWeightPart = BoundedFraction(SelectedEnemies().TotalInflictedDamage(), configGroup.dmgUpperBound);
+    this->weight += configGroup.dmgFracCoeff * damageWeightPart;
 }
 
 void BotAttackOutOfDespairGoal::GetDesiredWorldState(WorldState *worldState)
@@ -209,11 +261,13 @@ void BotReactToDangerGoal::UpdateWeight(const WorldState &currWorldState)
     if (currWorldState.PotentialDangerDamageVar().Ignore())
         return;
 
-    float weight = 0.15f + 1.75f * currWorldState.PotentialDangerDamageVar() / currWorldState.DamageToBeKilled();
-    if (weight > 3.0f)
-        weight = 3.0f;
-    weight /= 3.0f;
-    weight = 3.0f / Q_RSqrt(weight);
+    const auto &configGroup = WeightConfig().nativeGoals.reactToDanger;
+
+    float damageFraction = currWorldState.PotentialDangerDamageVar() / currWorldState.DamageToBeKilled();
+    float weight = configGroup.baseWeight + configGroup.dmgFracCoeff * damageFraction;
+    weight = BoundedFraction(weight, configGroup.weightBound);
+    weight = configGroup.weightBound / Q_RSqrt(weight);
+
     this->weight = weight;
 }
 
@@ -233,14 +287,15 @@ void BotReactToThreatGoal::UpdateWeight(const WorldState &currWorldState)
     if (currWorldState.ThreatPossibleOriginVar().Ignore())
         return;
 
-    float weight = 0.15f + 3.25f * currWorldState.ThreatInflictedDamageVar() / currWorldState.DamageToBeKilled();
+    const auto &configGroup = WeightConfig().nativeGoals.reactToThreat;
+    float damageRatio = currWorldState.ThreatInflictedDamageVar() / currWorldState.DamageToBeKilled();
+    float weight = configGroup.baseWeight + configGroup.dmgFracCoeff * damageRatio;
     float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
     if (offensiveness >= 0.5f)
-        weight *= (1.0f + (offensiveness - 0.5f));
-    if (weight > 1.75f)
-        weight = 1.75f;
-    weight /= 1.75f;
-    weight = 1.75f / Q_RSqrt(weight);
+        weight *= (1.0f + configGroup.offCoeff * (offensiveness - 0.5f));
+    weight = BoundedFraction(weight, configGroup.weightBound);
+    weight = configGroup.weightBound / Q_RSqrt(weight);
+
     this->weight = weight;
 }
 
@@ -267,7 +322,8 @@ void BotReactToEnemyLostGoal::UpdateWeight(const WorldState &currWorldState)
     if (currWorldState.LostEnemyLastSeenOriginVar().Ignore())
         return;
 
-    this->weight = 1.75f * self->ai->botRef->GetEffectiveOffensiveness();
+    const auto &configGroup = WeightConfig().nativeGoals.reactToEnemyLost;
+    this->weight = configGroup.baseWeight + configGroup.offCoeff * self->ai->botRef->GetEffectiveOffensiveness();
 }
 
 void BotReactToEnemyLostGoal::GetDesiredWorldState(WorldState *worldState)

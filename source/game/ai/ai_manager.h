@@ -11,7 +11,7 @@ class AiManager: public AiFrameAwareUpdatable
     static const unsigned MAX_ACTIONS = AiBaseBrain::MAX_ACTIONS;
     static const unsigned MAX_GOALS = AiBaseBrain::MAX_GOALS;
 protected:
-    AiManager();
+    AiManager(const char *gametype, const char *mapname);
 
     int teams[MAX_CLIENTS];
     ai_handle_t *last;
@@ -154,15 +154,15 @@ protected:
 
     void SetupBotGoalsAndActions(edict_t *ent);
 public:
-    virtual ~AiManager() override {}
-
     void LinkAi(ai_handle_t *ai);
     void UnlinkAi(ai_handle_t *ai);
 
     void OnBotDropped(edict_t *ent);
 
-    static void OnGametypeChanged(const char *gametype);
-    static AiManager *Instance();
+    static AiManager *Instance() { return instance; }
+
+    static void Init(const char *gametype, const char *mapname);
+    static void Shutdown();
 
     void NavEntityReachedBy(const NavEntity *canceledGoal, const class Ai *goalGrabber);
     void NavEntityReachedSignal(const edict_t *ent);
@@ -171,7 +171,8 @@ public:
     void SpawnBot(const char *teamName);
     void RespawnBot(edict_t *ent);
     void RemoveBot(const char *name);
-    void RemoveBots();
+    void AfterLevelScriptShutdown();
+    void BeforeLevelScriptShutdown();
 
     void RegisterScriptGoal(const char *goalName, void *factoryObject, unsigned updatePeriod);
     void RegisterScriptAction(const char *actionName, void *factoryObject);

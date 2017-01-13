@@ -18,6 +18,8 @@ class BotBaseAction: public AiBaseAction
 public:
     BotBaseAction(Ai *ai, const char *name_)
         : AiBaseAction(ai, name_) {}
+
+    inline const class BotWeightConfig &WeightConfig() const;
 };
 
 class BotGenericRunToItemActionRecord: public BotBaseActionRecord

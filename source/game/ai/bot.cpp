@@ -4,6 +4,7 @@
 
 Bot::Bot(edict_t *self_, float skillLevel_)
     : Ai(self_, &botBrain, AiAasRouteCache::NewInstance(), PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
+      weightConfig(self_),
       dangersDetector(self_),
       botBrain(this, skillLevel_),
       skillLevel(skillLevel_),
