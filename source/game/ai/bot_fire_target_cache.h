@@ -7,11 +7,11 @@ struct AimParams
 {
     vec3_t fireOrigin;
     vec3_t fireTarget;
-    float suggestedBaseAccuracy;
+    float suggestedBaseCoordError;
 
-    inline float EffectiveAccuracy(float skill) const
+    inline float EffectiveCoordError(float skill) const
     {
-        return suggestedBaseAccuracy * (1.0f - 0.75f * skill);
+        return suggestedBaseCoordError * (1.5f - 1.35f * skill);
     }
 };
 

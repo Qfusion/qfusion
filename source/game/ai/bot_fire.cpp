@@ -113,7 +113,7 @@ void Bot::FireWeapon(BotInput *input)
     }
 
     // Always track enemy with a "crosshair" like a human does in each frame
-    LookAtEnemy(aimParams->EffectiveAccuracy(Skill()), aimParams->fireOrigin, aimParams->fireTarget, input);
+    LookAtEnemy(aimParams->EffectiveCoordError(Skill()), aimParams->fireOrigin, aimParams->fireTarget, input);
 
     // Attack only in Think() frames unless a continuousFire is required or the bot has hard skill
     if (ShouldSkipThinkFrame() && Skill() < 0.66f)
@@ -139,10 +139,10 @@ void Bot::FireWeapon(BotInput *input)
         GT_asFireScriptWeapon(self->r.client, scriptFireDef->WeaponNum());
 }
 
-void Bot::LookAtEnemy(float accuracy, const vec_t *fire_origin, vec_t *target, BotInput *input)
+void Bot::LookAtEnemy(float coordError, const vec_t *fire_origin, vec_t *target, BotInput *input)
 {
     for (int i = 0; i < 3; ++i)
-        target[i] += (aimingRandomHolder.GetCoordRandom(i) - 0.5f) * accuracy;
+        target[i] += (aimingRandomHolder.GetCoordRandom(i) - 0.5f) * coordError;
 
     Vec3 toTargetVec(target);
     toTargetVec -= fire_origin;

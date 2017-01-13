@@ -774,7 +774,7 @@ private:
     bool CheckShot(const AimParams &aimParams, const BotInput *input,
                    const SelectedEnemies &selectedEnemies, const GenericFireDef &fireDef);
 
-    void LookAtEnemy(float accuracy, const vec3_t fire_origin, vec3_t target, BotInput *input);
+    void LookAtEnemy(float coordError, const vec3_t fire_origin, vec3_t target, BotInput *input);
     void PressAttack(const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
                      const GenericFireDef *scriptFireDef, BotInput *input);
 

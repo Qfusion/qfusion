@@ -327,8 +327,8 @@ bool BotFireTargetCache::AdjustTargetByEnvironmentWithAAS(const SelectedEnemies 
     return false;
 }
 
-constexpr float WFAC_GENERIC_PROJECTILE = 300.0f;
-constexpr float WFAC_GENERIC_INSTANT = 150.0f;
+constexpr float GENERIC_PROJECTILE_COORD_AIM_ERROR = 75.0f;
+constexpr float GENERIC_INSTANTHIT_COORD_AIM_ERROR = 100.0f;
 
 bool BotFireTargetCache::AdjustTargetByEnvironment(const SelectedEnemies &selectedEnemies,
                                                    float splashRaidus, AimParams *aimParams)
@@ -360,7 +360,7 @@ void BotFireTargetCache::AdjustPredictionExplosiveAimTypeParams(const SelectedEn
         cachedFireTarget.origin = Vec3(aimParams->fireTarget);
     }
     // Accuracy for air rockets is worse anyway (movement prediction in gravity field is approximate)
-    aimParams->suggestedBaseAccuracy = 1.3f * (1.01f - bot->ai->botRef->Skill()) * WFAC_GENERIC_PROJECTILE;
+    aimParams->suggestedBaseCoordError = 1.3f * (1.01f - bot->ai->botRef->Skill()) * GENERIC_PROJECTILE_COORD_AIM_ERROR;
 }
 
 
@@ -370,9 +370,9 @@ void BotFireTargetCache::AdjustPredictionAimTypeParams(const SelectedEnemies &se
                                                        AimParams *aimParams)
 {
     if (fireDef.IsBuiltin() && fireDef.WeaponNum() == WEAP_PLASMAGUN)
-        aimParams->suggestedBaseAccuracy = 0.5f * WFAC_GENERIC_PROJECTILE * (1.0f - bot->ai->botRef->Skill());
+        aimParams->suggestedBaseCoordError = 0.5f * GENERIC_PROJECTILE_COORD_AIM_ERROR * (1.0f - bot->ai->botRef->Skill());
     else
-        aimParams->suggestedBaseAccuracy = WFAC_GENERIC_PROJECTILE;
+        aimParams->suggestedBaseCoordError = GENERIC_PROJECTILE_COORD_AIM_ERROR;
 
     GetPredictedTargetOrigin(selectedEnemies, selectedWeapons, fireDef.ProjectileSpeed(), aimParams);
 }
@@ -412,14 +412,14 @@ void BotFireTargetCache::AdjustDropAimTypeParams(const SelectedEnemies &selected
     }
 
     // This kind of weapons is not precise by its nature, do not add any more noise.
-    aimParams->suggestedBaseAccuracy = 0.3f * (1.01f - bot->ai->botRef->Skill()) * WFAC_GENERIC_PROJECTILE;
+    aimParams->suggestedBaseCoordError = 0.3f * (1.01f - bot->ai->botRef->Skill()) * GENERIC_PROJECTILE_COORD_AIM_ERROR;
 }
 
 void BotFireTargetCache::AdjustInstantAimTypeParams(const SelectedEnemies &selectedEnemies,
                                                     const SelectedWeapons &selectedWeapons,
                                                     const GenericFireDef &fireDef, AimParams *aimParams)
 {
-    aimParams->suggestedBaseAccuracy = WFAC_GENERIC_INSTANT * (1.0f - bot->ai->botRef->Skill());
+    aimParams->suggestedBaseCoordError = GENERIC_INSTANTHIT_COORD_AIM_ERROR;
 }
 
 void BotFireTargetCache::SetupCoarseFireTarget(const SelectedEnemies &selectedEnemies,
@@ -448,7 +448,7 @@ void BotFireTargetCache::SetupCoarseFireTarget(const SelectedEnemies &selectedEn
         const auto &snapshots = selectedEnemies.LastSeenSnapshots();
         const unsigned levelTime = level.time;
         // Skilled bots have this value lesser (this means target will be closer to an actual origin)
-        const unsigned maxTimeDelta = (unsigned)(500 - 400 * skill);
+        const unsigned maxTimeDelta = (unsigned)(900 - 550 * skill);
         const float weightTimeDeltaScale = 1.0f / maxTimeDelta;
         float weightsSum = 1.0f;
         for (auto iter = snapshots.begin(), end = snapshots.end(); iter != end; ++iter)
@@ -477,10 +477,11 @@ void BotFireTargetCache::SetupCoarseFireTarget(const SelectedEnemies &selectedEn
 
         if (extrapolationRandomTimeoutAt < levelTime)
         {
-            extrapolationRandom = random();
-            extrapolationRandomTimeoutAt = levelTime + 500;
+            // Make constant part lesser for higher skill
+            extrapolationRandom = (0.75f - 0.5f * skill) * random() + 0.25f + 0.5f * (1.0f - skill);
+            extrapolationRandomTimeoutAt = levelTime + 150;
         }
-        float extrapolationTimeSeconds = 0.0001f * (500 - 300 * skill) * extrapolationRandom;
+        float extrapolationTimeSeconds = 0.0001f * (900 - 650 * skill) * extrapolationRandom;
         // Add some extrapolated target movement
         VectorMA(target, extrapolationTimeSeconds, velocity, target);
     }
