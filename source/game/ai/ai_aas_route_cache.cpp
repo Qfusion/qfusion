@@ -152,6 +152,7 @@ AiAasRouteCache::~AiAasRouteCache()
     // free routing algorithm memory
     FreeMemory(areaupdate);
     FreeMemory(portalupdate);
+    FreeMemory(dijkstralabels);
     // free lists with areas the reachabilities go through
     FreeRefCountedMemory(reachabilityareas);
     // free the reachability area index
@@ -944,7 +945,7 @@ void AiAasRouteCache::InitPortalCache(void)
 
 void AiAasRouteCache::InitRoutingUpdate(void)
 {
-    int maxreachabilityareas = 0;
+    maxreachabilityareas = 0;
     for (int i = 0; i < aasWorld.NumClusters(); i++)
     {
         if (aasWorld.Clusters()[i].numreachabilityareas > maxreachabilityareas)
@@ -956,6 +957,8 @@ void AiAasRouteCache::InitRoutingUpdate(void)
     areaupdate = (aas_routingupdate_t *) GetClearedMemory(maxreachabilityareas * sizeof(aas_routingupdate_t));
     //allocate memory for the portal update fields
     portalupdate = (aas_routingupdate_t *) GetClearedMemory((aasWorld.NumPortals() + 1) * sizeof(aas_routingupdate_t));
+    //allocate memory for the Dijkstra's algorithm labels
+    dijkstralabels = (signed char *) GetClearedMemory(maxreachabilityareas);
 }
 
 constexpr auto MAX_REACHABILITYPASSAREAS = 32;
@@ -1035,6 +1038,11 @@ struct RoutingUpdateRef
     }
 };
 
+// Dijkstra's algorithm labels
+constexpr signed char UNREACHED = 0;
+constexpr signed char LABELED = -1;
+constexpr signed char SCANNED = +1;
+
 void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areaCache)
 {
     //NOTE: not more than 128 reachabilities per area allowed
@@ -1064,11 +1072,15 @@ void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areaCache)
     const bool *areaDisabledStatusPairs = this->oldAndCurrAreaDisabledStatus;
     unsigned short ***areaTravelTimes = this->areatraveltimes;
 
+    signed char *dijkstraAreaLabels = this->dijkstralabels;
+    memset(dijkstraAreaLabels, UNREACHED, maxreachabilityareas);
+
     aas_routingupdate_t *curupdate = &routingUpdate[clusterareanum];
     curupdate->areanum = areaCache->areanum;
     curupdate->areatraveltimes = startareatraveltimes;
     curupdate->tmptraveltime = areaCache->starttraveltime;
     areaCache->traveltimes[clusterareanum] = areaCache->starttraveltime;
+    dijkstraAreaLabels[clusterareanum] = LABELED;
 
     StaticVector<RoutingUpdateRef, 1024> updateHeap;
     updateHeap.push_back(RoutingUpdateRef(clusterareanum, curupdate->tmptraveltime));
@@ -1078,10 +1090,9 @@ void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areaCache)
     {
         std::pop_heap(updateHeap.begin(), updateHeap.end());
         RoutingUpdateRef currUpdateRef = updateHeap.back();
-        updateHeap.pop_back();
-
         curupdate = &routingUpdate[currUpdateRef.index];
-        curupdate->marked = false;
+        dijkstraAreaLabels[currUpdateRef.index] = SCANNED;
+        updateHeap.pop_back();
 
         //check all reversed reachability links
         const aas_reversedreachability_t *revreach = &reversedReachability[curupdate->areanum];
@@ -1126,6 +1137,9 @@ void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areaCache)
             if (clusterareanum >= numreachabilityareas)
                 continue;
 
+            if (dijkstraAreaLabels[clusterareanum] == SCANNED)
+                continue;
+
             //time already travelled plus the traveltime through
             //the current area plus the travel time from the reachability
             unsigned short t = curupdate->tmptraveltime + curupdate->areatraveltimes[i] + reach->traveltime;
@@ -1152,9 +1166,9 @@ void AiAasRouteCache::UpdateAreaRoutingCache(aas_routingcache_t *areaCache)
                 nextupdate->areanum = nextareanum;
                 nextupdate->tmptraveltime = t;
                 nextupdate->areatraveltimes = areaTravelTimes[nextareanum][linknum - firstnextareareach];
-                if (!nextupdate->marked)
+                if (dijkstraAreaLabels[clusterareanum] == UNREACHED)
                 {
-                    nextupdate->marked = true;
+                    dijkstraAreaLabels[clusterareanum] = LABELED;
                     updateHeap.push_back(RoutingUpdateRef(clusterareanum, t));
                     std::push_heap(updateHeap.begin(), updateHeap.end());
                 }
@@ -1215,9 +1229,13 @@ void AiAasRouteCache::UpdatePortalRoutingCache(aas_routingcache_t *portalCache)
 
     aas_routingupdate_t *curupdate = &routingUpdate[aasWorld.NumPortals()];
 
+    signed char *dijkstraPortalLabels = this->dijkstralabels;
+    memset(dijkstraPortalLabels, UNREACHED, (size_t)(aasWorld.NumPortals() + 1));
+
     curupdate->cluster = portalCache->cluster;
     curupdate->areanum = portalCache->areanum;
     curupdate->tmptraveltime = portalCache->starttraveltime;
+    dijkstraPortalLabels[aasWorld.NumPortals()] = LABELED;
     //if the start area is a cluster portal, store the travel time for that portal
     int clusternum = areaSettings[portalCache->areanum].cluster;
     if (clusternum < 0)
@@ -1233,11 +1251,13 @@ void AiAasRouteCache::UpdatePortalRoutingCache(aas_routingcache_t *portalCache)
     {
         std::pop_heap(updateHeap.begin(), updateHeap.end());
         curupdate = &portalupdate[updateHeap.back().index];
+        dijkstraPortalLabels[updateHeap.back().index] = SCANNED;
         updateHeap.pop_back();
 
-        //current update is removed from the list
-        curupdate->marked = false;
-        //
+        // Fix invalid access to cluster 0
+        if (!curupdate->cluster)
+            continue;
+
         const aas_cluster_t *cluster = &clusters[curupdate->cluster];
         //
         aas_routingcache_t *cache = GetAreaRoutingCache(curupdate->cluster, curupdate->areanum, portalCache->travelflags);
@@ -1245,6 +1265,8 @@ void AiAasRouteCache::UpdatePortalRoutingCache(aas_routingcache_t *portalCache)
         for (int i = 0; i < cluster->numportals; i++)
         {
             int portalnum = portalIndex[cluster->firstportal + i];
+            if (dijkstraPortalLabels[portalnum] == SCANNED)
+                continue;
             const aas_portal_t *portal = &portals[portalnum];
             //if this is the portal of the current update continue
             if (portal->areanum == curupdate->areanum)
@@ -1284,9 +1306,9 @@ void AiAasRouteCache::UpdatePortalRoutingCache(aas_routingcache_t *portalCache)
                 nextupdate->areanum = portal->areanum;
                 //add travel time through the actual portal area for the next update
                 nextupdate->tmptraveltime = t + portalMaxTravelTimes[portalnum];
-                if (!nextupdate->marked)
+                if (dijkstraPortalLabels[portalnum] == UNREACHED)
                 {
-                    nextupdate->marked = true;
+                    dijkstraPortalLabels[portalnum] = LABELED;
                     updateHeap.push_back(RoutingUpdateRef(portalnum, nextupdate->tmptraveltime));
                     std::push_heap(updateHeap.begin(), updateHeap.end());
                 }
@@ -1430,6 +1452,9 @@ bool AiAasRouteCache::RouteToGoalArea(const RoutingRequest &request, RoutingResu
         if (portal->frontcluster == clusternum || portal->backcluster == clusternum)
             goalclusternum = clusternum;
     }
+    // Fix invalid access to cluster 0
+    else if (!clusternum || !goalclusternum)
+        return false;
 
     //if both areas are in the same cluster
     //NOTE: there might be a shorter route via another cluster!!! but we don't care

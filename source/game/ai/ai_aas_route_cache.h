@@ -69,7 +69,6 @@ class AiAasRouteCache
         int areanum;								//area number of the update
         unsigned short int tmptraveltime;			//temporary travel time
         unsigned short int *areatraveltimes;		//travel times within the area
-        bool marked;							    //true if the update is in the list
     } aas_routingupdate_t;
 
     //reversed reachability link
@@ -121,6 +120,8 @@ class AiAasRouteCache
     aas_routingupdate_t *portalupdate;
     //reversed reachability links
     aas_reversedreachability_t *reversedreachability;
+    signed char *dijkstralabels;
+    int maxreachabilityareas;
     //travel times within the areas
     unsigned short ***areatraveltimes;
     //array of size numclusters with cluster cache
