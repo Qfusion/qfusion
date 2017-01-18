@@ -49,7 +49,7 @@ char *Sys_ConsoleInput( void ) {
 static void Sys_AnsiColorPrint( const char *msg ) {
 	static char buffer[2096];
 	int length = 0;
-	static int q3ToAnsi[ 8 ] =
+	static const int q3ToAnsi[ MAX_S_COLORS ] =
 	{
 		30, // COLOR_BLACK
 		31, // COLOR_RED
