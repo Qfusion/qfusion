@@ -598,7 +598,7 @@ void GLimp_EndFrame( void ) {
 /*
 ** GLimp_AppActivate
 */
-void GLimp_AppActivate( bool active, bool destroy ) {
+void GLimp_AppActivate( bool active, bool minimize, bool destroy ) {
 	if( active ) {
 		ri.Cvar_Set( "gl_drawbuffer", "GL_BACK" );
 	} else {

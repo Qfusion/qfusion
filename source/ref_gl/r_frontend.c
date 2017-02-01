@@ -271,9 +271,9 @@ rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd ) {
 	return err;
 }
 
-void RF_AppActivate( bool active, bool destroy ) {
+void RF_AppActivate( bool active, bool minimize, bool destroy ) {
 	R_Flush();
-	GLimp_AppActivate( active, destroy );
+	GLimp_AppActivate( active, minimize, destroy );
 }
 
 void RF_Shutdown( bool verbose ) {

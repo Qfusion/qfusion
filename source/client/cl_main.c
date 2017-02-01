@@ -2513,7 +2513,7 @@ void CL_Frame( int realmsec, int gamemsec ) {
 		if( cl_maxfps->integer < absMinFps ) {
 			Cvar_ForceSet( "cl_maxfps", STR_TOSTR( absMinFps ) );
 		}
-		maxFps = VID_AppIsActive() ? cl_maxfps->value : absMinFps;
+		maxFps = VID_AppIsMinimized() ? absMinFps : cl_maxfps->value;
 		minMsec = max( ( 1000.0f / maxFps ), 1 );
 		roundingMsec += max( ( 1000.0f / maxFps ), 1.0f ) - minMsec;
 	} else {
@@ -2533,7 +2533,7 @@ void CL_Frame( int realmsec, int gamemsec ) {
 		bool sleep = cl_sleep->integer != 0;
 
 		sleep = sleep || ( cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED );
-		sleep = sleep || !VID_AppIsActive(); // FIXME: not sure about listen server here..
+		sleep = sleep || !VID_AppIsActive() || VID_AppIsMinimized(); // FIXME: not sure about listen server here..
 
 		if( sleep && minMsec - extraMsec > 1 ) {
 			Sys_Sleep( 1 );
