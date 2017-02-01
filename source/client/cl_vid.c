@@ -54,6 +54,7 @@ static bool vid_ref_sound_restart;
 static bool vid_ref_active;
 static bool vid_initialized;
 static bool vid_app_active;
+static bool vid_app_minimized;
 
 static void     *vid_ref_libhandle = NULL;
 static mempool_t *vid_ref_mempool = NULL;
@@ -135,9 +136,10 @@ static rserr_t VID_Sys_Init_( void *parentWindow, bool verbose ) {
 /*
 ** VID_AppActivate
 */
-void VID_AppActivate( bool active, bool destroy ) {
+void VID_AppActivate( bool active, bool minimize, bool destroy ) {
 	vid_app_active = active;
-	re.AppActivate( active, destroy );
+	vid_app_minimized = minimize;
+	re.AppActivate( active, minimize, destroy );
 }
 
 /*
@@ -145,6 +147,13 @@ void VID_AppActivate( bool active, bool destroy ) {
 */
 bool VID_AppIsActive( void ) {
 	return vid_app_active;
+}
+
+/*
+** VID_AppIsMinimized
+*/
+bool VID_AppIsMinimized( void ) {
+	return vid_app_minimized;
 }
 
 /*

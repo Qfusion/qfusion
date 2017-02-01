@@ -273,10 +273,12 @@ static void key_event( const SDL_KeyboardEvent *event, const bool state ) {
 
 /*****************************************************************************/
 
-static void AppActivate( bool active ) {
+static void AppActivate( SDL_Window *window, bool active ) {
+	bool minimized = ( SDL_GetWindowFlags( window ) & SDL_WINDOW_MINIMIZED ) != 0;
+
 	SCR_PauseCinematic( !active );
 	CL_SoundModule_Activate( active );
-	VID_AppActivate( active, false );
+	VID_AppActivate( active, minimized, false );
 }
 
 static void IN_HandleEvents( void ) {
@@ -354,10 +356,10 @@ static void IN_HandleEvents( void ) {
 			case SDL_WINDOWEVENT:
 				switch( event.window.event ) {
 					case SDL_WINDOWEVENT_SHOWN:
-						AppActivate( true );
+						AppActivate( SDL_GetWindowFromID( event.window.windowID ), true );
 						break;
 					case SDL_WINDOWEVENT_HIDDEN:
-						AppActivate( false );
+						AppActivate( SDL_GetWindowFromID( event.window.windowID ), false );
 						break;
 					case SDL_WINDOWEVENT_CLOSE:
 						break;

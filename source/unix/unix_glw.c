@@ -1051,7 +1051,7 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ram
 /*
 ** GLimp_AppActivate
 */
-void GLimp_AppActivate( bool active, bool destroy ) {
+void GLimp_AppActivate( bool active, bool minimize, bool destroy ) {
 }
 
 /*

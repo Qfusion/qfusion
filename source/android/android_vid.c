@@ -172,7 +172,7 @@ rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix
 				   verbose );
 
 	if( res == rserr_ok ) {
-		VID_AppActivate( window != NULL, false );
+		VID_AppActivate( window != NULL, window == NULL, false );
 	}
 
 	return res;
@@ -180,5 +180,5 @@ rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix
 
 void VID_Android_SetWindow( ANativeWindow *window ) {
 	re.SetWindow( NULL, NULL, window );
-	VID_AppActivate( window != NULL, false );
+	VID_AppActivate( window != NULL, window == NULL, false );
 }

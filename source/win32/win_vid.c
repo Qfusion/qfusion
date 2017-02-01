@@ -286,7 +286,7 @@ static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy ) {
 		VID_EnableWinKeys( !ActiveApp );
 	}
 
-	VID_AppActivate( fActive, destroy );
+	VID_AppActivate( fActive, minimize, destroy );
 }
 
 /*

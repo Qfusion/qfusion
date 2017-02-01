@@ -383,7 +383,7 @@ rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool 
 /*
 ** GLimp_AppActivate
 */
-void GLimp_AppActivate( bool active, bool destroy ) {
+void GLimp_AppActivate( bool active, bool minimize, bool destroy ) {
 }
 
 /*
