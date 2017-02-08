@@ -144,24 +144,40 @@ void TacticalSpotsRegistry::SetupMutualSpotsVisibility()
 {
     spotVisibilityTable = (unsigned char *)G_LevelMalloc(numSpots * numSpots);
 
+    float *mins = vec3_origin;
+    float *maxs = vec3_origin;
+
     trace_t trace;
     for (unsigned i = 0; i < numSpots; ++i)
     {
+        // Consider each spot visible to itself
+        spotVisibilityTable[i * numSpots + i] = 255;
+
         TacticalSpot &currSpot = spots[i];
         vec3_t currSpotBounds[2];
         VectorCopy(currSpot.absMins, currSpotBounds[0]);
         VectorCopy(currSpot.absMaxs, currSpotBounds[1]);
 
-        for (unsigned j = 0; j < numSpots / 2; ++j)
+        // Mutual visibility for spots [0, i) has been already computed
+        for (unsigned j = i + 1; j < numSpots; ++j)
         {
-            unsigned char visibility = 0;
-
             TacticalSpot &testedSpot = spots[j];
+            if (!trap_inPVS(currSpot.origin, testedSpot.origin))
+            {
+                spotVisibilityTable[j * numSpots + i] = 0;
+                spotVisibilityTable[i * numSpots + j] = 0;
+                continue;
+            }
+
+            unsigned char visibility = 0;
             vec3_t testedSpotBounds[2];
             VectorCopy(testedSpot.absMins, testedSpotBounds[0]);
             VectorCopy(testedSpot.absMaxs, testedSpotBounds[1]);
 
-            G_Trace(&trace, currSpot.origin, nullptr, nullptr, testedSpot.origin, nullptr, MASK_AISOLID);
+            // Do not test against any entities using G_Trace() as these tests are expensive and pointless in this case.
+            // Test only against the solid world.
+            trap_CM_TransformedBoxTrace(&trace, currSpot.origin, testedSpot.origin,
+                                        mins, maxs, nullptr, MASK_SOLID, nullptr, nullptr);
             bool areOriginsMutualVisible = (trace.fraction == 1.0f);
 
             for (unsigned n = 0; n < 8; ++n)
@@ -180,7 +196,7 @@ void TacticalSpotsRegistry::SetupMutualSpotsVisibility()
                         testedSpotBounds[(m >> 1) & 1][1],
                         testedSpotBounds[(m >> 0) & 1][2]
                     };
-                    G_Trace(&trace, from, nullptr, nullptr, to, nullptr, MASK_AISOLID);
+                    trap_CM_TransformedBoxTrace(&trace, from, to, mins, maxs, nullptr, MASK_SOLID, nullptr, nullptr);
                     // If all 64 traces succeed, the visibility is a half of the maximal score
                     visibility += 2 * (unsigned char)trace.fraction;
                 }
@@ -197,8 +213,6 @@ void TacticalSpotsRegistry::SetupMutualSpotsVisibility()
 
             spotVisibilityTable[i * numSpots + j] = visibility;
             spotVisibilityTable[j * numSpots + i] = visibility;
-            // Consider the spot visible to itself?
-            spotVisibilityTable[i * numSpots + i] = 255;
         }
     }
 }
@@ -208,6 +222,9 @@ void TacticalSpotsRegistry::SetupMutualSpotsReachability()
     spotTravelTimeTable = (int *)G_LevelMalloc(sizeof(int) * numSpots * numSpots);
     const int flags = Bot::ALLOWED_TRAVEL_FLAGS;
     AiAasRouteCache *routeCache = AiAasRouteCache::Shared();
+    // Note: spots reachabilities are not reversible
+    // (for spots two A and B reachabilies A->B and B->A might differ, including being invalid, non-existent)
+    // Thus we have to find a reachability for each possible pair of spots
     for (unsigned i = 0; i < numSpots; ++i)
     {
         const int currAreaNum = spots[i].aasAreaNum;
