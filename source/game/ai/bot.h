@@ -7,6 +7,7 @@
 #include "ai_base_ai.h"
 #include "vec3.h"
 
+#include "bot_movement.h"
 #include "bot_weapon_selector.h"
 #include "bot_fire_target_cache.h"
 #include "bot_tactical_spots_cache.h"
@@ -38,122 +39,6 @@ struct AiAlertSpot
           carrierEnemyInfluenceScale(carrierEnemyInfluenceScale_) {}
 };
 
-struct AiCampingSpot
-{
-    friend class Bot;
-private:
-    AiCampingSpot(): origin(NAN, NAN, NAN), lookAtPoint(NAN, NAN, NAN) {}
-public:
-    Vec3 origin;
-    Vec3 lookAtPoint;
-    float radius;
-    float alertness;
-    bool hasLookAtPoint;
-
-    AiCampingSpot(const Vec3 &origin_, float radius_, float alertness_ = 0.75f)
-        : origin(origin_), lookAtPoint(NAN, NAN, NAN), radius(radius_), alertness(alertness_), hasLookAtPoint(false) {}
-
-    AiCampingSpot(const vec3_t &origin_, float radius_, float alertness_ = 0.75f)
-        : origin(origin_), lookAtPoint(NAN, NAN, NAN), radius(radius_), alertness(alertness_), hasLookAtPoint(false) {}
-
-    AiCampingSpot(const vec3_t &origin_, const vec3_t &lookAtPoint_, float radius_, float alertness_ = 0.75f)
-        : origin(origin_), lookAtPoint(lookAtPoint_), radius(radius_), alertness(alertness_), hasLookAtPoint(true) {}
-
-    AiCampingSpot(const Vec3 &origin_, const Vec3 &lookAtPoint_, float radius_, float alertness_ = 0.75f)
-        : origin(origin_), lookAtPoint(lookAtPoint_), radius(radius_), alertness(alertness_), hasLookAtPoint(true) {}
-};
-
-struct AiPendingLookAtPoint
-{
-    friend class Bot;
-private:
-    AiPendingLookAtPoint(): origin(NAN, NAN, NAN) {}
-public:
-    Vec3 origin;
-    float turnSpeedMultiplier;
-
-    AiPendingLookAtPoint(const vec3_t origin_, float turnSpeedMultiplier_)
-        : origin(origin_), turnSpeedMultiplier(turnSpeedMultiplier_) {}
-
-    AiPendingLookAtPoint(const Vec3 &origin_, float turnSpeedMultiplier_)
-        : origin(origin_), turnSpeedMultiplier(turnSpeedMultiplier_) {}
-};
-
-struct BotInput
-{
-    usercmd_t ucmd;
-    Vec3 intendedLookVec;
-    // A copy of self->s.angles for modification
-    // We do not want to do deeply hidden angles update in the aiming functions,
-    // the BotInput should be only mutable thing in the related code.
-    // Should be copied back to self->s.angles if it has been modified when the BotInput gets applied.
-    Vec3 alreadyComputedAngles;
-    bool fireScriptWeapon;
-    bool isUcmdSet;
-    bool isLookVecSet;
-    bool hasAlreadyComputedAngles;
-    bool canOverrideUcmd;
-    bool shouldOverrideUcmd;
-    bool canOverrideLookVec;
-    bool shouldOverrideLookVec;
-    bool canOverridePitch;
-    bool applyExtraViewPrecision;
-    float turnSpeedMultiplier;
-
-    inline BotInput(const edict_t *self)
-        : intendedLookVec(NAN, NAN, NAN),
-          alreadyComputedAngles(self->s.angles),
-          fireScriptWeapon(false),
-          isUcmdSet(false),
-          isLookVecSet(false),
-          hasAlreadyComputedAngles(false),
-          canOverrideUcmd(false),
-          shouldOverrideUcmd(false),
-          canOverrideLookVec(false),
-          shouldOverrideLookVec(false),
-          canOverridePitch(false),
-          applyExtraViewPrecision(false),
-          turnSpeedMultiplier(1.0f)
-    {
-        memset(&ucmd, 0, sizeof(ucmd));
-    }
-
-    inline void SetButton(int button, bool isSet)
-    {
-        if (isSet)
-            ucmd.buttons |= button;
-        else
-            ucmd.buttons &= ~button;
-    }
-
-    inline bool IsButtonSet(int button) const { return (ucmd.buttons & button) != 0; }
-
-    inline void SetAttackButton(bool isSet) { SetButton(BUTTON_ATTACK, isSet); }
-    inline void SetSpecialButton(bool isSet) { SetButton(BUTTON_SPECIAL, isSet); }
-    inline void SetWalkButton(bool isSet) { SetButton(BUTTON_WALK, isSet); }
-
-    inline bool IsAttackButtonSet() const { return IsButtonSet(BUTTON_ATTACK); }
-    inline bool IsSpecialButtonSet() const { return IsButtonSet(BUTTON_SPECIAL); }
-    inline bool IsWalkButtonSet() const { return IsButtonSet(BUTTON_WALK); }
-
-    inline int ForwardMovement() const { return (int)ucmd.forwardmove; }
-    inline int RightMovement() const { return (int)ucmd.sidemove; }
-    inline int UpMovement() const { return (int)ucmd.upmove; }
-
-    inline bool IsCrouching() const { return ucmd.upmove < 0; }
-
-    inline void SetForwardMovement(int movement) { ucmd.forwardmove = movement; }
-    inline void SetRightMovement(int movement) { ucmd.sidemove = movement; }
-    inline void SetUpMovement(int movement) { ucmd.upmove = movement; }
-
-    inline void ClearMovementDirections()
-    {
-        ucmd.forwardmove = 0;
-        ucmd.sidemove = 0;
-        ucmd.upmove = 0;
-    }
-};
-
 class Bot: public Ai
 {
     friend class AiManager;
@@ -175,6 +60,24 @@ class Bot: public Ai
     friend class BotAttackOutOfDespairGoal;
     friend class BotTacticalSpotsCache;
     friend class WorldState;
+
+    friend struct BotMovementState;
+    friend class BotMovementPredictionContext;
+    friend class BotBaseMovementAction;
+    friend class BotDummyMovementAction;
+    friend class BotMoveOnLadderMovementAction;
+    friend class BotHandleTriggeredJumppadMovementAction;
+    friend class BotLandOnSavedAreasMovementAction;
+    friend class BotRidePlatformMovementAction;
+    friend class BotSwimMovementAction;
+    friend class BotFlyUntilLandingMovementAction;
+    friend class BotCampASpotMovementAction;
+    friend class BotWalkCarefullyMovementAction;
+    friend class BotGenericRunBunnyingMovementAction;
+    friend class BotBunnyStraighteningReachChainMovementAction;
+    friend class BotBunnyToBestShortcutAreaMovementAction;
+    friend class BotBunnyInVelocityDirectionMovementAction;
+    friend class BotCombatDodgeSemiRandomlyToTargetMovementAction;
 public:
     static constexpr auto PREFERRED_TRAVEL_FLAGS =
         TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR | TFL_TELEPORT | TFL_JUMPPAD;
@@ -315,6 +218,15 @@ public:
 
     inline const BotWeightConfig &WeightConfig() const { return weightConfig; }
     inline BotWeightConfig &WeightConfig() { return weightConfig; }
+
+    inline void OnInterceptedPredictedEvent(int ev, int parm)
+    {
+        movementPredictionContext.OnInterceptedPredictedEvent(ev, parm);
+    }
+    inline void OnInterceptedPMoveTouchTriggers(pmove_t *pm, const vec3_t previousOrigin)
+    {
+        movementPredictionContext.OnInterceptedPMoveTouchTriggers(pm, previousOrigin);
+    }
 protected:
     virtual void Frame() override;
     virtual void Think() override;
@@ -326,12 +238,7 @@ protected:
         UpdateScriptWeaponsStatus();
     }
 
-    void TouchedNavEntity(const edict_t *underlyingEntity) override
-    {
-        botBrain.HandleNavTargetTouch(underlyingEntity);
-    }
     virtual void TouchedOtherEntity(const edict_t *entity) override;
-    void TouchedJumppad(const edict_t *jumppad);
 private:
     void RegisterVisibleEnemies();
 
@@ -392,235 +299,27 @@ private:
     BotStartLostEnemyPursuitAction startLostEnemyPursuitAction;
     BotStopLostEnemyPursuitAction stopLostEnemyPursuitAction;
 
-    struct JumppadMovementState
-    {
-        // Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
-        // It gets processed by movement code in next frame
-        bool hasTouchedJumppad;
-        // If this flag is set, bot is in "jumppad" movement state
-        bool hasEnteredJumppad;
-        // This timeout is computed and set in Bot::TouchedJumppad().
-        // Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
-        // If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
-        unsigned startLandingAt;
-        // Next reach. cache is lost in air.
-        // Thus we have to store next areas starting a jumppad movement and try to prefer these areas for landing
-        static constexpr int MAX_LANDING_AREAS = 16;
-        int landingAreas[MAX_LANDING_AREAS];
-        int landingAreasCount;
-        Vec3 jumppadTarget;
+    // Must be initialized before any of movement actions constructors is called
+    StaticVector<BotBaseMovementAction *, 16> movementActions;
 
-        inline JumppadMovementState()
-            : hasTouchedJumppad(false),
-              hasEnteredJumppad(false),
-              startLandingAt(0),
-              landingAreasCount(0),
-              jumppadTarget(INFINITY, INFINITY, INFINITY) {}
+    BotDummyMovementAction dummyMovementAction;
+    BotHandleTriggeredJumppadMovementAction handleTriggeredJumppadMovementAction;
+    BotLandOnSavedAreasMovementAction landOnSavedAreasSetMovementAction;
+    BotRidePlatformMovementAction ridePlatformMovementAction;
+    BotSwimMovementAction swimMovementAction;
+    BotFlyUntilLandingMovementAction flyUntilLandingMovementAction;
+    BotCampASpotMovementAction campASpotMovementAction;
+    BotWalkCarefullyMovementAction walkCarefullyMovementAction;
+    BotBunnyStraighteningReachChainMovementAction bunnyStraighteningReachChainMovementAction;
+    BotBunnyToBestShortcutAreaMovementAction bunnyToBestShortcutAreaMovementAction;
+    BotBunnyInVelocityDirectionMovementAction bunnyInVelocityDirectionMovementAction;
+    BotCombatDodgeSemiRandomlyToTargetMovementAction combatDodgeSemiRandomlyToTargetMovementAction;
 
-        inline bool IsActive() const
-        {
-            return hasTouchedJumppad || hasEnteredJumppad;
-        }
+    BotMovementState movementState;
 
-        inline bool ShouldPerformLanding() const
-        {
-            return startLandingAt <= level.time;
-        }
-
-        inline void Invalidate()
-        {
-            hasTouchedJumppad = false;
-            hasEnteredJumppad = false;
-        }
-    };
-
-    JumppadMovementState jumppadMovementState;
-
-    struct RocketJumpMovementState
-    {
-        const edict_t *self;
-
-        Vec3 jumpTarget;
-        Vec3 fireTarget;
-        bool hasPendingRocketJump;
-        bool hasTriggeredRocketJump;
-        bool hasCorrectedRocketJump;
-        unsigned timeoutAt;
-
-        RocketJumpMovementState(const edict_t *self_)
-            : self(self_),
-              jumpTarget(INFINITY, INFINITY, INFINITY),
-              fireTarget(INFINITY, INFINITY, INFINITY),
-              hasPendingRocketJump(false),
-              hasTriggeredRocketJump(false),
-              hasCorrectedRocketJump(false),
-              timeoutAt(0) {}
-
-        inline bool IsActive() const
-        {
-            return hasPendingRocketJump || hasTriggeredRocketJump || hasCorrectedRocketJump;
-        }
-
-        inline void TryInvalidate()
-        {
-            if (IsActive())
-            {
-                if (self->groundentity || (jumpTarget - self->s.origin).SquaredLength() < 48 * 48)
-                    Invalidate();
-            }
-        }
-
-        void Invalidate()
-        {
-            hasPendingRocketJump = false;
-            hasTriggeredRocketJump = false;
-            hasCorrectedRocketJump = false;
-        }
-
-        void SetPending(const Vec3 &jumpTarget_, const Vec3 &fireTarget_, unsigned timeoutPeriod)
-        {
-            this->jumpTarget = jumpTarget_;
-            this->fireTarget = fireTarget_;
-            hasPendingRocketJump = true;
-            hasTriggeredRocketJump = false;
-            hasCorrectedRocketJump = false;
-            timeoutAt = level.time + timeoutPeriod;
-        }
-    };
-
-    RocketJumpMovementState rocketJumpMovementState;
-
-    struct PendingLandingDashState
-    {
-        bool isTriggered;
-        bool isOnGroundThisFrame;
-        bool wasOnGroundPrevFrame;
-        unsigned timeoutAt;
-
-        inline PendingLandingDashState()
-            : isTriggered(false),
-              isOnGroundThisFrame(false),
-              wasOnGroundPrevFrame(false),
-              timeoutAt(0) {}
-
-        inline bool IsActive() const
-        {
-            return isTriggered;
-        }
-
-        inline bool MayApplyDash() const
-        {
-            return !wasOnGroundPrevFrame && isOnGroundThisFrame;
-        }
-
-        inline void Invalidate()
-        {
-            isTriggered = false;
-        }
-
-        void TryInvalidate()
-        {
-            if (IsActive())
-            {
-                if (timeoutAt < level.time)
-                    Invalidate();
-                else if (isOnGroundThisFrame && wasOnGroundPrevFrame)
-                    Invalidate();
-            }
-        }
-
-        inline void SetTriggered(unsigned timeoutPeriod)
-        {
-            isTriggered = true;
-            timeoutAt = level.time + timeoutPeriod;
-        }
-
-        inline float EffectiveTurnSpeedMultiplier(float baseTurnSpeedMultiplier) const
-        {
-            return isTriggered ? 1.35f : baseTurnSpeedMultiplier;
-        }
-    };
-
-    PendingLandingDashState pendingLandingDashState;
-
-    unsigned combatMovePushTimeout;
-    int combatMovePushes[3];
+    BotMovementPredictionContext movementPredictionContext;
 
     unsigned vsayTimeout;
-
-    struct PendingLookAtPointState
-    {
-        AiPendingLookAtPoint pendingLookAtPoint;
-        unsigned timeoutAt;
-
-        inline PendingLookAtPointState(): timeoutAt(0) {}
-
-        inline bool IsActive() const
-        {
-            return timeoutAt > level.time;
-        }
-
-        inline void SetTriggered(const AiPendingLookAtPoint &pendingLookAtPoint_, unsigned timeoutPeriod = 500)
-        {
-            this->pendingLookAtPoint = pendingLookAtPoint_;
-            this->timeoutAt = level.time + timeoutPeriod;
-        }
-
-        inline void Invalidate()
-        {
-            timeoutAt = 0;
-        }
-    };
-
-    PendingLookAtPointState pendingLookAtPointState;
-
-    struct CampingSpotState
-    {
-        AiCampingSpot campingSpot;
-        bool isTriggered;
-        Vec3 strafeDir;
-        // When to change chosen strafe dir
-        unsigned strafeTimeoutAt;
-        // When to change randomly chosen look-at-point (if the point is not initially specified)
-        unsigned lookAtPointTimeoutAt;
-
-        inline CampingSpotState()
-            : isTriggered(false),
-              strafeDir(INFINITY, INFINITY, INFINITY),
-              strafeTimeoutAt(0),
-              lookAtPointTimeoutAt(0) {}
-
-        inline bool IsActive() const
-        {
-            return isTriggered;
-        }
-
-        inline void SetTriggered(const AiCampingSpot &campingSpot_)
-        {
-            this->campingSpot = campingSpot_;
-            strafeTimeoutAt = 0;
-            lookAtPointTimeoutAt = 0;
-        }
-
-        inline void Invalidate()
-        {
-            isTriggered = false;
-        }
-
-        inline const Vec3 &Origin() const { return campingSpot.origin; }
-        inline float Radius() const { return campingSpot.radius; }
-        inline AiPendingLookAtPoint LookAtPoint() const
-        {
-            return AiPendingLookAtPoint(campingSpot.origin, 0.75f + 1.0f * campingSpot.alertness);
-        }
-        inline float Alertness() const { return campingSpot.alertness; }
-        inline void SetStrafeDirTimeout()
-        {
-            strafeTimeoutAt = level.time + 500 + (unsigned) (100.0f * random() - 250.0f * Alertness());
-        }
-    };
-
-    CampingSpotState campingSpotState;
 
     bool isInSquad;
 
@@ -690,7 +389,8 @@ private:
 
     void UpdateScriptWeaponsStatus();
 
-    void Move(BotInput *input, bool mayHitWhileRunning);
+    void MovementFrame(BotInput *input);
+    bool CanChangeWeapons() const;
     void ChangeWeapons(const SelectedWeapons &selectedWeapons);
     void ChangeWeapon(int weapon);
     void FireWeapon(BotInput *input);
@@ -698,77 +398,13 @@ private:
     void SayVoiceMessages();
     void GhostingFrame();
     void ActiveFrame();
-    void CallGhostingClientThink(BotInput *input);
-    void CallActiveClientThink(BotInput *input);
+    void CallGhostingClientThink(const BotInput &input);
+    void CallActiveClientThink(const BotInput &input);
 
     void OnRespawn();
 
-    void ApplyPendingTurnToLookAtPoint(BotInput *input);
-    void ApplyInput(BotInput *input);
-
-    // Must be called on each frame
-    void MoveFrame(BotInput *input);
-
-    void MoveOnLadder(BotInput *input);
-    void MoveEnteringJumppad(BotInput *input);
-    void MoveRidingJummpad(BotInput *input);
-    void MoveInRocketJumpState(BotInput *input, bool mayHitWhileMoving);
-    void MoveOnPlatform(BotInput *input);
-    void MoveCampingASpot(BotInput *input);
-    void MoveCampingASpotWithGivenLookAtPoint(const Vec3 &givenLookAtPoint, BotInput *input);
-    void MoveSwimming(BotInput *input);
-    void MoveGenericRunning(BotInput *input, bool mayHitWhileRunning);
-    Vec3 GetCheatingAcceleratedVelocity(float velocity2DDirDotToTarget2DDir, bool hasObstacles) const;
-    Vec3 GetCheatingCorrectedVelocity(float velocity2DDirDotToTarget2DDir, Vec3 toTargetDir2D) const;
-    bool CanFlyAboveGroundRelaxed() const;
-    bool CheckAndTryAvoidObstacles(BotInput *input, float speed);
-    // Tries to straighten look vec first.
-    // If the straightening failed, tries to interpolate it.
-    // Also, handles case of empty reachabilities chain in goal area and outside it.
-    // Returns true if look vec has been straightened (and is directed to an important spot).
-    bool StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed);
-    // Returns true if the intendedLookVec has been straightened
-    // Otherwise InterpolateLookVec() should be used
-    bool TryStraightenLookVec(Vec3 *intendedLookVec);
-    // Interpolates intendedLookVec for the pending areas chain
-    void InterpolateLookVec(Vec3 *intendedLookVec, float speed);
-    void TryLandOnNearbyAreas(BotInput *input);
-    bool TryLandOnArea(int areaNum, BotInput *input);
-    void CheckTargetProximity();
-
-    inline bool IsCloseToNavTarget()
-    {
-        return botBrain.IsCloseToNavTarget(96.0f);
-    }
-
-    bool MaySetPendingLandingDash();
-    void SetPendingLandingDash(BotInput *input);
-    void ApplyPendingLandingDash(BotInput *input);
-
-    bool TryRocketJumpShortcut(BotInput *input);
-    // A bot should aim to fireTarget while doing a RJ
-    // A bot should look on targetOrigin in flight
-    // Return false if targets can't be adjusted (and a RJ should be rejected).
-    bool AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarget) const;
-    // Should be called when a goal does not seem to be reachable for RJ on the distance to a goal.
-    bool AdjustRocketJumpTargetForPathShortcut(Vec3 *targetOrigin, Vec3 *fireTarget) const;
-    // Should be called when a goal seems to be reachable for RJ on the distance to a goal,
-    // but direct rocketjump to a goal is blocked by obstacles.
-    // Returns area num of found area (if any)
-    int TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botToGoalDist2D) const;
-    // Tries to select an appropriate weapon and schedule a pending rocketjump.
-    // Assumes that targetOrigin and fireTarget are checked.
-    // Returns false if a rocketjump cannot be triggered.
-    bool TrySetPendingWeaponJump(const Vec3 &targetOrigin, const Vec3 &fireTarget);
-    // Triggers a jump/dash and fire actions. It is assumed to be called from MoveInRocketJumpState()
-    // Assumes that targetOrigin and fireTarget are checked.
-    // Make sure you have selected an appropriate weapon and its ready to fire before you call it.
-    void TriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec3 &fireTarget);
-
-    void CombatMovement(BotInput *input);
-    void UpdateCombatMovePushes();
-    bool MayApplyCombatDash();
-    void ApplyCheatingGroundAcceleration(const BotInput *input);
+    void ApplyPendingTurnToLookAtPoint(BotInput *input, BotMovementPredictionContext *context = nullptr) const;
+    void ApplyInput(BotInput *input, BotMovementPredictionContext *context = nullptr);
 
     // Returns true if current look angle worth pressing attack
     bool CheckShot(const AimParams &aimParams, const BotInput *input,
@@ -777,10 +413,6 @@ private:
     void LookAtEnemy(float coordError, const vec3_t fire_origin, vec3_t target, BotInput *input);
     void PressAttack(const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
                      const GenericFireDef *scriptFireDef, BotInput *input);
-
-    bool MayHitWhileRunning() const;
-    void CheckTurnToBackwardsMovement(BotInput *input) const;
-    void SetDefaultBotInput(BotInput *input) const;
 
     inline bool HasEnemy() const { return selectedEnemies.AreValid(); }
     inline bool IsEnemyAStaticSpot() const { return selectedEnemies.IsStaticSpot(); }
@@ -793,16 +425,17 @@ private:
     inline Vec3 EnemyMins() const { return selectedEnemies.Mins(); }
     inline Vec3 EnemyMaxs() const { return selectedEnemies.Maxs(); }
 
-public:
-    //
-    // Exposed for script API
-    //
+    static constexpr unsigned MAX_SAVED_LANDING_AREAS = BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS;
+    StaticVector<int, MAX_SAVED_LANDING_AREAS> savedLandingAreas;
 
+    void CheckTargetProximity();
+
+public:
+    // These methods are exposed mostly for script interface
     inline unsigned NextSimilarWorldStateInstanceId()
     {
         return ++similarWorldStateInstanceId;
     }
-
     inline void SetNavTarget(NavTarget *navTarget)
     {
         botBrain.SetNavTarget(navTarget);
@@ -817,27 +450,27 @@ public:
     }
     inline void SetCampingSpot(const AiCampingSpot &campingSpot)
     {
-        campingSpotState.SetTriggered(campingSpot);
+        movementState.campingSpotState.Activate(campingSpot);
     }
     inline void ResetCampingSpot()
     {
-        campingSpotState.Invalidate();
+        movementState.campingSpotState.Deactivate();
     }
     inline bool HasActiveCampingSpot() const
     {
-        return campingSpotState.IsActive();
+        return movementState.campingSpotState.IsActive();
     }
     inline void SetPendingLookAtPoint(const AiPendingLookAtPoint &lookAtPoint, unsigned timeoutPeriod)
     {
-        pendingLookAtPointState.SetTriggered(lookAtPoint, timeoutPeriod);
+        movementState.pendingLookAtPointState.Activate(lookAtPoint, timeoutPeriod);
     }
     inline void ResetPendingLookAtPoint()
     {
-        pendingLookAtPointState.Invalidate();
+        movementState.pendingLookAtPointState.Deactivate();
     }
     inline bool HasPendingLookAtPoint() const
     {
-        return pendingLookAtPointState.IsActive();
+        return movementState.pendingLookAtPointState.IsActive();
     }
     const SelectedNavEntity &GetSelectedNavEntity() const
     {

@@ -534,7 +534,7 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
 bool BotBrain::ShouldSkipPlanning() const
 {
     // Skip planning moving on a jumppad
-    if (self->ai->botRef->jumppadMovementState.IsActive())
+    if (self->ai->botRef->movementState.jumppadMovementState.IsActive())
         return true;
 
     // Skip planning moving on an elevator

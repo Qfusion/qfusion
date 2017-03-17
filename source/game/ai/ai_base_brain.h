@@ -383,9 +383,9 @@ protected:
     // Used to detect attitude change
     signed char oldAttitude[MAX_EDICTS];
 
-    int CurrAasAreaNum() const { return self->ai->aiRef->currAasAreaNum; };
-    int DroppedToFloorAasAreaNum() const { return self->ai->aiRef->droppedToFloorAasAreaNum; }
-    Vec3 DroppedToFloorOrigin() const { return self->ai->aiRef->droppedToFloorOrigin; }
+    int CurrAasAreaNum() const { return self->ai->aiRef->entityPhysicsState->CurrAasAreaNum(); };
+    int DroppedToFloorAasAreaNum() const { return self->ai->aiRef->entityPhysicsState->DroppedToFloorAasAreaNum(); }
+    Vec3 DroppedToFloorOrigin() const { return self->ai->aiRef->entityPhysicsState->DroppedToFloorOrigin(); }
 
     int PreferredAasTravelFlags() const { return self->ai->aiRef->preferredAasTravelFlags; }
     int AllowedAasTravelFlags() const { return self->ai->aiRef->allowedAasTravelFlags; }
@@ -462,9 +462,17 @@ public:
     {
         return DistanceSquared(self->s.origin, navTarget->Origin().Data()) < proximityThreshold * proximityThreshold;
     }
-
-    int NavTargetAasAreaNum() const { return navTarget->AasAreaNum(); }
+    // Calling it when there is no nav target is legal
+    int NavTargetAasAreaNum() const
+    {
+        return navTarget ? navTarget->AasAreaNum() : 0;
+    }
     Vec3 NavTargetOrigin() const { return navTarget->Origin(); }
+    float NavTargetRadius() const { return navTarget->RadiusOrDefault(12.0f); }
+    bool IsNavTargetBasedOnEntity(const edict_t *ent) const
+    {
+        return navTarget ? navTarget->IsBasedOnEntity(ent) : false;
+    }
 
     bool HandleNavTargetTouch(const edict_t *ent);
     bool TryReachNavTargetByProximity();

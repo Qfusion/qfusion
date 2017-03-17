@@ -2,8 +2,15 @@
 #include "ai_aas_world.h"
 #include <algorithm>
 
+#ifndef _MSC_VER
+// Allow getting an address of not initialized yet field movementState.entityPhysicsState.
+// Saving this address for further use is legal, the field is not going to be used right now.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
+
 Bot::Bot(edict_t *self_, float skillLevel_)
-    : Ai(self_, &botBrain, AiAasRouteCache::NewInstance(), PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
+    : Ai(self_, &botBrain, AiAasRouteCache::NewInstance(), &movementState.entityPhysicsState, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS),
       weightConfig(self_),
       dangersDetector(self_),
       botBrain(this, skillLevel_),
@@ -44,8 +51,19 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       turnToLostEnemyAction(this),
       startLostEnemyPursuitAction(this),
       stopLostEnemyPursuitAction(this),
-      rocketJumpMovementState(self_),
-      combatMovePushTimeout(0),
+      dummyMovementAction(this),
+      handleTriggeredJumppadMovementAction(this),
+      landOnSavedAreasSetMovementAction(this),
+      ridePlatformMovementAction(this),
+      swimMovementAction(this),
+      flyUntilLandingMovementAction(this),
+      campASpotMovementAction(this),
+      walkCarefullyMovementAction(this),
+      bunnyStraighteningReachChainMovementAction(this),
+      bunnyToBestShortcutAreaMovementAction(this),
+      bunnyInVelocityDirectionMovementAction(this),
+      combatDodgeSemiRandomlyToTargetMovementAction(this),
+      movementPredictionContext(self_),
       vsayTimeout(level.time + 10000),
       isInSquad(false),
       defenceSpotId(-1),
@@ -59,20 +77,41 @@ Bot::Bot(edict_t *self_, float skillLevel_)
     SetTag(self->r.client->netname);
 }
 
-void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput)
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
+
+void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput, BotMovementPredictionContext *context) const
 {
-    if (!pendingLookAtPointState.IsActive())
+    BotPendingLookAtPointState *pendingLookAtPointState;
+    AiEntityPhysicsState *entityPhysicsState;
+    unsigned frameTime;
+    if (context)
+    {
+        pendingLookAtPointState = &context->movementState->pendingLookAtPointState;
+        entityPhysicsState = &context->movementState->entityPhysicsState;
+        frameTime = context->predictionStepMillis;
+    }
+    else
+    {
+        pendingLookAtPointState = &self->ai->botRef->movementState.pendingLookAtPointState;
+        entityPhysicsState = &self->ai->botRef->movementState.entityPhysicsState;
+        frameTime = game.frametime;
+    }
+
+    if (!pendingLookAtPointState->IsActive())
         return;
 
-    AiPendingLookAtPoint &pendingLookAtPoint = pendingLookAtPointState.pendingLookAtPoint;
-    Vec3 toPointDir(pendingLookAtPoint.origin);
-    toPointDir -= self->s.origin;
+    const AiPendingLookAtPoint &pendingLookAtPoint = pendingLookAtPointState->pendingLookAtPoint;
+    Vec3 toPointDir(pendingLookAtPoint.Origin());
+    toPointDir -= entityPhysicsState->Origin();
     toPointDir.NormalizeFast();
 
     botInput->intendedLookVec = toPointDir;
     botInput->isLookVecSet = true;
 
-    Vec3 newAngles = GetNewViewAngles(self->s.angles, toPointDir, pendingLookAtPoint.turnSpeedMultiplier);
+    float turnSpeedMultiplier = pendingLookAtPoint.TurnSpeedMultiplier();
+    Vec3 newAngles = GetNewViewAngles(entityPhysicsState->Angles().Data(), toPointDir, frameTime, turnSpeedMultiplier);
     botInput->alreadyComputedAngles = newAngles;
     botInput->hasAlreadyComputedAngles = true;
 
@@ -80,17 +119,45 @@ void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput)
     botInput->canOverridePitch = false;
 }
 
-void Bot::ApplyInput(BotInput *input)
+void Bot::ApplyInput(BotInput *input, BotMovementPredictionContext *context)
 {
     // It is legal (there are no enemies and no nav targets in some moments))
-    if (!input->isUcmdSet || !input->isLookVecSet)
+    if (!input->isLookVecSet)
+    {
+        //const float *origin = entityPhysicsState ? entityPhysicsState->Origin() : self->s.origin;
+        //AITools_DrawColorLine(origin, (Vec3(-32, +32, -32) + origin).Data(), COLOR_RGB(192, 0, 0), 0);
         return;
+    }
+    if (!input->isUcmdSet)
+    {
+        //const float *origin = entityPhysicsState ? entityPhysicsState->Origin() : self->s.origin;
+        //AITools_DrawColorLine(origin, (Vec3(+32, -32, +32) + origin).Data(), COLOR_RGB(192, 0, 192), 0);
+        return;
+    }
 
-    if (!input->hasAlreadyComputedAngles)
-        input->alreadyComputedAngles = GetNewViewAngles(self->s.angles, input->intendedLookVec, input->turnSpeedMultiplier);
-
-    // Set entity angles
-    VectorCopy(input->alreadyComputedAngles.Data(), self->s.angles);
+    if (context)
+    {
+        auto *entityPhysicsState = &context->movementState->entityPhysicsState;
+        if (!input->hasAlreadyComputedAngles)
+        {
+            Vec3 newAngles(GetNewViewAngles(entityPhysicsState->Angles(), input->intendedLookVec,
+                                            context->predictionStepMillis, input->TurnSpeedMultiplier()));
+            newAngles.CopyTo(input->alreadyComputedAngles);
+            input->hasAlreadyComputedAngles = true;
+        }
+        entityPhysicsState->SetAngles(input->alreadyComputedAngles);
+    }
+    else
+    {
+        if (!input->hasAlreadyComputedAngles)
+        {
+            Vec3 newAngles(GetNewViewAngles(self->s.angles, input->intendedLookVec,
+                                            game.frametime, input->TurnSpeedMultiplier()));
+            newAngles.CopyTo(input->alreadyComputedAngles);
+            input->hasAlreadyComputedAngles = true;
+        }
+        input->alreadyComputedAngles.CopyTo(self->s.angles);
+    }
 }
 
 void Bot::TouchedOtherEntity(const edict_t *entity)
@@ -110,7 +177,7 @@ void Bot::TouchedOtherEntity(const edict_t *entity)
     if (!Q_stricmp(entity->classname, "trigger_push"))
     {
         lastTouchedJumppadAt = level.time;
-        TouchedJumppad(entity);
+        movementState.jumppadMovementState.Activate(entity);
         return;
     }
 
@@ -125,33 +192,6 @@ void Bot::TouchedOtherEntity(const edict_t *entity)
         lastTouchedElevatorAt = level.time;
         return;
     }
-}
-
-void Bot::TouchedJumppad(const edict_t *jumppad)
-{
-    // jumppad->s.origin2 contains initial push velocity
-    Vec3 pushDir(jumppad->s.origin2);
-    pushDir.NormalizeFast();
-
-    float relaxedFlightSeconds = 0;
-    float zDotFactor = pushDir.Dot(&axis_identity[AXIS_UP]);
-    if (zDotFactor > 0)
-    {
-        // Start to find landing area when vertical velocity is close to zero.
-        // This may be wrong for Q3-like horizontal jumppads,
-        // but its unlikely to see this kind of triggers in the QF game.
-        relaxedFlightSeconds = 0.90f * jumppad->s.origin2[2] / (level.gravity + 0.0001f);
-    }
-    // Otherwise (for some weird jumppad that pushes dow) start to find landing area immediately
-
-    jumppadMovementState.startLandingAt = level.time + (unsigned)(1000.0f * relaxedFlightSeconds);
-    jumppadMovementState.hasTouchedJumppad = true;
-    // A bot might have just touched jumppad (it occurs quite often when a jumppad trigger is large).
-    // Resetting this flag is very important (otherwise bot movement will be broken forever).
-    // We might use timeout for this too but it is be error-prone
-    // (what timeout value to choose?), use the reliable approach.
-    jumppadMovementState.hasEnteredJumppad = false;
-    jumppadMovementState.jumppadTarget = Vec3(jumppad->target_ent->s.origin);
 }
 
 void Bot::EnableAutoAlert(const AiAlertSpot &alertSpot, AlertCallback callback, void *receiver)
@@ -327,6 +367,17 @@ void Bot::CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTar
     }
 }
 
+bool Bot::CanChangeWeapons() const
+{
+    if (!movementState.weaponJumpMovementState.IsActive())
+        return true;
+
+    if (movementState.weaponJumpMovementState.hasTriggeredRocketJump)
+        return true;
+
+    return false;
+}
+
 void Bot::ChangeWeapons(const SelectedWeapons &selectedWeapons)
 {
     if (selectedWeapons.BuiltinFireDef() != nullptr)
@@ -463,11 +514,7 @@ void Bot::GhostingFrame()
 
     botBrain.ClearGoalAndPlan();
 
-    jumppadMovementState.Invalidate();
-    rocketJumpMovementState.Invalidate();
-    pendingLandingDashState.Invalidate();
-    pendingLookAtPointState.Invalidate();
-    campingSpotState.Invalidate();
+    movementState.Reset();
 
     blockedTimeout = level.time + BLOCKED_TIMEOUT;
     self->nextThink = level.time + 100;
@@ -490,29 +537,29 @@ void Bot::GhostingFrame()
         return;
     }
 
-    BotInput botInput(self);
+    BotInput botInput;
     botInput.isUcmdSet = true;
     // ask for respawn if the minimum bot respawning time passed
     if( level.time > self->deathTimeStamp + 3000 )
         botInput.SetAttackButton(true);
 
-    CallGhostingClientThink(&botInput);
+    CallGhostingClientThink(botInput);
 }
 
-void Bot::CallGhostingClientThink(BotInput *input)
+void Bot::CallGhostingClientThink(const BotInput &input)
 {
+    usercmd_t ucmd;
+    input.CopyToUcmd(&ucmd);
     // set approximate ping and show values
-    input->ucmd.serverTimeStamp = game.serverTime;
-    input->ucmd.msec = (uint8_t)game.frametime;
+    ucmd.serverTimeStamp = game.serverTime;
+    ucmd.msec = (uint8_t)game.frametime;
     self->r.client->r.ping = 0;
 
-    ClientThink(self, &input->ucmd, 0);
+    ClientThink(self, &ucmd, 0);
 }
 
 void Bot::OnRespawn()
 {
-    // Ai status will be updated implicitly (since a bot stopped ghosting)
-    combatMovePushTimeout = 0;
     ResetNavigation();
 }
 
@@ -524,12 +571,9 @@ void Bot::Think()
     if (IsGhosting())
         return;
 
-    TestClosePlace();
-
     RegisterVisibleEnemies();
 
-    // Disable weapon switching if there is a pending rocket jump
-    if (!rocketJumpMovementState.IsActive() || rocketJumpMovementState.hasCorrectedRocketJump)
+    if (CanChangeWeapons())
     {
         weaponsSelector.Think(botBrain.cachedWorldState);
         ChangeWeapons(selectedWeapons);
@@ -559,33 +603,38 @@ void Bot::ActiveFrame()
 
     weaponsSelector.Frame(botBrain.cachedWorldState);
 
-    BotInput botInput(self);
+    BotInput botInput;
+    // Might modify botInput
     ApplyPendingTurnToLookAtPoint(&botInput);
-
-    MoveFrame(&botInput);
+    // Might modify botInput
+    MovementFrame(&botInput);
+    // Might modify botInput
     if (ShouldAttack())
         FireWeapon(&botInput);
 
+    // Apply modified botInput
     ApplyInput(&botInput);
-
-    CallActiveClientThink(&botInput);
+    CallActiveClientThink(botInput);
 
     SayVoiceMessages();
 }
 
-void Bot::CallActiveClientThink(BotInput *input)
+void Bot::CallActiveClientThink(const BotInput &input)
 {
+    usercmd_t ucmd;
+    input.CopyToUcmd(&ucmd);
+
     //set up for pmove
     for (int i = 0; i < 3; i++)
-        input->ucmd.angles[i] = (short)ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
+        ucmd.angles[i] = (short)ANGLE2SHORT(self->s.angles[i]) - self->r.client->ps.pmove.delta_angles[i];
 
     VectorSet(self->r.client->ps.pmove.delta_angles, 0, 0, 0);
 
     // set approximate ping and show values
-    input->ucmd.msec = (uint8_t)game.frametime;
-    input->ucmd.serverTimeStamp = game.serverTime;
+    ucmd.msec = (uint8_t)game.frametime;
+    ucmd.serverTimeStamp = game.serverTime;
 
-    ClientThink(self, &input->ucmd, 0);
+    ClientThink(self, &ucmd, 0);
     self->nextThink = level.time + 1;
 }
 

@@ -1,502 +1,2122 @@
 #include "bot.h"
+#include "bot_movement.h"
 #include "ai_aas_world.h"
-#include "ai_ground_trace_cache.h"
 
-void Bot::MoveFrame(BotInput *input)
+#ifndef PUBLIC_BUILD
+#define CHECK_ACTION_SUGGESTION_LOOPS
+#define ENABLE_MOVEMENT_ASSERTIONS
+#endif
+
+// Useful for debugging but freezes even Release version
+#if 0
+#define ENABLE_MOVEMENT_DEBUG_OUTPUT
+#endif
+
+// A cheaper version of G_Trace() that does not check against entities
+inline void SolidWorldTrace(trace_t *trace, const vec3_t from, const vec3_t to,
+                            const vec3_t mins = vec3_origin, const vec3_t maxs = vec3_origin)
 {
-    pendingLandingDashState.isOnGroundThisFrame = self->groundentity != nullptr;
+    assert(from);
+    float *from_ = const_cast<float *>(from);
+    assert(to);
+    float *to_ = const_cast<float *>(to);
+    assert(mins);
+    float *mins_ = const_cast<float *>(mins);
+    assert(maxs);
+    float *maxs_ = const_cast<float *>(maxs);
+    trap_CM_TransformedBoxTrace(trace, from_, to_, mins_, maxs_, nullptr, MASK_SOLID, nullptr, nullptr);
+}
 
-    pendingLandingDashState.TryInvalidate();
-    rocketJumpMovementState.TryInvalidate();
+inline float GetPMoveStatValue(const player_state_t *playerState, int statIndex, float defaultValue)
+{
+    float value = playerState->pmove.stats[statIndex];
+    // Put likely case (the value is not specified) first
+    return value < 0 ? defaultValue : value;
+}
 
-    // These triggered actions should be processed
-    if (jumppadMovementState.IsActive() || rocketJumpMovementState.IsActive() || pendingLandingDashState.IsActive())
+inline float BotMovementPredictionContext::GetJumpSpeed() const
+{
+    return GetPMoveStatValue(this->currPlayerState, PM_STAT_JUMPSPEED, DEFAULT_JUMPSPEED * GRAVITY_COMPENSATE);
+}
+
+inline float BotMovementPredictionContext::GetDashSpeed() const
+{
+    return GetPMoveStatValue(this->currPlayerState, PM_STAT_DASHSPEED, DEFAULT_DASHSPEED);
+}
+
+inline float BotMovementPredictionContext::GetRunSpeed() const
+{
+    return GetPMoveStatValue(this->currPlayerState, PM_STAT_MAXSPEED, DEFAULT_PLAYERSPEED);
+}
+
+inline Vec3 BotMovementPredictionContext::NavTargetOrigin() const
+{
+    return self->ai->botRef->NavTargetOrigin();
+}
+
+inline float BotMovementPredictionContext::NavTargetRadius() const
+{
+    return self->ai->botRef->NavTargetRadius();
+}
+
+inline bool BotMovementPredictionContext::IsCloseToNavTarget() const
+{
+    float distance = NavTargetRadius() + 32.0f;
+    return NavTargetOrigin().SquareDistanceTo(movementState->entityPhysicsState.Origin()) < distance * distance;
+}
+
+inline int BotMovementPredictionContext::CurrAasAreaNum() const
+{
+    if (int currAasAreaNum = movementState->entityPhysicsState.CurrAasAreaNum())
+        return currAasAreaNum;
+
+    return movementState->entityPhysicsState.DroppedToFloorAasAreaNum();
+}
+
+inline int BotMovementPredictionContext::NavTargetAasAreaNum() const
+{
+    return self->ai->botRef->NavTargetAasAreaNum();
+}
+
+inline bool BotMovementPredictionContext::IsInNavTargetArea() const
+{
+    const int navTargetAreaNum = NavTargetAasAreaNum();
+    if (!navTargetAreaNum)
+        return false;
+
+    const auto &entityPhysicsState = this->movementState->entityPhysicsState;
+    if (navTargetAreaNum == entityPhysicsState.CurrAasAreaNum())
+        return true;
+
+    if (navTargetAreaNum == entityPhysicsState.DroppedToFloorAasAreaNum())
+        return true;
+
+    return false;
+}
+
+void BotMovementPredictionContext::NextReachNumAndTravelTimeToNavTarget(int *reachNum, int *travelTimeToNavTarget)
+{
+    *reachNum = 0;
+    *travelTimeToNavTarget = 0;
+
+    // Do NOT use cached reachability chain for the frame (if any).
+    // It might be invalid after movement step, and the route cache does caching itself pretty well.
+
+    const int navTargetAreaNum = NavTargetAasAreaNum();
+    if (!navTargetAreaNum)
+        return;
+
+    const auto &entityPhysicsState = movementState->entityPhysicsState;
+    const auto &routeCache = self->ai->botRef->routeCache;
+
+    int fromAreaNums[2];
+    int numFromAreas = 0;
+
+    if (int currAasAreaNum = entityPhysicsState.CurrAasAreaNum())
+        fromAreaNums[numFromAreas++] = currAasAreaNum;
+    if (int droppedToFloorAasAreaNum = entityPhysicsState.DroppedToFloorAasAreaNum())
+        fromAreaNums[numFromAreas++] = droppedToFloorAasAreaNum;
+
+    // Perform search twice only if two these areas are distinct
+    if (numFromAreas == 2 && (fromAreaNums[0] == fromAreaNums[1]))
+        numFromAreas = 1;
+
+    for (int i = 0; i < numFromAreas; ++i)
     {
-        Move(input, false);
+        for (int travelFlags: {Bot::ALLOWED_TRAVEL_FLAGS, Bot::PREFERRED_TRAVEL_FLAGS})
+        {
+            int routeReachNum, routeTravelTime;
+            if (routeCache->ReachAndTravelTimeToGoalArea(fromAreaNums[i], navTargetAreaNum, travelFlags,
+                                                         &routeReachNum, &routeTravelTime))
+            {
+                *reachNum = routeReachNum;
+                *travelTimeToNavTarget = routeTravelTime;
+                return;
+            };
+        }
+    }
+}
+
+#define CHECK_STATE_FLAG(state, bit)                                                    \
+if ((expectedStatesMask & (1 << bit)) != (((unsigned)state.IsActive()) << (1 << bit)))  \
+{                                                                                       \
+    result = false;                                                                     \
+    if (logFunc)                                                                        \
+        logFunc(format, Nick(owner), #state ".IsActive()", (unsigned)state.IsActive()); \
+}
+
+bool BotMovementState::TestActualStatesForExpectedMask(unsigned expectedStatesMask, const edict_t *owner) const
+{
+    // Might be set to null if verbose logging is not needed
+#ifdef ENABLE_MOVEMENT_DEBUG_OUTPUT
+    void (*logFunc)(const char *format, ...) = G_Printf;
+#else
+    void (*logFunc)(const char *format, ...) = nullptr;
+#endif
+    constexpr const char *format = "BotMovementState(%s): %s %d has mismatch with the mask value\n";
+
+    bool result = true;
+    CHECK_STATE_FLAG(jumppadMovementState, 0);
+    CHECK_STATE_FLAG(weaponJumpMovementState, 1);
+    CHECK_STATE_FLAG(pendingLookAtPointState, 2);
+    CHECK_STATE_FLAG(campingSpotState, 3);
+    // Skip combatMoveDirsState.
+    // It either should not affect movement at all if regular movement is chosen,
+    // or should be handled solely by the combat movement code.
+    CHECK_STATE_FLAG(flyUntilLandingMovementState, 4);
+    return result;
+}
+
+BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordForCurrTime(BotMovementActionRecord *record)
+{
+    PredictedMovementAction *prevPredictedAction = nullptr;
+    PredictedMovementAction *nextPredictedAction = nullptr;
+    for (PredictedMovementAction &predictedAction: predictedMovementActions)
+    {
+        if (predictedAction.timestamp >= level.time)
+        {
+            nextPredictedAction = &predictedAction;
+            break;
+        }
+        prevPredictedAction = &predictedAction;
+    }
+
+    if (!nextPredictedAction)
+    {
+        Debug("Cannot use predicted movement action: next one (its timestamp is not in the past) cannot be found\n");
+        return nullptr;
+    }
+
+    if (!prevPredictedAction)
+    {
+        // If there were no activated actions, the next state must be recently computed for current level time.
+        Assert(nextPredictedAction->timestamp == level.time);
+        // These assertions have already spotted a bug
+        Assert(VectorCompare(nextPredictedAction->entityPhysicsState.Origin(), self->s.origin));
+        Assert(VectorCompare(nextPredictedAction->entityPhysicsState.Velocity(), self->velocity));
+        // If there is a modified velocity, it will be copied with this record and then applied
+        *record = nextPredictedAction->record;
+        Debug("Using just computed predicted movement action %s\n", nextPredictedAction->action->Name());
+        return nextPredictedAction->action;
+    }
+
+    Assert(prevPredictedAction->timestamp + prevPredictedAction->stepMillis == nextPredictedAction->timestamp);
+
+    if (!self->ai->botRef->movementState.TestActualStatesForExpectedMask(prevPredictedAction->movementStatesMask, self))
+        return nullptr;
+
+    // Check whether predicted action is valid for an actual bot entity physics state
+    float stateLerpFrac = level.time - prevPredictedAction->timestamp;
+    stateLerpFrac *= 1.0f / (nextPredictedAction->timestamp - prevPredictedAction->timestamp);
+    Assert(stateLerpFrac > 0 && stateLerpFrac <= 1.0f);
+    const char *format = "Prev predicted action timestamp is %d, next predicted action is %d, level.time is %d\n";
+    Debug(format, prevPredictedAction->timestamp, nextPredictedAction->timestamp, level.time);
+    Debug("Should interpolate entity physics state using fraction %f\n", stateLerpFrac);
+
+    const auto &prevPhysicsState = prevPredictedAction->entityPhysicsState;
+    const auto &nextPhysicsState = nextPredictedAction->entityPhysicsState;
+
+    vec3_t expectedOrigin;
+    VectorLerp(prevPhysicsState.Origin(), stateLerpFrac, nextPhysicsState.Origin(), expectedOrigin);
+    float squaredDistanceMismatch = DistanceSquared(self->s.origin, expectedOrigin);
+    if (squaredDistanceMismatch > 3.0f * 3.0f)
+    {
+        float distanceMismatch = SQRTFAST(squaredDistanceMismatch);
+        const char *format_ = "Cannot use predicted movement action: distance mismatch %f is too high for lerp frac %f\n";
+        Debug(format_, level.time, distanceMismatch, stateLerpFrac);
+        return nullptr;
+    }
+
+    vec3_t expectedVelocity;
+    VectorLerp(prevPhysicsState.Velocity(), stateLerpFrac, nextPhysicsState.Velocity(), expectedVelocity);
+    float expectedSpeed = SQRTFAST(VectorLengthSquared(expectedVelocity));
+    float actualSpeed = SQRTFAST(VectorLengthSquared(self->velocity));
+    float speedMismatch = fabsf(actualSpeed - expectedSpeed);
+    if (speedMismatch > 0.005f * expectedSpeed)
+    {
+        Debug("Expected speed: %.1f, actual speed: %.1f, speed mismatch: %.1f\n", expectedSpeed, actualSpeed, speedMismatch);
+        Debug("Cannot use predicted movement action: speed mismatch is too high\n");
+        return nullptr;
+    }
+
+    if (actualSpeed > 30.0f)
+    {
+        Vec3 expectedVelocityDir(expectedVelocity);
+        expectedVelocityDir *= 1.0f / expectedSpeed;
+        Vec3 actualVelocityDir(self->velocity);
+        actualVelocityDir *= 1.0f / actualSpeed;
+        float cosine = expectedVelocityDir.Dot(actualVelocityDir);
+        static const float MIN_COSINE = cosf((float)DEG2RAD(5.0f));
+        if (cosine < MIN_COSINE)
+        {
+            Debug("An angle between expected and actual velocities is %f degrees\n", (float)RAD2DEG(acosf(cosine)));
+            Debug("Cannot use predicted movement action:  expected and actual velocity directions differ significantly\n");
+            return nullptr;
+        }
+    }
+
+    if (!nextPredictedAction->record.botInput.canOverrideLookVec)
+    {
+        Vec3 prevStateAngles(prevPhysicsState.Angles());
+        Vec3 nextStateAngles(nextPhysicsState.Angles());
+
+        vec3_t expectedAngles;
+        for (int i : {YAW, ROLL})
+            expectedAngles[i] = LerpAngle(prevStateAngles.Data()[i], nextStateAngles.Data()[i], stateLerpFrac);
+
+        if (!nextPredictedAction->record.botInput.canOverridePitch)
+            expectedAngles[PITCH] = LerpAngle(prevStateAngles.Data()[PITCH], nextStateAngles.Data()[PITCH], stateLerpFrac);
+        else
+            expectedAngles[PITCH] = self->s.angles[PITCH];
+
+        vec3_t expectedLookDir;
+        AngleVectors(expectedAngles, expectedLookDir, nullptr, nullptr);
+        vec3_t actualLookDir;
+        AngleVectors(expectedLookDir, actualLookDir, nullptr, nullptr);
+        float cosine = DotProduct(expectedLookDir, actualLookDir);
+        static const float MIN_COSINE = cosf((float)DEG2RAD(5.0f));
+        if (cosine < MIN_COSINE)
+        {
+            Debug("An angle between and actual look directions is %f degrees\n", (float)RAD2DEG(acosf(cosine)));
+            Debug("Cannot use predicted movement action: expected and actual look directions differ significantly\n");
+            return nullptr;
+        }
+    }
+
+    // If next predicted state is likely to be completed next frame, use its input as-is (except the velocity)
+    if (nextPredictedAction->timestamp - level.time <= game.frametime)
+    {
+        *record = nextPredictedAction->record;
+        // Apply modified velocity only once for an exact timestamp
+        if (nextPredictedAction->timestamp != level.time)
+            record->hasModifiedVelocity = false;
+        return nextPredictedAction->action;
+    }
+
+    float inputLerpFrac = game.frametime / (((float)nextPredictedAction->timestamp - level.time));
+    Assert(inputLerpFrac > 0 && inputLerpFrac <= 1.0f);
+    // If next predicted time is likely to be pending next frame again, interpolate input for a single frame ahead
+    *record = nextPredictedAction->record;
+    // Prevent applying a modified velocity from the new state
+    record->hasModifiedVelocity = false;
+    if (!record->botInput.canOverrideLookVec)
+    {
+        vec3_t actualLookDir;
+        AngleVectors(self->s.angles, actualLookDir, nullptr, nullptr);
+        float *intendedLookVec = record->botInput.intendedLookVec.Data();
+        VectorLerp(actualLookDir, inputLerpFrac, intendedLookVec, intendedLookVec);
+    }
+
+    return nextPredictedAction->action;
+}
+
+BotBaseMovementAction *BotMovementPredictionContext::GetActionAndRecordForCurrTime(BotMovementActionRecord *record)
+{
+    auto *action = GetCachedActionAndRecordForCurrTime(record);
+    if (!action)
+    {
+        BuildPlan();
+        action = GetCachedActionAndRecordForCurrTime(record);
+    }
+
+    //AITools_DrawColorLine(self->s.origin, (Vec3(0, 0, 48) + self->s.origin).Data(), action->DebugColor(), 0);
+    return action;
+}
+
+void BotMovementPredictionContext::ShowBuiltPlanPath() const
+{
+    for (unsigned i = 0, j = 1; j < predictedMovementActions.size(); ++i, ++j)
+    {
+        int color;
+        switch (i % 3)
+        {
+            case 0: color = COLOR_RGB(192, 0, 0); break;
+            case 1: color = COLOR_RGB(0, 192, 0); break;
+            case 2: color = COLOR_RGB(0, 0, 192); break;
+        }
+        const float *v1 = predictedMovementActions[i].entityPhysicsState.Origin();
+        const float *v2 = predictedMovementActions[j].entityPhysicsState.Origin();
+        AITools_DrawColorLine(v1, v2, color, 0);
+    }
+}
+
+const Ai::ReachChainVector &BotMovementPredictionContext::NextReachChain()
+{
+    if (const auto *cachedReachChain = reachChainsCachesStack.GetCached())
+        return *cachedReachChain;
+
+    Ai::ReachChainVector dummy;
+    const Ai::ReachChainVector *oldReachChain = &dummy;
+    if (const auto *cachedOldReachChain = reachChainsCachesStack.GetCachedValueBelowTopOfStack())
+        oldReachChain = cachedOldReachChain;
+
+    auto *newReachChain = new(reachChainsCachesStack.GetUnsafeBufferForCachedValue())Ai::ReachChainVector;
+    self->ai->botRef->UpdateReachChain(*oldReachChain, newReachChain, movementState->entityPhysicsState);
+    return *newReachChain;
+};
+
+inline BotEnvironmentTraceCache &BotMovementPredictionContext::EnvironmentTraceCache()
+{
+    return environmentTestResultsStack.back();
+}
+
+typedef BotEnvironmentTraceCache::ObstacleAvoidanceResult ObstacleAvoidanceResult;
+
+inline ObstacleAvoidanceResult BotMovementPredictionContext::TryAvoidFullHeightObstacles(float correctionFraction)
+{
+    auto *intendedLookVec = &this->record->botInput.intendedLookVec;
+    return EnvironmentTraceCache().TryAvoidFullHeightObstacles(this, intendedLookVec, correctionFraction);
+}
+
+inline ObstacleAvoidanceResult BotMovementPredictionContext::TryAvoidJumpableObstacles(float correctionFraction)
+{
+    auto *intendedLookVec = &this->record->botInput.intendedLookVec;
+    return EnvironmentTraceCache().TryAvoidJumpableObstacles(this, intendedLookVec, correctionFraction);
+}
+
+static void Intercepted_PredictedEvent(int entNum, int ev, int parm)
+{
+    game.edicts[entNum].ai->botRef->OnInterceptedPredictedEvent(ev, parm);
+}
+
+static void Intercepted_PMoveTouchTriggers(pmove_t *pm, vec3_t previous_origin)
+{
+    game.edicts[pm->playerState->playerNum + 1].ai->botRef->OnInterceptedPMoveTouchTriggers(pm, previous_origin);
+}
+
+static void Intercepted_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end,
+                               int ignore, int contentmask, int timeDelta )
+{
+    trap_CM_TransformedBoxTrace(t, start, end, mins, maxs, nullptr, contentmask, nullptr, nullptr);
+}
+
+void BotMovementPredictionContext::OnInterceptedPredictedEvent(int ev, int parm)
+{
+    switch (ev)
+    {
+        case EV_JUMP:
+            this->frameEvents.hasJumped = true;
+            break;
+        case EV_DASH:
+            this->frameEvents.hasDashed = true;
+            break;
+        case EV_WALLJUMP:
+            this->frameEvents.hasWalljumped = true;
+            break;
+        case EV_FALL:
+            this->frameEvents.hasTakenFallDamage = true;
+            break;
+        default: // Shut up an analyzer
+            break;
+    }
+}
+
+void BotMovementPredictionContext::OnInterceptedPMoveTouchTriggers(pmove_t *pm, vec3_t const previousOrigin)
+{
+    edict_t *ent = game.edicts + pm->playerState->POVnum;
+    // update the entity with the new position
+    VectorCopy(pm->playerState->pmove.origin, ent->s.origin);
+    VectorCopy(pm->playerState->pmove.velocity, ent->velocity);
+    VectorCopy(pm->playerState->viewangles, ent->s.angles);
+    ent->viewheight = (int)pm->playerState->viewheight;
+    VectorCopy(pm->mins, ent->r.mins);
+    VectorCopy(pm->maxs, ent->r.maxs);
+
+    ent->waterlevel = pm->waterlevel;
+    ent->watertype = pm->watertype;
+    if (pm->groundentity == -1)
+    {
+        ent->groundentity = NULL;
     }
     else
     {
-        if (!selectedEnemies.AreValid())
-            Move(input, false);
-        else if (!ShouldKeepXhairOnEnemy())
-            Move(input, MayHitWhileRunning());
-        else if (MayHitWhileRunning())
-            Move(input, true);
-        else
-            CombatMovement(input);
+        ent->groundentity = &game.edicts[pm->groundentity];
+        ent->groundentity_linkcount = ent->groundentity->linkcount;
     }
 
-    CheckTargetProximity();
+    GClip_LinkEntity(ent);
 
-    pendingLandingDashState.wasOnGroundPrevFrame = pendingLandingDashState.isOnGroundThisFrame;
+    // expand the search bounds to include the space between the previous and current origin
+    vec3_t mins, maxs;
+    for (int i = 0; i < 3; i++)
+    {
+        if (previousOrigin[i] < pm->playerState->pmove.origin[i])
+        {
+            mins[i] = previousOrigin[i] + pm->maxs[i];
+            if (mins[i] > pm->playerState->pmove.origin[i] + pm->mins[i])
+                mins[i] = pm->playerState->pmove.origin[i] + pm->mins[i];
+            maxs[i] = pm->playerState->pmove.origin[i] + pm->maxs[i];
+        }
+        else
+        {
+            mins[i] = pm->playerState->pmove.origin[i] + pm->mins[i];
+            maxs[i] = previousOrigin[i] + pm->mins[i];
+            if (maxs[i] < pm->playerState->pmove.origin[i] + pm->maxs[i])
+                maxs[i] = pm->playerState->pmove.origin[i] + pm->maxs[i];
+        }
+    }
+
+    int *triggerEnts = this->frameEvents.touchedTriggerEnts;
+    this->frameEvents.numTouchedTriggers =
+        GClip_AreaEdicts(mins, maxs, triggerEnts, FrameEvents::MAX_TOUCHED_TRIGGERS, AREA_TRIGGERS, 0);
+
+    // Save this reference on stack for faster access
+    edict_t *gameEdicts = game.edicts;
+    for (int i = 0, end = this->frameEvents.numTouchedTriggers; i < end; i++)
+    {
+        if (!ent->r.inuse)
+            break;
+
+        edict_t *hit = gameEdicts + triggerEnts[i];
+        if (!hit->r.inuse)
+            continue;
+
+        if (!hit->classname)
+            continue;
+
+        // Speed up a bit by inline testing of first character before Q_stricmp() call
+        // TODO: Entity classname must have a hash attribute
+        switch (hit->classname[0])
+        {
+            case 'f':
+            case 'F':
+                if (!Q_stricmp("unc_plat", hit->classname + 1) && GClip_EntityContact(mins, maxs, hit))
+                    this->frameEvents.hasTouchedPlatform = true;
+                break;
+            case 't':
+            case 'T':
+                if (!Q_stricmp("rigger_push", hit->classname + 1))
+                {
+                    if (GClip_EntityContact(mins, maxs, ent))
+                        this->frameEvents.hasTouchedJumppad = true;
+                }
+                else if (!Q_stricmp("rigger_teleport", hit->classname + 1))
+                {
+                    if (GClip_EntityContact(mins, maxs, ent))
+                        this->frameEvents.hasTouchedTeleporter = true;
+                }
+                break;
+        }
+    }
+}
+
+void BotMovementPredictionContext::SetupStackForStep()
+{
+    PredictedMovementAction *topOfStack;
+    if (topOfStackIndex > 0)
+    {
+        Assert(predictedMovementActions.size());
+        Assert(botMovementStatesStack.size() == predictedMovementActions.size());
+        Assert(playerStatesStack.size() == predictedMovementActions.size());
+        Assert(pendingWeaponsStack.size() == predictedMovementActions.size());
+
+        Assert(defaultBotInputsCachesStack.Size() == predictedMovementActions.size());
+        Assert(reachChainsCachesStack.Size() == predictedMovementActions.size());
+        Assert(mayHitWhileRunningCachesStack.Size() == predictedMovementActions.size());
+        Assert(environmentTestResultsStack.size() == predictedMovementActions.size());
+
+        // topOfStackIndex already points to a needed array element in case of rolling back
+        const auto &belowTopOfStack = predictedMovementActions[topOfStackIndex - 1];
+        // For case of rolling back to savepoint we have to truncate grew stacks to it
+        // The only exception is rolling back to the same top of stack.
+        if (this->shouldRollback)
+        {
+            Assert(this->topOfStackIndex <= predictedMovementActions.size());
+            predictedMovementActions.truncate(topOfStackIndex);
+            botMovementStatesStack.truncate(topOfStackIndex);
+            playerStatesStack.truncate(topOfStackIndex);
+            pendingWeaponsStack.truncate(topOfStackIndex);
+
+            defaultBotInputsCachesStack.PopToSize(topOfStackIndex);
+            reachChainsCachesStack.PopToSize(topOfStackIndex);
+            mayHitWhileRunningCachesStack.PopToSize(topOfStackIndex);
+            environmentTestResultsStack.truncate(topOfStackIndex);
+        }
+        else
+        {
+            // For case of growing stack topOfStackIndex must point at the first
+            // 'illegal' yet free element at top of the stack
+            Assert(predictedMovementActions.size() == topOfStackIndex);
+        }
+
+        topOfStack = new(predictedMovementActions.unsafe_grow_back())PredictedMovementAction(belowTopOfStack);
+
+        // Push a copy of previous player state onto top of the stack
+        oldPlayerState = &playerStatesStack.back();
+        playerStatesStack.push_back(*oldPlayerState);
+        currPlayerState = &playerStatesStack.back();
+        // Push a copy of previous movement state onto top of the stack
+        botMovementStatesStack.push_back(botMovementStatesStack.back());
+        pendingWeaponsStack.push_back(belowTopOfStack.record.pendingWeapon);
+
+        oldStepMillis = belowTopOfStack.stepMillis;
+        Assert(belowTopOfStack.timestamp >= level.time);
+        Assert(belowTopOfStack.stepMillis > 0);
+        totalMillisAhead = (belowTopOfStack.timestamp - level.time) + belowTopOfStack.stepMillis;
+    }
+    else
+    {
+        predictedMovementActions.clear();
+        botMovementStatesStack.clear();
+        playerStatesStack.clear();
+        pendingWeaponsStack.clear();
+
+        defaultBotInputsCachesStack.PopToSize(0);
+        reachChainsCachesStack.PopToSize(0);
+        mayHitWhileRunningCachesStack.PopToSize(0);
+        environmentTestResultsStack.clear();
+
+        topOfStack = new(predictedMovementActions.unsafe_grow_back())PredictedMovementAction;
+        // Push the actual bot player state onto top of the stack
+        oldPlayerState = &self->r.client->ps;
+        playerStatesStack.push_back(*oldPlayerState);
+        currPlayerState = &playerStatesStack.back();
+        // Push the actual bot movement state onto top of the stack
+        botMovementStatesStack.push_back(self->ai->botRef->movementState);
+        pendingWeaponsStack.push_back((signed char)oldPlayerState->stats[STAT_PENDING_WEAPON]);
+
+        oldStepMillis = game.frametime;
+        totalMillisAhead = 0;
+    }
+    // Check whether topOfStackIndex really points at the last element of the array
+    Assert(predictedMovementActions.size() == topOfStackIndex + 1);
+
+    movementState = &botMovementStatesStack.back();
+    // Provide a predicted movement state for Ai base class
+    self->ai->botRef->entityPhysicsState = &movementState->entityPhysicsState;
+
+    // Set the current action record
+    this->record = &topOfStack->record;
+    this->record->pendingWeapon = pendingWeaponsStack.back();
+
+    Assert(reachChainsCachesStack.Size() + 1 == predictedMovementActions.size());
+    Assert(mayHitWhileRunningCachesStack.Size() + 1 == predictedMovementActions.size());
+    // Check caches size, a cache size must match the stack size after addition of a single placeholder element.
+    Assert(defaultBotInputsCachesStack.Size() + 1 == predictedMovementActions.size());
+    // Then put placeholders for non-cached yet values onto top of caches stack
+    defaultBotInputsCachesStack.PushDummyNonCachedValue();
+    // The different method is used (there is no copy/move constructors for the template type)
+    reachChainsCachesStack.UnsafeGrowForNonCachedValue();
+    mayHitWhileRunningCachesStack.PushDummyNonCachedValue();
+    new (environmentTestResultsStack.unsafe_grow_back())BotEnvironmentTraceCache;
+
+    this->shouldRollback = false;
+
+    // Save a movement state BEFORE movement step
+    topOfStack->entityPhysicsState = this->movementState->entityPhysicsState;
+    topOfStack->movementStatesMask = this->movementState->GetContainedStatesMask();
+}
+
+inline BotBaseMovementAction *BotMovementPredictionContext::SuggestAnyAction()
+{
+    if (BotBaseMovementAction *action = this->SuggestSuitableAction())
+        return action;
+
+    // If no action has been suggested, use a default/dummy one.
+    // We have to check the combat action since it might be disabled due to planning stack overflow.
+    if (self->ai->botRef->GetSelectedEnemies().AreValid() && self->ai->botRef->ShouldAttack())
+        if (!self->ai->botRef->combatDodgeSemiRandomlyToTargetMovementAction.IsDisabledForPlanning())
+            return &self->ai->botRef->combatDodgeSemiRandomlyToTargetMovementAction;
+
+    return &self->ai->botRef->dummyMovementAction;
+}
+
+BotBaseMovementAction *BotMovementPredictionContext::SuggestSuitableAction()
+{
+    Assert(!this->actionSuggestedByAction);
+
+    const auto &entityPhysicsState = this->movementState->entityPhysicsState;
+
+    if (entityPhysicsState.waterLevel > 1)
+        return &self->ai->botRef->swimMovementAction;
+
+    if (movementState->jumppadMovementState.hasTouchedJumppad)
+    {
+        if (movementState->jumppadMovementState.hasEnteredJumppad)
+        {
+            if (movementState->flyUntilLandingMovementState.IsActive())
+            {
+                if (movementState->flyUntilLandingMovementState.ShouldBeLanding(this))
+                    return &self->ai->botRef->landOnSavedAreasSetMovementAction;
+
+                return &self->ai->botRef->flyUntilLandingMovementAction;
+            }
+            // Fly until landing movement state has been deactivate,
+            // switch to bunnying (and, implicitly, to a dummy action if it fails)
+            return &self->ai->botRef->walkCarefullyMovementAction;
+        }
+        return &self->ai->botRef->handleTriggeredJumppadMovementAction;
+    }
+
+    if (const edict_t *groundEntity = entityPhysicsState.GroundEntity())
+    {
+        if (groundEntity->use == Use_Plat)
+            return &self->ai->botRef->ridePlatformMovementAction;
+    }
+
+    if (movementState->campingSpotState.IsActive())
+        return &self->ai->botRef->campASpotMovementAction;
+
+    return &self->ai->botRef->walkCarefullyMovementAction;
+}
+
+inline void BotMovementPredictionContext::SaveActionOnStack(BotBaseMovementAction *action)
+{
+    auto *topOfStack = &this->predictedMovementActions[this->topOfStackIndex];
+    // This was a source of an annoying bug! movement state has been modified during a prediction step!
+    // We expect that record state is a saved state BEFORE the step!
+    //topOfStack->entityPhysicsState = this->movementState->entityPhysicsState;
+    topOfStack->action = action;
+    topOfStack->timestamp = level.time + this->totalMillisAhead;
+    // Check the value for sanity, huge values are a product of negative values wrapping in unsigned context
+    Assert(this->predictionStepMillis < 100);
+    Assert(this->predictionStepMillis % 16 == 0);
+    topOfStack->stepMillis = this->predictionStepMillis;
+    this->topOfStackIndex++;
+}
+
+inline void BotMovementPredictionContext::MarkSavepoint(BotBaseMovementAction *markedBy, unsigned frameIndex)
+{
+    Assert(!this->cannotApplyAction);
+    Assert(!this->shouldRollback);
+
+    Assert(frameIndex == this->topOfStackIndex || frameIndex == this->topOfStackIndex + 1);
+    this->savepointTopOfStackIndex = frameIndex;
+    Debug("%s has marked frame %d as a savepoint\n", markedBy->Name(), frameIndex);
+}
+
+inline void BotMovementPredictionContext::RollbackToSavepoint()
+{
+    Assert(!this->isCompleted);
+    Assert(this->shouldRollback);
+    Assert(this->cannotApplyAction);
+
+    constexpr const char *format = "Rolling back to savepoint frame %d from ToS frame %d\n";
+    Debug(format, this->savepointTopOfStackIndex, this->topOfStackIndex);
+    Assert(this->topOfStackIndex >= this->savepointTopOfStackIndex);
+    this->topOfStackIndex = this->savepointTopOfStackIndex;
+}
+
+inline void BotMovementPredictionContext::SetPendingWeapon(int weapon)
+{
+    Assert(weapon >= WEAP_NONE && weapon < WEAP_TOTAL);
+    record->pendingWeapon = (decltype(record->pendingWeapon))weapon;
+    pendingWeaponsStack.back() = record->pendingWeapon;
+}
+
+inline void BotMovementPredictionContext::SaveSuggestedActionForNextFrame(BotBaseMovementAction *action)
+{
+    Assert(!this->actionSuggestedByAction);
+    this->actionSuggestedByAction = action;
+}
+
+inline unsigned BotMovementPredictionContext::MillisAheadForFrameStart(unsigned frameIndex) const
+{
+    Assert(frameIndex <= topOfStackIndex);
+    if (frameIndex < topOfStackIndex)
+        return predictedMovementActions[frameIndex].timestamp - level.time;
+    return totalMillisAhead;
+}
+
+bool BotMovementPredictionContext::NextPredictionStep()
+{
+    SetupStackForStep();
+
+    // Reset prediction step millis time.
+    // Actions might set their custom step value (otherwise it will be set to a default one).
+    this->predictionStepMillis = 0;
+#ifdef CHECK_ACTION_SUGGESTION_LOOPS
+    Assert(self->ai->botRef->movementActions.size() < 32);
+    uint32_t testedActionsMask = 0;
+    StaticVector<BotBaseMovementAction *, 32> testedActionsList;
+#endif
+
+    // Get an initial suggested a-priori action
+    BotBaseMovementAction *action;
+    if (this->actionSuggestedByAction)
+    {
+        action = this->actionSuggestedByAction;
+        this->actionSuggestedByAction = nullptr;
+    }
+    else
+        action = this->SuggestSuitableAction();
+
+#ifdef CHECK_ACTION_SUGGESTION_LOOPS
+    testedActionsMask |= (1 << action->ActionNum());
+    testedActionsList.push_back(action);
+#endif
+
+    for (;;)
+    {
+        this->cannotApplyAction = false;
+        // Prevent reusing record from the switched on the current frame action
+        this->record->Clear();
+        if (this->activeAction != action)
+        {
+            // If there was an active previous action, stop its application sequence.
+            if (this->activeAction)
+            {
+                unsigned stoppedAtFrameIndex = topOfStackIndex;
+                this->activeAction->OnApplicationSequenceStopped(this, BotBaseMovementAction::SWITCHED, stoppedAtFrameIndex);
+            }
+
+            this->activeAction = action;
+            // Start the action application sequence
+            this->activeAction->OnApplicationSequenceStarted(this);
+        }
+
+        Debug("About to call action->PlanPredictionStep() for %s at ToS frame %d\n", action->Name(), topOfStackIndex);
+        action->PlanPredictionStep(this);
+        // Check for rolling back necessity (an action application chain has lead to an illegal state)
+        if (this->shouldRollback)
+        {
+            // Stop an action application sequence manually with a failure.
+            this->activeAction->OnApplicationSequenceStopped(this, BotBaseMovementAction::FAILED, (unsigned)-1);
+            // An action can be suggested again after rolling back on the next prediction step.
+            // Force calling action->OnApplicationSequenceStarted() on the next prediction step.
+            this->activeAction = nullptr;
+            Debug("Prediction step failed after action->PlanPredictionStep() call for %s\n", action->Name());
+            this->RollbackToSavepoint();
+            // Continue planning by returning true (the stack will be restored to a savepoint index)
+            return true;
+        }
+
+        if (this->cannotApplyAction)
+        {
+            // If current action suggested an alternative, use it
+            // Otherwise use the generic suggestion algorithm
+            if (this->actionSuggestedByAction)
+            {
+                Debug("Cannot apply %s, but it has suggested %s\n", action->Name(), this->actionSuggestedByAction->Name());
+                action = this->actionSuggestedByAction;
+                this->actionSuggestedByAction = nullptr;
+            }
+            else
+            {
+                auto *rejectedAction = action;
+                action = this->SuggestAnyAction();
+                Debug("Cannot apply %s, using %s suggested by SuggestSuitableAction()\n", rejectedAction->Name(), action->Name());
+            }
+
+#ifdef CHECK_ACTION_SUGGESTION_LOOPS
+            if (testedActionsMask & (1 << action->ActionNum()))
+            {
+                Debug("List of actions suggested (and tested) this frame #%d:\n", this->topOfStackIndex);
+                for (unsigned i = 0; i < testedActionsList.size(); ++i)
+                {
+                    if (Q_stricmp(testedActionsList[i]->Name(), action->Name()))
+                        Debug("  %02d: %s\n", i, testedActionsList[i]->Name());
+                    else
+                        Debug(">>%02d: %s\n", i, testedActionsList[i]->Name());
+                }
+
+                AI_FailWith(__FUNCTION__, "An infinite action application loop has been detected\n");
+            }
+            testedActionsMask |= (1 << action->ActionNum());
+            testedActionsList.push_back(action);
+#endif
+            // Test next action. Action switch will be handled by the logic above before calling action->PlanPredictionStep().
+            continue;
+        }
+
+        // Movement prediction is completed
+        if (this->isCompleted)
+        {
+            constexpr const char *format = "Movement prediction is completed on %s, ToS frame %d, %d millis ahead\n";
+            Debug(format, action->Name(), this->topOfStackIndex, this->totalMillisAhead);
+            // Stop an action application sequence manually with a success.
+            action->OnApplicationSequenceStopped(this, BotBaseMovementAction::SUCCEEDED, this->topOfStackIndex);
+            // Save the predicted movement action
+            this->SaveActionOnStack(action);
+            // Stop planning by returning false
+            return false;
+        }
+
+        // An action can be applied, stop testing suitable actions
+        break;
+    }
+
+    Assert(action == this->activeAction);
+
+    // If prediction step millis time has not been set, set it to a default value
+    if (!this->predictionStepMillis)
+        this->predictionStepMillis = 48;
+
+    NextMovementStep();
+
+    action->CheckPredictionStepResults(this);
+    // If results check has been passed
+    if (!this->shouldRollback)
+    {
+        // If movement planning is completed, there is no need to do a next step
+        if (this->isCompleted)
+        {
+            constexpr const char *format = "Movement prediction is completed on %s, ToS frame %d, %d millis ahead\n";
+            Debug(format, action->Name(), this->topOfStackIndex, this->totalMillisAhead);
+            SaveActionOnStack(action);
+            // Stop action application sequence manually with a success.
+            // Prevent duplicated OnApplicationSequenceStopped() call
+            // (it might have been done in action->CheckPredictionStepResults() for this->activeAction)
+            if (this->activeAction)
+                this->activeAction->OnApplicationSequenceStopped(this, BotBaseMovementAction::SUCCEEDED, topOfStackIndex);
+            // Stop planning by returning false
+            return false;
+        }
+
+        // Check whether next prediction step is possible
+        if (this->CanGrowStackForNextStep())
+        {
+            SaveActionOnStack(action);
+            // Continue planning by returning true
+            return true;
+        }
+
+        // Disable this action for further planning (it has lead to stack overflow)
+        action->isDisabledForPlanning = true;
+        Debug("Stack overflow on action %s, this action will be disabled for further planning\n", action->Name());
+        this->SetPendingRollback();
+    }
+
+    constexpr const char *format = "Prediction step failed for %s after calling action->CheckPredictionStepResults()\n";
+    Debug(format, action->Name());
+
+    // An active action might have been already reset in action->CheckPredictionStepResults()
+    if (this->activeAction)
+    {
+        // Stop action application sequence with a failure manually.
+        this->activeAction->OnApplicationSequenceStopped(this, BotBaseMovementAction::FAILED, (unsigned)-1);
+    }
+    // An action can be suggested again after rolling back on the next prediction step.
+    // Force calling action->OnApplicationSequenceStarted() on the next prediction step.
+    this->activeAction = nullptr;
+
+    this->RollbackToSavepoint();
+    // Continue planning by returning true
+    return true;
+}
+
+void BotMovementPredictionContext::BuildPlan()
+{
+    for (auto *movementAction: self->ai->botRef->movementActions)
+        movementAction->BeforePlanning();
+
+    // Intercept these calls implicitly performed by PMove()
+    const auto general_PMoveTouchTriggers = module_PMoveTouchTriggers;
+    const auto general_PredictedEvent = module_PredictedEvent;
+
+    module_PMoveTouchTriggers = &Intercepted_PMoveTouchTriggers;
+    module_PredictedEvent = &Intercepted_PredictedEvent;
+
+    // The entity state might be modified by Intercepted_PMoveTouchTriggers(), so we have to save it
+    const Vec3 origin(self->s.origin);
+    const Vec3 velocity(self->velocity);
+    const Vec3 angles(self->s.angles);
+    const int viewHeight = self->viewheight;
+    const Vec3 mins(self->r.mins);
+    const Vec3 maxs(self->r.maxs);
+    const int waterLevel = self->waterlevel;
+    const int waterType = self->watertype;
+    edict_t *const groundEntity = self->groundentity;
+    const int groundEntityLinkCount = self->groundentity_linkcount;
+
+    auto savedPlayerState = self->r.client->ps;
+    auto savedPMove = self->r.client->old_pmove;
+
+    Assert(self->ai->botRef->entityPhysicsState == &self->ai->botRef->movementState.entityPhysicsState);
+    // Save current entity physics state (it will be modified even for a single prediction step)
+    const AiEntityPhysicsState currEntityPhysicsState = self->ai->botRef->movementState.entityPhysicsState;
+
+    // Remember to reset these values before each planning session
+    this->totalMillisAhead = 0;
+    this->savepointTopOfStackIndex = 0;
+    this->topOfStackIndex = 0;
+    this->activeAction = nullptr;
+    this->actionSuggestedByAction = nullptr;
+    this->isCompleted = false;
+    this->shouldRollback = false;
+    for (;;)
+    {
+        if (!NextPredictionStep())
+            break;
+    }
+
+    // The entity might be linked for some predicted state by Intercepted_PMoveTouchTriggers()
+    GClip_UnlinkEntity(self);
+
+    // Restore entity state
+    origin.CopyTo(self->s.origin);
+    velocity.CopyTo(self->velocity);
+    angles.CopyTo(self->s.angles);
+    self->viewheight = viewHeight;
+    mins.CopyTo(self->r.mins);
+    maxs.CopyTo(self->r.maxs);
+    self->waterlevel = waterLevel;
+    self->watertype = waterType;
+    self->groundentity = groundEntity;
+    self->groundentity_linkcount = groundEntityLinkCount;
+
+    self->r.client->ps = savedPlayerState;
+    self->r.client->old_pmove = savedPMove;
+
+    // Set first predicted movement state as the current bot movement state
+    self->ai->botRef->movementState = botMovementStatesStack[0];
+    // Even the first predicted movement state usually has modified physics state, restore it to a saved value
+    self->ai->botRef->movementState.entityPhysicsState = currEntityPhysicsState;
+    // Restore the current entity physics state reference in Ai subclass
+    self->ai->botRef->entityPhysicsState = &self->ai->botRef->movementState.entityPhysicsState;
+    // These assertions helped to find an annoying bug during development
+    Assert(VectorCompare(self->s.origin, self->ai->botRef->entityPhysicsState->Origin()));
+    Assert(VectorCompare(self->velocity, self->ai->botRef->entityPhysicsState->Velocity()));
+
+    module_PMoveTouchTriggers = general_PMoveTouchTriggers;
+    module_PredictedEvent = general_PredictedEvent;
+
+    for (auto *movementAction: self->ai->botRef->movementActions)
+        movementAction->AfterPlanning();
+}
+
+void BotMovementPredictionContext::NextMovementStep()
+{
+    auto *botInput = &this->record->botInput;
+    auto *entityPhysicsState = &movementState->entityPhysicsState;
+
+    // Make sure we're modify botInput/entityPhysicsState before copying to ucmd
+
+    // Simulate Bot::Think();
+    self->ai->botRef->ApplyPendingTurnToLookAtPoint(botInput, this);
+    // Simulate Bot::MovementFrame();
+    this->activeAction->ExecActionRecord(this->record, botInput, this);
+    // Simulate Bot::Think();
+    self->ai->botRef->ApplyInput(botInput, this);
+
+    // ExecActionRecord() might fail or complete the planning execution early.
+    // Do not call PMove() in these cases
+    if (this->cannotApplyAction || this->isCompleted)
+        return;
+
+    // Prepare for PMove()
+    currPlayerState->POVnum = (unsigned)ENTNUM(self);
+    currPlayerState->playerNum = (unsigned)PLAYERNUM(self);
+
+    VectorCopy(entityPhysicsState->Origin(), currPlayerState->pmove.origin);
+    VectorCopy(entityPhysicsState->Velocity(), currPlayerState->pmove.velocity);
+    Vec3 angles(entityPhysicsState->Angles());
+    angles.CopyTo(currPlayerState->viewangles);
+
+    currPlayerState->pmove.gravity = (int)level.gravity;
+    currPlayerState->pmove.pm_type = PM_NORMAL;
+
+    pmove_t pm;
+    // TODO: Eliminate this call?
+    memset(&pm, 0, sizeof(pmove_t));
+
+    pm.playerState = currPlayerState;
+    botInput->CopyToUcmd(&pm.cmd);
+
+    for (int i = 0; i < 3; i++)
+        pm.cmd.angles[i] = (short)ANGLE2SHORT(angles.Data()[i]) - currPlayerState->pmove.delta_angles[i];
+
+    VectorSet(currPlayerState->pmove.delta_angles, 0, 0, 0);
+
+    // Check for unsigned value wrapping
+    Assert(this->predictionStepMillis && this->predictionStepMillis < 100);
+    Assert(this->predictionStepMillis % 16 == 0);
+    pm.cmd.msec = (uint8_t)this->predictionStepMillis;
+    pm.cmd.serverTimeStamp = game.serverTime + this->totalMillisAhead;
+
+    if (memcmp(&oldPlayerState->pmove, &currPlayerState->pmove, sizeof(pmove_state_t)))
+        pm.snapinitial = true;
+
+    this->frameEvents.Clear();
+
+    // We currently test collisions only against a solid world on each movement step and the corresponding PMove() call.
+    // Touching trigger entities is handled by Intercepted_PMoveTouchTriggers(), also we use AAS sampling for it.
+    // Actions that involve touching trigger entities currently are never predicted ahead.
+    // If an action really needs to test against entities, a corresponding prediction step flag
+    // should be added and this interception of the module_Trace() should be skipped if the flag is set.
+
+    // Save the G_GS_Trace() pointer
+    auto oldModuleTrace = module_Trace;
+    module_Trace = Intercepted_Trace;
+
+    Pmove(&pm);
+
+    // Restore the G_GS_Trace() pointer
+    module_Trace = oldModuleTrace;
+
+    // Update the entity physics state that is going to be used in the next prediction frame
+    entityPhysicsState->UpdateFromPMove(&pm);
+    // Update the entire movement state that is going to be used in the next prediction frame
+    this->movementState->Frame(this->predictionStepMillis);
+    this->movementState->TryDeactivateContainedStates(self, this);
+}
+
+void BotMovementPredictionContext::Debug(const char *format, ...) const
+{
+#ifdef ENABLE_MOVEMENT_DEBUG_OUTPUT
+    char tag[64];
+    Q_snprintfz(tag, 64, "^6MovementPredictionContext(%s)", Nick(self));
+
+    va_list va;
+    va_start(va, format);
+    AI_Debugv(tag, format, va);
+    va_end(va);
+#endif
+}
+
+inline void BotMovementPredictionContext::Assert(bool condition) const
+{
+#ifdef ENABLE_MOVEMENT_ASSERTIONS
+    if (!condition)
+        abort();
+#endif
+}
+
+constexpr float Z_NO_BEND_SCALE = 0.5f;
+
+void BotMovementPredictionContext::SetDefaultBotInput()
+{
+    // Check for cached value first
+    if (const BotInput *cachedDefaultBotInput = defaultBotInputsCachesStack.GetCached())
+    {
+        this->record->botInput = *cachedDefaultBotInput;
+        return;
+    }
+
+    const auto &entityPhysicsState = movementState->entityPhysicsState;
+    auto *botInput = &this->record->botInput;
+
+    botInput->ClearMovementDirections();
+    botInput->SetSpecialButton(false);
+    botInput->SetWalkButton(false);
+    botInput->isUcmdSet = true;
+
+    // If angles are already set (e.g. by pending look at point), do not try to set angles for following AAS reach. chain
+    if (botInput->hasAlreadyComputedAngles)
+    {
+        // Save cached value and return
+        defaultBotInputsCachesStack.SetCachedValue(*botInput);
+        return;
+    }
+
+    botInput->isLookVecSet = true;
+    botInput->canOverrideLookVec = false;
+    botInput->canOverridePitch = true;
+    botInput->canOverrideUcmd = false;
+
+    const int navTargetAasAreaNum = NavTargetAasAreaNum();
+    const int currAasAreaNum = CurrAasAreaNum();
+    // If a current area and a nav target area are defined
+    if (currAasAreaNum && navTargetAasAreaNum)
+    {
+        // If bot is not in nav target area
+        if (currAasAreaNum != navTargetAasAreaNum)
+        {
+            const int nextReachNum = this->NextReachNum();
+            if (nextReachNum)
+            {
+                const auto &nextReach = AiAasWorld::Instance()->Reachabilities()[nextReachNum];
+                if (DistanceSquared(entityPhysicsState.Origin(), nextReach.start) < 12 * 12)
+                {
+                    Vec3 reachDir(nextReach.end);
+                    reachDir -= nextReach.start;
+                    reachDir.NormalizeFast();
+                    botInput->intendedLookVec = (16.0f * reachDir + nextReach.start);
+                    botInput->intendedLookVec -= entityPhysicsState.Origin();
+                    if (entityPhysicsState.GroundEntity())
+                        botInput->intendedLookVec.Z() = 0;
+                }
+                else
+                {
+                    VectorCopy(nextReach.start, botInput->intendedLookVec.Data());
+                    botInput->intendedLookVec -= entityPhysicsState.Origin();
+                }
+                // Save a cached value and return
+                defaultBotInputsCachesStack.SetCachedValue(*botInput);
+                return;
+            }
+        }
+        else
+        {
+            // Look at the nav target
+            botInput->intendedLookVec = NavTargetOrigin();
+            botInput->intendedLookVec -= entityPhysicsState.Origin();
+            // Save a cached value and return
+            defaultBotInputsCachesStack.SetCachedValue(*botInput);
+            return;
+        }
+    }
+
+    // A valid reachability chain does not exist, use dummy relaxed movement
+    if (VectorLengthSquared(entityPhysicsState.Velocity()) > 1)
+    {
+        // Follow the existing velocity direction
+        VectorCopy(entityPhysicsState.Velocity(), botInput->intendedLookVec.Data());
+    }
+    else
+    {
+        // The existing velocity is too low to extract a direction from it, keep looking in the same direction
+        botInput->alreadyComputedAngles.Set(entityPhysicsState.Angles());
+        botInput->hasAlreadyComputedAngles = true;
+    }
+
+    // Allow overriding look angles for aiming (since they are set to dummy ones)
+    botInput->canOverrideLookVec = true;
+    // Save a cached value and return
+    defaultBotInputsCachesStack.SetCachedValue(*botInput);
+}
+
+void BotBaseMovementAction::RegisterSelf()
+{
+    this->self = bot->self;
+    this->actionNum = bot->movementActions.size();
+    bot->movementActions.push_back(this);
+}
+
+inline BotBaseMovementAction &BotBaseMovementAction::DummyAction()
+{
+    // We have to check the combat action since it might be disabled due to planning stack overflow.
+    if (self->ai->botRef->ShouldKeepXhairOnEnemy() && self->ai->botRef->GetSelectedEnemies().AreValid())
+        if (!self->ai->botRef->combatDodgeSemiRandomlyToTargetMovementAction.IsDisabledForPlanning())
+            return self->ai->botRef->combatDodgeSemiRandomlyToTargetMovementAction;
+
+    return self->ai->botRef->dummyMovementAction;
+}
+
+inline BotBaseMovementAction &BotBaseMovementAction::DefaultWalkAction()
+{
+    return self->ai->botRef->walkCarefullyMovementAction;
+}
+inline BotBaseMovementAction &BotBaseMovementAction::DefaultBunnyAction()
+{
+    return self->ai->botRef->bunnyStraighteningReachChainMovementAction;
+}
+inline BotBaseMovementAction &BotBaseMovementAction::FallbackBunnyAction()
+{
+    return self->ai->botRef->bunnyInVelocityDirectionMovementAction;
+}
+inline BotFlyUntilLandingMovementAction &BotBaseMovementAction::FlyUntilLandingAction()
+{
+    return self->ai->botRef->flyUntilLandingMovementAction;
+}
+inline BotLandOnSavedAreasMovementAction &BotBaseMovementAction::LandOnSavedAreasAction()
+{
+    return self->ai->botRef->landOnSavedAreasSetMovementAction;
+}
+
+void BotBaseMovementAction::Debug(const char *format, ...) const
+{
+#ifdef ENABLE_MOVEMENT_DEBUG_OUTPUT
+    char tag[128];
+    Q_snprintfz(tag, 128, "^5%s(%s)", this->Name(), Nick(self));
+
+    va_list va;
+    va_start(va, format);
+    AI_Debugv(tag, format, va);
+    va_end(va);
+#endif
+}
+
+inline void BotBaseMovementAction::Assert(bool condition) const
+{
+#ifdef ENABLE_MOVEMENT_ASSERTIONS
+    if (!condition)
+        abort();
+#endif
+}
+
+void BotBaseMovementAction::ExecActionRecord(const BotMovementActionRecord *record,
+                                             BotInput *inputWillBeUsed,
+                                             BotMovementPredictionContext *context)
+{
+    Assert(inputWillBeUsed);
+    *inputWillBeUsed = record->botInput;
+
+    if (context)
+    {
+        if (record->hasModifiedVelocity)
+        {
+            context->movementState->entityPhysicsState.SetVelocity(record->ModifiedVelocity());
+        }
+
+        // Pending weapon must have been set in PlanPredictionStep()
+        // (in planning context it is defined by record->pendingWeapon, pendingWeaponsStack.back()).
+        if (record->pendingWeapon >= WEAP_NONE)
+        {
+            //Assert(record->pendingWeapon == context->PendingWeapon());
+        }
+        return;
+    }
+
+    if (record->hasModifiedVelocity)
+        record->ModifiedVelocity().CopyTo(self->velocity);
+
+    if (record->pendingWeapon != -1)
+        self->r.client->ps.stats[STAT_PENDING_WEAPON] = record->pendingWeapon;
+}
+
+void BotBaseMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+{
+    // These flags might be set by ExecActionRecord(). Skip checks in this case.
+    if (context->cannotApplyAction || context->isCompleted)
+        return;
+
+    const auto &newEntityPhysicsState = context->movementState->entityPhysicsState;
+    const auto &oldEntityPhysicsState = context->PhysicsStateBeforeStep();
+
+    // This is a default basic test that suits many relatively simple actions
+    // Forbid movement from regular contents to "bad" contents
+    // (if old contents are "bad" too, a movement step is considered legal)
+    // Note: we do not check any points between these two ones,
+    // and this can lead to missing "bad contents" for large prediction time step
+
+    constexpr auto badContents = CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_DONOTENTER;
+    if (newEntityPhysicsState.waterType & badContents)
+    {
+        if (!(oldEntityPhysicsState.waterType & badContents))
+        {
+            if (badContents & CONTENTS_LAVA)
+                Debug("A prediction step has lead to entering CONTENTS_LAVA point\n");
+            else if (badContents & CONTENTS_SLIME)
+                Debug("A prediction step has lead to entering CONTENTS_SLIME point\n");
+            else if (badContents & CONTENTS_DONOTENTER)
+                Debug("A prediction step has lead to entering CONTENTS_DONOTENTER point\n");
+
+            context->SetPendingRollback();
+            return;
+        }
+    }
+
+    if (stopPredictionOnEnteringWater && newEntityPhysicsState.waterLevel > 1)
+    {
+        Assert(this != &self->ai->botRef->swimMovementAction);
+        Debug("A prediction step has lead to entering water, should stop planning\n");
+        context->isCompleted = true;
+        return;
+    }
+
+    // Check AAS areas in the same way
+    int oldAasAreaNum = oldEntityPhysicsState.CurrAasAreaNum();
+    int newAasAreaNum = newEntityPhysicsState.CurrAasAreaNum();
+    if (newAasAreaNum != oldAasAreaNum)
+    {
+        const auto *aasAreaSettings = AiAasWorld::Instance()->AreaSettings();
+        const auto &currAreaSettings = aasAreaSettings[newAasAreaNum];
+        const auto &prevAreaSettings = aasAreaSettings[oldAasAreaNum];
+
+        if (currAreaSettings.areaflags & AREA_DISABLED)
+        {
+            if (!(prevAreaSettings.areaflags & AREA_DISABLED))
+            {
+                Debug("A prediction step has lead to entering an AREA_DISABLED AAS area\n");
+                context->SetPendingRollback();
+                return;
+            }
+        }
+
+        if (currAreaSettings.contents & AREACONTENTS_DONOTENTER)
+        {
+            if (!(prevAreaSettings.contents & AREACONTENTS_DONOTENTER))
+            {
+                Debug("A prediction step has lead to entering an AREACONTENTS_DONOTENTER AAS area\n");
+                context->SetPendingRollback();
+                return;
+            }
+        }
+    }
+
+    if (this->stopPredictionOnTouchingJumppad && context->frameEvents.hasTouchedJumppad)
+    {
+        Debug("A prediction step has lead to touching a jumppad, should stop planning\n");
+        context->isCompleted = true;
+        return;
+    }
+    if (this->stopPredictionOnTouchingTeleporter && context->frameEvents.hasTouchedTeleporter)
+    {
+        Debug("A prediction step has lead to touching a teleporter, should stop planning\n");
+        context->isCompleted = true;
+        return;
+    }
+    if (this->stopPredictionOnTouchingPlatform && context->frameEvents.hasTouchedPlatform)
+    {
+        Debug("A prediction step has lead to touching a platform, should stop planning\n");
+        context->isCompleted = true;
+        return;
+    }
+
+    if (this->stopPredictionOnTouchingNavEntity)
+    {
+        const edict_t *gameEdicts = game.edicts;
+        const int *ents = context->frameEvents.touchedTriggerEnts;
+        for (int i = 0, end = context->frameEvents.numTouchedTriggers; i < end; ++i)
+        {
+            const edict_t *ent = gameEdicts + ents[i];
+            if (self->ai->botRef->IsNavTargetBasedOnEntity(ent))
+            {
+                const char *entName = ent->classname ? ent->classname : "???";
+                Debug("A prediction step has lead to touching a nav entity %s, should stop planning\n", entName);
+                context->isCompleted = true;
+                return;
+            }
+        }
+    }
+}
+
+void BotBaseMovementAction::BeforePlanning()
+{
+    isDisabledForPlanning = false;
+    sequenceStartFrameIndex = std::numeric_limits<unsigned>::max();
+    sequenceEndFrameIndex = std::numeric_limits<unsigned>::max();
+}
+
+void BotBaseMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
+{
+    Debug("OnApplicationSequenceStarted(context): context->topOfStackIndex=%d\n", context->topOfStackIndex);
+
+    constexpr auto invalidValue = std::numeric_limits<unsigned>::max();
+    Assert(sequenceStartFrameIndex == invalidValue);
+    sequenceEndFrameIndex = invalidValue;
+    sequenceStartFrameIndex = context->topOfStackIndex;
+    originAtSequenceStart.Set(context->movementState->entityPhysicsState.Origin());
+}
+
+void BotBaseMovementAction::OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                                         SequenceStopReason reason,
+                                                         unsigned stoppedAtFrameIndex)
+{
+    constexpr auto invalidValue = std::numeric_limits<unsigned>::max();
+    Assert(sequenceStartFrameIndex != invalidValue);
+    Assert(sequenceEndFrameIndex == invalidValue);
+    Assert(sequenceStartFrameIndex <= stoppedAtFrameIndex);
+    sequenceStartFrameIndex = invalidValue;
+    sequenceEndFrameIndex = stoppedAtFrameIndex;
+
+    const char *format = "OnApplicationSequenceStopped(context, %s, %d): context->topOfStackIndex=%d\n";
+    switch (reason)
+    {
+        case SUCCEEDED:
+            Debug(format, "succeeded", stoppedAtFrameIndex, context->topOfStackIndex);
+            context->MarkSavepoint(this, stoppedAtFrameIndex + 1);
+            break;
+        case SWITCHED:
+            Debug(format, "switched", stoppedAtFrameIndex, context->topOfStackIndex);
+            context->MarkSavepoint(this, stoppedAtFrameIndex);
+            break;
+        case FAILED:
+            Debug(format, "failed", stoppedAtFrameIndex, context->topOfStackIndex);
+            break;
+    }
+}
+
+inline unsigned BotBaseMovementAction::SequenceDuration(const BotMovementPredictionContext *context) const
+{
+    unsigned millisAheadAtSequenceStart = context->MillisAheadForFrameStart(sequenceStartFrameIndex);
+    // TODO: Ensure that the method gets called only after prediction step in some way
+    // (We need a valid and actual prediction step millis)
+    Assert(context->predictionStepMillis);
+    Assert(context->predictionStepMillis % 16 == 0);
+    Assert(context->totalMillisAhead + context->predictionStepMillis > millisAheadAtSequenceStart);
+    return context->totalMillisAhead + context->predictionStepMillis - millisAheadAtSequenceStart;
+}
+
+void BotDummyMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    context->SetDefaultBotInput();
+    auto *botInput = &context->record->botInput;
+
+    if (context->NavTargetAasAreaNum())
+    {
+        botInput->SetForwardMovement(1);
+        // Check both following context conditions using && for these reasons:
+        // 1) A nav target area might be huge, do not walk prematurely
+        // 2) A bot might be still outside of a nav target area even if it is close to a nav target
+        if (self->ai->botRef->ShouldMoveCarefully() || (context->IsInNavTargetArea() && context->IsCloseToNavTarget()))
+            botInput->SetWalkButton(true);
+    }
+
+    // Try to prevent losing velocity due to a ground friction
+    // if other actions are temporarily unavailable for few frames.
+    // However, respect the "silent" tactics flag, this action is a fallback one
+    // for all other actions and thus can be applied in any situation
+    float obstacleAvoidanceCorrectonFactor = 0.7f;
+    if (!self->ai->botRef->ShouldBeSilent() && !self->ai->botRef->ShouldMoveCarefully())
+    {
+        const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+        if (VectorLengthSquared(entityPhysicsState.Velocity()) > 450 * 450)
+        {
+            botInput->SetUpMovement(1);
+        }
+        else
+        {
+            obstacleAvoidanceCorrectonFactor = 0.5f;
+            // Prevent blocking when a jump is expected (sometimes its the only available action)
+            if (int nextReachNum = context->NextReachNum())
+            {
+                const auto &nextReach = AiAasWorld::Instance()->Reachabilities()[nextReachNum];
+                switch (nextReach.traveltype)
+                {
+                    case TRAVEL_JUMP:
+                    case TRAVEL_STRAFEJUMP:
+                        if (DistanceSquared(nextReach.start, entityPhysicsState.Origin()) < 16 * 16)
+                        {
+                            botInput->SetSpecialButton(true);
+                            botInput->SetUpMovement(1);
+                        }
+                        break;
+                    case TRAVEL_DOUBLEJUMP:
+                    case TRAVEL_BARRIERJUMP:
+                        if (DistanceSquared(nextReach.start, entityPhysicsState.Origin()) < 12 * 12)
+                        {
+                            botInput->SetUpMovement(1);
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    if (botInput->UpMovement())
+        context->TryAvoidJumpableObstacles(0.3f);
+    else
+        context->TryAvoidFullHeightObstacles(obstacleAvoidanceCorrectonFactor);
+
+    botInput->canOverrideUcmd = true;
+    botInput->canOverrideLookVec = true;
+    Debug("Planning is complete: the action should never be predicted ahead\n");
+    context->isCompleted = true;
+}
+
+void BotRidePlatformMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    if (!GenericCheckIsActionEnabled(context, &DefaultWalkAction()))
+        return;
+
+    context->SetDefaultBotInput();
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+
+    const edict_t *groundEntity = entityPhysicsState.GroundEntity();
+    if (!groundEntity || groundEntity->use != Use_Plat)
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &DefaultWalkAction();
+        Debug("Cannot apply the action (cannot find a platform below)\n");
+        return;
+    }
+
+    switch (groundEntity->moveinfo.state)
+    {
+        case STATE_TOP:
+            this->isDisabledForPlanning = true;
+            context->cannotApplyAction = true;
+            context->actionSuggestedByAction = &DefaultWalkAction();
+            Debug("Cannot apply the action (the platform is in TOP state), start running away from it\n");
+            // Start running off the platform (this should be handled by context!)
+            break;
+        default:
+            // Stand idle on a platform, it is poor but platforms are not widely used.
+            context->record->botInput.ClearButtons();
+            context->record->botInput.ClearMovementDirections();
+            context->record->botInput.canOverrideUcmd = false;
+            context->record->botInput.canOverrideLookVec = true;
+            // Do not predict further movement
+            context->isCompleted = true;
+            Debug("Stand idle on the platform, do not plan ahead\n");
+            break;
+    }
+}
+
+void BotSwimMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    if (!GenericCheckIsActionEnabled(context))
+        return;
+
+    int nextReachNum = context->NextReachNum();
+    if (!nextReachNum)
+    {
+        context->cannotApplyAction = true;
+        Debug("Cannot apply action: next reachability is undefined in the given context state\n");
+        return;
+    }
+
+    context->SetDefaultBotInput();
+    context->record->botInput.canOverrideLookVec = true;
+    context->record->botInput.SetForwardMovement(1);
+    context->TryAvoidFullHeightObstacles(0.3f);
+
+    const auto &nextReach = AiAasWorld::Instance()->Reachabilities()[nextReachNum];
+    if (nextReach.traveltype == TRAVEL_SWIM)
+        return;
+
+    if (DistanceSquared(nextReach.start, context->movementState->entityPhysicsState.Origin()) > 24 * 24)
+        return;
+
+    // Exit water (might it be above a regular next area? this case is handled by the condition)
+    if (nextReach.start[2] < nextReach.end[2])
+        context->record->botInput.SetUpMovement(1);
+    else
+        context->record->botInput.SetUpMovement(-1);
+}
+
+void BotSwimMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction::CheckPredictionStepResults(context);
+    if (context->cannotApplyAction || context->isCompleted)
+        return;
+
+    const auto &oldPhysicsState = context->PhysicsStateBeforeStep();
+    const auto &newPhysicsState = context->movementState->entityPhysicsState;
+
+    Assert(oldPhysicsState.waterLevel > 1);
+    if (newPhysicsState.waterLevel < 2)
+    {
+        context->isCompleted = true;
+        Debug("A movement step has lead to exiting water, should stop planning\n");
+        return;
+    }
+}
+
+void BotFlyUntilLandingMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    if (!GenericCheckIsActionEnabled(context))
+        return;
+
+    if (context->movementState->entityPhysicsState.GroundEntity())
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &DummyAction();
+        Debug("A bot has landed on a ground in the given context state\n");
+        return;
+    }
+
+    if (context->movementState->flyUntilLandingMovementState.ShouldBeLanding(context))
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &LandOnSavedAreasAction();
+        Debug("Bot should perform landing in the given context state\n");
+        return;
+    }
+
+    context->SetDefaultBotInput();
+    context->record->botInput.ClearMovementDirections();
+    context->record->botInput.canOverrideLookVec = true;
+    Debug("Planning is completed (the action should never be predicted ahead\n");
+    context->isCompleted = true;
+}
+
+void Bot::MovementFrame(BotInput *input)
+{
+    this->movementState.Frame(game.frametime);
+    this->movementState.TryDeactivateContainedStates(self, nullptr);
+
+    BotMovementActionRecord movementActionRecord;
+    BotBaseMovementAction *movementAction = movementPredictionContext.GetActionAndRecordForCurrTime(&movementActionRecord);
+    movementAction->ExecActionRecord(&movementActionRecord, input, nullptr);
+
+    CheckTargetProximity();
 }
 
 constexpr float STRAIGHT_MOVEMENT_DOT_THRESHOLD = 0.8f;
 
-bool Bot::MayHitWhileRunning() const
+BotMovementPredictionContext::HitWhileRunningTestResult BotMovementPredictionContext::MayHitWhileRunning()
 {
-    if (!HasEnemy())
-        FailWith("MayHitWhileRunning(): there is no enemy");
+    if (const auto *cachedResult = mayHitWhileRunningCachesStack.GetCached())
+        return *cachedResult;
 
-    Vec3 botToEnemyDir(EnemyOrigin());
-    botToEnemyDir -= self->s.origin;
+    if (!self->ai->botRef->HasEnemy())
+    {
+        mayHitWhileRunningCachesStack.SetCachedValue(HitWhileRunningTestResult::Failure());
+        return HitWhileRunningTestResult::Failure();
+    }
+
+    const auto &entityPhysicsState = movementState->entityPhysicsState;
+    vec3_t botLookDir;
+    AngleVectors(entityPhysicsState.Angles().Data(), botLookDir, nullptr, nullptr);
+
+    Vec3 botToEnemyDir(self->ai->botRef->EnemyOrigin());
+    botToEnemyDir -= entityPhysicsState.Origin();
     // We are sure it has non-zero length (enemies collide with the bot)
     botToEnemyDir.NormalizeFast();
 
-    vec3_t botLookDir;
-    AngleVectors(self->s.angles, botLookDir, nullptr, nullptr);
     // Check whether the bot may hit while running
     if (botToEnemyDir.Dot(botLookDir) > STRAIGHT_MOVEMENT_DOT_THRESHOLD)
-        return true;
+    {
+        HitWhileRunningTestResult result;
+        result.canHitAsIs = true;
+        result.mayHitOverridingPitch = true;
+        mayHitWhileRunningCachesStack.SetCachedValue(result);
+        return result;
+    }
 
     // Check whether we can change pitch
     botLookDir[2] = botToEnemyDir.Z();
     // Normalize again
     float lookDirSquareLength = VectorLengthSquared(botLookDir);
     if (lookDirSquareLength < 0.000001f)
-        return false;
+    {
+        mayHitWhileRunningCachesStack.SetCachedValue(HitWhileRunningTestResult::Failure());
+        return HitWhileRunningTestResult::Failure();
+    }
 
     float lookDirInvLength = Q_RSqrt(lookDirSquareLength);
     VectorScale(botLookDir, lookDirInvLength, botLookDir);
-    return botToEnemyDir.Dot(botLookDir) > STRAIGHT_MOVEMENT_DOT_THRESHOLD;
+    if (botToEnemyDir.Dot(botLookDir) > STRAIGHT_MOVEMENT_DOT_THRESHOLD)
+    {
+        HitWhileRunningTestResult result;
+        result.canHitAsIs = false;
+        result.mayHitOverridingPitch = true;
+        mayHitWhileRunningCachesStack.SetCachedValue(result);
+        return result;
+    }
+
+    mayHitWhileRunningCachesStack.SetCachedValue(HitWhileRunningTestResult::Failure());
+    return HitWhileRunningTestResult::Failure();
 }
 
-void Bot::Move(BotInput *input, bool mayHitWhileRunning)
+void BotLandOnSavedAreasMovementAction::FilterRawAreas(const vec3_t start, const vec3_t target, int *rawAreas,
+                                                       int numRawAreas, FilteredRawAreas &result)
 {
-    if (self->is_ladder)
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto *aasWorldAreas = aasWorld->Areas();
+    const auto *aasWorldAreaSettings = aasWorld->AreaSettings();
+
+    Vec3 startToTargetDir(target);
+    startToTargetDir -= start;
+    startToTargetDir.NormalizeFast();
+    bool verticalTrajectory = startToTargetDir.Z() > 0.7f;
+
+    float maxAreaGroundHeight = -999999.0f;
+    float minAreaGroundHeight = +999999.0f;
+    for (int i = 0; i < numRawAreas; ++i)
     {
-        MoveOnLadder(input);
-    }
-    else if (jumppadMovementState.hasTouchedJumppad)
-    {
-        MoveEnteringJumppad(input);
-    }
-    else if (jumppadMovementState.hasEnteredJumppad)
-    {
-        MoveRidingJummpad(input);
-    }
-    else if (self->groundentity && Use_Plat == self->groundentity->use)
-    {
-        MoveOnPlatform(input);
-    }
-    else if (rocketJumpMovementState.IsActive())
-    {
-        MoveInRocketJumpState(input, mayHitWhileRunning);
-    }
-    else // standard movement
-    {
-        if (campingSpotState.IsActive())
-        {
-            MoveCampingASpot(input);
-        }
-        else if (self->is_swim)
-        {
-            MoveSwimming(input);
-        }
-        else
-        {
-            MoveGenericRunning(input, mayHitWhileRunning);
-        }
+        const int areaNum = rawAreas[i];
+        const auto &area = aasWorldAreas[areaNum];
+        const auto &areaSettings = aasWorldAreaSettings[areaNum];
+        // Skip non-grounded areas
+        if (!(areaSettings.areaflags & AREA_GROUNDED))
+            continue;
+        // Skip "do not enter" and disabled areas
+        if (areaSettings.contents & AREACONTENTS_DONOTENTER)
+            continue;
+        if (areaSettings.areaflags & (AREA_JUNK|AREA_DISABLED))
+            continue;
+        if (verticalTrajectory && area.mins[2] < start[2] + 64)
+            continue;
+
+        // Score is lower for closer areas
+        float score = DistanceSquared(target, area.center);
+        // Apply penalty to wall-bounded areas
+        if (areaSettings.areaflags & AREA_WALL)
+            score *= 0.33f;
+        // Give larger areas a better sorting attr
+        float dx = area.mins[0] - area.maxs[0];
+        float dy = area.mins[1] - area.maxs[1];
+        if (dx > 24)
+            score *= 1.0f + BoundedFraction(dx - 24, 64);
+        if (dy > 24)
+            score *= 1.0f + BoundedFraction(dy - 24, 64);
+        // The best area will be the first after sorting
+        result.emplace_back(AreaAndScore(areaNum, score));
+        if (maxAreaGroundHeight < area.mins[2])
+            maxAreaGroundHeight = area.mins[2];
+        if (minAreaGroundHeight > area.mins[2])
+            minAreaGroundHeight = area.mins[2];
     }
 
-    CheckTurnToBackwardsMovement(input);
+    if (result.size() < 2)
+        return;
+
+    Assert(minAreaGroundHeight <= maxAreaGroundHeight);
+    float heightDelta = maxAreaGroundHeight - minAreaGroundHeight;
+    if (heightDelta < 1.0f)
+        return;
+
+    // Give higher areas greater score
+    for (auto &areaAndScore: result)
+    {
+        const auto &area = aasWorldAreas[areaAndScore.areaNum];
+        areaAndScore.score *= 0.25f + 0.75f * (area.mins[2] - minAreaGroundHeight) / heightDelta;
+    }
 }
 
-void Bot::CheckTurnToBackwardsMovement(BotInput *input) const
+void BotLandOnSavedAreasMovementAction::CheckAreasNavTargetReachability(FilteredRawAreas &rawAreas,
+                                                                        int navTargetAreaNum,
+                                                                        ReachCheckedAreas &result)
 {
-    if (!HasPendingLookAtPoint() && !rocketJumpMovementState.hasCorrectedRocketJump)
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto *routeCache = self->ai->botRef->routeCache;
+    const auto *aasWorldAreas = aasWorld->Areas();
+
+    // The result is capable of storing all raw areas, just check travel time for each raw area
+    if (rawAreas.size() <= result.capacity())
     {
-        input->turnSpeedMultiplier = pendingLandingDashState.EffectiveTurnSpeedMultiplier(1.0f);
-        if (HasEnemy() && ShouldAttack())
+        for (const auto &rawArea: rawAreas)
         {
-            input->intendedLookVec.NormalizeFast();
-            Vec3 toEnemy(EnemyOrigin());
-            toEnemy -= self->s.origin;
-            float squareDistanceToEnemy = toEnemy.SquaredLength();
-            if (squareDistanceToEnemy > 1)
+            const int areaNum = rawArea.areaNum;
+            // Project the area center to the ground manually.
+            // (otherwise the following pathfinder call may perform a trace for it)
+            // Note that AAS area mins are absolute.
+            Vec3 origin(aasWorldAreas[areaNum].center);
+            origin.Z() = aasWorldAreas[areaNum].mins[2] + 8;
+            for (auto travelFlags: { Bot::PREFERRED_TRAVEL_FLAGS, Bot::ALLOWED_TRAVEL_FLAGS })
             {
-                float invDistanceToEnemy = Q_RSqrt(squareDistanceToEnemy);
-                toEnemy *= invDistanceToEnemy;
-                if (input->intendedLookVec.Dot(toEnemy) < 0)
+                // Returns 1 as a lowest feasible travel time value (in seconds ^-2), 0 when a path can't be found
+                if (int aasTravelTime = routeCache->TravelTimeToGoalArea(areaNum, navTargetAreaNum, travelFlags))
                 {
-                    // Check whether we should center view to prevent looking at the sky or a floor while spinning
-                    float factor = fabsf(self->s.origin[2] - EnemyOrigin().Z()) * invDistanceToEnemy;
-                    // If distance to enemy is 4x more than height difference, center view
-                    if (factor < 0.25f)
-                    {
-                        input->intendedLookVec.Z() *= 0.0001f;
-                    }
-                    input->SetForwardMovement(-input->ForwardMovement());
-                    input->SetRightMovement(-input->RightMovement());
-                    input->intendedLookVec *= -1;
-                    input->turnSpeedMultiplier = 1.35f;
+                    float score = rawArea.score * (std::numeric_limits<short>::max() - aasTravelTime);
+                    Assert(score >= 0.0f);
+                    result.emplace_back(AreaAndScore(areaNum, score));
+                    break;
                 }
             }
         }
-    }
-}
-
-void Bot::SetDefaultBotInput(BotInput *input) const
-{
-    input->ClearMovementDirections();
-    input->SetSpecialButton(false);
-    input->SetWalkButton(false);
-    input->isUcmdSet = true;
-
-    // A pending look at point is being applied
-    if (input->hasAlreadyComputedAngles)
-        return;
-
-    input->isLookVecSet = true;
-    input->canOverrideLookVec = true;
-    input->canOverrideUcmd = true;
-
-    // Set default values for cases when there is no (temporarily) nav target or it is (temporarily) unreachable
-    if (!currAasAreaNum || !botBrain.HasNavTarget() || (currAasAreaNum != NavTargetAasAreaNum() && nextReaches.empty()))
-    {
-        if (VectorLengthSquared(self->velocity) > 1)
-            VectorCopy(self->velocity, input->intendedLookVec.Data());
-        else
-            AngleVectors(self->s.angles, input->intendedLookVec.Data(), nullptr, nullptr);
-
         return;
     }
 
-    if (NavTargetAasAreaNum() != currAasAreaNum)
+    // We might have to cut off some areas due to exceeded result capacity.
+    // Sort raw areas so more valuable ones get tested first and might be stored in the result.
+    std::sort(rawAreas.begin(), rawAreas.end());
+
+    for (const auto &rawArea: rawAreas)
     {
-        const auto &nextReach = nextReaches.front();
-        if (IsCloseToReachStart())
-        {
-            Vec3 linkVec(nextReach.end);
-            linkVec -= nextReach.start;
-            linkVec.NormalizeFast();
-            input->intendedLookVec = (16.0f * linkVec + nextReach.end) - self->s.origin;
-        }
-        else
-            input->intendedLookVec = Vec3(nextReach.start) - self->s.origin;
-    }
-    else
-        input->intendedLookVec = Vec3(self->s.origin) - NavTargetOrigin();
-}
-
-void Bot::MoveOnLadder(BotInput *input)
-{
-    SetDefaultBotInput(input);
-    input->SetForwardMovement(1);
-    input->SetUpMovement(1);
-    input->canOverrideLookVec = false;
-    input->canOverridePitch = false;
-}
-
-void Bot::MoveInRocketJumpState(BotInput *input, bool mayHitWhileMoving)
-{
-    SetDefaultBotInput(input);
-
-    if (rocketJumpMovementState.hasPendingRocketJump)
-    {
-        // Wait for weapon switch
-        if (self->r.client->ps.stats[STAT_WEAPON] != self->r.client->ps.stats[STAT_PENDING_WEAPON])
-            return;
-        if (self->r.client->ps.stats[STAT_WEAPON_TIME])
-            return;
-
-        TriggerWeaponJump(input, rocketJumpMovementState.jumpTarget, rocketJumpMovementState.fireTarget);
-        rocketJumpMovementState.hasPendingRocketJump = false;
-        rocketJumpMovementState.hasTriggeredRocketJump = true;
-        rocketJumpMovementState.hasCorrectedRocketJump = false;
-        return;
-    }
-
-    if (!rocketJumpMovementState.hasCorrectedRocketJump)
-    {
-        Vec3 newVelocity(rocketJumpMovementState.fireTarget);
-        newVelocity -= self->s.origin;
-        float squareCorrectedDirLen = newVelocity.SquaredLength();
-        if (squareCorrectedDirLen > 1)
-        {
-            float speed = (float)VectorLength(self->velocity);
-            newVelocity *= Q_RSqrt(squareCorrectedDirLen);
-            newVelocity *= speed;
-            VectorCopy(newVelocity.Data(), self->velocity);
-        }
-        rocketJumpMovementState.hasPendingRocketJump = false;
-        rocketJumpMovementState.hasTriggeredRocketJump = false;
-        rocketJumpMovementState.hasCorrectedRocketJump = true;
-        input->canOverrideLookVec = false;
-        return;
-    }
-
-    input->canOverrideLookVec = mayHitWhileMoving;
-    input->canOverridePitch = false;
-    if (rocketJumpMovementState.timeoutAt - level.time < 300)
-    {
-        input->SetForwardMovement(1);
-        // Bounce off walls
-        if (!closeAreaProps.leftTest.CanWalk() || !closeAreaProps.rightTest.CanWalk())
-            input->SetSpecialButton(true);
-
-        if (ShouldAttack())
-        {
-            input->canOverrideLookVec = true;
-            input->SetForwardMovement(0);
-        }
-    }
-}
-
-template <typename T> struct AttributedArea
-{
-    int areaNum;
-    T attr;
-    AttributedArea() {}
-    AttributedArea(int areaNum_, T attr_): areaNum(areaNum_), attr(attr_) {}
-    bool operator<(const AttributedArea &that) const { return attr < that.attr; }
-};
-
-void Bot::MoveEnteringJumppad(BotInput *input)
-{
-    if (jumppadMovementState.hasEnteredJumppad)
-        return;
-
-    SetDefaultBotInput(input);
-    input->canOverrideLookVec = false;
-    input->canOverridePitch = false;
-
-    // Set these flags before the following early return (they must be set always in this method).
-    // The early return when the nav target is absent is quite common (bots lose target in air).
-    jumppadMovementState.hasEnteredJumppad = true;
-    jumppadMovementState.hasTouchedJumppad = false;
-
-    if (!botBrain.HasNavTarget())
-        return;
-
-    const int goalAasAreaNum = NavTargetAasAreaNum();
-
-    // Cache reference to avoid indirections
-    const aas_area_t *aasWorldAreas = aasWorld->Areas();
-
-    constexpr auto MAX_LANDING_AREAS = JumppadMovementState::MAX_LANDING_AREAS;
-    int &jumppadLandingAreasCount = jumppadMovementState.landingAreasCount;
-    int *jumppadLandingAreas = jumppadMovementState.landingAreas;
-    const Vec3 &jumppadTarget = jumppadMovementState.jumppadTarget;
-
-    jumppadLandingAreasCount = 0;
-    // Estimate distance (we may use bot origin as approximate jumppad origin since bot has just triggered it)
-    float approxDistance = (jumppadTarget - self->s.origin).LengthFast();
-    // Use larger box for huge jumppads
-    float baseSide = 56.0f + 72.0f * BoundedFraction(approxDistance, 1500.0f);
-    // Jumppad target has been set in Bot::TouchedJumppad()
-    Vec3 bboxMins = jumppadTarget + Vec3(-1.25f * baseSide, -1.25f * baseSide, -0.45f * baseSide);
-    Vec3 bboxMaxs = jumppadTarget + Vec3(+1.25f * baseSide, +1.25f * baseSide, +0.15f * baseSide);
-    // First, fetch all areas in the target bounding box (more than required)
-    int rawAreas[MAX_LANDING_AREAS * 2];
-    int rawAreasCount = aasWorld->BBoxAreas(bboxMins, bboxMaxs, rawAreas, MAX_LANDING_AREAS * 2);
-    // Then filter raw areas and sort by distance to jumppad target
-    AttributedArea<float> filteredAreas[MAX_LANDING_AREAS * 2];
-    int filteredAreasCount = 0;
-    for (int i = 0; i < rawAreasCount; ++i)
-    {
-        int areaNum = rawAreas[i];
-        // Skip areas above target that a-priori may not be a landing site. Areas bounds are absolute.
-        if (aasWorldAreas[areaNum].mins[2] + 8 > jumppadTarget.Z())
-            continue;
-        // Skip non-grounded areas
-        if (!aasWorld->AreaGrounded(areaNum))
-            continue;
-        // Skip "do not enter" areas
-        if (aasWorld->AreaDoNotEnter(areaNum))
-            continue;
-        float squareDistance = (jumppadTarget - aasWorld->Areas()[areaNum].center).SquaredLength();
-        filteredAreas[filteredAreasCount++] = AttributedArea<float>(areaNum, squareDistance);
-    }
-    std::sort(filteredAreas, filteredAreas + filteredAreasCount);
-
-    // Select no more than MAX_LANDING_AREAS feasible areas
-    // Since areas are sorted by proximity to jumppad target point,
-    // its unlikely that best areas may be rejected by this limit.
-    AttributedArea<int> areasAndTravelTimes[MAX_LANDING_AREAS];
-    int selectedAreasCount = 0;
-    for (int i = 0, end = filteredAreasCount; i < end; ++i)
-    {
-        int areaNum = filteredAreas[i].areaNum;
+        const int areaNum = rawArea.areaNum;
         // Project the area center to the ground manually.
         // (otherwise the following pathfinder call may perform a trace for it)
         // Note that AAS area mins are absolute.
         Vec3 origin(aasWorldAreas[areaNum].center);
         origin.Z() = aasWorldAreas[areaNum].mins[2] + 8;
-        // Returns 1 as a lowest feasible travel time value (in seconds ^-2), 0 when a path can't be found
-        int aasTravelTime = routeCache->TravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum, PreferredTravelFlags());
-        if (!aasTravelTime)
-            aasTravelTime = routeCache->TravelTimeToGoalArea(areaNum, origin.Data(), goalAasAreaNum, AllowedTravelFlags());
-        if (aasTravelTime)
+        for (auto travelFlags: { Bot::PREFERRED_TRAVEL_FLAGS, Bot::ALLOWED_TRAVEL_FLAGS })
         {
-            areasAndTravelTimes[selectedAreasCount++] = AttributedArea<int>(areaNum, aasTravelTime);
-            if (selectedAreasCount == MAX_LANDING_AREAS)
-                break;
-        }
-    }
-    // Sort landing areas by travel time to a goal, closest to goal areas first
-    std::sort(areasAndTravelTimes, areasAndTravelTimes + selectedAreasCount);
-    // Store areas for landing
-    for (int i = 0; i < selectedAreasCount; ++i)
-        jumppadLandingAreas[jumppadLandingAreasCount++] = areasAndTravelTimes[i].areaNum;
-
-    input->SetForwardMovement(1);
-}
-
-void Bot::MoveRidingJummpad(BotInput *input)
-{
-    SetDefaultBotInput(input);
-
-    // First check whether bot finally landed to some area.
-    // Prevent leaving the state prematurely (when the bot got stuck on the trigger or a ground nearby trigger)
-    if (self->groundentity && level.time - lastTouchedJumppadAt > 192)
-    {
-        const int solid = self->groundentity->s.solid;
-        if (ENTNUM(self->groundentity) == 0 || (solid == SOLID_YES || solid == SOLID_BMODEL))
-        {
-            jumppadMovementState.Invalidate();
-            input->SetForwardMovement(1);
-            return;
-        }
-    }
-
-    if (jumppadMovementState.ShouldPerformLanding())
-    {
-        int jumppadLandingAreasCount = jumppadMovementState.landingAreasCount;
-        const int *jumppadLandingAreas = jumppadMovementState.landingAreas;
-        if (jumppadLandingAreasCount)
-        {
-            // `jumppadLandingAreas` is assumed to be sorted, best areas first
-            for (int i = 0; i < jumppadLandingAreasCount; ++i)
+            // Returns 1 as a lowest feasible travel time value (in seconds ^-2), 0 when a path can't be found
+            if (int aasTravelTime = routeCache->TravelTimeToGoalArea(areaNum, navTargetAreaNum, travelFlags))
             {
-                if (TryLandOnArea(jumppadLandingAreas[i], input))
+                float score = rawArea.score * (std::numeric_limits<float>::max() - aasTravelTime);
+                Assert(score > 0.0f);
+                result.emplace_back(AreaAndScore(areaNum, score));
+                if (result.size() == result.capacity())
                     return;
+
+                break;
             }
         }
-        // TryLandOnNearbyAreas() is expensive. TODO: Use timeout between calls based on current speed
-        TryLandOnNearbyAreas(input);
     }
 }
 
-static inline float CoordDistance(float coord, float coordMins, float coordMaxs)
+float BotLandOnSavedAreasMovementAction::SuggestInitialBBoxSide(const vec3_t origin, const vec3_t target)
 {
-    if (coord < coordMins)
-        return coordMins - coord;
-    if (coord > coordMaxs)
-        return coord - coordMaxs;
-    return 0;
-}
-
-static float SquareDistanceToBoxBottom(const vec3_t origin, const vec3_t boxMins, const vec3_t boxMaxs)
-{
-    float xDist = CoordDistance(origin[0], boxMins[0], boxMaxs[0]);
-    float yDist = CoordDistance(origin[1], boxMins[1], boxMaxs[2]);
-    float zDist = origin[2] - boxMins[2];
-    return xDist * xDist + yDist * yDist + zDist * zDist;
-}
-
-void Bot::TryLandOnNearbyAreas(BotInput *input)
-{
-    Vec3 bboxMins(self->s.origin), bboxMaxs(self->s.origin);
-    bboxMins += Vec3(-128, -128, -128);
-    bboxMaxs += Vec3(+128, +128, +128);
-
-    constexpr int MAX_LANDING_AREAS = 16;
-    int areas[MAX_LANDING_AREAS];
-    int groundedAreas[MAX_LANDING_AREAS];
-    float distanceToAreas[MAX_LANDING_AREAS];
-
-    int numAllAreas = aasWorld->BBoxAreas(bboxMins.Data(), bboxMaxs.Data(), areas, MAX_LANDING_AREAS);
-    if (!numAllAreas)
-        return;
-
-    int numGroundedAreas = 0;
-    for (int i = 0; i < numAllAreas; ++i)
-    {
-        if (aasWorld->AreaGrounded(areas[i]))
-            groundedAreas[numGroundedAreas++] = areas[i];
-    }
-
-    // Sort areas by distance from bot to area bottom
-
-    for (int i = 0; i < numGroundedAreas; ++i)
-    {
-        const aas_area_t &area = aasWorld->Areas()[groundedAreas[i]];
-        distanceToAreas[i] = SquareDistanceToBoxBottom(self->s.origin, area.mins, area.maxs);
-    }
-
-    for (int i = 1; i < numGroundedAreas; ++i)
-    {
-        for (int j = i; j > 0 && distanceToAreas[j - 1] > distanceToAreas[j]; --j)
-        {
-            std::swap(groundedAreas[j], groundedAreas[j - 1]);
-            std::swap(distanceToAreas[j], distanceToAreas[j - 1]);
-        }
-    }
-
-    for (int i = 0; i < numGroundedAreas; ++i)
-    {
-        if (TryLandOnArea(areas[i], input))
-            return;
-    }
-    // Do not press keys each frame
-    float r;
-    if ((r = random()) > 0.8)
-        input->SetForwardMovement(r > 0.9 ? -1 : 1);
-    if ((r = random()) > 0.8)
-        input->SetRightMovement(r > 0.9 ? -1 : 1);
-    if (random() > 0.8)
-        input->SetSpecialButton(true);
-}
-
-bool Bot::TryLandOnArea(int areaNum, BotInput *input)
-{
-    Vec3 areaPoint(aasWorld->Areas()[areaNum].center);
-
-    // Lower area point to a bottom of area. Area mins/maxs are absolute.
-    areaPoint.Z() = aasWorld->Areas()[areaNum].mins[2];
-    // Do not try to "land" on upper areas
-    if (areaPoint.Z() > self->s.origin[2])
-        return false;
-
-    // We have to offset traced end point since we do not test a zero-width ray
-    Vec3 areaPointToBotVec(self->s.origin);
-    areaPointToBotVec -= areaPoint;
-    areaPointToBotVec.NormalizeFast();
-    Vec3 traceEnd(areaPoint);
+    float originToTargetDistance = DistanceFast(origin, target);
+    float pointBelowDistanceOffset = 96.0f;
+    if (originToTargetDistance > 2000.0f)
+        pointBelowDistanceOffset += 750.0f;
+    else if (originToTargetDistance > 96.0f)
+        pointBelowDistanceOffset += 0.125f * (originToTargetDistance - 96.0f);
 
     trace_t trace;
-    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.Data(), self, MASK_AISOLID);
-    if (trace.fraction == 1.0f)
+    int numHits = 0;
+    float avgHitDistance = 0.0f;
+    // Try to determine an appropriate box side by testing some rays to an expected ground
+    for (int i = 0; i < 3; ++i)
     {
-        input->SetForwardMovement(1);
-        input->intendedLookVec = -areaPointToBotVec;
-        return true;
+        Vec3 testedPointBelow(-0.15f + 0.30f * random(), -0.15f * 0.30f * random(), -1.0f);
+        testedPointBelow.X() += -0.15f + 0.30f * random();
+        testedPointBelow.Y() += -0.15f + 0.30f * random();
+        testedPointBelow.NormalizeFast();
+        testedPointBelow *= pointBelowDistanceOffset;
+        testedPointBelow += target;
+
+        SolidWorldTrace(&trace, target, testedPointBelow.Data());
+        if (trace.fraction == 1.0f)
+            continue;
+
+        avgHitDistance += pointBelowDistanceOffset * trace.fraction;
+        numHits++;
     }
 
-    return false;
+    float side = 96.0f + std::min(96.0f, 0.25f * originToTargetDistance);
+    if (!numHits)
+        return side;
+
+    avgHitDistance *= 1.0f / numHits;
+    return std::max(side, avgHitDistance);
 }
 
-void Bot::MoveCampingASpot(BotInput *input)
+inline void BotLandOnSavedAreasMovementAction::MakeBBoxDimensions(const vec_t *target, float side,
+                                                                  vec_t *mins, vec_t *maxs)
 {
-    AiCampingSpot &campingSpot = campingSpotState.campingSpot;
-    // If hasCampingLookAtPoint is false and this function has not been called yet since last camping spot setting,
-    // campingSpotLookAtPoint contains a junk, so it need to be overwritten
-    Vec3 lookAtPoint(campingSpot.lookAtPoint);
-    // If the camping action does not have a defined look direction, choose some random one
-    if (!campingSpot.hasLookAtPoint)
+    VectorSet(mins, -side, -side, -0.35f * side);
+    VectorAdd(mins, target, mins);
+    VectorSet(maxs, +side, +side, +0.15f * side);
+    VectorAdd(maxs, target, maxs);
+}
+
+inline void BotLandOnSavedAreasMovementAction::SaveLandingAreas(const vec3_t target,
+                                                                BotMovementPredictionContext *context)
+{
+    this->savedLandingAreas.clear();
+    if (int navTargetAreaNum = context->NavTargetAasAreaNum())
+        SaveLandingAreasForDefinedNavTarget(target, navTargetAreaNum, context);
+    else
+        SaveLandingAreasForUndefinedNavTarget(target, context);
+}
+
+void BotLandOnSavedAreasMovementAction::SaveLandingAreasForDefinedNavTarget(const vec3_t target,
+                                                                            int navTargetAreaNum,
+                                                                            BotMovementPredictionContext *context)
+{
+    Assert(this->savedLandingAreas.size() == 0);
+    // Cache these references to avoid indirections
+    const auto *aasWorld = AiAasWorld::Instance();
+
+    float side = SuggestInitialBBoxSide(context->movementState->entityPhysicsState.Origin(), target);
+    int rawAreas[MAX_BBOX_AREAS];
+    FilteredRawAreas filteredRawAreas;
+
+    ReachCheckedAreas reachCheckedAreas;
+    vec3_t bboxMins, bboxMaxs;
+    for (int i = 0; i < 3; ++i)
     {
-        // If the previously chosen look at point has timed out, choose a new one
-        if (campingSpotState.lookAtPointTimeoutAt <= level.time)
+        MakeBBoxDimensions(target, side, bboxMins, bboxMaxs);
+        int numRawAreas = aasWorld->BBoxAreas(bboxMins, bboxMaxs, rawAreas, MAX_BBOX_AREAS);
+        FilterRawAreas(context->movementState->entityPhysicsState.Origin(), target, rawAreas, numRawAreas, filteredRawAreas);
+        if (filteredRawAreas.empty())
+            continue;
+
+        CheckAreasNavTargetReachability(filteredRawAreas, navTargetAreaNum, reachCheckedAreas);
+        if (!reachCheckedAreas.empty())
         {
-            // Choose some random point to look at
-            campingSpot.lookAtPoint.X() = self->s.origin[0] - 50.0f + 100.0f * random();
-            campingSpot.lookAtPoint.Y() = self->s.origin[1] - 50.0f + 100.0f * random();
-            campingSpot.lookAtPoint.Z() = self->s.origin[2] - 15.0f + 30.0f * random();
-            campingSpotState.lookAtPointTimeoutAt = level.time + 1500 - (unsigned)(1250.0f * campingSpot.alertness);
+            std::make_heap(reachCheckedAreas.begin(), reachCheckedAreas.end());
+            while (!reachCheckedAreas.empty())
+            {
+                std::pop_heap(reachCheckedAreas.begin(), reachCheckedAreas.end());
+                this->savedLandingAreas.push_back(reachCheckedAreas.back().areaNum);
+                reachCheckedAreas.pop_back();
+            }
+            return;
+        }
+
+        // Try a larger box side
+        side *= SIDE_STEP_MULTIPLIER;
+    }
+}
+
+void BotLandOnSavedAreasMovementAction::SaveLandingAreasForUndefinedNavTarget(const vec_t *target,
+                                                                              BotMovementPredictionContext *context)
+{
+    Assert(this->savedLandingAreas.size() == 0);
+    // Cache these references to avoid indirections
+    const auto *aasWorld = AiAasWorld::Instance();
+
+    float side = SuggestInitialBBoxSide(context->movementState->entityPhysicsState.Origin(), target);
+    int rawAreas[MAX_BBOX_AREAS];
+    FilteredRawAreas filteredRawAreas;
+
+    vec3_t bboxMins, bboxMaxs;
+    for (int i = 0; i < 3; ++i)
+    {
+        MakeBBoxDimensions(target, side, bboxMins, bboxMaxs);
+        int numRawAreas = aasWorld->BBoxAreas(bboxMins, bboxMaxs, rawAreas, MAX_BBOX_AREAS);
+        FilterRawAreas(context->movementState->entityPhysicsState.Origin(), target, rawAreas, numRawAreas, filteredRawAreas);
+        if (!filteredRawAreas.empty())
+        {
+            if (filteredRawAreas.size() <= this->savedLandingAreas.capacity())
+            {
+                for (const auto &filteredArea: filteredRawAreas)
+                    this->savedLandingAreas.push_back(filteredArea.areaNum);
+            }
+            else
+            {
+                // Fetch best areas left, let the worst areas be cut off
+                std::make_heap(filteredRawAreas.begin(), filteredRawAreas.end());
+                while (!filteredRawAreas.empty())
+                {
+                    std::pop_heap(filteredRawAreas.begin(), filteredRawAreas.end());
+                    this->savedLandingAreas.push_back(filteredRawAreas.back().areaNum);
+                    filteredRawAreas.pop_back();
+                    if (this->savedLandingAreas.size() == this->savedLandingAreas.capacity())
+                        break;
+                }
+            }
+            return;
+        }
+
+        // Try a larger box side
+        side *= SIDE_STEP_MULTIPLIER;
+    }
+}
+
+void BotLandOnSavedAreasMovementAction::BeforePlanning()
+{
+    BotBaseMovementAction::BeforePlanning();
+    currAreaIndex = 0;
+    totalTestedAreas = 0;
+
+    this->savedLandingAreas.clear();
+    auto *botSavedAreas = &self->ai->botRef->savedLandingAreas;
+    for (int areaNum: *botSavedAreas)
+        this->savedLandingAreas.push_back(areaNum);
+
+    botSavedAreas->clear();
+}
+
+void BotLandOnSavedAreasMovementAction::AfterPlanning()
+{
+    BotBaseMovementAction::AfterPlanning();
+    if (this->isDisabledForPlanning)
+        return;
+
+    auto *botSavedAreas = &self->ai->botRef->savedLandingAreas;
+    for (int areaNum: this->savedLandingAreas)
+        botSavedAreas->push_back(areaNum);
+}
+
+void BotHandleTriggeredJumppadMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    if (!GenericCheckIsActionEnabled(context, &DummyAction()))
+        return;
+
+    auto *jumppadMovementState = &context->movementState->jumppadMovementState;
+    Assert(jumppadMovementState->IsActive());
+
+    if (jumppadMovementState->hasEnteredJumppad)
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &FlyUntilLandingAction();
+        Debug("The bot has already processed jumppad trigger touch in the given context state, fly until landing\n");
+        return;
+    }
+
+    jumppadMovementState->hasEnteredJumppad = true;
+
+    auto *botInput = &context->record->botInput;
+    botInput->Clear();
+
+    const float *jumppadTarget = jumppadMovementState->JumppadEntity()->target_ent->s.origin;
+    self->ai->botRef->landOnSavedAreasSetMovementAction.SaveLandingAreas(jumppadTarget, context);
+    // TODO: Compute an fitting target radius?
+    context->movementState->flyUntilLandingMovementState.Activate(jumppadTarget, 128.0f);
+    // Stop prediction (jumppad triggers are not simulated by Exec() code)
+    context->isCompleted = true;
+}
+
+bool BotLandOnSavedAreasMovementAction::TryLandingStepOnArea(int areaNum, BotMovementPredictionContext *context)
+{
+    auto *botInput = &context->record->botInput;
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+
+    const auto &area = AiAasWorld::Instance()->Areas()[areaNum];
+    Vec3 areaPoint(area.center);
+    // Lower area point to a bottom of area. Area mins/maxs are absolute.
+    areaPoint.Z() = area.mins[2];
+    // Do not try to "land" on upper areas
+    if (areaPoint.Z() > entityPhysicsState.Origin()[2])
+    {
+        Debug("Cannot land on an area that is above the bot origin in the given movement state\n");
+        return false;
+    }
+
+    botInput->Clear();
+    botInput->SetForwardMovement(1);
+    botInput->intendedLookVec = areaPoint;
+    botInput->intendedLookVec -= entityPhysicsState.Origin();
+    botInput->isLookVecSet = true;
+    botInput->isUcmdSet = true;
+
+    return true;
+}
+
+void BotLandOnSavedAreasMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    if (!GenericCheckIsActionEnabled(context, &DummyAction()))
+        return;
+
+    // This list might be empty if all nearby areas have been disabled (e.g. as blocked by enemy).
+    if (savedLandingAreas.empty())
+    {
+        Debug("Cannot apply action: the saved landing areas list is empty\n");
+        this->isDisabledForPlanning = true;
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &DummyAction();
+        return;
+    }
+
+    // If there the current tested area is set
+    if (currAreaIndex >= 0)
+    {
+        Assert(savedLandingAreas.size() > currAreaIndex);
+        // Continue testing this area
+        if (TryLandingStepOnArea(savedLandingAreas[currAreaIndex], context))
+        {
+            context->SaveSuggestedActionForNextFrame(this);
+            return;
+        }
+
+        // Schedule next saved area for testing
+        const char *format = "Landing on area %d/%d has failed, roll back to initial landing state for next area\n";
+        Debug(format, currAreaIndex, savedLandingAreas.size());
+        currAreaIndex = -1;
+        totalTestedAreas++;
+        // Force rolling back to savepoint
+        context->SetPendingRollback();
+        // (the method execution implicitly will be continued on the code below outside this condition on next call)
+        return;
+    }
+
+    // There is not current tested area set, try choose one that fit
+    for (; totalTestedAreas < savedLandingAreas.size(); totalTestedAreas++)
+    {
+        // Test each area left using a-priori feasibility of an area
+        if (TryLandingStepOnArea(savedLandingAreas[totalTestedAreas], context))
+        {
+            // Set the area as current
+            currAreaIndex = totalTestedAreas;
+            // Create a savepoint
+            context->savepointTopOfStackIndex = context->topOfStackIndex;
+            // (the method execution will be implicitly continue on the code inside the condition above on next call)
+            Debug("Area %d/%d has been chosen for landing tests\n", currAreaIndex, savedLandingAreas.size());
+            context->SaveSuggestedActionForNextFrame(this);
+            return;
         }
     }
-    MoveCampingASpotWithGivenLookAtPoint(lookAtPoint, input);
+
+    // All areas have been tested, and there is no suitable area for landing
+    // Roll back implicitly to the dummy movement action
+    context->cannotApplyAction = true;
+    context->actionSuggestedByAction = &DummyAction();
+    Debug("An area suitable for landing has not been found\n");
+}
+
+void BotLandOnSavedAreasMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction::CheckPredictionStepResults(context);
+    // If movement step failed, make sure that the next area (if any) will be tested after rollback
+    if (context->cannotApplyAction)
+    {
+        totalTestedAreas++;
+        currAreaIndex = -1;
+        return;
+    }
+
+    if (context->isCompleted)
+        return;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    if (!entityPhysicsState.GroundEntity())
+        return;
+
+    // Check which area bot has landed in
+    Assert(currAreaIndex >= 0 && currAreaIndex == totalTestedAreas && currAreaIndex < savedLandingAreas.size());
+    const int landingArea = savedLandingAreas[currAreaIndex];
+    if (landingArea == entityPhysicsState.CurrAasAreaNum() || landingArea == entityPhysicsState.DroppedToFloorAasAreaNum())
+    {
+        Debug("A prediction step has lead to touching a ground in the target landing area, should stop planning\n");
+        context->isCompleted = true;
+        return;
+    }
+
+    Debug("A prediction step has lead to touching a ground in an unexpected area\n");
+    context->SetPendingRollback();
+    // Make sure that the next area (if any) will be tested after rolling back
+    totalTestedAreas++;
+    currAreaIndex = -1;
 }
 
 void DirToKeyInput(const Vec3 &desiredDir, const vec3_t actualForwardDir, const vec3_t actualRightDir, BotInput *input)
@@ -520,1039 +2140,1729 @@ void DirToKeyInput(const Vec3 &desiredDir, const vec3_t actualForwardDir, const 
         input->SetForwardMovement(1);
 }
 
-void Bot::MoveCampingASpotWithGivenLookAtPoint(const Vec3 &lookAtPoint, BotInput *input)
+void BotCampASpotMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
 {
-    SetDefaultBotInput(input);
+    if (!GenericCheckIsActionEnabled(context, &DefaultWalkAction()))
+        return;
 
-    vec3_t actualLookDir, actualRightDir;
-    AngleVectors(self->s.angles, actualLookDir, actualRightDir, nullptr);
-
-    Vec3 botToSpot = campingSpotState.Origin() - self->s.origin;
-    float distance = botToSpot.Length();
-
-    if (distance / campingSpotState.campingSpot.radius > 2.0f)
+    if (this->disabledForApplicationFrameIndex == context->topOfStackIndex)
     {
-        // Bot should return to a point
-        input->ClearMovementDirections();
-        input->SetForwardMovement(1);
-        input->intendedLookVec = botToSpot;
-        // Very cheap workaround for "moving in planet gravity field" glitch by lowering move speed
-        Vec3 botToSpotDir = botToSpot * (1.0f / distance);
-        if (botToSpotDir.Dot(actualLookDir) < 0.7f)
-            input->SetWalkButton(true);
-
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &DefaultWalkAction();
         return;
     }
 
-    Vec3 expectedLookDir = lookAtPoint - campingSpotState.Origin();
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    auto *campingSpotState = &context->movementState->campingSpotState;
+    auto *botInput = &context->record->botInput;
+
+    context->SetDefaultBotInput();
+    context->record->botInput.canOverrideLookVec = true;
+
+    vec3_t actualLookDir, actualRightDir;
+    AngleVectors(entityPhysicsState.Angles().Data(), actualLookDir, actualRightDir, nullptr);
+
+    const Vec3 spotOrigin(campingSpotState->Origin());
+    float distance = spotOrigin.Distance2DTo(entityPhysicsState.Origin());
+
+    AiPendingLookAtPoint lookAtPoint(campingSpotState->GetOrUpdateRandomLookAtPoint());
+
+    Vec3 expectedLookDir(lookAtPoint.Origin());
+    expectedLookDir -= spotOrigin;
     expectedLookDir.NormalizeFast();
 
     if (expectedLookDir.Dot(actualLookDir) < 0.85)
     {
-        if (!HasPendingLookAtPoint())
+        if (!context->movementState->pendingLookAtPointState.IsActive())
         {
-            SetPendingLookAtPoint(campingSpotState.LookAtPoint(), 300);
-            input->ClearMovementDirections();
-            input->SetWalkButton(true);
+            AiPendingLookAtPoint pendingLookAtPoint(campingSpotState->GetOrUpdateRandomLookAtPoint());
+            context->movementState->pendingLookAtPointState.Activate(pendingLookAtPoint, 300);
+            botInput->ClearMovementDirections();
+            botInput->SetWalkButton(true);
             return;
         }
     }
 
+    context->predictionStepMillis = 16;
     // Keep actual look dir as-is, adjust position by keys only
-    VectorCopy(actualLookDir, input->intendedLookVec.Data());
-    if (campingSpotState.strafeTimeoutAt < level.time)
+    VectorCopy(actualLookDir, botInput->intendedLookVec.Data());
+    // This means we may strafe randomly
+    if (distance / campingSpotState->Radius() < 1.0f)
     {
-        // This means we may strafe randomly
-        if (distance / campingSpotState.Radius() < 0.7f)
+        if (!campingSpotState->AreKeyMoveDirsValid())
         {
-            campingSpotState.strafeDir.X() = -0.5f + random();
-            campingSpotState.strafeDir.Y() = -0.5f + random();
-            campingSpotState.strafeDir.Z() = 0.0f;
-            campingSpotState.SetStrafeDirTimeout();
+            auto &traceCache = context->EnvironmentTraceCache();
+            int keyMoves[2];
+            Vec3 botToSpotDir(spotOrigin);
+            botToSpotDir -= entityPhysicsState.Origin();
+            botToSpotDir.NormalizeFast();
+            traceCache.MakeRandomizedKeyMovesToTarget(context, botToSpotDir, keyMoves);
+            campingSpotState->SetKeyMoveDirs(keyMoves[0], keyMoves[1]);
         }
         else
         {
-            campingSpotState.strafeDir = botToSpot;
+            // Move dirs are kept and the bot is in the spot radius, use lesser prediction precision
+            context->predictionStepMillis = 32;
         }
-        campingSpotState.strafeDir.NormalizeFast();
+        botInput->SetForwardMovement(campingSpotState->ForwardMove());
+        botInput->SetRightMovement(campingSpotState->RightMove());
+        if (!botInput->ForwardMovement() && !botInput->RightMovement())
+            botInput->SetUpMovement(-1);
     }
-
-    Vec3 strafeMoveVec = campingSpotState.strafeDir;
-
-    DirToKeyInput(strafeMoveVec, actualLookDir, actualRightDir, input);
-
-    input->SetWalkButton(random() > campingSpotState.Alertness() * 0.75f);
-}
-
-void Bot::MoveOnPlatform(BotInput *input)
-{
-    SetDefaultBotInput(input);
-    switch (self->groundentity->moveinfo.state)
+    else
     {
-        case STATE_TOP:
-            // Start bunnying off the platform
-            MoveGenericRunning(input, true);
-            break;
-        default:
-            // Its poor but platforms are not widely used.
-            input->canOverrideUcmd = false;
-            input->shouldOverrideUcmd = false;
-            // Prevent treating standing on the same point as being blocked
-            blockedTimeout += game.frametime;
-            break;
+        Vec3 botToSpotDir(spotOrigin);
+        botToSpotDir -= entityPhysicsState.Origin();
+        botToSpotDir.NormalizeFast();
+        DirToKeyInput(botToSpotDir, actualLookDir, actualRightDir, botInput);
     }
+
+    botInput->SetWalkButton(random() > campingSpotState->Alertness() * 0.75f);
 }
 
-void Bot::MoveSwimming(BotInput *input)
-{
-    input->canOverrideLookVec = true;
-    input->SetForwardMovement(1);
-
-    // TODO: Check reachibility, if we are close, exit water
-    //if (!(G_PointContents(nodes[self->ai->next_node].origin) & MASK_WATER))  // Exit water
-    //    ucmd->upmove = 1;
-}
-
-constexpr float Z_NO_BEND_SCALE = 0.25f;
-
-bool Bot::CheckAndTryAvoidObstacles(BotInput *input, float speed)
-{
-#ifdef _DEBUG
-    if (!input->isLookVecSet)
-        AI_FailWith("Bot::CheckAndTryAvoidObstacles()", "There is no look vec set");
+#ifndef SQUARE
+#define SQUARE(x) ((x) * (x))
 #endif
 
-    Vec3 baseForwardVec(input->intendedLookVec);
-    baseForwardVec.Z() *= Z_NO_BEND_SCALE;
-    // Treat inability to check obstacles as obstacles presence
-    if (baseForwardVec.SquaredLength() < 0.01f)
+void BotCampASpotMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction::CheckPredictionStepResults(context);
+    if (context->cannotApplyAction || context->isCompleted)
+        return;
+
+    Vec3 origin(context->movementState->entityPhysicsState.Origin());
+    const auto &campingSpotState = context->movementState->campingSpotState;
+    if (!campingSpotState.IsActive())
+    {
+        Debug("A prediction step has lead to camping spot state deactivation (the bot is too far from its origin)\n");
+        context->SetPendingRollback();
+        return;
+    }
+
+    const auto &newEntityPhysicsState = context->movementState->entityPhysicsState;
+    const auto &oldEntityPhysicsState = context->PhysicsStateBeforeStep();
+    const float radius = campingSpotState.Radius();
+    Vec3 spotOrigin(campingSpotState.Origin());
+
+    const float oldSquareDistanceToOrigin = spotOrigin.SquareDistance2DTo(oldEntityPhysicsState.Origin());
+    const float newSquareDistanceToOrigin = spotOrigin.SquareDistance2DTo(newEntityPhysicsState.Origin());
+    if (oldSquareDistanceToOrigin > SQUARE(1.3f * radius))
+    {
+        if (newSquareDistanceToOrigin > oldSquareDistanceToOrigin)
+        {
+            Debug("A prediction step has lead to even greater distance to the spot origin while bot should return to it\n");
+            context->SetPendingRollback();
+            return;
+        }
+    }
+
+    // Wait for landing
+    if (!newEntityPhysicsState.GroundEntity())
+        return;
+
+    if (newSquareDistanceToOrigin < SQUARE(radius))
+    {
+        const unsigned sequenceDuration = this->SequenceDuration(context);
+        const unsigned completionMillisThreshold = (unsigned) (512 * (1.0f - 0.5f * campingSpotState.Alertness()));
+        if (sequenceDuration > completionMillisThreshold)
+        {
+            Debug("Bot is close to the spot origin and there is enough predicted data ahead\n");
+            context->isCompleted = true;
+            return;
+        }
+    }
+}
+
+void BotCampASpotMovementAction::OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                                              SequenceStopReason stopReason,
+                                                              unsigned stoppedAtFrameIndex)
+{
+    BotBaseMovementAction::OnApplicationSequenceStopped(context, stopReason, stoppedAtFrameIndex);
+
+    if (stopReason != FAILED)
+    {
+        disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
+        return;
+    }
+
+    disabledForApplicationFrameIndex = context->savepointTopOfStackIndex;
+}
+
+void BotBunnyInVelocityDirectionMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    auto *suggestedAction = &DummyAction();
+    if (!GenericCheckIsActionEnabled(context, suggestedAction))
+        return;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    Vec3 velocity2D(entityPhysicsState.Velocity());
+    velocity2D.Z() = 0;
+    // Bunnying with released keys makes sense only for relatively high speed
+    // (lower than dash speed in this case since a cheating acceleration is enabled for this action)
+    const float speedThreshold = context->GetRunSpeed();
+    if (velocity2D.SquaredLength() < speedThreshold * speedThreshold)
+    {
+        context->SetPendingRollback();
+        Debug("Cannot apply action: bot 2D velocity is too low to keep bunnying in velocity direction\n");
+        return;
+    }
+
+    if (!CheckCommonBunnyingActionPreconditions(context))
+        return;
+
+    auto *botInput = &context->record->botInput;
+    botInput->intendedLookVec.Set(entityPhysicsState.Velocity());
+    botInput->isLookVecSet = true;
+    if (!SetupBunnying(botInput->intendedLookVec, context))
+    {
+        context->SetPendingRollback();
+        return;
+    }
+
+    CheatingAccelerate(context, 1.0f);
+
+    botInput->canOverrideLookVec = false;
+    botInput->canOverridePitch = false;
+    // this action does not call SetDefaultBotInput() for an initial input, so we must set this flag manually
+    botInput->isUcmdSet = true;
+    botInput->ClearMovementDirections();
+    botInput->SetUpMovement(1);
+    botInput->SetForwardMovement(1);
+
+    // Always try to perform a walljump occasionally.
+    // This action requires some luck to succeed anyway, but can produce great results, do not be cautious.
+    Assert(this->walljumpingMode == WalljumpingMode::ALWAYS);
+    TrySetWalljump(context);
+}
+
+bool BotBunnyStraighteningReachChainMovementAction::TryStraightenLookVec(Vec3 *intendedLookVec, BotMovementPredictionContext *context)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const int navTargetAasAreaNum = context->NavTargetAasAreaNum();
+    Assert(navTargetAasAreaNum);
+
+    // Do not modify look vec in this case (we assume its set to nav target)
+    if (context->IsInNavTargetArea())
         return true;
 
-    baseForwardVec.NormalizeFast();
-    baseForwardVec *= 24.0f + 96.0f * BoundedFraction(speed, 900);
+    const auto &nextReachChain = context->NextReachChain();
+    if (nextReachChain.empty())
+    {
+        Debug("Cannot straighten look vec: next reach. chain is empty\n");
+        return false;
+    }
 
-    Vec3 forwardPoint = Vec3(baseForwardVec) + self->s.origin;
+    const AiAasWorld *aasWorld = AiAasWorld::Instance();
+    const aas_reachability_t *aasReachabilities = aasWorld->Reachabilities();
+    const aas_area_t *aasAreas = aasWorld->Areas();
+    const aas_areasettings_t *aasAreaSettings = aasWorld->AreaSettings();
 
-    float *const mins = vec3_origin;
-    float *const maxs = playerbox_stand_maxs;
+    unsigned lastValidReachIndex = std::numeric_limits<unsigned>::max();
+    const unsigned maxTestedReachabilities = std::min(16U, nextReachChain.size());
+    const aas_reachability_t *firstNonBunnyingReach = nullptr;
+    for (unsigned i = 0; i < maxTestedReachabilities; ++i)
+    {
+        const auto &reach = aasReachabilities[nextReachChain[i].ReachNum()];
+        if (reach.traveltype != TRAVEL_WALK && reach.traveltype != TRAVEL_WALKOFFLEDGE)
+        {
+            if (reach.traveltype != TRAVEL_JUMP && reach.traveltype != TRAVEL_STRAFEJUMP)
+            {
+                firstNonBunnyingReach = &reach;
+                break;
+            }
+        }
+
+        // Wraps on the first increment
+        lastValidReachIndex++;
+    }
+
+    if (lastValidReachIndex > maxTestedReachabilities)
+    {
+        Debug("There were no supported for bunnying reachabilities\n");
+        return false;
+    }
+    Assert(lastValidReachIndex < maxTestedReachabilities);
 
     trace_t trace;
-    G_Trace(&trace, self->s.origin, mins, maxs, forwardPoint.Data(), self, MASK_AISOLID);
-
-    if (trace.fraction == 1.0f)
-        return false;
-
-    if (trace.fraction > 0.5f && ISWALKABLEPLANE(&trace.plane))
-        return false;
-
-    // If we are in air, check whether we may crouch to prevent bumping a ceiling by head
-    // We do not switch to crouch movement style, since we are still in air and have bunny speed
-    if (!self->groundentity)
+    Vec3 traceStartPoint(entityPhysicsState.Origin());
+    traceStartPoint.Z() += playerbox_stand_viewheight;
+    int bestAreaNum = 0;
+    float bestScore = 0.0f;
+    for (int i = lastValidReachIndex; i >= 0; --i)
     {
-        trace_t crouchTrace;
-        G_Trace(&crouchTrace, self->s.origin, nullptr, playerbox_crouch_maxs, forwardPoint.Data(), self, MASK_AISOLID);
-        if (crouchTrace.fraction == 1.0f)
+        const int reachNum = nextReachChain[i].ReachNum();
+        const aas_reachability_t &reachability = aasReachabilities[reachNum];
+        const int areaNum = reachability.areanum;
+        const aas_area_t &area = aasAreas[areaNum];
+        const aas_areasettings_t &areaSettings = aasAreaSettings[areaNum];
+        if (areaSettings.contents & AREACONTENTS_DONOTENTER)
+            continue;
+
+        int areaFlags = areaSettings.areaflags;
+        if (areaFlags & AREA_DISABLED)
+            continue;
+        if (!(areaFlags & AREA_GROUNDED))
+            continue;
+
+        Vec3 areaPoint(area.center[0], area.center[1], area.mins[2] + 4.0f);
+        // Skip areas higher than the bot (to allow moving on a stairs chain, we test distance/height ratio)
+        if (area.mins[2] > entityPhysicsState.Origin()[2])
         {
-            input->SetUpMovement(-1);
-            return true;
-        }
-    }
-
-    // Trace both a bit left and a bit right directions. Don't reject early (otherwise one side will be always preferred)
-    float angleStep = 35.0f - 15.0f * BoundedFraction(speed, 900);
-
-    float bestFraction = trace.fraction;
-
-    float sign = -1.0f;
-    int stepNum = 1;
-
-    Vec3 angles(0, 0, 0);
-    while (stepNum < 4)
-    {
-        mat3_t matrix;
-        vec3_t rotatedForwardVec;
-
-        // First, rotate baseForwardVec by angle = sign * angleStep * stepNum
-        angles.Y() = sign * angleStep * stepNum;
-        AnglesToAxis(angles.Data(), matrix);
-        Matrix3_TransformVector(matrix, baseForwardVec.Data(), rotatedForwardVec);
-
-        Vec3 rotatedForwardPoint = Vec3(rotatedForwardVec) + self->s.origin;
-        G_Trace(&trace, self->s.origin, mins, maxs, rotatedForwardPoint.Data(), self, MASK_AISOLID);
-
-        if (trace.fraction > bestFraction)
-        {
-            bestFraction = trace.fraction;
-            // Copy found less blocked rotated forward vector to the intendedLookVec
-            VectorCopy(rotatedForwardVec, input->intendedLookVec.Data());
-            // Compensate applied Z scale applied to baseForwardVec (intendedLookVec Z is likely to be scaled again)
-            input->intendedLookVec.Z() *= 1.0f / Z_NO_BEND_SCALE;
+            float distance = areaPoint.FastDistance2DTo(entityPhysicsState.Origin());
+            if (area.mins[2] - entityPhysicsState.Origin()[2] > M_SQRT1_2 * distance)
+                continue;
         }
 
-        if (sign > 0)
-            stepNum++;
-        sign = -sign;
+        // Skip way too far areas (this is mainly an optimization for the following SolidWorldTrace() call)
+        if (DistanceSquared(area.center, entityPhysicsState.Origin()) > 350 * 350)
+            continue;
+
+        // Compute score first to cut off expensive tracing
+
+        // Give far areas greater initial score
+        float score = 0.5f + 0.5f * ((float)i / (float)lastValidReachIndex);
+        // Try skip "junk" areas (sometimes these areas cannot be avoided in the shortest path)
+        if (areaFlags & AREA_JUNK)
+            score *= 0.1f;
+        // Give ledge areas a bit smaller score (sometimes these areas cannot be avoided in the shortest path)
+        if (areaFlags & AREA_LEDGE)
+            score *= 0.7f;
+        // Prefer not bounded by walls areas to avoid bumping into walls
+        if (!(areaFlags & AREA_WALL))
+            score *= 1.6f;
+
+        if (score <= bestScore)
+            continue;
+
+        // Make sure the bot can see the ground
+        SolidWorldTrace(&trace, traceStartPoint.Data(), areaPoint.Data());
+        if (trace.fraction != 1.0f)
+            continue;
+
+        bestScore = score;
+        bestAreaNum = areaNum;
     }
 
-    // If bestFraction is still a fraction of the forward trace, moveVec is kept as is
+    if (!bestAreaNum)
+    {
+        // If there is a trigger entity in the reach chain, keep looking at it
+        if (firstNonBunnyingReach)
+        {
+            int travelType = firstNonBunnyingReach->traveltype;
+            if (travelType == TRAVEL_TELEPORT || travelType == TRAVEL_JUMPPAD || travelType == TRAVEL_ELEVATOR)
+            {
+                intendedLookVec->Set(firstNonBunnyingReach->start);
+                *intendedLookVec-= entityPhysicsState.Origin();
+                return true;
+            }
+        }
+
+        Debug("Cannot straighten look vec: cannot find a suitable area in reach. chain to aim for\n");
+        return false;
+    }
+
+    // Look not to the middle of an area, but to the nav target in this case
+    if (bestAreaNum == navTargetAasAreaNum)
+    {
+        intendedLookVec->Set(context->NavTargetOrigin());
+        *intendedLookVec -= entityPhysicsState.Origin();
+        return true;
+    }
+
+    const aas_area_t &bestArea = aasAreas[bestAreaNum];
+    intendedLookVec->Set(bestArea.center[0], bestArea.center[1], bestArea.mins[2] + 32);
+    *intendedLookVec -= traceStartPoint;
+    if (entityPhysicsState.HeightOverGround() < 8.0f)
+        intendedLookVec->Z() = 0;
+    else
+        intendedLookVec->Z() *= Z_NO_BEND_SCALE;
+
     return true;
 }
 
-bool Bot::StraightenOrInterpolateLookVec(Vec3 *intendedLookVec, float speed)
+inline float SuggestObstacleAvoidanceCorrectionFraction(const BotMovementPredictionContext *context)
 {
-    if (nextReaches.empty())
+    float squareSpeed = VectorLengthSquared(context->movementState->entityPhysicsState.Velocity());
+    // Might be negative!
+    float speedOverRunSpeed = SQRTFAST(squareSpeed) - context->GetRunSpeed();
+    if (speedOverRunSpeed > 500.0f)
+        return 0.15f;
+    return 0.35f - 0.20f * speedOverRunSpeed / 500.0f;
+}
+
+void BotBunnyStraighteningReachChainMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    auto *suggestedAction = &self->ai->botRef->bunnyToBestShortcutAreaMovementAction;
+    if (!GenericCheckIsActionEnabled(context, suggestedAction))
+        return;
+
+    if (!CheckCommonBunnyingActionPreconditions(context))
+        return;
+
+    if (this->hasSavedIntendedLookVec)
     {
-        if (currAasAreaNum != NavTargetAasAreaNum())
+        context->record->botInput.intendedLookVec = this->savedIntendedLookVec;
+    }
+    else
+    {
+        context->SetDefaultBotInput();
+        if (!TryStraightenLookVec(&context->record->botInput.intendedLookVec, context))
         {
-            // Looks like we are in air above a ground, keep as is waiting for landing.
-            VectorCopy(self->velocity, intendedLookVec->Data());
-            return false;
+            context->SetPendingRollback();
+            return;
         }
-        // Move to a goal origin
-        *intendedLookVec = NavTargetOrigin() - self->s.origin;
-        return true;
+        this->savedIntendedLookVec = context->record->botInput.intendedLookVec;
+        this->hasSavedIntendedLookVec = true;
     }
 
-    if (TryStraightenLookVec(intendedLookVec))
+    if (isTryingObstacleAvoidance)
+        context->TryAvoidJumpableObstacles(SuggestObstacleAvoidanceCorrectionFraction(context));
+
+    if (!SetupBunnying(context->record->botInput.intendedLookVec, context))
+    {
+        context->SetPendingRollback();
+        return;
+    }
+}
+
+int BotBunnyToBestShortcutAreaMovementAction::FindBestShortcutArea(BotMovementPredictionContext *context) const
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto *aasRouteCache = self->ai->botRef->routeCache;
+    const auto *aasAreas = aasWorld->Areas();
+    const auto *aasAreaSettings = aasWorld->AreaSettings();
+
+    const int navTargetAreaNum = context->NavTargetAasAreaNum();
+    Assert(navTargetAreaNum);
+
+    const int droppedToFloorAreaNum = entityPhysicsState.DroppedToFloorAasAreaNum();
+    const int currAreaNum = entityPhysicsState.CurrAasAreaNum();
+    const int travelFlags = self->ai->botRef->PreferredTravelFlags();
+
+    // Check whether the target area is reachable for preferred bot travel flags
+
+    int startAreaNums[2] = { entityPhysicsState.DroppedToFloorAasAreaNum(), entityPhysicsState.CurrAasAreaNum() };
+    int startTravelTimes[2];
+
+    int j = 0;
+    for (int i = 0, end = (startAreaNums[0] != startAreaNums[1]) ? 2 : 1; i < end; ++i)
+    {
+        if (int travelTime = aasRouteCache->TravelTimeToGoalArea(startAreaNums[i], navTargetAreaNum, travelFlags))
+            startTravelTimes[j++] = travelTime;
+    }
+
+    int bestStartTravelTime;
+    switch (j)
+    {
+        case 2:
+            bestStartTravelTime = (startTravelTimes[0] < startTravelTimes[1]) ? startTravelTimes[0] : startTravelTimes[1];
+            break;
+        case 1:
+            bestStartTravelTime = startTravelTimes[0];
+            break;
+        case 0:
+            return 0;
+    }
+
+    float side = 64.0f + 256.0f * self->ai->botRef->Skill();
+    Vec3 boxMins(-side, -side, -112), boxMaxs(+side, +side, 0);
+    boxMins += entityPhysicsState.Origin();
+    boxMaxs += entityPhysicsState.Origin();
+    int bboxAreaNums[48];
+    int numBBoxAreas = aasWorld->BBoxAreas(boxMins, boxMaxs, bboxAreaNums, 48);
+
+    int bestAreaNum = 0;
+    int bestTravelTimeSave = 0;
+    trace_t trace;
+    Vec3 traceStartPoint(entityPhysicsState.Origin());
+    traceStartPoint.Z() += playerbox_stand_viewheight;
+    for (int i = 0; i < numBBoxAreas; ++i)
+    {
+        const int areaNum = bboxAreaNums[i];
+        if (areaNum == droppedToFloorAreaNum || areaNum == currAreaNum)
+            continue;
+
+        const auto &areaSettings = aasAreaSettings[areaNum];
+        int areaFlags = areaSettings.areaflags;
+        if (!(areaFlags & AREA_GROUNDED))
+            continue;
+        if (areaFlags & (AREA_JUNK|AREA_DISABLED))
+            continue;
+        if (areaSettings.contents & (AREACONTENTS_WATER|AREACONTENTS_LAVA|AREACONTENTS_SLIME|AREACONTENTS_DONOTENTER))
+            continue;
+
+        const auto &area = aasAreas[areaNum];
+        Vec3 areaPoint(area.center[0], area.center[1], area.mins[2] + 4.0f);
+        // Skip areas higher than the bot (to allow moving on a stairs chain, we test distance/height ratio)
+        if (area.mins[2] > entityPhysicsState.Origin()[2])
+        {
+            float distance = areaPoint.FastDistance2DTo(entityPhysicsState.Origin());
+            if (area.mins[2] - entityPhysicsState.Origin()[2] > M_SQRT1_2 * distance)
+                continue;
+        }
+
+        int areaToTargetAreaTravelTime = aasRouteCache->TravelTimeToGoalArea(areaNum, navTargetAreaNum, travelFlags);
+        if (!areaToTargetAreaTravelTime)
+            continue;
+
+        // Time saved on traveling to goal
+        int travelTimeSave = bestStartTravelTime - areaToTargetAreaTravelTime;
+        if (travelTimeSave < bestTravelTimeSave)
+            continue;
+
+        SolidWorldTrace(&trace, traceStartPoint.Data(), areaPoint.Data());
+        if (trace.fraction != 1.0f)
+            continue;
+
+        // We DO not check whether traveling to the best nearby area takes less time
+        // than time traveling from best area to nav target saves.
+        // Otherwise only areas in the reachability chain conform to the condition if the routing algorithm works properly.
+        // We hope for shortcuts the routing algorithm is not aware of.
+        bestTravelTimeSave = travelTimeSave;
+        bestAreaNum = areaNum;
+    }
+
+    return bestAreaNum;
+}
+
+void BotBunnyToBestShortcutAreaMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    auto *suggestedAction = &FallbackBunnyAction();
+    if (!GenericCheckIsActionEnabled(context, suggestedAction))
+        return;
+
+    if (!CheckCommonBunnyingActionPreconditions(context))
+        return;
+
+    if (this->hasSavedIntendedLookVec)
+    {
+        context->record->botInput.intendedLookVec = this->savedIntendedLookVec;
+    }
+    else
+    {
+        int bestAreaNum = FindBestShortcutArea(context);
+        if (!bestAreaNum)
+        {
+            context->SetPendingRollback();
+            return;
+        }
+
+        const auto &area = AiAasWorld::Instance()->Areas()[bestAreaNum];
+        context->record->botInput.intendedLookVec.Set(area.center[0], area.center[1], area.mins[2] + 32);
+        context->record->botInput.intendedLookVec -= context->movementState->entityPhysicsState.Origin();
+        this->savedIntendedLookVec = context->record->botInput.intendedLookVec;
+        this->hasSavedIntendedLookVec = true;
+    }
+
+    if (isTryingObstacleAvoidance)
+        context->TryAvoidJumpableObstacles(SuggestObstacleAvoidanceCorrectionFraction(context));
+
+    if (!SetupBunnying(context->record->botInput.intendedLookVec, context))
+    {
+        context->SetPendingRollback();
+        return;
+    }
+}
+
+void BotWalkCarefullyMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction *suggestedAction = &DefaultBunnyAction();
+    if (!GenericCheckIsActionEnabled(context, suggestedAction))
+        return;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    if (!entityPhysicsState.GroundEntity() && entityPhysicsState.HeightOverGround() > 4.0f)
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = suggestedAction;
+        Debug("Cannot apply action: the bot is quite high above the ground\n");
+        return;
+    }
+
+    const int currAasAreaNum = context->CurrAasAreaNum();
+    if (!currAasAreaNum)
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &DummyAction();
+        Debug("Cannot apply action: current AAS area num is undefined\n");
+        return;
+    }
+
+    const int navTargetAasAreaNum = context->NavTargetAasAreaNum();
+    if (!navTargetAasAreaNum)
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &DummyAction();
+        Debug("Cannot apply action: nav target AAS area num is undefined\n");
+        return;
+    }
+
+    if (self->ai->botRef->ShouldMoveCarefully() || self->ai->botRef->ShouldBeSilent())
+    {
+        context->SetDefaultBotInput();
+        context->record->botInput.ClearMovementDirections();
+        context->record->botInput.SetForwardMovement(1);
+        if (self->ai->botRef->ShouldMoveCarefully() || context->IsInNavTargetArea())
+        {
+            context->record->botInput.SetWalkButton(true);
+        }
+        return;
+    }
+
+    // First test whether there is a gap in front of the bot
+    // (if this test is omitted, bots would use this no-jumping action instead of jumping over gaps and fall down)
+
+    const float zOffset = playerbox_stand_mins[2] - 16.0f - entityPhysicsState.HeightOverGround();
+    vec3_t forward, right;
+    AngleVectors(entityPhysicsState.Angles().Data(), nullptr, right, nullptr);
+    Vec3 frontTestPoint(forward);
+    frontTestPoint *= 8.0f;
+    frontTestPoint += entityPhysicsState.Origin();
+    frontTestPoint.Z() += zOffset;
+
+    trace_t trace;
+    SolidWorldTrace(&trace, entityPhysicsState.Origin(), frontTestPoint.Data());
+    if (trace.fraction == 1.0f)
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = suggestedAction;
+        return;
+    }
+
+    int hazardContentsMask = CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_DONOTENTER;
+    // Prevent touching a water if not bot is not already walking in it
+    if (!entityPhysicsState.waterLevel)
+        hazardContentsMask |= CONTENTS_WATER;
+
+    // An action might be applied if there are gap or hazard from both sides
+    // or from a single side and there is non-walkable plane from an other side
+    int gapSidesNum = 2;
+    int hazardSidesNum = 0;
+
+    const float sideOffset = playerbox_stand_maxs[1] - playerbox_stand_mins[1];
+    Vec3 sidePoints[2] = { Vec3(right), -Vec3(right) };
+    for (int i = 0; i < 2; ++i)
+    {
+        sidePoints[i] *= sideOffset;
+        sidePoints[i] += entityPhysicsState.Origin();
+        sidePoints[i].Z() += zOffset;
+        SolidWorldTrace(&trace, entityPhysicsState.Origin(), sidePoints[i].Data());
+        // Put likely case first
+        if (trace.fraction != 1.0f)
+        {
+            // Put likely case first
+            if (!(trace.contents & hazardContentsMask))
+            {
+                if (ISWALKABLEPLANE(&trace.plane))
+                {
+                    context->cannotApplyAction = true;
+                    context->actionSuggestedByAction = suggestedAction;
+                    Debug("Cannot apply action: there is no gap, wall or hazard to the right below\n");
+                    return;
+                }
+            }
+            else
+                hazardSidesNum++;
+
+            gapSidesNum--;
+        }
+    }
+
+    if (!(hazardSidesNum + gapSidesNum))
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = suggestedAction;
+        Debug("Cannot apply action: there are just two walls from both sides, no gap or hazard\n");
+        return;
+    }
+
+    context->SetDefaultBotInput();
+    context->record->botInput.ClearMovementDirections();
+    context->record->botInput.SetForwardMovement(1);
+    // Be especially careful when there is a nearby hazard area
+    if (hazardSidesNum)
+        context->record->botInput.SetWalkButton(true);
+}
+
+bool BotGenericRunBunnyingMovementAction::GenericCheckIsActionEnabled(BotMovementPredictionContext *context,
+                                                                      BotBaseMovementAction *suggestedAction)
+{
+    if (!BotBaseMovementAction::GenericCheckIsActionEnabled(context, suggestedAction))
+        return false;
+
+    if (this->disabledForApplicationFrameIndex != context->topOfStackIndex)
         return true;
 
-    InterpolateLookVec(intendedLookVec, speed);
+    Debug("Cannot apply action: the action has been disabled for application on frame %d\n", context->topOfStackIndex);
+    context->cannotApplyAction = true;
+    context->actionSuggestedByAction = suggestedAction;
     return false;
 }
 
-bool Bot::TryStraightenLookVec(Vec3 *intendedLookVec)
+bool BotGenericRunBunnyingMovementAction::CheckCommonBunnyingActionPreconditions(BotMovementPredictionContext *context)
 {
-    if (nextReaches.empty())
-        FailWith("TryStraightenLookVec(): nextReaches is empty");
+    int currAasAreaNum = context->CurrAasAreaNum();
+    if (!currAasAreaNum)
+    {
+        Debug("Cannot apply action: curr AAS area num is undefined\n");
+        context->SetPendingRollback();
+        return false;
+    }
 
-    // First, loop over known next reachabilities checking its travel type and Z level.
-    // If Z differs too much, path can't be straightened, thus, reject straightening early.
-    // Break on first non-TRAVEL_WALK reachability.
-    unsigned i = 0;
-    float minZ = self->s.origin[2];
-    float maxZ = self->s.origin[2];
-    for (; i < nextReaches.size(); ++i) {
-        const auto &reach = nextReaches[i];
-        float currZ = 0.5f * (reach.start[2] + reach.end[2]);
-        if (currZ < maxZ - 24)
+    int navTargetAasAreaNum = context->NavTargetAasAreaNum();
+    if (!navTargetAasAreaNum)
+    {
+        Debug("Cannot apply action: nav target AAS area num is undefined\n");
+        context->SetPendingRollback();
+        return false;
+    }
+
+    if (self->ai->botRef->GetSelectedEnemies().AreValid() && self->ai->botRef->GetMiscTactics().shouldKeepXhairOnEnemy)
+    {
+        if (!context->MayHitWhileRunning().CanHit())
+        {
+            Debug("Cannot apply action: cannot hit an enemy while keeping the crosshair on it is required\n");
+            context->SetPendingRollback();
+            this->isDisabledForPlanning = true;
             return false;
-        if (currZ > maxZ + 24)
-            return false;
-        if (currZ < minZ)
-            minZ = currZ;
-        else if (currZ > maxZ)
-            maxZ = currZ;
-
-        if (reach.traveltype != TRAVEL_WALK)
-            break;
-    }
-
-    bool traceStraightenedPath = false;
-    Vec3 lookAtPoint(0, 0, 0);
-
-    // All next known reachabilities. have TRAVEL_WALK travel type
-    if (i == nextReaches.size())
-    {
-        // If a reachablities chain contains goal area, goal area is last in the chain
-        if (nextReaches[i - 1].areanum == NavTargetAasAreaNum())
-        {
-            traceStraightenedPath = true;
-            lookAtPoint = NavTargetOrigin();
-        }
-    }
-    else
-    {
-        switch (nextReaches[i].traveltype)
-        {
-            case TRAVEL_TELEPORT:
-            case TRAVEL_JUMPPAD:
-            case TRAVEL_ELEVATOR:
-                // Look at the trigger
-                traceStraightenedPath = true;
-                lookAtPoint = Vec3(nextReaches[i].start);
         }
     }
 
-    if (!traceStraightenedPath)
-        return false;
-
-    // Check for obstacles on the straightened path
-    trace_t trace;
-    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, lookAtPoint.Data(), self, MASK_AISOLID);
-    if (trace.fraction != 1.0f)
-        return false;
-
-    *intendedLookVec = lookAtPoint - self->s.origin;
-    return true;
-}
-
-void Bot::InterpolateLookVec(Vec3 *intendedLookVec, float speed)
-{
-    if (nextReaches.empty())
-        FailWith("InterpolateLookVec(): nextReaches is empty");
-
-    const float radius = 72.0f + 72.0f * BoundedFraction(speed - 320, 640);
-
-    vec3_t weightedDirsToReachStart[MAX_REACH_CACHED];
-    vec3_t weightedDirsToAreaCenter[MAX_REACH_CACHED];
-
-    // If true, next reach. is outside of a transition radius
-    bool hasOnlySingleFarReach = false;
-    Vec3 singleFarNextReachDir(0, 0, 0);
-    Vec3 singleFarNextAreaCenterDir(0, 0, 0);
-
-    // Cache a referece to avoid indirection
-    const aas_area_t *areas = aasWorld->Areas();
-
-    int nearestReachesCount = 0;
-    for (unsigned i = 1; i < nextReaches.size(); ++i)
+    // Cannot find a next reachability in chain while it should exist
+    // (looks like the bot is too high above the ground)
+    if (!context->IsInNavTargetArea() && !context->NextReachNum())
     {
-        auto &reach = nextReaches[i];
-        int travelType = reach.traveltype;
-        // Make conditions fit line limit
-        if (travelType != TRAVEL_WALK && travelType != TRAVEL_WALKOFFLEDGE)
-            if (travelType != TRAVEL_JUMP && travelType != TRAVEL_STRAFEJUMP)
-                break;
-
-        float squareDist = DistanceSquared(reach.start, self->s.origin);
-        if (squareDist > radius * radius)
-        {
-            // If we haven't found next reach. yet
-            if (nearestReachesCount == 0)
-            {
-                singleFarNextReachDir = Vec3(reach.start) - self->s.origin;
-                singleFarNextReachDir.NormalizeFast();
-                singleFarNextAreaCenterDir = Vec3(areas[reach.areanum].center) - self->s.origin;
-                singleFarNextAreaCenterDir.NormalizeFast();
-                hasOnlySingleFarReach = true;
-                nearestReachesCount = 1;
-            }
-            break;
-        }
-
-        float *reachDir = weightedDirsToReachStart[nearestReachesCount];
-        // Copy vector from self origin to reach. start
-        VectorCopy(reach.start, reachDir);
-        VectorSubtract(reachDir, self->s.origin, reachDir);
-        // Compute the vector length
-        float invDistanceToReach = Q_RSqrt(squareDist);
-        // Normalize the vector to reach. start
-        VectorScale(reachDir, invDistanceToReach, reachDir);
-        // Compute and apply reach. distance factor (closest reach'es should have greater weight)
-        float reachDistanceFactor = 1.0f - (1.0f / invDistanceToReach) / radius;
-        VectorScale(reachDir, reachDistanceFactor, reachDir);
-
-        float *centerDir = weightedDirsToAreaCenter[nearestReachesCount];
-        // Copy vector from self origin to area center
-        VectorCopy(areas[reach.areanum].center, centerDir);
-        VectorSubtract(centerDir, self->s.origin, centerDir);
-        // Normalize the vector to area center
-        float invDistanceToCenter = Q_RSqrt(VectorLengthSquared(centerDir));
-        VectorScale(centerDir, invDistanceToCenter, centerDir);
-        // Compute and apply center distance factor (closest center points should have greater weight)
-        float centerDistanceFactor = 1.0f - (1.0f / invDistanceToCenter) / radius;
-        VectorScale(centerDir, centerDistanceFactor, centerDir);
-
-        nearestReachesCount++;
-        if (nearestReachesCount == MAX_REACH_CACHED)
-            break;
+        Debug("Cannot apply action: next reachability is undefined and bot is not in the nav target area\n");
+        context->SetPendingRollback();
+        return false;
     }
 
-    if (!nearestReachesCount || intendedLookVec->SquaredLength() < 0.01f)
+    if (!(context->currPlayerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_JUMP))
     {
-        Vec3 linkVec = Vec3(nextReaches.front().end) - nextReaches.front().start;
-        linkVec.NormalizeFast();
-        *intendedLookVec = Vec3(16 * linkVec + nextReaches.front().start) - self->s.origin;
-        return;
+        Debug("Cannot apply action: bot does not have the jump movement feature\n");
+        context->SetPendingRollback();
+        this->isDisabledForPlanning = true;
+        return false;
     }
 
-    *intendedLookVec = Vec3(nextReaches.front().start) - self->s.origin;
-    intendedLookVec->NormalizeFast();
-    if (hasOnlySingleFarReach)
+    if (self->ai->botRef->ShouldBeSilent())
     {
-        float pendingReachDistanceFactor = distanceToNextReachStart / radius;
-        float nextReachDistanceFactor = 1.0f - pendingReachDistanceFactor;
-        *intendedLookVec *= pendingReachDistanceFactor;
-        singleFarNextReachDir *= 1.0f - nextReachDistanceFactor;
-        singleFarNextAreaCenterDir *= 1.0f - nextReachDistanceFactor;
-        *intendedLookVec += 0.5f * (singleFarNextReachDir + singleFarNextAreaCenterDir);
+        Debug("Cannot apply action: bot should be silent\n");
+        context->SetPendingRollback();
+        this->isDisabledForPlanning = true;
+        return false;
     }
-    else
-    {
-        // Closest reach. start should have greater weight
-        *intendedLookVec *= 1.0f - distanceToNextReachStart / radius;
-        for (int i = 0; i < nearestReachesCount; ++i)
-            *intendedLookVec += 0.5f * (Vec3(weightedDirsToReachStart[i]) + weightedDirsToAreaCenter[i]);
-    }
-    // intendedLookVec is not required to be normalized, leave it as is
-}
-
-bool Bot::MaySetPendingLandingDash()
-{
-    // A bot is on ground
-    if (self->groundentity)
-        return false;
-
-    // Can't dash
-    if (!(self->r.client->ps.stats[PM_STAT_FEATURES] & PMFEAT_DASH))
-        return false;
-
-    // 2D speed is too low
-    if (self->velocity[0] * self->velocity[0] + self->velocity[1] * self->velocity[1] < 600.0f * 600.0f)
-        return false;
-
-    // Set a pending landing dash only being in middle of large area.
-    // Many small areas may provide enough space to do a pending dash,
-    // but in this case its likely that the intended movement vector will change its direction too quickly.
-    if (!aasWorld->AreaGrounded(droppedToFloorAasAreaNum))
-        return false;
-    const aas_area_t &area = aasWorld->Areas()[droppedToFloorAasAreaNum];
-    if (area.maxs[0] - self->s.origin[0] < 40.0f || self->s.origin[0] - area.mins[0] < 40.0f)
-        return false;
-    if (area.maxs[1] - self->s.origin[1] < 40.0f || self->s.origin[1] - area.mins[1] < 40.0f)
-        return false;
-
-    float traceDepth = -playerbox_stand_mins[2] + AI_JUMPABLE_HEIGHT;
-    trace_t trace;
-    AiGroundTraceCache::Instance()->GetGroundTrace(self, traceDepth, &trace);
-    // A bot is too high in air, so area assumptions are unlikely to be valid
-    if (trace.fraction == 1.0f)
-        return false;
-
-    float distanceToGround = traceDepth * trace.fraction + playerbox_stand_maxs[2];
-    // A bot will not be able to turn view to the desired direction to the moment of landing
-    if (distanceToGround < 6.0f && self->velocity[2] < 0.0f)
-        return false;
 
     return true;
 }
 
-void Bot::SetPendingLandingDash(BotInput *input)
+void BotGenericRunBunnyingMovementAction::SetupCommonBunnyingInput(BotMovementPredictionContext *context, float speed)
 {
-    input->isLookVecSet = true;
-    input->canOverrideLookVec = false;
-    input->canOverridePitch = true;
-    input->canOverrideUcmd = false;
-    input->ClearMovementDirections();
+    const auto *pmoveStats = context->currPlayerState->pmove.stats;
 
-    pendingLandingDashState.SetTriggered(700);
-}
+    auto *botInput = &context->record->botInput;
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
 
-void Bot::ApplyPendingLandingDash(BotInput *input)
-{
-    if (!pendingLandingDashState.MayApplyDash())
-        return;
+    botInput->SetForwardMovement(1);
+    const auto &hitWhileRunningTestResult = context->MayHitWhileRunning();
+    if (self->ai->botRef->GetSelectedEnemies().AreValid() && self->ai->botRef->ShouldKeepXhairOnEnemy())
+        Assert(hitWhileRunningTestResult.CanHit());
 
-    input->isLookVecSet = false;
-    input->canOverrideLookVec = false;
-    input->canOverrideUcmd = false;
-    input->SetForwardMovement(1);
-    input->SetRightMovement(0);
-    input->SetUpMovement(0);
-    input->SetSpecialButton(true);
+    botInput->canOverrideLookVec = hitWhileRunningTestResult.canHitAsIs;
+    botInput->canOverridePitch = true;
 
-    pendingLandingDashState.Invalidate();
-}
-
-void Bot::MoveGenericRunning(BotInput *input, bool mayHitWhileRunning)
-{
-    if (pendingLandingDashState.IsActive())
+    if ((pmoveStats[PM_STAT_FEATURES] & PMFEAT_DASH) && !pmoveStats[PM_STAT_DASHTIME] && !pmoveStats[PM_STAT_STUN])
     {
-        ApplyPendingLandingDash(input);
-        return;
+        bool shouldDash = false;
+        if (speed < context->GetDashSpeed() && entityPhysicsState.GroundEntity())
+        {
+            // Prevent dashing into obstacles
+            auto &traceCache = context->EnvironmentTraceCache();
+            traceCache.TestForResultsMask(context, traceCache.FullHeightMask(traceCache.FRONT));
+            if (traceCache.FullHeightFrontTrace().trace.fraction == 1.0f)
+                shouldDash = true;
+        }
+
+        if (shouldDash)
+        {
+            botInput->SetSpecialButton(true);
+            botInput->SetUpMovement(0);
+            // Predict dash precisely
+            context->predictionStepMillis = 16;
+        }
+        else
+            botInput->SetUpMovement(1);
     }
+    else
+    {
+        if (speed < context->GetRunSpeed())
+            botInput->SetUpMovement(0);
+        else
+            botInput->SetUpMovement(1);
+    }
+}
 
-    // TryRocketJumpShortcut() is expensive, call it only in Think() frames
-    if (!ShouldBeSilent() && !ShouldSkipThinkFrame() && TryRocketJumpShortcut(input))
-        return;
+bool BotGenericRunBunnyingMovementAction::SetupBunnying(const Vec3 &intendedLookVec,
+                                                        BotMovementPredictionContext *context)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    auto *botInput = &context->record->botInput;
 
-    SetDefaultBotInput(input);
-    // Nothing to do in these cases, just hope that area num / nav target will be updated soon
-    if (!currAasAreaNum || !botBrain.HasNavTarget())
-        return;
+    const float squareSpeed = VectorLengthSquared(entityPhysicsState.Velocity());
+    const float speed = squareSpeed > 0.01f ? SQRTFAST(squareSpeed) : squareSpeed;
 
-    Vec3 velocityVec(self->velocity);
-    float speed = velocityVec.SquaredLength() > 0.01f ? velocityVec.LengthFast() : 0;
-
-    StraightenOrInterpolateLookVec(&input->intendedLookVec, speed);
-    bool hasObstacles = CheckAndTryAvoidObstacles(input, speed);
-
-    Vec3 toTargetDir2D(input->intendedLookVec);
+    Vec3 toTargetDir2D(intendedLookVec);
     toTargetDir2D.Z() = 0;
 
-    Vec3 velocityDir2D(velocityVec);
+    Vec3 velocityDir2D(entityPhysicsState.Velocity());
     velocityDir2D.Z() = 0;
 
     float speed2DSquared = velocityDir2D.SquaredLength();
     float toTargetDir2DSqLen = toTargetDir2D.SquaredLength();
 
-    const short *movementSettings = self->r.client->ps.pmove.stats;
-    const short movementFeatures = movementSettings[PM_STAT_FEATURES];
-
-    if (speed2DSquared > 0.1f)
+    if (speed2DSquared > 1.0f)
     {
+        SetupCommonBunnyingInput(context, speed);
+
         velocityDir2D *= Q_RSqrt(speed2DSquared);
-
-        input->SetForwardMovement(1);
-        input->canOverrideLookVec = mayHitWhileRunning;
-        input->canOverridePitch = true;
-
-        if (movementFeatures & PMFEAT_DASH)
-        {
-            if (speed < movementSettings[PM_STAT_DASHSPEED])
-            {
-                input->SetUpMovement(0);
-                if (self->groundentity)
-                    input->SetSpecialButton(true);
-            }
-            // If we are not crouching in air to prevent bumping a ceiling, keep jump key pressed
-            else if (!input->IsCrouching() && movementFeatures & PMFEAT_JUMP)
-                input->SetUpMovement(1);
-        }
-        else
-        {
-            if (speed < movementSettings[PM_STAT_MAXSPEED])
-                input->SetUpMovement(0);
-            else if (!input->IsCrouching() && movementFeatures & PMFEAT_JUMP)
-                input->SetUpMovement(1);
-        }
 
         if (toTargetDir2DSqLen > 0.1f)
         {
             toTargetDir2D *= Q_RSqrt(toTargetDir2DSqLen);
 
             float velocityDir2DDotToTargetDir2D = velocityDir2D.Dot(toTargetDir2D);
-            if (velocityDir2DDotToTargetDir2D > STRAIGHT_MOVEMENT_DOT_THRESHOLD && !ShouldMoveCarefully())
+            if (velocityDir2DDotToTargetDir2D > STRAIGHT_MOVEMENT_DOT_THRESHOLD)
             {
                 // Apply cheating acceleration
-                Vec3 newVelocity = GetCheatingAcceleratedVelocity(velocityDir2DDotToTargetDir2D, hasObstacles);
-                VectorCopy(newVelocity.Data(), self->velocity);
-            }
-            // Correct trajectory using cheating aircontrol
-            else if (velocityDir2DDotToTargetDir2D > -0.3f)
-            {
-                Vec3 newVelocity = GetCheatingCorrectedVelocity(velocityDir2DDotToTargetDir2D, toTargetDir2D);
-                VectorCopy(newVelocity.Data(), self->velocity);
+                CheatingAccelerate(context, velocityDir2DDotToTargetDir2D - STRAIGHT_MOVEMENT_DOT_THRESHOLD);
             }
             else
             {
-                if (!ShouldBeSilent() && MaySetPendingLandingDash())
-                {
-                    SetPendingLandingDash(input);
-                    return;
-                }
+                // Correct trajectory using cheating aircontrol
+                CheatingCorrectVelocity(context, velocityDir2DDotToTargetDir2D, toTargetDir2D);
             }
-
-            // Prevent bending except in air (where it is useful to push a bot to a goal)
-            if (self->groundentity || !IsCloseToNavTarget())
-                input->intendedLookVec.Z() *= Z_NO_BEND_SCALE;
         }
     }
     // Looks like the bot is in air falling vertically
-    else if (!self->groundentity)
+    else if (!entityPhysicsState.GroundEntity())
     {
-        // Allow aiming in flight as described below
-        if (HasEnemy() && ShouldAttack() && CanFlyAboveGroundRelaxed())
+        // Release keys to allow full control over view in air without affecting movement
+        if (self->ai->botRef->ShouldAttack() && CanFlyAboveGroundRelaxed(context))
         {
-            input->ClearMovementDirections();
-            input->canOverrideLookVec = true;
+            botInput->ClearMovementDirections();
+            botInput->canOverrideLookVec = true;
         }
-        return;
-    }
-
-    bool allowAimingInFlight = !ShouldMoveCarefully();
-    // Prevent falling by switching to a cautious move style
-    if (closeAreaProps.frontTest.CanFall() || closeAreaProps.leftTest.CanFall() || closeAreaProps.rightTest.CanFall())
-    {
-        input->SetSpecialButton(false);
-        input->SetUpMovement(0);
-        allowAimingInFlight = false;
-    }
-    // If there is a side wall
-    else if (!closeAreaProps.leftTest.CanWalk() || !closeAreaProps.rightTest.CanWalk())
-    {
-        // If bot is in air and there are no obstacles on chosen forward direction, do a WJ.
-        if (!self->groundentity && !hasObstacles)
-            if (movementFeatures & PMFEAT_WALLJUMP)
-                input->SetSpecialButton(true);
-    }
-
-    // Skip dash and WJ near triggers to prevent missing a trigger
-    if (!nextReaches.empty())
-    {
-        switch (nextReaches.front().traveltype)
-        {
-            case TRAVEL_TELEPORT:
-            case TRAVEL_JUMPPAD:
-            case TRAVEL_ELEVATOR:
-            case TRAVEL_LADDER:
-            case TRAVEL_BARRIERJUMP:
-                input->SetSpecialButton(false);
-                allowAimingInFlight = false;
-            default:
-                if (IsCloseToNavTarget())
-                {
-                    input->SetSpecialButton(false);
-                    allowAimingInFlight = false;
-                }
-        }
-    }
-
-    if (ShouldBeSilent())
-    {
-        input->SetUpMovement(0);
-        input->SetSpecialButton(false);
-        allowAimingInFlight = false;
-    }
-
-    // If all these conditions are met, the bot can release all buttons in air and aim in arbitrary direction
-    if (allowAimingInFlight && HasEnemy() && ShouldAttack() && CanFlyAboveGroundRelaxed())
-    {
-        input->ClearMovementDirections();
-        input->canOverrideLookVec = true;
-        return;
-    }
-
-    // prevent blocking after all
-    if (!input->ForwardMovement() && !input->RightMovement() && !input->UpMovement() && !input->IsSpecialButtonSet())
-        input->SetForwardMovement(1);
-}
-
-bool Bot::CanFlyAboveGroundRelaxed() const
-{
-    // Test this first to cut off expensive trace computation
-    if (self->groundentity)
-        return false;
-
-    trace_t trace;
-    float playerEntHeightOffset = -playerbox_stand_mins[2];
-    float desiredHeightAboveGround = 0.3f * AI_JUMPABLE_HEIGHT;
-    float traceHeight = 8.0f + desiredHeightAboveGround + playerEntHeightOffset;
-    AiGroundTraceCache::Instance()->GetGroundTrace(self, traceHeight, &trace);
-    if (trace.fraction == 1.0f)
         return true;
-
-    return trace.fraction * traceHeight - playerEntHeightOffset >= desiredHeightAboveGround;
-}
-
-Vec3 Bot::GetCheatingAcceleratedVelocity(float velocity2DDirDotToTarget2DDir, bool hasObstacles) const
-{
-    // Apply cheating acceleration if bot is moving quite straight to a target
-    if (velocity2DDirDotToTarget2DDir <= STRAIGHT_MOVEMENT_DOT_THRESHOLD)
-        return Vec3(self->velocity);
-
-    if (ShouldMoveCarefully())
-        return Vec3(self->velocity);
-
-    if (self->groundentity)
-        return Vec3(self->velocity);
-
-    if (hasObstacles)
-        return Vec3(self->velocity);
-
-    if (Skill() <= 0.33f)
-        return Vec3(self->velocity);
-
-    const float squareSpeed = VectorLengthSquared(self->velocity);
-    const float runSpeed = self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED];
-
-    // Avoid division by zero and logic errors
-    if (squareSpeed < runSpeed * runSpeed)
-        return Vec3(self->velocity);
-
-    const float speed = 1.0f / Q_RSqrt(squareSpeed);
-
-    // Max accel is measured in units per second and decreases with speed
-    // For speed of runSpeed maxAccel is 180
-    // For speed of 900 and greater maxAccel is 0
-    // This means cheating acceleration is not applied for speeds greater than 900 ups
-    // However the bot may reach greater speed since builtin GS_NEWBUNNY forward accel is enabled
-    float maxAccel = 180.0f * (1.0f - BoundedFraction(speed - runSpeed, 900.0f - runSpeed));
-
-    // Modify maxAccel to respect player class movement limitations
-    maxAccel *= runSpeed / 320.0f;
-
-    // Accel contains of constant and directional parts
-    // If velocity dir exactly matches target dir, accel = maxAccel
-    float accelStrength = 0.0f;
-    accelStrength += velocity2DDirDotToTarget2DDir - STRAIGHT_MOVEMENT_DOT_THRESHOLD;
-    accelStrength /= (1.0f - STRAIGHT_MOVEMENT_DOT_THRESHOLD);
-    accelStrength += 0.5f;
-
-    Vec3 velocityBoost(self->velocity);
-    // Normalize velocity direction
-    velocityBoost *= 1.0f / speed;
-    // Multiply by accel and frame time in millis
-    velocityBoost *= accelStrength * maxAccel * 0.001f * game.frametime;
-    // Return resulting velocity
-    return velocityBoost + self->velocity;
-}
-
-Vec3 Bot::GetCheatingCorrectedVelocity(float velocity2DDirDotToTarget2DDir, Vec3 toTargetDir2D) const
-{
-    if (!(self->r.client->ps.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL))
-        return Vec3(self->velocity);
-
-    // Make correction less effective for large angles multiplying it
-    // by the dot product to avoid a weird-looking cheating movement
-    float controlMultiplier = 0.01f + velocity2DDirDotToTarget2DDir * 0.10f;
-    // Use lots of correction near items
-    if (ShouldMoveCarefully())
-        controlMultiplier += 0.25f;
-    // Use a high correction on the ground (it does not look weird because ground acceleration >> air one)
-    else if (self->groundentity)
-        controlMultiplier += 0.66f;
-
-    float squareSpeed = VectorLengthSquared(self->velocity);
-    if (squareSpeed < 1)
-        return Vec3(self->velocity);
-
-    float speed = 1.0f / Q_RSqrt(squareSpeed);
-    Vec3 newVelocity(self->velocity);
-    newVelocity *= 1.0f / speed;
-    newVelocity += controlMultiplier * toTargetDir2D;
-    // Preserve velocity magnitude
-    newVelocity.NormalizeFast();
-    newVelocity *= speed;
-    return newVelocity;
-}
-
-bool Bot::TryRocketJumpShortcut(BotInput *input)
-{
-    // Try to do coarse cheap checks first to prevent wasting CPU cycles in G_Trace()
-
-    if (!botBrain.HasNavTarget())
-        return false;
-    // No need for that
-    if (currAasAreaNum == NavTargetAasAreaNum())
-        return false;
-
-    float squareDistanceToGoal = DistanceSquared(self->s.origin, NavTargetOrigin().Data());
-
-    // Too close to the goal
-    if (squareDistanceToGoal < 128.0f * 128.0f)
-        return false;
-
-    bool canRefillHealthAndArmor = true;
-    canRefillHealthAndArmor &= (level.gametype.spawnableItemsMask & IT_HEALTH) != 0;
-    canRefillHealthAndArmor &= (level.gametype.spawnableItemsMask & IT_ARMOR) != 0;
-
-    // This means a bot would inflict himself a damage (he can't switch to a safe gun)
-    if (GS_SelfDamage() && !Inventory()[WEAP_INSTAGUN])
-    {
-        float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
-        if (HasQuad(self))
-            damageToBeKilled /= 4.0f;
-        if (HasShell(self))
-            damageToBeKilled *= 4.0f;
-
-        // Can't refill health and armor picking it on the map
-        if (damageToBeKilled < 60.0f || (damageToBeKilled < 200.0f && !canRefillHealthAndArmor))
-            return false;
-
-        // We tested minimal estimated damage values to cut off
-        // further expensive tests that involve lots of traces.
-        // Selfdamage should be tested again when weapon selection is performed.
-    }
-
-    if (!self->groundentity)
-    {
-        // Check whether a bot has a ground surface to push off it
-        // TODO: Check for walls?
-        trace_t trace;
-        AiGroundTraceCache::Instance()->GetGroundTrace(self, 36, &trace);
-        if (trace.fraction == 1.0f)
-            return false;
-        if (trace.surfFlags & SURF_NOIMPACT)
-            return false;
-    }
-
-    Vec3 targetOrigin(0, 0, 0);
-    Vec3 fireTarget(0, 0, 0);
-    if (squareDistanceToGoal < 750.0f * 750.0f)
-    {
-        if (!AdjustDirectRocketJumpToAGoalTarget(&targetOrigin, &fireTarget))
-            return false;
     }
     else
     {
-        // The goal does not seam to be reachable for RJ.
-        // Try just shortcut a path.
-        if (!AdjustRocketJumpTargetForPathShortcut(&targetOrigin, &fireTarget))
-            return false;
+        SetupCommonBunnyingInput(context, speed);
+        return true;
     }
 
-    return TrySetPendingWeaponJump(targetOrigin, fireTarget);
+    if (self->ai->botRef->ShouldAttack() && CanFlyAboveGroundRelaxed(context))
+    {
+        botInput->ClearMovementDirections();
+        botInput->canOverrideLookVec = true;
+    }
+
+    // Skip dash and WJ near triggers and nav targets to prevent missing a trigger/nav target
+    const int nextReachNum = context->NextReachNum();
+    if (!nextReachNum)
+    {
+        // Preconditions check must not allow bunnying outside of nav target area having an empty reach. chain
+        Assert(context->IsInNavTargetArea());
+        botInput->SetSpecialButton(false);
+        botInput->canOverrideLookVec = false;
+        botInput->canOverridePitch = false;
+        return true;
+    }
+
+    switch (AiAasWorld::Instance()->Reachabilities()[nextReachNum].traveltype)
+    {
+        case TRAVEL_TELEPORT:
+        case TRAVEL_JUMPPAD:
+        case TRAVEL_ELEVATOR:
+        case TRAVEL_LADDER:
+        case TRAVEL_BARRIERJUMP:
+            botInput->SetSpecialButton(false);
+            botInput->canOverrideLookVec = false;
+            botInput->canOverridePitch = true;
+            return true;
+        default:
+            if (context->IsCloseToNavTarget())
+            {
+                botInput->SetSpecialButton(false);
+                botInput->canOverrideLookVec = false;
+                botInput->canOverridePitch = false;
+                return true;
+            }
+    }
+
+    TrySetWalljump(context);
+    return true;
 }
 
-bool Bot::AdjustRocketJumpTargetForPathShortcut(Vec3 *targetOrigin, Vec3 *fireTarget) const
+bool BotGenericRunBunnyingMovementAction::CanFlyAboveGroundRelaxed(const BotMovementPredictionContext *context) const
 {
-    // Cache references to avoid indirections
-    const aas_area_t *aasWorldAreas = aasWorld->Areas();
-    const aas_areasettings_t *aasWorldAreaSettings = aasWorld->AreaSettings();
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    if (entityPhysicsState.GroundEntity())
+        return false;
 
-    const aas_area_t &currArea = aasWorldAreas[currAasAreaNum];
-    trace_t trace;
-    // Avoid occasional unsigned overflow (the loop starts from nextReaches.size() - 1 or 0)
-    for (unsigned i = std::min(nextReaches.size(), nextReaches.size() - 1); i >= 1; --i)
+    float desiredHeightOverGround = 0.3f * AI_JUMPABLE_HEIGHT;
+    return entityPhysicsState.HeightOverGround() >= desiredHeightOverGround;
+}
+
+inline void BotGenericRunBunnyingMovementAction::TrySetWalljump(BotMovementPredictionContext *context)
+{
+    // Might be set to NEVER for easy bots even for actions that used to try walljumping
+    if (walljumpingMode == WalljumpingMode::NEVER)
+        return;
+
+    if (hasTestedWalljumping)
+        return;
+
+    if (!isTryingWalljumping)
+        return;
+
+    if (!CanSetWalljump(context))
+        return;
+
+    auto *botInput = &context->record->botInput;
+    botInput->ClearMovementDirections();
+    botInput->SetSpecialButton(true);
+    // Predict a frame precisely for walljumps
+    context->predictionStepMillis = 16;
+}
+
+#define TEST_TRACE_RESULT_NORMAL(traceResult)                              \
+do                                                                         \
+{                                                                          \
+    if (traceResult.trace.fraction != 1.0f)                                \
+    {                                                                      \
+        if (velocity2DDir.Dot(traceResult.trace.plane.normal) < -0.5f)     \
+            return false;                                                  \
+        hasGoodWalljumpNormal = true;                                      \
+    }                                                                      \
+} while (0)
+
+bool BotGenericRunBunnyingMovementAction::CanSetWalljump(BotMovementPredictionContext *context) const
+{
+    const short *pmoveStats = context->currPlayerState->pmove.stats;
+    if (!(pmoveStats[PM_STAT_FEATURES] & PMFEAT_WALLJUMP))
+        return false;
+
+    if (pmoveStats[PM_STAT_WJTIME])
+        return false;
+
+    if (pmoveStats[PM_STAT_STUN])
+        return false;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    if (entityPhysicsState.GroundEntity())
+        return false;
+
+    if (entityPhysicsState.HeightOverGround() < 8.0f && entityPhysicsState.Velocity()[2] <= 0)
+        return false;
+
+    // Make sure the bot looks in velocity direction, so front test is valid for velocity to
+    Vec3 velocity2DDir(entityPhysicsState.Velocity());
+    velocity2DDir.Z() = 0;
+    float speed2D = velocity2DDir.NormalizeFast();
+    // The 2D speed is too low for walljumping
+    if (speed2D < 400)
+        return false;
+
+    auto &traceCache = context->EnvironmentTraceCache();
+    traceCache.TestForResultsMask(context, traceCache.FullHeightMask(traceCache.FRONT));
+    const auto &frontResult = traceCache.FullHeightFrontTrace();
+    if (velocity2DDir.Dot(frontResult.traceDir) < 0.7f)
+        return false;
+
+    bool hasGoodWalljumpNormal = false;
+    TEST_TRACE_RESULT_NORMAL(frontResult);
+
+    // Do not force full-height traces for sides to be computed.
+    // Walljump height rules are complicated, and full simulation of these rules seems to be excessive.
+    // In worst case a potential walljump might be skipped.
+    auto sidesMask = traceCache.FULL_SIDES_MASK & ~(traceCache.BACK|traceCache.BACK_LEFT|traceCache.BACK_RIGHT);
+    traceCache.TestForResultsMask(context, traceCache.JumpableHeightMask(sidesMask));
+
+    TEST_TRACE_RESULT_NORMAL(traceCache.JumpableHeightLeftTrace());
+    TEST_TRACE_RESULT_NORMAL(traceCache.JumpableHeightRightTrace());
+    TEST_TRACE_RESULT_NORMAL(traceCache.JumpableHeightFrontLeftTrace());
+    TEST_TRACE_RESULT_NORMAL(traceCache.JumpableHeightFrontLeftTrace());
+
+    return hasGoodWalljumpNormal;
+}
+
+#undef TEST_TRACE_RESULT_NORMAL
+
+void BotGenericRunBunnyingMovementAction::CheatingAccelerate(BotMovementPredictionContext *context, float frac) const
+{
+    if (self->ai->botRef->ShouldMoveCarefully())
+        return;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    if (entityPhysicsState.GroundEntity())
+        return;
+
+    if (self->ai->botRef->Skill() <= 0.33f)
+        return;
+
+    const float squareSpeed = VectorLengthSquared(entityPhysicsState.Velocity());
+    const float speedThreshold = context->GetRunSpeed() - 15.0f;
+
+    // Avoid division by zero and logic errors
+    if (squareSpeed < speedThreshold * speedThreshold)
+        return;
+
+    const float speed = SQRTFAST(squareSpeed);
+
+    // Max accel is measured in units per second and decreases with speed
+    // For speed of speedThreshold maxAccel is 240
+    // For speed of 900 and greater maxAccel is 0
+    // This means cheating acceleration is not applied for speeds greater than 900 ups
+    // However the bot may reach greater speed since builtin GS_NEWBUNNY forward accel is enabled
+    float maxAccel = 240.0f * (1.0f - BoundedFraction(speed - speedThreshold, 900.0f - speedThreshold));
+    Assert(maxAccel >= 0.0f && maxAccel <= 240.0f);
+
+    // Modify maxAccel to respect player class movement limitations
+    maxAccel *= speedThreshold / (320.0f - 15.0f);
+
+    // Accel contains of constant and directional parts
+    // If velocity dir exactly matches target dir, accel = maxAccel
+    clamp(frac, 0.0f, 1.0f);
+    float accelStrength = frac > 0 ? SQRTFAST(frac) : 0.0f;
+
+    Vec3 newVelocity(entityPhysicsState.Velocity());
+    // Normalize velocity boost direction
+    newVelocity *= 1.0f / speed;
+    // Make velocity boost vector
+    newVelocity *= (accelStrength * maxAccel) * (0.001f * context->oldStepMillis);
+    // Add velocity boost to the entity velocity in the given physics state
+    newVelocity += entityPhysicsState.Velocity();
+
+    context->record->SetModifiedVelocity(newVelocity);
+}
+
+void BotGenericRunBunnyingMovementAction::CheatingCorrectVelocity(BotMovementPredictionContext *context,
+                                                                  float velocity2DDirDotToTarget2DDir,
+                                                                  Vec3 toTargetDir2D) const
+{
+    // Respect player class movement limitations
+    if (!(context->currPlayerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL))
+        return;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+
+    // Make correction less effective for large angles multiplying it
+    // by the dot product to avoid a weird-looking cheating movement
+    float controlMultiplier = 0.05f + fabsf(velocity2DDirDotToTarget2DDir) * 0.05f;
+    // Use lots of correction near items
+    if (self->ai->botRef->ShouldMoveCarefully())
+        controlMultiplier += 0.10f;
+
+    const float squareSpeed = VectorLengthSquared(entityPhysicsState.Velocity());
+    if (squareSpeed < 1)
+        return;
+
+    // Check whether the direction to the target is normalized
+    Assert(toTargetDir2D.LengthFast() > 0.99f && toTargetDir2D.LengthFast() < 1.01f);
+
+    // Save current velocity magnitude
+    const float speed = SQRTFAST(squareSpeed);
+    Vec3 newVelocity(entityPhysicsState.Velocity());
+    // Normalize current velocity direction
+    newVelocity *= 1.0f / speed;
+    // Modify velocity direction
+    newVelocity += controlMultiplier * toTargetDir2D;
+    // Normalize velocity direction again after modification
+    newVelocity.Normalize();
+    // Restore velocity magnitude
+    newVelocity *= speed;
+
+    context->record->SetModifiedVelocity(newVelocity);
+}
+
+bool BotGenericRunBunnyingMovementAction::CheckStepSpeedGainOrLoss(BotMovementPredictionContext *context)
+{
+    const auto *oldPMove = &context->oldPlayerState->pmove;
+    const auto *newPMove = &context->currPlayerState->pmove;
+    // Make sure this test is skipped along with other ones while skimming
+    Assert(!(newPMove->skim_time && newPMove->skim_time != oldPMove->skim_time));
+
+    const auto &newEntityPhysicsState = context->movementState->entityPhysicsState;
+    const auto &oldEntityPhysicsState = context->PhysicsStateBeforeStep();
+
+    // Test for a huge speed loss in case of hitting of an obstacle
+    const float *oldVelocity = oldEntityPhysicsState.Velocity();
+    const float *newVelocity = newEntityPhysicsState.Velocity();
+    const float oldSquare2DSpeed = oldVelocity[0] * oldVelocity[0] + oldVelocity[1] * oldVelocity[1];
+    const float newSquare2DSpeed = newVelocity[0] * newVelocity[0] + newVelocity[1] * newVelocity[1];
+
+    if (newSquare2DSpeed < 10 * 10 && oldSquare2DSpeed > 100 * 100)
     {
-        const auto &reach = nextReaches[i];
-        // Reject non-grounded areas
-        if (!aasWorldAreaSettings[reach.areanum].areaflags & AREA_GROUNDED)
-            continue;
-        const auto &area = aasWorldAreas[reach.areanum];
-        // Can't RJ to lower areas
-        if (area.mins[2] - currArea.mins[2] < 48.0f)
-            continue;
-        // Can't be reached using RJ aprori
-        if (area.mins[2] - currArea.mins[2] > 280.0f)
-            continue;
-        // Avoid rocketjumping to degenerate areas
-        if (area.maxs[0] - area.mins[0] < 32.0f)
-            continue;
-        if (area.maxs[1] - area.mins[1] < 32.0f)
-            continue;
-
-        // Then we try to select a grounded area point nearest to a bot
-        // Offset this Z a bit above the ground to ensure that a point is strictly inside the area.
-        const float groundZ = area.mins[2] + 4.0f;
-        // Find nearest point of area AABB base
-        const float *bounds[2] = { area.mins, area.maxs };
-        vec3_t nearestBasePoint = { NAN, NAN, NAN };
-        float minDistance = std::numeric_limits<float>::max();
-        for (int j = 0; j < 4; ++j)
+        // Bumping into walls on high speed in nav target areas is OK
+        if (!context->IsInNavTargetArea() && !context->IsCloseToNavTarget())
         {
-            vec3_t basePoint;
-            basePoint[0] = bounds[(j >> 0) & 1][0];
-            basePoint[1] = bounds[(j >> 1) & 1][1];
-            basePoint[2] = groundZ;
-            float distance = DistanceSquared(self->s.origin, basePoint);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                VectorCopy(basePoint, nearestBasePoint);
-            }
+            Debug("A prediction step has lead to close to zero 2D speed while it was significant\n");
+            this->shouldTryObstacleAvoidance = true;
+            return false;
+        }
+    }
+
+    // Check for unintended bouncing back (starting from some speed threshold)
+    if (oldSquare2DSpeed > 100 * 100 && newSquare2DSpeed > 1 * 1)
+    {
+        Vec3 oldVelocity2DDir(oldVelocity[0], oldVelocity[1], 0);
+        oldVelocity2DDir *= Q_RSqrt(oldSquare2DSpeed);
+        Vec3 newVelocity2DDir(newVelocity[0], newVelocity[1], 0);
+        newVelocity2DDir *= Q_RSqrt(newSquare2DSpeed);
+        if (oldVelocity2DDir.Dot(newVelocity2DDir) < 0.1f)
+        {
+            Debug("A prediction step has lead to an unintended bouncing back\n");
+            this->mightHasFailedWalljumping = false;
+            return false;
+        }
+    }
+
+    // Check for regular speed loss
+    const float oldSquareSpeed = newSquare2DSpeed + newVelocity[2] * newVelocity[2];
+    const float newSquareSpeed = oldSquare2DSpeed + oldVelocity[2] * oldVelocity[2];
+
+    const float oldSpeed = oldSquareSpeed > 0 ? SQRTFAST(oldSquareSpeed) : 0.0f;
+    const float newSpeed = newSquareSpeed > 0 ? SQRTFAST(newSquareSpeed) : 0.0f;
+
+    Assert(context->predictionStepMillis);
+    float actualSpeedGainPerSecond = (newSpeed - oldSpeed) / (0.001f * context->predictionStepMillis);
+    if (actualSpeedGainPerSecond >= minDesiredSpeedGainPerSecond || context->IsInNavTargetArea())
+    {
+        // Reset speed loss timer
+        currentSpeedLossSequentialMillis = 0;
+        return true;
+    }
+
+    const char *format = "Actual speed gain per second %.3f is lower than the desired one %.3f\n";
+    Debug("oldSpeed: %.1f, newSpeed: %1.f, speed gain per second: %.1f\n", oldSpeed, newSpeed, actualSpeedGainPerSecond);
+    Debug(format, actualSpeedGainPerSecond, minDesiredSpeedGainPerSecond);
+
+    currentSpeedLossSequentialMillis += context->predictionStepMillis;
+    if (tolerableSpeedLossSequentialMillis < currentSpeedLossSequentialMillis)
+    {
+        const char *format_ = "A sequential speed loss interval of %d millis exceeds the tolerable one of %d millis\n";
+        Debug(format_, currentSpeedLossSequentialMillis, tolerableSpeedLossSequentialMillis);
+        this->shouldTryObstacleAvoidance = true;
+        return false;
+    }
+
+    return true;
+}
+
+bool BotGenericRunBunnyingMovementAction::IsMovingIntoNavEntity(BotMovementPredictionContext *context) const
+{
+    // Sometimes the camping spot movement action might be not applicable to reach a target.
+    // Prevent missing the target when THIS action is likely to be really applied to reach it.
+    // We do a coarse prediction of bot path for a second testing its intersection with the target (and no solid world).
+    // The following ray-sphere test is very coarse but yields satisfactory results.
+    // We might call G_Trace() but it is expensive and would fail if the target is not solid yet.
+    const auto &newEntityPhysicsState = context->movementState->entityPhysicsState;
+    Vec3 navTargetOrigin(context->NavTargetOrigin());
+    float navTargetRadius = context->NavTargetRadius();
+    // If bot is walking on ground, use an ordinary ray-sphere test for a linear movement assumed to the bot
+    if (newEntityPhysicsState.GroundEntity() && fabsf(newEntityPhysicsState.Velocity()[2]) < 1.0f)
+    {
+        Vec3 velocityDir(newEntityPhysicsState.Velocity());
+        velocityDir.NormalizeFast();
+
+        Vec3 botToTarget(navTargetOrigin);
+        botToTarget -= newEntityPhysicsState.Origin();
+
+        float botToTargetDotVelocityDir = botToTarget.Dot(velocityDir);
+        if (botToTarget.SquaredLength() > navTargetRadius * navTargetRadius && botToTargetDotVelocityDir < 0)
+            return false;
+
+        // |botToTarget| is the length of the triangle hypotenuse
+        // |botToTargetDotVelocityDir| is the length of the adjacent triangle side
+        // |distanceVec| is the length of the opposite triangle side
+        // (The distanceVec is directed to the target center)
+
+        // distanceVec = botToTarget - botToTargetDotVelocityDir * dir
+        Vec3 distanceVec(velocityDir);
+        distanceVec *= -botToTargetDotVelocityDir;
+        distanceVec += botToTarget;
+
+        return distanceVec.SquaredLength() <= navTargetRadius * navTargetRadius;
+    }
+
+    Vec3 botOrigin(newEntityPhysicsState.Origin());
+    Vec3 velocity(newEntityPhysicsState.Velocity());
+    const float gravity = level.gravity;
+    constexpr float timeStep = 0.125f;
+    for (unsigned stepNum = 0; stepNum < 8; ++stepNum)
+    {
+        velocity.Z() -= gravity * timeStep;
+        botOrigin += timeStep * velocity;
+
+        Vec3 botToTarget(navTargetOrigin);
+        botToTarget -= botOrigin;
+
+        if (botToTarget.SquaredLength() > navTargetRadius * navTargetRadius)
+        {
+            // The bot has already missed the nav entity (same check as in ray-sphere test)
+            if (botToTarget.Dot(velocity) < 0)
+                return false;
+
+            // The bot is still moving in the nav target direction
+            continue;
         }
 
-        // We can't simply use nearest point of area AABB
-        // since AABB may be greater than area itself (areas may be an arbitrary prism).
-        // Use an average of area grounded center and nearest grounded point for approximation of target point.
-        Vec3 areaPoint(area.center);
-        areaPoint.Z() = groundZ;
-        areaPoint += nearestBasePoint;
-        areaPoint *= 0.5f;
-
-        float squareDistanceToArea = DistanceSquared(self->s.origin, areaPoint.Data());
-        if (squareDistanceToArea > 550.0f * 550.0f)
-            continue;
-        if (squareDistanceToArea < 64.0f * 64.0f)
-            continue;
-
-        float distanceToArea = 1.0f / Q_RSqrt(squareDistanceToArea);
-
-        Vec3 traceEnd(areaPoint);
-        traceEnd.Z() += 48.0f + 64.0f * BoundedFraction(distanceToArea, 500);
-
-        // Check whether there are no obstacles on a segment from bot origin to fireTarget
-        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.Data(), self, MASK_AISOLID);
-        if (trace.fraction == 1.0f)
-        {
-            VectorCopy(areaPoint.Data(), targetOrigin->Data());
-            VectorCopy(traceEnd.Data(), fireTarget->Data());
-            return true;
-        }
+        // The bot is inside the target radius
+        return true;
     }
 
     return false;
 }
 
-bool Bot::AdjustDirectRocketJumpToAGoalTarget(Vec3 *targetOrigin, Vec3 *fireTarget) const
+void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
 {
-    // Make aliases for convenience to avoid pointer operations
-    Vec3 &targetOriginRef = *targetOrigin;
-    Vec3 &fireTargetRef = *fireTarget;
+    BotBaseMovementAction::CheckPredictionStepResults(context);
+    if (context->cannotApplyAction || context->isCompleted)
+        return;
 
-    targetOriginRef = NavTargetOrigin();
+    const auto &oldPMove = context->oldPlayerState->pmove;
+    const auto &newPMove = context->currPlayerState->pmove;
 
-    // Check target height for feasibility
-    float height = targetOriginRef.Z() - self->s.origin[2];
-    if (height < 48.0f || height > 280.0f)
-        return false;
-
-    // We are sure this distance not only non-zero but greater than 1.5-2x player height
-    float distanceToGoal = DistanceFast(self->s.origin, targetOriginRef.Data());
-
-    fireTargetRef = targetOriginRef;
-    fireTargetRef.Z() += 48.0f + 64.0f * BoundedFraction(distanceToGoal, 500);
-
-    Vec3 botToGoal2DDir(targetOriginRef);
-    botToGoal2DDir -= self->s.origin;
-    botToGoal2DDir.Z() = 0;
-    float botToGoalSquareDist2D = botToGoal2DDir.SquaredLength();
-    float botToGoalDist2D = -1;
-
-    if (botToGoalSquareDist2D > 1)
+    // Skip tests while skimming
+    if (newPMove.skim_time && newPMove.skim_time != oldPMove.skim_time)
     {
-        botToGoalDist2D = 1.0f / Q_RSqrt(botToGoalSquareDist2D);
-        botToGoal2DDir *= 1.0f / botToGoalDist2D;
-        // Aim not directly to goal but a bit closer to bot in XY plane
-        // (he will fly down to a goal from the trajectory zenith)
-        *fireTarget -= 0.33f * botToGoalDist2D * botToGoal2DDir;
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
     }
 
-    trace_t trace;
-    G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTargetRef.Data(), self, MASK_AISOLID);
-    // If there are obstacles
-    if (trace.fraction != 1.0f)
+    if (!CheckStepSpeedGainOrLoss(context))
     {
-        if (botToGoalDist2D < 48.0f)
-            return false;
-
-        int targetAreaNum = TryFindRocketJumpAreaCloseToGoal(botToGoal2DDir, botToGoalDist2D);
-        if (!targetAreaNum)
-            return false;
-
-        const aas_area_t &targetArea = aasWorld->Areas()[targetAreaNum];
-        VectorCopy(targetArea.center, targetOriginRef.Data());
-        targetOriginRef.Z() = targetArea.mins[2] + 16.0f;
-
-        // Recalculate
-        distanceToGoal = DistanceFast(self->s.origin, targetOriginRef.Data());
-
-        VectorCopy(targetOriginRef.Data(), fireTargetRef.Data());
-        fireTargetRef.Z() += 48.0f + 64.0f * BoundedFraction(distanceToGoal, 500);
+        context->SetPendingRollback();
+        return;
     }
 
-    return true;
-}
+    // This entity physics state has been modified after prediction step
+    const auto &newEntityPhysicsState = context->movementState->entityPhysicsState;
 
-int Bot::TryFindRocketJumpAreaCloseToGoal(const Vec3 &botToGoalDir2D, float botToGoalDist2D) const
-{
-    const int goalAreaNum = NavTargetAasAreaNum();
-    const aas_area_t &targetArea = aasWorld->Areas()[goalAreaNum];
-    Vec3 targetOrigin(targetArea.center);
-    targetOrigin.Z() = targetArea.mins[2] + 16.0f;
-
-    Vec3 areaTraceStart(targetArea.center);
-    areaTraceStart.Z() = targetArea.mins[2] + 16.0f;
-
-    Vec3 areaTraceEnd(areaTraceStart);
-    areaTraceEnd -= (botToGoalDist2D - 48.0f) * botToGoalDir2D;
-
-    int areas[16];
-    int numTracedAreas = aasWorld->TraceAreas(targetOrigin.Data(), areaTraceEnd.Data(), areas, nullptr, 16);
-
-    int travelFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_AIR;
-    trace_t trace;
-    // Start from the area closest to the bot, end on first area in trace after the goal area (i = 0)
-    for (int i = numTracedAreas - 1; i >= 1; --i)
+    bool isInNavTargetArea = context->IsInNavTargetArea();
+    if (isInNavTargetArea || context->IsCloseToNavTarget())
     {
-        // Do not try to reach a non-grounded area
-        if (!aasWorld->AreaGrounded(areas[i]))
-            continue;
-
-        // Check whether goal area is reachable from area pointed by areas[i]
-        // (note, we check reachablity from area to goal area, and not the opposite,
-        // because the given travel flags are not reversible).
-        const aas_area_t &area = aasWorld->Areas()[areas[i]];
-        Vec3 areaPoint(area.center);
-        areaPoint.Z() = area.mins[2] + 4.0f;
-        int reachNum = routeCache->ReachabilityToGoalArea(areas[i], areaPoint.Data(), goalAreaNum, travelFlags);
-        // This means goal area is not reachable with these travel flags
-        if (!reachNum)
-            continue;
-
-        // Set fireTarget to a point a bit above a grounded center of the area
-        // Check whether there are obstacles on a line from bot origin to fireTarget
-        Vec3 fireTarget = areaPoint;
-        fireTarget.Z() += 48.0f + 64.0f * BoundedFraction((areaPoint - self->s.origin).LengthFast(), 500);
-
-        G_Trace(&trace, self->s.origin, nullptr, playerbox_stand_maxs, fireTarget.Data(), self, MASK_AISOLID);
-        // fireTarget is reachable
-        if (trace.fraction == 1.0f)
-            return areas[i];
-    }
-
-    return 0;
-}
-
-bool Bot::TrySetPendingWeaponJump(const Vec3 &targetOrigin, const Vec3 &fireTarget)
-{
-    // Update values for adjusted target
-    float originDistance = DistanceFast(self->s.origin, targetOrigin.Data());
-    float originHeight = targetOrigin.Z() - self->s.origin[2];
-
-    // TODO: Compute actual trajectory
-    if (originDistance > 550.0f || originHeight > 280.0f)
-        return false;
-
-    // Select appropriate weapon
-    // TODO: Compute actual trajectory
-    int weapon = WEAP_GUNBLADE;
-    if (originDistance > 350.0f || originHeight > 200.0f)
-    {
-        // Should use a powerful weapon. Try to select an IG to prevent damaging itself.
-        if (Inventory()[WEAP_INSTAGUN])
-            weapon = WEAP_INSTAGUN;
-        else if (Inventory()[WEAP_ROCKETLAUNCHER] && (Inventory()[AMMO_ROCKETS] || Inventory()[AMMO_WEAK_ROCKETS]))
-            weapon = WEAP_ROCKETLAUNCHER;
-        // Can't switch to IG or RL
-        if (weapon == WEAP_GUNBLADE)
-            return false;
-        // Check selfdamage aposteriori
-        if (GS_SelfDamage() && weapon == WEAP_ROCKETLAUNCHER)
+        if (!IsMovingIntoNavEntity(context))
         {
-            float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
-            if (HasQuad(self))
-                damageToBeKilled /= 4.0f;
-            if (HasShell(self))
-                damageToBeKilled *= 4.0f;
-            if (damageToBeKilled < 125)
-                return false;
-            if (damageToBeKilled < 200.0f && !(level.gametype.spawnableItemsMask & (IT_HEALTH|IT_ARMOR)))
-                return false;
+            Debug("The bot is likely to miss the nav target\n");
+            context->SetPendingRollback();
+            return;
+        }
+
+        // Skip other checks in this case
+        if (isInNavTargetArea)
+        {
+            // Avoid prediction stack overflow in huge areas
+            if (newEntityPhysicsState.GroundEntity() && this->SequenceDuration(context) > 250)
+            {
+                Debug("The bot is on ground in the nav target area, moving into the target, there is enough predicted data\n");
+                context->isCompleted = true;
+                return;
+            }
+            // Keep this action as an active bunny action
+            context->SaveSuggestedActionForNextFrame(this);
+            return;
+        }
+    }
+
+    int currTravelTimeToNavTarget = context->TravelTimeToNavTarget();
+    if (!currTravelTimeToNavTarget)
+    {
+        currentUnreachableTargetSequentialMillis += context->predictionStepMillis;
+        if (currentUnreachableTargetSequentialMillis > tolerableUnreachableTargetSequentialMillis)
+        {
+            context->SetPendingRollback();
+            Debug("A prediction step has lead to undefined travel time to the nav target\n");
+            this->mightHasFailedWalljumping = true;
+        }
+        else
+            context->SaveSuggestedActionForNextFrame(this);
+
+        return;
+    }
+    // Reset unreachable target timer
+    currentUnreachableTargetSequentialMillis = 0;
+
+    if (currTravelTimeToNavTarget <= minTravelTimeToNavTargetSoFar)
+    {
+        minTravelTimeToNavTargetSoFar = currTravelTimeToNavTarget;
+        // Reset the greater travel time to target timer
+        currentGreaterTravelTimeSequentialMillis = 0;
+    }
+    else
+    {
+        currentGreaterTravelTimeSequentialMillis += context->predictionStepMillis;
+        if (currentGreaterTravelTimeSequentialMillis > tolerableGreaterTravelTimeSequentialMillis)
+        {
+            context->SetPendingRollback();
+            const char *format_ = "Curr travel time to the nav target: %d, min travel time so far: %d\n";
+            Debug(format_, currTravelTimeToNavTarget, minTravelTimeToNavTargetSoFar);
+            Debug("A prediction step has lead to greater travel time to the nav target\n");
+            this->mightHasFailedWalljumping = true;
+        }
+        else
+            context->SaveSuggestedActionForNextFrame(this);
+
+        return;
+    }
+
+    // Wait until landing
+    if (!newEntityPhysicsState.GroundEntity())
+    {
+        // Keep this action as an active bunny action
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+
+    if (originAtSequenceStart.SquareDistanceTo(newEntityPhysicsState.Origin()) < 32 * 32)
+    {
+        // Keep this action as an active bunny action
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+
+    Debug("The bot is on ground and there is enough predicted data ahead\n");
+    context->isCompleted = true;
+}
+
+void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction::OnApplicationSequenceStarted(context);
+    context->MarkSavepoint(this, context->topOfStackIndex);
+
+    hasSavedIntendedLookVec = false;
+
+    minTravelTimeToNavTargetSoFar = std::numeric_limits<int>::max();
+    if (context->NavTargetAasAreaNum())
+    {
+        if (int travelTime = context->TravelTimeToNavTarget())
+            minTravelTimeToNavTargetSoFar = travelTime;
+    }
+
+    originAtSequenceStart.Set(context->movementState->entityPhysicsState.Origin());
+
+    currentSpeedLossSequentialMillis = 0;
+    currentUnreachableTargetSequentialMillis = 0;
+    currentGreaterTravelTimeSequentialMillis = 0;
+}
+
+void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                                                       SequenceStopReason reason,
+                                                                       unsigned stoppedAtFrameIndex)
+{
+    BotBaseMovementAction::OnApplicationSequenceStopped(context, reason, stoppedAtFrameIndex);
+
+    if (reason != FAILED)
+    {
+        this->disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
+        ResetObstacleAvoidanceState();
+        ResetWalljumpingState();
+        return;
+    }
+
+    // If the action has been disabled due to prediction stack overflow
+    if (this->isDisabledForPlanning)
+        return;
+
+    if (walljumpingMode != WalljumpingMode::NEVER && !hasTestedWalljumping)
+    {
+        // We have not tested an action with enabled walljumping yet
+        if (!isTryingWalljumping)
+        {
+            isTryingWalljumping = true;
+            ResetObstacleAvoidanceState();
+            // Make sure this action will be chosen again after rolling back
+            context->SaveSuggestedActionForNextFrame(this);
+            return;
+        }
+
+        // The bot was trying walljumping during the last sequence
+        isTryingWalljumping = false;
+        hasTestedWalljumping = true;
+        ResetObstacleAvoidanceState();
+
+        // If the bot has really did a walljump in the prediction step
+        // and there was a failure and its likely that walljumping has lead to the failure
+        if (context->frameEvents.hasWalljumped && mightHasFailedWalljumping)
+        {
+            // Try again after rolling back without walljumping
+            if (walljumpingMode == WalljumpingMode::TRY_FIRST)
+            {
+                // Make sure this action will be chosen again after rolling back
+                context->SaveSuggestedActionForNextFrame(this);
+                return;
+            }
+
+            // A walljump is expected and has failed. Disable application after rolling back for this mode.
+            Assert(walljumpingMode == WalljumpingMode::ALWAYS);
+            ResetWalljumpingState();
+            this->disabledForApplicationFrameIndex = context->topOfStackIndex;
+            return;
+        }
+    }
+
+    if (!supportsObstacleAvoidance)
+    {
+        // However having shouldTryObstacleAvoidance flag is legal (it should be ignored in this case).
+        // Make sure THIS method logic (that sets isTryingObstacleAvoidance) works as intended.
+        Assert(!isTryingObstacleAvoidance);
+        // Disable applying this action after rolling back to the savepoint
+        this->disabledForApplicationFrameIndex = context->savepointTopOfStackIndex;
+        return;
+    }
+
+    if (!isTryingObstacleAvoidance && shouldTryObstacleAvoidance)
+    {
+        // Try using obstacle avoidance after rolling back to the savepoint
+        // (We rely on skimming for the first try).
+        isTryingObstacleAvoidance = true;
+        // Make sure this action will be chosen again after rolling back
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+
+    // Disable applying this action after rolling back to the savepoint
+    this->disabledForApplicationFrameIndex = context->savepointTopOfStackIndex;
+    this->ResetObstacleAvoidanceState();
+    this->ResetWalljumpingState();
+}
+
+void BotGenericRunBunnyingMovementAction::BeforePlanning()
+{
+    BotBaseMovementAction::BeforePlanning();
+    this->disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
+    ResetObstacleAvoidanceState();
+    ResetWalljumpingState();
+
+    // Hack for disabling walljumping for easy bots.
+    // (we might test self->ai->botRef->Skill() instead but this approach seems more CPU cache friendly).
+    if (self->ai->botRef->Skill() < 0.33f)
+    {
+        if (walljumpingMode == WalljumpingMode::TRY_FIRST)
+            walljumpingMode = WalljumpingMode::NEVER;
+        else if (walljumpingMode == WalljumpingMode::ALWAYS)
+            this->isDisabledForPlanning = true;
+    }
+}
+
+inline unsigned BotEnvironmentTraceCache::SelectNonBlockedDirs(BotMovementPredictionContext *context, unsigned *nonBlockedDirIndices)
+{
+    this->TestForResultsMask(context, this->FullHeightMask(FULL_SIDES_MASK));
+
+    unsigned numNonBlockedDirs = 0;
+    for (unsigned i = 0; i < 8; ++i)
+    {
+        if (this->FullHeightTraceForSideIndex(i).IsEmpty())
+            nonBlockedDirIndices[numNonBlockedDirs++] = i;
+    }
+    return numNonBlockedDirs;
+}
+
+void BotEnvironmentTraceCache::MakeRandomizedKeyMovesToTarget(BotMovementPredictionContext *context,
+                                                              const Vec3 &intendedMoveDir, int *keyMoves)
+{
+    unsigned nonBlockedDirIndices[8];
+    unsigned numNonBlockedDirs = SelectNonBlockedDirs(context, nonBlockedDirIndices);
+
+    vec3_t forwardDir, rightDir;
+    AngleVectors(context->movementState->entityPhysicsState.Origin(), forwardDir, rightDir, nullptr);
+    assert((intendedMoveDir.Length() - 1.0f) < 0.0001f);
+
+    // Choose randomly from all non-blocked dirs based on scores
+    // For each non - blocked area make an interval having a corresponding to the area score length.
+    // An interval is defined by lower and upper bounds.
+    // Upper bounds are stored in the array.
+    // Lower bounds are upper bounds of the previous array memner (if any) or 0 for the first array memeber.
+    float dirDistributionUpperBound[8];
+    float scoresSum = 0.0f;
+    for (unsigned i = 0; i < numNonBlockedDirs; ++i)
+    {
+        vec3_t keyMoveVec;
+        const float *dirFractions = sideDirXYFractions[nonBlockedDirIndices[i]];
+        VectorScale(forwardDir, dirFractions[0], keyMoveVec);
+        VectorMA(keyMoveVec, dirFractions[1], rightDir, keyMoveVec);
+        scoresSum += 0.55f + 0.45f * intendedMoveDir.Dot(keyMoveVec);
+        dirDistributionUpperBound[i] = scoresSum;
+    }
+
+    // A uniformly distributed random number in (0, scoresSum)
+    const float rn = random() * scoresSum;
+    for (int i = 0; i < numNonBlockedDirs; ++i)
+    {
+        if (rn > dirDistributionUpperBound[i])
+            continue;
+
+        int dirIndex = nonBlockedDirIndices[i];
+        const int *dirMoves = sideDirXYMoves[dirIndex];
+        Vector2Copy(dirMoves, keyMoves);
+        return;
+    }
+
+    Vector2Set(keyMoves, 0, 0);
+}
+
+void BotEnvironmentTraceCache::MakeKeyMovesToTarget(BotMovementPredictionContext *context,
+                                                    const Vec3 &intendedMoveDir, int *keyMoves)
+{
+    unsigned nonBlockedDirIndices[8];
+    unsigned numNonBlockedDirs = SelectNonBlockedDirs(context, nonBlockedDirIndices);
+
+    vec3_t forwardDir, rightDir;
+    AngleVectors(context->movementState->entityPhysicsState.Origin(), forwardDir, rightDir, nullptr);
+    assert((intendedMoveDir.Length() - 1.0f) < 0.0001f);
+
+    float bestScore = 0.0f;
+    unsigned bestDirIndex = (unsigned)-1;
+    for (unsigned i = 0; i < numNonBlockedDirs; ++i)
+    {
+        vec3_t keyMoveVec;
+        unsigned dirIndex = nonBlockedDirIndices[i];
+        const float *dirFractions = sideDirXYFractions[dirIndex];
+        VectorScale(forwardDir, dirFractions[0], keyMoveVec);
+        VectorMA(keyMoveVec, dirFractions[1], rightDir, keyMoveVec);
+        float score = 0.55f + 0.45f * intendedMoveDir.Dot(keyMoveVec);
+        if (score > bestScore)
+        {
+            bestScore = score;
+            bestDirIndex = dirIndex;
+        }
+    }
+    if (bestScore > 0)
+    {
+        const int *dirMoves = sideDirXYMoves[bestDirIndex];
+        Vector2Copy(dirMoves, keyMoves);
+        return;
+    }
+
+    Vector2Set(keyMoves, 0, 0);
+}
+
+void BotEnvironmentTraceCache::MakeRandomKeyMoves(BotMovementPredictionContext *context, int *keyMoves)
+{
+    unsigned nonBlockedDirIndices[8];
+    unsigned numNonBlockedDirs = SelectNonBlockedDirs(context, nonBlockedDirIndices);
+    if (numNonBlockedDirs)
+    {
+        int dirIndex = nonBlockedDirIndices[(unsigned)(0.9999f * numNonBlockedDirs * random())];
+        const int *dirMoves = sideDirXYMoves[dirIndex];
+        Vector2Copy(dirMoves, keyMoves);
+        return;
+    }
+    Vector2Set(keyMoves, 0, 0);
+}
+
+void BotCombatDodgeSemiRandomlyToTargetMovementAction::UpdateKeyMoveDirs(BotMovementPredictionContext *context)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    auto *combatMovementState = &context->movementState->combatMoveDirsState;
+    Assert(combatMovementState->IsActive());
+
+    int keyMoves[2];
+    auto &traceCache = context->EnvironmentTraceCache();
+    if (int nextReachNum = context->NextReachNum())
+    {
+        const aas_reachability_t &nextReach = AiAasWorld::Instance()->Reachabilities()[nextReachNum];
+        Vec3 intendedMoveDir(nextReach.start);
+        intendedMoveDir += nextReach.end;
+        intendedMoveDir *= 0.5f;
+        intendedMoveDir -= entityPhysicsState.Origin();
+        intendedMoveDir.NormalizeFast();
+
+        if (ShouldTryRandomness())
+            traceCache.MakeRandomizedKeyMovesToTarget(context, intendedMoveDir, keyMoves);
+        else
+            traceCache.MakeKeyMovesToTarget(context, intendedMoveDir, keyMoves);
+    }
+    else
+        traceCache.MakeRandomKeyMoves(context, keyMoves);
+
+    combatMovementState->Activate(keyMoves[0], keyMoves[1]);
+}
+
+void BotCombatDodgeSemiRandomlyToTargetMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    Assert(self->ai->botRef->ShouldKeepXhairOnEnemy());
+    Assert(self->ai->botRef->GetSelectedEnemies().AreValid());
+
+    auto *botInput = &context->record->botInput;
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+
+    botInput->canOverrideLookVec = true;
+    botInput->shouldOverrideLookVec = true;
+    botInput->isUcmdSet = true;
+
+    if (attemptNum == maxAttempts)
+    {
+        Debug("Attempts count has reached its limit. Should stop planning\n");
+        // There is no fallback action since this action is a default one for combat state.
+        botInput->SetForwardMovement(0);
+        botInput->SetRightMovement(0);
+        botInput->SetUpMovement(random() > 0.5f ? -1 : +1);
+        context->isCompleted = true;
+    }
+
+    Vec3 botToEnemies(self->ai->botRef->GetSelectedEnemies().LastSeenOrigin());
+    botToEnemies -= entityPhysicsState.Origin();
+
+    const short *pmStats = context->currPlayerState->pmove.stats;
+    if (entityPhysicsState.GroundEntity())
+    {
+        if (ShouldTrySpecialMovement())
+        {
+            if (pmStats[PM_STAT_FEATURES] & PMFEAT_DASH)
+            {
+                const float speedThreshold = context->GetDashSpeed() - 10;
+                const float squareSpeed = VectorLengthSquared(entityPhysicsState.Velocity());
+                if (squareSpeed < speedThreshold * speedThreshold)
+                {
+                    if (!pmStats[PM_STAT_DASHTIME] && !pmStats[PM_STAT_STUN])
+                    {
+                        botInput->SetSpecialButton(true);
+                        context->predictionStepMillis = 16;
+                    }
+                }
+            }
+            // If no dash has been set, try crouchslide
+            if (!botInput->IsSpecialButtonSet())
+            {
+                if (pmStats[PM_STAT_FEATURES] & PMFEAT_CROUCH)
+                {
+                    if (pmStats[PM_STAT_CROUCHSLIDETIME] > 100)
+                        botInput->SetUpMovement(-1);
+                }
+            }
+        }
+        auto *combatMovementState = &context->movementState->combatMoveDirsState;
+        if (combatMovementState->IsActive())
+            UpdateKeyMoveDirs(context);
+
+        botInput->SetForwardMovement(combatMovementState->ForwardMove());
+        botInput->SetRightMovement(combatMovementState->RightMove());
+        // Set at least a single key or button while on ground (forward/right move keys might both be zero)
+        if (!botInput->ForwardMovement() && !botInput->RightMovement() && !botInput->UpMovement())
+        {
+            if (!botInput->IsSpecialButtonSet())
+                botInput->SetUpMovement(-1);
         }
     }
     else
     {
-        // Should use GB but can't resist it
-        if (GS_SelfDamage())
+        if (ShouldTrySpecialMovement())
         {
-            float damageToBeKilled = DamageToKill(self, g_armor_protection->value, g_armor_degradation->value);
-            if (HasQuad(self))
-                damageToBeKilled /= 4.0f;
-            if (HasShell(self))
-                damageToBeKilled *= 4.0f;
-            if (damageToBeKilled < 60.0f)
-                weapon = WEAP_INSTAGUN;
-            else if (damageToBeKilled < 150.0f && !(level.gametype.spawnableItemsMask & (IT_HEALTH|IT_ARMOR)))
-                weapon = WEAP_INSTAGUN;
+            if ((pmStats[PM_STAT_FEATURES] & PMFEAT_WALLJUMP) && !pmStats[PM_STAT_WJTIME] && !pmStats[PM_STAT_STUN])
+            {
+                botInput->SetSpecialButton(true);
+                context->predictionStepMillis = 16;
+            }
+        }
+    }
+}
+
+void BotCombatDodgeSemiRandomlyToTargetMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction::CheckPredictionStepResults(context);
+    if (context->cannotApplyAction || context->isCompleted)
+        return;
+
+    // If there is no nav target, skip nav target reachability tests
+    if (this->minTravelTimeToTarget)
+    {
+        Assert(context->NavTargetAasAreaNum());
+        int newTravelTimeToTarget = context->TravelTimeToNavTarget();
+        if (!newTravelTimeToTarget)
+        {
+            Debug("A prediction step has lead to an undefined travel time to the nav target\n");
+            context->SetPendingRollback();
+            return;
+        }
+
+        if (newTravelTimeToTarget < this->minTravelTimeToTarget)
+        {
+            this->minTravelTimeToTarget = newTravelTimeToTarget;
+        }
+        else if (newTravelTimeToTarget > this->minTravelTimeToTarget + 50)
+        {
+            Debug("A prediction step has lead to a greater travel time to the nav target\n");
+            context->SetPendingRollback();
+            return;
         }
     }
 
-    ChangeWeapon(weapon);
-    if (self->r.client->ps.stats[STAT_WEAPON_TIME] > 192)
-        return false;
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const auto &moveDirsState = context->movementState->combatMoveDirsState;
+    // Do not check total distance in case when bot has/had zero move dirs set
+    if (!moveDirsState.ForwardMove() && !moveDirsState.RightMove())
+    {
+        // If the bot is on ground and move dirs set at a sequence start were invalidated
+        if (entityPhysicsState.GroundEntity() && !moveDirsState.IsActive())
+            context->isCompleted = true;
+        else
+            context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
 
-    rocketJumpMovementState.SetPending(targetOrigin, fireTarget, 750);
-    return true;
+    const float *oldOrigin = context->PhysicsStateBeforeStep().Origin();
+    const float *newOrigin = entityPhysicsState.Origin();
+    totalCovered2DDistance += SQRTFAST(SQUARE(newOrigin[0] - oldOrigin[0]) + SQUARE(newOrigin[1] - oldOrigin[1]));
+
+    // If the bot is on ground and move dirs set at a sequence start were invalidated
+    if (entityPhysicsState.GroundEntity() && !moveDirsState.IsActive())
+    {
+        // Check for blocking
+        if (totalCovered2DDistance < 24)
+        {
+            Debug("Total covered distance since sequence start is too low\n");
+            context->SetPendingRollback();
+            return;
+        }
+        context->isCompleted = true;
+        return;
+    }
+
+    context->SaveSuggestedActionForNextFrame(this);
 }
 
-void Bot::TriggerWeaponJump(BotInput *input, const Vec3 &targetOrigin, const Vec3 &fireTarget)
+void BotCombatDodgeSemiRandomlyToTargetMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
 {
-    Vec3 botToFireTarget = fireTarget - self->s.origin;
-    vec3_t lookAngles = {0, 0, 0};
-    VecToAngles((-botToFireTarget).Data(), lookAngles);
-    // Is corrected when hasCorrectedRocketJump is checked
-    lookAngles[PITCH] = 170.0f;
-    VectorCopy(lookAngles, self->s.angles);
+    BotBaseMovementAction::OnApplicationSequenceStarted(context);
 
-    input->ClearMovementDirections();
-    input->SetUpMovement(1);
-    input->SetAttackButton(true);
-    input->SetSpecialButton(true);
-    input->canOverrideLookVec = false;
-    input->canOverridePitch = false;
+    this->minTravelTimeToTarget = context->TravelTimeToNavTarget();
+    this->totalCovered2DDistance = 0.0f;
+    // Always reset combat move dirs state to ensure that the action will be predicted for the entire move dirs lifetime
+    context->movementState->combatMoveDirsState.Deactivate();
+}
+
+void BotCombatDodgeSemiRandomlyToTargetMovementAction::OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                                                                    SequenceStopReason stopReason,
+                                                                                    unsigned stoppedAtFrameIndex)
+{
+    BotBaseMovementAction::OnApplicationSequenceStopped(context, stopReason, stoppedAtFrameIndex);
+    if (stopReason != FAILED)
+    {
+        attemptNum = 0;
+        return;
+    }
+
+    attemptNum++;
+    Assert(attemptNum <= maxAttempts);
+}
+
+void BotCombatDodgeSemiRandomlyToTargetMovementAction::BeforePlanning()
+{
+    BotBaseMovementAction::BeforePlanning();
+    attemptNum = 0;
+    maxAttempts = self->ai->botRef->Skill() > 0.33f ? 4 : 2;
 }
 
 void Bot::CheckTargetProximity()
@@ -1570,162 +3880,296 @@ void Bot::CheckTargetProximity()
     }
 }
 
-constexpr auto AI_COMBATMOVE_TIMEOUT = 400;
-
-void Bot::CombatMovement(BotInput *input)
+void BotEnvironmentTraceCache::SetFullHeightCachedTracesEmpty(const vec3_t front2DDir, const vec3_t right2DDir)
 {
-    if (combatMovePushTimeout <= level.time)
+    for (unsigned i = 0; i < 6; ++i)
     {
-        combatMovePushTimeout = level.time + AI_COMBATMOVE_TIMEOUT;
-        UpdateCombatMovePushes();
+        auto &fullResult = results[i + 0];
+        auto &jumpableResult = results[i + 6];
+        fullResult.trace.fraction = 1.0f;
+        fullResult.trace.fraction = 1.0f;
+        // We have to save a legal trace dir
+        MakeTraceDir(i, front2DDir, right2DDir, fullResult.traceDir);
+        VectorCopy(fullResult.traceDir, jumpableResult.traceDir);
     }
-
-    input->isUcmdSet = true;
-    input->SetForwardMovement(combatMovePushes[0]);
-    input->SetRightMovement(combatMovePushes[1]);
-    input->SetUpMovement(combatMovePushes[2]);
-
-    // Dash is a single-frame event not affected by friction, so it should be checked each frame
-    if (MayApplyCombatDash())
-        input->SetSpecialButton(true);
-
-    if (self->groundentity)
-    {
-        if (input->IsSpecialButtonSet())
-        {
-            // If both forward/backward and side movement keys are set, reset forward/backward keys to force side dash
-            if (input->ForwardMovement() && input->RightMovement())
-                input->SetForwardMovement(0);
-        }
-        else
-        {
-            ApplyCheatingGroundAcceleration(input);
-
-            const float maxGroundSpeed = self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED];
-            const float squareGroundSpeed = VectorLengthSquared(self->velocity);
-
-            // If bot would not dash, do at least a jump
-            if (squareGroundSpeed > 0.64f * maxGroundSpeed * maxGroundSpeed)
-                input->SetUpMovement(1);
-        }
-    }
-    else
-    {
-        // Release forward button in air to use aircontrol
-        if (input->RightMovement() != 0)
-            input->SetForwardMovement(0);
-    }
+    resultsMask |= ALL_SIDES_MASK;
 }
 
-void Bot::ApplyCheatingGroundAcceleration(const BotInput *input)
+void BotEnvironmentTraceCache::SetJumpableHeightCachedTracesEmpty(const vec3_t front2DDir, const vec3_t right2DDir)
 {
-    vec3_t forward, right;
-    AngleVectors(self->s.angles, forward, right, nullptr);
-
-    float speedGainPerSecond = 500.0f * Skill();
-    float frameTimeSeconds = 0.0001f * game.frametime;
-    float factor = speedGainPerSecond * frameTimeSeconds;
-
-    VectorMA(self->velocity, factor * input->ForwardMovement(), forward, self->velocity);
-    VectorMA(self->velocity, factor * input->RightMovement(), right, self->velocity);
-
-    float squareSpeed = VectorLengthSquared(self->velocity);
-    if (squareSpeed > 1)
+    for (unsigned i = 0; i < 6; ++i)
     {
-        float speed = 1.0f / Q_RSqrt(squareSpeed);
-        float maxGroundSpeed = self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED];
-        if (speed > maxGroundSpeed)
-        {
-            // Normalize current direction
-            VectorScale(self->velocity, 1.0f / speed, self->velocity);
-            // Set current velocity magnitude to maxGroundSpeed
-            VectorScale(self->velocity, maxGroundSpeed, self->velocity);
-        }
+        auto &result = results[i + 6];
+        result.trace.fraction = 1.0f;
+        // We have to save a legal trace dir
+        MakeTraceDir(i, front2DDir, right2DDir, result.traceDir);
     }
+    resultsMask |= JUMPABLE_SIDES_MASK;
 }
 
-void Bot::UpdateCombatMovePushes()
+inline bool BotEnvironmentTraceCache::CanSkipTracingForAreaHeight(const vec3_t origin,
+                                                                  const aas_area_t &area,
+                                                                  float minZOffset)
 {
-    VectorClear(combatMovePushes);
-
-    // Use the same algorithm for combat move vec as for roaming look vec. The difference is:
-    // In roaming movement we keep forward pressed and align view to look vec
-    // In combat movement we keep view as-is (it set by aiming ai part) and move to goal using appropriate keys
-    Vec3 intendedMoveVec(0, 0, 0);
-    if (botBrain.HasNavTarget())
-    {
-        StraightenOrInterpolateLookVec(&intendedMoveVec, (float) VectorLength(self->velocity));
-    }
-    else
-    {
-        intendedMoveVec.X() = 0.5f - random();
-        intendedMoveVec.Y() = 0.5f - random();
-        intendedMoveVec.Z() = 0.5f - random();
-    }
-    intendedMoveVec.NormalizeFast();
-
-    vec3_t forward, right;
-    AngleVectors(self->s.angles, forward, right, nullptr);
-
-    const float moveDotForward = intendedMoveVec.Dot(forward);
-    const float moveDotRight = intendedMoveVec.Dot(right);
-
-    Vec3 toEnemyDir = EnemyOrigin() - self->s.origin;
-    toEnemyDir.NormalizeFast();
-
-    if (moveDotForward > 0.3f)
-        combatMovePushes[0] = +1;
-    else if (moveDotForward < -0.3f)
-        combatMovePushes[0] = -1;
-    else if (random() > 0.85f)
-        combatMovePushes[0] = Q_sign(random() - 0.5f);
-
-    if (moveDotRight > 0.3f)
-        combatMovePushes[1] = +1;
-    else if (moveDotRight < -0.3f)
-        combatMovePushes[1] = -1;
-    else if (random() > 0.85f)
-        combatMovePushes[0] = Q_sign(random() - 0.5f);
-
-    // If neither forward-back, nor left-right direction has been chosen, chose directions randomly
-    if (!combatMovePushes[0] && !combatMovePushes[1])
-    {
-        combatMovePushes[0] = Q_sign(random() - 0.5f);
-        combatMovePushes[1] = Q_sign(random() - 0.5f);
-    }
-
-    // Tend to jump or crouch excessively if we have height advantage
-    if (toEnemyDir.Z() < -0.3)
-        combatMovePushes[2] = random() > 0.75f ? Q_sign(random() - 0.5f) : 0;
-    // Otherwise do these moves sparingly only to surprise enemy sometimes
-    else
-        combatMovePushes[2] = random() > 0.9f ? Q_sign(random() - 0.5f) : 0;
-}
-
-bool Bot::MayApplyCombatDash()
-{
-    if (Skill() <= 0.25)
+    if (area.mins[2] >= origin[2] + minZOffset)
+        return false;
+    if (area.maxs[2] <= origin[2] + playerbox_stand_maxs[2])
         return false;
 
-    const auto &pmove = self->r.client->ps.pmove;
-    // Try to dash in fight depending of skill, if not already doing that
-    if (pmove.pm_flags & (PMF_DASHING | PMF_WALLJUMPING))
-        return false;
-
-    float prob = Skill() - 0.25f;
-    const auto &oldPmove = self->r.client->old_pmove;
-    // If bot has been stunned in previous frame, try to do the possible blocked by stun dash with high priority
-    if (oldPmove.stats[PM_STAT_STUN] || oldPmove.stats[PM_STAT_KNOCKBACK])
-    {
-        if (Skill() > 0.85f)
-        {
-            prob = 1.0f;
-        }
-        else if (Skill() > 0.66f)
-        {
-            prob *= 2;
-        }
-    }
-    return random() < prob;
+    return true;
 }
 
+const int BotEnvironmentTraceCache::sideDirXYMoves[8][2] =
+{
+    { +1, +0 }, // forward
+    { -1, +0 }, // back
+    { +0, -1 }, // left
+    { +0, +1 }, // right
+    { +1, -1 }, // front left
+    { +1, +1 }, // front right
+    { -1, -1 }, // back left
+    { -1, +1 }, // back right
+};
+
+const float BotEnvironmentTraceCache::sideDirXYFractions[8][2] =
+{
+    { +1.000f, +0.000f }, // front
+    { -1.000f, +0.000f }, // back
+    { +0.000f, -1.000f }, // left
+    { +0.000f, +1.000f }, // right
+    { +0.707f, -0.707f }, // front left
+    { +0.707f, +0.707f }, // front right
+    { -0.707f, -0.707f }, // back left
+    { -0.707f, +0.707f }, // back right
+};
+
+inline void BotEnvironmentTraceCache::MakeTraceDir(unsigned dirNum, const vec3_t front2DDir,
+                                                   const vec3_t right2DDir, vec3_t traceDir)
+{
+    const float *dirFractions = sideDirXYFractions[dirNum];
+    VectorScale(front2DDir, dirFractions[0], traceDir);
+    VectorMA(traceDir, dirFractions[1], right2DDir, traceDir);
+    VectorNormalizeFast(traceDir);
+}
+
+bool BotEnvironmentTraceCache::TrySkipTracingForCurrOrigin(BotMovementPredictionContext *context,
+                                                           const vec3_t front2DDir, const vec3_t right2DDir)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const int areaNum = entityPhysicsState.CurrAasAreaNum();
+    if (!areaNum)
+        return false;
+
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto &area = aasWorld->Areas()[areaNum];
+    const auto &areaSettings = aasWorld->AreaSettings()[areaNum];
+    const float *origin = entityPhysicsState.Origin();
+
+    // Extend playerbox XY bounds by TRACE_DEPTH
+    Vec3 mins(origin[0] - TRACE_DEPTH, origin[1] - TRACE_DEPTH, origin[2]);
+    Vec3 maxs(origin[0] + TRACE_DEPTH, origin[1] + TRACE_DEPTH, origin[2]);
+    mins += playerbox_stand_mins;
+    maxs += playerbox_stand_maxs;
+
+    // We have to add some offset to the area bounds (an area is not always a box)
+    const float areaBoundsOffset = (areaSettings.areaflags & AREA_WALL) ? 40.0f : 16.0f;
+
+    int sideNum = 0;
+    for (; sideNum < 2; ++sideNum)
+    {
+        if (area.mins[sideNum] + areaBoundsOffset >= mins.Data()[sideNum])
+            break;
+        if (area.maxs[sideNum] + areaBoundsOffset <= maxs.Data()[sideNum])
+            break;
+    }
+
+    // If the area bounds test has lead to conclusion that there is enough free space in side directions
+    if (sideNum == 2)
+    {
+        if (CanSkipTracingForAreaHeight(origin, area, playerbox_stand_mins[2] + 0.25f))
+        {
+            SetFullHeightCachedTracesEmpty(front2DDir, right2DDir);
+            return true;
+        }
+
+        if (CanSkipTracingForAreaHeight(origin, area, playerbox_stand_maxs[2] + AI_JUMPABLE_HEIGHT - 0.5f))
+        {
+            SetJumpableHeightCachedTracesEmpty(front2DDir, right2DDir);
+            // We might still need to perform full height traces in TestForResultsMask()
+            return false;
+        }
+    }
+
+    // Test bounds around the origin.
+    // Doing these tests can save expensive trace calls for separate directions
+
+    // Convert these bounds to relative for being used as trace args
+    mins -= origin;
+    maxs -= origin;
+
+    trace_t trace;
+    mins.Z() += 0.25f;
+    SolidWorldTrace(&trace, origin, origin, mins.Data(), maxs.Data());
+    if (trace.fraction == 1.0f)
+    {
+        SetFullHeightCachedTracesEmpty(front2DDir, right2DDir);
+        return true;
+    }
+
+    mins.Z() += AI_JUMPABLE_HEIGHT - 1.0f;
+    SolidWorldTrace(&trace, origin, origin, mins.Data(), maxs.Data());
+    if (trace.fraction == 1.0f)
+    {
+        SetJumpableHeightCachedTracesEmpty(front2DDir, right2DDir);
+        // We might still need to perform full height traces in TestForResultsMask()
+        return false;
+    }
+
+    return false;
+}
+
+void BotEnvironmentTraceCache::TestForResultsMask(BotMovementPredictionContext *context, unsigned requiredResultsMask)
+{
+    // There must not be any extra bits
+    Assert((requiredResultsMask & ~ALL_SIDES_MASK) == 0);
+    // All required traces have been already cached
+    if ((this->resultsMask & requiredResultsMask) == requiredResultsMask)
+        return;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    vec3_t front2DDir, right2DDir, traceEnd;
+    Vec3 angles(entityPhysicsState.Angles());
+    angles.Data()[PITCH] = 0.0f;
+    AngleVectors(angles.Data(), front2DDir, right2DDir, nullptr);
+
+    if (!this->didAreaTest)
+    {
+        this->didAreaTest = true;
+        if (TrySkipTracingForCurrOrigin(context, front2DDir, right2DDir))
+            return;
+    }
+
+    const float *origin = entityPhysicsState.Origin();
+
+    // First, test all full side traces.
+    // If a full side trace is empty, a corresponding "jumpable" side trace can be set as empty too.
+
+    // Test these bits for a quick computations shortcut
+    unsigned actualFullSides = this->resultsMask & FULL_SIDES_MASK;
+    unsigned resultFullSides = requiredResultsMask & FULL_SIDES_MASK;
+    if ((actualFullSides & resultFullSides) != resultFullSides)
+    {
+        const unsigned endMask = FullHeightMask(LAST_SIDE);
+        for (unsigned i = 0, mask = FullHeightMask(FIRST_SIDE); mask <= endMask; ++i, mask *= 2)
+        {
+            if (!(mask & requiredResultsMask) || (mask & this->resultsMask))
+                continue;
+
+            MakeTraceDir(i, front2DDir, right2DDir, traceEnd);
+            // Save the trace dir
+            auto &fullResult = results[i];
+            VectorCopy(traceEnd, fullResult.traceDir);
+            // Convert from a direction to the end point
+            VectorScale(traceEnd, TRACE_DEPTH, traceEnd);
+            VectorAdd(traceEnd, origin, traceEnd);
+            SolidWorldTrace(&fullResult.trace, origin, traceEnd, playerbox_stand_mins, playerbox_stand_maxs);
+            this->resultsMask |= mask;
+            // If full trace is empty, we can set partial trace as empty too
+            if (fullResult.trace.fraction == 1.0f)
+            {
+                auto &jumpableResult = results[i + 6];
+                jumpableResult.trace.fraction = 1.0f;
+                VectorCopy(fullResult.traceDir, jumpableResult.traceDir);
+                this->resultsMask |= (mask << 6);
+            }
+        }
+    }
+
+    unsigned actualJumpableSides = this->resultsMask & JUMPABLE_SIDES_MASK;
+    unsigned resultJumpableSides = requiredResultsMask & JUMPABLE_SIDES_MASK;
+    if ((actualJumpableSides & resultJumpableSides) != resultJumpableSides)
+    {
+        Vec3 mins(playerbox_stand_mins);
+        mins.Z() += AI_JUMPABLE_HEIGHT;
+        const unsigned endMask = JumpableHeightMask(LAST_SIDE);
+        for (unsigned i = 0, mask = JumpableHeightMask(FIRST_SIDE); mask <= endMask; ++i, mask *= 2)
+        {
+            if (!(mask & requiredResultsMask) || (mask & this->resultsMask))
+                continue;
+
+            MakeTraceDir(i, front2DDir, right2DDir, traceEnd);
+            // Save the trace dir
+            auto &result = results[i + 6];
+            VectorCopy(traceEnd, result.traceDir);
+            // Convert from a direction to the end point
+            VectorScale(traceEnd, TRACE_DEPTH, traceEnd);
+            VectorAdd(traceEnd, origin, traceEnd);
+            SolidWorldTrace(&result.trace, origin, traceEnd, mins.Data(), playerbox_stand_maxs);
+            this->resultsMask |= mask;
+        }
+    }
+
+    // Check whether all requires side traces have been computed
+    Assert((this->resultsMask & requiredResultsMask) == requiredResultsMask);
+}
+
+// Make a type alias to fit into a line length limit
+typedef BotEnvironmentTraceCache::ObstacleAvoidanceResult ObstacleAvoidanceResult;
+
+ObstacleAvoidanceResult BotEnvironmentTraceCache::TryAvoidObstacles(BotMovementPredictionContext *context,
+                                                                    Vec3 *intendedLookVec,
+                                                                    float correctionFraction,
+                                                                    unsigned sidesShift)
+{
+    TestForResultsMask(context, FRONT << sidesShift);
+    const TraceResult &frontResult = results[0 + sidesShift];
+    if (frontResult.trace.fraction == 1.0f)
+        return ObstacleAvoidanceResult::NO_OBSTACLES;
+
+    TestForResultsMask(context, (LEFT | RIGHT | FRONT_LEFT | FRONT_RIGHT) << sidesShift);
+
+    Vec3 velocityDir2D(context->movementState->entityPhysicsState.Velocity());
+    velocityDir2D.Z() = 0;
+    velocityDir2D.Normalize();
+
+    // Make velocity direction dot product affect score stronger for lower correction fraction (for high speed)
+
+    // This weight corresponds to a kept part of a trace fraction
+    const float alpha = 0.51f + 0.24f * correctionFraction;
+    // This weight corresponds to an added or subtracted part of a trace fraction multiplied by the dot product
+    const float beta = 0.49f - 0.24f * correctionFraction;
+    // Make sure a score is always positive
+    Assert(alpha > beta);
+    // Make sure that score is kept as is for the maximal dot product
+    Assert(fabsf(alpha + beta - 1.0f) < 0.0001f);
+
+    float maxScore = frontResult.trace.fraction * (alpha + beta * velocityDir2D.Dot(results[0 + sidesShift].traceDir));
+    const TraceResult *bestTraceResult = nullptr;
+
+    for (unsigned i = 2; i <= 5; ++i)
+    {
+        const TraceResult &result = results[i + sidesShift];
+        float score = result.trace.fraction;
+        // Make sure that non-blocked directions are in another category
+        if (score == 1.0f)
+            score *= 3.0f;
+
+        score *= alpha + beta * velocityDir2D.Dot(result.traceDir);
+        if (score <= maxScore)
+            continue;
+
+        maxScore = score;
+        bestTraceResult = &result;
+    }
+
+    if (bestTraceResult)
+    {
+        intendedLookVec->NormalizeFast();
+        *intendedLookVec *= (1.0f - correctionFraction);
+        VectorMA(intendedLookVec->Data(), correctionFraction, bestTraceResult->traceDir, intendedLookVec->Data());
+        // There is no need to normalize intendedLookVec (we had to do it for correction fraction application)
+        return ObstacleAvoidanceResult::CORRECTED;
+    }
+
+    return ObstacleAvoidanceResult::KEPT_AS_IS;
+}

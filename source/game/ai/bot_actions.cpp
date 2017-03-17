@@ -147,13 +147,15 @@ void BotPickupItemActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
     self->ai->botRef->GetMiscTactics().shouldMoveCarefully = true;
+    self->ai->botRef->SetCampingSpot(AiCampingSpot(navTarget.Origin(), GOAL_PICKUP_ACTION_RADIUS, 0.5f));
     self->ai->botRef->SetNavTarget(&navTarget);
 }
 
 void BotPickupItemActionRecord::Deactivate()
 {
-    BotBaseActionRecord::Activate();
+    BotBaseActionRecord::Deactivate();
     self->ai->botRef->ResetNavTarget();
+    self->ai->botRef->ResetCampingSpot();
 }
 
 AiBaseActionRecord::Status BotPickupItemActionRecord::CheckStatus(const WorldState &currWorldState) const
@@ -250,8 +252,9 @@ PlannerNode *BotPickupItemAction::TryApply(const WorldState &worldState)
 void BotWaitForItemActionRecord::Activate()
 {
     BotBaseActionRecord::Activate();
+    self->ai->botRef->GetMiscTactics().shouldMoveCarefully = true;
     self->ai->botRef->SetNavTarget(&navTarget);
-    self->ai->botRef->SetCampingSpot(AiCampingSpot(navTarget.Origin(), 0.66f * GOAL_PICKUP_ACTION_RADIUS));
+    self->ai->botRef->SetCampingSpot(AiCampingSpot(navTarget.Origin(), GOAL_PICKUP_ACTION_RADIUS, 0.5f));
 }
 
 void BotWaitForItemActionRecord::Deactivate()

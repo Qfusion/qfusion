@@ -238,7 +238,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
         unsigned moveDuration = 1;
         unsigned waitDuration = 1;
 
-        if (self->ai->botRef->currAasAreaNum != navEnt->AasAreaNum())
+        if (self->ai->botRef->CurrAreaNum() != navEnt->AasAreaNum())
         {
             // We ignore cost of traveling in goal area, since:
             // 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area

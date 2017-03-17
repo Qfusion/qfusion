@@ -34,13 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define EDICT_NUM( n ) ( (edict_t *)( game.edicts + n ) )
 #define NUM_FOR_EDICT( e ) ( ENTNUM( e ) )
 
-// BoxEdicts() can return a list of either solid or trigger entities
-// FIXME: eliminate AREA_ distinction?
-#define AREA_ALL		-1
-#define	AREA_SOLID		1
-#define	AREA_TRIGGERS	2
-
-
 #define AREA_GRID		128
 #define AREA_GRIDNODES	(AREA_GRID * AREA_GRID)
 #define AREA_GRIDMINSIZE 64.0f	// minimum areagrid cell size, smaller values 
@@ -714,7 +707,7 @@ void GClip_SetAreaPortalState( edict_t *ent, bool open )
 * returns the number of pointers filled in
 * ??? does this always return the world?
 */
-static int GClip_AreaEdicts( const vec3_t mins, const vec3_t maxs, 
+int GClip_AreaEdicts( const vec3_t mins, const vec3_t maxs,
 	int *list, int maxcount, int areatype, int timeDelta )
 {
 	int count;
@@ -1020,7 +1013,7 @@ void GClip_SetBrushModel( edict_t *ent, const char *name )
 /*
 * GClip_EntityContact
 */
-static bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent )
+bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent )
 {
 	trace_t tr;
 	struct cmodel_s *model;

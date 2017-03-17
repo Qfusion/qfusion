@@ -824,15 +824,33 @@ static const asBehavior_t asAiCampingSpot_ObjectBehaviors[] =
     ASLIB_BEHAVIOR_NULL
 };
 
-static const asProperty_t asAiCampingSpot_Properties[] =
+static asvec3_t objectCampingSpot_get_origin(const AiCampingSpot *obj)
 {
-    { ASLIB_PROPERTY_DECL(Vec3, origin), ASLIB_FOFFSET(AiCampingSpot, origin) },
-    { ASLIB_PROPERTY_DECL(Vec3, lookAtPoint), ASLIB_FOFFSET(AiCampingSpot, lookAtPoint) },
-    { ASLIB_PROPERTY_DECL(float, radius), ASLIB_FOFFSET(AiCampingSpot, radius) },
-    { ASLIB_PROPERTY_DECL(float, alertness), ASLIB_FOFFSET(AiCampingSpot, alertness) },
-    { ASLIB_PROPERTY_DECL(bool, hasLookAtPoint), ASLIB_FOFFSET(AiCampingSpot, hasLookAtPoint) },
+    asvec3_t result;
+    obj->Origin().CopyTo(result.v);
+    return result;
+}
 
-    ASLIB_PROPERTY_NULL
+static asvec3_t objectCampingSpot_get_lookAtPoint(const AiCampingSpot *obj)
+{
+    asvec3_t result;
+    obj->LookAtPoint().CopyTo(result.v);
+    return result;
+}
+
+static float objectCampingSpot_get_radius(const AiCampingSpot *obj) { return obj->Radius(); }
+static float objectCampingSpot_get_alertness(const AiCampingSpot *obj) { return obj->Alertness(); }
+static float objectCampingSpot_get_hasLookAtPoint(const AiCampingSpot *obj) { return obj->hasLookAtPoint; }
+
+static const asMethod_t asAiCampingSpot_ObjectMethods[] =
+{
+    DECLARE_METHOD(Vec3, get_origin, () const, objectCampingSpot_get_origin),
+    DECLARE_METHOD(Vec3, get_lookAtPoint, () const, objectCampingSpot_get_lookAtPoint),
+    DECLARE_METHOD(float, get_radius, () const, objectCampingSpot_get_radius),
+    DECLARE_METHOD(float, get_alertness, () const, objectCampingSpot_get_alertness),
+    DECLARE_METHOD(bool, get_hasLookAtPoint, () const, objectCampingSpot_get_hasLookAtPoint),
+
+    ASLIB_METHOD_NULL
 };
 
 static const asClassDescriptor_t asAiCampingSpotClassDescriptor =
@@ -842,8 +860,8 @@ static const asClassDescriptor_t asAiCampingSpotClassDescriptor =
     sizeof(AiCampingSpot),
     EMPTY_FUNCDEFS,
     asAiCampingSpot_ObjectBehaviors,
-    EMPTY_METHODS,
-    asAiCampingSpot_Properties,
+    asAiCampingSpot_ObjectMethods,
+    EMPTY_PROPERTIES,
 
     NULL, NULL
 };
@@ -860,12 +878,24 @@ static const asBehavior_t asAiPendingLookAtPoint_ObjectBehaviors[] =
     ASLIB_BEHAVIOR_NULL
 };
 
-static const asProperty_t asAiPendingLookAtPoint_ObjectProperties[] =
+static asvec3_t objectPendingLookAtPoint_get_origin(const AiPendingLookAtPoint *obj)
 {
-    { ASLIB_PROPERTY_DECL(Vec3, origin), ASLIB_FOFFSET(AiPendingLookAtPoint, origin) },
-    { ASLIB_PROPERTY_DECL(float, turnSpeedMultiplier), ASLIB_FOFFSET(AiPendingLookAtPoint, turnSpeedMultiplier) },
+    asvec3_t result;
+    obj->Origin().CopyTo(result.v);
+    return result;
+}
 
-    ASLIB_PROPERTY_NULL
+static float objectPendingLookAtPoint_get_turnSpeedMultiplier(const AiPendingLookAtPoint *obj)
+{
+    return obj->TurnSpeedMultiplier();
+}
+
+static const asMethod_t asAiPendingLookAtPoint_ObjectMethods[] =
+{
+    DECLARE_METHOD(Vec3, origin, () const, objectPendingLookAtPoint_get_origin),
+    DECLARE_METHOD(float, turnSpeedMultiplier, () const, objectPendingLookAtPoint_get_turnSpeedMultiplier),
+
+    ASLIB_METHOD_NULL
 };
 
 static const asClassDescriptor_t asAiPendingLookAtPointClassDescriptor =
@@ -875,8 +905,8 @@ static const asClassDescriptor_t asAiPendingLookAtPointClassDescriptor =
     sizeof(AiPendingLookAtPoint),
     EMPTY_FUNCDEFS,
     asAiPendingLookAtPoint_ObjectBehaviors,
-    EMPTY_METHODS,
-    asAiPendingLookAtPoint_ObjectProperties,
+    asAiPendingLookAtPoint_ObjectMethods,
+    EMPTY_PROPERTIES,
 
     NULL, NULL
 };

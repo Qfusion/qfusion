@@ -195,6 +195,18 @@ public:
         return basePointer + (first - cbegin());
     }
 
+    inline void truncate(size_type newSize)
+    {
+#ifndef _DEBUG
+        if (newSize > size())
+            fail_with("truncate(): `newSize` %d > `size()` %d", newSize, size());
+#endif
+        for (size_type i = newSize, end = count; i < end; ++i)
+            basePointer[i].~T();
+
+        count = newSize;
+    }
+
     inline iterator insert(const_iterator position, const T &val)
     {
 #ifdef _DEBUG

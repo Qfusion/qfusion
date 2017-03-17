@@ -756,6 +756,14 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin );
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
 int GClip_FindInRadius( vec3_t org, float rad, int *list, int maxcount );
 
+// BoxEdicts() can return a list of either solid or trigger entities
+// FIXME: eliminate AREA_ distinction?
+#define AREA_ALL       -1
+#define AREA_SOLID      1
+#define AREA_TRIGGERS   2
+int GClip_AreaEdicts( const vec3_t mins, const vec3_t maxs, int *list, int maxcount, int areatype, int timeDelta );
+bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent );
+
 //
 // g_combat.c
 //

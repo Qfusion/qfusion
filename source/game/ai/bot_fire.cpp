@@ -151,15 +151,15 @@ void Bot::LookAtEnemy(float coordError, const vec_t *fire_origin, vec_t *target,
     if (!input->isLookVecSet || input->canOverrideLookVec)
     {
         input->intendedLookVec = toTargetVec;
-        input->alreadyComputedAngles = GetNewViewAngles(self->s.angles, toTargetVec, angularSpeedMultiplier);
+        input->alreadyComputedAngles = GetNewViewAngles(self->s.angles, toTargetVec, game.frametime, angularSpeedMultiplier);
     }
     // (in case when XY view movement is exactly specified and Z view movement can vary)
     else if (input->canOverridePitch)
     {
         // These angles can be intended by the already set look vec (can be = not always ideal due to limited view speed).
-        Vec3 intendedAngles = GetNewViewAngles(self->s.angles, input->intendedLookVec, angularSpeedMultiplier);
+        Vec3 intendedAngles = GetNewViewAngles(self->s.angles, input->intendedLookVec, game.frametime, angularSpeedMultiplier);
         // These angles can be required to hit the target
-        Vec3 targetAimAngles = GetNewViewAngles(self->s.angles, toTargetVec, angularSpeedMultiplier);
+        Vec3 targetAimAngles = GetNewViewAngles(self->s.angles, toTargetVec, game.frametime, angularSpeedMultiplier);
         // Override pitch in hope this will be sufficient for hitting a target
         intendedAngles.Data()[PITCH] = targetAimAngles.Data()[PITCH];
         input->hasAlreadyComputedAngles = true;

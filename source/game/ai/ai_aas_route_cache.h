@@ -430,6 +430,18 @@ public:
         return 0;
     }
 
+    inline bool ReachAndTravelTimeToGoalArea(int fromAreaNum, int toAreaNum, int travelFlags, int *reachNum, int *travelTime) const
+    {
+        RoutingResult result;
+        if (RoutingResultToGoalArea(fromAreaNum, nullptr, toAreaNum, travelFlags, &result))
+        {
+            *reachNum = result.reachnum;
+            *travelTime = result.traveltime;
+            return true;
+        }
+        return false;
+    }
+
     inline bool AreaDisabled(int areaNum)
     {
         return oldAndCurrAreaDisabledStatus[areaNum * 2] || (aasWorld.AreaSettings()[areaNum].areaflags & AREA_DISABLED);
