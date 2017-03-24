@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define UI_API_VERSION      65
+#define UI_API_VERSION      66
 
 typedef size_t (*ui_async_stream_read_cb_t)( const void *buf, size_t numb, float percentage,
 											 int status, const char *contentType, void *privatep );
@@ -246,7 +246,7 @@ typedef struct {
 	void ( *Keyup )( int context, int key );
 	void ( *CharEvent )( int context, wchar_t key );
 
-	void ( *MouseMove )( int context, int dx, int dy );
+	void ( *MouseMove )( int context, int frameTime, int dx, int dy );
 	void ( *MouseSet )( int context, int mx, int my, bool showCursor );
 
 	bool ( *TouchEvent )( int context, int id, touchevent_t type, int x, int y );

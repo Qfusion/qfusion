@@ -719,6 +719,15 @@ void CL_GameModule_AddMovement( vec3_t movement ) {
 }
 
 /*
+* CL_GameModule_MouseMove
+*/
+void CL_GameModule_MouseMove( int frameTime, int dx, int dy ) {
+	if( cge ) {
+		cge->MouseMove( frameTime, dx, dy );
+	}
+}
+
+/*
 * CL_GameModule_TouchEvent
 */
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time ) {

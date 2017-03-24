@@ -1965,17 +1965,6 @@ static void CL_InitLocal( void ) {
 	cl_anglespeedkey =  Cvar_Get( "cl_anglespeedkey", "1.5", 0 );
 
 	cl_run =        Cvar_Get( "cl_run", "1", CVAR_ARCHIVE );
-	sensitivity =       Cvar_Get( "sensitivity", "3", CVAR_ARCHIVE );
-	zoomsens =      Cvar_Get( "zoomsens", "0", CVAR_ARCHIVE );
-	m_accel =       Cvar_Get( "m_accel", "0", CVAR_ARCHIVE );
-	m_accelStyle =  Cvar_Get( "m_accelStyle", "0", CVAR_ARCHIVE );
-	m_accelOffset = Cvar_Get( "m_accelOffset", "0", CVAR_ARCHIVE );
-	m_accelPow =    Cvar_Get( "m_accelPow", "2", CVAR_ARCHIVE );
-	m_filter =      Cvar_Get( "m_filter", "0", CVAR_ARCHIVE );
-	m_filterStrength =  Cvar_Get( "m_filterStrength", "0.5", CVAR_ARCHIVE );
-	m_pitch =       Cvar_Get( "m_pitch", "0.022", CVAR_ARCHIVE );
-	m_yaw =         Cvar_Get( "m_yaw", "0.022", CVAR_ARCHIVE );
-	m_sensCap =     Cvar_Get( "m_sensCap", "0", CVAR_ARCHIVE );
 
 	cl_masterservers =  Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, 0 );
 
@@ -2973,13 +2962,6 @@ void CL_Init( void ) {
 	ML_Init();
 
 	CL_Mumble_Init();
-}
-
-/*
-* CL_InitDynvars
-*/
-void CL_InitDynvars( void ) {
-	CL_InitInputDynvars();
 }
 
 /*

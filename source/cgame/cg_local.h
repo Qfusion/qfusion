@@ -1179,6 +1179,18 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 //
 // cg_input.cpp
 //
+extern cvar_t *sensitivity;
+extern cvar_t *zoomsens;
+extern cvar_t *m_accel;
+extern cvar_t *m_accelStyle;
+extern cvar_t *m_accelOffset;
+extern cvar_t *m_accelPow;
+extern cvar_t *m_filter;
+extern cvar_t *m_sensCap;
+
+extern cvar_t *m_pitch;
+extern cvar_t *m_yaw;
+
 extern cvar_t *cg_gamepad_moveThres;
 extern cvar_t *cg_gamepad_runThres;
 extern cvar_t *cg_gamepad_strafeThres;
@@ -1192,6 +1204,8 @@ extern cvar_t *cg_gamepad_accelMax;
 extern cvar_t *cg_gamepad_accelSpeed;
 extern cvar_t *cg_gamepad_accelThres;
 extern cvar_t *cg_gamepad_swapSticks;
+
+void CG_MouseMove( int frame_time, int mx, int my );
 
 void CG_UpdateInput( float frametime );
 void CG_ClearInputState( void );

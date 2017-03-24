@@ -618,9 +618,9 @@ void CL_UIModule_AddToServerList( const char *adr, const char *info ) {
 /*
 * CL_UIModule_MouseMove
 */
-void CL_UIModule_MouseMove( int dx, int dy ) {
+void CL_UIModule_MouseMove( int frameTime, int dx, int dy ) {
 	if( uie ) {
-		uie->MouseMove( UI_CONTEXT_MAIN, dx, dy );
+		uie->MouseMove( UI_CONTEXT_MAIN, frameTime, dx, dy );
 	}
 }
 

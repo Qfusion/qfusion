@@ -69,7 +69,7 @@ public:
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
 
-	void mouseMove( int contextId, int x, int y, bool absolute, bool showCursor );
+	void mouseMove( int contextId, int framTime, int x, int y, bool absolute, bool showCursor );
 	void textInput( int contextId, wchar_t c );
 	void keyEvent( int contextId, int key, bool pressed );
 	bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
@@ -162,16 +162,16 @@ private:
 	/**
 	 * Adds cursor movement from the gamepad sticks.
 	 *
-	 * @param frametime time since last UI input update
+	 * @param milliseconds since last UI input update
 	 */
-	void gamepadStickCursorMove( float frameTime );
+	void gamepadStickCursorMove( int frameTimeMsec );
 
 	/**
 	 * Adds cursor movement from the directional pad.
 	 *
-	 * @param frametime time since last UI input update
+	 * @param milliseconds since last UI input update
 	 */
-	void gamepadDpadCursorMove( float frameTime );
+	void gamepadDpadCursorMove( int frameTimeMsec );
 
 	/**
 	 * Adds cursor movement from the gamepad.

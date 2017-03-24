@@ -876,6 +876,17 @@ static void CG_RegisterVariables( void ) {
 
 	cg_viewBob = trap_Cvar_Get( "cg_viewBob", "1", CVAR_ARCHIVE );
 
+	sensitivity = trap_Cvar_Get( "sensitivity", "3", CVAR_ARCHIVE );
+	zoomsens = trap_Cvar_Get( "zoomsens", "0", CVAR_ARCHIVE );
+	m_accel = trap_Cvar_Get( "m_accel", "0", CVAR_ARCHIVE );
+	m_accelStyle = trap_Cvar_Get( "m_accelStyle", "0", CVAR_ARCHIVE );
+	m_accelOffset = trap_Cvar_Get( "m_accelOffset", "0", CVAR_ARCHIVE );
+	m_accelPow = trap_Cvar_Get( "m_accelPow", "2", CVAR_ARCHIVE );
+	m_filter = trap_Cvar_Get( "m_filter", "0", CVAR_ARCHIVE );
+	m_pitch = trap_Cvar_Get( "m_pitch", "0.022", CVAR_ARCHIVE );
+	m_yaw = trap_Cvar_Get( "m_yaw", "0.022", CVAR_ARCHIVE );
+	m_sensCap = trap_Cvar_Get( "m_sensCap", "0", CVAR_ARCHIVE );
+
 	cg_gamepad_moveThres = trap_Cvar_Get( "cg_gamepad_moveThres", "0.239", CVAR_ARCHIVE );
 	cg_gamepad_runThres = trap_Cvar_Get( "cg_gamepad_runThres", "0.75", CVAR_ARCHIVE );
 	cg_gamepad_strafeThres = trap_Cvar_Get( "cg_gamepad_strafeThres", "0.239", CVAR_ARCHIVE );

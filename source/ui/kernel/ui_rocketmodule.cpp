@@ -229,7 +229,7 @@ bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 		return false;
 	}
 
-	UI_Main::Get()->mouseMove( contextId, x, y, true, false );
+	UI_Main::Get()->mouseMove( contextId, 0, x, y, true, false );
 
 	if( type == TOUCH_DOWN ) {
 		context->ProcessMouseButtonDown( 0, KeyConverter::getModifiers() );
@@ -294,7 +294,7 @@ void RocketModule::cancelTouches( int contextId ) {
 
 	contextTouch.id = -1;
 	context->ProcessMouseButtonUp( 0, KeyConverter::getModifiers() );
-	UI_Main::Get()->mouseMove( contextId, 0, 0, true, false );
+	UI_Main::Get()->mouseMove( contextId, 0, 0, 0, true, false );
 }
 
 //==================================================

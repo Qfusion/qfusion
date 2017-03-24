@@ -328,11 +328,6 @@ extern cvar_t *cl_extrapolate;
 
 extern cvar_t *cl_flip;
 
-extern cvar_t *sensitivity;
-extern cvar_t *zoomsens;
-extern cvar_t *m_pitch;
-extern cvar_t *m_yaw;
-
 extern cvar_t *cl_timedemo;
 extern cvar_t *cl_demoavi_video;
 extern cvar_t *cl_demoavi_audio;
@@ -430,6 +425,7 @@ void CL_GameModule_ClearInputState( void );
 uint8_t CL_GameModule_GetButtonBits( void );
 void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime, bool flipped );
 void CL_GameModule_AddMovement( vec3_t movement );
+void CL_GameModule_MouseMove( int frameTime, int dx, int dy );
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 bool CL_GameModule_IsTouchDown( int id );
 
@@ -494,7 +490,7 @@ void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_ShowQuickMenu( bool show );
 bool CL_UIModule_HaveQuickMenu( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
-void CL_UIModule_MouseMove( int dx, int dy );
+void CL_UIModule_MouseMove( int frameTime, int dx, int dy );
 void CL_UIModule_MouseSet( int mx, int my, bool showCursor );
 
 //

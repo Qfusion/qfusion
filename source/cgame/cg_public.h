@@ -303,6 +303,8 @@ typedef struct {
 
 	bool ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
 
+	void ( *MouseMove )( int frameTime, int dx, int dy );
+
 	/**
 	 * Updates input-related parts of cgame every frame.
 	 *

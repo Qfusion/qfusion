@@ -24,6 +24,134 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
+/*
+===============================================================================
+
+MOUSE
+
+===============================================================================
+*/
+
+cvar_t *sensitivity;
+cvar_t *zoomsens;
+cvar_t *m_accel;
+cvar_t *m_accelStyle;
+cvar_t *m_accelOffset;
+cvar_t *m_accelPow;
+cvar_t *m_filter;
+cvar_t *m_sensCap;
+
+cvar_t *m_pitch;
+cvar_t *m_yaw;
+
+static float mouse_x = 0, mouse_y = 0;
+
+/*
+* CG_MouseMove
+*/
+void CG_MouseMove( int frame_time, int mx, int my ) {
+	static float old_mouse_x = 0, old_mouse_y = 0;
+	float accelSensitivity;
+
+	// mouse filtering
+	switch( m_filter->integer ) {
+	case 1:
+	{
+		mouse_x = ( mx + old_mouse_x ) * 0.5;
+		mouse_y = ( my + old_mouse_y ) * 0.5;
+	}
+	break;
+
+	default: // no filtering
+		mouse_x = mx;
+		mouse_y = my;
+		break;
+	}
+
+	old_mouse_x = mx;
+	old_mouse_y = my;
+
+	accelSensitivity = sensitivity->value;
+
+	if( m_accel->value != 0.0f && frame_time != 0 ) {
+		float rate;
+
+		// QuakeLive-style mouse acceleration, ported from ioquake3
+		// original patch by Gabriel Schnoering and TTimo
+		if( m_accelStyle->integer == 1 ) {
+			float base[2];
+			float power[2];
+
+			// sensitivity remains pretty much unchanged at low speeds
+			// m_accel is a power value to how the acceleration is shaped
+			// m_accelOffset is the rate for which the acceleration will have doubled the non accelerated amplification
+			// NOTE: decouple the config cvars for independent acceleration setup along X and Y?
+
+			base[0] = (float) ( abs( mx ) ) / (float) frame_time;
+			base[1] = (float) ( abs( my ) ) / (float) frame_time;
+			power[0] = powf( base[0] / m_accelOffset->value, m_accel->value );
+			power[1] = powf( base[1] / m_accelOffset->value, m_accel->value );
+
+			mouse_x = ( mouse_x + ( ( mouse_x < 0 ) ? -power[0] : power[0] ) * m_accelOffset->value );
+			mouse_y = ( mouse_y + ( ( mouse_y < 0 ) ? -power[1] : power[1] ) * m_accelOffset->value );
+		} else if( m_accelStyle->integer == 2 ) {
+			float accelOffset, accelPow;
+
+			// ch : similar to normal acceleration with offset and variable pow mechanisms
+
+			// sanitize values
+			accelPow = m_accelPow->value > 1.0 ? m_accelPow->value : 2.0;
+			accelOffset = m_accelOffset->value >= 0.0 ? m_accelOffset->value : 0.0;
+
+			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)frame_time;
+			rate -= accelOffset;
+			if( rate < 0 ) {
+				rate = 0.0;
+			}
+			// ch : TODO sens += pow( rate * m_accel->value, m_accelPow->value - 1.0 )
+			accelSensitivity += pow( rate * m_accel->value, accelPow - 1.0 );
+
+			// TODO : move this outside of this branch?
+			if( m_sensCap->value > 0 && accelSensitivity > m_sensCap->value ) {
+				accelSensitivity = m_sensCap->value;
+			}
+		} else {
+			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)frame_time;
+			accelSensitivity += rate * m_accel->value;
+		}
+	}
+
+	accelSensitivity *= CG_GetSensitivityScale( sensitivity->value, zoomsens->value );
+
+	mouse_x *= accelSensitivity;
+	mouse_y *= accelSensitivity;
+}
+
+/**
+* Adds view rotation from mouse.
+*
+* @param viewangles view angles to modify
+* @param frametime  real frame time
+* @param flip       horizontal flipping direction
+*/
+static void CG_AddMouseViewAngles( vec3_t viewangles, float frametime, bool flipped ) {
+	if( !mouse_x && !mouse_y ) {
+		return;
+	}
+
+	// add mouse X/Y movement to cmd
+	viewangles[YAW] -= ( m_yaw->value * mouse_x ) * ( flipped ? -1.0 : 1.0 );
+	viewangles[PITCH] += ( m_pitch->value * mouse_y );
+}
+
+/*
+===============================================================================
+
+GAMEPAD
+
+===============================================================================
+*/
+
 cvar_t *cg_gamepad_moveThres;
 cvar_t *cg_gamepad_runThres;
 cvar_t *cg_gamepad_strafeThres;
@@ -180,6 +308,7 @@ unsigned int CG_GetButtonBits( void ) {
 
 void CG_AddViewAngles( vec3_t viewangles, float frametime, bool flipped ) {
 	float flip = ( flipped ? -1.0f : 1.0f );
+	CG_AddMouseViewAngles( viewangles, frametime, flipped );
 	CG_AddGamepadViewAngles( viewangles, frametime, flip );
 	CG_AddTouchViewAngles( viewangles, frametime, flip );
 }

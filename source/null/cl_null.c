@@ -31,9 +31,6 @@ static void Key_Bind_Null_f( void ) {
 void CL_Init( void ) {
 }
 
-void CL_InitDynvars( void ) {
-}
-
 void CL_Disconnect( const char *message ) {
 }
 

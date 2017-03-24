@@ -28,8 +28,6 @@ cvar_t *cl_ucmdFPS;
 cvar_t *cl_ucmdTimeNudge;
 #endif
 
-extern cvar_t *cl_maxfps;
-
 extern unsigned sys_frame_time;
 static unsigned ucmd_frame_time;
 
@@ -41,159 +39,14 @@ MOUSE
 ===============================================================================
 */
 extern cvar_t *in_grabinconsole;
-extern cvar_t *m_filter;
-extern cvar_t *m_filterStrength;
-extern cvar_t *m_accel;
-extern cvar_t *m_accelStyle;
-extern cvar_t *m_accelOffset;
-extern cvar_t *m_accelPow;
-extern cvar_t *m_sensCap;
 
-#define M_FILTER_NONE       0
-#define M_FILTER_INTERPOLATE    1
-#define M_FILTER_EXTRAPOLATE    2
-
-#define M_STRINGIFY( x ) # x
-#define M_DOUBLEQUOTE( x ) M_STRINGIFY( x )
-
-static unsigned int mouse_frame_time = 0;
-
-static const unsigned int DEFAULT_BUF_SIZE = 5;
-static float *buf_x = NULL, *buf_y = NULL;
-static unsigned int buf_size = 0;
-static float buf_decay = 0.5;
-
-/*
-* CL_MouseFilterBufferSizeGet_f
-*/
-static dynvar_get_status_t CL_MouseFilterBufferSizeGet_f( void **size ) {
-	static char sizeStr[16];
-	sprintf( sizeStr, "%u", buf_size );
-	*size = sizeStr;
-	return DYNVAR_GET_OK;
-}
-
-/*
-* CL_MouseFilterBufferSizeSet_f
-*/
-static dynvar_set_status_t CL_MouseFilterBufferSizeSet_f( void *size ) {
-	static const unsigned int MIN_SIZE = 1;
-	static const unsigned int MAX_SIZE = 32; // more is pointless (probably anything more than 5)
-	const unsigned int desiredSize = atoi( (char *) size );
-	if( desiredSize >= MIN_SIZE && desiredSize <= MAX_SIZE ) {
-		// reallocate buffer
-		if( m_filter->integer != M_FILTER_EXTRAPOLATE ) {
-			Com_Printf( "Warning: \"m_filterBufferSize\" has no effect unless \"m_filter " M_DOUBLEQUOTE( M_FILTER_EXTRAPOLATE ) "\" is set.\n" );
-		}
-		Mem_ZoneFree( buf_x );
-		Mem_ZoneFree( buf_y );
-		buf_x = (float *) Mem_ZoneMalloc( sizeof( float ) * desiredSize );
-		buf_y = (float *) Mem_ZoneMalloc( sizeof( float ) * desiredSize );
-		// reset to 0
-		memset( buf_x, 0, sizeof( float ) * desiredSize );
-		memset( buf_y, 0, sizeof( float ) * desiredSize );
-		buf_size = desiredSize;
-		return DYNVAR_SET_OK;
-	} else {
-		Com_Printf( "\"m_filterBufferSize\" must be between \"%d\" and \"%d\".\n", MIN_SIZE, MAX_SIZE );
-		return DYNVAR_SET_INVALID;
-	}
-}
-
-/*
-* CL_MouseFilterBufferDecayGet_f
-*/
-static dynvar_get_status_t CL_MouseFilterBufferDecayGet_f( void **decay ) {
-	static char decayStr[16];
-	sprintf( decayStr, "%f", buf_decay );
-	*decay = decayStr;
-	return DYNVAR_GET_OK;
-}
-
-/*
-* CL_MouseFilterBufferDecaySet_f
-*/
-static dynvar_set_status_t CL_MouseFilterBufferDecaySet_f( void *decay ) {
-	static const float MIN_DECAY = 0.0;
-	static const float MAX_DECAY = 1.0;
-	const float desiredDecay = atof( decay );
-	if( desiredDecay >= MIN_DECAY && desiredDecay <= MAX_DECAY ) {
-		if( m_filter->integer != M_FILTER_EXTRAPOLATE ) {
-			Com_Printf( "Warning: \"m_filterBufferDecay\" has no effect unless \"m_filter " M_DOUBLEQUOTE( M_FILTER_EXTRAPOLATE ) "\" is set.\n" );
-		}
-		buf_decay = desiredDecay;
-		return DYNVAR_SET_OK;
-	} else {
-		Com_Printf( "\"m_filterBufferDecay\" must be between \"%f\" and \"%f\".\n", MIN_DECAY, MAX_DECAY );
-		return DYNVAR_SET_INVALID;
-	}
-}
-
-/*
-* CL_MouseExtrapolate
-* asymptotic extrapolation function
-*/
-static void CL_MouseExtrapolate( int mx, int my, float *extra_x, float *extra_y ) {
-
-	static unsigned int frameNo = 0;
-	static float sub_x = 0, sub_y = 0;
-	static int64_t lastMicros = 0;
-	static int64_t avgMicros = 0;
-
-	float add_x = 0.0, add_y = 0.0;
-	float decay = 1.0;
-	float decaySum = buf_size > 1 ? 0.0 : decay;
-	unsigned int i;
-
-	int64_t micros;
-	if( !lastMicros ) {
-		lastMicros = Sys_Microseconds() - 10000;    // start at 100 FPS
-	}
-	micros = Sys_Microseconds();                        // get current time in us
-	avgMicros = ( avgMicros + ( micros - lastMicros ) ) / 2; // calc running avg of us per frame
-
-	assert( buf_size );
-	frameNo = ( frameNo + 1 ) % buf_size;   // we use the buffer in a cyclic fashion
-
-	// normalize mouse movement to pixels per microsecond
-	buf_x[frameNo] = mx / (float) avgMicros;
-	buf_y[frameNo] = my / (float) avgMicros;
-
-	// calculate asymptotically weighted sum of movement over the last few frames
-	assert( buf_decay >= 0.0 );
-	for( i = 0; i < buf_size; ++i ) {
-		const unsigned int f = ( frameNo - i ) % buf_size;
-		assert( f <= buf_size );
-		add_x += buf_x[f] * decay;
-		add_y += buf_y[f] * decay;
-		decaySum += decay;
-		decay *= buf_decay;
-	}
-	assert( decaySum >= 1.0 );
-	add_x /= decaySum;
-	add_y /= decaySum;
-
-	// calculate difference to last frame and re-weigh it with avg us per frame
-	// we need to extrapolate the delta, not the momentum alone, so the mouse will come to
-	// rest at the same spot ultimately, regardless of extrapolation on or off
-	*extra_x = ( add_x - sub_x ) * avgMicros;
-	*extra_y = ( add_y - sub_y ) * avgMicros;
-
-	sub_x = add_x;
-	sub_y = add_y;
-	lastMicros = micros;
-}
 
 /*
 * CL_MouseMove
 */
 void CL_MouseMove( usercmd_t *cmd, int mx, int my ) {
 	static unsigned int mouse_time = 0, old_mouse_time = 0xFFFFFFFF;
-	static float mouse_x = 0, mouse_y = 0;
-	static float old_mouse_x = 0, old_mouse_y = 0;
-	float accelSensitivity;
-	float rate;
-	float accelOffset, accelPow;
+	int msec;
 
 	old_mouse_time = mouse_time;
 	mouse_time = Sys_Milliseconds();
@@ -201,10 +54,10 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my ) {
 		old_mouse_time = mouse_time - 1;
 	}
 
-	mouse_frame_time = mouse_time - old_mouse_time;
+	msec = mouse_time - old_mouse_time;
 
 	if( cls.key_dest == key_menu ) {
-		CL_UIModule_MouseMove( mx, my );
+		CL_UIModule_MouseMove( msec, mx, my );
 		return;
 	}
 
@@ -216,91 +69,7 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my ) {
 		return;
 	}
 
-	// mouse filtering
-	switch( m_filter->integer ) {
-		case M_FILTER_INTERPOLATE:
-		{
-			mouse_x = ( mx + old_mouse_x ) * 0.5;
-			mouse_y = ( my + old_mouse_y ) * 0.5;
-		}
-		break;
-
-		case M_FILTER_EXTRAPOLATE:
-		{
-			float extra_x, extra_y;
-			CL_MouseExtrapolate( mx, my, &extra_x, &extra_y );
-			mouse_x = mx + extra_x * m_filterStrength->value;
-			mouse_y = my + extra_y * m_filterStrength->value;
-		}
-		break;
-
-		default: // no filtering
-			mouse_x = mx;
-			mouse_y = my;
-			break;
-	}
-
-	old_mouse_x = mx;
-	old_mouse_y = my;
-
-	accelSensitivity = sensitivity->value;
-
-	if( m_accel->value != 0.0f && mouse_frame_time != 0.0f ) {
-		// QuakeLive-style mouse acceleration, ported from ioquake3
-		// original patch by Gabriel Schnoering and TTimo
-		if( m_accelStyle->integer == 1 ) {
-			float base[2];
-			float power[2];
-
-			// sensitivity remains pretty much unchanged at low speeds
-			// m_accel is a power value to how the acceleration is shaped
-			// m_accelOffset is the rate for which the acceleration will have doubled the non accelerated amplification
-			// NOTE: decouple the config cvars for independent acceleration setup along X and Y?
-
-			base[0] = (float) ( abs( mx ) ) / (float) mouse_frame_time;
-			base[1] = (float) ( abs( my ) ) / (float) mouse_frame_time;
-			power[0] = powf( base[0] / m_accelOffset->value, m_accel->value );
-			power[1] = powf( base[1] / m_accelOffset->value, m_accel->value );
-
-			mouse_x = ( mouse_x + ( ( mouse_x < 0 ) ? -power[0] : power[0] ) * m_accelOffset->value );
-			mouse_y = ( mouse_y + ( ( mouse_y < 0 ) ? -power[1] : power[1] ) * m_accelOffset->value );
-		} else if( m_accelStyle->integer == 2 ) {
-			// ch : similar to normal acceleration with offset and variable pow mechanisms
-
-			// sanitize values
-			accelPow = m_accelPow->value > 1.0 ? m_accelPow->value : 2.0;
-			accelOffset = m_accelOffset->value >= 0.0 ? m_accelOffset->value : 0.0;
-
-			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)mouse_frame_time;
-			rate -= accelOffset;
-			if( rate < 0 ) {
-				rate = 0.0;
-			}
-			// ch : TODO sens += pow( rate * m_accel->value, m_accelPow->value - 1.0 )
-			accelSensitivity += pow( rate * m_accel->value, accelPow - 1.0 );
-
-			// TODO : move this outside of this branch?
-			if( m_sensCap->value > 0 && accelSensitivity > m_sensCap->value ) {
-				accelSensitivity = m_sensCap->value;
-			}
-		} else {
-			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)mouse_frame_time;
-			accelSensitivity += rate * m_accel->value;
-		}
-	}
-
-	accelSensitivity *= CL_GameModule_GetSensitivityScale( sensitivity->value, zoomsens->value );
-
-	mouse_x *= accelSensitivity;
-	mouse_y *= accelSensitivity;
-
-	if( !mouse_x && !mouse_y ) {
-		return;
-	}
-
-	// add mouse X/Y movement to cmd
-	cl.viewangles[YAW] -= ( m_yaw->value * mouse_x ) * ( cl_flip->integer ? -1.0 : 1.0 );
-	cl.viewangles[PITCH] += ( m_pitch->value * mouse_y );
+	CL_GameModule_MouseMove( msec, mx, my );
 }
 
 /*
@@ -658,7 +427,9 @@ void CL_UpdateCommandInput( void ) {
 
 	// always let the mouse refresh cl.viewangles
 	IN_MouseMove( cmd );
+
 	CL_AddButtonBits( &cmd->buttons );
+
 	if( cls.key_dest == key_game ) {
 		CL_GameModule_AddViewAngles( cl.viewangles, cls.realframetime, cl_flip->integer != 0 );
 	}
@@ -796,20 +567,6 @@ void CL_InitInput( void ) {
 }
 
 /*
-* CL_InitInputDynvars
-*/
-void CL_InitInputDynvars( void ) {
-	Dynvar_Create( "m_filterBufferSize", true, CL_MouseFilterBufferSizeGet_f, CL_MouseFilterBufferSizeSet_f );
-	Dynvar_Create( "m_filterBufferDecay", true, CL_MouseFilterBufferDecayGet_f, CL_MouseFilterBufferDecaySet_f );
-	// we could simply call Dynvar_SetValue(m_filterBufferSize, "5") here, but then the user would get a warning in the console if m_filter was != M_FILTER_EXTRAPOLATE
-	buf_size = DEFAULT_BUF_SIZE;
-	buf_x = (float *) Mem_ZoneMalloc( sizeof( float ) * buf_size );
-	buf_y = (float *) Mem_ZoneMalloc( sizeof( float ) * buf_size );
-	memset( buf_x, 0, sizeof( float ) * buf_size );
-	memset( buf_y, 0, sizeof( float ) * buf_size );
-}
-
-/*
 * CL_ShutdownInput
 */
 void CL_ShutdownInput( void ) {
@@ -857,10 +614,6 @@ void CL_ShutdownInput( void ) {
 	Cmd_RemoveCommand( "-special" );
 	Cmd_RemoveCommand( "+zoom" );
 	Cmd_RemoveCommand( "-zoom" );
-	Dynvar_Destroy( Dynvar_Lookup( "m_filterBufferDecay" ) );
-	Dynvar_Destroy( Dynvar_Lookup( "m_filterBufferSize" ) );
-	Mem_ZoneFree( buf_x );
-	Mem_ZoneFree( buf_y );
 
 	in_initialized = true;
 }

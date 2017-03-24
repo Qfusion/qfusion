@@ -109,15 +109,15 @@ void CharEvent( int context, wchar_t key ) {
 	}
 }
 
-void MouseMove( int context, int dx, int dy ) {
+void MouseMove( int context, int frameTime, int dx, int dy ) {
 	if( ui_main ) {
-		ui_main->mouseMove( context, dx, dy, false, true );
+		ui_main->mouseMove( context, frameTime, dx, dy, false, true );
 	}
 }
 
 void MouseSet( int context, int mx, int my, bool showCursor ) {
 	if( ui_main ) {
-		ui_main->mouseMove( context, mx, my, true, showCursor );
+		ui_main->mouseMove( context, 0, mx, my, true, showCursor );
 	}
 }
 

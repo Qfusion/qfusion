@@ -1006,7 +1006,6 @@ CLIENT / SERVER SYSTEMS
 */
 
 void CL_Init( void );
-void CL_InitDynvars( void );
 void CL_Disconnect( const char *message );
 void CL_Shutdown( void );
 void CL_Frame( int realmsec, int gamemsec );

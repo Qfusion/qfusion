@@ -229,9 +229,9 @@ void UI_Main::preloadUI( void ) {
 
 	// initial cursor setup
 	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
-		mouseMove( UI_CONTEXT_MAIN, 0, 0, true, false );
+		mouseMove( UI_CONTEXT_MAIN, 0, 0, 0, true, false );
 	} else {
-		mouseMove( UI_CONTEXT_MAIN, refreshState.width >> 1, refreshState.height >> 1, true, true );
+		mouseMove( UI_CONTEXT_MAIN, 0, refreshState.width >> 1, refreshState.height >> 1, true, true );
 	}
 
 	if( !quickMenuURL.Empty() ) {
@@ -512,7 +512,8 @@ bool UI_Main::preloadEnabled( void ) {
 #endif
 }
 
-void UI_Main::gamepadStickCursorMove( float frameTime ) {
+void UI_Main::gamepadStickCursorMove( int frameTimeMsec ) {
+	float frameTime = frameTimeMsec * 0.001f;
 	const float threshold = 7849.0f / 32767.0f; // Xbox controller left stick dead zone.
 
 	vec4_t sticks;
@@ -539,12 +540,15 @@ void UI_Main::gamepadStickCursorMove( float frameTime ) {
 	int mx = ( int )x, my = ( int )y;
 	x -= ( float )mx;
 	y -= ( float )my;
-	mouseMove( UI_CONTEXT_MAIN, mx, my, false, true );
+	mouseMove( UI_CONTEXT_MAIN, frameTimeMsec, mx, my, false, true );
 }
 
-void UI_Main::gamepadDpadCursorMove( float frameTime ) {
+void UI_Main::gamepadDpadCursorMove( int frameTimeMsec ) {
+	float frameTime = frameTimeMsec * 0.001f;
 	static float holdTime;
 	static float x, y;
+
+	clamp_high( frameTime, 0.1f );
 
 	int dx = trap::Key_IsDown( K_DPAD_RIGHT ) - trap::Key_IsDown( K_DPAD_LEFT );
 	int dy = trap::Key_IsDown( K_DPAD_DOWN ) - trap::Key_IsDown( K_DPAD_UP );
@@ -577,7 +581,7 @@ void UI_Main::gamepadDpadCursorMove( float frameTime ) {
 	int mx = ( int )x, my = ( int )y;
 	x -= ( float )mx;
 	y -= ( float )my;
-	mouseMove( UI_CONTEXT_MAIN, mx, my, false, true );
+	mouseMove( UI_CONTEXT_MAIN, frameTimeMsec, mx, my, false, true );
 }
 
 void UI_Main::gamepadCursorMove( void ) {
@@ -588,25 +592,22 @@ void UI_Main::gamepadCursorMove( void ) {
 		lastTime = time;
 		return;
 	}
-
-	float frameTime = ( time - lastTime ) * 0.001f;
-	lastTime = time;
-
-	if( !frameTime ) {
+	if( lastTime == time ) {
 		return;
 	}
 
-	clamp_high( frameTime, 0.1f );
+	int frameTimeMsec = time - lastTime;
+	clamp_high( frameTimeMsec, 100 );
 
-	gamepadStickCursorMove( frameTime );
-	gamepadDpadCursorMove( frameTime );
+	gamepadStickCursorMove( frameTimeMsec );
+	gamepadDpadCursorMove( frameTimeMsec );
 }
 
 //===========================================
 
 // CALLBACKS FROM MAIN PROGRAM
 
-void UI_Main::mouseMove( int contextId, int x, int y, bool absolute, bool showCursor ) {
+void UI_Main::mouseMove( int contextId, int frameTime, int x, int y, bool absolute, bool showCursor ) {
 	int oldmousex, oldmousey;
 
 	oldmousex = mousex;

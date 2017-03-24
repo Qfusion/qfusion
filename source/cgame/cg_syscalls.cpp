@@ -56,6 +56,7 @@ extern "C" QF_DLL_EXPORT cgame_export_t * GetCGameAPI( cgame_import_t * import )
 	globals.ClearInputState = CG_ClearInputState;
 
 	globals.GetButtonBits = CG_GetButtonBits;
+	globals.MouseMove = CG_MouseMove;
 	globals.AddViewAngles = CG_AddViewAngles;
 	globals.AddMovement = CG_AddMovement;
 

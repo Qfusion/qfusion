@@ -874,7 +874,6 @@ void Qcommon_Init( int argc, char **argv ) {
 	Dynvar_Create( "irc_connected", false, Irc_GetConnected_f, Irc_SetConnected_f );
 
 	Sys_InitDynvars();
-	CL_InitDynvars();
 
 #ifdef TV_SERVER_ONLY
 	tv_server = Cvar_Get( "tv_server", "1", CVAR_NOSET );
