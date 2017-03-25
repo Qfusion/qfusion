@@ -76,7 +76,6 @@ typedef struct {
 	int cmdNum;                     // current cmd
 	usercmd_t *cmds;                // [CMD_BACKUP] each mesage will send several old cmds
 	int *cmd_time;                  // [CMD_BACKUP] time sent, for calculating pings
-	bool inputRefreshed;
 
 	int receivedSnapNum;
 	int pendingSnapNum;
@@ -212,8 +211,8 @@ typedef struct {
 	int framecount;
 	unsigned int realtime;          // always increasing, no clamping, etc
 	unsigned int gametime;          // always increasing, no clamping, etc
-	float frametime;                // seconds since last frame
-	float realframetime;
+	int frametime;                  // milliseconds since last frame
+	int realFrameTime;
 
 	socket_t socket_loopback;
 	socket_t socket_udp;
@@ -528,10 +527,8 @@ void CL_ShutdownInput( void );
 void CL_UserInputFrame( void );
 void CL_NewUserCommand( int msec );
 void CL_WriteUcmdsToMessage( msg_t *msg );
-void CL_MouseMove( usercmd_t *cmd, int mx, int my );
 void CL_MouseSet( int mx, int my, bool showCursor );
 void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
-void CL_UpdateCommandInput( void );
 void IN_CenterView( void );
 
 /**

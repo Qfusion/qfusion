@@ -28,8 +28,7 @@ cvar_t *cl_ucmdFPS;
 cvar_t *cl_ucmdTimeNudge;
 #endif
 
-extern unsigned sys_frame_time;
-static unsigned ucmd_frame_time;
+static int ucmdFrameTime;
 
 /*
 ===============================================================================
@@ -40,24 +39,17 @@ MOUSE
 */
 extern cvar_t *in_grabinconsole;
 
-
 /*
-* CL_MouseMove
+* CL_AddAnglesFromMouse
 */
-void CL_MouseMove( usercmd_t *cmd, int mx, int my ) {
-	static unsigned int mouse_time = 0, old_mouse_time = 0xFFFFFFFF;
-	int msec;
+static void CL_AddAnglesFromMouse( usercmd_t *cmd, int frameTime ) {
+	int mx, my;
 
-	old_mouse_time = mouse_time;
-	mouse_time = Sys_Milliseconds();
-	if( old_mouse_time >= mouse_time ) {
-		old_mouse_time = mouse_time - 1;
-	}
-
-	msec = mouse_time - old_mouse_time;
+	// always let the mouse refresh cl.viewangles
+	IN_GetMouseMovement( &mx, &my );
 
 	if( cls.key_dest == key_menu ) {
-		CL_UIModule_MouseMove( msec, mx, my );
+		CL_UIModule_MouseMove( frameTime, mx, my );
 		return;
 	}
 
@@ -69,7 +61,7 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my ) {
 		return;
 	}
 
-	CL_GameModule_MouseMove( msec, mx, my );
+	CL_GameModule_MouseMove( frameTime, mx, my );
 }
 
 /*
@@ -151,7 +143,7 @@ static void KeyDown( kbutton_t *b ) {
 	c = Cmd_Argv( 2 );
 	b->downtime = atoi( c );
 	if( !b->downtime ) {
-		b->downtime = sys_frame_time - 100;
+		b->downtime = cls.realtime - 100;
 	}
 
 	b->state |= 1 + 2; // down + impulse down
@@ -252,11 +244,11 @@ static float CL_KeyState( kbutton_t *key ) {
 
 	if( key->state ) {
 		// still down
-		msec += sys_frame_time - key->downtime;
-		key->downtime = sys_frame_time;
+		msec += cls.realtime - key->downtime;
+		key->downtime = cls.realtime;
 	}
 
-	val = (float) msec / (float)ucmd_frame_time;
+	val = (float) msec / (float)ucmdFrameTime;
 
 	return bound( 0, val, 1 );
 }
@@ -415,29 +407,22 @@ static void CL_AddMovementFromKeys( vec3_t movement ) {
 /*
 * CL_UpdateCommandInput
 */
-void CL_UpdateCommandInput( void ) {
-	static unsigned old_ucmd_frame_time;
+static void CL_UpdateCommandInput( int frameTime ) {
 	usercmd_t *cmd = &cl.cmds[cls.ucmdHead & CMD_MASK];
 
-	if( cl.inputRefreshed ) {
-		return;
-	}
+	ucmdFrameTime = frameTime;
 
-	ucmd_frame_time = sys_frame_time - old_ucmd_frame_time;
-
-	// always let the mouse refresh cl.viewangles
-	IN_MouseMove( cmd );
+	CL_AddAnglesFromMouse( cmd, frameTime );
 
 	CL_AddButtonBits( &cmd->buttons );
 
 	if( cls.key_dest == key_game ) {
-		CL_GameModule_AddViewAngles( cl.viewangles, cls.realframetime, cl_flip->integer != 0 );
+		CL_GameModule_AddViewAngles( cl.viewangles, cls.realFrameTime * 0.001f, cl_flip->integer != 0 );
 	}
 
-	if( ucmd_frame_time ) {
-		cmd->msec += ucmd_frame_time;
-		CL_AddAnglesFromKeys( ucmd_frame_time );
-		old_ucmd_frame_time = sys_frame_time;
+	if( frameTime ) {
+		cmd->msec += frameTime;
+		CL_AddAnglesFromKeys( frameTime );
 	}
 
 	if( cmd->msec ) {
@@ -445,7 +430,7 @@ void CL_UpdateCommandInput( void ) {
 
 		VectorSet( movement, 0.0f, 0.0f, 0.0f );
 
-		if( ucmd_frame_time ) {
+		if( frameTime ) {
 			CL_AddMovementFromKeys( movement );
 		}
 		if( cls.key_dest == key_game ) {
@@ -460,8 +445,6 @@ void CL_UpdateCommandInput( void ) {
 	cmd->angles[0] = ANGLE2SHORT( cl.viewangles[0] );
 	cmd->angles[1] = ANGLE2SHORT( cl.viewangles[1] );
 	cmd->angles[2] = ANGLE2SHORT( cl.viewangles[2] );
-
-	cl.inputRefreshed = true;
 }
 
 /*
@@ -731,7 +714,7 @@ void CL_WriteUcmdsToMessage( msg_t *msg ) {
 /*
 * CL_NextUserCommandTimeReached
 */
-static bool CL_NextUserCommandTimeReached( int realmsec ) {
+static bool CL_NextUserCommandTimeReached( int realMsec ) {
 	static int minMsec = 1, allMsec = 0, extraMsec = 0;
 	static float roundingMsec = 0.0f;
 	float maxucmds;
@@ -761,7 +744,7 @@ static bool CL_NextUserCommandTimeReached( int realmsec ) {
 		minMsec -= extraMsec;
 	}
 
-	allMsec += realmsec;
+	allMsec += realMsec;
 	if( allMsec < minMsec ) {
 		//if( !cls.netchan.unsentFragments ) {
 		//	NET_Sleep( minMsec - allMsec );
@@ -782,10 +765,12 @@ static bool CL_NextUserCommandTimeReached( int realmsec ) {
 /*
 * CL_NewUserCommand
 */
-void CL_NewUserCommand( int realmsec ) {
+void CL_NewUserCommand( int realMsec ) {
 	usercmd_t *ucmd;
 
-	if( !CL_NextUserCommandTimeReached( realmsec ) ) {
+	CL_UpdateCommandInput( realMsec );
+
+	if( !CL_NextUserCommandTimeReached( realMsec ) ) {
 		return;
 	}
 

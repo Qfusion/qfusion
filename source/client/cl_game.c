@@ -154,13 +154,6 @@ static void CL_GameModule_NET_GetCurrentState( int *incomingAcknowledged, int *o
 }
 
 /*
-* CL_GameModule_RefreshMouseAngles
-*/
-static void CL_GameModule_RefreshMouseAngles( void ) {
-	CL_UpdateCommandInput(); // force a mouse refresh when requesting the in-work user command
-}
-
-/*
 * CL_GameModule_R_RegisterWorldModel
 */
 static void CL_GameModule_R_RegisterWorldModel( const char *model ) {
@@ -438,7 +431,6 @@ void CL_GameModule_Init( void ) {
 	import.NET_GetUserCmd = CL_GameModule_NET_GetUserCmd;
 	import.NET_GetCurrentUserCmdNum = CL_GameModule_NET_GetCurrentUserCmdNum;
 	import.NET_GetCurrentState = CL_GameModule_NET_GetCurrentState;
-	import.RefreshMouseAngles = CL_GameModule_RefreshMouseAngles;
 
 	import.R_UpdateScreen = SCR_UpdateScreen;
 	import.R_GetClippedFragments = re.GetClippedFragments;
@@ -667,7 +659,7 @@ bool CL_GameModule_NewSnapshot( int pendingSnapshot ) {
 */
 void CL_GameModule_RenderView( float stereo_separation ) {
 	if( cge && cls.cgameActive ) {
-		cge->RenderView( cls.frametime, cls.realframetime, cls.realtime, cl.serverTime, stereo_separation,
+		cge->RenderView( cls.frametime, cls.realFrameTime, cls.realtime, cl.serverTime, stereo_separation,
 						 cl_extrapolate->integer && !cls.demo.playing ? cl_extrapolationTime->integer : 0, cl_flip->integer != 0 );
 	}
 }

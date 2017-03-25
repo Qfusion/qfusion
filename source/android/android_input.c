@@ -369,9 +369,9 @@ void IN_GetThumbsticks( vec4_t sticks ) {
 }
 
 /*
-* IN_MouseMove
+* IN_GetMouseMovement
 */
-void IN_MouseMove( usercmd_t *cmd ) {
+void IN_GetMouseMovement( int *dx, int *dy ) {
 }
 
 /*

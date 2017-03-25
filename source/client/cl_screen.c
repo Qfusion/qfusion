@@ -735,7 +735,7 @@ void SCR_UpdateScreen( void ) {
 			CL_UIModule_Refresh( false, true );
 
 			if( scr_timegraph->integer ) {
-				SCR_DebugGraph( cls.frametime * 300, 1, 1, 1 );
+				SCR_DebugGraph( cls.frametime * 0.3f, 1, 1, 1 );
 			}
 
 			if( scr_debuggraph->integer || scr_timegraph->integer || scr_netgraph->integer ) {

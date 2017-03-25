@@ -792,13 +792,15 @@ void IN_MouseEvent( int mstate ) {
 }
 
 /*
-* IN_MouseMove
+* IN_GetMouseMovement
 */
-void IN_MouseMove( usercmd_t *cmd ) {
+void IN_GetMouseMovement( int *dx, int *dy ) {
 	DIDEVICEOBJECTDATA od;
 	DWORD dwElements;
 	HRESULT hr;
 
+	*dx = *dy = 0;
+	
 	if( !mouseactive ) {
 		return;
 	}
@@ -895,7 +897,8 @@ void IN_MouseMove( usercmd_t *cmd ) {
 		}
 	}
 
-	CL_MouseMove( cmd, mx, my );
+	*dx = mx;
+	*dy = my;
 }
 
 /*

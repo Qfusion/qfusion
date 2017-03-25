@@ -2138,10 +2138,10 @@ static void CL_TimedemoStats( void ) {
 /*
 * CL_AdjustServerTime - adjust delta to new frame snap timestamp
 */
-void CL_AdjustServerTime( unsigned int gamemsec ) {
+void CL_AdjustServerTime( unsigned int gameMsec ) {
 	// hurry up if coming late (unless in demos)
 	if( !cls.demo.playing ) {
-		if( ( cl.newServerTimeDelta < cl.serverTimeDelta ) && gamemsec > 0 ) {
+		if( ( cl.newServerTimeDelta < cl.serverTimeDelta ) && gameMsec > 0 ) {
 			cl.serverTimeDelta--;
 		}
 		if( cl.newServerTimeDelta > cl.serverTimeDelta ) {
@@ -2391,9 +2391,9 @@ void CL_SendMessagesToServer( bool sendNow ) {
 /*
 * CL_NetFrame
 */
-static void CL_NetFrame( int realmsec, int gamemsec ) {
+static void CL_NetFrame( int realMsec, int gameMsec ) {
 	// read packets from server
-	if( realmsec > 5000 ) { // if in the debugger last frame, don't timeout
+	if( realMsec > 5000 ) { // if in the debugger last frame, don't timeout
 		cls.lastPacketReceivedTime = cls.realtime;
 	}
 
@@ -2419,7 +2419,7 @@ static void CL_NetFrame( int realmsec, int gamemsec ) {
 /*
 * CL_Frame
 */
-void CL_Frame( int realmsec, int gamemsec ) {
+void CL_Frame( int realMsec, int gameMsec ) {
 	static int allRealMsec = 0, allGameMsec = 0, extraMsec = 0;
 	static float roundingMsec = 0.0f;
 	int minMsec;
@@ -2429,10 +2429,10 @@ void CL_Frame( int realmsec, int gamemsec ) {
 		return;
 	}
 
-	cls.realtime += realmsec;
+	cls.realtime += realMsec;
 
 	if( cls.demo.playing && cls.demo.play_ignore_next_frametime ) {
-		gamemsec = 0;
+		gameMsec = 0;
 		cls.demo.play_ignore_next_frametime = false;
 	}
 
@@ -2455,30 +2455,30 @@ void CL_Frame( int realmsec, int gamemsec ) {
 
 		// fixed time for next frame
 		if( cls.demo.avi_video ) {
-			gamemsec = ( 1000.0 / (double)cl_demoavi_fps->integer ) * Cvar_Value( "timescale" );
-			if( gamemsec < 1 ) {
-				gamemsec = 1;
+			gameMsec = ( 1000.0 / (double)cl_demoavi_fps->integer ) * Cvar_Value( "timescale" );
+			if( gameMsec < 1 ) {
+				gameMsec = 1;
 			}
 		}
 	}
 
 	if( cls.demo.playing ) {
 		if( cls.demo.paused ) {
-			gamemsec = 0;
+			gameMsec = 0;
 		} else {
 			CL_LatchedDemoJump();
 		}
 	}
 
-	cls.gametime += gamemsec;
+	cls.gametime += gameMsec;
 
-	allRealMsec += realmsec;
-	allGameMsec += gamemsec;
+	allRealMsec += realMsec;
+	allGameMsec += gameMsec;
 
 	CL_UpdateSnapshot();
-	CL_AdjustServerTime( gamemsec );
+	CL_AdjustServerTime( gameMsec );
 	CL_UserInputFrame();
-	CL_NetFrame( realmsec, gamemsec );
+	CL_NetFrame( realMsec, gameMsec );
 	CL_MM_Frame();
 
 	if( cls.state == CA_CINEMATIC ) {
@@ -2530,8 +2530,8 @@ void CL_Frame( int realmsec, int gamemsec ) {
 		return;
 	}
 
-	cls.frametime = (float)allGameMsec * 0.001f;
-	cls.realframetime = (float)allRealMsec * 0.001f;
+	cls.frametime = allGameMsec;
+	cls.realFrameTime = allRealMsec;
 #if 1
 	if( allRealMsec < minMsec ) { // is compensating for a too slow frame
 		extraMsec -= ( minMsec - allRealMsec );
@@ -2552,12 +2552,7 @@ void CL_Frame( int realmsec, int gamemsec ) {
 
 	// refresh input in cgame
 	if( cls.key_dest == key_game ) {
-		CL_GameModule_UpdateInput( cls.realframetime );
-	}
-
-	cl.inputRefreshed = false;
-	if( cls.state != CA_ACTIVE ) {
-		CL_UpdateCommandInput();
+		CL_GameModule_UpdateInput( cls.realFrameTime * 0.001f );
 	}
 
 	CL_NewUserCommand( allRealMsec );
@@ -2570,8 +2565,6 @@ void CL_Frame( int realmsec, int gamemsec ) {
 	if( host_speeds->integer ) {
 		time_after_ref = Sys_Milliseconds();
 	}
-
-	CL_UpdateCommandInput();
 
 	if( CL_WriteAvi() ) {
 		int frame = ++cls.demo.avi_frame;

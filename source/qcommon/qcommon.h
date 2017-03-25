@@ -836,7 +836,7 @@ void        Com_Quit( void );
 int         Com_ClientState( void );        // this should have just been a cvar...
 void        Com_SetClientState( int state );
 
-bool    Com_DemoPlaying( void );
+bool		Com_DemoPlaying( void );
 void        Com_SetDemoPlaying( bool state );
 
 int         Com_ServerState( void );        // this should have just been a cvar...
@@ -934,7 +934,7 @@ void *Q_realloc( void *buf, size_t newsize );
 void Q_free( void *buf );
 
 void Qcommon_Init( int argc, char **argv );
-void Qcommon_Frame( unsigned int realmsec );
+void Qcommon_Frame( unsigned int realMsec );
 void Qcommon_Shutdown( void );
 
 /*
@@ -1008,7 +1008,7 @@ CLIENT / SERVER SYSTEMS
 void CL_Init( void );
 void CL_Disconnect( const char *message );
 void CL_Shutdown( void );
-void CL_Frame( int realmsec, int gamemsec );
+void CL_Frame( int realMsec, int gameMsec );
 void CL_ParseServerMessage( msg_t *msg );
 void CL_Netchan_Transmit( msg_t *msg );
 void Con_Print( const char *text );
@@ -1017,7 +1017,7 @@ void SCR_BeginLoadingPlaque( void );
 void SV_Init( void );
 void SV_Shutdown( const char *finalmsg );
 void SV_ShutdownGame( const char *finalmsg, bool reconnect );
-void SV_Frame( int realmsec, int gamemsec );
+void SV_Frame( int realMsec, int gameMsec );
 bool SV_SendMessageToClient( struct client_s *client, msg_t *msg );
 void SV_ParseClientMessage( struct client_s *client, msg_t *msg );
 

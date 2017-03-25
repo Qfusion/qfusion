@@ -1023,7 +1023,7 @@ void CG_StartFallKickEffect( int bounceTime );
 float CG_GetSensitivityScale( float sens, float zoomSens );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
 float CG_ViewSmoothFallKick( void );
-void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped );
+void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped );
 void CG_AddKickAngles( vec3_t viewangles );
 bool CG_ChaseStep( int step );
 bool CG_SwitchChaseCamMode( void );

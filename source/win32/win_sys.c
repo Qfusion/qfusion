@@ -186,9 +186,6 @@ void Sys_SendKeyEvents( void ) {
 		myTranslateMessage( &msg );
 		DispatchMessageW( &msg );
 	}
-
-	// grab frame time
-	sys_frame_time = timeGetTime(); // FIXME: should this be at start?
 }
 
 #endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)

@@ -946,13 +946,13 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped ) {
 */
 #define WAVE_AMPLITUDE  0.015   // [0..1]
 #define WAVE_FREQUENCY  0.6     // [0..1]
-void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped ) {
+void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped ) {
 	refdef_t *rd = &cg.view.refdef;
 
 	// update time
 	cg.realTime = realTime;
-	cg.frameTime = frameTime;
-	cg.realFrameTime = realFrameTime;
+	cg.frameTime = frameTime * 0.001f;
+	cg.realFrameTime = realFrameTime * 0.001f;
 	cg.frameCount++;
 	cg.time = serverTime;
 

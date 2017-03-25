@@ -214,10 +214,6 @@ static inline void trap_NET_GetCurrentState( int *incomingAcknowledged, int *out
 	CGAME_IMPORT.NET_GetCurrentState( incomingAcknowledged, outgoingSequence, outgoingSent );
 }
 
-static inline void trap_RefreshMouseAngles( void ) {
-	CGAME_IMPORT.RefreshMouseAngles();
-}
-
 static inline void trap_R_UpdateScreen( void ) {
 	CGAME_IMPORT.R_UpdateScreen();
 }

@@ -441,10 +441,6 @@ void CG_PredictMovement( void ) {
 
 	// run frames
 	while( ++ucmdExecuted <= ucmdHead ) {
-		if( ucmdExecuted == ucmdHead ) {
-			trap_RefreshMouseAngles();
-		}
-
 		frame = ucmdExecuted & CMD_MASK;
 		trap_NET_GetUserCmd( frame, &pm.cmd );
 

@@ -998,12 +998,12 @@ void Qcommon_Init( int argc, char **argv ) {
 /*
 * Qcommon_Frame
 */
-void Qcommon_Frame( unsigned int realmsec ) {
+void Qcommon_Frame( unsigned int realMsec ) {
 	static dynvar_t *frametick = NULL;
 	static uint64_t fc = 0;
 	char *s;
 	int time_before = 0, time_between = 0, time_after = 0;
-	static unsigned int gamemsec;
+	static unsigned int gameMsec;
 
 	if( com_quit ) {
 		Com_Quit();
@@ -1013,19 +1013,20 @@ void Qcommon_Frame( unsigned int realmsec ) {
 		return; // an ERR_DROP was thrown
 
 	}
+
 	if( logconsole && logconsole->modified ) {
 		logconsole->modified = false;
 		Com_ReopenConsoleLog();
 	}
 
 	if( fixedtime->integer > 0 ) {
-		gamemsec = fixedtime->integer;
+		gameMsec = fixedtime->integer;
 	} else if( timescale->value >= 0 ) {
 		static float extratime = 0.0f;
-		gamemsec = extratime + (float)realmsec * timescale->value;
-		extratime = ( extratime + (float)realmsec * timescale->value ) - (float)gamemsec;
+		gameMsec = extratime + (float)realMsec * timescale->value;
+		extratime = ( extratime + (float)realMsec * timescale->value ) - (float)gameMsec;
 	} else {
-		gamemsec = realmsec;
+		gameMsec = realMsec;
 	}
 
 	if( com_showtrace->integer ) {
@@ -1060,13 +1061,13 @@ void Qcommon_Frame( unsigned int realmsec ) {
 		time_before = Sys_Milliseconds();
 	}
 
-	SV_Frame( realmsec, gamemsec );
+	SV_Frame( realMsec, gameMsec );
 
 	if( host_speeds->integer ) {
 		time_between = Sys_Milliseconds();
 	}
 
-	CL_Frame( realmsec, gamemsec );
+	CL_Frame( realMsec, gameMsec );
 
 	if( host_speeds->integer ) {
 		time_after = Sys_Milliseconds();
@@ -1086,7 +1087,7 @@ void Qcommon_Frame( unsigned int realmsec ) {
 					all, sv, gm, cl, rf );
 	}
 
-	MM_Frame( realmsec );
+	MM_Frame( realMsec );
 
 	// wsw : aiwa : generic observer pattern to plug in arbitrary functionality
 	if( !frametick ) {

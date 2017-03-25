@@ -412,7 +412,9 @@ static void IN_WarpMouseToCenter( int *pcenter_x, int *pcenter_y ) {
 	}
 }
 
-void IN_MouseMove( usercmd_t *cmd ) {
+void IN_GetMouseMovement( int *dx, int *dy ) {
+	*dx = *dy = 0;
+	
 	if( mouse_active ) {
 		if( !mouse_relative ) {
 			if( mx || my ) {
@@ -427,9 +429,8 @@ void IN_MouseMove( usercmd_t *cmd ) {
 			}
 		}
 
-		if( mx || my ) {
-			CL_MouseMove( cmd, mx, my );
-		}
+		*dx = mx;
+		*dy = my;
 	}
 
 	mx = my = 0;

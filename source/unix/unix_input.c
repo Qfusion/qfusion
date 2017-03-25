@@ -640,9 +640,10 @@ void IN_Commands( void ) {
 	IN_SDL_JoyCommands();
 }
 
-void IN_MouseMove( usercmd_t *cmd ) {
+void IN_GetMouseMovement( int *dx, int *dy ) {
 	if( mouse_active ) {
-		CL_MouseMove( cmd, mx, my );
+		*dx = mx;
+		*dy = my;
 		mx = my = 0;
 	}
 }
