@@ -750,13 +750,13 @@ void CG_TouchFrame( void ) {
 /*
 * CG_GetTouchButtonBits
 */
-int CG_GetTouchButtonBits( void ) {
+static int CG_GetTouchButtonBits( void ) {
 	int buttons;
 	CG_GetHUDTouchButtons( &buttons, NULL );
 	return buttons;
 }
 
-void CG_AddTouchViewAngles( vec3_t viewAngles, float flip ) {
+static void CG_AddTouchViewAngles( vec3_t viewAngles, float flip ) {
 	cg_touchpad_t &viewpad = cg_touchpads[TOUCHPAD_VIEW];
 	if( viewpad.touch >= 0 ) {
 		if( cg_touch_lookThres->modified ) {
@@ -790,9 +790,11 @@ void CG_AddTouchViewAngles( vec3_t viewAngles, float flip ) {
 	}
 }
 
-void CG_AddTouchMovement( vec3_t movement ) {
+void CG_GetTouchMovement( vec3_t movement ) {
 	int upmove;
 	cg_touchpad_t &movepad = cg_touchpads[TOUCHPAD_MOVE];
+
+	VectorClear( movement );
 
 	if( movepad.touch >= 0 ) {
 		if( cg_touch_moveThres->modified ) {
@@ -822,7 +824,15 @@ void CG_AddTouchMovement( vec3_t movement ) {
 	}
 
 	CG_GetHUDTouchButtons( NULL, &upmove );
-	movement[2] += ( float )upmove;
+	movement[2] = ( float )upmove;
+}
+
+static void CG_AddTouchMovement( vec3_t movement ) {
+	vec3_t tm;
+
+	CG_GetTouchMovement( tm );
+
+	VectorAdd( movement, tm, movement );
 }
 
 /*

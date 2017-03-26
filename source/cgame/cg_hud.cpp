@@ -565,8 +565,8 @@ static int CG_GetTouchUpmove( const void *parameter ) {
 static int CG_GetTouchMovementDirection( const void *parameter ) {
 	vec3_t movement;
 
-	VectorSet( movement, 0.0f, 0.0f, 0.0f );
-	CG_AddTouchMovement( movement );
+	CG_GetTouchMovement( movement );
+
 	if( !movement[0] && !movement[1] ) {
 		return STAT_NOTSET;
 	}

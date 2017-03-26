@@ -966,9 +966,7 @@ int CG_AsyncGetRequest( const char *resource, void ( *done_cb )( int status, con
 const char *CG_TranslateString( const char *string );
 const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size );
 
-int CG_GetTouchButtonBits( void );
-void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip );
-void CG_AddTouchMovement( vec3_t movement );
+void CG_GetTouchMovement( vec3_t movement );
 
 //
 // cg_svcmds.c
