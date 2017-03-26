@@ -227,10 +227,8 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
         return nullptr;
     }
 
-    vec3_t expectedVelocity;
-    VectorLerp(prevPhysicsState.Velocity(), stateLerpFrac, nextPhysicsState.Velocity(), expectedVelocity);
-    float expectedSpeed = SQRTFAST(VectorLengthSquared(expectedVelocity));
-    float actualSpeed = SQRTFAST(VectorLengthSquared(self->velocity));
+    float expectedSpeed = (1.0f - stateLerpFrac) * prevPhysicsState.Speed() + stateLerpFrac * nextPhysicsState.Speed();
+    float actualSpeed = self->ai->botRef->entityPhysicsState->Speed();
     float speedMismatch = fabsf(actualSpeed - expectedSpeed);
     if (speedMismatch > 0.005f * expectedSpeed)
     {
@@ -241,6 +239,8 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
 
     if (actualSpeed > 30.0f)
     {
+        vec3_t expectedVelocity;
+        VectorLerp(prevPhysicsState.Velocity(), stateLerpFrac, nextPhysicsState.Velocity(), expectedVelocity);
         Vec3 expectedVelocityDir(expectedVelocity);
         expectedVelocityDir *= 1.0f / expectedSpeed;
         Vec3 actualVelocityDir(self->velocity);
@@ -271,9 +271,7 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
 
         vec3_t expectedLookDir;
         AngleVectors(expectedAngles, expectedLookDir, nullptr, nullptr);
-        vec3_t actualLookDir;
-        AngleVectors(expectedLookDir, actualLookDir, nullptr, nullptr);
-        float cosine = DotProduct(expectedLookDir, actualLookDir);
+        float cosine = self->ai->botRef->entityPhysicsState->ForwardDir().Dot(expectedLookDir);
         static const float MIN_COSINE = cosf((float)DEG2RAD(5.0f));
         if (cosine < MIN_COSINE)
         {
@@ -301,10 +299,9 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
     record->hasModifiedVelocity = false;
     if (!record->botInput.canOverrideLookVec)
     {
-        vec3_t actualLookDir;
-        AngleVectors(self->s.angles, actualLookDir, nullptr, nullptr);
+        Vec3 actualLookDir(self->ai->botRef->entityPhysicsState->ForwardDir());
         float *intendedLookVec = record->botInput.intendedLookVec.Data();
-        VectorLerp(actualLookDir, inputLerpFrac, intendedLookVec, intendedLookVec);
+        VectorLerp(actualLookDir.Data(), inputLerpFrac, intendedLookVec, intendedLookVec);
     }
 
     return nextPredictedAction->action;
@@ -1148,7 +1145,7 @@ void BotMovementPredictionContext::SetDefaultBotInput()
     }
 
     // A valid reachability chain does not exist, use dummy relaxed movement
-    if (VectorLengthSquared(entityPhysicsState.Velocity()) > 1)
+    if (entityPhysicsState.Speed() > 1)
     {
         // Follow the existing velocity direction
         VectorCopy(entityPhysicsState.Velocity(), botInput->intendedLookVec.Data());
@@ -1442,7 +1439,7 @@ void BotDummyMovementAction::PlanPredictionStep(BotMovementPredictionContext *co
     if (!self->ai->botRef->ShouldBeSilent() && !self->ai->botRef->ShouldMoveCarefully())
     {
         const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-        if (VectorLengthSquared(entityPhysicsState.Velocity()) > 450 * 450)
+        if (entityPhysicsState.Speed() > 450)
         {
             botInput->SetUpMovement(1);
         }
@@ -1629,8 +1626,7 @@ BotMovementPredictionContext::HitWhileRunningTestResult BotMovementPredictionCon
     }
 
     const auto &entityPhysicsState = movementState->entityPhysicsState;
-    vec3_t botLookDir;
-    AngleVectors(entityPhysicsState.Angles().Data(), botLookDir, nullptr, nullptr);
+    Vec3 botLookDir(entityPhysicsState.ForwardDir());
 
     Vec3 botToEnemyDir(self->ai->botRef->EnemyOrigin());
     botToEnemyDir -= entityPhysicsState.Origin();
@@ -1648,17 +1644,16 @@ BotMovementPredictionContext::HitWhileRunningTestResult BotMovementPredictionCon
     }
 
     // Check whether we can change pitch
-    botLookDir[2] = botToEnemyDir.Z();
+    botLookDir.Z() = botToEnemyDir.Z();
     // Normalize again
-    float lookDirSquareLength = VectorLengthSquared(botLookDir);
+    float lookDirSquareLength = botLookDir.SquaredLength();
     if (lookDirSquareLength < 0.000001f)
     {
         mayHitWhileRunningCachesStack.SetCachedValue(HitWhileRunningTestResult::Failure());
         return HitWhileRunningTestResult::Failure();
     }
 
-    float lookDirInvLength = Q_RSqrt(lookDirSquareLength);
-    VectorScale(botLookDir, lookDirInvLength, botLookDir);
+    botLookDir *= Q_RSqrt(lookDirSquareLength);
     if (botToEnemyDir.Dot(botLookDir) > STRAIGHT_MOVEMENT_DOT_THRESHOLD)
     {
         HitWhileRunningTestResult result;
@@ -2159,14 +2154,12 @@ void BotCampASpotMovementAction::PlanPredictionStep(BotMovementPredictionContext
     context->SetDefaultBotInput();
     context->record->botInput.canOverrideLookVec = true;
 
-    vec3_t actualLookDir, actualRightDir;
-    AngleVectors(entityPhysicsState.Angles().Data(), actualLookDir, actualRightDir, nullptr);
-
     const Vec3 spotOrigin(campingSpotState->Origin());
     float distance = spotOrigin.Distance2DTo(entityPhysicsState.Origin());
 
     AiPendingLookAtPoint lookAtPoint(campingSpotState->GetOrUpdateRandomLookAtPoint());
 
+    const Vec3 actualLookDir(entityPhysicsState.ForwardDir());
     Vec3 expectedLookDir(lookAtPoint.Origin());
     expectedLookDir -= spotOrigin;
     expectedLookDir.NormalizeFast();
@@ -2185,7 +2178,7 @@ void BotCampASpotMovementAction::PlanPredictionStep(BotMovementPredictionContext
 
     context->predictionStepMillis = 16;
     // Keep actual look dir as-is, adjust position by keys only
-    VectorCopy(actualLookDir, botInput->intendedLookVec.Data());
+    botInput->intendedLookVec = actualLookDir;
     // This means we may strafe randomly
     if (distance / campingSpotState->Radius() < 1.0f)
     {
@@ -2214,7 +2207,7 @@ void BotCampASpotMovementAction::PlanPredictionStep(BotMovementPredictionContext
         Vec3 botToSpotDir(spotOrigin);
         botToSpotDir -= entityPhysicsState.Origin();
         botToSpotDir.NormalizeFast();
-        DirToKeyInput(botToSpotDir, actualLookDir, actualRightDir, botInput);
+        DirToKeyInput(botToSpotDir, actualLookDir.Data(), entityPhysicsState.RightDir().Data(), botInput);
     }
 
     botInput->SetWalkButton(random() > campingSpotState->Alertness() * 0.75f);
@@ -2295,12 +2288,10 @@ void BotBunnyInVelocityDirectionMovementAction::PlanPredictionStep(BotMovementPr
         return;
 
     const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-    Vec3 velocity2D(entityPhysicsState.Velocity());
-    velocity2D.Z() = 0;
     // Bunnying with released keys makes sense only for relatively high speed
     // (lower than dash speed in this case since a cheating acceleration is enabled for this action)
     const float speedThreshold = context->GetRunSpeed();
-    if (velocity2D.SquaredLength() < speedThreshold * speedThreshold)
+    if (entityPhysicsState.Speed2D() < speedThreshold)
     {
         context->SetPendingRollback();
         Debug("Cannot apply action: bot 2D velocity is too low to keep bunnying in velocity direction\n");
@@ -2482,9 +2473,8 @@ bool BotBunnyStraighteningReachChainMovementAction::TryStraightenLookVec(Vec3 *i
 
 inline float SuggestObstacleAvoidanceCorrectionFraction(const BotMovementPredictionContext *context)
 {
-    float squareSpeed = VectorLengthSquared(context->movementState->entityPhysicsState.Velocity());
     // Might be negative!
-    float speedOverRunSpeed = SQRTFAST(squareSpeed) - context->GetRunSpeed();
+    float speedOverRunSpeed = context->movementState->entityPhysicsState.Speed() - context->GetRunSpeed();
     if (speedOverRunSpeed > 500.0f)
         return 0.15f;
     return 0.35f - 0.20f * speedOverRunSpeed / 500.0f;
@@ -2714,9 +2704,7 @@ void BotWalkCarefullyMovementAction::PlanPredictionStep(BotMovementPredictionCon
     // (if this test is omitted, bots would use this no-jumping action instead of jumping over gaps and fall down)
 
     const float zOffset = playerbox_stand_mins[2] - 16.0f - entityPhysicsState.HeightOverGround();
-    vec3_t forward, right;
-    AngleVectors(entityPhysicsState.Angles().Data(), nullptr, right, nullptr);
-    Vec3 frontTestPoint(forward);
+    Vec3 frontTestPoint(entityPhysicsState.ForwardDir());
     frontTestPoint *= 8.0f;
     frontTestPoint += entityPhysicsState.Origin();
     frontTestPoint.Z() += zOffset;
@@ -2741,7 +2729,7 @@ void BotWalkCarefullyMovementAction::PlanPredictionStep(BotMovementPredictionCon
     int hazardSidesNum = 0;
 
     const float sideOffset = playerbox_stand_maxs[1] - playerbox_stand_mins[1];
-    Vec3 sidePoints[2] = { Vec3(right), -Vec3(right) };
+    Vec3 sidePoints[2] = { Vec3(entityPhysicsState.RightDir()), -Vec3(entityPhysicsState.RightDir()) };
     for (int i = 0; i < 2; ++i)
     {
         sidePoints[i] *= sideOffset;
@@ -2857,7 +2845,7 @@ bool BotGenericRunBunnyingMovementAction::CheckCommonBunnyingActionPreconditions
     return true;
 }
 
-void BotGenericRunBunnyingMovementAction::SetupCommonBunnyingInput(BotMovementPredictionContext *context, float speed)
+void BotGenericRunBunnyingMovementAction::SetupCommonBunnyingInput(BotMovementPredictionContext *context)
 {
     const auto *pmoveStats = context->currPlayerState->pmove.stats;
 
@@ -2875,7 +2863,7 @@ void BotGenericRunBunnyingMovementAction::SetupCommonBunnyingInput(BotMovementPr
     if ((pmoveStats[PM_STAT_FEATURES] & PMFEAT_DASH) && !pmoveStats[PM_STAT_DASHTIME] && !pmoveStats[PM_STAT_STUN])
     {
         bool shouldDash = false;
-        if (speed < context->GetDashSpeed() && entityPhysicsState.GroundEntity())
+        if (entityPhysicsState.Speed() < context->GetDashSpeed() && entityPhysicsState.GroundEntity())
         {
             // Prevent dashing into obstacles
             auto &traceCache = context->EnvironmentTraceCache();
@@ -2896,7 +2884,7 @@ void BotGenericRunBunnyingMovementAction::SetupCommonBunnyingInput(BotMovementPr
     }
     else
     {
-        if (speed < context->GetRunSpeed())
+        if (entityPhysicsState.Speed() < context->GetRunSpeed())
             botInput->SetUpMovement(0);
         else
             botInput->SetUpMovement(1);
@@ -2909,23 +2897,20 @@ bool BotGenericRunBunnyingMovementAction::SetupBunnying(const Vec3 &intendedLook
     const auto &entityPhysicsState = context->movementState->entityPhysicsState;
     auto *botInput = &context->record->botInput;
 
-    const float squareSpeed = VectorLengthSquared(entityPhysicsState.Velocity());
-    const float speed = squareSpeed > 0.01f ? SQRTFAST(squareSpeed) : squareSpeed;
-
     Vec3 toTargetDir2D(intendedLookVec);
     toTargetDir2D.Z() = 0;
 
     Vec3 velocityDir2D(entityPhysicsState.Velocity());
     velocityDir2D.Z() = 0;
 
-    float speed2DSquared = velocityDir2D.SquaredLength();
+    float squareSpeed2D = entityPhysicsState.SquareSpeed2D();
     float toTargetDir2DSqLen = toTargetDir2D.SquaredLength();
 
-    if (speed2DSquared > 1.0f)
+    if (squareSpeed2D > 1.0f)
     {
-        SetupCommonBunnyingInput(context, speed);
+        SetupCommonBunnyingInput(context);
 
-        velocityDir2D *= Q_RSqrt(speed2DSquared);
+        velocityDir2D *= 1.0f / entityPhysicsState.Speed2D();
 
         if (toTargetDir2DSqLen > 0.1f)
         {
@@ -2957,7 +2942,7 @@ bool BotGenericRunBunnyingMovementAction::SetupBunnying(const Vec3 &intendedLook
     }
     else
     {
-        SetupCommonBunnyingInput(context, speed);
+        SetupCommonBunnyingInput(context);
         return true;
     }
 
@@ -3066,13 +3051,13 @@ bool BotGenericRunBunnyingMovementAction::CanSetWalljump(BotMovementPredictionCo
     if (entityPhysicsState.HeightOverGround() < 8.0f && entityPhysicsState.Velocity()[2] <= 0)
         return false;
 
-    // Make sure the bot looks in velocity direction, so front test is valid for velocity to
-    Vec3 velocity2DDir(entityPhysicsState.Velocity());
-    velocity2DDir.Z() = 0;
-    float speed2D = velocity2DDir.NormalizeFast();
+    float speed2D = entityPhysicsState.Speed2D();
     // The 2D speed is too low for walljumping
     if (speed2D < 400)
         return false;
+
+    Vec3 velocity2DDir(entityPhysicsState.Velocity()[0], entityPhysicsState.Velocity()[1], 0);
+    velocity2DDir *= 1.0f / speed2D;
 
     auto &traceCache = context->EnvironmentTraceCache();
     traceCache.TestForResultsMask(context, traceCache.FullHeightMask(traceCache.FRONT));
@@ -3111,14 +3096,12 @@ void BotGenericRunBunnyingMovementAction::CheatingAccelerate(BotMovementPredicti
     if (self->ai->botRef->Skill() <= 0.33f)
         return;
 
-    const float squareSpeed = VectorLengthSquared(entityPhysicsState.Velocity());
+    const float speed = entityPhysicsState.Speed();
     const float speedThreshold = context->GetRunSpeed() - 15.0f;
 
     // Avoid division by zero and logic errors
-    if (squareSpeed < speedThreshold * speedThreshold)
+    if (speed < speedThreshold)
         return;
-
-    const float speed = SQRTFAST(squareSpeed);
 
     // Max accel is measured in units per second and decreases with speed
     // For speed of speedThreshold maxAccel is 240
@@ -3164,15 +3147,13 @@ void BotGenericRunBunnyingMovementAction::CheatingCorrectVelocity(BotMovementPre
     if (self->ai->botRef->ShouldMoveCarefully())
         controlMultiplier += 0.10f;
 
-    const float squareSpeed = VectorLengthSquared(entityPhysicsState.Velocity());
-    if (squareSpeed < 1)
+    const float speed = entityPhysicsState.Speed();
+    if (speed < 100)
         return;
 
     // Check whether the direction to the target is normalized
     Assert(toTargetDir2D.LengthFast() > 0.99f && toTargetDir2D.LengthFast() < 1.01f);
 
-    // Save current velocity magnitude
-    const float speed = SQRTFAST(squareSpeed);
     Vec3 newVelocity(entityPhysicsState.Velocity());
     // Normalize current velocity direction
     newVelocity *= 1.0f / speed;
@@ -3199,8 +3180,8 @@ bool BotGenericRunBunnyingMovementAction::CheckStepSpeedGainOrLoss(BotMovementPr
     // Test for a huge speed loss in case of hitting of an obstacle
     const float *oldVelocity = oldEntityPhysicsState.Velocity();
     const float *newVelocity = newEntityPhysicsState.Velocity();
-    const float oldSquare2DSpeed = oldVelocity[0] * oldVelocity[0] + oldVelocity[1] * oldVelocity[1];
-    const float newSquare2DSpeed = newVelocity[0] * newVelocity[0] + newVelocity[1] * newVelocity[1];
+    const float oldSquare2DSpeed = oldEntityPhysicsState.SquareSpeed2D();
+    const float newSquare2DSpeed = newEntityPhysicsState.SquareSpeed2D();
 
     if (newSquare2DSpeed < 10 * 10 && oldSquare2DSpeed > 100 * 100)
     {
@@ -3217,9 +3198,9 @@ bool BotGenericRunBunnyingMovementAction::CheckStepSpeedGainOrLoss(BotMovementPr
     if (oldSquare2DSpeed > 100 * 100 && newSquare2DSpeed > 1 * 1)
     {
         Vec3 oldVelocity2DDir(oldVelocity[0], oldVelocity[1], 0);
-        oldVelocity2DDir *= Q_RSqrt(oldSquare2DSpeed);
+        oldVelocity2DDir *= 1.0f / oldEntityPhysicsState.Speed2D();
         Vec3 newVelocity2DDir(newVelocity[0], newVelocity[1], 0);
-        newVelocity2DDir *= Q_RSqrt(newSquare2DSpeed);
+        newVelocity2DDir *= 1.0f / newEntityPhysicsState.Speed2D();
         if (oldVelocity2DDir.Dot(newVelocity2DDir) < 0.1f)
         {
             Debug("A prediction step has lead to an unintended bouncing back\n");
@@ -3229,11 +3210,8 @@ bool BotGenericRunBunnyingMovementAction::CheckStepSpeedGainOrLoss(BotMovementPr
     }
 
     // Check for regular speed loss
-    const float oldSquareSpeed = newSquare2DSpeed + newVelocity[2] * newVelocity[2];
-    const float newSquareSpeed = oldSquare2DSpeed + oldVelocity[2] * oldVelocity[2];
-
-    const float oldSpeed = oldSquareSpeed > 0 ? SQRTFAST(oldSquareSpeed) : 0.0f;
-    const float newSpeed = newSquareSpeed > 0 ? SQRTFAST(newSquareSpeed) : 0.0f;
+    const float oldSpeed = oldEntityPhysicsState.Speed();
+    const float newSpeed = newEntityPhysicsState.Speed();
 
     Assert(context->predictionStepMillis);
     float actualSpeedGainPerSecond = (newSpeed - oldSpeed) / (0.001f * context->predictionStepMillis);
@@ -3274,7 +3252,7 @@ bool BotGenericRunBunnyingMovementAction::IsMovingIntoNavEntity(BotMovementPredi
     if (newEntityPhysicsState.GroundEntity() && fabsf(newEntityPhysicsState.Velocity()[2]) < 1.0f)
     {
         Vec3 velocityDir(newEntityPhysicsState.Velocity());
-        velocityDir.NormalizeFast();
+        velocityDir *= 1.0f / newEntityPhysicsState.Speed();
 
         Vec3 botToTarget(navTargetOrigin);
         botToTarget -= newEntityPhysicsState.Origin();
@@ -3575,8 +3553,9 @@ void BotEnvironmentTraceCache::MakeRandomizedKeyMovesToTarget(BotMovementPredict
     unsigned nonBlockedDirIndices[8];
     unsigned numNonBlockedDirs = SelectNonBlockedDirs(context, nonBlockedDirIndices);
 
-    vec3_t forwardDir, rightDir;
-    AngleVectors(context->movementState->entityPhysicsState.Origin(), forwardDir, rightDir, nullptr);
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const Vec3 forwardDir(entityPhysicsState.ForwardDir());
+    const Vec3 rightDir(entityPhysicsState.RightDir());
     assert((intendedMoveDir.Length() - 1.0f) < 0.0001f);
 
     // Choose randomly from all non-blocked dirs based on scores
@@ -3590,8 +3569,8 @@ void BotEnvironmentTraceCache::MakeRandomizedKeyMovesToTarget(BotMovementPredict
     {
         vec3_t keyMoveVec;
         const float *dirFractions = sideDirXYFractions[nonBlockedDirIndices[i]];
-        VectorScale(forwardDir, dirFractions[0], keyMoveVec);
-        VectorMA(keyMoveVec, dirFractions[1], rightDir, keyMoveVec);
+        VectorScale(forwardDir.Data(), dirFractions[0], keyMoveVec);
+        VectorMA(keyMoveVec, dirFractions[1], rightDir.Data(), keyMoveVec);
         scoresSum += 0.55f + 0.45f * intendedMoveDir.Dot(keyMoveVec);
         dirDistributionUpperBound[i] = scoresSum;
     }
@@ -3618,8 +3597,9 @@ void BotEnvironmentTraceCache::MakeKeyMovesToTarget(BotMovementPredictionContext
     unsigned nonBlockedDirIndices[8];
     unsigned numNonBlockedDirs = SelectNonBlockedDirs(context, nonBlockedDirIndices);
 
-    vec3_t forwardDir, rightDir;
-    AngleVectors(context->movementState->entityPhysicsState.Origin(), forwardDir, rightDir, nullptr);
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const Vec3 forwardDir(entityPhysicsState.ForwardDir());
+    const Vec3 rightDir(entityPhysicsState.RightDir());
     assert((intendedMoveDir.Length() - 1.0f) < 0.0001f);
 
     float bestScore = 0.0f;
@@ -3629,8 +3609,8 @@ void BotEnvironmentTraceCache::MakeKeyMovesToTarget(BotMovementPredictionContext
         vec3_t keyMoveVec;
         unsigned dirIndex = nonBlockedDirIndices[i];
         const float *dirFractions = sideDirXYFractions[dirIndex];
-        VectorScale(forwardDir, dirFractions[0], keyMoveVec);
-        VectorMA(keyMoveVec, dirFractions[1], rightDir, keyMoveVec);
+        VectorScale(forwardDir.Data(), dirFractions[0], keyMoveVec);
+        VectorMA(keyMoveVec, dirFractions[1], rightDir.Data(), keyMoveVec);
         float score = 0.55f + 0.45f * intendedMoveDir.Dot(keyMoveVec);
         if (score > bestScore)
         {
@@ -3723,8 +3703,7 @@ void BotCombatDodgeSemiRandomlyToTargetMovementAction::PlanPredictionStep(BotMov
             if (pmStats[PM_STAT_FEATURES] & PMFEAT_DASH)
             {
                 const float speedThreshold = context->GetDashSpeed() - 10;
-                const float squareSpeed = VectorLengthSquared(entityPhysicsState.Velocity());
-                if (squareSpeed < speedThreshold * speedThreshold)
+                if (entityPhysicsState.Speed() < speedThreshold)
                 {
                     if (!pmStats[PM_STAT_DASHTIME] && !pmStats[PM_STAT_STUN])
                     {
@@ -4128,9 +4107,9 @@ ObstacleAvoidanceResult BotEnvironmentTraceCache::TryAvoidObstacles(BotMovementP
 
     TestForResultsMask(context, (LEFT | RIGHT | FRONT_LEFT | FRONT_RIGHT) << sidesShift);
 
-    Vec3 velocityDir2D(context->movementState->entityPhysicsState.Velocity());
-    velocityDir2D.Z() = 0;
-    velocityDir2D.Normalize();
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    Vec3 velocityDir2D(entityPhysicsState.Velocity()[0], entityPhysicsState.Velocity()[1], 0);
+    velocityDir2D *= 1.0f / entityPhysicsState.Speed2D();
 
     // Make velocity direction dot product affect score stronger for lower correction fraction (for high speed)
 

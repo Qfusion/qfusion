@@ -7,6 +7,7 @@
 #include "ai_aas_world.h"
 #include "ai_aas_route_cache.h"
 #include "static_vector.h"
+#include "../../gameshared/q_comref.h"
 
 class alignas(4) AiEntityPhysicsState
 {
@@ -16,11 +17,28 @@ class alignas(4) AiEntityPhysicsState
     // These fields are accessed way too often, so packing benefits does not outweigh unpacking performance loss.
     vec3_t origin;
     vec3_t velocity;
+    // Unpacking of these fields is much cheaper than calling AngleVectors() that uses the expensive fsincos instruction
+    // 12 bytes totally
+    signed short forwardDir[3];
+    signed short rightDir[3];
+
+    inline static void SetPackedDir(const vec3_t dir, signed short *result)
+    {
+        // Do not multiply by the exact 2 ^ 15 value, leave some space for vector components slightly > 1.0f
+        result[0] = (signed short)(dir[0] * 30000);
+        result[1] = (signed short)(dir[1] * 30000);
+        result[2] = (signed short)(dir[2] * 30000);
+    }
+    inline static Vec3 UnpackedDir(const signed short *packedDir)
+    {
+        float scale = 1.0f / 30000;
+        return Vec3(scale * packedDir[0], scale * packedDir[1], scale * packedDir[2]);
+    }
 public:
     // CONTENTS flags, cannot be compressed
     int waterType;
 private:
-    short angles[3];
+    signed short angles[3];
     static_assert(MAX_EDICTS == (1 << 10), "Fields bits count assumes 1024 as game entities count limit");
     // Add an extra bit for -1 entity num sign
     short groundEntNum: 11;
@@ -41,6 +59,31 @@ public:
 private:
     unsigned currAasAreaNum: 20;
     unsigned droppedToFloorAasAreaNum: 20;
+    unsigned speed: 18;
+    unsigned speed2D: 18;
+
+    inline void SetSpeed(const vec3_t velocity)
+    {
+        float squareSpeed2D = velocity[0] * velocity[0] + velocity[1] * velocity[1];
+        float squareSpeed = squareSpeed2D + velocity[2] * velocity[2];
+        // If a square value is very low, leave it as-is
+        if (squareSpeed > 0.001f)
+            this->speed = (decltype(this->speed))(sqrtf(squareSpeed) * 16.0f);
+        else
+            this->speed = (decltype(this->speed))(squareSpeed * 16.0f);
+        if (squareSpeed2D > 0.001f)
+            this->speed2D = (decltype(this->speed2D))(sqrtf(squareSpeed2D) * 16.0f);
+        else
+            this->speed2D = (decltype(this->speed2D))(squareSpeed2D * 16.0f);
+    }
+
+    inline void UpdateDirs(const vec3_t angles)
+    {
+        vec3_t dirs[2];
+        AngleVectors(angles, dirs[0], dirs[1], nullptr);
+        SetPackedDir(dirs[0], forwardDir);
+        SetPackedDir(dirs[1], rightDir);
+    }
 
     void UpdateAreaNums();
 public:
@@ -49,7 +92,7 @@ public:
     inline void UpdateFromEntity(const edict_t *ent)
     {
         VectorCopy(ent->s.origin, this->origin);
-        VectorCopy(ent->velocity, this->velocity);
+        SetVelocity(ent->velocity);
         this->waterType = ent->watertype;
         this->waterLevel = (decltype(this->waterLevel))ent->waterlevel;
         SetAngles(ent->s.angles);
@@ -64,7 +107,7 @@ public:
     inline void UpdateFromPMove(const pmove_t *pmove)
     {
         VectorCopy(pmove->playerState->pmove.origin, this->origin);
-        VectorCopy(pmove->playerState->pmove.velocity, this->velocity);
+        SetVelocity(pmove->playerState->pmove.velocity);
         this->waterType = pmove->watertype;
         this->waterLevel = (decltype(this->waterLevel))pmove->waterlevel;
         SetAngles(pmove->playerState->viewangles);
@@ -100,8 +143,10 @@ public:
     inline void SetAngles(const Vec3 &angles) { SetAngles(angles.Data()); }
     inline void SetAngles(const vec3_t angles_)
     {
-        for (int i = 0; i < 3; ++i)
-            this->angles[i] = (short)ANGLE2SHORT(angles_[i]);
+        this->angles[0] = (short)ANGLE2SHORT(angles_[0]);
+        this->angles[1] = (short)ANGLE2SHORT(angles_[1]);
+        this->angles[2] = (short)ANGLE2SHORT(angles_[2]);
+        UpdateDirs(angles_);
     }
 
     int CurrAasAreaNum() const { return (int)currAasAreaNum; }
@@ -121,8 +166,30 @@ public:
     inline void SetOrigin(const Vec3 &origin) { SetOrigin(origin.Data()); }
 
     inline const float *Velocity() const { return velocity; }
-    inline void SetVelocity(const vec3_t velocity_) { VectorCopy(velocity_, this->velocity); }
+    inline void SetVelocity(const vec3_t velocity_)
+    {
+        VectorCopy(velocity_, this->velocity);
+        SetSpeed(velocity_);
+    }
     inline void SetVelocity(const Vec3 &velocity) { SetVelocity(velocity.Data()); }
+
+    // Note: there might be mismatch with an actual value computed from the velocity
+    inline float Speed() const { return speed / 16.0f; }
+    inline float Speed2D() const { return speed2D / 16.0f; }
+    // These getters are provided for compatibility with the other code
+    inline float SquareSpeed() const
+    {
+        float unpackedSpeed = Speed();
+        return unpackedSpeed * unpackedSpeed;
+    }
+    inline float SquareSpeed2D() const
+    {
+        float unpackedSpeed2D = Speed2D();
+        return unpackedSpeed2D * unpackedSpeed2D;
+    }
+
+    inline Vec3 ForwardDir() const { return UnpackedDir(forwardDir); }
+    inline Vec3 RightDir() const { return UnpackedDir(rightDir); }
 };
 
 class Ai: public EdictRef, public AiFrameAwareUpdatable
