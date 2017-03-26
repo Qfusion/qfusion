@@ -307,7 +307,7 @@ typedef struct {
 	 *
 	 * @param frametime real frame time
 	 */
-	void ( *UpdateInput )( int frameTime );
+	void ( *InputFrame )( int frameTime );
 
 	/**
 	* Transmits accumulated mouse movement event for the current frame.

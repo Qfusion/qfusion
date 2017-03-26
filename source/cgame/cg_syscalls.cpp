@@ -52,7 +52,7 @@ extern "C" QF_DLL_EXPORT cgame_export_t * GetCGameAPI( cgame_import_t * import )
 
 	globals.NewFrameSnapshot = CG_NewFrameSnap;
 
-	globals.UpdateInput = CG_UpdateInput;
+	globals.InputFrame = CG_InputFrame;
 	globals.ClearInputState = CG_ClearInputState;
 
 	globals.GetButtonBits = CG_GetButtonBits;

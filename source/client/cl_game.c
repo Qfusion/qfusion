@@ -665,11 +665,11 @@ void CL_GameModule_RenderView( float stereo_separation ) {
 }
 
 /*
-* CL_GameModule_UpdateInput
+* CL_GameModule_InputFrame
 */
-void CL_GameModule_UpdateInput( int frameTime ) {
+void CL_GameModule_InputFrame( int frameTime ) {
 	if( cge ) {
-		cge->UpdateInput( frameTime );
+		cge->InputFrame( frameTime );
 	}
 }
 

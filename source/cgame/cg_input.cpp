@@ -1067,9 +1067,9 @@ void CG_AddMovement( vec3_t movement ) {
 }
 
 /*
-* CG_UpdateInput
+* CG_InputFrame
 */
-void CG_UpdateInput( int frameTime ) {
+void CG_InputFrame( int frameTime ) {
 	cg_inputFrameTime = frameTime;
 
 	CG_GamepadFrame();

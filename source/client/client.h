@@ -409,7 +409,7 @@ float CL_GameModule_GetSensitivityScale( float sens, float zoomSens );
 bool CL_GameModule_NewSnapshot( int pendingSnapshot );
 void CL_GameModule_RenderView( float stereo_separation );
 void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t velocity );
-void CL_GameModule_UpdateInput( int frameTime );
+void CL_GameModule_InputFrame( int frameTime );
 void CL_GameModule_ClearInputState( void );
 uint8_t CL_GameModule_GetButtonBits( void );
 void CL_GameModule_AddViewAngles( vec3_t viewAngles );
@@ -504,8 +504,15 @@ void CL_ShutdownInput( void );
 void CL_UserInputFrame( void );
 void CL_NewUserCommand( int realMsec );
 void CL_WriteUcmdsToMessage( msg_t *msg );
+
+/**
+* Mouse input for systems with basic mouse support (without centering
+* and possibly without toggleable cursor).
+*/
 void CL_MouseSet( int mx, int my, bool showCursor );
+
 void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
+
 /**
  * Resets the input state to the same as when no input is done,
  * mainly when the current input dest can't receive events anymore.

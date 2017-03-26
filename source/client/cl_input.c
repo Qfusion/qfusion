@@ -31,32 +31,13 @@ cvar_t *cl_ucmdTimeNudge;
 #endif
 
 /*
-===============================================================================
-
-MOUSE
-
-===============================================================================
-*/
-
-/*
 * CL_MouseSet
-*
-* Mouse input for systems with basic mouse support (without centering
-* and possibly without toggleable cursor).
 */
 void CL_MouseSet( int mx, int my, bool showCursor ) {
 	if( cls.key_dest == key_menu ) {
 		CL_UIModule_MouseSet( mx, my, showCursor );
 	}
 }
-
-/*
-===============================================================================
-
-TOUCHSCREEN
-
-===============================================================================
-*/
 
 /*
 * CL_TouchEvent
@@ -97,8 +78,6 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 			break;
 	}
 }
-
-//==========================================================================
 
 /*
 * CL_ClearInputState
@@ -145,12 +124,11 @@ void CL_UserInputFrame( void ) {
 */
 static void CL_UpdateGameInput( int frameTime ) {
 	int mx, my;
-	extern cvar_t *in_grabinconsole;
 
 	IN_GetMouseMovement( &mx, &my );
 
 	// refresh input in cgame
-	CL_GameModule_UpdateInput( frameTime );
+	CL_GameModule_InputFrame( frameTime );
 
 	if( cls.key_dest == key_menu ) {
 		CL_UIModule_MouseMove( frameTime, mx, my );
@@ -158,7 +136,7 @@ static void CL_UpdateGameInput( int frameTime ) {
 		CL_GameModule_MouseMove( mx, my );
 	}
 
-	if( cls.key_dest == key_game || ( ( cls.key_dest == key_console ) && in_grabinconsole->integer ) ) {
+	if( cls.key_dest == key_game || ( ( cls.key_dest == key_console ) && Cvar_Value( "in_grabinconsole" ) != 0 ) ) {
 		CL_GameModule_AddViewAngles( cl.viewangles );
 	}
 }

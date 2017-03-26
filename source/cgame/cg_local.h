@@ -1178,7 +1178,7 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 //
 void CG_InitInput( void );
 void CG_ShutdownInput( void );
-void CG_UpdateInput( int frameTime );
+void CG_InputFrame( int frameTime );
 void CG_ClearInputState( void );
 
 void CG_MouseMove( int mx, int my );
