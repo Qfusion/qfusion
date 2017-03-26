@@ -217,12 +217,12 @@ void CG_LoadClientInfo( int client ) {
 * CG_ResetClientInfos
 */
 void CG_ResetClientInfos( void ) {
-	int i;
+	int i, cs;
 
 	memset( cgs.clientInfo, 0, sizeof( cgs.clientInfo ) );
 
-	for( i = 0; i < MAX_CLIENTS; i++ ) {
-		if( cgs.configStrings[CS_PLAYERINFOS + i][0] ) {
+	for( i = 0, cs = CS_PLAYERINFOS + i; i < MAX_CLIENTS; i++, cs++ ) {
+		if( cgs.configStrings[cs][0] ) {
 			CG_LoadClientInfo( i );
 		}
 	}

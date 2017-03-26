@@ -456,6 +456,7 @@ typedef struct {
 	// locally derived information from server state
 	//
 	char configStrings[MAX_CONFIGSTRINGS][MAX_CONFIGSTRING_CHARS];
+	char baseConfigStrings[MAX_CONFIGSTRINGS][MAX_CONFIGSTRING_CHARS];
 
 	bool hasGametypeMenu;
 

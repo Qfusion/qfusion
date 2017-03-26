@@ -1049,6 +1049,9 @@ static void CG_RegisterConfigStrings( void ) {
 		}
 	}
 
+	// backup initial configstrings for CG_Reset
+	memcpy( &cgs.baseConfigStrings[0][0], &cgs.configStrings[0][0], MAX_CONFIGSTRINGS*MAX_CONFIGSTRING_CHARS );
+
 	// if we got the server settings configstring, update our local copy of the data
 	CG_UpdateTVServerString();
 
@@ -1081,6 +1084,8 @@ void CG_StartBackgroundTrack( void ) {
 * CG_Reset
 */
 void CG_Reset( void ) {
+	memcpy( &cgs.configStrings[0][0], &cgs.baseConfigStrings[0][0], MAX_CONFIGSTRINGS*MAX_CONFIGSTRING_CHARS );
+
 	CG_ResetClientInfos();
 
 	CG_ResetPModels();
