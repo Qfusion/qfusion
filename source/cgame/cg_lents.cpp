@@ -1492,7 +1492,7 @@ void CG_AddLocalEntities( void ) {
 	float backlerp;
 	vec3_t angles;
 
-	time = cg.frameTime;
+	time = (float)cg.frameTime * 0.001f;
 	backlerp = 1.0f - cg.lerpfrac;
 
 	hnode = &cg_localents_headnode;

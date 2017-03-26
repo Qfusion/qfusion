@@ -312,13 +312,6 @@ extern client_static_t cls;
 extern cvar_t *cl_stereo_separation;
 extern cvar_t *cl_stereo;
 
-extern cvar_t *cl_yawspeed;
-extern cvar_t *cl_pitchspeed;
-
-extern cvar_t *cl_run;
-
-extern cvar_t *cl_anglespeedkey;
-
 extern cvar_t *cl_compresspackets;
 extern cvar_t *cl_shownet;
 
@@ -419,12 +412,12 @@ float CL_GameModule_GetSensitivityScale( float sens, float zoomSens );
 bool CL_GameModule_NewSnapshot( int pendingSnapshot );
 void CL_GameModule_RenderView( float stereo_separation );
 void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t velocity );
-void CL_GameModule_UpdateInput( float frametime );
+void CL_GameModule_UpdateInput( int frameTime );
 void CL_GameModule_ClearInputState( void );
 uint8_t CL_GameModule_GetButtonBits( void );
-void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime, bool flipped );
+void CL_GameModule_AddViewAngles( vec3_t viewAngles, bool flipped );
 void CL_GameModule_AddMovement( vec3_t movement );
-void CL_GameModule_MouseMove( int frameTime, int dx, int dy );
+void CL_GameModule_MouseMove( int dx, int dy );
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 bool CL_GameModule_IsTouchDown( int id );
 
@@ -441,7 +434,6 @@ void CL_SoundModule_SetEntitySpatilization( int entNum, vec3_t origin, vec3_t ve
 void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity, bool avidump );
 void CL_SoundModule_Activate( bool activate );
 struct sfx_s *CL_SoundModule_RegisterSound( const char *sample );
-void CL_SoundModule_FreeSound( struct sfx_s *sfx );
 void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
 void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
@@ -510,32 +502,18 @@ void CL_ShutDownServerList( void );
 //
 // cl_input.c
 //
-typedef struct {
-	int down[2];            // key nums holding it down
-	unsigned downtime;      // msec timestamp
-	unsigned msec;          // msec down this frame
-	int state;
-} kbutton_t;
-
-extern kbutton_t in_klook;
-extern kbutton_t in_strafe;
-extern kbutton_t in_speed;
-
 void CL_InitInput( void );
-void CL_InitInputDynvars( void );
 void CL_ShutdownInput( void );
 void CL_UserInputFrame( void );
-void CL_NewUserCommand( int msec );
+void CL_NewUserCommand( int realMsec );
 void CL_WriteUcmdsToMessage( msg_t *msg );
 void CL_MouseSet( int mx, int my, bool showCursor );
 void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
-void IN_CenterView( void );
-
 /**
  * Resets the input state to the same as when no input is done,
  * mainly when the current input dest can't receive events anymore.
  */
-void IN_ClearState( void );
+void CL_ClearInputState( void );
 
 
 

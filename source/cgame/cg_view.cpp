@@ -301,7 +301,7 @@ static void CG_CalcViewBob( void ) {
 		}
 	}
 
-	bobMove = cg.frameTime * bobScale;
+	bobMove = cg.frameTime * bobScale * 0.001f;
 	bobTime = ( cg.oldBobTime += bobMove );
 
 	cg.bobCycle = (int)bobTime;
@@ -951,8 +951,8 @@ void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int
 
 	// update time
 	cg.realTime = realTime;
-	cg.frameTime = frameTime * 0.001f;
-	cg.realFrameTime = realFrameTime * 0.001f;
+	cg.frameTime = frameTime;
+	cg.realFrameTime = realFrameTime;
 	cg.frameCount++;
 	cg.time = serverTime;
 

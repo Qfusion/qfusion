@@ -192,7 +192,7 @@ static int CG_GetFPS( const void *parameter ) {
 	static int fps;
 	static double oldtime;
 	static int oldframecount;
-	static float frameTimes[FPSSAMPLESCOUNT];
+	static int frameTimes[FPSSAMPLESCOUNT];
 	static float avFrameTime;
 	int i;
 	double t;
@@ -213,7 +213,7 @@ static int CG_GetFPS( const void *parameter ) {
 			avFrameTime += frameTimes[( cg.frameCount - i ) & FPSSAMPLESMASK];
 		}
 		avFrameTime /= FPSSAMPLESCOUNT;
-		fps = (int)( 1.0f / avFrameTime + 0.5f );
+		fps = (int)( 1000.0f / avFrameTime + 0.5f );
 	} else {
 		t = cg.realTime * 0.001f;
 		if( ( t - oldtime ) >= 0.25 ) {
@@ -485,7 +485,7 @@ static int CG_GetRaceVars( const void* parameter ) {
 		case strafe_an:
 
 			// optimal strafing angle
-			iNum = Q_rint( 100 * ( acos( ( 320 - 320 * cg.realFrameTime ) / CG_GetSpeed( 0 ) ) * 180 / M_PI - 45 ) ); //maybe need to check if speed below 320 is allowed for acos
+			iNum = Q_rint( 100 * ( acos( ( 320 - 0.32f * (float)cg.realFrameTime ) / CG_GetSpeed( 0 ) ) * 180 / M_PI - 45 ) ); //maybe need to check if speed below 320 is allowed for acos
 			if( iNum > 0 ) {
 				return iNum;
 			} else {
@@ -1384,7 +1384,7 @@ static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, 
 	}
 }
 
-static float cg_hud_weaponcrosstime;
+static int cg_hud_weaponcrosstime;
 
 /*
 * CG_DrawWeaponCrossQuarter
@@ -1424,7 +1424,7 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 	}
 
 	VectorCopy( colorWhite, color );
-	color[3] = cg_hud_weaponcrosstime * 4.0f;
+	color[3] = (float)cg_hud_weaponcrosstime * 0.004f;
 	clamp_high( color[3], 1.0f );
 	VectorCopy( colorWhite, colorTrans );
 	colorTrans[3] = color[3] * 0.5f;
@@ -1459,12 +1459,12 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 
 static void CG_CheckWeaponCross( void ) {
 	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL ) {
-		cg_hud_weaponcrosstime = 0.0f;
+		cg_hud_weaponcrosstime = 0;
 	}
 }
 
 void CG_ShowWeaponCross( void ) {
-	cg_hud_weaponcrosstime = 0.6f;
+	cg_hud_weaponcrosstime = 600;
 	CG_CheckWeaponCross();
 }
 
@@ -2472,7 +2472,7 @@ static bool CG_LFuncDrawWeaponCross( struct cg_layoutnode_s *commandnode, struct
 	int ammosize = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
 	int ammopass;
 
-	if( cg_hud_weaponcrosstime > 0.0f ) {
+	if( cg_hud_weaponcrosstime > 0 ) {
 		for( ammopass = 0; ammopass < 2; ammopass++ ) {
 			CG_DrawWeaponCrossQuarter( ammopass, 0, layout_cursor_x, layout_cursor_y,  0, -1, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
 			CG_DrawWeaponCrossQuarter( ammopass, 1, layout_cursor_x, layout_cursor_y,  1,  0, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
@@ -4556,7 +4556,7 @@ void CG_LoadStatusBar( void ) {
 /*
 * CG_GetHUDTouchButtons
 */
-void CG_GetHUDTouchButtons( unsigned int *buttons, int *upmove ) {
+void CG_GetHUDTouchButtons( int *buttons, int *upmove ) {
 	if( buttons ) {
 		*buttons = cg_hud_touch_buttons;
 	}

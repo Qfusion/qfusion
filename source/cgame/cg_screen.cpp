@@ -87,14 +87,7 @@ cvar_t *cg_scoreboardStats;
 cvar_t *cg_showTeamLocations;
 cvar_t *cg_showViewBlends;
 
-cvar_t *cg_touch_moveThres;
-cvar_t *cg_touch_strafeThres;
-cvar_t *cg_touch_lookThres;
-cvar_t *cg_touch_lookSens;
-cvar_t *cg_touch_lookInvert;
-cvar_t *cg_touch_lookDecel;
-
-float scr_damagetime_off;
+static int scr_damagetime_off;
 
 /*
 ===============================================================================
@@ -326,13 +319,6 @@ void CG_ScreenInit( void ) {
 	// wsw : hud debug prints
 	cg_debugHUD =           trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
-	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "24", CVAR_ARCHIVE );
-	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "32", CVAR_ARCHIVE );
-	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "5", CVAR_ARCHIVE );
-	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "9", CVAR_ARCHIVE );
-	cg_touch_lookInvert = trap_Cvar_Get( "cg_touch_lookInvert", "0", CVAR_ARCHIVE );
-	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "8.5", CVAR_ARCHIVE );
-
 	//
 	// register our commands
 	//
@@ -467,7 +453,7 @@ void CG_DrawCrosshair( int x, int y, int align ) {
 	if( cg_crosshair_color->modified || cg_crosshair_damage_color->modified ) {
 		if( cg_crosshair_damage_color->modified ) {
 			if( scr_damagetime_off <= 0 ) {
-				scr_damagetime_off = 0.3;
+				scr_damagetime_off = 300;
 			}
 			rgbcolor = COM_ReadColorRGBString( cg_crosshair_damage_color->string );
 		} else {
@@ -1422,9 +1408,13 @@ static void CG_SCRDrawViewBlend( void ) {
 //=======================================================
 
 /*
-* CG_CheckHUDChanges
+* CG_DrawHUD
 */
-static void CG_CheckHUDChanges( void ) {
+void CG_DrawHUD( bool touch ) {
+	if( !cg_showHUD->integer ) {
+		return;
+	}
+
 	// if changed from or to spec, reload the HUD
 	if( cg.specStateChanged ) {
 		cg_specHUD->modified = cg_clientHUD->modified = true;
@@ -1436,6 +1426,8 @@ static void CG_CheckHUDChanges( void ) {
 		CG_LoadStatusBar();
 		hud->modified = false;
 	}
+
+	CG_ExecuteLayoutProgram( cg.statusBar, touch );
 }
 
 /*
@@ -1461,10 +1453,7 @@ void CG_Draw2DView( void ) {
 		cg.motd = NULL;
 	}
 
-	if( cg_showHUD->integer ) {
-		CG_CheckHUDChanges();
-		CG_ExecuteLayoutProgram( cg.statusBar, false );
-	}
+	CG_DrawHUD( false );
 
 	CG_UpdateHUDPostDraw();
 
@@ -1493,287 +1482,4 @@ void CG_Draw2D( void ) {
 
 	CG_Draw2DView();
 	CG_DrawDemocam2D();
-}
-
-/*
-===============================================================================
-
-TOUCH INPUT
-
-===============================================================================
-*/
-
-cg_touch_t cg_touches[CG_MAX_TOUCHES];
-
-typedef struct {
-	int touch;
-	float x, y;
-} cg_touchpad_t;
-
-static cg_touchpad_t cg_touchpads[TOUCHPAD_COUNT];
-
-/*
-* CG_TouchArea
-*
-* Touches a rectangle. Returns touch id if it's a new touch.
-*/
-int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, unsigned int time ) ) {
-	if( ( w <= 0 ) || ( h <= 0 ) ) {
-		return -1;
-	}
-
-	int i;
-	int x2 = x + w, y2 = y + h;
-
-	// first check if already touched
-	for( i = 0; i < CG_MAX_TOUCHES; ++i ) {
-		cg_touch_t &touch = cg_touches[i];
-
-		if( touch.down && ( ( touch.area & TOUCHAREA_MASK ) == ( area & TOUCHAREA_MASK ) ) ) {
-			touch.area_valid = true;
-			if( ( ( touch.area >> TOUCHAREA_SUB_SHIFT ) != ( area >> TOUCHAREA_SUB_SHIFT ) ) &&
-				( touch.x >= x ) && ( touch.y >= y ) && ( touch.x < x2 ) && ( touch.y < y2 ) ) {
-				if( touch.upfunc ) {
-					touch.upfunc( i, 0 );
-				}
-				touch.area = area;
-				return i;
-			}
-			return -1;
-		}
-	}
-
-	// now add a new touch
-	for( i = 0; i < CG_MAX_TOUCHES; ++i ) {
-		cg_touch_t &touch = cg_touches[i];
-
-		if( touch.down && ( touch.area == TOUCHAREA_NONE ) &&
-			( touch.x >= x ) && ( touch.y >= y ) && ( touch.x < x2 ) && ( touch.y < y2 ) ) {
-			touch.area = area;
-			touch.area_valid = true;
-			touch.upfunc = upfunc;
-			return i;
-		}
-	}
-
-	return -1;
-}
-
-/*
-* CG_TouchEvent
-*/
-void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time ) {
-	if( id < 0 || id >= CG_MAX_TOUCHES ) {
-		return;
-	}
-
-	cg_touch_t &touch = cg_touches[id];
-	touch.x = x;
-	touch.y = y;
-
-	switch( type ) {
-		case TOUCH_DOWN:
-		case TOUCH_MOVE:
-			if( !touch.down ) {
-				touch.down = true;
-				touch.time = time;
-				touch.area = TOUCHAREA_NONE;
-			}
-			break;
-
-		case TOUCH_UP:
-			if( touch.down ) {
-				touch.down = false;
-				if( ( touch.area != TOUCHAREA_NONE ) && touch.upfunc ) {
-					touch.upfunc( id, time );
-				}
-			}
-			break;
-	}
-}
-
-/*
-* CG_IsTouchDown
-*/
-bool CG_IsTouchDown( int id ) {
-	if( id < 0 || id >= CG_MAX_TOUCHES ) {
-		return false;
-	}
-
-	return cg_touches[id].down;
-}
-
-/*
-* CG_TouchFrame
-*/
-void CG_TouchFrame( float frametime ) {
-	int i;
-	bool touching = false;
-
-	cg_touchpad_t &viewpad = cg_touchpads[TOUCHPAD_VIEW];
-	if( viewpad.touch >= 0 ) {
-		if( cg_touch_lookDecel->modified ) {
-			if( cg_touch_lookDecel->value < 0.0f ) {
-				trap_Cvar_Set( cg_touch_lookDecel->name, cg_touch_lookDecel->dvalue );
-			}
-			cg_touch_lookDecel->modified = false;
-		}
-
-		cg_touch_t &touch = cg_touches[viewpad.touch];
-
-		float decel = cg_touch_lookDecel->value * ( float )frametime;
-		float xdist = ( float )touch.x - viewpad.x;
-		float ydist = ( float )touch.y - viewpad.y;
-		viewpad.x += xdist * decel;
-		viewpad.y += ydist * decel;
-
-		// Check if decelerated too much (to the opposite direction)
-		if( ( ( ( float )touch.x - viewpad.x ) * xdist ) < 0.0f ) {
-			viewpad.x = touch.x;
-		}
-		if( ( ( ( float )touch.y - viewpad.y ) * ydist ) < 0.0f ) {
-			viewpad.y = touch.y;
-		}
-	}
-
-	for( i = 0; i < CG_MAX_TOUCHES; ++i ) {
-		cg_touches[i].area_valid = false;
-		if( cg_touches[i].down ) {
-			touching = true;
-		}
-	}
-
-	if( touching ) {
-		if( cg_showHUD->integer ) {
-			CG_CheckHUDChanges();
-			CG_ExecuteLayoutProgram( cg.statusBar, true );
-		}
-
-		// cancel non-existent areas
-		for( i = 0; i < CG_MAX_TOUCHES; ++i ) {
-			cg_touch_t &touch = cg_touches[i];
-			if( touch.down ) {
-				if( ( touch.area != TOUCHAREA_NONE ) && !touch.area_valid ) {
-					if( touch.upfunc ) {
-						touch.upfunc( i, 0 );
-					}
-					touch.area = TOUCHAREA_NONE;
-				}
-			}
-		}
-	}
-
-	CG_UpdateHUDPostTouch();
-}
-
-/*
-* CG_GetTouchButtonBits
-*/
-unsigned int CG_GetTouchButtonBits( void ) {
-	unsigned int buttons;
-	CG_GetHUDTouchButtons( &buttons, NULL );
-	return buttons;
-}
-
-void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip ) {
-	cg_touchpad_t &viewpad = cg_touchpads[TOUCHPAD_VIEW];
-	if( viewpad.touch >= 0 ) {
-		if( cg_touch_lookThres->modified ) {
-			if( cg_touch_lookThres->value < 0.0f ) {
-				trap_Cvar_Set( cg_touch_lookThres->name, cg_touch_lookThres->dvalue );
-			}
-			cg_touch_lookThres->modified = false;
-		}
-
-		cg_touch_t &touch = cg_touches[viewpad.touch];
-
-		float speed = cg_touch_lookSens->value * frametime * CG_GetSensitivityScale( 1.0f, 0.0f );
-		float scale = 1.0f / cgs.pixelRatio;
-
-		float angle = ( ( float )touch.y - viewpad.y ) * scale;
-		if( cg_touch_lookInvert->integer ) {
-			angle = -angle;
-		}
-		float dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
-		angle = fabs( angle ) - cg_touch_lookThres->value;
-		if( angle > 0.0f ) {
-			viewangles[PITCH] += angle * dir * speed;
-		}
-
-		angle = ( viewpad.x - ( float )touch.x ) * scale;
-		dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f ) * flip;
-		angle = fabs( angle ) - cg_touch_lookThres->value;
-		if( angle > 0.0f ) {
-			viewangles[YAW] += angle * dir * speed;
-		}
-	}
-}
-
-void CG_AddTouchMovement( vec3_t movement ) {
-	cg_touchpad_t &movepad = cg_touchpads[TOUCHPAD_MOVE];
-	if( movepad.touch >= 0 ) {
-		if( cg_touch_moveThres->modified ) {
-			if( cg_touch_moveThres->value < 0.0f ) {
-				trap_Cvar_Set( cg_touch_moveThres->name, cg_touch_moveThres->dvalue );
-			}
-			cg_touch_moveThres->modified = false;
-		}
-		if( cg_touch_strafeThres->modified ) {
-			if( cg_touch_strafeThres->value < 0.0f ) {
-				trap_Cvar_Set( cg_touch_strafeThres->name, cg_touch_strafeThres->dvalue );
-			}
-			cg_touch_strafeThres->modified = false;
-		}
-
-		cg_touch_t &touch = cg_touches[movepad.touch];
-
-		float move = ( float )touch.x - movepad.x;
-		if( fabs( move ) > cg_touch_strafeThres->value * cgs.pixelRatio ) {
-			movement[0] += ( move < 0 ) ? -1.0f : 1.0f;
-		}
-
-		move = movepad.y - ( float )touch.y;
-		if( fabs( move ) > cg_touch_moveThres->value * cgs.pixelRatio ) {
-			movement[1] += ( move < 0 ) ? -1.0f : 1.0f;
-		}
-	}
-
-	int upmove;
-	CG_GetHUDTouchButtons( NULL, &upmove );
-	movement[2] += ( float )upmove;
-}
-
-/*
-* CG_CancelTouches
-*/
-void CG_CancelTouches( void ) {
-	int i;
-
-	for( i = 0; i < CG_MAX_TOUCHES; ++i ) {
-		cg_touch_t &touch = cg_touches[i];
-		if( touch.down ) {
-			if( touch.area != TOUCHAREA_NONE ) {
-				if( touch.upfunc ) {
-					touch.upfunc( i, 0 );
-				}
-				touch.area = TOUCHAREA_NONE;
-			}
-			touch.down = false;
-		}
-	}
-}
-
-/*
-* CG_SetTouchpad
-*/
-void CG_SetTouchpad( int padID, int touchID ) {
-	cg_touchpad_t &pad = cg_touchpads[padID];
-
-	pad.touch = touchID;
-
-	if( touchID >= 0 ) {
-		cg_touch_t &touch = cg_touches[touchID];
-		pad.x = ( float )touch.x;
-		pad.y = ( float )touch.y;
-	}
 }

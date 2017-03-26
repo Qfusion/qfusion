@@ -302,14 +302,20 @@ typedef struct {
 
 	bool ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
 
-	void ( *MouseMove )( int frameTime, int dx, int dy );
-
 	/**
 	 * Updates input-related parts of cgame every frame.
 	 *
 	 * @param frametime real frame time
 	 */
-	void ( *UpdateInput )( float frametime );
+	void ( *UpdateInput )( int frameTime );
+
+	/**
+	* Transmits accumulated mouse movement event for the current frame.
+	*
+	* @param dx horizontal mouse movement
+	* @param dy vertical mouse movement
+	*/
+	void ( *MouseMove )( int dx, int dy );
 
 	/**
 	 * Resets cgame input state.
@@ -328,11 +334,10 @@ typedef struct {
 	 * Adds input view rotation.
 	 * May be called multiple times in a frame.
 	 *
-	 * @param viewangles view angles to modify
-	 * @param frametime  real frame time
+	 * @param viewAngles view angles to modify
 	 * @param flipped    whether horizontal input is flipped
 	 */
-	void ( *AddViewAngles )( vec3_t viewangles, float frametime, bool flipped );
+	void ( *AddViewAngles )( vec3_t viewAngles, bool flipped );
 
 	/**
 	 * Adds player movement.

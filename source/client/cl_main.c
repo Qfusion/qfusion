@@ -625,7 +625,7 @@ void CL_SetKeyDest( int key_dest ) {
 	}
 
 	if( cls.key_dest != key_dest ) {
-		IN_ClearState();
+		CL_ClearInputState();
 		cls.key_dest = key_dest;
 		Con_SetMessageMode();
 	}
@@ -1960,12 +1960,6 @@ static void CL_InitLocal( void ) {
 
 	cl_flip = Cvar_Get( "cl_flip", "0", CVAR_ARCHIVE );
 
-	cl_yawspeed =       Cvar_Get( "cl_yawspeed", "140", 0 );
-	cl_pitchspeed =     Cvar_Get( "cl_pitchspeed", "150", 0 );
-	cl_anglespeedkey =  Cvar_Get( "cl_anglespeedkey", "1.5", 0 );
-
-	cl_run =        Cvar_Get( "cl_run", "1", CVAR_ARCHIVE );
-
 	cl_masterservers =  Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, 0 );
 
 	cl_shownet =        Cvar_Get( "cl_shownet", "0", 0 );
@@ -2519,13 +2513,12 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	if( allRealMsec + extraMsec < minMsec ) {
 		// let CPU sleep while playing fullscreen video, while minimized
 		// or when cl_sleep is enabled
-		bool sleep = cl_sleep->integer != 0;
+		bool sleep = cl_sleep->integer != 0 ||
+			cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED ||
+			!VID_AppIsActive() || VID_AppIsMinimized(); // FIXME: not sure about listen server here..
 
-		sleep = sleep || ( cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED );
-		sleep = sleep || !VID_AppIsActive() || VID_AppIsMinimized(); // FIXME: not sure about listen server here..
-
-		if( sleep && minMsec - extraMsec > 1 ) {
-			Sys_Sleep( 1 );
+		if( sleep && minMsec - extraMsec >= 1 ) {
+			Sys_Sleep( minMsec - extraMsec - 1 );
 		}
 		return;
 	}
@@ -2549,11 +2542,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 	// allow rendering DLL change
 	VID_CheckChanges();
-
-	// refresh input in cgame
-	if( cls.key_dest == key_game ) {
-		CL_GameModule_UpdateInput( cls.realFrameTime * 0.001f );
-	}
 
 	CL_NewUserCommand( allRealMsec );
 

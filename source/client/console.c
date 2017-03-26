@@ -144,7 +144,7 @@ void Con_Close( void ) {
 
 	Con_ClearTyping();
 	Con_ClearNotify();
-	IN_ClearState();
+	CL_ClearInputState();
 }
 
 /*

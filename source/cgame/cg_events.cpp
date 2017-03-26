@@ -759,7 +759,7 @@ static void CG_Event_FireRiotgun( vec3_t origin, vec3_t dir, int weapon, int fir
 //=========================================================
 #define CG_MAX_ANNOUNCER_EVENTS 32
 #define CG_MAX_ANNOUNCER_EVENTS_MASK ( CG_MAX_ANNOUNCER_EVENTS - 1 )
-#define CG_ANNOUNCER_EVENTS_FRAMETIME 1.5f // the announcer will speak each 1.5 seconds
+#define CG_ANNOUNCER_EVENTS_FRAMETIME 1500 // the announcer will speak each 1.5 seconds
 typedef struct cg_announcerevent_s
 {
 	struct sfx_s *sound;
@@ -767,7 +767,7 @@ typedef struct cg_announcerevent_s
 cg_announcerevent_t cg_announcerEvents[CG_MAX_ANNOUNCER_EVENTS];
 static int cg_announcerEventsCurrent = 0;
 static int cg_announcerEventsHead = 0;
-static float cg_announcerEventsDelay = 0.0f;
+static int cg_announcerEventsDelay = 0;
 
 /*
 * CG_ClearAnnouncerEvents
@@ -805,7 +805,7 @@ void CG_AddAnnouncerEvent( struct sfx_s *sound, bool queued ) {
 void CG_ReleaseAnnouncerEvents( void ) {
 	// see if enough time has passed
 	cg_announcerEventsDelay -= cg.realFrameTime;
-	if( cg_announcerEventsDelay > 0.0f ) {
+	if( cg_announcerEventsDelay > 0 ) {
 		return;
 	}
 

@@ -946,7 +946,7 @@ int CG_DemoCam_FreeFly( void ) {
 
 		// run frame
 		trap_NET_GetUserCmd( trap_NET_GetCurrentUserCmdNum() - 1, &cmd );
-		cmd.msec = cg.realFrameTime * 1000;
+		cmd.msec = cg.realFrameTime;
 
 		for( i = 0; i < 3; i++ )
 			moveangles[i] = SHORT2ANGLE( cmd.angles[i] ) + SHORT2ANGLE( freecam_delta_angles[i] );
@@ -972,7 +972,7 @@ int CG_DemoCam_FreeFly( void ) {
 			wishspeed = maxspeed;
 		}
 
-		VectorMA( cam_origin, cg.realFrameTime, wishvel, cam_origin );
+		VectorMA( cam_origin, (float)cg.realFrameTime * 0.001f, wishvel, cam_origin );
 
 		cam_POVent = 0;
 		cam_3dPerson = false;
@@ -1070,7 +1070,7 @@ static int CG_Democam_CalcView( void ) {
 
 				// set velocity
 				VectorSubtract( cam_origin, v, cam_velocity );
-				VectorScale( cam_velocity, 1.0f / ( cg.frameTime * 1000.0f ), cam_velocity );
+				VectorScale( cam_velocity, 1.0f / (float)cg.frameTime, cam_velocity );
 				break;
 
 			case DEMOCAM_PATH_SPLINE:
@@ -1142,7 +1142,7 @@ static int CG_Democam_CalcView( void ) {
 
 				// set velocity
 				VectorSubtract( cam_origin, v, cam_velocity );
-				VectorScale( cam_velocity, 1.0f / ( cg.frameTime * 1000.0f ), cam_velocity );
+				VectorScale( cam_velocity, 1.0f / (float)cg.frameTime, cam_velocity );
 				break;
 
 			case DEMOCAM_ORBITAL:
@@ -1159,6 +1159,7 @@ static int CG_Democam_CalcView( void ) {
 				} else {
 					vec3_t center, forward;
 					struct cmodel_s *cmodel;
+					const float ft = (float)cg.frameTime * 0.001f;
 
 					// find the trackEnt origin
 					VectorLerp( cg_entities[currentcam->trackEnt].prev.origin, cg.lerpfrac, cg_entities[currentcam->trackEnt].current.origin, center );
@@ -1178,9 +1179,9 @@ static int CG_Democam_CalcView( void ) {
 						VecToAngles( forward, cam_orbital_angles );
 					}
 
-					cam_orbital_angles[PITCH] += currentcam->angles[PITCH] * cg.frameTime; AngleNormalize360( cam_orbital_angles[PITCH] );
-					cam_orbital_angles[YAW] += currentcam->angles[YAW] * cg.frameTime; AngleNormalize360( cam_orbital_angles[YAW] );
-					cam_orbital_angles[ROLL] += currentcam->angles[ROLL] * cg.frameTime; AngleNormalize360( cam_orbital_angles[ROLL] );
+					cam_orbital_angles[PITCH] += currentcam->angles[PITCH] * ft; AngleNormalize360( cam_orbital_angles[PITCH] );
+					cam_orbital_angles[YAW] += currentcam->angles[YAW] * ft; AngleNormalize360( cam_orbital_angles[YAW] );
+					cam_orbital_angles[ROLL] += currentcam->angles[ROLL] * ft; AngleNormalize360( cam_orbital_angles[ROLL] );
 					AngleVectors( cam_orbital_angles, forward, NULL, NULL );
 					VectorMA( center, cam_orbital_radius, forward, cam_origin );
 

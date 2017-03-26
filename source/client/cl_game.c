@@ -667,9 +667,9 @@ void CL_GameModule_RenderView( float stereo_separation ) {
 /*
 * CL_GameModule_UpdateInput
 */
-void CL_GameModule_UpdateInput( float frametime ) {
+void CL_GameModule_UpdateInput( int frameTime ) {
 	if( cge ) {
-		cge->UpdateInput( frametime );
+		cge->UpdateInput( frameTime );
 	}
 }
 
@@ -695,9 +695,9 @@ uint8_t CL_GameModule_GetButtonBits( void ) {
 /*
 * CL_GameModule_AddViewAngles
 */
-void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime, bool flipped ) {
+void CL_GameModule_AddViewAngles( vec3_t viewAngles, bool flipped ) {
 	if( cge ) {
-		cge->AddViewAngles( viewangles, frametime, flipped );
+		cge->AddViewAngles( viewAngles, flipped );
 	}
 }
 
@@ -713,9 +713,9 @@ void CL_GameModule_AddMovement( vec3_t movement ) {
 /*
 * CL_GameModule_MouseMove
 */
-void CL_GameModule_MouseMove( int frameTime, int dx, int dy ) {
+void CL_GameModule_MouseMove( int dx, int dy ) {
 	if( cge ) {
-		cge->MouseMove( frameTime, dx, dy );
+		cge->MouseMove( dx, dy );
 	}
 }
 

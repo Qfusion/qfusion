@@ -514,8 +514,8 @@ typedef struct {
 	float delay;
 
 	unsigned int realTime;
-	float frameTime;
-	float realFrameTime;
+	int frameTime;
+	int realFrameTime;
 	int frameCount;
 
 	unsigned int firstViewRealTime;
@@ -730,6 +730,7 @@ extern cvar_t *cg_showChasers;
 void CG_ScreenInit( void );
 void CG_ScreenShutdown( void );
 void CG_Draw2D( void );
+void CG_DrawHUD( bool touch );
 void CG_CalcVrect( void );
 void CG_TileClear( void );
 void CG_DrawLoading( void );
@@ -826,7 +827,7 @@ void CG_SC_ResetObituaries( void );
 void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );
 void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch );
-void CG_GetHUDTouchButtons( unsigned int *buttons, int *upmove );
+void CG_GetHUDTouchButtons( int *buttons, int *upmove );
 void CG_UpdateHUDPostDraw( void );
 void CG_UpdateHUDPostTouch( void );
 void CG_ShowWeaponCross( void );
@@ -953,8 +954,6 @@ char *_CG_CopyString( const char *in, const char *filename, int fileline );
 void CG_UseItem( const char *name );
 void CG_RegisterCGameCommands( void );
 void CG_UnregisterCGameCommands( void );
-void CG_RegisterDemoCommands( void );
-void CG_UnregisterDemoCommands( void );
 void CG_UpdateTVServerString( void );
 void CG_AddAward( const char *str );
 void CG_OverrideWeapondef( int index, const char *cstring );
@@ -967,7 +966,7 @@ int CG_AsyncGetRequest( const char *resource, void ( *done_cb )( int status, con
 const char *CG_TranslateString( const char *string );
 const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size );
 
-unsigned int CG_GetTouchButtonBits( void );
+int CG_GetTouchButtonBits( void );
 void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip );
 void CG_AddTouchMovement( vec3_t movement );
 
@@ -1176,42 +1175,15 @@ void CG_StackChatString( cg_gamechat_t *chat, const char *str );
 void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, int fontSize,
 				  int width, int height, int padding_x, int padding_y, vec4_t backColor, struct shader_s *backShader );
 
-//
-// cg_input.cpp
-//
-extern cvar_t *sensitivity;
-extern cvar_t *zoomsens;
-extern cvar_t *m_accel;
-extern cvar_t *m_accelStyle;
-extern cvar_t *m_accelOffset;
-extern cvar_t *m_accelPow;
-extern cvar_t *m_filter;
-extern cvar_t *m_sensCap;
-
-extern cvar_t *m_pitch;
-extern cvar_t *m_yaw;
-
-extern cvar_t *cg_gamepad_moveThres;
-extern cvar_t *cg_gamepad_runThres;
-extern cvar_t *cg_gamepad_strafeThres;
-extern cvar_t *cg_gamepad_strafeRunThres;
-extern cvar_t *cg_gamepad_pitchThres;
-extern cvar_t *cg_gamepad_yawThres;
-extern cvar_t *cg_gamepad_pitchSpeed;
-extern cvar_t *cg_gamepad_yawSpeed;
-extern cvar_t *cg_gamepad_pitchInvert;
-extern cvar_t *cg_gamepad_accelMax;
-extern cvar_t *cg_gamepad_accelSpeed;
-extern cvar_t *cg_gamepad_accelThres;
-extern cvar_t *cg_gamepad_swapSticks;
-
-void CG_MouseMove( int frame_time, int mx, int my );
-
-void CG_UpdateInput( float frametime );
+void CG_InitInput( void );
+void CG_ShutdownInput( void );
+void CG_UpdateInput( int frameTime );
 void CG_ClearInputState( void );
 
+void CG_MouseMove( int mx, int my );
+
 unsigned int CG_GetButtonBits( void );
-void CG_AddViewAngles( vec3_t viewangles, float frametime, bool flipped );
+void CG_AddViewAngles( vec3_t viewAngles, bool flipped );
 void CG_AddMovement( vec3_t movement );
 
 /**
