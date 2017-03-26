@@ -318,8 +318,6 @@ extern cvar_t *cl_shownet;
 extern cvar_t *cl_extrapolationTime;
 extern cvar_t *cl_extrapolate;
 
-extern cvar_t *cl_flip;
-
 extern cvar_t *cl_timedemo;
 extern cvar_t *cl_demoavi_video;
 extern cvar_t *cl_demoavi_audio;
@@ -344,7 +342,6 @@ extern entity_state_t cl_baselines[MAX_EDICTS];
 //
 // cl_cin.c
 //
-void SCR_InitCinematic( void );
 bool SCR_DrawCinematic( void );
 void SCR_RunCinematic( void );
 void SCR_StopCinematic( void );
@@ -415,7 +412,7 @@ void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t vel
 void CL_GameModule_UpdateInput( int frameTime );
 void CL_GameModule_ClearInputState( void );
 uint8_t CL_GameModule_GetButtonBits( void );
-void CL_GameModule_AddViewAngles( vec3_t viewAngles, bool flipped );
+void CL_GameModule_AddViewAngles( vec3_t viewAngles );
 void CL_GameModule_AddMovement( vec3_t movement );
 void CL_GameModule_MouseMove( int dx, int dy );
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );

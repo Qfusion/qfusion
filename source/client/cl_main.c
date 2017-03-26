@@ -40,8 +40,6 @@ cvar_t *cl_shownet;
 cvar_t *cl_extrapolationTime;
 cvar_t *cl_extrapolate;
 
-cvar_t *cl_flip;
-
 cvar_t *cl_timedemo;
 cvar_t *cl_demoavi_video;
 cvar_t *cl_demoavi_audio;
@@ -1957,8 +1955,6 @@ static void CL_InitLocal( void ) {
 
 	cl_extrapolationTime =  Cvar_Get( "cl_extrapolationTime", "0", CVAR_DEVELOPER );
 	cl_extrapolate = Cvar_Get( "cl_extrapolate", "1", CVAR_ARCHIVE );
-
-	cl_flip = Cvar_Get( "cl_flip", "0", CVAR_ARCHIVE );
 
 	cl_masterservers =  Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, 0 );
 

@@ -159,7 +159,7 @@ static void CL_UpdateGameInput( int frameTime ) {
 	}
 
 	if( cls.key_dest == key_game || ( ( cls.key_dest == key_console ) && in_grabinconsole->integer ) ) {
-		CL_GameModule_AddViewAngles( cl.viewangles, cl_flip->integer != 0 );
+		CL_GameModule_AddViewAngles( cl.viewangles );
 	}
 }
 
@@ -223,7 +223,7 @@ static void CL_SetUcmdMovement( usercmd_t *ucmd ) {
 		CL_GameModule_AddMovement( movement );
 	}
 
-	ucmd->sidemove = bound( -1.0f, movement[0], 1.0f ) * ( cl_flip->integer ? -1.0f : 1.0f );
+	ucmd->sidemove = bound( -1.0f, movement[0], 1.0f );
 	ucmd->forwardmove = bound( -1.0f, movement[1], 1.0f );
 	ucmd->upmove = bound( -1.0f, movement[2], 1.0f );
 }

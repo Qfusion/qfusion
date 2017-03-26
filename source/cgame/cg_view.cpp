@@ -799,7 +799,7 @@ static void CG_UpdateChaseCam( void ) {
 /*
 * CG_SetupViewDef
 */
-static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped ) {
+static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 	memset( view, 0, sizeof( cg_viewdef_t ) );
 
 	//
@@ -807,7 +807,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped ) {
 	//
 
 	view->type = type;
-	view->flipped = flipped;
+	view->flipped = cg_flip->integer != 0;
 
 	if( view->type == VIEWDEF_PLAYERVIEW ) {
 		view->POVent = cg.frame.playerState.POVnum;
@@ -946,7 +946,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped ) {
 */
 #define WAVE_AMPLITUDE  0.015   // [0..1]
 #define WAVE_FREQUENCY  0.6     // [0..1]
-void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped ) {
+void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime ) {
 	refdef_t *rd = &cg.view.refdef;
 
 	// update time
@@ -1067,9 +1067,9 @@ void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int
 	trap_R_ClearScene();
 
 	if( CG_DemoCam_Update() ) {
-		CG_SetupViewDef( &cg.view, CG_DemoCam_GetViewType(), flipped );
+		CG_SetupViewDef( &cg.view, CG_DemoCam_GetViewType() );
 	} else {
-		CG_SetupViewDef( &cg.view, VIEWDEF_PLAYERVIEW, flipped );
+		CG_SetupViewDef( &cg.view, VIEWDEF_PLAYERVIEW );
 	}
 
 	CG_LerpEntities();  // interpolate packet entities positions

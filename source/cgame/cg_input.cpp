@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-static int inputFrameTime;
-static bool inputCenterView;
+static int cg_inputFrameTime;
+static bool cg_inputCenterView;
 
 /*
 ===============================================================================
@@ -213,10 +213,10 @@ static float CG_KeyState( kbutton_t *key ) {
 		key->downtime = cg.realTime;
 	}
 
-	if( !inputFrameTime )
+	if( !cg_inputFrameTime )
 		return 0;
 
-	val = (float) msec / (float)inputFrameTime;
+	val = (float) msec / (float)cg_inputFrameTime;
 
 	return bound( 0, val, 1 );
 }
@@ -228,9 +228,9 @@ static void CG_AddKeysViewAngles( vec3_t viewAngles ) {
 	float speed;
 
 	if( in_speed.state & 1 ) {
-		speed = ( (float)inputFrameTime * 0.001f ) * cl_anglespeedkey->value;
+		speed = ( (float)cg_inputFrameTime * 0.001f ) * cl_anglespeedkey->value;
 	} else {
-		speed = (float)inputFrameTime * 0.001f;
+		speed = (float)cg_inputFrameTime * 0.001f;
 	}
 
 	if( !( in_strafe.state & 1 ) ) {
@@ -356,7 +356,7 @@ void CG_MouseMove( int mx, int my ) {
 
 	accelSensitivity = sensitivity->value;
 
-	if( m_accel->value != 0.0f && inputFrameTime != 0 ) {
+	if( m_accel->value != 0.0f && cg_inputFrameTime != 0 ) {
 		float rate;
 
 		// QuakeLive-style mouse acceleration, ported from ioquake3
@@ -370,8 +370,8 @@ void CG_MouseMove( int mx, int my ) {
 			// m_accelOffset is the rate for which the acceleration will have doubled the non accelerated amplification
 			// NOTE: decouple the config cvars for independent acceleration setup along X and Y?
 
-			base[0] = (float) ( abs( mx ) ) / (float) inputFrameTime;
-			base[1] = (float) ( abs( my ) ) / (float) inputFrameTime;
+			base[0] = (float) ( abs( mx ) ) / (float) cg_inputFrameTime;
+			base[1] = (float) ( abs( my ) ) / (float) cg_inputFrameTime;
 			power[0] = powf( base[0] / m_accelOffset->value, m_accel->value );
 			power[1] = powf( base[1] / m_accelOffset->value, m_accel->value );
 
@@ -386,7 +386,7 @@ void CG_MouseMove( int mx, int my ) {
 			accelPow = m_accelPow->value > 1.0 ? m_accelPow->value : 2.0;
 			accelOffset = m_accelOffset->value >= 0.0 ? m_accelOffset->value : 0.0;
 
-			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)inputFrameTime;
+			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)cg_inputFrameTime;
 			rate -= accelOffset;
 			if( rate < 0 ) {
 				rate = 0.0;
@@ -399,7 +399,7 @@ void CG_MouseMove( int mx, int my ) {
 				accelSensitivity = m_sensCap->value;
 			}
 		} else {
-			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)inputFrameTime;
+			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)cg_inputFrameTime;
 			accelSensitivity += rate * m_accel->value;
 		}
 	}
@@ -448,7 +448,7 @@ static cvar_t *cg_gamepad_accelSpeed;
 static cvar_t *cg_gamepad_accelThres;
 static cvar_t *cg_gamepad_swapSticks;
 
-static float cg_gamepad_accelPitch = 1.0f, cg_gamepad_accelYaw = 1.0f;
+static float cg_gamepadAccelPitch = 1.0f, cg_gamepadAccelYaw = 1.0f;
 
 /**
  * Updates time-dependent gamepad state.
@@ -476,18 +476,18 @@ static void CG_GamepadFrame( void ) {
 
 	float value = fabs( sticks[axes] );
 	if( value > cg_gamepad_yawThres->value ) {
-		cg_gamepad_accelYaw += ( ( value > accelThres ) ? 1.0f : -1.0f ) * inputFrameTime * 0.001f * accelSpeed;
-		clamp( cg_gamepad_accelYaw, 1.0f, accelMax );
+		cg_gamepadAccelYaw += ( ( value > accelThres ) ? 1.0f : -1.0f ) * cg_inputFrameTime * 0.001f * accelSpeed;
+		clamp( cg_gamepadAccelYaw, 1.0f, accelMax );
 	} else {
-		cg_gamepad_accelYaw = 1.0f;
+		cg_gamepadAccelYaw = 1.0f;
 	}
 
 	value = fabs( sticks[axes + 1] );
 	if( value > cg_gamepad_pitchThres->value ) {
-		cg_gamepad_accelPitch += ( ( value > accelThres ) ? 1.0f : -1.0f ) * inputFrameTime * 0.001f * accelSpeed;
-		clamp( cg_gamepad_accelPitch, 1.0f, accelMax );
+		cg_gamepadAccelPitch += ( ( value > accelThres ) ? 1.0f : -1.0f ) * cg_inputFrameTime * 0.001f * accelSpeed;
+		clamp( cg_gamepadAccelPitch, 1.0f, accelMax );
 	} else {
-		cg_gamepad_accelPitch = 1.0f;
+		cg_gamepadAccelPitch = 1.0f;
 	}
 }
 
@@ -515,8 +515,8 @@ static void CG_AddGamepadViewAngles( vec3_t viewAngles, float flip ) {
 	float value = ( fabs( axisValue ) - threshold ) / ( 1.0f - threshold ); // Smoothly apply the dead zone.
 	if( value > 0.0f ) {
 		// Quadratic interpolation.
-		viewAngles[YAW] -= inputFrameTime * 0.001f * flip *
-						   value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepad_accelYaw *
+		viewAngles[YAW] -= cg_inputFrameTime * 0.001f * flip *
+						   value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepadAccelYaw *
 						   cg_gamepad_yawSpeed->value * CG_GetSensitivityScale( cg_gamepad_yawSpeed->value, 0.0f );
 	}
 
@@ -524,8 +524,8 @@ static void CG_AddGamepadViewAngles( vec3_t viewAngles, float flip ) {
 	threshold = cg_gamepad_pitchThres->value;
 	value = ( fabs( axisValue ) - threshold ) / ( 1.0f - threshold );
 	if( value > 0.0f ) {
-		viewAngles[PITCH] += inputFrameTime * 0.001f * ( cg_gamepad_pitchInvert->integer ? -1.0f : 1.0f ) *
-							 value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepad_accelPitch *
+		viewAngles[PITCH] += cg_inputFrameTime * 0.001f * ( cg_gamepad_pitchInvert->integer ? -1.0f : 1.0f ) *
+							 value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepadAccelPitch *
 							 cg_gamepad_pitchSpeed->value * CG_GetSensitivityScale( cg_gamepad_pitchSpeed->value, 0.0f );
 	}
 }
@@ -705,7 +705,7 @@ void CG_TouchFrame( void ) {
 
 		cg_touch_t &touch = cg_touches[viewpad.touch];
 
-		float decel = cg_touch_lookDecel->value * ( float )inputFrameTime * 0.001f;
+		float decel = cg_touch_lookDecel->value * ( float )cg_inputFrameTime * 0.001f;
 		float xdist = ( float )touch.x - viewpad.x;
 		float ydist = ( float )touch.y - viewpad.y;
 		viewpad.x += xdist * decel;
@@ -768,7 +768,7 @@ static void CG_AddTouchViewAngles( vec3_t viewAngles, float flip ) {
 
 		cg_touch_t &touch = cg_touches[viewpad.touch];
 
-		float speed = cg_touch_lookSens->value * inputFrameTime * 0.001f * CG_GetSensitivityScale( 1.0f, 0.0f );
+		float speed = cg_touch_lookSens->value * cg_inputFrameTime * 0.001f * CG_GetSensitivityScale( 1.0f, 0.0f );
 		float scale = 1.0f / cgs.pixelRatio;
 
 		float angle = ( ( float )touch.y - viewpad.y ) * scale;
@@ -882,7 +882,7 @@ COMMON
 * CG_CenterView
 */
 static void CG_CenterView( void ) {
-	inputCenterView = true;
+	cg_inputCenterView = true;
 }
 
 /*
@@ -1027,10 +1027,10 @@ unsigned int CG_GetButtonBits( void ) {
 * Adds view rotation from all kinds of input devices.
 *
 * @param viewAngles view angles to modify
-* @param frameTime  real frame time
-* @param flip       horizontal flipping direction
+* @param flipped    horizontal flipping direction
 */
-void CG_AddViewAngles( vec3_t viewAngles, bool flipped ) {
+void CG_AddViewAngles( vec3_t viewAngles ) {
+	bool flipped = cg_flip->integer != 0;
 	float flip = ( flipped ? -1.0f : 1.0f );
 
 	CG_AddKeysViewAngles( viewAngles );
@@ -1041,9 +1041,9 @@ void CG_AddViewAngles( vec3_t viewAngles, bool flipped ) {
 
 	CG_AddMouseViewAngles( viewAngles, flipped );
 
-	if( inputCenterView ) {
+	if( cg_inputCenterView ) {
 		viewAngles[PITCH] = -SHORT2ANGLE( cg.predictedPlayerState.pmove.delta_angles[PITCH] );
-		inputCenterView = false;
+		cg_inputCenterView = false;
 	}
 }
 
@@ -1051,16 +1051,26 @@ void CG_AddViewAngles( vec3_t viewAngles, bool flipped ) {
 * CG_AddMovement
 */
 void CG_AddMovement( vec3_t movement ) {
-	CG_AddKeysMovement( movement );
-	CG_AddGamepadMovement( movement );
-	CG_AddTouchMovement( movement );
+	vec3_t dm;
+	bool flipped = cg_flip->integer != 0;
+
+	VectorClear( dm );
+
+	CG_AddKeysMovement( dm );
+	CG_AddGamepadMovement( dm );
+	CG_AddTouchMovement( dm );
+
+	if( flipped )
+		dm[0] = dm[0] * -1.0;
+
+	VectorAdd( movement, dm, movement );
 }
 
 /*
 * CG_UpdateInput
 */
 void CG_UpdateInput( int frameTime ) {
-	inputFrameTime = frameTime;
+	cg_inputFrameTime = frameTime;
 
 	CG_GamepadFrame();
 
@@ -1071,8 +1081,9 @@ void CG_UpdateInput( int frameTime ) {
 * CG_ClearInputState
 */
 void CG_ClearInputState( void ) {
-	cg_gamepad_accelPitch = 1.0f;
-	cg_gamepad_accelYaw = 1.0f;
+	cg_inputFrameTime = 0;
+	cg_gamepadAccelPitch = 1.0f;
+	cg_gamepadAccelYaw = 1.0f;
 
 	CG_ClearHUDInputState();
 }

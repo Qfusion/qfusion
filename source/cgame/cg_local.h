@@ -966,8 +966,6 @@ int CG_AsyncGetRequest( const char *resource, void ( *done_cb )( int status, con
 const char *CG_TranslateString( const char *string );
 const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size );
 
-void CG_GetTouchMovement( vec3_t movement );
-
 //
 // cg_svcmds.c
 //
@@ -1002,6 +1000,8 @@ typedef struct {
 
 extern cg_chasecam_t chaseCam;
 
+extern cvar_t *cg_flip;
+
 extern cvar_t *cg_thirdPerson;
 extern cvar_t *cg_thirdPersonAngle;
 extern cvar_t *cg_thirdPersonRange;
@@ -1020,7 +1020,7 @@ void CG_StartFallKickEffect( int bounceTime );
 float CG_GetSensitivityScale( float sens, float zoomSens );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
 float CG_ViewSmoothFallKick( void );
-void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped );
+void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime );
 void CG_AddKickAngles( vec3_t viewangles );
 bool CG_ChaseStep( int step );
 bool CG_SwitchChaseCamMode( void );
@@ -1166,13 +1166,16 @@ void CG_LaserBeamEffect( centity_t *cent );
 
 
 //
-// cg_chat.c
+// cg_chat.cpp
 //
 void CG_InitChat( cg_gamechat_t *chat );
 void CG_StackChatString( cg_gamechat_t *chat, const char *str );
 void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, int fontSize,
 				  int width, int height, int padding_x, int padding_y, vec4_t backColor, struct shader_s *backShader );
 
+//
+// cg_input.cpp
+//
 void CG_InitInput( void );
 void CG_ShutdownInput( void );
 void CG_UpdateInput( int frameTime );
@@ -1181,7 +1184,7 @@ void CG_ClearInputState( void );
 void CG_MouseMove( int mx, int my );
 
 unsigned int CG_GetButtonBits( void );
-void CG_AddViewAngles( vec3_t viewAngles, bool flipped );
+void CG_AddViewAngles( vec3_t viewAngles );
 void CG_AddMovement( vec3_t movement );
 
 /**
@@ -1192,5 +1195,7 @@ void CG_AddMovement( vec3_t movement );
  * @param keysSize output string buffer size
  */
 void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize );
+
+void CG_GetTouchMovement( vec3_t movement );
 
 //=================================================
