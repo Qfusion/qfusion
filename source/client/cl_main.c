@@ -1949,7 +1949,7 @@ static void CL_InitLocal( void ) {
 	cl_stereo =     Cvar_Get( "cl_stereo", "0", CVAR_ARCHIVE );
 
 	cl_maxfps =     Cvar_Get( "cl_maxfps", "250", CVAR_ARCHIVE );
-	cl_sleep =      Cvar_Get( "cl_sleep", "0", CVAR_ARCHIVE );
+	cl_sleep =      Cvar_Get( "cl_sleep", "1", CVAR_ARCHIVE );
 	cl_pps =        Cvar_Get( "cl_pps", "40", CVAR_ARCHIVE );
 	cl_compresspackets =    Cvar_Get( "cl_compresspackets", "1", CVAR_ARCHIVE );
 
@@ -2513,7 +2513,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 			cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED ||
 			!VID_AppIsActive() || VID_AppIsMinimized(); // FIXME: not sure about listen server here..
 
-		if( sleep && minMsec - extraMsec >= 1 ) {
+		if( sleep && minMsec - extraMsec > 1 ) {
 			Sys_Sleep( minMsec - extraMsec - 1 );
 		}
 		return;
