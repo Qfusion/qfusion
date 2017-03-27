@@ -414,16 +414,15 @@ void CG_MouseMove( int mx, int my ) {
 * Adds view rotation from mouse.
 *
 * @param viewAngles view angles to modify
-* @param flip       horizontal flipping direction
 */
-static void CG_AddMouseViewAngles( vec3_t viewAngles, bool flipped ) {
+static void CG_AddMouseViewAngles( vec3_t viewAngles ) {
 	if( !mouse_x && !mouse_y ) {
 		return;
 	}
 
 	// add mouse X/Y movement to cmd
-	viewAngles[YAW] -= ( m_yaw->value * mouse_x ) * ( flipped ? -1.0 : 1.0 );
-	viewAngles[PITCH] += ( m_pitch->value * mouse_y );
+	viewAngles[YAW] -= m_yaw->value * mouse_x;
+	viewAngles[PITCH] += m_pitch->value * mouse_y;
 }
 
 /*
@@ -495,9 +494,8 @@ static void CG_GamepadFrame( void ) {
  * Adds view rotation from the gamepad.
  *
  * @param viewAngles view angles to modify
- * @param flip       horizontal flipping direction
  */
-static void CG_AddGamepadViewAngles( vec3_t viewAngles, float flip ) {
+static void CG_AddGamepadViewAngles( vec3_t viewAngles ) {
 	vec4_t sticks;
 	trap_IN_GetThumbsticks( sticks );
 
@@ -515,7 +513,7 @@ static void CG_AddGamepadViewAngles( vec3_t viewAngles, float flip ) {
 	float value = ( fabs( axisValue ) - threshold ) / ( 1.0f - threshold ); // Smoothly apply the dead zone.
 	if( value > 0.0f ) {
 		// Quadratic interpolation.
-		viewAngles[YAW] -= cg_inputFrameTime * 0.001f * flip *
+		viewAngles[YAW] -= cg_inputFrameTime * 0.001f *
 						   value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepadAccelYaw *
 						   cg_gamepad_yawSpeed->value * CG_GetSensitivityScale( cg_gamepad_yawSpeed->value, 0.0f );
 	}
@@ -756,7 +754,7 @@ static int CG_GetTouchButtonBits( void ) {
 	return buttons;
 }
 
-static void CG_AddTouchViewAngles( vec3_t viewAngles, float flip ) {
+static void CG_AddTouchViewAngles( vec3_t viewAngles ) {
 	cg_touchpad_t &viewpad = cg_touchpads[TOUCHPAD_VIEW];
 	if( viewpad.touch >= 0 ) {
 		if( cg_touch_lookThres->modified ) {
@@ -782,7 +780,7 @@ static void CG_AddTouchViewAngles( vec3_t viewAngles, float flip ) {
 		}
 
 		angle = ( viewpad.x - ( float )touch.x ) * scale;
-		dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f ) * flip;
+		dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
 		angle = fabs( angle ) - cg_touch_lookThres->value;
 		if( angle > 0.0f ) {
 			viewAngles[YAW] += angle * dir * speed;
@@ -1030,16 +1028,20 @@ unsigned int CG_GetButtonBits( void ) {
 * @param flipped    horizontal flipping direction
 */
 void CG_AddViewAngles( vec3_t viewAngles ) {
+	vec3_t am;
 	bool flipped = cg_flip->integer != 0;
-	float flip = ( flipped ? -1.0f : 1.0f );
+	
+	VectorClear( am );
 
-	CG_AddKeysViewAngles( viewAngles );
+	CG_AddKeysViewAngles( am );
+	CG_AddGamepadViewAngles( am );
+	CG_AddTouchViewAngles( am );
+	CG_AddMouseViewAngles( am );
 
-	CG_AddGamepadViewAngles( viewAngles, flip );
-
-	CG_AddTouchViewAngles( viewAngles, flip );
-
-	CG_AddMouseViewAngles( viewAngles, flipped );
+	if( flipped ) {
+		am[YAW] = -am[YAW];
+	}
+	VectorAdd( viewAngles, am, viewAngles );
 
 	if( cg_inputCenterView ) {
 		viewAngles[PITCH] = -SHORT2ANGLE( cg.predictedPlayerState.pmove.delta_angles[PITCH] );
@@ -1060,9 +1062,9 @@ void CG_AddMovement( vec3_t movement ) {
 	CG_AddGamepadMovement( dm );
 	CG_AddTouchMovement( dm );
 
-	if( flipped )
+	if( flipped ) {
 		dm[0] = dm[0] * -1.0;
-
+	}
 	VectorAdd( movement, dm, movement );
 }
 
