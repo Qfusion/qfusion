@@ -1392,6 +1392,16 @@ public:
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
 };
 
+class BotWalkToBestNearbyTacticalSpotMovementAction: public BotBaseMovementAction
+{
+    inline void SetupMovementToTacticalSpot(BotMovementPredictionContext *context, const vec3_t spotOrigin);
+    inline void SetupMovementInTargetArea(BotMovementPredictionContext *context);
+public:
+    DECLARE_MOVEMENT_ACTION_CONSTRUCTOR(BotWalkToBestNearbyTacticalSpotMovementAction, COLOR_RGB(0, 72, 128));
+    void PlanPredictionStep(BotMovementPredictionContext *context) override;
+    void CheckPredictionStepResults(BotMovementPredictionContext *context) override;
+};
+
 class BotCombatDodgeSemiRandomlyToTargetMovementAction: public BotBaseMovementAction
 {
     int minTravelTimeToTarget;

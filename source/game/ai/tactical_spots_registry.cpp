@@ -176,8 +176,7 @@ void TacticalSpotsRegistry::SetupMutualSpotsVisibility()
 
             // Do not test against any entities using G_Trace() as these tests are expensive and pointless in this case.
             // Test only against the solid world.
-            trap_CM_TransformedBoxTrace(&trace, currSpot.origin, testedSpot.origin,
-                                        mins, maxs, nullptr, MASK_SOLID, nullptr, nullptr);
+            SolidWorldTrace(&trace, currSpot.origin, testedSpot.origin, mins, maxs);
             bool areOriginsMutualVisible = (trace.fraction == 1.0f);
 
             for (unsigned n = 0; n < 8; ++n)
@@ -196,7 +195,7 @@ void TacticalSpotsRegistry::SetupMutualSpotsVisibility()
                         testedSpotBounds[(m >> 1) & 1][1],
                         testedSpotBounds[(m >> 0) & 1][2]
                     };
-                    trap_CM_TransformedBoxTrace(&trace, from, to, mins, maxs, nullptr, MASK_SOLID, nullptr, nullptr);
+                    SolidWorldTrace(&trace, from, to, mins, maxs);
                     // If all 64 traces succeed, the visibility is a half of the maximal score
                     visibility += 2 * (unsigned char)trace.fraction;
                 }
@@ -1079,4 +1078,72 @@ Vec3 TacticalSpotsRegistry::MakeDodgeDangerDir(const OriginParams &originParams,
         }
     }
     return result;
+}
+
+bool TacticalSpotsRegistry::FindClosestToTargetWalkableSpot(const OriginParams &originParams,
+                                                            int targetAreaNum,
+                                                            vec3_t *spotOrigin) const
+{
+    uint16_t spotNums[MAX_SPOTS];
+    uint16_t insideSpotNum;
+    uint16_t numSpots = FindSpotsInRadius(originParams, spotNums, &insideSpotNum);
+
+    const auto *routeCache = originParams.routeCache;
+    const int originAreaNum = originParams.originAreaNum;
+    const int allowedTravelFlags = originParams.allowedTravelFlags;
+
+    // Assume that max allowed travel time to spot does not exceed travel time
+    // required to cover the search radius walking with 250 units of speed
+    const int maxTravelTimeToSpotWalking = (int)(originParams.searchRadius / 250.0f);
+
+    const int currTravelTimeToTarget = routeCache->TravelTimeToGoalArea(originAreaNum, targetAreaNum, allowedTravelFlags);
+    if (!currTravelTimeToTarget)
+        return false;
+
+    trace_t trace;
+
+    const TacticalSpot *bestSpot = nullptr;
+    int bestCombinedTravelTime = -1;
+    int travelTimeToSpotWalking, travelTimeFromSpotToTarget;
+
+    for (uint16_t i = 0; i < numSpots; ++i)
+    {
+        const uint16_t spotNum = spotNums[i];
+        const auto &spot = spots[spotNum];
+
+        travelTimeToSpotWalking = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, TFL_WALK);
+        if (!travelTimeToSpotWalking)
+            continue;
+
+        // Due to triangle inequality travelTimeToSpotWalking + travelTimeFromSpotToTarget >= currTravelTimeToTarget.
+        // We can reject spots that does not look like short-range reachable by walking though
+        if (travelTimeToSpotWalking > maxTravelTimeToSpotWalking)
+            continue;
+
+        travelTimeFromSpotToTarget = routeCache->TravelTimeToGoalArea(originAreaNum, spot.aasAreaNum, allowedTravelFlags);
+        if (!travelTimeFromSpotToTarget)
+            continue;
+
+        if (travelTimeFromSpotToTarget > currTravelTimeToTarget)
+            continue;
+
+        int combinedTravelTime = travelTimeToSpotWalking + travelTimeFromSpotToTarget;
+        if (combinedTravelTime <= bestCombinedTravelTime)
+            continue;
+
+        SolidWorldTrace(&trace, originParams.origin, spot.origin);
+        if (trace.fraction != 1.0f)
+            continue;
+
+        bestCombinedTravelTime = combinedTravelTime;
+        bestSpot = &spot;
+    }
+
+    if (bestSpot)
+    {
+        VectorCopy(bestSpot->origin, *spotOrigin);
+        return true;
+    }
+
+    return false;
 }

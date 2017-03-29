@@ -238,4 +238,19 @@ void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, i
 void GetHashAndLength(const char *str, unsigned *hash, unsigned *length);
 unsigned GetHashForLength(const char *str, unsigned length);
 
+// A cheaper version of G_Trace() that does not check against entities
+inline void SolidWorldTrace(trace_t *trace, const vec3_t from, const vec3_t to,
+							const vec3_t mins = vec3_origin, const vec3_t maxs = vec3_origin)
+{
+    assert(from);
+	float *from_ = const_cast<float *>(from);
+	assert(to);
+	float *to_ = const_cast<float *>(to);
+	assert(mins);
+	float *mins_ = const_cast<float *>(mins);
+	assert(maxs);
+	float *maxs_ = const_cast<float *>(maxs);
+	trap_CM_TransformedBoxTrace(trace, from_, to_, mins_, maxs_, nullptr, MASK_SOLID, nullptr, nullptr);
+}
+
 #endif

@@ -77,6 +77,7 @@ class Bot: public Ai
     friend class BotBunnyStraighteningReachChainMovementAction;
     friend class BotBunnyToBestShortcutAreaMovementAction;
     friend class BotBunnyInVelocityDirectionMovementAction;
+    friend class BotWalkToBestNearbyTacticalSpotMovementAction;
     friend class BotCombatDodgeSemiRandomlyToTargetMovementAction;
 public:
     static constexpr auto PREFERRED_TRAVEL_FLAGS =
@@ -313,6 +314,7 @@ private:
     BotBunnyStraighteningReachChainMovementAction bunnyStraighteningReachChainMovementAction;
     BotBunnyToBestShortcutAreaMovementAction bunnyToBestShortcutAreaMovementAction;
     BotBunnyInVelocityDirectionMovementAction bunnyInVelocityDirectionMovementAction;
+    BotWalkToBestNearbyTacticalSpotMovementAction walkToBestNearbyTacticalSpotMovementAction;
     BotCombatDodgeSemiRandomlyToTargetMovementAction combatDodgeSemiRandomlyToTargetMovementAction;
 
     BotMovementState movementState;

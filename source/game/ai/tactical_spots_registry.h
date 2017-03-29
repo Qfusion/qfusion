@@ -4,6 +4,7 @@
 #include "ai_local.h"
 #include "ai_aas_route_cache.h"
 #include "static_vector.h"
+#include "bot.h"
 
 class TacticalSpotsRegistry
 {
@@ -18,6 +19,8 @@ public:
         float searchRadius;
         AiAasRouteCache *routeCache;
         int originAreaNum;
+        int preferredTravelFlags;
+        int allowedTravelFlags;
     public:
         OriginParams(const edict_t *originEntity_, float searchRadius_, AiAasRouteCache *routeCache_)
             : originEntity(originEntity_), searchRadius(searchRadius_), routeCache(routeCache_)
@@ -25,6 +28,8 @@ public:
             VectorCopy(originEntity_->s.origin, this->origin);
             const AiAasWorld *aasWorld = AiAasWorld::Instance();
             originAreaNum = aasWorld->IsLoaded() ? aasWorld->FindAreaNum(originEntity) : 0;
+            preferredTravelFlags = Bot::PREFERRED_TRAVEL_FLAGS;
+            allowedTravelFlags = Bot::ALLOWED_TRAVEL_FLAGS;
         }
 
         OriginParams(const vec3_t origin_, float searchRadius_, AiAasRouteCache *routeCache_)
@@ -33,6 +38,8 @@ public:
             VectorCopy(origin_, this->origin);
             const AiAasWorld *aasWorld = AiAasWorld::Instance();
             originAreaNum = aasWorld->IsLoaded() ? aasWorld->FindAreaNum(origin) : 0;
+            preferredTravelFlags = Bot::PREFERRED_TRAVEL_FLAGS;
+            allowedTravelFlags = Bot::ALLOWED_TRAVEL_FLAGS;
         }
 
         inline Vec3 MinBBoxBounds(float minHeightAdvantage = 0.0f) const
@@ -173,10 +180,6 @@ public:
         DodgeDangerProblemParams(const Vec3 &dangerHitPoint_, const Vec3 &dangerDirection_, bool avoidSplashDamage_)
             : dangerHitPoint(dangerHitPoint_), dangerDirection(dangerDirection_), avoidSplashDamage(avoidSplashDamage_) {}
     };
-private:
-    static constexpr uint16_t MAX_SPOTS = 2048;
-    static constexpr uint16_t MIN_GRID_CELL_SIDE = 512;
-    static constexpr uint16_t MAX_GRID_DIMENSION = 32;
 
     struct TacticalSpot
     {
@@ -185,6 +188,10 @@ private:
         vec3_t absMaxs;
         int aasAreaNum;
     };
+private:
+    static constexpr uint16_t MAX_SPOTS = 2048;
+    static constexpr uint16_t MIN_GRID_CELL_SIDE = 512;
+    static constexpr uint16_t MAX_GRID_DIMENSION = 32;
 
     // i-th element contains a spot for i=spotNum
     TacticalSpot *spots;
@@ -327,6 +334,8 @@ public:
 
     int FindEvadeDangerSpots(const OriginParams &originParams, const DodgeDangerProblemParams &problemParams,
                              vec3_t *spotOrigins, int maxSpots) const;
+
+    bool FindClosestToTargetWalkableSpot(const OriginParams &originParams, int targetAreaNum, vec3_t *spotOrigin) const;
 };
 
 #endif

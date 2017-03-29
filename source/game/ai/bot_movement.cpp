@@ -1,6 +1,7 @@
 #include "bot.h"
 #include "bot_movement.h"
 #include "ai_aas_world.h"
+#include "tactical_spots_registry.h"
 
 #ifndef PUBLIC_BUILD
 #define CHECK_ACTION_SUGGESTION_LOOPS
@@ -11,21 +12,6 @@
 #if 0
 #define ENABLE_MOVEMENT_DEBUG_OUTPUT
 #endif
-
-// A cheaper version of G_Trace() that does not check against entities
-inline void SolidWorldTrace(trace_t *trace, const vec3_t from, const vec3_t to,
-                            const vec3_t mins = vec3_origin, const vec3_t maxs = vec3_origin)
-{
-    assert(from);
-    float *from_ = const_cast<float *>(from);
-    assert(to);
-    float *to_ = const_cast<float *>(to);
-    assert(mins);
-    float *mins_ = const_cast<float *>(mins);
-    assert(maxs);
-    float *maxs_ = const_cast<float *>(maxs);
-    trap_CM_TransformedBoxTrace(trace, from_, to_, mins_, maxs_, nullptr, MASK_SOLID, nullptr, nullptr);
-}
 
 inline float GetPMoveStatValue(const player_state_t *playerState, int statIndex, float defaultValue)
 {
@@ -1190,7 +1176,7 @@ inline BotBaseMovementAction &BotBaseMovementAction::DefaultBunnyAction()
 }
 inline BotBaseMovementAction &BotBaseMovementAction::FallbackBunnyAction()
 {
-    return self->ai->botRef->bunnyInVelocityDirectionMovementAction;
+    return self->ai->botRef->walkToBestNearbyTacticalSpotMovementAction;
 }
 inline BotFlyUntilLandingMovementAction &BotBaseMovementAction::FlyUntilLandingAction()
 {
@@ -2283,8 +2269,7 @@ void BotCampASpotMovementAction::OnApplicationSequenceStopped(BotMovementPredict
 
 void BotBunnyInVelocityDirectionMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
 {
-    auto *suggestedAction = &DummyAction();
-    if (!GenericCheckIsActionEnabled(context, suggestedAction))
+    if (!GenericCheckIsActionEnabled(context, &FallbackBunnyAction()))
         return;
 
     const auto &entityPhysicsState = context->movementState->entityPhysicsState;
@@ -2618,7 +2603,7 @@ int BotBunnyToBestShortcutAreaMovementAction::FindBestShortcutArea(BotMovementPr
 
 void BotBunnyToBestShortcutAreaMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
 {
-    auto *suggestedAction = &FallbackBunnyAction();
+    auto *suggestedAction = &self->ai->botRef->bunnyInVelocityDirectionMovementAction;
     if (!GenericCheckIsActionEnabled(context, suggestedAction))
         return;
 
@@ -3532,6 +3517,166 @@ void BotGenericRunBunnyingMovementAction::BeforePlanning()
         else if (walljumpingMode == WalljumpingMode::ALWAYS)
             this->isDisabledForPlanning = true;
     }
+}
+
+void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementInTargetArea(BotMovementPredictionContext *context)
+{
+    Vec3 intendedMoveVec(context->NavTargetOrigin());
+    intendedMoveVec -= context->movementState->entityPhysicsState.Origin();
+    intendedMoveVec.NormalizeFast();
+
+    int keyMoves[2];
+    if (context->IsCloseToNavTarget())
+        context->EnvironmentTraceCache().MakeKeyMovesToTarget(context, intendedMoveVec, keyMoves);
+    else
+        context->EnvironmentTraceCache().MakeRandomizedKeyMovesToTarget(context, intendedMoveVec, keyMoves);
+
+    auto *botInput = &context->record->botInput;
+    botInput->SetForwardMovement(keyMoves[0]);
+    botInput->SetRightMovement(keyMoves[1]);
+    botInput->intendedLookVec = intendedMoveVec;
+    botInput->isUcmdSet = true;
+    botInput->isLookVecSet = true;
+    botInput->canOverrideLookVec = true;
+}
+
+void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementToTacticalSpot(BotMovementPredictionContext *context,
+                                                                                const vec_t *spotOrigin)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    auto *botInput = &context->record->botInput;
+
+    botInput->intendedLookVec.Set(spotOrigin);
+    botInput->intendedLookVec -= entityPhysicsState.Origin();
+    botInput->intendedLookVec.NormalizeFast();
+    botInput->isLookVecSet = true;
+    botInput->isUcmdSet = true;
+
+    if (!self->ai->botRef->GetMiscTactics().shouldAttack || !self->ai->botRef->GetSelectedEnemies().AreValid())
+    {
+        if (botInput->intendedLookVec.Dot(entityPhysicsState.ForwardDir()) > 0.3f)
+        {
+            botInput->SetForwardMovement(1);
+            return;
+        }
+    }
+
+    int keyMoves[2];
+    context->EnvironmentTraceCache().MakeRandomizedKeyMovesToTarget(context, botInput->intendedLookVec, keyMoves);
+    botInput->SetForwardMovement(keyMoves[0]);
+    botInput->SetRightMovement(keyMoves[1]);
+    botInput->canOverrideLookVec = true;
+}
+
+void BotWalkToBestNearbyTacticalSpotMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    if (!GenericCheckIsActionEnabled(context, &DummyAction()))
+        return;
+
+    int navTargetAreaNum = context->NavTargetAasAreaNum();
+    if (!navTargetAreaNum)
+    {
+        this->isDisabledForPlanning = true;
+        return;
+    }
+
+    // Walk to the nav target in this case
+    if (context->IsInNavTargetArea())
+    {
+        SetupMovementInTargetArea(context);
+        return;
+    }
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    // If bot is in air or on ground and has high speed (not reachable by ground circle strafing)
+    if (!entityPhysicsState.GroundEntity() || entityPhysicsState.Speed() > 1.5f * context->GetRunSpeed())
+    {
+        if (!context->IsCloseToNavTarget())
+        {
+            Debug("Cannot apply action: prevent losing a significant speed while running on ground\n");
+            context->cannotApplyAction = true;
+            context->actionSuggestedByAction = &DummyAction();
+        }
+    }
+
+    vec3_t spotOrigin;
+    TacticalSpotsRegistry::OriginParams originParams(entityPhysicsState.Origin(), 192, self->ai->botRef->routeCache);
+    if (TacticalSpotsRegistry::Instance()->FindClosestToTargetWalkableSpot(originParams, navTargetAreaNum, &spotOrigin))
+    {
+        SetupMovementToTacticalSpot(context, spotOrigin);
+        return;
+    }
+
+    // Check whether the nav target can be reached by walking
+    const auto *routeCache = self->ai->botRef->routeCache;
+    const int currAreaNum = entityPhysicsState.CurrAasAreaNum();
+    if (!routeCache->TravelTimeToGoalArea(currAreaNum, navTargetAreaNum, TFL_WALK))
+    {
+        const int droppedToFloorAreaNum = entityPhysicsState.DroppedToFloorAasAreaNum();
+        if (currAreaNum == droppedToFloorAreaNum)
+        {
+            this->isDisabledForPlanning = true;
+            context->SetPendingRollback();
+            return;
+        }
+        if (!routeCache->TravelTimeToGoalArea(droppedToFloorAreaNum, navTargetAreaNum, TFL_WALK))
+        {
+            this->isDisabledForPlanning = true;
+            context->SetPendingRollback();
+            return;
+        }
+    }
+
+    trace_t trace;
+    Vec3 navTargetOrigin(context->NavTargetOrigin());
+    SolidWorldTrace(&trace, entityPhysicsState.Origin(), navTargetOrigin.Data(), playerbox_stand_mins, playerbox_stand_maxs);
+    if (trace.fraction != 1.0f)
+    {
+        this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
+        return;
+    }
+
+    // The bot is not in the nav target area, use generic movement to a tactical spot
+    SetupMovementToTacticalSpot(context, navTargetOrigin.Data());
+}
+
+void BotWalkToBestNearbyTacticalSpotMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction::CheckPredictionStepResults(context);
+    if (context->cannotApplyAction || context->isCompleted)
+        return;
+
+    const unsigned sequenceDuration = SequenceDuration(context);
+    if (sequenceDuration < 250)
+        return;
+
+    const auto &newEntityPhysicsState = context->movementState->entityPhysicsState;
+    if (newEntityPhysicsState.IsHighAboveGround() && !context->PhysicsStateBeforeStep().IsHighAboveGround())
+    {
+        Debug("A prediction step has lead to falling\n");
+        this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
+        return;
+    }
+
+    if (newEntityPhysicsState.Speed() < context->GetRunSpeed() - 10)
+    {
+        Debug("The bot speed is still below run speed after 250 millis\n");
+        this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
+        return;
+    }
+
+    if (originAtSequenceStart.SquareDistanceTo(newEntityPhysicsState.Origin()) < 48 * 48)
+    {
+        Debug("The bot is likely to be stuck after 250 millis\n");
+        this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
+    }
+
+    Debug("There is enough predicted data ahead\n");
+    context->isCompleted = true;
 }
 
 inline unsigned BotEnvironmentTraceCache::SelectNonBlockedDirs(BotMovementPredictionContext *context, unsigned *nonBlockedDirIndices)
