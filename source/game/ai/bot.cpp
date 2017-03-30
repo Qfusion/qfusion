@@ -108,13 +108,12 @@ void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput, BotMovementPredictio
     toPointDir -= entityPhysicsState->Origin();
     toPointDir.NormalizeFast();
 
-    botInput->intendedLookVec = toPointDir;
-    botInput->isLookVecSet = true;
+    botInput->SetIntendedLookDir(toPointDir, true);
+    botInput->isLookDirSet = true;
 
     float turnSpeedMultiplier = pendingLookAtPoint.TurnSpeedMultiplier();
     Vec3 newAngles = GetNewViewAngles(entityPhysicsState->Angles().Data(), toPointDir, frameTime, turnSpeedMultiplier);
-    botInput->alreadyComputedAngles = newAngles;
-    botInput->hasAlreadyComputedAngles = true;
+    botInput->SetAlreadyComputedAngles(newAngles);
 
     botInput->canOverrideLookVec = false;
     botInput->canOverridePitch = false;
@@ -123,7 +122,7 @@ void Bot::ApplyPendingTurnToLookAtPoint(BotInput *botInput, BotMovementPredictio
 void Bot::ApplyInput(BotInput *input, BotMovementPredictionContext *context)
 {
     // It is legal (there are no enemies and no nav targets in some moments))
-    if (!input->isLookVecSet)
+    if (!input->isLookDirSet)
     {
         //const float *origin = entityPhysicsState ? entityPhysicsState->Origin() : self->s.origin;
         //AITools_DrawColorLine(origin, (Vec3(-32, +32, -32) + origin).Data(), COLOR_RGB(192, 0, 0), 0);
@@ -141,23 +140,21 @@ void Bot::ApplyInput(BotInput *input, BotMovementPredictionContext *context)
         auto *entityPhysicsState = &context->movementState->entityPhysicsState;
         if (!input->hasAlreadyComputedAngles)
         {
-            Vec3 newAngles(GetNewViewAngles(entityPhysicsState->Angles(), input->intendedLookVec,
+            Vec3 newAngles(GetNewViewAngles(entityPhysicsState->Angles(), input->IntendedLookDir(),
                                             context->predictionStepMillis, input->TurnSpeedMultiplier()));
-            newAngles.CopyTo(input->alreadyComputedAngles);
-            input->hasAlreadyComputedAngles = true;
+            input->SetAlreadyComputedAngles(newAngles);
         }
-        entityPhysicsState->SetAngles(input->alreadyComputedAngles);
+        entityPhysicsState->SetAngles(input->AlreadyComputedAngles());
     }
     else
     {
         if (!input->hasAlreadyComputedAngles)
         {
-            Vec3 newAngles(GetNewViewAngles(self->s.angles, input->intendedLookVec,
+            Vec3 newAngles(GetNewViewAngles(self->s.angles, input->IntendedLookDir(),
                                             game.frametime, input->TurnSpeedMultiplier()));
-            newAngles.CopyTo(input->alreadyComputedAngles);
-            input->hasAlreadyComputedAngles = true;
+            input->SetAlreadyComputedAngles(newAngles);
         }
-        input->alreadyComputedAngles.CopyTo(self->s.angles);
+        input->AlreadyComputedAngles().CopyTo(self->s.angles);
     }
 }
 

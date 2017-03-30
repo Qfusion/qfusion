@@ -141,34 +141,34 @@ void Bot::FireWeapon(BotInput *input)
 
 void Bot::LookAtEnemy(float coordError, const vec_t *fire_origin, vec_t *target, BotInput *input)
 {
+    if (!input->canOverrideLookVec && !input->canOverridePitch && input->isLookDirSet)
+        return;
+
+    Vec3 toTargetDir(target);
+    toTargetDir -= fire_origin;
+    toTargetDir.NormalizeFast();
+
     for (int i = 0; i < 3; ++i)
         target[i] += (aimingRandomHolder.GetCoordRandom(i) - 0.5f) * coordError;
 
-    Vec3 toTargetVec(target);
-    toTargetVec -= fire_origin;
-    float angularSpeedMultiplier = 0.5f + 0.5f * Skill();
     // If there is no look vec set or it can be completely overridden
-    if (!input->isLookVecSet || input->canOverrideLookVec)
+    if (!input->isLookDirSet || input->canOverrideLookVec)
     {
-        input->intendedLookVec = toTargetVec;
-        input->alreadyComputedAngles = GetNewViewAngles(self->s.angles, toTargetVec, game.frametime, angularSpeedMultiplier);
+        input->SetIntendedLookDir(toTargetDir);
+        Vec3 newAngles = GetNewViewAngles(self->s.angles, toTargetDir, game.frametime, 1.0f);
+        input->SetAlreadyComputedAngles(newAngles);
+        return;
     }
-    // (in case when XY view movement is exactly specified and Z view movement can vary)
-    else if (input->canOverridePitch)
-    {
-        // These angles can be intended by the already set look vec (can be = not always ideal due to limited view speed).
-        Vec3 intendedAngles = GetNewViewAngles(self->s.angles, input->intendedLookVec, game.frametime, angularSpeedMultiplier);
-        // These angles can be required to hit the target
-        Vec3 targetAimAngles = GetNewViewAngles(self->s.angles, toTargetVec, game.frametime, angularSpeedMultiplier);
-        // Override pitch in hope this will be sufficient for hitting a target
-        intendedAngles.Data()[PITCH] = targetAimAngles.Data()[PITCH];
-        input->hasAlreadyComputedAngles = true;
-    }
-    // Otherwise do not modify already set look vec (a shot can be made if it is occasionally sufficient for it).
 
-    input->isLookVecSet = true;
-    input->canOverrideLookVec = false;
-    input->canOverridePitch = false;
+    // (in case when XY view movement is exactly specified and Z view movement can vary)
+    assert(input->canOverridePitch);
+    // These angles can be intended by the already set look vec (can be = not always ideal due to limited view speed).
+    Vec3 intendedAngles = GetNewViewAngles(self->s.angles, input->IntendedLookDir(), game.frametime, 1.0f);
+    // These angles can be required to hit the target
+    Vec3 targetAimAngles = GetNewViewAngles(self->s.angles, toTargetDir, game.frametime, 1.0f);
+    // Override pitch in hope this will be sufficient for hitting a target
+    intendedAngles.Data()[PITCH] = targetAimAngles.Data()[PITCH];
+    input->SetAlreadyComputedAngles(intendedAngles);
 }
 
 void Bot::PressAttack(const GenericFireDef *fireDef,
@@ -194,7 +194,7 @@ bool Bot::CheckShot(const AimParams &aimParams,
 {
     // Convert modified angles to direction back (due to limited view speed it rarely will match given direction)
     Vec3 newLookDir(0, 0, 0);
-    AngleVectors(input->alreadyComputedAngles.Data(), newLookDir.Data(), nullptr, nullptr);
+    AngleVectors(input->AlreadyComputedAngles().Data(), newLookDir.Data(), nullptr, nullptr);
 
     Vec3 toTarget(aimParams.fireTarget);
     toTarget -= aimParams.fireOrigin;

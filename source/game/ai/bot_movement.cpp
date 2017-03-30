@@ -286,8 +286,9 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
     if (!record->botInput.canOverrideLookVec)
     {
         Vec3 actualLookDir(self->ai->botRef->entityPhysicsState->ForwardDir());
-        float *intendedLookVec = record->botInput.intendedLookVec.Data();
-        VectorLerp(actualLookDir.Data(), inputLerpFrac, intendedLookVec, intendedLookVec);
+        Vec3 intendedLookVec(record->botInput.IntendedLookDir());
+        VectorLerp(actualLookDir.Data(), inputLerpFrac, intendedLookVec.Data(), intendedLookVec.Data());
+        record->botInput.SetIntendedLookDir(intendedLookVec);
     }
 
     return nextPredictedAction->action;
@@ -347,14 +348,16 @@ typedef BotEnvironmentTraceCache::ObstacleAvoidanceResult ObstacleAvoidanceResul
 
 inline ObstacleAvoidanceResult BotMovementPredictionContext::TryAvoidFullHeightObstacles(float correctionFraction)
 {
-    auto *intendedLookVec = &this->record->botInput.intendedLookVec;
-    return EnvironmentTraceCache().TryAvoidFullHeightObstacles(this, intendedLookVec, correctionFraction);
+    Vec3 intendedLookVec(this->record->botInput.IntendedLookDir());
+    return EnvironmentTraceCache().TryAvoidFullHeightObstacles(this, &intendedLookVec, correctionFraction);
+    this->record->botInput.SetIntendedLookDir(intendedLookVec);
 }
 
 inline ObstacleAvoidanceResult BotMovementPredictionContext::TryAvoidJumpableObstacles(float correctionFraction)
 {
-    auto *intendedLookVec = &this->record->botInput.intendedLookVec;
-    return EnvironmentTraceCache().TryAvoidJumpableObstacles(this, intendedLookVec, correctionFraction);
+    Vec3 intendedLookVec(this->record->botInput.IntendedLookDir());
+    return EnvironmentTraceCache().TryAvoidJumpableObstacles(this, &intendedLookVec, correctionFraction);
+    this->record->botInput.SetIntendedLookDir(intendedLookVec);
 }
 
 static void Intercepted_PredictedEvent(int entNum, int ev, int parm)
@@ -650,6 +653,8 @@ inline void BotMovementPredictionContext::SaveActionOnStack(BotBaseMovementActio
     // We expect that record state is a saved state BEFORE the step!
     //topOfStack->entityPhysicsState = this->movementState->entityPhysicsState;
     topOfStack->action = action;
+    // Make sure the angles can always be modified for input interpolation or aiming
+    topOfStack->record.botInput.hasAlreadyComputedAngles = false;
     topOfStack->timestamp = level.time + this->totalMillisAhead;
     // Check the value for sanity, huge values are a product of negative values wrapping in unsigned context
     Assert(this->predictionStepMillis < 100);
@@ -1082,7 +1087,7 @@ void BotMovementPredictionContext::SetDefaultBotInput()
         return;
     }
 
-    botInput->isLookVecSet = true;
+    botInput->isLookDirSet = true;
     botInput->canOverrideLookVec = false;
     botInput->canOverridePitch = true;
     botInput->canOverrideUcmd = false;
@@ -1101,18 +1106,21 @@ void BotMovementPredictionContext::SetDefaultBotInput()
                 const auto &nextReach = AiAasWorld::Instance()->Reachabilities()[nextReachNum];
                 if (DistanceSquared(entityPhysicsState.Origin(), nextReach.start) < 12 * 12)
                 {
-                    Vec3 reachDir(nextReach.end);
-                    reachDir -= nextReach.start;
-                    reachDir.NormalizeFast();
-                    botInput->intendedLookVec = (16.0f * reachDir + nextReach.start);
-                    botInput->intendedLookVec -= entityPhysicsState.Origin();
+                    Vec3 intendedLookVec(nextReach.end);
+                    intendedLookVec -= nextReach.start;
+                    intendedLookVec.NormalizeFast();
+                    intendedLookVec *= 16.0f;
+                    intendedLookVec += nextReach.start;
+                    intendedLookVec -= entityPhysicsState.Origin();
                     if (entityPhysicsState.GroundEntity())
-                        botInput->intendedLookVec.Z() = 0;
+                        intendedLookVec.Z() = 0;
+                    botInput->SetIntendedLookDir(intendedLookVec);
                 }
                 else
                 {
-                    VectorCopy(nextReach.start, botInput->intendedLookVec.Data());
-                    botInput->intendedLookVec -= entityPhysicsState.Origin();
+                    Vec3 intendedLookVec3(nextReach.start);
+                    intendedLookVec3 -= entityPhysicsState.Origin();
+                    botInput->SetIntendedLookDir(intendedLookVec3);
                 }
                 // Save a cached value and return
                 defaultBotInputsCachesStack.SetCachedValue(*botInput);
@@ -1122,8 +1130,9 @@ void BotMovementPredictionContext::SetDefaultBotInput()
         else
         {
             // Look at the nav target
-            botInput->intendedLookVec = NavTargetOrigin();
-            botInput->intendedLookVec -= entityPhysicsState.Origin();
+            Vec3 intendedLookVec(NavTargetOrigin());
+            intendedLookVec -= entityPhysicsState.Origin();
+            botInput->SetIntendedLookDir(intendedLookVec);
             // Save a cached value and return
             defaultBotInputsCachesStack.SetCachedValue(*botInput);
             return;
@@ -1134,13 +1143,12 @@ void BotMovementPredictionContext::SetDefaultBotInput()
     if (entityPhysicsState.Speed() > 1)
     {
         // Follow the existing velocity direction
-        VectorCopy(entityPhysicsState.Velocity(), botInput->intendedLookVec.Data());
+        botInput->SetIntendedLookDir(entityPhysicsState.Velocity());
     }
     else
     {
         // The existing velocity is too low to extract a direction from it, keep looking in the same direction
-        botInput->alreadyComputedAngles.Set(entityPhysicsState.Angles());
-        botInput->hasAlreadyComputedAngles = true;
+        botInput->SetAlreadyComputedAngles(entityPhysicsState.Angles());
     }
 
     // Allow overriding look angles for aiming (since they are set to dummy ones)
@@ -1593,6 +1601,7 @@ void Bot::MovementFrame(BotInput *input)
 
     BotMovementActionRecord movementActionRecord;
     BotBaseMovementAction *movementAction = movementPredictionContext.GetActionAndRecordForCurrTime(&movementActionRecord);
+
     movementAction->ExecActionRecord(&movementActionRecord, input, nullptr);
 
     CheckTargetProximity();
@@ -1996,9 +2005,9 @@ bool BotLandOnSavedAreasMovementAction::TryLandingStepOnArea(int areaNum, BotMov
 
     botInput->Clear();
     botInput->SetForwardMovement(1);
-    botInput->intendedLookVec = areaPoint;
-    botInput->intendedLookVec -= entityPhysicsState.Origin();
-    botInput->isLookVecSet = true;
+    Vec3 intendedLookVec(areaPoint);
+    intendedLookVec -= entityPhysicsState.Origin();
+    botInput->SetIntendedLookDir(intendedLookVec);
     botInput->isUcmdSet = true;
 
     return true;
@@ -2164,7 +2173,7 @@ void BotCampASpotMovementAction::PlanPredictionStep(BotMovementPredictionContext
 
     context->predictionStepMillis = 16;
     // Keep actual look dir as-is, adjust position by keys only
-    botInput->intendedLookVec = actualLookDir;
+    botInput->SetIntendedLookDir(actualLookDir, true);
     // This means we may strafe randomly
     if (distance / campingSpotState->Radius() < 1.0f)
     {
@@ -2287,9 +2296,8 @@ void BotBunnyInVelocityDirectionMovementAction::PlanPredictionStep(BotMovementPr
         return;
 
     auto *botInput = &context->record->botInput;
-    botInput->intendedLookVec.Set(entityPhysicsState.Velocity());
-    botInput->isLookVecSet = true;
-    if (!SetupBunnying(botInput->intendedLookVec, context))
+    botInput->SetIntendedLookDir(entityPhysicsState.Velocity());
+    if (!SetupBunnying(botInput->IntendedLookDir(), context))
     {
         context->SetPendingRollback();
         return;
@@ -2476,24 +2484,27 @@ void BotBunnyStraighteningReachChainMovementAction::PlanPredictionStep(BotMoveme
 
     if (this->hasSavedIntendedLookVec)
     {
-        context->record->botInput.intendedLookVec = this->savedIntendedLookVec;
+        context->record->botInput.SetIntendedLookDir(this->savedIntendedLookVec, true);
     }
     else
     {
         context->SetDefaultBotInput();
-        if (!TryStraightenLookVec(&context->record->botInput.intendedLookVec, context))
+        Vec3 intendedLookVec(context->record->botInput.IntendedLookDir());
+        if (!TryStraightenLookVec(&intendedLookVec, context))
         {
             context->SetPendingRollback();
             return;
         }
-        this->savedIntendedLookVec = context->record->botInput.intendedLookVec;
+        intendedLookVec.NormalizeFast();
+        context->record->botInput.SetIntendedLookDir(intendedLookVec, true);
+        this->savedIntendedLookVec = intendedLookVec;
         this->hasSavedIntendedLookVec = true;
     }
 
     if (isTryingObstacleAvoidance)
         context->TryAvoidJumpableObstacles(SuggestObstacleAvoidanceCorrectionFraction(context));
 
-    if (!SetupBunnying(context->record->botInput.intendedLookVec, context))
+    if (!SetupBunnying(context->record->botInput.IntendedLookDir(), context))
     {
         context->SetPendingRollback();
         return;
@@ -2540,7 +2551,7 @@ int BotBunnyToBestShortcutAreaMovementAction::FindBestShortcutArea(BotMovementPr
             return 0;
     }
 
-    float side = 64.0f + 256.0f * self->ai->botRef->Skill();
+    float side = 64.0f + 384.0f * self->ai->botRef->Skill();
     Vec3 boxMins(-side, -side, -112), boxMaxs(+side, +side, 0);
     boxMins += entityPhysicsState.Origin();
     boxMaxs += entityPhysicsState.Origin();
@@ -2612,7 +2623,7 @@ void BotBunnyToBestShortcutAreaMovementAction::PlanPredictionStep(BotMovementPre
 
     if (this->hasSavedIntendedLookVec)
     {
-        context->record->botInput.intendedLookVec = this->savedIntendedLookVec;
+        context->record->botInput.SetIntendedLookDir(this->savedIntendedLookVec, true);
     }
     else
     {
@@ -2624,16 +2635,19 @@ void BotBunnyToBestShortcutAreaMovementAction::PlanPredictionStep(BotMovementPre
         }
 
         const auto &area = AiAasWorld::Instance()->Areas()[bestAreaNum];
-        context->record->botInput.intendedLookVec.Set(area.center[0], area.center[1], area.mins[2] + 32);
-        context->record->botInput.intendedLookVec -= context->movementState->entityPhysicsState.Origin();
-        this->savedIntendedLookVec = context->record->botInput.intendedLookVec;
+
+        Vec3 intendedLookVec(area.center[0], area.center[1], area.mins[2] + 32);
+        intendedLookVec -= context->movementState->entityPhysicsState.Origin();
+        intendedLookVec.NormalizeFast();
+        context->record->botInput.SetIntendedLookDir(intendedLookVec, true);
+        this->savedIntendedLookVec = intendedLookVec;
         this->hasSavedIntendedLookVec = true;
     }
 
     if (isTryingObstacleAvoidance)
         context->TryAvoidJumpableObstacles(SuggestObstacleAvoidanceCorrectionFraction(context));
 
-    if (!SetupBunnying(context->record->botInput.intendedLookVec, context))
+    if (!SetupBunnying(context->record->botInput.IntendedLookDir(), context))
     {
         context->SetPendingRollback();
         return;
@@ -3534,9 +3548,8 @@ void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementInTargetArea(Bo
     auto *botInput = &context->record->botInput;
     botInput->SetForwardMovement(keyMoves[0]);
     botInput->SetRightMovement(keyMoves[1]);
-    botInput->intendedLookVec = intendedMoveVec;
+    botInput->SetIntendedLookDir(intendedMoveVec, true);
     botInput->isUcmdSet = true;
-    botInput->isLookVecSet = true;
     botInput->canOverrideLookVec = true;
 }
 
@@ -3546,15 +3559,15 @@ void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementToTacticalSpot(
     const auto &entityPhysicsState = context->movementState->entityPhysicsState;
     auto *botInput = &context->record->botInput;
 
-    botInput->intendedLookVec.Set(spotOrigin);
-    botInput->intendedLookVec -= entityPhysicsState.Origin();
-    botInput->intendedLookVec.NormalizeFast();
-    botInput->isLookVecSet = true;
+    Vec3 intendedLookVec(spotOrigin);
+    intendedLookVec -= entityPhysicsState.Origin();
+    intendedLookVec.NormalizeFast();
+    botInput->SetIntendedLookDir(intendedLookVec);
     botInput->isUcmdSet = true;
 
     if (!self->ai->botRef->GetMiscTactics().shouldAttack || !self->ai->botRef->GetSelectedEnemies().AreValid())
     {
-        if (botInput->intendedLookVec.Dot(entityPhysicsState.ForwardDir()) > 0.3f)
+        if (intendedLookVec.Dot(entityPhysicsState.ForwardDir()) > 0.3f)
         {
             botInput->SetForwardMovement(1);
             return;
@@ -3562,7 +3575,7 @@ void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementToTacticalSpot(
     }
 
     int keyMoves[2];
-    context->EnvironmentTraceCache().MakeRandomizedKeyMovesToTarget(context, botInput->intendedLookVec, keyMoves);
+    context->EnvironmentTraceCache().MakeRandomizedKeyMovesToTarget(context, intendedLookVec, keyMoves);
     botInput->SetForwardMovement(keyMoves[0]);
     botInput->SetRightMovement(keyMoves[1]);
     botInput->canOverrideLookVec = true;

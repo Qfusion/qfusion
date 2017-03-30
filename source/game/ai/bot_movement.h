@@ -81,15 +81,13 @@ public:
 
 class alignas(4) BotInput
 {
-public:
-    // This can't be packed without substantial data loss since user are not forced to set it normalized
-    Vec3 intendedLookVec;
+    // Todo: Pack since it is required to be normalized now?
+    Vec3 intendedLookDir;
     // A copy of self->s.angles for modification
     // We do not want to do deeply hidden angles update in the aiming functions,
     // the BotInput should be only mutable thing in the related code.
     // Should be copied back to self->s.angles if it has been modified when the BotInput gets applied.
     Vec3 alreadyComputedAngles;
-private:
     unsigned char turnSpeedMultiplier;
     signed ucmdForwardMove: 2;
     signed ucmdSideMove: 2;
@@ -100,7 +98,7 @@ private:
 public:
     bool fireScriptWeapon: 1;
     bool isUcmdSet: 1;
-    bool isLookVecSet: 1;
+    bool isLookDirSet: 1;
     bool hasAlreadyComputedAngles: 1;
     bool canOverrideUcmd: 1;
     bool shouldOverrideUcmd: 1;
@@ -110,7 +108,7 @@ public:
     bool applyExtraViewPrecision: 1;
 
     inline BotInput()
-        : intendedLookVec(NAN, NAN, NAN),
+        : intendedLookDir(NAN, NAN, NAN),
           alreadyComputedAngles(NAN, NAN, NAN),
           turnSpeedMultiplier(16)
     {
@@ -179,6 +177,47 @@ public:
             ucmd->buttons |= BUTTON_SPECIAL;
         if (walkButton)
             ucmd->buttons |= BUTTON_WALK;
+    }
+
+    inline void SetAlreadyComputedAngles(const Vec3 &angles)
+    {
+        alreadyComputedAngles = angles;
+        hasAlreadyComputedAngles = true;
+    }
+
+    inline const Vec3 &AlreadyComputedAngles() const
+    {
+#ifndef PUBLIC_BUILD
+        if (!hasAlreadyComputedAngles)
+            abort();
+#endif
+        return alreadyComputedAngles;
+    }
+
+    inline void SetIntendedLookDir(const Vec3 &intendedLookVec, bool alreadyNormalized = false)
+    {
+        SetIntendedLookDir(intendedLookVec.Data(), alreadyNormalized);
+    }
+
+    inline void SetIntendedLookDir(const vec3_t intendedLookVec, bool alreadyNormalized = false)
+    {
+        this->intendedLookDir.Set(intendedLookVec);
+        if (!alreadyNormalized)
+            this->intendedLookDir.NormalizeFast();
+#ifndef PUBLIC_BUILD
+        else if (fabsf(this->intendedLookDir.NormalizeFast() - 1.0f) > 0.1f)
+            abort();
+#endif
+        this->isLookDirSet = true;
+    }
+
+    inline const Vec3 &IntendedLookDir() const
+    {
+#ifndef PUBLIC_BUILD
+        if (isLookDirSet)
+            abort();
+#endif
+        return intendedLookDir;
     }
 };
 
@@ -754,12 +793,6 @@ public:
 
         // Use the method and not a static var (the method result should be inlined w/o any static memory access)
         static inline HitWhileRunningTestResult Failure() { return HitWhileRunningTestResult(); }
-
-        inline void CopyToBotInput(BotInput *botInput) const
-        {
-            botInput->canOverrideLookVec = this->canHitAsIs;
-            botInput->canOverridePitch = this->mayHitOverridingPitch;
-        }
     };
 private:
     struct PredictedMovementAction
