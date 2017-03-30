@@ -155,6 +155,12 @@ void BotBrain::Frame()
         baseOffensiveness = 0.5f;
 
     botEnemyPool.Update();
+
+    // Prevent selected nav entity timeout when planning should be skipped.
+    // Otherwise sometimes bot might be blocked in the middle of some movement action
+    // having no actual goals.
+    if (ShouldSkipPlanning())
+        selectedNavEntity.timeoutAt += game.frametime;
 }
 
 void BotBrain::Think()
@@ -535,6 +541,13 @@ bool BotBrain::ShouldSkipPlanning() const
 {
     // Skip planning moving on a jumppad
     if (self->ai->botRef->movementState.jumppadMovementState.IsActive())
+        return true;
+
+    // Skip planning while preparing for a weaponjump / landing after it
+    if (self->ai->botRef->movementState.weaponJumpMovementState.IsActive())
+        return true;
+
+    if (self->ai->botRef->movementState.flyUntilLandingMovementState.IsActive())
         return true;
 
     // Skip planning moving on an elevator
