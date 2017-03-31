@@ -240,6 +240,12 @@ static void CL_SetUcmdButtons( usercmd_t *ucmd ) {
 static void CL_RefreshUcmd( usercmd_t *ucmd, int msec, bool ready ) {
 	ucmd->msec += msec;
 
+	if( ucmd->msec ) {
+		CL_SetUcmdMovement( ucmd );
+
+		CL_SetUcmdButtons( ucmd );
+	}
+
 	if( ready ) {
 		ucmd->serverTimeStamp = cl.serverTime; // return the time stamp to the server
 
@@ -251,16 +257,16 @@ static void CL_RefreshUcmd( usercmd_t *ucmd, int msec, bool ready ) {
 		if( ucmd->msec < 1 ) {
 			ucmd->msec = 1;
 		}
+
+		// snap push fracs so client and server version match
+		ucmd->forwardmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->forwardmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
+		ucmd->sidemove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->sidemove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
+		ucmd->upmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->upmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
 	}
 
 	ucmd->angles[0] = ANGLE2SHORT( cl.viewangles[0] );
 	ucmd->angles[1] = ANGLE2SHORT( cl.viewangles[1] );
 	ucmd->angles[2] = ANGLE2SHORT( cl.viewangles[2] );
-
-	// snap push fracs so client and server version match
-	ucmd->forwardmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->forwardmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
-	ucmd->sidemove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->sidemove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
-	ucmd->upmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->upmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
 }
 
 /*
@@ -421,10 +427,6 @@ static void CL_CreateNewUserCommand( int realMsec ) {
 	cl.cmd_time[cl.cmdNum & CMD_MASK] = cls.realtime;
 
 	ucmd = &cl.cmds[cl.cmdNum & CMD_MASK];
-
-	CL_SetUcmdMovement( ucmd );
-
-	CL_SetUcmdButtons( ucmd );
 
 	CL_RefreshUcmd( ucmd, realMsec, true );
 
