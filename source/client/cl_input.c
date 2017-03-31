@@ -30,7 +30,7 @@ cvar_t *cl_ucmdFPS;
 cvar_t *cl_ucmdTimeNudge;
 #endif
 
-static void CL_NewUserCommand( int realMsec );
+static void CL_CreateNewUserCommand( int realMsec );
 
 /*
 * CL_MouseSet
@@ -105,26 +105,9 @@ void CL_ClearInputState( void ) {
 }
 
 /*
-* CL_UserInputFrame
-*/
-void CL_UserInputFrame( int realMsec ) {
-	// let the mouse activate or deactivate
-	IN_Frame();
-
-	// get new key events
-	Sys_SendKeyEvents();
-
-	// get new key events from mice or external controllers
-	IN_Commands();
-
-	// process console commands
-	Cbuf_Execute();
-
-	CL_NewUserCommand( realMsec );
-}
-
-/*
 * CL_UpdateGameInput
+*
+* Notifies cgame of new frame, refreshes input timings, coordinates and angles
 */
 static void CL_UpdateGameInput( int frameTime ) {
 	int mx, my;
@@ -143,6 +126,29 @@ static void CL_UpdateGameInput( int frameTime ) {
 	if( cls.key_dest == key_game || ( ( cls.key_dest == key_console ) && Cvar_Value( "in_grabinconsole" ) != 0 ) ) {
 		CL_GameModule_AddViewAngles( cl.viewangles );
 	}
+}
+
+/*
+* CL_UserInputFrame
+*/
+void CL_UserInputFrame( int realMsec ) {
+	// let the mouse activate or deactivate
+	IN_Frame();
+
+	// get new key events
+	Sys_SendKeyEvents();
+
+	// get new key events from mice or external controllers
+	IN_Commands();
+
+	// refresh mouse angles and movement velocity
+	CL_UpdateGameInput( realMsec );
+
+	// create a new usercmd_t structure for this frame
+	CL_CreateNewUserCommand( realMsec );
+
+	// process console commands
+	Cbuf_Execute();
 }
 
 /*
@@ -387,23 +393,21 @@ static bool CL_NextUserCommandTimeReached( int realMsec ) {
 
 	allMsec = 0;
 
+	if( cls.state < CA_ACTIVE ) {
+		return false;
+	}
+
 	// send a new user command message to the server
 	return true;
 }
 
 /*
-* CL_NewUserCommand
+* CL_CreateNewUserCommand
 */
-static void CL_NewUserCommand( int realMsec ) {
+static void CL_CreateNewUserCommand( int realMsec ) {
 	usercmd_t *ucmd;
 
-	CL_UpdateGameInput( realMsec );
-
 	if( !CL_NextUserCommandTimeReached( realMsec ) ) {
-		return;
-	}
-
-	if( cls.state < CA_ACTIVE ) {
 		return;
 	}
 
