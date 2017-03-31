@@ -2467,7 +2467,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 	CL_UpdateSnapshot();
 	CL_AdjustServerTime( gameMsec );
-	CL_UserInputFrame();
+	CL_UserInputFrame( realMsec );
 	CL_NetFrame( realMsec, gameMsec );
 	CL_MM_Frame();
 
@@ -2538,8 +2538,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 	// allow rendering DLL change
 	VID_CheckChanges();
-
-	CL_NewUserCommand( allRealMsec );
 
 	// update the screen
 	if( host_speeds->integer ) {

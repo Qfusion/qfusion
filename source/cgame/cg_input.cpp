@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
+static unsigned cg_inputTime;
 static int cg_inputFrameTime;
 static bool cg_inputCenterView;
 
@@ -108,7 +109,7 @@ static void CG_KeyDown( kbutton_t *b ) {
 	c = trap_Cmd_Argv( 2 );
 	b->downtime = atoi( c );
 	if( !b->downtime ) {
-		b->downtime = cg.realTime - 100;
+		b->downtime = cg_inputTime - 100;
 	}
 
 	b->state |= 1 + 2; // down + impulse down
@@ -209,8 +210,8 @@ static float CG_KeyState( kbutton_t *key ) {
 
 	if( key->state ) {
 		// still down
-		msec += cg.realTime - key->downtime;
-		key->downtime = cg.realTime;
+		msec += cg_inputTime - key->downtime;
+		key->downtime = cg_inputTime;
 	}
 
 	if( !cg_inputFrameTime )
@@ -1072,6 +1073,7 @@ void CG_AddMovement( vec3_t movement ) {
 * CG_InputFrame
 */
 void CG_InputFrame( int frameTime ) {
+	cg_inputTime = trap_Milliseconds();
 	cg_inputFrameTime = frameTime;
 
 	CG_GamepadFrame();

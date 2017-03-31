@@ -30,6 +30,8 @@ cvar_t *cl_ucmdFPS;
 cvar_t *cl_ucmdTimeNudge;
 #endif
 
+static void CL_NewUserCommand( int realMsec );
+
 /*
 * CL_MouseSet
 */
@@ -105,7 +107,7 @@ void CL_ClearInputState( void ) {
 /*
 * CL_UserInputFrame
 */
-void CL_UserInputFrame( void ) {
+void CL_UserInputFrame( int realMsec ) {
 	// let the mouse activate or deactivate
 	IN_Frame();
 
@@ -117,6 +119,8 @@ void CL_UserInputFrame( void ) {
 
 	// process console commands
 	Cbuf_Execute();
+
+	CL_NewUserCommand( realMsec );
 }
 
 /*
@@ -390,7 +394,7 @@ static bool CL_NextUserCommandTimeReached( int realMsec ) {
 /*
 * CL_NewUserCommand
 */
-void CL_NewUserCommand( int realMsec ) {
+static void CL_NewUserCommand( int realMsec ) {
 	usercmd_t *ucmd;
 
 	CL_UpdateGameInput( realMsec );

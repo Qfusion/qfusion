@@ -501,8 +501,7 @@ void CL_ShutDownServerList( void );
 //
 void CL_InitInput( void );
 void CL_ShutdownInput( void );
-void CL_UserInputFrame( void );
-void CL_NewUserCommand( int realMsec );
+void CL_UserInputFrame( int realMsec );
 void CL_WriteUcmdsToMessage( msg_t *msg );
 
 /**
