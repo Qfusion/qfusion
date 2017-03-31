@@ -237,16 +237,21 @@ static void CL_SetUcmdButtons( usercmd_t *ucmd ) {
 *
 * Updates ucmd to use the most recent viewangles.
 */
-static void CL_FinishUcmd( usercmd_t *ucmd ) {
-	ucmd->serverTimeStamp = cl.serverTime; // return the time stamp to the server
+static void CL_FinishUcmd( usercmd_t *ucmd, bool ready ) {
+	ucmd->serverTimeStamp = 0;
+	ucmd->msec = 0;
 
-	if( cl.cmdNum > 0 ) {
-		ucmd->msec = ucmd->serverTimeStamp - cl.cmds[( cl.cmdNum - 1 ) & CMD_MASK].serverTimeStamp;
-	} else {
-		ucmd->msec = 20;
-	}
-	if( ucmd->msec < 1 ) {
-		ucmd->msec = 1;
+	if( ready ) {
+		ucmd->serverTimeStamp = cl.serverTime; // return the time stamp to the server
+
+		if( cl.cmdNum > 0 ) {
+			ucmd->msec = ucmd->serverTimeStamp - cl.cmds[( cl.cmdNum - 1 ) & CMD_MASK].serverTimeStamp;
+		} else {
+			ucmd->msec = 20;
+		}
+		if( ucmd->msec < 1 ) {
+			ucmd->msec = 1;
+		}
 	}
 
 	ucmd->angles[0] = ANGLE2SHORT( cl.viewangles[0] );
@@ -420,7 +425,7 @@ static void CL_CreateNewUserCommand( int realMsec ) {
 
 	CL_SetUcmdButtons( ucmd );
 
-	CL_FinishUcmd( ucmd );
+	CL_FinishUcmd( ucmd, true );
 
 	// advance head and init the new command
 	cls.ucmdHead++;
@@ -428,5 +433,5 @@ static void CL_CreateNewUserCommand( int realMsec ) {
 	memset( ucmd, 0, sizeof( usercmd_t ) );
 
 	// start up with the most recent viewangles
-	CL_FinishUcmd( ucmd );
+	CL_FinishUcmd( ucmd, false );
 }
