@@ -262,7 +262,7 @@ public:
        AiEntityPhysicsState *entityPhysicsState_,
        int preferredAasTravelFlags_,
        int allowedAasTravelFlags_,
-       float yawSpeed = 180.0f,
+       float yawSpeed = 270.0f,
        float pitchSpeed = 140.0f);
 
     virtual ~Ai() override {};
