@@ -34,11 +34,9 @@ public:
     inline bool IsEmpty() const { return navEntity == nullptr; }
     // Empty one is considered valid (until it times out)
     inline bool IsValid() const { return timeoutAt > level.time; }
-    inline void Invalidate()
+    inline void InvalidateNextFrame()
     {
-        navEntity = nullptr;
-        cost = std::numeric_limits<float>::max();
-        timeoutAt = level.time;
+        timeoutAt = level.time + 1;
     }
     // Avoid class/method name clash by using Get prefix
     inline const NavEntity *GetNavEntity() const

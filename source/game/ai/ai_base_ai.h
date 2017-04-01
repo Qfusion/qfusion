@@ -225,7 +225,7 @@ protected:
     void SetFrameAffinity(unsigned modulo, unsigned offset) override;
 
     void OnNavTargetSet(NavTarget *navTarget);
-    void OnNavTargetReset();
+    virtual void OnNavTargetTouchHandled() {};
 
     virtual void Frame() override;
     virtual void Think() override;

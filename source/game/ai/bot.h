@@ -239,6 +239,11 @@ protected:
         UpdateScriptWeaponsStatus();
     }
 
+    virtual void OnNavTargetTouchHandled() override
+    {
+        botBrain.selectedNavEntity.InvalidateNextFrame();
+    }
+
     virtual void TouchedOtherEntity(const edict_t *entity) override;
 private:
     void RegisterVisibleEnemies();

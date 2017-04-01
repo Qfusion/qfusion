@@ -304,7 +304,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
     {
         constexpr const char *format = "current goal entity %s is kept as still having best weight %.3f\n";
         Debug(format, currGoalNavEntity->Name(), bestWeight);
-        return SelectedNavEntity(bestNavEnt, bestNavEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 500);
+        return SelectedNavEntity(bestNavEnt, bestNavEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 4000);
     }
     else if (currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold)
     {
@@ -312,7 +312,7 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
             "current goal entity %s is kept as having weight %.3f good enough to not consider picking another one\n";
         // If currGoalEntWeight > 0, currLongTermGoalEnt is guaranteed to be non-null
         Debug(format, currGoalNavEntity->Name(), currGoalEntWeight);
-        return SelectedNavEntity(currGoalNavEntity, currGoalEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 300);
+        return SelectedNavEntity(currGoalNavEntity, currGoalEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 2500);
     }
     else
     {
@@ -325,6 +325,6 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity(const SelectedNavEntity
         {
             Debug("suggested %s weighted %.3f as a new long-term goal\n", bestNavEnt->Name(), bestWeight);
         }
-        return SelectedNavEntity(bestNavEnt, bestNavEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 400);
+        return SelectedNavEntity(bestNavEnt, bestNavEntCost, GetGoalWeight(bestNavEnt->Id()), level.time + 2500);
     }
 }

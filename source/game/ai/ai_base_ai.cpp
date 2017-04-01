@@ -161,10 +161,6 @@ void Ai::OnNavTargetSet(NavTarget *navTarget)
     */
 }
 
-void Ai::OnNavTargetReset()
-{
-}
-
 void Ai::TouchedEntity(edict_t *ent)
 {
     if (aiBaseBrain->HandleNavTargetTouch(ent))
@@ -172,7 +168,7 @@ void Ai::TouchedEntity(edict_t *ent)
         // Clear goal area num to ensure bot will not repeatedly try to reach that area even if he has no goals.
         // Usually it gets overwritten in this or next frame, when bot picks up next goal,
         // but sometimes there are no other goals to pick up.
-        OnNavTargetReset();
+        OnNavTargetTouchHandled();
         return;
     }
     TouchedOtherEntity(ent);

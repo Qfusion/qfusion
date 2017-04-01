@@ -4011,7 +4011,7 @@ void Bot::CheckTargetProximity()
     {
         if (botBrain.TryReachNavTargetByProximity())
         {
-            OnNavTargetReset();
+            OnNavTargetTouchHandled();
             return;
         }
     }

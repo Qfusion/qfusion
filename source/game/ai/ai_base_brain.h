@@ -426,7 +426,7 @@ protected:
     inline void ResetNavTarget()
     {
         this->navTarget = nullptr;
-        self->ai->aiRef->OnNavTargetReset();
+        self->ai->aiRef->OnNavTargetTouchHandled();
     }
 
     int FindAasParamToGoalArea(int goalAreaNum, int (AiAasRouteCache::*pathFindingMethod)(int, int, int) const) const;
