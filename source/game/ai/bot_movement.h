@@ -1125,14 +1125,16 @@ protected:
         return false;
     }
 
+public:
     struct AreaAndScore
     {
         int areaNum;
         float score;
+        AreaAndScore() {}
         AreaAndScore(int areaNum_, float score_): areaNum(areaNum_), score(score_) {}
         bool operator<(const AreaAndScore &that) const { return score > that.score; }
     };
-public:
+
     inline BotBaseMovementAction(class Bot *bot_, const char *name_, int debugColor_ = 0)
         : bot(bot_),
           name(name_),
@@ -1296,8 +1298,9 @@ public:
 class BotGenericRunBunnyingMovementAction: public BotBaseMovementAction
 {
 protected:
-    Vec3 savedIntendedLookVec;
-    bool hasSavedIntendedLookVec;
+    Vec3 hasLandedAtOrigin;
+    bool hasAlreadyLandedOnce;
+    unsigned sequenceDurationAtLanding;
 
     int minTravelTimeToNavTargetSoFar;
 
@@ -1367,7 +1370,7 @@ protected:
 public:
     BotGenericRunBunnyingMovementAction(class Bot *bot_, const char *name_, int debugColor_ = 0)
         : BotBaseMovementAction(bot_, name_, debugColor_),
-          savedIntendedLookVec(0, 0, 0),
+          hasLandedAtOrigin(0, 0, 0),
           minDesiredSpeedGainPerSecond(0.0f),
           tolerableSpeedLossSequentialMillis(300),
           tolerableUnreachableTargetSequentialMillis(700),
@@ -1390,28 +1393,66 @@ public:
 #define DECLARE_BUNNYING_MOVEMENT_ACTION_CONSTRUCTOR(name, debugColor_) \
     name(class Bot *bot_): BotGenericRunBunnyingMovementAction(bot_, #name, debugColor_)
 
-class BotBunnyStraighteningReachChainMovementAction: public BotGenericRunBunnyingMovementAction
+class BotBunnyTestingMultipleLookDirsMovementAction: public BotGenericRunBunnyingMovementAction
 {
-    bool TryStraightenLookVec(Vec3 *intendedLookVec, BotMovementPredictionContext *context);
+protected:
+    static constexpr auto MAX_SUGGESTED_LOOK_DIRS = 3;
+
+    StaticVector<Vec3, MAX_SUGGESTED_LOOK_DIRS> suggestedLookDirs;
+    unsigned maxSuggestedLookDirs;
+    unsigned currSuggestedLookDirNum;
+    BotBaseMovementAction *suggestedAction;
+
+    virtual void SaveSuggestedLookDirs(BotMovementPredictionContext *context) = 0;
+
+    // A helper method to select best N areas that is optimized for small areas count.
+    // Modifies the collection in-place putting best areas at its beginning.
+    // Returns the new end iterator for the selected areas range.
+    // The begin iterator is assumed to remain the same.
+    inline AreaAndScore *TakeBestCandidateAreas(AreaAndScore *inputBegin, AreaAndScore *inputEnd, unsigned maxAreas);
+
+    void SaveCandidateAreaDirs(BotMovementPredictionContext *context,
+                               AreaAndScore *candidateAreasBegin,
+                               AreaAndScore *candidateAreasEnd);
 public:
-    DECLARE_BUNNYING_MOVEMENT_ACTION_CONSTRUCTOR(BotBunnyStraighteningReachChainMovementAction, COLOR_RGB(0, 192, 192))
-    {
-        supportsObstacleAvoidance = true;
-        walljumpingMode = WalljumpingMode::TRY_FIRST;
-    }
+    BotBunnyTestingMultipleLookDirsMovementAction(class Bot *bot_, const char *name_, int debugColor_)
+        : BotGenericRunBunnyingMovementAction(bot_, name_, debugColor_),
+          maxSuggestedLookDirs(MAX_SUGGESTED_LOOK_DIRS) {}
+
+    void BeforePlanning() override;
+    void OnApplicationSequenceStarted(BotMovementPredictionContext *context) override;
+    void OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                              SequenceStopReason stopReason,
+                                              unsigned stoppedAtFrameIndex) override;
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
 };
 
-class BotBunnyToBestShortcutAreaMovementAction: public BotGenericRunBunnyingMovementAction
+class BotBunnyStraighteningReachChainMovementAction: public BotBunnyTestingMultipleLookDirsMovementAction
 {
-    int FindBestShortcutArea(BotMovementPredictionContext *context) const;
+    static constexpr const char *NAME = "BotBunnyStraighteningReachChainMovementAction";
+    void SaveSuggestedLookDirs(BotMovementPredictionContext *context) override;
+    // Returns candidates end iterator
+    AreaAndScore *SelectCandidateAreas(BotMovementPredictionContext *context,
+                                       AreaAndScore *candidatesBegin,
+                                       unsigned lastValidReachIndex);
 public:
-    DECLARE_BUNNYING_MOVEMENT_ACTION_CONSTRUCTOR(BotBunnyToBestShortcutAreaMovementAction, COLOR_RGB(255, 64, 0))
-    {
-        supportsObstacleAvoidance = false;
-        walljumpingMode = WalljumpingMode::TRY_FIRST;
-    }
-    void PlanPredictionStep(BotMovementPredictionContext *context) override;
+    BotBunnyStraighteningReachChainMovementAction(class Bot *bot_);
+};
+
+class BotBunnyToBestShortcutAreaMovementAction: public BotBunnyTestingMultipleLookDirsMovementAction
+{
+    static constexpr const char *NAME = "BotBunnyToBestShortcutAreaMovementAction";
+    static constexpr int MAX_BBOX_AREAS = 32;
+
+    inline int FindActualStartTravelTime(BotMovementPredictionContext *context);
+    void SaveSuggestedLookDirs(BotMovementPredictionContext *context) override;
+    inline int FindBBoxAreas(BotMovementPredictionContext *context, int *areaNums, int maxAreas);
+    // Returns candidates end iterator
+    AreaAndScore *SelectCandidateAreas(BotMovementPredictionContext *context,
+                                       AreaAndScore *candidatesBegin,
+                                       int startTravelTime);
+public:
+    BotBunnyToBestShortcutAreaMovementAction(class Bot *bot_);
 };
 
 class BotBunnyInVelocityDirectionMovementAction: public BotGenericRunBunnyingMovementAction

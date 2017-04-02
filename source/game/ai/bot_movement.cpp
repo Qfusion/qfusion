@@ -13,6 +13,8 @@
 #define ENABLE_MOVEMENT_DEBUG_OUTPUT
 #endif
 
+typedef BotBaseMovementAction::AreaAndScore AreaAndScore;
+
 inline float GetPMoveStatValue(const player_state_t *playerState, int statIndex, float defaultValue)
 {
     float value = playerState->pmove.stats[statIndex];
@@ -694,7 +696,7 @@ inline void BotMovementPredictionContext::SetPendingWeapon(int weapon)
 
 inline void BotMovementPredictionContext::SaveSuggestedActionForNextFrame(BotBaseMovementAction *action)
 {
-    Assert(!this->actionSuggestedByAction);
+    //Assert(!this->actionSuggestedByAction);
     this->actionSuggestedByAction = action;
 }
 
@@ -2319,31 +2321,196 @@ void BotBunnyInVelocityDirectionMovementAction::PlanPredictionStep(BotMovementPr
     TrySetWalljump(context);
 }
 
-bool BotBunnyStraighteningReachChainMovementAction::TryStraightenLookVec(Vec3 *intendedLookVec, BotMovementPredictionContext *context)
+void BotBunnyTestingMultipleLookDirsMovementAction::BeforePlanning()
 {
+    BotGenericRunBunnyingMovementAction::BeforePlanning();
+    currSuggestedLookDirNum = 0;
+    suggestedLookDirs.clear();
+
+    // Ensure the suggested action has been set in subtype constructor
+    Assert(suggestedAction);
+}
+
+void BotBunnyTestingMultipleLookDirsMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *ctx)
+{
+    BotGenericRunBunnyingMovementAction::OnApplicationSequenceStarted(ctx);
+    // If there is no dirs tested yet
+    if (currSuggestedLookDirNum == 0)
+    {
+        suggestedLookDirs.clear();
+        if (ctx->NavTargetAasAreaNum())
+            SaveSuggestedLookDirs(ctx);
+    }
+}
+
+void BotBunnyTestingMultipleLookDirsMovementAction::OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                                                                 SequenceStopReason stopReason,
+                                                                                 unsigned stoppedAtFrameIndex)
+{
+    BotGenericRunBunnyingMovementAction::OnApplicationSequenceStopped(context, stopReason, stoppedAtFrameIndex);
+    // If application sequence succeeded
+    if (stopReason != FAILED)
+    {
+        currSuggestedLookDirNum = 0;
+        return;
+    }
+
+    // If the action has been disabled due to prediction stack overflow
+    if (this->isDisabledForPlanning)
+        return;
+
+    // If rolling back is available for the current suggested dir
+    if (disabledForApplicationFrameIndex != context->savepointTopOfStackIndex)
+        return;
+
+    // If another suggested look dir exists
+    if (currSuggestedLookDirNum + 1 < suggestedLookDirs.size())
+    {
+        currSuggestedLookDirNum++;
+        // Allow the action application after the context rollback to savepoint
+        this->disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
+        // Ensure this action will be used after rollback
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+    // Otherwise use the first dir in a new sequence started on some other frame
+    currSuggestedLookDirNum = 0;
+}
+
+inline float SuggestObstacleAvoidanceCorrectionFraction(const BotMovementPredictionContext *context)
+{
+    // Might be negative!
+    float speedOverRunSpeed = context->movementState->entityPhysicsState.Speed() - context->GetRunSpeed();
+    if (speedOverRunSpeed > 500.0f)
+        return 0.15f;
+    return 0.35f - 0.20f * speedOverRunSpeed / 500.0f;
+}
+
+void BotBunnyTestingMultipleLookDirsMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    if (!GenericCheckIsActionEnabled(context, suggestedAction))
+        return;
+
+    // Do this test after GenericCheckIsActionEnabled(), otherwise disabledForApplicationFrameIndex does not get tested
+    if (currSuggestedLookDirNum >= suggestedLookDirs.size())
+    {
+        Debug("There is no suggested look dirs yet/left\n");
+        context->SetPendingRollback();
+        return;
+    }
+
+    if (!CheckCommonBunnyingActionPreconditions(context))
+        return;
+
+    context->record->botInput.SetIntendedLookDir(suggestedLookDirs[currSuggestedLookDirNum], true);
+
+    if (isTryingObstacleAvoidance)
+        context->TryAvoidJumpableObstacles(SuggestObstacleAvoidanceCorrectionFraction(context));
+
+    if (!SetupBunnying(context->record->botInput.IntendedLookDir(), context))
+    {
+        context->SetPendingRollback();
+        return;
+    }
+}
+
+inline AreaAndScore *BotBunnyTestingMultipleLookDirsMovementAction::TakeBestCandidateAreas(AreaAndScore *inputBegin,
+                                                                                           AreaAndScore *inputEnd,
+                                                                                           unsigned maxAreas)
+{
+    Assert(inputEnd >= inputBegin);
+    const uintptr_t numAreas = inputEnd - inputBegin;
+    const uintptr_t numResultAreas = numAreas < maxAreas ? numAreas : maxAreas;
+
+    // Move best area to the array head, repeat it for the array tail
+    for (uintptr_t i = 0, end = numResultAreas; i < end; ++i)
+    {
+        // Set the start area as a current best one
+        auto &startArea = *(inputBegin + i);
+        for (uintptr_t j = i + 1; j < numAreas; ++j)
+        {
+            auto &currArea = *(inputBegin + j);
+            // If current area is better (<) than the start one, swap these areas
+            if (currArea.score < startArea.score)
+                std::swap(currArea, startArea);
+        }
+    }
+
+    return inputBegin + numResultAreas;
+}
+
+void BotBunnyTestingMultipleLookDirsMovementAction::SaveCandidateAreaDirs(BotMovementPredictionContext *context,
+                                                                          AreaAndScore *candidateAreasBegin,
+                                                                          AreaAndScore *candidateAreasEnd)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const int navTargetAreaNum = context->NavTargetAasAreaNum();
+    const auto *aasAreas = AiAasWorld::Instance()->Areas();
+
+    AreaAndScore *takenAreasBegin = candidateAreasBegin;
+    unsigned maxAreas = suggestedLookDirs.capacity() - suggestedLookDirs.size();
+    AreaAndScore *takenAreasEnd = TakeBestCandidateAreas(candidateAreasBegin, candidateAreasEnd, maxAreas);
+
+    for (auto iter = takenAreasBegin; iter < takenAreasEnd; ++iter)
+    {
+        int areaNum = (*iter).areaNum;
+        if (areaNum != navTargetAreaNum)
+        {
+            Vec3 *toAreaDir = new(suggestedLookDirs.unsafe_grow_back())Vec3(aasAreas[areaNum].center);
+            toAreaDir->Z() = aasAreas[areaNum].mins[2] + 32.0f;
+            *toAreaDir -= entityPhysicsState.Origin();
+            toAreaDir->Z() *= Z_NO_BEND_SCALE;
+            toAreaDir->NormalizeFast();
+        }
+        else
+        {
+            Vec3 *toTargetDir = new(suggestedLookDirs.unsafe_grow_back())Vec3(context->NavTargetOrigin());
+            *toTargetDir -= entityPhysicsState.Origin();
+            toTargetDir->NormalizeFast();
+        }
+    }
+}
+
+BotBunnyStraighteningReachChainMovementAction::BotBunnyStraighteningReachChainMovementAction(Bot *bot_)
+    : BotBunnyTestingMultipleLookDirsMovementAction(bot_, NAME, COLOR_RGB(0, 192, 0))
+{
+    supportsObstacleAvoidance = true;
+    walljumpingMode = WalljumpingMode::TRY_FIRST;
+    maxSuggestedLookDirs = 3;
+    // The constructor cannot be defined in the header due to this bot member access
+    suggestedAction = &bot_->bunnyToBestShortcutAreaMovementAction;
+}
+
+void BotBunnyStraighteningReachChainMovementAction::SaveSuggestedLookDirs(BotMovementPredictionContext *context)
+{
+    Assert(suggestedLookDirs.empty());
     const auto &entityPhysicsState = context->movementState->entityPhysicsState;
     const int navTargetAasAreaNum = context->NavTargetAasAreaNum();
     Assert(navTargetAasAreaNum);
 
     // Do not modify look vec in this case (we assume its set to nav target)
     if (context->IsInNavTargetArea())
-        return true;
+    {
+        Vec3 *toTargetDir = new(suggestedLookDirs.unsafe_grow_back())Vec3(context->NavTargetOrigin());
+        *toTargetDir -= entityPhysicsState.Origin();
+        toTargetDir->NormalizeFast();
+        return;
+    }
 
     const auto &nextReachChain = context->NextReachChain();
     if (nextReachChain.empty())
     {
         Debug("Cannot straighten look vec: next reach. chain is empty\n");
-        return false;
+        return;
     }
 
     const AiAasWorld *aasWorld = AiAasWorld::Instance();
     const aas_reachability_t *aasReachabilities = aasWorld->Reachabilities();
-    const aas_area_t *aasAreas = aasWorld->Areas();
-    const aas_areasettings_t *aasAreaSettings = aasWorld->AreaSettings();
 
     unsigned lastValidReachIndex = std::numeric_limits<unsigned>::max();
-    const unsigned maxTestedReachabilities = std::min(16U, nextReachChain.size());
-    const aas_reachability_t *firstNonBunnyingReach = nullptr;
+    constexpr unsigned MAX_TESTED_REACHABILITIES = 16U;
+    const unsigned maxTestedReachabilities = std::min(MAX_TESTED_REACHABILITIES, nextReachChain.size());
+    const aas_reachability_t *reachStoppedAt = nullptr;
     for (unsigned i = 0; i < maxTestedReachabilities; ++i)
     {
         const auto &reach = aasReachabilities[nextReachChain[i].ReachNum()];
@@ -2351,7 +2518,7 @@ bool BotBunnyStraighteningReachChainMovementAction::TryStraightenLookVec(Vec3 *i
         {
             if (reach.traveltype != TRAVEL_JUMP && reach.traveltype != TRAVEL_STRAFEJUMP)
             {
-                firstNonBunnyingReach = &reach;
+                reachStoppedAt = &reach;
                 break;
             }
         }
@@ -2363,15 +2530,56 @@ bool BotBunnyStraighteningReachChainMovementAction::TryStraightenLookVec(Vec3 *i
     if (lastValidReachIndex > maxTestedReachabilities)
     {
         Debug("There were no supported for bunnying reachabilities\n");
-        return false;
+        return;
     }
     Assert(lastValidReachIndex < maxTestedReachabilities);
+
+    AreaAndScore candidates[MAX_TESTED_REACHABILITIES];
+    AreaAndScore *candidatesEnd = SelectCandidateAreas(context, candidates, lastValidReachIndex);
+
+    SaveCandidateAreaDirs(context, candidates, candidatesEnd);
+
+    if (suggestedLookDirs.size() == maxSuggestedLookDirs)
+        return;
+
+    // If there is a trigger entity in the reach chain, try keep looking at it
+    if (reachStoppedAt)
+    {
+        int travelType = reachStoppedAt->traveltype;
+        if (travelType == TRAVEL_TELEPORT || travelType == TRAVEL_JUMPPAD || travelType == TRAVEL_ELEVATOR)
+        {
+            Vec3 *toTriggerDir = new(suggestedLookDirs.unsafe_grow_back())Vec3(reachStoppedAt->start);
+            *toTriggerDir -= entityPhysicsState.Origin();
+            toTriggerDir->NormalizeFast();
+            return;
+        }
+    }
+
+    if (suggestedLookDirs.size() == 0)
+        Debug("Cannot straighten look vec: cannot find a suitable area in reach. chain to aim for\n");
+}
+
+AreaAndScore *BotBunnyStraighteningReachChainMovementAction::SelectCandidateAreas(BotMovementPredictionContext *context,
+                                                                                  AreaAndScore *candidatesBegin,
+                                                                                  unsigned lastValidReachIndex)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const auto &nextReachChain = context->NextReachChain();
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto *aasReachabilities = aasWorld->Reachabilities();
+    const auto *aasAreas = aasWorld->Areas();
+    const auto *aasAreaSettings = aasWorld->AreaSettings();
+    const int navTargetAasAreaNum = context->NavTargetAasAreaNum();
+
+    const float distanceThreshold = 192.0f + 128.0f * BoundedFraction(entityPhysicsState.Speed(), 700);
+
+    AreaAndScore *candidatesPtr = candidatesBegin;
+    float minScore = 0.0f;
 
     trace_t trace;
     Vec3 traceStartPoint(entityPhysicsState.Origin());
     traceStartPoint.Z() += playerbox_stand_viewheight;
-    int bestAreaNum = 0;
-    float bestScore = 0.0f;
+
     for (int i = lastValidReachIndex; i >= 0; --i)
     {
         const int reachNum = nextReachChain[i].ReachNum();
@@ -2383,9 +2591,9 @@ bool BotBunnyStraighteningReachChainMovementAction::TryStraightenLookVec(Vec3 *i
             continue;
 
         int areaFlags = areaSettings.areaflags;
-        if (areaFlags & AREA_DISABLED)
-            continue;
         if (!(areaFlags & AREA_GROUNDED))
+            continue;
+        if (areaFlags & AREA_DISABLED)
             continue;
 
         Vec3 areaPoint(area.center[0], area.center[1], area.mins[2] + 4.0f);
@@ -2398,135 +2606,78 @@ bool BotBunnyStraighteningReachChainMovementAction::TryStraightenLookVec(Vec3 *i
         }
 
         // Skip way too far areas (this is mainly an optimization for the following SolidWorldTrace() call)
-        if (DistanceSquared(area.center, entityPhysicsState.Origin()) > 350 * 350)
+        if (DistanceSquared(area.center, entityPhysicsState.Origin()) > distanceThreshold * distanceThreshold)
             continue;
 
         // Compute score first to cut off expensive tracing
-
+        const float prevMinScore = minScore;
         // Give far areas greater initial score
-        float score = 0.5f + 0.5f * ((float)i / (float)lastValidReachIndex);
-        // Try skip "junk" areas (sometimes these areas cannot be avoided in the shortest path)
-        if (areaFlags & AREA_JUNK)
-            score *= 0.1f;
-        // Give ledge areas a bit smaller score (sometimes these areas cannot be avoided in the shortest path)
-        if (areaFlags & AREA_LEDGE)
-            score *= 0.7f;
-        // Prefer not bounded by walls areas to avoid bumping into walls
-        if (!(areaFlags & AREA_WALL))
-            score *= 1.6f;
+        float score = 999999.0f;
+        if (areaNum != navTargetAasAreaNum)
+        {
+            score = 0.5f + 0.5f * ((float) i / (float) lastValidReachIndex);
+            // Try skip "junk" areas (sometimes these areas cannot be avoided in the shortest path)
+            if (areaFlags & AREA_JUNK)
+                score *= 0.1f;
+            // Give ledge areas a bit smaller score (sometimes these areas cannot be avoided in the shortest path)
+            if (areaFlags & AREA_LEDGE)
+                score *= 0.7f;
+            // Prefer not bounded by walls areas to avoid bumping into walls
+            if (!(areaFlags & AREA_WALL))
+                score *= 1.6f;
 
-        if (score <= bestScore)
-            continue;
+            // Do not test lower score areas if there is already enough tested candidates
+            if (score > minScore)
+                minScore = score;
+            else if (candidatesPtr - candidatesBegin >= maxSuggestedLookDirs)
+                continue;
+        }
 
         // Make sure the bot can see the ground
         SolidWorldTrace(&trace, traceStartPoint.Data(), areaPoint.Data());
         if (trace.fraction != 1.0f)
+        {
+            // Restore minScore (it might have been set to the value of the rejected area score on this loop step)
+            minScore = prevMinScore;
             continue;
-
-        bestScore = score;
-        bestAreaNum = areaNum;
-    }
-
-    if (!bestAreaNum)
-    {
-        // If there is a trigger entity in the reach chain, keep looking at it
-        if (firstNonBunnyingReach)
-        {
-            int travelType = firstNonBunnyingReach->traveltype;
-            if (travelType == TRAVEL_TELEPORT || travelType == TRAVEL_JUMPPAD || travelType == TRAVEL_ELEVATOR)
-            {
-                intendedLookVec->Set(firstNonBunnyingReach->start);
-                *intendedLookVec-= entityPhysicsState.Origin();
-                return true;
-            }
         }
 
-        Debug("Cannot straighten look vec: cannot find a suitable area in reach. chain to aim for\n");
-        return false;
+        new (candidatesPtr++)AreaAndScore(areaNum, score);
     }
 
-    // Look not to the middle of an area, but to the nav target in this case
-    if (bestAreaNum == navTargetAasAreaNum)
-    {
-        intendedLookVec->Set(context->NavTargetOrigin());
-        *intendedLookVec -= entityPhysicsState.Origin();
-        return true;
-    }
-
-    const aas_area_t &bestArea = aasAreas[bestAreaNum];
-    intendedLookVec->Set(bestArea.center[0], bestArea.center[1], bestArea.mins[2] + 32);
-    *intendedLookVec -= traceStartPoint;
-    if (entityPhysicsState.HeightOverGround() < 8.0f)
-        intendedLookVec->Z() = 0;
-    else
-        intendedLookVec->Z() *= Z_NO_BEND_SCALE;
-
-    return true;
+    return candidatesPtr;
 }
 
-inline float SuggestObstacleAvoidanceCorrectionFraction(const BotMovementPredictionContext *context)
+BotBunnyToBestShortcutAreaMovementAction::BotBunnyToBestShortcutAreaMovementAction(Bot *bot_)
+    : BotBunnyTestingMultipleLookDirsMovementAction(bot_, NAME, COLOR_RGB(255, 64, 0))
 {
-    // Might be negative!
-    float speedOverRunSpeed = context->movementState->entityPhysicsState.Speed() - context->GetRunSpeed();
-    if (speedOverRunSpeed > 500.0f)
-        return 0.15f;
-    return 0.35f - 0.20f * speedOverRunSpeed / 500.0f;
+    supportsObstacleAvoidance = false;
+    walljumpingMode = WalljumpingMode::ALWAYS;
+    maxSuggestedLookDirs = 2;
+    // The constructor cannot be defined in the header due to this bot member access
+    suggestedAction = &bot_->bunnyInVelocityDirectionMovementAction;
 }
 
-void BotBunnyStraighteningReachChainMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+void BotBunnyToBestShortcutAreaMovementAction::SaveSuggestedLookDirs(BotMovementPredictionContext *context)
 {
-    auto *suggestedAction = &self->ai->botRef->bunnyToBestShortcutAreaMovementAction;
-    if (!GenericCheckIsActionEnabled(context, suggestedAction))
+    Assert(suggestedLookDirs.empty());
+    Assert(context->NavTargetAasAreaNum());
+
+    int startTravelTime = FindActualStartTravelTime(context);
+    if (!startTravelTime)
         return;
 
-    if (!CheckCommonBunnyingActionPreconditions(context))
-        return;
-
-    if (this->hasSavedIntendedLookVec)
-    {
-        context->record->botInput.SetIntendedLookDir(this->savedIntendedLookVec, true);
-    }
-    else
-    {
-        context->SetDefaultBotInput();
-        Vec3 intendedLookVec(context->record->botInput.IntendedLookDir());
-        if (!TryStraightenLookVec(&intendedLookVec, context))
-        {
-            context->SetPendingRollback();
-            return;
-        }
-        intendedLookVec.NormalizeFast();
-        context->record->botInput.SetIntendedLookDir(intendedLookVec, true);
-        this->savedIntendedLookVec = intendedLookVec;
-        this->hasSavedIntendedLookVec = true;
-    }
-
-    if (isTryingObstacleAvoidance)
-        context->TryAvoidJumpableObstacles(SuggestObstacleAvoidanceCorrectionFraction(context));
-
-    if (!SetupBunnying(context->record->botInput.IntendedLookDir(), context))
-    {
-        context->SetPendingRollback();
-        return;
-    }
+    AreaAndScore candidates[MAX_BBOX_AREAS];
+    AreaAndScore *candidatesEnd = SelectCandidateAreas(context, candidates, startTravelTime);
+    SaveCandidateAreaDirs(context, candidates, candidatesEnd);
 }
 
-int BotBunnyToBestShortcutAreaMovementAction::FindBestShortcutArea(BotMovementPredictionContext *context) const
+inline int BotBunnyToBestShortcutAreaMovementAction::FindActualStartTravelTime(BotMovementPredictionContext *context)
 {
     const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-    const auto *aasWorld = AiAasWorld::Instance();
     const auto *aasRouteCache = self->ai->botRef->routeCache;
-    const auto *aasAreas = aasWorld->Areas();
-    const auto *aasAreaSettings = aasWorld->AreaSettings();
-
-    const int navTargetAreaNum = context->NavTargetAasAreaNum();
-    Assert(navTargetAreaNum);
-
-    const int droppedToFloorAreaNum = entityPhysicsState.DroppedToFloorAasAreaNum();
-    const int currAreaNum = entityPhysicsState.CurrAasAreaNum();
     const int travelFlags = self->ai->botRef->PreferredTravelFlags();
-
-    // Check whether the target area is reachable for preferred bot travel flags
+    const int navTargetAreaNum = context->NavTargetAasAreaNum();
 
     int startAreaNums[2] = { entityPhysicsState.DroppedToFloorAasAreaNum(), entityPhysicsState.CurrAasAreaNum() };
     int startTravelTimes[2];
@@ -2538,31 +2689,55 @@ int BotBunnyToBestShortcutAreaMovementAction::FindBestShortcutArea(BotMovementPr
             startTravelTimes[j++] = travelTime;
     }
 
-    int bestStartTravelTime;
     switch (j)
     {
         case 2:
-            bestStartTravelTime = (startTravelTimes[0] < startTravelTimes[1]) ? startTravelTimes[0] : startTravelTimes[1];
-            break;
+            return std::min(startTravelTimes[0], startTravelTimes[1]);
         case 1:
-            bestStartTravelTime = startTravelTimes[0];
-            break;
-        case 0:
+            return startTravelTimes[0];
+        default:
             return 0;
     }
+}
 
-    float side = 64.0f + 384.0f * self->ai->botRef->Skill();
-    Vec3 boxMins(-side, -side, -112), boxMaxs(+side, +side, 0);
+inline int BotBunnyToBestShortcutAreaMovementAction::FindBBoxAreas(BotMovementPredictionContext *context,
+                                                                  int *areaNums, int maxAreas)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const float side = 128.0f + 192.0f * BoundedFraction(entityPhysicsState.Speed(), 700);
+
+    Vec3 boxMins(-side, -side, -0.33f * side);
+    Vec3 boxMaxs(+side, +side, 0);
     boxMins += entityPhysicsState.Origin();
     boxMaxs += entityPhysicsState.Origin();
-    int bboxAreaNums[48];
-    int numBBoxAreas = aasWorld->BBoxAreas(boxMins, boxMaxs, bboxAreaNums, 48);
 
-    int bestAreaNum = 0;
-    int bestTravelTimeSave = 0;
+    return AiAasWorld::Instance()->BBoxAreas(boxMins, boxMaxs, areaNums, maxAreas);
+}
+
+AreaAndScore *BotBunnyToBestShortcutAreaMovementAction::SelectCandidateAreas(BotMovementPredictionContext *context,
+                                                                             AreaAndScore *candidatesBegin,
+                                                                             int startTravelTime)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto *aasRouteCache = self->ai->botRef->routeCache;
+    const auto *aasAreas = aasWorld->Areas();
+    const auto *aasAreaSettings = aasWorld->AreaSettings();
+
+    const int navTargetAreaNum = context->NavTargetAasAreaNum();
+    const int travelFlags = self->ai->botRef->PreferredTravelFlags();
+    const int currAreaNum = entityPhysicsState.CurrAasAreaNum();
+    const int droppedToFloorAreaNum = entityPhysicsState.DroppedToFloorAasAreaNum();
+
+    int minTravelTimeSave = 0;
+    AreaAndScore *candidatesPtr = candidatesBegin;
+
     trace_t trace;
     Vec3 traceStartPoint(entityPhysicsState.Origin());
     traceStartPoint.Z() += playerbox_stand_viewheight;
+
+    int bboxAreaNums[MAX_BBOX_AREAS];
+    int numBBoxAreas = FindBBoxAreas(context, bboxAreaNums, MAX_BBOX_AREAS);
     for (int i = 0; i < numBBoxAreas; ++i)
     {
         const int areaNum = bboxAreaNums[i];
@@ -2593,65 +2768,35 @@ int BotBunnyToBestShortcutAreaMovementAction::FindBestShortcutArea(BotMovementPr
             continue;
 
         // Time saved on traveling to goal
-        int travelTimeSave = bestStartTravelTime - areaToTargetAreaTravelTime;
-        if (travelTimeSave < bestTravelTimeSave)
+        const int travelTimeSave = startTravelTime - areaToTargetAreaTravelTime;
+        // Try to reject non-feasible areas to cut off expensive trace computation
+        if (travelTimeSave <= 0)
+            continue;
+
+        const int prevMinTravelTimeSave = minTravelTimeSave;
+        // Do not test lower score areas if there is already enough tested candidates
+        if (travelTimeSave > minTravelTimeSave)
+            minTravelTimeSave = travelTimeSave;
+        else if (candidatesPtr - candidatesBegin >= maxSuggestedLookDirs)
             continue;
 
         SolidWorldTrace(&trace, traceStartPoint.Data(), areaPoint.Data());
         if (trace.fraction != 1.0f)
+        {
+            // Restore minTravelTimeSave (it might has been set to the value of the rejected area on this loop step)
+            minTravelTimeSave = prevMinTravelTimeSave;
             continue;
+        }
 
         // We DO not check whether traveling to the best nearby area takes less time
         // than time traveling from best area to nav target saves.
         // Otherwise only areas in the reachability chain conform to the condition if the routing algorithm works properly.
         // We hope for shortcuts the routing algorithm is not aware of.
-        bestTravelTimeSave = travelTimeSave;
-        bestAreaNum = areaNum;
+
+        new(candidatesPtr++)AreaAndScore(areaNum, travelTimeSave);
     }
 
-    return bestAreaNum;
-}
-
-void BotBunnyToBestShortcutAreaMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
-{
-    auto *suggestedAction = &self->ai->botRef->bunnyInVelocityDirectionMovementAction;
-    if (!GenericCheckIsActionEnabled(context, suggestedAction))
-        return;
-
-    if (!CheckCommonBunnyingActionPreconditions(context))
-        return;
-
-    if (this->hasSavedIntendedLookVec)
-    {
-        context->record->botInput.SetIntendedLookDir(this->savedIntendedLookVec, true);
-    }
-    else
-    {
-        int bestAreaNum = FindBestShortcutArea(context);
-        if (!bestAreaNum)
-        {
-            context->SetPendingRollback();
-            return;
-        }
-
-        const auto &area = AiAasWorld::Instance()->Areas()[bestAreaNum];
-
-        Vec3 intendedLookVec(area.center[0], area.center[1], area.mins[2] + 32);
-        intendedLookVec -= context->movementState->entityPhysicsState.Origin();
-        intendedLookVec.NormalizeFast();
-        context->record->botInput.SetIntendedLookDir(intendedLookVec, true);
-        this->savedIntendedLookVec = intendedLookVec;
-        this->hasSavedIntendedLookVec = true;
-    }
-
-    if (isTryingObstacleAvoidance)
-        context->TryAvoidJumpableObstacles(SuggestObstacleAvoidanceCorrectionFraction(context));
-
-    if (!SetupBunnying(context->record->botInput.IntendedLookDir(), context))
-    {
-        context->SetPendingRollback();
-        return;
-    }
+    return candidatesPtr;
 }
 
 void BotWalkCarefullyMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
@@ -3357,7 +3502,9 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
     if (!currTravelTimeToNavTarget)
     {
         currentUnreachableTargetSequentialMillis += context->predictionStepMillis;
-        if (currentUnreachableTargetSequentialMillis > tolerableUnreachableTargetSequentialMillis)
+        // Be very strict in case when bot does another jump after landing.
+        // (Prevent falling in a gap immediately after successful landing on a ledge).
+        if (currentUnreachableTargetSequentialMillis > tolerableUnreachableTargetSequentialMillis || hasAlreadyLandedOnce)
         {
             context->SetPendingRollback();
             Debug("A prediction step has lead to undefined travel time to the nav target\n");
@@ -3394,23 +3541,49 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
         return;
     }
 
-    // Wait until landing
-    if (!newEntityPhysicsState.GroundEntity())
+    if (!hasAlreadyLandedOnce)
     {
+        if (originAtSequenceStart.SquareDistance2DTo(newEntityPhysicsState.Origin()) > 64 * 64)
+        {
+            if (newEntityPhysicsState.GroundEntity())
+            {
+                hasLandedAtOrigin.Set(newEntityPhysicsState.Origin());
+                hasAlreadyLandedOnce = true;
+                sequenceDurationAtLanding = this->SequenceDuration(context);
+            }
+        }
+        else if (this->SequenceDuration(context) > 250)
+        {
+            Debug("The bot still did not cover 64 units after 250 millis\n");
+            context->SetPendingRollback();
+            return;
+        }
+
         // Keep this action as an active bunny action
         context->SaveSuggestedActionForNextFrame(this);
         return;
     }
 
-    if (originAtSequenceStart.SquareDistanceTo(newEntityPhysicsState.Origin()) < 32 * 32)
+    if (hasLandedAtOrigin.SquareDistance2DTo(newEntityPhysicsState.Origin()) > 16 * 16)
     {
-        // Keep this action as an active bunny action
-        context->SaveSuggestedActionForNextFrame(this);
+        Debug("There is enough predicted data ahead\n");
+        context->isCompleted = true;
         return;
     }
 
-    Debug("The bot is on ground and there is enough predicted data ahead\n");
-    context->isCompleted = true;
+    if (this->SequenceDuration(context) - sequenceDurationAtLanding > 128)
+    {
+        // Allow to bump into walls in nav target area
+        if (!context->IsInNavTargetArea())
+        {
+            Debug("The bot still did not cover 16 units in 128 millis after landing\n");
+            context->SetPendingRollback();
+            return;
+        }
+    }
+
+    // Keep this action as an active bunny action
+    context->SaveSuggestedActionForNextFrame(this);
 }
 
 void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
@@ -3418,7 +3591,7 @@ void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStarted(BotMoveme
     BotBaseMovementAction::OnApplicationSequenceStarted(context);
     context->MarkSavepoint(this, context->topOfStackIndex);
 
-    hasSavedIntendedLookVec = false;
+    hasAlreadyLandedOnce = false;
 
     minTravelTimeToNavTargetSoFar = std::numeric_limits<int>::max();
     if (context->NavTargetAasAreaNum())
