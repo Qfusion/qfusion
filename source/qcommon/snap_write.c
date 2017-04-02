@@ -30,6 +30,13 @@ Encode a client frame onto the network channel
 =========================================================================
 */
 
+
+#define PSOFS( x ) offsetof( player_state_t,x )
+/*
+static const msg_field_t player_state_fields[] = {
+	{ PSOFS( events[0] ), 32, MSG_ENCTYPE_UBASE128 },
+*/
+
 /*
 * SNAP_EmitPacketEntities
 *
@@ -1160,8 +1167,6 @@ void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, unsigned int f
 	entsList.numSnapshotEntities = 0;
 	memset( entsList.entityAddedToSnapList, 0, sizeof( entsList.entityAddedToSnapList ) );
 	SNAP_BuildSnapEntitiesList( cms, gi, clent, org, fatvis->skyorg, fatvis->pvs, frame, &entsList );
-
-	//Com_Printf( "Snap NumEntities:%i\n", entsList.numSnapshotEntities );
 
 	if( developer->integer ) {
 		int olde = -1;

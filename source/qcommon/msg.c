@@ -20,12 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // msg.c -- Message IO functions
 #include "qcommon.h"
 
-typedef struct msg_field_s {
-	int offset;
-	int bits;
-	MSG_ENCTYPE_t encoding;
-} msg_field_t;
-
 /*
 ==============================================================================
 
@@ -340,7 +334,7 @@ char *MSG_ReadStringLine( msg_t *msg ) {
 /*
 * MSG_CompareField
 */
-bool MSG_CompareField( const void *to, const void *from, const msg_field_t *field ) {
+bool MSG_CompareField( const void *from, const void *to, const msg_field_t *field ) {
 	int32_t itv, ifv;
 	bool btv, bfv;
 	int64_t bitv, bifv;
@@ -381,7 +375,7 @@ bool MSG_CompareField( const void *to, const void *from, const msg_field_t *fiel
 /*
 * MSG_CompareFields
 */
-unsigned MSG_CompareFields( const void *to, const void *from, const msg_field_t *fields, size_t numFields, uint8_t *fieldMask, size_t maskSize ) {
+unsigned MSG_CompareFields( const void *from, const void *to, const msg_field_t *fields, size_t numFields, uint8_t *fieldMask, size_t maskSize ) {
 	size_t i;
 	unsigned byteMask;
 
@@ -396,7 +390,7 @@ unsigned MSG_CompareFields( const void *to, const void *from, const msg_field_t 
 			Com_Error( ERR_FATAL, "MSG_CompareFields: byte > 32" );
 		}
 
-		if( MSG_CompareField( to, from, &fields[i] ) ) {
+		if( MSG_CompareField( from, to, &fields[i] ) ) {
 			fieldMask[byte] |= (1 << (i & 7));
 			byteMask |= (1 << (byte & 7));
 		}
@@ -528,6 +522,28 @@ void MSG_WriteFields( msg_t *msg, const void *to, const msg_field_t *fields, siz
 		b++;
 		byteMask >>= 1;
 	}
+}
+
+/*
+* MSG_WriteDeltaStruct
+*/
+void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const msg_field_t *fields, size_t numFields ) {
+	unsigned byteMask;
+	uint8_t fieldMask[32] = { 0 };
+
+	assert( numFields < 256 );
+	if( numFields > 256 ) {
+		Com_Error( ERR_FATAL, "MSG_WriteDeltaStruct: numFields == %i", numFields );
+	}
+
+	// send the movement message
+	byteMask = MSG_CompareFields( from, to, fields, numFields, fieldMask, sizeof( fieldMask ) );
+
+	MSG_WriteUintBase128( msg, byteMask );
+
+	MSG_WriteFieldMask( msg, fieldMask, byteMask );
+
+	MSG_WriteFields( msg, to, fields, numFields, fieldMask, byteMask );
 }
 
 /*
@@ -667,6 +683,28 @@ void MSG_ReadFields( msg_t *msg, void *to, const msg_field_t *fields, size_t num
 	}
 }
 
+/*
+* MSG_ReadDeltaStruct
+*/
+void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, const msg_field_t *fields, size_t numFields ) {
+	unsigned byteMask;
+	uint8_t fieldMask[32] = { 0 };
+
+	assert( numFields < 256 );
+	if( numFields > 256 ) {
+		Com_Error( ERR_FATAL, "MSG_WriteDeltaStruct: numFields == %i", numFields );
+	}
+
+	// set everything to the state we are delta'ing from
+	memcpy( to, from, size );
+
+	byteMask = MSG_ReadUintBase128( msg );
+
+	MSG_ReadFieldMask( msg, fieldMask, sizeof( fieldMask ), byteMask );
+
+	MSG_ReadFields( msg, to, fields, numFields, fieldMask, sizeof( fieldMask ), byteMask );
+}
+
 //==================================================
 // DELTA ENTITIES
 //==================================================
@@ -740,7 +778,7 @@ static const msg_field_t ent_state_fields[] = {
 */
 static void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned byteMask ) {
 	MSG_WriteIntBase128( msg, (remove ? 1 : 0) | number << 1 );
-	MSG_WriteUint8( msg, byteMask );
+	MSG_WriteUintBase128( msg, byteMask );
 }
 
 /*
@@ -752,7 +790,7 @@ static void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned
 void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg, bool force ) {
 	int number;
 	unsigned byteMask;
-	uint8_t fieldMask[8] = { 0 };
+	uint8_t fieldMask[32] = { 0 };
 	const msg_field_t *fields = ent_state_fields;
 	int numFields = sizeof( ent_state_fields ) / sizeof( ent_state_fields[0] );
 
@@ -783,7 +821,7 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 		return;
 	}
 
-	byteMask = MSG_CompareFields( to, from, fields, numFields, fieldMask, sizeof( fieldMask ) );
+	byteMask = MSG_CompareFields( from, to, fields, numFields, fieldMask, sizeof( fieldMask ) );
 	if( !byteMask && !force ) {
 		// no changes
 		return;
@@ -807,7 +845,7 @@ int MSG_ReadEntityNumber( msg_t *msg, bool *remove, unsigned *byteMask ) {
 	number = (int)MSG_ReadIntBase128( msg );
 	*remove = (number & 1 ? true : false);
 	number = number >> 1;
-	*byteMask = MSG_ReadUint8( msg );
+	*byteMask = MSG_ReadUintBase128( msg );
 
 	return number;
 }
@@ -818,7 +856,7 @@ int MSG_ReadEntityNumber( msg_t *msg, bool *remove, unsigned *byteMask ) {
 * Can go from either a baseline or a previous packet_entity
 */
 void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, int number, unsigned byteMask ) {
-	uint8_t fieldMask[8] = { 0 };
+	uint8_t fieldMask[32] = { 0 };
 	const msg_field_t *fields = ent_state_fields;
 	int numFields = sizeof( ent_state_fields ) / sizeof( ent_state_fields[0] );
 
@@ -853,16 +891,10 @@ static const msg_field_t usercmd_fields[] = {
 * MSG_WriteDeltaUsercmd
 */
 void MSG_WriteDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *cmd ) {
-	uint8_t fieldMask = 0;
 	int numFields = sizeof( usercmd_fields ) / sizeof( usercmd_fields[0] );
 	const msg_field_t *fields = usercmd_fields;
 
-	// send the movement message
-	MSG_CompareFields( cmd, from, fields, numFields, &fieldMask, 1 );
-
-	MSG_WriteFieldMask( msg, &fieldMask, 1 );
-
-	MSG_WriteFields( msg, cmd, fields, numFields, &fieldMask, 1 );
+	MSG_WriteDeltaStruct( msg, from, cmd, fields, numFields );
 
 	MSG_WriteInt32( msg, cmd->serverTimeStamp );
 }
@@ -871,15 +903,11 @@ void MSG_WriteDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *cmd ) {
 * MSG_ReadDeltaUsercmd
 */
 void MSG_ReadDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *move ) {
-	uint8_t fieldMask = 0;
 	int numFields = sizeof( usercmd_fields ) / sizeof( usercmd_fields[0] );
 	const msg_field_t *fields = usercmd_fields;
 
-	memcpy( move, from, sizeof( *move ) );
-
-	MSG_ReadFieldMask( msg, &fieldMask, 1, 1 );
-
-	MSG_ReadFields( msg, move, fields, numFields, &fieldMask, 1, 1 );
+	MSG_ReadDeltaStruct( msg, from, move, sizeof( usercmd_t ), fields, numFields );
 
 	move->serverTimeStamp = MSG_ReadInt32( msg );
 }
+
