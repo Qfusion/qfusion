@@ -31,6 +31,7 @@ file(GLOB CLIENT_HEADERS
 	"../steamlib/steamlib_public.h"
 	"../cin/cin_public.h"
 	"../matchmaker/*.h"
+	"../server/*.h"
 )
 
 file(GLOB CLIENT_COMMON_SOURCES
