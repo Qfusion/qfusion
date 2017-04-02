@@ -45,9 +45,6 @@ struct packet_s {
 #define RELAY_GLOBAL_DELAY      RELAY_MIN_DELAY
 #endif
 
-#define MAX_FRAME_SOUNDS    256
-#define MAX_TIME_DELTAS     8
-
 typedef struct fatvis_s {
 	vec_t *skyorg;
 	uint8_t pvs[MAX_MAP_LEAFS / 8];

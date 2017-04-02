@@ -49,7 +49,6 @@ typedef struct ginfo_s {
 	int max_clients;        // <= sv_maxclients, <= max_edicts
 } ginfo_t;
 
-#define MAX_FRAME_SOUNDS 256
 typedef struct {
 	server_state_t state;       // precache commands are only valid during load
 
@@ -70,12 +69,12 @@ typedef struct {
 
 struct gclient_s {
 	player_state_t ps;  // communicated by server to clients
-	client_shared_t r;
+	client_shared_t r;  // shared by both the server system and game
 };
 
 struct edict_s {
-	entity_state_t s;
-	entity_shared_t r;
+	entity_state_t s;   // communicated by server to clients
+	entity_shared_t r;  // shared by both the server system and game
 };
 
 #define EDICT_NUM( n ) ( (edict_t *)( (uint8_t *)sv.gi.edicts + sv.gi.edict_size * ( n ) ) )
