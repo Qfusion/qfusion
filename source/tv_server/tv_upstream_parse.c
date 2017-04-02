@@ -75,25 +75,25 @@ static void TV_Upstream_ParseServerData( upstream_t *upstream, msg_t *msg ) {
 	upstream->state = CA_CONNECTED;
 
 	// parse protocol version number
-	i = MSG_ReadLong( msg );
+	i = MSG_ReadInt32( msg );
 
 	if( i != APP_PROTOCOL_VERSION && !( upstream->demo.playing && i == APP_DEMO_PROTOCOL_VERSION ) ) {
 		TV_Upstream_Error( upstream, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
 	}
 
-	upstream->servercount = MSG_ReadLong( msg );
-	upstream->snapFrameTime = (unsigned int) MSG_ReadShort( msg );
+	upstream->servercount = MSG_ReadInt32( msg );
+	upstream->snapFrameTime = (unsigned int) MSG_ReadInt16( msg );
 
 	Q_strncpyz( upstream->basegame, MSG_ReadString( msg ), sizeof( upstream->basegame ) );
 	Q_strncpyz( upstream->game, MSG_ReadString( msg ), sizeof( upstream->game ) );
 
 	// parse player entity number
-	upstream->playernum = MSG_ReadShort( msg );
+	upstream->playernum = MSG_ReadInt16( msg );
 
 	// get the full level name
 	Q_strncpyz( upstream->levelname, MSG_ReadString( msg ), sizeof( upstream->levelname ) );
 
-	upstream->sv_bitflags = MSG_ReadByte( msg );
+	upstream->sv_bitflags = MSG_ReadUint8( msg );
 	upstream->reliable = ( ( upstream->sv_bitflags & SV_BITFLAGS_RELIABLE ) ? true : false );
 
 	if( ( upstream->sv_bitflags & SV_BITFLAGS_HTTP ) != 0 ) {
@@ -102,7 +102,7 @@ static void TV_Upstream_ParseServerData( upstream_t *upstream, msg_t *msg ) {
 			MSG_ReadString( msg );
 		} else {
 			// http port number
-			MSG_ReadShort( msg );
+			MSG_ReadInt16( msg );
 		}
 	}
 
@@ -112,10 +112,10 @@ static void TV_Upstream_ParseServerData( upstream_t *upstream, msg_t *msg ) {
 	Com_FreePureList( &upstream->purelist );
 
 	// add new
-	numpure = MSG_ReadShort( msg );
+	numpure = MSG_ReadInt16( msg );
 	while( numpure > 0 ) {
 		const char *pakname = MSG_ReadString( msg );
-		const unsigned checksum = MSG_ReadLong( msg );
+		const unsigned checksum = MSG_ReadInt32( msg );
 
 		Com_AddPakToPureList( &upstream->purelist, pakname, checksum, upstream->mempool );
 
@@ -147,7 +147,7 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 			TV_Upstream_Error( upstream, "Bad server message" );
 		}
 
-		cmd = MSG_ReadByte( msg );
+		cmd = MSG_ReadUint8( msg );
 
 		if( cmd == -1 ) {
 			break;
@@ -163,7 +163,7 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 
 			case svc_servercmd:
 				if( !upstream->reliable ) {
-					int cmdNum = MSG_ReadLong( msg );
+					int cmdNum = MSG_ReadInt32( msg );
 					if( cmdNum < 0 ) {
 						TV_Upstream_Error( upstream, "Invalid cmdNum value" );
 					}
@@ -202,8 +202,8 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 				if( upstream->reliable ) {
 					TV_Upstream_Error( upstream, "clack message while reliable" );
 				}
-				upstream->reliableAcknowledge = (unsigned)MSG_ReadLong( msg );
-				MSG_ReadLong( msg ); // ucmdAcknowledged
+				upstream->reliableAcknowledge = (unsigned)MSG_ReadInt32( msg );
+				MSG_ReadInt32( msg ); // ucmdAcknowledged
 				break;
 
 			case svc_frame:
@@ -216,7 +216,7 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 
 				assert( upstream->demo.playing );
 
-				length = MSG_ReadLong( msg );
+				length = MSG_ReadInt32( msg );
 				MSG_SkipData( msg, length );
 			}
 			break;
@@ -231,9 +231,9 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 				if( 1 ) {
 					int len;
 
-					MSG_ReadByte( msg );        // extension id
-					MSG_ReadByte( msg );        // version number
-					len = MSG_ReadShort( msg ); // command length
+					MSG_ReadUint8( msg );        // extension id
+					MSG_ReadUint8( msg );        // version number
+					len = MSG_ReadInt16( msg ); // command length
 					MSG_SkipData( msg, len );   // command data
 				}
 				break;

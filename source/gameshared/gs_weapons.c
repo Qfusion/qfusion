@@ -500,7 +500,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 		firedef = GS_FiredefForPlayerState( playerState, playerState->stats[STAT_WEAPON] );
 		playerState->weaponState = WEAPON_STATE_ACTIVATING;
 		playerState->stats[STAT_WEAPON_TIME] += firedef->weaponup_time;
-		module_PredictedEvent( playerState->POVnum, EV_WEAPONACTIVATE, playerState->stats[STAT_WEAPON] );
+		module_PredictedEvent( playerState->POVnum, EV_WEAPONACTIVATE, playerState->stats[STAT_WEAPON]<<1 );
 	}
 
 	if( playerState->weaponState == WEAPON_STATE_ACTIVATING ) {
@@ -548,9 +548,9 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 	}
 
 	if( playerState->weaponState == WEAPON_STATE_FIRING ) {
-		int parm = playerState->stats[STAT_WEAPON];
+		int parm = playerState->stats[STAT_WEAPON] << 1;
 		if( firedef->fire_mode == FIRE_MODE_STRONG ) {
-			parm |= EV_INVERSE;
+			parm |= 0x1;
 		}
 
 		playerState->stats[STAT_WEAPON_TIME] += firedef->reload_time;

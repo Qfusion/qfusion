@@ -1129,8 +1129,8 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_WEAPONACTIVATE:
 			CG_PModel_AddAnimation( ent->number, 0, TORSO_WEAPON_SWITCHIN, 0, EVENT_CHANNEL );
-			weapon = ( parm & ~EV_INVERSE );
-			fireMode = ( parm & EV_INVERSE ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
+			weapon = ( parm >> 1 ) & 0x3f;
+			fireMode = ( parm & 0x1 ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 			if( predicted ) {
 				cg_entities[ent->number].current.weapon = weapon;
 				if( fireMode == FIRE_MODE_STRONG ) {
@@ -1153,8 +1153,8 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_SMOOTHREFIREWEAPON: // the server never sends this event
 			if( predicted ) {
-				weapon = ( parm & ~EV_INVERSE );
-				fireMode = ( parm & EV_INVERSE ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
+				weapon = ( parm >> 1 ) & 0x3f;
+				fireMode = ( parm & 0x1 ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 
 				cg_entities[ent->number].current.weapon = weapon;
 				if( fireMode == FIRE_MODE_STRONG ) {
@@ -1170,8 +1170,8 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 			break;
 
 		case EV_FIREWEAPON:
-			weapon = ( parm & ~EV_INVERSE );
-			fireMode = ( parm & EV_INVERSE ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
+			weapon = ( parm >> 1 ) & 0x3f;
+			fireMode = ( parm & 0x1 ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 
 			if( predicted ) {
 				cg_entities[ent->number].current.weapon = weapon;
@@ -1357,7 +1357,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 								COLOR_R( ent->colorRGBA ) * ( 1.0 / 255.0 ),
 								COLOR_G( ent->colorRGBA ) * ( 1.0 / 255.0 ),
 								COLOR_B( ent->colorRGBA ) * ( 1.0 / 255.0 ),
-								ent->eventCount );
+								ent->counterNum );
 			break;
 
 		case EV_GESTURE:

@@ -182,7 +182,9 @@ static void CG_NewPacketEntityState( entity_state_t *state ) {
 		}
 
 		// some data changes will force no lerping
-		if( ( state->modelindex != cent->current.modelindex ) || state->teleported || state->linearMovement != cent->current.linearMovement ) {
+		if( state->modelindex != cent->current.modelindex
+			|| state->teleported 
+			|| state->linearMovement != cent->current.linearMovement ) {
 			cent->serverFrame = -99;
 		}
 
@@ -192,15 +194,6 @@ static void CG_NewPacketEntityState( entity_state_t *state ) {
 			cent->prev = *state;
 
 			memset( cent->localEffects, 0, sizeof( cent->localEffects ) );
-
-			// new entities may have old_origin
-			if( state->svflags & SVF_TRANSMITORIGIN2 &&
-				( state->type == ET_GENERIC || state->type == ET_GIB
-				  || state->type == ET_GRENADE || state->type == ET_SPRITE
-				  || state->type == ET_ITEM || state->type == ET_FLAG_BASE
-				  || state->type == ET_PARTICLES || state->type == ET_RADAR ) ) {
-				VectorCopy( state->old_origin, cent->prev.origin );
-			}
 
 			// Init the animation when new into PVS
 			if( cg.frame.valid && ( state->type == ET_PLAYER || state->type == ET_CORPSE ) ) {
@@ -234,7 +227,7 @@ static void CG_NewPacketEntityState( entity_state_t *state ) {
 		cent->serverFrame = cg.frame.serverFrame;
 
 		// set up velocities for this entity
-		if( cgs.extrapolationTime && ( state->svflags & SVF_TRANSMITORIGIN2 ) &&
+		if( cgs.extrapolationTime &&
 			( cent->current.type == ET_PLAYER || cent->current.type == ET_CORPSE ) ) {
 			VectorCopy( cent->current.origin2, cent->velocity );
 			VectorCopy( cent->prev.origin2, cent->prevVelocity );
@@ -710,7 +703,8 @@ void CG_LerpGenericEnt( centity_t *cent ) {
 		// do the animation properly
 		vec3_t delta, move;
 
-		VectorSubtract( cent->current.old_origin, cent->current.origin, move );
+		// FIXME: does this still work?
+		VectorSubtract( cent->current.origin2, cent->current.origin, move );
 		Matrix3_TransformVector( cent->ent.axis, move, delta );
 		VectorMA( cent->current.origin, cent->ent.backlerp, delta, cent->ent.origin );
 	} else if( ISVIEWERENTITY( cent->current.number ) || cg.view.POVent == cent->current.number ) {
@@ -2205,10 +2199,6 @@ void CG_UpdateEntities( void ) {
 				break;
 
 			default:
-				if( cent->type & ET_INVERSE ) {
-					CG_Printf( "CG_UpdateEntities: entity type with ET_INVERSE. Stripped type %i", cent->type & 127 );
-				}
-
 				CG_Error( "CG_UpdateEntities: unknown entity type %i", cent->type );
 				break;
 		}

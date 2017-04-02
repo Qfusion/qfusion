@@ -92,14 +92,12 @@ static void Move_UpdateLinearVelocity( edict_t *ent, float dist, int speed ) {
 
 	ent->s.linearMovement = speed != 0;
 	if( !ent->s.linearMovement ) {
-		ent->r.svflags &= ~SVF_TRANSMITORIGIN2;
 		VectorCopy( ent->s.origin, ent->s.old_origin );
 		return;
 	}
 
 	VectorCopy( ent->moveinfo.dest, ent->s.linearMovementEnd );
 	VectorCopy( ent->s.origin, ent->s.linearMovementBegin );
-	ent->r.svflags |= SVF_TRANSMITORIGIN2;
 	ent->s.linearMovementTimeStamp = game.serverTime - game.frametime;
 	ent->s.linearMovementDuration = duration;
 }

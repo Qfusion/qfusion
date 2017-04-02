@@ -644,7 +644,7 @@ void GClip_LinkEntity( edict_t *ent ) {
 	}
 
 	// if first time, make sure old_origin is valid
-	if( !ent->linkcount && !( ent->r.svflags & SVF_TRANSMITORIGIN2 ) ) {
+	if( !ent->linkcount ) {
 		VectorCopy( ent->s.origin, ent->s.old_origin );
 		ent->olds = ent->s;
 	}

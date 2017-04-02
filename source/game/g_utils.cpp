@@ -781,16 +781,14 @@ void G_InitEdict( edict_t *e ) {
 	e->r.inuse = true;
 	e->classname = NULL;
 	e->gravity = 1.0;
-	e->s.number = ENTNUM( e );
 	e->timeDelta = 0;
-	e->s.team = 0;
 	e->deadflag = DEAD_NO;
-	e->s.attenuation = ATTN_NORM;
-
-	e->s.teleported = false;
 	e->timeStamp = 0;
-	e->s.linearMovement = false;
 	e->scriptSpawned = false;
+
+	memset( &e->s, 0, sizeof( entity_state_t ) );
+	e->s.attenuation = ATTN_NORM;
+	e->s.number = ENTNUM( e );
 
 	G_asResetEntityBehaviors( e );
 

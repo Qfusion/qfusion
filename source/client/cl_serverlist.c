@@ -407,7 +407,7 @@ static void CL_ParseGetServersResponseMessage( msg_t *msg, bool extended ) {
 	netadr_t adr;
 
 	MSG_BeginReading( msg );
-	MSG_ReadLong( msg ); // skip the -1
+	MSG_ReadInt32( msg ); // skip the -1
 
 	//jump over the command name
 	header = ( extended ? "getserversExtResponse" : "getserversResponse" );
@@ -417,19 +417,19 @@ static void CL_ParseGetServersResponseMessage( msg_t *msg, bool extended ) {
 	}
 
 	while( msg->readcount + 7 <= msg->cursize ) {
-		char prefix = MSG_ReadChar( msg );
+		char prefix = MSG_ReadInt8( msg );
 
 		switch( prefix ) {
 			case '\\':
 				MSG_ReadData( msg, addr, 4 );
-				port = ShortSwap( MSG_ReadShort( msg ) ); // both endians need this swapped.
+				port = ShortSwap( MSG_ReadInt16( msg ) ); // both endians need this swapped.
 				Q_snprintfz( adrString, sizeof( adrString ), "%u.%u.%u.%u:%u", addr[0], addr[1], addr[2], addr[3], port );
 				break;
 
 			case '/':
 				if( extended ) {
 					MSG_ReadData( msg, addr, 16 );
-					port = ShortSwap( MSG_ReadShort( msg ) ); // both endians need this swapped.
+					port = ShortSwap( MSG_ReadInt16( msg ) ); // both endians need this swapped.
 					Q_snprintfz( adrString, sizeof( adrString ), "[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]:%hu",
 								 addr[ 0], addr[ 1], addr[ 2], addr[ 3], addr[ 4], addr[ 5], addr[ 6], addr[ 7],
 								 addr[ 8], addr[ 9], addr[10], addr[11], addr[12], addr[13], addr[14], addr[15],

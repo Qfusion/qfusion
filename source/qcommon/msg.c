@@ -20,6 +20,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // msg.c -- Message IO functions
 #include "qcommon.h"
 
+typedef struct msg_field_s {
+	int offset;
+	int bits;
+	MSG_ENCTYPE_t encoding;
+} msg_field_t;
+
 /*
 ==============================================================================
 
@@ -65,7 +71,7 @@ void MSG_WriteData( msg_t *msg, const void *data, size_t length ) {
 #if 0
 	unsigned int i;
 	for( i = 0; i < length; i++ )
-		MSG_WriteByte( msg, ( (uint8_t *)data )[i] );
+		MSG_WriteUint8( msg, ( (uint8_t *)data )[i] );
 #else
 	MSG_CopyData( msg, data, length );
 #endif
@@ -75,35 +81,68 @@ void MSG_CopyData( msg_t *buf, const void *data, size_t length ) {
 	memcpy( MSG_GetSpace( buf, length ), data, length );
 }
 
-void MSG_WriteChar( msg_t *msg, int c ) {
+void MSG_WriteInt8( msg_t *msg, int c ) {
 	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 1 );
 	buf[0] = ( char )c;
 }
 
-void MSG_WriteByte( msg_t *msg, int c ) {
+void MSG_WriteUint8( msg_t *msg, int c ) {
 	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 1 );
 	buf[0] = ( uint8_t )( c & 0xff );
 }
 
-void MSG_WriteShort( msg_t *msg, int c ) {
+void MSG_WriteInt16( msg_t *msg, int c ) {
 	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 2 );
 	buf[0] = ( uint8_t )( c & 0xff );
 	buf[1] = ( uint8_t )( ( c >> 8 ) & 0xff );
 }
 
-void MSG_WriteInt3( msg_t *msg, int c ) {
+void MSG_WriteInt24( msg_t *msg, int c ) {
 	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 3 );
 	buf[0] = ( uint8_t )( c & 0xff );
 	buf[1] = ( uint8_t )( ( c >> 8 ) & 0xff );
 	buf[2] = ( uint8_t )( ( c >> 16 ) & 0xff );
 }
 
-void MSG_WriteLong( msg_t *msg, int c ) {
+void MSG_WriteInt32( msg_t *msg, int c ) {
 	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 4 );
 	buf[0] = ( uint8_t )( c & 0xff );
 	buf[1] = ( uint8_t )( ( c >> 8 ) & 0xff );
 	buf[2] = ( uint8_t )( ( c >> 16 ) & 0xff );
 	buf[3] = ( uint8_t )( c >> 24 );
+}
+
+void MSG_WriteInt64( msg_t *msg, int64_t c ) {
+	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 8 );
+	buf[0] = ( uint8_t )( c & 0xffL );
+	buf[1] = ( uint8_t )( ( c >> 8L ) & 0xffL );
+	buf[2] = ( uint8_t )( ( c >> 16L ) & 0xffL );
+	buf[3] = ( uint8_t )( ( c >> 24L ) & 0xffL );
+	buf[4] = ( uint8_t )( ( c >> 32L ) & 0xffL );
+	buf[5] = ( uint8_t )( ( c >> 40L ) & 0xffL );
+	buf[6] = ( uint8_t )( ( c >> 48L ) & 0xffL );
+	buf[7] = ( uint8_t )( c >> 56L );
+}
+
+void MSG_WriteUintBase128( msg_t *msg, uint64_t c ) {
+	uint8_t buf[10];
+	size_t len = 0;
+
+	do {
+		buf[len] = c & 0x7fU;
+		if ( c >>= 7 ) {
+			buf[len] |= 0x80U;
+		}
+		len++;
+	} while( c );
+
+	MSG_WriteData( msg, buf, len );
+}
+
+void MSG_WriteIntBase128( msg_t *msg, int64_t c ) {
+	// use Zig-zag encoding for signed integers for more efficient storage
+	uint64_t cc = (uint64_t)(c << 1) ^ (uint64_t)(c >> 63);
+	MSG_WriteUintBase128( msg, cc );
 }
 
 void MSG_WriteFloat( msg_t *msg, float f ) {
@@ -113,11 +152,11 @@ void MSG_WriteFloat( msg_t *msg, float f ) {
 	} dat;
 
 	dat.f = f;
-	MSG_WriteLong( msg, dat.l );
+	MSG_WriteInt32( msg, dat.l );
 }
 
 void MSG_WriteDir( msg_t *msg, vec3_t dir ) {
-	MSG_WriteByte( msg, dir ? DirToByte( dir ) : 0 );
+	MSG_WriteUint8( msg, dir ? DirToByte( dir ) : 0 );
 }
 
 void MSG_WriteString( msg_t *msg, const char *s ) {
@@ -142,7 +181,7 @@ void MSG_BeginReading( msg_t *msg ) {
 	msg->readcount = 0;
 }
 
-int MSG_ReadChar( msg_t *msg ) {
+int MSG_ReadInt8( msg_t *msg ) {
 	int i = (signed char)msg->data[msg->readcount++];
 	if( msg->readcount > msg->cursize ) {
 		i = -1;
@@ -151,7 +190,7 @@ int MSG_ReadChar( msg_t *msg ) {
 }
 
 
-int MSG_ReadByte( msg_t *msg ) {
+int MSG_ReadUint8( msg_t *msg ) {
 	msg->readcount++;
 	if( msg->readcount > msg->cursize ) {
 		return -1;
@@ -160,7 +199,7 @@ int MSG_ReadByte( msg_t *msg ) {
 	return ( unsigned char )( msg->data[msg->readcount - 1] );
 }
 
-int MSG_ReadShort( msg_t *msg ) {
+int MSG_ReadInt16( msg_t *msg ) {
 	msg->readcount += 2;
 	if( msg->readcount > msg->cursize ) {
 		return -1;
@@ -169,7 +208,7 @@ int MSG_ReadShort( msg_t *msg ) {
 	return ( short )( msg->data[msg->readcount - 2] | ( msg->data[msg->readcount - 1] << 8 ) );
 }
 
-int MSG_ReadInt3( msg_t *msg ) {
+int MSG_ReadInt24( msg_t *msg ) {
 	msg->readcount += 3;
 	if( msg->readcount > msg->cursize ) {
 		return -1;
@@ -181,7 +220,7 @@ int MSG_ReadInt3( msg_t *msg ) {
 		   | ( ( msg->data[msg->readcount - 1] & 0x80 ) ? ~0xFFFFFF : 0 );
 }
 
-int MSG_ReadLong( msg_t *msg ) {
+int MSG_ReadInt32( msg_t *msg ) {
 	msg->readcount += 4;
 	if( msg->readcount > msg->cursize ) {
 		return -1;
@@ -193,6 +232,44 @@ int MSG_ReadLong( msg_t *msg ) {
 		   | ( msg->data[msg->readcount - 1] << 24 );
 }
 
+int64_t MSG_ReadInt64( msg_t *msg ) {
+	msg->readcount += 8;
+	if( msg->readcount > msg->cursize ) {
+		return -1;
+	}
+
+	return ( int64_t )msg->data[msg->readcount - 8]
+		| ( ( int64_t )msg->data[msg->readcount - 7] << 8L )
+		| ( ( int64_t )msg->data[msg->readcount - 6] << 16L )
+		| ( ( int64_t )msg->data[msg->readcount - 5] << 24L )
+		| ( ( int64_t )msg->data[msg->readcount - 4] << 32L )
+		| ( ( int64_t )msg->data[msg->readcount - 3] << 40L )
+		| ( ( int64_t )msg->data[msg->readcount - 2] << 48L )
+		| ( ( int64_t )msg->data[msg->readcount - 1] << 56L );
+}
+
+uint64_t MSG_ReadUintBase128( msg_t *msg ) {
+	size_t len = 0;
+	uint64_t i = 0;
+
+	while( len < 10 ) {
+		uint8_t c = MSG_ReadUint8( msg );
+		i |= (c & 0x7fLL) << (7 * len);
+		len++;
+		if( !(c & 0x80) ) {
+			break;
+		}
+	}
+
+	return i;
+}
+
+int64_t MSG_ReadIntBase128( msg_t *msg ) {
+	// un-Zig-Zag our value back to a signed integer
+	uint64_t c = MSG_ReadUintBase128( msg );
+	return (int64_t)(c >> 1) ^ (-(int64_t)(c & 1));
+}
+
 float MSG_ReadFloat( msg_t *msg ) {
 	union {
 
@@ -201,7 +278,7 @@ float MSG_ReadFloat( msg_t *msg ) {
 		int l;
 	} dat;
 
-	dat.l = MSG_ReadLong( msg );
+	dat.l = MSG_ReadInt32( msg );
 	if( msg->readcount > msg->cursize ) {
 		dat.f = -1;
 	}
@@ -209,14 +286,14 @@ float MSG_ReadFloat( msg_t *msg ) {
 }
 
 void MSG_ReadDir( msg_t *msg, vec3_t dir ) {
-	ByteToDir( MSG_ReadByte( msg ), dir );
+	ByteToDir( MSG_ReadUint8( msg ), dir );
 }
 
 void MSG_ReadData( msg_t *msg, void *data, size_t length ) {
 	unsigned int i;
 
 	for( i = 0; i < length; i++ )
-		( (uint8_t *)data )[i] = MSG_ReadByte( msg );
+		( (uint8_t *)data )[i] = MSG_ReadUint8( msg );
 
 }
 
@@ -234,7 +311,7 @@ static char *MSG_ReadString2( msg_t *msg, bool linebreak ) {
 
 	l = 0;
 	do {
-		c = MSG_ReadByte( msg );
+		c = MSG_ReadUint8( msg );
 		if( c == -1 || c == 0 || ( linebreak && c == '\n' ) ) {
 			break;
 		}
@@ -257,8 +334,414 @@ char *MSG_ReadStringLine( msg_t *msg ) {
 }
 
 //==================================================
-// SPECIAL CASES
+// ENCODED FIELDS
 //==================================================
+
+/*
+* MSG_CompareField
+*/
+bool MSG_CompareField( const void *to, const void *from, const msg_field_t *field ) {
+	int32_t itv, ifv;
+	bool btv, bfv;
+	int64_t bitv, bifv;
+	float ftv, ffv;
+
+	switch( field->bits ) {
+		case 0:
+			ftv = *((float *)( (uint8_t *)to + field->offset ));
+			ffv = *((float *)( (uint8_t *)from + field->offset ));
+			return ftv != ffv;
+		case 1:
+			btv = *((bool *)( (uint8_t *)to + field->offset ));
+			bfv = *((bool *)( (uint8_t *)from + field->offset ));
+			return btv != bfv;
+		case 8:
+			itv = *((int8_t *)( (uint8_t *)to + field->offset ));
+			ifv = *((int8_t *)( (uint8_t *)from + field->offset ));
+			return itv != ifv;
+		case 16:
+			itv = *((int16_t *)( (uint8_t *)to + field->offset ));
+			ifv = *((int16_t *)( (uint8_t *)from + field->offset ));
+			return itv != ifv;
+		case 32:
+			itv = *((int32_t *)( (uint8_t *)to + field->offset ));
+			ifv = *((int32_t *)( (uint8_t *)from + field->offset ));
+			return itv != ifv;
+		case 64:
+			bitv = *((int64_t *)( (uint8_t *)to + field->offset ));
+			bifv = *((int64_t *)( (uint8_t *)from + field->offset ));
+			return bitv != bifv;
+		default:
+			Com_Error( ERR_FATAL, "MSG_CompareField: unknown field bits value %i", field->bits );
+	}
+
+	return false;
+}
+
+/*
+* MSG_CompareFields
+*/
+unsigned MSG_CompareFields( const void *to, const void *from, const msg_field_t *fields, size_t numFields, uint8_t *fieldMask, size_t maskSize ) {
+	size_t i;
+	unsigned byteMask;
+
+	byteMask = 0;
+	for( i = 0; i < numFields; i++ ) {
+		size_t byte = i >> 3;
+
+		if( byte > maskSize ) {
+			Com_Error( ERR_FATAL, "MSG_CompareFields: byte > maskSize" );
+		}
+		if( byte > 32 ) {
+			Com_Error( ERR_FATAL, "MSG_CompareFields: byte > 32" );
+		}
+
+		if( MSG_CompareField( to, from, &fields[i] ) ) {
+			fieldMask[byte] |= (1 << (i & 7));
+			byteMask |= (1 << (byte & 7));
+		}
+	}
+
+	return byteMask;
+}
+
+/*
+* MSG_WriteField
+*/
+void MSG_WriteField( msg_t *msg, const void *to, const msg_field_t *field ) {
+	switch( field->encoding ) {
+		case MSG_ENCTYPE_BOOL:
+			break;
+		case MSG_ENCTYPE_FIXEDINT8:
+			MSG_WriteInt8( msg, *((int8_t *)( (uint8_t *)to + field->offset )) );
+			break;
+		case MSG_ENCTYPE_FIXEDINT16:
+			MSG_WriteInt16( msg, *((int16_t *)( (uint8_t *)to + field->offset )) );
+			break;
+		case MSG_ENCTYPE_FIXEDINT32:
+			MSG_WriteInt32( msg, *((int32_t *)( (uint8_t *)to + field->offset )) );
+			break;
+		case MSG_ENCTYPE_FIXEDINT64:
+			MSG_WriteInt64( msg, *((int64_t *)( (uint8_t *)to + field->offset )) );
+			break;
+		case MSG_ENCTYPE_FLOAT:
+			MSG_WriteFloat( msg, *((float *)( (uint8_t *)to + field->offset )) );
+			break;
+		case MSG_ENCTYPE_FLOAT8:
+			MSG_WriteInt8( msg, (int)((*((float *)( (uint8_t *)to + field->offset ))) * 127.0f) );
+			break;
+		case MSG_ENCTYPE_FLOAT88:
+			MSG_WriteInt16( msg, (int)((*((float *)( (uint8_t *)to + field->offset ))) * 255.0f) );
+			break;
+		case MSG_ENCTYPE_COORD24:
+			MSG_WriteCoord24( msg, *((float *)( (uint8_t *)to + field->offset )) );
+			break;
+		case MSG_ENCTYPE_ANGLE8:
+			MSG_WriteAngle8( msg, *((float *)( (uint8_t *)to + field->offset )) );
+			break;
+		case MSG_ENCTYPE_ANGLE16:
+			MSG_WriteAngle16( msg, *((float *)( (uint8_t *)to + field->offset )) );
+			break;
+		case MSG_ENCTYPE_BASE128:
+			switch( field->bits ) {
+			case 8:
+				MSG_WriteInt8( msg, *((int8_t *)( (uint8_t *)to + field->offset )) );
+				break;
+			case 16:
+				MSG_WriteIntBase128( msg, *((int16_t *)( (uint8_t *)to + field->offset )) );
+				break;
+			case 32:
+				MSG_WriteIntBase128( msg, *((int32_t *)( (uint8_t *)to + field->offset )) );
+				break;
+			case 64:
+				MSG_WriteIntBase128( msg, *((int64_t *)( (uint8_t *)to + field->offset )) );
+				break;
+			default:
+				Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
+				break;
+			}
+			break;
+		case MSG_ENCTYPE_UBASE128:
+			switch( field->bits ) {
+			case 8:
+				MSG_WriteUint8( msg, *((uint8_t *)( (uint8_t *)to + field->offset )) );
+				break;
+			case 16:
+				MSG_WriteUintBase128( msg, *((uint16_t *)( (uint8_t *)to + field->offset )) );
+				break;
+			case 32:
+				MSG_WriteUintBase128( msg, *((uint32_t *)( (uint8_t *)to + field->offset )) );
+				break;
+			case 64:
+				MSG_WriteUintBase128( msg, *((uint64_t *)( (uint8_t *)to + field->offset )) );
+				break;
+			default:
+				Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
+				break;
+			}
+			break;
+		default:
+			Com_Error( ERR_FATAL, "MSG_WriteField: unknown encoding type %i", field->encoding );
+			break;
+	}
+}
+
+/*
+* MSG_WriteFieldMask
+*/
+void MSG_WriteFieldMask( msg_t *msg, const uint8_t *fieldMask, unsigned byteMask ) {
+	size_t b;
+
+	b = 0;
+	while( byteMask ) {
+		if( byteMask & 1 ) {
+			MSG_WriteUint8( msg, fieldMask[b] );
+		}
+		b++;
+		byteMask >>= 1;
+	}
+}
+
+/*
+* MSG_WriteFields
+*/
+void MSG_WriteFields( msg_t *msg, const void *to, const msg_field_t *fields, size_t numFields, const uint8_t *fieldMask, unsigned byteMask ) {
+	size_t b;
+
+	b = 0;
+	while( byteMask ) {
+		if( byteMask & 1 ) {
+			unsigned fm = fieldMask[b];
+			size_t f = b << 3;
+
+			while( fm ) {
+				if( f >= numFields )
+					return;
+				if( fm & 1 ) {
+					MSG_WriteField( msg, to, &fields[f] );
+				}
+				f++;
+				fm >>= 1;
+			}
+		}
+		
+		b++;
+		byteMask >>= 1;
+	}
+}
+
+/*
+* MSG_ReadField
+*/
+void MSG_ReadField( msg_t *msg, const void *to, const msg_field_t *field ) {
+	switch( field->encoding ) {
+	case MSG_ENCTYPE_BOOL:
+		*((bool *)( (uint8_t *)to + field->offset )) ^= true;
+		break;
+	case MSG_ENCTYPE_FIXEDINT8:
+		*((int8_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt8( msg );
+		break;
+	case MSG_ENCTYPE_FIXEDINT16:
+		*((int16_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt16( msg );
+		break;
+	case MSG_ENCTYPE_FIXEDINT32:
+		*((int32_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt32( msg );
+		break;
+	case MSG_ENCTYPE_FIXEDINT64:
+		*((int64_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt64( msg );
+		break;
+	case MSG_ENCTYPE_FLOAT:
+		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadFloat( msg );
+		break;
+	case MSG_ENCTYPE_FLOAT8:
+		*((float *)( (uint8_t *)to + field->offset )) = (float)MSG_ReadInt8( msg ) / 127.0f;
+		break;
+	case MSG_ENCTYPE_FLOAT88:
+		*((float *)( (uint8_t *)to + field->offset )) = (float)MSG_ReadInt16( msg ) / 255.0f;
+		break;
+	case MSG_ENCTYPE_COORD24:
+		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadCoord24( msg );
+		break;
+	case MSG_ENCTYPE_ANGLE8:
+		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadAngle8( msg );
+		break;
+	case MSG_ENCTYPE_ANGLE16:
+		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadAngle16( msg );
+		break;
+	case MSG_ENCTYPE_BASE128:
+		switch( field->bits ) {
+		case 8:
+			*((int8_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt8( msg );
+			break;
+		case 16:
+			*((int16_t *)( (uint8_t *)to + field->offset )) = MSG_ReadIntBase128( msg );
+			break;
+		case 32:
+			*((int32_t *)( (uint8_t *)to + field->offset )) = MSG_ReadIntBase128( msg );
+			break;
+		case 64:
+			*((int64_t *)( (uint8_t *)to + field->offset )) = MSG_ReadIntBase128( msg );
+			break;
+		default:
+			Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
+			break;
+		}
+		break;
+	case MSG_ENCTYPE_UBASE128:
+		switch( field->bits ) {
+		case 8:
+			*((uint8_t *)( (uint8_t *)to + field->offset )) = MSG_ReadUint8( msg );
+			break;
+		case 16:
+			*((uint16_t *)( (uint8_t *)to + field->offset )) = MSG_ReadUintBase128( msg );
+			break;
+		case 32:
+			*((uint32_t *)( (uint8_t *)to + field->offset )) = MSG_ReadUintBase128( msg );
+			break;
+		case 64:
+			*((uint64_t *)( (uint8_t *)to + field->offset )) = MSG_ReadUintBase128( msg );
+			break;
+		default:
+			Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
+			break;
+		}
+		break;
+	default:
+		Com_Error( ERR_FATAL, "MSG_WriteField: unknown encoding type %i", field->encoding );
+		break;
+	}
+}
+
+/*
+* MSG_ReadFieldMask
+*/
+void MSG_ReadFieldMask( msg_t *msg, uint8_t *fieldMask, size_t maskSize, unsigned byteMask ) {
+	size_t b;
+	
+	b = 0;
+	while( byteMask ) {
+		if( byteMask & 1 ) {
+			if( b >= maskSize ) {
+				Com_Error( ERR_FATAL, "MSG_ReadFieldMask: i >= maskSize" );
+			}
+			fieldMask[b] = MSG_ReadUint8( msg );
+		}
+		b++;
+		byteMask >>= 1;
+	}
+}
+
+/*
+* MSG_ReadFields
+*/
+void MSG_ReadFields( msg_t *msg, void *to, const msg_field_t *fields, size_t numFields, const uint8_t *fieldMask, size_t maskSize, unsigned byteMask ) {
+	size_t b;
+
+	b = 0;
+	while( byteMask ) {
+		if( byteMask & 1 ) {
+			unsigned fm;
+			size_t f = b << 3;
+
+			if( b >= maskSize ) {
+				Com_Error( ERR_FATAL, "MSG_ReadFields: b >= maxSize" );
+			}
+			
+			fm = fieldMask[b];
+			while( fm ) {
+				if( f >= numFields ) {
+					Com_Error( ERR_FATAL, "MSG_ReadFields: f >= numFields" );
+				}
+
+				if( fm & 1 ) {
+					MSG_ReadField( msg, to, &fields[f] );
+				}
+
+				f++;
+				fm >>= 1;
+			}
+		}
+
+		b++;
+		byteMask >>= 1;
+	}
+}
+
+//==================================================
+// DELTA ENTITIES
+//==================================================
+
+#define ESOFS( x ) offsetof( entity_state_t,x )
+
+static const msg_field_t ent_state_fields[] = {
+	{ ESOFS( events[0] ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( eventParms[0] ), 32, MSG_ENCTYPE_BASE128 },
+
+	{ ESOFS( origin[0] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( origin[1] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( origin[2] ), 0, MSG_ENCTYPE_COORD24 },
+
+	{ ESOFS( angles[0] ), 0, MSG_ENCTYPE_ANGLE16 },
+	{ ESOFS( angles[1] ), 0, MSG_ENCTYPE_ANGLE16 },
+
+	{ ESOFS( teleported ), 1, MSG_ENCTYPE_BOOL },
+
+	{ ESOFS( type ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( solid ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( frame ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( modelindex ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( svflags ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( skinnum ), 32, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( effects ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( ownerNum ), 32, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( targetNum ), 32, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( sound ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( modelindex2 ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( attenuation ), 0, MSG_ENCTYPE_FLOAT88 },
+	{ ESOFS( counterNum ), 32, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( bodyOwner ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( channel ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( events[1] ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( eventParms[1] ), 32, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( weapon ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( firemode ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( damage ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( range ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( team ), 32, MSG_ENCTYPE_UBASE128 },
+
+	{ ESOFS( origin2[0] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( origin2[1] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( origin2[2] ), 0, MSG_ENCTYPE_COORD24 },
+
+	{ ESOFS( linearMovementTimeStamp ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( linearMovement ), 1, MSG_ENCTYPE_BOOL },
+	{ ESOFS( linearMovementDuration ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( linearMovementVelocity[0] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementVelocity[1] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementVelocity[2] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementBegin[0] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementBegin[1] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementBegin[2] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementEnd[0] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementEnd[1] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementEnd[2] ), 0, MSG_ENCTYPE_COORD24 },
+
+	{ ESOFS( itemNum ), 32, MSG_ENCTYPE_UBASE128 },
+
+	{ ESOFS( angles[2] ), 0, MSG_ENCTYPE_ANGLE16 },
+
+	{ ESOFS( colorRGBA ), 32, MSG_ENCTYPE_FIXEDINT32 },
+
+	{ ESOFS( light ), 32, MSG_ENCTYPE_FIXEDINT32 },
+};
+
+/*
+* MSG_WriteEntityNumber
+*/
+static void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned byteMask ) {
+	MSG_WriteIntBase128( msg, (remove ? 1 : 0) | number << 1 );
+	MSG_WriteUint8( msg, byteMask );
+}
 
 /*
 * MSG_WriteDeltaEntity
@@ -266,342 +749,65 @@ char *MSG_ReadStringLine( msg_t *msg ) {
 * Writes part of a packetentities message.
 * Can delta from either a baseline or a previous packet_entity
 */
-void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg, bool force, bool updateOtherOrigin ) {
-	int bits;
+void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg, bool force ) {
+	int number;
+	unsigned byteMask;
+	uint8_t fieldMask[8] = { 0 };
+	const msg_field_t *fields = ent_state_fields;
+	int numFields = sizeof( ent_state_fields ) / sizeof( ent_state_fields[0] );
 
-	if( !to->number ) {
+	assert( numFields < 256 );
+	if( numFields > 256 ) {
+		Com_Error( ERR_FATAL, "MSG_WriteDeltaEntity: numFields == %i", numFields );
+	}
+
+	if( !to ) {
+		if( !from )
+			Com_Error( ERR_FATAL, "MSG_WriteDeltaEntity: Unset base state" );
+		number = from->number;
+	} else {
+		number = to->number;
+	}
+
+	if( !number ) {
 		Com_Error( ERR_FATAL, "MSG_WriteDeltaEntity: Unset entity number" );
-	} else if( to->number >= MAX_EDICTS ) {
+	} else if( number >= MAX_EDICTS ) {
 		Com_Error( ERR_FATAL, "MSG_WriteDeltaEntity: Entity number >= MAX_EDICTS" );
-	} else if( to->number < 0 ) {
+	} else if( number < 0 ) {
 		Com_Error( ERR_FATAL, "MSG_WriteDeltaEntity: Invalid Entity number" );
 	}
 
-	// send an update
-	bits = 0;
-
-	if( to->number & 0xFF00 ) {
-		bits |= U_NUMBER16; // number8 is implicit otherwise
-
-	}
-	if( to->linearMovement ) {
-		if( to->linearMovementVelocity[0] != from->linearMovementVelocity[0] || to->linearMovement != from->linearMovement ) {
-			bits |= U_ORIGIN1;
-		}
-		if( to->linearMovementVelocity[1] != from->linearMovementVelocity[1] || to->linearMovement != from->linearMovement ) {
-			bits |= U_ORIGIN2;
-		}
-		if( to->linearMovementVelocity[2] != from->linearMovementVelocity[2] || to->linearMovement != from->linearMovement ) {
-			bits |= U_ORIGIN3;
-		}
-	} else {
-		if( to->origin[0] != from->origin[0] ) {
-			bits |= U_ORIGIN1;
-		}
-		if( to->origin[1] != from->origin[1] ) {
-			bits |= U_ORIGIN2;
-		}
-		if( to->origin[2] != from->origin[2] ) {
-			bits |= U_ORIGIN3;
-		}
+	if( !to ) {
+		// remove
+		MSG_WriteEntityNumber( msg, number, true, 0 );
+		return;
 	}
 
-	if( to->angles[0] != from->angles[0] ) {
-		bits |= U_ANGLE1;
-	}
-	if( to->angles[1] != from->angles[1] ) {
-		bits |= U_ANGLE2;
-	}
-	if( to->angles[2] != from->angles[2] ) {
-		bits |= U_ANGLE3;
+	byteMask = MSG_CompareFields( to, from, fields, numFields, fieldMask, sizeof( fieldMask ) );
+	if( !byteMask && !force ) {
+		// no changes
+		return;
 	}
 
-	if( to->skinnum != from->skinnum ) {
-		if( to->skinnum & 0xFFFF0000 ) {
-			bits |= ( U_SKIN8 | U_SKIN16 );
-		} else if( to->skinnum & 0xFF00 ) {
-			bits |= U_SKIN16;
-		} else {
-			bits |= U_SKIN8;
-		}
-	}
+	MSG_WriteEntityNumber( msg, number, false, byteMask );
 
-	if( to->frame != from->frame ) {
-		if( to->frame & 0xFF00 ) {
-			bits |= U_FRAME16;
-		} else {
-			bits |= U_FRAME8;
-		}
-	}
+	MSG_WriteFieldMask( msg, fieldMask, byteMask );
 
-	if( to->effects != from->effects ) {
-		if( to->effects & 0xFFFF0000 ) {
-			bits |= ( U_EFFECTS8 | U_EFFECTS16 );
-		} else if( to->effects & 0xFF00 ) {
-			bits |= U_EFFECTS16;
-		} else {
-			bits |= U_EFFECTS8;
-		}
-	}
-
-	if( to->solid != from->solid ) {
-		bits |= U_SOLID;
-	}
-
-	// events are not delta compressed, just 0 compressed
-	if( to->events[0] ) {
-		bits |= U_EVENT;
-	}
-	if( to->events[1] ) {
-		bits |= U_EVENT2;
-	}
-
-	if( to->modelindex != from->modelindex ) {
-		bits |= U_MODEL;
-	}
-	if( to->modelindex2 != from->modelindex2 ) {
-		bits |= U_MODEL2;
-	}
-
-	if( ( to->type != from->type ) || ( to->linearMovement != from->linearMovement ) ) {
-		bits |= U_TYPE;
-	}
-
-	if( to->sound != from->sound ) {
-		bits |= U_SOUND;
-	}
-
-	if( updateOtherOrigin ) {
-		if( to->origin2[0] != from->origin2[0] || to->origin2[1] != from->origin2[1] || to->origin2[2] != from->origin2[2]
-			|| to->teleported || to->linearMovement != from->linearMovement || to->linearMovementTimeStamp != from->linearMovementTimeStamp ) {
-			bits |= U_OTHERORIGIN;
-		}
-	}
-
-	if( to->attenuation != from->attenuation ) {
-		bits |= U_ATTENUATION;
-	}
-
-	if( to->weapon != from->weapon || to->teleported != from->teleported ) {
-		bits |= U_WEAPON;
-	}
-
-	if( to->svflags != from->svflags ) {
-		bits |= U_SVFLAGS;
-	}
-
-	if( to->light != from->light ) {
-		bits |= U_LIGHT;
-	}
-
-	if( to->team != from->team ) {
-		bits |= U_TEAM;
-	}
-
-	//
-	// write the message
-	//
-	if( !bits && !force ) {
-		return; // nothing to send!
-
-	}
-	//----------
-
-	if( bits & 0xff000000 ) {
-		bits |= U_MOREBITS3 | U_MOREBITS2 | U_MOREBITS1;
-	} else if( bits & 0x00ff0000 ) {
-		bits |= U_MOREBITS2 | U_MOREBITS1;
-	} else if( bits & 0x0000ff00 ) {
-		bits |= U_MOREBITS1;
-	}
-
-	MSG_WriteByte( msg, bits & 255 );
-
-	if( bits & 0xff000000 ) {
-		MSG_WriteByte( msg, ( bits >> 8 ) & 255 );
-		MSG_WriteByte( msg, ( bits >> 16 ) & 255 );
-		MSG_WriteByte( msg, ( bits >> 24 ) & 255 );
-	} else if( bits & 0x00ff0000 ) {
-		MSG_WriteByte( msg, ( bits >> 8 ) & 255 );
-		MSG_WriteByte( msg, ( bits >> 16 ) & 255 );
-	} else if( bits & 0x0000ff00 ) {
-		MSG_WriteByte( msg, ( bits >> 8 ) & 255 );
-	}
-
-	//----------
-
-	if( bits & U_NUMBER16 ) {
-		MSG_WriteShort( msg, to->number );
-	} else {
-		MSG_WriteByte( msg, to->number );
-	}
-
-	if( bits & U_TYPE ) {
-		uint8_t ttype = 0;
-		ttype = to->type & ~ET_INVERSE;
-		if( to->linearMovement ) {
-			ttype |= ET_INVERSE;
-		}
-		MSG_WriteByte( msg, ttype );
-	}
-
-	if( bits & U_SOLID ) {
-		MSG_WriteShort( msg, to->solid );
-	}
-
-	if( bits & U_MODEL ) {
-		MSG_WriteShort( msg, to->modelindex );
-	}
-	if( bits & U_MODEL2 ) {
-		MSG_WriteShort( msg, to->modelindex2 );
-	}
-
-	if( bits & U_FRAME8 ) {
-		MSG_WriteByte( msg, to->frame );
-	} else if( bits & U_FRAME16 ) {
-		MSG_WriteShort( msg, to->frame );
-	}
-
-	if( ( bits & U_SKIN8 ) && ( bits & U_SKIN16 ) ) { //used for laser colors
-		MSG_WriteLong( msg, to->skinnum );
-	} else if( bits & U_SKIN8 ) {
-		MSG_WriteByte( msg, to->skinnum );
-	} else if( bits & U_SKIN16 ) {
-		MSG_WriteShort( msg, to->skinnum );
-	}
-
-
-	if( ( bits & ( U_EFFECTS8 | U_EFFECTS16 ) ) == ( U_EFFECTS8 | U_EFFECTS16 ) ) {
-		MSG_WriteLong( msg, to->effects );
-	} else if( bits & U_EFFECTS8 ) {
-		MSG_WriteByte( msg, to->effects );
-	} else if( bits & U_EFFECTS16 ) {
-		MSG_WriteShort( msg, to->effects );
-	}
-
-	if( to->linearMovement ) {
-		if( bits & U_ORIGIN1 ) {
-			MSG_WriteCoord( msg, to->linearMovementVelocity[0] );
-		}
-		if( bits & U_ORIGIN2 ) {
-			MSG_WriteCoord( msg, to->linearMovementVelocity[1] );
-		}
-		if( bits & U_ORIGIN3 ) {
-			MSG_WriteCoord( msg, to->linearMovementVelocity[2] );
-		}
-	} else {
-		if( bits & U_ORIGIN1 ) {
-			MSG_WriteCoord( msg, to->origin[0] );
-		}
-		if( bits & U_ORIGIN2 ) {
-			MSG_WriteCoord( msg, to->origin[1] );
-		}
-		if( bits & U_ORIGIN3 ) {
-			MSG_WriteCoord( msg, to->origin[2] );
-		}
-	}
-
-	if( bits & U_ANGLE1 && ( to->solid == SOLID_BMODEL ) ) {
-		MSG_WriteAngle16( msg, to->angles[0] );
-	} else if( bits & U_ANGLE1 ) {
-		MSG_WriteAngle( msg, to->angles[0] );
-	}
-
-	if( bits & U_ANGLE2 && ( to->solid == SOLID_BMODEL ) ) {
-		MSG_WriteAngle16( msg, to->angles[1] );
-	} else if( bits & U_ANGLE2 ) {
-		MSG_WriteAngle( msg, to->angles[1] );
-	}
-
-	if( bits & U_ANGLE3 && ( to->solid == SOLID_BMODEL ) ) {
-		MSG_WriteAngle16( msg, to->angles[2] );
-	} else if( bits & U_ANGLE3 ) {
-		MSG_WriteAngle( msg, to->angles[2] );
-	}
-
-	if( bits & U_OTHERORIGIN ) {
-		MSG_WriteCoord( msg, to->origin2[0] );
-		MSG_WriteCoord( msg, to->origin2[1] );
-		MSG_WriteCoord( msg, to->origin2[2] );
-	}
-
-	if( bits & U_SOUND ) {
-		MSG_WriteShort( msg, (uint8_t)to->sound );
-	}
-
-	if( bits & U_EVENT ) {
-		if( !to->eventParms[0] ) {
-			MSG_WriteByte( msg, (uint8_t)( to->events[0] & ~EV_INVERSE ) );
-		} else {
-			MSG_WriteByte( msg, (uint8_t)( to->events[0] | EV_INVERSE ) );
-			MSG_WriteByte( msg, (uint8_t)to->eventParms[0] );
-		}
-	}
-	if( bits & U_EVENT2 ) {
-		if( !to->eventParms[1] ) {
-			MSG_WriteByte( msg, (uint8_t)( to->events[1] & ~EV_INVERSE ) );
-		} else {
-			MSG_WriteByte( msg, (uint8_t)( to->events[1] | EV_INVERSE ) );
-			MSG_WriteByte( msg, (uint8_t)to->eventParms[1] );
-		}
-	}
-
-	if( bits & U_ATTENUATION ) {
-		MSG_WriteByte( msg, (uint8_t)( to->attenuation * 16 ) );
-	}
-
-	if( bits & U_WEAPON ) {
-		uint8_t tweapon = 0;
-		tweapon = to->weapon & ~0x80;
-		if( to->teleported ) {
-			tweapon |= 0x80;
-		}
-		MSG_WriteByte( msg, tweapon );
-	}
-
-	if( bits & U_SVFLAGS ) {
-		MSG_WriteShort( msg, to->svflags );
-	}
-
-	if( bits & U_LIGHT ) {
-		MSG_WriteLong( msg, to->light );
-	}
-
-	if( bits & U_TEAM ) {
-		MSG_WriteByte( msg, to->team );
-	}
+	MSG_WriteFields( msg, to, fields, numFields, fieldMask, byteMask );
 }
 
 /*
-* MSG_ReadEntityBits
+* MSG_ReadEntityNumber
 *
-* Returns the entity number and the header bits
+* Returns the entity number and the remove bit
 */
-int MSG_ReadEntityBits( msg_t *msg, unsigned *bits ) {
-	unsigned b, total;
+int MSG_ReadEntityNumber( msg_t *msg, bool *remove, unsigned *byteMask ) {
 	int number;
 
-	total = (uint8_t)MSG_ReadByte( msg );
-	if( total & U_MOREBITS1 ) {
-		b = (uint8_t)MSG_ReadByte( msg );
-		total |= ( b << 8 ) & 0x0000FF00;
-	}
-	if( total & U_MOREBITS2 ) {
-		b = (uint8_t)MSG_ReadByte( msg );
-		total |= ( b << 16 ) & 0x00FF0000;
-	}
-	if( total & U_MOREBITS3 ) {
-		b = (uint8_t)MSG_ReadByte( msg );
-		total |= ( b << 24 ) & 0xFF000000;
-	}
-
-	if( total & U_NUMBER16 ) {
-		number = MSG_ReadShort( msg );
-	} else {
-		number = (uint8_t)MSG_ReadByte( msg );
-	}
-
-	*bits = total;
+	number = (int)MSG_ReadIntBase128( msg );
+	*remove = (number & 1 ? true : false);
+	number = number >> 1;
+	*byteMask = MSG_ReadUint8( msg );
 
 	return number;
 }
@@ -611,250 +817,69 @@ int MSG_ReadEntityBits( msg_t *msg, unsigned *bits ) {
 *
 * Can go from either a baseline or a previous packet_entity
 */
-void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, int number, unsigned bits ) {
+void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, int number, unsigned byteMask ) {
+	uint8_t fieldMask[8] = { 0 };
+	const msg_field_t *fields = ent_state_fields;
+	int numFields = sizeof( ent_state_fields ) / sizeof( ent_state_fields[0] );
+
 	// set everything to the state we are delta'ing from
 	*to = *from;
-
 	to->number = number;
+	
+	MSG_ReadFieldMask( msg, fieldMask, sizeof( fieldMask ), byteMask );
 
-	if( bits & U_TYPE ) {
-		uint8_t ttype;
-		ttype = (uint8_t)MSG_ReadByte( msg );
-		to->type = ttype & ~ET_INVERSE;
-		to->linearMovement = ( ttype & ET_INVERSE ) ? true : false;
-	}
-
-	if( bits & U_SOLID ) {
-		to->solid = MSG_ReadShort( msg );
-	}
-
-	if( bits & U_MODEL ) {
-		to->modelindex = MSG_ReadShort( msg );
-	}
-	if( bits & U_MODEL2 ) {
-		to->modelindex2 = MSG_ReadShort( msg );
-	}
-
-	if( bits & U_FRAME8 ) {
-		to->frame = (uint8_t)MSG_ReadByte( msg );
-	}
-	if( bits & U_FRAME16 ) {
-		to->frame = MSG_ReadShort( msg );
-	}
-
-	if( ( bits & U_SKIN8 ) && ( bits & U_SKIN16 ) ) { //used for laser colors
-		to->skinnum = MSG_ReadLong( msg );
-	} else if( bits & U_SKIN8 ) {
-		to->skinnum = MSG_ReadByte( msg );
-	} else if( bits & U_SKIN16 ) {
-		to->skinnum = MSG_ReadShort( msg );
-	}
-
-	if( ( bits & ( U_EFFECTS8 | U_EFFECTS16 ) ) == ( U_EFFECTS8 | U_EFFECTS16 ) ) {
-		to->effects = MSG_ReadLong( msg );
-	} else if( bits & U_EFFECTS8 ) {
-		to->effects = (uint8_t)MSG_ReadByte( msg );
-	} else if( bits & U_EFFECTS16 ) {
-		to->effects = MSG_ReadShort( msg );
-	}
-
-	if( to->linearMovement ) {
-		if( bits & U_ORIGIN1 ) {
-			to->linearMovementVelocity[0] = MSG_ReadCoord( msg );
-		}
-		if( bits & U_ORIGIN2 ) {
-			to->linearMovementVelocity[1] = MSG_ReadCoord( msg );
-		}
-		if( bits & U_ORIGIN3 ) {
-			to->linearMovementVelocity[2] = MSG_ReadCoord( msg );
-		}
-	} else {
-		if( bits & U_ORIGIN1 ) {
-			to->origin[0] = MSG_ReadCoord( msg );
-		}
-		if( bits & U_ORIGIN2 ) {
-			to->origin[1] = MSG_ReadCoord( msg );
-		}
-		if( bits & U_ORIGIN3 ) {
-			to->origin[2] = MSG_ReadCoord( msg );
-		}
-	}
-
-	if( ( bits & U_ANGLE1 ) && ( to->solid == SOLID_BMODEL ) ) {
-		to->angles[0] = MSG_ReadAngle16( msg );
-	} else if( bits & U_ANGLE1 ) {
-		to->angles[0] = MSG_ReadAngle( msg );
-	}
-
-	if( ( bits & U_ANGLE2 ) && ( to->solid == SOLID_BMODEL ) ) {
-		to->angles[1] = MSG_ReadAngle16( msg );
-	} else if( bits & U_ANGLE2 ) {
-		to->angles[1] = MSG_ReadAngle( msg );
-	}
-
-	if( ( bits & U_ANGLE3 ) && ( to->solid == SOLID_BMODEL ) ) {
-		to->angles[2] = MSG_ReadAngle16( msg );
-	} else if( bits & U_ANGLE3 ) {
-		to->angles[2] = MSG_ReadAngle( msg );
-	}
-
-	if( bits & U_OTHERORIGIN ) {
-		MSG_ReadPos( msg, to->origin2 );
-	}
-
-	if( bits & U_SOUND ) {
-		to->sound = MSG_ReadShort( msg );
-	}
-
-	if( bits & U_EVENT ) {
-		int event = (uint8_t)MSG_ReadByte( msg );
-		if( event & EV_INVERSE ) {
-			to->eventParms[0] = (uint8_t)MSG_ReadByte( msg );
-		} else {
-			to->eventParms[0] = 0;
-		}
-		to->events[0] = ( event & ~EV_INVERSE );
-	} else {
-		to->events[0] = 0;
-		to->eventParms[0] = 0;
-	}
-
-	if( bits & U_EVENT2 ) {
-		int event = (uint8_t)MSG_ReadByte( msg );
-		if( event & EV_INVERSE ) {
-			to->eventParms[1] = (uint8_t)MSG_ReadByte( msg );
-		} else {
-			to->eventParms[1] = 0;
-		}
-		to->events[1] = ( event & ~EV_INVERSE );
-	} else {
-		to->events[1] = 0;
-		to->eventParms[1] = 0;
-	}
-
-	if( bits & U_ATTENUATION ) {
-		uint8_t attenuation = MSG_ReadByte( msg );
-		to->attenuation = (float)attenuation / 16.0;
-	}
-
-	if( bits & U_WEAPON ) {
-		uint8_t tweapon;
-		tweapon = (uint8_t)MSG_ReadByte( msg );
-		to->weapon = tweapon & ~0x80;
-		to->teleported = ( tweapon & 0x80 ) ? true : false;
-	}
-
-	if( bits & U_SVFLAGS ) {
-		to->svflags = MSG_ReadShort( msg );
-	}
-
-	if( bits & U_LIGHT ) {
-		if( to->linearMovement ) {
-			to->linearMovementTimeStamp = (unsigned int)MSG_ReadLong( msg );
-		} else {
-			to->light = MSG_ReadLong( msg );
-		}
-	}
-
-	if( bits & U_TEAM ) {
-		to->team = (uint8_t)MSG_ReadByte( msg );
-	}
+	MSG_ReadFields( msg, to, fields, numFields, fieldMask, sizeof( fieldMask ), byteMask );
 }
 
+//==================================================
+// DELTA USER CMDS
+//==================================================
 
-void MSG_WriteDeltaUsercmd( msg_t *buf, usercmd_t *from, usercmd_t *cmd ) {
-	int bits;
+#define UCOFS( x ) offsetof( usercmd_t,x )
+
+static const msg_field_t usercmd_fields[] = {
+	{ UCOFS( angles[0] ), 16, MSG_ENCTYPE_FIXEDINT16 },
+	{ UCOFS( angles[1] ), 16, MSG_ENCTYPE_FIXEDINT16 },
+	{ UCOFS( angles[2] ), 16, MSG_ENCTYPE_FIXEDINT16 },
+
+	{ UCOFS( forwardmove ), 0, MSG_ENCTYPE_FLOAT8 },
+	{ UCOFS( sidemove ), 0, MSG_ENCTYPE_FLOAT8 },
+	{ UCOFS( upmove ), 0, MSG_ENCTYPE_FLOAT8 },
+
+	{ UCOFS( buttons ), 8, MSG_ENCTYPE_UBASE128 },
+};
+
+/*
+* MSG_WriteDeltaUsercmd
+*/
+void MSG_WriteDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *cmd ) {
+	uint8_t fieldMask = 0;
+	int numFields = sizeof( usercmd_fields ) / sizeof( usercmd_fields[0] );
+	const msg_field_t *fields = usercmd_fields;
 
 	// send the movement message
+	MSG_CompareFields( cmd, from, fields, numFields, &fieldMask, 1 );
 
-	bits = 0;
-	if( cmd->angles[0] != from->angles[0] ) {
-		bits |= CM_ANGLE1;
-	}
-	if( cmd->angles[1] != from->angles[1] ) {
-		bits |= CM_ANGLE2;
-	}
-	if( cmd->angles[2] != from->angles[2] ) {
-		bits |= CM_ANGLE3;
-	}
+	MSG_WriteFieldMask( msg, &fieldMask, 1 );
 
-	if( cmd->forwardmove != from->forwardmove ) {
-		bits |= CM_FORWARD;
-	}
-	if( cmd->sidemove != from->sidemove ) {
-		bits |= CM_SIDE;
-	}
-	if( cmd->upmove != from->upmove ) {
-		bits |= CM_UP;
-	}
+	MSG_WriteFields( msg, cmd, fields, numFields, &fieldMask, 1 );
 
-	if( cmd->buttons != from->buttons ) {
-		bits |= CM_BUTTONS;
-	}
-
-	MSG_WriteByte( buf, bits );
-
-	if( bits & CM_ANGLE1 ) {
-		MSG_WriteShort( buf, cmd->angles[0] );
-	}
-	if( bits & CM_ANGLE2 ) {
-		MSG_WriteShort( buf, cmd->angles[1] );
-	}
-	if( bits & CM_ANGLE3 ) {
-		MSG_WriteShort( buf, cmd->angles[2] );
-	}
-
-	if( bits & CM_FORWARD ) {
-		MSG_WriteChar( buf, (int)( cmd->forwardmove * UCMD_PUSHFRAC_SNAPSIZE ) );
-	}
-	if( bits & CM_SIDE ) {
-		MSG_WriteChar( buf, (int)( cmd->sidemove * UCMD_PUSHFRAC_SNAPSIZE ) );
-	}
-	if( bits & CM_UP ) {
-		MSG_WriteChar( buf, (int)( cmd->upmove * UCMD_PUSHFRAC_SNAPSIZE ) );
-	}
-
-	if( bits & CM_BUTTONS ) {
-		MSG_WriteByte( buf, cmd->buttons );
-	}
-
-	MSG_WriteLong( buf, cmd->serverTimeStamp );
-
+	MSG_WriteInt32( msg, cmd->serverTimeStamp );
 }
 
-void MSG_ReadDeltaUsercmd( msg_t *msg_read, usercmd_t *from, usercmd_t *move ) {
-	int bits;
+/*
+* MSG_ReadDeltaUsercmd
+*/
+void MSG_ReadDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *move ) {
+	uint8_t fieldMask = 0;
+	int numFields = sizeof( usercmd_fields ) / sizeof( usercmd_fields[0] );
+	const msg_field_t *fields = usercmd_fields;
 
 	memcpy( move, from, sizeof( *move ) );
 
-	bits = MSG_ReadByte( msg_read );
+	MSG_ReadFieldMask( msg, &fieldMask, 1, 1 );
 
-	// read current angles
-	if( bits & CM_ANGLE1 ) {
-		move->angles[0] = MSG_ReadShort( msg_read );
-	}
-	if( bits & CM_ANGLE2 ) {
-		move->angles[1] = MSG_ReadShort( msg_read );
-	}
-	if( bits & CM_ANGLE3 ) {
-		move->angles[2] = MSG_ReadShort( msg_read );
-	}
+	MSG_ReadFields( msg, move, fields, numFields, &fieldMask, 1, 1 );
 
-	// read movement
-	if( bits & CM_FORWARD ) {
-		move->forwardmove = (float)MSG_ReadChar( msg_read ) / UCMD_PUSHFRAC_SNAPSIZE;
-	}
-	if( bits & CM_SIDE ) {
-		move->sidemove = (float)MSG_ReadChar( msg_read ) / UCMD_PUSHFRAC_SNAPSIZE;
-	}
-	if( bits & CM_UP ) {
-		move->upmove = (float)MSG_ReadChar( msg_read ) / UCMD_PUSHFRAC_SNAPSIZE;
-	}
-
-	// read buttons
-	if( bits & CM_BUTTONS ) {
-		move->buttons = MSG_ReadByte( msg_read );
-	}
-
-	move->serverTimeStamp = MSG_ReadLong( msg_read );
+	move->serverTimeStamp = MSG_ReadInt32( msg );
 }

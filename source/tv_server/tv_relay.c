@@ -349,8 +349,8 @@ static void TV_Relay_ReadPackets( relay_t *relay ) {
 		// skip header
 		MSG_BeginReading( msg );
 		if( !relay->upstream->demo.playing ) {
-			MSG_ReadLong( msg );
-			MSG_ReadLong( msg );
+			MSG_ReadInt32( msg );
+			MSG_ReadInt32( msg );
 		}
 		if( relay->state >= CA_HANDSHAKE ) {
 			TV_Relay_ParseServerMessage( relay, msg );

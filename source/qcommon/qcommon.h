@@ -72,41 +72,49 @@ void MSG_CopyData( msg_t *buf, const void *data, size_t length );
 struct usercmd_s;
 struct entity_state_s;
 
-void MSG_WriteChar( msg_t *sb, int c );
-void MSG_WriteByte( msg_t *sb, int c );
-void MSG_WriteShort( msg_t *sb, int c );
-void MSG_WriteInt3( msg_t *sb, int c );
-void MSG_WriteLong( msg_t *sb, int c );
+void MSG_WriteInt8( msg_t *sb, int c );
+void MSG_WriteUint8( msg_t *sb, int c );
+void MSG_WriteInt16( msg_t *sb, int c );
+void MSG_WriteInt24( msg_t *sb, int c );
+void MSG_WriteInt32( msg_t *sb, int c );
+void MSG_WriteInt64( msg_t *sb, int64_t c );
+void MSG_WriteUintBase128( msg_t *msg, uint64_t c );
+void MSG_WriteIntBase128( msg_t *msg, int64_t c );
 void MSG_WriteFloat( msg_t *sb, float f );
 void MSG_WriteString( msg_t *sb, const char *s );
-#define MSG_WriteCoord( sb, f ) ( MSG_WriteInt3( ( sb ), Q_rint( ( f * PM_VECTOR_SNAP ) ) ) )
-#define MSG_WritePos( sb, pos ) ( MSG_WriteCoord( ( sb ), ( pos )[0] ), MSG_WriteCoord( sb, ( pos )[1] ), MSG_WriteCoord( sb, ( pos )[2] ) )
-#define MSG_WriteAngle( sb, f ) ( MSG_WriteByte( ( sb ), ANGLE2BYTE( ( f ) ) ) )
-#define MSG_WriteAngle16( sb, f ) ( MSG_WriteShort( ( sb ), ANGLE2SHORT( ( f ) ) ) )
+#define MSG_WriteCoord8( sb, f ) ( MSG_WriteInt8( ( sb ), Q_rint( ( f * 127.0f ) ) ) )
+#define MSG_WriteCoord24( sb, f ) ( MSG_WriteIntBase128( ( sb ), Q_rint( ( f * 16.0f ) ) ) )
+#define MSG_WritePos( sb, pos ) ( MSG_WriteCoord24( ( sb ), ( pos )[0] ), MSG_WriteCoord24( sb, ( pos )[1] ), MSG_WriteCoord24( sb, ( pos )[2] ) )
+#define MSG_WriteAngle8( sb, f ) ( MSG_WriteUint8( ( sb ), ANGLE2BYTE( ( f ) ) ) )
+#define MSG_WriteAngle16( sb, f ) ( MSG_WriteInt16( ( sb ), ANGLE2SHORT( ( f ) ) ) )
 void MSG_WriteDeltaUsercmd( msg_t *sb, struct usercmd_s *from, struct usercmd_s *cmd );
-void MSG_WriteDeltaEntity( struct entity_state_s *from, struct entity_state_s *to, msg_t *msg, bool force, bool newentity );
+void MSG_WriteDeltaEntity( struct entity_state_s *from, struct entity_state_s *to, msg_t *msg, bool force );
 void MSG_WriteDir( msg_t *sb, vec3_t vector );
 
 
 void MSG_BeginReading( msg_t *sb );
 
 // returns -1 if no more characters are available
-int MSG_ReadChar( msg_t *msg );
-int MSG_ReadByte( msg_t *msg );
-int MSG_ReadShort( msg_t *sb );
-int MSG_ReadInt3( msg_t *sb );
-int MSG_ReadLong( msg_t *sb );
+int MSG_ReadInt8( msg_t *msg );
+int MSG_ReadUint8( msg_t *msg );
+int MSG_ReadInt16( msg_t *sb );
+int MSG_ReadInt24( msg_t *sb );
+int MSG_ReadInt32( msg_t *sb );
+int64_t MSG_ReadInt64( msg_t *sb );
+uint64_t MSG_ReadUintBase128( msg_t *msg );
+int64_t MSG_ReadIntBase128( msg_t *msg );
 float MSG_ReadFloat( msg_t *sb );
 char *MSG_ReadString( msg_t *sb );
 char *MSG_ReadStringLine( msg_t *sb );
-#define MSG_ReadCoord( sb ) ( (float)MSG_ReadInt3( ( sb ) ) * ( 1.0 / PM_VECTOR_SNAP ) )
-#define MSG_ReadPos( sb, pos ) ( ( pos )[0] = MSG_ReadCoord( ( sb ) ), ( pos )[1] = MSG_ReadCoord( ( sb ) ), ( pos )[2] = MSG_ReadCoord( ( sb ) ) )
-#define MSG_ReadAngle( sb ) ( BYTE2ANGLE( MSG_ReadByte( ( sb ) ) ) )
-#define MSG_ReadAngle16( sb ) ( SHORT2ANGLE( MSG_ReadShort( ( sb ) ) ) )
+#define MSG_ReadCoord8( sb ) ( (float)MSG_ReadInt8( ( sb ) ) / 127.0f )
+#define MSG_ReadCoord24( sb ) ( (float)MSG_ReadIntBase128( ( sb ) ) / 16.0f )
+#define MSG_ReadPos( sb, pos ) ( ( pos )[0] = MSG_ReadCoord24( ( sb ) ), ( pos )[1] = MSG_ReadCoord24( ( sb ) ), ( pos )[2] = MSG_ReadCoord24( ( sb ) ) )
+#define MSG_ReadAngle8( sb ) ( BYTE2ANGLE( MSG_ReadUint8( ( sb ) ) ) )
+#define MSG_ReadAngle16( sb ) ( SHORT2ANGLE( MSG_ReadInt16( ( sb ) ) ) )
 void MSG_ReadDeltaUsercmd( msg_t *sb, struct usercmd_s *from, struct usercmd_s *cmd );
 
-int MSG_ReadEntityBits( msg_t *msg, unsigned *bits );
-void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, int number, unsigned bits );
+int MSG_ReadEntityNumber( msg_t *msg, bool *remove, unsigned *byteMask );
+void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, int number, unsigned byteMask );
 
 void MSG_ReadDir( msg_t *sb, vec3_t vector );
 void MSG_ReadData( msg_t *sb, void *buffer, size_t length );
@@ -311,67 +319,6 @@ enum clc_ops_e {
 #define PS_M_DELTA_ANGLES1  ( 1 << 26 )
 #define PS_M_DELTA_ANGLES2  ( 1 << 27 )
 #define PS_PLAYERNUM        ( 1 << 28 )
-
-
-
-//==============================================
-
-// user_cmd_t communication
-
-//#define	CMD_BACKUP		64	// allow a lot of command backups for very fast systems
-//#define CMD_MASK		(CMD_BACKUP-1)
-
-// ms and light always sent, the others are optional
-#define CM_ANGLE1   ( 1 << 0 )
-#define CM_ANGLE2   ( 1 << 1 )
-#define CM_ANGLE3   ( 1 << 2 )
-#define CM_FORWARD  ( 1 << 3 )
-#define CM_SIDE     ( 1 << 4 )
-#define CM_UP       ( 1 << 5 )
-#define CM_BUTTONS  ( 1 << 6 )
-
-//==============================================
-
-// entity_state_t communication
-
-// try to pack the common update flags into the first byte
-#define U_ORIGIN1   ( 1 << 0 )
-#define U_ORIGIN2   ( 1 << 1 )
-#define U_ORIGIN3   ( 1 << 2 )
-#define U_ANGLE1    ( 1 << 3 )
-#define U_ANGLE2    ( 1 << 4 )
-#define U_EVENT     ( 1 << 5 )
-#define U_REMOVE    ( 1 << 6 )      // REMOVE this entity, don't add it
-#define U_MOREBITS1 ( 1 << 7 )      // read one additional byte
-
-// second byte
-#define U_NUMBER16  ( 1 << 8 )      // NUMBER8 is implicit if not set
-#define U_FRAME8    ( 1 << 9 )      // frame is a byte
-#define U_SVFLAGS   ( 1 << 10 )
-#define U_MODEL     ( 1 << 11 )
-#define U_TYPE      ( 1 << 12 )
-#define U_OTHERORIGIN   ( 1 << 13 )     // FIXME: get rid of this
-#define U_SKIN8     ( 1 << 14 )
-#define U_MOREBITS2 ( 1 << 15 )     // read one additional byte
-
-// third byte
-#define U_EFFECTS8  ( 1 << 16 )     // autorotate, trails, etc
-#define U_WEAPON    ( 1 << 17 )
-#define U_SOUND     ( 1 << 18 )
-#define U_MODEL2    ( 1 << 19 )     // weapons, flags, etc
-#define U_LIGHT     ( 1 << 20 )
-#define U_SOLID     ( 1 << 21 )     // angles are short if bmodel (precise)
-#define U_EVENT2    ( 1 << 22 )
-#define U_MOREBITS3 ( 1 << 23 )     // read one additional byte
-
-// fourth byte
-#define U_SKIN16    ( 1 << 24 )
-#define U_ANGLE3    ( 1 << 25 )     // for multiview, info need for culling
-#define U_ATTENUATION   ( 1 << 26 )
-#define U_EFFECTS16 ( 1 << 27 )
-#define U_____UNUSED2   ( 1 << 28 )
-#define U_FRAME16   ( 1 << 29 )     // frame is a short
-#define U_TEAM      ( 1 << 30 )     // gameteam. Will rarely change
 
 /*
 ==============================================================

@@ -40,9 +40,8 @@ static void SNAP_EmitPacketEntities( ginfo_t *gi, client_snapshot_t *from, clien
 	int oldindex, newindex;
 	int oldnum, newnum;
 	int from_num_entities;
-	int bits;
 
-	MSG_WriteByte( msg, svc_packetentities );
+	MSG_WriteUint8( msg, svc_packetentities );
 
 	if( !from ) {
 		from_num_entities = 0;
@@ -75,7 +74,7 @@ static void SNAP_EmitPacketEntities( ginfo_t *gi, client_snapshot_t *from, clien
 			// in any bytes being emited if the entity has not changed at all
 			// note that players are always 'newentities', this updates their oldorigin always
 			// and prevents warping ( wsw : jal : I removed it from the players )
-			MSG_WriteDeltaEntity( oldent, newent, msg, false, ( ( EDICT_NUM( newent->number ) )->r.svflags & SVF_TRANSMITORIGIN2 ) ? true : false );
+			MSG_WriteDeltaEntity( oldent, newent, msg, false );
 			oldindex++;
 			newindex++;
 			continue;
@@ -83,35 +82,20 @@ static void SNAP_EmitPacketEntities( ginfo_t *gi, client_snapshot_t *from, clien
 
 		if( newnum < oldnum ) {
 			// this is a new entity, send it from the baseline
-			MSG_WriteDeltaEntity( &baselines[newnum], newent, msg, true, ( ( EDICT_NUM( newent->number ) )->r.svflags & SVF_TRANSMITORIGIN2 ) ? true : false );
+			MSG_WriteDeltaEntity( &baselines[newnum], newent, msg, true );
 			newindex++;
 			continue;
 		}
 
 		if( newnum > oldnum ) {
 			// the old entity isn't present in the new message
-			bits = U_REMOVE;
-			if( oldnum >= 256 ) {
-				bits |= ( U_NUMBER16 | U_MOREBITS1 );
-			}
-
-			MSG_WriteByte( msg, bits & 255 );
-			if( bits & 0x0000ff00 ) {
-				MSG_WriteByte( msg, ( bits >> 8 ) & 255 );
-			}
-
-			if( bits & U_NUMBER16 ) {
-				MSG_WriteShort( msg, oldnum );
-			} else {
-				MSG_WriteByte( msg, oldnum );
-			}
-
+			MSG_WriteDeltaEntity( oldent, NULL, msg, false );
 			oldindex++;
 			continue;
 		}
 	}
 
-	MSG_WriteShort( msg, 0 ); // end of packetentities
+	MSG_WriteInt16( msg, 0 ); // end of packetentities
 }
 
 /*
@@ -151,14 +135,14 @@ static void SNAP_WriteDeltaGameStateToClient( client_snapshot_t *from, client_sn
 		}
 	}
 
-	MSG_WriteByte( msg, svc_match );
-	MSG_WriteByte( msg, bits );
-	MSG_WriteShort( msg, statbits );
+	MSG_WriteUint8( msg, svc_match );
+	MSG_WriteUint8( msg, bits );
+	MSG_WriteInt16( msg, statbits );
 
 	if( bits ) {
 		for( i = 0; i < MAX_GAME_LONGSTATS; i++ ) {
 			if( bits & ( 1 << i ) ) {
-				MSG_WriteLong( msg, (int)gameState->longstats[i] );
+				MSG_WriteInt32( msg, (int)gameState->longstats[i] );
 			}
 		}
 	}
@@ -166,7 +150,7 @@ static void SNAP_WriteDeltaGameStateToClient( client_snapshot_t *from, client_sn
 	if( statbits ) {
 		for( i = 0; i < MAX_GAME_STATS; i++ ) {
 			if( statbits & ( 1 << i ) ) {
-				MSG_WriteShort( msg, gameState->stats[i] );
+				MSG_WriteInt16( msg, gameState->stats[i] );
 			}
 		}
 	}
@@ -296,7 +280,7 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 	//
 	// write it
 	//
-	MSG_WriteByte( msg, svc_playerinfo );
+	MSG_WriteUint8( msg, svc_playerinfo );
 
 	if( pflags & 0xff000000 ) {
 		pflags |= PS_MOREBITS3 | PS_MOREBITS2 | PS_MOREBITS1;
@@ -306,83 +290,83 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 		pflags |= PS_MOREBITS1;
 	}
 
-	MSG_WriteByte( msg, pflags & 255 );
+	MSG_WriteUint8( msg, pflags & 255 );
 
 	if( pflags & 0xff000000 ) {
-		MSG_WriteByte( msg, ( pflags >> 8 ) & 255 );
-		MSG_WriteByte( msg, ( pflags >> 16 ) & 255 );
-		MSG_WriteByte( msg, ( pflags >> 24 ) & 255 );
+		MSG_WriteUint8( msg, ( pflags >> 8 ) & 255 );
+		MSG_WriteUint8( msg, ( pflags >> 16 ) & 255 );
+		MSG_WriteUint8( msg, ( pflags >> 24 ) & 255 );
 	} else if( pflags & 0x00ff0000 ) {
-		MSG_WriteByte( msg, ( pflags >> 8 ) & 255 );
-		MSG_WriteByte( msg, ( pflags >> 16 ) & 255 );
+		MSG_WriteUint8( msg, ( pflags >> 8 ) & 255 );
+		MSG_WriteUint8( msg, ( pflags >> 16 ) & 255 );
 	} else if( pflags & 0x0000ff00 ) {
-		MSG_WriteByte( msg, ( pflags >> 8 ) & 255 );
+		MSG_WriteUint8( msg, ( pflags >> 8 ) & 255 );
 	}
 
 	//
 	// write the pmove_state_t
 	//
 	if( pflags & PS_M_TYPE ) {
-		MSG_WriteByte( msg, ps->pmove.pm_type );
+		MSG_WriteUint8( msg, ps->pmove.pm_type );
 	}
 
 	if( pflags & PS_M_ORIGIN0 ) {
-		MSG_WriteInt3( msg, (int)( ps->pmove.origin[0] * PM_VECTOR_SNAP ) );
+		MSG_WriteInt24( msg, (int)( ps->pmove.origin[0] * PM_VECTOR_SNAP ) );
 	}
 	if( pflags & PS_M_ORIGIN1 ) {
-		MSG_WriteInt3( msg, (int)( ps->pmove.origin[1] * PM_VECTOR_SNAP ) );
+		MSG_WriteInt24( msg, (int)( ps->pmove.origin[1] * PM_VECTOR_SNAP ) );
 	}
 	if( pflags & PS_M_ORIGIN2 ) {
-		MSG_WriteInt3( msg, (int)( ps->pmove.origin[2] * PM_VECTOR_SNAP ) );
+		MSG_WriteInt24( msg, (int)( ps->pmove.origin[2] * PM_VECTOR_SNAP ) );
 	}
 
 	if( pflags & PS_M_VELOCITY0 ) {
-		MSG_WriteInt3( msg, (int)( ps->pmove.velocity[0] * PM_VECTOR_SNAP ) );
+		MSG_WriteInt24( msg, (int)( ps->pmove.velocity[0] * PM_VECTOR_SNAP ) );
 	}
 	if( pflags & PS_M_VELOCITY1 ) {
-		MSG_WriteInt3( msg, (int)( ps->pmove.velocity[1] * PM_VECTOR_SNAP ) );
+		MSG_WriteInt24( msg, (int)( ps->pmove.velocity[1] * PM_VECTOR_SNAP ) );
 	}
 	if( pflags & PS_M_VELOCITY2 ) {
-		MSG_WriteInt3( msg, (int)( ps->pmove.velocity[2] * PM_VECTOR_SNAP ) );
+		MSG_WriteInt24( msg, (int)( ps->pmove.velocity[2] * PM_VECTOR_SNAP ) );
 	}
 
 	if( pflags & PS_M_TIME ) {
-		MSG_WriteByte( msg, ps->pmove.pm_time );
+		MSG_WriteUint8( msg, ps->pmove.pm_time );
 	}
 
 	if( pflags & PS_M_SKIM ) {
-		MSG_WriteByte( msg, ps->pmove.skim_time );
+		MSG_WriteUint8( msg, ps->pmove.skim_time );
 	}
 
 	if( pflags & PS_M_FLAGS ) {
-		MSG_WriteShort( msg, ps->pmove.pm_flags );
+		MSG_WriteInt16( msg, ps->pmove.pm_flags );
 	}
 
 	if( pflags & PS_M_DELTA_ANGLES0 ) {
-		MSG_WriteShort( msg, ps->pmove.delta_angles[0] );
+		MSG_WriteInt16( msg, ps->pmove.delta_angles[0] );
 	}
 	if( pflags & PS_M_DELTA_ANGLES1 ) {
-		MSG_WriteShort( msg, ps->pmove.delta_angles[1] );
+		MSG_WriteInt16( msg, ps->pmove.delta_angles[1] );
 	}
 	if( pflags & PS_M_DELTA_ANGLES2 ) {
-		MSG_WriteShort( msg, ps->pmove.delta_angles[2] );
+		MSG_WriteInt16( msg, ps->pmove.delta_angles[2] );
 	}
 
 	if( pflags & PS_EVENT ) {
 		if( !ps->eventParm[0] ) {
-			MSG_WriteByte( msg, ps->event[0] & ~EV_INVERSE );
+			MSG_WriteUint8( msg, ps->event[0] & ~EV_INVERSE );
 		} else {
-			MSG_WriteByte( msg, ps->event[0] | EV_INVERSE );
-			MSG_WriteByte( msg, ps->eventParm[0] );
+			MSG_WriteUint8( msg, ps->event[0] | EV_INVERSE );
+			MSG_WriteUint8( msg, ps->eventParm[0] );
 		}
 	}
 
 	if( pflags & PS_EVENT2 ) {
 		if( !ps->eventParm[1] ) {
-			MSG_WriteByte( msg, ps->event[1] & ~EV_INVERSE );
+			MSG_WriteUint8( msg, ps->event[1] & ~EV_INVERSE );
 		} else {
-			MSG_WriteByte( msg, ps->event[1] | EV_INVERSE );
-			MSG_WriteByte( msg, ps->eventParm[1] );
+			MSG_WriteUint8( msg, ps->event[1] | EV_INVERSE );
+			MSG_WriteUint8( msg, ps->eventParm[1] );
 		}
 	}
 
@@ -393,27 +377,27 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 	}
 
 	if( pflags & PS_M_GRAVITY ) {
-		MSG_WriteShort( msg, ps->pmove.gravity );
+		MSG_WriteInt16( msg, ps->pmove.gravity );
 	}
 
 	if( pflags & PS_WEAPONSTATE ) {
-		MSG_WriteByte( msg, ps->weaponState );
+		MSG_WriteUint8( msg, ps->weaponState );
 	}
 
 	if( pflags & PS_FOV ) {
-		MSG_WriteByte( msg, (uint8_t)ps->fov );
+		MSG_WriteUint8( msg, (uint8_t)ps->fov );
 	}
 
 	if( pflags & PS_POVNUM ) {
-		MSG_WriteByte( msg, (uint8_t)ps->POVnum );
+		MSG_WriteUint8( msg, (uint8_t)ps->POVnum );
 	}
 
 	if( pflags & PS_PLAYERNUM ) {
-		MSG_WriteByte( msg, (uint8_t)ps->playerNum );
+		MSG_WriteUint8( msg, (uint8_t)ps->playerNum );
 	}
 
 	if( pflags & PS_VIEWHEIGHT ) {
-		MSG_WriteChar( msg, (char)ps->viewheight );
+		MSG_WriteInt8( msg, (char)ps->viewheight );
 	}
 
 	if( pflags & PS_PMOVESTATS ) {
@@ -426,11 +410,11 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 			}
 		}
 
-		MSG_WriteShort( msg, pmstatbits & 0xFFFF );
+		MSG_WriteInt16( msg, pmstatbits & 0xFFFF );
 
 		for( i = 0; i < PM_STAT_SIZE; i++ ) {
 			if( pmstatbits & ( 1 << i ) ) {
-				MSG_WriteShort( msg, ps->pmove.stats[i] );
+				MSG_WriteInt16( msg, ps->pmove.stats[i] );
 			}
 		}
 	}
@@ -447,18 +431,18 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 		}
 
 		for( i = 0; i < SNAP_INVENTORY_LONGS; i++ ) {
-			MSG_WriteLong( msg, invstatbits[i] );
+			MSG_WriteInt32( msg, invstatbits[i] );
 		}
 
 		for( i = 0; i < MAX_ITEMS; i++ ) {
 			if( invstatbits[i >> 5] & ( 1 << ( i & 31 ) ) ) {
-				MSG_WriteByte( msg, (uint8_t)ps->inventory[i] );
+				MSG_WriteUint8( msg, (uint8_t)ps->inventory[i] );
 			}
 		}
 	}
 
 	if( pflags & PS_PLRKEYS ) {
-		MSG_WriteByte( msg, ps->plrkeys );
+		MSG_WriteUint8( msg, ps->plrkeys );
 	}
 
 	// send stats
@@ -470,12 +454,12 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 	}
 
 	for( i = 0; i < SNAP_STATS_LONGS; i++ ) {
-		MSG_WriteLong( msg, statbits[i] );
+		MSG_WriteInt32( msg, statbits[i] );
 	}
 
 	for( i = 0; i < PS_MAX_STATS; i++ ) {
 		if( statbits[i >> 5] & ( 1 << ( i & 31 ) ) ) {
-			MSG_WriteShort( msg, ps->stats[i] );
+			MSG_WriteInt16( msg, ps->stats[i] );
 		}
 	}
 }
@@ -565,15 +549,15 @@ static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 					continue;
 				}
 
-				MSG_WriteShort( msg, frameNum - framenum );
+				MSG_WriteInt16( msg, frameNum - framenum );
 				MSG_WriteString( msg, command );
 
 				// 0 means everyone
 				if( numtargets == maxnumtargets ) {
-					MSG_WriteByte( msg, 0 );
+					MSG_WriteUint8( msg, 0 );
 				} else {
 					int bytes = ( maxtarget + 7 ) / 8;
-					MSG_WriteByte( msg, bytes );
+					MSG_WriteUint8( msg, bytes );
 					MSG_WriteData( msg, targets, bytes );
 				}
 			}
@@ -609,11 +593,11 @@ static void SNAP_RelayMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 			continue;
 		}
 
-		MSG_WriteShort( msg, 0 );
+		MSG_WriteInt16( msg, 0 );
 		MSG_WriteString( msg, command );
 
 		if( gcmd->all ) {
-			MSG_WriteByte( msg, 0 );
+			MSG_WriteUint8( msg, 0 );
 		} else {
 			int maxtarget, bytes;
 
@@ -624,7 +608,7 @@ static void SNAP_RelayMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 				}
 
 			bytes = ( maxtarget + 7 ) / 8;
-			MSG_WriteByte( msg, bytes );
+			MSG_WriteUint8( msg, bytes );
 			MSG_WriteData( msg, gcmd->targets, bytes );
 		}
 	}
@@ -671,15 +655,15 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, uns
 		client->nodelta = false;
 	}
 
-	MSG_WriteByte( msg, svc_frame );
+	MSG_WriteUint8( msg, svc_frame );
 
 	pos = msg->cursize;
-	MSG_WriteShort( msg, 0 );       // we will write length here
+	MSG_WriteInt16( msg, 0 );       // we will write length here
 
-	MSG_WriteLong( msg, gameTime ); // serverTimeStamp
-	MSG_WriteLong( msg, frameNum );
-	MSG_WriteLong( msg, client->lastframe );
-	MSG_WriteLong( msg, frame->UcmdExecuted );
+	MSG_WriteInt32( msg, gameTime ); // serverTimeStamp
+	MSG_WriteInt32( msg, frameNum );
+	MSG_WriteInt32( msg, client->lastframe );
+	MSG_WriteInt32( msg, frame->UcmdExecuted );
 
 	flags = 0;
 	if( oldframe != NULL ) {
@@ -691,17 +675,17 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, uns
 	if( frame->multipov ) {
 		flags |= FRAMESNAP_FLAG_MULTIPOV;
 	}
-	MSG_WriteByte( msg, flags );
+	MSG_WriteUint8( msg, flags );
 
 	supcnt = client->suppressCount;
 #ifndef RATEKILLED
 	supcnt = 0;
 #endif
 	client->suppressCount = 0;
-	MSG_WriteByte( msg, supcnt );   // rate dropped packets
+	MSG_WriteUint8( msg, supcnt );   // rate dropped packets
 
 	// add game comands
-	MSG_WriteByte( msg, svc_gamecommands );
+	MSG_WriteUint8( msg, svc_gamecommands );
 	if( frame->multipov ) {
 		if( frame->relay ) {
 			SNAP_RelayMultiPOVCommands( gi, client, msg, numcmds, commands, commandsData );
@@ -726,14 +710,14 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, uns
 			}
 
 			// send it
-			MSG_WriteShort( msg, frameNum - client->gameCommands[index].framenum );
+			MSG_WriteInt16( msg, frameNum - client->gameCommands[index].framenum );
 			MSG_WriteString( msg, client->gameCommands[index].command );
 		}
 	}
-	MSG_WriteShort( msg, -1 );
+	MSG_WriteInt16( msg, -1 );
 
 	// send over the areabits
-	MSG_WriteByte( msg, frame->areabytes );
+	MSG_WriteUint8( msg, frame->areabytes );
 	MSG_WriteData( msg, frame->areabits, frame->areabytes );
 
 	SNAP_WriteDeltaGameStateToClient( oldframe, frame, msg );
@@ -746,7 +730,7 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, uns
 			SNAP_WritePlayerstateToClient( NULL, &frame->ps[i], msg );
 		}
 	}
-	MSG_WriteByte( msg, 0 );
+	MSG_WriteUint8( msg, 0 );
 
 	// delta encode the entities
 	SNAP_EmitPacketEntities( gi, oldframe, frame, msg, baselines, client_entities ? client_entities->entities : NULL, client_entities ? client_entities->num_entities : 0 );
@@ -754,7 +738,7 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, uns
 	// write length into reserved space
 	length = msg->cursize - pos - 2;
 	msg->cursize = pos;
-	MSG_WriteShort( msg, length );
+	MSG_WriteInt16( msg, length );
 	msg->cursize += length;
 
 	client->lastSentFrameNum = frameNum;

@@ -274,50 +274,76 @@ typedef enum {
 #define EVENT_ENTITIES_START    96 // entity types above this index will get event treatment
 #define ISEVENTENTITY( x ) ( ( (entity_state_t *)x )->type >= EVENT_ENTITIES_START )
 
+typedef enum MSG_ENCTYPE_e {
+	MSG_ENCTYPE_BOOL,					// a of value of 'true' is represented by a single bit in the header
+
+	MSG_ENCTYPE_FIXEDINT8,				// 8-bit integer
+	MSG_ENCTYPE_FIXEDINT16,				// 16-bit integer
+	MSG_ENCTYPE_FIXEDINT32,				// 32-bit integer
+	MSG_ENCTYPE_FIXEDINT64,				// 64-bit integer
+
+	MSG_ENCTYPE_FLOAT,					// 32-bit float
+	MSG_ENCTYPE_FLOAT8,					// 32-bit float value represented as a 8-bit signed integer (should be in -1..1 range)
+	MSG_ENCTYPE_FLOAT88,				// 32-bit float value represented as a 8.8 fixed-point integer
+
+	MSG_ENCTYPE_COORD24,				// 32-bit float value represented as a 20.4 fixed-point integer
+	MSG_ENCTYPE_ANGLE8,					// 32-bit float angle mapped to signed 8-bit integer
+	MSG_ENCTYPE_ANGLE16,				// 32-bit float angle mapped to signed 16-bit integer
+
+	MSG_ENCTYPE_BASE128,				// base-128 encoded unsigned integer
+	MSG_ENCTYPE_UBASE128				// base-128 encoded signed integer
+} MSG_ENCTYPE_t;
+
 typedef struct entity_state_s {
 	int number;                         // edict index
 
 	unsigned int svflags;
 
 	int type;                           // ET_GENERIC, ET_BEAM, etc
-	bool linearMovement;                // is sent inside "type" as ET_INVERSE flag
-	union {
-		vec3_t linearMovementVelocity;      // this is transmitted instead of origin when linearProjectile is true
-		vec3_t linearMovementEnd;           // the end movement point for brush models
-	};
+
+	// for client side prediction, 8*(bits 0-4) is x/y radius
+	// 8*(bits 5-9) is z down distance, 8(bits10-15) is z up
+	// GClip_LinkEntity sets this properly
+	int solid;
 
 	vec3_t origin;
 	vec3_t angles;
 
-	union {
-		vec3_t old_origin;              // for lerping
-		vec3_t origin2;                 // ET_BEAM, ET_PORTALSURFACE, ET_EVENT specific
-		vec3_t linearMovementBegin;     // the starting movement point for brush models
-	};
+	vec3_t old_origin;              // for lerping
+	vec3_t origin2;                 // ET_BEAM, ET_PORTALSURFACE, ET_EVENT specific
 
 	unsigned int modelindex;
-	union {
-		unsigned int modelindex2;
-		int bodyOwner;                  // ET_PLAYER specific, for dead bodies
-		int channel;                    // ET_SOUNDEVENT
-	};
+	unsigned int modelindex2;
 
-	union {
-		int frame;
-		int ownerNum;                   // ET_EVENT specific
-	};
+	int bodyOwner;                  // ET_PLAYER specific, for dead bodies
+	int channel;                    // ET_SOUNDEVENT
 
-	union {
-		int counterNum;                 // ET_GENERIC
-		int skinnum;                    // for ET_PLAYER
-		int itemNum;                    // for ET_ITEM
-		int firemode;                   // for weapon events
-		int damage;                     // EV_BLOOD
-		int targetNum;                  // ET_EVENT specific
-		int colorRGBA;                  // ET_BEAM, ET_EVENT specific
-		int range;                      // ET_LASERBEAM, ET_CURVELASERBEAM specific
-		unsigned int linearMovementDuration;
-	};
+	int frame;
+	int ownerNum;                   // ET_EVENT specific
+
+	unsigned int effects;
+
+	// impulse events -- muzzle flashes, footsteps, etc
+	// events only go out for a single frame, they
+	// are automatically cleared each frame
+	int events[2];
+	int eventParms[2];
+
+	int counterNum;                 // ET_GENERIC
+	int skinnum;                    // for ET_PLAYER
+	int itemNum;                    // for ET_ITEM
+	int firemode;                   // for weapon events
+	int damage;                     // EV_BLOOD
+	int targetNum;                  // ET_EVENT specific
+	int colorRGBA;                  // ET_BEAM, ET_EVENT specific
+	int range;                      // ET_LASERBEAM, ET_CURVELASERBEAM specific
+
+	bool linearMovement;                // is sent inside "type" as ET_INVERSE flag
+	vec3_t linearMovementVelocity;      // this is transmitted instead of origin when linearProjectile is true
+	vec3_t linearMovementEnd;           // the end movement point for brush models
+	vec3_t linearMovementBegin;     // the starting movement point for brush models
+	unsigned int linearMovementDuration;
+	unsigned int linearMovementTimeStamp;
 
 	float attenuation;                  // should be <= 255/16.0 as this is sent as byte
 
@@ -328,28 +354,9 @@ typedef struct entity_state_s {
 	int weapon;                         // WEAP_ for players
 	bool teleported;                    // the entity was teleported this snap (sent inside "weapon" as ET_INVERSE flag)
 
-	unsigned int effects;
-
-	union {
-		// for client side prediction, 8*(bits 0-4) is x/y radius
-		// 8*(bits 5-9) is z down distance, 8(bits10-15) is z up
-		// GClip_LinkEntity sets this properly
-		int solid;
-		int eventCount;                 // ET_EVENT specific
-	};
-
 	int sound;                          // for looping sounds, to guarantee shutoff
 
-	// impulse events -- muzzle flashes, footsteps, etc
-	// events only go out for a single frame, they
-	// are automatically cleared each frame
-	int events[2];
-	int eventParms[2];
-
-	union {
-		unsigned int linearMovementTimeStamp;
-		int light;                      // constant light glow
-	};
+	int light;                      // constant light glow
 
 	int team;                           // team in the game
 } entity_state_t;

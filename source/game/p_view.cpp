@@ -458,12 +458,8 @@ void G_ClientEndSnapFrame( edict_t *ent ) {
 	for( i = 0; i < 3; i++ )
 		client->ps.pmove.delta_angles[i] = ANGLE2SHORT( client->ps.viewangles[i] ) - client->ucmd.angles[i];
 
-	// this is pretty hackish. We exploit the fact that servers *do not* transmit
-	// origin2/old_origin for ET_PLAYER/ET_CORPSE entities, and we use it for sending the player velocity
+	// this is pretty hackish
 	if( !G_ISGHOSTING( ent ) ) {
-		ent->r.svflags |= SVF_TRANSMITORIGIN2;
 		VectorCopy( ent->velocity, ent->s.origin2 );
-	} else {
-		ent->r.svflags &= ~SVF_TRANSMITORIGIN2;
 	}
 }

@@ -643,28 +643,28 @@ bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, cons
 		Q_snprintfz( version, sizeof( version ), "%i.%i.0.0", APP_VERSION_MAJOR, APP_VERSION_MINOR );
 
 		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
-		MSG_WriteByte( &msg, 'I' );
-		MSG_WriteByte( &msg, APP_PROTOCOL_VERSION );
+		MSG_WriteUint8( &msg, 'I' );
+		MSG_WriteUint8( &msg, APP_PROTOCOL_VERSION );
 		MSG_WriteString( &msg, hostname );
 		MSG_WriteString( &msg, "" ); // no map
 		MSG_WriteString( &msg, gamedir );
 		MSG_WriteString( &msg, APPLICATION " TV" );
-		MSG_WriteShort( &msg, 0 ); // app ID specified later
-		MSG_WriteByte( &msg, count );
-		MSG_WriteByte( &msg, min( tv_maxclients->integer, 99 ) );
-		MSG_WriteByte( &msg, 0 ); // no bots
-		MSG_WriteByte( &msg, 'p' );
-		MSG_WriteByte( &msg, STEAMQUERY_OS );
-		MSG_WriteByte( &msg, tv_password->string[0] ? 1 : 0 );
-		MSG_WriteByte( &msg, 0 ); // VAC insecure
+		MSG_WriteInt16( &msg, 0 ); // app ID specified later
+		MSG_WriteUint8( &msg, count );
+		MSG_WriteUint8( &msg, min( tv_maxclients->integer, 99 ) );
+		MSG_WriteUint8( &msg, 0 ); // no bots
+		MSG_WriteUint8( &msg, 'p' );
+		MSG_WriteUint8( &msg, STEAMQUERY_OS );
+		MSG_WriteUint8( &msg, tv_password->string[0] ? 1 : 0 );
+		MSG_WriteUint8( &msg, 0 ); // VAC insecure
 		MSG_WriteString( &msg, version );
-		MSG_WriteByte( &msg, 0x40 | 0x1 ); // spectator data | game ID containing app ID
+		MSG_WriteUint8( &msg, 0x40 | 0x1 ); // spectator data | game ID containing app ID
 		// spectator data
-		MSG_WriteShort( &msg, tv_port->integer );
+		MSG_WriteInt16( &msg, tv_port->integer );
 		MSG_WriteString( &msg, hostname );
 		// 64-bit game ID - needed to specify app ID
-		MSG_WriteLong( &msg, APP_STEAMID & 0xffffff );
-		MSG_WriteLong( &msg, 0 );
+		MSG_WriteInt32( &msg, APP_STEAMID & 0xffffff );
+		MSG_WriteInt32( &msg, 0 );
 		Netchan_OutOfBand( socket, address, msg.cursize, msg.data );
 		return true;
 	}
@@ -681,7 +681,7 @@ bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, cons
 			return true;
 		}
 
-		challenge = MSG_ReadLong( inmsg );
+		challenge = MSG_ReadInt32( inmsg );
 
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
 		Q_strncpyz( basedir, FS_BaseGameDirectory(), sizeof( basedir ) );
@@ -762,7 +762,7 @@ void TV_Downstream_UpstreamlessPacket( const socket_t *socket, const netadr_t *a
 	char *s, *c;
 
 	MSG_BeginReading( msg );
-	MSG_ReadLong( msg );    // skip the -1 marker
+	MSG_ReadInt32( msg );    // skip the -1 marker
 
 	s = MSG_ReadStringLine( msg );
 

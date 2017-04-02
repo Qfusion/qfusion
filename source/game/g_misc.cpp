@@ -59,7 +59,6 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage ) {
 	damage = bound( 0, damage, 255 );
 
 	event = G_SpawnEvent( EV_SPOG, damage, origin );
-	event->r.svflags |= SVF_TRANSMITORIGIN2;
 	event->s.team = self->s.team;
 	VectorCopy( self->velocity, event->s.origin2 );
 }
@@ -795,7 +794,7 @@ void SP_misc_portal_surface( edict_t *ent ) {
 
 	ent->s.type = ET_PORTALSURFACE;
 	ent->s.modelindex = 1;
-	ent->r.svflags = SVF_PORTAL | SVF_TRANSMITORIGIN2;
+	ent->r.svflags = SVF_PORTAL;
 
 	// mirror
 	if( !ent->target ) {
@@ -991,7 +990,7 @@ static void locateTargetSpeaker( edict_t *ent ) {
 //target : point this to a target_speaker entity
 void SP_misc_video_speaker( edict_t *ent ) {
 	ent->r.svflags &= ~SVF_NOCLIENT;
-	ent->r.svflags |= SVF_TRANSMITORIGIN2 | SVF_SOUNDCULL;
+	ent->r.svflags |= SVF_SOUNDCULL;
 	ent->r.solid = SOLID_NOT;
 	ent->s.type = ET_VIDEO_SPEAKER;
 

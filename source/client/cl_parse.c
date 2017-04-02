@@ -726,8 +726,8 @@ static void CL_ParseDownload( msg_t *msg ) {
 
 	// read the data
 	svFilename = MSG_ReadString( msg );
-	offset = MSG_ReadLong( msg );
-	size = MSG_ReadLong( msg );
+	offset = MSG_ReadInt32( msg );
+	size = MSG_ReadInt32( msg );
 
 	if( cls.demo.playing ) {
 		// ignore download commands coming from demo files
@@ -816,14 +816,14 @@ static void CL_ParseServerData( msg_t *msg ) {
 	CL_SetClientState( CA_CONNECTED );
 
 	// parse protocol version number
-	i = MSG_ReadLong( msg );
+	i = MSG_ReadInt32( msg );
 
 	if( i != APP_PROTOCOL_VERSION && !( cls.demo.playing && i == APP_DEMO_PROTOCOL_VERSION ) ) {
 		Com_Error( ERR_DROP, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
 	}
 
-	cl.servercount = MSG_ReadLong( msg );
-	cl.snapFrameTime = (unsigned int)MSG_ReadShort( msg );
+	cl.servercount = MSG_ReadInt32( msg );
+	cl.snapFrameTime = (unsigned int)MSG_ReadInt16( msg );
 	cl.gamestart = true;
 
 	// set extrapolation time to half snapshot time
@@ -865,12 +865,12 @@ static void CL_ParseServerData( msg_t *msg ) {
 	}
 
 	// parse player entity number
-	cl.playernum = MSG_ReadShort( msg );
+	cl.playernum = MSG_ReadInt16( msg );
 
 	// get the full level name
 	Q_strncpyz( cl.servermessage, MSG_ReadString( msg ), sizeof( cl.servermessage ) );
 
-	sv_bitflags = MSG_ReadByte( msg );
+	sv_bitflags = MSG_ReadUint8( msg );
 
 	if( cls.demo.playing ) {
 		cls.reliable = ( sv_bitflags & SV_BITFLAGS_RELIABLE );
@@ -891,7 +891,7 @@ static void CL_ParseServerData( msg_t *msg ) {
 			// read base upstream url
 			cls.httpbaseurl = ZoneCopyString( MSG_ReadString( msg ) );
 		} else {
-			http_portnum = MSG_ReadShort( msg ) & 0xffff;
+			http_portnum = MSG_ReadInt16( msg ) & 0xffff;
 			cls.httpaddress = cls.serveraddress;
 			if( cls.httpaddress.type == NA_IP6 ) {
 				cls.httpaddress.address.ipv6.port = BigShort( http_portnum );
@@ -914,10 +914,10 @@ static void CL_ParseServerData( msg_t *msg ) {
 	Com_FreePureList( &cls.purelist );
 
 	// add new
-	numpure = MSG_ReadShort( msg );
+	numpure = MSG_ReadInt16( msg );
 	while( numpure > 0 ) {
 		const char *pakname = MSG_ReadString( msg );
-		const unsigned checksum = MSG_ReadLong( msg );
+		const unsigned checksum = MSG_ReadInt32( msg );
 
 		Com_AddPakToPureList( &cls.purelist, pakname, checksum, NULL );
 
@@ -1211,7 +1211,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 			break;
 		}
 
-		cmd = MSG_ReadByte( msg );
+		cmd = MSG_ReadUint8( msg );
 		if( cl_debug_serverCmd->integer & 4 ) {
 			if( cmd == -1 ) {
 				Com_Printf( "%3i:CMD %i %s\n", msg->readcount - 1, cmd, "EOF" );
@@ -1245,7 +1245,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 
 			case svc_servercmd:
 				if( !cls.reliable ) {
-					int cmdNum = MSG_ReadLong( msg );
+					int cmdNum = MSG_ReadInt32( msg );
 					if( cmdNum < 0 ) {
 						Com_Error( ERR_DROP, "CL_ParseServerMessage: Invalid cmdNum value received: %i\n",
 								   cmdNum );
@@ -1284,8 +1284,8 @@ void CL_ParseServerMessage( msg_t *msg ) {
 					Com_Error( ERR_DROP, "CL_ParseServerMessage: clack message for reliable client\n" );
 					return;
 				}
-				cls.reliableAcknowledge = (unsigned)MSG_ReadLong( msg );
-				cls.ucmdAcknowledged = (unsigned)MSG_ReadLong( msg );
+				cls.reliableAcknowledge = (unsigned)MSG_ReadInt32( msg );
+				cls.ucmdAcknowledged = (unsigned)MSG_ReadInt32( msg );
 				if( cl_debug_serverCmd->integer & 4 ) {
 					Com_Printf( "svc_clcack:reliable cmd ack:%i ucmdack:%i\n", cls.reliableAcknowledge, cls.ucmdAcknowledged );
 				}
@@ -1300,10 +1300,10 @@ void CL_ParseServerMessage( msg_t *msg ) {
 				{
 					size_t meta_data_maxsize;
 
-					MSG_ReadLong( msg );
-					MSG_ReadLong( msg );
-					cls.demo.meta_data_realsize = (size_t)MSG_ReadLong( msg );
-					meta_data_maxsize = (size_t)MSG_ReadLong( msg );
+					MSG_ReadInt32( msg );
+					MSG_ReadInt32( msg );
+					cls.demo.meta_data_realsize = (size_t)MSG_ReadInt32( msg );
+					meta_data_maxsize = (size_t)MSG_ReadInt32( msg );
 
 					// sanity check
 					if( cls.demo.meta_data_realsize > meta_data_maxsize ) {
@@ -1328,9 +1328,9 @@ void CL_ParseServerMessage( msg_t *msg ) {
 				if( 1 ) {
 					int ext, len;
 
-					ext = MSG_ReadByte( msg );  // extension id
-					MSG_ReadByte( msg );        // version number
-					len = MSG_ReadShort( msg ); // command length
+					ext = MSG_ReadUint8( msg );  // extension id
+					MSG_ReadUint8( msg );        // version number
+					len = MSG_ReadInt16( msg ); // command length
 
 					switch( ext ) {
 						default:

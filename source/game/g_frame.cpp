@@ -387,13 +387,9 @@ static void G_SnapEntities( void ) {
 		}
 
 		if( ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE ) {
-			// this is pretty hackish. We exploit the fact that 0.5 servers *do not* transmit
-			// origin2/old_origin for ET_PLAYER/ET_CORPSE entities, and we use it for sending the player velocity
+			// this is pretty hackish
 			if( !G_ISGHOSTING( ent ) ) {
-				ent->r.svflags |= SVF_TRANSMITORIGIN2;
 				VectorCopy( ent->velocity, ent->s.origin2 );
-			} else {
-				ent->r.svflags &= ~SVF_TRANSMITORIGIN2;
 			}
 		}
 
@@ -505,10 +501,7 @@ void G_ClearSnap( void ) {
 	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ ) {
 		if( !GS_MatchPaused() ) {
 			// copy origin to old origin ( this old_origin is for snaps )
-			if( !( ent->r.svflags & SVF_TRANSMITORIGIN2 ) ) {
-				VectorCopy( ent->s.origin, ent->s.old_origin );
-			}
-
+			VectorCopy( ent->s.origin, ent->s.old_origin );
 			G_CheckClientRespawnClick( ent );
 		}
 

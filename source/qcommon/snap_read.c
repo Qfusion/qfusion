@@ -85,13 +85,13 @@ static void SNAP_ParseDeltaGameState( msg_t *msg, snapshot_t *oldframe, snapshot
 
 	//memcpy( gameState, deltaGameState, sizeof( game_state_t ) );
 
-	bits = (uint8_t)MSG_ReadByte( msg );
-	statbits = MSG_ReadShort( msg );
+	bits = (uint8_t)MSG_ReadUint8( msg );
+	statbits = MSG_ReadInt16( msg );
 
 	if( bits ) {
 		for( i = 0; i < MAX_GAME_LONGSTATS; i++ ) {
 			if( bits & ( 1 << i ) ) {
-				gameState->longstats[i] = (unsigned int)MSG_ReadLong( msg );
+				gameState->longstats[i] = (unsigned int)MSG_ReadInt32( msg );
 			}
 		}
 	}
@@ -99,7 +99,7 @@ static void SNAP_ParseDeltaGameState( msg_t *msg, snapshot_t *oldframe, snapshot
 	if( statbits ) {
 		for( i = 0; i < MAX_GAME_STATS; i++ ) {
 			if( statbits & ( 1 << i ) ) {
-				gameState->stats[i] = MSG_ReadShort( msg );
+				gameState->stats[i] = MSG_ReadInt16( msg );
 			}
 		}
 	}
@@ -120,17 +120,17 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 		memset( state, 0, sizeof( *state ) );
 	}
 
-	flags = (uint8_t)MSG_ReadByte( msg );
+	flags = (uint8_t)MSG_ReadUint8( msg );
 	if( flags & PS_MOREBITS1 ) {
-		b = (uint8_t)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadUint8( msg );
 		flags |= b << 8;
 	}
 	if( flags & PS_MOREBITS2 ) {
-		b = (uint8_t)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadUint8( msg );
 		flags |= b << 16;
 	}
 	if( flags & PS_MOREBITS3 ) {
-		b = (uint8_t)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadUint8( msg );
 		flags |= b << 24;
 	}
 
@@ -138,55 +138,55 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 	// parse the pmove_state_t
 	//
 	if( flags & PS_M_TYPE ) {
-		state->pmove.pm_type = (uint8_t)MSG_ReadByte( msg );
+		state->pmove.pm_type = (uint8_t)MSG_ReadUint8( msg );
 	}
 
 	if( flags & PS_M_ORIGIN0 ) {
-		state->pmove.origin[0] = ( (float)MSG_ReadInt3( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.origin[0] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
 	}
 	if( flags & PS_M_ORIGIN1 ) {
-		state->pmove.origin[1] = ( (float)MSG_ReadInt3( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.origin[1] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
 	}
 	if( flags & PS_M_ORIGIN2 ) {
-		state->pmove.origin[2] = ( (float)MSG_ReadInt3( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.origin[2] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
 	}
 
 	if( flags & PS_M_VELOCITY0 ) {
-		state->pmove.velocity[0] = ( (float)MSG_ReadInt3( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.velocity[0] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
 	}
 	if( flags & PS_M_VELOCITY1 ) {
-		state->pmove.velocity[1] = ( (float)MSG_ReadInt3( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.velocity[1] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
 	}
 	if( flags & PS_M_VELOCITY2 ) {
-		state->pmove.velocity[2] = ( (float)MSG_ReadInt3( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.velocity[2] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
 	}
 
 	if( flags & PS_M_TIME ) {
-		state->pmove.pm_time = (uint8_t)MSG_ReadByte( msg );
+		state->pmove.pm_time = (uint8_t)MSG_ReadUint8( msg );
 	}
 
 	if( flags & PS_M_SKIM ) {
-		state->pmove.skim_time = (uint8_t)MSG_ReadByte( msg );
+		state->pmove.skim_time = (uint8_t)MSG_ReadUint8( msg );
 	}
 
 	if( flags & PS_M_FLAGS ) {
-		state->pmove.pm_flags = MSG_ReadShort( msg );
+		state->pmove.pm_flags = MSG_ReadInt16( msg );
 	}
 
 	if( flags & PS_M_DELTA_ANGLES0 ) {
-		state->pmove.delta_angles[0] = MSG_ReadShort( msg );
+		state->pmove.delta_angles[0] = MSG_ReadInt16( msg );
 	}
 	if( flags & PS_M_DELTA_ANGLES1 ) {
-		state->pmove.delta_angles[1] = MSG_ReadShort( msg );
+		state->pmove.delta_angles[1] = MSG_ReadInt16( msg );
 	}
 	if( flags & PS_M_DELTA_ANGLES2 ) {
-		state->pmove.delta_angles[2] = MSG_ReadShort( msg );
+		state->pmove.delta_angles[2] = MSG_ReadInt16( msg );
 	}
 
 	if( flags & PS_EVENT ) {
-		state->event[0] = MSG_ReadByte( msg );
+		state->event[0] = MSG_ReadUint8( msg );
 		if( state->event[0] & EV_INVERSE ) {
-			state->eventParm[0] = MSG_ReadByte( msg );
+			state->eventParm[0] = MSG_ReadUint8( msg );
 		} else {
 			state->eventParm[0] = 0;
 		}
@@ -197,9 +197,9 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 	}
 
 	if( flags & PS_EVENT2 ) {
-		state->event[1] = MSG_ReadByte( msg );
+		state->event[1] = MSG_ReadUint8( msg );
 		if( state->event[1] & EV_INVERSE ) {
-			state->eventParm[1] = MSG_ReadByte( msg );
+			state->eventParm[1] = MSG_ReadUint8( msg );
 		} else {
 			state->eventParm[1] = 0;
 		}
@@ -216,40 +216,40 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 	}
 
 	if( flags & PS_M_GRAVITY ) {
-		state->pmove.gravity = MSG_ReadShort( msg );
+		state->pmove.gravity = MSG_ReadInt16( msg );
 	}
 
 	if( flags & PS_WEAPONSTATE ) {
-		state->weaponState = (uint8_t)MSG_ReadByte( msg );
+		state->weaponState = (uint8_t)MSG_ReadUint8( msg );
 	}
 
 	if( flags & PS_FOV ) {
-		state->fov = (uint8_t)MSG_ReadByte( msg );
+		state->fov = (uint8_t)MSG_ReadUint8( msg );
 	}
 
 	if( flags & PS_POVNUM ) {
-		state->POVnum = (uint8_t)MSG_ReadByte( msg );
+		state->POVnum = (uint8_t)MSG_ReadUint8( msg );
 	}
 	if( state->POVnum == 0 ) {
 		Com_Error( ERR_DROP, "SNAP_ParsePlayerstate: Invalid POVnum %i", state->POVnum );
 	}
 
 	if( flags & PS_PLAYERNUM ) {
-		state->playerNum = (uint8_t)MSG_ReadByte( msg );
+		state->playerNum = (uint8_t)MSG_ReadUint8( msg );
 	}
 	if( state->playerNum >= MAX_CLIENTS ) {
 		Com_Error( ERR_DROP, "SNAP_ParsePlayerstate: Invalid playerNum %i", state->playerNum );
 	}
 
 	if( flags & PS_VIEWHEIGHT ) {
-		state->viewheight = MSG_ReadChar( msg );
+		state->viewheight = MSG_ReadInt8( msg );
 	}
 
 	if( flags & PS_PMOVESTATS ) {
-		int pmstatbits = MSG_ReadShort( msg );
+		int pmstatbits = MSG_ReadInt16( msg );
 		for( i = 0; i < PM_STAT_SIZE; i++ ) {
 			if( pmstatbits & ( 1 << i ) ) {
-				state->pmove.stats[i] = MSG_ReadShort( msg );
+				state->pmove.stats[i] = MSG_ReadInt16( msg );
 			}
 		}
 	}
@@ -259,67 +259,65 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 
 		// parse inventory
 		for( i = 0; i < SNAP_INVENTORY_LONGS; i++ ) {
-			invstatbits[i] = MSG_ReadLong( msg );
+			invstatbits[i] = MSG_ReadInt32( msg );
 		}
 
 		for( i = 0; i < MAX_ITEMS; i++ ) {
 			if( invstatbits[i >> 5] & ( 1 << ( i & 31 ) ) ) {
-				state->inventory[i] = MSG_ReadByte( msg );
+				state->inventory[i] = MSG_ReadUint8( msg );
 			}
 		}
 	}
 
 	if( flags & PS_PLRKEYS ) {
-		state->plrkeys = MSG_ReadByte( msg );
+		state->plrkeys = MSG_ReadUint8( msg );
 	}
 
 	// parse stats
 	for( i = 0; i < SNAP_STATS_LONGS; i++ ) {
-		statbits[i] = MSG_ReadLong( msg );
+		statbits[i] = MSG_ReadInt32( msg );
 	}
 
 	for( i = 0; i < PS_MAX_STATS; i++ ) {
 		if( statbits[i >> 5] & ( 1 << ( i & 31 ) ) ) {
-			state->stats[i] = MSG_ReadShort( msg );
+			state->stats[i] = MSG_ReadInt16( msg );
 		}
 	}
 }
 
 /*
-* SNAP_ParseEntityBits
-*/
-static int SNAP_ParseEntityBits( msg_t *msg, unsigned *bits ) {
-	return MSG_ReadEntityBits( msg, bits );
-}
-
-/*
-* SNAP_DeltaEntity
+* SNAP_ParseDeltaEntity
 *
-* Parses deltas from the given base and adds the resulting entity
-* to the current frame
+* Parses deltas from the given base and adds the resulting entity to the current frame
 */
-static void SNAP_DeltaEntity( msg_t *msg, snapshot_t *frame, int newnum, entity_state_t *old, unsigned bits ) {
+static void SNAP_ParseDeltaEntity( msg_t *msg, snapshot_t *frame, int newnum, entity_state_t *old, unsigned byteMask ) {
 	entity_state_t *state;
 
 	state = &frame->parsedEntities[frame->numEntities & ( MAX_PARSE_ENTITIES - 1 )];
 	frame->numEntities++;
-	MSG_ReadDeltaEntity( msg, old, state, newnum, bits );
+	MSG_ReadDeltaEntity( msg, old, state, newnum, byteMask );
 }
 
 /*
 * SNAP_ParseBaseline
 */
 void SNAP_ParseBaseline( msg_t *msg, entity_state_t *baselines ) {
-	entity_state_t *es;
-	unsigned bits;
+	bool remove;
 	int newnum;
-	entity_state_t nullstate, tmp;
+	unsigned byteMask;
 
-	memset( &nullstate, 0, sizeof( nullstate ) );
-	newnum = MSG_ReadEntityBits( msg, &bits );
+	newnum = MSG_ReadEntityNumber( msg, &remove, &byteMask );
+	assert( remove == false );
 
-	es = ( baselines ? &baselines[newnum] : &tmp );
-	MSG_ReadDeltaEntity( msg, &nullstate, es, newnum, bits );
+	if( !remove ) {
+		entity_state_t *es;
+		entity_state_t nullstate, tmp;
+
+		memset( &nullstate, 0, sizeof( nullstate ) );
+
+		es = ( baselines ? &baselines[newnum] : &tmp );
+		MSG_ReadDeltaEntity( msg, &nullstate, es, newnum, byteMask );
+	}
 }
 
 /*
@@ -330,7 +328,8 @@ void SNAP_ParseBaseline( msg_t *msg, entity_state_t *baselines ) {
 */
 static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot_t *newframe, entity_state_t *baselines, int shownet ) {
 	int newnum;
-	unsigned bits;
+	bool remove;
+	unsigned byteMask;
 	entity_state_t *oldstate = NULL;
 	int oldindex, oldnum;
 
@@ -348,7 +347,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 	}
 
 	while( true ) {
-		newnum = SNAP_ParseEntityBits( msg, &bits );
+		newnum = MSG_ReadEntityNumber( msg, &remove, &byteMask );
 		if( newnum >= MAX_EDICTS ) {
 			Com_Error( ERR_DROP, "CL_ParsePacketEntities: bad number:%i", newnum );
 		}
@@ -366,7 +365,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 				Com_Printf( "   unchanged: %i\n", oldnum );
 			}
 
-			SNAP_DeltaEntity( msg, newframe, oldnum, oldstate, 0 );
+			SNAP_ParseDeltaEntity( msg, newframe, oldnum, oldstate, 0 );
 
 			oldindex++;
 			if( oldindex >= oldframe->numEntities ) {
@@ -379,7 +378,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 
 		// delta from baseline
 		if( oldnum > newnum ) {
-			if( bits & U_REMOVE ) {
+			if( remove ) {
 				Com_Printf( "U_REMOVE: oldnum > newnum (can't remove from baseline!)\n" );
 				continue;
 			}
@@ -389,12 +388,12 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 				Com_Printf( "   baseline: %i\n", newnum );
 			}
 
-			SNAP_DeltaEntity( msg, newframe, newnum, &baselines[newnum], bits );
+			SNAP_ParseDeltaEntity( msg, newframe, newnum, &baselines[newnum], byteMask );
 			continue;
 		}
 
 		if( oldnum == newnum ) {
-			if( bits & U_REMOVE ) {
+			if( remove ) {
 				// the entity present in oldframe is not in the current frame
 				if( shownet == 3 ) {
 					Com_Printf( "   remove: %i\n", newnum );
@@ -419,7 +418,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 				Com_Printf( "   delta: %i\n", newnum );
 			}
 
-			SNAP_DeltaEntity( msg, newframe, newnum, oldstate, bits );
+			SNAP_ParseDeltaEntity( msg, newframe, newnum, oldstate, byteMask );
 
 			oldindex++;
 			if( oldindex >= oldframe->numEntities ) {
@@ -439,7 +438,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 			Com_Printf( "   unchanged: %i\n", oldnum );
 		}
 
-		SNAP_DeltaEntity( msg, newframe, oldnum, oldstate, 0 );
+		SNAP_ParseDeltaEntity( msg, newframe, oldnum, oldstate, 0 );
 
 		oldindex++;
 		if( oldindex >= oldframe->numEntities ) {
@@ -462,12 +461,12 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 	int flags, snapNum, supCnt;
 
 	// get total length
-	len = MSG_ReadShort( msg );
+	len = MSG_ReadInt16( msg );
 	pos = msg->readcount;
 
 	// get the snapshot id
-	serverTime = (unsigned)MSG_ReadLong( msg );
-	snapNum = MSG_ReadLong( msg );
+	serverTime = (unsigned)MSG_ReadInt32( msg );
+	snapNum = MSG_ReadInt32( msg );
 
 	if( backup ) {
 		newframe = &backup[snapNum & UPDATE_MASK];
@@ -481,15 +480,15 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 
 	newframe->serverTime = serverTime;
 	newframe->serverFrame = snapNum;
-	newframe->deltaFrameNum = MSG_ReadLong( msg );
-	newframe->ucmdExecuted = MSG_ReadLong( msg );
+	newframe->deltaFrameNum = MSG_ReadInt32( msg );
+	newframe->ucmdExecuted = MSG_ReadInt32( msg );
 
-	flags = MSG_ReadByte( msg );
+	flags = MSG_ReadUint8( msg );
 	newframe->delta = ( flags & FRAMESNAP_FLAG_DELTA ) ? true : false;
 	newframe->multipov = ( flags & FRAMESNAP_FLAG_MULTIPOV ) ? true : false;
 	newframe->allentities = ( flags & FRAMESNAP_FLAG_ALLENTITIES ) ? true : false;
 
-	supCnt = MSG_ReadByte( msg );
+	supCnt = MSG_ReadUint8( msg );
 	if( suppressCount ) {
 		*suppressCount = supCnt;
 #ifdef RATEKILLED
@@ -570,13 +569,13 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 	}
 
 	// read game commands
-	cmd = MSG_ReadByte( msg );
+	cmd = MSG_ReadUint8( msg );
 	if( cmd != svc_gamecommands ) {
 		Com_Error( ERR_DROP, "SNAP_ParseFrame: not gamecommands" );
 	}
 
 	numtargets = 0;
-	while( ( framediff = MSG_ReadShort( msg ) ) != -1 ) {
+	while( ( framediff = MSG_ReadInt16( msg ) ) != -1 ) {
 		text = MSG_ReadString( msg );
 
 		// see if it's valid and not yet handled
@@ -599,7 +598,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 			newframe->gamecommandsDataHead += strlen( text ) + 1;
 
 			if( newframe->multipov ) {
-				numtargets = MSG_ReadByte( msg );
+				numtargets = MSG_ReadUint8( msg );
 				if( numtargets ) {
 					if( numtargets > sizeof( gcmd->targets ) ) {
 						Com_Error( ERR_DROP, "SNAP_ParseFrame: too many gamecommand targets" );
@@ -609,13 +608,13 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 				}
 			}
 		} else if( newframe->multipov ) {   // otherwise, ignore it
-			numtargets = MSG_ReadByte( msg );
+			numtargets = MSG_ReadUint8( msg );
 			MSG_SkipData( msg, numtargets );
 		}
 	}
 
 	// read areabits
-	len = (size_t)MSG_ReadByte( msg );
+	len = (size_t)MSG_ReadUint8( msg );
 	if( len > newframe->areabytes ) {
 		Com_Error( ERR_DROP, "Invalid areabits size: %u > %u", len, newframe->areabytes );
 	}
@@ -623,7 +622,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 	MSG_ReadData( msg, newframe->areabits, len );
 
 	// read match info
-	cmd = MSG_ReadByte( msg );
+	cmd = MSG_ReadUint8( msg );
 	_SHOWNET( msg, svc_strings[cmd], showNet );
 	if( cmd != svc_match ) {
 		Com_Error( ERR_DROP, "SNAP_ParseFrame: not match info" );
@@ -632,7 +631,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 
 	// read playerinfos
 	numplayers = 0;
-	while( ( cmd = MSG_ReadByte( msg ) ) ) {
+	while( ( cmd = MSG_ReadUint8( msg ) ) ) {
 		_SHOWNET( msg, svc_strings[cmd], showNet );
 		if( cmd != svc_playerinfo ) {
 			Com_Error( ERR_DROP, "SNAP_ParseFrame: not playerinfo" );
@@ -648,7 +647,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 	newframe->playerState = newframe->playerStates[0];
 
 	// read packet entities
-	cmd = MSG_ReadByte( msg );
+	cmd = MSG_ReadUint8( msg );
 	_SHOWNET( msg, svc_strings[cmd], showNet );
 	if( cmd != svc_packetentities ) {
 		Com_Error( ERR_DROP, "SNAP_ParseFrame: not packetentities" );

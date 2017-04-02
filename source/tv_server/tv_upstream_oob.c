@@ -106,7 +106,7 @@ void TV_Upstream_ConnectionlessPacket( upstream_t *upstream, msg_t *msg ) {
 	char *s, *c;
 
 	MSG_BeginReading( msg );
-	MSG_ReadLong( msg );    // skip the -1 marker
+	MSG_ReadInt32( msg );    // skip the -1 marker
 
 	s = MSG_ReadStringLine( msg );
 	Cmd_TokenizeString( s );

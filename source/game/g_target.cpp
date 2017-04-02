@@ -345,7 +345,7 @@ static void target_laser_think( edict_t *self ) {
 				self->spawnflags &= ~0x80000000;
 
 				event = G_SpawnEvent( EV_LASER_SPARKS, DirToByte( tr.plane.normal ), tr.endpos );
-				event->s.eventCount = count;
+				event->s.counterNum = count;
 				event->s.colorRGBA = self->s.colorRGBA;
 			}
 			break;
@@ -395,7 +395,6 @@ void target_laser_start( edict_t *self ) {
 	self->r.solid = SOLID_NOT;
 	self->s.type = ET_BEAM;
 	self->s.modelindex = 1;     // must be non-zero
-	self->r.svflags = SVF_TRANSMITORIGIN2;
 
 	// set the beam diameter
 	if( self->spawnflags & 64 ) {

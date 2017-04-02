@@ -282,15 +282,15 @@ static void SV_New_f( client_t *client ) {
 	SV_InitClientMessage( client, &tmpMessage, NULL, 0 );
 
 	// send the serverdata
-	MSG_WriteByte( &tmpMessage, svc_serverdata );
-	MSG_WriteLong( &tmpMessage, APP_PROTOCOL_VERSION );
-	MSG_WriteLong( &tmpMessage, svs.spawncount );
-	MSG_WriteShort( &tmpMessage, (unsigned short)svc.snapFrameTime );
+	MSG_WriteUint8( &tmpMessage, svc_serverdata );
+	MSG_WriteInt32( &tmpMessage, APP_PROTOCOL_VERSION );
+	MSG_WriteInt32( &tmpMessage, svs.spawncount );
+	MSG_WriteInt16( &tmpMessage, (unsigned short)svc.snapFrameTime );
 	MSG_WriteString( &tmpMessage, FS_BaseGameDirectory() );
 	MSG_WriteString( &tmpMessage, FS_GameDirectory() );
 
 	playernum = client - svs.clients;
-	MSG_WriteShort( &tmpMessage, playernum );
+	MSG_WriteInt16( &tmpMessage, playernum );
 
 	// send full levelname
 	MSG_WriteString( &tmpMessage, sv.mapname );
@@ -317,14 +317,14 @@ static void SV_New_f( client_t *client ) {
 				sv_bitflags |= SV_BITFLAGS_HTTP_BASEURL;
 			}
 		}
-		MSG_WriteByte( &tmpMessage, sv_bitflags );
+		MSG_WriteUint8( &tmpMessage, sv_bitflags );
 	}
 
 	if( sv_bitflags & SV_BITFLAGS_HTTP ) {
 		if( sv_bitflags & SV_BITFLAGS_HTTP_BASEURL ) {
 			MSG_WriteString( &tmpMessage, sv_http_upstream_baseurl->string );
 		} else {
-			MSG_WriteShort( &tmpMessage, sv_http_port->integer ); // HTTP port number
+			MSG_WriteInt16( &tmpMessage, sv_http_port->integer ); // HTTP port number
 		}
 	}
 
@@ -334,12 +334,12 @@ static void SV_New_f( client_t *client ) {
 		Com_Error( ERR_DROP, "Error: Too many pure files." );
 	}
 
-	MSG_WriteShort( &tmpMessage, numpure );
+	MSG_WriteInt16( &tmpMessage, numpure );
 
 	purefile = svs.purelist;
 	while( purefile ) {
 		MSG_WriteString( &tmpMessage, purefile->filename );
-		MSG_WriteLong( &tmpMessage, purefile->checksum );
+		MSG_WriteInt32( &tmpMessage, purefile->checksum );
 		purefile = purefile->next;
 	}
 
@@ -434,8 +434,8 @@ static void SV_Baselines_f( client_t *client ) {
 	while( tmpMessage.cursize < FRAGMENT_SIZE * 3 && start < MAX_EDICTS ) {
 		base = &sv.baselines[start];
 		if( base->modelindex || base->sound || base->effects ) {
-			MSG_WriteByte( &tmpMessage, svc_spawnbaseline );
-			MSG_WriteDeltaEntity( &nullstate, base, &tmpMessage, true, true );
+			MSG_WriteUint8( &tmpMessage, svc_spawnbaseline );
+			MSG_WriteDeltaEntity( &nullstate, base, &tmpMessage, true );
 		}
 		start++;
 	}
@@ -555,10 +555,10 @@ static void SV_NextDownload_f( client_t *client ) {
 		blocksize = FS_Read( data, blocksize, client->download.file );
 	}
 
-	MSG_WriteByte( &tmpMessage, svc_download );
+	MSG_WriteUint8( &tmpMessage, svc_download );
 	MSG_WriteString( &tmpMessage, client->download.name );
-	MSG_WriteLong( &tmpMessage, offset );
-	MSG_WriteLong( &tmpMessage, blocksize );
+	MSG_WriteInt32( &tmpMessage, offset );
+	MSG_WriteInt32( &tmpMessage, blocksize );
 	if( blocksize > 0 ) {
 		MSG_CopyData( &tmpMessage, data, blocksize );
 	}
@@ -986,12 +986,12 @@ static void SV_ParseMoveCommand( client_t *client, msg_t *msg ) {
 	usercmd_t nullcmd;
 	int lastframe;
 
-	lastframe = MSG_ReadLong( msg );
+	lastframe = MSG_ReadInt32( msg );
 
 	// read the id of the first ucmd we will receive
-	ucmdHead = (unsigned int)MSG_ReadLong( msg );
+	ucmdHead = (unsigned int)MSG_ReadInt32( msg );
 	// read the number of ucmds we will receive
-	ucmdCount = (unsigned int)MSG_ReadByte( msg );
+	ucmdCount = (unsigned int)MSG_ReadUint8( msg );
 
 	if( ucmdCount > CMD_MASK ) {
 		SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Ucmd overflow" );
@@ -1056,7 +1056,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 			return;
 		}
 
-		c = MSG_ReadByte( msg );
+		c = MSG_ReadUint8( msg );
 		if( c == -1 ) {
 			break;
 		}
@@ -1088,7 +1088,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 					SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: svack from reliable client" );
 					return;
 				}
-				cmdNum = MSG_ReadLong( msg );
+				cmdNum = MSG_ReadInt32( msg );
 				if( cmdNum < client->reliableAcknowledge || cmdNum > client->reliableSent ) {
 					//SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: bad server command acknowledged" );
 					return;
@@ -1099,7 +1099,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 
 			case clc_clientcommand:
 				if( !client->reliable ) {
-					cmdNum = MSG_ReadLong( msg );
+					cmdNum = MSG_ReadInt32( msg );
 					if( cmdNum <= client->clientCommandExecuted ) {
 						s = MSG_ReadString( msg ); // read but ignore
 						continue;
@@ -1117,9 +1117,9 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 				if( 1 ) {
 					int ext, len;
 
-					ext = MSG_ReadByte( msg );  // extension id
-					MSG_ReadByte( msg );        // version number
-					len = MSG_ReadShort( msg ); // command length
+					ext = MSG_ReadUint8( msg );  // extension id
+					MSG_ReadUint8( msg );        // version number
+					len = MSG_ReadInt16( msg ); // command length
 
 					switch( ext ) {
 						default:

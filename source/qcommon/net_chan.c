@@ -98,7 +98,7 @@ void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t 
 	// write the packet header
 	MSG_Init( &send, send_buf, sizeof( send_buf ) );
 
-	MSG_WriteLong( &send, -1 ); // -1 sequence means out of band
+	MSG_WriteInt32( &send, -1 ); // -1 sequence means out of band
 	MSG_WriteData( &send, data, length );
 
 	// send the datagram
@@ -303,18 +303,18 @@ bool Netchan_TransmitNextFragment( netchan_t *chan ) {
 		Com_Printf( "Transmit fragment (%s) (id:%i)\n", NET_SocketToString( chan->socket ), chan->outgoingSequence );
 	}
 
-	MSG_WriteLong( &send, chan->outgoingSequence | FRAGMENT_BIT );
+	MSG_WriteInt32( &send, chan->outgoingSequence | FRAGMENT_BIT );
 	// wsw : jal : by now our header sends incoming ack too (q3 doesn't)
 	// wsw : also add compressed bit if it's compressed
 	if( chan->unsentIsCompressed ) {
-		MSG_WriteLong( &send, chan->incomingSequence | FRAGMENT_BIT );
+		MSG_WriteInt32( &send, chan->incomingSequence | FRAGMENT_BIT );
 	} else {
-		MSG_WriteLong( &send, chan->incomingSequence );
+		MSG_WriteInt32( &send, chan->incomingSequence );
 	}
 
 	// send the game port if we are a client
 	if( !chan->socket->server ) {
-		MSG_WriteShort( &send, local_game_port );
+		MSG_WriteInt16( &send, local_game_port );
 	}
 
 	// copy the reliable message to the packet first
@@ -326,8 +326,8 @@ bool Netchan_TransmitNextFragment( netchan_t *chan ) {
 		last = false;
 	}
 
-	MSG_WriteShort( &send, chan->unsentFragmentStart );
-	MSG_WriteShort( &send, ( last ? ( fragmentLength | FRAGMENT_LAST ) : fragmentLength ) );
+	MSG_WriteInt16( &send, chan->unsentFragmentStart );
+	MSG_WriteInt16( &send, ( last ? ( fragmentLength | FRAGMENT_LAST ) : fragmentLength ) );
 	MSG_CopyData( &send, chan->unsentBuffer + chan->unsentFragmentStart, fragmentLength );
 
 	// send the datagram
@@ -404,20 +404,20 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg ) {
 	MSG_Init( &send, send_buf, sizeof( send_buf ) );
 	MSG_Clear( &send );
 
-	MSG_WriteLong( &send, chan->outgoingSequence );
+	MSG_WriteInt32( &send, chan->outgoingSequence );
 	// wsw : jal : by now our header sends incoming ack too (q3 doesn't)
 	// wsw : jal : also add compressed information if it's compressed
 	if( msg->compressed ) {
-		MSG_WriteLong( &send, chan->incomingSequence | FRAGMENT_BIT );
+		MSG_WriteInt32( &send, chan->incomingSequence | FRAGMENT_BIT );
 	} else {
-		MSG_WriteLong( &send, chan->incomingSequence );
+		MSG_WriteInt32( &send, chan->incomingSequence );
 	}
 
 	chan->outgoingSequence++;
 
 	// send the game port if we are a client
 	if( !chan->socket->server ) {
-		MSG_WriteShort( &send, local_game_port );
+		MSG_WriteInt16( &send, local_game_port );
 	}
 
 	MSG_CopyData( &send, msg->data, msg->cursize );
@@ -456,8 +456,8 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 
 	// get sequence numbers
 	MSG_BeginReading( msg );
-	sequence = MSG_ReadLong( msg );
-	sequence_ack = MSG_ReadLong( msg ); // wsw : jal : by now our header sends incoming ack too (q3 doesn't)
+	sequence = MSG_ReadInt32( msg );
+	sequence_ack = MSG_ReadInt32( msg ); // wsw : jal : by now our header sends incoming ack too (q3 doesn't)
 
 	// check for fragment information
 	if( sequence & FRAGMENT_BIT ) {
@@ -482,13 +482,13 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 
 	// read the game port if we are a server
 	if( chan->socket->server ) {
-		game_port = MSG_ReadShort( msg );
+		game_port = MSG_ReadInt16( msg );
 	}
 
 	// read the fragment information
 	if( fragmented ) {
-		fragmentStart = MSG_ReadShort( msg );
-		fragmentLength = MSG_ReadShort( msg );
+		fragmentStart = MSG_ReadInt16( msg );
+		fragmentLength = MSG_ReadInt16( msg );
 		if( fragmentLength & FRAGMENT_LAST ) {
 			lastfragment = true;
 			fragmentLength &= ~FRAGMENT_LAST;
@@ -581,10 +581,10 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 		// wsw : jal : reconstruct the message
 
 		MSG_Clear( msg );
-		MSG_WriteLong( msg, sequence );
-		MSG_WriteLong( msg, sequence_ack );
+		MSG_WriteInt32( msg, sequence );
+		MSG_WriteInt32( msg, sequence_ack );
 		if( chan->socket->server ) {
-			MSG_WriteShort( msg, game_port );
+			MSG_WriteInt16( msg, game_port );
 		}
 
 		msg->compressed = compressed;

@@ -183,8 +183,8 @@ static bool TV_Upstream_ProcessPacket( netchan_t *netchan, msg_t *msg ) {
 	}
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
-	/*sequence = */ MSG_ReadLong( msg );
-	/*sequence_ack = */ MSG_ReadLong( msg );
+	/*sequence = */ MSG_ReadInt32( msg );
+	/*sequence_ack = */ MSG_ReadInt32( msg );
 	if( msg->compressed ) {
 		zerror = Netchan_DecompressMessage( msg );
 		if( zerror < 0 ) { // compression error. Drop the packet
@@ -207,10 +207,10 @@ static void TV_Upstream_WriteUcmdToMessage( upstream_t *upstream, msg_t *msg ) {
 	memset( &cmd, 0, sizeof( usercmd_t ) );
 	cmd.serverTimeStamp = upstream->serverTime;
 
-	MSG_WriteByte( msg, clc_move );
-	MSG_WriteLong( msg, upstream->serverFrame );
-	MSG_WriteLong( msg, upstream->framenum );
-	MSG_WriteByte( msg, 1 );
+	MSG_WriteUint8( msg, clc_move );
+	MSG_WriteInt32( msg, upstream->serverFrame );
+	MSG_WriteInt32( msg, upstream->framenum );
+	MSG_WriteUint8( msg, 1 );
 
 	MSG_WriteDeltaUsercmd( msg, &nullcmd, &cmd );
 }
@@ -245,8 +245,8 @@ static void TV_Upstream_SendMessagesToServer( upstream_t *upstream, bool sendNow
 
 		if( sendNow || tvs.realtime > upstream->lastPacketSentTime + 100 || ucmd ) {
 			if( !upstream->reliable ) {
-				MSG_WriteByte( &message, clc_svcack );
-				MSG_WriteLong( &message, (unsigned int)upstream->lastExecutedServerCommand );
+				MSG_WriteUint8( &message, clc_svcack );
+				MSG_WriteInt32( &message, (unsigned int)upstream->lastExecutedServerCommand );
 			}
 		}
 
@@ -751,9 +751,9 @@ void TV_Upstream_UpdateReliableCommandsToServer( upstream_t *upstream, msg_t *ms
 			continue;
 		}
 
-		MSG_WriteByte( msg, clc_clientcommand );
+		MSG_WriteUint8( msg, clc_clientcommand );
 		if( !upstream->reliable ) {
-			MSG_WriteLong( msg, i );
+			MSG_WriteInt32( msg, i );
 		}
 		MSG_WriteString( msg, upstream->reliableCommands[i & ( MAX_RELIABLE_COMMANDS - 1 )] );
 	}

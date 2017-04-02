@@ -90,26 +90,26 @@ void TV_Downstream_New_f( client_t *client ) {
 	TV_Downstream_InitClientMessage( client, &message, messageData, sizeof( messageData ) );
 
 	// send the serverdata
-	MSG_WriteByte( &message, svc_serverdata );
-	MSG_WriteLong( &message, APP_PROTOCOL_VERSION );
+	MSG_WriteUint8( &message, svc_serverdata );
+	MSG_WriteInt32( &message, APP_PROTOCOL_VERSION );
 	if( !client->relay ) {
-		MSG_WriteLong( &message, tvs.lobby.spawncount );
-		MSG_WriteShort( &message, tvs.lobby.snapFrameTime );
+		MSG_WriteInt32( &message, tvs.lobby.spawncount );
+		MSG_WriteInt16( &message, tvs.lobby.snapFrameTime );
 		MSG_WriteString( &message, FS_BaseGameDirectory() );
 		MSG_WriteString( &message, FS_GameDirectory() );
 	} else {
-		MSG_WriteLong( &message, client->relay->servercount );
-		MSG_WriteShort( &message, client->relay->snapFrameTime );
+		MSG_WriteInt32( &message, client->relay->servercount );
+		MSG_WriteInt16( &message, client->relay->snapFrameTime );
 		MSG_WriteString( &message, client->relay->basegame );
 		MSG_WriteString( &message, client->relay->game );
 	}
 
 	if( client->relay ) {
 		// we use our own playernum on the relay server
-		MSG_WriteShort( &message, client->relay->playernum );
+		MSG_WriteInt16( &message, client->relay->playernum );
 	} else {
 		playernum = client - tvs.clients;
-		MSG_WriteShort( &message, playernum );
+		MSG_WriteInt16( &message, playernum );
 	}
 
 	// send full levelname
@@ -126,19 +126,19 @@ void TV_Downstream_New_f( client_t *client ) {
 		tv_bitflags |= SV_BITFLAGS_RELIABLE;
 	}
 
-	MSG_WriteByte( &message, tv_bitflags ); // sv_bitflags
+	MSG_WriteUint8( &message, tv_bitflags ); // sv_bitflags
 
 	// purelist
 	if( !client->relay ) {
-		MSG_WriteShort( &message, 0 );
+		MSG_WriteInt16( &message, 0 );
 	} else {
 		numpure = Com_CountPureListFiles( client->relay->purelist );
 
-		MSG_WriteShort( &message, numpure );
+		MSG_WriteInt16( &message, numpure );
 		iter = client->relay->purelist;
 		while( iter ) {
 			MSG_WriteString( &message, iter->filename );
-			MSG_WriteLong( &message, iter->checksum );
+			MSG_WriteInt32( &message, iter->checksum );
 			iter = iter->next;
 		}
 	}
@@ -257,8 +257,8 @@ static void TV_Downstream_Baselines_f( client_t *client ) {
 
 	while( message.cursize < FRAGMENT_SIZE * 3 && start < MAX_EDICTS ) {
 		if( client->relay->baselines[start].number ) {
-			MSG_WriteByte( &message, svc_spawnbaseline );
-			MSG_WriteDeltaEntity( &nullstate, &client->relay->baselines[start], &message, true, true );
+			MSG_WriteUint8( &message, svc_spawnbaseline );
+			MSG_WriteDeltaEntity( &nullstate, &client->relay->baselines[start], &message, true );
 		}
 		start++;
 	}

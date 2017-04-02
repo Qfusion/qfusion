@@ -139,9 +139,9 @@ void CL_UpdateClientCommandsToServer( msg_t *msg ) {
 			continue;
 		}
 
-		MSG_WriteByte( msg, clc_clientcommand );
+		MSG_WriteUint8( msg, clc_clientcommand );
 		if( !cls.reliable ) {
-			MSG_WriteLong( msg, i );
+			MSG_WriteInt32( msg, i );
 		}
 		MSG_WriteString( msg, cls.reliableCommands[i & ( MAX_RELIABLE_COMMANDS - 1 )] );
 	}
@@ -1051,7 +1051,7 @@ static void CL_ConnectionlessPacket( const socket_t *socket, const netadr_t *add
 	char *c;
 
 	MSG_BeginReading( msg );
-	MSG_ReadLong( msg ); // skip the -1
+	MSG_ReadInt32( msg ); // skip the -1
 
 	s = MSG_ReadStringLine( msg );
 
@@ -1255,8 +1255,8 @@ static bool CL_ProcessPacket( netchan_t *netchan, msg_t *msg ) {
 	}
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
-	MSG_ReadLong( msg ); // sequence
-	MSG_ReadLong( msg ); // sequence_ack
+	MSG_ReadInt32( msg ); // sequence
+	MSG_ReadInt32( msg ); // sequence_ack
 	if( msg->compressed ) {
 		zerror = Netchan_DecompressMessage( msg );
 		if( zerror < 0 ) {
@@ -2350,8 +2350,8 @@ void CL_SendMessagesToServer( bool sendNow ) {
 		if( sendNow || cls.realtime > 100 + cls.lastPacketSentTime ) {
 			// write the command ack
 			if( !cls.reliable ) {
-				MSG_WriteByte( &message, clc_svcack );
-				MSG_WriteLong( &message, (unsigned int)cls.lastExecutedServerCommand );
+				MSG_WriteUint8( &message, clc_svcack );
+				MSG_WriteInt32( &message, (unsigned int)cls.lastExecutedServerCommand );
 			}
 			//write up the clc commands
 			CL_UpdateClientCommandsToServer( &message );
@@ -2362,8 +2362,8 @@ void CL_SendMessagesToServer( bool sendNow ) {
 	} else if( sendNow || CL_MaxPacketsReached() ) {
 		// write the command ack
 		if( !cls.reliable ) {
-			MSG_WriteByte( &message, clc_svcack );
-			MSG_WriteLong( &message, (unsigned int)cls.lastExecutedServerCommand );
+			MSG_WriteUint8( &message, clc_svcack );
+			MSG_WriteInt32( &message, (unsigned int)cls.lastExecutedServerCommand );
 		}
 		// send a userinfo update if needed
 		if( userinfo_modified ) {

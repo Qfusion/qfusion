@@ -159,9 +159,9 @@ static bool SV_ProcessPacket( netchan_t *netchan, msg_t *msg ) {
 	}
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
-	MSG_ReadLong( msg ); // sequence
-	MSG_ReadLong( msg ); // sequence_ack
-	MSG_ReadShort( msg ); // game_port
+	MSG_ReadInt32( msg ); // sequence
+	MSG_ReadInt32( msg ); // sequence_ack
+	MSG_ReadInt16( msg ); // game_port
 	if( msg->compressed ) {
 		zerror = Netchan_DecompressMessage( msg );
 		if( zerror < 0 ) {
@@ -288,9 +288,9 @@ static void SV_ReadPackets( void ) {
 			// read the game port out of the message so we can fix up
 			// stupid address translating routers
 			MSG_BeginReading( &msg );
-			MSG_ReadLong( &msg ); // sequence number
-			MSG_ReadLong( &msg ); // sequence number
-			game_port = MSG_ReadShort( &msg ) & 0xffff;
+			MSG_ReadInt32( &msg ); // sequence number
+			MSG_ReadInt32( &msg ); // sequence number
+			game_port = MSG_ReadInt16( &msg ) & 0xffff;
 			// data follows
 
 			// check for packets from connected clients

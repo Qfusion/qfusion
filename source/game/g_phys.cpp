@@ -887,8 +887,8 @@ void SV_Physics_LinearProjectile( edict_t *ent ) {
 	// find it's current position given the starting timeStamp
 	flyTime = (float)( game.serverTime - ent->s.linearMovementTimeStamp ) * 0.001f;
 
-	VectorCopy( ent->s.origin, start );
-	VectorMA( ent->s.origin2, flyTime, ent->velocity, end );
+	VectorCopy( ent->s.linearMovementBegin, start );
+	VectorMA( ent->s.linearMovementBegin, flyTime, ent->s.linearMovementVelocity, end );
 
 	G_Trace4D( &trace, start, ent->r.mins, ent->r.maxs, end, ent, mask, ent->timeDelta );
 	VectorCopy( trace.endpos, ent->s.origin );
@@ -900,7 +900,7 @@ void SV_Physics_LinearProjectile( edict_t *ent ) {
 	}
 
 	// update some data required for the transmission
-	VectorCopy( ent->velocity, ent->s.linearMovementVelocity );
+	//VectorCopy( ent->velocity, ent->s.linearMovementVelocity );
 
 	GClip_TouchTriggers( ent );
 	ent->groundentity = NULL; // projectiles never have ground entity

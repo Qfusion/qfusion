@@ -446,7 +446,6 @@ void SP_trigger_push( edict_t *self ) {
 	self->nextThink = level.time + 1;
 	self->r.svflags &= ~SVF_NOCLIENT;
 	self->s.type = ET_PUSH_TRIGGER;
-	self->r.svflags |= SVF_TRANSMITORIGIN2;
 	GClip_LinkEntity( self ); // ET_PUSH_TRIGGER gets exceptions at linking so it's added for prediction
 	self->timeStamp = level.time;
 	if( !self->wait ) {

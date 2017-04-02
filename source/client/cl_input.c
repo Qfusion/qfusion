@@ -323,22 +323,22 @@ void CL_WriteUcmdsToMessage( msg_t *msg ) {
 	}
 
 	// begin a client move command
-	MSG_WriteByte( msg, clc_move );
+	MSG_WriteUint8( msg, clc_move );
 
 	// (acknowledge server frame snap)
 	// let the server know what the last frame we
 	// got was, so the next message can be delta compressed
 	if( cl.receivedSnapNum <= 0 ) {
-		MSG_WriteLong( msg, -1 );
+		MSG_WriteInt32( msg, -1 );
 	} else {
-		MSG_WriteLong( msg, cl.snapShots[cl.receivedSnapNum & UPDATE_MASK].serverFrame );
+		MSG_WriteInt32( msg, cl.snapShots[cl.receivedSnapNum & UPDATE_MASK].serverFrame );
 	}
 
 	// Write the actual ucmds
 
 	// write the id number of first ucmd to be sent, and the count
-	MSG_WriteLong( msg, ucmdHead );
-	MSG_WriteByte( msg, (uint8_t)( ucmdHead - ucmdFirst ) );
+	MSG_WriteInt32( msg, ucmdHead );
+	MSG_WriteUint8( msg, (uint8_t)( ucmdHead - ucmdFirst ) );
 
 	// write the ucmds
 	for( i = ucmdFirst; i < ucmdHead; i++ ) {

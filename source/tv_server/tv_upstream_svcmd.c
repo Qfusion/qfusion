@@ -89,7 +89,7 @@ static void TV_Upstream_HandleConfigstring( upstream_t *upstream, int index, con
 
 	// override CS_HOSTNAME in next packet
 	MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
-	MSG_WriteByte( &msg, svc_servercs );
+	MSG_WriteUint8( &msg, svc_servercs );
 	MSG_WriteString( &msg, va( "cs %i \"%s\"", CS_HOSTNAME, hostname ) );
 	TV_Upstream_SavePacket( upstream, &msg, 0 );
 }

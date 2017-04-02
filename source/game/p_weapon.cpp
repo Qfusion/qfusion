@@ -193,10 +193,6 @@ static void G_ProjectileDistancePrestep( edict_t *projectile, float distance ) {
 
 	mask = ( projectile->r.clipmask ) ? projectile->r.clipmask : MASK_SHOT; // race trick should come set up inside clipmask
 
-	if( projectile->movetype == MOVETYPE_LINEARPROJECTILE ) {
-		VectorCopy( projectile->s.origin2, projectile->s.origin );
-	}
-
 #ifdef PLASMAHACK
 	VectorCopy( projectile->s.origin, plasma_hack_start );
 #endif
@@ -205,7 +201,7 @@ static void G_ProjectileDistancePrestep( edict_t *projectile, float distance ) {
 	G_Trace4D( &trace, projectile->s.origin, projectile->r.mins, projectile->r.maxs, dest, projectile->r.owner, mask, projectile->timeDelta );
 
 	for( i = 0; i < 3; i++ )
-		projectile->s.origin[i] = projectile->s.origin2[i] = projectile->olds.origin[i] = projectile->olds.origin2[i] = trace.endpos[i];
+		projectile->s.origin[i] = projectile->olds.origin[i] = trace.endpos[i];
 
 	GClip_LinkEntity( projectile );
 	SV_Impact( projectile, &trace );
@@ -698,8 +694,8 @@ void G_FireWeapon( edict_t *ent, int parm ) {
 	vec3_t viewoffset = { 0, 0, 0 };
 	int ucmdSeed;
 
-	weapondef = GS_GetWeaponDef( ( parm & ~EV_INVERSE ) );
-	firedef = ( parm & EV_INVERSE ) ? &weapondef->firedef : &weapondef->firedef_weak;
+	weapondef = GS_GetWeaponDef( ( parm >> 1 ) & 0x3f );
+	firedef = ( parm & 0x1 ) ? &weapondef->firedef : &weapondef->firedef_weak;
 
 	// find this shot projection source
 	if( ent->r.client ) {
@@ -775,6 +771,8 @@ void G_FireWeapon( edict_t *ent, int parm ) {
 		//	G_ProjectileTimePrestep( projectile, 1000.0f * ( g_projectile_prestep->value / VectorLengthFast( projectile->velocity ) ) );
 		//else
 		G_ProjectileDistancePrestep( projectile, g_projectile_prestep->value );
+		if( projectile->s.linearMovement )
+			VectorCopy( projectile->s.origin, projectile->s.linearMovementBegin );
 	}
 
 #ifdef NO_ROCKET_ANTILAG

@@ -254,7 +254,6 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	GS_SnapVelocity( projectile->velocity );
 
 	projectile->movetype = MOVETYPE_LINEARPROJECTILE;
-	projectile->s.linearMovement = true;
 
 	projectile->r.solid = SOLID_YES;
 	projectile->r.clipmask = ( !GS_RaceGametype() ) ? MASK_SHOT : MASK_SOLID;
@@ -262,7 +261,6 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	projectile->r.svflags = SVF_PROJECTILE;
 
 	// enable me when drawing exception is added to cgame
-	projectile->r.svflags |= SVF_TRANSMITORIGIN2;
 	VectorClear( projectile->r.mins );
 	VectorClear( projectile->r.maxs );
 	projectile->s.modelindex = 0;
@@ -275,7 +273,6 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	projectile->style = 0;
 	projectile->s.sound = 0;
 	projectile->timeStamp = level.time;
-	projectile->s.linearMovementTimeStamp = game.serverTime;
 	projectile->timeDelta = timeDelta;
 
 	projectile->projectileInfo.minDamage = min( minDamage, damage );
@@ -288,7 +285,10 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	GClip_LinkEntity( projectile );
 
 	// update some data required for the transmission
+	projectile->s.linearMovement = true;
+	VectorCopy( projectile->s.origin, projectile->s.linearMovementBegin );
 	VectorCopy( projectile->velocity, projectile->s.linearMovementVelocity );
+	projectile->s.linearMovementTimeStamp = game.serverTime;
 	projectile->s.team = self->s.team;
 	projectile->s.modelindex2 = ( abs( timeDelta ) > 255 ) ? 255 : (unsigned int)abs( timeDelta );
 	return projectile;
@@ -390,7 +390,6 @@ void W_Fire_Blade( edict_t *self, int range, vec3_t start, vec3_t angles, float 
 		event = G_SpawnEvent( EV_BLADE_IMPACT, 0, end );
 		event->s.ownerNum = ENTNUM( self );
 		VectorScale( trace.plane.normal, 1024, event->s.origin2 );
-		event->r.svflags = SVF_TRANSMITORIGIN2;
 		return;
 	}
 
@@ -487,7 +486,6 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	// send the event
 	event = G_SpawnEvent( EV_FIRE_BULLET, seed, start );
 	event->s.ownerNum = ENTNUM( self );
-	event->r.svflags = SVF_TRANSMITORIGIN2;
 	VectorScale( dir, 4096, event->s.origin2 ); // DirToByte is too inaccurate
 	event->s.weapon = WEAP_MACHINEGUN;
 	event->s.firemode = ( mod == MOD_MACHINEGUN_S ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
@@ -575,7 +573,6 @@ void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int r
 	// send the event
 	event = G_SpawnEvent( EV_FIRE_RIOTGUN, seed, start );
 	event->s.ownerNum = ENTNUM( self );
-	event->r.svflags = SVF_TRANSMITORIGIN2;
 	VectorScale( dir, 4096, event->s.origin2 ); // DirToByte is too inaccurate
 	event->s.weapon = WEAP_RIOTGUN;
 	event->s.firemode = ( mod == MOD_RIOTGUN_S ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
@@ -1088,7 +1085,6 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 
 	// send the weapon fire effect
 	event = G_SpawnEvent( EV_ELECTROTRAIL, ENTNUM( self ), start );
-	event->r.svflags = SVF_TRANSMITORIGIN2;
 	VectorScale( dir, 1024, event->s.origin2 );
 	event->s.firemode = fireMode;
 
@@ -1199,7 +1195,6 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 
 	// send the weapon fire effect
 	event = G_SpawnEvent( EV_ELECTROTRAIL, ENTNUM( self ), start );
-	event->r.svflags = SVF_TRANSMITORIGIN2;
 	VectorScale( dir, 1024, event->s.origin2 );
 	event->s.firemode = FIRE_MODE_STRONG;
 
@@ -1317,7 +1312,6 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 
 	// send the weapon fire effect
 	event = G_SpawnEvent( EV_INSTATRAIL, ENTNUM( self ), start );
-	event->r.svflags = SVF_TRANSMITORIGIN2;
 	VectorScale( dir, 1024, event->s.origin2 );
 }
 
@@ -1414,7 +1408,6 @@ static edict_t *_FindOrSpawnLaser( edict_t *owner, int entType, bool *newLaser )
 		laser->s.ownerNum = ownerNum;
 		laser->movetype = MOVETYPE_NONE;
 		laser->r.solid = SOLID_NOT;
-		laser->r.svflags = SVF_TRANSMITORIGIN2;
 		laser->s.modelindex = 255; // needs to have some value so it isn't filtered by the server culling
 	}
 

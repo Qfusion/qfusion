@@ -93,25 +93,25 @@ static void TV_Relay_ParseServerData( relay_t *relay, msg_t *msg ) {
 	relay->map_checksum = 0;
 
 	// parse protocol version number
-	i = MSG_ReadLong( msg );
+	i = MSG_ReadInt32( msg );
 
 	if( i != APP_PROTOCOL_VERSION && !( relay->upstream->demo.playing && i == APP_DEMO_PROTOCOL_VERSION ) ) {
 		TV_Relay_Error( relay, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
 	}
 
-	relay->servercount = MSG_ReadLong( msg );
-	relay->snapFrameTime = (unsigned int)MSG_ReadShort( msg );
+	relay->servercount = MSG_ReadInt32( msg );
+	relay->snapFrameTime = (unsigned int)MSG_ReadInt16( msg );
 
 	Q_strncpyz( relay->basegame, MSG_ReadString( msg ), sizeof( relay->basegame ) );
 	Q_strncpyz( relay->game, MSG_ReadString( msg ), sizeof( relay->game ) );
 
 	// parse player entity number
-	relay->playernum = MSG_ReadShort( msg );
+	relay->playernum = MSG_ReadInt16( msg );
 
 	// get the full level name
 	Q_strncpyz( relay->levelname, MSG_ReadString( msg ), sizeof( relay->levelname ) );
 
-	relay->sv_bitflags = MSG_ReadByte( msg );
+	relay->sv_bitflags = MSG_ReadUint8( msg );
 
 	// using upstream->reliable won't work for TV_Relay_ParseServerMessage
 	// in case of reliable demo following unreliable demo, causing "clack message while reliable" error
@@ -123,7 +123,7 @@ static void TV_Relay_ParseServerData( relay_t *relay, msg_t *msg ) {
 			MSG_ReadString( msg );
 		} else {
 			// http port number
-			MSG_ReadShort( msg );
+			MSG_ReadInt16( msg );
 		}
 	}
 
@@ -133,10 +133,10 @@ static void TV_Relay_ParseServerData( relay_t *relay, msg_t *msg ) {
 	Com_FreePureList( &relay->purelist );
 
 	// add new
-	numpure = MSG_ReadShort( msg );
+	numpure = MSG_ReadInt16( msg );
 	while( numpure > 0 ) {
 		const char *pakname = MSG_ReadString( msg );
-		const unsigned checksum = MSG_ReadLong( msg );
+		const unsigned checksum = MSG_ReadInt32( msg );
 
 		Com_AddPakToPureList( &relay->purelist, pakname, checksum, relay->upstream->mempool );
 
@@ -166,7 +166,7 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 			TV_Relay_Error( relay, "Bad server message" );
 		}
 
-		cmd = MSG_ReadByte( msg );
+		cmd = MSG_ReadUint8( msg );
 		/*if( cmd == -1 )
 		Com_Printf( "%3i:CMD %i %s\n", msg->readcount-1, cmd, "EOF" );
 		else
@@ -186,7 +186,7 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 
 			case svc_servercmd:
 				if( !relay->reliable ) {
-					int cmdNum = MSG_ReadLong( msg );
+					int cmdNum = MSG_ReadInt32( msg );
 					if( cmdNum < 0 ) {
 						TV_Relay_Error( relay, "Invalid cmdNum value" );
 					}
@@ -226,8 +226,8 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 				if( relay->reliable ) {
 					TV_Relay_Error( relay, "clack message while reliable" );
 				}
-				MSG_ReadLong( msg ); // reliableAcknowledge
-				MSG_ReadLong( msg ); // ucmdAcknowledged
+				MSG_ReadInt32( msg ); // reliableAcknowledge
+				MSG_ReadInt32( msg ); // ucmdAcknowledged
 				break;
 
 			case svc_frame:
@@ -238,7 +238,7 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 			{
 				int length;
 
-				length = MSG_ReadLong( msg );
+				length = MSG_ReadInt32( msg );
 				MSG_SkipData( msg, length );
 			}
 			break;
@@ -253,9 +253,9 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 				if( 1 ) {
 					int len;
 
-					MSG_ReadByte( msg );        // extension id
-					MSG_ReadByte( msg );        // version number
-					len = MSG_ReadShort( msg ); // command length
+					MSG_ReadUint8( msg );        // extension id
+					MSG_ReadUint8( msg );        // version number
+					len = MSG_ReadInt16( msg ); // command length
 					MSG_SkipData( msg, len );   // command data
 				}
 				break;

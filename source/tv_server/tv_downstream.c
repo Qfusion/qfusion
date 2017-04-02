@@ -410,9 +410,9 @@ void TV_Downstream_AddReliableCommandsToMessage( client_t *client, msg_t *msg ) 
 			continue;
 		}
 
-		MSG_WriteByte( msg, svc_servercmd );
+		MSG_WriteUint8( msg, svc_servercmd );
 		if( !client->reliable ) {
-			MSG_WriteLong( msg, i );
+			MSG_WriteInt32( msg, i );
 		}
 		MSG_WriteString( msg, client->reliableCommands[i & ( MAX_RELIABLE_COMMANDS - 1 )] );
 	}
@@ -440,9 +440,9 @@ void TV_Downstream_InitClientMessage( client_t *client, msg_t *msg, uint8_t *dat
 
 	// write the last client-command we received so it's acknowledged
 	if( !client->reliable ) {
-		MSG_WriteByte( msg, svc_clcack );
-		MSG_WriteLong( msg, client->clientCommandExecuted );
-		MSG_WriteLong( msg, client->UcmdReceived ); // acknowledge the last ucmd
+		MSG_WriteUint8( msg, svc_clcack );
+		MSG_WriteInt32( msg, client->clientCommandExecuted );
+		MSG_WriteInt32( msg, client->UcmdReceived ); // acknowledge the last ucmd
 	}
 }
 
@@ -578,9 +578,9 @@ static bool TV_Downstream_ProcessPacket( netchan_t *netchan, msg_t *msg ) {
 	}
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
-	/*sequence = */ MSG_ReadLong( msg );
-	/*sequence_ack = */ MSG_ReadLong( msg );
-	/*game_port = */ MSG_ReadShort( msg );
+	/*sequence = */ MSG_ReadInt32( msg );
+	/*sequence_ack = */ MSG_ReadInt32( msg );
+	/*game_port = */ MSG_ReadInt16( msg );
 	if( msg->compressed ) {
 		zerror = Netchan_DecompressMessage( msg );
 		if( zerror < 0 ) { // compression error. Drop the packet
@@ -694,9 +694,9 @@ void TV_Downstream_ReadPackets( void ) {
 			// read the game port out of the message so we can fix up
 			// stupid address translating routers
 			MSG_BeginReading( &msg );
-			MSG_ReadLong( &msg ); // sequence number
-			MSG_ReadLong( &msg ); // sequence number
-			game_port = MSG_ReadShort( &msg ) & 0xffff;
+			MSG_ReadInt32( &msg ); // sequence number
+			MSG_ReadInt32( &msg ); // sequence number
+			game_port = MSG_ReadInt16( &msg ) & 0xffff;
 			// data follows
 
 			// check for packets from connected clients

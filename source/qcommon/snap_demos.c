@@ -90,14 +90,14 @@ static void SNAP_DemoMetaDataMessage( msg_t *msg, const char *meta_data, size_t 
 	int meta_data_ofs, meta_data_ofs_pos;
 
 	// demoinfo message
-	MSG_WriteByte( msg, svc_demoinfo );
+	MSG_WriteUint8( msg, svc_demoinfo );
 
 	demoinfo_len_pos = msg->cursize;
-	MSG_WriteLong( msg, 0 );    // svc_demoinfo length
+	MSG_WriteInt32( msg, 0 );    // svc_demoinfo length
 	demoinfo_len = msg->cursize;
 
 	meta_data_ofs_pos = msg->cursize;
-	MSG_WriteLong( msg, 0 );    // meta data start offset
+	MSG_WriteInt32( msg, 0 );    // meta data start offset
 	meta_data_ofs = msg->cursize;
 
 	if( meta_data_realsize > SNAP_MAX_DEMO_META_DATA_SIZE ) {
@@ -108,8 +108,8 @@ static void SNAP_DemoMetaDataMessage( msg_t *msg, const char *meta_data, size_t 
 	}
 
 	meta_data_ofs = msg->cursize - meta_data_ofs;
-	MSG_WriteLong( msg, meta_data_realsize );       // real size
-	MSG_WriteLong( msg, SNAP_MAX_DEMO_META_DATA_SIZE ); // max size
+	MSG_WriteInt32( msg, meta_data_realsize );       // real size
+	MSG_WriteInt32( msg, SNAP_MAX_DEMO_META_DATA_SIZE ); // max size
 	MSG_WriteData( msg, meta_data, meta_data_realsize );
 	MSG_WriteData( msg, dummy_meta_data, SNAP_MAX_DEMO_META_DATA_SIZE - meta_data_realsize );
 
@@ -117,9 +117,9 @@ static void SNAP_DemoMetaDataMessage( msg_t *msg, const char *meta_data, size_t 
 	demoinfo_len = msg->cursize - demoinfo_len;
 
 	msg->cursize = demoinfo_len_pos;
-	MSG_WriteLong( msg, demoinfo_len ); // svc_demoinfo length
+	MSG_WriteInt32( msg, demoinfo_len ); // svc_demoinfo length
 	msg->cursize = meta_data_ofs_pos;
-	MSG_WriteLong( msg, meta_data_ofs );    // meta data start offset
+	MSG_WriteInt32( msg, meta_data_ofs );    // meta data start offset
 
 	msg->cursize = demoinfo_end;
 }
@@ -162,15 +162,15 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 	SNAP_RecordDemoMetaDataMessage( demofile, &msg );
 
 	// serverdata message
-	MSG_WriteByte( &msg, svc_serverdata );
-	MSG_WriteLong( &msg, APP_DEMO_PROTOCOL_VERSION );
-	MSG_WriteLong( &msg, spawncount );
-	MSG_WriteShort( &msg, (unsigned short)snapFrameTime );
+	MSG_WriteUint8( &msg, svc_serverdata );
+	MSG_WriteInt32( &msg, APP_DEMO_PROTOCOL_VERSION );
+	MSG_WriteInt32( &msg, spawncount );
+	MSG_WriteInt16( &msg, (unsigned short)snapFrameTime );
 	MSG_WriteString( &msg, FS_BaseGameDirectory() );
 	MSG_WriteString( &msg, FS_GameDirectory() );
-	MSG_WriteShort( &msg, -1 ); // playernum
+	MSG_WriteInt16( &msg, -1 ); // playernum
 	MSG_WriteString( &msg, sv_name ); // level name
-	MSG_WriteByte( &msg, sv_bitflags & ~SV_BITFLAGS_HTTP ); // sv_bitflags
+	MSG_WriteUint8( &msg, sv_bitflags & ~SV_BITFLAGS_HTTP ); // sv_bitflags
 
 	// pure files
 	i = Com_CountPureListFiles( purelist );
@@ -178,12 +178,12 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 		Com_Error( ERR_DROP, "Error: Too many pure files." );
 	}
 
-	MSG_WriteShort( &msg, i );
+	MSG_WriteInt16( &msg, i );
 
 	purefile = purelist;
 	while( purefile ) {
 		MSG_WriteString( &msg, purefile->filename );
-		MSG_WriteLong( &msg, purefile->checksum );
+		MSG_WriteInt32( &msg, purefile->checksum );
 		purefile = purefile->next;
 
 		DEMO_SAFEWRITE( demofile, &msg, false );
@@ -193,7 +193,7 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 	for( i = 0; i < MAX_CONFIGSTRINGS; i++ ) {
 		const char *configstring = configstrings + i * MAX_CONFIGSTRING_CHARS;
 		if( configstring[0] ) {
-			MSG_WriteByte( &msg, svc_servercs );
+			MSG_WriteUint8( &msg, svc_servercs );
 			MSG_WriteString( &msg, va( "cs %i \"%s\"", i, configstring ) );
 
 			DEMO_SAFEWRITE( demofile, &msg, false );
@@ -206,8 +206,8 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 	for( i = 0; i < MAX_EDICTS; i++ ) {
 		base = &baselines[i];
 		if( base->modelindex || base->sound || base->effects ) {
-			MSG_WriteByte( &msg, svc_spawnbaseline );
-			MSG_WriteDeltaEntity( &nullstate, base, &msg, true, true );
+			MSG_WriteUint8( &msg, svc_spawnbaseline );
+			MSG_WriteDeltaEntity( &nullstate, base, &msg, true );
 
 			DEMO_SAFEWRITE( demofile, &msg, false );
 		}
@@ -216,7 +216,7 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 	// client expects the server data to be in a separate packet
 	DEMO_SAFEWRITE( demofile, &msg, true );
 
-	MSG_WriteByte( &msg, svc_servercs );
+	MSG_WriteUint8( &msg, svc_servercs );
 	MSG_WriteString( &msg, "precache" );
 
 	DEMO_SAFEWRITE( demofile, &msg, true );

@@ -34,12 +34,12 @@ static void TV_Downstream_ParseMoveCommand( client_t *client, msg_t *msg ) {
 	usercmd_t nullcmd;
 	int lastframe, ucmdCount;
 
-	lastframe = MSG_ReadLong( msg );
+	lastframe = MSG_ReadInt32( msg );
 
 	// read the id of the first ucmd we will receive
-	ucmdHead = MSG_ReadLong( msg );
+	ucmdHead = MSG_ReadInt32( msg );
 	// read the number of ucmds we will receive
-	ucmdCount = MSG_ReadByte( msg );
+	ucmdCount = MSG_ReadUint8( msg );
 
 	if( ucmdCount > CMD_MASK ) {
 		TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "Ucmd overflow" );
@@ -92,7 +92,7 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 			break;
 		}
 
-		c = MSG_ReadByte( msg );
+		c = MSG_ReadUint8( msg );
 		if( c == -1 ) {
 			break;
 		}
@@ -110,7 +110,7 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 					TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "svack from reliable client" );
 					return;
 				}
-				cmdNum = MSG_ReadLong( msg );
+				cmdNum = MSG_ReadInt32( msg );
 				if( cmdNum < client->reliableAcknowledge || cmdNum > client->reliableSent ) {
 					//					TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "bad server command acknowledged" );
 					return;
@@ -120,7 +120,7 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 
 			case clc_clientcommand:
 				if( !client->reliable ) {
-					cmdNum = MSG_ReadLong( msg );
+					cmdNum = MSG_ReadInt32( msg );
 					if( cmdNum <= client->clientCommandExecuted ) {
 						s = MSG_ReadString( msg ); // read but ignore
 						continue;
@@ -138,9 +138,9 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 				if( 1 ) {
 					int ext, len;
 
-					ext = MSG_ReadByte( msg );  // extension id
-					MSG_ReadByte( msg );        // version number
-					len = MSG_ReadShort( msg ); // command length
+					ext = MSG_ReadUint8( msg );  // extension id
+					MSG_ReadUint8( msg );        // version number
+					len = MSG_ReadInt16( msg ); // command length
 
 					switch( ext ) {
 						default:

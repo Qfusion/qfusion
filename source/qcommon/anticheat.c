@@ -47,11 +47,11 @@ static AC_Export_t InitServer_f = NULL;
 		import.AC_StructEntry( MSG_WriteData ), \
 		import.AC_StructEntry( MSG_CopyData ), \
 \
-		import.AC_StructEntry( MSG_WriteChar ), \
-		import.AC_StructEntry( MSG_WriteByte ), \
-		import.AC_StructEntry( MSG_WriteShort ), \
-		import.AC_StructEntry( MSG_WriteInt3 ), \
-		import.AC_StructEntry( MSG_WriteLong ), \
+		import.AC_StructEntry( MSG_WriteInt8 ), \
+		import.AC_StructEntry( MSG_WriteUint8 ), \
+		import.AC_StructEntry( MSG_WriteInt16 ), \
+		import.AC_StructEntry( MSG_WriteInt24 ), \
+		import.AC_StructEntry( MSG_WriteInt32 ), \
 		import.AC_StructEntry( MSG_WriteFloat ), \
 		import.AC_StructEntry( MSG_WriteString ), \
 		import.AC_StructEntry( MSG_WriteDeltaUsercmd ), \
@@ -60,11 +60,11 @@ static AC_Export_t InitServer_f = NULL;
 \
 		import.AC_StructEntry( MSG_BeginReading ), \
 \
-		import.AC_StructEntry( MSG_ReadChar ), \
-		import.AC_StructEntry( MSG_ReadByte ), \
-		import.AC_StructEntry( MSG_ReadShort ), \
+		import.AC_StructEntry( MSG_ReadInt8 ), \
+		import.AC_StructEntry( MSG_ReadUint8 ), \
+		import.AC_StructEntry( MSG_ReadInt16 ), \
 		import.AC_StructEntry( MSG_ReadInt3 ), \
-		import.AC_StructEntry( MSG_ReadLong ), \
+		import.AC_StructEntry( MSG_ReadInt32 ), \
 		import.AC_StructEntry( MSG_ReadFloat ), \
 		import.AC_StructEntry( MSG_ReadString ), \
 		import.AC_StructEntry( MSG_ReadStringLine ), \
