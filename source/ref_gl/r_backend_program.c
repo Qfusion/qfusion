@@ -1433,7 +1433,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		  || rgbgen == RGB_GEN_EXACT_VERTEX ) &&
 		( rb.currentShader->flags & SHADER_LIGHTMAP ) &&
 		( pass->flags & GLSTATE_BLEND_ADD ) != GLSTATE_BLEND_ADD &&
-		( pass->flags & ( GLSTATE_SRCBLEND_SRC_ALPHA ) ) == 0 ) {
+		( pass->flags & ( GLSTATE_SRCBLEND_SRC_ALPHA ) ) != GLSTATE_SRCBLEND_SRC_ALPHA ) {
 		lightStyle = rb.superLightStyle;
 		isLightmapped = true;
 	}
