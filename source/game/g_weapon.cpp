@@ -690,8 +690,8 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t angles, int speed, 
 	grenade->classname = "grenade";
 	grenade->enemy = NULL;
 	VectorSet( grenade->avelocity, 300, 300, 300 );
-	VectorSet( grenade->r.mins, -8, -8, -8 );
-	VectorSet( grenade->r.maxs,  8,  8,  8 );
+	VectorSet( grenade->r.mins, -2, -2, -2 );
+	VectorSet( grenade->r.maxs,  2,  2,  2 );
 
 	if( mod == MOD_GRENADE_S ) {
 		grenade->s.modelindex = trap_ModelIndex( PATH_GRENADE_STRONG_MODEL );
