@@ -7,7 +7,7 @@ qfusion is the id Tech 2 derived game engine
 ## Features (incomplete list)
 
 - Fully open-source under the GPLv2 and easy to mod
-- Runs on Linux, OS X, Windows and Android (in development)
+- Runs on Linux, macOS, Windows and Android (in development)
 - Modern and fast OpenGL 3.0 and OpenGL ES 3.0 renderer, running in a dedicated program thread
 - <a href="http://librocket.com/wiki/documentation">User Interface</a> based on XHTML/CSS standards with support for remote content
 - Support for vertex and skeletal animation
