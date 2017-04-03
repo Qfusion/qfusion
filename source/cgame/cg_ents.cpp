@@ -1876,7 +1876,7 @@ void CG_AddEntities( void ) {
 				CG_AddGenericEnt( cent );
 				CG_ProjectileTrail( cent );
 				CG_EntityLoopSound( state, ATTN_NORM );
-				CG_AddLightToScene( cent->ent.origin, 300, 1, 1, 0 );
+				CG_AddLightToScene( cent->ent.origin, 300, 0.8f, 0.6f, 0 );
 				break;
 			case ET_GRENADE:
 				CG_AddGenericEnt( cent );

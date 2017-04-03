@@ -602,7 +602,7 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, 
 	VectorMA( pos, radius * 0.12f, dir, origin );
 	le = CG_AllocSprite( LE_ALPHA_FADE, origin, radius * 0.5f, 8,
 						 1, 1, 1, 1,
-						 radius * 4, 0.75f, 0.533f, 0, // yellow dlight
+						 radius * 4, 0.8f, 0.6f, 0, // orange dlight
 						 CG_MediaShader( cgs.media.shaderRocketExplosion ) );
 
 	VectorSet( vec, crandom() * expvelocity, crandom() * expvelocity, crandom() * expvelocity );
