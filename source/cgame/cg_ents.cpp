@@ -1887,6 +1887,7 @@ void CG_AddEntities( void ) {
 			case ET_PLASMA:
 				CG_AddGenericEnt( cent );
 				CG_EntityLoopSound( state, ATTN_STATIC );
+				CG_AddLightToScene( cent->ent.origin, 110, 0, 1, 0 );
 				break;
 
 			case ET_SPRITE:
