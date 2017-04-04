@@ -309,7 +309,6 @@ static void G_KnockBackPush( edict_t *targ, edict_t *attacker, const vec3_t base
 	}
 
 	VectorMA( targ->velocity, push, dir, targ->velocity );
-	GS_SnapVelocity( targ->velocity );
 }
 
 /*

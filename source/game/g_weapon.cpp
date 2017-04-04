@@ -251,7 +251,6 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	VectorCopy( angles, projectile->s.angles );
 	AngleVectors( angles, dir, NULL, NULL );
 	VectorScale( dir, speed, projectile->velocity );
-	GS_SnapVelocity( projectile->velocity );
 
 	projectile->movetype = MOVETYPE_LINEARPROJECTILE;
 
@@ -310,7 +309,6 @@ static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t angle
 	VectorCopy( angles, projectile->s.angles );
 	AngleVectors( angles, dir, NULL, NULL );
 	VectorScale( dir, speed, projectile->velocity );
-	GS_SnapVelocity( projectile->velocity );
 
 	projectile->movetype = MOVETYPE_BOUNCEGRENADE;
 
@@ -690,8 +688,6 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t angles, int speed, 
 	grenade->classname = "grenade";
 	grenade->enemy = NULL;
 	VectorSet( grenade->avelocity, 300, 300, 300 );
-	VectorSet( grenade->r.mins, -2, -2, -2 );
-	VectorSet( grenade->r.maxs,  2,  2,  2 );
 
 	if( mod == MOD_GRENADE_S ) {
 		grenade->s.modelindex = trap_ModelIndex( PATH_GRENADE_STRONG_MODEL );

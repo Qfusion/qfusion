@@ -604,18 +604,22 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
 static void PM_AirAccelerate( vec3_t wishdir, float wishspeed ) {
 	vec3_t heading = { pml.velocity[0], pml.velocity[1], 0 };
 	float speed = VectorNormalize( heading );
+
 	// Speed is below player walk speed
 	if( speed <= pml.maxPlayerSpeed ) {
 		// Apply acceleration
 		VectorMA( pml.velocity, pml.maxPlayerSpeed * pml.frametime, wishdir, pml.velocity );
 		return;
 	}
+
 	// Calculate a dot product between heading and wishdir
 	// Looking straight results in better acceleration
 	float dot = 50 * ( DotProduct( heading, wishdir ) - 0.98 );
 	clamp( dot, 0, 1 );
+
 	// Calculate resulting acceleration
 	float accel = dot * pml.maxPlayerSpeed * pml.maxPlayerSpeed * pml.maxPlayerSpeed / ( speed * speed );
+
 	// Apply acceleration
 	VectorMA( pml.velocity, accel * pml.frametime, heading, pml.velocity );
 }
@@ -940,6 +944,62 @@ static void PM_Move( void ) {
 	}
 }
 
+/*
+* PM_GroundTrace
+*
+* If the player hull point one-quarter unit down is solid, the player is on ground
+*/
+static void PM_GroundTrace( trace_t *trace ) {
+	vec3_t point;
+
+	// see if standing on something solid
+	point[0] = pml.origin[0];
+	point[1] = pml.origin[1];
+	point[2] = pml.origin[2] - 0.25;
+
+	module_Trace( trace, pml.origin, pm->mins, pm->maxs, point, pm->playerState->POVnum, pm->contentmask, 0 );
+}
+
+/*
+* PM_GoodPosition
+*/
+static bool PM_GoodPosition( vec3_t origin, trace_t *trace ) {
+	if( pm->playerState->pmove.pm_type == PM_SPECTATOR ) {
+		return true;
+	}
+
+	module_Trace( trace, origin, pm->mins, pm->maxs, origin, pm->playerState->POVnum, pm->contentmask, 0 );
+
+	return !trace->allsolid;
+}
+
+/*
+* PM_UnstickPosition
+*/
+static void PM_UnstickPosition( trace_t *trace ) {
+	int j;
+	vec3_t origin;
+
+	VectorCopy( pml.origin, origin );
+
+	// try all combinations
+	for( j = 0; j < 8; j++ ) {
+		VectorCopy( pml.origin, origin );
+
+		origin[0] += ( ( j & 1 ) ? -1 : 1 );
+		origin[1] += ( ( j & 2 ) ? -1 : 1 );
+		origin[2] += ( ( j & 4 ) ? -1 : 1 );
+
+		if( PM_GoodPosition( origin, trace ) ) {
+			VectorCopy( origin, pml.origin );
+			PM_GroundTrace( trace );
+			return;
+		}
+	}
+
+	// go back to the last position
+	VectorCopy( pml.previous_origin, pml.origin );
+}
 
 /*
 * PM_CategorizePosition
@@ -947,22 +1007,23 @@ static void PM_Move( void ) {
 static void PM_CategorizePosition( void ) {
 	vec3_t point;
 	int cont;
-	trace_t trace;
 	int sample1;
 	int sample2;
-
-	// if the player hull point one-quarter unit down is solid, the player is on ground
-
-	// see if standing on something solid
-	point[0] = pml.origin[0];
-	point[1] = pml.origin[1];
-	point[2] = pml.origin[2] - 0.25;
 
 	if( pml.velocity[2] > 180 ) { // !!ZOID changed from 100 to 180 (ramp accel)
 		pm->playerState->pmove.pm_flags &= ~PMF_ON_GROUND;
 		pm->groundentity = -1;
 	} else {
-		module_Trace( &trace, pml.origin, pm->mins, pm->maxs, point, pm->playerState->POVnum, pm->contentmask, 0 );
+		trace_t trace;
+
+		// see if standing on something solid
+		PM_GroundTrace( &trace );
+
+		if( trace.allsolid ) {
+			// try to unstick position
+			PM_UnstickPosition( &trace );
+		}
+
 		pml.groundplane = trace.plane;
 		pml.groundsurfFlags = trace.surfFlags;
 		pml.groundcontents = trace.contents;
@@ -999,6 +1060,8 @@ static void PM_CategorizePosition( void ) {
 	sample2 = pm->playerState->viewheight - pm->mins[2];
 	sample1 = sample2 / 2;
 
+	point[0] = pml.origin[0];
+	point[1] = pml.origin[1];
 	point[2] = pml.origin[2] + pm->mins[2] + 1;
 	cont = module_PointContents( point, 0 );
 
@@ -1606,107 +1669,6 @@ void PM_AdjustViewheight( void ) {
 	}
 }
 
-static bool PM_GoodPosition( int snaptorigin[3] ) {
-	trace_t trace;
-	vec3_t origin, end;
-	int i;
-
-	if( pm->playerState->pmove.pm_type == PM_SPECTATOR ) {
-		return true;
-	}
-
-	for( i = 0; i < 3; i++ )
-		origin[i] = end[i] = snaptorigin[i] * ( 1.0 / PM_VECTOR_SNAP );
-	module_Trace( &trace, origin, pm->mins, pm->maxs, end, pm->playerState->POVnum, pm->contentmask, 0 );
-
-	return !trace.allsolid ? true : false;
-}
-
-/*
-* PM_SnapPosition
-*
-* On exit, the origin will have a value that is pre-quantized to the (1.0/16.0)
-* precision of the network channel and in a valid position.
-*/
-static void PM_SnapPosition( void ) {
-	int sign[3];
-	int i, j, bits;
-	int base[3];
-	int velint[3], origint[3];
-	// try all single bits first
-	static const int jitterbits[8] = { 0, 4, 1, 2, 3, 5, 6, 7 };
-
-	// snap velocity to sixteenths
-	for( i = 0; i < 3; i++ ) {
-		velint[i] = (int)( pml.velocity[i] * PM_VECTOR_SNAP );
-		pm->playerState->pmove.velocity[i] = velint[i] * ( 1.0 / PM_VECTOR_SNAP );
-	}
-
-	for( i = 0; i < 3; i++ ) {
-		if( pml.origin[i] >= 0 ) {
-			sign[i] = 1;
-		} else {
-			sign[i] = -1;
-		}
-		origint[i] = (int)( pml.origin[i] * PM_VECTOR_SNAP );
-		if( origint[i] * ( 1.0 / PM_VECTOR_SNAP ) == pml.origin[i] ) {
-			sign[i] = 0;
-		}
-	}
-	VectorCopy( origint, base );
-
-	// try all combinations
-	for( j = 0; j < 8; j++ ) {
-		bits = jitterbits[j];
-		VectorCopy( base, origint );
-		for( i = 0; i < 3; i++ )
-			if( bits & ( 1 << i ) ) {
-				origint[i] += sign[i];
-			}
-
-		if( PM_GoodPosition( origint ) ) {
-			VectorScale( origint, ( 1.0 / PM_VECTOR_SNAP ), pm->playerState->pmove.origin );
-			return;
-		}
-	}
-
-	// go back to the last position
-	VectorCopy( pml.previous_origin, pm->playerState->pmove.origin );
-	VectorClear( pm->playerState->pmove.velocity );
-}
-
-
-/*
-* PM_InitialSnapPosition
-*
-*/
-static void PM_InitialSnapPosition( void ) {
-	int x, y, z;
-	int base[3];
-	static const int offset[3] = { 0, -1, 1 };
-	int origint[3];
-
-	VectorScale( pm->playerState->pmove.origin, PM_VECTOR_SNAP, origint );
-	VectorCopy( origint, base );
-
-	for( z = 0; z < 3; z++ ) {
-		origint[2] = base[2] + offset[z];
-		for( y = 0; y < 3; y++ ) {
-			origint[1] = base[1] + offset[y];
-			for( x = 0; x < 3; x++ ) {
-				origint[0] = base[0] + offset[x];
-				if( PM_GoodPosition( origint ) ) {
-					pml.origin[0] = pm->playerState->pmove.origin[0] = origint[0] * ( 1.0 / PM_VECTOR_SNAP );
-					pml.origin[1] = pm->playerState->pmove.origin[1] = origint[1] * ( 1.0 / PM_VECTOR_SNAP );
-					pml.origin[2] = pm->playerState->pmove.origin[2] = origint[2] * ( 1.0 / PM_VECTOR_SNAP );
-					VectorCopy( pm->playerState->pmove.origin, pml.previous_origin );
-					return;
-				}
-			}
-		}
-	}
-}
-
 static void PM_UpdateDeltaAngles( void ) {
 	int i;
 
@@ -1757,6 +1719,35 @@ static void PM_ApplyMouseAnglesClamp( void ) {
 #endif
 
 /*
+* PM_BeginMove
+*/
+static void PM_BeginMove( void ) {
+	// clear results
+	pm->numtouch = 0;
+	pm->groundentity = -1;
+	pm->watertype = 0;
+	pm->waterlevel = 0;
+	pm->step = false;
+
+	// clear all pmove local vars
+	memset( &pml, 0, sizeof( pml ) );
+
+	VectorCopy( pm->playerState->pmove.origin, pml.origin );
+	VectorCopy( pm->playerState->pmove.velocity, pml.velocity );
+
+	// save old org in case we get stuck
+	VectorCopy( pm->playerState->pmove.origin, pml.previous_origin );
+}
+
+/*
+* PM_EndMove
+*/
+static void PM_EndMove( void ) {
+	VectorCopy( pml.origin, pm->playerState->pmove.origin );
+	VectorCopy( pml.velocity, pm->playerState->pmove.velocity );
+}
+
+/*
 * Pmove
 *
 * Can be called by either the server or the client
@@ -1771,23 +1762,10 @@ void Pmove( pmove_t *pmove ) {
 
 	pm = pmove;
 
-	// clear results
-	pm->numtouch = 0;
-	pm->groundentity = -1;
-	pm->watertype = 0;
-	pm->waterlevel = 0;
-	pm->step = false;
-
 	// clear all pmove local vars
-	memset( &pml, 0, sizeof( pml ) );
-
-	VectorCopy( pm->playerState->pmove.origin, pml.origin );
-	VectorCopy( pm->playerState->pmove.velocity, pml.velocity );
+	PM_BeginMove();
 
 	fallvelocity = ( ( pml.velocity[2] < 0.0f ) ? fabs( pml.velocity[2] ) : 0.0f );
-
-	// save old org in case we get stuck
-	VectorCopy( pm->playerState->pmove.origin, pml.previous_origin );
 
 	pml.frametime = pm->cmd.msec * 0.001;
 
@@ -1945,15 +1923,14 @@ void Pmove( pmove_t *pmove ) {
 		pm->playerState->pmove.stats[PM_STAT_FWDTIME] = PM_FORWARD_ACCEL_TIMEDELAY;
 	}
 
-	if( pm->snapinitial ) {
-		PM_InitialSnapPosition();
-	}
-
 	if( pm->playerState->pmove.pm_type != PM_NORMAL ) { // includes dead, freeze, chasecam...
 		if( !GS_MatchPaused() ) {
 			PM_ClearDash();
+
 			PM_ClearWallJump();
+
 			PM_ClearStun();
+
 			pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] = 0;
 			pm->playerState->pmove.stats[PM_STAT_CROUCHTIME] = 0;
 			pm->playerState->pmove.stats[PM_STAT_ZOOMTIME] = 0;
@@ -1966,6 +1943,7 @@ void Pmove( pmove_t *pmove ) {
 
 		if( pm->playerState->pmove.pm_type == PM_SPECTATOR ) {
 			PM_ApplyMouseAnglesClamp();
+
 			PM_FlyMove( false );
 		} else {
 			pml.forwardPush = 0;
@@ -1973,7 +1951,7 @@ void Pmove( pmove_t *pmove ) {
 			pml.upPush = 0;
 		}
 
-		PM_SnapPosition();
+		PM_EndMove();
 		return;
 	}
 
@@ -1981,6 +1959,7 @@ void Pmove( pmove_t *pmove ) {
 
 	// set mins, maxs, viewheight amd fov
 	PM_AdjustBBox();
+
 	PM_CheckZoom();
 
 	// round up mins/maxs to hull size and adjust the viewheight, if needed
@@ -1988,6 +1967,7 @@ void Pmove( pmove_t *pmove ) {
 
 	// set groundentity, watertype, and waterlevel
 	PM_CategorizePosition();
+
 	oldGroundEntity = pm->groundentity;
 
 	PM_CheckSpecialMovement();
@@ -1997,6 +1977,7 @@ void Pmove( pmove_t *pmove ) {
 	} else if( pm->playerState->pmove.pm_flags & PMF_TIME_WATERJUMP ) {
 		// waterjump has no control, but falls
 		pml.velocity[2] -= pm->playerState->pmove.gravity * pml.frametime;
+
 		if( pml.velocity[2] < 0 ) {
 			// cancel as soon as we are falling down again
 			pm->playerState->pmove.pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );
@@ -2008,7 +1989,9 @@ void Pmove( pmove_t *pmove ) {
 		// Kurim
 		// Keep this order !
 		PM_CheckJump();
+
 		PM_CheckDash();
+
 		PM_CheckWallJump();
 
 		PM_CheckCrouchSlide();
@@ -2046,7 +2029,8 @@ void Pmove( pmove_t *pmove ) {
 
 	// set groundentity, watertype, and waterlevel for final spot
 	PM_CategorizePosition();
-	PM_SnapPosition();
+
+	PM_EndMove();
 
 	// falling event
 

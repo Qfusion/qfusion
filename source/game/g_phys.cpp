@@ -401,7 +401,6 @@ static trace_t SV_PushEntity( edict_t *ent, vec3_t push ) {
 	vec3_t end;
 	int mask;
 
-	GS_SnapVelocity( push );
 	VectorCopy( ent->s.origin, start );
 	VectorAdd( start, push, end );
 
@@ -465,10 +464,6 @@ static bool SV_Push( edict_t *pusher, vec3_t move, vec3_t amove ) {
 	pushed_t *p;
 	mat3_t axis;
 	vec3_t org, org2, move2;
-
-	// clamp the move so the position will
-	// be accurate for client side prediction
-	GS_SnapVelocity( move );
 
 	// find the bounding box
 	for( i = 0; i < 3; i++ ) {
@@ -783,8 +778,6 @@ static void SV_Physics_Toss( edict_t *ent ) {
 		return;
 	}
 
-	GS_SnapPosition( ent->s.origin, ent->r.mins, ent->r.maxs, ENTNUM( ent ), ent->r.clipmask ? ent->r.clipmask : MASK_SOLID );
-
 	if( trace.fraction < 1.0f ) {
 		if( ent->movetype == MOVETYPE_BOUNCE ) {
 			backoff = 1.5;
@@ -833,8 +826,6 @@ static void SV_Physics_Toss( edict_t *ent ) {
 			}
 		}
 	}
-
-	GS_SnapVelocity( ent->velocity );
 
 	// check for water transition
 	wasinwater = ( ent->watertype & MASK_WATER ) ? true : false;

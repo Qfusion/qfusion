@@ -142,23 +142,23 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 	}
 
 	if( flags & PS_M_ORIGIN0 ) {
-		state->pmove.origin[0] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.origin[0] = MSG_ReadFloat( msg );
 	}
 	if( flags & PS_M_ORIGIN1 ) {
-		state->pmove.origin[1] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.origin[1] = MSG_ReadFloat( msg );
 	}
 	if( flags & PS_M_ORIGIN2 ) {
-		state->pmove.origin[2] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.origin[2] = MSG_ReadFloat( msg );
 	}
 
 	if( flags & PS_M_VELOCITY0 ) {
-		state->pmove.velocity[0] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.velocity[0] = (float)MSG_ReadCoord24( msg );
 	}
 	if( flags & PS_M_VELOCITY1 ) {
-		state->pmove.velocity[1] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.velocity[1] = (float)MSG_ReadCoord24( msg );
 	}
 	if( flags & PS_M_VELOCITY2 ) {
-		state->pmove.velocity[2] = ( (float)MSG_ReadInt24( msg ) * ( 1.0 / PM_VECTOR_SNAP ) );
+		state->pmove.velocity[2] = (float)MSG_ReadCoord24( msg );
 	}
 
 	if( flags & PS_M_TIME ) {

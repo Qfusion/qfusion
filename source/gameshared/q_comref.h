@@ -65,14 +65,6 @@ typedef struct usercmd_s {
 	unsigned int serverTimeStamp;
 } usercmd_t;
 
-// this structure needs to be communicated bit-accurate
-// from the server to the client to guarantee that
-// prediction stays in sync, so no floats are used.
-// if any part of the game code modifies this struct, it
-// will result in a prediction error of some degree.
-
-#define PM_VECTOR_SNAP 16
-
 #define MAX_PM_STATS 16
 
 enum {
@@ -125,8 +117,8 @@ typedef enum {
 typedef struct {
 	int pm_type;
 
-	float origin[3];            // 12.3
-	float velocity[3];          // 12.3
+	float origin[3];
+	float velocity[3];
 
 	int pm_flags;               // ducked, jump_held, etc
 	int pm_time;                // each unit = 8 ms
@@ -479,7 +471,6 @@ typedef struct {
 
 	// command (in)
 	usercmd_t cmd;
-	bool snapinitial;       // if s has been changed outside pmove
 
 	// results (out)
 	int numtouch;

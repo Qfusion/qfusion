@@ -173,60 +173,6 @@ static void TVM_PM_ClampAngles( void ) {
 #endif
 
 /*
-* TVM_PM_SnapPosition
-*
-* On exit, the origin will have a value that is pre-quantized to the (1.0/16.0)
-* precision of the network channel and in a valid position.
-*/
-static void TVM_PM_SnapPosition( void ) {
-	int sign[3];
-	int i, j, bits;
-	int base[3];
-	int velint[3], origint[3];
-	// try all single bits first
-	static const int jitterbits[8] = { 0, 4, 1, 2, 3, 5, 6, 7 };
-
-	// snap velocity to sixteenths
-	for( i = 0; i < 3; i++ ) {
-		velint[i] = (int)( pml.velocity[i] * PM_VECTOR_SNAP );
-		pm->playerState->pmove.velocity[i] = velint[i] * ( 1.0 / PM_VECTOR_SNAP );
-	}
-
-	for( i = 0; i < 3; i++ ) {
-		if( pml.origin[i] >= 0 ) {
-			sign[i] = 1;
-		} else {
-			sign[i] = -1;
-		}
-		origint[i] = (int)( pml.origin[i] * PM_VECTOR_SNAP );
-		if( origint[i] * ( 1.0 / PM_VECTOR_SNAP ) == pml.origin[i] ) {
-			sign[i] = 0;
-		}
-	}
-	VectorCopy( origint, base );
-
-	// try all combinations
-	for( j = 0; j < 8; j++ ) {
-		bits = jitterbits[j];
-		VectorCopy( base, origint );
-		for( i = 0; i < 3; i++ )
-			if( bits & ( 1 << i ) ) {
-				origint[i] += sign[i];
-			}
-
-		//		if( TVM_PM_GoodPosition(origint) ) {
-		if( 1 ) {
-			VectorScale( origint, ( 1.0 / PM_VECTOR_SNAP ), pm->playerState->pmove.origin );
-			return;
-		}
-	}
-
-	// go back to the last position
-	VectorCopy( pml.previous_origin, pm->playerState->pmove.origin );
-	VectorClear( pm->playerState->pmove.velocity );
-}
-
-/*
 * TVM_Pmove
 *
 * Can be called by either the server or the client
@@ -318,5 +264,5 @@ void TVM_Pmove( pmove_t *pmove ) {
 		pm->cmd.buttons = 0;
 	}
 
-	TVM_PM_SnapPosition();
+	VectorCopy( pml.origin, pm->playerState->pmove.velocity );
 }

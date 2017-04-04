@@ -368,10 +368,6 @@ void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int tim
 	VectorCopy( ent->r.mins, pm.mins );
 	VectorCopy( ent->r.maxs, pm.maxs );
 
-	if( memcmp( &client->old_pmove, &client->ps.pmove, sizeof( pmove_state_t ) ) ) {
-		pm.snapinitial = true;
-	}
-
 	// perform a pmove
 	TVM_Pmove( &pm );
 

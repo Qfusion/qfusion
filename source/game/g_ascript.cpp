@@ -1869,8 +1869,6 @@ static asvec3_t objectGameEntity_GetVelocity( edict_t *obj ) {
 }
 
 static void objectGameEntity_SetVelocity( asvec3_t *vel, edict_t *self ) {
-	GS_SnapVelocity( self->velocity );
-
 	VectorCopy( vel->v, self->velocity );
 
 	if( self->r.client && trap_GetClientState( PLAYERNUM( self ) ) >= CS_SPAWNED ) {
@@ -1899,10 +1897,8 @@ static asvec3_t objectGameEntity_GetOrigin( edict_t *obj ) {
 
 static void objectGameEntity_SetOrigin( asvec3_t *vec, edict_t *self ) {
 	if( self->r.client && trap_GetClientState( PLAYERNUM( self ) ) >= CS_SPAWNED ) {
-		GS_SnapPosition( vec->v, self->r.mins, self->r.maxs, ENTNUM( self ), self->s.solid ? G_SolidMaskForEnt( self ) : 0 );
 		VectorCopy( vec->v, self->r.client->ps.pmove.origin );
 	}
-
 	VectorCopy( vec->v, self->s.origin );
 }
 

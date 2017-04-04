@@ -30,13 +30,6 @@ Encode a client frame onto the network channel
 =========================================================================
 */
 
-
-#define PSOFS( x ) offsetof( player_state_t,x )
-/*
-static const msg_field_t player_state_fields[] = {
-	{ PSOFS( events[0] ), 32, MSG_ENCTYPE_UBASE128 },
-*/
-
 /*
 * SNAP_EmitPacketEntities
 *
@@ -318,23 +311,23 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 	}
 
 	if( pflags & PS_M_ORIGIN0 ) {
-		MSG_WriteInt24( msg, (int)( ps->pmove.origin[0] * PM_VECTOR_SNAP ) );
+		MSG_WriteFloat( msg, ps->pmove.origin[0] );
 	}
 	if( pflags & PS_M_ORIGIN1 ) {
-		MSG_WriteInt24( msg, (int)( ps->pmove.origin[1] * PM_VECTOR_SNAP ) );
+		MSG_WriteFloat( msg, ps->pmove.origin[1] );
 	}
 	if( pflags & PS_M_ORIGIN2 ) {
-		MSG_WriteInt24( msg, (int)( ps->pmove.origin[2] * PM_VECTOR_SNAP ) );
+		MSG_WriteFloat( msg, ps->pmove.origin[2] );
 	}
 
 	if( pflags & PS_M_VELOCITY0 ) {
-		MSG_WriteInt24( msg, (int)( ps->pmove.velocity[0] * PM_VECTOR_SNAP ) );
+		MSG_WriteCoord24( msg, ps->pmove.velocity[0] );
 	}
 	if( pflags & PS_M_VELOCITY1 ) {
-		MSG_WriteInt24( msg, (int)( ps->pmove.velocity[1] * PM_VECTOR_SNAP ) );
+		MSG_WriteCoord24( msg, ps->pmove.velocity[1] );
 	}
 	if( pflags & PS_M_VELOCITY2 ) {
-		MSG_WriteInt24( msg, (int)( ps->pmove.velocity[2] * PM_VECTOR_SNAP ) );
+		MSG_WriteCoord24( msg, ps->pmove.velocity[2] );
 	}
 
 	if( pflags & PS_M_TIME ) {

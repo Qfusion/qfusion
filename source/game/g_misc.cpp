@@ -696,8 +696,6 @@ void SP_light_mine( edict_t *ent ) {
 //Does the same thing as info_teleport_destination
 void SP_misc_teleporter_dest( edict_t *ent ) {
 	//ent->s.origin[2] += 16;
-
-	GS_SnapInitialPosition( ent->s.origin, playerbox_stand_mins, playerbox_stand_maxs, ent->s.number, MASK_PLAYERSOLID );
 }
 
 //=====================================================

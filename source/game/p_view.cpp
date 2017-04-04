@@ -125,8 +125,6 @@ static void G_Client_DeadView( edict_t *ent ) {
 	VectorCopy( client->ps.viewangles, ent->s.angles );
 	VectorCopy( ent->s.origin, client->ps.pmove.origin );
 	VectorClear( client->ps.pmove.velocity );
-
-	GS_SnapPosition( client->ps.pmove.origin, ent->r.mins, ent->r.maxs, ENTNUM( ent ), 0 );
 }
 
 //====================================================================

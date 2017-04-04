@@ -765,6 +765,4 @@ void SP_trigger_teleport( edict_t *ent ) {
 
 void SP_info_teleport_destination( edict_t *ent ) {
 	ent->s.origin[2] += 16;
-
-	GS_SnapInitialPosition( ent->s.origin, playerbox_stand_mins, playerbox_stand_maxs, ent->s.number, MASK_PLAYERSOLID );
 }

@@ -1642,10 +1642,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 		pm.cmd = *ucmd;
 	}
 
-	if( memcmp( &client->old_pmove, &client->ps.pmove, sizeof( pmove_state_t ) ) ) {
-		pm.snapinitial = true;
-	}
-
 	// perform a pmove
 	Pmove( &pm );
 

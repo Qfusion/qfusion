@@ -37,112 +37,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //==================================================
 
 /*
-* GS_GoodPosition
-*/
-static bool GS_GoodPosition( int snaptorigin[3], vec3_t mins, vec3_t maxs, int passent, int contentmask ) {
-	trace_t trace;
-	vec3_t point;
-	int i;
-
-	if( !( contentmask & MASK_SOLID ) ) {
-		return true;
-	}
-
-	for( i = 0; i < 3; i++ )
-		point[i] = (float)snaptorigin[i] * ( 1.0 / PM_VECTOR_SNAP );
-
-	module_Trace( &trace, point, mins, maxs, point, passent, contentmask, 0 );
-	return !trace.allsolid ? true : false;
-}
-
-/*
-* GS_SnapInitialPosition
-*/
-bool GS_SnapInitialPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int contentmask ) {
-	int x, y, z;
-	int base[3];
-	static const int offset[3] = { 0, -1, 1 };
-	int originInt[3];
-
-	VectorScale( origin, PM_VECTOR_SNAP, originInt );
-	VectorCopy( originInt, base );
-
-	for( z = 0; z < 3; z++ ) {
-		originInt[2] = base[2] + offset[z];
-		for( y = 0; y < 3; y++ ) {
-			originInt[1] = base[1] + offset[y];
-			for( x = 0; x < 3; x++ ) {
-				originInt[0] = base[0] + offset[x];
-				if( GS_GoodPosition( originInt, mins, maxs, passent, contentmask ) ) {
-					origin[0] = originInt[0] * ( 1.0 / PM_VECTOR_SNAP );
-					origin[1] = originInt[1] * ( 1.0 / PM_VECTOR_SNAP );
-					origin[2] = originInt[2] * ( 1.0 / PM_VECTOR_SNAP );
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-/*
-* GS_SnapPosition
-*/
-bool GS_SnapPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int contentmask ) {
-	int sign[3];
-	int i, j, bits;
-	int base[3];
-	int originInt[3];
-	// try all single bits first
-	static const int jitterbits[8] = { 0, 4, 1, 2, 3, 5, 6, 7 };
-
-	for( i = 0; i < 3; i++ ) {
-		if( origin[i] >= 0 ) {
-			sign[i] = 1;
-		} else {
-			sign[i] = -1;
-		}
-		originInt[i] = (int)( origin[i] * PM_VECTOR_SNAP );
-		if( (float)originInt[i] * ( 1.0 / PM_VECTOR_SNAP ) == origin[i] ) {
-			sign[i] = 0;
-		}
-	}
-
-	VectorCopy( originInt, base );
-
-	// try all combinations
-	for( j = 0; j < 8; j++ ) {
-		bits = jitterbits[j];
-		VectorCopy( base, originInt );
-		for( i = 0; i < 3; i++ ) {
-			if( bits & ( 1 << i ) ) {
-				originInt[i] += sign[i] * PM_VECTOR_SNAP;
-			}
-		}
-
-		if( GS_GoodPosition( originInt, mins, maxs, passent, contentmask ) ) {
-			VectorScale( originInt, ( 1.0 / PM_VECTOR_SNAP ), origin );
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/*
-* GS_SnapVelocity
-*/
-void GS_SnapVelocity( vec3_t velocity ) {
-	int i, velocityInt[3];
-	// snap velocity to sixteenths
-	for( i = 0; i < 3; i++ ) {
-		velocityInt[i] = (int)( velocity[i] * PM_VECTOR_SNAP );
-		velocity[i] = (float)velocityInt[i] * ( 1.0 / PM_VECTOR_SNAP );
-	}
-}
-
-/*
 * GS_ClipVelocity
 */
 void GS_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce ) {
@@ -411,10 +305,6 @@ int GS_SlideMove( move_t *move ) {
 
 		break;
 	}
-
-	// snap
-	GS_SnapPosition( move->origin, move->mins, move->maxs, move->passent, move->contentmask );
-	GS_SnapVelocity( move->velocity );
 
 	return blockedmask;
 }

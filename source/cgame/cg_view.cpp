@@ -1095,13 +1095,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int
 	// offset vieworg appropriately if we're doing stereo separation
 	VectorMA( cg.view.origin, stereo_separation, &cg.view.axis[AXIS_RIGHT], rd->vieworg );
 
-	// never let it sit exactly on a node line, because a water plane can
-	// disappear when viewed with the eye exactly on it.
-	// the server protocol only specifies to 1/16 pixel, so add 1/16 in each axis
-	rd->vieworg[0] += 1.0 / PM_VECTOR_SNAP;
-	rd->vieworg[1] += 1.0 / PM_VECTOR_SNAP;
-	rd->vieworg[2] += 1.0 / PM_VECTOR_SNAP;
-
 	AnglesToAxis( cg.view.angles, rd->viewaxis );
 
 	rd->rdflags = CG_RenderFlags();
