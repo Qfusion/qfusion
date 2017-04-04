@@ -1405,6 +1405,7 @@ static edict_t *_FindOrSpawnLaser( edict_t *owner, int entType, bool *newLaser )
 		laser->movetype = MOVETYPE_NONE;
 		laser->r.solid = SOLID_NOT;
 		laser->s.modelindex = 255; // needs to have some value so it isn't filtered by the server culling
+		laser->r.svflags &= ~SVF_NOCLIENT;
 	}
 
 	return laser;
