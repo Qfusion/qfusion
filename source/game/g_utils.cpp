@@ -792,12 +792,8 @@ void G_InitEdict( edict_t *e ) {
 
 	G_asResetEntityBehaviors( e );
 
-	//mark all entities to not be sent by default
-	if( e->r.svflags & SVF_FAKECLIENT ) {
-		e->r.svflags = SVF_NOCLIENT | SVF_FAKECLIENT;
-	} else {
-		e->r.svflags = SVF_NOCLIENT;
-	}
+	// mark all entities to not be sent by default
+	e->r.svflags = SVF_NOCLIENT | (e->r.svflags & SVF_FAKECLIENT);
 
 	// clear the old state data
 	memset( &e->olds, 0, sizeof( e->olds ) );
@@ -908,9 +904,9 @@ edict_t *G_SpawnEvent( int event, int parm, vec3_t origin ) {
 }
 
 /*
-* G_TurnEntityIntoEvent
+* G_MorphEntityIntoEvent
 */
-void G_TurnEntityIntoEvent( edict_t *ent, int event, int parm ) {
+void G_MorphEntityIntoEvent( edict_t *ent, int event, int parm ) {
 	ent->s.type = ET_EVENT;
 	ent->r.solid = SOLID_NOT;
 	ent->r.svflags &= ~SVF_PROJECTILE; // FIXME: Medar: should be remove all or remove this one elsewhere?

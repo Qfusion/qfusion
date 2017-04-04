@@ -137,14 +137,14 @@ void BecomeExplosion1( edict_t *self ) {
 			radius = 1;
 		}
 
-		G_TurnEntityIntoEvent( self, EV_EXPLOSION2, radius );
+		G_MorphEntityIntoEvent( self, EV_EXPLOSION2, radius );
 	} else {
 		radius = ( self->projectileInfo.radius * 1 / 8 ) & 0xFF;
 		if( radius < 1 ) {
 			radius = 1;
 		}
 
-		G_TurnEntityIntoEvent( self, EV_EXPLOSION1, radius );
+		G_MorphEntityIntoEvent( self, EV_EXPLOSION1, radius );
 	}
 
 	self->r.svflags &= ~SVF_NOCLIENT;

@@ -620,7 +620,7 @@ void G_ProjectSource( vec3_t point, vec3_t distance, vec3_t forward, vec3_t righ
 
 void G_AddEvent( edict_t *ent, int event, int parm, bool highPriority );
 edict_t *G_SpawnEvent( int event, int parm, vec3_t origin );
-void G_TurnEntityIntoEvent( edict_t *ent, int event, int parm );
+void G_MorphEntityIntoEvent( edict_t *ent, int event, int parm );
 
 void G_CallThink( edict_t *ent );
 void G_CallTouch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags );
