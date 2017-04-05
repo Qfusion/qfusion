@@ -57,7 +57,7 @@ enum {
 // usercmd_t is sent to the server each client frame
 typedef struct usercmd_s {
 	uint8_t msec;
-	uint8_t buttons;
+	uint32_t buttons;
 	int16_t angles[3];
 	int8_t forwardmove, sidemove, upmove;
 	uint32_t serverTimeStamp;

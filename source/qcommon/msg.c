@@ -878,7 +878,7 @@ static const msg_field_t usercmd_fields[] = {
 	{ UCOFS( sidemove ), 0, MSG_ENCTYPE_FIXEDINT8 },
 	{ UCOFS( upmove ), 0, MSG_ENCTYPE_FIXEDINT8 },
 
-	{ UCOFS( buttons ), 8, MSG_ENCTYPE_UBASE128 },
+	{ UCOFS( buttons ), 32, MSG_ENCTYPE_UBASE128 },
 };
 
 /*

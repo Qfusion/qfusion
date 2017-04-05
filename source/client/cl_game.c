@@ -685,7 +685,7 @@ void CL_GameModule_ClearInputState( void ) {
 /*
 * CL_GameModule_GetButtonBits
 */
-uint8_t CL_GameModule_GetButtonBits( void ) {
+unsigned CL_GameModule_GetButtonBits( void ) {
 	if( cge ) {
 		return cge->GetButtonBits();
 	}
