@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "qcommon.h"
-
 #include "snap_write.h"
 
 /*
@@ -321,13 +320,13 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 	}
 
 	if( pflags & PS_M_VELOCITY0 ) {
-		MSG_WriteCoord24( msg, ps->pmove.velocity[0] );
+		MSG_WriteHalfFloat( msg, ps->pmove.velocity[0] );
 	}
 	if( pflags & PS_M_VELOCITY1 ) {
-		MSG_WriteCoord24( msg, ps->pmove.velocity[1] );
+		MSG_WriteHalfFloat( msg, ps->pmove.velocity[1] );
 	}
 	if( pflags & PS_M_VELOCITY2 ) {
-		MSG_WriteCoord24( msg, ps->pmove.velocity[2] );
+		MSG_WriteHalfFloat( msg, ps->pmove.velocity[2] );
 	}
 
 	if( pflags & PS_M_TIME ) {

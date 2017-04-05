@@ -267,17 +267,16 @@ typedef enum {
 typedef enum MSG_ENCTYPE_e {
 	MSG_ENCTYPE_BOOL,					// a of value of 'true' is represented by a single bit in the header
 
-	MSG_ENCTYPE_FIXEDINT8,				// 8-bit integer
-	MSG_ENCTYPE_FIXEDINT16,				// 16-bit integer
-	MSG_ENCTYPE_FIXEDINT32,				// 32-bit integer
-	MSG_ENCTYPE_FIXEDINT64,				// 64-bit integer
+	MSG_ENCTYPE_FIXED_INT8,				// 8-bit integer
+	MSG_ENCTYPE_FIXED_INT16,			// 16-bit integer
+	MSG_ENCTYPE_FIXED_INT32,			// 32-bit integer
+	MSG_ENCTYPE_FIXED_INT64,			// 64-bit integer
 
-	MSG_ENCTYPE_FLOAT,					// 32-bit float
-	MSG_ENCTYPE_FLOAT88,				// 32-bit float value represented as a 8.8 fixed-point integer
+	MSG_ENCTYPE_FLOAT,					// 32-bit floating point value
+	MSG_ENCTYPE_HALF_FLOAT,				// 16-bit floating point value
 
-	MSG_ENCTYPE_COORD24,				// 32-bit float value represented as a 20.4 fixed-point integer
-	MSG_ENCTYPE_ANGLE8,					// 32-bit float angle mapped to signed 8-bit integer
-	MSG_ENCTYPE_ANGLE16,				// 32-bit float angle mapped to signed 16-bit integer
+	MSG_ENCTYPE_COORD,					// 32-bit float value snapped as a 20.4 fixed-point integer
+	MSG_ENCTYPE_ANGLE,					// 32-bit float angle value, normalized to [0..360], transmitted at half-precision
 
 	MSG_ENCTYPE_BASE128,				// base-128 encoded unsigned integer
 	MSG_ENCTYPE_UBASE128				// base-128 encoded signed integer

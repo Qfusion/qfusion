@@ -82,17 +82,17 @@ struct entity_state_s;
 void MSG_WriteInt8( msg_t *sb, int c );
 void MSG_WriteUint8( msg_t *sb, int c );
 void MSG_WriteInt16( msg_t *sb, int c );
+void MSG_WriteUint16( msg_t *sb, unsigned c );
 void MSG_WriteInt24( msg_t *sb, int c );
 void MSG_WriteInt32( msg_t *sb, int c );
 void MSG_WriteInt64( msg_t *sb, int64_t c );
 void MSG_WriteUintBase128( msg_t *msg, uint64_t c );
 void MSG_WriteIntBase128( msg_t *msg, int64_t c );
 void MSG_WriteFloat( msg_t *sb, float f );
+void MSG_WriteHalfFloat( msg_t *sb, float f );
 void MSG_WriteString( msg_t *sb, const char *s );
-#define MSG_WriteCoord8( sb, f ) ( MSG_WriteInt8( ( sb ), Q_rint( ( f * 127.0f ) ) ) )
-#define MSG_WriteCoord24( sb, f ) ( MSG_WriteIntBase128( ( sb ), Q_rint( ( f * 16.0f ) ) ) )
-#define MSG_WritePos( sb, pos ) ( MSG_WriteCoord24( ( sb ), ( pos )[0] ), MSG_WriteCoord24( sb, ( pos )[1] ), MSG_WriteCoord24( sb, ( pos )[2] ) )
-#define MSG_WriteAngle8( sb, f ) ( MSG_WriteUint8( ( sb ), ANGLE2BYTE( ( f ) ) ) )
+#define MSG_WriteCoord( sb, f ) ( MSG_WriteIntBase128( ( sb ), Q_rint( ( f * 16.0f ) ) ) )
+#define MSG_WritePos( sb, pos ) ( MSG_WriteCoord( ( sb ), ( pos )[0] ), MSG_WriteCoord( sb, ( pos )[1] ), MSG_WriteCoord( sb, ( pos )[2] ) )
 #define MSG_WriteAngle16( sb, f ) ( MSG_WriteInt16( ( sb ), ANGLE2SHORT( ( f ) ) ) )
 void MSG_WriteDeltaUsercmd( msg_t *sb, struct usercmd_s *from, struct usercmd_s *cmd );
 void MSG_WriteDeltaEntity( struct entity_state_s *from, struct entity_state_s *to, msg_t *msg, bool force );
@@ -107,19 +107,19 @@ void MSG_BeginReading( msg_t *sb );
 
 int MSG_ReadInt8( msg_t *msg );
 int MSG_ReadUint8( msg_t *msg );
-int MSG_ReadInt16( msg_t *sb );
+int16_t MSG_ReadInt16( msg_t *sb );
+uint16_t MSG_ReadUint16( msg_t *sb );
 int MSG_ReadInt24( msg_t *sb );
 int MSG_ReadInt32( msg_t *sb );
 int64_t MSG_ReadInt64( msg_t *sb );
 uint64_t MSG_ReadUintBase128( msg_t *msg );
 int64_t MSG_ReadIntBase128( msg_t *msg );
 float MSG_ReadFloat( msg_t *sb );
+float MSG_ReadHalfFloat( msg_t *sb );
 char *MSG_ReadString( msg_t *sb );
 char *MSG_ReadStringLine( msg_t *sb );
-#define MSG_ReadCoord8( sb ) ( (float)MSG_ReadInt8( ( sb ) ) / 127.0f )
-#define MSG_ReadCoord24( sb ) ( (float)MSG_ReadIntBase128( ( sb ) ) / 16.0f )
-#define MSG_ReadPos( sb, pos ) ( ( pos )[0] = MSG_ReadCoord24( ( sb ) ), ( pos )[1] = MSG_ReadCoord24( ( sb ) ), ( pos )[2] = MSG_ReadCoord24( ( sb ) ) )
-#define MSG_ReadAngle8( sb ) ( BYTE2ANGLE( MSG_ReadUint8( ( sb ) ) ) )
+#define MSG_ReadCoord( sb ) ( (float)MSG_ReadIntBase128( ( sb ) ) / 16.0f )
+#define MSG_ReadPos( sb, pos ) ( ( pos )[0] = MSG_ReadCoord( ( sb ) ), ( pos )[1] = MSG_ReadCoord( ( sb ) ), ( pos )[2] = MSG_ReadCoord( ( sb ) ) )
 #define MSG_ReadAngle16( sb ) ( SHORT2ANGLE( MSG_ReadInt16( ( sb ) ) ) )
 void MSG_ReadDeltaUsercmd( msg_t *sb, struct usercmd_s *from, struct usercmd_s *cmd );
 

@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // msg.c -- Message IO functions
 #include "qcommon.h"
+#include "../qalgo/half_float.h"
 
 /*
 ==============================================================================
@@ -91,6 +92,12 @@ void MSG_WriteInt16( msg_t *msg, int c ) {
 	buf[1] = ( uint8_t )( ( c >> 8 ) & 0xff );
 }
 
+void MSG_WriteUint16( msg_t *msg, unsigned c ) {
+	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 2 );
+	buf[0] = ( uint8_t )( c & 0xff );
+	buf[1] = ( uint8_t )( ( c >> 8 ) & 0xff );
+}
+
 void MSG_WriteInt24( msg_t *msg, int c ) {
 	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 3 );
 	buf[0] = ( uint8_t )( c & 0xff );
@@ -149,6 +156,10 @@ void MSG_WriteFloat( msg_t *msg, float f ) {
 	MSG_WriteInt32( msg, dat.l );
 }
 
+void MSG_WriteHalfFloat( msg_t *msg, float f ) {
+	MSG_WriteUint16( msg, Com_FloatToHalf( f ) );
+}
+
 void MSG_WriteDir( msg_t *msg, vec3_t dir ) {
 	MSG_WriteUint8( msg, dir ? DirToByte( dir ) : 0 );
 }
@@ -193,13 +204,20 @@ int MSG_ReadUint8( msg_t *msg ) {
 	return ( unsigned char )( msg->data[msg->readcount - 1] );
 }
 
-int MSG_ReadInt16( msg_t *msg ) {
+int16_t MSG_ReadInt16( msg_t *msg ) {
 	msg->readcount += 2;
 	if( msg->readcount > msg->cursize ) {
 		return -1;
 	}
+	return ( int16_t )( msg->data[msg->readcount - 2] | ( msg->data[msg->readcount - 1] << 8 ) );
+}
 
-	return ( short )( msg->data[msg->readcount - 2] | ( msg->data[msg->readcount - 1] << 8 ) );
+uint16_t MSG_ReadUint16( msg_t *msg ) {
+	msg->readcount += 2;
+	if( msg->readcount > msg->cursize ) {
+		return 0;
+	}
+	return ( uint16_t )( msg->data[msg->readcount - 2] | ( msg->data[msg->readcount - 1] << 8 ) );
 }
 
 int MSG_ReadInt24( msg_t *msg ) {
@@ -277,6 +295,10 @@ float MSG_ReadFloat( msg_t *msg ) {
 		dat.f = -1;
 	}
 	return dat.f;
+}
+
+float MSG_ReadHalfFloat( msg_t *msg ) {
+	return Com_HalfToFloat( MSG_ReadUint16( msg ) );
 }
 
 void MSG_ReadDir( msg_t *msg, vec3_t dir ) {
@@ -406,32 +428,29 @@ void MSG_WriteField( msg_t *msg, const void *to, const msg_field_t *field ) {
 	switch( field->encoding ) {
 		case MSG_ENCTYPE_BOOL:
 			break;
-		case MSG_ENCTYPE_FIXEDINT8:
+		case MSG_ENCTYPE_FIXED_INT8:
 			MSG_WriteInt8( msg, *((int8_t *)( (uint8_t *)to + field->offset )) );
 			break;
-		case MSG_ENCTYPE_FIXEDINT16:
+		case MSG_ENCTYPE_FIXED_INT16:
 			MSG_WriteInt16( msg, *((int16_t *)( (uint8_t *)to + field->offset )) );
 			break;
-		case MSG_ENCTYPE_FIXEDINT32:
+		case MSG_ENCTYPE_FIXED_INT32:
 			MSG_WriteInt32( msg, *((int32_t *)( (uint8_t *)to + field->offset )) );
 			break;
-		case MSG_ENCTYPE_FIXEDINT64:
+		case MSG_ENCTYPE_FIXED_INT64:
 			MSG_WriteInt64( msg, *((int64_t *)( (uint8_t *)to + field->offset )) );
 			break;
 		case MSG_ENCTYPE_FLOAT:
 			MSG_WriteFloat( msg, *((float *)( (uint8_t *)to + field->offset )) );
 			break;
-		case MSG_ENCTYPE_FLOAT88:
-			MSG_WriteInt16( msg, (int)((*((float *)( (uint8_t *)to + field->offset ))) * 255.0f) );
+		case MSG_ENCTYPE_HALF_FLOAT:
+			MSG_WriteHalfFloat( msg, (*((float *)( (uint8_t *)to + field->offset ))) );
 			break;
-		case MSG_ENCTYPE_COORD24:
-			MSG_WriteCoord24( msg, *((float *)( (uint8_t *)to + field->offset )) );
+		case MSG_ENCTYPE_COORD:
+			MSG_WriteCoord( msg, *((float *)( (uint8_t *)to + field->offset )) );
 			break;
-		case MSG_ENCTYPE_ANGLE8:
-			MSG_WriteAngle8( msg, *((float *)( (uint8_t *)to + field->offset )) );
-			break;
-		case MSG_ENCTYPE_ANGLE16:
-			MSG_WriteAngle16( msg, *((float *)( (uint8_t *)to + field->offset )) );
+		case MSG_ENCTYPE_ANGLE:
+			MSG_WriteHalfFloat( msg, anglemod( (*((float *)( (uint8_t *)to + field->offset ))) ) );
 			break;
 		case MSG_ENCTYPE_BASE128:
 			switch( field->bits ) {
@@ -551,32 +570,29 @@ void MSG_ReadField( msg_t *msg, const void *to, const msg_field_t *field ) {
 	case MSG_ENCTYPE_BOOL:
 		*((bool *)( (uint8_t *)to + field->offset )) ^= true;
 		break;
-	case MSG_ENCTYPE_FIXEDINT8:
+	case MSG_ENCTYPE_FIXED_INT8:
 		*((int8_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt8( msg );
 		break;
-	case MSG_ENCTYPE_FIXEDINT16:
+	case MSG_ENCTYPE_FIXED_INT16:
 		*((int16_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt16( msg );
 		break;
-	case MSG_ENCTYPE_FIXEDINT32:
+	case MSG_ENCTYPE_FIXED_INT32:
 		*((int32_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt32( msg );
 		break;
-	case MSG_ENCTYPE_FIXEDINT64:
+	case MSG_ENCTYPE_FIXED_INT64:
 		*((int64_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt64( msg );
 		break;
 	case MSG_ENCTYPE_FLOAT:
 		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadFloat( msg );
 		break;
-	case MSG_ENCTYPE_FLOAT88:
-		*((float *)( (uint8_t *)to + field->offset )) = (float)MSG_ReadInt16( msg ) / 255.0f;
+	case MSG_ENCTYPE_HALF_FLOAT:
+		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadHalfFloat( msg );
 		break;
-	case MSG_ENCTYPE_COORD24:
-		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadCoord24( msg );
+	case MSG_ENCTYPE_COORD:
+		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadCoord( msg );
 		break;
-	case MSG_ENCTYPE_ANGLE8:
-		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadAngle8( msg );
-		break;
-	case MSG_ENCTYPE_ANGLE16:
-		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadAngle16( msg );
+	case MSG_ENCTYPE_ANGLE:
+		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadHalfFloat( msg );
 		break;
 	case MSG_ENCTYPE_BASE128:
 		switch( field->bits ) {
@@ -709,62 +725,62 @@ static const msg_field_t ent_state_fields[] = {
 	{ ESOFS( events[0] ), 32, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( eventParms[0] ), 32, MSG_ENCTYPE_BASE128 },
 
-	{ ESOFS( origin[0] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( origin[1] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( origin[2] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( origin[0] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin[1] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin[2] ), 0, MSG_ENCTYPE_COORD },
 
-	{ ESOFS( angles[0] ), 0, MSG_ENCTYPE_ANGLE16 },
-	{ ESOFS( angles[1] ), 0, MSG_ENCTYPE_ANGLE16 },
+	{ ESOFS( angles[0] ), 0, MSG_ENCTYPE_ANGLE },
+	{ ESOFS( angles[1] ), 0, MSG_ENCTYPE_ANGLE },
 
 	{ ESOFS( teleported ), 1, MSG_ENCTYPE_BOOL },
 
 	{ ESOFS( type ), 32, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( solid ), 32, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( frame ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( modelindex ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( modelindex ), 32, MSG_ENCTYPE_FIXED_INT8 },
 	{ ESOFS( svflags ), 32, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( skinnum ), 32, MSG_ENCTYPE_BASE128 },
 	{ ESOFS( effects ), 32, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( ownerNum ), 32, MSG_ENCTYPE_BASE128 },
 	{ ESOFS( targetNum ), 32, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( sound ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( modelindex2 ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( attenuation ), 0, MSG_ENCTYPE_FLOAT88 },
+	{ ESOFS( sound ), 32, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( modelindex2 ), 32, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( attenuation ), 0, MSG_ENCTYPE_HALF_FLOAT },
 	{ ESOFS( counterNum ), 32, MSG_ENCTYPE_BASE128 },
 	{ ESOFS( bodyOwner ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( channel ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( channel ), 32, MSG_ENCTYPE_FIXED_INT8 },
 	{ ESOFS( events[1] ), 32, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( eventParms[1] ), 32, MSG_ENCTYPE_BASE128 },
 	{ ESOFS( weapon ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( firemode ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( firemode ), 32, MSG_ENCTYPE_FIXED_INT8 },
 	{ ESOFS( damage ), 32, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( range ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( team ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( team ), 32, MSG_ENCTYPE_FIXED_INT8 },
 
-	{ ESOFS( origin2[0] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( origin2[1] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( origin2[2] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( origin2[0] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin2[1] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin2[2] ), 0, MSG_ENCTYPE_COORD },
 
 	{ ESOFS( linearMovementTimeStamp ), 32, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( linearMovement ), 1, MSG_ENCTYPE_BOOL },
 	{ ESOFS( linearMovementDuration ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( linearMovementVelocity[0] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( linearMovementVelocity[1] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( linearMovementVelocity[2] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( linearMovementBegin[0] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( linearMovementBegin[1] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( linearMovementBegin[2] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( linearMovementEnd[0] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( linearMovementEnd[1] ), 0, MSG_ENCTYPE_COORD24 },
-	{ ESOFS( linearMovementEnd[2] ), 0, MSG_ENCTYPE_COORD24 },
+	{ ESOFS( linearMovementVelocity[0] ), 0, MSG_ENCTYPE_HALF_FLOAT },
+	{ ESOFS( linearMovementVelocity[1] ), 0, MSG_ENCTYPE_HALF_FLOAT },
+	{ ESOFS( linearMovementVelocity[2] ), 0, MSG_ENCTYPE_HALF_FLOAT },
+	{ ESOFS( linearMovementBegin[0] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementBegin[1] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementBegin[2] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementEnd[0] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementEnd[1] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementEnd[2] ), 0, MSG_ENCTYPE_COORD },
 
 	{ ESOFS( itemNum ), 32, MSG_ENCTYPE_UBASE128 },
 
-	{ ESOFS( angles[2] ), 0, MSG_ENCTYPE_ANGLE16 },
+	{ ESOFS( angles[2] ), 0, MSG_ENCTYPE_ANGLE },
 
-	{ ESOFS( colorRGBA ), 32, MSG_ENCTYPE_FIXEDINT32 },
+	{ ESOFS( colorRGBA ), 32, MSG_ENCTYPE_FIXED_INT32 },
 
-	{ ESOFS( light ), 32, MSG_ENCTYPE_FIXEDINT32 },
+	{ ESOFS( light ), 32, MSG_ENCTYPE_FIXED_INT32 },
 };
 
 /*
@@ -870,13 +886,13 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 #define UCOFS( x ) offsetof( usercmd_t,x )
 
 static const msg_field_t usercmd_fields[] = {
-	{ UCOFS( angles[0] ), 16, MSG_ENCTYPE_FIXEDINT16 },
-	{ UCOFS( angles[1] ), 16, MSG_ENCTYPE_FIXEDINT16 },
-	{ UCOFS( angles[2] ), 16, MSG_ENCTYPE_FIXEDINT16 },
+	{ UCOFS( angles[0] ), 16, MSG_ENCTYPE_FIXED_INT16 },
+	{ UCOFS( angles[1] ), 16, MSG_ENCTYPE_FIXED_INT16 },
+	{ UCOFS( angles[2] ), 16, MSG_ENCTYPE_FIXED_INT16 },
 
-	{ UCOFS( forwardmove ), 0, MSG_ENCTYPE_FIXEDINT8 },
-	{ UCOFS( sidemove ), 0, MSG_ENCTYPE_FIXEDINT8 },
-	{ UCOFS( upmove ), 0, MSG_ENCTYPE_FIXEDINT8 },
+	{ UCOFS( forwardmove ), 0, MSG_ENCTYPE_FIXED_INT8 },
+	{ UCOFS( sidemove ), 0, MSG_ENCTYPE_FIXED_INT8 },
+	{ UCOFS( upmove ), 0, MSG_ENCTYPE_FIXED_INT8 },
 
 	{ UCOFS( buttons ), 32, MSG_ENCTYPE_UBASE128 },
 };

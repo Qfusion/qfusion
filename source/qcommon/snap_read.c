@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "qcommon.h"
-
 #include "snap_read.h"
 
 /*
@@ -152,13 +151,13 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 	}
 
 	if( flags & PS_M_VELOCITY0 ) {
-		state->pmove.velocity[0] = (float)MSG_ReadCoord24( msg );
+		state->pmove.velocity[0] = MSG_ReadHalfFloat( msg );
 	}
 	if( flags & PS_M_VELOCITY1 ) {
-		state->pmove.velocity[1] = (float)MSG_ReadCoord24( msg );
+		state->pmove.velocity[1] = MSG_ReadHalfFloat( msg );
 	}
 	if( flags & PS_M_VELOCITY2 ) {
-		state->pmove.velocity[2] = (float)MSG_ReadCoord24( msg );
+		state->pmove.velocity[2] = MSG_ReadHalfFloat( msg );
 	}
 
 	if( flags & PS_M_TIME ) {
