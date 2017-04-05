@@ -50,7 +50,7 @@ const float pm_friction = 8; // initially 6
 const float pm_accelerate = 12; // user intended acceleration when on ground or fly movement ( initially 10 )
 const float pm_decelerate = 12; // user intended deceleration when on ground
 
-#define SPEEDKEY    500
+#define SPEEDKEY    500.0f
 
 /*
 * TVM_PM_ClampAngles
@@ -238,9 +238,9 @@ void TVM_Pmove( pmove_t *pmove ) {
 
 	pm->playerState->viewheight = playerbox_stand_viewheight;
 
-	pml.forwardPush = pm->cmd.forwardmove * SPEEDKEY;
-	pml.sidePush = pm->cmd.sidemove * SPEEDKEY;
-	pml.upPush = pm->cmd.upmove * SPEEDKEY;
+	pml.forwardPush = pm->cmd.forwardmove * SPEEDKEY / 127.0f;
+	pml.sidePush = pm->cmd.sidemove * SPEEDKEY / 127.0f;
+	pml.upPush = pm->cmd.upmove * SPEEDKEY / 127.0f;
 
 	if( pm->playerState->pmove.stats[PM_STAT_NOUSERCONTROL] > 0 ) {
 		pml.forwardPush = 0;

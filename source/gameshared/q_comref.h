@@ -54,15 +54,13 @@ enum {
 #define CMD_BACKUP  64  // allow a lot of command backups for very fast systems
 #define CMD_MASK    ( CMD_BACKUP - 1 )
 
-#define UCMD_PUSHFRAC_SNAPSIZE 127.0f //32767.0f//send as char or short
-
 // usercmd_t is sent to the server each client frame
 typedef struct usercmd_s {
 	uint8_t msec;
 	uint8_t buttons;
-	short angles[3];
-	float forwardmove, sidemove, upmove;
-	unsigned int serverTimeStamp;
+	int16_t angles[3];
+	int8_t forwardmove, sidemove, upmove;
+	uint32_t serverTimeStamp;
 } usercmd_t;
 
 #define MAX_PM_STATS 16
@@ -275,7 +273,6 @@ typedef enum MSG_ENCTYPE_e {
 	MSG_ENCTYPE_FIXEDINT64,				// 64-bit integer
 
 	MSG_ENCTYPE_FLOAT,					// 32-bit float
-	MSG_ENCTYPE_FLOAT8,					// 32-bit float value represented as a 8-bit signed integer (should be in -1..1 range)
 	MSG_ENCTYPE_FLOAT88,				// 32-bit float value represented as a 8.8 fixed-point integer
 
 	MSG_ENCTYPE_COORD24,				// 32-bit float value represented as a 20.4 fixed-point integer

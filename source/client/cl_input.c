@@ -211,9 +211,9 @@ static void CL_SetUcmdMovement( usercmd_t *ucmd ) {
 		CL_GameModule_AddMovement( movement );
 	}
 
-	ucmd->sidemove = bound( -1.0f, movement[0], 1.0f );
-	ucmd->forwardmove = bound( -1.0f, movement[1], 1.0f );
-	ucmd->upmove = bound( -1.0f, movement[2], 1.0f );
+	ucmd->sidemove = bound( -127, movement[0] * 127, 127 );
+	ucmd->forwardmove = bound( -127, movement[1] * 127, 127 );
+	ucmd->upmove = bound( -127, movement[2] * 127, 127 );
 }
 
 /*
@@ -257,11 +257,6 @@ static void CL_RefreshUcmd( usercmd_t *ucmd, int msec, bool ready ) {
 		if( ucmd->msec < 1 ) {
 			ucmd->msec = 1;
 		}
-
-		// snap push fracs so client and server version match
-		ucmd->forwardmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->forwardmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
-		ucmd->sidemove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->sidemove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
-		ucmd->upmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->upmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
 	}
 
 	ucmd->angles[0] = ANGLE2SHORT( cl.viewangles[0] );

@@ -40,7 +40,7 @@ vec3_t playerbox_gib_mins = { -16, -16, 0 };
 vec3_t playerbox_gib_maxs = { 16, 16, 16 };
 int playerbox_gib_viewheight = 8;
 
-#define SPEEDKEY    500
+#define SPEEDKEY    500.0f
 
 #define PM_DASHJUMP_TIMEDELAY 1000 // delay in milliseconds
 #define PM_WALLJUMP_TIMEDELAY   1300
@@ -1906,9 +1906,9 @@ void Pmove( pmove_t *pmove ) {
 		}
 	}
 
-	pml.forwardPush = pm->cmd.forwardmove * SPEEDKEY;
-	pml.sidePush = pm->cmd.sidemove * SPEEDKEY;
-	pml.upPush = pm->cmd.upmove * SPEEDKEY;
+	pml.forwardPush = pm->cmd.forwardmove * SPEEDKEY / 127.0f;
+	pml.sidePush = pm->cmd.sidemove * SPEEDKEY / 127.0f;
+	pml.upPush = pm->cmd.upmove * SPEEDKEY / 127.0f;
 
 	if( pm->playerState->pmove.stats[PM_STAT_NOUSERCONTROL] > 0 ) {
 		pml.forwardPush = 0;

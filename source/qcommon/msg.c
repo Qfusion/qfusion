@@ -421,9 +421,6 @@ void MSG_WriteField( msg_t *msg, const void *to, const msg_field_t *field ) {
 		case MSG_ENCTYPE_FLOAT:
 			MSG_WriteFloat( msg, *((float *)( (uint8_t *)to + field->offset )) );
 			break;
-		case MSG_ENCTYPE_FLOAT8:
-			MSG_WriteInt8( msg, (int)((*((float *)( (uint8_t *)to + field->offset ))) * 127.0f) );
-			break;
 		case MSG_ENCTYPE_FLOAT88:
 			MSG_WriteInt16( msg, (int)((*((float *)( (uint8_t *)to + field->offset ))) * 255.0f) );
 			break;
@@ -568,9 +565,6 @@ void MSG_ReadField( msg_t *msg, const void *to, const msg_field_t *field ) {
 		break;
 	case MSG_ENCTYPE_FLOAT:
 		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadFloat( msg );
-		break;
-	case MSG_ENCTYPE_FLOAT8:
-		*((float *)( (uint8_t *)to + field->offset )) = (float)MSG_ReadInt8( msg ) / 127.0f;
 		break;
 	case MSG_ENCTYPE_FLOAT88:
 		*((float *)( (uint8_t *)to + field->offset )) = (float)MSG_ReadInt16( msg ) / 255.0f;
@@ -880,9 +874,9 @@ static const msg_field_t usercmd_fields[] = {
 	{ UCOFS( angles[1] ), 16, MSG_ENCTYPE_FIXEDINT16 },
 	{ UCOFS( angles[2] ), 16, MSG_ENCTYPE_FIXEDINT16 },
 
-	{ UCOFS( forwardmove ), 0, MSG_ENCTYPE_FLOAT8 },
-	{ UCOFS( sidemove ), 0, MSG_ENCTYPE_FLOAT8 },
-	{ UCOFS( upmove ), 0, MSG_ENCTYPE_FLOAT8 },
+	{ UCOFS( forwardmove ), 0, MSG_ENCTYPE_FIXEDINT8 },
+	{ UCOFS( sidemove ), 0, MSG_ENCTYPE_FIXEDINT8 },
+	{ UCOFS( upmove ), 0, MSG_ENCTYPE_FIXEDINT8 },
 
 	{ UCOFS( buttons ), 8, MSG_ENCTYPE_UBASE128 },
 };

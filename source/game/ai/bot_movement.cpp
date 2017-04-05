@@ -128,13 +128,13 @@ void Bot::TryEscapeIfBlocked( usercmd_t *ucmd ) {
 
 	// Way to this point should not be blocked
 	SetPendingLookAtPoint( Vec3( aasWorld->Areas()[currAasAreaNum].center ), 1.5f );
-	ucmd->forwardmove = 1;
+	ucmd->forwardmove = 127;
 	ucmd->buttons |= BUTTON_SPECIAL;
 }
 
 void Bot::MoveOnLadder( Vec3 *intendedLookVec, usercmd_t *ucmd ) {
-	ucmd->forwardmove = 1;
-	ucmd->upmove = 1;
+	ucmd->forwardmove = 127;
+	ucmd->upmove = 127;
 	ucmd->sidemove = 0;
 }
 
@@ -157,7 +157,7 @@ void Bot::MoveTriggeredARocketJump( Vec3 *intendedLookVec, usercmd_t *ucmd ) {
 		}
 		rocketJumpMovementState.hasCorrectedRocketJump = true;
 	} else if( rocketJumpMovementState.timeoutAt - level.time < 300 ) {
-		ucmd->forwardmove = 1;
+		ucmd->forwardmove = 127;
 
 		// Bounce off walls
 		if( !closeAreaProps.leftTest.CanWalk() || !closeAreaProps.rightTest.CanWalk() ) {
@@ -274,7 +274,7 @@ void Bot::MoveEnteringJumppad( Vec3 *intendedLookVec, usercmd_t *ucmd ) {
 	for( int i = 0; i < selectedAreasCount; ++i )
 		jumppadLandingAreas[jumppadLandingAreasCount++] = areasAndTravelTimes[i].areaNum;
 
-	ucmd->forwardmove = 1;
+	ucmd->forwardmove = 127;
 	jumppadMovementState.hasEnteredJumppad = true;
 }
 
@@ -282,7 +282,7 @@ void Bot::MoveRidingJummpad( Vec3 *intendedLookVec, usercmd_t *ucmd ) {
 	// First check whether bot finally landed to some area
 	if( self->groundentity ) {
 		jumppadMovementState.hasEnteredJumppad = false;
-		ucmd->forwardmove = 1;
+		ucmd->forwardmove = 127;
 		return;
 	}
 
@@ -369,10 +369,10 @@ void Bot::TryLandOnNearbyAreas( Vec3 *intendedLookVec, usercmd_t *ucmd ) {
 	// Do not press keys each frame
 	float r;
 	if( ( r = random() ) > 0.8 ) {
-		ucmd->forwardmove = r > 0.9 ? -1 : 1;
+		ucmd->forwardmove = r > 0.9 ? -127 : 127;
 	}
 	if( ( r = random() ) > 0.8 ) {
-		ucmd->sidemove = r > 0.9 ? -1 : 1;
+		ucmd->sidemove = r > 0.9 ? -127 : 127;
 	}
 	if( random() > 0.8 ) {
 		ucmd->buttons |= BUTTON_SPECIAL;
@@ -399,7 +399,7 @@ bool Bot::TryLandOnArea( int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd ) {
 	trace_t trace;
 	G_Trace( &trace, self->s.origin, nullptr, playerbox_stand_maxs, traceEnd.Data(), self, MASK_AISOLID );
 	if( trace.fraction == 1.0f ) {
-		ucmd->forwardmove = 1;
+		ucmd->forwardmove = 127;
 		*intendedLookVec = -areaPointToBotVec;
 		return true;
 	}
@@ -433,16 +433,16 @@ void KeyMoveVecToUcmd( const Vec3 &keyMoveVec, const vec3_t actualLookDir, const
 
 	float dotForward = keyMoveVec.Dot( actualLookDir );
 	if( dotForward > 0.3 ) {
-		ucmd->forwardmove = 1;
+		ucmd->forwardmove = 127;
 	} else if( dotForward < -0.3 ) {
-		ucmd->forwardmove = -1;
+		ucmd->forwardmove = -127;
 	}
 
 	float dotRight = keyMoveVec.Dot( actualRightDir );
 	if( dotRight > 0.3 ) {
-		ucmd->sidemove = 1;
+		ucmd->sidemove = 127;
 	} else if( dotRight < -0.3 ) {
-		ucmd->sidemove = -1;
+		ucmd->sidemove = -127;
 	}
 }
 
@@ -455,7 +455,7 @@ void Bot::MoveCampingASpotWithGivenLookAtPoint( const Vec3 &lookAtPoint, Vec3 *i
 
 	if( distance / campingSpotState.spotRadius > 2.0f ) {
 		// Bot should return to a point
-		ucmd->forwardmove = 1;
+		ucmd->forwardmove = 127;
 		ucmd->sidemove = 0;
 		ucmd->upmove = 0;
 
@@ -531,11 +531,11 @@ void Bot::MoveOnPlatform( Vec3 *intendedLookVec, usercmd_t *ucmd ) {
 }
 
 void Bot::MoveSwimming( Vec3 *intendedLookVec, usercmd_t *ucmd ) {
-	ucmd->forwardmove = true;
+	ucmd->forwardmove = 127;
 
 	// TODO: Check reachibility, if we are close, exit water
 	//if (!(G_PointContents(nodes[self->ai->next_node].origin) & MASK_WATER))  // Exit water
-	//    ucmd->upmove = 1;
+	//    ucmd->upmove = 127;
 }
 
 constexpr float Z_NO_BEND_SCALE = 0.25f;
@@ -574,7 +574,7 @@ bool Bot::CheckAndTryAvoidObstacles( Vec3 *intendedLookVec, usercmd_t *ucmd, flo
 		trace_t crouchTrace;
 		G_Trace( &crouchTrace, self->s.origin, nullptr, playerbox_crouch_maxs, forwardPoint.Data(), self, MASK_AISOLID );
 		if( crouchTrace.fraction == 1.0f ) {
-			ucmd->upmove = -1;
+			ucmd->upmove = -127;
 			return true;
 		}
 	}
@@ -881,7 +881,7 @@ void Bot::ApplyPendingLandingDash( usercmd_t *ucmd ) {
 		return;
 	}
 
-	ucmd->forwardmove = 1;
+	ucmd->forwardmove = 127;
 	ucmd->sidemove = 0;
 	ucmd->upmove = 0;
 	ucmd->buttons |= BUTTON_SPECIAL;
@@ -921,7 +921,7 @@ void Bot::MoveGenericRunning( Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSil
 	if( speed2DSquared > 0.1f ) {
 		velocityDir2D *= Q_RSqrt( speed2DSquared );
 
-		ucmd->forwardmove = 1;
+		ucmd->forwardmove = 127;
 
 		if( movementFeatures & PMFEAT_DASH ) {
 			if( speed < movementSettings[PM_STAT_DASHSPEED] ) {
@@ -932,13 +932,13 @@ void Bot::MoveGenericRunning( Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSil
 			}
 			// If we are not crouching in air to prevent bumping a ceiling, keep jump key pressed
 			else if( ucmd->upmove != -1 && movementFeatures & PMFEAT_JUMP ) {
-				ucmd->upmove = 1;
+				ucmd->upmove = 127;
 			}
 		} else {
 			if( speed < movementSettings[PM_STAT_MAXSPEED] ) {
 				ucmd->upmove = 0;
 			} else if( ucmd->upmove != -1 && movementFeatures & PMFEAT_JUMP ) {
-				ucmd->upmove = 1;
+				ucmd->upmove = 127;
 			}
 		}
 
@@ -981,20 +981,20 @@ void Bot::MoveGenericRunning( Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSil
 					float targetDirDotRight = toTargetDir2D.Dot( rightLookDir );
 
 					if( targetDirDotForward > 0.3f ) {
-						ucmd->forwardmove = 1;
+						ucmd->forwardmove = 127;
 					} else if( targetDirDotForward < -0.3f ) {
-						ucmd->forwardmove = -1;
+						ucmd->forwardmove = -127;
 					}
 
 					if( targetDirDotRight > 0.3f ) {
-						ucmd->sidemove = 1;
+						ucmd->sidemove = 127;
 					} else if( targetDirDotRight > 0.3f ) {
-						ucmd->sidemove = -1;
+						ucmd->sidemove = -127;
 					}
 
 					// Prevent blocking if neither forwardmove, not sidemove has been chosen
 					if( !ucmd->forwardmove && !ucmd->sidemove ) {
-						ucmd->forwardmove = -1;
+						ucmd->forwardmove = -127;
 					}
 				} else if( velocityToTarget2DDot < 0.1f ) {
 					if( !beSilent && MaySetPendingLandingDash() ) {
@@ -1465,7 +1465,7 @@ void Bot::TriggerWeaponJump( usercmd_t *ucmd, const Vec3 &targetOrigin, const Ve
 
 	ucmd->forwardmove = 0;
 	ucmd->sidemove = 0;
-	ucmd->upmove = 1;
+	ucmd->upmove = 127;
 	ucmd->buttons |= ( BUTTON_ATTACK | BUTTON_SPECIAL );
 
 	rocketJumpMovementState.SetTriggered( targetOrigin, fireTarget, 750 );
@@ -1574,9 +1574,9 @@ void Bot::CombatMovement( usercmd_t *ucmd, bool hasToEvade ) {
 		UpdateCombatMovePushes();
 	}
 
-	ucmd->forwardmove = combatMovePushes[0];
-	ucmd->sidemove = combatMovePushes[1];
-	ucmd->upmove = combatMovePushes[2];
+	ucmd->forwardmove = bound( -127, combatMovePushes[0] * 127, 127 );
+	ucmd->sidemove = bound( -127, combatMovePushes[1] * 127, 127 );
+	ucmd->upmove = bound( -127, combatMovePushes[2] * 127, 127 );
 
 	// Dash is a single-frame event not affected by friction, so it should be checked each frame
 	if( MayApplyCombatDash() ) {
@@ -1593,7 +1593,7 @@ void Bot::CombatMovement( usercmd_t *ucmd, bool hasToEvade ) {
 
 			// If bot would not dash, do at least a jump
 			if( squareGroundSpeed > 0.64f * maxGroundSpeed * maxGroundSpeed ) {
-				ucmd->upmove = 1;
+				ucmd->upmove = 127;
 			}
 		}
 	} else {
