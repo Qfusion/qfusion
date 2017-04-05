@@ -1,5 +1,5 @@
-#ifndef WSW_TRIE_H
-#define WSW_TRIE_H
+#ifndef Q_TRIE_H
+#define Q_TRIE_H
 
 /* Forward declaration of trie structures (layout hidden) */
 struct trie_s;
