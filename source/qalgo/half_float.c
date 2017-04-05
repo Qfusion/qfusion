@@ -1,22 +1,4 @@
 /*
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
-
-/*
  * Mesa 3-D graphics library
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
@@ -40,68 +22,69 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**
- * Sometimes we treat GLfloats as GLints.  On x86 systems, moving a float
- * as a int (thereby using integer registers instead of FP registers) is
- * a performance win.  Typically, this can be done with ordinary casts.
- * But with gcc's -fstrict-aliasing flag (which defaults to on in gcc 3.0)
- * these casts generate warnings.
- * The following union typedef is used to solve that.
- */
-typedef union { GLfloat f; GLint i; GLuint u; } fi_type;
+#include <assert.h>
+#include <math.h>
+#include <stdint.h>
+
+#ifdef _MSC_VER
+
+#pragma warning( disable : 4244 )
+#pragma warning( disable : 4204 )
+
+#endif
+
+typedef union { float f; int32_t i; uint32_t u; } fi_type;
+
+/* The C standard library has functions round()/rint()/nearbyint() that round
+* their arguments according to the rounding mode set in the floating-point
+* control register. While there are trunc()/ceil()/floor() functions that do
+* a specific operation without modifying the rounding mode, there is no
+* roundeven() in any version of C.
+*
+* Technical Specification 18661 (ISO/IEC TS 18661-1:2014) adds roundeven(),
+* but it's unfortunately not implemented by glibc.
+*
+* This implementation differs in that it does not raise the inexact exception.
+*
+* We use rint() to implement these functions, with the assumption that the
+* floating-point rounding mode has not been changed from the default Round
+* to Nearest.
+*/
 
 /**
- * Convert float to int by rounding to nearest integer, away from zero.
- */
-static inline int _mesa_IROUND( float f ) {
-	return (int) ( ( f >= 0.0F ) ? ( f + 0.5F ) : ( f - 0.5F ) );
+* \brief Rounds \c x to the nearest integer, with ties to the even integer.
+*/
+static inline float
+_mesa_roundevenf( float x ) {
+	return rintf( x );
 }
 
-/* Using C99 rounding functions for roundToEven() implementation is
- * difficult, because round(), rint, and nearbyint() are affected by
- * fesetenv(), which the application may have done for its own
- * purposes.  Mesa's IROUND macro is close to what we want, but it
- * rounds away from 0 on n + 0.5.
- */
-static inline int
-_mesa_round_to_even( float val ) {
-	int rounded = _mesa_IROUND( val );
-
-	if( val - floor( val ) == 0.5 ) {
-		if( rounded % 2 != 0 ) {
-			rounded += val > 0 ? -1 : 1;
-		}
-	}
-
-	return rounded;
-}
-
 /**
- * Convert a 4-byte float to a 2-byte half float.
- *
- * Not all float32 values can be represented exactly as a float16 value. We
- * round such intermediate float32 values to the nearest float16. When the
- * float32 lies exactly between to float16 values, we round to the one with
- * an even mantissa.
- *
- * This rounding behavior has several benefits:
- *   - It has no sign bias.
- *
- *   - It reproduces the behavior of real hardware: opcode F32TO16 in Intel's
- *     GPU ISA.
- *
- *   - By reproducing the behavior of the GPU (at least on Intel hardware),
- *     compile-time evaluation of constant packHalf2x16 GLSL expressions will
- *     result in the same value as if the expression were executed on the GPU.
- */
-static inline GLhalfARB
+* Convert a 4-byte float to a 2-byte half float.
+*
+* Not all float32 values can be represented exactly as a float16 value. We
+* round such intermediate float32 values to the nearest float16. When the
+* float32 lies exactly between to float16 values, we round to the one with
+* an even mantissa.
+*
+* This rounding behavior has several benefits:
+*   - It has no sign bias.
+*
+*   - It reproduces the behavior of real hardware: opcode F32TO16 in Intel's
+*     GPU ISA.
+*
+*   - By reproducing the behavior of the GPU (at least on Intel hardware),
+*     compile-time evaluation of constant packHalf2x16 GLSL expressions will
+*     result in the same value as if the expression were executed on the GPU.
+*/
+static unsigned short
 _mesa_float_to_half( float val ) {
 	const fi_type fi = {val};
 	const int flt_m = fi.i & 0x7fffff;
 	const int flt_e = ( fi.i >> 23 ) & 0xff;
 	const int flt_s = ( fi.i >> 31 ) & 0x1;
 	int s, e, m = 0;
-	GLhalfARB result;
+	unsigned short result;
 
 	/* sign bit */
 	s = flt_s;
@@ -128,32 +111,32 @@ _mesa_float_to_half( float val ) {
 		const int new_exp = flt_e - 127;
 		if( new_exp < -14 ) {
 			/* The float32 lies in the range (0.0, min_normal16) and is rounded
-			 * to a nearby float16 value. The result will be either zero, subnormal,
-			 * or normal.
-			 */
+			* to a nearby float16 value. The result will be either zero, subnormal,
+			* or normal.
+			*/
 			e = 0;
-			m = _mesa_round_to_even( ( 1 << 24 ) * fabsf( fi.f ) );
+			m = (int) _mesa_roundevenf( ( 1 << 24 ) * fabsf( fi.f ) );
 		} else if( new_exp > 15 ) {
 			/* map this value to infinity */
 			/* m = 0; - already set */
 			e = 31;
 		} else {
 			/* The float32 lies in the range
-			 *   [min_normal16, max_normal16 + max_step16)
-			 * and is rounded to a nearby float16 value. The result will be
-			 * either normal or infinite.
-			 */
+			*   [min_normal16, max_normal16 + max_step16)
+			* and is rounded to a nearby float16 value. The result will be
+			* either normal or infinite.
+			*/
 			e = new_exp + 15;
-			m = _mesa_round_to_even( flt_m / (float) ( 1 << 13 ) );
+			m = (int) _mesa_roundevenf( flt_m / (float) ( 1 << 13 ) );
 		}
 	}
 
 	assert( 0 <= m && m <= 1024 );
 	if( m == 1024 ) {
 		/* The float32 was rounded upwards into the range of the next exponent,
-		 * so bump the exponent. This correctly handles the case where f32
-		 * should be rounded up to float16 infinity.
-		 */
+		* so bump the exponent. This correctly handles the case where f32
+		* should be rounded up to float16 infinity.
+		*/
 		++e;
 		m = 0;
 	}
@@ -164,12 +147,12 @@ _mesa_float_to_half( float val ) {
 
 
 /**
- * Convert a 2-byte half float to a 4-byte float.
- * Based on code from:
- * http://www.opengl.org/discussion_boards/ubb/Forum3/HTML/008786.html
- */
-static inline float
-_mesa_half_to_float( GLhalfARB val ) {
+* Convert a 2-byte half float to a 4-byte float.
+* Based on code from:
+* http://www.opengl.org/discussion_boards/ubb/Forum3/HTML/008786.html
+*/
+static float
+_mesa_half_to_float( unsigned short val ) {
 	/* XXX could also use a 64K-entry lookup table */
 	const int m = val & 0x3ff;
 	const int e = ( val >> 10 ) & 0x1f;
@@ -209,4 +192,16 @@ _mesa_half_to_float( GLhalfARB val ) {
 	fi.i = ( flt_s << 31 ) | ( flt_e << 23 ) | flt_m;
 	result = fi.f;
 	return result;
+}
+
+// ============================================================================
+
+unsigned short
+Com_FloatToHalf( float val ) {
+	return _mesa_float_to_half( val );
+}
+
+float
+Com_HalfToFloat( unsigned short val ) {
+	return _mesa_half_to_float( val );
 }
