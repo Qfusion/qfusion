@@ -552,10 +552,14 @@ void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const m
 		Com_Error( ERR_FATAL, "MSG_WriteDeltaStruct: numFields == %i", numFields );
 	}
 
-	// send the movement message
 	byteMask = MSG_CompareFields( from, to, fields, numFields, fieldMask, sizeof( fieldMask ) );
 
-	MSG_WriteUintBase128( msg, byteMask );
+	if( numFields <= 8 ) {
+		// we don't need the byteMask in case all field bits fit a single byte
+		byteMask = 1;
+	} else {
+		MSG_WriteUintBase128( msg, byteMask );
+	}
 
 	MSG_WriteFieldMask( msg, fieldMask, byteMask );
 
@@ -708,7 +712,12 @@ void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, c
 	// set everything to the state we are delta'ing from
 	memcpy( to, from, size );
 
-	byteMask = MSG_ReadUintBase128( msg );
+	if( numFields <= 8 ) {
+		// we don't need the byteMask in case all field bits fit a single byte
+		byteMask = 1;
+	} else {
+		byteMask = MSG_ReadUintBase128( msg );
+	}
 
 	MSG_ReadFieldMask( msg, fieldMask, sizeof( fieldMask ), byteMask );
 
