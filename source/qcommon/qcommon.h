@@ -63,6 +63,7 @@ typedef struct {
 typedef struct msg_field_s {
 	int offset;
 	int bits;
+	int count;
 	MSG_ENCTYPE_t encoding;
 } msg_field_t;
 
@@ -97,10 +98,6 @@ void MSG_WriteString( msg_t *sb, const char *s );
 void MSG_WriteDeltaUsercmd( msg_t *sb, struct usercmd_s *from, struct usercmd_s *cmd );
 void MSG_WriteDeltaEntity( struct entity_state_s *from, struct entity_state_s *to, msg_t *msg, bool force );
 void MSG_WriteDir( msg_t *sb, vec3_t vector );
-
-unsigned MSG_CompareFields( const void *to, const void *from, const msg_field_t *fields, size_t numFields, uint8_t *fieldMask, size_t maskSize );
-void MSG_WriteFieldMask( msg_t *msg, const uint8_t *fieldMask, unsigned byteMask );
-void MSG_WriteFields( msg_t *msg, const void *to, const msg_field_t *fields, size_t numFields, const uint8_t *fieldMask, unsigned byteMask );
 void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const msg_field_t *fields, size_t numFields );
 
 void MSG_BeginReading( msg_t *sb );
@@ -129,8 +126,6 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 void MSG_ReadDir( msg_t *sb, vec3_t vector );
 void MSG_ReadData( msg_t *sb, void *buffer, size_t length );
 
-void MSG_ReadFieldMask( msg_t *msg, uint8_t *fieldMask, size_t maskSize, unsigned byteMask );
-void MSG_ReadFields( msg_t *msg, void *to, const msg_field_t *fields, size_t numFields, const uint8_t *fieldMask, size_t maskSize, unsigned byteMask );
 void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, const msg_field_t *fields, size_t numFields );
 
 //============================================================================

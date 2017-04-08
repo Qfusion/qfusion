@@ -354,9 +354,19 @@ char *MSG_ReadStringLine( msg_t *msg ) {
 //==================================================
 
 /*
+* MSG_FieldBytes
+*/
+static size_t MSG_FieldBytes( const msg_field_t *field ) {
+	if( field->bits == 0 ) {
+		return sizeof( float );
+	}
+	return field->bits >> 3;
+}
+
+/*
 * MSG_CompareField
 */
-bool MSG_CompareField( const void *from, const void *to, const msg_field_t *field ) {
+static bool MSG_CompareField( const uint8_t *from, const uint8_t *to, const msg_field_t *field ) {
 	int32_t itv, ifv;
 	bool btv, bfv;
 	int64_t bitv, bifv;
@@ -364,28 +374,28 @@ bool MSG_CompareField( const void *from, const void *to, const msg_field_t *fiel
 
 	switch( field->bits ) {
 		case 0:
-			ftv = *((float *)( (uint8_t *)to + field->offset ));
-			ffv = *((float *)( (uint8_t *)from + field->offset ));
+			ftv = *((float *)( to + field->offset ));
+			ffv = *((float *)( from + field->offset ));
 			return ftv != ffv;
 		case 1:
-			btv = *((bool *)( (uint8_t *)to + field->offset ));
-			bfv = *((bool *)( (uint8_t *)from + field->offset ));
+			btv = *((bool *)( to + field->offset ));
+			bfv = *((bool *)( from + field->offset ));
 			return btv != bfv;
 		case 8:
-			itv = *((int8_t *)( (uint8_t *)to + field->offset ));
-			ifv = *((int8_t *)( (uint8_t *)from + field->offset ));
+			itv = *((int8_t *)( to + field->offset ));
+			ifv = *((int8_t *)( from + field->offset ));
 			return itv != ifv;
 		case 16:
-			itv = *((int16_t *)( (uint8_t *)to + field->offset ));
-			ifv = *((int16_t *)( (uint8_t *)from + field->offset ));
+			itv = *((int16_t *)( to + field->offset ));
+			ifv = *((int16_t *)( from + field->offset ));
 			return itv != ifv;
 		case 32:
-			itv = *((int32_t *)( (uint8_t *)to + field->offset ));
-			ifv = *((int32_t *)( (uint8_t *)from + field->offset ));
+			itv = *((int32_t *)( to + field->offset ));
+			ifv = *((int32_t *)( from + field->offset ));
 			return itv != ifv;
 		case 64:
-			bitv = *((int64_t *)( (uint8_t *)to + field->offset ));
-			bifv = *((int64_t *)( (uint8_t *)from + field->offset ));
+			bitv = *((int64_t *)( to + field->offset ));
+			bifv = *((int64_t *)( from + field->offset ));
 			return bitv != bifv;
 		default:
 			Com_Error( ERR_FATAL, "MSG_CompareField: unknown field bits value %i", field->bits );
@@ -395,104 +405,153 @@ bool MSG_CompareField( const void *from, const void *to, const msg_field_t *fiel
 }
 
 /*
-* MSG_CompareFields
+* MSG_WriteField
 */
-unsigned MSG_CompareFields( const void *from, const void *to, const msg_field_t *fields, size_t numFields, uint8_t *fieldMask, size_t maskSize ) {
-	size_t i;
-	unsigned byteMask;
-
-	byteMask = 0;
-	for( i = 0; i < numFields; i++ ) {
-		size_t byte = i >> 3;
-
-		if( byte > maskSize ) {
-			Com_Error( ERR_FATAL, "MSG_CompareFields: byte > maskSize" );
+static void MSG_WriteField( msg_t *msg, const uint8_t *to, const msg_field_t *field ) {
+	switch( field->encoding ) {
+	case MSG_ENCTYPE_BOOL:
+		break;
+	case MSG_ENCTYPE_FIXED_INT8:
+		MSG_WriteInt8( msg, *((int8_t *)( to + field->offset )) );
+		break;
+	case MSG_ENCTYPE_FIXED_INT16:
+		MSG_WriteInt16( msg, *((int16_t *)( to + field->offset )) );
+		break;
+	case MSG_ENCTYPE_FIXED_INT32:
+		MSG_WriteInt32( msg, *((int32_t *)( to + field->offset )) );
+		break;
+	case MSG_ENCTYPE_FIXED_INT64:
+		MSG_WriteInt64( msg, *((int64_t *)( to + field->offset )) );
+		break;
+	case MSG_ENCTYPE_FLOAT:
+		MSG_WriteFloat( msg, *((float *)( to + field->offset )) );
+		break;
+	case MSG_ENCTYPE_HALF_FLOAT:
+		MSG_WriteHalfFloat( msg, (*((float *)( to + field->offset ))) );
+		break;
+	case MSG_ENCTYPE_COORD:
+		MSG_WriteCoord( msg, *((float *)( to + field->offset )) );
+		break;
+	case MSG_ENCTYPE_ANGLE:
+		MSG_WriteHalfFloat( msg, anglemod( (*((float *)( to + field->offset ))) ) );
+		break;
+	case MSG_ENCTYPE_BASE128:
+		switch( field->bits ) {
+		case 8:
+			MSG_WriteInt8( msg, *((int8_t *)( to + field->offset )) );
+			break;
+		case 16:
+			MSG_WriteIntBase128( msg, *((int16_t *)( to + field->offset )) );
+			break;
+		case 32:
+			MSG_WriteIntBase128( msg, *((int32_t *)( to + field->offset )) );
+			break;
+		case 64:
+			MSG_WriteIntBase128( msg, *((int64_t *)( to + field->offset )) );
+			break;
+		default:
+			Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
+			break;
 		}
-		if( byte > 32 ) {
-			Com_Error( ERR_FATAL, "MSG_CompareFields: byte > 32" );
+		break;
+	case MSG_ENCTYPE_UBASE128:
+		switch( field->bits ) {
+		case 8:
+			MSG_WriteUint8( msg, *((uint8_t *)( to + field->offset )) );
+			break;
+		case 16:
+			MSG_WriteUintBase128( msg, *((uint16_t *)( to + field->offset )) );
+			break;
+		case 32:
+			MSG_WriteUintBase128( msg, *((uint32_t *)( to + field->offset )) );
+			break;
+		case 64:
+			MSG_WriteUintBase128( msg, *((uint64_t *)( to + field->offset )) );
+			break;
+		default:
+			Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
+			break;
 		}
-
-		if( MSG_CompareField( from, to, &fields[i] ) ) {
-			fieldMask[byte] |= (1 << (i & 7));
-			byteMask |= (1 << (byte & 7));
-		}
+		break;
+	default:
+		Com_Error( ERR_FATAL, "MSG_WriteField: unknown encoding type %i", field->encoding );
+		break;
 	}
-
-	return byteMask;
 }
 
 /*
-* MSG_WriteField
+* MSG_ReadField
 */
-void MSG_WriteField( msg_t *msg, const void *to, const msg_field_t *field ) {
+static void MSG_ReadField( msg_t *msg, uint8_t *to, const msg_field_t *field ) {
 	switch( field->encoding ) {
-		case MSG_ENCTYPE_BOOL:
+	case MSG_ENCTYPE_BOOL:
+		*((bool *)( to + field->offset )) ^= true;
+		break;
+	case MSG_ENCTYPE_FIXED_INT8:
+		*((int8_t *)( to + field->offset )) = MSG_ReadInt8( msg );
+		break;
+	case MSG_ENCTYPE_FIXED_INT16:
+		*((int16_t *)( to + field->offset )) = MSG_ReadInt16( msg );
+		break;
+	case MSG_ENCTYPE_FIXED_INT32:
+		*((int32_t *)( to + field->offset )) = MSG_ReadInt32( msg );
+		break;
+	case MSG_ENCTYPE_FIXED_INT64:
+		*((int64_t *)( to + field->offset )) = MSG_ReadInt64( msg );
+		break;
+	case MSG_ENCTYPE_FLOAT:
+		*((float *)( to + field->offset )) = MSG_ReadFloat( msg );
+		break;
+	case MSG_ENCTYPE_HALF_FLOAT:
+		*((float *)( to + field->offset )) = MSG_ReadHalfFloat( msg );
+		break;
+	case MSG_ENCTYPE_COORD:
+		*((float *)( to + field->offset )) = MSG_ReadCoord( msg );
+		break;
+	case MSG_ENCTYPE_ANGLE:
+		*((float *)( to + field->offset )) = MSG_ReadHalfFloat( msg );
+		break;
+	case MSG_ENCTYPE_BASE128:
+		switch( field->bits ) {
+		case 8:
+			*((int8_t *)( to + field->offset )) = MSG_ReadInt8( msg );
 			break;
-		case MSG_ENCTYPE_FIXED_INT8:
-			MSG_WriteInt8( msg, *((int8_t *)( (uint8_t *)to + field->offset )) );
+		case 16:
+			*((int16_t *)( to + field->offset )) = MSG_ReadIntBase128( msg );
 			break;
-		case MSG_ENCTYPE_FIXED_INT16:
-			MSG_WriteInt16( msg, *((int16_t *)( (uint8_t *)to + field->offset )) );
+		case 32:
+			*((int32_t *)( to + field->offset )) = MSG_ReadIntBase128( msg );
 			break;
-		case MSG_ENCTYPE_FIXED_INT32:
-			MSG_WriteInt32( msg, *((int32_t *)( (uint8_t *)to + field->offset )) );
-			break;
-		case MSG_ENCTYPE_FIXED_INT64:
-			MSG_WriteInt64( msg, *((int64_t *)( (uint8_t *)to + field->offset )) );
-			break;
-		case MSG_ENCTYPE_FLOAT:
-			MSG_WriteFloat( msg, *((float *)( (uint8_t *)to + field->offset )) );
-			break;
-		case MSG_ENCTYPE_HALF_FLOAT:
-			MSG_WriteHalfFloat( msg, (*((float *)( (uint8_t *)to + field->offset ))) );
-			break;
-		case MSG_ENCTYPE_COORD:
-			MSG_WriteCoord( msg, *((float *)( (uint8_t *)to + field->offset )) );
-			break;
-		case MSG_ENCTYPE_ANGLE:
-			MSG_WriteHalfFloat( msg, anglemod( (*((float *)( (uint8_t *)to + field->offset ))) ) );
-			break;
-		case MSG_ENCTYPE_BASE128:
-			switch( field->bits ) {
-			case 8:
-				MSG_WriteInt8( msg, *((int8_t *)( (uint8_t *)to + field->offset )) );
-				break;
-			case 16:
-				MSG_WriteIntBase128( msg, *((int16_t *)( (uint8_t *)to + field->offset )) );
-				break;
-			case 32:
-				MSG_WriteIntBase128( msg, *((int32_t *)( (uint8_t *)to + field->offset )) );
-				break;
-			case 64:
-				MSG_WriteIntBase128( msg, *((int64_t *)( (uint8_t *)to + field->offset )) );
-				break;
-			default:
-				Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
-				break;
-			}
-			break;
-		case MSG_ENCTYPE_UBASE128:
-			switch( field->bits ) {
-			case 8:
-				MSG_WriteUint8( msg, *((uint8_t *)( (uint8_t *)to + field->offset )) );
-				break;
-			case 16:
-				MSG_WriteUintBase128( msg, *((uint16_t *)( (uint8_t *)to + field->offset )) );
-				break;
-			case 32:
-				MSG_WriteUintBase128( msg, *((uint32_t *)( (uint8_t *)to + field->offset )) );
-				break;
-			case 64:
-				MSG_WriteUintBase128( msg, *((uint64_t *)( (uint8_t *)to + field->offset )) );
-				break;
-			default:
-				Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
-				break;
-			}
+		case 64:
+			*((int64_t *)( to + field->offset )) = MSG_ReadIntBase128( msg );
 			break;
 		default:
-			Com_Error( ERR_FATAL, "MSG_WriteField: unknown encoding type %i", field->encoding );
+			Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
 			break;
+		}
+		break;
+	case MSG_ENCTYPE_UBASE128:
+		switch( field->bits ) {
+		case 8:
+			*((uint8_t *)( to + field->offset )) = MSG_ReadUint8( msg );
+			break;
+		case 16:
+			*((uint16_t *)( to + field->offset )) = MSG_ReadUintBase128( msg );
+			break;
+		case 32:
+			*((uint32_t *)( to + field->offset )) = MSG_ReadUintBase128( msg );
+			break;
+		case 64:
+			*((uint64_t *)( to + field->offset )) = MSG_ReadUintBase128( msg );
+			break;
+		default:
+			Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
+			break;
+		}
+		break;
+	default:
+		Com_Error( ERR_FATAL, "MSG_WriteField: unknown encoding type %i", field->encoding );
+		break;
 	}
 }
 
@@ -513,28 +572,299 @@ void MSG_WriteFieldMask( msg_t *msg, const uint8_t *fieldMask, unsigned byteMask
 }
 
 /*
-* MSG_WriteFields
+* MSG_ReadFieldMask
 */
-void MSG_WriteFields( msg_t *msg, const void *to, const msg_field_t *fields, size_t numFields, const uint8_t *fieldMask, unsigned byteMask ) {
+void MSG_ReadFieldMask( msg_t *msg, uint8_t *fieldMask, size_t maskSize, unsigned byteMask ) {
+	size_t b;
+
+	b = 0;
+	while( byteMask ) {
+		if( byteMask & 1 ) {
+			if( b >= maskSize ) {
+				Com_Error( ERR_FATAL, "MSG_ReadFieldMask: i >= maskSize" );
+			}
+			fieldMask[b] = MSG_ReadUint8( msg );
+		}
+		b++;
+		byteMask >>= 1;
+	}
+}
+
+/*
+* MSG_CompareArrays
+*/
+static unsigned MSG_CompareArrays( const void *from, const void *to, const msg_field_t *field, uint8_t *elemMask, size_t maskSize, bool quick ) {
+	size_t i;
+	unsigned byteMask;
+	const size_t bytes = MSG_FieldBytes( field );
+	const size_t maxElems = field->count;
+	const uint8_t *bfrom = from, *bto = to;
+
+	byteMask = 0;
+	for( i = 0; i < maxElems; i++ ) {
+		size_t byte = i >> 3;
+
+		if( elemMask != NULL && byte > maskSize ) {
+			Com_Error( ERR_FATAL, "MSG_CompareArrays: byte > maskSize" );
+		}
+		if( byte > 32 ) {
+			Com_Error( ERR_FATAL, "MSG_CompareArrays: byte > 32" );
+		}
+
+		if( MSG_CompareField( bfrom, bto, field ) ) {
+			if( elemMask != NULL ) {
+				elemMask[byte] |= (1 << (i & 7));
+			}
+			byteMask |= (1 << (byte & 7));
+			if( quick ) {
+				return byteMask;
+			}
+		}
+
+		bfrom += bytes;
+		bto += bytes;
+	}
+
+	return byteMask;
+}
+
+/*
+* MSG_WriteArrayElems
+*/
+static void MSG_WriteArrayElems( msg_t *msg, const void *to, const msg_field_t *field, const uint8_t *elemMask, unsigned byteMask ) {
+	size_t b;
+	const size_t bytes = MSG_FieldBytes( field );
+	const size_t maxElems = field->count;
+	const uint8_t *bto = to;
+
+	b = 0;
+	while( byteMask ) {
+		if( byteMask & 1 ) {
+			unsigned fm = elemMask[b];
+			size_t f = b << 3;
+
+			while( fm ) {
+				if( f >= maxElems )
+					return;
+
+				if( fm & 1 ) {
+					MSG_WriteField( msg, bto + f * bytes, field );
+				}
+				f++;
+				fm >>= 1;
+			}
+		}
+
+		b++;
+		byteMask >>= 1;
+	}
+}
+
+/*
+* MSG_ReadArrayElems
+*/
+static void MSG_ReadArrayElems( msg_t *msg, void *to, const msg_field_t *field, const uint8_t *elemMask, size_t maskSize, unsigned byteMask ) {
+	size_t b;
+	uint8_t *bto = to;
+	const size_t bytes = MSG_FieldBytes( field );
+	const size_t maxElems = field->count;
+
+	b = 0;
+	while( byteMask ) {
+		if( byteMask & 1 ) {
+			unsigned fm;
+			size_t fn = b << 3;
+
+			if( b >= maskSize ) {
+				Com_Error( ERR_FATAL, "MSG_ReadArrayElems: b >= maxSize" );
+			}
+
+			fm = elemMask[b];
+			while( fm ) {
+				assert( fn < maxElems );
+				if( fn >= maxElems ) {
+					Com_Error( ERR_FATAL, "MSG_ReadArrayElems: fn >= maxElems" );
+				}
+
+				if( fm & 1 ) {
+					MSG_ReadField( msg, bto + fn * bytes, field );
+				}
+
+				fn++;
+				fm >>= 1;
+			}
+		}
+
+		b++;
+		byteMask >>= 1;
+	}
+}
+
+/*
+* MSG_WriteDeltaArray
+*/
+void MSG_WriteDeltaArray( msg_t *msg, const void *from, const void *to, const msg_field_t *field ) {
+	unsigned byteMask;
+	uint8_t elemMask[32] = { 0 };
+	const size_t numElems = field->count;
+
+	assert( numElems < 256 );
+	if( numElems > 256 ) {
+		Com_Error( ERR_FATAL, "MSG_WriteDeltaArray: numFields == %i", numElems );
+	}
+
+	byteMask = MSG_CompareArrays( from, to, field, elemMask, sizeof( elemMask ), false );
+
+	if( numElems <= 8 ) {
+		// we don't need the byteMask in case all field bits fit a single byte
+		byteMask = 1;
+	} else {
+		MSG_WriteUintBase128( msg, byteMask );
+	}
+
+	MSG_WriteFieldMask( msg, elemMask, byteMask );
+
+	MSG_WriteArrayElems( msg, to, field, elemMask, byteMask );
+}
+
+/*
+* MSG_ReadDeltaArray
+*/
+void MSG_ReadDeltaArray( msg_t *msg, const void *from, void *to, const msg_field_t *field ) {
+	unsigned byteMask;
+	uint8_t elemMask[32] = { 0 };
+	const size_t bytes = MSG_FieldBytes( field );
+	const size_t maxElems = field->count;
+
+	assert( maxElems < 256 );
+	if( maxElems > 256 ) {
+		Com_Error( ERR_FATAL, "MSG_ReadDeltaArray: numFields == %i", maxElems );
+	}
+
+	// set everything to the state we are delta'ing from
+	memcpy( (uint8_t *)to + field->offset, (uint8_t *)from + field->offset, bytes * maxElems );
+
+	if( maxElems <= 8 ) {
+		// we don't need the byteMask in case all field bits fit a single byte
+		byteMask = 1;
+	} else {
+		byteMask = MSG_ReadUintBase128( msg );
+	}
+
+	MSG_ReadFieldMask( msg, elemMask, sizeof( elemMask ), byteMask );
+
+	MSG_ReadArrayElems( msg, to, field, elemMask, sizeof( elemMask ), byteMask );
+}
+
+/*
+* MSG_CompareStructs
+*/
+static unsigned MSG_CompareStructs( const void *from, const void *to, const msg_field_t *fields, size_t numFields, uint8_t *fieldMask, size_t maskSize ) {
+	size_t i;
+	unsigned byteMask;
+
+	byteMask = 0;
+	for( i = 0; i < numFields; i++ ) {
+		size_t byte = i >> 3;
+		bool change;
+		const msg_field_t *f = &fields[i];
+
+		if( fieldMask != NULL && byte > maskSize ) {
+			Com_Error( ERR_FATAL, "MSG_CompareStructs: byte > maskSize" );
+		}
+		if( byte > 32 ) {
+			Com_Error( ERR_FATAL, "MSG_CompareStructs: byte > 32" );
+		}
+
+		if( f->count > 1 ) {
+			change = MSG_CompareArrays( from, to, f, NULL, 0, true ) != 0;
+		} else {
+			change = MSG_CompareField( from, to, f );
+		}
+
+		if( change ) {
+			if( fieldMask != NULL ) {
+				fieldMask[byte] |= (1 << (i & 7));
+			}
+			byteMask |= (1 << (byte & 7));
+		}
+	}
+
+	return byteMask;
+}
+
+/*
+* MSG_WriteStructFields
+*/
+static void MSG_WriteStructFields( msg_t *msg, const void *from, const void *to, const msg_field_t *fields, size_t numFields, const uint8_t *fieldMask, unsigned byteMask ) {
 	size_t b;
 
 	b = 0;
 	while( byteMask ) {
 		if( byteMask & 1 ) {
 			unsigned fm = fieldMask[b];
-			size_t f = b << 3;
+			size_t fn = b << 3;
 
 			while( fm ) {
-				if( f >= numFields )
+				if( fn >= numFields )
 					return;
+				
 				if( fm & 1 ) {
-					MSG_WriteField( msg, to, &fields[f] );
+					const msg_field_t *f = &fields[fn];
+
+					if( f->count > 1 ) {
+						MSG_WriteDeltaArray( msg, from, to, f );
+					} else {
+						MSG_WriteField( msg, to, f );
+					}
 				}
-				f++;
+				fn++;
 				fm >>= 1;
 			}
 		}
-		
+
+		b++;
+		byteMask >>= 1;
+	}
+}
+
+/*
+* MSG_ReadStructFields
+*/
+static void MSG_ReadStructFields( msg_t *msg, const void *from, void *to, const msg_field_t *fields, size_t numFields, const uint8_t *fieldMask, size_t maskSize, unsigned byteMask ) {
+	size_t b;
+
+	b = 0;
+	while( byteMask ) {
+		if( byteMask & 1 ) {
+			unsigned fm;
+			size_t fn = b << 3;
+
+			if( b >= maskSize ) {
+				Com_Error( ERR_FATAL, "MSG_ReadStructFields: b >= maxSize" );
+			}
+
+			fm = fieldMask[b];
+			while( fm ) {
+				assert( fn < numFields );
+				if( fn >= numFields ) {
+					Com_Error( ERR_FATAL, "MSG_ReadStructFields: f >= numFields" );
+				}
+
+				if( fm & 1 ) {
+					const msg_field_t *f = &fields[fn];
+					if( f->count > 1 ) {
+						MSG_ReadDeltaArray( msg, from, to, f );
+					} else {
+						MSG_ReadField( msg, to, f );
+					}
+				}
+
+				fn++;
+				fm >>= 1;
+			}
+		}
+
 		b++;
 		byteMask >>= 1;
 	}
@@ -552,7 +882,7 @@ void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const m
 		Com_Error( ERR_FATAL, "MSG_WriteDeltaStruct: numFields == %i", numFields );
 	}
 
-	byteMask = MSG_CompareFields( from, to, fields, numFields, fieldMask, sizeof( fieldMask ) );
+	byteMask = MSG_CompareStructs( from, to, fields, numFields, fieldMask, sizeof( fieldMask ) );
 
 	if( numFields <= 8 ) {
 		// we don't need the byteMask in case all field bits fit a single byte
@@ -563,138 +893,7 @@ void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const m
 
 	MSG_WriteFieldMask( msg, fieldMask, byteMask );
 
-	MSG_WriteFields( msg, to, fields, numFields, fieldMask, byteMask );
-}
-
-/*
-* MSG_ReadField
-*/
-void MSG_ReadField( msg_t *msg, const void *to, const msg_field_t *field ) {
-	switch( field->encoding ) {
-	case MSG_ENCTYPE_BOOL:
-		*((bool *)( (uint8_t *)to + field->offset )) ^= true;
-		break;
-	case MSG_ENCTYPE_FIXED_INT8:
-		*((int8_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt8( msg );
-		break;
-	case MSG_ENCTYPE_FIXED_INT16:
-		*((int16_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt16( msg );
-		break;
-	case MSG_ENCTYPE_FIXED_INT32:
-		*((int32_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt32( msg );
-		break;
-	case MSG_ENCTYPE_FIXED_INT64:
-		*((int64_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt64( msg );
-		break;
-	case MSG_ENCTYPE_FLOAT:
-		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadFloat( msg );
-		break;
-	case MSG_ENCTYPE_HALF_FLOAT:
-		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadHalfFloat( msg );
-		break;
-	case MSG_ENCTYPE_COORD:
-		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadCoord( msg );
-		break;
-	case MSG_ENCTYPE_ANGLE:
-		*((float *)( (uint8_t *)to + field->offset )) = MSG_ReadHalfFloat( msg );
-		break;
-	case MSG_ENCTYPE_BASE128:
-		switch( field->bits ) {
-		case 8:
-			*((int8_t *)( (uint8_t *)to + field->offset )) = MSG_ReadInt8( msg );
-			break;
-		case 16:
-			*((int16_t *)( (uint8_t *)to + field->offset )) = MSG_ReadIntBase128( msg );
-			break;
-		case 32:
-			*((int32_t *)( (uint8_t *)to + field->offset )) = MSG_ReadIntBase128( msg );
-			break;
-		case 64:
-			*((int64_t *)( (uint8_t *)to + field->offset )) = MSG_ReadIntBase128( msg );
-			break;
-		default:
-			Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
-			break;
-		}
-		break;
-	case MSG_ENCTYPE_UBASE128:
-		switch( field->bits ) {
-		case 8:
-			*((uint8_t *)( (uint8_t *)to + field->offset )) = MSG_ReadUint8( msg );
-			break;
-		case 16:
-			*((uint16_t *)( (uint8_t *)to + field->offset )) = MSG_ReadUintBase128( msg );
-			break;
-		case 32:
-			*((uint32_t *)( (uint8_t *)to + field->offset )) = MSG_ReadUintBase128( msg );
-			break;
-		case 64:
-			*((uint64_t *)( (uint8_t *)to + field->offset )) = MSG_ReadUintBase128( msg );
-			break;
-		default:
-			Com_Error( ERR_FATAL, "MSG_WriteField: unknown base128 field bits value %i", field->bits );
-			break;
-		}
-		break;
-	default:
-		Com_Error( ERR_FATAL, "MSG_WriteField: unknown encoding type %i", field->encoding );
-		break;
-	}
-}
-
-/*
-* MSG_ReadFieldMask
-*/
-void MSG_ReadFieldMask( msg_t *msg, uint8_t *fieldMask, size_t maskSize, unsigned byteMask ) {
-	size_t b;
-	
-	b = 0;
-	while( byteMask ) {
-		if( byteMask & 1 ) {
-			if( b >= maskSize ) {
-				Com_Error( ERR_FATAL, "MSG_ReadFieldMask: i >= maskSize" );
-			}
-			fieldMask[b] = MSG_ReadUint8( msg );
-		}
-		b++;
-		byteMask >>= 1;
-	}
-}
-
-/*
-* MSG_ReadFields
-*/
-void MSG_ReadFields( msg_t *msg, void *to, const msg_field_t *fields, size_t numFields, const uint8_t *fieldMask, size_t maskSize, unsigned byteMask ) {
-	size_t b;
-
-	b = 0;
-	while( byteMask ) {
-		if( byteMask & 1 ) {
-			unsigned fm;
-			size_t f = b << 3;
-
-			if( b >= maskSize ) {
-				Com_Error( ERR_FATAL, "MSG_ReadFields: b >= maxSize" );
-			}
-			
-			fm = fieldMask[b];
-			while( fm ) {
-				if( f >= numFields ) {
-					Com_Error( ERR_FATAL, "MSG_ReadFields: f >= numFields" );
-				}
-
-				if( fm & 1 ) {
-					MSG_ReadField( msg, to, &fields[f] );
-				}
-
-				f++;
-				fm >>= 1;
-			}
-		}
-
-		b++;
-		byteMask >>= 1;
-	}
+	MSG_WriteStructFields( msg, from, to, fields, numFields, fieldMask, byteMask );
 }
 
 /*
@@ -706,7 +905,7 @@ void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, c
 
 	assert( numFields < 256 );
 	if( numFields > 256 ) {
-		Com_Error( ERR_FATAL, "MSG_WriteDeltaStruct: numFields == %i", numFields );
+		Com_Error( ERR_FATAL, "MSG_ReadDeltaStruct: numFields == %i", numFields );
 	}
 
 	// set everything to the state we are delta'ing from
@@ -721,7 +920,7 @@ void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, c
 
 	MSG_ReadFieldMask( msg, fieldMask, sizeof( fieldMask ), byteMask );
 
-	MSG_ReadFields( msg, to, fields, numFields, fieldMask, sizeof( fieldMask ), byteMask );
+	MSG_ReadStructFields( msg, from, to, fields, numFields, fieldMask, sizeof( fieldMask ), byteMask );
 }
 
 //==================================================
@@ -731,65 +930,65 @@ void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, c
 #define ESOFS( x ) offsetof( entity_state_t,x )
 
 static const msg_field_t ent_state_fields[] = {
-	{ ESOFS( events[0] ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( eventParms[0] ), 32, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( events[0] ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( eventParms[0] ), 32, 1, MSG_ENCTYPE_BASE128 },
 
-	{ ESOFS( origin[0] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( origin[1] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( origin[2] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin[0] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin[1] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin[2] ), 0, 1, MSG_ENCTYPE_COORD },
 
-	{ ESOFS( angles[0] ), 0, MSG_ENCTYPE_ANGLE },
-	{ ESOFS( angles[1] ), 0, MSG_ENCTYPE_ANGLE },
+	{ ESOFS( angles[0] ), 0, 1, MSG_ENCTYPE_ANGLE },
+	{ ESOFS( angles[1] ), 0, 1, MSG_ENCTYPE_ANGLE },
 
-	{ ESOFS( teleported ), 1, MSG_ENCTYPE_BOOL },
+	{ ESOFS( teleported ), 1, 1, MSG_ENCTYPE_BOOL },
 
-	{ ESOFS( type ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( solid ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( frame ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( modelindex ), 32, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( svflags ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( skinnum ), 32, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( effects ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( ownerNum ), 32, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( targetNum ), 32, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( sound ), 32, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( modelindex2 ), 32, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( attenuation ), 0, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( counterNum ), 32, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( bodyOwner ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( channel ), 32, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( events[1] ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( eventParms[1] ), 32, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( weapon ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( firemode ), 32, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( damage ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( range ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( team ), 32, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( type ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( solid ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( frame ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( modelindex ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( svflags ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( skinnum ), 32, 1, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( effects ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( ownerNum ), 32, 1, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( targetNum ), 32, 1, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( sound ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( modelindex2 ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( attenuation ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ ESOFS( counterNum ), 32, 1, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( bodyOwner ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( channel ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( events[1] ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( eventParms[1] ), 32, 1, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( weapon ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( firemode ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( damage ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( range ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( team ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
 
-	{ ESOFS( origin2[0] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( origin2[1] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( origin2[2] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin2[0] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin2[1] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin2[2] ), 0, 1, MSG_ENCTYPE_COORD },
 
-	{ ESOFS( linearMovementTimeStamp ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( linearMovement ), 1, MSG_ENCTYPE_BOOL },
-	{ ESOFS( linearMovementDuration ), 32, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( linearMovementVelocity[0] ), 0, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( linearMovementVelocity[1] ), 0, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( linearMovementVelocity[2] ), 0, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( linearMovementBegin[0] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementBegin[1] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementBegin[2] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementEnd[0] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementEnd[1] ), 0, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementEnd[2] ), 0, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementTimeStamp ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( linearMovement ), 1, 1, MSG_ENCTYPE_BOOL },
+	{ ESOFS( linearMovementDuration ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( linearMovementVelocity[0] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ ESOFS( linearMovementVelocity[1] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ ESOFS( linearMovementVelocity[2] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ ESOFS( linearMovementBegin[0] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementBegin[1] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementBegin[2] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementEnd[0] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementEnd[1] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementEnd[2] ), 0, 1, MSG_ENCTYPE_COORD },
 
-	{ ESOFS( itemNum ), 32, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( itemNum ), 32, 1, MSG_ENCTYPE_UBASE128 },
 
-	{ ESOFS( angles[2] ), 0, MSG_ENCTYPE_ANGLE },
+	{ ESOFS( angles[2] ), 0, 1, MSG_ENCTYPE_ANGLE },
 
-	{ ESOFS( colorRGBA ), 32, MSG_ENCTYPE_FIXED_INT32 },
+	{ ESOFS( colorRGBA ), 32, 1, MSG_ENCTYPE_FIXED_INT32 },
 
-	{ ESOFS( light ), 32, MSG_ENCTYPE_FIXED_INT32 },
+	{ ESOFS( light ), 32, 1, MSG_ENCTYPE_FIXED_INT32 },
 };
 
 /*
@@ -840,7 +1039,7 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 		return;
 	}
 
-	byteMask = MSG_CompareFields( from, to, fields, numFields, fieldMask, sizeof( fieldMask ) );
+	byteMask = MSG_CompareStructs( from, to, fields, numFields, fieldMask, sizeof( fieldMask ) );
 	if( !byteMask && !force ) {
 		// no changes
 		return;
@@ -850,7 +1049,7 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 
 	MSG_WriteFieldMask( msg, fieldMask, byteMask );
 
-	MSG_WriteFields( msg, to, fields, numFields, fieldMask, byteMask );
+	MSG_WriteStructFields( msg, from, to, fields, numFields, fieldMask, byteMask );
 }
 
 /*
@@ -885,7 +1084,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 	
 	MSG_ReadFieldMask( msg, fieldMask, sizeof( fieldMask ), byteMask );
 
-	MSG_ReadFields( msg, to, fields, numFields, fieldMask, sizeof( fieldMask ), byteMask );
+	MSG_ReadStructFields( msg, from, to, fields, numFields, fieldMask, sizeof( fieldMask ), byteMask );
 }
 
 //==================================================
@@ -895,15 +1094,15 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 #define UCOFS( x ) offsetof( usercmd_t,x )
 
 static const msg_field_t usercmd_fields[] = {
-	{ UCOFS( angles[0] ), 16, MSG_ENCTYPE_FIXED_INT16 },
-	{ UCOFS( angles[1] ), 16, MSG_ENCTYPE_FIXED_INT16 },
-	{ UCOFS( angles[2] ), 16, MSG_ENCTYPE_FIXED_INT16 },
+	{ UCOFS( angles[0] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
+	{ UCOFS( angles[1] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
+	{ UCOFS( angles[2] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
 
-	{ UCOFS( forwardmove ), 0, MSG_ENCTYPE_FIXED_INT8 },
-	{ UCOFS( sidemove ), 0, MSG_ENCTYPE_FIXED_INT8 },
-	{ UCOFS( upmove ), 0, MSG_ENCTYPE_FIXED_INT8 },
+	{ UCOFS( forwardmove ), 0, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ UCOFS( sidemove ), 0, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ UCOFS( upmove ), 0, 1, MSG_ENCTYPE_FIXED_INT8 },
 
-	{ UCOFS( buttons ), 32, MSG_ENCTYPE_UBASE128 },
+	{ UCOFS( buttons ), 32, 1, MSG_ENCTYPE_UBASE128 },
 };
 
 /*
