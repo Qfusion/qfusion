@@ -1612,8 +1612,8 @@ void Bot::ApplyCheatingGroundAcceleration( const usercmd_t *ucmd ) {
 	float frameTimeSeconds = 0.0001f * game.frametime;
 	float factor = speedGainPerSecond * frameTimeSeconds;
 
-	VectorMA( self->velocity, factor * ucmd->forwardmove, forward, self->velocity );
-	VectorMA( self->velocity, factor * ucmd->sidemove, right, self->velocity );
+	VectorMA( self->velocity, factor * ucmd->forwardmove / 127.0f, forward, self->velocity );
+	VectorMA( self->velocity, factor * ucmd->sidemove / 127.0f, right, self->velocity );
 
 	float squareSpeed = VectorLengthSquared( self->velocity );
 	if( squareSpeed > 1 ) {
