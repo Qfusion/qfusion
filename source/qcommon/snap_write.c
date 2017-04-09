@@ -73,7 +73,7 @@ static void SNAP_EmitPacketEntities( ginfo_t *gi, client_snapshot_t *from, clien
 			// in any bytes being emited if the entity has not changed at all
 			// note that players are always 'newentities', this updates their oldorigin always
 			// and prevents warping ( wsw : jal : I removed it from the players )
-			MSG_WriteDeltaEntity( oldent, newent, msg, false );
+			MSG_WriteDeltaEntity( msg, oldent, newent, false );
 			oldindex++;
 			newindex++;
 			continue;
@@ -81,14 +81,14 @@ static void SNAP_EmitPacketEntities( ginfo_t *gi, client_snapshot_t *from, clien
 
 		if( newnum < oldnum ) {
 			// this is a new entity, send it from the baseline
-			MSG_WriteDeltaEntity( &baselines[newnum], newent, msg, true );
+			MSG_WriteDeltaEntity( msg, &baselines[newnum], newent, true );
 			newindex++;
 			continue;
 		}
 
 		if( newnum > oldnum ) {
 			// the old entity isn't present in the new message
-			MSG_WriteDeltaEntity( oldent, NULL, msg, false );
+			MSG_WriteDeltaEntity( msg, oldent, NULL, false );
 			oldindex++;
 			continue;
 		}
@@ -158,309 +158,9 @@ static void SNAP_WriteDeltaGameStateToClient( client_snapshot_t *from, client_sn
 /*
 * SNAP_WritePlayerstateToClient
 */
-static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *ps, msg_t *msg ) {
-	int i;
-	int pflags;
-	player_state_t dummy;
-	int statbits[SNAP_STATS_LONGS];
-
-	if( !ops ) {
-		memset( &dummy, 0, sizeof( dummy ) );
-		ops = &dummy;
-	}
-
-	//
-	// determine what needs to be sent
-	//
-	pflags = 0;
-
-	if( ps->pmove.pm_type != ops->pmove.pm_type ) {
-		pflags |= PS_M_TYPE;
-	}
-
-	if( ps->pmove.origin[0] != ops->pmove.origin[0] ) {
-		pflags |= PS_M_ORIGIN0;
-	}
-	if( ps->pmove.origin[1] != ops->pmove.origin[1] ) {
-		pflags |= PS_M_ORIGIN1;
-	}
-	if( ps->pmove.origin[2] != ops->pmove.origin[2] ) {
-		pflags |= PS_M_ORIGIN2;
-	}
-
-	if( ps->pmove.velocity[0] != ops->pmove.velocity[0] ) {
-		pflags |= PS_M_VELOCITY0;
-	}
-	if( ps->pmove.velocity[1] != ops->pmove.velocity[1] ) {
-		pflags |= PS_M_VELOCITY1;
-	}
-	if( ps->pmove.velocity[2] != ops->pmove.velocity[2] ) {
-		pflags |= PS_M_VELOCITY2;
-	}
-
-	if( ps->pmove.pm_time != ops->pmove.pm_time ) {
-		pflags |= PS_M_TIME;
-	}
-
-	if( ps->pmove.skim_time != ops->pmove.skim_time ) {
-		pflags |= PS_M_SKIM;
-	}
-
-	if( ps->pmove.pm_flags != ops->pmove.pm_flags ) {
-		pflags |= PS_M_FLAGS;
-	}
-
-	if( ps->pmove.delta_angles[0] != ops->pmove.delta_angles[0] ) {
-		pflags |= PS_M_DELTA_ANGLES0;
-	}
-	if( ps->pmove.delta_angles[1] != ops->pmove.delta_angles[1] ) {
-		pflags |= PS_M_DELTA_ANGLES1;
-	}
-	if( ps->pmove.delta_angles[2] != ops->pmove.delta_angles[2] ) {
-		pflags |= PS_M_DELTA_ANGLES2;
-	}
-
-	if( ps->event[0] ) {
-		pflags |= PS_EVENT;
-	}
-
-	if( ps->event[1] ) {
-		pflags |= PS_EVENT2;
-	}
-
-	if( ps->viewangles[0] != ops->viewangles[0]
-		|| ps->viewangles[1] != ops->viewangles[1]
-		|| ps->viewangles[2] != ops->viewangles[2] ) {
-		pflags |= PS_VIEWANGLES;
-	}
-
-	if( ps->pmove.gravity != ops->pmove.gravity ) {
-		pflags |= PS_M_GRAVITY;
-	}
-
-	if( ps->weaponState != ops->weaponState ) {
-		pflags |= PS_WEAPONSTATE;
-	}
-
-	if( ps->fov != ops->fov ) {
-		pflags |= PS_FOV;
-	}
-
-	if( ps->POVnum != ops->POVnum ) {
-		pflags |= PS_POVNUM;
-	}
-
-	if( ps->playerNum != ops->playerNum ) {
-		pflags |= PS_PLAYERNUM;
-	}
-
-	if( ps->viewheight != ops->viewheight ) {
-		pflags |= PS_VIEWHEIGHT;
-	}
-
-	for( i = 0; i < PM_STAT_SIZE; i++ ) {
-		if( ps->pmove.stats[i] != ops->pmove.stats[i] ) {
-			pflags |= PS_PMOVESTATS;
-			break;
-		}
-	}
-
-	for( i = 0; i < MAX_ITEMS; i++ ) {
-		if( ps->inventory[i] != ops->inventory[i] ) {
-			pflags |= PS_INVENTORY;
-			break;
-		}
-	}
-
-	if( ps->plrkeys != ops->plrkeys ) {
-		pflags |= PS_PLRKEYS;
-	}
-
-	//
-	// write it
-	//
+static void SNAP_WritePlayerstateToClient( msg_t *msg, const player_state_t *ops, player_state_t *ps ) {
 	MSG_WriteUint8( msg, svc_playerinfo );
-
-	if( pflags & 0xff000000 ) {
-		pflags |= PS_MOREBITS3 | PS_MOREBITS2 | PS_MOREBITS1;
-	} else if( pflags & 0x00ff0000 ) {
-		pflags |= PS_MOREBITS2 | PS_MOREBITS1;
-	} else if( pflags & 0x0000ff00 ) {
-		pflags |= PS_MOREBITS1;
-	}
-
-	MSG_WriteUint8( msg, pflags & 255 );
-
-	if( pflags & 0xff000000 ) {
-		MSG_WriteUint8( msg, ( pflags >> 8 ) & 255 );
-		MSG_WriteUint8( msg, ( pflags >> 16 ) & 255 );
-		MSG_WriteUint8( msg, ( pflags >> 24 ) & 255 );
-	} else if( pflags & 0x00ff0000 ) {
-		MSG_WriteUint8( msg, ( pflags >> 8 ) & 255 );
-		MSG_WriteUint8( msg, ( pflags >> 16 ) & 255 );
-	} else if( pflags & 0x0000ff00 ) {
-		MSG_WriteUint8( msg, ( pflags >> 8 ) & 255 );
-	}
-
-	//
-	// write the pmove_state_t
-	//
-	if( pflags & PS_M_TYPE ) {
-		MSG_WriteUint8( msg, ps->pmove.pm_type );
-	}
-
-	if( pflags & PS_M_ORIGIN0 ) {
-		MSG_WriteFloat( msg, ps->pmove.origin[0] );
-	}
-	if( pflags & PS_M_ORIGIN1 ) {
-		MSG_WriteFloat( msg, ps->pmove.origin[1] );
-	}
-	if( pflags & PS_M_ORIGIN2 ) {
-		MSG_WriteFloat( msg, ps->pmove.origin[2] );
-	}
-
-	if( pflags & PS_M_VELOCITY0 ) {
-		MSG_WriteHalfFloat( msg, ps->pmove.velocity[0] );
-	}
-	if( pflags & PS_M_VELOCITY1 ) {
-		MSG_WriteHalfFloat( msg, ps->pmove.velocity[1] );
-	}
-	if( pflags & PS_M_VELOCITY2 ) {
-		MSG_WriteHalfFloat( msg, ps->pmove.velocity[2] );
-	}
-
-	if( pflags & PS_M_TIME ) {
-		MSG_WriteUint8( msg, ps->pmove.pm_time );
-	}
-
-	if( pflags & PS_M_SKIM ) {
-		MSG_WriteUint8( msg, ps->pmove.skim_time );
-	}
-
-	if( pflags & PS_M_FLAGS ) {
-		MSG_WriteInt16( msg, ps->pmove.pm_flags );
-	}
-
-	if( pflags & PS_M_DELTA_ANGLES0 ) {
-		MSG_WriteInt16( msg, ps->pmove.delta_angles[0] );
-	}
-	if( pflags & PS_M_DELTA_ANGLES1 ) {
-		MSG_WriteInt16( msg, ps->pmove.delta_angles[1] );
-	}
-	if( pflags & PS_M_DELTA_ANGLES2 ) {
-		MSG_WriteInt16( msg, ps->pmove.delta_angles[2] );
-	}
-
-	if( pflags & PS_EVENT ) {
-		if( !ps->eventParm[0] ) {
-			MSG_WriteUint8( msg, ps->event[0] & ~EV_INVERSE );
-		} else {
-			MSG_WriteUint8( msg, ps->event[0] | EV_INVERSE );
-			MSG_WriteUint8( msg, ps->eventParm[0] );
-		}
-	}
-
-	if( pflags & PS_EVENT2 ) {
-		if( !ps->eventParm[1] ) {
-			MSG_WriteUint8( msg, ps->event[1] & ~EV_INVERSE );
-		} else {
-			MSG_WriteUint8( msg, ps->event[1] | EV_INVERSE );
-			MSG_WriteUint8( msg, ps->eventParm[1] );
-		}
-	}
-
-	if( pflags & PS_VIEWANGLES ) {
-		MSG_WriteAngle16( msg, ps->viewangles[0] );
-		MSG_WriteAngle16( msg, ps->viewangles[1] );
-		MSG_WriteAngle16( msg, ps->viewangles[2] );
-	}
-
-	if( pflags & PS_M_GRAVITY ) {
-		MSG_WriteInt16( msg, ps->pmove.gravity );
-	}
-
-	if( pflags & PS_WEAPONSTATE ) {
-		MSG_WriteUint8( msg, ps->weaponState );
-	}
-
-	if( pflags & PS_FOV ) {
-		MSG_WriteUint8( msg, (uint8_t)ps->fov );
-	}
-
-	if( pflags & PS_POVNUM ) {
-		MSG_WriteUint8( msg, (uint8_t)ps->POVnum );
-	}
-
-	if( pflags & PS_PLAYERNUM ) {
-		MSG_WriteUint8( msg, (uint8_t)ps->playerNum );
-	}
-
-	if( pflags & PS_VIEWHEIGHT ) {
-		MSG_WriteInt8( msg, (char)ps->viewheight );
-	}
-
-	if( pflags & PS_PMOVESTATS ) {
-		int pmstatbits;
-
-		pmstatbits = 0;
-		for( i = 0; i < PM_STAT_SIZE; i++ ) {
-			if( ps->pmove.stats[i] != ops->pmove.stats[i] ) {
-				pmstatbits |= ( 1 << i );
-			}
-		}
-
-		MSG_WriteInt16( msg, pmstatbits & 0xFFFF );
-
-		for( i = 0; i < PM_STAT_SIZE; i++ ) {
-			if( pmstatbits & ( 1 << i ) ) {
-				MSG_WriteInt16( msg, ps->pmove.stats[i] );
-			}
-		}
-	}
-
-	if( pflags & PS_INVENTORY ) {
-		int invstatbits[SNAP_INVENTORY_LONGS];
-
-		// send inventory stats
-		memset( invstatbits, 0, sizeof( invstatbits ) );
-		for( i = 0; i < MAX_ITEMS; i++ ) {
-			if( ps->inventory[i] != ops->inventory[i] ) {
-				invstatbits[i >> 5] |= ( 1 << ( i & 31 ) );
-			}
-		}
-
-		for( i = 0; i < SNAP_INVENTORY_LONGS; i++ ) {
-			MSG_WriteInt32( msg, invstatbits[i] );
-		}
-
-		for( i = 0; i < MAX_ITEMS; i++ ) {
-			if( invstatbits[i >> 5] & ( 1 << ( i & 31 ) ) ) {
-				MSG_WriteUint8( msg, (uint8_t)ps->inventory[i] );
-			}
-		}
-	}
-
-	if( pflags & PS_PLRKEYS ) {
-		MSG_WriteUint8( msg, ps->plrkeys );
-	}
-
-	// send stats
-	memset( statbits, 0, sizeof( statbits ) );
-	for( i = 0; i < PS_MAX_STATS; i++ ) {
-		if( ps->stats[i] != ops->stats[i] ) {
-			statbits[i >> 5] |= 1 << ( i & 31 );
-		}
-	}
-
-	for( i = 0; i < SNAP_STATS_LONGS; i++ ) {
-		MSG_WriteInt32( msg, statbits[i] );
-	}
-
-	for( i = 0; i < PS_MAX_STATS; i++ ) {
-		if( statbits[i >> 5] & ( 1 << ( i & 31 ) ) ) {
-			MSG_WriteInt16( msg, ps->stats[i] );
-		}
-	}
+	MSG_WriteDeltaPlayerstate( msg, ops, ps );
 }
 
 /*
@@ -724,9 +424,9 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, uns
 	// delta encode the playerstate
 	for( i = 0; i < frame->numplayers; i++ ) {
 		if( oldframe && oldframe->numplayers > i ) {
-			SNAP_WritePlayerstateToClient( &oldframe->ps[i], &frame->ps[i], msg );
+			SNAP_WritePlayerstateToClient( msg, &oldframe->ps[i], &frame->ps[i] );
 		} else {
-			SNAP_WritePlayerstateToClient( NULL, &frame->ps[i], msg );
+			SNAP_WritePlayerstateToClient( msg, NULL, &frame->ps[i] );
 		}
 	}
 	MSG_WriteUint8( msg, 0 );

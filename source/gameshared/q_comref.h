@@ -58,9 +58,9 @@ enum {
 typedef struct usercmd_s {
 	uint8_t msec;
 	uint32_t buttons;
+	uint32_t serverTimeStamp;
 	int16_t angles[3];
 	int8_t forwardmove, sidemove, upmove;
-	uint32_t serverTimeStamp;
 } usercmd_t;
 
 #define MAX_PM_STATS 16
@@ -454,11 +454,10 @@ typedef struct {
 	float viewheight;
 	float fov;                  // horizontal field of view (unused)
 
-	uint8_t weaponState;
-
 	int inventory[MAX_ITEMS];
 	short stats[PS_MAX_STATS];  // fast status bar updates
-	uint8_t plrkeys;                // infos on the pressed keys of chased player (self if not chasing)
+	uint32_t plrkeys;           // infos on the pressed keys of chased player (self if not chasing)
+	uint8_t weaponState;
 } player_state_t;
 
 typedef struct {

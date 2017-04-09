@@ -258,7 +258,7 @@ static void TV_Downstream_Baselines_f( client_t *client ) {
 	while( message.cursize < FRAGMENT_SIZE * 3 && start < MAX_EDICTS ) {
 		if( client->relay->baselines[start].number ) {
 			MSG_WriteUint8( &message, svc_spawnbaseline );
-			MSG_WriteDeltaEntity( &nullstate, &client->relay->baselines[start], &message, true );
+			MSG_WriteDeltaEntity( &message, &nullstate, &client->relay->baselines[start], true );
 		}
 		start++;
 	}

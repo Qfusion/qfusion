@@ -435,7 +435,7 @@ static void SV_Baselines_f( client_t *client ) {
 		base = &sv.baselines[start];
 		if( base->modelindex || base->sound || base->effects ) {
 			MSG_WriteUint8( &tmpMessage, svc_spawnbaseline );
-			MSG_WriteDeltaEntity( &nullstate, base, &tmpMessage, true );
+			MSG_WriteDeltaEntity( &tmpMessage, &nullstate, base, true );
 		}
 		start++;
 	}

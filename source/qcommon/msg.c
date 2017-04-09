@@ -703,7 +703,7 @@ static void MSG_ReadArrayElems( msg_t *msg, void *to, const msg_field_t *field, 
 /*
 * MSG_WriteDeltaArray
 */
-void MSG_WriteDeltaArray( msg_t *msg, const void *from, const void *to, const msg_field_t *field ) {
+static void MSG_WriteDeltaArray( msg_t *msg, const void *from, const void *to, const msg_field_t *field ) {
 	unsigned byteMask;
 	uint8_t elemMask[32] = { 0 };
 	const size_t numElems = field->count;
@@ -730,10 +730,10 @@ void MSG_WriteDeltaArray( msg_t *msg, const void *from, const void *to, const ms
 /*
 * MSG_ReadDeltaArray
 */
-void MSG_ReadDeltaArray( msg_t *msg, const void *from, void *to, const msg_field_t *field ) {
+static void MSG_ReadDeltaArray( msg_t *msg, const void *from, void *to, const msg_field_t *field ) {
 	unsigned byteMask;
 	uint8_t elemMask[32] = { 0 };
-	const size_t bytes = MSG_FieldBytes( field );
+	//const size_t bytes = MSG_FieldBytes( field );
 	const size_t maxElems = field->count;
 
 	assert( maxElems < 256 );
@@ -742,7 +742,8 @@ void MSG_ReadDeltaArray( msg_t *msg, const void *from, void *to, const msg_field
 	}
 
 	// set everything to the state we are delta'ing from
-	memcpy( (uint8_t *)to + field->offset, (uint8_t *)from + field->offset, bytes * maxElems );
+	// we actually do this in MSG_ReadDeltaStruct
+	// memcpy( (uint8_t *)to + field->offset, (uint8_t *)from + field->offset, bytes * maxElems );
 
 	if( maxElems <= 8 ) {
 		// we don't need the byteMask in case all field bits fit a single byte
@@ -1005,7 +1006,7 @@ static void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned
 * Writes part of a packetentities message.
 * Can delta from either a baseline or a previous packet_entity
 */
-void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg, bool force ) {
+void MSG_WriteDeltaEntity( msg_t *msg, const entity_state_t *from, entity_state_t *to, bool force ) {
 	int number;
 	unsigned byteMask;
 	uint8_t fieldMask[32] = { 0 };
@@ -1073,7 +1074,7 @@ int MSG_ReadEntityNumber( msg_t *msg, bool *remove, unsigned *byteMask ) {
 *
 * Can go from either a baseline or a previous packet_entity
 */
-void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, int number, unsigned byteMask ) {
+void MSG_ReadDeltaEntity( msg_t *msg, const entity_state_t *from, entity_state_t *to, int number, unsigned byteMask ) {
 	uint8_t fieldMask[32] = { 0 };
 	const msg_field_t *fields = ent_state_fields;
 	int numFields = sizeof( ent_state_fields ) / sizeof( ent_state_fields[0] );
@@ -1108,7 +1109,7 @@ static const msg_field_t usercmd_fields[] = {
 /*
 * MSG_WriteDeltaUsercmd
 */
-void MSG_WriteDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *cmd ) {
+void MSG_WriteDeltaUsercmd( msg_t *msg, const usercmd_t *from, usercmd_t *cmd ) {
 	int numFields = sizeof( usercmd_fields ) / sizeof( usercmd_fields[0] );
 	const msg_field_t *fields = usercmd_fields;
 
@@ -1120,7 +1121,7 @@ void MSG_WriteDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *cmd ) {
 /*
 * MSG_ReadDeltaUsercmd
 */
-void MSG_ReadDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *move ) {
+void MSG_ReadDeltaUsercmd( msg_t *msg, const usercmd_t *from, usercmd_t *move ) {
 	int numFields = sizeof( usercmd_fields ) / sizeof( usercmd_fields[0] );
 	const msg_field_t *fields = usercmd_fields;
 
@@ -1129,3 +1130,88 @@ void MSG_ReadDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *move ) {
 	move->serverTimeStamp = MSG_ReadInt32( msg );
 }
 
+//==================================================
+// DELTA PLAYER STATES
+//==================================================
+
+#define PSOFS( x ) offsetof( player_state_t,x )
+
+static const msg_field_t player_state_msg_fields[] = {
+	{ PSOFS( pmove.pm_type ), 32, 1, MSG_ENCTYPE_UBASE128 },
+
+	{ PSOFS( pmove.origin[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ PSOFS( pmove.origin[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ PSOFS( pmove.origin[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
+
+	{ PSOFS( pmove.velocity[0] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ PSOFS( pmove.velocity[1] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ PSOFS( pmove.velocity[2] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+
+	{ PSOFS( pmove.pm_time ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( pmove.skim_time ), 32, 1, MSG_ENCTYPE_UBASE128 },
+
+	{ PSOFS( pmove.pm_flags ), 32, 1, MSG_ENCTYPE_UBASE128 },
+
+	{ PSOFS( pmove.delta_angles[0] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
+	{ PSOFS( pmove.delta_angles[1] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
+	{ PSOFS( pmove.delta_angles[2] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
+
+	{ PSOFS( event[0] ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( eventParm[0] ), 32, 1, MSG_ENCTYPE_UBASE128 },
+
+	{ PSOFS( event[1] ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( eventParm[1] ), 32, 1, MSG_ENCTYPE_UBASE128 },
+
+	{ PSOFS( viewangles[0] ), 0, 1, MSG_ENCTYPE_ANGLE },
+	{ PSOFS( viewangles[1] ), 0, 1, MSG_ENCTYPE_ANGLE },
+	{ PSOFS( viewangles[2] ), 0, 1, MSG_ENCTYPE_ANGLE },
+
+	{ PSOFS( pmove.gravity ), 32, 1, MSG_ENCTYPE_UBASE128 },
+
+	{ PSOFS( weaponState ), 8, 1, MSG_ENCTYPE_FIXED_INT8 },
+
+	{ PSOFS( fov ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+
+	{ PSOFS( POVnum ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( playerNum ), 32, 1, MSG_ENCTYPE_UBASE128 },
+
+	{ PSOFS( viewheight ), 32, 1, MSG_ENCTYPE_HALF_FLOAT },
+
+	{ PSOFS( plrkeys ), 32, 1, MSG_ENCTYPE_UBASE128 },
+
+	{ PSOFS( stats ), 16, PS_MAX_STATS, MSG_ENCTYPE_BASE128 },
+
+	{ PSOFS( pmove.stats ), 16, PM_STAT_SIZE, MSG_ENCTYPE_BASE128 },
+	{ PSOFS( inventory ), 32, MAX_ITEMS, MSG_ENCTYPE_UBASE128 },
+};
+
+/*
+* MSG_WriteDeltaPlayerstate
+*/
+void MSG_WriteDeltaPlayerstate( msg_t *msg, const player_state_t *ops, player_state_t *ps ) {
+	int numFields = sizeof( player_state_msg_fields ) / sizeof( player_state_msg_fields[0] );
+	const msg_field_t *fields = player_state_msg_fields;
+	static player_state_t dummy;
+
+	if( !ops ) {
+		ops = &dummy;
+	}
+
+	MSG_WriteDeltaStruct( msg, ops, ps, fields, numFields );
+}
+
+/*
+* MSG_ReadDeltaPlayerstate
+*/
+void MSG_ReadDeltaPlayerstate( msg_t *msg, const player_state_t *ops, player_state_t *ps ) {
+	int numFields = sizeof( player_state_msg_fields ) / sizeof( player_state_msg_fields[0] );
+	const msg_field_t *fields = player_state_msg_fields;
+	static player_state_t dummy;
+
+	if( !ops ) {
+		ops = &dummy;
+	}
+	memcpy( ps, ops, sizeof( player_state_t ) );
+
+	MSG_ReadDeltaStruct( msg, ops, ps, sizeof( player_state_t ), fields, numFields );
+}

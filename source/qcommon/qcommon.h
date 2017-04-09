@@ -95,8 +95,9 @@ void MSG_WriteString( msg_t *sb, const char *s );
 #define MSG_WriteCoord( sb, f ) ( MSG_WriteIntBase128( ( sb ), Q_rint( ( f * 16.0f ) ) ) )
 #define MSG_WritePos( sb, pos ) ( MSG_WriteCoord( ( sb ), ( pos )[0] ), MSG_WriteCoord( sb, ( pos )[1] ), MSG_WriteCoord( sb, ( pos )[2] ) )
 #define MSG_WriteAngle16( sb, f ) ( MSG_WriteInt16( ( sb ), ANGLE2SHORT( ( f ) ) ) )
-void MSG_WriteDeltaUsercmd( msg_t *sb, struct usercmd_s *from, struct usercmd_s *cmd );
-void MSG_WriteDeltaEntity( struct entity_state_s *from, struct entity_state_s *to, msg_t *msg, bool force );
+void MSG_WriteDeltaUsercmd( msg_t *sb, const struct usercmd_s *from, struct usercmd_s *cmd );
+void MSG_WriteDeltaEntity( msg_t *msg, const struct entity_state_s *from, struct entity_state_s *to, bool force );
+void MSG_WriteDeltaPlayerstate( msg_t *msg, const player_state_t *ops, player_state_t *ps );
 void MSG_WriteDir( msg_t *sb, vec3_t vector );
 void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const msg_field_t *fields, size_t numFields );
 
@@ -118,10 +119,11 @@ char *MSG_ReadStringLine( msg_t *sb );
 #define MSG_ReadCoord( sb ) ( (float)MSG_ReadIntBase128( ( sb ) ) / 16.0f )
 #define MSG_ReadPos( sb, pos ) ( ( pos )[0] = MSG_ReadCoord( ( sb ) ), ( pos )[1] = MSG_ReadCoord( ( sb ) ), ( pos )[2] = MSG_ReadCoord( ( sb ) ) )
 #define MSG_ReadAngle16( sb ) ( SHORT2ANGLE( MSG_ReadInt16( ( sb ) ) ) )
-void MSG_ReadDeltaUsercmd( msg_t *sb, struct usercmd_s *from, struct usercmd_s *cmd );
+void MSG_ReadDeltaUsercmd( msg_t *sb, const struct usercmd_s *from, struct usercmd_s *cmd );
 
 int MSG_ReadEntityNumber( msg_t *msg, bool *remove, unsigned *byteMask );
-void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, int number, unsigned byteMask );
+void MSG_ReadDeltaEntity( msg_t *msg, const entity_state_t *from, entity_state_t *to, int number, unsigned byteMask );
+void MSG_ReadDeltaPlayerstate( msg_t *msg, const player_state_t *ops, player_state_t *ps );
 
 void MSG_ReadDir( msg_t *sb, vec3_t vector );
 void MSG_ReadData( msg_t *sb, void *buffer, size_t length );
@@ -142,9 +144,6 @@ purelist_t *Com_FindPakInPureList( purelist_t *purelist, const char *pakname );
 void Com_FreePureList( purelist_t **purelist );
 
 //============================================================================
-
-#define SNAP_INVENTORY_LONGS            ( ( MAX_ITEMS + 31 ) / 32 )
-#define SNAP_STATS_LONGS                ( ( PS_MAX_STATS + 31 ) / 32 )
 
 #define SNAP_MAX_DEMO_META_DATA_SIZE    16 * 1024
 
@@ -292,41 +291,6 @@ enum clc_ops_e {
 #define FRAMESNAP_FLAG_DELTA        ( 1 << 0 )
 #define FRAMESNAP_FLAG_ALLENTITIES  ( 1 << 1 )
 #define FRAMESNAP_FLAG_MULTIPOV     ( 1 << 2 )
-
-// plyer_state_t communication
-
-#define PS_M_TYPE       ( 1 << 0 )
-#define PS_M_ORIGIN0    ( 1 << 1 )
-#define PS_M_ORIGIN1    ( 1 << 2 )
-#define PS_M_ORIGIN2    ( 1 << 3 )
-#define PS_M_VELOCITY0  ( 1 << 4 )
-#define PS_M_VELOCITY1  ( 1 << 5 )
-#define PS_M_VELOCITY2  ( 1 << 6 )
-#define PS_MOREBITS1    ( 1 << 7 )
-
-#define PS_M_TIME       ( 1 << 8 )
-#define PS_EVENT        ( 1 << 9 )
-#define PS_EVENT2       ( 1 << 10 )
-#define PS_WEAPONSTATE  ( 1 << 11 )
-#define PS_INVENTORY    ( 1 << 12 )
-#define PS_FOV          ( 1 << 13 )
-#define PS_VIEWANGLES   ( 1 << 14 )
-#define PS_MOREBITS2    ( 1 << 15 )
-
-#define PS_POVNUM       ( 1 << 16 )
-#define PS_VIEWHEIGHT   ( 1 << 17 )
-#define PS_PMOVESTATS   ( 1 << 18 )
-#define PS_M_FLAGS      ( 1 << 19 )
-#define PS_PLRKEYS      ( 1 << 20 )
-#define PS_M_SKIM       ( 1 << 21 )
-//...
-#define PS_MOREBITS3    ( 1 << 23 )
-
-#define PS_M_GRAVITY        ( 1 << 24 )
-#define PS_M_DELTA_ANGLES0  ( 1 << 25 )
-#define PS_M_DELTA_ANGLES1  ( 1 << 26 )
-#define PS_M_DELTA_ANGLES2  ( 1 << 27 )
-#define PS_PLAYERNUM        ( 1 << 28 )
 
 /*
 ==============================================================
