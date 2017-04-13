@@ -66,49 +66,14 @@ FRAME PARSING
 * SNAP_ParseDeltaGameState
 */
 static void SNAP_ParseDeltaGameState( msg_t *msg, snapshot_t *oldframe, snapshot_t *newframe ) {
-	short statbits;
-	uint8_t bits;
-	int i;
-	game_state_t *gameState;
-
-	// start from old state or 0 if none
-	gameState = &newframe->gameState;
-	if( oldframe ) {
-		*gameState = oldframe->gameState;
-	} else {
-		memset( gameState, 0, sizeof( game_state_t ) );
-	}
-
-	assert( MAX_GAME_STATS == 16 );
-	assert( MAX_GAME_LONGSTATS == 8 );
-
-	//memcpy( gameState, deltaGameState, sizeof( game_state_t ) );
-
-	bits = (uint8_t)MSG_ReadUint8( msg );
-	statbits = MSG_ReadInt16( msg );
-
-	if( bits ) {
-		for( i = 0; i < MAX_GAME_LONGSTATS; i++ ) {
-			if( bits & ( 1 << i ) ) {
-				gameState->longstats[i] = (unsigned int)MSG_ReadInt32( msg );
-			}
-		}
-	}
-
-	if( statbits ) {
-		for( i = 0; i < MAX_GAME_STATS; i++ ) {
-			if( statbits & ( 1 << i ) ) {
-				gameState->stats[i] = MSG_ReadInt16( msg );
-			}
-		}
-	}
+	MSG_ReadDeltaGameState( msg, oldframe ? &oldframe->gameState : NULL, &newframe->gameState );
 }
 
 /*
 * SNAP_ParsePlayerstate
 */
 static void SNAP_ParsePlayerstate( msg_t *msg, const player_state_t *oldstate, player_state_t *state ) {
-	MSG_ReadDeltaPlayerstate( msg, oldstate, state );
+	MSG_ReadDeltaPlayerState( msg, oldstate, state );
 }
 
 /*

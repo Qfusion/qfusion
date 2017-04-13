@@ -1163,7 +1163,7 @@ static const msg_field_t player_state_msg_fields[] = {
 /*
 * MSG_WriteDeltaPlayerstate
 */
-void MSG_WriteDeltaPlayerstate( msg_t *msg, const player_state_t *ops, player_state_t *ps ) {
+void MSG_WriteDeltaPlayerState( msg_t *msg, const player_state_t *ops, const player_state_t *ps ) {
 	int numFields = sizeof( player_state_msg_fields ) / sizeof( player_state_msg_fields[0] );
 	const msg_field_t *fields = player_state_msg_fields;
 	static player_state_t dummy;
@@ -1178,7 +1178,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, const player_state_t *ops, player_st
 /*
 * MSG_ReadDeltaPlayerstate
 */
-void MSG_ReadDeltaPlayerstate( msg_t *msg, const player_state_t *ops, player_state_t *ps ) {
+void MSG_ReadDeltaPlayerState( msg_t *msg, const player_state_t *ops, player_state_t *ps ) {
 	int numFields = sizeof( player_state_msg_fields ) / sizeof( player_state_msg_fields[0] );
 	const msg_field_t *fields = player_state_msg_fields;
 	static player_state_t dummy;
@@ -1189,4 +1189,45 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, const player_state_t *ops, player_sta
 	memcpy( ps, ops, sizeof( player_state_t ) );
 
 	MSG_ReadDeltaStruct( msg, ops, ps, sizeof( player_state_t ), fields, numFields );
+}
+
+//==================================================
+// DELTA GAME STATES
+//==================================================
+
+#define GSOFS( x ) offsetof( game_state_t,x )
+
+static const msg_field_t game_state_msg_fields[] = {
+	{ GSOFS( stats ), 16, MAX_GAME_STATS, MSG_ENCTYPE_BASE128 },
+	{ GSOFS( longstats ), 32, MAX_GAME_LONGSTATS, MSG_ENCTYPE_UBASE128 },
+};
+
+/*
+* MSG_WriteDeltaGameState
+*/
+void MSG_WriteDeltaGameState( msg_t *msg, const game_state_t *from, const game_state_t *to ) {
+	int numFields = sizeof( game_state_msg_fields ) / sizeof( game_state_msg_fields[0] );
+	const msg_field_t *fields = game_state_msg_fields;
+	static game_state_t dummy;
+
+	if( !from ) {
+		from = &dummy;
+	}
+
+	MSG_WriteDeltaStruct( msg, from, to, fields, numFields );
+}
+
+/*
+* MSG_ReadDeltaGameState
+*/
+void MSG_ReadDeltaGameState( msg_t *msg, const game_state_t *from, game_state_t *to ) {
+	int numFields = sizeof( game_state_msg_fields ) / sizeof( game_state_msg_fields[0] );
+	const msg_field_t *fields = game_state_msg_fields;
+	static game_state_t dummy;
+
+	if( !from ) {
+		from = &dummy;
+	}
+
+	MSG_ReadDeltaStruct( msg, from, to, sizeof( game_state_t ), fields, numFields );
 }

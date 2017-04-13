@@ -101,58 +101,8 @@ static void SNAP_EmitPacketEntities( ginfo_t *gi, client_snapshot_t *from, clien
 * SNAP_WriteDeltaGameStateToClient
 */
 static void SNAP_WriteDeltaGameStateToClient( client_snapshot_t *from, client_snapshot_t *to, msg_t *msg ) {
-	int i;
-	short statbits;
-	uint8_t bits;
-	game_state_t *gameState, *deltaGameState;
-	game_state_t dummy;
-
-	gameState = &to->gameState;
-	if( !from ) {
-		memset( &dummy, 0, sizeof( dummy ) );
-		deltaGameState = &dummy;
-	} else {
-		deltaGameState = &from->gameState;
-	}
-
-	// FIXME: This protocol needs optimization
-
-	assert( MAX_GAME_STATS == 16 );
-	assert( MAX_GAME_LONGSTATS == 8 );
-
-	bits = 0;
-	for( i = 0; i < MAX_GAME_LONGSTATS; i++ ) {
-		if( deltaGameState->longstats[i] != gameState->longstats[i] ) {
-			bits |= 1 << i;
-		}
-	}
-
-	statbits = 0;
-	for( i = 0; i < MAX_GAME_STATS; i++ ) {
-		if( deltaGameState->stats[i] != gameState->stats[i] ) {
-			statbits |= 1 << i;
-		}
-	}
-
 	MSG_WriteUint8( msg, svc_match );
-	MSG_WriteUint8( msg, bits );
-	MSG_WriteInt16( msg, statbits );
-
-	if( bits ) {
-		for( i = 0; i < MAX_GAME_LONGSTATS; i++ ) {
-			if( bits & ( 1 << i ) ) {
-				MSG_WriteInt32( msg, (int)gameState->longstats[i] );
-			}
-		}
-	}
-
-	if( statbits ) {
-		for( i = 0; i < MAX_GAME_STATS; i++ ) {
-			if( statbits & ( 1 << i ) ) {
-				MSG_WriteInt16( msg, gameState->stats[i] );
-			}
-		}
-	}
+	MSG_WriteDeltaGameState( msg, from ? &from->gameState : NULL, &to->gameState );
 }
 
 /*
@@ -160,7 +110,7 @@ static void SNAP_WriteDeltaGameStateToClient( client_snapshot_t *from, client_sn
 */
 static void SNAP_WritePlayerstateToClient( msg_t *msg, const player_state_t *ops, player_state_t *ps ) {
 	MSG_WriteUint8( msg, svc_playerinfo );
-	MSG_WriteDeltaPlayerstate( msg, ops, ps );
+	MSG_WriteDeltaPlayerState( msg, ops, ps );
 }
 
 /*
