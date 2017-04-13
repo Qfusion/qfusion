@@ -275,7 +275,6 @@ typedef enum MSG_ENCTYPE_e {
 	MSG_ENCTYPE_FLOAT,					// 32-bit floating point value
 	MSG_ENCTYPE_HALF_FLOAT,				// 16-bit floating point value
 
-	MSG_ENCTYPE_COORD,					// 32-bit float value snapped as a 20.4 fixed-point integer
 	MSG_ENCTYPE_ANGLE,					// 32-bit float angle value, normalized to [0..360], transmitted at half-precision
 
 	MSG_ENCTYPE_BASE128,				// base-128 encoded unsigned integer

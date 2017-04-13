@@ -98,13 +98,6 @@ void MSG_WriteUint16( msg_t *msg, unsigned c ) {
 	buf[1] = ( uint8_t )( ( c >> 8 ) & 0xff );
 }
 
-void MSG_WriteInt24( msg_t *msg, int c ) {
-	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 3 );
-	buf[0] = ( uint8_t )( c & 0xff );
-	buf[1] = ( uint8_t )( ( c >> 8 ) & 0xff );
-	buf[2] = ( uint8_t )( ( c >> 16 ) & 0xff );
-}
-
 void MSG_WriteInt32( msg_t *msg, int c ) {
 	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 4 );
 	buf[0] = ( uint8_t )( c & 0xff );
@@ -218,18 +211,6 @@ uint16_t MSG_ReadUint16( msg_t *msg ) {
 		return 0;
 	}
 	return ( uint16_t )( msg->data[msg->readcount - 2] | ( msg->data[msg->readcount - 1] << 8 ) );
-}
-
-int MSG_ReadInt24( msg_t *msg ) {
-	msg->readcount += 3;
-	if( msg->readcount > msg->cursize ) {
-		return -1;
-	}
-
-	return msg->data[msg->readcount - 3]
-		   | ( msg->data[msg->readcount - 2] << 8 )
-		   | ( msg->data[msg->readcount - 1] << 16 )
-		   | ( ( msg->data[msg->readcount - 1] & 0x80 ) ? ~0xFFFFFF : 0 );
 }
 
 int MSG_ReadInt32( msg_t *msg ) {
@@ -429,9 +410,6 @@ static void MSG_WriteField( msg_t *msg, const uint8_t *to, const msg_field_t *fi
 	case MSG_ENCTYPE_HALF_FLOAT:
 		MSG_WriteHalfFloat( msg, (*((float *)( to + field->offset ))) );
 		break;
-	case MSG_ENCTYPE_COORD:
-		MSG_WriteCoord( msg, *((float *)( to + field->offset )) );
-		break;
 	case MSG_ENCTYPE_ANGLE:
 		MSG_WriteHalfFloat( msg, anglemod( (*((float *)( to + field->offset ))) ) );
 		break;
@@ -504,9 +482,6 @@ static void MSG_ReadField( msg_t *msg, uint8_t *to, const msg_field_t *field ) {
 		break;
 	case MSG_ENCTYPE_HALF_FLOAT:
 		*((float *)( to + field->offset )) = MSG_ReadHalfFloat( msg );
-		break;
-	case MSG_ENCTYPE_COORD:
-		*((float *)( to + field->offset )) = MSG_ReadCoord( msg );
 		break;
 	case MSG_ENCTYPE_ANGLE:
 		*((float *)( to + field->offset )) = MSG_ReadHalfFloat( msg );
@@ -934,9 +909,9 @@ static const msg_field_t ent_state_fields[] = {
 	{ ESOFS( events[0] ), 32, 1, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( eventParms[0] ), 32, 1, MSG_ENCTYPE_BASE128 },
 
-	{ ESOFS( origin[0] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( origin[1] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( origin[2] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( origin[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( origin[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
 
 	{ ESOFS( angles[0] ), 0, 1, MSG_ENCTYPE_ANGLE },
 	{ ESOFS( angles[1] ), 0, 1, MSG_ENCTYPE_ANGLE },
@@ -966,9 +941,9 @@ static const msg_field_t ent_state_fields[] = {
 	{ ESOFS( range ), 32, 1, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( team ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
 
-	{ ESOFS( origin2[0] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( origin2[1] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( origin2[2] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( origin2[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( origin2[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( origin2[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
 
 	{ ESOFS( linearMovementTimeStamp ), 32, 1, MSG_ENCTYPE_UBASE128 },
 	{ ESOFS( linearMovement ), 1, 1, MSG_ENCTYPE_BOOL },
@@ -976,12 +951,12 @@ static const msg_field_t ent_state_fields[] = {
 	{ ESOFS( linearMovementVelocity[0] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
 	{ ESOFS( linearMovementVelocity[1] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
 	{ ESOFS( linearMovementVelocity[2] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( linearMovementBegin[0] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementBegin[1] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementBegin[2] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementEnd[0] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementEnd[1] ), 0, 1, MSG_ENCTYPE_COORD },
-	{ ESOFS( linearMovementEnd[2] ), 0, 1, MSG_ENCTYPE_COORD },
+	{ ESOFS( linearMovementBegin[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( linearMovementBegin[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( linearMovementBegin[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( linearMovementEnd[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( linearMovementEnd[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( linearMovementEnd[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
 
 	{ ESOFS( itemNum ), 32, 1, MSG_ENCTYPE_UBASE128 },
 
@@ -1006,7 +981,7 @@ static void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned
 * Writes part of a packetentities message.
 * Can delta from either a baseline or a previous packet_entity
 */
-void MSG_WriteDeltaEntity( msg_t *msg, const entity_state_t *from, entity_state_t *to, bool force ) {
+void MSG_WriteDeltaEntity( msg_t *msg, const entity_state_t *from, const entity_state_t *to, bool force ) {
 	int number;
 	unsigned byteMask;
 	uint8_t fieldMask[32] = { 0 };
