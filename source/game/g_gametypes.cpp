@@ -498,7 +498,7 @@ bool G_Match_CheckExtendPlayTime( void ) {
 		if( G_Match_Tied() ) {
 			GS_GamestatSetFlag( GAMESTAT_FLAG_MATCHEXTENDED, true );
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_PLAYTIME;
-			gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
+			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
 			if( g_match_extendedtime->value ) {
 				if( !GS_MatchExtended() ) { // first one
@@ -509,12 +509,12 @@ bool G_Match_CheckExtendPlayTime( void ) {
 
 				G_PrintMsg( NULL, "Match tied. Timelimit extended by %i minutes!\n", g_match_extendedtime->integer );
 				G_CenterPrintFormatMsg( NULL, "%s MINUTE OVERTIME\n", va( "%i", g_match_extendedtime->integer ), NULL );
-				gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)( ( fabs( g_match_extendedtime->value ) * 60 ) * 1000 );
+				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)( ( fabs( g_match_extendedtime->value ) * 60 ) * 1000 );
 			} else {
 				G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_OVERTIME_SUDDENDEATH_1_to_2, ( rand() & 1 ) + 1 ) ), GS_MAX_TEAMS, true, NULL );
 				G_PrintMsg( NULL, "Match tied. Sudden death!\n" );
 				G_CenterPrintMsg( NULL, "SUDDEN DEATH" );
-				gs.gameState.longstats[GAMELONG_MATCHDURATION] = 0;
+				gs.gameState.stats[GAMESTAT_MATCHDURATION] = 0;
 			}
 
 			return true;
@@ -749,8 +749,8 @@ void G_Match_LaunchState( int matchState ) {
 			level.forceStart = false;
 
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_WARMUP;
-			gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)( fabs( g_warmup_timelimit->value * 60 ) * 1000 );
-			gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)( fabs( g_warmup_timelimit->value * 60 ) * 1000 );
+			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
 			// race has playtime in warmup too, so flag the matchmaker about this
 			if( GS_RaceGametype() ) {
@@ -765,8 +765,8 @@ void G_Match_LaunchState( int matchState ) {
 			advance_queue = true;
 
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_COUNTDOWN;
-			gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)( fabs( g_countdown_time->value ) * 1000 );
-			gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)( fabs( g_countdown_time->value ) * 1000 );
+			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
 			break;
 		}
@@ -779,8 +779,8 @@ void G_Match_LaunchState( int matchState ) {
 			level.forceStart = false;
 
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_PLAYTIME;
-			gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)( fabs( 60 * g_timelimit->value ) * 1000 );
-			gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)( fabs( 60 * g_timelimit->value ) * 1000 );
+			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
 			// request a new match UUID
 			trap_ConfigString( CS_MATCHUUID, "" );
@@ -795,8 +795,8 @@ void G_Match_LaunchState( int matchState ) {
 		case MATCH_STATE_POSTMATCH:
 		{
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_POSTMATCH;
-			gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( g_postmatch_timelimit->value * 1000 ); // postmatch time in seconds
-			gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)fabs( g_postmatch_timelimit->value * 1000 ); // postmatch time in seconds
+			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
 			G_Timeout_Reset();
 			level.teamlock = false;
@@ -814,8 +814,8 @@ void G_Match_LaunchState( int matchState ) {
 			}
 
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_WAITEXIT;
-			gs.gameState.longstats[GAMELONG_MATCHDURATION] = 25000;
-			gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = 25000;
+			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
 			level.exitNow = false;
 		}

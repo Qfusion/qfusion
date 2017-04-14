@@ -414,12 +414,10 @@ typedef enum {
 
 //==============================================
 
-#define MAX_GAME_STATS  16
-#define MAX_GAME_LONGSTATS 8
+#define MAX_GAME_STATS  64
 
 typedef struct {
-	short stats[MAX_GAME_STATS];
-	unsigned int longstats[MAX_GAME_LONGSTATS];
+	int64_t stats[MAX_GAME_STATS];
 } game_state_t;
 
 //==============================================

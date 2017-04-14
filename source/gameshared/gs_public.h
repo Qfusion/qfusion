@@ -95,43 +95,40 @@ enum {
 	MATCH_STATE_TOTAL
 };
 
-#define GS_MODULE_GAME      1
-#define GS_MODULE_CGAME     2
-
-// longs
-#define GAMELONG_MATCHSTART 0
-#define GAMELONG_MATCHDURATION 1
-#define GAMELONG_CLOCKOVERRIDE 2
-#define GAMELONG_FLAGS      3
-
-// shorts
-#define GAMESTAT_FLAGS 0
-#define GAMESTAT_MATCHSTATE 1
-#define GAMESTAT_MAXPLAYERSINTEAM 2
-#define GAMESTAT_COLORCORRECTION 3
+enum {
+	GS_MODULE_GAME = 1,
+	GS_MODULE_CGAME,
+};
 
 
-// GAMESTAT_FLAGS bits
+enum {
+	GAMESTAT_FLAGS,
+	GAMESTAT_MATCHSTATE,
+	GAMESTAT_MATCHSTART,
+	GAMESTAT_MATCHDURATION,
+	GAMESTAT_CLOCKOVERRIDE,
+	GAMESTAT_MAXPLAYERSINTEAM,
+	GAMESTAT_COLORCORRECTION,
+};
 
-#define GAMESTAT_FLAG_PAUSED ( 1 << 0 )
-#define GAMESTAT_FLAG_WAITING ( 1 << 1 )
-#define GAMESTAT_FLAG_INSTAGIB ( 1 << 2 )
-#define GAMESTAT_FLAG_MATCHEXTENDED ( 1 << 3 )
-#define GAMESTAT_FLAG_FALLDAMAGE ( 1 << 4 )
-#define GAMESTAT_FLAG_HASCHALLENGERS ( 1 << 5 )
-#define GAMESTAT_FLAG_INHIBITSHOOTING ( 1 << 6 )
-#define GAMESTAT_FLAG_ISTEAMBASED ( 1 << 7 )
-#define GAMESTAT_FLAG_ISRACE ( 1 << 8 )
-#define GAMESTAT_FLAG_COUNTDOWN ( 1 << 9 )
-#define GAMESTAT_FLAG_SELFDAMAGE ( 1 << 10 )
-#define GAMESTAT_FLAG_INFINITEAMMO ( 1 << 11 )
-#define GAMESTAT_FLAG_CANFORCEMODELS ( 1 << 12 )
-#define GAMESTAT_FLAG_CANSHOWMINIMAP ( 1 << 13 )
-#define GAMESTAT_FLAG_TEAMONLYMINIMAP ( 1 << 14 )
-#define GAMESTAT_FLAG_MMCOMPATIBLE ( 1 << 15 )
-
-#define GAMELONG_FLAG_ISTUTORIAL ( 1 << 0 )
-#define GAMELONG_FLAG_CANDROPWEAPON ( 1 << 1 )
+#define GAMESTAT_FLAG_PAUSED ( 1 << 0LL )
+#define GAMESTAT_FLAG_WAITING ( 1 << 1LL )
+#define GAMESTAT_FLAG_INSTAGIB ( 1 << 2LL )
+#define GAMESTAT_FLAG_MATCHEXTENDED ( 1 << 3LL )
+#define GAMESTAT_FLAG_FALLDAMAGE ( 1 << 4LL )
+#define GAMESTAT_FLAG_HASCHALLENGERS ( 1 << 5LL )
+#define GAMESTAT_FLAG_INHIBITSHOOTING ( 1 << 6LL )
+#define GAMESTAT_FLAG_ISTEAMBASED ( 1 << 7LL )
+#define GAMESTAT_FLAG_ISRACE ( 1 << 8LL )
+#define GAMESTAT_FLAG_COUNTDOWN ( 1 << 9LL )
+#define GAMESTAT_FLAG_SELFDAMAGE ( 1 << 10LL )
+#define GAMESTAT_FLAG_INFINITEAMMO ( 1 << 11LL )
+#define GAMESTAT_FLAG_CANFORCEMODELS ( 1 << 12LL )
+#define GAMESTAT_FLAG_CANSHOWMINIMAP ( 1 << 13LL )
+#define GAMESTAT_FLAG_TEAMONLYMINIMAP ( 1 << 14LL )
+#define GAMESTAT_FLAG_MMCOMPATIBLE ( 1 << 15LL )
+#define GAMESTAT_FLAG_ISTUTORIAL ( 1 << 16LL )
+#define GAMESTAT_FLAG_CANDROPWEAPON ( 1 << 17LL )
 
 typedef struct {
 	int module;
@@ -143,8 +140,6 @@ typedef struct {
 extern gs_state_t gs;
 
 #define GS_GamestatSetFlag( flag, b ) ( b ? ( gs.gameState.stats[GAMESTAT_FLAGS] |= flag ) : ( gs.gameState.stats[GAMESTAT_FLAGS] &= ~flag ) )
-#define GS_GamestatSetLongFlag( flag, b ) ( b ? ( gs.gameState.longstats[GAMELONG_FLAGS] |= flag ) : ( gs.gameState.longstats[GAMELONG_FLAGS] &= ~flag ) )
-
 #define GS_Instagib() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_INSTAGIB ) ? true : false )
 #define GS_FallDamage() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_FALLDAMAGE ) ? true : false )
 #define GS_ShootingDisabled() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_INHIBITSHOOTING ) ? true : false )
@@ -161,17 +156,17 @@ extern gs_state_t gs;
 #define GS_CanShowMinimap() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANSHOWMINIMAP ) ? true : false )
 #define GS_TeamOnlyMinimap() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_TEAMONLYMINIMAP ) ? true : false )
 #define GS_MMCompatible() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_MMCOMPATIBLE ) ? true : false )
-#define GS_TutorialGametype() ( gs.gameState.longstats[GAMELONG_FLAGS] & GAMELONG_FLAG_ISTUTORIAL ? true : false )
-#define GS_CanDropWeapon() ( gs.gameState.longstats[GAMELONG_FLAGS] & GAMELONG_FLAG_CANDROPWEAPON ? true : false )
+#define GS_TutorialGametype() ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_ISTUTORIAL ? true : false )
+#define GS_CanDropWeapon() ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANDROPWEAPON ? true : false )
 
 #define GS_MatchState() ( gs.gameState.stats[GAMESTAT_MATCHSTATE] )
 #define GS_MaxPlayersInTeam() ( gs.gameState.stats[GAMESTAT_MAXPLAYERSINTEAM] )
 #define GS_InvidualGameType() ( GS_MaxPlayersInTeam() == 1 ? true : false )
 
-#define GS_MatchDuration() ( gs.gameState.longstats[GAMELONG_MATCHDURATION] )
-#define GS_MatchStartTime() ( gs.gameState.longstats[GAMELONG_MATCHSTART] )
-#define GS_MatchEndTime() ( gs.gameState.longstats[GAMELONG_MATCHDURATION] ? gs.gameState.longstats[GAMELONG_MATCHSTART] + gs.gameState.longstats[GAMELONG_MATCHDURATION] : 0 )
-#define GS_MatchClockOverride() ( gs.gameState.longstats[GAMELONG_CLOCKOVERRIDE] )
+#define GS_MatchDuration() ( gs.gameState.stats[GAMESTAT_MATCHDURATION] )
+#define GS_MatchStartTime() ( gs.gameState.stats[GAMESTAT_MATCHSTART] )
+#define GS_MatchEndTime() ( gs.gameState.stats[GAMESTAT_MATCHDURATION] ? gs.gameState.stats[GAMESTAT_MATCHSTART] + gs.gameState.stats[GAMESTAT_MATCHDURATION] : 0 )
+#define GS_MatchClockOverride() ( gs.gameState.stats[GAMESTAT_CLOCKOVERRIDE] )
 
 #define GS_ColorCorrection() ( gs.gameState.stats[GAMESTAT_COLORCORRECTION] )
 

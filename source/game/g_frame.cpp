@@ -249,7 +249,7 @@ void G_CheckCvars( void ) {
 	if( g_warmup_timelimit->modified ) {
 		// if we are inside timelimit period, update the endtime
 		if( GS_MatchState() == MATCH_STATE_WARMUP ) {
-			gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_warmup_timelimit->integer );
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_warmup_timelimit->integer );
 		}
 		g_warmup_timelimit->modified = false;
 	}
@@ -259,9 +259,9 @@ void G_CheckCvars( void ) {
 		if( GS_MatchState() == MATCH_STATE_PLAYTIME &&
 			!GS_MatchExtended() ) {
 			if( g_timelimit->value ) {
-				gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_timelimit->value );
+				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_timelimit->value );
 			} else {
-				gs.gameState.longstats[GAMELONG_MATCHDURATION] = 0;
+				gs.gameState.stats[GAMESTAT_MATCHDURATION] = 0;
 			}
 		}
 		g_timelimit->modified = false;
@@ -271,7 +271,7 @@ void G_CheckCvars( void ) {
 		// if we are inside extended_time period, update the endtime
 		if( GS_MatchExtended() ) {
 			if( g_match_extendedtime->integer ) {
-				gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( 60 * 1000 * g_match_extendedtime->value );
+				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)fabs( 60 * 1000 * g_match_extendedtime->value );
 			}
 		}
 		g_match_extendedtime->modified = false;
@@ -301,8 +301,8 @@ void G_CheckCvars( void ) {
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_MMCOMPATIBLE, level.gametype.mmCompatible );
 
-	GS_GamestatSetLongFlag( GAMELONG_FLAG_ISTUTORIAL, level.gametype.isTutorial );
-	GS_GamestatSetLongFlag( GAMELONG_FLAG_CANDROPWEAPON, ( level.gametype.dropableItemsMask & IT_WEAPON ) != 0 );
+	GS_GamestatSetFlag( GAMESTAT_FLAG_ISTUTORIAL, level.gametype.isTutorial );
+	GS_GamestatSetFlag( GAMESTAT_FLAG_CANDROPWEAPON, ( level.gametype.dropableItemsMask & IT_WEAPON ) != 0 );
 
 	gs.gameState.stats[GAMESTAT_MAXPLAYERSINTEAM] = level.gametype.maxPlayersPerTeam;
 	clamp( gs.gameState.stats[GAMESTAT_MAXPLAYERSINTEAM], 0, 255 );
@@ -477,7 +477,7 @@ void G_ClearSnap( void ) {
 	game.realtime = trap_Milliseconds(); // level.time etc. might not be real time
 
 	// clear gametype's clock override
-	gs.gameState.longstats[GAMELONG_CLOCKOVERRIDE] = 0;
+	gs.gameState.stats[GAMESTAT_CLOCKOVERRIDE] = 0;
 
 	// clear all events in the snap
 	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ ) {
@@ -719,7 +719,7 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime ) {
 
 	if( GS_MatchPaused() ) {
 		// freeze match clock and linear projectiles
-		gs.gameState.longstats[GAMELONG_MATCHSTART] += serverTimeDelta;
+		gs.gameState.stats[GAMESTAT_MATCHSTART] += serverTimeDelta;
 		for( edict_t *ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ ) {
 			if( ent->s.linearMovement ) {
 				ent->s.linearMovementTimeStamp += serverTimeDelta;
@@ -734,7 +734,7 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime ) {
 
 	// reset warmup clock if not enough players
 	if( GS_MatchWaiting() ) {
-		gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
+		gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 	}
 
 	level.framenum++;

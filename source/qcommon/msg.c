@@ -1198,8 +1198,7 @@ void MSG_ReadDeltaPlayerState( msg_t *msg, const player_state_t *ops, player_sta
 #define GSOFS( x ) offsetof( game_state_t,x )
 
 static const msg_field_t game_state_msg_fields[] = {
-	{ GSOFS( stats ), 16, MAX_GAME_STATS, MSG_ENCTYPE_BASE128 },
-	{ GSOFS( longstats ), 32, MAX_GAME_LONGSTATS, MSG_ENCTYPE_UBASE128 },
+	{ GSOFS( stats ), 64, MAX_GAME_STATS, MSG_ENCTYPE_BASE128 },
 };
 
 /*

@@ -875,7 +875,7 @@ static void objectMatch_setScore( asstring_t *name, match_t *self ) {
 }
 
 static void objectMatch_setClockOverride( unsigned int time, match_t *self ) {
-	gs.gameState.longstats[GAMELONG_CLOCKOVERRIDE] = time;
+	gs.gameState.stats[GAMESTAT_CLOCKOVERRIDE] = time;
 }
 
 static const asFuncdef_t match_Funcdefs[] =
