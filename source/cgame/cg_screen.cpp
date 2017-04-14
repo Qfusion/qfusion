@@ -556,7 +556,7 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key ) {
 * CG_DrawClock
 */
 void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color ) {
-	unsigned int clocktime, startTime, duration, curtime;
+	int64_t clocktime, startTime, duration, curtime;
 	double seconds;
 	int minutes;
 	char string[12];

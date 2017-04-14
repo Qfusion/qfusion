@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 void CG_DamageIndicatorAdd( int damage, const vec3_t dir ) {
 	int i;
-	unsigned int damageTime;
+	int64_t damageTime;
 	vec3_t playerAngles;
 	mat3_t playerAxis;
 

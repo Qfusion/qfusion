@@ -160,7 +160,7 @@ static bool CG_ClipEntityContact( const vec3_t origin, const vec3_t mins, const 
 	trace_t tr;
 	vec3_t absmins, absmaxs;
 	vec3_t entorigin, entangles;
-	unsigned serverTime = cg.frame.serverTime;
+	int64_t serverTime = cg.frame.serverTime;
 
 	if( !mins ) {
 		mins = vec3_origin;
@@ -233,7 +233,7 @@ static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins, const 
 	entity_state_t *ent;
 	struct cmodel_s *cmodel;
 	vec3_t bmins, bmaxs;
-	unsigned serverTime = cg.frame.serverTime;
+	int64_t serverTime = cg.frame.serverTime;
 
 	for( i = 0; i < cg_numSolids; i++ ) {
 		ent = cg_solidList[i];
@@ -484,7 +484,7 @@ void CG_PredictMovement( void ) {
 		if( ent->solid == SOLID_BMODEL ) {
 			if( ent->linearMovement ) {
 				vec3_t move;
-				unsigned serverTime;
+				int64_t serverTime;
 
 				serverTime = GS_MatchPaused() ? cg.frame.serverTime : cg.time + cgs.extrapolationTime;
 				GS_LinearMovementDelta( ent, cg.frame.serverTime, serverTime, move );

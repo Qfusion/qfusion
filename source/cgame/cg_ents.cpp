@@ -68,7 +68,7 @@ static bool CG_UpdateLinearProjectilePosition( centity_t *cent ) {
 	vec3_t origin;
 	entity_state_t *state;
 	int moveTime;
-	unsigned int serverTime;
+	int64_t serverTime;
 #define MIN_DRAWDISTANCE_FIRSTPERSON 86
 #define MIN_DRAWDISTANCE_THIRDPERSON 52
 

@@ -53,7 +53,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 typedef struct snapshot_s {
 	bool valid;             // cleared if delta parsing was invalid
 	int serverFrame;
-	unsigned int serverTime;    // time in the server when frame was created
+	int64_t serverTime;    // time in the server when frame was created
 	unsigned int ucmdExecuted;
 	bool delta;
 	bool allentities;
@@ -298,7 +298,7 @@ typedef struct {
 
 	void ( *Trace )( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask );
 
-	void ( *RenderView )( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime );
+	void ( *RenderView )( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime );
 
 	bool ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
 
@@ -355,7 +355,7 @@ typedef struct {
 	 * @param y    finger y position
 	 * @param time when the event was fired
 	 */
-	void ( *TouchEvent )( int id, touchevent_t type, int x, int y, unsigned int time );
+	void ( *TouchEvent )( int id, touchevent_t type, int x, int y, int64_t time );
 
 	/**
 	 * Returns whether a finger is currently being handled by cgame.

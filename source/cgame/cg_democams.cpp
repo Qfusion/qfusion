@@ -27,8 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 char *demoscriptname;
 bool democam_editing_mode;
-unsigned int demo_initial_timestamp;
-unsigned int demo_time;
+int64_t demo_initial_timestamp;
+int64_t demo_time;
 
 static bool CamIsFree;
 
@@ -61,7 +61,7 @@ static const char *cam_TypeNames[] = {
 typedef struct cg_democam_s
 {
 	int type;
-	unsigned int timeStamp;
+	int64_t timeStamp;
 	int trackEnt;
 	vec3_t origin;
 	vec3_t angles;
@@ -86,14 +86,14 @@ static float cam_orbital_radius;
 /*
 * CG_Democam_FindCurrent
 */
-static cg_democam_t *CG_Democam_FindCurrent( unsigned int time ) {
-	unsigned int higher_time = 0;
+static cg_democam_t *CG_Democam_FindCurrent( int64_t time ) {
+	int64_t higher_time = 0;
 	cg_democam_t *cam, *curcam;
 
 	cam = cg_cams_headnode;
 	curcam = NULL;
 	while( cam != NULL ) {
-		if( cam->timeStamp <= time && cam->timeStamp > higher_time ) {
+		if( curcam == NULL || cam->timeStamp <= time && cam->timeStamp > higher_time ) {
 			higher_time = cam->timeStamp;
 			curcam = cam;
 		}
@@ -106,14 +106,14 @@ static cg_democam_t *CG_Democam_FindCurrent( unsigned int time ) {
 /*
 * CG_Democam_FindNext
 */
-static cg_democam_t *CG_Democam_FindNext( unsigned int time ) {
-	unsigned int lower_time = 0xFFFFFFFF;
+static cg_democam_t *CG_Democam_FindNext( int64_t time ) {
+	int64_t lower_time = 0;
 	cg_democam_t *cam, *ncam;
 
 	cam = cg_cams_headnode;
 	ncam = NULL;
 	while( cam != NULL ) {
-		if( cam->timeStamp > time && cam->timeStamp < lower_time ) {
+		if( ncam == NULL || cam->timeStamp > time && cam->timeStamp < lower_time ) {
 			lower_time = cam->timeStamp;
 			ncam = cam;
 		}
@@ -206,8 +206,8 @@ void CG_Democam_FreeCams( void ) {
 
 typedef struct cg_subtitles_s
 {
-	unsigned int timeStamp;
-	unsigned int maxDuration;
+	int64_t timeStamp;
+	int64_t maxDuration;
 	bool highprint;
 	char *text;
 
@@ -217,13 +217,13 @@ typedef struct cg_subtitles_s
 static cg_subtitle_t *cg_subs_headnode = NULL;
 
 static cg_subtitle_t *CG_Democam_FindCurrentSubtitle( void ) {
-	unsigned int higher_time = 0;
+	int64_t higher_time = 0;
 	cg_subtitle_t *sub, *currentsub;
 
 	sub = cg_subs_headnode;
 	currentsub = NULL;
 	while( sub != NULL ) {
-		if( sub->timeStamp > higher_time && sub->timeStamp <= demo_time &&
+		if( ( currentsub == NULL || sub->timeStamp > higher_time ) && sub->timeStamp <= demo_time &&
 			( sub->timeStamp + sub->maxDuration > demo_time ) ) {
 			higher_time = sub->timeStamp;
 			currentsub = sub;
@@ -315,7 +315,7 @@ void CG_Democam_FreeSubtitles( void ) {
 * CG_Democam_ExecutePathAnalisys
 */
 static void CG_Democam_ExecutePathAnalysis( void ) {
-	unsigned int pathtime;
+	int64_t pathtime;
 	cg_democam_t *ccam, *ncam, *pcam, *sncam;
 	int count;
 
@@ -754,7 +754,7 @@ void CG_Democam_DrawCenterSubtitle( int y, unsigned int maxwidth, struct qfontfa
 void CG_DrawDemocam2D( void ) {
 	int xpos, ypos;
 	const char *cam_type_name;
-	unsigned int cam_timestamp;
+	int64_t cam_timestamp;
 	char sfov[8], strack[8];
 	cg_subtitle_t *sub;
 
@@ -1455,7 +1455,7 @@ static void CG_EditCam_Cmd_f( void ) {
 			CG_Democam_ExecutePathAnalysis();
 			return;
 		} else if( !Q_stricmp( trap_Cmd_Argv( 1 ), "timeOffset" ) ) {
-			unsigned int newtimestamp;
+			int64_t newtimestamp;
 			if( trap_Cmd_Argc() < 3 ) {
 				// not enough parameters, print help
 				CG_Printf( "Usage: EditCam timeOffset <value>\n" );

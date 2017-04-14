@@ -72,9 +72,9 @@ typedef struct {
 	entity_state_t prev;        // will always be valid, but might just be a copy of current
 
 	int serverFrame;            // if not current, this ent isn't in the frame
-	unsigned int fly_stoptime;
+	int64_t fly_stoptime;
 
-	int respawnTime;
+	int64_t respawnTime;
 
 	entity_t ent;                   // interpolated, to be added to render list
 	unsigned int type;
@@ -99,7 +99,7 @@ typedef struct {
 	vec3_t trailOrigin;         // for particle trails
 
 	// local effects from events timers
-	unsigned int localEffects[MAX_LOCALEFFECTS];
+	int64_t localEffects[MAX_LOCALEFFECTS];
 
 	// attached laser beam
 	vec3_t laserOrigin;
@@ -369,16 +369,16 @@ typedef struct {
 #define MAX_ANGLES_KICKS 3
 
 typedef struct {
-	unsigned int timestamp;
-	unsigned int kicktime;
+	int64_t timestamp;
+	int64_t kicktime;
 	float v_roll, v_pitch;
 } cg_kickangles_t;
 
 #define MAX_COLORBLENDS 3
 
 typedef struct {
-	unsigned int timestamp;
-	unsigned int blendtime;
+	int64_t timestamp;
+	int64_t blendtime;
 	float blend[4];
 } cg_viewblend_t;
 
@@ -447,8 +447,8 @@ typedef struct {
 	bool gameMenuRequested;
 	int gameProtocol;
 	char demoExtension[MAX_QPATH];
-	unsigned int snapFrameTime;
-	unsigned int extrapolationTime;
+	unsigned snapFrameTime;
+	unsigned extrapolationTime;
 
 	char *demoAudioStream;
 
@@ -491,19 +491,19 @@ typedef struct {
 	char checkname[MAX_QPATH];
 	char loadingstring[MAX_QPATH];
 	int precacheCount, precacheTotal, precacheStart;
-	unsigned precacheStartMsec;
+	int64_t precacheStartMsec;
 } cg_static_t;
 
 typedef struct {
-	unsigned int time;
+	int64_t time;
 	char text[GAMECHAT_STRING_SIZE];
 } cg_gamemessage_t;
 
 typedef struct {
-	unsigned int nextMsg;
-	unsigned int lastMsgTime;
+	int64_t nextMsg;
+	int64_t lastMsgTime;
 	bool lastActive;
-	unsigned int lastActiveChangeTime;
+	int64_t lastActiveChangeTime;
 	float activeFrac;
 	cg_gamemessage_t messages[GAMECHAT_STACK_SIZE];
 } cg_gamechat_t;
@@ -511,15 +511,15 @@ typedef struct {
 #define MAX_HELPMESSAGE_CHARS 4096
 
 typedef struct {
-	unsigned int time;
+	int64_t time;
 	float delay;
 
-	unsigned int realTime;
+	int64_t realTime;
 	int frameTime;
 	int realFrameTime;
 	int frameCount;
 
-	unsigned int firstViewRealTime;
+	int64_t firstViewRealTime;
 	int viewFrameCount;
 	bool startedMusic;
 
@@ -533,10 +533,10 @@ typedef struct {
 	float predictedOrigins[CMD_BACKUP][3];              // for debug comparing against server
 
 	float predictedStep;                // for stair up smoothing
-	unsigned int predictedStepTime;
+	int64_t predictedStepTime;
 
-	unsigned int predictingTimeStamp;
-	unsigned int predictedEventTimes[PREDICTABLE_EVENTS_MAX];
+	int64_t predictingTimeStamp;
+	int64_t predictedEventTimes[PREDICTABLE_EVENTS_MAX];
 	vec3_t predictionError;
 	player_state_t predictedPlayerState;     // current in use, predicted or interpolated
 	int predictedWeaponSwitch;              // inhibit shooting prediction while a weapon change is expected
@@ -568,7 +568,7 @@ typedef struct {
 	unsigned int multiviewPlayerNum;       // for multipov chasing, takes effect on next snap
 
 	int pointedNum;
-	unsigned int pointRemoveTime;
+	int64_t pointRemoveTime;
 	int pointedHealth;
 	int pointedArmor;
 
@@ -587,26 +587,26 @@ typedef struct {
 
 	cg_kickangles_t kickangles[MAX_ANGLES_KICKS];
 	cg_viewblend_t colorblends[MAX_COLORBLENDS];
-	unsigned int damageBlends[4];
-	unsigned int fallEffectTime;
-	unsigned int fallEffectRebounceTime;
+	int64_t damageBlends[4];
+	int64_t fallEffectTime;
+	int64_t fallEffectRebounceTime;
 
 	//
 	// transient data from server
 	//
 	const char *matchmessage;
 	char helpmessage[MAX_HELPMESSAGE_CHARS];
-	unsigned helpmessage_time;
+	int64_t helpmessage_time;
 	char *teaminfo;
 	size_t teaminfo_size;
 	char *motd;
-	unsigned int motd_time;
+	int64_t motd_time;
 	char quickmenu[MAX_STRING_CHARS];
 	bool quickmenu_left;
 
 	// awards
 	char award_lines[MAX_AWARD_LINES][MAX_CONFIGSTRING_CHARS];
-	unsigned int award_times[MAX_AWARD_LINES];
+	int64_t award_times[MAX_AWARD_LINES];
 	int award_head;
 
 	// statusbar program
@@ -788,18 +788,18 @@ enum {
 typedef struct {
 	bool down; // is the finger currently down?
 	int x, y; // current x and y of the touch
-	unsigned int time; // system time when pressed
+	int64_t time; // system time when pressed
 	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
 	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
-	void ( *upfunc )( int id, unsigned int time ); // function to call when the finger is released, time is 0 if cancelled
+	void ( *upfunc )( int id, int64_t time ); // function to call when the finger is released, time is 0 if cancelled
 } cg_touch_t;
 
 extern cg_touch_t cg_touches[];
 
-int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, unsigned int time ) );
-void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
+int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, int64_t time ) );
+void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 bool CG_IsTouchDown( int id );
-void CG_TouchFrame( float frametime );
+void CG_TouchFrame( void );
 void CG_CancelTouches( void );
 
 enum {
@@ -939,10 +939,10 @@ extern cvar_t *cg_flashWindowCount;
 #define CG_Free( data ) trap_MemFree( data, __FILE__, __LINE__ )
 
 int CG_API( void );
-void CG_Init(   const char *serverName, unsigned int playerNum,
-				int vidWidth, int vidHeight, float pixelRatio,
-				bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime,
-				int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
+void CG_Init( const char *serverName, unsigned int playerNum,
+			  int vidWidth, int vidHeight, float pixelRatio,
+			  bool demoplaying, const char *demoName, bool pure, unsigned snapFrameTime,
+			  int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
 void CG_Shutdown( void );
 void CG_ValidateItemDef( int tag, char *name );
 void CG_Printf( const char *format, ... );
@@ -1021,7 +1021,7 @@ void CG_StartFallKickEffect( int bounceTime );
 float CG_GetSensitivityScale( float sens, float zoomSens );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
 float CG_ViewSmoothFallKick( void );
-void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime );
+void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime );
 void CG_AddKickAngles( vec3_t viewangles );
 bool CG_ChaseStep( int step );
 bool CG_SwitchChaseCamMode( void );
@@ -1033,7 +1033,6 @@ void CG_ClearLocalEntities( void );
 void CG_AddLocalEntities( void );
 void CG_FreeLocalEntities( void );
 
-void CG_AddLaser( const vec3_t start, const vec3_t end, float radius, int colors, struct shader_s *shader );
 void CG_BulletExplosion( const vec3_t origin, const vec_t *dir, const trace_t *trace );
 void CG_BubbleTrail( const vec3_t start, const vec3_t end, int dist );
 void CG_Explosion1( const vec3_t pos );
@@ -1042,7 +1041,6 @@ void CG_ProjectileTrail( centity_t *cent );
 void CG_NewBloodTrail( centity_t *cent );
 void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage );
 void CG_CartoonHitEffect( const vec3_t origin, const vec3_t dir, int damage );
-void CG_NewElectroBeamPuff( centity_t *cent, const vec3_t origin, vec3_t dir );
 void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, float r, float g, float b );
 void CG_GreenLaser( const vec3_t start, const vec3_t end );
 void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVelocity, int team );

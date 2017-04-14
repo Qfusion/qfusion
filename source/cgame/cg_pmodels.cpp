@@ -724,9 +724,9 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 
 	// All powerups
 	if( ( effects & ( EF_QUAD | EF_SHELL | EF_REGEN ) ) == ( EF_QUAD | EF_SHELL | EF_REGEN ) ) {
-		if( (unsigned int)( cg.time * 0.005 ) & 1 ) {
+		if( (int64_t)( cg.time * 0.005 ) & 1 ) {
 			effects &= ~EF_SHELL;
-		} else if( (unsigned int)( cg.time * 0.01 ) & 1 ) {
+		} else if( (int64_t)( cg.time * 0.01 ) & 1 ) {
 			effects &= ~EF_REGEN;
 		} else {
 			effects &= ~EF_QUAD;
@@ -735,7 +735,7 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 
 	// Quad + regen
 	if( ( effects & ( EF_QUAD | EF_REGEN ) ) == ( EF_QUAD | EF_REGEN ) ) {
-		if( (unsigned int)( cg.time * 0.005 ) & 1 ) {
+		if( (int64_t)( cg.time * 0.005 ) & 1 ) {
 			effects &= ~EF_REGEN;
 		} else {
 			effects &= ~EF_QUAD;
@@ -744,7 +744,7 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 
 	// Shell + regen
 	if( ( effects & ( EF_SHELL | EF_REGEN ) ) == ( EF_SHELL | EF_REGEN ) ) {
-		if( (unsigned int)( cg.time * 0.005 ) & 1 ) {
+		if( (int64_t)( cg.time * 0.005 ) & 1 ) {
 			effects &= ~EF_REGEN;
 		} else {
 			effects &= ~EF_SHELL;
@@ -753,7 +753,7 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 
 	// Shell + quad
 	if( ( effects & ( EF_SHELL | EF_QUAD ) ) == ( EF_SHELL | EF_QUAD ) ) {
-		if( (unsigned int)( cg.time * 0.005 ) & 1 ) {
+		if( (int64_t)( cg.time * 0.005 ) & 1 ) {
 			effects &= ~EF_REGEN;
 		} else {
 			effects &= ~EF_QUAD;

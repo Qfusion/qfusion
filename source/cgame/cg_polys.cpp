@@ -29,8 +29,8 @@ typedef struct cpoly_s
 
 	struct shader_s *shader;
 
-	unsigned int die;                   // remove after this time
-	unsigned int fadetime;
+	int64_t die;                   // remove after this time
+	int64_t fadetime;
 	float fadefreq;
 	float color[4];
 
@@ -123,7 +123,7 @@ static void CG_FreePoly( cpoly_t *dl ) {
 * CG_SpawnPolygon
 */
 static cpoly_t *CG_SpawnPolygon( float r, float g, float b, float a,
-								 unsigned int die, unsigned int fadetime, struct shader_s *shader, int tag ) {
+								 int64_t die, int64_t fadetime, struct shader_s *shader, int tag ) {
 	cpoly_t *pl;
 
 	fadetime = min( fadetime, die );
@@ -169,7 +169,8 @@ static void CG_OrientPolygon( const vec3_t origin, const vec3_t angles, poly_t *
 * Spawns a polygon from start to end points length and given width.
 * shaderlenght makes reference to size of the texture it will draw, so it can be tiled.
 */
-static cpoly_t *CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int width, unsigned int dietime, unsigned int fadetime, struct shader_s *shader, int shaderlength, int tag ) {
+static cpoly_t *CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, 
+								  int width, int64_t dietime, int64_t fadetime, struct shader_s *shader, int shaderlength, int tag ) {
 	cpoly_t *cgpoly;
 	poly_t *poly;
 	vec3_t angles, dir;

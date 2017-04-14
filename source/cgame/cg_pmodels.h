@@ -68,13 +68,13 @@ typedef struct weaponinfo_s {
 	vec3_t handpositionAngles;
 
 	// flash
-	unsigned int flashTime;
+	int64_t flashTime;
 	bool flashFade;
 	float flashRadius;
 	vec3_t flashColor;
 
 	// barrel
-	unsigned int barrelTime;
+	int64_t barrelTime;
 	float barrelSpeed;
 
 	// sfx
@@ -83,7 +83,6 @@ typedef struct weaponinfo_s {
 	int num_strongfire_sounds;
 	struct sfx_s *sound_strongfire[WEAPONINFO_MAX_FIRE_SOUNDS];
 	struct sfx_s *sound_reload;
-
 } weaponinfo_t;
 
 extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
@@ -122,9 +121,8 @@ typedef struct {
 	//effects
 	orientation_t projectionSource;     // for projectiles
 	// weapon. Not sure about keeping it here
-	unsigned int flash_time;
-	unsigned int barrel_time;
-
+	int64_t flash_time;
+	int64_t barrel_time;
 } pmodel_t;
 
 extern pmodel_t cg_entPModels[MAX_EDICTS];      //a pmodel handle for each cg_entity
@@ -150,7 +148,6 @@ void CG_PModelsInit( void );
 void CG_ResetPModels( void );
 void CG_RegisterBasePModel( void );
 struct pmodelinfo_s *CG_RegisterPlayerModel( const char *filename );
-void CG_LoadClientPmodel( int cenum, char *model_name, const char *skin_name );
 void CG_AddPModel( centity_t *cent );
 bool CG_PModel_GetProjectionSource( int entnum, orientation_t *tag_result );
 void CG_UpdatePlayerModelEnt( centity_t *cent );
@@ -162,7 +159,7 @@ void CG_PModel_ClearEventAnimations( int entNum );
 //
 struct weaponinfo_s *CG_CreateWeaponZeroModel( char *cgs_name );
 struct weaponinfo_s *CG_RegisterWeaponModel( char *cgs_name, int weaponTag );
-void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, orientation_t *projectionSource, unsigned int flash_time, unsigned int barrel_time );
+void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time );
 struct weaponinfo_s *CG_GetWeaponInfo( int currentweapon );
 
 //=================================================
@@ -177,9 +174,9 @@ typedef struct {
 
 	// animation
 	int baseAnim;
-	unsigned int baseAnimStartTime;
+	int64_t baseAnimStartTime;
 	int eventAnim;
-	unsigned int eventAnimStartTime;
+	int64_t eventAnimStartTime;
 
 	// other effects
 	orientation_t projectionSource;

@@ -783,7 +783,7 @@ typedef enum { OBITUARY_NONE, OBITUARY_NORMAL, OBITUARY_TEAM, OBITUARY_SUICIDE, 
 typedef struct obituary_s
 {
 	obituary_type_t type;
-	unsigned int time;
+	int64_t time;
 	char victim[MAX_INFO_VALUE];
 	int victim_team;
 	char attacker[MAX_INFO_VALUE];
@@ -1217,7 +1217,7 @@ static void CG_SetTouchWeaponDrop( int weaponTag ) {
 /**
  * Touch release handler for the weapon icons.
  */
-static void CG_WeaponUpFunc( int id, unsigned int time ) {
+static void CG_WeaponUpFunc( int id, int64_t time ) {
 	CG_SetTouchWeaponDrop( 0 );
 }
 
@@ -2575,7 +2575,7 @@ static bool CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_lay
 	return true;
 }
 
-static void CG_MoveUpFunc( int id, unsigned int time ) {
+static void CG_MoveUpFunc( int id, int64_t time ) {
 	CG_SetTouchpad( TOUCHPAD_MOVE, -1 );
 }
 
@@ -2590,7 +2590,7 @@ static bool CG_LFuncTouchMove( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static void CG_ViewUpFunc( int id, unsigned int time ) {
+static void CG_ViewUpFunc( int id, int64_t time ) {
 	CG_SetTouchpad( TOUCHPAD_VIEW, -1 );
 
 	if( cg_hud_touch_zoomSeq ) {
@@ -2643,7 +2643,7 @@ static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static void CG_UpmoveUpFunc( int id, unsigned int time ) {
+static void CG_UpmoveUpFunc( int id, int64_t time ) {
 	cg_hud_touch_upmove = 0;
 }
 
@@ -2667,7 +2667,7 @@ static bool CG_LFuncTouchCrouch( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
-static void CG_AttackUpFunc( int id, unsigned int time ) {
+static void CG_AttackUpFunc( int id, int64_t time ) {
 	cg_hud_touch_buttons &= ~BUTTON_ATTACK;
 }
 
@@ -2681,7 +2681,7 @@ static bool CG_LFuncTouchAttack( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
-static void CG_SpecialUpFunc( int id, unsigned int time ) {
+static void CG_SpecialUpFunc( int id, int64_t time ) {
 	cg_hud_touch_buttons &= ~BUTTON_SPECIAL;
 }
 
@@ -2715,7 +2715,7 @@ static bool CG_LFuncTouchDropItem( struct cg_layoutnode_s *commandnode, struct c
 	return true;
 }
 
-static void CG_ScoresUpFunc( int id, unsigned int time ) {
+static void CG_ScoresUpFunc( int id, int64_t time ) {
 	CG_ScoresOff_f();
 }
 
@@ -2729,7 +2729,7 @@ static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
-static void CG_QuickMenuUpFunc( int id, unsigned int time ) {
+static void CG_QuickMenuUpFunc( int id, int64_t time ) {
 	if( GS_MatchState() < MATCH_STATE_POSTMATCH ) {
 		CG_ShowQuickMenu( 0 );
 	}

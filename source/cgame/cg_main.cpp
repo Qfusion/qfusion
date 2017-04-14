@@ -1130,7 +1130,7 @@ void CG_Reset( void ) {
 void CG_Init( const char *serverName, unsigned int playerNum,
 			  int vidWidth, int vidHeight, float pixelRatio,
 			  bool demoplaying, const char *demoName, bool pure,
-			  unsigned int snapFrameTime, int protocol, const char *demoExtension,
+			  unsigned snapFrameTime, int protocol, const char *demoExtension,
 			  int sharedSeed, bool gameStart ) {
 	CG_InitGameShared();
 

@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-static unsigned cg_inputTime;
+static int64_t cg_inputTime;
 static int cg_inputFrameTime;
 static bool cg_inputCenterView;
 
@@ -47,14 +47,14 @@ state bit 1 is edge triggered on the up to down transition
 state bit 2 is edge triggered on the down to up transition
 
 
-Key_Event (int key, bool down, unsigned time);
+Key_Event (int key, bool down, int64_t time);
 
 ===============================================================================
 */
 
 typedef struct {
 	int down[2];            // key nums holding it down
-	unsigned downtime;      // msec timestamp
+	int64_t downtime;       // msec timestamp
 	unsigned msec;          // msec down this frame
 	int state;
 } kbutton_t;
@@ -600,7 +600,7 @@ static cvar_t *cg_touch_lookDecel;
 *
 * Touches a rectangle. Returns touch id if it's a new touch.
 */
-int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, unsigned int time ) ) {
+int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, int64_t time ) ) {
 	if( ( w <= 0 ) || ( h <= 0 ) ) {
 		return -1;
 	}
@@ -645,7 +645,7 @@ int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id
 /*
 * CG_TouchEvent
 */
-void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time ) {
+void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
 	if( id < 0 || id >= CG_MAX_TOUCHES ) {
 		return;
 	}

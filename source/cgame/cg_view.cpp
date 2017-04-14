@@ -90,7 +90,7 @@ static void CG_AddLocalSounds( void ) {
 	// add local announces
 	if( GS_Countdown() ) {
 		if( GS_MatchDuration() ) {
-			unsigned int duration, curtime, remainingSeconds;
+			int64_t duration, curtime, remainingSeconds;
 			float seconds;
 
 			curtime = GS_MatchPaused() ? cg.frame.serverTime : cg.time;
@@ -946,7 +946,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 */
 #define WAVE_AMPLITUDE  0.015   // [0..1]
 #define WAVE_FREQUENCY  0.6     // [0..1]
-void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime ) {
+void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime ) {
 	refdef_t *rd = &cg.view.refdef;
 
 	// update time
@@ -963,7 +963,7 @@ void CG_RenderView( int frameTime, int realFrameTime, int realTime, unsigned int
 	}
 
 	{
-		float snapTime = ( cg.frame.serverTime - cg.oldFrame.serverTime );
+		int snapTime = ( cg.frame.serverTime - cg.oldFrame.serverTime );
 
 		if( !snapTime ) {
 			snapTime = cgs.snapFrameTime;

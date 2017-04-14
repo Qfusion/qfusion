@@ -545,7 +545,7 @@ struct weaponinfo_s *CG_GetWeaponInfo( int weapon ) {
 *
 * Add weapon model(s) positioned at the tag
 */
-void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int effects, orientation_t *projectionSource, unsigned int flash_time, unsigned int barrel_time ) {
+void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int effects, orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time ) {
 	entity_t weapon;
 	weaponinfo_t *weaponInfo;
 	float intensity;

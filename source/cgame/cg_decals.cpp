@@ -27,8 +27,8 @@ typedef struct cdecal_s
 {
 	struct cdecal_s *prev, *next;
 
-	unsigned int die;                   // remove after this time
-	unsigned int fadetime;
+	int64_t die;                   // remove after this time
+	int64_t fadetime;
 	float fadefreq;
 	bool fadealpha;
 

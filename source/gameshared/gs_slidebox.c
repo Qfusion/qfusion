@@ -74,7 +74,7 @@ void GS_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce ) {
 /*
 * GS_LinearMovement
 */
-int GS_LinearMovement( const entity_state_t *ent, unsigned time, vec3_t dest ) {
+int GS_LinearMovement( const entity_state_t *ent, int64_t time, vec3_t dest ) {
 	vec3_t dist;
 	int moveTime;
 	float moveFrac;
@@ -104,7 +104,7 @@ int GS_LinearMovement( const entity_state_t *ent, unsigned time, vec3_t dest ) {
 /*
 * GS_LinearMovementDelta
 */
-void GS_LinearMovementDelta( const entity_state_t *ent, unsigned oldTime, unsigned curTime, vec3_t dest ) {
+void GS_LinearMovementDelta( const entity_state_t *ent, int64_t oldTime, int64_t curTime, vec3_t dest ) {
 	vec3_t p1, p2;
 	GS_LinearMovement( ent, oldTime, p1 );
 	GS_LinearMovement( ent, curTime, p2 );

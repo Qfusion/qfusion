@@ -267,7 +267,7 @@ int GS_UpdateBaseAnims( entity_state_t *state, vec3_t velocity ) {
 * continue playing it until a new event chanel animation
 * is fired.
 */
-void GS_PModel_AnimToFrame( unsigned int curTime, gs_pmodel_animationset_t *animSet, gs_pmodel_animationstate_t *anim ) {
+void GS_PModel_AnimToFrame( int64_t curTime, gs_pmodel_animationset_t *animSet, gs_pmodel_animationstate_t *anim ) {
 	int i, channel = BASE_CHANNEL;
 
 	for( i = LOWER; i < PMODEL_PARTS; i++ ) {

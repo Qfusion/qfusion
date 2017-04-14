@@ -208,8 +208,7 @@ void GS_TraceCurveLaserBeam( trace_t *trace, vec3_t origin, vec3_t angles, vec3_
 	}
 }
 
-void GS_AddLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState,
-						   unsigned int timeStamp ) {
+void GS_AddLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, int64_t timeStamp ) {
 	vec3_t origin, dir;
 	int range = GS_GetWeaponDef( WEAP_LASERGUN )->firedef_weak.timeout;
 
@@ -228,10 +227,10 @@ void GS_AddLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerSta
 	trail->head++;
 }
 
-bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, unsigned int curtime, vec3_t out ) {
+bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, int64_t curtime, vec3_t out ) {
 	int older;
 	int current;
-	unsigned int timeStamp;
+	int64_t timeStamp;
 
 	if( curtime <= CURVELASERBEAM_BACKTIME ) {
 		return false;

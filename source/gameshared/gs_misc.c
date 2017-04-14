@@ -117,8 +117,8 @@ void GS_BBoxForEntityState( entity_state_t *state, vec3_t mins, vec3_t maxs ) {
 * When the animation is finished it will return frame -1. Takes looping into account. Looping animations
 * are never finished.
 */
-float GS_FrameForTime( int *frame, unsigned int curTime, unsigned int startTimeStamp, float frametime, int firstframe, int lastframe, int loopingframes, bool forceLoop ) {
-	unsigned int runningtime, framecount;
+float GS_FrameForTime( int *frame, int64_t curTime, int64_t startTimeStamp, float frametime, int firstframe, int lastframe, int loopingframes, bool forceLoop ) {
+	int64_t runningtime, framecount;
 	int curframe;
 	float framefrac;
 

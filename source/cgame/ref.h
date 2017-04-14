@@ -141,7 +141,7 @@ typedef struct entity_s {
 	/*
 	** misc
 	*/
-	unsigned int shaderTime;
+	int64_t shaderTime;
 	union {
 		byte_vec4_t color;
 		uint8_t shaderRGBA[4];
@@ -166,7 +166,7 @@ typedef struct refdef_s {
 	vec3_t vieworg;
 	mat3_t viewaxis;
 	float blend[4];                     // rgba 0-1 full screen blend
-	unsigned int time;                  // time is used for timing offsets
+	int64_t time;                       // time is used for timing offsets
 	int rdflags;                        // RDF_UNDERWATER, etc
 	skyportal_t skyportal;
 	uint8_t *areabits;                  // if not NULL, only areas with set bits will be drawn

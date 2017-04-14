@@ -357,7 +357,7 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon ) {
 */
 void CG_AddViewWeapon( cg_viewweapon_t *viewweapon ) {
 	orientation_t tag;
-	unsigned int flash_time = 0;
+	int64_t flash_time = 0;
 
 	if( !cg.view.drawWeapon || viewweapon->weapon == WEAP_NONE ) {
 		return;

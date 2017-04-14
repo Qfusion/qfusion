@@ -245,8 +245,8 @@ typedef struct {
 int GS_SlideMove( move_t *move );
 void GS_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce );
 
-int GS_LinearMovement( const entity_state_t *ent, unsigned time, vec3_t dest );
-void GS_LinearMovementDelta( const entity_state_t *ent, unsigned oldTime, unsigned curTime, vec3_t dest );
+int GS_LinearMovement( const entity_state_t *ent, int64_t time, vec3_t dest );
+void GS_LinearMovementDelta( const entity_state_t *ent, int64_t oldTime, int64_t curTime, vec3_t dest );
 
 //==============================================================
 //
@@ -566,21 +566,19 @@ bool GS_IsTeamDamage( entity_state_t *targ, entity_state_t *attacker );
 enum {
 	BASE_CHANNEL,
 	EVENT_CHANNEL,
-
 	PLAYERANIM_CHANNELS
 };
 
 typedef struct {
 	int newanim[PMODEL_PARTS];
-
 } gs_animationbuffer_t;
 
 typedef struct {
 	int anim;
 	int frame;
-	unsigned int startTimestamp;
+	int64_t startTimestamp;
 	float lerpFrac;
-}gs_animstate_t;
+} gs_animstate_t;
 
 typedef struct {
 	// animations in the mixer
@@ -601,7 +599,7 @@ typedef struct {
 } gs_pmodel_animationset_t;
 
 int GS_UpdateBaseAnims( entity_state_t *state, vec3_t velocity );
-void GS_PModel_AnimToFrame( unsigned int curTime, gs_pmodel_animationset_t *animSet, gs_pmodel_animationstate_t *anim );
+void GS_PModel_AnimToFrame( int64_t curTime, gs_pmodel_animationset_t *animSet, gs_pmodel_animationstate_t *anim );
 void GS_PlayerModel_ClearEventAnimations( gs_pmodel_animationset_t *animSet, gs_pmodel_animationstate_t *animState );
 void GS_PlayerModel_AddAnimation( gs_pmodel_animationstate_t *animState, int loweranim, int upperanim, int headanim, int channel );
 
@@ -623,7 +621,7 @@ void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *messa
 void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher );
 int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs );
 void GS_BBoxForEntityState( entity_state_t *state, vec3_t mins, vec3_t maxs );
-float GS_FrameForTime( int *frame, unsigned int curTime, unsigned int startTimeStamp, float frametime, int firstframe, int lastframe, int loopingframes, bool forceLoop );
+float GS_FrameForTime( int *frame, int64_t curTime, int64_t startTimeStamp, float frametime, int firstframe, int lastframe, int loopingframes, bool forceLoop );
 
 //===============================================================
 
@@ -1094,7 +1092,6 @@ typedef struct firedef_s {
 	int ammo_pickup;
 	int ammo_max;
 	int ammo_low;
-
 } firedef_t;
 
 typedef struct {
@@ -1103,7 +1100,6 @@ typedef struct {
 
 	firedef_t firedef;
 	firedef_t firedef_weak;
-
 } gs_weapon_definition_t;
 
 gs_weapon_definition_t *GS_GetWeaponDef( int weapon );
@@ -1123,14 +1119,13 @@ void GS_TraceCurveLaserBeam( trace_t *trace, vec3_t origin, vec3_t angles, vec3_
 
 typedef struct {
 	vec3_t origins[LASERGUN_WEAK_TRAIL_BACKUP];
-	unsigned int timeStamps[LASERGUN_WEAK_TRAIL_BACKUP];
+	int64_t timeStamps[LASERGUN_WEAK_TRAIL_BACKUP];
 	bool teleported[LASERGUN_WEAK_TRAIL_BACKUP];
 	int head;
 }gs_laserbeamtrail_t;
 
-void GS_AddLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState,
-						   unsigned int timeStamp );
-bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, unsigned int timeStamp, vec3_t out );
+void GS_AddLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, int64_t timeStamp );
+bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, int64_t timeStamp, vec3_t out );
 
 //===============================================================
 // gs_weapondefs.c
