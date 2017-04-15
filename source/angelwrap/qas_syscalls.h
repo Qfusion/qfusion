@@ -35,7 +35,7 @@ static inline void trap_Error( const char *msg ) {
 	ANGELWRAP_IMPORT.Error( msg );
 }
 
-static inline unsigned int trap_Milliseconds( void ) {
+static inline int64_t trap_Milliseconds( void ) {
 	return ANGELWRAP_IMPORT.Milliseconds();
 }
 

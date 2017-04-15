@@ -30,7 +30,8 @@ private:
 	CScriptAnyInterface *any;
 
 	FunctionCallScheduler *sched;
-	unsigned int start, delay;
+	int64_t start;
+	unsigned delay;
 	bool intervalled;
 };
 

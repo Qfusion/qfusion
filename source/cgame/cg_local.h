@@ -544,7 +544,7 @@ typedef struct {
 	gs_laserbeamtrail_t weaklaserTrail;
 
 	// prediction optimization (don't run all ucmds in not needed)
-	int predictFrom;
+	int64_t predictFrom;
 	entity_state_t predictFromEntityState;
 	player_state_t predictFromPlayerState;
 

@@ -379,8 +379,8 @@ void ServerInfoFetcher::clearQueries() {
 
 // advance queries
 void ServerInfoFetcher::updateFrame() {
-	unsigned int now = trap::Milliseconds();
-	unsigned int treshold = now - ( TIMEOUT_SEC * 1000 );
+	int64_t now = trap::Milliseconds();
+	int64_t treshold = now - ( TIMEOUT_SEC * 1000 );
 	ActiveList::iterator it;
 
 	// remove old items (timeout)

@@ -22,7 +22,7 @@ uint64_t Sys_Microseconds( void ) {
 /*
 * Sys_Milliseconds
 */
-unsigned int Sys_Milliseconds( void ) {
+int64_t Sys_Milliseconds( void ) {
 	return Sys_Microseconds() / 1000;
 }
 

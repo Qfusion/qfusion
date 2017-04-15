@@ -213,7 +213,7 @@ public:
 		stack->pushDocument( location.buffer );
 	}
 
-	unsigned int getTime( void ) const {
+	int64_t getTime( void ) const {
 		const RefreshState &state = UI_Main::Get()->getRefreshState();
 		return state.time;
 	}

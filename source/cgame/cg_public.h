@@ -52,13 +52,13 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 #define MAX_PARSE_ENTITIES  1024
 typedef struct snapshot_s {
 	bool valid;             // cleared if delta parsing was invalid
-	int serverFrame;
+	int64_t serverFrame;
 	int64_t serverTime;    // time in the server when frame was created
-	unsigned int ucmdExecuted;
+	int64_t ucmdExecuted;
 	bool delta;
 	bool allentities;
 	bool multipov;
-	int deltaFrameNum;
+	int64_t deltaFrameNum;
 	size_t areabytes;
 	uint8_t *areabits;             // portalarea visibility bits
 	int numplayers;
@@ -143,7 +143,7 @@ typedef struct {
 	const char *( *Key_KeynumToString )( int keynum );
 
 	void ( *GetConfigString )( int i, char *str, int size );
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 	bool ( *DownloadRequest )( const char *filename, bool requestpak );
 
 	unsigned int ( * Hash_BlockChecksum )( const uint8_t * data, size_t len );
@@ -151,7 +151,7 @@ typedef struct {
 
 	void ( *NET_GetUserCmd )( int frame, usercmd_t *cmd );
 	int ( *NET_GetCurrentUserCmdNum )( void );
-	void ( *NET_GetCurrentState )( int *incomingAcknowledged, int *outgoingSequence, int *outgoingSent );
+	void ( *NET_GetCurrentState )( int64_t *incomingAcknowledged, int64_t *outgoingSequence, int64_t *outgoingSent );
 
 	// Asynchronous HTTP requests
 	void ( *AsyncStream_UrlEncode )( const char *src, char *dst, size_t size );

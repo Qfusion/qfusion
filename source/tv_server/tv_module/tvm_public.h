@@ -110,7 +110,7 @@ typedef struct {
 	void ( *GameCmd )( relay_t *relay, int numClient, const char *cmd );
 	void ( *ConfigString )( relay_t *relay, int number, const char *value );
 
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 
 	struct cmodel_s *( *CM_InlineModel )( relay_t * relay, int num );
 	int ( *CM_TransformedPointContents )( relay_t *relay, vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );

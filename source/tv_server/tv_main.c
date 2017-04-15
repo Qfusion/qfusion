@@ -273,7 +273,7 @@ void SV_Shutdown( const char *finalmsg ) {
 void SV_ShutdownGame( const char *finalmsg, bool reconnect ) {
 }
 
-void SV_Frame( int realmsec, int gamemsec ) {
+void SV_Frame( unsigned realmsec, unsigned gamemsec ) {
 	TV_Frame( realmsec, gamemsec );
 }
 

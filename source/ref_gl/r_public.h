@@ -59,7 +59,7 @@ typedef struct {
 	void ( *Cmd_Execute )( void );
 	void ( *Cmd_SetCompletionFunc )( const char *cmd_name, char **( *completion_func )( const char *partial ) );
 
-	unsigned int ( *Sys_Milliseconds )( void );
+	int64_t ( *Sys_Milliseconds )( void );
 	uint64_t ( *Sys_Microseconds )( void );
 	void ( *Sys_Sleep )( unsigned int milliseconds );
 
@@ -90,13 +90,13 @@ typedef struct {
 	const char * ( *FS_MediaDirectory )( fs_mediatype_t type );
 	void ( *FS_AddFileToMedia )( const char *filename );
 
-	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, bool *yuv, float *framerate );
-	bool ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
+	struct cinematics_s *( *CIN_Open )( const char *name, int64_t start_time, bool *yuv, float *framerate );
+	bool ( *CIN_NeedNextFrame )( struct cinematics_s *cin, int64_t curtime );
 	uint8_t *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height,
 									 int *aspect_numerator, int *aspect_denominator, bool *redraw );
 	ref_yuv_t *( *CIN_ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height,
 										  int *aspect_numerator, int *aspect_denominator, bool *redraw );
-	void ( *CIN_Reset )( struct cinematics_s *cin, unsigned int cur_time );
+	void ( *CIN_Reset )( struct cinematics_s *cin, int64_t cur_time );
 	void ( *CIN_Close )( struct cinematics_s *cin );
 
 	struct mempool_s *( *Mem_AllocPool )( struct mempool_s *parent, const char *name, const char *filename, int fileline );

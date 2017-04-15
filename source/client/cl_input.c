@@ -44,7 +44,7 @@ void CL_MouseSet( int mx, int my, bool showCursor ) {
 /*
 * CL_TouchEvent
 */
-void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time ) {
+void CL_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
 	switch( cls.key_dest ) {
 		case key_game:
 		{

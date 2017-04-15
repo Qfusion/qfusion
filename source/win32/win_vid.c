@@ -79,7 +79,7 @@ HWND cl_parent_hwnd;    // pointer to parent window handle
 static HHOOK WinKeyHook;
 static bool s_winkeys_hooked;
 static bool s_alttab_disabled;
-extern unsigned sys_msg_time;
+extern int64_t sys_msg_time;
 
 static float vid_pixelRatio = 1.0f;
 

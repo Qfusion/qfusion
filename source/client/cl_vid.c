@@ -308,7 +308,7 @@ static void VID_RefModule_MemEmptyPool( mempool_t *pool, const char *filename, i
 	_Mem_EmptyPool( pool, MEMPOOL_REFMODULE, 0, filename, fileline );
 }
 
-static struct cinematics_s *VID_RefModule_CIN_Open( const char *name, unsigned int start_time, bool *yuv, float *framerate ) {
+static struct cinematics_s *VID_RefModule_CIN_Open( const char *name, int64_t start_time, bool *yuv, float *framerate ) {
 	return CIN_Open( name, start_time, CIN_LOOP, yuv, framerate );
 }
 

@@ -131,7 +131,7 @@ void CL_AddReliableCommand( /*const*/ char *cmd ) {
 * Add the pending commands to the message
 */
 void CL_UpdateClientCommandsToServer( msg_t *msg ) {
-	unsigned int i;
+	int64_t i;
 
 	// write any unacknowledged clientCommands
 	for( i = cls.reliableAcknowledge + 1; i <= cls.reliableSequence; i++ ) {
@@ -141,7 +141,7 @@ void CL_UpdateClientCommandsToServer( msg_t *msg ) {
 
 		MSG_WriteUint8( msg, clc_clientcommand );
 		if( !cls.reliable ) {
-			MSG_WriteInt32( msg, i );
+			MSG_WriteIntBase128( msg, i );
 		}
 		MSG_WriteString( msg, cls.reliableCommands[i & ( MAX_RELIABLE_COMMANDS - 1 )] );
 	}
@@ -237,7 +237,7 @@ static void CL_SendConnectPacket( void ) {
 */
 static void CL_CheckForResend( void ) {
 	// FIXME: should use cls.realtime, but it can be old here after starting a server
-	unsigned int realtime = Sys_Milliseconds();
+	int64_t realtime = Sys_Milliseconds();
 
 	if( cls.demo.playing ) {
 		return;
@@ -2106,9 +2106,9 @@ static void CL_ShutdownLocal( void ) {
 */
 static void CL_TimedemoStats( void ) {
 	if( cl_timedemo->integer && cls.demo.playing ) {
-		unsigned lastTime = cl.timedemo.lastTime;
+		int64_t lastTime = cl.timedemo.lastTime;
 		if( lastTime != 0 ) {
-			unsigned curTime;
+			int64_t curTime;
 
 			re.Finish();
 
@@ -2160,7 +2160,7 @@ void CL_AdjustServerTime( unsigned int gameMsec ) {
 /*
 * CL_RestartTimeDeltas
 */
-void CL_RestartTimeDeltas( unsigned int newTimeDelta ) {
+void CL_RestartTimeDeltas( int newTimeDelta ) {
 	int i;
 
 	cl.serverTimeDelta = cl.newServerTimeDelta = newTimeDelta;
@@ -2284,7 +2284,7 @@ void CL_Netchan_Transmit( msg_t *msg ) {
 * CL_MaxPacketsReached
 */
 static bool CL_MaxPacketsReached( void ) {
-	static unsigned int lastPacketTime = 0;
+	static int64_t lastPacketTime = 0;
 	static float roundingMsec = 0.0f;
 	int minpackettime;
 	int elapsedTime;
@@ -2351,7 +2351,7 @@ void CL_SendMessagesToServer( bool sendNow ) {
 			// write the command ack
 			if( !cls.reliable ) {
 				MSG_WriteUint8( &message, clc_svcack );
-				MSG_WriteInt32( &message, (unsigned int)cls.lastExecutedServerCommand );
+				MSG_WriteIntBase128( &message, cls.lastExecutedServerCommand );
 			}
 			//write up the clc commands
 			CL_UpdateClientCommandsToServer( &message );
@@ -2363,7 +2363,7 @@ void CL_SendMessagesToServer( bool sendNow ) {
 		// write the command ack
 		if( !cls.reliable ) {
 			MSG_WriteUint8( &message, clc_svcack );
-			MSG_WriteInt32( &message, (unsigned int)cls.lastExecutedServerCommand );
+			MSG_WriteIntBase128( &message, cls.lastExecutedServerCommand );
 		}
 		// send a userinfo update if needed
 		if( userinfo_modified ) {

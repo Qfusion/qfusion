@@ -297,7 +297,7 @@ static void Irc_Logic_ReadMessages( void ) {
 }
 
 static void Irc_Logic_Frame_f( void *frame ) {
-	const uint64_t f = *(uint64_t*) frame;
+	const int64_t f = *(int64_t*) frame;
 	if( !( f % IRC_TRANSMIT_INTERVAL ) ) {
 		Irc_Logic_SendMessages();
 		Irc_Logic_ReadMessages();

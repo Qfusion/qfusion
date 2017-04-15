@@ -88,7 +88,7 @@ typedef struct c4frame_s
 } c4frame_t;
 
 c4frame_t sv_collisionframes[CFRAME_UPDATE_BACKUP];
-static unsigned int sv_collisionFrameNum = 0;
+static int64_t sv_collisionFrameNum = 0;
 
 void GClip_BackUpCollisionFrame( void ) {
 	c4frame_t *cframe;

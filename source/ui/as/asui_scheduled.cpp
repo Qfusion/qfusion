@@ -36,7 +36,7 @@ ScheduledFunction::~ScheduledFunction() {
 }
 
 bool ScheduledFunction::run() {
-	unsigned int now = trap::Milliseconds();
+	int64_t now = trap::Milliseconds();
 
 	if( funcPtr.isValid() || funcPtr2.isValid() ) {
 		// call function

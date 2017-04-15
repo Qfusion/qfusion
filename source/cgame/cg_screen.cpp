@@ -376,7 +376,7 @@ int CG_ParseValue( const char **s ) {
 * CG_DrawNet
 */
 void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color ) {
-	int incomingAcknowledged, outgoingSequence;
+	int64_t incomingAcknowledged, outgoingSequence;
 
 	if( cgs.demoPlaying ) {
 		return;

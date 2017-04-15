@@ -7,7 +7,7 @@ static uint64_t hwtimer_freq;
 static int milli_offset = 0;
 static int64_t micro_offset = 0;
 
-static unsigned int Sys_Milliseconds_TGT( void );
+static int64_t Sys_Milliseconds_TGT( void );
 static uint64_t Sys_Microseconds_QPC( void );
 
 // wsw: pb adapted High Res Performance Counter code from ezquake
@@ -50,7 +50,7 @@ static dynvar_set_status_t Sys_SetHwTimer_f( void *val ) {
 static void Sys_SynchronizeTimers_f( void *val ) {
 	static int hwtimer_old = -1;
 
-	const unsigned int millis = Sys_Milliseconds_TGT();
+	const int64_t millis = Sys_Milliseconds_TGT();
 	const int64_t micros = Sys_Microseconds_QPC();
 	const int64_t drift = micros - millis * 1000;
 
@@ -109,14 +109,14 @@ void Sys_InitTime( void ) {
 * Sys_Milliseconds
 */
 
-static unsigned int Sys_Milliseconds_TGT( void ) {
-	static unsigned int base;
+static int64_t Sys_Milliseconds_TGT( void ) {
+	static int64_t base;
 	static bool initialized = false;
 	unsigned int now;
 
 	if( !initialized ) {
 		// let base retain 16 bits of effectively random data which is used
-		//for quickly generating random numbers
+		// for quickly generating random numbers
 		base = timeGetTime() & 0xffff0000;
 		initialized = true;
 	}
@@ -141,7 +141,7 @@ static uint64_t Sys_Microseconds_QPC( void ) {
 	return ( ( p_now - p_start ) * 1000000 ) / hwtimer_freq;
 }
 
-unsigned int Sys_Milliseconds( void ) {
+int64_t Sys_Milliseconds( void ) {
 	if( hwtimer ) {
 		return ( Sys_Microseconds_QPC() + micro_offset ) / 1000;
 	} else {

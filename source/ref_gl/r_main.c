@@ -1588,7 +1588,7 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 * R_BeginFrame
 */
 void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
-	unsigned int time = ri.Sys_Milliseconds();
+	int64_t time = ri.Sys_Milliseconds();
 
 	GLimp_BeginFrame();
 

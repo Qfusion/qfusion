@@ -246,7 +246,7 @@ static void TV_Upstream_SendMessagesToServer( upstream_t *upstream, bool sendNow
 		if( sendNow || tvs.realtime > upstream->lastPacketSentTime + 100 || ucmd ) {
 			if( !upstream->reliable ) {
 				MSG_WriteUint8( &message, clc_svcack );
-				MSG_WriteInt32( &message, (unsigned int)upstream->lastExecutedServerCommand );
+				MSG_WriteIntBase128( &message, upstream->lastExecutedServerCommand );
 			}
 		}
 
@@ -743,7 +743,7 @@ void TV_Upstream_AddReliableCommand( upstream_t *upstream, const char *cmd ) {
 * Add the pending commands to the message
 */
 void TV_Upstream_UpdateReliableCommandsToServer( upstream_t *upstream, msg_t *msg ) {
-	unsigned int i;
+	int64_t i;
 
 	// write any unacknowledged clientCommands
 	for( i = upstream->reliableAcknowledge + 1; i <= upstream->reliableSequence; i++ ) {
@@ -753,7 +753,7 @@ void TV_Upstream_UpdateReliableCommandsToServer( upstream_t *upstream, msg_t *ms
 
 		MSG_WriteUint8( msg, clc_clientcommand );
 		if( !upstream->reliable ) {
-			MSG_WriteInt32( msg, i );
+			MSG_WriteIntBase128( msg, i );
 		}
 		MSG_WriteString( msg, upstream->reliableCommands[i & ( MAX_RELIABLE_COMMANDS - 1 )] );
 	}

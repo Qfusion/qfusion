@@ -1064,7 +1064,7 @@ void TV_Downstream_InitMaster( void ) {
 * let it know we are alive, and log information
 */
 void TV_Downstream_MasterHeartbeat( void ) {
-	unsigned int time = Sys_Milliseconds();
+	int64_t time = Sys_Milliseconds();
 	int i;
 	const socket_t *socket;
 

@@ -154,7 +154,7 @@ typedef struct {
 	void ( *VID_FlashWindow )( int count );
 
 	void ( *GetConfigString )( int i, char *str, int size );
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 	uint64_t ( *Microseconds )( void );
 
 	// files will be memory mapped read only

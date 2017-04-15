@@ -80,7 +80,7 @@ static void TV_Downstream_ParseMoveCommand( client_t *client, msg_t *msg ) {
 */
 void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 	int c;
-	unsigned cmdNum;
+	int64_t cmdNum;
 	char *s;
 
 	assert( client );
@@ -110,9 +110,9 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 					TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "svack from reliable client" );
 					return;
 				}
-				cmdNum = MSG_ReadInt32( msg );
+				cmdNum = MSG_ReadIntBase128( msg );
 				if( cmdNum < client->reliableAcknowledge || cmdNum > client->reliableSent ) {
-					//					TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "bad server command acknowledged" );
+					// TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "bad server command acknowledged" );
 					return;
 				}
 				client->reliableAcknowledge = cmdNum;
@@ -120,7 +120,7 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 
 			case clc_clientcommand:
 				if( !client->reliable ) {
-					cmdNum = MSG_ReadInt32( msg );
+					cmdNum = MSG_ReadIntBase128( msg );
 					if( cmdNum <= client->clientCommandExecuted ) {
 						s = MSG_ReadString( msg ); // read but ignore
 						continue;

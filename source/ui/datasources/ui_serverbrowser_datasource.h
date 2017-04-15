@@ -201,7 +201,7 @@ class ServerInfoFetcher
 	typedef std::queue<std::string> StringQueue;
 	StringQueue serverQueue;
 	// active queries
-	typedef std::pair<unsigned int, std::string> ActiveQuery;
+	typedef std::pair<int64_t, std::string> ActiveQuery;
 	typedef std::list<ActiveQuery> ActiveList;
 
 	ActiveList activeQueries;
@@ -226,7 +226,7 @@ public:
 	unsigned int numIssued() const { return numIssuedQueries; }
 
 private:
-	unsigned int lastQueryTime;
+	int64_t lastQueryTime;
 	unsigned int numIssuedQueries;
 
 	// compare address of active query
@@ -288,7 +288,7 @@ class ServerBrowserDataSource : public Rocket::Controls::DataSource
 	// need to separate full update and refresh?
 	bool active;
 	unsigned updateId;
-	unsigned lastActiveTime;
+	int64_t lastActiveTime;
 
 	// DEBUG
 	int numNotifies;
@@ -386,13 +386,13 @@ public:
 
 	bool isUpdating( void ) { return active; }
 	unsigned getUpdateId( void ) { return updateId; }
-	unsigned getLastActiveTime( void ) { return lastActiveTime; }
+	int64_t getLastActiveTime( void ) { return lastActiveTime; }
 
 	// DEBUG
 	int getActivity( void ) { return numNotifies; }
 
 private:
-	unsigned int lastUpdateTime;
+	int64_t lastUpdateTime;
 
 	void tableNameForServerInfo( const ServerInfo &, String &table ) const;
 	void addServerToTable( ServerInfo &info, const String &tableName );

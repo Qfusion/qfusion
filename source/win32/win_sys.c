@@ -427,7 +427,7 @@ abort:
 HINSTANCE global_hInstance;
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow ) {
 	MSG msg;
-	unsigned int oldtime, newtime, time;
+	int64_t oldtime, newtime, time;
 
 	/* previous instances do not exist in Win32 */
 	if( hPrevInstance ) {

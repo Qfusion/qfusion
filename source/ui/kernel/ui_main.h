@@ -22,7 +22,7 @@ namespace WSWUI
 class RefreshState
 {
 public:
-	unsigned int time;
+	int64_t time;
 	int clientState;
 	int serverState;
 	bool drawBackground;

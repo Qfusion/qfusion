@@ -138,7 +138,7 @@ static int CL_GameModule_NET_GetCurrentUserCmdNum( void ) {
 /*
 * CL_GameModule_NET_GetCurrentState
 */
-static void CL_GameModule_NET_GetCurrentState( int *incomingAcknowledged, int *outgoingSequence, int *outgoingSent ) {
+static void CL_GameModule_NET_GetCurrentState( int64_t *incomingAcknowledged, int64_t *outgoingSequence, int64_t *outgoingSent ) {
 	if( incomingAcknowledged )
 #ifdef TCP_ALLOW_CONNECT
 	{ *incomingAcknowledged = cls.ucmdHead;}
@@ -357,7 +357,7 @@ static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin,
 */
 void CL_GameModule_Init( void ) {
 	int apiversion;
-	unsigned int start;
+	int64_t start;
 	cgame_import_t import;
 	void *( *builtinAPIfunc )( void * ) = NULL;
 #ifdef CGAME_HARD_LINKED
@@ -722,7 +722,7 @@ void CL_GameModule_MouseMove( int dx, int dy ) {
 /*
 * CL_GameModule_TouchEvent
 */
-void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time ) {
+void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
 	if( cge ) {
 		cge->TouchEvent( id, type, x, y, time );
 	}

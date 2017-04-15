@@ -203,7 +203,7 @@ void CIN_UnloadLibrary( bool verbose ) {
 	}
 }
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time,
+struct cinematics_s *CIN_Open( const char *name, int64_t start_time,
 							   int flags, bool *yuv, float *framerate ) {
 	if( cin_export ) {
 		return cin_export->Open( name, start_time, flags, yuv, framerate );
@@ -225,7 +225,7 @@ const char *CIN_FileName( struct cinematics_s *cin ) {
 	return NULL;
 }
 
-bool CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime ) {
+bool CIN_NeedNextFrame( struct cinematics_s *cin, int64_t curtime ) {
 	if( cin_export ) {
 		return cin_export->NeedNextFrame( cin, curtime );
 	}
@@ -259,7 +259,7 @@ bool CIN_AddRawSamplesListener( struct cinematics_s *cin, void *listener,
 	return false;
 }
 
-void CIN_Reset( struct cinematics_s *cin, unsigned int cur_time ) {
+void CIN_Reset( struct cinematics_s *cin, int64_t cur_time ) {
 	if( cin_export ) {
 		cin_export->Reset( cin, cur_time );
 	}

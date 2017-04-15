@@ -67,7 +67,7 @@ static unsigned int cl_mm_last_heartbeat;
 
 static unsigned int cl_mm_loginHandle = 0;
 static unsigned int cl_mm_loginState = 0;
-static unsigned int cl_mm_loginTime = 0;
+static int64_t cl_mm_loginTime = 0;
 static int cl_mm_loginRetries = 0;
 
 static char *cl_mm_errmsg = NULL;
@@ -330,7 +330,7 @@ bool CL_MM_WaitForLogin( void ) {
 }
 
 void CL_MM_Frame( void ) {
-	unsigned int time;
+	int64_t time;
 
 	time = Sys_Milliseconds();
 
@@ -389,7 +389,7 @@ static void cl_mm_logout_done( stat_query_t *query, bool success, void *customp 
 */
 bool CL_MM_Logout( bool force ) {
 	stat_query_t *query;
-	unsigned int timeout;
+	int64_t timeout;
 	bool result;
 
 	if( !cl_mm_enabled || !cls.mm_session ) {
@@ -683,7 +683,7 @@ static void CL_MM_LoginSteamCb( void *data, size_t len ) {
 * CL_MM_LoginSteam
 */
 static bool CL_MM_LoginSteam( void ) {
-	unsigned start_time;
+	int64_t start_time;
 
 	if( cl_mm_loginState >= LOGIN_STATE_WAITING || cl_mm_enabled ) {
 		// already authed or in process

@@ -35,10 +35,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct serverlist_s {
 	char address[48];
-	unsigned int pingTimeStamp;
-	unsigned int lastValidPing;
-	unsigned int lastUpdatedByMasterServer;
-	unsigned int masterServerUpdateSeq;
+	int64_t pingTimeStamp;
+	int64_t lastValidPing;
+	int64_t lastUpdatedByMasterServer;
+	int64_t masterServerUpdateSeq;
 	bool isLocal;
 	struct serverlist_s *pnext;
 } serverlist_t;
@@ -48,9 +48,9 @@ serverlist_t *masterList, *favoritesList;
 static bool filter_allow_full = false;
 static bool filter_allow_empty = false;
 
-static unsigned int masterServerUpdateSeq;
+static int64_t masterServerUpdateSeq;
 
-static unsigned int localQueryTimeStamp = 0;
+static int64_t localQueryTimeStamp = 0;
 
 typedef struct masterserver_s {
 	char addressString[MAX_TOKEN_CHARS];
@@ -377,7 +377,7 @@ void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg
 	}
 
 	if( pingserver && pingserver->pingTimeStamp ) { // valid ping
-		unsigned int ping = Sys_Milliseconds() - pingserver->pingTimeStamp;
+		int64_t ping = Sys_Milliseconds() - pingserver->pingTimeStamp;
 		CL_UIModule_AddToServerList( adrString, va( "\\\\ping\\\\%i%s", ping, s ) );
 		pingserver->pingTimeStamp = 0;
 		pingserver->lastValidPing = Com_DaysSince1900();
@@ -386,7 +386,7 @@ void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg
 
 	// assume LAN response
 	if( NET_IsLANAddress( address ) && ( localQueryTimeStamp + LAN_SERVER_PINGING_TIMEOUT > Sys_Milliseconds() ) ) {
-		unsigned int ping = Sys_Milliseconds() - localQueryTimeStamp;
+		int64_t ping = Sys_Milliseconds() - localQueryTimeStamp;
 		CL_UIModule_AddToServerList( adrString, va( "\\\\ping\\\\%i%s", ping, s ) );
 		return;
 	}
@@ -472,10 +472,7 @@ void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address
 
 	// add the new server addresses to the local addresses list
 	masterServerUpdateSeq++;
-	if( !masterServerUpdateSeq ) {
-		// wrapped
-		masterServerUpdateSeq = 1;
-	}
+
 	CL_ParseGetServersResponseMessage( msg, extended );
 
 //	CL_WriteServerCache();

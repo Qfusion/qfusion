@@ -1090,7 +1090,7 @@ void MSG_WriteDeltaUsercmd( msg_t *msg, const usercmd_t *from, usercmd_t *cmd ) 
 
 	MSG_WriteDeltaStruct( msg, from, cmd, fields, numFields );
 
-	MSG_WriteInt32( msg, cmd->serverTimeStamp );
+	MSG_WriteIntBase128( msg, cmd->serverTimeStamp );
 }
 
 /*
@@ -1102,7 +1102,7 @@ void MSG_ReadDeltaUsercmd( msg_t *msg, const usercmd_t *from, usercmd_t *move ) 
 
 	MSG_ReadDeltaStruct( msg, from, move, sizeof( usercmd_t ), fields, numFields );
 
-	move->serverTimeStamp = MSG_ReadInt32( msg );
+	move->serverTimeStamp = MSG_ReadIntBase128( msg );
 }
 
 //==================================================

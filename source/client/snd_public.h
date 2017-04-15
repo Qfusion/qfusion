@@ -77,7 +77,7 @@ typedef struct {
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	bool ( *FS_IsUrl )( const char *url );
 
-	unsigned int ( *Sys_Milliseconds )( void );
+	int64_t ( *Sys_Milliseconds )( void );
 	void ( *Sys_Sleep )( unsigned int milliseconds );
 
 	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t * funcs );

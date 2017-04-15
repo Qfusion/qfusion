@@ -27,7 +27,7 @@ typedef struct {
 	void ( *Print )( const char *msg );
 	void ( *Error )( const char *msg );
 
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 
 	// console variable interaction
 	cvar_t *( *Cvar_Get )( const char *name, const char *value, int flags );

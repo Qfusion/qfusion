@@ -134,7 +134,7 @@ static inline bool trap_FS_IsUrl( const char *url ) {
 }
 
 // misc
-static inline unsigned int trap_Milliseconds( void ) {
+static inline int64_t trap_Milliseconds( void ) {
 	return SOUND_IMPORT.Sys_Milliseconds();
 }
 

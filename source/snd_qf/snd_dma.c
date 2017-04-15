@@ -57,7 +57,7 @@ playsound_t s_pendingplays;
 rawsound_t *raw_sounds[MAX_RAW_SOUNDS];
 
 #define UPDATE_MSEC 10
-static unsigned s_last_update_time;
+static int64_t s_last_update_time;
 
 static int s_attenuation_model = 0;
 static float s_attenuation_maxdistance = 0;
@@ -1633,7 +1633,7 @@ static pipeCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 */
 static int S_EnqueuedCmdsWaiter( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandlers, bool timeout ) {
 	int read = S_ReadEnqueuedCmds( queue, cmdHandlers );
-	unsigned now = trap_Milliseconds();
+	int64_t now = trap_Milliseconds();
 
 	if( read < 0 ) {
 		// shutdown

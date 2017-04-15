@@ -137,10 +137,10 @@ typedef struct client_s {
 	socket_t socket;
 
 	char reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
-	unsigned int reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
-	unsigned int reliableAcknowledge;   // last acknowledged reliable message
-	unsigned int reliableSent;          // last sent reliable message, not necesarily acknowledged yet
-	int suppressCount;                  // number of messages rate suppressed
+	int64_t reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
+	int64_t reliableAcknowledge;   // last acknowledged reliable message
+	int64_t reliableSent;          // last sent reliable message, not necesarily acknowledged yet
+	int suppressCount;              // number of messages rate suppressed
 
 	game_command_t gameCommands[MAX_RELIABLE_COMMANDS];
 	int gameCommandCurrent;             // position in the gameCommands table
@@ -148,19 +148,19 @@ typedef struct client_s {
 	unsigned int clientCommandExecuted; // last client-command we received
 
 	unsigned int UcmdTime;
-	unsigned int UcmdExecuted;          // last client-command we executed
-	unsigned int UcmdReceived;          // last client-command we received
+	int64_t UcmdExecuted;              // last client-command we executed
+	int64_t UcmdReceived;              // last client-command we received
 	usercmd_t ucmds[CMD_BACKUP];        // each message will send several old cmds
 
-	unsigned int lastPacketSentTime;    // time when we sent the last message to this client
-	unsigned int lastPacketReceivedTime; // time when we received the last message from this client
-	unsigned lastconnect;
+	int64_t lastPacketSentTime;     // time when we sent the last message to this client
+	int64_t lastPacketReceivedTime; // time when we received the last message from this client
+	int64_t lastconnect;
 
 	int lastframe;                  // used for delta compression etc.
 	bool nodelta;               // send one non delta compressed frame trough
 	int nodelta_frame;              // when we get confirmation of this frame, the non-delta frame is trough
 	usercmd_t lastcmd;              // for filling in big drops
-	unsigned int lastSentFrameNum;  // for knowing which was last frame we sent
+	int64_t lastSentFrameNum;  // for knowing which was last frame we sent
 
 	int frame_latency[LATENCY_COUNTS];
 	int ping;
@@ -185,9 +185,9 @@ typedef struct client_s {
 
 typedef struct {
 	int spawncount;
-	unsigned int next_heartbeat;
-	unsigned int framenum;
-	unsigned int lastrun;
+	int64_t next_heartbeat;
+	int64_t framenum;
+	int64_t lastrun;
 	unsigned int snapFrameTime;
 } tv_lobby_t;
 

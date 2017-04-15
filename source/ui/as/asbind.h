@@ -290,6 +290,10 @@ template<>
 inline const char *typestr<unsigned short>() { return "uint16"; }
 template<>
 inline const char *typestr<bool>() { return "bool"; }
+template<>
+inline const char *typestr<int64_t>() { return "int16"; }
+template<>
+inline const char *typestr<uint64_t>() { return "uint64"; }
 
 template<>
 inline const char *typestr<float>() { return "float"; }
@@ -961,6 +965,14 @@ template<>
 struct SetArg<double>{
 	void operator()( asIScriptContext *ctx, int idx, double &t ) { ctx->SetArgDouble( idx, t ); }
 };
+template<>
+struct SetArg<int64_t>{
+	void operator()( asIScriptContext *ctx, int idx, int64_t &t ) { ctx->SetArgQWord( idx, t ); }
+};
+template<>
+struct SetArg<uint64_t>{
+	void operator()( asIScriptContext *ctx, int idx, uint64_t &t ) { ctx->SetArgQWord( idx, t ); }
+};
 // bool FIXME: 32-bits on PowerPC
 template<>
 struct SetArg<bool>{
@@ -1024,6 +1036,14 @@ struct GetArg<double>{
 template<>
 struct GetArg<bool>{
 	bool operator()( asIScriptContext *ctx ) { return ctx->GetReturnByte() == 0 ? false : true; }
+};
+template<>
+struct GetArg<int64_t>{
+	int64_t operator()( asIScriptContext *ctx ) { return ctx->GetReturnQWord(); }
+};
+template<>
+struct GetArg<uint64_t>{
+	uint64_t operator()( asIScriptContext *ctx ) { return ctx->GetReturnQWord(); }
 };
 // pointers and references
 template<typename T>

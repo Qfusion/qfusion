@@ -441,7 +441,7 @@ static void Sys_Android_ExecuteIntent( void ) {
 void android_main( struct android_app *app ) {
 	int ident, events;
 	struct android_poll_source *source;
-	unsigned int oldtime, newtime, time;
+	int64_t oldtime, newtime, time;
 
 	app_dummy();
 

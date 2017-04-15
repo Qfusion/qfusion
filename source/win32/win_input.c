@@ -83,7 +83,7 @@ static void     IN_RawInput_Shutdown( void );
 static int      IN_RawInput_Register( void );
 static void     IN_RawInput_DeRegister( void );
 
-extern unsigned sys_msg_time;
+extern int64_t sys_msg_time;
 
 cvar_t *in_mouse;
 cvar_t *in_grabinconsole;
@@ -1054,7 +1054,7 @@ void IN_Commands( void ) {
 	int buttons, buttonsOld, buttonsDiff;
 	bool trigger, triggerOld;
 	static bool notConnected;
-	static unsigned int lastConnectedCheck;
+	static int64_t lastConnectedCheck;
 
 	if( in_xinput_initialized && in_appactive ) {
 		XINPUT_STATE state;
@@ -1086,7 +1086,7 @@ void IN_Commands( void ) {
 			K_A_BUTTON, K_B_BUTTON, K_X_BUTTON, K_Y_BUTTON
 		};
 
-		unsigned int time = Sys_Milliseconds();
+		int64_t time = Sys_Milliseconds();
 
 		for( i = 0; i < ( sizeof( keys ) / sizeof( keys[0] ) ); i++ ) {
 			if( !keys[i] ) {

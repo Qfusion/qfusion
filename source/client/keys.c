@@ -559,10 +559,10 @@ void Key_CharEvent( int key, wchar_t charkey ) {
 * (This order is not final! We might want to suppress the second pair of
 * mouse1 down/up events, or make +MOUSE1DBLCLK come before +MOUSE1)
 */
-void Key_MouseEvent( int key, bool down, unsigned time ) {
-	static unsigned int last_button1_click = 0;
+void Key_MouseEvent( int key, bool down, int64_t time ) {
+	static int64_t last_button1_click = 0;
 	// use a lower delay than XP default (480 ms) because we don't support width/height yet
-	const unsigned int doubleclick_time = 350;  // milliseconds
+	const int64_t doubleclick_time = 350;  // milliseconds
 	//	static int last_button1_x, last_button1_y; // TODO
 	//	const int doubleclick_width = 4;	// TODO
 	//	const int doubleclick_height = 4;	// TODO
@@ -625,7 +625,7 @@ static int Key_NumPadKeyValue( int key ) {
 * Called by the system between frames for both key up and key down events
 * Should NOT be called during an interrupt!
 */
-void Key_Event( int key, bool down, unsigned time ) {
+void Key_Event( int key, bool down, int64_t time ) {
 	char *kb;
 	char cmd[1024];
 	bool handled = false;

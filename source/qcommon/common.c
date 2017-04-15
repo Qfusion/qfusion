@@ -72,10 +72,10 @@ struct cmodel_state_s *server_cms = NULL;
 unsigned server_map_checksum = 0;
 
 // host_speeds times
-unsigned int time_before_game;
-unsigned int time_after_game;
-unsigned int time_before_ref;
-unsigned int time_after_ref;
+int64_t time_before_game;
+int64_t time_after_game;
+int64_t time_before_ref;
+int64_t time_after_ref;
 
 /*
 ==============================================================

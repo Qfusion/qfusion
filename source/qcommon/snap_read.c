@@ -248,7 +248,7 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 	int len, pos;
 	int areabytes;
 	uint8_t *areabits;
-	unsigned int serverTime;
+	int64_t serverTime;
 	int flags, snapNum, supCnt;
 
 	// get total length
@@ -256,8 +256,8 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 	pos = msg->readcount;
 
 	// get the snapshot id
-	serverTime = (unsigned)MSG_ReadInt32( msg );
-	snapNum = MSG_ReadInt32( msg );
+	serverTime = MSG_ReadIntBase128( msg );
+	snapNum = MSG_ReadUintBase128( msg );
 
 	if( backup ) {
 		newframe = &backup[snapNum & UPDATE_MASK];
@@ -271,8 +271,8 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 
 	newframe->serverTime = serverTime;
 	newframe->serverFrame = snapNum;
-	newframe->deltaFrameNum = MSG_ReadInt32( msg );
-	newframe->ucmdExecuted = MSG_ReadInt32( msg );
+	newframe->deltaFrameNum = MSG_ReadUintBase128( msg );
+	newframe->ucmdExecuted = MSG_ReadUintBase128( msg );
 
 	flags = MSG_ReadUint8( msg );
 	newframe->delta = ( flags & FRAMESNAP_FLAG_DELTA ) ? true : false;

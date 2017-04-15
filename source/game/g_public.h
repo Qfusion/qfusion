@@ -92,7 +92,7 @@ typedef struct {
 	int ( *ImageIndex )( const char *name );
 	int ( *SkinIndex )( const char *name );
 
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 
 	bool ( *inPVS )( const vec3_t p1, const vec3_t p2 );
 

@@ -194,7 +194,7 @@ static inline void trap_GetConfigString( int i, char *str, int size ) {
 	CGAME_IMPORT.GetConfigString( i, str, size );
 }
 
-static inline unsigned int trap_Milliseconds( void ) {
+static inline int64_t trap_Milliseconds( void ) {
 	return CGAME_IMPORT.Milliseconds();
 }
 
@@ -210,7 +210,7 @@ static inline int trap_NET_GetCurrentUserCmdNum( void ) {
 	return CGAME_IMPORT.NET_GetCurrentUserCmdNum();
 }
 
-static inline void trap_NET_GetCurrentState( int *incomingAcknowledged, int *outgoingSequence, int *outgoingSent ) {
+static inline void trap_NET_GetCurrentState( int64_t *incomingAcknowledged, int64_t *outgoingSequence, int64_t *outgoingSent ) {
 	CGAME_IMPORT.NET_GetCurrentState( incomingAcknowledged, outgoingSequence, outgoingSent );
 }
 

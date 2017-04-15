@@ -52,8 +52,8 @@ typedef struct ginfo_s {
 typedef struct {
 	server_state_t state;       // precache commands are only valid during load
 
-	unsigned nextSnapTime;              // always sv.framenum * svc.snapFrameTime msec
-	unsigned framenum;
+	int64_t nextSnapTime;              // always sv.framenum * svc.snapFrameTime msec
+	int64_t framenum;
 
 	char mapname[MAX_QPATH];               // map name
 
@@ -93,7 +93,7 @@ typedef struct {
 	player_state_t *ps;                 // [numplayers]
 	int num_entities;
 	int first_entity;                   // into the circular sv.client_entities[]
-	unsigned int sentTimeStamp;         // time at what this frame snap was sent to the clients
+	int64_t sentTimeStamp;         // time at what this frame snap was sent to the clients
 	unsigned int UcmdExecuted;
 	game_state_t gameState;
 } client_snapshot_t;
@@ -102,12 +102,12 @@ typedef struct {
 	char *name;
 	int file;
 	int size;               // total bytes (can't use EOF because of paks)
-	unsigned int timeout;   // so we can free the file being downloaded
+	int64_t timeout;   // so we can free the file being downloaded
 	                        // if client omits sending success or failure message
 } client_download_t;
 
 typedef struct {
-	unsigned int framenum;
+	int64_t framenum;
 	char command[MAX_STRING_CHARS];
 } game_command_t;
 
@@ -121,7 +121,7 @@ typedef struct client_s {
 
 	char userinfo[MAX_INFO_STRING];         // name, etc
 	char userinfoLatched[MAX_INFO_STRING];  // flood prevention - actual userinfo updates are delayed
-	unsigned int userinfoLatchTimeout;
+	int64_t userinfoLatchTimeout;
 
 	bool reliable;                  // no need for acks, connection is reliable
 	bool mv;                        // send multiview data to the client
@@ -130,28 +130,28 @@ typedef struct client_s {
 	socket_t socket;
 
 	char reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
-	unsigned int reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
-	unsigned int reliableAcknowledge;   // last acknowledged reliable message
-	unsigned int reliableSent;          // last sent reliable message, not necesarily acknowledged yet
+	int64_t reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
+	int64_t reliableAcknowledge;   // last acknowledged reliable message
+	int64_t reliableSent;          // last sent reliable message, not necesarily acknowledged yet
 
 	game_command_t gameCommands[MAX_RELIABLE_COMMANDS];
-	int gameCommandCurrent;             // position in the gameCommands table
+	int64_t gameCommandCurrent;             // position in the gameCommands table
 
-	unsigned int clientCommandExecuted; // last client-command we received
+	int64_t clientCommandExecuted; // last client-command we received
 
-	unsigned int UcmdTime;
-	unsigned int UcmdExecuted;          // last client-command we executed
-	unsigned int UcmdReceived;          // last client-command we received
+	int64_t UcmdTime;
+	int64_t UcmdExecuted;          // last client-command we executed
+	int64_t UcmdReceived;          // last client-command we received
 	usercmd_t ucmds[CMD_BACKUP];        // each message will send several old cmds
 
-	unsigned int lastPacketSentTime;    // time when we sent the last message to this client
-	unsigned int lastPacketReceivedTime; // time when we received the last message from this client
-	unsigned lastconnect;
+	int64_t lastPacketSentTime;    // time when we sent the last message to this client
+	int64_t lastPacketReceivedTime; // time when we received the last message from this client
+	int64_t lastconnect;
 
-	int lastframe;                  // used for delta compression etc.
+	int64_t lastframe;                  // used for delta compression etc.
 	bool nodelta;               // send one non delta compressed frame trough
-	int nodelta_frame;              // when we get confirmation of this frame, the non-delta frame is trough
-	unsigned int lastSentFrameNum;  // for knowing which was last frame we sent
+	int64_t nodelta_frame;              // when we get confirmation of this frame, the non-delta frame is through
+	int64_t lastSentFrameNum;  // for knowing which was last frame we sent
 
 	int frame_latency[LATENCY_COUNTS];
 	int ping;
@@ -208,7 +208,7 @@ typedef struct {
 	char *filename;
 	char *tempname;
 	time_t localtime;
-	unsigned int basetime, duration;
+	int64_t basetime, duration;
 	client_t client;                // special client for writing the messages
 	char meta_data[SNAP_MAX_DEMO_META_DATA_SIZE];
 	size_t meta_data_realsize;
@@ -242,8 +242,8 @@ typedef struct fatvis_s {
 
 typedef struct {
 	bool initialized;               // sv_init has completed
-	unsigned int realtime;                  // real world time - always increasing, no clamping, etc
-	unsigned int gametime;                  // game world time - always increasing, no clamping, etc
+	int64_t realtime;               // real world time - always increasing, no clamping, etc
+	int64_t gametime;               // game world time - always increasing, no clamping, etc
 
 	socket_t socket_udp;
 	socket_t socket_udp6;
@@ -280,12 +280,12 @@ typedef struct {
 } server_static_t;
 
 typedef struct {
-	unsigned int nextHeartbeat;
-	unsigned int lastActivity;
+	int64_t nextHeartbeat;
+	int64_t lastActivity;
 	unsigned int snapFrameTime;     // msecs between server packets
 	unsigned int gameFrameTime;     // msecs between game code executions
 	bool autostarted;
-	unsigned int lastMasterResolve;
+	int64_t lastMasterResolve;
 	unsigned int autoUpdateMinute;  // the minute number we should run the autoupdate check, in the range 0 to 59
 } server_constant_t;
 

@@ -319,7 +319,7 @@ inline void GetConfigString( int i, char *str, int size ) {
 	UI_IMPORT.GetConfigString( i, str, size );
 }
 
-inline unsigned int Milliseconds( void ) {
+inline int64_t Milliseconds( void ) {
 	return UI_IMPORT.Milliseconds();
 }
 

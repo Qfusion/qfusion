@@ -116,17 +116,15 @@ static void SNAP_WritePlayerstateToClient( msg_t *msg, const player_state_t *ops
 /*
 * SNAP_WriteMultiPOVCommands
 */
-static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *msg, unsigned int frameNum ) {
+static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *msg, int64_t frameNum ) {
 	int i, index;
 	client_t *cl;
 	int positions[MAX_CLIENTS];
-	char *command;
-	int maxnumtargets, numtargets, maxtarget;
-	unsigned int framenum;
-	uint8_t targets[MAX_CLIENTS / 8];
+	int maxnumtargets;
+	const char *command;
 
 	// find the first command to send from every client
-	maxnumtargets = maxtarget = 0;
+	maxnumtargets = 0;
 	for( i = 0; i < gi->max_clients; i++ ) {
 		cl = gi->clients + i;
 
@@ -143,7 +141,7 @@ static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 			// all the time, and we might want to create a server demo frame or something in between snaps
 			if( cl->gameCommands[index].command[0] && cl->gameCommands[index].framenum + 256 >= frameNum &&
 				cl->gameCommands[index].framenum <= frameNum &&
-				( client->lastframe >= 0 && cl->gameCommands[index].framenum > (unsigned int)client->lastframe ) ) {
+				( client->lastframe >= 0 && cl->gameCommands[index].framenum > client->lastframe ) ) {
 				break;
 			}
 		}
@@ -151,10 +149,12 @@ static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 
 	// send all messages, combining similar messages together to save space
 	do {
+		int numtargets = 0, maxtarget = 0;
+		int64_t framenum = 0;
+		uint8_t targets[MAX_CLIENTS / 8];
+
 		command = NULL;
-		maxtarget = 0;
-		numtargets = 0;
-		framenum = 0;
+		memset( targets, 0, sizeof( targets ) );
 
 		// we find the message with the earliest framenum, and collect all recipients for that
 		for( i = 0; i < gi->max_clients; i++ ) {
@@ -266,7 +266,7 @@ static void SNAP_RelayMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 /*
 * SNAP_WriteFrameSnapToClient
 */
-void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, unsigned int frameNum, unsigned int gameTime,
+void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, int64_t frameNum, int64_t gameTime,
 								  entity_state_t *baselines, client_entities_t *client_entities,
 								  int numcmds, gcommand_t *commands, const char *commandsData ) {
 	client_snapshot_t *frame, *oldframe;
@@ -284,12 +284,12 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, uns
 		}
 	}
 
-	if( client->lastframe <= 0 || (unsigned)client->lastframe > frameNum || client->nodelta ) {
+	if( client->lastframe <= 0 || client->lastframe > frameNum || client->nodelta ) {
 		// client is asking for a not compressed retransmit
 		oldframe = NULL;
 	}
 	//else if( frameNum >= client->lastframe + (UPDATE_BACKUP - 3) )
-	else if( frameNum >= (unsigned)client->lastframe + UPDATE_MASK ) {
+	else if( frameNum >= client->lastframe + UPDATE_MASK ) {
 		// client hasn't gotten a good message through in a long time
 		oldframe = NULL;
 	} else {
@@ -309,10 +309,10 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, uns
 	pos = msg->cursize;
 	MSG_WriteInt16( msg, 0 );       // we will write length here
 
-	MSG_WriteInt32( msg, gameTime ); // serverTimeStamp
-	MSG_WriteInt32( msg, frameNum );
-	MSG_WriteInt32( msg, client->lastframe );
-	MSG_WriteInt32( msg, frame->UcmdExecuted );
+	MSG_WriteIntBase128( msg, gameTime ); // serverTimeStamp
+	MSG_WriteUintBase128( msg, frameNum );
+	MSG_WriteUintBase128( msg, client->lastframe );
+	MSG_WriteUintBase128( msg, frame->UcmdExecuted );
 
 	flags = 0;
 	if( oldframe != NULL ) {
@@ -712,7 +712,7 @@ static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_
 * Decides which entities are going to be visible to the client, and
 * copies off the playerstat and areabits.
 */
-void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, unsigned int frameNum, unsigned int timeStamp,
+void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, int64_t frameNum, int64_t timeStamp,
 								fatvis_t *fatvis, client_t *client,
 								game_state_t *gameState, client_entities_t *client_entities,
 								bool relay, mempool_t *mempool ) {

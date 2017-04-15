@@ -95,7 +95,7 @@ static void Irc_Rcon_ProcessMsg( const char *user, const char *msg ) {
 	word = strtok( buf, " " );
 	if( word && !strcasecmp( word, IRC_RCON_PREFIX ) ) {
 		// it really is an RCON message, not a normal PRIVMSG
-		unsigned int millis = IRC_IMPORT.Sys_Milliseconds();
+		int64_t millis = IRC_IMPORT.Sys_Milliseconds();
 		irc_rcon_user_t *rcon_user;
 		if( IRC_IMPORT.Trie_Find( irc_rcon_users, user, TRIE_EXACT_MATCH, (void**) &rcon_user ) == TRIE_OK ) {
 			// user is already authorized

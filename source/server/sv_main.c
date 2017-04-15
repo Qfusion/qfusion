@@ -429,7 +429,7 @@ static void SV_CheckTimeouts( void ) {
 static void SV_CheckLatchedUserinfoChanges( void ) {
 	client_t *cl;
 	int i;
-	unsigned int time = Sys_Milliseconds();
+	int64_t time = Sys_Milliseconds();
 
 	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ ) {
 		if( cl->state == CS_FREE || cl->state == CS_ZOMBIE ) {
@@ -453,7 +453,7 @@ static void SV_CheckLatchedUserinfoChanges( void ) {
 * SV_RunGameFrame
 */
 static bool SV_RunGameFrame( int msec ) {
-	static unsigned int accTime = 0;
+	static int64_t accTime = 0;
 	bool refreshSnapshot;
 	bool refreshGameModule;
 	bool sentFragments;
@@ -501,7 +501,7 @@ static bool SV_RunGameFrame( int msec ) {
 	}
 
 	if( refreshGameModule ) {
-		unsigned int moduleTime;
+		int64_t moduleTime;
 
 		// update ping based on the last known frame from all clients
 		SV_CalcPings();
@@ -647,8 +647,8 @@ void SV_UpdateActivity( void ) {
 * SV_CheckAutoUpdate
 */
 static void SV_CheckAutoUpdate( void ) {
-	unsigned int days;
-	unsigned int uptimeMinute;
+	int64_t days;
+	int64_t uptimeMinute;
 
 	if( !sv_pure->integer && sv_autoUpdate->integer ) {
 		Com_Printf( "WARNING: Autoupdate is not available for unpure servers.\n" );
@@ -713,9 +713,7 @@ static void SV_CheckMatchUUID( void ) {
 /*
 * SV_Frame
 */
-void SV_Frame( int realmsec, int gamemsec ) {
-	const unsigned int wrappingPoint = 0x70000000;
-
+void SV_Frame( unsigned realmsec, unsigned gamemsec ) {
 	time_before_game = time_after_game = 0;
 
 	// if server is not active, do nothing
@@ -726,13 +724,6 @@ void SV_Frame( int realmsec, int gamemsec ) {
 
 	svs.realtime += realmsec;
 	svs.gametime += gamemsec;
-
-	// advance to next map if the server is running for too long (numbers taken from q3 src)
-	if( svs.realtime > wrappingPoint || svs.gametime > wrappingPoint || sv.framenum >= wrappingPoint ) {
-		Cbuf_AddText( "wait; vstr nextmap\n" );
-		SV_ShutdownGame( "Restarting server due to time wrapping", true );
-		return;
-	}
 
 	// check timeouts
 	SV_CheckTimeouts();

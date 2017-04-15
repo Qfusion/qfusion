@@ -777,7 +777,7 @@ static void SV_ShowServerinfo_f( client_t *client ) {
 */
 static void SV_UserinfoCommand_f( client_t *client ) {
 	char *info;
-	unsigned int time;
+	int64_t time;
 
 	info = Cmd_Argv( 1 );
 	if( !Info_Validate( info ) ) {
@@ -909,7 +909,7 @@ USER CMD EXECUTION
 */
 usercmd_t *SV_FindNextUserCommand( client_t *client ) {
 	usercmd_t *ucmd;
-	unsigned int higherTime = 0xFFFFFFFF;
+	int64_t higherTime = 0;
 	unsigned int i;
 
 	higherTime = svs.gametime; // ucmds can never have a higher timestamp than server time, unless cheating
@@ -921,7 +921,7 @@ usercmd_t *SV_FindNextUserCommand( client_t *client ) {
 				continue;
 			}
 
-			if( client->ucmds[i & CMD_MASK].serverTimeStamp < higherTime ) {
+			if( ucmd == NULL || client->ucmds[i & CMD_MASK].serverTimeStamp < higherTime ) {
 				higherTime = client->ucmds[i & CMD_MASK].serverTimeStamp;
 				ucmd = &client->ucmds[i & CMD_MASK];
 			}
@@ -936,7 +936,7 @@ usercmd_t *SV_FindNextUserCommand( client_t *client ) {
 */
 void SV_ExecuteClientThinks( int clientNum ) {
 	unsigned int msec;
-	unsigned int minUcmdTime;
+	int64_t minUcmdTime;
 	int timeDelta;
 	client_t *client;
 	usercmd_t *ucmd;
@@ -1037,7 +1037,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 	int c;
 	char *s;
 	bool move_issued;
-	unsigned int cmdNum;
+	int64_t cmdNum;
 
 	if( !msg ) {
 		return;
@@ -1088,7 +1088,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 					SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: svack from reliable client" );
 					return;
 				}
-				cmdNum = MSG_ReadInt32( msg );
+				cmdNum = MSG_ReadIntBase128( msg );
 				if( cmdNum < client->reliableAcknowledge || cmdNum > client->reliableSent ) {
 					//SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: bad server command acknowledged" );
 					return;
@@ -1099,7 +1099,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 
 			case clc_clientcommand:
 				if( !client->reliable ) {
-					cmdNum = MSG_ReadInt32( msg );
+					cmdNum = MSG_ReadIntBase128( msg );
 					if( cmdNum <= client->clientCommandExecuted ) {
 						s = MSG_ReadString( msg ); // read but ignore
 						continue;

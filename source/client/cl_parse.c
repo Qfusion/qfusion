@@ -1284,8 +1284,8 @@ void CL_ParseServerMessage( msg_t *msg ) {
 					Com_Error( ERR_DROP, "CL_ParseServerMessage: clack message for reliable client\n" );
 					return;
 				}
-				cls.reliableAcknowledge = (unsigned)MSG_ReadInt32( msg );
-				cls.ucmdAcknowledged = (unsigned)MSG_ReadInt32( msg );
+				cls.reliableAcknowledge = MSG_ReadUintBase128( msg );
+				cls.ucmdAcknowledged = MSG_ReadUintBase128( msg );
 				if( cl_debug_serverCmd->integer & 4 ) {
 					Com_Printf( "svc_clcack:reliable cmd ack:%i ucmdack:%i\n", cls.reliableAcknowledge, cls.ucmdAcknowledged );
 				}

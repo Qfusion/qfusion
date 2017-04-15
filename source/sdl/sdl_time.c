@@ -10,7 +10,7 @@ void Sys_InitTime( void ) {
 	freq = SDL_GetPerformanceFrequency();
 }
 
-unsigned int Sys_Milliseconds( void ) {
+int64_t Sys_Milliseconds( void ) {
 	return Sys_Microseconds() / 1000;
 }
 

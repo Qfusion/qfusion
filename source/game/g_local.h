@@ -185,7 +185,7 @@ typedef struct {
 // it is read/written to the level.sav file for savegames
 //
 typedef struct {
-	unsigned int framenum;
+	int64_t framenum;
 	int64_t time; // time in milliseconds
 	int64_t spawnedTimeStamp; // time when map was restarted
 	int64_t finalMatchDuration;

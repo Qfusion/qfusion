@@ -42,8 +42,8 @@ typedef struct qfontface_s qfontface_t;
 
 typedef struct {
 	int frames;
-	unsigned int startTime;
-	unsigned int lastTime;
+	int64_t startTime;
+	int64_t lastTime;
 	int counts[100];
 } cl_timedemo_t;
 
@@ -56,8 +56,8 @@ typedef struct {
 	bool paused;
 	int pause_cnt;
 	bool yuv;
-	unsigned int startTime;
-	unsigned int pauseTime;
+	int64_t startTime;
+	int64_t pauseTime;
 	uint8_t *pic;
 	int aspect_numerator, aspect_denominator;
 	ref_yuv_t *cyuv;
@@ -97,7 +97,7 @@ typedef struct {
 	int serverTimeDeltas[MAX_TIMEDELTAS_BACKUP];
 	int newServerTimeDelta;         // the time difference with the server time, or at least our best guess about it
 	int serverTimeDelta;            // the time difference with the server time, or at least our best guess about it
-	unsigned int serverTime;        // the best match we can guess about current time in the server
+	int64_t serverTime;             // the best match we can guess about current time in the server
 	unsigned int snapFrameTime;
 
 	//
@@ -138,8 +138,8 @@ typedef struct {
 	char *requestname;              // file we requested from the server (NULL if none requested)
 	bool requestnext;           // whether to request next download after this, for precaching
 	bool requestpak;            // whether to only allow .pk3/.pak or only allow normal file
-	unsigned int timeout;
-	unsigned int timestart;
+	int64_t timeout;
+	int64_t timestart;
 
 	// both downloads
 	char *name;                     // name of the file in download, relative to base path
@@ -182,12 +182,12 @@ typedef struct {
 	char *filename;
 
 	time_t localtime;       // time of day of demo recording
-	unsigned int time;      // milliseconds passed since the start of the demo
-	unsigned int duration, basetime;
+	int64_t time;           // milliseconds passed since the start of the demo
+	int64_t duration, basetime;
 
 	bool play_jump;
 	bool play_jump_latched;
-	unsigned int play_jump_time;
+	int64_t play_jump_time;
 	bool play_ignore_next_frametime;
 
 	bool avi;
@@ -208,9 +208,9 @@ typedef struct {
 	keydest_t old_key_dest;
 	bool quickmenu;
 
-	int framecount;
-	unsigned int realtime;          // always increasing, no clamping, etc
-	unsigned int gametime;          // always increasing, no clamping, etc
+	int64_t framecount;
+	int64_t realtime;               // always increasing, no clamping, etc
+	int64_t gametime;               // always increasing, no clamping, etc
 	int frametime;                  // milliseconds since last frame
 	int realFrameTime;
 
@@ -234,7 +234,7 @@ typedef struct {
 	char *servername;               // name of server from original connect
 	socket_type_t servertype;       // socket type used to connect to the server
 	netadr_t serveraddress;         // address of that server
-	int connect_time;               // for connection retransmits
+	int64_t connect_time;               // for connection retransmits
 	int connect_count;
 
 	socket_t *socket;               // socket used by current connection
@@ -269,22 +269,22 @@ typedef struct {
 	qfontface_t *consoleFont;
 
 	// these are our reliable messages that go to the server
-	unsigned int reliableSequence;          // the last one we put in the list to be sent
-	unsigned int reliableSent;              // the last one we sent to the server
-	unsigned int reliableAcknowledge;       // the last one the server has executed
+	int64_t reliableSequence;          // the last one we put in the list to be sent
+	int64_t reliableSent;              // the last one we sent to the server
+	int64_t reliableAcknowledge;       // the last one the server has executed
 	char reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
 
 	// reliable messages received from server
-	int lastExecutedServerCommand;          // last server command grabbed or executed with CL_GetServerCommand
+	int64_t lastExecutedServerCommand;          // last server command grabbed or executed with CL_GetServerCommand
 
 	// ucmds buffer
-	unsigned int ucmdAcknowledged;
-	unsigned int ucmdHead;
-	unsigned int ucmdSent;
+	int64_t ucmdAcknowledged;
+	int64_t ucmdHead;
+	int64_t ucmdSent;
 
 	// times when we got/sent last valid packets from/to server
-	unsigned int lastPacketSentTime;
-	unsigned int lastPacketReceivedTime;
+	int64_t lastPacketSentTime;
+	int64_t lastPacketReceivedTime;
 
 	// pure list
 	bool sv_pure;
@@ -362,7 +362,7 @@ void CL_UpdateClientCommandsToServer( msg_t *msg );
 void CL_AddReliableCommand( /*const*/ char *cmd );
 void CL_Netchan_Transmit( msg_t *msg );
 void CL_SendMessagesToServer( bool sendNow );
-void CL_RestartTimeDeltas( unsigned int newTimeDelta );
+void CL_RestartTimeDeltas( int newTimeDelta );
 void CL_AdjustServerTime( unsigned int gamemsec );
 
 char *CL_GetClipboardData( void );
@@ -415,7 +415,7 @@ unsigned CL_GameModule_GetButtonBits( void );
 void CL_GameModule_AddViewAngles( vec3_t viewAngles );
 void CL_GameModule_AddMovement( vec3_t movement );
 void CL_GameModule_MouseMove( int dx, int dy );
-void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
+void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 bool CL_GameModule_IsTouchDown( int id );
 
 //
@@ -510,7 +510,7 @@ void CL_WriteUcmdsToMessage( msg_t *msg );
 */
 void CL_MouseSet( int mx, int my, bool showCursor );
 
-void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
+void CL_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 
 /**
  * Resets the input state to the same as when no input is done,

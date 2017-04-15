@@ -319,8 +319,8 @@ void SV_InitClientMessage( client_t *client, msg_t *msg, uint8_t *data, size_t s
 	// write the last client-command we received so it's acknowledged
 	if( !client->reliable ) {
 		MSG_WriteUint8( msg, svc_clcack );
-		MSG_WriteInt32( msg, client->clientCommandExecuted );
-		MSG_WriteInt32( msg, client->UcmdReceived ); // acknowledge the last ucmd
+		MSG_WriteUintBase128( msg, client->clientCommandExecuted );
+		MSG_WriteUintBase128( msg, client->UcmdReceived ); // acknowledge the last ucmd
 	}
 }
 

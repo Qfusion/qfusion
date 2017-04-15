@@ -53,17 +53,17 @@ struct upstream_s {
 	bool rejected;
 
 	int timeoutcount;
-	unsigned int lastPacketReceivedTime;
-	unsigned int lastPacketSentTime;
+	int64_t lastPacketReceivedTime;
+	int64_t lastPacketSentTime;
 
-	unsigned int reliableSequence;          // the last one we put in the list to be sent
-	unsigned int reliableSent;              // the last one we sent to the server
-	unsigned int reliableAcknowledge;       // the last one the server has executed
+	int64_t reliableSequence;          // the last one we put in the list to be sent
+	int64_t reliableSent;              // the last one we sent to the server
+	int64_t reliableAcknowledge;       // the last one the server has executed
 	char reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
 
-	int framenum;
-	int lastExecutedServerCommand;
-	unsigned int lastUcmdTime;
+	int64_t framenum;
+	int64_t lastExecutedServerCommand;
+	int64_t lastUcmdTime;
 
 	bool reliable;
 	bool multiview;                     // are we receiving multiview data?
@@ -72,8 +72,8 @@ struct upstream_s {
 	// serverdata
 	int playernum;
 	int servercount;
-	unsigned int serverTime;
-	int serverFrame;
+	int64_t serverTime;
+	int64_t serverFrame;
 	unsigned int snapFrameTime;
 	char game[MAX_QPATH];
 	char basegame[MAX_QPATH];

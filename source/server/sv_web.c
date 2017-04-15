@@ -110,7 +110,7 @@ typedef struct sv_http_connection_s {
 	socket_t socket;
 	netadr_t address;
 
-	unsigned int last_active;
+	int64_t last_active;
 
 	sv_http_request_t request;
 	sv_http_response_t response;

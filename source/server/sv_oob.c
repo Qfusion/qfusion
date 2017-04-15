@@ -163,7 +163,7 @@ void SV_UpdateMaster( void ) {
 * let it know we are alive, and log information
 */
 void SV_MasterHeartbeat( void ) {
-	unsigned int time = Sys_Milliseconds();
+	int64_t time = Sys_Milliseconds();
 	int i;
 
 	if( svc.nextHeartbeat > time ) {
@@ -616,7 +616,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	char *session_id_str;
 	unsigned int ticket_id;
 	bool tv_client;
-	unsigned int time;
+	int64_t time;
 
 	Com_DPrintf( "SVC_DirectConnect (%s)\n", Cmd_Args() );
 
@@ -1093,7 +1093,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		int i, players = 0;
 		client_t *cl;
 		char name[MAX_NAME_BYTES];
-		unsigned int time = Sys_Milliseconds();
+		int64_t time = Sys_Milliseconds();
 
 		if( sv_showInfoQueries->integer ) {
 			Com_Printf( "Steam Players Packet %s\n", NET_AddressToString( address ) );

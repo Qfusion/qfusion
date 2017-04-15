@@ -32,9 +32,9 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
 * If vsync is enabled, only yields if got nothing to do.
 */
 static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
-	static unsigned lastTime = 0;
+	static int64_t lastTime = 0;
 	static int bias = 0;
-	unsigned time = ri.Sys_Milliseconds();
+	int64_t time = ri.Sys_Milliseconds();
 	unsigned wait, frameTime;
 	unsigned minMsec;
 	ref_cmdbuf_t *frame;

@@ -116,7 +116,7 @@ void GameAjaxDataSource::GetRow( StringList &row, const String &table, int row_i
 }
 
 int GameAjaxDataSource::GetNumRows( const String &tableName ) {
-	unsigned int now = trap::Milliseconds();
+	int64_t now = trap::Milliseconds();
 
 	char baseURL[1024];
 	trap::GetBaseServerURL( baseURL, sizeof( baseURL ) );

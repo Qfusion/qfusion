@@ -360,8 +360,8 @@ static void CG_PredictAddStep( int virtualtime, int predictiontime, float stepSi
 * CG_PredictSmoothSteps
 */
 static void CG_PredictSmoothSteps( void ) {
-	int outgoing;
-	int frame;
+	int64_t outgoing;
+	int64_t frame;
 	usercmd_t cmd;
 	int i;
 	int virtualtime = 0, predictiontime = 0;
@@ -401,8 +401,8 @@ static void CG_PredictSmoothSteps( void ) {
 * Sets cg.predictedVelocty, cg.predictedOrigin and cg.predictedAngles
 */
 void CG_PredictMovement( void ) {
-	int ucmdExecuted, ucmdHead;
-	int frame;
+	int64_t ucmdExecuted, ucmdHead;
+	int64_t frame;
 	pmove_t pm;
 
 	trap_NET_GetCurrentState( NULL, &ucmdHead, NULL );

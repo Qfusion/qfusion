@@ -585,7 +585,7 @@ void UI_Main::gamepadDpadCursorMove( int frameTimeMsec ) {
 }
 
 void UI_Main::gamepadCursorMove( void ) {
-	unsigned int time = trap::Milliseconds();
+	int64_t time = trap::Milliseconds();
 
 	static unsigned int lastTime;
 	if( !lastTime ) {

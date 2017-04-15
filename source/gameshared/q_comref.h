@@ -58,7 +58,7 @@ enum {
 typedef struct usercmd_s {
 	uint8_t msec;
 	uint32_t buttons;
-	uint32_t serverTimeStamp;
+	int64_t serverTimeStamp;
 	int16_t angles[3];
 	int8_t forwardmove, sidemove, upmove;
 } usercmd_t;

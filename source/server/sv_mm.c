@@ -378,7 +378,7 @@ int SV_MM_ClientConnect( const netadr_t *address, char *userinfo, unsigned int t
 }
 
 void SV_MM_Frame( void ) {
-	unsigned int time;
+	int64_t time;
 
 	if( sv_mm_enable->modified ) {
 		if( sv_mm_enable->integer && !sv_mm_initialized ) {
@@ -426,7 +426,7 @@ static void sv_mm_logout_done( stat_query_t *query, bool success, void *customp 
 */
 static void SV_MM_Logout( bool force ) {
 	stat_query_t *query;
-	unsigned int timeout;
+	int64_t timeout;
 
 	if( !sv_mm_initialized || !sv_mm_session ) {
 		return;

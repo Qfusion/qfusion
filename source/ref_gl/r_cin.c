@@ -49,7 +49,7 @@ static r_cinhandle_t r_cinematics_headnode, *r_free_cinematics;
 */
 static void R_RunCin( r_cinhandle_t *h ) {
 	bool redraw = false;
-	unsigned int now = ri.Sys_Milliseconds();
+	int64_t now = ri.Sys_Milliseconds();
 
 	// don't advance cinematics during registration
 	if( rsh.registrationOpen ) {
