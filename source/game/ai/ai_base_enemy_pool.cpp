@@ -124,7 +124,7 @@ void AiBaseEnemyPool::PreThink() {
 }
 
 void AiBaseEnemyPool::Think() {
-	const unsigned levelTime = level.time;
+	const int64_t levelTime = level.time;
 	for( Enemy &enemy: trackedEnemies ) {
 		// If enemy slot is free
 		if( !enemy.ent ) {
@@ -170,13 +170,13 @@ float AiBaseEnemyPool::ComputeRawEnemyWeight( const edict_t *enemy ) {
 		}
 	}
 
-	if( unsigned time = LastAttackedByTime( enemy ) ) {
+	if( int64_t time = LastAttackedByTime( enemy ) ) {
 		weight += 1.55f * ( 1.0f - BoundedFraction( level.time - time, ATTACKER_TIMEOUT ) );
 
 		// TODO: Add weight for poor attackers (by total damage / attack attepts ratio)
 	}
 
-	if( unsigned time = LastTargetTime( enemy ) ) {
+	if( int64_t time = LastTargetTime( enemy ) ) {
 		weight += 1.55f * ( 1.0f - BoundedFraction( level.time - time, TARGET_TIMEOUT ) );
 
 		// TODO: Add weight for targets that are well hit by bot
@@ -243,7 +243,7 @@ void AiBaseEnemyPool::OnPain( const edict_t *bot, const edict_t *enemy, float ki
 	}
 }
 
-unsigned AiBaseEnemyPool::LastAttackedByTime( const edict_t *ent ) const {
+int64_t AiBaseEnemyPool::LastAttackedByTime( const edict_t *ent ) const {
 	for( const AttackStats &attackStats: attackers )
 		if( ent && attackStats.ent == ent ) {
 			return attackStats.LastActivityAt();
@@ -252,7 +252,7 @@ unsigned AiBaseEnemyPool::LastAttackedByTime( const edict_t *ent ) const {
 	return 0;
 }
 
-unsigned AiBaseEnemyPool::LastTargetTime( const edict_t *ent ) const {
+int64_t AiBaseEnemyPool::LastTargetTime( const edict_t *ent ) const {
 	for( const AttackStats &targetStats: targets )
 		if( ent && targetStats.ent == ent ) {
 			return targetStats.LastActivityAt();
@@ -359,7 +359,7 @@ bool AiBaseEnemyPool::WillAssignAimEnemy() const {
 		}
 		if( enemy.LastSeenAt() == level.time ) {
 			// Check whether we may react
-			for( unsigned seenTimestamp: enemy.lastSeenTimestamps ) {
+			for( int64_t seenTimestamp: enemy.lastSeenTimestamps ) {
 				if( seenTimestamp + reactionTime <= level.time ) {
 					return true;
 				}

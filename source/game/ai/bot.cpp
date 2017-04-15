@@ -235,7 +235,7 @@ void Bot::CheckAlertSpots( const StaticVector<edict_t *, MAX_CLIENTS> &visibleTa
 	}
 
 	// Then call callbacks
-	const unsigned levelTime = level.time;
+	const int64_t levelTime = level.time;
 	for( unsigned i = 0; i < alertSpots.size(); ++i ) {
 		auto &alertSpot = alertSpots[i];
 		unsigned nonReportedFor = levelTime - alertSpot.lastReportedAt;

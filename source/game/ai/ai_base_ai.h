@@ -74,7 +74,7 @@ protected:
 
 	inline bool IsCloseToReachStart() { return distanceToNextReachStart < 24.0f; };
 
-	unsigned blockedTimeout;
+	int64_t blockedTimeout;
 
 	float aiYawSpeed, aiPitchSpeed;
 	float oldYawAbsDiff, oldPitchAbsDiff;

@@ -109,7 +109,7 @@ public:
 		}
 	}
 
-	unsigned Timeout() const;
+	int64_t Timeout() const;
 
 	inline bool ShouldBeReachedAtTouch() const { return IsFlagSet( NavEntityFlags::REACH_AT_TOUCH ); }
 	inline bool ShouldBeReachedAtRadius() const { return IsFlagSet( NavEntityFlags::REACH_AT_RADIUS ); }
@@ -120,7 +120,7 @@ public:
 	// Returns level.time when the item is already spawned
 	// Returns zero if spawn time is unknown
 	// Returns spawn time when the item is not spawned and spawn time may be predicted
-	unsigned SpawnTime() const;
+	int64_t SpawnTime() const;
 };
 
 // A goal may be based on a NavEntity (an item with attributes) or may be an "aritficial" spot
@@ -140,8 +140,8 @@ class Goal
 	Vec3 explicitOrigin;
 
 	int explicitAasAreaNum;
-	unsigned explicitSpawnTime;
-	unsigned explicitTimeout;
+	int64_t explicitSpawnTime;
+	int64_t explicitTimeout;
 	float explicitRadius;
 
 	const char *name;
@@ -264,11 +264,11 @@ public:
 	// Returns level.time when the item is already spawned
 	// Returns zero if spawn time is unknown
 	// Returns spawn time when the item is not spawned and spawn time may be predicted
-	inline unsigned SpawnTime() const {
+	inline int64_t SpawnTime() const {
 		return navEntity ? navEntity->SpawnTime() : explicitSpawnTime;
 	}
 
-	inline unsigned Timeout() const {
+	inline int64_t Timeout() const {
 		return navEntity ? navEntity->Timeout() : explicitTimeout;
 	}
 

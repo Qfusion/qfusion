@@ -1156,7 +1156,7 @@ bool Bot::TryRocketJumpShortcut( usercmd_t *ucmd ) {
 	Vec3 fireTarget( 0, 0, 0 );
 	if( squareDistanceToGoal < 750.0f * 750.0f ) {
 		// Do not do rocketjumps to non-urgent goals
-		unsigned goalSpawnTime = botBrain.GoalSpawnTime();
+		int64_t goalSpawnTime = botBrain.GoalSpawnTime();
 
 		// Avoid unsigned overflows
 		if( goalSpawnTime && goalSpawnTime > level.time && goalSpawnTime - level.time > 3000 ) {

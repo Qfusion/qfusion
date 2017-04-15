@@ -32,7 +32,7 @@ class AiObjectiveBasedTeamBrain : public AiSquadBasedTeamBrain
 	struct DefenceSpot : public AiDefenceSpot {
 		float weight;
 		float alertLevel;
-		unsigned alertTimeoutAt;
+		int64_t alertTimeoutAt;
 
 		DefenceSpot( const AiDefenceSpot &spot )
 			: AiDefenceSpot( spot ),

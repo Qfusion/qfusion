@@ -816,7 +816,7 @@ static void G_SpawnEntities( void ) {
 * Creates a server's entity / program execution context by
 * parsing textual entity definitions out of an ent file.
 */
-void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int levelTime, unsigned int serverTime, unsigned int realTime ) {
+void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTime, int64_t serverTime, int64_t realTime ) {
 	char *mapString = NULL;
 	char name[MAX_CONFIGSTRING_CHARS];
 	int i;

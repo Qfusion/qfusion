@@ -614,8 +614,7 @@ void G_ExitLevel( void ) {
 	char command[256];
 	const char *nextmapname;
 	bool loadmap = true;
-	unsigned int timeLimit;
-	const unsigned int wrappingPoint = 0x70000000;
+	int64_t timeLimit;
 
 	level.exitNow = false;
 
@@ -624,10 +623,8 @@ void G_ExitLevel( void ) {
 	timeLimit *= 60 * 1000;
 
 	// if it's the same map see if we can restart without loading
-	if( !level.hardReset && !Q_stricmp( nextmapname, level.mapname ) ) {
-		if( ( (signed)level.time < (signed)( wrappingPoint - timeLimit ) ) && G_RespawnLevel() ) {
-			loadmap = false;
-		}
+	if( !level.hardReset && !Q_stricmp( nextmapname, level.mapname ) && G_RespawnLevel() ) {
+		loadmap = false;
 	}
 
 	if( loadmap ) {

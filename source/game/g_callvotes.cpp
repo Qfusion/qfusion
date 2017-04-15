@@ -71,7 +71,7 @@ typedef struct callvotetype_s
 // Data that will only be used by the common callvote functions
 typedef struct
 {
-	unsigned int timeout;           // time to finish
+	int64_t timeout;           // time to finish
 	callvotedata_t vote;
 } callvotestate_t;
 
@@ -1931,7 +1931,7 @@ static const char *G_CallVotes_String( const callvotedata_t *vote ) {
 static void G_CallVotes_CheckState( void ) {
 	edict_t *ent;
 	int needvotes, yeses = 0, voters = 0, noes = 0;
-	static unsigned int warntimer;
+	static int64_t warntimer;
 
 	if( !callvoteState.vote.callvote ) {
 		warntimer = 0;
@@ -2097,7 +2097,7 @@ static void G_CallVotes_UpdateVotesConfigString( void ) {
 * G_CallVotes_Think
 */
 void G_CallVotes_Think( void ) {
-	static unsigned int callvotethinktimer = 0;
+	static int64_t callvotethinktimer = 0;
 
 	if( !callvoteState.vote.callvote ) {
 		callvotethinktimer = 0;

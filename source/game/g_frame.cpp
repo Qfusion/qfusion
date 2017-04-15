@@ -249,7 +249,7 @@ void G_CheckCvars( void ) {
 	if( g_warmup_timelimit->modified ) {
 		// if we are inside timelimit period, update the endtime
 		if( GS_MatchState() == MATCH_STATE_WARMUP ) {
-			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_warmup_timelimit->integer );
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (int64_t)fabs( 60.0f * 1000 * g_warmup_timelimit->integer );
 		}
 		g_warmup_timelimit->modified = false;
 	}
@@ -259,7 +259,7 @@ void G_CheckCvars( void ) {
 		if( GS_MatchState() == MATCH_STATE_PLAYTIME &&
 			!GS_MatchExtended() ) {
 			if( g_timelimit->value ) {
-				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_timelimit->value );
+				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (int64_t)fabs( 60.0f * 1000 * g_timelimit->value );
 			} else {
 				gs.gameState.stats[GAMESTAT_MATCHDURATION] = 0;
 			}
@@ -271,7 +271,7 @@ void G_CheckCvars( void ) {
 		// if we are inside extended_time period, update the endtime
 		if( GS_MatchExtended() ) {
 			if( g_match_extendedtime->integer ) {
-				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (unsigned int)fabs( 60 * 1000 * g_match_extendedtime->value );
+				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (int64_t)fabs( 60 * 1000 * g_match_extendedtime->value );
 			}
 		}
 		g_match_extendedtime->modified = false;
@@ -702,7 +702,7 @@ static edict_t *G_GetNextThinkClient( edict_t *current ) {
 * G_RunFrame
 * Advances the world
 */
-void G_RunFrame( unsigned int msec, unsigned int serverTime ) {
+void G_RunFrame( unsigned int msec, int64_t serverTime ) {
 	G_CheckCvars();
 
 	game.localTime = time( NULL );

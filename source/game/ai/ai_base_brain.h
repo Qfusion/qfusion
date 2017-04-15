@@ -26,14 +26,14 @@ protected:
 	Goal localSpecialGoal;
 	Goal *specialGoal;
 
-	unsigned longTermGoalSearchTimeout;
-	unsigned shortTermGoalSearchTimeout;
+	int64_t longTermGoalSearchTimeout;
+	int64_t shortTermGoalSearchTimeout;
 
 	const unsigned longTermGoalSearchPeriod;
 	const unsigned shortTermGoalSearchPeriod;
 
-	unsigned longTermGoalReevaluationTimeout;
-	unsigned shortTermGoalReevaluationTimeout;
+	int64_t longTermGoalReevaluationTimeout;
+	int64_t shortTermGoalReevaluationTimeout;
 
 	const unsigned longTermGoalReevaluationPeriod;
 	const unsigned shortTermGoalReevaluationPeriod;

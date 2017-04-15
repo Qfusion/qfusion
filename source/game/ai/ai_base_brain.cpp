@@ -174,23 +174,23 @@ bool AiBaseBrain::ShouldCancelGoal( const Goal *goal ) {
 		return true;
 	}
 
-	unsigned spawnTime = goal->SpawnTime();
+	int64_t spawnTime = goal->SpawnTime();
 
 	// The entity is not spawned and respawn time is unknown
 	if( !spawnTime ) {
 		return true;
 	}
 
-	unsigned timeout = goal->Timeout();
+	int64_t timeout = goal->Timeout();
 	if( timeout <= level.time ) {
 		return true;
 	}
 
 	if( goal->IsBasedOnSomeEntity() ) {
 		// Find milliseconds required to move to a goal
-		unsigned moveTime = FindTravelTimeToGoalArea( goal->AasAreaNum() ) * 10U;
+		int64_t moveTime = FindTravelTimeToGoalArea( goal->AasAreaNum() ) * 10U;
 		if( moveTime ) {
-			unsigned reachTime = level.time + moveTime;
+			int64_t reachTime = level.time + moveTime;
 
 			// A goal requires too long waiting
 			if( spawnTime > reachTime && spawnTime - reachTime > goal->MaxWaitDuration() ) {
@@ -402,7 +402,7 @@ float AiBaseBrain::SelectLongTermGoalCandidates( const Goal *currLongTermGoal, G
 		}
 
 		// This is a coarse and cheap test, helps to reject recently picked armors and powerups
-		unsigned spawnTime = navEnt->SpawnTime();
+		int64_t spawnTime = navEnt->SpawnTime();
 
 		// A feasible spawn time (non-zero) always >= level.time.
 		if( !spawnTime || level.time - spawnTime > 15000 ) {
@@ -446,7 +446,7 @@ float AiBaseBrain::SelectLongTermGoalCandidates( const Goal *currLongTermGoal, G
 			}
 		}
 
-		unsigned spawnTime = navEnt->SpawnTime();
+		int64_t spawnTime = navEnt->SpawnTime();
 
 		// The entity is not spawned and respawn time is unknown
 		if( !spawnTime ) {
@@ -454,7 +454,7 @@ float AiBaseBrain::SelectLongTermGoalCandidates( const Goal *currLongTermGoal, G
 		}
 
 		// Entity origin may be reached at this time
-		unsigned reachTime = level.time + moveDuration;
+		int64_t reachTime = level.time + moveDuration;
 		if( reachTime < spawnTime ) {
 			waitDuration = spawnTime - reachTime;
 		}

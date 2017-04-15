@@ -71,8 +71,8 @@ static int G_Chase_FindFollowPOV( edict_t *ent ) {
 	int newpov = -1;
 	edict_t *target;
 	static int ctfpov = -1, poweruppov = -1;
-	static unsigned int flagswitchTime = 0;
-	static unsigned int pwupswitchTime = 0;
+	static int64_t flagswitchTime = 0;
+	static int64_t pwupswitchTime = 0;
 #define CARRIERSWITCHDELAY 8000
 
 	if( !ent->r.client || !ent->r.client->resp.chase.active || !ent->r.client->resp.chase.followmode ) {

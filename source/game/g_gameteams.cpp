@@ -310,7 +310,7 @@ void G_Teams_SetTeam( edict_t *ent, int team ) {
 
 	if( ent->r.client->team != TEAM_SPECTATOR && team != TEAM_SPECTATOR ) {
 		// keep scores when switching between non-spectating teams
-		unsigned int timeStamp = ent->r.client->teamstate.timeStamp;
+		int64_t timeStamp = ent->r.client->teamstate.timeStamp;
 		memset( &ent->r.client->teamstate, 0, sizeof( ent->r.client->teamstate ) );
 		ent->r.client->teamstate.timeStamp = timeStamp;
 	} else {
@@ -400,7 +400,7 @@ static int G_GameTypes_DenyJoinTeam( edict_t *ent, int team ) {
 
 	// waiting for chanllengers queue to be executed
 	if( GS_HasChallengers() &&
-		game.realtime < level.spawnedTimeStamp + (unsigned)( G_CHALLENGERS_MIN_JOINTEAM_MAPTIME + game.snapFrameTime ) ) {
+		game.realtime < level.spawnedTimeStamp + (int64_t)( G_CHALLENGERS_MIN_JOINTEAM_MAPTIME + game.snapFrameTime ) ) {
 		return ER_TEAM_CHALLENGERS;
 	}
 

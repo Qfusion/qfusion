@@ -147,7 +147,7 @@ public:
 		return ent->r.client ? ent->r.client->ps.stats[STAT_PENDING_WEAPON] : WEAP_NONE;
 	}
 
-	inline unsigned LastSeenAt() const { return lastSeenAt; }
+	inline int64_t LastSeenAt() const { return lastSeenAt; }
 	inline const Vec3 &LastSeenPosition() const { return lastSeenPosition; }
 	inline const Vec3 &LastSeenVelocity() const { return lastSeenVelocity; }
 
@@ -163,7 +163,7 @@ public:
 
 	// TODO: Fuse in a single array of some struct
 	// Array of last seen timestamps
-	StaticDeque<unsigned, MAX_TRACKED_POSITIONS> lastSeenTimestamps;
+	StaticDeque<int64_t, MAX_TRACKED_POSITIONS> lastSeenTimestamps;
 	// Array of last seen positions
 	StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenPositions;
 	// Array of last seen enemy velocities
@@ -175,7 +175,7 @@ private:
 	// Same as front() of lastSeenVelocities, used for faster access
 	Vec3 lastSeenVelocity;
 	// Same as front() of lastSeenTimestamps, used for faster access
-	unsigned lastSeenAt;
+	int64_t lastSeenAt;
 };
 
 class AttackStats
@@ -191,8 +191,8 @@ class AttackStats
 
 	unsigned frameIndex;
 	unsigned totalAttacks;
-	unsigned lastDamageAt;
-	unsigned lastTouchAt;
+	int64_t lastDamageAt;
+	int64_t lastTouchAt;
 	float totalDamage;
 
 	const edict_t *ent;
@@ -233,7 +233,7 @@ public:
 	// but you want to mark frame as a frame of activity anyway
 	void Touch() { lastTouchAt = level.time; }
 
-	unsigned LastActivityAt() const { return std::max( lastDamageAt, lastTouchAt ); }
+	int64_t LastActivityAt() const { return std::max( lastDamageAt, lastTouchAt ); }
 };
 
 class AiBaseEnemyPool : public AiFrameAwareUpdatable
@@ -275,7 +275,7 @@ private:
 
 	const unsigned reactionTime;
 
-	unsigned prevThinkLevelTime;
+	int64_t prevThinkLevelTime;
 
 	StaticVector<AttackStats, MAX_TRACKED_ATTACKERS> attackers;
 	StaticVector<AttackStats, MAX_TRACKED_TARGETS> targets;
@@ -360,8 +360,8 @@ public:
 	void EnqueueTarget( const edict_t *target );
 
 	// Returns zero if ent not found
-	unsigned LastAttackedByTime( const edict_t *ent ) const;
-	unsigned LastTargetTime( const edict_t *ent ) const;
+	int64_t LastAttackedByTime( const edict_t *ent ) const;
+	int64_t LastTargetTime( const edict_t *ent ) const;
 };
 
 #endif

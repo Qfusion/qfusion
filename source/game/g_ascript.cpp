@@ -834,11 +834,11 @@ static unsigned int objectMatch_duration( match_t *self ) {
 	return GS_MatchDuration();
 }
 
-static unsigned int objectMatch_startTime( match_t *self ) {
+static int64_t objectMatch_startTime( match_t *self ) {
 	return GS_MatchStartTime();
 }
 
-static unsigned int objectMatch_endTime( match_t *self ) {
+static int64_t objectMatch_endTime( match_t *self ) {
 	return GS_MatchEndTime();
 }
 
@@ -874,7 +874,7 @@ static void objectMatch_setScore( asstring_t *name, match_t *self ) {
 	trap_ConfigString( CS_MATCHSCORE, buf );
 }
 
-static void objectMatch_setClockOverride( unsigned int time, match_t *self ) {
+static void objectMatch_setClockOverride( int64_t time, match_t *self ) {
 	gs.gameState.stats[GAMESTAT_CLOCKOVERRIDE] = time;
 }
 
@@ -1711,7 +1711,7 @@ static void objectGameClient_NewRaceRun( int numSectors, gclient_t *self ) {
 	G_NewRaceRun( PLAYERENT( playerNum ), numSectors );
 }
 
-static void objectGameClient_SetRaceTime( int sector, unsigned int time, gclient_t *self ) {
+static void objectGameClient_SetRaceTime( int sector, int64_t time, gclient_t *self ) {
 	int playerNum;
 
 	playerNum = objectGameClient_PlayerNum( self );
@@ -3724,7 +3724,7 @@ void G_asShutdownGameModuleEngine( void ) {
 * Perform garbage collection procedure
 */
 void G_asGarbageCollect( bool force ) {
-	static unsigned int lastTime = 0;
+	static int64_t lastTime = 0;
 	unsigned int currentSize, totalDestroyed, totalDetected;
 	asIScriptEngine *asEngine;
 

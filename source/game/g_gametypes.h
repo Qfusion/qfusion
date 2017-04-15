@@ -49,14 +49,14 @@ typedef struct {
 	int mm_attacker;    // session-id
 	int mm_victim;      // session-id
 	int weapon;         // weapon used
-	unsigned int time;  // server timestamp
+	int64_t time;		// server timestamp
 } loggedFrag_t;
 
 typedef struct {
-	int owner;      // session-id
-	unsigned int timestamp; // milliseconds
+	int owner;			// session-id
+	int64_t timestamp;	// milliseconds
 	int numSectors;
-	unsigned int *times;    // unsigned int * numSectors+1, where last is final time
+	int64_t *times;		// unsigned int * numSectors+1, where last is final time
 } raceRun_t;
 
 typedef struct {
@@ -113,7 +113,7 @@ typedef struct {
 // this is only really used to create the script objects
 typedef struct {
 	bool dummy;
-}match_t;
+} match_t;
 
 typedef struct {
 	match_t match;

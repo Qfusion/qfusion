@@ -83,8 +83,8 @@ typedef struct c4frame_s
 	c4clipedict_t clipEdicts[MAX_EDICTS];   // fixme: there is a g_maxentities cvar. We have to adjust to it
 	int numedicts;
 
-	unsigned int timestamp;
-	unsigned int framenum;
+	int64_t timestamp;
+	int64_t framenum;
 } c4frame_t;
 
 c4frame_t sv_collisionframes[CFRAME_UPDATE_BACKUP];
@@ -131,7 +131,8 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 	static c4clipedict_t *clipent;
 	static c4clipedict_t clipentNewer; // for interpolation
 	c4frame_t *cframe = NULL;
-	unsigned int backTime, cframenum, bf, i;
+	int64_t backTime, cframenum;
+	unsigned bf, i;
 	edict_t *ent = game.edicts + entNum;
 
 	// pick one of the 8 slots to prevent overwritings
@@ -157,8 +158,8 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 		if( g_antilag_maxtimedelta->integer < 0 ) {
 			trap_Cvar_SetValue( "g_antilag_maxtimedelta", abs( g_antilag_maxtimedelta->integer ) );
 		}
-		if( backTime > (unsigned int)g_antilag_maxtimedelta->integer ) {
-			backTime = (unsigned int)g_antilag_maxtimedelta->integer;
+		if( backTime > (int64_t)g_antilag_maxtimedelta->integer ) {
+			backTime = (int64_t)g_antilag_maxtimedelta->integer;
 		}
 	}
 

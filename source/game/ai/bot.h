@@ -82,10 +82,10 @@ public:
 	}
 	inline bool IsInSquad() const { return isInSquad; }
 
-	inline unsigned LastAttackedByTime( const edict_t *attacker ) {
+	inline int64_t LastAttackedByTime( const edict_t *attacker ) {
 		return botBrain.LastAttackedByTime( attacker );
 	}
-	inline unsigned LastTargetTime( const edict_t *target ) {
+	inline int64_t LastTargetTime( const edict_t *target ) {
 		return botBrain.LastTargetTime( target );
 	}
 	inline void OnEnemyRemoved( const Enemy *enemy ) {
@@ -201,7 +201,7 @@ private:
 		// This timeout is computed and set in Bot::TouchedJumppad().
 		// Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
 		// If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
-		unsigned jumppadMoveTimeout;
+		int64_t jumppadMoveTimeout;
 		// Next reach. cache is lost in air.
 		// Thus we have to store next areas starting a jumppad movement and try to prefer these areas for landing
 		static constexpr int MAX_LANDING_AREAS = 16;
@@ -231,7 +231,7 @@ private:
 		bool hasTriggeredRocketJump;
 		bool hasCorrectedRocketJump;
 		bool wasTriggeredPrevFrame;
-		unsigned timeoutAt;
+		int64_t timeoutAt;
 
 		RocketJumpMovementState( const edict_t *self_ )
 			: self( self_ ),
@@ -273,7 +273,7 @@ private:
 		bool isTriggered;
 		bool isOnGroundThisFrame;
 		bool wasOnGroundPrevFrame;
-		unsigned timeoutAt;
+		int64_t timeoutAt;
 
 		inline PendingLandingDashState()
 			: isTriggered( false ),
@@ -315,14 +315,14 @@ private:
 
 	PendingLandingDashState pendingLandingDashState;
 
-	unsigned combatMovePushTimeout;
+	int64_t combatMovePushTimeout;
 	int combatMovePushes[3];
 
-	unsigned vsayTimeout;
+	int64_t vsayTimeout;
 
 	struct PendingLookAtPointState {
 		Vec3 lookAtPoint;
-		unsigned timeoutAt;
+		int64_t timeoutAt;
 		float turnSpeedMultiplier;
 		bool isTriggered;
 
@@ -363,9 +363,9 @@ private:
 		Vec3 lookAtPoint;
 		Vec3 strafeDir;
 		// When to change chosen strafe dir
-		unsigned strafeTimeoutAt;
+		int64_t strafeTimeoutAt;
 		// When to change randomly chosen look-at-point (if the point is not initially specified)
-		unsigned lookAtPointTimeoutAt;
+		int64_t lookAtPointTimeoutAt;
 
 		inline CampingSpotState()
 			: isTriggered( false ),
@@ -418,7 +418,7 @@ private:
 	int offenseSpotId;
 
 	struct AlertSpot : public AiAlertSpot {
-		unsigned lastReportedAt;
+		int64_t lastReportedAt;
 		float lastReportedScore;
 		AlertCallback callback;
 		void *receiver;

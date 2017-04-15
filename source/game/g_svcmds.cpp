@@ -109,7 +109,7 @@ typedef struct
 {
 	unsigned mask;
 	unsigned compare;
-	unsigned timeout;
+	int64_t timeout;
 } ipfilter_t;
 
 #define MAX_IPFILTERS   1024

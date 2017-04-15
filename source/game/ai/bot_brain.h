@@ -191,12 +191,12 @@ class BotBrain : public AiBaseBrain
 
 	unsigned combatTaskInstanceCounter;
 
-	unsigned nextTargetChoiceAt;
-	unsigned nextWeaponChoiceAt;
+	int64_t nextTargetChoiceAt;
+	int64_t nextWeaponChoiceAt;
 
-	unsigned nextFastWeaponSwitchActionCheckAt;
+	int64_t nextFastWeaponSwitchActionCheckAt;
 
-	unsigned prevThinkLevelTime;
+	int64_t prevThinkLevelTime;
 
 	// These values are loaded from cvars for fast access
 	const float armorProtection;
@@ -293,7 +293,7 @@ class BotBrain : public AiBaseBrain
 	virtual void OnGoalCleanedUp( const Goal *goalEnt ) override;
 	virtual void OnClearSpecialGoalRequested() override;
 
-	unsigned GoalSpawnTime() const;
+	int64_t GoalSpawnTime() const;
 	bool HasMoreImportantTasksThanEnemies() const;
 	bool StartPursuit( const Enemy &enemy, unsigned timeout = 1000 );
 	bool SetTacticalSpot( const Vec3 &origin, unsigned timeout = 1000 );
@@ -396,10 +396,10 @@ public:
 
 	// In these calls use not active but bot's own enemy pool
 	// (this behaviour is expected by callers, otherwise referring to a squad enemy pool is enough)
-	inline unsigned LastAttackedByTime( const edict_t *attacker ) const {
+	inline int64_t LastAttackedByTime( const edict_t *attacker ) const {
 		return botEnemyPool.LastAttackedByTime( attacker );
 	}
-	inline unsigned LastTargetTime( const edict_t *target ) const {
+	inline int64_t LastTargetTime( const edict_t *target ) const {
 		return botEnemyPool.LastTargetTime( target );
 	}
 

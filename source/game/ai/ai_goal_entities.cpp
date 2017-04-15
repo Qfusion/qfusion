@@ -53,7 +53,7 @@ bool NavEntity::IsTopTierItem( const float *overriddenEntityWeights ) const {
 	return false;
 }
 
-unsigned NavEntity::SpawnTime() const {
+int64_t NavEntity::SpawnTime() const {
 	if( !ent->r.inuse ) {
 		return 0;
 	}
@@ -109,11 +109,11 @@ unsigned NavEntity::MaxWaitDuration() const {
 	return 3000;
 }
 
-unsigned NavEntity::Timeout() const {
+int64_t NavEntity::Timeout() const {
 	if( IsDroppedEntity() ) {
 		return ent->nextThink;
 	}
-	return std::numeric_limits<unsigned>::max();
+	return std::numeric_limits<int64_t>::max();
 }
 
 Goal::Goal( const AiFrameAwareUpdatable *initialSetter )

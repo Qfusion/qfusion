@@ -45,7 +45,7 @@ private:
 	// If a connectivity of squad members is violated
 	// (bots can't neither fight, nor move together)
 	// and not restored to this timestamps, squad should be invalidated.
-	unsigned brokenConnectivityTimeoutAt;
+	int64_t brokenConnectivityTimeoutAt;
 
 	bool botsDetached;
 
@@ -58,8 +58,8 @@ private:
 
 	void UpdateBotRoleWeights();
 
-	unsigned lastDroppedByBotTimestamps[MAX_SIZE];
-	unsigned lastDroppedForBotTimestamps[MAX_SIZE];
+	int64_t lastDroppedByBotTimestamps[MAX_SIZE];
+	int64_t lastDroppedForBotTimestamps[MAX_SIZE];
 
 	void CheckMembersInventory();
 

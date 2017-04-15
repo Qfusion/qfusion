@@ -417,7 +417,7 @@ void BotBrain::TryStartPursuit( CombatTask *task, const Enemy *enemy ) {
 	}
 }
 
-unsigned BotBrain::GoalSpawnTime() const {
+int64_t BotBrain::GoalSpawnTime() const {
 	// Note: goals are listed in order of (short-term) priority
 
 	if( specialGoal ) {

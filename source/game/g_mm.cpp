@@ -275,7 +275,7 @@ void G_ListRatings_f( void ) {
 //==========================================================
 
 // race records from MM
-void G_AddRaceRecords( edict_t *ent, int numSectors, unsigned int *records ) {
+void G_AddRaceRecords( edict_t *ent, int numSectors, int64_t *records ) {
 	gclient_t *cl;
 	raceRun_t *rr;
 	size_t size;
@@ -291,15 +291,15 @@ void G_AddRaceRecords( edict_t *ent, int numSectors, unsigned int *records ) {
 		G_LevelFree( rr->times );
 	}
 
-	size = ( numSectors + 1 ) * sizeof( unsigned int );
-	rr->times = ( unsigned int * )G_LevelMalloc( size );
+	size = ( numSectors + 1 ) * sizeof( *rr->times );
+	rr->times = ( int64_t * )G_LevelMalloc( size );
 
 	memcpy( rr->times, records, size );
 	rr->numSectors = numSectors;
 }
 
 // race records to AS (TODO: export this to AS)
-unsigned int G_GetRaceRecord( edict_t *ent, int sector ) {
+int64_t G_GetRaceRecord( edict_t *ent, int sector ) {
 	gclient_t *cl;
 	raceRun_t *rr;
 
@@ -343,7 +343,7 @@ raceRun_t *G_NewRaceRun( edict_t *ent, int numSectors ) {
 		G_LevelFree( rr->times );
 	}
 
-	rr->times = ( unsigned int * )G_LevelMalloc( ( numSectors + 1 ) * sizeof( unsigned int ) );
+	rr->times = ( int64_t * )G_LevelMalloc( ( numSectors + 1 ) * sizeof( *rr->times ) );
 	rr->numSectors = numSectors;
 	rr->owner = cl->mm_session;
 
@@ -351,7 +351,7 @@ raceRun_t *G_NewRaceRun( edict_t *ent, int numSectors ) {
 }
 
 // from AS
-void G_SetRaceTime( edict_t *ent, int sector, unsigned int time ) {
+void G_SetRaceTime( edict_t *ent, int sector, int64_t time ) {
 	gclient_t *cl;
 	raceRun_t *rr;
 

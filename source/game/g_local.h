@@ -158,8 +158,8 @@ typedef struct {
 
 	unsigned int frametime;         // in milliseconds
 	int snapFrameTime;              // in milliseconds
-	unsigned int realtime;          // actual time, set with Sys_Milliseconds every frame
-	unsigned int serverTime;        // actual time in the server
+	int64_t realtime;				// actual time, set with Sys_Milliseconds every frame
+	int64_t serverTime;				// actual time in the server
 
 	time_t localTime;               // local time in milliseconds
 
@@ -174,8 +174,8 @@ typedef struct {
 #define SIGNIFICANT_MATCH_DURATION      66 * 1000
 
 typedef struct {
-	int time;
-	int endtime;
+	int64_t time;
+	int64_t endtime;
 	int caller;
 	int used[MAX_CLIENTS];
 } timeout_t;
@@ -186,9 +186,9 @@ typedef struct {
 //
 typedef struct {
 	unsigned int framenum;
-	unsigned int time; // time in milliseconds
-	unsigned int spawnedTimeStamp; // time when map was restarted
-	unsigned int finalMatchDuration;
+	int64_t time; // time in milliseconds
+	int64_t spawnedTimeStamp; // time when map was restarted
+	int64_t finalMatchDuration;
 
 	char level_name[MAX_CONFIGSTRING_CHARS];    // the descriptive name (Outer Base, etc)
 	char mapname[MAX_CONFIGSTRING_CHARS];       // the server name (q3dm0, etc)
@@ -947,7 +947,7 @@ bool G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadn
 // g_frame.c
 //
 void G_CheckCvars( void );
-void G_RunFrame( unsigned int msec, unsigned int serverTime );
+void G_RunFrame( unsigned int msec, int64_t serverTime );
 void G_SnapClients( void );
 void G_ClearSnap( void );
 void G_SnapFrame( void );
@@ -959,7 +959,7 @@ void G_SnapFrame( void );
 bool G_CallSpawn( edict_t *ent );
 bool G_RespawnLevel( void );
 void G_ResetLevel( void );
-void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int levelTime, unsigned int serverTime, unsigned int realTime );
+void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTime, int64_t serverTime, int64_t realTime );
 const char *G_GetEntitySpawnKey( const char *key, edict_t *self );
 
 //
@@ -1002,7 +1002,7 @@ typedef struct {
 	int mode;                   //3rd or 1st person
 	int range;
 	bool teamonly;
-	unsigned int timeout;           //delay after loosing target
+	int64_t timeout;           //delay after loosing target
 	int followmode;
 } chasecam_t;
 
@@ -1060,7 +1060,7 @@ typedef struct {
 
 	uint8_t combo[MAX_CLIENTS]; // combo management for award
 	edict_t *lasthit;
-	unsigned int lasthit_time;
+	int64_t lasthit_time;
 
 	bool fairplay_award;
 } award_info_t;
@@ -1084,7 +1084,7 @@ typedef struct {
 	chasecam_t chase;
 	award_info_t awardInfo;
 
-	unsigned int timeStamp; // last time it was reset
+	int64_t timeStamp; // last time it was reset
 
 	// player_state_t event
 	int events[MAX_CLIENT_EVENTS];
@@ -1097,55 +1097,55 @@ typedef struct {
 	float armor;
 	float instashieldCharge;
 
-	unsigned int next_drown_time;
+	int64_t next_drown_time;
 	int drowningDamage;
 	int old_waterlevel;
 	int old_watertype;
 
-	unsigned int pickup_msg_time;
+	int64_t pickup_msg_time;
 } client_respawnreset_t;
 
 typedef struct {
-	unsigned int timeStamp;         // last time it was reset
+	int64_t timeStamp;				// last time it was reset
 
 	unsigned int respawnCount;
 	matchmessage_t matchmessage;
 	unsigned int helpmessage;
 
-	unsigned int last_vsay;         // time when last vsay was said
-	unsigned int last_activity;
+	int64_t last_vsay;				// time when last vsay was said
+	int64_t last_activity;
 
 	score_stats_t stats;
 	bool showscores;
-	unsigned int scoreboard_time;   // when scoreboard was last sent
-	bool showPLinks;            // bot debug
+	int64_t scoreboard_time;		// when scoreboard was last sent
+	bool showPLinks;				// bot debug
 
 	// flood protection
-	unsigned int flood_locktill;    // locked from talking
-	unsigned int flood_when[MAX_FLOOD_MESSAGES];        // when messages were said
+	int64_t flood_locktill;			// locked from talking
+	int64_t flood_when[MAX_FLOOD_MESSAGES];        // when messages were said
 	int flood_whenhead;             // head pointer for when said
 	// team only
-	unsigned int flood_team_when[MAX_FLOOD_MESSAGES];   // when messages were said
+	int64_t flood_team_when[MAX_FLOOD_MESSAGES];   // when messages were said
 	int flood_team_whenhead;        // head pointer for when said
 
-	unsigned int callvote_when;
+	int64_t callvote_when;
 
 	char quickMenuItems[1024];
 } client_levelreset_t;
 
 typedef struct {
-	unsigned int timeStamp; // last time it was reset
+	int64_t timeStamp; // last time it was reset
 
 	bool is_coach;
 
-	unsigned int readyUpWarningNext; // (timer) warn people to ready up
+	int64_t readyUpWarningNext; // (timer) warn people to ready up
 	int readyUpWarningCount;
 
 	// for position command
 	bool position_saved;
 	vec3_t position_origin;
 	vec3_t position_angles;
-	unsigned int position_lastcmd;
+	int64_t position_lastcmd;
 
 	const gsitem_t *last_drop_item;
 	vec3_t last_drop_location;
@@ -1229,7 +1229,7 @@ struct gclient_quit_s {
 	int mm_session;
 
 	score_stats_t stats;
-	unsigned int timePlayed;
+	int64_t timePlayed;
 	bool final;         // is true, player was there in the end
 	struct gclient_quit_s *next;
 };
@@ -1261,7 +1261,7 @@ typedef struct {
 	bool expandEffect;
 	bool shrinkEffect;
 	int frequency;
-}particles_edict_t;
+} particles_edict_t;
 
 struct edict_s {
 	entity_state_t s;
@@ -1284,7 +1284,7 @@ struct edict_s {
 
 	const char *model;
 	const char *model2;
-	unsigned int freetime;          // time when the object was freed
+	int64_t freetime;          // time when the object was freed
 
 	int numEvents;
 	bool eventPriority[2];
@@ -1297,7 +1297,7 @@ struct edict_s {
 	const char *spawnString;            // keep track of string definition of this entity
 	int spawnflags;
 
-	unsigned int nextThink;
+	int64_t nextThink;
 
 	void ( *think )( edict_t *self );
 	void ( *touch )( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags );
@@ -1320,8 +1320,8 @@ struct edict_s {
 	float speed;
 	float accel, decel;         // usef for func_rotating
 
-	unsigned int timeStamp;
-	unsigned int deathTimeStamp;
+	int64_t timeStamp;
+	int64_t deathTimeStamp;
 	int timeDelta;              // SVF_PROJECTILE only. Used for 4D collision detection
 
 	projectileinfo_t projectileInfo;    // specific for projectiles
@@ -1334,29 +1334,29 @@ struct edict_s {
 	unsigned mapmessage_index;
 
 	int mass;
-	unsigned int air_finished;
+	int64_t air_finished;
 	float gravity;              // per entity gravity multiplier (1.0 is normal) // use for lowgrav artifact, flares
 
 	edict_t *goalentity;
 	edict_t *movetarget;
 	float yaw_speed;
 
-	unsigned int pain_debounce_time;
+	int64_t pain_debounce_time;
 
 	float health;
 	int max_health;
 	int gib_health;
 	int deadflag;
 
-	const char *map;                  // target_changelevel
+	const char *map;			// target_changelevel
 
-	int viewheight;             // height above origin where eyesight is determined
+	int viewheight;				// height above origin where eyesight is determined
 	int takedamage;
-
-	const char *sounds;                   //make this a spawntemp var?
+	
+	const char *sounds;         // make this a spawntemp var?
 	int count;
 
-	unsigned int timeout; // for SW and fat PG
+	int64_t timeout;			// for SW and fat PG
 
 	edict_t *chain;
 	edict_t *enemy;
@@ -1382,13 +1382,13 @@ struct edict_s {
 	float light;
 	vec3_t color;
 
-	const gsitem_t *item;           // for bonus items
-	int invpak[AMMO_TOTAL];         // small inventory-like for dropped backpacks. Handles weapons and ammos of both types
+	const gsitem_t *item;       // for bonus items
+	int invpak[AMMO_TOTAL];     // small inventory-like for dropped backpacks. Handles weapons and ammos of both types
 
 	// common data blocks
 	moveinfo_t moveinfo;        // func movers movement
 
-	ai_handle_t *ai;     //MbotGame
+	ai_handle_t *ai;
 	float aiIntrinsicEnemyWeight;
 
 	snap_edict_t snap; // information that is cleared each frame snap
@@ -1401,7 +1401,7 @@ struct edict_s {
 	bool was_step;
 
 	edict_t *trigger_entity;
-	unsigned int trigger_timeout;
+	int64_t trigger_timeout;
 
 	bool linked;
 
@@ -1430,9 +1430,9 @@ void G_RemoveRating( edict_t *ent );
 void G_ListRatings_f( void );
 
 void G_AddRaceRecords( edict_t *ent, int numSectors, unsigned int *records );
-unsigned int G_GetRaceRecord( edict_t *ent, int sector );
+int64_t G_GetRaceRecord( edict_t *ent, int sector );
 raceRun_t *G_NewRaceRun( edict_t *ent, int numSectors );
-void G_SetRaceTime( edict_t *ent, int sector, unsigned int time );
+void G_SetRaceTime( edict_t *ent, int sector, int64_t time );
 void G_ListRaces_f( void );
 
 // web

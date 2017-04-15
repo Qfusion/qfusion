@@ -376,7 +376,7 @@ typedef struct
 	int wave_time;
 	int wave_maxcount;
 	bool spectate_team;
-	unsigned int nextWaveTime;
+	int64_t nextWaveTime;
 } g_teamspawnqueue_t;
 
 g_teamspawnqueue_t g_spawnQueues[GS_MAX_TEAMS];

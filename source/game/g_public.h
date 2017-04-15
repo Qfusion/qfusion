@@ -207,7 +207,7 @@ typedef struct {
 	void ( *Shutdown )( void );
 
 	// each new level entered will cause a call to SpawnEntities
-	void ( *InitLevel )( char *mapname, char *entities, int entstrlen, unsigned int levelTime, unsigned int serverTime, unsigned int realTime );
+	void ( *InitLevel )( char *mapname, char *entities, int entstrlen, int64_t levelTime, int64_t serverTime, int64_t realTime );
 
 	bool ( *ClientConnect )( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient );
 	void ( *ClientBegin )( edict_t *ent );
@@ -217,7 +217,7 @@ typedef struct {
 	void ( *ClientCommand )( edict_t *ent );
 	void ( *ClientThink )( edict_t *ent, usercmd_t *cmd, int timeDelta );
 
-	void ( *RunFrame )( unsigned int msec, unsigned int serverTime );
+	void ( *RunFrame )( unsigned int msec, int64_t serverTime );
 	void ( *SnapFrame )( void );
 	void ( *ClearSnap )( void );
 

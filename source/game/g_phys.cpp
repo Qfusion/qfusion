@@ -213,7 +213,7 @@ static void SV_CheckVelocity( edict_t *ent ) {
 * Runs thinking code for this frame if necessary
 */
 static void SV_RunThink( edict_t *ent ) {
-	unsigned int thinktime;
+	int64_t thinktime;
 
 	thinktime = ent->nextThink;
 	if( thinktime <= 0 ) {
