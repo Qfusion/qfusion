@@ -63,8 +63,8 @@ typedef struct cinematics_s {
 	int file;
 	int headerlen;
 
-	unsigned int cur_time;
-	unsigned int start_time;        // Sys_Milliseconds for first cinematic frame
+	int64_t cur_time;
+	int64_t start_time;        // Sys_Milliseconds for first cinematic frame
 	unsigned int frame;
 
 	bool yuv;
@@ -87,14 +87,14 @@ bool CIN_Init( bool verbose );
 void CIN_Shutdown( bool verbose );
 char *CIN_CopyString( const char *in );
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time,
+struct cinematics_s *CIN_Open( const char *name, int64_t start_time,
 							   int flags, bool *yuv, float *framerate );
 
 bool CIN_HasOggAudio( cinematics_t *cin );
 
 const char *CIN_FileName( cinematics_t *cin );
 
-bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime );
+bool CIN_NeedNextFrame( cinematics_t *cin, int64_t curtime );
 
 uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height,
 							int *aspect_numerator, int *aspect_denominator, bool *redraw );
@@ -112,7 +112,7 @@ void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigne
 
 unsigned int CIN_GetRawSamplesLengthFromListeners( cinematics_t *cin );
 
-void CIN_Reset( cinematics_t *cin, unsigned int cur_time );
+void CIN_Reset( cinematics_t *cin, int64_t cur_time );
 
 void CIN_Close( cinematics_t *cin );
 

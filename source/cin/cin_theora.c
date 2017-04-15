@@ -42,7 +42,7 @@ typedef struct {
 	double s_rate_msec;
 	ogg_int64_t s_samples_read;
 	ogg_int64_t s_samples_need;
-	unsigned int s_sound_time;
+	int64_t s_sound_time;
 
 	ogg_sync_state oy;              /* sync and verify incoming physical bitstream */
 	ogg_stream_state os_audio;
@@ -484,7 +484,7 @@ read_samples:
 static bool OggTheora_NeedVideoData( cinematics_t *cin ) {
 	unsigned int realframe;
 	qtheora_info_t *qth = cin->fdata;
-	unsigned int sync_time = qth->s_sound_time;
+	int64_t sync_time = qth->s_sound_time;
 
 	if( !cin->width ) {
 		// need at least one valid frame
@@ -512,7 +512,7 @@ static bool OggTheora_LoadVideoFrame( cinematics_t *cin ) {
 	ogg_packet op;
 	qtheora_info_t *qth = cin->fdata;
 	th_ycbcr_buffer yuv;
-	unsigned int sync_time = qth->s_sound_time;
+	int64_t sync_time = qth->s_sound_time;
 
 	memset( &op, 0, sizeof( op ) );
 
@@ -1185,7 +1185,7 @@ void Theora_Reset_CIN( cinematics_t *cin ) {
 * Theora_NeedNextFrame_CIN
 */
 bool Theora_NeedNextFrame_CIN( cinematics_t *cin ) {
-	unsigned int sys_time;
+	int64_t sys_time;
 	qtheora_info_t *qth = cin->fdata;
 
 	sys_time = cin->cur_time - cin->start_time;

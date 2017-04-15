@@ -98,7 +98,7 @@ static const cin_type_t cin_types[] =
 /*
 * CIN_Open
 */
-cinematics_t *CIN_Open( const char *name, unsigned int start_time,
+cinematics_t *CIN_Open( const char *name, int64_t start_time,
 						int flags, bool *yuv, float *framerate ) {
 	int i;
 	size_t name_size;
@@ -219,7 +219,7 @@ const char *CIN_FileName( cinematics_t *cin ) {
 /*
 * CIN_NeedNextFrame
 */
-bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime ) {
+bool CIN_NeedNextFrame( cinematics_t *cin, int64_t curtime ) {
 	const cin_type_t *type;
 
 	assert( cin );
@@ -396,7 +396,7 @@ unsigned int CIN_GetRawSamplesLengthFromListeners( cinematics_t *cin ) {
 /*
 * CIN_Reset
 */
-void CIN_Reset( cinematics_t *cin, unsigned int cur_time ) {
+void CIN_Reset( cinematics_t *cin, int64_t cur_time ) {
 	const cin_type_t *type;
 
 	assert( cin );

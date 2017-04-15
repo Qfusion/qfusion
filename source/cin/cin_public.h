@@ -146,13 +146,13 @@ typedef struct {
 	bool ( *Init )( bool verbose );
 	void ( *Shutdown )( bool verbose );
 
-	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, int flags, bool *yuv, float *framerate );
+	struct cinematics_s *( *Open )( const char *name, int64_t start_time, int flags, bool *yuv, float *framerate );
 	bool ( *HasOggAudio )( struct cinematics_s *cin );
-	bool ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
+	bool ( *NeedNextFrame )( struct cinematics_s *cin, int64_t curtime );
 	uint8_t *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw );
 	cin_yuv_t *( *ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw );
 	bool ( *AddRawSamplesListener )( struct cinematics_s *cin, void *listener, cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs );
-	void ( *Reset )( struct cinematics_s *cin, unsigned int cur_time );
+	void ( *Reset )( struct cinematics_s *cin, int64_t cur_time );
 	void ( *Close )( struct cinematics_s *cin );
 	const char *( *FileName )( struct cinematics_s *cin );
 } cin_export_t;
