@@ -150,7 +150,7 @@ typedef struct {
 #define MAX_GAMECOMMANDS    256     // command names for command completion
 #define MAX_LOCATIONS       256
 #define MAX_WEAPONDEFS      MAX_ITEMS
-#define MAX_HELPMESSAGES        256
+#define MAX_HELPMESSAGES    256
 
 //
 // config strings are a general means of communication from
@@ -225,12 +225,9 @@ typedef struct {
 # define MAX_UCMD_TIMENUDGE 50
 #endif
 
-
 // entity_state_t is the information conveyed from the server
 // in an update message about entities that the client will
 // need to render in some way
-
-#define ET_INVERSE  128
 
 // edict->svflags
 #define SVF_NOCLIENT            0x00000001      // don't send entity to clients, even if it has effects
@@ -257,12 +254,14 @@ typedef enum {
 
 // entity_state_t->event values
 // entity events are for effects that take place relative
-// to an existing entities origin.  Very network efficient.
-
-#define EV_INVERSE  128
+// to an existing entities origin. Very network efficient.
 
 #define EVENT_ENTITIES_START    96 // entity types above this index will get event treatment
 #define ISEVENTENTITY( x ) ( ( (entity_state_t *)x )->type >= EVENT_ENTITIES_START )
+
+//==============================================
+
+// primitive encoding types for network messages
 
 typedef enum MSG_ENCTYPE_e {
 	MSG_ENCTYPE_BOOL,					// a of value of 'true' is represented by a single bit in the header
@@ -280,6 +279,8 @@ typedef enum MSG_ENCTYPE_e {
 	MSG_ENCTYPE_BASE128,				// base-128 encoded unsigned integer
 	MSG_ENCTYPE_UBASE128				// base-128 encoded signed integer
 } MSG_ENCTYPE_t;
+
+//==============================================
 
 typedef struct entity_state_s {
 	int number;                         // edict index
@@ -325,10 +326,10 @@ typedef struct entity_state_s {
 	int colorRGBA;                  // ET_BEAM, ET_EVENT specific
 	int range;                      // ET_LASERBEAM, ET_CURVELASERBEAM specific
 
-	bool linearMovement;                // is sent inside "type" as ET_INVERSE flag
+	bool linearMovement;
 	vec3_t linearMovementVelocity;      // this is transmitted instead of origin when linearProjectile is true
 	vec3_t linearMovementEnd;           // the end movement point for brush models
-	vec3_t linearMovementBegin;     // the starting movement point for brush models
+	vec3_t linearMovementBegin;			// the starting movement point for brush models
 	unsigned int linearMovementDuration;
 	int64_t linearMovementTimeStamp;
 
@@ -339,11 +340,11 @@ typedef struct entity_state_s {
 	// PVS culling)
 
 	int weapon;                         // WEAP_ for players
-	bool teleported;                    // the entity was teleported this snap (sent inside "weapon" as ET_INVERSE flag)
+	bool teleported;
 
 	int sound;                          // for looping sounds, to guarantee shutoff
 
-	int light;                      // constant light glow
+	int light;							// constant light glow
 
 	int team;                           // team in the game
 } entity_state_t;
