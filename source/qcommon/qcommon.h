@@ -64,7 +64,7 @@ typedef struct msg_field_s {
 	int offset;
 	int bits;
 	int count;
-	MSG_ENCTYPE_t encoding;
+	wireType_t encoding;
 } msg_field_t;
 
 // msg.c

@@ -227,7 +227,6 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 	body->s.weapon = 0;
 
 	//copy player position and box size
-	VectorCopy( ent->s.old_origin, body->s.old_origin );
 	VectorCopy( ent->s.origin, body->s.origin );
 	VectorCopy( ent->s.origin, body->olds.origin );
 	VectorCopy( ent->r.mins, body->r.mins );
@@ -608,7 +607,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	SelectSpawnPoint( self, &spawnpoint, spawn_origin, spawn_angles );
 	VectorCopy( spawn_origin, client->ps.pmove.origin );
 	VectorCopy( spawn_origin, self->s.origin );
-	VectorCopy( self->s.origin, self->s.old_origin );
 
 	// set angles
 	self->s.angles[PITCH] = 0;
@@ -724,7 +722,6 @@ void G_TeleportPlayer( edict_t *player, edict_t *dest ) {
 	// update the entity from the pmove
 	VectorCopy( client->ps.viewangles, player->s.angles );
 	VectorCopy( client->ps.pmove.origin, player->s.origin );
-	VectorCopy( client->ps.pmove.origin, player->s.old_origin );
 	VectorCopy( client->ps.pmove.origin, player->olds.origin );
 	VectorCopy( client->ps.pmove.velocity, player->velocity );
 

@@ -92,7 +92,6 @@ static void Move_UpdateLinearVelocity( edict_t *ent, float dist, int speed ) {
 
 	ent->s.linearMovement = speed != 0;
 	if( !ent->s.linearMovement ) {
-		VectorCopy( ent->s.origin, ent->s.old_origin );
 		return;
 	}
 

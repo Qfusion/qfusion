@@ -263,22 +263,22 @@ typedef enum {
 
 // primitive encoding types for network messages
 
-typedef enum MSG_ENCTYPE_e {
-	MSG_ENCTYPE_BOOL,					// a of value of 'true' is represented by a single bit in the header
+typedef enum {
+	WIRE_BOOL,					// a of value of 'true' is represented by a single bit in the header
 
-	MSG_ENCTYPE_FIXED_INT8,				// 8-bit integer
-	MSG_ENCTYPE_FIXED_INT16,			// 16-bit integer
-	MSG_ENCTYPE_FIXED_INT32,			// 32-bit integer
-	MSG_ENCTYPE_FIXED_INT64,			// 64-bit integer
+	WIRE_FIXED_INT8,				// 8-bit integer
+	WIRE_FIXED_INT16,			// 16-bit integer
+	WIRE_FIXED_INT32,			// 32-bit integer
+	WIRE_FIXED_INT64,			// 64-bit integer
 
-	MSG_ENCTYPE_FLOAT,					// 32-bit floating point value
-	MSG_ENCTYPE_HALF_FLOAT,				// 16-bit floating point value
+	WIRE_FLOAT,					// 32-bit floating point value
+	WIRE_HALF_FLOAT,				// 16-bit floating point value
 
-	MSG_ENCTYPE_ANGLE,					// 32-bit float angle value, normalized to [0..360], transmitted at half-precision
+	WIRE_ANGLE,					// 32-bit float angle value, normalized to [0..360], transmitted at half-precision
 
-	MSG_ENCTYPE_BASE128,				// base-128 encoded unsigned integer
-	MSG_ENCTYPE_UBASE128				// base-128 encoded signed integer
-} MSG_ENCTYPE_t;
+	WIRE_BASE128,				// base-128 encoded unsigned integer
+	WIRE_UBASE128				// base-128 encoded signed integer
+} wireType_t;
 
 //==============================================
 
@@ -296,8 +296,6 @@ typedef struct entity_state_s {
 
 	vec3_t origin;
 	vec3_t angles;
-
-	vec3_t old_origin;              // for lerping
 	vec3_t origin2;                 // ET_BEAM, ET_PORTALSURFACE, ET_EVENT specific
 
 	unsigned int modelindex;

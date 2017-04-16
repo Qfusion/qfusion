@@ -107,7 +107,6 @@ static void SV_CreateBaseline( void ) {
 		//
 		// take current state as baseline
 		//
-		VectorCopy( svent->s.origin, svent->s.old_origin );
 		sv.baselines[entnum] = svent->s;
 	}
 }

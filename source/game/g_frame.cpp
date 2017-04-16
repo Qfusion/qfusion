@@ -501,7 +501,6 @@ void G_ClearSnap( void ) {
 	for( ent = &game.edicts[0]; ENTNUM( ent ) < game.numentities; ent++ ) {
 		if( !GS_MatchPaused() ) {
 			// copy origin to old origin ( this old_origin is for snaps )
-			VectorCopy( ent->s.origin, ent->s.old_origin );
 			G_CheckClientRespawnClick( ent );
 		}
 

@@ -245,7 +245,6 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 
 	projectile = G_Spawn();
 	VectorCopy( start, projectile->s.origin );
-	VectorCopy( start, projectile->s.old_origin );
 	VectorCopy( start, projectile->olds.origin );
 
 	VectorCopy( angles, projectile->s.angles );
@@ -303,7 +302,6 @@ static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t angle
 
 	projectile = G_Spawn();
 	VectorCopy( start, projectile->s.origin );
-	VectorCopy( start, projectile->s.old_origin );
 	VectorCopy( start, projectile->olds.origin );
 
 	VectorCopy( angles, projectile->s.angles );

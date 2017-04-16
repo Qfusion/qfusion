@@ -44,7 +44,6 @@ static bool G_Teleport( edict_t *ent, vec3_t origin, vec3_t angles ) {
 	}
 
 	VectorCopy( origin, ent->s.origin );
-	VectorCopy( origin, ent->s.old_origin );
 	VectorCopy( origin, ent->olds.origin );
 	ent->s.teleported = true;
 

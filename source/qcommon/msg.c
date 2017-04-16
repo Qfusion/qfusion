@@ -390,30 +390,30 @@ static bool MSG_CompareField( const uint8_t *from, const uint8_t *to, const msg_
 */
 static void MSG_WriteField( msg_t *msg, const uint8_t *to, const msg_field_t *field ) {
 	switch( field->encoding ) {
-	case MSG_ENCTYPE_BOOL:
+	case WIRE_BOOL:
 		break;
-	case MSG_ENCTYPE_FIXED_INT8:
+	case WIRE_FIXED_INT8:
 		MSG_WriteInt8( msg, *((int8_t *)( to + field->offset )) );
 		break;
-	case MSG_ENCTYPE_FIXED_INT16:
+	case WIRE_FIXED_INT16:
 		MSG_WriteInt16( msg, *((int16_t *)( to + field->offset )) );
 		break;
-	case MSG_ENCTYPE_FIXED_INT32:
+	case WIRE_FIXED_INT32:
 		MSG_WriteInt32( msg, *((int32_t *)( to + field->offset )) );
 		break;
-	case MSG_ENCTYPE_FIXED_INT64:
+	case WIRE_FIXED_INT64:
 		MSG_WriteInt64( msg, *((int64_t *)( to + field->offset )) );
 		break;
-	case MSG_ENCTYPE_FLOAT:
+	case WIRE_FLOAT:
 		MSG_WriteFloat( msg, *((float *)( to + field->offset )) );
 		break;
-	case MSG_ENCTYPE_HALF_FLOAT:
+	case WIRE_HALF_FLOAT:
 		MSG_WriteHalfFloat( msg, (*((float *)( to + field->offset ))) );
 		break;
-	case MSG_ENCTYPE_ANGLE:
+	case WIRE_ANGLE:
 		MSG_WriteHalfFloat( msg, anglemod( (*((float *)( to + field->offset ))) ) );
 		break;
-	case MSG_ENCTYPE_BASE128:
+	case WIRE_BASE128:
 		switch( field->bits ) {
 		case 8:
 			MSG_WriteInt8( msg, *((int8_t *)( to + field->offset )) );
@@ -432,7 +432,7 @@ static void MSG_WriteField( msg_t *msg, const uint8_t *to, const msg_field_t *fi
 			break;
 		}
 		break;
-	case MSG_ENCTYPE_UBASE128:
+	case WIRE_UBASE128:
 		switch( field->bits ) {
 		case 8:
 			MSG_WriteUint8( msg, *((uint8_t *)( to + field->offset )) );
@@ -462,31 +462,31 @@ static void MSG_WriteField( msg_t *msg, const uint8_t *to, const msg_field_t *fi
 */
 static void MSG_ReadField( msg_t *msg, uint8_t *to, const msg_field_t *field ) {
 	switch( field->encoding ) {
-	case MSG_ENCTYPE_BOOL:
+	case WIRE_BOOL:
 		*((bool *)( to + field->offset )) ^= true;
 		break;
-	case MSG_ENCTYPE_FIXED_INT8:
+	case WIRE_FIXED_INT8:
 		*((int8_t *)( to + field->offset )) = MSG_ReadInt8( msg );
 		break;
-	case MSG_ENCTYPE_FIXED_INT16:
+	case WIRE_FIXED_INT16:
 		*((int16_t *)( to + field->offset )) = MSG_ReadInt16( msg );
 		break;
-	case MSG_ENCTYPE_FIXED_INT32:
+	case WIRE_FIXED_INT32:
 		*((int32_t *)( to + field->offset )) = MSG_ReadInt32( msg );
 		break;
-	case MSG_ENCTYPE_FIXED_INT64:
+	case WIRE_FIXED_INT64:
 		*((int64_t *)( to + field->offset )) = MSG_ReadInt64( msg );
 		break;
-	case MSG_ENCTYPE_FLOAT:
+	case WIRE_FLOAT:
 		*((float *)( to + field->offset )) = MSG_ReadFloat( msg );
 		break;
-	case MSG_ENCTYPE_HALF_FLOAT:
+	case WIRE_HALF_FLOAT:
 		*((float *)( to + field->offset )) = MSG_ReadHalfFloat( msg );
 		break;
-	case MSG_ENCTYPE_ANGLE:
+	case WIRE_ANGLE:
 		*((float *)( to + field->offset )) = MSG_ReadHalfFloat( msg );
 		break;
-	case MSG_ENCTYPE_BASE128:
+	case WIRE_BASE128:
 		switch( field->bits ) {
 		case 8:
 			*((int8_t *)( to + field->offset )) = MSG_ReadInt8( msg );
@@ -505,7 +505,7 @@ static void MSG_ReadField( msg_t *msg, uint8_t *to, const msg_field_t *field ) {
 			break;
 		}
 		break;
-	case MSG_ENCTYPE_UBASE128:
+	case WIRE_UBASE128:
 		switch( field->bits ) {
 		case 8:
 			*((uint8_t *)( to + field->offset )) = MSG_ReadUint8( msg );
@@ -906,65 +906,65 @@ void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, c
 #define ESOFS( x ) offsetof( entity_state_t,x )
 
 static const msg_field_t ent_state_fields[] = {
-	{ ESOFS( events[0] ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( eventParms[0] ), 32, 1, MSG_ENCTYPE_BASE128 },
+	{ ESOFS( events[0] ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( eventParms[0] ), 32, 1, WIRE_BASE128 },
 
-	{ ESOFS( origin[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( origin[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( origin[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( origin[0] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( origin[1] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( origin[2] ), 0, 1, WIRE_FLOAT },
 
-	{ ESOFS( angles[0] ), 0, 1, MSG_ENCTYPE_ANGLE },
-	{ ESOFS( angles[1] ), 0, 1, MSG_ENCTYPE_ANGLE },
+	{ ESOFS( angles[0] ), 0, 1, WIRE_ANGLE },
+	{ ESOFS( angles[1] ), 0, 1, WIRE_ANGLE },
 
-	{ ESOFS( teleported ), 1, 1, MSG_ENCTYPE_BOOL },
+	{ ESOFS( teleported ), 1, 1, WIRE_BOOL },
 
-	{ ESOFS( type ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( solid ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( frame ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( modelindex ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( svflags ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( skinnum ), 32, 1, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( effects ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( ownerNum ), 32, 1, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( targetNum ), 32, 1, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( sound ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( modelindex2 ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( attenuation ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( counterNum ), 32, 1, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( bodyOwner ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( channel ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( events[1] ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( eventParms[1] ), 32, 1, MSG_ENCTYPE_BASE128 },
-	{ ESOFS( weapon ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( firemode ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
-	{ ESOFS( damage ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( range ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( team ), 32, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ ESOFS( type ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( solid ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( frame ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( modelindex ), 32, 1, WIRE_FIXED_INT8 },
+	{ ESOFS( svflags ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( skinnum ), 32, 1, WIRE_BASE128 },
+	{ ESOFS( effects ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( ownerNum ), 32, 1, WIRE_BASE128 },
+	{ ESOFS( targetNum ), 32, 1, WIRE_BASE128 },
+	{ ESOFS( sound ), 32, 1, WIRE_FIXED_INT8 },
+	{ ESOFS( modelindex2 ), 32, 1, WIRE_FIXED_INT8 },
+	{ ESOFS( attenuation ), 0, 1, WIRE_HALF_FLOAT },
+	{ ESOFS( counterNum ), 32, 1, WIRE_BASE128 },
+	{ ESOFS( bodyOwner ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( channel ), 32, 1, WIRE_FIXED_INT8 },
+	{ ESOFS( events[1] ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( eventParms[1] ), 32, 1, WIRE_BASE128 },
+	{ ESOFS( weapon ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( firemode ), 32, 1, WIRE_FIXED_INT8 },
+	{ ESOFS( damage ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( range ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( team ), 32, 1, WIRE_FIXED_INT8 },
 
-	{ ESOFS( origin2[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( origin2[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( origin2[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( origin2[0] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( origin2[1] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( origin2[2] ), 0, 1, WIRE_FLOAT },
 
-	{ ESOFS( linearMovementTimeStamp ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( linearMovement ), 1, 1, MSG_ENCTYPE_BOOL },
-	{ ESOFS( linearMovementDuration ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ ESOFS( linearMovementVelocity[0] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( linearMovementVelocity[1] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( linearMovementVelocity[2] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
-	{ ESOFS( linearMovementBegin[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( linearMovementBegin[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( linearMovementBegin[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( linearMovementEnd[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( linearMovementEnd[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ ESOFS( linearMovementEnd[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ ESOFS( linearMovementTimeStamp ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( linearMovement ), 1, 1, WIRE_BOOL },
+	{ ESOFS( linearMovementDuration ), 32, 1, WIRE_UBASE128 },
+	{ ESOFS( linearMovementVelocity[0] ), 0, 1, WIRE_HALF_FLOAT },
+	{ ESOFS( linearMovementVelocity[1] ), 0, 1, WIRE_HALF_FLOAT },
+	{ ESOFS( linearMovementVelocity[2] ), 0, 1, WIRE_HALF_FLOAT },
+	{ ESOFS( linearMovementBegin[0] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( linearMovementBegin[1] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( linearMovementBegin[2] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( linearMovementEnd[0] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( linearMovementEnd[1] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( linearMovementEnd[2] ), 0, 1, WIRE_FLOAT },
 
-	{ ESOFS( itemNum ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ ESOFS( itemNum ), 32, 1, WIRE_UBASE128 },
 
-	{ ESOFS( angles[2] ), 0, 1, MSG_ENCTYPE_ANGLE },
+	{ ESOFS( angles[2] ), 0, 1, WIRE_ANGLE },
 
-	{ ESOFS( colorRGBA ), 32, 1, MSG_ENCTYPE_FIXED_INT32 },
+	{ ESOFS( colorRGBA ), 32, 1, WIRE_FIXED_INT32 },
 
-	{ ESOFS( light ), 32, 1, MSG_ENCTYPE_FIXED_INT32 },
+	{ ESOFS( light ), 32, 1, WIRE_FIXED_INT32 },
 };
 
 /*
@@ -1070,15 +1070,15 @@ void MSG_ReadDeltaEntity( msg_t *msg, const entity_state_t *from, entity_state_t
 #define UCOFS( x ) offsetof( usercmd_t,x )
 
 static const msg_field_t usercmd_fields[] = {
-	{ UCOFS( angles[0] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
-	{ UCOFS( angles[1] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
-	{ UCOFS( angles[2] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
+	{ UCOFS( angles[0] ), 16, 1, WIRE_FIXED_INT16 },
+	{ UCOFS( angles[1] ), 16, 1, WIRE_FIXED_INT16 },
+	{ UCOFS( angles[2] ), 16, 1, WIRE_FIXED_INT16 },
 
-	{ UCOFS( forwardmove ), 8, 1, MSG_ENCTYPE_FIXED_INT8 },
-	{ UCOFS( sidemove ), 8, 1, MSG_ENCTYPE_FIXED_INT8 },
-	{ UCOFS( upmove ), 8, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ UCOFS( forwardmove ), 8, 1, WIRE_FIXED_INT8 },
+	{ UCOFS( sidemove ), 8, 1, WIRE_FIXED_INT8 },
+	{ UCOFS( upmove ), 8, 1, WIRE_FIXED_INT8 },
 
-	{ UCOFS( buttons ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ UCOFS( buttons ), 32, 1, WIRE_UBASE128 },
 };
 
 /*
@@ -1112,52 +1112,52 @@ void MSG_ReadDeltaUsercmd( msg_t *msg, const usercmd_t *from, usercmd_t *move ) 
 #define PSOFS( x ) offsetof( player_state_t,x )
 
 static const msg_field_t player_state_msg_fields[] = {
-	{ PSOFS( pmove.pm_type ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( pmove.pm_type ), 32, 1, WIRE_UBASE128 },
 
-	{ PSOFS( pmove.origin[0] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ PSOFS( pmove.origin[1] ), 0, 1, MSG_ENCTYPE_FLOAT },
-	{ PSOFS( pmove.origin[2] ), 0, 1, MSG_ENCTYPE_FLOAT },
+	{ PSOFS( pmove.origin[0] ), 0, 1, WIRE_FLOAT },
+	{ PSOFS( pmove.origin[1] ), 0, 1, WIRE_FLOAT },
+	{ PSOFS( pmove.origin[2] ), 0, 1, WIRE_FLOAT },
 
-	{ PSOFS( pmove.velocity[0] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
-	{ PSOFS( pmove.velocity[1] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
-	{ PSOFS( pmove.velocity[2] ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ PSOFS( pmove.velocity[0] ), 0, 1, WIRE_HALF_FLOAT },
+	{ PSOFS( pmove.velocity[1] ), 0, 1, WIRE_HALF_FLOAT },
+	{ PSOFS( pmove.velocity[2] ), 0, 1, WIRE_HALF_FLOAT },
 
-	{ PSOFS( pmove.pm_time ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ PSOFS( pmove.skim_time ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( pmove.pm_time ), 32, 1, WIRE_UBASE128 },
+	{ PSOFS( pmove.skim_time ), 32, 1, WIRE_UBASE128 },
 
-	{ PSOFS( pmove.pm_flags ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( pmove.pm_flags ), 32, 1, WIRE_UBASE128 },
 
-	{ PSOFS( pmove.delta_angles[0] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
-	{ PSOFS( pmove.delta_angles[1] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
-	{ PSOFS( pmove.delta_angles[2] ), 16, 1, MSG_ENCTYPE_FIXED_INT16 },
+	{ PSOFS( pmove.delta_angles[0] ), 16, 1, WIRE_FIXED_INT16 },
+	{ PSOFS( pmove.delta_angles[1] ), 16, 1, WIRE_FIXED_INT16 },
+	{ PSOFS( pmove.delta_angles[2] ), 16, 1, WIRE_FIXED_INT16 },
 
-	{ PSOFS( event[0] ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ PSOFS( eventParm[0] ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( event[0] ), 32, 1, WIRE_UBASE128 },
+	{ PSOFS( eventParm[0] ), 32, 1, WIRE_UBASE128 },
 
-	{ PSOFS( event[1] ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ PSOFS( eventParm[1] ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( event[1] ), 32, 1, WIRE_UBASE128 },
+	{ PSOFS( eventParm[1] ), 32, 1, WIRE_UBASE128 },
 
-	{ PSOFS( viewangles[0] ), 0, 1, MSG_ENCTYPE_ANGLE },
-	{ PSOFS( viewangles[1] ), 0, 1, MSG_ENCTYPE_ANGLE },
-	{ PSOFS( viewangles[2] ), 0, 1, MSG_ENCTYPE_ANGLE },
+	{ PSOFS( viewangles[0] ), 0, 1, WIRE_ANGLE },
+	{ PSOFS( viewangles[1] ), 0, 1, WIRE_ANGLE },
+	{ PSOFS( viewangles[2] ), 0, 1, WIRE_ANGLE },
 
-	{ PSOFS( pmove.gravity ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( pmove.gravity ), 32, 1, WIRE_UBASE128 },
 
-	{ PSOFS( weaponState ), 8, 1, MSG_ENCTYPE_FIXED_INT8 },
+	{ PSOFS( weaponState ), 8, 1, WIRE_FIXED_INT8 },
 
-	{ PSOFS( fov ), 0, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ PSOFS( fov ), 0, 1, WIRE_HALF_FLOAT },
 
-	{ PSOFS( POVnum ), 32, 1, MSG_ENCTYPE_UBASE128 },
-	{ PSOFS( playerNum ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( POVnum ), 32, 1, WIRE_UBASE128 },
+	{ PSOFS( playerNum ), 32, 1, WIRE_UBASE128 },
 
-	{ PSOFS( viewheight ), 32, 1, MSG_ENCTYPE_HALF_FLOAT },
+	{ PSOFS( viewheight ), 32, 1, WIRE_HALF_FLOAT },
 
-	{ PSOFS( plrkeys ), 32, 1, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( plrkeys ), 32, 1, WIRE_UBASE128 },
 
-	{ PSOFS( stats ), 16, PS_MAX_STATS, MSG_ENCTYPE_BASE128 },
+	{ PSOFS( stats ), 16, PS_MAX_STATS, WIRE_BASE128 },
 
-	{ PSOFS( pmove.stats ), 16, PM_STAT_SIZE, MSG_ENCTYPE_BASE128 },
-	{ PSOFS( inventory ), 32, MAX_ITEMS, MSG_ENCTYPE_UBASE128 },
+	{ PSOFS( pmove.stats ), 16, PM_STAT_SIZE, WIRE_BASE128 },
+	{ PSOFS( inventory ), 32, MAX_ITEMS, WIRE_UBASE128 },
 };
 
 /*
@@ -1198,7 +1198,7 @@ void MSG_ReadDeltaPlayerState( msg_t *msg, const player_state_t *ops, player_sta
 #define GSOFS( x ) offsetof( game_state_t,x )
 
 static const msg_field_t game_state_msg_fields[] = {
-	{ GSOFS( stats ), 64, MAX_GAME_STATS, MSG_ENCTYPE_BASE128 },
+	{ GSOFS( stats ), 64, MAX_GAME_STATS, WIRE_BASE128 },
 };
 
 /*
