@@ -191,7 +191,6 @@ void GClip_LinkEntity( tvm_relay_t *relay, edict_t *ent ) {
 
 	// if first time, make sure old_origin is valid
 	if( !ent->r.linkcount ) {
-		VectorCopy( ent->s.origin, ent->s.old_origin );
 		//ent->olds = ent->s;
 	}
 	ent->r.linkcount++;

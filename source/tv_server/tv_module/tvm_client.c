@@ -124,13 +124,11 @@ void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent ) {
 	spot = TVM_SelectSpawnPoint( ent );
 	if( spot ) {
 		VectorCopy( spot->s.origin, ent->s.origin );
-		VectorCopy( spot->s.origin, ent->s.old_origin );
 		VectorCopy( spot->s.angles, ent->s.angles );
 		VectorCopy( spot->s.origin, ent->r.client->ps.pmove.origin );
 		VectorCopy( spot->s.angles, ent->r.client->ps.viewangles );
 	} else {
 		VectorClear( ent->s.origin );
-		VectorClear( ent->s.old_origin );
 		VectorClear( ent->s.angles );
 		VectorClear( ent->r.client->ps.pmove.origin );
 		VectorClear( ent->r.client->ps.viewangles );
