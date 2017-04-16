@@ -253,7 +253,7 @@ void BotBrain::UpdateKeptCurrentCombatTask() {
 		if( task->enemy ) {
 			nextWeaponChoiceAt = level.time + aimWeaponChoicePeriod;
 			SuggestAimWeaponAndTactics( task );
-			Debug( "UpdateKeptCombatTask(): has aim enemy, next weapon choice at %09d\n", nextWeaponChoiceAt );
+			Debug( "UpdateKeptCombatTask(): has aim enemy, next weapon choice at %09lld\n", (long long)nextWeaponChoiceAt );
 		}
 
 		// If tactics has been changed, treat updated combat task as new
@@ -336,7 +336,7 @@ void BotBrain::TryFindNewCombatTask() {
 		activeEnemyPool->EnqueueTarget( aimEnemy->ent );
 		UpdateBlockedAreasStatus();
 
-		Debug( "TryFindNewCombatTask(): found aim enemy %s, next target choice at %09d\n", aimEnemy->Nick(), nextTargetChoiceAt );
+		Debug( "TryFindNewCombatTask(): found aim enemy %s, next target choice at %09lld\n", aimEnemy->Nick(), (long long)nextTargetChoiceAt );
 		SuggestAimWeaponAndTactics( &combatTask );
 		return;
 	}

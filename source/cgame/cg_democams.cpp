@@ -93,7 +93,7 @@ static cg_democam_t *CG_Democam_FindCurrent( int64_t time ) {
 	cam = cg_cams_headnode;
 	curcam = NULL;
 	while( cam != NULL ) {
-		if( curcam == NULL || cam->timeStamp <= time && cam->timeStamp > higher_time ) {
+		if( curcam == NULL || ( cam->timeStamp <= time && cam->timeStamp > higher_time ) ) {
 			higher_time = cam->timeStamp;
 			curcam = cam;
 		}
@@ -113,7 +113,7 @@ static cg_democam_t *CG_Democam_FindNext( int64_t time ) {
 	cam = cg_cams_headnode;
 	ncam = NULL;
 	while( cam != NULL ) {
-		if( ncam == NULL || cam->timeStamp > time && cam->timeStamp < lower_time ) {
+		if( ncam == NULL || ( cam->timeStamp > time && cam->timeStamp < lower_time ) ) {
 			lower_time = cam->timeStamp;
 			ncam = cam;
 		}
