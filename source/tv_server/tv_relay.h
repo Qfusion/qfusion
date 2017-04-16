@@ -48,7 +48,6 @@ struct packet_s {
 typedef struct fatvis_s {
 	vec_t *skyorg;
 	uint8_t pvs[MAX_MAP_LEAFS / 8];
-	uint8_t phs[MAX_MAP_LEAFS / 8];
 } fatvis_t;
 
 typedef struct client_entities_s {

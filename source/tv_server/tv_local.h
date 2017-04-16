@@ -65,7 +65,7 @@ typedef struct {
 typedef struct {
 	netadr_t adr;
 	int challenge;
-	int time;
+	int64_t time;
 } challenge_t;
 
 // MAX_SNAP_ENTITIES is the guess of what we consider maximum amount of entities
@@ -74,10 +74,10 @@ typedef struct {
 
 typedef struct {
 	char *name;
-	uint8_t *data;            // file being downloaded
-	int size;               // total bytes (can't use EOF because of paks)
-	unsigned int timeout;   // so we can free the file being downloaded
-	// if client omits sending success or failure message
+	uint8_t *data;      // file being downloaded
+	size_t size;        // total bytes (can't use EOF because of paks)
+	int64_t timeout;	// so we can free the file being downloaded
+						// if client omits sending success or failure message
 } client_download_t;
 
 typedef struct {
@@ -90,11 +90,11 @@ typedef struct {
 	uint8_t *areabits;                // portalarea visibility bits
 	int numplayers;
 	int ps_size;
-	player_state_t *ps;                 // [numplayers]
+	player_state_t *ps;               // [numplayers]
 	int num_entities;
-	int first_entity;                   // into the circular sv_packet_entities[]
-	unsigned int sentTimeStamp;         // time at what this frame snap was sent to the clients
-	unsigned int UcmdExecuted;
+	int first_entity;                 // into the circular sv_packet_entities[]
+	int64_t sentTimeStamp;            // time at what this frame snap was sent to the clients
+	int64_t UcmdExecuted;
 	game_state_t gameState;
 } client_snapshot_t;
 
@@ -111,14 +111,14 @@ typedef struct {
 void TV_FlushRedirect( int sv_redirected, const char *outputbuf, const void *extra );
 
 typedef struct {
-	unsigned int framenum;
+	int64_t framenum;
 	char command[MAX_STRING_CHARS];
 } game_command_t;
 
 #define MAX_FLOOD_MESSAGES 32
 typedef struct {
-	unsigned int locktill;           // locked from talking
-	unsigned int when[MAX_FLOOD_MESSAGES];           // when messages were said
+	int64_t locktill;           // locked from talking
+	int64_t when[MAX_FLOOD_MESSAGES];           // when messages were said
 	int whenhead;             // head pointer for when said
 } client_flood_t;
 
@@ -145,9 +145,9 @@ typedef struct client_s {
 	game_command_t gameCommands[MAX_RELIABLE_COMMANDS];
 	int gameCommandCurrent;             // position in the gameCommands table
 
-	unsigned int clientCommandExecuted; // last client-command we received
+	int64_t clientCommandExecuted; // last client-command we received
 
-	unsigned int UcmdTime;
+	int64_t UcmdTime;
 	int64_t UcmdExecuted;              // last client-command we executed
 	int64_t UcmdReceived;              // last client-command we received
 	usercmd_t ucmds[CMD_BACKUP];        // each message will send several old cmds
@@ -166,11 +166,6 @@ typedef struct client_s {
 	int ping;
 	edict_t *edict;                     // EDICT_NUM(clientnum+1)
 	char name[MAX_INFO_VALUE];          // extracted from userinfo, high bits masked
-
-	// The sounds datagram is written to by multicasted sound commands
-	// It can be harmlessly overflowed.
-	msg_t soundsmsg;
-	uint8_t soundsmsgData[MAX_MSGLEN];
 
 	client_snapshot_t snapShots[UPDATE_BACKUP]; // updates can be delta'd from here
 
@@ -192,7 +187,7 @@ typedef struct {
 } tv_lobby_t;
 
 typedef struct {
-	unsigned int realtime;
+	int64_t realtime;
 
 	tv_lobby_t lobby;
 

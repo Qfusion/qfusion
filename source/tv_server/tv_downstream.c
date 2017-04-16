@@ -32,10 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * TV_Downstream_ClientResetCommandBuffers
 */
 void TV_Downstream_ClientResetCommandBuffers( client_t *client, bool resetReliable ) {
-	// clear the sounds datagram
-	MSG_Init( &client->soundsmsg, client->soundsmsgData, sizeof( client->soundsmsgData ) );
-	MSG_Clear( &client->soundsmsg );
-
 	if( resetReliable ) { // reset the reliable commands buffer
 		client->clientCommandExecuted = 0;
 		client->reliableAcknowledge = 0;

@@ -44,8 +44,7 @@ int ActiveApp;
 int Minimized;
 int AppFocused;
 
-unsigned sys_msg_time;
-unsigned sys_frame_time;
+int64_t sys_msg_time;
 
 #define MAX_NUM_ARGVS   128
 int argc;
