@@ -94,10 +94,6 @@ static void GS_SetBaseAnimLower( pm_anim_t *pmanim ) {
 			pmanim->animState[LOWER] = LEGS_SWIM_NEUTRAL;
 		}
 	}
-	//FALLING
-	else if( pmanim->moveflags & ANIMMOVE_AIR ) {
-		pmanim->animState[LOWER] = LEGS_JUMP_NEUTRAL;
-	}
 	//CROUCH
 	else if( pmanim->moveflags & ANIMMOVE_DUCK ) {
 		if( pmanim->moveflags & ( ANIMMOVE_WALK | ANIMMOVE_RUN ) ) {
@@ -105,6 +101,10 @@ static void GS_SetBaseAnimLower( pm_anim_t *pmanim ) {
 		} else {
 			pmanim->animState[LOWER] = LEGS_CROUCH_IDLE;
 		}
+	}
+	//FALLING
+	else if( pmanim->moveflags & ANIMMOVE_AIR ) {
+		pmanim->animState[LOWER] = LEGS_JUMP_NEUTRAL;
 	}
 	// RUN
 	else if( pmanim->moveflags & ANIMMOVE_RUN ) {
