@@ -231,6 +231,19 @@ void AiEntityPhysicsState::UpdateAreaNums()
         return;
     }
 
+    // Use a computation shortcut when the current area is grounded
+    if (aasWorld->AreaSettings()[this->currAasAreaNum].areaflags & AREA_GROUNDED)
+    {
+        float areaMinsZ = aasWorld->Areas()[this->currAasAreaNum].mins[2];
+        float selfZ = Self()->s.origin[2];
+        float heightOverGround = selfZ - areaMinsZ + playerbox_stand_maxs[2];
+        clamp_high(heightOverGround, GROUND_TRACE_DEPTH);
+        SetHeightOverGround(heightOverGround);
+        this->droppedToFloorOriginOffset = (decltype(this->droppedToFloorOriginOffset))(heightOverGround - 4.0f);
+        this->droppedToFloorAasAreaNum = this->currAasAreaNum;
+        return;
+    }
+
     // Try drop an origin from air to floor
     trace_t trace;
     edict_t *ent = const_cast<edict_t *>(Self());
