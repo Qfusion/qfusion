@@ -718,6 +718,15 @@ void G_SetMovedir( vec3_t angles, vec3_t movedir ) {
 	VectorClear( angles );
 }
 
+/*
+* G_SetOrigin
+*/
+void G_SetOrigin( edict_t *ent, const vec3_t origin ) {
+	memset( &ent->s.tr, 0, sizeof( ent->s.tr ) );
+	ent->s.tr.type = TR_STATIC;
+	VectorCopy( origin, ent->s.tr.position );
+	VectorCopy( origin, ent->r.origin );
+}
 
 float vectoyaw( vec3_t vec ) {
 	float yaw;

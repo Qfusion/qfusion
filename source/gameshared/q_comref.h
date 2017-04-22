@@ -282,6 +282,24 @@ typedef enum {
 
 //==============================================
 
+typedef enum {
+	TR_STATIC,
+	TR_INTERPOLATE,
+	TR_LINEAR,
+	TR_SINE,
+} trType_t;
+
+typedef struct {
+	trType_t type;
+	int64_t startTime;			// the moment the trajectory has been set
+	vec3_t position;			// starting point
+	vec3_t velocity;			// velocity
+	float gravity;
+	unsigned duration;
+} trajectory_t;
+
+//==============================================
+
 typedef struct entity_state_s {
 	int number;                         // edict index
 
@@ -294,8 +312,11 @@ typedef struct entity_state_s {
 	// GClip_LinkEntity sets this properly
 	int solid;
 
-	vec3_t origin;
-	vec3_t angles;
+	trajectory_t tr;
+	trajectory_t atr;
+	
+	//vec3_t origin;
+	//vec3_t angles;
 	vec3_t origin2;                 // ET_BEAM, ET_PORTALSURFACE, ET_EVENT specific
 
 	unsigned int modelindex;

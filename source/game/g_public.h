@@ -55,6 +55,8 @@ typedef struct {
 	//================================
 
 	unsigned int svflags;                // SVF_NOCLIENT, SVF_MONSTER, etc
+	vec3_t origin;
+	vec3_t angles;
 	vec3_t mins, maxs;
 	vec3_t absmin, absmax, size;
 	solid_t solid;

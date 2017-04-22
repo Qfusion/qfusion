@@ -199,7 +199,6 @@ static const asEnumVal_t asMovetypeEnumVals[] =
 	ASLIB_ENUM_VAL( MOVETYPE_LINEARPROJECTILE ),
 	ASLIB_ENUM_VAL( MOVETYPE_BOUNCE ),
 	ASLIB_ENUM_VAL( MOVETYPE_BOUNCEGRENADE ),
-	ASLIB_ENUM_VAL( MOVETYPE_TOSSSLIDE ),
 
 	ASLIB_ENUM_VAL_NULL
 };
@@ -1891,15 +1890,17 @@ static void objectGameEntity_SetAVelocity( asvec3_t *vel, edict_t *self ) {
 static asvec3_t objectGameEntity_GetOrigin( edict_t *obj ) {
 	asvec3_t origin;
 
-	VectorCopy( obj->s.origin, origin.v );
+	VectorCopy( obj->r.origin, origin.v );
 	return origin;
 }
 
 static void objectGameEntity_SetOrigin( asvec3_t *vec, edict_t *self ) {
 	if( self->r.client && trap_GetClientState( PLAYERNUM( self ) ) >= CS_SPAWNED ) {
 		VectorCopy( vec->v, self->r.client->ps.pmove.origin );
+		VectorCopy( vec->v, self->r.origin );
+		return;
 	}
-	VectorCopy( vec->v, self->s.origin );
+	G_SetOrigin( self, vec->v );
 }
 
 static asvec3_t objectGameEntity_GetOrigin2( edict_t *obj ) {
@@ -1916,12 +1917,12 @@ static void objectGameEntity_SetOrigin2( asvec3_t *vec, edict_t *self ) {
 static asvec3_t objectGameEntity_GetAngles( edict_t *obj ) {
 	asvec3_t angles;
 
-	VectorCopy( obj->s.angles, angles.v );
+	VectorCopy( obj->r.angles, angles.v );
 	return angles;
 }
 
 static void objectGameEntity_SetAngles( asvec3_t *vec, edict_t *self ) {
-	VectorCopy( vec->v, self->s.angles );
+	VectorCopy( vec->v, self->r.angles );
 
 	if( self->r.client && trap_GetClientState( PLAYERNUM( self ) ) >= CS_SPAWNED ) {
 		int i;
@@ -1952,7 +1953,7 @@ static asvec3_t objectGameEntity_GetMovedir( edict_t *self ) {
 }
 
 static void objectGameEntity_SetMovedir( edict_t *self ) {
-	G_SetMovedir( self->s.angles, self->moveinfo.movedir );
+	G_SetMovedir( self->r.angles, self->moveinfo.movedir );
 }
 
 static bool objectGameEntity_isBrushModel( edict_t *self ) {
@@ -2136,7 +2137,7 @@ static void objectGameEntity_TeleportEffect( bool in, edict_t *self ) {
 static void objectGameEntity_sustainDamage( edict_t *inflictor, edict_t *attacker, asvec3_t *dir, float damage, float knockback, float stun, int mod, edict_t *self ) {
 	G_Damage( self, inflictor, attacker,
 			  dir ? dir->v : NULL, dir ? dir->v : NULL,
-			  inflictor ? inflictor->s.origin : self->s.origin,
+			  inflictor ? inflictor->r.origin : self->r.origin,
 			  damage, knockback, stun, 0, mod >= 0 ? mod : 0 );
 }
 
@@ -2177,7 +2178,7 @@ static void objectGameEntity_explosionEffect( int radius, edict_t *self ) {
 	}
 
 	for( i = 0; i < 3; i++ )
-		center[i] = self->s.origin[i] + ( 0.5f * ( self->r.maxs[i] + self->r.mins[i] ) );
+		center[i] = self->r.origin[i] + ( 0.5f * ( self->r.maxs[i] + self->r.mins[i] ) );
 
 	G_SpawnEvent( eventType, eventRadius, center );
 }

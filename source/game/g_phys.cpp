@@ -69,87 +69,6 @@ void G_AddGroundFriction( edict_t *ent, float friction ) {
 	}
 }
 
-/*
-* G_BoxSlideMove
-* calls GS_SlideMove for edict_t and triggers touch functions of touched objects
-*/
-int G_BoxSlideMove( edict_t *ent, int contentmask, float slideBounce, float friction ) {
-	int i;
-	move_t entMove;
-	int blockedmask = 0;
-	float oldVelocity;
-	memset( &entMove, 0, sizeof( move_t ) );
-
-	oldVelocity = VectorLength( ent->velocity );
-	if( !ent->groundentity ) {
-		SV_AddGravity( ent );
-	} else { // horizontal friction
-		G_AddGroundFriction( ent, friction );
-	}
-
-	entMove.numClipPlanes = 0;
-	entMove.numtouch = 0;
-
-	if( oldVelocity > 0 ) {
-		VectorCopy( ent->s.origin, entMove.origin );
-		VectorCopy( ent->velocity, entMove.velocity );
-		VectorCopy( ent->r.mins, entMove.mins );
-		VectorCopy( ent->r.maxs, entMove.maxs );
-
-		entMove.remainingTime = FRAMETIME;
-
-		VectorSet( entMove.gravityDir, 0, 0, -1 );
-		entMove.slideBounce = slideBounce;
-		entMove.groundEntity = ( ent->groundentity == NULL ) ? -1 : ENTNUM( ent->groundentity );
-
-		entMove.passent = ENTNUM( ent );
-		entMove.contentmask = contentmask;
-
-		blockedmask = GS_SlideMove( &entMove );
-
-		// update with the new values
-		VectorCopy( entMove.origin, ent->s.origin );
-		VectorCopy( entMove.velocity, ent->velocity );
-		ent->groundentity = ( entMove.groundEntity == -1 ) ? NULL : &game.edicts[entMove.groundEntity];
-
-		GClip_LinkEntity( ent );
-	}
-
-	// call touches
-	if( contentmask != 0 ) {
-		edict_t *other;
-		GClip_TouchTriggers( ent );
-
-		// touch other objects
-		for( i = 0; i < entMove.numtouch; i++ ) {
-			other = &game.edicts[entMove.touchents[i]];
-			if( other->r.svflags & SVF_PROJECTILE ) {
-				continue;
-			}
-
-			G_CallTouch( other, ent, NULL, 0 );
-
-			// if self touch function, fire up touch and if freed stop
-			G_CallTouch( ent, other, NULL, 0 );
-			if( !ent->r.inuse ) { // it may have been freed by the touch function
-				break;
-			}
-		}
-	}
-
-	if( ent->r.inuse ) {
-		G_CheckGround( ent );
-		if( ent->groundentity && VectorLength( ent->velocity ) <= 1 && oldVelocity > 1 ) {
-			VectorClear( ent->velocity );
-			VectorClear( ent->avelocity );
-			G_CallStop( ent );
-		}
-	}
-
-	return blockedmask;
-}
-
-
 
 //================================================================================
 
@@ -183,7 +102,7 @@ static edict_t *SV_TestEntityPosition( edict_t *ent ) {
 		mask = MASK_SOLID;
 	}
 
-	G_Trace4D( &trace, ent->s.origin, ent->r.mins, ent->r.maxs, ent->s.origin, ent, mask, ent->timeDelta );
+	G_Trace4D( &trace, ent->r.origin, ent->r.mins, ent->r.maxs, ent->r.origin, ent, mask, ent->timeDelta );
 	if( trace.startsolid ) {
 		return game.edicts;
 	}
@@ -401,7 +320,7 @@ static trace_t SV_PushEntity( edict_t *ent, vec3_t push ) {
 	vec3_t end;
 	int mask;
 
-	VectorCopy( ent->s.origin, start );
+	VectorCopy( ent->r.origin, start );
 	VectorAdd( start, push, end );
 
 retry:
@@ -413,7 +332,7 @@ retry:
 
 	G_Trace4D( &trace, start, ent->r.mins, ent->r.maxs, end, ent, mask, ent->timeDelta );
 	if( ent->movetype == MOVETYPE_PUSH || !trace.startsolid ) {
-		VectorCopy( trace.endpos, ent->s.origin );
+		VectorCopy( trace.endpos, ent->r.origin );
 	}
 
 	GClip_LinkEntity( ent );
@@ -424,7 +343,7 @@ retry:
 		// if the pushed entity went away and the pusher is still there
 		if( !game.edicts[trace.ent].r.inuse && ent->movetype == MOVETYPE_PUSH && ent->r.inuse ) {
 			// move the pusher back and try again
-			VectorCopy( start, ent->s.origin );
+			VectorCopy( start, ent->r.origin );
 			GClip_LinkEntity( ent );
 			goto retry;
 		}
@@ -957,9 +876,6 @@ void G_RunEntity( edict_t *ent ) {
 			break;
 		case MOVETYPE_LINEARPROJECTILE:
 			SV_Physics_LinearProjectile( ent );
-			break;
-		case MOVETYPE_TOSSSLIDE:
-			G_BoxSlideMove( ent, ent->r.clipmask ? ent->r.clipmask : MASK_PLAYERSOLID, 1.01f, 10 );
 			break;
 		default:
 			G_Error( "SV_Physics: bad movetype %i", (int)ent->movetype );

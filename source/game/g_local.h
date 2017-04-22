@@ -127,7 +127,6 @@ typedef enum {
 	MOVETYPE_LINEARPROJECTILE, // extra size to monsters
 	MOVETYPE_BOUNCE,
 	MOVETYPE_BOUNCEGRENADE,
-	MOVETYPE_TOSSSLIDE
 } movetype_t;
 
 //
@@ -595,6 +594,8 @@ void G_SetMovedir( vec3_t angles, vec3_t movedir );
 void G_InitMover( edict_t *ent );
 void G_DropSpawnpointToFloor( edict_t *ent );
 
+void G_SetOrigin( edict_t *ent, const vec3_t origin );
+
 void G_InitEdict( edict_t *e );
 edict_t *G_Spawn( void );
 void G_FreeEdict( edict_t *e );
@@ -917,7 +918,6 @@ void G_UpdateScoreBoardMessages( void );
 //
 void SV_Impact( edict_t *e1, trace_t *trace );
 void G_RunEntity( edict_t *ent );
-int G_BoxSlideMove( edict_t *ent, int contentmask, float slideBounce, float friction );
 
 //
 // g_main.c
