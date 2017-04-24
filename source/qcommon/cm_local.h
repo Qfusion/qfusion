@@ -49,6 +49,8 @@ typedef struct {
 	int contents;
 	int checkcount;             // to avoid repeated testings
 
+	vec3_t mins, maxs;
+
 	int numsides;
 	cbrushside_t *brushsides;
 } cbrush_t;
@@ -199,6 +201,8 @@ struct cmodel_state_s {
 
 void    CM_InitBoxHull( cmodel_state_t *cms );
 void    CM_InitOctagonHull( cmodel_state_t *cms );
+
+void    CM_BoundBrush( cmodel_state_t *cms, cbrush_t *brush );
 
 void    CM_FloodAreaConnections( cmodel_state_t *cms );
 
