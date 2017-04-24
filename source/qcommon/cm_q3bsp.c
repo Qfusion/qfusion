@@ -816,6 +816,7 @@ static void CMod_LoadBrushes( cmodel_state_t *cms, lump_t *l ) {
 		out->contents = cms->map_shaderrefs[shaderref].contents;
 		out->numsides = LittleLong( in->numsides );
 		out->brushsides = cms->map_brushsides + LittleLong( in->firstside );
+		CM_BoundBrush( cms, out );
 	}
 }
 
@@ -891,5 +892,14 @@ void CM_LoadQ3BrushModel( cmodel_state_t *cms, void *parent, void *buf, bspForma
 
 	if( cms->numvertexes ) {
 		Mem_Free( cms->map_verts );
+	}
+}
+
+void CM_BoundBrush( cmodel_state_t *cms, cbrush_t *brush ) {
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		brush->mins[i] = -brush->brushsides[i * 2 + 0].plane->dist;
+		brush->maxs[i] = +brush->brushsides[i * 2 + 1].plane->dist;
 	}
 }
