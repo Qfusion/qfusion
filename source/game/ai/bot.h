@@ -96,6 +96,8 @@ public:
 
     void Pain(const edict_t *enemy, float kick, int damage)
     {
+        if (kick != 0.0f)
+            lastKnockbackAt = level.time;
         botBrain.OnPain(enemy, kick, damage);
     }
     void OnEnemyDamaged(const edict_t *enemy, int damage)
@@ -368,6 +370,7 @@ private:
     unsigned lastTouchedTeleportAt;
     unsigned lastTouchedJumppadAt;
     unsigned lastTouchedElevatorAt;
+    unsigned lastKnockbackAt;
 
     unsigned similarWorldStateInstanceId;
 

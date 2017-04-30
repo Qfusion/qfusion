@@ -72,6 +72,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       lastTouchedTeleportAt(0),
       lastTouchedJumppadAt(0),
       lastTouchedElevatorAt(0),
+      lastKnockbackAt(0),
       similarWorldStateInstanceId(0)
 {
     self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;

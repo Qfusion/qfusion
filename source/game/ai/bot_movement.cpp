@@ -204,68 +204,75 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
     const auto &prevPhysicsState = prevPredictedAction->entityPhysicsState;
     const auto &nextPhysicsState = nextPredictedAction->entityPhysicsState;
 
-    vec3_t expectedOrigin;
-    VectorLerp(prevPhysicsState.Origin(), stateLerpFrac, nextPhysicsState.Origin(), expectedOrigin);
-    float squaredDistanceMismatch = DistanceSquared(self->s.origin, expectedOrigin);
-    if (squaredDistanceMismatch > 3.0f * 3.0f)
+    // Prevent cache invalidation on each frame if bot is being hit by a continuous fire weapon and knocked back.
+    // Perform misprediction test only on the 3rd frame after a last knockback timestamp.
+    if (level.time - self->ai->botRef->lastKnockbackAt > 32)
     {
-        float distanceMismatch = SQRTFAST(squaredDistanceMismatch);
-        const char *format_ = "Cannot use predicted movement action: distance mismatch %f is too high for lerp frac %f\n";
-        Debug(format_, level.time, distanceMismatch, stateLerpFrac);
-        return nullptr;
-    }
-
-    float expectedSpeed = (1.0f - stateLerpFrac) * prevPhysicsState.Speed() + stateLerpFrac * nextPhysicsState.Speed();
-    float actualSpeed = self->ai->botRef->entityPhysicsState->Speed();
-    float speedMismatch = fabsf(actualSpeed - expectedSpeed);
-    if (speedMismatch > 0.005f * expectedSpeed)
-    {
-        Debug("Expected speed: %.1f, actual speed: %.1f, speed mismatch: %.1f\n", expectedSpeed, actualSpeed, speedMismatch);
-        Debug("Cannot use predicted movement action: speed mismatch is too high\n");
-        return nullptr;
-    }
-
-    if (actualSpeed > 30.0f)
-    {
-        vec3_t expectedVelocity;
-        VectorLerp(prevPhysicsState.Velocity(), stateLerpFrac, nextPhysicsState.Velocity(), expectedVelocity);
-        Vec3 expectedVelocityDir(expectedVelocity);
-        expectedVelocityDir *= 1.0f / expectedSpeed;
-        Vec3 actualVelocityDir(self->velocity);
-        actualVelocityDir *= 1.0f / actualSpeed;
-        float cosine = expectedVelocityDir.Dot(actualVelocityDir);
-        static const float MIN_COSINE = cosf((float)DEG2RAD(5.0f));
-        if (cosine < MIN_COSINE)
+        vec3_t expectedOrigin;
+        VectorLerp(prevPhysicsState.Origin(), stateLerpFrac, nextPhysicsState.Origin(), expectedOrigin);
+        float squaredDistanceMismatch = DistanceSquared(self->s.origin, expectedOrigin);
+        if (squaredDistanceMismatch > 3.0f * 3.0f)
         {
-            Debug("An angle between expected and actual velocities is %f degrees\n", (float)RAD2DEG(acosf(cosine)));
-            Debug("Cannot use predicted movement action:  expected and actual velocity directions differ significantly\n");
+            float distanceMismatch = SQRTFAST(squaredDistanceMismatch);
+            const char *format_ = "Cannot use predicted movement action: distance mismatch %f is too high for lerp frac %f\n";
+            Debug(format_, level.time, distanceMismatch, stateLerpFrac);
             return nullptr;
         }
-    }
 
-    if (!nextPredictedAction->record.botInput.canOverrideLookVec)
-    {
-        Vec3 prevStateAngles(prevPhysicsState.Angles());
-        Vec3 nextStateAngles(nextPhysicsState.Angles());
-
-        vec3_t expectedAngles;
-        for (int i : {YAW, ROLL})
-            expectedAngles[i] = LerpAngle(prevStateAngles.Data()[i], nextStateAngles.Data()[i], stateLerpFrac);
-
-        if (!nextPredictedAction->record.botInput.canOverridePitch)
-            expectedAngles[PITCH] = LerpAngle(prevStateAngles.Data()[PITCH], nextStateAngles.Data()[PITCH], stateLerpFrac);
-        else
-            expectedAngles[PITCH] = self->s.angles[PITCH];
-
-        vec3_t expectedLookDir;
-        AngleVectors(expectedAngles, expectedLookDir, nullptr, nullptr);
-        float cosine = self->ai->botRef->entityPhysicsState->ForwardDir().Dot(expectedLookDir);
-        static const float MIN_COSINE = cosf((float)DEG2RAD(5.0f));
-        if (cosine < MIN_COSINE)
+        float expectedSpeed = (1.0f - stateLerpFrac) * prevPhysicsState.Speed() + stateLerpFrac * nextPhysicsState.Speed();
+        float actualSpeed = self->ai->botRef->entityPhysicsState->Speed();
+        float speedMismatch = fabsf(actualSpeed - expectedSpeed);
+        if (speedMismatch > 0.005f * expectedSpeed)
         {
-            Debug("An angle between and actual look directions is %f degrees\n", (float)RAD2DEG(acosf(cosine)));
-            Debug("Cannot use predicted movement action: expected and actual look directions differ significantly\n");
+            Debug("Expected speed: %.1f, actual speed: %.1f, speed mismatch: %.1f\n", expectedSpeed, actualSpeed,
+                  speedMismatch);
+            Debug("Cannot use predicted movement action: speed mismatch is too high\n");
             return nullptr;
+        }
+
+        if (actualSpeed > 30.0f)
+        {
+            vec3_t expectedVelocity;
+            VectorLerp(prevPhysicsState.Velocity(), stateLerpFrac, nextPhysicsState.Velocity(), expectedVelocity);
+            Vec3 expectedVelocityDir(expectedVelocity);
+            expectedVelocityDir *= 1.0f / expectedSpeed;
+            Vec3 actualVelocityDir(self->velocity);
+            actualVelocityDir *= 1.0f / actualSpeed;
+            float cosine = expectedVelocityDir.Dot(actualVelocityDir);
+            static const float MIN_COSINE = cosf((float) DEG2RAD(5.0f));
+            if (cosine < MIN_COSINE)
+            {
+                Debug("An angle between expected and actual velocities is %f degrees\n",(float) RAD2DEG(acosf(cosine)));
+                Debug("Cannot use predicted movement action:  expected and actual velocity directions differ significantly\n");
+                return nullptr;
+            }
+        }
+
+        if (!nextPredictedAction->record.botInput.canOverrideLookVec)
+        {
+            Vec3 prevStateAngles(prevPhysicsState.Angles());
+            Vec3 nextStateAngles(nextPhysicsState.Angles());
+
+            vec3_t expectedAngles;
+            for (int i : {YAW, ROLL})
+                expectedAngles[i] = LerpAngle(prevStateAngles.Data()[i], nextStateAngles.Data()[i], stateLerpFrac);
+
+            if (!nextPredictedAction->record.botInput.canOverridePitch)
+                expectedAngles[PITCH] = LerpAngle(prevStateAngles.Data()[PITCH], nextStateAngles.Data()[PITCH],
+                                                  stateLerpFrac);
+            else
+                expectedAngles[PITCH] = self->s.angles[PITCH];
+
+            vec3_t expectedLookDir;
+            AngleVectors(expectedAngles, expectedLookDir, nullptr, nullptr);
+            float cosine = self->ai->botRef->entityPhysicsState->ForwardDir().Dot(expectedLookDir);
+            static const float MIN_COSINE = cosf((float) DEG2RAD(5.0f));
+            if (cosine < MIN_COSINE)
+            {
+                Debug("An angle between and actual look directions is %f degrees\n", (float) RAD2DEG(acosf(cosine)));
+                Debug("Cannot use predicted movement action: expected and actual look directions differ significantly\n");
+                return nullptr;
+            }
         }
     }
 
