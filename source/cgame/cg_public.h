@@ -32,14 +32,14 @@ struct model_s;
 struct cmodel_s;
 struct qfontface_s;
 
-typedef size_t (*cg_async_stream_read_cb_t)( const void *buf, size_t numb, float percentage,
+typedef size_t ( *cg_async_stream_read_cb_t )( const void *buf, size_t numb, float percentage,
 											 int status, const char *contentType, void *privatep );
-typedef void (*cg_async_stream_done_cb_t)( int status, const char *contentType, void *privatep );
+typedef void ( *cg_async_stream_done_cb_t )( int status, const char *contentType, void *privatep );
 
-typedef void (*cg_raw_samples_cb_t)( void*,unsigned int, unsigned int, unsigned short, unsigned short, const uint8_t * );
-typedef unsigned int (*cg_get_raw_samples_cb_t)( void* );
+typedef void ( *cg_raw_samples_cb_t )( void *, unsigned int, unsigned int, unsigned short, unsigned short, const uint8_t * );
+typedef unsigned int ( *cg_get_raw_samples_cb_t )( void* );
 
-typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
+typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 // cg_public.h -- client game dll information visible to engine
 
@@ -244,7 +244,7 @@ typedef struct {
 	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
-	fdrawchar_t ( *SCR_SetDrawCharIntercept )( fdrawchar_t intercept );
+	cg_fdrawchar_t ( *SCR_SetDrawCharIntercept )( cg_fdrawchar_t intercept );
 	void ( *SCR_EnableQuickMenu )( bool enabled );
 	bool ( *SCR_HaveQuickMenu )( void );
 	bool ( *SCR_IsQuickMenuShown )( void );

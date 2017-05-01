@@ -23,11 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define UI_API_VERSION      66
 
-typedef size_t (*ui_async_stream_read_cb_t)( const void *buf, size_t numb, float percentage,
+typedef size_t ( *ui_async_stream_read_cb_t )( const void *buf, size_t numb, float percentage,
 											 int status, const char *contentType, void *privatep );
-typedef void (*ui_async_stream_done_cb_t)( int status, const char *contentType, void *privatep );
+typedef void ( *ui_async_stream_done_cb_t )( int status, const char *contentType, void *privatep );
 
-typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
+typedef void ( *ui_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 enum {
 	UI_CONTEXT_QUICK,
@@ -127,7 +127,7 @@ typedef struct {
 	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
-	fdrawchar_t ( *SCR_SetDrawCharIntercept )( fdrawchar_t intercept );
+	ui_fdrawchar_t ( *SCR_SetDrawCharIntercept )( ui_fdrawchar_t intercept );
 
 	void ( *CL_Quit )( void );
 	void ( *CL_SetKeyDest )( int key_dest );

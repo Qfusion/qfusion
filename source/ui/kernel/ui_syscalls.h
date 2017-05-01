@@ -231,7 +231,7 @@ inline size_t SCR_FontAdvance( struct qfontface_s *font ) {
 	return UI_IMPORT.SCR_FontAdvance( font );
 }
 
-inline fdrawchar_t SCR_SetDrawCharIntercept( fdrawchar_t intercept ) {
+inline ui_fdrawchar_t SCR_SetDrawCharIntercept( ui_fdrawchar_t intercept ) {
 	return UI_IMPORT.SCR_SetDrawCharIntercept( intercept );
 }
 
