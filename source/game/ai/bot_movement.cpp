@@ -190,8 +190,13 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
 
     Assert(prevPredictedAction->timestamp + prevPredictedAction->stepMillis == nextPredictedAction->timestamp);
 
-    if (!self->ai->botRef->movementState.TestActualStatesForExpectedMask(prevPredictedAction->movementStatesMask, self))
-        return nullptr;
+    // Fail prediction if both previous and next predicted movement states mask mismatch the current movement state
+    const auto &actualMovementState = self->ai->botRef->movementState;
+    if (!actualMovementState.TestActualStatesForExpectedMask(prevPredictedAction->movementStatesMask, self))
+    {
+        if (!actualMovementState.TestActualStatesForExpectedMask(nextPredictedAction->movementStatesMask, self))
+            return nullptr;
+    }
 
     // Check whether predicted action is valid for an actual bot entity physics state
     float stateLerpFrac = level.time - prevPredictedAction->timestamp;
