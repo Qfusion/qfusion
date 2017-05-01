@@ -393,7 +393,7 @@ bool CL_MM_Logout( bool force ) {
 	bool result;
 
 	if( !cl_mm_enabled || !cls.mm_session ) {
-		CL_MM_ErrorMessage( true, "MM Logout: not logged in" );
+		//CL_MM_ErrorMessage( true, "MM Logout: not logged in" );
 		return false;
 	}
 
