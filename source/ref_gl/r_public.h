@@ -166,6 +166,11 @@ typedef struct {
 	void ( *AddLightStyleToScene )( int style, float r, float g, float b );
 	void ( *RenderScene )( const refdef_t *fd );
 
+	/**
+	 * BlurScreen performs fullscreen blur of the default framebuffer and blits it to screen
+	 */
+	void ( *BlurScreen )( void );
+
 	void ( *DrawStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 							  const float *color, const struct shader_s *shader );
 	void ( *DrawRotatedStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2,

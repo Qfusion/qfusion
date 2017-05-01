@@ -369,9 +369,9 @@ void CL_AdjustServerTime( unsigned int gamemsec );
 char *CL_GetClipboardData( void );
 void CL_SetClipboardData( const char *data );
 void CL_FreeClipboardData( char *data );
-int CL_GetKeyDest( void );              // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)
-void CL_SetKeyDest( int key_dest );
-void CL_SetOldKeyDest( int key_dest );
+keydest_t CL_GetKeyDest( void );              // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)
+void CL_SetKeyDest( keydest_t key_dest );
+void CL_SetOldKeyDest( keydest_t key_dest );
 void CL_ResetServerCount( void );
 void CL_SetClientState( int state );
 connstate_t CL_GetClientState( void );  // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)

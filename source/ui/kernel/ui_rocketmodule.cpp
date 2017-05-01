@@ -448,6 +448,7 @@ void RocketModule::registerCustoms() {
 	registerElement( "irclog", GetIrcLogWidgetInstancer() );
 	registerElement( "iframe", GetIFrameWidgetInstancer() );
 	registerElement( "l10n", GetElementL10nInstancer() );
+	registerElement( "blur", GetElementBlurInstancer() );
 
 	//
 	// EVENTS

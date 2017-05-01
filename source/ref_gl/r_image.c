@@ -2771,7 +2771,7 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 							   0, width, height, 0, colorFlags, IMAGE_TAG_BUILTIN,
 							   glConfig.forceRGBAFramebuffers ? 4 : 3 );
 	}
-	if( depth && *color ) {
+	if( depth && color && *color ) {
 		R_InitViewportTexture( depth, va_r( tn, sizeof( tn ), "%s_depth", name ),
 							   0, width, height, 0, depthFlags, IMAGE_TAG_BUILTIN, 1 );
 
@@ -2787,6 +2787,7 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
  * Screen textures may only be used in or referenced from the rendering context/thread.
 */
 static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, bool useFloat ) {
+	int i, j;
 	char name[128];
 	const char *postfix = useFloat ? "16f" : "";
 
@@ -2794,24 +2795,21 @@ static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, bool useFloat ) 
 		Q_snprintfz( name, sizeof( name ), "r_screenTex%s", postfix );
 		R_InitScreenImagePair( name, &st->screenTex, &st->screenDepthTex, true, useFloat, 0, ~0 );
 
-		// Stencil is required in the copy for depth/stencil formats to match when blitting.
+		// stencil is required in the copy for depth/stencil formats to match when blitting.
 		Q_snprintfz( name, sizeof( name ), "r_screenTexCopy%s", postfix );
 		R_InitScreenImagePair( name, &st->screenTexCopy, &st->screenDepthTexCopy, true, useFloat, 0, ~0 );
 	}
 
-	Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy0", postfix );
-	R_InitScreenImagePair( name, &st->screenPPCopies[0], NULL, false, useFloat, 0, ~0 );
-
-	Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy1", postfix );
-	R_InitScreenImagePair( name, &st->screenPPCopies[1], NULL, false, useFloat, 0, ~0 );
+	for( j = 0; j < 2; j++ ) {
+		Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy%i", postfix, j );
+		R_InitScreenImagePair( name, &st->screenPPCopies[j], NULL, false, useFloat, 0, ~0 );
+	}
 
 	if( !useFloat && glConfig.ext.draw_buffers ) {
 		Q_snprintfz( name, sizeof( name ), "rsh.screenTexOverbright%s", postfix );
 		R_InitScreenImagePair( name, &st->screenOverbrightTex, NULL, false, false, 0, ~IT_FRAMEBUFFER );
 
 		if( st->screenOverbrightTex ) {
-			int i, j;
-
 			for( i = 0; i < NUM_BLOOM_LODS; i++ ) {
 				for( j = 0; j < 2; j++ ) {
 					Q_snprintfz( name, sizeof( name ), "rsh.screenTexBloomLod%s_%i_%i", postfix, i, j );
@@ -2846,13 +2844,11 @@ static void R_ReleaseBuiltinScreenImageSet( refScreenTexSet_t *st ) {
 		st->screenDepthTexCopy = NULL;
 	}
 
-	if( st->screenPPCopies[0] ) {
-		R_FreeImage( st->screenPPCopies[0] );
-		st->screenPPCopies[0] = NULL;
-	}
-	if( st->screenPPCopies[1] ) {
-		R_FreeImage( st->screenPPCopies[1] );
-		st->screenPPCopies[1] = NULL;
+	for( j = 0; j < 2; j++ ) {
+		if( st->screenPPCopies[j] ) {
+			R_FreeImage( st->screenPPCopies[j] );
+			st->screenPPCopies[j] = NULL;
+		}
 	}
 
 	if( st->screenOverbrightTex ) {

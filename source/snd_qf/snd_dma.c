@@ -1411,7 +1411,7 @@ static unsigned S_HandleSetListenerCmd( const sndCmdSetListener_t *cmd ) {
 */
 static unsigned S_HandleStartLocalSoundCmd( const sndCmdStartLocalSound_t *cmd ) {
 	//Com_Printf("S_HandleStartLocalSoundCmd\n");
-	S_StartGlobalSound( known_sfx + cmd->sfx, S_CHANNEL_AUTO, 1 );
+	S_StartGlobalSound( known_sfx + cmd->sfx, 0, 1 );
 	return sizeof( *cmd );
 }
 

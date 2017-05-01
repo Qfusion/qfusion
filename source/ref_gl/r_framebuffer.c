@@ -497,6 +497,7 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 	int bits;
 	int destObj;
 	int dx, dy, dw, dh;
+	r_fbo_t scrfbo;
 	r_fbo_t *fbo;
 	r_fbo_t *destfbo;
 
@@ -504,11 +505,16 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 		return;
 	}
 
-	assert( src > 0 && src <= r_num_framebuffer_objects );
-	if( src <= 0 || src > r_num_framebuffer_objects ) {
+	assert( src >= 0 && src <= r_num_framebuffer_objects );
+	if( src < 0 || src > r_num_framebuffer_objects ) {
 		return;
 	}
-	fbo = r_framebuffer_objects + src - 1;
+
+	if( src == 0 ) {
+		fbo = &scrfbo;
+	} else {
+		fbo = r_framebuffer_objects + src - 1;
+	}
 
 	assert( dest >= 0 && dest <= r_num_framebuffer_objects );
 	if( dest < 0 || dest > r_num_framebuffer_objects ) {
@@ -527,6 +533,12 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 	}
 
 	RB_ApplyScissor();
+
+	if( src == 0 ) {
+		memset( fbo, 0, sizeof( *fbo ) );
+		fbo->width = glConfig.width;
+		fbo->height = glConfig.height;
+	}
 
 	if( destfbo ) {
 		dw = destfbo->width;
@@ -570,8 +582,13 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, destObj );
 
 #ifndef GL_ES_VERSION_2_0
-	qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT + readAtt );
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT + drawAtt );
+	if( src == 0 ) {
+		qglReadBuffer( GL_BACK );
+		qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT + drawAtt );
+	} else {
+		qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT + readAtt );
+		qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT + drawAtt );
+	}
 #endif
 
 	qglBlitFramebufferEXT( 0, 0, fbo->width, fbo->height, dx, dy, dx + dw, dy + dh, bits, filter );
@@ -580,8 +597,13 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
 #ifndef GL_ES_VERSION_2_0
-	qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT );
-	qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+	if( src == 0 ) {
+		qglReadBuffer( GL_BACK );
+		qglDrawBuffer( GL_BACK );
+	} else {
+		qglReadBuffer( GL_COLOR_ATTACHMENT0_EXT );
+		qglDrawBuffer( GL_COLOR_ATTACHMENT0_EXT );
+	}
 #endif
 
 	assert( qglGetError() == GL_NO_ERROR );

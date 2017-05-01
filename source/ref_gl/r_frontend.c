@@ -446,6 +446,10 @@ void RF_RenderScene( const refdef_t *fd ) {
 	rrf.frame->RenderScene( rrf.frame, fd );
 }
 
+void RF_BlurScreen( void ) {
+	rrf.frame->BlurScreen( rrf.frame );
+}
+
 void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 						const vec4_t color, const shader_t *shader ) {
 	rrf.frame->DrawRotatedStretchPic( rrf.frame, x, y, w, h, s1, t1, s2, t2, 0, color, shader );

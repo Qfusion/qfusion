@@ -44,6 +44,7 @@ typedef struct ref_cmdbuf_s {
 	void ( *AddPolyToScene )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly );
 	void ( *AddLightStyleToScene )( struct ref_cmdbuf_s *cmdbuf, int style, float r, float g, float b );
 	void ( *RenderScene )( struct ref_cmdbuf_s *cmdbuf, const refdef_t *fd );
+	void ( *BlurScreen )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *SetScissor )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h );
 	void ( *ResetScissor )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *DrawStretchRaw )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );

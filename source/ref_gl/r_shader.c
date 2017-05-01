@@ -583,6 +583,7 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 	if( !Q_stricmp( name, "$coronaimage" ) || !Q_stricmp( name, "*corona" ) ) {
 		return rsh.coronaTexture;
 	}
+
 	if( !Q_strnicmp( name, "*lm", 3 ) ) {
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with explicit lightmap image\n", shader->name );
 		return rsh.whiteTexture;

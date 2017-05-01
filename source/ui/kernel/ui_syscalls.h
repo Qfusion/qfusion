@@ -77,6 +77,10 @@ inline void R_RenderScene( refdef_t *fd ) {
 	UI_IMPORT.R_RenderScene( fd );
 }
 
+inline void R_BlurScreen( void ) {
+	UI_IMPORT.R_BlurScreen();
+}
+
 inline void R_EndFrame( void ) {
 	UI_IMPORT.R_EndFrame();
 }
@@ -239,7 +243,7 @@ inline void CL_Quit( void ) {
 	UI_IMPORT.CL_Quit();
 }
 
-inline void CL_SetKeyDest( int key_dest ) {
+inline void CL_SetKeyDest( keydest_t key_dest ) {
 	UI_IMPORT.CL_SetKeyDest( key_dest );
 }
 

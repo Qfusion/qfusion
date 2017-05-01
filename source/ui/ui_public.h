@@ -84,6 +84,7 @@ typedef struct {
 	void ( *R_AddLightStyleToScene )( int style, float r, float g, float b );
 	void ( *R_AddPolyToScene )( const poly_t *poly );
 	void ( *R_RenderScene )( const refdef_t *fd );
+	void ( *R_BlurScreen )( void );
 	void ( *R_EndFrame )( void );
 	void ( *R_RegisterWorldModel )( const char *name );
 	void ( *R_ModelBounds )( const struct model_s *mod, vec3_t mins, vec3_t maxs );
@@ -130,7 +131,7 @@ typedef struct {
 	ui_fdrawchar_t ( *SCR_SetDrawCharIntercept )( ui_fdrawchar_t intercept );
 
 	void ( *CL_Quit )( void );
-	void ( *CL_SetKeyDest )( int key_dest );
+	void ( *CL_SetKeyDest )( keydest_t key_dest );
 	void ( *CL_ResetServerCount )( void );
 	char *( *CL_GetClipboardData )( void );
 	void ( *CL_SetClipboardData )( const char *data );

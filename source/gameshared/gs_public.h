@@ -196,7 +196,7 @@ extern gs_state_t gs;
 // channel 0 never willingly overrides
 // other channels (1-7) always override a playing sound on that channel
 enum {
-	CHAN_AUTO = S_CHANNEL_AUTO,
+	CHAN_AUTO,
 	CHAN_PAIN,
 	CHAN_VOICE,
 	CHAN_ITEM,
@@ -1013,6 +1013,10 @@ enum {
 };
 
 // entity_state_t->effects
+// Effects are things handled on the client side (lights, particles, frame animations)
+// that happen constantly on the given entity.
+// An entity that has effects will be sent to the client
+// even if it has a zero index model.
 #define EF_ROTATE_AND_BOB           1           // rotate and bob (bonus items)
 #define EF_SHELL                    2
 #define EF_STRONG_WEAPON            4

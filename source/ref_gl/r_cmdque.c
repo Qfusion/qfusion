@@ -47,6 +47,7 @@ enum {
 	REF_CMD_ADD_POLY_TO_SCENE,
 	REF_CMD_ADD_LIGHT_STYLE_TO_SCENE,
 	REF_CMD_RENDER_SCENE,
+	REF_CMD_BLUR_SCREEN,
 
 	REF_CMD_SET_SCISSOR,
 	REF_CMD_RESET_SCISSOR,
@@ -121,6 +122,10 @@ typedef struct {
 
 typedef struct {
 	int id;
+} refCmdBlurScreen_t;
+
+typedef struct {
+	int id;
 	int x, y, w, h;
 } refCmdSetScissor_t;
 
@@ -150,6 +155,7 @@ static unsigned R_HandleAddLightToSceneCmd( uint8_t *cmdbuf );
 static unsigned R_HandleAddPolyToSceneCmd( uint8_t *cmdbuf );
 static unsigned R_HandleAddLightStyleToSceneCmd( uint8_t *cmdbuf );
 static unsigned R_HandleRenderSceneCmd( uint8_t *cmdbuf );
+static unsigned R_HandleBlurScreenCmd( uint8_t *cmdbuf );
 static unsigned R_HandleSetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleResetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleDrawStretchRawCmd( uint8_t *cmdbuf );
@@ -168,6 +174,7 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 	(refCmdHandler_t)R_HandleAddPolyToSceneCmd,
 	(refCmdHandler_t)R_HandleAddLightStyleToSceneCmd,
 	(refCmdHandler_t)R_HandleRenderSceneCmd,
+	(refCmdHandler_t)R_HandleBlurScreenCmd,
 	(refCmdHandler_t)R_HandleSetScissorCmd,
 	(refCmdHandler_t)R_HandleResetScissorCmd,
 	(refCmdHandler_t)R_HandleDrawStretchRawCmd,
@@ -242,6 +249,12 @@ static unsigned R_HandleRenderSceneCmd( uint8_t *pcmd ) {
 
 	R_RenderScene( &cmd->refdef );
 	return cmd->length;
+}
+
+static unsigned R_HandleBlurScreenCmd( uint8_t *pcmd ) {
+	refCmdBlurScreen_t *cmd = (void *)pcmd;
+	R_BlurScreen();
+	return sizeof( *cmd );
 }
 
 static unsigned R_HandleSetScissorCmd( uint8_t *pcmd ) {
@@ -515,6 +528,11 @@ static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd ) {
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
 }
 
+static void RF_IssueBlurScreenCmd( ref_cmdbuf_t *cmdbuf ) {
+	refCmdClearScene_t cmd = { REF_CMD_BLUR_SCREEN };
+	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
+}
+
 static void RF_IssueSetScissorCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h ) {
 	refCmdSetScissor_t cmd;
 
@@ -627,6 +645,7 @@ ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
 	cmdbuf->AddPolyToScene = &RF_IssueAddPolyToSceneCmd;
 	cmdbuf->AddLightStyleToScene = &RF_IssueAddLightStyleToSceneCmd;
 	cmdbuf->RenderScene = &RF_IssueRenderSceneCmd;
+	cmdbuf->BlurScreen = &RF_IssueBlurScreenCmd;
 	cmdbuf->SetScissor = &RF_IssueSetScissorCmd;
 	cmdbuf->ResetScissor = &RF_IssueResetScissorCmd;
 	cmdbuf->DrawStretchRaw = &RF_IssueDrawStretchRawCmd;

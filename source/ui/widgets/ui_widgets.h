@@ -81,6 +81,7 @@ Rocket::Core::ElementInstancer *GetVideoInstancer( void );
 Rocket::Core::ElementInstancer *GetIrcLogWidgetInstancer( void );
 Rocket::Core::ElementInstancer *GetIFrameWidgetInstancer( void );
 Rocket::Core::ElementInstancer *GetElementL10nInstancer( void );
+Rocket::Core::ElementInstancer *GetElementBlurInstancer( void );
 }
 
 #endif /* __WIDGETS_H__ */

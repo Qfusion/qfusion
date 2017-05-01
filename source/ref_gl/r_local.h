@@ -739,6 +739,7 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 void R_AddPolyToScene( const poly_t *poly );
 void R_AddLightStyleToScene( int style, float r, float g, float b );
 void R_RenderScene( const refdef_t *fd );
+void R_BlurScreen( void );
 
 //
 // r_surf.c

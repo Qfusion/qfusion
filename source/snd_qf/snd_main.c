@@ -70,7 +70,7 @@ static void SF_Play_f( void ) {
 			Com_Printf( "Couldn't play: %s\n", trap_Cmd_Argv( i ) );
 			continue;
 		}
-		S_StartGlobalSound( sfx, S_CHANNEL_AUTO, 1.0 );
+		S_StartGlobalSound( sfx, 0, 1.0 );
 	}
 }
 #endif // ENABLE_PLAY

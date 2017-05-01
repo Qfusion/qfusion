@@ -350,7 +350,8 @@ static image_t *R_BlurTextureToScrFbo( const refdef_t *fd, image_t *image, image
 	images[0] = image;
 	images[1] = otherImage;
 	for( i = 0; i < numPasses; i++ ) {
-		R_BlitTextureToScrFbo( fd, images[i & 1], images[( i + 1 ) & 1]->fbo, GLSL_PROGRAM_TYPE_KAWASE_BLUR, colorWhite, 0, 0, NULL, kernel[i] );
+		R_BlitTextureToScrFbo( fd, images[i & 1], images[( i + 1 ) & 1]->fbo, GLSL_PROGRAM_TYPE_KAWASE_BLUR, 
+			colorWhite, 0, 0, NULL, kernel[i] );
 	}
 
 	return images[( i + 1 ) & 1];
@@ -441,7 +442,7 @@ void R_RenderScene( const refdef_t *fd ) {
 		}
 
 		if( r_soft_particles->integer && ( rn.st->screenTex != NULL ) ) {
-			// use a FBO with a depth renderbuffer attached
+			// use FBO with depth renderbuffer attached
 			if( !rn.renderTarget ) {
 				rn.renderTarget = rn.st->screenTex->fbo;
 			}
@@ -631,6 +632,8 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	// apply FXAA
 	if( fbFlags & PPFX_BIT_FXAA ) {
+		assert( fbFlags == PPFX_BIT_FXAA );
+
 		// not that FXAA only works on LDR input
 		R_BlitTextureToScrFbo( fd,
 							   ppSource, 0,
@@ -648,6 +651,27 @@ void R_RenderScene( const refdef_t *fd ) {
 							   colorWhite, 0,
 							   0, NULL, 0 );
 	}
+}
+
+/*
+* R_BlurScreen
+*/
+void R_BlurScreen( void ) {
+	refdef_t dummy, *fd;
+	image_t *ppSource;
+
+	fd = &dummy;
+	memset( fd, 0, sizeof( *fd ) );
+	fd->width = rf.frameBufferWidth;
+	fd->height = rf.frameBufferHeight;
+
+	RB_FlushDynamicMeshes();
+
+	RB_BlitFrameBufferObject( 0, rsh.st.screenPPCopies[0]->fbo, GL_COLOR_BUFFER_BIT, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
+
+	ppSource = R_BlurTextureToScrFbo( fd, rsh.st.screenPPCopies[0], rsh.st.screenPPCopies[1] );
+
+	R_BlitTextureToScrFbo( fd, ppSource, 0, GLSL_PROGRAM_TYPE_NONE, colorWhite, 0, 0, NULL, 0 );
 }
 
 /*

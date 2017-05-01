@@ -399,14 +399,6 @@ typedef enum {
 	CS_SPAWNED          // client is fully in game
 } sv_client_state_t;
 
-#define S_CHANNEL_AUTO 0
-
-// entity_state_t->effects
-// Effects are things handled on the client side (lights, particles, frame animations)
-// that happen constantly on the given entity.
-// An entity that has effects will be sent to the client
-// even if it has a zero index model.
-
 typedef enum {
 	key_game,
 	key_console,
@@ -415,32 +407,27 @@ typedef enum {
 	key_delegate
 } keydest_t;
 
-
 typedef enum {
 	rserr_ok,
-
 	rserr_invalid_fullscreen,
 	rserr_invalid_mode,
 	rserr_invalid_driver,
 	rserr_restart_required,
-
 	rserr_unknown
 } rserr_t;
 
 // font style flags
 typedef enum {
 	QFONT_STYLE_NONE            = 0,
-
 	QFONT_STYLE_ITALIC          = ( 1 << 0 ),
 	QFONT_STYLE_BOLD            = ( 1 << 1 ),
-
 	QFONT_STYLE_MASK            = ( 1 << 2 ) - 1
 } qfontstyle_t;
 
 // font drawing flags
 typedef enum {
 	TEXTDRAWFLAG_NO_COLORS  = 1 << 0,   // draw color codes instead of applying them
-		TEXTDRAWFLAG_KERNING    = 1 << 1
+	TEXTDRAWFLAG_KERNING    = 1 << 1
 } textdrawflag_t;
 
 typedef enum {
@@ -451,10 +438,10 @@ typedef enum {
 
 typedef enum {
 	IN_DEVICE_KEYBOARD      = 1 << 0,
-		IN_DEVICE_MOUSE         = 1 << 1,
-		IN_DEVICE_JOYSTICK      = 1 << 2,
-		IN_DEVICE_TOUCHSCREEN   = 1 << 3,
-		IN_DEVICE_SOFTKEYBOARD  = 1 << 4
+	IN_DEVICE_MOUSE         = 1 << 1,
+	IN_DEVICE_JOYSTICK      = 1 << 2,
+	IN_DEVICE_TOUCHSCREEN   = 1 << 3,
+	IN_DEVICE_SOFTKEYBOARD  = 1 << 4
 } in_devicemask_t;
 
 #ifdef __cplusplus

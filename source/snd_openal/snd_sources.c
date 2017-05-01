@@ -408,14 +408,14 @@ void S_StartLocalSound( sfx_t *sfx ) {
 		return;
 	}
 
-	src = S_AllocSource( SRCPRI_LOCAL, -1, S_CHANNEL_AUTO );
+	src = S_AllocSource( SRCPRI_LOCAL, -1, 0 );
 	if( !src ) {
 		return;
 	}
 
 	S_UseBuffer( sfx );
 
-	source_setup( src, sfx, SRCPRI_LOCAL, -1, S_CHANNEL_AUTO, 1.0, ATTN_NONE );
+	source_setup( src, sfx, SRCPRI_LOCAL, -1, 0, 1.0, ATTN_NONE );
 	qalSourcei( src->source, AL_SOURCE_RELATIVE, AL_TRUE );
 
 	qalSourcePlay( src->source );

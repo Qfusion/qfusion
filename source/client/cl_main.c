@@ -610,14 +610,14 @@ void CL_OpenURLInBrowser( const char *url ) {
 /*
 * CL_GetKeyDest
 */
-int CL_GetKeyDest( void ) {
+keydest_t CL_GetKeyDest( void ) {
 	return cls.key_dest;
 }
 
 /*
 * CL_SetKeyDest
 */
-void CL_SetKeyDest( int key_dest ) {
+void CL_SetKeyDest( keydest_t key_dest ) {
 	if( key_dest < key_game || key_dest > key_delegate ) {
 		Com_Error( ERR_DROP, "CL_SetKeyDest: invalid key_dest" );
 	}
@@ -632,7 +632,7 @@ void CL_SetKeyDest( int key_dest ) {
 /*
 * CL_SetOldKeyDest
 */
-void CL_SetOldKeyDest( int key_dest ) {
+void CL_SetOldKeyDest( keydest_t key_dest ) {
 	if( key_dest < key_game || key_dest > key_delegate ) {
 		Com_Error( ERR_DROP, "CL_SetKeyDest: invalid key_dest" );
 	}
