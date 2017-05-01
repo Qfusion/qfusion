@@ -48,6 +48,8 @@ static struct sfx_s *CG_RegisterPmodelSexedSound( pmodelinfo_t *pmodelinfo, cons
 		return NULL;
 	}
 
+	model[0] = '\0';
+
 	Q_strncpyz( oname, name, sizeof( oname ) );
 	COM_StripExtension( oname );
 	for( sexedSfx = pmodelinfo->sexedSfx; sexedSfx; sexedSfx = sexedSfx->next ) {

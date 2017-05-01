@@ -54,8 +54,9 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	: rocketInitialized( false ), hideCursorBits( 0 ),
 
 	// pointers
-	systemInterface( 0 ), fsInterface( 0 ), renderInterface( 0 ),
-	contextMain( 0 ), contextQuick( 0 ) {
+	systemInterface( nullptr ), fsInterface( nullptr ), renderInterface( nullptr ),
+	contextMain( nullptr ), contextQuick( nullptr ), 
+	scriptEventListenerInstancer( nullptr ) {
 	Rocket::Core::String contextName = trap::Cvar_String( "gamename" );
 
 	renderInterface = __new__( UI_RenderInterface )( vidWidth, vidHeight, pixelRatio );

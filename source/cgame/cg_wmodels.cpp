@@ -422,7 +422,6 @@ static struct weaponinfo_s *CG_FindWeaponModelSpot( char *filename ) {
 	int i;
 	int freespot = -1;
 
-
 	for( i = 0; i < WEAP_TOTAL; i++ ) {
 		if( cg_pWeaponModelInfos[i].inuse == true ) {
 			if( !Q_stricmp( cg_pWeaponModelInfos[i].name, filename ) ) { //found it
@@ -439,6 +438,7 @@ static struct weaponinfo_s *CG_FindWeaponModelSpot( char *filename ) {
 
 	if( freespot < 0 ) {
 		CG_Error( "%sCG_FindWeaponModelSpot: Couldn't find a free weaponinfo spot%s", S_COLOR_RED, S_COLOR_WHITE );
+		return NULL;
 	}
 
 	//we have a free spot
@@ -460,7 +460,9 @@ struct weaponinfo_s *CG_RegisterWeaponModel( char *cgs_name, int weaponTag ) {
 	COM_StripExtension( filename );
 
 	weaponinfo = CG_FindWeaponModelSpot( filename );
-
+	if( !weaponinfo ) {
+		return NULL;
+	}
 	if( weaponinfo->inuse == true ) {
 		return weaponinfo;
 	}
@@ -506,7 +508,9 @@ struct weaponinfo_s *CG_CreateWeaponZeroModel( char *filename ) {
 	COM_StripExtension( filename );
 
 	weaponinfo = CG_FindWeaponModelSpot( filename );
-
+	if( !weaponinfo ) {
+		return NULL;
+	}
 	if( weaponinfo->inuse == true ) {
 		return weaponinfo;
 	}

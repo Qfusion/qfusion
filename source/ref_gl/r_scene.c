@@ -207,6 +207,7 @@ void R_AddLightStyleToScene( int style, float r, float g, float b ) {
 
 	if( style < 0 || style >= MAX_LIGHTSTYLES ) {
 		ri.Com_Error( ERR_DROP, "R_AddLightStyleToScene: bad light style %i", style );
+		return;
 	}
 
 	ls = &rsc.lightStyles[style];

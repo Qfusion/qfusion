@@ -367,6 +367,7 @@ void Cvar_GetLatchedVars( cvar_flag_t flags ) {
 	unsigned int i;
 	struct trie_dump_s *dump = NULL;
 	cvar_flag_t latchFlags;
+	cvar_t *changedGameDir = NULL;
 
 	Cvar_FlagsClear( &latchFlags );
 	Cvar_FlagSet( &latchFlags, CVAR_LATCH );
@@ -384,8 +385,7 @@ void Cvar_GetLatchedVars( cvar_flag_t flags ) {
 	for( i = 0; i < dump->size; ++i ) {
 		cvar_t *const var = (cvar_t *) dump->key_value_vector[i].value;
 		if( !strcmp( var->name, "fs_game" ) ) {
-			FS_SetGameDirectory( var->latched_string, false );
-			return;
+			changedGameDir = var;
 		}
 		Mem_ZoneFree( var->string );
 		var->string = var->latched_string;
@@ -394,6 +394,10 @@ void Cvar_GetLatchedVars( cvar_flag_t flags ) {
 		var->integer = Q_rint( var->value );
 	}
 	Trie_FreeDump( dump );
+
+	if( changedGameDir ) {
+		FS_SetGameDirectory( changedGameDir->string, false );
+	}
 }
 
 /*

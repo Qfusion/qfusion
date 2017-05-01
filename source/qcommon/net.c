@@ -265,6 +265,7 @@ static socket_handle_t OpenSocket( socket_type_t type, bool ipv6 ) {
 
 				if( setsockopt( handle, SOL_SOCKET, SO_LINGER, (char *)&ling, sizeof( ling ) ) < 0 ) {
 					NET_SetErrorStringFromLastError( "socket" );
+					Sys_NET_SocketClose( handle );
 					return INVALID_SOCKET;
 				}
 			}
@@ -729,6 +730,7 @@ static int NET_TCP_Accept( const socket_t *socket, socket_t *newsocket, netadr_t
 	}
 
 	if( !SockaddressToAddress( (struct sockaddr *)&sockaddress, address ) ) {
+		Sys_NET_SocketClose( handle );
 		return -1;
 	}
 

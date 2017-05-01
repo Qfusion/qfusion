@@ -1179,9 +1179,11 @@ static int CG_Democam_CalcView( void ) {
 						VecToAngles( forward, cam_orbital_angles );
 					}
 
-					cam_orbital_angles[PITCH] += currentcam->angles[PITCH] * ft; AngleNormalize360( cam_orbital_angles[PITCH] );
-					cam_orbital_angles[YAW] += currentcam->angles[YAW] * ft; AngleNormalize360( cam_orbital_angles[YAW] );
-					cam_orbital_angles[ROLL] += currentcam->angles[ROLL] * ft; AngleNormalize360( cam_orbital_angles[ROLL] );
+					for( i = 0; i < 3; i++ ) {
+						cam_orbital_angles[i] += currentcam->angles[i] * ft;
+						cam_orbital_angles[i] = AngleNormalize360( cam_orbital_angles[i] );
+					}
+
 					AngleVectors( cam_orbital_angles, forward, NULL, NULL );
 					VectorMA( center, cam_orbital_radius, forward, cam_origin );
 

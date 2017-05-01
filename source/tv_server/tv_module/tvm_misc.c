@@ -168,6 +168,7 @@ bool TVM_ConfigString( tvm_relay_t *relay, int number, const char *value ) {
 
 	if( number < 0 || number >= MAX_CONFIGSTRINGS ) {
 		TVM_RelayError( relay, "TVM_ConfigString: Invalid number" );
+		return false;
 	}
 
 	Q_strncpyz( relay->configStrings[number], value, sizeof( relay->configStrings[number] ) );

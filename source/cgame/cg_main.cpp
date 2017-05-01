@@ -455,8 +455,9 @@ const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst
 static void CG_RegisterWeaponModels( void ) {
 	int i;
 
-	for( i = 0; i < cgs.numWeaponModels; i++ )
+	for( i = 0; i < cgs.numWeaponModels; i++ ) {
 		cgs.weaponInfos[i] = CG_RegisterWeaponModel( cgs.weaponModels[i], i );
+	}
 
 	// special case for weapon 0. Must always load the animation script
 	if( !cgs.weaponInfos[0] ) {
@@ -1059,7 +1060,7 @@ static void CG_RegisterConfigStrings( void ) {
 
 	trap_Cmd_ExecuteText( EXEC_NOW, va( "exec configs/client/%s.cfg silent", gs.gametypeName ) );
 
-	CG_SC_AutoRecordAction( cgs.configStrings[i] );
+	CG_SC_AutoRecordAction( cgs.configStrings[CS_AUTORECORDSTATE] );
 }
 
 /*

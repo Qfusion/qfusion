@@ -195,7 +195,7 @@ static void G_Teams_InvitePlayer( int team, edict_t *ent ) {
 		return;
 	}
 
-	for( i = 0; teamlist[team].invited[i] && i < MAX_CLIENTS; i++ ) {
+	for( i = 0; i < MAX_CLIENTS && teamlist[team].invited[i]; i++ ) {
 		if( teamlist[team].invited[i] == ENTNUM( ent ) ) {
 			return;
 		}
@@ -218,7 +218,7 @@ void G_Teams_UnInvitePlayer( int team, edict_t *ent ) {
 		return;
 	}
 
-	for( i = 0; teamlist[team].invited[i] && i < MAX_CLIENTS; i++ ) {
+	for( i = 0; i < MAX_CLIENTS && teamlist[team].invited[i]; i++ ) {
 		if( teamlist[team].invited[i] == ENTNUM( ent ) ) {
 			break;
 		}

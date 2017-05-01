@@ -50,8 +50,7 @@ bool CG_ChaseStep( int step ) {
 
 		// the POV was lost, find the closer one (may go up or down, but who cares)
 		if( index == -1 ) {
-			index = CG_LostMultiviewPOV();
-			cg.multiviewPlayerNum = cg.frame.playerStates[index].playerNum;
+			checkPlayer = CG_LostMultiviewPOV();
 		} else {
 			checkPlayer = index;
 			for( i = 0; i < cg.frame.numplayers; i++ ) {
@@ -67,12 +66,17 @@ bool CG_ChaseStep( int step ) {
 				}
 				break;
 			}
-
-			cg.multiviewPlayerNum = cg.frame.playerStates[checkPlayer].playerNum;
 		}
 
+		if( index < 0 ) {
+			return false;
+		}
+
+		cg.multiviewPlayerNum = cg.frame.playerStates[checkPlayer].playerNum;
 		return true;
-	} else if( !cgs.demoPlaying ) {
+	}
+	
+	if( !cgs.demoPlaying ) {
 		trap_Cmd_ExecuteText( EXEC_NOW, step > 0 ? "chasenext" : "chaseprev" );
 		return true;
 	}

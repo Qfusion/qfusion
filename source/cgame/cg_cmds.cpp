@@ -127,6 +127,7 @@ void CG_ConfigString( int i, const char *s ) {
 
 	if( i < 0 || i >= MAX_CONFIGSTRINGS ) {
 		CG_Error( "configstring > MAX_CONFIGSTRINGS" );
+		return;
 	}
 
 	Q_strncpyz( cgs.configStrings[i], s, sizeof( cgs.configStrings[i] ) );

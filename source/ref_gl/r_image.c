@@ -1797,7 +1797,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
 	int width = 1, height = 1, samples = 1;
 	bool loaded = false;
 
-	if( len >= pathsize ) {
+	if( len >= pathsize - 7 ) {
 		return false;
 	}
 

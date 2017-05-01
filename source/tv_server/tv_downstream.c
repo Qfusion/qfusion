@@ -595,7 +595,7 @@ void TV_Downstream_ReadPackets( void ) {
 	int i, socketind, ret, game_port;
 	client_t *cl;
 #ifdef TCP_ALLOW_TVCONNECT
-	socket_t newsocket;
+	socket_t newsocket = { 0 };
 #endif
 	socket_t *socket;
 	netadr_t address;

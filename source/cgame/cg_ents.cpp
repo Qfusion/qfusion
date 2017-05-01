@@ -301,13 +301,9 @@ static void CG_SetFramePlayerState( snapshot_t *frame, int index ) {
 
 static void CG_UpdatePlayerState( void ) {
 	int i;
-	int index;
+	int index = 0;
 
-	// just one POV
-	if( !cg.frame.multipov ) {
-		index = 0;
-		cg.multiviewPlayerNum = cg.frame.playerStates[index].playerNum;
-	} else {
+	if( cg.frame.multipov ) {
 		// find the playerState containing our current POV, then cycle playerStates
 		index = -1;
 		for( i = 0; i < cg.frame.numplayers; i++ ) {
@@ -319,12 +315,15 @@ static void CG_UpdatePlayerState( void ) {
 		}
 
 		// the POV was lost, find the closer one (may go up or down, but who cares)
-		if( index == -1 || cg.frame.playerStates[index].pmove.pm_type == PM_SPECTATOR ) {
+		if( index < 0 || cg.frame.playerStates[index].pmove.pm_type == PM_SPECTATOR ) {
 			index = CG_LostMultiviewPOV();
 		}
-
-		cg.multiviewPlayerNum = cg.frame.playerStates[index].playerNum;
+		if( index < 0 ) {
+			index = 0;
+		}
 	}
+
+	cg.multiviewPlayerNum = cg.frame.playerStates[index].playerNum;
 
 	// set up the playerstates
 
@@ -2221,6 +2220,7 @@ void CG_GetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity ) {
 
 	if( entNum < -1 || entNum >= MAX_EDICTS ) {
 		CG_Error( "CG_GetEntitySoundOrigin: bad entnum" );
+		return;
 	}
 
 	// hack for client side floatcam

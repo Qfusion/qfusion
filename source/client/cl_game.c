@@ -107,9 +107,11 @@ static void CL_GameModule_PrintToLog( const char *msg ) {
 static void CL_GameModule_GetConfigString( int i, char *str, int size ) {
 	if( i < 0 || i >= MAX_CONFIGSTRINGS ) {
 		Com_DPrintf( S_COLOR_RED "CL_GameModule_GetConfigString: i > MAX_CONFIGSTRINGS" );
+		return;
 	}
 	if( !str || size <= 0 ) {
 		Com_DPrintf( S_COLOR_RED "CL_GameModule_GetConfigString: NULL string" );
+		return;
 	}
 
 	Q_strncpyz( str, cl.configstrings[i], size );

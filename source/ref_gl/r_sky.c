@@ -526,6 +526,7 @@ void ClipSkyPolygon( int nump, vec3_t vecs, int stage ) {
 
 	if( nump > MAX_CLIP_VERTS ) {
 		ri.Com_Error( ERR_DROP, "ClipSkyPolygon: MAX_CLIP_VERTS" );
+		return;
 	}
 
 loc1:

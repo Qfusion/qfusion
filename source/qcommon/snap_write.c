@@ -326,10 +326,12 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, int
 	}
 	MSG_WriteUint8( msg, flags );
 
+#ifdef RATEKILLED
 	supcnt = client->suppressCount;
-#ifndef RATEKILLED
+#else
 	supcnt = 0;
 #endif
+
 	client->suppressCount = 0;
 	MSG_WriteUint8( msg, supcnt );   // rate dropped packets
 

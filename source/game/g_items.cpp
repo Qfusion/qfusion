@@ -1035,6 +1035,7 @@ void PrecacheItem( const gsitem_t *it ) {
 			len = s - start;
 			if( len >= MAX_QPATH || len < 5 ) {
 				G_Error( "PrecacheItem: %s has bad precache string", it->classname );
+				return;
 			}
 			memcpy( data, start, len );
 			data[len] = 0;
