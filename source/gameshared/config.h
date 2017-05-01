@@ -32,8 +32,6 @@ break
 
 //#define PURE_CHEAT
 
-//#define ANTICHEAT_MODULE
-
 //#define UCMDTIMENUDGE
 
 #define TCP_SUPPORT
