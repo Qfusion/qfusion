@@ -192,7 +192,7 @@ public:
 			}
 		}
 
-		if( abs( refdef.width - GetClientWidth() ) >= MODELVIEW_EPSILON || abs( refdef.height - GetClientHeight() ) >= MODELVIEW_EPSILON ) {
+		if( std::fabs( refdef.width - GetClientWidth() ) >= MODELVIEW_EPSILON || std::fabs( refdef.height - GetClientHeight() ) >= MODELVIEW_EPSILON ) {
 			RecomputePosition = true;
 		}
 

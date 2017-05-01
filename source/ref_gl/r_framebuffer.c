@@ -554,8 +554,8 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 		case FBO_COPY_NORMAL_DST_SIZE:
 			dx = 0;
 			dy = 0;
-			dw = dw;
-			dh = dh;
+			//dw = dw;
+			//dh = dh;
 			break;
 		default:
 			dx = 0;

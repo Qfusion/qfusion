@@ -1052,7 +1052,7 @@ static int wswcurl_checkmsg( void ) {
 			}
 		} else {
 			// failed, store and pass to callback negative status value
-			r->status = -abs( msg->data.result );
+			r->status = (int)msg->data.result * -1;
 			r->respcode = -1;
 
 			if( r->callback_done ) {
