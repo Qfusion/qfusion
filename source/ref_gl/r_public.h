@@ -24,13 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define REF_API_VERSION 24
 
-struct mempool_s;
-struct cinematics_s;
-
-typedef struct qthread_s qthread_t;
-typedef struct qmutex_s qmutex_t;
-typedef struct qbufPipe_s qbufPipe_t;
-
 //
 // these are the functions exported by the refresh module
 //
@@ -116,12 +109,12 @@ typedef struct {
 	void ( *Mutex_Lock )( struct qmutex_s *mutex );
 	void ( *Mutex_Unlock )( struct qmutex_s *mutex );
 
-	qbufPipe_t *( *BufPipe_Create )( size_t bufSize, int flags );
-	void ( *BufPipe_Destroy )( qbufPipe_t **pqueue );
-	void ( *BufPipe_Finish )( qbufPipe_t *queue );
-	void ( *BufPipe_WriteCmd )( qbufPipe_t *queue, const void *cmd, unsigned cmd_size );
-	int ( *BufPipe_ReadCmds )( qbufPipe_t *queue, unsigned( **cmdHandlers )( const void * ) );
-	void ( *BufPipe_Wait )( qbufPipe_t *queue, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ), bool ),
+	struct qbufPipe_s *( *BufPipe_Create )( size_t bufSize, int flags );
+	void ( *BufPipe_Destroy )( struct qbufPipe_s **pqueue );
+	void ( *BufPipe_Finish )( struct qbufPipe_s *queue );
+	void ( *BufPipe_WriteCmd )( struct qbufPipe_s *queue, const void *cmd, unsigned cmd_size );
+	int ( *BufPipe_ReadCmds )( struct qbufPipe_s *queue, unsigned( **cmdHandlers )( const void * ) );
+	void ( *BufPipe_Wait )( struct qbufPipe_s *queue, int ( *read )( struct qbufPipe_s *, unsigned( ** )( const void * ), bool ),
 							unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec );
 } ref_import_t;
 
