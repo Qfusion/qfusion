@@ -71,20 +71,16 @@ class ColorBlock : public Element
 	static const char *DEFAULT_COLOR;
 
 public:
-	ColorBlock( const String &tag, const XMLAttributes &attr ) : Element( tag ), color() {
+	ColorBlock( const String &tag, const XMLAttributes &attr ) : Element( tag ), 
+		selector( nullptr ), cvar( nullptr ), color(), hasRGB( false ) {
 		// grab the rgb attribute,
 		String attrRgb = attr.Get<String>( "rgb", "" );
-		if( attrRgb.Length() ) {
+		if( !attrRgb.Empty() ) {
 			setColor( attrRgb );
-			hasRGB = 1;
-
-			// DEBUG
-			//Com_Printf( "I ARE NOT CUSTOM %s\n", attrRgb.CString() );
+			hasRGB = true;
 		} else {
 			setColor( "" );
-			hasRGB = 0;
-
-			//Com_Printf( "I ARE CUSTOM\n" );
+			hasRGB = false;
 		}
 	}
 
@@ -115,13 +111,13 @@ public:
 		SetProperty( "background", hex );
 	}
 
-	bool isCustom() const { return hasRGB == 0; }
+	bool isCustom() const { return hasRGB == false; }
 
 private:
 	ColorSelector *selector;
 	cvar_t *cvar;           // set, if this is "custom color"
-	size_t hasRGB;          // if rgb attribute was given on construction (size_t aligns nicely)
 	String color;           // just use rocket string in rocket element
+	bool hasRGB;            // if rgb attribute was given on construction
 };
 
 const char *ColorBlock::DEFAULT_COLOR = "85 86 102";
@@ -198,17 +194,8 @@ public:
 				if( cb && cb->isCustom() ) {
 					cb->setColor( value );
 					selectColorBlock( cb );
-
-					// DEBUG
-					//Com_Printf( "ColorSelector FOUND custom\n" );
 					break;
 				}
-			}
-
-			// FIXME: what if we still have no block selected?
-			if( it == colors.end() ) {
-				// DEBUG
-				//Com_Printf( "ColorSelector DIDNT FIND custom\n" );
 			}
 		}
 
@@ -227,14 +214,6 @@ public:
 		ColorBlock *cb = dynamic_cast<ColorBlock*>( child );
 		if( cb ) {
 			cb->setSelector( this );
-
-			/*
-			// in preliminary stage, set :selected on the matched child?
-			// NEEDS A FIX AGAINST CUSTOM COLOR.. for now set the initial
-			// value with optionsform
-			if( cvar && cvar->string && cb->getColor() == cvar->string )
-			    selectColorBlock( cb );
-			*/
 		}
 	}
 
@@ -276,7 +255,7 @@ ColorBlock::~ColorBlock() {
 	if( selector ) {
 		selector->RemoveReference();
 	}
-	selector = 0;
+	selector = nullptr;
 }
 
 // Element methods

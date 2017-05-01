@@ -12,7 +12,7 @@ using namespace Rocket::Controls;
 namespace WSWUI
 {
 
-IrcChannelsDataSource::IrcChannelsDataSource() : DataSource( TVCHANNELS_SOURCE ), channelString( "" ) {
+IrcChannelsDataSource::IrcChannelsDataSource() : DataSource( TVCHANNELS_SOURCE ), irc_channels( nullptr ), channelString( "" ) {
 	channelList.clear();
 }
 

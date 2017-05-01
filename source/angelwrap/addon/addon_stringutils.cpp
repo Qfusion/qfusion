@@ -132,6 +132,7 @@ static asstring_t *QAS_FormatStringHelper( const char *format, ... ) {
 
 	int ret = Q_vsnprintfz( buf, buf_size, format, args );
 	if( ret < 0 ) {
+		va_end( args );
 		return objectString_FactoryBuffer( "", 0 );
 	}
 
@@ -142,6 +143,8 @@ static asstring_t *QAS_FormatStringHelper( const char *format, ... ) {
 
 	asstring_t *formatted = objectString_FactoryBuffer( NULL, ret );
 	Q_vsnprintfz( formatted->buffer, formatted->size, format, args );
+	va_end( args );
+
 	return formatted;
 }
 

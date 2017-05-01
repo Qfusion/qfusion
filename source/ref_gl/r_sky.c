@@ -513,7 +513,7 @@ static void DrawSkyPolygon( int nump, vec3_t vecs ) {
 /*
 * ClipSkyPolygon
 */
-void ClipSkyPolygon( int nump, vec3_t vecs, int stage ) {
+void ClipSkyPolygon( int nump, vec_t *vecs, int stage ) {
 	float *norm;
 	float *v;
 	bool front, back;

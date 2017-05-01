@@ -34,6 +34,8 @@ class NinePatchDecorator : public Decorator
 	PropertyDictionary properties;
 
 public:
+	NinePatchDecorator() : Decorator(), texture_index( -1 ) {}
+
 	bool Initialise( const PropertyDictionary &_properties ) {
 		const Property *property = _properties.GetProperty( "src" );
 		texture_index = LoadTexture( property->Get< String >(), property->source );

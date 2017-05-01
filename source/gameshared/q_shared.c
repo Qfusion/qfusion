@@ -2135,7 +2135,7 @@ linear_allocator_t * LinearAllocator( size_t elemSize, size_t preAllocate, alloc
 	size_t size;
 
 	if( !elemSize ) {
-		return 0;
+		return NULL;
 	}
 
 	if( preAllocate < LA_MIN_PREALLOCATE ) {
@@ -2147,6 +2147,7 @@ linear_allocator_t * LinearAllocator( size_t elemSize, size_t preAllocate, alloc
 	la = (linear_allocator_t*)alloc_function( size, __FILE__, __LINE__ );
 	if( !la ) {
 		Sys_Error( "LinearAllocator: failed to create allocator\n" );
+		return NULL;
 	}
 	memset( la, 0, sizeof( *la ) );
 	la->base = (void*)( &la[1] );
@@ -2174,6 +2175,7 @@ void *LA_Alloc( linear_allocator_t *la ) {
 	la = (linear_allocator_t*)la->alloc( newSize, __FILE__, __LINE__ );
 	if( !la ) {
 		Sys_Error( "LinearAllocator: Failed to allocate element\n" );
+		return NULL;
 	}
 
 	// fix the base pointer
@@ -2189,6 +2191,7 @@ void *LA_Pointer( linear_allocator_t *la, size_t index ) {
 	// Sys_Error?
 	if( index >= la->allocatedElems ) {
 		Sys_Error( "LinearAllocator: Incorrect index in LA_Pointer\n" );
+		return NULL;
 	}
 
 	return ( (unsigned char*)la->base ) + index * la->elemSize;

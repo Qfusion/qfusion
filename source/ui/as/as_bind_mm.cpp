@@ -102,8 +102,8 @@ public:
 
 		for( ListenersList::iterator it = listeners.begin(); it != listeners.end(); ++it ) {
 			if( it->first == l.first && it->second.getPtr() == func ) {
-				listeners.erase( it );
 				it->second.release();
+				it = listeners.erase( it );
 				break;
 			}
 		}
