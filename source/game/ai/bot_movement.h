@@ -1378,6 +1378,11 @@ protected:
     static constexpr auto MAX_SUGGESTED_LOOK_DIRS = 3;
 
     StaticVector<Vec3, MAX_SUGGESTED_LOOK_DIRS> suggestedLookDirs;
+    // Contains areas that were used in dirs construction.
+    // Might be useful by skipping areas already tested by other (also an descendant of this class) action.
+    // Note that 1-1 correspondence between dirs and areas (and even dirs size and areas size) is not mandatory.
+    StaticVector<int, MAX_SUGGESTED_LOOK_DIRS> dirsBaseAreas;
+
     unsigned maxSuggestedLookDirs;
     unsigned currSuggestedLookDirNum;
     BotBaseMovementAction *suggestedAction;
@@ -1408,6 +1413,7 @@ public:
 
 class BotBunnyStraighteningReachChainMovementAction: public BotBunnyTestingMultipleLookDirsMovementAction
 {
+    friend class BotBunnyToBestShortcutAreaMovementAction;
     static constexpr const char *NAME = "BotBunnyStraighteningReachChainMovementAction";
     void SaveSuggestedLookDirs(BotMovementPredictionContext *context) override;
     // Returns candidates end iterator
@@ -1420,6 +1426,7 @@ public:
 
 class BotBunnyToBestShortcutAreaMovementAction: public BotBunnyTestingMultipleLookDirsMovementAction
 {
+    friend class BotBunnyStraighteningReachChainMovementAction;
     static constexpr const char *NAME = "BotBunnyToBestShortcutAreaMovementAction";
     static constexpr int MAX_BBOX_AREAS = 32;
 

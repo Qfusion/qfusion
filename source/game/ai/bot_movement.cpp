@@ -2335,6 +2335,7 @@ void BotBunnyTestingMultipleLookDirsMovementAction::BeforePlanning()
     BotGenericRunBunnyingMovementAction::BeforePlanning();
     currSuggestedLookDirNum = 0;
     suggestedLookDirs.clear();
+    dirsBaseAreas.clear();
 
     // Ensure the suggested action has been set in subtype constructor
     Assert(suggestedAction);
@@ -2347,6 +2348,7 @@ void BotBunnyTestingMultipleLookDirsMovementAction::OnApplicationSequenceStarted
     if (currSuggestedLookDirNum == 0)
     {
         suggestedLookDirs.clear();
+        dirsBaseAreas.clear();
         if (ctx->NavTargetAasAreaNum())
             SaveSuggestedLookDirs(ctx);
     }
@@ -2463,9 +2465,11 @@ void BotBunnyTestingMultipleLookDirsMovementAction::SaveCandidateAreaDirs(BotMov
     for (auto iter = takenAreasBegin; iter < takenAreasEnd; ++iter)
     {
         int areaNum = (*iter).areaNum;
+        void *mem = suggestedLookDirs.unsafe_grow_back();
+        dirsBaseAreas.push_back(areaNum);
         if (areaNum != navTargetAreaNum)
         {
-            Vec3 *toAreaDir = new(suggestedLookDirs.unsafe_grow_back())Vec3(aasAreas[areaNum].center);
+            Vec3 *toAreaDir = new(mem)Vec3(aasAreas[areaNum].center);
             toAreaDir->Z() = aasAreas[areaNum].mins[2] + 32.0f;
             *toAreaDir -= entityPhysicsState.Origin();
             toAreaDir->Z() *= Z_NO_BEND_SCALE;
@@ -2473,7 +2477,7 @@ void BotBunnyTestingMultipleLookDirsMovementAction::SaveCandidateAreaDirs(BotMov
         }
         else
         {
-            Vec3 *toTargetDir = new(suggestedLookDirs.unsafe_grow_back())Vec3(context->NavTargetOrigin());
+            Vec3 *toTargetDir = new(mem)Vec3(context->NavTargetOrigin());
             *toTargetDir -= entityPhysicsState.Origin();
             toTargetDir->NormalizeFast();
         }
@@ -2492,6 +2496,7 @@ BotBunnyStraighteningReachChainMovementAction::BotBunnyStraighteningReachChainMo
 void BotBunnyStraighteningReachChainMovementAction::SaveSuggestedLookDirs(BotMovementPredictionContext *context)
 {
     Assert(suggestedLookDirs.empty());
+    Assert(dirsBaseAreas.empty());
     const auto &entityPhysicsState = context->movementState->entityPhysicsState;
     const int navTargetAasAreaNum = context->NavTargetAasAreaNum();
     Assert(navTargetAasAreaNum);
@@ -2499,7 +2504,9 @@ void BotBunnyStraighteningReachChainMovementAction::SaveSuggestedLookDirs(BotMov
     // Do not modify look vec in this case (we assume its set to nav target)
     if (context->IsInNavTargetArea())
     {
-        Vec3 *toTargetDir = new(suggestedLookDirs.unsafe_grow_back())Vec3(context->NavTargetOrigin());
+        void *mem = suggestedLookDirs.unsafe_grow_back();
+        dirsBaseAreas.push_back(navTargetAasAreaNum);
+        Vec3 *toTargetDir = new(mem)Vec3(context->NavTargetOrigin());
         *toTargetDir -= entityPhysicsState.Origin();
         toTargetDir->NormalizeFast();
         return;
@@ -2556,7 +2563,10 @@ void BotBunnyStraighteningReachChainMovementAction::SaveSuggestedLookDirs(BotMov
         int travelType = reachStoppedAt->traveltype;
         if (travelType == TRAVEL_TELEPORT || travelType == TRAVEL_JUMPPAD || travelType == TRAVEL_ELEVATOR)
         {
-            Vec3 *toTriggerDir = new(suggestedLookDirs.unsafe_grow_back())Vec3(reachStoppedAt->start);
+            void *mem = suggestedLookDirs.unsafe_grow_back();
+            // reachStoppedAt->areanum is an area num of reach destination, not the trigger itself.
+            // Saving or restoring the trigger area num does not seem worth this minor case.
+            Vec3 *toTriggerDir = new(mem)Vec3(reachStoppedAt->start);
             *toTriggerDir -= entityPhysicsState.Origin();
             toTriggerDir->NormalizeFast();
             return;
@@ -2579,15 +2589,15 @@ AreaAndScore *BotBunnyStraighteningReachChainMovementAction::SelectCandidateArea
     const auto *aasAreaSettings = aasWorld->AreaSettings();
     const int navTargetAasAreaNum = context->NavTargetAasAreaNum();
 
-    const float distanceThreshold = 192.0f + 128.0f * BoundedFraction(entityPhysicsState.Speed(), 700);
+    // Do not make it speed-depended, it leads to looping/jitter!
+    const float distanceThreshold = 256.0f + 512.0f * self->ai->botRef->Skill();
 
     AreaAndScore *candidatesPtr = candidatesBegin;
     float minScore = 0.0f;
 
-    trace_t trace;
     Vec3 traceStartPoint(entityPhysicsState.Origin());
     traceStartPoint.Z() += playerbox_stand_viewheight;
-
+    trace_t trace;
     for (int i = lastValidReachIndex; i >= 0; --i)
     {
         const int reachNum = nextReachChain[i].ReachNum();
@@ -2613,8 +2623,13 @@ AreaAndScore *BotBunnyStraighteningReachChainMovementAction::SelectCandidateArea
                 continue;
         }
 
+        const float squareDistanceToArea = DistanceSquared(area.center, entityPhysicsState.Origin());
+        // Skip way too close areas (otherwise the bot might fall into endless looping)
+        if (squareDistanceToArea < SQUARE(0.4f * distanceThreshold))
+            continue;
+
         // Skip way too far areas (this is mainly an optimization for the following SolidWorldTrace() call)
-        if (DistanceSquared(area.center, entityPhysicsState.Origin()) > distanceThreshold * distanceThreshold)
+        if (squareDistanceToArea > SQUARE(distanceThreshold))
             continue;
 
         // Compute score first to cut off expensive tracing
@@ -2711,7 +2726,8 @@ inline int BotBunnyToBestShortcutAreaMovementAction::FindBBoxAreas(BotMovementPr
                                                                   int *areaNums, int maxAreas)
 {
     const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-    const float side = 128.0f + 192.0f * BoundedFraction(entityPhysicsState.Speed(), 700);
+    // Do not make it speed-depended, it leads to looping/jitter!
+    const float side = 256.0f + 256.0f * self->ai->botRef->Skill();
 
     Vec3 boxMins(-side, -side, -0.33f * side);
     Vec3 boxMaxs(+side, +side, 0);
@@ -2736,12 +2752,20 @@ AreaAndScore *BotBunnyToBestShortcutAreaMovementAction::SelectCandidateAreas(Bot
     const int currAreaNum = entityPhysicsState.CurrAasAreaNum();
     const int droppedToFloorAreaNum = entityPhysicsState.DroppedToFloorAasAreaNum();
 
+    const auto &prevTestedAction = self->ai->botRef->bunnyStraighteningReachChainMovementAction;
+    Assert(prevTestedAction.suggestedAction == this);
+    const auto &prevTestedAreas = prevTestedAction.dirsBaseAreas;
+
+    const float speed = entityPhysicsState.Speed();
+    Vec3 velocityDir(entityPhysicsState.Velocity());
+    velocityDir *= 1.0f / speed;
+
     int minTravelTimeSave = 0;
     AreaAndScore *candidatesPtr = candidatesBegin;
 
-    trace_t trace;
     Vec3 traceStartPoint(entityPhysicsState.Origin());
     traceStartPoint.Z() += playerbox_stand_viewheight;
+    trace_t trace;
 
     int bboxAreaNums[MAX_BBOX_AREAS];
     int numBBoxAreas = FindBBoxAreas(context, bboxAreaNums, MAX_BBOX_AREAS);
@@ -2760,6 +2784,13 @@ AreaAndScore *BotBunnyToBestShortcutAreaMovementAction::SelectCandidateAreas(Bot
         if (areaSettings.contents & (AREACONTENTS_WATER|AREACONTENTS_LAVA|AREACONTENTS_SLIME|AREACONTENTS_DONOTENTER))
             continue;
 
+        // Skip areas that have lead to the previous action failure
+        if (prevTestedAction.disabledForApplicationFrameIndex == context->topOfStackIndex)
+        {
+            if (std::find(prevTestedAreas.begin(), prevTestedAreas.end(), areaNum) != prevTestedAreas.end())
+                continue;
+        }
+
         const auto &area = aasAreas[areaNum];
         Vec3 areaPoint(area.center[0], area.center[1], area.mins[2] + 4.0f);
         // Skip areas higher than the bot (to allow moving on a stairs chain, we test distance/height ratio)
@@ -2769,6 +2800,21 @@ AreaAndScore *BotBunnyToBestShortcutAreaMovementAction::SelectCandidateAreas(Bot
             if (area.mins[2] - entityPhysicsState.Origin()[2] > M_SQRT1_2 * distance)
                 continue;
         }
+
+        Vec3 toAreaDir(areaPoint);
+        toAreaDir -= entityPhysicsState.Origin();
+        float distanceToArea = toAreaDir.LengthFast();
+
+        // Reject areas that are very close to the bot.
+        // This for example helps to skip some junk areas in stair-like environment.
+        if (distanceToArea < 96)
+            continue;
+
+        toAreaDir *= 1.0f / distanceToArea;
+        // Reject areas behind/not in front depending on speed
+        float speedDotFactor = -1.0f + 2 * 0.99f * BoundedFraction(speed, 900);
+        if (velocityDir.Dot(toAreaDir) < speedDotFactor)
+            continue;
 
         int areaToTargetAreaTravelTime = aasRouteCache->TravelTimeToGoalArea(areaNum, navTargetAreaNum, travelFlags);
         if (!areaToTargetAreaTravelTime)
