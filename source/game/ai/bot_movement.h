@@ -1298,9 +1298,17 @@ public:
 class BotGenericRunBunnyingMovementAction: public BotBaseMovementAction
 {
 protected:
-    Vec3 hasLandedAtOrigin;
+    Vec3 originAtLanding;
     bool hasAlreadyLandedOnce;
-    unsigned sequenceDurationAtLanding;
+
+    enum JumpPredictionMode {
+        PREDICT_FULL_ARCH,
+        PREDICT_HALF_ARCH,
+        PREDICT_JUST_A_BIT
+    } nextJumpPredictionMode;
+
+    float extraPredictionDistanceAfterLanding;
+    unsigned sequenceDurationAtFirstLanding;
 
     int minTravelTimeToNavTargetSoFar;
 
@@ -1351,7 +1359,7 @@ protected:
 public:
     BotGenericRunBunnyingMovementAction(class Bot *bot_, const char *name_, int debugColor_ = 0)
         : BotBaseMovementAction(bot_, name_, debugColor_),
-          hasLandedAtOrigin(0, 0, 0),
+          originAtLanding(0, 0, 0),
           minDesiredSpeedGainPerSecond(0.0f),
           tolerableSpeedLossSequentialMillis(300),
           tolerableUnreachableTargetSequentialMillis(700),

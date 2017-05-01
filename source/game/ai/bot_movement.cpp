@@ -3549,14 +3549,20 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
         currentUnreachableTargetSequentialMillis += context->predictionStepMillis;
         // Be very strict in case when bot does another jump after landing.
         // (Prevent falling in a gap immediately after successful landing on a ledge).
-        if (currentUnreachableTargetSequentialMillis > tolerableUnreachableTargetSequentialMillis || hasAlreadyLandedOnce)
+        if (currentUnreachableTargetSequentialMillis > tolerableUnreachableTargetSequentialMillis)
         {
             context->SetPendingRollback();
             Debug("A prediction step has lead to undefined travel time to the nav target\n");
+            return;
         }
-        else
-            context->SaveSuggestedActionForNextFrame(this);
+        if (hasAlreadyLandedOnce && nextJumpPredictionMode == PREDICT_JUST_A_BIT)
+        {
+            context->SetPendingRollback();
+            Debug("A prediction step has lead to undefined travel time to the nav target\n");
+            return;
+        }
 
+        context->SaveSuggestedActionForNextFrame(this);
         return;
     }
     // Reset unreachable target timer
@@ -3584,21 +3590,48 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
         return;
     }
 
+    const unsigned currSequenceDuration = this->SequenceDuration(context);
+    const auto &oldEntityPhysicsState = context->PhysicsStateBeforeStep();
     if (!hasAlreadyLandedOnce)
     {
-        if (originAtSequenceStart.SquareDistance2DTo(newEntityPhysicsState.Origin()) > 64 * 64)
+        if (!oldEntityPhysicsState.GroundEntity() && newEntityPhysicsState.GroundEntity())
         {
-            if (newEntityPhysicsState.GroundEntity())
+            hasAlreadyLandedOnce = true;
+            originAtLanding.Set(newEntityPhysicsState.Origin());
+            sequenceDurationAtFirstLanding = currSequenceDuration;
+
+            float squareDistanceFromStart = originAtSequenceStart.SquareDistance2DTo(newEntityPhysicsState.Origin());
+            if (squareDistanceFromStart > SQUARE(72.0f))
             {
-                hasLandedAtOrigin.Set(newEntityPhysicsState.Origin());
-                hasAlreadyLandedOnce = true;
-                sequenceDurationAtLanding = this->SequenceDuration(context);
+                nextJumpPredictionMode = PREDICT_JUST_A_BIT;
+                extraPredictionDistanceAfterLanding = 12.0f;
             }
+            else if (squareDistanceFromStart > SQUARE(48.0f))
+                nextJumpPredictionMode = PREDICT_HALF_ARCH;
+            else
+                nextJumpPredictionMode = PREDICT_FULL_ARCH;
         }
-        else if (this->SequenceDuration(context) > 250)
+
+        // Keep this action as an active bunny action
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+
+    if (nextJumpPredictionMode == PREDICT_JUST_A_BIT)
+    {
+        auto distanceFromLandingPoint = originAtLanding.SquareDistance2DTo(newEntityPhysicsState.Origin());
+        if (distanceFromLandingPoint > SQUARE(extraPredictionDistanceAfterLanding))
         {
-            Debug("The bot still did not cover 64 units after 250 millis\n");
+            context->isCompleted = true;
+            Debug("There is enough predicted data ahead (a jump has been predicted a bit after landing)\n");
+            return;
+        }
+
+        auto fmt = "The bot still has not covered %f units after landing in 128 millis while testing jump ahead a bit\n";
+        if (currSequenceDuration - sequenceDurationAtFirstLanding > 128)
+        {
             context->SetPendingRollback();
+            Debug(fmt, extraPredictionDistanceAfterLanding);
             return;
         }
 
@@ -3607,26 +3640,54 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
         return;
     }
 
-    if (hasLandedAtOrigin.SquareDistance2DTo(newEntityPhysicsState.Origin()) > 16 * 16)
+    // This test for covered distance is common for PREDICT_FULL_ARCH and PREDICT_HALF_ARCH modes
+    if (currSequenceDuration - sequenceDurationAtFirstLanding > 192)
     {
-        Debug("There is enough predicted data ahead\n");
-        context->isCompleted = true;
-        return;
-    }
-
-    if (this->SequenceDuration(context) - sequenceDurationAtLanding > 128)
-    {
-        // Allow to bump into walls in nav target area
-        if (!context->IsInNavTargetArea())
+        if (originAtLanding.SquareDistance2DTo(newEntityPhysicsState.Origin()) < SQUARE(24))
         {
-            Debug("The bot still did not cover 16 units in 128 millis after landing\n");
             context->SetPendingRollback();
+            Debug("The bot still has not covered 24 units after landing in 192 millis while testing half/full jump\n");
             return;
         }
     }
 
-    // Keep this action as an active bunny action
-    context->SaveSuggestedActionForNextFrame(this);
+    if (nextJumpPredictionMode == PREDICT_FULL_ARCH)
+    {
+        if (!oldEntityPhysicsState.GroundEntity() && newEntityPhysicsState.GroundEntity())
+        {
+            originAtLanding.Set(newEntityPhysicsState.Origin());
+            // Predict a bit after landing
+            nextJumpPredictionMode = PREDICT_JUST_A_BIT;
+            extraPredictionDistanceAfterLanding = 20.0f;
+        }
+
+        // Keep this action as an active bunny action
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+
+    if (nextJumpPredictionMode == PREDICT_HALF_ARCH)
+    {
+        // The bot has landed while the peek of the jump has not been registered.
+        // It might occur while bunnying on an upward slope/stairs.
+        if (!oldEntityPhysicsState.GroundEntity() && newEntityPhysicsState.GroundEntity())
+        {
+            originAtLanding.Set(newEntityPhysicsState.Origin());
+            // Predict a bit after landing
+            nextJumpPredictionMode = PREDICT_JUST_A_BIT;
+            extraPredictionDistanceAfterLanding = 24.0f;
+        }
+        else if (oldEntityPhysicsState.Velocity()[2] >= 0 && newEntityPhysicsState.Velocity()[2] < 0)
+        {
+            context->isCompleted = true;
+            Debug("There is enough predicted data ahead (a half of next jump has been predicted)\n");
+            return;
+        }
+
+        // Keep this action as an active bunny action
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
 }
 
 void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
@@ -3643,7 +3704,8 @@ void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStarted(BotMoveme
             minTravelTimeToNavTargetSoFar = travelTime;
     }
 
-    originAtSequenceStart.Set(context->movementState->entityPhysicsState.Origin());
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    originAtSequenceStart.Set(entityPhysicsState.Origin());
 
     currentSpeedLossSequentialMillis = 0;
     currentUnreachableTargetSequentialMillis = 0;
