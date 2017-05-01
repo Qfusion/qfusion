@@ -579,13 +579,6 @@ static const glsl_feature_t glsl_features_empty[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_generic[] =
-{
-	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
-
-	{ 0, NULL, NULL }
-};
-
 static const glsl_feature_t glsl_features_material[] =
 {
 	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
