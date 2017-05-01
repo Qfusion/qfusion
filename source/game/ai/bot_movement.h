@@ -1334,25 +1334,6 @@ protected:
         isTryingObstacleAvoidance = false;
     }
 
-    enum class WalljumpingMode: char
-    {
-        NEVER,
-        ALWAYS,
-        TRY_FIRST
-    };
-    WalljumpingMode walljumpingMode;
-    // Ignored if an action does not support walljumping
-    bool isTryingWalljumping;
-    bool hasTestedWalljumping;
-    bool mightHasFailedWalljumping;
-
-    inline void ResetWalljumpingState()
-    {
-        isTryingWalljumping = false;
-        hasTestedWalljumping = false;
-        mightHasFailedWalljumping = false;
-    }
-
     void SetupCommonBunnyingInput(BotMovementPredictionContext *context);
     void CheatingAccelerate(BotMovementPredictionContext *context, float frac) const;
     void CheatingCorrectVelocity(BotMovementPredictionContext *context, float velocity2DDirDotToTarget2DDir, Vec3 toTargetDir2D) const;
@@ -1375,11 +1356,9 @@ public:
           tolerableSpeedLossSequentialMillis(300),
           tolerableUnreachableTargetSequentialMillis(700),
           tolerableGreaterTravelTimeSequentialMillis(350),
-          supportsObstacleAvoidance(false),
-          walljumpingMode(WalljumpingMode::NEVER)
+          supportsObstacleAvoidance(false)
     {
         ResetObstacleAvoidanceState();
-        ResetWalljumpingState();
     }
 
     void CheckPredictionStepResults(BotMovementPredictionContext *context) override;
@@ -1461,7 +1440,6 @@ public:
     DECLARE_BUNNYING_MOVEMENT_ACTION_CONSTRUCTOR(BotBunnyInVelocityDirectionMovementAction, COLOR_RGB(192, 0, 0))
     {
         supportsObstacleAvoidance = false;
-        walljumpingMode = WalljumpingMode::ALWAYS;
     }
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
 };

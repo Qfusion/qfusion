@@ -2327,9 +2327,6 @@ void BotBunnyInVelocityDirectionMovementAction::PlanPredictionStep(BotMovementPr
     botInput->SetUpMovement(1);
     botInput->SetForwardMovement(1);
 
-    // Always try to perform a walljump occasionally.
-    // This action requires some luck to succeed anyway, but can produce great results, do not be cautious.
-    Assert(this->walljumpingMode == WalljumpingMode::ALWAYS);
     TrySetWalljump(context);
 }
 
@@ -2487,7 +2484,6 @@ BotBunnyStraighteningReachChainMovementAction::BotBunnyStraighteningReachChainMo
     : BotBunnyTestingMultipleLookDirsMovementAction(bot_, NAME, COLOR_RGB(0, 192, 0))
 {
     supportsObstacleAvoidance = true;
-    walljumpingMode = WalljumpingMode::TRY_FIRST;
     maxSuggestedLookDirs = 3;
     // The constructor cannot be defined in the header due to this bot member access
     suggestedAction = &bot_->bunnyToBestShortcutAreaMovementAction;
@@ -2664,7 +2660,6 @@ BotBunnyToBestShortcutAreaMovementAction::BotBunnyToBestShortcutAreaMovementActi
     : BotBunnyTestingMultipleLookDirsMovementAction(bot_, NAME, COLOR_RGB(255, 64, 0))
 {
     supportsObstacleAvoidance = false;
-    walljumpingMode = WalljumpingMode::ALWAYS;
     maxSuggestedLookDirs = 2;
     // The constructor cannot be defined in the header due to this bot member access
     suggestedAction = &bot_->bunnyInVelocityDirectionMovementAction;
@@ -3157,16 +3152,6 @@ bool BotGenericRunBunnyingMovementAction::CanFlyAboveGroundRelaxed(const BotMove
 
 inline void BotGenericRunBunnyingMovementAction::TrySetWalljump(BotMovementPredictionContext *context)
 {
-    // Might be set to NEVER for easy bots even for actions that used to try walljumping
-    if (walljumpingMode == WalljumpingMode::NEVER)
-        return;
-
-    if (hasTestedWalljumping)
-        return;
-
-    if (!isTryingWalljumping)
-        return;
-
     if (!CanSetWalljump(context))
         return;
 
@@ -3353,15 +3338,17 @@ bool BotGenericRunBunnyingMovementAction::CheckStepSpeedGainOrLoss(BotMovementPr
     // Check for unintended bouncing back (starting from some speed threshold)
     if (oldSquare2DSpeed > 100 * 100 && newSquare2DSpeed > 1 * 1)
     {
-        Vec3 oldVelocity2DDir(oldVelocity[0], oldVelocity[1], 0);
-        oldVelocity2DDir *= 1.0f / oldEntityPhysicsState.Speed2D();
-        Vec3 newVelocity2DDir(newVelocity[0], newVelocity[1], 0);
-        newVelocity2DDir *= 1.0f / newEntityPhysicsState.Speed2D();
-        if (oldVelocity2DDir.Dot(newVelocity2DDir) < 0.1f)
+        if (this->SequenceDuration(context) > 128)
         {
-            Debug("A prediction step has lead to an unintended bouncing back\n");
-            this->mightHasFailedWalljumping = false;
-            return false;
+            Vec3 oldVelocity2DDir(oldVelocity[0], oldVelocity[1], 0);
+            oldVelocity2DDir *= 1.0f / oldEntityPhysicsState.Speed2D();
+            Vec3 newVelocity2DDir(newVelocity[0], newVelocity[1], 0);
+            newVelocity2DDir *= 1.0f / newEntityPhysicsState.Speed2D();
+            if (oldVelocity2DDir.Dot(newVelocity2DDir) < 0.1f)
+            {
+                Debug("A prediction step has lead to an unintended bouncing back\n");
+                return false;
+            }
         }
     }
 
@@ -3520,7 +3507,6 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
         {
             context->SetPendingRollback();
             Debug("A prediction step has lead to undefined travel time to the nav target\n");
-            this->mightHasFailedWalljumping = true;
         }
         else
             context->SaveSuggestedActionForNextFrame(this);
@@ -3545,7 +3531,6 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
             const char *format_ = "Curr travel time to the nav target: %d, min travel time so far: %d\n";
             Debug(format_, currTravelTimeToNavTarget, minTravelTimeToNavTargetSoFar);
             Debug("A prediction step has lead to greater travel time to the nav target\n");
-            this->mightHasFailedWalljumping = true;
         }
         else
             context->SaveSuggestedActionForNextFrame(this);
@@ -3629,50 +3614,12 @@ void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStopped(BotMoveme
     {
         this->disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
         ResetObstacleAvoidanceState();
-        ResetWalljumpingState();
         return;
     }
 
     // If the action has been disabled due to prediction stack overflow
     if (this->isDisabledForPlanning)
         return;
-
-    if (walljumpingMode != WalljumpingMode::NEVER && !hasTestedWalljumping)
-    {
-        // We have not tested an action with enabled walljumping yet
-        if (!isTryingWalljumping)
-        {
-            isTryingWalljumping = true;
-            ResetObstacleAvoidanceState();
-            // Make sure this action will be chosen again after rolling back
-            context->SaveSuggestedActionForNextFrame(this);
-            return;
-        }
-
-        // The bot was trying walljumping during the last sequence
-        isTryingWalljumping = false;
-        hasTestedWalljumping = true;
-        ResetObstacleAvoidanceState();
-
-        // If the bot has really did a walljump in the prediction step
-        // and there was a failure and its likely that walljumping has lead to the failure
-        if (context->frameEvents.hasWalljumped && mightHasFailedWalljumping)
-        {
-            // Try again after rolling back without walljumping
-            if (walljumpingMode == WalljumpingMode::TRY_FIRST)
-            {
-                // Make sure this action will be chosen again after rolling back
-                context->SaveSuggestedActionForNextFrame(this);
-                return;
-            }
-
-            // A walljump is expected and has failed. Disable application after rolling back for this mode.
-            Assert(walljumpingMode == WalljumpingMode::ALWAYS);
-            ResetWalljumpingState();
-            this->disabledForApplicationFrameIndex = context->topOfStackIndex;
-            return;
-        }
-    }
 
     if (!supportsObstacleAvoidance)
     {
@@ -3697,7 +3644,6 @@ void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStopped(BotMoveme
     // Disable applying this action after rolling back to the savepoint
     this->disabledForApplicationFrameIndex = context->savepointTopOfStackIndex;
     this->ResetObstacleAvoidanceState();
-    this->ResetWalljumpingState();
 }
 
 void BotGenericRunBunnyingMovementAction::BeforePlanning()
@@ -3705,17 +3651,6 @@ void BotGenericRunBunnyingMovementAction::BeforePlanning()
     BotBaseMovementAction::BeforePlanning();
     this->disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
     ResetObstacleAvoidanceState();
-    ResetWalljumpingState();
-
-    // Hack for disabling walljumping for easy bots.
-    // (we might test self->ai->botRef->Skill() instead but this approach seems more CPU cache friendly).
-    if (self->ai->botRef->Skill() < 0.33f)
-    {
-        if (walljumpingMode == WalljumpingMode::TRY_FIRST)
-            walljumpingMode = WalljumpingMode::NEVER;
-        else if (walljumpingMode == WalljumpingMode::ALWAYS)
-            this->isDisabledForPlanning = true;
-    }
 }
 
 void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementInTargetArea(BotMovementPredictionContext *context)
