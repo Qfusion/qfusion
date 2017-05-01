@@ -33,6 +33,9 @@ typedef struct { char *name; void **funcPointer; } dllfunc_t;
 
 typedef struct mempool_s mempool_t;
 typedef struct cinematics_s cinematics_t;
+typedef struct qthread_s qthread_t;
+typedef struct qmutex_s qmutex_t;
+typedef struct qbufPipe_s qbufPipe_t;
 
 typedef unsigned short elem_t;
 

@@ -143,7 +143,7 @@ void QThreads_Shutdown( void ) {
 
 // ============================================================================
 
-typedef struct qbufPipe_s {
+struct qbufPipe_s {
 	int blockWrite;
 	volatile int terminated;
 	unsigned write_pos;
@@ -154,7 +154,7 @@ typedef struct qbufPipe_s {
 	qcondvar_t *nonempty_condvar;
 	qmutex_t *nonempty_mutex;
 	char *buf;
-} qbufPipe_t;
+};
 
 /*
 * QBufPipe_Create

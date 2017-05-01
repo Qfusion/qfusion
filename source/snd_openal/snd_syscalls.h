@@ -24,6 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern sound_import_t SOUND_IMPORT;
 
+typedef struct qthread_s qthread_t;
+typedef struct qmutex_s qmutex_t;
+typedef struct qbufPipe_s qbufPipe_t;
+
 static inline void trap_Print( const char *msg ) {
 	SOUND_IMPORT.Print( msg );
 }
