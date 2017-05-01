@@ -543,8 +543,6 @@ void CL_GameModule_Init( void ) {
 		Com_Error( ERR_DROP, "Failed to load client game DLL" );
 	}
 
-	AC_LoadLibrary( (void *) &import, (void *) cge, ANTICHEAT_CLIENT ); // impulZ: Refire AC Init
-
 	apiversion = cge->API();
 	if( apiversion != CGAME_API_VERSION ) {
 		Com_UnloadGameLibrary( &module_handle );

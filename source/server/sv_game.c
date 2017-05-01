@@ -567,8 +567,6 @@ void SV_InitGameProgs( void ) {
 		Com_Error( ERR_DROP, "Failed to load game DLL" );
 	}
 
-	AC_LoadLibrary( (void *) &import, (void *) ge, ANTICHEAT_SERVER );  // impulZ: Refire AC Init
-
 	apiversion = ge->API();
 	if( apiversion != GAME_API_VERSION ) {
 		Com_UnloadGameLibrary( &module_handle );

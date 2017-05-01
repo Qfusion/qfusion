@@ -935,19 +935,6 @@ void SV_ParseClientMessage( struct client_s *client, msg_t *msg );
 /*
 ==============================================================
 
-ANTICHEAT
-
-==============================================================
-*/
-
-#define ANTICHEAT_CLIENT    0x01
-#define ANTICHEAT_SERVER    0x02
-
-bool AC_LoadLibrary( void *imports, void *exports, unsigned int flags );
-
-/*
-==============================================================
-
 WSW ANGEL SCRIPT SYSTEMS
 
 ==============================================================
