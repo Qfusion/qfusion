@@ -191,7 +191,7 @@ static void G_UpdateServerInfo( void ) {
 
 			len = 0;
 
-			for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
+			for( count = 0; ( name = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
 				if( G_Gametype_IsVotable( name ) ) {
 					len += strlen( name ) + 1;
 				}
@@ -201,7 +201,7 @@ static void G_UpdateServerInfo( void ) {
 			votable = ( char * )G_Malloc( len );
 			votable[0] = 0;
 
-			for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
+			for( count = 0; ( name = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
 				if( G_Gametype_IsVotable( name ) ) {
 					Q_strncatz( votable, name, len );
 					Q_strncatz( votable, " ", len );

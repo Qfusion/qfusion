@@ -474,7 +474,7 @@ static void G_VoteGametypeExtraHelp( edict_t *ent ) {
 
 	Q_strncatz( message, "- Available gametypes:", sizeof( message ) );
 
-	for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL;
+	for( count = 0; ( name = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL;
 		 count++ ) {
 		if( G_Gametype_IsVotable( name ) ) {
 			Q_strncatz( message, " ", sizeof( message ) );
@@ -496,7 +496,7 @@ static http_response_code_t G_VoteGametypeWebRequest( http_query_method_t method
 		return HTTP_RESP_BAD_REQUEST;
 	}
 
-	for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL;
+	for( count = 0; ( name = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL;
 		 count++ ) {
 		if( G_Gametype_IsVotable( name ) ) {
 			G_AppendString( &msg, va(

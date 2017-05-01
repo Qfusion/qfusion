@@ -46,6 +46,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string.h>
 #endif
 
+#define QAS_SECTIONS_SEPARATOR ';'
+#define QAS_FILE_EXTENSION     ".as"
+
 extern struct mempool_s *angelwrappool;
 
 #define QAS_MemAlloc( pool, size ) trap_MemAlloc( pool, size, __FILE__, __LINE__ )
@@ -94,5 +97,8 @@ void qasReleaseDictionaryCpp( CScriptDictionaryInterface *dict );
 // any tools
 CScriptAnyInterface *qasCreateAnyCpp( asIScriptEngine *engine );
 void qasReleaseAnyCpp( CScriptAnyInterface *any );
+
+// projects / bundles
+asIScriptModule *qasLoadScriptProject( asIScriptEngine *engine, const char *moduleName, const char *rootDir, const char *dir, const char *filename, const char *ext );
 
 #endif // __QAS_LOCAL_H__

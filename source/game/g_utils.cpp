@@ -362,60 +362,6 @@ const char *_G_RegisterLevelString( const char *string, const char *filename, in
 //==============================================================================
 
 /*
-* G_ListNameForPosition
-*/
-char *G_ListNameForPosition( const char *namesList, int position, const char separator ) {
-	static char buf[MAX_STRING_CHARS];
-	const char *s, *t;
-	char *b;
-	int count, len;
-
-	if( !namesList ) {
-		return NULL;
-	}
-
-	// set up the tittle from the spinner names
-	s = namesList;
-	t = s;
-	count = 0;
-	buf[0] = 0;
-	b = buf;
-	while( *s && ( s = strchr( s, separator ) ) ) {
-		if( count == position ) {
-			len = s - t;
-			if( len <= 0 ) {
-				G_Error( "G_NameInStringList: empty name in list\n" );
-			}
-			if( len > MAX_STRING_CHARS - 1 ) {
-				G_Printf( "WARNING: G_NameInStringList: name is too long\n" );
-			}
-			while( t <= s ) {
-				if( *t == separator || t == s ) {
-					*b = 0;
-					break;
-				}
-
-				*b = *t;
-				t++;
-				b++;
-			}
-
-			break;
-		}
-
-		count++;
-		s++;
-		t = s;
-	}
-
-	if( buf[0] == 0 ) {
-		return NULL;
-	}
-
-	return buf;
-}
-
-/*
 * G_AllocCreateNamesList
 */
 char *G_AllocCreateNamesList( const char *path, const char *extension, const char separator ) {

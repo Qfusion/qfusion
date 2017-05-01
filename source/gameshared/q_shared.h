@@ -135,6 +135,8 @@ int COM_ReadColorRGBString( const char *in );
 int COM_ValidatePlayerColor( int rgbcolor );
 bool COM_ValidateConfigstring( const char *string );
 
+char *COM_ListNameForPosition( const char *namesList, int position, const char separator );
+
 //==============================================================
 //
 // STRINGLIB

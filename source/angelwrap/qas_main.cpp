@@ -52,6 +52,8 @@ void QAS_InitAngelExport( void ) {
 
 	angelExport.asCreateAnyCpp = qasCreateAnyCpp;
 	angelExport.asReleaseAnyCpp = qasReleaseAnyCpp;
+
+	angelExport.asLoadScriptProject = qasLoadScriptProject;
 }
 
 int QAS_API( void ) {

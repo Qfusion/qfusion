@@ -175,6 +175,23 @@ void Com_ScriptModule_Init( void ) {
 	import.Cmd_RemoveCommand = Cmd_RemoveCommand;
 	import.Cmd_ExecuteText = Cbuf_ExecuteText;
 
+	import.FS_FOpenFile = FS_FOpenFile;
+	import.FS_Read = FS_Read;
+	import.FS_Write = FS_Write;
+	import.FS_Print = FS_Print;
+	import.FS_Tell = FS_Tell;
+	import.FS_Seek = FS_Seek;
+	import.FS_Eof = FS_Eof;
+	import.FS_Flush = FS_Flush;
+	import.FS_FCloseFile = FS_FCloseFile;
+	import.FS_RemoveFile = FS_RemoveFile;
+	import.FS_GetFileList = FS_GetFileList;
+	import.FS_FirstExtension = FS_FirstExtension;
+	import.FS_MoveFile = FS_MoveFile;
+	import.FS_IsUrl = FS_IsUrl;
+	import.FS_FileMTime = FS_BaseFileMTime;
+	import.FS_RemoveDirectory = FS_RemoveDirectory;
+
 	import.Mem_Alloc = Com_ScriptModule_MemAlloc;
 	import.Mem_Free = Com_ScriptModule_MemFree;
 	import.Mem_AllocPool = Com_ScriptModule_MemAllocPool;

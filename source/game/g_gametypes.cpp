@@ -1747,7 +1747,7 @@ bool G_Gametype_Exists( const char *name ) {
 		return false;
 	}
 
-	for( count = 0; ( str = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
+	for( count = 0; ( str = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
 		if( !Q_stricmp( name, str ) ) {
 			return true;
 		}

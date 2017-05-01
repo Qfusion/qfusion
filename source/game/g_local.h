@@ -468,8 +468,6 @@ void SP_func_pendulum( edict_t *ent );
 //
 // g_ascript.c
 //
-#define ANGEL_SCRIPT_EXTENSION              ".as"
-
 bool GT_asLoadScript( const char *gametypeName );
 void GT_asShutdownScript( void );
 void GT_asCallSpawn( void );
@@ -610,7 +608,6 @@ void G_StringPoolInit( void );
 const char *_G_RegisterLevelString( const char *string, const char *filename, int fileline );
 #define G_RegisterLevelString( in ) _G_RegisterLevelString( in, __FILE__, __LINE__ )
 
-char *G_ListNameForPosition( const char *namesList, int position, const char separator );
 char *G_AllocCreateNamesList( const char *path, const char *extension, const char separator );
 
 char *_G_CopyString( const char *in, const char *filename, int fileline );

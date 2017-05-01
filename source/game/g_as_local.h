@@ -26,9 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern angelwrap_api_t *angelExport;
 
-#define SECTIONS_SEPARATOR                  ';'
-
-#define SCRIPTS_DIRECTORY                   "progs"
+#define GAME_SCRIPTS_DIRECTORY              "progs"
 
 #define GAMETYPE_SCRIPTS_MODULE_NAME        "gametype"
 #define GAMETYPE_SCRIPTS_DIRECTORY          "gametypes"

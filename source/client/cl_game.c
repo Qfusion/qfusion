@@ -405,7 +405,6 @@ void CL_GameModule_Init( void ) {
 	import.FS_FOpenFile = FS_FOpenFile;
 	import.FS_Read = FS_Read;
 	import.FS_Write = FS_Write;
-
 	import.FS_Print = FS_Print;
 	import.FS_Tell = FS_Tell;
 	import.FS_Seek = FS_Seek;
