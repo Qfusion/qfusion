@@ -288,7 +288,7 @@ typedef struct
 
 AiAasWorld::aas_link_t *AiAasWorld::LinkEntity(const vec3_t absmins, const vec3_t absmaxs, int entnum)
 {
-    aas_linkstack_t linkstack[128];
+    aas_linkstack_t linkstack[256];
     aas_linkstack_t *lstack_p;
 
     aas_link_t *linkedAreas = nullptr;
@@ -361,7 +361,7 @@ AiAasWorld::aas_link_t *AiAasWorld::LinkEntity(const vec3_t absmins, const vec3_
             lstack_p->nodenum = aasnode->children[0];
             lstack_p++;
         }
-        if (lstack_p >= &linkstack[127])
+        if (lstack_p >= &linkstack[255])
         {
             G_Printf(S_COLOR_RED "AiAasWorld::LinkEntity(): stack overflow\n");
             break;
@@ -372,7 +372,7 @@ AiAasWorld::aas_link_t *AiAasWorld::LinkEntity(const vec3_t absmins, const vec3_
             lstack_p->nodenum = aasnode->children[1];
             lstack_p++;
         }
-        if (lstack_p >= &linkstack[127])
+        if (lstack_p >= &linkstack[255])
         {
             G_Printf(S_COLOR_RED "AiAasWorld::LinkEntity(): stack overflow\n");
             break;
