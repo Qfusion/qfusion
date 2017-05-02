@@ -64,7 +64,7 @@ matrix:
             description: "Build submitted via Travis CI"
           notification_email: vluchits@gmail.com
           build_command_prepend: "cd source && cov-configure --comptype clangcc --compiler clang && cov-configure --comptype clangcxx --compiler clang++ && export SDL2DIR=$HOME/.deps/$QF_ARCH && cmake ."
-          build_command: "make"
+          build_command: "make -j8"
           branch_pattern: ci
     - dist: precise
       language: android
@@ -91,7 +91,7 @@ script:
   - cd source
   - if [[ "$QF_ARCH" == "x86_64" ]]; then make -j8; fi
   - if [[ "$QF_ARCH" == "x86" ]]; then make -j8 game cgame; fi
-  - if [[ "$QF_ARCH" == "OSX" ]]; then xcodebuild -project qfusion.xcodeproj/ -jobs 8 -configuration Release -target ALL_BUILD; fi
+  - if [[ "$QF_ARCH" == "OSX" ]]; then xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration Release -target ALL_BUILD; fi
   - if [[ "$QF_ARCH" == "android" ]]; then cd ../platforms/android/projects/qfusion/jni && ndk-build -j8 && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
 
 before_deploy:
