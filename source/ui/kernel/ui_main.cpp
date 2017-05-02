@@ -862,7 +862,7 @@ void UI_Main::M_Menu_Force_f( void ) {
 
 	// if forced, ensure we have at least the default page on stack
 	if( !nav->hasDocuments() ) {
-		nav->pushDocument( self->ui_index );
+		nav->pushDocument( ui_index );
 	}
 	self->showUI( true );
 }
