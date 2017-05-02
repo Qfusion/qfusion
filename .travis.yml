@@ -89,10 +89,10 @@ install:
 
 script:
   - cd source
-  - if [[ "$QF_ARCH" == "x86_64" ]]; then make; fi
-  - if [[ "$QF_ARCH" == "x86" ]]; then make game cgame; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then make -j2; fi
+  - if [[ "$QF_ARCH" == "x86" ]]; then make -j2 game cgame; fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then xcodebuild -project qfusion.xcodeproj/ -configuration Release -target ALL_BUILD; fi
-  - if [[ "$QF_ARCH" == "android" ]]; then cd ../platforms/android/projects/qfusion/jni && ndk-build && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
+  - if [[ "$QF_ARCH" == "android" ]]; then cd ../platforms/android/projects/qfusion/jni && ndk-build -j2 && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
 
 before_deploy:
   - cd build
