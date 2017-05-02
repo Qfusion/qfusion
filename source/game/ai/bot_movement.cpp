@@ -3504,6 +3504,18 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
     // Skip tests while skimming
     if (newPMove.skim_time && newPMove.skim_time != oldPMove.skim_time)
     {
+        // The only exception is testing covered distance to prevent
+        // jumping in front of wall contacting it forever updating skim timer
+        if (this->SequenceDuration(context) > 400)
+        {
+            if (originAtSequenceStart.SquareDistance2DTo(newPMove.origin) < SQUARE(128))
+            {
+                context->SetPendingRollback();
+                Debug("Looks like the bot is stuck and is resetting the skim timer forever by jumping\n");
+                return;
+            }
+        }
+
         context->SaveSuggestedActionForNextFrame(this);
         return;
     }
