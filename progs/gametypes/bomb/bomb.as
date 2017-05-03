@@ -58,9 +58,9 @@ cBombSite @bombSite;
 
 uint bombProgress;
 
-uint bombNextBeep;
+int64 bombNextBeep;
 
-uint bombPickTime;
+int64 bombPickTime;
 Entity @bombDropper;
 
 // used for time of last action (eg planting)
@@ -70,7 +70,7 @@ Entity @bombDropper;
 // TODO: add a check incase they do?
 //       something like bombLaunchState instead of bombState = ...
 //       and check if current state is *ING and set radii etc
-uint bombActionTime;
+int64 bombActionTime;
 
 Entity @bombCarrier = null;
 Entity @fastPlanter = null;

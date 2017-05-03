@@ -186,7 +186,7 @@ void GENERIC_SetUpEndMatch()
 ///*****************************************************************
 
 bool cheatVarsListInitialized = false;
-uint lastCheatVarRequestTime = levelTime + 30000;
+int64 lastCheatVarRequestTime = levelTime + 30000;
 int cheackVarChecked = 0;
 
 class cCheatVar

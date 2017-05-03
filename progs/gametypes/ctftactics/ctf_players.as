@@ -27,29 +27,29 @@ class cPlayer
     cReviver @reviver;
     cBomb @bomb;
 
-    uint medicCooldownTime;
-	uint gruntCooldownTime;
-    uint engineerBuildCooldownTime;
-    uint genericCooldownTime;
-    uint bombCooldownTime;
-    uint dispenserCooldownTime;
-    uint respawnTime;
-	uint rageTime;
-	uint detectTime;
+    int64 medicCooldownTime;
+	int64 gruntCooldownTime;
+    int64 engineerBuildCooldownTime;
+    int64 genericCooldownTime;
+    int64 bombCooldownTime;
+    int64 dispenserCooldownTime;
+    int64 respawnTime;
+	int64 rageTime;
+	int64 detectTime;
 	bool rageEnabled;
 	bool detectEnabled;
 	bool detectCancelled;
     bool invisibilityEnabled;
     float invisibilityLoad;
     int invisibilityWasUsingWeapon;
-    uint invisibilityCooldownTime;
-    uint hudMessageTimeout;
+    int64 invisibilityCooldownTime;
+    int64 hudMessageTimeout;
 
     cPlayer @deadcamMedic;
-    uint deadcamMedicScanTime;
+    int64 deadcamMedicScanTime;
 
     int botPendingClass;
-    uint botPendingClassAssignedAt;
+    int64 botPendingClassAssignedAt;
     
     cPlayer()
     {

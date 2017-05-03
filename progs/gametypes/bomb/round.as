@@ -37,8 +37,8 @@ const uint ROUNDSTATE_POST = 4;
 uint roundState = ROUNDSTATE_NONE;
 
 bool roundCheckEndTime; // you can check if roundStateEndTime == 0 but roundStateEndTime can overflow
-uint roundStartTime;    // roundStartTime because only spawn protection uses it
-uint roundStateEndTime; // XXX: this should be fixed in all gts
+int64 roundStartTime;    // roundStartTime because only spawn protection uses it
+int64 roundStateEndTime; // XXX: this should be fixed in all gts
 
 int roundCountDown;
 

@@ -27,13 +27,13 @@ Vec3 bombMins( -8, -8, -8 ), bombMaxs( 8, 8, 8 );
 class cBomb
 {
     bool inuse;
-	uint explodeTime;
+	int64 explodeTime;
 	int bombAlarmSoundIndex;
 
     Entity @bombEnt;
     cPlayer @player;
 
-    uint spawnedAt;
+    int64 spawnedAt;
     bool botShouldPickup;
 
     void Init()

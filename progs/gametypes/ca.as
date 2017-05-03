@@ -39,8 +39,8 @@ class cCARound
 {
     int state;
     int numRounds;
-    uint roundStateStartTime;
-    uint roundStateEndTime;
+    int64 roundStateStartTime;
+    int64 roundStateEndTime;
     int countDown;
     Entity @alphaSpawn;
     Entity @betaSpawn;

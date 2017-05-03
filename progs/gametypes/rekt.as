@@ -39,8 +39,8 @@ class EnduranceMatch
 {
 	private eRoundState roundState;
 	private uint numRounds;
-	private uint roundStateStartTime;
-	private uint roundStateEndTime;
+	private int64 roundStateStartTime;
+	private int64 roundStateEndTime;
 
 	private int countDown;
 

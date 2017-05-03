@@ -23,7 +23,7 @@ cDispenser[] gtDispensers( MAX_DISPENSERS );
 
 Vec3 dispenserMins( -16, -16, -16 ), dispenserMaxs( 24, 24, 16 );
 
-uint[] dispenserCooldownTimes( maxClients );
+int64[] dispenserCooldownTimes( maxClients );
 
 class cDispenser
 {
