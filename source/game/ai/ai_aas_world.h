@@ -191,6 +191,7 @@ typedef struct aas_node_s
 class AiAasWorld
 {
     bool loaded = false;
+    unsigned char checksum[128];
 
     //bounding boxes
     int numbboxes;
@@ -300,6 +301,7 @@ public:
     static AiAasWorld *Instance() { return instance; }
 
     inline bool IsLoaded() const { return loaded; }
+    inline const char *Checksum() const { return loaded ? (const char *)checksum : ""; }
 
     void Frame();
 

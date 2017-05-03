@@ -1,6 +1,9 @@
 #include "ai_aas_world.h"
 #include "static_vector.h"
 #include "../g_local.h"
+#include "../../qalgo/md5.h"
+#include "../../qalgo/base64.h"
+
 #undef min
 #undef max
 #include <memory>
@@ -620,6 +623,7 @@ class AasFileReader
     } aas_header_t;
 
     aas_header_t header;
+    int fileSize;
 
     char *LoadLump(int lumpNum, int size);
 public:
@@ -641,6 +645,8 @@ public:
         int length = lastoffset - oldOffset;
         return std::make_tuple((T*)rawData, length / sizeof(T));
     };
+
+    bool ComputeChecksum(unsigned char *digest);
 };
 
 #define AASID						(('S'<<24)+('A'<<16)+('A'<<8)+'E')
@@ -653,8 +659,8 @@ AasFileReader::AasFileReader(const char *mapname)
     char filename[MAX_QPATH];
     Q_snprintfz(filename, MAX_QPATH, "maps/%s.aas", mapname);
 
-    trap_FS_FOpenFile(filename, &fp, FS_READ);
-    if (!fp)
+    fileSize = trap_FS_FOpenFile(filename, &fp, FS_READ);
+    if (!fp || fileSize <= 0)
     {
         G_Printf(S_COLOR_RED "can't open %s\n", filename);
         return;
@@ -713,6 +719,28 @@ char *AasFileReader::LoadLump(int lumpNum, int size)
         lastoffset += length;
     }
     return buf;
+}
+
+bool AasFileReader::ComputeChecksum(unsigned char *digest)
+{
+    if (trap_FS_Seek(fp, 0, FS_SEEK_SET) < 0)
+        return false;
+
+    // TODO: Read the entire AAS data at start and then use the read chunk for loading of AAS lumps
+    char *mem = (char *)G_LevelMalloc((unsigned)fileSize);
+    if (trap_FS_Read(mem, (unsigned)fileSize, fp) <= 0)
+    {
+        G_LevelFree(mem);
+        return false;
+    }
+
+    static_assert(sizeof(*digest) == sizeof(md5_byte_t), "");
+    md5_digest(mem, fileSize, digest);
+    size_t base64Length;
+    base64_encode(digest, 16, &base64Length);
+    digest[base64Length] = '\0';
+    G_LevelFree(mem);
+    return true;
 }
 
 bool AiAasWorld::Load(const char *mapname)
@@ -775,6 +803,9 @@ bool AiAasWorld::Load(const char *mapname)
 
     std::tie(clusters, numclusters) = reader.LoadLump<aas_cluster_t>(AASLUMP_CLUSTERS);
     if (numclusters && !clusters)
+        return false;
+
+    if (!reader.ComputeChecksum(checksum))
         return false;
 
     SwapData();

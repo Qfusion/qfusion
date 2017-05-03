@@ -199,15 +199,15 @@ private:
     // 0 if spot origins and bounds are completely invisible for each other
     // ...
     // 255 if spot origins and bounds are completely visible for each other
-    unsigned char *spotVisibilityTable;
+    uint8_t *spotVisibilityTable;
     // For i-th spot element # i * numSpots + j contains AAS travel time to j-th spot.
     // If the value is zero, j-th spot is not reachable from i-th one (we conform to AAS time encoding).
     // Non-zero value is a travel time in seconds^-2 (we conform to AAS time encoding).
     // Non-zero does not guarantee the spot is reachable for some picked bot
     // (these values are calculated using shared AI route cache and bots have individual one for blocked paths handling).
-    int *spotTravelTimeTable;
+    uint16_t *spotTravelTimeTable;
     // i-th element contains an offset of a grid cell spot nums list for i=cellNum
-    unsigned *gridListOffsets;
+    uint32_t *gridListOffsets;
     // Contains packed lists of grid cell spot nums.
     // Each list starts by number of spot nums followed by spot nums.
     uint16_t *gridSpotsLists;
@@ -219,6 +219,8 @@ private:
     unsigned gridNumCells[3];
 
     unsigned numSpots;
+
+    bool needsSavingPrecomputedData;
 
     struct SpotAndScore
     {
@@ -235,18 +237,22 @@ private:
 
     static TacticalSpotsRegistry instance;
 
-    TacticalSpotsRegistry()
-        : spots(nullptr),
-          spotVisibilityTable(nullptr),
-          gridListOffsets(nullptr),
-          gridSpotsLists(nullptr),
-          numSpots(0) {}
+    inline TacticalSpotsRegistry()
+    {
+        memset(this, 0, sizeof(TacticalSpotsRegistry));
+    }
+
+    ~TacticalSpotsRegistry();
 
     bool Load(const char *mapname);
+    bool LoadRawNavFileData(const char *mapname);
+    bool LoadSpotsFromRawNavNodes(const char *nodeOriginsData, unsigned strideInBytes, unsigned numRawNodes);
+    bool TryLoadPrecomputedData(const char *mapname);
+    void SavePrecomputedData(const char *mapname);
 
-    void SetupMutualSpotsVisibility();
-    void SetupMutualSpotsReachability();
-    void SetupSpotsGrid();
+    void ComputeMutualSpotsVisibility();
+    void ComputeMutualSpotsReachability();
+    void MakeSpotsGrid();
     void SetupGridParams();
 
     inline unsigned PointGridCellNum(const vec3_t point)
@@ -260,6 +266,8 @@ private:
 
         return i * (gridNumCells[1] * gridNumCells[2]) + j * gridNumCells[2] + k;
     }
+
+    inline unsigned NumGridCells() const { return gridNumCells[0] * gridNumCells[1] * gridNumCells[2]; }
 
     uint16_t FindSpotsInRadius(const OriginParams &originParams, uint16_t *spotNums, uint16_t *insideSpotNum) const;
 
@@ -319,11 +327,11 @@ public:
     static bool Init(const char *mapname);
     static void Shutdown();
 
-    inline bool IsLoaded() const { return numSpots > 0; }
+    inline bool IsLoaded() const { return spots != nullptr && numSpots > 0; }
 
     static inline const TacticalSpotsRegistry *Instance()
     {
-        return instance.numSpots ? &instance : nullptr;
+        return instance.IsLoaded() ? &instance : nullptr;
     }
 
     int FindPositionalAdvantageSpots(const OriginParams &originParams, const AdvantageProblemParams &problemParams,
