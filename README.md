@@ -1,4 +1,8 @@
-# qfusion [![Build Status](https://travis-ci.org/Qfusion/qfusion.svg?branch=master)](https://travis-ci.org/Qfusion/qfusion) [![Build status](https://ci.appveyor.com/api/projects/status/ijn380lud31mepv6?svg=true)](https://ci.appveyor.com/project/viciious/qfusion)  [![Coverity Scan Build Status](https://scan.coverity.com/projects/qfusion/badge.svg)](https://scan.coverity.com/projects/qfusion)
+# qfusion
+
+[![Build Status][travis-badge]][travis-url]
+[![Build Status][appveyor-badge]][appveyor-url]
+[![Coverity Scan Build Status][coverity-badge]][coverity-url]
 
 http://www.qfusion.net/
 
@@ -46,3 +50,11 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+
+[travis-badge]: https://travis-ci.org/Qfusion/qfusion.svg?branch=master
+[travis-url]: https://travis-ci.org/Qfusion/qfusion
+[appveyor-badge]: https://ci.appveyor.com/api/projects/status/ijn380lud31mepv6?svg=true
+[appveyor-url]: https://ci.appveyor.com/project/viciious/qfusion
+[coverity-badge]: https://scan.coverity.com/projects/qfusion/badge.svg
+[coverity-url]: https://scan.coverity.com/projects/qfusion
