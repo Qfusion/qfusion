@@ -1194,11 +1194,11 @@ inline BotBaseMovementAction &BotBaseMovementAction::DefaultWalkAction()
 }
 inline BotBaseMovementAction &BotBaseMovementAction::DefaultBunnyAction()
 {
-    return self->ai->botRef->bunnyStraighteningReachChainMovementAction;
+    return self->ai->botRef->bunnyInterpolatingReachChainMovementAction;
 }
 inline BotBaseMovementAction &BotBaseMovementAction::FallbackBunnyAction()
 {
-    return self->ai->botRef->walkToBestNearbyTacticalSpotMovementAction;
+    return self->ai->botRef->walkInterpolatingReachChainMovementAction;
 }
 inline BotFlyUntilLandingMovementAction &BotBaseMovementAction::FlyUntilLandingAction()
 {
@@ -2290,44 +2290,202 @@ void BotCampASpotMovementAction::OnApplicationSequenceStopped(BotMovementPredict
     disabledForApplicationFrameIndex = context->savepointTopOfStackIndex;
 }
 
-void BotBunnyInVelocityDirectionMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+struct ReachChainInterpolator
 {
-    if (!GenericCheckIsActionEnabled(context, &FallbackBunnyAction()))
-        return;
+    Vec3 intendedLookDir;
+    // Continue interpolating while a next reach has these travel types
+    const int *compatibleReachTypes;
+    int numCompatibleReachTypes;
+    // Stop interpolating on these reach types but include a reach start in interpolation
+    const int *allowedEndReachTypes;
+    int numAllowedEndReachTypes;
+    // Note: Ignored when there is only a single far reach.
+    float stopAtDistance;
 
-    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-    // Bunnying with released keys makes sense only for relatively high speed
-    // (lower than dash speed in this case since a cheating acceleration is enabled for this action)
-    const float speedThreshold = context->GetRunSpeed();
-    if (entityPhysicsState.Speed2D() < speedThreshold)
+    inline ReachChainInterpolator()
+        : intendedLookDir(0, 0, 0),
+          numCompatibleReachTypes(0),
+          numAllowedEndReachTypes(0),
+          stopAtDistance(256)
+    {}
+
+    inline void SetCompatibleReachTypes(const int *reachTravelTypes, int numTravelTypes)
     {
-        context->SetPendingRollback();
-        Debug("Cannot apply action: bot 2D velocity is too low to keep bunnying in velocity direction\n");
-        return;
+        this->compatibleReachTypes = reachTravelTypes;
+        this->numCompatibleReachTypes = numTravelTypes;
     }
+
+    inline void SetAllowedEndReachTypes(const int *reachTravelTypes, int numTravelTypes)
+    {
+        this->allowedEndReachTypes = reachTravelTypes;
+        this->numAllowedEndReachTypes = numTravelTypes;
+    }
+
+    inline bool IsCompatibleReachType(int reachTravelType) const
+    {
+        assert((reachTravelType & TRAVELTYPE_MASK) == reachTravelType);
+        const int *end = compatibleReachTypes + numCompatibleReachTypes;
+        return std::find(compatibleReachTypes, end, reachTravelType) != end;
+    }
+
+    inline bool IsAllowedEndReachType(int reachTravelType) const
+    {
+        assert((reachTravelType & TRAVELTYPE_MASK) == reachTravelType);
+        const int *end = allowedEndReachTypes + numAllowedEndReachTypes;
+        return std::find(allowedEndReachTypes, end, reachTravelType) != end;
+    }
+
+    bool Exec(BotMovementPredictionContext *context);
+
+    inline const Vec3 &Result() const { return intendedLookDir; }
+};
+
+bool ReachChainInterpolator::Exec(BotMovementPredictionContext *context)
+{
+    trace_t trace;
+    vec3_t firstReachDir;
+    const auto &reachChain = context->NextReachChain();
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto *aasReach = aasWorld->Reachabilities();
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const float *origin = entityPhysicsState.Origin();
+    const aas_reachability_t *singleFarReach = nullptr;
+    const float squareDistanceThreshold = SQUARE(stopAtDistance);
+    const int navTargetAreaNum = context->NavTargetAasAreaNum();
+    unsigned numReachFound = 0;
+    bool endsInNavTargetArea = false;
+
+    intendedLookDir.Set(0, 0, 0);
+    for (unsigned i = 0; i < reachChain.size(); ++i)
+    {
+        const auto &reach = aasReach[reachChain[i].ReachNum()];
+
+        int travelType = reach.traveltype & TRAVELTYPE_MASK;
+        // If the reach type is not in compatible types, we will have to make an immediate or pending break of the loop
+        if (!IsCompatibleReachType(travelType))
+        {
+            // If the reach type is not even mentioned in the allowed stop reach types, break immediately
+            if (!IsAllowedEndReachType(travelType))
+                break;
+
+            // If the reach type is mentioned in the allowed stop reach types, process the reach but stop at it.
+            // This line acts as a pending break after the iteration
+            i = reachChain.size() + 1;
+        }
+
+        if (DistanceSquared(origin, reach.start) > squareDistanceThreshold)
+        {
+            assert(!singleFarReach);
+            // The trace segment might be very long, test PVS first
+            if (trap_inPVS(origin, reach.start))
+            {
+                SolidWorldTrace(&trace, origin, reach.start);
+                if (trace.fraction == 1.0f)
+                    singleFarReach = &reach;
+            }
+            break;
+        }
+
+        SolidWorldTrace(&trace, origin, reach.start);
+        if (trace.fraction != 1.0f)
+            break;
+
+        if (reach.areanum == navTargetAreaNum)
+            endsInNavTargetArea = true;
+
+        Vec3 reachDir(reach.start);
+        reachDir -= origin;
+        reachDir.NormalizeFast();
+        // Add a reach dir to the dirs list (be optimistic to avoid extra temporaries)
+        if (numReachFound)
+        {
+            // Limit dirs angular spread checking against a first found dir as a base dir
+            if (reachDir.Dot(firstReachDir) < 0.5f)
+                break;
+        }
+        else
+            reachDir.CopyTo(firstReachDir);
+
+        intendedLookDir += reachDir;
+    }
+
+    if (!numReachFound)
+    {
+        if (!singleFarReach)
+        {
+            if (context->IsInNavTargetArea())
+            {
+                intendedLookDir.Set(context->NavTargetOrigin());
+                intendedLookDir -= origin;
+                intendedLookDir.NormalizeFast();
+                return true;
+            }
+            return false;
+        }
+
+        intendedLookDir.Set(singleFarReach->start);
+        intendedLookDir -= origin;
+        intendedLookDir.NormalizeFast();
+        return true;
+    }
+
+    if (endsInNavTargetArea)
+    {
+        Vec3 navTargetOrigin(context->NavTargetOrigin());
+        SolidWorldTrace(&trace, origin, navTargetOrigin.Data());
+        if (trace.fraction == 1.0f)
+        {
+            // Add the direction to the nav target to the interpolated dir
+            Vec3 toTargetDir(navTargetOrigin);
+            toTargetDir -= origin;
+            toTargetDir.NormalizeFast();
+            if (toTargetDir.Dot(firstReachDir) > 0.5f)
+            {
+                intendedLookDir += toTargetDir;
+                // Count it as an additional interpolated reachability
+                numReachFound++;
+            }
+        }
+    }
+
+    // If there were more than a single reach dir added to the look dir, it requires normalization
+    if (numReachFound > 1)
+        intendedLookDir.NormalizeFast();
+
+    return true;
+}
+
+void BotBunnyInterpolatingReachChainMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    if (!GenericCheckIsActionEnabled(context, &self->ai->botRef->bunnyStraighteningReachChainMovementAction))
+        return;
 
     if (!CheckCommonBunnyingActionPreconditions(context))
         return;
 
-    auto *botInput = &context->record->botInput;
-    botInput->SetIntendedLookDir(entityPhysicsState.Velocity());
-    if (!SetupBunnying(botInput->IntendedLookDir(), context))
+    context->record->botInput.isUcmdSet = true;
+    // Continue interpolating while a next reach has these travel types
+    const int compatibleReachTypes[4] = { TRAVEL_WALK, TRAVEL_WALKOFFLEDGE, TRAVEL_JUMP, TRAVEL_STRAFEJUMP };
+    // Stop interpolating on these reach types but include a reach start in interpolation
+    const int allowedEndReachTypes[4] = { TRAVEL_TELEPORT, TRAVEL_JUMPPAD, TRAVEL_ELEVATOR, TRAVEL_LADDER };
+    ReachChainInterpolator interpolator;
+    interpolator.stopAtDistance = 256;
+    interpolator.SetCompatibleReachTypes(compatibleReachTypes, sizeof(compatibleReachTypes) / sizeof(int));
+    interpolator.SetAllowedEndReachTypes(allowedEndReachTypes, sizeof(allowedEndReachTypes) / sizeof(int));
+    if (!interpolator.Exec(context))
+    {
+        context->SetPendingRollback();
+        Debug("Cannot apply action: cannot interpolate reach chain\n");
+        return;
+    }
+
+    context->record->botInput.SetIntendedLookDir(interpolator.Result(), true);
+
+    if (!SetupBunnying(context->record->botInput.IntendedLookDir(), context))
     {
         context->SetPendingRollback();
         return;
     }
-
-    CheatingAccelerate(context, 1.0f);
-
-    botInput->canOverrideLookVec = false;
-    botInput->canOverridePitch = false;
-    // this action does not call SetDefaultBotInput() for an initial input, so we must set this flag manually
-    botInput->isUcmdSet = true;
-    botInput->ClearMovementDirections();
-    botInput->SetUpMovement(1);
-    botInput->SetForwardMovement(1);
-
-    TrySetWalljump(context);
 }
 
 void BotBunnyTestingMultipleLookDirsMovementAction::BeforePlanning()
@@ -2677,7 +2835,7 @@ BotBunnyToBestShortcutAreaMovementAction::BotBunnyToBestShortcutAreaMovementActi
     supportsObstacleAvoidance = false;
     maxSuggestedLookDirs = 2;
     // The constructor cannot be defined in the header due to this bot member access
-    suggestedAction = &bot_->bunnyInVelocityDirectionMovementAction;
+    suggestedAction = &bot_->walkInterpolatingReachChainMovementAction;
 }
 
 void BotBunnyToBestShortcutAreaMovementAction::SaveSuggestedLookDirs(BotMovementPredictionContext *context)
@@ -3773,17 +3931,17 @@ void BotGenericRunBunnyingMovementAction::BeforePlanning()
     ResetObstacleAvoidanceState();
 }
 
-void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementInTargetArea(BotMovementPredictionContext *context)
+void BotWalkInterpolatingReachChainMovementAction::SetupMovementInTargetArea(BotMovementPredictionContext *context)
 {
     Vec3 intendedMoveVec(context->NavTargetOrigin());
     intendedMoveVec -= context->movementState->entityPhysicsState.Origin();
     intendedMoveVec.NormalizeFast();
 
     int keyMoves[2];
-    if (context->IsCloseToNavTarget())
-        context->EnvironmentTraceCache().MakeKeyMovesToTarget(context, intendedMoveVec, keyMoves);
-    else
+    if (self->ai->botRef->HasEnemy() && !context->IsCloseToNavTarget())
         context->EnvironmentTraceCache().MakeRandomizedKeyMovesToTarget(context, intendedMoveVec, keyMoves);
+    else
+        context->EnvironmentTraceCache().MakeKeyMovesToTarget(context, intendedMoveVec, keyMoves);
 
     auto *botInput = &context->record->botInput;
     botInput->SetForwardMovement(keyMoves[0]);
@@ -3793,35 +3951,7 @@ void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementInTargetArea(Bo
     botInput->canOverrideLookVec = true;
 }
 
-void BotWalkToBestNearbyTacticalSpotMovementAction::SetupMovementToTacticalSpot(BotMovementPredictionContext *context,
-                                                                                const vec_t *spotOrigin)
-{
-    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-    auto *botInput = &context->record->botInput;
-
-    Vec3 intendedLookVec(spotOrigin);
-    intendedLookVec -= entityPhysicsState.Origin();
-    intendedLookVec.NormalizeFast();
-    botInput->SetIntendedLookDir(intendedLookVec);
-    botInput->isUcmdSet = true;
-
-    if (!self->ai->botRef->GetMiscTactics().shouldAttack || !self->ai->botRef->GetSelectedEnemies().AreValid())
-    {
-        if (intendedLookVec.Dot(entityPhysicsState.ForwardDir()) > 0.3f)
-        {
-            botInput->SetForwardMovement(1);
-            return;
-        }
-    }
-
-    int keyMoves[2];
-    context->EnvironmentTraceCache().MakeRandomizedKeyMovesToTarget(context, intendedLookVec, keyMoves);
-    botInput->SetForwardMovement(keyMoves[0]);
-    botInput->SetRightMovement(keyMoves[1]);
-    botInput->canOverrideLookVec = true;
-}
-
-void BotWalkToBestNearbyTacticalSpotMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+void BotWalkInterpolatingReachChainMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
 {
     if (!GenericCheckIsActionEnabled(context, &DummyAction()))
         return;
@@ -3833,6 +3963,15 @@ void BotWalkToBestNearbyTacticalSpotMovementAction::PlanPredictionStep(BotMoveme
         return;
     }
 
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    if (!entityPhysicsState.GroundEntity() && entityPhysicsState.HeightOverGround() > 12)
+    {
+        context->cannotApplyAction = true;
+        context->actionSuggestedByAction = &DummyAction();
+        Debug("Cannot apply action: the bot is way too high above the ground\n");
+        return;
+    }
+
     // Walk to the nav target in this case
     if (context->IsInNavTargetArea())
     {
@@ -3840,74 +3979,94 @@ void BotWalkToBestNearbyTacticalSpotMovementAction::PlanPredictionStep(BotMoveme
         return;
     }
 
-    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-    // If bot is in air or on ground and has high speed (not reachable by ground circle strafing)
-    if (!entityPhysicsState.GroundEntity() || entityPhysicsState.Speed() > 1.5f * context->GetRunSpeed())
+    // Continue interpolating while a next reach has these travel types
+    const int compatibleReachTypes[1] = { TRAVEL_WALK };
+    // Stop interpolating on these reach types but include a reach start in interpolation
+    const int allowedEndReachTypes[6] =
     {
-        if (!context->IsCloseToNavTarget())
-        {
-            Debug("Cannot apply action: prevent losing a significant speed while running on ground\n");
-            context->cannotApplyAction = true;
-            context->actionSuggestedByAction = &DummyAction();
-        }
-    }
-
-    vec3_t spotOrigin;
-    TacticalSpotsRegistry::OriginParams originParams(entityPhysicsState.Origin(), 192, self->ai->botRef->routeCache);
-    if (TacticalSpotsRegistry::Instance()->FindClosestToTargetWalkableSpot(originParams, navTargetAreaNum, &spotOrigin))
-    {
-        SetupMovementToTacticalSpot(context, spotOrigin);
-        return;
-    }
-
-    // Check whether the nav target can be reached by walking
-    const auto *routeCache = self->ai->botRef->routeCache;
-    const int currAreaNum = entityPhysicsState.CurrAasAreaNum();
-    if (!routeCache->TravelTimeToGoalArea(currAreaNum, navTargetAreaNum, TFL_WALK))
-    {
-        const int droppedToFloorAreaNum = entityPhysicsState.DroppedToFloorAasAreaNum();
-        if (currAreaNum == droppedToFloorAreaNum)
-        {
-            this->isDisabledForPlanning = true;
-            context->SetPendingRollback();
-            return;
-        }
-        if (!routeCache->TravelTimeToGoalArea(droppedToFloorAreaNum, navTargetAreaNum, TFL_WALK))
-        {
-            this->isDisabledForPlanning = true;
-            context->SetPendingRollback();
-            return;
-        }
-    }
-
-    trace_t trace;
-    Vec3 navTargetOrigin(context->NavTargetOrigin());
-    SolidWorldTrace(&trace, entityPhysicsState.Origin(), navTargetOrigin.Data(), playerbox_stand_mins, playerbox_stand_maxs);
-    if (trace.fraction != 1.0f)
+        TRAVEL_WALKOFFLEDGE, TRAVEL_JUMP, TRAVEL_TELEPORT, TRAVEL_JUMPPAD, TRAVEL_ELEVATOR, TRAVEL_LADDER
+    };
+    ReachChainInterpolator interpolator;
+    interpolator.stopAtDistance = 128.0f;
+    interpolator.SetCompatibleReachTypes(compatibleReachTypes, sizeof(compatibleReachTypes) / sizeof(int));
+    interpolator.SetAllowedEndReachTypes(allowedEndReachTypes, sizeof(allowedEndReachTypes) / sizeof(int));
+    if (!interpolator.Exec(context))
     {
         this->isDisabledForPlanning = true;
         context->SetPendingRollback();
+        Debug("Cannot apply action: cannot interpolate reach chain\n");
         return;
     }
 
-    // The bot is not in the nav target area, use generic movement to a tactical spot
-    SetupMovementToTacticalSpot(context, navTargetOrigin.Data());
+    int keyMoves[2];
+    auto &environmentTraceCache = context->EnvironmentTraceCache();
+    if (self->ai->botRef->HasEnemy())
+        environmentTraceCache.MakeRandomizedKeyMovesToTarget(context, interpolator.Result(), keyMoves);
+    else
+        environmentTraceCache.MakeKeyMovesToTarget(context, interpolator.Result(), keyMoves);
+
+    auto *botInput = &context->record->botInput;
+    botInput->SetForwardMovement(keyMoves[0]);
+    botInput->SetRightMovement(keyMoves[1]);
+    botInput->SetIntendedLookDir(interpolator.Result(), true);
+    botInput->isUcmdSet = true;
+    botInput->canOverrideLookVec = true;
 }
 
-void BotWalkToBestNearbyTacticalSpotMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+void BotWalkInterpolatingReachChainMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
 {
     BotBaseMovementAction::CheckPredictionStepResults(context);
     if (context->cannotApplyAction || context->isCompleted)
         return;
 
-    const unsigned sequenceDuration = SequenceDuration(context);
-    if (sequenceDuration < 250)
-        return;
+    const auto &newPMove = context->currPlayerState->pmove;
+    const auto &oldPMove = context->oldPlayerState->pmove;
+    // Disallow skimming to kick in.
+    // A bot is not intended to move fast enough in this action to allow hiding bumping into obstacles by skimming.
+    if (newPMove.skim_time && newPMove.skim_time != oldPMove.skim_time)
+    {
+        Debug("A prediction step has lead to skimming. A skimming is not allowed in this action\n");
+        this->isDisabledForPlanning = true;
+    }
 
     const auto &newEntityPhysicsState = context->movementState->entityPhysicsState;
-    if (newEntityPhysicsState.IsHighAboveGround() && !context->PhysicsStateBeforeStep().IsHighAboveGround())
+    const auto &oldEntityPhysicsState = context->PhysicsStateBeforeStep();
+    if (!newEntityPhysicsState.GroundEntity())
     {
-        Debug("A prediction step has lead to falling\n");
+        // Allow being in air on steps/stairs
+        if (newEntityPhysicsState.HeightOverGround() > 12 && oldEntityPhysicsState.HeightOverGround() < 12)
+        {
+            Debug("A prediction step has lead to being way too high above the ground\n");
+            this->isDisabledForPlanning = true;
+            context->SetPendingRollback();
+            return;
+        }
+    }
+
+    int currTravelTimeToNavTarget = context->TravelTimeToNavTarget();
+    if (!currTravelTimeToNavTarget)
+    {
+        Debug("A prediction step has lead to an undefined travel time to the nav target\n");
+        this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
+    }
+    if (currTravelTimeToNavTarget > minTravelTimeToTarget)
+    {
+        Debug("A prediction step has lead to an increased travel time to the nav target\n");
+        this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
+    }
+    minTravelTimeToTarget = currTravelTimeToNavTarget;
+
+    if (this->SequenceDuration(context) < 250)
+    {
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+
+    if (originAtSequenceStart.SquareDistanceTo(newEntityPhysicsState.Origin()) < 32 * 32)
+    {
+        Debug("The bot is likely to be stuck after 250 millis\n");
         this->isDisabledForPlanning = true;
         context->SetPendingRollback();
         return;
@@ -3921,15 +4080,22 @@ void BotWalkToBestNearbyTacticalSpotMovementAction::CheckPredictionStepResults(B
         return;
     }
 
-    if (originAtSequenceStart.SquareDistanceTo(newEntityPhysicsState.Origin()) < 48 * 48)
+    // Wait for hitting the ground
+    if (!newEntityPhysicsState.GroundEntity())
     {
-        Debug("The bot is likely to be stuck after 250 millis\n");
-        this->isDisabledForPlanning = true;
-        context->SetPendingRollback();
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
     }
 
     Debug("There is enough predicted data ahead\n");
     context->isCompleted = true;
+}
+
+void BotWalkInterpolatingReachChainMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction::OnApplicationSequenceStarted(context);
+
+    minTravelTimeToTarget = context->TravelTimeToNavTarget();
 }
 
 inline unsigned BotEnvironmentTraceCache::SelectNonBlockedDirs(BotMovementPredictionContext *context, unsigned *nonBlockedDirIndices)

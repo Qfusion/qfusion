@@ -1449,24 +1449,25 @@ public:
     BotBunnyToBestShortcutAreaMovementAction(class Bot *bot_);
 };
 
-class BotBunnyInVelocityDirectionMovementAction: public BotGenericRunBunnyingMovementAction
+class BotBunnyInterpolatingReachChainMovementAction: public BotGenericRunBunnyingMovementAction
 {
 public:
-    DECLARE_BUNNYING_MOVEMENT_ACTION_CONSTRUCTOR(BotBunnyInVelocityDirectionMovementAction, COLOR_RGB(192, 0, 0))
+    DECLARE_BUNNYING_MOVEMENT_ACTION_CONSTRUCTOR(BotBunnyInterpolatingReachChainMovementAction, COLOR_RGB(32, 0, 255))
     {
         supportsObstacleAvoidance = false;
     }
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
 };
 
-class BotWalkToBestNearbyTacticalSpotMovementAction: public BotBaseMovementAction
+class BotWalkInterpolatingReachChainMovementAction: public BotBaseMovementAction
 {
-    inline void SetupMovementToTacticalSpot(BotMovementPredictionContext *context, const vec3_t spotOrigin);
+    int minTravelTimeToTarget;
     inline void SetupMovementInTargetArea(BotMovementPredictionContext *context);
 public:
-    DECLARE_MOVEMENT_ACTION_CONSTRUCTOR(BotWalkToBestNearbyTacticalSpotMovementAction, COLOR_RGB(0, 72, 128));
+    DECLARE_MOVEMENT_ACTION_CONSTRUCTOR(BotWalkInterpolatingReachChainMovementAction, COLOR_RGB(16, 72, 128));
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
     void CheckPredictionStepResults(BotMovementPredictionContext *context) override;
+    void OnApplicationSequenceStarted(BotMovementPredictionContext *context) override;
 };
 
 class BotCombatDodgeSemiRandomlyToTargetMovementAction: public BotBaseMovementAction

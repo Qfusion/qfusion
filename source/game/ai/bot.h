@@ -76,8 +76,8 @@ class Bot: public Ai
     friend class BotGenericRunBunnyingMovementAction;
     friend class BotBunnyStraighteningReachChainMovementAction;
     friend class BotBunnyToBestShortcutAreaMovementAction;
-    friend class BotBunnyInVelocityDirectionMovementAction;
-    friend class BotWalkToBestNearbyTacticalSpotMovementAction;
+    friend class BotBunnyInterpolatingReachChainMovementAction;
+    friend class BotWalkInterpolatingReachChainMovementAction;
     friend class BotCombatDodgeSemiRandomlyToTargetMovementAction;
 public:
     static constexpr auto PREFERRED_TRAVEL_FLAGS =
@@ -320,8 +320,8 @@ private:
     BotWalkCarefullyMovementAction walkCarefullyMovementAction;
     BotBunnyStraighteningReachChainMovementAction bunnyStraighteningReachChainMovementAction;
     BotBunnyToBestShortcutAreaMovementAction bunnyToBestShortcutAreaMovementAction;
-    BotBunnyInVelocityDirectionMovementAction bunnyInVelocityDirectionMovementAction;
-    BotWalkToBestNearbyTacticalSpotMovementAction walkToBestNearbyTacticalSpotMovementAction;
+    BotBunnyInterpolatingReachChainMovementAction bunnyInterpolatingReachChainMovementAction;
+    BotWalkInterpolatingReachChainMovementAction walkInterpolatingReachChainMovementAction;
     BotCombatDodgeSemiRandomlyToTargetMovementAction combatDodgeSemiRandomlyToTargetMovementAction;
 
     BotMovementState movementState;
