@@ -472,14 +472,14 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 			return;
 		}
 
-		int64 protectTime = cvarSpawnProtection.integer;
+		int protectTime = cvarSpawnProtection.integer;
 
-		if ( protectTime == 0 )
+		if ( protectTime <= 0 )
 		{
 			return;
 		}
 
-		int64 elapsedTime = int( ( levelTime - roundStartTime ) * 0.001f );
+		int elapsedTime = int( ( levelTime - roundStartTime ) * 0.001f );
 
 		if ( elapsedTime > protectTime )
 		{
@@ -502,7 +502,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 
 		assert( damage > 0, "main.as GT_ScoreEvent: damage < 0" );
 
-		uint protectTimeO3 = protectTime / 3; // protectTime over 3
+		int protectTimeO3 = protectTime / 3; // protectTime over 3
 
 		// TODO: smooth damage scaling?
 		if ( elapsedTime < protectTimeO3 )
