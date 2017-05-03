@@ -55,10 +55,10 @@ class cTurret
 
     Entity @enemy;	// located target
     Entity @invisibleEnemy;
-    uint invisibleEnemySince;
+    int64 invisibleEnemySince;
     uint invisibleEnemyReactionTime;
     int invisibilityAlarmSoundIndex;
-    uint lastInvisibilityAlarmTime;
+    int64 lastInvisibilityAlarmTime;
     uint invisibilityAlarmRepeatDelay;
 	
     Entity @minimap;   // Minimap
@@ -81,17 +81,17 @@ class cTurret
     int damage;
     int knockback;
     int stun;
-	uint detectTime;
+	int64 detectTime;
     int projectileSpeed;	// only for projectiles (rockets, grenades, plasma)
     int splashRadius;		// only for projectiles (rockets, grenades, plasma)
 
     int painSoundIndex;
-    uint lastPainTime;
+    int64 lastPainTime;
     uint painDelay;
 
     Vec3 idleAngles;		// initial angles. Do not modify.
-    uint firedTime;		// last time it shot. Do not modify
-    uint targetLocationTime; 	// last time it scanned for enemies. Do not modify
+    int64 firedTime;		// last time it shot. Do not modify
+    int64 targetLocationTime; 	// last time it scanned for enemies. Do not modify
 
     void Init()
     {

@@ -23,11 +23,11 @@ uint siteCount = 0;
 class cPendingExplosion
 {
 	uint pointIndex;
-	uint explodeTime;
+	int64 explodeTime;
 
 	cPendingExplosion @next;
 
-	cPendingExplosion( uint index, uint time )
+	cPendingExplosion( uint index, int64 time )
 	{
 		this.pointIndex = index;
 		this.explodeTime = time;
@@ -145,7 +145,7 @@ class cBombSite
 		}
 	}
 
-	void addPendingExplosion( uint index, uint time )
+	void addPendingExplosion( uint index, int64 time )
 	{
 		cPendingExplosion @explosion = @cPendingExplosion( index, time );
 

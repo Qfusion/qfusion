@@ -22,13 +22,11 @@ bool demoRecording = false;
 const int MAX_RECORDS = 30;
 const int HUD_RECORDS = 3;
 
-uint[] levelRecordSectors;
-uint levelRecordFinishTime;
 String levelRecordPlayerName;
 
 // ch : MM
 const uint RECORD_SEND_INTERVAL = 5 * 60 * 1000; // 5 minutes
-uint lastRecordSent = 0;
+int64 lastRecordSent = 0;
 
 enum eMenuItems
 {
@@ -256,7 +254,7 @@ class Player
     Client @client;
     uint[] sectorTimes;
     uint[] bestSectorTimes;
-    uint startTime;
+    int64 startTime;
     uint finishTime;
     bool hasTime;
     uint bestFinishTime;
@@ -514,7 +512,7 @@ class Player
         return true;
     }
 
-    uint timeStamp()
+    int64 timeStamp()
     {
         return levelTime;
     }
@@ -1163,7 +1161,7 @@ void RACE_SetUpMatch()
 
 String randmap;
 String randmap_passed = "";
-uint randmap_time = 0;
+int64 randmap_time = 0;
 
 bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc )
 {

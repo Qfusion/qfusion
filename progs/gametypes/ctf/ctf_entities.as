@@ -34,7 +34,7 @@ class cFlagBase
 	Entity @decal;
     int dropper;
     bool handDropped;
-    uint droppedTime;
+    int64 droppedTime;
     cFlagBase @next;
 
     int team;

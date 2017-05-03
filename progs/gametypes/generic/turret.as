@@ -76,8 +76,8 @@ class cTurret
     int splashRadius;		// only for projectiles (rockets, grenades, plasma)
 
     Vec3 idleAngles;		// initial angles. Do not modify.
-    uint firedTime;		// last time it shot. Do not modify
-    uint targetLocationTime; 	// last time it scanned for enemies. Do not modify
+    int64 firedTime;		// last time it shot. Do not modify
+    int64 targetLocationTime; 	// last time it scanned for enemies. Do not modify
 
     void Init()
     {

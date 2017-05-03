@@ -44,7 +44,7 @@ class cCARound
     int countDown;
     Entity @alphaSpawn;
     Entity @betaSpawn;
-	uint minuteLeft;
+	int64 minuteLeft;
 	int timelimit;
 	int alpha_oneVS;
 	int beta_oneVS;

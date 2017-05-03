@@ -472,14 +472,14 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 			return;
 		}
 
-		uint protectTime = cvarSpawnProtection.integer;
+		int64 protectTime = cvarSpawnProtection.integer;
 
 		if ( protectTime == 0 )
 		{
 			return;
 		}
 
-		uint elapsedTime = int( ( levelTime - roundStartTime ) * 0.001f );
+		int64 elapsedTime = int( ( levelTime - roundStartTime ) * 0.001f );
 
 		if ( elapsedTime > protectTime )
 		{
