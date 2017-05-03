@@ -158,7 +158,7 @@ public:
 	static bool DefaultCompareBinary( const ServerInfo *lhs, const ServerInfo *rhs );
 
 private:
-	void tokenizeInfo( const char *, __stl_vector( __stl_string ) & );
+	void tokenizeInfo( const char *info, __stl_vector( __stl_string ) &tokens );
 };
 
 // filtering mechanism for serverbrowser
@@ -173,7 +173,10 @@ public:
 		ONLY=2          // only show these servers
 	};
 
-	ServerBrowserFilter() {}
+	ServerBrowserFilter() : 
+		full( HIDE ), empty( HIDE ), instagib( HIDE ), 
+		password( HIDE ), ranked( HIDE ), registered( HIDE ),
+		gametype( "" ) {}
 
 	// called by ServerBrowserDataSource to filter servers as per settings
 	// TODO: proper implementation

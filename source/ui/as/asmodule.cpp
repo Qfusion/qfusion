@@ -47,9 +47,11 @@ public:
 	void Read( void *ptr, asUINT _size ) {
 		if( !data || !ptr ) {
 			trap::Error( "BinaryBuffer::Read null pointer" );
+			return;
 		}
 		if( ( offset + _size ) > allocated ) {
 			trap::Error( "BinaryBuffer::Read tried to read more bytes than available" );
+			return;
 		}
 
 		memcpy( ptr, data + offset, _size );
@@ -59,7 +61,9 @@ public:
 	void Write( const void *ptr, asUINT _size ) {
 		if( !data || !ptr ) {
 			trap::Error( "BinaryBuffer::Write null pointer" );
+			return;
 		}
+
 		if( ( size + _size ) > allocated ) {
 			// reallocate
 			allocated = size + _size;
@@ -68,6 +72,7 @@ public:
 			__delete__( data );   // note! regular delete works for unsigned char*
 			data = tmp;
 		}
+
 		memcpy( data + size, ptr, _size );
 		size += _size;
 	}
@@ -108,6 +113,7 @@ public:
 	void Read( void *ptr, asUINT size ) {
 		if( !fh ) {
 			trap::Error( "BinaryFileStream::Read tried to read from closed file" );
+			return;
 		}
 
 		trap::FS_Read( ptr, size, fh );
@@ -116,6 +122,7 @@ public:
 	void Write( const void *ptr, asUINT size ) {
 		if( !fh ) {
 			trap::Error( "BinaryFileStream::Write tried to write to closed file" );
+			return;
 		}
 
 		trap::FS_Write( ptr, size, fh );
@@ -217,12 +224,12 @@ public:
 	}
 
 	virtual asIScriptModule *getActiveModule( void ) const {
-		if( !engine ) {
+		if( engine == nullptr ) {
 			return NULL;
 		}
 		asIScriptContext *activeContext = UI_Main::Get()->getAS()->getActiveContext();
-		asIScriptFunction *currentFunction = activeContext ? activeContext->GetFunction( 0 ) : NULL;
-		return currentFunction->GetModule();
+		asIScriptFunction *currentFunction = activeContext != nullptr ? activeContext->GetFunction( 0 ) : nullptr;
+		return currentFunction != nullptr ? currentFunction->GetModule() : nullptr;
 	}
 
 	virtual asIObjectType *getStringObjectType( void ) const {

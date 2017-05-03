@@ -58,7 +58,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	// other members
 	quickMenuURL( "" ),
 	mousex( 0 ), mousey( 0 ), gameProtocol( protocol ),
-	menuVisible( false ), forceMenu( false ), showNavigationStack( false ),
+	menuVisible( false ), quickMenuVisible( false ), forceMenu( false ), showNavigationStack( false ),
 	demoExtension( demoExtension ), invalidateAjaxCache( false ),
 	ui_basepath( nullptr ), ui_cursor( nullptr ), ui_developer( nullptr ), ui_preload( nullptr ) {
 	// instance
@@ -78,10 +78,12 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 
 	// temp fix for missing background on start.. populate refreshState with some nice values
 	refreshState.clientState = CA_UNINITIALIZED;
+	refreshState.serverState = 0;
 	refreshState.width = vidWidth;
 	refreshState.height = vidHeight;
 	refreshState.pixelRatio = pixelRatio;
 	refreshState.drawBackground = true;
+	refreshState.time = 0;
 
 	connectInfo.serverName = "";
 	connectInfo.rejectMessage = "";

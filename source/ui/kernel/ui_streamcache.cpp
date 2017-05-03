@@ -29,7 +29,9 @@ namespace WSWUI
 
 #define LINK_EXTENSION ".link"
 
-AsyncStream::AsyncStream() : privatep( NULL ), key( "" ), tmpFilename( "" ), tmpFilenum( 0 ), noCache( false ) {
+AsyncStream::AsyncStream() : privatep( nullptr ), key( "" ), parent( nullptr ), tmpFilename( "" ), tmpFilenum( 0 ), noCache( false ),
+	read_cb( nullptr ), done_cb( nullptr ), cache_cb( nullptr )
+{
 }
 
 // ======================================================

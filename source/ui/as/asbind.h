@@ -1070,40 +1070,40 @@ struct FunctionPtrBase {
 	asIScriptContext *ctx;
 
 	FunctionPtrBase( asIScriptFunction *fptr )
-		: fptr( fptr ) {}
+		: fptr( fptr ), ctx( nullptr ) {}
 
 	// never 'new' this or descendant classes!
 	// virtual ~FunctionPtrBase() {}
 
 	asIScriptFunction *getPtr( void ) { return fptr; }
-	const char *getName( void ) { return fptr != NULL ? fptr->GetName() : "#NULL#"; }
-	bool isValid( void ) { return fptr != NULL; }
+	const char *getName( void ) { return fptr != nullptr ? fptr->GetName() : "#NULL#"; }
+	bool isValid( void ) { return fptr != nullptr; }
 	void addref( void ) {
-		if( fptr != NULL ) {
+		if( fptr != nullptr ) {
 			fptr->AddRef();
 		}
 	}
 	void release( void ) {
-		if( fptr != NULL ) {
+		if( fptr != nullptr ) {
 			asIScriptFunction *fptr_ = fptr; fptr = NULL; fptr_->Release();
 		}
 	}
 	void setContext( asIScriptContext *_ctx ) { ctx = _ctx; }
 	asIScriptModule *getModule( void ) {
 		asIScriptFunction *f = fptr;
-		while( f && f->GetFuncType() == asFUNC_DELEGATE )
+		while( f != nullptr && f->GetFuncType() == asFUNC_DELEGATE )
 			f = f->GetDelegateFunction();
-		return f ? f->GetModule() : NULL;
+		return f != nullptr ? f->GetModule() : NULL;
 	}
 
 	// general calling function
 	void precall( void ) {
-		if( fptr ) {
+		if( fptr != nullptr ) {
 			ctx->Prepare( fptr );
 		}
 	}
 	void call( void ) {
-		if( ctx ) {
+		if( ctx != nullptr ) {
 			int r = ctx->Execute();
 			if( r != asEXECUTION_FINISHED && r != asEXECUTION_SUSPENDED ) {
 				Com_Printf( "ASBind::FunctionPtrBase: Execute failed %d (name %s)\n", r, fptr->GetName() );

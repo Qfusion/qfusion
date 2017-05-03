@@ -10,7 +10,7 @@ namespace ASUI
 {
 
 ScheduledFunction::ScheduledFunction()
-	: any( NULL ), sched( 0 ) {
+	: any( NULL ), sched( 0 ), start( 0 ), delay( 0 ), intervalled( false ) {
 
 }
 

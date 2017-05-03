@@ -39,7 +39,7 @@ public:
 		EventListener(),
 		suspendedContext( NULL ),
 		attachedModalDocument( NULL ),
-		modalValue( 0 ),
+		modalValue( 0 ), shuttingDown( false ),
 		backgroundTrackPlaying( false ) {
 		schedulers.clear();
 	}

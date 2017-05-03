@@ -26,7 +26,6 @@ public:
 	int clientState;
 	int serverState;
 	bool drawBackground;
-	int backgroundNum;
 	int width, height;
 	float pixelRatio;
 };
