@@ -1125,6 +1125,10 @@ protected:
         return false;
     }
 
+    void CheatingAccelerate(BotMovementPredictionContext *context, float frac) const;
+    void CheatingCorrectVelocity(BotMovementPredictionContext *context,
+                                 float velocity2DDirDotToTarget2DDir,
+                                 const Vec3 &toTargetDir2D) const;
 public:
     struct AreaAndScore
     {
@@ -1343,8 +1347,6 @@ protected:
     }
 
     void SetupCommonBunnyingInput(BotMovementPredictionContext *context);
-    void CheatingAccelerate(BotMovementPredictionContext *context, float frac) const;
-    void CheatingCorrectVelocity(BotMovementPredictionContext *context, float velocity2DDirDotToTarget2DDir, Vec3 toTargetDir2D) const;
     // TODO: Mark as virtual in base class and mark as final here to avoid a warning about hiding parent member?
     bool GenericCheckIsActionEnabled(BotMovementPredictionContext *context, BotBaseMovementAction *suggestedAction);
     bool CheckCommonBunnyingActionPreconditions(BotMovementPredictionContext *context);

@@ -3269,18 +3269,23 @@ bool BotGenericRunBunnyingMovementAction::SetupBunnying(const Vec3 &intendedLook
 
         if (toTargetDir2DSqLen > 0.1f)
         {
-            toTargetDir2D *= Q_RSqrt(toTargetDir2DSqLen);
-
-            float velocityDir2DDotToTargetDir2D = velocityDir2D.Dot(toTargetDir2D);
-            if (velocityDir2DDotToTargetDir2D > STRAIGHT_MOVEMENT_DOT_THRESHOLD)
+            const auto &oldPMove = context->oldPlayerState->pmove;
+            const auto &newPMove = context->currPlayerState->pmove;
+            // If not skimming
+            if (!(newPMove.skim_time && newPMove.skim_time != oldPMove.skim_time))
             {
-                // Apply cheating acceleration
-                CheatingAccelerate(context, velocityDir2DDotToTargetDir2D - STRAIGHT_MOVEMENT_DOT_THRESHOLD);
-            }
-            else
-            {
-                // Correct trajectory using cheating aircontrol
-                CheatingCorrectVelocity(context, velocityDir2DDotToTargetDir2D, toTargetDir2D);
+                toTargetDir2D *= Q_RSqrt(toTargetDir2DSqLen);
+                float velocityDir2DDotToTargetDir2D = velocityDir2D.Dot(toTargetDir2D);
+                if (velocityDir2DDotToTargetDir2D > 0.0f)
+                {
+                    // Apply cheating acceleration
+                    CheatingAccelerate(context, velocityDir2DDotToTargetDir2D);
+                }
+                if (velocityDir2DDotToTargetDir2D < STRAIGHT_MOVEMENT_DOT_THRESHOLD)
+                {
+                    // Correct trajectory using cheating aircontrol
+                    CheatingCorrectVelocity(context, velocityDir2DDotToTargetDir2D, toTargetDir2D);
+                }
             }
         }
     }
@@ -3429,7 +3434,7 @@ bool BotGenericRunBunnyingMovementAction::CanSetWalljump(BotMovementPredictionCo
 
 #undef TEST_TRACE_RESULT_NORMAL
 
-void BotGenericRunBunnyingMovementAction::CheatingAccelerate(BotMovementPredictionContext *context, float frac) const
+void BotBaseMovementAction::CheatingAccelerate(BotMovementPredictionContext *context, float frac) const
 {
     if (self->ai->botRef->ShouldMoveCarefully())
         return;
@@ -3438,46 +3443,69 @@ void BotGenericRunBunnyingMovementAction::CheatingAccelerate(BotMovementPredicti
     if (entityPhysicsState.GroundEntity())
         return;
 
-    if (self->ai->botRef->Skill() <= 0.33f)
-        return;
-
     const float speed = entityPhysicsState.Speed();
     const float speedThreshold = context->GetRunSpeed() - 15.0f;
+    // Respect player class speed properties
+    const float groundSpeedScale = speedThreshold / (DEFAULT_PLAYERSPEED_STANDARD - 15.0f);
 
     // Avoid division by zero and logic errors
     if (speed < speedThreshold)
         return;
 
-    // Max accel is measured in units per second and decreases with speed
-    // For speed of speedThreshold maxAccel is 240
-    // For speed of 900 and greater maxAccel is 0
-    // This means cheating acceleration is not applied for speeds greater than 900 ups
-    // However the bot may reach greater speed since builtin GS_NEWBUNNY forward accel is enabled
-    float maxAccel = 240.0f * (1.0f - BoundedFraction(speed - speedThreshold, 900.0f - speedThreshold));
-    Assert(maxAccel >= 0.0f && maxAccel <= 240.0f);
+    if (frac <= 0.0f)
+        return;
 
-    // Modify maxAccel to respect player class movement limitations
-    maxAccel *= speedThreshold / (320.0f - 15.0f);
+    const float maxSpeedGainPerSecond = 250.0f;
+    const float minSpeedGainPerSecond = 75.0f;
+    float speedGainPerSecond;
+    // If speed = pivotSpeed speedGainPerSecond remains the same
+    const float pivotSpeed = 550.0f * groundSpeedScale;
+    const float constantAccelSpeed = 900.0f;
+    if (speed > pivotSpeed)
+    {
+        speedGainPerSecond = minSpeedGainPerSecond;
+        // In this case speedGainPerSecond slowly decreases to minSpeedGainPerSecond
+        // on speed = constantAccelSpeed or greater
+        if (speed <= constantAccelSpeed)
+        {
+            float speedFrac = BoundedFraction(speed - pivotSpeed, constantAccelSpeed - pivotSpeed);
+            Assert(speedFrac >= 0.0f && speedFrac <= 1.0f);
+            speedGainPerSecond += (maxSpeedGainPerSecond - minSpeedGainPerSecond) * (1.0f - speedFrac);
+        }
+    }
+    else
+    {
+        // In this case speedGainPerSecond might be 2x as greater than maxSpeedGainPerSecond
+        Assert(speedThreshold < pivotSpeed);
+        float speedFrac = BoundedFraction(speed - speedThreshold, pivotSpeed - speedThreshold);
+        Assert(speedFrac >= 0.0f && speedFrac <= 1.0f);
+        speedGainPerSecond = maxSpeedGainPerSecond * (1.0f + (1.0f - speedFrac));
+        // Also modify the frac to ensure the bot accelerates fast to the pivotSpeed in all cases
+        // (the real applied frac is frac^(1/4))
+        frac = SQRTFAST(frac);
+    }
 
-    // Accel contains of constant and directional parts
-    // If velocity dir exactly matches target dir, accel = maxAccel
-    clamp(frac, 0.0f, 1.0f);
-    float accelStrength = frac > 0 ? SQRTFAST(frac) : 0.0f;
+    speedGainPerSecond *= groundSpeedScale;
+    if (self->ai->botRef->Skill() <= 0.33f)
+        speedGainPerSecond *= 0.33f;
+
+    clamp_high(frac, 1.0f);
+    frac = SQRTFAST(frac);
 
     Vec3 newVelocity(entityPhysicsState.Velocity());
     // Normalize velocity boost direction
     newVelocity *= 1.0f / speed;
     // Make velocity boost vector
-    newVelocity *= (accelStrength * maxAccel) * (0.001f * context->oldStepMillis);
+    newVelocity *= (frac * speedGainPerSecond) * (0.001f * context->oldStepMillis);
     // Add velocity boost to the entity velocity in the given physics state
     newVelocity += entityPhysicsState.Velocity();
 
     context->record->SetModifiedVelocity(newVelocity);
 }
 
-void BotGenericRunBunnyingMovementAction::CheatingCorrectVelocity(BotMovementPredictionContext *context,
-                                                                  float velocity2DDirDotToTarget2DDir,
-                                                                  Vec3 toTargetDir2D) const
+void BotBaseMovementAction::CheatingCorrectVelocity(BotMovementPredictionContext *context,
+                                                    float velocity2DDirDotToTarget2DDir,
+                                                    const Vec3 &toTargetDir2D) const
 {
     // Respect player class movement limitations
     if (!(context->currPlayerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL))
@@ -4307,6 +4335,19 @@ void BotCombatDodgeSemiRandomlyToTargetMovementAction::PlanPredictionStep(BotMov
             {
                 botInput->SetSpecialButton(true);
                 context->predictionStepMillis = 16;
+            }
+        }
+
+        const float skill = self->ai->botRef->Skill();
+        if (skill > 0.33f)
+        {
+            if (!botInput->IsSpecialButtonSet() && entityPhysicsState.Speed2D() < 650)
+            {
+                const auto &oldPMove = context->oldPlayerState->pmove;
+                const auto &newPMove = context->currPlayerState->pmove;
+                // If not skimming
+                if (!(newPMove.skim_time && newPMove.skim_time != oldPMove.skim_time))
+                    CheatingAccelerate(context, skill);
             }
         }
     }

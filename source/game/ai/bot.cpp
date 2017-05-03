@@ -75,7 +75,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       lastKnockbackAt(0),
       similarWorldStateInstanceId(0)
 {
-    self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;
+    self->r.client->movestyle = GS_CLASSICBUNNY;
     SetTag(self->r.client->netname);
 }
 
