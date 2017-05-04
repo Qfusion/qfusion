@@ -324,27 +324,38 @@ public:
 class alignas(2) BotFlyUntilLandingMovementState: protected BotAerialMovementState
 {
     short target[3];
-    unsigned short landingDistanceThreshold: 14;
+    unsigned short landingDistanceThreshold: 13;
     bool isTriggered: 1;
+    // If not set, uses target Z level as landing threshold
+    bool usesDistanceThreshold: 1;
     bool isLanding: 1;
 public:
     inline BotFlyUntilLandingMovementState() : isTriggered(false), isLanding(false) {}
 
     inline void Frame(unsigned frameTime) {}
 
-    inline bool ShouldBeLanding(const class BotMovementPredictionContext *context);
+    inline bool CheckForLanding(const class BotMovementPredictionContext *context);
 
     inline void Activate(const vec3_t target_, float landingDistanceThreshold_)
     {
         SetPacked4uVec(target_, this->target);
         landingDistanceThreshold = (decltype(landingDistanceThreshold))(landingDistanceThreshold_);
         isTriggered = true;
+        usesDistanceThreshold = true;
         isLanding = false;
     }
 
     inline void Activate(const Vec3 &target_, float landingDistanceThreshold_)
     {
         Activate(target_.Data(), landingDistanceThreshold_);
+    }
+
+    inline void Activate(float startLandingAtZ)
+    {
+        this->target[2] = (short)startLandingAtZ;
+        isTriggered = true;
+        usesDistanceThreshold = false;
+        isLanding = false;
     }
 
     inline bool IsActive() const { return isTriggered; }
@@ -356,6 +367,8 @@ public:
         if (ShouldDeactivate(self, context))
             Deactivate();
     }
+
+    inline Vec3 Target() const { return GetUnpacked4uVec(target); }
 };
 
 struct alignas(2) BotPendingLookAtPointState
@@ -1042,15 +1055,26 @@ inline bool BotAerialMovementState::ShouldDeactivate(const edict_t *self, const 
     return false;
 }
 
-inline bool BotFlyUntilLandingMovementState::ShouldBeLanding(const class BotMovementPredictionContext *context)
+inline bool BotFlyUntilLandingMovementState::CheckForLanding(const class BotMovementPredictionContext *context)
 {
     if (isLanding)
         return true;
+
     const float *botOrigin = context->movementState->entityPhysicsState.Origin();
-    Vec3 unpackedTarget(GetUnpacked4uVec(target));
-    if (unpackedTarget.Z() > botOrigin[2] + 12.0f)
+
+    // Put the likely case first
+    if (!this->usesDistanceThreshold)
+    {
+        if (target[2] < botOrigin[2])
+        {
+            isLanding = true;
+            return true;
+        }
         return false;
+    }
+
     const float distanceThreshold = this->landingDistanceThreshold * 4.0f;
+    Vec3 unpackedTarget(GetUnpacked4uVec(target));
     if (unpackedTarget.SquareDistanceTo(botOrigin) > distanceThreshold * distanceThreshold)
         return false;
 
@@ -1218,28 +1242,23 @@ class BotLandOnSavedAreasMovementAction: public BotBaseMovementAction
     friend class BotHandleTriggeredJumppadMovementAction;
     friend class BotTryWeaponJumpShortcutMovementAction;
 
-    StaticVector<int, BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS> savedLandingAreas;
+    static constexpr auto MAX_SAVED_LANDING_AREAS = BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS;
+    StaticVector<int, MAX_SAVED_LANDING_AREAS> savedLandingAreas;
+    typedef StaticVector<AreaAndScore, MAX_SAVED_LANDING_AREAS * 2> FilteredAreas;
 
     int currAreaIndex;
     unsigned totalTestedAreas;
 
-    static constexpr auto MAX_BBOX_AREAS = BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS * 2;
-    typedef StaticVector<AreaAndScore, MAX_BBOX_AREAS> FilteredRawAreas;
-    typedef StaticVector<AreaAndScore, BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS> ReachCheckedAreas;
+    int FindJumppadAreaNum(const edict_t *jumppadEntity);
 
-    float SuggestInitialBBoxSide(const vec3_t origin, const vec3_t target);
-    static constexpr auto SIDE_STEP_MULTIPLIER = 1.35f;
-    inline void MakeBBoxDimensions(const vec3_t target, float side, vec3_t mins, vec3_t maxs);
-
-    void FilterRawAreas(const vec3_t start, const vec3_t target, int *rawAreas, int numRawAreas, FilteredRawAreas &result);
-    void CheckAreasNavTargetReachability(FilteredRawAreas &rawAreas, int navTargetAreaNum, ReachCheckedAreas &result);
-
-    inline void SaveLandingAreas(const vec3_t target, BotMovementPredictionContext *context);
-    // For each candidate area checks reachability from the area to the nav target area
-    void SaveLandingAreasForDefinedNavTarget(const vec3_t target, int navTargetAreaNum, BotMovementPredictionContext *context);
-    // Generic version that does not perform reachability checks
-    // (Sometimes this movement action gets triggered when there is (temporarily) no nav target area)
-    void SaveLandingAreasForUndefinedNavTarget(const vec3_t target, BotMovementPredictionContext *context);
+    // Returns a Z level when the landing is expected to be started
+    float SaveJumppadLandingAreas(const edict_t *jumppadEntity);
+    float SaveLandingAreasForJumppadTargetArea(const edict_t *jumppadEntity,
+                                               int navTargetAreaNum,
+                                               int jumppadTargetAreaNum);
+    float SaveFilteredCandidateAreas(const edict_t *jumppadEntity,
+                                     int jumppadTargetAreaNum,
+                                     const FilteredAreas &filteredAreas);
 public:
     DECLARE_MOVEMENT_ACTION_CONSTRUCTOR(BotLandOnSavedAreasMovementAction, COLOR_RGB(255, 0, 255));
     bool TryLandingStepOnArea(int areaNum, BotMovementPredictionContext *context);
