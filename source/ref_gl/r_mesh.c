@@ -56,9 +56,6 @@ void R_ClearDrawList( drawList_t *list ) {
 	// clear counters
 	list->numDrawSurfs = 0;
 
-	list->numSliceElems = list->numSliceElemsReal = 0;
-	list->numSliceVerts = list->numSliceVertsReal = 0;
-
 	// clear VBO slices
 	if( list->vboSlices ) {
 		memset( list->vboSlices, 0, sizeof( *list->vboSlices ) * list->maxVboSlices );
@@ -136,7 +133,7 @@ unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool ligh
 		order |= 0x80;
 	}
 	// draw game objects after the world
-	if( e != rsc.worldent ) {
+	if( e != NULL && e != rsc.worldent ) {
 		order |= 0x100;
 	}
 
@@ -153,18 +150,16 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 						   float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf ) {
 	sortedDrawSurf_t *sds;
 	int shaderSort;
-	bool depthWrite;
 	int renderFx;
 
 	if( !list || !shader ) {
 		return NULL;
 	}
-	if( Shader_ReadDepth( shader ) && ( rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
+	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && Shader_ReadDepth( shader ) ) {
 		return NULL;
 	}
 
 	shaderSort = shader->sort;
-	depthWrite = ( shader->flags & SHADER_DEPTHWRITE ) ? true : false;
 	renderFx = e->renderfx;
 
 	if( shader->cin ) {
@@ -181,6 +176,8 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 	}
 
 	if( renderFx & RF_WEAPONMODEL ) {
+		bool depthWrite = ( shader->flags & SHADER_DEPTHWRITE ) ? true : false;
+
 		if( renderFx & RF_NOCOLORWRITE ) {
 			// depth-pass for alpha-blended weapon:
 			// write to depth but do not write to color
@@ -222,9 +219,24 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 * Updates sorting order for pre-added draw surface. Does nothing after R_SortDrawList is called.
 * Theoretically, should only update the dlightbit.
 */
-void R_UpdateDrawListSurf( void *psds, unsigned order ) {
+void R_UpdateDrawListSurf( void *psds, float dist, unsigned order ) {
 	sortedDrawSurf_t *sds = psds;
-	sds->distKey |= ( order & 0x7FF );
+	sds->distKey |= R_PackDistKey( 0, dist, order );
+}
+
+/*
+* R_GetDrawListSurfPortal
+*/
+portalSurface_t *R_GetDrawListSurfPortal( void *psds ) {
+	sortedDrawSurf_t *sds = psds;
+	unsigned int sortKey = sds->sortKey;
+	unsigned int shaderNum;
+	unsigned int entNum;
+	int portalNum, fogNum;
+
+	R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &portalNum, &entNum );
+
+	return portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 }
 
 /*
@@ -290,11 +302,10 @@ static void R_ReserveVBOSlices( drawList_t *list, unsigned int minSlices ) {
 }
 
 /*
-* R_AddVBOSlice
+* R_AddDrawListVBOSlice
 */
-void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems,
+void R_AddDrawListVBOSlice( drawList_t *list, unsigned int index, unsigned int numVerts, unsigned int numElems,
 					unsigned int firstVert, unsigned int firstElem ) {
-	drawList_t *list = rn.meshlist;
 	vboSlice_t *slice;
 
 	if( index >= list->maxVboSlices ) {
@@ -313,9 +324,6 @@ void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numE
 		slice->numVerts = numVerts;
 		slice->numElems = numElems;
 	} else {
-		list->numSliceVertsReal -= slice->numVerts;
-		list->numSliceElemsReal -= slice->numElems;
-
 		if( firstVert < slice->firstVert ) {
 			// prepend
 			slice->numVerts = slice->numVerts + slice->firstVert - firstVert;
@@ -329,23 +337,31 @@ void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numE
 			slice->numElems = max( slice->numElems, numElems + firstElem - slice->firstElem );
 		}
 	}
-
-	list->numSliceVerts += numVerts;
-	list->numSliceVertsReal += slice->numVerts;
-	list->numSliceElems += numElems;
-	list->numSliceElemsReal += slice->numElems;
 }
 
 /*
-* R_GetVBOSlice
+* R_GetDrawListVBOSlice
 */
-vboSlice_t *R_GetVBOSlice( unsigned int index ) {
-	drawList_t *list = rn.meshlist;
-
+vboSlice_t *R_GetDrawListVBOSlice( drawList_t *list, unsigned int index ) {
 	if( index >= list->maxVboSlices ) {
 		return NULL;
 	}
 	return &list->vboSlices[index];
+}
+
+/*
+* R_GetDrawListVBOSliceCounts
+*
+* The initial values are not reset
+*/
+void R_GetVBOSliceCounts( drawList_t *list, unsigned *numSliceVerts, unsigned *numSliceElems ) {
+	unsigned i;
+
+	for( i = 0; i < list->maxVboSlices; i++ ) {
+		*numSliceVerts += list->vboSlices[i].numVerts;
+
+		*numSliceElems += list->vboSlices[i].numElems;
+	}
 }
 
 static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =

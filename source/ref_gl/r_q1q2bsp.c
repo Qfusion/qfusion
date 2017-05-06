@@ -359,18 +359,18 @@ static bool Mod_GetWALInfo( q2mtexinfo_t *texinfo ) {
 /*
 * Mod_BuildMeshForSurface
 */
-static mesh_t *Mod_BuildMeshForSurface( q2msurface_t *fa ) {
+static mesh_t *Mod_BuildMeshForSurface( q2msurface_t *fa, msurface_t *out ) {
 	int i, j, index;
 	int max_style;
 	int smax, tmax;
 	int numVerts, numElems;
-	q2dedge_t   *r_pedge;
-	float       *vec;
+	q2dedge_t *r_pedge;
+	float *vec;
 	float s, t, base_s, base_t;
 	size_t bufSize;
-	uint8_t     *buffer;
-	mesh_t      *mesh;
-	elem_t      *elems;
+	uint8_t *buffer;
+	mesh_t *mesh;
+	elem_t *elems;
 
 	// reconstruct the polygon
 	numVerts = fa->numedges;
@@ -379,7 +379,7 @@ static mesh_t *Mod_BuildMeshForSurface( q2msurface_t *fa ) {
 	for( j = 0; j < MAX_LIGHTMAPS && fa->styles[j] != 255; j++ ) ;
 	max_style = j;
 
-	bufSize = sizeof( mesh_t ) + numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
+	bufSize = numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 	bufSize += numElems * sizeof( elem_t );
 	for( j = 0; j < max_style; j++ )
 		bufSize += numVerts * sizeof( vec2_t );
@@ -395,7 +395,7 @@ static mesh_t *Mod_BuildMeshForSurface( q2msurface_t *fa ) {
 
 	buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 
-	mesh = ( mesh_t * )buffer; buffer += sizeof( mesh_t );
+	mesh = &out->mesh;
 	mesh->numVerts = numVerts;
 	mesh->numElems = numElems;
 
@@ -614,20 +614,21 @@ static void Mod_SubdividePolygon( int numverts, float *verts ) {
 * Breaks a polygon up along axial 64 unit boundaries so
 * that turbulent and sky warps can be done reasonably.
 */
-static mesh_t *Mod_BuildMeshForWarpSurface( q2msurface_t *fa ) {
+static void Mod_BuildMeshForWarpSurface( q2msurface_t *fa, msurface_t *out ) {
 	vec3_t verts[64];
 	int numVerts;
 	int numElems;
 	int i;
 	int index;
-	float       *vec;
+	float *vec;
 	q2mwarppoly_t *poly, *next;
 	size_t bufSize;
-	uint8_t     *buffer;
-	mesh_t      *mesh;
-	elem_t      *elems;
+	uint8_t *buffer;
+	mesh_t *mesh;
+	elem_t *elems;
 
 	loadbmodel_warppoly = NULL;
+	memset( &out->mesh, 0, sizeof( mesh_t ) );
 
 	//
 	// convert edges back to a normal polygon
@@ -655,16 +656,16 @@ static mesh_t *Mod_BuildMeshForWarpSurface( q2msurface_t *fa ) {
 	}
 
 	if( !numVerts || !numElems ) {
-		return NULL;
+		return;
 	}
 
 	// build mesh
-	bufSize = sizeof( mesh_t ) + numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
+	bufSize = numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 	bufSize += numElems * sizeof( elem_t );
 
 	buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 
-	mesh = ( mesh_t * )buffer; buffer += sizeof( mesh_t );
+	mesh = &out->mesh;
 	mesh->numVerts = 0;
 	mesh->numElems = 0;
 
@@ -731,8 +732,6 @@ static mesh_t *Mod_BuildMeshForWarpSurface( q2msurface_t *fa ) {
 		VectorCopy( fa->plane->normal, mesh->normalsArray[i] );
 		mesh->normalsArray[i][3] = 0.0f;
 	}
-
-	return mesh;
 }
 
 //=======================================================
@@ -768,7 +767,7 @@ static void Mod_ApplySuperStylesToFace( const q2msurface_t *in, msurface_t *out 
 	int j, k;
 	float *lmArray;
 	uint8_t *lmlayersArray;
-	mesh_t *mesh = out->mesh;
+	mesh_t *mesh = &out->mesh;
 	mlightmapRect_t *lmRects[MAX_LIGHTMAPS];
 	int lightmaps[MAX_LIGHTMAPS];
 	uint8_t lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
@@ -838,14 +837,9 @@ static void Mod_CreateFaces( void ) {
 		}
 
 		if( in->texinfo->flags & Q2_SURF_WARP ) {
-			out->mesh = Mod_BuildMeshForWarpSurface( in );
+			Mod_BuildMeshForWarpSurface( in, out );
 		} else {
-			out->mesh = Mod_BuildMeshForSurface( in );
-		}
-
-		if( out->mesh ) {
-			out->numElems = out->mesh->numElems;
-			out->numVerts = out->mesh->numVerts;
+			Mod_BuildMeshForSurface( in, out );
 		}
 
 		Mod_ApplySuperStylesToFace( in, out );
@@ -1306,8 +1300,8 @@ static void Mod_Q2LoadSubmodels( const lump_t *l ) {
 		}
 
 		out->radius = RadiusFromBounds( out->mins, out->maxs );
-		out->firstface = LittleLong( in->firstface );
-		out->numfaces = LittleLong( in->numfaces );
+		out->firstModelSurface = LittleLong( in->firstface );
+		out->numModelSurfaces = LittleLong( in->numfaces );
 	}
 }
 
@@ -1965,8 +1959,8 @@ static int Mod_Q1LoadSubmodels( const lump_t *l ) {
 		}
 
 		out->radius = RadiusFromBounds( out->mins, out->maxs );
-		out->firstface = LittleLong( in->firstface );
-		out->numfaces = LittleLong( in->numfaces );
+		out->firstModelSurface = LittleLong( in->firstface );
+		out->numModelSurfaces = LittleLong( in->numfaces );
 	}
 
 	return numvisleafs;

@@ -107,7 +107,7 @@ static void R_TraceAgainstTriangle( const vec_t *a, const vec_t *b, const vec_t 
 */
 static bool R_TraceAgainstSurface( msurface_t *surf ) {
 	int i;
-	mesh_t *mesh = surf->mesh;
+	mesh_t *mesh = &surf->mesh;
 	elem_t  *elem = mesh->elems;
 	vec4_t *verts = mesh->xyzArray;
 	float old_frac = trace_fraction;
@@ -153,7 +153,7 @@ static int R_TraceAgainstLeaf( mleaf_t *leaf ) {
 			continue;
 		}
 
-		if( surf->mesh ) {
+		if( surf->mesh.numVerts != 0 ) {
 			if( R_TraceAgainstSurface( surf ) ) {
 				trace_surface = surf;   // impact surface
 			}
@@ -170,8 +170,8 @@ static int R_TraceAgainstBmodel( mbrushmodel_t *bmodel ) {
 	unsigned int i;
 	msurface_t *surf;
 
-	for( i = 0; i < bmodel->nummodelsurfaces; i++ ) {
-		surf = bmodel->firstmodelsurface + i;
+	for( i = 0; i < bmodel->numModelSurfaces; i++ ) {
+		surf = rsh.worldBrushModel->surfaces + bmodel->firstModelSurface + i;
 		if( surf->flags & trace_umask ) {
 			continue;
 		}

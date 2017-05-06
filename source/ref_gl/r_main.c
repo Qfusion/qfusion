@@ -446,7 +446,7 @@ static vec4_t pic_normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 static vec2_t pic_st[4];
 static byte_vec4_t pic_colors[4];
 static elem_t pic_elems[6] = { 0, 1, 2, 0, 2, 3 };
-static mesh_t pic_mesh = { 4, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, NULL, NULL, 6, pic_elems };
+static mesh_t pic_mesh = { 4, 6, pic_elems, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, NULL, NULL };
 
 /*
 * R_Set2DMode
@@ -934,20 +934,25 @@ static void R_SetupFrame( void ) {
 			if( !rf.numWorldSurfVis ) {
 				rf.worldSurfVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
 				rf.worldSurfFullVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-				rf.numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
 			} else if( rf.numWorldSurfVis < rsh.worldBrushModel->numsurfaces ) {
 				rf.worldSurfVis = R_Realloc( (void *)rf.worldSurfVis, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
 				rf.worldSurfFullVis = R_Realloc( (void *)rf.worldSurfFullVis, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-				rf.numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
 			}
+			rf.numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
 
 			if( !rf.numWorldLeafVis ) {
 				rf.worldLeafVis = R_Malloc( rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
-				rf.numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
 			} else if( rf.numWorldLeafVis < rsh.worldBrushModel->numvisleafs ) {
 				rf.worldLeafVis = R_Realloc( (void *)rf.worldLeafVis, rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
-				rf.numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
 			}
+			rf.numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
+
+			if( !rf.numWorldDrawSurfVis ) {
+				rf.worldDrawSurfVis = R_Malloc( rsh.worldBrushModel->numDrawSurfaces * sizeof( *rf.worldDrawSurfVis ) );
+			} else if( rf.numWorldDrawSurfVis < rsh.worldBrushModel->numDrawSurfaces ) {
+				rf.worldDrawSurfVis = R_Realloc( (void *)rf.worldDrawSurfVis, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rf.worldDrawSurfVis ) );
+			}
+			rf.numWorldDrawSurfVis = rsh.worldBrushModel->numDrawSurfaces;
 
 			R_WaitWorldModel();
 		}
@@ -1165,7 +1170,6 @@ void R_RenderView( const refdef_t *fd ) {
 	bool shadowMap = rn.renderFlags & RF_SHADOWMAPVIEW ? true : false;
 
 	rn.refdef = *fd;
-	rn.numVisSurfaces = 0;
 
 	// load view matrices with default far clip value
 	R_SetupViewMatrices();
@@ -1182,7 +1186,7 @@ void R_RenderView( const refdef_t *fd ) {
 
 	ClearBounds( rn.visMins, rn.visMaxs );
 
-	R_ClearSky();
+	R_ClearSky( &rn.skyDrawSurface );
 
 	if( r_novis->integer ) {
 		rn.renderFlags |= RF_NOVIS;
@@ -1215,11 +1219,6 @@ void R_RenderView( const refdef_t *fd ) {
 		if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 			R_DrawWorld();
 
-			if( !rn.numVisSurfaces ) {
-				// no world surfaces visible
-				return;
-			}
-
 			rn.fog_eye = R_FogForSphere( rn.viewOrigin, 0.5 );
 			rn.hdrExposure = R_LightExposureForOrigin( rn.viewOrigin );
 		}
@@ -1242,6 +1241,8 @@ void R_RenderView( const refdef_t *fd ) {
 	if( r_speeds->integer ) {
 		rf.stats.t_add_entities += ( ri.Sys_Milliseconds() - msec );
 	}
+
+	RJ_CompleteJobs();
 
 	if( !shadowMap ) {
 		// now set  the real far clip value and reload view matrices
@@ -1275,11 +1276,9 @@ void R_RenderView( const refdef_t *fd ) {
 		rf.stats.t_draw_meshes += ( ri.Sys_Milliseconds() - msec );
 	}
 
-	rf.stats.c_slices_verts += rn.meshlist->numSliceVerts;
-	rf.stats.c_slices_verts_real += rn.meshlist->numSliceVertsReal;
-
-	rf.stats.c_slices_elems += rn.meshlist->numSliceElems;
-	rf.stats.c_slices_elems_real += rn.meshlist->numSliceElemsReal;
+	if( r_speeds->integer ) {
+		R_GetVBOSliceCounts( rn.meshlist, &rf.stats.c_slices_verts, &rf.stats.c_slices_elems );
+	}
 
 	if( r_showtris->integer ) {
 		R_DrawOutlinedSurfaces( rn.meshlist );
@@ -1442,20 +1441,22 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 
 				Q_snprintfz( out, size,
 							 "%u fps\n"
-							 "%4u wpoly %4u leafs\n"
-							 "%5u\\%5u sverts %5u\\%5u stris\n"
+							 "%4u wpoly %4u leafs %4u surfs\n"
+							 "%5u sverts %5u stris\n"
 							 "%s",
 							 rf.fps.average,
-							 rf.stats.c_brush_polys, rf.stats.c_world_leafs,
-							 rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems / 3, rf.stats.c_slices_elems_real / 3,
+							 rf.stats.c_brush_polys, rf.stats.c_world_leafs, rf.stats.c_world_draw_surfs,
+							 rf.stats.c_slices_verts, rf.stats.c_slices_elems / 3,
 							 backend_msg
 							 );
 				break;
 			case 2:
 			case 3:
 				Q_snprintfz( out, size,
+							 "cull nodes\\surfs: %5u\\%5u\n"
 							 "node: %5u\n"
-							 "polys\\ents: %5u\\%5i  draw: %5u\n",
+							 "polys\\ents: %5u\\%5u  draw: %5u\n",
+							 rf.stats.t_cull_world_nodes, rf.stats.t_cull_world_surfs, 
 							 rf.stats.t_world_node,
 							 rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
 							 );
@@ -1465,6 +1466,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 				if( rf.debugSurface ) {
 					int numVerts = 0, numTris = 0;
 					msurface_t *debugSurface = rf.debugSurface;
+					drawSurfaceBSP_t *drawSurf = rf.debugSurface ? &rsh.worldBrushModel->drawSurfaces[debugSurface->drawSurf - 1] : NULL;
 
 					Q_snprintfz( out, size,
 								 "%s type:%i sort:%i",
@@ -1472,12 +1474,12 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 
 					Q_strncatz( out, "\n", size );
 
-					if( r_speeds->integer == 5 && debugSurface->drawSurf->vbo ) {
-						numVerts = debugSurface->drawSurf->vbo->numVerts;
-						numTris = debugSurface->drawSurf->vbo->numElems / 3;
-					} else if( debugSurface->mesh ) {
-						numVerts = debugSurface->mesh->numVerts;
-						numTris = debugSurface->mesh->numElems;
+					if( r_speeds->integer == 5 && drawSurf->vbo ) {
+						numVerts = drawSurf->vbo->numVerts;
+						numTris = drawSurf->vbo->numElems / 3;
+					} else {
+						numVerts = debugSurface->mesh.numVerts;
+						numTris = debugSurface->mesh.numElems;
 					}
 
 					if( numVerts ) {
@@ -1547,24 +1549,26 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 
 		surf = R_TraceLine( &tr, start, end, 0 );
 		if( surf && surf->drawSurf && !r_showtris->integer ) {
+			drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + surf->drawSurf - 1;
+
 			R_ClearDrawList( rn.meshlist );
 
 			R_ClearDrawList( rn.portalmasklist );
 
-			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), NULL, surf->shader, 0, 0, NULL, surf->drawSurf ) ) {
+			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), NULL, surf->shader, 0, 0, NULL, drawSurf ) ) {
 				if( rn.refdef.rdflags & RDF_FLIPPED ) {
 					RB_FlipFrontFace();
 				}
 
 				if( r_speeds->integer == 5 ) {
 					// VBO debug mode
-					R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces,
-								   surf->drawSurf->numVerts, surf->drawSurf->numElems,
+					R_AddDrawListVBOSlice( rn.meshlist, drawSurf - rsh.worldBrushModel->drawSurfaces,
+								   drawSurf->numVerts, drawSurf->numElems,
 								   0, 0 );
 				} else {
 					// classic mode (showtris for individual surface)
-					R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces,
-								   surf->mesh->numVerts, surf->mesh->numElems,
+					R_AddDrawListVBOSlice( rn.meshlist, drawSurf - rsh.worldBrushModel->drawSurfaces,
+								   surf->mesh.numVerts, surf->mesh.numElems,
 								   surf->firstDrawSurfVert, surf->firstDrawSurfElem );
 				}
 

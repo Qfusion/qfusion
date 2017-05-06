@@ -153,24 +153,15 @@ typedef struct portalSurface_s {
 
 typedef struct {
 	unsigned int renderFlags;
-
-	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
-	int renderTarget;                       // target framebuffer object
-	bool multisampleDepthResolved;
-
-	refdef_t refdef;
-	int scissor[4];
-	int viewport[4];
-	drawList_t      *meshlist;              // meshes to be rendered
-	drawList_t      *portalmasklist;        // sky and portal BSP surfaces are rendered before (sky-)portals
-	                                        // to create depth mask
-
 	unsigned int dlightBits;
 
 	unsigned int shadowBits;
-	shadowGroup_t   *shadowGroup;
 
-	entity_t        *currententity;
+	int renderTarget;                       // target framebuffer object
+	bool multisampleDepthResolved;
+
+	int scissor[4];
+	int viewport[4];
 
 	//
 	// view origin
@@ -181,9 +172,12 @@ typedef struct {
 	float farClip;
 	unsigned int clipFlags;
 	vec3_t visMins, visMaxs;
-	unsigned int numVisSurfaces;
 	float visFarClip;
 	float hdrExposure;
+
+	vec3_t lodOrigin;
+	vec3_t pvsOrigin;
+	cplane_t clipPlane;
 
 	mat4_t objectMatrix;
 	mat4_t cameraMatrix;
@@ -194,21 +188,28 @@ typedef struct {
 	mat4_t cameraProjectionMatrix;                  // cameraMatrix * projectionMatrix
 	mat4_t modelviewProjectionMatrix;               // modelviewMatrix * projectionMatrix
 
-	float skyMins[2][6];
-	float skyMaxs[2][6];
+	drawSurfaceSky_t skyDrawSurface;
 
 	float lod_dist_scale_for_fov;
-
-	mfog_t          *fog_eye;
 
 	unsigned int numPortalSurfaces;
 	unsigned int numDepthPortalSurfaces;
 	portalSurface_t portalSurfaces[MAX_PORTAL_SURFACES];
 	portalSurface_t *skyportalSurface;
 
-	vec3_t lodOrigin;
-	vec3_t pvsOrigin;
-	cplane_t clipPlane;
+	refdef_t refdef;
+
+	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
+
+	drawList_t      *meshlist;              // meshes to be rendered
+	drawList_t      *portalmasklist;        // sky and portal BSP surfaces are rendered before (sky-)portals
+											// to create depth mask
+
+	shadowGroup_t   *shadowGroup;
+
+	entity_t        *currententity;
+
+	mfog_t          *fog_eye;
 } refinst_t;
 
 //====================================================
@@ -312,9 +313,11 @@ typedef struct {
 
 	struct {
 		unsigned int c_brush_polys, c_world_leafs;
-		unsigned int c_slices_verts, c_slices_verts_real;
-		unsigned int c_slices_elems, c_slices_elems_real;
+		unsigned int c_slices_verts, c_slices_elems;
+		unsigned int c_world_draw_surfs;
+		unsigned int t_cull_world_nodes, t_cull_world_surfs;
 		unsigned int t_world_node;
+		unsigned int t_add_world_surfs;
 		unsigned int t_add_polys, t_add_entities;
 		unsigned int t_draw_meshes;
 	} stats;
@@ -339,6 +342,9 @@ typedef struct {
 
 	unsigned int numWorldLeafVis;
 	volatile unsigned char *worldLeafVis;
+
+	unsigned int numWorldDrawSurfVis;
+	volatile unsigned char *worldDrawSurfVis;
 
 	char drawBuffer[32];
 	bool newDrawBuffer;
@@ -677,10 +683,12 @@ void R_ClearDrawList( drawList_t *list );
 unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool lightmap, bool dlight );
 void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader,
 						   float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
-void R_UpdateDrawListSurf( void *psds, unsigned order );
-void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems,
+void R_UpdateDrawListSurf( void *psds, float dist, unsigned order );
+portalSurface_t *R_GetDrawListSurfPortal( void *psds );
+void R_AddDrawListVBOSlice( drawList_t *list, unsigned int index, unsigned int numVerts, unsigned int numElems,
 					unsigned int firstVert, unsigned int firstElem );
-vboSlice_t *R_GetVBOSlice( unsigned int index );
+vboSlice_t *R_GetDrawListVBOSlice( drawList_t *list, unsigned int index );
+void R_GetVBOSliceCounts( drawList_t *list, unsigned *numSliceVerts, unsigned *numSliceElems );
 
 void R_InitDrawLists( void );
 
@@ -699,10 +707,10 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 //
 extern drawList_t r_portallist, r_skyportallist;
 
-portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
+portalSurface_t *R_AddPortalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf );
+portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf );
+void R_UpdatePortalSurface( portalSurface_t *portalSurface, const mesh_t *mesh,
 									 const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf );
-portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *shader,
-										void *drawSurf );
 void R_DrawPortals( void );
 
 //
@@ -855,10 +863,19 @@ enum {
 
 struct skydome_s *R_CreateSkydome( model_t *model );
 void        R_TouchSkydome( struct skydome_s *skydome );
-void        R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceBSP_t *drawSurf );
-void        R_ClearSky( void );
-bool        R_ClipSkySurface( const msurface_t *fa );
-bool        R_AddSkySurfToDrawList( const msurface_t *fa, const portalSurface_t *portalSurface );
+void        R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, 
+	                       unsigned int shadowBits, drawSurfaceSky_t *drawSurf );
+void        R_ClearSky( drawSurfaceSky_t *drawSurf );
+
+/**
+* Maps world surface to skybox side
+*
+* @param fa world surface
+* @return returns true if surface has been successfully mapped to skybox axis
+*/
+bool        R_ClipSkySurface( drawSurfaceSky_t *drawSurf, const msurface_t *fa );
+void        *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader, const portalSurface_t *portalSurf, 
+	                                 drawSurfaceSky_t *drawSurf );
 
 //====================================================================
 

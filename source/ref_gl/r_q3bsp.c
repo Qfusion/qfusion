@@ -520,8 +520,8 @@ static void Mod_LoadSubmodels( const lump_t *l ) {
 		}
 
 		out->radius = RadiusFromBounds( out->mins, out->maxs );
-		out->firstface = LittleLong( in->firstface );
-		out->numfaces = LittleLong( in->numfaces );
+		out->firstModelSurface = LittleLong( in->firstface );
+		out->numModelSurfaces = LittleLong( in->numfaces );
 	}
 }
 
@@ -625,11 +625,12 @@ static int Mod_AddUpdatePatchGroup( const rdface_t *in ) {
 /*
 * Mod_CreateMeshForSurface
 */
-#define MESH_T_SIZE_ALIGNED ALIGN( sizeof( mesh_t ), sizeof( vec_t ) )
-static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int patchGroupRef ) {
+void Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int patchGroupRef ) {
 	mesh_t *mesh = NULL;
 	uint8_t *buffer;
 	size_t bufSize, bufPos = 0;
+
+	memset( &out->mesh, 0, sizeof( mesh_t ) );
 
 	switch( out->facetype ) {
 		case FACETYPE_PATCH:
@@ -665,7 +666,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numVerts = size[0] * size[1];
 			numElems = ( size[0] - 1 ) * ( size[1] - 1 ) * 6;
 
-			bufSize = MESH_T_SIZE_ALIGNED;
+			bufSize = 0;
 			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
 				hasLightmap[j] = ( ( in->lightmapStyles[j] != 255 ) && ( LittleLong( in->lm_texnum[j] ) >= 0 ) ) ? true : false;
@@ -687,7 +688,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
-			mesh = ( mesh_t * )buffer; bufPos += MESH_T_SIZE_ALIGNED;
+			mesh = &out->mesh;
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
@@ -745,7 +746,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				mesh->numVerts = numVerts;
 				mesh->numElems = numElems;
 
-				bufPos = MESH_T_SIZE_ALIGNED + numVerts * sizeof( vec4_t );
+				bufPos = numVerts * sizeof( vec4_t );
 
 				normalsPos = bufPos;
 				memmove( buffer + normalsPos, mesh->normalsArray, numVerts * sizeof( vec4_t ) );
@@ -793,8 +794,8 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				memcpy( buffer, oldBuffer, bufSize );
 				R_Free( oldBuffer );
 
-				mesh = ( mesh_t * )buffer;
-				mesh->xyzArray = ( vec4_t * )( buffer + MESH_T_SIZE_ALIGNED );
+				mesh = &out->mesh;
+				mesh->xyzArray = ( vec4_t * )( buffer );
 				mesh->normalsArray = ( vec4_t * )( buffer + normalsPos );
 				mesh->sVectorsArray = ( vec4_t * )( buffer + sVectorsPos );
 				mesh->stArray = ( vec2_t * )( buffer + stPos );
@@ -858,7 +859,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numElems = LittleLong( in->numelems );
 			firstElem = LittleLong( in->firstelem );
 
-			bufSize = MESH_T_SIZE_ALIGNED;
+			bufSize = 0;
 			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
 				hasLightmap[j] = ( ( in->lightmapStyles[j] != 255 ) && ( LittleLong( in->lm_texnum[j] ) >= 0 ) ) ? true : false;
@@ -882,7 +883,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
-			mesh = ( mesh_t * )buffer; bufPos += MESH_T_SIZE_ALIGNED;
+			mesh = &out->mesh;
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
@@ -966,8 +967,6 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			break;
 		}
 	}
-
-	return mesh;
 }
 
 /*
@@ -1508,7 +1507,7 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out ) {
 	int j, k;
 	float *lmArray;
 	uint8_t *lmlayersArray;
-	mesh_t *mesh = out->mesh;
+	mesh_t *mesh = &out->mesh;
 	mlightmapRect_t *lmRects[MAX_LIGHTMAPS];
 	int lightmaps[MAX_LIGHTMAPS];
 	uint8_t lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
@@ -1625,11 +1624,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 	in = loadmodel_dsurfaces;
 	surf = loadbmodel->surfaces;
 	for( i = 0; i < loadbmodel->numsurfaces; i++, in++, surf++ ) {
-		surf->mesh = Mod_CreateMeshForSurface( in, surf, loadmodel_patchgrouprefs[i] );
-		if( surf->mesh ) {
-			surf->numVerts = surf->mesh->numVerts;
-			surf->numElems = surf->mesh->numElems;
-		}
+		Mod_CreateMeshForSurface( in, surf, loadmodel_patchgrouprefs[i] );
 
 		Mod_ApplySuperStylesToFace( in, surf );
 
@@ -1639,7 +1634,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 			mapConfig.forceWorldOutlines = true;
 		}
 
-		if( globalFog && surf->mesh && surf->fog != testFog ) {
+		if( globalFog && surf->mesh.numVerts != 0 && surf->fog != testFog ) {
 			if( !( surf->shader->flags & SHADER_SKY ) && !surf->shader->fog_dist ) {
 				globalFog = false;
 			}

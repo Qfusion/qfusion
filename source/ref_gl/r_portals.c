@@ -25,22 +25,54 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal );
 /*
 * R_AddPortalSurface
 */
-portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
-									 const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf ) {
-	unsigned int i;
-	float dist;
-	cplane_t plane, untransformed_plane;
-	vec3_t v[3];
+portalSurface_t *R_AddPortalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf ) {
 	portalSurface_t *portalSurface;
 	bool depthPortal = !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) );
 
-	if( !mesh || !shader ) {
+	if( !shader ) {
 		return NULL;
 	}
 
 	if( R_FASTSKY() && depthPortal ) {
 		return NULL;
 	}
+
+	if( rn.numPortalSurfaces == MAX_PORTAL_SURFACES ) {
+		// not enough space
+		return NULL;
+	}
+
+	portalSurface = &rn.portalSurfaces[rn.numPortalSurfaces++];
+	memset( portalSurface, 0, sizeof( portalSurface_t ) );
+	portalSurface->entity = ent;
+	portalSurface->shader = shader;
+	portalSurface->skyPortal = NULL;
+	ClearBounds( portalSurface->mins, portalSurface->maxs );
+	memset( portalSurface->texures, 0, sizeof( portalSurface->texures ) );
+
+	if( depthPortal ) {
+		rn.numDepthPortalSurfaces++;
+	}
+
+	return portalSurface;
+}
+
+/*
+* R_UpdatePortalSurface
+*/
+void R_UpdatePortalSurface( portalSurface_t *portalSurface, const mesh_t *mesh,
+									 const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf ) {
+	unsigned int i;
+	float dist;
+	cplane_t plane, untransformed_plane;
+	vec3_t v[3];
+	const entity_t *ent;
+
+	if( !mesh || !portalSurface ) {
+		return;
+	}
+
+	ent = portalSurface->entity;
 
 	for( i = 0; i < 3; i++ ) {
 		VectorCopy( mesh->xyzArray[mesh->elems[i]], v[i] );
@@ -56,7 +88,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 
 		// autosprites are quads, facing the viewer
 		if( mesh->numVerts < 4 ) {
-			return NULL;
+			return;
 		}
 
 		// compute centre as average of 4 vertices
@@ -92,7 +124,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 	if( ( dist = PlaneDiff( rn.viewOrigin, &plane ) ) <= BACKFACE_EPSILON ) {
 		// behind the portal plane
 		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) ) {
-			return NULL;
+			return;
 		}
 
 		// we need to render the backplane view
@@ -100,46 +132,16 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 
 	// check if portal view is opaque due to alphagen portal
 	if( shader->portalDistance && dist > shader->portalDistance ) {
-		return NULL;
+		return;
 	}
 
-	// find the matching portal plane
-	for( i = 0; i < rn.numPortalSurfaces; i++ ) {
-		portalSurface = &rn.portalSurfaces[i];
-
-		if( portalSurface->entity == ent &&
-			portalSurface->shader == shader &&
-			DotProduct( portalSurface->plane.normal, plane.normal ) > 0.99f &&
-			fabs( portalSurface->plane.dist - plane.dist ) < 0.1f ) {
-			goto addsurface;
-		}
-	}
-
-	if( i == MAX_PORTAL_SURFACES ) {
-		// not enough space
-		return NULL;
-	}
-
-	portalSurface = &rn.portalSurfaces[rn.numPortalSurfaces++];
-	portalSurface->entity = ent;
 	portalSurface->plane = plane;
-	portalSurface->shader = shader;
 	portalSurface->untransformed_plane = untransformed_plane;
-	portalSurface->skyPortal = NULL;
-	ClearBounds( portalSurface->mins, portalSurface->maxs );
-	memset( portalSurface->texures, 0, sizeof( portalSurface->texures ) );
 
-	if( depthPortal ) {
-		rn.numDepthPortalSurfaces++;
-	}
-
-addsurface:
 	AddPointToBounds( mins, portalSurface->mins, portalSurface->maxs );
 	AddPointToBounds( maxs, portalSurface->mins, portalSurface->maxs );
 	VectorAdd( portalSurface->mins, portalSurface->maxs, portalSurface->centre );
 	VectorScale( portalSurface->centre, 0.5, portalSurface->centre );
-
-	return portalSurface;
 }
 
 /*

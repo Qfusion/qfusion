@@ -140,15 +140,17 @@ static int r_fragmentframecount;
 * a convex fragment (polygon, trifan) which the result of clipping
 * the input winding by six fragment planes.
 */
-static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *surf, vec3_t snorm ) {
+static bool R_WindingClipFragment( const vec3_t *wVerts, int numVerts, const msurface_t *surf, vec3_t snorm ) {
 	int i, j;
 	int stage, newc, numv;
 	cplane_t *plane;
 	bool front;
-	float *v, *nextv, d;
-	float dists[MAX_FRAGMENT_VERTS + 1];
+	float d, dists[MAX_FRAGMENT_VERTS + 1];
 	int sides[MAX_FRAGMENT_VERTS + 1];
-	vec3_t *verts, *newverts, newv[2][MAX_FRAGMENT_VERTS], t;
+	const float *v, *v2;
+	const vec3_t *verts;
+	float *nextv;
+	vec3_t *newverts, newv[2][MAX_FRAGMENT_VERTS], t;
 	fragment_t *fr;
 
 	numv = numVerts;
@@ -208,9 +210,9 @@ static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *sur
 			}
 
 			d = dists[i] / ( dists[i] - dists[i + 1] );
-			nextv = ( i == numv - 1 ) ? verts[0] : v + 3;
+			v2 = ( i == numv - 1 ) ? verts[0] : v + 3;
 			for( j = 0; j < 3; j++ )
-				newverts[newc][j] = v[j] + d * ( nextv[j] - v[j] );
+				newverts[newc][j] = v[j] + d * ( v2[j] - v[j] );
 			newc++;
 		}
 
@@ -252,8 +254,8 @@ static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *sur
 	// not sure if it's 100% correct, but sounds convincing
 	if( numv == 4 ) {
 		for( i = 0, v = verts[0]; i < numv; i++, v += 3 ) {
-			nextv = ( i == 3 ) ? verts[0] : v + 3;
-			VectorSubtract( v, nextv, t );
+			v2 = ( i == 3 ) ? verts[0] : v + 3;
+			VectorSubtract( v, v2, t );
 
 			d = fragmentDiameterSquared - DotProduct( t, t );
 			if( d > 0.01 || d < -0.01 ) {
@@ -274,11 +276,11 @@ static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *sur
 * q2 polys) or tristrips for ultra-fast clipping, providing there's
 * enough stack space (depending on MAX_FRAGMENT_VERTS value).
 */
-static bool R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal ) {
+static bool R_PlanarSurfClipFragment( const msurface_t *surf, vec3_t normal ) {
 	int i;
-	mesh_t *mesh;
-	elem_t  *elem;
-	vec4_t *verts;
+	const mesh_t *mesh;
+	const elem_t *elem;
+	const vec4_t *verts;
 	vec3_t poly[4];
 	vec3_t dir1, dir2, snorm;
 	bool planar;
@@ -291,7 +293,7 @@ static bool R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal ) {
 		}
 	}
 
-	mesh = surf->mesh;
+	mesh = &surf->mesh;
 	elem = mesh->elems;
 	verts = mesh->xyzArray;
 
@@ -328,15 +330,15 @@ static bool R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal ) {
 /*
 * R_PatchSurfClipFragment
 */
-static bool R_PatchSurfClipFragment( msurface_t *surf, vec3_t normal ) {
+static bool R_PatchSurfClipFragment( const msurface_t *surf, vec3_t normal ) {
 	int i, j;
-	mesh_t *mesh;
-	elem_t  *elem;
-	vec4_t *verts;
+	const mesh_t *mesh;
+	const elem_t *elem;
+	const vec4_t *verts;
 	vec3_t poly[3];
 	vec3_t dir1, dir2, snorm;
 
-	mesh = surf->mesh;
+	mesh = &surf->mesh;
 	elem = mesh->elems;
 	verts = mesh->xyzArray;
 

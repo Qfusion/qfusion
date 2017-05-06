@@ -107,7 +107,7 @@ bool R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipfla
 			continue;
 		}
 
-		switch( p->signbits ) {
+		switch( p->signbits & 7 ) {
 			case 0:
 				if( p->normal[0] * maxs[0] + p->normal[1] * maxs[1] + p->normal[2] * maxs[2] < p->dist ) {
 					return true;
@@ -149,8 +149,7 @@ bool R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipfla
 				}
 				break;
 			default:
-				assert( 0 );
-				return false;
+				break;
 		}
 	}
 

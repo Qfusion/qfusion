@@ -24,14 +24,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "iqm.h"
 
+typedef struct {
+	unsigned number;
+	msurface_t *surf;
+} msortedSurface_t;
+
 void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadSkeletalModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
 void Mod_LoadQ2BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
 void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
 void Mod_FixupQ1MipTex( model_t *mod );
-
-model_t *Mod_LoadModel( model_t *mod, bool crash );
 
 static void R_InitMapConfig( const char *model );
 static void R_FinishMapConfig( const model_t *mod );
@@ -125,8 +128,8 @@ static void Mod_CreateVisLeafs( model_t *mod ) {
 	mbrushmodel_t *loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 
 	count = loadbmodel->numleafs;
-	loadbmodel->visleafs = Mod_Malloc( mod, count * sizeof( *loadbmodel->visleafs ) );
-	memset( loadbmodel->visleafs, 0, count * sizeof( *loadbmodel->visleafs ) );
+	loadbmodel->visleafs = Mod_Malloc( mod, (count + 1) * sizeof( *loadbmodel->visleafs ) );
+	memset( loadbmodel->visleafs, 0, (count + 1) * sizeof( *loadbmodel->visleafs ) );
 
 	numVisLeafs = 0;
 	for( i = 0; i < count; i++ ) {
@@ -135,6 +138,8 @@ static void Mod_CreateVisLeafs( model_t *mod ) {
 		leaf = loadbmodel->leafs + i;
 		if( leaf->cluster < 0 || !leaf->numVisSurfaces ) {
 			leaf->visSurfaces = NULL;
+			leaf->numVisSurfaces = 0;
+			leaf->fragmentSurfaces = NULL;
 			leaf->numFragmentSurfaces = 0;
 			leaf->fragmentSurfaces = NULL;
 			continue;
@@ -165,6 +170,7 @@ static void Mod_CreateVisLeafs( model_t *mod ) {
 		loadbmodel->visleafs[numVisLeafs++] = leaf;
 	}
 
+	loadbmodel->visleafs[numVisLeafs] = NULL;
 	loadbmodel->numvisleafs = numVisLeafs;
 }
 
@@ -222,13 +228,13 @@ static void Mod_FinishFaces( model_t *mod ) {
 	for( i = 0; i < loadbmodel->numsurfaces; i++ ) {
 		vec_t *vert;
 		msurface_t *surf;
-		mesh_t *mesh;
+		const mesh_t *mesh;
 
 		surf = loadbmodel->surfaces + i;
-		mesh = surf->mesh;
+		mesh = &surf->mesh;
 		shader = surf->shader;
 
-		if( !mesh || !shader ) {
+		if( !R_SurfPotentiallyVisible( surf ) ) {
 			continue;
 		}
 
@@ -281,12 +287,23 @@ static void Mod_SetupSubmodels( model_t *mod ) {
 
 		memcpy( starmod, mod, sizeof( model_t ) );
 		if( i ) {
-			memcpy( bmodel, mod->extradata, sizeof( mbrushmodel_t ) );
+			memcpy( bmodel, loadbmodel, sizeof( mbrushmodel_t ) );
 		}
 
-		bmodel->firstmodelsurface = bmodel->surfaces + bm->firstface;
-		bmodel->nummodelsurfaces = bm->numfaces;
+		bmodel->firstModelSurface = bm->firstModelSurface;
+		bmodel->numModelSurfaces = bm->numModelSurfaces;
+
+		bmodel->firstModelDrawSurface = bm->firstModelDrawSurface;
+		bmodel->numModelDrawSurfaces = bm->numModelDrawSurfaces;
+
 		starmod->extradata = bmodel;
+		if( i == 0 ) {
+			bmodel->visleafs = loadbmodel->visleafs;
+			bmodel->numvisleafs = loadbmodel->numvisleafs;
+		} else {
+			bmodel->visleafs = NULL;
+			bmodel->numvisleafs = 0;
+		}
 
 		VectorCopy( bm->maxs, starmod->maxs );
 		VectorCopy( bm->mins, starmod->mins );
@@ -301,6 +318,99 @@ static void Mod_SetupSubmodels( model_t *mod ) {
 }
 
 #define VBO_Printf ri.Com_DPrintf
+
+/*
+* R_CompareSurfacesByDrawSurf
+*/
+static int R_CompareSurfacesByDrawSurf( const msortedSurface_t *s1, const msortedSurface_t *s2 ) {
+	if( s1->surf->drawSurf > s2->surf->drawSurf )
+		return 1;
+	if( s1->surf->drawSurf < s2->surf->drawSurf )
+		return -1;
+	return s1->surf->firstDrawSurfVert - s2->surf->firstDrawSurfVert;
+}
+
+/*
+* Mod_SortModelSurfaces
+*/
+static void Mod_SortModelSurfaces( model_t *mod, unsigned int modnum ) {
+	unsigned i, j;
+	mmodel_t *bm;
+	mbrushmodel_t *loadbmodel;
+	unsigned numSurfaces, firstSurface;
+	msurface_t *backupSurfaces;
+	msortedSurface_t *sortedSurfaces;
+	unsigned *map;
+	unsigned lastDrawSurf;
+
+	assert( mod );
+
+	loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
+	assert( loadbmodel );
+
+	assert( modnum >= 0 && modnum < loadbmodel->numsubmodels );
+	bm = loadbmodel->submodels + modnum;
+
+	// ignore empty models
+	numSurfaces = bm->numModelSurfaces;
+	firstSurface = bm->firstModelSurface;
+	if( !numSurfaces ) {
+		return;
+	}
+
+	map = ( unsigned * )Mod_Malloc( mod, numSurfaces * sizeof( *map ) );
+	sortedSurfaces = ( msortedSurface_t * )Mod_Malloc( mod, numSurfaces * sizeof( *sortedSurfaces ) );
+	backupSurfaces = ( msurface_t * )Mod_Malloc( mod, numSurfaces * sizeof( *backupSurfaces ) );
+	for( i = 0; i < numSurfaces; i++ ) {
+		sortedSurfaces[i].number = i;
+		sortedSurfaces[i].surf = loadbmodel->surfaces + firstSurface + i;
+	}
+
+	memcpy( backupSurfaces, loadbmodel->surfaces + firstSurface, numSurfaces * sizeof( msurface_t ) );
+	qsort( sortedSurfaces, numSurfaces, sizeof( msortedSurface_t ), &R_CompareSurfacesByDrawSurf );
+
+	for( i = 0; i < numSurfaces; i++ ) {
+		map[sortedSurfaces[i].number] = i;
+	}
+
+	if( !modnum && loadbmodel->visleafs ) {
+		mleaf_t *leaf, **pleaf;
+		for( pleaf = loadbmodel->visleafs, leaf = *pleaf; leaf; leaf = *++pleaf ) {
+			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+				leaf->visSurfaces[j] = map[leaf->visSurfaces[j]];
+				leaf->fragmentSurfaces[j] = map[leaf->fragmentSurfaces[j]];
+			}
+		}
+	}
+
+	for( i = 0; i < numSurfaces; i++ ) {
+		*(loadbmodel->surfaces + firstSurface + i) = backupSurfaces[sortedSurfaces[i].number];
+	}
+
+	lastDrawSurf = loadbmodel->numDrawSurfaces + 1;
+	for( i = 0; i < numSurfaces; i++ ) {
+		drawSurfaceBSP_t *drawSurf;
+		msurface_t *surf = loadbmodel->surfaces + firstSurface + i;
+
+		if( !surf->drawSurf ) {
+			continue;
+		}
+
+		drawSurf = &loadbmodel->drawSurfaces[surf->drawSurf - 1];
+
+		if( lastDrawSurf != surf->drawSurf ) {
+			drawSurf->numWorldSurfaces = 0;
+			drawSurf->firstWorldSurface = firstSurface + i;
+			lastDrawSurf = surf->drawSurf;
+		}
+
+		drawSurf->numWorldSurfaces++;
+	}
+
+	R_Free( map );
+	R_Free( sortedSurfaces );
+	R_Free( backupSurfaces );
+}
 
 /*
 * Mod_CreateSubmodelBufferObjects
@@ -337,18 +447,21 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	bm = loadbmodel->submodels + modnum;
 
 	// ignore empty models
-	if( !bm->numfaces ) {
+	if( !bm->numModelSurfaces ) {
 		return 0;
 	}
 
-	surfmap = ( msurface_t ** )Mod_Malloc( mod, bm->numfaces * sizeof( *surfmap ) );
-	surfaces = ( msurface_t ** )Mod_Malloc( mod, bm->numfaces * sizeof( *surfaces ) );
+	surfmap = ( msurface_t ** )Mod_Malloc( mod, bm->numModelSurfaces * sizeof( *surfmap ) );
+	surfaces = ( msurface_t ** )Mod_Malloc( mod, bm->numModelSurfaces * sizeof( *surfaces ) );
 	numSurfaces = 0;
 
 	numTempVBOs = 0;
 	maxTempVBOs = 1024;
 	tempVBOs = ( mesh_vbo_t * )Mod_Malloc( mod, maxTempVBOs * sizeof( *tempVBOs ) );
 	startDrawSurface = loadbmodel->numDrawSurfaces;
+
+	bm->numModelDrawSurfaces = 0;
+	bm->firstModelDrawSurface = startDrawSurface;
 
 	if( !modnum && loadbmodel->pvs ) {
 		mleaf_t *leaf, **pleaf;
@@ -366,14 +479,14 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		visdata = ( uint8_t * )Mod_Malloc( mod, rowlongs * 4 * loadbmodel->numsurfaces );
 		areadata = ( uint8_t * )Mod_Malloc( mod, areabytes * loadbmodel->numsurfaces );
 
-		for( pleaf = loadbmodel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ ) {
+		for( pleaf = loadbmodel->visleafs, leaf = *pleaf; leaf; leaf = *++pleaf ) {
 			for( i = 0; i < leaf->numVisSurfaces; i++ ) {
 				unsigned surfnum;
 
 				surfnum = leaf->visSurfaces[i];
 				surf = loadbmodel->surfaces + surfnum;
 
-				if( surfnum >= bm->numfaces ) {
+				if( surfnum >= bm->numModelSurfaces ) {
 					// some buggy maps such as aeroq2 contain visleafs that address faces from submodels...
 					continue;
 				}
@@ -402,7 +515,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 			}
 		}
 
-		memset( surfmap, 0, bm->numfaces * sizeof( *surfmap ) );
+		memset( surfmap, 0, bm->numModelSurfaces * sizeof( *surfmap ) );
 	} else {
 		// either a submodel or an unvised map
 		rowbytes = 0;
@@ -411,7 +524,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		areabytes = 0;
 		areadata = NULL;
 
-		for( i = 0, surf = loadbmodel->surfaces + bm->firstface; i < bm->numfaces; i++, surf++ ) {
+		for( i = 0, surf = loadbmodel->surfaces + bm->firstModelSurface; i < bm->numModelSurfaces; i++, surf++ ) {
 			if( !R_SurfPotentiallyVisible( surf ) ) {
 				continue;
 			}
@@ -459,8 +572,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		arearow = areadata + i * areabytes;
 
 		fcount = 1;
-		vcount = surf->numVerts;
-		ecount = surf->numElems;
+		vcount = surf->mesh.numVerts;
+		ecount = surf->mesh.numElems;
 
 		// portal or foliage surfaces can not be batched
 		if( !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) && !surf->numInstances ) {
@@ -481,7 +594,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				if( surf2->fog != surf->fog ) {
 					continue;
 				}
-				if( vcount + surf2->numVerts >= USHRT_MAX ) {
+				if( vcount + surf2->mesh.numVerts >= USHRT_MAX ) {
 					continue;
 				}
 				if( surf2->numInstances != 0 ) {
@@ -511,8 +624,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 						longrow[k] |= longrow2[k];
 merge:
 					fcount++;
-					vcount += surf2->numVerts;
-					ecount += surf2->numElems;
+					vcount += surf2->mesh.numVerts;
+					ecount += surf2->mesh.numElems;
 					surfmap[j] = surf;
 					last_merged = j;
 				}
@@ -547,14 +660,16 @@ merge:
 			drawSurf->superLightStyle = surf->superLightStyle;
 			drawSurf->instances = surf->instances;
 			drawSurf->numInstances = surf->numInstances;
+			drawSurf->fog = surf->fog;
+			drawSurf->shader = surf->shader;
 
 			// upload vertex and elements data for face itself
-			surf->drawSurf = drawSurf;
+			surf->drawSurf = loadbmodel->numDrawSurfaces;
 			surf->firstDrawSurfVert = 0;
 			surf->firstDrawSurfElem = 0;
 
-			vcount = surf->numVerts;
-			ecount = surf->numElems;
+			vcount = surf->mesh.numVerts;
+			ecount = surf->mesh.numElems;
 			numUnmappedSurfaces--;
 
 			// now if there are any merged faces upload them to the same VBO
@@ -565,12 +680,12 @@ merge:
 					}
 
 					surf2 = surfaces[j];
-					surf2->drawSurf = drawSurf;
+					surf2->drawSurf = loadbmodel->numDrawSurfaces;
 					surf2->firstDrawSurfVert = vcount;
 					surf2->firstDrawSurfElem = ecount;
 
-					vcount += surf2->numVerts;
-					ecount += surf2->numElems;
+					vcount += surf2->mesh.numVerts;
+					ecount += surf2->mesh.numElems;
 					numUnmappedSurfaces--;
 				}
 			}
@@ -678,19 +793,28 @@ merge:
 	// upload data to merged VBO's and assign offsets to drawSurfs
 	for( i = 0; i < numSurfaces; i++ ) {
 		mesh_vbo_t *vbo;
+		const mesh_t *mesh;
 		int vertsOffset, elemsOffset;
 
 		surf = surfaces[i];
-		drawSurf = surf->drawSurf;
+
+		if( !surf->drawSurf ) {
+			continue;
+		}
+
+		drawSurf = &loadbmodel->drawSurfaces[surf->drawSurf - 1];
+		mesh = &surf->mesh;
 		vbo = drawSurf->vbo;
 
 		vertsOffset = drawSurf->firstVboVert + surf->firstDrawSurfVert;
 		elemsOffset = drawSurf->firstVboElem + surf->firstDrawSurfElem;
 
-		R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, surf->mesh );
-		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, surf->mesh );
+		R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, mesh );
+		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, mesh );
 		R_UploadVBOInstancesData( vbo, 0, surf->numInstances, surf->instances );
 	}
+
+	bm->numModelDrawSurfaces = loadbmodel->numDrawSurfaces - bm->firstModelDrawSurface;
 
 	R_Free( tempVBOs );
 	R_Free( surfmap );
@@ -732,6 +856,10 @@ void Mod_CreateVertexBufferObjects( model_t *mod ) {
 		total_size += size;
 	}
 
+	for( i = 0; i < loadbmodel->numsubmodels; i++ ) {
+		Mod_SortModelSurfaces( mod, i );
+	}
+
 	if( total ) {
 		VBO_Printf( "Created %i VBOs, totalling %.1f MiB of memory\n", total, ( total_size + 1048574 ) / 1048576.0f );
 	}
@@ -742,18 +870,18 @@ void Mod_CreateVertexBufferObjects( model_t *mod ) {
 */
 static void Mod_CreateSkydome( model_t *mod ) {
 	unsigned int i, j;
-	mmodel_t *bm;
-	msurface_t *surf;
 	mbrushmodel_t *loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 
 	for( i = 0; i < loadbmodel->numsubmodels; i++ ) {
-		bm = loadbmodel->submodels + i;
+		mmodel_t *bm = loadbmodel->submodels + i;
+		msurface_t *surf = loadbmodel->surfaces + bm->firstModelSurface;
 
-		for( j = 0, surf = loadbmodel->surfaces + bm->firstface; j < bm->numfaces; j++, surf++ ) {
+		for( j = 0; j < bm->numModelSurfaces; j++ ) {
 			if( R_SurfPotentiallyVisible( surf ) && ( surf->shader->flags & SHADER_SKY ) ) {
 				loadbmodel->skydome = R_CreateSkydome( mod );
 				return;
 			}
+			surf++;
 		}
 	}
 }
@@ -768,9 +896,9 @@ static void Mod_FinalizeBrushModel( model_t *model, const dvis_t *pvsData ) {
 
 	Mod_CreateVisLeafs( model );
 
-	Mod_SetupSubmodels( model );
-
 	Mod_CreateVertexBufferObjects( model );
+
+	Mod_SetupSubmodels( model );
 
 	Mod_CreateSkydome( model );
 }
@@ -781,29 +909,23 @@ static void Mod_FinalizeBrushModel( model_t *model, const dvis_t *pvsData ) {
 static void Mod_TouchBrushModel( model_t *model ) {
 	unsigned int i;
 	unsigned int modnum;
-	mmodel_t *bm;
 	mbrushmodel_t *loadbmodel;
-	msurface_t *surf;
 
 	assert( model );
 
 	loadbmodel = ( ( mbrushmodel_t * )model->extradata );
 	assert( loadbmodel );
 
-	// touch all shaders and vertex buffer objects for this bmodel
-
 	for( modnum = 0; modnum < loadbmodel->numsubmodels; modnum++ ) {
 		loadbmodel->inlines[modnum].registrationSequence = rsh.registrationSequence;
+	}
 
-		bm = loadbmodel->submodels + modnum;
-		for( i = 0, surf = loadbmodel->surfaces + bm->firstface; i < bm->numfaces; i++, surf++ ) {
-			if( surf->shader ) {
-				R_TouchShader( surf->shader );
-			}
-			if( surf->drawSurf ) {
-				R_TouchMeshVBO( surf->drawSurf->vbo );
-			}
-		}
+	// touch all shaders and vertex buffer objects for this bmodel
+
+	for( i = 0; i < loadbmodel->numDrawSurfaces; i++ ) {
+		drawSurfaceBSP_t *drawSurf = &loadbmodel->drawSurfaces[i];
+		R_TouchShader( drawSurf->shader );
+		R_TouchMeshVBO( drawSurf->vbo );
 	}
 
 	for( i = 0; i < loadbmodel->numfogs; i++ ) {

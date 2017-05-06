@@ -43,9 +43,15 @@ BRUSH MODELS
 // in memory representation
 //
 typedef struct {
-	vec3_t mins, maxs;
 	float radius;
-	unsigned int firstface, numfaces;
+
+	unsigned int firstModelSurface;
+	unsigned int numModelSurfaces;
+
+	unsigned int firstModelDrawSurface;
+	unsigned int numModelDrawSurfaces;
+
+	vec3_t mins, maxs;
 } mmodel_t;
 
 typedef struct mfog_s {
@@ -64,13 +70,14 @@ typedef struct mshaderref_s {
 typedef struct msurface_s {
 	unsigned int facetype, flags;
 
-	drawSurfaceBSP_t *drawSurf;
-	unsigned int numVerts, numElems;    // cached from mesh
 	unsigned int firstDrawSurfVert, firstDrawSurfElem;
 
-	shader_t        *shader;
-	mesh_t          *mesh;
-	mfog_t          *fog;
+	unsigned int numInstances;
+
+	unsigned int drawSurf;
+
+	int fragmentframe;                  // for multi-check avoidance
+
 	vec4_t plane;
 
 	union {
@@ -82,12 +89,14 @@ typedef struct msurface_s {
 		float color[3];
 	};
 
-	int fragmentframe;                  // for multi-check avoidance
+	mesh_t mesh;
+
+	instancePoint_t *instances;
+
+	shader_t *shader;
+	mfog_t *fog;
 
 	struct superLightStyle_s *superLightStyle;
-
-	unsigned int numInstances;
-	instancePoint_t *instances;
 } msurface_t;
 
 typedef struct mnode_s {
@@ -109,10 +118,10 @@ typedef struct mleaf_s {
 	float maxs[3];                      // for bounding box culling
 
 	unsigned numVisSurfaces;
-	unsigned        *visSurfaces;
+	unsigned *visSurfaces;
 
 	unsigned numFragmentSurfaces;
-	unsigned        *fragmentSurfaces;
+	unsigned *fragmentSurfaces;
 } mleaf_t;
 
 typedef struct {
@@ -137,8 +146,13 @@ typedef struct mbrushmodel_s {
 	mmodel_t        *submodels;
 	struct model_s  *inlines;
 
-	unsigned int nummodelsurfaces;
-	msurface_t      *firstmodelsurface;
+	unsigned int numModelSurfaces;
+	unsigned int firstModelSurface;
+
+	unsigned int numModelDrawSurfaces;
+	unsigned int firstModelDrawSurface;
+
+	msurface_t      *modelSurfaces;
 
 	unsigned int numplanes;
 	cplane_t        *planes;

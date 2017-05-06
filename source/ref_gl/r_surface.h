@@ -40,12 +40,6 @@ typedef struct {
 	drawSurfaceType_t type;
 
 	unsigned int visFrame;          // should be drawn when node is crossed
-	void *listSurf;                 // only valid if visFrame == rf.frameCount
-
-	struct mesh_vbo_s *vbo;
-	unsigned int firstVboVert, firstVboElem;
-
-	struct superLightStyle_s *superLightStyle;
 
 	unsigned int shadowBits;
 	unsigned int shadowFrame;
@@ -53,12 +47,33 @@ typedef struct {
 	unsigned int dlightBits;
 	unsigned int dlightFrame;
 
+	unsigned int numVerts;
+	unsigned int numElems;
+
+	unsigned int firstVboVert, firstVboElem;
+
+	unsigned int firstWorldSurface, numWorldSurfaces;
+
 	unsigned int numInstances;
 	instancePoint_t *instances;
 
-	unsigned int numVerts;
-	unsigned int numElems;
+	struct shader_s *shader;
+
+	struct mfog_s *fog;
+
+	struct mesh_vbo_s *vbo;
+
+	struct superLightStyle_s *superLightStyle;
+
+	void *listSurf;                 // only valid if visFrame == rf.frameCount
 } drawSurfaceBSP_t;
+
+typedef struct {
+	drawSurfaceType_t type;
+
+	float skyMins[2][6];
+	float skyMaxs[2][6];
+} drawSurfaceSky_t;
 
 typedef struct {
 	drawSurfaceType_t type;
@@ -79,15 +94,17 @@ typedef struct {
 typedef struct {
 	drawSurfaceType_t type;
 
+	int fogNum;
+
+	int numElems;
 	int numVerts;
+
 	vec4_t *xyzArray;
 	vec4_t *normalsArray;
 	vec2_t *stArray;
 	byte_vec4_t *colorsArray;
-	int numElems;
 	elem_t *elems;
 	struct shader_s *shader;
-	int fogNum;
 } drawSurfacePoly_t;
 
 #endif // R_SURFACE_H

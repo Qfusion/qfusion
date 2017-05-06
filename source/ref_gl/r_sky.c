@@ -58,13 +58,6 @@ static void Gen_Box( skydome_t *skydome );
 
 static void MakeSkyVec( float x, float y, float z, int axis, vec3_t v );
 
-typedef struct {
-	drawSurfaceType_t type;
-	unsigned int visFrame;          // should be drawn when node is crossed
-} drawSurfaceSky_t;
-
-static drawSurfaceSky_t r_skySurf = { ST_SKY, 0 };
-
 /*
 * R_CreateSkydome
 */
@@ -253,11 +246,11 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 * R_DrawSkyBoxSide
 */
 static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visSide, const shader_t *skyShader,
-							  const shader_t *skyboxShader, const mfog_t *fog, int imageIndex ) {
+							  const shader_t *skyboxShader, const mfog_t *fog, int imageIndex, drawSurfaceSky_t *drawSurf ) {
 	int side = visSide->index;
 
-	if( rn.skyMins[0][side] >= rn.skyMaxs[0][side] ||
-		rn.skyMins[1][side] >= rn.skyMaxs[1][side] ) {
+	if( drawSurf->skyMins[0][side] >= drawSurf->skyMaxs[0][side] ||
+		drawSurf->skyMins[1][side] >= drawSurf->skyMaxs[1][side] ) {
 		return;
 	}
 
@@ -276,12 +269,12 @@ static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visS
 * R_DrawSkyBox
 */
 static void R_DrawSkyBox( const skydome_t *skydome, const visSkySide_t *visSides, const shader_t *skyShader,
-						  const shader_t *skyboxShader, const mfog_t *fog ) {
+						  const shader_t *skyboxShader, const mfog_t *fog, drawSurfaceSky_t *drawSurf ) {
 	int i;
 	const int skytexorder[6] = { SKYBOX_RIGHT, SKYBOX_FRONT, SKYBOX_LEFT, SKYBOX_BACK, SKYBOX_TOP, SKYBOX_BOTTOM };
 
 	for( i = 0; i < 6; i++ )
-		R_DrawSkyBoxSide( skydome, visSides + i, skyShader, skyboxShader, fog, skytexorder[i] );
+		R_DrawSkyBoxSide( skydome, visSides + i, skyShader, skyboxShader, fog, skytexorder[i], drawSurf );
 }
 
 /*
@@ -289,12 +282,12 @@ static void R_DrawSkyBox( const skydome_t *skydome, const visSkySide_t *visSides
 *
 * Draw dummy skybox side to prevent the HOM effect
 */
-static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *visSides, const mfog_t *fog ) {
+static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *visSides, const mfog_t *fog, drawSurfaceSky_t *drawSurf ) {
 	int side = 5;
 	const visSkySide_t *visSide = visSides + side;
 
-	if( rn.skyMins[0][side] >= rn.skyMaxs[0][side] ||
-		rn.skyMins[1][side] >= rn.skyMaxs[1][side] ) {
+	if( drawSurf->skyMins[0][side] >= drawSurf->skyMaxs[0][side] ||
+		drawSurf->skyMins[1][side] >= drawSurf->skyMaxs[1][side] ) {
 		return;
 	}
 
@@ -308,7 +301,8 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 /*
 * R_DrawSkySurf
 */
-void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceBSP_t *drawSurf ) {
+void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, 
+	                unsigned int shadowBits, drawSurfaceSky_t *drawSurf ) {
 	int i;
 	int numVisSides;
 	visSkySide_t visSkySides[6];
@@ -330,18 +324,18 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	memset( visSkySides, 0, sizeof( visSkySides ) );
 
 	for( i = 0; i < 6; i++ ) {
-		if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
-			rn.skyMins[1][i] >= rn.skyMaxs[1][i] ) {
+		if( drawSurf->skyMins[0][i] >= drawSurf->skyMaxs[0][i] ||
+			drawSurf->skyMins[1][i] >= drawSurf->skyMaxs[1][i] ) {
 			continue;
 		}
 
 		// increase the visible sides counter
 		numVisSides++;
 
-		umin = (int)( ( rn.skyMins[0][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) );
-		umax = (int)( ( rn.skyMaxs[0][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) ) + 1;
-		vmin = (int)( ( rn.skyMins[1][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) );
-		vmax = (int)( ( rn.skyMaxs[1][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) ) + 1;
+		umin = (int)( ( drawSurf->skyMins[0][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) );
+		umax = (int)( ( drawSurf->skyMaxs[0][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) ) + 1;
+		vmin = (int)( ( drawSurf->skyMins[1][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) );
+		vmax = (int)( ( drawSurf->skyMaxs[1][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) ) + 1;
 
 		clamp( umin, 0, SIDE_SIZE - 1 );
 		clamp( umax, 0, SIDE_SIZE - 1 );
@@ -375,20 +369,20 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	if( skyportal ) {
 		// render fake fogged skybox
-		R_DrawSkyBox( skydome, visSkySides, rsh.emptyFogShader, shader, fog );
+		R_DrawSkyBox( skydome, visSkySides, rsh.emptyFogShader, shader, fog, drawSurf );
 	} else {
 		if( shader->skyboxImages[0] ) {
-			R_DrawSkyBox( skydome, visSkySides, rsh.skyShader, shader, fog );
+			R_DrawSkyBox( skydome, visSkySides, rsh.skyShader, shader, fog, drawSurf );
 		} else {
-			R_DrawBlackBottom( skydome, visSkySides, fog );
+			R_DrawBlackBottom( skydome, visSkySides, fog, drawSurf );
 		}
 
 		if( shader->numpasses ) {
 			for( i = 0; i < 5; i++ ) {
 				const visSkySide_t *visSide = visSkySides + i;
 
-				if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
-					rn.skyMins[1][i] >= rn.skyMaxs[1][i] ) {
+				if( drawSurf->skyMins[0][i] >= drawSurf->skyMaxs[0][i] ||
+					drawSurf->skyMins[1][i] >= drawSurf->skyMaxs[1][i] ) {
 					continue;
 				}
 
@@ -406,11 +400,9 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 //===================================================================
 
-static const msurface_t *r_warpFace;
-static bool r_warpFaceVis;
 static int r_warpFaceAxis;
 
-vec3_t skyclip[6] = {
+const vec3_t skyclip[6] = {
 	{ 1, 1, 0 },
 	{ 1, -1, 0 },
 	{ 0, -1, 1 },
@@ -420,7 +412,7 @@ vec3_t skyclip[6] = {
 };
 
 // 1 = s, 2 = t, 3 = 2048
-int st_to_vec[6][3] =
+const int st_to_vec[6][3] =
 {
 	{ 3, -1, 2 },
 	{ -3, 1, 2 },
@@ -433,7 +425,7 @@ int st_to_vec[6][3] =
 };
 
 // s = [0]/[2], t = [1]/[2]
-int vec_to_st[6][3] =
+const int vec_to_st[6][3] =
 {
 	{ -2, 3, 1 },
 	{ 2, 3, -1 },
@@ -448,7 +440,7 @@ int vec_to_st[6][3] =
 /*
 * DrawSkyPolygon
 */
-static void DrawSkyPolygon( int nump, vec3_t vecs ) {
+static void DrawSkyPolygon( drawSurfaceSky_t *drawSurf, int nump, vec3_t vecs, int *visAxis ) {
 	int i, j;
 	vec3_t v, av;
 	float s, t, dv;
@@ -473,8 +465,7 @@ static void DrawSkyPolygon( int nump, vec3_t vecs ) {
 		axis = ( v[2] < 0 ) ? 5 : 4;
 	}
 
-	r_warpFaceVis = true;
-	r_warpFaceAxis = axis;
+	*visAxis = axis;
 
 	// project new texture coords
 	for( i = 0; i < nump; i++, vecs += 3 ) {
@@ -493,17 +484,17 @@ static void DrawSkyPolygon( int nump, vec3_t vecs ) {
 		j = vec_to_st[axis][1];
 		t = ( j < 0 ) ? -vecs[-j - 1] * dv : vecs[j - 1] * dv;
 
-		if( s < rn.skyMins[0][axis] ) {
-			rn.skyMins[0][axis] = s;
+		if( s < drawSurf->skyMins[0][axis] ) {
+			drawSurf->skyMins[0][axis] = s;
 		}
-		if( t < rn.skyMins[1][axis] ) {
-			rn.skyMins[1][axis] = t;
+		if( t < drawSurf->skyMins[1][axis] ) {
+			drawSurf->skyMins[1][axis] = t;
 		}
-		if( s > rn.skyMaxs[0][axis] ) {
-			rn.skyMaxs[0][axis] = s;
+		if( s > drawSurf->skyMaxs[0][axis] ) {
+			drawSurf->skyMaxs[0][axis] = s;
 		}
-		if( t > rn.skyMaxs[1][axis] ) {
-			rn.skyMaxs[1][axis] = t;
+		if( t > drawSurf->skyMaxs[1][axis] ) {
+			drawSurf->skyMaxs[1][axis] = t;
 		}
 	}
 }
@@ -513,8 +504,8 @@ static void DrawSkyPolygon( int nump, vec3_t vecs ) {
 /*
 * ClipSkyPolygon
 */
-void ClipSkyPolygon( int nump, vec_t *vecs, int stage ) {
-	float *norm;
+static void ClipSkyPolygon( drawSurfaceSky_t *drawSurf, int nump, vec_t *vecs, int stage, int *visAxis ) {
+	const float *norm;
 	float *v;
 	bool front, back;
 	float d, e;
@@ -532,7 +523,7 @@ void ClipSkyPolygon( int nump, vec_t *vecs, int stage ) {
 loc1:
 	if( stage == 6 ) {
 		// fully clipped, so draw it
-		DrawSkyPolygon( nump, vecs );
+		DrawSkyPolygon( drawSurf, nump, vecs, visAxis );
 		return;
 	}
 
@@ -596,66 +587,53 @@ loc1:
 	}
 
 	// continue
-	ClipSkyPolygon( newc[0], newv[0][0], stage + 1 );
-	ClipSkyPolygon( newc[1], newv[1][0], stage + 1 );
+	ClipSkyPolygon( drawSurf, newc[0], newv[0][0], stage + 1, visAxis );
+	ClipSkyPolygon( drawSurf, newc[1], newv[1][0], stage + 1, visAxis );
 }
 
 /*
 * R_ClipSkySurface
 */
-bool R_ClipSkySurface( const msurface_t *surf ) {
+bool R_ClipSkySurface( drawSurfaceSky_t *drawSurf, const msurface_t *surf ) {
 	int i;
-	vec4_t *vert;
-	elem_t  *elem;
-	mesh_t *mesh;
+	const vec4_t *vert;
+	const elem_t *elem;
+	const mesh_t *mesh;
 	vec3_t verts[4];
+	int axis = -1;
 
 	// calculate vertex values for sky box
-	r_warpFace = surf;
-	r_warpFaceVis = false;
-
-	mesh = surf->mesh;
+	mesh = &surf->mesh;
 	elem = mesh->elems;
 	vert = mesh->xyzArray;
 	for( i = 0; i < mesh->numElems; i += 3, elem += 3 ) {
 		VectorSubtract( vert[elem[0]], rn.viewOrigin, verts[0] );
 		VectorSubtract( vert[elem[1]], rn.viewOrigin, verts[1] );
 		VectorSubtract( vert[elem[2]], rn.viewOrigin, verts[2] );
-		ClipSkyPolygon( 3, verts[0], 0 );
+		ClipSkyPolygon( drawSurf, 3, verts[0], 0, &axis );
 	}
 
-	return r_warpFaceVis;
+	return axis != -1;
 }
 
 /*
 * R_AddSkySurfToDrawList
 */
-bool R_AddSkySurfToDrawList( const msurface_t *surf, const portalSurface_t *portalSurf ) {
-	mfog_t *fog = surf->fog;
-	shader_t *shader = surf->shader;
-
-	if( fog && fog->shader->fog_clearDist >= shader->skyHeight ) {
-		// if sky is too low to become fogged, ignore passed fog reference
-		fog = NULL;
-	}
-
-	if( r_skySurf.visFrame != rf.frameCount ) {
-		r_skySurf.visFrame = rf.frameCount;
-		R_AddSurfToDrawList( rn.meshlist, rsc.skyent, fog, shader, 0, r_warpFaceAxis, portalSurf, &r_skySurf );
-	}
-
-	return true;
+void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader,const portalSurface_t *portalSurf, drawSurfaceSky_t *drawSurf ) {
+	return R_AddSurfToDrawList( rn.meshlist, rsc.skyent, NULL, shader, 0, 0, portalSurf, drawSurf );
 }
 
 /*
 * R_ClearSky
 */
-void R_ClearSky( void ) {
+void R_ClearSky( drawSurfaceSky_t *drawSurf ) {
 	int i;
 
+	drawSurf->type = ST_SKY;
+
 	for( i = 0; i < 6; i++ ) {
-		rn.skyMins[0][i] = rn.skyMins[1][i] = 9999999;
-		rn.skyMaxs[0][i] = rn.skyMaxs[1][i] = -9999999;
+		drawSurf->skyMins[0][i] = drawSurf->skyMins[1][i] = 9999999;
+		drawSurf->skyMaxs[0][i] = drawSurf->skyMaxs[1][i] = -9999999;
 	}
 }
 

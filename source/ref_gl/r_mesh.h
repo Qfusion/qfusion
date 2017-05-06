@@ -28,6 +28,10 @@ struct portalSurface_s;
 
 typedef struct mesh_s {
 	unsigned short numVerts;
+	unsigned short numElems;
+
+	elem_t              *elems;
+
 	vec4_t              *xyzArray;
 	vec4_t              *normalsArray;
 	vec4_t              *sVectorsArray;
@@ -38,14 +42,11 @@ typedef struct mesh_s {
 
 	uint8_t             *blendIndices;
 	uint8_t             *blendWeights;
-
-	unsigned short numElems;
-	elem_t              *elems;
 } mesh_t;
 
 typedef struct {
-	unsigned int numVerts, numElems;
 	unsigned int firstVert, firstElem;
+	unsigned int numVerts, numElems; // real counts, including the overdraw
 } vboSlice_t;
 
 typedef struct {
@@ -60,9 +61,6 @@ typedef struct {
 
 	unsigned int maxVboSlices;
 	vboSlice_t          *vboSlices;
-
-	unsigned numSliceVerts, numSliceVertsReal;
-	unsigned numSliceElems, numSliceElemsReal;
 } drawList_t;
 
 typedef void (*drawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, const struct portalSurface_s *, unsigned int, void * );
