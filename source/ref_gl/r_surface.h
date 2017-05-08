@@ -54,6 +54,8 @@ typedef struct {
 
 	unsigned int firstWorldSurface, numWorldSurfaces;
 
+	unsigned int numIndirectCmds;
+
 	unsigned int numInstances;
 	instancePoint_t *instances;
 

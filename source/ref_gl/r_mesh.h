@@ -44,6 +44,14 @@ typedef struct mesh_s {
 	uint8_t             *blendWeights;
 } mesh_t;
 
+typedef  struct {
+	unsigned int		count;
+	unsigned int		instanceCount;
+	unsigned int		firstElement;
+	unsigned int		baseVertex;
+	unsigned int		baseInstance;
+} drawElementsIndirectCommand_t;
+
 typedef struct {
 	unsigned int firstVert, firstElem;
 	unsigned int numVerts, numElems; // real counts, including the overdraw
@@ -58,6 +66,9 @@ typedef struct {
 typedef struct {
 	unsigned int numDrawSurfs, maxDrawSurfs;
 	sortedDrawSurf_t    *drawSurfs;
+
+	unsigned int		maxIndirectsCmds;
+	drawElementsIndirectCommand_t *indirectCmds;
 
 	unsigned int maxVboSlices;
 	vboSlice_t          *vboSlices;

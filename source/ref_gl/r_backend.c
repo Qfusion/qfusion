@@ -60,6 +60,8 @@ void RB_Init( void ) {
 void RB_Shutdown( void ) {
 	RP_StorePrecacheList();
 
+	R_ReleaseDrawIndirectVBO( rb.indirectDrawBufferVBO );
+
 	R_FreePool( &rb.mempool );
 }
 
@@ -125,6 +127,11 @@ void RB_BeginFrame( void ) {
 * RB_EndFrame
 */
 void RB_EndFrame( void ) {
+	if( rb.drawIndirectOffset ) {
+		RB_BindDrawIndirectBuffer( rb.indirectDrawBufferVBO );
+		qglBufferDataARB( GL_DRAW_INDIRECT_BUFFER, DRAW_INDIRECT_BUFFER_SIZE, NULL, GL_STREAM_DRAW_ARB );
+		rb.drawIndirectOffset = 0;
+	}
 }
 
 /*
@@ -500,6 +507,17 @@ void RB_BindElementArrayBuffer( int buffer ) {
 }
 
 /*
+* RB_BindDrawIndirectBuffer
+*/
+void RB_BindDrawIndirectBuffer( int buffer )
+{
+	if( buffer != rb.gl.currentDrawIndirectVBO ) {
+		qglBindBufferARB( GL_DRAW_INDIRECT_BUFFER, buffer );
+		rb.gl.currentDrawIndirectVBO = buffer;
+	}
+}
+
+/*
 * RB_EnableVertexAttrib
 */
 static void RB_EnableVertexAttrib( int index, bool enable ) {
@@ -665,6 +683,8 @@ void RB_RegisterStreamVBOs( void ) {
 									   vattribs[i], VBO_TAG_STREAM, VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT );
 		stream->vertexData = RB_Alloc( MAX_STREAM_VBO_VERTS * stream->vbo->vertexSize );
 	}
+
+	rb.indirectDrawBufferVBO = R_CreateDrawIndirectVBO( DRAW_INDIRECT_BUFFER_SIZE );
 }
 
 /*
@@ -1047,6 +1067,15 @@ void RB_DrawElementsReal( rbDrawElements_t *de ) {
 
 	RB_ApplyScissor();
 
+	if( rb.drawIndirectCount ) {
+		// TODO: check buffer overflow
+		RB_BindDrawIndirectBuffer( rb.indirectDrawBufferVBO );
+		qglBufferSubDataARB( GL_DRAW_INDIRECT_BUFFER, rb.drawIndirectOffset, rb.drawIndirectSize, rb.indirect );
+		qglMultiDrawElementsIndirect( rb.primitive, GL_UNSIGNED_SHORT, (GLvoid *)rb.drawIndirectOffset, rb.drawIndirectCount, 0 );
+		rb.drawIndirectOffset += rb.drawIndirectSize;
+		return;
+	}
+
 	numVerts = de->numVerts;
 	numElems = de->numElems;
 	firstVert = de->firstVert;
@@ -1149,6 +1178,9 @@ void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
 					  int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems ) {
 	rb.currentVAttribs &= ~VATTRIB_INSTANCES_BITS;
 
+	rb.indirect = NULL;
+	rb.drawIndirectCount = 0;
+
 	rb.drawElements.numVerts = numVerts;
 	rb.drawElements.numElems = numElems;
 	rb.drawElements.firstVert = firstVert;
@@ -1183,6 +1215,9 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	if( rb.currentVBOId <= RB_VBO_NONE ) {
 		return;
 	}
+
+	rb.indirect = NULL;
+	rb.drawIndirectCount = 0;
 
 	rb.drawElements.numVerts = numVerts;
 	rb.drawElements.numElems = numElems;
@@ -1219,6 +1254,21 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 
 	rb.drawElements.numInstances = numInstances;
 	rb.drawShadowElements.numInstances = numInstances;
+	RB_DrawElements_();
+}
+
+/*
+* RB_DrawElementsInstanced
+*/
+void RB_MultiDrawElementsIndirect( const void *indirect, unsigned drawCount, size_t size ) {
+	if( !drawCount ) {
+		return;
+	}
+	
+	rb.indirect = indirect;
+	rb.drawIndirectCount = drawCount;
+	rb.drawIndirectSize = size;
+	
 	RB_DrawElements_();
 }
 

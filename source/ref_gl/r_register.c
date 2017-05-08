@@ -384,6 +384,15 @@ static const gl_extension_func_t gl_ext_multisample_ARB_funcs[] =
 	,GL_EXTENSION_FUNC_EXT( NULL,NULL )
 };
 
+/* GL_ARB_multi_draw_indirect */
+static const gl_extension_func_t gl_ext_multi_draw_indirect_ARB_func[] =
+{
+	GL_EXTENSION_FUNC(MultiDrawArraysIndirect)
+	,GL_EXTENSION_FUNC(MultiDrawElementsIndirect)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 #else // GL_ES_VERSION_2_0
 
 /* GL_ANGLE_framebuffer_blit */
@@ -511,6 +520,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION_EXT( EXT, texture_array, 1, false, false, NULL, texture3D )
 	,GL_EXTENSION( EXT, packed_depth_stencil, false, false, NULL )
 	,GL_EXTENSION( SGIS, texture_lod, false, false, NULL )
+	,GL_EXTENSION( ARB, multi_draw_indirect, false, false, &gl_ext_multi_draw_indirect_ARB_func )
 	,GL_EXTENSION( ARB, gpu_shader5, false, false, NULL )
 	,GL_EXTENSION( ARB, texture_float, false, false, NULL )
 	,GL_EXTENSION( EXT, texture_sRGB, false, false, NULL )

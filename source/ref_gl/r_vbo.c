@@ -801,6 +801,39 @@ vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset, int num
 }
 
 /*
+* R_CreateDrawIndirectVBO
+*/
+unsigned int R_CreateDrawIndirectVBO( size_t size )
+{
+	unsigned int id;
+
+	if( !glConfig.ext.multi_draw_indirect )
+		return 0;
+	if( !size )
+		return 0;
+
+	qglGenBuffersARB( 1, &id );
+	if( !id )
+		return 0;
+
+	RB_BindDrawIndirectBuffer( id );
+	qglBufferDataARB( GL_DRAW_INDIRECT_BUFFER, size, NULL, GL_DYNAMIC_DRAW_ARB );
+	if( qglGetError () == GL_OUT_OF_MEMORY )
+		return 0;
+
+	return id;
+}
+
+/*
+* R_ReleaseDrawIndirectVBO
+*/
+void R_ReleaseDrawIndirectVBO( unsigned id )
+{
+	if( id )
+		qglDeleteBuffersARB( 1, &id );
+}
+
+/*
 * R_FreeVBOsByTag
 *
 * Release all vertex buffer objects with specified tag.

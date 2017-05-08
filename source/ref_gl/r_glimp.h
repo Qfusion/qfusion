@@ -197,6 +197,7 @@ typedef struct {
 	,multisample
 	,pixel_format
 	,framebuffer_multisample
+	,multi_draw_indirect
 	;
 	union { char shadow, shadow_samplers; };
 	union { char texture3D, texture_3D; };

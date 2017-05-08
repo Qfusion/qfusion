@@ -172,7 +172,7 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	const vboSlice_t *shadowSlice;
 	static const vboSlice_t nullSlice = { 0 };
 	int firstVert, firstElem;
-	int numVerts, numElems;
+	unsigned numVerts, numElems;
 	int firstShadowVert, firstShadowElem;
 	int numShadowVerts, numShadowElems;
 	unsigned shadowBits, dlightBits;
@@ -234,10 +234,20 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		RB_DrawElementsInstanced( firstVert, numVerts, firstElem, numElems,
 								  firstShadowVert, numShadowVerts, firstShadowElem, numShadowElems,
 								  drawSurf->numInstances, drawSurf->instances );
-	} else {
-		RB_DrawElements( firstVert, numVerts, firstElem, numElems,
-						 firstShadowVert, numShadowVerts, firstShadowElem, numShadowElems );
+		return;
 	}
+	
+	if( drawSurf->numIndirectCmds && r_temp1->integer ) {
+		drawElementsIndirectCommand_t *cmd = R_GetIndirectCmd( drawSurf->firstWorldSurface );
+
+		if( cmd->count < numElems ) {
+			RB_MultiDrawElementsIndirect( cmd, drawSurf->numIndirectCmds, sizeof( *cmd ) * drawSurf->numIndirectCmds );
+			return;
+		}
+	}
+
+	RB_DrawElements( firstVert, numVerts, firstElem, numElems,
+					 firstShadowVert, numShadowVerts, firstShadowElem, numShadowElems );
 }
 
 /*
@@ -293,16 +303,21 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 
 	drawOrder = R_PackOpaqueOrder( e, shader, false, 0 );
 
+	drawSurf->numIndirectCmds = 0;
 	drawSurf->visFrame = rf.frameCount;
 	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 0, drawOrder, portalSurface, drawSurf );
 	if( !drawSurf->listSurf ) {
 		return false;
 	}
 
+	// reserve
+	R_AddIndirectCmd( drawSurf->firstWorldSurface + drawSurf->numWorldSurfaces, 0, 0 );
+
 	if( portalSurface && !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) ) {
 		R_AddSurfToDrawList( rn.portalmasklist, e, NULL, rsh.skyShader, 0, 0, NULL, drawSurf );
 	}
 
+	// reserve
 	R_AddDrawListVBOSlice( rn.meshlist, sliceIndex, 0, 0, 0, 0 );
 	R_AddDrawListVBOSlice( rn.meshlist, sliceIndex + rsh.worldBrushModel->numDrawSurfaces, 0, 0, 0, 0 );
 
@@ -371,77 +386,92 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 	bool dlight = false;
 	msurface_t *firstVisSurf, *lastVisSurf;
 	msurface_t *firstVisShadowSurf, *lastVisShadowSurf;
+	drawElementsIndirectCommand_t *indirect;
 
 	if( !drawSurf->listSurf ) {
 		return;
 	}
 
+	indirect = NULL;
 	firstVisSurf = lastVisSurf = NULL;
 	firstVisShadowSurf = lastVisShadowSurf = NULL;
 
 	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
+		float sdist = 0;
 		unsigned ss = drawSurf->firstWorldSurface + i;
+		msurface_t *surf = rsh.worldBrushModel->surfaces + ss;
+		unsigned int newDlightBits = dlightBits;
+		unsigned int newShadowBits = shadowBits;
 
-		if( rf.worldSurfVis[ss] ) {
-			float sdist = 0;
-			msurface_t *surf = rsh.worldBrushModel->surfaces + ss;
-			unsigned int newDlightBits = dlightBits;
-			unsigned int newShadowBits = shadowBits;
-
-			if( !R_ClipSpecialWorldSurf( drawSurf, surf, origin, &sdist ) ) {
-				// clipped away
-				continue;
-			}
-
-			if( ( surf->flags & SURF_NOLIGHTMAP ) == 0 )
-				lightmapped = true;
-			if( sdist > sdist )
-				dist = sdist;
-
-			// avoid double-checking dlights that have already been added to drawSurf
-			if( drawSurf->dlightFrame == rsc.frameCount )
-				newDlightBits &= ~drawSurf->dlightBits;
-
-			if( newDlightBits )
-				newDlightBits = R_SurfaceDlightBits( surf, newDlightBits );
-			if( newShadowBits )
-				newShadowBits = R_SurfaceShadowBits( surf, newShadowBits );
-
-			// dynamic lights that affect the surface
-			if( newDlightBits ) {
-				// ignore dlights that have already been marked as affectors
-				if( drawSurf->dlightFrame == rsc.frameCount ) {
-					drawSurf->dlightBits |= newDlightBits;
-				} else {
-					drawSurf->dlightBits = newDlightBits;
-					drawSurf->dlightFrame = rsc.frameCount;
-				}
-
-				dlight = true;
-			}
-
-			// shadows that are projected onto the surface
-			if( newShadowBits ) {
-				// ignore shadows that have already been marked as affectors
-				if( drawSurf->shadowFrame == rsc.frameCount ) {
-					drawSurf->shadowBits |= newShadowBits;
-				} else {
-					drawSurf->shadowBits = newShadowBits;
-					drawSurf->shadowFrame = rsc.frameCount;
-				}
-
-				if( firstVisShadowSurf == NULL )
-					firstVisShadowSurf = surf;
-				lastVisShadowSurf = surf;
-			}
-
-			// surfaces are sorted by their firstDrawVert index so to cut the final slice
-			// we only need to note the first and the last surface
-			if( firstVisSurf == NULL )
-				firstVisSurf = surf;
-			lastVisSurf = surf;
+		if( !rf.worldSurfVis[ss] ) {
+			indirect = NULL;
+			continue;
 		}
-	}
+		if( !R_ClipSpecialWorldSurf( drawSurf, surf, origin, &sdist ) ) {
+			indirect = NULL;
+			// clipped away
+			continue;
+		}
+
+		if( !indirect ) {
+			indirect = R_AddIndirectCmd( drawSurf->firstWorldSurface + drawSurf->numIndirectCmds, 
+				drawSurf->firstVboElem + surf->firstDrawSurfElem, 0 );
+			if( indirect ) {
+				drawSurf->numIndirectCmds++;
+			}
+		}
+
+		if( indirect ) {
+			indirect->count += surf->mesh.numElems;
+		}
+
+		if( ( surf->flags & SURF_NOLIGHTMAP ) == 0 )
+			lightmapped = true;
+		if( sdist > sdist )
+			dist = sdist;
+
+		// avoid double-checking dlights that have already been added to drawSurf
+		if( drawSurf->dlightFrame == rsc.frameCount )
+			newDlightBits &= ~drawSurf->dlightBits;
+
+		if( newDlightBits )
+			newDlightBits = R_SurfaceDlightBits( surf, newDlightBits );
+		if( newShadowBits )
+			newShadowBits = R_SurfaceShadowBits( surf, newShadowBits );
+
+		// dynamic lights that affect the surface
+		if( newDlightBits ) {
+			// ignore dlights that have already been marked as affectors
+			if( drawSurf->dlightFrame == rsc.frameCount ) {
+				drawSurf->dlightBits |= newDlightBits;
+			} else {
+				drawSurf->dlightBits = newDlightBits;
+				drawSurf->dlightFrame = rsc.frameCount;
+			}
+			dlight = true;
+		}
+
+		// shadows that are projected onto the surface
+		if( newShadowBits ) {
+			// ignore shadows that have already been marked as affectors
+			if( drawSurf->shadowFrame == rsc.frameCount ) {
+				drawSurf->shadowBits |= newShadowBits;
+			} else {
+				drawSurf->shadowBits = newShadowBits;
+				drawSurf->shadowFrame = rsc.frameCount;
+			}
+
+			if( firstVisShadowSurf == NULL )
+				firstVisShadowSurf = surf;
+			lastVisShadowSurf = surf;
+		}	
+
+		// surfaces are sorted by their firstDrawVert index so to cut the final slice
+		// we only need to note the first and the last surface
+		if( firstVisSurf == NULL )
+			firstVisSurf = surf;
+		lastVisSurf = surf;
+	}	
 
 	// prepare the slice
 	if( firstVisSurf ) {

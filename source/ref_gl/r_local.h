@@ -690,6 +690,9 @@ void R_AddDrawListVBOSlice( drawList_t *list, unsigned int index, unsigned int n
 vboSlice_t *R_GetDrawListVBOSlice( drawList_t *list, unsigned int index );
 void R_GetVBOSliceCounts( drawList_t *list, unsigned *numSliceVerts, unsigned *numSliceElems );
 
+drawElementsIndirectCommand_t *R_AddIndirectCmd( unsigned int index, unsigned int first, unsigned count );
+drawElementsIndirectCommand_t *R_GetIndirectCmd( unsigned int index );
+
 void R_InitDrawLists( void );
 
 void R_SortDrawList( drawList_t *list );
@@ -844,6 +847,8 @@ void        R_UploadVBOVertexRawData( mesh_vbo_t *vbo, int vertsOffset, int numV
 vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, vattribmask_t vattribs, const mesh_t *mesh );
 void        R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, const mesh_t *mesh );
 vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset, int numInstances, instancePoint_t *instances );
+unsigned int R_CreateDrawIndirectVBO( size_t size );
+void		R_ReleaseDrawIndirectVBO( unsigned id );
 void        R_FreeVBOsByTag( vbo_tag_t tag );
 void        R_FreeUnusedVBOs( void );
 void        R_ShutdownVBO( void );

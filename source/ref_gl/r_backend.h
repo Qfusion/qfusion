@@ -80,6 +80,7 @@ void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
 void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems,
 							   int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
 							   int numInstances, instancePoint_t *instances );
+void RB_MultiDrawElementsIndirect( const void *indirect, unsigned drawCount, size_t size );
 
 void RB_FlushTextureCache( void );
 

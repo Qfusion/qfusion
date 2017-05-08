@@ -327,7 +327,7 @@ static int R_CompareSurfacesByDrawSurf( const msortedSurface_t *s1, const msorte
 		return 1;
 	if( s1->surf->drawSurf < s2->surf->drawSurf )
 		return -1;
-	return s1->surf->firstDrawSurfVert - s2->surf->firstDrawSurfVert;
+	return s1->surf->firstDrawSurfElem - s2->surf->firstDrawSurfElem;
 }
 
 /*

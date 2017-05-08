@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_DYNAMIC_DRAWS           2048
 
+#define DRAW_INDIRECT_BUFFER_SIZE	1024*1024
+
 typedef struct r_backend_stats_s {
 	unsigned int numVerts, numElems;
 	unsigned int c_totalVerts, c_totalTris, c_totalStaticVerts, c_totalStaticTris, c_totalDraws, c_totalBinds;
@@ -74,6 +76,7 @@ typedef struct r_backend_s {
 
 		int currentArrayVBO;
 		int currentElemArrayVBO;
+		int currentDrawIndirectVBO;
 
 		int faceCull;
 		bool frontFace;
@@ -118,6 +121,8 @@ typedef struct r_backend_s {
 	rbBonesData_t bonesData;
 	const portalSurface_t *currentPortalSurface;
 
+	unsigned indirectDrawBufferVBO;
+
 	// glUseProgram cache
 	int currentProgram;
 	int currentProgramObject;
@@ -133,6 +138,11 @@ typedef struct r_backend_s {
 
 	instancePoint_t *drawInstances;
 	int maxDrawInstances;
+
+	const void *indirect;
+	unsigned int drawIndirectCount;
+	unsigned int drawIndirectSize;
+	unsigned int drawIndirectOffset;
 
 	rbDrawElements_t drawElements;
 	rbDrawElements_t drawShadowElements;
@@ -202,6 +212,7 @@ int RB_BindProgram( int program );
 void RB_BindImage( int tmu, const image_t *tex );
 void RB_BindArrayBuffer( int buffer );
 void RB_BindElementArrayBuffer( int buffer );
+void RB_BindDrawIndirectBuffer( int buffer );
 void RB_SetInstanceData( int numInstances, instancePoint_t *instances );
 bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
 
