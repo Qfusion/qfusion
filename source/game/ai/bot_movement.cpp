@@ -3127,7 +3127,7 @@ void BotWalkCarefullyMovementAction::PlanPredictionStep(BotMovementPredictionCon
     // First test whether there is a gap in front of the bot
     // (if this test is omitted, bots would use this no-jumping action instead of jumping over gaps and fall down)
 
-    const float zOffset = playerbox_stand_mins[2] - 16.0f - entityPhysicsState.HeightOverGround();
+    const float zOffset = playerbox_stand_mins[2] - 32.0f - entityPhysicsState.HeightOverGround();
     Vec3 frontTestPoint(entityPhysicsState.ForwardDir());
     frontTestPoint *= 8.0f;
     frontTestPoint += entityPhysicsState.Origin();
