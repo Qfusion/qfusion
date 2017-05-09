@@ -48,8 +48,6 @@ int playerbox_gib_viewheight = 8;
 #define PM_SPECIAL_CROUCH_INHIBIT 400
 #define PM_AIRCONTROL_BOUNCE_DELAY 200
 #define PM_OVERBOUNCE		1.01f
-#define PM_CROUCHSLIDE 1500
-#define PM_CROUCHSLIDE_FADE 500
 #define PM_CROUCHSLIDE_TIMEDELAY 700
 #define PM_CROUCHSLIDE_CONTROL 3
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in

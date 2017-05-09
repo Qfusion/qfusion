@@ -1198,7 +1198,7 @@ inline BotBaseMovementAction &BotBaseMovementAction::DefaultBunnyAction()
 }
 inline BotBaseMovementAction &BotBaseMovementAction::FallbackBunnyAction()
 {
-    return self->ai->botRef->walkInterpolatingReachChainMovementAction;
+    return self->ai->botRef->walkOrSlideInterpolatingReachChainMovementAction;
 }
 inline BotFlyUntilLandingMovementAction &BotBaseMovementAction::FlyUntilLandingAction()
 {
@@ -1424,6 +1424,26 @@ inline unsigned BotBaseMovementAction::SequenceDuration(const BotMovementPredict
     return context->totalMillisAhead + context->predictionStepMillis - millisAheadAtSequenceStart;
 }
 
+// Height threshold should be set according to used time step
+// (we might miss crouch sliding activation if its low and the time step is large)
+inline bool ShouldPrepareForCrouchSliding(BotMovementPredictionContext *context, float heightThreshold = 12.0f)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    if (entityPhysicsState.GroundEntity())
+        return false;
+
+    if (entityPhysicsState.Velocity()[2] > 0)
+        return false;
+
+    if (entityPhysicsState.HeightOverGround() > heightThreshold)
+        return false;
+
+    if (entityPhysicsState.Speed() < context->GetRunSpeed())
+        return false;
+
+    return true;
+}
+
 void BotDummyMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
 {
     context->SetDefaultBotInput();
@@ -1447,9 +1467,9 @@ void BotDummyMovementAction::PlanPredictionStep(BotMovementPredictionContext *co
     if (!self->ai->botRef->ShouldBeSilent() && !self->ai->botRef->ShouldMoveCarefully())
     {
         const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-        if (entityPhysicsState.Speed() > 450)
+        if (entityPhysicsState.Speed() > 450 || context->currPlayerState->pmove.pm_flags & PMF_CROUCH_SLIDING)
         {
-            botInput->SetUpMovement(1);
+            botInput->SetUpMovement(-1);
         }
         else
         {
@@ -1480,10 +1500,13 @@ void BotDummyMovementAction::PlanPredictionStep(BotMovementPredictionContext *co
         }
     }
 
-    if (botInput->UpMovement())
+    if (botInput->UpMovement() > 0)
         context->TryAvoidJumpableObstacles(0.3f);
     else
         context->TryAvoidFullHeightObstacles(obstacleAvoidanceCorrectonFactor);
+
+    if (ShouldPrepareForCrouchSliding(context))
+        botInput->SetUpMovement(-1);
 
     botInput->canOverrideUcmd = true;
     botInput->canOverrideLookVec = true;
@@ -2904,7 +2927,7 @@ BotBunnyToBestShortcutAreaMovementAction::BotBunnyToBestShortcutAreaMovementActi
     supportsObstacleAvoidance = false;
     maxSuggestedLookDirs = 2;
     // The constructor cannot be defined in the header due to this bot member access
-    suggestedAction = &bot_->walkInterpolatingReachChainMovementAction;
+    suggestedAction = &bot_->walkOrSlideInterpolatingReachChainMovementAction;
 }
 
 void BotBunnyToBestShortcutAreaMovementAction::SaveSuggestedLookDirs(BotMovementPredictionContext *context)
@@ -3412,6 +3435,12 @@ bool BotGenericRunBunnyingMovementAction::SetupBunnying(const Vec3 &intendedLook
                 botInput->canOverridePitch = false;
                 return true;
             }
+    }
+
+    if (ShouldPrepareForCrouchSliding(context, 8.0f))
+    {
+        botInput->SetUpMovement(-1);
+        context->predictionStepMillis = 16;
     }
 
     TrySetWalljump(context);
@@ -4028,11 +4057,14 @@ void BotGenericRunBunnyingMovementAction::BeforePlanning()
     ResetObstacleAvoidanceState();
 }
 
-void BotWalkInterpolatingReachChainMovementAction::SetupMovementInTargetArea(BotMovementPredictionContext *context)
+void BotWalkOrSlideInterpolatingReachChainMovementAction::SetupMovementInTargetArea(BotMovementPredictionContext *context)
 {
     Vec3 intendedMoveVec(context->NavTargetOrigin());
     intendedMoveVec -= context->movementState->entityPhysicsState.Origin();
     intendedMoveVec.NormalizeFast();
+
+    if (TrySetupCrouchSliding(context, intendedMoveVec))
+        return;
 
     int keyMoves[2];
     if (self->ai->botRef->HasEnemy() && !context->IsCloseToNavTarget())
@@ -4048,8 +4080,49 @@ void BotWalkInterpolatingReachChainMovementAction::SetupMovementInTargetArea(Bot
     botInput->canOverrideLookVec = true;
 }
 
-void BotWalkInterpolatingReachChainMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+bool BotWalkOrSlideInterpolatingReachChainMovementAction::TrySetupCrouchSliding(BotMovementPredictionContext *context,
+                                                                                const Vec3 &intendedLookDir)
 {
+    if (!(context->currPlayerState->pmove.pm_flags & PMF_CROUCH_SLIDING))
+        return false;
+
+    if (context->currPlayerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] <= (3 * PM_CROUCHSLIDE_FADE) / 4)
+        return false;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    if (entityPhysicsState.Speed() < context->GetRunSpeed())
+        return false;
+
+    if (self->ai->botRef->HasEnemy())
+        return false;
+
+    Vec3 velocityDir(entityPhysicsState.Velocity());
+    velocityDir *= 1.0f / entityPhysicsState.Speed();
+
+    // These directions mismatch is way too high for using crouch slide control
+    if (velocityDir.Dot(entityPhysicsState.ForwardDir()) < 0)
+        return false;
+
+    if (velocityDir.Dot(intendedLookDir) < 0)
+        return false;
+
+    auto *botInput = &context->record->botInput;
+    botInput->SetIntendedLookDir(intendedLookDir, true);
+    botInput->SetUpMovement(-1);
+    botInput->isUcmdSet = true;
+
+    float dotRight = intendedLookDir.Dot(entityPhysicsState.RightDir());
+    if (dotRight > 0.2f)
+        botInput->SetRightMovement(1);
+    else if (dotRight < -0.2f)
+        botInput->SetRightMovement(-1);
+
+    return true;
+}
+
+void BotWalkOrSlideInterpolatingReachChainMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    totalNumFrames++;
     if (!GenericCheckIsActionEnabled(context, &DummyAction()))
         return;
 
@@ -4095,14 +4168,31 @@ void BotWalkInterpolatingReachChainMovementAction::PlanPredictionStep(BotMovemen
         return;
     }
 
-    int keyMoves[2];
-    auto &environmentTraceCache = context->EnvironmentTraceCache();
-    if (self->ai->botRef->HasEnemy())
-        environmentTraceCache.MakeRandomizedKeyMovesToTarget(context, interpolator.Result(), keyMoves);
-    else
-        environmentTraceCache.MakeKeyMovesToTarget(context, interpolator.Result(), keyMoves);
+    if (TrySetupCrouchSliding(context, interpolator.Result()))
+    {
+        // Predict crouch sliding precisely
+        context->predictionStepMillis = 16;
+        numSlideFrames++;
+        return;
+    }
 
+    int keyMoves[2] = { 0, 0 };
     auto *botInput = &context->record->botInput;
+    if (entityPhysicsState.GroundEntity())
+    {
+        auto &environmentTraceCache = context->EnvironmentTraceCache();
+        if (self->ai->botRef->HasEnemy())
+            environmentTraceCache.MakeRandomizedKeyMovesToTarget(context, interpolator.Result(), keyMoves);
+        else
+            environmentTraceCache.MakeKeyMovesToTarget(context, interpolator.Result(), keyMoves);
+    }
+    else if (ShouldPrepareForCrouchSliding(context))
+    {
+        botInput->SetUpMovement(-1);
+        // Predict crouch sliding precisely
+        context->predictionStepMillis = 16;
+    }
+
     botInput->SetForwardMovement(keyMoves[0]);
     botInput->SetRightMovement(keyMoves[1]);
     botInput->SetIntendedLookDir(interpolator.Result(), true);
@@ -4110,7 +4200,7 @@ void BotWalkInterpolatingReachChainMovementAction::PlanPredictionStep(BotMovemen
     botInput->canOverrideLookVec = true;
 }
 
-void BotWalkInterpolatingReachChainMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+void BotWalkOrSlideInterpolatingReachChainMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
 {
     BotBaseMovementAction::CheckPredictionStepResults(context);
     if (context->cannotApplyAction || context->isCompleted)
@@ -4124,6 +4214,7 @@ void BotWalkInterpolatingReachChainMovementAction::CheckPredictionStepResults(Bo
     {
         Debug("A prediction step has lead to skimming. A skimming is not allowed in this action\n");
         this->isDisabledForPlanning = true;
+        return;
     }
 
     const auto &newEntityPhysicsState = context->movementState->entityPhysicsState;
@@ -4146,24 +4237,27 @@ void BotWalkInterpolatingReachChainMovementAction::CheckPredictionStepResults(Bo
         Debug("A prediction step has lead to an undefined travel time to the nav target\n");
         this->isDisabledForPlanning = true;
         context->SetPendingRollback();
+        return;
     }
     if (currTravelTimeToNavTarget > minTravelTimeToTarget)
     {
         Debug("A prediction step has lead to an increased travel time to the nav target\n");
         this->isDisabledForPlanning = true;
         context->SetPendingRollback();
+        return;
     }
     minTravelTimeToTarget = currTravelTimeToNavTarget;
 
-    if (this->SequenceDuration(context) < 250)
+    if (this->SequenceDuration(context) < 200)
     {
         context->SaveSuggestedActionForNextFrame(this);
         return;
     }
 
-    if (originAtSequenceStart.SquareDistanceTo(newEntityPhysicsState.Origin()) < 32 * 32)
+    float distanceThreshold = 20.0f + 28.0f * (numSlideFrames / (float)totalNumFrames);
+    if (originAtSequenceStart.SquareDistanceTo(newEntityPhysicsState.Origin()) < SQUARE(distanceThreshold))
     {
-        Debug("The bot is likely to be stuck after 250 millis\n");
+        Debug("The bot is likely to be stuck after 200 millis\n");
         this->isDisabledForPlanning = true;
         context->SetPendingRollback();
         return;
@@ -4171,7 +4265,7 @@ void BotWalkInterpolatingReachChainMovementAction::CheckPredictionStepResults(Bo
 
     if (newEntityPhysicsState.Speed() < context->GetRunSpeed() - 10)
     {
-        Debug("The bot speed is still below run speed after 250 millis\n");
+        Debug("The bot speed is still below run speed after 200 millis\n");
         this->isDisabledForPlanning = true;
         context->SetPendingRollback();
         return;
@@ -4188,11 +4282,13 @@ void BotWalkInterpolatingReachChainMovementAction::CheckPredictionStepResults(Bo
     context->isCompleted = true;
 }
 
-void BotWalkInterpolatingReachChainMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
+void BotWalkOrSlideInterpolatingReachChainMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
 {
     BotBaseMovementAction::OnApplicationSequenceStarted(context);
 
     minTravelTimeToTarget = context->TravelTimeToNavTarget();
+    totalNumFrames = 0;
+    numSlideFrames = 0;
 }
 
 inline unsigned BotEnvironmentTraceCache::SelectNonBlockedDirs(BotMovementPredictionContext *context, unsigned *nonBlockedDirIndices)
@@ -4371,15 +4467,6 @@ void BotCombatDodgeSemiRandomlyToTargetMovementAction::PlanPredictionStep(BotMov
                         botInput->SetSpecialButton(true);
                         context->predictionStepMillis = 16;
                     }
-                }
-            }
-            // If no dash has been set, try crouchslide
-            if (!botInput->IsSpecialButtonSet())
-            {
-                if (pmStats[PM_STAT_FEATURES] & PMFEAT_CROUCH)
-                {
-                    if (pmStats[PM_STAT_CROUCHSLIDETIME] > 100)
-                        botInput->SetUpMovement(-1);
                 }
             }
         }

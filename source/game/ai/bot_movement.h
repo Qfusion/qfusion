@@ -1480,12 +1480,15 @@ public:
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
 };
 
-class BotWalkInterpolatingReachChainMovementAction: public BotBaseMovementAction
+class BotWalkOrSlideInterpolatingReachChainMovementAction: public BotBaseMovementAction
 {
     int minTravelTimeToTarget;
+    int totalNumFrames;
+    int numSlideFrames;
     inline void SetupMovementInTargetArea(BotMovementPredictionContext *context);
+    inline bool TrySetupCrouchSliding(BotMovementPredictionContext *context, const Vec3 &intendedLookDir);
 public:
-    DECLARE_MOVEMENT_ACTION_CONSTRUCTOR(BotWalkInterpolatingReachChainMovementAction, COLOR_RGB(16, 72, 128));
+    DECLARE_MOVEMENT_ACTION_CONSTRUCTOR(BotWalkOrSlideInterpolatingReachChainMovementAction, COLOR_RGB(16, 72, 128));
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
     void CheckPredictionStepResults(BotMovementPredictionContext *context) override;
     void OnApplicationSequenceStarted(BotMovementPredictionContext *context) override;

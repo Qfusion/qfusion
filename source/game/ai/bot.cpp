@@ -62,7 +62,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       bunnyStraighteningReachChainMovementAction(this),
       bunnyToBestShortcutAreaMovementAction(this),
       bunnyInterpolatingReachChainMovementAction(this),
-      walkInterpolatingReachChainMovementAction(this),
+      walkOrSlideInterpolatingReachChainMovementAction(this),
       combatDodgeSemiRandomlyToTargetMovementAction(this),
       movementPredictionContext(self_),
       vsayTimeout(level.time + 10000),

@@ -144,6 +144,8 @@ typedef struct
 
 #define	MAXTOUCH    32
 
+#define PM_CROUCHSLIDE 1500
+#define PM_CROUCHSLIDE_FADE 500
 
 
 //==========================================================
