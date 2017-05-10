@@ -1444,72 +1444,275 @@ inline bool ShouldPrepareForCrouchSliding(BotMovementPredictionContext *context,
     return true;
 }
 
-void BotDummyMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+inline float Distance2DSquared(const vec3_t a, const vec3_t b)
 {
-    context->SetDefaultBotInput();
-    auto *botInput = &context->record->botInput;
+    float dx = a[0] - b[0];
+    float dy = a[1] - b[1];
+    return dx * dx + dy * dy;
+}
 
-    if (context->NavTargetAasAreaNum())
+#ifndef SQUARE
+#define SQUARE(x) ((x) * (x))
+#endif
+
+bool BotDummyMovementAction::HandleWalkOrFallReachability(BotMovementPredictionContext *context,
+                                                          const aas_reachability_t &reach,
+                                                          float zNoBendScale)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    float squareDistance2D = Distance2DSquared(entityPhysicsState.Origin(), reach.start);
+    if (squareDistance2D > SQUARE(20.0f))
+        return false;
+
+    Vec3 reachDir(reach.start);
+    reachDir -= entityPhysicsState.Origin();
+    reachDir.NormalizeFast();
+
+    if (reachDir.Z() < 0.5f)
     {
-        botInput->SetForwardMovement(1);
-        // Check both following context conditions using && for these reasons:
-        // 1) A nav target area might be huge, do not walk prematurely
-        // 2) A bot might be still outside of a nav target area even if it is close to a nav target
-        if (self->ai->botRef->ShouldMoveCarefully() || (context->IsInNavTargetArea() && context->IsCloseToNavTarget()))
-            botInput->SetWalkButton(true);
+        reachDir.Z() *= zNoBendScale;
+        reachDir.NormalizeFast();
     }
 
-    // Try to prevent losing velocity due to a ground friction
-    // if other actions are temporarily unavailable for few frames.
-    // However, respect the "silent" tactics flag, this action is a fallback one
-    // for all other actions and thus can be applied in any situation
-    float obstacleAvoidanceCorrectonFactor = 0.7f;
-    if (!self->ai->botRef->ShouldBeSilent() && !self->ai->botRef->ShouldMoveCarefully())
+    context->record->botInput.SetIntendedLookDir(reachDir, true);
+    context->record->botInput.SetForwardMovement(1);
+    if (reachDir.Dot(entityPhysicsState.ForwardDir()) < 0.7f)
     {
-        const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-        if (entityPhysicsState.Speed() > 450 || context->currPlayerState->pmove.pm_flags & PMF_CROUCH_SLIDING)
+        context->record->botInput.SetWalkButton(true);
+    }
+    else
+    {
+        if (!entityPhysicsState.GroundEntity())
+            context->record->botInput.SetForwardMovement(0);
+        else if (squareDistance2D < SQUARE(12.0f))
+            context->record->botInput.SetWalkButton(true);
+    }
+
+    return true;
+}
+
+bool BotDummyMovementAction::HandleLongJumpReachability(BotMovementPredictionContext *context,
+                                                        const aas_reachability_t &reach)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    float squareDistance2D = Distance2DSquared(entityPhysicsState.Origin(), reach.start);
+    if (squareDistance2D > SQUARE(24.0f))
+        return false;
+
+    Vec3 startDir(reach.start);
+    startDir -= entityPhysicsState.Origin();
+    startDir.NormalizeFast();
+
+    context->record->botInput.SetIntendedLookDir(startDir, true);
+    context->record->botInput.SetForwardMovement(1);
+    if (startDir.Dot(entityPhysicsState.ForwardDir()) > 0.9f)
+    {
+        if (squareDistance2D < SQUARE(14.0f))
+            context->record->botInput.SetUpMovement(1);
+    }
+    else if (!entityPhysicsState.GroundEntity())
+    {
+        context->record->botInput.SetForwardMovement(0);
+        // The bot has just jumped. Try using aircontrol to hit the reach end.
+        if (entityPhysicsState.Velocity()[2] > 0)
         {
-            botInput->SetUpMovement(-1);
+            Vec3 endDir(reach.end);
+            endDir -= entityPhysicsState.Origin();
+            endDir.NormalizeFast();
+            context->record->botInput.SetIntendedLookDir(endDir, true);
+            float dotRight = endDir.Dot(entityPhysicsState.Origin());
+            if (dotRight > 0.1f)
+                context->record->botInput.SetRightMovement(+1);
+            else if (dotRight < -0.1f)
+                context->record->botInput.SetRightMovement(-1);
+        }
+    }
+    else
+    {
+        if (squareDistance2D < SQUARE(14.0f))
+            context->record->botInput.SetWalkButton(true);
+    }
+
+    return true;
+}
+
+bool BotDummyMovementAction::HandleClimbJumpReachability(BotMovementPredictionContext *context,
+                                                         const aas_reachability_t &reach)
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    float squareDistance2D = Distance2DSquared(entityPhysicsState.Origin(), reach.start);
+    if (squareDistance2D > SQUARE(24.0f))
+        return false;
+
+    if (squareDistance2D < SQUARE(14.0f))
+    {
+        // Jump and press special when start falling
+        if (entityPhysicsState.GroundEntity())
+            context->record->botInput.SetUpMovement(1);
+        else if (entityPhysicsState.Velocity()[2] < 35.0f)
+            context->record->botInput.SetSpecialButton(true);
+        else if (entityPhysicsState.Velocity()[2] > 0.66f * DEFAULT_JUMPSPEED)
+        {
+            float heightOverGround = entityPhysicsState.HeightOverGround();
+            // Hack! boost jump Z speed for bots at jump start
+            if (heightOverGround < 12.0f)
+            {
+                Vec3 newVelocity(entityPhysicsState.Velocity());
+                newVelocity.Z() = DEFAULT_JUMPSPEED + 30.0f;
+                context->record->SetModifiedVelocity(newVelocity);
+            }
+        }
+
+        Vec3 reachVec(reach.end);
+        reachVec -= reach.start;
+        context->record->botInput.SetIntendedLookDir(reachVec, false);
+        context->record->botInput.SetTurnSpeedMultiplier(2.0f);
+    }
+    else
+    {
+        Vec3 reachDir(reach.start);
+        reachDir -= entityPhysicsState.Origin();
+        reachDir.NormalizeFast();
+
+        context->record->botInput.SetForwardMovement(1);
+        if (reachDir.Dot(entityPhysicsState.ForwardDir()) < 0.7f)
+            context->record->botInput.SetWalkButton(true);
+
+        context->record->botInput.SetIntendedLookDir(reachDir, true);
+    }
+
+    return true;
+}
+
+bool BotDummyMovementAction::ShouldCrouchSlideNow(BotMovementPredictionContext *context) const
+{
+    if (context->currPlayerState->pmove.pm_flags & PMF_CROUCH_SLIDING)
+    {
+        if (context->currPlayerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > PM_CROUCHSLIDE_FADE)
+            return true;
+    }
+
+    if (context->movementState->entityPhysicsState.Speed2D() > context->GetRunSpeed() * 1.2f)
+        return true;
+
+    return false;
+}
+
+void BotDummyMovementAction::PlanPredictionStep(BotMovementPredictionContext *context)
+{
+    auto *botInput = &context->record->botInput;
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+
+    int nextReachNum = 0;
+    bool handledSpecialMovement = false;
+
+    if (context->IsInNavTargetArea())
+    {
+        Vec3 intendedLookDir(context->NavTargetOrigin());
+        intendedLookDir -= entityPhysicsState.Origin();
+        intendedLookDir.NormalizeFast();
+        botInput->SetIntendedLookDir(intendedLookDir, true);
+
+        if (entityPhysicsState.GroundEntity())
+        {
+            botInput->SetForwardMovement(true);
+            if (self->ai->botRef->ShouldMoveCarefully())
+                botInput->SetWalkButton(true);
+            else if (context->IsCloseToNavTarget())
+                botInput->SetWalkButton(true);
         }
         else
         {
-            obstacleAvoidanceCorrectonFactor = 0.5f;
-            // Prevent blocking when a jump is expected (sometimes its the only available action)
-            if (int nextReachNum = context->NextReachNum())
+            // Try apply QW-like aircontrol
+            float dotForward = intendedLookDir.Dot(entityPhysicsState.ForwardDir());
+            if (dotForward > 0)
             {
-                const auto &nextReach = AiAasWorld::Instance()->Reachabilities()[nextReachNum];
-                switch (nextReach.traveltype)
-                {
-                    case TRAVEL_JUMP:
-                    case TRAVEL_STRAFEJUMP:
-                        if (DistanceSquared(nextReach.start, entityPhysicsState.Origin()) < 16 * 16)
-                        {
-                            botInput->SetSpecialButton(true);
-                            botInput->SetUpMovement(1);
-                        }
-                        break;
-                    case TRAVEL_DOUBLEJUMP:
-                    case TRAVEL_BARRIERJUMP:
-                        if (DistanceSquared(nextReach.start, entityPhysicsState.Origin()) < 12 * 12)
-                        {
-                            botInput->SetUpMovement(1);
-                        }
-                        break;
-                }
+                float dotRight = intendedLookDir.Dot(entityPhysicsState.RightDir());
+                if (dotRight > 0.3f)
+                    botInput->SetRightMovement(+1);
+                else if (dotRight < -0.3f)
+                    botInput->SetRightMovement(-1);
             }
+        }
+
+        handledSpecialMovement = true;
+    }
+    else if ((nextReachNum = context->NextReachNum()))
+    {
+        const auto &nextReach = AiAasWorld::Instance()->Reachabilities()[nextReachNum];
+        switch (nextReach.traveltype & TRAVELTYPE_MASK)
+        {
+            case TRAVEL_WALK:
+                if (!ShouldCrouchSlideNow(context))
+                {
+                    handledSpecialMovement = HandleWalkOrFallReachability(context, nextReach, 0.33f);
+                    // Prepare for crouch sliding even if a special movement (reach. transition) was handled
+                    // (Check whether it was handled to avoid duplicated ShouldPrepareForCrouchSliding() test).
+                    if (handledSpecialMovement)
+                    {
+                        if (!self->ai->botRef->ShouldMoveCarefully() && ShouldPrepareForCrouchSliding(context))
+                            botInput->SetUpMovement(-1);
+                    }
+                }
+                break;
+            case TRAVEL_WALKOFFLEDGE:
+                handledSpecialMovement = HandleWalkOrFallReachability(context, nextReach, 1.00f);
+                break;
+            case TRAVEL_JUMP:
+            case TRAVEL_STRAFEJUMP:
+                handledSpecialMovement = HandleLongJumpReachability(context, nextReach);
+                break;
+            case TRAVEL_BARRIERJUMP:
+            case TRAVEL_DOUBLEJUMP:
+                handledSpecialMovement = HandleClimbJumpReachability(context, nextReach);
+                break;
         }
     }
 
-    if (botInput->UpMovement() > 0)
-        context->TryAvoidJumpableObstacles(0.3f);
-    else
-        context->TryAvoidFullHeightObstacles(obstacleAvoidanceCorrectonFactor);
+    if (!handledSpecialMovement)
+    {
+        if (!nextReachNum || !context->NavTargetAasAreaNum())
+        {
+            // Looks like the nav target is lost due to being high above the ground
+            if (entityPhysicsState.IsHighAboveGround())
+            {
+                if (entityPhysicsState.Speed2D() > context->GetRunSpeed())
+                {
+                    // If there is a substantial 2D speed, looks like the bot is jumping over a gap
+                    Vec3 intendedLookDir(entityPhysicsState.Velocity());
+                    intendedLookDir *= 1.0f / entityPhysicsState.Speed2D();
+                    botInput->SetIntendedLookDir(intendedLookDir, true);
+                }
+                else
+                {
+                    // Force falling down
+                    Vec3 intendedLookDir(0, 0, -1);
+                    botInput->SetIntendedLookDir(intendedLookDir, true);
+                    // Try apply the weak forward air control
+                    // This condition contains the degenerate dot product with the intended look dir
+                    if (entityPhysicsState.ForwardDir().Z() < -0.7)
+                        botInput->SetForwardMovement(1);
+                }
+            }
+        }
+        else
+        {
+            Vec3 intendedLookVec(AiAasWorld::Instance()->Reachabilities()[nextReachNum].start);
+            intendedLookVec -= entityPhysicsState.Origin();
+            botInput->SetIntendedLookDir(intendedLookVec, false);
+            botInput->SetForwardMovement(1);
+        }
 
-    if (ShouldPrepareForCrouchSliding(context))
-        botInput->SetUpMovement(-1);
+        if (!self->ai->botRef->ShouldMoveCarefully())
+        {
+            if (ShouldCrouchSlideNow(context) || ShouldPrepareForCrouchSliding(context))
+                botInput->SetUpMovement(-1);
+        }
+    }
 
+    botInput->isUcmdSet = true;
     botInput->canOverrideUcmd = true;
-    botInput->canOverrideLookVec = true;
+    botInput->canOverrideLookVec = !handledSpecialMovement;
     Debug("Planning is complete: the action should never be predicted ahead\n");
     context->isCompleted = true;
 }
@@ -2313,10 +2516,6 @@ void BotCampASpotMovementAction::PlanPredictionStep(BotMovementPredictionContext
 
     botInput->SetWalkButton(random() > campingSpotState->Alertness() * 0.75f);
 }
-
-#ifndef SQUARE
-#define SQUARE(x) ((x) * (x))
-#endif
 
 void BotCampASpotMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
 {

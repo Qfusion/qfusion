@@ -1221,6 +1221,12 @@ public:
 
 class BotDummyMovementAction: public BotBaseMovementAction
 {
+    inline bool ShouldCrouchSlideNow(BotMovementPredictionContext *context) const;
+    bool HandleWalkOrFallReachability(BotMovementPredictionContext *context,
+                                      const aas_reachability_t &reach,
+                                      float zNoBendScale);
+    bool HandleLongJumpReachability(BotMovementPredictionContext *context, const aas_reachability_t &reach);
+    bool HandleClimbJumpReachability(BotMovementPredictionContext *context, const aas_reachability_t &reach);
 public:
     DECLARE_MOVEMENT_ACTION_CONSTRUCTOR(BotDummyMovementAction, COLOR_RGB(0, 0, 0));
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
