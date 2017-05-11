@@ -332,7 +332,7 @@ static bool R_ClipSpecialWorldSurf( drawSurfaceBSP_t *drawSurf, const msurface_t
 		portalSurface = R_GetDrawListSurfPortal( drawSurf->listSurf );
 	}
 
-	if( ( portalSurface != NULL ) ) {
+	if( portalSurface != NULL ) {
 		vec3_t centre;
 		float dist = 0;
 
@@ -365,10 +365,14 @@ static bool R_ClipSpecialWorldSurf( drawSurfaceBSP_t *drawSurf, const msurface_t
 * For sky surfaces, skybox clipping is also performed.
 */
 static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int dlightBits, unsigned shadowBits, const vec3_t origin ) {
-	unsigned i;
+	unsigned i, end;
 	float dist = 0;
 	bool lightmapped = false;
 	bool dlight = false;
+	bool special;
+	msurface_t *surf;
+	unsigned dlightFrame, shadowFrame;
+	unsigned curDlightBits, curShadowBits;
 	msurface_t *firstVisSurf, *lastVisSurf;
 	msurface_t *firstVisShadowSurf, *lastVisShadowSurf;
 
@@ -379,55 +383,59 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 	firstVisSurf = lastVisSurf = NULL;
 	firstVisShadowSurf = lastVisShadowSurf = NULL;
 
-	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
-		unsigned ss = drawSurf->firstWorldSurface + i;
+	dlightFrame = drawSurf->dlightFrame;
+	shadowFrame = drawSurf->shadowFrame;
 
-		if( rf.worldSurfVis[ss] ) {
+	curDlightBits = dlightFrame == rsc.frameCount ? drawSurf->dlightBits : 0;
+	curShadowBits = shadowFrame == rsc.frameCount ? drawSurf->shadowBits : 0;
+
+	end = drawSurf->firstWorldSurface + drawSurf->numWorldSurfaces;
+	surf = rsh.worldBrushModel->surfaces + drawSurf->firstWorldSurface;
+
+	special = ( drawSurf->shader->flags & (SHADER_SKY|SHADER_PORTAL) ) != 0;
+
+	for( i = drawSurf->firstWorldSurface; i < end; i++ ) {
+		if( rf.worldSurfVis[i] ) {
 			float sdist = 0;
-			msurface_t *surf = rsh.worldBrushModel->surfaces + ss;
-			unsigned int newDlightBits = dlightBits;
-			unsigned int newShadowBits = shadowBits;
+			unsigned int checkDlightBits = dlightBits & ~curDlightBits;
+			unsigned int checkShadowBits = shadowBits & ~curShadowBits;
 
-			if( !R_ClipSpecialWorldSurf( drawSurf, surf, origin, &sdist ) ) {
+			if( special && !R_ClipSpecialWorldSurf( drawSurf, surf, origin, &sdist ) ) {
 				// clipped away
 				continue;
 			}
 
-			if( ( surf->flags & SURF_NOLIGHTMAP ) == 0 )
+			if( !lightmapped && ( surf->flags & SURF_NOLIGHTMAP ) == 0 )
 				lightmapped = true;
 			if( sdist > sdist )
 				dist = sdist;
 
-			// avoid double-checking dlights that have already been added to drawSurf
-			if( drawSurf->dlightFrame == rsc.frameCount )
-				newDlightBits &= ~drawSurf->dlightBits;
-
-			if( newDlightBits )
-				newDlightBits = R_SurfaceDlightBits( surf, newDlightBits );
-			if( newShadowBits )
-				newShadowBits = R_SurfaceShadowBits( surf, newShadowBits );
+			if( checkDlightBits )
+				checkDlightBits = R_SurfaceDlightBits( surf, checkDlightBits );
+			if( checkShadowBits )
+				checkShadowBits = R_SurfaceShadowBits( surf, checkShadowBits );
 
 			// dynamic lights that affect the surface
-			if( newDlightBits ) {
+			if( checkDlightBits ) {
 				// ignore dlights that have already been marked as affectors
-				if( drawSurf->dlightFrame == rsc.frameCount ) {
-					drawSurf->dlightBits |= newDlightBits;
+				if( dlightFrame == rsc.frameCount ) {
+					curDlightBits |= checkDlightBits;
 				} else {
-					drawSurf->dlightBits = newDlightBits;
-					drawSurf->dlightFrame = rsc.frameCount;
+					dlightFrame = rsc.frameCount;
+					curDlightBits = checkDlightBits;
 				}
 
 				dlight = true;
 			}
 
 			// shadows that are projected onto the surface
-			if( newShadowBits ) {
+			if( checkShadowBits ) {
 				// ignore shadows that have already been marked as affectors
-				if( drawSurf->shadowFrame == rsc.frameCount ) {
-					drawSurf->shadowBits |= newShadowBits;
+				if( shadowFrame == rsc.frameCount ) {
+					curShadowBits |= checkShadowBits;
 				} else {
-					drawSurf->shadowBits = newShadowBits;
-					drawSurf->shadowFrame = rsc.frameCount;
+					shadowFrame = rsc.frameCount;
+					curShadowBits = checkShadowBits;
 				}
 
 				if( firstVisShadowSurf == NULL )
@@ -441,6 +449,17 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 				firstVisSurf = surf;
 			lastVisSurf = surf;
 		}
+		surf++;
+	}
+
+	if( dlightFrame == rsc.frameCount ) {
+		drawSurf->dlightBits = curDlightBits;
+		drawSurf->dlightFrame = dlightFrame;
+	}
+
+	if( shadowFrame == rsc.frameCount ) {
+		drawSurf->shadowBits = curShadowBits;
+		drawSurf->shadowFrame = shadowFrame;
 	}
 
 	// prepare the slice
@@ -733,33 +752,35 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 */
 static void R_CullVisSurfaces( unsigned firstSurf, unsigned numSurfs, unsigned clipFlags ) {
 	unsigned i;
+	unsigned end;
+	msurface_t *surf;
+	
+	end = firstSurf + numSurfs;
+	surf = rsh.worldBrushModel->surfaces + firstSurf;
 
-	for( i = 0; i < numSurfs; i++ ) {
-		unsigned s = firstSurf + i;
-		msurface_t *surf = rsh.worldBrushModel->surfaces + s;
-
-		if( !surf->drawSurf ) {
-			rf.worldSurfVis[s] = 0;
-			continue;
-		}
-
-		if( rf.worldSurfVis[s] ) {
+	for( i = firstSurf; i < end; i++ ) {
+		if( rf.worldSurfVis[i] ) {
 			// the surface is at partly visible in at least one leaf, frustum cull it
 			if( R_CullSurface( rsc.worldent, surf, clipFlags ) ) {
-				rf.worldSurfVis[s] = 0;
+				rf.worldSurfVis[i] = 0;
 			}
-			rf.worldSurfFullVis[s] = 0;
+			rf.worldSurfFullVis[i] = 0;
 		}
 		else {
-			if( rf.worldSurfFullVis[s] ) {
+			if( rf.worldSurfFullVis[i] ) {
 				// a fully visible surface, mark as visible
-				rf.worldSurfVis[s] = 1;
+				rf.worldSurfVis[i] = 1;
 			}
 		}
 
-		if( rf.worldSurfVis[s] ) {
-			rf.worldDrawSurfVis[surf->drawSurf - 1] = 1;
+		if( rf.worldSurfVis[i] ) {
+			if( !surf->drawSurf )
+				rf.worldSurfVis[i] = 0;
+			else
+				rf.worldDrawSurfVis[surf->drawSurf - 1] = 1;
 		}
+
+		surf++;
 	}
 }
 
