@@ -700,7 +700,7 @@ void SCR_UpdateScreen( void ) {
 	}
 
 	cinematic = cls.state == CA_CINEMATIC ? true : false;
-	forcevsync = cinematic;
+	forcevsync = cinematic || ( cls.state == CA_DISCONNECTED && scr_con_current );
 	forceclear = cinematic;
 	timedemo = cl_timedemo->integer != 0 && cls.demo.playing;
 
