@@ -175,6 +175,7 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	int numVerts, numElems;
 	int firstShadowVert, firstShadowElem;
 	int numShadowVerts, numShadowElems;
+	unsigned dlightBits, shadowBits;
 
 	slice = R_GetDrawListVBOSlice( rn.meshlist, drawSurf - rsh.worldBrushModel->drawSurfaces );
 	shadowSlice = R_GetDrawListVBOSlice( rn.meshlist, rsh.worldBrushModel->numDrawSurfaces + ( drawSurf - rsh.worldBrushModel->drawSurfaces ) );
@@ -188,6 +189,8 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	}
 
 	// shadowBits are shared for all rendering instances (normal view, portals, etc)
+	dlightBits = drawSurf->dlightBits;
+	shadowBits = drawSurf->shadowBits & rsc.renderedShadowBits;
 
 	// if either shadow slice is empty or shadowBits is 0, then we must pass the surface unshadowed
 
@@ -214,9 +217,9 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
 
-	RB_SetDlightBits( drawSurf->dlightBits );
+	RB_SetDlightBits( dlightBits );
 
-	RB_SetShadowBits( drawSurf->shadowBits & rsc.renderedShadowBits );
+	RB_SetShadowBits( shadowBits );
 
 	RB_SetLightstyle( drawSurf->superLightStyle );
 
