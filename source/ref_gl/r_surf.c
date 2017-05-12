@@ -175,7 +175,6 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	int numVerts, numElems;
 	int firstShadowVert, firstShadowElem;
 	int numShadowVerts, numShadowElems;
-	unsigned shadowBits, dlightBits;
 
 	slice = R_GetDrawListVBOSlice( rn.meshlist, drawSurf - rsh.worldBrushModel->drawSurfaces );
 	shadowSlice = R_GetDrawListVBOSlice( rn.meshlist, rsh.worldBrushModel->numDrawSurfaces + ( drawSurf - rsh.worldBrushModel->drawSurfaces ) );
@@ -184,17 +183,8 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	}
 
 	assert( slice != NULL );
-
-	if( drawSurf->dlightFrame == rsc.frameCount ) {
-		dlightBits = drawSurf->dlightBits & rn.dlightBits;
-	} else {
-		dlightBits = 0;
-	}
-
-	if( drawSurf->shadowFrame == rsc.frameCount ) {
-		shadowBits = ( drawSurf->shadowBits & rn.shadowBits ) & rsc.renderedShadowBits;
-	} else {
-		shadowBits = 0;
+	if( !slice ) {
+		return;
 	}
 
 	// shadowBits are shared for all rendering instances (normal view, portals, etc)
@@ -224,9 +214,9 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
 
-	RB_SetDlightBits( dlightBits );
+	RB_SetDlightBits( drawSurf->dlightBits );
 
-	RB_SetShadowBits( shadowBits );
+	RB_SetShadowBits( drawSurf->shadowBits & rsc.renderedShadowBits );
 
 	RB_SetLightstyle( drawSurf->superLightStyle );
 
@@ -276,6 +266,8 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 			portalSurface = R_AddSkyportalSurface( e, shader, drawSurf );
 		}
 
+		drawSurf->dlightBits = 0;
+		drawSurf->shadowBits = 0;
 		drawSurf->visFrame = rf.frameCount;
 		drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 0, drawOrder, portalSurface, drawSurf );
 
@@ -293,6 +285,8 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 
 	drawOrder = R_PackOpaqueOrder( e, shader, false, 0 );
 
+	drawSurf->dlightBits = 0;
+	drawSurf->shadowBits = 0;
 	drawSurf->visFrame = rf.frameCount;
 	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 0, drawOrder, portalSurface, drawSurf );
 	if( !drawSurf->listSurf ) {
@@ -367,8 +361,7 @@ static bool R_ClipSpecialWorldSurf( drawSurfaceBSP_t *drawSurf, const msurface_t
 static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int dlightBits, unsigned shadowBits, const vec3_t origin ) {
 	unsigned i, end;
 	float dist = 0;
-	bool lightmapped = false;
-	bool dlight = false;
+	bool lightmapped;
 	bool special;
 	msurface_t *surf;
 	unsigned dlightFrame, shadowFrame;
@@ -392,6 +385,7 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 	end = drawSurf->firstWorldSurface + drawSurf->numWorldSurfaces;
 	surf = rsh.worldBrushModel->surfaces + drawSurf->firstWorldSurface;
 
+	lightmapped = false;
 	special = ( drawSurf->shader->flags & (SHADER_SKY|SHADER_PORTAL) ) != 0;
 
 	for( i = drawSurf->firstWorldSurface; i < end; i++ ) {
@@ -424,8 +418,6 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 					dlightFrame = rsc.frameCount;
 					curDlightBits = checkDlightBits;
 				}
-
-				dlight = true;
 			}
 
 			// shadows that are projected onto the surface
@@ -471,7 +463,7 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 		if( lastVisSurf != firstVisSurf )
 			R_AddSurfaceVBOSlice( rn.meshlist, drawSurf, lastVisSurf, 0 );
 
-		drawOrder = R_PackOpaqueOrder( NULL, NULL, lightmapped, dlight );
+		drawOrder = R_PackOpaqueOrder( NULL, NULL, lightmapped, dlightFrame == rsc.frameCount );
 		R_UpdateDrawListSurf( drawSurf->listSurf, dist, drawOrder );
 	}
 
