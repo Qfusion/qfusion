@@ -322,7 +322,9 @@ static void Mod_SetupSubmodels( model_t *mod ) {
 /*
 * R_CompareSurfacesByDrawSurf
 */
-static int R_CompareSurfacesByDrawSurf( const msortedSurface_t *s1, const msortedSurface_t *s2 ) {
+static int R_CompareSurfacesByDrawSurf( const void *ps1, const void *ps2 ) {
+	const msortedSurface_t *s1 = ps1;
+	const msortedSurface_t *s2 = ps2;
 	if( s1->surf->drawSurf > s2->surf->drawSurf )
 		return 1;
 	if( s1->surf->drawSurf < s2->surf->drawSurf )
