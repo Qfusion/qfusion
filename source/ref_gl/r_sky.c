@@ -400,8 +400,6 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 //===================================================================
 
-static int r_warpFaceAxis;
-
 const vec3_t skyclip[6] = {
 	{ 1, 1, 0 },
 	{ 1, -1, 0 },
