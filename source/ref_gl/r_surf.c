@@ -364,7 +364,6 @@ static bool R_ClipSpecialWorldSurf( drawSurfaceBSP_t *drawSurf, const msurface_t
 static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int dlightBits, unsigned shadowBits, const vec3_t origin ) {
 	unsigned i, end;
 	float dist = 0;
-	bool lightmapped;
 	bool special;
 	msurface_t *surf;
 	unsigned dlightFrame, shadowFrame;
@@ -388,7 +387,6 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 	end = drawSurf->firstWorldSurface + drawSurf->numWorldSurfaces;
 	surf = rsh.worldBrushModel->surfaces + drawSurf->firstWorldSurface;
 
-	lightmapped = false;
 	special = ( drawSurf->shader->flags & (SHADER_SKY|SHADER_PORTAL) ) != 0;
 
 	for( i = drawSurf->firstWorldSurface; i < end; i++ ) {
@@ -402,8 +400,6 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 				continue;
 			}
 
-			if( !lightmapped && ( surf->flags & SURF_NOLIGHTMAP ) == 0 )
-				lightmapped = true;
 			if( sdist > sdist )
 				dist = sdist;
 
@@ -460,12 +456,14 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 	// prepare the slice
 	if( firstVisSurf ) {
 		int drawOrder;
+		bool lightmapped;
 
 		R_AddSurfaceVBOSlice( rn.meshlist, drawSurf, firstVisSurf, 0 );
 
 		if( lastVisSurf != firstVisSurf )
 			R_AddSurfaceVBOSlice( rn.meshlist, drawSurf, lastVisSurf, 0 );
 
+		lightmapped = drawSurf->superLightStyle != NULL && drawSurf->superLightStyle->lightmapNum[0] >= 0;
 		drawOrder = R_PackOpaqueOrder( NULL, NULL, lightmapped, dlightFrame == rsc.frameCount );
 		R_UpdateDrawListSurf( drawSurf->listSurf, dist, drawOrder );
 	}

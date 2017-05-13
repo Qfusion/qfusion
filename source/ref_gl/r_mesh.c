@@ -125,7 +125,7 @@ unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool ligh
 	}
 
 	// group by lightmap
-	if( lightmap ) {
+	if( !lightmap ) {
 		order |= 0x40;
 	}
 	// group by dlight
@@ -221,7 +221,8 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 */
 void R_UpdateDrawListSurf( void *psds, float dist, unsigned order ) {
 	sortedDrawSurf_t *sds = psds;
-	sds->distKey |= R_PackDistKey( 0, dist, order );
+	// preserve the original shader bits
+	sds->distKey = (sds->distKey & ((~((1 << 26)-1))|0x3F)) | R_PackDistKey( 0, dist, order );
 }
 
 /*

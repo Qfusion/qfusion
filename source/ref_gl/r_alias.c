@@ -761,14 +761,16 @@ bool R_AddAliasModelToDrawList( const entity_t *e ) {
 			for( j = 0; j < mesh->numskins; j++ ) {
 				shader = mesh->skins[j].shader;
 				if( shader ) {
-					R_AddSurfToDrawList( rn.meshlist, e, fog, shader, distance, 0, NULL, aliasmodel->drawSurfs + i );
+					int drawOrder = R_PackOpaqueOrder( e, shader, false, 0 );
+					R_AddSurfToDrawList( rn.meshlist, e, fog, shader, distance, drawOrder, NULL, aliasmodel->drawSurfs + i );
 				}
 			}
 			continue;
 		}
 
 		if( shader ) {
-			R_AddSurfToDrawList( rn.meshlist, e, fog, shader, distance, 0, NULL, aliasmodel->drawSurfs + i );
+			int drawOrder = R_PackOpaqueOrder( e, shader, false, 0 );
+			R_AddSurfToDrawList( rn.meshlist, e, fog, shader, distance, drawOrder, NULL, aliasmodel->drawSurfs + i );
 		}
 	}
 
