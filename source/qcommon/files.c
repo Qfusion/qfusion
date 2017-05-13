@@ -402,7 +402,7 @@ static int FS_FileLength( FILE *f, bool close ) {
 
 	assert( f != NULL );
 	if( !f ) {
-		return 0;
+		return -1;
 	}
 
 	pos = ftell( f );
