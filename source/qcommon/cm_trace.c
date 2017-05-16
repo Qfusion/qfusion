@@ -763,6 +763,9 @@ static void CM_CollideBox( cmodel_state_t *cms, cbrush_t **markbrushes, int numm
 		}
 		facet = patch->facets;
 		for( j = 0; j < patch->numfacets; j++, facet++ ) {
+			if( !BoundsIntersect( facet->mins, facet->maxs, trace_absmins, trace_absmaxs ) ) {
+				continue;
+			}
 			func( cms, facet );
 			if( !trace_trace->fraction ) {
 				return;
