@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static int CM_CreateFacetFromPoints( cmodel_state_t *cms, cbrush_t *facet, vec3_t *verts, int numverts, cshaderref_t *shaderref, cplane_t *brushplanes ) {
 	int i, j;
 	int axis, dir;
-	vec3_t normal, mins, maxs;
+	vec3_t normal;
 	float d, dist;
 	cplane_t mainplane;
 	vec3_t vec, vec2;
@@ -41,6 +41,10 @@ static int CM_CreateFacetFromPoints( cmodel_state_t *cms, cbrush_t *facet, vec3_
 	facet->numsides = 0;
 	facet->brushsides = NULL;
 	facet->contents = shaderref->contents;
+
+	// these bounds are default for the facet, and are not valid
+	// however only bogus facets that are not collidable anyway would use these bounds
+	ClearBounds( facet->mins, facet->maxs );
 
 	// calculate plane for this triangle
 	PlaneFromPoints( verts, &mainplane );
@@ -81,9 +85,8 @@ static int CM_CreateFacetFromPoints( cmodel_state_t *cms, cbrush_t *facet, vec3_
 	brushplanes[numbrushplanes].dist = mainplane.dist; numbrushplanes++;
 
 	// calculate mins & maxs
-	ClearBounds( mins, maxs );
 	for( i = 0; i < numverts; i++ )
-		AddPointToBounds( verts[i], mins, maxs );
+		AddPointToBounds( verts[i], facet->mins, facet->maxs );
 
 	// add the axial planes
 	for( axis = 0; axis < 3; axis++ ) {
@@ -98,9 +101,9 @@ static int CM_CreateFacetFromPoints( cmodel_state_t *cms, cbrush_t *facet, vec3_
 				VectorClear( normal );
 				normal[axis] = dir;
 				if( dir == 1 ) {
-					dist = maxs[axis];
+					dist = facet->maxs[axis];
 				} else {
-					dist = -mins[axis];
+					dist = -facet->mins[axis];
 				}
 
 				VectorCopy( normal, brushplanes[numbrushplanes].normal );
@@ -171,6 +174,12 @@ static int CM_CreateFacetFromPoints( cmodel_state_t *cms, cbrush_t *facet, vec3_
 				}
 			}
 		}
+	}
+
+	// spread facet mins/maxs by a unit
+	for( i = 0; i < 3; i++ ) {
+		facet->mins[i] -= 1.0f;
+		facet->maxs[i] += 1.0f;
 	}
 
 	return ( facet->numsides = numbrushplanes );
