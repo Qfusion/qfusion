@@ -892,6 +892,7 @@ private:
     CachesStack<Ai::ReachChainVector, MAX_PREDICTED_STATES> reachChainsCachesStack;
     CachesStack<BotInput, MAX_PREDICTED_STATES> defaultBotInputsCachesStack;
     CachesStack<HitWhileRunningTestResult, MAX_PREDICTED_STATES> mayHitWhileRunningCachesStack;
+    CachesStack<bool, MAX_PREDICTED_STATES> canSafelyKeepHighSpeedCachesStack;
     StaticVector<BotEnvironmentTraceCache, MAX_PREDICTED_STATES> environmentTestResultsStack;
 public:
     BotMovementState *movementState;
@@ -955,6 +956,9 @@ public:
     inline int CurrGroundedAasAreaNum() const;
     inline int NavTargetAasAreaNum() const;
     inline bool IsInNavTargetArea() const;
+
+    bool TestWhetherCanSafelyKeepHighSpeed();
+    inline bool CanSafelyKeepHighSpeed();
 
     const Ai::ReachChainVector &NextReachChain();
     inline BotEnvironmentTraceCache &EnvironmentTraceCache();

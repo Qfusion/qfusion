@@ -95,6 +95,101 @@ inline bool BotMovementPredictionContext::IsInNavTargetArea() const
     return false;
 }
 
+inline bool IsInsideHugeArea(const float *origin, const aas_area_t &area, float offset)
+{
+    if (area.mins[0] > origin[0] - offset || area.maxs[0] < origin[0] + offset)
+        return false;
+
+    if (area.mins[1] > origin[1] - offset || area.maxs[1] < origin[1] + offset)
+        return false;
+
+    return true;
+}
+
+inline bool BotMovementPredictionContext::CanSafelyKeepHighSpeed()
+{
+    if (const bool *cachedValue = canSafelyKeepHighSpeedCachesStack.GetCached())
+        return *cachedValue;
+
+    bool result = TestWhetherCanSafelyKeepHighSpeed();
+    canSafelyKeepHighSpeedCachesStack.SetCachedValue(result);
+    return result;
+}
+
+bool BotMovementPredictionContext::TestWhetherCanSafelyKeepHighSpeed()
+{
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto *aasAreas = aasWorld->Areas();
+    const auto *routeCache = self->ai->botRef->routeCache;
+    const auto &entityPhysicsState = movementState->entityPhysicsState;
+
+    const float offset = 20.0f + 48.0f * BoundedFraction(entityPhysicsState.HeightOverGround(), 32);
+    int prevAreaNum = CurrGroundedAasAreaNum();
+    if (prevAreaNum && IsInsideHugeArea(entityPhysicsState.Origin(), aasAreas[prevAreaNum], offset))
+        return true;
+
+    const int navTargetAreaNum = this->NavTargetAasAreaNum();
+    const int travelFlags[] = { self->ai->botRef->preferredAasTravelFlags, self->ai->botRef->allowedAasTravelFlags };
+    int startTravelTime = this->TravelTimeToNavTarget();
+    int travelTime = 0;
+
+    Vec3 origin(entityPhysicsState.Origin());
+    Vec3 velocity(entityPhysicsState.Velocity());
+    Vec3 prevOrigin(origin);
+    float secondsAhead = 0.0f;
+    trace_t trace;
+    for (;;)
+    {
+        secondsAhead += 0.1f;
+        velocity.Set(entityPhysicsState.Velocity());
+        velocity.Z() = entityPhysicsState.Velocity()[2] - secondsAhead * level.gravity;
+        origin += secondsAhead * velocity;
+
+        // Try use cheap AAS area bounds tests
+        int areaNum = aasWorld->FindAreaNum(origin);
+        if (areaNum != prevAreaNum && areaNum)
+        {
+            if (aasWorld->AreaGrounded(areaNum))
+            {
+                if (IsInsideHugeArea(entityPhysicsState.Origin(), aasAreas[areaNum], offset))
+                    return true;
+            }
+        }
+        prevAreaNum = areaNum;
+
+        SolidWorldTrace(&trace, prevOrigin.Data(), origin.Data(), playerbox_stand_mins, playerbox_stand_maxs);
+        if (trace.fraction != 1.0f)
+        {
+            // No area is found on landing
+            if (!areaNum)
+                return false;
+
+            // Disallow bumping into walls (it can lead to cycling in tight environments)
+            if (!ISWALKABLEPLANE(&trace.plane.normal))
+                return false;
+
+            // Check travel time to the nav target if it is present
+            if (navTargetAreaNum)
+            {
+                for (int flags: travelFlags)
+                {
+                    if ((travelTime = routeCache->TravelTimeToGoalArea(areaNum, navTargetAreaNum, flags)))
+                        break;
+                }
+                if (!travelTime || travelTime > startTravelTime + 100)
+                    return false;
+            }
+            return trace.endpos[2] + 8 - playerbox_stand_mins[2] >= entityPhysicsState.Origin()[2];
+        }
+
+        // The ground is still not found
+        if (secondsAhead > 0.5f)
+            return false;
+
+        prevOrigin = origin;
+    }
+}
+
 void BotMovementPredictionContext::NextReachNumAndTravelTimeToNavTarget(int *reachNum, int *travelTimeToNavTarget)
 {
     *reachNum = 0;
@@ -526,6 +621,7 @@ void BotMovementPredictionContext::SetupStackForStep()
         Assert(defaultBotInputsCachesStack.Size() == predictedMovementActions.size());
         Assert(reachChainsCachesStack.Size() == predictedMovementActions.size());
         Assert(mayHitWhileRunningCachesStack.Size() == predictedMovementActions.size());
+        Assert(canSafelyKeepHighSpeedCachesStack.Size() == predictedMovementActions.size());
         Assert(environmentTestResultsStack.size() == predictedMovementActions.size());
 
         // topOfStackIndex already points to a needed array element in case of rolling back
@@ -543,6 +639,7 @@ void BotMovementPredictionContext::SetupStackForStep()
             defaultBotInputsCachesStack.PopToSize(topOfStackIndex);
             reachChainsCachesStack.PopToSize(topOfStackIndex);
             mayHitWhileRunningCachesStack.PopToSize(topOfStackIndex);
+            canSafelyKeepHighSpeedCachesStack.PopToSize(topOfStackIndex);
             environmentTestResultsStack.truncate(topOfStackIndex);
         }
         else
@@ -577,6 +674,7 @@ void BotMovementPredictionContext::SetupStackForStep()
         defaultBotInputsCachesStack.PopToSize(0);
         reachChainsCachesStack.PopToSize(0);
         mayHitWhileRunningCachesStack.PopToSize(0);
+        canSafelyKeepHighSpeedCachesStack.PopToSize(0);
         environmentTestResultsStack.clear();
 
         topOfStack = new(predictedMovementActions.unsafe_grow_back())PredictedMovementAction;
@@ -611,6 +709,7 @@ void BotMovementPredictionContext::SetupStackForStep()
     // The different method is used (there is no copy/move constructors for the template type)
     reachChainsCachesStack.UnsafeGrowForNonCachedValue();
     mayHitWhileRunningCachesStack.PushDummyNonCachedValue();
+    canSafelyKeepHighSpeedCachesStack.PushDummyNonCachedValue();
     new (environmentTestResultsStack.unsafe_grow_back())BotEnvironmentTraceCache;
 
     this->shouldRollback = false;
@@ -1716,10 +1815,24 @@ void BotDummyMovementAction::PlanPredictionStep(BotMovementPredictionContext *co
             botInput->SetForwardMovement(1);
         }
 
-        if (!self->ai->botRef->ShouldMoveCarefully())
+        const auto &miscTactics = &self->ai->botRef->GetMiscTactics();
+        if (!miscTactics->shouldMoveCarefully && !(context->NavTargetAasAreaNum() && context->IsCloseToNavTarget()))
         {
             if (ShouldCrouchSlideNow(context) || ShouldPrepareForCrouchSliding(context))
+            {
                 botInput->SetUpMovement(-1);
+            }
+            else if (!miscTactics->shouldBeSilent)
+            {
+                if (entityPhysicsState.GroundEntity() && entityPhysicsState.Speed2D() > context->GetRunSpeed())
+                {
+                    if (context->CanSafelyKeepHighSpeed())
+                    {
+                        botInput->ClearMovementDirections();
+                        botInput->SetUpMovement(+1);
+                    }
+                }
+            }
         }
     }
 
@@ -4408,6 +4521,7 @@ void BotWalkOrSlideInterpolatingReachChainMovementAction::PlanPredictionStep(Bot
     if (!navTargetAreaNum)
     {
         this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
         return;
     }
 
@@ -4444,6 +4558,24 @@ void BotWalkOrSlideInterpolatingReachChainMovementAction::PlanPredictionStep(Bot
         context->SetPendingRollback();
         Debug("Cannot apply action: cannot interpolate reach chain\n");
         return;
+    }
+
+    const auto &miscTactics = self->ai->botRef->GetMiscTactics();
+    if (!miscTactics.shouldBeSilent && !miscTactics.shouldMoveCarefully)
+    {
+        if (entityPhysicsState.Speed2D() > context->GetRunSpeed())
+        {
+            // Check whether the bot is moving in a "proper" direction to prevent cycling in a loop around a reachability
+            Vec3 velocityDir(entityPhysicsState.Velocity());
+            velocityDir *= 1.0f / (entityPhysicsState.Speed() + 0.000001f);
+            if (velocityDir.Dot(interpolator.Result()) > 0.7f)
+            {
+                context->cannotApplyAction = true;
+                context->actionSuggestedByAction = &DummyAction();
+                Debug("Cannot apply action: do not lose a high speed, this speed is safe in the current environment\n");
+                return;
+            }
+        }
     }
 
     if (TrySetupCrouchSliding(context, interpolator.Result()))
