@@ -952,6 +952,7 @@ public:
     inline float NavTargetRadius() const;
     inline bool IsCloseToNavTarget() const;
     inline int CurrAasAreaNum() const;
+    inline int CurrGroundedAasAreaNum() const;
     inline int NavTargetAasAreaNum() const;
     inline bool IsInNavTargetArea() const;
 
@@ -1327,19 +1328,9 @@ public:
 class BotGenericRunBunnyingMovementAction: public BotBaseMovementAction
 {
 protected:
-    Vec3 originAtLanding;
-    bool hasAlreadyLandedOnce;
-
-    enum JumpPredictionMode {
-        PREDICT_FULL_ARCH,
-        PREDICT_HALF_ARCH,
-        PREDICT_JUST_A_BIT
-    } nextJumpPredictionMode;
-
-    float extraPredictionDistanceAfterLanding;
-    unsigned sequenceDurationAtFirstLanding;
-
     int minTravelTimeToNavTargetSoFar;
+    int minTravelTimeAreaNumSoFar;
+    float minTravelTimeAreaGroundZ;
 
     // A fraction of speed gain per frame time.
     // Might be negative, in this case it limits allowed speed loss
@@ -1352,8 +1343,11 @@ protected:
     // These timers allow to temporarily skip targer reachability/travel time tests.
     unsigned currentUnreachableTargetSequentialMillis;
     unsigned tolerableUnreachableTargetSequentialMillis;
-    unsigned currentGreaterTravelTimeSequentialMillis;
-    unsigned tolerableGreaterTravelTimeSequentialMillis;
+
+    // Allow increased final travel time if the min travel time area is reachable by walking
+    // from the final area and walking travel time is lower than this limit.
+    // It allows to follow the reachability chain less strictly while still being close to it.
+    unsigned tolerableWalkableIncreasedTravelTimeMillis;
 
     // There is a mechanism for completely disabling an action for further planning by setting isDisabledForPlanning flag.
     // However we need a more flexible way of disabling an action after an failed application sequence.
@@ -1386,11 +1380,10 @@ protected:
 public:
     BotGenericRunBunnyingMovementAction(class Bot *bot_, const char *name_, int debugColor_ = 0)
         : BotBaseMovementAction(bot_, name_, debugColor_),
-          originAtLanding(0, 0, 0),
           minDesiredSpeedGainPerSecond(0.0f),
           tolerableSpeedLossSequentialMillis(300),
           tolerableUnreachableTargetSequentialMillis(700),
-          tolerableGreaterTravelTimeSequentialMillis(350),
+          tolerableWalkableIncreasedTravelTimeMillis(2000),
           supportsObstacleAvoidance(false)
     {
         ResetObstacleAvoidanceState();

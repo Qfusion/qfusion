@@ -61,6 +61,19 @@ inline int BotMovementPredictionContext::CurrAasAreaNum() const
     return movementState->entityPhysicsState.DroppedToFloorAasAreaNum();
 }
 
+inline int BotMovementPredictionContext::CurrGroundedAasAreaNum() const
+{
+    const auto *aasWorld = AiAasWorld::Instance();
+    const auto &entityPhysicsState = movementState->entityPhysicsState;
+    int areaNums[2] = { entityPhysicsState.CurrAasAreaNum(), entityPhysicsState.DroppedToFloorAasAreaNum() };
+    for (int i = 0, end = (areaNums[0] != areaNums[1] ? 2 : 1); i < end; ++i)
+    {
+        if (areaNums[i] && aasWorld->AreaGrounded(areaNums[i]))
+            return areaNums[i];
+    }
+    return 0;
+}
+
 inline int BotMovementPredictionContext::NavTargetAasAreaNum() const
 {
     return self->ai->botRef->NavTargetAasAreaNum();
@@ -4050,12 +4063,6 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
             Debug("A prediction step has lead to undefined travel time to the nav target\n");
             return;
         }
-        if (hasAlreadyLandedOnce && nextJumpPredictionMode == PREDICT_JUST_A_BIT)
-        {
-            context->SetPendingRollback();
-            Debug("A prediction step has lead to undefined travel time to the nav target\n");
-            return;
-        }
 
         context->SaveSuggestedActionForNextFrame(this);
         return;
@@ -4066,123 +4073,192 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults(BotMovement
     if (currTravelTimeToNavTarget <= minTravelTimeToNavTargetSoFar)
     {
         minTravelTimeToNavTargetSoFar = currTravelTimeToNavTarget;
-        // Reset the greater travel time to target timer
-        currentGreaterTravelTimeSequentialMillis = 0;
+        minTravelTimeAreaNumSoFar = context->CurrAasAreaNum();
+        if (int groundedAreaNum = context->CurrGroundedAasAreaNum())
+            minTravelTimeAreaGroundZ = AiAasWorld::Instance()->Areas()[groundedAreaNum].mins[2];
     }
     else
     {
-        currentGreaterTravelTimeSequentialMillis += context->predictionStepMillis;
-        if (currentGreaterTravelTimeSequentialMillis > tolerableGreaterTravelTimeSequentialMillis)
+        constexpr const char *format = "A prediction step has lead to increased travel time to nav target\n";
+        if (currTravelTimeToNavTarget > minTravelTimeToNavTargetSoFar + tolerableWalkableIncreasedTravelTimeMillis)
         {
             context->SetPendingRollback();
-            const char *format_ = "Curr travel time to the nav target: %d, min travel time so far: %d\n";
-            Debug(format_, currTravelTimeToNavTarget, minTravelTimeToNavTargetSoFar);
-            Debug("A prediction step has lead to greater travel time to the nav target\n");
+            Debug(format);
+            return;
         }
-        else
-            context->SaveSuggestedActionForNextFrame(this);
 
-        return;
-    }
-
-    const unsigned currSequenceDuration = this->SequenceDuration(context);
-    const auto &oldEntityPhysicsState = context->PhysicsStateBeforeStep();
-    if (!hasAlreadyLandedOnce)
-    {
-        if (!oldEntityPhysicsState.GroundEntity() && newEntityPhysicsState.GroundEntity())
+        if (minTravelTimeAreaGroundZ != std::numeric_limits<float>::max())
         {
-            hasAlreadyLandedOnce = true;
-            originAtLanding.Set(newEntityPhysicsState.Origin());
-            sequenceDurationAtFirstLanding = currSequenceDuration;
-
-            float squareDistanceFromStart = originAtSequenceStart.SquareDistance2DTo(newEntityPhysicsState.Origin());
-            if (squareDistanceFromStart > SQUARE(72.0f))
+            int groundedAreaNum = context->CurrGroundedAasAreaNum();
+            if (!groundedAreaNum)
             {
-                nextJumpPredictionMode = PREDICT_JUST_A_BIT;
-                extraPredictionDistanceAfterLanding = 12.0f;
+                context->SetPendingRollback();
+                Debug(format);
+                return;
             }
-            else if (squareDistanceFromStart > SQUARE(48.0f))
-                nextJumpPredictionMode = PREDICT_HALF_ARCH;
-            else
-                nextJumpPredictionMode = PREDICT_FULL_ARCH;
+            float currGroundAreaZ = AiAasWorld::Instance()->Areas()[groundedAreaNum].mins[2];
+            // Disallow significant difference in height with the min travel time area.
+            // If the current area is higher than the min travel time area,
+            // use an increased height delta (falling is easier than climbing)
+            if (minTravelTimeAreaGroundZ > currGroundAreaZ + 8 || minTravelTimeAreaGroundZ + 48 < currGroundAreaZ )
+            {
+                context->SetPendingRollback();
+                Debug(format);
+                return;
+            }
         }
 
-        // Keep this action as an active bunny action
+        if (minTravelTimeAreaNumSoFar)
+        {
+            // Disallow moving into an area if the min travel time area cannot be reached by walking from the area
+            int areaNums[2] = {newEntityPhysicsState.CurrAasAreaNum(), newEntityPhysicsState.DroppedToFloorAasAreaNum()};
+            bool walkable = false;
+            for (int i = 0, end = (areaNums[0] != areaNums[1] ? 2 : 1); i < end; ++i)
+            {
+                int travelFlags = TRAVEL_WALK | TRAVEL_WALKOFFLEDGE;
+                int toAreaNum = minTravelTimeAreaNumSoFar;
+                if (int aasTime = self->ai->botRef->routeCache->TravelTimeToGoalArea(areaNums[i], toAreaNum, travelFlags))
+                {
+                    // aasTime is in seconds^-2
+                    if (aasTime * 10 < tolerableWalkableIncreasedTravelTimeMillis)
+                    {
+                        walkable = true;
+                        break;
+                    }
+                }
+            }
+            if (!walkable)
+            {
+                context->SetPendingRollback();
+                Debug(format);
+                return;
+            }
+        }
+    }
+
+    if (originAtSequenceStart.SquareDistanceTo(newEntityPhysicsState.Origin()) < 72 * 72)
+    {
+        if (SequenceDuration(context) < 512)
+        {
+            context->SaveSuggestedActionForNextFrame(this);
+            return;
+        }
+
+        // Prevent wasting CPU cycles on further prediction
+        Debug("The bot still has not covered 72 units yet in 512 millis\n");
+        context->SetPendingRollback();
+        return;
+    }
+
+    if (newEntityPhysicsState.GroundEntity())
+    {
+        Debug("The bot has covered 96 units and is on ground, should stop prediction\n");
+        context->isCompleted = true;
+        return;
+    }
+
+    // Continue prediction in the bot does not move down.
+    // Test velocity dir Z, use some negative threshold to avoid wasting CPU cycles
+    // on traces that are parallel to the ground.
+    if (newEntityPhysicsState.Velocity()[2] / newEntityPhysicsState.Speed() > -0.1f)
+    {
         context->SaveSuggestedActionForNextFrame(this);
         return;
     }
 
-    if (nextJumpPredictionMode == PREDICT_JUST_A_BIT)
+    if (newEntityPhysicsState.IsHighAboveGround())
     {
-        auto distanceFromLandingPoint = originAtLanding.SquareDistance2DTo(newEntityPhysicsState.Origin());
-        if (distanceFromLandingPoint > SQUARE(extraPredictionDistanceAfterLanding))
-        {
-            context->isCompleted = true;
-            Debug("There is enough predicted data ahead (a jump has been predicted a bit after landing)\n");
-            return;
-        }
-
-        auto fmt = "The bot still has not covered %f units after landing in 128 millis while testing jump ahead a bit\n";
-        if (currSequenceDuration - sequenceDurationAtFirstLanding > 128)
-        {
-            context->SetPendingRollback();
-            Debug(fmt, extraPredictionDistanceAfterLanding);
-            return;
-        }
-
-        // Keep this action as an active bunny action
         context->SaveSuggestedActionForNextFrame(this);
         return;
     }
 
-    // This test for covered distance is common for PREDICT_FULL_ARCH and PREDICT_HALF_ARCH modes
-    if (currSequenceDuration - sequenceDurationAtFirstLanding > 192)
+    // Try stop prediction if the bot is inside a huge "good" area
+    const auto *aasWorld = AiAasWorld::Instance();
+    const int currAreaNum = context->CurrAasAreaNum();
+    const auto &area = aasWorld->Areas()[currAreaNum];
+    const auto &areaSettings = aasWorld->AreaSettings()[currAreaNum];
+
+    if (areaSettings.areaflags & AREA_GROUNDED)
     {
-        if (originAtLanding.SquareDistance2DTo(newEntityPhysicsState.Origin()) < SQUARE(24))
+        const float *origin = newEntityPhysicsState.Origin();
+        if (area.mins[0] < origin[0] - 48 && area.maxs[0] > origin[0] + 48)
         {
-            context->SetPendingRollback();
-            Debug("The bot still has not covered 24 units after landing in 192 millis while testing half/full jump\n");
-            return;
+            if (area.mins[1] < origin[1] - 48 && area.maxs[1] > origin[1] + 48)
+            {
+                Debug("The bot is not very high above the ground and is inside a \"good\" area\n");
+                context->isCompleted = true;
+                return;
+            }
         }
     }
 
-    if (nextJumpPredictionMode == PREDICT_FULL_ARCH)
+    // Can't test for reachability after tracing
+    if (!currTravelTimeToNavTarget)
     {
-        if (!oldEntityPhysicsState.GroundEntity() && newEntityPhysicsState.GroundEntity())
-        {
-            originAtLanding.Set(newEntityPhysicsState.Origin());
-            // Predict a bit after landing
-            nextJumpPredictionMode = PREDICT_JUST_A_BIT;
-            extraPredictionDistanceAfterLanding = 20.0f;
-        }
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+    Assert(context->NavTargetAasAreaNum());
 
-        // Keep this action as an active bunny action
+    // We might wait for landing, but it produces bad results
+    // (rejects many legal moves probably due to prediction stack overflow)
+    // The tracing is expensive but we did all possible cutoffs above
+
+    Vec3 predictedOrigin(newEntityPhysicsState.Origin());
+    float predictionSeconds = 0.2f;
+    for (int i = 0; i < 3; ++i)
+    {
+        predictedOrigin.Data()[i] += newEntityPhysicsState.Velocity()[i] * predictionSeconds;
+    }
+    predictedOrigin.Data()[2] -= 0.5f * level.gravity * predictionSeconds * predictionSeconds;
+
+    trace_t trace;
+    SolidWorldTrace(&trace, newEntityPhysicsState.Origin(), predictedOrigin.Data(), playerbox_stand_mins);
+    constexpr auto badContents = CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_NODROP|CONTENTS_DONOTENTER;
+    if (trace.fraction == 1.0f || !ISWALKABLEPLANE(&trace.plane) || (trace.contents & badContents))
+    {
+        // Can't say much. The test is very coarse, continue prediction.
         context->SaveSuggestedActionForNextFrame(this);
         return;
     }
 
-    if (nextJumpPredictionMode == PREDICT_HALF_ARCH)
+    Vec3 groundPoint(trace.endpos);
+    groundPoint.Z() += 4.0f;
+    int groundAreaNum = aasWorld->FindAreaNum(groundPoint);
+    if (!groundAreaNum)
     {
-        // The bot has landed while the peek of the jump has not been registered.
-        // It might occur while bunnying on an upward slope/stairs.
-        if (!oldEntityPhysicsState.GroundEntity() && newEntityPhysicsState.GroundEntity())
-        {
-            originAtLanding.Set(newEntityPhysicsState.Origin());
-            // Predict a bit after landing
-            nextJumpPredictionMode = PREDICT_JUST_A_BIT;
-            extraPredictionDistanceAfterLanding = 24.0f;
-        }
-        else if (oldEntityPhysicsState.Velocity()[2] >= 0 && newEntityPhysicsState.Velocity()[2] < 0)
-        {
-            context->isCompleted = true;
-            Debug("There is enough predicted data ahead (a half of next jump has been predicted)\n");
-            return;
-        }
-
-        // Keep this action as an active bunny action
+        // Can't say much. The test is very coarse, continue prediction.
         context->SaveSuggestedActionForNextFrame(this);
         return;
     }
+
+    const auto &groundAreaSettings = aasWorld->AreaSettings()[groundAreaNum];
+    if (!(groundAreaSettings.areaflags & AREA_GROUNDED) || (groundAreaSettings.areaflags & (AREA_DISABLED|AREA_JUNK)))
+    {
+        // Can't say much. The test is very coarse, continue prediction.
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+    if ((groundAreaSettings.contents & (AREACONTENTS_LAVA|AREACONTENTS_SLIME|AREACONTENTS_DONOTENTER)))
+    {
+        // Can't say much. The test is very coarse, continue prediction.
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+
+    int travelFlags = self->ai->botRef->allowedAasTravelFlags;
+    const auto *routeCache = self->ai->botRef->routeCache;
+    int travelTime = routeCache->TravelTimeToGoalArea(groundAreaNum, context->NavTargetAasAreaNum(), travelFlags);
+    if (travelTime && travelTime < currTravelTimeToNavTarget)
+    {
+        Debug("The bot is not very high above the ground and looks like it lands in a \"good\" area\n");
+        context->isCompleted = true;
+        return;
+    }
+
+    // Can't say much. The test is very coarse, continue prediction
+    context->SaveSuggestedActionForNextFrame(this);
+    return;
 }
 
 void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStarted(BotMovementPredictionContext *context)
@@ -4190,21 +4266,24 @@ void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStarted(BotMoveme
     BotBaseMovementAction::OnApplicationSequenceStarted(context);
     context->MarkSavepoint(this, context->topOfStackIndex);
 
-    hasAlreadyLandedOnce = false;
-
     minTravelTimeToNavTargetSoFar = std::numeric_limits<int>::max();
+    minTravelTimeAreaNumSoFar = 0;
+    minTravelTimeAreaGroundZ = std::numeric_limits<float>::max();
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
     if (context->NavTargetAasAreaNum())
     {
         if (int travelTime = context->TravelTimeToNavTarget())
+        {
             minTravelTimeToNavTargetSoFar = travelTime;
+            if (int groundedAreaNum = context->CurrGroundedAasAreaNum())
+                minTravelTimeAreaGroundZ = AiAasWorld::Instance()->Areas()[groundedAreaNum].mins[2];
+        }
     }
 
-    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
     originAtSequenceStart.Set(entityPhysicsState.Origin());
 
     currentSpeedLossSequentialMillis = 0;
     currentUnreachableTargetSequentialMillis = 0;
-    currentGreaterTravelTimeSequentialMillis = 0;
 }
 
 void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStopped(BotMovementPredictionContext *context,
