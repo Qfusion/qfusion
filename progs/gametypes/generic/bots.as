@@ -356,3 +356,78 @@ void GENERIC_DebugPrintScriptWorldStateAttachmentDiff( any @lhs, any @rhs )
 
 	lhsValue.debugPrintDiff( rhsValue );
 }
+
+class AIScriptWeightConfigVarGroup
+{
+	AIScriptWeightConfigVarGroup @nextSibling;
+	const String @name;
+
+    AIScriptWeightConfigVar @childVarsHead;
+	AIScriptWeightConfigVarGroup @childGroupsHead;
+
+
+	AIScriptWeightConfigVarGroup( AIScriptWeightConfigVarGroup @parent, const String @name )
+	{
+		@this.nextSibling = null;
+		@this.name = @name;
+		@this.childVarsHead = null;
+		@this.childGroupsHead = null;
+
+		if ( @parent != null )
+			parent.registerGroup( this );
+	}
+
+	void registerVar( AIScriptWeightConfigVar @var )
+	{
+		@var.nextSibling = @this.childVarsHead;
+		@this.childVarsHead = @var;
+	}
+
+	void registerGroup( AIScriptWeightConfigVarGroup @group )
+	{
+		@group.nextSibling = @this.childGroupsHead;
+		@this.childGroupsHead = @group;
+	}
+}
+
+class AIScriptWeightConfigVar
+{
+	AIScriptWeightConfigVar @nextSibling;
+	const String @name;
+	float value;
+	float minValue;
+	float maxValue;
+	float defaultValue;
+
+	AIScriptWeightConfigVar( AIScriptWeightConfigVarGroup @parent, const String @name )
+	{
+		@this.nextSibling = null;
+		@this.name = @name;
+
+		if ( @parent != null )
+			parent.registerVar( this );
+	}
+
+	void getValueProps( float &out value, float &out minValue, float &out maxValue, float &out defaultValue )
+	{
+		value = this.value;
+		minValue = this.minValue;
+		maxValue = this.maxValue;
+		defaultValue = this.defaultValue;
+	}
+
+	void setValue( float value )
+	{
+		this.value = value;
+	}
+}
+
+void GENERIC_GetScriptWeightConfigVarValueProps( AIScriptWeightConfigVar @var, float &out value, float &out minValue, float &out maxValue, float &out defaultValue)
+{
+	var.getValueProps( value, minValue, maxValue, defaultValue );
+}
+
+void GENERIC_SetScriptWeightConfigVarValue( AIScriptWeightConfigVar @var, float value )
+{
+	var.setValue( value );
+}
