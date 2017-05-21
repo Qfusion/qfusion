@@ -909,7 +909,7 @@ static const asMethod_t match_Methods[] =
 	{ ASLIB_FUNCTION_DECL( const String @, getScore, ( ) const ), asFUNCTION( objectMatch_getScore ),  asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_name, ( String & in ) ), asFUNCTION( objectMatch_setName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setScore, ( String & in ) ), asFUNCTION( objectMatch_setScore ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, setClockOverride, ( uint milliseconds ) ), asFUNCTION( objectMatch_setClockOverride ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, setClockOverride, ( int64 milliseconds ) ), asFUNCTION( objectMatch_setClockOverride ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };

@@ -44,7 +44,7 @@ cvar_t *cg_touch_zoomThres;
 cvar_t *cg_touch_zoomTime;
 
 static int cg_hud_touch_buttons, cg_hud_touch_upmove;
-static unsigned int cg_hud_touch_zoomSeq, cg_hud_touch_zoomLastTouch;
+static int64_t cg_hud_touch_zoomSeq, cg_hud_touch_zoomLastTouch;
 static int cg_hud_touch_zoomX, cg_hud_touch_zoomY;
 
 enum
