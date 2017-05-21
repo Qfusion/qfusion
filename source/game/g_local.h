@@ -1206,7 +1206,7 @@ struct gclient_s {
 	int movestyle;
 	int movestyle_latched;
 	bool isoperator;
-	unsigned int queueTimeStamp;
+	int64_t queueTimeStamp;
 	int muted;     // & 1 = chat disabled, & 2 = vsay disabled
 
 	usercmd_t ucmd;
