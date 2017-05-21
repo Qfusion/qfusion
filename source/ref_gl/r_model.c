@@ -664,6 +664,7 @@ merge:
 			drawSurf->numInstances = surf->numInstances;
 			drawSurf->fog = surf->fog;
 			drawSurf->shader = surf->shader;
+			drawSurf->numLightmaps = 0;
 
 			// upload vertex and elements data for face itself
 			surf->drawSurf = loadbmodel->numDrawSurfaces;
@@ -673,6 +674,15 @@ merge:
 			vcount = surf->mesh.numVerts;
 			ecount = surf->mesh.numElems;
 			numUnmappedSurfaces--;
+
+			// count lightmaps
+			if( surf->superLightStyle ) {
+				for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
+					if( surf->superLightStyle->lightmapStyles[j] == 255 )
+						break;
+					drawSurf->numLightmaps++;
+				}
+			}
 
 			// now if there are any merged faces upload them to the same VBO
 			if( fcount > 1 ) {

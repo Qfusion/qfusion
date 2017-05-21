@@ -87,8 +87,36 @@ static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes ) {
 /*
 * R_PackDistKey
 */
-static unsigned int R_PackDistKey( int shaderSort, int dist, int order ) {
-	return ( shaderSort << 26 ) | ( ( max( 0x400 - dist, 0 ) << 5 ) & 0x7FFF ) << 11 | min( order, 0x7FF );
+static int R_PackDistKey( int renderFx, const shader_t *shader, float dist, unsigned order ) {
+	int shaderSort;
+
+	shaderSort = shader->sort;
+
+	if( renderFx & RF_WEAPONMODEL ) {
+		bool depthWrite = ( shader->flags & SHADER_DEPTHWRITE ) ? true : false;
+
+		if( renderFx & RF_NOCOLORWRITE ) {
+			// depth-pass for alpha-blended weapon:
+			// write to depth but do not write to color
+			if( !depthWrite ) {
+				return 0;
+			}
+			// reorder the mesh to be drawn after everything else
+			// but before the blend-pass for the weapon
+			shaderSort = SHADER_SORT_WEAPON;
+		} else if( renderFx & RF_ALPHAHACK ) {
+			// blend-pass for the weapon:
+			// meshes that do not write to depth, are rendered as additives,
+			// meshes that were previously added as SHADER_SORT_WEAPON (see above)
+			// are now added to the very end of the list
+			shaderSort = depthWrite ? SHADER_SORT_WEAPON2 : SHADER_SORT_ADDITIVE;
+		}
+	} else if( renderFx & RF_ALPHAHACK ) {
+		// force shader sort to additive
+		shaderSort = SHADER_SORT_ADDITIVE;
+	}
+
+	return ( shaderSort << 26 ) | ( max( 0x400 - (int)dist, 0 ) << 15 ) | ( order & 0x7FFF );
 }
 
 /*
@@ -116,26 +144,23 @@ static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int 
 *
 * Returns sort order for opaque objects.
 */
-unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool lightmap, bool dlight ) {
+unsigned R_PackOpaqueOrder( const mfog_t *fog, const shader_t *shader, int numLightmaps, bool dlight ) {
 	int order = 0;
 
 	// shader order
-	if( shader ) {
+	if( shader != NULL ) {
 		order = R_PackShaderOrder( shader );
-	}
-
-	// group by lightmap
-	if( !lightmap ) {
-		order |= 0x40;
 	}
 	// group by dlight
 	if( dlight ) {
+		order |= 0x40;
+	}
+	// group by dlight
+	if( fog != NULL ) {
 		order |= 0x80;
 	}
-	// draw game objects after the world
-	if( e != NULL && e != rsc.worldent ) {
-		order |= 0x100;
-	}
+	// group by lightmaps
+	order |= ( (MAX_LIGHTMAPS - numLightmaps) << 10 );
 
 	return order;
 }
@@ -148,9 +173,8 @@ unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool ligh
 */
 void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader,
 						   float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf ) {
+	int distKey;
 	sortedDrawSurf_t *sds;
-	int shaderSort;
-	int renderFx;
 
 	if( !list || !shader ) {
 		return NULL;
@@ -159,8 +183,10 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 		return NULL;
 	}
 
-	shaderSort = shader->sort;
-	renderFx = e->renderfx;
+	distKey = R_PackDistKey( e->renderfx, shader, dist, order );
+	if( !distKey ) {
+		return NULL;
+	}
 
 	if( shader->cin ) {
 		R_UploadCinematicShader( shader );
@@ -175,54 +201,21 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 		R_ReserveDrawSurfaces( list, minMeshes );
 	}
 
-	if( renderFx & RF_WEAPONMODEL ) {
-		bool depthWrite = ( shader->flags & SHADER_DEPTHWRITE ) ? true : false;
-
-		if( renderFx & RF_NOCOLORWRITE ) {
-			// depth-pass for alpha-blended weapon:
-			// write to depth but do not write to color
-			if( !depthWrite ) {
-				return false;
-			}
-			// reorder the mesh to be drawn after everything else
-			// but before the blend-pass for the weapon
-			shaderSort = SHADER_SORT_WEAPON;
-		} else if( renderFx & RF_ALPHAHACK ) {
-			// blend-pass for the weapon:
-			// meshes that do not write to depth, are rendered as additives,
-			// meshes that were previously added as SHADER_SORT_WEAPON (see above)
-			// are now added to the very end of the list
-			shaderSort = depthWrite ? SHADER_SORT_WEAPON2 : SHADER_SORT_ADDITIVE;
-		}
-	} else if( renderFx & RF_ALPHAHACK ) {
-		// force shader sort to additive
-		shaderSort = SHADER_SORT_ADDITIVE;
-	}
-
-	if( shaderSort == SHADER_SORT_OPAQUE ) {
-		// do not sort opaque meshes by distance
-		dist = 0;
-	}
-
 	sds = &list->drawSurfs[list->numDrawSurfs++];
-	sds->distKey = R_PackDistKey( shaderSort, (int)dist, order );
-	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - rsh.worldBrushModel->fogs : -1,
-								  portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM( e ) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
+	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - rsh.worldBrushModel->fogs : -1,
+		portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM( e ) );
+	sds->distKey = distKey;
 
 	return sds;
 }
 
 /*
-* R_UpdateDrawListSurf
-*
-* Updates sorting order for pre-added draw surface. Does nothing after R_SortDrawList is called.
-* Theoretically, should only update the dlightbit.
+* R_UpdateDrawSurfDistKey
 */
-void R_UpdateDrawListSurf( void *psds, float dist, unsigned order ) {
+void R_UpdateDrawSurfDistKey( void *psds, int renderFx, const shader_t *shader, float dist, unsigned order ) {
 	sortedDrawSurf_t *sds = psds;
-	// preserve the original shader bits
-	sds->distKey = (sds->distKey & ((~((1 << 26)-1))|0x3F)) | R_PackDistKey( 0, dist, order );
+	sds->distKey = R_PackDistKey( renderFx, shader, dist, order );
 }
 
 /*

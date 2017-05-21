@@ -57,6 +57,8 @@ typedef struct {
 	unsigned int numInstances;
 	instancePoint_t *instances;
 
+	unsigned int numLightmaps;
+
 	struct shader_s *shader;
 
 	struct mfog_s *fog;

@@ -673,16 +673,6 @@ static r_glslfeat_t RB_AlphatestProgramFeatures( const shaderpass_t *pass ) {
 }
 
 /*
-* RB_TcModsProgramFeatures
-*/
-static r_glslfeat_t RB_TcModsProgramFeatures( const shaderpass_t *pass ) {
-	if( pass->numtcmods ) {
-		return GLSL_SHADER_COMMON_TC_MOD;
-	}
-	return 0;
-}
-
-/*
 * RB_sRGBProgramFeatures
 *
 * The main framebuffer is always srgb, otherwise assume linear
@@ -1867,7 +1857,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 	features |= RB_AutospriteProgramFeatures();
 	features |= RB_InstancedArraysProgramFeatures();
 	features |= RB_AlphatestProgramFeatures( pass );
-	features |= RB_TcModsProgramFeatures( pass );
 	features |= RB_sRGBProgramFeatures( pass );
 
 	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE )

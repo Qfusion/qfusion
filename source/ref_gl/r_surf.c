@@ -286,7 +286,7 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 		portalSurface = R_AddPortalSurface( e, shader, drawSurf );
 	}
 
-	drawOrder = R_PackOpaqueOrder( e, shader, false, 0 );
+	drawOrder = R_PackOpaqueOrder( fog, shader, drawSurf->numLightmaps, false );
 
 	drawSurf->dlightBits = 0;
 	drawSurf->shadowBits = 0;
@@ -455,17 +455,18 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 
 	// prepare the slice
 	if( firstVisSurf ) {
-		int drawOrder;
-		bool lightmapped;
+		bool dlight = dlightFrame == rsc.frameCount;
 
 		R_AddSurfaceVBOSlice( rn.meshlist, drawSurf, firstVisSurf, 0 );
 
 		if( lastVisSurf != firstVisSurf )
 			R_AddSurfaceVBOSlice( rn.meshlist, drawSurf, lastVisSurf, 0 );
 
-		lightmapped = drawSurf->superLightStyle != NULL && drawSurf->superLightStyle->lightmapNum[0] >= 0;
-		drawOrder = R_PackOpaqueOrder( NULL, NULL, lightmapped, dlightFrame == rsc.frameCount );
-		R_UpdateDrawListSurf( drawSurf->listSurf, dist, drawOrder );
+		// update the distance sorting key if it's a portal surface or a normal dlit surface
+		if( dist != 0 || dlight ) {
+			int drawOrder = R_PackOpaqueOrder( drawSurf->fog, drawSurf->shader, drawSurf->numLightmaps, dlight );
+			R_UpdateDrawSurfDistKey( drawSurf->listSurf, 0, drawSurf->shader, dist, drawOrder );
+		}
 	}
 
 	if( firstVisShadowSurf ) {

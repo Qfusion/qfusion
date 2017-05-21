@@ -207,8 +207,6 @@ typedef struct {
 
 	shadowGroup_t   *shadowGroup;
 
-	entity_t        *currententity;
-
 	mfog_t          *fog_eye;
 } refinst_t;
 
@@ -680,10 +678,10 @@ void        R_ResetScissor( void );
 //
 void R_InitDrawList( drawList_t *list );
 void R_ClearDrawList( drawList_t *list );
-unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool lightmap, bool dlight );
+unsigned R_PackOpaqueOrder( const mfog_t *fog, const shader_t *shader, int numLightmaps, bool dlight );
 void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader,
 						   float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
-void R_UpdateDrawListSurf( void *psds, float dist, unsigned order );
+void R_UpdateDrawSurfDistKey( void *psds, int renderFx, const shader_t *shader, float dist, unsigned order );
 portalSurface_t *R_GetDrawListSurfPortal( void *psds );
 void R_AddDrawListVBOSlice( drawList_t *list, unsigned int index, unsigned int numVerts, unsigned int numElems,
 					unsigned int firstVert, unsigned int firstElem );

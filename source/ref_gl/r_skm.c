@@ -1520,7 +1520,7 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
 		}
 
 		if( shader ) {
-			int drawOrder = R_PackOpaqueOrder( e, shader, false, 0 );
+			int drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
 			R_AddSurfToDrawList( rn.meshlist, e, fog, shader, distance, drawOrder, NULL, skmodel->drawSurfs + i );
 		}
 	}

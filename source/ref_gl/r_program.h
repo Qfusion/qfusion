@@ -108,9 +108,7 @@ enum {
 
 #define GLSL_SHADER_COMMON_FRAGMENT_HIGHP       GLSL_BIT( 26 )
 
-#define GLSL_SHADER_COMMON_TC_MOD               GLSL_BIT( 27 )
-
-#define GLSL_SHADER_COMMON_LINEAR2SRB           GLSL_BIT( 28 )
+#define GLSL_SHADER_COMMON_LINEAR2SRB           GLSL_BIT( 27 )
 
 // material program type features
 #define GLSL_SHADER_MATERIAL_LIGHTSTYLE0        GLSL_BIT( 32 )
