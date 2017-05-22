@@ -35,7 +35,7 @@ static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
 	ref_cmdbuf_t *frame;
 
 	if( !adapter->lastForceVsync ) {
-		adapter->cmdPipe->WaitForCmds( adapter->cmdPipe, Q_THREADS_WAIT_INFINITE );
+		ri.Sys_Sleep( 0 );
 	}
 
 	frame = RF_GetNextAdapterFrame( adapter );
@@ -344,9 +344,6 @@ void RF_EndFrame( void ) {
 		rrf.frameId++;
 		ri.Mutex_Unlock( rrf.adapter.frameLock );
 	}
-
-	// wake up the backend thread
-	rrf.adapter.cmdPipe->Fence( rrf.adapter.cmdPipe );
 }
 
 void RF_BeginRegistration( void ) {
