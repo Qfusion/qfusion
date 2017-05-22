@@ -357,7 +357,6 @@ extern r_globals_t rf;
 #define R_ENT2NUM( ent ) ( ( ent ) - rsc.entities )
 #define R_NUM2ENT( num ) ( rsc.entities + ( num ) )
 
-extern cvar_t *r_maxfps;
 extern cvar_t *r_norefresh;
 extern cvar_t *r_drawentities;
 extern cvar_t *r_drawworld;

@@ -35,7 +35,6 @@ typedef struct {
 	qmutex_t        *frameLock;
 	ref_cmdpipe_t   *cmdPipe;
 	volatile bool shutdown;
-	volatile int maxfps;
 	bool lastForceVsync;
 } ref_frontendAdapter_t;
 
@@ -65,7 +64,7 @@ void RF_AppActivate( bool active, bool minimize, bool destroy );
 rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 void RF_Shutdown( bool verbose );
 void RF_SurfaceChangePending( void );
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS );
+void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );
 void RF_EndRegistration( void );

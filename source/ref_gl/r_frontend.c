@@ -32,47 +32,11 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
 * If vsync is enabled, only yields if got nothing to do.
 */
 static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
-	static int64_t lastTime = 0;
-	static int bias = 0;
-	int64_t time = ri.Sys_Milliseconds();
-	unsigned wait, frameTime;
-	unsigned minMsec;
 	ref_cmdbuf_t *frame;
 
 	if( !adapter->lastForceVsync ) {
-		if( adapter->maxfps > 0 ) {
-			minMsec = 1000 / adapter->maxfps;
-		} else {
-			minMsec = 1;
-		}
-		frameTime = (int)( time - lastTime );
-
-		bias += frameTime - minMsec;
-		if( bias > (int)minMsec ) {
-			bias = (int)minMsec;
-		}
-
-		// Adjust minMsec if previous frame took too long to render so
-		// that framerate is stable at the requested value.
-		bias -= minMsec;
-
-		wait = frameTime;
-		do {
-			if( wait >= minMsec ) {
-				wait = 0;
-			} else {
-				wait = minMsec - wait;
-			}
-			if( wait > 1 ) {
-				adapter->cmdPipe->WaitForCmds( adapter->cmdPipe, wait - 1 );
-			} else {
-				ri.Sys_Sleep( 0 );
-			}
-			wait = ri.Sys_Milliseconds() - lastTime;
-		} while( wait < minMsec );
+		adapter->cmdPipe->WaitForCmds( adapter->cmdPipe, Q_THREADS_WAIT_INFINITE );
 	}
-
-	lastTime = ri.Sys_Milliseconds();
 
 	frame = RF_GetNextAdapterFrame( adapter );
 	if( frame ) {
@@ -157,7 +121,6 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter ) {
 * RF_AdapterInit
 */
 static bool RF_AdapterInit( ref_frontendAdapter_t *adapter ) {
-	adapter->maxfps = 0;
 	adapter->cmdPipe = RF_CreateCmdPipe( !glConfig.multithreading );
 
 	if( glConfig.multithreading ) {
@@ -292,14 +255,6 @@ void RF_Shutdown( bool verbose ) {
 }
 
 static void RF_CheckCvars( void ) {
-	// disallow bogus r_maxfps values, reset to default value instead
-	if( r_maxfps->modified ) {
-		if( r_maxfps->integer <= 0 ) {
-			ri.Cvar_ForceSet( r_maxfps->name, r_maxfps->dvalue );
-		}
-		r_maxfps->modified = false;
-	}
-
 	// update gamma
 	if( r_gamma->modified ) {
 		r_gamma->modified = false;
@@ -344,19 +299,13 @@ static void RF_CheckCvars( void ) {
 	}
 }
 
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS ) {
+void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync ) {
 	int swapInterval;
 
 	RF_CheckCvars();
 
 	// run cinematic passes on shaders
 	R_RunAllCinematics();
-
-	if( uncappedFPS ) {
-		rrf.adapter.maxfps = 0;
-	} else {
-		rrf.adapter.maxfps = r_maxfps->integer;
-	}
 
 	// take the frame the backend is not busy processing
 	if( glConfig.multithreading ) {
@@ -395,6 +344,9 @@ void RF_EndFrame( void ) {
 		rrf.frameId++;
 		ri.Mutex_Unlock( rrf.adapter.frameLock );
 	}
+
+	// wake up the backend thread
+	rrf.adapter.cmdPipe->Fence( rrf.adapter.cmdPipe );
 }
 
 void RF_BeginRegistration( void ) {

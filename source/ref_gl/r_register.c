@@ -28,7 +28,6 @@ r_shared_t rsh;
 
 mempool_t *r_mempool;
 
-cvar_t *r_maxfps;
 cvar_t *r_norefresh;
 cvar_t *r_drawentities;
 cvar_t *r_drawworld;
@@ -1057,7 +1056,6 @@ static void R_Register( const char *screenshotsPrefix ) {
 	char tmp[128];
 	const qgl_driverinfo_t *driver;
 
-	r_maxfps = ri.Cvar_Get( "r_maxfps", "250", CVAR_ARCHIVE );
 	r_norefresh = ri.Cvar_Get( "r_norefresh", "0", 0 );
 	r_fullbright = ri.Cvar_Get( "r_fullbright", "0", CVAR_LATCH_VIDEO );
 	r_lightmap = ri.Cvar_Get( "r_lightmap", "0", 0 );
@@ -1167,8 +1165,6 @@ static void R_Register( const char *screenshotsPrefix ) {
 
 	// make sure we rebuild our 3D texture after vid_restart
 	r_wallcolor->modified = r_floorcolor->modified = true;
-
-	r_maxfps->modified = true;
 
 	// set to 1 to enable use of the checkerboard texture for missing world and model images
 	r_usenotexture = ri.Cvar_Get( "r_usenotexture", "0", CVAR_ARCHIVE );
