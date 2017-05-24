@@ -763,7 +763,16 @@ BotBaseMovementAction *BotMovementPredictionContext::SuggestSuitableAction()
     if (const edict_t *groundEntity = entityPhysicsState.GroundEntity())
     {
         if (groundEntity->use == Use_Plat)
-            return &self->ai->botRef->ridePlatformMovementAction;
+        {
+            // (prevent blocking if touching platform but not actually triggering it like @ wdm1 GA)
+            const auto &mins = groundEntity->r.absmin;
+            const auto &maxs = groundEntity->r.absmax;
+            if (mins[0] <= entityPhysicsState.Origin()[0] && maxs[0] >= entityPhysicsState.Origin()[0])
+            {
+                if (mins[1] <= entityPhysicsState.Origin()[1] && maxs[1] >= entityPhysicsState.Origin()[1])
+                    return &self->ai->botRef->ridePlatformMovementAction;
+            }
+        }
     }
 
     if (movementState->campingSpotState.IsActive())
@@ -1848,11 +1857,8 @@ void BotRidePlatformMovementAction::PlanPredictionStep(BotMovementPredictionCont
     if (!GenericCheckIsActionEnabled(context, &DefaultWalkAction()))
         return;
 
-    context->SetDefaultBotInput();
-    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-
-    const edict_t *groundEntity = entityPhysicsState.GroundEntity();
-    if (!groundEntity || groundEntity->use != Use_Plat)
+    const edict_t *platform = GetPlatform(context);
+    if (!platform)
     {
         context->cannotApplyAction = true;
         context->actionSuggestedByAction = &DefaultWalkAction();
@@ -1860,24 +1866,288 @@ void BotRidePlatformMovementAction::PlanPredictionStep(BotMovementPredictionCont
         return;
     }
 
-    switch (groundEntity->moveinfo.state)
+    if (platform->moveinfo.state == STATE_TOP)
+        SetupExitPlatformMovement(context, platform);
+    else
+        SetupIdleRidingPlatformMovement(context, platform);
+}
+
+void BotRidePlatformMovementAction::CheckPredictionStepResults(BotMovementPredictionContext *context)
+{
+    BotBaseMovementAction::CheckPredictionStepResults(context);
+    if (context->cannotApplyAction || context->isCompleted)
+        return;
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const int targetAreaNum = self->ai->botRef->savedPlatformAreas[currTestedAreaIndex];
+    const int currAreaNum = entityPhysicsState.CurrAasAreaNum();
+    const int droppedToFloorAreaNum = entityPhysicsState.DroppedToFloorAasAreaNum();
+    if (currAreaNum == targetAreaNum || droppedToFloorAreaNum == targetAreaNum)
     {
-        case STATE_TOP:
-            this->isDisabledForPlanning = true;
-            context->cannotApplyAction = true;
-            context->actionSuggestedByAction = &DefaultWalkAction();
-            Debug("Cannot apply the action (the platform is in TOP state), start running away from it\n");
-            // Start running off the platform (this should be handled by context!)
-            break;
-        default:
-            // Stand idle on a platform, it is poor but platforms are not widely used.
-            context->record->botInput.ClearButtons();
-            context->record->botInput.ClearMovementDirections();
-            context->record->botInput.canOverrideUcmd = false;
-            context->record->botInput.canOverrideLookVec = true;
-            // Do not predict further movement
-            context->isCompleted = true;
-            Debug("Stand idle on the platform, do not plan ahead\n");
+        Debug("The bot has entered the target exit area, should stop planning\n");
+        context->isCompleted = true;
+        return;
+    }
+
+    const unsigned sequenceDuration = SequenceDuration(context);
+    if (sequenceDuration < 250)
+    {
+        context->SaveSuggestedActionForNextFrame(this);
+        return;
+    }
+
+    if (originAtSequenceStart.SquareDistance2DTo(entityPhysicsState.Origin()) < 32 * 32)
+    {
+        Debug("The bot is likely stuck trying to use area #%d to exit the platform\n", currTestedAreaIndex);
+        context->SetPendingRollback();
+        return;
+    }
+
+    if (sequenceDuration > 550)
+    {
+        Debug("The bot still has not reached the target exit area\n");
+        context->SetPendingRollback();
+        return;
+    }
+
+    context->SaveSuggestedActionForNextFrame(this);
+}
+
+void BotRidePlatformMovementAction::OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                                                 SequenceStopReason stopReason,
+                                                                 unsigned stoppedAtFrameIndex)
+{
+    BotBaseMovementAction::OnApplicationSequenceStopped(context, stopReason, stoppedAtFrameIndex);
+    if (stopReason != FAILED)
+        return;
+
+    currTestedAreaIndex++;
+}
+
+void BotRidePlatformMovementAction::SetupIdleRidingPlatformMovement(BotMovementPredictionContext *context,
+                                                                    const edict_t *platform)
+{
+    if (self->ai->botRef->savedPlatformAreas.empty() && context->NavTargetAasAreaNum())
+        TrySaveExitAreas(context, platform);
+
+    auto *botInput = &context->record->botInput;
+    if (self->ai->botRef->HasEnemy())
+    {
+        Vec3 toEnemy(self->ai->botRef->EnemyOrigin());
+        toEnemy -= context->movementState->entityPhysicsState.Origin();
+        botInput->SetIntendedLookDir(toEnemy, false);
+    }
+    else
+    {
+        float height = platform->moveinfo.start_origin[2] - platform->moveinfo.end_origin[2];
+        float frac = (platform->s.origin[2] - platform->moveinfo.end_origin[2]) / height;
+        if (frac > 0.5f && !self->ai->botRef->savedPlatformAreas.empty())
+        {
+            const auto &area = AiAasWorld::Instance()->Areas()[self->ai->botRef->savedPlatformAreas.front()];
+            Vec3 lookVec(area.center);
+            lookVec -= context->movementState->entityPhysicsState.Origin();
+            botInput->SetIntendedLookDir(lookVec, false);
+        }
+        else
+        {
+            Vec3 lookVec(context->movementState->entityPhysicsState.ForwardDir());
+            lookVec.Z() = 0.5f - 1.0f * frac;
+            botInput->SetIntendedLookDir(lookVec, false);
+        }
+    }
+
+    botInput->isUcmdSet = true;
+    botInput->canOverrideUcmd = true;
+
+    Debug("Stand idle on the platform, do not plan ahead\n");
+    context->isCompleted = true;
+}
+
+void BotRidePlatformMovementAction::SetupExitPlatformMovement(BotMovementPredictionContext *context,
+                                                              const edict_t *platform)
+{
+    const ExitAreasVector &suggestedAreas = SuggestExitAreas(context, platform);
+    if (suggestedAreas.empty())
+    {
+        Debug("Warning: there is no platform exit areas, do not plan ahead\n");
+        this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
+        return;
+    }
+
+    if (currTestedAreaIndex >= suggestedAreas.size())
+    {
+        Debug("All suggested exit area tests have failed\n");
+        this->isDisabledForPlanning = true;
+        context->SetPendingRollback();
+        return;
+    }
+
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    auto *botInput = &context->record->botInput;
+
+    const auto &area = AiAasWorld::Instance()->Areas()[suggestedAreas[currTestedAreaIndex]];
+    Vec3 intendedLookDir(area.center);
+    intendedLookDir.Z() = area.mins[2] + 32;
+    intendedLookDir -= entityPhysicsState.Origin();
+    float distance = intendedLookDir.NormalizeFast();
+    botInput->SetIntendedLookDir(intendedLookDir, true);
+
+    botInput->isUcmdSet = true;
+    float dot = intendedLookDir.Dot(entityPhysicsState.ForwardDir());
+    if (dot < 0.0f)
+    {
+        botInput->SetTurnSpeedMultiplier(3.0f);
+        return;
+    }
+
+    if (dot < 0.7f)
+    {
+        botInput->SetWalkButton(true);
+        return;
+    }
+
+    if (distance > 64.0f)
+        botInput->SetSpecialButton(true);
+}
+
+const edict_t *BotRidePlatformMovementAction::GetPlatform(BotMovementPredictionContext *context) const
+{
+    const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+    const edict_t *groundEntity = entityPhysicsState.GroundEntity();
+    if (groundEntity)
+    {
+        return groundEntity->use == Use_Plat ? groundEntity : nullptr;
+    }
+
+    trace_t trace;
+    Vec3 startPoint(entityPhysicsState.Origin());
+    startPoint.Z() += playerbox_stand_mins[2];
+    Vec3 endPoint(entityPhysicsState.Origin());
+    endPoint.Z() += playerbox_stand_mins[2];
+    endPoint.Z() -= 32.0f;
+    G_Trace(&trace, startPoint.Data(), playerbox_stand_mins, playerbox_stand_maxs, endPoint.Data(), self, MASK_ALL);
+    if (trace.ent != -1)
+    {
+        groundEntity = game.edicts + trace.ent;
+        if (groundEntity->use == Use_Plat)
+            return groundEntity;
+    }
+
+    return nullptr;
+}
+
+void BotRidePlatformMovementAction::TrySaveExitAreas(BotMovementPredictionContext *context, const edict_t *platform)
+{
+    auto &savedAreas = self->ai->botRef->savedPlatformAreas;
+    savedAreas.clear();
+
+    int navTargetAreaNum = self->ai->botRef->NavTargetAasAreaNum();
+    Assert(navTargetAreaNum);
+
+    FindExitAreas(context, platform, tmpExitAreas);
+
+    const auto *routeCache = self->ai->botRef->routeCache;
+    const int travelFlags = self->ai->botRef->allowedAasTravelFlags;
+
+    int areaTravelTimes[MAX_SAVED_AREAS];
+    for (unsigned i = 0, end = tmpExitAreas.size(); i < end; ++i)
+    {
+        int travelTime = routeCache->TravelTimeToGoalArea(tmpExitAreas[i], navTargetAreaNum, travelFlags);
+        if (!travelTime)
+            continue;
+
+        savedAreas.push_back(tmpExitAreas[i]);
+        areaTravelTimes[i] = travelTime;
+    }
+
+    // Sort areas
+    for (unsigned i = 1, end = savedAreas.size(); i < end; ++i)
+    {
+        int area = savedAreas[i];
+        int travelTime = areaTravelTimes[i];
+        unsigned j = i - 1;
+        for (; j < std::numeric_limits<unsigned>::max() && areaTravelTimes[j] < travelTime; --j)
+        {
+            savedAreas[j + 1] = savedAreas[j];
+            areaTravelTimes[j + 1] = areaTravelTimes[j];
+        }
+
+        savedAreas[j + 1] = area;
+        areaTravelTimes[j + 1] = travelTime;
+    }
+}
+
+typedef BotRidePlatformMovementAction::ExitAreasVector ExitAreasVector;
+
+const ExitAreasVector &BotRidePlatformMovementAction::SuggestExitAreas(BotMovementPredictionContext *context,
+                                                                       const edict_t *platform)
+{
+    if (!self->ai->botRef->savedPlatformAreas.empty())
+        return self->ai->botRef->savedPlatformAreas;
+
+    FindExitAreas(context, platform, tmpExitAreas);
+
+    // Save found areas to avoid repeated FindExitAreas() calls while testing next area after rollback
+    for (int areaNum: tmpExitAreas)
+        self->ai->botRef->savedPlatformAreas.push_back(areaNum);
+
+    return tmpExitAreas;
+};
+
+void BotRidePlatformMovementAction::FindExitAreas(BotMovementPredictionContext *context,
+                                                  const edict_t *platform,
+                                                  ExitAreasVector &exitAreas)
+{
+    const auto &aasWorld = AiAasWorld::Instance();
+    const auto *aasAreas = aasWorld->Areas();
+    const auto *aasAreaSettings = aasWorld->AreaSettings();
+
+    const BotMovementState &movementState = context ? *context->movementState : self->ai->botRef->movementState;
+
+    exitAreas.clear();
+
+    Vec3 mins(platform->r.absmin);
+    Vec3 maxs(platform->r.absmax);
+    // SP_func_plat(): start is the top position, end is the bottom
+    mins.Z() = platform->moveinfo.start_origin[2];
+    maxs.Z() = platform->moveinfo.start_origin[2] + 96.0f;
+    // We have to extend bounds... check whether wdm9 movement is OK if one changes these values.
+    for (int i = 0; i < 2; ++i)
+    {
+        mins.Data()[i] -= 96.0f;
+        maxs.Data()[i] += 96.0f;
+    }
+
+    Vec3 finalBotOrigin(movementState.entityPhysicsState.Origin());
+    // Add an extra 1 unit offset for tracing purposes
+    finalBotOrigin.Z() += platform->moveinfo.start_origin[2] - platform->s.origin[2] + 1.0f;
+
+    trace_t trace;
+    int bboxAreaNums[48];
+    const int numBBoxAreas = aasWorld->BBoxAreas(mins, maxs, bboxAreaNums, 48);
+    for (int i = 0; i < numBBoxAreas; ++i)
+    {
+        const int areaNum = bboxAreaNums[i];
+        const auto &area = aasAreas[areaNum];
+        const auto &areaSettings = aasAreaSettings[areaNum];
+        if (!(areaSettings.areaflags & AREA_GROUNDED))
+            continue;
+        if (areaSettings.areaflags & (AREA_JUNK|AREA_DISABLED))
+            continue;
+        if (areaSettings.contents & (AREACONTENTS_DONOTENTER|AREACONTENTS_MOVER))
+            continue;
+
+        Vec3 areaPoint(area.center);
+        areaPoint.Z() = area.mins[2] + 8.0f;
+
+        // Do not use player box as trace mins/maxs (it leads to blocking when a bot rides a platform near a wall)
+        G_Trace(&trace, finalBotOrigin.Data(), nullptr, nullptr, areaPoint.Data(), self, MASK_ALL);
+        if (trace.fraction != 1.0f)
+            continue;
+
+        exitAreas.push_back(areaNum);
+        if (exitAreas.size() == exitAreas.capacity())
             break;
     }
 }
@@ -1981,6 +2251,28 @@ void Bot::MovementFrame(BotInput *input)
     movementAction->ExecActionRecord(&movementActionRecord, input, nullptr);
 
     CheckTargetProximity();
+    CheckGroundPlatform();
+}
+
+void Bot::CheckGroundPlatform()
+{
+    if (!self->groundentity)
+        return;
+
+    // Reset saved platform areas after touching a solid world ground
+    if (self->groundentity == world)
+    {
+        self->ai->botRef->savedPlatformAreas.clear();
+        return;
+    }
+
+    if (self->groundentity->use != Use_Plat)
+        return;
+
+    if (self->groundentity->moveinfo.state != STATE_BOTTOM)
+        return;
+
+    self->ai->botRef->ridePlatformMovementAction.TrySaveExitAreas(nullptr, self->groundentity);
 }
 
 constexpr float STRAIGHT_MOVEMENT_DOT_THRESHOLD = 0.8f;

@@ -400,6 +400,7 @@ private:
     void UpdateScriptWeaponsStatus();
 
     void MovementFrame(BotInput *input);
+    void CheckGroundPlatform();
     bool CanChangeWeapons() const;
     void ChangeWeapons(const SelectedWeapons &selectedWeapons);
     void ChangeWeapon(int weapon);
@@ -435,8 +436,9 @@ private:
     inline Vec3 EnemyMins() const { return selectedEnemies.Mins(); }
     inline Vec3 EnemyMaxs() const { return selectedEnemies.Maxs(); }
 
-    static constexpr unsigned MAX_SAVED_LANDING_AREAS = BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS;
-    StaticVector<int, MAX_SAVED_LANDING_AREAS> savedLandingAreas;
+    static constexpr unsigned MAX_SAVED_AREAS = BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS;
+    StaticVector<int, MAX_SAVED_AREAS> savedLandingAreas;
+    StaticVector<int, MAX_SAVED_AREAS> savedPlatformAreas;
 
     void CheckTargetProximity();
 

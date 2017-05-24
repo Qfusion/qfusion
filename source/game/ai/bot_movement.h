@@ -1281,9 +1281,36 @@ public:
 
 class BotRidePlatformMovementAction: public BotBaseMovementAction
 {
+    friend class Bot;
 public:
     DECLARE_MOVEMENT_ACTION_CONSTRUCTOR(BotRidePlatformMovementAction, COLOR_RGB(128, 128, 0));
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
+    void CheckPredictionStepResults(BotMovementPredictionContext *context) override;
+
+    void BeforePlanning() override
+    {
+        BotBaseMovementAction::BeforePlanning();
+        currTestedAreaIndex = 0;
+    }
+
+    void OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                      SequenceStopReason stopReason,
+                                      unsigned stoppedAtFrameIndex) override;
+
+    static constexpr auto MAX_SAVED_AREAS = BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS;
+    typedef StaticVector<int, MAX_SAVED_AREAS> ExitAreasVector;
+private:
+    ExitAreasVector tmpExitAreas;
+    unsigned currTestedAreaIndex;
+
+    const edict_t *GetPlatform(BotMovementPredictionContext *context) const;
+    // A context might be null!
+    void TrySaveExitAreas(BotMovementPredictionContext *context, const edict_t *platform);
+    const ExitAreasVector &SuggestExitAreas(BotMovementPredictionContext *context, const edict_t *platform);
+    void FindExitAreas(BotMovementPredictionContext *context, const edict_t *platform, ExitAreasVector &exitAreas);
+
+    void SetupIdleRidingPlatformMovement(BotMovementPredictionContext *context, const edict_t *platform);
+    void SetupExitPlatformMovement(BotMovementPredictionContext *context, const edict_t *platform);
 };
 
 class BotSwimMovementAction: public BotBaseMovementAction
