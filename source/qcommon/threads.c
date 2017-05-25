@@ -243,7 +243,6 @@ static void QBufPipe_BufLenAdd( qbufPipe_t *pipe, int val ) {
 void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *pcmd, unsigned cmd_size ) {
 	void *buf;
 	unsigned write_remains;
-	bool was_empty;
 
 	if( !pipe ) {
 		return;
@@ -257,7 +256,6 @@ void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *pcmd, unsigned cmd_size ) 
 		pipe->write_pos = 0;
 	}
 
-	was_empty = Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0, pipe->cmdbuf_mutex ) == true;
 	write_remains = pipe->bufSize - pipe->write_pos;
 
 	if( sizeof( int ) > write_remains ) {
@@ -304,11 +302,9 @@ void QBufPipe_WriteCmd( qbufPipe_t *pipe, const void *pcmd, unsigned cmd_size ) 
 	QBufPipe_BufLenAdd( pipe, cmd_size ); // atomic
 
 	// wake the other thread waiting for signal
-	if( was_empty ) {
-		QMutex_Lock( pipe->nonempty_mutex );
-		QBufPipe_Wake( pipe );
-		QMutex_Unlock( pipe->nonempty_mutex );
-	}
+	QMutex_Lock( pipe->nonempty_mutex );
+	QBufPipe_Wake( pipe );
+	QMutex_Unlock( pipe->nonempty_mutex );
 }
 
 /*
