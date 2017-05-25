@@ -77,9 +77,6 @@ void BotGenericRunToItemActionRecord::Deactivate()
     self->ai->botRef->ResetNavTarget();
 }
 
-constexpr float GOAL_PICKUP_ACTION_RADIUS = 72.0f;
-constexpr float TACTICAL_SPOT_RADIUS = 40.0f;
-
 AiBaseActionRecord::Status BotGenericRunToItemActionRecord::CheckStatus(const WorldState &currWorldState) const
 {
     const auto &selectedNavEntity = self->ai->botRef->GetSelectedNavEntity();

@@ -345,6 +345,37 @@ PlannerNode *BotReactToEnemyLostGoal::GetWorldStateTransitions(const WorldState 
     return ApplyExtraActions(firstTransition, worldState);
 }
 
+void BotRoamGoal::UpdateWeight(const WorldState &currWorldState)
+{
+    // This goal is a fallback goal. Set the lowest feasible weight if it should be positive.
+    if (self->ai->botRef->ShouldUseRoamSpotAsNavTarget())
+    {
+        this->weight = 0.000001f;
+        return;
+    }
+
+    this->weight = 0.0f;
+}
+
+void BotRoamGoal::GetDesiredWorldState(WorldState *worldState)
+{
+    worldState->SetIgnoreAll(true);
+
+    const Vec3 &spotOrigin = self->ai->botRef->roamingManager.GetCachedRoamingSpot();
+    worldState->BotOriginVar().SetValue(spotOrigin);
+    worldState->BotOriginVar().SetSatisfyOp(WorldState::SatisfyOp::EQ, 32.0f);
+    worldState->BotOriginVar().SetIgnore(false);
+}
+
+PlannerNode *BotRoamGoal::GetWorldStateTransitions(const WorldState &worldState)
+{
+    PlannerNode *firstTransition = nullptr;
+
+    TRY_APPLY_ACTION(genericRunAvoidingCombatAction);
+
+    return ApplyExtraActions(firstTransition, worldState);
+}
+
 void BotScriptGoal::UpdateWeight(const WorldState &currWorldState)
 {
     this->weight = GENERIC_asGetScriptGoalWeight(scriptObject, currWorldState);

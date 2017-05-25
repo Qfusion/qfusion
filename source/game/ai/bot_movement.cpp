@@ -5312,14 +5312,16 @@ void Bot::CheckTargetProximity()
     if (!botBrain.HasNavTarget())
         return;
 
-    if (botBrain.IsCloseToNavTarget(128.0f))
-    {
-        if (botBrain.TryReachNavTargetByProximity())
-        {
-            OnNavTargetTouchHandled();
-            return;
-        }
-    }
+    if (!botBrain.IsCloseToNavTarget(128.0f))
+        return;
+
+    // Save the origin for the roaming manager to avoid its occasional modification in the code below
+    Vec3 navTargetOrigin(NavTargetOrigin());
+    if (!botBrain.TryReachNavTargetByProximity())
+        return;
+
+    roamingManager.OnNavTargetReached(navTargetOrigin);
+    OnNavTargetTouchHandled();
 }
 
 void BotEnvironmentTraceCache::SetFullHeightCachedTracesEmpty(const vec3_t front2DDir, const vec3_t right2DDir)

@@ -11,6 +11,7 @@
 #include "bot_weapon_selector.h"
 #include "bot_fire_target_cache.h"
 #include "bot_tactical_spots_cache.h"
+#include "bot_roaming_manager.h"
 #include "bot_weight_config.h"
 
 #include "bot_goals.h"
@@ -50,6 +51,7 @@ class Bot: public Ai
     friend class BotFireTargetCache;
     friend class BotItemsSelector;
     friend class BotWeaponSelector;
+    friend class BotRoamingManager;
     friend class BotBaseGoal;
     friend class BotGrabItemGoal;
     friend class BotKillEnemyGoal;
@@ -58,6 +60,7 @@ class Bot: public Ai
     friend class BotReactToThreatGoal;
     friend class BotReactToEnemyLostGoal;
     friend class BotAttackOutOfDespairGoal;
+    friend class BotRoamGoal;
     friend class BotTacticalSpotsCache;
     friend class WorldState;
 
@@ -264,6 +267,7 @@ private:
     BotWeaponSelector weaponsSelector;
 
     BotTacticalSpotsCache tacticalSpotsCache;
+    BotRoamingManager roamingManager;
 
     BotFireTargetCache builtinFireTargetCache;
     BotFireTargetCache scriptFireTargetCache;
@@ -275,6 +279,7 @@ private:
     BotReactToThreatGoal reactToThreatGoal;
     BotReactToEnemyLostGoal reactToEnemyLostGoal;
     BotAttackOutOfDespairGoal attackOutOfDespairGoal;
+    BotRoamGoal roamGoal;
 
     BotGenericRunToItemAction genericRunToItemAction;
     BotPickupItemAction pickupItemAction;
@@ -373,6 +378,22 @@ private:
     unsigned lastKnockbackAt;
 
     unsigned similarWorldStateInstanceId;
+
+    unsigned lastItemSelectedAt;
+    unsigned noItemAvailableSince;
+
+    inline bool ShouldUseRoamSpotAsNavTarget() const
+    {
+        const auto &selectedNavEntity = GetSelectedNavEntity();
+        // Wait for item selection in this case (the selection is just no longer valid).
+        if (!selectedNavEntity.IsValid())
+            return false;
+        // There was a valid item selected
+        if (!selectedNavEntity.IsEmpty())
+            return false;
+
+        return level.time - noItemAvailableSince > 3000;
+    }
 
     class AimingRandomHolder
     {

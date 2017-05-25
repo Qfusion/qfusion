@@ -18,6 +18,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       selectedEnemies(self_),
       weaponsSelector(self_, selectedEnemies, selectedWeapons, 600 - From0UpToMax(300, skillLevel_)),
       tacticalSpotsCache(self_),
+      roamingManager(self_),
       builtinFireTargetCache(self_),
       scriptFireTargetCache(self_),
       grabItemGoal(this),
@@ -27,6 +28,7 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       reactToThreatGoal(this),
       reactToEnemyLostGoal(this),
       attackOutOfDespairGoal(this),
+      roamGoal(this),
       genericRunToItemAction(this),
       pickupItemAction(this),
       waitForItemAction(this),
@@ -73,7 +75,9 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       lastTouchedJumppadAt(0),
       lastTouchedElevatorAt(0),
       lastKnockbackAt(0),
-      similarWorldStateInstanceId(0)
+      similarWorldStateInstanceId(0),
+      lastItemSelectedAt(0),
+      noItemAvailableSince(0)
 {
     self->r.client->movestyle = GS_CLASSICBUNNY;
     SetTag(self->r.client->netname);

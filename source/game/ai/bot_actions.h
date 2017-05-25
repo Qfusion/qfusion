@@ -3,6 +3,9 @@
 
 #include "ai_base_brain.h"
 
+constexpr const float GOAL_PICKUP_ACTION_RADIUS = 72.0f;
+constexpr const float TACTICAL_SPOT_RADIUS = 40.0f;
+
 class BotBaseActionRecord: public AiBaseActionRecord
 {
 public:
@@ -211,7 +214,7 @@ public:
         : BotBaseActionRecord(pool_, self_, "BotGenericRunAvoidingCombatActionRecord"),
           navTarget(NavTarget::Dummy())
     {
-        navTarget.SetToTacticalSpot(destination);
+        navTarget.SetToTacticalSpot(destination, GOAL_PICKUP_ACTION_RADIUS);
     }
 
     void Activate() override;

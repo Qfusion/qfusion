@@ -8,6 +8,7 @@
 
 class TacticalSpotsRegistry
 {
+    friend class BotRoamingManager;
     // These types need forward declaration before methods where they are used.
 public:
     class OriginParams

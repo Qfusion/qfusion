@@ -236,6 +236,23 @@ void BotBrain::OnEnemyDamaged(const edict_t *target, int damage)
         squad->OnBotDamagedEnemy(self, target, damage);
 }
 
+inline const SelectedNavEntity &BotBrain::GetOrUpdateSelectedNavEntity()
+{
+    if (selectedNavEntity.IsValid())
+        return selectedNavEntity;
+
+    // Use direct access to the field to skip assertion
+    prevSelectedNavEntity = selectedNavEntity.navEntity;
+    selectedNavEntity = itemsSelector.SuggestGoalNavEntity(selectedNavEntity);
+
+    if (!selectedNavEntity.IsEmpty())
+        self->ai->botRef->lastItemSelectedAt = level.time;
+    else if (self->ai->botRef->lastItemSelectedAt >= self->ai->botRef->noItemAvailableSince)
+        self->ai->botRef->noItemAvailableSince = level.time;
+
+    return selectedNavEntity;
+}
+
 void BotBrain::UpdateBlockedAreasStatus()
 {
     if (activeEnemyPool->ActiveEnemies().empty() || ShouldRushHeadless())
@@ -454,7 +471,17 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
     const SelectedNavEntity &currSelectedNavEntity = GetOrUpdateSelectedNavEntity();
     if (currSelectedNavEntity.IsEmpty())
     {
-        worldState->NavTargetOriginVar().SetIgnore(true);
+        // HACK! If there is no selected nav entity, set the value to the roaming spot origin.
+        if (self->ai->botRef->ShouldUseRoamSpotAsNavTarget())
+        {
+            Vec3 spot(self->ai->botRef->roamingManager.GetCachedRoamingSpot());
+            Debug("Using a roaming spot @ %.1f %.1f %.1f as a world state nav target var\n", spot.X(), spot.Y(), spot.Z());
+            worldState->NavTargetOriginVar().SetValue(spot);
+        }
+        else
+        {
+            worldState->NavTargetOriginVar().SetIgnore(true);
+        }
         worldState->GoalItemWaitTimeVar().SetIgnore(true);
     }
     else

@@ -96,6 +96,16 @@ public:
     PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
 };
 
+class BotRoamGoal: public BotBaseGoal
+{
+public:
+    BotRoamGoal(Ai *ai_): BotBaseGoal(ai_, "BotRoamGoal", 400) {}
+
+    void UpdateWeight(const WorldState &currWorldState) override;
+    void GetDesiredWorldState(WorldState *worldState) override;
+    PlannerNode *GetWorldStateTransitions(const WorldState &worldState) override;
+};
+
 class BotScriptGoal: public BotBaseGoal
 {
     void *scriptObject;

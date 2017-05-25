@@ -128,16 +128,7 @@ class BotBrain: public AiBaseBrain
     // For tracking picked up items
     const NavEntity *prevSelectedNavEntity;
 
-    inline const SelectedNavEntity &GetOrUpdateSelectedNavEntity()
-    {
-        if (!selectedNavEntity.IsValid())
-        {
-            // Use direct access to the field to skip assertion
-            prevSelectedNavEntity = selectedNavEntity.navEntity;
-            selectedNavEntity = itemsSelector.SuggestGoalNavEntity(selectedNavEntity);
-        }
-        return selectedNavEntity;
-    }
+    const SelectedNavEntity &GetOrUpdateSelectedNavEntity();
 
     inline bool HasJustPickedGoalItem() const
     {
