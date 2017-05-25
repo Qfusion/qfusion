@@ -34,22 +34,12 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
 static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
 	ref_cmdbuf_t *frame;
 
-	if( !adapter->lastForceVsync ) {
-		ri.Sys_Sleep( 0 );
-	}
+	adapter->cmdPipe->WaitForCmds( adapter->cmdPipe, Q_THREADS_WAIT_INFINITE );
 
 	frame = RF_GetNextAdapterFrame( adapter );
 	if( frame ) {
 		frame->RunCmds( frame );
-		adapter->lastForceVsync = frame->GetForceVsync( frame );
-		adapter->readFrameId = frame->GetFrameId( frame );
-	} else {
-		if( adapter->lastForceVsync ) {
-			ri.Sys_Sleep( 0 );
-		}
 	}
-
-	adapter->cmdPipe->RunCmds( adapter->cmdPipe );
 }
 
 /*
@@ -77,11 +67,6 @@ static void *RF_AdapterThreadProc( void *param ) {
 static void RF_AdapterWait( ref_frontendAdapter_t *adapter ) {
 	if( adapter->thread == NULL ) {
 		return;
-	}
-
-	while( adapter->frameId != adapter->readFrameId ) {
-		adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
-		adapter->cmdPipe->Fence( adapter->cmdPipe );
 	}
 
 	adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
@@ -151,11 +136,8 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter ) {
 
 	ri.Mutex_Lock( adapter->frameLock );
 	if( adapter->frameNum != fe->lastFrameNum ) {
-		adapter->frameId = fe->frameId;
 		adapter->frameNum = fe->lastFrameNum;
-
 		result = fe->frames[adapter->frameNum];
-		result->SetFrameId( result, fe->frameId );
 	}
 	ri.Mutex_Unlock( adapter->frameLock );
 
@@ -193,7 +175,6 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 		return err;
 	}
 
-	rrf.frameId = 0;
 	rrf.frameNum = rrf.lastFrameNum = 0;
 
 	if( !rrf.frame ) {
@@ -341,9 +322,10 @@ void RF_EndFrame( void ) {
 	if( glConfig.multithreading ) {
 		ri.Mutex_Lock( rrf.adapter.frameLock );
 		rrf.lastFrameNum = rrf.frameNum;
-		rrf.frameId++;
 		ri.Mutex_Unlock( rrf.adapter.frameLock );
 	}
+
+	rrf.adapter.cmdPipe->Fence( rrf.adapter.cmdPipe );
 }
 
 void RF_BeginRegistration( void ) {

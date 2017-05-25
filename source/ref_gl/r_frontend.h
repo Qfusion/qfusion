@@ -29,19 +29,15 @@ typedef struct {
 	void            *owner;             // pointer to parent ref_frontend_t
 	void            *GLcontext;
 	unsigned frameNum;
-	uint32_t frameId;
-	volatile uint32_t readFrameId;
 	qthread_t       *thread;
 	qmutex_t        *frameLock;
 	ref_cmdpipe_t   *cmdPipe;
 	volatile bool shutdown;
-	bool lastForceVsync;
 } ref_frontendAdapter_t;
 
 typedef struct {
 	unsigned frameNum;                  // wrapped
 	unsigned lastFrameNum;
-	uint32_t frameId;
 
 	ref_cmdbuf_t    *frames[3];         // triple-buffered
 	ref_cmdbuf_t    *frame;             // current frontend frame

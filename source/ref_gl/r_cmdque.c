@@ -304,7 +304,6 @@ static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation,
 	cmd.cameraSeparation = cameraSeparation;
 	cmd.forceClear = forceClear;
 	cmd.swapInterval = swapInterval;
-	cmdbuf->forceVsync = swapInterval != 0;
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
@@ -612,18 +611,6 @@ static void RF_ClearCmdBuf( ref_cmdbuf_t *cmdbuf ) {
 	cmdbuf->len = 0;
 }
 
-static void RF_SetCmdBufFrameId( ref_cmdbuf_t *cmdbuf, unsigned frameId ) {
-	cmdbuf->frameId = frameId;
-}
-
-static unsigned RF_GetCmdBufFrameId( ref_cmdbuf_t *cmdbuf ) {
-	return cmdbuf->frameId;
-}
-
-static bool RF_GetCmdBufForceVsync( ref_cmdbuf_t *cmdbuf ) {
-	return cmdbuf->forceVsync;
-}
-
 ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
 	ref_cmdbuf_t *cmdbuf;
 
@@ -652,9 +639,6 @@ ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
 	cmdbuf->DrawStretchRawYUV = &RF_IssueDrawStretchRawYUVCmd;
 
 	cmdbuf->Clear = &RF_ClearCmdBuf;
-	cmdbuf->SetFrameId = &RF_SetCmdBufFrameId;
-	cmdbuf->GetFrameId = &RF_GetCmdBufFrameId;
-	cmdbuf->GetForceVsync = &RF_GetCmdBufForceVsync;
 	cmdbuf->RunCmds = &RF_RunCmdBufProc;
 
 	return cmdbuf;
@@ -815,7 +799,7 @@ static unsigned R_HandleInitReliableCmd( void *pcmd ) {
 }
 
 static unsigned R_HandleShutdownReliableCmd( void *pcmd ) {
-	refReliableCmdInitShutdown_t *cmd = pcmd;
+	//refReliableCmdInitShutdown_t *cmd = pcmd;
 
 	R_ReleaseBuiltinScreenImages();
 
@@ -823,7 +807,7 @@ static unsigned R_HandleShutdownReliableCmd( void *pcmd ) {
 
 	RFB_Shutdown();
 
-	return sizeof( *cmd );
+	return 0;
 }
 
 static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd ) {

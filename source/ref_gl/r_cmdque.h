@@ -26,9 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // public frontend -> frontend/backend commands
 
 typedef struct ref_cmdbuf_s {
-	uint32_t frameId;
 	size_t len;
-	bool forceVsync;
 
 	// command procs
 
@@ -52,10 +50,7 @@ typedef struct ref_cmdbuf_s {
 
 	// execution proc
 	void ( *Clear )( struct ref_cmdbuf_s *cmdbuf );
-	void ( *SetFrameId )( struct ref_cmdbuf_s *cmdbuf, unsigned frameId );
-	unsigned ( *GetFrameId )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
-	bool ( *GetForceVsync )( struct ref_cmdbuf_s *cmdbuf );
 
 	bool sync;            // if true, commands are executes in immediate mode
 	size_t buf_size;
