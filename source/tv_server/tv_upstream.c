@@ -153,18 +153,16 @@ char *TV_Upstream_Userinfo( upstream_t *upstream ) {
 * TV_Upstream_Netchan_Transmit
 */
 static void TV_Upstream_Netchan_Transmit( upstream_t *upstream, msg_t *msg ) {
-	//int zerror;
-
 	// if we got here with unsent fragments, fire them all now
 	Netchan_PushAllFragments( &upstream->netchan );
-
+	
 	// do not enable client compression until I fix the compression+fragmentation rare case bug
-	/*if( cl_compresspackets->integer ) {
-	zerror = Netchan_CompressMessage( msg );
-	if( zerror < 0 ) {  // it's compression error, just send uncompressed
-	Com_DPrintf( "TV_Upstream_Netchan_Transmit (ignoring compression): Compression error %i\n", zerror );
+	if( msg->cursize > 60 ) {
+		int zerror = Netchan_CompressMessage( msg );
+		if( zerror < 0 ) {  // it's compression error, just send uncompressed
+			Com_DPrintf( "TV_Upstream_Netchan_Transmit (ignoring compression): Compression error %i\n", zerror );
+		}
 	}
-	}*/
 
 	Netchan_Transmit( &upstream->netchan, msg );
 	upstream->lastPacketSentTime = tvs.realtime;

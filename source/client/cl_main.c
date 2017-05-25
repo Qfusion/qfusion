@@ -34,7 +34,6 @@ cvar_t *cl_timeout;
 cvar_t *cl_maxfps;
 cvar_t *cl_sleep;
 cvar_t *cl_pps;
-cvar_t *cl_compresspackets;
 cvar_t *cl_shownet;
 
 cvar_t *cl_extrapolationTime;
@@ -1951,7 +1950,6 @@ static void CL_InitLocal( void ) {
 	cl_maxfps =     Cvar_Get( "cl_maxfps", "250", CVAR_ARCHIVE );
 	cl_sleep =      Cvar_Get( "cl_sleep", "1", CVAR_ARCHIVE );
 	cl_pps =        Cvar_Get( "cl_pps", "40", CVAR_ARCHIVE );
-	cl_compresspackets =    Cvar_Get( "cl_compresspackets", "1", CVAR_ARCHIVE );
 
 	cl_extrapolationTime =  Cvar_Get( "cl_extrapolationTime", "0", CVAR_DEVELOPER );
 	cl_extrapolate = Cvar_Get( "cl_extrapolate", "1", CVAR_ARCHIVE );
@@ -2263,14 +2261,11 @@ void CL_UpdateSnapshot( void ) {
 * CL_Netchan_Transmit
 */
 void CL_Netchan_Transmit( msg_t *msg ) {
-	int zerror;
-
 	// if we got here with unsent fragments, fire them all now
 	Netchan_PushAllFragments( &cls.netchan );
 
-	// do not enable client compression until I fix the compression+fragmentation rare case bug
-	if( ( cl_compresspackets->integer && msg->cursize > 60 ) || cl_compresspackets->integer > 1 ) {
-		zerror = Netchan_CompressMessage( msg );
+	if( msg->cursize > 60 ) {
+		int zerror = Netchan_CompressMessage( msg );
 		if( zerror < 0 ) { // it's compression error, just send uncompressed
 			Com_DPrintf( "CL_Netchan_Transmit (ignoring compression): Compression error %i\n", zerror );
 		}

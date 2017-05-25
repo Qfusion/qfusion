@@ -313,7 +313,6 @@ extern client_static_t cls;
 extern cvar_t *cl_stereo_separation;
 extern cvar_t *cl_stereo;
 
-extern cvar_t *cl_compresspackets;
 extern cvar_t *cl_shownet;
 
 extern cvar_t *cl_extrapolationTime;
