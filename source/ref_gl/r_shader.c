@@ -1515,9 +1515,11 @@ static void Shaderpass_DepthFunc( shader_t *shader, shaderpass_t *pass, const ch
 
 	token = Shader_ParseString( ptr );
 
-	pass->flags &= ~GLSTATE_DEPTHFUNC_EQ;
+	pass->flags &= ~(GLSTATE_DEPTHFUNC_EQ|GLSTATE_DEPTHFUNC_GT);
 	if( !strcmp( token, "equal" ) ) {
 		pass->flags |= GLSTATE_DEPTHFUNC_EQ;
+	} else if( !strcmp( token, "greater" ) ) {
+		pass->flags |= GLSTATE_DEPTHFUNC_GT;
 	}
 }
 
