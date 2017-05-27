@@ -832,22 +832,28 @@ void CL_Disconnect( const char *message ) {
 	SV_ShutdownGame( "Owner left the listen server", false );
 
 	if( cl_timedemo && cl_timedemo->integer ) {
-		unsigned int time;
 		int i;
+		float mean = 0;
+		int64_t time;
 
 		Com_Printf( "\n" );
 		for( i = 1; i < 100; i++ ) {
 			if( cl.timedemo.counts[i] > 0 ) {
-				Com_Printf( "%2ims - %7.2ffps: %6.2f%c\n", i, 1000.0 / i,
-							( cl.timedemo.counts[i] * 1.0 / cl.timedemo.frames ) * 100.0, '%' );
+				float fps, frac;
+				
+				fps = 1000.0 / i;
+				frac = cl.timedemo.counts[i] * 1.0 / cl.timedemo.frames;
+				mean += fps * frac;
+
+				Com_Printf( "%2ims - %7.2ffps: %6.2f%c\n", i, fps,
+					frac * 100.0, '%' );
 			}
 		}
 
 		Com_Printf( "\n" );
 		time = Sys_Milliseconds() - cl.timedemo.startTime;
 		if( time > 0 ) {
-			Com_Printf( "%i frames, %3.1f seconds: %3.1f fps\n", cl.timedemo.frames,
-						time / 1000.0, cl.timedemo.frames * 1000.0 / time );
+			Com_Printf( "%3.1f seconds: %3.1f mean fps\n", time / 1000.0, mean );
 		}
 	}
 
@@ -2107,14 +2113,16 @@ static void CL_TimedemoStats( void ) {
 		int64_t lastTime = cl.timedemo.lastTime;
 		if( lastTime != 0 ) {
 			int64_t curTime;
+			int fps, msec;
 
-			re.Finish();
+			fps = re.GetAverageFramerate();
+			msec = 1000.0f / (float)fps;
 
 			curTime = Sys_Milliseconds();
-			if( curTime - lastTime >= 100 ) {
+			if( msec  >= 100 ) {
 				cl.timedemo.counts[99]++;
 			} else {
-				cl.timedemo.counts[curTime - lastTime]++;
+				cl.timedemo.counts[msec]++;
 			}
 			cl.timedemo.lastTime = curTime;
 			return;
