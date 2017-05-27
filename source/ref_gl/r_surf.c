@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
+#define WORLDSURF_DIST 1024.0f                  // hack the draw order for world surfaces
+
 static vec3_t modelOrg;                         // relative to view point
 
 //==================================================================================
@@ -291,7 +293,7 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 	drawSurf->dlightBits = 0;
 	drawSurf->shadowBits = 0;
 	drawSurf->visFrame = rf.frameCount;
-	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 0, drawOrder, portalSurface, drawSurf );
+	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, fog, shader, WORLDSURF_DIST, drawOrder, portalSurface, drawSurf );
 	if( !drawSurf->listSurf ) {
 		return false;
 	}
@@ -465,6 +467,8 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 		// update the distance sorting key if it's a portal surface or a normal dlit surface
 		if( dist != 0 || dlight ) {
 			int drawOrder = R_PackOpaqueOrder( drawSurf->fog, drawSurf->shader, drawSurf->numLightmaps, dlight );
+			if( dist == 0 )
+				dist = WORLDSURF_DIST;
 			R_UpdateDrawSurfDistKey( drawSurf->listSurf, 0, drawSurf->shader, dist, drawOrder );
 		}
 	}
