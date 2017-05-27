@@ -833,27 +833,26 @@ void CL_Disconnect( const char *message ) {
 
 	if( cl_timedemo && cl_timedemo->integer ) {
 		int i;
-		float mean = 0;
-		int64_t time;
+		int64_t sumcounts = 0;
 
 		Com_Printf( "\n" );
 		for( i = 1; i < 100; i++ ) {
 			if( cl.timedemo.counts[i] > 0 ) {
-				float fps, frac;
+				float fps, perc;
 				
 				fps = 1000.0 / i;
-				frac = cl.timedemo.counts[i] * 1.0 / cl.timedemo.frames;
-				mean += fps * frac;
+				perc = cl.timedemo.counts[i] * 100.0 / cl.timedemo.frames;
+				sumcounts += i * cl.timedemo.counts[i];
 
-				Com_Printf( "%2ims - %7.2ffps: %6.2f%c\n", i, fps,
-					frac * 100.0, '%' );
+				Com_Printf( "%2ims - %7.2ffps: %6.2f%%\n", i, fps, perc );
 			}
 		}
 
 		Com_Printf( "\n" );
-		time = Sys_Milliseconds() - cl.timedemo.startTime;
 		if( time > 0 ) {
-			Com_Printf( "%3.1f seconds: %3.1f mean fps\n", time / 1000.0, mean );
+			float mean = 1000.0 / (double)sumcounts * cl.timedemo.frames;
+			int64_t duration = Sys_Milliseconds() - cl.timedemo.startTime;
+			Com_Printf( "%3.1f seconds: %3.1f mean fps\n", duration / 1000.0, mean );
 		}
 	}
 
@@ -2112,11 +2111,10 @@ static void CL_TimedemoStats( void ) {
 	if( cl_timedemo->integer && cls.demo.playing ) {
 		int64_t lastTime = cl.timedemo.lastTime;
 		if( lastTime != 0 ) {
+			int msec;
 			int64_t curTime;
-			int fps, msec;
 
-			fps = re.GetAverageFramerate();
-			msec = 1000.0f / (float)fps;
+			msec = re.GetAverageFrametime();
 
 			curTime = Sys_Milliseconds();
 			if( msec  >= 100 ) {

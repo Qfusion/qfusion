@@ -197,16 +197,16 @@ static int CG_GetFPS( const void *parameter ) {
 	int i;
 	double t;
 
-	if( cg_showFPS->integer == 1 ) {
-		// FIXME: this should be removed once the API no longer locked
-		fps = (int)trap_R_GetAverageFramerate();
-		if( fps < 1 ) {
-			fps = 1;
-		}
-		return fps;
+	if( cg_showFPS->modified ) {
+		memset( frameTimes, 0, sizeof( frameTimes ) );
+		cg_showFPS->modified = false;
 	}
 
-	frameTimes[cg.frameCount & FPSSAMPLESMASK] = cg.realFrameTime;
+	if( cg_showFPS->integer == 1 ) {
+		frameTimes[cg.frameCount & FPSSAMPLESMASK] = trap_R_GetAverageFrametime();
+	} else {
+		frameTimes[cg.frameCount & FPSSAMPLESMASK] = cg.realFrameTime;
+	}
 
 	if( cg_showFPS->integer == 2 ) {
 		for( avFrameTime = 0.0f, i = 0; i < FPSSAMPLESCOUNT; i++ ) {

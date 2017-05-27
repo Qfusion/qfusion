@@ -1444,7 +1444,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 							 "%4u wpoly %4u leafs %4u surfs\n"
 							 "%5u sverts %5u stris\n"
 							 "%s",
-							 rf.fps.average,
+							 1000.0 / rf.frameTime.average,
 							 rf.stats.c_brush_polys, rf.stats.c_world_leafs, rf.stats.c_world_draw_surfs,
 							 rf.stats.c_slices_verts, rf.stats.c_slices_elems / 3,
 							 backend_msg
@@ -1504,7 +1504,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 			default:
 				Q_snprintfz( out, size,
 							 "%u fps",
-							 rf.fps.average
+							 1000.0 / rf.frameTime.average
 							 );
 				break;
 		}
@@ -1640,13 +1640,13 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
 
 	// update fps meter
-	rf.fps.count++;
-	rf.fps.time = time;
-	if( rf.fps.time - rf.fps.oldTime >= 250 ) {
-		rf.fps.average = time - rf.fps.oldTime;
-		rf.fps.average = 1000.0f * ( rf.fps.count - rf.fps.oldCount ) / (float)rf.fps.average + 0.5f;
-		rf.fps.oldTime = time;
-		rf.fps.oldCount = rf.fps.count;
+	rf.frameTime.count++;
+	rf.frameTime.time = time;
+	if( rf.frameTime.time - rf.frameTime.oldTime >= 50 ) {
+		rf.frameTime.average = time - rf.frameTime.oldTime;
+		rf.frameTime.average = ((float)rf.frameTime.average / ( rf.frameTime.count - rf.frameTime.oldCount )) + 0.5f;
+		rf.frameTime.oldTime = time;
+		rf.frameTime.oldCount = rf.frameTime.count;
 	}
 
 	R_Set2DMode( true );

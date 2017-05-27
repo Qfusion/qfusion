@@ -90,7 +90,7 @@ void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, b
 void RF_EnvShot( const char *path, const char *name, unsigned pixels );
 bool RF_RenderingEnabled( void );
 const char *RF_GetSpeedsMessage( char *out, size_t size );
-int RF_GetAverageFramerate( void );
+int RF_GetAverageFrametime( void );
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
 void RF_BeginAviDemo( void );
 void RF_WriteAviFrame( int frame, bool scissor );

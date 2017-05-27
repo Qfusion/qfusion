@@ -481,8 +481,8 @@ const char *RF_GetSpeedsMessage( char *out, size_t size ) {
 	return out;
 }
 
-int RF_GetAverageFramerate( void ) {
-	return rf.fps.average;
+int RF_GetAverageFrametime( void ) {
+	return rf.frameTime.average;
 }
 
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data ) {

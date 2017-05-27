@@ -324,7 +324,7 @@ typedef struct {
 		unsigned average;        // updates 4 times per second
 		unsigned time, oldTime;
 		unsigned count, oldCount;
-	} fps;
+	} frameTime;
 
 	volatile bool dataSync;   // call R_Finish
 

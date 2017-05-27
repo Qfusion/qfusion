@@ -170,7 +170,7 @@ typedef struct {
 	void ( *R_AddLightStyleToScene )( int style, float r, float g, float b );
 	void ( *R_RenderScene )( const struct refdef_s *fd );
 	const char *( *R_GetSpeedsMessage )( char *out, size_t size );
-	int ( *R_GetAverageFramerate )( void );
+	int ( *R_GetAverageFrametime )( void );
 	void ( *R_RegisterWorldModel )( const char *name );
 	void ( *R_ModelBounds )( const struct model_s *mod, vec3_t mins, vec3_t maxs );
 	void ( *R_ModelFrameBounds )( const struct model_s *mod, int frame, vec3_t mins, vec3_t maxs );

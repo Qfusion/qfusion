@@ -260,8 +260,8 @@ static inline const char *trap_R_GetSpeedsMessage( char *out, size_t size ) {
 	return CGAME_IMPORT.R_GetSpeedsMessage( out, size );
 }
 
-static inline int trap_R_GetAverageFramerate( void ) {
-	return CGAME_IMPORT.R_GetAverageFramerate();
+static inline int trap_R_GetAverageFrametime( void ) {
+	return CGAME_IMPORT.R_GetAverageFrametime();
 }
 
 static inline void trap_R_RegisterWorldModel( const char *name ) {

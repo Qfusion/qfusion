@@ -213,7 +213,7 @@ typedef struct {
 	void ( *BeginFrame )( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS );
 	void ( *EndFrame )( void );
 	const char *( *GetSpeedsMessage )( char *out, size_t size );
-	int ( *GetAverageFramerate )( void );
+	int ( *GetAverageFrametime )( void );
 	void ( *Finish )( void );
 
 	void ( *BeginAviDemo )( void );

@@ -86,7 +86,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.TransformVectorToScreen = RF_TransformVectorToScreen;
 
 	globals.GetSpeedsMessage = RF_GetSpeedsMessage;
-	globals.GetAverageFramerate = RF_GetAverageFramerate;
+	globals.GetAverageFrametime = RF_GetAverageFrametime;
 
 	globals.BeginAviDemo = RF_BeginAviDemo;
 	globals.WriteAviFrame = RF_WriteAviFrame;
