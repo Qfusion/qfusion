@@ -1444,7 +1444,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 							 "%4u wpoly %4u leafs %4u surfs\n"
 							 "%5u sverts %5u stris\n"
 							 "%s",
-							 1000.0 / rf.frameTime.average,
+							 (int)(1000.0 / rf.frameTime.average),
 							 rf.stats.c_brush_polys, rf.stats.c_world_leafs, rf.stats.c_world_draw_surfs,
 							 rf.stats.c_slices_verts, rf.stats.c_slices_elems / 3,
 							 backend_msg
@@ -1504,7 +1504,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 			default:
 				Q_snprintfz( out, size,
 							 "%u fps",
-							 1000.0 / rf.frameTime.average
+							 (int)(1000.0 / rf.frameTime.average)
 							 );
 				break;
 		}

@@ -1397,6 +1397,7 @@ static rserr_t R_PostInit( void ) {
 	for( i = 0; i < 256; i++ )
 		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
 
+	rf.frameTime.average = 1;
 	rf.swapInterval = -1;
 	rf.speedsMsgLock = ri.Mutex_Create();
 	rf.debugSurfaceLock = ri.Mutex_Create();
