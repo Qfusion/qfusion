@@ -705,7 +705,7 @@ void SCR_UpdateScreen( void ) {
 	timedemo = cl_timedemo->integer != 0 && cls.demo.playing;
 
 	for( i = 0; i < numframes; i++ ) {
-		re.BeginFrame( separation[i], forceclear, forcevsync );
+		re.BeginFrame( separation[i], forceclear, forcevsync, timedemo );
 
 		if( scr_draw_loading == 2 ) {
 			// loading plaque over APP_STARTUP_COLOR screen

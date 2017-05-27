@@ -34,7 +34,10 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
 static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
 	ref_cmdbuf_t *frame;
 
-	adapter->cmdPipe->WaitForCmds( adapter->cmdPipe, Q_THREADS_WAIT_INFINITE );
+	if( adapter->noWait )
+		adapter->cmdPipe->RunCmds( adapter->cmdPipe );
+	else
+		adapter->cmdPipe->WaitForCmds( adapter->cmdPipe, Q_THREADS_WAIT_INFINITE );
 
 	frame = RF_GetNextAdapterFrame( adapter );
 	if( frame ) {
@@ -280,13 +283,15 @@ static void RF_CheckCvars( void ) {
 	}
 }
 
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync ) {
+void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS ) {
 	int swapInterval;
 
 	RF_CheckCvars();
 
 	// run cinematic passes on shaders
 	R_RunAllCinematics();
+
+	rrf.adapter.noWait = uncappedFPS;
 
 	// take the frame the backend is not busy processing
 	if( glConfig.multithreading ) {

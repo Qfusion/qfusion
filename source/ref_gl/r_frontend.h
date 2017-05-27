@@ -28,11 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct {
 	void            *owner;             // pointer to parent ref_frontend_t
 	void            *GLcontext;
-	unsigned frameNum;
+	unsigned        frameNum;
 	qthread_t       *thread;
 	qmutex_t        *frameLock;
 	ref_cmdpipe_t   *cmdPipe;
-	volatile bool shutdown;
+	volatile bool   shutdown;
+	volatile bool   noWait;
 } ref_frontendAdapter_t;
 
 typedef struct {
@@ -60,7 +61,7 @@ void RF_AppActivate( bool active, bool minimize, bool destroy );
 rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 void RF_Shutdown( bool verbose );
 void RF_SurfaceChangePending( void );
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
+void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS );
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );
 void RF_EndRegistration( void );
