@@ -195,7 +195,6 @@ static int CG_GetFPS( const void *parameter ) {
 	static int frameTimes[FPSSAMPLESCOUNT];
 	static float avFrameTime;
 	int i;
-	double t;
 
 	if( cg_showFPS->modified ) {
 		memset( frameTimes, 0, sizeof( frameTimes ) );
@@ -208,21 +207,11 @@ static int CG_GetFPS( const void *parameter ) {
 		frameTimes[cg.frameCount & FPSSAMPLESMASK] = cg.realFrameTime;
 	}
 
-	if( cg_showFPS->integer == 2 ) {
-		for( avFrameTime = 0.0f, i = 0; i < FPSSAMPLESCOUNT; i++ ) {
-			avFrameTime += frameTimes[( cg.frameCount - i ) & FPSSAMPLESMASK];
-		}
-		avFrameTime /= FPSSAMPLESCOUNT;
-		fps = (int)( 1000.0f / avFrameTime + 0.5f );
-	} else {
-		t = cg.realTime * 0.001f;
-		if( ( t - oldtime ) >= 0.25 ) {
-			// updates 4 times a second
-			fps = ( cg.frameCount - oldframecount ) / ( t - oldtime ) + 0.5;
-			oldframecount = cg.frameCount;
-			oldtime = t;
-		}
+	for( avFrameTime = 0.0f, i = 0; i < FPSSAMPLESCOUNT; i++ ) {
+		avFrameTime += frameTimes[( cg.frameCount - i ) & FPSSAMPLESMASK];
 	}
+	avFrameTime /= FPSSAMPLESCOUNT;
+	fps = (int)( 1000.0f / avFrameTime + 0.5f );
 
 	return fps;
 }
