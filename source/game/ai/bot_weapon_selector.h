@@ -163,6 +163,13 @@ public:
         return primaryEnemy->LastSeenAt();
     }
 
+    Vec3 ClosestEnemyOrigin(const Vec3 &relativelyTo) const
+    {
+        return ClosestEnemyOrigin(relativelyTo.Data());
+    }
+
+    Vec3 ClosestEnemyOrigin(const vec3_t relativelyTo) const;
+
     typedef Enemy::SnapshotsQueue SnapshotsQueue;
     const SnapshotsQueue &LastSeenSnapshots() const
     {

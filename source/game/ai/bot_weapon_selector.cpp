@@ -28,6 +28,22 @@ void SelectedEnemies::Set(const Enemy *primaryEnemy_,
         this->activeEnemies.push_back(*iter);
 }
 
+Vec3 SelectedEnemies::ClosestEnemyOrigin(const vec3_t relativelyTo) const
+{
+    const Enemy *closestEnemy = nullptr;
+    float minSquareDistance = std::numeric_limits<float>::max();
+    for (const Enemy *enemy: activeEnemies)
+    {
+        float squareDistance = enemy->LastSeenPosition().SquareDistanceTo(relativelyTo);
+        if (minSquareDistance > squareDistance)
+        {
+            minSquareDistance = squareDistance;
+            closestEnemy = enemy;
+        }
+    }
+    return closestEnemy->LastSeenPosition();
+}
+
 float SelectedEnemies::DamageToKill() const
 {
     CheckValid(__FUNCTION__);

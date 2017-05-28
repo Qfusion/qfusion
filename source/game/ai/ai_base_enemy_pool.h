@@ -379,7 +379,7 @@ public:
 
     // Note that these methods modify this object state
     const Enemy *ChooseVisibleEnemy(const edict_t *challenger);
-    const Enemy *ChooseLostOrHiddenEnemy(const edict_t *challenger);
+    const Enemy *ChooseLostOrHiddenEnemy(const edict_t *challenger, unsigned timeout = (unsigned)-1);
 
     void OnPain(const edict_t *bot, const edict_t *enemy, float kick, int damage);
     void OnEnemyDamaged(const edict_t *bot, const edict_t *target, int damage);

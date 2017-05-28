@@ -492,18 +492,17 @@ const Enemy *AiBaseEnemyPool::ChooseVisibleEnemy(const edict_t *challenger)
     return candidates.front().enemy;
 }
 
-const Enemy *AiBaseEnemyPool::ChooseLostOrHiddenEnemy(const edict_t *challenger)
+const Enemy *AiBaseEnemyPool::ChooseLostOrHiddenEnemy(const edict_t *challenger, unsigned timeout)
 {
     if (AvgSkill() < 0.33f)
         return nullptr;
 
-    Vec3 botOrigin(challenger->s.origin);
     vec3_t forward;
     AngleVectors(challenger->s.angles, forward, nullptr, nullptr);
 
-    static_assert(NOT_SEEN_TIMEOUT > 2000, "This value will yield too low spam enemy timeout");
-    // If enemy has been not seen more than timeout, do not start spam at this enemy location
-    const unsigned timeout = (unsigned)((NOT_SEEN_TIMEOUT - 1000) * AvgSkill());
+    // ChooseLostOrHiddenEnemy(const edict_t *challenger, unsigned timeout = (unsigned)-1)
+    if (timeout > NOT_SEEN_TIMEOUT)
+        timeout = (unsigned)((NOT_SEEN_TIMEOUT - 1000) * AvgSkill());
 
     float bestScore = 0.0f;
     const Enemy *bestEnemy = nullptr;

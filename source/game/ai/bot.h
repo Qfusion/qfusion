@@ -63,7 +63,6 @@ class Bot: public Ai
     friend class BotRoamGoal;
     friend class BotTacticalSpotsCache;
     friend class WorldState;
-
     friend struct BotMovementState;
     friend class BotMovementPredictionContext;
     friend class BotBaseMovementAction;
@@ -418,6 +417,100 @@ private:
 
     AimingRandomHolder aimingRandomHolder;
 
+    class KeptInFovPoint
+    {
+        const edict_t *self;
+        Vec3 origin;
+        unsigned instanceId;
+        float viewDot;
+        bool isActive;
+
+        float ComputeViewDot(const vec3_t origin_)
+        {
+            Vec3 selfToOrigin(origin_);
+            selfToOrigin -= self->s.origin;
+            selfToOrigin.NormalizeFast();
+            vec3_t forward;
+            AngleVectors(self->s.angles, forward, nullptr, nullptr);
+            return selfToOrigin.Dot(forward);
+        }
+    public:
+        KeptInFovPoint(const edict_t *self_):
+            self(self_), origin(0, 0, 0), instanceId(0), isActive(false) {}
+
+        void Activate(const Vec3 &origin_, unsigned instanceId_)
+        {
+            Activate(origin_.Data(), instanceId_);
+        }
+
+        void Activate(const vec3_t origin_, unsigned instanceId_)
+        {
+            this->origin.Set(origin_);
+            this->instanceId = instanceId_;
+            this->isActive = true;
+            this->viewDot = ComputeViewDot(origin_);
+        }
+
+        inline void TryDeactivate(const Vec3 &actualOrigin, unsigned instanceId_)
+        {
+            TryDeactivate(actualOrigin.Data(), instanceId_);
+        }
+
+        inline void TryDeactivate(const vec3_t actualOrigin, unsigned instanceId_)
+        {
+            if (!this->isActive)
+                return;
+
+            if (this->instanceId != instanceId_)
+            {
+                Deactivate();
+                return;
+            }
+
+            if (this->origin.SquareDistanceTo(actualOrigin) < 32 * 32)
+                return;
+
+            float actualDot = ComputeViewDot(actualOrigin);
+            // Do not deactivate if an origin has been changed but the view angles are approximately the same
+            if (fabsf(viewDot - actualDot) > 0.1f)
+            {
+                Deactivate();
+                return;
+            }
+        }
+
+        inline void Update(const Vec3 &actualOrigin, unsigned instanceId_)
+        {
+            Update(actualOrigin.Data(), instanceId);
+        }
+
+        inline void Update(const vec3_t actualOrigin, unsigned instanceId_)
+        {
+            TryDeactivate(actualOrigin, instanceId_);
+
+            if (!IsActive())
+                Activate(actualOrigin, instanceId_);
+        }
+
+        inline void Deactivate() { isActive = false; }
+        inline bool IsActive() const { return isActive; }
+        inline const Vec3 &Origin() const
+        {
+            assert(isActive);
+            return origin;
+        }
+        inline unsigned InstanceIdOrDefault(unsigned default_ = 0) const
+        {
+            return isActive ? instanceId : default_;
+        }
+    };
+
+    KeptInFovPoint keptInFovPoint;
+    const Enemy *lastChosenLostOrHiddenEnemy;
+    unsigned lastChosenLostOrHiddenEnemyInstanceId;
+
+    void UpdateKeptInFovPoint();
+
     void UpdateScriptWeaponsStatus();
 
     void MovementFrame(BotInput *input);
@@ -437,6 +530,8 @@ private:
 
     void ApplyPendingTurnToLookAtPoint(BotInput *input, BotMovementPredictionContext *context = nullptr) const;
     void ApplyInput(BotInput *input, BotMovementPredictionContext *context = nullptr);
+    bool CheckInputInversion(BotInput *input, BotMovementPredictionContext *context = nullptr);
+    inline void InvertKeys(BotInput *input, BotMovementPredictionContext *context = nullptr);
 
     // Returns true if current look angle worth pressing attack
     bool CheckShot(const AimParams &aimParams, const BotInput *input,

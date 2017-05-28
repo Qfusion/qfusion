@@ -542,6 +542,13 @@ struct alignas(4) BotMovementState
     static_assert(alignof(BotCombatMoveDirsState) == 2, "Members order by alignment is broken");
     BotCombatMoveDirsState combatMoveDirsState;
 
+    // Prevents jitter (switching input inversion on/off if the view dot product is near the inversion dot threshold)
+    // If this flag is set, the threshold is lowered.
+    bool isDoingInputInversion;
+
+    inline BotMovementState()
+        : isDoingInputInversion(false) {}
+
     inline void Frame(unsigned frameTime)
     {
         jumppadMovementState.Frame(frameTime);

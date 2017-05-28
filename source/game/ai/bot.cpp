@@ -77,7 +77,10 @@ Bot::Bot(edict_t *self_, float skillLevel_)
       lastKnockbackAt(0),
       similarWorldStateInstanceId(0),
       lastItemSelectedAt(0),
-      noItemAvailableSince(0)
+      noItemAvailableSince(0),
+      keptInFovPoint(self_),
+      lastChosenLostOrHiddenEnemy(nullptr),
+      lastChosenLostOrHiddenEnemyInstanceId(0)
 {
     self->r.client->movestyle = GS_CLASSICBUNNY;
     SetTag(self->r.client->netname);
@@ -145,9 +148,19 @@ void Bot::ApplyInput(BotInput *input, BotMovementPredictionContext *context)
         auto *entityPhysicsState = &context->movementState->entityPhysicsState;
         if (!input->hasAlreadyComputedAngles)
         {
-            Vec3 newAngles(GetNewViewAngles(entityPhysicsState->Angles(), input->IntendedLookDir(),
-                                            context->predictionStepMillis, input->TurnSpeedMultiplier()));
-            input->SetAlreadyComputedAngles(newAngles);
+            if (CheckInputInversion(input, context))
+            {
+                InvertKeys(input, context);
+                Vec3 newAngles(GetNewViewAngles(self->s.angles, -input->IntendedLookDir(),
+                                                context->predictionStepMillis, 5.0f * input->TurnSpeedMultiplier()));
+                input->SetAlreadyComputedAngles(newAngles);
+            }
+            else
+            {
+                Vec3 newAngles(GetNewViewAngles(entityPhysicsState->Angles(), input->IntendedLookDir(),
+                                                context->predictionStepMillis, input->TurnSpeedMultiplier()));
+                input->SetAlreadyComputedAngles(newAngles);
+            }
         }
         entityPhysicsState->SetAngles(input->AlreadyComputedAngles());
     }
@@ -155,12 +168,147 @@ void Bot::ApplyInput(BotInput *input, BotMovementPredictionContext *context)
     {
         if (!input->hasAlreadyComputedAngles)
         {
-            Vec3 newAngles(GetNewViewAngles(self->s.angles, input->IntendedLookDir(),
-                                            game.frametime, input->TurnSpeedMultiplier()));
-            input->SetAlreadyComputedAngles(newAngles);
+            if (CheckInputInversion(input, context))
+            {
+                InvertKeys(input, context);
+                Vec3 newAngles(GetNewViewAngles(self->s.angles, -input->IntendedLookDir(),
+                                                game.frametime, 5.0f * input->TurnSpeedMultiplier()));
+                input->SetAlreadyComputedAngles(newAngles);
+            }
+            else
+            {
+                Vec3 newAngles(GetNewViewAngles(self->s.angles, input->IntendedLookDir(),
+                                                game.frametime, input->TurnSpeedMultiplier()));
+                input->SetAlreadyComputedAngles(newAngles);
+            }
         }
         input->AlreadyComputedAngles().CopyTo(self->s.angles);
     }
+}
+
+inline bool Bot::CheckInputInversion(BotInput *input, BotMovementPredictionContext *context)
+{
+    // We cannot just check whether the dot product is negative.
+    // (a non-implemented side movement is required in case when fabs(the dot product) < 0.X).
+    // Invert movement only if it can be represented as a negated forward movement without a substantial side part.
+    constexpr const float INVERT_DOT_THRESHOLD = -0.3f;
+
+    if (!keptInFovPoint.IsActive())
+    {
+        if (context)
+            context->movementState->isDoingInputInversion = false;
+        else
+            self->ai->botRef->movementState.isDoingInputInversion = false;
+
+        return false;
+    }
+
+    static_assert(INVERT_DOT_THRESHOLD < -0.1f, "The dot threshold is assumed to be negative in all cases");
+    Vec3 selfToPoint(keptInFovPoint.Origin());
+    if (context)
+    {
+        selfToPoint -= context->movementState->entityPhysicsState.Origin();
+        selfToPoint.NormalizeFast();
+        // Prevent choice jitter
+        float dotThreshold = INVERT_DOT_THRESHOLD;
+        if (context->movementState->isDoingInputInversion)
+            dotThreshold += 0.1f;
+
+        bool result = selfToPoint.Dot(input->IntendedLookDir()) < dotThreshold;
+        context->movementState->isDoingInputInversion = result;
+        return result;
+    }
+
+    selfToPoint -= self->s.origin;
+    selfToPoint.NormalizeFast();
+
+    float dotThreshold = INVERT_DOT_THRESHOLD;
+    if (self->ai->botRef->movementState.isDoingInputInversion)
+        dotThreshold += 0.1f;
+
+    bool result = selfToPoint.Dot(input->IntendedLookDir()) < dotThreshold;
+    self->ai->botRef->movementState.isDoingInputInversion = result;
+    return result;
+}
+
+inline void Bot::InvertKeys(BotInput *input, BotMovementPredictionContext *context)
+{
+    input->SetForwardMovement(-input->ForwardMovement());
+    input->SetRightMovement(-input->RightMovement());
+
+    // If no keys are set, forward dash is preferred by default.
+    // Set negative forward movement in this case manually.
+    if (input->IsSpecialButtonSet())
+        return;
+
+    if (input->ForwardMovement() || input->RightMovement())
+        return;
+
+    if (context)
+    {
+        if (context->movementState->entityPhysicsState.GroundEntity())
+            input->SetForwardMovement(-1);
+    }
+    else
+    {
+        if (self->groundentity)
+            input->SetForwardMovement(-1);
+    }
+}
+
+void Bot::UpdateKeptInFovPoint()
+{
+    if (GetMiscTactics().shouldRushHeadless)
+    {
+        keptInFovPoint.Deactivate();
+        return;
+    }
+
+    if (selectedEnemies.AreValid())
+    {
+        Vec3 origin(selectedEnemies.ClosestEnemyOrigin(self->s.origin));
+        if (!GetMiscTactics().shouldKeepXhairOnEnemy)
+        {
+            if (!selectedEnemies.HaveQuad() && !selectedEnemies.HaveCarrier())
+            {
+                if (origin.SquareDistanceTo(self->s.origin) > 1024 * 1024)
+                    return;
+            }
+        }
+
+        keptInFovPoint.Update(origin, selectedEnemies.InstanceId());
+        return;
+    }
+
+    unsigned timeout = GetMiscTactics().shouldKeepXhairOnEnemy ? 2000 : 1000;
+    if (GetMiscTactics().willRetreat)
+        timeout = (timeout * 3u) / 2u;
+
+    if (const Enemy *lostOrHiddenEnemy = botBrain.activeEnemyPool->ChooseLostOrHiddenEnemy(self, timeout))
+    {
+        if (!lastChosenLostOrHiddenEnemy)
+            lastChosenLostOrHiddenEnemyInstanceId++;
+        else if (lastChosenLostOrHiddenEnemy->ent != lostOrHiddenEnemy->ent)
+            lastChosenLostOrHiddenEnemyInstanceId++;
+
+        Vec3 origin(lostOrHiddenEnemy->LastSeenPosition());
+        if (!GetMiscTactics().shouldKeepXhairOnEnemy)
+        {
+            float distanceThreshold = (!selectedEnemies.HaveQuad() && !selectedEnemies.HaveCarrier()) ? 768 : 2048;
+            if (origin.SquareDistanceTo(self->s.origin) > distanceThreshold * distanceThreshold)
+            {
+                lastChosenLostOrHiddenEnemy = nullptr;
+                return;
+            }
+        }
+
+        lastChosenLostOrHiddenEnemy = lostOrHiddenEnemy;
+        keptInFovPoint.Update(origin, lastChosenLostOrHiddenEnemyInstanceId);
+        return;
+    }
+
+    lastChosenLostOrHiddenEnemy = nullptr;
+    keptInFovPoint.Deactivate();
 }
 
 void Bot::TouchedOtherEntity(const edict_t *entity)
@@ -515,6 +663,8 @@ void Bot::GhostingFrame()
     selectedEnemies.Invalidate();
     selectedWeapons.Invalidate();
 
+    lastChosenLostOrHiddenEnemy = nullptr;
+
     botBrain.ClearGoalAndPlan();
 
     movementState.Reset();
@@ -575,6 +725,8 @@ void Bot::Think()
         return;
 
     RegisterVisibleEnemies();
+
+    UpdateKeptInFovPoint();
 
     if (CanChangeWeapons())
     {
