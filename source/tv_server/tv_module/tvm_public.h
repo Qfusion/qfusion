@@ -76,8 +76,8 @@ typedef struct {
 typedef struct snapshot_s {
 	bool valid;             // cleared if delta parsing was invalid
 	int serverFrame;
-	unsigned int serverTime;    // time in the server when frame was created
-	unsigned int ucmdExecuted;
+	int64_t serverTime;    // time in the server when frame was created
+	int64_t ucmdExecuted;
 	bool delta;
 	bool allentities;
 	bool multipov;

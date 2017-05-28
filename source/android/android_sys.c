@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <android/window.h>
 #include <linux/limits.h>
 
-unsigned int sys_frame_time;
+int64_t sys_frame_time;
 
 struct android_app *sys_android_app;
 

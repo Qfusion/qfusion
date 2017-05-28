@@ -113,7 +113,7 @@ BotBrain::BotBrain( edict_t *bot_, float skillLevel_ )
 void BotBrain::PreThink() {
 	AiBaseBrain::PreThink();
 
-	const unsigned levelTime = level.time;
+	const int64_t levelTime = level.time;
 
 	if( combatTask.enemy ) {
 		if( !combatTask.enemy->IsValid() ) {

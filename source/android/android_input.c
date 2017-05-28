@@ -334,7 +334,7 @@ void IN_Android_CharEvent( int charkey ) {
 	}
 
 	if( key ) {
-		unsigned int time = Sys_Android_Microseconds() / ( ( uint64_t )1000 );
+		int64_t time = Sys_Android_Microseconds() / ( ( uint64_t )1000 );
 		Key_Event( key, true, time );
 		Key_Event( key, false, time );
 	}

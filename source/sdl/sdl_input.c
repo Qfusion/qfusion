@@ -122,7 +122,7 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 
 static void mouse_wheel_event( SDL_MouseWheelEvent *event ) {
 	int key = event->y > 0 ? K_MWHEELUP : K_MWHEELDOWN;
-	unsigned sys_msg_time = Sys_Milliseconds();
+	int64_t sys_msg_time = Sys_Milliseconds();
 
 	if( !mouse_active ) {
 		return;

@@ -89,12 +89,13 @@ bool CG_ChaseStep( int step ) {
 */
 static void CG_AddLocalSounds( void ) {
 	static bool postmatchsound_set = false, demostream = false, background = false;
-	static unsigned int lastSecond = 0;
+	static unsigned lastSecond = 0;
 
 	// add local announces
 	if( GS_Countdown() ) {
 		if( GS_MatchDuration() ) {
-			int64_t duration, curtime, remainingSeconds;
+			int64_t duration, curtime;
+			unsigned remainingSeconds;
 			float seconds;
 
 			curtime = GS_MatchPaused() ? cg.frame.serverTime : cg.time;

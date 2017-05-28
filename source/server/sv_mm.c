@@ -38,7 +38,7 @@ static int sv_mm_session;
 
 // local session counter
 static unsigned int sv_mm_localsession;
-static unsigned int sv_mm_last_heartbeat;
+static int64_t sv_mm_last_heartbeat;
 static bool sv_mm_logout_semaphore = false;
 
 // flag for gamestate = game-on

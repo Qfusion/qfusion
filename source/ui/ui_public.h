@@ -235,7 +235,7 @@ typedef struct {
 
 	void ( *TouchAllAssets )( void );
 
-	void ( *Refresh )( unsigned int time, int clientState, int serverState,
+	void ( *Refresh )( int64_t time, int clientState, int serverState,
 					   bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime,
 					   bool backGround, bool showCursor );
 

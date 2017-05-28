@@ -96,7 +96,7 @@ typedef struct r_backend_s {
 		unsigned currentTextures[MAX_TEXTURE_UNITS];
 	} gl;
 
-	unsigned int time;
+	int64_t time;
 
 	rbStats_t stats;
 

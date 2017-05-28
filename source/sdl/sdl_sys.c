@@ -10,7 +10,7 @@
 #include <sys/param.h>
 #endif
 
-unsigned sys_frame_time;
+int64_t sys_frame_time;
 
 void Sys_InitTime( void );
 
@@ -83,7 +83,7 @@ void Sys_SendKeyEvents( void ) {
 /*****************************************************************************/
 
 int main( int argc, char **argv ) {
-	unsigned int oldtime, newtime, time;
+	int64_t oldtime, newtime;
 
 #if defined( __APPLE__ ) && !defined( DEDICATED_ONLY )
 	char resourcesPath[MAXPATHLEN];
@@ -103,6 +103,7 @@ int main( int argc, char **argv ) {
 
 	oldtime = Sys_Milliseconds();
 	while( true ) {
+		int time;
 		// find time spent rendering last frame
 		do {
 			newtime = Sys_Milliseconds();
