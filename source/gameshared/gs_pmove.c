@@ -412,7 +412,8 @@ static int PM_SlideMove( void ) {
 	}
 
 	if( pm->numtouch ) {
-		if( pm->playerState->pmove.pm_time || ( pm->groundentity == -1 && pm->waterlevel < 2
+		if( pm->playerState->pmove.pm_time || ( pm->groundentity == -1 && pm->waterlevel < 2 
+												&& ( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CORNERSKIMMING )
 												&& pm->playerState->pmove.skim_time > 0 && old_velocity[2] >= pml.velocity[2] ) ) {
 			VectorCopy( old_velocity, pml.velocity );
 		}
@@ -585,7 +586,7 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
 		accelspeed = addspeed;
 	}
 
-	crouchslide = pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING && pm->groundentity != -1 && !( pml.groundsurfFlags & SURF_SLICK );
+	crouchslide = ( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING ) && pm->groundentity != -1 && !( pml.groundsurfFlags & SURF_SLICK );
 
 	if( crouchslide ) {
 		accelspeed *= PM_CROUCHSLIDE_CONTROL;
@@ -1105,7 +1106,6 @@ static void PM_CheckJump( void ) {
 		if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) ) {
 			pm->playerState->pmove.pm_flags &= ~PMF_JUMP_HELD;
 		}
-
 		return;
 	}
 
@@ -1379,6 +1379,10 @@ static void PM_CheckWallJump( void ) {
 * PM_CheckCrouchSlide
 */
 static void PM_CheckCrouchSlide( void ) {
+	if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CROUCHSLIDING ) ) {
+		return;
+	}
+
 	if( pml.upPush < 0 && VectorLengthFast( tv( pml.velocity[0], pml.velocity[1], 0 ) ) > pml.maxWalkSpeed ) {
 		if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > 0 ) {
 			return; // cooldown or already sliding

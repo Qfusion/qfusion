@@ -639,9 +639,11 @@ float GS_FrameForTime( int *frame, int64_t curTime, int64_t startTimeStamp, floa
 #define PMFEAT_ITEMPICK         ( 1 << 10 )
 #define PMFEAT_GUNBLADEAUTOATTACK ( 1 << 11 )
 #define PMFEAT_WEAPONSWITCH     ( 1 << 12 )
+#define PMFEAT_CORNERSKIMMING   ( 1 << 13 )
+#define PMFEAT_CROUCHSLIDING    ( 1 << 14 )
 
 #define PMFEAT_ALL              ( 0xFFFF )
-#define PMFEAT_DEFAULT          ( PMFEAT_ALL & ~PMFEAT_GHOSTMOVE )
+#define PMFEAT_DEFAULT          ( PMFEAT_ALL & ~(PMFEAT_GHOSTMOVE|PMFEAT_CORNERSKIMMING|PMFEAT_CROUCHSLIDING) )
 
 enum {
 	STAT_LAYOUTS = 0
