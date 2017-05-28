@@ -120,11 +120,10 @@ void R_DrawCoronas( void ) {
 		dist =
 			rn.viewAxis[AXIS_FORWARD + 0] * ( light->origin[0] - rn.viewOrigin[0] ) +
 			rn.viewAxis[AXIS_FORWARD + 1] * ( light->origin[1] - rn.viewOrigin[1] ) +
-			rn.viewAxis[AXIS_FORWARD + 2] * ( light->origin[2] - rn.viewOrigin[2] );
-		if( dist < light->intensity ) {
+			rn.viewAxis[AXIS_FORWARD + 2] * ( light->origin[2] - rn.viewOrigin[2] ) - light->intensity;
+		if( dist < 0 ) {
 			continue;
 		}
-		dist -= light->intensity;
 
 		R_TraceLine( &tr, light->origin, rn.viewOrigin, SURF_NONSOLID );
 		if( tr.fraction != 1.0f ) {

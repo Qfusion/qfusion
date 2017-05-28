@@ -1288,7 +1288,7 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int s
 				void *hinstance, void *wndproc, void *parenthWnd,
 				bool verbose ) {
 	const qgl_driverinfo_t *driver;
-	const char *dllname = NULL;
+	const char *dllname = "";
 	qgl_initerr_t initerr;
 
 	r_mempool = R_AllocPool( NULL, "Rendering Frontend" );

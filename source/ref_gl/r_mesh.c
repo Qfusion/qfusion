@@ -182,6 +182,9 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && Shader_ReadDepth( shader ) ) {
 		return NULL;
 	}
+	if( !rsh.worldBrushModel ) {
+		fog = NULL;
+	}
 
 	distKey = R_PackDistKey( e->renderfx, shader, dist, order );
 	if( !distKey ) {

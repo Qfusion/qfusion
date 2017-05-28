@@ -1459,7 +1459,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 				n = sscanf( value, "%8f", &ambientf );
 				if( n != 1 ) {
 					int ia = 0;
-					n = sscanf( value, "%3i", &ia );
+					sscanf( value, "%3i", &ia );
 					ambientf = ia;
 				}
 			} else if( !strcmp( key, "_color" ) ) {
@@ -1624,18 +1624,22 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 	in = loadmodel_dsurfaces;
 	surf = loadbmodel->surfaces;
 	for( i = 0; i < loadbmodel->numsurfaces; i++, in++, surf++ ) {
+		shader_t *shader;
+
 		Mod_CreateMeshForSurface( in, surf, loadmodel_patchgrouprefs[i] );
 
 		Mod_ApplySuperStylesToFace( in, surf );
 
+		shader = surf->shader;
+
 		// force outlines hack for old maps
 		if( !mapConfig.forceWorldOutlines
-			&& surf->shader && ( surf->shader->flags & SHADER_FORCE_OUTLINE_WORLD )  ) {
+			&& shader && ( shader->flags & SHADER_FORCE_OUTLINE_WORLD )  ) {
 			mapConfig.forceWorldOutlines = true;
 		}
 
 		if( globalFog && surf->mesh.numVerts != 0 && surf->fog != testFog ) {
-			if( !( surf->shader->flags & SHADER_SKY ) && !surf->shader->fog_dist ) {
+			if( shader && !( shader->flags & SHADER_SKY ) && !shader->fog_dist ) {
 				globalFog = false;
 			}
 		}

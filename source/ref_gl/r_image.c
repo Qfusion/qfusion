@@ -1971,6 +1971,7 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 	image = R_LinkPic( hash );
 	if( !image ) {
 		ri.Com_Error( ERR_DROP, "R_LoadImage: r_numImages == MAX_GLIMAGES" );
+		return NULL;
 	}
 
 	image->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );

@@ -655,58 +655,54 @@ merge:
 			vbo->index = numTempVBOs;
 		}
 
-		if( vbo ) {
-			// allocate a drawsurf
-			drawSurf = &loadbmodel->drawSurfaces[loadbmodel->numDrawSurfaces++];
-			drawSurf->type = ST_BSP;
-			drawSurf->superLightStyle = surf->superLightStyle;
-			drawSurf->instances = surf->instances;
-			drawSurf->numInstances = surf->numInstances;
-			drawSurf->fog = surf->fog;
-			drawSurf->shader = surf->shader;
-			drawSurf->numLightmaps = 0;
+		// allocate a drawsurf
+		drawSurf = &loadbmodel->drawSurfaces[loadbmodel->numDrawSurfaces++];
+		drawSurf->type = ST_BSP;
+		drawSurf->superLightStyle = surf->superLightStyle;
+		drawSurf->instances = surf->instances;
+		drawSurf->numInstances = surf->numInstances;
+		drawSurf->fog = surf->fog;
+		drawSurf->shader = surf->shader;
+		drawSurf->numLightmaps = 0;
 
-			// upload vertex and elements data for face itself
-			surf->drawSurf = loadbmodel->numDrawSurfaces;
-			surf->firstDrawSurfVert = 0;
-			surf->firstDrawSurfElem = 0;
+		// upload vertex and elements data for face itself
+		surf->drawSurf = loadbmodel->numDrawSurfaces;
+		surf->firstDrawSurfVert = 0;
+		surf->firstDrawSurfElem = 0;
 
-			vcount = surf->mesh.numVerts;
-			ecount = surf->mesh.numElems;
-			numUnmappedSurfaces--;
+		vcount = surf->mesh.numVerts;
+		ecount = surf->mesh.numElems;
+		numUnmappedSurfaces--;
 
-			// count lightmaps
-			if( surf->superLightStyle ) {
-				for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
-					if( surf->superLightStyle->lightmapStyles[j] == 255 )
-						break;
-					drawSurf->numLightmaps++;
-				}
-			}
-
-			// now if there are any merged faces upload them to the same VBO
-			if( fcount > 1 ) {
-				for( j = i + 1; j <= last_merged; j++ ) {
-					if( surfmap[j] != surf ) {
-						continue;
-					}
-
-					surf2 = surfaces[j];
-					surf2->drawSurf = loadbmodel->numDrawSurfaces;
-					surf2->firstDrawSurfVert = vcount;
-					surf2->firstDrawSurfElem = ecount;
-
-					vcount += surf2->mesh.numVerts;
-					ecount += surf2->mesh.numElems;
-					numUnmappedSurfaces--;
-				}
-			}
-
-			drawSurf->numVerts = vcount;
-			drawSurf->numElems = ecount;
-
-			*vbo_total_size += vbo->arrayBufferSize + vbo->elemBufferSize;
+		// count lightmaps
+		for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
+			if( surf->superLightStyle->lightmapStyles[j] == 255 )
+				break;
+			drawSurf->numLightmaps++;
 		}
+
+		// now if there are any merged faces upload them to the same VBO
+		if( fcount > 1 ) {
+			for( j = i + 1; j <= last_merged; j++ ) {
+				if( surfmap[j] != surf ) {
+					continue;
+				}
+
+				surf2 = surfaces[j];
+				surf2->drawSurf = loadbmodel->numDrawSurfaces;
+				surf2->firstDrawSurfVert = vcount;
+				surf2->firstDrawSurfElem = ecount;
+
+				vcount += surf2->mesh.numVerts;
+				ecount += surf2->mesh.numElems;
+				numUnmappedSurfaces--;
+			}
+		}
+
+		drawSurf->numVerts = vcount;
+		drawSurf->numElems = ecount;
+
+		*vbo_total_size += vbo->arrayBufferSize + vbo->elemBufferSize;
 	}
 
 	assert( numUnmappedSurfaces == 0 );

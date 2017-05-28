@@ -63,6 +63,10 @@ void RFB_Init( void ) {
 * Delete framebuffer object along with attached render buffer
 */
 static void RFB_DeleteObject( r_fbo_t *fbo ) {
+	if( !fbo ) {
+		return;
+	}
+
 	if( fbo->depthRenderBuffer ) {
 		qglDeleteRenderbuffersEXT( 1, &fbo->depthRenderBuffer );
 	}
@@ -223,9 +227,7 @@ found:
 	return i + 1;
 
 fail:
-	if( fbo ) {
-		RFB_DeleteObject( fbo );
-	}
+	RFB_DeleteObject( fbo );
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 	return 0;
 }
@@ -370,7 +372,12 @@ bind:
 	// attach texture
 	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, texnum, 0 );
 	if( texture ) {
-		if( ( !texture && depth ) || ( ( texture->flags & ( IT_DEPTH | IT_STENCIL ) ) == ( IT_DEPTH | IT_STENCIL ) ) ) {
+		if( ( texture->flags & ( IT_DEPTH | IT_STENCIL ) ) == ( IT_DEPTH | IT_STENCIL ) ) {
+			qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texnum, 0 );
+		}
+	}
+	else {
+		if( depth ) {
 			qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texnum, 0 );
 		}
 	}

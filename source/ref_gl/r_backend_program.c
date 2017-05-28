@@ -485,7 +485,7 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass ) {
 	const image_t *tex;
 
-	if( pass->anim_fps ) {
+	if( pass->anim_fps && pass->anim_numframes ) {
 		return pass->images[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
 	}
 
@@ -766,6 +766,11 @@ static void RB_UpdateFogUniforms( int program, const mfog_t *fog ) {
 	float dist;
 	cplane_t fogPlane, vpnPlane;
 
+	assert( fog != NULL );
+	if( !fog ) {
+		return;
+	}
+
 	dist = RB_TransformFogPlanes( fog, fogPlane.normal, &fogPlane.dist, vpnPlane.normal, &vpnPlane.dist );
 
 	RP_UpdateFogUniforms( program, fog->shader->fog_color, fog->shader->fog_clearDist,
@@ -808,7 +813,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	}
 
 	// use blank image if the normalmap is too tiny due to high picmip value
-	if( normalmap && ( normalmap->upload_width < 2 || normalmap->upload_height < 2 ) ) {
+	if( !normalmap || ( normalmap->upload_width < 2 || normalmap->upload_height < 2 ) ) {
 		normalmap = rsh.blankBumpTexture;
 	}
 

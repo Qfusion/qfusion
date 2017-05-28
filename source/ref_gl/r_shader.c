@@ -1787,9 +1787,7 @@ done:
 	if( temp ) {
 		R_FreeFile( temp );
 	}
-	if( pathName ) {
-		R_Free( pathName );
-	}
+	R_Free( pathName );
 }
 
 /*

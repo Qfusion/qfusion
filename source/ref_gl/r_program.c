@@ -1614,7 +1614,7 @@ static const char **R_ProgramFeatures2Defines( const glsl_feature_t *type_featur
 * R_Features2HashKey
 */
 static int R_Features2HashKey( r_glslfeat_t features ) {
-	int hash = 0x7e53a269;
+	int64_t hash = 0x7e53a269;
 
 #define ComputeHash( hash,val ) hash = -1521134295 * hash + ( val ), hash += ( hash << 10 ), hash ^= ( hash >> 6 )
 

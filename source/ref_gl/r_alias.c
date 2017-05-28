@@ -572,7 +572,7 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 
 		// based on backend's needs
 		calcVerts = ( framenum || oldframenum ) ? true : false;
-		calcNormals = ( ( ( vattribs & VATTRIB_NORMAL_BIT ) != 0 ) && ( ( framenum != 0 ) || ( oldframenum != 0 ) ) ) ? true : false;
+		calcNormals = ( ( ( vattribs & VATTRIB_NORMAL_BIT ) != 0 ) && calcVerts ) ? true : false;
 		calcSTVectors = ( ( ( vattribs & VATTRIB_SVECTOR_BIT ) != 0 ) && calcNormals ) ? true : false;
 
 		memset( &dynamicMesh, 0, sizeof( dynamicMesh ) );
@@ -587,50 +587,46 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 		inNormalsArray = dynamicMesh.normalsArray;
 		inSVectorsArray = dynamicMesh.sVectorsArray;
 
-		if( !framenum && !oldframenum ) {
-			if( calcNormals ) {
-				v = aliasmesh->vertexes;
-				for( i = 0; i < aliasmesh->numverts; i++, v++ )
-					R_LatLongToNorm( v->latlong, inNormalsArray[i] );
-			}
-		} else if( framenum == oldframenum ) {
-			for( i = 0; i < 3; i++ )
-				frontv[i] = frame->scale[i];
+		if( calcVerts ) {
+			if( framenum == oldframenum ) {
+				for( i = 0; i < 3; i++ )
+					frontv[i] = frame->scale[i];
 
-			v = aliasmesh->vertexes + framenum * aliasmesh->numverts;
-			for( i = 0; i < aliasmesh->numverts; i++, v++ ) {
-				Vector4Set( inVertsArray[i],
-							move[0] + v->point[0] * frontv[0],
-							move[1] + v->point[1] * frontv[1],
-							move[2] + v->point[2] * frontv[2],
-							1 );
+				v = aliasmesh->vertexes + framenum * aliasmesh->numverts;
+				for( i = 0; i < aliasmesh->numverts; i++, v++ ) {
+					Vector4Set( inVertsArray[i],
+								move[0] + v->point[0] * frontv[0],
+								move[1] + v->point[1] * frontv[1],
+								move[2] + v->point[2] * frontv[2],
+								1 );
 
-				if( calcNormals ) {
-					R_LatLongToNorm4( v->latlong, inNormalsArray[i] );
+					if( calcNormals ) {
+						R_LatLongToNorm4( v->latlong, inNormalsArray[i] );
+					}
 				}
-			}
-		} else {
-			for( i = 0; i < 3; i++ ) {
-				backv[i] = backlerp * oldframe->scale[i];
-				frontv[i] = ( 1.0f - backlerp ) * frame->scale[i];
-			}
+			} else {
+				for( i = 0; i < 3; i++ ) {
+					backv[i] = backlerp * oldframe->scale[i];
+					frontv[i] = ( 1.0f - backlerp ) * frame->scale[i];
+				}
 
-			v = aliasmesh->vertexes + framenum * aliasmesh->numverts;
-			ov = aliasmesh->vertexes + oldframenum * aliasmesh->numverts;
-			for( i = 0; i < aliasmesh->numverts; i++, v++, ov++ ) {
-				VectorSet( inVertsArray[i],
-						   move[0] + v->point[0] * frontv[0] + ov->point[0] * backv[0],
-						   move[1] + v->point[1] * frontv[1] + ov->point[1] * backv[1],
-						   move[2] + v->point[2] * frontv[2] + ov->point[2] * backv[2] );
+				v = aliasmesh->vertexes + framenum * aliasmesh->numverts;
+				ov = aliasmesh->vertexes + oldframenum * aliasmesh->numverts;
+				for( i = 0; i < aliasmesh->numverts; i++, v++, ov++ ) {
+					VectorSet( inVertsArray[i],
+							   move[0] + v->point[0] * frontv[0] + ov->point[0] * backv[0],
+							   move[1] + v->point[1] * frontv[1] + ov->point[1] * backv[1],
+							   move[2] + v->point[2] * frontv[2] + ov->point[2] * backv[2] );
 
-				if( calcNormals ) {
-					R_LatLongToNorm( v->latlong, normal );
-					R_LatLongToNorm( ov->latlong, oldnormal );
+					if( calcNormals ) {
+						R_LatLongToNorm( v->latlong, normal );
+						R_LatLongToNorm( ov->latlong, oldnormal );
 
-					VectorSet( inNormalsArray[i],
-							   normal[0] + ( oldnormal[0] - normal[0] ) * backlerp,
-							   normal[1] + ( oldnormal[1] - normal[1] ) * backlerp,
-							   normal[2] + ( oldnormal[2] - normal[2] ) * backlerp );
+						Vector4Set( inNormalsArray[i],
+								   normal[0] + ( oldnormal[0] - normal[0] ) * backlerp,
+								   normal[1] + ( oldnormal[1] - normal[1] ) * backlerp,
+								   normal[2] + ( oldnormal[2] - normal[2] ) * backlerp, 0 );
+					}
 				}
 			}
 		}

@@ -618,10 +618,18 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 	} else if( vbo->spritePointsOffset && ( ( vattribs & VATTRIB_AUTOSPRITE_BIT ) == VATTRIB_AUTOSPRITE_BIT ) ) {
 		vec4_t *verts;
 		vec4_t centre[4];
-		int numQuads = numVerts / 4;
+		int numQuads;
 		size_t bufferOffset = vbo->spritePointsOffset;
 
-		for( i = 0, verts = mesh->xyzArray; i < numQuads; i++, verts += 4 ) {
+		if( mesh->xyzArray ) {
+			verts = mesh->xyzArray;
+			numQuads = numVerts / 4;
+		} else {
+			verts = NULL;
+			numQuads = 0;
+		}
+
+		for( i = 0; i < numQuads; i++ ) {
 			// centre
 			for( j = 0; j < 3; j++ ) {
 				centre[0][j] = ( verts[0][j] + verts[1][j] + verts[2][j] + verts[3][j] ) * 0.25;
@@ -638,6 +646,7 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 											  4, vertSize, 4, data + bufferOffset );
 
 			bufferOffset += 4 * vertSize;
+			verts += 4;
 		}
 	}
 

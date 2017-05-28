@@ -27,12 +27,13 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal );
 */
 portalSurface_t *R_AddPortalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf ) {
 	portalSurface_t *portalSurface;
-	bool depthPortal = !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) );
+	bool depthPortal;
 
 	if( !shader ) {
 		return NULL;
 	}
 
+	depthPortal = !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) );
 	if( R_FASTSKY() && depthPortal ) {
 		return NULL;
 	}
