@@ -46,7 +46,7 @@ void GClip_UnlinkEntity( tvm_relay_t *relay, edict_t *ent ) {
 *
 * FIXME: this is a copy&paste of GS_LinearMovement
 */
-static int GClip_LinearMovement_( const entity_state_t *ent, unsigned time, vec3_t dest ) {
+static int GClip_LinearMovement_( const entity_state_t *ent, int64_t time, vec3_t dest ) {
 	vec3_t dist;
 	int moveTime;
 	float moveFrac;

@@ -55,7 +55,7 @@ struct edict_s {
 #define MAX_INCOMING_CONNECTIONS 256
 typedef struct {
 	bool active;
-	unsigned int time;      // for timeout
+	int64_t time;      // for timeout
 	socket_t socket;
 	netadr_t address;
 } incoming_t;

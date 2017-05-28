@@ -106,7 +106,7 @@ void IN_SDL_JoyCommands( void ) {
 
 	buttonsDiff = buttons ^ buttonsOld;
 	if( buttonsDiff ) {
-		unsigned int time = Sys_Milliseconds();
+		int64_t time = Sys_Milliseconds();
 
 		for( i = 0; i < ( sizeof( keys ) / sizeof( keys[0] ) ); i++ ) {
 			if( buttonsDiff & ( 1 << i ) ) {

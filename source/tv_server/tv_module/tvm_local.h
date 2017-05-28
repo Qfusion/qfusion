@@ -57,7 +57,7 @@ struct tvm_relay_s {
 	char *map_entities;         // raw string containing the unparsed entities
 	char mapname[MAX_CONFIGSTRING_CHARS];
 
-	unsigned int serverTime;        // time in the server
+	int64_t serverTime;        // time in the server
 	snapshot_t frame;
 	game_state_t gameState;
 	char configStrings[MAX_CONFIGSTRINGS][MAX_CONFIGSTRING_CHARS];
@@ -77,7 +77,7 @@ struct tvm_relay_s {
 };
 
 typedef struct {
-	unsigned int realtime;          // actual time
+	int64_t realtime;          // actual time
 	int maxclients;
 } tv_module_locals_t;
 

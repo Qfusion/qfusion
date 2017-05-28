@@ -24,7 +24,7 @@
 
 int curtime;
 
-unsigned sys_frame_time;
+int64_t sys_frame_time;
 
 
 static void Sys_mkdir( char *path ) {
@@ -125,6 +125,6 @@ static void main( int argc, char **argv ) {
 	Qcommon_Init( argc, argv );
 
 	while( 1 ) {
-		Qcommon_Frame( 0.1 );
+		Qcommon_Frame( 100 );
 	}
 }

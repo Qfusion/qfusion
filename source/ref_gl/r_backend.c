@@ -99,7 +99,7 @@ void RB_EndRegistration( void ) {
 /*
 * RB_SetTime
 */
-void RB_SetTime( unsigned int time ) {
+void RB_SetTime( int64_t time ) {
 	rb.time = time;
 	rb.nullEnt.shaderTime = ri.Sys_Milliseconds();
 }

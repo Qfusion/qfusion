@@ -52,7 +52,7 @@ FIXME:  This will be remidied once a native Mac port is complete
 
 #if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )
 
-unsigned sys_frame_time;
+int64_t sys_frame_time;
 
 uid_t saved_euid;
 

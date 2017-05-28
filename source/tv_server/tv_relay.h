@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct packet_s packet_t;
 
 struct packet_s {
-	unsigned int time;
+	int64_t time;
 	msg_t msg;
 	packet_t *next;
 };
@@ -65,8 +65,8 @@ struct relay_s {
 	tv_module_export_t *module_export;
 	mempool_t *module_mempool;
 
-	unsigned int realtime;
-	unsigned int lastrun;       // last RunFrame time
+	int64_t realtime;
+	int64_t lastrun;       // last RunFrame time
 
 	int lastExecutedServerCommand;
 	bool multiview;
@@ -81,7 +81,7 @@ struct relay_s {
 	ginfo_t gi;
 	int num_active_specs;
 	int serverTimeDelta;         // the time difference with the server time, or at least our best guess about it
-	unsigned int serverTime;    // the best match we can guess about current time in the server
+	int64_t serverTime;    // the best match we can guess about current time in the server
 	unsigned int snapFrameTime;
 
 	// initial server state

@@ -322,7 +322,7 @@ typedef struct {
 
 	struct {
 		unsigned average;        // updates 4 times per second
-		unsigned time, oldTime;
+		int64_t time, oldTime;
 		unsigned count, oldCount;
 	} frameTime;
 

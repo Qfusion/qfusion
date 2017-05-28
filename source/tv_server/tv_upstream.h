@@ -47,7 +47,7 @@ struct upstream_s {
 	socket_t socket_real;
 	netchan_t netchan;
 
-	int connect_time;
+	int64_t connect_time;
 	int connect_count;
 	int challenge;
 	bool rejected;
@@ -88,7 +88,8 @@ struct upstream_s {
 	struct {
 		bool recording;
 		bool waiting;
-		unsigned int basetime, duration;
+		int64_t basetime;
+		unsigned int duration;
 		bool autorecording;
 
 		bool playing;

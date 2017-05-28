@@ -38,7 +38,7 @@ struct refScreenTexSet_s;
 // core
 void RB_Init( void );
 void RB_Shutdown( void );
-void RB_SetTime( unsigned int time );
+void RB_SetTime( int64_t time );
 void RB_BeginFrame( void );
 void RB_EndFrame( void );
 void RB_BeginRegistration( void );

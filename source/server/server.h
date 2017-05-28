@@ -199,7 +199,7 @@ typedef struct client_s {
 typedef struct {
 	netadr_t adr;
 	int challenge;
-	int time;
+	int64_t time;
 } challenge_t;
 
 // for server side demo recording
@@ -220,7 +220,7 @@ typedef server_static_demo_t demorec_t;
 #define MAX_INCOMING_CONNECTIONS 256
 typedef struct {
 	bool active;
-	unsigned int time;      // for timeout
+	int64_t time;      // for timeout
 	socket_t socket;
 	netadr_t address;
 } incoming_t;

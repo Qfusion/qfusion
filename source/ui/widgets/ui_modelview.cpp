@@ -30,7 +30,7 @@ private:
 	vec3_t baseangles;
 	vec3_t angles;
 	vec3_t anglespeed;
-	unsigned int time;
+	int64_t time;
 	bool AutoRotationCenter;
 	bool Initialized;
 	bool RecomputePosition;
@@ -81,7 +81,7 @@ public:
 			return;
 		}
 
-		unsigned int curtime = UI_Main::Get()->getRefreshState().time;
+		int64_t curtime = UI_Main::Get()->getRefreshState().time;
 		float deltatime = curtime - time;
 
 		refdef.time = curtime;
