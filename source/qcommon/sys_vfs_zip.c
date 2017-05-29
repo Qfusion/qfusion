@@ -93,7 +93,7 @@ static unsigned Sys_VFS_Zip_SearchCentralDir( FILE *fin ) {
 		if( fseek( fin, readPos, SEEK_SET ) != 0 ) {
 			break;
 		}
-		if( !fread( buf, readSize, 1, fin ) ) {
+		if( fread( buf, 1, readSize, fin ) != readSize ) {
 			break;
 		}
 
@@ -118,7 +118,7 @@ static unsigned Sys_VFS_Zip_GetFileInfo( FILE *f, unsigned pos, unsigned byteBef
 	if( fseek( f, pos, SEEK_SET ) ) {
 		return 0;
 	}
-	if( !fread( infoHeader, sizeof( infoHeader ), 1, f ) ) {
+	if( fread( infoHeader, 1, sizeof( infoHeader ), f ) != sizeof( infoHeader ) ) {
 		return 0;
 	}
 
@@ -140,7 +140,7 @@ static unsigned Sys_VFS_Zip_GetFileInfo( FILE *f, unsigned pos, unsigned byteBef
 	}
 
 	if( name ) {
-		if( !fread( name, sizeRead, 1, f ) ) {
+		if( fread( name, 1, sizeRead, f ) != sizeRead ) {
 			return 0;
 		}
 		*( name + sizeRead ) = 0;
@@ -150,7 +150,7 @@ static unsigned Sys_VFS_Zip_GetFileInfo( FILE *f, unsigned pos, unsigned byteBef
 	if( fseek( f, localOffset, SEEK_SET ) ) {
 		return 0;
 	}
-	if( !fread( localHeader, sizeof( localHeader ), 1, f ) ) {
+	if( fread( localHeader, 1, sizeof( localHeader ), f ) != sizeof( localHeader ) ) {
 		return 0;
 	}
 
@@ -212,7 +212,7 @@ static void Sys_VFS_Zip_LoadVFS( int idx, const char *filename ) {
 		Com_Printf( "Error seeking VFS zip file: %s\n", filename );
 		goto end;
 	}
-	if( !fread( zipHeader, sizeof( zipHeader ), 1, fin ) ) {
+	if( fread( zipHeader, 1, sizeof( zipHeader ), fin ) != sizeof( zipHeader ) ) {
 		Com_Printf( "Error reading VFS zip file: %s\n", filename );
 		goto end;
 	}
