@@ -254,7 +254,7 @@ void SV_Status_f( void ) {
 		for( j = 0; j < l; j++ )
 			Com_Printf( " " );
 
-		Com_Printf( "%7i ", svs.realtime - cl->lastPacketReceivedTime );
+		Com_Printf( "%7i ", (int)(svs.realtime - cl->lastPacketReceivedTime) );
 
 		s = NET_AddressToString( &cl->netchan.remoteAddress );
 		Com_Printf( "%s", s );

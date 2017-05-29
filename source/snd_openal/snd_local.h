@@ -167,7 +167,7 @@ typedef struct src_s {
 
 	cvar_t *volumeVar;
 
-	int lastUse;    // Last time used
+	int64_t lastUse;    // Last time used
 	int priority;
 	int entNum;
 	int channel;

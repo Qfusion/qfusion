@@ -332,7 +332,7 @@ src_t *S_AllocSource( int priority, int entNum, int channel ) {
 	int i;
 	int empty = -1;
 	int weakest = -1;
-	int weakest_time = trap_Milliseconds();
+	int64_t weakest_time = trap_Milliseconds();
 	int weakest_priority = priority;
 
 	for( i = 0; i < src_count; i++ ) {
