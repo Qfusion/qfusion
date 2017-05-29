@@ -2025,7 +2025,7 @@ block_allocator_t * BlockAllocator( size_t elemSize, size_t blockSize, alloc_fun
 	block_allocator_t *ba;
 
 	if( !elemSize ) {
-		return 0;
+		return NULL;
 	}
 
 	if( !blockSize ) {
@@ -2035,6 +2035,7 @@ block_allocator_t * BlockAllocator( size_t elemSize, size_t blockSize, alloc_fun
 	ba = (block_allocator_t*)alloc_function( sizeof( *ba ), __FILE__, __LINE__ );
 	if( !ba ) {
 		Sys_Error( "BlockAllocator: Failed to create allocator\n" );
+		return NULL;
 	}
 
 	memset( ba, 0, sizeof( *ba ) );
@@ -2062,6 +2063,7 @@ void *BA_Alloc( block_allocator_t *ba ) {
 	b = (block_alloc_block_t*)ba->alloc( sizeof( *b ) + ba->blockSize * ba->elemSize, __FILE__, __LINE__ );
 	if( !b ) {
 		Sys_Error( "BlockAllocator: Failed to allocate element\n" );
+		return NULL;
 	}
 
 	memset( b, 0, sizeof( *b ) );

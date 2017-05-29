@@ -188,6 +188,7 @@ int GS_UpdateBaseAnims( entity_state_t *state, vec3_t velocity ) {
 
 	if( !state ) {
 		module_Error( "GS_UpdateBaseAnims: NULL state\n" );
+		return 0;
 	}
 
 	GS_BBoxForEntityState( state, mins, maxs );

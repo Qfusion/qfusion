@@ -1659,7 +1659,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	assert( !deforms || deformsKey );
 
 	// default deformsKey to empty string, easier on checking later
-	if( !deforms ) {
+	if( !deforms || !deformsKey ) {
 		deformsKey = "";
 	}
 

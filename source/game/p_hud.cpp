@@ -426,12 +426,6 @@ void G_SetClientStats( edict_t *ent ) {
 			client->ps.stats[STAT_TEAM_ALPHA_SCORE + i] = teamlist[team].stats.score;
 			i++;
 		}
-
-		// mark the rest as not set
-		for(; team < GS_MAX_TEAMS; team++ ) {
-			client->ps.stats[STAT_TEAM_ALPHA_SCORE + i] = STAT_NOTSET;
-			i++;
-		}
 	} else {
 		// not team based
 		i = 0;
