@@ -189,12 +189,10 @@ static int CG_GetSpeedVertical( const void *parameter ) {
 static int CG_GetFPS( const void *parameter ) {
 #define FPSSAMPLESCOUNT 32
 #define FPSSAMPLESMASK ( FPSSAMPLESCOUNT - 1 )
-	static int fps;
-	static double oldtime;
-	static int oldframecount;
-	static int frameTimes[FPSSAMPLESCOUNT];
-	static float avFrameTime;
 	int i;
+	int fps;
+	static int frameTimes[FPSSAMPLESCOUNT];
+	float avFrameTime;
 
 	if( cg_showFPS->modified ) {
 		memset( frameTimes, 0, sizeof( frameTimes ) );
