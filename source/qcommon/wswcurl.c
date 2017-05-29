@@ -381,7 +381,7 @@ size_t wswcurl_urldecode( const char *src, char *dst, size_t size ) {
 
 	QMutex_Lock( curldummy_mutex );
 	curl_unesc = qcurl_easy_unescape( curldummy, src, 0, &unesc_len );
-	QMutex_Lock( curldummy_mutex );
+	QMutex_Unlock( curldummy_mutex );
 
 	Q_strncpyz( dst, curl_unesc, size );
 	qcurl_free( curl_unesc );
