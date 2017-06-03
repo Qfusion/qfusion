@@ -1021,13 +1021,8 @@ void Con_DrawConsole( void ) {
 	time( &long_time );
 	newtime = localtime( &long_time );
 
-#ifdef PUBLIC_BUILD
 	Q_snprintfz( version, sizeof( version ), "%02d:%02d %s v%4.2f", newtime->tm_hour, newtime->tm_min,
 				 APPLICATION, APP_VERSION );
-#else
-	Q_snprintfz( version, sizeof( version ), "%02d:%02d %s v%4.2f rev:%s", newtime->tm_hour, newtime->tm_min,
-				 APPLICATION, APP_VERSION, revisioncvar->string );
-#endif
 
 	scaled = 4 * pixelRatio;
 	SCR_DrawString( viddef.width - SCR_strWidth( version, cls.consoleFont, 0, 0 ) - scaled,

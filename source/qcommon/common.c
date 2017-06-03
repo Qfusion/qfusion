@@ -49,7 +49,6 @@ cvar_t *developer;
 cvar_t *timescale;
 cvar_t *dedicated;
 cvar_t *versioncvar;
-cvar_t *revisioncvar;
 cvar_t *tv_server;
 
 static cvar_t *fixedtime;
