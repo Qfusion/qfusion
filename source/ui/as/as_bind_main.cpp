@@ -17,7 +17,6 @@ void BindAPI( ASInterface *as ) {
 	PrebindEventListener( as );
 	PrebindElement( as );
 	PrebindWindow( as );
-	PrebindIrc( as );
 	PrebindL10n( as );
 
 	PrebindOptionsForm( as );
@@ -34,7 +33,6 @@ void BindAPI( ASInterface *as ) {
 	BindEvent( as );
 	BindElement( as );
 	BindWindow( as );
-	BindIrc( as );
 	BindL10n( as );
 
 	BindOptionsForm( as );
@@ -54,7 +52,6 @@ void BindGlobals( ASInterface *as ) {
 	BindServerbrowserGlobal( as );
 	BindGameGlobal( as );
 	BindMatchMakerGlobal( as );
-	BindIrcGlobal( as );
 	BindConsoleGlobal( as );
 }
 

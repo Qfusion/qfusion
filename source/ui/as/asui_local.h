@@ -104,11 +104,6 @@ void BindMatchMakerGlobal( ASInterface *as );
 void RunMatchMakerFrame( void );
 void UnbindMatchMaker( void );
 
-// as_bind_irc.cpp
-void PrebindIrc( ASInterface *as );
-void BindIrc( ASInterface *as );
-void BindIrcGlobal( ASInterface *as );
-
 // as_bind_l10n.cpp
 void PrebindL10n( ASInterface *as );
 void BindL10n( ASInterface *as );
