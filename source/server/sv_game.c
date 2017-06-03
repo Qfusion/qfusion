@@ -511,15 +511,6 @@ void SV_InitGameProgs( void ) {
 	import.Mem_Alloc = PF_MemAlloc;
 	import.Mem_Free = PF_MemFree;
 
-	import.Dynvar_Create = Dynvar_Create;
-	import.Dynvar_Destroy = Dynvar_Destroy;
-	import.Dynvar_Lookup = Dynvar_Lookup;
-	import.Dynvar_GetName = Dynvar_GetName;
-	import.Dynvar_GetValue = Dynvar_GetValue;
-	import.Dynvar_SetValue = Dynvar_SetValue;
-	import.Dynvar_AddListener = Dynvar_AddListener;
-	import.Dynvar_RemoveListener = Dynvar_RemoveListener;
-
 	import.Cvar_Get = Cvar_Get;
 	import.Cvar_Set = Cvar_Set;
 	import.Cvar_SetValue = Cvar_SetValue;

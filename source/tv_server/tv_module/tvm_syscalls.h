@@ -87,39 +87,6 @@ static inline void trap_MemFree( void *data, const char *filename, int fileline 
 	TV_MODULE_IMPORT.Mem_Free( data, filename, fileline );
 }
 
-// dynvars
-static inline dynvar_t *trap_Dynvar_Create( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter ) {
-	return TV_MODULE_IMPORT.Dynvar_Create( name, console, getter, setter );
-}
-
-static inline void trap_Dynvar_Destroy( dynvar_t *dynvar ) {
-	TV_MODULE_IMPORT.Dynvar_Destroy( dynvar );
-}
-
-static inline dynvar_t *trap_Dynvar_Lookup( const char *name ) {
-	return TV_MODULE_IMPORT.Dynvar_Lookup( name );
-}
-
-static inline const char *trap_Dynvar_GetName( dynvar_t *dynvar ) {
-	return TV_MODULE_IMPORT.Dynvar_GetName( dynvar );
-}
-
-static inline dynvar_get_status_t trap_Dynvar_GetValue( dynvar_t *dynvar, void **value ) {
-	return TV_MODULE_IMPORT.Dynvar_GetValue( dynvar, value );
-}
-
-static inline dynvar_set_status_t trap_Dynvar_SetValue( dynvar_t *dynvar, void *value ) {
-	return TV_MODULE_IMPORT.Dynvar_SetValue( dynvar, value );
-}
-
-static inline void trap_Dynvar_AddListener( dynvar_t *dynvar, dynvar_listener_f listener ) {
-	TV_MODULE_IMPORT.Dynvar_AddListener( dynvar, listener );
-}
-
-static inline void trap_Dynvar_RemoveListener( dynvar_t *dynvar, dynvar_listener_f listener ) {
-	TV_MODULE_IMPORT.Dynvar_RemoveListener( dynvar, listener );
-}
-
 // cvars
 static inline cvar_t *trap_Cvar_Get( const char *name, const char *value, int flags ) {
 	return TV_MODULE_IMPORT.Cvar_Get( name, value, flags );

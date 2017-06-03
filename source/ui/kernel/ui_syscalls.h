@@ -427,39 +427,6 @@ inline const char *Cvar_String( const char *name ) {
 	return UI_IMPORT.Cvar_String( name );
 }
 
-// dynvars
-inline dynvar_t *Dynvar_Create( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter ) {
-	return UI_IMPORT.Dynvar_Create( name, console, getter, setter );
-}
-
-inline void Dynvar_Destroy( dynvar_t *dynvar ) {
-	UI_IMPORT.Dynvar_Destroy( dynvar );
-}
-
-inline dynvar_t *Dynvar_Lookup( const char *name ) {
-	return UI_IMPORT.Dynvar_Lookup( name );
-}
-
-inline const char *Dynvar_GetName( dynvar_t *dynvar ) {
-	return UI_IMPORT.Dynvar_GetName( dynvar );
-}
-
-inline dynvar_get_status_t Dynvar_GetValue( dynvar_t *dynvar, void **value ) {
-	return UI_IMPORT.Dynvar_GetValue( dynvar, value );
-}
-
-inline dynvar_set_status_t Dynvar_SetValue( dynvar_t *dynvar, void *value ) {
-	return UI_IMPORT.Dynvar_SetValue( dynvar, value );
-}
-
-inline void Dynvar_AddListener( dynvar_t *dynvar, dynvar_listener_f listener ) {
-	UI_IMPORT.Dynvar_AddListener( dynvar, listener );
-}
-
-inline void Dynvar_RemoveListener( dynvar_t *dynvar, dynvar_listener_f listener ) {
-	UI_IMPORT.Dynvar_RemoveListener( dynvar, listener );
-}
-
 //console args
 inline int Cmd_Argc( void ) {
 	return UI_IMPORT.Cmd_Argc();

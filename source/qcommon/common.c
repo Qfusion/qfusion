@@ -331,15 +331,6 @@ void Com_DeferQuit( void ) {
 * do the apropriate things.
 */
 void Com_Quit( void ) {
-	if( dynvars_initialized ) {
-		dynvar_t *quit = Dynvar_Lookup( "quit" );
-		if( quit ) {
-			// wsw : aiwa : added "quit" event for pluggable clean-up (e.g. IRC shutdown)
-			Dynvar_CallListeners( quit, NULL );
-		}
-		Dynvar_Destroy( quit );
-	}
-
 	SV_Shutdown( "Server quit\n" );
 	CL_Shutdown();
 	MM_Shutdown();
@@ -863,8 +854,6 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	// wsw : aiwa : create dynvars (needs to be completed before .cfg scripts are executed)
 	Dynvar_Create( "sys_uptime", true, Com_Sys_Uptime_f, DYNVAR_READONLY );
-	Dynvar_Create( "frametick", false, DYNVAR_WRITEONLY, DYNVAR_READONLY );
-	Dynvar_Create( "quit", false, DYNVAR_WRITEONLY, DYNVAR_READONLY );
 
 	Sys_InitDynvars();
 
@@ -985,8 +974,6 @@ void Qcommon_Init( int argc, char **argv ) {
 * Qcommon_Frame
 */
 void Qcommon_Frame( unsigned int realMsec ) {
-	static dynvar_t *frametick = NULL;
-	static uint64_t fc = 0;
 	char *s;
 	int time_before = 0, time_between = 0, time_after = 0;
 	static unsigned int gameMsec;
@@ -1074,13 +1061,6 @@ void Qcommon_Frame( unsigned int realMsec ) {
 	}
 
 	MM_Frame( realMsec );
-
-	// wsw : aiwa : generic observer pattern to plug in arbitrary functionality
-	if( !frametick ) {
-		frametick = Dynvar_Lookup( "frametick" );
-	}
-	Dynvar_CallListeners( frametick, &fc );
-	++fc;
 }
 
 /*

@@ -128,16 +128,6 @@ typedef struct {
 	void *( *Mem_Alloc )( relay_t * relay_server, size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 
-	// dynvars
-	dynvar_t *( *Dynvar_Create )( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter );
-	void ( *Dynvar_Destroy )( dynvar_t *dynvar );
-	dynvar_t *( *Dynvar_Lookup )( const char *name );
-	const char *( *Dynvar_GetName )( dynvar_t * dynvar );
-	dynvar_get_status_t ( *Dynvar_GetValue )( dynvar_t *dynvar, void **value );
-	dynvar_set_status_t ( *Dynvar_SetValue )( dynvar_t *dynvar, void *value );
-	void ( *Dynvar_AddListener )( dynvar_t *dynvar, dynvar_listener_f listener );
-	void ( *Dynvar_RemoveListener )( dynvar_t *dynvar, dynvar_listener_f listener );
-
 	// console variable interaction
 	cvar_t *( *Cvar_Get )( const char *name, const char *value, int flags );
 	cvar_t *( *Cvar_Set )( const char *name, const char *value );

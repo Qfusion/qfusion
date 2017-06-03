@@ -37,29 +37,7 @@ static bool keydown[256];
 
 static bool key_initialized = false;
 
-static char alt_color_escape = '$';
-static dynvar_t *key_colorEscape = NULL;
-
 static cvar_t *in_debug;
-
-static dynvar_get_status_t Key_GetColorEscape_f( void **key ) {
-	assert( key );
-	*key = (void *) &alt_color_escape;
-	return DYNVAR_GET_OK;
-}
-
-static dynvar_set_status_t Key_SetColorEscape_f( void *key ) {
-	const char *const keyStr = (char *) key;
-	assert( keyStr );
-	if( strlen( keyStr ) == 1 ) {
-		const char keyChr = *keyStr;
-		if( !isalnum( keyChr ) ) {
-			alt_color_escape = keyChr;
-			return DYNVAR_SET_OK;
-		}
-	}
-	return DYNVAR_SET_INVALID;
-}
 
 typedef struct {
 	const char *name;
@@ -490,9 +468,6 @@ void Key_Init( void ) {
 	Cmd_AddCommand( "unbindall", Key_Unbindall );
 	Cmd_AddCommand( "bindlist", Key_Bindlist_f );
 
-	// wsw : aiwa : create dynvar for alternative color escape character
-	key_colorEscape = Dynvar_Create( "key_colorEscape", true, Key_GetColorEscape_f, Key_SetColorEscape_f );
-
 	in_debug = Cvar_Get( "in_debug", "0", 0 );
 
 	key_initialized = true;
@@ -520,10 +495,6 @@ void Key_Shutdown( void ) {
 void Key_CharEvent( int key, wchar_t charkey ) {
 	if( Key_IsToggleConsole( key ) ) {
 		return;
-	}
-
-	if( charkey == ( wchar_t )alt_color_escape ) {
-		charkey = Q_COLOR_ESCAPE;
 	}
 
 	switch( cls.key_dest ) {

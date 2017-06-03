@@ -649,17 +649,12 @@ static void SCR_RenderView( float stereo_separation, bool timedemo ) {
 * text to the screen.
 */
 void SCR_UpdateScreen( void ) {
-	static dynvar_t *updatescreen = NULL;
 	int numframes;
 	int i;
 	float separation[2];
 	bool cinematic;
 	bool forcevsync, forceclear;
 	bool timedemo;
-
-	if( !updatescreen ) {
-		updatescreen = Dynvar_Create( "updatescreen", false, DYNVAR_WRITEONLY, DYNVAR_READONLY );
-	}
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
 	// do nothing at all
@@ -745,9 +740,6 @@ void SCR_UpdateScreen( void ) {
 			SCR_DrawConsole();
 			SCR_DrawNotify();
 		}
-
-		// wsw : aiwa : call any listeners so they can draw their stuff
-		Dynvar_CallListeners( updatescreen, NULL );
 
 		re.EndFrame();
 	}

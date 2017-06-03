@@ -521,15 +521,6 @@ tv_module_t *TV_GetModule( const char *game ) {
 	iter->import.Mem_Alloc = TV_Module_MemAlloc;
 	iter->import.Mem_Free = TV_Module_MemFree;
 
-	iter->import.Dynvar_Create = Dynvar_Create;
-	iter->import.Dynvar_Destroy = Dynvar_Destroy;
-	iter->import.Dynvar_Lookup = Dynvar_Lookup;
-	iter->import.Dynvar_GetName = Dynvar_GetName;
-	iter->import.Dynvar_GetValue = Dynvar_GetValue;
-	iter->import.Dynvar_SetValue = Dynvar_SetValue;
-	iter->import.Dynvar_AddListener = Dynvar_AddListener;
-	iter->import.Dynvar_RemoveListener = Dynvar_RemoveListener;
-
 	iter->import.Cvar_Get = Cvar_Get;
 	iter->import.Cvar_Set = Cvar_Set;
 	iter->import.Cvar_SetValue = Cvar_SetValue;
