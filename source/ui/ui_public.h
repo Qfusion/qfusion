@@ -209,16 +209,6 @@ typedef struct {
 										 ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep );
 	size_t ( *GetBaseServerURL )( char *buffer, size_t buffer_size );
 
-	// IRC
-	size_t ( *Irc_HistorySize )( void );
-	size_t ( *Irc_HistoryTotalSize )( void );
-
-	// history is in reverse order (newest line first)
-	const struct irc_chat_history_node_s *( *Irc_GetHistoryHeadNode )( void );
-	const struct irc_chat_history_node_s *( *Irc_GetNextHistoryNode )( const struct irc_chat_history_node_s *n );
-	const struct irc_chat_history_node_s *( *Irc_GetPrevHistoryNode )( const struct irc_chat_history_node_s *n );
-	const char *( *Irc_GetHistoryNodeLine )( const struct irc_chat_history_node_s *n );
-
 	// l10n
 	void ( *L10n_ClearDomain )( void );
 	void ( *L10n_LoadLangPOFile )( const char *filepath );

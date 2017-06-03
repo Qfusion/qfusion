@@ -398,37 +398,6 @@ DYNVAR
 /*
 ==============================================================
 
-IRC
-
-==============================================================
-*/
-struct irc_chat_history_node_s;
-
-void Irc_Connect_f( void );
-void Irc_Disconnect_f( void );
-dynvar_get_status_t Irc_GetConnected_f( void **connected );
-dynvar_set_status_t Irc_SetConnected_f( void *connected );
-bool Irc_IsConnected( void );
-size_t Irc_HistorySize( void );
-size_t Irc_HistoryTotalSize( void );
-const struct irc_chat_history_node_s *Irc_GetHistoryHeadNode( void );
-const struct irc_chat_history_node_s *Irc_GetNextHistoryNode( const struct irc_chat_history_node_s *n );
-const struct irc_chat_history_node_s *Irc_GetPrevHistoryNode( const struct irc_chat_history_node_s *n );
-const char *Irc_GetHistoryNodeLine( const struct irc_chat_history_node_s *n );
-
-/*
-==============================================================
-
-SVN INTEGRATION
-
-==============================================================
-*/
-
-const char *SVN_RevString( void );
-
-/*
-==============================================================
-
 NET
 
 ==============================================================

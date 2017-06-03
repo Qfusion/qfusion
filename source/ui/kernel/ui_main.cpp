@@ -26,7 +26,6 @@
 #include "datasources/ui_profiles_datasource.h"
 #include "datasources/ui_serverbrowser_datasource.h"
 #include "datasources/ui_tvchannels_datasource.h"
-#include "datasources/ui_ircchannels_datasource.h"
 #include "datasources/ui_gameajax_datasource.h"
 
 #include "formatters/ui_levelshot_formatter.h"
@@ -53,7 +52,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	empty_fmt( 0 ), serverflags_fmt( 0 ),
 	serverBrowser( 0 ), gameTypes( 0 ), maps( 0 ), vidProfiles( 0 ), huds( 0 ), videoModes( 0 ),
 	demos( 0 ), mods( 0 ),
-	playerModels( 0 ), tvchannels( 0 ), ircchannels( 0 ), gameajax( 0 ),
+	playerModels( 0 ), tvchannels( 0 ), gameajax( 0 ),
 
 	// other members
 	quickMenuURL( "" ),
@@ -386,7 +385,6 @@ void UI_Main::createDataSources( void ) {
 	demos = __new__( DemosDataSource )( demoExtension );
 	mods = __new__( ModsDataSource )();
 	tvchannels = __new__( TVChannelsDataSource )();
-	ircchannels = __new__( IrcChannelsDataSource )();
 	gameajax = __new__( GameAjaxDataSource )();
 	playerModels = __new__( ModelsDataSource )();
 	vidProfiles = __new__( ProfilesDataSource )();
@@ -401,7 +399,6 @@ void UI_Main::destroyDataSources( void ) {
 	__SAFE_DELETE_NULLIFY( demos );
 	__SAFE_DELETE_NULLIFY( mods );
 	__SAFE_DELETE_NULLIFY( tvchannels );
-	__SAFE_DELETE_NULLIFY( ircchannels );
 	__SAFE_DELETE_NULLIFY( gameajax );
 	__SAFE_DELETE_NULLIFY( playerModels );
 	__SAFE_DELETE_NULLIFY( vidProfiles );
@@ -727,9 +724,6 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	}
 	if( demos ) {
 		demos->UpdateFrame();
-	}
-	if( ircchannels ) {
-		ircchannels->UpdateFrame();
 	}
 
 	if( clientState == CA_ACTIVE && invalidateAjaxCache ) {

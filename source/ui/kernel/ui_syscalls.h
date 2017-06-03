@@ -526,32 +526,6 @@ inline size_t MM_GetBaseWebURL( char *buffer, size_t buffer_size ) {
 	return UI_IMPORT.MM_GetBaseWebURL( buffer, buffer_size );
 }
 
-// IRC
-inline size_t Irc_HistorySize( void ) {
-	return UI_IMPORT.Irc_HistorySize();
-}
-
-inline size_t Irc_HistoryTotalSize( void ) {
-	return UI_IMPORT.Irc_HistoryTotalSize();
-}
-
-// history is in reverse order (newest line first)
-inline const struct irc_chat_history_node_s *Irc_GetHistoryHeadNode( void ) {
-	return UI_IMPORT.Irc_GetHistoryHeadNode();
-}
-
-inline const struct irc_chat_history_node_s *Irc_GetNextHistoryNode( const struct irc_chat_history_node_s *n ) {
-	return UI_IMPORT.Irc_GetNextHistoryNode( n );
-}
-
-inline const struct irc_chat_history_node_s *Irc_GetPrevHistoryNode( const struct irc_chat_history_node_s *n ) {
-	return UI_IMPORT.Irc_GetPrevHistoryNode( n );
-}
-
-inline const char *Irc_GetHistoryNodeLine( const struct irc_chat_history_node_s *n ) {
-	return UI_IMPORT.Irc_GetHistoryNodeLine( n );
-}
-
 inline const char *L10n_TranslateString( const char *string ) {
 	return UI_IMPORT.L10n_TranslateString( string );
 }

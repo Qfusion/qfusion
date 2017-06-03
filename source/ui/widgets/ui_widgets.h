@@ -78,7 +78,6 @@ Rocket::Core::ElementInstancer *GetInlineDivInstancer( void );
 Rocket::Core::ElementInstancer *GetImageWidgetInstancer( void );
 Rocket::Core::ElementInstancer *GetElementFieldInstancer( void );
 Rocket::Core::ElementInstancer *GetVideoInstancer( void );
-Rocket::Core::ElementInstancer *GetIrcLogWidgetInstancer( void );
 Rocket::Core::ElementInstancer *GetIFrameWidgetInstancer( void );
 Rocket::Core::ElementInstancer *GetElementL10nInstancer( void );
 Rocket::Core::ElementInstancer *GetElementBlurInstancer( void );

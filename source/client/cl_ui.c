@@ -318,13 +318,6 @@ void CL_UIModule_Init( void ) {
 
 	import.asGetAngelExport = Com_asGetAngelExport;
 
-	import.Irc_HistorySize = Irc_HistorySize;
-	import.Irc_HistoryTotalSize = Irc_HistoryTotalSize;
-	import.Irc_GetHistoryHeadNode = Irc_GetHistoryHeadNode;
-	import.Irc_GetNextHistoryNode = Irc_GetNextHistoryNode;
-	import.Irc_GetPrevHistoryNode = Irc_GetPrevHistoryNode;
-	import.Irc_GetHistoryNodeLine = Irc_GetHistoryNodeLine;
-
 	import.L10n_LoadLangPOFile = &CL_UIModule_L10n_LoadLangPOFile;
 	import.L10n_TranslateString = &CL_UIModule_L10n_TranslateString;
 	import.L10n_ClearDomain = &CL_UIModule_L10n_ClearDomain;
