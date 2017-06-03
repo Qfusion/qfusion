@@ -50,10 +50,6 @@ int64_t sys_msg_time;
 int argc;
 char *argv[MAX_NUM_ARGVS];
 
-// dynvar forward declarations
-static dynvar_get_status_t Sys_GetAffinity_f( void **affinity );
-static dynvar_set_status_t Sys_SetAffinity_f( void *affinity );
-
 void Sys_InitTimeDynvar( void );
 void Sys_InitTime( void );
 
@@ -135,15 +131,6 @@ void Sys_Init( void ) {
 * Sys_InitDynvars
 */
 void Sys_InitDynvars( void ) {
-	char *dummyStr;
-	dynvar_t *affinity_var;
-
-	affinity_var = Dynvar_Create( "sys_affinity", true, Sys_GetAffinity_f, Sys_SetAffinity_f );
-	assert( affinity_var );
-	Dynvar_GetValue( affinity_var, (void **)&dummyStr );
-	assert( dummyStr );
-	Dynvar_SetValue( affinity_var, dummyStr );
-
 	Sys_InitTimeDynvar();
 }
 
@@ -322,102 +309,6 @@ static void ParseCommandLine( LPSTR lpCmdLine ) {
 			}
 		}
 	}
-}
-
-static dynvar_get_status_t Sys_GetAffinity_f( void **affinity ) {
-	static bool affinityAutoSet = false;
-	static char affinityString[33];
-	DWORD_PTR procAffinity, sysAffinity;
-	HANDLE proc = GetCurrentProcess();
-
-	if( GetProcessAffinityMask( proc, &procAffinity, &sysAffinity ) ) {
-		SYSTEM_INFO sysInfo;
-		DWORD i;
-
-		CloseHandle( proc );
-
-		assert( affinity );
-
-		GetSystemInfo( &sysInfo );
-		for( i = 0; i < sysInfo.dwNumberOfProcessors && i < 33; ++i ) {
-			affinityString[i] = '0' + ( ( procAffinity & sysAffinity ) & 1 );
-			procAffinity >>= 1;
-			sysAffinity >>= 1;
-		}
-		affinityString[i] = '\0';
-
-		if( !affinityAutoSet ) {
-#if 0
-			// set the affinity string to something like 0001
-			const char *lastBit = strrchr( affinityString, '1' );
-			if( lastBit ) { // Vic: FIXME??
-				for( i = 0; i < (DWORD)( lastBit - affinityString ); i++ )
-					affinityString[i] = '0';
-			}
-#endif
-			affinityAutoSet = true;
-		}
-
-		*affinity = affinityString;
-		return DYNVAR_GET_OK;
-	}
-
-	CloseHandle( proc );
-	*affinity = NULL;
-	return DYNVAR_GET_TRANSIENT;
-}
-
-static dynvar_set_status_t Sys_SetAffinity_f( void *affinity ) {
-	dynvar_set_status_t result = DYNVAR_SET_INVALID;
-	SYSTEM_INFO sysInfo;
-	DWORD_PTR procAffinity = 0, i;
-	HANDLE proc = GetCurrentProcess();
-	char minValid[33], maxValid[33];
-	const size_t len = strlen( (char *) affinity );
-
-	// create range of valid values for error printing
-	GetSystemInfo( &sysInfo );
-	for( i = 0; i < sysInfo.dwNumberOfProcessors; ++i ) {
-		minValid[i] = '0';
-		maxValid[i] = '1';
-	}
-	minValid[i] = '\0';
-	maxValid[i] = '\0';
-
-	if( len == sysInfo.dwNumberOfProcessors ) {
-		// string is of valid length, parse in reverse direction
-		const char *c;
-		for( c = ( (char *) affinity ) + len - 1; c >= (char *) affinity; --c ) {
-			// parse binary digit
-			procAffinity <<= 1;
-			switch( *c ) {
-				case '0':
-					// nothing to do
-					break;
-				case '1':
-					// at least one digit must be 1
-					result = DYNVAR_SET_OK;
-					procAffinity |= 1;
-					break;
-				default:
-					// invalid character found
-					result = DYNVAR_SET_INVALID;
-					goto abort;
-			}
-		}
-
-		SetProcessAffinityMask( proc, procAffinity );
-		//if (len > 1)
-		//SetPriorityClass(proc, HIGH_PRIORITY_CLASS);
-	}
-
-abort:
-	if( result != DYNVAR_SET_OK ) {
-		Com_Printf( "\"sys_affinity\" must be a non-zero bitmask between \"%s\" and \"%s\".\n", minValid, maxValid );
-	}
-
-	CloseHandle( proc );
-	return result;
 }
 
 /*
