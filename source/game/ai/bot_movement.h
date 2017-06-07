@@ -791,12 +791,25 @@ public:
 
 class BotBaseMovementAction;
 
-class BotMovementPredictionContext
+struct BotMovementPredictionConstants
+{
+    enum SequenceStopReason: uint8_t
+    {
+        UNSPECIFIED, // An empty initial value, should be replaced by SWITCHED on actual use
+        SUCCEEDED,   // The sequence has been completed successfully
+        SWITCHED,    // The action cannot be applied in the current environment, another action is suggested
+        DISABLED,    // The action is disabled for application, another action is suggested
+        FAILED       // A prediction step has lead to a failure
+    };
+
+    static constexpr unsigned MAX_SAVED_LANDING_AREAS = 16;
+};
+
+class BotMovementPredictionContext: public BotMovementPredictionConstants
 {
     friend class BotTriggerPendingWeaponJumpMovementAction;
 public:
     static constexpr unsigned MAX_PREDICTED_STATES = 48;
-    static constexpr unsigned MAX_SAVED_LANDING_AREAS = 16;
 
     struct alignas(1) HitWhileRunningTestResult
     {
@@ -919,6 +932,7 @@ public:
     unsigned topOfStackIndex;
     unsigned savepointTopOfStackIndex;
 
+    SequenceStopReason sequenceStopReason;
     bool isCompleted;
     bool cannotApplyAction;
     bool shouldRollback;
@@ -1104,7 +1118,7 @@ inline void BotCampingSpotState::TryDeactivate(const edict_t *self, const class 
 
 class Bot;
 
-class BotBaseMovementAction
+class BotBaseMovementAction: public BotMovementPredictionConstants
 {
     friend class BotMovementPredictionContext;
     Bot *bot;
@@ -1155,6 +1169,7 @@ protected:
         if (!isDisabledForPlanning)
             return true;
 
+        context->sequenceStopReason = DISABLED;
         context->cannotApplyAction = true;
         context->actionSuggestedByAction = suggestedAction;
         Debug("The action has been completely disabled for further planning\n");
@@ -1207,12 +1222,6 @@ public:
     // The second callback is provided for symmetry reasons
     // (e.g. any resources that are allocated in the first callback might need cleanup).
     virtual void OnApplicationSequenceStarted(BotMovementPredictionContext *context);
-    enum SequenceStopReason
-    {
-        SUCCEEDED,
-        SWITCHED,
-        FAILED
-    };
 
     // Might be called in a next frame, thats what stoppedAtFrameIndex is.
     // If application sequence has failed, stoppedAtFrameIndex is ignored.
@@ -1260,7 +1269,6 @@ class BotLandOnSavedAreasMovementAction: public BotBaseMovementAction
     friend class BotHandleTriggeredJumppadMovementAction;
     friend class BotTryWeaponJumpShortcutMovementAction;
 
-    static constexpr auto MAX_SAVED_LANDING_AREAS = BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS;
     StaticVector<int, MAX_SAVED_LANDING_AREAS> savedLandingAreas;
     typedef StaticVector<AreaAndScore, MAX_SAVED_LANDING_AREAS * 2> FilteredAreas;
 
@@ -1529,6 +1537,15 @@ public:
     void PlanPredictionStep(BotMovementPredictionContext *context) override;
     void CheckPredictionStepResults(BotMovementPredictionContext *context) override;
     void OnApplicationSequenceStarted(BotMovementPredictionContext *context) override;
+    void OnApplicationSequenceStopped(BotMovementPredictionContext *context,
+                                      SequenceStopReason stopReason,
+                                      unsigned stoppedAtFrameIndex) override
+    {
+        BotBaseMovementAction::OnApplicationSequenceStopped(context, stopReason, stoppedAtFrameIndex);
+        // Make sure the action gets disabled for planning after a prediction step failure
+        if (stopReason == FAILED)
+            this->isDisabledForPlanning = true;
+    }
 };
 
 class BotCombatDodgeSemiRandomlyToTargetMovementAction: public BotBaseMovementAction

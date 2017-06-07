@@ -869,6 +869,7 @@ bool BotMovementPredictionContext::NextPredictionStep()
     testedActionsList.push_back(action);
 #endif
 
+    this->sequenceStopReason = UNSPECIFIED;
     for (;;)
     {
         this->cannotApplyAction = false;
@@ -880,8 +881,15 @@ bool BotMovementPredictionContext::NextPredictionStep()
             if (this->activeAction)
             {
                 unsigned stoppedAtFrameIndex = topOfStackIndex;
-                this->activeAction->OnApplicationSequenceStopped(this, BotBaseMovementAction::SWITCHED, stoppedAtFrameIndex);
+
+                // Never pass the UNSPECIFIED reason to the OnApplicationSequenceStopped() call
+                if (sequenceStopReason == UNSPECIFIED)
+                    sequenceStopReason = SWITCHED;
+
+                this->activeAction->OnApplicationSequenceStopped(this, sequenceStopReason, stoppedAtFrameIndex);
             }
+
+            sequenceStopReason = UNSPECIFIED;
 
             this->activeAction = action;
             // Start the action application sequence
@@ -1055,6 +1063,7 @@ void BotMovementPredictionContext::BuildPlan()
     this->topOfStackIndex = 0;
     this->activeAction = nullptr;
     this->actionSuggestedByAction = nullptr;
+    this->sequenceStopReason = UNSPECIFIED;
     this->isCompleted = false;
     this->shouldRollback = false;
     for (;;)
@@ -1520,12 +1529,20 @@ void BotBaseMovementAction::OnApplicationSequenceStopped(BotMovementPredictionCo
     const char *format = "OnApplicationSequenceStopped(context, %s, %d): context->topOfStackIndex=%d\n";
     switch (reason)
     {
+        case UNSPECIFIED:
+            // Should not be reached
+            Assert(false);
+            break;
         case SUCCEEDED:
             Debug(format, "succeeded", stoppedAtFrameIndex, context->topOfStackIndex);
             context->MarkSavepoint(this, stoppedAtFrameIndex + 1);
             break;
         case SWITCHED:
             Debug(format, "switched", stoppedAtFrameIndex, context->topOfStackIndex);
+            context->MarkSavepoint(this, stoppedAtFrameIndex);
+            break;
+        case DISABLED:
+            Debug(format, "disabled", stoppedAtFrameIndex, context->topOfStackIndex);
             context->MarkSavepoint(this, stoppedAtFrameIndex);
             break;
         case FAILED:
@@ -1918,7 +1935,7 @@ void BotRidePlatformMovementAction::OnApplicationSequenceStopped(BotMovementPred
                                                                  unsigned stoppedAtFrameIndex)
 {
     BotBaseMovementAction::OnApplicationSequenceStopped(context, stopReason, stoppedAtFrameIndex);
-    if (stopReason != FAILED)
+    if (stopReason != FAILED && stopReason != DISABLED)
         return;
 
     currTestedAreaIndex++;
@@ -2864,6 +2881,7 @@ void BotCampASpotMovementAction::PlanPredictionStep(BotMovementPredictionContext
 
     if (this->disabledForApplicationFrameIndex == context->topOfStackIndex)
     {
+        context->sequenceStopReason = DISABLED;
         context->cannotApplyAction = true;
         context->actionSuggestedByAction = &DefaultWalkAction();
         return;
@@ -2990,13 +3008,16 @@ void BotCampASpotMovementAction::OnApplicationSequenceStopped(BotMovementPredict
 {
     BotBaseMovementAction::OnApplicationSequenceStopped(context, stopReason, stoppedAtFrameIndex);
 
-    if (stopReason != FAILED)
+    if (stopReason == DISABLED)
+        return;
+
+    if (stopReason == FAILED)
     {
-        disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
+        disabledForApplicationFrameIndex = context->savepointTopOfStackIndex;
         return;
     }
 
-    disabledForApplicationFrameIndex = context->savepointTopOfStackIndex;
+    disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
 }
 
 struct ReachChainInterpolator
@@ -3229,7 +3250,10 @@ void BotBunnyTestingMultipleLookDirsMovementAction::OnApplicationSequenceStopped
     // If application sequence succeeded
     if (stopReason != FAILED)
     {
-        currSuggestedLookDirNum = 0;
+        if (stopReason != DISABLED)
+        {
+            currSuggestedLookDirNum = 0;
+        }
         return;
     }
 
@@ -3847,6 +3871,7 @@ bool BotGenericRunBunnyingMovementAction::GenericCheckIsActionEnabled(BotMovemen
         return true;
 
     Debug("Cannot apply action: the action has been disabled for application on frame %d\n", context->topOfStackIndex);
+    context->sequenceStopReason = DISABLED;
     context->cannotApplyAction = true;
     context->actionSuggestedByAction = suggestedAction;
     return false;
@@ -4699,8 +4724,11 @@ void BotGenericRunBunnyingMovementAction::OnApplicationSequenceStopped(BotMoveme
 
     if (reason != FAILED)
     {
-        this->disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
         ResetObstacleAvoidanceState();
+        if (reason != DISABLED)
+        {
+            this->disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
+        }
         return;
     }
 
