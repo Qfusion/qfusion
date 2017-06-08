@@ -13,7 +13,7 @@ protected:
     bool ShouldSkipThinkFrame()
     {
         // Check whether the modulo has not been set yet
-        return frameAffinityModulo == 0 || level.framenum % frameAffinityModulo != frameAffinityOffset;
+        return frameAffinityModulo == 0 || (unsigned)(level.framenum % frameAffinityModulo) != frameAffinityOffset;
     }
 
     // This method group is called on each frame. See Update() for calls order.

@@ -363,15 +363,15 @@ protected:
     NavTarget *navTarget;
     AiBaseActionRecord *planHead;
     AiBaseGoal *activeGoal;
-    unsigned nextActiveGoalUpdateAt;
+    int64_t nextActiveGoalUpdateAt;
 
     const NavTarget *lastReachedNavTarget;
-    unsigned lastNavTargetReachedAt;
+    int64_t lastNavTargetReachedAt;
 
-    unsigned prevThinkAt;
+    int64_t prevThinkAt;
 
     float decisionRandom;
-    unsigned nextDecisionRandomUpdateAt;
+    int64_t nextDecisionRandomUpdateAt;
 
     StaticVector<AiBaseGoal *, MAX_GOALS> goals;
     StaticVector<AiBaseAction *, MAX_ACTIONS> actions;

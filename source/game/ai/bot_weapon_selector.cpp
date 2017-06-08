@@ -112,9 +112,10 @@ bool SelectedEnemies::Contain(const Enemy *enemy) const
 bool SelectedEnemies::AreThreatening() const
 {
     CheckValid(__FUNCTION__);
+    const int64_t levelTime = level.time;
     for (const Enemy *activeEnemy: activeEnemies)
     {
-        if (level.time - activeEnemy->LastAttackedByTime() < 1000)
+        if (levelTime - activeEnemy->LastAttackedByTime() < 1000)
             return true;
 
         // Try cut off quite expensive AngleVectors() call

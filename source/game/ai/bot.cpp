@@ -495,11 +495,11 @@ void Bot::CheckAlertSpots(const StaticVector<edict_t *, MAX_CLIENTS> &visibleTar
     }
 
     // Then call callbacks
-    const unsigned levelTime = level.time;
+    const int64_t levelTime = level.time;
     for (unsigned i = 0; i < alertSpots.size(); ++i)
     {
         auto &alertSpot = alertSpots[i];
-        unsigned nonReportedFor = levelTime - alertSpot.lastReportedAt;
+        uint64_t nonReportedFor = (uint64_t)(levelTime - alertSpot.lastReportedAt);
         if (nonReportedFor >= 1000)
             alertSpot.lastReportedScore = 0.0f;
 
@@ -577,7 +577,7 @@ void Bot::SayVoiceMessages()
         return;
     }
 
-    vsayTimeout = level.time + ( ( 8+random()*12 ) * 1000 );
+    vsayTimeout = (int64_t)(level.time + ( ( 8+random()*12 ) * 1000 ));
 
     // the more bots, the less vsays to play
     if( random() > 0.1 + 1.0f / game.numBots )

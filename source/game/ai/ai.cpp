@@ -67,7 +67,8 @@ void AI_Debugv(const char *nick, const char *format, va_list va)
 {
     char concatBuffer[1024];
 
-    int prefixLen = sprintf(concatBuffer, "t=%09d %s: ", level.time, nick);
+    const int64_t levelTime = level.time;
+    int prefixLen = sprintf(concatBuffer, "t=%09" PRIi64 " %s: ", levelTime, nick);
 
     Q_vsnprintfz(concatBuffer + prefixLen, 1024 - prefixLen, format, va);
 

@@ -22,7 +22,7 @@ class BotFireTargetCache
         Vec3 origin;
         unsigned selectedEnemiesInstanceId;
         unsigned selectedWeaponsInstanceId;
-        unsigned invalidAt;
+        int64_t invalidAt;
 
         CachedFireTarget()
             : origin(0, 0, 0),
@@ -58,7 +58,7 @@ class BotFireTargetCache
     const edict_t *bot;
     // Contains a value in range [0, 1] used for extrapolation of enemy origin for imitation of human-like aiming
     float extrapolationRandom;
-    unsigned extrapolationRandomTimeoutAt;
+    int64_t extrapolationRandomTimeoutAt;
 
     void SetupCoarseFireTarget(const SelectedEnemies &selectedEnemies,
                                const GenericFireDef &fireDef,

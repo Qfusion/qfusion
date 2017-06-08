@@ -238,7 +238,7 @@ void AiBaseEnemyPool::OnPain(const edict_t *bot, const edict_t *enemy, float kic
         OnNewThreat(enemy);
 }
 
-unsigned AiBaseEnemyPool::LastAttackedByTime(const edict_t *ent) const
+int64_t AiBaseEnemyPool::LastAttackedByTime(const edict_t *ent) const
 {
     for (const AttackStats &attackStats: attackers)
         if (ent && attackStats.ent == ent)
@@ -247,7 +247,7 @@ unsigned AiBaseEnemyPool::LastAttackedByTime(const edict_t *ent) const
     return 0;
 }
 
-unsigned AiBaseEnemyPool::LastTargetTime(const edict_t *ent) const
+int64_t AiBaseEnemyPool::LastTargetTime(const edict_t *ent) const
 {
     for (const AttackStats &targetStats: targets)
         if (ent && targetStats.ent == ent)

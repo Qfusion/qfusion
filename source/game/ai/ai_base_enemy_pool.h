@@ -110,14 +110,14 @@ class Enemy
     float maxPositiveWeight;
     unsigned positiveWeightsCount;
 
-    unsigned registeredAt;
+    int64_t registeredAt;
 
     // Same as front() of lastSeenPositions, used for faster access
     Vec3 lastSeenPosition;
     // Same as front() of lastSeenVelocities, used for faster access
     Vec3 lastSeenVelocity;
     // Same as front() of lastSeenTimestamps, used for faster access
-    unsigned lastSeenAt;
+    int64_t lastSeenAt;
 public:
     const edict_t *ent;  // If null, the enemy slot is unused
 
@@ -172,11 +172,11 @@ public:
         return ent->r.client ? ent->r.client->ps.stats[STAT_PENDING_WEAPON] : WEAP_NONE;
     }
 
-    inline unsigned LastSeenAt() const { return lastSeenAt; }
+    inline int64_t LastSeenAt() const { return lastSeenAt; }
     inline const Vec3 &LastSeenPosition() const { return lastSeenPosition; }
     inline const Vec3 &LastSeenVelocity() const { return lastSeenVelocity; }
 
-    inline unsigned LastAttackedByTime() const;
+    inline int64_t LastAttackedByTime() const;
     inline float TotalInflictedDamage() const;
 
     inline bool IsValid() const { return ent != nullptr; }
@@ -194,7 +194,7 @@ public:
     {
         const Vec3 origin;
         const Vec3 velocity;
-        unsigned timestamp;
+        int64_t timestamp;
 
         Snapshot(const vec3_t origin_, const vec3_t velocity_, unsigned timestamp_)
             : origin(origin_), velocity(velocity_), timestamp(timestamp_) {}
@@ -217,8 +217,8 @@ class AttackStats
 
     unsigned frameIndex;
     unsigned totalAttacks;
-    unsigned lastDamageAt;
-    unsigned lastTouchAt;
+    int64_t lastDamageAt;
+    int64_t lastTouchAt;
     float totalDamage;
 
     const edict_t *ent;
@@ -261,7 +261,7 @@ public:
     // but you want to mark frame as a frame of activity anyway
     void Touch() { lastTouchAt = level.time; }
 
-    unsigned LastActivityAt() const { return std::max(lastDamageAt, lastTouchAt); }
+    int64_t LastActivityAt() const { return std::max(lastDamageAt, lastTouchAt); }
 };
 
 class AiBaseEnemyPool: public AiFrameAwareUpdatable
@@ -283,7 +283,7 @@ public:
 private:
     float avgSkill; // (0..1)
     float decisionRandom; // [0, 1]
-    unsigned decisionRandomUpdateAt;
+    int64_t decisionRandomUpdateAt;
 
     // All known (viewed and not forgotten) enemies
     Enemy trackedEnemies[MAX_TRACKED_ENEMIES];
@@ -302,7 +302,7 @@ private:
 
     const unsigned reactionTime;
 
-    unsigned prevThinkLevelTime;
+    int64_t prevThinkLevelTime;
 
     StaticVector<AttackStats, MAX_TRACKED_ATTACKERS> attackers;
     StaticVector<AttackStats, MAX_TRACKED_TARGETS> targets;
@@ -387,13 +387,13 @@ public:
     void EnqueueTarget(const edict_t *target);
 
     // Returns zero if ent not found
-    unsigned LastAttackedByTime(const edict_t *ent) const;
-    unsigned LastTargetTime(const edict_t *ent) const;
+    int64_t LastAttackedByTime(const edict_t *ent) const;
+    int64_t LastTargetTime(const edict_t *ent) const;
 
     float TotalDamageInflictedBy(const edict_t *ent) const;
 };
 
-inline unsigned Enemy::LastAttackedByTime() const { return parent->LastAttackedByTime(ent); }
+inline int64_t Enemy::LastAttackedByTime() const { return parent->LastAttackedByTime(ent); }
 inline float Enemy::TotalInflictedDamage() const { return parent->TotalDamageInflictedBy(ent); }
 
 #endif

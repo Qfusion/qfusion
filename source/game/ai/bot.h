@@ -332,7 +332,7 @@ private:
 
     BotMovementPredictionContext movementPredictionContext;
 
-    unsigned vsayTimeout;
+    int64_t vsayTimeout;
 
     bool isInSquad;
 
@@ -341,7 +341,7 @@ private:
 
     struct AlertSpot: public AiAlertSpot
     {
-        unsigned lastReportedAt;
+        int64_t lastReportedAt;
         float lastReportedScore;
         AlertCallback callback;
         void *receiver;
@@ -371,15 +371,15 @@ private:
     StaticVector<AiScriptWeaponDef, MAX_SCRIPT_WEAPONS> scriptWeaponDefs;
     StaticVector<int, MAX_SCRIPT_WEAPONS> scriptWeaponCooldown;
 
-    unsigned lastTouchedTeleportAt;
-    unsigned lastTouchedJumppadAt;
-    unsigned lastTouchedElevatorAt;
-    unsigned lastKnockbackAt;
+    int64_t lastTouchedTeleportAt;
+    int64_t lastTouchedJumppadAt;
+    int64_t lastTouchedElevatorAt;
+    int64_t lastKnockbackAt;
 
     unsigned similarWorldStateInstanceId;
 
-    unsigned lastItemSelectedAt;
-    unsigned noItemAvailableSince;
+    int64_t lastItemSelectedAt;
+    int64_t noItemAvailableSince;
 
     inline bool ShouldUseRoamSpotAsNavTarget() const
     {
@@ -396,7 +396,7 @@ private:
 
     class AimingRandomHolder
     {
-        unsigned valuesTimeoutAt[3];
+        int64_t valuesTimeoutAt[3];
         float values[3];
     public:
         inline AimingRandomHolder()

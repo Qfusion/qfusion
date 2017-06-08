@@ -97,7 +97,7 @@ inline bool BotRoamingManager::IsTemporarilyDisabled(unsigned spotNum)
     return level.time - visitedAt[spotNum] < VISITED_SPOT_EXPIRATION_TIME;
 }
 
-inline bool BotRoamingManager::IsTemporarilyDisabled(unsigned spotNum, unsigned levelTime)
+inline bool BotRoamingManager::IsTemporarilyDisabled(unsigned spotNum, int64_t levelTime)
 {
     assert(levelTime >= visitedAt[spotNum]);
     return levelTime - visitedAt[spotNum] < VISITED_SPOT_EXPIRATION_TIME;
@@ -109,7 +109,7 @@ int BotRoamingManager::TrySuggestTacticalSpot()
     // It may lead to performance spikes otherwise.
     Candidates candidateSpots;
 
-    const auto levelTime = level.time;
+    const int64_t levelTime = level.time;
     const unsigned numSpots = tacticalSpotsRegistry->numSpots;
     const auto *spots = tacticalSpotsRegistry->spots;
     for (unsigned i = 0; i < candidateSpots.capacity(); ++i)
@@ -338,7 +338,7 @@ bool BotRoamingManager::IsFeasibleArea(const aas_area_t &area, const aas_areaset
 
 void BotRoamingManager::TryResetAllSpotsDisabledState()
 {
-    const auto levelTime = level.time;
+    const int64_t levelTime = level.time;
     // Check whether there are unvisited/expired spots
     unsigned numEnabledSpots = 0;
     for (unsigned i = 0, end = tacticalSpotsRegistry->numSpots; i < end; ++i)
@@ -361,7 +361,7 @@ void BotRoamingManager::OnNavTargetReached(const Vec3 &navTargetOrigin)
     TacticalSpotsRegistry::OriginParams originParams(self, 128.0f, self->ai->botRef->routeCache);
     uint16_t insideSpotNum = std::numeric_limits<uint16_t>::max();
     const unsigned numNearbySpots = tacticalSpotsRegistry->FindSpotsInRadius(originParams, spotNums, &insideSpotNum);
-    const auto levelTime = level.time;
+    const int64_t levelTime = level.time;
     // Consider all these spots visited with the only exception:
     // do not count spots behind a wall / an obstacle as visited.
     trace_t trace;

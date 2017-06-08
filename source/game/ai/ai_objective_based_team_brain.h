@@ -35,7 +35,7 @@ class AiObjectiveBasedTeamBrain: public AiSquadBasedTeamBrain
     {
         float weight;
         float alertLevel;
-        unsigned alertTimeoutAt;
+        int64_t alertTimeoutAt;
 
         DefenceSpot(const AiDefenceSpot &spot)
             : AiDefenceSpot(spot),

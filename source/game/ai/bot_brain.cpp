@@ -494,12 +494,12 @@ void BotBrain::PrepareCurrWorldState(WorldState *worldState)
         // AAS returns 1 seconds^-2 as a lowest feasible value
         if (travelTime <= 10)
             travelTime = 0;
-        unsigned spawnTime = navEntity->SpawnTime();
+        int64_t spawnTime = navEntity->SpawnTime();
         // If the goal item spawns before the moment when it gets reached
         if (level.time + travelTime >= spawnTime)
             worldState->GoalItemWaitTimeVar().SetValue(0);
         else
-            worldState->GoalItemWaitTimeVar().SetValue(spawnTime - level.time - travelTime);
+            worldState->GoalItemWaitTimeVar().SetValue((unsigned)(spawnTime - level.time - travelTime));
     }
 
     worldState->HasJustPickedGoalItemVar().SetValue(HasJustPickedGoalItem());

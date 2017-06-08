@@ -19,8 +19,8 @@ public:
     ~AiGroundTraceCache();
     static AiGroundTraceCache *Instance();
 
-    void GetGroundTrace(const struct edict_s *ent, float depth, trace_t *trace, unsigned maxMillisAgo = 0);
-    bool TryDropToFloor(const struct edict_s *ent, float depth, vec3_t result, unsigned maxMillisAgo = 0);
+    void GetGroundTrace(const struct edict_s *ent, float depth, trace_t *trace, uint64_t maxMillisAgo = 0);
+    bool TryDropToFloor(const struct edict_s *ent, float depth, vec3_t result, uint64_t maxMillisAgo = 0);
 };
 
 #endif

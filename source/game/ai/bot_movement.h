@@ -833,7 +833,7 @@ private:
         AiEntityPhysicsState entityPhysicsState;
         BotMovementActionRecord record;
         BotBaseMovementAction *action;
-        unsigned timestamp;
+        int64_t timestamp;
         unsigned stepMillis;
         unsigned movementStatesMask;
     };

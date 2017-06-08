@@ -72,7 +72,7 @@ class BotBrain: public AiBaseBrain
     const float skillLevel;
     const unsigned reactionTime;
 
-    unsigned nextTargetChoiceAt;
+    int64_t nextTargetChoiceAt;
     const unsigned targetChoicePeriod;
 
     BotItemsSelector itemsSelector;

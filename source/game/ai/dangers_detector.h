@@ -31,7 +31,7 @@ struct Danger
     Vec3 hitPoint;
     Vec3 direction;
     float damage;
-    unsigned timeoutAt;
+    int64_t timeoutAt;
     const edict_t *attacker;
     bool splash;
 };

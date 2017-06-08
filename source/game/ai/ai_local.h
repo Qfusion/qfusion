@@ -38,6 +38,8 @@ in NO WAY supported by Steve Yeager.
 #undef min
 #endif
 
+#include <cinttypes>
+
 #include <algorithm>
 #include <utility>
 #include <stdarg.h>

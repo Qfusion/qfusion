@@ -50,7 +50,7 @@ bool NavEntity::IsTopTierItem(const float *overriddenEntityWeights) const
     return false;
 }
 
-unsigned NavEntity::SpawnTime() const
+int64_t NavEntity::SpawnTime() const
 {
     if (!ent->r.inuse)
         return 0;
@@ -72,10 +72,10 @@ unsigned NavEntity::SpawnTime() const
     return ent->nextThink;
 }
 
-unsigned NavEntity::MaxWaitDuration() const
+uint64_t NavEntity::MaxWaitDuration() const
 {
     if (!ent->item || ShouldBeReachedOnEvent())
-        return std::numeric_limits<unsigned>::max();
+        return std::numeric_limits<uint64_t>::max();
 
     if (ent->item->type == IT_POWERUP)
         return 9000;
@@ -96,11 +96,11 @@ unsigned NavEntity::MaxWaitDuration() const
     return 3000;
 }
 
-unsigned NavEntity::Timeout() const
+int64_t NavEntity::Timeout() const
 {
     if (IsDroppedEntity())
         return ent->nextThink;
-    return std::numeric_limits<unsigned>::max();
+    return std::numeric_limits<int64_t>::max();
 }
 
 NavEntitiesRegistry NavEntitiesRegistry::instance;

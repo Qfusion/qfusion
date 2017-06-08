@@ -53,16 +53,16 @@ class SelectedWeapons
     GenericFireDef builtinFireDef;
     GenericFireDef scriptFireDef;
 
+    int64_t timeoutAt;
     unsigned instanceId;
-    unsigned timeoutAt;
 
     bool preferBuiltinWeapon;
     bool hasSelectedBuiltinWeapon;
     bool hasSelectedScriptWeapon;
 
     SelectedWeapons()
-        : instanceId(0),
-          timeoutAt(0),
+        : timeoutAt(0),
+          instanceId(0),
           preferBuiltinWeapon(true),
           hasSelectedBuiltinWeapon(false),
           hasSelectedScriptWeapon(false) {}
@@ -86,7 +86,7 @@ public:
     inline unsigned InstanceId() const { return instanceId; }
     inline bool AreValid() const { return timeoutAt > level.time; }
     inline void Invalidate() { timeoutAt = level.time; }
-    inline unsigned TimeoutAt() const { return timeoutAt; }
+    inline int64_t TimeoutAt() const { return timeoutAt; }
     inline bool PreferBuiltinWeapon() const { return preferBuiltinWeapon; }
 };
 
@@ -100,8 +100,8 @@ class SelectedEnemies
     const Enemy *primaryEnemy;
     StaticVector<const Enemy *, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> activeEnemies;
 
+    int64_t timeoutAt;
     unsigned instanceId;
-    unsigned timeoutAt;
 
     inline void CheckValid(const char *function) const
     {
@@ -272,9 +272,9 @@ class BotWeaponSelector
     const SelectedEnemies &selectedEnemies;
 
     float weaponChoiceRandom;
-    unsigned weaponChoiceRandomTimeoutAt;
+    int64_t weaponChoiceRandomTimeoutAt;
 
-    unsigned nextFastWeaponSwitchActionCheckAt;
+    int64_t nextFastWeaponSwitchActionCheckAt;
     const unsigned weaponChoicePeriod;
 public:
     BotWeaponSelector(edict_t *self_,
@@ -284,6 +284,7 @@ public:
         : self(self_),
           selectedWeapons(selectedWeapons_),
           selectedEnemies(selectedEnemies_),
+          weaponChoiceRandomTimeoutAt(0),
           nextFastWeaponSwitchActionCheckAt(0),
           weaponChoicePeriod(weaponChoicePeriod_) {}
 

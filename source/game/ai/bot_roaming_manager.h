@@ -13,11 +13,11 @@ class BotRoamingManager
     // levelTime - visitedAt[spotNum] is still below this limit.
     static constexpr unsigned VISITED_SPOT_EXPIRATION_TIME = 10 * 1000;
 
-    unsigned visitedAt[MAX_SPOTS];
+    int64_t visitedAt[MAX_SPOTS];
     edict_t *self;
     Vec3 tmpSpotOrigin;
     Vec3 cachedSpotOrigin;
-    unsigned spotSelectedAt;
+    int64_t spotSelectedAt;
     int currTacticalSpotNum;
     unsigned numVisitedSpots;
     const class TacticalSpotsRegistry *tacticalSpotsRegistry;
@@ -27,7 +27,7 @@ class BotRoamingManager
 
     const Vec3 &GetRoamingSpot();
     inline bool IsTemporarilyDisabled(unsigned spotNum);
-    inline bool IsTemporarilyDisabled(unsigned spotNum, unsigned levelTime);
+    inline bool IsTemporarilyDisabled(unsigned spotNum, int64_t levelTime);
     inline const Vec3 &SetTmpSpotFromArea(int areaNum);
     // Non-negative return values are feasible
     int TrySuggestTacticalSpot();

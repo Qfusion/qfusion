@@ -5,9 +5,9 @@
 
 struct CachedTrace
 {
-    float depth;
-    unsigned computedAt;
     trace_t trace;
+    int64_t computedAt;
+    float depth;
 };
 
 AiGroundTraceCache::AiGroundTraceCache()
@@ -34,7 +34,7 @@ AiGroundTraceCache* AiGroundTraceCache::Instance()
     return &instanceHolder.front();
 }
 
-void AiGroundTraceCache::GetGroundTrace(const edict_s *ent, float depth, trace_t *trace, unsigned maxMillisAgo)
+void AiGroundTraceCache::GetGroundTrace(const edict_s *ent, float depth, trace_t *trace, uint64_t maxMillisAgo)
 {
     edict_t *entRef = const_cast<edict_t *>(ent);
     CachedTrace *cachedTrace = (CachedTrace *)data + ENTNUM(entRef);
@@ -73,7 +73,7 @@ void AiGroundTraceCache::GetGroundTrace(const edict_s *ent, float depth, trace_t
 }
 
 // Uses the same algorithm as GetGroundTrace() but avoids trace result copying and thus a is a bit faster.
-bool AiGroundTraceCache::TryDropToFloor(const struct edict_s *ent, float depth, vec3_t result, unsigned maxMillisAgo)
+bool AiGroundTraceCache::TryDropToFloor(const struct edict_s *ent, float depth, vec3_t result, uint64_t maxMillisAgo)
 {
     edict_t *entRef = const_cast<edict_t *>(ent);
     CachedTrace *cachedTrace = (CachedTrace *)data + ENTNUM(entRef);

@@ -446,7 +446,7 @@ void BotFireTargetCache::SetupCoarseFireTarget(const SelectedEnemies &selectedEn
             VectorCopy(selectedEnemies.ActualVelocity().Data(), velocity);
 
         const auto &snapshots = selectedEnemies.LastSeenSnapshots();
-        const unsigned levelTime = level.time;
+        const int64_t levelTime = level.time;
         // Skilled bots have this value lesser (this means target will be closer to an actual origin)
         const unsigned maxTimeDelta = (unsigned)(900 - 550 * skill);
         const float weightTimeDeltaScale = 1.0f / maxTimeDelta;
@@ -454,7 +454,7 @@ void BotFireTargetCache::SetupCoarseFireTarget(const SelectedEnemies &selectedEn
         for (auto iter = snapshots.begin(), end = snapshots.end(); iter != end; ++iter)
         {
             const auto &snapshot = *iter;
-            unsigned timeDelta = levelTime - snapshot.timestamp;
+            unsigned timeDelta = (unsigned)(levelTime - snapshot.timestamp);
             // If snapshot is too outdated, stop accumulation
             if (timeDelta > maxTimeDelta)
                 break;

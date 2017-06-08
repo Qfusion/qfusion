@@ -281,10 +281,11 @@ AiBaseActionRecord::Status BotWaitForItemActionRecord::CheckStatus(const WorldSt
         return INVALID;
     }
     // Wait duration is too long (more than it was estimated)
-    unsigned waitDuration = navTarget.SpawnTime() - level.time;
-    if (navTarget.SpawnTime() - level.time > navTarget.MaxWaitDuration())
+    uint64_t waitDuration = (uint64_t)(navTarget.SpawnTime() - level.time);
+    if (waitDuration > navTarget.MaxWaitDuration())
     {
-        constexpr auto *format = "Wait duration %d is too long (the maximum allowed value for the nav target is %d)\n";
+        constexpr auto *format =
+            "Wait duration %" PRIu64 " is too long (the maximum allowed value for the nav target is %" PRIu64 ")\n";
         Debug(format, waitDuration, navTarget.MaxWaitDuration());
         return INVALID;
     }

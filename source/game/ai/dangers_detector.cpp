@@ -58,7 +58,7 @@ public:
         const int selfTeam = self->s.team;
         const int selfPlayerNum = ENTNUM(const_cast<edict_t *>(self)) + 1;
         const bool hasSelfDamage = GS_SelfDamage();
-        const unsigned levelTime = level.time;
+        const int64_t levelTime = level.time;
         const unsigned grenadeTimeout = GS_GetWeaponDef(WEAP_GRENADELAUNCHER)->firedef.timeout;
 
         int entNums[MAX_EDICTS];

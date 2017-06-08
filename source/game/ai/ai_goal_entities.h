@@ -97,7 +97,7 @@ public:
 
     inline bool MayBeReachedInGroup() const { return IsFlagSet(NavEntityFlags::REACH_IN_GROUP); }
 
-    unsigned MaxWaitDuration() const;
+    uint64_t MaxWaitDuration() const;
 
     bool IsTopTierItem(const float *overriddenEntityWeights = nullptr) const;
 
@@ -115,7 +115,7 @@ public:
             GT_asBotReachedGoalRadius(bot->ai, ent);
     }
 
-    unsigned Timeout() const;
+    int64_t Timeout() const;
 
     inline bool ShouldBeReachedAtTouch() const { return IsFlagSet(NavEntityFlags::REACH_AT_TOUCH); }
     inline bool ShouldBeReachedAtRadius() const { return IsFlagSet(NavEntityFlags::REACH_AT_RADIUS); }
@@ -126,7 +126,7 @@ public:
     // Returns level.time when the item is already spawned
     // Returns zero if spawn time is unknown
     // Returns spawn time when the item is not spawned and spawn time may be predicted
-    unsigned SpawnTime() const;
+    int64_t SpawnTime() const;
 };
 
 // A NavTarget may be based on a NavEntity (an item with attributes) or may be an "artificial" spot
@@ -134,9 +134,9 @@ class NavTarget
 {
     Vec3 explicitOrigin;
     NavTargetFlags explicitFlags;
+    int64_t explicitSpawnTime;
+    int64_t explicitTimeout;
     int explicitAasAreaNum;
-    unsigned explicitSpawnTime;
-    unsigned explicitTimeout;
     float explicitRadius;
 
     const NavEntity *navEntity;
@@ -151,9 +151,9 @@ class NavTarget
     NavTarget()
         : explicitOrigin(NAN, NAN, NAN),
           explicitFlags(NavTargetFlags::NONE),
-          explicitAasAreaNum(0),
           explicitSpawnTime(0),
           explicitTimeout(0),
+          explicitAasAreaNum(0),
           explicitRadius(0),
           navEntity(nullptr),
           name(nullptr) {}
@@ -171,9 +171,9 @@ public:
         this->navEntity = nullptr;
         this->explicitOrigin = origin;
         this->explicitFlags = NavTargetFlags::REACH_ON_RADIUS | NavTargetFlags::TACTICAL_SPOT;
-        this->explicitAasAreaNum = AiAasWorld::Instance()->FindAreaNum(origin);
         this->explicitSpawnTime = 0;
-        this->explicitTimeout = std::numeric_limits<unsigned>::max();
+        this->explicitTimeout = std::numeric_limits<int64_t>::max();
+        this->explicitAasAreaNum = AiAasWorld::Instance()->FindAreaNum(origin);
         this->explicitRadius = reachRadius;
     }
 
@@ -221,7 +221,7 @@ public:
         return navEntity && navEntity->IsTopTierItem(overriddenEntityWeights);
     }
 
-    inline unsigned MaxWaitDuration() const
+    inline uint64_t MaxWaitDuration() const
     {
         return navEntity ? navEntity->MaxWaitDuration() : 0;
     }
@@ -286,7 +286,7 @@ public:
     // Returns level.time when the item is already spawned
     // Returns zero if spawn time is unknown
     // Returns spawn time when the item is not spawned and spawn time may be predicted
-    inline unsigned SpawnTime() const
+    inline int64_t SpawnTime() const
     {
         if (navEntity)
             return navEntity->SpawnTime();
@@ -295,7 +295,7 @@ public:
         return level.time;
     }
 
-    inline unsigned Timeout() const
+    inline int64_t Timeout() const
     {
         return navEntity ? navEntity->Timeout() : explicitTimeout;
     }

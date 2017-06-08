@@ -265,11 +265,12 @@ bool BotMovementState::TestActualStatesForExpectedMask(unsigned expectedStatesMa
 
 BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordForCurrTime(BotMovementActionRecord *record)
 {
+    const int64_t levelTime = level.time;
     PredictedMovementAction *prevPredictedAction = nullptr;
     PredictedMovementAction *nextPredictedAction = nullptr;
     for (PredictedMovementAction &predictedAction: predictedMovementActions)
     {
-        if (predictedAction.timestamp >= level.time)
+        if (predictedAction.timestamp >= levelTime)
         {
             nextPredictedAction = &predictedAction;
             break;
@@ -286,7 +287,7 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
     if (!prevPredictedAction)
     {
         // If there were no activated actions, the next state must be recently computed for current level time.
-        Assert(nextPredictedAction->timestamp == level.time);
+        Assert(nextPredictedAction->timestamp == levelTime);
         // These assertions have already spotted a bug
         Assert(VectorCompare(nextPredictedAction->entityPhysicsState.Origin(), self->s.origin));
         Assert(VectorCompare(nextPredictedAction->entityPhysicsState.Velocity(), self->velocity));
@@ -307,10 +308,11 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
     }
 
     // Check whether predicted action is valid for an actual bot entity physics state
-    float stateLerpFrac = level.time - prevPredictedAction->timestamp;
+    float stateLerpFrac = (float)(levelTime - prevPredictedAction->timestamp);
     stateLerpFrac *= 1.0f / (nextPredictedAction->timestamp - prevPredictedAction->timestamp);
     Assert(stateLerpFrac > 0 && stateLerpFrac <= 1.0f);
-    const char *format = "Prev predicted action timestamp is %d, next predicted action is %d, level.time is %d\n";
+    const char *format =
+        "Prev predicted action timestamp is " PRId64 ", next predicted action is " PRId64 ", level.time is %" PRId64 "\n";
     Debug(format, prevPredictedAction->timestamp, nextPredictedAction->timestamp, level.time);
     Debug("Should interpolate entity physics state using fraction %f\n", stateLerpFrac);
 
@@ -328,7 +330,7 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
         {
             float distanceMismatch = SQRTFAST(squaredDistanceMismatch);
             const char *format_ = "Cannot use predicted movement action: distance mismatch %f is too high for lerp frac %f\n";
-            Debug(format_, level.time, distanceMismatch, stateLerpFrac);
+            Debug(format_, distanceMismatch, stateLerpFrac);
             return nullptr;
         }
 
@@ -390,16 +392,16 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
     }
 
     // If next predicted state is likely to be completed next frame, use its input as-is (except the velocity)
-    if (nextPredictedAction->timestamp - level.time <= game.frametime)
+    if (nextPredictedAction->timestamp - levelTime <= game.frametime)
     {
         *record = nextPredictedAction->record;
         // Apply modified velocity only once for an exact timestamp
-        if (nextPredictedAction->timestamp != level.time)
+        if (nextPredictedAction->timestamp != levelTime)
             record->hasModifiedVelocity = false;
         return nextPredictedAction->action;
     }
 
-    float inputLerpFrac = game.frametime / (((float)nextPredictedAction->timestamp - level.time));
+    float inputLerpFrac = game.frametime / ((float)(nextPredictedAction->timestamp - levelTime));
     Assert(inputLerpFrac > 0 && inputLerpFrac <= 1.0f);
     // If next predicted time is likely to be pending next frame again, interpolate input for a single frame ahead
     *record = nextPredictedAction->record;
@@ -662,7 +664,7 @@ void BotMovementPredictionContext::SetupStackForStep()
         oldStepMillis = belowTopOfStack.stepMillis;
         Assert(belowTopOfStack.timestamp >= level.time);
         Assert(belowTopOfStack.stepMillis > 0);
-        totalMillisAhead = (belowTopOfStack.timestamp - level.time) + belowTopOfStack.stepMillis;
+        totalMillisAhead = (unsigned)(belowTopOfStack.timestamp - level.time) + belowTopOfStack.stepMillis;
     }
     else
     {
@@ -837,7 +839,7 @@ inline unsigned BotMovementPredictionContext::MillisAheadForFrameStart(unsigned 
 {
     Assert(frameIndex <= topOfStackIndex);
     if (frameIndex < topOfStackIndex)
-        return predictedMovementActions[frameIndex].timestamp - level.time;
+        return (unsigned)(predictedMovementActions[frameIndex].timestamp - level.time);
     return totalMillisAhead;
 }
 

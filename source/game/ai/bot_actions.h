@@ -260,12 +260,11 @@ DECLARE_INHERITED_ACTION(BotStopRunningAwayAction, BotRunAwayAction, 5);
 class BotDodgeToSpotActionRecord: public BotBaseActionRecord
 {
     NavTarget navTarget;
-    unsigned timeoutAt;
+    int64_t timeoutAt;
 public:
     BotDodgeToSpotActionRecord(PoolBase *pool_, edict_t *self_, const Vec3 &spotOrigin)
         : BotBaseActionRecord(pool_, self_, "BotDodgeToSpotActionRecord"),
-          navTarget(NavTarget::Dummy()),
-          timeoutAt((unsigned)-1)
+          navTarget(NavTarget::Dummy())
     {
         navTarget.SetToTacticalSpot(spotOrigin);
     }
