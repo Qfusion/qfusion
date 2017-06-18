@@ -110,13 +110,6 @@ static void CL_UIModule_AsyncStream_Shutdown( void ) {
 	ui_async_stream = NULL;
 }
 
-/*
-* CL_UIModule_R_RegisterWorldModel
-*/
-static void CL_UIModule_R_RegisterWorldModel( const char *model ) {
-	re.RegisterWorldModel( model, NULL );
-}
-
 #define UI_L10N_DOMAIN  "ui"
 
 /*
@@ -237,7 +230,7 @@ void CL_UIModule_Init( void ) {
 	import.R_RenderScene = re.RenderScene;
 	import.R_BlurScreen = re.BlurScreen;
 	import.R_EndFrame = re.EndFrame;
-	import.R_RegisterWorldModel = CL_UIModule_R_RegisterWorldModel;
+	import.R_RegisterWorldModel = re.RegisterWorldModel;
 	import.R_ModelBounds = re.ModelBounds;
 	import.R_ModelFrameBounds = re.ModelFrameBounds;
 	import.R_RegisterModel = re.RegisterModel;

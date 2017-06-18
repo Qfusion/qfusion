@@ -349,9 +349,9 @@ void RF_EndRegistration( void ) {
 	RF_AdapterWait( &rrf.adapter );
 }
 
-void RF_RegisterWorldModel( const char *model, const dvis_t *pvsData ) {
+void RF_RegisterWorldModel( const char *model ) {
 	RF_AdapterWait( &rrf.adapter );
-	R_RegisterWorldModel( model, pvsData );
+	R_RegisterWorldModel( model );
 }
 
 void RF_ClearScene( void ) {

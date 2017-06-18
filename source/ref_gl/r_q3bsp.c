@@ -1401,6 +1401,27 @@ static void Mod_LoadLightArray_RBSP( const lump_t *l ) {
 }
 
 /*
+* Mod_LoadVisibility
+*/
+static void Mod_LoadVisibility( const lump_t *l ) {
+	dvis_t *out;
+	const dvis_t *in;
+
+	if( !l->filelen ) {
+		loadbmodel->pvs = NULL;
+		return;
+	}
+
+	in = ( void * )( mod_base + l->fileofs );
+	out = Mod_Malloc( loadmodel, l->filelen );
+	loadbmodel->pvs = out;
+
+	memcpy( out, mod_base + l->fileofs, l->filelen );
+	out->numclusters = LittleLong( in->numclusters );
+	out->rowsize = LittleLong( in->rowsize );
+}
+
+/*
 * Mod_LoadEntities
 */
 static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, vec3_t outline ) {
@@ -1707,6 +1728,7 @@ void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 
 	// load into heap
 	Mod_LoadSubmodels( &header->lumps[LUMP_MODELS] );
+	Mod_LoadVisibility( &header->lumps[LUMP_VISIBILITY] );
 	Mod_LoadEntities( &header->lumps[LUMP_ENTITIES], gridSize, ambient, outline );
 	Mod_LoadLighting( &header->lumps[LUMP_LIGHTING], &header->lumps[LUMP_FACES] );
 	Mod_LoadShaderrefs( &header->lumps[LUMP_SHADERREFS] );

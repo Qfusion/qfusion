@@ -156,13 +156,6 @@ static void CL_GameModule_NET_GetCurrentState( int64_t *incomingAcknowledged, in
 }
 
 /*
-* CL_GameModule_R_RegisterWorldModel
-*/
-static void CL_GameModule_R_RegisterWorldModel( const char *model ) {
-	re.RegisterWorldModel( model, cl.cms ? CM_PVSData( cl.cms ) : NULL );
-}
-
-/*
 * CL_GameModule_MemAlloc
 */
 static void *CL_GameModule_MemAlloc( size_t size, const char *filename, int fileline ) {
@@ -434,7 +427,7 @@ void CL_GameModule_Init( void ) {
 	import.R_RenderScene = re.RenderScene;
 	import.R_GetSpeedsMessage = re.GetSpeedsMessage;
 	import.R_GetAverageFrametime = re.GetAverageFrametime;
-	import.R_RegisterWorldModel = CL_GameModule_R_RegisterWorldModel;
+	import.R_RegisterWorldModel = re.RegisterWorldModel;
 	import.R_ModelBounds = re.ModelBounds;
 	import.R_ModelFrameBounds = re.ModelFrameBounds;
 	import.R_RegisterModel = re.RegisterModel;

@@ -65,7 +65,7 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bo
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );
 void RF_EndRegistration( void );
-void RF_RegisterWorldModel( const char *model, const dvis_t *pvsData );
+void RF_RegisterWorldModel( const char *model );
 void RF_ClearScene( void );
 void RF_AddEntityToScene( const entity_t *ent );
 void RF_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );

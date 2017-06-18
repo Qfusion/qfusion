@@ -143,7 +143,7 @@ typedef struct {
 	void ( *ModelBounds )( const struct model_s *model, vec3_t mins, vec3_t maxs );
 	void ( *ModelFrameBounds )( const struct model_s *model, int frame, vec3_t mins, vec3_t maxs );
 
-	void ( *RegisterWorldModel )( const char *model, const dvis_t *pvsData );
+	void ( *RegisterWorldModel )( const char *model );
 	struct model_s *( *RegisterModel )( const char *name );
 	struct shader_s *( *RegisterPic )( const char *name );
 	struct shader_s *( *RegisterRawPic )( const char *name, int width, int height, uint8_t * data, int samples );
