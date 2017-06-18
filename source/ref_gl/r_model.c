@@ -32,9 +32,6 @@ typedef struct {
 void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadSkeletalModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
-void Mod_LoadQ2BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
-void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
-void Mod_FixupQ1MipTex( model_t *mod );
 
 static void R_InitMapConfig( const char *model );
 static void R_FinishMapConfig( const model_t *mod );
@@ -46,7 +43,6 @@ static model_t mod_known[MAX_MOD_KNOWN];
 static int mod_numknown;
 static int modfilelen;
 static bool mod_isworldmodel;
-static const dvis_t *mod_worldvis;
 model_t *r_prevworldmodel;
 static mapconfig_t *mod_mapConfigs;
 
@@ -62,12 +58,6 @@ static const modelFormatDescr_t mod_supportedformats[] =
 
 	// Q3-alike .bsp models
 	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ3BrushModel },
-
-	// Q2 .bsp models
-	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ2BrushModel },
-
-	// Q1 .bsp models
-	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ1BrushModel },
 
 	// trailing NULL
 	{ NULL, 0, NULL, 0, NULL }
@@ -897,9 +887,7 @@ static void Mod_CreateSkydome( model_t *mod ) {
 /*
 * Mod_FinalizeBrushModel
 */
-static void Mod_FinalizeBrushModel( model_t *model, const dvis_t *pvsData ) {
-	( ( mbrushmodel_t * )model->extradata )->pvs = ( dvis_t * )pvsData;
-
+static void Mod_FinalizeBrushModel( model_t *model ) {
 	Mod_FinishFaces( model );
 
 	Mod_CreateVisLeafs( model );
@@ -980,7 +968,6 @@ void R_InitModels( void ) {
 	mod_mempool = R_AllocPool( r_mempool, "Models" );
 	memset( mod_novis, 0xff, sizeof( mod_novis ) );
 	mod_isworldmodel = false;
-	mod_worldvis = NULL;
 	r_prevworldmodel = NULL;
 	mod_mapConfigs = R_MallocExt( mod_mempool, sizeof( *mod_mapConfigs ) * MAX_MOD_KNOWN, 0, 1 );
 }
@@ -1206,7 +1193,7 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 
 	// do some common things
 	if( mod->type == mod_brush ) {
-		Mod_FinalizeBrushModel( mod, mod_worldvis );
+		Mod_FinalizeBrushModel( mod );
 		mod->touch = &Mod_TouchBrushModel;
 	}
 
@@ -1340,14 +1327,13 @@ static void R_FinishMapConfig( const model_t *mod ) {
 *
 * Specifies the model that will be used as the world
 */
-void R_RegisterWorldModel( const char *model, const dvis_t *pvsData ) {
+void R_RegisterWorldModel( const char *model ) {
 	r_prevworldmodel = rsh.worldModel;
 	rsh.worldModel = NULL;
 	rsh.worldBrushModel = NULL;
 	rsh.worldModelSequence++;
 
 	mod_isworldmodel = true;
-	mod_worldvis = pvsData;
 
 	rsh.worldModel = Mod_ForName( model, true );
 
@@ -1362,7 +1348,6 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData ) {
 
 	R_TouchModel( rsh.worldModel );
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
-	rsh.worldBrushModel->pvs = ( dvis_t * )pvsData;
 }
 
 /*
@@ -1371,9 +1356,6 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData ) {
 void R_WaitWorldModel( void ) {
 	// load all world images if not yet
 	R_FinishLoadingImages();
-
-	// if it's a Quake1 .bsp, load default miptex's for all missing high res images
-	Mod_FixupQ1MipTex( rsh.worldModel );
 }
 
 /*

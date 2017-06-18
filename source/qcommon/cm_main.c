@@ -39,12 +39,6 @@ static const modelFormatDescr_t cm_supportedformats[] =
 	// Q3-alike .bsp models
 	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )CM_LoadQ3BrushModel },
 
-	// Q2-alike .bsp models
-	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )CM_LoadQ2BrushModel },
-
-	// Q1-alike .bsp models
-	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )CM_LoadQ1BrushModel },
-
 	// trailing NULL
 	{ NULL, 0, NULL, 0, NULL }
 };
@@ -157,7 +151,6 @@ static void CM_Clear( cmodel_state_t *cms ) {
 
 	cms->CM_TransformedBoxTrace = NULL;
 	cms->CM_TransformedPointContents = NULL;
-	cms->CM_RoundUpToHullSize = NULL;
 }
 
 /*
@@ -494,27 +487,16 @@ int CM_NumClusters( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_PVSData
-*/
-dvis_t *CM_PVSData( cmodel_state_t *cms ) {
-	return cms->map_pvs;
-}
-
-/*
-* CM_ClusterVS
-*/
-static inline uint8_t *CM_ClusterVS( int cluster, dvis_t *vis, uint8_t *nullrow ) {
-	if( cluster == -1 || !vis ) {
-		return nullrow;
-	}
-	return ( uint8_t * )vis->data + cluster * vis->rowsize;
-}
-
-/*
 * CM_ClusterPVS
 */
 static inline uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster ) {
-	return CM_ClusterVS( cluster, cms->map_pvs, cms->nullrow );
+	dvis_t *vis = cms->map_pvs;
+
+	if( cluster == -1 || !vis ) {
+		return cms->nullrow;
+	}
+
+	return ( uint8_t * )vis->data + cluster * vis->rowsize;
 }
 
 /*

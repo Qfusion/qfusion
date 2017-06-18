@@ -177,13 +177,6 @@ static void G_GS_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec
 }
 
 /*
-* G_GS_RoundUpToHullSize
-*/
-static void G_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs ) {
-	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
-}
-
-/*
 * G_InitGameShared
 * give gameshared access to some utilities
 */
@@ -204,7 +197,6 @@ static void G_InitGameShared( void ) {
 	module_Trace = G_GS_Trace;
 	module_GetEntityState = G_GetEntityStateForDeltaTime;
 	module_PointContents = G_PointContents4D;
-	module_RoundUpToHullSize = G_GS_RoundUpToHullSize;
 	module_PMoveTouchTriggers = G_PMoveTouchTriggers;
 	module_GetConfigString = trap_GetConfigString;
 }

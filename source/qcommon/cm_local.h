@@ -193,7 +193,6 @@ struct cmodel_state_s {
 	// optional special handling of line tracing and point contents
 	void ( *CM_TransformedBoxTrace )( struct cmodel_state_s *cms, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
 	int ( *CM_TransformedPointContents )( struct cmodel_state_s *cms, vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
-	void ( *CM_RoundUpToHullSize )( struct cmodel_state_s *cms, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 };
 
 //=======================================================================

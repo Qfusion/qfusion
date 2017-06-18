@@ -304,13 +304,6 @@ static int CG_GS_PointContents( vec3_t point, int timeDelta ) {
 }
 
 /*
-* CG_GS_RoundUpToHullSize
-*/
-static void CG_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs ) {
-	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
-}
-
-/*
 * CG_GS_GetEntityState
 */
 static entity_state_t *CG_GS_GetEntityState( int entNum, int deltaTime ) {
@@ -364,7 +357,6 @@ static void CG_InitGameShared( void ) {
 	module_Trace = CG_GS_Trace;
 	module_GetEntityState = CG_GS_GetEntityState;
 	module_PointContents = CG_GS_PointContents;
-	module_RoundUpToHullSize = CG_GS_RoundUpToHullSize;
 	module_PMoveTouchTriggers = CG_Predict_TouchTriggers;
 	module_GetConfigString = CG_GS_GetConfigString;
 

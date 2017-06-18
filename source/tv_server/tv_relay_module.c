@@ -64,15 +64,6 @@ static inline void TV_Module_CM_TransformedBoxTrace( relay_t *relay, trace_t *tr
 	CM_TransformedBoxTrace( relay->cms, tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
 }
 
-static inline void TV_Module_CM_RoundUpToHullSize( relay_t *relay, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel ) {
-	if( !relay ) {
-		Com_Printf( "Error: TV_Module_CM_RoundUpToHullSize: Relay not set\n" );
-		return;
-	}
-
-	CM_RoundUpToHullSize( relay->cms, mins, maxs, cmodel );
-}
-
 static inline struct cmodel_s *TV_Module_CM_InlineModel( relay_t *relay, int num ) {
 	if( !relay ) {
 		Com_Printf( "Error: TV_Module_CM_InlineModel: Relay not set\n" );
@@ -493,7 +484,6 @@ tv_module_t *TV_GetModule( const char *game ) {
 
 	iter->import.CM_TransformedPointContents = TV_Module_CM_TransformedPointContents;
 	iter->import.CM_TransformedBoxTrace = TV_Module_CM_TransformedBoxTrace;
-	iter->import.CM_RoundUpToHullSize = TV_Module_CM_RoundUpToHullSize;
 	iter->import.CM_InlineModel = TV_Module_CM_InlineModel;
 	iter->import.CM_InlineModelBounds = TV_Module_CM_InlineModelBounds;
 	iter->import.CM_ModelForBBox = TV_Module_CM_ModelForBBox;

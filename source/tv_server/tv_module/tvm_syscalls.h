@@ -54,9 +54,6 @@ static inline int trap_CM_TransformedPointContents( tvm_relay_t *relay, vec3_t p
 static inline void trap_CM_TransformedBoxTrace( tvm_relay_t *relay, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles ) {
 	TV_MODULE_IMPORT.CM_TransformedBoxTrace( relay->server, tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
 }
-static inline void trap_CM_RoundUpToHullSize( tvm_relay_t *relay, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel ) {
-	TV_MODULE_IMPORT.CM_RoundUpToHullSize( relay->server, mins, maxs, cmodel );
-}
 static inline struct cmodel_s *trap_CM_InlineModel( tvm_relay_t *relay, int num ) {
 	return TV_MODULE_IMPORT.CM_InlineModel( relay->server, num );
 }

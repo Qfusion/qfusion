@@ -287,21 +287,6 @@ int CM_BoxLeafnums( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, int *list, in
 }
 
 /*
-* CM_RoundUpToHullSize
-*/
-void CM_RoundUpToHullSize( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, cmodel_t *cmodel ) {
-	if( !cmodel ) {
-		cmodel = cms->map_cmodels;
-	}
-
-	// special rounding code
-	if( !cmodel->builtin && cms->CM_RoundUpToHullSize ) {
-		cms->CM_RoundUpToHullSize( cms, mins, maxs, cmodel );
-		return;
-	}
-}
-
-/*
 * CM_BrushContents
 */
 static inline int CM_BrushContents( cbrush_t *brush, vec3_t p ) {
