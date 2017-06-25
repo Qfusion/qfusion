@@ -14,7 +14,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -38,31 +38,31 @@ namespace WSWUI
 
 using namespace Rocket::Core;
 
-#define WSW_UI_IMAGES_CACHE_TTL		60*24			// TTL of one day (in minutes)
+#define WSW_UI_IMAGES_CACHE_TTL     60 * 24           // TTL of one day (in minutes)
 
 /**
-	The 'img' element. The image element can have a rectangular sub-region of its source texture
-	specified with the 'coords' attribute; the element will render this region rather than the
-	entire image.
+    The 'img' element. The image element can have a rectangular sub-region of its source texture
+    specified with the 'coords' attribute; the element will render this region rather than the
+    entire image.
 
-	The 'coords' attribute is similar to that of the HTML imagemap. It takes four comma-separated
-	integer values, specifying the top-left and the bottom right of the region in
-	pixel-coordinates, in that order. So for example, the attribute "coords" = "0, 10, 100, 210"
-	will render a 100 x 200 region, beginning at (0, 10) and rendering through to (100, 210). No
-	clamping to the dimensions of the source image will occur; rendered results in this case will
-	depend on the texture addressing mode.
+    The 'coords' attribute is similar to that of the HTML imagemap. It takes four comma-separated
+    integer values, specifying the top-left and the bottom right of the region in
+    pixel-coordinates, in that order. So for example, the attribute "coords" = "0, 10, 100, 210"
+    will render a 100 x 200 region, beginning at (0, 10) and rendering through to (100, 210). No
+    clamping to the dimensions of the source image will occur; rendered results in this case will
+    depend on the texture addressing mode.
 
-	The intrinsic dimensions of the image can now come from three different sources. They are
-	used in the following order:
+    The intrinsic dimensions of the image can now come from three different sources. They are
+    used in the following order:
 
-	1) 'width' / 'height' attributes if present
-	2) pixel width / height given by the 'coords' attribute
-	3) width / height of the source texture
+    1) 'width' / 'height' attributes if present
+    2) pixel width / height given by the 'coords' attribute
+    3) width / height of the source texture
 
-	This has the result of sizing the element to the pixel-size of the rendered image, unless
-	overridden by the 'width' or 'height' attributes.
+    This has the result of sizing the element to the pixel-size of the rendered image, unless
+    overridden by the 'width' or 'height' attributes.
 
-	@author Peter Curry
+    @author Peter Curry
  */
 
 class ElementImage : public Element
@@ -70,16 +70,16 @@ class ElementImage : public Element
 public:
 	/// Constructs a new ElementImage. This should not be called directly; use the Factory instead.
 	/// @param[in] tag The tag the element was declared as in RML.
-	ElementImage(const String& tag);
+	ElementImage( const String& tag );
 	virtual ~ElementImage();
 
 	/// Returns the element's inherent size.
 	/// @param[out] The element's intrinsic dimensions.
 	/// @return True.
-	bool GetIntrinsicDimensions(Vector2f& dimensions);
+	bool GetIntrinsicDimensions( Vector2f& dimensions );
 
 	// streaming callbacks
-	static void CacheRead(const char *fileName, void *privatep);
+	static void CacheRead( const char *fileName, void *privatep );
 
 	bool LoadCachedTexture();
 
@@ -89,11 +89,11 @@ protected:
 
 	/// Checks for changes to the image's source or dimensions.
 	/// @param[in] changed_attributes A list of attributes changed on the element.
-	virtual void OnAttributeChange(const AttributeNameList& changed_attributes);
+	virtual void OnAttributeChange( const AttributeNameList& changed_attributes );
 
 	/// Regenerates the element's geometry on a resize event.
 	/// @param[in] event The event to process.
-	virtual void ProcessEvent(Event& event);
+	virtual void ProcessEvent( Event& event );
 
 	// Loads the element's texture, as specified by the 'src' attribute.
 	virtual bool LoadDiskTexture();

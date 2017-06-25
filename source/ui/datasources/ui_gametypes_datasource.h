@@ -5,56 +5,53 @@
 
 namespace WSWUI
 {
-	/// Provides information about game types (full name and id).
-	/// Used in the "start local game" screen to populate the game type
-	/// dropdown select box with data.
-	class GameTypesDataSource : public Rocket::Controls::DataSource
-	{
-	public:
-		/// Reads the available game types from /progs/gametypes
-		GameTypesDataSource();	
-		
-		/// Retrieve a "row".
-		/// If row_index is negative or too big, the function will silently
-		/// return.
-		/// For each element in @param cols, the following strings will be
-		/// added to @param row:
-		///  - the id of the gametype corresponding to row_index if the 
-		///    value of the element is "val"
-		///  - the name of the gametype corresponding to row_index if the 
-		///    value of the element is "name"
-		///  - an empty string in all the other cases
-		virtual void GetRow (Rocket::Core::StringList &row, const Rocket::Core::String&, int row_index, const Rocket::Core::StringList& cols);
+/// Provides information about game types (full name and id).
+/// Used in the "start local game" screen to populate the game type
+/// dropdown select box with data.
+class GameTypesDataSource : public Rocket::Controls::DataSource
+{
+public:
+	/// Reads the available game types from /progs/gametypes
+	GameTypesDataSource();
 
-		/// Returns the number of the available game types
-		virtual int	GetNumRows (const Rocket::Core::String &table);
+	/// Retrieve a "row".
+	/// If row_index is negative or too big, the function will silently
+	/// return.
+	/// For each element in @param cols, the following strings will be
+	/// added to @param row:
+	///  - the id of the gametype corresponding to row_index if the
+	///    value of the element is "val"
+	///  - the name of the gametype corresponding to row_index if the
+	///    value of the element is "name"
+	///  - an empty string in all the other cases
+	virtual void GetRow( Rocket::Core::StringList &row, const Rocket::Core::String&, int row_index, const Rocket::Core::StringList& cols );
 
-	private:
-		struct gametype
-		{
-			std::string name;
-			std::string title;
-			std::string description;
+	/// Returns the number of the available game types
+	virtual int GetNumRows( const Rocket::Core::String &table );
 
-			gametype() : name(""), title(""), description("") {};
-			gametype(const std::string &name) : name(name), title(name), description("") {};
-		};
+private:
+	struct gametype {
+		std::string name;
+		std::string title;
+		std::string description;
 
-		struct cmp_gametypes_by_id
-		{
-			typedef gametype first_argument_type;
-			typedef std::string second_argument_type;
-			typedef bool result_type;
-
-			result_type operator()(const gametype &lhs, const std::string &rhs) const
-			{
-				return lhs.name == rhs;
-			}
-		};
-
-		typedef std::vector<gametype> GameTypeList;
-		GameTypeList gameTypes; /// Contains all accessible gametypes 
+		gametype() : name( "" ), title( "" ), description( "" ) {};
+		gametype( const std::string &name ) : name( name ), title( name ), description( "" ) {};
 	};
+
+	struct cmp_gametypes_by_id {
+		typedef gametype first_argument_type;
+		typedef std::string second_argument_type;
+		typedef bool result_type;
+
+		result_type operator()( const gametype &lhs, const std::string &rhs ) const {
+			return lhs.name == rhs;
+		}
+	};
+
+	typedef std::vector<gametype> GameTypeList;
+	GameTypeList gameTypes;     /// Contains all accessible gametypes
+};
 }
 
 #endif //__UI_GAMETYPES_DATASOURCE_H__

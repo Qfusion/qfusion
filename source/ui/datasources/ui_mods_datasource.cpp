@@ -30,53 +30,49 @@ namespace WSWUI
 {
 
 ModsDataSource::ModsDataSource( void ) :
-	Rocket::Controls::DataSource( SOURCE_NAME )
-	{
-		UpdatePath();
-	}
+	Rocket::Controls::DataSource( SOURCE_NAME ) {
+	UpdatePath();
+}
 
 ModsDataSource::~ModsDataSource() {}
 
 // update the list of the mod files
-void ModsDataSource::UpdatePath( void )
-{
+void ModsDataSource::UpdatePath( void ) {
 	const char *s;
-	char buffer[8*1024], foldername[MAX_QPATH];
+	char buffer[8 * 1024], foldername[MAX_QPATH];
 	int numfolders, length, i;
 
-	if( ( numfolders = trap::FS_GetGameDirectoryList( buffer, sizeof( buffer ) ) ) == 0 )
+	if( ( numfolders = trap::FS_GetGameDirectoryList( buffer, sizeof( buffer ) ) ) == 0 ) {
 		return;
+	}
 
 	s = buffer;
 	length = 0;
-	for( i = 0; i < numfolders; i++, s += length+1 )
-	{
+	for( i = 0; i < numfolders; i++, s += length + 1 ) {
 		length = strlen( s );
 		Q_strncpyz( foldername, s, sizeof( foldername ) );
-		
+
 		modsList.push_back( foldername );
 		NotifyRowAdd( TABLE_NAME, i, 1 );
 	}
 }
 
-void ModsDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns )
-{
-	if( row_index < 0 || (size_t)row_index >= modsList.size() )
+void ModsDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns ) {
+	if( row_index < 0 || (size_t)row_index >= modsList.size() ) {
 		return;
+	}
 
-	if( table == TABLE_NAME )
-	{
+	if( table == TABLE_NAME ) {
 		// there should be only 1 column, but we watch ahead in the future
-		for( size_t i = 0; i < columns.size(); i++)
-		{
-			if( columns[i] == FIELDS )
+		for( size_t i = 0; i < columns.size(); i++ ) {
+			if( columns[i] == FIELDS ) {
 				row.push_back( modsList[row_index].c_str() );
+			}
 		}
 	}
 }
 
-int ModsDataSource::GetNumRows( const String &table )
-{
+int ModsDataSource::GetNumRows( const String &table ) {
 	return modsList.size();
 }
 

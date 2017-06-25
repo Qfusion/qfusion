@@ -20,25 +20,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "android_sys.h"
 
-void VID_EnableAltTab( bool enable )
-{
+void VID_EnableAltTab( bool enable ) {
 }
 
-void VID_EnableWinKeys( bool enable )
-{
+void VID_EnableWinKeys( bool enable ) {
 }
 
-void VID_FlashWindow( int count )
-{
+void VID_FlashWindow( int count ) {
 }
 
-bool VID_GetDefaultMode( int *width, int *height )
-{
+bool VID_GetDefaultMode( int *width, int *height ) {
 	int i, modeWidth, modeHeight, lastWidth = 0, lastHeight = 0;
 	static int maxWidth;
 
-	if( !maxWidth )
-	{
+	if( !maxWidth ) {
 		JNIEnv *env = Sys_Android_GetJNIEnv();
 
 		jstring name;
@@ -50,29 +45,29 @@ bool VID_GetDefaultMode( int *width, int *height )
 		jclass configurationInfoClass;
 		jfieldID reqGlEsVersion;
 
-		name = (*env)->NewStringUTF( env, "activity" );
-		activityManager = (*env)->CallObjectMethod( env, sys_android_app->activity->clazz, sys_android_getSystemService, name );
-		(*env)->DeleteLocalRef( env, name );
-		activityManagerClass = (*env)->FindClass( env, "android/app/ActivityManager" );
-		getDeviceConfigurationInfo = (*env)->GetMethodID( env, activityManagerClass,
-			"getDeviceConfigurationInfo", "()Landroid/content/pm/ConfigurationInfo;" );
-		(*env)->DeleteLocalRef( env, activityManagerClass );
+		name = ( *env )->NewStringUTF( env, "activity" );
+		activityManager = ( *env )->CallObjectMethod( env, sys_android_app->activity->clazz, sys_android_getSystemService, name );
+		( *env )->DeleteLocalRef( env, name );
+		activityManagerClass = ( *env )->FindClass( env, "android/app/ActivityManager" );
+		getDeviceConfigurationInfo = ( *env )->GetMethodID( env, activityManagerClass,
+															"getDeviceConfigurationInfo", "()Landroid/content/pm/ConfigurationInfo;" );
+		( *env )->DeleteLocalRef( env, activityManagerClass );
 
-		configurationInfo = (*env)->CallObjectMethod( env, activityManager, getDeviceConfigurationInfo );
-		(*env)->DeleteLocalRef( env, activityManager );
-		configurationInfoClass = (*env)->FindClass( env, "android/content/pm/ConfigurationInfo" );
-		reqGlEsVersion = (*env)->GetFieldID( env, configurationInfoClass, "reqGlEsVersion", "I" );
-		(*env)->DeleteLocalRef( env, configurationInfoClass );
+		configurationInfo = ( *env )->CallObjectMethod( env, activityManager, getDeviceConfigurationInfo );
+		( *env )->DeleteLocalRef( env, activityManager );
+		configurationInfoClass = ( *env )->FindClass( env, "android/content/pm/ConfigurationInfo" );
+		reqGlEsVersion = ( *env )->GetFieldID( env, configurationInfoClass, "reqGlEsVersion", "I" );
+		( *env )->DeleteLocalRef( env, configurationInfoClass );
 
 		// Use full HD as the default on GPUs that support OpenGL ES 3.1, created in 2014 or later, such as NVIDIA Tegra K1.
-		maxWidth = ( ( (*env)->GetIntField( env, configurationInfo, reqGlEsVersion ) >= 0x30001 ) ? 1920 : 1280 );
-		(*env)->DeleteLocalRef( env, configurationInfo );
+		maxWidth = ( ( ( *env )->GetIntField( env, configurationInfo, reqGlEsVersion ) >= 0x30001 ) ? 1920 : 1280 );
+		( *env )->DeleteLocalRef( env, configurationInfo );
 	}
 
-	for( i = 0; VID_GetModeInfo( &modeWidth, &modeHeight, i ); i++ )
-	{
-		if( modeWidth > maxWidth )
+	for( i = 0; VID_GetModeInfo( &modeWidth, &modeHeight, i ); i++ ) {
+		if( modeWidth > maxWidth ) {
 			break;
+		}
 
 		lastWidth = modeWidth;
 		lastHeight = modeHeight;
@@ -85,31 +80,28 @@ bool VID_GetDefaultMode( int *width, int *height )
 	return true;
 }
 
-unsigned int VID_GetSysModes( vidmode_t *modes )
-{
+unsigned int VID_GetSysModes( vidmode_t *modes ) {
 	ANativeWindow *window = sys_android_app->window;
 	int windowWidth, windowHeight;
 	int density;
 	float densityStep;
 	int i;
 
-	if( !window )
+	if( !window ) {
 		return 0;
+	}
 
 	windowWidth = ANativeWindow_getWidth( window );
 	windowHeight = ANativeWindow_getHeight( window );
-	if( windowHeight > windowWidth )
-	{
+	if( windowHeight > windowWidth ) {
 		// The window may be created in portrait orientation sometimes, for example, when launching in sleep mode.
 		int tempWidth = windowWidth;
 		windowWidth = windowHeight;
 		windowHeight = tempWidth;
 	}
 
-	if( windowHeight <= 480 )
-	{
-		if( modes )
-		{
+	if( windowHeight <= 480 ) {
+		if( modes ) {
 			modes[0].width = windowWidth;
 			modes[0].height = windowHeight;
 		}
@@ -117,21 +109,21 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 	}
 
 	density = AConfiguration_getDensity( sys_android_app->config );
-	if( !density )
+	if( !density ) {
 		density = ACONFIGURATION_DENSITY_MEDIUM;
+	}
 	densityStep = 1.0f - ( float )( density - 40 ) / ( float )density;
 
-	for( i = 0; ; i++ )
-	{
+	for( i = 0; ; i++ ) {
 		float scale = 1.0f - densityStep * ( float )i;
 		int width = windowWidth * scale;
 		int height = windowHeight * scale;
 
-		if( ( width <= 0 ) || ( height < 480 ) )
+		if( ( width <= 0 ) || ( height < 480 ) ) {
 			break;
+		}
 
-		if( modes )
-		{
+		if( modes ) {
 			modes[i].width = width;
 			modes[i].height = height;
 		}
@@ -140,29 +132,27 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 	return i;
 }
 
-void *VID_GetWindowHandle( void )
-{
+void *VID_GetWindowHandle( void ) {
 	return NULL;
 }
 
-void VID_UpdateWindowPosAndSize( int x, int y )
-{
+void VID_UpdateWindowPosAndSize( int x, int y ) {
 }
 
-float VID_GetPixelRatio( void )
-{
+float VID_GetPixelRatio( void ) {
 	static float invDensity;
 	int height;
 	int windowWidth, windowHeight;
 
-	if( !sys_android_app->window || !viddef.height )
+	if( !sys_android_app->window || !viddef.height ) {
 		return 1.0f;
+	}
 
-	if( !invDensity )
-	{
+	if( !invDensity ) {
 		float density = AConfiguration_getDensity( sys_android_app->config ) * ( 1.0f / ( float )ACONFIGURATION_DENSITY_MEDIUM );
-		if( !density )
+		if( !density ) {
 			density = 1.0f / ( float )ACONFIGURATION_DENSITY_MEDIUM;
+		}
 		invDensity = 1.0f / density;
 	}
 
@@ -171,25 +161,24 @@ float VID_GetPixelRatio( void )
 	return ( float )viddef.height / ( ( float )( min( windowWidth, windowHeight ) ) * invDensity );
 }
 
-rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, 
-	const int *iconXPM, void *parentWindow, bool verbose )
-{
+rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor,
+					  const int *iconXPM, void *parentWindow, bool verbose ) {
 	ANativeWindow *window = sys_android_app->window;
 	rserr_t res;
 
 	res = re.Init( applicationName, screenshotsPrefix, startupColor,
-		0, iconXPM,
-		NULL, NULL, window,
-		verbose );
+				   0, iconXPM,
+				   NULL, NULL, window,
+				   verbose );
 
-	if( res == rserr_ok )
-		VID_AppActivate( window != NULL, false );
+	if( res == rserr_ok ) {
+		VID_AppActivate( window != NULL, window == NULL, false );
+	}
 
 	return res;
 }
 
-void VID_Android_SetWindow( ANativeWindow *window )
-{
+void VID_Android_SetWindow( ANativeWindow *window ) {
 	re.SetWindow( NULL, NULL, window );
-	VID_AppActivate( window != NULL, false );
+	VID_AppActivate( window != NULL, window == NULL, false );
 }

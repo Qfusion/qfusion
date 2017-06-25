@@ -25,8 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "tv_relay.h"
 
-struct upstream_s
-{
+struct upstream_s {
 	connstate_t state;
 
 	packet_t *packetqueue;
@@ -48,23 +47,23 @@ struct upstream_s
 	socket_t socket_real;
 	netchan_t netchan;
 
-	int connect_time;
+	int64_t connect_time;
 	int connect_count;
 	int challenge;
 	bool rejected;
 
 	int timeoutcount;
-	unsigned int lastPacketReceivedTime;
-	unsigned int lastPacketSentTime;
+	int64_t lastPacketReceivedTime;
+	int64_t lastPacketSentTime;
 
-	unsigned int reliableSequence;          // the last one we put in the list to be sent
-	unsigned int reliableSent;              // the last one we sent to the server
-	unsigned int reliableAcknowledge;       // the last one the server has executed
+	int64_t reliableSequence;          // the last one we put in the list to be sent
+	int64_t reliableSent;              // the last one we sent to the server
+	int64_t reliableAcknowledge;       // the last one the server has executed
 	char reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
 
-	int framenum;
-	int lastExecutedServerCommand;
-	unsigned int lastUcmdTime;
+	int64_t framenum;
+	int64_t lastExecutedServerCommand;
+	int64_t lastUcmdTime;
 
 	bool reliable;
 	bool multiview;                     // are we receiving multiview data?
@@ -73,8 +72,8 @@ struct upstream_s
 	// serverdata
 	int playernum;
 	int servercount;
-	unsigned int serverTime;
-	int serverFrame;
+	int64_t serverTime;
+	int64_t serverFrame;
 	unsigned int snapFrameTime;
 	char game[MAX_QPATH];
 	char basegame[MAX_QPATH];
@@ -89,7 +88,8 @@ struct upstream_s
 	struct {
 		bool recording;
 		bool waiting;
-		unsigned int basetime, duration;
+		int64_t basetime;
+		unsigned int duration;
 		bool autorecording;
 
 		bool playing;
@@ -107,10 +107,10 @@ struct upstream_s
 	char *audiotrack;
 
 	// relays
-	relay_t	relay;
+	relay_t relay;
 };
 
-#define TV_Upstream_CopyString( upstream,in ) _TVCopyString_Pool( (upstream)->mempool, in, __FILE__, __LINE__ )
+#define TV_Upstream_CopyString( upstream,in ) _TVCopyString_Pool( ( upstream )->mempool, in, __FILE__, __LINE__ )
 bool TV_UpstreamForText( const char *text, upstream_t **upstream );
 void TV_Upstream_UpdateReliableCommandsToServer( upstream_t *upstream, msg_t *msg );
 void TV_Upstream_Error( upstream_t *upstream, const char *format, ... );

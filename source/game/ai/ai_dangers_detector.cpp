@@ -1,6 +1,6 @@
 #include "ai_shutdown_hooks_holder.h"
-#include "caching_game_allocator.h"
-#include "dangers_detector.h"
+#include "ai_caching_game_allocator.h"
+#include "ai_dangers_detector.h"
 #include <algorithm>
 
 inline trace_t Trace( const Vec3 &start, const Vec3 &mins, const Vec3 &maxs, const Vec3 &end, const edict_t *passedict, int contentmask = MASK_SOLID ) {

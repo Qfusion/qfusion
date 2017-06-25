@@ -57,15 +57,12 @@ static const char *_qglGetGLWExtensionsString( void );
 **
 ** Unloads the specified DLL then nulls out all the proc pointers.
 */
-void QGL_Shutdown( void )
-{
-	if( glw_state.OpenGLLib )
-	{
+void QGL_Shutdown( void ) {
+	if( glw_state.OpenGLLib ) {
 		dlclose( glw_state.OpenGLLib );
 		glw_state.OpenGLLib = NULL;
 	}
-	if( glw_state.EGLLib )
-	{
+	if( glw_state.EGLLib ) {
 		dlclose( glw_state.EGLLib );
 		glw_state.EGLLib = NULL;
 	}
@@ -81,21 +78,16 @@ void QGL_Shutdown( void )
 ** might be.
 **
 */
-qgl_initerr_t QGL_Init( const char *dllname )
-{
-	if( !( glw_state.EGLLib = dlopen( QGL_EGL_LIBNAME, RTLD_LAZY | RTLD_GLOBAL ) ) )
-	{
+qgl_initerr_t QGL_Init( const char *dllname ) {
+	if( !( glw_state.EGLLib = dlopen( QGL_EGL_LIBNAME, RTLD_LAZY | RTLD_GLOBAL ) ) ) {
 		Com_Printf( "%s\n", dlerror() );
 		return qgl_initerr_unknown;
 	}
 
-	if( !( glw_state.OpenGLLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL ) ) )
-	{
+	if( !( glw_state.OpenGLLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL ) ) ) {
 		Com_Printf( "%s\n", dlerror() );
 		return qgl_initerr_invalid_driver;
-	}
-	else
-	{
+	} else {
 		Com_Printf( "Using %s for OpenGL...\n", dllname );
 	}
 
@@ -133,8 +125,7 @@ qgl_initerr_t QGL_Init( const char *dllname )
 **
 ** Returns information about the GL DLL.
 */
-const qgl_driverinfo_t *QGL_GetDriverInfo( void )
-{
+const qgl_driverinfo_t *QGL_GetDriverInfo( void ) {
 	// libGLESv2 exposes GLES2 and above, libGLESv3 is a symlink to it
 	static const qgl_driverinfo_t driver =
 	{
@@ -150,18 +141,17 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 /*
 ** qglGetProcAddress
 */
-void *qglGetProcAddress( const GLubyte *procName )
-{
+void *qglGetProcAddress( const GLubyte *procName ) {
 	return (void *)qeglGetProcAddress( (const char *)procName );
 }
 
 /*
 ** _qglGetGLWExtensionsString
 */
-static const char *_qglGetGLWExtensionsString( void )
-{
+static const char *_qglGetGLWExtensionsString( void ) {
 	EGLDisplay dpy = qeglGetDisplay( EGL_DEFAULT_DISPLAY );
-	if( dpy == EGL_NO_DISPLAY )
+	if( dpy == EGL_NO_DISPLAY ) {
 		return NULL;
+	}
 	return qeglQueryString( dpy, EGL_EXTENSIONS );
 }

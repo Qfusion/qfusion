@@ -26,28 +26,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //===============================================================
 
 // link_t is only used for entity area links now
-typedef struct link_s
-{
+typedef struct link_s {
 	struct link_s *prev, *next;
 	int entNum;
 } link_t;
 
-#define	MAX_ENT_CLUSTERS    16
+#define MAX_ENT_CLUSTERS    16
 
 typedef struct edict_s edict_t;
 typedef struct gclient_s gclient_t;
 typedef struct relay_s relay_t;
 typedef struct tvm_relay_s tvm_relay_t;
 
-typedef struct
-{
+typedef struct {
 	int ping;
 	int health;
 	int frags;
 } client_shared_t;
 
-typedef struct
-{
+typedef struct {
 	gclient_t *client;
 	bool inuse;
 	int linkcount;
@@ -65,9 +62,9 @@ typedef struct
 	int svflags;                // SVF_NOCLIENT, SVF_MONSTER, etc
 	vec3_t mins, maxs;
 	vec3_t absmin, absmax, size;
-	solid_t	solid;
+	solid_t solid;
 	int clipmask;
-	edict_t	*owner;
+	edict_t *owner;
 #ifdef TVCOLLISION4D
 	vec3_t deltaOrigin4D;
 #endif
@@ -75,13 +72,12 @@ typedef struct
 
 //===============================================================
 
-#define	MAX_PARSE_ENTITIES	1024
-typedef struct snapshot_s
-{
+#define MAX_PARSE_ENTITIES  1024
+typedef struct snapshot_s {
 	bool valid;             // cleared if delta parsing was invalid
 	int serverFrame;
-	unsigned int serverTime;    // time in the server when frame was created
-	unsigned int ucmdExecuted;
+	int64_t serverTime;    // time in the server when frame was created
+	int64_t ucmdExecuted;
 	bool delta;
 	bool allentities;
 	bool multipov;
@@ -96,7 +92,7 @@ typedef struct snapshot_s
 	game_state_t gameState;
 	int numgamecommands;
 	gcommand_t gamecommands[MAX_PARSE_GAMECOMMANDS];
-	char gamecommandsData[(MAX_STRING_CHARS / 16) * MAX_PARSE_GAMECOMMANDS];
+	char gamecommandsData[( MAX_STRING_CHARS / 16 ) * MAX_PARSE_GAMECOMMANDS];
 	size_t gamecommandsDataHead;
 } snapshot_t;
 
@@ -105,8 +101,7 @@ typedef struct snapshot_s
 //
 // functions provided by the main engine
 //
-typedef struct
-{
+typedef struct {
 	void ( *Print )( const char *msg );
 	void ( *Error )( const char *msg );
 	void ( *RelayError )( relay_t *relay, const char *msg );
@@ -115,33 +110,22 @@ typedef struct
 	void ( *GameCmd )( relay_t *relay, int numClient, const char *cmd );
 	void ( *ConfigString )( relay_t *relay, int number, const char *value );
 
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 
-	struct cmodel_s	*( *CM_InlineModel )( relay_t *relay, int num );
+	struct cmodel_s *( *CM_InlineModel )( relay_t * relay, int num );
 	int ( *CM_TransformedPointContents )( relay_t *relay, vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
-	void ( *CM_RoundUpToHullSize )( relay_t *relay, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 	void ( *CM_TransformedBoxTrace )( relay_t *relay, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
 	void ( *CM_InlineModelBounds )( relay_t *relay, struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
-	struct cmodel_s	*( *CM_ModelForBBox )( relay_t *relay, vec3_t mins, vec3_t maxs );
-	struct cmodel_s	*( *CM_OctagonModelForBBox )( relay_t *relay, vec3_t mins, vec3_t maxs );
+	struct cmodel_s *( *CM_ModelForBBox )( relay_t * relay, vec3_t mins, vec3_t maxs );
+	struct cmodel_s *( *CM_OctagonModelForBBox )( relay_t * relay, vec3_t mins, vec3_t maxs );
 	bool ( *CM_AreasConnected )( relay_t *relay, int area1, int area2 );
 	int ( *CM_BoxLeafnums )( relay_t *relay, vec3_t mins, vec3_t maxs, int *list, int listsize, int *topnode );
 	int ( *CM_LeafCluster )( relay_t *relay, int leafnum );
 	int ( *CM_LeafArea )( relay_t *relay, int leafnum );
 
 	// managed memory allocation
-	void *( *Mem_Alloc )( relay_t *relay_server, size_t size, const char *filename, int fileline );
+	void *( *Mem_Alloc )( relay_t * relay_server, size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
-
-	// dynvars
-	dynvar_t *( *Dynvar_Create )( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter );
-	void ( *Dynvar_Destroy )( dynvar_t *dynvar );
-	dynvar_t *( *Dynvar_Lookup )( const char *name );
-	const char *( *Dynvar_GetName )( dynvar_t *dynvar );
-	dynvar_get_status_t ( *Dynvar_GetValue )( dynvar_t *dynvar, void **value );
-	dynvar_set_status_t ( *Dynvar_SetValue )( dynvar_t *dynvar, void *value );
-	void ( *Dynvar_AddListener )( dynvar_t *dynvar, dynvar_listener_f listener );
-	void ( *Dynvar_RemoveListener )( dynvar_t *dynvar, dynvar_listener_f listener );
 
 	// console variable interaction
 	cvar_t *( *Cvar_Get )( const char *name, const char *value, int flags );
@@ -196,8 +180,7 @@ typedef struct
 //
 // functions exported by the game subsystem
 //
-typedef struct
-{
+typedef struct {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
 
@@ -207,7 +190,7 @@ typedef struct
 	void ( *Init )( const char *game, unsigned int maxclients );
 	void ( *Shutdown )( void );
 
-	tvm_relay_t *( *InitRelay )( relay_t *relay_server, unsigned int snapFrameTime, int playernum );
+	tvm_relay_t *( *InitRelay )( relay_t * relay_server, unsigned int snapFrameTime, int playernum );
 	void ( *ShutdownRelay )( tvm_relay_t *relay );
 
 	// each new level entered will cause a call to SpawnEntities
@@ -230,7 +213,7 @@ typedef struct
 	void ( *SnapFrame )( tvm_relay_t *relay );
 	void ( *ClearSnap )( tvm_relay_t *relay );
 
-	game_state_t *( *GetGameState )( tvm_relay_t *relay );
+	game_state_t *( *GetGameState )( tvm_relay_t * relay );
 	bool ( *AllowDownload )( tvm_relay_t *relay, edict_t *ent, const char *requestname, const char *uploadname );
 } tv_module_export_t;
 

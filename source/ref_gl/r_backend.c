@@ -35,8 +35,7 @@ static void RB_SelectTextureUnit( int tmu );
 /*
 * RB_Init
 */
-void RB_Init( void )
-{
+void RB_Init( void ) {
 	memset( &rb, 0, sizeof( rb ) );
 
 	rb.mempool = R_AllocPool( NULL, "Rendering Backend" );
@@ -51,15 +50,14 @@ void RB_Init( void )
 
 	// create VBO's we're going to use for streamed data
 	RB_RegisterStreamVBOs();
-	
+
 	RP_PrecachePrograms();
 }
 
 /*
 * RB_Shutdown
 */
-void RB_Shutdown( void )
-{
+void RB_Shutdown( void ) {
 	RP_StorePrecacheList();
 
 	R_FreePool( &rb.mempool );
@@ -68,8 +66,7 @@ void RB_Shutdown( void )
 /*
 * RB_BeginRegistration
 */
-void RB_BeginRegistration( void )
-{
+void RB_BeginRegistration( void ) {
 	int i;
 
 	RB_RegisterStreamVBOs();
@@ -80,10 +77,12 @@ void RB_BeginRegistration( void )
 		RB_SelectTextureUnit( i );
 
 		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, 0 );
-		if( glConfig.ext.texture_array )
+		if( glConfig.ext.texture_array ) {
 			qglBindTexture( GL_TEXTURE_2D_ARRAY_EXT, 0 );
-		if( glConfig.ext.texture3D )
+		}
+		if( glConfig.ext.texture3D ) {
 			qglBindTexture( GL_TEXTURE_3D_EXT, 0 );
+		}
 		qglBindTexture( GL_TEXTURE_2D, 0 );
 	}
 
@@ -93,16 +92,14 @@ void RB_BeginRegistration( void )
 /*
 * RB_EndRegistration
 */
-void RB_EndRegistration( void )
-{
+void RB_EndRegistration( void ) {
 	RB_BindVBO( 0, 0 );
 }
 
 /*
 * RB_SetTime
 */
-void RB_SetTime( unsigned int time )
-{
+void RB_SetTime( int64_t time ) {
 	rb.time = time;
 	rb.nullEnt.shaderTime = ri.Sys_Milliseconds();
 }
@@ -110,8 +107,7 @@ void RB_SetTime( unsigned int time )
 /*
 * RB_BeginFrame
 */
-void RB_BeginFrame( void )
-{
+void RB_BeginFrame( void ) {
 	Vector4Set( rb.nullEnt.shaderRGBA, 1, 1, 1, 1 );
 	rb.nullEnt.scale = 1;
 	VectorClear( rb.nullEnt.origin );
@@ -128,30 +124,26 @@ void RB_BeginFrame( void )
 /*
 * RB_EndFrame
 */
-void RB_EndFrame( void )
-{
+void RB_EndFrame( void ) {
 }
 
 /*
 * RB_StatsMessage
 */
-void RB_StatsMessage( char *msg, size_t size )
-{
-	Q_snprintfz( msg, size, 
-		"%4i verts %4i tris\n"
-		"%4i draws %4i binds %4i progs",		
-		rb.stats.c_totalVerts, rb.stats.c_totalTris,
-		rb.stats.c_totalDraws, rb.stats.c_totalBinds, rb.stats.c_totalPrograms
-	);
+void RB_StatsMessage( char *msg, size_t size ) {
+	Q_snprintfz( msg, size,
+				 "%4i verts %4i tris\n"
+				 "%4i draws %4i binds %4i progs",
+				 rb.stats.c_totalVerts, rb.stats.c_totalTris,
+				 rb.stats.c_totalDraws, rb.stats.c_totalBinds, rb.stats.c_totalPrograms
+				 );
 }
 
 /*
 * RB_SetGLDefaults
 */
-static void RB_SetGLDefaults( void )
-{
-	if( glConfig.stencilBits )
-	{
+static void RB_SetGLDefaults( void ) {
+	if( glConfig.stencilBits ) {
 		qglStencilMask( ( GLuint ) ~0 );
 		qglStencilFunc( GL_EQUAL, 128, 0xFF );
 		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
@@ -176,10 +168,10 @@ static void RB_SetGLDefaults( void )
 /*
 * RB_SelectTextureUnit
 */
-static void RB_SelectTextureUnit( int tmu )
-{
-	if( tmu == rb.gl.currentTMU )
+static void RB_SelectTextureUnit( int tmu ) {
+	if( tmu == rb.gl.currentTMU ) {
 		return;
+	}
 
 	rb.gl.currentTMU = tmu;
 	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
@@ -191,16 +183,14 @@ static void RB_SelectTextureUnit( int tmu )
 /*
 * RB_FlushTextureCache
 */
-void RB_FlushTextureCache( void )
-{
+void RB_FlushTextureCache( void ) {
 	rb.gl.flushTextures = true;
 }
 
 /*
 * RB_BindImage
 */
-void RB_BindImage( int tmu, const image_t *tex )
-{
+void RB_BindImage( int tmu, const image_t *tex ) {
 	GLuint texnum;
 
 	assert( tex != NULL );
@@ -222,8 +212,9 @@ void RB_BindImage( int tmu, const image_t *tex )
 	}
 
 	texnum = tex->texnum;
-	if( rb.gl.currentTextures[tmu] == texnum )
+	if( rb.gl.currentTextures[tmu] == texnum ) {
 		return;
+	}
 
 	rb.gl.currentTextures[tmu] = texnum;
 
@@ -237,23 +228,22 @@ void RB_BindImage( int tmu, const image_t *tex )
 /*
 * RB_DepthRange
 */
-void RB_DepthRange( float depthmin, float depthmax )
-{
+void RB_DepthRange( float depthmin, float depthmax ) {
 	clamp( depthmin, 0.0f, 1.0f );
 	clamp( depthmax, 0.0f, 1.0f );
 	rb.gl.depthmin = depthmin;
 	rb.gl.depthmax = depthmax;
 	// depthmin == depthmax is a special case when a specific depth value is going to be written
-	if( ( depthmin != depthmax ) && !rb.gl.depthoffset )
+	if( ( depthmin != depthmax ) && !rb.gl.depthoffset ) {
 		depthmin += 4.0f / 65535.0f;
+	}
 	qglDepthRange( depthmin, depthmax );
 }
 
 /*
 * RB_GetDepthRange
 */
-void RB_GetDepthRange( float* depthmin, float *depthmax )
-{
+void RB_GetDepthRange( float* depthmin, float *depthmax ) {
 	*depthmin = rb.gl.depthmin;
 	*depthmax = rb.gl.depthmax;
 }
@@ -261,15 +251,14 @@ void RB_GetDepthRange( float* depthmin, float *depthmax )
 /*
 * RB_DepthOffset
 */
-void RB_DepthOffset( bool enable )
-{
+void RB_DepthOffset( bool enable ) {
 	float depthmin = rb.gl.depthmin;
 	float depthmax = rb.gl.depthmax;
 	rb.gl.depthoffset = enable;
-	if( depthmin != depthmax )
-	{
-		if( !enable )
+	if( depthmin != depthmax ) {
+		if( !enable ) {
 			depthmin += 4.0f / 65535.0f;
+		}
 		qglDepthRange( depthmin, depthmax );
 	}
 }
@@ -277,24 +266,21 @@ void RB_DepthOffset( bool enable )
 /*
 * RB_ClearDepth
 */
-void RB_ClearDepth( float depth )
-{
+void RB_ClearDepth( float depth ) {
 	qglClearDepth( depth );
 }
 
 /*
 * RB_LoadCameraMatrix
 */
-void RB_LoadCameraMatrix( const mat4_t m )
-{
+void RB_LoadCameraMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.cameraMatrix );
 }
 
 /*
 * RB_LoadObjectMatrix
 */
-void RB_LoadObjectMatrix( const mat4_t m )
-{
+void RB_LoadObjectMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.objectMatrix );
 	Matrix4_MultiplyFast( rb.cameraMatrix, m, rb.modelviewMatrix );
 	Matrix4_Multiply( rb.projectionMatrix, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
@@ -303,8 +289,7 @@ void RB_LoadObjectMatrix( const mat4_t m )
 /*
 * RB_LoadProjectionMatrix
 */
-void RB_LoadProjectionMatrix( const mat4_t m )
-{
+void RB_LoadProjectionMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.projectionMatrix );
 	Matrix4_Multiply( m, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
 }
@@ -312,20 +297,20 @@ void RB_LoadProjectionMatrix( const mat4_t m )
 /*
 * RB_Cull
 */
-void RB_Cull( int cull )
-{
-	if( rb.gl.faceCull == cull )
+void RB_Cull( int cull ) {
+	if( rb.gl.faceCull == cull ) {
 		return;
+	}
 
-	if( !cull )
-	{
+	if( !cull ) {
 		qglDisable( GL_CULL_FACE );
 		rb.gl.faceCull = 0;
 		return;
 	}
 
-	if( !rb.gl.faceCull )
+	if( !rb.gl.faceCull ) {
 		qglEnable( GL_CULL_FACE );
+	}
 	qglCullFace( cull );
 	rb.gl.faceCull = cull;
 }
@@ -333,155 +318,145 @@ void RB_Cull( int cull )
 /*
 * RB_SetState
 */
-void RB_SetState( int state )
-{
+void RB_SetState( int state ) {
 	int diff;
 
 	diff = rb.gl.state ^ state;
-	if( !diff )
+	if( !diff ) {
 		return;
+	}
 
-	if( diff & GLSTATE_BLEND_MASK )
-	{
-		if( state & GLSTATE_BLEND_MASK )
-		{
+	if( diff & GLSTATE_BLEND_MASK ) {
+		if( state & GLSTATE_BLEND_MASK ) {
 			int blendsrc, blenddst;
 
-			switch( state & GLSTATE_SRCBLEND_MASK )
-			{
-			case GLSTATE_SRCBLEND_ZERO:
-				blendsrc = GL_ZERO;
-				break;
-			case GLSTATE_SRCBLEND_DST_COLOR:
-				blendsrc = GL_DST_COLOR;
-				break;
-			case GLSTATE_SRCBLEND_ONE_MINUS_DST_COLOR:
-				blendsrc = GL_ONE_MINUS_DST_COLOR;
-				break;
-			case GLSTATE_SRCBLEND_SRC_ALPHA:
-				blendsrc = GL_SRC_ALPHA;
-				break;
-			case GLSTATE_SRCBLEND_ONE_MINUS_SRC_ALPHA:
-				blendsrc = GL_ONE_MINUS_SRC_ALPHA;
-				break;
-			case GLSTATE_SRCBLEND_DST_ALPHA:
-				blendsrc = GL_DST_ALPHA;
-				break;
-			case GLSTATE_SRCBLEND_ONE_MINUS_DST_ALPHA:
-				blendsrc = GL_ONE_MINUS_DST_ALPHA;
-				break;
-			default:
-			case GLSTATE_SRCBLEND_ONE:
-				blendsrc = GL_ONE;
-				break;
+			switch( state & GLSTATE_SRCBLEND_MASK ) {
+				case GLSTATE_SRCBLEND_ZERO:
+					blendsrc = GL_ZERO;
+					break;
+				case GLSTATE_SRCBLEND_DST_COLOR:
+					blendsrc = GL_DST_COLOR;
+					break;
+				case GLSTATE_SRCBLEND_ONE_MINUS_DST_COLOR:
+					blendsrc = GL_ONE_MINUS_DST_COLOR;
+					break;
+				case GLSTATE_SRCBLEND_SRC_ALPHA:
+					blendsrc = GL_SRC_ALPHA;
+					break;
+				case GLSTATE_SRCBLEND_ONE_MINUS_SRC_ALPHA:
+					blendsrc = GL_ONE_MINUS_SRC_ALPHA;
+					break;
+				case GLSTATE_SRCBLEND_DST_ALPHA:
+					blendsrc = GL_DST_ALPHA;
+					break;
+				case GLSTATE_SRCBLEND_ONE_MINUS_DST_ALPHA:
+					blendsrc = GL_ONE_MINUS_DST_ALPHA;
+					break;
+				default:
+				case GLSTATE_SRCBLEND_ONE:
+					blendsrc = GL_ONE;
+					break;
 			}
 
-			switch( state & GLSTATE_DSTBLEND_MASK )
-			{
-			case GLSTATE_DSTBLEND_ONE:
-				blenddst = GL_ONE;
-				break;
-			case GLSTATE_DSTBLEND_SRC_COLOR:
-				blenddst = GL_SRC_COLOR;
-				break;
-			case GLSTATE_DSTBLEND_ONE_MINUS_SRC_COLOR:
-				blenddst = GL_ONE_MINUS_SRC_COLOR;
-				break;
-			case GLSTATE_DSTBLEND_SRC_ALPHA:
-				blenddst = GL_SRC_ALPHA;
-				break;
-			case GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA:
-				blenddst = GL_ONE_MINUS_SRC_ALPHA;
-				break;
-			case GLSTATE_DSTBLEND_DST_ALPHA:
-				blenddst = GL_DST_ALPHA;
-				break;
-			case GLSTATE_DSTBLEND_ONE_MINUS_DST_ALPHA:
-				blenddst = GL_ONE_MINUS_DST_ALPHA;
-				break;
-			default:
-			case GLSTATE_DSTBLEND_ZERO:
-				blenddst = GL_ZERO;
-				break;
+			switch( state & GLSTATE_DSTBLEND_MASK ) {
+				case GLSTATE_DSTBLEND_ONE:
+					blenddst = GL_ONE;
+					break;
+				case GLSTATE_DSTBLEND_SRC_COLOR:
+					blenddst = GL_SRC_COLOR;
+					break;
+				case GLSTATE_DSTBLEND_ONE_MINUS_SRC_COLOR:
+					blenddst = GL_ONE_MINUS_SRC_COLOR;
+					break;
+				case GLSTATE_DSTBLEND_SRC_ALPHA:
+					blenddst = GL_SRC_ALPHA;
+					break;
+				case GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA:
+					blenddst = GL_ONE_MINUS_SRC_ALPHA;
+					break;
+				case GLSTATE_DSTBLEND_DST_ALPHA:
+					blenddst = GL_DST_ALPHA;
+					break;
+				case GLSTATE_DSTBLEND_ONE_MINUS_DST_ALPHA:
+					blenddst = GL_ONE_MINUS_DST_ALPHA;
+					break;
+				default:
+				case GLSTATE_DSTBLEND_ZERO:
+					blenddst = GL_ZERO;
+					break;
 			}
 
-			if( !( rb.gl.state & GLSTATE_BLEND_MASK ) )
+			if( !( rb.gl.state & GLSTATE_BLEND_MASK ) ) {
 				qglEnable( GL_BLEND );
+			}
 
 			qglBlendFuncSeparateEXT( blendsrc, blenddst, GL_ONE, GL_ONE );
-		}
-		else
-		{
+		} else {
 			qglDisable( GL_BLEND );
 		}
 	}
 
-	if( diff & (GLSTATE_NO_COLORWRITE|GLSTATE_ALPHAWRITE) )
-	{
-		if( state & GLSTATE_NO_COLORWRITE )
+	if( diff & ( GLSTATE_NO_COLORWRITE | GLSTATE_ALPHAWRITE ) ) {
+		if( state & GLSTATE_NO_COLORWRITE ) {
 			qglColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-		else
+		} else {
 			qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, ( state & GLSTATE_ALPHAWRITE ) ? GL_TRUE : GL_FALSE );
+		}
 	}
 
-	if( diff & (GLSTATE_DEPTHFUNC_EQ|GLSTATE_DEPTHFUNC_GT) )
-	{
-		if( state & GLSTATE_DEPTHFUNC_EQ )
+	if( diff & ( GLSTATE_DEPTHFUNC_EQ | GLSTATE_DEPTHFUNC_GT ) ) {
+		if( state & GLSTATE_DEPTHFUNC_EQ ) {
 			qglDepthFunc( GL_EQUAL );
-		else if( state & GLSTATE_DEPTHFUNC_GT )
+		} else if( state & GLSTATE_DEPTHFUNC_GT ) {
 			qglDepthFunc( GL_GREATER );
-		else
+		} else {
 			qglDepthFunc( GL_LEQUAL );
+		}
 	}
 
-	if( diff & GLSTATE_DEPTHWRITE )
-	{
-		if( state & GLSTATE_DEPTHWRITE )
+	if( diff & GLSTATE_DEPTHWRITE ) {
+		if( state & GLSTATE_DEPTHWRITE ) {
 			qglDepthMask( GL_TRUE );
-		else
+		} else {
 			qglDepthMask( GL_FALSE );
+		}
 	}
 
-	if( diff & GLSTATE_NO_DEPTH_TEST )
-	{
-		if( state & GLSTATE_NO_DEPTH_TEST )
+	if( diff & GLSTATE_NO_DEPTH_TEST ) {
+		if( state & GLSTATE_NO_DEPTH_TEST ) {
 			qglDisable( GL_DEPTH_TEST );
-		else
+		} else {
 			qglEnable( GL_DEPTH_TEST );
+		}
 	}
 
-	if( diff & GLSTATE_OFFSET_FILL )
-	{
-		if( state & GLSTATE_OFFSET_FILL )
-		{
+	if( diff & GLSTATE_OFFSET_FILL ) {
+		if( state & GLSTATE_OFFSET_FILL ) {
 			qglEnable( GL_POLYGON_OFFSET_FILL );
 			RB_DepthOffset( true );
-		}
-		else
-		{
+		} else {
 			qglDisable( GL_POLYGON_OFFSET_FILL );
 			RB_DepthOffset( false );
 		}
 	}
 
-	if( diff & GLSTATE_STENCIL_TEST )
-	{
-		if( glConfig.stencilBits )
-		{
-			if( state & GLSTATE_STENCIL_TEST )
+	if( diff & GLSTATE_STENCIL_TEST ) {
+		if( glConfig.stencilBits ) {
+			if( state & GLSTATE_STENCIL_TEST ) {
 				qglEnable( GL_STENCIL_TEST );
-			else
+			} else {
 				qglDisable( GL_STENCIL_TEST );
+			}
 		}
 	}
 
-	if( diff & GLSTATE_ALPHATEST )
-	{
+	if( diff & GLSTATE_ALPHATEST ) {
 		if( glConfig.ext.multisample ) {
-			if( state & GLSTATE_ALPHATEST )
+			if( state & GLSTATE_ALPHATEST ) {
 				qglEnable( GL_SAMPLE_ALPHA_TO_COVERAGE_ARB );
-			else
+			} else {
 				qglDisable( GL_SAMPLE_ALPHA_TO_COVERAGE_ARB );
+			}
 		}
 	}
 
@@ -491,8 +466,7 @@ void RB_SetState( int state )
 /*
 * RB_FrontFace
 */
-void RB_FrontFace( bool front )
-{
+void RB_FrontFace( bool front ) {
 	qglFrontFace( front ? GL_CW : GL_CCW );
 	rb.gl.frontFace = front;
 }
@@ -500,18 +474,15 @@ void RB_FrontFace( bool front )
 /*
 * RB_FlipFrontFace
 */
-void RB_FlipFrontFace( void )
-{
+void RB_FlipFrontFace( void ) {
 	RB_FrontFace( !rb.gl.frontFace );
 }
 
 /*
 * RB_BindArrayBuffer
 */
-void RB_BindArrayBuffer( int buffer )
-{
-	if( buffer != rb.gl.currentArrayVBO )
-	{
+void RB_BindArrayBuffer( int buffer ) {
+	if( buffer != rb.gl.currentArrayVBO ) {
 		qglBindBufferARB( GL_ARRAY_BUFFER_ARB, buffer );
 		rb.gl.currentArrayVBO = buffer;
 		rb.gl.lastVAttribs = 0;
@@ -521,10 +492,8 @@ void RB_BindArrayBuffer( int buffer )
 /*
 * RB_BindElementArrayBuffer
 */
-void RB_BindElementArrayBuffer( int buffer )
-{
-	if( buffer != rb.gl.currentElemArrayVBO )
-	{
+void RB_BindElementArrayBuffer( int buffer ) {
+	if( buffer != rb.gl.currentElemArrayVBO ) {
 		qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, buffer );
 		rb.gl.currentElemArrayVBO = buffer;
 	}
@@ -533,13 +502,12 @@ void RB_BindElementArrayBuffer( int buffer )
 /*
 * RB_EnableVertexAttrib
 */
-static void RB_EnableVertexAttrib( int index, bool enable )
-{
+static void RB_EnableVertexAttrib( int index, bool enable ) {
 	unsigned int bit;
 	unsigned int diff;
 
 	bit = 1 << index;
-	diff = (rb.gl.vertexAttribEnabled & bit) ^ (enable ? bit : 0);
+	diff = ( rb.gl.vertexAttribEnabled & bit ) ^ ( enable ? bit : 0 );
 	if( !diff ) {
 		return;
 	}
@@ -547,8 +515,7 @@ static void RB_EnableVertexAttrib( int index, bool enable )
 	if( enable ) {
 		rb.gl.vertexAttribEnabled |= bit;
 		qglEnableVertexAttribArrayARB( index );
-	}
-	else {
+	} else {
 		rb.gl.vertexAttribEnabled &= ~bit;
 		qglDisableVertexAttribArrayARB( index );
 	}
@@ -557,8 +524,7 @@ static void RB_EnableVertexAttrib( int index, bool enable )
 /*
 * RB_Scissor
 */
-void RB_Scissor( int x, int y, int w, int h )
-{
+void RB_Scissor( int x, int y, int w, int h ) {
 	if( ( rb.gl.scissor[0] == x ) && ( rb.gl.scissor[1] == y ) &&
 		( rb.gl.scissor[2] == w ) && ( rb.gl.scissor[3] == h ) ) {
 		return;
@@ -574,8 +540,7 @@ void RB_Scissor( int x, int y, int w, int h )
 /*
 * RB_GetScissor
 */
-void RB_GetScissor( int *x, int *y, int *w, int *h )
-{
+void RB_GetScissor( int *x, int *y, int *w, int *h ) {
 	if( x ) {
 		*x = rb.gl.scissor[0];
 	}
@@ -593,8 +558,7 @@ void RB_GetScissor( int *x, int *y, int *w, int *h )
 /*
 * RB_ApplyScissor
 */
-void RB_ApplyScissor( void )
-{
+void RB_ApplyScissor( void ) {
 	int h = rb.gl.scissor[3];
 	if( rb.gl.scissorChanged ) {
 		rb.gl.scissorChanged = false;
@@ -605,8 +569,7 @@ void RB_ApplyScissor( void )
 /*
 * RB_Viewport
 */
-void RB_Viewport( int x, int y, int w, int h )
-{
+void RB_Viewport( int x, int y, int w, int h ) {
 	rb.gl.viewport[0] = x;
 	rb.gl.viewport[1] = y;
 	rb.gl.viewport[2] = w;
@@ -617,18 +580,18 @@ void RB_Viewport( int x, int y, int w, int h )
 /*
 * RB_Clear
 */
-void RB_Clear( int bits, float r, float g, float b, float a )
-{
+void RB_Clear( int bits, float r, float g, float b, float a ) {
 	int state = rb.gl.state;
 
-	if( bits & GL_DEPTH_BUFFER_BIT )
+	if( bits & GL_DEPTH_BUFFER_BIT ) {
 		state |= GLSTATE_DEPTHWRITE;
+	}
 
-	if( bits & GL_STENCIL_BUFFER_BIT )
+	if( bits & GL_STENCIL_BUFFER_BIT ) {
 		qglClearStencil( 128 );
+	}
 
-	if( bits & GL_COLOR_BUFFER_BIT )
-	{
+	if( bits & GL_COLOR_BUFFER_BIT ) {
 		state = ( state & ~GLSTATE_NO_COLORWRITE ) | GLSTATE_ALPHAWRITE;
 		qglClearColor( r, g, b, a );
 	}
@@ -645,8 +608,7 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 /*
 * RB_BindFrameBufferObject
 */
-void RB_BindFrameBufferObject( int object )
-{
+void RB_BindFrameBufferObject( int object ) {
 	int width, height;
 
 	RFB_BindObject( object );
@@ -655,8 +617,9 @@ void RB_BindFrameBufferObject( int object )
 
 	RFB_GetObjectSize( object, &width, &height );
 
-	if( rb.gl.fbHeight != height )
+	if( rb.gl.fbHeight != height ) {
 		rb.gl.scissorChanged = true;
+	}
 
 	rb.gl.fbWidth = width;
 	rb.gl.fbHeight = height;
@@ -665,31 +628,28 @@ void RB_BindFrameBufferObject( int object )
 /*
 * RB_BoundFrameBufferObject
 */
-int RB_BoundFrameBufferObject( void )
-{
+int RB_BoundFrameBufferObject( void ) {
 	return RFB_BoundObject();
 }
 
 /*
 * RB_BlitFrameBufferObject
 */
-void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt )
-{
+void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt ) {
 	RFB_BlitObject( src, dest, bitMask, mode, filter, readAtt, drawAtt );
 }
 
 /*
 * RB_RegisterStreamVBOs
 *
-* Allocate/keep alive dynamic vertex buffers object 
+* Allocate/keep alive dynamic vertex buffers object
 * we'll steam the dynamic geometry into
 */
-void RB_RegisterStreamVBOs( void )
-{
+void RB_RegisterStreamVBOs( void ) {
 	int i;
 	rbDynamicStream_t *stream;
 	vattribmask_t vattribs[RB_VBO_NUM_STREAMS] = {
-		VATTRIBS_MASK & ~VATTRIB_INSTANCES_BITS,
+		VATTRIBS_MASK &~VATTRIB_INSTANCES_BITS,
 		COMPACT_STREAM_VATTRIBS
 	};
 
@@ -701,8 +661,8 @@ void RB_RegisterStreamVBOs( void )
 			continue;
 		}
 		stream->vbo = R_CreateMeshVBO( &rb,
-			MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, 0,
-			vattribs[i], VBO_TAG_STREAM, VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT );
+									   MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, 0,
+									   vattribs[i], VBO_TAG_STREAM, VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT );
 		stream->vertexData = RB_Alloc( MAX_STREAM_VBO_VERTS * stream->vbo->vertexSize );
 	}
 }
@@ -710,19 +670,16 @@ void RB_RegisterStreamVBOs( void )
 /*
 * RB_BindVBO
 */
-void RB_BindVBO( int id, int primitive )
-{
+void RB_BindVBO( int id, int primitive ) {
 	mesh_vbo_t *vbo;
 
 	rb.primitive = primitive;
 
 	if( id < RB_VBO_NONE ) {
 		vbo = rb.dynamicStreams[-id - 1].vbo;
-	}
-	else if( id == RB_VBO_NONE ) {
+	} else if( id == RB_VBO_NONE ) {
 		vbo = NULL;
-	}
-	else {
+	} else {
 		vbo = R_GetVBOByIndex( id );
 	}
 
@@ -742,9 +699,8 @@ void RB_BindVBO( int id, int primitive )
 * RB_AddDynamicMesh
 */
 void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
-	const struct mfog_s *fog, const struct portalSurface_s *portalSurface, unsigned int shadowBits,
-	const struct mesh_s *mesh, int primitive, float x_offset, float y_offset )
-{
+						const struct mfog_s *fog, const struct portalSurface_s *portalSurface, unsigned int shadowBits,
+						const struct mesh_s *mesh, int primitive, float x_offset, float y_offset ) {
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
 	bool trifan = false;
 	int scissor[4];
@@ -799,8 +755,7 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 		RB_BindShader( entity, shader, fog );
 		vattribs = rb.currentVAttribs;
 		streamId = ( ( vattribs & ~COMPACT_STREAM_VATTRIBS ) ? RB_VBO_STREAM : RB_VBO_STREAM_COMPACT );
-	}
-	else {
+	} else {
 		vattribs = prev->vattribs;
 	}
 
@@ -825,8 +780,7 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 		draw = prev;
 		draw->drawElements.numVerts += numVerts;
 		draw->drawElements.numElems += numElems;
-	}
-	else {
+	} else {
 		draw = &rb.dynamicDraws[rb.numDynamicDraws++];
 		draw->entity = entity;
 		draw->shader = shader;
@@ -848,17 +802,15 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 
 	destVertOffset = stream->drawElements.firstVert + stream->drawElements.numVerts;
 	R_FillVBOVertexDataBuffer( stream->vbo, vattribs, mesh,
-		stream->vertexData + destVertOffset * stream->vbo->vertexSize );
+							   stream->vertexData + destVertOffset * stream->vbo->vertexSize );
 
 	destElems = dynamicStreamElems[-streamId - 1] + stream->drawElements.firstElem + stream->drawElements.numElems;
 	if( trifan ) {
 		R_BuildTrifanElements( destVertOffset, numElems, destElems );
-	}
-	else {
+	} else {
 		if( primitive == GL_TRIANGLES ) {
 			R_CopyOffsetTriangles( mesh->elems, numElems, destVertOffset, destElems );
-		}
-		else {
+		} else {
 			R_CopyOffsetElements( mesh->elems, numElems, destVertOffset, destElems );
 		}
 	}
@@ -870,8 +822,7 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 /*
 * RB_FlushDynamicMeshes
 */
-void RB_FlushDynamicMeshes( void )
-{
+void RB_FlushDynamicMeshes( void ) {
 	int i, numDraws = rb.numDynamicDraws;
 	rbDynamicStream_t *stream;
 	rbDynamicDraw_t *draw;
@@ -903,7 +854,7 @@ void RB_FlushDynamicMeshes( void )
 
 		if( stream->drawElements.numVerts ) {
 			R_UploadVBOVertexRawData( stream->vbo, stream->drawElements.firstVert, stream->drawElements.numVerts,
-				stream->vertexData + stream->drawElements.firstVert * stream->vbo->vertexSize );
+									  stream->vertexData + stream->drawElements.firstVert * stream->vbo->vertexSize );
 			stream->drawElements.firstVert += stream->drawElements.numVerts;
 			stream->drawElements.numVerts = 0;
 		}
@@ -953,8 +904,7 @@ void RB_FlushDynamicMeshes( void )
 /*
 * RB_EnableVertexAttribs
 */
-static void RB_EnableVertexAttribs( void )
-{
+static void RB_EnableVertexAttribs( void ) {
 	vattribmask_t vattribs = rb.currentVAttribs;
 	mesh_vbo_t *vbo = rb.currentVBO;
 	vattribmask_t hfa = vbo->halfFloatAttribs;
@@ -970,72 +920,66 @@ static void RB_EnableVertexAttribs( void )
 
 	// xyz position
 	RB_EnableVertexAttrib( VATTRIB_POSITION, true );
-	qglVertexAttribPointerARB( VATTRIB_POSITION, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_POSITION_BIT, hfa ), 
-		GL_FALSE, vbo->vertexSize, ( const GLvoid * )0 );
+	qglVertexAttribPointerARB( VATTRIB_POSITION, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_POSITION_BIT, hfa ),
+							   GL_FALSE, vbo->vertexSize, ( const GLvoid * )0 );
 
 	// normal
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_NORMAL, true );
-		qglVertexAttribPointerARB( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_NORMAL_BIT, hfa ), 
-			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->normalsOffset );
-	}
-	else {
+		qglVertexAttribPointerARB( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_NORMAL_BIT, hfa ),
+								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->normalsOffset );
+	} else {
 		RB_EnableVertexAttrib( VATTRIB_NORMAL, false );
 	}
 
 	// s-vector
 	if( vattribs & VATTRIB_SVECTOR_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_SVECTOR, true );
-		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SVECTOR_BIT, hfa ), 
-			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->sVectorsOffset );
-	}
-	else {
+		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SVECTOR_BIT, hfa ),
+								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->sVectorsOffset );
+	} else {
 		RB_EnableVertexAttrib( VATTRIB_SVECTOR, false );
 	}
-	
+
 	// color
 	if( vattribs & VATTRIB_COLOR0_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_COLOR0, true );
-		qglVertexAttribPointerARB( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE, 
-			GL_TRUE, vbo->vertexSize, (const GLvoid * )vbo->colorsOffset[0] );
-	}
-	else {
+		qglVertexAttribPointerARB( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE,
+								   GL_TRUE, vbo->vertexSize, (const GLvoid * )vbo->colorsOffset[0] );
+	} else {
 		RB_EnableVertexAttrib( VATTRIB_COLOR0, false );
 	}
 
 	// texture coordinates
 	if( vattribs & VATTRIB_TEXCOORDS_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_TEXCOORDS, true );
-		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_GL_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ), 
-			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->stOffset );
-	}
-	else {
+		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_GL_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ),
+								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->stOffset );
+	} else {
 		RB_EnableVertexAttrib( VATTRIB_TEXCOORDS, false );
 	}
 
-	if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
+	if( ( vattribs & VATTRIB_AUTOSPRITE_BIT ) == VATTRIB_AUTOSPRITE_BIT ) {
 		// submit sprite point
 		RB_EnableVertexAttrib( VATTRIB_SPRITEPOINT, true );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), 
-			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->spritePointsOffset );
-	}
-	else {
+		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ),
+								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->spritePointsOffset );
+	} else {
 		RB_EnableVertexAttrib( VATTRIB_SPRITEPOINT, false );
 	}
 
 	// bones (skeletal models)
-	if( (vattribs & VATTRIB_BONES_BITS) == VATTRIB_BONES_BITS ) {
+	if( ( vattribs & VATTRIB_BONES_BITS ) == VATTRIB_BONES_BITS ) {
 		// submit indices
 		RB_EnableVertexAttrib( VATTRIB_BONESINDICES, true );
-		qglVertexAttribPointerARB( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE, 
-			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->bonesIndicesOffset );
+		qglVertexAttribPointerARB( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE,
+								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->bonesIndicesOffset );
 
 		// submit weights
 		RB_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, true );
-		qglVertexAttribPointerARB( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE, 
-			GL_TRUE, vbo->vertexSize, ( const GLvoid * )vbo->bonesWeightsOffset );
-	}
-	else {
+		qglVertexAttribPointerARB( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE,
+								   GL_TRUE, vbo->vertexSize, ( const GLvoid * )vbo->bonesWeightsOffset );
+	} else {
 		int i;
 		vattrib_t lmattr;
 		vattribbit_t lmattrbit;
@@ -1047,11 +991,10 @@ static void RB_EnableVertexAttribs( void )
 		for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
 			if( vattribs & lmattrbit ) {
 				RB_EnableVertexAttrib( lmattr, true );
-				qglVertexAttribPointerARB( lmattr, vbo->lmstSize[i], 
-					FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), 
-					GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmstOffset[i] );
-			}
-			else {
+				qglVertexAttribPointerARB( lmattr, vbo->lmstSize[i],
+										   FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ),
+										   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmstOffset[i] );
+			} else {
 				RB_EnableVertexAttrib( lmattr, false );
 			}
 
@@ -1066,9 +1009,8 @@ static void RB_EnableVertexAttribs( void )
 			if( vattribs & ( VATTRIB_LMLAYERS0123_BIT << i ) ) {
 				RB_EnableVertexAttrib( lmattr, true );
 				qglVertexAttribPointerARB( lmattr, 4, GL_UNSIGNED_BYTE,
-					GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmlayersOffset[i] );
-			}
-			else {
+										   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmlayersOffset[i] );
+			} else {
 				RB_EnableVertexAttrib( lmattr, false );
 			}
 
@@ -1076,15 +1018,15 @@ static void RB_EnableVertexAttribs( void )
 		}
 	}
 
-	if( (vattribs & VATTRIB_INSTANCES_BITS) == VATTRIB_INSTANCES_BITS ) {
+	if( ( vattribs & VATTRIB_INSTANCES_BITS ) == VATTRIB_INSTANCES_BITS ) {
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, true );
-		qglVertexAttribPointerARB( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ), 
-			( const GLvoid * )vbo->instancesOffset );
+		qglVertexAttribPointerARB( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ),
+								   ( const GLvoid * )vbo->instancesOffset );
 		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_QUAT, 1 );
 
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, true );
-		qglVertexAttribPointerARB( VATTRIB_INSTANCE_XYZS, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ), 
-			( const GLvoid * )( vbo->instancesOffset + sizeof( vec_t ) * 4 ) );
+		qglVertexAttribPointerARB( VATTRIB_INSTANCE_XYZS, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ),
+								   ( const GLvoid * )( vbo->instancesOffset + sizeof( vec_t ) * 4 ) );
 		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_XYZS, 1 );
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, false );
@@ -1095,13 +1037,13 @@ static void RB_EnableVertexAttribs( void )
 /*
 * RB_DrawElementsReal
 */
-void RB_DrawElementsReal( rbDrawElements_t *de )
-{
+void RB_DrawElementsReal( rbDrawElements_t *de ) {
 	int firstVert, numVerts, firstElem, numElems;
 	int numInstances;
 
-	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt ) || !de )
+	if( !( r_drawelements->integer || rb.currentEntity == &rb.nullEnt ) || !de ) {
 		return;
+	}
 
 	RB_ApplyScissor();
 
@@ -1114,8 +1056,8 @@ void RB_DrawElementsReal( rbDrawElements_t *de )
 	if( numInstances ) {
 		if( glConfig.ext.instanced_arrays ) {
 			// the instance data is contained in vertex attributes
-			qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT, 
-				(GLvoid *)(firstElem * sizeof( elem_t )), numInstances );
+			qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+										 (GLvoid *)( firstElem * sizeof( elem_t ) ), numInstances );
 
 			rb.stats.c_totalDraws++;
 		} else if( glConfig.ext.draw_instanced ) {
@@ -1128,8 +1070,8 @@ void RB_DrawElementsReal( rbDrawElements_t *de )
 
 				RB_SetInstanceData( numUInstances, rb.drawInstances + i );
 
-				qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT, 
-					(GLvoid *)(firstElem * sizeof( elem_t )), numUInstances );
+				qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+											 (GLvoid *)( firstElem * sizeof( elem_t ) ), numUInstances );
 
 				rb.stats.c_totalDraws++;
 			}
@@ -1142,28 +1084,27 @@ void RB_DrawElementsReal( rbDrawElements_t *de )
 				RB_SetInstanceData( 1, rb.drawInstances + i );
 
 				if( glConfig.ext.draw_range_elements ) {
-					qglDrawRangeElementsEXT( rb.primitive, 
-						firstVert, firstVert + numVerts - 1, numElems, 
-						GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+					qglDrawRangeElementsEXT( rb.primitive,
+											 firstVert, firstVert + numVerts - 1, numElems,
+											 GL_UNSIGNED_SHORT, (GLvoid *)( firstElem * sizeof( elem_t ) ) );
 				} else {
 					qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
-						(GLvoid *)(firstElem * sizeof( elem_t )) );
+									 (GLvoid *)( firstElem * sizeof( elem_t ) ) );
 				}
 
 				rb.stats.c_totalDraws++;
 			}
 		}
-	}
-	else {
+	} else {
 		numInstances = 1;
 
 		if( glConfig.ext.draw_range_elements ) {
-			qglDrawRangeElementsEXT( rb.primitive, 
-				firstVert, firstVert + numVerts - 1, numElems, 
-				GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+			qglDrawRangeElementsEXT( rb.primitive,
+									 firstVert, firstVert + numVerts - 1, numElems,
+									 GL_UNSIGNED_SHORT, (GLvoid *)( firstElem * sizeof( elem_t ) ) );
 		} else {
 			qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
-				(GLvoid *)(firstElem * sizeof( elem_t )) );
+							 (GLvoid *)( firstElem * sizeof( elem_t ) ) );
 		}
 
 		rb.stats.c_totalDraws++;
@@ -1178,17 +1119,15 @@ void RB_DrawElementsReal( rbDrawElements_t *de )
 /*
 * RB_GetVertexAttribs
 */
-vattribmask_t RB_GetVertexAttribs( void )
-{
+vattribmask_t RB_GetVertexAttribs( void ) {
 	return rb.currentVAttribs;
 }
 
 /*
 * RB_DrawElements_
 */
-static void RB_DrawElements_( void )
-{
-	if ( !rb.drawElements.numVerts || !rb.drawElements.numElems ) {
+static void RB_DrawElements_( void ) {
+	if( !rb.drawElements.numVerts || !rb.drawElements.numElems ) {
 		return;
 	}
 
@@ -1207,8 +1146,7 @@ static void RB_DrawElements_( void )
 * RB_DrawElements
 */
 void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
-	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems )
-{
+					  int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems ) {
 	rb.currentVAttribs &= ~VATTRIB_INSTANCES_BITS;
 
 	rb.drawElements.numVerts = numVerts;
@@ -1232,9 +1170,8 @@ void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
 * Draws <numInstances> instances of elements
 */
 void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems,
-	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
-	int numInstances, instancePoint_t *instances )
-{
+							   int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
+							   int numInstances, instancePoint_t *instances ) {
 	if( !numInstances ) {
 		return;
 	}
@@ -1288,8 +1225,7 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 /*
 * RB_SetCamera
 */
-void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis )
-{
+void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis ) {
 	VectorCopy( cameraOrigin, rb.cameraOrigin );
 	Matrix3_Copy( cameraAxis, rb.cameraAxis );
 }
@@ -1297,8 +1233,7 @@ void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis )
 /*
 * RB_SetRenderFlags
 */
-void RB_SetRenderFlags( int flags )
-{
+void RB_SetRenderFlags( int flags ) {
 	rb.renderFlags = flags;
 }
 
@@ -1307,8 +1242,7 @@ void RB_SetRenderFlags( int flags )
 *
 * Returns triangle outlines state before the call
 */
-bool RB_EnableTriangleOutlines( bool enable )
-{
+bool RB_EnableTriangleOutlines( bool enable ) {
 	bool oldVal = rb.triangleOutlines;
 
 	if( rb.triangleOutlines != enable ) {
@@ -1319,8 +1253,7 @@ bool RB_EnableTriangleOutlines( bool enable )
 		if( enable ) {
 			RB_SetShaderStateMask( 0, GLSTATE_NO_DEPTH_TEST );
 			qglPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-		}
-		else {
+		} else {
 			RB_SetShaderStateMask( ~0, 0 );
 			qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		}
@@ -1333,8 +1266,7 @@ bool RB_EnableTriangleOutlines( bool enable )
 /*
 * RB_ScissorForBounds
 */
-bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
-{
+bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h ) {
 	int i;
 	int ix1, iy1, ix2, iy2;
 	float x1, y1, x2, y2;
@@ -1345,8 +1277,7 @@ bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
 
 	x1 = y1 = 999999;
 	x2 = y2 = -999999;
-	for( i = 0; i < 8; i++ )
-	{
+	for( i = 0; i < 8; i++ ) {
 		// compute and rotate the full bounding box
 		VectorCopy( bbox[i], corner );
 
@@ -1367,13 +1298,15 @@ bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
 	}
 
 	ix1 = max( x1 - 1.0f, 0 ); ix2 = min( x2 + 1.0f, rb.gl.viewport[2] );
-	if( ix1 >= ix2 )
+	if( ix1 >= ix2 ) {
 		return false; // FIXME
 
+	}
 	iy1 = max( y1 - 1.0f, 0 ); iy2 = min( y2 + 1.0f, rb.gl.viewport[3] );
-	if( iy1 >= iy2 )
+	if( iy1 >= iy2 ) {
 		return false; // FIXME
 
+	}
 	*x = ix1;
 	*y = rb.gl.viewport[3] - iy2;
 	*w = ix2 - ix1;

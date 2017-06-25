@@ -166,9 +166,9 @@ public:
 	}
 
 	inline void CopyToUcmd( usercmd_t *ucmd ) const {
-		ucmd->forwardmove = ForwardMovement();
-		ucmd->sidemove = RightMovement();
-		ucmd->upmove = UpMovement();
+		ucmd->forwardmove = 127 * ForwardMovement();
+		ucmd->sidemove = 127 * RightMovement();
+		ucmd->upmove = 127 * UpMovement();
 
 		ucmd->buttons = 0;
 		if( attackButton ) {
@@ -611,7 +611,7 @@ public:
 
 	inline void SetModifiedVelocity( const vec3_t velocity ) {
 		for( int i = 0; i < 3; ++i ) {
-			int snappedVelocityComponent = (int)( velocity[i] * PM_VECTOR_SNAP );
+			int snappedVelocityComponent = (int)( velocity[i] * 16.0f );
 			if( snappedVelocityComponent > std::numeric_limits<signed short>::max() ) {
 				snappedVelocityComponent = std::numeric_limits<signed short>::max();
 			} else if( snappedVelocityComponent < std::numeric_limits<signed short>::min() ) {
@@ -624,7 +624,7 @@ public:
 
 	inline Vec3 ModifiedVelocity() const {
 		assert( hasModifiedVelocity );
-		float scale = 1.0f / PM_VECTOR_SNAP;
+		float scale = 1.0f / 16.0f;
 		return Vec3( scale * modifiedVelocity[0], scale * modifiedVelocity[1], scale * modifiedVelocity[2] );
 	}
 };

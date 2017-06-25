@@ -30,8 +30,7 @@ static fdrawchar_t drawCharIntercept = NULL;
 /*
 * FTLIB_GrabChar
 */
-static int FTLIB_GrabChar( const char **pstr, wchar_t *wc, int *colorindex, int flags )
-{
+static int FTLIB_GrabChar( const char **pstr, wchar_t *wc, int *colorindex, int flags ) {
 	if( flags & TEXTDRAWFLAG_NO_COLORS ) {
 		wchar_t num = Q_GrabWCharFromUtf8String( pstr );
 		*wc = num;
@@ -44,8 +43,7 @@ static int FTLIB_GrabChar( const char **pstr, wchar_t *wc, int *colorindex, int 
 /*
 * FTLIB_FontSize
 */
-size_t FTLIB_FontSize( qfontface_t *font )
-{
+size_t FTLIB_FontSize( qfontface_t *font ) {
 	if( !font ) {
 		return 0;
 	}
@@ -55,8 +53,7 @@ size_t FTLIB_FontSize( qfontface_t *font )
 /*
 * FTLIB_FontHeight
 */
-size_t FTLIB_FontHeight( qfontface_t *font )
-{
+size_t FTLIB_FontHeight( qfontface_t *font ) {
 	if( !font ) {
 		return 0;
 	}
@@ -67,8 +64,7 @@ size_t FTLIB_FontHeight( qfontface_t *font )
 * FTLIB_strWidth
 * doesn't count invisible characters. Counts up to given length, if any.
 */
-size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int flags )
-{
+size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int flags ) {
 	const char *s = str, *olds;
 	size_t width = 0;
 	wchar_t num, prev_num = 0;
@@ -77,53 +73,55 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int fl
 	getKerning_f getKerning;
 	bool hasKerning;
 
-	if( !str || !font )
+	if( !str || !font ) {
 		return 0;
+	}
 
 	renderString = font->f->renderString;
 	getKerning = font->f->getKerning;
 	hasKerning = ( flags & TEXTDRAWFLAG_KERNING ) && font->hasKerning;
 
-	while( *s && *s != '\n' )
-	{
-		if( maxlen && (size_t)( s - str ) >= maxlen )  // stop counting at desired len
+	while( *s && *s != '\n' ) {
+		if( maxlen && (size_t)( s - str ) >= maxlen ) { // stop counting at desired len
 			return width;
+		}
 
 		olds = s;
 
-		switch( FTLIB_GrabChar( &s, &num, NULL, flags ) )
-		{
-		case GRABCHAR_CHAR:
-			if( num < ' ' )
+		switch( FTLIB_GrabChar( &s, &num, NULL, flags ) ) {
+			case GRABCHAR_CHAR:
+				if( num < ' ' ) {
+					break;
+				}
+
+				glyph = FTLIB_GetGlyph( font, num );
+				if( !glyph ) {
+					num = FTLIB_REPLACEMENT_GLYPH;
+					glyph = FTLIB_GetGlyph( font, num );
+				}
+
+				if( !glyph->shader ) {
+					renderString( font, olds );
+				}
+
+				if( prev_num && hasKerning ) {
+					width += getKerning( font, prev_glyph, glyph );
+				}
+
+				width += glyph->x_advance;
+
+				prev_num = num;
+				prev_glyph = glyph;
 				break;
 
-			glyph = FTLIB_GetGlyph( font, num );
-			if( !glyph )
-			{
-				num = FTLIB_REPLACEMENT_GLYPH;
-				glyph = FTLIB_GetGlyph( font, num );
-			}
+			case GRABCHAR_COLOR:
+				break;
 
-			if( !glyph->shader )
-				renderString( font, olds );
+			case GRABCHAR_END:
+				return width;
 
-			if( prev_num && hasKerning )
-				width += getKerning( font, prev_glyph, glyph );
-
-			width += glyph->x_advance;
-
-			prev_num = num;
-			prev_glyph = glyph;
-			break;
-
-		case GRABCHAR_COLOR:
-			break;
-
-		case GRABCHAR_END:
-			return width;
-
-		default:
-			assert( 0 );
+			default:
+				assert( 0 );
 		}
 	}
 
@@ -134,8 +132,7 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int fl
 * FTLIB_StrlenForWidth
 * returns the len allowed for the string to fit inside a given width when using a given font.
 */
-size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth, int flags )
-{
+size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth, int flags ) {
 	const char *s, *olds;
 	size_t width = 0;
 	int gc;
@@ -146,42 +143,42 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 	getKerning_f getKerning;
 	bool hasKerning;
 
-	if( !str || !font )
+	if( !str || !font ) {
 		return 0;
+	}
 
 	renderString = font->f->renderString;
 	getKerning = font->f->getKerning;
 	hasKerning = ( flags & TEXTDRAWFLAG_KERNING ) && font->hasKerning;
 
-	for( s = str; s; )
-	{
+	for( s = str; s; ) {
 		olds = s;
 		gc = FTLIB_GrabChar( &s, &num, NULL, flags );
-		if( gc == GRABCHAR_CHAR )
-		{
-			if( num == '\n' )
+		if( gc == GRABCHAR_CHAR ) {
+			if( num == '\n' ) {
 				break;
+			}
 
-			if( num < ' ' )
+			if( num < ' ' ) {
 				continue;
+			}
 
 			glyph = FTLIB_GetGlyph( font, num );
-			if( !glyph )
-			{
+			if( !glyph ) {
 				num = FTLIB_REPLACEMENT_GLYPH;
 				glyph = FTLIB_GetGlyph( font, num );
 			}
 
-			if( !glyph->shader )
+			if( !glyph->shader ) {
 				renderString( font, olds );
+			}
 
 			advance = glyph->x_advance;
 			if( hasKerning && prev_num ) {
 				advance += getKerning( font, prev_glyph, glyph );
 			}
 
-			if( maxwidth && ( ( width + advance ) > maxwidth ) )
-			{
+			if( maxwidth && ( ( width + advance ) > maxwidth ) ) {
 				s = olds;
 				break;
 			}
@@ -190,13 +187,13 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 
 			prev_num = num;
 			prev_glyph = glyph;
-		}
-		else if( gc == GRABCHAR_COLOR )
+		} else if( gc == GRABCHAR_COLOR ) {
 			continue;
-		else if( gc == GRABCHAR_END )
+		} else if( gc == GRABCHAR_END ) {
 			break;
-		else
+		} else {
 			assert( 0 );
+		}
 	}
 
 	return (unsigned int)( s - str );
@@ -205,8 +202,7 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 /*
 * FTLIB_FontUnderline
 */
-int FTLIB_FontUnderline( qfontface_t *font, int *thickness )
-{
+int FTLIB_FontUnderline( qfontface_t *font, int *thickness ) {
 	int p = 0, t = 0;
 	if( font ) {
 		p = font->underlinePosition;
@@ -221,8 +217,7 @@ int FTLIB_FontUnderline( qfontface_t *font, int *thickness )
 /*
 * FTLIB_FontAdvance
 */
-size_t FTLIB_FontAdvance( qfontface_t *font )
-{
+size_t FTLIB_FontAdvance( qfontface_t *font ) {
 	if( font ) {
 		return font->advance;
 	}
@@ -232,8 +227,7 @@ size_t FTLIB_FontAdvance( qfontface_t *font )
 /*
 * FTLIB_FontXHeight
 */
-size_t FTLIB_FontXHeight( qfontface_t *font )
-{
+size_t FTLIB_FontXHeight( qfontface_t *font ) {
 	if( font ) {
 		if( !font->xHeight ) {
 			qglyph_t *glyph = FTLIB_GetGlyph( font, 'x' );
@@ -254,8 +248,7 @@ size_t FTLIB_FontXHeight( qfontface_t *font )
 /*
 * FTLIB_SetDrawIntercept
 */
-fdrawchar_t FTLIB_SetDrawIntercept( fdrawchar_t intercept )
-{
+fdrawchar_t FTLIB_SetDrawIntercept( fdrawchar_t intercept ) {
 	fdrawchar_t old = drawCharIntercept;
 	drawCharIntercept = intercept;
 	return old;
@@ -263,98 +256,98 @@ fdrawchar_t FTLIB_SetDrawIntercept( fdrawchar_t intercept )
 
 /*
 * FTLIB_DrawRawChar
-* 
+*
 * Draws one graphics character with 0 being transparent.
 * It can be clipped to the top of the screen to allow the console to be
 * smoothly scrolled off.
 */
-void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color )
-{
+void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color ) {
 	qglyph_t *glyph;
 	fdrawchar_t draw = trap_R_DrawStretchPic;
 
-	if( ( num <= ' ' ) || !font || ( y <= -font->height ) )
+	if( ( num <= ' ' ) || !font || ( y <= -font->height ) ) {
 		return;
+	}
 
 	glyph = FTLIB_GetGlyph( font, num );
-	if( !glyph )
-	{
+	if( !glyph ) {
 		num = FTLIB_REPLACEMENT_GLYPH;
 		glyph = FTLIB_GetGlyph( font, num );
 	}
 
-	if( !glyph->shader )
+	if( !glyph->shader ) {
 		font->f->renderString( font, Q_WCharToUtf8Char( num ) );
+	}
 
-	if( !glyph->width || !glyph->height )
+	if( !glyph->width || !glyph->height ) {
 		return;
+	}
 
-	if( drawCharIntercept )
+	if( drawCharIntercept ) {
 		draw = drawCharIntercept;
+	}
 
-	draw( x + glyph->x_offset, y + font->glyphYOffset + glyph->y_offset, 
-		glyph->width, glyph->height,
-		glyph->s1, glyph->t1, glyph->s2, glyph->t2,
-		color, glyph->shader );
+	draw( x + glyph->x_offset, y + font->glyphYOffset + glyph->y_offset,
+		  glyph->width, glyph->height,
+		  glyph->s1, glyph->t1, glyph->s2, glyph->t2,
+		  color, glyph->shader );
 }
 
 /*
 * FTLIB_DrawClampChar
-* 
+*
 * Draws one graphics character with 0 being transparent.
 * Clipped to [xmin, ymin; xmax, ymax].
 */
-void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
-{
+void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color ) {
 	qglyph_t *glyph;
 	int x2, y2;
 	float s1 = 0.0f, t1 = 0.0f, s2 = 1.0f, t2 = 1.0f;
 	float tw, th;
 	fdrawchar_t draw = trap_R_DrawStretchPic;
 
-	if( ( num <= ' ' ) || !font || ( xmax <= xmin ) || ( ymax <= ymin ) )
+	if( ( num <= ' ' ) || !font || ( xmax <= xmin ) || ( ymax <= ymin ) ) {
 		return;
+	}
 
 	glyph = FTLIB_GetGlyph( font, num );
-	if( !glyph )
-	{
+	if( !glyph ) {
 		num = FTLIB_REPLACEMENT_GLYPH;
 		glyph = FTLIB_GetGlyph( font, num );
 	}
 
-	if( !glyph->shader )
+	if( !glyph->shader ) {
 		font->f->renderString( font, Q_WCharToUtf8Char( num ) );
+	}
 
-	if( !glyph->width || !glyph->height )
+	if( !glyph->width || !glyph->height ) {
 		return;
+	}
 
 	x += glyph->x_offset;
 	y += font->glyphYOffset + glyph->y_offset;
 	x2 = x + glyph->width;
 	y2 = y + glyph->height;
-	if( ( x > xmax ) || ( y > ymax ) || ( x2 <= xmin ) || ( y2 <= ymin ) )
+	if( ( x > xmax ) || ( y > ymax ) || ( x2 <= xmin ) || ( y2 <= ymin ) ) {
 		return;
+	}
 
 	++xmax;
 	++ymax;
 
-	if( x < xmin )
-	{
+	if( x < xmin ) {
 		s1 = ( xmin - x ) / ( float )glyph->width;
 		x = xmin;
 	}
-	if( y < ymin )
-	{
+	if( y < ymin ) {
 		t1 = ( ymin - y ) / ( float )glyph->height;
 		y = ymin;
 	}
-	if( x2 > xmax )
-	{
+	if( x2 > xmax ) {
 		s2 = 1.0f - ( x2 - xmax ) / ( float )glyph->width;
 		x2 = xmax;
 	}
-	if( y2 > ymax )
-	{
+	if( y2 > ymax ) {
 		t2 = 1.0f - ( y2 - ymax ) / ( float )glyph->height;
 		y2 = ymax;
 	}
@@ -362,20 +355,20 @@ void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xma
 	tw = glyph->s2 - glyph->s1;
 	th = glyph->t2 - glyph->t1;
 
-	if( drawCharIntercept )
+	if( drawCharIntercept ) {
 		draw = drawCharIntercept;
+	}
 
 	draw( x, y, x2 - x, y2 - y,
-		glyph->s1 + tw * s1, glyph->t1 + th * t1,
-		glyph->s1 + tw * s2, glyph->t1 + th * t2,
-		color, glyph->shader );
+		  glyph->s1 + tw * s1, glyph->t1 + th * t1,
+		  glyph->s1 + tw * s2, glyph->t1 + th * t2,
+		  color, glyph->shader );
 }
 
 /*
 * FTLIB_DrawClampString
 */
-void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color, int flags )
-{
+void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color, int flags ) {
 	int xoffset = 0;
 	vec4_t scolor;
 	int colorindex;
@@ -387,10 +380,12 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 	getKerning_f getKerning;
 	bool hasKerning;
 
-	if( !str || !font )
+	if( !str || !font ) {
 		return;
-	if( ( xmax <= xmin ) || ( ymax <= ymin ) || ( x > xmax ) || ( y > ymax ) )
+	}
+	if( ( xmax <= xmin ) || ( ymax <= ymin ) || ( x > xmax ) || ( y > ymax ) ) {
 		return;
+	}
 
 	Vector4Copy( color, scolor );
 
@@ -398,52 +393,51 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 	getKerning = font->f->getKerning;
 	hasKerning = ( flags & TEXTDRAWFLAG_KERNING ) && font->hasKerning;
 
-	while( 1 )
-	{
+	while( 1 ) {
 		olds = s;
 		gc = FTLIB_GrabChar( &s, &num, &colorindex, flags );
-		if( gc == GRABCHAR_CHAR )
-		{
-			if( num == '\n' )
+		if( gc == GRABCHAR_CHAR ) {
+			if( num == '\n' ) {
 				break;
+			}
 
-			if( num < ' ' )
+			if( num < ' ' ) {
 				continue;
+			}
 
 			glyph = FTLIB_GetGlyph( font, num );
-			if( !glyph )
-			{
+			if( !glyph ) {
 				num = FTLIB_REPLACEMENT_GLYPH;
 				glyph = FTLIB_GetGlyph( font, num );
 			}
 
-			if( !glyph->shader )
+			if( !glyph->shader ) {
 				renderString( font, olds );
-
-			if( prev_num )
-			{
-				xoffset += prev_glyph->x_advance;
-				if( hasKerning )
-					xoffset += getKerning( font, prev_glyph, glyph );
 			}
 
-			if( x + xoffset > xmax )
+			if( prev_num ) {
+				xoffset += prev_glyph->x_advance;
+				if( hasKerning ) {
+					xoffset += getKerning( font, prev_glyph, glyph );
+				}
+			}
+
+			if( x + xoffset > xmax ) {
 				break;
+			}
 
 			FTLIB_DrawClampChar( x + xoffset, y, num, xmin, ymin, xmax, ymax, font, scolor );
 
 			prev_num = num;
 			prev_glyph = glyph;
-		}
-		else if( gc == GRABCHAR_COLOR )
-		{
+		} else if( gc == GRABCHAR_COLOR ) {
 			assert( ( unsigned )colorindex < MAX_S_COLORS );
 			VectorCopy( color_table[colorindex], scolor );
-		}
-		else if( gc == GRABCHAR_END )
+		} else if( gc == GRABCHAR_END ) {
 			break;
-		else
+		} else {
 			assert( 0 );
+		}
 	}
 }
 
@@ -451,8 +445,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 * FTLIB_DrawRawString - Doesn't care about aligning. Returns drawn len.
 * It can stop when reaching maximum width when a value has been parsed.
 */
-size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int *width, qfontface_t *font, vec4_t color, int flags )
-{
+size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int *width, qfontface_t *font, vec4_t color, int flags ) {
 	unsigned int xoffset = 0;
 	vec4_t scolor;
 	const char *s, *olds;
@@ -463,8 +456,9 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 	getKerning_f getKerning;
 	bool hasKerning;
 
-	if( !str || !font )
+	if( !str || !font ) {
 		return 0;
+	}
 
 	Vector4Copy( color, scolor );
 
@@ -472,37 +466,37 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 	getKerning = font->f->getKerning;
 	hasKerning = ( flags & TEXTDRAWFLAG_KERNING ) && font->hasKerning;
 
-	for( s = str; s; )
-	{
+	for( s = str; s; ) {
 		olds = s;
 		gc = FTLIB_GrabChar( &s, &num, &colorindex, flags );
-		if( gc == GRABCHAR_CHAR )
-		{
-			if( num == '\n' )
+		if( gc == GRABCHAR_CHAR ) {
+			if( num == '\n' ) {
 				break;
+			}
 
-			if( num < ' ' )
+			if( num < ' ' ) {
 				continue;
+			}
 
 			glyph = FTLIB_GetGlyph( font, num );
-			if( !glyph )
-			{
+			if( !glyph ) {
 				num = FTLIB_REPLACEMENT_GLYPH;
 				glyph = FTLIB_GetGlyph( font, num );
 			}
 
-			if( !glyph->shader )
+			if( !glyph->shader ) {
 				renderString( font, olds );
+			}
 
 			// ignore kerning at this point so the full width of the previous character will always be returned
-			if( maxwidth && ( ( xoffset + glyph->x_advance ) > maxwidth ) )
-			{
+			if( maxwidth && ( ( xoffset + glyph->x_advance ) > maxwidth ) ) {
 				s = olds;
 				break;
 			}
 
-			if( hasKerning && prev_num )
+			if( hasKerning && prev_num ) {
 				xoffset += getKerning( font, prev_glyph, glyph );
+			}
 
 			FTLIB_DrawRawChar( x + xoffset, y, num, font, scolor );
 
@@ -510,20 +504,19 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 
 			prev_num = num;
 			prev_glyph = glyph;
-		}
-		else if( gc == GRABCHAR_COLOR )
-		{
+		} else if( gc == GRABCHAR_COLOR ) {
 			assert( ( unsigned )colorindex < MAX_S_COLORS );
 			VectorCopy( color_table[colorindex], scolor );
-		}
-		else if( gc == GRABCHAR_END )
+		} else if( gc == GRABCHAR_END ) {
 			break;
-		else
+		} else {
 			assert( 0 );
+		}
 	}
 
-	if( width )
+	if( width ) {
 		*width = xoffset;
+	}
 
 	return ( s - str );
 }
@@ -532,8 +525,7 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
  *
  * Draws a string with word wrap.
  */
-int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, qfontface_t *font, vec4_t color, int flags )
-{
+int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, qfontface_t *font, vec4_t color, int flags ) {
 	bool ended = false; // whether to stop drawing lines
 
 	// characters and glyphs
@@ -562,8 +554,9 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 	int line_height; // height of a single line
 	int lines = 0; // number of lines drawn - the return value
 
-	if( !str || !font || ( maxwidth <= 0 ) )
+	if( !str || !font || ( maxwidth <= 0 ) ) {
 		return 0;
+	}
 
 	halign = halign % 3; // ignore vertical alignment
 
@@ -576,8 +569,7 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 
 	Vector4Copy( color, word_color );
 
-	do
-	{
+	do {
 		// reset
 		word_chars = space_chars = 0;
 		word_width = space_width = 0;
@@ -589,42 +581,38 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 		// find where to wrap
 		prev_num = 0;
 		prev_glyph = NULL;
-		while( str )
-		{
+		while( str ) {
 			oldstr = str;
 			gc = FTLIB_GrabChar( &str, &num, &colorindex, flags );
-			if( gc == GRABCHAR_CHAR )
-			{
-				if( num == '\n' )
-				{
-					if( !word_chars )
+			if( gc == GRABCHAR_CHAR ) {
+				if( num == '\n' ) {
+					if( !word_chars ) {
 						space_chars = space_width = 0;
+					}
 					Vector4Copy( color, line_next_color );
 					break;
 				}
 
-				if( num < ' ' )
+				if( num < ' ' ) {
 					continue;
+				}
 
 				glyph = FTLIB_GetGlyph( font, num );
-				if( !glyph )
-				{
+				if( !glyph ) {
 					num = FTLIB_REPLACEMENT_GLYPH;
 					glyph = FTLIB_GetGlyph( font, num );
 				}
 
-				if( !glyph->shader )
+				if( !glyph->shader ) {
 					renderString( font, oldstr );
+				}
 
-				if( Q_IsBreakingSpaceChar( num ) )
-				{
-					if( in_space )
-					{
-						if( !line_chars )
+				if( Q_IsBreakingSpaceChar( num ) ) {
+					if( in_space ) {
+						if( !line_chars ) {
 							continue; // skip preceding whitespaces in a line
-					}
-					else
-					{
+						}
+					} else {
 						in_space = true;
 
 						// reached the space without wrapping - send the current word to the line
@@ -634,43 +622,36 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 						word_width = space_width = 0;
 					}
 					space_chars++;
-					if( hasKerning && prev_num )
+					if( hasKerning && prev_num ) {
 						space_width += getKerning( font, prev_glyph, glyph );
+					}
 					space_width += glyph->x_advance;
-				}
-				else
-				{
+				} else {
 					in_space = false;
 
 					glyph_width = glyph->x_advance;
-					if( hasKerning && prev_num )
+					if( hasKerning && prev_num ) {
 						glyph_width += getKerning( font, prev_glyph, glyph );
+					}
 
-					if( !word_chars )
-					{
+					if( !word_chars ) {
 						word = oldstr;
 						Vector4Copy( line_next_color, word_color );
 					}
 
-					if( line_chars )
-					{
+					if( line_chars ) {
 						// wrap after the previous word, ignoring spaces between the words
-						if( ( line_width + space_width + word_width + glyph_width ) > maxwidth )
-						{
+						if( ( line_width + space_width + word_width + glyph_width ) > maxwidth ) {
 							str = word;
 							Vector4Copy( word_color, line_next_color );
 							word_chars = space_chars = 0;
 							word_width = space_width = 0;
 							break;
 						}
-					}
-					else
-					{
+					} else {
 						line = word;
-						if( word_chars ) // always draw at least 1 character in a line
-						{
-							if( ( word_width + glyph_width ) > maxwidth )
-							{
+						if( word_chars ) { // always draw at least 1 character in a line
+							if( ( word_width + glyph_width ) > maxwidth ) {
 								str = oldstr;
 								break;
 							}
@@ -683,56 +664,52 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 
 				prev_num = num;
 				prev_glyph = glyph;
-			}
-			else if( gc == GRABCHAR_COLOR )
-			{
+			} else if( gc == GRABCHAR_COLOR ) {
 				assert( ( unsigned )colorindex < MAX_S_COLORS );
 				VectorCopy( color_table[colorindex], line_next_color );
-				if( !line_chars && !word_chars )
+				if( !line_chars && !word_chars ) {
 					Vector4Copy( line_next_color, line_color );
-			}
-			else if( gc == GRABCHAR_END )
-			{
+				}
+			} else if( gc == GRABCHAR_END ) {
 				ended = true;
 				break;
-			}
-			else
+			} else {
 				assert( 0 );
+			}
 		}
 		// add the remaining part of the word
 		line_chars += space_chars + word_chars;
 		line_width += space_width + word_width;
 
 		// draw the line
-		if( line_chars > 0 )
-		{
+		if( line_chars > 0 ) {
 			line_x = x;
-			if( halign == ALIGN_CENTER_TOP )
+			if( halign == ALIGN_CENTER_TOP ) {
 				line_x -= line_width >> 1;
-			else if( halign == ALIGN_RIGHT_TOP )
+			} else if( halign == ALIGN_RIGHT_TOP ) {
 				line_x -= line_width;
+			}
 
 			prev_num = 0;
 			prev_glyph = NULL;
-			while( ( line_chars > 0 ) && line )
-			{
+			while( ( line_chars > 0 ) && line ) {
 				gc = FTLIB_GrabChar( &line, &num, &colorindex, flags );
-				if( gc == GRABCHAR_CHAR )
-				{
-					if( num < ' ' )
+				if( gc == GRABCHAR_CHAR ) {
+					if( num < ' ' ) {
 						continue;
+					}
 
 					line_chars--;
 
 					glyph = FTLIB_GetGlyph( font, num );
-					if( !glyph )
-					{
+					if( !glyph ) {
 						num = FTLIB_REPLACEMENT_GLYPH;
 						glyph = FTLIB_GetGlyph( font, num );
 					}
 
-					if( hasKerning && prev_num )
+					if( hasKerning && prev_num ) {
 						line_x += getKerning( font, prev_glyph, glyph );
+					}
 
 					FTLIB_DrawRawChar( line_x, y, num, font, line_color );
 
@@ -740,22 +717,21 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 
 					prev_num = num;
 					prev_glyph = glyph;
-				}
-				else if( gc == GRABCHAR_COLOR )
-				{
+				} else if( gc == GRABCHAR_COLOR ) {
 					assert( ( unsigned )colorindex < MAX_S_COLORS );
 					VectorCopy( color_table[colorindex], line_color );
-				}
-				else if( gc == GRABCHAR_END )
+				} else if( gc == GRABCHAR_END ) {
 					break;
-				else
+				} else {
 					assert( 0 );
+				}
 			}
 		}
 
 		lines++;
-		if( ( maxlines > 0 ) && ( lines >= maxlines ) )
+		if( ( maxlines > 0 ) && ( lines >= maxlines ) ) {
 			break;
+		}
 		y += line_height;
 
 	} while( !ended );

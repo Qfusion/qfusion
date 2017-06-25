@@ -30,11 +30,10 @@ namespace WSWUI
 class DatetimeFormatter : public Rocket::Controls::DataFormatter
 {
 public:
-	DatetimeFormatter() : Rocket::Controls::DataFormatter("datetime") {}
+	DatetimeFormatter() : Rocket::Controls::DataFormatter( "datetime" ) {}
 
 	// Expects unix time as input. Formats input as "YY/MM/DD hh:mm"
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data )
-	{
+	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
 		if( raw_data[0].Empty() ) {
 			formatted_data = "";
 			return;
@@ -46,11 +45,10 @@ public:
 
 		if( nt ) {
 			formatted_data = Rocket::Core::String( 32,
-				"%02d/%02d/%02d %02d:%02d", 
-				nt->tm_year+1900, nt->tm_mon + 1, nt->tm_mday, nt->tm_hour, nt->tm_min
-			);
-		}
-		else {
+												   "%02d/%02d/%02d %02d:%02d",
+												   nt->tm_year + 1900, nt->tm_mon + 1, nt->tm_mday, nt->tm_hour, nt->tm_min
+												   );
+		} else {
 			formatted_data = "##/##/## ##:##";
 		}
 	}

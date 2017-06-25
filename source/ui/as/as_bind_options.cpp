@@ -7,7 +7,8 @@
 
 #include "widgets/ui_optionsform.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 typedef WSWUI::OptionsForm OptionsForm;
 
@@ -27,29 +28,27 @@ static Element *OptionsForm_CastToElement( OptionsForm *self ) {
 	return e;
 }
 
-void PrebindOptionsForm( ASInterface *as )
-{
+void PrebindOptionsForm( ASInterface *as ) {
 	ASBind::Class<WSWUI::OptionsForm, ASBind::class_ref>( as->getEngine() );
 }
 
-void BindOptionsForm( ASInterface *as )
-{
+void BindOptionsForm( ASInterface *as ) {
 	asIScriptEngine *engine = as->getEngine();
 
 	ASBind::GetClass<OptionsForm>( engine )
-		.refs( &OptionsForm::AddReference, &OptionsForm::RemoveReference )
+	.refs( &OptionsForm::AddReference, &OptionsForm::RemoveReference )
 
-		.method( &OptionsForm::restoreOptions, "restoreOptions" )
-		.method( &OptionsForm::storeOptions, "storeOptions" )
-		.method( &OptionsForm::applyOptions, "applyOptions" )
+	.method( &OptionsForm::restoreOptions, "restoreOptions" )
+	.method( &OptionsForm::storeOptions, "storeOptions" )
+	.method( &OptionsForm::applyOptions, "applyOptions" )
 
-		.refcast( &OptionsForm_CastToElement, true, true )
-		;
+	.refcast( &OptionsForm_CastToElement, true, true )
+	;
 
 	// Cast behavior for the Element class
 	ASBind::GetClass<Rocket::Core::Element>( engine )
-		.refcast( &Element_CastToOptionsForm, true, true )
-		;
+	.refcast( &Element_CastToOptionsForm, true, true )
+	;
 }
 
 }

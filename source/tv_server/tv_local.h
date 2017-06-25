@@ -27,14 +27,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct upstream_s upstream_t;
 
-typedef struct ginfo_s
-{
+typedef struct ginfo_s {
 	struct edict_s *edicts;
 	struct client_s *clients;
 	int edict_size;
 	int num_edicts;         // current number, <= max_edicts
 	int max_edicts;
-	int max_clients;		// <= sv_maxclients, <= max_edicts
+	int max_clients;        // <= sv_maxclients, <= max_edicts
 
 	struct edict_s *local_edicts;
 	int local_edict_size;
@@ -42,52 +41,46 @@ typedef struct ginfo_s
 	int local_max_edicts;
 } ginfo_t;
 
-struct gclient_s
-{
+struct gclient_s {
 	player_state_t ps;  // communicated by server to clients
-	client_shared_t	r;
+	client_shared_t r;
 };
 
-struct edict_s
-{
+struct edict_s {
 	entity_state_t s;
-	entity_shared_t	r;
+	entity_shared_t r;
 };
 
 #ifdef TCP_ALLOW_TVCONNECT
 #define MAX_INCOMING_CONNECTIONS 256
-typedef struct
-{
+typedef struct {
 	bool active;
-	unsigned int time;      // for timeout
+	int64_t time;      // for timeout
 	socket_t socket;
 	netadr_t address;
 } incoming_t;
 #endif
 
-#define	MAX_CHALLENGES	1024
-typedef struct
-{
+#define MAX_CHALLENGES  1024
+typedef struct {
 	netadr_t adr;
 	int challenge;
-	int time;
+	int64_t time;
 } challenge_t;
 
 // MAX_SNAP_ENTITIES is the guess of what we consider maximum amount of entities
 // to be sent to a client into a snap. It's used for finding size of the backup storage
 #define MAX_SNAP_ENTITIES 64
 
-typedef struct
-{
+typedef struct {
 	char *name;
-	uint8_t *data;            // file being downloaded
-	int size;               // total bytes (can't use EOF because of paks)
-	unsigned int timeout;   // so we can free the file being downloaded
-	// if client omits sending success or failure message
+	uint8_t *data;      // file being downloaded
+	size_t size;        // total bytes (can't use EOF because of paks)
+	int64_t timeout;	// so we can free the file being downloaded
+						// if client omits sending success or failure message
 } client_download_t;
 
-typedef struct
-{
+typedef struct {
 	bool allentities;
 	bool multipov;
 	bool relay;
@@ -97,49 +90,45 @@ typedef struct
 	uint8_t *areabits;                // portalarea visibility bits
 	int numplayers;
 	int ps_size;
-	player_state_t *ps;                 // [numplayers]
+	player_state_t *ps;               // [numplayers]
 	int num_entities;
-	int first_entity;                   // into the circular sv_packet_entities[]
-	unsigned int sentTimeStamp;         // time at what this frame snap was sent to the clients
-	unsigned int UcmdExecuted;
+	int first_entity;                 // into the circular sv_packet_entities[]
+	int64_t sentTimeStamp;            // time at what this frame snap was sent to the clients
+	int64_t UcmdExecuted;
 	game_state_t gameState;
 } client_snapshot_t;
 
 typedef enum { RD_NONE, RD_PACKET } redirect_t;
 
-#define	TV_OUTPUTBUF_LENGTH ( MAX_MSGLEN - 16 )
+#define TV_OUTPUTBUF_LENGTH ( MAX_MSGLEN - 16 )
 extern char tv_outputbuf[TV_OUTPUTBUF_LENGTH];
 
-typedef struct
-{
+typedef struct {
 	const socket_t *socket;
 	const netadr_t *address;
 } flush_params_t;
 
 void TV_FlushRedirect( int sv_redirected, const char *outputbuf, const void *extra );
 
-typedef struct
-{
-	unsigned int framenum;
+typedef struct {
+	int64_t framenum;
 	char command[MAX_STRING_CHARS];
 } game_command_t;
 
 #define MAX_FLOOD_MESSAGES 32
-typedef struct
-{
-	unsigned int locktill;           // locked from talking
-	unsigned int when[MAX_FLOOD_MESSAGES];           // when messages were said
+typedef struct {
+	int64_t locktill;           // locked from talking
+	int64_t when[MAX_FLOOD_MESSAGES];           // when messages were said
 	int whenhead;             // head pointer for when said
 } client_flood_t;
 
-#define	LATENCY_COUNTS	16
-typedef struct client_s
-{
+#define LATENCY_COUNTS  16
+typedef struct client_s {
 	sv_client_state_t state;
 
 	char userinfo[MAX_INFO_STRING];             // name, etc
 
-	relay_t	*relay;
+	relay_t *relay;
 
 	bool reliable;                  // no need for acks, upstream is reliable
 	bool mv;                        // send multiview data to the client
@@ -148,40 +137,35 @@ typedef struct client_s
 	socket_t socket;
 
 	char reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
-	unsigned int reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
-	unsigned int reliableAcknowledge;   // last acknowledged reliable message
-	unsigned int reliableSent;          // last sent reliable message, not necesarily acknowledged yet
-	int suppressCount;					// number of messages rate suppressed
+	int64_t reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
+	int64_t reliableAcknowledge;   // last acknowledged reliable message
+	int64_t reliableSent;          // last sent reliable message, not necesarily acknowledged yet
+	int suppressCount;              // number of messages rate suppressed
 
 	game_command_t gameCommands[MAX_RELIABLE_COMMANDS];
 	int gameCommandCurrent;             // position in the gameCommands table
 
-	unsigned int clientCommandExecuted; // last client-command we received
+	int64_t clientCommandExecuted; // last client-command we received
 
-	unsigned int UcmdTime;
-	unsigned int UcmdExecuted;          // last client-command we executed
-	unsigned int UcmdReceived;          // last client-command we received
+	int64_t UcmdTime;
+	int64_t UcmdExecuted;              // last client-command we executed
+	int64_t UcmdReceived;              // last client-command we received
 	usercmd_t ucmds[CMD_BACKUP];        // each message will send several old cmds
 
-	unsigned int lastPacketSentTime;    // time when we sent the last message to this client
-	unsigned int lastPacketReceivedTime; // time when we received the last message from this client
-	unsigned lastconnect;
+	int64_t lastPacketSentTime;     // time when we sent the last message to this client
+	int64_t lastPacketReceivedTime; // time when we received the last message from this client
+	int64_t lastconnect;
 
 	int lastframe;                  // used for delta compression etc.
 	bool nodelta;               // send one non delta compressed frame trough
 	int nodelta_frame;              // when we get confirmation of this frame, the non-delta frame is trough
 	usercmd_t lastcmd;              // for filling in big drops
-	unsigned int lastSentFrameNum;  // for knowing which was last frame we sent
+	int64_t lastSentFrameNum;  // for knowing which was last frame we sent
 
 	int frame_latency[LATENCY_COUNTS];
 	int ping;
-	edict_t	*edict;                     // EDICT_NUM(clientnum+1)
+	edict_t *edict;                     // EDICT_NUM(clientnum+1)
 	char name[MAX_INFO_VALUE];          // extracted from userinfo, high bits masked
-
-	// The sounds datagram is written to by multicasted sound commands
-	// It can be harmlessly overflowed.
-	msg_t soundsmsg;
-	uint8_t soundsmsgData[MAX_MSGLEN];
 
 	client_snapshot_t snapShots[UPDATE_BACKUP]; // updates can be delta'd from here
 
@@ -194,18 +178,16 @@ typedef struct client_s
 	netchan_t netchan;
 } client_t;
 
-typedef struct
-{
+typedef struct {
 	int spawncount;
-	unsigned int next_heartbeat;
-	unsigned int framenum;
-	unsigned int lastrun;
+	int64_t next_heartbeat;
+	int64_t framenum;
+	int64_t lastrun;
 	unsigned int snapFrameTime;
 } tv_lobby_t;
 
-typedef struct
-{
-	unsigned int realtime;
+typedef struct {
+	int64_t realtime;
 
 	tv_lobby_t lobby;
 

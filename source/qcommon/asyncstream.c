@@ -45,8 +45,7 @@ struct async_stream_module_s {
 /*
 * AsyncStream_InitModule
 */
-async_stream_module_t *AsyncStream_InitModule( const char *name, async_stream_alloc_t alloc_f, async_stream_free_t free_f )
-{
+async_stream_module_t *AsyncStream_InitModule( const char *name, async_stream_alloc_t alloc_f, async_stream_free_t free_f ) {
 	size_t name_size;
 	async_stream_module_t *module;
 
@@ -58,7 +57,7 @@ async_stream_module_t *AsyncStream_InitModule( const char *name, async_stream_al
 
 	// allocate and initialize module, store pointers
 	module = alloc_f( sizeof( *module ) + name_size, __FILE__, __LINE__ );
-	module->name = ( char * )(( uint8_t * )module + sizeof( *module ));
+	module->name = ( char * )( ( uint8_t * )module + sizeof( *module ) );
 	Q_strncpyz( module->name, name, name_size );
 	module->alloc_f = alloc_f;
 	module->free_f = free_f;
@@ -70,9 +69,8 @@ async_stream_module_t *AsyncStream_InitModule( const char *name, async_stream_al
 /*
 * AsyncStream_ReadCallback
 */
-static size_t AsyncStream_ReadCallback( wswcurl_req *req, const void *buf, size_t numb, float percentage, void *privatep )
-{
-	async_stream_handler_t *handler;	
+static size_t AsyncStream_ReadCallback( wswcurl_req *req, const void *buf, size_t numb, float percentage, void *privatep ) {
+	async_stream_handler_t *handler;
 
 	handler = ( async_stream_handler_t * )privatep;
 	assert( handler );
@@ -92,8 +90,7 @@ static size_t AsyncStream_ReadCallback( wswcurl_req *req, const void *buf, size_
 /*
 * AsyncStream_DoneCallback
 */
-static void AsyncStream_DoneCallback( wswcurl_req *req, int status, void *privatep )
-{
+static void AsyncStream_DoneCallback( wswcurl_req *req, int status, void *privatep ) {
 	async_stream_module_t *module;
 	async_stream_handler_t *handler;
 
@@ -133,9 +130,8 @@ static void AsyncStream_DoneCallback( wswcurl_req *req, int status, void *privat
 /*
 * AsyncStream_HeaderCallback
 */
-static void AsyncStream_HeaderCallback( wswcurl_req *req, const char *buf, void *privatep )
-{
-	async_stream_handler_t *handler;	
+static void AsyncStream_HeaderCallback( wswcurl_req *req, const char *buf, void *privatep ) {
+	async_stream_handler_t *handler;
 
 	handler = ( async_stream_handler_t * )privatep;
 	assert( handler );
@@ -151,36 +147,32 @@ static void AsyncStream_HeaderCallback( wswcurl_req *req, const char *buf, void 
 /*
 * AsyncStream_UrlEncode
 */
-void AsyncStream_UrlEncode( const char *src, char *dst, size_t size )
-{
+void AsyncStream_UrlEncode( const char *src, char *dst, size_t size ) {
 	wswcurl_urlencode( src, dst, size );
 }
 
 /*
 * AsyncStream_UrlDecode
 */
-size_t AsyncStream_UrlDecode( const char *src, char *dst, size_t size )
-{
+size_t AsyncStream_UrlDecode( const char *src, char *dst, size_t size ) {
 	return Q_urldecode( src, dst, size );
 }
 
 /*
 * AsyncStream_UrlEncodeUnsafeChars
 */
-void AsyncStream_UrlEncodeUnsafeChars( const char *src, char *dst, size_t size )
-{
+void AsyncStream_UrlEncodeUnsafeChars( const char *src, char *dst, size_t size ) {
 	Q_urlencode_unsafechars( src, dst, size );
 }
 
 /*
 * AsyncStream_PerformRequestExt
 */
-int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *url, const char *method, 
-	const char *data, 
-	const char **headers, int timeout, int resumeFrom, 
-	async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, async_stream_header_cb_t header_cb,
-	void *privatep )
-{
+int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *url, const char *method,
+								   const char *data,
+								   const char **headers, int timeout, int resumeFrom,
+								   async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, async_stream_header_cb_t header_cb,
+								   void *privatep ) {
 	const char *postfields;
 	wswcurl_req *request;
 	async_stream_handler_t *handler;
@@ -213,12 +205,10 @@ int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *ur
 		sep = strchr( url, '?' );
 		request = wswcurl_create( NULL, "%s%s%s", url, sep ? "&" : "?", data );
 		postfields = NULL;
-	}
-	else if( !Q_stricmp( method, "POST" ) ) {
+	} else if( !Q_stricmp( method, "POST" ) ) {
 		request = wswcurl_create( NULL, "%s", url );
 		postfields = data;
-	}
-	else {
+	} else {
 		Com_Printf( S_COLOR_YELLOW "AsyncStream_PerformRequest(\"%s\"): unsupported method \"%s\".\n", module->name, method );
 		return -3;
 	}
@@ -231,8 +221,7 @@ int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *ur
 	// allocate local handler
 	if( module->alloc_f ) {
 		handler = module->alloc_f( sizeof( *handler ), __FILE__, __LINE__ );
-	}
-	else {
+	} else {
 		handler = NULL;
 	}
 
@@ -273,8 +262,8 @@ int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *ur
 	}
 
 	wswcurl_set_timeout( request, timeout );
-	wswcurl_stream_callbacks( request, AsyncStream_ReadCallback, AsyncStream_DoneCallback, 
-		AsyncStream_HeaderCallback, handler );
+	wswcurl_stream_callbacks( request, AsyncStream_ReadCallback, AsyncStream_DoneCallback,
+							  AsyncStream_HeaderCallback, handler );
 
 	// start
 	wswcurl_start( request );
@@ -285,24 +274,22 @@ int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *ur
 /*
 * AsyncStream_PerformRequest
 */
-int AsyncStream_PerformRequest( async_stream_module_t *module, const char *url, const char *method, const char *data, 
-	const char *referer, int timeout, int resumeFrom, async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, 
-	void *privatep )
-{
+int AsyncStream_PerformRequest( async_stream_module_t *module, const char *url, const char *method, const char *data,
+								const char *referer, int timeout, int resumeFrom, async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb,
+								void *privatep ) {
 	const char *headers[3] = { NULL, NULL, NULL };
-	
+
 	headers[0] = "Referer";
 	headers[1] = referer;
 
-	return AsyncStream_PerformRequestExt( module, url, method, data, headers, 
-		timeout, resumeFrom, read_cb, done_cb, NULL, privatep );
+	return AsyncStream_PerformRequestExt( module, url, method, data, headers,
+										  timeout, resumeFrom, read_cb, done_cb, NULL, privatep );
 }
 
 /*
 * AsyncStream_ShutdownModule
 */
-void AsyncStream_ShutdownModule( async_stream_module_t *module )
-{
+void AsyncStream_ShutdownModule( async_stream_module_t *module ) {
 	async_stream_free_t free_f;
 
 	//assert( module );

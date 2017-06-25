@@ -24,14 +24,13 @@
 
 //=============================================================================
 
-#define	MAX_MASTERS						16 // max recipients for heartbeat packets
-#define	HEARTBEAT_SECONDS				300
-#define TTL_MASTERS						24*60*60
+#define MAX_MASTERS                     16 // max recipients for heartbeat packets
+#define HEARTBEAT_SECONDS               300
+#define TTL_MASTERS                     24 * 60 * 60
 
-#define USERINFO_UPDATE_COOLDOWN_MSEC	2000
+#define USERINFO_UPDATE_COOLDOWN_MSEC   2000
 
-typedef enum
-{
+typedef enum {
 	ss_dead,        // no map loaded
 	ss_loading,     // spawning level edicts
 	ss_game         // actively running
@@ -40,24 +39,21 @@ typedef enum
 // some commands are only valid before the server has finished
 // initializing (precache commands, static sounds / objects, etc)
 
-typedef struct ginfo_s
-{
+typedef struct ginfo_s {
 	struct edict_s *edicts;
 	struct client_s *clients;
 
 	int edict_size;
 	int num_edicts;         // current number, <= max_edicts
 	int max_edicts;
-	int max_clients;		// <= sv_maxclients, <= max_edicts
+	int max_clients;        // <= sv_maxclients, <= max_edicts
 } ginfo_t;
 
-#define MAX_FRAME_SOUNDS 256
-typedef struct
-{
+typedef struct {
 	server_state_t state;       // precache commands are only valid during load
 
-	unsigned nextSnapTime;              // always sv.framenum * svc.snapFrameTime msec
-	unsigned framenum;
+	int64_t nextSnapTime;              // always sv.framenum * svc.snapFrameTime msec
+	int64_t framenum;
 
 	char mapname[MAX_QPATH];               // map name
 
@@ -71,67 +67,61 @@ typedef struct
 	ginfo_t gi;
 } server_t;
 
-struct gclient_s
-{
+struct gclient_s {
 	player_state_t ps;  // communicated by server to clients
-	client_shared_t	r;
+	client_shared_t r;  // shared by both the server system and game
 };
 
-struct edict_s
-{
-	entity_state_t s;
-	entity_shared_t	r;
+struct edict_s {
+	entity_state_t s;   // communicated by server to clients
+	entity_shared_t r;  // shared by both the server system and game
 };
 
-#define EDICT_NUM( n ) ( (edict_t *)( (uint8_t *)sv.gi.edicts + sv.gi.edict_size*( n ) ) )
-#define NUM_FOR_EDICT( e ) ( ( (uint8_t *)( e )-(uint8_t *)sv.gi.edicts ) / sv.gi.edict_size )
+#define EDICT_NUM( n ) ( (edict_t *)( (uint8_t *)sv.gi.edicts + sv.gi.edict_size * ( n ) ) )
+#define NUM_FOR_EDICT( e ) ( ( (uint8_t *)( e ) - (uint8_t *)sv.gi.edicts ) / sv.gi.edict_size )
 
-typedef struct
-{
+typedef struct {
 	bool allentities;
 	bool multipov;
 	bool relay;
 	int clientarea;
 	int numareas;
 	int areabytes;
-	uint8_t *areabits;					// portalarea visibility bits
+	uint8_t *areabits;                  // portalarea visibility bits
 	int numplayers;
 	int ps_size;
 	player_state_t *ps;                 // [numplayers]
 	int num_entities;
 	int first_entity;                   // into the circular sv.client_entities[]
-	unsigned int sentTimeStamp;         // time at what this frame snap was sent to the clients
+	int64_t sentTimeStamp;         // time at what this frame snap was sent to the clients
 	unsigned int UcmdExecuted;
 	game_state_t gameState;
 } client_snapshot_t;
 
-typedef struct
-{
+typedef struct {
 	char *name;
 	int file;
 	int size;               // total bytes (can't use EOF because of paks)
-	unsigned int timeout;   // so we can free the file being downloaded
+	int64_t timeout;   // so we can free the file being downloaded
 	                        // if client omits sending success or failure message
 } client_download_t;
 
-typedef struct
-{
-	unsigned int framenum;
+typedef struct {
+	int64_t framenum;
 	char command[MAX_STRING_CHARS];
 } game_command_t;
 
-#define	LATENCY_COUNTS	16
-#define	RATE_MESSAGES	25  // wsw : jal : was 10: I think it must fit sv_pps, I have to calculate it
+#define LATENCY_COUNTS  16
+#define RATE_MESSAGES   25  // wsw : jal : was 10: I think it must fit sv_pps, I have to calculate it
 
 #define HTTP_CLIENT_SESSION_SIZE 16
 
-typedef struct client_s
-{
+typedef struct client_s {
 	sv_client_state_t state;
 
-	char userinfo[MAX_INFO_STRING];			// name, etc
-	char userinfoLatched[MAX_INFO_STRING];	// flood prevention - actual userinfo updates are delayed
-	unsigned int userinfoLatchTimeout;
+	char userinfo[MAX_INFO_STRING];         // name, etc
+	char userinfoLatched[MAX_INFO_STRING];  // flood prevention - actual userinfo updates are delayed
+	int64_t userinfoLatchTimeout;
 
 	bool reliable;                  // no need for acks, connection is reliable
 	bool mv;                        // send multiview data to the client
@@ -140,28 +130,28 @@ typedef struct client_s
 	socket_t socket;
 
 	char reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
-	unsigned int reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
-	unsigned int reliableAcknowledge;   // last acknowledged reliable message
-	unsigned int reliableSent;          // last sent reliable message, not necesarily acknowledged yet
+	int64_t reliableSequence;      // last added reliable message, not necesarily sent or acknowledged yet
+	int64_t reliableAcknowledge;   // last acknowledged reliable message
+	int64_t reliableSent;          // last sent reliable message, not necesarily acknowledged yet
 
 	game_command_t gameCommands[MAX_RELIABLE_COMMANDS];
-	int gameCommandCurrent;             // position in the gameCommands table
+	int64_t gameCommandCurrent;             // position in the gameCommands table
 
-	unsigned int clientCommandExecuted; // last client-command we received
+	int64_t clientCommandExecuted; // last client-command we received
 
-	unsigned int UcmdTime;
-	unsigned int UcmdExecuted;          // last client-command we executed
-	unsigned int UcmdReceived;          // last client-command we received
+	int64_t UcmdTime;
+	int64_t UcmdExecuted;          // last client-command we executed
+	int64_t UcmdReceived;          // last client-command we received
 	usercmd_t ucmds[CMD_BACKUP];        // each message will send several old cmds
 
-	unsigned int lastPacketSentTime;    // time when we sent the last message to this client
-	unsigned int lastPacketReceivedTime; // time when we received the last message from this client
-	unsigned lastconnect;
+	int64_t lastPacketSentTime;    // time when we sent the last message to this client
+	int64_t lastPacketReceivedTime; // time when we received the last message from this client
+	int64_t lastconnect;
 
-	int lastframe;                  // used for delta compression etc.
+	int64_t lastframe;                  // used for delta compression etc.
 	bool nodelta;               // send one non delta compressed frame trough
-	int nodelta_frame;              // when we get confirmation of this frame, the non-delta frame is trough
-	unsigned int lastSentFrameNum;  // for knowing which was last frame we sent
+	int64_t nodelta_frame;              // when we get confirmation of this frame, the non-delta frame is through
+	int64_t lastSentFrameNum;  // for knowing which was last frame we sent
 
 	int frame_latency[LATENCY_COUNTS];
 	int ping;
@@ -170,7 +160,7 @@ typedef struct client_s
 	int rate;
 	int suppressCount;              // number of messages rate suppressed
 #endif
-	edict_t	*edict;                 // EDICT_NUM(clientnum+1)
+	edict_t *edict;                 // EDICT_NUM(clientnum+1)
 	char name[MAX_INFO_VALUE];      // extracted from userinfo, high bits masked
 	char session[HTTP_CLIENT_SESSION_SIZE];  // session id for HTTP requests
 
@@ -200,27 +190,25 @@ typedef struct client_s
 // MAX_CHALLENGES is made large to prevent a denial
 // of service attack that could cycle all of them
 // out before legitimate users connected
-#define	MAX_CHALLENGES	1024
+#define MAX_CHALLENGES  1024
 
 // MAX_SNAP_ENTITIES is the guess of what we consider maximum amount of entities
 // to be sent to a client into a snap. It's used for finding size of the backup storage
 #define MAX_SNAP_ENTITIES 64
 
-typedef struct
-{
+typedef struct {
 	netadr_t adr;
 	int challenge;
-	int time;
+	int64_t time;
 } challenge_t;
 
 // for server side demo recording
-typedef struct
-{
+typedef struct {
 	int file;
 	char *filename;
 	char *tempname;
 	time_t localtime;
-	unsigned int basetime, duration;
+	int64_t basetime, duration;
 	client_t client;                // special client for writing the messages
 	char meta_data[SNAP_MAX_DEMO_META_DATA_SIZE];
 	size_t meta_data_realsize;
@@ -230,10 +218,9 @@ typedef server_static_demo_t demorec_t;
 
 #ifdef TCP_ALLOW_CONNECT
 #define MAX_INCOMING_CONNECTIONS 256
-typedef struct
-{
+typedef struct {
 	bool active;
-	unsigned int time;      // for timeout
+	int64_t time;      // for timeout
 	socket_t socket;
 	netadr_t address;
 } incoming_t;
@@ -241,25 +228,21 @@ typedef struct
 
 #define MAX_MOTD_LEN 1024
 
-typedef struct client_entities_s
-{
-	unsigned num_entities;				// maxclients->integer*UPDATE_BACKUP*MAX_PACKET_ENTITIES
-	unsigned next_entities;				// next client_entity to use
-	entity_state_t *entities;			// [num_entities]
+typedef struct client_entities_s {
+	unsigned num_entities;              // maxclients->integer*UPDATE_BACKUP*MAX_PACKET_ENTITIES
+	unsigned next_entities;             // next client_entity to use
+	entity_state_t *entities;           // [num_entities]
 } client_entities_t;
 
-typedef struct fatvis_s
-{
+typedef struct fatvis_s {
 	vec_t *skyorg;
-	uint8_t pvs[MAX_MAP_LEAFS/8];
-	uint8_t phs[MAX_MAP_LEAFS/8];
+	uint8_t pvs[MAX_MAP_LEAFS / 8];
 } fatvis_t;
 
-typedef struct
-{
+typedef struct {
 	bool initialized;               // sv_init has completed
-	unsigned int realtime;                  // real world time - always increasing, no clamping, etc
-	unsigned int gametime;                  // game world time - always increasing, no clamping, etc
+	int64_t realtime;               // real world time - always increasing, no clamping, etc
+	int64_t gametime;               // game world time - always increasing, no clamping, etc
 
 	socket_t socket_udp;
 	socket_t socket_udp6;
@@ -284,7 +267,7 @@ typedef struct
 
 	server_static_demo_t demo;
 
-	purelist_t *purelist;				// pure file support
+	purelist_t *purelist;               // pure file support
 
 	cmodel_state_t *cms;                // passed to CM-functions
 
@@ -295,15 +278,14 @@ typedef struct
 	void *wakelock;
 } server_static_t;
 
-typedef struct
-{
-	unsigned int nextHeartbeat;
-	unsigned int lastActivity;
-	unsigned int snapFrameTime;		// msecs between server packets
-	unsigned int gameFrameTime;		// msecs between game code executions
+typedef struct {
+	int64_t nextHeartbeat;
+	int64_t lastActivity;
+	unsigned int snapFrameTime;     // msecs between server packets
+	unsigned int gameFrameTime;     // msecs between game code executions
 	bool autostarted;
-	unsigned int lastMasterResolve;
-	unsigned int autoUpdateMinute;	// the minute number we should run the autoupdate check, in the range 0 to 59
+	int64_t lastMasterResolve;
+	unsigned int autoUpdateMinute;  // the minute number we should run the autoupdate check, in the range 0 to 59
 } server_constant_t;
 
 //=============================================================================
@@ -316,7 +298,7 @@ extern mempool_t *sv_mempool;
 
 extern server_constant_t svc;              // constant server info (trully persistant since sv_init)
 extern server_static_t svs;                // persistant server info
-extern server_t	sv;                 // local server
+extern server_t sv;                 // local server
 
 extern cvar_t *sv_ip;
 extern cvar_t *sv_port;
@@ -443,19 +425,17 @@ void SV_ResetClientFrameCounters( void );
 typedef enum { RD_NONE, RD_PACKET } redirect_t;
 
 // destination class for SV_multicast
-typedef enum
-{
+typedef enum {
 	MULTICAST_ALL,
 	MULTICAST_PHS,
 	MULTICAST_PVS
 } multicast_t;
 
-#define	SV_OUTPUTBUF_LENGTH ( MAX_MSGLEN - 16 )
+#define SV_OUTPUTBUF_LENGTH ( MAX_MSGLEN - 16 )
 
 extern char sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 
-typedef struct
-{
+typedef struct {
 	const socket_t *socket;
 	const netadr_t *address;
 } flush_params_t;
@@ -471,8 +451,8 @@ void SV_BroadcastCommand( const char *format, ... );
 //
 void SV_ParseClientMessage( client_t *client, msg_t *msg );
 bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
-                           int game_port, int challenge, bool fakeClient, bool tvClient,
-                           unsigned int ticket_id, int session_id );
+					   int game_port, int challenge, bool fakeClient, bool tvClient,
+					   unsigned int ticket_id, int session_id );
 void SV_DropClient( client_t *drop, int type, const char *format, ... );
 void SV_ExecuteClientThinks( int clientNum );
 void SV_ClientResetCommandBuffers( client_t *client );
@@ -522,7 +502,7 @@ void SV_Demo_Purge_f( void );
 void SV_DemoList_f( client_t *client );
 void SV_DemoGet_f( client_t *client );
 
-#define SV_SetDemoMetaKeyValue(k,v) svs.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue(svs.demo.meta_data, sizeof(svs.demo.meta_data), svs.demo.meta_data_realsize, k, v)
+#define SV_SetDemoMetaKeyValue( k,v ) svs.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue( svs.demo.meta_data, sizeof( svs.demo.meta_data ), svs.demo.meta_data_realsize, k, v )
 
 bool SV_IsDemoDownloadRequest( const char *request );
 
@@ -550,13 +530,13 @@ int SV_MM_GenerateLocalSession( void );
 struct stat_query_s *SV_MM_CreateQuery( const char *iface, const char *url, bool get );
 void SV_MM_SendQuery( stat_query_t *query );
 void SV_MM_GameState( bool state );
-void SV_MM_GetMatchUUID( void (*callback_fn)( const char *uuid ) );
+void SV_MM_GetMatchUUID( void ( *callback_fn )( const char *uuid ) );
 
-// 
+//
 // sv_web.c
 //
-typedef http_response_code_t ( *http_game_query_cb )( http_query_method_t method, const char *resource, 
-		const char *query_string, char **content, size_t *content_length );
+typedef http_response_code_t ( *http_game_query_cb )( http_query_method_t method, const char *resource,
+													  const char *query_string, char **content, size_t *content_length );
 
 void SV_Web_Init( void );
 void SV_Web_Shutdown( void );

@@ -21,13 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    65
+#define UI_API_VERSION      66
 
-typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
-	int status, const char *contentType, void *privatep);
-typedef void (*ui_async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
+typedef size_t ( *ui_async_stream_read_cb_t )( const void *buf, size_t numb, float percentage,
+											 int status, const char *contentType, void *privatep );
+typedef void ( *ui_async_stream_done_cb_t )( int status, const char *contentType, void *privatep );
 
-typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
+typedef void ( *ui_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 enum {
 	UI_CONTEXT_QUICK,
@@ -38,28 +38,15 @@ enum {
 
 #include "../cgame/ref.h"
 
-struct irc_chat_history_node_s;
-
 //
 // these are the functions exported by the refresh module
 //
-typedef struct
-{
+typedef struct {
 	// halts the application
 	void ( *Error )( const char *str );
 
 	// console messages
 	void ( *Print )( const char *str );
-
-	// dynvars
-	dynvar_t *( *Dynvar_Create )( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter );
-	void ( *Dynvar_Destroy )( dynvar_t *dynvar );
-	dynvar_t *( *Dynvar_Lookup )( const char *name );
-	const char *( *Dynvar_GetName )( dynvar_t *dynvar );
-	dynvar_get_status_t ( *Dynvar_GetValue )( dynvar_t *dynvar, void **value );
-	dynvar_set_status_t ( *Dynvar_SetValue )( dynvar_t *dynvar, void *value );
-	void ( *Dynvar_AddListener )( dynvar_t *dynvar, dynvar_listener_f listener );
-	void ( *Dynvar_RemoveListener )( dynvar_t *dynvar, dynvar_listener_f listener );
 
 	// console variable interaction
 	cvar_t *( *Cvar_Get )( const char *name, const char *value, int flags );
@@ -85,6 +72,7 @@ typedef struct
 	void ( *R_AddLightStyleToScene )( int style, float r, float g, float b );
 	void ( *R_AddPolyToScene )( const poly_t *poly );
 	void ( *R_RenderScene )( const refdef_t *fd );
+	void ( *R_BlurScreen )( void );
 	void ( *R_EndFrame )( void );
 	void ( *R_RegisterWorldModel )( const char *name );
 	void ( *R_ModelBounds )( const struct model_s *mod, vec3_t mins, vec3_t maxs );
@@ -92,7 +80,7 @@ typedef struct
 	struct model_s *( *R_RegisterModel )( const char *name );
 	struct shader_s *( *R_RegisterSkin )( const char *name );
 	struct shader_s *( *R_RegisterPic )( const char *name );
-	struct shader_s *( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
+	struct shader_s *( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t * data, int samples );
 	struct shader_s *( *R_RegisterLevelshot )( const char *name, struct shader_s *defaultPic, bool *matchesDefault );
 	struct skinfile_s *( *R_RegisterSkinFile )( const char *name );
 	struct shader_s *( *R_RegisterVideo )( const char *name );
@@ -128,10 +116,10 @@ typedef struct
 	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
-	fdrawchar_t ( *SCR_SetDrawCharIntercept )( fdrawchar_t intercept );
+	ui_fdrawchar_t ( *SCR_SetDrawCharIntercept )( ui_fdrawchar_t intercept );
 
 	void ( *CL_Quit )( void );
-	void ( *CL_SetKeyDest )( int key_dest );
+	void ( *CL_SetKeyDest )( keydest_t key_dest );
 	void ( *CL_ResetServerCount )( void );
 	char *( *CL_GetClipboardData )( void );
 	void ( *CL_SetClipboardData )( const char *data );
@@ -155,7 +143,7 @@ typedef struct
 	void ( *VID_FlashWindow )( int count );
 
 	void ( *GetConfigString )( int i, char *str, int size );
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 	uint64_t ( *Microseconds )( void );
 
 	// files will be memory mapped read only
@@ -191,7 +179,7 @@ typedef struct
 
 	// MatchMaker
 	bool ( *MM_Login )( const char *user, const char *password );
-	bool ( *MM_Logout)( bool force );
+	bool ( *MM_Logout )( bool force );
 	int ( *MM_GetLoginState )( void );
 	size_t ( *MM_GetLastErrorMessage )( char *buffer, size_t buffer_size );
 	size_t ( *MM_GetProfileURL )( char *buffer, size_t buffer_size, bool rml );
@@ -200,24 +188,14 @@ typedef struct
 	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 
-	struct angelwrap_api_s *( *asGetAngelExport ) ( void );
+	struct angelwrap_api_s *( *asGetAngelExport )( void );
 
 	// Asynchronous HTTP requests
 	void ( *AsyncStream_UrlEncode )( const char *src, char *dst, size_t size );
 	size_t ( *AsyncStream_UrlDecode )( const char *src, char *dst, size_t size );
 	int ( *AsyncStream_PerformRequest )( const char *url, const char *method, const char *data, int timeout,
-		ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep );
+										 ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep );
 	size_t ( *GetBaseServerURL )( char *buffer, size_t buffer_size );
-
-	// IRC
-	size_t (*Irc_HistorySize)(void);
-	size_t (*Irc_HistoryTotalSize)(void);
-
-	// history is in reverse order (newest line first)
-	const struct irc_chat_history_node_s *(*Irc_GetHistoryHeadNode)(void);
-	const struct irc_chat_history_node_s *(*Irc_GetNextHistoryNode)(const struct irc_chat_history_node_s *n);
-	const struct irc_chat_history_node_s *(*Irc_GetPrevHistoryNode)(const struct irc_chat_history_node_s *n);
-	const char *(*Irc_GetHistoryNodeLine)(const struct irc_chat_history_node_s *n);
 
 	// l10n
 	void ( *L10n_ClearDomain )( void );
@@ -226,29 +204,28 @@ typedef struct
 	const char *( *L10n_GetUserLanguage )( void );
 } ui_import_t;
 
-typedef struct
-{
+typedef struct {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
 	void ( *Init )( int vidWidth, int vidHeight, float pixelRatio,
-			int protocol, const char *demoExtension, const char *basePath );
+					int protocol, const char *demoExtension, const char *basePath );
 	void ( *Shutdown )( void );
 
 	void ( *TouchAllAssets )( void );
 
-	void ( *Refresh )( unsigned int time, int clientState, int serverState, 
-		bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
-		bool backGround, bool showCursor );
+	void ( *Refresh )( int64_t time, int clientState, int serverState,
+					   bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime,
+					   bool backGround, bool showCursor );
 
-	void ( *UpdateConnectScreen )( const char *serverName, const char *rejectmessage, 
-		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
-		int connectCount, bool backGround );
+	void ( *UpdateConnectScreen )( const char *serverName, const char *rejectmessage,
+								   int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed,
+								   int connectCount, bool backGround );
 
 	void ( *Keydown )( int context, int key );
 	void ( *Keyup )( int context, int key );
 	void ( *CharEvent )( int context, wchar_t key );
 
-	void ( *MouseMove )( int context, int dx, int dy );
+	void ( *MouseMove )( int context, int frameTime, int dx, int dy );
 	void ( *MouseSet )( int context, int mx, int my, bool showCursor );
 
 	bool ( *TouchEvent )( int context, int id, touchevent_t type, int x, int y );
@@ -265,7 +242,7 @@ typedef struct
 #ifdef __cplusplus
 extern "C" {
 #endif
-	ui_export_t *GetUIAPI( ui_import_t *import );
+ui_export_t *GetUIAPI( ui_import_t *import );
 #ifdef __cplusplus
 }
 #endif

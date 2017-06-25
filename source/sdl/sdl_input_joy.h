@@ -27,4 +27,3 @@ void IN_SDL_JoyCommands( void );
 void IN_SDL_JoyShutdown( void );
 
 #endif // IN_SDL_CONTROLLER_H
-

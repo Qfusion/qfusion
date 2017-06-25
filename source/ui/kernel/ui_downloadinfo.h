@@ -23,21 +23,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "kernel/ui_common.h"
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 class DownloadInfo
 {
 public:
-	DownloadInfo() : name( "" ), type( 0 ), percent( 0 ), speed( 0 )
-	{
+	DownloadInfo() : name( "" ), type( 0 ), percent( 0 ), speed( 0 ) {
 	}
 
-	DownloadInfo( const char *name, int type ) : name( name ? name : "" ), type( type ), percent( 0 ), speed( 0 )
-	{
+	DownloadInfo( const char *name, int type ) : name( name ? name : "" ), type( type ), percent( 0 ), speed( 0 ) {
 	}
 
-	DownloadInfo & operator = ( const DownloadInfo &other )
-	{
+	DownloadInfo & operator =( const DownloadInfo &other ) {
 		name = other.getName();
 		type = other.getType();
 		percent = other.getPercent();

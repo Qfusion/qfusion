@@ -25,65 +25,57 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "as/asui.h"
 #include "as/asui_local.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 // dummy funcdef
-static void ASMatchMaker_EventListenerCallback( Event *event )
-{
+static void ASMatchMaker_EventListenerCallback( Event *event ) {
 }
 
 class ASMatchMaker
 {
 public:
-	ASMatchMaker( ASInterface *asmodule ) : state(0), asmodule(asmodule) { }
+	ASMatchMaker( ASInterface *asmodule ) : state( 0 ), asmodule( asmodule ) { }
 	~ASMatchMaker() { clearEventListeners(); }
 
-	bool login( const asstring_t &user, const asstring_t &password )
-	{
+	bool login( const asstring_t &user, const asstring_t &password ) {
 		return trap::MM_Login( ASSTR( user ), ASSTR( password ) ) == true;
 	}
 
-	bool logout( void )
-	{
+	bool logout( void ) {
 		return trap::MM_Logout( false ) == true;
 	}
 
-	int getState( void ) const
-	{
+	int getState( void ) const {
 		return state;
 	}
 
-	asstring_t *getUser( void ) const
-	{
+	asstring_t *getUser( void ) const {
 		return ASSTR( trap::Cvar_String( "cl_mm_user" ) );
 	}
 
-	asstring_t *getProfileURL( bool rml ) const
-	{
+	asstring_t *getProfileURL( bool rml ) const {
 		char buffer[2048];
 
 		trap::MM_GetProfileURL( buffer, sizeof( buffer ), rml ? true : false );
 		return ASSTR( buffer );
 	}
 
-	asstring_t *getBaseWebURL() const
-	{
+	asstring_t *getBaseWebURL() const {
 		char buffer[2048];
 
 		trap::MM_GetBaseWebURL( buffer, sizeof( buffer ) );
 		return ASSTR( buffer );
 	}
 
-	asstring_t *getLastError( void ) const
-	{
+	asstring_t *getLastError( void ) const {
 		char buffer[2048];
 
 		trap::MM_GetLastErrorMessage( buffer, sizeof( buffer ) );
 		return ASSTR( buffer );
 	}
 
-	void update( void )
-	{
+	void update( void ) {
 		const int pstate = state;
 		state = trap::MM_GetLoginState();
 
@@ -98,7 +90,7 @@ public:
 
 	void addEventListener( const asstring_t &event, asIScriptFunction *func ) {
 		EventCallback cb;
-		
+
 		cb = ASBind::CreateFunctionPtr( func, cb );
 
 		Listener l( ASSTR( event ), cb );
@@ -110,8 +102,8 @@ public:
 
 		for( ListenersList::iterator it = listeners.begin(); it != listeners.end(); ++it ) {
 			if( it->first == l.first && it->second.getPtr() == func ) {
-				listeners.erase(it);
 				it->second.release();
+				it = listeners.erase( it );
 				break;
 			}
 		}
@@ -123,8 +115,7 @@ private:
 	int state;
 	ASInterface *asmodule;
 
-	void dispatchEvent( const char *event, const Rocket::Core::Dictionary &parms )
-	{
+	void dispatchEvent( const char *event, const Rocket::Core::Dictionary &parms ) {
 		Rocket::Core::Event *ev = Rocket::Core::Factory::InstanceEvent( NULL, event, parms, false );
 
 		ev->SetPhase( Rocket::Core::Event::PHASE_BUBBLE ); // FIXME?
@@ -141,7 +132,7 @@ erase:
 
 			if( it->first == event ) {
 				ev->AddReference();
-				
+
 				try {
 					func.setContext( asmodule->getContext() );
 					func( ev );
@@ -151,20 +142,19 @@ erase:
 				}
 			}
 
-			 ++it;
+			++it;
 		}
 
 		ev->RemoveReference();
 	}
 
-	void clearEventListeners( void )
-	{
+	void clearEventListeners( void ) {
 		for( ListenersList::iterator it = listeners.begin(); it != listeners.end(); ++it )
 			it->second.release();
 		listeners.clear();
 	}
 
-	typedef ASBind::FunctionPtr<void( Rocket::Core::Event* )> EventCallback;
+	typedef ASBind::FunctionPtr<void ( Rocket::Core::Event* )> EventCallback;
 	typedef std::pair<std::string, EventCallback> Listener;
 	typedef std::vector<Listener> ListenersList;
 	ListenersList listeners;
@@ -173,7 +163,8 @@ erase:
 }
 ASBIND_TYPE( ASUI::ASMatchMaker, Matchmaker );
 
-namespace ASUI {
+namespace ASUI
+{
 
 // ====================================================================
 
@@ -181,16 +172,15 @@ static ASMatchMaker *asMM;
 
 /// This makes AS aware of this class so other classes may reference
 /// it in their properties and methods
-void PrebindMatchMaker( ASInterface *as )
-{
+void PrebindMatchMaker( ASInterface *as ) {
 	ASBind::Class<ASMatchMaker, ASBind::class_singleref>( as->getEngine() );
 }
 
-void BindMatchMaker( ASInterface *as )
-{
+void BindMatchMaker( ASInterface *as ) {
 	ASBind::Global( as->getEngine() )
-		// setTimeout and setInterval callback funcdefs
-		.funcdef( &ASMatchMaker_EventListenerCallback, "MMEventListenerCallback" )
+
+	// setTimeout and setInterval callback funcdefs
+	.funcdef( &ASMatchMaker_EventListenerCallback, "MMEventListenerCallback" )
 	;
 
 	ASBind::Enum( as->getEngine(), "eMatchmakerState" )
@@ -200,39 +190,37 @@ void BindMatchMaker( ASInterface *as )
 	;
 
 	ASBind::GetClass<ASMatchMaker>( as->getEngine() )
-		.method( &ASMatchMaker::login, "login" )
-		.method( &ASMatchMaker::logout, "logout" )
-		.method( &ASMatchMaker::getState, "get_state" )
-		.method( &ASMatchMaker::getLastError, "get_lastError" )
-		.method( &ASMatchMaker::getUser, "get_user" )
-		.method( &ASMatchMaker::getProfileURL, "profileURL" )
-		.method( &ASMatchMaker::getBaseWebURL, "baseWebURL" )
+	.method( &ASMatchMaker::login, "login" )
+	.method( &ASMatchMaker::logout, "logout" )
+	.method( &ASMatchMaker::getState, "get_state" )
+	.method( &ASMatchMaker::getLastError, "get_lastError" )
+	.method( &ASMatchMaker::getUser, "get_user" )
+	.method( &ASMatchMaker::getProfileURL, "profileURL" )
+	.method( &ASMatchMaker::getBaseWebURL, "baseWebURL" )
 
-		.method2( &ASMatchMaker::addEventListener, "void addEventListener( const String &event, MMEventListenerCallback @callback )" )
-		.method2( &ASMatchMaker::removeEventListener, "void removeEventListener( const String &event, MMEventListenerCallback @callback )" )
+	.method2( &ASMatchMaker::addEventListener, "void addEventListener( const String &event, MMEventListenerCallback @callback )" )
+	.method2( &ASMatchMaker::removeEventListener, "void removeEventListener( const String &event, MMEventListenerCallback @callback )" )
 	;
 }
 
-void BindMatchMakerGlobal( ASInterface *as )
-{
+void BindMatchMakerGlobal( ASInterface *as ) {
 	assert( asMM == NULL );
 
 	// set the AS module for scheduler
 	asMM = __new__( ASMatchMaker )( as );
 
 	ASBind::Global( as->getEngine() )
-		// global variable
-		.var( asMM, "matchmaker" )
+
+	// global variable
+	.var( asMM, "matchmaker" )
 	;
 }
 
-void RunMatchMakerFrame( void )
-{
+void RunMatchMakerFrame( void ) {
 	asMM->update();
 }
 
-void UnbindMatchMaker( void )
-{
+void UnbindMatchMaker( void ) {
 	__delete__( asMM );
 	asMM = NULL;
 }

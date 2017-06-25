@@ -955,7 +955,8 @@ void AiAasRouteCache::InitReachabilityAreas() {
 	}
 }
 
-struct RoutingUpdateRef {
+struct RoutingUpdateRef
+{
 	int index;
 	unsigned short tmpTravelTime;
 

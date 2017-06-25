@@ -2,8 +2,8 @@
 // Microsoft Developer Studio generated include file.
 // Used by warsow.rc
 //
-#define IDI_APPICON_VALUE		105
-#define IDI_APPICON_VALUE1		106
+#define IDI_APPICON_VALUE       105
+#define IDI_APPICON_VALUE1      106
 
 // Next default values for new objects
 //

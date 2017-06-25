@@ -95,7 +95,7 @@ typedef struct
 
 static void SP_worldspawn( edict_t *ent );
 
-spawn_t	spawns[] = {
+spawn_t spawns[] = {
 	{ "info_player_start", SP_info_player_start },
 	{ "info_player_deathmatch", SP_info_player_deathmatch },
 	{ "info_player_intermission", SP_info_player_intermission },
@@ -173,13 +173,13 @@ spawn_t	spawns[] = {
 	{ NULL, NULL }
 };
 
-static gsitem_t *G_ItemForEntity( edict_t *ent )
-{
+static gsitem_t *G_ItemForEntity( edict_t *ent ) {
 	gsitem_t *item;
 
 	// check item spawn functions
-	if( ( item = GS_FindItemByClassname( ent->classname ) ) != NULL )
+	if( ( item = GS_FindItemByClassname( ent->classname ) ) != NULL ) {
 		return item;
+	}
 
 	return NULL;
 }
@@ -189,8 +189,7 @@ static gsitem_t *G_ItemForEntity( edict_t *ent )
 *
 * Returns true if there's a direct match
 */
-static bool G_GametypeFilterMatch( const char *filter )
-{
+static bool G_GametypeFilterMatch( const char *filter ) {
 	const char *list_separators = ", ";
 	char *tok, *temp;
 	bool match = false;
@@ -212,40 +211,44 @@ static bool G_GametypeFilterMatch( const char *filter )
 /*
 * G_CanSpawnEntity
 */
-static bool G_CanSpawnEntity( edict_t *ent )
-{
+static bool G_CanSpawnEntity( edict_t *ent ) {
 	gsitem_t *item;
 
-	if( ent == world )
+	if( ent == world ) {
 		return true;
+	}
 
-	if( !GS_TeamBasedGametype() && st.notfree )
+	if( !GS_TeamBasedGametype() && st.notfree ) {
 		return false;
-	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() == 1 ) ) && ( st.notduel || st.notfree ) )
+	}
+	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() == 1 ) ) && ( st.notduel || st.notfree ) ) {
 		return false;
-	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() != 1 ) ) && st.notteam )
+	}
+	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() != 1 ) ) && st.notteam ) {
 		return false;
+	}
 
 	// check for Q3TA-style inhibition key
-	if( st.gametype )
-	{
-		if( !G_GametypeFilterMatch( st.gametype ) )
+	if( st.gametype ) {
+		if( !G_GametypeFilterMatch( st.gametype ) ) {
 			return false;
+		}
 	}
-	if( st.not_gametype )
-	{
-		if( G_GametypeFilterMatch( st.not_gametype ) )
+	if( st.not_gametype ) {
+		if( G_GametypeFilterMatch( st.not_gametype ) ) {
 			return false;
+		}
 	}
 
-	if( ( item = G_ItemForEntity( ent ) ) != NULL )
-	{
+	if( ( item = G_ItemForEntity( ent ) ) != NULL ) {
 		// not pickable items aren't either spawnable
-		if( !( item->flags & ITFLAG_PICKABLE ) )
+		if( !( item->flags & ITFLAG_PICKABLE ) ) {
 			return false;
+		}
 
-		if( !G_Gametype_CanSpawnItem( item ) )
+		if( !G_Gametype_CanSpawnItem( item ) ) {
 			return false;
+		}
 	}
 
 	return true;
@@ -253,45 +256,41 @@ static bool G_CanSpawnEntity( edict_t *ent )
 
 /*
 * G_CallSpawn
-* 
+*
 * Finds the spawn function for the entity and calls it
 */
-bool G_CallSpawn( edict_t *ent )
-{
-	spawn_t	*s;
+bool G_CallSpawn( edict_t *ent ) {
+	spawn_t *s;
 	gsitem_t *item;
 
-	if( !ent->classname )
-	{
-		if( developer->integer )
+	if( !ent->classname ) {
+		if( developer->integer ) {
 			G_Printf( "G_CallSpawn: NULL classname\n" );
+		}
 		return false;
 	}
 
-	if( ( item = G_ItemForEntity( ent ) ) != NULL )
-	{
+	if( ( item = G_ItemForEntity( ent ) ) != NULL ) {
 		SpawnItem( ent, item );
 		return true;
 	}
 
 	// check normal spawn functions
-	for( s = spawns; s->name; s++ )
-	{
-		if( !Q_stricmp( s->name, ent->classname ) )
-		{
+	for( s = spawns; s->name; s++ ) {
+		if( !Q_stricmp( s->name, ent->classname ) ) {
 			s->spawn( ent );
 			return true;
 		}
 	}
 
 	// see if there's a spawn definition in the gametype scripts
-	if( G_asCallMapEntitySpawnScript( ent->classname, ent ) )
-	{
+	if( G_asCallMapEntitySpawnScript( ent->classname, ent ) ) {
 		return true; // handled by the script
 	}
 
-	if( sv_cheats->integer || developer->integer ) // mappers load their maps with devmap
+	if( sv_cheats->integer || developer->integer ) { // mappers load their maps with devmap
 		G_Printf( "%s doesn't have a spawn function\n", ent->classname );
+	}
 
 	return false;
 }
@@ -299,8 +298,7 @@ bool G_CallSpawn( edict_t *ent )
 /*
 * G_GetEntitySpawnKey
 */
-const char *G_GetEntitySpawnKey( const char *key, edict_t *self )
-{
+const char *G_GetEntitySpawnKey( const char *key, edict_t *self ) {
 	static char value[MAX_TOKEN_CHARS];
 	char keyname[MAX_TOKEN_CHARS];
 	char *com_token;
@@ -308,38 +306,41 @@ const char *G_GetEntitySpawnKey( const char *key, edict_t *self )
 
 	value[0] = 0;
 
-	if( self )
+	if( self ) {
 		data = self->spawnString;
+	}
 
-	if( data && data[0] && key && key[0] )
-	{
+	if( data && data[0] && key && key[0] ) {
 		// go through all the dictionary pairs
-		while( 1 )
-		{
+		while( 1 ) {
 			// parse key
 			com_token = COM_Parse( &data );
-			if( com_token[0] == '}' )
+			if( com_token[0] == '}' ) {
 				break;
+			}
 
-			if( !data )
+			if( !data ) {
 				G_Error( "G_GetEntitySpawnKey: EOF without closing brace" );
+			}
 
 			Q_strncpyz( keyname, com_token, sizeof( keyname ) );
 
 			// parse value
 			com_token = COM_Parse( &data );
-			if( !data )
+			if( !data ) {
 				G_Error( "G_GetEntitySpawnKey: EOF without closing brace" );
+			}
 
-			if( com_token[0] == '}' )
+			if( com_token[0] == '}' ) {
 				G_Error( "G_GetEntitySpawnKey: closing brace without data" );
+			}
 
 			// key names with a leading underscore are used for utility comments and are immediately discarded
-			if( keyname[0] == '_' )
+			if( keyname[0] == '_' ) {
 				continue;
+			}
 
-			if( !Q_stricmp( key, keyname ) )
-			{
+			if( !Q_stricmp( key, keyname ) ) {
 				Q_strncpyz( value, com_token, sizeof( value ) );
 				break;
 			}
@@ -352,8 +353,7 @@ const char *G_GetEntitySpawnKey( const char *key, edict_t *self )
 /*
 * ED_NewString
 */
-static char *ED_NewString( const char *string )
-{
+static char *ED_NewString( const char *string ) {
 	char *newb, *new_p;
 	size_t i, l;
 
@@ -363,23 +363,18 @@ static char *ED_NewString( const char *string )
 
 	new_p = newb;
 
-	for( i = 0; i < l; i++ )
-	{
-		if( string[i] == '\\' && i < l-1 )
-		{
+	for( i = 0; i < l; i++ ) {
+		if( string[i] == '\\' && i < l - 1 ) {
 			i++;
-			if( string[i] == 'n' )
-			{
+			if( string[i] == 'n' ) {
 				*new_p++ = '\n';
-			}
-			else
-			{
+			} else {
 				*new_p++ = '/';
 				*new_p++ = string[i];
 			}
-		}
-		else
+		} else {
 			*new_p++ = string[i];
+		}
 	}
 
 	*new_p = '\0';
@@ -388,71 +383,68 @@ static char *ED_NewString( const char *string )
 
 /*
 * ED_ParseField
-* 
+*
 * Takes a key/value pair and sets the binary values
 * in an edict
 */
-static void ED_ParseField( char *key, char *value, edict_t *ent )
-{
+static void ED_ParseField( char *key, char *value, edict_t *ent ) {
 	const field_t *f;
 	uint8_t *b;
 	float v;
 	vec3_t vec;
 
-	for( f = fields; f->name; f++ )
-	{
-		if( !Q_stricmp( f->name, key ) )
-		{
+	for( f = fields; f->name; f++ ) {
+		if( !Q_stricmp( f->name, key ) ) {
 			// found it
-			if( f->flags & FFL_SPAWNTEMP )
+			if( f->flags & FFL_SPAWNTEMP ) {
 				b = (uint8_t *)&st;
-			else
+			} else {
 				b = (uint8_t *)ent;
+			}
 
-			switch( f->type )
-			{
-			case F_LSTRING:
-				*(char **)( b+f->ofs ) = ED_NewString( value );
-				break;
-			case F_VECTOR:
-				sscanf( value, "%f %f %f", &vec[0], &vec[1], &vec[2] );
-				( (float *)( b+f->ofs ) )[0] = vec[0];
-				( (float *)( b+f->ofs ) )[1] = vec[1];
-				( (float *)( b+f->ofs ) )[2] = vec[2];
-				break;
-			case F_INT:
-				*(int *)( b+f->ofs ) = atoi( value );
-				break;
-			case F_FLOAT:
-				*(float *)( b+f->ofs ) = atof( value );
-				break;
-			case F_ANGLEHACK:
-				v = atof( value );
-				( (float *)( b+f->ofs ) )[0] = 0;
-				( (float *)( b+f->ofs ) )[1] = v;
-				( (float *)( b+f->ofs ) )[2] = 0;
-				break;
-			case F_IGNORE:
-				break;
-			default:
-				break; // FIXME: Should this be error?
+			switch( f->type ) {
+				case F_LSTRING:
+					*(char **)( b + f->ofs ) = ED_NewString( value );
+					break;
+				case F_VECTOR:
+					sscanf( value, "%f %f %f", &vec[0], &vec[1], &vec[2] );
+					( (float *)( b + f->ofs ) )[0] = vec[0];
+					( (float *)( b + f->ofs ) )[1] = vec[1];
+					( (float *)( b + f->ofs ) )[2] = vec[2];
+					break;
+				case F_INT:
+					*(int *)( b + f->ofs ) = atoi( value );
+					break;
+				case F_FLOAT:
+					*(float *)( b + f->ofs ) = atof( value );
+					break;
+				case F_ANGLEHACK:
+					v = atof( value );
+					( (float *)( b + f->ofs ) )[0] = 0;
+					( (float *)( b + f->ofs ) )[1] = v;
+					( (float *)( b + f->ofs ) )[2] = 0;
+					break;
+				case F_IGNORE:
+					break;
+				default:
+					break; // FIXME: Should this be error?
 			}
 			return;
 		}
 	}
 
-	if( developer->integer )
+	if( developer->integer ) {
 		G_Printf( "%s is not a field\n", key );
+	}
 }
 
 /*
 * ED_ParseEdict
-* 
+*
 * Parses an edict out of the given string, returning the new position
 * ed should be a properly initialized empty edict.
 */
-static char *ED_ParseEdict( char *data, edict_t *ent )
-{
+static char *ED_ParseEdict( char *data, edict_t *ent ) {
 	bool init;
 	char keyname[256];
 	char *com_token;
@@ -462,81 +454,89 @@ static char *ED_ParseEdict( char *data, edict_t *ent )
 	level.spawning_entity = ent;
 
 	// go through all the dictionary pairs
-	while( 1 )
-	{
+	while( 1 ) {
 		// parse key
 		com_token = COM_Parse( &data );
-		if( com_token[0] == '}' )
+		if( com_token[0] == '}' ) {
 			break;
-		if( !data )
+		}
+		if( !data ) {
 			G_Error( "ED_ParseEntity: EOF without closing brace" );
+		}
 
 		Q_strncpyz( keyname, com_token, sizeof( keyname ) );
 
 		// parse value
 		com_token = COM_Parse( &data );
-		if( !data )
+		if( !data ) {
 			G_Error( "ED_ParseEntity: EOF without closing brace" );
+		}
 
-		if( com_token[0] == '}' )
+		if( com_token[0] == '}' ) {
 			G_Error( "ED_ParseEntity: closing brace without data" );
+		}
 
 		init = true;
 
 		// keynames with a leading underscore are used for utility comments,
 		// and are immediately discarded by quake
-		if( keyname[0] == '_' )
+		if( keyname[0] == '_' ) {
 			continue;
+		}
 
 		ED_ParseField( keyname, com_token, ent );
 	}
 
-	if( !init )
+	if( !init ) {
 		ent->classname = NULL;
-	if( ent->classname && ent->helpmessage )
+	}
+	if( ent->classname && ent->helpmessage ) {
 		ent->mapmessage_index = G_RegisterHelpMessage( ent->helpmessage );
+	}
 
 	return data;
 }
 
 /*
 * G_FindTeams
-* 
+*
 * Chain together all entities with a matching team field.
-* 
+*
 * All but the first will have the FL_TEAMSLAVE flag set.
 * All but the last will have the teamchain field set to the next one
 */
-static void G_FindTeams( void )
-{
-	edict_t	*e, *e2, *chain;
+static void G_FindTeams( void ) {
+	edict_t *e, *e2, *chain;
 	int i, j;
 	int c, c2;
 
 	c = 0;
 	c2 = 0;
-	for( i = 1, e = game.edicts+i; i < game.numentities; i++, e++ )
-	{
-		if( !e->r.inuse )
+	for( i = 1, e = game.edicts + i; i < game.numentities; i++, e++ ) {
+		if( !e->r.inuse ) {
 			continue;
-		if( !e->team )
+		}
+		if( !e->team ) {
 			continue;
-		if( e->flags & FL_TEAMSLAVE )
+		}
+		if( e->flags & FL_TEAMSLAVE ) {
 			continue;
+		}
 		chain = e;
 		e->teammaster = e;
 		c++;
 		c2++;
-		for( j = i+1, e2 = e+1; j < game.numentities; j++, e2++ )
-		{
-			if( !e2->r.inuse )
+		for( j = i + 1, e2 = e + 1; j < game.numentities; j++, e2++ ) {
+			if( !e2->r.inuse ) {
 				continue;
-			if( !e2->team )
+			}
+			if( !e2->team ) {
 				continue;
-			if( e2->flags & FL_TEAMSLAVE )
+			}
+			if( e2->flags & FL_TEAMSLAVE ) {
 				continue;
-			if( !strcmp( e->team, e2->team ) )
-			{
+			}
+			if( !strcmp( e->team, e2->team ) ) {
 				c2++;
 				chain->teamchain = e2;
 				e2->teammaster = e;
@@ -546,12 +546,12 @@ static void G_FindTeams( void )
 		}
 	}
 
-	if( developer->integer )
+	if( developer->integer ) {
 		G_Printf( "%i teams with %i entities\n", c, c2 );
+	}
 }
 
-void G_PrecacheMedia( void )
-{
+void G_PrecacheMedia( void ) {
 	//
 	// MODELS
 	//
@@ -661,8 +661,7 @@ void G_PrecacheMedia( void )
 	trap_SoundIndex( va( S_ANNOUNCER_SCORE_TIED_LEAD_1_to_2, 1 ) );
 	trap_SoundIndex( va( S_ANNOUNCER_SCORE_TIED_LEAD_1_to_2, 2 ) );
 
-	if( GS_TeamBasedGametype() )
-	{
+	if( GS_TeamBasedGametype() ) {
 		trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_TAKEN_LEAD_1_to_2, 1 ) );
 		trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_TAKEN_LEAD_1_to_2, 2 ) );
 		trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_LOST_LEAD_1_to_2, 1 ) );
@@ -671,6 +670,7 @@ void G_PrecacheMedia( void )
 		trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_TIED_LEAD_1_to_2, 2 ) );
 		trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_TIED_LEAD_1_to_2, 1 ) );
 		trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_TIED_LEAD_1_to_2, 2 ) );
+
 		//trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_1_to_4_TAKEN_LEAD_1_to_2, 3, 1 ) );
 		//trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_1_to_4_TAKEN_LEAD_1_to_2, 3, 2 ) );
 		//trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_1_to_4_TAKEN_LEAD_1_to_2, 4, 1 ) );
@@ -680,140 +680,132 @@ void G_PrecacheMedia( void )
 	//
 	// LIGHTSTYLES
 	//
-	trap_ConfigString( CS_LIGHTS+0, LS_NORMAL );
-	trap_ConfigString( CS_LIGHTS+1, LS_FLICKER1 );
-	trap_ConfigString( CS_LIGHTS+2, LS_SLOW_STRONG_PULSE );
-	trap_ConfigString( CS_LIGHTS+3, LS_CANDLE1 );
-	trap_ConfigString( CS_LIGHTS+4, LS_FAST_STROBE );
-	trap_ConfigString( CS_LIGHTS+5, LS_GENTLE_PULSE_1 );
-	trap_ConfigString( CS_LIGHTS+6, LS_FLICKER2 );
-	trap_ConfigString( CS_LIGHTS+7, LS_CANDLE2 );
-	trap_ConfigString( CS_LIGHTS+8, LS_CANDLE3 );
-	trap_ConfigString( CS_LIGHTS+9, LS_SLOW_STROBE );
-	trap_ConfigString( CS_LIGHTS+10, LS_FLUORESCENT_FLICKER );
-	trap_ConfigString( CS_LIGHTS+11, LS_SLOW_PULSE_NOT_FADE );
+	trap_ConfigString( CS_LIGHTS + 0, LS_NORMAL );
+	trap_ConfigString( CS_LIGHTS + 1, LS_FLICKER1 );
+	trap_ConfigString( CS_LIGHTS + 2, LS_SLOW_STRONG_PULSE );
+	trap_ConfigString( CS_LIGHTS + 3, LS_CANDLE1 );
+	trap_ConfigString( CS_LIGHTS + 4, LS_FAST_STROBE );
+	trap_ConfigString( CS_LIGHTS + 5, LS_GENTLE_PULSE_1 );
+	trap_ConfigString( CS_LIGHTS + 6, LS_FLICKER2 );
+	trap_ConfigString( CS_LIGHTS + 7, LS_CANDLE2 );
+	trap_ConfigString( CS_LIGHTS + 8, LS_CANDLE3 );
+	trap_ConfigString( CS_LIGHTS + 9, LS_SLOW_STROBE );
+	trap_ConfigString( CS_LIGHTS + 10, LS_FLUORESCENT_FLICKER );
+	trap_ConfigString( CS_LIGHTS + 11, LS_SLOW_PULSE_NOT_FADE );
+
 	// styles 32-62 are assigned by the light program for switchable lights
-	trap_ConfigString( CS_LIGHTS+63, "a" );
+	trap_ConfigString( CS_LIGHTS + 63, "a" );
 }
 
 /*
 * G_FreeEntities
 */
-static void G_FreeEntities( void )
-{
+static void G_FreeEntities( void ) {
 	int i;
 
-	if( !level.time )
+	if( !level.time ) {
 		memset( game.edicts, 0, game.maxentities * sizeof( game.edicts[0] ) );
-	else
-	{
+	} else {
 		G_FreeEdict( world );
-		for( i = gs.maxclients + 1; i < game.maxentities; i++ )
-		{
-			if( game.edicts[i].r.inuse )
+		for( i = gs.maxclients + 1; i < game.maxentities; i++ ) {
+			if( game.edicts[i].r.inuse ) {
 				G_FreeEdict( game.edicts + i );
+			}
 		}
 	}
-	
+
 	game.numentities = gs.maxclients + 1;
 }
 
 /*
 * G_SpawnEntities
 */
-static void G_SpawnEntities( void )
-{
+static void G_SpawnEntities( void ) {
 	int i;
 	edict_t *ent;
 	char *token;
 	const gsitem_t *item;
 	char *entities;
-	
+
 	game.levelSpawnCount++;
 	level.spawnedTimeStamp = game.realtime;
 	level.canSpawnEntities = true;
 
 	G_InitBodyQueue(); // reserve some spots for dead player bodies
-	
+
 	entities = level.mapString;
 	level.map_parsed_ents[0] = 0;
 	level.map_parsed_len = 0;
 
 	i = 0;
 	ent = NULL;
-	while( 1 )
-	{
+	while( 1 ) {
 		level.spawning_entity = NULL;
-		
+
 		// parse the opening brace
 		token = COM_Parse( &entities );
-		if( !entities )
+		if( !entities ) {
 			break;
-		if( token[0] != '{' )
+		}
+		if( token[0] != '{' ) {
 			G_Error( "G_SpawnMapEntities: found %s when expecting {", token );
-		
-		if( !ent )
-		{
+		}
+
+		if( !ent ) {
 			ent = world;
 			G_InitEdict( world );
-		}
-		else
+		} else {
 			ent = G_Spawn();
-		
-		ent->spawnString = entities; // keep track of string definition of this entity
-		
-		entities = ED_ParseEdict( entities, ent );
-		if( !ent->classname )
-		{
-			i++;
-			G_FreeEdict( ent );
-			continue;
 		}
-		
-		if( !G_CanSpawnEntity( ent ) )
-		{
+
+		ent->spawnString = entities; // keep track of string definition of this entity
+
+		entities = ED_ParseEdict( entities, ent );
+		if( !ent->classname ) {
 			i++;
 			G_FreeEdict( ent );
 			continue;
 		}
 
-		if( !G_CallSpawn( ent ) )
-		{
+		if( !G_CanSpawnEntity( ent ) ) {
 			i++;
 			G_FreeEdict( ent );
 			continue;
 		}
-		
+
+		if( !G_CallSpawn( ent ) ) {
+			i++;
+			G_FreeEdict( ent );
+			continue;
+		}
+
 		// check whether an item is allowed to spawn
-		if( ( item = ent->item ) )
-		{
+		if( ( item = ent->item ) ) {
 			// not pickable items aren't spawnable
-			if( item->flags & ITFLAG_PICKABLE )
-			{
-				if( G_Gametype_CanSpawnItem( item ) )
-				{
+			if( item->flags & ITFLAG_PICKABLE ) {
+				if( G_Gametype_CanSpawnItem( item ) ) {
 					// override entity's classname with whatever item specifies
 					ent->classname = item->classname;
 					PrecacheItem( item );
 					continue;
 				}
 			}
-			
+
 			i++;
 			G_FreeEdict( ent );
 			continue;
 		}
 	}
-	
+
 	// is the parsing string sane?
 	assert( level.map_parsed_len < level.mapStrlen );
 	level.map_parsed_ents[level.map_parsed_len] = 0;
-	
+
 	G_FindTeams();
-	
+
 	// make sure server got the edicts data
 	trap_LocateEntities( game.edicts, sizeof( game.edicts[0] ), game.numentities, game.maxentities );
-	
+
 	// items need brush model entities spawned before they are linked
 	G_Items_FinishSpawningItems();
 }
@@ -824,8 +816,7 @@ static void G_SpawnEntities( void )
 * Creates a server's entity / program execution context by
 * parsing textual entity definitions out of an ent file.
 */
-void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int levelTime, unsigned int serverTime, unsigned int realTime )
-{
+void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTime, int64_t serverTime, int64_t realTime ) {
 	char *mapString = NULL;
 	char name[MAX_CONFIGSTRING_CHARS];
 	int i;
@@ -849,8 +840,9 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 
 	GClip_ClearWorld(); // clear areas links
 
-	if( !entities )
+	if( !entities ) {
 		G_Error( "G_SpawnLevel: NULL entities string\n" );
+	}
 
 	// make a copy of the raw entities string so it's not freed with the pool
 	mapString = ( char * )G_Malloc( entstrlen + 1 );
@@ -884,11 +876,10 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	G_FreeEntities();
 
 	// link client fields on player ents
-	for( i = 0; i < gs.maxclients; i++ )
-	{
-		game.edicts[i+1].s.number = i+1;
-		game.edicts[i+1].r.client = &game.clients[i];
-		game.edicts[i+1].r.inuse = ( trap_GetClientState( i ) >= CS_CONNECTED ) ? true : false;
+	for( i = 0; i < gs.maxclients; i++ ) {
+		game.edicts[i + 1].s.number = i + 1;
+		game.edicts[i + 1].r.client = &game.clients[i];
+		game.edicts[i + 1].r.inuse = ( trap_GetClientState( i ) >= CS_CONNECTED ) ? true : false;
 		memset( &game.clients[i].level, 0, sizeof( game.clients[0].level ) );
 		game.clients[i].level.timeStamp = level.time;
 	}
@@ -914,9 +905,11 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	G_CallVotes_Init();
 	G_SpawnQueue_Init();
 	G_Teams_Init();
+
 	// load map script
 	G_asLoadMapScript( level.mapname );
 	G_Gametype_Init();
+
 	// ch : this would be the location to "transfer ratings"
 	G_PrecacheItems(); // set configstrings for items (gametype must be initialized)
 	G_PrecacheMedia();
@@ -943,28 +936,26 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	G_asGarbageCollect( true );
 }
 
-void G_ResetLevel( void )
-{
+void G_ResetLevel( void ) {
 	int i;
-	
+
 	G_FreeEdict( world );
-	for( i = gs.maxclients + 1; i < game.maxentities; i++ )
-	{
-		if( game.edicts[i].r.inuse )
+	for( i = gs.maxclients + 1; i < game.maxentities; i++ ) {
+		if( game.edicts[i].r.inuse ) {
 			G_FreeEdict( game.edicts + i );
+		}
 	}
 
 	G_SpawnEntities();
 
 	// call gametype specific
 	GT_asCallSpawn();
-	
+
 	// call map specific
 	G_asCallMapInit();
 }
 
-bool G_RespawnLevel( void )
-{
+bool G_RespawnLevel( void ) {
 	G_InitLevel( level.mapname, level.mapString, level.mapStrlen, level.time, game.serverTime, game.realtime );
 	return true;
 }
@@ -981,8 +972,7 @@ bool G_RespawnLevel( void )
 //"gravity"	800 is default gravity
 //"message"	text to print at user logon
 //========================
-static void SP_worldspawn( edict_t *ent )
-{
+static void SP_worldspawn( edict_t *ent ) {
 	ent->movetype = MOVETYPE_PUSH;
 	ent->r.solid = SOLID_YES;
 	ent->r.inuse = true;       // since the world doesn't use G_Spawn()
@@ -991,39 +981,36 @@ static void SP_worldspawn( edict_t *ent )
 	GClip_SetBrushModel( ent, "*0" ); // sets mins / maxs and modelindex 1
 	G_PureModel( "*0" );
 
-	if( st.nextmap )
+	if( st.nextmap ) {
 		Q_strncpyz( level.nextmap, st.nextmap, sizeof( level.nextmap ) );
+	}
 
 	// make some data visible to the server
 	/*
 	message = trap_GetFullnameFromMapList( level.mapname );
 	if( message && message[0] )
-		ent->message = G_LevelCopyString( message );
+	    ent->message = G_LevelCopyString( message );
 	*/
 
-	if( ent->message && ent->message[0] )
-	{
+	if( ent->message && ent->message[0] ) {
 		trap_ConfigString( CS_MESSAGE, ent->message );
 		Q_strncpyz( level.level_name, ent->message, sizeof( level.level_name ) );
-	}
-	else
-	{
+	} else {
 		trap_ConfigString( CS_MESSAGE, level.mapname );
 		Q_strncpyz( level.level_name, level.mapname, sizeof( level.level_name ) );
 	}
 
 	// send music
-	if( st.music )
-	{
+	if( st.music ) {
 		trap_ConfigString( CS_AUDIOTRACK, st.music );
 		trap_PureSound( st.music );
 	}
 
-	if( st.gravity )
+	if( st.gravity ) {
 		level.gravity = atof( st.gravity );
+	}
 
-	if( st.colorCorrection )
-	{
+	if( st.colorCorrection ) {
 		level.colorCorrection = trap_ImageIndex( st.colorCorrection );
 		gs.gameState.stats[GAMESTAT_COLORCORRECTION] = level.colorCorrection;
 	}

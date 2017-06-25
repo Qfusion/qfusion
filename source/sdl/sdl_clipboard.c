@@ -4,25 +4,23 @@
 /*
 * Sys_GetClipboardData
 */
-char *Sys_GetClipboardData( void )
-{
-	if( SDL_HasClipboardText() == SDL_TRUE )
+char *Sys_GetClipboardData( void ) {
+	if( SDL_HasClipboardText() == SDL_TRUE ) {
 		return SDL_GetClipboardText();
+	}
 	return NULL;
 }
 
 /*
 * Sys_SetClipboardData
 */
-bool Sys_SetClipboardData( const char *data )
-{
+bool Sys_SetClipboardData( const char *data ) {
 	return SDL_SetClipboardText( data );
 }
 
 /*
 * Sys_FreeClipboardData
 */
-void Sys_FreeClipboardData( char *data )
-{
+void Sys_FreeClipboardData( char *data ) {
 	SDL_free( data );
 }

@@ -25,15 +25,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // public interfaces
 
-typedef struct asstring_s
-{
+typedef struct asstring_s {
 	char *buffer;
 	unsigned int len, size;
 	int asRefCount;
 } asstring_t;
 
-typedef struct asvec3_s
-{
+typedef struct asvec3_s {
 	vec3_t v;
 } asvec3_t;
 
@@ -69,22 +67,22 @@ public:
 	virtual void Release() const = 0;
 
 	// Sets/Gets a variable type value for a key
-	virtual void Set(const asstring_t &key, void *value, int typeId) = 0;
-	virtual bool Get(const asstring_t &key, void *value, int typeId) const = 0;
+	virtual void Set( const asstring_t &key, void *value, int typeId ) = 0;
+	virtual bool Get( const asstring_t &key, void *value, int typeId ) const = 0;
 
 	// Sets/Gets an integer number value for a key
-	virtual void Set(const asstring_t &key, int64_t &value) = 0;
-	virtual bool Get(const asstring_t &key, int64_t &value) const = 0;
+	virtual void Set( const asstring_t &key, int64_t &value ) = 0;
+	virtual bool Get( const asstring_t &key, int64_t &value ) const = 0;
 
 	// Sets/Gets a real number value for a key
-	virtual void Set(const asstring_t &key, double &value) = 0;
-	virtual bool Get(const asstring_t &key, double &value) const = 0;
+	virtual void Set( const asstring_t &key, double &value ) = 0;
+	virtual bool Get( const asstring_t &key, double &value ) const = 0;
 
 	// Returns true if the key is set
-	virtual bool Exists(const asstring_t &key) const = 0;
+	virtual bool Exists( const asstring_t &key ) const = 0;
 
 	// Deletes the key
-	virtual void Delete(const asstring_t &key) = 0;
+	virtual void Delete( const asstring_t &key ) = 0;
 
 	// Deletes all keys
 	virtual void DeleteAll() = 0;
@@ -101,21 +99,20 @@ public:
 	virtual int Release() const = 0;
 
 	// Store the value, either as variable type, integer number, or real number
-	virtual void Store(void *ref, int refTypeId) = 0;
-	virtual void Store(asINT64 &value) = 0;
-	virtual void Store(double &value) = 0;
+	virtual void Store( void *ref, int refTypeId ) = 0;
+	virtual void Store( asINT64 &value ) = 0;
+	virtual void Store( double &value ) = 0;
 
 	// Retrieve the stored value, either as variable type, integer number, or real number
-	virtual bool Retrieve(void *ref, int refTypeId) const = 0;
-	virtual bool Retrieve(asINT64 &value) const = 0;
-	virtual bool Retrieve(double &value) const = 0;
+	virtual bool Retrieve( void *ref, int refTypeId ) const = 0;
+	virtual bool Retrieve( asINT64 &value ) const = 0;
+	virtual bool Retrieve( double &value ) const = 0;
 
 	// Get the type id of the stored value
 	virtual int  GetTypeId() const = 0;
 };
 
-typedef	struct angelwrap_api_s
-{
+typedef struct angelwrap_api_s {
 	int angelwrap_api_version;
 
 	// C++ interfaces
@@ -125,26 +122,29 @@ typedef	struct angelwrap_api_s
 	void ( *asReleaseEngine )( asIScriptEngine *engine );
 
 	// context
-	asIScriptContext *( *asAcquireContext )( asIScriptEngine *engine );
+	asIScriptContext *( *asAcquireContext )( asIScriptEngine * engine );
 	void ( *asReleaseContext )( asIScriptContext *context );
 	asIScriptContext *( *asGetActiveContext )( void );
 
 	// strings
 	asstring_t *( *asStringFactoryBuffer )( const char *buffer, unsigned int length );
-	void( *asStringRelease )( asstring_t *str );
-	asstring_t *( *asStringAssignString )( asstring_t *self, const char *string, unsigned int strlen );
-	
+	void ( *asStringRelease )( asstring_t *str );
+	asstring_t *( *asStringAssignString )( asstring_t * self, const char *string, unsigned int strlen );
+
 	// array
 	CScriptArrayInterface *( *asCreateArrayCpp )( unsigned int length, void *ot );
 	void ( *asReleaseArrayCpp )( CScriptArrayInterface *arr );
 
 	// dictionary
-	CScriptDictionaryInterface *( *asCreateDictionaryCpp )( asIScriptEngine *engine );
+	CScriptDictionaryInterface *( *asCreateDictionaryCpp )( asIScriptEngine * engine );
 	void ( *asReleaseDictionaryCpp )( CScriptDictionaryInterface *arr );
 
 	// any
-	CScriptAnyInterface *( *asCreateAnyCpp )( asIScriptEngine *engine );
+	CScriptAnyInterface *( *asCreateAnyCpp )( asIScriptEngine * engine );
 	void ( *asReleaseAnyCpp )( CScriptAnyInterface *any );
+
+	// projects
+	asIScriptModule *( *asLoadScriptProject )( asIScriptEngine *engine, const char *moduleName, const char *rootDir, const char *dir, const char *filename, const char *ext );
 } angelwrap_api_t;
 
 #endif

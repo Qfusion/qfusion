@@ -23,70 +23,59 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon_vec3.h"
 
 // CLASS: Vec3
-void objectVec3_DefaultConstructor( asvec3_t *self )
-{
+void objectVec3_DefaultConstructor( asvec3_t *self ) {
 	self->v[0] = self->v[1] = self->v[2] = 0;
 }
 
-void objectVec3_Constructor3F( float x, float y, float z, asvec3_t *self )
-{
+void objectVec3_Constructor3F( float x, float y, float z, asvec3_t *self ) {
 	self->v[0] = x;
 	self->v[1] = y;
 	self->v[2] = z;
 }
 
-void objectVec3_Constructor1F( float v, asvec3_t *self )
-{
+void objectVec3_Constructor1F( float v, asvec3_t *self ) {
 	self->v[0] = self->v[1] = self->v[2] = v;
 }
 
-void objectVec3_CopyConstructor( asvec3_t *other, asvec3_t *self )
-{
+void objectVec3_CopyConstructor( asvec3_t *other, asvec3_t *self ) {
 	self->v[0] = other->v[0];
 	self->v[1] = other->v[1];
 	self->v[2] = other->v[2];
 }
 
-static asvec3_t *objectVec3_AssignBehaviour( asvec3_t *other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_AssignBehaviour( asvec3_t *other, asvec3_t *self ) {
 	VectorCopy( other->v, self->v );
 	return self;
 }
 
-static asvec3_t *objectVec3_AssignBehaviourD( float other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_AssignBehaviourD( float other, asvec3_t *self ) {
 	VectorSet( self->v, other, other, other );
 	return self;
 }
 
-static asvec3_t *objectVec3_AssignBehaviourI( int other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_AssignBehaviourI( int other, asvec3_t *self ) {
 	VectorSet( self->v, other, other, other );
 	return self;
 }
 
-static asvec3_t *objectVec3_AddAssignBehaviour( asvec3_t *other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_AddAssignBehaviour( asvec3_t *other, asvec3_t *self ) {
 	VectorAdd( self->v, other->v, self->v );
 	return self;
 }
 
-static asvec3_t *objectVec3_SubAssignBehaviour( asvec3_t *other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_SubAssignBehaviour( asvec3_t *other, asvec3_t *self ) {
 	VectorSubtract( self->v, other->v, self->v );
 	return self;
 }
 
-static asvec3_t *objectVec3_MulAssignBehaviour( asvec3_t *other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_MulAssignBehaviour( asvec3_t *other, asvec3_t *self ) {
 	vec_t product = DotProduct( self->v, other->v );
 
 	VectorScale( self->v, product, self->v );
 	return self;
 }
 
-static asvec3_t *objectVec3_XORAssignBehaviour( asvec3_t *other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_XORAssignBehaviour( asvec3_t *other, asvec3_t *self ) {
 	vec3_t product;
 
 	CrossProduct( self->v, other->v, product );
@@ -94,136 +83,115 @@ static asvec3_t *objectVec3_XORAssignBehaviour( asvec3_t *other, asvec3_t *self 
 	return self;
 }
 
-static asvec3_t *objectVec3_MulAssignBehaviourI( int other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_MulAssignBehaviourI( int other, asvec3_t *self ) {
 	VectorScale( self->v, other, self->v );
 	return self;
 }
 
-static asvec3_t *objectVec3_MulAssignBehaviourD( float other, asvec3_t *self )
-{
+static asvec3_t *objectVec3_MulAssignBehaviourD( float other, asvec3_t *self ) {
 	VectorScale( self->v, other, self->v );
 	return self;
 }
 
-static asvec3_t objectVec3_AddBehaviour( asvec3_t *first, asvec3_t *second )
-{
+static asvec3_t objectVec3_AddBehaviour( asvec3_t *first, asvec3_t *second ) {
 	asvec3_t vec;
 
 	VectorAdd( first->v, second->v, vec.v );
 	return vec;
 }
 
-static asvec3_t objectVec3_SubtractBehaviour( asvec3_t *first, asvec3_t *second )
-{
+static asvec3_t objectVec3_SubtractBehaviour( asvec3_t *first, asvec3_t *second ) {
 	asvec3_t vec;
 
 	VectorSubtract( first->v, second->v, vec.v );
 	return vec;
 }
 
-static float objectVec3_MultiplyBehaviour( asvec3_t *first, asvec3_t *second )
-{
+static float objectVec3_MultiplyBehaviour( asvec3_t *first, asvec3_t *second ) {
 	return DotProduct( first->v, second->v );
 }
 
-static asvec3_t objectVec3_MultiplyBehaviourVD( asvec3_t *first, float second )
-{
+static asvec3_t objectVec3_MultiplyBehaviourVD( asvec3_t *first, float second ) {
 	asvec3_t vec;
 
 	VectorScale( first->v, second, vec.v );
 	return vec;
 }
 
-static asvec3_t objectVec3_MultiplyBehaviourDV( float first, asvec3_t *second )
-{
+static asvec3_t objectVec3_MultiplyBehaviourDV( float first, asvec3_t *second ) {
 	return objectVec3_MultiplyBehaviourVD( second, first );
 }
 
-static asvec3_t objectVec3_MultiplyBehaviourVI( asvec3_t *first, int second )
-{
+static asvec3_t objectVec3_MultiplyBehaviourVI( asvec3_t *first, int second ) {
 	asvec3_t vec;
 
 	VectorScale( first->v, second, vec.v );
 	return vec;
 }
 
-static asvec3_t objectVec3_MultiplyBehaviourIV( int first, asvec3_t *second )
-{
+static asvec3_t objectVec3_MultiplyBehaviourIV( int first, asvec3_t *second ) {
 	return objectVec3_MultiplyBehaviourVI( second, first );
 }
 
-static asvec3_t objectVec3_XORBehaviour( asvec3_t *first, asvec3_t *second )
-{
+static asvec3_t objectVec3_XORBehaviour( asvec3_t *first, asvec3_t *second ) {
 	asvec3_t vec;
 
 	CrossProduct( first->v, second->v, vec.v );
 	return vec;
 }
 
-static bool objectVec3_EqualBehaviour( asvec3_t *first, asvec3_t *second )
-{
+static bool objectVec3_EqualBehaviour( asvec3_t *first, asvec3_t *second ) {
 	return VectorCompare( first->v, second->v );
 }
 
-static void objectVec3_Set( float x, float y, float z, asvec3_t *vec )
-{
+static void objectVec3_Set( float x, float y, float z, asvec3_t *vec ) {
 	VectorSet( vec->v, x, y, z );
 }
 
-static float objectVec3_Length( const asvec3_t *vec )
-{
+static float objectVec3_Length( const asvec3_t *vec ) {
 	return VectorLength( vec->v );
 }
 
-static float objectVec3_Normalize( asvec3_t *vec )
-{
+static float objectVec3_Normalize( asvec3_t *vec ) {
 	return VectorNormalize( vec->v );
 }
 
-static float objectVec3_Distance( asvec3_t *other, asvec3_t *self )
-{
+static float objectVec3_Distance( asvec3_t *other, asvec3_t *self ) {
 	return Distance( self->v, other->v );
 }
 
-static void objectVec3_AngleVectors( asvec3_t *f, asvec3_t *r, asvec3_t *u, asvec3_t *self )
-{
+static void objectVec3_AngleVectors( asvec3_t *f, asvec3_t *r, asvec3_t *u, asvec3_t *self ) {
 	AngleVectors( self->v, f->v, r->v, u->v );
 }
 
-static asvec3_t objectVec3_VecToAngles( asvec3_t *self )
-{
+static asvec3_t objectVec3_VecToAngles( asvec3_t *self ) {
 	asvec3_t angles;
 
 	VecToAngles( self->v, angles.v );
 	return angles;
 }
 
-static asvec3_t objectVec3_Perpendicular( asvec3_t *self )
-{
+static asvec3_t objectVec3_Perpendicular( asvec3_t *self ) {
 	asvec3_t dst;
 
 	PerpendicularVector( dst.v, self->v );
 	return dst;
 }
 
-static void objectVec3_MakeNormalVectors( asvec3_t *r, asvec3_t *u, asvec3_t *self )
-{
+static void objectVec3_MakeNormalVectors( asvec3_t *r, asvec3_t *u, asvec3_t *self ) {
 	MakeNormalVectors( self->v, r->v, u->v );
 }
 
-void PreRegisterVec3Addon( asIScriptEngine *engine )
-{
+void PreRegisterVec3Addon( asIScriptEngine *engine ) {
 	int r;
 
 	// register the vector type
 	r = engine->RegisterObjectType( "Vec3", sizeof( asvec3_t ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }
 
-void RegisterVec3Addon( asIScriptEngine *engine )
-{
+void RegisterVec3Addon( asIScriptEngine *engine ) {
 	int r;
 
 	// register object behaviours
@@ -272,5 +240,5 @@ void RegisterVec3Addon( asIScriptEngine *engine )
 	r = engine->RegisterObjectProperty( "Vec3", "float y", asOFFSET( asvec3_t, v[1] ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Vec3", "float z", asOFFSET( asvec3_t, v[2] ) ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }

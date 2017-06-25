@@ -22,11 +22,10 @@ namespace WSWUI
 class RefreshState
 {
 public:
-	unsigned int time;
+	int64_t time;
 	int clientState;
 	int serverState;
 	bool drawBackground;
-	int backgroundNum;
 	int width, height;
 	float pixelRatio;
 };
@@ -41,7 +40,6 @@ class DemosDataSource;
 class ModsDataSource;
 class ModelsDataSource;
 class TVChannelsDataSource;
-class IrcChannelsDataSource;
 class GameAjaxDataSource;
 
 class LevelShotFormatter;
@@ -59,17 +57,17 @@ public:
 
 	virtual ~UI_Main();
 
-	void refreshScreen( unsigned int time, int clientState, int serverState, 
-		bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
-		bool backGround, bool showCursor );
-	void drawConnectScreen( const char *serverName, const char *rejectmessage, 
-		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
-		int connectCount, bool backGround );
+	void refreshScreen( unsigned int time, int clientState, int serverState,
+						bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime,
+						bool backGround, bool showCursor );
+	void drawConnectScreen( const char *serverName, const char *rejectmessage,
+							int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed,
+							int connectCount, bool backGround );
 
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
 
-	void mouseMove( int contextId, int x, int y, bool absolute, bool showCursor );
+	void mouseMove( int contextId, int framTime, int x, int y, bool absolute, bool showCursor );
 	void textInput( int contextId, wchar_t c );
 	void keyEvent( int contextId, int key, bool pressed );
 	bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
@@ -86,7 +84,7 @@ public:
 	static void M_Menu_Modal_f( void );
 	static void M_Menu_Tv_f( void );
 	static void M_Menu_DemoPlay_f( void );
-	static void M_Menu_Close_f( void );	
+	static void M_Menu_Close_f( void );
 	static void M_Menu_AddTVChannel_f( void );
 	static void M_Menu_RemoveTVChannel_f( void );
 
@@ -95,10 +93,10 @@ public:
 
 	// DEBUG
 	static void PrintDocuments_Cmd( void );
-	
+
 	// Other static functions
 	static UI_Main *Instance( int vidWidth, int vidHeight, float pixelRatio,
-		int protocol, const char *demoExtension, const char *basePath );
+							  int protocol, const char *demoExtension, const char *basePath );
 	static UI_Main *Get( void );
 	static void Destroy( void );
 	static bool preloadEnabled( void );
@@ -121,7 +119,7 @@ public:
 
 	const std::string &getServerName( void ) const { return connectInfo.serverName; }
 	const std::string &getRejectMessage( void ) const { return connectInfo.rejectMessage; }
-	const DownloadInfo *getDownloadInfo ( void ) const { return &connectInfo.downloadInfo; }
+	const DownloadInfo *getDownloadInfo( void ) const { return &connectInfo.downloadInfo; }
 	unsigned int getConnectCount( void ) const { return connectInfo.connectCount; }
 
 	static int getGameProtocol( void );
@@ -136,7 +134,7 @@ public:
 
 private:
 	UI_Main( int vidWidth, int vidHeight, float pixelRatio,
-		int protocol, const char *demoExtension, const char *basePath );
+			 int protocol, const char *demoExtension, const char *basePath );
 
 	//// METHODS
 	bool initAS( void );
@@ -162,16 +160,16 @@ private:
 	/**
 	 * Adds cursor movement from the gamepad sticks.
 	 *
-	 * @param frametime time since last UI input update
+	 * @param milliseconds since last UI input update
 	 */
-	void gamepadStickCursorMove( float frameTime );
+	void gamepadStickCursorMove( int frameTimeMsec );
 
 	/**
 	 * Adds cursor movement from the directional pad.
 	 *
-	 * @param frametime time since last UI input update
+	 * @param milliseconds since last UI input update
 	 */
-	void gamepadDpadCursorMove( float frameTime );
+	void gamepadDpadCursorMove( int frameTimeMsec );
 
 	/**
 	 * Adds cursor movement from the gamepad.
@@ -181,7 +179,7 @@ private:
 
 	void customRender( void );
 
-	static UI_Main *self;	// for static functions
+	static UI_Main *self;   // for static functions
 
 	// modules
 	ASUI::ASInterface *asmodule;
@@ -206,7 +204,6 @@ private:
 	ModsDataSource *mods;
 	ModelsDataSource *playerModels;
 	TVChannelsDataSource *tvchannels;
-	IrcChannelsDataSource *ircchannels;
 	GameAjaxDataSource *gameajax;
 
 	UI_Navigation navigations[UI_NUM_CONTEXTS];

@@ -31,9 +31,9 @@ public:
 	/// @param[in] value The raw value defined for this property.
 	/// @param[in] parameters The parameters defined for this property; not used for this parser.
 	/// @return True if the value was validated successfully, false otherwise.
-	virtual bool ParseValue(Rocket::Core::Property& property, 
-		const Rocket::Core::String& value, 
-		const Rocket::Core::ParameterMap& parameters) const;
+	virtual bool ParseValue( Rocket::Core::Property& property,
+							 const Rocket::Core::String& value,
+							 const Rocket::Core::ParameterMap& parameters ) const;
 
 	// Destroys the parser.
 	void Release();

@@ -45,7 +45,7 @@ private:
 
 	class DynTableFetcher
 	{
-	public:
+public:
 		DynTableFetcher( DynTable *table ) : table( table ), buf( "" ) {}
 		DynTable *table;
 		std::string buf;
@@ -56,12 +56,12 @@ private:
 	DynTableList tableList;
 
 	static size_t StreamRead( const void *buf, size_t numb, float percentage, int status,
-			const char *contentType, void *privatep );
+							  const char *contentType, void *privatep );
 	static void StreamDone( int status, const char *contentType, void *privatep );
 };
 
 Rocket::Controls::DataSource *GetCallvotesDataSourceInstance();
-void DestroyCallvotesDataSourceInstance(Rocket::Controls::DataSource *instance);
+void DestroyCallvotesDataSourceInstance( Rocket::Controls::DataSource *instance );
 
 }
 #endif

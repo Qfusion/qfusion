@@ -549,7 +549,7 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders( const edict_t *carrier,
 			botAndScore.bot->ai->botRef->OverrideEntityWeight( carrier, 4.5f );
 			continue;
 		}
-		;
+
 		// Decrease carrier weight if bot is already close to it
 		float distance = 1.0f / Q_RSqrt( squareDistance );
 		float distanceFactor = distance / 768.0f;

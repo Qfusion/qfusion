@@ -28,21 +28,19 @@ cvar_t *vid_fullscreen;
 
 static bool GLimp_InitGL( int stencilbits, bool stereo );
 
-void GLimp_SetWindowIcon( void )
-{
+void GLimp_SetWindowIcon( void ) {
 #ifndef __APPLE__
 	const int *xpm_icon = glw_state.applicationIcon;
 
-	if( xpm_icon )
-	{
+	if( xpm_icon ) {
 		SDL_Surface *surface;
 
-		surface = SDL_CreateRGBSurfaceFrom( (void *)(xpm_icon+2), xpm_icon[0], xpm_icon[1], 32, xpm_icon[0]*4,
+		surface = SDL_CreateRGBSurfaceFrom( (void *)( xpm_icon + 2 ), xpm_icon[0], xpm_icon[1], 32, xpm_icon[0] * 4,
 #ifdef ENDIAN_LITTLE
-			0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
+											0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
 #else
-			0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
-#endif 
+											0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+#endif
 
 		SDL_SetWindowIcon( glw_state.sdl_window, surface );
 
@@ -51,8 +49,7 @@ void GLimp_SetWindowIcon( void )
 #endif
 }
 
-rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
-{
+rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen ) {
 	Uint32 flags = 0;
 	bool borderless = glConfig.borderless;
 
@@ -69,18 +66,18 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 		return rserr_ok;
 	}
 
-    return rserr_invalid_fullscreen;
+	return rserr_invalid_fullscreen;
 }
 
-static void GLimp_CreateWindow( int x, int y, int width, int height )
-{
+static void GLimp_CreateWindow( int x, int y, int width, int height ) {
 	unsigned flags = SDL_WINDOW_OPENGL;
 
-	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, 
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags );
+	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName,
+											 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags );
 
-	if( !glw_state.sdl_window )
+	if( !glw_state.sdl_window ) {
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
+	}
 
 	if( glw_state.wndproc ) {
 		glw_state.wndproc( glw_state.sdl_window, 0, 0, 0 );
@@ -97,15 +94,13 @@ static void GLimp_CreateWindow( int x, int y, int width, int height )
  * @param fullscreen <code>true</code> for a fullscreen mode,
  *     <code>false</code> otherwise
  */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless )
-{
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless ) {
 	const char *win_fs[] = {"W", "FS"};
 
 #ifdef __APPLE__
 	if( fullscreen ) {
 		borderless = true;
-	}
-	else {
+	} else {
 		borderless = false;
 	}
 #endif
@@ -133,19 +128,17 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.fullScreen = fullscreen;
 	if( GLimp_SetFullscreenMode( displayFrequency, fullscreen ) == rserr_ok ) {
 		glConfig.fullScreen = fullscreen;
-	}
-	else {
+	} else {
 		glConfig.fullScreen = !fullscreen;
 	}
 
-    return glConfig.fullScreen == fullscreen ? rserr_ok : rserr_invalid_fullscreen;
+	return glConfig.fullScreen == fullscreen ? rserr_ok : rserr_invalid_fullscreen;
 }
 
 /**
  * Shutdown GLimp sub system.
  */
-void GLimp_Shutdown()
-{
+void GLimp_Shutdown() {
 	SDL_DestroyWindow( glw_state.sdl_window );
 
 	free( glw_state.applicationName );
@@ -164,15 +157,13 @@ void GLimp_Shutdown()
  */
 
 bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
-	int iconResource, const int *iconXPM )
-{
+				 int iconResource, const int *iconXPM ) {
 	glw_state.wndproc = wndproc;
 	glw_state.applicationName = strdup( applicationName );
 	glw_state.applicationIcon = NULL;
 	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );
-	
-	if( iconXPM )
-	{
+
+	if( iconXPM ) {
 		size_t icon_memsize = iconXPM[0] * iconXPM[1] * sizeof( int );
 		glw_state.applicationIcon = malloc( icon_memsize );
 		memcpy( glw_state.applicationIcon, iconXPM, icon_memsize );
@@ -181,8 +172,7 @@ bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, vo
 	return true;
 }
 
-static bool GLimp_InitGL( int stencilbits, bool stereo )
-{
+static bool GLimp_InitGL( int stencilbits, bool stereo ) {
 	int colorBits, depthBits, stencilBits, stereo_;
 
 	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, max( 0, stencilbits ) );
@@ -225,24 +215,21 @@ fail:
 /**
  * TODO documentation
  */
-void GLimp_BeginFrame( void )
-{
+void GLimp_BeginFrame( void ) {
 }
 
 /**
  * Swap the buffers and possibly do other stuff that yet needs to be
  * determined.
  */
-void GLimp_EndFrame( void )
-{
+void GLimp_EndFrame( void ) {
 	SDL_GL_SwapWindow( glw_state.sdl_window );
 }
 
 /**
  * TODO documentation
  */
-bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
-{
+bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp ) {
 	unsigned short ramp256[3 * 256];
 
 	if( stride < 256 ) {
@@ -263,12 +250,12 @@ bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *r
 /**
  * TODO documentation
  */
-void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp )
-{
+void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp ) {
 	unsigned short ramp256[3 * 256];
 
-	if( size != 256 )
+	if( size != 256 ) {
 		return;
+	}
 
 	memcpy( ramp256, ramp, size * sizeof( *ramp ) );
 	memcpy( ramp256 + 256, ramp + stride, size * sizeof( *ramp ) );
@@ -281,17 +268,16 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ram
 /**
  * TODO documentation
  */
-void GLimp_AppActivate( bool active, bool destroy )
-{
+void GLimp_AppActivate( bool active, bool minimize, bool destroy ) {
 }
 
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending )
-{
-	if( surfaceChangePending )
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending ) {
+	if( surfaceChangePending ) {
 		*surfaceChangePending = false;
+	}
 
 	return rserr_ok; // surface cannot be lost
 }
@@ -299,62 +285,57 @@ rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool 
 /*
 ** GLimp_RenderingEnabled
 */
-bool GLimp_RenderingEnabled( void )
-{
+bool GLimp_RenderingEnabled( void ) {
 	return true;
 }
 
 /*
 ** GLimp_SetSwapInterval
 */
-void GLimp_SetSwapInterval( int swapInterval )
-{
+void GLimp_SetSwapInterval( int swapInterval ) {
 	SDL_GL_SetSwapInterval( swapInterval );
 }
 
 /*
 ** GLimp_MakeCurrent
 */
-bool GLimp_MakeCurrent( void *context, void *surface )
-{
+bool GLimp_MakeCurrent( void *context, void *surface ) {
 	return SDL_GL_MakeCurrent( glw_state.sdl_window, (SDL_GLContext)context ) == 0;
 }
 
 /*
 ** GLimp_EnableMultithreadedRendering
 */
-void GLimp_EnableMultithreadedRendering( bool enable )
-{
+void GLimp_EnableMultithreadedRendering( bool enable ) {
 }
 
 /*
 ** GLimp_GetWindowSurface
 */
-void *GLimp_GetWindowSurface( bool *renderable )
-{
-	if( renderable )
+void *GLimp_GetWindowSurface( bool *renderable ) {
+	if( renderable ) {
 		*renderable = true;
+	}
 	return NULL;
 }
 
 /*
 ** GLimp_UpdatePendingWindowSurface
 */
-void GLimp_UpdatePendingWindowSurface( void )
-{
+void GLimp_UpdatePendingWindowSurface( void ) {
 }
 
 /*
 ** GLimp_SharedContext_Create
 */
-bool GLimp_SharedContext_Create( void **context, void **surface )
-{
+bool GLimp_SharedContext_Create( void **context, void **surface ) {
 	SDL_GL_SetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1 );
-	
+
 	*context = (void*)SDL_GL_CreateContext( glw_state.sdl_window );
-	if( surface )
+	if( surface ) {
 		*surface = NULL;
-	
+	}
+
 	// SDL_GL_CreateContext makes the newly created context current
 	// we don't want that, so revert to our main context
 	return SDL_GL_MakeCurrent( glw_state.sdl_window, glw_state.sdl_glcontext ) == 0;
@@ -363,7 +344,6 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 /*
 ** GLimp_SharedContext_Destroy
 */
-void GLimp_SharedContext_Destroy( void *context, void *surface )
-{
+void GLimp_SharedContext_Destroy( void *context, void *surface ) {
 	SDL_GL_DeleteContext( (SDL_GLContext)context );
 }

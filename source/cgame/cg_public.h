@@ -32,34 +32,33 @@ struct model_s;
 struct cmodel_s;
 struct qfontface_s;
 
-typedef size_t (*cg_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
-	int status, const char *contentType, void *privatep);
-typedef void (*cg_async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
+typedef size_t ( *cg_async_stream_read_cb_t )( const void *buf, size_t numb, float percentage,
+											 int status, const char *contentType, void *privatep );
+typedef void ( *cg_async_stream_done_cb_t )( int status, const char *contentType, void *privatep );
 
-typedef void (*cg_raw_samples_cb_t)(void*,unsigned int, unsigned int, unsigned short, unsigned short, const uint8_t *);
-typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
+typedef void ( *cg_raw_samples_cb_t )( void *, unsigned int, unsigned int, unsigned short, unsigned short, const uint8_t * );
+typedef unsigned int ( *cg_get_raw_samples_cb_t )( void* );
 
-typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
+typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   99
+#define CGAME_API_VERSION   100
 
 //
 // structs and variables shared with the main engine
 //
 
-#define	MAX_PARSE_ENTITIES	1024
-typedef struct snapshot_s
-{
+#define MAX_PARSE_ENTITIES  1024
+typedef struct snapshot_s {
 	bool valid;             // cleared if delta parsing was invalid
-	int serverFrame;
-	unsigned int serverTime;    // time in the server when frame was created
-	unsigned int ucmdExecuted;
+	int64_t serverFrame;
+	int64_t serverTime;    // time in the server when frame was created
+	int64_t ucmdExecuted;
 	bool delta;
 	bool allentities;
 	bool multipov;
-	int deltaFrameNum;
+	int64_t deltaFrameNum;
 	size_t areabytes;
 	uint8_t *areabits;             // portalarea visibility bits
 	int numplayers;
@@ -70,7 +69,7 @@ typedef struct snapshot_s
 	game_state_t gameState;
 	int numgamecommands;
 	gcommand_t gamecommands[MAX_PARSE_GAMECOMMANDS];
-	char gamecommandsData[(MAX_STRING_CHARS / 16) * MAX_PARSE_GAMECOMMANDS];
+	char gamecommandsData[( MAX_STRING_CHARS / 16 ) * MAX_PARSE_GAMECOMMANDS];
 	size_t gamecommandsDataHead;
 } snapshot_t;
 
@@ -79,24 +78,13 @@ typedef struct snapshot_s
 //
 // functions provided by the main engine
 //
-typedef struct
-{
+typedef struct {
 	// drops to console a client game error
 	void ( *Error )( const char *msg );
 
 	// console messages
 	void ( *Print )( const char *msg );
 	void ( *PrintToLog )( const char *msg );
-
-	// dynvars
-	dynvar_t *( *Dynvar_Create )( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter );
-	void ( *Dynvar_Destroy )( dynvar_t *dynvar );
-	dynvar_t *( *Dynvar_Lookup )( const char *name );
-	const char *( *Dynvar_GetName )( dynvar_t *dynvar );
-	dynvar_get_status_t ( *Dynvar_GetValue )( dynvar_t *dynvar, void **value );
-	dynvar_set_status_t ( *Dynvar_SetValue )( dynvar_t *dynvar, void *value );
-	void ( *Dynvar_AddListener )( dynvar_t *dynvar, dynvar_listener_f listener );
-	void ( *Dynvar_RemoveListener )( dynvar_t *dynvar, dynvar_listener_f listener );
 
 	// console variable interaction
 	cvar_t *( *Cvar_Get )( const char *name, const char *value, int flags );
@@ -145,22 +133,21 @@ typedef struct
 	const char *( *Key_KeynumToString )( int keynum );
 
 	void ( *GetConfigString )( int i, char *str, int size );
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 	bool ( *DownloadRequest )( const char *filename, bool requestpak );
 
-	unsigned int (* Hash_BlockChecksum )( const uint8_t * data, size_t len );
-	unsigned int (* Hash_SuperFastHash )( const uint8_t * data, size_t len, unsigned int seed );
+	unsigned int ( * Hash_BlockChecksum )( const uint8_t * data, size_t len );
+	unsigned int ( * Hash_SuperFastHash )( const uint8_t * data, size_t len, unsigned int seed );
 
 	void ( *NET_GetUserCmd )( int frame, usercmd_t *cmd );
 	int ( *NET_GetCurrentUserCmdNum )( void );
-	void ( *NET_GetCurrentState )( int *incomingAcknowledged, int *outgoingSequence, int *outgoingSent );
-	void ( *RefreshMouseAngles )( void );
+	void ( *NET_GetCurrentState )( int64_t *incomingAcknowledged, int64_t *outgoingSequence, int64_t *outgoingSent );
 
 	// Asynchronous HTTP requests
 	void ( *AsyncStream_UrlEncode )( const char *src, char *dst, size_t size );
 	size_t ( *AsyncStream_UrlDecode )( const char *src, char *dst, size_t size );
 	int ( *AsyncStream_PerformRequest )( const char *url, const char *method, const char *data, int timeout,
-		cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep );
+										 cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep );
 	size_t ( *GetBaseServerURL )( char *buffer, size_t buffer_size );
 
 	// refresh system
@@ -173,13 +160,13 @@ typedef struct
 	void ( *R_AddLightStyleToScene )( int style, float r, float g, float b );
 	void ( *R_RenderScene )( const struct refdef_s *fd );
 	const char *( *R_GetSpeedsMessage )( char *out, size_t size );
-	int ( *R_GetAverageFramerate )( void );
+	int ( *R_GetAverageFrametime )( void );
 	void ( *R_RegisterWorldModel )( const char *name );
 	void ( *R_ModelBounds )( const struct model_s *mod, vec3_t mins, vec3_t maxs );
 	void ( *R_ModelFrameBounds )( const struct model_s *mod, int frame, vec3_t mins, vec3_t maxs );
 	struct model_s *( *R_RegisterModel )( const char *name );
 	struct shader_s *( *R_RegisterPic )( const char *name );
-	struct shader_s *( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
+	struct shader_s *( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t * data, int samples );
 	struct shader_s *( *R_RegisterLevelshot )( const char *name, struct shader_s *defaultPic, bool *matchesDefault );
 	struct shader_s *( *R_RegisterSkin )( const char *name );
 	struct skinfile_s *( *R_RegisterSkinFile )( const char *name );
@@ -206,12 +193,11 @@ typedef struct
 
 	// collision detection
 	int ( *CM_NumInlineModels )( void );
-	struct cmodel_s	*( *CM_InlineModel )( int num );
-	struct cmodel_s	*( *CM_ModelForBBox )( vec3_t mins, vec3_t maxs );
-	struct cmodel_s	*( *CM_OctagonModelForBBox )( vec3_t mins, vec3_t maxs );
+	struct cmodel_s *( *CM_InlineModel )( int num );
+	struct cmodel_s *( *CM_ModelForBBox )( vec3_t mins, vec3_t maxs );
+	struct cmodel_s *( *CM_OctagonModelForBBox )( vec3_t mins, vec3_t maxs );
 	void ( *CM_TransformedBoxTrace )( trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
 	int ( *CM_TransformedPointContents )( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
-	void ( *CM_RoundUpToHullSize )( vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 	void ( *CM_InlineModelBounds )( struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
 	bool ( *CM_InPVS )( const vec3_t p1, const vec3_t p2 );
 
@@ -225,8 +211,8 @@ typedef struct
 	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop, int mode );
 	void ( *S_StopBackgroundTrack )( void );
 	void ( *S_RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
-	void ( *S_PositionedRawSamples )( int entnum, float fvol, float attenuation, 
-		unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
+	void ( *S_PositionedRawSamples )( int entnum, float fvol, float attenuation,
+									  unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
 	unsigned int ( *S_GetRawSamplesLength )( void );
 	unsigned int ( *S_GetPositionedRawSamplesLength )( int entnum );
 	void ( *S_SetEntitySpatilization )( int entNum, vec3_t origin, vec3_t velocity );
@@ -247,7 +233,7 @@ typedef struct
 	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
-	fdrawchar_t ( *SCR_SetDrawCharIntercept )( fdrawchar_t intercept );
+	cg_fdrawchar_t ( *SCR_SetDrawCharIntercept )( cg_fdrawchar_t intercept );
 	void ( *SCR_EnableQuickMenu )( bool enabled );
 	bool ( *SCR_HaveQuickMenu )( void );
 	bool ( *SCR_IsQuickMenuShown )( void );
@@ -263,29 +249,28 @@ typedef struct
 	const char *( *L10n_TranslateString )( const char *string );
 
 	// cinematics
-	bool ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener, 
-		cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
+	bool ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener,
+										 cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
 
 	// input
 	void ( *IN_GetThumbsticks )( vec4_t sticks );
 	unsigned int ( *IN_IME_GetCandidates )( char * const *cands, size_t candSize, unsigned int maxCands,
-		int *selected, int *firstKey );
+											int *selected, int *firstKey );
 	unsigned int ( *IN_SupportedDevices )( void );
 } cgame_import_t;
 
 //
 // functions exported by the client game subsystem
 //
-typedef struct
-{
+typedef struct {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
 
 	// the init function will be called at each restart
 	void ( *Init )( const char *serverName, unsigned int playerNum,
-		int vidWidth, int vidHeight, float pixelRatio,
-		bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime, 
-		int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
+					int vidWidth, int vidHeight, float pixelRatio,
+					bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime,
+					int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
 
 	// "soft restarts" at demo jumps
 	void ( *Reset )( void );
@@ -302,7 +287,7 @@ typedef struct
 
 	void ( *Trace )( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask );
 
-	void ( *RenderView )( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped );
+	void ( *RenderView )( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime );
 
 	bool ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
 
@@ -311,7 +296,15 @@ typedef struct
 	 *
 	 * @param frametime real frame time
 	 */
-	void ( *UpdateInput )( float frametime );
+	void ( *InputFrame )( int frameTime );
+
+	/**
+	* Transmits accumulated mouse movement event for the current frame.
+	*
+	* @param dx horizontal mouse movement
+	* @param dy vertical mouse movement
+	*/
+	void ( *MouseMove )( int dx, int dy );
 
 	/**
 	 * Resets cgame input state.
@@ -330,11 +323,9 @@ typedef struct
 	 * Adds input view rotation.
 	 * May be called multiple times in a frame.
 	 *
-	 * @param viewangles view angles to modify
-	 * @param frametime  real frame time
-	 * @param flipped    whether horizontal input is flipped
+	 * @param viewAngles view angles to modify
 	 */
-	void ( *AddViewAngles )( vec3_t viewangles, float frametime, bool flipped );
+	void ( *AddViewAngles )( vec3_t viewAngles );
 
 	/**
 	 * Adds player movement.
@@ -353,7 +344,7 @@ typedef struct
 	 * @param y    finger y position
 	 * @param time when the event was fired
 	 */
-	void ( *TouchEvent )( int id, touchevent_t type, int x, int y, unsigned int time );
+	void ( *TouchEvent )( int id, touchevent_t type, int x, int y, int64_t time );
 
 	/**
 	 * Returns whether a finger is currently being handled by cgame.

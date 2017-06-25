@@ -44,7 +44,7 @@ cvar_t *cg_touch_zoomThres;
 cvar_t *cg_touch_zoomTime;
 
 static int cg_hud_touch_buttons, cg_hud_touch_upmove;
-static unsigned int cg_hud_touch_zoomSeq, cg_hud_touch_zoomLastTouch;
+static int64_t cg_hud_touch_zoomSeq, cg_hud_touch_zoomLastTouch;
 static int cg_hud_touch_zoomX, cg_hud_touch_zoomY;
 
 enum
@@ -137,47 +137,40 @@ static const constant_numeric_t cg_numeric_constants[] = {
 };
 
 // picnames for custom icons (weaponlist)
-static const char *customWeaponPics[WEAP_TOTAL-1];
-static const char *customNoGunWeaponPics[WEAP_TOTAL-1];
+static const char *customWeaponPics[WEAP_TOTAL - 1];
+static const char *customNoGunWeaponPics[WEAP_TOTAL - 1];
 static const char *customWeaponSelectPic;
 
 //=============================================================================
 
-static int CG_GetStatEnemyTeam( const void *parameter )
-{
+static int CG_GetStatEnemyTeam( const void *parameter ) {
 	return ( ( cg.predictedPlayerState.stats[STAT_TEAM] == TEAM_ALPHA ) ? TEAM_BETA :
-		( ( cg.predictedPlayerState.stats[STAT_TEAM] == TEAM_BETA ) ? TEAM_ALPHA : TEAM_SPECTATOR ) );
+			 ( ( cg.predictedPlayerState.stats[STAT_TEAM] == TEAM_BETA ) ? TEAM_ALPHA : TEAM_SPECTATOR ) );
 }
 
-static int CG_GetStatValue( const void *parameter )
-{
+static int CG_GetStatValue( const void *parameter ) {
 	assert( (intptr_t)parameter >= 0 && (intptr_t)parameter < MAX_STATS );
 
 	return cg.predictedPlayerState.stats[(intptr_t)parameter];
 }
 
-static int CG_GetRaceStatValue( const void *parameter )
-{
+static int CG_GetRaceStatValue( const void *parameter ) {
 	return CG_GetStatValue( parameter );
 }
 
-static int CG_GetLayoutStatFlag( const void *parameter )
-{
+static int CG_GetLayoutStatFlag( const void *parameter ) {
 	return ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & (intptr_t)parameter ) ? 1 : 0;
 }
 
-static int CG_GetPOVnum( const void *parameter )
-{
+static int CG_GetPOVnum( const void *parameter ) {
 	return ( cg.predictedPlayerState.POVnum != cgs.playerNum + 1 ) ? cg.predictedPlayerState.POVnum : STAT_NOTSET;
 }
 
-static int CG_GetArmorItem( const void *parameter )
-{
+static int CG_GetArmorItem( const void *parameter ) {
 	return GS_Armor_TagForCount( cg.predictedPlayerState.stats[STAT_ARMOR] );
 }
 
-static float _getspeed( void )
-{
+static float _getspeed( void ) {
 	vec3_t hvel;
 
 	VectorSet( hvel, cg.predictedPlayerState.pmove.velocity[0], cg.predictedPlayerState.pmove.velocity[1], 0 );
@@ -185,148 +178,111 @@ static float _getspeed( void )
 	return VectorLength( hvel );
 }
 
-static int CG_GetSpeed( const void *parameter )
-{
+static int CG_GetSpeed( const void *parameter ) {
 	return (int)_getspeed();
 }
 
-static int CG_GetSpeedVertical( const void *parameter )
-{
+static int CG_GetSpeedVertical( const void *parameter ) {
 	return cg.predictedPlayerState.pmove.velocity[2];
 }
 
-static int CG_GetFPS( const void *parameter )
-{
+static int CG_GetFPS( const void *parameter ) {
 #define FPSSAMPLESCOUNT 32
-#define FPSSAMPLESMASK ( FPSSAMPLESCOUNT-1 )
-	static int fps;
-	static double oldtime;
-	static int oldframecount;
-	static float frameTimes[FPSSAMPLESCOUNT];
-	static float avFrameTime;
+#define FPSSAMPLESMASK ( FPSSAMPLESCOUNT - 1 )
 	int i;
-	double t;
+	int fps;
+	static int frameTimes[FPSSAMPLESCOUNT];
+	float avFrameTime;
 
-	if( cg_showFPS->integer == 1 )
-	{
-		// FIXME: this should be removed once the API no longer locked
-		fps = (int)trap_R_GetAverageFramerate();
-		if( fps < 1 )
-			fps = 1;
-		return fps;
+	if( cg_showFPS->modified ) {
+		memset( frameTimes, 0, sizeof( frameTimes ) );
+		cg_showFPS->modified = false;
 	}
 
-	frameTimes[cg.frameCount & FPSSAMPLESMASK] = cg.realFrameTime;
+	if( cg_showFPS->integer == 1 ) {
+		frameTimes[cg.frameCount & FPSSAMPLESMASK] = trap_R_GetAverageFrametime();
+	} else {
+		frameTimes[cg.frameCount & FPSSAMPLESMASK] = cg.realFrameTime;
+	}
 
-	if( cg_showFPS->integer == 2 )
-	{
-		for( avFrameTime = 0.0f, i = 0; i < FPSSAMPLESCOUNT; i++ )
-		{
-			avFrameTime += frameTimes[( cg.frameCount-i ) & FPSSAMPLESMASK];
-		}
-		avFrameTime /= FPSSAMPLESCOUNT;
-		fps = (int)( 1.0f/avFrameTime + 0.5f );
+	for( avFrameTime = 0.0f, i = 0; i < FPSSAMPLESCOUNT; i++ ) {
+		avFrameTime += frameTimes[( cg.frameCount - i ) & FPSSAMPLESMASK];
 	}
-	else
-	{
-		t = cg.realTime * 0.001f;
-		if( ( t - oldtime ) >= 0.25 )
-		{
-			// updates 4 times a second
-			fps = ( cg.frameCount - oldframecount ) / ( t - oldtime ) + 0.5;
-			oldframecount = cg.frameCount;
-			oldtime = t;
-		}
-	}
+	avFrameTime /= FPSSAMPLESCOUNT;
+	fps = (int)( 1000.0f / avFrameTime + 0.5f );
 
 	return fps;
 }
 
-static int CG_GetPowerupTime( const void *parameter )
-{
+static int CG_GetPowerupTime( const void *parameter ) {
 	int powerup = (intptr_t)parameter;
 	return cg.predictedPlayerState.inventory[powerup];
 }
 
-static int CG_GetMatchState( const void *parameter )
-{
-	if( cgs.demoTutorial )
+static int CG_GetMatchState( const void *parameter ) {
+	if( cgs.demoTutorial ) {
 		return MATCH_STATE_NONE;
+	}
 	return GS_MatchState();
 }
 
-static int CG_GetMatchDuration( const void *parameter )
-{
+static int CG_GetMatchDuration( const void *parameter ) {
 	return GS_MatchDuration();
 }
 
-static int CG_GetOvertime( const void *parameter )
-{
+static int CG_GetOvertime( const void *parameter ) {
 	return GS_MatchExtended();
 }
 
-static int CG_GetInstagib( const void *parameter )
-{
+static int CG_GetInstagib( const void *parameter ) {
 	return GS_Instagib();
 }
 
-static int CG_GetTeamBased( const void *parameter )
-{
+static int CG_GetTeamBased( const void *parameter ) {
 	return GS_TeamBasedGametype();
 }
 
-static int CG_InvidualGameType( const void *parameter )
-{
+static int CG_InvidualGameType( const void *parameter ) {
 	return GS_InvidualGameType();
 }
 
-static int CG_RaceGameType( const void *parameter )
-{
+static int CG_RaceGameType( const void *parameter ) {
 	return GS_RaceGametype();
 }
 
-static int CG_TutorialGameType( const void *parameter )
-{
+static int CG_TutorialGameType( const void *parameter ) {
 	return GS_TutorialGametype();
 }
 
-static int CG_Paused( const void *parameter )
-{
+static int CG_Paused( const void *parameter ) {
 	return GS_MatchPaused();
 }
 
-static int CG_GetZoom( const void *parameter )
-{
+static int CG_GetZoom( const void *parameter ) {
 	return ( !cg.view.thirdperson && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] != 0 ) );
 }
 
-static int CG_GetVidWidth( const void *parameter )
-{
+static int CG_GetVidWidth( const void *parameter ) {
 	return cgs.vidWidth;
 }
 
-static int CG_GetVidHeight( const void *parameter )
-{
+static int CG_GetVidHeight( const void *parameter ) {
 	return cgs.vidHeight;
 }
 
-static int CG_GetStunned( const void *parameter )
-{
+static int CG_GetStunned( const void *parameter ) {
 	return cg.predictedPlayerState.pmove.stats[PM_STAT_STUN];
 }
 
-static int CG_GetCvar( const void *parameter )
-{
+static int CG_GetCvar( const void *parameter ) {
 	return trap_Cvar_Value( (const char *)parameter );
 }
 
-static int CG_GetDamageIndicatorDirValue( const void *parameter )
-{
+static int CG_GetDamageIndicatorDirValue( const void *parameter ) {
 	float frac = 0;
 	int index = (intptr_t)parameter;
 
-	if( cg.damageBlends[index] > cg.time && !cg.view.thirdperson )
-	{
+	if( cg.damageBlends[index] > cg.time && !cg.view.thirdperson ) {
 		frac = ( cg.damageBlends[index] - cg.time ) / 300.0f;
 		clamp( frac, 0.0f, 1.0f );
 	}
@@ -334,28 +290,26 @@ static int CG_GetDamageIndicatorDirValue( const void *parameter )
 	return frac * 1000;
 }
 
-static int CG_GetCurrentWeaponInventoryData( const void *parameter )
-{
+static int CG_GetCurrentWeaponInventoryData( const void *parameter ) {
 	gs_weapon_definition_t *weapondef = GS_GetWeaponDef( cg.predictedPlayerState.stats[STAT_WEAPON] );
 	firedef_t *firedef;
 	int result;
 
-	switch( (intptr_t)parameter )
-	{
-	case 0: // AMMO_ITEM
-	default:
-		firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
-		result = firedef->ammo_id;
-		break;
-	case 1: // STRONG AMMO COUNT
-		result = cg.predictedPlayerState.inventory[weapondef->firedef.ammo_id];
-		break;
-	case 2: // WEAK AMMO COUNT
-		result = cg.predictedPlayerState.inventory[weapondef->firedef_weak.ammo_id];
-		break;
-	case 3: // LOW AMMO THRESHOLD
-		result = weapondef->firedef.ammo_low;
-		break;
+	switch( (intptr_t)parameter ) {
+		case 0: // AMMO_ITEM
+		default:
+			firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
+			result = firedef->ammo_id;
+			break;
+		case 1: // STRONG AMMO COUNT
+			result = cg.predictedPlayerState.inventory[weapondef->firedef.ammo_id];
+			break;
+		case 2: // WEAK AMMO COUNT
+			result = cg.predictedPlayerState.inventory[weapondef->firedef_weak.ammo_id];
+			break;
+		case 3: // LOW AMMO THRESHOLD
+			result = weapondef->firedef.ammo_low;
+			break;
 	}
 
 	return result;
@@ -368,110 +322,106 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter )
  * @param weapon weapon item ID
  * @return whether to display the weapon
  */
-static bool CG_IsWeaponInList( int weapon )
-{
+static bool CG_IsWeaponInList( int weapon ) {
 	bool hasWeapon = ( cg.predictedPlayerState.inventory[weapon] != 0 );
 	bool hasAmmo = ( cg.predictedPlayerState.inventory[weapon - WEAP_GUNBLADE + AMMO_GUNBLADE] ||
-		cg.predictedPlayerState.inventory[weapon - WEAP_GUNBLADE + AMMO_WEAK_GUNBLADE] );
+					 cg.predictedPlayerState.inventory[weapon - WEAP_GUNBLADE + AMMO_WEAK_GUNBLADE] );
 
-	if( weapon == WEAP_GUNBLADE ) // gunblade always has 1 ammo when it's strong, but the player doesn't necessarily have it
+	if( weapon == WEAP_GUNBLADE ) { // gunblade always has 1 ammo when it's strong, but the player doesn't necessarily have it
 		return hasWeapon;
+	}
 
 	return hasWeapon || hasAmmo;
 }
 
-static int CG_GetWeaponCount( const void *parameter )
-{
+static int CG_GetWeaponCount( const void *parameter ) {
 	int i, n = 0;
-	for( i = 0; i < WEAP_TOTAL-1; i++ )
-	{
-		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
+	for( i = 0; i < WEAP_TOTAL - 1; i++ ) {
+		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
 			n++;
+		}
 	}
 	return n;
 }
 
-static int CG_GetPmoveType( const void *parameter )
-{
+static int CG_GetPmoveType( const void *parameter ) {
 	// the real pmove type of the client, which is chasecam or spectator when playing a demo
 	return cg.frame.playerState.pmove.pm_type;
 }
 
-static int CG_IsDemoPlaying( const void *parameter )
-{
+static int CG_IsDemoPlaying( const void *parameter ) {
 	return ( cgs.demoPlaying ? 1 : 0 );
 }
 
-static int CG_DownloadInProgress( const void *parameter )
-{
+static int CG_DownloadInProgress( const void *parameter ) {
 	const char *str;
 
 	str = trap_Cvar_String( "cl_download_name" );
-	if( str[0] )
+	if( str[0] ) {
 		return 1;
+	}
 	return 0;
 }
 
-static int CG_GetShowItemTimers( const void *parameter )
-{
-	if( cgs.tv )
+static int CG_GetShowItemTimers( const void *parameter ) {
+	if( cgs.tv ) {
 		return (int)trap_Cvar_Value( (char *)parameter ) & 2;
+	}
 	return (int)trap_Cvar_Value( (char *)parameter ) & 1;
 }
 
-static int CG_GetItemTimer( const void *parameter )
-{
+static int CG_GetItemTimer( const void *parameter ) {
 	int num = (intptr_t)parameter;
 	centity_t *cent;
 
 	cent = CG_GetItemTimerEnt( num );
-	if( !cent )
+	if( !cent ) {
 		return 0;
+	}
 	return cent->item->tag;
 }
 
-static int CG_GetItemTimerCount( const void *parameter )
-{
+static int CG_GetItemTimerCount( const void *parameter ) {
 	int num = (intptr_t)parameter;
 	centity_t *cent;
 
 	cent = CG_GetItemTimerEnt( num );
-	if( !cent )
+	if( !cent ) {
 		return 0;
+	}
 	return cent->ent.frame;
 }
 
-static int CG_GetItemTimerLocation( const void *parameter )
-{
+static int CG_GetItemTimerLocation( const void *parameter ) {
 	int num = (intptr_t)parameter;
 	centity_t *cent;
 
 	cent = CG_GetItemTimerEnt( num );
-	if( !cent )
+	if( !cent ) {
 		return 0;
+	}
 	return cent->current.modelindex2;
 }
 
-static int CG_GetItemTimerTeam( const void *parameter )
-{
+static int CG_GetItemTimerTeam( const void *parameter ) {
 	int num = (intptr_t)parameter;
 	centity_t *cent;
 
 	cent = CG_GetItemTimerEnt( num );
-	if( !cent )
+	if( !cent ) {
 		return 0;
-	return max( (int)cent->current.modelindex-1, 0 );
+	}
+	return max( (int)cent->current.modelindex - 1, 0 );
 }
 
-static int CG_InputDeviceSupported( const void *parameter )
-{
+static int CG_InputDeviceSupported( const void *parameter ) {
 	return ( trap_IN_SupportedDevices() & ( ( intptr_t )parameter ) ) ? 1 : 0;
 }
 
 // ch : backport some of racesow hud elements
 /*********************************************************************************
 lm: edit for race mod,
-	adds bunch of vars to the hud.
+    adds bunch of vars to the hud.
 
 *********************************************************************************/
 
@@ -486,70 +436,73 @@ enum race_index {
 	max_index
 };
 
-static int CG_GetRaceVars( const void* parameter )
-{
+static int CG_GetRaceVars( const void* parameter ) {
 	int index = (intptr_t)parameter;
 	int iNum;
 	vec3_t hor_vel, view_dir, an;
 
-	if( GS_MatchState() != MATCH_STATE_WARMUP && !GS_RaceGametype() )
+	if( GS_MatchState() != MATCH_STATE_WARMUP && !GS_RaceGametype() ) {
 		return 0;
+	}
 
 	switch( index ) {
 		case diff_an:
+
 			// difference of look and move angles
 			hor_vel[0] = cg.predictedPlayerState.pmove.velocity[0];
 			hor_vel[1] = cg.predictedPlayerState.pmove.velocity[1];
 			hor_vel[2] = 0;
 			VecToAngles( hor_vel, an );
 			AngleVectors( cg.predictedPlayerState.viewangles, view_dir, NULL, NULL );
-			iNum = Q_rint(100 * (cg.predictedPlayerState.viewangles[YAW] - an[YAW]));
+			iNum = Q_rint( 100 * ( cg.predictedPlayerState.viewangles[YAW] - an[YAW] ) );
 			while( iNum > 18000 )
 				iNum -= 36000;
 			while( iNum < -18000 )
 				iNum += 36000;
 
 			// ch : check if player is moving backwards so iNum wont wrap around
-			if( DotProduct( hor_vel, view_dir ) >= 0.0 )
+			if( DotProduct( hor_vel, view_dir ) >= 0.0 ) {
 				return iNum;
-
-			else if( iNum < 0 )
+			} else if( iNum < 0 ) {
 				return 18000 + iNum;
-			else
+			} else {
 				return -18000 + iNum;
+			}
 
 		case strafe_an:
+
 			// optimal strafing angle
-			iNum = Q_rint(100 * (acos((320-320*cg.realFrameTime)/CG_GetSpeed(0))*180/M_PI-45) ); //maybe need to check if speed below 320 is allowed for acos
-			if (iNum > 0)
+			iNum = Q_rint( 100 * ( acos( ( 320 - 0.32f * (float)cg.realFrameTime ) / CG_GetSpeed( 0 ) ) * 180 / M_PI - 45 ) ); //maybe need to check if speed below 320 is allowed for acos
+			if( iNum > 0 ) {
 				return iNum;
-			else
+			} else {
 				return 0;
+			}
 		case move_an:
+
 			// angle of current moving direction
 			hor_vel[0] = cg.predictedPlayerState.pmove.velocity[0];
 			hor_vel[1] = cg.predictedPlayerState.pmove.velocity[1];
 			hor_vel[2] = 0;
 			VecToAngles( hor_vel, an );
-			iNum = Q_rint(100 * an[YAW]);
+			iNum = Q_rint( 100 * an[YAW] );
 			while( iNum > 18000 )
 				iNum -= 36000;
 			while( iNum < -18000 )
 				iNum += 36000;
 			return iNum;
 		case mouse_x:
-			return Q_rint(100 * cg.predictedPlayerState.viewangles[YAW]);
+			return Q_rint( 100 * cg.predictedPlayerState.viewangles[YAW] );
 		case mouse_y:
-			return Q_rint(100 * cg.predictedPlayerState.viewangles[PITCH]);
+			return Q_rint( 100 * cg.predictedPlayerState.viewangles[PITCH] );
 		default:
 			return STAT_NOTSET;
 	}
 }
 
-static int CG_GetAccel( const void* parameter )
-{
+static int CG_GetAccel( const void* parameter ) {
 #define ACCEL_SAMPLE_COUNT 16
-#define ACCEL_SAMPLE_MASK (ACCEL_SAMPLE_COUNT-1)
+#define ACCEL_SAMPLE_MASK ( ACCEL_SAMPLE_COUNT - 1 )
 	int i;
 	float t, dt;
 	float accel;
@@ -561,12 +514,11 @@ static int CG_GetAccel( const void* parameter )
 
 	t = cg.realTime * 0.001f;
 	dt = t - oldTime;
-	if( dt > 0.0 )
-	{
+	if( dt > 0.0 ) {
 		// raw acceleration
 		newSpeed = _getspeed();
 		accel = ( newSpeed - oldSpeed ) / dt;
-		accelHistory[sampleCount&ACCEL_SAMPLE_MASK] = accel;
+		accelHistory[sampleCount & ACCEL_SAMPLE_MASK] = accel;
 		sampleCount++;
 		oldSpeed = newSpeed;
 		oldTime = t;
@@ -576,68 +528,63 @@ static int CG_GetAccel( const void* parameter )
 	accel = 0.0f;
 	for( i = 0; i < ACCEL_SAMPLE_COUNT; i++ )
 		accel += accelHistory[i];
-	accel /= (float)(ACCEL_SAMPLE_COUNT);
+	accel /= (float)( ACCEL_SAMPLE_COUNT );
 
-	if( GS_MatchState() != MATCH_STATE_WARMUP && !GS_RaceGametype() )
+	if( GS_MatchState() != MATCH_STATE_WARMUP && !GS_RaceGametype() ) {
 		return 0;
+	}
 
 	return (int)accel;
 }
 
-static int CG_GetTouchFlip( const void *parameter )
-{
+static int CG_GetTouchFlip( const void *parameter ) {
 	return cg_touch_flip->integer ? -1 : 1;
 }
 
-static int CG_GetTouchButtonPressed( const void *parameter )
-{
+static int CG_GetTouchButtonPressed( const void *parameter ) {
 	return ( cg_hud_touch_buttons & ( intptr_t )parameter ) ? 1 : 0;
 }
 
-static int CG_GetTouchUpmove( const void *parameter )
-{
+static int CG_GetTouchUpmove( const void *parameter ) {
 	return cg_hud_touch_upmove;
 }
 
-static int CG_GetTouchMovementDirection( const void *parameter )
-{
+static int CG_GetTouchMovementDirection( const void *parameter ) {
 	vec3_t movement;
 
-	VectorSet( movement, 0.0f, 0.0f, 0.0f );
-	CG_AddTouchMovement( movement );
-	if( !movement[0] && !movement[1] )
-		return STAT_NOTSET;
+	CG_GetTouchMovement( movement );
 
-	if( movement[0] > 0.0f )
-	{
-		if( !movement[1] )
+	if( !movement[0] && !movement[1] ) {
+		return STAT_NOTSET;
+	}
+
+	if( movement[0] > 0.0f ) {
+		if( !movement[1] ) {
 			return 0;
+		}
 		return ( movement[1] > 0.0f ) ? 45 : -45;
-	}
-	else if( movement[0] < 0.0f )
-	{
-		if( !movement[1] )
+	} else if( movement[0] < 0.0f ) {
+		if( !movement[1] ) {
 			return 180;
+		}
 		return 180 - ( ( movement[1] > 0.0f ) ? 45 : -45 );
-	}
-	else
-	{
+	} else {
 		return ( movement[1] > 0.0f ) ? 90 : -90;
 	}
 }
 
-static int CG_GetScoreboardShown( const void *parameter )
-{
+static int CG_GetScoreboardShown( const void *parameter ) {
 	return CG_IsScoreboardShown() ? 1 : 0;
 }
 
-static int CG_GetQuickMenuState( const void *parameter )
-{
-	if( trap_SCR_IsQuickMenuShown() )
+static int CG_GetQuickMenuState( const void *parameter ) {
+	if( trap_SCR_IsQuickMenuShown() ) {
 		return 2;
+	}
 
-	if( trap_SCR_HaveQuickMenu() )
+	if( trap_SCR_HaveQuickMenu() ) {
 		return 1;
+	}
 
 	return 0;
 }
@@ -743,9 +690,9 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "MOUSE_X", CG_GetRaceVars, (void *)mouse_x },
 	{ "MOUSE_Y", CG_GetRaceVars, (void *)mouse_y },
 	{ "ACCELERATION", CG_GetAccel, NULL },
-	{ "MOVEANGLE", CG_GetRaceVars, (void *)move_an	},
+	{ "MOVEANGLE", CG_GetRaceVars, (void *)move_an  },
 	{ "STRAFEANGLE", CG_GetRaceVars, (void *)strafe_an },
-	{ "DIFF_ANGLE", CG_GetRaceVars, (void *)diff_an	},
+	{ "DIFF_ANGLE", CG_GetRaceVars, (void *)diff_an },
 
 	// cvars
 	{ "SHOW_FPS", CG_GetCvar, "cg_showFPS" },
@@ -822,8 +769,8 @@ typedef enum { OBITUARY_NONE, OBITUARY_NORMAL, OBITUARY_TEAM, OBITUARY_SUICIDE, 
 
 typedef struct obituary_s
 {
-	obituary_type_t	type;
-	unsigned int time;
+	obituary_type_t type;
+	int64_t time;
 	char victim[MAX_INFO_VALUE];
 	int victim_team;
 	char attacker[MAX_INFO_VALUE];
@@ -837,9 +784,8 @@ static int cg_obituaries_current = -1;
 /*
 * CG_SC_PrintObituary
 */
-void CG_SC_PrintObituary( const char *format, ... )
-{
-	va_list	argptr;
+void CG_SC_PrintObituary( const char *format, ... ) {
+	va_list argptr;
 	char msg[GAMECHAT_STRING_SIZE];
 
 	va_start( argptr, format );
@@ -847,15 +793,14 @@ void CG_SC_PrintObituary( const char *format, ... )
 	va_end( argptr );
 
 	trap_Print( msg );
-	
+
 	CG_StackChatString( &cg.chat, msg );
 }
 
 /*
 * CG_SC_ResetObituaries
 */
-void CG_SC_ResetObituaries( void )
-{
+void CG_SC_ResetObituaries( void ) {
 	memset( cg_obituaries, 0, sizeof( cg_obituaries ) );
 	cg_obituaries_current = -1;
 }
@@ -863,8 +808,7 @@ void CG_SC_ResetObituaries( void )
 /*
 * CG_SC_Obituary
 */
-void CG_SC_Obituary( void )
-{
+void CG_SC_Obituary( void ) {
 	char message[128];
 	char message2[128];
 	cg_clientInfo_t *victim, *attacker;
@@ -875,33 +819,30 @@ void CG_SC_Obituary( void )
 	obituary_t *current;
 
 	// wsw : jal : extract gender from their player model info, if any
-	if( victimNum >= 0 && victimNum < MAX_EDICTS && cg_entPModels[victimNum].pmodelinfo )
+	if( victimNum >= 0 && victimNum < MAX_EDICTS && cg_entPModels[victimNum].pmodelinfo ) {
 		victim_gender = cg_entPModels[victimNum].pmodelinfo->sex;
+	}
 
 	victim = &cgs.clientInfo[victimNum - 1];
 
-	if( attackerNum )
-	{
+	if( attackerNum ) {
 		attacker = &cgs.clientInfo[attackerNum - 1];
-	}
-	else
-	{
+	} else {
 		attacker = NULL;
 	}
 
 	cg_obituaries_current++;
-	if( cg_obituaries_current >= MAX_OBITUARIES )
+	if( cg_obituaries_current >= MAX_OBITUARIES ) {
 		cg_obituaries_current = 0;
+	}
 	current = &cg_obituaries[cg_obituaries_current];
 
 	current->time = cg.time;
-	if( victim )
-	{
+	if( victim ) {
 		Q_strncpyz( current->victim, victim->name, sizeof( current->victim ) );
 		current->victim_team = cg_entities[victimNum].current.team;
 	}
-	if( attacker )
-	{
+	if( attacker ) {
 		Q_strncpyz( current->attacker, attacker->name, sizeof( current->attacker ) );
 		current->attacker_team = cg_entities[attackerNum].current.team;
 	}
@@ -909,39 +850,32 @@ void CG_SC_Obituary( void )
 
 	GS_Obituary( victim, victim_gender, attacker, mod, message, message2 );
 
-	if( attackerNum )
-	{
-		if( victimNum != attackerNum )
-		{
+	if( attackerNum ) {
+		if( victimNum != attackerNum ) {
 			// teamkill
 			if( cg_entities[attackerNum].current.team == cg_entities[victimNum].current.team &&
-			   GS_TeamBasedGametype() )
-			{
+				GS_TeamBasedGametype() ) {
 				current->type = OBITUARY_TEAM;
-				if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
-				{
+				if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE ) {
 					CG_LocalPrint( "%s%s%s %s %s%s %s%s%s\n", S_COLOR_RED, "TEAMFRAG:", S_COLOR_WHITE, victim->name,
-					           S_COLOR_WHITE, message, attacker->name, S_COLOR_WHITE, message2 );
+								   S_COLOR_WHITE, message, attacker->name, S_COLOR_WHITE, message2 );
 				}
 
-				if( ISVIEWERENTITY( attackerNum ) && ( cg_showObituaries->integer & CG_OBITUARY_CENTER ) )
-				{
+				if( ISVIEWERENTITY( attackerNum ) && ( cg_showObituaries->integer & CG_OBITUARY_CENTER ) ) {
 					char name[MAX_NAME_BYTES + 2];
 					Q_strncpyz( name, victim->name, sizeof( name ) );
 					Q_strupr( name );
 					Q_strncatz( name, S_COLOR_WHITE, sizeof( name ) );
 					CG_CenterPrint( va( CG_TranslateString( "YOU TEAMFRAGGED %s" ), name ) );
 				}
-			}
-			else // good kill
-			{
+			} else {   // good kill
 				current->type = OBITUARY_NORMAL;
-				if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
+				if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE ) {
 					CG_LocalPrint( "%s %s%s %s%s%s\n", victim->name, S_COLOR_WHITE, message, attacker->name, S_COLOR_WHITE,
-					           message2 );
+								   message2 );
+				}
 
-				if( ISVIEWERENTITY( attackerNum ) && ( cg_showObituaries->integer & CG_OBITUARY_CENTER ) )
-				{
+				if( ISVIEWERENTITY( attackerNum ) && ( cg_showObituaries->integer & CG_OBITUARY_CENTER ) ) {
 					char name[MAX_NAME_BYTES + 2];
 					Q_strncpyz( name, victim->name, sizeof( name ) );
 					Q_strupr( name );
@@ -949,25 +883,22 @@ void CG_SC_Obituary( void )
 					CG_CenterPrint( va( CG_TranslateString( "YOU FRAGGED %s" ), name ) );
 				}
 			}
-		}
-		else // suicide
-		{
+		} else {   // suicide
 			current->type = OBITUARY_SUICIDE;
-			if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
+			if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE ) {
 				CG_LocalPrint( "%s %s%s\n", victim->name, S_COLOR_WHITE, message );
+			}
 		}
-	}
-	else // world accidents
-	{
+	} else {   // world accidents
 		current->type = OBITUARY_ACCIDENT;
-		if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
+		if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE ) {
 			CG_LocalPrint( "%s %s%s\n", victim->name, S_COLOR_WHITE, message );
+		}
 	}
 }
 
 static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font, vec4_t color, int width, int height,
-                               int internal_align, unsigned int icon_size )
-{
+							   int internal_align, unsigned int icon_size ) {
 	int i, num, skip, next, w, num_max;
 	unsigned line_height;
 	int xoffset, yoffset;
@@ -975,37 +906,37 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 	struct shader_s *pic;
 	vec4_t teamcolor;
 
-	if( !( cg_showObituaries->integer & CG_OBITUARY_HUD ) )
+	if( !( cg_showObituaries->integer & CG_OBITUARY_HUD ) ) {
 		return;
+	}
 
 	line_height = max( (unsigned)trap_SCR_FontHeight( font ), icon_size );
 	num_max = height / line_height;
 
-	if( width < (int)icon_size || !num_max )
+	if( width < (int)icon_size || !num_max ) {
 		return;
+	}
 
 	next = cg_obituaries_current + 1;
-	if( next >= MAX_OBITUARIES )
+	if( next >= MAX_OBITUARIES ) {
 		next = 0;
+	}
 
 	num = 0;
 	i = next;
-	do
-	{
-		if( cg_obituaries[i].type != OBITUARY_NONE && cg.time - cg_obituaries[i].time <= 5000 )
+	do {
+		if( cg_obituaries[i].type != OBITUARY_NONE && cg.time - cg_obituaries[i].time <= 5000 ) {
 			num++;
-		if( ++i >= MAX_OBITUARIES )
+		}
+		if( ++i >= MAX_OBITUARIES ) {
 			i = 0;
-	}
-	while( i != next );
+		}
+	} while( i != next );
 
-	if( num > num_max )
-	{
+	if( num > num_max ) {
 		skip = num - num_max;
 		num = num_max;
-	}
-	else
-	{
+	} else {
 		skip = 0;
 	}
 
@@ -1016,127 +947,114 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 	yoffset = 0;
 
 	i = next;
-	do
-	{
+	do {
 		obr = &cg_obituaries[i];
-		if( ++i >= MAX_OBITUARIES )
+		if( ++i >= MAX_OBITUARIES ) {
 			i = 0;
+		}
 
-		if( obr->type == OBITUARY_NONE || cg.time - obr->time > 5000 )
+		if( obr->type == OBITUARY_NONE || cg.time - obr->time > 5000 ) {
 			continue;
+		}
 
-		if( skip > 0 )
-		{
+		if( skip > 0 ) {
 			skip--;
 			continue;
 		}
 
-		switch( obr->mod )
-		{
-		case MOD_GUNBLADE_W:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GUNBLADE-1] );
-			break;
-		case MOD_GUNBLADE_S:
-			pic = CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
-			break;
-		case MOD_MACHINEGUN_W:
-		case MOD_MACHINEGUN_S:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_MACHINEGUN-1] );
-			break;
-		case MOD_RIOTGUN_W:
-		case MOD_RIOTGUN_S:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_RIOTGUN-1] );
-			break;
-		case MOD_GRENADE_W:
-		case MOD_GRENADE_S:
-		case MOD_GRENADE_SPLASH_W:
-		case MOD_GRENADE_SPLASH_S:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GRENADELAUNCHER-1] );
-			break;
-		case MOD_ROCKET_W:
-		case MOD_ROCKET_S:
-		case MOD_ROCKET_SPLASH_W:
-		case MOD_ROCKET_SPLASH_S:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ROCKETLAUNCHER-1] );
-			break;
-		case MOD_PLASMA_W:
-		case MOD_PLASMA_S:
-		case MOD_PLASMA_SPLASH_W:
-		case MOD_PLASMA_SPLASH_S:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_PLASMAGUN-1] );
-			break;
-		case MOD_ELECTROBOLT_W:
-		case MOD_ELECTROBOLT_S:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT-1] );
-			break;
-		case MOD_INSTAGUN_W:
-		case MOD_INSTAGUN_S:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_INSTAGUN-1] );
-			break;
-		case MOD_LASERGUN_W:
-		case MOD_LASERGUN_S:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_LASERGUN-1] );
-			break;
-		default:
-			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GUNBLADE-1] ); // FIXME
-			break;
+		switch( obr->mod ) {
+			case MOD_GUNBLADE_W:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GUNBLADE - 1] );
+				break;
+			case MOD_GUNBLADE_S:
+				pic = CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
+				break;
+			case MOD_MACHINEGUN_W:
+			case MOD_MACHINEGUN_S:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_MACHINEGUN - 1] );
+				break;
+			case MOD_RIOTGUN_W:
+			case MOD_RIOTGUN_S:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_RIOTGUN - 1] );
+				break;
+			case MOD_GRENADE_W:
+			case MOD_GRENADE_S:
+			case MOD_GRENADE_SPLASH_W:
+			case MOD_GRENADE_SPLASH_S:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GRENADELAUNCHER - 1] );
+				break;
+			case MOD_ROCKET_W:
+			case MOD_ROCKET_S:
+			case MOD_ROCKET_SPLASH_W:
+			case MOD_ROCKET_SPLASH_S:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ROCKETLAUNCHER - 1] );
+				break;
+			case MOD_PLASMA_W:
+			case MOD_PLASMA_S:
+			case MOD_PLASMA_SPLASH_W:
+			case MOD_PLASMA_SPLASH_S:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_PLASMAGUN - 1] );
+				break;
+			case MOD_ELECTROBOLT_W:
+			case MOD_ELECTROBOLT_S:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT - 1] );
+				break;
+			case MOD_INSTAGUN_W:
+			case MOD_INSTAGUN_S:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_INSTAGUN - 1] );
+				break;
+			case MOD_LASERGUN_W:
+			case MOD_LASERGUN_S:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_LASERGUN - 1] );
+				break;
+			default:
+				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GUNBLADE - 1] ); // FIXME
+				break;
 		}
 
 		w = 0;
-		if( obr->type != OBITUARY_ACCIDENT )
+		if( obr->type != OBITUARY_ACCIDENT ) {
 			w += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
+		}
 		w += icon_size;
 		w += min( trap_SCR_strWidth( obr->victim, font, 0 ), ( width - icon_size ) / 2 );
 
-		if( internal_align == 1 )
-		{
+		if( internal_align == 1 ) {
 			// left
 			xoffset = 0;
-		}
-		else if( internal_align == 2 )
-		{
+		} else if( internal_align == 2 ) {
 			// center
 			xoffset = ( width - w ) / 2;
-		}
-		else
-		{
+		} else {
 			// right
 			xoffset = width - w;
 		}
 
-		if( obr->type != OBITUARY_ACCIDENT )
-		{
-			if( ( obr->attacker_team == TEAM_ALPHA ) || ( obr->attacker_team == TEAM_BETA ) )
-			{
+		if( obr->type != OBITUARY_ACCIDENT ) {
+			if( ( obr->attacker_team == TEAM_ALPHA ) || ( obr->attacker_team == TEAM_BETA ) ) {
 				CG_TeamColor( obr->attacker_team, teamcolor );
-			}
-			else
-			{
+			} else {
 				Vector4Set( teamcolor, 255, 255, 255, 255 );
 			}
 			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + ( line_height - trap_SCR_FontHeight( font ) ) / 2,
-			                          ALIGN_LEFT_TOP, COM_RemoveColorTokensExt( obr->attacker, true ), ( width - icon_size ) / 2,
-			                          font, teamcolor );
+									  ALIGN_LEFT_TOP, COM_RemoveColorTokensExt( obr->attacker, true ), ( width - icon_size ) / 2,
+									  font, teamcolor );
 			xoffset += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
 		}
 
-		if( ( obr->victim_team == TEAM_ALPHA ) || ( obr->victim_team == TEAM_BETA ) )
-		{
+		if( ( obr->victim_team == TEAM_ALPHA ) || ( obr->victim_team == TEAM_BETA ) ) {
 			CG_TeamColor( obr->victim_team, teamcolor );
-		}
-		else
-		{
+		} else {
 			Vector4Set( teamcolor, 255, 255, 255, 255 );
 		}
 		trap_SCR_DrawStringWidth( x + xoffset + icon_size, y + yoffset + line_height / 2, ALIGN_LEFT_MIDDLE,
-		                          COM_RemoveColorTokensExt( obr->victim, true ), ( width - icon_size ) / 2, font, teamcolor );
+								  COM_RemoveColorTokensExt( obr->victim, true ), ( width - icon_size ) / 2, font, teamcolor );
 
 		trap_R_DrawStretchPic( x + xoffset, y + yoffset + ( line_height - icon_size ) / 2, icon_size,
-		                       icon_size, 0, 0, 1, 1, colorWhite, pic );
+							   icon_size, 0, 0, 1, 1, colorWhite, pic );
 
 		yoffset += line_height;
-	}
-	while( i != next );
+	} while( i != next );
 }
 
 //=============================================================================
@@ -1145,48 +1063,50 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 #define AWARDS_OVERSHOOT_FREQUENCY 6.0f
 #define AWARDS_OVERSHOOT_DECAY 10.0f
 
-void CG_ClearAwards( void )
-{
-    // reset awards
-    cg.award_head = 0;
-    memset( cg.award_times, 0, sizeof( cg.award_times ) );
+void CG_ClearAwards( void ) {
+	// reset awards
+	cg.award_head = 0;
+	memset( cg.award_times, 0, sizeof( cg.award_times ) );
 }
 
-static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, vec4_t color )
-{
+static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, vec4_t color ) {
 	int i, count, current;
 	int yoffset;
 	int s_x, e_x, m_x;
 
-	if( !cg_showAwards->integer )
+	if( !cg_showAwards->integer ) {
 		return;
-
-	if( !cg.award_head )
-		return;
-
-	for( count = 0; count < MAX_AWARD_LINES; count++ )
-	{
-		current = ( (cg.award_head - 1) - count );
-		if( current < 0 )
-			break;
-
-		if( cg.award_times[current % MAX_AWARD_LINES] + MAX_AWARD_DISPLAYTIME < cg.time )
-			break;
-
-		if( !cg.award_lines[current % MAX_AWARD_LINES][0] )
-			break;
 	}
 
-	if( !count )
+	if( !cg.award_head ) {
 		return;
+	}
+
+	for( count = 0; count < MAX_AWARD_LINES; count++ ) {
+		current = ( ( cg.award_head - 1 ) - count );
+		if( current < 0 ) {
+			break;
+		}
+
+		if( cg.award_times[current % MAX_AWARD_LINES] + MAX_AWARD_DISPLAYTIME < cg.time ) {
+			break;
+		}
+
+		if( !cg.award_lines[current % MAX_AWARD_LINES][0] ) {
+			break;
+		}
+	}
+
+	if( !count ) {
+		return;
+	}
 
 	y = CG_VerticalAlignForHeight( y, align, trap_SCR_FontHeight( font ) * MAX_AWARD_LINES );
 
 	s_x = CG_HorizontalMovementForAlign( align ) < 0 ? cgs.vidWidth : 0;
 	e_x = x;
 
-	for( i = count; i > 0; i-- )
-	{
+	for( i = count; i > 0; i-- ) {
 		float moveTime;
 		const char *str;
 
@@ -1196,9 +1116,9 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 		yoffset = trap_SCR_FontHeight( font ) * ( MAX_AWARD_LINES - i );
 		moveTime = ( cg.time - cg.award_times[ current ] ) / 1000.0f;
 
-		m_x = LinearMovementWithOvershoot( s_x, e_x, 
-			AWARDS_OVERSHOOT_DURATION, AWARDS_OVERSHOOT_FREQUENCY, AWARDS_OVERSHOOT_DECAY, 
-			moveTime );
+		m_x = LinearMovementWithOvershoot( s_x, e_x,
+										   AWARDS_OVERSHOOT_DURATION, AWARDS_OVERSHOOT_FREQUENCY, AWARDS_OVERSHOOT_DECAY,
+										   moveTime );
 
 		trap_SCR_DrawStringWidth( m_x, y + yoffset, align, str, 0, font, color );
 	}
@@ -1206,35 +1126,29 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 
 //=============================================================================
 
-static bool CG_IsWeaponSelected( int weapon )
-{
-	if( cg.view.playerPrediction && cg.predictedWeaponSwitch && cg.predictedWeaponSwitch != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] )
+static bool CG_IsWeaponSelected( int weapon ) {
+	if( cg.view.playerPrediction && cg.predictedWeaponSwitch && cg.predictedWeaponSwitch != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] ) {
 		return ( weapon == cg.predictedWeaponSwitch );
+	}
 
 	return ( weapon == cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] );
 }
 
-static struct shader_s *CG_GetWeaponIcon( int weapon )
-{
+static struct shader_s *CG_GetWeaponIcon( int weapon ) {
 	int currentWeapon = cg.predictedPlayerState.stats[STAT_WEAPON];
 	int weaponState = cg.predictedPlayerState.weaponState;
 
-	if( weapon == WEAP_GUNBLADE && cg.predictedPlayerState.inventory[AMMO_GUNBLADE] )
-	{
-		if( currentWeapon != WEAP_GUNBLADE || ( weaponState != WEAPON_STATE_REFIRESTRONG && weaponState != WEAPON_STATE_REFIRE ) )
-		{
+	if( weapon == WEAP_GUNBLADE && cg.predictedPlayerState.inventory[AMMO_GUNBLADE] ) {
+		if( currentWeapon != WEAP_GUNBLADE || ( weaponState != WEAPON_STATE_REFIRESTRONG && weaponState != WEAPON_STATE_REFIRE ) ) {
 			return CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
 		}
 	}
 
-	if( weapon == WEAP_INSTAGUN )
-	{
-		if( currentWeapon == WEAP_INSTAGUN && weaponState == WEAPON_STATE_REFIRESTRONG )
-		{
+	if( weapon == WEAP_INSTAGUN ) {
+		if( currentWeapon == WEAP_INSTAGUN && weaponState == WEAPON_STATE_REFIRESTRONG ) {
 			int chargeTime = GS_GetWeaponDef( WEAP_INSTAGUN )->firedef.reload_time;
 			int chargeTimeStep = chargeTime / 3;
-			if( chargeTimeStep > 0 )
-			{
+			if( chargeTimeStep > 0 ) {
 				int charge = ( chargeTime - cg.predictedPlayerState.stats[STAT_WEAPON_TIME] ) / chargeTimeStep;
 				clamp( charge, 0, 2 );
 				return CG_MediaShader( cgs.media.shaderInstagunChargeIcon[charge] );
@@ -1256,23 +1170,21 @@ static float cg_touch_dropWeaponX, cg_touch_dropWeaponY;
 /**
  * Resets touch weapon dropping if needed.
  */
-static void CG_CheckTouchWeaponDrop( void )
-{
+static void CG_CheckTouchWeaponDrop( void ) {
 	if( !cg_touch_dropWeapon ||
 		!GS_CanDropWeapon() ||
 		( cg.frame.playerState.pmove.pm_type != PM_NORMAL ) ||
-		!( cg.predictedPlayerState.inventory[cg_touch_dropWeapon] ) )
-	{
+		!( cg.predictedPlayerState.inventory[cg_touch_dropWeapon] ) ) {
 		cg_touch_dropWeapon = 0;
 		cg_touch_dropWeaponTime = 0.0f;
 		return;
 	}
 
-	if( cg_touch_dropWeaponTime > 1.0f )
-	{
+	if( cg_touch_dropWeaponTime > 1.0f ) {
 		gsitem_t *item = GS_FindItemByTag( cg_touch_dropWeapon );
-		if( item )
+		if( item ) {
 			trap_Cmd_ExecuteText( EXEC_NOW, va( "drop \"%s\"", item->name ) );
+		}
 		cg_touch_dropWeapon = 0;
 		cg_touch_dropWeaponTime = 0.0f;
 	}
@@ -1283,8 +1195,7 @@ static void CG_CheckTouchWeaponDrop( void )
  *
  * @param weaponTag tag of the weapon item to drop
  */
-static void CG_SetTouchWeaponDrop( int weaponTag )
-{
+static void CG_SetTouchWeaponDrop( int weaponTag ) {
 	cg_touch_dropWeapon = weaponTag;
 	cg_touch_dropWeaponTime = 0.0f;
 	CG_CheckTouchWeaponDrop();
@@ -1293,103 +1204,99 @@ static void CG_SetTouchWeaponDrop( int weaponTag )
 /**
  * Touch release handler for the weapon icons.
  */
-static void CG_WeaponUpFunc( int id, unsigned int time )
-{
+static void CG_WeaponUpFunc( int id, int64_t time ) {
 	CG_SetTouchWeaponDrop( 0 );
 }
 
 /*
 * CG_DrawWeaponIcons
 */
-static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih, int align, bool touch )
-{
+static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih, int align, bool touch ) {
 	int curx, cury, curw, curh;
 	int i, j, n;
 	float fj, fn;
 	bool selected_weapon;
 	vec4_t colorTrans = { 1.0f, 1.0f, 1.0f, 0.5f };
 
-	if( !cg_weaponlist || !cg_weaponlist->integer )
+	if( !cg_weaponlist || !cg_weaponlist->integer ) {
 		return;
-
-	if( iw > 0 )
-		curw = iw;
-	else
-		curw = 32 * cgs.vidWidth/800; // 32 = default size for icons
-	if( ih > 0 )
-		curh = ih;
-	else
-		curh = 32 * cgs.vidHeight/600; // 32 = default size for icons
-
-	n = 0;
-
-	for( i = 0; i < WEAP_TOTAL-1; i++ )
-	{
-		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
-			n++;
 	}
 
-	for( i = j = 0; i < WEAP_TOTAL-1; i++ )
-	{
-		// if player doesnt have this weapon, skip it
-		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
-			continue;
+	if( iw > 0 ) {
+		curw = iw;
+	} else {
+		curw = 32 * cgs.vidWidth / 800; // 32 = default size for icons
+	}
+	if( ih > 0 ) {
+		curh = ih;
+	} else {
+		curh = 32 * cgs.vidHeight / 600; // 32 = default size for icons
 
-		selected_weapon = CG_IsWeaponSelected( WEAP_GUNBLADE+i );
+	}
+	n = 0;
+
+	for( i = 0; i < WEAP_TOTAL - 1; i++ ) {
+		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
+			n++;
+		}
+	}
+
+	for( i = j = 0; i < WEAP_TOTAL - 1; i++ ) {
+		// if player doesnt have this weapon, skip it
+		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
+			continue;
+		}
+
+		selected_weapon = CG_IsWeaponSelected( WEAP_GUNBLADE + i );
 
 		fj = (float)j;
 		fn = (float)n;
 		curx = CG_HorizontalAlignForWidth( x + (int)( offx * ( fj - fn / 2.0f ) ), align, curw );
 		cury = CG_VerticalAlignForHeight( y + (int)( offy * ( fj - fn / 2.0f ) ), align, curh );
 
-		if( touch )
-		{
-			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] )
-			{
-				if( CG_TouchArea( TOUCHAREA_HUD_WEAPON | ( i << TOUCHAREA_SUB_SHIFT ), curx, cury, curw, curh, CG_WeaponUpFunc ) >= 0 )
-				{
-					if( !selected_weapon )
-					{
-						gsitem_t *item = GS_FindItemByTag( WEAP_GUNBLADE+i );
-						if( item )
+		if( touch ) {
+			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE + i] ) {
+				if( CG_TouchArea( TOUCHAREA_HUD_WEAPON | ( i << TOUCHAREA_SUB_SHIFT ), curx, cury, curw, curh, CG_WeaponUpFunc ) >= 0 ) {
+					if( !selected_weapon ) {
+						gsitem_t *item = GS_FindItemByTag( WEAP_GUNBLADE + i );
+						if( item ) {
 							trap_Cmd_ExecuteText( EXEC_NOW, va( "use %s", item->name ) ); // without quotes!
+						}
 					}
-					if( i ) // don't drop gunblade
-						CG_SetTouchWeaponDrop( WEAP_GUNBLADE+i );
+					if( i ) { // don't drop gunblade
+						CG_SetTouchWeaponDrop( WEAP_GUNBLADE + i );
+					}
 					break;
 				}
 			}
-		}
-		else
-		{
-			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] )
-			{
+		} else {
+			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE + i] ) {
 				// swipe the weapon icon
-				if( cg_touch_dropWeapon == WEAP_GUNBLADE+i )
-				{
+				if( cg_touch_dropWeapon == WEAP_GUNBLADE + i ) {
 					float dropOffset = ( bound( 0.75f, cg_touch_dropWeaponTime, 1.0f ) - 0.75f ) * 4.0f;
 					curx += cg_touch_dropWeaponX * dropOffset;
 					cury += cg_touch_dropWeaponY * dropOffset;
 				}
 
 				// wsw : pb : display a little box around selected weapon in weaponlist
-				if( selected_weapon )
-				{
-					if( customWeaponSelectPic )
+				if( selected_weapon ) {
+					if( customWeaponSelectPic ) {
 						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
-					else
+					} else {
 						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
+					}
 				}
-				if( customWeaponPics[i] )
+				if( customWeaponPics[i] ) {
 					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customWeaponPics[i] ) );
-				else
+				} else {
 					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
+				}
+			} else
+			if( customNoGunWeaponPics[i] ) {
+				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customNoGunWeaponPics[i] ) );
+			} else {
+				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
 			}
-			else
-				if( customNoGunWeaponPics[i] )
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customNoGunWeaponPics[i] ) );
-				else
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
 		}
 		j++;
 	}
@@ -1398,77 +1305,78 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 /*
 * CG_DrawWeaponAmmos
 */
-static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, int ammotype, int align )
-{
+static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, int ammotype, int align ) {
 	int curx, cury, curwh;
 	int i, j, n, fs;
 	float fj, fn;
 	vec4_t color;
 	int startammo;
 
-	if( !cg_weaponlist || !cg_weaponlist->integer )
+	if( !cg_weaponlist || !cg_weaponlist->integer ) {
 		return;
+	}
 
-	if( ammotype == 1 )
+	if( ammotype == 1 ) {
 		startammo = AMMO_GUNBLADE;
-	else
+	} else {
 		startammo = AMMO_WEAK_GUNBLADE;
+	}
 
-	if( fontsize > 0 )
+	if( fontsize > 0 ) {
 		fs = fontsize;
-	else
+	} else {
 		fs = 12; // 12 = default size for font
-	curwh = (int)( fs * cgs.vidHeight/600 );
+	}
+	curwh = (int)( fs * cgs.vidHeight / 600 );
 
 	n = 0;
 
-	for( i = 0; i < WEAP_TOTAL-1; i++ )
-	{
-		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
+	for( i = 0; i < WEAP_TOTAL - 1; i++ ) {
+		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
 			n++;
+		}
 	}
 
 	VectorCopy( colorWhite, color );
 
-	for( i = j = 0; i < WEAP_TOTAL-1; i++ )
-	{
+	for( i = j = 0; i < WEAP_TOTAL - 1; i++ ) {
 		// if player doesn't have this weapon, skip it
-		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
+		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
 			continue;
+		}
 
-		if( i ) // skip gunblade because it uses a different icon instead of the ammo count
-		{
-			if( CG_IsWeaponSelected( WEAP_GUNBLADE+i ) )
+		if( i ) { // skip gunblade because it uses a different icon instead of the ammo count
+			if( CG_IsWeaponSelected( WEAP_GUNBLADE + i ) ) {
 				color[3] = 1.0;
-			else
+			} else {
 				color[3] = 0.5;
+			}
 
 			fj = (float)j;
 			fn = (float)n;
 			curx = x + (int)( offx * ( fj - fn / 2.0f ) );
 			cury = y + (int)( offy * ( fj - fn / 2.0f ) );
 
-			if( cg_touch_dropWeapon == WEAP_GUNBLADE+i )
-			{
+			if( cg_touch_dropWeapon == WEAP_GUNBLADE + i ) {
 				float dropOffset = ( bound( 0.75f, cg_touch_dropWeaponTime, 1.0f ) - 0.75f ) * 4.0f;
 				curx += cg_touch_dropWeaponX * dropOffset;
 				cury += cg_touch_dropWeaponY * dropOffset;
 			}
 
-			if( cg.predictedPlayerState.inventory[i+startammo] )
-				CG_DrawHUDNumeric( curx, cury, align, color, curwh, curwh, cg.predictedPlayerState.inventory[i+startammo] );
+			if( cg.predictedPlayerState.inventory[i + startammo] ) {
+				CG_DrawHUDNumeric( curx, cury, align, color, curwh, curwh, cg.predictedPlayerState.inventory[i + startammo] );
+			}
 		}
 		j++;
 	}
 }
 
-static float cg_hud_weaponcrosstime;
+static int cg_hud_weaponcrosstime;
 
 /*
 * CG_DrawWeaponCrossQuarter
 */
-static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, int dirx, int diry, int iw, int ih, int ammoofs, int ammosize )
-{
+static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, int dirx, int diry, int iw, int ih, int ammoofs, int ammosize ) {
 	int i;
 	int first = quarter << 1;
 	int w[2], count = 0, t;
@@ -1477,16 +1385,13 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 	x += dirx * iw - ( iw >> 1 );
 	y += diry * ih - ( ih >> 1 );
 
-	for( i = 0; i < 2; i++ )
-	{
-		if( !cg.predictedPlayerState.inventory[WEAP_GUNBLADE + first + i] )
-		{
+	for( i = 0; i < 2; i++ ) {
+		if( !cg.predictedPlayerState.inventory[WEAP_GUNBLADE + first + i] ) {
 			continue;
 		}
 		if( ( first + i ) /* show uncharged gunblade */ &&
 			!cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
-			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] )
-		{
+			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] ) {
 			continue;
 		}
 
@@ -1494,46 +1399,44 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 		count++;
 	}
 
-	if( !count )
+	if( !count ) {
 		return;
+	}
 
 	if( ( count == 2 ) && !CG_IsWeaponSelected( WEAP_GUNBLADE + w[0] ) &&
-		( CG_IsWeaponSelected( WEAP_GUNBLADE + w[1] ) || ( cg.lastCrossWeapons & ( 1 << quarter ) ) ) )
-	{
+		( CG_IsWeaponSelected( WEAP_GUNBLADE + w[1] ) || ( cg.lastCrossWeapons & ( 1 << quarter ) ) ) ) {
 		t = w[0];
 		w[0] = w[1];
 		w[1] = t;
 	}
 
 	VectorCopy( colorWhite, color );
-	color[3] = cg_hud_weaponcrosstime * 4.0f;
+	color[3] = (float)cg_hud_weaponcrosstime * 0.004f;
 	clamp_high( color[3], 1.0f );
 	VectorCopy( colorWhite, colorTrans );
 	colorTrans[3] = color[3] * 0.5f;
 
-	if( !ammopass && CG_IsWeaponSelected( WEAP_GUNBLADE + w[0] ) )
-	{
-		if( customWeaponSelectPic )
+	if( !ammopass && CG_IsWeaponSelected( WEAP_GUNBLADE + w[0] ) ) {
+		if( customWeaponSelectPic ) {
 			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
-		else
+		} else {
 			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
+		}
 	}
 
-	for( i = 0; i < count; i++ )
-	{
-		if( !ammopass )
-		{
-			if( customWeaponPics[w[i]] )
+	for( i = 0; i < count; i++ ) {
+		if( !ammopass ) {
+			if( customWeaponPics[w[i]] ) {
 				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, trap_R_RegisterPic( customWeaponPics[w[i]] ) );
-			else
+			} else {
 				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, CG_GetWeaponIcon( WEAP_GUNBLADE + w[i] ) );
+			}
 		}
 
-		if( ammopass && w[i] /* don't show 1 for charged gunblade */ && cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] )
-		{
+		if( ammopass && w[i] /* don't show 1 for charged gunblade */ && cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] ) {
 			CG_DrawHUDNumeric( x + ( iw >> 1 ), y + ( ih >> 1 ) + ammoofs, ALIGN_CENTER_MIDDLE,
-				CG_IsWeaponSelected( WEAP_GUNBLADE + w[i] ) ? color : colorTrans, ammosize, ammosize,
-				cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] );
+							   CG_IsWeaponSelected( WEAP_GUNBLADE + w[i] ) ? color : colorTrans, ammosize, ammosize,
+							   cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] );
 		}
 
 		x += dirx * iw;
@@ -1541,15 +1444,14 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 	}
 }
 
-static void CG_CheckWeaponCross( void )
-{
-	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL )
-		cg_hud_weaponcrosstime = 0.0f;
+static void CG_CheckWeaponCross( void ) {
+	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL ) {
+		cg_hud_weaponcrosstime = 0;
+	}
 }
 
-void CG_ShowWeaponCross( void )
-{
-	cg_hud_weaponcrosstime = 0.6f;
+void CG_ShowWeaponCross( void ) {
+	cg_hud_weaponcrosstime = 600;
 	CG_CheckWeaponCross();
 }
 
@@ -1562,78 +1464,63 @@ typedef float ( *opFunc_t )( const float a, float b );
 // we will always operate with floats so we don't have to code 2 different numeric paths
 // it's not like using float or ints would make a difference in this simple-scripting case.
 
-static float CG_OpFuncAdd( const float a, const float b )
-{
+static float CG_OpFuncAdd( const float a, const float b ) {
 	return a + b;
 }
 
-static float CG_OpFuncSubtract( const float a, const float b )
-{
+static float CG_OpFuncSubtract( const float a, const float b ) {
 	return a - b;
 }
 
-static float CG_OpFuncMultiply( const float a, const float b )
-{
+static float CG_OpFuncMultiply( const float a, const float b ) {
 	return a * b;
 }
 
-static float CG_OpFuncDivide( const float a, const float b )
-{
+static float CG_OpFuncDivide( const float a, const float b ) {
 	return a / b;
 }
 
-static float CG_OpFuncAND( const float a, const float b )
-{
+static float CG_OpFuncAND( const float a, const float b ) {
 	return (int)a & (int)b;
 }
 
-static float CG_OpFuncOR( const float a, const float b )
-{
+static float CG_OpFuncOR( const float a, const float b ) {
 	return (int)a | (int)b;
 }
 
-static float CG_OpFuncXOR( const float a, const float b )
-{
+static float CG_OpFuncXOR( const float a, const float b ) {
 	return (int)a ^ (int)b;
 }
 
-static float CG_OpFuncCompareEqual( const float a, const float b )
-{
+static float CG_OpFuncCompareEqual( const float a, const float b ) {
 	return ( a == b );
 }
 
-static float CG_OpFuncCompareNotEqual( const float a, const float b )
-{
+static float CG_OpFuncCompareNotEqual( const float a, const float b ) {
 	return ( a != b );
 }
 
-static float CG_OpFuncCompareGreater( const float a, const float b )
-{
+static float CG_OpFuncCompareGreater( const float a, const float b ) {
 	return ( a > b );
 }
 
-static float CG_OpFuncCompareGreaterOrEqual( const float a, const float b )
-{
+static float CG_OpFuncCompareGreaterOrEqual( const float a, const float b ) {
 	return ( a >= b );
 }
 
-static float CG_OpFuncCompareSmaller( const float a, const float b )
-{
+static float CG_OpFuncCompareSmaller( const float a, const float b ) {
 	return ( a < b );
 }
 
-static float CG_OpFuncCompareSmallerOrEqual( const float a, const float b )
-{
+static float CG_OpFuncCompareSmallerOrEqual( const float a, const float b ) {
 	return ( a <= b );
 }
 
-static float CG_OpFuncCompareAnd( const float a, const float b )
-{
+static float CG_OpFuncCompareAnd( const float a, const float b ) {
 	return ( a && b );
 }
 
-static float CG_OpFuncCompareOr( const float a, const float b )
-{
+static float CG_OpFuncCompareOr( const float a, const float b ) {
 	return ( a || b );
 }
 
@@ -1729,17 +1616,16 @@ static cg_layoutoperators_t cg_LayoutOperators[] =
 /*
 * CG_OperatorFuncForArgument
 */
-static opFunc_t CG_OperatorFuncForArgument( const char *token )
-{
+static opFunc_t CG_OperatorFuncForArgument( const char *token ) {
 	cg_layoutoperators_t *op;
 
 	while( *token == ' ' )
 		token++;
 
-	for( op = cg_LayoutOperators; op->name; op++ )
-	{
-		if( !Q_stricmp( token, op->name ) )
+	for( op = cg_LayoutOperators; op->name; op++ ) {
+		if( !Q_stricmp( token, op->name ) ) {
 			return op->opFunc;
+		}
 	}
 
 	return NULL;
@@ -1765,7 +1651,7 @@ static struct qfontface_s *layout_cursor_font;
 static char layout_cursor_font_name[MAX_QPATH];
 static int layout_cursor_font_size;
 static int layout_cursor_font_style;
-struct qfontface_s *(*layout_cursor_font_regfunc)( const char *, int , unsigned int );
+struct qfontface_s *(*layout_cursor_font_regfunc)( const char *, int, unsigned int );
 static bool layout_cursor_font_dirty = true;
 
 static struct qfontface_s *CG_GetLayoutCursorFont( void );
@@ -1781,28 +1667,28 @@ enum
 //=============================================================================
 // Commands' Functions
 //=============================================================================
-static bool CG_LFuncDrawTimer( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawTimer( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	char time[64];
 	int min, sec, milli;
 
 	milli = (int)CG_GetNumericArg( &argumentnode );
-	if( milli < 0 )
+	if( milli < 0 ) {
 		return true;
+	}
 
 	// stat is in milliseconds/100.0f
-	min = milli/600;
-	milli -= min*600;
-	sec = milli/10;
-	milli -= sec*10;
+	min = milli / 600;
+	milli -= min * 600;
+	sec = milli / 10;
+	milli -= sec * 10;
+
 	// we want MM:SS:m
 	Q_snprintfz( time, sizeof( time ), "%02d:%02d.%1d", min, sec, milli );
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, time, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawPicVar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawPicVar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int min, max, val, firstimg, lastimg, imgcount;
 	static char filefmt[MAX_QPATH], filenm[MAX_QPATH], *ptr;
 	int x, y, filenr;
@@ -1815,46 +1701,44 @@ static bool CG_LFuncDrawPicVar( struct cg_layoutnode_s *commandnode, struct cg_l
 	firstimg = (int)( CG_GetNumericArg( &argumentnode ) );
 	lastimg  = (int)( CG_GetNumericArg( &argumentnode ) );
 
-	if( min > max )
-	{	// swap min and max and count downwards
+	if( min > max ) { // swap min and max and count downwards
 		int t = min;
 		min = max;
 		max = t;
 		cnt = -cnt;
 	}
-	if( firstimg > lastimg )
-	{	// swap firstimg and lastimg and count the other way around
+	if( firstimg > lastimg ) { // swap firstimg and lastimg and count the other way around
 		int t = firstimg;
 		firstimg = lastimg;
 		lastimg = t;
 		cnt = -cnt;
 	}
 
-	if( val < min )
+	if( val < min ) {
 		val = min;
-	if( val > max )
+	}
+	if( val > max ) {
 		val = max;
+	}
 	val -= min;
 	max -= min;
 	min = 0;
 
 	imgcount = lastimg - firstimg + 1;
 
-	if( ( max != 0 ) && ( imgcount != 0 ) )
-	{                                // Check for division by 0
+	if( ( max != 0 ) && ( imgcount != 0 ) ) { // Check for division by 0
 		filenr =  (int)( ( (double)val / ( (double)max / imgcount ) ) );
-	}
-	else
-	{
+	} else {
 		filenr = 0;
 	}
-	if( filenr >= imgcount )
+	if( filenr >= imgcount ) {
 		filenr = ( imgcount - 1 );
-	if( filenr < 0 )
+	}
+	if( filenr < 0 ) {
 		filenr = 0;
+	}
 
-	if( cnt < 0 )
-	{
+	if( cnt < 0 ) {
 		filenr = ( imgcount - filenr ) - 1;
 	}
 	filenr += firstimg;
@@ -1862,18 +1746,15 @@ static bool CG_LFuncDrawPicVar( struct cg_layoutnode_s *commandnode, struct cg_l
 	filefmt[0] = '\0';
 	Q_strncpyz( filefmt, CG_GetStringArg( &argumentnode ), sizeof( filenm ) );
 	ptr = filefmt;
-	while( ( ptr[0] ) && ( ptr[1] ) )
-	{
-		if( ( ptr[0] == '#' ) && ( ptr[1] == '#' ) )
-		{
+	while( ( ptr[0] ) && ( ptr[1] ) ) {
+		if( ( ptr[0] == '#' ) && ( ptr[1] == '#' ) ) {
 			ptr[0] = '%';
 			ptr[1] = 'd';
 			break; // Only replace first occurance?
 		}
 		ptr++;
 	}
-	if( ( ptr[0] != '%' ) && ( ptr[1] != 'd' ) )
-	{
+	if( ( ptr[0] != '%' ) && ( ptr[1] != 'd' ) ) {
 		CG_Printf( "WARNING 'CG_LFuncDrawPicVar' Invalid file string parameter, no '##' present!" );
 		return false;
 	}
@@ -1884,18 +1765,15 @@ static bool CG_LFuncDrawPicVar( struct cg_layoutnode_s *commandnode, struct cg_l
 	return true;
 }
 
-static bool CG_LFuncDrawPicByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawPicByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 	int x, y;
 
-	if( value >= 0 && value < MAX_IMAGES )
-	{
-		if( cgs.configStrings[CS_IMAGES + value][0] )
-		{
+	if( value >= 0 && value < MAX_IMAGES ) {
+		if( cgs.configStrings[CS_IMAGES + value][0] ) {
 			x = CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width );
 			y = CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height );
-			trap_R_DrawStretchPic( x, y, layout_cursor_width, layout_cursor_height, 0, 0, 1, 1, layout_cursor_color, trap_R_RegisterPic( cgs.configStrings[CS_IMAGES+value] ) );
+			trap_R_DrawStretchPic( x, y, layout_cursor_width, layout_cursor_height, 0, 0, 1, 1, layout_cursor_color, trap_R_RegisterPic( cgs.configStrings[CS_IMAGES + value] ) );
 			return true;
 		}
 	}
@@ -1903,23 +1781,22 @@ static bool CG_LFuncDrawPicByIndex( struct cg_layoutnode_s *commandnode, struct 
 	return false;
 }
 
-static bool CG_LFuncDrawPicByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawPicByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int itemindex = (int)CG_GetNumericArg( &argumentnode );
 	int x, y;
-	gsitem_t	*item;
+	gsitem_t    *item;
 
 	item = GS_FindItemByTag( itemindex );
-	if( !item )
+	if( !item ) {
 		return false;
+	}
 	x = CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width );
 	y = CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height );
 	trap_R_DrawStretchPic( x, y, layout_cursor_width, layout_cursor_height, 0, 0, 1, 1, layout_cursor_color, trap_R_RegisterPic( item->icon ) );
 	return true;
 }
 
-static bool CG_LFuncDrawPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int x, y;
 
 	x = CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width );
@@ -1928,8 +1805,7 @@ static bool CG_LFuncDrawPicByName( struct cg_layoutnode_s *commandnode, struct c
 	return true;
 }
 
-static bool CG_LFuncDrawSubPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawSubPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int x, y;
 	struct shader_s *shader;
 	float s1, t1, s2, t2;
@@ -1948,8 +1824,7 @@ static bool CG_LFuncDrawSubPicByName( struct cg_layoutnode_s *commandnode, struc
 	return true;
 }
 
-static bool CG_LFuncDrawRotatedPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawRotatedPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int x, y;
 	struct shader_s *shader;
 	float angle;
@@ -1965,14 +1840,12 @@ static bool CG_LFuncDrawRotatedPicByName( struct cg_layoutnode_s *commandnode, s
 	return true;
 }
 
-static bool CG_LFuncDrawModelByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawModelByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	struct model_s *model;
 	int value = (int)CG_GetNumericArg( &argumentnode );
 
-	if( value >= 0 && value < MAX_MODELS )
-	{
-		model = value > 1 ? CG_RegisterModel( cgs.configStrings[CS_MODELS+value] ) : NULL;
+	if( value >= 0 && value < MAX_MODELS ) {
+		model = value > 1 ? CG_RegisterModel( cgs.configStrings[CS_MODELS + value] ) : NULL;
 		CG_DrawHUDModel( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_width, layout_cursor_height, model, NULL, layout_cursor_rotation[YAW] );
 		return true;
 	}
@@ -1980,8 +1853,7 @@ static bool CG_LFuncDrawModelByIndex( struct cg_layoutnode_s *commandnode, struc
 	return false;
 }
 
-static bool CG_LFuncDrawModelByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawModelByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	struct model_s *model;
 	struct shader_s *shader;
 	const char *shadername;
@@ -1993,20 +1865,18 @@ static bool CG_LFuncDrawModelByName( struct cg_layoutnode_s *commandnode, struct
 	return true;
 }
 
-static bool CG_LFuncDrawModelByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawModelByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int i;
-	gsitem_t	*item;
+	gsitem_t    *item;
 	struct model_s *model;
 	int itemindex = (int)CG_GetNumericArg( &argumentnode );
 
 	item = GS_FindItemByTag( itemindex );
-	if( !item )
+	if( !item ) {
 		return false;
-	for( i = 0; i < MAX_ITEM_MODELS; i++ )
-	{
-		if( item->world_model[i] != NULL )
-		{
+	}
+	for( i = 0; i < MAX_ITEM_MODELS; i++ ) {
+		if( item->world_model[i] != NULL ) {
 			model = itemindex >= 1 ? CG_RegisterModel( item->world_model[i] ) : NULL;
 			CG_DrawHUDModel( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_width, layout_cursor_height, model, NULL, layout_cursor_rotation[YAW] );
 		}
@@ -2014,17 +1884,15 @@ static bool CG_LFuncDrawModelByItemIndex( struct cg_layoutnode_s *commandnode, s
 	return true;
 }
 
-static bool CG_LFuncScale( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncScale( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	layout_cursor_scale = (int)CG_GetNumericArg( &argumentnode );
 	return true;
 }
 
-#define SCALE_X( n ) ( (layout_cursor_scale == NOSCALE) ? (n) : ((layout_cursor_scale == SCALEBYHEIGHT) ? (n)*cgs.vidHeight/600.0f : (n)*cgs.vidWidth/800.0f) )
-#define SCALE_Y( n ) ( (layout_cursor_scale == NOSCALE) ? (n) : ((layout_cursor_scale == SCALEBYWIDTH) ? (n)*cgs.vidWidth/800.0f : (n)*cgs.vidHeight/600.0f) )
+#define SCALE_X( n ) ( ( layout_cursor_scale == NOSCALE ) ? ( n ) : ( ( layout_cursor_scale == SCALEBYHEIGHT ) ? ( n ) * cgs.vidHeight / 600.0f : ( n ) * cgs.vidWidth / 800.0f ) )
+#define SCALE_Y( n ) ( ( layout_cursor_scale == NOSCALE ) ? ( n ) : ( ( layout_cursor_scale == SCALEBYWIDTH ) ? ( n ) * cgs.vidWidth / 800.0f : ( n ) * cgs.vidHeight / 600.0f ) )
 
-static bool CG_LFuncCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	float x, y;
 
 	x = CG_GetNumericArg( &argumentnode );
@@ -2037,8 +1905,7 @@ static bool CG_LFuncCursor( struct cg_layoutnode_s *commandnode, struct cg_layou
 	return true;
 }
 
-static bool CG_LFuncCursorX( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncCursorX( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	float x;
 
 	x = CG_GetNumericArg( &argumentnode );
@@ -2048,8 +1915,7 @@ static bool CG_LFuncCursorX( struct cg_layoutnode_s *commandnode, struct cg_layo
 	return true;
 }
 
-static bool CG_LFuncCursorY( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncCursorY( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	float y;
 
 	y = CG_GetNumericArg( &argumentnode );
@@ -2059,8 +1925,7 @@ static bool CG_LFuncCursorY( struct cg_layoutnode_s *commandnode, struct cg_layo
 	return true;
 }
 
-static bool CG_LFuncMoveCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncMoveCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	float x, y;
 
 	x = CG_GetNumericArg( &argumentnode );
@@ -2073,8 +1938,7 @@ static bool CG_LFuncMoveCursor( struct cg_layoutnode_s *commandnode, struct cg_l
 	return true;
 }
 
-static bool CG_LFuncSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	float x, y;
 
 	x = CG_GetNumericArg( &argumentnode );
@@ -2087,8 +1951,7 @@ static bool CG_LFuncSize( struct cg_layoutnode_s *commandnode, struct cg_layoutn
 	return true;
 }
 
-static bool CG_LFuncSizeWidth( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncSizeWidth( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	float x;
 
 	x = CG_GetNumericArg( &argumentnode );
@@ -2098,8 +1961,7 @@ static bool CG_LFuncSizeWidth( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static bool CG_LFuncSizeHeight( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncSizeHeight( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	float y;
 
 	y = CG_GetNumericArg( &argumentnode );
@@ -2109,54 +1971,50 @@ static bool CG_LFuncSizeHeight( struct cg_layoutnode_s *commandnode, struct cg_l
 	return true;
 }
 
-static bool CG_LFuncColor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncColor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int i;
-	for( i = 0; i < 4; i++ )
-	{
+	for( i = 0; i < 4; i++ ) {
 		layout_cursor_color[i] = CG_GetNumericArg( &argumentnode );
 		clamp( layout_cursor_color[i], 0, 1 );
 	}
 	return true;
 }
 
-static bool CG_LFuncColorToTeamColor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncColorToTeamColor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_TeamColor( CG_GetNumericArg( &argumentnode ), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncColorAlpha( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncColorAlpha( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	layout_cursor_color[3] = CG_GetNumericArg( &argumentnode );
 	return true;
 }
 
-static bool CG_LFuncRotationSpeed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncRotationSpeed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int i;
-	for( i = 0; i < 3; i++ )
-	{
+	for( i = 0; i < 3; i++ ) {
 		layout_cursor_rotation[i] = CG_GetNumericArg( &argumentnode );
 		clamp( layout_cursor_rotation[i], 0, 999 );
 	}
 	return true;
 }
 
-static bool CG_LFuncAlign( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncAlign( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int v, h;
 
 	h = (int)CG_GetNumericArg( &argumentnode );
 	v = (int)CG_GetNumericArg( &argumentnode );
-	if( h < 1 ) h = 1;
-	if( v < 1 ) v = 1;
-	layout_cursor_align = ( h-1 )+( 3*( v-1 ) );
+	if( h < 1 ) {
+		h = 1;
+	}
+	if( v < 1 ) {
+		v = 1;
+	}
+	layout_cursor_align = ( h - 1 ) + ( 3 * ( v - 1 ) );
 	return true;
 }
 
-static struct qfontface_s *CG_GetLayoutCursorFont( void )
-{
+static struct qfontface_s *CG_GetLayoutCursorFont( void ) {
 	struct qfontface_s *font;
 
 	if( !layout_cursor_font_dirty ) {
@@ -2177,20 +2035,14 @@ static struct qfontface_s *CG_GetLayoutCursorFont( void )
 	return layout_cursor_font;
 }
 
-static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	const char *fontname = CG_GetStringArg( &argumentnode );
 
-	if( !Q_stricmp( fontname, "con_fontSystem" ) )
-	{
+	if( !Q_stricmp( fontname, "con_fontSystem" ) ) {
 		Q_strncpyz( layout_cursor_font_name, cgs.fontSystemFamily, sizeof( layout_cursor_font_name ) );
-	}
-	else if( !Q_stricmp( fontname, "con_fontSystemMono" ) )
-	{
+	} else if( !Q_stricmp( fontname, "con_fontSystemMono" ) ) {
 		Q_strncpyz( layout_cursor_font_name, cgs.fontSystemMonoFamily, sizeof( layout_cursor_font_name ) );
-	}
-	else
-	{
+	} else {
 		Q_strncpyz( layout_cursor_font_name, fontname, sizeof( layout_cursor_font_name ) );
 	}
 	layout_cursor_font_dirty = true;
@@ -2199,8 +2051,7 @@ static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_l
 	return true;
 }
 
-static bool CG_LFuncSpecialFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncSpecialFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	const char *fontname = CG_GetStringArg( &argumentnode );
 
 	Q_strncpyz( layout_cursor_font_name, fontname, sizeof( layout_cursor_font_name ) );
@@ -2210,19 +2061,19 @@ static bool CG_LFuncSpecialFontFamily( struct cg_layoutnode_s *commandnode, stru
 	return true;
 }
 
-static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	struct cg_layoutnode_s *charnode = argumentnode;
 	const char *fontsize = CG_GetStringArg( &charnode );
 
-	if( !Q_stricmp( fontsize, "con_fontsystemsmall" ) )
+	if( !Q_stricmp( fontsize, "con_fontsystemsmall" ) ) {
 		layout_cursor_font_size = cgs.fontSystemSmallSize;
-	else if( !Q_stricmp( fontsize, "con_fontsystemmedium" ) )
+	} else if( !Q_stricmp( fontsize, "con_fontsystemmedium" ) ) {
 		layout_cursor_font_size = cgs.fontSystemMediumSize;
-	else if( !Q_stricmp( fontsize, "con_fontsystembig" ) )
+	} else if( !Q_stricmp( fontsize, "con_fontsystembig" ) ) {
 		layout_cursor_font_size = cgs.fontSystemBigSize;
-	else
+	} else {
 		layout_cursor_font_size = (int)ceilf( CG_GetNumericArg( &argumentnode ) );
+	}
 
 	clamp_low( layout_cursor_font_size, 1 );
 
@@ -2231,28 +2082,18 @@ static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_lay
 	return true;
 }
 
-static bool CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	const char *fontstyle = CG_GetStringArg( &argumentnode );
 
-	if( !Q_stricmp( fontstyle, "normal" ) )
-	{
+	if( !Q_stricmp( fontstyle, "normal" ) ) {
 		layout_cursor_font_style = QFONT_STYLE_NONE;
-	}
-	else if( !Q_stricmp( fontstyle, "italic" ) )
-	{
+	} else if( !Q_stricmp( fontstyle, "italic" ) ) {
 		layout_cursor_font_style = QFONT_STYLE_ITALIC;
-	}
-	else if( !Q_stricmp( fontstyle, "bold" ) )
-	{
+	} else if( !Q_stricmp( fontstyle, "bold" ) ) {
 		layout_cursor_font_style = QFONT_STYLE_BOLD;
-	}
-	else if( !Q_stricmp( fontstyle, "bold-italic" ) )
-	{
+	} else if( !Q_stricmp( fontstyle, "bold-italic" ) ) {
 		layout_cursor_font_style = QFONT_STYLE_BOLD | QFONT_STYLE_ITALIC;
-	}
-	else
-	{
+	} else {
 		CG_Printf( "WARNING 'CG_LFuncFontStyle' Unknown font style '%s'", fontstyle );
 		return false;
 	}
@@ -2262,24 +2103,21 @@ static bool CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static bool CG_LFuncDrawObituaries( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawObituaries( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int internal_align = (int)CG_GetNumericArg( &argumentnode );
 	int icon_size = (int)CG_GetNumericArg( &argumentnode );
 
 	CG_DrawObituaries( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color,
-	                   layout_cursor_width, layout_cursor_height, internal_align, icon_size * cgs.vidHeight / 600 );
+					   layout_cursor_width, layout_cursor_height, internal_align, icon_size * cgs.vidHeight / 600 );
 	return true;
 }
 
-static bool CG_LFuncDrawAwards( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawAwards( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawAwards( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
@@ -2288,13 +2126,10 @@ static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_la
 #define HELPMESSAGE_OVERSHOOT_FREQUENCY 6.0f
 #define HELPMESSAGE_OVERSHOOT_DECAY 10.0f
 
-static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	// hide this one when scoreboard is up
-	if( !CG_IsScoreboardShown() )
-	{
-		if( !cgs.demoPlaying )
-		{
+	if( !CG_IsScoreboardShown() ) {
+		if( !cgs.demoPlaying ) {
 			int i;
 			int y = layout_cursor_y;
 			int font_height = trap_SCR_FontHeight( CG_GetLayoutCursorFont() );
@@ -2305,49 +2140,46 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 			// scale alpha to text appears more faint if the player's moving
 			Vector4Copy( layout_cursor_color, color );
 
-			for( i = 0; i < 3; i++ )
-			{
+			for( i = 0; i < 3; i++ ) {
 				int x = layout_cursor_x;
 
-				switch( i )
-				{
-				case 0:
-					helpmessage = "";
-					if( showhelp ) {
-						if( cg.helpmessage[0] ) {
-							int s_x, e_x;
-							float moveTime = ( cg.time - cg.helpmessage_time ) / 1000.0f;
+				switch( i ) {
+					case 0:
+						helpmessage = "";
+						if( showhelp ) {
+							if( cg.helpmessage[0] ) {
+								int s_x, e_x;
+								float moveTime = ( cg.time - cg.helpmessage_time ) / 1000.0f;
 
-							s_x = CG_HorizontalMovementForAlign( layout_cursor_align ) < 0 ? cgs.vidWidth : 0;
-							e_x = x;
+								s_x = CG_HorizontalMovementForAlign( layout_cursor_align ) < 0 ? cgs.vidWidth : 0;
+								e_x = x;
 
-							x = LinearMovementWithOvershoot( s_x, e_x, 
-								HELPMESSAGE_OVERSHOOT_DURATION, HELPMESSAGE_OVERSHOOT_FREQUENCY, HELPMESSAGE_OVERSHOOT_DECAY, 
-								moveTime );
+								x = LinearMovementWithOvershoot( s_x, e_x,
+																 HELPMESSAGE_OVERSHOOT_DURATION, HELPMESSAGE_OVERSHOOT_FREQUENCY, HELPMESSAGE_OVERSHOOT_DECAY,
+																 moveTime );
 
-							helpmessage = cg.helpmessage;
+								helpmessage = cg.helpmessage;
+							} else if( cg.matchmessage ) {
+								helpmessage = cg.matchmessage;
+							}
 						}
-						else if( cg.matchmessage ) {
-							helpmessage = cg.matchmessage;
+						break;
+					case 1:
+						if( !cg.motd ) {
+							return true;
 						}
-					}
-					break;
-				case 1:
-					if( !cg.motd )
+						helpmessage = CG_TranslateString( "Message of the day:" );
+						break;
+					case 2:
+						helpmessage = cg.motd;
+						break;
+					default:
 						return true;
-					helpmessage = CG_TranslateString( "Message of the day:" );
-					break;
-				case 2:
-					helpmessage = cg.motd;
-					break;
-				default:
-					return true;
 				}
 
-				if( helpmessage[0] )
-				{
+				if( helpmessage[0] ) {
 					y += trap_SCR_DrawMultilineString( x, y, helpmessage, layout_cursor_align,
-						layout_cursor_width, 0, CG_GetLayoutCursorFont(), color ) * font_height;
+													   layout_cursor_width, 0, CG_GetLayoutCursorFont(), color ) * font_height;
 				}
 			}
 		}
@@ -2355,39 +2187,38 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 	return true;
 }
 
-static bool CG_LFuncDrawTeamMates( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawTeamMates( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawTeamMates();
 	return true;
 }
 
-static bool CG_LFuncDrawPointed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawPointed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawPlayerNames( CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawString( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawString( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	const char *string = CG_GetStringArg( &argumentnode );
-	
-	if( !string || !string[0] )
+
+	if( !string || !string[0] ) {
 		return false;
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, 
-		CG_TranslateString( string ), CG_GetLayoutCursorFont(), layout_cursor_color );
+	}
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
+						 CG_TranslateString( string ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws )
-{
+static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws ) {
 	int i;
 	char temps[1024];
 	size_t pos, string_len;
 
-	if( !string || !string[0] )
+	if( !string || !string[0] ) {
 		return false;
-	if( !num_draws )
+	}
+	if( !num_draws ) {
 		return false;
+	}
 
 	//string = CG_TranslateString( string );
 	string_len = strlen( string );
@@ -2407,20 +2238,17 @@ static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws )
 	return true;
 }
 
-static bool CG_LFuncDrawStringRepeat( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawStringRepeat( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	const char *string = CG_GetStringArg( &argumentnode );
 	int num_draws = CG_GetNumericArg( &argumentnode );
 	return CG_LFuncDrawStringRepeat_x( string, num_draws );
 }
 
-static bool CG_LFuncDrawStringRepeatConfigString( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawStringRepeatConfigString( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	const char *string = CG_GetStringArg( &argumentnode );
 	int index = (int)CG_GetNumericArg( &argumentnode );
 
-	if( index < 0 || index >= MAX_CONFIGSTRINGS )
-	{
+	if( index < 0 || index >= MAX_CONFIGSTRINGS ) {
 		CG_Printf( "WARNING 'CG_LFuncDrawStringRepeatConfigString' Bad stat_string index" );
 		return false;
 	}
@@ -2429,144 +2257,130 @@ static bool CG_LFuncDrawStringRepeatConfigString( struct cg_layoutnode_s *comman
 	return CG_LFuncDrawStringRepeat_x( string, num_draws );
 }
 
-static bool CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
-	gsitem_t	*item;
+static bool CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
+	gsitem_t    *item;
 	int itemindex = CG_GetNumericArg( &argumentnode );
 
 	item = GS_FindItemByTag( itemindex );
-	if( !item || !item->name )
+	if( !item || !item->name ) {
 		return false;
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, 
-		CG_TranslateString( item->name ), CG_GetLayoutCursorFont(), layout_cursor_color );
+	}
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
+						 CG_TranslateString( item->name ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawConfigstring( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawConfigstring( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int index = (int)CG_GetNumericArg( &argumentnode );
 
-	if( index < 0 || index >= MAX_CONFIGSTRINGS )
-	{
+	if( index < 0 || index >= MAX_CONFIGSTRINGS ) {
 		CG_Printf( "WARNING 'CG_LFuncDrawConfigstring' Bad stat_string index" );
 		return false;
 	}
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-		cgs.configStrings[index], CG_GetLayoutCursorFont(), layout_cursor_color );
+						 cgs.configStrings[index], CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawCleanConfigstring( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawCleanConfigstring( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int index = (int)CG_GetNumericArg( &argumentnode );
 
-	if( index < 0 || index >= MAX_CONFIGSTRINGS )
-	{
+	if( index < 0 || index >= MAX_CONFIGSTRINGS ) {
 		CG_Printf( "WARNING 'CG_LFuncDrawCleanConfigstring' Bad stat_string index" );
 		return false;
 	}
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-		COM_RemoveColorTokensExt( cgs.configStrings[index], true ), CG_GetLayoutCursorFont(), layout_cursor_color );
+						 COM_RemoveColorTokensExt( cgs.configStrings[index], true ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
 
-	if( cgs.demoTutorial )
+	if( cgs.demoTutorial ) {
 		return true;
+	}
 
-	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] )
-	{
+	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] ) {
 		vec4_t color;
 		VectorCopy( colorWhite, color );
 		color[3] = layout_cursor_color[3];
 		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-			cgs.clientInfo[index].name, CG_GetLayoutCursorFont(), color );
+							 cgs.clientInfo[index].name, CG_GetLayoutCursorFont(), color );
 		return true;
 	}
 	return false;
 }
 
-static bool CG_LFuncDrawCleanPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawCleanPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
 
-	if( cgs.demoTutorial )
+	if( cgs.demoTutorial ) {
 		return true;
+	}
 
-	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] )
-	{
+	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] ) {
 		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-			COM_RemoveColorTokensExt( cgs.clientInfo[index].name, true ), CG_GetLayoutCursorFont(), layout_cursor_color );
+							 COM_RemoveColorTokensExt( cgs.clientInfo[index].name, true ), CG_GetLayoutCursorFont(), layout_cursor_color );
 		return true;
 	}
 	return false;
 }
 
-static bool CG_LFuncDrawNumeric( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawNumeric( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 	CG_DrawHUDNumeric( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_color, layout_cursor_width, layout_cursor_height, value );
 	return true;
 }
 
-static bool CG_LFuncDrawStretchNum( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawStretchNum( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	static char num[16];
 	int len;
 	int value = (int)CG_GetNumericArg( &argumentnode );
 
 	Q_snprintfz( num, sizeof( num ), "%i", value );
 	len = strlen( num );
-	if( len * layout_cursor_height <= layout_cursor_width )
-	{
+	if( len * layout_cursor_height <= layout_cursor_width ) {
 		CG_DrawHUDNumeric( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_color, layout_cursor_height, layout_cursor_height, value );
-	}
-	else
-	{    //stretch numbers
+	} else {   //stretch numbers
 		CG_DrawHUDNumeric( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_color, layout_cursor_width / len, layout_cursor_height, value );
 	}
 	return true;
 }
 
-static bool CG_LFuncDrawNumeric2( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawNumeric2( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, va( "%i", value ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawBar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawBar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 	int maxvalue = (int)CG_GetNumericArg( &argumentnode );
 	CG_DrawHUDRect( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-	                layout_cursor_width, layout_cursor_height, value, maxvalue,
-	                layout_cursor_color, NULL );
+					layout_cursor_width, layout_cursor_height, value, maxvalue,
+					layout_cursor_color, NULL );
 	return true;
 }
 
-static bool CG_LFuncDrawPicBar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawPicBar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 	int maxvalue = (int)CG_GetNumericArg( &argumentnode );
 
 	CG_DrawHUDRect( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-	               layout_cursor_width, layout_cursor_height, value, maxvalue,
-	               layout_cursor_color, trap_R_RegisterPic( CG_GetStringArg( &argumentnode ) ) );
+					layout_cursor_width, layout_cursor_height, value, maxvalue,
+					layout_cursor_color, trap_R_RegisterPic( CG_GetStringArg( &argumentnode ) ) );
 	return true;
 }
 
-static bool CG_LFuncDrawWeaponIcon( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawWeaponIcon( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int weapon = cg.predictedPlayerState.stats[STAT_WEAPON];
 	int x, y;
 
-	if( weapon < WEAP_GUNBLADE || weapon >= WEAP_TOTAL )
+	if( weapon < WEAP_GUNBLADE || weapon >= WEAP_TOTAL ) {
 		return false;
+	}
 
 	x = CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width );
 	y = CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height );
@@ -2574,27 +2388,26 @@ static bool CG_LFuncDrawWeaponIcon( struct cg_layoutnode_s *commandnode, struct 
 	return true;
 }
 
-static bool CG_LFuncCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int weapon = (int)CG_GetNumericArg( &argumentnode );
 	int hasgun = (int)CG_GetNumericArg( &argumentnode );
 
-	if( weapon <= WEAP_NONE || weapon >= WEAP_TOTAL )
+	if( weapon <= WEAP_NONE || weapon >= WEAP_TOTAL ) {
 		return false;
+	}
 
-	if( hasgun )
-		customWeaponPics[weapon-1] = CG_GetStringArg( &argumentnode );
-	else
-		customNoGunWeaponPics[weapon-1] = CG_GetStringArg( &argumentnode );
+	if( hasgun ) {
+		customWeaponPics[weapon - 1] = CG_GetStringArg( &argumentnode );
+	} else {
+		customNoGunWeaponPics[weapon - 1] = CG_GetStringArg( &argumentnode );
+	}
 
 	return true;
 }
 
-static bool CG_LFuncResetCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncResetCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int weapon;
-	for( weapon = 0; weapon < WEAP_TOTAL-1; weapon++ )
-	{
+	for( weapon = 0; weapon < WEAP_TOTAL - 1; weapon++ ) {
 		customWeaponPics[weapon] = NULL;
 		customNoGunWeaponPics[weapon] = NULL;
 	}
@@ -2602,38 +2415,33 @@ static bool CG_LFuncResetCustomWeaponIcons( struct cg_layoutnode_s *commandnode,
 	return true;
 }
 
-static bool CG_LFuncCustomWeaponSelect( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncCustomWeaponSelect( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	customWeaponSelectPic = CG_GetStringArg( &argumentnode );
 	return true;
 }
 
-static void CG_LFuncsWeaponIcons( struct cg_layoutnode_s *argumentnode, bool touch )
-{
+static void CG_LFuncsWeaponIcons( struct cg_layoutnode_s *argumentnode, bool touch ) {
 	int offx, offy, w, h;
 
-	offx = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth/800 );
-	offy = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
-	w = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth/800 );
-	h = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
+	offx = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth / 800 );
+	offy = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
+	w = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth / 800 );
+	h = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
 
 	CG_DrawWeaponIcons( layout_cursor_x, layout_cursor_y, offx, offy, w, h, layout_cursor_align, touch );
 }
 
-static bool CG_LFuncDrawWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_LFuncsWeaponIcons( argumentnode, false );
 	return true;
 }
 
-static bool CG_LFuncTouchWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_LFuncsWeaponIcons( argumentnode, true );
 	return true;
 }
 
-static bool CG_LFuncSetTouchWeaponDropOffset( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncSetTouchWeaponDropOffset( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	float x, y;
 
 	x = CG_GetNumericArg( &argumentnode );
@@ -2646,35 +2454,31 @@ static bool CG_LFuncSetTouchWeaponDropOffset( struct cg_layoutnode_s *commandnod
 	return true;
 }
 
-static bool CG_LFuncDrawWeaponCross( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
-	int ammoofs = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
-	int ammosize = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
+static bool CG_LFuncDrawWeaponCross( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
+	int ammoofs = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
+	int ammosize = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
 	int ammopass;
 
-	if( cg_hud_weaponcrosstime > 0.0f )
-	{
-		for( ammopass = 0; ammopass < 2; ammopass++ )
-		{
+	if( cg_hud_weaponcrosstime > 0 ) {
+		for( ammopass = 0; ammopass < 2; ammopass++ ) {
 			CG_DrawWeaponCrossQuarter( ammopass, 0, layout_cursor_x, layout_cursor_y,  0, -1, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
 			CG_DrawWeaponCrossQuarter( ammopass, 1, layout_cursor_x, layout_cursor_y,  1,  0, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
 			CG_DrawWeaponCrossQuarter( ammopass, 2, layout_cursor_x, layout_cursor_y,  0,  1, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
 			CG_DrawWeaponCrossQuarter( ammopass, 3, layout_cursor_x, layout_cursor_y, -1,  0, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
-			if( ammosize <= 0 )
+			if( ammosize <= 0 ) {
 				break;
+			}
 		}
 	}
 	return true;
 }
 
-static bool CG_LFuncDrawCaptureAreas( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawCaptureAreas( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	// FIXME: DELETE ME
 	return true;
 }
 
-static bool CG_LFuncDrawMiniMap( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawMiniMap( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	bool draw_playernames, draw_itemnames;
 
 	draw_playernames = (int)( CG_GetNumericArg( &argumentnode ) ) == 0 ? false : true;
@@ -2685,13 +2489,13 @@ static bool CG_LFuncDrawMiniMap( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
-static bool CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int loc_tag = CG_GetNumericArg( &argumentnode );
 	char string[MAX_CONFIGSTRING_CHARS];
 
-	if( loc_tag < 0 || loc_tag >= MAX_LOCATIONS )
+	if( loc_tag < 0 || loc_tag >= MAX_LOCATIONS ) {
 		return false;
+	}
 
 	trap_GetConfigString( CS_LOCATIONS + loc_tag, string, sizeof( string ) );
 
@@ -2699,12 +2503,11 @@ static bool CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struc
 	return true;
 }
 
-static bool CG_LFuncDrawWeaponWeakAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawWeaponWeakAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int offx, offy, fontsize;
 
-	offx = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth/800 );
-	offy = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
+	offx = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth / 800 );
+	offy = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
 	fontsize = (int)CG_GetNumericArg( &argumentnode );
 
 	CG_DrawWeaponAmmos( layout_cursor_x, layout_cursor_y, offx, offy, fontsize, 2, layout_cursor_align );
@@ -2712,12 +2515,11 @@ static bool CG_LFuncDrawWeaponWeakAmmo( struct cg_layoutnode_s *commandnode, str
 	return true;
 }
 
-static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int offx, offy, fontsize;
 
-	offx = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth/800 );
-	offy = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
+	offx = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth / 800 );
+	offy = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
 	fontsize = (int)CG_GetNumericArg( &argumentnode );
 
 	CG_DrawWeaponAmmos( layout_cursor_x, layout_cursor_y, offx, offy, fontsize, 1, layout_cursor_align );
@@ -2725,116 +2527,99 @@ static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, s
 	return true;
 }
 
-static bool CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawTeamInfo( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawCrosshair( layout_cursor_x, layout_cursor_y, layout_cursor_align );
 	return true;
 }
 
-static bool CG_LFuncDrawKeyState( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawKeyState( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	const char *key = CG_GetStringArg( &argumentnode );
 
 	CG_DrawKeyState( layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, layout_cursor_align, key );
 	return true;
 }
 
-static bool CG_LFuncDrawNet( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawNet( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawNet( layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, layout_cursor_align, layout_cursor_color );
 	return true;
 }
 
-static bool CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int padding_x, padding_y;
 	struct shader_s *shader;
 
-	padding_x = (int)( CG_GetNumericArg( &argumentnode ) )*cgs.vidWidth/800;
-	padding_y = (int)( CG_GetNumericArg( &argumentnode ) )*cgs.vidHeight/600;
+	padding_x = (int)( CG_GetNumericArg( &argumentnode ) ) * cgs.vidWidth / 800;
+	padding_y = (int)( CG_GetNumericArg( &argumentnode ) ) * cgs.vidHeight / 600;
 	shader = trap_R_RegisterPic( CG_GetStringArg( &argumentnode ) );
 
 	CG_DrawChat( &cg.chat, layout_cursor_x, layout_cursor_y, layout_cursor_font_name, CG_GetLayoutCursorFont(), layout_cursor_font_size,
-		layout_cursor_width, layout_cursor_height, padding_x, padding_y, layout_cursor_color, shader );
+				 layout_cursor_width, layout_cursor_height, padding_x, padding_y, layout_cursor_color, shader );
 	return true;
 }
 
-static void CG_MoveUpFunc( int id, unsigned int time )
-{
+static void CG_MoveUpFunc( int id, int64_t time ) {
 	CG_SetTouchpad( TOUCHPAD_MOVE, -1 );
 }
 
-static bool CG_LFuncTouchMove( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchMove( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int touch = CG_TouchArea( TOUCHAREA_HUD_MOVE,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, CG_MoveUpFunc );
-	if( touch >= 0 )
+							  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+							  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+							  layout_cursor_width, layout_cursor_height, CG_MoveUpFunc );
+	if( touch >= 0 ) {
 		CG_SetTouchpad( TOUCHPAD_MOVE, touch );
+	}
 	return true;
 }
 
-static void CG_ViewUpFunc( int id, unsigned int time )
-{
+static void CG_ViewUpFunc( int id, int64_t time ) {
 	CG_SetTouchpad( TOUCHPAD_VIEW, -1 );
 
-	if( cg_hud_touch_zoomSeq )
-	{
+	if( cg_hud_touch_zoomSeq ) {
 		cg_touch_t &touch = cg_touches[id];
 
 		int threshold = ( int )( cg_touch_zoomThres->value * cgs.pixelRatio );
 		if( !time || ( (int)( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
 			( abs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
-			( abs( touch.y - cg_hud_touch_zoomY ) > threshold ) )
-		{
+			( abs( touch.y - cg_hud_touch_zoomY ) > threshold ) ) {
 			cg_hud_touch_zoomSeq = 0;
 		}
 
-		if( cg_hud_touch_zoomSeq == 1 )
-		{
+		if( cg_hud_touch_zoomSeq == 1 ) {
 			cg_hud_touch_zoomSeq = 2;
 			cg_hud_touch_zoomLastTouch = time;
 			cg_hud_touch_zoomX = touch.x;
 			cg_hud_touch_zoomY = touch.y;
-		}
-		else if( cg_hud_touch_zoomSeq == 3 )
-		{
+		} else if( cg_hud_touch_zoomSeq == 3 ) {
 			cg_hud_touch_zoomSeq = 0;
 			cg_hud_touch_buttons ^= BUTTON_ZOOM; // toggle zoom after a double tap
 		}
 	}
 }
 
-static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int touchID = CG_TouchArea( TOUCHAREA_HUD_VIEW,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, CG_ViewUpFunc );
-	if( touchID >= 0 )
-	{
+								CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+								CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+								layout_cursor_width, layout_cursor_height, CG_ViewUpFunc );
+	if( touchID >= 0 ) {
 		CG_SetTouchpad( TOUCHPAD_VIEW, touchID );
 
 		cg_touch_t &touch = cg_touches[touchID];
-		if( cg_hud_touch_zoomSeq )
-		{
+		if( cg_hud_touch_zoomSeq ) {
 			int threshold = ( int )( cg_touch_zoomThres->value * cgs.pixelRatio );
 			if( ( ( int )( touch.time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
 				( abs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
-				( abs( touch.y - cg_hud_touch_zoomY ) > threshold ) )
-			{
+				( abs( touch.y - cg_hud_touch_zoomY ) > threshold ) ) {
 				cg_hud_touch_zoomSeq = 0;
 			}
 		}
-		if( !cg_hud_touch_zoomSeq || ( cg_hud_touch_zoomSeq == 2 ) )
-		{
+		if( !cg_hud_touch_zoomSeq || ( cg_hud_touch_zoomSeq == 2 ) ) {
 			cg_hud_touch_zoomSeq++;
 			cg_hud_touch_zoomLastTouch = touch.time;
 			cg_hud_touch_zoomX = touch.x;
@@ -2845,127 +2630,106 @@ static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static void CG_UpmoveUpFunc( int id, unsigned int time )
-{
+static void CG_UpmoveUpFunc( int id, int64_t time ) {
 	cg_hud_touch_upmove = 0;
 }
 
-static bool CG_LFuncTouchJump( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchJump( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	if( CG_TouchArea( TOUCHAREA_HUD_JUMP,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 )
-	{
+					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+					  layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 ) {
 		cg_hud_touch_upmove = 1;
 	}
 	return true;
 }
 
-static bool CG_LFuncTouchCrouch( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchCrouch( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	if( CG_TouchArea( TOUCHAREA_HUD_CROUCH,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 )
-	{
+					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+					  layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 ) {
 		cg_hud_touch_upmove = -1;
 	}
 	return true;
 }
 
-static void CG_AttackUpFunc( int id, unsigned int time )
-{
+static void CG_AttackUpFunc( int id, int64_t time ) {
 	cg_hud_touch_buttons &= ~BUTTON_ATTACK;
 }
 
-static bool CG_LFuncTouchAttack( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchAttack( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	if( CG_TouchArea( TOUCHAREA_HUD_ATTACK,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, CG_AttackUpFunc ) >= 0 )
-	{
+					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+					  layout_cursor_width, layout_cursor_height, CG_AttackUpFunc ) >= 0 ) {
 		cg_hud_touch_buttons |= BUTTON_ATTACK;
 	}
 	return true;
 }
 
-static void CG_SpecialUpFunc( int id, unsigned int time )
-{
+static void CG_SpecialUpFunc( int id, int64_t time ) {
 	cg_hud_touch_buttons &= ~BUTTON_SPECIAL;
 }
 
-static bool CG_LFuncTouchSpecial( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchSpecial( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	if( CG_TouchArea( TOUCHAREA_HUD_SPECIAL,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, CG_SpecialUpFunc ) >= 0 )
-	{
+					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+					  layout_cursor_width, layout_cursor_height, CG_SpecialUpFunc ) >= 0 ) {
 		cg_hud_touch_buttons |= BUTTON_SPECIAL;
 	}
 	return true;
 }
 
-static bool CG_LFuncTouchClassAction( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchClassAction( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	if( CG_TouchArea( TOUCHAREA_HUD_CLASSACTION,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, NULL ) >= 0 )
-	{
+					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+					  layout_cursor_width, layout_cursor_height, NULL ) >= 0 ) {
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "classAction%i", ( int )CG_GetNumericArg( &argumentnode ) ) );
 	}
 	return true;
 }
 
-static bool CG_LFuncTouchDropItem( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchDropItem( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	if( CG_TouchArea( TOUCHAREA_HUD_DROPITEM,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, NULL ) >= 0 )
-	{
+					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+					  layout_cursor_width, layout_cursor_height, NULL ) >= 0 ) {
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "drop \"%s\"", CG_GetStringArg( &argumentnode ) ) );
 	}
 	return true;
 }
 
-static void CG_ScoresUpFunc( int id, unsigned int time )
-{
+static void CG_ScoresUpFunc( int id, int64_t time ) {
 	CG_ScoresOff_f();
 }
 
-static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	if( CG_TouchArea( TOUCHAREA_HUD_SCORES,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, CG_ScoresUpFunc ) >= 0 )
-	{
+					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+					  layout_cursor_width, layout_cursor_height, CG_ScoresUpFunc ) >= 0 ) {
 		CG_ScoresOn_f();
 	}
 	return true;
 }
 
-static void CG_QuickMenuUpFunc( int id, unsigned int time )
-{
-	if( GS_MatchState() < MATCH_STATE_POSTMATCH )
+static void CG_QuickMenuUpFunc( int id, int64_t time ) {
+	if( GS_MatchState() < MATCH_STATE_POSTMATCH ) {
 		CG_ShowQuickMenu( 0 );
+	}
 }
 
-static bool CG_LFuncTouchQuickMenu( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncTouchQuickMenu( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int side = ( int )CG_GetNumericArg( &argumentnode );
 
-	if( GS_MatchState() < MATCH_STATE_POSTMATCH )
-	{
+	if( GS_MatchState() < MATCH_STATE_POSTMATCH ) {
 		if( CG_TouchArea( TOUCHAREA_HUD_QUICKMENU,
-			CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-			CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-			layout_cursor_width, layout_cursor_height, CG_QuickMenuUpFunc ) >= 0 )
-		{
+						  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+						  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+						  layout_cursor_width, layout_cursor_height, CG_QuickMenuUpFunc ) >= 0 ) {
 			CG_ShowQuickMenu( ( side < 0 ) ? -1 : 1 );
 		}
 	}
@@ -2973,13 +2737,11 @@ static bool CG_LFuncTouchQuickMenu( struct cg_layoutnode_s *commandnode, struct 
 }
 
 
-static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	return (int)CG_GetNumericArg( &argumentnode ) != 0;
 }
 
-static bool CG_LFuncIfNot( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
+static bool CG_LFuncIfNot( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	return (int)CG_GetNumericArg( &argumentnode ) == 0;
 }
 
@@ -3247,7 +3009,7 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		"Draws indicators where team mates are",
 		false
 	},
-	
+
 	{
 		"drawStatString",
 		CG_LFuncDrawConfigstring,
@@ -3292,7 +3054,7 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		"Draws numbers as text",
 		false
 	},
-	
+
 	{
 		"drawStringRepeat",
 		CG_LFuncDrawStringRepeat,
@@ -3301,7 +3063,7 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		"Draws argument string multiple times",
 		false
 	},
-	
+
 	{
 		"drawStringRepeatConfigString",
 		CG_LFuncDrawStringRepeatConfigString,
@@ -3688,53 +3450,46 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	}
 };
 
-void Cmd_CG_PrintHudHelp_f( void )
-{
+void Cmd_CG_PrintHudHelp_f( void ) {
 	const cg_layoutcommand_t *cmd;
 	cg_layoutoperators_t *op;
 	int i;
-	gsitem_t	*item;
+	gsitem_t    *item;
 	char *name, *p;
 
 	CG_Printf( "- %sHUD scripts commands\n-------------------------------------%s\n", S_COLOR_YELLOW, S_COLOR_WHITE );
-	for( cmd = cg_LayoutCommands; cmd->name; cmd++ )
-	{
+	for( cmd = cg_LayoutCommands; cmd->name; cmd++ ) {
 		CG_Printf( "- cmd: %s%s%s expected arguments: %s%i%s\n- desc: %s%s%s\n",
-		           S_COLOR_YELLOW, cmd->name, S_COLOR_WHITE,
-		           S_COLOR_YELLOW, cmd->numparms, S_COLOR_WHITE,
-		           S_COLOR_BLUE, cmd->help, S_COLOR_WHITE );
+				   S_COLOR_YELLOW, cmd->name, S_COLOR_WHITE,
+				   S_COLOR_YELLOW, cmd->numparms, S_COLOR_WHITE,
+				   S_COLOR_BLUE, cmd->help, S_COLOR_WHITE );
 	}
 	CG_Printf( "\n" );
 
 	CG_Printf( "- %sHUD scripts operators\n------------------------------------%s\n", S_COLOR_YELLOW, S_COLOR_WHITE );
 	CG_Printf( "- " );
-	for( op = cg_LayoutOperators; op->name; op++ )
-	{
+	for( op = cg_LayoutOperators; op->name; op++ ) {
 		CG_Printf( "%s%s%s, ", S_COLOR_YELLOW, op->name, S_COLOR_WHITE );
 	}
 	CG_Printf( "\n\n" );
 
 	CG_Printf( "- %sHUD scripts CONSTANT names\n-------------------------------%s\n", S_COLOR_YELLOW, S_COLOR_WHITE );
-	for( item = &itemdefs[1]; item->classname; item++ )
-	{
+	for( item = &itemdefs[1]; item->classname; item++ ) {
 		name = Q_strupr( CG_CopyString( item->name ) );
 		p = name;
-		while( ( p = strchr( p, ' ' ) ) )
-		{
+		while( ( p = strchr( p, ' ' ) ) ) {
 			*p = '_';
 		}
 
 		CG_Printf( "%sITEM_%s%s, ", S_COLOR_YELLOW, name, S_COLOR_WHITE );
 	}
-	for( i = 0; cg_numeric_constants[i].name != NULL; i++ )
-	{
+	for( i = 0; cg_numeric_constants[i].name != NULL; i++ ) {
 		CG_Printf( "%s%s%s, ", S_COLOR_YELLOW, cg_numeric_constants[i].name, S_COLOR_WHITE );
 	}
 	CG_Printf( "\n\n" );
 
 	CG_Printf( "- %sHUD scripts REFERENCE names\n------------------------------%s\n", S_COLOR_YELLOW, S_COLOR_WHITE );
-	for( i = 0; cg_numeric_references[i].name != NULL; i++ )
-	{
+	for( i = 0; cg_numeric_references[i].name != NULL; i++ ) {
 		CG_Printf( "%s%s%s, ", S_COLOR_YELLOW, cg_numeric_references[i].name, S_COLOR_WHITE );
 	}
 	CG_Printf( "\n" );
@@ -3762,12 +3517,12 @@ typedef struct cg_layoutnode_s
 /*
 * CG_GetStringArg
 */
-static const char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode )
-{
+static const char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode ) {
 	struct cg_layoutnode_s *anode = *argumentsnode;
 
-	if( !anode || anode->type == LNODE_COMMAND )
+	if( !anode || anode->type == LNODE_COMMAND ) {
 		CG_Error( "'CG_LayoutGetIntegerArg': bad arg count" );
+	}
 
 	// we can return anything as string
 	*argumentsnode = anode->next;
@@ -3778,30 +3533,27 @@ static const char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode )
 * CG_GetNumericArg
 * can use recursion for mathematical operations
 */
-static float CG_GetNumericArg( struct cg_layoutnode_s **argumentsnode )
-{
+static float CG_GetNumericArg( struct cg_layoutnode_s **argumentsnode ) {
 	struct cg_layoutnode_s *anode = *argumentsnode;
 	float value;
 
-	if( !anode || anode->type == LNODE_COMMAND )
+	if( !anode || anode->type == LNODE_COMMAND ) {
 		CG_Error( "'CG_LayoutGetIntegerArg': bad arg count" );
+	}
 
-	if( anode->type != LNODE_NUMERIC && anode->type != LNODE_REFERENCE_NUMERIC )
+	if( anode->type != LNODE_NUMERIC && anode->type != LNODE_REFERENCE_NUMERIC ) {
 		CG_Printf( "WARNING: 'CG_LayoutGetIntegerArg': arg %s is not numeric", anode->string );
+	}
 
 	*argumentsnode = anode->next;
-	if( anode->type == LNODE_REFERENCE_NUMERIC )
-	{
+	if( anode->type == LNODE_REFERENCE_NUMERIC ) {
 		value = cg_numeric_references[anode->integer].func( cg_numeric_references[anode->integer].parameter );
-	}
-	else
-	{
+	} else {
 		value = anode->value;
 	}
 
 	// recurse if there are operators
-	if( anode->opFunc != NULL )
-	{
+	if( anode->opFunc != NULL ) {
 		value = anode->opFunc( value, CG_GetNumericArg( argumentsnode ) );
 	}
 
@@ -3812,23 +3564,21 @@ static float CG_GetNumericArg( struct cg_layoutnode_s **argumentsnode )
 * CG_LayoutParseCommandNode
 * alloc a new node for a command
 */
-static cg_layoutnode_t *CG_LayoutParseCommandNode( const char *token )
-{
+static cg_layoutnode_t *CG_LayoutParseCommandNode( const char *token ) {
 	int i = 0;
 	const cg_layoutcommand_t *command = NULL;
 	cg_layoutnode_t *node;
 
-	for( i = 0; cg_LayoutCommands[i].name; i++ )
-	{
-		if( !Q_stricmp( token, cg_LayoutCommands[i].name ) )
-		{
+	for( i = 0; cg_LayoutCommands[i].name; i++ ) {
+		if( !Q_stricmp( token, cg_LayoutCommands[i].name ) ) {
 			command = &cg_LayoutCommands[i];
 			break;
 		}
 	}
 
-	if( command == NULL )
+	if( command == NULL ) {
 		return NULL;
+	}
 
 	node = ( cg_layoutnode_t * )CG_Malloc( sizeof( cg_layoutnode_t ) );
 	node->type = LNODE_COMMAND;
@@ -3847,8 +3597,7 @@ static cg_layoutnode_t *CG_LayoutParseCommandNode( const char *token )
 * CG_LayoutParseArgumentNode
 * alloc a new node for an argument
 */
-static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token )
-{
+static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token ) {
 	cg_layoutnode_t *node;
 	int type = LNODE_NUMERIC;
 	char tokcopy[MAX_TOKEN_CHARS], *p;
@@ -3857,107 +3606,85 @@ static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token )
 	gsitem_t *item;
 
 	// find what's it
-	if( !token )
+	if( !token ) {
 		return NULL;
+	}
 
 	valuetok = token;
 
-	if( token[0] == '%' )
-	{                  // it's a stat parm
+	if( token[0] == '%' ) { // it's a stat parm
 		int i;
 		type = LNODE_REFERENCE_NUMERIC;
 		valuetok++; // skip %
 
 		// replace stat names by values
-		for( i = 0; cg_numeric_references[i].name != NULL; i++ )
-		{
-			if( !Q_stricmp( valuetok, cg_numeric_references[i].name ) )
-			{
+		for( i = 0; cg_numeric_references[i].name != NULL; i++ ) {
+			if( !Q_stricmp( valuetok, cg_numeric_references[i].name ) ) {
 				Q_snprintfz( tmpstring, sizeof( tmpstring ), "%i", i );
 				valuetok = tmpstring;
 				break;
 			}
 		}
-		if( cg_numeric_references[i].name == NULL )
-		{
+		if( cg_numeric_references[i].name == NULL ) {
 			CG_Printf( "Warning: HUD: %s is not valid numeric reference\n", valuetok );
 			valuetok--;
 			valuetok = "0";
 		}
-	}
-	else if( token[0] == '#' )
-	{                         // it's a integer constant
+	} else if( token[0] == '#' ) {   // it's a integer constant
 		int i;
 		type = LNODE_NUMERIC;
 		valuetok++; // skip #
 
 		// replace constants names by values
-		if( !strncmp( valuetok, "ITEM_", strlen( "ITEM_" ) ) )
-		{			
+		if( !strncmp( valuetok, "ITEM_", strlen( "ITEM_" ) ) ) {
 			Q_strncpyz( tokcopy, valuetok, sizeof( tokcopy ) );
 			valuetok = tokcopy;
 
 			p = tokcopy;
-			while( ( p = strchr( p, '_' ) ) )
-			{
+			while( ( p = strchr( p, '_' ) ) ) {
 				*p = ' ';
 			}
-			if( ( item = GS_FindItemByName( valuetok + strlen( "ITEM_" ) ) ) )
-			{
+			if( ( item = GS_FindItemByName( valuetok + strlen( "ITEM_" ) ) ) ) {
 				Q_snprintfz( tmpstring, sizeof( tmpstring ), "%i", item->tag );
 				valuetok = tmpstring;
 			}
-			if( item == NULL )
-			{
+			if( item == NULL ) {
 				CG_Printf( "Warning: HUD: %s is not valid numeric constant\n", valuetok );
 				valuetok = "0";
 			}
-		}
-		else
-		{
-			for( i = 0; cg_numeric_constants[i].name != NULL; i++ )
-			{
-				if( !Q_stricmp( valuetok, cg_numeric_constants[i].name ) )
-				{
+		} else {
+			for( i = 0; cg_numeric_constants[i].name != NULL; i++ ) {
+				if( !Q_stricmp( valuetok, cg_numeric_constants[i].name ) ) {
 					Q_snprintfz( tmpstring, sizeof( tmpstring ), "%i", cg_numeric_constants[i].value );
 					valuetok = tmpstring;
 					break;
 				}
 			}
-			if( cg_numeric_constants[i].name == NULL )
-			{
+			if( cg_numeric_constants[i].name == NULL ) {
 				CG_Printf( "Warning: HUD: %s is not valid numeric constant\n", valuetok );
 				valuetok = "0";
 			}
 		}
 
 #if 0 // not used yet at least
-	}
-	else if( token[0] == '$' )
-	{                         // it's a string constant
+	} else if( token[0] == '$' ) {   // it's a string constant
 		int i;
 		type = LNODE_STRING;
 		valuetok++; // skip $
 
 		// replace stat names by values
-		for( i = 0; cg_string_constants[i].name != NULL; i++ )
-		{
-			if( !Q_stricmp( valuetok, cg_string_constants[i].name ) )
-			{
+		for( i = 0; cg_string_constants[i].name != NULL; i++ ) {
+			if( !Q_stricmp( valuetok, cg_string_constants[i].name ) ) {
 				Q_snprintfz( tmpstring, sizeof( tmpstring ), "%s", cg_string_constants[i].value );
 				valuetok = tmpstring;
 				break;
 			}
 		}
 #endif
-	}
-	else if( token[0] == '\\' )
-	{
+	} else if( token[0] == '\\' ) {
 		valuetok = ++token;
 		type = LNODE_STRING;
-	}
-	else if( token[0] < '0' && token[0] > '9' && token[0] != '.' )
-	{
+	} else if( token[0] < '0' && token[0] > '9' && token[0] != '.' ) {
 		type = LNODE_STRING;
 	}
 
@@ -3979,32 +3706,24 @@ static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token )
 /*
 * CG_LayoutCathegorizeToken
 */
-static int CG_LayoutCathegorizeToken( char *token )
-{
+static int CG_LayoutCathegorizeToken( char *token ) {
 	int i = 0;
 
-	for( i = 0; cg_LayoutCommands[i].name; i++ )
-	{
-		if( !Q_stricmp( token, cg_LayoutCommands[i].name ) )
+	for( i = 0; cg_LayoutCommands[i].name; i++ ) {
+		if( !Q_stricmp( token, cg_LayoutCommands[i].name ) ) {
 			return LNODE_COMMAND;
+		}
 	}
 
-	if( token[0] == '%' )
-	{                  // it's a numerical reference
+	if( token[0] == '%' ) { // it's a numerical reference
 		return LNODE_REFERENCE_NUMERIC;
-	}
-	else if( token[0] == '#' )
-	{                         // it's a numerical constant
+	} else if( token[0] == '#' ) {   // it's a numerical constant
 		return LNODE_NUMERIC;
 #if 0
-	}
-	else if( token[0] == '$' )
-	{                         // it's a string constant
+	} else if( token[0] == '$' ) {   // it's a string constant
 		return LNODE_STRING;
 #endif
-	}
-	else if( token[0] < '0' && token[0] > '9' && token[0] != '.' )
-	{
+	} else if( token[0] < '0' && token[0] > '9' && token[0] != '.' ) {
 		return LNODE_STRING;
 	}
 
@@ -4015,23 +3734,24 @@ static int CG_LayoutCathegorizeToken( char *token )
 * CG_RecurseFreeLayoutThread
 * recursive for freeing "if" subtrees
 */
-static void CG_RecurseFreeLayoutThread( cg_layoutnode_t *rootnode )
-{
+static void CG_RecurseFreeLayoutThread( cg_layoutnode_t *rootnode ) {
 	cg_layoutnode_t *node;
 
-	if( !rootnode )
+	if( !rootnode ) {
 		return;
+	}
 
-	while( rootnode )
-	{
+	while( rootnode ) {
 		node = rootnode;
 		rootnode = rootnode->parent;
 
-		if( node->ifthread )
+		if( node->ifthread ) {
 			CG_RecurseFreeLayoutThread( node->ifthread );
+		}
 
-		if( node->string )
+		if( node->string ) {
 			CG_Free( node->string );
+		}
 
 		CG_Free( node );
 	}
@@ -4041,8 +3761,7 @@ static void CG_RecurseFreeLayoutThread( cg_layoutnode_t *rootnode )
 * CG_LayoutFixCommasInToken
 * commas are accepted in the scripts. They actually do nothing, but are good for readability
 */
-static bool CG_LayoutFixCommasInToken( char **ptr, char **backptr )
-{
+static bool CG_LayoutFixCommasInToken( char **ptr, char **backptr ) {
 	char *token;
 	char *back;
 	int offset, count;
@@ -4051,15 +3770,15 @@ static bool CG_LayoutFixCommasInToken( char **ptr, char **backptr )
 	token = *ptr;
 	back = *backptr;
 
-	if( !token || !strlen( token ) ) return false;
+	if( !token || !strlen( token ) ) {
+		return false;
+	}
 
 	// check that sizes match (quotes are removed from tokens)
 	offset = count = strlen( token );
 	back = *backptr;
-	while( count-- )
-	{
-		if( *back == '"' )
-		{
+	while( count-- ) {
+		if( *back == '"' ) {
 			count++;
 			offset++;
 		}
@@ -4067,20 +3786,18 @@ static bool CG_LayoutFixCommasInToken( char **ptr, char **backptr )
 	}
 
 	back = *backptr - offset;
-	while( offset )
-	{
-		if( *back == '"' )
-		{
+	while( offset ) {
+		if( *back == '"' ) {
 			offset--;
 			back++;
 			continue;
 		}
 
-		if( *token != *back )
+		if( *token != *back ) {
 			CG_Printf( "Token and Back mismatch %c - %c\n", *token, *back );
+		}
 
-		if( *back == ',' )
-		{
+		if( *back == ',' ) {
 			*back = ' ';
 			stepback = true;
 		}
@@ -4097,159 +3814,156 @@ static bool CG_LayoutFixCommasInToken( char **ptr, char **backptr )
 * CG_RecurseParseLayoutScript
 * recursive for generating "if" subtrees
 */
-static cg_layoutnode_t *CG_RecurseParseLayoutScript( char **ptr, int level )
-{
-	cg_layoutnode_t	*command = NULL;
-	cg_layoutnode_t	*argumentnode = NULL;
-	cg_layoutnode_t	*node = NULL;
-	cg_layoutnode_t	*rootnode = NULL;
+static cg_layoutnode_t *CG_RecurseParseLayoutScript( char **ptr, int level ) {
+	cg_layoutnode_t *command = NULL;
+	cg_layoutnode_t *argumentnode = NULL;
+	cg_layoutnode_t *node = NULL;
+	cg_layoutnode_t *rootnode = NULL;
 	int expecArgs = 0, numArgs = 0;
 	int token_type;
 	bool add;
 	char *token, *s_tokenback;
 
-	if( !ptr )
+	if( !ptr ) {
 		return NULL;
+	}
 
-	if( !*ptr || !*ptr[0] )
+	if( !*ptr || !*ptr[0] ) {
 		return NULL;
+	}
 
-	while( *ptr )
-	{
+	while( *ptr ) {
 		s_tokenback = *ptr;
 
 		token = COM_Parse( ptr );
 		while( *token == ' ' ) token++; // eat up whitespaces
-		if( !Q_stricmp( ",", token ) ) continue; // was just a comma
-		if( CG_LayoutFixCommasInToken( &token, ptr ) )
-		{
+		if( !Q_stricmp( ",", token ) ) {
+			continue;                            // was just a comma
+		}
+		if( CG_LayoutFixCommasInToken( &token, ptr ) ) {
 			*ptr = s_tokenback; // step back
 			continue;
 		}
 
-		if( !*token ) continue;
-		if( !strlen( token ) ) continue;
+		if( !*token ) {
+			continue;
+		}
+		if( !strlen( token ) ) {
+			continue;
+		}
 
 		add = false;
 		token_type = CG_LayoutCathegorizeToken( token );
 
 		// if it's an operator, we don't create a node, but add the operation to the last one
-		if( CG_OperatorFuncForArgument( token ) != NULL )
-		{
-			if( !node )
-			{
+		if( CG_OperatorFuncForArgument( token ) != NULL ) {
+			if( !node ) {
 				CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): \"%s\" Operator hasn't any prior argument\n", level, token );
 				continue;
 			}
-			if( node->type == LNODE_COMMAND || node->type == LNODE_STRING )
+			if( node->type == LNODE_COMMAND || node->type == LNODE_STRING ) {
 				CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): \"%s\" Operator was assigned to a command node\n", level, token );
-			else
+			} else {
 				expecArgs++; // we now expect one extra argument (not counting the operator one)
 
+			}
 			node->opFunc = CG_OperatorFuncForArgument( token );
 			continue; // skip and continue
 		}
 
-		if( expecArgs > numArgs )
-		{
+		if( expecArgs > numArgs ) {
 			// we are expecting an argument
-			switch( token_type )
-			{
-			case LNODE_NUMERIC:
-			case LNODE_STRING:
-			case LNODE_REFERENCE_NUMERIC:
+			switch( token_type ) {
+				case LNODE_NUMERIC:
+				case LNODE_STRING:
+				case LNODE_REFERENCE_NUMERIC:
+					break;
+				case LNODE_COMMAND:
+				{
+					CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): \"%s\" is not a valid argument for \"%s\"\n", level, token, command ? command->string : "" );
+					continue;
+				}
 				break;
-			case LNODE_COMMAND:
-			{
-				CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): \"%s\" is not a valid argument for \"%s\"\n", level, token, command ? command->string : "" );
-				continue;
-			}
-				break;
-			default:
-			{
-				CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i) skip and continue: Unrecognized token \"%s\"\n", level, token );
-				continue;
-			}
+				default:
+				{
+					CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i) skip and continue: Unrecognized token \"%s\"\n", level, token );
+					continue;
+				}
 				break;
 			}
-		}
-		else
-		{
-			if( token_type != LNODE_COMMAND )
-			{
+		} else {
+			if( token_type != LNODE_COMMAND ) {
 				// we are expecting a command
 				CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): unrecognized command \"%s\"\n", level, token );
 				continue;
 			}
 
 			// special case: endif commands interrupt the thread and are not saved
-			if( !Q_stricmp( token, "endif" ) )
-			{
+			if( !Q_stricmp( token, "endif" ) ) {
 				//finish the last command properly
-				if( command )
+				if( command ) {
 					command->integer = expecArgs;
+				}
 				return rootnode;
 			}
 
 			// special case: last command was "if", we create a new sub-thread and ignore the new command
-			if( command && ( !Q_stricmp( command->string, "if" ) || !Q_stricmp( command->string, "ifnot" ) ) )
-			{
+			if( command && ( !Q_stricmp( command->string, "if" ) || !Q_stricmp( command->string, "ifnot" ) ) ) {
 				*ptr = s_tokenback; // step back one token
 				command->ifthread = CG_RecurseParseLayoutScript( ptr, level + 1 );
 			}
 		}
 
 		// things look fine, proceed creating the node
-		switch( token_type )
-		{
-		case LNODE_NUMERIC:
-		case LNODE_STRING:
-		case LNODE_REFERENCE_NUMERIC:
-		{
-			node = CG_LayoutParseArgumentNode( token );
-			if( !node )
+		switch( token_type ) {
+			case LNODE_NUMERIC:
+			case LNODE_STRING:
+			case LNODE_REFERENCE_NUMERIC:
 			{
-				CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): \"%s\" is not a valid argument for \"%s\"\n", level, token, command ? command->string : "" );
+				node = CG_LayoutParseArgumentNode( token );
+				if( !node ) {
+					CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): \"%s\" is not a valid argument for \"%s\"\n", level, token, command ? command->string : "" );
+					break;
+				}
+				numArgs++;
+				add = true;
+			}
+			break;
+			case LNODE_COMMAND:
+			{
+				node = CG_LayoutParseCommandNode( token );
+				if( !node ) {
+					CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): \"%s\" is not a valid command\n", level, token );
+					break; // skip and continue
+				}
+
+				// expected arguments could have been extended by the operators
+				if( command ) {
+					command->integer = expecArgs;
+				}
+
+				// move on into the new command
+				command = node;
+				argumentnode = NULL;
+				numArgs = 0;
+				expecArgs = command->integer;
+				add = true;
+			}
+			break;
+			default:
 				break;
-			}
-			numArgs++;
-			add = true;
-		}
-			break;
-		case LNODE_COMMAND:
-		{
-			node = CG_LayoutParseCommandNode( token );
-			if( !node )
-			{
-				CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): \"%s\" is not a valid command\n", level, token );
-				break; // skip and continue
-			}
-
-			// expected arguments could have been extended by the operators
-			if( command )
-				command->integer = expecArgs;
-
-			// move on into the new command
-			command = node;
-			argumentnode = NULL;
-			numArgs = 0;
-			expecArgs = command->integer;
-			add = true;
-		}
-			break;
-		default:
-			break;
 		}
 
-		if( add == true )
-		{
+		if( add == true ) {
 			if( command && command == rootnode ) {
-				if( !argumentnode )
+				if( !argumentnode ) {
 					argumentnode = node;
+				}
 			}
 
-			if( rootnode )
+			if( rootnode ) {
 				rootnode->next = node;
+			}
 			node->parent = rootnode;
 			rootnode = node;
 
@@ -4265,15 +3979,15 @@ static cg_layoutnode_t *CG_RecurseParseLayoutScript( char **ptr, int level )
 		}
 	}
 
-	if( level > 0 )
+	if( level > 0 ) {
 		CG_Printf( "WARNING 'CG_RecurseParseLayoutScript'(level %i): If without endif\n", level );
+	}
 
 	return rootnode;
 }
 
 #if 0
-static void CG_RecursePrintLayoutThread( cg_layoutnode_t *rootnode, int level )
-{
+static void CG_RecursePrintLayoutThread( cg_layoutnode_t *rootnode, int level ) {
 	int i;
 	cg_layoutnode_t *node;
 
@@ -4281,14 +3995,14 @@ static void CG_RecursePrintLayoutThread( cg_layoutnode_t *rootnode, int level )
 	while( node->parent )
 		node = node->parent;
 
-	while( node )
-	{
+	while( node ) {
 		for( i = 0; i < level; i++ )
 			CG_Printf( "   " );
 		CG_Printf( "%s\n", node->string );
 
-		if( node->ifthread )
-			CG_RecursePrintLayoutThread( node->ifthread, level+1 );
+		if( node->ifthread ) {
+			CG_RecursePrintLayoutThread( node->ifthread, level + 1 );
+		}
 
 		node = node->next;
 	}
@@ -4298,8 +4012,7 @@ static void CG_RecursePrintLayoutThread( cg_layoutnode_t *rootnode, int level )
 /*
 * CG_ParseLayoutScript
 */
-static void CG_ParseLayoutScript( char *string, cg_layoutnode_t *rootnode )
-{
+static void CG_ParseLayoutScript( char *string, cg_layoutnode_t *rootnode ) {
 
 	CG_RecurseFreeLayoutThread( cg.statusBar );
 	cg.statusBar = CG_RecurseParseLayoutScript( &string, 0 );
@@ -4319,37 +4032,35 @@ static void CG_ParseLayoutScript( char *string, cg_layoutnode_t *rootnode )
 * we keep a pointer to the command and run the tree counting arguments until we reach the next command,
 * then we call the command function sending the pointer to first argument and the pointer to the command.
 * At return we advance one node (we stopped at last argument node) so it starts again from the next command (if any).
-* 
+*
 * When finding an "if" command with a subtree, we execute the "if" command. In the case it
 * returns any value, we recurse execute the subtree
 */
-static void CG_RecurseExecuteLayoutThread( cg_layoutnode_t *rootnode, bool touch )
-{
-	cg_layoutnode_t	*argumentnode = NULL;
-	cg_layoutnode_t	*commandnode = NULL;
+static void CG_RecurseExecuteLayoutThread( cg_layoutnode_t *rootnode, bool touch ) {
+	cg_layoutnode_t *argumentnode = NULL;
+	cg_layoutnode_t *commandnode = NULL;
 	int numArguments;
 
-	if( !rootnode )
+	if( !rootnode ) {
 		return;
+	}
 
 	// run until the real root
 	commandnode = rootnode;
-	while( commandnode->parent )
-	{
+	while( commandnode->parent ) {
 		commandnode = commandnode->parent;
 	}
 
 	// now run backwards up to the next command node
-	while( commandnode )
-	{
+	while( commandnode ) {
 		argumentnode = commandnode->next;
 
 		// we could trust the parser, but I prefer counting the arguments here
 		numArguments = 0;
-		while( argumentnode )
-		{
-			if( argumentnode->type == LNODE_COMMAND )
+		while( argumentnode ) {
+			if( argumentnode->type == LNODE_COMMAND ) {
 				break;
+			}
 
 			argumentnode = argumentnode->next;
 			numArguments++;
@@ -4359,39 +4070,35 @@ static void CG_RecurseExecuteLayoutThread( cg_layoutnode_t *rootnode, bool touch
 		argumentnode = commandnode->next;
 
 		// Execute the command node
-		if( commandnode->integer != numArguments )
-		{
+		if( commandnode->integer != numArguments ) {
 			CG_Printf( "ERROR: Layout command %s: invalid argument count (expecting %i, found %i)\n", commandnode->string, commandnode->integer, numArguments );
 			return;
 		}
-		if( !touch && commandnode->func )
-		{
+		if( !touch && commandnode->func ) {
 			//special case for if commands
-			if( commandnode->func( commandnode, argumentnode, numArguments ) )
-			{
+			if( commandnode->func( commandnode, argumentnode, numArguments ) ) {
 				// execute the "if" thread when command returns a value
-				if( commandnode->ifthread )
+				if( commandnode->ifthread ) {
 					CG_RecurseExecuteLayoutThread( commandnode->ifthread, touch );
+				}
 			}
-		}
-		else if( touch && commandnode->touchfunc )
-		{
+		} else if( touch && commandnode->touchfunc ) {
 			//special case for if commands
-			if( commandnode->touchfunc( commandnode, argumentnode, numArguments ) )
-			{
+			if( commandnode->touchfunc( commandnode, argumentnode, numArguments ) ) {
 				// execute the "if" thread when command returns a value
-				if( commandnode->ifthread )
+				if( commandnode->ifthread ) {
 					CG_RecurseExecuteLayoutThread( commandnode->ifthread, touch );
+				}
 			}
 		}
 
 		//move up to next command node
 		commandnode = argumentnode;
-		if( commandnode == rootnode )
+		if( commandnode == rootnode ) {
 			return;
+		}
 
-		while( commandnode && commandnode->type != LNODE_COMMAND )
-		{
+		while( commandnode && commandnode->type != LNODE_COMMAND ) {
 			commandnode = commandnode->next;
 		}
 	}
@@ -4400,8 +4107,7 @@ static void CG_RecurseExecuteLayoutThread( cg_layoutnode_t *rootnode, bool touch
 /*
 * CG_ExecuteLayoutProgram
 */
-void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch )
-{
+void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch ) {
 	CG_RecurseExecuteLayoutThread( rootnode, touch );
 }
 
@@ -4414,11 +4120,11 @@ void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch )
 /*
 * CG_LoadHUDFile
 */
+
 // Loads the HUD-file recursively. Recursive includes now supported
 // Also processes "preload" statements for graphics pre-loading
 #define HUD_MAX_LVL 16 // maximum levels of recursive file loading
-static char *CG_LoadHUDFile( char *path )
-{
+static char *CG_LoadHUDFile( char *path ) {
 	char *rec_fn[HUD_MAX_LVL]; // Recursive filenames...
 	char *rec_buf[HUD_MAX_LVL]; // Recursive file contents buffers
 	char *rec_ptr[HUD_MAX_LVL]; // Recursive file position buffers
@@ -4428,8 +4134,9 @@ static char *CG_LoadHUDFile( char *path )
 	int f, i, len;
 
 	// Check if path is correct
-	if( path == NULL )
+	if( path == NULL ) {
 		return NULL;
+	}
 	memset( rec_ptr, 0, sizeof( rec_ptr ) );
 	memset( rec_buf, 0, sizeof( rec_buf ) );
 	memset( rec_ptr, 0, sizeof( rec_ptr ) );
@@ -4437,29 +4144,20 @@ static char *CG_LoadHUDFile( char *path )
 	// Copy the path of the file to the first recursive level filename :)
 	rec_fn[rec_lvl] = ( char * )CG_Malloc( strlen( path ) + 1 );
 	Q_strncpyz( rec_fn[rec_lvl], path, strlen( path ) + 1 );
-	while( 1 )
-	{
-		if( rec_lvl > rec_plvl )
-		{
+	while( 1 ) {
+		if( rec_lvl > rec_plvl ) {
 			// We went a recursive level higher, our filename should have been filled in :)
-			if( !rec_fn[rec_lvl] )
-			{
+			if( !rec_fn[rec_lvl] ) {
 				rec_lvl--;
-			}
-			else if( rec_fn[rec_lvl][0] == '\0' )
-			{
+			} else if( rec_fn[rec_lvl][0] == '\0' ) {
 				CG_Free( rec_fn[rec_lvl] );
 				rec_fn[rec_lvl] = NULL;
 				rec_lvl--;
-			}
-			else
-			{
+			} else {
 				// First check if this file hadn't been included already by one of the previous files
 				// in the current file-stack to prevent problems :)
-				for( i = 0; i < rec_lvl; i++ )
-				{
-					if( !Q_stricmp( rec_fn[rec_lvl], rec_fn[i] ) )
-					{
+				for( i = 0; i < rec_lvl; i++ ) {
+					if( !Q_stricmp( rec_fn[rec_lvl], rec_fn[i] ) ) {
 						// Recursive file loading detected!!
 						CG_Printf( "HUD: WARNING: Detected recursive file inclusion: %s\n", rec_fn[rec_lvl] );
 						CG_Free( rec_fn[rec_lvl] );
@@ -4467,139 +4165,114 @@ static char *CG_LoadHUDFile( char *path )
 					}
 				}
 			}
+
 			// File was OK :)
-			if( rec_fn[rec_lvl] != NULL )
-			{
+			if( rec_fn[rec_lvl] != NULL ) {
 				len = trap_FS_FOpenFile( rec_fn[rec_lvl], &f, FS_READ );
-				if( len > 0 )
-				{
+				if( len > 0 ) {
 					rec_plvl = rec_lvl;
 					rec_buf[rec_lvl] = ( char * )CG_Malloc( len + 1 );
 					rec_buf[rec_lvl][len] = '\0';
 					rec_ptr[rec_lvl] = rec_buf[rec_lvl];
+
 					// Now read the file
-					if( trap_FS_Read( rec_buf[rec_lvl], len, f ) <= 0 )
-					{
+					if( trap_FS_Read( rec_buf[rec_lvl], len, f ) <= 0 ) {
 						CG_Free( rec_fn[rec_lvl] );
 						CG_Free( rec_buf[rec_lvl] );
 						rec_fn[rec_lvl] = NULL;
 						rec_buf[rec_lvl] = NULL;
-						if( rec_lvl > 0 )
-						{
+						if( rec_lvl > 0 ) {
 							CG_Printf( "HUD: WARNING: Read error while loading file: %s\n", rec_fn[rec_lvl] );
 						}
 						rec_lvl--;
 					}
 					trap_FS_FCloseFile( f );
-				}
-				else
-				{
-					if( !len )
-					{
+				} else {
+					if( !len ) {
 						// File was empty - still have to close
 						trap_FS_FCloseFile( f );
-					}
-					else if( rec_lvl > 0 )
-					{
+					} else if( rec_lvl > 0 ) {
 						CG_Printf( "HUD: WARNING: Could not include file: %s\n", rec_fn[rec_lvl] );
 					}
 					CG_Free( rec_fn[rec_lvl] );
 					rec_fn[rec_lvl] = NULL;
 					rec_lvl--;
 				}
-			}
-			else
-			{
+			} else {
 				// Skip this file, go down one level
 				rec_lvl--;
 			}
 			rec_plvl = rec_lvl;
-		}
-		else if( rec_lvl < rec_plvl )
-		{
+		} else if( rec_lvl < rec_plvl ) {
 			// Free previous level buffer
-			if( rec_fn[rec_plvl] ) CG_Free( rec_fn[rec_plvl] );
-			if( rec_buf[rec_plvl] ) CG_Free( rec_buf[rec_plvl] );
+			if( rec_fn[rec_plvl] ) {
+				CG_Free( rec_fn[rec_plvl] );
+			}
+			if( rec_buf[rec_plvl] ) {
+				CG_Free( rec_buf[rec_plvl] );
+			}
 			rec_buf[rec_plvl] = NULL;
 			rec_ptr[rec_plvl] = NULL;
 			rec_fn[rec_plvl] = NULL;
 			rec_plvl = rec_lvl;
-			if( rec_lvl < 0 )
-			{
+			if( rec_lvl < 0 ) {
 				// Break - end of recursive looping
-				if( retbuf == NULL )
-				{
+				if( retbuf == NULL ) {
 					CG_Printf( "HUD: ERROR: Could not load empty HUD-script: %s\n", path );
 				}
 				break;
 			}
 		}
-		if( rec_lvl < 0 )
-		{
+		if( rec_lvl < 0 ) {
 			break;
 		}
 		token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], true, false );
-		if( !Q_stricmp( "include", token ) )
-		{
+		if( !Q_stricmp( "include", token ) ) {
 			// Handle include
 			token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], false, false );
-			if( ( ( rec_lvl + 1 ) < HUD_MAX_LVL ) && ( rec_ptr[rec_lvl] ) && ( token ) && ( token[0] != '\0' ) )
-			{
+			if( ( ( rec_lvl + 1 ) < HUD_MAX_LVL ) && ( rec_ptr[rec_lvl] ) && ( token ) && ( token[0] != '\0' ) ) {
 				// Go to next recursive level and prepare it's filename :)
 				rec_lvl++;
 				i = strlen( "huds/" ) + strlen( token ) + strlen( ".hud" ) + 1;
 				rec_fn[rec_lvl] = ( char * )CG_Malloc( i );
 				Q_snprintfz( rec_fn[rec_lvl], i, "huds/%s", token );
 				COM_DefaultExtension( rec_fn[rec_lvl], ".hud", i );
-				if( trap_FS_FOpenFile( rec_fn[rec_lvl], NULL, FS_READ ) < 0 )
-				{
+				if( trap_FS_FOpenFile( rec_fn[rec_lvl], NULL, FS_READ ) < 0 ) {
 					// File doesn't exist!
 					CG_Free( rec_fn[rec_lvl] );
 					i = strlen( "huds/inc/" ) + strlen( token ) + strlen( ".hud" ) + 1;
 					rec_fn[rec_lvl] = ( char * )CG_Malloc( i );
 					Q_snprintfz( rec_fn[rec_lvl], i, "huds/inc/%s", token );
 					COM_DefaultExtension( rec_fn[rec_lvl], ".hud", i );
-					if( trap_FS_FOpenFile( rec_fn[rec_lvl], NULL, FS_READ ) < 0 )
-					{
+					if( trap_FS_FOpenFile( rec_fn[rec_lvl], NULL, FS_READ ) < 0 ) {
 						CG_Free( rec_fn[rec_lvl] );
 						rec_fn[rec_lvl] = NULL;
 						rec_lvl--;
 					}
 				}
 			}
-		}
-		else if( !Q_stricmp( "precache", token ) )
-		{
+		} else if( !Q_stricmp( "precache", token ) ) {
 			// Handle graphics precaching
-			if( rec_ptr[rec_lvl] == NULL )
-			{
+			if( rec_ptr[rec_lvl] == NULL ) {
 				CG_Printf( "HUD: ERROR: EOF instead of file argument for preload\n" );
-			}
-			else
-			{
+			} else {
 				token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], false, false );
-				if( ( token ) && ( token[0] != '\0' ) )
-				{
-					if( developer->integer )
+				if( ( token ) && ( token[0] != '\0' ) ) {
+					if( developer->integer ) {
 						CG_Printf( "HUD: INFO: Precaching image '%s'\n", token );
+					}
 					trap_R_RegisterPic( token );
-				}
-				else
-				{
+				} else {
 					CG_Printf( "HUD: ERROR: Missing argument for preload\n" );
 				}
 			}
-		}
-		else if( ( len = strlen( token ) ) > 0 )
-		{
+		} else if( ( len = strlen( token ) ) > 0 ) {
 			// Normal token, add to token-pool.
-			if( ( retuse + len + 1 ) >= retlen )
-			{
+			if( ( retuse + len + 1 ) >= retlen ) {
 				// Enlarge token buffer by 1kb
 				retlen += 1024;
 				tmpbuf = ( char * )CG_Malloc( retlen );
-				if( retbuf )
-				{
+				if( retbuf ) {
 					memcpy( tmpbuf, retbuf, retuse );
 					CG_Free( retbuf );
 				}
@@ -4612,15 +4285,14 @@ static char *CG_LoadHUDFile( char *path )
 			retuse++;
 			retbuf[retuse] = '\0';
 		}
+
 		// Detect "end-of-file" of included files and go down 1 level.
-		if( ( rec_lvl <= rec_plvl ) && ( !rec_ptr[rec_lvl] ) )
-		{
+		if( ( rec_lvl <= rec_plvl ) && ( !rec_ptr[rec_lvl] ) ) {
 			rec_plvl = rec_lvl;
 			rec_lvl--;
 		}
 	}
-	if( retbuf == NULL )
-	{
+	if( retbuf == NULL ) {
 		CG_Printf( "HUD: ERROR: Could not load file: %s\n", path );
 	}
 	return retbuf;
@@ -4645,10 +4317,10 @@ static char *CG_LoadHUDFile( char *path )
     // load the file
     length = trap_FS_FOpenFile( path, &f, FS_READ );
     if( length == -1 )
-   	return NULL;
+    return NULL;
     if( !length ) {
-   	trap_FS_FCloseFile( f );
-   	return NULL;
+    trap_FS_FCloseFile( f );
+    return NULL;
     }
 
     // alloc a temp buffer according to size
@@ -4666,42 +4338,42 @@ static char *CG_LoadHUDFile( char *path )
     included_length=0;
     while ( parse )
     {
-   	token=COM_ParseExt2( &parse, true, false );
+    token=COM_ParseExt2( &parse, true, false );
 
-   	if( (!Q_stricmp( token, "include" )) && skip_include == false)
-   	{
-   	    toinclude=COM_ParseExt2( &parse, true, false );
-   	    //if( cg_debugHUD && cg_debugHUD->integer )
-   	    //CG_Printf( "included: %s \n", toinclude );
+    if( (!Q_stricmp( token, "include" )) && skip_include == false)
+    {
+        toinclude=COM_ParseExt2( &parse, true, false );
+        //if( cg_debugHUD && cg_debugHUD->integer )
+        //CG_Printf( "included: %s \n", toinclude );
 
-   	    fipath_size = strlen("huds/inc/") + strlen(toinclude) + strlen(".hud") + 1;
-   	    fipath = CG_Malloc( fipath_size );
-   	    Q_snprintfz( fipath, fipath_size, "huds/inc/%s", toinclude );
-   	    COM_DefaultExtension( fipath, ".hud", fipath_size );
-   	    fi_length = trap_FS_FOpenFile( fipath, &fi, FS_READ );
+        fipath_size = strlen("huds/inc/") + strlen(toinclude) + strlen(".hud") + 1;
+        fipath = CG_Malloc( fipath_size );
+        Q_snprintfz( fipath, fipath_size, "huds/inc/%s", toinclude );
+        COM_DefaultExtension( fipath, ".hud", fipath_size );
+        fi_length = trap_FS_FOpenFile( fipath, &fi, FS_READ );
 
-   	    if( fi_length == -1 )
-   	    {
-   		// failed to include file
-   		CG_Printf( "HUD: Failed to include hud subfile: %s \n", fipath );
-   	    }
+        if( fi_length == -1 )
+        {
+        // failed to include file
+        CG_Printf( "HUD: Failed to include hud subfile: %s \n", fipath );
+        }
 
-   	    if( fi_length > 0)
-   	    {
-   		// not an empty file
-   		// we have the size we can close it
-   		included_length+=fi_length;
-   	    }
-   	    trap_FS_FCloseFile( fi );
+        if( fi_length > 0)
+        {
+        // not an empty file
+        // we have the size we can close it
+        included_length+=fi_length;
+        }
+        trap_FS_FCloseFile( fi );
 
-   	    CG_Free( fipath );
-   	    fipath = NULL;
-   	    fipath_size = 0;
-   	} else {
-   	    // not an include line
-   	    // simply count token size for optimized hud layout
-   	    optimized_length+=strlen( token ) + 1; // for spaces
-   	}
+        CG_Free( fipath );
+        fipath = NULL;
+        fipath_size = 0;
+    } else {
+        // not an include line
+        // simply count token size for optimized hud layout
+        optimized_length+=strlen( token ) + 1; // for spaces
+    }
     }
 
     // second pass: we now have the needed size
@@ -4712,75 +4384,75 @@ static char *CG_LoadHUDFile( char *path )
     parse=temp_buffer;
     while ( parse )
     {
-   	token=COM_ParseExt2( &parse, true, false );
+    token=COM_ParseExt2( &parse, true, false );
 
-   	if( (!Q_stricmp( token, "include" )) && skip_include == false)
-   	{
-   	    toinclude=COM_ParseExt2( &parse, true, false );
+    if( (!Q_stricmp( token, "include" )) && skip_include == false)
+    {
+        toinclude=COM_ParseExt2( &parse, true, false );
 
-   	    fipath_size = strlen("huds/inc/") + strlen(toinclude) + strlen(".hud") + 1;
-   	    fipath = CG_Malloc( fipath_size );
-   	    Q_snprintfz( fipath, fipath_size, "huds/inc/%s", toinclude );
-   	    COM_ReplaceExtension( fipath, ".hud", fipath_size );
-   	    fi_length = trap_FS_FOpenFile( fipath, &fi, FS_READ );
+        fipath_size = strlen("huds/inc/") + strlen(toinclude) + strlen(".hud") + 1;
+        fipath = CG_Malloc( fipath_size );
+        Q_snprintfz( fipath, fipath_size, "huds/inc/%s", toinclude );
+        COM_ReplaceExtension( fipath, ".hud", fipath_size );
+        fi_length = trap_FS_FOpenFile( fipath, &fi, FS_READ );
 
-   	    if( fi_length == -1 )
-   	    {
-   		// failed to include file
-   		CG_Printf( "HUD: Failed to include hud subfile: %s \n", path );
-   	    }
+        if( fi_length == -1 )
+        {
+        // failed to include file
+        CG_Printf( "HUD: Failed to include hud subfile: %s \n", path );
+        }
 
-   	    if( fi_length > 0)
-   	    {
-   		char *fi_parse;
-   		char *include_buffer;
+        if( fi_length > 0)
+        {
+        char *fi_parse;
+        char *include_buffer;
 
-   		// not an empty file
-   		if( cg_debugHUD && cg_debugHUD->integer )
-   		    CG_Printf( "HUD: Including sub hud file: %s \n", toinclude );
+        // not an empty file
+        if( cg_debugHUD && cg_debugHUD->integer )
+            CG_Printf( "HUD: Including sub hud file: %s \n", toinclude );
 
-   		// reparse all lines from included file to skip include commands
+        // reparse all lines from included file to skip include commands
 
-   		// alloc a temp buffer according to size
-   		include_buffer = CG_Malloc( fi_length + 1 );
+        // alloc a temp buffer according to size
+        include_buffer = CG_Malloc( fi_length + 1 );
 
-   		// load included layout file in memory
-   		trap_FS_Read( include_buffer, fi_length, fi );
+        // load included layout file in memory
+        trap_FS_Read( include_buffer, fi_length, fi );
 
-   		fi_parse=include_buffer;
-   		while ( fi_parse )
-   		{
-   		    token=COM_ParseExt2( &fi_parse, true, false );
+        fi_parse=include_buffer;
+        while ( fi_parse )
+        {
+            token=COM_ParseExt2( &fi_parse, true, false );
 
-   		    if( !Q_stricmp( token, "include" ) )
-   		    {
-   			// skip recursive include
-   			toinclude=COM_ParseExt2( &fi_parse, true, false );
-   			CG_Printf( "HUD: No recursive include allowed: huds/inc/%s \n", toinclude );
-   		    }
-   		    else
-   		    {
-   			// normal token
-   			strcat( opt_buffer, token );
-   			strcat( opt_buffer, " ");
-   		    }
-   		}
+            if( !Q_stricmp( token, "include" ) )
+            {
+            // skip recursive include
+            toinclude=COM_ParseExt2( &fi_parse, true, false );
+            CG_Printf( "HUD: No recursive include allowed: huds/inc/%s \n", toinclude );
+            }
+            else
+            {
+            // normal token
+            strcat( opt_buffer, token );
+            strcat( opt_buffer, " ");
+            }
+        }
 
-   		// release memory
-   		CG_Free( include_buffer );
-   	    }
+        // release memory
+        CG_Free( include_buffer );
+        }
 
-   	    // close included file
-   	    trap_FS_FCloseFile( fi );
+        // close included file
+        trap_FS_FCloseFile( fi );
 
-   	    CG_Free( fipath );
-   	    fipath = NULL;
-   	    fipath_size = 0;
-   	} else {
-   	    // normal token
-   	    strcat( opt_buffer, token );
-   	    strcat( opt_buffer, " ");
-   	}
+        CG_Free( fipath );
+        fipath = NULL;
+        fipath_size = 0;
+    } else {
+        // normal token
+        strcat( opt_buffer, token );
+        strcat( opt_buffer, " ");
+    }
     }
 
     // free temp buffer
@@ -4793,8 +4465,7 @@ static char *CG_LoadHUDFile( char *path )
 /*
 * CG_LoadStatusBarFile
 */
-static void CG_LoadStatusBarFile( char *path )
-{
+static void CG_LoadStatusBarFile( char *path ) {
 	char *opt;
 	int i;
 
@@ -4803,8 +4474,7 @@ static void CG_LoadStatusBarFile( char *path )
 	//opt = CG_OptimizeStatusBarFile( path, false );
 	opt = CG_LoadHUDFile( path );
 
-	if( opt == NULL )
-	{
+	if( opt == NULL ) {
 		CG_Printf( "HUD: failed to load %s file\n", path );
 		return;
 	}
@@ -4813,6 +4483,7 @@ static void CG_LoadStatusBarFile( char *path )
 
 	// load the new status bar program
 	CG_ParseLayoutScript( opt, cg.statusBar );
+
 	// Free the opt buffer!
 	CG_Free( opt );
 
@@ -4823,8 +4494,7 @@ static void CG_LoadStatusBarFile( char *path )
 	layout_cursor_font_dirty = true;
 	layout_cursor_font_regfunc = trap_SCR_RegisterFont;
 
-	for( i = 0; i < WEAP_TOTAL-1; i++ )
-	{
+	for( i = 0; i < WEAP_TOTAL - 1; i++ ) {
 		customWeaponPics[i] = NULL;
 		customNoGunWeaponPics[i] = NULL;
 	}
@@ -4836,8 +4506,7 @@ static void CG_LoadStatusBarFile( char *path )
 /*
 * CG_LoadStatusBar
 */
-void CG_LoadStatusBar( void )
-{
+void CG_LoadStatusBar( void ) {
 	cvar_t *hud = ISREALSPECTATOR() ? cg_specHUD : cg_clientHUD;
 	const char *default_hud = ( ( trap_IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) ? "default_touch" : "default" );
 	size_t filename_size;
@@ -4850,25 +4519,23 @@ void CG_LoadStatusBar( void )
 	filename = ( char * )alloca( filename_size );
 
 	// always load default first. Custom second if needed
-	if( cg_debugHUD && cg_debugHUD->integer )
+	if( cg_debugHUD && cg_debugHUD->integer ) {
 		CG_Printf( "HUD: Loading default clientHUD huds/%s\n", default_hud );
+	}
 	Q_snprintfz( filename, filename_size, "huds/%s", default_hud );
 	COM_DefaultExtension( filename, ".hud", filename_size );
 	CG_LoadStatusBarFile( filename );
 
-	if( hud->string[0] )
-	{
-		if( Q_stricmp( hud->string, default_hud ) )
-		{
-			if( cg_debugHUD && cg_debugHUD->integer )
+	if( hud->string[0] ) {
+		if( Q_stricmp( hud->string, default_hud ) ) {
+			if( cg_debugHUD && cg_debugHUD->integer ) {
 				CG_Printf( "HUD: Loading custom clientHUD huds/%s\n", hud->string );
+			}
 			Q_snprintfz( filename, filename_size, "huds/%s", hud->string );
 			COM_DefaultExtension( filename, ".hud", filename_size );
 			CG_LoadStatusBarFile( filename );
 		}
-	}
-	else
-	{
+	} else {
 		trap_Cvar_Set( hud->name, default_hud );
 	}
 }
@@ -4876,19 +4543,19 @@ void CG_LoadStatusBar( void )
 /*
 * CG_GetHUDTouchButtons
 */
-void CG_GetHUDTouchButtons( unsigned int *buttons, int *upmove )
-{
-	if( buttons )
+void CG_GetHUDTouchButtons( int *buttons, int *upmove ) {
+	if( buttons ) {
 		*buttons = cg_hud_touch_buttons;
-	if( upmove )
+	}
+	if( upmove ) {
 		*upmove = cg_hud_touch_upmove;
+	}
 }
 
 /*
 * CG_UpdateHUDPostDraw
 */
-void CG_UpdateHUDPostDraw( void )
-{
+void CG_UpdateHUDPostDraw( void ) {
 	cg_hud_weaponcrosstime -= cg.frameTime;
 	CG_CheckWeaponCross();
 
@@ -4899,17 +4566,16 @@ void CG_UpdateHUDPostDraw( void )
 /*
 * CG_UpdateHUDPostTouch
 */
-void CG_UpdateHUDPostTouch( void )
-{
-	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL )
+void CG_UpdateHUDPostTouch( void ) {
+	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL ) {
 		cg_hud_touch_buttons &= ~BUTTON_ZOOM;
+	}
 }
 
 /*
 * CG_ClearHUDInputState
 */
-void CG_ClearHUDInputState( void )
-{
+void CG_ClearHUDInputState( void ) {
 	CG_CancelTouches();
 
 	cg_hud_touch_zoomSeq = 0;

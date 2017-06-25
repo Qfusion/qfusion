@@ -15,7 +15,8 @@ class CScriptDictionaryInterface;
 struct asstring_s;
 typedef struct asstring_s asstring_t;
 
-namespace ASUI {
+namespace ASUI
+{
 
 // base class for AS
 class ASInterface

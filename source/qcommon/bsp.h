@@ -31,12 +31,11 @@ BSP FORMATS
 
 typedef void ( *modelLoader_t )( void *param0, void *param1, void *param2, void *param3 );
 
-#define BSP_NONE		0
-#define BSP_RAVEN		1
-#define BSP_NOAREAS		2
+#define BSP_NONE        0
+#define BSP_RAVEN       1
+#define BSP_NOAREAS     2
 
-typedef struct
-{
+typedef struct {
 	const char *header;
 	const int *versions;
 	int lightmapWidth;
@@ -45,8 +44,7 @@ typedef struct
 	int entityLumpNum;
 } bspFormatDesc_t;
 
-typedef struct
-{
+typedef struct {
 	const char *header;
 	int headerLen;
 	const bspFormatDesc_t *bspFormats;
@@ -55,8 +53,6 @@ typedef struct
 } modelFormatDescr_t;
 
 extern const bspFormatDesc_t q3BSPFormats[];
-extern const bspFormatDesc_t q2BSPFormats[];
-extern const bspFormatDesc_t q1BSPFormats[];
 
 const bspFormatDesc_t *Q_FindBSPFormat( const bspFormatDesc_t *formats, const char *header, int version );
 const modelFormatDescr_t *Q_FindFormatDescriptor( const modelFormatDescr_t *formats, const uint8_t *buf, const bspFormatDesc_t **bspFormat );

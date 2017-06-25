@@ -23,10 +23,9 @@
 
 #include <SDL.h>
 
-typedef int (* wndproc_t)(void *, int, int, int);
+typedef int (* wndproc_t)( void *, int, int, int );
 
-typedef struct
-{
+typedef struct {
 	char *applicationName;
 	int *applicationIcon;
 

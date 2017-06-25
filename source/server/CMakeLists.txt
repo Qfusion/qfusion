@@ -13,6 +13,7 @@ file(GLOB SERVER_HEADERS
 	"../angelwrap/qas_public.h"
 	"../game/g_public.h"
 	"../irc/irc_interface.h"
+	"../server/*.h"
 )
 
 file(GLOB SERVER_SOURCES

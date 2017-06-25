@@ -46,6 +46,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string.h>
 #endif
 
+#define QAS_SECTIONS_SEPARATOR ';'
+#define QAS_FILE_EXTENSION     ".as"
+
 extern struct mempool_s *angelwrappool;
 
 #define QAS_MemAlloc( pool, size ) trap_MemAlloc( pool, size, __FILE__, __LINE__ )
@@ -57,11 +60,11 @@ extern struct mempool_s *angelwrappool;
 #define QAS_Malloc( size ) QAS_MemAlloc( angelwrappool, size )
 #define QAS_Free( data ) QAS_MemFree( data )
 
-#define QAS_NEW(x)        new(QAS_Malloc(sizeof(x))) (x)
-#define QAS_DELETE(ptr,x) {void *tmp = ptr; (ptr)->~x(); QAS_Free(tmp);}
+#define QAS_NEW( x )        new( QAS_Malloc( sizeof( x ) ) )( x )
+#define QAS_DELETE( ptr,x ) {void *tmp = ptr; ( ptr )->~x(); QAS_Free( tmp );}
 
-#define QAS_NEWARRAY(x,cnt)  (x*)QAS_Malloc(sizeof(x)*cnt)
-#define QAS_DELETEARRAY(ptr) QAS_Free(ptr)
+#define QAS_NEWARRAY( x,cnt )  (x*)QAS_Malloc( sizeof( x ) * cnt )
+#define QAS_DELETEARRAY( ptr ) QAS_Free( ptr )
 
 int QAS_API( void );
 int QAS_Init( void );
@@ -94,5 +97,8 @@ void qasReleaseDictionaryCpp( CScriptDictionaryInterface *dict );
 // any tools
 CScriptAnyInterface *qasCreateAnyCpp( asIScriptEngine *engine );
 void qasReleaseAnyCpp( CScriptAnyInterface *any );
+
+// projects / bundles
+asIScriptModule *qasLoadScriptProject( asIScriptEngine *engine, const char *moduleName, const char *rootDir, const char *dir, const char *filename, const char *ext );
 
 #endif // __QAS_LOCAL_H__

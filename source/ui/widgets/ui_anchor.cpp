@@ -4,24 +4,23 @@
 #include "widgets/ui_widgets.h"
 #include "widgets/ui_idiv.h"
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 using namespace Rocket::Core;
 
 class AnchorWidget : public Element /* , public EventListener */
 {
 public:
-	AnchorWidget( const String &tag ) : Element(tag)
-	{
+	AnchorWidget( const String &tag ) : Element( tag ) {
 	}
 
 	virtual ~AnchorWidget()
 	{}
 
-	static void CacheRead( const char *fileName, void *privatep )
-	{
-		AnchorWidget *element = static_cast<AnchorWidget *> (privatep);
-		String target = element->GetAttribute<String>("target", "");
+	static void CacheRead( const char *fileName, void *privatep ) {
+		AnchorWidget *element = static_cast<AnchorWidget *> ( privatep );
+		String target = element->GetAttribute<String>( "target", "" );
 		InlineDiv *idiv = NULL;
 
 		// allow targeting specific idiv's via the "target" attribute
@@ -32,7 +31,7 @@ public:
 				idiv = ( InlineDiv * )_target;
 			}
 			if( !idiv ) {
-				Com_Printf("AnchorWidget::CacheRead: target idiv '%s' was not found\n", target.CString());
+				Com_Printf( "AnchorWidget::CacheRead: target idiv '%s' was not found\n", target.CString() );
 				return;
 			}
 		} else {
@@ -41,31 +40,28 @@ public:
 
 		if( idiv ) {
 			idiv->ReadFromFile( fileName );
-		}
-		else {
+		} else {
 			ElementDocument *document = element->GetOwnerDocument();
-			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetScriptObject());
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>( document->GetScriptObject() );
 			if( ui_document ) {
 				WSWUI::NavigationStack *stack = ui_document->getStack();
-				if( stack )
+				if( stack ) {
 					stack->pushDocument( fileName );
+				}
 			}
 		}
 
 		element->RemoveReference();
 	}
 
-	virtual void ProcessEvent( Event &event )
-	{
-		if( event == "click" )
-		{
+	virtual void ProcessEvent( Event &event ) {
+		if( event == "click" ) {
 			// TODO: wrap this to UI_Main that will catch errors and the
 			// new rootdocument (along with populating href with correct
 			// path)
-			String href = GetAttribute<String>("href", "");
-			if( href.Empty() )
-			{
-				Com_Printf("AnchorWidget::ProcessEvent: empty href\n");
+			String href = GetAttribute<String>( "href", "" );
+			if( href.Empty() ) {
+				Com_Printf( "AnchorWidget::ProcessEvent: empty href\n" );
 				return;
 			}
 
@@ -75,9 +71,9 @@ public:
 			}
 
 			// check for warsow:// and warsow{protocol}:// href's
-			String 
-				gameProtocol (trap::Cvar_String( "gamename" )),
-				gameProtocolSchema( 32,  "%s%i", trap::Cvar_String( "gamename" ), UI_Main::Get()->getGameProtocol() );
+			String
+				gameProtocol( trap::Cvar_String( "gamename" ) ),
+			gameProtocolSchema( 32,  "%s%i", trap::Cvar_String( "gamename" ), UI_Main::Get()->getGameProtocol() );
 
 			URL url( href );
 			String urlProtocol = url.GetProtocol().ToLower();
@@ -86,40 +82,35 @@ public:
 				// connect to game server
 				trap::Cmd_ExecuteText( EXEC_APPEND, va( "connect \"%s\"\n", href.CString() ) );
 				return;
-			}
-			else if( trap::FS_IsUrl( href.CString() ) ) {
-				String target = GetAttribute<String>("target", "");
+			} else if( trap::FS_IsUrl( href.CString() ) ) {
+				String target = GetAttribute<String>( "target", "" );
 
 				if( target == "_browser" ) {
 					// open the link in OS browser
 					trap::CL_OpenURLInBrowser( href.CString() );
-				}
-				else {
+				} else {
 					AddReference();
 
 					UI_Main::Get()->getStreamCache()->PerformRequest(
 						href.CString(), "GET", NULL,
 						NULL, NULL, &CacheRead, ( void * )this
-					);
+						);
 				}
 				return;
 			}
 
-			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(GetOwnerDocument()->GetScriptObject());
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>( GetOwnerDocument()->GetScriptObject() );
 			if( ui_document ) {
 				ui_document->getStack()->pushDocument( href.CString() );
 			}
-		}
-		else
-		{
+		} else {
 			Element::ProcessEvent( event );
 		}
 	}
 
 private:
 	// returns the parent <idiv> element for anchor, if any
-	Element *GetParentIDiv( void ) const
-	{
+	Element *GetParentIDiv( void ) const {
 		Element *p;
 
 		p = ( Element * )this;
@@ -139,8 +130,7 @@ private:
 
 //==============================================================
 
-ElementInstancer *GetAnchorWidgetInstancer( void )
-{
+ElementInstancer *GetAnchorWidgetInstancer( void ) {
 	return __new__( GenericElementInstancer<AnchorWidget> )();
 }
 

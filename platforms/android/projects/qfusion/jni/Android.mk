@@ -23,7 +23,6 @@ include $(QFUSION_PATH)/third-party/libRocket/Build/android/Core.mk
 include $(QFUSION_PATH)/source/angelwrap/Android.mk
 include $(QFUSION_PATH)/source/cin/Android.mk
 include $(QFUSION_PATH)/source/ftlib/Android.mk
-include $(QFUSION_PATH)/source/irc/Android.mk
 include $(QFUSION_PATH)/source/ref_gl/Android.mk
 include $(QFUSION_PATH)/source/snd_openal/Android.mk
 include $(QFUSION_PATH)/source/snd_qf/Android.mk

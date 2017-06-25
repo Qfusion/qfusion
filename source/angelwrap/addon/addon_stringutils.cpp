@@ -24,94 +24,115 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon_scriptarray.h"
 #include "addon_stringutils.h"
 
-namespace StringUtils {
+namespace StringUtils
+{
 
 // lifted from AngelScript source code
 
-static std::string FormatInt( asINT64 value, const std::string &options, asUINT width )
-{
-	bool leftJustify = options.find("l") != std::string::npos;
-	bool padWithZero = options.find("0") != std::string::npos;
-	bool alwaysSign  = options.find("+") != std::string::npos;
-	bool spaceOnSign = options.find(" ") != std::string::npos;
-	bool hexSmall    = options.find("h") != std::string::npos;
-	bool hexLarge    = options.find("H") != std::string::npos;
+static std::string FormatInt( asINT64 value, const std::string &options, asUINT width ) {
+	bool leftJustify = options.find( "l" ) != std::string::npos;
+	bool padWithZero = options.find( "0" ) != std::string::npos;
+	bool alwaysSign  = options.find( "+" ) != std::string::npos;
+	bool spaceOnSign = options.find( " " ) != std::string::npos;
+	bool hexSmall    = options.find( "h" ) != std::string::npos;
+	bool hexLarge    = options.find( "H" ) != std::string::npos;
 
 	std::string fmt = "%";
-	if( leftJustify ) fmt += "-";
-	if( alwaysSign )  fmt += "+";
-	if( spaceOnSign ) fmt += " ";
-	if( padWithZero ) fmt += "0";
+	if( leftJustify ) {
+		fmt += "-";
+	}
+	if( alwaysSign ) {
+		fmt += "+";
+	}
+	if( spaceOnSign ) {
+		fmt += " ";
+	}
+	if( padWithZero ) {
+		fmt += "0";
+	}
 
 	fmt += "*";
 
-	if( hexSmall ) fmt += "x";
-	else if( hexLarge ) fmt += "X";
-	else fmt += "d";
+	if( hexSmall ) {
+		fmt += "x";
+	} else if( hexLarge ) {
+		fmt += "X";
+	} else {
+		fmt += "d";
+	}
 
 	std::string buf;
-	buf.resize(width+20);
+	buf.resize( width + 20 );
 
-	Q_snprintfz(&buf[0], buf.size(), fmt.c_str(), width, value);
-	buf.resize(strlen(&buf[0]));
+	Q_snprintfz( &buf[0], buf.size(), fmt.c_str(), width, value );
+	buf.resize( strlen( &buf[0] ) );
 
 	return buf;
 }
 
-static std::string FormatFloat( double value, const std::string &options, size_t width, size_t precision )
-{
-	bool leftJustify = options.find("l") != std::string::npos;
-	bool padWithZero = options.find("0") != std::string::npos;
-	bool alwaysSign  = options.find("+") != std::string::npos;
-	bool spaceOnSign = options.find(" ") != std::string::npos;
-	bool expSmall    = options.find("e") != std::string::npos;
-	bool expLarge    = options.find("E") != std::string::npos;
+static std::string FormatFloat( double value, const std::string &options, size_t width, size_t precision ) {
+	bool leftJustify = options.find( "l" ) != std::string::npos;
+	bool padWithZero = options.find( "0" ) != std::string::npos;
+	bool alwaysSign  = options.find( "+" ) != std::string::npos;
+	bool spaceOnSign = options.find( " " ) != std::string::npos;
+	bool expSmall    = options.find( "e" ) != std::string::npos;
+	bool expLarge    = options.find( "E" ) != std::string::npos;
 
 	std::string fmt = "%";
-	if( leftJustify ) fmt += "-";
-	if( alwaysSign ) fmt += "+";
-	if( spaceOnSign ) fmt += " ";
-	if( padWithZero ) fmt += "0";
+	if( leftJustify ) {
+		fmt += "-";
+	}
+	if( alwaysSign ) {
+		fmt += "+";
+	}
+	if( spaceOnSign ) {
+		fmt += " ";
+	}
+	if( padWithZero ) {
+		fmt += "0";
+	}
 
 	fmt += "*.*";
 
-	if( expSmall ) fmt += "e";
-	else if( expLarge ) fmt += "E";
-	else fmt += "f";
+	if( expSmall ) {
+		fmt += "e";
+	} else if( expLarge ) {
+		fmt += "E";
+	} else {
+		fmt += "f";
+	}
 
 	std::string buf;
-	buf.resize(width+precision+50);
+	buf.resize( width + precision + 50 );
 
-	Q_snprintfz(&buf[0], buf.size(), fmt.c_str(), width, precision, value);
-	buf.resize(strlen(&buf[0]));
+	Q_snprintfz( &buf[0], buf.size(), fmt.c_str(), width, precision, value );
+	buf.resize( strlen( &buf[0] ) );
 
 	return buf;
 }
 
-static asstring_t *QAS_FormatInt( asINT64 value, const asstring_t &options, asUINT width )
-{
+static asstring_t *QAS_FormatInt( asINT64 value, const asstring_t &options, asUINT width ) {
 	std::string s( options.buffer );
 	std::string ret = FormatInt( value, s, width );
 	return objectString_FactoryBuffer( ret.c_str(), ret.length() );
 }
 
-static asstring_t *QAS_FormatFloat( double value, const asstring_t &options, asUINT width, asUINT precision )
-{
+static asstring_t *QAS_FormatFloat( double value, const asstring_t &options, asUINT width, asUINT precision ) {
 	std::string s( options.buffer );
 	std::string ret = FormatFloat( value, s, width, precision );
 	return objectString_FactoryBuffer( ret.c_str(), ret.length() );
 }
 
-static asstring_t *QAS_FormatStringHelper( const char *format, ... )
-{
+static asstring_t *QAS_FormatStringHelper( const char *format, ... ) {
 	char buf[256];
-    va_list args;
-	const int buf_size = int(sizeof( buf ));
+	va_list args;
+	const int buf_size = int(sizeof( buf ) );
 
-    va_start( args, format );
+	va_start( args, format );
 
 	int ret = Q_vsnprintfz( buf, buf_size, format, args );
 	if( ret < 0 ) {
+		va_end( args );
 		return objectString_FactoryBuffer( "", 0 );
 	}
 
@@ -122,62 +143,55 @@ static asstring_t *QAS_FormatStringHelper( const char *format, ... )
 
 	asstring_t *formatted = objectString_FactoryBuffer( NULL, ret );
 	Q_vsnprintfz( formatted->buffer, formatted->size, format, args );
+	va_end( args );
+
 	return formatted;
 }
 
-static asstring_t *QAS_FormatString1( const asstring_t &format, const asstring_t &arg1 )
-{
+static asstring_t *QAS_FormatString1( const asstring_t &format, const asstring_t &arg1 ) {
 	return QAS_FormatStringHelper( format.buffer, arg1.buffer );
 }
 
-static asstring_t *QAS_FormatString2( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2 )
-{
+static asstring_t *QAS_FormatString2( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2 ) {
 	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer );
 }
 
-static asstring_t *QAS_FormatString3( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3 )
-{
+static asstring_t *QAS_FormatString3( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3 ) {
 	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer );
 }
 
-static asstring_t *QAS_FormatString4( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
-	const asstring_t &arg4 )
-{
+static asstring_t *QAS_FormatString4( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3,
+									  const asstring_t &arg4 ) {
 	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer );
 }
 
-static asstring_t *QAS_FormatString5( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
-	const asstring_t &arg4, const asstring_t &arg5 )
-{
+static asstring_t *QAS_FormatString5( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3,
+									  const asstring_t &arg4, const asstring_t &arg5 ) {
 	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer, arg5.buffer );
 }
 
-static asstring_t *QAS_FormatString6( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
-	const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6 )
-{
+static asstring_t *QAS_FormatString6( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3,
+									  const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6 ) {
 	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer, arg5.buffer, arg6.buffer );
 }
 
-static asstring_t *QAS_FormatString7( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
-	const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6, const asstring_t &arg7 )
-{
+static asstring_t *QAS_FormatString7( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3,
+									  const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6, const asstring_t &arg7 ) {
 	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer, arg5.buffer, arg6.buffer, arg7.buffer );
 }
 
-static asstring_t *QAS_FormatString8( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
-	const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6, const asstring_t &arg7, const asstring_t &arg8 )
-{
+static asstring_t *QAS_FormatString8( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3,
+									  const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6, const asstring_t &arg7, const asstring_t &arg8 ) {
 	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer, arg5.buffer, arg6.buffer, arg7.buffer, arg8.buffer );
 }
 
-static CScriptArrayInterface *QAS_SplitString( const asstring_t &str, const asstring_t &delim )
-{
+static CScriptArrayInterface *QAS_SplitString( const asstring_t &str, const asstring_t &delim ) {
 	asIScriptContext *ctx = asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
 
-	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<String @>"));
+	asIObjectType *ot = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "array<String @>" ) );
 
-	CScriptArrayInterface *arr = QAS_NEW(CScriptArray)(0, ot);
+	CScriptArrayInterface *arr = QAS_NEW( CScriptArray )( 0, ot );
 	const char *pdelim = delim.buffer;
 	const size_t delim_len = strlen( pdelim );
 
@@ -193,7 +207,7 @@ static CScriptArrayInterface *QAS_SplitString( const asstring_t &str, const asst
 		}
 
 		arr->Resize( count + 1 );
-		*((asstring_t **)arr->At(count)) = objectString_FactoryBuffer( prev_pbuf, pbuf - prev_pbuf );
+		*( (asstring_t **)arr->At( count ) ) = objectString_FactoryBuffer( prev_pbuf, pbuf - prev_pbuf );
 
 		prev_pbuf = pbuf + delim_len;
 		count++;
@@ -201,14 +215,13 @@ static CScriptArrayInterface *QAS_SplitString( const asstring_t &str, const asst
 
 	// append the remaining part
 	arr->Resize( count + 1 );
-	*((asstring_t **)arr->At(count)) = objectString_FactoryBuffer( prev_pbuf, strlen( prev_pbuf ) );
+	*( (asstring_t **)arr->At( count ) ) = objectString_FactoryBuffer( prev_pbuf, strlen( prev_pbuf ) );
 
 	return arr;
 }
 
-static asstring_t *QAS_JoinString( const CScriptArrayInterface &arr, const asstring_t &delim )
-{
-	std::string ret("");
+static asstring_t *QAS_JoinString( const CScriptArrayInterface &arr, const asstring_t &delim ) {
+	std::string ret( "" );
 
 	unsigned int arr_size = arr.GetSize();
 	if( arr_size > 0 ) {
@@ -216,32 +229,29 @@ static asstring_t *QAS_JoinString( const CScriptArrayInterface &arr, const asstr
 		asstring_t *str;
 
 		for( i = 0; i < arr_size - 1; i++ ) {
-			str = *((asstring_t **)arr.At(i));
+			str = *( (asstring_t **)arr.At( i ) );
 
 			ret += str->buffer;
 			ret += delim.buffer;
 		}
 
 		// append the last element
-		str = *((asstring_t **)arr.At(i));
+		str = *( (asstring_t **)arr.At( i ) );
 		ret += str->buffer;
 	}
 
 	return objectString_FactoryBuffer( ret.c_str(), ret.length() );
 }
 
-static unsigned int QAS_Strtol( const asstring_t &str, unsigned int base )
-{
+static unsigned int QAS_Strtol( const asstring_t &str, unsigned int base ) {
 	return strtol( str.buffer, NULL, base );
 }
 
-static asstring_t *QAS_StringFromCharCode( unsigned int charCode )
-{
+static asstring_t *QAS_StringFromCharCode( unsigned int charCode ) {
 	return objectString_FactoryBuffer( Q_WCharToUtf8Char( charCode ), Q_WCharUtf8Length( charCode ) );
 }
 
-static asstring_t *QAS_StringFromCharCodes( const CScriptArrayInterface &arr )
-{
+static asstring_t *QAS_StringFromCharCodes( const CScriptArrayInterface &arr ) {
 	unsigned int arr_size = arr.GetSize();
 	unsigned int i;
 
@@ -274,12 +284,10 @@ static asstring_t *QAS_StringFromCharCodes( const CScriptArrayInterface &arr )
 
 using namespace StringUtils;
 
-void PreRegisterStringUtilsAddon( asIScriptEngine *engine )
-{
+void PreRegisterStringUtilsAddon( asIScriptEngine *engine ) {
 }
 
-void RegisterStringUtilsAddon( asIScriptEngine *engine )
-{
+void RegisterStringUtilsAddon( asIScriptEngine *engine ) {
 	int r;
 
 	r = engine->SetDefaultNamespace( "StringUtils" ); assert( r >= 0 );
@@ -290,27 +298,27 @@ void RegisterStringUtilsAddon( asIScriptEngine *engine )
 	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1)", asFUNCTION( QAS_FormatString1 ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2)", asFUNCTION( QAS_FormatString2 ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
-		"const String &in arg3)", asFUNCTION( QAS_FormatString3 ), asCALL_CDECL ); assert( r >= 0 );
+										"const String &in arg3)", asFUNCTION( QAS_FormatString3 ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
-		"const String &in arg3, const String &in arg4)", asFUNCTION( QAS_FormatString4 ), asCALL_CDECL ); assert( r >= 0 );
+										"const String &in arg3, const String &in arg4)", asFUNCTION( QAS_FormatString4 ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
-		"const String &in arg3, const String &in arg4, const String &in arg5)", asFUNCTION( QAS_FormatString5 ), asCALL_CDECL ); assert( r >= 0 );
+										"const String &in arg3, const String &in arg4, const String &in arg5)", asFUNCTION( QAS_FormatString5 ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
-		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6)", asFUNCTION( QAS_FormatString6 ), asCALL_CDECL ); assert( r >= 0 );
+										"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6)", asFUNCTION( QAS_FormatString6 ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
-		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7)", asFUNCTION( QAS_FormatString7 ), asCALL_CDECL ); assert( r >= 0 );
+										"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7)", asFUNCTION( QAS_FormatString7 ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
-		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7, const String &in arg8)", asFUNCTION( QAS_FormatString8 ), asCALL_CDECL ); assert( r >= 0 );
-	
+										"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7, const String &in arg8)", asFUNCTION( QAS_FormatString8 ), asCALL_CDECL ); assert( r >= 0 );
+
 	r = engine->RegisterGlobalFunction( "array<String @> @Split(const String &in string, const String &in delimiter)", asFUNCTION( QAS_SplitString ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @Join(array<String @> &in, const String &in delimiter)", asFUNCTION( QAS_JoinString ), asCALL_CDECL ); assert( r >= 0 );
 
 	r = engine->RegisterGlobalFunction( "uint Strtol(const String &in string, uint base)", asFUNCTION( QAS_Strtol ), asCALL_CDECL ); assert( r >= 0 );
-	
+
 	r = engine->RegisterGlobalFunction( "String @FromCharCode(uint charCode)", asFUNCTION( QAS_StringFromCharCode ), asCALL_CDECL ); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @FromCharCode(array<uint> &in charCodes)", asFUNCTION( QAS_StringFromCharCodes ), asCALL_CDECL ); assert( r >= 0 );
 
 	r = engine->SetDefaultNamespace( "" ); assert( r >= 0 );
 
-	(void)sizeof(r); // hush the compiler
+	(void)sizeof( r ); // hush the compiler
 }

@@ -22,8 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __ADDON_CVAR_H__
 #define __ADDON_CVAR_H__
 
-typedef struct  
-{
+typedef struct {
 	cvar_t *cvar;
 } ascvar_t;
 

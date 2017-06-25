@@ -23,92 +23,90 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/sys_library.h"
 
 server_constant_t svc;              // constant server info (trully persistant since sv_init)
-server_static_t	svs;                // persistant server info
+server_static_t svs;                // persistant server info
 server_t sv;                 // local server
 
 /*
 * SV_FindIndex
 */
-static int SV_FindIndex( const char *name, int start, int max, bool create )
-{
+static int SV_FindIndex( const char *name, int start, int max, bool create ) {
 	int i;
 
-	if( !name || !name[0] )
+	if( !name || !name[0] ) {
 		return 0;
-
-	if( strlen( name ) >= MAX_CONFIGSTRING_CHARS )
-		Com_Error( ERR_DROP, "Configstring too long: %s\n", name );
-
-	for( i = 1; i < max && sv.configstrings[start+i][0]; i++ )
-	{
-		if( !strncmp( sv.configstrings[start+i], name, sizeof( sv.configstrings[start+i] ) ) )
-			return i;
 	}
 
-	if( !create )
+	if( strlen( name ) >= MAX_CONFIGSTRING_CHARS ) {
+		Com_Error( ERR_DROP, "Configstring too long: %s\n", name );
+	}
+
+	for( i = 1; i < max && sv.configstrings[start + i][0]; i++ ) {
+		if( !strncmp( sv.configstrings[start + i], name, sizeof( sv.configstrings[start + i] ) ) ) {
+			return i;
+		}
+	}
+
+	if( !create ) {
 		return 0;
+	}
 
-	if( i == max )
+	if( i == max ) {
 		Com_Error( ERR_DROP, "*Index: overflow" );
+	}
 
-	Q_strncpyz( sv.configstrings[start+i], name, sizeof( sv.configstrings[i] ) );
+	Q_strncpyz( sv.configstrings[start + i], name, sizeof( sv.configstrings[i] ) );
 
 	// send the update to everyone
-	if( sv.state != ss_loading )
-		SV_SendServerCommand( NULL, "cs %i \"%s\"", start+i, name );
+	if( sv.state != ss_loading ) {
+		SV_SendServerCommand( NULL, "cs %i \"%s\"", start + i, name );
+	}
 
 	return i;
 }
 
 
-int SV_ModelIndex( const char *name )
-{
+int SV_ModelIndex( const char *name ) {
 	return SV_FindIndex( name, CS_MODELS, MAX_MODELS, true );
 }
 
-int SV_SoundIndex( const char *name )
-{
+int SV_SoundIndex( const char *name ) {
 	return SV_FindIndex( name, CS_SOUNDS, MAX_SOUNDS, true );
 }
 
-int SV_ImageIndex( const char *name )
-{
+int SV_ImageIndex( const char *name ) {
 	return SV_FindIndex( name, CS_IMAGES, MAX_IMAGES, true );
 }
 
-int SV_SkinIndex( const char *name )
-{
+int SV_SkinIndex( const char *name ) {
 	return SV_FindIndex( name, CS_SKINFILES, MAX_SKINFILES, true );
 }
 
 /*
 * SV_CreateBaseline
-* 
+*
 * Entity baselines are used to compress the update messages
 * to the clients -- only the fields that differ from the
 * baseline will be transmitted
 */
-static void SV_CreateBaseline( void )
-{
-	edict_t	*svent;
+static void SV_CreateBaseline( void ) {
+	edict_t *svent;
 	int entnum;
 
-	for( entnum = 1; entnum < sv.gi.num_edicts; entnum++ )
-	{
+	for( entnum = 1; entnum < sv.gi.num_edicts; entnum++ ) {
 		svent = EDICT_NUM( entnum );
 
-		if( !svent->r.inuse )
+		if( !svent->r.inuse ) {
 			continue;
-		if( !svent->s.modelindex && !svent->s.sound && !svent->s.effects )
+		}
+		if( !svent->s.modelindex && !svent->s.sound && !svent->s.effects ) {
 			continue;
+		}
 
 		svent->s.number = entnum;
 
 		//
 		// take current state as baseline
 		//
-		if( !( svent->r.svflags & SVF_TRANSMITORIGIN2 ) )
-			VectorCopy( svent->s.origin, svent->s.origin2 );
 		sv.baselines[entnum] = svent->s;
 	}
 }
@@ -116,14 +114,12 @@ static void SV_CreateBaseline( void )
 /*
 * SV_PureList_f
 */
-void SV_PureList_f( void )
-{
+void SV_PureList_f( void ) {
 	purelist_t *purefile;
 
 	Com_Printf( "Pure files:\n" );
 	purefile = svs.purelist;
-	while( purefile )
-	{
+	while( purefile ) {
 		Com_Printf( "- %s (%u)\n", purefile->filename, purefile->checksum );
 		purefile = purefile->next;
 	}
@@ -132,26 +128,25 @@ void SV_PureList_f( void )
 /*
 * SV_AddPurePak
 */
-static void SV_AddPurePak( const char *pakname )
-{
-	if( !Com_FindPakInPureList( svs.purelist, pakname ) )
+static void SV_AddPurePak( const char *pakname ) {
+	if( !Com_FindPakInPureList( svs.purelist, pakname ) ) {
 		Com_AddPakToPureList( &svs.purelist, pakname, FS_ChecksumBaseFile( pakname, false ), NULL );
+	}
 }
 
 /*
 * SV_AddPureFile
 */
-void SV_AddPureFile( const char *filename )
-{
+void SV_AddPureFile( const char *filename ) {
 	const char *pakname;
 
-	if( !filename || !strlen( filename ) )
+	if( !filename || !strlen( filename ) ) {
 		return;
+	}
 
 	pakname = FS_PakNameForFile( filename );
 
-	if( pakname )
-	{
+	if( pakname ) {
 		Com_DPrintf( "Pure file: %s (%s)\n", pakname, filename );
 		SV_AddPurePak( pakname );
 	}
@@ -160,30 +155,24 @@ void SV_AddPureFile( const char *filename )
 /*
 * SV_ReloadPureList
 */
-static void SV_ReloadPureList( void )
-{
+static void SV_ReloadPureList( void ) {
 	char **paks;
 	int i, numpaks;
 
 	Com_FreePureList( &svs.purelist );
 
 	// game modules
-	if( sv_pure_forcemodulepk3->string[0] )
-	{
+	if( sv_pure_forcemodulepk3->string[0] ) {
 		if( Q_strnicmp( COM_FileBase( sv_pure_forcemodulepk3->string ), "modules", strlen( "modules" ) ) ||
-			!FS_IsPakValid( sv_pure_forcemodulepk3->string, NULL ) )
-		{
+			!FS_IsPakValid( sv_pure_forcemodulepk3->string, NULL ) ) {
 			Com_Printf( "Warning: Invalid value for sv_pure_forcemodulepk3, disabling\n" );
 			Cvar_ForceSet( "sv_pure_forcemodulepk3", "" );
-		}
-		else
-		{
+		} else {
 			SV_AddPurePak( sv_pure_forcemodulepk3->string );
 		}
 	}
 
-	if( !sv_pure_forcemodulepk3->string[0] )
-	{
+	if( !sv_pure_forcemodulepk3->string[0] ) {
 		char *libname;
 		int libname_size;
 
@@ -191,17 +180,13 @@ static void SV_ReloadPureList( void )
 		libname = Mem_TempMalloc( libname_size );
 		Q_snprintfz( libname, libname_size, LIB_PREFIX "game_" ARCH LIB_SUFFIX );
 
-		if( !FS_PakNameForFile( libname ) )
-		{
-			if( sv_pure->integer )
-			{
+		if( !FS_PakNameForFile( libname ) ) {
+			if( sv_pure->integer ) {
 				Com_Printf( "Warning: Game module not in pk3, disabling pure mode\n" );
 				Com_Printf( "sv_pure_forcemodulepk3 can be used to force the pure system to use a different module\n" );
 				Cvar_ForceSet( "sv_pure", "0" );
 			}
-		}
-		else
-		{
+		} else {
 			SV_AddPureFile( libname );
 		}
 
@@ -212,10 +197,8 @@ static void SV_ReloadPureList( void )
 	// *pure.(pk3|pak)
 	paks = NULL;
 	numpaks = FS_GetExplicitPurePakList( &paks );
-	if( numpaks )
-	{
-		for( i = 0; i < numpaks; i++ )
-		{
+	if( numpaks ) {
+		for( i = 0; i < numpaks; i++ ) {
 			SV_AddPurePak( paks[i] );
 			Mem_ZoneFree( paks[i] );
 		}
@@ -226,8 +209,7 @@ static void SV_ReloadPureList( void )
 /*
 * SV_SetServerConfigStrings
 */
-void SV_SetServerConfigStrings( void )
-{
+void SV_SetServerConfigStrings( void ) {
 	Q_snprintfz( sv.configstrings[CS_MAXCLIENTS], sizeof( sv.configstrings[0] ), "%i", sv_maxclients->integer );
 	Q_strncpyz( sv.configstrings[CS_TVSERVER], "0", sizeof( sv.configstrings[0] ) );
 	Q_strncpyz( sv.configstrings[CS_HOSTNAME], Cvar_String( "sv_hostname" ), sizeof( sv.configstrings[0] ) );
@@ -238,13 +220,13 @@ void SV_SetServerConfigStrings( void )
 * SV_SpawnServer
 * Change the server to a new map, taking all connected clients along with it.
 */
-static void SV_SpawnServer( const char *server, bool devmap )
-{
+static void SV_SpawnServer( const char *server, bool devmap ) {
 	unsigned checksum;
 	int i;
 
-	if( devmap )
+	if( devmap ) {
 		Cvar_ForceSet( "sv_cheats", "1" );
+	}
 	Cvar_FixCheatVars();
 
 	Com_Printf( "------- Server Initialization -------\n" );
@@ -313,10 +295,9 @@ static void SV_SpawnServer( const char *server, bool devmap )
 * SV_InitGame
 * A brand new game has been started
 */
-void SV_InitGame( void )
-{
+void SV_InitGame( void ) {
 	int i;
-	edict_t	*ent;
+	edict_t *ent;
 	netadr_t address, ipv6_address;
 	bool socket_opened = false;
 
@@ -324,34 +305,34 @@ void SV_InitGame( void )
 	CL_Disconnect( NULL );
 	SCR_BeginLoadingPlaque();
 
-	if( svs.initialized )
-	{
+	if( svs.initialized ) {
 		// cause any connected clients to reconnect
 		SV_ShutdownGame( "Server restarted", true );
 
 		// SV_ShutdownGame will also call Cvar_GetLatchedVars
-	}
-	else
-	{
+	} else {
 		// get any latched variable changes (sv_maxclients, etc)
 		Cvar_GetLatchedVars( CVAR_LATCH );
 	}
 
 	svs.initialized = true;
 
-	if( sv_skilllevel->integer > 2 )
+	if( sv_skilllevel->integer > 2 ) {
 		Cvar_ForceSet( "sv_skilllevel", "2" );
-	if( sv_skilllevel->integer < 0 )
+	}
+	if( sv_skilllevel->integer < 0 ) {
 		Cvar_ForceSet( "sv_skilllevel", "0" );
+	}
 
 	// init clients
-	if( sv_maxclients->integer < 1 )
+	if( sv_maxclients->integer < 1 ) {
 		Cvar_FullSet( "sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, true );
-	else if( sv_maxclients->integer > MAX_CLIENTS )
+	} else if( sv_maxclients->integer > MAX_CLIENTS ) {
 		Cvar_FullSet( "sv_maxclients", va( "%i", MAX_CLIENTS ), CVAR_SERVERINFO | CVAR_LATCH, true );
+	}
 
 	svs.spawncount = rand();
-	svs.clients = Mem_Alloc( sv_mempool, sizeof( client_t )*sv_maxclients->integer );
+	svs.clients = Mem_Alloc( sv_mempool, sizeof( client_t ) * sv_maxclients->integer );
 	svs.client_entities.num_entities = sv_maxclients->integer * UPDATE_BACKUP * MAX_SNAP_ENTITIES;
 	svs.client_entities.entities = Mem_Alloc( sv_mempool, sizeof( entity_state_t ) * svs.client_entities.num_entities );
 
@@ -360,77 +341,63 @@ void SV_InitGame( void )
 	address.type = NA_NOTRANSMIT;
 	ipv6_address.type = NA_NOTRANSMIT;
 
-	if( !dedicated->integer )
-	{
+	if( !dedicated->integer ) {
 		NET_InitAddress( &address, NA_LOOPBACK );
-		if( !NET_OpenSocket( &svs.socket_loopback, SOCKET_LOOPBACK, &address, true ) )
+		if( !NET_OpenSocket( &svs.socket_loopback, SOCKET_LOOPBACK, &address, true ) ) {
 			Com_Error( ERR_FATAL, "Couldn't open loopback socket: %s\n", NET_ErrorString() );
+		}
 	}
 
-	if( dedicated->integer || sv_maxclients->integer > 1 )
-	{
+	if( dedicated->integer || sv_maxclients->integer > 1 ) {
 		// IPv4
 		NET_StringToAddress( sv_ip->string, &address );
 		NET_SetAddressPort( &address, sv_port->integer );
-		if( !NET_OpenSocket( &svs.socket_udp, SOCKET_UDP, &address, true ) )
+		if( !NET_OpenSocket( &svs.socket_udp, SOCKET_UDP, &address, true ) ) {
 			Com_Printf( "Error: Couldn't open UDP socket: %s\n", NET_ErrorString() );
-		else
+		} else {
 			socket_opened = true;
+		}
 
 		// IPv6
 		NET_StringToAddress( sv_ip6->string, &ipv6_address );
-		if( ipv6_address.type == NA_IP6 )
-		{
+		if( ipv6_address.type == NA_IP6 ) {
 			NET_SetAddressPort( &ipv6_address, sv_port6->integer );
-			if( !NET_OpenSocket( &svs.socket_udp6, SOCKET_UDP, &ipv6_address, true ) )
+			if( !NET_OpenSocket( &svs.socket_udp6, SOCKET_UDP, &ipv6_address, true ) ) {
 				Com_Printf( "Error: Couldn't open UDP6 socket: %s\n", NET_ErrorString() );
-			else
+			} else {
 				socket_opened = true;
-		}
-		else
+			}
+		} else {
 			Com_Printf( "Error: invalid IPv6 address: %s\n", sv_ip6->string );
+		}
 	}
 
 #ifdef TCP_ALLOW_CONNECT
-	if( sv_tcp->integer && ( dedicated->integer || sv_maxclients->integer > 1 ) )
-	{
+	if( sv_tcp->integer && ( dedicated->integer || sv_maxclients->integer > 1 ) ) {
 		bool err = true;
 
-		if( !NET_OpenSocket( &svs.socket_tcp, SOCKET_TCP, &address, true ) )
-		{
+		if( !NET_OpenSocket( &svs.socket_tcp, SOCKET_TCP, &address, true ) ) {
 			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
-		}
-		else
-		{
+		} else {
 			NET_SetSocketNoDelay( &svs.socket_tcp, 1 );
-			if( !NET_Listen( &svs.socket_tcp ) )
-			{
+			if( !NET_Listen( &svs.socket_tcp ) ) {
 				Com_Printf( "Error: Couldn't listen to TCP socket: %s\n", NET_ErrorString() );
 				NET_CloseSocket( &svs.socket_tcp );
-			}
-			else
-			{
+			} else {
 				err = false;
 				socket_opened = true;
 			}
 		}
 
-		if( ipv6_address.type == NA_IP6 )
-		{
-			if( !NET_OpenSocket( &svs.socket_tcp6, SOCKET_TCP, &ipv6_address, true ) )
-			{
+		if( ipv6_address.type == NA_IP6 ) {
+			if( !NET_OpenSocket( &svs.socket_tcp6, SOCKET_TCP, &ipv6_address, true ) ) {
 				Com_Printf( "Error: Couldn't open TCP6 socket: %s\n", NET_ErrorString() );
-			}
-			else
-			{
+			} else {
 				NET_SetSocketNoDelay( &svs.socket_tcp6, 1 );
-				if( !NET_Listen( &svs.socket_tcp6 ) )
-				{
+				if( !NET_Listen( &svs.socket_tcp6 ) ) {
 					Com_Printf( "Error: Couldn't listen to TCP6 socket: %s\n", NET_ErrorString() );
 					NET_CloseSocket( &svs.socket_tcp6 );
-				}
-				else
-				{
+				} else {
 					err = false;
 					socket_opened = true;
 				}
@@ -443,18 +410,18 @@ void SV_InitGame( void )
 	}
 #endif
 
-	if( dedicated->integer && !socket_opened )
+	if( dedicated->integer && !socket_opened ) {
 		Com_Error( ERR_FATAL, "Couldn't open any socket\n" );
+	}
 
 	// init mm
 	// SV_MM_Init();
 
 	// init game
 	SV_InitGameProgs();
-	for( i = 0; i < sv_maxclients->integer; i++ )
-	{
-		ent = EDICT_NUM( i+1 );
-		ent->s.number = i+1;
+	for( i = 0; i < sv_maxclients->integer; i++ ) {
+		ent = EDICT_NUM( i + 1 );
+		ent->s.number = i + 1;
 		svs.clients[i].edict = ent;
 	}
 
@@ -470,27 +437,26 @@ void SV_InitGame( void )
 
 /*
 * SV_FinalMessage
-* 
+*
 * Used by SV_ShutdownGame to send a final message to all
 * connected clients before the server goes down.  The messages are sent immediately,
 * not just stuck on the outgoing message list, because the server is going
 * to totally exit after returning from this function.
 */
-static void SV_FinalMessage( const char *message, bool reconnect )
-{
+static void SV_FinalMessage( const char *message, bool reconnect ) {
 	int i, j;
 	client_t *cl;
 
-	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
-	{
-		if( cl->edict && ( cl->edict->r.svflags & SVF_FAKECLIENT ) )
+	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ ) {
+		if( cl->edict && ( cl->edict->r.svflags & SVF_FAKECLIENT ) ) {
 			continue;
-		if( cl->state >= CS_CONNECTING )
-		{
-			if( reconnect )
+		}
+		if( cl->state >= CS_CONNECTING ) {
+			if( reconnect ) {
 				SV_SendServerCommand( cl, "forcereconnect \"%s\"", message );
-			else
+			} else {
 				SV_SendServerCommand( cl, "disconnect %i \"%s\"", DROP_TYPE_GENERAL, message );
+			}
 
 			SV_InitClientMessage( cl, &tmpMessage, NULL, 0 );
 			SV_AddReliableCommandsToMessage( cl, &tmpMessage );
@@ -504,19 +470,21 @@ static void SV_FinalMessage( const char *message, bool reconnect )
 
 /*
 * SV_ShutdownGame
-* 
+*
 * Called when each game quits
 */
-void SV_ShutdownGame( const char *finalmsg, bool reconnect )
-{
-	if( !svs.initialized )
+void SV_ShutdownGame( const char *finalmsg, bool reconnect ) {
+	if( !svs.initialized ) {
 		return;
+	}
 
-	if( svs.demo.file )
+	if( svs.demo.file ) {
 		SV_Demo_Stop_f();
+	}
 
-	if( svs.clients )
+	if( svs.clients ) {
 		SV_FinalMessage( finalmsg, reconnect );
+	}
 
 	SV_ShutdownGameProgs();
 
@@ -537,20 +505,17 @@ void SV_ShutdownGame( const char *finalmsg, bool reconnect )
 	// get any latched variable changes (sv_maxclients, etc)
 	Cvar_GetLatchedVars( CVAR_LATCH );
 
-	if( svs.clients )
-	{
+	if( svs.clients ) {
 		Mem_Free( svs.clients );
 		svs.clients = NULL;
 	}
 
-	if( svs.client_entities.entities )
-	{
+	if( svs.client_entities.entities ) {
 		Mem_Free( svs.client_entities.entities );
 		memset( &svs.client_entities, 0, sizeof( svs.client_entities ) );
 	}
 
-	if( svs.cms )
-	{
+	if( svs.cms ) {
 		// CM_ReleaseReference will take care of freeing up the memory
 		// if there are no other modules referencing the collision model
 		CM_ReleaseReference( svs.cms );
@@ -564,17 +529,16 @@ void SV_ShutdownGame( const char *finalmsg, bool reconnect )
 
 	Com_FreePureList( &svs.purelist );
 
-	if( svs.motd )
-	{
+	if( svs.motd ) {
 		Mem_Free( svs.motd );
 		svs.motd = NULL;
 	}
 
-	if( sv_mempool )
+	if( sv_mempool ) {
 		Mem_EmptyPool( sv_mempool );
+	}
 
-	if( svs.wakelock )
-	{
+	if( svs.wakelock ) {
 		Sys_ReleaseWakeLock( svs.wakelock );
 		svs.wakelock = NULL;
 	}
@@ -588,26 +552,26 @@ void SV_ShutdownGame( const char *finalmsg, bool reconnect )
 * SV_Map
 * command from the console or progs.
 */
-void SV_Map( const char *level, bool devmap )
-{
+void SV_Map( const char *level, bool devmap ) {
 	client_t *cl;
 	int i;
 
-	if( svs.demo.file )
+	if( svs.demo.file ) {
 		SV_Demo_Stop_f();
+	}
 
 	// skip the end-of-unit flag if necessary
-	if( level[0] == '*' )
+	if( level[0] == '*' ) {
 		level++;
+	}
 
-	if( sv.state == ss_dead )
+	if( sv.state == ss_dead ) {
 		SV_InitGame(); // the game is just starting
 
+	}
 	// remove all bots before changing map
-	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
-	{
-		if( cl->state && cl->edict && ( cl->edict->r.svflags & SVF_FAKECLIENT ) )
-		{
+	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ ) {
+		if( cl->state && cl->edict && ( cl->edict->r.svflags & SVF_FAKECLIENT ) ) {
 			SV_DropClient( cl, DROP_TYPE_GENERAL, NULL );
 		}
 	}
@@ -615,21 +579,19 @@ void SV_Map( const char *level, bool devmap )
 	// wsw : Medar : this used to be at SV_SpawnServer, but we need to do it before sending changing
 	// so we don't send frames after sending changing command
 	// leave slots at start for clients only
-	for( i = 0; i < sv_maxclients->integer; i++ )
-	{
+	for( i = 0; i < sv_maxclients->integer; i++ ) {
 		// needs to reconnect
-		if( svs.clients[i].state > CS_CONNECTING )
-		{
+		if( svs.clients[i].state > CS_CONNECTING ) {
 			svs.clients[i].state = CS_CONNECTING;
 		}
 
 		// limit number of connected multiview clients
-		if( svs.clients[i].mv )
-		{
-			if( sv.num_mv_clients < sv_maxmvclients->integer )
+		if( svs.clients[i].mv ) {
+			if( sv.num_mv_clients < sv_maxmvclients->integer ) {
 				sv.num_mv_clients++;
-			else
+			} else {
 				svs.clients[i].mv = false;
+			}
 		}
 
 		svs.clients[i].lastframe = -1;

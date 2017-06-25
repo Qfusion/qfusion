@@ -137,19 +137,15 @@ static bool alinit_fail = false;
 /*
 * GPA
 */
-static void *GPA( char *str )
-{
+static void *GPA( char *str ) {
 	void *rv;
 
 	rv = SYMLOAD( OpenALLib, str );
-	if( !rv )
-	{
+	if( !rv ) {
 		Com_Printf( " Couldn't load symbol: %s\n", str );
 		alinit_fail = true;
 		return NULL;
-	}
-	else
-	{
+	} else {
 		//Com_DPrintf( " Loaded symbol: %s (0x%08X)\n", str, rv);
 		return rv;
 	}
@@ -158,29 +154,31 @@ static void *GPA( char *str )
 /*
 * QAL_Init
 */
-bool QAL_Init( const char *libname, bool verbose )
-{
-	if( OpenALLib )
+bool QAL_Init( const char *libname, bool verbose ) {
+	if( OpenALLib ) {
 		return true;
+	}
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "Loading OpenAL library: %s\n", libname );
+	}
 
-	if( ( OpenALLib = OBJLOAD( libname ) ) == 0 )
-	{
+	if( ( OpenALLib = OBJLOAD( libname ) ) == 0 ) {
 #ifdef _WIN32
 		return false;
 #else
 		char fn[2048];
 
-		if( getcwd( fn, sizeof( fn ) ) == NULL )
+		if( getcwd( fn, sizeof( fn ) ) == NULL ) {
 			return false;
+		}
 
 		Q_strncatz( fn, "/", sizeof( fn ) );
 		Q_strncatz( fn, libname, sizeof( fn ) );
 
-		if( ( OpenALLib = OBJLOAD( fn ) ) == 0 )
+		if( ( OpenALLib = OBJLOAD( fn ) ) == 0 ) {
 			return false;
+		}
 #endif
 	}
 
@@ -258,8 +256,7 @@ bool QAL_Init( const char *libname, bool verbose )
 	qalcGetString = GPA( "alcGetString" );
 	qalcGetIntegerv = GPA( "alcGetIntegerv" );
 
-	if( alinit_fail )
-	{
+	if( alinit_fail ) {
 		QAL_Shutdown();
 		Com_Printf( " Error: One or more symbols not found.\n" );
 		return false;
@@ -271,10 +268,8 @@ bool QAL_Init( const char *libname, bool verbose )
 /*
 * QAL_Shutdown
 */
-void QAL_Shutdown( void )
-{
-	if( OpenALLib )
-	{
+void QAL_Shutdown( void ) {
+	if( OpenALLib ) {
 		OBJFREE( OpenALLib );
 		OpenALLib = NULL;
 	}
@@ -352,11 +347,9 @@ void QAL_Shutdown( void )
 	qalcGetIntegerv = NULL;
 }
 #else
-bool QAL_Init( const char *libname, bool verbose )
-{
+bool QAL_Init( const char *libname, bool verbose ) {
 	return true;
 }
-void QAL_Shutdown( void )
-{
+void QAL_Shutdown( void ) {
 }
 #endif

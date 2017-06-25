@@ -24,16 +24,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "as/asui.h"
 #include "as/asui_local.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 #define MAX_PRINTMSG 4096
 
 // dummy cConsole class, single referenced
-class Console 
+class Console
 {
 public:
-	Console()
-	{
+	Console() {
 	}
 };
 
@@ -41,39 +41,33 @@ static Console dummyConsole;
 
 // =====================================================================================
 
-void PrebindConsole( ASInterface *as )
-{
+void PrebindConsole( ASInterface *as ) {
 	ASBind::Class<Console, ASBind::class_singleref>( as->getEngine() );
 }
 
-static void Console_Log( Console *console, const asstring_t &s )
-{
+static void Console_Log( Console *console, const asstring_t &s ) {
 	trap::Print( s.buffer );
 }
 
-static void Console_Debug( Console *console, const asstring_t &s )
-{
+static void Console_Debug( Console *console, const asstring_t &s ) {
 	if( UI_Main::Get()->debugOn() ) {
 		trap::Print( s.buffer );
 	}
 }
 
-static void Console_Error( Console *console, const asstring_t &s )
-{
+static void Console_Error( Console *console, const asstring_t &s ) {
 	char msg[MAX_PRINTMSG];
 	Q_snprintfz( msg, sizeof( msg ), S_COLOR_RED "ERROR: %s\n", s.buffer );
 	trap::Print( msg );
 }
 
-static void Console_Warn( Console *console, const asstring_t &s )
-{
+static void Console_Warn( Console *console, const asstring_t &s ) {
 	char msg[MAX_PRINTMSG];
 	Q_snprintfz( msg, sizeof( msg ), S_COLOR_YELLOW "WARNING: %s\n", s.buffer );
 	trap::Print( msg );
 }
 
-static void Console_Trace( Console *console )
-{
+static void Console_Trace( Console *console ) {
 	char msg[MAX_PRINTMSG];
 	auto *ctx = UI_Main::Get()->getAS()->getActiveContext();
 
@@ -81,8 +75,7 @@ static void Console_Trace( Console *console )
 	Q_snprintfz( msg, sizeof( msg ), S_COLOR_CYAN "Stacktrace for %s:\n", ctx->GetFunction( 0 )->GetModuleName() );
 	trap::Print( msg );
 
-	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ )
-	{
+	for( asUINT n = 0; n < ctx->GetCallstackSize(); n++ ) {
 		asIScriptFunction *func;
 		const char *scriptSection;
 		int line, column;
@@ -95,31 +88,29 @@ static void Console_Trace( Console *console )
 	}
 }
 
-static void Console_Assert( Console *console, bool condition )
-{
+static void Console_Assert( Console *console, bool condition ) {
 	if( condition == false ) {
 		trap::Print( S_COLOR_RED "Assertion failed\n" );
 		Console_Trace( console );
 	}
 }
 
-void BindConsole( ASInterface *as )
-{
+void BindConsole( ASInterface *as ) {
 	ASBind::GetClass<Console>( as->getEngine() )
-		.constmethod( Console_Log, "log", true )
-		.constmethod( Console_Debug, "debug", true )
-		.constmethod( Console_Warn, "warn", true )
-		.constmethod( Console_Error, "error", true )
-		.constmethod( Console_Trace, "trace", true )
-		.constmethod( Console_Assert, "assert", true )
+	.constmethod( Console_Log, "log", true )
+	.constmethod( Console_Debug, "debug", true )
+	.constmethod( Console_Warn, "warn", true )
+	.constmethod( Console_Error, "error", true )
+	.constmethod( Console_Trace, "trace", true )
+	.constmethod( Console_Assert, "assert", true )
 	;
 }
 
-void BindConsoleGlobal( ASInterface *as )
-{
+void BindConsoleGlobal( ASInterface *as ) {
 	ASBind::Global( as->getEngine() )
-		// global variable
-		.var( &dummyConsole, "console" )
+
+	// global variable
+	.var( &dummyConsole, "console" )
 	;
 }
 

@@ -24,49 +24,43 @@ struct shader_s;
 struct mfog_s;
 struct portalSurface_s;
 
-#define MIN_RENDER_MESHES			2048
+#define MIN_RENDER_MESHES           2048
 
-typedef struct mesh_s
-{
-	unsigned short		numVerts;
-	vec4_t				*xyzArray;
-	vec4_t				*normalsArray;
-	vec4_t				*sVectorsArray;
-	vec2_t				*stArray;
-	vec2_t				*lmstArray[MAX_LIGHTMAPS];
-	byte_vec4_t			*lmlayersArray[( MAX_LIGHTMAPS + 3 ) / 4];
-	byte_vec4_t			*colorsArray[MAX_LIGHTMAPS];
+typedef struct mesh_s {
+	unsigned short numVerts;
+	unsigned short numElems;
 
-	uint8_t				*blendIndices;
-	uint8_t				*blendWeights;
+	elem_t              *elems;
 
-	unsigned short		numElems;
-	elem_t				*elems;
+	vec4_t              *xyzArray;
+	vec4_t              *normalsArray;
+	vec4_t              *sVectorsArray;
+	vec2_t              *stArray;
+	vec2_t              *lmstArray[MAX_LIGHTMAPS];
+	byte_vec4_t         *lmlayersArray[( MAX_LIGHTMAPS + 3 ) / 4];
+	byte_vec4_t         *colorsArray[MAX_LIGHTMAPS];
+
+	uint8_t             *blendIndices;
+	uint8_t             *blendWeights;
 } mesh_t;
 
-typedef struct
-{
-	unsigned int		numVerts, numElems;
-	unsigned int		firstVert, firstElem;
+typedef struct {
+	unsigned int firstVert, firstElem;
+	unsigned int numVerts, numElems; // real counts, including the overdraw
 } vboSlice_t;
 
-typedef struct
-{
-	unsigned int		distKey;
-	unsigned int		sortKey;
-	drawSurfaceType_t	*drawSurf;
+typedef struct {
+	unsigned int distKey;
+	unsigned int sortKey;
+	drawSurfaceType_t   *drawSurf;
 } sortedDrawSurf_t;
 
-typedef struct
-{
-	unsigned int		numDrawSurfs, maxDrawSurfs;
-	sortedDrawSurf_t	*drawSurfs;
+typedef struct {
+	unsigned int numDrawSurfs, maxDrawSurfs;
+	sortedDrawSurf_t    *drawSurfs;
 
-	unsigned int		maxVboSlices;
-	vboSlice_t			*vboSlices;
-
-	unsigned			numSliceVerts, numSliceVertsReal;
-	unsigned			numSliceElems, numSliceElemsReal;
+	unsigned int maxVboSlices;
+	vboSlice_t          *vboSlices;
 } drawList_t;
 
 typedef void (*drawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, const struct portalSurface_s *, unsigned int, void * );

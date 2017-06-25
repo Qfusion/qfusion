@@ -25,8 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * R_BatchPolySurf
 */
-void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfacePoly_t *poly )
-{
+void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfacePoly_t *poly ) {
 	mesh_t mesh;
 
 	mesh.elems = poly->elems;
@@ -47,22 +46,22 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 /*
 * R_DrawPolys
 */
-void R_DrawPolys( void )
-{
+void R_DrawPolys( void ) {
 	unsigned int i;
 	drawSurfacePoly_t *p;
 	mfog_t *fog;
 
-	if( rn.renderFlags & RF_ENVVIEW )
+	if( rn.renderFlags & RF_ENVVIEW ) {
 		return;
+	}
 
-	for( i = 0; i < rsc.numPolys; i++ )
-	{
+	for( i = 0; i < rsc.numPolys; i++ ) {
 		p = rsc.polys + i;
-		if( p->fogNum <= 0 || (unsigned)p->fogNum > rsh.worldBrushModel->numfogs )
+		if( p->fogNum <= 0 || (unsigned)p->fogNum > rsh.worldBrushModel->numfogs ) {
 			fog = NULL;
-		else
+		} else {
 			fog = rsh.worldBrushModel->fogs + p->fogNum - 1;
+		}
 
 		if( !R_AddSurfToDrawList( rn.meshlist, rsc.polyent, fog, p->shader, 0, i, NULL, p ) ) {
 			continue;
@@ -73,8 +72,7 @@ void R_DrawPolys( void )
 /*
 * R_DrawStretchPoly
 */
-void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
-{
+void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset ) {
 	mesh_t mesh;
 	vec4_t translated[256];
 
@@ -132,56 +130,51 @@ static float fragmentDiameterSquared;
 
 static int r_fragmentframecount;
 
-#define	MAX_FRAGMENT_VERTS  64
+#define MAX_FRAGMENT_VERTS  64
 
 /*
 * R_WindingClipFragment
-* 
+*
 * This function operates on windings (convex polygons without
 * any points inside) like triangles, quads, etc. The output is
 * a convex fragment (polygon, trifan) which the result of clipping
 * the input winding by six fragment planes.
 */
-static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *surf, vec3_t snorm )
-{
+static bool R_WindingClipFragment( const vec3_t *wVerts, int numVerts, const msurface_t *surf, vec3_t snorm ) {
 	int i, j;
 	int stage, newc, numv;
 	cplane_t *plane;
 	bool front;
-	float *v, *nextv, d;
-	float dists[MAX_FRAGMENT_VERTS+1];
-	int sides[MAX_FRAGMENT_VERTS+1];
-	vec3_t *verts, *newverts, newv[2][MAX_FRAGMENT_VERTS], t;
+	float d, dists[MAX_FRAGMENT_VERTS + 1];
+	int sides[MAX_FRAGMENT_VERTS + 1];
+	const float *v, *v2;
+	const vec3_t *verts;
+	float *nextv;
+	vec3_t *newverts, newv[2][MAX_FRAGMENT_VERTS], t;
 	fragment_t *fr;
 
 	numv = numVerts;
 	verts = wVerts;
 
-	for( stage = 0, plane = fragmentPlanes; stage < 6; stage++, plane++ )
-	{
-		for( i = 0, v = verts[0], front = false; i < numv; i++, v += 3 )
-		{
+	for( stage = 0, plane = fragmentPlanes; stage < 6; stage++, plane++ ) {
+		for( i = 0, v = verts[0], front = false; i < numv; i++, v += 3 ) {
 			d = PlaneDiff( v, plane );
 
-			if( d > ON_EPSILON )
-			{
+			if( d > ON_EPSILON ) {
 				front = true;
 				sides[i] = SIDE_FRONT;
-			}
-			else if( d < -ON_EPSILON )
-			{
+			} else if( d < -ON_EPSILON ) {
 				sides[i] = SIDE_BACK;
-			}
-			else
-			{
+			} else {
 				front = true;
 				sides[i] = SIDE_ON;
 			}
 			dists[i] = d;
 		}
 
-		if( !front )
+		if( !front ) {
 			return false;
+		}
 
 		// clip it
 		sides[i] = sides[0];
@@ -189,40 +182,43 @@ static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *sur
 
 		newc = 0;
 		newverts = newv[stage & 1];
-		for( i = 0, v = verts[0]; i < numv; i++, v += 3 )
-		{
-			switch( sides[i] )
-			{
-			case SIDE_FRONT:
-				if( newc == MAX_FRAGMENT_VERTS )
-					return false;
-				VectorCopy( v, newverts[newc] );
-				newc++;
-				break;
-			case SIDE_BACK:
-				break;
-			case SIDE_ON:
-				if( newc == MAX_FRAGMENT_VERTS )
-					return false;
-				VectorCopy( v, newverts[newc] );
-				newc++;
-				break;
+		for( i = 0, v = verts[0]; i < numv; i++, v += 3 ) {
+			switch( sides[i] ) {
+				case SIDE_FRONT:
+					if( newc == MAX_FRAGMENT_VERTS ) {
+						return false;
+					}
+					VectorCopy( v, newverts[newc] );
+					newc++;
+					break;
+				case SIDE_BACK:
+					break;
+				case SIDE_ON:
+					if( newc == MAX_FRAGMENT_VERTS ) {
+						return false;
+					}
+					VectorCopy( v, newverts[newc] );
+					newc++;
+					break;
 			}
 
-			if( sides[i] == SIDE_ON || sides[i+1] == SIDE_ON || sides[i+1] == sides[i] )
+			if( sides[i] == SIDE_ON || sides[i + 1] == SIDE_ON || sides[i + 1] == sides[i] ) {
 				continue;
-			if( newc == MAX_FRAGMENT_VERTS )
+			}
+			if( newc == MAX_FRAGMENT_VERTS ) {
 				return false;
+			}
 
-			d = dists[i] / ( dists[i] - dists[i+1] );
-			nextv = ( i == numv - 1 ) ? verts[0] : v + 3;
+			d = dists[i] / ( dists[i] - dists[i + 1] );
+			v2 = ( i == numv - 1 ) ? verts[0] : v + 3;
 			for( j = 0; j < 3; j++ )
-				newverts[newc][j] = v[j] + d * ( nextv[j] - v[j] );
+				newverts[newc][j] = v[j] + d * ( v2[j] - v[j] );
 			newc++;
 		}
 
-		if( newc <= 2 )
+		if( newc <= 2 ) {
 			return false;
+		}
 
 		// continue with new verts
 		numv = newc;
@@ -230,23 +226,24 @@ static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *sur
 	}
 
 	// fully clipped
-	if( numFragmentVerts + numv > maxFragmentVerts )
+	if( numFragmentVerts + numv > maxFragmentVerts ) {
 		return false;
+	}
 
 	fr = &clippedFragments[numClippedFragments++];
 	fr->numverts = numv;
 	fr->firstvert = numFragmentVerts;
 	fr->fognum = surf->fog ? surf->fog - rsh.worldBrushModel->fogs + 1 : -1;
 	VectorCopy( snorm, fr->normal );
-	for( i = 0, v = verts[0], nextv = fragmentVerts[numFragmentVerts]; i < numv; i++, v += 3, nextv += 4 )
-	{
+	for( i = 0, v = verts[0], nextv = fragmentVerts[numFragmentVerts]; i < numv; i++, v += 3, nextv += 4 ) {
 		VectorCopy( v, nextv );
 		nextv[3] = 1;
 	}
 
 	numFragmentVerts += numv;
-	if( numFragmentVerts == maxFragmentVerts && numClippedFragments == maxClippedFragments )
+	if( numFragmentVerts == maxFragmentVerts && numClippedFragments == maxClippedFragments ) {
 		return true;
+	}
 
 	// if all of the following is true:
 	// a) all clipping planes are perpendicular
@@ -255,16 +252,15 @@ static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *sur
 	// d) all sides are radius*2 +- epsilon (0.001)
 	// then it is safe to assume there's only one fragment possible
 	// not sure if it's 100% correct, but sounds convincing
-	if( numv == 4 )
-	{
-		for( i = 0, v = verts[0]; i < numv; i++, v += 3 )
-		{
-			nextv = ( i == 3 ) ? verts[0] : v + 3;
-			VectorSubtract( v, nextv, t );
+	if( numv == 4 ) {
+		for( i = 0, v = verts[0]; i < numv; i++, v += 3 ) {
+			v2 = ( i == 3 ) ? verts[0] : v + 3;
+			VectorSubtract( v, v2, t );
 
 			d = fragmentDiameterSquared - DotProduct( t, t );
-			if( d > 0.01 || d < -0.01 )
+			if( d > 0.01 || d < -0.01 ) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -274,43 +270,40 @@ static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *sur
 
 /*
 * R_PlanarSurfClipFragment
-* 
+*
 * NOTE: one might want to combine this function with
 * R_WindingClipFragment for special cases like trifans (q1 and
 * q2 polys) or tristrips for ultra-fast clipping, providing there's
 * enough stack space (depending on MAX_FRAGMENT_VERTS value).
 */
-static bool R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
-{
+static bool R_PlanarSurfClipFragment( const msurface_t *surf, vec3_t normal ) {
 	int i;
-	mesh_t *mesh;
-	elem_t	*elem;
-	vec4_t *verts;
+	const mesh_t *mesh;
+	const elem_t *elem;
+	const vec4_t *verts;
 	vec3_t poly[4];
 	vec3_t dir1, dir2, snorm;
 	bool planar;
 
 	planar = surf->facetype == FACETYPE_PLANAR && !VectorCompare( surf->plane, vec3_origin );
-	if( planar )
-	{
+	if( planar ) {
 		VectorCopy( surf->plane, snorm );
-		if( DotProduct( normal, snorm ) < 0.5 )
+		if( DotProduct( normal, snorm ) < 0.5 ) {
 			return false; // greater than 60 degrees
+		}
 	}
 
-	mesh = surf->mesh;
+	mesh = &surf->mesh;
 	elem = mesh->elems;
 	verts = mesh->xyzArray;
 
 	// clip each triangle individually
-	for( i = 0; i < mesh->numElems; i += 3, elem += 3 )
-	{
+	for( i = 0; i < mesh->numElems; i += 3, elem += 3 ) {
 		VectorCopy( verts[elem[0]], poly[0] );
 		VectorCopy( verts[elem[1]], poly[1] );
 		VectorCopy( verts[elem[2]], poly[2] );
 
-		if( !planar )
-		{
+		if( !planar ) {
 			// calculate two mostly perpendicular edge directions
 			VectorSubtract( poly[0], poly[1], dir1 );
 			VectorSubtract( poly[2], poly[1], dir2 );
@@ -321,12 +314,14 @@ static bool R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
 			VectorNormalize( snorm );
 
 			// we multiply 0.5 by length of snorm to avoid normalizing
-			if( DotProduct( normal, snorm ) < 0.5 )
+			if( DotProduct( normal, snorm ) < 0.5 ) {
 				continue; // greater than 60 degrees
+			}
 		}
 
-		if( R_WindingClipFragment( poly, 3, surf, snorm ) )
+		if( R_WindingClipFragment( poly, 3, surf, snorm ) ) {
 			return true;
+		}
 	}
 
 	return false;
@@ -335,31 +330,26 @@ static bool R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
 /*
 * R_PatchSurfClipFragment
 */
-static bool R_PatchSurfClipFragment( msurface_t *surf, vec3_t normal )
-{
+static bool R_PatchSurfClipFragment( const msurface_t *surf, vec3_t normal ) {
 	int i, j;
-	mesh_t *mesh;
-	elem_t	*elem;
-	vec4_t *verts;
+	const mesh_t *mesh;
+	const elem_t *elem;
+	const vec4_t *verts;
 	vec3_t poly[3];
 	vec3_t dir1, dir2, snorm;
 
-	mesh = surf->mesh;
+	mesh = &surf->mesh;
 	elem = mesh->elems;
 	verts = mesh->xyzArray;
 
 	// clip each triangle individually
-	for( i = j = 0; i < mesh->numElems; i += 6, elem += 6, j = 0 )
-	{
+	for( i = j = 0; i < mesh->numElems; i += 6, elem += 6, j = 0 ) {
 		VectorCopy( verts[elem[1]], poly[1] );
 
-		if( !j )
-		{
+		if( !j ) {
 			VectorCopy( verts[elem[0]], poly[0] );
 			VectorCopy( verts[elem[2]], poly[2] );
-		}
-		else
-		{
+		} else {
 tri2:
 			j++;
 			VectorCopy( poly[2], poly[0] );
@@ -376,14 +366,17 @@ tri2:
 		VectorNormalize( snorm );
 
 		// we multiply 0.5 by length of snorm to avoid normalizing
-		if( DotProduct( normal, snorm ) < 0.5 )
+		if( DotProduct( normal, snorm ) < 0.5 ) {
 			continue; // greater than 60 degrees
 
-		if( R_WindingClipFragment( poly, 3, surf, snorm ) )
+		}
+		if( R_WindingClipFragment( poly, 3, surf, snorm ) ) {
 			return true;
+		}
 
-		if( !j )
+		if( !j ) {
 			goto tri2;
+		}
 	}
 
 	return false;
@@ -392,51 +385,51 @@ tri2:
 /*
 * R_SurfPotentiallyFragmented
 */
-bool R_SurfPotentiallyFragmented( const msurface_t *surf )
-{
-	if( surf->flags & ( SURF_NOMARKS|SURF_NOIMPACT|SURF_NODRAW ) )
+bool R_SurfPotentiallyFragmented( const msurface_t *surf ) {
+	if( surf->flags & ( SURF_NOMARKS | SURF_NOIMPACT | SURF_NODRAW ) ) {
 		return false;
-	return ( ( surf->facetype == FACETYPE_PLANAR ) 
-		|| ( surf->facetype == FACETYPE_PATCH ) 
-		/* || (surf->facetype == FACETYPE_TRISURF)*/ );
+	}
+	return ( ( surf->facetype == FACETYPE_PLANAR )
+			 || ( surf->facetype == FACETYPE_PATCH )
+	         /* || (surf->facetype == FACETYPE_TRISURF)*/ );
 }
 
 /*
 * R_RecursiveFragmentNode
 */
-static void R_RecursiveFragmentNode( void )
-{
+static void R_RecursiveFragmentNode( void ) {
 	unsigned i;
 	int stackdepth = 0;
 	float dist;
 	bool inside;
-	mnode_t	*node, *localstack[2048];
-	mleaf_t	*leaf;
+	mnode_t *node, *localstack[2048];
+	mleaf_t *leaf;
 	msurface_t *surf;
 
-	for( node = rsh.worldBrushModel->nodes, stackdepth = 0; node != NULL; )
-	{
-		if( node->plane == NULL )
-		{
+	for( node = rsh.worldBrushModel->nodes, stackdepth = 0; node != NULL; ) {
+		if( node->plane == NULL ) {
 			leaf = ( mleaf_t * )node;
-			
-			for( i = 0; i < leaf->numFragmentSurfaces; i++ )
-			{
-				if( numFragmentVerts == maxFragmentVerts || numClippedFragments == maxClippedFragments )
+
+			for( i = 0; i < leaf->numFragmentSurfaces; i++ ) {
+				if( numFragmentVerts == maxFragmentVerts || numClippedFragments == maxClippedFragments ) {
 					return; // already reached the limit
 
+				}
 				surf = rsh.worldBrushModel->surfaces + leaf->fragmentSurfaces[i];
-				if( surf->fragmentframe == r_fragmentframecount )
+				if( surf->fragmentframe == r_fragmentframecount ) {
 					continue;
+				}
 				surf->fragmentframe = r_fragmentframecount;
 
-				if( !BoundsAndSphereIntersect( surf->mins, surf->maxs, fragmentOrigin, fragmentRadius ) )
+				if( !BoundsAndSphereIntersect( surf->mins, surf->maxs, fragmentOrigin, fragmentRadius ) ) {
 					continue;
+				}
 
-				if( surf->facetype == FACETYPE_PATCH )
+				if( surf->facetype == FACETYPE_PATCH ) {
 					inside = R_PatchSurfClipFragment( surf, fragmentNormal );
-				else
+				} else {
 					inside = R_PlanarSurfClipFragment( surf, fragmentNormal );
+				}
 
 				// if there some fragments that are inside a surface, that doesn't mean that
 				// there are no fragments that are OUTSIDE, so the check below is disabled
@@ -445,24 +438,26 @@ static void R_RecursiveFragmentNode( void )
 				(void)inside; // hush compiler warning
 			}
 
-			if( numFragmentVerts == maxFragmentVerts || numClippedFragments == maxClippedFragments )
+			if( numFragmentVerts == maxFragmentVerts || numClippedFragments == maxClippedFragments ) {
 				return; // already reached the limit
 
-			if( !stackdepth )
+			}
+			if( !stackdepth ) {
 				break;
+			}
 			node = localstack[--stackdepth];
 			continue;
 		}
 
 		dist = PlaneDiff( fragmentOrigin, node->plane );
-		if( dist > fragmentRadius )
-		{
+		if( dist > fragmentRadius ) {
 			node = node->children[0];
 			continue;
 		}
 
-		if( ( dist >= -fragmentRadius ) && ( stackdepth < sizeof( localstack )/sizeof( mnode_t * ) ) )
+		if( ( dist >= -fragmentRadius ) && ( stackdepth < sizeof( localstack ) / sizeof( mnode_t * ) ) ) {
 			localstack[stackdepth++] = node->children[0];
+		}
 		node = node->children[1];
 	}
 }
@@ -470,9 +465,8 @@ static void R_RecursiveFragmentNode( void )
 /*
 * R_GetClippedFragments
 */
-int R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], 
-	int maxfverts, vec4_t *fverts, int maxfragments, fragment_t *fragments )
-{
+int R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3],
+						   int maxfverts, vec4_t *fverts, int maxfragments, fragment_t *fragments ) {
 	int i;
 	float d;
 
@@ -496,24 +490,23 @@ int R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3],
 	VectorCopy( origin, fragmentOrigin );
 	VectorCopy( axis[0], fragmentNormal );
 	fragmentRadius = radius;
-	fragmentDiameterSquared = radius*radius*4;
+	fragmentDiameterSquared = radius * radius * 4;
 
 	// calculate clipping planes
-	for( i = 0; i < 3; i++ )
-	{
-		float radius0 = (i ? radius : 40);
+	for( i = 0; i < 3; i++ ) {
+		float radius0 = ( i ? radius : 40 );
 		d = DotProduct( origin, axis[i] );
 
-		VectorCopy( axis[i], fragmentPlanes[i*2].normal );
-		fragmentPlanes[i*2].dist = d - radius0;
-		fragmentPlanes[i*2].type = PlaneTypeForNormal( fragmentPlanes[i*2].normal );
+		VectorCopy( axis[i], fragmentPlanes[i * 2].normal );
+		fragmentPlanes[i * 2].dist = d - radius0;
+		fragmentPlanes[i * 2].type = PlaneTypeForNormal( fragmentPlanes[i * 2].normal );
 
-		VectorNegate( axis[i], fragmentPlanes[i*2+1].normal );
-		fragmentPlanes[i*2+1].dist = -d - radius0;
-		fragmentPlanes[i*2+1].type = PlaneTypeForNormal( fragmentPlanes[i*2+1].normal );
+		VectorNegate( axis[i], fragmentPlanes[i * 2 + 1].normal );
+		fragmentPlanes[i * 2 + 1].dist = -d - radius0;
+		fragmentPlanes[i * 2 + 1].type = PlaneTypeForNormal( fragmentPlanes[i * 2 + 1].normal );
 	}
 
-	R_RecursiveFragmentNode ();
+	R_RecursiveFragmentNode();
 
 	return numClippedFragments;
 }

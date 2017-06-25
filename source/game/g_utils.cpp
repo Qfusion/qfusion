@@ -17,6 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+
 // g_utils.c -- misc utility functions for game module
 
 #include "g_local.h"
@@ -41,14 +42,16 @@ Ported over from Quake 1 and Quake 3.
 #define ZONEID      0x1d4a11
 #define MINFRAGMENT 64
 
-typedef struct memblock_s {
+typedef struct memblock_s
+{
 	int size;               // including the header and possibly tiny fragments
 	int tag;                // a tag of 0 is a free block
 	struct memblock_s       *next, *prev;
 	int id;                 // should be ZONEID
 } memblock_t;
 
-typedef struct {
+typedef struct
+{
 	int size;           // total bytes malloced, including header
 	int count, used;
 	memblock_t blocklist;       // start / end cap for linked list
@@ -356,60 +359,6 @@ const char *_G_RegisterLevelString( const char *string, const char *filename, in
 }
 
 //==============================================================================
-
-/*
-* G_ListNameForPosition
-*/
-char *G_ListNameForPosition( const char *namesList, int position, const char separator ) {
-	static char buf[MAX_STRING_CHARS];
-	const char *s, *t;
-	char *b;
-	int count, len;
-
-	if( !namesList ) {
-		return NULL;
-	}
-
-	// set up the tittle from the spinner names
-	s = namesList;
-	t = s;
-	count = 0;
-	buf[0] = 0;
-	b = buf;
-	while( *s && ( s = strchr( s, separator ) ) ) {
-		if( count == position ) {
-			len = s - t;
-			if( len <= 0 ) {
-				G_Error( "G_NameInStringList: empty name in list\n" );
-			}
-			if( len > MAX_STRING_CHARS - 1 ) {
-				G_Printf( "WARNING: G_NameInStringList: name is too long\n" );
-			}
-			while( t <= s ) {
-				if( *t == separator || t == s ) {
-					*b = 0;
-					break;
-				}
-
-				*b = *t;
-				t++;
-				b++;
-			}
-
-			break;
-		}
-
-		count++;
-		s++;
-		t = s;
-	}
-
-	if( buf[0] == 0 ) {
-		return NULL;
-	}
-
-	return buf;
-}
 
 /*
 * G_AllocCreateNamesList
@@ -777,16 +726,14 @@ void G_InitEdict( edict_t *e ) {
 	e->r.inuse = true;
 	e->classname = NULL;
 	e->gravity = 1.0;
-	e->s.number = ENTNUM( e );
 	e->timeDelta = 0;
-	e->s.team = 0;
 	e->deadflag = DEAD_NO;
-	e->s.attenuation = ATTN_NORM;
-
-	e->s.teleported = false;
 	e->timeStamp = 0;
-	e->s.linearMovement = false;
 	e->scriptSpawned = false;
+
+	memset( &e->s, 0, sizeof( entity_state_t ) );
+	e->s.attenuation = ATTN_NORM;
+	e->s.number = ENTNUM( e );
 
 	G_asResetEntityBehaviors( e );
 
@@ -794,12 +741,8 @@ void G_InitEdict( edict_t *e ) {
 	e->aiIntrinsicEnemyWeight = 0.0f;
 	e->aiVisibilityDistance = 999999.9f;
 
-	//mark all entities to not be sent by default
-	if( e->r.svflags & SVF_FAKECLIENT ) {
-		e->r.svflags = SVF_NOCLIENT | SVF_FAKECLIENT;
-	} else {
-		e->r.svflags = SVF_NOCLIENT;
-	}
+	// mark all entities to not be sent by default
+	e->r.svflags = SVF_NOCLIENT | (e->r.svflags & SVF_FAKECLIENT);
 
 	// clear the old state data
 	memset( &e->olds, 0, sizeof( e->olds ) );
@@ -910,9 +853,9 @@ edict_t *G_SpawnEvent( int event, int parm, vec3_t origin ) {
 }
 
 /*
-* G_TurnEntityIntoEvent
+* G_MorphEntityIntoEvent
 */
-void G_TurnEntityIntoEvent( edict_t *ent, int event, int parm ) {
+void G_MorphEntityIntoEvent( edict_t *ent, int event, int parm ) {
 	ent->s.type = ET_EVENT;
 	ent->r.solid = SOLID_NOT;
 	ent->r.svflags &= ~SVF_PROJECTILE; // FIXME: Medar: should be remove all or remove this one elsewhere?
@@ -1650,6 +1593,7 @@ bool G_Visible( edict_t *self, edict_t *other ) {
 	VectorCopy( other->s.origin, spot2 );
 	spot2[2] += other->viewheight;
 	G_Trace( &trace, spot1, vec3_origin, vec3_origin, spot2, self, MASK_OPAQUE );
+
 	//trace = gi.trace( spot1, vec3_origin, vec3_origin, spot2, self, MASK_OPAQUE );
 
 	if( trace.fraction == 1.0f || ENTNUM( other ) == trace.ent ) {
@@ -1893,6 +1837,7 @@ bool G_CheckBottom( edict_t *ent ) {
 
 realcheck:
 	c_no++;
+
 	//
 	// check it for real...
 	//
@@ -2052,7 +1997,7 @@ void G_AnnouncerSound( edict_t *targ, int soundindex, int team, bool queued, edi
 		}
 
 		G_AddPlayerStateEvent( targ->r.client, psev, soundindex );
-	} else { // add it to all players
+	} else {   // add it to all players
 		edict_t *ent;
 
 		for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {

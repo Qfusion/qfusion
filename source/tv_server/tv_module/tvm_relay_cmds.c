@@ -25,32 +25,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * TVM_RelayCommand_Pass
 */
-static void TVM_RelayCommand_Pass( tvm_relay_t *relay, snapshot_t *frame, gcommand_t *gcmd )
-{
+static void TVM_RelayCommand_Pass( tvm_relay_t *relay, snapshot_t *frame, gcommand_t *gcmd ) {
 	int i;
 	int target;
 	edict_t *ent;
 
 	assert( gcmd );
 
-	for( i = 0; i < relay->local_maxclients; i++ )
-	{
+	for( i = 0; i < relay->local_maxclients; i++ ) {
 		ent = relay->local_edicts + i;
-		if( !ent->r.inuse || !ent->r.client )
+		if( !ent->r.inuse || !ent->r.client ) {
 			continue;
-		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED )
+		}
+		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED ) {
 			continue;
+		}
 
-		target = (ent->r.client->chase.active ? ent->r.client->chase.target-1 : relay->playernum);
-		if( gcmd->all || !frame->multipov || ( target >= 0 && gcmd->targets[target>>3] & ( 1<<( target&7 ) ) ) )
+		target = ( ent->r.client->chase.active ? ent->r.client->chase.target - 1 : relay->playernum );
+		if( gcmd->all || !frame->multipov || ( target >= 0 && gcmd->targets[target >> 3] & ( 1 << ( target & 7 ) ) ) ) {
 			trap_GameCmd( relay, PLAYERNUM( ent ), frame->gamecommandsData + gcmd->commandOffset );
+		}
 	}
 }
 
 /*
 * TVM_RelayCommand
 */
-void TVM_RelayCommand( tvm_relay_t *relay, snapshot_t *frame, gcommand_t *gcmd )
-{
+void TVM_RelayCommand( tvm_relay_t *relay, snapshot_t *frame, gcommand_t *gcmd ) {
 	TVM_RelayCommand_Pass( relay, frame, gcmd );
 }

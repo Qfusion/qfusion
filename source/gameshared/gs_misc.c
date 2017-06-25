@@ -34,7 +34,6 @@ entity_state_t *( *module_GetEntityState )( int entNum, int deltaTime );
 int ( *module_PointContents )( vec3_t point, int timeDelta );
 void ( *module_PredictedEvent )( int entNum, int ev, int parm );
 void ( *module_PMoveTouchTriggers )( pmove_t *pm, vec3_t previous_origin );
-void ( *module_RoundUpToHullSize )( vec3_t mins, vec3_t maxs );
 const char *( *module_GetConfigString )( int index );
 
 // TEMP MOVE ME
@@ -43,11 +42,11 @@ gs_state_t gs;
 /*
 * GS_TouchPushTrigger
 */
-void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher )
-{
+void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher ) {
 	// spectators don't use jump pads
-	if( playerState->pmove.pm_type != PM_NORMAL )
+	if( playerState->pmove.pm_type != PM_NORMAL ) {
 		return;
+	}
 
 	VectorCopy( pusher->origin2, playerState->pmove.velocity );
 
@@ -61,8 +60,7 @@ void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher )
 /*
 * GS_WaterLevel
 */
-int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs )
-{
+int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs ) {
 	vec3_t point;
 	int cont;
 	int waterlevel;
@@ -73,18 +71,17 @@ int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs )
 	point[1] = state->origin[1];
 	point[2] = state->origin[2] + mins[2] + 1;
 	cont = module_PointContents( point, 0 );
-	if( cont & MASK_WATER )
-	{
+	if( cont & MASK_WATER ) {
 		waterlevel = 1;
 		point[2] += 26;
 		cont = module_PointContents( point, 0 );
-		if( cont & MASK_WATER )
-		{
+		if( cont & MASK_WATER ) {
 			waterlevel = 2;
 			point[2] += 22;
 			cont = module_PointContents( point, 0 );
-			if( cont & MASK_WATER )
+			if( cont & MASK_WATER ) {
 				waterlevel = 3;
+			}
 		}
 	}
 
@@ -94,21 +91,17 @@ int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs )
 /*
 * GS_BBoxForEntityState
 */
-void GS_BBoxForEntityState( entity_state_t *state, vec3_t mins, vec3_t maxs )
-{
+void GS_BBoxForEntityState( entity_state_t *state, vec3_t mins, vec3_t maxs ) {
 	int x, zd, zu;
 
-	if( state->solid == SOLID_BMODEL )
-	{
+	if( state->solid == SOLID_BMODEL ) {
 		// FIXME: This is wrong, we don't have access to bmodels at gameshared (simply didn't add it)
 		module_Error( "GS_BBoxForEntityState: called for a brush model\n" );
 		//cmodel = trap_CM_InlineModel( state->modelindex );
-	}
-	else
-	{                               // encoded bbox
+	} else {                          // encoded bbox
 		x = 8 * ( state->solid & 31 );
-		zd = 8 * ( ( state->solid>>5 ) & 31 );
-		zu = 8 * ( ( state->solid>>10 ) & 63 ) - 32;
+		zd = 8 * ( ( state->solid >> 5 ) & 31 );
+		zu = 8 * ( ( state->solid >> 10 ) & 63 ) - 32;
 
 		mins[0] = mins[1] = -x;
 		maxs[0] = maxs[1] = x;
@@ -123,20 +116,17 @@ void GS_BBoxForEntityState( entity_state_t *state, vec3_t mins, vec3_t maxs )
 * When the animation is finished it will return frame -1. Takes looping into account. Looping animations
 * are never finished.
 */
-float GS_FrameForTime( int *frame, unsigned int curTime, unsigned int startTimeStamp, float frametime, int firstframe, int lastframe, int loopingframes, bool forceLoop )
-{
-	unsigned int runningtime, framecount;
+float GS_FrameForTime( int *frame, int64_t curTime, int64_t startTimeStamp, float frametime, int firstframe, int lastframe, int loopingframes, bool forceLoop ) {
+	int64_t runningtime, framecount;
 	int curframe;
 	float framefrac;
 
-	if( curTime <= startTimeStamp )
-	{
+	if( curTime <= startTimeStamp ) {
 		*frame = firstframe;
 		return 0.0f;
 	}
 
-	if( firstframe == lastframe )
-	{
+	if( firstframe == lastframe ) {
 		*frame = firstframe;
 		return 1.0f;
 	}
@@ -147,13 +137,12 @@ float GS_FrameForTime( int *frame, unsigned int curTime, unsigned int startTimeS
 	framefrac -= framecount;
 
 	curframe = firstframe + framecount;
-	if( curframe > lastframe )
-	{
-		if( forceLoop && !loopingframes )
+	if( curframe > lastframe ) {
+		if( forceLoop && !loopingframes ) {
 			loopingframes = lastframe - firstframe;
+		}
 
-		if( loopingframes )
-		{
+		if( loopingframes ) {
 			unsigned int numloops;
 			unsigned int startcount;
 
@@ -161,11 +150,12 @@ float GS_FrameForTime( int *frame, unsigned int curTime, unsigned int startTimeS
 
 			numloops = ( framecount - startcount ) / loopingframes;
 			curframe -= loopingframes * numloops;
-			if( loopingframes == 1 )
+			if( loopingframes == 1 ) {
 				framefrac = 1.0f;
-		}
-		else
+			}
+		} else {
 			curframe = -1;
+		}
 	}
 
 	*frame = curframe;
@@ -178,8 +168,7 @@ float GS_FrameForTime( int *frame, unsigned int curTime, unsigned int startTimeS
 /*
 * GS_SetGametypeName
 */
-void GS_SetGametypeName( const char *name )
-{
+void GS_SetGametypeName( const char *name ) {
 	Q_strncpyz( gs.gametypeName, name, sizeof( gs.gametypeName ) );
 }
 
@@ -188,125 +177,121 @@ void GS_SetGametypeName( const char *name )
 *
 * Can be called by either the server or the client
 */
-void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *message, char *message2 )
-{
+void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *message, char *message2 ) {
 	message[0] = 0;
 	message2[0] = 0;
 
-	if( !attacker || attacker == victim )
-	{
-		switch( mod )
-		{
-		case MOD_SUICIDE:
-			strcpy( message, "suicides" );
-			break;
-		case MOD_FALLING:
-			strcpy( message, "cratered" );
-			break;
-		case MOD_CRUSH:
-			strcpy( message, "was squished" );
-			break;
-		case MOD_WATER:
-			strcpy( message, "sank like a rock" );
-			break;
-		case MOD_SLIME:
-			strcpy( message, "melted" );
-			break;
-		case MOD_LAVA:
-			strcpy( message, "sacrificed to the lava god" ); // wsw : pb : some killed messages
-			break;
-		case MOD_EXPLOSIVE:
-		case MOD_BARREL:
-			strcpy( message, "blew up" );
-			break;
-		case MOD_EXIT:
-			strcpy( message, "found a way out" );
-			break;
-		case MOD_BOMB:
-		case MOD_SPLASH:
-		case MOD_TRIGGER_HURT:
-			strcpy( message, "was in the wrong place" );
-			break;
-		default:
-			strcpy( message, "died" );
-			break;
+	if( !attacker || attacker == victim ) {
+		switch( mod ) {
+			case MOD_SUICIDE:
+				strcpy( message, "suicides" );
+				break;
+			case MOD_FALLING:
+				strcpy( message, "cratered" );
+				break;
+			case MOD_CRUSH:
+				strcpy( message, "was squished" );
+				break;
+			case MOD_WATER:
+				strcpy( message, "sank like a rock" );
+				break;
+			case MOD_SLIME:
+				strcpy( message, "melted" );
+				break;
+			case MOD_LAVA:
+				strcpy( message, "sacrificed to the lava god" ); // wsw : pb : some killed messages
+				break;
+			case MOD_EXPLOSIVE:
+			case MOD_BARREL:
+				strcpy( message, "blew up" );
+				break;
+			case MOD_EXIT:
+				strcpy( message, "found a way out" );
+				break;
+			case MOD_BOMB:
+			case MOD_SPLASH:
+			case MOD_TRIGGER_HURT:
+				strcpy( message, "was in the wrong place" );
+				break;
+			default:
+				strcpy( message, "died" );
+				break;
 		}
 		return;
 	}
 
-	switch( mod )
-	{
-	case MOD_TELEFRAG:
-		strcpy( message, "tried to invade" );
-		strcpy( message2, "'s personal space" );
-		break;
-	case MOD_GUNBLADE_W:
-		strcpy( message, "was impaled by" );
-		strcpy( message2, "'s gunblade" );
-		break;
-	case MOD_GUNBLADE_S:
-		strcpy( message, "could not hide from" );
-		strcpy( message2, "'s almighty gunblade" );
-		break;
-	case MOD_MACHINEGUN_W:
-	case MOD_MACHINEGUN_S:
-		strcpy( message, "was penetrated by" );
-		strcpy( message2, "'s machinegun" );
-		break;
-	case MOD_RIOTGUN_W:
-	case MOD_RIOTGUN_S:
-		strcpy( message, "was shred by" );
-		strcpy( message2, "'s riotgun" );
-		break;
-	case MOD_GRENADE_W:
-	case MOD_GRENADE_S:
-		strcpy( message, "was popped by" );
-		strcpy( message2, "'s grenade" );
-		break;
-	case MOD_ROCKET_W:
-	case MOD_ROCKET_S:
-		strcpy( message, "ate" );
-		strcpy( message2, "'s rocket" );
-		break;
-	case MOD_PLASMA_W:
-	case MOD_PLASMA_S:
-		strcpy( message, "was melted by" );
-		strcpy( message2, "'s plasmagun" );
-		break;
-	case MOD_ELECTROBOLT_W:
-	case MOD_ELECTROBOLT_S:
-		strcpy( message, "was bolted by" );
-		strcpy( message2, "'s electrobolt" );
-		break;
-	case MOD_INSTAGUN_W:
-	case MOD_INSTAGUN_S:
-		strcpy( message, "was instagibbed by" );
-		strcpy( message2, "'s instabeam" );
-		break;
-	case MOD_LASERGUN_W:
-	case MOD_LASERGUN_S:
-		strcpy( message, "was cut by" );
-		strcpy( message2, "'s lasergun" );
-		break;
-	case MOD_GRENADE_SPLASH_W:
-	case MOD_GRENADE_SPLASH_S:
-		strcpy( message, "didn't see" );
-		strcpy( message2, "'s grenade" );
-		break;
-	case MOD_ROCKET_SPLASH_W:
-	case MOD_ROCKET_SPLASH_S:
-		strcpy( message, "almost dodged" );
-		strcpy( message2, "'s rocket" );
-		break;
+	switch( mod ) {
+		case MOD_TELEFRAG:
+			strcpy( message, "tried to invade" );
+			strcpy( message2, "'s personal space" );
+			break;
+		case MOD_GUNBLADE_W:
+			strcpy( message, "was impaled by" );
+			strcpy( message2, "'s gunblade" );
+			break;
+		case MOD_GUNBLADE_S:
+			strcpy( message, "could not hide from" );
+			strcpy( message2, "'s almighty gunblade" );
+			break;
+		case MOD_MACHINEGUN_W:
+		case MOD_MACHINEGUN_S:
+			strcpy( message, "was penetrated by" );
+			strcpy( message2, "'s machinegun" );
+			break;
+		case MOD_RIOTGUN_W:
+		case MOD_RIOTGUN_S:
+			strcpy( message, "was shred by" );
+			strcpy( message2, "'s riotgun" );
+			break;
+		case MOD_GRENADE_W:
+		case MOD_GRENADE_S:
+			strcpy( message, "was popped by" );
+			strcpy( message2, "'s grenade" );
+			break;
+		case MOD_ROCKET_W:
+		case MOD_ROCKET_S:
+			strcpy( message, "ate" );
+			strcpy( message2, "'s rocket" );
+			break;
+		case MOD_PLASMA_W:
+		case MOD_PLASMA_S:
+			strcpy( message, "was melted by" );
+			strcpy( message2, "'s plasmagun" );
+			break;
+		case MOD_ELECTROBOLT_W:
+		case MOD_ELECTROBOLT_S:
+			strcpy( message, "was bolted by" );
+			strcpy( message2, "'s electrobolt" );
+			break;
+		case MOD_INSTAGUN_W:
+		case MOD_INSTAGUN_S:
+			strcpy( message, "was instagibbed by" );
+			strcpy( message2, "'s instabeam" );
+			break;
+		case MOD_LASERGUN_W:
+		case MOD_LASERGUN_S:
+			strcpy( message, "was cut by" );
+			strcpy( message2, "'s lasergun" );
+			break;
+		case MOD_GRENADE_SPLASH_W:
+		case MOD_GRENADE_SPLASH_S:
+			strcpy( message, "didn't see" );
+			strcpy( message2, "'s grenade" );
+			break;
+		case MOD_ROCKET_SPLASH_W:
+		case MOD_ROCKET_SPLASH_S:
+			strcpy( message, "almost dodged" );
+			strcpy( message2, "'s rocket" );
+			break;
 
-	case MOD_PLASMA_SPLASH_W:
-	case MOD_PLASMA_SPLASH_S:
-		strcpy( message, "was melted by" );
-		strcpy( message2, "'s plasmagun" );
-		break;
+		case MOD_PLASMA_SPLASH_W:
+		case MOD_PLASMA_SPLASH_S:
+			strcpy( message, "was melted by" );
+			strcpy( message2, "'s plasmagun" );
+			break;
 
-	default:
-		strcpy( message, "was fragged by" );
-		break;
+		default:
+			strcpy( message, "was fragged by" );
+			break;
 	}
 }

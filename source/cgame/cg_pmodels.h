@@ -35,8 +35,7 @@ extern cvar_t *cg_gunbob;
 extern cvar_t *cg_gun_fov;
 extern cvar_t *cg_handOffset;
 
-enum
-{
+enum {
 	WEAPMODEL_NOANIM,
 	WEAPMODEL_STANDBY,
 	WEAPMODEL_ATTACK_WEAK,
@@ -50,12 +49,11 @@ enum
 #define WEAPONINFO_MAX_FIRE_SOUNDS 4
 
 //equivalent to pmodelinfo_t. Shared by different players, etc.
-typedef struct weaponinfo_s
-{
+typedef struct weaponinfo_s {
 	char name[MAX_QPATH];
 	bool inuse;
 
-	struct	model_s	*model[WEAPMODEL_PARTS]; //one weapon consists of several models
+	struct  model_s *model[WEAPMODEL_PARTS]; //one weapon consists of several models
 
 	int firstframe[VWEAP_MAXANIMS];         //animation script
 	int lastframe[VWEAP_MAXANIMS];
@@ -70,13 +68,13 @@ typedef struct weaponinfo_s
 	vec3_t handpositionAngles;
 
 	// flash
-	unsigned int flashTime;
+	int64_t flashTime;
 	bool flashFade;
 	float flashRadius;
 	vec3_t flashColor;
 
 	// barrel
-	unsigned int barrelTime;
+	int64_t barrelTime;
 	float barrelSpeed;
 
 	// sfx
@@ -85,7 +83,6 @@ typedef struct weaponinfo_s
 	int num_strongfire_sounds;
 	struct sfx_s *sound_strongfire[WEAPONINFO_MAX_FIRE_SOUNDS];
 	struct sfx_s *sound_reload;
-
 } weaponinfo_t;
 
 extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
@@ -94,12 +91,11 @@ extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
 
 //pmodelinfo_t is the playermodel structure as originally readed
 //Consider it static 'read-only', cause it is shared by different players
-typedef struct pmodelinfo_s
-{
+typedef struct pmodelinfo_s {
 	char *name;
 	int sex;
 
-	struct	model_s	*model;
+	struct  model_s *model;
 	struct cg_sexedSfx_s *sexedSfx;
 
 	int numRotators[PMODEL_PARTS];
@@ -111,8 +107,7 @@ typedef struct pmodelinfo_s
 	struct pmodelinfo_s *next;
 } pmodelinfo_t;
 
-typedef struct
-{
+typedef struct {
 	//static data
 	pmodelinfo_t *pmodelinfo;
 	struct skinfile_s *skin;
@@ -126,12 +121,11 @@ typedef struct
 	//effects
 	orientation_t projectionSource;     // for projectiles
 	// weapon. Not sure about keeping it here
-	unsigned int flash_time;
-	unsigned int barrel_time;
-
+	int64_t flash_time;
+	int64_t barrel_time;
 } pmodel_t;
 
-extern pmodel_t	cg_entPModels[MAX_EDICTS];      //a pmodel handle for each cg_entity
+extern pmodel_t cg_entPModels[MAX_EDICTS];      //a pmodel handle for each cg_entity
 
 //
 // cg_pmodels.c
@@ -142,19 +136,18 @@ void CG_AddShellEffects( entity_t *ent, int effects );
 bool CG_GrabTag( orientation_t *tag, entity_t *ent, const char *tagname );
 void CG_PlaceModelOnTag( entity_t *ent, entity_t *dest, orientation_t *tag );
 void CG_PlaceRotatedModelOnTag( entity_t *ent, entity_t *dest, orientation_t *tag );
-void CG_MoveToTag( vec3_t move_origin, 
-	mat3_t move_axis, 
-	const vec3_t space_origin, 
-	const mat3_t space_axis, 
-	const vec3_t tag_origin, 
-	const mat3_t tag_axis );
+void CG_MoveToTag( vec3_t move_origin,
+				   mat3_t move_axis,
+				   const vec3_t space_origin,
+				   const mat3_t space_axis,
+				   const vec3_t tag_origin,
+				   const mat3_t tag_axis );
 
 //pmodels
 void CG_PModelsInit( void );
 void CG_ResetPModels( void );
 void CG_RegisterBasePModel( void );
 struct pmodelinfo_s *CG_RegisterPlayerModel( const char *filename );
-void CG_LoadClientPmodel( int cenum, char *model_name, const char *skin_name );
 void CG_AddPModel( centity_t *cent );
 bool CG_PModel_GetProjectionSource( int entnum, orientation_t *tag_result );
 void CG_UpdatePlayerModelEnt( centity_t *cent );
@@ -166,15 +159,14 @@ void CG_PModel_ClearEventAnimations( int entNum );
 //
 struct weaponinfo_s *CG_CreateWeaponZeroModel( char *cgs_name );
 struct weaponinfo_s *CG_RegisterWeaponModel( char *cgs_name, int weaponTag );
-void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, orientation_t *projectionSource, unsigned int flash_time, unsigned int barrel_time );
+void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time );
 struct weaponinfo_s *CG_GetWeaponInfo( int currentweapon );
 
 //=================================================
 //				VIEW WEAPON
 //=================================================
 
-typedef struct
-{
+typedef struct {
 	entity_t ent;
 
 	unsigned int POVnum;
@@ -182,11 +174,10 @@ typedef struct
 
 	// animation
 	int baseAnim;
-	unsigned int baseAnimStartTime;
+	int64_t baseAnimStartTime;
 	int eventAnim;
-	unsigned int eventAnimStartTime;
+	int64_t eventAnimStartTime;
 
 	// other effects
 	orientation_t projectionSource;
 } cg_viewweapon_t;
-

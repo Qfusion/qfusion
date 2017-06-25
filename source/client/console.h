@@ -22,10 +22,10 @@
 // console
 //
 
-#define	NUM_CON_TIMES 4
+#define NUM_CON_TIMES 4
 
 // wsw : aiwa : global definition to activate case-sensitivity of console (1 == activated)
-#define	    CON_CASE_SENSITIVE 0
+#define     CON_CASE_SENSITIVE 0
 
 struct qfontface_s;
 

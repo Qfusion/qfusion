@@ -50,12 +50,8 @@ static inline int CL_GameModule_CM_TransformedPointContents( vec3_t p, struct cm
 }
 
 static inline void CL_GameModule_CM_TransformedBoxTrace( trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs,
-	struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles ) {
+														 struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles ) {
 	CM_TransformedBoxTrace( cl.cms, tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
-}
-
-static inline void CL_GameModule_CM_RoundUpToHullSize( vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel ) {
-	CM_RoundUpToHullSize( cl.cms, mins, maxs, cmodel );
 }
 
 static inline struct cmodel_s *CL_GameModule_CM_InlineModel( int num ) {
@@ -90,28 +86,29 @@ static void CL_GameModule_Error( const char *msg ) {
 /*
 * CL_GameModule_Print
 */
-static void CL_GameModule_Print( const char *msg )
-{
+static void CL_GameModule_Print( const char *msg ) {
 	Com_Printf( "%s", msg );
 }
 
 /*
 * CL_GameModule_PrintToLog
 */
-static void CL_GameModule_PrintToLog( const char *msg )
-{
+static void CL_GameModule_PrintToLog( const char *msg ) {
 	Con_PrintSilent( msg );
 }
 
 /*
 * CL_GameModule_GetConfigString
 */
-static void CL_GameModule_GetConfigString( int i, char *str, int size )
-{
-	if( i < 0 || i >= MAX_CONFIGSTRINGS )
+static void CL_GameModule_GetConfigString( int i, char *str, int size ) {
+	if( i < 0 || i >= MAX_CONFIGSTRINGS ) {
 		Com_DPrintf( S_COLOR_RED "CL_GameModule_GetConfigString: i > MAX_CONFIGSTRINGS" );
-	if( !str || size <= 0 )
+		return;
+	}
+	if( !str || size <= 0 ) {
 		Com_DPrintf( S_COLOR_RED "CL_GameModule_GetConfigString: NULL string" );
+		return;
+	}
 
 	Q_strncpyz( str, cl.configstrings[i], size );
 }
@@ -119,12 +116,11 @@ static void CL_GameModule_GetConfigString( int i, char *str, int size )
 /*
 * CL_GameModule_NET_GetUserCmd
 */
-static void CL_GameModule_NET_GetUserCmd( int frame, usercmd_t *cmd )
-{
-	if( cmd )
-	{
-		if( frame < 0 )
+static void CL_GameModule_NET_GetUserCmd( int frame, usercmd_t *cmd ) {
+	if( cmd ) {
+		if( frame < 0 ) {
 			frame = 0;
+		}
 
 		*cmd = cl.cmds[frame & CMD_MASK];
 	}
@@ -140,33 +136,19 @@ static int CL_GameModule_NET_GetCurrentUserCmdNum( void ) {
 /*
 * CL_GameModule_NET_GetCurrentState
 */
-static void CL_GameModule_NET_GetCurrentState( int *incomingAcknowledged, int *outgoingSequence, int *outgoingSent )
-{
+static void CL_GameModule_NET_GetCurrentState( int64_t *incomingAcknowledged, int64_t *outgoingSequence, int64_t *outgoingSent ) {
 	if( incomingAcknowledged )
 #ifdef TCP_ALLOW_CONNECT
-		*incomingAcknowledged = cls.ucmdHead;
+	{ *incomingAcknowledged = cls.ucmdHead;}
 #else
-		*incomingAcknowledged = cls.ucmdAcknowledged;
+	{ *incomingAcknowledged = cls.ucmdAcknowledged;}
 #endif
-	if( outgoingSequence )
+	if( outgoingSequence ) {
 		*outgoingSequence = cls.ucmdHead;
-	if( outgoingSent )
+	}
+	if( outgoingSent ) {
 		*outgoingSent = cls.ucmdSent;
-}
-
-/*
-* CL_GameModule_RefreshMouseAngles
-*/
-static void CL_GameModule_RefreshMouseAngles( void )
-{
-	CL_UpdateCommandInput(); // force a mouse refresh when requesting the in-work user command
-}
-
-/*
-* CL_GameModule_R_RegisterWorldModel
-*/
-static void CL_GameModule_R_RegisterWorldModel( const char *model ) {
-	re.RegisterWorldModel( model, cl.cms ? CM_PVSData( cl.cms ) : NULL );
+	}
 }
 
 /*
@@ -187,7 +169,7 @@ static void CL_GameModule_MemFree( void *data, const char *filename, int filelin
 * CL_GameModule_SoundUpdate
 */
 static void CL_GameModule_SoundUpdate( const vec3_t origin, const vec3_t velocity,
-	const mat3_t axis, const char *identity ) {
+									   const mat3_t axis, const char *identity ) {
 	CL_SoundModule_Update( origin, velocity, axis, identity, CL_WriteAvi() && cls.demo.avi_audio );
 }
 
@@ -196,71 +178,64 @@ static void CL_GameModule_SoundUpdate( const vec3_t origin, const vec3_t velocit
 /*
 * CL_GameModule_AsyncStream_Init
 */
-static void CL_GameModule_AsyncStream_Init( void )
-{
+static void CL_GameModule_AsyncStream_Init( void ) {
 	cg_async_stream = AsyncStream_InitModule( "CGame", CL_GameModule_MemAlloc, CL_GameModule_MemFree );
 }
 
 /*
 * CL_GameModule_AsyncStream_PerformRequest
 */
-static int CL_GameModule_AsyncStream_PerformRequest( const char *url, const char *method, 
-	const char *data, int timeout,
-	cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep )
-{
+static int CL_GameModule_AsyncStream_PerformRequest( const char *url, const char *method,
+													 const char *data, int timeout,
+													 cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep ) {
 	const char *headers[] = { NULL, NULL, NULL, NULL, NULL };
 
 	assert( cg_async_stream );
-	
+
 	CL_AddSessionHttpRequestHeaders( url, headers );
 
-	return AsyncStream_PerformRequestExt( cg_async_stream, url, method, data, headers, timeout, 
-		0, read_cb, done_cb, NULL, privatep );
+	return AsyncStream_PerformRequestExt( cg_async_stream, url, method, data, headers, timeout,
+										  0, read_cb, done_cb, NULL, privatep );
 }
 
 /*
 * CL_GameModule_AsyncStream_Shutdown
 */
-static void CL_GameModule_AsyncStream_Shutdown( void )
-{
+static void CL_GameModule_AsyncStream_Shutdown( void ) {
 	AsyncStream_ShutdownModule( cg_async_stream );
 	cg_async_stream = NULL;
 }
 
 //==============================================
 
-#define CGAME_L10N_DOMAIN	"cgame"
+#define CGAME_L10N_DOMAIN   "cgame"
 
 /*
 * CL_GameModule_L10n_LoadLangPOFile
 */
-void CL_GameModule_L10n_LoadLangPOFile( const char *filepath )
-{
+void CL_GameModule_L10n_LoadLangPOFile( const char *filepath ) {
 	L10n_LoadLangPOFile( CGAME_L10N_DOMAIN, filepath );
 }
 
 /*
 * CL_GameModule_TranslateString
 */
-const char *CL_GameModule_L10n_TranslateString( const char *string )
-{
+const char *CL_GameModule_L10n_TranslateString( const char *string ) {
 	return L10n_TranslateString( CGAME_L10N_DOMAIN, string );
 }
 
 /*
 * CL_GameModule_L10n_ClearDomain
 */
-void CL_GameModule_L10n_ClearDomain( void )
-{
+void CL_GameModule_L10n_ClearDomain( void ) {
 	L10n_ClearDomain( CGAME_L10N_DOMAIN );
 }
 
 /*
 * CL_GameModule_S_RawSamples
 */
-static void CL_GameModule_S_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data )
-{
+static void CL_GameModule_S_RawSamples( unsigned int samples, unsigned int rate,
+										unsigned short width, unsigned short channels, const uint8_t *data ) {
 	CL_SoundModule_RawSamples( samples, rate, width, channels, data, false );
 }
 
@@ -271,7 +246,7 @@ static void CL_GameModule_S_RawSamples( unsigned int samples, unsigned int rate,
 // entities which are not valid anymore due to
 // module reload
 
-#define MAX_CGAME_RAW_SAMPLES_LISTENERS	8
+#define MAX_CGAME_RAW_SAMPLES_LISTENERS 8
 
 typedef struct {
 	bool inuse;
@@ -287,10 +262,9 @@ cg_raw_samples_listener_t cg_raw_samples_listeners[MAX_CGAME_RAW_SAMPLES_LISTENE
 /*
 * CL_GameModule_RawSamples
 */
-static void CL_GameModule_RawSamples( void *ptr, unsigned int samples, 
-	unsigned int rate, unsigned short width, unsigned short channels, 
-	const uint8_t *data )
-{
+static void CL_GameModule_RawSamples( void *ptr, unsigned int samples,
+									  unsigned int rate, unsigned short width, unsigned short channels,
+									  const uint8_t *data ) {
 	cg_raw_samples_listener_t *cglistener;
 
 	// free listener
@@ -308,10 +282,9 @@ static void CL_GameModule_RawSamples( void *ptr, unsigned int samples,
 /*
 * CL_GameModule_GetRawSamplesLength
 */
-static unsigned int CL_GameModule_GetRawSamplesLength( void *ptr )
-{
+static unsigned int CL_GameModule_GetRawSamplesLength( void *ptr ) {
 	cg_raw_samples_listener_t *cglistener;
-	
+
 	cglistener = ( cg_raw_samples_listener_t * )ptr;
 	if( cglistener->load_seq != cg_load_seq ) {
 		return 0;
@@ -322,9 +295,8 @@ static unsigned int CL_GameModule_GetRawSamplesLength( void *ptr )
 /*
 * CL_GameModule_AddRawSamplesListener
 */
-static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin, 
-	void *listener, cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs )
-{
+static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin,
+												 void *listener, cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs ) {
 	int i;
 	cg_raw_samples_listener_t *cglistener, *freel;
 
@@ -335,18 +307,17 @@ static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin,
 		if( !freel && !cglistener->inuse ) {
 			// grab a free one
 			freel = cglistener;
-		}
-		else if( cglistener->inuse
-			&& cglistener->cin == cin 
-			&& cglistener->ptr == listener
-			&& cglistener->rs == rs
-			&& cglistener->grs == grs ) {
-				// same listener
-				return true;
+		} else if( cglistener->inuse
+				   && cglistener->cin == cin
+				   && cglistener->ptr == listener
+				   && cglistener->rs == rs
+				   && cglistener->grs == grs ) {
+			// same listener
+			return true;
 		}
 		cglistener++;
 	}
-	
+
 	if( !freel ) {
 		return false;
 	}
@@ -360,8 +331,8 @@ static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin,
 	cglistener->rs = (cin_raw_samples_cb_t)rs;
 	cglistener->grs = (cin_get_raw_samples_cb_t)grs;
 
-	if( !CIN_AddRawSamplesListener( cin, cglistener, &CL_GameModule_RawSamples, 
-		&CL_GameModule_GetRawSamplesLength ) ) {
+	if( !CIN_AddRawSamplesListener( cin, cglistener, &CL_GameModule_RawSamples,
+									&CL_GameModule_GetRawSamplesLength ) ) {
 		// free listener
 		cglistener->inuse = false;
 		return false;
@@ -375,12 +346,11 @@ static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin,
 /*
 * CL_GameModule_Init
 */
-void CL_GameModule_Init( void )
-{
+void CL_GameModule_Init( void ) {
 	int apiversion;
-	unsigned int start;
+	int64_t start;
 	cgame_import_t import;
-	void *( *builtinAPIfunc )(void *) = NULL;
+	void *( *builtinAPIfunc )( void * ) = NULL;
 #ifdef CGAME_HARD_LINKED
 	builtinAPIfunc = GetCGameAPI;
 #endif
@@ -395,15 +365,6 @@ void CL_GameModule_Init( void )
 	import.Error = CL_GameModule_Error;
 	import.Print = CL_GameModule_Print;
 	import.PrintToLog = CL_GameModule_PrintToLog;
-
-	import.Dynvar_Create = Dynvar_Create;
-	import.Dynvar_Destroy = Dynvar_Destroy;
-	import.Dynvar_Lookup = Dynvar_Lookup;
-	import.Dynvar_GetName = Dynvar_GetName;
-	import.Dynvar_GetValue = Dynvar_GetValue;
-	import.Dynvar_SetValue = Dynvar_SetValue;
-	import.Dynvar_AddListener = Dynvar_AddListener;
-	import.Dynvar_RemoveListener = Dynvar_RemoveListener;
 
 	import.Cvar_Get = Cvar_Get;
 	import.Cvar_Set = Cvar_Set;
@@ -426,7 +387,6 @@ void CL_GameModule_Init( void )
 	import.FS_FOpenFile = FS_FOpenFile;
 	import.FS_Read = FS_Read;
 	import.FS_Write = FS_Write;
-
 	import.FS_Print = FS_Print;
 	import.FS_Tell = FS_Tell;
 	import.FS_Seek = FS_Seek;
@@ -452,7 +412,6 @@ void CL_GameModule_Init( void )
 	import.NET_GetUserCmd = CL_GameModule_NET_GetUserCmd;
 	import.NET_GetCurrentUserCmdNum = CL_GameModule_NET_GetCurrentUserCmdNum;
 	import.NET_GetCurrentState = CL_GameModule_NET_GetCurrentState;
-	import.RefreshMouseAngles = CL_GameModule_RefreshMouseAngles;
 
 	import.R_UpdateScreen = SCR_UpdateScreen;
 	import.R_GetClippedFragments = re.GetClippedFragments;
@@ -463,8 +422,8 @@ void CL_GameModule_Init( void )
 	import.R_AddLightStyleToScene = re.AddLightStyleToScene;
 	import.R_RenderScene = re.RenderScene;
 	import.R_GetSpeedsMessage = re.GetSpeedsMessage;
-	import.R_GetAverageFramerate = re.GetAverageFramerate;
-	import.R_RegisterWorldModel = CL_GameModule_R_RegisterWorldModel;
+	import.R_GetAverageFrametime = re.GetAverageFrametime;
+	import.R_RegisterWorldModel = re.RegisterWorldModel;
 	import.R_ModelBounds = re.ModelBounds;
 	import.R_ModelFrameBounds = re.ModelFrameBounds;
 	import.R_RegisterModel = re.RegisterModel;
@@ -497,7 +456,6 @@ void CL_GameModule_Init( void )
 	import.CM_NumInlineModels = CL_GameModule_CM_NumInlineModels;
 	import.CM_InlineModel = CL_GameModule_CM_InlineModel;
 	import.CM_TransformedBoxTrace = CL_GameModule_CM_TransformedBoxTrace;
-	import.CM_RoundUpToHullSize = CL_GameModule_CM_RoundUpToHullSize;
 	import.CM_TransformedPointContents = CL_GameModule_CM_TransformedPointContents;
 	import.CM_ModelForBBox = CL_GameModule_CM_ModelForBBox;
 	import.CM_OctagonModelForBBox = CL_GameModule_CM_OctagonModelForBBox;
@@ -559,18 +517,15 @@ void CL_GameModule_Init( void )
 
 	if( builtinAPIfunc ) {
 		cge = builtinAPIfunc( &import );
-	}
-	else {
+	} else {
 		cge = (cgame_export_t *)Com_LoadGameLibrary( "cgame", "GetCGameAPI", &module_handle, &import, cls.sv_pure, NULL );
 	}
-	if( !cge )
+	if( !cge ) {
 		Com_Error( ERR_DROP, "Failed to load client game DLL" );
-
-	AC_LoadLibrary( (void *) &import, (void *) cge, ANTICHEAT_CLIENT );	// impulZ: Refire AC Init
+	}
 
 	apiversion = cge->API();
-	if( apiversion != CGAME_API_VERSION )
-	{
+	if( apiversion != CGAME_API_VERSION ) {
 		Com_UnloadGameLibrary( &module_handle );
 		Mem_FreePool( &cl_gamemodulepool );
 		cge = NULL;
@@ -583,10 +538,10 @@ void CL_GameModule_Init( void )
 
 	start = Sys_Milliseconds();
 	cge->Init( cls.servername, cl.playernum,
-		viddef.width, viddef.height, VID_GetPixelRatio(),
-		cls.demo.playing, cls.demo.playing ? cls.demo.filename : "",
-		cls.sv_pure, cl.snapFrameTime, APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR,
-		cls.mediaRandomSeed, cl.gamestart );
+			   viddef.width, viddef.height, VID_GetPixelRatio(),
+			   cls.demo.playing, cls.demo.playing ? cls.demo.filename : "",
+			   cls.sv_pure, cl.snapFrameTime, APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR,
+			   cls.mediaRandomSeed, cl.gamestart );
 
 	Com_DPrintf( "CL_GameModule_Init: %.2f seconds\n", (float)( Sys_Milliseconds() - start ) * 0.001f );
 
@@ -597,19 +552,19 @@ void CL_GameModule_Init( void )
 /*
 * CL_GameModule_Reset
 */
-void CL_GameModule_Reset( void )
-{
-	if( cge )
+void CL_GameModule_Reset( void ) {
+	if( cge ) {
 		cge->Reset();
+	}
 }
 
 /*
 * CL_GameModule_Shutdown
 */
-void CL_GameModule_Shutdown( void )
-{
-	if( !cge )
+void CL_GameModule_Shutdown( void ) {
+	if( !cge ) {
 		return;
+	}
 
 	cg_load_seq++;
 	cls.cgameActive = false;
@@ -625,52 +580,50 @@ void CL_GameModule_Shutdown( void )
 /*
 * CL_GameModule_EscapeKey
 */
-void CL_GameModule_EscapeKey( void )
-{
-	if( cge )
+void CL_GameModule_EscapeKey( void ) {
+	if( cge ) {
 		cge->EscapeKey();
-	else if( cls.state == CA_CINEMATIC )
+	} else if( cls.state == CA_CINEMATIC ) {
 		SCR_FinishCinematic();
+	}
 }
 
 /*
 * CL_GameModule_GetEntitySoundOrigin
 */
-void CL_GameModule_GetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity )
-{
-	if( cge )
+void CL_GameModule_GetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity ) {
+	if( cge ) {
 		cge->GetEntitySpatilization( entNum, origin, velocity );
+	}
 }
 
 /*
 * CL_GameModule_ConfigString
 */
-void CL_GameModule_ConfigString( int number, const char *value )
-{
-	if( cge )
+void CL_GameModule_ConfigString( int number, const char *value ) {
+	if( cge ) {
 		cge->ConfigString( number, value );
+	}
 }
 
 /*
 * CL_GameModule_GetSensitivityScale
 */
-float CL_GameModule_GetSensitivityScale( float sens, float zoomSens )
-{
-	if( cge )
+float CL_GameModule_GetSensitivityScale( float sens, float zoomSens ) {
+	if( cge ) {
 		return cge->GetSensitivityScale( sens, zoomSens );
-	else
+	} else {
 		return 1.0f;
+	}
 }
 
 /*
 * CL_GameModule_NewSnapshot
 */
-bool CL_GameModule_NewSnapshot( int pendingSnapshot )
-{
+bool CL_GameModule_NewSnapshot( int pendingSnapshot ) {
 	snapshot_t *currentSnap, *newSnap;
 
-	if( cge )
-	{
+	if( cge ) {
 		currentSnap = ( cl.currentSnapNum <= 0 ) ? NULL : &cl.snapShots[cl.currentSnapNum & UPDATE_MASK];
 		newSnap = &cl.snapShots[pendingSnapshot & UPDATE_MASK];
 		return cge->NewFrameSnapshot( newSnap, currentSnap );
@@ -682,76 +635,84 @@ bool CL_GameModule_NewSnapshot( int pendingSnapshot )
 /*
 * CL_GameModule_RenderView
 */
-void CL_GameModule_RenderView( float stereo_separation )
-{
-	if( cge && cls.cgameActive )
-		cge->RenderView( cls.frametime, cls.realframetime, cls.realtime, cl.serverTime, stereo_separation, 
-		cl_extrapolate->integer && !cls.demo.playing ? cl_extrapolationTime->integer : 0, cl_flip->integer != 0 );
+void CL_GameModule_RenderView( float stereo_separation ) {
+	if( cge && cls.cgameActive ) {
+		cge->RenderView( cls.frametime, cls.realFrameTime, cls.realtime, cl.serverTime, stereo_separation,
+						 cl_extrapolate->integer && !cls.demo.playing ? cl_extrapolationTime->integer : 0 );
+	}
 }
 
 /*
-* CL_GameModule_UpdateInput
+* CL_GameModule_InputFrame
 */
-void CL_GameModule_UpdateInput( float frametime )
-{
-	if( cge )
-		cge->UpdateInput( frametime );
+void CL_GameModule_InputFrame( int frameTime ) {
+	if( cge ) {
+		cge->InputFrame( frameTime );
+	}
 }
 
 /*
 * CL_GameModule_ClearInputState
 */
-void CL_GameModule_ClearInputState( void )
-{
-	if( cge )
+void CL_GameModule_ClearInputState( void ) {
+	if( cge ) {
 		cge->ClearInputState();
+	}
 }
 
 /*
 * CL_GameModule_GetButtonBits
 */
-uint8_t CL_GameModule_GetButtonBits( void )
-{
-	if( cge )
+unsigned CL_GameModule_GetButtonBits( void ) {
+	if( cge ) {
 		return cge->GetButtonBits();
+	}
 	return 0;
 }
 
 /*
 * CL_GameModule_AddViewAngles
 */
-void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime, bool flipped )
-{
-	if( cge )
-		cge->AddViewAngles( viewangles, frametime, flipped );
+void CL_GameModule_AddViewAngles( vec3_t viewAngles ) {
+	if( cge ) {
+		cge->AddViewAngles( viewAngles );
+	}
 }
 
 /*
 * CL_GameModule_AddMovement
 */
-void CL_GameModule_AddMovement( vec3_t movement )
-{
-	if( cge )
+void CL_GameModule_AddMovement( vec3_t movement ) {
+	if( cge ) {
 		cge->AddMovement( movement );
+	}
+}
+
+/*
+* CL_GameModule_MouseMove
+*/
+void CL_GameModule_MouseMove( int dx, int dy ) {
+	if( cge ) {
+		cge->MouseMove( dx, dy );
+	}
 }
 
 /*
 * CL_GameModule_TouchEvent
 */
-void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
-{
-	if( cge )
+void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
+	if( cge ) {
 		cge->TouchEvent( id, type, x, y, time );
+	}
 }
 
 /*
 * CL_GameModule_IsTouchDown
 */
-bool CL_GameModule_IsTouchDown( int id )
-{
-	if( cge )
+bool CL_GameModule_IsTouchDown( int id ) {
+	if( cge ) {
 		return cge->IsTouchDown( id );
+	}
 
 	return false;
 }
-

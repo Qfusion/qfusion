@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // ftlib_public.h - font provider subsystem
 
-#define	FTLIB_API_VERSION			11
+#define FTLIB_API_VERSION           11
 
 //===============================================================
 
@@ -35,8 +35,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 //
 // functions provided by the main engine
 //
-typedef struct
-{
+typedef struct {
 	// drops to console a client game error
 	void ( *Error )( const char *msg );
 
@@ -80,16 +79,16 @@ typedef struct
 	bool ( *FS_IsUrl )( const char *url );
 
 	// clock
-	unsigned int ( *Sys_Milliseconds )( void );
+	int64_t ( *Sys_Milliseconds )( void );
 	uint64_t ( *Sys_Microseconds )( void );
 
-	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t *funcs );
+	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t * funcs );
 	void ( *Sys_UnloadLibrary )( void **lib );
 
 	// renderer
 	struct shader_s *( *R_RegisterPic )( const char *name );
-	struct shader_s * ( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
-	struct shader_s * ( *R_RegisterRawAlphaMask )( const char *name, int width, int height, uint8_t *data );
+	struct shader_s * ( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t * data, int samples );
+	struct shader_s * ( *R_RegisterRawAlphaMask )( const char *name, int width, int height, uint8_t * data );
 	void ( *R_DrawStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 	void ( *R_ReplaceRawSubPic )( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data );
 	void ( *R_Scissor )( int x, int y, int w, int h );
@@ -108,8 +107,7 @@ typedef struct
 //
 // functions exported by the cinematics subsystem
 //
-typedef struct
-{
+typedef struct {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
 

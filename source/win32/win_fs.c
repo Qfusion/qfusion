@@ -26,11 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <shlobj.h>
 
 #ifndef CSIDL_APPDATA
-# define CSIDL_APPDATA					0x001A
+# define CSIDL_APPDATA                  0x001A
 #endif
 
 #ifndef CSIDL_PERSONAL
-# define CSIDL_PERSONAL					0x0005        // My Documents
+# define CSIDL_PERSONAL                 0x0005        // My Documents
 #endif
 
 #define USE_MY_DOCUMENTS
@@ -43,29 +43,38 @@ static intptr_t findhandle = -1;
 /*
 * CompareAttributes
 */
-static bool CompareAttributes( unsigned found, unsigned musthave, unsigned canthave )
-{
-	if( ( found & _A_RDONLY ) && ( canthave & SFF_RDONLY ) )
+static bool CompareAttributes( unsigned found, unsigned musthave, unsigned canthave ) {
+	if( ( found & _A_RDONLY ) && ( canthave & SFF_RDONLY ) ) {
 		return false;
-	if( ( found & _A_HIDDEN ) && ( canthave & SFF_HIDDEN ) )
+	}
+	if( ( found & _A_HIDDEN ) && ( canthave & SFF_HIDDEN ) ) {
 		return false;
-	if( ( found & _A_SYSTEM ) && ( canthave & SFF_SYSTEM ) )
+	}
+	if( ( found & _A_SYSTEM ) && ( canthave & SFF_SYSTEM ) ) {
 		return false;
-	if( ( found & _A_SUBDIR ) && ( canthave & SFF_SUBDIR ) )
+	}
+	if( ( found & _A_SUBDIR ) && ( canthave & SFF_SUBDIR ) ) {
 		return false;
-	if( ( found & _A_ARCH ) && ( canthave & SFF_ARCH ) )
+	}
+	if( ( found & _A_ARCH ) && ( canthave & SFF_ARCH ) ) {
 		return false;
+	}
 
-	if( ( musthave & SFF_RDONLY ) && !( found & _A_RDONLY ) )
+	if( ( musthave & SFF_RDONLY ) && !( found & _A_RDONLY ) ) {
 		return false;
-	if( ( musthave & SFF_HIDDEN ) && !( found & _A_HIDDEN ) )
+	}
+	if( ( musthave & SFF_HIDDEN ) && !( found & _A_HIDDEN ) ) {
 		return false;
-	if( ( musthave & SFF_SYSTEM ) && !( found & _A_SYSTEM ) )
+	}
+	if( ( musthave & SFF_SYSTEM ) && !( found & _A_SYSTEM ) ) {
 		return false;
-	if( ( musthave & SFF_SUBDIR ) && !( found & _A_SUBDIR ) )
+	}
+	if( ( musthave & SFF_SUBDIR ) && !( found & _A_SUBDIR ) ) {
 		return false;
-	if( ( musthave & SFF_ARCH ) && !( found & _A_ARCH ) )
+	}
+	if( ( musthave & SFF_ARCH ) && !( found & _A_ARCH ) ) {
 		return false;
+	}
 
 	return true;
 }
@@ -73,26 +82,23 @@ static bool CompareAttributes( unsigned found, unsigned musthave, unsigned canth
 /*
 * _Sys_Utf8FileNameToWide
 */
-static void _Sys_Utf8FileNameToWide(const char *utf8name, wchar_t *wname, size_t wchars)
-{
+static void _Sys_Utf8FileNameToWide( const char *utf8name, wchar_t *wname, size_t wchars ) {
 	MultiByteToWideChar( CP_UTF8, 0, utf8name, -1, wname, wchars );
-	wname[wchars-1] = '\0';
+	wname[wchars - 1] = '\0';
 }
 
 /*
 * _Sys_WideFileNameToUtf8
 */
-static void _Sys_WideFileNameToUtf8(const wchar_t *wname, char *utf8name, size_t utf8chars)
-{
+static void _Sys_WideFileNameToUtf8( const wchar_t *wname, char *utf8name, size_t utf8chars ) {
 	WideCharToMultiByte( CP_UTF8, 0, wname, -1, utf8name, utf8chars, NULL, NULL );
-	utf8name[utf8chars-1] = '\0';
+	utf8name[utf8chars - 1] = '\0';
 }
 
 /*
 * Sys_FS_FindFirst
 */
-const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned canthave )
-{
+const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned canthave ) {
 	size_t size;
 	struct _wfinddata_t findinfo;
 	char finame[MAX_PATH];
@@ -102,37 +108,38 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 	assert( findhandle == -1 );
 	assert( !findbase && !findpath && !findpath_size );
 
-	if( findhandle != -1 )
+	if( findhandle != -1 ) {
 		Sys_Error( "Sys_FindFirst without close" );
+	}
 
 	findbase = Mem_TempMalloc( sizeof( char ) * ( strlen( path ) + 1 ) );
 	Q_strncpyz( findbase, path, ( strlen( path ) + 1 ) );
 	COM_StripFilename( findbase );
 
-	_Sys_Utf8FileNameToWide( path, wpath, sizeof( wpath )/sizeof( wpath[0] ) );
+	_Sys_Utf8FileNameToWide( path, wpath, sizeof( wpath ) / sizeof( wpath[0] ) );
 
 	findhandle = _wfindfirst( wpath, &findinfo );
 
-	if( findhandle == -1 )
+	if( findhandle == -1 ) {
 		return NULL;
+	}
 
 	_Sys_WideFileNameToUtf8( findinfo.name, finame, sizeof( finame ) );
 
 	if( strcmp( finame, "." ) && strcmp( finame, ".." ) &&
-		CompareAttributes( findinfo.attrib, musthave, canthave ) )
-	{
+		CompareAttributes( findinfo.attrib, musthave, canthave ) ) {
 		size_t finame_len = strlen( finame );
 		size = sizeof( char ) * ( strlen( findbase ) + 1 + finame_len + 1 + 1 );
-		if( findpath_size < size )
-		{
-			if( findpath )
+		if( findpath_size < size ) {
+			if( findpath ) {
 				Mem_TempFree( findpath );
+			}
 			findpath_size = size * 2; // extra space to reduce reallocs
 			findpath = Mem_TempMalloc( findpath_size );
 		}
 
-		Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, finame, 
-			( findinfo.attrib & _A_SUBDIR ) && finame[finame_len-1] != '/' ? "/" : "" );
+		Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, finame,
+					 ( findinfo.attrib & _A_SUBDIR ) && finame[finame_len - 1] != '/' ? "/" : "" );
 		return findpath;
 	}
 
@@ -142,8 +149,7 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 /*
 * Sys_FS_FindNext
 */
-const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
-{
+const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave ) {
 	size_t size;
 	struct _wfinddata_t findinfo;
 	char finame[MAX_PATH];
@@ -151,28 +157,27 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 	assert( findhandle != -1 );
 	assert( findbase );
 
-	if( findhandle == -1 )
+	if( findhandle == -1 ) {
 		return NULL;
+	}
 
-	while( _wfindnext( findhandle, &findinfo ) != -1 )
-	{
+	while( _wfindnext( findhandle, &findinfo ) != -1 ) {
 		_Sys_WideFileNameToUtf8( findinfo.name, finame, sizeof( finame ) );
 
 		if( strcmp( finame, "." ) && strcmp( finame, ".." ) &&
-			CompareAttributes( findinfo.attrib, musthave, canthave ) )
-		{
+			CompareAttributes( findinfo.attrib, musthave, canthave ) ) {
 			size_t finame_len = strlen( finame );
 			size = sizeof( char ) * ( strlen( findbase ) + 1 + finame_len + 1 + 1 );
-			if( findpath_size < size )
-			{
-				if( findpath )
+			if( findpath_size < size ) {
+				if( findpath ) {
 					Mem_TempFree( findpath );
+				}
 				findpath_size = size * 2; // extra space to reduce reallocs
 				findpath = Mem_TempMalloc( findpath_size );
 			}
 
-			Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, finame, 
-				( findinfo.attrib & _A_SUBDIR ) && finame[finame_len-1] != '/' ? "/" : "" );
+			Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, finame,
+						 ( findinfo.attrib & _A_SUBDIR ) && finame[finame_len - 1] != '/' ? "/" : "" );
 			return findpath;
 		}
 	}
@@ -183,12 +188,10 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 /*
 * Sys_FS_FindClose
 */
-void Sys_FS_FindClose( void )
-{
+void Sys_FS_FindClose( void ) {
 	assert( findbase );
 
-	if( findhandle != -1 )
-	{
+	if( findhandle != -1 ) {
 		_findclose( findhandle );
 		findhandle = -1;
 	}
@@ -196,8 +199,7 @@ void Sys_FS_FindClose( void )
 	Mem_TempFree( findbase );
 	findbase = NULL;
 
-	if( findpath )
-	{
+	if( findpath ) {
 		Mem_TempFree( findpath );
 		findpath = NULL;
 		findpath_size = 0;
@@ -207,8 +209,7 @@ void Sys_FS_FindClose( void )
 /*
 * Sys_FS_GetHomeDirectory
 */
-const char *Sys_FS_GetHomeDirectory( void )
-{
+const char *Sys_FS_GetHomeDirectory( void ) {
 #ifdef USE_MY_DOCUMENTS
 	int csidl = CSIDL_PERSONAL;
 #else
@@ -216,26 +217,30 @@ const char *Sys_FS_GetHomeDirectory( void )
 #endif
 
 	static char home[MAX_PATH] = { '\0' };
-	if( home[0] != '\0' )
+	if( home[0] != '\0' ) {
 		return home;
+	}
 
 #ifndef SHGetFolderPath
 	HINSTANCE shFolderDll = LoadLibrary( "shfolder.dll" );
 
-	if( !shFolderDll )
+	if( !shFolderDll ) {
 		shFolderDll = LoadLibrary( "shell32.dll" );
+	}
 
 	SHGetFolderPath = GetProcAddress( shFolderDll, "SHGetFolderPathA" );
-	if( SHGetFolderPath )
+	if( SHGetFolderPath ) {
 		SHGetFolderPath( NULL, csidl, 0, 0, home );
+	}
 
 	FreeLibrary( shFolderDll );
 #else
 	SHGetFolderPath( 0, csidl, 0, 0, home );
 #endif
 
-	if ( home[0] == '\0' )
+	if( home[0] == '\0' ) {
 		return NULL;
+	}
 
 #ifdef USE_MY_DOCUMENTS
 	Q_strncpyz( home, va( "%s/My Games/%s %d.%d", COM_SanitizeFilePath( home ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( home ) );
@@ -249,24 +254,21 @@ const char *Sys_FS_GetHomeDirectory( void )
 /*
 * Sys_FS_GetCacheDirectory
 */
-const char *Sys_FS_GetCacheDirectory( void )
-{
+const char *Sys_FS_GetCacheDirectory( void ) {
 	return NULL;
 }
 
 /*
 * Sys_FS_GetSecureDirectory
 */
-const char *Sys_FS_GetSecureDirectory( void )
-{
+const char *Sys_FS_GetSecureDirectory( void ) {
 	return NULL;
 }
 
 /*
 * Sys_FS_GetMediaDirectory
 */
-const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type )
-{
+const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type ) {
 	// TODO: Libraries / My Pictures?
 	return NULL;
 }
@@ -274,8 +276,7 @@ const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type )
 /*
 * Sys_FS_GetRuntimeDirectory
 */
-const char *Sys_FS_GetRuntimeDirectory( void )
-{
+const char *Sys_FS_GetRuntimeDirectory( void ) {
 	static char temp[MAX_PATH] = { '\0' };
 
 	if( temp[0] == 0 ) {
@@ -284,7 +285,7 @@ const char *Sys_FS_GetRuntimeDirectory( void )
 			temp[0] = '\0';
 			return NULL;
 		}
-		Q_strncpyz( temp, va( "%s/%s %d.%d", COM_SanitizeFilePath( temp ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( temp ) );		
+		Q_strncpyz( temp, va( "%s/%s %d.%d", COM_SanitizeFilePath( temp ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( temp ) );
 	}
 
 	return temp[0] == '\0' ? NULL : temp;
@@ -293,45 +294,41 @@ const char *Sys_FS_GetRuntimeDirectory( void )
 /*
 * Sys_FS_LockFile
 */
-void *Sys_FS_LockFile( const char *path )
-{
+void *Sys_FS_LockFile( const char *path ) {
 	HANDLE handle;
 
 	handle = CreateFile( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
-	if( handle == INVALID_HANDLE_VALUE )
+	if( handle == INVALID_HANDLE_VALUE ) {
 		return NULL;
+	}
 	return (void *)handle;
 }
 
 /*
 * Sys_FS_UnlockFile
 */
-void Sys_FS_UnlockFile( void *handle )
-{
+void Sys_FS_UnlockFile( void *handle ) {
 	CloseHandle( (HANDLE)handle );
 }
 
 /*
 * Sys_FS_CreateDirectory
 */
-bool Sys_FS_CreateDirectory( const char *path )
-{
+bool Sys_FS_CreateDirectory( const char *path ) {
 	return ( !_mkdir( path ) );
 }
 
 /*
 * Sys_FS_RemoveDirectory
 */
-bool Sys_FS_RemoveDirectory( const char *path )
-{
+bool Sys_FS_RemoveDirectory( const char *path ) {
 	return ( !_rmdir( path ) );
 }
 
 /*
 * Sys_FS_FileMTime
 */
-time_t Sys_FS_FileMTime( const char *filename )
-{
+time_t Sys_FS_FileMTime( const char *filename ) {
 	HANDLE hFile;
 	FILETIME ft;
 	time_t time = 0;
@@ -342,7 +339,7 @@ time_t Sys_FS_FileMTime( const char *filename )
 		return 0;
 	}
 
-    // retrieve the last-write file time for the file
+	// retrieve the last-write file time for the file
 	if( GetFileTime( hFile, NULL, NULL, &ft ) ) {
 		ULARGE_INTEGER ull;
 
@@ -362,16 +359,14 @@ time_t Sys_FS_FileMTime( const char *filename )
 /*
 * Sys_FS_FileNo
 */
-int Sys_FS_FileNo( FILE *fp )
-{
+int Sys_FS_FileNo( FILE *fp ) {
 	return _fileno( fp );
 }
 
 /*
 * Sys_FS_MMapFile
 */
-void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset )
-{
+void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset ) {
 	HANDLE h;
 	size_t offsetpad;
 	void *data;
@@ -380,16 +375,17 @@ void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, s
 	assert( mapping != NULL );
 
 	h = CreateFileMapping( (HANDLE) _get_osfhandle( fileno ), 0, PAGE_READONLY, 0, 0, 0 );
-	if( h == 0 )
+	if( h == 0 ) {
 		return NULL;
-	
+	}
+
 	if( granularitymask == 0 ) {
 		SYSTEM_INFO sysInfo;
 		GetSystemInfo( &sysInfo );
-		granularitymask = ~(sysInfo.dwAllocationGranularity - 1);
+		granularitymask = ~( sysInfo.dwAllocationGranularity - 1 );
 	}
 
-	offsetpad = offset - (offset & granularitymask);
+	offsetpad = offset - ( offset & granularitymask );
 
 	data = MapViewOfFile( h, FILE_MAP_READ, 0, offset - offsetpad, size + offsetpad );
 	if( !data ) {
@@ -405,17 +401,17 @@ void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, s
 /*
 * Sys_FS_UnMMapFile
 */
-void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size, size_t mapping_offset )
-{
-	if( data )
-		UnmapViewOfFile( (HANDLE)((char *)data - mapping_offset) );
-	if( mapping )
+void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size, size_t mapping_offset ) {
+	if( data ) {
+		UnmapViewOfFile( (HANDLE)( (char *)data - mapping_offset ) );
+	}
+	if( mapping ) {
 		CloseHandle( (HANDLE)mapping );
+	}
 }
 
 /*
 * Sys_FS_AddFileToMedia
 */
-void Sys_FS_AddFileToMedia( const char *filename )
-{
+void Sys_FS_AddFileToMedia( const char *filename ) {
 }

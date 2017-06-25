@@ -31,12 +31,11 @@ namespace WSWUI
 class ColorCodeFormatter : public Rocket::Controls::DataFormatter
 {
 public:
-	ColorCodeFormatter() : Rocket::Controls::DataFormatter("colorcode") {}
+	ColorCodeFormatter() : Rocket::Controls::DataFormatter( "colorcode" ) {}
 
 	// Formats string into colored spans
 	// FIXME: this isn't terribly efficient, converting UTF-8 characters back and forth
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data )
-	{
+	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
 		formatted_data = "";
 
 		// emit styled text span for each colored text block.
@@ -56,8 +55,7 @@ public:
 
 				if( gc == GRABCHAR_CHAR ) {
 					colorblock += Q_WCharToUtf8Char( num );
-				}
-				else if( gc == GRABCHAR_COLOR ) {
+				} else if( gc == GRABCHAR_COLOR ) {
 					if( !colorblock.Empty() ) {
 						htmlEncode( colorblock );
 						formatted_data += colorblock;
@@ -73,16 +71,15 @@ public:
 					} else {
 						vec_t *c = color_table[colorindex];
 						formatted_data += Rocket::Core::String( 64,
-							"<span style=\"color:rgb(%i%%,%i%%,%i%%);\">",
-							bound(0,(int)(c[0] * 100.0f),100),
-							bound(0,(int)(c[1] * 100.0f),100),
-							bound(0,(int)(c[2] * 100.0f),100)
-						);
+																"<span style=\"color:rgb(%i%%,%i%%,%i%%);\">",
+																bound( 0,(int)( c[0] * 100.0f ),100 ),
+																bound( 0,(int)( c[1] * 100.0f ),100 ),
+																bound( 0,(int)( c[2] * 100.0f ),100 )
+																);
 					}
 
 					old_colorindex = colorindex;
-				}
-				else if( gc == GRABCHAR_END ) {
+				} else if( gc == GRABCHAR_END ) {
 					if( !colorblock.Empty() ) {
 						htmlEncode( colorblock );
 						formatted_data += colorblock;
@@ -92,9 +89,9 @@ public:
 						formatted_data += "</span>";
 					}
 					break;
-				}
-				else
+				} else {
 					assert( 0 );
+				}
 			}
 		}
 	}
@@ -102,8 +99,7 @@ public:
 	// FIXME: this is a mess...
 
 	// html encode single string inplace
-	void htmlEncode( Rocket::Core::String &s )
-	{
+	void htmlEncode( Rocket::Core::String &s ) {
 		s = s.Replace( "&", "&amp;" );
 		s = s.Replace( "<", "&lt;" );
 		s = s.Replace( ">", "&gt;" );

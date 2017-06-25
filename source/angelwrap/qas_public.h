@@ -21,14 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __QAS_PUBLIC_H__
 #define __QAS_PUBLIC_H__
 
-#define	ANGELWRAP_API_VERSION   14
+#define ANGELWRAP_API_VERSION   15
 
-typedef struct
-{
+typedef struct {
 	void ( *Print )( const char *msg );
 	void ( *Error )( const char *msg );
 
-	unsigned int ( *Milliseconds )( void );
+	int64_t ( *Milliseconds )( void );
 
 	// console variable interaction
 	cvar_t *( *Cvar_Get )( const char *name, const char *value, int flags );
@@ -46,6 +45,23 @@ typedef struct
 	void ( *Cmd_RemoveCommand )( const char *cmd_name );
 	void ( *Cmd_ExecuteText )( int exec_when, const char *text );
 
+	int ( *FS_FOpenFile )( const char *filename, int *filenum, int mode );
+	int ( *FS_Read )( void *buffer, size_t len, int file );
+	int ( *FS_Write )( const void *buffer, size_t len, int file );
+	int ( *FS_Print )( int file, const char *msg );
+	int ( *FS_Tell )( int file );
+	int ( *FS_Seek )( int file, int offset, int whence );
+	int ( *FS_Eof )( int file );
+	int ( *FS_Flush )( int file );
+	void ( *FS_FCloseFile )( int file );
+	bool ( *FS_RemoveFile )( const char *filename );
+	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
+	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
+	bool ( *FS_MoveFile )( const char *src, const char *dst );
+	bool ( *FS_IsUrl )( const char *url );
+	time_t ( *FS_FileMTime )( const char *filename );
+	bool ( *FS_RemoveDirectory )( const char *dirname );
+
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
 	void *( *Mem_Alloc )( struct mempool_s *pool, size_t size, const char *filename, int fileline );
@@ -54,8 +70,7 @@ typedef struct
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
 } angelwrap_import_t;
 
-typedef struct
-{
+typedef struct {
 	int ( *API )( void );
 	int ( *Init )( void );
 	void ( *Shutdown )( void );

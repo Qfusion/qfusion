@@ -25,7 +25,7 @@ ALCdevice *alDevice = NULL;
 ALCcontext *alContext = NULL;
 
 #define UPDATE_MSEC 10
-static unsigned s_last_update_time;
+static int64_t s_last_update_time;
 
 int s_attenuation_model = 0;
 float s_attenuation_maxdistance = 0;
@@ -40,8 +40,7 @@ static bool snd_shutdown_bug = false;
 /*
 * S_ListDevices_f
 */
-static void S_ListDevices_f( void )
-{
+static void S_ListDevices_f( void ) {
 	char *device, *defaultDevice, *curDevice;
 
 	Com_Printf( "Available OpenAL devices:\n" );
@@ -50,14 +49,14 @@ static void S_ListDevices_f( void )
 	curDevice = ( char * )qalcGetString( alDevice, ALC_DEVICE_SPECIFIER );
 	device = ( char * )qalcGetString( NULL, ALC_DEVICE_SPECIFIER );
 
-	for( ; *device; device += strlen( device ) + 1 )
-	{
-		if( defaultDevice && !strcmp( device, defaultDevice ) )
+	for( ; *device; device += strlen( device ) + 1 ) {
+		if( defaultDevice && !strcmp( device, defaultDevice ) ) {
 			Com_Printf( "(def) : " );
-		else if( curDevice && !strcmp( device, curDevice ) )
+		} else if( curDevice && !strcmp( device, curDevice ) ) {
 			Com_Printf( "(cur) : " );
-		else
+		} else {
 			Com_Printf( "      : " );
+		}
 
 		Com_Printf( "%s\n", device );
 	}
@@ -66,21 +65,19 @@ static void S_ListDevices_f( void )
 /*
 * S_SoundFormat
 */
-ALuint S_SoundFormat( int width, int channels )
-{
-	if( width == 1 )
-	{
-		if( channels == 1 )
+ALuint S_SoundFormat( int width, int channels ) {
+	if( width == 1 ) {
+		if( channels == 1 ) {
 			return AL_FORMAT_MONO8;
-		else if( channels == 2 )
+		} else if( channels == 2 ) {
 			return AL_FORMAT_STEREO8;
-	}
-	else if( width == 2 )
-	{
-		if( channels == 1 )
+		}
+	} else if( width == 2 ) {
+		if( channels == 1 ) {
 			return AL_FORMAT_MONO16;
-		else if( channels == 2 )
+		} else if( channels == 2 ) {
 			return AL_FORMAT_STEREO16;
+		}
 	}
 
 	Com_Printf( "Unknown sound format: %i channels, %i bits.\n", channels, width * 8 );
@@ -92,50 +89,46 @@ ALuint S_SoundFormat( int width, int channels )
 *
 * Returns buffer length expressed in milliseconds
 */
-ALuint S_GetBufferLength( ALuint buffer )
-{
-    ALint size, bits, channels, freq;
+ALuint S_GetBufferLength( ALuint buffer ) {
+	ALint size, bits, channels, freq;
 
-    qalGetBufferi( buffer, AL_SIZE, &size );
-    qalGetBufferi( buffer, AL_BITS, &bits );
-    qalGetBufferi( buffer, AL_FREQUENCY, &freq );
-    qalGetBufferi( buffer, AL_CHANNELS, &channels );
+	qalGetBufferi( buffer, AL_SIZE, &size );
+	qalGetBufferi( buffer, AL_BITS, &bits );
+	qalGetBufferi( buffer, AL_FREQUENCY, &freq );
+	qalGetBufferi( buffer, AL_CHANNELS, &channels );
 
 	if( qalGetError() != AL_NO_ERROR ) {
-        return 0;
+		return 0;
 	}
-    return (ALuint)((ALfloat)(size/(bits/8)/channels) * 1000.0 / freq + 0.5f);
+	return (ALuint)( (ALfloat)( size / ( bits / 8 ) / channels ) * 1000.0 / freq + 0.5f );
 }
 
 /*
 * S_ErrorMessage
 */
-const char *S_ErrorMessage( ALenum error )
-{
-	switch( error )
-	{
-	case AL_NO_ERROR:
-		return "No error";
-	case AL_INVALID_NAME:
-		return "Invalid name";
-	case AL_INVALID_ENUM:
-		return "Invalid enumerator";
-	case AL_INVALID_VALUE:
-		return "Invalid value";
-	case AL_INVALID_OPERATION:
-		return "Invalid operation";
-	case AL_OUT_OF_MEMORY:
-		return "Out of memory";
-	default:
-		return "Unknown error";
+const char *S_ErrorMessage( ALenum error ) {
+	switch( error ) {
+		case AL_NO_ERROR:
+			return "No error";
+		case AL_INVALID_NAME:
+			return "Invalid name";
+		case AL_INVALID_ENUM:
+			return "Invalid enumerator";
+		case AL_INVALID_VALUE:
+			return "Invalid value";
+		case AL_INVALID_OPERATION:
+			return "Invalid operation";
+		case AL_OUT_OF_MEMORY:
+			return "Out of memory";
+		default:
+			return "Unknown error";
 	}
 }
 
 /*
 * S_Init
 */
-static bool S_Init( void *hwnd, int maxEntities, bool verbose )
-{
+static bool S_Init( void *hwnd, int maxEntities, bool verbose ) {
 	int numDevices;
 	int userDeviceNum = -1;
 	char *devices, *defaultDevice;
@@ -148,73 +141,66 @@ static bool S_Init( void *hwnd, int maxEntities, bool verbose )
 
 	// get system default device identifier
 	defaultDevice = ( char * )qalcGetString( NULL, ALC_DEFAULT_DEVICE_SPECIFIER );
-	if( !defaultDevice )
-	{
+	if( !defaultDevice ) {
 		Com_Printf( "Failed to get openAL default device\n" );
 		return false;
 	}
 
-	s_openAL_device = trap_Cvar_Get( "s_openAL_device", ALDEVICE_DEFAULT ? ALDEVICE_DEFAULT : defaultDevice, CVAR_ARCHIVE|CVAR_LATCH_SOUND );
+	s_openAL_device = trap_Cvar_Get( "s_openAL_device", ALDEVICE_DEFAULT ? ALDEVICE_DEFAULT : defaultDevice, CVAR_ARCHIVE | CVAR_LATCH_SOUND );
 
 	devices = ( char * )qalcGetString( NULL, ALC_DEVICE_SPECIFIER );
-	for( numDevices = 0; *devices; devices += strlen( devices ) + 1, numDevices++ )
-	{
-		if( !Q_stricmp( s_openAL_device->string, devices ) )
-		{
+	for( numDevices = 0; *devices; devices += strlen( devices ) + 1, numDevices++ ) {
+		if( !Q_stricmp( s_openAL_device->string, devices ) ) {
 			userDeviceNum = numDevices;
 
 			// force case sensitive
-			if( strcmp( s_openAL_device->string, devices ) )
+			if( strcmp( s_openAL_device->string, devices ) ) {
 				trap_Cvar_ForceSet( "s_openAL_device", devices );
+			}
 		}
 	}
 
-	if( !numDevices )
-	{
+	if( !numDevices ) {
 		Com_Printf( "Failed to get openAL devices\n" );
 		return false;
 	}
 
 	// the device assigned by the user is not available
-	if( userDeviceNum == -1 )
-	{
+	if( userDeviceNum == -1 ) {
 		Com_Printf( "'s_openAL_device': incorrect device name, reseting to default\n" );
 
 		trap_Cvar_ForceSet( "s_openAL_device", ALDEVICE_DEFAULT ? ALDEVICE_DEFAULT : defaultDevice );
 
 		devices = ( char * )qalcGetString( NULL, ALC_DEVICE_SPECIFIER );
-		for( numDevices = 0; *devices; devices += strlen( devices ) + 1, numDevices++ )
-		{
-			if( !Q_stricmp( s_openAL_device->string, devices ) )
+		for( numDevices = 0; *devices; devices += strlen( devices ) + 1, numDevices++ ) {
+			if( !Q_stricmp( s_openAL_device->string, devices ) ) {
 				userDeviceNum = numDevices;
+			}
 		}
 
-		if( userDeviceNum == -1 )
+		if( userDeviceNum == -1 ) {
 			trap_Cvar_ForceSet( "s_openAL_device", defaultDevice );
+		}
 	}
 
 	alDevice = qalcOpenDevice( (const ALchar *)s_openAL_device->string );
-	if( !alDevice )
-	{
+	if( !alDevice ) {
 		Com_Printf( "Failed to open device\n" );
 		return false;
 	}
 
 	// Create context
 	alContext = qalcCreateContext( alDevice, NULL );
-	if( !alContext )
-	{
+	if( !alContext ) {
 		Com_Printf( "Failed to create context\n" );
 		return false;
 	}
 	qalcMakeContextCurrent( alContext );
 
-	if( verbose )
-	{
+	if( verbose ) {
 		Com_Printf( "OpenAL initialized\n" );
 
-		if( numDevices )
-		{
+		if( numDevices ) {
 			int i;
 
 			Com_Printf( "  Devices:    " );
@@ -224,8 +210,9 @@ static bool S_Init( void *hwnd, int maxEntities, bool verbose )
 				Com_Printf( "%s%s", devices, ( i < numDevices - 1 ) ? ", " : "" );
 			Com_Printf( "\n" );
 
-			if( defaultDevice && *defaultDevice )
+			if( defaultDevice && *defaultDevice ) {
 				Com_Printf( "  Default system device: %s\n", defaultDevice );
+			}
 
 			Com_Printf( "\n" );
 		}
@@ -238,13 +225,15 @@ static bool S_Init( void *hwnd, int maxEntities, bool verbose )
 	}
 
 	// Check for Linux shutdown race condition
-	if( !Q_stricmp( qalGetString( AL_VENDOR ), "J. Valenzuela" ) )
+	if( !Q_stricmp( qalGetString( AL_VENDOR ), "J. Valenzuela" ) ) {
 		snd_shutdown_bug = true;
+	}
 
 	qalDopplerFactor( s_doppler->value );
 	qalDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
-	if( qalSpeedOfSound ) // opelAL 1.1 only. alDopplerVelocity being deprecated
+	if( qalSpeedOfSound ) { // opelAL 1.1 only. alDopplerVelocity being deprecated
 		qalSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
+	}
 
 	s_doppler->modified = false;
 
@@ -252,13 +241,11 @@ static bool S_Init( void *hwnd, int maxEntities, bool verbose )
 
 	S_LockBackgroundTrack( false );
 
-	if( !S_InitDecoders( verbose ) )
-	{
+	if( !S_InitDecoders( verbose ) ) {
 		Com_Printf( "Failed to init decoders\n" );
 		return false;
 	}
-	if( !S_InitSources( maxEntities, verbose ) )
-	{
+	if( !S_InitSources( maxEntities, verbose ) ) {
 		Com_Printf( "Failed to init sources\n" );
 		return false;
 	}
@@ -269,8 +256,7 @@ static bool S_Init( void *hwnd, int maxEntities, bool verbose )
 /*
 * S_Shutdown
 */
-static void S_Shutdown( bool verbose )
-{
+static void S_Shutdown( bool verbose ) {
 	S_StopStreams();
 	S_LockBackgroundTrack( false );
 	S_StopBackgroundTrack();
@@ -278,17 +264,16 @@ static void S_Shutdown( bool verbose )
 	S_ShutdownSources();
 	S_ShutdownDecoders( verbose );
 
-	if( alContext )
-	{
-		if( !snd_shutdown_bug )
+	if( alContext ) {
+		if( !snd_shutdown_bug ) {
 			qalcMakeContextCurrent( NULL );
+		}
 
 		qalcDestroyContext( alContext );
 		alContext = NULL;
 	}
 
-	if( alDevice )
-	{
+	if( alDevice ) {
 		qalcCloseDevice( alDevice );
 		alDevice = NULL;
 	}
@@ -297,49 +282,46 @@ static void S_Shutdown( bool verbose )
 /*
 * S_SetAttenuationModel
 */
-void S_SetAttenuationModel( int model, float maxdistance, float refdistance )
-{
+void S_SetAttenuationModel( int model, float maxdistance, float refdistance ) {
 	s_attenuation_model = model;
 	s_attenuation_maxdistance = maxdistance;
 	s_attenuation_refdistance = refdistance;
 
-	switch( model )
-	{
-	case 0:
-		qalDistanceModel( AL_LINEAR_DISTANCE );
-		break;
-	case 1:
-	default:
-		qalDistanceModel( AL_LINEAR_DISTANCE_CLAMPED );
-		break;
-	case 2:
-		qalDistanceModel( AL_INVERSE_DISTANCE );
-		break;
-	case 3:
-		qalDistanceModel( AL_INVERSE_DISTANCE_CLAMPED );
-		break;
-	case 4:
-		qalDistanceModel( AL_EXPONENT_DISTANCE );
-		break;
-	case 5:
-		qalDistanceModel( AL_EXPONENT_DISTANCE_CLAMPED );
-		break;
+	switch( model ) {
+		case 0:
+			qalDistanceModel( AL_LINEAR_DISTANCE );
+			break;
+		case 1:
+		default:
+			qalDistanceModel( AL_LINEAR_DISTANCE_CLAMPED );
+			break;
+		case 2:
+			qalDistanceModel( AL_INVERSE_DISTANCE );
+			break;
+		case 3:
+			qalDistanceModel( AL_INVERSE_DISTANCE_CLAMPED );
+			break;
+		case 4:
+			qalDistanceModel( AL_EXPONENT_DISTANCE );
+			break;
+		case 5:
+			qalDistanceModel( AL_EXPONENT_DISTANCE_CLAMPED );
+			break;
 	}
 }
 
 /*
 * S_SetListener
 */
-static void S_SetListener( const vec3_t origin, const vec3_t velocity, const mat3_t axis )
-{
+static void S_SetListener( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
 	float orientation[6];
 
-	orientation[0] = axis[AXIS_FORWARD+0];
-	orientation[1] = axis[AXIS_FORWARD+1];
-	orientation[2] = axis[AXIS_FORWARD+2];
-	orientation[3] = axis[AXIS_UP+0];
-	orientation[4] = axis[AXIS_UP+1];
-	orientation[5] = axis[AXIS_UP+2];
+	orientation[0] = axis[AXIS_FORWARD + 0];
+	orientation[1] = axis[AXIS_FORWARD + 1];
+	orientation[2] = axis[AXIS_FORWARD + 2];
+	orientation[3] = axis[AXIS_UP + 0];
+	orientation[4] = axis[AXIS_UP + 1];
+	orientation[5] = axis[AXIS_UP + 2];
 
 	qalListenerfv( AL_POSITION, origin );
 	qalListenerfv( AL_VELOCITY, velocity );
@@ -349,29 +331,28 @@ static void S_SetListener( const vec3_t origin, const vec3_t velocity, const mat
 /*
 * S_Update
 */
-static void S_Update( void )
-{
+static void S_Update( void ) {
 	S_UpdateMusic();
-	
+
 	S_UpdateStreams();
-	
+
 	s_volume->modified = false; // Checked by src and stream
 	s_musicvolume->modified = false; // Checked by stream and music
 
-	if( s_doppler->modified )
-	{
-		if( s_doppler->value > 0.0f )
+	if( s_doppler->modified ) {
+		if( s_doppler->value > 0.0f ) {
 			qalDopplerFactor( s_doppler->value );
-		else
+		} else {
 			qalDopplerFactor( 0.0f );
+		}
 		s_doppler->modified = false;
 	}
 
-	if( s_sound_velocity->modified )
-	{
+	if( s_sound_velocity->modified ) {
 		qalDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
-		if( qalSpeedOfSound )
+		if( qalSpeedOfSound ) {
 			qalSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
+		}
 		s_sound_velocity->modified = false;
 	}
 }
@@ -379,41 +360,38 @@ static void S_Update( void )
 /*
 * S_StopAllSounds
 */
-void S_StopAllSounds( bool stopMusic )
-{
+void S_StopAllSounds( bool stopMusic ) {
 	S_StopStreams();
 	S_StopAllSources();
 	if( stopMusic ) {
-		S_StopBackgroundTrack( );
+		S_StopBackgroundTrack();
 	}
 }
 
 /*
 * S_Activate
 */
-void S_Activate( bool activate )
-{
+void S_Activate( bool activate ) {
 	S_LockBackgroundTrack( !activate );
 
 	// TODO: Actually stop playing sounds while not active?
-	if( activate )
+	if( activate ) {
 		qalListenerf( AL_GAIN, 1 );
-	else
+	} else {
 		qalListenerf( AL_GAIN, 0 );
+	}
 }
 
 /*
 * S_BeginAviDemo
 */
-void S_BeginAviDemo( void )
-{
+void S_BeginAviDemo( void ) {
 }
 
 /*
 * S_StopAviDemo
 */
-void S_StopAviDemo( void )
-{
+void S_StopAviDemo( void ) {
 }
 
 // =====================================================================
@@ -421,8 +399,7 @@ void S_StopAviDemo( void )
 /*
 * S_HandleInitCmd
 */
-static unsigned S_HandleInitCmd( const sndCmdInit_t *cmd )
-{
+static unsigned S_HandleInitCmd( const sndCmdInit_t *cmd ) {
 	//Com_Printf("S_HandleShutdownCmd\n");
 	S_Init( cmd->hwnd, cmd->maxents, cmd->verbose );
 	return sizeof( *cmd );
@@ -431,8 +408,7 @@ static unsigned S_HandleInitCmd( const sndCmdInit_t *cmd )
 /*
 * S_HandleShutdownCmd
 */
-static unsigned S_HandleShutdownCmd( const sndCmdShutdown_t *cmd )
-{
+static unsigned S_HandleShutdownCmd( const sndCmdShutdown_t *cmd ) {
 	//Com_Printf("S_HandleShutdownCmd\n");
 	S_Shutdown( cmd->verbose );
 	return 0; // terminate
@@ -441,8 +417,7 @@ static unsigned S_HandleShutdownCmd( const sndCmdShutdown_t *cmd )
 /*
 * S_HandleClearCmd
 */
-static unsigned S_HandleClearCmd( const sndCmdClear_t *cmd )
-{
+static unsigned S_HandleClearCmd( const sndCmdClear_t *cmd ) {
 	//Com_Printf("S_HandleClearCmd\n");
 	S_Clear();
 	return sizeof( *cmd );
@@ -451,8 +426,7 @@ static unsigned S_HandleClearCmd( const sndCmdClear_t *cmd )
 /*
 * S_HandleStopCmd
 */
-static unsigned S_HandleStopCmd( const sndCmdStop_t *cmd )
-{
+static unsigned S_HandleStopCmd( const sndCmdStop_t *cmd ) {
 	//Com_Printf("S_HandleStopCmd\n");
 	S_StopAllSounds( cmd->stopMusic );
 	return sizeof( *cmd );
@@ -461,8 +435,7 @@ static unsigned S_HandleStopCmd( const sndCmdStop_t *cmd )
 /*
 * S_HandleFreeSfxCmd
 */
-static unsigned S_HandleFreeSfxCmd( const sndCmdFreeSfx_t *cmd )
-{
+static unsigned S_HandleFreeSfxCmd( const sndCmdFreeSfx_t *cmd ) {
 	//Com_Printf("S_HandleFreeSfxCmd\n");
 	S_UnloadBuffer( S_GetBufferById( cmd->sfx ) );
 	return sizeof( *cmd );
@@ -471,8 +444,7 @@ static unsigned S_HandleFreeSfxCmd( const sndCmdFreeSfx_t *cmd )
 /*
 * S_HandleLoadSfxCmd
 */
-static unsigned S_HandleLoadSfxCmd( const sndCmdLoadSfx_t *cmd )
-{
+static unsigned S_HandleLoadSfxCmd( const sndCmdLoadSfx_t *cmd ) {
 	//Com_Printf("S_HandleLoadSfxCmd\n");
 	S_LoadBuffer( S_GetBufferById( cmd->sfx ) );
 	return sizeof( *cmd );
@@ -481,8 +453,7 @@ static unsigned S_HandleLoadSfxCmd( const sndCmdLoadSfx_t *cmd )
 /*
 * S_HandleSetAttenuationModelCmd
 */
-static unsigned S_HandleSetAttenuationModelCmd( const sndCmdSetAttenuationModel_t *cmd )
-{
+static unsigned S_HandleSetAttenuationModelCmd( const sndCmdSetAttenuationModel_t *cmd ) {
 	//Com_Printf("S_HandleSetAttenuationModelCmd\n");
 	S_SetAttenuationModel( cmd->model, cmd->maxdistance, cmd->refdistance );
 	return sizeof( *cmd );
@@ -491,8 +462,7 @@ static unsigned S_HandleSetAttenuationModelCmd( const sndCmdSetAttenuationModel_
 /*
 * S_HandleSetEntitySpatializationCmd
 */
-static unsigned S_HandleSetEntitySpatializationCmd( const sndCmdSetEntitySpatialization_t *cmd )
-{
+static unsigned S_HandleSetEntitySpatializationCmd( const sndCmdSetEntitySpatialization_t *cmd ) {
 	//Com_Printf("S_HandleSetEntitySpatializationCmd\n");
 	S_SetEntitySpatialization( cmd->entnum, cmd->origin, cmd->velocity );
 	return sizeof( *cmd );
@@ -501,8 +471,7 @@ static unsigned S_HandleSetEntitySpatializationCmd( const sndCmdSetEntitySpatial
 /*
 * S_HandleSetListernerCmd
 */
-static unsigned S_HandleSetListernerCmd( const sndCmdSetListener_t *cmd )
-{
+static unsigned S_HandleSetListernerCmd( const sndCmdSetListener_t *cmd ) {
 	//Com_Printf("S_HandleSetListernerCmd\n");
 	S_SetListener( cmd->origin, cmd->velocity, cmd->axis );
 	S_UpdateSources();
@@ -512,8 +481,7 @@ static unsigned S_HandleSetListernerCmd( const sndCmdSetListener_t *cmd )
 /*
 * S_HandleStartLocalSoundCmd
 */
-static unsigned S_HandleStartLocalSoundCmd( const sndCmdStartLocalSound_t *cmd )
-{
+static unsigned S_HandleStartLocalSoundCmd( const sndCmdStartLocalSound_t *cmd ) {
 	//Com_Printf("S_HandleStartFixedSoundCmd\n");
 	S_StartLocalSound( S_GetBufferById( cmd->sfx ) );
 	return sizeof( *cmd );
@@ -522,8 +490,7 @@ static unsigned S_HandleStartLocalSoundCmd( const sndCmdStartLocalSound_t *cmd )
 /*
 * S_HandleStartFixedSoundCmd
 */
-static unsigned S_HandleStartFixedSoundCmd( const sndCmdStartFixedSound_t *cmd )
-{
+static unsigned S_HandleStartFixedSoundCmd( const sndCmdStartFixedSound_t *cmd ) {
 	//Com_Printf("S_HandleStartFixedSoundCmd\n");
 	S_StartFixedSound( S_GetBufferById( cmd->sfx ), cmd->origin, cmd->channel, cmd->fvol, cmd->attenuation );
 	return sizeof( *cmd );
@@ -532,8 +499,7 @@ static unsigned S_HandleStartFixedSoundCmd( const sndCmdStartFixedSound_t *cmd )
 /*
 * S_HandleStartRelativeSoundCmd
 */
-static unsigned S_HandleStartRelativeSoundCmd( const sndCmdStartRelativeSound_t *cmd )
-{
+static unsigned S_HandleStartRelativeSoundCmd( const sndCmdStartRelativeSound_t *cmd ) {
 	//Com_Printf("S_HandleStartRelativeSoundCmd\n");
 	S_StartRelativeSound( S_GetBufferById( cmd->sfx ), cmd->entnum, cmd->channel, cmd->fvol, cmd->attenuation );
 	return sizeof( *cmd );
@@ -542,8 +508,7 @@ static unsigned S_HandleStartRelativeSoundCmd( const sndCmdStartRelativeSound_t 
 /*
 * S_HandleStartGlobalSoundCmd
 */
-static unsigned S_HandleStartGlobalSoundCmd( const sndCmdStartGlobalSound_t *cmd )
-{
+static unsigned S_HandleStartGlobalSoundCmd( const sndCmdStartGlobalSound_t *cmd ) {
 	//Com_Printf("S_HandleStartGlobalSoundCmd\n");
 	S_StartGlobalSound( S_GetBufferById( cmd->sfx ), cmd->channel, cmd->fvol );
 	return sizeof( *cmd );
@@ -552,8 +517,7 @@ static unsigned S_HandleStartGlobalSoundCmd( const sndCmdStartGlobalSound_t *cmd
 /*
 * S_HandleStartBackgroundTrackCmd
 */
-static unsigned S_HandleStartBackgroundTrackCmd( const sndCmdStartBackgroundTrack_t *cmd )
-{
+static unsigned S_HandleStartBackgroundTrackCmd( const sndCmdStartBackgroundTrack_t *cmd ) {
 	//Com_Printf("S_HandleStartBackgroundTrackCmd\n");
 	S_StartBackgroundTrack( cmd->intro, cmd->loop, cmd->mode );
 	return sizeof( *cmd );
@@ -562,8 +526,7 @@ static unsigned S_HandleStartBackgroundTrackCmd( const sndCmdStartBackgroundTrac
 /*
 * S_HandleStopBackgroundTrackCmd
 */
-static unsigned S_HandleStopBackgroundTrackCmd( const sndCmdStopBackgroundTrack_t *cmd )
-{
+static unsigned S_HandleStopBackgroundTrackCmd( const sndCmdStopBackgroundTrack_t *cmd ) {
 	//Com_Printf("S_HandleStopBackgroundTrackCmd\n");
 	S_StopBackgroundTrack();
 	return sizeof( *cmd );
@@ -572,8 +535,7 @@ static unsigned S_HandleStopBackgroundTrackCmd( const sndCmdStopBackgroundTrack_
 /*
 * S_HandleLockBackgroundTrackCmd
 */
-static unsigned S_HandleLockBackgroundTrackCmd( const sndCmdLockBackgroundTrack_t *cmd )
-{
+static unsigned S_HandleLockBackgroundTrackCmd( const sndCmdLockBackgroundTrack_t *cmd ) {
 	//Com_Printf("S_HandleLockBackgroundTrackCmd\n");
 	S_LockBackgroundTrack( cmd->lock );
 	return sizeof( *cmd );
@@ -582,8 +544,7 @@ static unsigned S_HandleLockBackgroundTrackCmd( const sndCmdLockBackgroundTrack_
 /*
 * S_HandleAddLoopSoundCmd
 */
-static unsigned S_HandleAddLoopSoundCmd( const sndAddLoopSoundCmd_t *cmd )
-{
+static unsigned S_HandleAddLoopSoundCmd( const sndAddLoopSoundCmd_t *cmd ) {
 	//Com_Printf("S_HandleAddLoopSoundCmd\n");
 	S_AddLoopSound( S_GetBufferById( cmd->sfx ), cmd->entnum, cmd->fvol, cmd->attenuation );
 	return sizeof( *cmd );
@@ -592,8 +553,7 @@ static unsigned S_HandleAddLoopSoundCmd( const sndAddLoopSoundCmd_t *cmd )
 /*
 * S_HandleAdvanceBackgroundTrackCmd
 */
-static unsigned S_HandleAdvanceBackgroundTrackCmd( const sndAdvanceBackgroundTrackCmd_t *cmd )
-{
+static unsigned S_HandleAdvanceBackgroundTrackCmd( const sndAdvanceBackgroundTrackCmd_t *cmd ) {
 	//Com_Printf("S_HandleAdvanceBackgroundTrackCmd\n");
 	if( cmd->val < 0 ) {
 		S_PrevBackgroundTrack();
@@ -606,8 +566,7 @@ static unsigned S_HandleAdvanceBackgroundTrackCmd( const sndAdvanceBackgroundTra
 /*
 * S_HandlePauseBackgroundTrackCmd
 */
-static unsigned S_HandlePauseBackgroundTrackCmd( const sndPauseBackgroundTrackCmd_t *cmd )
-{
+static unsigned S_HandlePauseBackgroundTrackCmd( const sndPauseBackgroundTrackCmd_t *cmd ) {
 	//Com_Printf("S_HandlePauseBackgroundTrackCmd\n");
 	S_PauseBackgroundTrack();
 	return sizeof( *cmd );
@@ -616,8 +575,7 @@ static unsigned S_HandlePauseBackgroundTrackCmd( const sndPauseBackgroundTrackCm
 /*
 * S_HandleActivateCmd
 */
-static unsigned S_HandleActivateCmd( const sndActivateCmd_t *cmd )
-{
+static unsigned S_HandleActivateCmd( const sndActivateCmd_t *cmd ) {
 	//Com_Printf("S_HandleActivateCmd\n");
 
 	S_Clear();
@@ -630,22 +588,21 @@ static unsigned S_HandleActivateCmd( const sndActivateCmd_t *cmd )
 /*
 * S_HandleAviDemoCmd
 */
-static unsigned S_HandleAviDemoCmd( const sndAviDemo_t *cmd )
-{
-	if( cmd->begin )
+static unsigned S_HandleAviDemoCmd( const sndAviDemo_t *cmd ) {
+	if( cmd->begin ) {
 		S_BeginAviDemo();
-	else
+	} else {
 		S_StopAviDemo();
+	}
 	return sizeof( *cmd );
 }
 
 /*
 * S_HandleRawSamplesCmd
 */
-static unsigned S_HandleRawSamplesCmd( const sndRawSamplesCmd_t *cmd )
-{
+static unsigned S_HandleRawSamplesCmd( const sndRawSamplesCmd_t *cmd ) {
 	S_RawSamples( cmd->samples, cmd->rate, cmd->width, cmd->channels,
-		cmd->data, cmd->music );
+				  cmd->data, cmd->music );
 	S_Free( ( void * )cmd->data );
 	return sizeof( *cmd );
 }
@@ -653,10 +610,9 @@ static unsigned S_HandleRawSamplesCmd( const sndRawSamplesCmd_t *cmd )
 /*
 * S_HandlePositionedRawSamplesCmd
 */
-static unsigned S_HandlePositionedRawSamplesCmd( const sndPositionedRawSamplesCmd_t *cmd )
-{
+static unsigned S_HandlePositionedRawSamplesCmd( const sndPositionedRawSamplesCmd_t *cmd ) {
 	S_PositionedRawSamples( cmd->entnum, cmd->fvol, cmd->attenuation,
-		cmd->samples, cmd->rate, cmd->width, cmd->channels, cmd->data );
+							cmd->samples, cmd->rate, cmd->width, cmd->channels, cmd->data );
 	S_Free( ( void * )cmd->data );
 	return sizeof( *cmd );
 }
@@ -664,12 +620,10 @@ static unsigned S_HandlePositionedRawSamplesCmd( const sndPositionedRawSamplesCm
 /*
 * S_HandleStuffCmd
 */
-static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd )
-{
+static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd ) {
 	if( !Q_stricmp( cmd->text, "soundlist" ) ) {
 		S_SoundList_f();
-	}
-	else if( !Q_stricmp( cmd->text, "devicelist" ) ) {
+	} else if( !Q_stricmp( cmd->text, "devicelist" ) ) {
 		S_ListDevices_f();
 	}
 	return sizeof( *cmd );
@@ -678,8 +632,7 @@ static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd )
 /*
 * S_HandleSetMulEntitySpatializationCmd
 */
-static unsigned S_HandleSetMulEntitySpatializationCmd( const sndCmdSetMulEntitySpatialization_t *cmd )
-{
+static unsigned S_HandleSetMulEntitySpatializationCmd( const sndCmdSetMulEntitySpatialization_t *cmd ) {
 	unsigned i;
 	//Com_Printf("S_HandleSetEntitySpatializationCmd\n");
 	for( i = 0; i < cmd->numents; i++ )
@@ -744,10 +697,9 @@ static pipeCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 /*
 * S_EnqueuedCmdsWaiter
 */
-static int S_EnqueuedCmdsWaiter( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandlers, bool timeout )
-{
+static int S_EnqueuedCmdsWaiter( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandlers, bool timeout ) {
 	int read = S_ReadEnqueuedCmds( queue, cmdHandlers );
-	unsigned now = trap_Milliseconds();
+	int64_t now = trap_Milliseconds();
 
 	if( read < 0 ) {
 		// shutdown
@@ -765,8 +717,7 @@ static int S_EnqueuedCmdsWaiter( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandl
 /*
 * S_BackgroundUpdateProc
 */
-void *S_BackgroundUpdateProc( void *param )
-{
+void *S_BackgroundUpdateProc( void *param ) {
 	sndCmdPipe_t *s_cmdQueue = param;
 
 	S_WaitEnqueuedCmds( s_cmdQueue, S_EnqueuedCmdsWaiter, sndCmdHandlers, UPDATE_MSEC );

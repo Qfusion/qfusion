@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "kernel/ui_utils.h"
 #include "datasources/ui_gameajax_datasource.h"
 
-#define GAMEAJAX_SOURCE	"gameajax"
+#define GAMEAJAX_SOURCE "gameajax"
 
 using namespace Rocket::Core;
 using namespace Rocket::Controls;
@@ -57,29 +57,29 @@ public:
 	void GetRocketRow( StringList &rocketRow, int row_index, const StringList& cols ) const {
 		RowsList::const_iterator r_it = rows.begin();
 		std::advance( r_it, row_index );
-		if( r_it == rows.end() ) {;
+		if( r_it == rows.end() ) {
+			;
 			return;
 		}
 
 		const Row &row = *r_it;
 		for( StringList::const_iterator it = cols.begin(); it != cols.end(); ++it ) {
-			Row::const_iterator v = row.find( (*it).CString() );
+			Row::const_iterator v = row.find( ( *it ).CString() );
 			rocketRow.push_back( v == row.end() ? "" : v->second.c_str() );
 		}
 	}
 
-	private:
-		std::string name;
-		typedef std::vector<Row> RowsList;
-		RowsList rows;
+private:
+	std::string name;
+	typedef std::vector<Row> RowsList;
+	RowsList rows;
 };
 
-class DynTable: public Table
+class DynTable : public Table
 {
 public:
-	DynTable( const std::string &name, unsigned int updateTime, const std::string &baseURL ) 
-		: Table( name ), updateTime( updateTime ), baseURL( baseURL )
-	{
+	DynTable( const std::string &name, unsigned int updateTime, const std::string &baseURL )
+		: Table( name ), updateTime( updateTime ), baseURL( baseURL ) {
 	}
 
 	unsigned int GetUpdateTime() const {
@@ -97,20 +97,17 @@ private:
 
 // ============================================================================
 
-GameAjaxDataSource::GameAjaxDataSource() : DataSource( GAMEAJAX_SOURCE )
-{
+GameAjaxDataSource::GameAjaxDataSource() : DataSource( GAMEAJAX_SOURCE ) {
 }
 
-GameAjaxDataSource::~GameAjaxDataSource( void )
-{
+GameAjaxDataSource::~GameAjaxDataSource( void ) {
 	for( DynTableList::iterator it = tableList.begin(); it != tableList.end(); ++it ) {
 		__delete__( it->second->table );
 		__delete__( it->second );
 	}
 }
 
-void GameAjaxDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList& cols )
-{
+void GameAjaxDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList& cols ) {
 	DynTableList::const_iterator it = tableList.find( table.CString() );
 	if( it == tableList.end() ) {
 		return;
@@ -118,9 +115,8 @@ void GameAjaxDataSource::GetRow( StringList &row, const String &table, int row_i
 	it->second->table->GetRocketRow( row, row_index, cols );
 }
 
-int GameAjaxDataSource::GetNumRows( const String &tableName )
-{
-	unsigned int now = trap::Milliseconds();
+int GameAjaxDataSource::GetNumRows( const String &tableName ) {
+	int64_t now = trap::Milliseconds();
 
 	char baseURL[1024];
 	trap::GetBaseServerURL( baseURL, sizeof( baseURL ) );
@@ -130,7 +126,7 @@ int GameAjaxDataSource::GetNumRows( const String &tableName )
 
 	if( t_it != tableList.end() ) {
 		oldTable = t_it->second->table;
-		
+
 		// return cached counter
 		if( oldTable->GetBaseURL() == baseURL ) {
 			if( oldTable->GetUpdateTime() + UPDATE_INTERVAL > now ) {
@@ -140,7 +136,7 @@ int GameAjaxDataSource::GetNumRows( const String &tableName )
 
 		//tableList.erase( t_it );
 	}
-	
+
 	// trigger AJAX-style query to server
 
 	std::string stdTableName = tableName.CString();
@@ -151,24 +147,23 @@ int GameAjaxDataSource::GetNumRows( const String &tableName )
 
 	trap::AsyncStream_PerformRequest(
 		url.c_str(), "GET", "", 10,
-		&GameAjaxDataSource::StreamRead, &GameAjaxDataSource::StreamDone, 
-		static_cast<void *>(__new__(SourceFetcherPair)(this, __new__(DynTableFetcher)(table)))
-	);
+		&GameAjaxDataSource::StreamRead, &GameAjaxDataSource::StreamDone,
+		static_cast<void *>( __new__( SourceFetcherPair )( this, __new__( DynTableFetcher )( table ) ) )
+		);
 
 	return oldTable != NULL ? oldTable->GetNumRows() : 0;
 }
 
-void GameAjaxDataSource::FlushCache( void )
-{
+void GameAjaxDataSource::FlushCache( void ) {
 	// do nothing
 }
 
-size_t GameAjaxDataSource::StreamRead( const void *buf, size_t numb, float percentage, 
-	int status, const char *contentType, void *privatep )
-{
+size_t GameAjaxDataSource::StreamRead( const void *buf, size_t numb, float percentage,
+									   int status, const char *contentType, void *privatep ) {
 	if( status < 0 || status >= 300 ) {
 		return 0;
 	}
+
 	// appened new data to the global buffer
 	SourceFetcherPair *fp = static_cast< SourceFetcherPair *>( privatep );
 	DynTableFetcher *fetcher = fp->second;
@@ -176,8 +171,7 @@ size_t GameAjaxDataSource::StreamRead( const void *buf, size_t numb, float perce
 	return numb;
 }
 
-void GameAjaxDataSource::StreamDone( int status, const char *contentType, void *privatep )
-{
+void GameAjaxDataSource::StreamDone( int status, const char *contentType, void *privatep ) {
 	SourceFetcherPair *fp = static_cast< SourceFetcherPair *>( privatep );
 	DynTableFetcher *fetcher = fp->second;
 	GameAjaxDataSource *ds = fp->first;
@@ -205,18 +199,18 @@ void GameAjaxDataSource::StreamDone( int status, const char *contentType, void *
 	// }
 	char *token;
 	std::string key, value;
-	for(; ( token = COM_Parse( &data ) ) && token[0] == '{'; )
-	{
+	for(; ( token = COM_Parse( &data ) ) && token[0] == '{'; ) {
 		Row row;
 
-		while( 1 )
-		{
+		while( 1 ) {
 			token = COM_ParseExt( &data, true );
-			if( !token[0] )
+			if( !token[0] ) {
 				break; // error
-			if( token[0] == '}' )
+			}
+			if( token[0] == '}' ) {
 				break; // end of callvote
 
+			}
 			key = Q_trim( token );
 			value = COM_ParseExt( &data, true );
 			row[key] = value;
@@ -224,7 +218,7 @@ void GameAjaxDataSource::StreamDone( int status, const char *contentType, void *
 
 		table->AddRow( row );
 	}
-	
+
 	if( oldTable != NULL ) {
 		ds->tableList[tableName] = fetcher;
 
@@ -232,8 +226,7 @@ void GameAjaxDataSource::StreamDone( int status, const char *contentType, void *
 
 		__delete__( oldTable );
 		__delete__( oldFetcher );
-	}
-	else {
+	} else {
 		ds->tableList[tableName] = fetcher;
 		ds->NotifyRowAdd( rocketTableName, 0, table->GetNumRows() );
 	}

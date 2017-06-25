@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007 Victor Luchits
+Copyright (C) 2017 Victor Luchits
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,12 +18,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "svnrev.h"
+#include "ui_precompiled.h"
+#include "kernel/ui_common.h"
+#include "kernel/ui_main.h"
+#include "widgets/ui_widgets.h"
+#include "widgets/ui_blur.h"
 
-/*
-* SVN_RevString
-*/
-const char *SVN_RevString( void )
+namespace WSWUI
 {
-	return SVN_REVSTR;
+
+using namespace Rocket::Core;
+
+ElementBlur::ElementBlur( const String &tag ) : Element( tag ) {
+	SetProperty( "position", "fixed" );
+}
+
+void ElementBlur::OnRender( void ) {
+	trap::R_BlurScreen();
+}
+
+//==============================================================
+
+ElementInstancer *GetElementBlurInstancer( void ) {
+	return __new__( GenericElementInstancer<ElementBlur> )();
+}
+
 }

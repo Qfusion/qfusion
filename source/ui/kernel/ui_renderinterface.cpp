@@ -23,8 +23,7 @@ typedef Rocket::Core::CompiledGeometryHandle CompiledGeometryHandle;
 typedef struct shader_s shader_t;
 
 UI_RenderInterface::UI_RenderInterface( int vidWidth, int vidHeight, float pixelRatio )
-	: vid_width( vidWidth ), vid_height( vidHeight ), polyAlloc()
-{
+	: vid_width( vidWidth ), vid_height( vidHeight ), polyAlloc() {
 	pixelsPerInch = 160.0f * pixelRatio;
 
 	texCounter = 0;
@@ -38,13 +37,11 @@ UI_RenderInterface::UI_RenderInterface( int vidWidth, int vidHeight, float pixel
 	whiteShader = trap::R_RegisterPic( "$whiteimage" );
 }
 
-UI_RenderInterface::~UI_RenderInterface()
-{
+UI_RenderInterface::~UI_RenderInterface() {
 	this->RemoveReference();
 }
 
-Rocket::Core::CompiledGeometryHandle UI_RenderInterface::CompileGeometry(Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture)
-{
+Rocket::Core::CompiledGeometryHandle UI_RenderInterface::CompileGeometry( Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture ) {
 	poly_t *poly;
 
 	poly = RocketGeometry2Poly( false, vertices, num_vertices, indices, num_indices, texture );
@@ -52,8 +49,7 @@ Rocket::Core::CompiledGeometryHandle UI_RenderInterface::CompileGeometry(Rocket:
 	return Rocket::Core::CompiledGeometryHandle( poly );
 }
 
-void UI_RenderInterface::ReleaseCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry)
-{
+void UI_RenderInterface::ReleaseCompiledGeometry( Rocket::Core::CompiledGeometryHandle geometry ) {
 	if( geometry == 0 ) {
 		return;
 	}
@@ -62,8 +58,7 @@ void UI_RenderInterface::ReleaseCompiledGeometry(Rocket::Core::CompiledGeometryH
 	polyAlloc.free( poly );
 }
 
-void UI_RenderInterface::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry, const Rocket::Core::Vector2f & translation)
-{
+void UI_RenderInterface::RenderCompiledGeometry( Rocket::Core::CompiledGeometryHandle geometry, const Rocket::Core::Vector2f & translation ) {
 	if( geometry == 0 ) {
 		return;
 	}
@@ -73,8 +68,7 @@ void UI_RenderInterface::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHa
 	trap::R_DrawStretchPoly( poly, translation.x, translation.y );
 }
 
-void UI_RenderInterface::RenderGeometry(Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f & translation)
-{
+void UI_RenderInterface::RenderGeometry( Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f & translation ) {
 	poly_t *poly;
 
 	poly = RocketGeometry2Poly( true, vertices, num_vertices, indices, num_indices, texture );
@@ -82,42 +76,39 @@ void UI_RenderInterface::RenderGeometry(Rocket::Core::Vertex *vertices, int num_
 	trap::R_DrawStretchPoly( poly, translation.x, translation.y );
 }
 
-void UI_RenderInterface::SetScissorRegion(int x, int y, int width, int height)
-{
+void UI_RenderInterface::SetScissorRegion( int x, int y, int width, int height ) {
 	scissorX = x;
 	scissorY = y;
 	scissorWidth = width;
 	scissorHeight = height;
 
-	if( scissorEnabled )
+	if( scissorEnabled ) {
 		trap::R_Scissor( x, y, width, height );
+	}
 }
 
-void UI_RenderInterface::EnableScissorRegion(bool enable)
-{
-	if( enable )
+void UI_RenderInterface::EnableScissorRegion( bool enable ) {
+	if( enable ) {
 		trap::R_Scissor( scissorX, scissorY, scissorWidth, scissorHeight );
-	else
+	} else {
 		trap::R_ResetScissor();
+	}
 
 	scissorEnabled = enable;
 }
 
-void UI_RenderInterface::ReleaseTexture(Rocket::Core::TextureHandle texture_handle)
-{
+void UI_RenderInterface::ReleaseTexture( Rocket::Core::TextureHandle texture_handle ) {
 
 }
 
-bool UI_RenderInterface::GenerateTexture(Rocket::Core::TextureHandle & texture_handle, const Rocket::Core::byte *source, const Rocket::Core::Vector2i & source_dimensions, int source_samples)
-{
+bool UI_RenderInterface::GenerateTexture( Rocket::Core::TextureHandle & texture_handle, const Rocket::Core::byte *source, const Rocket::Core::Vector2i & source_dimensions, int source_samples ) {
 	shader_t *shader;
 	Rocket::Core::String name( MAX_QPATH, "ui_raw_%d", texCounter++ );
 
 	// Com_Printf("RenderInterface::GenerateTexture: going to register %s %dx%d\n", name.CString(), source_dimensions.x, source_dimensions.y );
 	shader = trap::R_RegisterRawPic( name.CString(), source_dimensions.x, source_dimensions.y, (uint8_t*)source, source_samples );
-	if( !shader )
-	{
-		Com_Printf(S_COLOR_RED"Warning: RenderInterface couldnt register raw pic %s!\n", name.CString() );
+	if( !shader ) {
+		Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt register raw pic %s!\n", name.CString() );
 		return false;
 	}
 
@@ -129,15 +120,13 @@ bool UI_RenderInterface::GenerateTexture(Rocket::Core::TextureHandle & texture_h
 	return true;
 }
 
-bool UI_RenderInterface::LoadTexture(Rocket::Core::TextureHandle & texture_handle, Rocket::Core::Vector2i & texture_dimensions, const Rocket::Core::String & source)
-{
+bool UI_RenderInterface::LoadTexture( Rocket::Core::TextureHandle & texture_handle, Rocket::Core::Vector2i & texture_dimensions, const Rocket::Core::String & source ) {
 	shader_t *shader = NULL;
 	Rocket::Core::String source2( source );
 
 	if( source2[0] == '/' ) {
 		source2.Erase( 0, 1 );
-	}
-	else if( source2[0] == '?' ) {
+	} else if( source2[0] == '?' ) {
 		String protocol = source2.Substring( 1, source2.Find( "::" ) - 1 );
 		if( protocol == "fonthandle" ) {
 			if( sscanf( source2.CString(), "?fonthandle::%p", &shader ) != 1 ) {
@@ -151,8 +140,7 @@ bool UI_RenderInterface::LoadTexture(Rocket::Core::TextureHandle & texture_handl
 		shader = trap::R_RegisterPic( source2.CString() );
 	}
 
-	if( !shader )
-	{
+	if( !shader ) {
 		Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt load pic %s!\n", source.CString() );
 		return false;
 	}
@@ -170,41 +158,34 @@ bool UI_RenderInterface::LoadTexture(Rocket::Core::TextureHandle & texture_handl
 	return true;
 }
 
-int UI_RenderInterface::GetHeight( void )
-{
+int UI_RenderInterface::GetHeight( void ) {
 	return this->vid_height;
 }
 
-int UI_RenderInterface::GetWidth( void )
-{
+int UI_RenderInterface::GetWidth( void ) {
 	return this->vid_width;
 }
 
-float UI_RenderInterface::GetPixelsPerInch( void )
-{
+float UI_RenderInterface::GetPixelsPerInch( void ) {
 	return this->pixelsPerInch;
 }
 
-float UI_RenderInterface::GetBasePixelsPerInch( void )
-{
+float UI_RenderInterface::GetBasePixelsPerInch( void ) {
 	return 160.0f;
 }
 
-poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture )
-{
+poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture ) {
 	poly_t *poly;
 	int i;
 
 	if( temp ) {
 		poly = polyAlloc.get_temp( num_vertices, num_indices );
-	}
-	else {
+	} else {
 		poly = polyAlloc.alloc( num_vertices, num_indices );
 	}
 
 	// copy stuff over
-	for( i = 0; i < num_vertices; i++ )
-	{
+	for( i = 0; i < num_vertices; i++ ) {
 		poly->verts[i][0] = vertices[i].position.x;
 		poly->verts[i][1] = vertices[i].position.y;
 		poly->verts[i][2] = 1; // ??
@@ -232,8 +213,7 @@ poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex
 	return poly;
 }
 
-void UI_RenderInterface::AddShaderToCache( const Rocket::Core::String &shader )
-{
+void UI_RenderInterface::AddShaderToCache( const Rocket::Core::String &shader ) {
 	ShaderMap::const_iterator it;
 
 	it = shaderMap.find( shader );
@@ -242,13 +222,11 @@ void UI_RenderInterface::AddShaderToCache( const Rocket::Core::String &shader )
 	}
 }
 
-void UI_RenderInterface::ClearShaderCache( void )
-{
+void UI_RenderInterface::ClearShaderCache( void ) {
 	shaderMap.clear();
 }
 
-void UI_RenderInterface::TouchAllCachedShaders( void )
-{
+void UI_RenderInterface::TouchAllCachedShaders( void ) {
 	ShaderMap::const_iterator it;
 
 	for( it = shaderMap.begin(); it != shaderMap.end(); ++it ) {

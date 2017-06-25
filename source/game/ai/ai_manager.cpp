@@ -8,6 +8,7 @@
 
 // Class static variable declaration
 AiManager *AiManager::instance = nullptr;
+
 // Actual instance location in memory
 static StaticVector<AiManager, 1> instanceHolder;
 

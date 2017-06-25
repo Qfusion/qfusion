@@ -67,19 +67,16 @@ static int snd_inited = 0;
 static cvar_t *s_bits = NULL;
 static cvar_t *s_channels = NULL;
 
-void S_Activate( bool active )
-{
+void S_Activate( bool active ) {
 }
 
 /* The audio callback. All the magic happens here. */
 static unsigned dmapos = 0;
 static unsigned dmasize = 0;
-static void sdl_audio_callback( void *userdata, Uint8 *stream, int len )
-{
+static void sdl_audio_callback( void *userdata, Uint8 *stream, int len ) {
 	int pos = dmapos % dmasize;
 
-	if( !snd_inited ) /* shouldn't happen, but just in case... */
-	{
+	if( !snd_inited ) { /* shouldn't happen, but just in case... */
 		memset( stream, '\0', len );
 		return;
 	} else if( len > 0 ) {
@@ -92,24 +89,22 @@ static void sdl_audio_callback( void *userdata, Uint8 *stream, int len )
 			len2 = len - len1;
 		}
 		memcpy( stream, dma.buffer + pos, len1 );
-		if( len2 <= 0 )
+		if( len2 <= 0 ) {
 			dmapos += len1;
-		else /* wraparound? */
-		{
+		} else { /* wraparound? */
 			memcpy( stream + len1, dma.buffer, len2 );
 			dmapos = len2;
 		}
 	}
 }
 
-static void print_audiospec( const char *str, const SDL_AudioSpec *spec )
-{
+static void print_audiospec( const char *str, const SDL_AudioSpec *spec ) {
 	Com_Printf( "%s:\n", str );
 
 // I'm sorry this is nasty.
 #define PRINT_AUDIO_FMT( x )              \
-	if( spec->format == x )               \
-		Com_Printf( "Format: %s\n", #x ); \
+	if( spec->format == x ) {               \
+		Com_Printf( "Format: %s\n", #x );} \
 	else
 	PRINT_AUDIO_FMT( AUDIO_U8 )
 	PRINT_AUDIO_FMT( AUDIO_S8 )
@@ -126,18 +121,19 @@ static void print_audiospec( const char *str, const SDL_AudioSpec *spec )
 	Com_Printf( "\n" );
 }
 
-bool SNDDMA_Init( void *hwnd, bool verbose )
-{
+bool SNDDMA_Init( void *hwnd, bool verbose ) {
 	char drivername[128];
 	SDL_AudioSpec desired;
 	SDL_AudioSpec obtained;
 	int tmp;
 
-	if( snd_inited )
+	if( snd_inited ) {
 		return 1;
+	}
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "SDL Audio driver initializing...\n" );
+	}
 
 	if( !s_bits ) {
 		s_bits = trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
@@ -145,14 +141,16 @@ bool SNDDMA_Init( void *hwnd, bool verbose )
 	}
 
 	if( !SDL_WasInit( SDL_INIT_AUDIO ) ) {
-		if( verbose )
+		if( verbose ) {
 			Com_Printf( "Calling SDL_Init(SDL_INIT_AUDIO)...\n" );
+		}
 		if( SDL_Init( SDL_INIT_AUDIO ) == -1 ) {
 			Com_Printf( "SDL_Init(SDL_INIT_AUDIO) failed: %s\n", SDL_GetError() );
 			return false;
 		}
-		if( verbose )
+		if( verbose ) {
 			Com_Printf( "SDL_Init(SDL_INIT_AUDIO) passed.\n" );
+		}
 	}
 
 #if SDL_VERSION_ATLEAST( 2, 0, 0 )
@@ -162,37 +160,41 @@ bool SNDDMA_Init( void *hwnd, bool verbose )
 		Q_strncpyz( drivername, "(UNKNOWN)", sizeof( drivername ) );
 	}
 #else
-	if( SDL_AudioDriverName( drivername, sizeof( drivername ) ) == NULL )
+	if( SDL_AudioDriverName( drivername, sizeof( drivername ) ) == NULL ) {
 		Q_strncpyz( drivername, "(UNKNOWN)", sizeof( drivername ) );
+	}
 #endif
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "SDL audio driver is \"%s\"\n", drivername );
+	}
 
 	memset( &desired, '\0', sizeof( desired ) );
 	memset( &obtained, '\0', sizeof( obtained ) );
 
-	if( s_khz->integer == 44 )
+	if( s_khz->integer == 44 ) {
 		desired.freq = 44100;
-	else if( s_khz->integer == 22 )
+	} else if( s_khz->integer == 22 ) {
 		desired.freq = 22050;
-	else
+	} else {
 		desired.freq = 11025;
+	}
 
 	desired.format = ( ( s_bits->integer != 16 ) ? AUDIO_U8 : AUDIO_S16SYS );
 
 	// I dunno if this is the best idea, but I'll give it a try...
 	//  should probably check a cvar for this...
 	// just pick a sane default.
-	if( desired.freq <= 11025 )
+	if( desired.freq <= 11025 ) {
 		desired.samples = 256;
-	else if( desired.freq <= 22050 )
+	} else if( desired.freq <= 22050 ) {
 		desired.samples = 512;
-	else if( desired.freq <= 44100 )
+	} else if( desired.freq <= 44100 ) {
 		desired.samples = 1024;
-	else
+	} else {
 		desired.samples = 2048; // (*shrug*)
 
+	}
 	desired.channels = s_channels->integer;
 	desired.callback = sdl_audio_callback;
 
@@ -216,15 +218,15 @@ bool SNDDMA_Init( void *hwnd, bool verbose )
 	//  reasonable...this is why I let the user override.
 	tmp = ( obtained.samples * obtained.channels ) * 4;
 
-	if( tmp & ( tmp - 1 ) ) // not a power of two? Seems to confuse something.
-	{
+	if( tmp & ( tmp - 1 ) ) { // not a power of two? Seems to confuse something.
 		int val = 1;
 		while( val < tmp )
 			val <<= 1;
 
 		val >>= 1;
-		if( verbose )
+		if( verbose ) {
 			Com_Printf( "WARNING: sdlmixsamps wasn't a power of two (%d), so we made it one (%d).\n", tmp, val );
+		}
 		tmp = val;
 	}
 
@@ -238,25 +240,26 @@ bool SNDDMA_Init( void *hwnd, bool verbose )
 	dmasize = ( dma.samples * ( dma.samplebits / 8 ) );
 	dma.buffer = calloc( 1, dmasize );
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "Starting SDL audio callback...\n" );
+	}
 	SDL_PauseAudio( 0 ); // start callback.
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "SDL audio initialized.\n" );
+	}
 	snd_inited = 1;
 	return true;
 }
 
-int SNDDMA_GetDMAPos( void )
-{
+int SNDDMA_GetDMAPos( void ) {
 	return dmapos / ( dma.samplebits / 8 );
 }
 
-void SNDDMA_Shutdown( bool verbose )
-{
-	if( verbose )
+void SNDDMA_Shutdown( bool verbose ) {
+	if( verbose ) {
 		Com_Printf( "Closing SDL audio device...\n" );
+	}
 
 	SDL_PauseAudio( 1 );
 	SDL_CloseAudio();
@@ -267,8 +270,9 @@ void SNDDMA_Shutdown( bool verbose )
 	dmapos = dmasize = 0;
 	snd_inited = 0;
 
-	if( verbose )
+	if( verbose ) {
 		Com_Printf( "SDL audio device shut down.\n" );
+	}
 }
 
 /*
@@ -278,12 +282,10 @@ void SNDDMA_Shutdown( bool verbose )
    Send sound to device if buffer isn't really the dma buffer
    ===============
  */
-void SNDDMA_Submit( void )
-{
+void SNDDMA_Submit( void ) {
 	SDL_UnlockAudio();
 }
 
-void SNDDMA_BeginPainting( void )
-{
+void SNDDMA_BeginPainting( void ) {
 	SDL_LockAudio();
 }

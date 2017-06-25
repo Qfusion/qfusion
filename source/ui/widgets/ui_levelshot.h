@@ -7,27 +7,27 @@
 
 namespace WSWUI
 {
-	/// A decorator over an image element for displaying
-	/// levelshots. The src attribute of this element only
-	/// needs to contain the name of the map.
-	/// If the appropriate levelshot is not found, a fallback
-	/// image is displayed.
-	class LevelShot : public ElementImage
-	{
-	public:
-		/// Initializes the levelshot element
-		explicit LevelShot(const Rocket::Core::String&);
-	
-		virtual void OnAttributeChange(const Rocket::Core::AttributeNameList&);
+/// A decorator over an image element for displaying
+/// levelshots. The src attribute of this element only
+/// needs to contain the name of the map.
+/// If the appropriate levelshot is not found, a fallback
+/// image is displayed.
+class LevelShot : public ElementImage
+{
+public:
+	/// Initializes the levelshot element
+	explicit LevelShot( const Rocket::Core::String& );
 
-	private:
-		/// Generates the path to the preview image from the given map name
-		static Rocket::Core::String getImagePath(const Rocket::Core::String&);
+	virtual void OnAttributeChange( const Rocket::Core::AttributeNameList& );
 
-		static shader_s *fallbackShader;
+private:
+	/// Generates the path to the preview image from the given map name
+	static Rocket::Core::String getImagePath( const Rocket::Core::String& );
 
-		bool srcProcessed;
-	};
+	static shader_s *fallbackShader;
+
+	bool srcProcessed;
+};
 }
 
 #endif // __UI_LEVELSHOT_H__

@@ -20,15 +20,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // stub out the matchmaker system
 
-void MM_Init( void )
-{
+void MM_Init( void ) {
 }
 
-void MM_Shutdown( void )
-{
+void MM_Shutdown( void ) {
 }
 
-void MM_Frame( int realmsec )
-{
+void MM_Frame( int realmsec ) {
 	(void)realmsec;
 }

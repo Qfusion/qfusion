@@ -33,9 +33,8 @@ cvar_t *tv_chasemode;
 
 #ifndef TV_MODULE_HARD_LINKED
 // this is only here so the functions in q_shared.c and q_math.c can link
-void Sys_Error( const char *format, ... )
-{
-	va_list	argptr;
+void Sys_Error( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -45,9 +44,8 @@ void Sys_Error( const char *format, ... )
 	trap_Error( msg );
 }
 
-void Com_Printf( const char *format, ... )
-{
-	va_list	argptr;
+void Com_Printf( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -63,9 +61,8 @@ void Com_Printf( const char *format, ... )
 /*
 * TVM_Printf
 */
-void TVM_Printf( const char *format, ... )
-{
-	va_list	argptr;
+void TVM_Printf( const char *format, ... ) {
+	va_list argptr;
 	char msg[1024];
 
 	va_start( argptr, format );
@@ -78,9 +75,8 @@ void TVM_Printf( const char *format, ... )
 /*
 * TVM_Error
 */
-void TVM_Error( const char *format, ... )
-{
-	va_list	argptr;
+void TVM_Error( const char *format, ... ) {
+	va_list argptr;
 	char msg[1024];
 
 	va_start( argptr, format );
@@ -93,9 +89,8 @@ void TVM_Error( const char *format, ... )
 /*
 * TVM_RelayError
 */
-void TVM_RelayError( tvm_relay_t *relay, const char *format, ... )
-{
-	va_list	argptr;
+void TVM_RelayError( tvm_relay_t *relay, const char *format, ... ) {
+	va_list argptr;
 	char msg[1024];
 
 	assert( relay );
@@ -112,16 +107,14 @@ void TVM_RelayError( tvm_relay_t *relay, const char *format, ... )
 /*
 * TVM_API
 */
-int TVM_API( void )
-{
+int TVM_API( void ) {
 	return TV_MODULE_API_VERSION;
 }
 
 /*
 * TVM_InitRelay
 */
-tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, int playernum )
-{
+tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, int playernum ) {
 	tvm_relay_t *relay;
 	int i;
 
@@ -148,7 +141,7 @@ tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, i
 		relay->edicts[i].relay = relay;
 
 	trap_LocateEntities( relay, relay->edicts, sizeof( relay->edicts[0] ), relay->numentities,
-		relay->maxentities );
+						 relay->maxentities );
 
 	// initialize local entities
 	relay->local_maxentities = MAX_EDICTS;
@@ -158,8 +151,7 @@ tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, i
 	relay->local_numentities = relay->local_maxclients;
 
 	// set relay and local
-	for( i = 0; i < relay->local_maxentities; i++ )
-	{
+	for( i = 0; i < relay->local_maxentities; i++ ) {
 		relay->local_edicts[i].local = true;
 		relay->local_edicts[i].relay = relay;
 	}
@@ -169,7 +161,7 @@ tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, i
 		relay->local_edicts[i].r.client = relay->local_clients + i;
 
 	trap_LocateLocalEntities( relay, relay->local_edicts, sizeof( relay->local_edicts[0] ), relay->local_numentities,
-		relay->local_maxclients );
+							  relay->local_maxclients );
 
 	return relay;
 }
@@ -177,8 +169,7 @@ tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, i
 /*
 * TVM_ShutdownRelay
 */
-void TVM_ShutdownRelay( tvm_relay_t *relay )
-{
+void TVM_ShutdownRelay( tvm_relay_t *relay ) {
 	assert( relay );
 
 	TVM_Printf( "==== TVM_ShutdownRelay ====\n" );
@@ -188,11 +179,10 @@ void TVM_ShutdownRelay( tvm_relay_t *relay )
 
 /*
 * TVM_Init
-* 
+*
 * This will be called when the dll is first loaded
 */
-void TVM_Init( const char *game, unsigned int maxclients )
-{
+void TVM_Init( const char *game, unsigned int maxclients ) {
 	TVM_Printf( "==== TVM_Init ====\n" );
 
 	developer = trap_Cvar_Get( "developer", "0", 0 );
@@ -207,7 +197,6 @@ void TVM_Init( const char *game, unsigned int maxclients )
 /*
 * TVM_Shutdown
 */
-void TVM_Shutdown( void )
-{
+void TVM_Shutdown( void ) {
 	TVM_Printf( "==== TVM_Shutdown ====\n" );
 }

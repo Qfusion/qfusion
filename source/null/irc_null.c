@@ -22,22 +22,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static bool connected_b = false;
 
-void Irc_Connect_f( void )
-{
+void Irc_Connect_f( void ) {
 }
 
-void Irc_Disconnect_f( void )
-{
+void Irc_Disconnect_f( void ) {
 }
 
-dynvar_get_status_t Irc_GetConnected_f( void **connected )
-{
+dynvar_get_status_t Irc_GetConnected_f( void **connected ) {
 	*connected = &connected_b;
 	return DYNVAR_GET_OK;
 }
 
-dynvar_set_status_t Irc_SetConnected_f( void *connected )
-{
+dynvar_set_status_t Irc_SetConnected_f( void *connected ) {
 	connected_b = false;
 	return DYNVAR_SET_OK;
 }

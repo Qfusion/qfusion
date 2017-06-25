@@ -22,15 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __VID_H__
 #define __VID_H__
 
-typedef struct
-{
+typedef struct {
 	unsigned width, height;             // coordinates from main game
 } viddef_t;
 
-extern viddef_t	viddef;             // global video state
+extern viddef_t viddef;             // global video state
 
-typedef struct
-{
+typedef struct {
 	int width, height;
 } vidmode_t;
 
@@ -45,11 +43,12 @@ void VID_FlashWindow( int count );
 bool VID_GetDefaultMode( int *width, int *height );
 unsigned int VID_GetSysModes( vidmode_t *modes );
 bool VID_GetModeInfo( int *width, int *height, unsigned int mode );
-void VID_AppActivate( bool active, bool destroy );
+void VID_AppActivate( bool active, bool minimize, bool destroy );
 bool VID_RefreshIsActive( void );
 bool VID_AppIsActive( void );
-int	VID_GetWindowWidth( void );
-int	VID_GetWindowHeight( void );
+bool VID_AppIsMinimized( void );
+int VID_GetWindowWidth( void );
+int VID_GetWindowHeight( void );
 float VID_GetPixelRatio( void );
 
 #endif

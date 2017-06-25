@@ -1,18 +1,17 @@
-#include "caching_game_allocator.h"
+#include "ai_caching_game_allocator.h"
 #include "ai_local.h"
 #include "ai_shutdown_hooks_holder.h"
 
 #define FANCY_TAG "CachedGameAllocator\"%s\"::"
 
-UntypedCachingGameAllocator::UntypedCachingGameAllocator( size_t elemSize_,
-														  const char *tag_,
-														  unsigned limit_, unsigned initialCacheSize )
-	: chunkSize( elemSize_ ), limit( limit_ ), tag( tag_ ? tag_ : "unknown tag" ) {
-	isCleared = false;
-	isInitialized = false;
-
-	cachedChunksCount = initialCacheSize;
-	usedChunksCount = 0;
+UntypedCachingGameAllocator::UntypedCachingGameAllocator( size_t elemSize,
+														  const char *tag,
+														  size_t limit, unsigned initialCacheSize )
+	: chunkSize( elemSize ), limit( limit ), tag( tag ), 
+	usedChunksCount( 0 ), cachedChunksCount( initialCacheSize ),
+	isInitialized( false ), isCleared( false ) {
+	if( this->tag == NULL )
+		this->tag = "unknown tag";
 }
 
 void UntypedCachingGameAllocator::Init() {

@@ -22,8 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __ADDON_TIME_H__
 #define __ADDON_TIME_H__
 
-typedef struct  
-{
+typedef struct {
 	time_t time;
 	struct tm localtime;
 } astime_t;

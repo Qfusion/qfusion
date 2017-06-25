@@ -22,21 +22,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qalgo/q_trie.h"
 #include "l10n.h"
 
-typedef struct
-{
+typedef struct {
 	trie_t *trie;
 	char *buffer;
 } podict_t;
 
-typedef struct pofile_s
-{
+typedef struct pofile_s {
 	char *path;
 	podict_t *dict;
 	struct pofile_s *next;
 } pofile_t;
 
-typedef struct podomain_s
-{
+typedef struct podomain_s {
 	char *name;
 	pofile_t *pofiles_head;
 	struct podomain_s *next;
@@ -53,17 +50,16 @@ static podomain_t *podomains_head;
 static const char * podomain_common_name = "common";
 static podomain_t *podomain_common;
 
-#define L10n_Malloc(size) _Mem_Alloc( pomempool, size, 0, 0, __FILE__, __LINE__ )
-#define L10n_Free(data) _Mem_Free( data, 0, 0, __FILE__, __LINE__ )
-#define L10n_CopyString(string) _Mem_CopyString( pomempool, string, __FILE__, __LINE__ )
+#define L10n_Malloc( size ) _Mem_Alloc( pomempool, size, 0, 0, __FILE__, __LINE__ )
+#define L10n_Free( data ) _Mem_Free( data, 0, 0, __FILE__, __LINE__ )
+#define L10n_CopyString( string ) _Mem_CopyString( pomempool, string, __FILE__, __LINE__ )
 
 // ============================================================================
 
 /*
 * L10n_ParsePOString
 */
-static size_t L10n_ParsePOString( char *instr, char *outstr, bool *err )
-{
+static size_t L10n_ParsePOString( char *instr, char *outstr, bool *err ) {
 	int i;
 	char *q1, *q2;
 	char *outstart = outstr;
@@ -91,14 +87,13 @@ static size_t L10n_ParsePOString( char *instr, char *outstr, bool *err )
 		}
 		q1++;
 		*q2 = '\0';
-	}
-	else {
+	} else {
 		if( ( q1 && !q2 ) || ( !q1 && q2 ) ) {
 			*err = true;
 			return 0;
 		}
 		// no quotes
-		for( q1 = instr; *q1 == ' ' || *q1 == '\t'; q1++ );
+		for( q1 = instr; *q1 == ' ' || *q1 == '\t'; q1++ ) ;
 	}
 
 	// skip empty lines
@@ -110,12 +105,13 @@ static size_t L10n_ParsePOString( char *instr, char *outstr, bool *err )
 		char num;
 		char c = *instr;
 
-		switch (c) {
+		switch( c ) {
 			case '\\':
-				c = *(++instr);
-				if (!c)
+				c = *( ++instr );
+				if( !c ) {
 					break;
-				switch (c) {
+				}
+				switch( c ) {
 					case 'a':
 						*outstr++ = '\a';
 						break;
@@ -141,13 +137,13 @@ static size_t L10n_ParsePOString( char *instr, char *outstr, bool *err )
 						// hexadecimals
 						num = 0;
 						for( i = 0; i < 2; i++ ) {
-							c = *(++instr);
+							c = *( ++instr );
 							if( c >= '0' && c <= '9' ) {
-								num = (num << 4) | (c - '0');
+								num = ( num << 4 ) | ( c - '0' );
 							} else if( c >= 'a' && c <= 'f' ) {
-								num = (num << 4) | (c - 'a');
+								num = ( num << 4 ) | ( c - 'a' );
 							} else if( c >= 'A' && c <= 'F' ) {
-								num = (num << 4) | (c - 'A');
+								num = ( num << 4 ) | ( c - 'A' );
 							} else {
 								instr -= 2;
 								break;
@@ -161,9 +157,9 @@ static size_t L10n_ParsePOString( char *instr, char *outstr, bool *err )
 						if( c >= '0' && c <= '7' ) {
 							instr--;
 							for( i = 0; i < 3; i++ ) {
-								c = *(++instr);
+								c = *( ++instr );
 								if( c >= '0' && c <= '7' ) {
-									num = (num << 3) | (c - '0');
+									num = ( num << 3 ) | ( c - '0' );
 								} else {
 									instr -= 2;
 									break;
@@ -189,8 +185,7 @@ static size_t L10n_ParsePOString( char *instr, char *outstr, bool *err )
 * Doesn't allocate memory, writes to input buffer, which
 * should NOT be freed after calling this function.
 */
-static trie_t *L10n_ParsePOFile( const char *filepath, char *buffer, int length )
-{
+static trie_t *L10n_ParsePOFile( const char *filepath, char *buffer, int length ) {
 	int linenum = 0;
 	char *start = buffer, *end = buffer + length;
 	char *cur, *eol;
@@ -253,18 +248,16 @@ parse_cmd:
 			outstr = cur + 5;
 			msgid = outstr;
 			*msgid = '\0';
-		}
-		else if( have_msgid && !strncmp( cur, "msgstr ", 7 ) ) {
+		} else if( have_msgid && !strncmp( cur, "msgstr ", 7 ) ) {
 			have_msgstr = true;
 			instr = cur + 7;
 			outstr = cur + 6;
 			msgstr = outstr;
 			*msgstr = '\0';
-		}
-		else {
+		} else {
 			// multiline?
 			if( have_msgid || have_msgstr ) {
-				if( *cur != '"' || !strrchr( cur+1, '"') ) {
+				if( *cur != '"' || !strrchr( cur + 1, '"' ) ) {
 					if( have_msgstr ) {
 						Trie_Insert( dict, msgid, ( void * )msgstr );
 					}
@@ -284,11 +277,10 @@ parse_cmd:
 		if( !str_length ) {
 			have_msgid = have_msgstr = false;
 			if( error ) {
-				Com_Printf( S_COLOR_YELLOW "Error parsing line %i of %s: syntax error near '%s'\n", 
-					linenum, filepath, instr );
+				Com_Printf( S_COLOR_YELLOW "Error parsing line %i of %s: syntax error near '%s'\n",
+							linenum, filepath, instr );
 			}
-		}
-		else {
+		} else {
 			// shift the output buffer so that in case multiline string
 			// is ecountered it'll be properly appended
 			outstr += str_length;
@@ -305,8 +297,7 @@ parse_cmd:
 /*
 * L10n_LoadPODict
 */
-static podict_t *L10n_LoadPODict( const char *filepath )
-{
+static podict_t *L10n_LoadPODict( const char *filepath ) {
 	int file;
 	int length;
 	podict_t *podict;
@@ -329,8 +320,7 @@ static podict_t *L10n_LoadPODict( const char *filepath )
 /*
 * L10n_DestroyPODict
 */
-static void L10n_DestroyPODict( podict_t *podict )
-{
+static void L10n_DestroyPODict( podict_t *podict ) {
 	if( !podict ) {
 		return;
 	}
@@ -343,8 +333,7 @@ static void L10n_DestroyPODict( podict_t *podict )
 /*
 * L10n_CreatePOFile
 */
-static pofile_t *L10n_CreatePOFile( const char *filepath )
-{
+static pofile_t *L10n_CreatePOFile( const char *filepath ) {
 	size_t filepath_size = strlen( filepath ) + 1;
 	pofile_t *pofile;
 	pofile = ( pofile_t * )L10n_Malloc( sizeof( *pofile ) + filepath_size );
@@ -358,8 +347,7 @@ static pofile_t *L10n_CreatePOFile( const char *filepath )
 /*
 * L10n_DestroyPOFile
 */
-static void L10n_DestroyPOFile( pofile_t *pofile )
-{
+static void L10n_DestroyPOFile( pofile_t *pofile ) {
 	L10n_DestroyPODict( pofile->dict );
 	L10n_Free( pofile );
 }
@@ -367,8 +355,7 @@ static void L10n_DestroyPOFile( pofile_t *pofile )
 /*
 * L10n_FindPOFile
 */
-static pofile_t *L10n_FindPOFile( podomain_t *podomain, const char *filepath )
-{
+static pofile_t *L10n_FindPOFile( podomain_t *podomain, const char *filepath ) {
 	pofile_t *pofile;
 
 	if( !podomain ) {
@@ -387,8 +374,7 @@ static pofile_t *L10n_FindPOFile( podomain_t *podomain, const char *filepath )
 /*
 * L10n_FindPODomain
 */
-static podomain_t *L10n_FindPODomain( const char *name )
-{
+static podomain_t *L10n_FindPODomain( const char *name ) {
 	podomain_t *podomain;
 
 	if( !name ) {
@@ -407,8 +393,7 @@ static podomain_t *L10n_FindPODomain( const char *name )
 /*
 * L10n_CreatePODomain
 */
-static podomain_t *L10n_CreatePODomain( const char *name )
-{
+static podomain_t *L10n_CreatePODomain( const char *name ) {
 	size_t name_size = strlen( name ) + 1;
 	podomain_t *podomain;
 	podomain = ( podomain_t * )L10n_Malloc( sizeof( *podomain ) + name_size );
@@ -422,12 +407,10 @@ static podomain_t *L10n_CreatePODomain( const char *name )
 /*
 * L10n_ClearPODomain
 */
-static void L10n_ClearPODomain( podomain_t *podomain )
-{
+static void L10n_ClearPODomain( podomain_t *podomain ) {
 	pofile_t *pofile, *next;
-	
-	for( pofile = podomain->pofiles_head; pofile; pofile = next )
-	{
+
+	for( pofile = podomain->pofiles_head; pofile; pofile = next ) {
 		next = pofile->next;
 		L10n_DestroyPOFile( pofile );
 	}
@@ -437,8 +420,7 @@ static void L10n_ClearPODomain( podomain_t *podomain )
 /*
 * L10n_DestroyPODomain
 */
-static void L10n_DestroyPODomain( podomain_t *podomain )
-{
+static void L10n_DestroyPODomain( podomain_t *podomain ) {
 	L10n_ClearPODomain( podomain );
 	L10n_Free( podomain );
 }
@@ -446,18 +428,17 @@ static void L10n_DestroyPODomain( podomain_t *podomain )
 /*
 * L10n_GetUserLanguage
 */
-const char *L10n_GetUserLanguage( void )
-{
-	if( cl_lang->string[0] )
+const char *L10n_GetUserLanguage( void ) {
+	if( cl_lang->string[0] ) {
 		return cl_lang->string;
+	}
 	return posyslang;
 }
 
 /*
 * L10n_Init
 */
-void L10n_Init( void )
-{
+void L10n_Init( void ) {
 	const char *syslang;
 
 	podomains_head = NULL;
@@ -466,9 +447,9 @@ void L10n_Init( void )
 
 	cl_lang = Cvar_Get( "lang", "", CVAR_ARCHIVE
 #ifdef PUBLIC_BUILD
-		| CVAR_LATCH_VIDEO
+						| CVAR_LATCH_VIDEO
 #endif
-		);
+						);
 
 	syslang = Sys_GetPreferredLanguage();
 	if( !syslang || !syslang[0] ) {
@@ -480,8 +461,7 @@ void L10n_Init( void )
 /*
 * L10n_LoadLangPOFile_
 */
-static bool L10n_LoadLangPOFile_( podomain_t *podomain, const char *filepath, const char *lang )
-{
+static bool L10n_LoadLangPOFile_( podomain_t *podomain, const char *filepath, const char *lang ) {
 	pofile_t *pofile;
 	podict_t *pofile_dict;
 	char *tempfilename;
@@ -532,8 +512,7 @@ static bool L10n_LoadLangPOFile_( podomain_t *podomain, const char *filepath, co
 /*
 * L10n_LoadLangPOFile
 */
-void L10n_LoadLangPOFile( const char *domainname, const char *filepath )
-{
+void L10n_LoadLangPOFile( const char *domainname, const char *filepath ) {
 	podomain_t *podomain;
 	char lang[MAX_STRING_CHARS];
 
@@ -574,8 +553,7 @@ void L10n_LoadLangPOFile( const char *domainname, const char *filepath )
 /*
 * L10n_LookupString
 */
-const char *L10n_LookupString( const podomain_t *podomain, const char *string )
-{
+const char *L10n_LookupString( const podomain_t *podomain, const char *string ) {
 	const pofile_t *pofile;
 	const podict_t *dict;
 	char *result = NULL;
@@ -592,11 +570,10 @@ const char *L10n_LookupString( const podomain_t *podomain, const char *string )
 /*
 * L10n_TranslateString
 */
-const char *L10n_TranslateString( const char *domainname, const char *string )
-{
+const char *L10n_TranslateString( const char *domainname, const char *string ) {
 	const podomain_t *podomain;
 	const char *result;
-	
+
 	if( !string || !*string ) {
 		return string;
 	}
@@ -623,8 +600,7 @@ const char *L10n_TranslateString( const char *domainname, const char *string )
 /*
 * L10n_ClearDomain
 */
-void L10n_ClearDomain( const char *domainname )
-{
+void L10n_ClearDomain( const char *domainname ) {
 	podomain_t *podomain;
 
 	podomain = L10n_FindPODomain( domainname );
@@ -636,8 +612,7 @@ void L10n_ClearDomain( const char *domainname )
 /*
 * L10n_ClearDomains
 */
-void L10n_ClearDomains( void )
-{
+void L10n_ClearDomains( void ) {
 	podomain_t *podomain;
 
 	for( podomain = podomains_head; podomain; podomain = podomain->next ) {
@@ -648,12 +623,10 @@ void L10n_ClearDomains( void )
 /*
 * L10n_Shutdown
 */
-void L10n_Shutdown( void )
-{
+void L10n_Shutdown( void ) {
 	podomain_t *podomain, *next;
 
-	for( podomain = podomains_head; podomain; podomain = next )
-	{
+	for( podomain = podomains_head; podomain; podomain = next ) {
 		next = podomain->next;
 		L10n_DestroyPODomain( podomain );
 	}

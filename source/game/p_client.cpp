@@ -59,7 +59,7 @@ static void ClientObituary( edict_t *self, edict_t *inflictor, edict_t *attacker
 				G_Printf( "%s%s %s %s%s%s\n", self->r.client->netname, S_COLOR_WHITE, message,
 						  attacker->r.client->netname, S_COLOR_WHITE, message2 );
 			}
-		} else {    // suicide
+		} else {      // suicide
 			self->enemy = NULL;
 			if( dedicated->integer ) {
 				G_Printf( "%s %s%s\n", self->r.client->netname, S_COLOR_WHITE, message );
@@ -67,7 +67,7 @@ static void ClientObituary( edict_t *self, edict_t *inflictor, edict_t *attacker
 		}
 
 		G_Obituary( self, attacker, mod );
-	} else {    // wrong place, suicide, etc.
+	} else {      // wrong place, suicide, etc.
 		self->enemy = NULL;
 		if( dedicated->integer ) {
 			G_Printf( "%s %s%s\n", self->r.client->netname, S_COLOR_WHITE, message );
@@ -156,6 +156,7 @@ static void body_think( edict_t *self ) {
 	VectorClear( self->avelocity );
 	self->movetype = MOVETYPE_NONE;
 	self->think = NULL;
+
 	//memset( &self->snap, 0, sizeof(self->snap) );
 	GClip_UnlinkEntity( self );
 }
@@ -226,7 +227,6 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 	body->s.weapon = 0;
 
 	//copy player position and box size
-	VectorCopy( ent->s.old_origin, body->s.old_origin );
 	VectorCopy( ent->s.origin, body->s.origin );
 	VectorCopy( ent->s.origin, body->olds.origin );
 	VectorCopy( ent->r.mins, body->r.mins );
@@ -286,7 +286,7 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 		body->takedamage = DAMAGE_NO;
 		body->r.solid = SOLID_NOT;
 		body->nextThink = level.time + 500; // make damageable in 0.5 seconds
-	} else { // wasn't a player, just copy it's model
+	} else {   // wasn't a player, just copy it's model
 		VectorClear( body->velocity );
 		body->s.modelindex = ent->s.modelindex;
 		body->s.frame = ent->s.frame;
@@ -484,7 +484,6 @@ void G_GhostClient( edict_t *ent ) {
 void G_ClientRespawn( edict_t *self, bool ghost ) {
 	int i;
 	edict_t *spawnpoint;
-	vec3_t hull_mins, hull_maxs;
 	vec3_t spawn_origin, spawn_angles;
 	gclient_t *client;
 	int old_team;
@@ -568,13 +567,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	VectorClear( self->velocity );
 	VectorClear( self->avelocity );
 
-	VectorCopy( self->r.mins, hull_mins );
-	VectorCopy( self->r.maxs, hull_maxs );
-	trap_CM_RoundUpToHullSize( hull_mins, hull_maxs, NULL );
-	if( self->r.maxs[2] > hull_maxs[2] ) {
-		self->viewheight -= ( self->r.maxs[2] - hull_maxs[2] );
-	}
-
 	client->ps.POVnum = ENTNUM( self );
 
 	// set movement info
@@ -607,7 +599,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	SelectSpawnPoint( self, &spawnpoint, spawn_origin, spawn_angles );
 	VectorCopy( spawn_origin, client->ps.pmove.origin );
 	VectorCopy( spawn_origin, self->s.origin );
-	VectorCopy( self->s.origin, self->s.old_origin );
 
 	// set angles
 	self->s.angles[PITCH] = 0;
@@ -726,7 +717,6 @@ void G_TeleportPlayer( edict_t *player, edict_t *dest ) {
 	// update the entity from the pmove
 	VectorCopy( client->ps.viewangles, player->s.angles );
 	VectorCopy( client->ps.pmove.origin, player->s.origin );
-	VectorCopy( client->ps.pmove.origin, player->s.old_origin );
 	VectorCopy( client->ps.pmove.origin, player->olds.origin );
 	VectorCopy( client->ps.pmove.velocity, player->velocity );
 
@@ -1642,10 +1632,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 
 	if( !client->isTV ) {
 		pm.cmd = *ucmd;
-	}
-
-	if( memcmp( &client->old_pmove, &client->ps.pmove, sizeof( pmove_state_t ) ) ) {
-		pm.snapinitial = true;
 	}
 
 	// perform a pmove

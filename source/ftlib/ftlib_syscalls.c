@@ -24,11 +24,10 @@ ftlib_import_t FTLIB_IMPORT;
 
 /*
 * GetFTLibAPI
-* 
+*
 * Returns a pointer to the structure with all entry points
 */
-QF_DLL_EXPORT ftlib_export_t *GetFTLibAPI( ftlib_import_t *import )
-{
+QF_DLL_EXPORT ftlib_export_t *GetFTLibAPI( ftlib_import_t *import ) {
 	static ftlib_export_t globals;
 
 	FTLIB_IMPORT = *import;
@@ -43,7 +42,7 @@ QF_DLL_EXPORT ftlib_export_t *GetFTLibAPI( ftlib_import_t *import )
 	globals.TouchFont = &FTLIB_TouchFont;
 	globals.TouchAllFonts = &FTLIB_TouchAllFonts;
 	globals.FreeFonts = &FTLIB_FreeFonts;
-	
+
 	globals.FontSize = &FTLIB_FontSize;
 	globals.FontHeight = &FTLIB_FontHeight;
 	globals.StringWidth = &FTLIB_strWidth;
@@ -62,8 +61,7 @@ QF_DLL_EXPORT ftlib_export_t *GetFTLibAPI( ftlib_import_t *import )
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( FTLIB_HARD_LINKED )
-int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
-{
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved ) {
 	return 1;
 }
 #endif

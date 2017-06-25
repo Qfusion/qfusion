@@ -26,13 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void TVM_SpectatorMode( edict_t *ent );
 
-static void TVM_Chase_SetChaseActive( edict_t *ent, bool active )
-{
+static void TVM_Chase_SetChaseActive( edict_t *ent, bool active ) {
 	ent->r.client->chase.active = active;
 }
 
-static void TVM_GhostClient( edict_t *ent )
-{
+static void TVM_GhostClient( edict_t *ent ) {
 	ent->movetype = MOVETYPE_NONE;
 	ent->r.solid = SOLID_NOT;
 
@@ -54,24 +52,25 @@ static void TVM_GhostClient( edict_t *ent )
 /*
 * TVM_CanChase
 */
-static bool TVM_Chase_IsValidTarget( edict_t *ent, edict_t *target )
-{
+static bool TVM_Chase_IsValidTarget( edict_t *ent, edict_t *target ) {
 	assert( ent && ent->local && ent->r.client );
 
-	if( !ent || !target )
+	if( !ent || !target ) {
 		return false;
+	}
 
-	if( !target->r.inuse || target->local || !target->r.client )
+	if( !target->r.inuse || target->local || !target->r.client ) {
 		return false;
+	}
 
-	if( target->s.team <= 0 ) // skip spectator team
+	if( target->s.team <= 0 ) { // skip spectator team
 		return false;
+	}
 
 	return true;
 }
 
-static int TVM_Chase_FindFollowPOV( edict_t *ent )
-{
+static int TVM_Chase_FindFollowPOV( edict_t *ent ) {
 	int i, j;
 	int quad, warshell, regen, scorelead;
 	int maxteam;
@@ -86,8 +85,9 @@ static int TVM_Chase_FindFollowPOV( edict_t *ent )
 	static unsigned int pwupswitchTime = 0;
 #define CARRIERSWITCHDELAY 8000
 
-	if( !ent->r.client || !ent->r.client->chase.active || !ent->r.client->chase.followmode )
+	if( !ent->r.client || !ent->r.client->chase.active || !ent->r.client->chase.followmode ) {
 		return newpov;
+	}
 
 	// follow killer
 	if( ent->r.client->chase.followmode & 8 ) {
@@ -109,41 +109,45 @@ static int TVM_Chase_FindFollowPOV( edict_t *ent )
 	newctfpov = newpoweruppov = -1;
 	maxteam = 0;
 
-	for( i = 1; PLAYERNUM( (relay->edicts + i) ) < relay->maxclients; i++ )
-	{
+	for( i = 1; PLAYERNUM( ( relay->edicts + i ) ) < relay->maxclients; i++ ) {
 		target = relay->edicts + i;
 
-		if( !TVM_Chase_IsValidTarget( ent, target ) )
-		{
+		if( !TVM_Chase_IsValidTarget( ent, target ) ) {
 			// check if old targets are still valid
-			if( ctfpov == ENTNUM( target ) )
+			if( ctfpov == ENTNUM( target ) ) {
 				ctfpov = -1;
-			if( poweruppov == ENTNUM( target ) )
+			}
+			if( poweruppov == ENTNUM( target ) ) {
 				poweruppov = -1;
+			}
 			continue;
 		}
-		if( target->s.team <= 0 || target->s.team >= sizeof( flags ) / sizeof( flags[0] ) )
+		if( target->s.team <= 0 || target->s.team >= sizeof( flags ) / sizeof( flags[0] ) ) {
 			continue;
-		if( ent->r.client->chase.teamonly && ent->s.team != target->s.team )
+		}
+		if( ent->r.client->chase.teamonly && ent->s.team != target->s.team ) {
 			continue;
+		}
 
-		if( target->s.effects & relay->effects.quad )
+		if( target->s.effects & relay->effects.quad ) {
 			quad = ENTNUM( target );
-		if( target->s.effects & relay->effects.shell )
+		}
+		if( target->s.effects & relay->effects.shell ) {
 			warshell = ENTNUM( target );
-		if( target->s.effects & relay->effects.regen )
+		}
+		if( target->s.effects & relay->effects.regen ) {
 			regen = ENTNUM( target );
+		}
 
-		if( target->s.team && (target->s.effects & relay->effects.enemy_flag) )
-		{
-			if( target->s.team > maxteam )
+		if( target->s.team && ( target->s.effects & relay->effects.enemy_flag ) ) {
+			if( target->s.team > maxteam ) {
 				maxteam = target->s.team;
-			flags[target->s.team-1] = ENTNUM( target );
+			}
+			flags[target->s.team - 1] = ENTNUM( target );
 		}
 
 		// find the scoring leader
-		if( target->r.client->ps.stats[relay->stats.frags] > score_max )
-		{
+		if( target->r.client->ps.stats[relay->stats.frags] > score_max ) {
 			score_max = target->r.client->ps.stats[relay->stats.frags];
 			scorelead = ENTNUM( target );
 		}
@@ -151,37 +155,35 @@ static int TVM_Chase_FindFollowPOV( edict_t *ent )
 
 	// do some categorization
 
-	for( i = 0; i < maxteam; i++ )
-	{
-		if( flags[i] == -1 )
+	for( i = 0; i < maxteam; i++ ) {
+		if( flags[i] == -1 ) {
 			continue;
+		}
 
 		// default new ctfpov to the first flag carrier
-		if( newctfpov == -1 )
+		if( newctfpov == -1 ) {
 			newctfpov = flags[i];
-		else
+		} else {
 			break;
+		}
 	}
 
 	// do we have more than one flag carrier?
-	if( i < maxteam )
-	{
+	if( i < maxteam ) {
 		// default to old ctfpov
-		if( ctfpov >= 0 )
+		if( ctfpov >= 0 ) {
 			newctfpov = ctfpov;
-		if( ctfpov < 0 || relay->serverTime > flagswitchTime )
-		{
+		}
+		if( ctfpov < 0 || relay->serverTime > flagswitchTime ) {
 			// alternate between flag carriers
-			for( i = 0; i < maxteam; i++ )
-			{
-				if( flags[i] != ctfpov )
+			for( i = 0; i < maxteam; i++ ) {
+				if( flags[i] != ctfpov ) {
 					continue;
+				}
 
-				for( j = 0; j < maxteam-1; j++ )
-				{
-					if( flags[(i+j+1)%maxteam] != -1 )
-					{
-						newctfpov = flags[(i+j+1)%maxteam];
+				for( j = 0; j < maxteam - 1; j++ ) {
+					if( flags[( i + j + 1 ) % maxteam] != -1 ) {
+						newctfpov = flags[( i + j + 1 ) % maxteam];
 						break;
 					}
 				}
@@ -189,59 +191,55 @@ static int TVM_Chase_FindFollowPOV( edict_t *ent )
 			}
 		}
 
-		if( newctfpov != ctfpov )
-		{
+		if( newctfpov != ctfpov ) {
 			ctfpov = newctfpov;
 			flagswitchTime = relay->serverTime + CARRIERSWITCHDELAY;
 		}
-	}
-	else
-	{
+	} else {
 		ctfpov = newctfpov;
 		flagswitchTime = 0;
 	}
 
-	if( quad != -1 && warshell != -1 && quad != warshell )
-	{
+	if( quad != -1 && warshell != -1 && quad != warshell ) {
 		// default to old powerup
-		if( poweruppov >= 0 )
+		if( poweruppov >= 0 ) {
 			newpoweruppov = poweruppov;
-		if( poweruppov < 0 || relay->serverTime > pwupswitchTime )
-		{
-			if( poweruppov == quad )
+		}
+		if( poweruppov < 0 || relay->serverTime > pwupswitchTime ) {
+			if( poweruppov == quad ) {
 				newpoweruppov = warshell;
-			else if( poweruppov == warshell )
+			} else if( poweruppov == warshell ) {
 				newpoweruppov = quad;
-			else 
+			} else {
 				newpoweruppov = ( rand() & 1 ) ? quad : warshell;
+			}
 		}
 
-		if( poweruppov != newpoweruppov )
-		{
+		if( poweruppov != newpoweruppov ) {
 			poweruppov = newpoweruppov;
 			pwupswitchTime = relay->serverTime + CARRIERSWITCHDELAY;
 		}
-	}
-	else
-	{
-		if( quad != -1 )
+	} else {
+		if( quad != -1 ) {
 			newpoweruppov = quad;
-		else if( warshell != -1 )
+		} else if( warshell != -1 ) {
 			newpoweruppov = warshell;
-		else if( regen != -1 )
+		} else if( regen != -1 ) {
 			newpoweruppov = regen;
+		}
 
 		poweruppov = newpoweruppov;
 		pwupswitchTime = 0;
 	}
 
 	// so, we got all, select what we prefer to show
-	if( ctfpov != -1 && ( ent->r.client->chase.followmode & 4 ) )
+	if( ctfpov != -1 && ( ent->r.client->chase.followmode & 4 ) ) {
 		newpov = ctfpov;
-	else if( poweruppov != -1 && ( ent->r.client->chase.followmode & 2 ) )
+	} else if( poweruppov != -1 && ( ent->r.client->chase.followmode & 2 ) ) {
 		newpov = poweruppov;
-	else if( scorelead != -1 && ( ent->r.client->chase.followmode & 1 ) )
+	} else if( scorelead != -1 && ( ent->r.client->chase.followmode & 1 ) ) {
 		newpov = scorelead;
+	}
 
 	return newpov;
 #undef CARRIERSWITCHDELAY
@@ -250,30 +248,33 @@ static int TVM_Chase_FindFollowPOV( edict_t *ent )
 /*
 * TVM_ChaseClientEndSnapFrame
 */
-void TVM_ChaseClientEndSnapFrame( edict_t *ent )
-{
+void TVM_ChaseClientEndSnapFrame( edict_t *ent ) {
 	edict_t *target;
 	int i, followpov;
 
 	assert( ent && ent->local && ent->r.client );
 	assert( ent->r.client->chase.active );
 
-	if( ( followpov = TVM_Chase_FindFollowPOV( ent ) ) != -1 )
+	if( ( followpov = TVM_Chase_FindFollowPOV( ent ) ) != -1 ) {
 		ent->r.client->chase.target = followpov;
-
-	target = NULL;
-	for( i = 0; i < 2 && !target; i++ )
-	{
-		if( i )
-			TVM_ChasePlayer( ent, NULL, 0 );
-		if( ent->r.client->chase.target > 0 && ent->r.client->chase.target <= ent->relay->maxclients )
-			target = ent->relay->edicts + ent->r.client->chase.target;
-		if( target && !TVM_Chase_IsValidTarget( ent, target ) )
-			target = NULL;
 	}
 
-	if( !target )
+	target = NULL;
+	for( i = 0; i < 2 && !target; i++ ) {
+		if( i ) {
+			TVM_ChasePlayer( ent, NULL, 0 );
+		}
+		if( ent->r.client->chase.target > 0 && ent->r.client->chase.target <= ent->relay->maxclients ) {
+			target = ent->relay->edicts + ent->r.client->chase.target;
+		}
+		if( target && !TVM_Chase_IsValidTarget( ent, target ) ) {
+			target = NULL;
+		}
+	}
+
+	if( !target ) {
 		return;
+	}
 
 	// copy target playerState to me
 	ent->r.client->ps = target->r.client->ps;
@@ -288,8 +289,7 @@ void TVM_ChaseClientEndSnapFrame( edict_t *ent )
 	GClip_LinkEntity( ent->relay, ent );
 }
 
-void TVM_ChasePlayer( edict_t *ent, char *name, int followmode )
-{
+void TVM_ChasePlayer( edict_t *ent, char *name, int followmode ) {
 	int i;
 	edict_t *e;
 	gclient_t *client;
@@ -301,70 +301,68 @@ void TVM_ChasePlayer( edict_t *ent, char *name, int followmode )
 	client = ent->r.client;
 
 	oldTarget = client->chase.target;
-	if( oldTarget < 0 )
+	if( oldTarget < 0 ) {
 		oldTarget = 0;
+	}
 
-	if( !can_follow && followmode )
-	{
+	if( !can_follow && followmode ) {
 		TVM_PrintMsg( ent->relay, ent, "Chasecam follow mode unavailable\n" );
 		followmode = false;
 	}
 
-	if( ent->r.client->chase.followmode && !followmode )
+	if( ent->r.client->chase.followmode && !followmode ) {
 		TVM_PrintMsg( ent->relay, ent, "Disabling chasecam follow mode\n" );
+	}
 
 	// always disable chasing as a start
 	memset( &client->chase, 0, sizeof( chasecam_t ) );
 
 	// locate the requested target
-	if( name && name[0] )
-	{
+	if( name && name[0] ) {
 		// find it by player names
-		for( e = ent->relay->edicts + 1; PLAYERNUM( e ) < ent->relay->maxclients; e++ )
-		{
-			if( !TVM_Chase_IsValidTarget( ent, e ) )
+		for( e = ent->relay->edicts + 1; PLAYERNUM( e ) < ent->relay->maxclients; e++ ) {
+			if( !TVM_Chase_IsValidTarget( ent, e ) ) {
 				continue;
+			}
 
-			Q_strncpyz( colorlessname, COM_RemoveColorTokens( e->r.client->pers.netname ), sizeof(colorlessname) );
+			Q_strncpyz( colorlessname, COM_RemoveColorTokens( e->r.client->pers.netname ), sizeof( colorlessname ) );
 
-			if( !Q_stricmp( COM_RemoveColorTokens( name ), colorlessname ) )
-			{
+			if( !Q_stricmp( COM_RemoveColorTokens( name ), colorlessname ) ) {
 				targetNum = PLAYERNUM( e );
 				break;
 			}
 		}
 
 		// didn't find it by name, try by numbers
-		if( targetNum == -1 )
-		{
+		if( targetNum == -1 ) {
 			i = atoi( name );
-			if( i >= 0 && i < ent->relay->maxclients )
-			{
+			if( i >= 0 && i < ent->relay->maxclients ) {
 				e = ent->relay->edicts + 1 + i;
-				if( TVM_Chase_IsValidTarget( ent, e ) )
+				if( TVM_Chase_IsValidTarget( ent, e ) ) {
 					targetNum = PLAYERNUM( e );
+				}
 			}
 		}
 
-		if( targetNum == -1 )
+		if( targetNum == -1 ) {
 			TVM_PrintMsg( ent->relay, ent, "Requested chasecam target is not available\n" );
+		}
 	}
 
 	// try to reuse old target if we didn't find a valid one
-	if( targetNum == -1 && oldTarget > 0 && oldTarget <= ent->relay->maxclients )
-	{
+	if( targetNum == -1 && oldTarget > 0 && oldTarget <= ent->relay->maxclients ) {
 		e = ent->relay->edicts + 1 + oldTarget;
-		if( TVM_Chase_IsValidTarget( ent, e ) )
+		if( TVM_Chase_IsValidTarget( ent, e ) ) {
 			targetNum = PLAYERNUM( e );
+		}
 	}
 
 	// if we still don't have a target, just pick the first valid one
-	if( targetNum == -1 )
-	{
-		for( e = ent->relay->edicts + 1; PLAYERNUM( e ) < ent->relay->maxclients; e++ )
-		{
-			if( !TVM_Chase_IsValidTarget( ent, e ) )
+	if( targetNum == -1 ) {
+		for( e = ent->relay->edicts + 1; PLAYERNUM( e ) < ent->relay->maxclients; e++ ) {
+			if( !TVM_Chase_IsValidTarget( ent, e ) ) {
 				continue;
+			}
 
 			targetNum = PLAYERNUM( e );
 			break;
@@ -373,15 +371,12 @@ void TVM_ChasePlayer( edict_t *ent, char *name, int followmode )
 
 	// make the client a ghost
 	TVM_GhostClient( ent );
-	if( targetNum != -1 )
-	{
+	if( targetNum != -1 ) {
 		// we found a target, set up the chasecam
 		client->chase.target = targetNum + 1;
 		client->chase.followmode = followmode;
 		TVM_Chase_SetChaseActive( ent, true );
-	}
-	else
-	{
+	} else {
 		// stay as observer
 		ent->movetype = MOVETYPE_NOCLIP;
 		TVM_SpectatorMode( ent );
@@ -393,11 +388,10 @@ void TVM_ChasePlayer( edict_t *ent, char *name, int followmode )
 * TVM_ChaseChange
 * Can be called when no chase target set, will then find from beginning or end (depending on the step)
 */
-static void TVM_ChaseChange( edict_t *ent, int step )
-{
+static void TVM_ChaseChange( edict_t *ent, int step ) {
 	int i, j;
 	int maxClients;
-	edict_t	*newtarget = NULL;
+	edict_t *newtarget = NULL;
 	int start;
 
 	assert( ent && ent->local && ent->r.client );
@@ -405,56 +399,56 @@ static void TVM_ChaseChange( edict_t *ent, int step )
 
 	maxClients = ent->relay->maxclients;
 
-	if( !maxClients )
+	if( !maxClients ) {
 		return;
+	}
 
-	if( !ent->r.client->chase.active )
+	if( !ent->r.client->chase.active ) {
 		return;
+	}
 
 	i = start = ent->r.client->chase.target;
 
-	if( step == 0 )
-	{
-		if( TVM_Chase_IsValidTarget( ent, ent->relay->edicts + i ) )
+	if( step == 0 ) {
+		if( TVM_Chase_IsValidTarget( ent, ent->relay->edicts + i ) ) {
 			newtarget = ent->relay->edicts + i;
-		else
+		} else {
 			step = 1;
+		}
 	}
 
-	if( !newtarget )
-	{
-		for( j = 0; j < maxClients; j++ )
-		{
+	if( !newtarget ) {
+		for( j = 0; j < maxClients; j++ ) {
 			i += step;
-			if( i < 1 )
+			if( i < 1 ) {
 				i = maxClients;
-			else if( i > maxClients )
+			} else if( i > maxClients ) {
 				i = 1;
-			if( i == start )
+			}
+			if( i == start ) {
 				break;
-			if( TVM_Chase_IsValidTarget( ent, ent->relay->edicts + i ) )
-			{	
+			}
+			if( TVM_Chase_IsValidTarget( ent, ent->relay->edicts + i ) ) {
 				newtarget = ent->relay->edicts + i;
 				break;
 			}
 		}
 	}
 
-	if( newtarget )
-	{
-		TVM_ChasePlayer( ent, va( "%i", PLAYERNUM(newtarget) ), ent->r.client->chase.followmode );
+	if( newtarget ) {
+		TVM_ChasePlayer( ent, va( "%i", PLAYERNUM( newtarget ) ), ent->r.client->chase.followmode );
 	}
 }
 
 /*
 * TVM_Cmd_ChaseNext
 */
-void TVM_Cmd_ChaseNext( edict_t *ent )
-{
+void TVM_Cmd_ChaseNext( edict_t *ent ) {
 	assert( ent && ent->local && ent->r.client );
 
-	if( !ent->r.client->chase.active )
+	if( !ent->r.client->chase.active ) {
 		return;
+	}
 
 	TVM_ChaseChange( ent, 1 );
 }
@@ -462,12 +456,12 @@ void TVM_Cmd_ChaseNext( edict_t *ent )
 /*
 * TVM_Cmd_ChasePrev
 */
-void TVM_Cmd_ChasePrev( edict_t *ent )
-{
+void TVM_Cmd_ChasePrev( edict_t *ent ) {
 	assert( ent && ent->local && ent->r.client );
 
-	if( !ent->r.client->chase.active )
+	if( !ent->r.client->chase.active ) {
 		return;
+	}
 
 	TVM_ChaseChange( ent, -1 );
 }
@@ -475,8 +469,7 @@ void TVM_Cmd_ChasePrev( edict_t *ent )
 /*
 * TVM_SpectatorMode
 */
-static void TVM_SpectatorMode( edict_t *ent )
-{
+static void TVM_SpectatorMode( edict_t *ent ) {
 	assert( ent && ent->local && ent->r.client );
 
 	// was in chasecam
@@ -489,8 +482,7 @@ static void TVM_SpectatorMode( edict_t *ent )
 /*
 * TVM_Cmd_ChaseCam
 */
-void TVM_Cmd_ChaseCam( edict_t *ent )
-{
+void TVM_Cmd_ChaseCam( edict_t *ent ) {
 	const char *arg1;
 
 	assert( ent && ent->local && ent->r.client );
@@ -501,42 +493,27 @@ void TVM_Cmd_ChaseCam( edict_t *ent )
 	// & 8 = fragger
 
 	arg1 = trap_Cmd_Argv( 1 );
-	if( trap_Cmd_Argc() < 2 )
-	{
+	if( trap_Cmd_Argc() < 2 ) {
 		TVM_ChasePlayer( ent, NULL, 0 );
-	}
-	else if( !Q_stricmp( arg1, "auto" ) )
-	{
+	} else if( !Q_stricmp( arg1, "auto" ) ) {
 		TVM_PrintMsg( ent->relay, ent, "Chasecam mode is 'auto'. It will follow the score leader when no powerup nor flag is carried.\n" );
 		TVM_ChasePlayer( ent, NULL, 7 );
-	}
-	else if( !Q_stricmp( arg1, "carriers" ) )
-	{
+	} else if( !Q_stricmp( arg1, "carriers" ) ) {
 		TVM_PrintMsg( ent->relay, ent, "Chasecam mode is 'carriers'. It will switch to flag or powerup carriers when any of these items is picked up.\n" );
 		TVM_ChasePlayer( ent, NULL, 6 );
-	}
-	else if( !Q_stricmp( arg1, "powerups" ) )
-	{
+	} else if( !Q_stricmp( arg1, "powerups" ) ) {
 		TVM_PrintMsg( ent->relay, ent, "Chasecam mode is 'powerups'. It will switch to powerup carriers when any of these items is picked up.\n" );
 		TVM_ChasePlayer( ent, NULL, 2 );
-	}
-	else if( !Q_stricmp( arg1, "objectives" ) )
-	{
+	} else if( !Q_stricmp( arg1, "objectives" ) ) {
 		TVM_PrintMsg( ent->relay, ent, "Chasecam mode is 'objectives'. It will switch to flag carriers when any of these items is picked up.\n" );
 		TVM_ChasePlayer( ent, NULL, 4 );
-	}
-	else if( !Q_stricmp( arg1, "score" ) )
-	{
+	} else if( !Q_stricmp( arg1, "score" ) ) {
 		TVM_PrintMsg( ent->relay, ent, "Chasecam mode is 'score'. It will always follow the highest fragger.\n" );
 		TVM_ChasePlayer( ent, NULL, 1 );
-	}
-	else if( !Q_stricmp( arg1, "fragger" ) )
-	{
+	} else if( !Q_stricmp( arg1, "fragger" ) ) {
 		TVM_PrintMsg( ent->relay, ent, "Chasecam mode is 'fragger'. The last fragging player will be followed.\n" );
 		TVM_ChasePlayer( ent, NULL, 8 );
-	}
-	else if( !Q_stricmp( arg1, "help" ) )
-	{
+	} else if( !Q_stricmp( arg1, "help" ) ) {
 		TVM_PrintMsg( ent->relay, ent, "Chasecam modes:\n" );
 		TVM_PrintMsg( ent->relay, ent, "- 'auto': Chase the score leader unless there's an objective carrier or a powerup carrier.\n" );
 		TVM_PrintMsg( ent->relay, ent, "- 'carriers': User has pov control unless there's an objective carrier or a powerup carrier.\n" );
@@ -544,9 +521,7 @@ void TVM_Cmd_ChaseCam( edict_t *ent )
 		TVM_PrintMsg( ent->relay, ent, "- 'powerups': User has pov control unless there's a powerup carrier.\n" );
 		TVM_PrintMsg( ent->relay, ent, "- 'score': Always follow the score leader. User has no pov control.\n" );
 		TVM_PrintMsg( ent->relay, ent, "- 'none': Disable chasecam.\n" );
-	}
-	else
-	{
+	} else {
 		TVM_ChasePlayer( ent, trap_Cmd_Argv( 1 ), 0 );
 	}
 }
@@ -554,20 +529,15 @@ void TVM_Cmd_ChaseCam( edict_t *ent )
 /*
 * TVM_Cmd_SwitchChaseCamMode - Used by cgame for switching mode when clicking the mouse button
 */
-void TVM_Cmd_SwitchChaseCamMode( edict_t *ent )
-{
+void TVM_Cmd_SwitchChaseCamMode( edict_t *ent ) {
 	assert( ent && ent->local && ent->r.client );
 
-	if( ent->r.client->chase.active )
-	{
+	if( ent->r.client->chase.active ) {
 		// avoid freefly during demo playback at all costs
-		if( !(ent->relay->playernum < 0) )
+		if( !( ent->relay->playernum < 0 ) ) {
 			TVM_SpectatorMode( ent );
-	}
-	else
-	{
+		}
+	} else {
 		TVM_ChasePlayer( ent, NULL, ent->r.client->chase.followmode );
 	}
 }
-
-

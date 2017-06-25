@@ -5,7 +5,8 @@
 
 #include "asui_local.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 typedef Rocket::Core::URL RocketURL;
 
@@ -19,7 +20,7 @@ public:
 	ASURL( const ASURL &other );
 
 	/// Assignment operator, required by the AS.
-	ASURL &operator = ( const ASURL &other );
+	ASURL &operator =( const ASURL &other );
 
 	/// Returns the entire URL string.
 	asstring_t *GetURL( void ) const;

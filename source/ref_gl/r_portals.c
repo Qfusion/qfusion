@@ -25,23 +25,55 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal );
 /*
 * R_AddPortalSurface
 */
-portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh, 
-	const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf )
-{
+portalSurface_t *R_AddPortalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf ) {
+	portalSurface_t *portalSurface;
+	bool depthPortal;
+
+	if( !shader ) {
+		return NULL;
+	}
+
+	depthPortal = !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) );
+	if( R_FASTSKY() && depthPortal ) {
+		return NULL;
+	}
+
+	if( rn.numPortalSurfaces == MAX_PORTAL_SURFACES ) {
+		// not enough space
+		return NULL;
+	}
+
+	portalSurface = &rn.portalSurfaces[rn.numPortalSurfaces++];
+	memset( portalSurface, 0, sizeof( portalSurface_t ) );
+	portalSurface->entity = ent;
+	portalSurface->shader = shader;
+	portalSurface->skyPortal = NULL;
+	ClearBounds( portalSurface->mins, portalSurface->maxs );
+	memset( portalSurface->texures, 0, sizeof( portalSurface->texures ) );
+
+	if( depthPortal ) {
+		rn.numDepthPortalSurfaces++;
+	}
+
+	return portalSurface;
+}
+
+/*
+* R_UpdatePortalSurface
+*/
+void R_UpdatePortalSurface( portalSurface_t *portalSurface, const mesh_t *mesh,
+									 const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf ) {
 	unsigned int i;
 	float dist;
 	cplane_t plane, untransformed_plane;
 	vec3_t v[3];
-	portalSurface_t *portalSurface;
-	bool depthPortal = !( shader->flags & (SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2) );
+	const entity_t *ent;
 
-	if( !mesh || !shader ) {
-		return NULL;
+	if( !mesh || !portalSurface ) {
+		return;
 	}
 
-	if( R_FASTSKY() && depthPortal ) {
-		return NULL;
-	}
+	ent = portalSurface->entity;
 
 	for( i = 0; i < 3; i++ ) {
 		VectorCopy( mesh->xyzArray[mesh->elems[i]], v[i] );
@@ -52,13 +84,12 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 	untransformed_plane.dist += 1; // nudge along the normal a bit
 	CategorizePlane( &untransformed_plane );
 
-	if( shader->flags & SHADER_AUTOSPRITE )
-	{
+	if( shader->flags & SHADER_AUTOSPRITE ) {
 		vec3_t centre;
 
 		// autosprites are quads, facing the viewer
 		if( mesh->numVerts < 4 ) {
-			return NULL;
+			return;
 		}
 
 		// compute centre as average of 4 vertices
@@ -70,37 +101,31 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 		VectorNegate( &rn.viewAxis[AXIS_FORWARD], plane.normal );
 		plane.dist = DotProduct( plane.normal, centre );
 		CategorizePlane( &plane );
-	}
-	else
-	{
+	} else {
 		vec3_t temp;
 		mat3_t entity_rotation;
 
 		// regular surfaces
-		if( !Matrix3_Compare( ent->axis, axis_identity ) )
-		{
+		if( !Matrix3_Compare( ent->axis, axis_identity ) ) {
 			Matrix3_Transpose( ent->axis, entity_rotation );
 
 			for( i = 0; i < 3; i++ ) {
 				VectorCopy( v[i], temp );
-				Matrix3_TransformVector( entity_rotation, temp, v[i] ); 
+				Matrix3_TransformVector( entity_rotation, temp, v[i] );
 				VectorMA( ent->origin, ent->scale, v[i], v[i] );
 			}
 
 			PlaneFromPoints( v, &plane );
 			CategorizePlane( &plane );
-		}
-		else
-		{
+		} else {
 			plane = untransformed_plane;
 		}
 	}
 
-	if( ( dist = PlaneDiff( rn.viewOrigin, &plane ) ) <= BACKFACE_EPSILON )
-	{
+	if( ( dist = PlaneDiff( rn.viewOrigin, &plane ) ) <= BACKFACE_EPSILON ) {
 		// behind the portal plane
 		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) ) {
-			return NULL;
+			return;
 		}
 
 		// we need to render the backplane view
@@ -108,57 +133,26 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 
 	// check if portal view is opaque due to alphagen portal
 	if( shader->portalDistance && dist > shader->portalDistance ) {
-		return NULL;
+		return;
 	}
 
-	// find the matching portal plane
-	for( i = 0; i < rn.numPortalSurfaces; i++ ) {
-		portalSurface = &rn.portalSurfaces[i];
-
-		if( portalSurface->entity == ent &&
-			portalSurface->shader == shader &&
-			DotProduct( portalSurface->plane.normal, plane.normal ) > 0.99f &&
-			fabs( portalSurface->plane.dist - plane.dist ) < 0.1f ) {
-				goto addsurface;
-		}
-	}
-
-	if( i == MAX_PORTAL_SURFACES ) {
-		// not enough space
-		return NULL;
-	}
-
-	portalSurface = &rn.portalSurfaces[rn.numPortalSurfaces++];
-	portalSurface->entity = ent;
 	portalSurface->plane = plane;
-	portalSurface->shader = shader;
 	portalSurface->untransformed_plane = untransformed_plane;
-	portalSurface->skyPortal = NULL;
-	ClearBounds( portalSurface->mins, portalSurface->maxs );
-	memset( portalSurface->texures, 0, sizeof( portalSurface->texures ) );
 
-	if( depthPortal ) {
-		rn.numDepthPortalSurfaces++;
-	}
-
-addsurface:
 	AddPointToBounds( mins, portalSurface->mins, portalSurface->maxs );
 	AddPointToBounds( maxs, portalSurface->mins, portalSurface->maxs );
 	VectorAdd( portalSurface->mins, portalSurface->maxs, portalSurface->centre );
 	VectorScale( portalSurface->centre, 0.5, portalSurface->centre );
-
-	return portalSurface;
 }
 
 /*
 * R_DrawPortalSurface
-* 
+*
 * Renders the portal view and captures the results from framebuffer if
 * we need to do a $portalmap stage. Note that for $portalmaps we must
 * use a different viewport.
 */
-static void R_DrawPortalSurface( portalSurface_t *portalSurface )
-{
+static void R_DrawPortalSurface( portalSurface_t *portalSurface ) {
 	unsigned int i;
 	int x, y, w, h;
 	float dist, d, best_d;
@@ -178,27 +172,23 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	image_t *portalTexures[2] = { NULL, NULL };
 
 	doReflection = doRefraction = true;
-	if( shader->flags & SHADER_PORTAL_CAPTURE )
-	{
+	if( shader->flags & SHADER_PORTAL_CAPTURE ) {
 		shaderpass_t *pass;
 
 		captureTexture = NULL;
 		captureTextureId = 0;
 
-		for( i = 0, pass = shader->passes; i < shader->numpasses; i++, pass++ )
-		{
-			if( pass->program_type == GLSL_PROGRAM_TYPE_DISTORTION )
-			{
-				if( ( pass->alphagen.type == ALPHA_GEN_CONST && pass->alphagen.args[0] == 1 ) )
+		for( i = 0, pass = shader->passes; i < shader->numpasses; i++, pass++ ) {
+			if( pass->program_type == GLSL_PROGRAM_TYPE_DISTORTION ) {
+				if( ( pass->alphagen.type == ALPHA_GEN_CONST && pass->alphagen.args[0] == 1 ) ) {
 					doRefraction = false;
-				else if( ( pass->alphagen.type == ALPHA_GEN_CONST && pass->alphagen.args[0] == 0 ) )
+				} else if( ( pass->alphagen.type == ALPHA_GEN_CONST && pass->alphagen.args[0] == 0 ) ) {
 					doReflection = false;
+				}
 				break;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		captureTexture = NULL;
 		captureTextureId = -1;
 	}
@@ -208,18 +198,17 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	h = rn.refdef.height;
 
 	dist = PlaneDiff( rn.viewOrigin, portal_plane );
-	if( dist <= BACKFACE_EPSILON || !doReflection )
-	{
-		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) || !doRefraction )
+	if( dist <= BACKFACE_EPSILON || !doReflection ) {
+		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) || !doRefraction ) {
 			return;
+		}
 
 		// even if we're behind the portal, we still need to capture
 		// the second portal image for refraction
 		refraction = true;
 		captureTexture = NULL;
 		captureTextureId = 1;
-		if( dist < 0 )
-		{
+		if( dist < 0 ) {
 			VectorInverse( portal_plane->normal );
 			portal_plane->dist = -portal_plane->dist;
 		}
@@ -230,26 +219,23 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 
 	best = NULL;
 	best_d = 100000000;
-	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ )
-	{
-		ent = R_NUM2ENT(i);
-		if( ent->rtype != RT_PORTALSURFACE )
+	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
+		ent = R_NUM2ENT( i );
+		if( ent->rtype != RT_PORTALSURFACE ) {
 			continue;
+		}
 
 		d = PlaneDiff( ent->origin, untransformed_plane );
-		if( ( d >= -64 ) && ( d <= 64 ) )
-		{
+		if( ( d >= -64 ) && ( d <= 64 ) ) {
 			d = Distance( ent->origin, portal_centre );
-			if( d < best_d )
-			{
+			if( d < best_d ) {
 				best = ent;
 				best_d = d;
 			}
 		}
 	}
 
-	if( best == NULL )
-	{
+	if( best == NULL ) {
 		if( captureTextureId < 0 ) {
 			// still do a push&pop because to ensure the clean state
 			if( R_PushRefInst() ) {
@@ -257,11 +243,10 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 			}
 			return;
 		}
-	}
-	else
-	{
-		if( !VectorCompare( best->origin, best->origin2 ) )	// portal
+	} else {
+		if( !VectorCompare( best->origin, best->origin2 ) ) { // portal
 			mirror = false;
+		}
 		best->rtype = NUM_RTYPES;
 	}
 
@@ -278,8 +263,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 
 setup_and_render:
 
-	if( refraction )
-	{
+	if( refraction ) {
 		VectorInverse( portal_plane->normal );
 		portal_plane->dist = -portal_plane->dist;
 		CategorizePlane( portal_plane );
@@ -288,11 +272,10 @@ setup_and_render:
 		VectorCopy( viewerOrigin, rn.pvsOrigin );
 
 		rn.renderFlags |= RF_PORTALVIEW;
-		if( prevFlipped )
+		if( prevFlipped ) {
 			rn.renderFlags |= RF_FLIPFRONTFACE;
-	}
-	else if( mirror )
-	{
+		}
+	} else if( mirror ) {
 		VectorReflect( rn.viewOrigin, portal_plane->normal, portal_plane->dist, origin );
 
 		VectorReflect( &rn.viewAxis[AXIS_FORWARD], portal_plane->normal, 0, &axis[AXIS_FORWARD] );
@@ -303,10 +286,8 @@ setup_and_render:
 
 		VectorCopy( viewerOrigin, rn.pvsOrigin );
 
-		rn.renderFlags = (prevRenderFlags ^ RF_FLIPFRONTFACE) | RF_MIRRORVIEW;
-	}
-	else
-	{
+		rn.renderFlags = ( prevRenderFlags ^ RF_FLIPFRONTFACE ) | RF_MIRRORVIEW;
+	} else {
 		vec3_t tvec;
 		mat3_t A, B, C, rot;
 
@@ -347,13 +328,15 @@ setup_and_render:
 		rn.renderFlags |= RF_PORTALVIEW;
 
 		// ignore entities, if asked politely
-		if( best->renderfx & RF_NOPORTALENTS )
+		if( best->renderfx & RF_NOPORTALENTS ) {
 			rn.renderFlags |= RF_ENVVIEW;
-		if( prevFlipped )
+		}
+		if( prevFlipped ) {
 			rn.renderFlags |= RF_FLIPFRONTFACE;
+		}
 	}
 
-	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER|RDF_FLIPPED );
+	rn.refdef.rdflags &= ~( RDF_UNDERWATER | RDF_CROSSINGWATER | RDF_FLIPPED );
 
 	rn.shadowGroup = NULL;
 	rn.meshlist = &r_portallist;
@@ -365,18 +348,17 @@ setup_and_render:
 
 	rn.farClip = R_DefaultFarClip();
 
-	rn.clipFlags |= ( 1<<5 );
+	rn.clipFlags |= ( 1 << 5 );
 	rn.frustum[5] = *portal_plane;
 	CategorizePlane( &rn.frustum[5] );
 
 	// if we want to render to a texture, initialize texture
 	// but do not try to render to it more than once
-	if( captureTextureId >= 0 )
-	{
+	if( captureTextureId >= 0 ) {
 		int texFlags = shader->flags & SHADER_NO_TEX_FILTERING ? IT_NOFILTERING : 0;
 
 		captureTexture = R_GetPortalTexture( rsc.refdef.width, rsc.refdef.height, texFlags,
-			rsc.frameCount );
+											 rsc.frameCount );
 		portalTexures[captureTextureId] = captureTexture;
 
 		if( !captureTexture ) {
@@ -395,8 +377,7 @@ setup_and_render:
 		rn.renderFlags |= RF_PORTAL_CAPTURE;
 		Vector4Set( rn.viewport, rn.refdef.x + x, rn.refdef.y + y, w, h );
 		Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
-	}
-	else {
+	} else {
 		rn.renderFlags &= ~RF_PORTAL_CAPTURE;
 	}
 
@@ -405,8 +386,7 @@ setup_and_render:
 
 	R_RenderView( &rn.refdef );
 
-	if( doRefraction && !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) )
-	{
+	if( doRefraction && !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) ) {
 		rn.renderFlags = prevRenderFlags;
 		refraction = true;
 		captureTexture = NULL;
@@ -429,8 +409,7 @@ done:
 *
 * The depth buffer is then preserved for portal render stage to minimize overdraw.
 */
-static void R_DrawPortalsDepthMask( void )
-{
+static void R_DrawPortalsDepthMask( void ) {
 	float depthmin, depthmax;
 
 	if( !rn.portalmasklist || !rn.portalmasklist->numDrawSurfs ) {
@@ -441,7 +420,7 @@ static void R_DrawPortalsDepthMask( void )
 
 	RB_ClearDepth( depthmin );
 	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
-	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE|GLSTATE_DEPTHFUNC_GT|GLSTATE_NO_COLORWRITE );
+	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_DEPTHFUNC_GT | GLSTATE_NO_COLORWRITE );
 	RB_DepthRange( depthmax, depthmax );
 
 	R_DrawSurfaces( rn.portalmasklist );
@@ -454,15 +433,14 @@ static void R_DrawPortalsDepthMask( void )
 /*
 * R_DrawPortals
 */
-void R_DrawPortals( void )
-{
+void R_DrawPortals( void ) {
 	unsigned int i;
 
 	if( rf.viewcluster == -1 ) {
 		return;
 	}
 
-	if( !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW|RF_SHADOWMAPVIEW ) ) ) {
+	if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) ) {
 		R_DrawPortalsDepthMask();
 
 		// render skyportal
@@ -470,7 +448,7 @@ void R_DrawPortals( void )
 			portalSurface_t *ps = rn.skyportalSurface;
 			R_DrawSkyportal( ps->entity, ps->skyPortal );
 		}
-		
+
 		// render regular portals
 		for( i = 0; i < rn.numPortalSurfaces; i++ ) {
 			portalSurface_t ps = rn.portalSurfaces[i];
@@ -485,18 +463,15 @@ void R_DrawPortals( void )
 /*
 * R_AddSkyportalSurface
 */
-portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf )
-{
+portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf ) {
 	portalSurface_t *portalSurface;
 
 	if( rn.skyportalSurface ) {
 		portalSurface = rn.skyportalSurface;
-	}
-	else if( rn.numPortalSurfaces == MAX_PORTAL_SURFACES ) {
+	} else if( rn.numPortalSurfaces == MAX_PORTAL_SURFACES ) {
 		// not enough space
 		return NULL;
-	}
-	else {
+	} else {
 		portalSurface = &rn.portalSurfaces[rn.numPortalSurfaces++];
 		memset( portalSurface, 0, sizeof( *portalSurface ) );
 		rn.skyportalSurface = portalSurface;
@@ -504,7 +479,7 @@ portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *sha
 	}
 
 	R_AddSurfToDrawList( rn.portalmasklist, ent, NULL, rsh.skyShader, 0, 0, NULL, drawSurf );
-	
+
 	portalSurface->entity = ent;
 	portalSurface->shader = shader;
 	portalSurface->skyPortal = &rn.refdef.skyportal;
@@ -514,13 +489,12 @@ portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *sha
 /*
 * R_DrawSkyportal
 */
-static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal )
-{
+static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 	if( !R_PushRefInst() ) {
 		return;
 	}
 
-	rn.renderFlags = ( rn.renderFlags|RF_PORTALVIEW );
+	rn.renderFlags = ( rn.renderFlags | RF_PORTALVIEW );
 	//rn.renderFlags &= ~RF_SOFT_PARTICLES;
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
@@ -536,23 +510,19 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal )
 		rn.renderFlags |= RF_ENVVIEW;
 	}
 
-	if( skyportal->scale )
-	{
+	if( skyportal->scale ) {
 		vec3_t centre, diff;
 
 		VectorAdd( rsh.worldModel->mins, rsh.worldModel->maxs, centre );
 		VectorScale( centre, 0.5f, centre );
 		VectorSubtract( centre, rn.viewOrigin, diff );
 		VectorMA( skyportal->vieworg, -skyportal->scale, diff, rn.refdef.vieworg );
-	}
-	else
-	{
+	} else {
 		VectorCopy( skyportal->vieworg, rn.refdef.vieworg );
 	}
 
 	// FIXME
-	if( !VectorCompare( skyportal->viewanglesOffset, vec3_origin ) )
-	{
+	if( !VectorCompare( skyportal->viewanglesOffset, vec3_origin ) ) {
 		vec3_t angles;
 		mat3_t axis;
 
@@ -565,9 +535,8 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal )
 		Matrix3_Copy( axis, rn.refdef.viewaxis );
 	}
 
-	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER|RDF_SKYPORTALINVIEW );
-	if( skyportal->fov )
-	{
+	rn.refdef.rdflags &= ~( RDF_UNDERWATER | RDF_CROSSINGWATER | RDF_SKYPORTALINVIEW );
+	if( skyportal->fov ) {
 		rn.refdef.fov_x = skyportal->fov;
 		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
 		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );

@@ -20,28 +20,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_BACKEND_LOCAL_H
 #define R_BACKEND_LOCAL_H
 
-#define MAX_STREAM_VBO_VERTS		8192
-#define MAX_STREAM_VBO_ELEMENTS		MAX_STREAM_VBO_VERTS*6
-#define MAX_STREAM_VBO_TRIANGLES	MAX_STREAM_VBO_ELEMENTS/3
+#define MAX_STREAM_VBO_VERTS        8192
+#define MAX_STREAM_VBO_ELEMENTS     MAX_STREAM_VBO_VERTS * 6
+#define MAX_STREAM_VBO_TRIANGLES    MAX_STREAM_VBO_ELEMENTS / 3
 
-#define MAX_DYNAMIC_DRAWS			2048
+#define MAX_DYNAMIC_DRAWS           2048
 
-typedef struct r_backend_stats_s
-{
+typedef struct r_backend_stats_s {
 	unsigned int numVerts, numElems;
 	unsigned int c_totalVerts, c_totalTris, c_totalStaticVerts, c_totalStaticTris, c_totalDraws, c_totalBinds;
 	unsigned int c_totalPrograms;
 } rbStats_t;
 
-typedef struct
-{
+typedef struct {
 	unsigned int numBones;
 	dualquat_t dualQuats[MAX_GLSL_UNIFORM_BONES];
 	unsigned int maxWeights;
 } rbBonesData_t;
 
-typedef struct
-{
+typedef struct {
 	unsigned int firstVert;
 	unsigned int numVerts;
 	unsigned int firstElem;
@@ -49,15 +46,13 @@ typedef struct
 	unsigned int numInstances;
 } rbDrawElements_t;
 
-typedef struct
-{
+typedef struct {
 	mesh_vbo_t *vbo;
 	uint8_t *vertexData;
 	rbDrawElements_t drawElements;
 } rbDynamicStream_t;
 
-typedef struct
-{
+typedef struct {
 	const entity_t *entity;
 	const shader_t *shader;
 	const mfog_t *fog;
@@ -71,39 +66,37 @@ typedef struct
 	rbDrawElements_t drawElements;
 } rbDynamicDraw_t;
 
-typedef struct r_backend_s
-{
-	mempool_t			*mempool;
+typedef struct r_backend_s {
+	mempool_t           *mempool;
 
-	struct
-	{
-		int				state;
+	struct {
+		int state;
 
-		int 			currentArrayVBO;
-		int 			currentElemArrayVBO;
+		int currentArrayVBO;
+		int currentElemArrayVBO;
 
-		int				faceCull;
-		bool			frontFace;
+		int faceCull;
+		bool frontFace;
 
-		int				viewport[4];
-		int				scissor[4];
-		bool			scissorChanged;
+		int viewport[4];
+		int scissor[4];
+		bool scissorChanged;
 
-		unsigned int	vertexAttribEnabled;
-		vattribmask_t	lastVAttribs, lastHalfFloatVAttribs;
+		unsigned int vertexAttribEnabled;
+		vattribmask_t lastVAttribs, lastHalfFloatVAttribs;
 
-		int				fbWidth, fbHeight;
+		int fbWidth, fbHeight;
 
-		float			depthmin, depthmax;
+		float depthmin, depthmax;
 
-		bool			depthoffset;
+		bool depthoffset;
 
-		bool			flushTextures;
-		int				currentTMU;
-		unsigned		currentTextures[MAX_TEXTURE_UNITS];				
+		bool flushTextures;
+		int currentTMU;
+		unsigned currentTextures[MAX_TEXTURE_UNITS];
 	} gl;
 
-	unsigned int time;
+	int64_t time;
 
 	rbStats_t stats;
 
@@ -124,13 +117,13 @@ typedef struct r_backend_s
 	const mesh_vbo_t *currentMeshVBO;
 	rbBonesData_t bonesData;
 	const portalSurface_t *currentPortalSurface;
-	
+
 	// glUseProgram cache
-	int	currentProgram;
+	int currentProgram;
 	int currentProgramObject;
 
 	// RP_RegisterProgram cache
-	int	currentRegProgram;
+	int currentRegProgram;
 	int currentRegProgramType;
 	r_glslfeat_t currentRegProgramFeatures;
 
@@ -191,20 +184,20 @@ typedef struct r_backend_s
 extern rbackend_t rb;
 
 // r_backend.c
-#define RB_Alloc(size) R_MallocExt( rb.mempool, size, 16, 1 )
-#define RB_Free(data) R_Free(data)
+#define RB_Alloc( size ) R_MallocExt( rb.mempool, size, 16, 1 )
+#define RB_Free( data ) R_Free( data )
 
 void RB_DrawElementsReal( rbDrawElements_t *de );
-#define RB_IsAlphaBlending(blendsrc,blenddst) \
-	( (blendsrc) == GLSTATE_SRCBLEND_SRC_ALPHA || (blenddst) == GLSTATE_DSTBLEND_SRC_ALPHA ) || \
-	( (blendsrc) == GLSTATE_SRCBLEND_ONE_MINUS_SRC_ALPHA || (blenddst) == GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA )
+#define RB_IsAlphaBlending( blendsrc,blenddst ) \
+	( ( blendsrc ) == GLSTATE_SRCBLEND_SRC_ALPHA || ( blenddst ) == GLSTATE_DSTBLEND_SRC_ALPHA ) || \
+	( ( blendsrc ) == GLSTATE_SRCBLEND_ONE_MINUS_SRC_ALPHA || ( blenddst ) == GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA )
 
 // r_backend_program.c
 void RB_InitShading( void );
 void RB_DrawOutlinedElements( void );
 void RB_DrawShadedElements( void );
-int RB_RegisterProgram( int type, const char *name, const char *deformsKey, 
-	const deformv_t *deforms, int numDeforms, r_glslfeat_t features );
+int RB_RegisterProgram( int type, const char *name, const char *deformsKey,
+						const deformv_t *deforms, int numDeforms, r_glslfeat_t features );
 int RB_BindProgram( int program );
 void RB_BindImage( int tmu, const image_t *tex );
 void RB_BindArrayBuffer( int buffer );

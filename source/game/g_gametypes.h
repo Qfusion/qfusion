@@ -28,40 +28,38 @@ extern cvar_t *g_countdown_time;
 extern cvar_t *g_match_extendedtime;
 extern cvar_t *g_votable_gametypes;
 extern cvar_t *g_gametype; // only for use in function that deal with changing gametype, use GS_Gametype()
+extern cvar_t *g_gametype_generic;
 extern cvar_t *g_gametypes_list;
 
+
 #define G_CHALLENGERS_MIN_JOINTEAM_MAPTIME  9000 // must wait 10 seconds before joining
-#define GAMETYPE_PROJECT_EXTENSION			".gt"
-#define CHAR_GAMETYPE_SEPARATOR				';'
+#define GAMETYPE_PROJECT_EXTENSION          ".gt"
+#define CHAR_GAMETYPE_SEPARATOR             ';'
 
-#define MAX_RACE_CHECKPOINTS	32
+#define MAX_RACE_CHECKPOINTS    32
 
-typedef struct gameaward_s
-{
+typedef struct gameaward_s {
 	// ch : size of this?
 	const char *name;
 	int count;
 	// struct gameaward_s *next;
 } gameaward_t;
 
-typedef struct
-{
-	int mm_attacker;	// session-id
-	int mm_victim;		// session-id
-	int weapon;			// weapon used
-	unsigned int time;	// server timestamp
+typedef struct {
+	int mm_attacker;    // session-id
+	int mm_victim;      // session-id
+	int weapon;         // weapon used
+	int64_t time;		// server timestamp
 } loggedFrag_t;
 
-typedef struct
-{
-	int owner;		// session-id
-	unsigned int timestamp;	// milliseconds
+typedef struct {
+	int owner;			// session-id
+	int64_t timestamp;	// milliseconds
 	int numSectors;
-	unsigned int *times;	// unsigned int * numSectors+1, where last is final time
+	int64_t *times;		// unsigned int * numSectors+1, where last is final time
 } raceRun_t;
 
-typedef struct
-{
+typedef struct {
 	int score;
 	int deaths;
 	int frags;
@@ -70,12 +68,12 @@ typedef struct
 	int numrounds;
 	int awards;
 
-	int accuracy_shots[AMMO_TOTAL-AMMO_GUNBLADE];
-	int accuracy_hits[AMMO_TOTAL-AMMO_GUNBLADE];
-	int accuracy_hits_direct[AMMO_TOTAL-AMMO_GUNBLADE];
-	int accuracy_hits_air[AMMO_TOTAL-AMMO_GUNBLADE];
-	int accuracy_damage[AMMO_TOTAL-AMMO_GUNBLADE];
-	int accuracy_frags[AMMO_TOTAL-AMMO_GUNBLADE];
+	int accuracy_shots[AMMO_TOTAL - AMMO_GUNBLADE];
+	int accuracy_hits[AMMO_TOTAL - AMMO_GUNBLADE];
+	int accuracy_hits_direct[AMMO_TOTAL - AMMO_GUNBLADE];
+	int accuracy_hits_air[AMMO_TOTAL - AMMO_GUNBLADE];
+	int accuracy_damage[AMMO_TOTAL - AMMO_GUNBLADE];
+	int accuracy_frags[AMMO_TOTAL - AMMO_GUNBLADE];
 	int total_damage_given;
 	int total_damage_received;
 	int total_teamdamage_given;
@@ -113,13 +111,11 @@ typedef struct
 } score_stats_t;
 
 // this is only really used to create the script objects
-typedef struct
-{
+typedef struct {
 	bool dummy;
-}match_t;
+} match_t;
 
-typedef struct
-{
+typedef struct {
 	match_t match;
 
 	void *initFunc;
@@ -181,8 +177,7 @@ typedef struct
 	int forceTeamBots;
 } gametype_descriptor_t;
 
-typedef struct
-{
+typedef struct {
 	int playerIndices[MAX_CLIENTS];
 	int numplayers;
 	score_stats_t stats;

@@ -31,7 +31,7 @@ using namespace Rocket::Core;
 class UI_KeySelectInstancer;
 
 /*
-	Keyselect widget used to manage the binds in the Rocket ui.
+    Keyselect widget used to manage the binds in the Rocket ui.
  */
 class UI_KeySelect : public Element, public EventListener
 {
@@ -78,13 +78,11 @@ private:
 	static RocketModule* GetRocketModule( void ) { return UI_Main::Get()->getRocket(); }
 
 	// Some usefull functions to get keybinds
-	static int GetKeyboardKey( Event &evt )
-	{
+	static int GetKeyboardKey( Event &evt ) {
 		int rkey = evt.GetParameter<int>( "key_identifier", 0 );
 		return KeyConverter::fromRocketKey( rkey );
 	}
-	static int GetWheelKey( Event &evt )
-	{
+	static int GetWheelKey( Event &evt ) {
 		int rkey = evt.GetParameter<int>( "wheel_delta", 0 );
 		return KeyConverter::fromRocketWheel( rkey );
 	}
@@ -92,7 +90,7 @@ private:
 	// generic utilization
 	inline bool KeysAreFree( void ) { return !boundKey[0] && !boundKey[1]; }
 	inline bool KeysAreBound( void ) { return boundKey[0] && boundKey[1]; }
-	inline bool FirstKeyIsBound( void ) { return  boundKey[0] && !boundKey[1]; }
+	inline bool FirstKeyIsBound( void ) { return boundKey[0] && !boundKey[1]; }
 
 	// resolve binds conflicts with the others keyselect using instancer.
 	void ResolveConflictsForKey( int key );
@@ -112,9 +110,9 @@ private:
 
 
 /*
-	Used to initialize instances of UI_KeySelect and 
-	provides to manage the list of all the keybinds, removing
-	binds conflicts.
+    Used to initialize instances of UI_KeySelect and
+    provides to manage the list of all the keybinds, removing
+    binds conflicts.
  */
 class UI_KeySelectInstancer : public ElementInstancer
 {

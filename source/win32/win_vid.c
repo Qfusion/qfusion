@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "resource.h"
 
 #ifndef WM_MOUSEWHEEL
-#define WM_MOUSEWHEEL ( WM_MOUSELAST+1 ) // message that will be supported by the OS
+#define WM_MOUSEWHEEL ( WM_MOUSELAST + 1 ) // message that will be supported by the OS
 #endif
 
 #ifndef MK_XBUTTON1
@@ -50,11 +50,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #if ( _WIN32_WINNT < 0x0400 )
-#define KF_UP		    0x8000
-#define LLKHF_UP	    ( KF_UP >> 8 )
+#define KF_UP           0x8000
+#define LLKHF_UP        ( KF_UP >> 8 )
 
-typedef struct
-{
+typedef struct {
 	DWORD vkCode;
 	DWORD scanCode;
 	DWORD flags;
@@ -75,38 +74,35 @@ extern cvar_t *win_nowinkeys;
 
 // Global variables used internally by this module
 HWND cl_hwnd;           // Main window handle for life of program
-HWND cl_parent_hwnd;	// pointer to parent window handle
+HWND cl_parent_hwnd;    // pointer to parent window handle
 
 static HHOOK WinKeyHook;
 static bool s_winkeys_hooked;
 static bool s_alttab_disabled;
-extern unsigned	sys_msg_time;
+extern int64_t sys_msg_time;
 
 static float vid_pixelRatio = 1.0f;
 
 /*
 ** WinKeys system hook (taken from ezQuake)
 */
-LRESULT CALLBACK LLWinKeyHook( int Code, WPARAM wParam, LPARAM lParam )
-{
+LRESULT CALLBACK LLWinKeyHook( int Code, WPARAM wParam, LPARAM lParam ) {
 	PKBDLLHOOKSTRUCT p;
 
 	p = (PKBDLLHOOKSTRUCT) lParam;
 
-	if( ActiveApp )
-	{
+	if( ActiveApp ) {
 		// we do not allow separate bindings for left and right keys yet
-		switch( p->vkCode )
-		{
+		switch( p->vkCode ) {
 #if 0
-		case VK_LWIN: Key_Event( K_LWIN, !( p->flags & LLKHF_UP ), sys_msg_time ); return 1;
-		case VK_RWIN: Key_Event( K_RWIN, !( p->flags & LLKHF_UP ), sys_msg_time ); return 1;
+			case VK_LWIN: Key_Event( K_LWIN, !( p->flags & LLKHF_UP ), sys_msg_time ); return 1;
+			case VK_RWIN: Key_Event( K_RWIN, !( p->flags & LLKHF_UP ), sys_msg_time ); return 1;
 #else
-		case VK_LWIN: Key_Event( K_WIN, !( p->flags & LLKHF_UP ), sys_msg_time ); return 1;
-		case VK_RWIN: Key_Event( K_WIN, !( p->flags & LLKHF_UP ), sys_msg_time ); return 1;
+			case VK_LWIN: Key_Event( K_WIN, !( p->flags & LLKHF_UP ), sys_msg_time ); return 1;
+			case VK_RWIN: Key_Event( K_WIN, !( p->flags & LLKHF_UP ), sys_msg_time ); return 1;
 #endif
-		default:
-			break;
+			default:
+				break;
 		}
 	}
 
@@ -116,21 +112,17 @@ LRESULT CALLBACK LLWinKeyHook( int Code, WPARAM wParam, LPARAM lParam )
 /*
 * VID_EnableAltTab
 */
-void VID_EnableAltTab( bool enable )
-{
-	if( enable )
-	{
-		if( s_alttab_disabled )
-		{
+void VID_EnableAltTab( bool enable ) {
+	if( enable ) {
+		if( s_alttab_disabled ) {
 			UnregisterHotKey( 0, 0 );
 			UnregisterHotKey( 0, 1 );
 			s_alttab_disabled = false;
 		}
-	}
-	else
-	{
-		if( s_alttab_disabled )
+	} else {
+		if( s_alttab_disabled ) {
 			return;
+		}
 
 		RegisterHotKey( 0, 0, MOD_ALT, VK_TAB );
 		RegisterHotKey( 0, 1, MOD_ALT, VK_RETURN );
@@ -142,22 +134,17 @@ void VID_EnableAltTab( bool enable )
 /*
 * VID_EnableWinKeys
 */
-void VID_EnableWinKeys( bool enable )
-{
-	if( enable )
-	{
-		if( !s_winkeys_hooked )
-		{
-			if( ( WinKeyHook = SetWindowsHookEx( 13, LLWinKeyHook, global_hInstance, 0 ) ) )
+void VID_EnableWinKeys( bool enable ) {
+	if( enable ) {
+		if( !s_winkeys_hooked ) {
+			if( ( WinKeyHook = SetWindowsHookEx( 13, LLWinKeyHook, global_hInstance, 0 ) ) ) {
 				s_winkeys_hooked = true;
-			else
+			} else {
 				Com_Printf( "Failed to install winkey hook.\n" );
+			}
 		}
-	}
-	else
-	{
-		if( s_winkeys_hooked )
-		{
+	} else {
+		if( s_winkeys_hooked ) {
 			UnhookWindowsHookEx( WinKeyHook );
 			s_winkeys_hooked = false;
 		}
@@ -197,11 +184,10 @@ static byte s_scantokey[128] =
 
 /*
 * IN_MapKey
-* 
+*
 * Map from windows to quake keynums
 */
-int IN_MapKey( int key )
-{
+int IN_MapKey( int key ) {
 	int result;
 	int modified;
 	bool is_extended;
@@ -210,86 +196,80 @@ int IN_MapKey( int key )
 
 	modified = ( key >> 16 ) & 255;
 
-	if( modified > 127 )
+	if( modified > 127 ) {
 		return 0;
-
-	if( key & ( 1 << 24 ) )
-	{
-		is_extended = true;
 	}
-	else
-	{
+
+	if( key & ( 1 << 24 ) ) {
+		is_extended = true;
+	} else {
 		is_extended = false;
 	}
 
 	result = s_scantokey[modified];
 
-	if( !is_extended )
-	{
-		switch( result )
-		{
-		case K_HOME:
-			return KP_HOME;
-		case K_UPARROW:
-			return KP_UPARROW;
-		case K_PGUP:
-			return KP_PGUP;
-		case K_LEFTARROW:
-			return KP_LEFTARROW;
-		case K_RIGHTARROW:
-			return KP_RIGHTARROW;
-		case K_END:
-			return KP_END;
-		case K_DOWNARROW:
-			return KP_DOWNARROW;
-		case K_PGDN:
-			return KP_PGDN;
-		case K_INS:
-			return KP_INS;
-		case K_DEL:
-			return KP_DEL;
-		default:
-			return result;
+	if( !is_extended ) {
+		switch( result ) {
+			case K_HOME:
+				return KP_HOME;
+			case K_UPARROW:
+				return KP_UPARROW;
+			case K_PGUP:
+				return KP_PGUP;
+			case K_LEFTARROW:
+				return KP_LEFTARROW;
+			case K_RIGHTARROW:
+				return KP_RIGHTARROW;
+			case K_END:
+				return KP_END;
+			case K_DOWNARROW:
+				return KP_DOWNARROW;
+			case K_PGDN:
+				return KP_PGDN;
+			case K_INS:
+				return KP_INS;
+			case K_DEL:
+				return KP_DEL;
+			default:
+				return result;
 		}
-	}
-	else
-	{
-		switch( result )
-		{
-		case K_PAUSE:
-			return K_NUMLOCK;
-		case 0x0D:
-			return K_ENTER;
-		case 0x2F:
-			return KP_SLASH;
-		case 0xAF:
-			return KP_PLUS;
-		case K_LALT:
-			return K_RALT;
-		case K_LCTRL:
-			return K_RCTRL;
+	} else {
+		switch( result ) {
+			case K_PAUSE:
+				return K_NUMLOCK;
+			case 0x0D:
+				return K_ENTER;
+			case 0x2F:
+				return KP_SLASH;
+			case 0xAF:
+				return KP_PLUS;
+			case K_LALT:
+				return K_RALT;
+			case K_LCTRL:
+				return K_RCTRL;
 		}
 		return result;
 	}
 }
 // wsw : pb :  end of paste from Q3
 
-static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy )
-{
+static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy ) {
 	int prevActiveApp;
 
 	Minimized = minimize;
-	if( destroy )
+	if( destroy ) {
 		fActive = minimize = FALSE;
+	}
 
-	IN_ClearState();
+	CL_ClearInputState();
 
 	// we don't want to act like we're active if we're minimized
 	prevActiveApp = ActiveApp;
-	if( fActive && !Minimized )
+	if( fActive && !Minimized ) {
 		ActiveApp = true;
-	else
+	} else {
 		ActiveApp = false;
+	}
 
 	// minimize/restore mouse-capture on demand
 	IN_Activate( ActiveApp );
@@ -299,75 +279,71 @@ static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy )
 		CL_SoundModule_Activate( ActiveApp );
 	}
 
-	if( win_noalttab->integer )
+	if( win_noalttab->integer ) {
 		VID_EnableAltTab( !ActiveApp );
-	if( win_nowinkeys->integer )
+	}
+	if( win_nowinkeys->integer ) {
 		VID_EnableWinKeys( !ActiveApp );
+	}
 
-	VID_AppActivate( fActive, destroy );
+	VID_AppActivate( fActive, minimize, destroy );
 }
 
 /*
 * MainWndProc
-* 
+*
 * main window procedure
 */
 LONG WINAPI MainWndProc(
-						HWND hWnd,
-						UINT uMsg,
-						WPARAM wParam,
-						LPARAM lParam )
-{
-	switch( uMsg )
-	{
-	case WM_MOUSEWHEEL:
-		/*
-		** this chunk of code theoretically only works under NT4 and Win98
-		** since this message doesn't exist under Win95
-		*/
-		if( mouse_wheel_type != MWHEEL_DINPUT )
-		{
-			mouse_wheel_type = MWHEEL_WM;
-			if( ( short ) HIWORD( wParam ) > 0 )
-			{
-				Key_Event( K_MWHEELUP, true, sys_msg_time );
-				Key_Event( K_MWHEELUP, false, sys_msg_time );
+	HWND hWnd,
+	UINT uMsg,
+	WPARAM wParam,
+	LPARAM lParam ) {
+	switch( uMsg ) {
+		case WM_MOUSEWHEEL:
+			/*
+			** this chunk of code theoretically only works under NT4 and Win98
+			** since this message doesn't exist under Win95
+			*/
+			if( mouse_wheel_type != MWHEEL_DINPUT ) {
+				mouse_wheel_type = MWHEEL_WM;
+				if( ( short ) HIWORD( wParam ) > 0 ) {
+					Key_Event( K_MWHEELUP, true, sys_msg_time );
+					Key_Event( K_MWHEELUP, false, sys_msg_time );
+				} else {
+					Key_Event( K_MWHEELDOWN, true, sys_msg_time );
+					Key_Event( K_MWHEELDOWN, false, sys_msg_time );
+				}
 			}
-			else
-			{
-				Key_Event( K_MWHEELDOWN, true, sys_msg_time );
-				Key_Event( K_MWHEELDOWN, false, sys_msg_time );
-			}
-		}
-		break;
+			break;
 
-	case WM_HOTKEY:
-		return 0;
+		case WM_HOTKEY:
+			return 0;
 
-	case WM_INPUT:
-		IN_RawInput_MouseRead( (HANDLE)lParam );
-		break;
+		case WM_INPUT:
+			IN_RawInput_MouseRead( (HANDLE)lParam );
+			break;
 
-	case WM_CREATE:
-		cl_hwnd = hWnd;
-		cl_parent_hwnd = GetParent( hWnd );
-		IN_WinIME_AssociateContext();
-		AppActivate( TRUE, FALSE, FALSE );
-		MSH_MOUSEWHEEL = RegisterWindowMessage( "MSWHEEL_ROLLMSG" );
-		break;
+		case WM_CREATE:
+			cl_hwnd = hWnd;
+			cl_parent_hwnd = GetParent( hWnd );
+			IN_WinIME_AssociateContext();
+			AppActivate( TRUE, FALSE, FALSE );
+			MSH_MOUSEWHEEL = RegisterWindowMessage( "MSWHEEL_ROLLMSG" );
+			break;
 
-	case WM_PAINT:
-		break;
+		case WM_PAINT:
+			break;
 
-	case WM_DESTROY:
-		// let sound and input know about this?
-		cl_hwnd = NULL;
-		cl_parent_hwnd = NULL;
-		IN_WinIME_AssociateContext();
-		AppActivate( FALSE, FALSE, TRUE );
-		break;
+		case WM_DESTROY:
+			// let sound and input know about this?
+			cl_hwnd = NULL;
+			cl_parent_hwnd = NULL;
+			IN_WinIME_AssociateContext();
+			AppActivate( FALSE, FALSE, TRUE );
+			break;
 
-	case WM_ACTIVATE:
+		case WM_ACTIVATE:
 		{
 			BOOL fActive, fMinimized;
 
@@ -377,27 +353,24 @@ LONG WINAPI MainWndProc(
 
 			AppActivate( fActive, fMinimized, FALSE );
 
-			if( fActive && !fMinimized )
-			{
+			if( fActive && !fMinimized ) {
 				SetForegroundWindow( cl_hwnd );
 				ShowWindow( cl_hwnd, SW_RESTORE );
-			}
-			else
-			{
-				if( vid_fullscreen->integer || fMinimized )
+			} else {
+				if( vid_fullscreen->integer || fMinimized ) {
 					ShowWindow( cl_hwnd, SW_MINIMIZE );
+				}
 			}
 		}
 		break;
 
-	case WM_MOVE:
+		case WM_MOVE:
 		{
 			int xPos, yPos;
 			RECT r;
 			int style;
 
-			if( !vid_fullscreen->integer )
-			{
+			if( !vid_fullscreen->integer ) {
 				xPos = (short) LOWORD( lParam ); // horizontal position
 				yPos = (short) HIWORD( lParam ); // vertical position
 
@@ -413,120 +386,117 @@ LONG WINAPI MainWndProc(
 				Cvar_SetValue( "vid_ypos", yPos + r.top );
 				vid_xpos->modified = false;
 				vid_ypos->modified = false;
-				if( ActiveApp )
+				if( ActiveApp ) {
 					IN_Activate( true );
+				}
 			}
 		}
 		break;
 
 		// this is complicated because Win32 seems to pack multiple mouse events into
 		// one update sometimes, so we always check all states and look for events
-	case WM_LBUTTONDOWN:
-	case WM_LBUTTONUP:
-	case WM_RBUTTONDOWN:
-	case WM_RBUTTONUP:
-	case WM_MBUTTONDOWN:
-	case WM_MBUTTONUP:
-	case WM_MOUSEMOVE:
-	case WM_XBUTTONUP:
-	case WM_XBUTTONDOWN:
+		case WM_LBUTTONDOWN:
+		case WM_LBUTTONUP:
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_MBUTTONDOWN:
+		case WM_MBUTTONUP:
+		case WM_MOUSEMOVE:
+		case WM_XBUTTONUP:
+		case WM_XBUTTONDOWN:
 		{
 			int i, temp = 0;
 			int mbuttons[] = { MK_LBUTTON, MK_RBUTTON, MK_MBUTTON,
-				MK_XBUTTON1, MK_XBUTTON2, MK_XBUTTON3, MK_XBUTTON4, MK_XBUTTON5 };
+							   MK_XBUTTON1, MK_XBUTTON2, MK_XBUTTON3, MK_XBUTTON4, MK_XBUTTON5 };
 
 			for( i = 0; i < mouse_buttons; i++ )
-				if( wParam & mbuttons[i] )
-					temp |= ( 1<<i );
+				if( wParam & mbuttons[i] ) {
+					temp |= ( 1 << i );
+				}
 
 			IN_MouseEvent( temp );
 		}
 		break;
 
-	case WM_SYSCOMMAND:
-		if( wParam == SC_SCREENSAVE )
-			return 0;
-		break;
+		case WM_SYSCOMMAND:
+			if( wParam == SC_SCREENSAVE ) {
+				return 0;
+			}
+			break;
 
-	case WM_SYSKEYDOWN:
-		if( wParam == VK_RETURN ) {
-			Cbuf_ExecuteText( EXEC_APPEND, "toggle vid_fullscreen\n" );
-			return 0;
-		}
-		if( wParam == VK_F4 )
-		{
-			Cbuf_ExecuteText( EXEC_NOW, "quit\n" );
-			return 0;
-		}
-		if( wParam == VK_F10)
-		{
+		case WM_SYSKEYDOWN:
+			if( wParam == VK_RETURN ) {
+				Cbuf_ExecuteText( EXEC_APPEND, "toggle vid_fullscreen\n" );
+				return 0;
+			}
+			if( wParam == VK_F4 ) {
+				Cbuf_ExecuteText( EXEC_NOW, "quit\n" );
+				return 0;
+			}
+			if( wParam == VK_F10 ) {
+				Key_Event( IN_MapKey( lParam ), true, sys_msg_time );
+				return 0; // don't let the default handler activate the menu in windowed mode
+			}
+		// fall through
+		case WM_KEYDOWN:
+			if( wParam == VK_PROCESSKEY ) {
+				return 0;
+			}
 			Key_Event( IN_MapKey( lParam ), true, sys_msg_time );
-			return 0;	// don't let the default handler activate the menu in windowed mode
-		}
-		// fall through
-	case WM_KEYDOWN:
-		if( wParam == VK_PROCESSKEY )
-			return 0;
-		Key_Event( IN_MapKey( lParam ), true, sys_msg_time );
-		break;
+			break;
 
-	case WM_SYSKEYUP:
-		if( wParam == 18 )
-		{ // ALT-key
+		case WM_SYSKEYUP:
+			if( wParam == 18 ) { // ALT-key
+				Key_Event( IN_MapKey( lParam ), false, sys_msg_time );
+				return 0;
+			}
+		// fall through
+		case WM_KEYUP:
+			if( wParam == VK_PROCESSKEY ) {
+				return 0;
+			}
 			Key_Event( IN_MapKey( lParam ), false, sys_msg_time );
-			return 0;
-		}
-		// fall through
-	case WM_KEYUP:
-		if( wParam == VK_PROCESSKEY )
-			return 0;
-		Key_Event( IN_MapKey( lParam ), false, sys_msg_time );
-		break;
+			break;
 
-	case WM_CLOSE:
-		Cbuf_ExecuteText( EXEC_NOW, "quit" );
-		break;
+		case WM_CLOSE:
+			Cbuf_ExecuteText( EXEC_NOW, "quit" );
+			break;
 
-	case WM_KILLFOCUS:
-		AppFocused = false;
-		break;
+		case WM_KILLFOCUS:
+			AppFocused = false;
+			break;
 
-	case WM_SETFOCUS:
-		AppFocused = true;
-		break;
+		case WM_SETFOCUS:
+			AppFocused = true;
+			break;
 
-	// wsw : pb : new keyboard code using WM_CHAR event
-	case WM_CHAR:
+		// wsw : pb : new keyboard code using WM_CHAR event
+		case WM_CHAR:
 		{
-			int key = (wParam <= 255) ? wParam : 0;
+			int key = ( wParam <= 255 ) ? wParam : 0;
 			Key_CharEvent( key, wParam );
 		}
 		break;
 
-	case WM_ENTERSIZEMOVE:
-		CL_SoundModule_Clear();
-		break;
+		case WM_ENTERSIZEMOVE:
+			CL_SoundModule_Clear();
+			break;
 
-	case WM_IME_STARTCOMPOSITION:
-		return 0;
+		case WM_IME_STARTCOMPOSITION:
+			return 0;
 
-	case WM_IME_SETCONTEXT:
-		lParam &= ~ISC_SHOWUIALL;
-		break;
+		case WM_IME_SETCONTEXT:
+			lParam &= ~ISC_SHOWUIALL;
+			break;
 	}
 
-	if( uMsg == MSH_MOUSEWHEEL )
-	{
-		if( mouse_wheel_type != MWHEEL_DINPUT )
-		{
+	if( uMsg == MSH_MOUSEWHEEL ) {
+		if( mouse_wheel_type != MWHEEL_DINPUT ) {
 			mouse_wheel_type = MWHEEL_WM;
-			if( ( ( int ) wParam ) > 0 )
-			{
+			if( ( ( int ) wParam ) > 0 ) {
 				Key_Event( K_MWHEELUP, true, sys_msg_time );
 				Key_Event( K_MWHEELUP, false, sys_msg_time );
-			}
-			else
-			{
+			} else {
 				Key_Event( K_MWHEELDOWN, true, sys_msg_time );
 				Key_Event( K_MWHEELDOWN, false, sys_msg_time );
 			}
@@ -540,8 +510,7 @@ LONG WINAPI MainWndProc(
 /*
 ** VID_GetWindowHandle - The sound module may require the handle when using directsound
 */
-void *VID_GetWindowHandle( void )
-{
+void *VID_GetWindowHandle( void ) {
 	return ( void * )cl_hwnd;
 }
 
@@ -549,19 +518,17 @@ void *VID_GetWindowHandle( void )
 ** VID_Sys_Init
 */
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor,
-	const int *iconXPM, void *parentWindow, bool verbose )
-{
+					  const int *iconXPM, void *parentWindow, bool verbose ) {
 	return re.Init( applicationName, screenshotsPrefix, startupColor,
-		IDI_APPICON_VALUE, iconXPM, 
-		global_hInstance, MainWndProc, parentWindow, 
-		verbose );
+					IDI_APPICON_VALUE, iconXPM,
+					global_hInstance, MainWndProc, parentWindow,
+					verbose );
 }
 
 /*
 ** VID_UpdateWindowPosAndSize
 */
-void VID_UpdateWindowPosAndSize( int x, int y )
-{
+void VID_UpdateWindowPosAndSize( int x, int y ) {
 	RECT r;
 	int style;
 	int w, h;
@@ -583,17 +550,17 @@ void VID_UpdateWindowPosAndSize( int x, int y )
 /*
 ** VID_GetDefaultMode
 */
-bool VID_GetDefaultMode( int *width, int *height )
-{
+bool VID_GetDefaultMode( int *width, int *height ) {
 	DEVMODE dm;
-		
+
 	memset( &dm, 0, sizeof( dm ) );
 	dm.dmSize = sizeof( dm );
 
 	EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm );
 
-	if( !dm.dmPelsWidth || !dm.dmPelsHeight )
+	if( !dm.dmPelsWidth || !dm.dmPelsHeight ) {
 		return false;
+	}
 
 	*width = dm.dmPelsWidth;
 	*height = dm.dmPelsHeight;
@@ -604,27 +571,27 @@ bool VID_GetDefaultMode( int *width, int *height )
 /*
 ** VID_GetSysModes
 */
-unsigned int VID_GetSysModes( vidmode_t *modes )
-{
+unsigned int VID_GetSysModes( vidmode_t *modes ) {
 	DEVMODE dm;
 	unsigned int i, count = 0, prevwidth = 0, prevheight = 0;
 
 	memset( &dm, 0, sizeof( dm ) );
 	dm.dmSize = sizeof( dm );
 
-	for( i = 0; EnumDisplaySettings( NULL, i, &dm ); i++ )
-	{
-		if( dm.dmBitsPerPel < 15 )
+	for( i = 0; EnumDisplaySettings( NULL, i, &dm ); i++ ) {
+		if( dm.dmBitsPerPel < 15 ) {
 			continue;
+		}
 
-		if( ( dm.dmPelsWidth == prevwidth ) && ( dm.dmPelsHeight == prevheight ) )
+		if( ( dm.dmPelsWidth == prevwidth ) && ( dm.dmPelsHeight == prevheight ) ) {
 			continue;
+		}
 
-		if( ChangeDisplaySettings( &dm, CDS_TEST|CDS_FULLSCREEN ) != DISP_CHANGE_SUCCESSFUL )
+		if( ChangeDisplaySettings( &dm, CDS_TEST | CDS_FULLSCREEN ) != DISP_CHANGE_SUCCESSFUL ) {
 			continue;
+		}
 
-		if( modes )
-		{
+		if( modes ) {
 			modes[count].width = dm.dmPelsWidth;
 			modes[count].height = dm.dmPelsHeight;
 		}
@@ -644,24 +611,25 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 *
 * Sends a flash message to inactive window
 */
-void VID_FlashWindow( int count )
-{
+void VID_FlashWindow( int count ) {
 	FLASHWINFO fwi;
 
-	if( ActiveApp )
+	if( ActiveApp ) {
 		return;
-	if( !count )
+	}
+	if( !count ) {
 		return;
+	}
 
-	ZeroMemory(&fwi, sizeof(fwi));
+	ZeroMemory( &fwi, sizeof( fwi ) );
 
-	fwi.cbSize = sizeof(fwi);
+	fwi.cbSize = sizeof( fwi );
 	fwi.dwFlags = FLASHW_ALL;
 	fwi.dwTimeout = 0;
 	fwi.hwnd = cl_hwnd;
 	fwi.uCount = count;
 
-	FlashWindowEx(&fwi);
+	FlashWindowEx( &fwi );
 }
 
 /*
@@ -669,23 +637,21 @@ void VID_FlashWindow( int count )
 *
 * Disables the automatic DPI scaling and gets the pixel ratio.
 */
-void VID_SetProcessDPIAware( void )
-{
+void VID_SetProcessDPIAware( void ) {
 	HINSTANCE user32Dll;
 	HDC hdc;
 
 	user32Dll = LoadLibrary( "user32.dll" );
-	if( user32Dll )
-	{
-		BOOL ( WINAPI *pSetProcessDPIAware )( void ) = ( void * )GetProcAddress( user32Dll, "SetProcessDPIAware" );
-		if( pSetProcessDPIAware )
+	if( user32Dll ) {
+		BOOL( WINAPI * pSetProcessDPIAware )( void ) = ( void * )GetProcAddress( user32Dll, "SetProcessDPIAware" );
+		if( pSetProcessDPIAware ) {
 			pSetProcessDPIAware();
+		}
 		FreeLibrary( user32Dll );
 	}
 
 	hdc = GetDC( NULL );
-	if( hdc )
-	{
+	if( hdc ) {
 		vid_pixelRatio = ( float )GetDeviceCaps( hdc, LOGPIXELSY ) / 96.0f;
 		ReleaseDC( NULL, hdc );
 	}
@@ -694,7 +660,6 @@ void VID_SetProcessDPIAware( void )
 /*
 ** VID_GetPixelRatio
 */
-float VID_GetPixelRatio( void )
-{
+float VID_GetPixelRatio( void ) {
 	return vid_pixelRatio;
 }

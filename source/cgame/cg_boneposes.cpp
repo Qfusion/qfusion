@@ -32,25 +32,23 @@ cgs_skeleton_t *skel_headnode;
 
 //#define SKEL_PRINTBONETREE
 #ifdef SKEL_PRINTBONETREE
-static void CG_PrintBoneTree( cgs_skeleton_t *skel, bonenode_t *node, int level )
-{
+static void CG_PrintBoneTree( cgs_skeleton_t *skel, bonenode_t *node, int level ) {
 	int i;
 
-	if( node->bonenum != -1 )
-	{
-		for( i = 0; i < level; i++ )
-		{
+	if( node->bonenum != -1 ) {
+		for( i = 0; i < level; i++ ) {
 			CG_Printf( "  " );
 		}
 		CG_Printf( "%i %s\n", skel->bones[node->bonenum].parent, skel->bones[node->bonenum].name );
 	}
 
 	level++;
+
 	// find children of this bone
-	for( i = 0; i < node->numbonechildren; i++ )
-	{
-		if( node->bonechildren[i] )
+	for( i = 0; i < node->numbonechildren; i++ ) {
+		if( node->bonechildren[i] ) {
 			CG_PrintBoneTree( skel, node->bonechildren[i], level );
+		}
 	}
 }
 #endif
@@ -59,34 +57,31 @@ static void CG_PrintBoneTree( cgs_skeleton_t *skel, bonenode_t *node, int level 
 * CG_CreateBonesTreeNode
 * Find out the original tree
 */
-static bonenode_t *CG_CreateBonesTreeNode( cgs_skeleton_t *skel, int bone )
-{
+static bonenode_t *CG_CreateBonesTreeNode( cgs_skeleton_t *skel, int bone ) {
 	int i, count;
 	int children[SKM_MAX_BONES];
 	bonenode_t *bonenode;
 
 	bonenode = (bonenode_t *)CG_Malloc( sizeof( bonenode_t ) );
 	bonenode->bonenum = bone;
-	if( bone != -1 )
+	if( bone != -1 ) {
 		skel->bones[bone].node = bonenode; // store a pointer in the linear array for fast first access.
+
+	}
 
 	// find childs of this bone
 	count = 0;
-	for( i = 0; i < skel->numBones; i++ )
-	{
-		if( skel->bones[i].parent == bone )
-		{
+	for( i = 0; i < skel->numBones; i++ ) {
+		if( skel->bones[i].parent == bone ) {
 			children[count] = i;
 			count++;
 		}
 	}
 
 	bonenode->numbonechildren = count;
-	if( bonenode->numbonechildren )
-	{
+	if( bonenode->numbonechildren ) {
 		bonenode->bonechildren = ( bonenode_t ** )CG_Malloc( sizeof( bonenode_t * ) * bonenode->numbonechildren );
-		for( i = 0; i < bonenode->numbonechildren; i++ )
-		{
+		for( i = 0; i < bonenode->numbonechildren; i++ ) {
 			bonenode->bonechildren[i] = CG_CreateBonesTreeNode( skel, children[i] );
 		}
 	}
@@ -97,8 +92,7 @@ static bonenode_t *CG_CreateBonesTreeNode( cgs_skeleton_t *skel, int bone )
 /*
 * CG_SkeletonForModel
 */
-cgs_skeleton_t *CG_SkeletonForModel( struct model_s *model )
-{
+cgs_skeleton_t *CG_SkeletonForModel( struct model_s *model ) {
 	int i, j;
 	cgs_skeleton_t *skel;
 	uint8_t *buffer;
@@ -106,35 +100,37 @@ cgs_skeleton_t *CG_SkeletonForModel( struct model_s *model )
 	bonepose_t *bonePose;
 	int numBones, numFrames;
 
-	if( !model )
+	if( !model ) {
 		return NULL;
+	}
 
 	numBones = trap_R_SkeletalGetNumBones( model, &numFrames );
-	if( !numBones || !numFrames )
+	if( !numBones || !numFrames ) {
 		return NULL; // no bones or frames
 
-	for( skel = skel_headnode; skel; skel = skel->next )
-	{
-		if( skel->model == model )
+	}
+	for( skel = skel_headnode; skel; skel = skel->next ) {
+		if( skel->model == model ) {
 			return skel;
+		}
 	}
 
 	// allocate one huge array to hold our data
 	buffer = (uint8_t *)CG_Malloc( sizeof( cgs_skeleton_t ) + numBones * sizeof( cgs_bone_t ) +
-		numFrames * ( sizeof( bonepose_t * ) + numBones * sizeof( bonepose_t ) ) );
+								   numFrames * ( sizeof( bonepose_t * ) + numBones * sizeof( bonepose_t ) ) );
 
 	skel = ( cgs_skeleton_t * )buffer; buffer += sizeof( cgs_skeleton_t );
 	skel->bones = ( cgs_bone_t * )buffer; buffer += numBones * sizeof( cgs_bone_t );
 	skel->numBones = numBones;
 	skel->bonePoses = ( bonepose_t ** )buffer; buffer += numFrames * sizeof( bonepose_t * );
 	skel->numFrames = numFrames;
+
 	// register bones
 	for( i = 0, bone = skel->bones; i < numBones; i++, bone++ )
 		bone->parent = trap_R_SkeletalGetBoneInfo( model, i, bone->name, sizeof( bone->name ), &bone->flags );
 
 	// register poses for all frames for all bones
-	for( i = 0; i < numFrames; i++ )
-	{
+	for( i = 0; i < numFrames; i++ ) {
 		skel->bonePoses[i] = ( bonepose_t * )buffer; buffer += numBones * sizeof( bonepose_t );
 		for( j = 0, bonePose = skel->bonePoses[i]; j < numBones; j++, bonePose++ )
 			trap_R_SkeletalGetBonePose( model, j, i, bonePose );
@@ -162,10 +158,10 @@ cgs_skeleton_t *CG_SkeletonForModel( struct model_s *model )
 /*
 * CG_BoneNodeFromNum
 */
-bonenode_t *CG_BoneNodeFromNum( cgs_skeleton_t *skel, int bonenum )
-{
-	if( bonenum < 0 || bonenum >= skel->numBones )
+bonenode_t *CG_BoneNodeFromNum( cgs_skeleton_t *skel, int bonenum ) {
+	if( bonenum < 0 || bonenum >= skel->numBones ) {
 		return skel->bonetree;
+	}
 	return skel->bones[bonenum].node;
 }
 
@@ -173,30 +169,25 @@ bonenode_t *CG_BoneNodeFromNum( cgs_skeleton_t *skel, int bonenum )
 * CG_RecurseBlendSkeletalBone
 * Combine 2 different poses in one from a given root bone
 */
-void CG_RecurseBlendSkeletalBone( bonepose_t *inboneposes, bonepose_t *outboneposes, bonenode_t *bonenode, float frac )
-{
+void CG_RecurseBlendSkeletalBone( bonepose_t *inboneposes, bonepose_t *outboneposes, bonenode_t *bonenode, float frac ) {
 	int i;
 	bonepose_t *inbone, *outbone;
 
-	if( bonenode->bonenum != -1 )
-	{
+	if( bonenode->bonenum != -1 ) {
 		inbone = inboneposes + bonenode->bonenum;
 		outbone = outboneposes + bonenode->bonenum;
-		if( frac == 1 )
-		{
+		if( frac == 1 ) {
 			memcpy( &outboneposes[bonenode->bonenum], &inboneposes[bonenode->bonenum], sizeof( bonepose_t ) );
-		}
-		else
-		{
+		} else {
 			// blend current node pose
 			DualQuat_Lerp( inbone->dualquat, outbone->dualquat, frac, outbone->dualquat );
 		}
 	}
 
-	for( i = 0; i < bonenode->numbonechildren; i++ )
-	{
-		if( bonenode->bonechildren[i] )
+	for( i = 0; i < bonenode->numbonechildren; i++ ) {
+		if( bonenode->bonechildren[i] ) {
 			CG_RecurseBlendSkeletalBone( inboneposes, outboneposes, bonenode->bonechildren[i], frac );
+		}
 	}
 }
 
@@ -204,20 +195,17 @@ void CG_RecurseBlendSkeletalBone( bonepose_t *inboneposes, bonepose_t *outbonepo
 * CG_TransformBoneposes
 * Transform boneposes to parent bone space (mount the skeleton)
 */
-void CG_TransformBoneposes( cgs_skeleton_t *skel, bonepose_t *outboneposes, bonepose_t *sourceboneposes )
-{
+void CG_TransformBoneposes( cgs_skeleton_t *skel, bonepose_t *outboneposes, bonepose_t *sourceboneposes ) {
 	int j;
 	bonepose_t temppose;
 
-	for( j = 0; j < (int)skel->numBones; j++ )
-	{
-		if( skel->bones[j].parent >= 0 )
-		{
+	for( j = 0; j < (int)skel->numBones; j++ ) {
+		if( skel->bones[j].parent >= 0 ) {
 			memcpy( &temppose, &sourceboneposes[j], sizeof( bonepose_t ) );
 			DualQuat_Multiply( outboneposes[skel->bones[j].parent].dualquat, temppose.dualquat, outboneposes[j].dualquat );
-		}
-		else if( outboneposes != sourceboneposes )
+		} else if( outboneposes != sourceboneposes ) {
 			memcpy( &outboneposes[j], &sourceboneposes[j], sizeof( bonepose_t ) );
+		}
 	}
 }
 
@@ -226,23 +214,17 @@ void CG_TransformBoneposes( cgs_skeleton_t *skel, bonepose_t *outboneposes, bone
 * Interpolate between 2 poses. It doesn't matter where they come
 * from nor if they are previously transformed or not
 */
-bool CG_LerpBoneposes( cgs_skeleton_t *skel, bonepose_t *curboneposes, bonepose_t *oldboneposes, bonepose_t *outboneposes, float frontlerp )
-{
+bool CG_LerpBoneposes( cgs_skeleton_t *skel, bonepose_t *curboneposes, bonepose_t *oldboneposes, bonepose_t *outboneposes, float frontlerp ) {
 	int i;
 
 	assert( curboneposes && oldboneposes && outboneposes );
 	assert( skel && skel->numBones && skel->numFrames );
 
-	if( frontlerp == 1 )
-	{
+	if( frontlerp == 1 ) {
 		memcpy( outboneposes, curboneposes, sizeof( bonepose_t ) * skel->numBones );
-	}
-	else if( frontlerp == 0 )
-	{
+	} else if( frontlerp == 0 ) {
 		memcpy( outboneposes, oldboneposes, sizeof( bonepose_t ) * skel->numBones );
-	}
-	else
-	{
+	} else {
 		// lerp all bone poses
 		for( i = 0; i < (int)skel->numBones; i++, curboneposes++, oldboneposes++, outboneposes++ ) {
 			DualQuat_Lerp( oldboneposes->dualquat, curboneposes->dualquat, frontlerp, outboneposes->dualquat );
@@ -256,25 +238,22 @@ bool CG_LerpBoneposes( cgs_skeleton_t *skel, bonepose_t *curboneposes, bonepose_
 * CG_LerpSkeletonPoses
 * Interpolate between 2 frame poses in a skeleton
 */
-bool CG_LerpSkeletonPoses( cgs_skeleton_t *skel, int curframe, int oldframe, bonepose_t *outboneposes, float frontlerp )
-{
-	if( !skel )
+bool CG_LerpSkeletonPoses( cgs_skeleton_t *skel, int curframe, int oldframe, bonepose_t *outboneposes, float frontlerp ) {
+	if( !skel ) {
 		return false;
+	}
 
-	if( curframe >= skel->numFrames || curframe < 0 )
-	{
+	if( curframe >= skel->numFrames || curframe < 0 ) {
 		CG_Printf( S_COLOR_YELLOW "CG_LerpSkeletonPoses: out of bounds frame: %i [%i]\n", curframe, skel->numFrames );
 		curframe = 0;
 	}
 
-	if( oldframe >= skel->numFrames || oldframe < 0 )
-	{
+	if( oldframe >= skel->numFrames || oldframe < 0 ) {
 		CG_Printf( S_COLOR_YELLOW "CG_LerpSkeletonPoses: out of bounds oldframe: %i [%i]\n", oldframe, skel->numFrames );
 		oldframe = 0;
 	}
 
-	if( curframe == oldframe )
-	{
+	if( curframe == oldframe ) {
 		memcpy( outboneposes, skel->bonePoses[curframe], sizeof( bonepose_t ) * skel->numBones );
 		return true;
 	}
@@ -285,8 +264,7 @@ bool CG_LerpSkeletonPoses( cgs_skeleton_t *skel, int curframe, int oldframe, bon
 /*
 * CG_RotateBonePose
 */
-void CG_RotateBonePose( vec3_t angles, bonepose_t *bonepose )
-{
+void CG_RotateBonePose( vec3_t angles, bonepose_t *bonepose ) {
 	dualquat_t quat_rotator;
 	bonepose_t temppose;
 	vec3_t tempangles;
@@ -306,17 +284,17 @@ void CG_RotateBonePose( vec3_t angles, bonepose_t *bonepose )
 * CG_TagMask
 * Use alternative names for tag bones
 */
-static cg_tagmask_t *CG_TagMask( const char *maskname, cgs_skeleton_t *skel )
-{
+static cg_tagmask_t *CG_TagMask( const char *maskname, cgs_skeleton_t *skel ) {
 	cg_tagmask_t *tagmask;
 
-	if( !skel )
+	if( !skel ) {
 		return NULL;
+	}
 
-	for( tagmask = skel->tagmasks; tagmask; tagmask = tagmask->next )
-	{
-		if( !Q_stricmp( tagmask->tagname, maskname ) )
+	for( tagmask = skel->tagmasks; tagmask; tagmask = tagmask->next ) {
+		if( !Q_stricmp( tagmask->tagname, maskname ) ) {
 			return tagmask;
+		}
 	}
 
 	return NULL;
@@ -326,44 +304,39 @@ static cg_tagmask_t *CG_TagMask( const char *maskname, cgs_skeleton_t *skel )
 * CG_SkeletalPoseGetAttachment
 * Get the tag from the interpolated and transformed pose
 */
-bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel, 
-	bonepose_t *boneposes, const char *bonename )
-{
+bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel,
+								   bonepose_t *boneposes, const char *bonename ) {
 	int i;
 	quat_t quat;
 	cgs_bone_t *bone;
 	bonepose_t *bonepose;
 	cg_tagmask_t *tagmask;
 
-	if( !boneposes || !skel )
-	{
+	if( !boneposes || !skel ) {
 		CG_Printf( "CG_SkeletalPoseLerpAttachment: Wrong model or boneposes %s\n", bonename );
 		return false;
 	}
 
 	tagmask = CG_TagMask( bonename, skel );
+
 	// find the appropriate attachment bone
-	if( tagmask )
-	{
+	if( tagmask ) {
 		bone = skel->bones;
-		for( i = 0; i < skel->numBones; i++, bone++ )
-		{
-			if( !Q_stricmp( bone->name, tagmask->bonename ) )
+		for( i = 0; i < skel->numBones; i++, bone++ ) {
+			if( !Q_stricmp( bone->name, tagmask->bonename ) ) {
 				break;
+			}
 		}
-	}
-	else
-	{
+	} else {
 		bone = skel->bones;
-		for( i = 0; i < skel->numBones; i++, bone++ )
-		{
-			if( !Q_stricmp( bone->name, bonename ) )
+		for( i = 0; i < skel->numBones; i++, bone++ ) {
+			if( !Q_stricmp( bone->name, bonename ) ) {
 				break;
+			}
 		}
 	}
 
-	if( i == skel->numBones )
-	{
+	if( i == skel->numBones ) {
 		CG_Printf( "CG_SkeletalPoseLerpAttachment: no such bone %s\n", bonename );
 		return false;
 	}
@@ -380,13 +353,11 @@ bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel,
 	Matrix3_Normalize( orient->axis );
 
 	// do the offseting if having a tagmask
-	if( tagmask )
-	{
-		// we want to place a rotated model over this tag, not to rotate the tag, 
+	if( tagmask ) {
+		// we want to place a rotated model over this tag, not to rotate the tag,
 		// because all rotations would move. So we create a new orientation for the
 		// model and we position the new orientation in tag space
-		if( tagmask->rotate[YAW] || tagmask->rotate[PITCH] || tagmask->rotate[ROLL] )
-		{
+		if( tagmask->rotate[YAW] || tagmask->rotate[PITCH] || tagmask->rotate[ROLL] ) {
 			orientation_t modOrient, newOrient;
 
 			VectorCopy( tagmask->offset, modOrient.origin );
@@ -396,20 +367,18 @@ bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel,
 			Matrix3_Identity( newOrient.axis );
 
 			CG_MoveToTag( newOrient.origin, newOrient.axis,
-				orient->origin, orient->axis,
-				modOrient.origin, modOrient.axis
-				 );
+						  orient->origin, orient->axis,
+						  modOrient.origin, modOrient.axis
+						  );
 
 			Matrix3_Copy( newOrient.axis, orient->axis );
 			VectorCopy( newOrient.origin, orient->origin );
-		}
-		else
-		{
+		} else {
 			// offset
-			for( i = 0; i < 3; i++ )
-			{
-				if( tagmask->offset[i] )
-					VectorMA( orient->origin, tagmask->offset[i], &orient->axis[i*3], orient->origin );
+			for( i = 0; i < 3; i++ ) {
+				if( tagmask->offset[i] ) {
+					VectorMA( orient->origin, tagmask->offset[i], &orient->axis[i * 3], orient->origin );
+				}
 			}
 		}
 	}
@@ -424,7 +393,7 @@ bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel,
 //
 //========================================================================
 
-#define TBC_Block_Size	    1024
+#define TBC_Block_Size      1024
 static int TBC_Size;
 
 bonepose_t *TBC;        //Temporary Boneposes Cache
@@ -435,8 +404,7 @@ static int TBC_Count;
 * CG_InitTemporaryBoneposesCache
 * allocate space for temporary boneposes
 */
-void CG_InitTemporaryBoneposesCache( void )
-{
+void CG_InitTemporaryBoneposesCache( void ) {
 	TBC_Size = TBC_Block_Size;
 	TBC = ( bonepose_t * )CG_Malloc( sizeof( bonepose_t ) * TBC_Size );
 	TBC_Count = 0;
@@ -445,8 +413,7 @@ void CG_InitTemporaryBoneposesCache( void )
 /*
 * CG_ExpandTemporaryBoneposesCache
 */
-static void CG_ExpandTemporaryBoneposesCache( int num )
-{
+static void CG_ExpandTemporaryBoneposesCache( int num ) {
 	bonepose_t *temp;
 
 	temp = TBC;
@@ -461,8 +428,7 @@ static void CG_ExpandTemporaryBoneposesCache( int num )
 /*
 * CG_ResetTemporaryBoneposesCache
 */
-void CG_ResetTemporaryBoneposesCache( void )
-{
+void CG_ResetTemporaryBoneposesCache( void ) {
 	TBC_Count = 0;
 }
 
@@ -470,11 +436,11 @@ void CG_ResetTemporaryBoneposesCache( void )
 * CG_RegisterTemporaryExternalBoneposes
 * These boneposes are RESET after drawing EACH FRAME
 */
-bonepose_t *CG_RegisterTemporaryExternalBoneposes( cgs_skeleton_t *skel )
-{
+bonepose_t *CG_RegisterTemporaryExternalBoneposes( cgs_skeleton_t *skel ) {
 	bonepose_t *boneposes;
-	if( ( TBC_Count + skel->numBones ) > TBC_Size )
+	if( ( TBC_Count + skel->numBones ) > TBC_Size ) {
 		CG_ExpandTemporaryBoneposesCache( skel->numBones );
+	}
 
 	boneposes = &TBC[TBC_Count];
 	TBC_Count += skel->numBones;
@@ -487,13 +453,11 @@ bonepose_t *CG_RegisterTemporaryExternalBoneposes( cgs_skeleton_t *skel )
 * Sets up skeleton with inline boneposes based on frame/oldframe values
 * These boneposes will be RESET after drawing EACH FRAME.
 */
-cgs_skeleton_t *CG_SetBoneposesForTemporaryEntity( entity_t *ent )
-{
+cgs_skeleton_t *CG_SetBoneposesForTemporaryEntity( entity_t *ent ) {
 	cgs_skeleton_t *skel;
 
 	skel = CG_SkeletonForModel( ent->model );
-	if( skel )
-	{
+	if( skel ) {
 		// get space in cache, interpolate, transform, link
 		ent->boneposes = CG_RegisterTemporaryExternalBoneposes( skel );
 		CG_LerpSkeletonPoses( skel, ent->frame, ent->oldframe, ent->boneposes, 1.0 - ent->backlerp );
@@ -507,8 +471,7 @@ cgs_skeleton_t *CG_SetBoneposesForTemporaryEntity( entity_t *ent )
 /*
 * CG_FreeTemporaryBoneposesCache
 */
-void CG_FreeTemporaryBoneposesCache( void )
-{
+void CG_FreeTemporaryBoneposesCache( void ) {
 	CG_Free( TBC );
 	TBC_Size = 0;
 	TBC_Count = 0;

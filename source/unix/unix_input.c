@@ -56,27 +56,28 @@ int Sys_XTimeToSysTime( unsigned long xtime );
 * @param e The XEvent of the request
 * @returns The proterty Atom for the appropriate response
 */
-static Atom Sys_ClipboardProperty( XSelectionRequestEvent* request )
-{
+static Atom Sys_ClipboardProperty( XSelectionRequestEvent* request ) {
 	int i;
 	const Atom formats[] = {
 		XA_utf8_string,
 		XA_text,
-		XA_STRING };
+		XA_STRING
+	};
 	const int formatCount = sizeof( formats ) / sizeof( formats[0] );
 
 	// Legacy client
-	if( request->property == None )
+	if( request->property == None ) {
 		return None;
+	}
 
 	// Requested list of available datatypes
-	if( request->target == XA_TARGETS )
-	{
+	if( request->target == XA_TARGETS ) {
 		const Atom targets[] = {
 			XA_TARGETS,
 			XA_utf8_string,
 			XA_text,
-			XA_STRING };
+			XA_STRING
+		};
 
 		XChangeProperty(
 			x11display.dpy,
@@ -92,10 +93,8 @@ static Atom Sys_ClipboardProperty( XSelectionRequestEvent* request )
 	}
 
 	// Requested a data type
-	for( i = 0; i < formatCount; i++ )
-	{
-		if( request->target == formats[i] )
-		{
+	for( i = 0; i < formatCount; i++ ) {
+		if( request->target == formats[i] ) {
 			// Requested a supported type
 			XChangeProperty(
 				x11display.dpy,
@@ -122,14 +121,14 @@ static Atom Sys_ClipboardProperty( XSelectionRequestEvent* request )
 * with debug and windowed mode. It rests on the assumption that the X server will use the same
 * timestamp on press/release event pairs for key repeats.
 */
-static bool X11_PendingInput( void )
-{
+static bool X11_PendingInput( void ) {
 	assert( x11display.dpy );
 
 	// Flush the display connection and look to see if events are queued
 	XFlush( x11display.dpy );
-	if( XEventsQueued( x11display.dpy, QueuedAlready ) )
+	if( XEventsQueued( x11display.dpy, QueuedAlready ) ) {
 		return true;
+	}
 
 	{ // More drastic measures are required -- see if X is ready to talk
 		static struct timeval zero_time;
@@ -139,28 +138,26 @@ static bool X11_PendingInput( void )
 		x11_fd = ConnectionNumber( x11display.dpy );
 		FD_ZERO( &fdset );
 		FD_SET( x11_fd, &fdset );
-		if( select( x11_fd+1, &fdset, NULL, NULL, &zero_time ) == 1 )
+		if( select( x11_fd + 1, &fdset, NULL, NULL, &zero_time ) == 1 ) {
 			return ( XPending( x11display.dpy ) );
+		}
 	}
 
 	// Oh well, nothing is ready ..
 	return false;
 }
 
-static bool repeated_press( XEvent *event )
-{
+static bool repeated_press( XEvent *event ) {
 	XEvent peekevent;
 	bool repeated = false;
 
 	assert( x11display.dpy );
 
-	if( X11_PendingInput() )
-	{
+	if( X11_PendingInput() ) {
 		XPeekEvent( x11display.dpy, &peekevent );
 		if( ( peekevent.type == KeyPress ) &&
 			( peekevent.xkey.keycode == event->xkey.keycode ) &&
-			( peekevent.xkey.time == event->xkey.time ) )
-		{
+			( peekevent.xkey.time == event->xkey.time ) ) {
 			repeated = true;
 			// we only skip the KeyRelease event, so we send many key down events, but no releases, while repeating
 			//XNextEvent(x11display.dpy, &peekevent);  // skip event.
@@ -172,8 +169,7 @@ static bool repeated_press( XEvent *event )
 
 /*****************************************************************************/
 
-static Cursor CreateNullCursor( Display *display, Window root )
-{
+static Cursor CreateNullCursor( Display *display, Window root ) {
 	Pixmap cursormask;
 	XGCValues xgc;
 	GC gc;
@@ -196,8 +192,7 @@ static Cursor CreateNullCursor( Display *display, Window root )
 	return cursor;
 }
 
-static void install_grabs_mouse( void )
-{
+static void install_grabs_mouse( void ) {
 	int i;
 	int num_devices;
 	XIDeviceInfo *info;
@@ -205,89 +200,89 @@ static void install_grabs_mouse( void )
 
 	assert( x11display.dpy && x11display.win );
 
-	if( mouse_active )
+	if( mouse_active ) {
 		return;
+	}
 
-	XDefineCursor(x11display.dpy, x11display.win, CreateNullCursor(x11display.dpy, x11display.win));
+	XDefineCursor( x11display.dpy, x11display.win, CreateNullCursor( x11display.dpy, x11display.win ) );
 
 	mask.deviceid = XIAllDevices;
-	mask.mask_len = XIMaskLen(XI_LASTEVENT);
-	mask.mask = calloc(mask.mask_len, sizeof(char));
-	XISetMask(mask.mask, XI_Enter);
-	XISetMask(mask.mask, XI_Leave);
-	XISetMask(mask.mask, XI_ButtonPress);
-	XISetMask(mask.mask, XI_ButtonRelease);
+	mask.mask_len = XIMaskLen( XI_LASTEVENT );
+	mask.mask = calloc( mask.mask_len, sizeof( char ) );
+	XISetMask( mask.mask, XI_Enter );
+	XISetMask( mask.mask, XI_Leave );
+	XISetMask( mask.mask, XI_ButtonPress );
+	XISetMask( mask.mask, XI_ButtonRelease );
 
-	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
-	for(i = 0; i < num_devices; i++) {
+	info = XIQueryDevice( x11display.dpy, XIAllDevices, &num_devices );
+	for( i = 0; i < num_devices; i++ ) {
 		int id = info[i].deviceid;
-		if(info[i].use == XISlavePointer) {
+		if( info[i].use == XISlavePointer ) {
 			mask.deviceid = id;
-			XIGrabDevice(x11display.dpy, id, x11display.win, CurrentTime, None, GrabModeSync,
-				GrabModeSync, True, &mask);
-		}
-		else if(info[i].use == XIMasterPointer) {
-			if (x11display.features.wmStateFullscreen)
-				XIWarpPointer(x11display.dpy, id, None, x11display.win, 0, 0, 0, 0, 0, 0);
-			else
-				XIWarpPointer(x11display.dpy, id, None, x11display.win, 0, 0, 0, 0, x11display.win_width/2, x11display.win_height/2);
+			XIGrabDevice( x11display.dpy, id, x11display.win, CurrentTime, None, GrabModeSync,
+						  GrabModeSync, True, &mask );
+		} else if( info[i].use == XIMasterPointer ) {
+			if( x11display.features.wmStateFullscreen ) {
+				XIWarpPointer( x11display.dpy, id, None, x11display.win, 0, 0, 0, 0, 0, 0 );
+			} else {
+				XIWarpPointer( x11display.dpy, id, None, x11display.win, 0, 0, 0, 0, x11display.win_width / 2, x11display.win_height / 2 );
+			}
 		}
 	}
-	XIFreeDeviceInfo(info);
+	XIFreeDeviceInfo( info );
 
 	mask.deviceid = XIAllDevices;
-	memset(mask.mask, 0, mask.mask_len);
-	XISetMask(mask.mask, XI_RawMotion);
+	memset( mask.mask, 0, mask.mask_len );
+	XISetMask( mask.mask, XI_RawMotion );
 
-	XISelectEvents(x11display.dpy, DefaultRootWindow(x11display.dpy), &mask, 1);
+	XISelectEvents( x11display.dpy, DefaultRootWindow( x11display.dpy ), &mask, 1 );
 
-	free(mask.mask);
+	free( mask.mask );
 
-	XSync(x11display.dpy, True);
+	XSync( x11display.dpy, True );
 
 	mx = my = 0;
 	mouse_active = true;
 }
 
-static void uninstall_grabs_mouse( void )
-{
+static void uninstall_grabs_mouse( void ) {
 	int i;
 	int num_devices;
 	XIDeviceInfo *info;
 
 	assert( x11display.dpy && x11display.win );
 
-	if( !mouse_active )
+	if( !mouse_active ) {
 		return;
+	}
 
-	XUndefineCursor(x11display.dpy, x11display.win);
+	XUndefineCursor( x11display.dpy, x11display.win );
 
-	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
+	info = XIQueryDevice( x11display.dpy, XIAllDevices, &num_devices );
 
-	for(i = 0; i < num_devices; i++) {
-		if(info[i].use == XIFloatingSlave) {
-			XIUngrabDevice(x11display.dpy, info[i].deviceid, CurrentTime);
-		}
-		else if(info[i].use == XIMasterPointer) {
-			XIWarpPointer(x11display.dpy, info[i].deviceid, None, x11display.win, 0, 0, 0, 0,
-				x11display.win_width/2, x11display.win_height/2);
+	for( i = 0; i < num_devices; i++ ) {
+		if( info[i].use == XIFloatingSlave ) {
+			XIUngrabDevice( x11display.dpy, info[i].deviceid, CurrentTime );
+		} else if( info[i].use == XIMasterPointer ) {
+			XIWarpPointer( x11display.dpy, info[i].deviceid, None, x11display.win, 0, 0, 0, 0,
+						   x11display.win_width / 2, x11display.win_height / 2 );
 		}
 	}
-	XIFreeDeviceInfo(info);
+	XIFreeDeviceInfo( info );
 
 	mouse_active = false;
 	mx = my = 0;
 }
 
-static void install_grabs_keyboard( void )
-{
+static void install_grabs_keyboard( void ) {
 	int res;
 	int fevent;
 
 	assert( x11display.dpy && x11display.win );
 
-	if( input_active )
+	if( input_active ) {
 		return;
+	}
 
 	if( !x11display.features.wmStateFullscreen ) {
 		res = XGrabKeyboard( x11display.dpy, x11display.win, False, GrabModeAsync, GrabModeAsync, CurrentTime );
@@ -300,9 +295,9 @@ static void install_grabs_keyboard( void )
 	// init X Input method, needed by Xutf8LookupString
 	x11display.im = XOpenIM( x11display.dpy, NULL, NULL, NULL );
 	x11display.ic = XCreateIC( x11display.im,
-		XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-		XNClientWindow, x11display.win,
-		NULL );
+							   XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+							   XNClientWindow, x11display.win,
+							   NULL );
 
 	if( x11display.ic ) {
 		XGetICValues( x11display.ic, XNFilterEvents, &fevent, NULL );
@@ -312,12 +307,12 @@ static void install_grabs_keyboard( void )
 	input_active = true;
 }
 
-static void uninstall_grabs_keyboard( void )
-{
+static void uninstall_grabs_keyboard( void ) {
 	assert( x11display.dpy && x11display.win );
 
-	if( !input_active )
+	if( !input_active ) {
 		return;
+	}
 
 	XUngrabKeyboard( x11display.dpy, CurrentTime );
 
@@ -327,9 +322,8 @@ static void uninstall_grabs_keyboard( void )
 }
 
 // Q3 version
-static int XLateKey( KeySym keysym )
-{
-	switch(keysym) {
+static int XLateKey( KeySym keysym ) {
+	switch( keysym ) {
 		case XK_Scroll_Lock: return K_SCROLLLOCK;
 		case XK_Caps_Lock: return K_CAPSLOCK;
 		case XK_Num_Lock: return K_NUMLOCK;
@@ -391,7 +385,7 @@ static int XLateKey( KeySym keysym )
 		case XK_KP_Subtract: return KP_MINUS;
 		case XK_KP_Divide: return KP_SLASH;
 		default:
-			if (keysym >= 32 && keysym <= 126) {
+			if( keysym >= 32 && keysym <= 126 ) {
 				return keysym;
 			}
 			break;
@@ -403,8 +397,7 @@ static int XLateKey( KeySym keysym )
 /*
 *_X11_CheckWMSTATE
 */
-static void _X11_CheckWMSTATE( void )
-{
+static void _X11_CheckWMSTATE( void ) {
 #define WM_STATE_ELEMENTS 1
 	unsigned long *property = NULL;
 	unsigned long nitems;
@@ -416,64 +409,62 @@ static void _X11_CheckWMSTATE( void )
 	minimized = false;
 	xa_WM_STATE = x11display.wmState;
 
-	status = XGetWindowProperty ( x11display.dpy, x11display.win,
-		xa_WM_STATE, 0L, WM_STATE_ELEMENTS,
-		False, xa_WM_STATE, &actual_type, &actual_format,
-		&nitems, &leftover, (unsigned char **)&property );
+	status = XGetWindowProperty( x11display.dpy, x11display.win,
+								 xa_WM_STATE, 0L, WM_STATE_ELEMENTS,
+								 False, xa_WM_STATE, &actual_type, &actual_format,
+								 &nitems, &leftover, (unsigned char **)&property );
 
-	if ( ! ( ( status == Success ) &&
-		( actual_type == xa_WM_STATE ) &&
-		( nitems == WM_STATE_ELEMENTS ) ) )
-	{
-		if ( property )
-		{
-			XFree ( (char *)property );
+	if( !( ( status == Success ) &&
+		   ( actual_type == xa_WM_STATE ) &&
+		   ( nitems == WM_STATE_ELEMENTS ) ) ) {
+		if( property ) {
+			XFree( (char *)property );
 			property = NULL;
 			return;
 		}
 	}
 
-	if( ( *property == IconicState ) || ( *property == WithdrawnState ) )
+	if( ( *property == IconicState ) || ( *property == WithdrawnState ) ) {
 		minimized = true;
+	}
 
 	XFree( (char *)property );
 }
 
-static void handle_button(XGenericEventCookie *cookie)
-{
+static void handle_button( XGenericEventCookie *cookie ) {
 	XIDeviceEvent *ev = (XIDeviceEvent *)cookie->data;
 	bool down = cookie->evtype == XI_ButtonPress;
 	int button = ev->detail;
-	unsigned time = Sys_XTimeToSysTime(ev->time);
+	unsigned time = Sys_XTimeToSysTime( ev->time );
 	int k_button;
 
-	if(!mouse_active)
+	if( !mouse_active ) {
 		return;
+	}
 
-	switch(button) {
+	switch( button ) {
 		case 1: k_button = K_MOUSE1; break;
 		case 2: k_button = K_MOUSE3; break;
 		case 3: k_button = K_MOUSE2; break;
 		case 4: k_button = K_MWHEELUP; break;
 		case 5: k_button = K_MWHEELDOWN; break;
-			/* Switch place of MOUSE4-5 with MOUSE6-7 */
+		/* Switch place of MOUSE4-5 with MOUSE6-7 */
 		case 6: k_button = K_MOUSE6; break;
 		case 7: k_button = K_MOUSE7; break;
 		case 8: k_button = K_MOUSE4; break;
 		case 9: k_button = K_MOUSE5; break;
-			/* End switch */
+		/* End switch */
 		case 10: k_button = K_MOUSE8; break;
 		default: return;
 	}
 
-	Key_Event(k_button, down, time);
+	Key_Event( k_button, down, time );
 }
 
-static void handle_key(XEvent *event)
-{
+static void handle_key( XEvent *event ) {
 	bool down = event->type == KeyPress;
 	XKeyEvent *kevent = &event->xkey;
-	unsigned time = Sys_XTimeToSysTime(event->xkey.time);
+	unsigned time = Sys_XTimeToSysTime( event->xkey.time );
 	KeySym keysym;
 	int key;
 	int XLookupRet;
@@ -486,11 +477,13 @@ static void handle_key(XEvent *event)
 	memset( buf, 0, sizeof buf ); // XLookupString doesn't zero-terminate the buffer
 	XLookupRet = 0;
 #ifdef X_HAVE_UTF8_STRING
-	if( x11display.ic )
+	if( x11display.ic ) {
 		XLookupRet = Xutf8LookupString( x11display.ic, kevent, buf, sizeof buf, &keysym, 0 );
+	}
 #endif
-	if( !XLookupRet )
+	if( !XLookupRet ) {
 		XLookupRet = XLookupString( kevent, buf, sizeof buf, &keysym, 0 );
+	}
 
 	// get keysym without modifiers, so that movement works when e.g. a cyrillic layout is selected
 	kevent->state = 0;
@@ -499,8 +492,7 @@ static void handle_key(XEvent *event)
 
 	Key_Event( key, down, time );
 
-	if( down )
-	{
+	if( down ) {
 		const char *p;
 		for( p = buf; *p; ) {
 			wchar_t wc = Q_GrabWCharFromUtf8String( (const char **)&p );
@@ -509,179 +501,167 @@ static void handle_key(XEvent *event)
 	}
 }
 
-static void handle_raw_motion(XIRawEvent *ev)
-{
+static void handle_raw_motion( XIRawEvent *ev ) {
 	double *raw_valuator = ev->raw_values;
 
-	if(!mouse_active)
+	if( !mouse_active ) {
 		return;
+	}
 
-	if(XIMaskIsSet(ev->valuators.mask, 0)) {
+	if( XIMaskIsSet( ev->valuators.mask, 0 ) ) {
 		mx += *raw_valuator++;
 	}
 
-	if(XIMaskIsSet(ev->valuators.mask, 1)) {
+	if( XIMaskIsSet( ev->valuators.mask, 1 ) ) {
 		my += *raw_valuator++;
 	}
 
 }
 
-static void handle_cookie(XGenericEventCookie *cookie)
-{
-	switch(cookie->evtype) {
-	case XI_RawMotion:
-		handle_raw_motion(cookie->data);
-		break;
-	case XI_Enter:
-	case XI_Leave:
-		break;
-	case XI_ButtonPress:
-	case XI_ButtonRelease:
-		handle_button(cookie);
-		break;
-	default:
-		break;
+static void handle_cookie( XGenericEventCookie *cookie ) {
+	switch( cookie->evtype ) {
+		case XI_RawMotion:
+			handle_raw_motion( cookie->data );
+			break;
+		case XI_Enter:
+		case XI_Leave:
+			break;
+		case XI_ButtonPress:
+		case XI_ButtonRelease:
+			handle_button( cookie );
+			break;
+		default:
+			break;
 	}
 }
 
-static void HandleEvents( void )
-{
+static void HandleEvents( void ) {
 	XEvent event, response;
 	XSelectionRequestEvent* request;
 
 	assert( x11display.dpy && x11display.win );
 
-	while( XPending( x11display.dpy ) )
-	{
+	while( XPending( x11display.dpy ) ) {
 		XGenericEventCookie *cookie = &event.xcookie;
 		XNextEvent( x11display.dpy, &event );
 
-		if( cookie->type == GenericEvent && cookie->extension == xi_opcode 
+		if( cookie->type == GenericEvent && cookie->extension == xi_opcode
 			&& XGetEventData( x11display.dpy, cookie ) ) {
-				handle_cookie( cookie );
-				XFreeEventData( x11display.dpy, cookie );
-				continue;
+			handle_cookie( cookie );
+			XFreeEventData( x11display.dpy, cookie );
+			continue;
 		}
 
-		switch( event.type )
-		{
-		case KeyPress:
-		case KeyRelease:
-			handle_key( &event );
-			break;
-		case FocusIn:
-			if( event.xfocus.mode == NotifyGrab || event.xfocus.mode == NotifyUngrab ) {
-				// Someone is handling a global hotkey, ignore it
-				continue;
-			}
-			if( !focus )
-			{
-				focus = true;
-				install_grabs_keyboard();
-			}
-			break;
-
-		case FocusOut:
-			if( event.xfocus.mode == NotifyGrab || event.xfocus.mode == NotifyUngrab ) {
-				// Someone is handling a global hotkey, ignore it
-				continue;
-			}
-			if( focus )
-			{
-				if ( Cvar_Value( "vid_fullscreen" ) ) {
-					XIconifyWindow( x11display.dpy, x11display.win, x11display.scr );
+		switch( event.type ) {
+			case KeyPress:
+			case KeyRelease:
+				handle_key( &event );
+				break;
+			case FocusIn:
+				if( event.xfocus.mode == NotifyGrab || event.xfocus.mode == NotifyUngrab ) {
+					// Someone is handling a global hotkey, ignore it
+					continue;
 				}
-				uninstall_grabs_keyboard();
-				IN_ClearState();
-				focus = false;
-			}
-			break;
+				if( !focus ) {
+					focus = true;
+					install_grabs_keyboard();
+				}
+				break;
 
-		case ClientMessage:
-			if( event.xclient.data.l[0] == x11display.wmDeleteWindow )
-				Cbuf_ExecuteText( EXEC_NOW, "quit" );
-			break;
+			case FocusOut:
+				if( event.xfocus.mode == NotifyGrab || event.xfocus.mode == NotifyUngrab ) {
+					// Someone is handling a global hotkey, ignore it
+					continue;
+				}
+				if( focus ) {
+					if( Cvar_Value( "vid_fullscreen" ) ) {
+						XIconifyWindow( x11display.dpy, x11display.win, x11display.scr );
+					}
+					uninstall_grabs_keyboard();
+					IN_ClearState();
+					focus = false;
+				}
+				break;
 
-		case ConfigureNotify:
-			VID_AppActivate( true, false );
-			break;
+			case ClientMessage:
+				if( event.xclient.data.l[0] == x11display.wmDeleteWindow ) {
+					Cbuf_ExecuteText( EXEC_NOW, "quit" );
+				}
+				break;
 
-		case PropertyNotify:
-			if( event.xproperty.window == x11display.win )
-			{
-				if ( event.xproperty.atom == x11display.wmState )
-				{
-					bool was_minimized = minimized;
+			case ConfigureNotify:
+				VID_AppActivate( true, false );
+				break;
 
-					_X11_CheckWMSTATE();
+			case PropertyNotify:
+				if( event.xproperty.window == x11display.win ) {
+					if( event.xproperty.atom == x11display.wmState ) {
+						bool was_minimized = minimized;
 
-					if( minimized != was_minimized )
-					{
-						// FIXME: find a better place for this?..
-						SCR_PauseCinematic( minimized );
-						CL_SoundModule_Activate( !minimized );
+						_X11_CheckWMSTATE();
+
+						if( minimized != was_minimized ) {
+							// FIXME: find a better place for this?..
+							SCR_PauseCinematic( minimized );
+							CL_SoundModule_Activate( !minimized );
+						}
 					}
 				}
-			}
-			break;
+				break;
 
-		case SelectionClear:
-			// Another app took clipboard ownership away
-			// There's not actually anything we need to do here
-			break;
+			case SelectionClear:
+				// Another app took clipboard ownership away
+				// There's not actually anything we need to do here
+				break;
 
-		case SelectionRequest:
-			// Another app is requesting clipboard information
-			request = &event.xselectionrequest;
+			case SelectionRequest:
+				// Another app is requesting clipboard information
+				request = &event.xselectionrequest;
 
-			memset( &response, 0, sizeof( response ) );
-			response.xselection.type = SelectionNotify;
-			response.xselection.display = request->display;
-			response.xselection.requestor = request->requestor;
-			response.xselection.selection = request->selection;
-			response.xselection.target = request->target;
-			response.xselection.time = request->time;
-			response.xselection.property = Sys_ClipboardProperty( request );
+				memset( &response, 0, sizeof( response ) );
+				response.xselection.type = SelectionNotify;
+				response.xselection.display = request->display;
+				response.xselection.requestor = request->requestor;
+				response.xselection.selection = request->selection;
+				response.xselection.target = request->target;
+				response.xselection.time = request->time;
+				response.xselection.property = Sys_ClipboardProperty( request );
 
-			// Send the response
-			XSendEvent( x11display.dpy, request->requestor, 0, 0, &response );
-			break;
+				// Send the response
+				XSendEvent( x11display.dpy, request->requestor, 0, 0, &response );
+				break;
 		}
 	}
 }
 
 /*****************************************************************************/
 
-void IN_Commands( void )
-{
+void IN_Commands( void ) {
 	IN_SDL_JoyCommands();
 }
 
-void IN_MouseMove( usercmd_t *cmd )
-{
-	if( mouse_active )
-	{
-		CL_MouseMove( cmd, mx, my );
+void IN_GetMouseMovement( int *dx, int *dy ) {
+	if( mouse_active ) {
+		*dx = mx;
+		*dy = my;
 		mx = my = 0;
 	}
 }
 
-static void IN_Activate( bool active )
-{
-	if( !input_inited )
+static void IN_Activate( bool active ) {
+	if( !input_inited ) {
 		return;
-	if( mouse_active == active )
+	}
+	if( mouse_active == active ) {
 		return;
+	}
 
 	assert( x11display.dpy && x11display.win );
 
-	if( active )
-	{
+	if( active ) {
 		install_grabs_mouse();
 		install_grabs_keyboard();
-	}
-	else
-	{
+	} else {
 		uninstall_grabs_mouse();
 		uninstall_grabs_keyboard();
 	}
@@ -690,14 +670,14 @@ static void IN_Activate( bool active )
 }
 
 
-void IN_Init( void )
-{
+void IN_Init( void ) {
 	int event, error;
 	int xi2_major = 2;
 	int xi2_minor = 0;
 
-	if( input_inited )
+	if( input_inited ) {
 		return;
+	}
 
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 
@@ -726,10 +706,10 @@ void IN_Init( void )
 	XA_utf8_string = XInternAtom( x11display.dpy, "UTF8_STRING", 0 );
 }
 
-void IN_Shutdown( void )
-{
-	if( !input_inited )
+void IN_Shutdown( void ) {
+	if( !input_inited ) {
 		return;
+	}
 
 	uninstall_grabs_keyboard();
 	uninstall_grabs_mouse();
@@ -738,28 +718,24 @@ void IN_Shutdown( void )
 	focus = false;
 }
 
-void IN_Restart( void )
-{
+void IN_Restart( void ) {
 	IN_Shutdown();
 	IN_Init();
 }
 
-void IN_Frame( void )
-{
+void IN_Frame( void ) {
 	bool m_active = false;
 
-	if( !input_inited )
+	if( !input_inited ) {
 		return;
+	}
 
 	HandleEvents();
 
 	if( focus ) {
-		if( !Cvar_Value( "vid_fullscreen" ) && ( ( cls.key_dest == key_console ) && !in_grabinconsole->integer ) )
-		{
+		if( !Cvar_Value( "vid_fullscreen" ) && ( ( cls.key_dest == key_console ) && !in_grabinconsole->integer ) ) {
 			m_active = false;
-		}
-		else
-		{
+		} else {
 			m_active = true;
 		}
 	}
@@ -767,46 +743,47 @@ void IN_Frame( void )
 	IN_Activate( m_active );
 }
 
-unsigned int IN_SupportedDevices( void )
-{
+unsigned int IN_SupportedDevices( void ) {
 	return IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE | IN_DEVICE_JOYSTICK;
 }
 
-void IN_ShowSoftKeyboard( bool show )
-{
+void IN_ShowSoftKeyboard( bool show ) {
 }
 
-void IN_GetInputLanguage( char *dest, size_t size )
-{
-	if( size )
+void IN_GetInputLanguage( char *dest, size_t size ) {
+	if( size ) {
 		dest[0] = '\0';
+	}
 	// TODO: Implement using Xkb.
 }
 
 // TODO: IBus IME.
 
-void IN_IME_Enable( bool enable )
-{
+void IN_IME_Enable( bool enable ) {
 }
 
-size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen )
-{
-	if( str && strSize )
+size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen ) {
+	if( str && strSize ) {
 		str[0] = '\0';
-	if( cursorPos )
+	}
+	if( cursorPos ) {
 		*cursorPos = 0;
-	if( convStart )
+	}
+	if( convStart ) {
 		*convStart = 0;
-	if( convLen )
+	}
+	if( convLen ) {
 		*convLen = 0;
+	}
 	return 0;
 }
 
-unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands, int *selected, int *firstKey )
-{
-	if( selected )
+unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands, int *selected, int *firstKey ) {
+	if( selected ) {
 		*selected = -1;
-	if( firstKey )
+	}
+	if( firstKey ) {
 		*firstKey = 1;
+	}
 	return 0;
 }

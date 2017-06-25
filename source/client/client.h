@@ -22,6 +22,7 @@
 #include "../qcommon/qcommon.h"
 #include "../ref_gl/r_public.h"
 #include "../cgame/cg_public.h"
+#include "../ftlib/ftlib_public.h"
 #include "../matchmaker/mm_rating.h"
 #include "snd_public.h"
 #include "../qcommon/steam.h"
@@ -40,16 +41,14 @@ typedef struct qfontface_s qfontface_t;
 #define MAX_TIMEDELTAS_BACKUP 8
 #define MASK_TIMEDELTAS_BACKUP ( MAX_TIMEDELTAS_BACKUP - 1 )
 
-typedef struct
-{
+typedef struct {
 	int frames;
-	unsigned int startTime;
-	unsigned int lastTime;
+	int64_t startTime;
+	int64_t lastTime;
 	int counts[100];
 } cl_timedemo_t;
 
-typedef struct
-{
+typedef struct {
 	void *h;
 	int width, height;
 	bool keepRatio;
@@ -58,8 +57,8 @@ typedef struct
 	bool paused;
 	int pause_cnt;
 	bool yuv;
-	unsigned int startTime;
-	unsigned int pauseTime;
+	int64_t startTime;
+	int64_t pauseTime;
 	uint8_t *pic;
 	int aspect_numerator, aspect_denominator;
 	ref_yuv_t *cyuv;
@@ -70,23 +69,21 @@ typedef struct
 // the client_state_t structure is wiped completely at every
 // server map change
 //
-typedef struct
-{
+typedef struct {
 	int timeoutcount;
 
 	cl_timedemo_t timedemo;
 
-	int cmdNum;						// current cmd
-	usercmd_t *cmds;				// [CMD_BACKUP] each mesage will send several old cmds
-	int *cmd_time;					// [CMD_BACKUP] time sent, for calculating pings
-	bool inputRefreshed;
+	int cmdNum;                     // current cmd
+	usercmd_t *cmds;                // [CMD_BACKUP] each mesage will send several old cmds
+	int *cmd_time;                  // [CMD_BACKUP] time sent, for calculating pings
 
 	int receivedSnapNum;
 	int pendingSnapNum;
 	int currentSnapNum;
 	int previousSnapNum;
-	int suppressCount;				// number of messages rate suppressed
-	snapshot_t *snapShots;			// [CMD_BACKUP]
+	int suppressCount;              // number of messages rate suppressed
+	snapshot_t *snapShots;          // [CMD_BACKUP]
 	uint8_t *frames_areabits;
 
 	cmodel_state_t *cms;
@@ -99,9 +96,9 @@ typedef struct
 	vec3_t viewangles;
 
 	int serverTimeDeltas[MAX_TIMEDELTAS_BACKUP];
-	int newServerTimeDelta;			// the time difference with the server time, or at least our best guess about it
-	int serverTimeDelta;			// the time difference with the server time, or at least our best guess about it
-	unsigned int serverTime;		// the best match we can guess about current time in the server
+	int newServerTimeDelta;         // the time difference with the server time, or at least our best guess about it
+	int serverTimeDelta;            // the time difference with the server time, or at least our best guess about it
+	int64_t serverTime;             // the best match we can guess about current time in the server
 	unsigned int snapFrameTime;
 
 	//
@@ -132,69 +129,66 @@ of server connections
 
 typedef struct download_list_s download_list_t;
 
-struct download_list_s
-{
+struct download_list_s {
 	char *filename;
-	download_list_t	*next;
+	download_list_t *next;
 };
 
-typedef struct
-{
+typedef struct {
 	// for request
 	char *requestname;              // file we requested from the server (NULL if none requested)
 	bool requestnext;           // whether to request next download after this, for precaching
 	bool requestpak;            // whether to only allow .pk3/.pak or only allow normal file
-	unsigned int timeout;
-	unsigned int timestart;
+	int64_t timeout;
+	int64_t timestart;
 
 	// both downloads
 	char *name;                     // name of the file in download, relative to base path
-	char *origname;					// name of the file in download as originally passed by the server
+	char *origname;                 // name of the file in download as originally passed by the server
 	char *tempname;                 // temporary location, relative to base path
 	size_t size;
 	unsigned checksum;
 
 	double percent;
 	int successCount;               // so we know to restart media
-	download_list_t	*list;          // list of all tried downloads, so we don't request same pk3 twice
+	download_list_t *list;          // list of all tried downloads, so we don't request same pk3 twice
 
 	// server download
 	int filenum;
 	size_t offset;
 	int retries;
-	size_t baseoffset;				// for download speed calculation when resuming downloads
+	size_t baseoffset;              // for download speed calculation when resuming downloads
 
 	// web download
 	bool web;
 	bool web_official;
 	bool web_official_only;
-	char *web_url;					// download URL, passed by the server
+	char *web_url;                  // download URL, passed by the server
 	bool web_local_http;
 
 	bool disconnect;            // set when user tries to disconnect, to allow cleaning up webdownload
-	bool pending_reconnect;		// set when we ignored a map change command to avoid stopping the download
-	bool cancelled;				// to allow cleaning up of temporary download file
+	bool pending_reconnect;     // set when we ignored a map change command to avoid stopping the download
+	bool cancelled;             // to allow cleaning up of temporary download file
 } download_t;
 
-typedef struct
-{
+typedef struct {
 	char *name;
 
 	bool recording;
-	bool waiting;		// don't record until a non-delta message is received
+	bool waiting;       // don't record until a non-delta message is received
 	bool playing;
-	bool paused;		// A boolean to test if demo is paused -- PLX
+	bool paused;        // A boolean to test if demo is paused -- PLX
 
 	int file;
 	char *filename;
 
-	time_t localtime;		// time of day of demo recording
-	unsigned int time;		// milliseconds passed since the start of the demo
-	unsigned int duration, basetime;
+	time_t localtime;       // time of day of demo recording
+	int64_t time;           // milliseconds passed since the start of the demo
+	int64_t duration, basetime;
 
 	bool play_jump;
 	bool play_jump_latched;
-	unsigned int play_jump_time;
+	int64_t play_jump_time;
 	bool play_ignore_next_frametime;
 
 	bool avi;
@@ -209,18 +203,17 @@ typedef struct
 
 typedef cl_demo_t demorec_t;
 
-typedef struct
-{
+typedef struct {
 	connstate_t state;          // only set through CL_SetClientState
 	keydest_t key_dest;
 	keydest_t old_key_dest;
 	bool quickmenu;
 
-	int framecount;
-	unsigned int realtime;          // always increasing, no clamping, etc
-	unsigned int gametime;          // always increasing, no clamping, etc
-	float frametime;                // seconds since last frame
-	float realframetime;
+	int64_t framecount;
+	int64_t realtime;               // always increasing, no clamping, etc
+	int64_t gametime;               // always increasing, no clamping, etc
+	int frametime;                  // milliseconds since last frame
+	int realFrameTime;
 
 	socket_t socket_loopback;
 	socket_t socket_udp;
@@ -242,7 +235,7 @@ typedef struct
 	char *servername;               // name of server from original connect
 	socket_type_t servertype;       // socket type used to connect to the server
 	netadr_t serveraddress;         // address of that server
-	int connect_time;               // for connection retransmits
+	int64_t connect_time;               // for connection retransmits
 	int connect_count;
 
 	socket_t *socket;               // socket used by current connection
@@ -277,22 +270,22 @@ typedef struct
 	qfontface_t *consoleFont;
 
 	// these are our reliable messages that go to the server
-	unsigned int reliableSequence;          // the last one we put in the list to be sent
-	unsigned int reliableSent;              // the last one we sent to the server
-	unsigned int reliableAcknowledge;       // the last one the server has executed
+	int64_t reliableSequence;          // the last one we put in the list to be sent
+	int64_t reliableSent;              // the last one we sent to the server
+	int64_t reliableAcknowledge;       // the last one the server has executed
 	char reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
 
 	// reliable messages received from server
-	int lastExecutedServerCommand;          // last server command grabbed or executed with CL_GetServerCommand
+	int64_t lastExecutedServerCommand;          // last server command grabbed or executed with CL_GetServerCommand
 
 	// ucmds buffer
-	unsigned int ucmdAcknowledged;
-	unsigned int ucmdHead;
-	unsigned int ucmdSent;
+	int64_t ucmdAcknowledged;
+	int64_t ucmdHead;
+	int64_t ucmdSent;
 
 	// times when we got/sent last valid packets from/to server
-	unsigned int lastPacketSentTime;
-	unsigned int lastPacketReceivedTime;
+	int64_t lastPacketSentTime;
+	int64_t lastPacketReceivedTime;
 
 	// pure list
 	bool sv_pure;
@@ -320,25 +313,10 @@ extern client_static_t cls;
 extern cvar_t *cl_stereo_separation;
 extern cvar_t *cl_stereo;
 
-extern cvar_t *cl_yawspeed;
-extern cvar_t *cl_pitchspeed;
-
-extern cvar_t *cl_run;
-
-extern cvar_t *cl_anglespeedkey;
-
-extern cvar_t *cl_compresspackets;
 extern cvar_t *cl_shownet;
 
 extern cvar_t *cl_extrapolationTime;
 extern cvar_t *cl_extrapolate;
-
-extern cvar_t *cl_flip;
-
-extern cvar_t *sensitivity;
-extern cvar_t *zoomsens;
-extern cvar_t *m_pitch;
-extern cvar_t *m_yaw;
 
 extern cvar_t *cl_timedemo;
 extern cvar_t *cl_demoavi_video;
@@ -364,7 +342,6 @@ extern entity_state_t cl_baselines[MAX_EDICTS];
 //
 // cl_cin.c
 //
-void SCR_InitCinematic( void );
 bool SCR_DrawCinematic( void );
 void SCR_RunCinematic( void );
 void SCR_StopCinematic( void );
@@ -385,15 +362,15 @@ void CL_UpdateClientCommandsToServer( msg_t *msg );
 void CL_AddReliableCommand( /*const*/ char *cmd );
 void CL_Netchan_Transmit( msg_t *msg );
 void CL_SendMessagesToServer( bool sendNow );
-void CL_RestartTimeDeltas( unsigned int newTimeDelta );
+void CL_RestartTimeDeltas( int newTimeDelta );
 void CL_AdjustServerTime( unsigned int gamemsec );
 
 char *CL_GetClipboardData( void );
 void CL_SetClipboardData( const char *data );
 void CL_FreeClipboardData( char *data );
-int CL_GetKeyDest( void );              // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)
-void CL_SetKeyDest( int key_dest );
-void CL_SetOldKeyDest( int key_dest );
+keydest_t CL_GetKeyDest( void );              // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)
+void CL_SetKeyDest( keydest_t key_dest );
+void CL_SetOldKeyDest( keydest_t key_dest );
 void CL_ResetServerCount( void );
 void CL_SetClientState( int state );
 connstate_t CL_GetClientState( void );  // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)
@@ -416,9 +393,9 @@ size_t CL_GetBaseServerURL( char *buffer, size_t buffer_size );
 
 int CL_AddSessionHttpRequestHeaders( const char *url, const char **headers );
 void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, int resumeFrom,
-	size_t (*read_cb)(const void *, size_t, float, int, const char *, void *), 
-	void (*done_cb)(int, const char *, void *), 
-	void (*header_cb)(const char *, void *), void *privatep, bool urlencodeUnsafe );
+							size_t ( *read_cb )( const void *, size_t, float, int, const char *, void * ),
+							void ( *done_cb )( int, const char *, void * ),
+							void ( *header_cb )( const char *, void * ), void *privatep, bool urlencodeUnsafe );
 
 //
 // cl_game.c
@@ -432,12 +409,13 @@ float CL_GameModule_GetSensitivityScale( float sens, float zoomSens );
 bool CL_GameModule_NewSnapshot( int pendingSnapshot );
 void CL_GameModule_RenderView( float stereo_separation );
 void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t velocity );
-void CL_GameModule_UpdateInput( float frametime );
+void CL_GameModule_InputFrame( int frameTime );
 void CL_GameModule_ClearInputState( void );
-uint8_t CL_GameModule_GetButtonBits( void );
-void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime, bool flipped );
+unsigned CL_GameModule_GetButtonBits( void );
+void CL_GameModule_AddViewAngles( vec3_t viewAngles );
 void CL_GameModule_AddMovement( vec3_t movement );
-void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
+void CL_GameModule_MouseMove( int dx, int dy );
+void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 bool CL_GameModule_IsTouchDown( int id );
 
 //
@@ -453,17 +431,16 @@ void CL_SoundModule_SetEntitySpatilization( int entNum, vec3_t origin, vec3_t ve
 void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity, bool avidump );
 void CL_SoundModule_Activate( bool activate );
 struct sfx_s *CL_SoundModule_RegisterSound( const char *sample );
-void CL_SoundModule_FreeSound( struct sfx_s *sfx );
 void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
 void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
 void CL_SoundModule_StartLocalSound( const char *s );
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
-void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data, bool music );
-void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation, 
-	unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data );
+void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate,
+								unsigned short width, unsigned short channels, const uint8_t *data, bool music );
+void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation,
+										  unsigned int samples, unsigned int rate,
+										  unsigned short width, unsigned short channels, const uint8_t *data );
 unsigned int CL_SoundModule_GetRawSamplesLength( void );
 unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum );
 void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, int mode );
@@ -501,7 +478,7 @@ void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_ShowQuickMenu( bool show );
 bool CL_UIModule_HaveQuickMenu( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
-void CL_UIModule_MouseMove( int dx, int dy );
+void CL_UIModule_MouseMove( int frameTime, int dx, int dy );
 void CL_UIModule_MouseSet( int mx, int my, bool showCursor );
 
 //
@@ -522,35 +499,24 @@ void CL_ShutDownServerList( void );
 //
 // cl_input.c
 //
-typedef struct
-{
-	int down[2];            // key nums holding it down
-	unsigned downtime;      // msec timestamp
-	unsigned msec;          // msec down this frame
-	int state;
-} kbutton_t;
-
-extern kbutton_t in_klook;
-extern kbutton_t in_strafe;
-extern kbutton_t in_speed;
-
 void CL_InitInput( void );
-void CL_InitInputDynvars( void );
 void CL_ShutdownInput( void );
-void CL_UserInputFrame( void );
-void CL_NewUserCommand( int msec );
+void CL_UserInputFrame( int realMsec );
 void CL_WriteUcmdsToMessage( msg_t *msg );
-void CL_MouseMove( usercmd_t *cmd, int mx, int my );
+
+/**
+* Mouse input for systems with basic mouse support (without centering
+* and possibly without toggleable cursor).
+*/
 void CL_MouseSet( int mx, int my, bool showCursor );
-void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
-void CL_UpdateCommandInput( void );
-void IN_CenterView( void );
+
+void CL_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 
 /**
  * Resets the input state to the same as when no input is done,
  * mainly when the current input dest can't receive events anymore.
  */
-void IN_ClearState( void );
+void CL_ClearInputState( void );
 
 
 
@@ -571,13 +537,13 @@ void CL_BeginDemoAviDump( void );
 size_t CL_ReadDemoMetaData( const char *demopath, char *meta_data, size_t meta_data_size );
 char **CL_DemoComplete( const char *partial );
 #define CL_WriteAvi() ( cls.demo.avi && cls.state == CA_ACTIVE && cls.demo.playing && !cls.demo.play_jump )
-#define CL_SetDemoMetaKeyValue(k,v) cls.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue(cls.demo.meta_data, sizeof(cls.demo.meta_data), cls.demo.meta_data_realsize, k, v)
+#define CL_SetDemoMetaKeyValue( k,v ) cls.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue( cls.demo.meta_data, sizeof( cls.demo.meta_data ), cls.demo.meta_data_realsize, k, v )
 
 //
 // cl_parse.c
 //
 void CL_ParseServerMessage( msg_t *msg );
-#define SHOWNET(msg,s) _SHOWNET(msg,s,cl_shownet->integer);
+#define SHOWNET( msg,s ) _SHOWNET( msg,s,cl_shownet->integer );
 
 void CL_FreeDownloadList( void );
 bool CL_CheckOrDownloadFile( const char *filename );
@@ -634,7 +600,7 @@ void CL_AddNetgraph( void );
 extern float scr_con_current;
 extern float scr_conlines;       // lines of console to display
 
-extern ref_export_t re;		// interface to refresh .dll
+extern ref_export_t re;     // interface to refresh .dll
 
 //
 // cl_mm.c

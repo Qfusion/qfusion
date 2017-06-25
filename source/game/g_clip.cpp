@@ -40,7 +40,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // work better for lots of small objects, higher
 // values for large objects
 
-typedef struct {
+typedef struct
+{
 	link_t grid[AREA_GRIDNODES];
 	link_t outside;
 	vec3_t bias;
@@ -49,6 +50,7 @@ typedef struct {
 	vec3_t maxs;
 	vec3_t size;
 	int marknumber;
+
 	// since the areagrid can have multiple references to one entity,
 	// we should avoid extensive checking on entities already encountered
 	int entmarknumber[MAX_EDICTS];
@@ -72,12 +74,12 @@ typedef struct c4frame_s {
 	c4clipedict_t clipEdicts[MAX_EDICTS];   // fixme: there is a g_maxentities cvar. We have to adjust to it
 	int numedicts;
 
-	unsigned int timestamp;
-	unsigned int framenum;
+	int64_t timestamp;
+	int64_t framenum;
 } c4frame_t;
 
 c4frame_t sv_collisionframes[CFRAME_UPDATE_BACKUP];
-static unsigned int sv_collisionFrameNum = 0;
+static int64_t sv_collisionFrameNum = 0;
 
 void GClip_BackUpCollisionFrame( void ) {
 	c4frame_t *cframe;
@@ -120,7 +122,8 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 	static c4clipedict_t *clipent;
 	static c4clipedict_t clipentNewer; // for interpolation
 	c4frame_t *cframe = NULL;
-	unsigned int backTime, cframenum, bf, i;
+	int64_t backTime, cframenum;
+	unsigned bf, i;
 	edict_t *ent = game.edicts + entNum;
 
 	// pick one of the 8 slots to prevent overwritings
@@ -146,8 +149,8 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 		if( g_antilag_maxtimedelta->integer < 0 ) {
 			trap_Cvar_SetValue( "g_antilag_maxtimedelta", abs( g_antilag_maxtimedelta->integer ) );
 		}
-		if( backTime > (unsigned int)g_antilag_maxtimedelta->integer ) {
-			backTime = (unsigned int)g_antilag_maxtimedelta->integer;
+		if( backTime > (int64_t)g_antilag_maxtimedelta->integer ) {
+			backTime = (int64_t)g_antilag_maxtimedelta->integer;
 		}
 	}
 
@@ -323,9 +326,11 @@ static void GClip_LinkEntity_AreaGrid( areagrid_t *areagrid, edict_t *ent ) {
 
 	igridmins[0] = (int) floor( ( ent->r.absmin[0] + areagrid->bias[0] ) * areagrid->scale[0] );
 	igridmins[1] = (int) floor( ( ent->r.absmin[1] + areagrid->bias[1] ) * areagrid->scale[1] );
+
 	//igridmins[2] = (int) floor( (ent->r.absmin[2] + areagrid->bias[2]) * areagrid->scale[2] );
 	igridmaxs[0] = (int) floor( ( ent->r.absmax[0] + areagrid->bias[0] ) * areagrid->scale[0] ) + 1;
 	igridmaxs[1] = (int) floor( ( ent->r.absmax[1] + areagrid->bias[1] ) * areagrid->scale[1] ) + 1;
+
 	//igridmaxs[2] = (int) floor( (ent->r.absmax[2] + areagrid->bias[2]) * areagrid->scale[2] ) + 1;
 	if( igridmins[0] < 0 || igridmaxs[0] > AREA_GRID
 		|| igridmins[1] < 0 || igridmaxs[1] > AREA_GRID
@@ -368,15 +373,19 @@ static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins
 
 	igridmins[0] = (int) floor( ( paddedmins[0] + areagrid->bias[0] ) * areagrid->scale[0] );
 	igridmins[1] = (int) floor( ( paddedmins[1] + areagrid->bias[1] ) * areagrid->scale[1] );
+
 	//igridmins[2] = (int) ( (paddedmins[2] + areagrid->bias[2]) * areagrid->scale[2] );
 	igridmaxs[0] = (int) floor( ( paddedmaxs[0] + areagrid->bias[0] ) * areagrid->scale[0] ) + 1;
 	igridmaxs[1] = (int) floor( ( paddedmaxs[1] + areagrid->bias[1] ) * areagrid->scale[1] ) + 1;
+
 	//igridmaxs[2] = (int) ( (paddedmaxs[2] + areagrid->bias[2]) * areagrid->scale[2] ) + 1;
 	igridmins[0] = max( 0, igridmins[0] );
 	igridmins[1] = max( 0, igridmins[1] );
+
 	//igridmins[2] = max( 0, igridmins[2] );
 	igridmaxs[0] = min( AREA_GRID, igridmaxs[0] );
 	igridmaxs[1] = min( AREA_GRID, igridmaxs[1] );
+
 	//igridmaxs[2] = min( AREA_GRID, igridmaxs[2] );
 
 	// paranoid debugging
@@ -524,7 +533,7 @@ void GClip_LinkEntity( edict_t *ent ) {
 		} else {
 			ent->s.solid = 0;
 		}
-	} else { // encode the size into the entity_state for client prediction
+	} else {   // encode the size into the entity_state for client prediction
 		if( ent->r.solid == SOLID_TRIGGER ) {
 			ent->s.solid = 0;
 		} else {
@@ -556,7 +565,7 @@ void GClip_LinkEntity( edict_t *ent ) {
 			ent->r.absmin[i] = ent->s.origin[i] - radius;
 			ent->r.absmax[i] = ent->s.origin[i] + radius;
 		}
-	} else { // axis aligned
+	} else {   // axis aligned
 		VectorAdd( ent->s.origin, ent->r.mins, ent->r.absmin );
 		VectorAdd( ent->s.origin, ent->r.maxs, ent->r.absmax );
 	}
@@ -627,8 +636,7 @@ void GClip_LinkEntity( edict_t *ent ) {
 	}
 
 	// if first time, make sure old_origin is valid
-	if( !ent->linkcount && !( ent->r.svflags & SVF_TRANSMITORIGIN2 ) ) {
-		VectorCopy( ent->s.origin, ent->s.old_origin );
+	if( !ent->linkcount ) {
 		ent->olds = ent->s;
 	}
 	ent->linkcount++;
@@ -910,6 +918,7 @@ void G_Trace4D( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs,
 				vec3_t end, edict_t *passedict, int contentmask, int timeDelta ) {
 	GClip_Trace( tr, start, mins, maxs, end, passedict, contentmask, timeDelta );
 }
+
 //===========================================================================
 
 
@@ -924,6 +933,7 @@ void GClip_SetBrushModel( edict_t *ent, const char *name ) {
 	if( !name ) {
 		G_Error( "GClip_SetBrushModel: NULL model in '%s'",
 				 ent->classname ? ent->classname : "no classname" );
+		return;
 	}
 
 	if( !name[0] ) {

@@ -9,17 +9,15 @@
 namespace WSWUI
 {
 
-#define TBC_Block_Size			1024
+#define TBC_Block_Size          1024
 
-typedef struct
-{
+typedef struct {
 	char name[MAX_QPATH];
 	int flags;
 	int parent;
 } cgs_bone_t;
 
-typedef struct cgs_skeleton_s
-{
+typedef struct cgs_skeleton_s {
 	struct model_s *model;
 
 	int numBones;
@@ -41,7 +39,6 @@ protected:
 	cgs_skeleton_t *skel_headnode;
 
 public:
-
 	UI_BonePoses();
 	~UI_BonePoses();
 

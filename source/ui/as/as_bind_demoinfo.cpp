@@ -26,67 +26,62 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "as/asui.h"
 #include "as/asui_local.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 typedef WSWUI::DemoInfo DemoInfo;
 typedef WSWUI::DemoMetaData DemoMetaData;
 
-void PrebindDemoInfo( ASInterface *as )
-{
+void PrebindDemoInfo( ASInterface *as ) {
 	ASBind::Class<DemoInfo, ASBind::class_class>( as->getEngine() );
 }
 
-static void DemoInfo_StringConstructor( DemoInfo *self, const asstring_t & name )
-{
+static void DemoInfo_StringConstructor( DemoInfo *self, const asstring_t & name ) {
 	new( self ) DemoInfo( ASSTR( name ) );
 }
 
-static const asstring_t *DemoInfo_GetName( DemoInfo *demoInfo )
-{
+static const asstring_t *DemoInfo_GetName( DemoInfo *demoInfo ) {
 	return ASSTR( demoInfo->getName() );
 }
 
-static void DemoInfo_SetName( DemoInfo *demoInfo, const asstring_t &name )
-{
+static void DemoInfo_SetName( DemoInfo *demoInfo, const asstring_t &name ) {
 	demoInfo->setName( ASSTR( name ) );
 }
 
-static asstring_t *DemoInfo_GetMeta( DemoInfo *demoInfo, const asstring_t &key )
-{
+static asstring_t *DemoInfo_GetMeta( DemoInfo *demoInfo, const asstring_t &key ) {
 	const DemoMetaData &metaData = demoInfo->getMetaData();
 	DemoMetaData::const_iterator it = metaData.find( key.buffer );
 
-	if( it == metaData.end() ) { 
+	if( it == metaData.end() ) {
 		return ASSTR( "" );
 	}
 	return ASSTR( it->second.c_str() );
 }
 
-void BindDemoInfo( ASInterface *as )
-{
+void BindDemoInfo( ASInterface *as ) {
 	// this allows AS to access properties and control demos
 	// some of the methods are only relevant for the playing instance
 	ASBind::GetClass<DemoInfo>( as->getEngine() )
-		.constructor<void()>()
-		.constructor( &DemoInfo_StringConstructor, true )
-		
-		.constructor<void(const DemoInfo &other)>()
-		.destructor()
+	.constructor<void()>()
+	.constructor( &DemoInfo_StringConstructor, true )
 
-		.method( &DemoInfo::operator =, "opAssign" )
+	.constructor<void(const DemoInfo &other)>()
+	.destructor()
 
-		.method( &DemoInfo::getPlaying, "get_isPlaying" )
-		.method( &DemoInfo::getPaused, "get_isPaused" )
-		.method( &DemoInfo::getTime, "get_time" )
-		.method( &DemoInfo::Play, "play" )
-		.method( &DemoInfo::Stop, "stop" )
-		.method( &DemoInfo::Pause, "pause" )
-		.method( &DemoInfo::Jump, "jump" )
+	.method( &DemoInfo::operator =, "opAssign" )
 
-		.constmethod( &DemoInfo_GetName, "get_name", true )
-		.constmethod( &DemoInfo_SetName, "set_name", true )
+	.method( &DemoInfo::getPlaying, "get_isPlaying" )
+	.method( &DemoInfo::getPaused, "get_isPaused" )
+	.method( &DemoInfo::getTime, "get_time" )
+	.method( &DemoInfo::Play, "play" )
+	.method( &DemoInfo::Stop, "stop" )
+	.method( &DemoInfo::Pause, "pause" )
+	.method( &DemoInfo::Jump, "jump" )
 
-		.constmethod( &DemoInfo_GetMeta, "getMeta", true )
+	.constmethod( &DemoInfo_GetName, "get_name", true )
+	.constmethod( &DemoInfo_SetName, "set_name", true )
+
+	.constmethod( &DemoInfo_GetMeta, "getMeta", true )
 	;
 }
 

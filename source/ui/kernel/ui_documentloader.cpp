@@ -4,7 +4,8 @@
 #include "kernel/ui_eventlistener.h"
 #include "kernel/ui_documentloader.h"
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 namespace Core = Rocket::Core;
 
@@ -16,91 +17,81 @@ Document::Document( const std::string &name, NavigationStack *stack )
 	: documentName( name ), rocketDocument( NULL ), stack( stack ), viewed( false )
 {}
 
-Document::~Document()
-{
+Document::~Document() {
 	// well.. we dont remove references here or purge the document?
 }
 
-int Document::addReference()
-{
-	if( rocketDocument )
-	{
+int Document::addReference() {
+	if( rocketDocument ) {
 		rocketDocument->AddReference();
 		return rocketDocument->GetReferenceCount();
 	}
 	return 0;
 }
 
-int Document::removeReference()
-{
-	if( rocketDocument )
-	{
+int Document::removeReference() {
+	if( rocketDocument ) {
 		rocketDocument->RemoveReference();
 		return rocketDocument->GetReferenceCount();
 	}
 	return 0;
 }
 
-int Document::getReference()
-{
-	if( rocketDocument )
+int Document::getReference() {
+	if( rocketDocument ) {
 		return rocketDocument->GetReferenceCount();
+	}
 	return 0;
 }
 
-void Document::Show( bool show, bool modal )
-{
+void Document::Show( bool show, bool modal ) {
 	if( rocketDocument ) {
 		if( show ) {
 			rocketDocument->Show( modal ? Rocket::Core::ElementDocument::MODAL : 0 );
-		}
-		else {
+		} else {
 			rocketDocument->Hide();
 		}
 	}
 }
 
-void Document::Hide()
-{
-	if( rocketDocument )
-		rocketDocument->Hide();
-}
-
-void Document::Focus()
-{
-	if( rocketDocument )
-		rocketDocument->Focus();
-}
-
-void Document::FocusFirstTabElement()
-{
+void Document::Hide() {
 	if( rocketDocument ) {
-		if (!rocketDocument->FocusFirstTabElement())
-			rocketDocument->Focus();
+		rocketDocument->Hide();
 	}
 }
 
-bool Document::IsModal()
-{
-	if( rocketDocument )
+void Document::Focus() {
+	if( rocketDocument ) {
+		rocketDocument->Focus();
+	}
+}
+
+void Document::FocusFirstTabElement() {
+	if( rocketDocument ) {
+		if( !rocketDocument->FocusFirstTabElement() ) {
+			rocketDocument->Focus();
+		}
+	}
+}
+
+bool Document::IsModal() {
+	if( rocketDocument ) {
 		return rocketDocument->IsModal();
+	}
 	return false;
 }
 
 //==========================================
 
-DocumentLoader::DocumentLoader(int contextId) : contextId(contextId)
-{
+DocumentLoader::DocumentLoader( int contextId ) : contextId( contextId ) {
 	// register itself to UI_Main
 }
 
-DocumentLoader::~DocumentLoader()
-{
+DocumentLoader::~DocumentLoader() {
 
 }
 
-Document *DocumentLoader::loadDocument(const char *path, NavigationStack *stack)
-{
+Document *DocumentLoader::loadDocument( const char *path, NavigationStack *stack ) {
 	UI_Main *ui = UI_Main::Get();
 	RocketModule *rm = ui->getRocket();
 	Document *loadedDocument;
@@ -112,7 +103,7 @@ Document *DocumentLoader::loadDocument(const char *path, NavigationStack *stack)
 	loadedDocument->setRocketDocument( rocketDocument );
 
 	if( !rocketDocument ) {
-		Com_Printf( "DocumentLoader::loadDocument failed to load %s\n", path);
+		Com_Printf( "DocumentLoader::loadDocument failed to load %s\n", path );
 		__delete__( loadedDocument );
 		return NULL;
 	}
@@ -126,8 +117,7 @@ Document *DocumentLoader::loadDocument(const char *path, NavigationStack *stack)
 }
 
 // TODO: redundant
-void DocumentLoader::closeDocument(Document *document)
-{
+void DocumentLoader::closeDocument( Document *document ) {
 	UI_Main *ui = UI_Main::Get();
 	RocketModule *rm = ui->getRocket();
 	Rocket::Core::ElementDocument *rocketDocument = document->getRocketDocument();
@@ -136,7 +126,7 @@ void DocumentLoader::closeDocument(Document *document)
 	Rocket::Core::Dictionary ev_parms;
 	rocketDocument->DispatchEvent( "beforeUnload", ev_parms );
 
-	rm->closeDocument(rocketDocument);
+	rm->closeDocument( rocketDocument );
 }
 
 

@@ -1,5 +1,5 @@
 sudo: false
-install: true
+dist: trusty
 cache: 
   apt: true
   directories:
@@ -11,10 +11,16 @@ notifications:
       secure: FO4vtIe+YSl6xpJVmNzSOvef5RQxOjuUGJ02zhRrkBK3DOQMP2pOjIRIyEq6m0xx+BVK5UoLl8ACFS5e5P0wJOE7Bvl963yonKgK+sGutEGck5EmroBLCln9KvXkYaBElMgDZBZDm8q9ValjVwB2ym/aP82//6LLnCeVRBMThjE=
     on_success: change
     on_failure: always
+env:
+  global:
+    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+    #   via the "travis encrypt" command using the project repo's public key
+    - secure: "VR/Ts9vkdBqrE22XaT4IrREJB7k0Ml60U+ek0VeVHQTAYGjL+KP13ocoTjBEIEo+iKbUJdX6pXN3VxKu7VAu2W47qIRi7VRznjH0MOonreV7oLX1s7uXYmxJSVIWjQ3EcKIW9I+Qpd3brTd3BV/ew816hfYJJKC2SU6AIV8RszE="
 
 matrix:
   include:
     - os: osx
+      osx_image: xcode8.3
       env: QF_ARCH=OSX
       language: c++
       compiler: clang
@@ -37,18 +43,15 @@ matrix:
             - gcc-multilib
     - os: linux
       language: c++
-      compiler: gcc-4.9
+      compiler: clang
       env: QF_ARCH=x86_64
       addons:
         apt:
-          sources:
-            - kubuntu-backports
-            - ubuntu-toolchain-r-test
           packages:
-            - gcc-4.9
-            - g++-4.9
+            - clang
             - cmake
             - build-essential
+            - libsdl2-dev
             - libopenal-dev
             - libjpeg8-dev
             - libvorbis-dev
@@ -56,7 +59,16 @@ matrix:
             - libfreetype6-dev
             - zlib1g-dev
             - libcurl4-gnutls-dev
-    - language: android
+        coverity_scan:
+          project:
+            name: "Qfusion/qfusion"
+            description: "Build submitted via Travis CI"
+          notification_email: vluchits@gmail.com
+          build_command_prepend: "cd source && cov-configure --comptype clangcc --compiler clang && cov-configure --comptype clangcxx --compiler clang++ && export SDL2DIR=$HOME/.deps/$QF_ARCH && cmake ."
+          build_command: "make -j8"
+          branch_pattern: ci
+    - dist: precise
+      language: android
       env: QF_ARCH=android
       jdk: oraclejdk7
       android:
@@ -64,21 +76,24 @@ matrix:
           - build-tools-21.0.2
           - android-19
 
-before_install:
-
 install:
-  - if [[ "$QF_ARCH" == "x86_64" ]] && [ ! -e "$HOME/.deps/$QF_ARCH/lib/pkgconfig/sdl2.pc" ]; then mkdir -p $HOME/.deps/$QF_ARCH && cd $HOME/.deps/$QF_ARCH && curl -O http://www.libsdl.org/release/SDL2-2.0.4.tar.gz && tar -xzvf SDL2-2.0.4.tar.gz && cd SDL2-2.0.4 && ./configure --prefix="$HOME/.deps/$QF_ARCH" && make && make install && cd .. && rm -rf SDL2-2.0.4 && cd "$TRAVIS_BUILD_DIR"; fi
   - if [[ "$QF_ARCH" == "android" ]] && [ ! -e "$HOME/.deps/android-ndk-r11c" ]; then curl -L http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip >ndk.zip && unzip ndk.zip -d $HOME/.deps &> /dev/null && rm ndk.zip; fi
   - if [[ "$QF_ARCH" == "android" ]]; then export NDK_HOME=$HOME/.deps/android-ndk-r11c && export PATH="$PATH:$NDK_HOME"; fi
-  - if [[ "$QF_ARCH" == "x86_64" ]]; then export CC=gcc-4.9 CXX=g++-4.9; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then export CC=clang CXX=clang++; fi
   - if [[ "$QF_ARCH" == "x86" ]]; then export CC=gcc-4.9 CXX=g++-4.9; fi
+  - cd "$TRAVIS_BUILD_DIR/source"
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then cmake .; fi
+  - if [[ "$QF_ARCH" == "x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 -DGAME_MODULES_ONLY=1 .; fi
+  - if [[ "$QF_ARCH" == "OSX" ]]; then cmake -G Xcode .; fi
+  - if [[ "$QF_ARCH" == "android" ]]; then mkdir -p build/libs && cd ../platforms/android/projects/qfusion/jni && ln -s ../../../../../libsrcs libsrcs && ln -s ../../../../../third-party third-party && ln -s ../../../../../source source && ln -s ../../../../../icons icons; fi
+  - cd "$TRAVIS_BUILD_DIR"
 
 script:
   - cd source
-  - if [[ "$QF_ARCH" == "x86_64" ]]; then export SDL2DIR="$HOME/.deps/$QF_ARCH" && cmake . && make; fi
-  - if [[ "$QF_ARCH" == "x86" ]]; then cmake -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.cmake -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 -DGAME_MODULES_ONLY=1 . && make game cgame; fi
-  - if [[ "$QF_ARCH" == "OSX" ]]; then cmake -G Xcode . && xcodebuild -project qfusion.xcodeproj/ -configuration Release -target ALL_BUILD; fi
-  - if [[ "$QF_ARCH" == "android" ]]; then mkdir -p build/libs && cd ../platforms/android/projects/qfusion/jni && ln -s ../../../../../libsrcs libsrcs && ln -s ../../../../../third-party third-party && ln -s ../../../../../source source && ln -s ../../../../../icons icons && ndk-build && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then make -j8; fi
+  - if [[ "$QF_ARCH" == "x86" ]]; then make -j8 game cgame; fi
+  - if [[ "$QF_ARCH" == "OSX" ]]; then xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration Release -target ALL_BUILD; fi
+  - if [[ "$QF_ARCH" == "android" ]]; then cd ../platforms/android/projects/qfusion/jni && ndk-build -j8 && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
 
 before_deploy:
   - cd build

@@ -30,19 +30,19 @@ extern "C" {
 
 // rating info structure and utilities freely usable by all modules
 
-#define MM_RATING_DEFAULT 		0.0
-#define MM_DEVIATION_DEFAULT 	1.0
-#define MM_DEVIATION_MIN 		0.0		// FIXME
-#define MM_DEVIATION_MAX		1.0
-#define MM_DEFAULT_T			4.0
-#define MM_PROBABILITY_DEFAULT 	0.5
+#define MM_RATING_DEFAULT       0.0
+#define MM_DEVIATION_DEFAULT    1.0
+#define MM_DEVIATION_MIN        0.0     // FIXME
+#define MM_DEVIATION_MAX        1.0
+#define MM_DEFAULT_T            4.0
+#define MM_PROBABILITY_DEFAULT  0.5
 
 typedef struct clientRating_s {
-	char 	gametype[32];
-	float 	rating;
-	float 	deviation;
-	int 	uuid;		// can be used to reference clients by sessionID or playernum etc..
-	struct 	clientRating_s *next;
+	char gametype[32];
+	float rating;
+	float deviation;
+	int uuid;           // can be used to reference clients by sessionID or playernum etc..
+	struct  clientRating_s *next;
 } clientRating_t;
 
 // returns the given rating or NULL

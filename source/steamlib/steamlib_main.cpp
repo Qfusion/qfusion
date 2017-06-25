@@ -18,66 +18,59 @@ License along with this library.
 
 #include "steamlib_local.h"
 
-namespace WSWSTEAM {
+namespace WSWSTEAM
+{
 
 /*
 * SteamLib_API
 */
-int SteamLib_API( void )
-{
+int SteamLib_API( void ) {
 	return STEAMLIB_API_VERSION;
 }
 
 /*
 * SteamLib_SteamLib_InitAPI
 */
-int SteamLib_Init( void )
-{
+int SteamLib_Init( void ) {
 	return 0;
 }
 
 /*
 * SteamLib_RunFrame
 */
-void SteamLib_RunFrame( void )
-{
+void SteamLib_RunFrame( void ) {
 }
 
 /*
 * SteamLib_Shutdown
 */
-void SteamLib_Shutdown( void )
-{
+void SteamLib_Shutdown( void ) {
 }
 
 /*
 * SteamLib_GetSteamID
 */
-uint64_t SteamLib_GetSteamID( void )
-{
+uint64_t SteamLib_GetSteamID( void ) {
 	return 0;
 }
 
 /*
 * SteamLib_GetAuthSessionTicket
 */
-int SteamLib_GetAuthSessionTicket( void (*callback)( void *, size_t ) )
-{
+int SteamLib_GetAuthSessionTicket( void ( *callback )( void *, size_t ) ) {
 	return 0;
 }
 
 /*
 * SteamLib_AdvertiseGame
 */
-void SteamLib_AdvertiseGame( const uint8_t *ip, unsigned short port )
-{
+void SteamLib_AdvertiseGame( const uint8_t *ip, unsigned short port ) {
 }
 
 /*
 * SteamLib_GetPersonaName
 */
-void SteamLib_GetPersonaName( char *name, size_t namesize )
-{
+void SteamLib_GetPersonaName( char *name, size_t namesize ) {
 	if( namesize ) {
 		name[0] = '\0';
 	}

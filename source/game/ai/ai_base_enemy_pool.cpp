@@ -123,7 +123,7 @@ void AiBaseEnemyPool::PreThink() {
 }
 
 void AiBaseEnemyPool::Think() {
-	const unsigned levelTime = level.time;
+	const int64_t levelTime = level.time;
 	for( Enemy &enemy: trackedEnemies ) {
 		// If enemy slot is free
 		if( !enemy.ent ) {
@@ -166,12 +166,12 @@ float AiBaseEnemyPool::ComputeRawEnemyWeight( const edict_t *enemy ) {
 		}
 	}
 
-	if( unsigned time = LastAttackedByTime( enemy ) ) {
+	if( int64_t time = LastAttackedByTime( enemy ) ) {
 		weight += 1.55f * ( 1.0f - BoundedFraction( level.time - time, ATTACKER_TIMEOUT ) );
 		// TODO: Add weight for poor attackers (by total damage / attack attepts ratio)
 	}
 
-	if( unsigned time = LastTargetTime( enemy ) ) {
+	if( int64_t time = LastTargetTime( enemy ) ) {
 		weight += 1.55f * ( 1.0f - BoundedFraction( level.time - time, TARGET_TIMEOUT ) );
 		// TODO: Add weight for targets that are well hit by bot
 	}
@@ -389,7 +389,8 @@ void AiBaseEnemyPool::UpdateEnemyWeight( Enemy &enemy ) {
 	}
 }
 
-struct EnemyAndScore {
+struct EnemyAndScore
+{
 	Enemy *enemy;
 	float score;
 	EnemyAndScore( Enemy *enemy_, float score_ ) : enemy( enemy_ ), score( score_ ) {}

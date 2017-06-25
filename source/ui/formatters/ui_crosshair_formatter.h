@@ -29,15 +29,14 @@ namespace WSWUI
 class CrosshairFormatter : public Rocket::Controls::DataFormatter
 {
 public:
-	CrosshairFormatter() : Rocket::Controls::DataFormatter("crosshair") {}
+	CrosshairFormatter() : Rocket::Controls::DataFormatter( "crosshair" ) {}
 
 	// CrosshairDataSource contains the reference to the .tga crosshair images
 	// this formatter shows them into an <img> html tag
-	void FormatData( String& formatted_data, const StringList& raw_data )
-	{
+	void FormatData( String& formatted_data, const StringList& raw_data ) {
 		formatted_data = "";
-		for( StringList::const_iterator it = raw_data.begin(); it != raw_data.end(); ++it)
-			formatted_data += " <img src=\"" + (*it) + "\" width=\"32\" height=\"32\" />";
+		for( StringList::const_iterator it = raw_data.begin(); it != raw_data.end(); ++it )
+			formatted_data += " <img src=\"" + ( *it ) + "\" width=\"32\" height=\"32\" />";
 	}
 };
 

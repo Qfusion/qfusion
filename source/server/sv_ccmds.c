@@ -32,22 +32,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * SV_FindPlayer
 * Helper for the functions below. It finds the client_t for the given name or id
 */
-static client_t *SV_FindPlayer( char *s )
-{
+static client_t *SV_FindPlayer( char *s ) {
 	client_t *cl;
 	client_t *player;
 	int i;
 	int idnum = 0;
 
-	if( !s )
+	if( !s ) {
 		return NULL;
+	}
 
 	// numeric values are just slot numbers
-	if( s[0] >= '0' && s[0] <= '9' )
-	{
+	if( s[0] >= '0' && s[0] <= '9' ) {
 		idnum = atoi( s );
-		if( idnum < 0 || idnum >= sv_maxclients->integer )
-		{
+		if( idnum < 0 || idnum >= sv_maxclients->integer ) {
 			Com_Printf( "Bad client slot: %i\n", idnum );
 			return NULL;
 		}
@@ -57,12 +55,11 @@ static client_t *SV_FindPlayer( char *s )
 	}
 
 	// check for a name match
-	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
-	{
-		if( !cl->state )
+	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ ) {
+		if( !cl->state ) {
 			continue;
-		if( !Q_stricmp( cl->name, s ) )
-		{
+		}
+		if( !Q_stricmp( cl->name, s ) ) {
 			player = cl;
 			goto found_player;
 		}
@@ -72,8 +69,7 @@ static client_t *SV_FindPlayer( char *s )
 	return NULL;
 
 found_player:
-	if( !player->state || !player->edict )
-	{
+	if( !player->state || !player->edict ) {
 		Com_Printf( "Client %s is not active\n", s );
 		return NULL;
 	}
@@ -86,13 +82,11 @@ found_player:
 /*
 * SV_AutoUpdateComplete_f
 */
-static void SV_AutoUpdateComplete_f( void )
-{
+static void SV_AutoUpdateComplete_f( void ) {
 	// update the map list, which also does a filesystem rescan
 	ML_Update();
 
-	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS )
-	{
+	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS ) {
 		// force restart
 		svc.lastActivity = 0;
 	}
@@ -101,8 +95,7 @@ static void SV_AutoUpdateComplete_f( void )
 /*
 * SV_AutoUpdateFromWeb
 */
-void SV_AutoUpdateFromWeb( bool checkOnly )
-{
+void SV_AutoUpdateFromWeb( bool checkOnly ) {
 	if( checkOnly ) {
 		Com_Autoupdate_Run( true, NULL );
 		return;
@@ -115,10 +108,8 @@ void SV_AutoUpdateFromWeb( bool checkOnly )
 /*
 * SV_AutoUpdate_f
 */
-static void SV_AutoUpdate_f( void )
-{
-	if( !sv_pure->integer )
-	{
+static void SV_AutoUpdate_f( void ) {
+	if( !sv_pure->integer ) {
 		Com_Printf( "Autoupdate is only available for pure servers\n" );
 		return;
 	}
@@ -129,10 +120,8 @@ static void SV_AutoUpdate_f( void )
 /*
 * SV_AutoUpdateCheck_f
 */
-static void SV_AutoUpdateCheck_f( void )
-{
-	if( !sv_pure->integer )
-	{
+static void SV_AutoUpdateCheck_f( void ) {
+	if( !sv_pure->integer ) {
 		Com_Printf( "Autoupdate is only available for pure servers\n" );
 		return;
 	}
@@ -142,78 +131,68 @@ static void SV_AutoUpdateCheck_f( void )
 
 /*
 * SV_Map_f
-* 
+*
 * User command to change the map
 * map: restart game, and start map
 * devmap: restart game, enable cheats, and start map
 * gamemap: just start the map
 */
-static void SV_Map_f( void )
-{
+static void SV_Map_f( void ) {
 	char *map;
 	char mapname[MAX_CONFIGSTRING_CHARS];
 	bool found = false;
 
-	if( Cmd_Argc() < 2 )
-	{
+	if( Cmd_Argc() < 2 ) {
 		Com_Printf( "Usage: %s <map>\n", Cmd_Argv( 0 ) );
 		return;
 	}
 
 	// if map "<map>" is used Cmd_Args() will return the "" as well.
-	if( Cmd_Argc() == 2 )
+	if( Cmd_Argc() == 2 ) {
 		map = Cmd_Argv( 1 );
-	else
+	} else {
 		map = Cmd_Args();
+	}
 
 	Com_DPrintf( "SV_GameMap(%s)\n", map );
 
 	// applies to fullnames and filenames (whereas + strlen( "maps/" ) wouldnt)
-	if( strlen( map ) >= MAX_CONFIGSTRING_CHARS )
-	{
+	if( strlen( map ) >= MAX_CONFIGSTRING_CHARS ) {
 		Com_Printf( "Map name too long.\n" );
 		return;
 	}
 
 	Q_strncpyz( mapname, map, sizeof( mapname ) );
-	if( ML_ValidateFilename( mapname ) )
-	{
+	if( ML_ValidateFilename( mapname ) ) {
 		COM_StripExtension( mapname );
-		if( ML_FilenameExists( mapname ) )
-		{
+		if( ML_FilenameExists( mapname ) ) {
 			found = true;
-		}
-		else
-		{
+		} else {
 			ML_Update();
-			if( ML_FilenameExists( mapname ) )
+			if( ML_FilenameExists( mapname ) ) {
 				found = true;
+			}
 		}
 	}
 
-	if( !found )
-	{
-		if( ML_ValidateFullname( map ) )
-		{
+	if( !found ) {
+		if( ML_ValidateFullname( map ) ) {
 			Q_strncpyz( mapname, ML_GetFilename( map ), sizeof( mapname ) );
-			if( *mapname )
+			if( *mapname ) {
 				found = true;
+			}
 		}
 
-		if( !found )
-		{
+		if( !found ) {
 			Com_Printf( "Couldn't find map: %s\n", map );
 			return;
 		}
 	}
 
-	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS )
-	{
+	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS ) {
 		FS_RemoveNotifications( FS_NOTIFY_NEWPAKS );
 		sv.state = ss_dead; // don't save current level when changing
-	}
-	else if( !Q_stricmp( Cmd_Argv( 0 ), "map" ) || !Q_stricmp( Cmd_Argv( 0 ), "devmap" ) )
-	{
+	} else if( !Q_stricmp( Cmd_Argv( 0 ), "map" ) || !Q_stricmp( Cmd_Argv( 0 ), "devmap" ) ) {
 		sv.state = ss_dead; // don't save current level when changing
 	}
 
@@ -229,8 +208,7 @@ static void SV_Map_f( void )
 /*
 * SV_MapComplete_f
 */
-static char **SV_MapComplete_f( const char *partial )
-{
+static char **SV_MapComplete_f( const char *partial ) {
 	return ML_CompleteBuildList( partial );
 }
 
@@ -239,14 +217,12 @@ static char **SV_MapComplete_f( const char *partial )
 /*
 * SV_Status_f
 */
-void SV_Status_f( void )
-{
+void SV_Status_f( void ) {
 	int i, j, l;
 	client_t *cl;
 	const char *s;
 	int ping;
-	if( !svs.clients )
-	{
+	if( !svs.clients ) {
 		Com_Printf( "No server running.\n" );
 		return;
 	}
@@ -254,21 +230,20 @@ void SV_Status_f( void )
 
 	Com_Printf( "num score ping name            lastmsg address               port   rate  \n" );
 	Com_Printf( "--- ----- ---- --------------- ------- --------------------- ------ ------\n" );
-	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
-	{
-		if( !cl->state )
+	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ ) {
+		if( !cl->state ) {
 			continue;
+		}
 		Com_Printf( "%3i ", i );
 		Com_Printf( "%5i ", cl->edict->r.client->r.frags );
 
-		if( cl->state == CS_CONNECTED )
+		if( cl->state == CS_CONNECTED ) {
 			Com_Printf( "CNCT " );
-		else if( cl->state == CS_ZOMBIE )
+		} else if( cl->state == CS_ZOMBIE ) {
 			Com_Printf( "ZMBI " );
-		else if( cl->state == CS_CONNECTING )
+		} else if( cl->state == CS_CONNECTING ) {
 			Com_Printf( "AWAI " );
-		else
-		{
+		} else {
 			ping = cl->ping < 9999 ? cl->ping : 9999;
 			Com_Printf( "%4i ", ping );
 		}
@@ -279,7 +254,7 @@ void SV_Status_f( void )
 		for( j = 0; j < l; j++ )
 			Com_Printf( " " );
 
-		Com_Printf( "%7i ", svs.realtime - cl->lastPacketReceivedTime );
+		Com_Printf( "%7i ", (int)(svs.realtime - cl->lastPacketReceivedTime) );
 
 		s = NET_AddressToString( &cl->netchan.remoteAddress );
 		Com_Printf( "%s", s );
@@ -292,16 +267,18 @@ void SV_Status_f( void )
 #ifndef RATEKILLED
 		// wsw : jal : print real rate in use
 		Com_Printf( "  " );
-		if( cl->edict && ( cl->edict->r.svflags & SVF_FAKECLIENT ) )
+		if( cl->edict && ( cl->edict->r.svflags & SVF_FAKECLIENT ) ) {
 			Com_Printf( "BOT" );
-		else if( cl->rate == 99999 )
+		} else if( cl->rate == 99999 ) {
 			Com_Printf( "LAN" );
-		else
+		} else {
 			Com_Printf( "%5i", cl->rate );
+		}
 #endif
 		Com_Printf( " " );
-		if( cl->mv )
+		if( cl->mv ) {
 			Com_Printf( "MV" );
+		}
 		Com_Printf( "\n" );
 	}
 	Com_Printf( "\n" );
@@ -310,8 +287,7 @@ void SV_Status_f( void )
 /*
 * SV_Heartbeat_f
 */
-static void SV_Heartbeat_f( void )
-{
+static void SV_Heartbeat_f( void ) {
 	svc.nextHeartbeat = Sys_Milliseconds();
 }
 
@@ -319,8 +295,7 @@ static void SV_Heartbeat_f( void )
 * SV_Serverinfo_f
 * Examine or change the serverinfo string
 */
-static void SV_Serverinfo_f( void )
-{
+static void SV_Serverinfo_f( void ) {
 	Com_Printf( "Server info settings:\n" );
 	Info_Print( Cvar_Serverinfo() );
 }
@@ -329,18 +304,17 @@ static void SV_Serverinfo_f( void )
 * SV_DumpUser_f
 * Examine all a users info strings
 */
-static void SV_DumpUser_f( void )
-{
+static void SV_DumpUser_f( void ) {
 	client_t *client;
-	if( Cmd_Argc() != 2 )
-	{
+	if( Cmd_Argc() != 2 ) {
 		Com_Printf( "Usage: info <userid>\n" );
 		return;
 	}
 
 	client = SV_FindPlayer( Cmd_Argv( 1 ) );
-	if( !client )
+	if( !client ) {
 		return;
+	}
 
 	Com_Printf( "userinfo\n" );
 	Com_Printf( "--------\n" );
@@ -351,10 +325,10 @@ static void SV_DumpUser_f( void )
 * SV_KillServer_f
 * Kick everyone off, possibly in preparation for a new game
 */
-static void SV_KillServer_f( void )
-{
-	if( !svs.initialized )
+static void SV_KillServer_f( void ) {
+	if( !svs.initialized ) {
 		return;
+	}
 
 	SV_ShutdownGame( "Server was killed", false );
 }
@@ -363,29 +337,28 @@ static void SV_KillServer_f( void )
 * SV_CvarCheck_f
 * Ask the client to inform us of the current value of a cvar
 */
-static void SV_CvarCheck_f( void )
-{
+static void SV_CvarCheck_f( void ) {
 	client_t *client;
 	int i;
 
-	if( !svs.initialized )
+	if( !svs.initialized ) {
 		return;
+	}
 
-	if( Cmd_Argc() != 3 )
-	{
+	if( Cmd_Argc() != 3 ) {
 		Com_Printf( "Usage: cvarcheck <userid> <cvar name>\n" );
 		return;
 	}
 
-	if( !Q_stricmp( Cmd_Argv( 1 ), "all" ) )
-	{
-		for( i = 0, client = svs.clients; i < sv_maxclients->integer; i++, client++ )
-		{
-			if( !client->state )
+	if( !Q_stricmp( Cmd_Argv( 1 ), "all" ) ) {
+		for( i = 0, client = svs.clients; i < sv_maxclients->integer; i++, client++ ) {
+			if( !client->state ) {
 				continue;
+			}
 
-			if( client->tvclient )
+			if( client->tvclient ) {
 				continue;
+			}
 
 			SV_SendServerCommand( client, "cvarinfo \"%s\"", Cmd_Argv( 2 ) );
 		}
@@ -394,8 +367,7 @@ static void SV_CvarCheck_f( void )
 	}
 
 	client = SV_FindPlayer( Cmd_Argv( 1 ) );
-	if( !client )
-	{
+	if( !client ) {
 		Com_Printf( "%s is not valid client id\n", Cmd_Argv( 1 ) );
 		return;
 	}
@@ -408,8 +380,7 @@ static void SV_CvarCheck_f( void )
 /*
 * SV_InitOperatorCommands
 */
-void SV_InitOperatorCommands( void )
-{
+void SV_InitOperatorCommands( void ) {
 	Cmd_AddCommand( "heartbeat", SV_Heartbeat_f );
 	Cmd_AddCommand( "status", SV_Status_f );
 	Cmd_AddCommand( "serverinfo", SV_Serverinfo_f );
@@ -427,8 +398,7 @@ void SV_InitOperatorCommands( void )
 
 	Cmd_AddCommand( "purelist", SV_PureList_f );
 
-	if( dedicated->integer )
-	{
+	if( dedicated->integer ) {
 		Cmd_AddCommand( "autoupdate", SV_AutoUpdate_f );
 		Cmd_AddCommand( "autoupdatecheck", SV_AutoUpdateCheck_f );
 	}
@@ -443,8 +413,7 @@ void SV_InitOperatorCommands( void )
 /*
 * SV_ShutdownOperatorCommands
 */
-void SV_ShutdownOperatorCommands( void )
-{
+void SV_ShutdownOperatorCommands( void ) {
 	Cmd_RemoveCommand( "heartbeat" );
 	Cmd_RemoveCommand( "status" );
 	Cmd_RemoveCommand( "serverinfo" );
@@ -462,8 +431,7 @@ void SV_ShutdownOperatorCommands( void )
 
 	Cmd_RemoveCommand( "purelist" );
 
-	if( dedicated->integer )
-	{
+	if( dedicated->integer ) {
 		Cmd_RemoveCommand( "autoupdate" );
 		Cmd_RemoveCommand( "autoupdatecheck" );
 	}

@@ -1096,10 +1096,6 @@ void BotMovementPredictionContext::NextMovementStep() {
 	pm.cmd.msec = (uint8_t)this->predictionStepMillis;
 	pm.cmd.serverTimeStamp = game.serverTime + this->totalMillisAhead;
 
-	if( memcmp( &oldPlayerState->pmove, &currPlayerState->pmove, sizeof( pmove_state_t ) ) ) {
-		pm.snapinitial = true;
-	}
-
 	this->frameEvents.Clear();
 
 	// We currently test collisions only against a solid world on each movement step and the corresponding PMove() call.

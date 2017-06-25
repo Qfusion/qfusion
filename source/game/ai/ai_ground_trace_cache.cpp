@@ -3,7 +3,8 @@
 #include "static_vector.h"
 #include "ai_local.h"
 
-struct CachedTrace {
+struct CachedTrace
+{
 	trace_t trace;
 	int64_t computedAt;
 	float depth;

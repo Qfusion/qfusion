@@ -14,26 +14,23 @@ using namespace Rocket::Core;
 namespace WSWUI
 {
 
-UI_SystemInterface::UI_SystemInterface()
-{
+UI_SystemInterface::UI_SystemInterface() {
 }
 
-UI_SystemInterface::~UI_SystemInterface()
-{
+UI_SystemInterface::~UI_SystemInterface() {
 }
 
 
-float UI_SystemInterface::GetElapsedTime()
-{
+float UI_SystemInterface::GetElapsedTime() {
 	return float( trap::Milliseconds() ) * 0.001;
 }
 
-bool UI_SystemInterface::LogMessage(Log::Type type, const String& message)
-{
+bool UI_SystemInterface::LogMessage( Log::Type type, const String& message ) {
 	String console_msg;
 
 	switch( type ) {
 		case Log::LT_ALWAYS:
+
 			// ignore?
 			break;
 		case Log::LT_ERROR:
@@ -46,9 +43,11 @@ bool UI_SystemInterface::LogMessage(Log::Type type, const String& message)
 			trap::Print( console_msg.CString() );
 			break;
 		case Log::LT_INFO:
+
 			//if( trap::Cvar_Value( "developer" ) ) {
-				console_msg = "LibRocket: " + message + "\n";
-				trap::Print( console_msg.CString() );
+			console_msg = "LibRocket: " + message + "\n";
+			trap::Print( console_msg.CString() );
+
 			//}
 			break;
 		case Log::LT_DEBUG:
@@ -62,10 +61,9 @@ bool UI_SystemInterface::LogMessage(Log::Type type, const String& message)
 	return true;
 }
 
-int UI_SystemInterface::TranslateString(Rocket::Core::String& translated, const Rocket::Core::String& input)
-{
+int UI_SystemInterface::TranslateString( Rocket::Core::String& translated, const Rocket::Core::String& input ) {
 	const char *l10ned;
-	
+
 	l10ned = trap::L10n_TranslateString( input.CString() );
 	if( l10ned ) {
 		if( !strcmp( input.CString(), l10ned ) ) {
@@ -83,25 +81,23 @@ int UI_SystemInterface::TranslateString(Rocket::Core::String& translated, const 
 	return 0;
 }
 
-void UI_SystemInterface::GetClipboardText(Rocket::Core::WString &text)
-{
+void UI_SystemInterface::GetClipboardText( Rocket::Core::WString &text ) {
 	Rocket::Core::WString clipboard_content;
-	
+
 	char *data = trap::CL_GetClipboardData();
-	if (data == NULL) {
+	if( data == NULL ) {
 		text = "";
 		return;
 	}
-	
+
 	text = data;
-	trap::CL_FreeClipboardData(data);
+	trap::CL_FreeClipboardData( data );
 }
 
-void UI_SystemInterface::SetClipboardText(const Rocket::Core::WString &text)
-{
+void UI_SystemInterface::SetClipboardText( const Rocket::Core::WString &text ) {
 	Rocket::Core::String utf8_text;
-	text.ToUTF8(utf8_text);
-	trap::CL_SetClipboardData(utf8_text.CString());
+	text.ToUTF8( utf8_text );
+	trap::CL_SetClipboardData( utf8_text.CString() );
 }
 
 }

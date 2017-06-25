@@ -7,15 +7,16 @@
 
 namespace WSWUI
 {
-	class Video : public ElementImage
-	{
-	public:
-		/// Initializes the video element
-		explicit Video(const Rocket::Core::String&);
-	
-		virtual void OnAttributeChange(const Rocket::Core::AttributeNameList&);
-	private:
-	};
+class Video : public ElementImage
+{
+public:
+	/// Initializes the video element
+	explicit Video( const Rocket::Core::String& );
+
+	virtual void OnAttributeChange( const Rocket::Core::AttributeNameList& );
+
+private:
+};
 }
 
 #endif // __UI_VIDEO_H__

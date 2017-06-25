@@ -4,10 +4,11 @@
 
 #include <Rocket/Core/DecoratorInstancer.h>
 
-namespace WSWUI {
+namespace WSWUI
+{
 
-	Rocket::Core::DecoratorInstancer *GetGradientDecoratorInstancer( void );
-	Rocket::Core::DecoratorInstancer *GetNinePatchDecoratorInstancer( void );
+Rocket::Core::DecoratorInstancer *GetGradientDecoratorInstancer( void );
+Rocket::Core::DecoratorInstancer *GetNinePatchDecoratorInstancer( void );
 
 }
 #endif

@@ -32,8 +32,6 @@ break
 
 //#define PURE_CHEAT
 
-//#define ANTICHEAT_MODULE
-
 //#define UCMDTIMENUDGE
 
 #define TCP_SUPPORT
@@ -43,21 +41,21 @@ break
 //#define TCP_ALLOW_CONNECT
 #define TCP_ALLOW_TVCONNECT
 
-#if defined(TCP_ALLOW_CONNECT) && !defined(TCP_SUPPORT)
+#if defined( TCP_ALLOW_CONNECT ) && !defined( TCP_SUPPORT )
 #undef TCP_ALLOW_CONNECT
 #endif
 
-#if defined(TCP_ALLOW_CONNECT) && !defined(TCP_ALLOW_TVCONNECT)
+#if defined( TCP_ALLOW_CONNECT ) && !defined( TCP_ALLOW_TVCONNECT )
 #define TCP_ALLOW_TVCONNECT
 #endif
 
-#if defined(TCP_ALLOW_TVCONNECT) && !defined(TCP_SUPPORT)
+#if defined( TCP_ALLOW_TVCONNECT ) && !defined( TCP_SUPPORT )
 #undef TCP_ALLOW_TVCONNECT
 #endif
 
 #define HTTP_SUPPORT
 
-#if defined(HTTP_SUPPORT) && !defined(TCP_SUPPORT)
+#if defined( HTTP_SUPPORT ) && !defined( TCP_SUPPORT )
 #undef HTTP_SUPPORT
 #endif
 

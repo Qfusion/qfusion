@@ -18,38 +18,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#define MAX_CM_LEAFS		( MAX_MAP_LEAFS )
+#define MAX_CM_LEAFS        ( MAX_MAP_LEAFS )
 
-#define CM_SUBDIV_LEVEL		( 16 )
+#define CM_SUBDIV_LEVEL     ( 16 )
 
 //#define TRACEVICFIX
 #define TRACE_NOAXIAL_SAFETY_OFFSET 0.1
 
 // keep 1/8 unit away to keep the position valid before network snapping
 // and to avoid various numeric issues
-#define	SURFACE_CLIP_EPSILON	(0.125)
+#define SURFACE_CLIP_EPSILON    ( 0.125 )
 
-typedef struct
-{
+typedef struct {
 	char *name;
 	int contents;
 	int flags;
 } cshaderref_t;
 
-typedef struct
-{
+typedef struct {
 	cplane_t *plane;
 	int children[2];            // negative numbers are leafs
 } cnode_t;
 
-typedef struct
-{
+typedef struct {
 	cplane_t *plane;
 	int surfFlags;
 } cbrushside_t;
 
-typedef struct
-{
+typedef struct {
 	int contents;
 	int checkcount;             // to avoid repeated testings
 
@@ -57,8 +53,7 @@ typedef struct
 	cbrushside_t *brushsides;
 } cbrush_t;
 
-typedef struct
-{
+typedef struct {
 	int contents;
 	int checkcount;             // to avoid repeated testings
 
@@ -68,8 +63,7 @@ typedef struct
 	cbrush_t *facets;
 } cface_t;
 
-typedef struct
-{
+typedef struct {
 	int contents;
 	int cluster;
 
@@ -79,15 +73,14 @@ typedef struct
 	cbrush_t **markbrushes;
 
 	int nummarkfaces;
-	cface_t	**markfaces;
+	cface_t **markfaces;
 } cleaf_t;
 
-typedef struct cmodel_s
-{
+typedef struct cmodel_s {
 	vec3_t mins, maxs;
 
 	int nummarkfaces;
-	cface_t	**markfaces;
+	cface_t **markfaces;
 
 	int nummarkbrushes;
 	cbrush_t **markbrushes;
@@ -99,14 +92,12 @@ typedef struct cmodel_s
 	bool builtin;
 } cmodel_t;
 
-typedef struct
-{
+typedef struct {
 	int floodnum;               // if two areas have equal floodnums, they are connected
 	int floodvalid;
 } carea_t;
 
-struct cmodel_state_s
-{
+struct cmodel_state_s {
 	int checkcount;
 	int refcount;
 	struct mempool_s *mempool;
@@ -126,11 +117,11 @@ struct cmodel_state_s
 	cplane_t *map_planes;
 
 	int numnodes;
-	cnode_t	*map_nodes;
+	cnode_t *map_nodes;
 
 	int numleafs;                   // = 1
-	cleaf_t	map_leaf_empty;         // allow leaf funcs to be called without a map
-	cleaf_t	*map_leafs;             // = &map_leaf_empty;
+	cleaf_t map_leaf_empty;         // allow leaf funcs to be called without a map
+	cleaf_t *map_leafs;             // = &map_leaf_empty;
 
 	int nummarkbrushes;
 	cbrush_t **map_markbrushes;
@@ -144,10 +135,10 @@ struct cmodel_state_s
 	cbrush_t *map_brushes;
 
 	int numfaces;
-	cface_t	*map_faces;
+	cface_t *map_faces;
 
 	int nummarkfaces;
-	cface_t	**map_markfaces;
+	cface_t **map_markfaces;
 
 	vec3_t *map_verts;              // this will be freed
 	int numvertexes;
@@ -157,21 +148,21 @@ struct cmodel_state_s
 	cnode_t *map_clipnodes;
 
 	int nummaphulls;
-	struct chull_s *map_hulls;		// nummaphulls * numcmodels
+	struct chull_s *map_hulls;      // nummaphulls * numcmodels
 	// ==== Q1 specific stuff ===
 
 	// each area has a list of portals that lead into other areas
 	// when portals are closed, other areas may not be visible or
 	// hearable even if the vis info says that it should be
 	int numareas;                   // = 1
-	carea_t	map_area_empty;
-	carea_t	*map_areas;             // = &map_area_empty;
+	carea_t map_area_empty;
+	carea_t *map_areas;             // = &map_area_empty;
 	int *map_areaportals;
 
 	dvis_t *map_pvs, *map_phs;
 	int map_visdatasize;
 
-	uint8_t nullrow[MAX_CM_LEAFS/8];
+	uint8_t nullrow[MAX_CM_LEAFS / 8];
 
 	int numentitychars;
 	char map_entitystring_empty;
@@ -202,14 +193,13 @@ struct cmodel_state_s
 	// optional special handling of line tracing and point contents
 	void ( *CM_TransformedBoxTrace )( struct cmodel_state_s *cms, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
 	int ( *CM_TransformedPointContents )( struct cmodel_state_s *cms, vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
-	void ( *CM_RoundUpToHullSize )( struct cmodel_state_s *cms, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 };
 
 //=======================================================================
 
-void	CM_InitBoxHull( cmodel_state_t *cms );
-void	CM_InitOctagonHull( cmodel_state_t *cms );
+void    CM_InitBoxHull( cmodel_state_t *cms );
+void    CM_InitOctagonHull( cmodel_state_t *cms );
 
-void	CM_FloodAreaConnections( cmodel_state_t *cms );
+void    CM_FloodAreaConnections( cmodel_state_t *cms );
 
-uint8_t	*CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed );
+uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed );

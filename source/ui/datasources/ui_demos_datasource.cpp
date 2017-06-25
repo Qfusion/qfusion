@@ -23,14 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "kernel/ui_utils.h"
 #include "datasources/ui_demos_datasource.h"
 
-#define DEMOS_SOURCE		"demos"
-#define FIELD_NAME			"name"
-#define FIELD_PATH			"path"
-#define FIELD_ISDIR			"is_dir"
+#define DEMOS_SOURCE        "demos"
+#define FIELD_NAME          "name"
+#define FIELD_PATH          "path"
+#define FIELD_ISDIR         "is_dir"
 
 // fixed paths
-#define PATH_ROOT		"demos"
-#define PATH_PARENT		".."
+#define PATH_ROOT       "demos"
+#define PATH_PARENT     ".."
 
 namespace WSWUI
 {
@@ -38,24 +38,20 @@ namespace WSWUI
 typedef std::vector<std::string> DirList;
 
 DemoCollection::DemoCollection( void ) :
-	path( "" ), demoExtension( "" ), defaultItemName( "" ), numDirectories( 0 )
-{
+	path( "" ), demoExtension( "" ), defaultItemName( "" ), numDirectories( 0 ) {
 }
 
 DemoCollection::DemoCollection( const std::string &path, const std::string &demoExtension ) :
-	path( path ), demoExtension( demoExtension ), defaultItemName( "" ), numDirectories( 0 )
-{
+	path( path ), demoExtension( demoExtension ), defaultItemName( "" ), numDirectories( 0 ) {
 	PopulateList();
 }
 
-DemoCollection::~DemoCollection( void )
-{
+DemoCollection::~DemoCollection( void ) {
 	demoList.clear();
 }
 
-void DemoCollection::PopulateList( void )
-{
-	std::string fullPath = std::string( PATH_ROOT ) + (IsRoot() ? "" : "/" + path);
+void DemoCollection::PopulateList( void ) {
+	std::string fullPath = std::string( PATH_ROOT ) + ( IsRoot() ? "" : "/" + path );
 
 	// populate the list of directories and demo files
 	demoList.clear();
@@ -80,40 +76,34 @@ void DemoCollection::PopulateList( void )
 	getFileList( demoList, fullPath, demoExtension.c_str(), true );
 }
 
-bool DemoCollection::IsRoot( void ) const 
-{ 
+bool DemoCollection::IsRoot( void ) const {
 	return path.empty();
 }
 
-int DemoCollection::GetNumItems( void ) const
-{
+int DemoCollection::GetNumItems( void ) const {
 	return int( demoList.size() );
 }
 
-int DemoCollection::GetNumDirectories( void ) const
-{
+int DemoCollection::GetNumDirectories( void ) const {
 	return int( numDirectories );
 }
 
-const std::string & DemoCollection::GetItemName( int index ) const
-{
-	assert( index >= 0 && index < int(demoList.size()) );
+const std::string & DemoCollection::GetItemName( int index ) const {
+	assert( index >= 0 && index < int(demoList.size() ) );
 	return demoList[index];
 }
 
-std::string DemoCollection::GetItemPath( const int index ) const
-{
+std::string DemoCollection::GetItemPath( const int index ) const {
 	if( !index && !IsRoot() ) {
 		// return path to part dir
 		return GetPathToParentDir();
 	}
 
-	assert( index >= 0 && index < int(demoList.size()) );
-	return (IsRoot() ? "" : path + "/") + demoList[index];
+	assert( index >= 0 && index < int(demoList.size() ) );
+	return ( IsRoot() ? "" : path + "/" ) + demoList[index];
 }
 
-std::string DemoCollection::GetPathToParentDir( void ) const
-{
+std::string DemoCollection::GetPathToParentDir( void ) const {
 	if( IsRoot() ) {
 		return "";
 	}
@@ -131,17 +121,14 @@ std::string DemoCollection::GetPathToParentDir( void ) const
 // ===================================================================================
 
 DemosDataSourceHelper::DemosDataSourceHelper( void ) :
-	DemoCollection(), updateIndex( 0 )
-{
+	DemoCollection(), updateIndex( 0 ) {
 }
 
 DemosDataSourceHelper::DemosDataSourceHelper( const std::string &path, const std::string &demoExtension ) :
-	DemoCollection( path, demoExtension ), updateIndex( 0 )
-{
+	DemoCollection( path, demoExtension ), updateIndex( 0 ) {
 }
 
-bool DemosDataSourceHelper::UpdateFrame( int *firstRowAdded, int *numRowsAdded )
-{
+bool DemosDataSourceHelper::UpdateFrame( int *firstRowAdded, int *numRowsAdded ) {
 	if( updateIndex >= demoList.size() ) {
 		return false;
 	}
@@ -154,33 +141,28 @@ bool DemosDataSourceHelper::UpdateFrame( int *firstRowAdded, int *numRowsAdded )
 	return true;
 }
 
-int DemosDataSourceHelper::GetUpdateIndex( void ) const
-{
+int DemosDataSourceHelper::GetUpdateIndex( void ) const {
 	return int( updateIndex );
 }
 
 // ===================================================================================
 
 DemosDataSource::DemosDataSource( const std::string &demoExtension ) :
-	DataSource( "demos" ), lastQueryTable( "" ), demoExtension( demoExtension )
-{
+	DataSource( "demos" ), lastQueryTable( "" ), demoExtension( demoExtension ) {
 }
 
-DemosDataSource::~DemosDataSource( void )
-{
+DemosDataSource::~DemosDataSource( void ) {
 	Reset();
 }
 
-void DemosDataSource::Reset( void )
-{
+void DemosDataSource::Reset( void ) {
 	for( DemoPathList::const_iterator it = demoPaths.begin(); it != demoPaths.end(); ++it ) {
 		NotifyRowRemove( it->first, 0, it->second.GetUpdateIndex() );
 	}
 	demoPaths.clear();
 }
 
-void DemosDataSource::UpdateFrame( void )
-{
+void DemosDataSource::UpdateFrame( void ) {
 	for( DemoPathList::iterator it = demoPaths.begin(); it != demoPaths.end(); ++it ) {
 		int firstRowAdded, numRowsAdded;
 
@@ -191,8 +173,7 @@ void DemosDataSource::UpdateFrame( void )
 	}
 }
 
-void DemosDataSource::GetRow( StringList& row, const String& table, int row_index, const StringList& columns )
-{
+void DemosDataSource::GetRow( StringList& row, const String& table, int row_index, const StringList& columns ) {
 	if( demoPaths.find( table ) == demoPaths.end() ) {
 		return;
 	}
@@ -204,8 +185,7 @@ void DemosDataSource::GetRow( StringList& row, const String& table, int row_inde
 		return;
 	}
 
-	for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it )
-	{
+	for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
 		const Rocket::Core::String &col = *it;
 
 		if( col == FIELD_NAME ) {
@@ -218,8 +198,7 @@ void DemosDataSource::GetRow( StringList& row, const String& table, int row_inde
 	}
 }
 
-int DemosDataSource::GetNumRows( const String& table )
-{
+int DemosDataSource::GetNumRows( const String& table ) {
 	// table name represents a relative demo path with a trailing "/":
 	// "/" represents the root path inside the demo directory
 	// "tutorials/" represents tutorials subdirectory, etc

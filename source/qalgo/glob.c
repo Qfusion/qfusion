@@ -27,59 +27,62 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 /* Like glob_match, but match PATTERN against any final segment of TEXT.  */
-static int glob_match_after_star( const char *pattern, const char *text, const int casecmp )
-{
+static int glob_match_after_star( const char *pattern, const char *text, const int casecmp ) {
 	register const char *p = pattern, *t = text;
 	register char c, c1;
 
 	while( ( c = *p++ ) == '?' || c == '*' )
-		if( c == '?' && *t++ == '\0' )
+		if( c == '?' && *t++ == '\0' ) {
 			return 0;
+		}
 
-	if( c == '\0' )
+	if( c == '\0' ) {
 		return 1;
+	}
 
-	if( c == '\\' )
+	if( c == '\\' ) {
 		c1 = *p;
-	else
+	} else {
 		c1 = c;
+	}
 
-	while( 1 )
-	{
-		if( ( c == '[' || ( casecmp ? ( *t == c1 ) : ( tolower( *t ) == tolower( c1 ) ) ) ) && glob_match( p - 1, t, casecmp ) )
+	while( 1 ) {
+		if( ( c == '[' || ( casecmp ? ( *t == c1 ) : ( tolower( *t ) == tolower( c1 ) ) ) ) && glob_match( p - 1, t, casecmp ) ) {
 			return 1;
-		if( *t++ == '\0' )
+		}
+		if( *t++ == '\0' ) {
 			return 0;
+		}
 	}
 }
 
 #if 0 /* Not used */
 /* Return nonzero if PATTERN has any special globbing chars in it.  */
-static int glob_pattern_p( char *pattern )
-{
+static int glob_pattern_p( char *pattern ) {
 	register char *p = pattern;
 	register char c;
 	int open = 0;
 
 	while( ( c = *p++ ) != '\0' )
-		switch( c )
-	{
-		case '?':
-		case '*':
-			return 1;
-
-		case '[':/* Only accept an open brace if there is a close */
-			open++;	/* brace to match it.  Bracket expressions must be */
-			continue; /* complete, according to Posix.2 */
-		case ']':
-			if( open )
+		switch( c ) {
+			case '?':
+			case '*':
 				return 1;
-			continue;
 
-		case '\\':
-			if( *p++ == '\0' )
-				return 0;
-	}
+			case '[':/* Only accept an open brace if there is a close */
+				open++; /* brace to match it.  Bracket expressions must be */
+				continue; /* complete, according to Posix.2 */
+			case ']':
+				if( open ) {
+					return 1;
+				}
+				continue;
+
+			case '\\':
+				if( *p++ == '\0' ) {
+					return 0;
+				}
+		}
 
 	return 0;
 }
@@ -103,103 +106,109 @@ To suppress the special syntactic significance of any of `[]*?!-\',
 and match the character exactly, precede it with a `\'.
 */
 
-int glob_match( const char *pattern, const char *text, const int casecmp )
-{
+int glob_match( const char *pattern, const char *text, const int casecmp ) {
 	register const char *p = pattern, *t = text;
 	register char c;
 
 	while( ( c = *p++ ) != '\0' )
-		switch( c )
-	{
-		case '?':
-			if( *t == '\0' )
-				return 0;
-			else
-				++t;
-			break;
+		switch( c ) {
+			case '?':
+				if( *t == '\0' ) {
+					return 0;
+				} else {
+					++t;
+				}
+				break;
 
-		case '\\':
-			if( *p++ != *t++ )
-				return 0;
-			break;
+			case '\\':
+				if( *p++ != *t++ ) {
+					return 0;
+				}
+				break;
 
-		case '*':
-			return glob_match_after_star( p, t, casecmp );
+			case '*':
+				return glob_match_after_star( p, t, casecmp );
 
-		case '[':
+			case '[':
 			{
 				register char c1 = *t++;
 				int invert;
 
-				if( !c1 )
+				if( !c1 ) {
 					return ( 0 );
+				}
 
 				invert = ( ( *p == '!' ) || ( *p == '^' ) );
-				if( invert )
+				if( invert ) {
 					p++;
+				}
 
 				c = *p++;
-				while( 1 )
-				{
+				while( 1 ) {
 					register char cstart = c, cend = c;
 
-					if( c == '\\' )
-					{
+					if( c == '\\' ) {
 						cstart = *p++;
 						cend = cstart;
 					}
-					if( c == '\0' )
+					if( c == '\0' ) {
 						return 0;
+					}
 
 					c = *p++;
-					if( c == '-' && *p != ']' )
-					{
+					if( c == '-' && *p != ']' ) {
 						cend = *p++;
-						if( cend == '\\' )
+						if( cend == '\\' ) {
 							cend = *p++;
-						if( cend == '\0' )
+						}
+						if( cend == '\0' ) {
 							return 0;
+						}
 						c = *p++;
 					}
-					if( c1 >= cstart && c1 <= cend )
+					if( c1 >= cstart && c1 <= cend ) {
 						goto match;
-					if( c == ']' )
+					}
+					if( c == ']' ) {
 						break;
+					}
 				}
-				if( !invert )
+				if( !invert ) {
 					return 0;
+				}
 				break;
 
 match:
 				/* Skip the rest of the [...] construct that already matched.  */
-				while( c != ']' )
-				{
-					if( c == '\0' )
+				while( c != ']' ) {
+					if( c == '\0' ) {
 						return 0;
+					}
 					c = *p++;
-					if( c == '\0' )
+					if( c == '\0' ) {
 						return 0;
-					else if( c == '\\' )
+					} else if( c == '\\' ) {
 						++p;
+					}
 				}
-				if( invert )
+				if( invert ) {
 					return 0;
+				}
 				break;
 			}
 
-		default:
-			if( casecmp )
-			{
-				if( c != *t++ )
-					return 0;
-			}
-			else
-			{
-				if( tolower( c ) != tolower( *t ) )
-					return 0;
-				t++;
-			}
-	}
+			default:
+				if( casecmp ) {
+					if( c != *t++ ) {
+						return 0;
+					}
+				} else {
+					if( tolower( c ) != tolower( *t ) ) {
+						return 0;
+					}
+					t++;
+				}
+		}
 
 	return *t == '\0';
 }

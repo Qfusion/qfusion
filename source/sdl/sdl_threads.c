@@ -37,11 +37,10 @@ struct qcondvar_s {
 /*
 * Sys_Mutex_Create
 */
-int Sys_Mutex_Create( qmutex_t **pmutex )
-{
+int Sys_Mutex_Create( qmutex_t **pmutex ) {
 	qmutex_t *mutex;
 
-	mutex = (qmutex_t *)Q_malloc(sizeof(*mutex));
+	mutex = (qmutex_t *)Q_malloc( sizeof( *mutex ) );
 	mutex->m = SDL_CreateMutex();
 
 	*pmutex = mutex;
@@ -51,41 +50,37 @@ int Sys_Mutex_Create( qmutex_t **pmutex )
 /*
 * Sys_Mutex_Destroy
 */
-void Sys_Mutex_Destroy( qmutex_t *mutex )
-{
-	if (!mutex) {
+void Sys_Mutex_Destroy( qmutex_t *mutex ) {
+	if( !mutex ) {
 		return;
 	}
 
-	SDL_DestroyMutex(mutex->m);
-	Q_free(mutex);
+	SDL_DestroyMutex( mutex->m );
+	Q_free( mutex );
 }
 
 /*
 * Sys_Mutex_Lock
 */
-void Sys_Mutex_Lock( qmutex_t *mutex )
-{
-	SDL_LockMutex(mutex->m);
+void Sys_Mutex_Lock( qmutex_t *mutex ) {
+	SDL_LockMutex( mutex->m );
 }
 
 /*
 * Sys_Mutex_Unlock
 */
-void Sys_Mutex_Unlock( qmutex_t *mutex )
-{
-	SDL_UnlockMutex(mutex->m);
+void Sys_Mutex_Unlock( qmutex_t *mutex ) {
+	SDL_UnlockMutex( mutex->m );
 }
 
 /*
 * Sys_Thread_Create
 */
-int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *param )
-{
+int Sys_Thread_Create( qthread_t **pthread, void *( *routine )( void* ), void *param ) {
 	qthread_t *thread;
 
-	thread = (qthread_t *)Q_malloc(sizeof(*thread));
-	thread->t = SDL_CreateThread((SDL_ThreadFunction)routine, NULL, param);
+	thread = (qthread_t *)Q_malloc( sizeof( *thread ) );
+	thread->t = SDL_CreateThread( (SDL_ThreadFunction)routine, NULL, param );
 
 	*pthread = thread;
 	return 0;
@@ -94,11 +89,10 @@ int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *para
 /*
 * Sys_Thread_Join
 */
-void Sys_Thread_Join( qthread_t *thread )
-{
+void Sys_Thread_Join( qthread_t *thread ) {
 	int status = 0;
 
-	if (thread) {
+	if( thread ) {
 		SDL_WaitThread( thread->t, &status );
 		free( thread );
 	}
@@ -107,32 +101,28 @@ void Sys_Thread_Join( qthread_t *thread )
 /*
 * Sys_Thread_Yield
 */
-void Sys_Thread_Yield( void )
-{
-	Sys_Sleep(0);
+void Sys_Thread_Yield( void ) {
+	Sys_Sleep( 0 );
 }
 
 /*
 * Sys_Atomic_Add
 */
-int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
-{
+int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex ) {
 	return SDL_AtomicAdd( ( SDL_atomic_t * )value, add ) + add;
 }
 
 /*
 * Sys_Atomic_CAS
 */
-bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex )
-{
+bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex ) {
 	return SDL_AtomicCAS( ( SDL_atomic_t * )value, newval, oldval ) == SDL_TRUE;
 }
 
 /*
 * Sys_CondVar_Create
 */
-int Sys_CondVar_Create( qcondvar_t **pcond )
-{
+int Sys_CondVar_Create( qcondvar_t **pcond ) {
 	qcondvar_t *cond;
 
 	if( !pcond ) {
@@ -153,8 +143,7 @@ int Sys_CondVar_Create( qcondvar_t **pcond )
 /*
 * Sys_CondVar_Destroy
 */
-void Sys_CondVar_Destroy( qcondvar_t *cond )
-{
+void Sys_CondVar_Destroy( qcondvar_t *cond ) {
 	if( !cond ) {
 		return;
 	}
@@ -166,8 +155,7 @@ void Sys_CondVar_Destroy( qcondvar_t *cond )
 /*
 * Sys_CondVar_Wait
 */
-bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec )
-{
+bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec ) {
 	if( !cond || !mutex ) {
 		return false;
 	}
@@ -178,8 +166,7 @@ bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_m
 /*
 * Sys_CondVar_Wake
 */
-void Sys_CondVar_Wake( qcondvar_t *cond )
-{
+void Sys_CondVar_Wake( qcondvar_t *cond ) {
 	if( !cond ) {
 		return;
 	}

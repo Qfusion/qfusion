@@ -39,46 +39,44 @@ typedef struct { char *name; void **funcPointer; } dllfunc_t;
 
 #define CIN_MAX_RAW_SAMPLES_LISTENERS 8
 
-typedef struct
-{
+typedef struct {
 	void *listener;
 	cin_raw_samples_cb_t raw_samples;
 	cin_get_raw_samples_cb_t get_raw_samples;
 } cin_raw_samples_listener_t;
 
-typedef struct cinematics_s
-{
-	char		*name;
+typedef struct cinematics_s {
+	char        *name;
 
-	int			flags;
-	float		framerate;
+	int flags;
+	float framerate;
 
 	unsigned int s_rate;
 	unsigned short s_width;
 	unsigned short s_channels;
 	unsigned int s_samples_length;
 
-	int			width;
-	int			height;
-	int			aspect_numerator, aspect_denominator;
+	int width;
+	int height;
+	int aspect_numerator, aspect_denominator;
 
-	int			file;
-	int			headerlen;
+	int file;
+	int headerlen;
 
-	unsigned int cur_time;
-	unsigned int start_time;		// Sys_Milliseconds for first cinematic frame
+	int64_t cur_time;
+	int64_t start_time;        // Sys_Milliseconds for first cinematic frame
 	unsigned int frame;
 
-	bool	yuv;
+	bool yuv;
 
-	uint8_t		*vid_buffer;
+	uint8_t     *vid_buffer;
 
-	bool	haveAudio;			// only valid for the current frame
-	int			num_listeners;
+	bool haveAudio;             // only valid for the current frame
+	int num_listeners;
 	cin_raw_samples_listener_t listeners[CIN_MAX_RAW_SAMPLES_LISTENERS];
 
-	int			type;
-	void		*fdata;				// format-dependent data
+	int type;
+	void        *fdata;             // format-dependent data
 	struct mempool_s *mempool;
 } cinematics_t;
 
@@ -89,32 +87,32 @@ bool CIN_Init( bool verbose );
 void CIN_Shutdown( bool verbose );
 char *CIN_CopyString( const char *in );
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
-	int flags, bool *yuv, float *framerate );
+struct cinematics_s *CIN_Open( const char *name, int64_t start_time,
+							   int flags, bool *yuv, float *framerate );
 
 bool CIN_HasOggAudio( cinematics_t *cin );
 
 const char *CIN_FileName( cinematics_t *cin );
 
-bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime );
+bool CIN_NeedNextFrame( cinematics_t *cin, int64_t curtime );
 
-uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 
-	int *aspect_numerator, int *aspect_denominator, bool *redraw );
+uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height,
+							int *aspect_numerator, int *aspect_denominator, bool *redraw );
 
-cin_yuv_t *CIN_ReadNextFrameYUV( cinematics_t *cin, int *width, int *height, 
-	int *aspect_numerator, int *aspect_denominator, bool *redraw );
+cin_yuv_t *CIN_ReadNextFrameYUV( cinematics_t *cin, int *width, int *height,
+								 int *aspect_numerator, int *aspect_denominator, bool *redraw );
 
 void CIN_ClearRawSamplesListeners( cinematics_t *cin );
 
-bool CIN_AddRawSamplesListener( cinematics_t *cin, void *listener, 
-	cin_raw_samples_cb_t raw_samples, cin_get_raw_samples_cb_t get_raw_samples );
+bool CIN_AddRawSamplesListener( cinematics_t *cin, void *listener,
+								cin_raw_samples_cb_t raw_samples, cin_get_raw_samples_cb_t get_raw_samples );
 
-void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const uint8_t *data );
+void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigned int rate,
+								unsigned short width, unsigned short channels, const uint8_t *data );
 
 unsigned int CIN_GetRawSamplesLengthFromListeners( cinematics_t *cin );
 
-void CIN_Reset( cinematics_t *cin, unsigned int cur_time );
+void CIN_Reset( cinematics_t *cin, int64_t cur_time );
 
 void CIN_Close( cinematics_t *cin );
 

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../matchmaker/mm_query.h"
 
 // number of raceruns to send in one batch
-#define RACERUN_BATCH_SIZE	256
+#define RACERUN_BATCH_SIZE  256
 
 stat_query_api_t *sq_api;
 
@@ -29,13 +29,13 @@ static void G_Match_RaceReport( void );
 
 //====================================================
 
-static clientRating_t *g_ratingAlloc( const char *gametype, float rating, float deviation, int uuid )
-{
+static clientRating_t *g_ratingAlloc( const char *gametype, float rating, float deviation, int uuid ) {
 	clientRating_t *cr;
 
-	cr = (clientRating_t*)G_Malloc( sizeof(*cr) );
-	if( !cr )
+	cr = (clientRating_t*)G_Malloc( sizeof( *cr ) );
+	if( !cr ) {
 		return NULL;
+	}
 
 	Q_strncpyz( cr->gametype, gametype, sizeof( cr->gametype ) - 1 );
 	cr->rating = rating;
@@ -46,18 +46,15 @@ static clientRating_t *g_ratingAlloc( const char *gametype, float rating, float 
 	return cr;
 }
 
-static clientRating_t *g_ratingCopy( clientRating_t *other )
-{
+static clientRating_t *g_ratingCopy( clientRating_t *other ) {
 	return g_ratingAlloc( other->gametype, other->rating, other->deviation, other->uuid );
 }
 
 // free the list of clientRatings
-static void g_ratingsFree( clientRating_t *list )
-{
+static void g_ratingsFree( clientRating_t *list ) {
 	clientRating_t *next;
 
-	while( list )
-	{
+	while( list ) {
 		next = list->next;
 		G_Free( list );
 		list = next;
@@ -65,17 +62,13 @@ static void g_ratingsFree( clientRating_t *list )
 }
 
 // update the current servers rating
-static void g_serverRating( void )
-{
+static void g_serverRating( void ) {
 	clientRating_t avg;
 
-	if( !game.ratings )
-	{
+	if( !game.ratings ) {
 		avg.rating = MM_RATING_DEFAULT;
 		avg.deviation = MM_DEVIATION_DEFAULT;
-	}
-	else
-	{
+	} else {
 		Rating_AverageRating( &avg, game.ratings );
 	}
 
@@ -87,8 +80,7 @@ static void g_serverRating( void )
 /*
 * G_TransferRatings
 */
-void G_TransferRatings( void )
-{
+void G_TransferRatings( void ) {
 	clientRating_t *cr, *found;
 	edict_t *ent;
 	gclient_t *client;
@@ -98,30 +90,32 @@ void G_TransferRatings( void )
 	g_ratingsFree( game.ratings );
 	game.ratings = 0;
 
-	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
-	{
+	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {
 		client = ent->r.client;
 
-		if( !client )
+		if( !client ) {
 			continue;
-		if( !ent->r.inuse )
+		}
+		if( !ent->r.inuse ) {
 			continue;
+		}
 
 		// temphack for duplicate client entries
 		found = Rating_FindId( game.ratings, client->mm_session );
-		if( found )
+		if( found ) {
 			continue;
+		}
 
 		found = Rating_Find( client->ratings, gs.gametypeName );
 
 		// create a new default rating if this doesnt exist
 		// DONT USE G_AddDefaultRating cause this will cause double entries in game.ratings
-		if( !found )
-		{
+		if( !found ) {
 			found = g_ratingAlloc( gs.gametypeName, MM_RATING_DEFAULT, MM_DEVIATION_DEFAULT, client->mm_session );
-			if( !found )
-				continue;	// ??
+			if( !found ) {
+				continue;   // ??
 
+			}
 			found->next = client->ratings;
 			client->ratings = found;
 		}
@@ -137,46 +131,42 @@ void G_TransferRatings( void )
 
 // This doesnt update ratings, only inserts new default rating if it doesnt exist
 // if gametype is NULL, use current gametype
-clientRating_t *G_AddDefaultRating( edict_t *ent, const char *gametype )
-{
+clientRating_t *G_AddDefaultRating( edict_t *ent, const char *gametype ) {
 	clientRating_t *cr;
 	gclient_t *client;
 
-	if ( gametype == NULL )
+	if( gametype == NULL ) {
 		gametype = gs.gametypeName;
+	}
 
 	client = ent->r.client;
-	if( ! ent->r.inuse )
+	if( !ent->r.inuse ) {
 		return NULL;
+	}
 
 	cr = Rating_Find( client->ratings, gametype );
-	if( cr == NULL )
-	{
+	if( cr == NULL ) {
 		cr = g_ratingAlloc( gametype, MM_RATING_DEFAULT, MM_DEVIATION_DEFAULT, ent->r.client->mm_session );
-		if( !cr )
+		if( !cr ) {
 			return NULL;
+		}
 
 		cr->next = client->ratings;
 		client->ratings = cr;
 	}
 
-	if( !strcmp( gametype, gs.gametypeName) )
-	{
+	if( !strcmp( gametype, gs.gametypeName ) ) {
 		clientRating_t *found;
 
 		// add this rating to current game-ratings
 		found = Rating_FindId( game.ratings, client->mm_session );
-		if( !found )
-		{
+		if( !found ) {
 			found = g_ratingCopy( cr );
-			if( found )
-			{
+			if( found ) {
 				found->next = game.ratings;
 				game.ratings = found;
 			}
-		}
-		else
-		{
+		} else {
 			// update rating
 			found->rating = cr->rating;
 			found->deviation = cr->deviation;
@@ -188,51 +178,45 @@ clientRating_t *G_AddDefaultRating( edict_t *ent, const char *gametype )
 }
 
 // this inserts a new one, or updates the ratings if it exists
-clientRating_t *G_AddRating( edict_t *ent, const char *gametype, float rating, float deviation )
-{
+clientRating_t *G_AddRating( edict_t *ent, const char *gametype, float rating, float deviation ) {
 	clientRating_t *cr;
 	gclient_t *client;
 
-	if ( gametype == NULL )
+	if( gametype == NULL ) {
 		gametype = gs.gametypeName;
+	}
 
 	client = ent->r.client;
-	if( ! ent->r.inuse )
+	if( !ent->r.inuse ) {
 		return NULL;
+	}
 
 	cr = Rating_Find( client->ratings, gametype );
-	if( cr != NULL )
-	{
+	if( cr != NULL ) {
 		cr->rating = rating;
 		cr->deviation = deviation;
-	}
-	else
-	{
+	} else {
 		cr = g_ratingAlloc( gametype, rating, deviation, ent->r.client->mm_session );
-		if( !cr )
+		if( !cr ) {
 			return NULL;
+		}
 
 		cr->next = client->ratings;
 		client->ratings = cr;
 	}
 
-	if( !strcmp( gametype, gs.gametypeName) )
-	{
+	if( !strcmp( gametype, gs.gametypeName ) ) {
 		clientRating_t *found;
 
 		// add this rating to current game-ratings
 		found = Rating_FindId( game.ratings, client->mm_session );
-		if( !found )
-		{
+		if( !found ) {
 			found = g_ratingCopy( cr );
-			if( found )
-			{
+			if( found ) {
 				found->next = game.ratings;
 				game.ratings = found;
 			}
-		}
-		else
-		{
+		} else {
 			// update values
 			found->rating = rating;
 			found->deviation = deviation;
@@ -245,8 +229,7 @@ clientRating_t *G_AddRating( edict_t *ent, const char *gametype, float rating, f
 }
 
 // removes all references for given entity
-void G_RemoveRating( edict_t *ent )
-{
+void G_RemoveRating( edict_t *ent ) {
 	gclient_t *client;
 	clientRating_t *cr;
 
@@ -254,8 +237,9 @@ void G_RemoveRating( edict_t *ent )
 
 	// first from the game
 	cr = Rating_DetachId( &game.ratings, client->mm_session );
-	if( cr )
+	if( cr ) {
 		G_Free( cr );
+	}
 
 	// then the clients own list
 	g_ratingsFree( client->ratings );
@@ -265,96 +249,101 @@ void G_RemoveRating( edict_t *ent )
 }
 
 // debug purposes
-void G_ListRatings_f( void )
-{
+void G_ListRatings_f( void ) {
 	clientRating_t *cr;
 	gclient_t *cl;
 	edict_t *ent;
 
-	Com_Printf("Listing ratings by gametype:\n");
+	Com_Printf( "Listing ratings by gametype:\n" );
 	for( cr = game.ratings; cr ; cr = cr->next )
-		Com_Printf("  %s %d %f %f\n", cr->gametype, cr->uuid, cr->rating, cr->deviation );
+		Com_Printf( "  %s %d %f %f\n", cr->gametype, cr->uuid, cr->rating, cr->deviation );
 
-	Com_Printf("Listing ratings by player\n");
-	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
-	{
+	Com_Printf( "Listing ratings by player\n" );
+	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {
 		cl = ent->r.client;
 
-		if( ! ent->r.inuse )
+		if( !ent->r.inuse ) {
 			continue;
+		}
 
-		Com_Printf("%s:\n", cl->netname );
+		Com_Printf( "%s:\n", cl->netname );
 		for( cr = cl->ratings; cr ; cr = cr->next )
-			Com_Printf("  %s %d %f %f\n", cr->gametype, cr->uuid, cr->rating, cr->deviation );
+			Com_Printf( "  %s %d %f %f\n", cr->gametype, cr->uuid, cr->rating, cr->deviation );
 	}
 }
 
 //==========================================================
 
 // race records from MM
-void G_AddRaceRecords( edict_t *ent, int numSectors, unsigned int *records )
-{
+void G_AddRaceRecords( edict_t *ent, int numSectors, int64_t *records ) {
 	gclient_t *cl;
 	raceRun_t *rr;
 	size_t size;
 
 	cl = ent->r.client;
 
-	if( ! ent->r.inuse || cl == NULL )
+	if( !ent->r.inuse || cl == NULL ) {
 		return;
+	}
 
 	rr = &cl->level.stats.raceRecords;
-	if( rr->times )
+	if( rr->times ) {
 		G_LevelFree( rr->times );
+	}
 
-	size = ( numSectors + 1 ) * sizeof( unsigned int );
-	rr->times = ( unsigned int * )G_LevelMalloc( size );
+	size = ( numSectors + 1 ) * sizeof( *rr->times );
+	rr->times = ( int64_t * )G_LevelMalloc( size );
 
 	memcpy( rr->times, records, size );
 	rr->numSectors = numSectors;
 }
 
 // race records to AS (TODO: export this to AS)
-unsigned int G_GetRaceRecord( edict_t *ent, int sector )
-{
+int64_t G_GetRaceRecord( edict_t *ent, int sector ) {
 	gclient_t *cl;
 	raceRun_t *rr;
 
 	cl = ent->r.client;
 
-	if( ! ent->r.inuse || cl == NULL )
+	if( !ent->r.inuse || cl == NULL ) {
 		return 0;
+	}
 
 	rr = &cl->level.stats.raceRecords;
-	if( !rr->times )
+	if( !rr->times ) {
 		return 0;
+	}
 
 	// sector = -1 means final sector
-	if( sector < -1 || sector >= rr->numSectors )
+	if( sector < -1 || sector >= rr->numSectors ) {
 		return 0;
+	}
 
-	if( sector < 0 )
-		return rr->times[rr->numSectors];	// SAFE!
+	if( sector < 0 ) {
+		return rr->times[rr->numSectors];   // SAFE!
+	}
+
 	// else
 	return rr->times[sector];
 }
 
 // from AS
-raceRun_t *G_NewRaceRun( edict_t *ent, int numSectors )
-{
+raceRun_t *G_NewRaceRun( edict_t *ent, int numSectors ) {
 	gclient_t *cl;
 	raceRun_t *rr;
 
 	cl = ent->r.client;
 
-	if( ! ent->r.inuse || cl == NULL  )
+	if( !ent->r.inuse || cl == NULL  ) {
 		return 0;
+	}
 
 	rr = &cl->level.stats.currentRun;
-	if( rr->times != NULL )
+	if( rr->times != NULL ) {
 		G_LevelFree( rr->times );
+	}
 
-	rr->times = ( unsigned int * )G_LevelMalloc( (numSectors + 1) * sizeof( unsigned int ) );
+	rr->times = ( int64_t * )G_LevelMalloc( ( numSectors + 1 ) * sizeof( *rr->times ) );
 	rr->numSectors = numSectors;
 	rr->owner = cl->mm_session;
 
@@ -362,93 +351,90 @@ raceRun_t *G_NewRaceRun( edict_t *ent, int numSectors )
 }
 
 // from AS
-void G_SetRaceTime( edict_t *ent, int sector, unsigned int time )
-{
+void G_SetRaceTime( edict_t *ent, int sector, int64_t time ) {
 	gclient_t *cl;
 	raceRun_t *rr;
 
 	cl = ent->r.client;
 
-	if( ! ent->r.inuse || cl == NULL )
+	if( !ent->r.inuse || cl == NULL ) {
 		return;
+	}
 
 	rr = &cl->level.stats.currentRun;
-	if( sector < -1 || sector >= rr->numSectors )
+	if( sector < -1 || sector >= rr->numSectors ) {
 		return;
+	}
 
 	// normal sector
-	if( sector >= 0 )
+	if( sector >= 0 ) {
 		rr->times[sector] = time;
-	else if (rr->numSectors > 0)
-	{
-		raceRun_t *nrr;	// new global racerun
+	} else if( rr->numSectors > 0 ) {
+		raceRun_t *nrr; // new global racerun
 
 		rr->times[rr->numSectors] = time;
 		rr->timestamp = trap_Milliseconds();
 
 		// validate the client
 		// no bots for race, at all
-		if( ent->r.svflags & SVF_FAKECLIENT /* && mm_debug_reportbots->value == 0 */ )
-		{
-			G_Printf("G_SetRaceTime: not reporting fakeclients\n");
+		if( ent->r.svflags & SVF_FAKECLIENT /* && mm_debug_reportbots->value == 0 */ ) {
+			G_Printf( "G_SetRaceTime: not reporting fakeclients\n" );
 			return;
 		}
 
-		if( cl->mm_session <= 0 )
-		{
-			G_Printf("G_SetRaceTime: not reporting non-registered clients\n");
+		if( cl->mm_session <= 0 ) {
+			G_Printf( "G_SetRaceTime: not reporting non-registered clients\n" );
 			return;
 		}
 
-		if( !game.raceruns )
+		if( !game.raceruns ) {
 			game.raceruns = LinearAllocator( sizeof( raceRun_t ), 0, _G_LevelMalloc, _G_LevelFree );
+		}
 
 		// push new run
 		nrr = ( raceRun_t * )LA_Alloc( game.raceruns );
 		memcpy( nrr, rr, sizeof( raceRun_t ) );
+
 		// reuse this one in nrr
 		rr->times = 0;
 
 		// see if we have to push intermediate result
-		if( LA_Size( game.raceruns ) >= RACERUN_BATCH_SIZE )
-		{
+		if( LA_Size( game.raceruns ) >= RACERUN_BATCH_SIZE ) {
 			G_Match_SendReport();
+
 			// double-check this for memory-leaks
-			if( game.raceruns != 0 )
+			if( game.raceruns != 0 ) {
 				LinearAllocator_Free( game.raceruns );
+			}
 			game.raceruns = 0;
 		}
 	}
 }
 
-void G_ListRaces_f( void )
-{
+void G_ListRaces_f( void ) {
 	int i, j, size;
 	raceRun_t *run;
 
-	if( !game.raceruns || !LA_Size( game.raceruns ) )
-	{
-		G_Printf("No races to report\n");
+	if( !game.raceruns || !LA_Size( game.raceruns ) ) {
+		G_Printf( "No races to report\n" );
 		return;
 	}
 
-	G_Printf(S_COLOR_RED "  session    " S_COLOR_YELLOW "times\n");
+	G_Printf( S_COLOR_RED "  session    " S_COLOR_YELLOW "times\n" );
 	size = LA_Size( game.raceruns );
-	for( i = 0; i < size; i++ )
-	{
+	for( i = 0; i < size; i++ ) {
 		run = (raceRun_t*)LA_Pointer( game.raceruns, i );
-		G_Printf(S_COLOR_RED "  %d    " S_COLOR_YELLOW, run->owner );
+		G_Printf( S_COLOR_RED "  %d    " S_COLOR_YELLOW, run->owner );
 		for( j = 0; j < run->numSectors; j++ )
-			G_Printf("%d ", run->times[j] );
-		G_Printf(S_COLOR_GREEN "%d\n", run->times[run->numSectors]);	// SAFE!
+			G_Printf( "%d ", run->times[j] );
+		G_Printf( S_COLOR_GREEN "%d\n", run->times[run->numSectors] );    // SAFE!
 	}
 }
 
 //==========================================================
 
 // free the collected statistics memory
-void G_ClearStatistics( void )
-{
+void G_ClearStatistics( void ) {
 
 }
 
@@ -460,8 +446,7 @@ void G_ClearStatistics( void )
 /*
 * G_AddPlayerReport
 */
-void G_AddPlayerReport( edict_t *ent, bool final )
-{
+void G_AddPlayerReport( edict_t *ent, bool final ) {
 	gclient_t *cl;
 	gclient_quit_t *quit;
 	int i, mm_session;
@@ -469,53 +454,55 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 
 	// TODO: check if MM is enabled
 
-	if( GS_RaceGametype() )
-	{
+	if( GS_RaceGametype() ) {
 		// force sending report when someone disconnects
 		G_Match_SendReport();
 		return;
 	}
 
 	// if( !g_isSupportedGametype( gs.gametypeName ) )
-	if( !GS_MMCompatible() )
+	if( !GS_MMCompatible() ) {
 		return;
+	}
 
 	cl = ent->r.client;
 
-	if( ! ent->r.inuse )
+	if( !ent->r.inuse ) {
 		return;
+	}
 
 	report_bots = trap_Cvar_Get( "sv_mm_debug_reportbots", "0", CVAR_CHEAT );
 
-	if( ( ent->r.svflags & SVF_FAKECLIENT ) && !report_bots->integer )
+	if( ( ent->r.svflags & SVF_FAKECLIENT ) && !report_bots->integer ) {
 		return;
+	}
 
-	if( cl == NULL || cl->team == TEAM_SPECTATOR )
+	if( cl == NULL || cl->team == TEAM_SPECTATOR ) {
 		return;
+	}
 
 	mm_session = cl->mm_session;
-	if( mm_session == 0 )
-	{
+	if( mm_session == 0 ) {
 		G_Printf( "G_AddPlayerReport: Client without session-id (%s" S_COLOR_WHITE ") %d\n\t(%s)\n", cl->netname, mm_session, cl->userinfo );
 		return;
 	}
 
 	// check merge situation
-	for( quit = game.quits; quit; quit = quit->next )
-	{
-		if( quit->mm_session == mm_session )
+	for( quit = game.quits; quit; quit = quit->next ) {
+		if( quit->mm_session == mm_session ) {
 			break;
+		}
 
 		// ch : for unregistered players, merge stats by name
-		if( mm_session < 0 && quit->mm_session < 0 && !strcmp( quit->netname, cl->netname ) )
+		if( mm_session < 0 && quit->mm_session < 0 && !strcmp( quit->netname, cl->netname ) ) {
 			break;
+		}
 	}
 
 	// debug :
-	G_Printf("G_AddPlayerReport %s" S_COLOR_WHITE ", session %d\n", cl->netname, mm_session );
+	G_Printf( "G_AddPlayerReport %s" S_COLOR_WHITE ", session %d\n", cl->netname, mm_session );
 
-	if( quit )
-	{
+	if( quit ) {
 		gameaward_t *award1, *award2;
 		loggedFrag_t *frag1, *frag2;
 		int j, inSize, outSize;
@@ -551,8 +538,7 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 		quit->stats.flags_capped += cl->level.stats.flags_capped;
 		quit->stats.fairplay_count += cl->level.stats.fairplay_count;
 
-		for( i = 0; i < (AMMO_TOTAL-AMMO_GUNBLADE); i++ )
-		{
+		for( i = 0; i < ( AMMO_TOTAL - AMMO_GUNBLADE ); i++ ) {
 			quit->stats.accuracy_damage[i] += cl->level.stats.accuracy_damage[i];
 			quit->stats.accuracy_frags[i] += cl->level.stats.accuracy_frags[i];
 			quit->stats.accuracy_hits[i] += cl->level.stats.accuracy_hits[i];
@@ -562,28 +548,25 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 		}
 
 		// merge awards
-		if( cl->level.stats.awardAllocator )
-		{
-			if( !quit->stats.awardAllocator )
+		if( cl->level.stats.awardAllocator ) {
+			if( !quit->stats.awardAllocator ) {
 				quit->stats.awardAllocator = LinearAllocator( sizeof( gameaward_t ), 0, _G_LevelMalloc, _G_LevelFree );
+			}
 
 			inSize = LA_Size( cl->level.stats.awardAllocator );
 			outSize = quit->stats.awardAllocator ? LA_Size( quit->stats.awardAllocator ) : 0;
-			for( i = 0; i < inSize; i++ )
-			{
+			for( i = 0; i < inSize; i++ ) {
 				award1 = ( gameaward_t * )LA_Pointer( cl->level.stats.awardAllocator, i );
+
 				// search for matching one
-				for( j = 0; j < outSize; j++ )
-				{
+				for( j = 0; j < outSize; j++ ) {
 					award2 = ( gameaward_t * )LA_Pointer( quit->stats.awardAllocator, j );
-					if( !strcmp( award1->name, award2->name ) )
-					{
+					if( !strcmp( award1->name, award2->name ) ) {
 						award2->count += award1->count;
 						break;
 					}
 				}
-				if( j >= outSize )
-				{
+				if( j >= outSize ) {
 					award2 = ( gameaward_t * )LA_Alloc( quit->stats.awardAllocator );
 					award2->name = award1->name;
 					award2->count = award1->count;
@@ -596,14 +579,13 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 		}
 
 		// merge logged frags
-		if( cl->level.stats.fragAllocator )
-		{
+		if( cl->level.stats.fragAllocator ) {
 			inSize = LA_Size( cl->level.stats.fragAllocator );
-			if( !quit->stats.fragAllocator )
+			if( !quit->stats.fragAllocator ) {
 				quit->stats.fragAllocator = LinearAllocator( sizeof( loggedFrag_t ), 0, _G_LevelMalloc, _G_LevelFree );
+			}
 
-			for( i = 0; i < inSize; i++ )
-			{
+			for( i = 0; i < inSize; i++ ) {
 				frag1 = ( loggedFrag_t * )LA_Pointer( cl->level.stats.fragAllocator, i );
 				frag2 = ( loggedFrag_t * )LA_Alloc( quit->stats.fragAllocator );
 				memcpy( frag2, frag1, sizeof( *frag1 ) );
@@ -613,9 +595,7 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 			LinearAllocator_Free( cl->level.stats.fragAllocator );
 			cl->level.stats.fragAllocator = 0;
 		}
-	}
-	else
-	{
+	} else {
 		// create a new quit structure
 		quit = ( gclient_quit_t * )G_Malloc( sizeof( *quit ) );
 		memset( quit, 0, sizeof( *quit ) );
@@ -636,8 +616,7 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 }
 
 // common header
-static void g_mm_writeHeader( stat_query_t *query, int teamGame )
-{
+static void g_mm_writeHeader( stat_query_t *query, int teamGame ) {
 	stat_query_section_t *matchsection = sq_api->CreateSection( query, 0, "match" );
 
 	// Write match properties
@@ -648,9 +627,9 @@ static void g_mm_writeHeader( stat_query_t *query, int teamGame )
 	sq_api->SetNumber( matchsection, "timeplayed", level.finalMatchDuration / 1000 );
 	sq_api->SetNumber( matchsection, "timelimit", GS_MatchDuration() / 1000 );
 	sq_api->SetNumber( matchsection, "scorelimit", g_scorelimit->integer );
-	sq_api->SetNumber( matchsection, "instagib", ( GS_Instagib() ? 1 : 0 ));
+	sq_api->SetNumber( matchsection, "instagib", ( GS_Instagib() ? 1 : 0 ) );
 	sq_api->SetNumber( matchsection, "teamgame", teamGame );
-	sq_api->SetNumber( matchsection, "racegame", ( GS_RaceGametype() ? 1 : 0 ));
+	sq_api->SetNumber( matchsection, "racegame", ( GS_RaceGametype() ? 1 : 0 ) );
 	sq_api->SetString( matchsection, "gamedir", trap_Cvar_String( "fs_game" ) );
 	sq_api->SetNumber( matchsection, "timestamp", trap_Milliseconds() );
 	if( g_autorecord->integer ) {
@@ -658,10 +637,10 @@ static void g_mm_writeHeader( stat_query_t *query, int teamGame )
 	}
 }
 
-static stat_query_t *G_Match_GenerateReport( void )
-{
+static stat_query_t *G_Match_GenerateReport( void ) {
 	stat_query_t *query;
 	stat_query_section_t *playersarray;
+
 	//stat_query_section_t *weapindexarray;
 	gclient_quit_t *cl, *potm;
 	int i, teamGame, duelGame;
@@ -669,12 +648,14 @@ static stat_query_t *G_Match_GenerateReport( void )
 	score_stats_t *stats;
 
 	// Feature: do not report matches with duration less than 1 minute (actually 66 seconds)
-	if( level.finalMatchDuration <= SIGNIFICANT_MATCH_DURATION )
+	if( level.finalMatchDuration <= SIGNIFICANT_MATCH_DURATION ) {
 		return 0;
+	}
 
 	query = sq_api->CreateQuery( NULL, "smr", false );
-	if( !query )
+	if( !query ) {
 		return 0;
+	}
 
 	// ch : race properties through GS_RaceGametype()
 
@@ -693,14 +674,12 @@ static stat_query_t *G_Match_GenerateReport( void )
 	g_mm_writeHeader( query, teamGame );
 
 	// Write team properties (if any)
-	if( teamlist[TEAM_ALPHA].numplayers > 0 && teamGame != 0 )
-	{
+	if( teamlist[TEAM_ALPHA].numplayers > 0 && teamGame != 0 ) {
 		stat_query_section_t *teamarray = sq_api->CreateArray( query, 0, "teams" );
 
-		for( i = TEAM_ALPHA; i <= TEAM_BETA; i++ )
-		{
+		for( i = TEAM_ALPHA; i <= TEAM_BETA; i++ ) {
 			stat_query_section_t *team = sq_api->CreateSection( query, teamarray, 0 );
-			sq_api->SetString( team, "name", trap_GetConfigString ( CS_TEAM_SPECTATOR_NAME + (i-TEAM_SPECTATOR) ) );
+			sq_api->SetString( team, "name", trap_GetConfigString( CS_TEAM_SPECTATOR_NAME + ( i - TEAM_SPECTATOR ) ) );
 			sq_api->SetNumber( team, "index", i - TEAM_ALPHA );
 			sq_api->SetNumber( team, "score", teamlist[i].stats.score );
 		}
@@ -715,8 +694,9 @@ static stat_query_t *G_Match_GenerateReport( void )
 	potm = NULL;
 	for( cl = game.quits; cl; cl = cl->next ) {
 		stats = &cl->stats;
-		if( !potm || stats->score > potm->stats.score )
+		if( !potm || stats->score > potm->stats.score ) {
 			potm = cl;
+		}
 	}
 
 	// to receieve "Player of the Match" award the player must also have the "Fair Play" award
@@ -740,8 +720,7 @@ static stat_query_t *G_Match_GenerateReport( void )
 
 	// Write player properties
 	playersarray = sq_api->CreateArray( query, 0, "players" );
-	for( cl = game.quits; cl; cl = cl->next )
-	{
+	for( cl = game.quits; cl; cl = cl->next ) {
 		stat_query_section_t *playersection, *accsection, *awardssection;
 		gameaward_t *ga;
 		int numAwards;
@@ -776,26 +755,25 @@ static stat_query_t *G_Match_GenerateReport( void )
 		sq_api->SetNumber( playersection, "bombs_defused", cl->stats.bombs_defused );
 		sq_api->SetNumber( playersection, "flags_capped", cl->stats.flags_capped );
 
-		if( teamGame != 0 )
+		if( teamGame != 0 ) {
 			sq_api->SetNumber( playersection, "team", cl->team - TEAM_ALPHA );
+		}
 
 		// AWARDS
 		numAwards = 0;
-		if( stats->awardAllocator && LA_Size( stats->awardAllocator ) > 0 )
+		if( stats->awardAllocator && LA_Size( stats->awardAllocator ) > 0 ) {
 			numAwards += LA_Size( stats->awardAllocator );
+		}
 
-		if( numAwards )
-		{
+		if( numAwards ) {
 			stat_query_section_t *gasection;
 			int size;
 
 			awardssection = sq_api->CreateArray( query, playersection, "awards" );
 
-			if( stats->awardAllocator )
-			{
+			if( stats->awardAllocator ) {
 				size = numAwards;
-				for ( i = 0; i < size; i++ )
-				{
+				for( i = 0; i < size; i++ ) {
 					ga = (gameaward_t*)LA_Pointer( stats->awardAllocator, i );
 					gasection = sq_api->CreateSection( query, awardssection, 0 );
 					sq_api->SetString( gasection, "name", ga->name );
@@ -810,28 +788,27 @@ static stat_query_t *G_Match_GenerateReport( void )
 		// WEAPONS
 
 		// first pass calculate the number of weapons, see if we even need this section
-		for( i = 0; i < (AMMO_TOTAL-WEAP_TOTAL); i++ )
-		{
-			if ( stats->accuracy_shots[i] > 0 )
+		for( i = 0; i < ( AMMO_TOTAL - WEAP_TOTAL ); i++ ) {
+			if( stats->accuracy_shots[i] > 0 ) {
 				break;
+			}
 		}
-		if ( i < (AMMO_TOTAL-WEAP_TOTAL) )
-		{
+		if( i < ( AMMO_TOTAL - WEAP_TOTAL ) ) {
 			int j;
 
 			accsection = sq_api->CreateSection( query, playersection, "weapons" );
 
 			// we only loop thru the lower section of weapons since we put both
 			// weak and strong shots inside the same weapon
-			for ( j = 0; j < AMMO_WEAK_GUNBLADE-WEAP_TOTAL; j++ )
-			{
+			for( j = 0; j < AMMO_WEAK_GUNBLADE - WEAP_TOTAL; j++ ) {
 				int weak, hits, shots;
 				double acc;
 				stat_query_section_t *weapsection;
 
-				weak = j + (AMMO_WEAK_GUNBLADE-WEAP_TOTAL);
-				if ( stats->accuracy_shots[j] == 0 && stats->accuracy_shots[weak] == 0)
+				weak = j + ( AMMO_WEAK_GUNBLADE - WEAP_TOTAL );
+				if( stats->accuracy_shots[j] == 0 && stats->accuracy_shots[weak] == 0 ) {
 					continue;
+				}
 
 				if( !weapnames[j] ) {
 					gsitem_t *it = GS_FindItemByTag( WEAP_GUNBLADE + j );
@@ -844,8 +821,9 @@ static stat_query_t *G_Match_GenerateReport( void )
 				// STRONG
 				hits = stats->accuracy_hits[j];
 				shots = stats->accuracy_shots[j];
+
 				// copied from cg_scoreboard.c, but changed the last -1 to 0 (no hits is zero acc, right??)
-				acc = (double) (hits > 0 ? ((hits) == (shots) ? 100 : (min( (int)( floor( ( 100.0f*(hits) ) / ( (float)(shots) ) + 0.5f ) ), 99 ))) : 0);
+				acc = (double) ( hits > 0 ? ( ( hits ) == ( shots ) ? 100 : ( min( (int)( floor( ( 100.0f * ( hits ) ) / ( (float)( shots ) ) + 0.5f ) ), 99 ) ) ) : 0 );
 
 				sq_api->SetNumber( weapsection, "strong_hits", hits );
 				sq_api->SetNumber( weapsection, "strong_shots", shots );
@@ -856,8 +834,9 @@ static stat_query_t *G_Match_GenerateReport( void )
 				// WEAK
 				hits = stats->accuracy_hits[weak];
 				shots = stats->accuracy_shots[weak];
+
 				// copied from cg_scoreboard.c, but changed the last -1 to 0 (no hits is zero acc, right??)
-				acc = (double) (hits > 0 ? ((hits) == (shots) ? 100 : (min( (int)( floor( ( 100.0f*(hits) ) / ( (float)(shots) ) + 0.5f ) ), 99 ))) : 0);
+				acc = (double) ( hits > 0 ? ( ( hits ) == ( shots ) ? 100 : ( min( (int)( floor( ( 100.0f * ( hits ) ) / ( (float)( shots ) ) + 0.5f ) ), 99 ) ) ) : 0 );
 
 				sq_api->SetNumber( weapsection, "weak_hits", hits );
 				sq_api->SetNumber( weapsection, "weak_shots", shots );
@@ -868,16 +847,14 @@ static stat_query_t *G_Match_GenerateReport( void )
 		}
 
 		// duel frags
-		if( /* duelGame && */ stats->fragAllocator != 0 && LA_Size( stats->fragAllocator ) > 0 )
-		{
+		if( /* duelGame && */ stats->fragAllocator != 0 && LA_Size( stats->fragAllocator ) > 0 ) {
 			stat_query_section_t *fragSection;
 			loggedFrag_t *lfrag;
 			int size;
 
 			fragSection = sq_api->CreateArray( query, playersection, "log_frags" );
 			size = LA_Size( stats->fragAllocator );
-			for( i = 0; i < size; i++ )
-			{
+			for( i = 0; i < size; i++ ) {
 				stat_query_section_t *sect;
 
 				lfrag = (loggedFrag_t*)LA_Pointer( stats->fragAllocator, i );
@@ -898,8 +875,7 @@ static stat_query_t *G_Match_GenerateReport( void )
 /*
 * G_Match_SendReport
 */
-void G_Match_SendReport( void )
-{
+void G_Match_SendReport( void ) {
 	edict_t *ent;
 	gclient_quit_t *qcl, *qnext;
 	stat_query_t *query;
@@ -908,18 +884,17 @@ void G_Match_SendReport( void )
 	// TODO: check if MM is enabled
 
 	sq_api = trap_GetStatQueryAPI();
-	if( !sq_api )
+	if( !sq_api ) {
 		return;
+	}
 
-	if( GS_RaceGametype() )
-	{
+	if( GS_RaceGametype() ) {
 		G_Match_RaceReport();
 		return;
 	}
 
 	// if( g_isSupportedGametype( gs.gametypeName ) )
-	if( GS_MMCompatible() )
-	{
+	if( GS_MMCompatible() ) {
 		// merge game.clients with game.quits
 		for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
 			G_AddPlayerReport( ent, true );
@@ -929,12 +904,10 @@ void G_Match_SendReport( void )
 		for( qcl = game.quits; qcl ; qcl = qcl->next )
 			numPlayers++;
 
-		if( numPlayers > 1 )
-		{
+		if( numPlayers > 1 ) {
 			// emit them all
 			query = G_Match_GenerateReport();
-			if( query )
-			{
+			if( query ) {
 				trap_MM_SendQuery( query );
 
 				// this will be free'd by callbacks
@@ -945,8 +918,7 @@ void G_Match_SendReport( void )
 
 	// clear the quit-list
 	qnext = NULL;
-	for( qcl = game.quits; qcl ; qcl = qnext )
-	{
+	for( qcl = game.quits; qcl ; qcl = qnext ) {
 		qnext = qcl->next;
 		G_Free( qcl );
 	}
@@ -956,23 +928,20 @@ void G_Match_SendReport( void )
 /*
 * G_Match_RaceReport
 */
-static void G_Match_RaceReport( void )
-{
+static void G_Match_RaceReport( void ) {
 	stat_query_t *query;
 	stat_query_section_t *runsArray;
 	stat_query_section_t *timesArray, *dummy;
 	raceRun_t *prr;
 	int i, j, size;
 
-	if( !GS_RaceGametype() )
-	{
-		G_Printf("G_Match_RaceReport.. not race gametype\n");
+	if( !GS_RaceGametype() ) {
+		G_Printf( "G_Match_RaceReport.. not race gametype\n" );
 		return;
 	}
 
-	if( !game.raceruns || !LA_Size( game.raceruns ) )
-	{
-		G_Printf("G_Match_RaceReport.. no runs to report\n");
+	if( !game.raceruns || !LA_Size( game.raceruns ) ) {
+		G_Printf( "G_Match_RaceReport.. no runs to report\n" );
 		return;
 	}
 
@@ -981,16 +950,15 @@ static void G_Match_RaceReport( void )
 	* runs :
 	* [
 	*   {
-	*   	session_id : 3434343,
-	*  	times : [ 12, 43, 56, 7878, 4 ]
+	*       session_id : 3434343,
+	*   times : [ 12, 43, 56, 7878, 4 ]
 	*    }
 	* ]
 	*  ( TODO: get the nickname there )
 	*/
 	query = sq_api->CreateQuery( NULL, "smr", false );
-	if( !query )
-	{
-		G_Printf("G_Match_RaceReport.. failed to create query object\n");
+	if( !query ) {
+		G_Printf( "G_Match_RaceReport.. failed to create query object\n" );
 		return;
 	}
 
@@ -999,8 +967,7 @@ static void G_Match_RaceReport( void )
 	// Players array
 	runsArray = sq_api->CreateArray( query, 0, "runs" );
 	size = LA_Size( game.raceruns );
-	for( i = 0; i < size; i++ )
-	{
+	for( i = 0; i < size; i++ ) {
 		prr = (raceRun_t*)LA_Pointer( game.raceruns, i );
 
 		dummy = sq_api->CreateSection( query, runsArray, 0 );

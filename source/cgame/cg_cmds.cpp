@@ -31,172 +31,149 @@ SERVER COMMANDS
 /*
 * CG_SC_Print
 */
-static void CG_SC_Print( void )
-{
+static void CG_SC_Print( void ) {
 	CG_LocalPrint( "%s", trap_Cmd_Argv( 1 ) );
 }
 
 /*
 * CG_SC_ChatPrint
 */
-static void CG_SC_ChatPrint( void )
-{
-	const bool teamonly = (!Q_stricmp( trap_Cmd_Argv( 0 ), "tch" ) ? true : false);
+static void CG_SC_ChatPrint( void ) {
+	const bool teamonly = ( !Q_stricmp( trap_Cmd_Argv( 0 ), "tch" ) ? true : false );
 	const int who = atoi( trap_Cmd_Argv( 1 ) );
-	const char *name = (who && who == bound(1, who, MAX_CLIENTS) ? cgs.clientInfo[who-1].name : NULL);
+	const char *name = ( who && who == bound( 1, who, MAX_CLIENTS ) ? cgs.clientInfo[who - 1].name : NULL );
 	const char *text = trap_Cmd_Argv( 2 );
-	const cvar_t *filter = (cgs.tv ? cg_chatFilterTV : cg_chatFilter);
+	const cvar_t *filter = ( cgs.tv ? cg_chatFilterTV : cg_chatFilter );
 
-	if( filter->integer & (teamonly ? 2 : 1) )
+	if( filter->integer & ( teamonly ? 2 : 1 ) ) {
 		return;
+	}
 
-	if( !name )
+	if( !name ) {
 		CG_LocalPrint( S_COLOR_GREEN "console: %s\n", text );
-	else if( teamonly )
+	} else if( teamonly ) {
 		CG_LocalPrint( S_COLOR_YELLOW "[%s]" S_COLOR_WHITE "%s" S_COLOR_YELLOW ": %s\n",
-			cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR ? "SPEC" : "TEAM", name, text );
-	else
+					   cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR ? "SPEC" : "TEAM", name, text );
+	} else {
 		CG_LocalPrint( "%s" S_COLOR_GREEN ": %s\n", name, text );
+	}
 
-	if( cg_chatBeep->integer )
+	if( cg_chatBeep->integer ) {
 		trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
+	}
 }
 
 /*
 * CG_SC_TVChatPrint
 */
-static void CG_SC_TVChatPrint( void )
-{
+static void CG_SC_TVChatPrint( void ) {
 	const char *name = trap_Cmd_Argv( 1 );
 	const char *text = trap_Cmd_Argv( 2 );
-	const cvar_t *filter = (cgs.tv ? cg_chatFilterTV : cg_chatFilter);
+	const cvar_t *filter = ( cgs.tv ? cg_chatFilterTV : cg_chatFilter );
 
-	if( filter->integer & 4 )
+	if( filter->integer & 4 ) {
 		return;
+	}
 
 	CG_LocalPrint( S_COLOR_RED "[TV]" S_COLOR_WHITE "%s" S_COLOR_GREEN ": %s", name, text );
-	if( cg_chatBeep->integer )
+	if( cg_chatBeep->integer ) {
 		trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
+	}
 }
 
 /*
 * CG_SC_CenterPrint
 */
-static void CG_SC_CenterPrint( void )
-{
+static void CG_SC_CenterPrint( void ) {
 	CG_CenterPrint( trap_Cmd_Argv( 1 ) );
 }
 
 /*
 * CG_SC_CenterPrintFormat
 */
-static void CG_SC_CenterPrintFormat( void )
-{
+static void CG_SC_CenterPrintFormat( void ) {
 	if( trap_Cmd_Argc() == 8 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ), 
-			trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ), trap_Cmd_Argv( 6 ), trap_Cmd_Argv( 7 ) ) );
+		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
+							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ), trap_Cmd_Argv( 6 ), trap_Cmd_Argv( 7 ) ) );
 	} else if( trap_Cmd_Argc() == 7 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ), 
-			trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ), trap_Cmd_Argv( 6 ) ) );
+		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
+							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ), trap_Cmd_Argv( 6 ) ) );
 	} else if( trap_Cmd_Argc() == 6 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ), 
-			trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ) ) );
+		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
+							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ) ) );
 	} else if( trap_Cmd_Argc() == 5 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ), 
-			trap_Cmd_Argv( 4 ) ) );
+		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
+							trap_Cmd_Argv( 4 ) ) );
 	} else if( trap_Cmd_Argc() == 4 ) {
 		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ) ) );
 	} else if( trap_Cmd_Argc() == 3 ) {
 		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ) ) );
 	} else if( trap_Cmd_Argc() == 2 ) {
 		CG_CenterPrint( CG_TranslateString( trap_Cmd_Argv( 1 ) ) ); // theoretically, shouldn't happen
-	} 
+	}
 }
 
 /*
 * CG_ConfigString
 */
-void CG_ConfigString( int i, const char *s )
-{
+void CG_ConfigString( int i, const char *s ) {
 	size_t len;
 
 	// wsw : jal : warn if configstring overflow
 	len = strlen( s );
-	if( len >= MAX_CONFIGSTRING_CHARS )
+	if( len >= MAX_CONFIGSTRING_CHARS ) {
 		CG_Printf( "%sWARNING:%s Configstring %i overflowed\n", S_COLOR_YELLOW, S_COLOR_WHITE, i );
+	}
 
-	if( i < 0 || i >= MAX_CONFIGSTRINGS )
+	if( i < 0 || i >= MAX_CONFIGSTRINGS ) {
 		CG_Error( "configstring > MAX_CONFIGSTRINGS" );
+		return;
+	}
 
 	Q_strncpyz( cgs.configStrings[i], s, sizeof( cgs.configStrings[i] ) );
-			
+
 	// do something apropriate
-	if( i == CS_MAPNAME )
-	{
+	if( i == CS_MAPNAME ) {
 		CG_RegisterLevelMinimap();
-	}
-	else if( i == CS_TVSERVER )
-	{
+	} else if( i == CS_TVSERVER ) {
 		CG_UpdateTVServerString();
-	}
-	else if( i == CS_GAMETYPETITLE )
-	{
-	}
-	else if( i == CS_GAMETYPENAME )
-	{
+	} else if( i == CS_GAMETYPETITLE ) {
+	} else if( i == CS_GAMETYPENAME ) {
 		GS_SetGametypeName( cgs.configStrings[CS_GAMETYPENAME] );
-	}
-	else if( i == CS_AUTORECORDSTATE )
-	{
+	} else if( i == CS_AUTORECORDSTATE ) {
 		CG_SC_AutoRecordAction( cgs.configStrings[i] );
-	}
-	else if( i >= CS_MODELS && i < CS_MODELS+MAX_MODELS )
-	{
-		if( cgs.configStrings[i][0] == '$' )	// indexed pmodel
-			cgs.pModelsIndex[i-CS_MODELS] = CG_RegisterPlayerModel( cgs.configStrings[i]+1 );
-		else
-			cgs.modelDraw[i-CS_MODELS] = CG_RegisterModel( cgs.configStrings[i] );
-	}
-	else if( i >= CS_SOUNDS && i < CS_SOUNDS+MAX_SOUNDS )
-	{
-		if( cgs.configStrings[i][0] != '*' )
-			cgs.soundPrecache[i-CS_SOUNDS] = trap_S_RegisterSound( cgs.configStrings[i] );
-	}
-	else if( i >= CS_IMAGES && i < CS_IMAGES+MAX_IMAGES )
-	{
-		if( strstr( cgs.configStrings[i], "correction/" ) ) // HACK HACK HACK -- for color correction LUTs
-			cgs.imagePrecache[i-CS_IMAGES] = trap_R_RegisterLinearPic( cgs.configStrings[i] );
-		else
-			cgs.imagePrecache[i-CS_IMAGES] = trap_R_RegisterPic( cgs.configStrings[i] );
-	}
-	else if( i >= CS_SKINFILES && i < CS_SKINFILES+MAX_SKINFILES )
-	{
-		cgs.skinPrecache[i-CS_SKINFILES] = trap_R_RegisterSkinFile( cgs.configStrings[i] );
-	}
-	else if( i >= CS_LIGHTS && i < CS_LIGHTS+MAX_LIGHTSTYLES )
-	{
+	} else if( i >= CS_MODELS && i < CS_MODELS + MAX_MODELS ) {
+		if( cgs.configStrings[i][0] == '$' ) {  // indexed pmodel
+			cgs.pModelsIndex[i - CS_MODELS] = CG_RegisterPlayerModel( cgs.configStrings[i] + 1 );
+		} else {
+			cgs.modelDraw[i - CS_MODELS] = CG_RegisterModel( cgs.configStrings[i] );
+		}
+	} else if( i >= CS_SOUNDS && i < CS_SOUNDS + MAX_SOUNDS ) {
+		if( cgs.configStrings[i][0] != '*' ) {
+			cgs.soundPrecache[i - CS_SOUNDS] = trap_S_RegisterSound( cgs.configStrings[i] );
+		}
+	} else if( i >= CS_IMAGES && i < CS_IMAGES + MAX_IMAGES ) {
+		if( strstr( cgs.configStrings[i], "correction/" ) ) { // HACK HACK HACK -- for color correction LUTs
+			cgs.imagePrecache[i - CS_IMAGES] = trap_R_RegisterLinearPic( cgs.configStrings[i] );
+		} else {
+			cgs.imagePrecache[i - CS_IMAGES] = trap_R_RegisterPic( cgs.configStrings[i] );
+		}
+	} else if( i >= CS_SKINFILES && i < CS_SKINFILES + MAX_SKINFILES ) {
+		cgs.skinPrecache[i - CS_SKINFILES] = trap_R_RegisterSkinFile( cgs.configStrings[i] );
+	} else if( i >= CS_LIGHTS && i < CS_LIGHTS + MAX_LIGHTSTYLES ) {
 		CG_SetLightStyle( i - CS_LIGHTS );
-	}
-	else if( i >= CS_ITEMS && i < CS_ITEMS+MAX_ITEMS )
-	{
+	} else if( i >= CS_ITEMS && i < CS_ITEMS + MAX_ITEMS ) {
 		CG_ValidateItemDef( i - CS_ITEMS, cgs.configStrings[i] );
-	}
-	else if( i >= CS_PLAYERINFOS && i < CS_PLAYERINFOS+MAX_CLIENTS )
-	{
-		CG_LoadClientInfo( &cgs.clientInfo[i-CS_PLAYERINFOS], cgs.configStrings[i], i-CS_PLAYERINFOS );
-	}
-	else if( i >= CS_GAMECOMMANDS && i < CS_GAMECOMMANDS+MAX_GAMECOMMANDS )
-	{
-		if( !cgs.demoPlaying )
-		{
+	} else if( i >= CS_PLAYERINFOS && i < CS_PLAYERINFOS + MAX_CLIENTS ) {
+		CG_LoadClientInfo( i - CS_PLAYERINFOS );
+	} else if( i >= CS_GAMECOMMANDS && i < CS_GAMECOMMANDS + MAX_GAMECOMMANDS ) {
+		if( !cgs.demoPlaying ) {
 			trap_Cmd_AddCommand( cgs.configStrings[i], NULL );
 			if( !Q_stricmp( cgs.configStrings[i], "gametypemenu" ) ) {
 				cgs.hasGametypeMenu = true;
 			}
-		}				
-	}
-	else if( i >= CS_WEAPONDEFS && i < CS_WEAPONDEFS + MAX_WEAPONDEFS )
-	{
+		}
+	} else if( i >= CS_WEAPONDEFS && i < CS_WEAPONDEFS + MAX_WEAPONDEFS ) {
 		CG_OverrideWeapondef( i - CS_WEAPONDEFS, cgs.configStrings[i] );
 	}
 }
@@ -204,56 +181,57 @@ void CG_ConfigString( int i, const char *s )
 /*
 * CG_SC_Scoreboard
 */
-static void CG_SC_Scoreboard( void )
-{
+static void CG_SC_Scoreboard( void ) {
 	SCR_UpdateScoreboardMessage( trap_Cmd_Argv( 1 ) );
 }
 
 /*
 * CG_SC_PrintPlayerStats
 */
-static void CG_SC_PrintPlayerStats( const char *s, void ( *print )( const char *format, ... ), void ( *printDmg )( const char *format, ... ) )
-{
+static void CG_SC_PrintPlayerStats( const char *s, void ( *print )( const char *format, ... ), void ( *printDmg )( const char *format, ... ) ) {
 	int playerNum;
 	int i, shot_strong, hit_total, shot_total;
 	int total_damage_given, total_damage_received, health_taken, armor_taken;
 	gsitem_t *item;
 
 	playerNum = CG_ParseValue( &s );
-	if( playerNum < 0 || playerNum >= gs.maxclients )
+	if( playerNum < 0 || playerNum >= gs.maxclients ) {
 		return;
+	}
 
-	if( !printDmg )
+	if( !printDmg ) {
 		printDmg = print;
+	}
 
 	// print stats to console/file
 	printDmg( "Stats for %s" S_COLOR_WHITE ":\r\n", cgs.clientInfo[playerNum].name );
 	print( "\r\nWeapon\r\n" );
 	print( "    hit/shot percent\r\n" );
 
-	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ )
-	{
+	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
 		item = GS_FindItemByTag( i );
 		assert( item );
 
 		shot_total = CG_ParseValue( &s );
-		if( shot_total < 1 )  // only continue with registered shots
+		if( shot_total < 1 ) { // only continue with registered shots
 			continue;
+		}
 		hit_total = CG_ParseValue( &s );
 
 		// legacy - parse shot_strong and hit_strong
 		shot_strong = CG_ParseValue( &s );
-		if( shot_strong != shot_total )
+		if( shot_strong != shot_total ) {
 			CG_ParseValue( &s );
+		}
 
 		// name
 		print( "%s%2s" S_COLOR_WHITE ": ", item->color, item->shortname );
 
-#define STATS_PERCENT(hit,total) ((total) == 0 ? 0 : ((hit) == (total) ? 100 : (float)(hit) * 100.0f / (float)(total)))
+#define STATS_PERCENT( hit,total ) ( ( total ) == 0 ? 0 : ( ( hit ) == ( total ) ? 100 : (float)( hit ) * 100.0f / (float)( total ) ) )
 
 		// total
 		print( S_COLOR_GREEN "%3i" S_COLOR_WHITE "/" S_COLOR_CYAN "%3i      " S_COLOR_YELLOW "%2.1f",
-			hit_total, shot_total, STATS_PERCENT( hit_total, shot_total ) );
+			   hit_total, shot_total, STATS_PERCENT( hit_total, shot_total ) );
 
 		print( "\r\n" );
 	}
@@ -264,15 +242,15 @@ static void CG_SC_PrintPlayerStats( const char *s, void ( *print )( const char *
 	total_damage_received = CG_ParseValue( &s );
 
 	printDmg( S_COLOR_YELLOW "Damage given/received: " S_COLOR_WHITE "%i/%i " S_COLOR_YELLOW "ratio: %s%3.2f\r\n",
-		total_damage_given, total_damage_received,
-		( total_damage_given > total_damage_received ? S_COLOR_GREEN : S_COLOR_RED ),
-		STATS_PERCENT( total_damage_given, total_damage_given + total_damage_received ) );
+			  total_damage_given, total_damage_received,
+			  ( total_damage_given > total_damage_received ? S_COLOR_GREEN : S_COLOR_RED ),
+			  STATS_PERCENT( total_damage_given, total_damage_given + total_damage_received ) );
 
 	health_taken = CG_ParseValue( &s );
 	armor_taken = CG_ParseValue( &s );
 
 	printDmg( S_COLOR_YELLOW "Health/Armor taken: " S_COLOR_CYAN "%i" S_COLOR_WHITE "/" S_COLOR_CYAN "%i\r\n",
-		health_taken, armor_taken );
+			  health_taken, armor_taken );
 
 #undef STATS_PERCENT
 }
@@ -281,9 +259,8 @@ static void CG_SC_PrintPlayerStats( const char *s, void ( *print )( const char *
 * CG_SC_PrintStatsToFile
 */
 static int cg_statsFileHandle;
-void CG_SC_PrintStatsToFile( const char *format, ... )
-{
-	va_list	argptr;
+void CG_SC_PrintStatsToFile( const char *format, ... ) {
+	va_list argptr;
 	char msg[1024];
 
 	va_start( argptr, format );
@@ -296,13 +273,12 @@ void CG_SC_PrintStatsToFile( const char *format, ... )
 /*
 * CG_SC_DumpPlayerStats
 */
-static void CG_SC_DumpPlayerStats( const char *filename, const char *stats )
-{
-	if( cgs.demoPlaying )
+static void CG_SC_DumpPlayerStats( const char *filename, const char *stats ) {
+	if( cgs.demoPlaying ) {
 		return;
+	}
 
-	if( trap_FS_FOpenFile( filename, &cg_statsFileHandle, FS_APPEND ) == -1 )
-	{
+	if( trap_FS_FOpenFile( filename, &cg_statsFileHandle, FS_APPEND ) == -1 ) {
 		CG_Printf( "Couldn't write autorecorded stats, error opening file %s\n", filename );
 		return;
 	}
@@ -315,31 +291,29 @@ static void CG_SC_DumpPlayerStats( const char *filename, const char *stats )
 /*
 * CG_SC_PlayerStats
 */
-static void CG_SC_PlayerStats( void )
-{
+static void CG_SC_PlayerStats( void ) {
 	const char *s;
 	int print;
 
 	print = atoi( trap_Cmd_Argv( 1 ) );
 	s = trap_Cmd_Argv( 2 );
 
-	if( !print )
-	{	// scoreboard message update
+	if( !print ) { // scoreboard message update
 		SCR_UpdatePlayerStatsMessage( s );
 		return;
 	}
 
 	CG_SC_PrintPlayerStats( s, CG_Printf, CG_LocalPrint );
 
-	if( print == 2 )
+	if( print == 2 ) {
 		CG_SC_AutoRecordAction( "stats" );
+	}
 }
 
 /*
 * CG_SC_AutoRecordName
 */
-static const char *CG_SC_AutoRecordName( void )
-{
+static const char *CG_SC_AutoRecordName( void ) {
 	time_t long_time;
 	struct tm *newtime;
 	static char name[MAX_STRING_CHARS];
@@ -350,14 +324,11 @@ static const char *CG_SC_AutoRecordName( void )
 	time( &long_time );
 	newtime = localtime( &long_time );
 
-	if( cg.view.POVent <= 0 )
-	{
+	if( cg.view.POVent <= 0 ) {
 		cleanplayername2 = "";
-	}
-	else
-	{
+	} else {
 		// remove color tokens from player names (doh)
-		cleanplayername = COM_RemoveColorTokens( cgs.clientInfo[cg.view.POVent-1].name );
+		cleanplayername = COM_RemoveColorTokens( cgs.clientInfo[cg.view.POVent - 1].name );
 
 		// remove junk chars from player names for files
 		cleanplayername2 = COM_RemoveJunkChars( cleanplayername );
@@ -370,13 +341,13 @@ static const char *CG_SC_AutoRecordName( void )
 	// make file name
 	// duel_year-month-day_hour-min_map_player
 	Q_snprintfz( name, sizeof( name ), "%s_%04d-%02d-%02d_%02d-%02d_%s_%s_%04i",
-		gs.gametypeName,
-		newtime->tm_year + 1900, newtime->tm_mon+1, newtime->tm_mday,
-		newtime->tm_hour, newtime->tm_min,
-		mapname,
-		cleanplayername2,
-		(int)brandom( 0, 9999 )
-		);
+				 gs.gametypeName,
+				 newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
+				 newtime->tm_hour, newtime->tm_min,
+				 mapname,
+				 cleanplayername2,
+				 (int)brandom( 0, 9999 )
+				 );
 
 	return name;
 }
@@ -384,81 +355,67 @@ static const char *CG_SC_AutoRecordName( void )
 /*
 * CG_SC_AutoRecordAction
 */
-void CG_SC_AutoRecordAction( const char *action )
-{
+void CG_SC_AutoRecordAction( const char *action ) {
 	static bool autorecording = false;
 	const char *name;
 	bool spectator;
 
-	if( !action[0] )
+	if( !action[0] ) {
 		return;
+	}
 
 	// filter out autorecord commands when playing a demo
-	if( cgs.demoPlaying )
+	if( cgs.demoPlaying ) {
 		return;
+	}
 
 	// let configstrings and other stuff arrive before taking any action
-	if( !cgs.precacheDone )
+	if( !cgs.precacheDone ) {
 		return;
+	}
 
-	if( cg.frame.playerState.pmove.pm_type == PM_SPECTATOR || cg.frame.playerState.pmove.pm_type == PM_CHASECAM )
+	if( cg.frame.playerState.pmove.pm_type == PM_SPECTATOR || cg.frame.playerState.pmove.pm_type == PM_CHASECAM ) {
 		spectator = true;
-	else
+	} else {
 		spectator = false;
+	}
 
 	name = CG_SC_AutoRecordName();
 
-	if( !Q_stricmp( action, "start" ) )
-	{
-		if( cg_autoaction_demo->integer && ( !spectator || cg_autoaction_spectator->integer ) )
-		{
+	if( !Q_stricmp( action, "start" ) ) {
+		if( cg_autoaction_demo->integer && ( !spectator || cg_autoaction_spectator->integer ) ) {
 			trap_Cmd_ExecuteText( EXEC_NOW, "stop silent" );
 			trap_Cmd_ExecuteText( EXEC_NOW, va( "record autorecord/%s/%s silent",
-				gs.gametypeName, name ) );
+												gs.gametypeName, name ) );
 			autorecording = true;
 		}
-	}
-	else if( !Q_stricmp( action, "altstart" ) )
-	{
-		if( cg_autoaction_demo->integer && ( !spectator || cg_autoaction_spectator->integer ) )
-		{
+	} else if( !Q_stricmp( action, "altstart" ) ) {
+		if( cg_autoaction_demo->integer && ( !spectator || cg_autoaction_spectator->integer ) ) {
 			trap_Cmd_ExecuteText( EXEC_NOW, va( "record autorecord/%s/%s silent",
-				gs.gametypeName, name ) );
+												gs.gametypeName, name ) );
 			autorecording = true;
 		}
-	}
-	else if( !Q_stricmp( action, "stop" ) )
-	{
-		if( autorecording )
-		{
+	} else if( !Q_stricmp( action, "stop" ) ) {
+		if( autorecording ) {
 			trap_Cmd_ExecuteText( EXEC_NOW, "stop silent" );
 			autorecording = false;
 		}
 
-		if( cg_autoaction_screenshot->integer && ( !spectator || cg_autoaction_spectator->integer ) )
-		{
+		if( cg_autoaction_screenshot->integer && ( !spectator || cg_autoaction_spectator->integer ) ) {
 			trap_Cmd_ExecuteText( EXEC_NOW, va( "screenshot autorecord/%s/%s silent",
-				gs.gametypeName, name ) );
+												gs.gametypeName, name ) );
 		}
-	}
-	else if( !Q_stricmp( action, "cancel" ) )
-	{
-		if( autorecording )
-		{
+	} else if( !Q_stricmp( action, "cancel" ) ) {
+		if( autorecording ) {
 			trap_Cmd_ExecuteText( EXEC_NOW, "stop cancel silent" );
 			autorecording = false;
 		}
-	}
-	else if( !Q_stricmp( action, "stats" ) )
-	{
-		if( cg_autoaction_stats->integer && ( !spectator || cg_autoaction_spectator->integer ) )
-		{
+	} else if( !Q_stricmp( action, "stats" ) ) {
+		if( cg_autoaction_stats->integer && ( !spectator || cg_autoaction_spectator->integer ) ) {
 			const char *filename = va( "stats/%s/%s.txt", gs.gametypeName, name );
 			CG_SC_DumpPlayerStats( filename, trap_Cmd_Argv( 2 ) );
 		}
-	}
-	else if( developer->integer )
-	{
+	} else if( developer->integer ) {
 		CG_Printf( "CG_SC_AutoRecordAction: Unknown action: %s\n", action );
 	}
 }
@@ -466,8 +423,7 @@ void CG_SC_AutoRecordAction( const char *action )
 /*
 * CG_SC_ChannelAdd
 */
-static void CG_SC_ChannelAdd( void )
-{
+static void CG_SC_ChannelAdd( void ) {
 	char menuparms[MAX_STRING_CHARS];
 
 	Q_snprintfz( menuparms, sizeof( menuparms ), "menu_tvchannel_add %s\n", trap_Cmd_Args() );
@@ -477,15 +433,14 @@ static void CG_SC_ChannelAdd( void )
 /*
 * CG_SC_ChannelRemove
 */
-static void CG_SC_ChannelRemove( void )
-{
+static void CG_SC_ChannelRemove( void ) {
 	int i, id;
 
-	for( i = 1; i < trap_Cmd_Argc(); i++ )
-	{
+	for( i = 1; i < trap_Cmd_Argc(); i++ ) {
 		id = atoi( trap_Cmd_Argv( i ) );
-		if( id <= 0 )
+		if( id <= 0 ) {
 			continue;
+		}
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "menu_tvchannel_remove %i\n", id ) );
 	}
 }
@@ -496,63 +451,59 @@ static void CG_SC_ChannelRemove( void )
  * @param mm match message ID
  * @return match message text
  */
-static const char *CG_MatchMessageString( matchmessage_t mm )
-{
-	if( ( trap_IN_SupportedDevices() & ( IN_DEVICE_KEYBOARD|IN_DEVICE_MOUSE ) ) != ( IN_DEVICE_KEYBOARD|IN_DEVICE_MOUSE ) )
-	{
-		switch( mm )
-		{
-		case MATCHMESSAGE_CHALLENGERS_QUEUE:
-			return "You are inside the challengers queue waiting for your turn to play.\n"
-				"Use the in-game menu to exit the queue.";
+static const char *CG_MatchMessageString( matchmessage_t mm ) {
+	if( ( trap_IN_SupportedDevices() & ( IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE ) ) != ( IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE ) ) {
+		switch( mm ) {
+			case MATCHMESSAGE_CHALLENGERS_QUEUE:
+				return "You are inside the challengers queue waiting for your turn to play.\n"
+					   "Use the in-game menu to exit the queue.";
 
-		case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
-			return "Use the in-game menu to enter the challengers queue.\n"
-				"Only players in the queue will have a turn to play against the last winner.";
+			case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
+				return "Use the in-game menu to enter the challengers queue.\n"
+					   "Only players in the queue will have a turn to play against the last winner.";
 
-		case MATCHMESSAGE_GET_READY:
-			return "Set yourself READY using the in-game menu to start the match!";
+			case MATCHMESSAGE_GET_READY:
+				return "Set yourself READY using the in-game menu to start the match!";
 
-		case MATCHMESSAGE_WAITING_FOR_PLAYERS:
-			return "Waiting for players.";
+			case MATCHMESSAGE_WAITING_FOR_PLAYERS:
+				return "Waiting for players.";
 
-		default:
-			return "";
+			default:
+				return "";
 		}
 
 		return "";
 	}
 
-	switch( mm )
-	{
-	case MATCHMESSAGE_CHALLENGERS_QUEUE:
-		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
-			"You are inside the challengers queue waiting for your turn to play.\n"
-			"Use the in-game menu to exit the queue.\n"
-			"\nUse the mouse buttons for switching spectator modes.";
+	switch( mm ) {
+		case MATCHMESSAGE_CHALLENGERS_QUEUE:
+			return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
+				   "You are inside the challengers queue waiting for your turn to play.\n"
+				   "Use the in-game menu to exit the queue.\n"
+				   "\nUse the mouse buttons for switching spectator modes.";
 
-	case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
-		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
-			"Use the in-game menu or press 'F3' to enter the challengers queue.\n"
-			"Only players in the queue will have a turn to play against the last winner.\n"
-			"\nUse the mouse buttons for switching spectator modes.";
+		case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
+			return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
+				   "Use the in-game menu or press 'F3' to enter the challengers queue.\n"
+				   "Only players in the queue will have a turn to play against the last winner.\n"
+				   "\nUse the mouse buttons for switching spectator modes.";
 
-	case MATCHMESSAGE_SPECTATOR_MODES:
-		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
-			"Mouse buttons for switching spectator modes.\n"
-			"This message can be hidden by disabling 'help' in player setup menu.";
+		case MATCHMESSAGE_SPECTATOR_MODES:
+			return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
+				   "Mouse buttons for switching spectator modes.\n"
+				   "This message can be hidden by disabling 'help' in player setup menu.";
 
-	case MATCHMESSAGE_GET_READY:
-		return "Set yourself READY to start the match!\n"
-			"You can use the in-game menu or simply press 'F4'.\n"
-			"'ESC' for in-game menu or 'ENTER' for in-game chat.";
+		case MATCHMESSAGE_GET_READY:
+			return "Set yourself READY to start the match!\n"
+				   "You can use the in-game menu or simply press 'F4'.\n"
+				   "'ESC' for in-game menu or 'ENTER' for in-game chat.";
 
-	case MATCHMESSAGE_WAITING_FOR_PLAYERS:
-		return "Waiting for players.\n"
-			"'ESC' for in-game menu.";
+		case MATCHMESSAGE_WAITING_FOR_PLAYERS:
+			return "Waiting for players.\n"
+				   "'ESC' for in-game menu.";
 
-	default:
-		return "";
+		default:
+			return "";
 	}
 
 	return "";
@@ -561,8 +512,7 @@ static const char *CG_MatchMessageString( matchmessage_t mm )
 /*
 * CG_SC_MatchMessage
 */
-static void CG_SC_MatchMessage( void )
-{
+static void CG_SC_MatchMessage( void ) {
 	matchmessage_t mm;
 	const char *matchmessage;
 
@@ -570,8 +520,9 @@ static void CG_SC_MatchMessage( void )
 
 	mm = (matchmessage_t)atoi( trap_Cmd_Argv( 1 ) );
 	matchmessage = CG_MatchMessageString( mm );
-	if( !matchmessage || !matchmessage[0] )
+	if( !matchmessage || !matchmessage[0] ) {
 		return;
+	}
 
 	cg.matchmessage = CG_TranslateString( matchmessage );
 }
@@ -579,8 +530,7 @@ static void CG_SC_MatchMessage( void )
 /*
 * CG_SC_HelpMessage
 */
-static void CG_SC_HelpMessage( void )
-{
+static void CG_SC_HelpMessage( void ) {
 	unsigned index;
 	const char *id;
 	const char *helpmessage = NULL;
@@ -615,7 +565,7 @@ static void CG_SC_HelpMessage( void )
 		if( c == '{' ) { // template
 			int t = *( helpmessage++ );
 			switch( t ) {
-			case 'B': // key binding
+				case 'B': // key binding
 				{
 					char cmd[MAX_STRING_CHARS];
 					unsigned cmdlen = 0;
@@ -632,10 +582,10 @@ static void CG_SC_HelpMessage( void )
 					CG_GetBoundKeysString( cmd, cg.helpmessage + outlen, MAX_HELPMESSAGE_CHARS - outlen );
 					outlen += strlen( cg.helpmessage + outlen );
 				}
-				continue;
-			default:
-				helpmessage--;
-				break;
+					continue;
+				default:
+					helpmessage--;
+					break;
 			}
 		}
 
@@ -650,23 +600,21 @@ static void CG_SC_HelpMessage( void )
 /*
 * CG_CS_UpdateTeamInfo
 */
-static void CG_CS_UpdateTeamInfo( void )
-{
+static void CG_CS_UpdateTeamInfo( void ) {
 	char *ti;
 
 	ti = trap_Cmd_Argv( 1 );
-	if( !ti[0] )
-	{
+	if( !ti[0] ) {
 		cg.teaminfo_size = 0;
 		CG_Free( cg.teaminfo );
 		cg.teaminfo = NULL;
 		return;
 	}
 
-	if( strlen( ti ) + 1 > cg.teaminfo_size )
-	{
-		if( cg.teaminfo )
+	if( strlen( ti ) + 1 > cg.teaminfo_size ) {
+		if( cg.teaminfo ) {
 			CG_Free( cg.teaminfo );
+		}
 		cg.teaminfo_size = strlen( ti ) + 1;
 		cg.teaminfo = ( char * )CG_Malloc( cg.teaminfo_size );
 	}
@@ -678,16 +626,13 @@ static void CG_CS_UpdateTeamInfo( void )
 * CG_Cmd_DemoGet_f
 */
 static bool demo_requested = false;
-static void CG_Cmd_DemoGet_f( void )
-{
-	if( demo_requested )
-	{
+static void CG_Cmd_DemoGet_f( void ) {
+	if( demo_requested ) {
 		CG_Printf( "Already requesting a demo\n" );
 		return;
 	}
 
-	if( trap_Cmd_Argc() != 2 || ( atoi( trap_Cmd_Argv( 1 ) ) <= 0 && trap_Cmd_Argv( 1 )[0] != '.' ) )
-	{
+	if( trap_Cmd_Argc() != 2 || ( atoi( trap_Cmd_Argv( 1 ) ) <= 0 && trap_Cmd_Argv( 1 )[0] != '.' ) ) {
 		CG_Printf( "Usage: demoget <number>\n" );
 		CG_Printf( "Downloads a demo from the server\n" );
 		CG_Printf( "Use the demolist command to see list of demos on the server\n" );
@@ -702,26 +647,22 @@ static void CG_Cmd_DemoGet_f( void )
 /*
 * CG_SC_DemoGet
 */
-static void CG_SC_DemoGet( void )
-{
+static void CG_SC_DemoGet( void ) {
 	const char *filename, *extension;
 
-	if( cgs.demoPlaying )
-	{
+	if( cgs.demoPlaying ) {
 		// ignore download commands coming from demo files
 		return;
 	}
 
-	if( !demo_requested )
-	{
+	if( !demo_requested ) {
 		CG_Printf( "Warning: demoget when not requested, ignored\n" );
 		return;
 	}
 
 	demo_requested = false;
 
-	if( trap_Cmd_Argc() < 2 )
-	{
+	if( trap_Cmd_Argc() < 2 ) {
 		CG_Printf( "No such demo found\n" );
 		return;
 	}
@@ -729,8 +670,7 @@ static void CG_SC_DemoGet( void )
 	filename = trap_Cmd_Argv( 1 );
 	extension = COM_FileExtension( filename );
 	if( !COM_ValidateRelativeFilename( filename ) ||
-		!extension || Q_stricmp( extension, cgs.demoExtension ) )
-	{
+		!extension || Q_stricmp( extension, cgs.demoExtension ) ) {
 		CG_Printf( "Warning: demoget: Invalid filename, ignored\n" );
 		return;
 	}
@@ -741,24 +681,25 @@ static void CG_SC_DemoGet( void )
 /*
 * CG_SC_MOTD
 */
-static void CG_SC_MOTD( void )
-{
+static void CG_SC_MOTD( void ) {
 	char *motd;
 
-	if( cg.motd )
+	if( cg.motd ) {
 		CG_Free( cg.motd );
+	}
 	cg.motd = NULL;
 
 	motd = trap_Cmd_Argv( 2 );
-	if( !motd[0] )
+	if( !motd[0] ) {
 		return;
+	}
 
-	if( !strcmp( trap_Cmd_Argv( 1 ), "1" ) )
-	{
+	if( !strcmp( trap_Cmd_Argv( 1 ), "1" ) ) {
 		cg.motd = CG_CopyString( motd );
-		cg.motd_time = cg.time + 50 *strlen( motd );
-		if( cg.motd_time < cg.time + 5000 )
+		cg.motd_time = cg.time + 50 * strlen( motd );
+		if( cg.motd_time < cg.time + 5000 ) {
 			cg.motd_time = cg.time + 5000;
+		}
 	}
 
 	CG_Printf( "\nMessage of the Day:\n%s", motd );
@@ -767,21 +708,21 @@ static void CG_SC_MOTD( void )
 /*
 * CG_SC_MenuCustom
 */
-static void CG_SC_MenuCustom( void )
-{
+static void CG_SC_MenuCustom( void ) {
 	char request[MAX_STRING_CHARS];
 	int i, c;
 
-	if( cgs.demoPlaying || cgs.tv )
+	if( cgs.demoPlaying || cgs.tv ) {
 		return;
+	}
 
-	if( trap_Cmd_Argc() < 2 )
+	if( trap_Cmd_Argc() < 2 ) {
 		return;
+	}
 
 	Q_strncpyz( request, va( "menu_open custom title \"%s\" ", trap_Cmd_Argv( 1 ) ), sizeof( request ) );
-	
-	for( i = 2, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ )
-	{
+
+	for( i = 2, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ ) {
 		const char *label = trap_Cmd_Argv( i );
 		const char *cmd = trap_Cmd_Argv( i + 1 );
 
@@ -795,19 +736,17 @@ static void CG_SC_MenuCustom( void )
 /*
 * CG_SC_MenuQuick
 */
-static void CG_SC_MenuQuick( void )
-{
+static void CG_SC_MenuQuick( void ) {
 	int i, c;
 
-	if( cgs.demoPlaying || cgs.tv )
+	if( cgs.demoPlaying || cgs.tv ) {
 		return;
+	}
 
 	cg.quickmenu[0] = '\0';
 
-	if( trap_Cmd_Argc() >= 2 )
-	{
-		for( i = 1, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ )
-		{
+	if( trap_Cmd_Argc() >= 2 ) {
+		for( i = 1, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ ) {
 			const char *label = trap_Cmd_Argv( i );
 			const char *cmd = trap_Cmd_Argv( i + 1 );
 
@@ -822,16 +761,17 @@ static void CG_SC_MenuQuick( void )
 /*
 * CG_SC_MenuOpen
 */
-static void CG_SC_MenuOpen_( bool modal )
-{
+static void CG_SC_MenuOpen_( bool modal ) {
 	char request[MAX_STRING_CHARS];
 	int i, c;
 
-	if( cgs.demoPlaying || cgs.tv )
+	if( cgs.demoPlaying || cgs.tv ) {
 		return;
+	}
 
-	if( trap_Cmd_Argc() < 2 )
+	if( trap_Cmd_Argc() < 2 ) {
 		return;
+	}
 
 	Q_strncpyz( request, va( "%s \"%s\"", modal ? "menu_modal" : "menu_open", trap_Cmd_Argv( 1 ) ), sizeof( request ) );
 	for( i = 2, c = 1; i < trap_Cmd_Argc(); i++, c++ )
@@ -843,26 +783,24 @@ static void CG_SC_MenuOpen_( bool modal )
 /*
 * CG_SC_MenuOpen
 */
-static void CG_SC_MenuOpen( void )
-{
+static void CG_SC_MenuOpen( void ) {
 	CG_SC_MenuOpen_( false );
 }
 
 /*
 * CG_SC_MenuModal
 */
-static void CG_SC_MenuModal( void )
-{
+static void CG_SC_MenuModal( void ) {
 	CG_SC_MenuOpen_( true );
 }
 
 /*
 * CG_AddAward
 */
-void CG_AddAward( const char *str )
-{
-	if( !str || !str[0] )
+void CG_AddAward( const char *str ) {
+	if( !str || !str[0] ) {
 		return;
+	}
 
 	Q_strncpyz( cg.award_lines[cg.award_head % MAX_AWARD_LINES], CG_TranslateString( str ), MAX_CONFIGSTRING_CHARS );
 	cg.award_times[cg.award_head % MAX_AWARD_LINES] = cg.time;
@@ -872,8 +810,7 @@ void CG_AddAward( const char *str )
 /*
 * CG_SC_AddAward
 */
-static void CG_SC_AddAward( void )
-{
+static void CG_SC_AddAward( void ) {
 	CG_AddAward( trap_Cmd_Argv( 1 ) );
 }
 
@@ -913,18 +850,15 @@ static const svcmd_t cg_svcmds[] =
 /*
 * CG_GameCommand
 */
-void CG_GameCommand( const char *command )
-{
+void CG_GameCommand( const char *command ) {
 	char *s;
 	const svcmd_t *cmd;
 
 	trap_Cmd_TokenizeString( command );
 
 	s = trap_Cmd_Argv( 0 );
-	for( cmd = cg_svcmds; cmd->name; cmd++ )
-	{
-		if( !strcmp( s, cmd->name ) )
-		{
+	for( cmd = cg_svcmds; cmd->name; cmd++ ) {
+		if( !strcmp( s, cmd->name ) ) {
 			cmd->func();
 			return;
 		}
@@ -944,21 +878,20 @@ CGAME COMMANDS
 /*
 * CG_UseItem
 */
-void CG_UseItem( const char *name )
-{
+void CG_UseItem( const char *name ) {
 	gsitem_t *item;
 
-	if( !cg.frame.valid || cgs.demoPlaying )
+	if( !cg.frame.valid || cgs.demoPlaying ) {
 		return;
+	}
 
-	if( !name )
+	if( !name ) {
 		return;
+	}
 
 	item = GS_Cmd_UseItem( &cg.frame.playerState, name, 0 );
-	if( item )
-	{
-		if( item->type & IT_WEAPON )
-		{
+	if( item ) {
+		if( item->type & IT_WEAPON ) {
 			CG_Predict_ChangeWeapon( item->tag );
 			cg.lastWeapon = cg.predictedPlayerState.stats[STAT_PENDING_WEAPON];
 		}
@@ -970,10 +903,8 @@ void CG_UseItem( const char *name )
 /*
 * CG_Cmd_UseItem_f
 */
-static void CG_Cmd_UseItem_f( void )
-{
-	if( !trap_Cmd_Argc() )
-	{
+static void CG_Cmd_UseItem_f( void ) {
+	if( !trap_Cmd_Argc() ) {
 		CG_Printf( "Usage: 'use <item name>' or 'use <item index>'\n" );
 		return;
 	}
@@ -984,22 +915,20 @@ static void CG_Cmd_UseItem_f( void )
 /*
 * CG_Cmd_NextWeapon_f
 */
-static void CG_Cmd_NextWeapon_f( void )
-{
+static void CG_Cmd_NextWeapon_f( void ) {
 	gsitem_t *item;
 
-	if( !cg.frame.valid )
+	if( !cg.frame.valid ) {
 		return;
+	}
 
-	if( cgs.demoPlaying || cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM )
-	{
+	if( cgs.demoPlaying || cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) {
 		CG_ChaseStep( 1 );
 		return;
 	}
 
 	item = GS_Cmd_NextWeapon_f( &cg.frame.playerState, cg.predictedWeaponSwitch );
-	if( item )
-	{
+	if( item ) {
 		CG_Predict_ChangeWeapon( item->tag );
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "cmd use %i", item->tag ) );
 		cg.lastWeapon = cg.predictedPlayerState.stats[STAT_PENDING_WEAPON];
@@ -1009,22 +938,20 @@ static void CG_Cmd_NextWeapon_f( void )
 /*
 * CG_Cmd_PrevWeapon_f
 */
-static void CG_Cmd_PrevWeapon_f( void )
-{
+static void CG_Cmd_PrevWeapon_f( void ) {
 	gsitem_t *item;
 
-	if( !cg.frame.valid )
+	if( !cg.frame.valid ) {
 		return;
+	}
 
-	if( cgs.demoPlaying || cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM )
-	{
+	if( cgs.demoPlaying || cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) {
 		CG_ChaseStep( -1 );
 		return;
 	}
 
 	item = GS_Cmd_PrevWeapon_f( &cg.frame.playerState, cg.predictedWeaponSwitch );
-	if( item )
-	{
+	if( item ) {
 		CG_Predict_ChangeWeapon( item->tag );
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "cmd use %i", item->tag ) );
 		cg.lastWeapon = cg.predictedPlayerState.stats[STAT_PENDING_WEAPON];
@@ -1034,20 +961,19 @@ static void CG_Cmd_PrevWeapon_f( void )
 /*
 * CG_Cmd_PrevWeapon_f
 */
-static void CG_Cmd_LastWeapon_f( void )
-{
+static void CG_Cmd_LastWeapon_f( void ) {
 	gsitem_t *item;
 
-	if( !cg.frame.valid || cgs.demoPlaying )
+	if( !cg.frame.valid || cgs.demoPlaying ) {
 		return;
+	}
 
-	if( cg.lastWeapon != WEAP_NONE && cg.lastWeapon != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] )
-	{
+	if( cg.lastWeapon != WEAP_NONE && cg.lastWeapon != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] ) {
 		item = GS_Cmd_UseItem( &cg.frame.playerState, va( "%i", cg.lastWeapon ), IT_WEAPON );
-		if( item )
-		{
-			if( item->type & IT_WEAPON )
+		if( item ) {
+			if( item->type & IT_WEAPON ) {
 				CG_Predict_ChangeWeapon( item->tag );
+			}
 
 			trap_Cmd_ExecuteText( EXEC_NOW, va( "cmd use %i", item->tag ) );
 			cg.lastWeapon = cg.predictedPlayerState.stats[STAT_PENDING_WEAPON];
@@ -1058,43 +984,40 @@ static void CG_Cmd_LastWeapon_f( void )
 /*
 * CG_Cmd_WeaponCross_f
 */
-static void CG_Cmd_WeaponCross_f( void )
-{
+static void CG_Cmd_WeaponCross_f( void ) {
 	int i;
 	int quarter = -1, first;
 	int w[2], count = 0, selected = -1, select;
 	gsitem_t *item;
 
-	if( !cg.frame.valid )
+	if( !cg.frame.valid ) {
 		return;
+	}
 
-	if( trap_Cmd_Argc() > 1 )
+	if( trap_Cmd_Argc() > 1 ) {
 		quarter = atoi( trap_Cmd_Argv( 1 ) );
+	}
 
-	if( ( quarter < 0 ) || ( quarter > 4 ) )
-	{
+	if( ( quarter < 0 ) || ( quarter > 4 ) ) {
 		CG_Printf( "Usage: '%s <0-4>' (0 - just show, 1 - GB/MG, 2 - RG/GL, 3 - RL/PG, 4 - LG/EB)\n", trap_Cmd_Argv( 0 ) );
 		return;
 	}
 
-	if( cgs.demoPlaying || ( cg.predictedPlayerState.pmove.pm_type != PM_NORMAL ) )
-	{
+	if( cgs.demoPlaying || ( cg.predictedPlayerState.pmove.pm_type != PM_NORMAL ) ) {
 		if( cgs.demoPlaying ||
 			( cg.predictedPlayerState.pmove.pm_type == PM_SPECTATOR ) ||
-			( cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) )
-		{
-			switch( quarter )
-			{
-			case 1:
-			case 3:
-				CG_SwitchChaseCamMode();
-				break;
-			case 2:
-				CG_ChaseStep( 1 );
-				break;
-			case 4:
-				CG_ChaseStep( -1 );
-				break;
+			( cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) ) {
+			switch( quarter ) {
+				case 1:
+				case 3:
+					CG_SwitchChaseCamMode();
+					break;
+				case 2:
+					CG_ChaseStep( 1 );
+					break;
+				case 4:
+					CG_ChaseStep( -1 );
+					break;
 			}
 		}
 		return;
@@ -1102,54 +1025,53 @@ static void CG_Cmd_WeaponCross_f( void )
 
 	CG_ShowWeaponCross();
 
-	if( !quarter )
+	if( !quarter ) {
 		return;
+	}
 
 	quarter--;
 	first = quarter << 1;
 
-	for( i = 0; i < 2; i++ )
-	{
-		if( !cg.predictedPlayerState.inventory[WEAP_GUNBLADE + first + i] )
-		{
+	for( i = 0; i < 2; i++ ) {
+		if( !cg.predictedPlayerState.inventory[WEAP_GUNBLADE + first + i] ) {
 			continue;
 		}
 		if( ( first + i ) /* show uncharged gunblade */ &&
 			!cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
-			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] )
-		{
+			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] ) {
 			continue;
 		}
 
-		if( cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] == ( WEAP_GUNBLADE + first + i ) )
+		if( cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] == ( WEAP_GUNBLADE + first + i ) ) {
 			selected = i;
+		}
 
 		w[count] = first + i;
 		count++;
 	}
 
-	if( !count )
+	if( !count ) {
 		return;
-
-	if( count == 2 )
-	{
-		if( selected >= 0 )
-			select = selected ^ 1;
-		else
-			select = ( cg.lastCrossWeapons >> quarter ) & 1;
 	}
-	else
-	{
-		if( selected >= 0 )
+
+	if( count == 2 ) {
+		if( selected >= 0 ) {
+			select = selected ^ 1;
+		} else {
+			select = ( cg.lastCrossWeapons >> quarter ) & 1;
+		}
+	} else {
+		if( selected >= 0 ) {
 			return;
+		}
 		select = 0;
 	}
 
 	item = GS_Cmd_UseItem( &cg.frame.playerState, va( "%i", WEAP_GUNBLADE + w[select] ), IT_WEAPON );
-	if( item )
-	{
-		if( item->type & IT_WEAPON )
+	if( item ) {
+		if( item->type & IT_WEAPON ) {
 			CG_Predict_ChangeWeapon( item->tag );
+		}
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "cmd use %i", item->tag ) );
 		cg.lastCrossWeapons = ( cg.lastCrossWeapons & ~( 1 << quarter ) ) | ( ( w[select] & 1 ) << quarter );
 	}
@@ -1158,8 +1080,7 @@ static void CG_Cmd_WeaponCross_f( void )
 /*
 * CG_Viewpos_f
 */
-static void CG_Viewpos_f( void )
-{
+static void CG_Viewpos_f( void ) {
 	CG_Printf( "\"origin\" \"%i %i %i\"\n", (int)cg.view.origin[0], (int)cg.view.origin[1], (int)cg.view.origin[2] );
 	CG_Printf( "\"angles\" \"%i %i %i\"\n", (int)cg.view.angles[0], (int)cg.view.angles[1], (int)cg.view.angles[2] );
 }
@@ -1169,8 +1090,7 @@ static void CG_Viewpos_f( void )
 /*
 * CG_GametypeMenuCmdAdd_f
 */
-static void CG_GametypeMenuCmdAdd_f( void )
-{
+static void CG_GametypeMenuCmdAdd_f( void ) {
 	cgs.hasGametypeMenu = true;
 }
 
@@ -1179,10 +1099,9 @@ static void CG_GametypeMenuCmdAdd_f( void )
 *
 * Helper function
 */
-static char **CG_PlayerNamesCompletionExt_f( const char *partial, bool teamOnly )
-{
+static char **CG_PlayerNamesCompletionExt_f( const char *partial, bool teamOnly ) {
 	int i;
-	int team = cg_entities[cgs.playerNum+1].current.team;
+	int team = cg_entities[cgs.playerNum + 1].current.team;
 	char **matches = NULL;
 	int num_matches = 0;
 
@@ -1195,10 +1114,10 @@ static char **CG_PlayerNamesCompletionExt_f( const char *partial, bool teamOnly 
 			if( !info->cleanname[0] ) {
 				continue;
 			}
-			if( teamOnly && ( cg_entities[i+1].current.team != team ) ) {
+			if( teamOnly && ( cg_entities[i + 1].current.team != team ) ) {
 				continue;
 			}
-			if( !Q_strnicmp( info->cleanname, partial, partial_len )) {
+			if( !Q_strnicmp( info->cleanname, partial, partial_len ) ) {
 				matches[num_matches++] = info->cleanname;
 			}
 		}
@@ -1211,48 +1130,42 @@ static char **CG_PlayerNamesCompletionExt_f( const char *partial, bool teamOnly 
 /*
 * CG_PlayerNamesCompletion_f
 */
-static char **CG_PlayerNamesCompletion_f( const char *partial )
-{
+static char **CG_PlayerNamesCompletion_f( const char *partial ) {
 	return CG_PlayerNamesCompletionExt_f( partial, false );
 }
 
 /*
 * CG_TeamPlayerNamesCompletion_f
 */
-static char **CG_TeamPlayerNamesCompletion_f( const char *partial )
-{
+static char **CG_TeamPlayerNamesCompletion_f( const char *partial ) {
 	return CG_PlayerNamesCompletionExt_f( partial, true );
 }
 
 /*
 * CG_SayCmdAdd_f
 */
-static void CG_SayCmdAdd_f( void )
-{
+static void CG_SayCmdAdd_f( void ) {
 	trap_Cmd_SetCompletionFunc( "say", &CG_PlayerNamesCompletion_f );
 }
 
 /*
 * CG_SayTeamCmdAdd_f
 */
-static void CG_SayTeamCmdAdd_f( void )
-{
+static void CG_SayTeamCmdAdd_f( void ) {
 	trap_Cmd_SetCompletionFunc( "say_team", &CG_TeamPlayerNamesCompletion_f );
 }
 
 /*
 * CG_StatsCmdAdd_f
 */
-static void CG_StatsCmdAdd_f( void )
-{
+static void CG_StatsCmdAdd_f( void ) {
 	trap_Cmd_SetCompletionFunc( "stats", &CG_PlayerNamesCompletion_f );
 }
 
 /*
 * CG_WhoisCmdAdd_f
 */
-static void CG_WhoisCmdAdd_f( void )
-{
+static void CG_WhoisCmdAdd_f( void ) {
 	trap_Cmd_SetCompletionFunc( "whois", &CG_PlayerNamesCompletion_f );
 }
 
@@ -1298,37 +1211,35 @@ static const cgcmd_t cgcmds[] =
 /*
 * CG_RegisterCGameCommands
 */
-void CG_RegisterCGameCommands( void )
-{
+void CG_RegisterCGameCommands( void ) {
 	int i;
 	char *name;
 	const cgcmd_t *cmd;
 
-	if( !cgs.demoPlaying )
-	{
+	if( !cgs.demoPlaying ) {
 		const svcmd_t *svcmd;
 
 		// add game side commands
-		for( i = 0; i < MAX_GAMECOMMANDS; i++ )
-		{
-			name = cgs.configStrings[CS_GAMECOMMANDS+i];
-			if( !name[0] )
+		for( i = 0; i < MAX_GAMECOMMANDS; i++ ) {
+			name = cgs.configStrings[CS_GAMECOMMANDS + i];
+			if( !name[0] ) {
 				continue;
+			}
 
 			// check for local command overrides
-			for( cmd = cgcmds; cmd->name; cmd++ )
-			{
-				if( !Q_stricmp( cmd->name, name ) )
+			for( cmd = cgcmds; cmd->name; cmd++ ) {
+				if( !Q_stricmp( cmd->name, name ) ) {
 					break;
+				}
 			}
-			if( cmd->name )
+			if( cmd->name ) {
 				continue;
+			}
 
 			trap_Cmd_AddCommand( name, NULL );
 
 			// check for server commands we might want to do some special things for..
-			for( svcmd = cg_consvcmds; svcmd->name; svcmd++ )
-			{
+			for( svcmd = cg_consvcmds; svcmd->name; svcmd++ ) {
 				if( !Q_stricmp( svcmd->name, name ) ) {
 					if( svcmd->func ) {
 						svcmd->func();
@@ -1340,10 +1251,10 @@ void CG_RegisterCGameCommands( void )
 	}
 
 	// add local commands
-	for( cmd = cgcmds; cmd->name; cmd++ )
-	{
-		if( cgs.demoPlaying && !cmd->allowdemo )
+	for( cmd = cgcmds; cmd->name; cmd++ ) {
+		if( cgs.demoPlaying && !cmd->allowdemo ) {
 			continue;
+		}
 		trap_Cmd_AddCommand( cmd->name, cmd->func );
 	}
 }
@@ -1351,30 +1262,29 @@ void CG_RegisterCGameCommands( void )
 /*
 * CG_UnregisterCGameCommands
 */
-void CG_UnregisterCGameCommands( void )
-{
+void CG_UnregisterCGameCommands( void ) {
 	int i;
 	char *name;
 	const cgcmd_t *cmd;
 
-	if( !cgs.demoPlaying )
-	{
+	if( !cgs.demoPlaying ) {
 		// remove game commands
-		for( i = 0; i < MAX_GAMECOMMANDS; i++ )
-		{
-			name = cgs.configStrings[CS_GAMECOMMANDS+i];
-			if( !name[0] )
+		for( i = 0; i < MAX_GAMECOMMANDS; i++ ) {
+			name = cgs.configStrings[CS_GAMECOMMANDS + i];
+			if( !name[0] ) {
 				continue;
+			}
 
 			// check for local command overrides so we don't try
 			// to unregister them twice
-			for( cmd = cgcmds; cmd->name; cmd++ )
-			{
-				if( !Q_stricmp( cmd->name, name ) )
+			for( cmd = cgcmds; cmd->name; cmd++ ) {
+				if( !Q_stricmp( cmd->name, name ) ) {
 					break;
+				}
 			}
-			if( cmd->name )
+			if( cmd->name ) {
 				continue;
+			}
 
 			trap_Cmd_RemoveCommand( name );
 		}
@@ -1383,10 +1293,10 @@ void CG_UnregisterCGameCommands( void )
 	}
 
 	// remove local commands
-	for( cmd = cgcmds; cmd->name; cmd++ )
-	{
-		if( cgs.demoPlaying && !cmd->allowdemo )
+	for( cmd = cgcmds; cmd->name; cmd++ ) {
+		if( cgs.demoPlaying && !cmd->allowdemo ) {
 			continue;
+		}
 		trap_Cmd_RemoveCommand( cmd->name );
 	}
 }

@@ -31,6 +31,7 @@ using namespace Rocket::Core;
 class ScriptEventListener : public EventListener
 {
 	ASInterface *asmodule;
+
 	// We have to make Event const, cause we cant use &inout with value-types
 	ASBind::FunctionPtr<void( Rocket::Core::Element*, Rocket::Core::Event* )> funcPtr;
 	String funcName;
@@ -42,23 +43,21 @@ class ScriptEventListener : public EventListener
 
 	/** DAMN MIXTURE OF Rocket::String, std::string and std::ostringstream!! **/
 
-	String createFunctionName( void )
-	{
+	String createFunctionName( void ) {
 		std::ostringstream os;
 		os << "__eventfunc_" << uniqueId;
 		return String( os.str().c_str() );
 	}
 
-	String createFunctionCode( const String &code )
-	{
+	String createFunctionCode( const String &code ) {
 		std::ostringstream os;
+
 		// TODO: grab the typenames from ASBind::TypeString
 		os << "void __eventfunc_" << uniqueId << "( Element @self, Event @event){" << code.CString() << "}";
 		return String( os.str().c_str() );
 	}
 
-	void fetchFunctionPtr( asIScriptModule *module )
-	{
+	void fetchFunctionPtr( asIScriptModule *module ) {
 		if( loaded ) {
 			return;
 		}
@@ -71,10 +70,9 @@ class ScriptEventListener : public EventListener
 		}
 
 		// check direct function-name
-		if( script[0] == '$' )
+		if( script[0] == '$' ) {
 			funcName = script.Substring( 1 );
-		else
-		{
+		} else {
 			// compile inline code
 			funcName = createFunctionName();
 			String funcCode = createFunctionCode( script );
@@ -82,8 +80,8 @@ class ScriptEventListener : public EventListener
 			asIScriptFunction *scriptFunc = NULL;
 
 			if( !asmodule->addFunction( module, funcName.CString(), funcCode.CString(), &scriptFunc ) ) {
-				Com_Printf( S_COLOR_YELLOW "WARNING: ScriptEventListener addFunction failed with %s %s\n", 
-					funcName.CString(), funcCode.CString() );
+				Com_Printf( S_COLOR_YELLOW "WARNING: ScriptEventListener addFunction failed with %s %s\n",
+							funcName.CString(), funcCode.CString() );
 			} else if( scriptFunc ) {
 				// I think we only hit this scenario when we do smth like
 				// elem.setInnerRML( '<button onclick="window.close();" />' );
@@ -103,10 +101,8 @@ class ScriptEventListener : public EventListener
 	}
 
 public:
-
-	ScriptEventListener( const String &s, int uniqueId, Element *target ) : script( s ), 
-		loaded( false ), released( false ),  uniqueId( uniqueId ), target( target )
-	{
+	ScriptEventListener( const String &s, int uniqueId, Element *target ) : script( s ),
+		loaded( false ), released( false ),  uniqueId( uniqueId ), target( target ) {
 		asmodule = UI_Main::Get()->getAS();
 		if( target ) {
 			target->AddReference();
@@ -121,8 +117,7 @@ public:
 		releaseFunctionPtr();
 	}
 
-	virtual void ProcessEvent( Event &event )
-	{
+	virtual void ProcessEvent( Event &event ) {
 		if( !target ) {
 			return;
 		}
@@ -140,7 +135,7 @@ public:
 			return;
 		}
 
-		UI_ScriptDocument *document = dynamic_cast<UI_ScriptDocument *>(elem->GetOwnerDocument());
+		UI_ScriptDocument *document = dynamic_cast<UI_ScriptDocument *>( elem->GetOwnerDocument() );
 		if( !document || document->IsLoading() ) {
 			return;
 		}
@@ -152,9 +147,9 @@ public:
 
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "ScriptEventListener: Event %s, target %s, script %s\n",
-				event.GetType().CString(),
-				event.GetTargetElement()->GetTagName().CString(),
-				script.CString() );
+						event.GetType().CString(),
+						event.GetTargetElement()->GetTagName().CString(),
+						script.CString() );
 		}
 
 		if( funcPtr.isValid() ) {
@@ -171,14 +166,12 @@ public:
 			} catch( ASBind::Exception & ) {
 				Com_Printf( S_COLOR_RED "ScriptEventListener: Failed to call function %s %s\n", funcName.CString(), script.CString() );
 			}
-		}
-		else {
+		} else {
 			Com_Printf( S_COLOR_RED "ScriptEventListener: Not gonna call invalid function %s %s\n", funcName.CString(), script.CString() );
 		}
 	}
 
-	void releaseFunctionPtr()
-	{
+	void releaseFunctionPtr() {
 		if( released ) {
 			return;
 		}
@@ -192,8 +185,7 @@ public:
 		}
 	}
 
-	bool isValid()
-	{
+	bool isValid() {
 		if( released ) {
 			return false;
 		}
@@ -211,12 +203,12 @@ public:
 class ScriptEventCaller : public EventListener
 {
 	ASInterface *as;
+
 	// We have to make Event const, cause we cant use &inout with value-types
 	ASBind::FunctionPtr<void( Element*, Event* )> funcPtr;
 
 public:
-	ScriptEventCaller( ASInterface *as, asIScriptFunction *func ) : as( as )
-	{
+	ScriptEventCaller( ASInterface *as, asIScriptFunction *func ) : as( as ) {
 		funcPtr = ASBind::CreateFunctionPtr( func, funcPtr );
 		if( !funcPtr.isValid() ) {
 			Com_Printf( S_COLOR_YELLOW "WARNING: ScriptEventCaller::CreateFunctionPtr failed with %s\n", func ? func->GetDeclaration() : "NULL" );
@@ -224,31 +216,28 @@ public:
 		}
 	}
 
-	virtual ~ScriptEventCaller() 
-	{
+	virtual ~ScriptEventCaller() {
 		funcPtr.release();
 	}
 
 	// Perform the cleanup
-	virtual void OnDetach( Element* element )
-	{
+	virtual void OnDetach( Element* element ) {
 		__delete__( this );
 	}
 
-	virtual void ProcessEvent( Event &event )
-	{
+	virtual void ProcessEvent( Event &event ) {
 		Element *elem = event.GetTargetElement();
 
-		UI_ScriptDocument *document = dynamic_cast<UI_ScriptDocument *>(elem->GetOwnerDocument());
+		UI_ScriptDocument *document = dynamic_cast<UI_ScriptDocument *>( elem->GetOwnerDocument() );
 		if( !document || document->IsLoading() ) {
 			return;
 		}
 
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "ScriptEventCaller: Event %s, target %s, func %s\n",
-				event.GetType().CString(),
-				event.GetTargetElement()->GetTagName().CString(),
-				funcPtr.getName() );
+						event.GetType().CString(),
+						event.GetTargetElement()->GetTagName().CString(),
+						funcPtr.getName() );
 		}
 
 		if( funcPtr.isValid() ) {
@@ -264,16 +253,14 @@ public:
 			} catch( ASBind::Exception & ) {
 				Com_Printf( S_COLOR_RED "ScriptEventListener: Failed to call function %s\n", funcPtr.getName() );
 			}
-		}
-		else {
+		} else {
 			Com_Printf( S_COLOR_RED "ScriptEventListener: Not gonna call invalid function %s\n", funcPtr.getName() );
 		}
 	}
 };
 
-EventListener *CreateScriptEventCaller( ASInterface *as, asIScriptFunction *func )
-{
-	return __new__(ScriptEventCaller)( as, func );
+EventListener *CreateScriptEventCaller( ASInterface *as, asIScriptFunction *func ) {
+	return __new__( ScriptEventCaller )( as, func );
 }
 
 //===================================================
@@ -289,18 +276,16 @@ class ScriptEventListenerInstancer : public EventListenerInstancer
 	int idCounter;
 
 public:
-	ScriptEventListenerInstancer() : idCounter(0)
-	{
+	ScriptEventListenerInstancer() : idCounter( 0 ) {
 	}
 
-	virtual ~ScriptEventListenerInstancer()
-	{
+	virtual ~ScriptEventListenerInstancer() {
 	}
 
-	virtual Rocket::Core::EventListener* InstanceEventListener( const String& value, Element *elem )
-	{
-		if( !value.Length() )
+	virtual Rocket::Core::EventListener* InstanceEventListener( const String& value, Element *elem ) {
+		if( !value.Length() ) {
 			return 0;
+		}
 
 		ScriptEventListener *listener = __new__( ScriptEventListener )( value, idCounter++, elem );
 		listeners.push_back( listener );
@@ -308,30 +293,26 @@ public:
 	}
 
 	/// Releases pointers to AS functions held by allocated listeners
-	void ReleaseListenersFunctions()
-	{
+	void ReleaseListenersFunctions() {
 		for( listenerList::iterator it = listeners.begin(); it != listeners.end(); ++it ) {
-			(*it)->releaseFunctionPtr();
+			( *it )->releaseFunctionPtr();
 		}
 	}
 
 	/// Releases all allocated listeners
-	void ReleaseListeners()
-	{
+	void ReleaseListeners() {
 		for( listenerList::iterator it = listeners.begin(); it != listeners.end(); ++it ) {
 			__delete__( *it );
 		}
 		listeners.clear();
 	}
 
-	void Release()
-	{
+	void Release() {
 		ReleaseListeners();
 		__delete__( this );
 	}
 
-	void GarbageCollect( void )
-	{
+	void GarbageCollect( void ) {
 		for( listenerList::iterator it = listeners.begin(); it != listeners.end(); ) {
 			ScriptEventListener *listener = *it;
 			if( !listener->isValid() ) {
@@ -339,28 +320,26 @@ public:
 				__delete__( listener );
 				continue;
 			}
-			 ++it;
+			++it;
 		}
 	}
 };
 
-EventListenerInstancer *GetScriptEventListenerInstancer( void )
-{
+EventListenerInstancer *GetScriptEventListenerInstancer( void ) {
 	EventListenerInstancer *instancer = __new__( ScriptEventListenerInstancer )();
+
 	// instancer->RemoveReference();
 	return instancer;
 }
 
-void ReleaseScriptEventListenersFunctions( EventListenerInstancer *instancer )
-{
+void ReleaseScriptEventListenersFunctions( EventListenerInstancer *instancer ) {
 	ScriptEventListenerInstancer *scriptInstancer = static_cast<ScriptEventListenerInstancer *>( instancer );
 	if( scriptInstancer ) {
 		scriptInstancer->ReleaseListenersFunctions();
 	}
 }
 
-void GarbageCollectEventListenersFunctions( EventListenerInstancer *instancer )
-{
+void GarbageCollectEventListenersFunctions( EventListenerInstancer *instancer ) {
 	ScriptEventListenerInstancer *scriptInstancer = static_cast<ScriptEventListenerInstancer *>( instancer );
 	if( scriptInstancer ) {
 		scriptInstancer->GarbageCollect();

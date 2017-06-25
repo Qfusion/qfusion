@@ -26,12 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct stat_query_s stat_query_t;
 typedef /* struct stat_query_section_s */ void* stat_query_section_t;
 
-typedef struct stat_query_api_s
-{
+typedef struct stat_query_api_s {
 	stat_query_t *( *CreateQuery )( const char *iface, const char *str, bool get );
 	// this is automatically called after calling users callback function so you rarely need to call this yourself
 	void ( *DestroyQuery )( stat_query_t *query );
-	void ( *SetCallback )( stat_query_t *query, void (*callback_fn)( stat_query_t *, bool, void *), void *customp );
+	void ( *SetCallback )( stat_query_t *query, void ( *callback_fn )( stat_query_t *, bool, void * ), void *customp );
 	// you may or may not be allowed to call this directly
 	void ( *Send )( stat_query_t *query );
 
@@ -40,21 +39,21 @@ typedef struct stat_query_api_s
 	void ( *SetField )( stat_query_t *query, const char *name, const char *value );
 
 	// Get data properties
-	stat_query_section_t *( *GetRoot )( stat_query_t *query );
+	stat_query_section_t *( *GetRoot )( stat_query_t * query );
 	// named sections/arrays and properties
-	stat_query_section_t *( *GetSection )( stat_query_section_t *parent, const char *name );
+	stat_query_section_t *( *GetSection )( stat_query_section_t * parent, const char *name );
 	double ( *GetNumber )( stat_query_section_t *parent, const char *name );
-	const char *( *GetString )( stat_query_section_t *parent, const char *name );
+	const char *( *GetString )( stat_query_section_t * parent, const char *name );
 	// indexed sections and properties from array
-	stat_query_section_t *( *GetArraySection )( stat_query_section_t *parent, int idx );
+	stat_query_section_t *( *GetArraySection )( stat_query_section_t * parent, int idx );
 	double ( *GetArrayNumber )( stat_query_section_t *array, int idx );
-	const char *( *GetArrayString )( stat_query_section_t *array, int idx );
+	const char *( *GetArrayString )( stat_query_section_t * array, int idx );
 
 	// Set data properties
 	// named section with key/value pairs inside (leave sectionname NULL, if inside array)
-	stat_query_section_t *( *CreateSection )( stat_query_t *query, stat_query_section_t *parent, const char *sectionname );
+	stat_query_section_t *( *CreateSection )( stat_query_t * query, stat_query_section_t * parent, const char *sectionname );
 	// named array with unnamed items inside
-	stat_query_section_t *( *CreateArray )( stat_query_t *query, stat_query_section_t *parent, const char *arrayname );
+	stat_query_section_t *( *CreateArray )( stat_query_t * query, stat_query_section_t * parent, const char *arrayname );
 	// named properties
 	void ( *SetString )( stat_query_section_t *section, const char *name, const char *value );
 	void ( *SetNumber )( stat_query_section_t *section, const char *prop_name, double prop_value );
@@ -65,9 +64,9 @@ typedef struct stat_query_api_s
 	void ( *AddArrayString )( stat_query_section_t *array, const char *prop_value );
 	void ( *AddArrayNumber )( stat_query_section_t *array, double prop_value );
 
-	const char *( *GetRawResponse )( stat_query_t *query );
+	const char *( *GetRawResponse )( stat_query_t * query );
 	// char *const *( *GetTokenizedResponse )( stat_query_t *query, int *argc );
-	char **( *GetTokenizedResponse )( stat_query_t *query, int *argc );
+	char **( *GetTokenizedResponse )( stat_query_t * query, int *argc );
 
 	// translates to wswcurl_perform()
 	void ( *Poll )( void );

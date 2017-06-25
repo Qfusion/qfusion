@@ -31,50 +31,44 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * Sys_Library_Close
 */
-bool Sys_Library_Close( void *lib )
-{
+bool Sys_Library_Close( void *lib ) {
 	return !dlclose( lib );
 }
 
 /*
 * Sys_Library_GetFullName
 */
-const char *Sys_Library_GetFullName( const char *name )
-{
+const char *Sys_Library_GetFullName( const char *name ) {
 	return FS_AbsoluteNameForBaseFile( name );
 }
 
 /*
 * Sys_Library_GetGameLibPath
 */
-const char *Sys_Library_GetGameLibPath( const char *name, int64_t time, int randomizer )
-{
+const char *Sys_Library_GetGameLibPath( const char *name, int64_t time, int randomizer ) {
 	static char tempname[PATH_MAX];
-	Q_snprintfz( tempname, sizeof(tempname), "%s/%s/tempmodules_%lld_%d_%d/%s", FS_RuntimeDirectory(), FS_GameDirectory(),
-		time, Sys_GetCurrentProcessId(), randomizer, name );
+	Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/tempmodules_%lld_%d_%d/%s", FS_RuntimeDirectory(), FS_GameDirectory(),
+				 time, Sys_GetCurrentProcessId(), randomizer, name );
 	return tempname;
 }
 
 /*
 * Sys_Library_Open
 */
-void *Sys_Library_Open( const char *name )
-{
+void *Sys_Library_Open( const char *name ) {
 	return dlopen( name, RTLD_NOW );
 }
 
 /*
 * Sys_Library_ProcAddress
 */
-void *Sys_Library_ProcAddress( void *lib, const char *apifuncname )
-{
+void *Sys_Library_ProcAddress( void *lib, const char *apifuncname ) {
 	return (void *)dlsym( lib, apifuncname );
 }
 
 /*
 * Sys_Library_ErrorString
 */
-const char *Sys_Library_ErrorString( void )
-{
+const char *Sys_Library_ErrorString( void ) {
 	return dlerror();
 }

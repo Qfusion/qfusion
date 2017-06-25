@@ -34,9 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "tvm_public.h"
 
-struct tvm_relay_s
-{
-	relay_t	*server;
+struct tvm_relay_s {
+	relay_t *server;
 
 	// entities from the remote server
 	int maxclients;
@@ -44,7 +43,7 @@ struct tvm_relay_s
 	int numentities;
 	unsigned int snapFrameTime;
 
-	edict_t	*edicts;            // [maxentities]
+	edict_t *edicts;            // [maxentities]
 	gclient_t *clients;         // [maxclients]
 
 	// local entities for this relay
@@ -52,13 +51,13 @@ struct tvm_relay_s
 	int local_maxentities;
 	int local_numentities;
 
-	edict_t	*local_edicts;      // [local_maxclients]
+	edict_t *local_edicts;      // [local_maxclients]
 	gclient_t *local_clients;   // [local_maxclients]
 
 	char *map_entities;         // raw string containing the unparsed entities
 	char mapname[MAX_CONFIGSTRING_CHARS];
 
-	unsigned int serverTime;        // time in the server
+	int64_t serverTime;        // time in the server
 	snapshot_t frame;
 	game_state_t gameState;
 	char configStrings[MAX_CONFIGSTRINGS][MAX_CONFIGSTRING_CHARS];
@@ -66,22 +65,19 @@ struct tvm_relay_s
 
 	int playernum;
 
-	struct
-	{
+	struct {
 		int frags;
 		int health;
 		int last_killer;
 	} stats;
 
-	struct
-	{
+	struct {
 		int quad, shell, regen, enemy_flag;
 	} effects;
 };
 
-typedef struct
-{
-	unsigned int realtime;          // actual time
+typedef struct {
+	int64_t realtime;          // actual time
 	int maxclients;
 } tv_module_locals_t;
 
@@ -89,10 +85,9 @@ typedef struct
 * edict stuff
 */
 
-#define	FOFS( x ) (size_t)&( ( (edict_t *)0 )->x )
+#define FOFS( x ) (size_t)&( ( (edict_t *)0 )->x )
 
-typedef enum
-{
+typedef enum {
 	MOVETYPE_NONE,      // never moves
 	MOVETYPE_PLAYER,    // never moves (but is moved by pmove)
 	MOVETYPE_NOCLIP,    // origin and angles change with no interaction
@@ -105,15 +100,13 @@ typedef enum
 	MOVETYPE_BOUNCEGRENADE
 } movetype_t;
 
-typedef struct snap_edict_s
-{
+typedef struct snap_edict_s {
 	int buttons;
 } snap_edict_t;
 
-struct edict_s
-{
+struct edict_s {
 	entity_state_t s;
-	entity_shared_t	r;
+	entity_shared_t r;
 
 	// DO NOT MODIFY ANYTHING ABOVE THIS, THE SERVER
 	// EXPECTS THE FIELDS IN THAT ORDER!
@@ -130,7 +123,7 @@ struct edict_s
 	int viewheight;             // height above origin where eyesight is determined
 	vec3_t velocity;
 
-	edict_t	*groundentity;
+	edict_t *groundentity;
 	int groundentity_linkcount;
 
 	int watertype;

@@ -30,12 +30,12 @@ static SDL_GameController *in_sdl_joyController;
 *
 * SDL game controller code called in IN_Init.
 */
-void IN_SDL_JoyInit( bool active )
-{
+void IN_SDL_JoyInit( bool active ) {
 	in_sdl_joyActive = active;
 
-	if( SDL_InitSubSystem( SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER ) )
+	if( SDL_InitSubSystem( SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER ) ) {
 		return;
+	}
 
 	in_sdl_joyInitialized = true;
 }
@@ -43,8 +43,7 @@ void IN_SDL_JoyInit( bool active )
 /*
 * IN_SDL_JoyActivate
 */
-void IN_SDL_JoyActivate( bool active )
-{
+void IN_SDL_JoyActivate( bool active ) {
 	in_sdl_joyActive = active;
 }
 
@@ -53,8 +52,7 @@ void IN_SDL_JoyActivate( bool active )
 *
 * SDL game controller code called in IN_Commands.
 */
-void IN_SDL_JoyCommands( void )
-{
+void IN_SDL_JoyCommands( void ) {
 	int i, buttons = 0, buttonsDiff;
 	static int buttonsOld;
 	const int keys[] =
@@ -65,58 +63,55 @@ void IN_SDL_JoyCommands( void )
 		K_LTRIGGER, K_RTRIGGER
 	};
 
-	if( in_sdl_joyInitialized )
-	{
+	if( in_sdl_joyInitialized ) {
 		SDL_GameControllerUpdate();
 
-		if( in_sdl_joyController && !SDL_GameControllerGetAttached( in_sdl_joyController ) )
-		{
+		if( in_sdl_joyController && !SDL_GameControllerGetAttached( in_sdl_joyController ) ) {
 			SDL_GameControllerClose( in_sdl_joyController );
 			in_sdl_joyController = NULL;
 		}
 
-		if( !in_sdl_joyController )
-		{
+		if( !in_sdl_joyController ) {
 			int num = SDL_NumJoysticks();
 
-			for( i = 0; i < num; i++ )
-			{
+			for( i = 0; i < num; i++ ) {
 				in_sdl_joyController = SDL_GameControllerOpen( i );
-				if( in_sdl_joyController )	
+				if( in_sdl_joyController ) {
 					break;
+				}
 			}
 		}
 	}
 
-	if( in_sdl_joyActive )
-	{
+	if( in_sdl_joyActive ) {
 		SDL_GameController *controller = in_sdl_joyController;
-		if( controller )
-		{
-			for( i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++ )
-			{
-				if( keys[i] && SDL_GameControllerGetButton( controller, i ) )
+		if( controller ) {
+			for( i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++ ) {
+				if( keys[i] && SDL_GameControllerGetButton( controller, i ) ) {
 					buttons |= 1 << i;
+				}
 			}
 
-			if( SDL_GameControllerGetButton( controller, SDL_CONTROLLER_BUTTON_START ) )
+			if( SDL_GameControllerGetButton( controller, SDL_CONTROLLER_BUTTON_START ) ) {
 				buttons |= 1 << SDL_CONTROLLER_BUTTON_BACK;
-			if( SDL_GameControllerGetAxis( controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT ) > ( 30 * 128 ) )
+			}
+			if( SDL_GameControllerGetAxis( controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT ) > ( 30 * 128 ) ) {
 				buttons |= 1 << SDL_CONTROLLER_BUTTON_MAX;
-			if( SDL_GameControllerGetAxis( controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT ) > ( 30 * 128 ) )
+			}
+			if( SDL_GameControllerGetAxis( controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT ) > ( 30 * 128 ) ) {
 				buttons |= 1 << ( SDL_CONTROLLER_BUTTON_MAX + 1 );
+			}
 		}
 	}
 
 	buttonsDiff = buttons ^ buttonsOld;
-	if( buttonsDiff )
-	{
-		unsigned int time = Sys_Milliseconds();
+	if( buttonsDiff ) {
+		int64_t time = Sys_Milliseconds();
 
-		for( i = 0; i < ( sizeof( keys ) / sizeof( keys[0] ) ); i++ )
-		{
-			if( buttonsDiff & ( 1 << i ) )
+		for( i = 0; i < ( sizeof( keys ) / sizeof( keys[0] ) ); i++ ) {
+			if( buttonsDiff & ( 1 << i ) ) {
 				Key_Event( keys[i], ( buttons & ( 1 << i ) ) ? true : false, time );
+			}
 		}
 
 		buttonsOld = buttons;
@@ -126,20 +121,17 @@ void IN_SDL_JoyCommands( void )
 /*
 * IN_SDL_JoyThumbstickValue
 */
-static float IN_SDL_JoyThumbstickValue( int value )
-{
+static float IN_SDL_JoyThumbstickValue( int value ) {
 	return value * ( ( value >= 0 ) ? ( 1.0f / 32767.0f ) : ( 1.0f / 32768.0f ) );
 }
 
 /*
 * IN_GetThumbsticks
 */
-void IN_GetThumbsticks( vec4_t sticks )
-{
+void IN_GetThumbsticks( vec4_t sticks ) {
 	SDL_GameController *controller = in_sdl_joyController;
 
-	if( !controller || !in_sdl_joyActive )
-	{
+	if( !controller || !in_sdl_joyActive ) {
 		Vector4Set( sticks, 0.0f, 0.0f, 0.0f, 0.0f );
 		return;
 	}
@@ -155,10 +147,10 @@ void IN_GetThumbsticks( vec4_t sticks )
 *
 * SDL game controller code called in IN_Shutdown.
 */
-void IN_SDL_JoyShutdown( void )
-{
-	if( !in_sdl_joyInitialized )
+void IN_SDL_JoyShutdown( void ) {
+	if( !in_sdl_joyInitialized ) {
 		return;
+	}
 
 	in_sdl_joyController = NULL;
 	SDL_QuitSubSystem( SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER );

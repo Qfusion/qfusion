@@ -84,8 +84,8 @@ extern "C" {
 #pragma warning( disable : 4702 )       // unreachable code
 #pragma warning( disable : 4306 )       // conversion from 'int' to 'void *' of greater size
 #pragma warning( disable : 4305 )       // truncation from 'void *' to 'int'
-#pragma warning( disable : 4055 )		// 'type cast' : from data pointer 'void *' to function pointer
-#pragma warning( disable : 4204 )		// nonstandard extension used : non-constant aggregate initializer
+#pragma warning( disable : 4055 )       // 'type cast' : from data pointer 'void *' to function pointer
+#pragma warning( disable : 4204 )       // nonstandard extension used : non-constant aggregate initializer
 
 #if defined _M_AMD64
 #pragma warning( disable : 4267 )       // conversion from 'size_t' to whatever, possible loss of data
@@ -95,7 +95,7 @@ extern "C" {
 #pragma warning( disable : 4324 )       // structure was padded due to alignment specifier
 #endif
 
-#if defined(_MSC_VER) && defined(_I64_MAX)
+#if defined( _MSC_VER ) && defined( _I64_MAX )
 # define HAVE___STRTOI64
 #endif
 
@@ -158,7 +158,7 @@ extern "C" {
 #define ARCH "x64"
 #elif defined ( _M_ALPHA )
 #define CPUSTRING "axp"
-#define ARCH	  "axp"
+#define ARCH      "axp"
 #endif
 
 // doh, some compilers need a _ prefix for variables so they can be
@@ -288,8 +288,8 @@ typedef int ioctl_param_t;
 
 typedef int socket_handle_t;
 
-#define SOCKET_ERROR (-1)
-#define INVALID_SOCKET (-1)
+#define SOCKET_ERROR ( -1 )
+#define INVALID_SOCKET ( -1 )
 
 #endif
 
@@ -342,22 +342,22 @@ typedef int ioctl_param_t;
 
 typedef int socket_handle_t;
 
-#define SOCKET_ERROR (-1)
-#define INVALID_SOCKET (-1)
+#define SOCKET_ERROR ( -1 )
+#define INVALID_SOCKET ( -1 )
 
 #endif
 
 //==============================================
 
-#if (defined __i386__ || defined __x86_64__) && defined __GNUC__
+#if ( defined __i386__ || defined __x86_64__ ) && defined __GNUC__
 #define HAVE__BUILTIN_ATOMIC
-#elif (defined _WIN32)
+#elif ( defined _WIN32 )
 #define HAVE__INTERLOCKED_API
 #endif
 
 //==============================================
 
-#if !defined(__cplusplus)
+#if !defined( __cplusplus )
 
 #ifdef HAVE___INLINE
 #ifndef inline
@@ -441,7 +441,7 @@ typedef int socket_handle_t;
 
 #if defined ( __GNUC__ )
 #define ATTRIBUTE_ALIGNED( x ) __attribute__( ( aligned( x ) ) )
-#define ATTRIBUTE_NOINLINE     __attribute__((noinline))
+#define ATTRIBUTE_NOINLINE     __attribute__( ( noinline ) )
 #define ATTRIBUTE_NAKED
 #elif defined ( _MSC_VER )
 #define ATTRIBUTE_ALIGNED( x ) __declspec( align( x ) )
@@ -464,28 +464,40 @@ typedef int socket_handle_t;
 
 // the ALIGN macro as defined by Linux kernel
 #ifdef HAVE_TYPEOF
-#define __ALIGN_MASK(x,mask)    (((x)+(mask))&~(mask))
-#define ALIGN(x,a)              __ALIGN_MASK(x,(typeof(x))(a)-1)
+#define __ALIGN_MASK( x,mask )    ( ( ( x ) + ( mask ) ) & ~( mask ) )
+#define ALIGN( x,a )              __ALIGN_MASK( x,( typeof( x ) )( a ) - 1 )
 #else
 #define ALIGN( x, a ) ( ( ( x ) + ( ( size_t )( a ) - 1 ) ) & ~( ( size_t )( a ) - 1 ) )
 #endif
 
 #ifdef _M_AMD64
-#define STR_TO_POINTER(str) (void *)strtoll(str,NULL,0)
+#define STR_TO_POINTER( str ) (void *)strtoll( str,NULL,0 )
 #else
-#define STR_TO_POINTER(str) (void *)strtol(str,NULL,0)
+#define STR_TO_POINTER( str ) (void *)strtol( str,NULL,0 )
+#endif
+
+// The `malloc' attribute is used to tell the compiler that a function
+// may be treated as if it were the malloc function.  The compiler
+// assumes that calls to malloc result in a pointers that cannot
+// alias anything.  This will often improve optimization.
+#if defined ( __GNUC__ )
+#define ATTRIBUTE_MALLOC __attribute__( ( malloc ) )
+#elif defined ( _MSC_VER )
+#define ATTRIBUTE_MALLOC __declspec( noalias ) __declspec( restrict )
+#else
+#define ATTRIBUTE_MALLOC
 #endif
 
 // Generic helper definitions for shared library support
 #if defined _WIN32 || defined __CYGWIN__
-# define QF_DLL_IMPORT __declspec(dllimport)
-# define QF_DLL_EXPORT __declspec(dllexport)
+# define QF_DLL_IMPORT __declspec( dllimport )
+# define QF_DLL_EXPORT __declspec( dllexport )
 # define QF_DLL_LOCAL
 #else
 # if __GNUC__ >= 4
-#  define QF_DLL_IMPORT __attribute__ ((visibility("default")))
-#  define QF_DLL_EXPORT __attribute__ ((visibility("default")))
-#  define QF_DLL_LOCAL  __attribute__ ((visibility("hidden")))
+#  define QF_DLL_IMPORT __attribute__ ( ( visibility( "default" ) ) )
+#  define QF_DLL_EXPORT __attribute__ ( ( visibility( "default" ) ) )
+#  define QF_DLL_LOCAL  __attribute__ ( ( visibility( "hidden" ) ) )
 # else
 #  define QF_DLL_IMPORT
 #  define QF_DLL_EXPORT
@@ -503,4 +515,3 @@ typedef int socket_handle_t;
 #endif
 
 #endif // GAME_QARCH_H
-

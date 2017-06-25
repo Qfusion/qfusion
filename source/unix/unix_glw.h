@@ -21,8 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UNIX_GLW_H_
 #define __UNIX_GLW_H_
 
-typedef struct
-{
+typedef struct {
 	char *applicationName;
 	int *applicationIcon;
 	void *OpenGLLib; // instance of OpenGL library

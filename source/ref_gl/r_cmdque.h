@@ -25,41 +25,36 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // public frontend -> frontend/backend commands
 
-typedef struct ref_cmdbuf_s
-{
-	uint32_t		frameId;
-	size_t			len;
-	bool			forceVsync;
+typedef struct ref_cmdbuf_s {
+	size_t len;
 
 	// command procs
 
 	// a valid frame should begin and end with BeginFrame and EndFrame respectively
-	void			( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval );
-	void			( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
-	void			( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
-						float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );
-	void			( *DrawStretchPoly )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly, float x_offset, float y_offset );
-	void			( *ClearScene )( struct ref_cmdbuf_s *cmdbuf );
-	void			( *AddEntityToScene )( struct ref_cmdbuf_s *cmdbuf, const entity_t *ent );
-	void			( *AddLightToScene )( struct ref_cmdbuf_s *cmdbuf, const vec3_t org, float intensity, float r, float g, float b );
-	void			( *AddPolyToScene )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly );
-	void			( *AddLightStyleToScene )( struct ref_cmdbuf_s *cmdbuf, int style, float r, float g, float b );
-	void			( *RenderScene )( struct ref_cmdbuf_s *cmdbuf, const refdef_t *fd );
-	void			( *SetScissor )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h );
-	void			( *ResetScissor )( struct ref_cmdbuf_s *cmdbuf );
-	void			( *DrawStretchRaw )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
-	void			( *DrawStretchRawYUV )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
+	void ( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval );
+	void ( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
+	void ( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
+									 float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );
+	void ( *DrawStretchPoly )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly, float x_offset, float y_offset );
+	void ( *ClearScene )( struct ref_cmdbuf_s *cmdbuf );
+	void ( *AddEntityToScene )( struct ref_cmdbuf_s *cmdbuf, const entity_t *ent );
+	void ( *AddLightToScene )( struct ref_cmdbuf_s *cmdbuf, const vec3_t org, float intensity, float r, float g, float b );
+	void ( *AddPolyToScene )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly );
+	void ( *AddLightStyleToScene )( struct ref_cmdbuf_s *cmdbuf, int style, float r, float g, float b );
+	void ( *RenderScene )( struct ref_cmdbuf_s *cmdbuf, const refdef_t *fd );
+	void ( *BlurScreen )( struct ref_cmdbuf_s *cmdbuf );
+	void ( *SetScissor )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h );
+	void ( *ResetScissor )( struct ref_cmdbuf_s *cmdbuf );
+	void ( *DrawStretchRaw )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
+	void ( *DrawStretchRawYUV )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
 
 	// execution proc
-	void			( *Clear )( struct ref_cmdbuf_s *cmdbuf );
-	void			( *SetFrameId )( struct ref_cmdbuf_s *cmdbuf, unsigned frameId );
-	unsigned		( *GetFrameId )( struct ref_cmdbuf_s *cmdbuf );
-	void			( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
-	bool			( *GetForceVsync )( struct ref_cmdbuf_s *cmdbuf );
+	void ( *Clear )( struct ref_cmdbuf_s *cmdbuf );
+	void ( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
 
-	bool			sync; // if true, commands are executes in immediate mode
-	size_t			buf_size;
-	uint8_t			*buf;
+	bool sync;            // if true, commands are executes in immediate mode
+	size_t buf_size;
+	uint8_t         *buf;
 } ref_cmdbuf_t;
 
 ref_cmdbuf_t *RF_CreateCmdBuf( bool sync );
@@ -70,31 +65,30 @@ void RF_DestroyCmdBuf( ref_cmdbuf_t **pcmdbuf );
 // inter-frame thread-safe pipe for commands
 // we need it to process commands that may not be dropped along with respective frames
 
-typedef struct ref_cmdpipe_s
-{
-	void			( *Init )( struct ref_cmdpipe_s *cmdpipe );
-	void			( *Shutdown )( struct ref_cmdpipe_s *cmdpipe );
+typedef struct ref_cmdpipe_s {
+	void ( *Init )( struct ref_cmdpipe_s *cmdpipe );
+	void ( *Shutdown )( struct ref_cmdpipe_s *cmdpipe );
 
-	void			( *SurfaceChange )( struct ref_cmdpipe_s *cmdpipe );
-	void			( *ScreenShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent );
-	void			( *EnvShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, unsigned pixels );
-	void			( *AviShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, int x, int y, int w, int h );
-	void			( *BeginRegistration )( struct ref_cmdpipe_s *cmdpipe );
-	void			( *EndRegistration )( struct ref_cmdpipe_s *cmdpipe );
-	void			( *SetCustomColor )( struct ref_cmdpipe_s *cmdpipe, int num, int r, int g, int b );
-	void			( *SetWallFloorColors )( struct ref_cmdpipe_s *cmdpipe, const vec3_t wallColor, const vec3_t floorColor );
-	void			( *SetDrawBuffer )( struct ref_cmdpipe_s *cmdpipe, const char *drawbuffer );
-	void			( *SetTextureMode )( struct ref_cmdpipe_s *cmdpipe, const char *texturemode );
-	void			( *SetTextureFilter )( struct ref_cmdpipe_s *cmdpipe, int filter );
-	void			( *SetGamma )( struct ref_cmdpipe_s *cmdpipe, float gamma );
-	void			( *Fence )( struct ref_cmdpipe_s *cmdpipe );
+	void ( *SurfaceChange )( struct ref_cmdpipe_s *cmdpipe );
+	void ( *ScreenShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent );
+	void ( *EnvShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, unsigned pixels );
+	void ( *AviShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, int x, int y, int w, int h );
+	void ( *BeginRegistration )( struct ref_cmdpipe_s *cmdpipe );
+	void ( *EndRegistration )( struct ref_cmdpipe_s *cmdpipe );
+	void ( *SetCustomColor )( struct ref_cmdpipe_s *cmdpipe, int num, int r, int g, int b );
+	void ( *SetWallFloorColors )( struct ref_cmdpipe_s *cmdpipe, const vec3_t wallColor, const vec3_t floorColor );
+	void ( *SetDrawBuffer )( struct ref_cmdpipe_s *cmdpipe, const char *drawbuffer );
+	void ( *SetTextureMode )( struct ref_cmdpipe_s *cmdpipe, const char *texturemode );
+	void ( *SetTextureFilter )( struct ref_cmdpipe_s *cmdpipe, int filter );
+	void ( *SetGamma )( struct ref_cmdpipe_s *cmdpipe, float gamma );
+	void ( *Fence )( struct ref_cmdpipe_s *cmdpipe );
 
-	int 			( *RunCmds )( struct ref_cmdpipe_s *cmdpipe );
-	void 			( *WaitForCmds )( struct ref_cmdpipe_s *cmdpipe, unsigned timeout );
-	void 			( *FinishCmds )( struct ref_cmdpipe_s *cmdpipe );
+	int ( *RunCmds )( struct ref_cmdpipe_s *cmdpipe );
+	void ( *WaitForCmds )( struct ref_cmdpipe_s *cmdpipe, unsigned timeout );
+	void ( *FinishCmds )( struct ref_cmdpipe_s *cmdpipe );
 
-	bool			sync; // if true, commands are executes in immediate mode
-	qbufPipe_t		*pipe;
+	bool sync;            // if true, commands are executes in immediate mode
+	qbufPipe_t      *pipe;
 } ref_cmdpipe_t;
 
 ref_cmdpipe_t *RF_CreateCmdPipe( bool sync );

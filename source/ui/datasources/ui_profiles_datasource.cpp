@@ -31,40 +31,35 @@ namespace WSWUI
 {
 
 ProfilesDataSource::ProfilesDataSource( void ) :
-	Rocket::Controls::DataSource( PROFILES_SOURCE )
-{
+	Rocket::Controls::DataSource( PROFILES_SOURCE ) {
 	UpdateProfiles();
 }
 
-ProfilesDataSource::~ProfilesDataSource( void )
-{
+ProfilesDataSource::~ProfilesDataSource( void ) {
 }
 
 // populates profiles list
-void ProfilesDataSource::UpdateProfiles( void )
-{
+void ProfilesDataSource::UpdateProfiles( void ) {
 	profilesList.clear();
 	getFileList( profilesList, "profiles", ".cfg", false );
 }
 
-void ProfilesDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns)
-{
-	if( row_index < 0 || (size_t)row_index >= profilesList.size() )
+void ProfilesDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns ) {
+	if( row_index < 0 || (size_t)row_index >= profilesList.size() ) {
 		return;
+	}
 
 	// populate table
-	if( table == TABLE_NAME )
-	{
-		for( size_t i = 0; i < columns.size(); i++)
-		{
-			if( columns[i] == PROFILES_NAME )
+	if( table == TABLE_NAME ) {
+		for( size_t i = 0; i < columns.size(); i++ ) {
+			if( columns[i] == PROFILES_NAME ) {
 				row.push_back( profilesList[row_index].c_str() );
+			}
 		}
 	}
 }
 
-int ProfilesDataSource::GetNumRows(const String &table)
-{
+int ProfilesDataSource::GetNumRows( const String &table ) {
 	return profilesList.size();
 }
 

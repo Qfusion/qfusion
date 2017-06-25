@@ -2,7 +2,7 @@ Source: qfusion
 Section: development
 Priority: optional
 Homepage: http://qfusion.net/
-Vcs-Git: https://github.com/Warsow/qfusion.git
+Vcs-Git: https://github.com/Qfusion/qfusion.git
 Standards-Version: 3.9.2
 
 Package: qfusion-dev

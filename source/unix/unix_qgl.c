@@ -83,10 +83,10 @@ static const char *_qglGetGLWExtensionsStringInit( void );
 **
 ** Unloads the specified DLL then nulls out all the proc pointers.
 */
-void QGL_Shutdown( void )
-{
-	if( glw_state.OpenGLLib )
+void QGL_Shutdown( void ) {
+	if( glw_state.OpenGLLib ) {
 		dlclose( glw_state.OpenGLLib );
+	}
 	glw_state.OpenGLLib = NULL;
 
 	qglGetGLWExtensionsString = NULL;
@@ -124,15 +124,11 @@ void QGL_Shutdown( void )
 ** might be.
 **
 */
-qgl_initerr_t QGL_Init( const char *dllname )
-{
-	if( ( glw_state.OpenGLLib = dlopen( dllname, RTLD_LAZY|RTLD_GLOBAL ) ) == 0 )
-	{
+qgl_initerr_t QGL_Init( const char *dllname ) {
+	if( ( glw_state.OpenGLLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL ) ) == 0 ) {
 		Com_Printf( "%s\n", dlerror() );
 		return qgl_initerr_invalid_driver;
-	}
-	else
-	{
+	} else {
 		Com_Printf( "Using %s for OpenGL...\n", dllname );
 	}
 
@@ -170,8 +166,7 @@ qgl_initerr_t QGL_Init( const char *dllname )
 **
 ** Returns information about the GL DLL.
 */
-const qgl_driverinfo_t *QGL_GetDriverInfo( void )
-{
+const qgl_driverinfo_t *QGL_GetDriverInfo( void ) {
 	static const qgl_driverinfo_t driver =
 	{
 		"libGL.so.1",
@@ -183,34 +178,35 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 /*
 ** qglGetProcAddress
 */
-void *qglGetProcAddress( const GLubyte *procName )
-{
+void *qglGetProcAddress( const GLubyte *procName ) {
 #if 1
-	if( qglXGetProcAddressARB )
+	if( qglXGetProcAddressARB ) {
 		return qglXGetProcAddressARB( procName );
+	}
 #endif
-	if( glw_state.OpenGLLib )
+	if( glw_state.OpenGLLib ) {
 		return (void *)dlsym( glw_state.OpenGLLib, (char *) procName );
+	}
 	return NULL;
 }
 
 /*
 ** qglGetGLWExtensionsString
 */
-static const char *_qglGetGLWExtensionsStringInit( void )
-{
+static const char *_qglGetGLWExtensionsStringInit( void ) {
 	int major = 0, minor = 0;
 
-	if( !qglXQueryVersion || !qglXQueryVersion( x11display.dpy, &major, &minor ) || !( minor > 0 || major > 1 ) )
+	if( !qglXQueryVersion || !qglXQueryVersion( x11display.dpy, &major, &minor ) || !( minor > 0 || major > 1 ) ) {
 		qglXQueryExtensionsString = NULL;
+	}
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsString;
 
 	return qglGetGLWExtensionsString();
 }
 
-static const char *_qglGetGLWExtensionsString( void )
-{
-	if( qglXQueryExtensionsString )
+static const char *_qglGetGLWExtensionsString( void ) {
+	if( qglXQueryExtensionsString ) {
 		return qglXQueryExtensionsString( x11display.dpy, x11display.scr );
+	}
 	return NULL;
 }

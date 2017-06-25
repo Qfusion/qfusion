@@ -10,17 +10,15 @@
 #include <sys/param.h>
 #endif
 
-unsigned sys_frame_time;
+int64_t sys_frame_time;
 
 void Sys_InitTime( void );
 
-void Sys_Sleep( unsigned int millis )
-{
+void Sys_Sleep( unsigned int millis ) {
 	SDL_Delay( millis );
 }
 
-void Sys_Error( const char *format, ... )
-{
+void Sys_Error( const char *format, ... ) {
 	va_list argptr;
 	char msg[1024];
 
@@ -36,23 +34,20 @@ void Sys_Error( const char *format, ... )
 /*
 * Sys_Init
 */
-void Sys_Init( void )
-{
+void Sys_Init( void ) {
 	Sys_InitTime();
 }
 
 /*
 * Sys_InitDynvars
 */
-void Sys_InitDynvars( void )
-{
+void Sys_InitDynvars( void ) {
 }
 
 /*
 * Sys_Quit
 */
-void Sys_Quit( void )
-{
+void Sys_Quit( void ) {
 	Qcommon_Shutdown();
 
 	exit( 0 );
@@ -61,39 +56,34 @@ void Sys_Quit( void )
 /*
 * Sys_AcquireWakeLock
 */
-void *Sys_AcquireWakeLock( void )
-{
+void *Sys_AcquireWakeLock( void ) {
 	return NULL;
 }
 
 /*
 * Sys_ReleaseWakeLock
 */
-void Sys_ReleaseWakeLock( void *wl )
-{
+void Sys_ReleaseWakeLock( void *wl ) {
 }
 
 /*
 * Sys_AppActivate
 */
-void Sys_AppActivate( void )
-{
+void Sys_AppActivate( void ) {
 }
 
 /*
 * Sys_SendKeyEvents
 */
-void Sys_SendKeyEvents( void )
-{
+void Sys_SendKeyEvents( void ) {
 	// grab frame time
 	sys_frame_time = Sys_Milliseconds();
 }
 
 /*****************************************************************************/
 
-int main( int argc, char **argv )
-{
-	unsigned int oldtime, newtime, time;
+int main( int argc, char **argv ) {
+	int64_t oldtime, newtime;
 
 #if defined( __APPLE__ ) && !defined( DEDICATED_ONLY )
 	char resourcesPath[MAXPATHLEN];
@@ -108,17 +98,19 @@ int main( int argc, char **argv )
 #endif
 
 	SDL_Init( SDL_INIT_VIDEO );
-	
+
 	Qcommon_Init( argc, argv );
 
 	oldtime = Sys_Milliseconds();
 	while( true ) {
+		int time;
 		// find time spent rendering last frame
 		do {
 			newtime = Sys_Milliseconds();
 			time = newtime - oldtime;
-			if( time > 0 )
+			if( time > 0 ) {
 				break;
+			}
 			Sys_Sleep( 0 );
 		} while( 1 );
 		oldtime = newtime;

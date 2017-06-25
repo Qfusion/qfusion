@@ -31,36 +31,32 @@ namespace WSWUI
 {
 
 HudsDataSource::HudsDataSource( void ) :
-	Rocket::Controls::DataSource( HUDS_SOURCE )
-{
+	Rocket::Controls::DataSource( HUDS_SOURCE ) {
 	UpdateHudsList();
 }
 
-HudsDataSource::~HudsDataSource( void )
-{
+HudsDataSource::~HudsDataSource( void ) {
 }
 
-void HudsDataSource::UpdateHudsList( void )
-{
+void HudsDataSource::UpdateHudsList( void ) {
 	int i;
 
 	hudsList.clear();
 
-	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN )
-	{
+	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
 		getFileList( hudsList, "huds", ".hud" );
-	}
-	else
-	{
+	} else {
 		HudList tempHudsList;
 		getFileList( tempHudsList, "huds", ".hud" );
 		int tempSize = tempHudsList.size();
-		for( i = 0; i < tempSize; i++ )
-		{
+
+		for( i = 0; i < tempSize; i++ ) {
 			const std::string &tempName = tempHudsList[i];
 			size_t tempNameLength = tempName.length();
-			if( ( tempNameLength >= 6 ) && !Q_stricmp( tempName.c_str() + tempNameLength - 6, "_touch" ) )
+
+			if( ( tempNameLength >= 6 ) && !Q_stricmp( tempName.c_str() + tempNameLength - 6, "_touch" ) ) {
 				continue;
+			}
 
 			hudsList.push_back( tempName );
 		}
@@ -71,24 +67,22 @@ void HudsDataSource::UpdateHudsList( void )
 		NotifyRowAdd( TABLE_NAME, i, 1 );
 }
 
-void HudsDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns )
-{
-	if( row_index < 0 || (size_t)row_index >= hudsList.size() )
+void HudsDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns ) {
+	if( row_index < 0 || (size_t)row_index >= hudsList.size() ) {
 		return;
+	}
 
-	if( table == TABLE_NAME )
-	{
+	if( table == TABLE_NAME ) {
 		// there should be only 1 column, but we watch ahead in the future
-		for( size_t i = 0; i < columns.size(); i++)
-		{
-			if( columns[i] == FIELDS )
+		for( size_t i = 0; i < columns.size(); i++ ) {
+			if( columns[i] == FIELDS ) {
 				row.push_back( hudsList[row_index].c_str() );
+			}
 		}
 	}
 }
 
-int HudsDataSource::GetNumRows( const String &table )
-{
+int HudsDataSource::GetNumRows( const String &table ) {
 	return hudsList.size();
 }
 }

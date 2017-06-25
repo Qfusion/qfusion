@@ -38,46 +38,47 @@ static const char *cg_defaultSexedSounds[] =
 /*
 * CG_RegisterPmodelSexedSound
 */
-static struct sfx_s *CG_RegisterPmodelSexedSound( pmodelinfo_t *pmodelinfo, const char *name )
-{
+static struct sfx_s *CG_RegisterPmodelSexedSound( pmodelinfo_t *pmodelinfo, const char *name ) {
 	char *p, *s, model[MAX_QPATH];
 	cg_sexedSfx_t *sexedSfx;
 	char oname[MAX_QPATH];
 	char sexedFilename[MAX_QPATH];
 
-	if( !pmodelinfo )
+	if( !pmodelinfo ) {
 		return NULL;
+	}
+
+	model[0] = '\0';
 
 	Q_strncpyz( oname, name, sizeof( oname ) );
 	COM_StripExtension( oname );
-	for( sexedSfx = pmodelinfo->sexedSfx; sexedSfx; sexedSfx = sexedSfx->next )
-	{
-		if( !Q_stricmp( sexedSfx->name, oname ) )
+	for( sexedSfx = pmodelinfo->sexedSfx; sexedSfx; sexedSfx = sexedSfx->next ) {
+		if( !Q_stricmp( sexedSfx->name, oname ) ) {
 			return sexedSfx->sfx;
+		}
 	}
 
 	// find out what's the model name
 	s = pmodelinfo->name;
-	if( s[0] )
-	{
+	if( s[0] ) {
 		p = strchr( s, '/' );
-		if( p )
-		{
+		if( p ) {
 			s = p + 1;
 			p = strchr( s, '/' );
-			if( p )
-			{
+			if( p ) {
 				Q_strncpyz( model, p + 1, sizeof( model ) );
 				p = strchr( model, '/' );
-				if( p )
+				if( p ) {
 					*p = 0;
+				}
 			}
 		}
 	}
 
 	// if we can't figure it out, they're DEFAULT_PLAYERMODEL
-	if( !model[0] )
+	if( !model[0] ) {
 		Q_strncpyz( model, DEFAULT_PLAYERMODEL, sizeof( model ) );
+	}
 
 	sexedSfx = ( cg_sexedSfx_t * )CG_Malloc( sizeof( cg_sexedSfx_t ) );
 	sexedSfx->name = CG_CopyString( oname );
@@ -85,24 +86,18 @@ static struct sfx_s *CG_RegisterPmodelSexedSound( pmodelinfo_t *pmodelinfo, cons
 	pmodelinfo->sexedSfx = sexedSfx;
 
 	// see if we already know of the model specific sound
-	Q_snprintfz( sexedFilename, sizeof( sexedFilename ), "sounds/players/%s/%s", model, oname+1 );
+	Q_snprintfz( sexedFilename, sizeof( sexedFilename ), "sounds/players/%s/%s", model, oname + 1 );
 
 	if( ( !COM_FileExtension( sexedFilename ) &&
-		trap_FS_FirstExtension( sexedFilename, SOUND_EXTENSIONS, NUM_SOUND_EXTENSIONS ) ) ||
-		trap_FS_FOpenFile( sexedFilename, NULL, FS_READ ) != -1 )
-	{
+		  trap_FS_FirstExtension( sexedFilename, SOUND_EXTENSIONS, NUM_SOUND_EXTENSIONS ) ) ||
+		trap_FS_FOpenFile( sexedFilename, NULL, FS_READ ) != -1 ) {
 		sexedSfx->sfx = trap_S_RegisterSound( sexedFilename );
-	}
-	else
-	{       // no, revert to default player sounds folders
-		if( pmodelinfo->sex == GENDER_FEMALE )
-		{
-			Q_snprintfz( sexedFilename, sizeof( sexedFilename ), "sounds/players/%s/%s", "female", oname+1 );
+	} else {   // no, revert to default player sounds folders
+		if( pmodelinfo->sex == GENDER_FEMALE ) {
+			Q_snprintfz( sexedFilename, sizeof( sexedFilename ), "sounds/players/%s/%s", "female", oname + 1 );
 			sexedSfx->sfx = trap_S_RegisterSound( sexedFilename );
-		}
-		else
-		{
-			Q_snprintfz( sexedFilename, sizeof( sexedFilename ), "sounds/players/%s/%s", "male", oname+1 );
+		} else {
+			Q_snprintfz( sexedFilename, sizeof( sexedFilename ), "sounds/players/%s/%s", "male", oname + 1 );
 			sexedSfx->sfx = trap_S_RegisterSound( sexedFilename );
 		}
 	}
@@ -113,86 +108,84 @@ static struct sfx_s *CG_RegisterPmodelSexedSound( pmodelinfo_t *pmodelinfo, cons
 /*
 * CG_UpdateSexedSoundsRegistration
 */
-void CG_UpdateSexedSoundsRegistration( pmodelinfo_t *pmodelinfo )
-{
+void CG_UpdateSexedSoundsRegistration( pmodelinfo_t *pmodelinfo ) {
 	cg_sexedSfx_t *sexedSfx, *next;
 	const char *name;
 	int i;
 
-	if( !pmodelinfo )
+	if( !pmodelinfo ) {
 		return;
+	}
 
 	// free loaded sounds
-	for( sexedSfx = pmodelinfo->sexedSfx; sexedSfx; sexedSfx = next )
-	{
+	for( sexedSfx = pmodelinfo->sexedSfx; sexedSfx; sexedSfx = next ) {
 		next = sexedSfx->next;
 		CG_Free( sexedSfx );
 	}
 	pmodelinfo->sexedSfx = NULL;
 
 	// load default sounds
-	for( i = 0;; i++ )
-	{
+	for( i = 0;; i++ ) {
 		name = cg_defaultSexedSounds[i];
-		if( !name )
+		if( !name ) {
 			break;
+		}
 		CG_RegisterPmodelSexedSound( pmodelinfo, name );
 	}
 
 	// load sounds server told us
-	for( i = 1; i < MAX_SOUNDS; i++ )
-	{
-		name = cgs.configStrings[CS_SOUNDS+i];
-		if( !name[0] )
+	for( i = 1; i < MAX_SOUNDS; i++ ) {
+		name = cgs.configStrings[CS_SOUNDS + i];
+		if( !name[0] ) {
 			break;
-		if( name[0] == '*' )
+		}
+		if( name[0] == '*' ) {
 			CG_RegisterPmodelSexedSound( pmodelinfo, name );
+		}
 	}
 }
 
 /*
 * CG_RegisterSexedSound
 */
-struct sfx_s *CG_RegisterSexedSound( int entnum, const char *name )
-{
-	if( entnum < 0 || entnum >= MAX_EDICTS )
+struct sfx_s *CG_RegisterSexedSound( int entnum, const char *name ) {
+	if( entnum < 0 || entnum >= MAX_EDICTS ) {
 		return NULL;
+	}
 	return CG_RegisterPmodelSexedSound( cg_entPModels[entnum].pmodelinfo, name );
 }
 
 /*
 * CG_SexedSound
 */
-void CG_SexedSound( int entnum, int entchannel, const char *name, float fvol, float attn )
-{
+void CG_SexedSound( int entnum, int entchannel, const char *name, float fvol, float attn ) {
 	bool fixed;
 
 	fixed = entchannel & CHAN_FIXED ? true : false;
 	entchannel &= ~CHAN_FIXED;
 
-	if( fixed )
+	if( fixed ) {
 		trap_S_StartFixedSound( CG_RegisterSexedSound( entnum, name ), cg_entities[entnum].current.origin, entchannel, fvol, attn );
-	else if( ISVIEWERENTITY( entnum ) )
+	} else if( ISVIEWERENTITY( entnum ) ) {
 		trap_S_StartGlobalSound( CG_RegisterSexedSound( entnum, name ), entchannel, fvol );
-	else
+	} else {
 		trap_S_StartRelativeSound( CG_RegisterSexedSound( entnum, name ), entnum, entchannel, fvol, attn );
+	}
 }
 
-
 /*
-* CG_LoadClientInfo
+* CG_ParseClientInfo
 */
-void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *info, int client )
-{
+static void CG_ParseClientInfo( cg_clientInfo_t *ci, const char *info ) {
 	char *s;
 	int rgbcolor;
 
 	assert( ci );
 	assert( info );
-	assert( client >= 0 && client < gs.maxclients );
 
-	if( !Info_Validate( info ) )
+	if( !Info_Validate( info ) ) {
 		CG_Error( "Invalid client info" );
+	}
 
 	s = Info_ValueForKey( info, "name" );
 	Q_strncpyz( ci->name, s && s[0] ? s : "badname", sizeof( ci->name ) );
@@ -206,8 +199,33 @@ void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *info, int client )
 	// color
 	s = Info_ValueForKey( info, "color" );
 	rgbcolor = s && s[0] ? COM_ReadColorRGBString( s ) : -1;
-	if( rgbcolor != -1 )
+	if( rgbcolor != -1 ) {
 		Vector4Set( ci->color, COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ), 255 );
-	else
+	} else {
 		Vector4Set( ci->color, 255, 255, 255, 255 );
+	}
+}
+
+/*
+* CG_LoadClientInfo
+* Updates cached client info from the current CS_PLAYERINFOS configstring value
+*/
+void CG_LoadClientInfo( int client ) {
+	assert( client >= 0 && client < gs.maxclients );
+	CG_ParseClientInfo( &cgs.clientInfo[client], cgs.configStrings[CS_PLAYERINFOS + client] );
+}
+
+/*
+* CG_ResetClientInfos
+*/
+void CG_ResetClientInfos( void ) {
+	int i, cs;
+
+	memset( cgs.clientInfo, 0, sizeof( cgs.clientInfo ) );
+
+	for( i = 0, cs = CS_PLAYERINFOS + i; i < MAX_CLIENTS; i++, cs++ ) {
+		if( cgs.configStrings[cs][0] ) {
+			CG_LoadClientInfo( i );
+		}
+	}
 }

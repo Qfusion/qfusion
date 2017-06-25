@@ -381,7 +381,8 @@ static void InitWeaponDefHelpers() {
 		return;
 	}
 
-	struct WeaponAndTier {
+	struct WeaponAndTier
+	{
 		int weapon, tier;
 		WeaponAndTier() {}
 		WeaponAndTier( int weapon_, int tier_ ) : weapon( weapon_ ), tier( tier_ ) {}
@@ -585,7 +586,8 @@ bool AiSquad::ShouldNotDropItemsNow() const {
 	squadCenter += maxs;
 	squadCenter *= 0.5f;
 
-	struct PotentialStealer {
+	struct PotentialStealer
+	{
 		const Enemy *enemy;
 		Vec3 extrapolatedOrigin;
 		PotentialStealer( const Enemy *enemy_, const Vec3 &extrapolatedOrigin_ )
@@ -676,7 +678,8 @@ void AiSquad::FindSupplierCandidates( unsigned botNum, StaticVector<unsigned, Ai
 		applyDirectionFactor = true;
 	}
 
-	struct BotAndScore {
+	struct BotAndScore
+	{
 		unsigned botNum;
 		float score;
 		BotAndScore( unsigned botNum_, float score_ ) : botNum( botNum_ ), score( score_ ) {}
@@ -1075,7 +1078,8 @@ void AiSquadBasedTeamBrain::Think() {
 
 class NearbyMatesList;
 
-struct NearbyBotProps {
+struct NearbyBotProps
+{
 	Bot *bot;
 	unsigned botOrphanIndex;
 	NearbyMatesList *botMates;

@@ -7,14 +7,14 @@ class VideoDataSource :
 	public Rocket::Controls::DataSource
 {
 public:
-	VideoDataSource(void);
-	~VideoDataSource(void);
+	VideoDataSource( void );
+	~VideoDataSource( void );
 
 	// methods which must be overridden
 	void GetRow( StringList& row, const String& table, int row_index, const StringList& columns );
 	int GetNumRows( const String& table );
-private:
 
+private:
 	std::vector<std::string> modesList;
 
 	// populate the table

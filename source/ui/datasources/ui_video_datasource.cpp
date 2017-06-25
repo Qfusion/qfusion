@@ -31,17 +31,14 @@ namespace WSWUI
 {
 
 VideoDataSource::VideoDataSource( void ) :
-	Rocket::Controls::DataSource( VIDEO_SOURCE )
-{
+	Rocket::Controls::DataSource( VIDEO_SOURCE ) {
 	updateVideoModeList();
 }
 
-VideoDataSource::~VideoDataSource( void )
-{
+VideoDataSource::~VideoDataSource( void ) {
 }
 
-void VideoDataSource::updateVideoModeList( void )
-{
+void VideoDataSource::updateVideoModeList( void ) {
 	char resolution[64];
 	int i, width, height;
 	int vidWidth = trap::Cvar_Value( "vid_width" ), vidHeight = trap::Cvar_Value( "vid_height" );
@@ -50,16 +47,15 @@ void VideoDataSource::updateVideoModeList( void )
 	// lists must be clear before
 	modesList.clear();
 
-	for( i = 0; trap::VID_GetModeInfo( &width, &height, i ); i++ )
-    {
+	for( i = 0; trap::VID_GetModeInfo( &width, &height, i ); i++ ) {
 		Q_snprintfz( resolution, sizeof( resolution ), "%i x %i", width, height );
 		modesList.push_back( resolution );
-		if( width == vidWidth && height == vidHeight )
+		if( width == vidWidth && height == vidHeight ) {
 			custom = false;
-    }
+		}
+	}
 
-	if( custom )
-	{
+	if( custom ) {
 		Q_snprintfz( resolution, sizeof( resolution ), "%i x %i", vidWidth, vidHeight );
 		modesList.push_back( resolution );
 	}
@@ -70,24 +66,22 @@ void VideoDataSource::updateVideoModeList( void )
 		NotifyRowAdd( TABLE_NAME, i, 1 );
 }
 
-void VideoDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns )
-{
-	if( row_index < 0 || (size_t)row_index >= modesList.size() )
+void VideoDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns ) {
+	if( row_index < 0 || (size_t)row_index >= modesList.size() ) {
 		return;
+	}
 
 	// populate table
-	if( table == TABLE_NAME )
-	{
-		for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it )
-		{
-			if( *it == RESOLUTION )
+	if( table == TABLE_NAME ) {
+		for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
+			if( *it == RESOLUTION ) {
 				row.push_back( modesList[row_index].c_str() );
+			}
 		}
 	}
 }
 
-int VideoDataSource::GetNumRows( const String &table )
-{
+int VideoDataSource::GetNumRows( const String &table ) {
 	return modesList.size();
 }
 

@@ -29,24 +29,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * TVM_RunClients
 */
-static void TVM_RunClients( tvm_relay_t *relay )
-{
+static void TVM_RunClients( tvm_relay_t *relay ) {
 	int i;
 	edict_t *ent;
 
-	for( i = 0; i < relay->local_maxclients; i++ )
-	{
+	for( i = 0; i < relay->local_maxclients; i++ ) {
 		ent = relay->local_edicts + i;
-		if( ent->s.teleported )
+		if( ent->s.teleported ) {
 			ent->s.teleported = false;
-		if( !ent->r.inuse || !ent->r.client )
+		}
+		if( !ent->r.inuse || !ent->r.client ) {
 			continue;
-		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED )
+		}
+		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED ) {
 			continue;
+		}
 
 		// the client entities may have been moved by the world, update their pmove positions
-		if( ent->movetype != MOVETYPE_NOCLIP )
-		{
+		if( ent->movetype != MOVETYPE_NOCLIP ) {
 			VectorCopy( ent->s.origin, ent->r.client->ps.pmove.origin );
 			VectorCopy( ent->velocity, ent->r.client->ps.pmove.velocity );
 		}
@@ -59,25 +59,25 @@ static void TVM_RunClients( tvm_relay_t *relay )
 /*
 * TVM_RunLinearProjectiles
 */
-void TVM_RunLinearProjectiles( tvm_relay_t *relay )
-{
+void TVM_RunLinearProjectiles( tvm_relay_t *relay ) {
 	int i;
 	edict_t *ent;
 	vec3_t old_origin;
 
-	for( i = relay->maxclients + 1; i < relay->numentities; i++ )
-	{
+	for( i = relay->maxclients + 1; i < relay->numentities; i++ ) {
 		ent = relay->edicts + i;
-		if( !ent->s.linearMovement || !ent->r.inuse )
+		if( !ent->s.linearMovement || !ent->r.inuse ) {
 			continue;
+		}
 
 		VectorCopy( ent->s.origin, old_origin );
 		GClip_LinearMovement( relay, ent );
 
 		// check if projectile has moved since TVM_NewPacketEntityState
 		// before calling GClip_LinkEntity to save CPU time
-		if( ent->r.linkcount && VectorCompare( ent->s.origin, old_origin ) )
+		if( ent->r.linkcount && VectorCompare( ent->s.origin, old_origin ) ) {
 			continue;
+		}
 
 		GClip_LinkEntity( relay, ent );
 	}
@@ -87,8 +87,7 @@ void TVM_RunLinearProjectiles( tvm_relay_t *relay )
 * TVM_RunFrame
 * Advances the world
 */
-void TVM_RunFrame( tvm_relay_t *relay, unsigned int msec )
-{
+void TVM_RunFrame( tvm_relay_t *relay, unsigned int msec ) {
 	tvm.realtime += msec;
 
 	TVM_RunLinearProjectiles( relay );

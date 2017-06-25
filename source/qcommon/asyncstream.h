@@ -38,10 +38,10 @@ typedef void (*async_stream_free_t)( void *data, const char *filename, int filel
 // contentType represents value read from the Content-Type: field by libcurl:
 // A value of NULL indicates that the server didn't send a valid Content-Type header or that the protocol used doesn't support this.
 
-typedef size_t (*async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
-	int status, const char *contentType, void *privatep);
-typedef void (*async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
-typedef void (*async_stream_header_cb_t)(const void *buf, void *privatep);
+typedef size_t (*async_stream_read_cb_t)( const void *buf, size_t numb, float percentage,
+										  int status, const char *contentType, void *privatep );
+typedef void (*async_stream_done_cb_t)( int status, const char *contentType, void *privatep );
+typedef void (*async_stream_header_cb_t)( const void *buf, void *privatep );
 
 typedef struct async_stream_module_s async_stream_module_t;
 
@@ -70,7 +70,7 @@ void AsyncStream_UrlEncode( const char *src, char *dst, size_t size );
 /*
 * AsyncStream_UrlDecode
 *
-* Converts the given URL-encoded string to a null-terminated plain string. Returns 
+* Converts the given URL-encoded string to a null-terminated plain string. Returns
 * total (untruncated) length of the resulting string.
 */
 size_t AsyncStream_UrlDecode( const char *src, char *dst, size_t size );
@@ -90,16 +90,16 @@ void AsyncStream_UrlEncodeUnsafeChars( const char *src, char *dst, size_t size )
 * to be URL-encoded.
 * Timeout should be specified in seconds.
 * Read callback is called whenever there's data to be read from the request. Done callback
-* is called upon completion of the request. A negative value indicates an error (usually a 
+* is called upon completion of the request. A negative value indicates an error (usually a
 * negated CURL error code).
 * Caller may also specify a private pointer to be passed to callback functions.
 *
 * Returns 0 on success.
 */
-int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *url, const char *method, const char *data, 
-	const char **headers, int timeout, int resumeFrom, 
-	async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, async_stream_header_cb_t header_cb,
-	void *privatep );
+int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *url, const char *method, const char *data,
+								   const char **headers, int timeout, int resumeFrom,
+								   async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, async_stream_header_cb_t header_cb,
+								   void *privatep );
 
-int AsyncStream_PerformRequest( async_stream_module_t *module, const char *url, const char *method, const char *data, 
-	const char *referer, int timeout, int resumeFrom, async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, void *privatep );
+int AsyncStream_PerformRequest( async_stream_module_t *module, const char *url, const char *method, const char *data,
+								const char *referer, int timeout, int resumeFrom, async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, void *privatep );

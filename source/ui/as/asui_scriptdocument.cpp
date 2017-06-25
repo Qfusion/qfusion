@@ -5,28 +5,25 @@
 #include "as/asui.h"
 #include "as/asui_local.h"
 
-namespace ASUI {
+namespace ASUI
+{
 
 using namespace Rocket::Core;
 
 UI_ScriptDocument::UI_ScriptDocument( const String &tag )
-	: ElementDocument( tag ), numScriptsAdded( 0 ), as( NULL ), module( NULL ), isLoading( false ), numScripts( 0 ), owner( NULL )
-{
+	: ElementDocument( tag ), numScriptsAdded( 0 ), as( NULL ), module( NULL ), isLoading( false ), numScripts( 0 ), owner( NULL ) {
 	isLoading = true;
 	onloads.clear();
 }
 
-UI_ScriptDocument::~UI_ScriptDocument( void )
-{
+UI_ScriptDocument::~UI_ScriptDocument( void ) {
 }
 
-asIScriptModule *UI_ScriptDocument::GetModule( void ) const
-{
+asIScriptModule *UI_ScriptDocument::GetModule( void ) const {
 	return module;
 }
-	
-void UI_ScriptDocument::LoadScript( Stream *stream, const String &source_name )
-{
+
+void UI_ScriptDocument::LoadScript( Stream *stream, const String &source_name ) {
 	String code;
 
 	stream->Read( code, stream->Length() );
@@ -56,8 +53,7 @@ void UI_ScriptDocument::LoadScript( Stream *stream, const String &source_name )
 	}
 }
 
-void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
-{
+void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event ) {
 	if( event.GetType() == "afterLoad" && event.GetTargetElement() == this ) {
 		if( module ) {
 			owner = event.GetParameter<void *>( "owner", NULL );
@@ -71,7 +67,7 @@ void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
 		// handle postponed onload events (HOWTO handle these in cached documents?)
 		for( PostponedList::iterator it = onloads.begin(); it != onloads.end(); ++it ) {
 			Rocket::Core::Event *load = *it;
-			this->DispatchEvent( load->GetType(), *(load->GetParameters()), true );
+			this->DispatchEvent( load->GetType(), *( load->GetParameters() ), true );
 			load->RemoveReference();
 		}
 
@@ -93,7 +89,7 @@ void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
 
 	if( isLoading ) {
 		Rocket::Core::Event *instanced = Rocket::Core::Factory::InstanceEvent( event.GetTargetElement(),
-			event.GetType(), *event.GetParameters(), true );
+																			   event.GetType(), *event.GetParameters(), true );
 		onloads.push_back( instanced );
 		event.StopPropagation();
 		return;
@@ -102,8 +98,7 @@ void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
 	Rocket::Core::ElementDocument::ProcessEvent( event );
 }
 
-Rocket::Core::ScriptObject UI_ScriptDocument::GetScriptObject( void ) const
-{
+Rocket::Core::ScriptObject UI_ScriptDocument::GetScriptObject( void ) const {
 	return owner;
 }
 
@@ -113,13 +108,11 @@ class UI_ScriptDocumentInstancer : public ElementInstancer
 {
 public:
 	// UI_ScriptDocumentInstancer() {}
-	virtual Element *InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr )
-	{
+	virtual Element *InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr ) {
 		return new UI_ScriptDocument( tag );
 	}
 
-	virtual void ReleaseElement(Element* element)
-	{
+	virtual void ReleaseElement( Element* element ) {
 		//ElementDocument *doc = dynamic_cast<ElementDocument*>( element );
 		//Com_Printf("ReleaseElement called %s\n", doc ? doc->GetSourceURL().CString() : "" );
 		delete element;
@@ -128,9 +121,9 @@ public:
 	virtual void Release() { delete this; }
 };
 
-ElementInstancer *GetScriptDocumentInstancer( void )
-{
+ElementInstancer *GetScriptDocumentInstancer( void ) {
 	ElementInstancer *instancer = new UI_ScriptDocumentInstancer();
+
 	// instancer->RemoveReference();
 	return instancer;
 }

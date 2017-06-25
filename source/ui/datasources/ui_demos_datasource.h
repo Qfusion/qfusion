@@ -69,7 +69,7 @@ protected:
 	bool IsRoot( void ) const;
 };
 
-/// This class merely exists to help us counting on table row updates 
+/// This class merely exists to help us counting on table row updates
 /// for libRocket DataSource listeners
 class DemosDataSourceHelper : public DemoCollection
 {

@@ -24,11 +24,10 @@ cin_import_t CIN_IMPORT;
 
 /*
 * GetCinematicsAPI
-* 
+*
 * Returns a pointer to the structure with all entry points
 */
-QF_DLL_EXPORT cin_export_t *GetCinematicsAPI( cin_import_t *import )
-{
+QF_DLL_EXPORT cin_export_t *GetCinematicsAPI( cin_import_t *import ) {
 	static cin_export_t globals;
 
 	CIN_IMPORT = *import;
@@ -52,8 +51,7 @@ QF_DLL_EXPORT cin_export_t *GetCinematicsAPI( cin_import_t *import )
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( CIN_HARD_LINKED )
-int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
-{
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved ) {
 	return 1;
 }
 #endif

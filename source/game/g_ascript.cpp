@@ -219,6 +219,8 @@ static const asEnumVal_t asPMoveFeaturesVals[] =
 	ASLIB_ENUM_VAL( PMFEAT_ITEMPICK ),
 	ASLIB_ENUM_VAL( PMFEAT_GUNBLADEAUTOATTACK ),
 	ASLIB_ENUM_VAL( PMFEAT_WEAPONSWITCH ),
+	ASLIB_ENUM_VAL( PMFEAT_CORNERSKIMMING ),
+	ASLIB_ENUM_VAL( PMFEAT_CROUCHSLIDING ),
 	ASLIB_ENUM_VAL( PMFEAT_ALL ),
 	ASLIB_ENUM_VAL( PMFEAT_DEFAULT ),
 
@@ -576,7 +578,8 @@ static asIObjectType *asEntityArrayType() {
 //=======================================================================
 
 // CLASS: Trace
-typedef struct {
+typedef struct
+{
 	trace_t trace;
 } astrace_t;
 
@@ -833,11 +836,11 @@ static unsigned int objectMatch_duration( match_t *self ) {
 	return GS_MatchDuration();
 }
 
-static unsigned int objectMatch_startTime( match_t *self ) {
+static int64_t objectMatch_startTime( match_t *self ) {
 	return GS_MatchStartTime();
 }
 
-static unsigned int objectMatch_endTime( match_t *self ) {
+static int64_t objectMatch_endTime( match_t *self ) {
 	return GS_MatchEndTime();
 }
 
@@ -873,8 +876,8 @@ static void objectMatch_setScore( asstring_t *name, match_t *self ) {
 	trap_ConfigString( CS_MATCHSCORE, buf );
 }
 
-static void objectMatch_setClockOverride( unsigned int time, match_t *self ) {
-	gs.gameState.longstats[GAMELONG_CLOCKOVERRIDE] = time;
+static void objectMatch_setClockOverride( int64_t time, match_t *self ) {
+	gs.gameState.stats[GAMESTAT_CLOCKOVERRIDE] = time;
 }
 
 static const asFuncdef_t match_Funcdefs[] =
@@ -901,14 +904,14 @@ static const asMethod_t match_Methods[] =
 	{ ASLIB_FUNCTION_DECL( bool, isWaiting, ( ) const ), asFUNCTION( objectMatch_isWaiting ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, isExtended, ( ) const ), asFUNCTION( objectMatch_isExtended ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( uint, duration, ( ) const ), asFUNCTION( objectMatch_duration ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( uint, startTime, ( ) const ), asFUNCTION( objectMatch_startTime ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( uint, endTime, ( ) const ), asFUNCTION( objectMatch_endTime ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int64, startTime, ( ) const ), asFUNCTION( objectMatch_startTime ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int64, endTime, ( ) const ), asFUNCTION( objectMatch_endTime ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, getState, ( ) const ), asFUNCTION( objectMatch_getState ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_name, ( ) const ), asFUNCTION( objectMatch_getName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, getScore, ( ) const ), asFUNCTION( objectMatch_getScore ),  asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_name, ( String & in ) ), asFUNCTION( objectMatch_setName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setScore, ( String & in ) ), asFUNCTION( objectMatch_setScore ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, setClockOverride, ( uint milliseconds ) ), asFUNCTION( objectMatch_setClockOverride ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, setClockOverride, ( int64 milliseconds ) ), asFUNCTION( objectMatch_setClockOverride ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
@@ -1710,7 +1713,7 @@ static void objectGameClient_NewRaceRun( int numSectors, gclient_t *self ) {
 	G_NewRaceRun( PLAYERENT( playerNum ), numSectors );
 }
 
-static void objectGameClient_SetRaceTime( int sector, unsigned int time, gclient_t *self ) {
+static void objectGameClient_SetRaceTime( int sector, int64_t time, gclient_t *self ) {
 	int playerNum;
 
 	playerNum = objectGameClient_PlayerNum( self );
@@ -1802,7 +1805,7 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, set_chaseActive, ( const bool active ) ), asFUNCTION( objectGameClient_SetChaseActive ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_chaseActive, ( ) const ), asFUNCTION( objectGameClient_GetChaseActive ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, newRaceRun, ( int numSectors ) ), asFUNCTION( objectGameClient_NewRaceRun ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, setRaceTime, ( int sector, uint time ) ), asFUNCTION( objectGameClient_SetRaceTime ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, setRaceTime, ( int sector, int64 time ) ), asFUNCTION( objectGameClient_SetRaceTime ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setHelpMessage, ( uint msg ) ), asFUNCTION( objectGameClient_SetHelpMessage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setQuickMenuItems, ( const String &in ) ), asFUNCTION( objectGameClient_SetQuickMenuItems ), asCALL_CDECL_OBJLAST },
 
@@ -1818,7 +1821,7 @@ static const asProperty_t gameclient_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int, team ), ASLIB_FOFFSET( gclient_t, team ) },
 	{ ASLIB_PROPERTY_DECL( const int, hand ), ASLIB_FOFFSET( gclient_t, hand ) },
 	{ ASLIB_PROPERTY_DECL( const bool, isOperator ), ASLIB_FOFFSET( gclient_t, isoperator ) },
-	{ ASLIB_PROPERTY_DECL( const uint, queueTimeStamp ), ASLIB_FOFFSET( gclient_t, queueTimeStamp ) },
+	{ ASLIB_PROPERTY_DECL( const int64, queueTimeStamp ), ASLIB_FOFFSET( gclient_t, queueTimeStamp ) },
 	{ ASLIB_PROPERTY_DECL( const int, muted ), ASLIB_FOFFSET( gclient_t, muted ) },
 	{ ASLIB_PROPERTY_DECL( float, armor ), ASLIB_FOFFSET( gclient_t, resp.armor ) },
 	{ ASLIB_PROPERTY_DECL( const bool, chaseActive ), ASLIB_FOFFSET( gclient_t, resp.chase.active ) },
@@ -1830,8 +1833,8 @@ static const asProperty_t gameclient_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const int16, weapon ), ASLIB_FOFFSET( gclient_t, ps.stats[STAT_WEAPON] ) },
 	{ ASLIB_PROPERTY_DECL( const int16, pendingWeapon ), ASLIB_FOFFSET( gclient_t, ps.stats[STAT_PENDING_WEAPON] ) },
 	{ ASLIB_PROPERTY_DECL( bool, takeStun ), ASLIB_FOFFSET( gclient_t, resp.takeStun ) },
-	{ ASLIB_PROPERTY_DECL( uint, lastActivity ), ASLIB_FOFFSET( gclient_t, level.last_activity ) },
-	{ ASLIB_PROPERTY_DECL( const uint, uCmdTimeStamp ), ASLIB_FOFFSET( gclient_t, ucmd.serverTimeStamp ) },
+	{ ASLIB_PROPERTY_DECL( int64, lastActivity ), ASLIB_FOFFSET( gclient_t, level.last_activity ) },
+	{ ASLIB_PROPERTY_DECL( const int64, uCmdTimeStamp ), ASLIB_FOFFSET( gclient_t, ucmd.serverTimeStamp ) },
 
 	ASLIB_PROPERTY_NULL
 };
@@ -1868,8 +1871,6 @@ static asvec3_t objectGameEntity_GetVelocity( edict_t *obj ) {
 }
 
 static void objectGameEntity_SetVelocity( asvec3_t *vel, edict_t *self ) {
-	GS_SnapVelocity( self->velocity );
-
 	VectorCopy( vel->v, self->velocity );
 
 	if( self->r.client && trap_GetClientState( PLAYERNUM( self ) ) >= CS_SPAWNED ) {
@@ -1898,10 +1899,8 @@ static asvec3_t objectGameEntity_GetOrigin( edict_t *obj ) {
 
 static void objectGameEntity_SetOrigin( asvec3_t *vec, edict_t *self ) {
 	if( self->r.client && trap_GetClientState( PLAYERNUM( self ) ) >= CS_SPAWNED ) {
-		GS_SnapPosition( vec->v, self->r.mins, self->r.maxs, ENTNUM( self ), self->s.solid ? G_SolidMaskForEnt( self ) : 0 );
 		VectorCopy( vec->v, self->r.client->ps.pmove.origin );
 	}
-
 	VectorCopy( vec->v, self->s.origin );
 }
 
@@ -2284,7 +2283,7 @@ static const asProperty_t gedict_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int, spawnFlags ), ASLIB_FOFFSET( edict_t, spawnflags ) },
 	{ ASLIB_PROPERTY_DECL( int, style ), ASLIB_FOFFSET( edict_t, style ) },
 	{ ASLIB_PROPERTY_DECL( int, moveType ), ASLIB_FOFFSET( edict_t, movetype ) },
-	{ ASLIB_PROPERTY_DECL( uint, nextThink ), ASLIB_FOFFSET( edict_t, nextThink ) },
+	{ ASLIB_PROPERTY_DECL( int64, nextThink ), ASLIB_FOFFSET( edict_t, nextThink ) },
 	{ ASLIB_PROPERTY_DECL( float, health ), ASLIB_FOFFSET( edict_t, health ) },
 	{ ASLIB_PROPERTY_DECL( int, maxHealth ), ASLIB_FOFFSET( edict_t, max_health ) },
 	{ ASLIB_PROPERTY_DECL( int, viewHeight ), ASLIB_FOFFSET( edict_t, viewheight ) },
@@ -2302,7 +2301,7 @@ static const asProperty_t gedict_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int, waterLevel ), ASLIB_FOFFSET( edict_t, waterlevel ) },
 	{ ASLIB_PROPERTY_DECL( float, attenuation ), ASLIB_FOFFSET( edict_t, attenuation ) },
 	{ ASLIB_PROPERTY_DECL( int, mass ), ASLIB_FOFFSET( edict_t, mass ) },
-	{ ASLIB_PROPERTY_DECL( uint, timeStamp ), ASLIB_FOFFSET( edict_t, timeStamp ) },
+	{ ASLIB_PROPERTY_DECL( int64, timeStamp ), ASLIB_FOFFSET( edict_t, timeStamp ) },
 
 	{ ASLIB_PROPERTY_DECL( float, aiIntrinsicEnemyWeight ), ASLIB_FOFFSET( edict_t, aiIntrinsicEnemyWeight ) },
 	{ ASLIB_PROPERTY_DECL( float, aiVisibilityDistance ), ASLIB_FOFFSET( edict_t, aiVisibilityDistance ) },
@@ -3132,11 +3131,12 @@ static const asglobfuncs_t asGameGlobFuncs[] =
 
 static const asglobproperties_t asGlobProps[] =
 {
-	{ "const uint levelTime", &level.time },
+	{ "const int64 levelTime", &level.time },
 	{ "const uint frameTime", &game.frametime },
-	{ "const uint realTime", &game.realtime },
+	{ "const int64 realTime", &game.realtime },
+
 	//{ "const uint serverTime", &game.serverTime }, // I think this one isn't script business
-	{ "const uint64 localTime", &game.localTime },
+	{ "const int64 localTime", &game.localTime },
 	{ "const int maxEntities", &game.maxentities },
 	{ "const int numEntities", &game.numentities },
 	{ "const int maxClients", &gs.maxclients },
@@ -3488,149 +3488,10 @@ bool G_ExecutionErrorReport( int error ) {
 }
 
 /*
-* G_LoadScriptSection
-*/
-static char *G_LoadScriptSection( const char *dir, const char *script, int sectionNum ) {
-	char filename[MAX_QPATH];
-	uint8_t *data;
-	int length, filenum;
-	char *sectionName;
-
-	sectionName = G_ListNameForPosition( script, sectionNum, SECTIONS_SEPARATOR );
-	if( !sectionName ) {
-		return NULL;
-	}
-
-	COM_StripExtension( sectionName );
-
-	while( *sectionName == '\n' || *sectionName == ' ' || *sectionName == '\r' )
-		sectionName++;
-
-	if( sectionName[0] == '/' ) {
-		Q_snprintfz( filename, sizeof( filename ), "%s%s%s", SCRIPTS_DIRECTORY, sectionName, ANGEL_SCRIPT_EXTENSION );
-	} else {
-		Q_snprintfz( filename, sizeof( filename ), "%s/%s/%s%s", SCRIPTS_DIRECTORY, dir, sectionName, ANGEL_SCRIPT_EXTENSION );
-	}
-	Q_strlwr( filename );
-
-	length = trap_FS_FOpenFile( filename, &filenum, FS_READ );
-
-	if( length == -1 ) {
-		G_Printf( "Couldn't find script section: '%s'\n", filename );
-		return NULL;
-	}
-
-	//load the script data into memory
-	data = ( uint8_t * )G_Malloc( length + 1 );
-	trap_FS_Read( data, length, filenum );
-	trap_FS_FCloseFile( filenum );
-
-	G_Printf( "* Loaded script section '%s'\n", filename );
-	return (char *)data;
-}
-
-/*
-* G_BuildGameScript
-*/
-static asIScriptModule *G_BuildGameScript( const char *moduleName, const char *dir, const char *scriptName, const char *script ) {
-	int error;
-	int numSections, sectionNum;
-	char *section;
-	asIScriptModule *asModule;
-	asIScriptEngine *asEngine;
-
-	asEngine = GAME_AS_ENGINE();
-	if( asEngine == NULL ) {
-		G_Printf( S_COLOR_RED "G_BuildGameScript: Angelscript API unavailable\n" );
-		return NULL;
-	}
-
-	G_Printf( "* Initializing script '%s'\n", scriptName );
-
-	// count referenced script sections
-	for( numSections = 0; ( section = G_ListNameForPosition( script, numSections, SECTIONS_SEPARATOR ) ) != NULL; numSections++ ) ;
-
-	if( !numSections ) {
-		G_Printf( S_COLOR_RED "* Error: script '%s' has no sections\n", scriptName );
-		return NULL;
-	}
-
-	// load up the script sections
-
-	asModule = asEngine->GetModule( moduleName, asGM_CREATE_IF_NOT_EXISTS );
-	if( asModule == NULL ) {
-		G_Printf( S_COLOR_RED "G_BuildGameScript: GetModule '%s' failed\n", moduleName );
-		return NULL;
-	}
-
-	for( sectionNum = 0; ( section = G_LoadScriptSection( dir, script, sectionNum ) ) != NULL; sectionNum++ ) {
-		const char *sectionName = G_ListNameForPosition( script, sectionNum, SECTIONS_SEPARATOR );
-		error = asModule->AddScriptSection( sectionName, section, strlen( section ) );
-
-		G_Free( section );
-
-		if( error ) {
-			G_Printf( S_COLOR_RED "* Failed to add the script section %s with error %i\n", sectionName, error );
-			asEngine->DiscardModule( moduleName );
-			return NULL;
-		}
-	}
-
-	if( sectionNum != numSections ) {
-		G_Printf( S_COLOR_RED "* Error: couldn't load all script sections.\n" );
-		asEngine->DiscardModule( moduleName );
-		return NULL;
-	}
-
-	error = asModule->Build();
-	if( error ) {
-		G_Printf( S_COLOR_RED "* Failed to build the script '%s'\n", scriptName );
-		asEngine->DiscardModule( moduleName );
-		return NULL;
-	}
-
-	return asModule;
-}
-
-/*
 * G_LoadGameScript
 */
 asIScriptModule *G_LoadGameScript( const char *moduleName, const char *dir, const char *filename, const char *ext ) {
-	int length, filenum;
-	char *data;
-	char filepath[MAX_QPATH];
-	asIScriptModule *asModule;
-
-	Q_snprintfz( filepath, sizeof( filepath ), "%s/%s/%s", SCRIPTS_DIRECTORY, dir, filename );
-	COM_DefaultExtension( filepath, ext, sizeof( filepath ) );
-
-	length = trap_FS_FOpenFile( filepath, &filenum, FS_READ );
-
-	if( length == -1 ) {
-		G_Printf( "G_LoadGameScript: Couldn't find '%s'.\n", filepath );
-		return NULL;
-	}
-
-	if( !length ) {
-		G_Printf( "G_LoadGameScript: '%s' is empty.\n", filepath );
-		trap_FS_FCloseFile( filenum );
-		return NULL;
-	}
-
-	//load the script data into memory
-	data = ( char * )G_Malloc( length + 1 );
-	trap_FS_Read( data, length, filenum );
-	trap_FS_FCloseFile( filenum );
-
-	// Initialize the script
-	asModule = G_BuildGameScript( moduleName, dir, filepath, data );
-	if( !asModule ) {
-		G_Free( data );
-		return NULL;
-	}
-
-	G_Free( data );
-	return asModule;
+	return angelExport->asLoadScriptProject( GAME_AS_ENGINE(), moduleName, GAME_SCRIPTS_DIRECTORY, dir, filename, ext );
 }
 
 /*
@@ -3731,7 +3592,7 @@ void G_asShutdownGameModuleEngine( void ) {
 * Perform garbage collection procedure
 */
 void G_asGarbageCollect( bool force ) {
-	static unsigned int lastTime = 0;
+	static int64_t lastTime = 0;
 	unsigned int currentSize, totalDestroyed, totalDetected;
 	asIScriptEngine *asEngine;
 

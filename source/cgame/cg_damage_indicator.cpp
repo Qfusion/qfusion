@@ -23,12 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * CG_DamageIndicatorAdd
 */
-void CG_DamageIndicatorAdd( int damage, const vec3_t dir )
-{
+void CG_DamageIndicatorAdd( int damage, const vec3_t dir ) {
 	int i;
-	unsigned int damageTime;
+	int64_t damageTime;
 	vec3_t playerAngles;
 	mat3_t playerAxis;
+
 // epsilons are 30 degrees
 #define INDICATOR_EPSILON 0.5f
 #define INDICATOR_EPSILON_UP 0.85f
@@ -39,8 +39,9 @@ void CG_DamageIndicatorAdd( int damage, const vec3_t dir )
 	float blends[4];
 	float forward, side;
 
-	if( !cg_damage_indicator->integer )
+	if( !cg_damage_indicator->integer ) {
 		return;
+	}
 
 	playerAngles[PITCH] = 0;
 	playerAngles[YAW] = cg.predictedPlayerState.viewangles[YAW];
@@ -48,40 +49,40 @@ void CG_DamageIndicatorAdd( int damage, const vec3_t dir )
 
 	Matrix3_FromAngles( playerAngles, playerAxis );
 
-	if( cg_damage_indicator_time->value < 0 )
+	if( cg_damage_indicator_time->value < 0 ) {
 		trap_Cvar_SetValue( "cg_damage_indicator_time", 0 );
+	}
 
 	Vector4Set( blends, 0, 0, 0, 0 );
 	damageTime = damage * cg_damage_indicator_time->value;
 
 	// up and down go distributed equally to all blends and assumed when no dir is given
 	if( !dir || VectorCompare( dir, vec3_origin ) || cg_damage_indicator->integer == 2 || GS_Instagib() ||
-		( fabs( DotProduct( dir, &playerAxis[AXIS_UP] ) ) > INDICATOR_EPSILON_UP ) )
-	{
+		( fabs( DotProduct( dir, &playerAxis[AXIS_UP] ) ) > INDICATOR_EPSILON_UP ) ) {
 		blends[RIGHT_BLEND] += damageTime;
 		blends[LEFT_BLEND] += damageTime;
 		blends[TOP_BLEND] += damageTime;
 		blends[BOTTOM_BLEND] += damageTime;
-	}
-	else
-	{
+	} else {
 		side = DotProduct( dir, &playerAxis[AXIS_RIGHT] );
-		if( side > INDICATOR_EPSILON )
+		if( side > INDICATOR_EPSILON ) {
 			blends[LEFT_BLEND] += damageTime;
-		else if( side < -INDICATOR_EPSILON )
+		} else if( side < -INDICATOR_EPSILON ) {
 			blends[RIGHT_BLEND] += damageTime;
+		}
 
 		forward = DotProduct( dir, &playerAxis[AXIS_FORWARD] );
-		if( forward > INDICATOR_EPSILON )
+		if( forward > INDICATOR_EPSILON ) {
 			blends[BOTTOM_BLEND] += damageTime;
-		else if( forward < -INDICATOR_EPSILON )
+		} else if( forward < -INDICATOR_EPSILON ) {
 			blends[TOP_BLEND] += damageTime;
+		}
 	}
 
-	for( i = 0; i < 4; i++ )
-	{
-		if( cg.damageBlends[i] < cg.time + blends[i] )
+	for( i = 0; i < 4; i++ ) {
+		if( cg.damageBlends[i] < cg.time + blends[i] ) {
 			cg.damageBlends[i] = cg.time + blends[i];
+		}
 	}
 #undef TOP_BLEND
 #undef RIGHT_BLEND
@@ -94,8 +95,7 @@ void CG_DamageIndicatorAdd( int damage, const vec3_t dir )
 /*
 * CG_ResetDamageIndicator
 */
-void CG_ResetDamageIndicator( void )
-{
+void CG_ResetDamageIndicator( void ) {
 	int i;
 
 	for( i = 0; i < 4; i++ )

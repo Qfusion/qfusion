@@ -30,8 +30,7 @@ CINEMATICS PLAYBACK ABSTRACTION LAYER
 #include "cin_theora.h"
 #include "cin_roq.h"
 
-enum
-{
+enum {
 	CIN_TYPE_NONE = -1,
 
 	CIN_TYPE_THEORA,
@@ -40,19 +39,18 @@ enum
 	CIN_NUM_TYPES
 };
 
-typedef struct
-{
+typedef struct {
 	const char * const extensions;
 	bool ( *init )( cinematics_t *cin );
 	bool ( *has_ogg_audio )( cinematics_t *cin );
 	void ( *shutdown )( cinematics_t *cin );
 	void ( *reset )( cinematics_t *cin );
 	bool ( *need_next_frame )( cinematics_t *cin );
-	uint8_t *( *read_next_frame )( cinematics_t *cin, bool *redraw );
-	cin_yuv_t *( *read_next_frame_yuv )( cinematics_t *cin, bool *redraw );
+	uint8_t *( *read_next_frame )( cinematics_t * cin, bool * redraw );
+	cin_yuv_t *( *read_next_frame_yuv )( cinematics_t * cin, bool * redraw );
 } cin_type_t;
 
-static const cin_type_t cin_types[] = 
+static const cin_type_t cin_types[] =
 {
 	// Ogg Theora
 	{
@@ -100,9 +98,8 @@ static const cin_type_t cin_types[] =
 /*
 * CIN_Open
 */
-cinematics_t *CIN_Open( const char *name, unsigned int start_time, 
-	int flags, bool *yuv, float *framerate )
-{
+cinematics_t *CIN_Open( const char *name, int64_t start_time,
+						int flags, bool *yuv, float *framerate ) {
 	int i;
 	size_t name_size;
 	const cin_type_t *type;
@@ -112,7 +109,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 	unsigned load_msec;
 
 	load_msec = trap_Milliseconds();
-	name_size = strlen( name ) + /*strlen( ".roq" )*/10 + 1;
+	name_size = strlen( name ) + /*strlen( ".roq" )*/ 10 + 1;
 
 	mempool = CIN_AllocPool( name );
 	cin = CIN_Alloc( mempool, sizeof( *cin ) );
@@ -129,40 +126,35 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 	cin->flags = 0;
 	cin->flags = flags;
 
-	if( trap_FS_IsUrl( name ) )
-	{
+	if( trap_FS_IsUrl( name ) ) {
 		cin->type = CIN_TYPE_THEORA;
 		Q_strncpyz( cin->name, name, name_size );
 		trap_FS_FOpenFile( cin->name, &cin->file, FS_READ );
-	}
-	else
-	{
+	} else {
 		cin->type = CIN_TYPE_NONE;
 		Q_snprintfz( cin->name, name_size, "%s", name );
 	}
 
 	// loop through the list of supported formats
-	for( i = 0, type = cin_types; i < CIN_NUM_TYPES && cin->type == CIN_TYPE_NONE; i++, type++ )
-	{
+	for( i = 0, type = cin_types; i < CIN_NUM_TYPES && cin->type == CIN_TYPE_NONE; i++, type++ ) {
 		char *s, *t;
 		const char *ext;
 
 		// no extensions, break, probably a safe guard
-		if( !type->extensions )
+		if( !type->extensions ) {
 			break;
+		}
 
 		// scan filesystem, trying all known extensions for this format
 		s = CIN_CopyString( type->extensions );
 
 		t = strtok( s, " " );
-		while( t != NULL )
-		{
+		while( t != NULL ) {
 			ext = t;
 			COM_ReplaceExtension( cin->name, ext, name_size );
 
 			trap_FS_FOpenFile( cin->name, &cin->file, FS_READ );
-			if( cin->file )
-			{
+			if( cin->file ) {
 				// found the file
 				cin->type = i;
 				break;
@@ -181,21 +173,21 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 		if( !res ) {
 			type->shutdown( cin );
 		}
-	}
-	else {
+	} else {
 		res = false;
 	}
 
-	if( !res )
-	{
+	if( !res ) {
 		CIN_Free( cin );
 		return NULL;
 	}
 
-	if( yuv )
+	if( yuv ) {
 		*yuv = cin->yuv;
-	if( framerate )
+	}
+	if( framerate ) {
 		*framerate = cin->framerate;
+	}
 
 	// update the timers to account for loading
 	load_msec = trap_Milliseconds() - load_msec;
@@ -207,8 +199,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 /*
 * CIN_HasOggAudio
 */
-bool CIN_HasOggAudio( cinematics_t *cin )
-{
+bool CIN_HasOggAudio( cinematics_t *cin ) {
 	const cin_type_t *type;
 
 	assert( cin );
@@ -221,16 +212,14 @@ bool CIN_HasOggAudio( cinematics_t *cin )
 /*
 * CIN_Filename
 */
-const char *CIN_FileName( cinematics_t *cin )
-{
+const char *CIN_FileName( cinematics_t *cin ) {
 	return cin->name;
 }
 
 /*
 * CIN_NeedNextFrame
 */
-bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
-{
+bool CIN_NeedNextFrame( cinematics_t *cin, int64_t curtime ) {
 	const cin_type_t *type;
 
 	assert( cin );
@@ -241,8 +230,9 @@ bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 	cin->cur_time = curtime;
 	cin->s_samples_length = CIN_GetRawSamplesLengthFromListeners( cin );
 
-	if( cin->cur_time < cin->start_time )
+	if( cin->cur_time < cin->start_time ) {
 		return false;
+	}
 
 	return type->need_next_frame( cin );
 }
@@ -250,9 +240,8 @@ bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 /*
 * CIN_ReadNextFrame_
 */
-static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height, 
-	int *aspect_numerator, int *aspect_denominator, bool *redraw, bool yuv )
-{
+static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height,
+									int *aspect_numerator, int *aspect_denominator, bool *redraw, bool yuv ) {
 	int i;
 	uint8_t *frame = NULL;
 	const cin_type_t *type;
@@ -265,17 +254,16 @@ static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height,
 
 	cin->haveAudio = false;
 
-	for( i = 0; i < 2; i++ )
-	{
+	for( i = 0; i < 2; i++ ) {
 		redraw_ = false;
 		if( yuv ) {
 			frame = ( uint8_t * )type->read_next_frame_yuv( cin, &redraw_ );
-		}
-		else {
+		} else {
 			frame = type->read_next_frame( cin, &redraw_ );
 		}
-		if( frame || !( cin->flags & CIN_LOOP ) )
+		if( frame || !( cin->flags & CIN_LOOP ) ) {
 			break;
+		}
 
 		// try again from the beginning if looping
 		type->reset( cin );
@@ -283,16 +271,21 @@ static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height,
 		cin->start_time = cin->cur_time;
 	}
 
-	if( width )
+	if( width ) {
 		*width = cin->width;
-	if( height )
+	}
+	if( height ) {
 		*height = cin->height;
-	if( aspect_numerator )
+	}
+	if( aspect_numerator ) {
 		*aspect_numerator = cin->aspect_numerator;
-	if( aspect_denominator )
+	}
+	if( aspect_denominator ) {
 		*aspect_denominator = cin->aspect_denominator;
-	if( redraw )
+	}
+	if( redraw ) {
 		*redraw = redraw_;
+	}
 
 	if( cin->haveAudio ) {
 		CIN_ClearRawSamplesListeners( cin );
@@ -305,36 +298,32 @@ static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height,
 /*
 * CIN_ReadNextFrame
 */
-uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 
-	int *aspect_numerator, int *aspect_denominator, bool *redraw )
-{
-	return CIN_ReadNextFrame_( cin, width, height, 
-		aspect_numerator, aspect_denominator, redraw, false );
+uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height,
+							int *aspect_numerator, int *aspect_denominator, bool *redraw ) {
+	return CIN_ReadNextFrame_( cin, width, height,
+							   aspect_numerator, aspect_denominator, redraw, false );
 }
 
 /*
 * CIN_ReadNextFrameYUV
 */
-cin_yuv_t *CIN_ReadNextFrameYUV( cinematics_t *cin, int *width, int *height, 
-	int *aspect_numerator, int *aspect_denominator, bool *redraw )
-{
+cin_yuv_t *CIN_ReadNextFrameYUV( cinematics_t *cin, int *width, int *height,
+								 int *aspect_numerator, int *aspect_denominator, bool *redraw ) {
 	return ( cin_yuv_t * )CIN_ReadNextFrame_( cin, width, height, aspect_numerator, aspect_denominator, redraw, true );
 }
 
 /*
 * CIN_ClearRawSamplesListeners
 */
-void CIN_ClearRawSamplesListeners( cinematics_t *cin )
-{
+void CIN_ClearRawSamplesListeners( cinematics_t *cin ) {
 	cin->num_listeners = 0;
 }
 
 /*
 * CIN_AddRawSamplesListener
 */
-bool CIN_AddRawSamplesListener( cinematics_t *cin, void *listener, 
-	cin_raw_samples_cb_t raw_samples, cin_get_raw_samples_cb_t get_raw_samples )
-{
+bool CIN_AddRawSamplesListener( cinematics_t *cin, void *listener,
+								cin_raw_samples_cb_t raw_samples, cin_get_raw_samples_cb_t get_raw_samples ) {
 	int i;
 
 	if( !cin ) {
@@ -352,9 +341,10 @@ bool CIN_AddRawSamplesListener( cinematics_t *cin, void *listener,
 	}
 
 	for( i = 0; i < cin->num_listeners; i++ ) {
-		if( cin->listeners[i].listener == listener 
-			&& cin->listeners[i].raw_samples == raw_samples )
+		if( cin->listeners[i].listener == listener
+			&& cin->listeners[i].raw_samples == raw_samples ) {
 			return true;
+		}
 	}
 
 	cin->listeners[cin->num_listeners].listener = listener;
@@ -368,9 +358,8 @@ bool CIN_AddRawSamplesListener( cinematics_t *cin, void *listener,
 /*
 * CIN_RawSamplesToListeners
 */
-void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const uint8_t *data )
-{
+void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigned int rate,
+								unsigned short width, unsigned short channels, const uint8_t *data ) {
 	int i;
 
 	if( cin->flags & CIN_NOAUDIO ) {
@@ -391,14 +380,13 @@ void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigne
 * Returns maximum samples length of all listeners. This can result
 * in underruns for some listeners but never in overruns.
 */
-unsigned int CIN_GetRawSamplesLengthFromListeners( cinematics_t *cin )
-{
+unsigned int CIN_GetRawSamplesLengthFromListeners( cinematics_t *cin ) {
 	int i;
 	unsigned int length = 0;
 
 	for( i = 0; i < cin->num_listeners; i++ ) {
-		unsigned int l = cin->listeners[i].get_raw_samples ? 
-			cin->listeners[i].get_raw_samples( cin->listeners[i].listener ) : 0;
+		unsigned int l = cin->listeners[i].get_raw_samples ?
+						 cin->listeners[i].get_raw_samples( cin->listeners[i].listener ) : 0;
 		length = max( length, l );
 	}
 
@@ -408,8 +396,7 @@ unsigned int CIN_GetRawSamplesLengthFromListeners( cinematics_t *cin )
 /*
 * CIN_Reset
 */
-void CIN_Reset( cinematics_t *cin, unsigned int cur_time )
-{
+void CIN_Reset( cinematics_t *cin, int64_t cur_time ) {
 	const cin_type_t *type;
 
 	assert( cin );
@@ -426,13 +413,13 @@ void CIN_Reset( cinematics_t *cin, unsigned int cur_time )
 /*
 * CIN_Close
 */
-void CIN_Close( cinematics_t *cin )
-{
+void CIN_Close( cinematics_t *cin ) {
 	struct mempool_s *mempool;
 	const cin_type_t *type;
 
-	if( !cin )
+	if( !cin ) {
 		return;
+	}
 
 	assert( cin->type > CIN_TYPE_NONE && cin->type < CIN_NUM_TYPES );
 
@@ -445,26 +432,22 @@ void CIN_Close( cinematics_t *cin )
 	cin->cur_time = 0;
 	cin->start_time = 0; // done
 
-	if( cin->file )
-	{
+	if( cin->file ) {
 		trap_FS_FCloseFile( cin->file );
 		cin->file = 0;
 	}
 
-	if( cin->fdata )
-	{
+	if( cin->fdata ) {
 		CIN_Free( cin->fdata );
 		cin->fdata = NULL;
 	}
 
-	if( cin->name )
-	{
+	if( cin->name ) {
 		CIN_Free( cin->name );
 		cin->name = NULL;
 	}
 
-	if( cin->vid_buffer )
-	{
+	if( cin->vid_buffer ) {
 		CIN_Free( cin->vid_buffer );
 		cin->vid_buffer = NULL;
 	}

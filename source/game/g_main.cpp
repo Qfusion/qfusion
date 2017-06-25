@@ -177,13 +177,6 @@ static void G_GS_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec
 }
 
 /*
-* G_GS_RoundUpToHullSize
-*/
-static void G_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs ) {
-	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
-}
-
-/*
 * G_InitGameShared
 * give gameshared access to some utilities
 */
@@ -204,7 +197,6 @@ static void G_InitGameShared( void ) {
 	module_Trace = G_GS_Trace;
 	module_GetEntityState = G_GetEntityStateForDeltaTime;
 	module_PointContents = G_PointContents4D;
-	module_RoundUpToHullSize = G_GS_RoundUpToHullSize;
 	module_PMoveTouchTriggers = G_PMoveTouchTriggers;
 	module_GetConfigString = trap_GetConfigString;
 }
@@ -618,8 +610,7 @@ void G_ExitLevel( void ) {
 	char command[256];
 	const char *nextmapname;
 	bool loadmap = true;
-	unsigned int timeLimit;
-	const unsigned int wrappingPoint = 0x70000000;
+	int64_t timeLimit;
 
 	level.exitNow = false;
 
@@ -628,10 +619,8 @@ void G_ExitLevel( void ) {
 	timeLimit *= 60 * 1000;
 
 	// if it's the same map see if we can restart without loading
-	if( !level.hardReset && !Q_stricmp( nextmapname, level.mapname ) ) {
-		if( ( (signed)level.time < (signed)( wrappingPoint - timeLimit ) ) && G_RespawnLevel() ) {
-			loadmap = false;
-		}
+	if( !level.hardReset && !Q_stricmp( nextmapname, level.mapname ) && G_RespawnLevel() ) {
+		loadmap = false;
 	}
 
 	AI_RemoveBots();

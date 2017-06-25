@@ -10,8 +10,8 @@ class ModelsDataSource :
 	public Rocket::Controls::DataSource
 {
 public:
-	ModelsDataSource(void);
-	~ModelsDataSource(void);
+	ModelsDataSource( void );
+	~ModelsDataSource( void );
 
 	// methods which must be overridden
 	void GetRow( StringList& row, const String& table, int row_index, const StringList& columns );

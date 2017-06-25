@@ -32,8 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * InitClientPersistant
 */
-static void InitClientPersistant( gclient_t *client )
-{
+static void InitClientPersistant( gclient_t *client ) {
 	assert( client );
 
 	memset( &client->pers, 0, sizeof( client->pers ) );
@@ -43,24 +42,23 @@ static void InitClientPersistant( gclient_t *client )
 
 /*
 * TVM_ClientEndSnapFrame
-* 
+*
 * Called for each player at the end of the server frame
 * and right after spawning
 */
-void TVM_ClientEndSnapFrame( edict_t *ent )
-{
+void TVM_ClientEndSnapFrame( edict_t *ent ) {
 	edict_t *spec;
 	tvm_relay_t *relay = ent->relay;
 
 	assert( ent && ent->local && ent->r.client && !ent->r.client->chase.active );
 
-	if( relay->playernum < 0 )
+	if( relay->playernum < 0 ) {
 		spec = NULL;
-	else
+	} else {
 		spec = relay->edicts + relay->playernum + 1;
+	}
 
-	if( relay->frame.valid && !relay->frame.multipov )
-	{
+	if( relay->frame.valid && !relay->frame.multipov ) {
 		assert( spec );
 		ent->r.client->ps = spec->r.client->ps;
 		ent->r.client->ps.pmove.pm_type = PM_CHASECAM;
@@ -71,50 +69,48 @@ void TVM_ClientEndSnapFrame( edict_t *ent )
 		return;
 	}
 
-	if( spec && spec->r.inuse && spec->r.client )
-	{
+	if( spec && spec->r.inuse && spec->r.client ) {
 		memcpy( ent->r.client->ps.stats, spec->r.client->ps.stats, sizeof( ent->r.client->ps.stats ) );
 		memcpy( ent->r.client->ps.inventory, spec->r.client->ps.inventory, sizeof( ent->r.client->ps.inventory ) );
-	}
-	else
-	{
+	} else {
 		memset( ent->r.client->ps.stats, 0, sizeof( ent->r.client->ps.stats ) );
 		memset( ent->r.client->ps.inventory, 0, sizeof( ent->r.client->ps.inventory ) );
 	}
 
 	ent->r.client->ps.viewheight = ent->viewheight;
-	if( relay->playernum < 0 )
+	if( relay->playernum < 0 ) {
 		ent->r.client->ps.POVnum = 255; // FIXME
-	else
+	} else {
 		ent->r.client->ps.POVnum = relay->playernum + 1;
+	}
 }
 
 /*
 * TVM_ClientIsZoom
 */
-bool TVM_ClientIsZoom( edict_t *ent )
-{
+bool TVM_ClientIsZoom( edict_t *ent ) {
 	assert( ent && ent->local && ent->r.client );
 
 #if 0
-	if( ent->r.client->ps.stats[STAT_HEALTH] <= 0 )
+	if( ent->r.client->ps.stats[STAT_HEALTH] <= 0 ) {
 		return false;
+	}
 #endif
 
-	if( ent->snap.buttons & BUTTON_ZOOM )
+	if( ent->snap.buttons & BUTTON_ZOOM ) {
 		return true;
+	}
 
 	return false;
 }
 
 /*
 * TVM_ClientBegin
-* 
+*
 * called when a client has finished connecting, and is ready
 * to be placed into the game. This will happen every level load.
 */
-void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent )
-{
+void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent ) {
 	edict_t *spot, *other;
 	int i, specs;
 	char hostname[MAX_CONFIGSTRING_CHARS];
@@ -126,18 +122,13 @@ void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent )
 	ent->r.client->pers.connecting = false;
 
 	spot = TVM_SelectSpawnPoint( ent );
-	if( spot )
-	{
+	if( spot ) {
 		VectorCopy( spot->s.origin, ent->s.origin );
-		VectorCopy( spot->s.origin, ent->s.old_origin );
 		VectorCopy( spot->s.angles, ent->s.angles );
 		VectorCopy( spot->s.origin, ent->r.client->ps.pmove.origin );
 		VectorCopy( spot->s.angles, ent->r.client->ps.viewangles );
-	}
-	else
-	{
+	} else {
 		VectorClear( ent->s.origin );
-		VectorClear( ent->s.old_origin );
 		VectorClear( ent->s.angles );
 		VectorClear( ent->r.client->ps.pmove.origin );
 		VectorClear( ent->r.client->ps.viewangles );
@@ -149,40 +140,42 @@ void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent )
 		ent->r.client->ps.pmove.delta_angles[i] = ANGLE2SHORT( ent->s.angles[i] ) - ent->r.client->pers.cmd_angles[i];
 
 	specs = 0;
-	for( i = 0; i < relay->local_maxclients; i++ )
-	{
+	for( i = 0; i < relay->local_maxclients; i++ ) {
 		other = relay->local_edicts + i;
-		if( other == ent )
+		if( other == ent ) {
 			continue;
-		if( !other->r.inuse || !other->r.client )
+		}
+		if( !other->r.inuse || !other->r.client ) {
 			continue;
-		if( trap_GetClientState( relay, PLAYERNUM( other ) ) != CS_SPAWNED )
+		}
+		if( trap_GetClientState( relay, PLAYERNUM( other ) ) != CS_SPAWNED ) {
 			continue;
+		}
 		specs++;
 	}
 
 	Q_strncpyz( hostname, relay->configStrings[CS_HOSTNAME], sizeof( hostname ) );
 	TVM_PrintMsg( relay, ent, S_COLOR_ORANGE "Welcome to %s! There %s currently %i spectator%s on this channel.\n",
-		COM_RemoveColorTokens( hostname ), (specs == 1 ? "is" : "are"), specs, (specs == 1 ? "" : "s") );
+				  COM_RemoveColorTokens( hostname ), ( specs == 1 ? "is" : "are" ), specs, ( specs == 1 ? "" : "s" ) );
 
 	TVM_PrintMsg( relay, ent, S_COLOR_ORANGE "For more information about chase camera modes type 'chase help' at console.\n" );
 
-	if( ent->r.client->chase.active )
+	if( ent->r.client->chase.active ) {
 		TVM_ChaseClientEndSnapFrame( ent );
-	else
+	} else {
 		TVM_ClientEndSnapFrame( ent );
+	}
 }
 
 /*
 * TVM_ClientUserInfoChanged
-* 
+*
 * called whenever the player updates a userinfo variable.
-* 
+*
 * The game can override any of the settings in place
 * (forcing skins or names, etc) before copying it off.
 */
-void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo )
-{
+void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo ) {
 	gclient_t *cl;
 
 	assert( ent && ent->local && ent->r.client );
@@ -190,14 +183,12 @@ void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo
 	cl = ent->r.client;
 
 	// check for malformed or illegal info strings
-	if( !Info_Validate( userinfo ) )
-	{
+	if( !Info_Validate( userinfo ) ) {
 		trap_DropClient( relay, PLAYERNUM( ent ), DROP_TYPE_GENERAL, "Error: Invalid userinfo" );
 		return;
 	}
 
-	if( !Info_ValueForKey( userinfo, "name" ) )
-	{
+	if( !Info_ValueForKey( userinfo, "name" ) ) {
 		trap_DropClient( relay, PLAYERNUM( ent ), DROP_TYPE_GENERAL, "Error: No name set" );
 		return;
 	}
@@ -212,16 +203,14 @@ void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo
 /*
 * TVM_CanConnect
 */
-bool TVM_CanConnect( tvm_relay_t *relay, char *userinfo )
-{
+bool TVM_CanConnect( tvm_relay_t *relay, char *userinfo ) {
 	return true;
 }
 
 /*
 * TVM_ClientConnect
 */
-void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo )
-{
+void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo ) {
 	edict_t *spec;
 
 	assert( relay );
@@ -229,10 +218,11 @@ void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo )
 	assert( userinfo );
 
 	// make sure we start with known default
-	if( ent->relay->playernum < 0 )
+	if( ent->relay->playernum < 0 ) {
 		spec = NULL;
-	else
+	} else {
 		spec = ent->relay->edicts + ent->relay->playernum + 1;
+	}
 	ent->local = true;
 	ent->relay = relay;
 	ent->r.inuse = true;
@@ -254,12 +244,11 @@ void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo )
 
 /*
 * TVM_ClientDisconnect
-* 
+*
 * Called when a player drops from the server.
 * Will not be called between levels.
 */
-void TVM_ClientDisconnect( tvm_relay_t *relay, edict_t *ent )
-{
+void TVM_ClientDisconnect( tvm_relay_t *relay, edict_t *ent ) {
 	assert( ent && ent->local && ent->r.client );
 
 	//TVM_Printf( "Disconnect: %s\n", ent->r.client->pers.netname );
@@ -274,51 +263,56 @@ void TVM_ClientDisconnect( tvm_relay_t *relay, edict_t *ent )
 
 /*
 * TVM_ClientMultiviewChanged
-* 
+*
 * This will be called when client tries to change multiview mode
 * Mode change can be disallowed by returning false
 */
-bool TVM_ClientMultiviewChanged( tvm_relay_t *relay, edict_t *ent, bool multiview )
-{
+bool TVM_ClientMultiviewChanged( tvm_relay_t *relay, edict_t *ent, bool multiview ) {
 	assert( ent && ent->local && ent->r.client );
 
 	ent->r.client->pers.multiview = multiview;
 	return true;
 }
 
-static void TVM_ClientMakePlrkeys( gclient_t *client, usercmd_t *ucmd )
-{
+static void TVM_ClientMakePlrkeys( gclient_t *client, usercmd_t *ucmd ) {
 	assert( client );
 	assert( ucmd );
 
 	client->plrkeys = 0; // clear it first
 
-	if( ucmd->forwardmove > 0 )
+	if( ucmd->forwardmove > 0 ) {
 		client->plrkeys |= ( 1 << KEYICON_FORWARD );
-	if( ucmd->forwardmove < 0 )
+	}
+	if( ucmd->forwardmove < 0 ) {
 		client->plrkeys |= ( 1 << KEYICON_BACKWARD );
-	if( ucmd->sidemove > 0 )
+	}
+	if( ucmd->sidemove > 0 ) {
 		client->plrkeys |= ( 1 << KEYICON_RIGHT );
-	if( ucmd->sidemove < 0 )
+	}
+	if( ucmd->sidemove < 0 ) {
 		client->plrkeys |= ( 1 << KEYICON_LEFT );
-	if( ucmd->upmove > 0 )
+	}
+	if( ucmd->upmove > 0 ) {
 		client->plrkeys |= ( 1 << KEYICON_JUMP );
-	if( ucmd->upmove < 0 )
+	}
+	if( ucmd->upmove < 0 ) {
 		client->plrkeys |= ( 1 << KEYICON_CROUCH );
-	if( ucmd->buttons & BUTTON_ATTACK )
+	}
+	if( ucmd->buttons & BUTTON_ATTACK ) {
 		client->plrkeys |= ( 1 << KEYICON_FIRE );
-	if( ucmd->buttons & BUTTON_SPECIAL )
+	}
+	if( ucmd->buttons & BUTTON_SPECIAL ) {
 		client->plrkeys |= ( 1 << KEYICON_SPECIAL );
+	}
 }
 
 /*
 * TVM_ClientThink
-* 
+*
 * This will be called once for each client frame, which will
 * usually be a couple times for each server frame.
 */
-void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int timeDelta )
-{
+void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	gclient_t *client;
 	static pmove_t pm;
 
@@ -338,36 +332,28 @@ void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int tim
 	client->ps.pmove.gravity = 850;
 
 	// in QFusion this was applied to both ps.pmove and pm.s, so it never activated snap initial
-	if( !ent->relay->frame.multipov )
-	{
+	if( !ent->relay->frame.multipov ) {
 		client->ps.pmove.pm_type = PM_CHASECAM;
-	}
-	else
-	{
+	} else {
 		edict_t *spec;
 
-		if( ent->relay->playernum < 0 )
+		if( ent->relay->playernum < 0 ) {
 			spec = NULL;
-		else
+		} else {
 			spec = &ent->relay->edicts[ent->relay->playernum + 1];
+		}
 
-		if( spec && spec->r.client && spec->r.client->ps.pmove.pm_type == PM_FREEZE )
-		{
+		if( spec && spec->r.client && spec->r.client->ps.pmove.pm_type == PM_FREEZE ) {
 			client->ps.pmove.pm_type = PM_FREEZE;
-			if( !VectorCompare( ent->s.origin, spec->s.origin ) )
-			{
+			if( !VectorCompare( ent->s.origin, spec->s.origin ) ) {
 				ent->s.teleported = true;
 				VectorCopy( spec->s.origin, ent->s.origin );
 				VectorCopy( spec->s.angles, ent->s.angles );
 				VectorCopy( spec->s.angles, client->ps.viewangles );
 			}
-		}
-		else if( client->chase.active )
-		{
+		} else if( client->chase.active ) {
 			client->ps.pmove.pm_type = PM_CHASECAM;
-		}
-		else
-		{
+		} else {
 			client->ps.pmove.pm_type = PM_SPECTATOR;
 		}
 	}
@@ -379,9 +365,6 @@ void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int tim
 
 	VectorCopy( ent->r.mins, pm.mins );
 	VectorCopy( ent->r.maxs, pm.maxs );
-
-	if( memcmp( &client->old_pmove, &client->ps.pmove, sizeof( pmove_state_t ) ) )
-		pm.snapinitial = true;
 
 	// perform a pmove
 	TVM_Pmove( &pm );
@@ -400,21 +383,19 @@ void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int tim
 	ent->waterlevel = pm.waterlevel;
 	ent->watertype = pm.watertype;
 
-	if( pm.groundentity != -1 )
-	{
+	if( pm.groundentity != -1 ) {
 		ent->groundentity = &ent->relay->edicts[pm.groundentity];
 		ent->groundentity_linkcount = ent->groundentity->r.linkcount;
-	}
-	else
-	{
+	} else {
 		ent->groundentity = NULL;
 	}
 
 	GClip_LinkEntity( ent->relay, ent );
 
 	// during the min respawn time, clear all buttons
-	if( client->ps.pmove.stats[PM_STAT_NOUSERCONTROL] <= 0 )
+	if( client->ps.pmove.stats[PM_STAT_NOUSERCONTROL] <= 0 ) {
 		client->buttons = ucmd->buttons;
+	}
 
 	// generating plrkeys (optimized for net communication)
 	TVM_ClientMakePlrkeys( client, ucmd );

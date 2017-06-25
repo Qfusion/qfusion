@@ -23,8 +23,8 @@
 extern int anykeydown;
 
 void Key_CharEvent( int key, wchar_t charkey );
-void Key_Event( int key, bool down, unsigned time );
-void Key_MouseEvent( int key, bool down, unsigned time );
+void Key_Event( int key, bool down, int64_t time );
+void Key_MouseEvent( int key, bool down, int64_t time );
 void Key_Init( void );
 void Key_Shutdown( void );
 void Key_WriteBindings( int file );

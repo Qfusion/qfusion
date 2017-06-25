@@ -18,35 +18,32 @@
 
  */
 
-#define RoQ_HEADER1			4228
-#define RoQ_HEADER2			-1
-#define RoQ_HEADER3			30
+#define RoQ_HEADER1         4228
+#define RoQ_HEADER2         -1
+#define RoQ_HEADER3         30
 
-#define RoQ_FRAMERATE		30
+#define RoQ_FRAMERATE       30
 
-#define RoQ_INFO			0x1001
-#define RoQ_QUAD_CODEBOOK	0x1002
-#define RoQ_QUAD_VQ			0x1011
-#define RoQ_SOUND_MONO		0x1020
-#define RoQ_SOUND_STEREO	0x1021
+#define RoQ_INFO            0x1001
+#define RoQ_QUAD_CODEBOOK   0x1002
+#define RoQ_QUAD_VQ         0x1011
+#define RoQ_SOUND_MONO      0x1020
+#define RoQ_SOUND_STEREO    0x1021
 
-#define RoQ_ID_MOT			0x00
-#define RoQ_ID_FCC			0x01
-#define RoQ_ID_SLD			0x02
-#define RoQ_ID_CCC			0x03
+#define RoQ_ID_MOT          0x00
+#define RoQ_ID_FCC          0x01
+#define RoQ_ID_SLD          0x02
+#define RoQ_ID_CCC          0x03
 
-typedef struct
-{
+typedef struct {
 	uint8_t y[4], u, v;
 } roq_cell_t;
 
-typedef struct
-{
+typedef struct {
 	uint8_t idx[4];
 } roq_qcell_t;
 
-typedef struct
-{
+typedef struct {
 	unsigned short id;
 	unsigned int size;
 	unsigned short argument;

@@ -23,20 +23,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "kernel/ui_demoinfo.h"
 #include "kernel/ui_utils.h"
 
-namespace WSWUI {
-
-DemoInfo::DemoInfo()
+namespace WSWUI
 {
+
+DemoInfo::DemoInfo() {
 	setName( "" );
 }
 
-DemoInfo::DemoInfo( const char *name )
-{
+DemoInfo::DemoInfo( const char *name ) {
 	setName( name );
 }
 
-DemoInfo & DemoInfo::operator = ( const DemoInfo &other )
-{
+DemoInfo & DemoInfo::operator =( const DemoInfo &other ) {
 	this->directory = other.directory;
 	this->time = other.time;
 	this->isPlaying = other.isPlaying;
@@ -46,13 +44,11 @@ DemoInfo & DemoInfo::operator = ( const DemoInfo &other )
 	return *this;
 }
 
-const bool DemoInfo::isValid( void ) const
-{
+const bool DemoInfo::isValid( void ) const {
 	return !name.empty();
 }
 
-void DemoInfo::setName( const std::string & newName )
-{
+void DemoInfo::setName( const std::string & newName ) {
 	this->name = newName;
 	this->directory.clear();
 	this->hasMetaData = false;
@@ -61,18 +57,15 @@ void DemoInfo::setName( const std::string & newName )
 	this->metaData.clear();
 }
 
-const std::string &DemoInfo::getName() const
-{
+const std::string &DemoInfo::getName() const {
 	return name;
 }
 
-const std::string DemoInfo::getFullPath() const
-{
+const std::string DemoInfo::getFullPath() const {
 	return directory + name;
 }
 
-const DemoMetaData &DemoInfo::getMetaData()
-{
+const DemoMetaData &DemoInfo::getMetaData() {
 	if( !hasMetaData ) {
 		hasMetaData = true;
 		readMetaData();
@@ -80,40 +73,34 @@ const DemoMetaData &DemoInfo::getMetaData()
 	return metaData;
 }
 
-void DemoInfo::setDirectory( const std::string &directory_ )
-{
+void DemoInfo::setDirectory( const std::string &directory_ ) {
 	directory = directory_.empty() ? "" : directory_ + "/";
 }
 
-void DemoInfo::Play( void ) const
-{
+void DemoInfo::Play( void ) const {
 	std::string playcmd = std::string( "demo \"" ) + getName() + "\"";
 	trap::Cmd_ExecuteText( EXEC_APPEND, playcmd.c_str() );
 }
 
-void DemoInfo::Pause( void ) const
-{
+void DemoInfo::Pause( void ) const {
 	if( isPlaying ) {
 		trap::Cmd_ExecuteText( EXEC_NOW, "demopause" );
 	}
 }
 
-void DemoInfo::Stop( void ) const
-{
+void DemoInfo::Stop( void ) const {
 	if( isPlaying ) {
 		trap::Cmd_ExecuteText( EXEC_APPEND, "disconnect" );
 	}
 }
 
-void DemoInfo::Jump( unsigned int jtime ) const
-{
+void DemoInfo::Jump( unsigned int jtime ) const {
 	std::string jumpcmd = std::string( "demojump \"" ) + WSWUI::toString( jtime ) + "\"";
 	trap::Cmd_ExecuteText( EXEC_NOW, jumpcmd.c_str() );
 }
 
-void DemoInfo::readMetaData( void )
-{
-	const size_t meta_data_c_size = 16*1024;
+void DemoInfo::readMetaData( void ) {
+	const size_t meta_data_c_size = 16 * 1024;
 	char meta_data_c_str[meta_data_c_size];
 
 	std::string fullName = getFullPath();

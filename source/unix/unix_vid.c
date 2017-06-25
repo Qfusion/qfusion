@@ -23,8 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 x11display_t x11display;
 
-static int VID_WndProc( x11display_t *wnd, int ev, int p1, int p2 )
-{
+static int VID_WndProc( x11display_t *wnd, int ev, int p1, int p2 ) {
 	x11display = *wnd;
 	return 0;
 }
@@ -32,42 +31,37 @@ static int VID_WndProc( x11display_t *wnd, int ev, int p1, int p2 )
 /*
 * VID_Sys_Init
 */
-rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, 
-	const int *iconXPM, void *parentWindow, bool verbose )
-{
+rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor,
+					  const int *iconXPM, void *parentWindow, bool verbose ) {
 	x11display.dpy = NULL;
 
 	return re.Init( applicationName, screenshotsPrefix, startupColor, 0, iconXPM,
-		NULL, &VID_WndProc, parentWindow, verbose );
+					NULL, &VID_WndProc, parentWindow, verbose );
 }
 
 /*
 * VID_UpdateWindowPosAndSize
 */
-void VID_UpdateWindowPosAndSize( int x, int y )
-{
+void VID_UpdateWindowPosAndSize( int x, int y ) {
 }
 
 /*
 * VID_EnableAltTab
 */
-void VID_EnableAltTab( bool enable )
-{
+void VID_EnableAltTab( bool enable ) {
 }
 
 /*
 * VID_GetWindowHandle - The sound module may require the handle when using Window's directsound
 */
-void *VID_GetWindowHandle( void )
-{
+void *VID_GetWindowHandle( void ) {
 	return ( void * )NULL;
 }
 
 /*
 * VID_EnableWinKeys
 */
-void VID_EnableWinKeys( bool enable )
-{
+void VID_EnableWinKeys( bool enable ) {
 }
 
 /*
@@ -75,8 +69,7 @@ void VID_EnableWinKeys( bool enable )
 *
 * Tell Window-Manager that application demands user attention
 */
-static void _NET_WM_STATE_DEMANDS_ATTENTION( void )
-{
+static void _NET_WM_STATE_DEMANDS_ATTENTION( void ) {
 	XEvent xev;
 	Atom wm_state;
 	Atom wm_demandsAttention;
@@ -88,7 +81,7 @@ static void _NET_WM_STATE_DEMANDS_ATTENTION( void )
 	wm_state = XInternAtom( x11display.dpy, "_NET_WM_STATE", False );
 	wm_demandsAttention = XInternAtom( x11display.dpy, "_NET_WM_STATE_DEMANDS_ATTENTION", False );
 
-	memset(&xev, 0, sizeof(xev));
+	memset( &xev, 0, sizeof( xev ) );
 	xev.type = ClientMessage;
 	xev.xclient.window = x11display.win;
 	xev.xclient.message_type = wm_state;
@@ -97,7 +90,7 @@ static void _NET_WM_STATE_DEMANDS_ATTENTION( void )
 	xev.xclient.data.l[1] = wm_demandsAttention;
 
 	XSendEvent( x11display.dpy, DefaultRootWindow( x11display.dpy ), False,
-		SubstructureNotifyMask, &xev );
+				SubstructureNotifyMask, &xev );
 }
 
 /*
@@ -105,8 +98,7 @@ static void _NET_WM_STATE_DEMANDS_ATTENTION( void )
 *
 * Sends a flash message to inactive window
 */
-void VID_FlashWindow( int count )
-{
+void VID_FlashWindow( int count ) {
 	if( x11display.dpy ) {
 		_NET_WM_STATE_DEMANDS_ATTENTION();
 	}
@@ -115,8 +107,7 @@ void VID_FlashWindow( int count )
 /*
 ** VID_GetSysModes
 */
-unsigned int VID_GetSysModes( vidmode_t *modes )
-{
+unsigned int VID_GetSysModes( vidmode_t *modes ) {
 	XRRScreenConfiguration *xrrConfig;
 	XRRScreenSize *xrrSizes;
 	Display *dpy;
@@ -124,16 +115,13 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 	int num_sizes = 0, i;
 
 	dpy = XOpenDisplay( NULL );
-	if( dpy )
-	{
+	if( dpy ) {
 		root = DefaultRootWindow( dpy );
 		xrrConfig = XRRGetScreenInfo( dpy, root );
 		xrrSizes = XRRConfigSizes( xrrConfig, &num_sizes );
 
-		if( modes )
-		{
-			for( i = 0; i < num_sizes; i++ )
-			{
+		if( modes ) {
+			for( i = 0; i < num_sizes; i++ ) {
 				modes[i].width = xrrSizes[i].width;
 				modes[i].height = xrrSizes[i].height;
 			}
@@ -148,8 +136,7 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 /*
 ** VID_GetDefaultMode
 */
-bool VID_GetDefaultMode( int *width, int *height )
-{
+bool VID_GetDefaultMode( int *width, int *height ) {
 	XRRScreenConfiguration *xrrConfig;
 	XRRScreenSize *xrrSizes;
 	Display *dpy;
@@ -159,8 +146,7 @@ bool VID_GetDefaultMode( int *width, int *height )
 	int num_sizes;
 
 	dpy = XOpenDisplay( NULL );
-	if( dpy )
-	{
+	if( dpy ) {
 		root = DefaultRootWindow( dpy );
 		xrrConfig = XRRGetScreenInfo( dpy, root );
 		xrrSizes = XRRConfigSizes( xrrConfig, &num_sizes );
@@ -179,7 +165,6 @@ bool VID_GetDefaultMode( int *width, int *height )
 /*
 ** VID_GetPixelRatio
 */
-float VID_GetPixelRatio( void )
-{
+float VID_GetPixelRatio( void ) {
 	return 1.0f;
 }

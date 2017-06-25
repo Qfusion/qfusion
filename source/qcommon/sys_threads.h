@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef SYS_THREADS_H
 #define SYS_THREADS_H
 
-int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *param );
+int Sys_Thread_Create( qthread_t **pthread, void *( *routine )( void* ), void *param );
 void Sys_Thread_Join( qthread_t *thread );
 void Sys_Thread_Yield( void );
 

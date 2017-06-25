@@ -29,29 +29,25 @@ namespace WSWUI
 class FiletypeFormatter : public Rocket::Controls::DataFormatter
 {
 public:
-	FiletypeFormatter() : Rocket::Controls::DataFormatter("filetype") {}
+	FiletypeFormatter() : Rocket::Controls::DataFormatter( "filetype" ) {}
 
 	// Encloses filename into a <filetype> tag and sets its class to file extension (e.g. "mp3") .
 	// Directories have their own tag <dirtype> with the only possible class "back" for ".." directories.
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data )
-	{
+	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
 		const Rocket::Core::String &fname = raw_data[0];
 		if( fname == ".." ) {
 			formatted_data = "<dirtype class=\"back\">..</dirtype>";
-		}
-		else {
+		} else {
 			Rocket::Core::String::size_type nameLength = fname.Length();
 			Rocket::Core::String::size_type delimPos = fname.RFind( "/" );
-			if ( delimPos != fname.npos && delimPos + 1 == nameLength ) {
-				formatted_data = String("<dirtype>") + fname.Substring( 0, nameLength - 1 ) + "</dirtype>";
-			}
-			else {
+			if( delimPos != fname.npos && delimPos + 1 == nameLength ) {
+				formatted_data = String( "<dirtype>" ) + fname.Substring( 0, nameLength - 1 ) + "</dirtype>";
+			} else {
 				delimPos = fname.RFind( "." );
 				if( delimPos != fname.npos ) {
-					formatted_data = String("<filetype class=\"") + fname.Substring( delimPos + 1 ) + "\">" + fname + "</filetype>";
-				}
-				else {
-					formatted_data = String("<filetype>") + fname + "</filetype>";
+					formatted_data = String( "<filetype class=\"" ) + fname.Substring( delimPos + 1 ) + "\">" + fname + "</filetype>";
+				} else {
+					formatted_data = String( "<filetype>" ) + fname + "</filetype>";
 				}
 			}
 		}

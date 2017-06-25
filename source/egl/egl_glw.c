@@ -31,17 +31,16 @@ glwstate_t glw_state;
 /*
 ** GLimp_BeginFrame
 */
-void GLimp_BeginFrame( void )
-{
+void GLimp_BeginFrame( void ) {
 }
 
 /*
 ** GLimp_EndFrame
 */
-void GLimp_EndFrame( void )
-{
-	if( glw_state.surface != EGL_NO_SURFACE )
+void GLimp_EndFrame( void ) {
+	if( glw_state.surface != EGL_NO_SURFACE ) {
 		qeglSwapBuffers( glw_state.display, glw_state.surface );
+	}
 }
 
 /*
@@ -51,8 +50,7 @@ void GLimp_EndFrame( void )
 ** of OpenGL.
 */
 bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
-	int iconResource, const int *iconXPM )
-{
+				 int iconResource, const int *iconXPM ) {
 	glw_state.window = ( EGLNativeWindowType )parenthWnd;
 	return true;
 }
@@ -64,33 +62,28 @@ bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, vo
 ** subsystem. The state structure is also nulled out.
 **
 */
-void GLimp_Shutdown( void )
-{
-	if( glw_state.windowMutex )
+void GLimp_Shutdown( void ) {
+	if( glw_state.windowMutex ) {
 		ri.Mutex_Destroy( &glw_state.windowMutex );
-	if( glw_state.context != EGL_NO_CONTEXT )
-	{
+	}
+	if( glw_state.context != EGL_NO_CONTEXT ) {
 		qeglMakeCurrent( glw_state.display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
 		qeglDestroyContext( glw_state.display, glw_state.context );
 		glw_state.context = EGL_NO_CONTEXT;
 	}
-	if( glw_state.surface != EGL_NO_SURFACE )
-	{
+	if( glw_state.surface != EGL_NO_SURFACE ) {
 		qeglDestroySurface( glw_state.display, glw_state.surface );
 		glw_state.surface = EGL_NO_SURFACE;
 	}
-	if( glw_state.noWindowPbuffer != EGL_NO_SURFACE )
-	{
+	if( glw_state.noWindowPbuffer != EGL_NO_SURFACE ) {
 		qeglDestroySurface( glw_state.display, glw_state.noWindowPbuffer );
 		glw_state.noWindowPbuffer = EGL_NO_SURFACE;
 	}
-	if( glw_state.mainThreadPbuffer != EGL_NO_SURFACE )
-	{
+	if( glw_state.mainThreadPbuffer != EGL_NO_SURFACE ) {
 		qeglDestroySurface( glw_state.display, glw_state.mainThreadPbuffer );
 		glw_state.mainThreadPbuffer = EGL_NO_SURFACE;
 	}
-	if( glw_state.display != EGL_NO_DISPLAY )
-	{
+	if( glw_state.display != EGL_NO_DISPLAY ) {
 		qeglTerminate( glw_state.display );
 		glw_state.display = EGL_NO_DISPLAY;
 	}
@@ -99,42 +92,40 @@ void GLimp_Shutdown( void )
 /*
 ** GLimp_EGL_ChooseVisual
 */
-static EGLConfig GLimp_EGL_ChooseVisual( int colorSize, int depthSize, int depthEncoding, int stencilSize, int minSwapInterval )
-{
+static EGLConfig GLimp_EGL_ChooseVisual( int colorSize, int depthSize, int depthEncoding, int stencilSize, int minSwapInterval ) {
 	int attribs[] =
 	{
-		/*  0 */	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-		/*  2 */	EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
-		/*  4 */	EGL_RED_SIZE, colorSize,
-		/*  6 */	EGL_GREEN_SIZE, colorSize,
-		/*  8 */	EGL_BLUE_SIZE, colorSize,
-		/* 10 */	EGL_ALPHA_SIZE, colorSize,
-		/* 12 */	EGL_DEPTH_SIZE, depthSize,
-		/* 14 */	EGL_STENCIL_SIZE, stencilSize,
-		/* 16 */	EGL_SAMPLES, 0,
-		/* 18 */	EGL_SAMPLE_BUFFERS, 0,
-		/* 20 */	EGL_NONE, EGL_DONT_CARE,
-					EGL_NONE, EGL_DONT_CARE,
-					EGL_NONE
+		/*  0 */ EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+		/*  2 */ EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
+		/*  4 */ EGL_RED_SIZE, colorSize,
+		/*  6 */ EGL_GREEN_SIZE, colorSize,
+		/*  8 */ EGL_BLUE_SIZE, colorSize,
+		/* 10 */ EGL_ALPHA_SIZE, colorSize,
+		/* 12 */ EGL_DEPTH_SIZE, depthSize,
+		/* 14 */ EGL_STENCIL_SIZE, stencilSize,
+		/* 16 */ EGL_SAMPLES, 0,
+		/* 18 */ EGL_SAMPLE_BUFFERS, 0,
+		/* 20 */ EGL_NONE, EGL_DONT_CARE,
+		EGL_NONE, EGL_DONT_CARE,
+		EGL_NONE
 	};
 	int addAttrib = 20;
 	int numConfigs = 0;
 	EGLConfig config = NULL;
 
-	if( minSwapInterval != EGL_DONT_CARE )
-	{
+	if( minSwapInterval != EGL_DONT_CARE ) {
 		attribs[addAttrib++] = EGL_MIN_SWAP_INTERVAL;
 		attribs[addAttrib++] = minSwapInterval;
 	}
 
-	if( depthEncoding != EGL_DONT_CARE )
-	{
+	if( depthEncoding != EGL_DONT_CARE ) {
 		attribs[addAttrib++] = EGL_DEPTH_ENCODING_NV;
 		attribs[addAttrib++] = depthEncoding;
 	}
 
-	if( qeglChooseConfig( glw_state.display, attribs, &config, 1, &numConfigs ) )
+	if( qeglChooseConfig( glw_state.display, attribs, &config, 1, &numConfigs ) ) {
 		return numConfigs ? config : 0;
+	}
 
 	return NULL;
 }
@@ -142,8 +133,7 @@ static EGLConfig GLimp_EGL_ChooseVisual( int colorSize, int depthSize, int depth
 /*
 ** GLimp_EGL_ChooseConfig
 */
-static void GLimp_EGL_ChooseConfig( void )
-{
+static void GLimp_EGL_ChooseConfig( void ) {
 	int colorSizes[] = { 8, 4 }, colorSize;
 	int depthSizes[] = { 24, 16, 16 }, depthSize, firstDepthSize = 0;
 	bool depthEncodingSupported = false;
@@ -159,35 +149,31 @@ static void GLimp_EGL_ChooseConfig( void )
 	const char *extensions = qglGetGLWExtensionsString();
 	int i, j, k;
 
-	if( !( ri.Cvar_Get( "gl_ext_depth24", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ) )
+	if( !( ri.Cvar_Get( "gl_ext_depth24", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO )->integer ) ) {
 		firstDepthSize = 1;
+	}
 
 	if( extensions && strstr( extensions, "EGL_NV_depth_nonlinear" ) &&
-		ri.Cvar_Get( "gl_ext_depth_nonlinear", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer )
-	{
+		ri.Cvar_Get( "gl_ext_depth_nonlinear", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO )->integer ) {
 		depthEncodingSupported = true;
 	}
 
-	for( i = 0; i < sizeof( colorSizes ) / sizeof( colorSizes[0] ); i++ )
-	{
+	for( i = 0; i < sizeof( colorSizes ) / sizeof( colorSizes[0] ); i++ ) {
 		colorSize = colorSizes[i];
 
-		for( j = firstDepthSize; j < sizeof( depthSizes ) / sizeof( depthSizes[0] ); j++ )
-		{
+		for( j = firstDepthSize; j < sizeof( depthSizes ) / sizeof( depthSizes[0] ); j++ ) {
 			depthEncoding = depthEncodings[j];
-			if( ( depthEncoding != EGL_DONT_CARE ) && !depthEncodingSupported )
+			if( ( depthEncoding != EGL_DONT_CARE ) && !depthEncodingSupported ) {
 				continue;
+			}
 
 			depthSize = depthSizes[j];
 
-			for( stencilSize = maxStencilSize; stencilSize >= 0; stencilSize -= 8 )
-			{
-				for( k = 0; k < sizeof( minSwapIntervals ) / sizeof( minSwapIntervals[0] ); k++ )
-				{
+			for( stencilSize = maxStencilSize; stencilSize >= 0; stencilSize -= 8 ) {
+				for( k = 0; k < sizeof( minSwapIntervals ) / sizeof( minSwapIntervals[0] ); k++ ) {
 					EGLConfig config = GLimp_EGL_ChooseVisual( colorSize, depthSize, depthEncoding, stencilSize, minSwapIntervals[k] );
 
-					if( config )
-					{
+					if( config ) {
 						glw_state.config = config;
 
 #ifdef GLIMP_EGL_FORCE_VSYNC
@@ -197,16 +183,16 @@ static void GLimp_EGL_ChooseConfig( void )
 #endif
 						ri.Com_Printf( "Got colorbits %i, depthbits %i%s, stencilbits %i"
 #ifndef GLIMP_EGL_FORCE_VSYNC
-							", min swap interval %i"
+									   ", min swap interval %i"
 #endif
-							"\n"
-							, colorSize * 4, depthSize
-							, ( depthEncoding == EGL_DEPTH_ENCODING_NONLINEAR_NV ) ? " (non-linear)" : ""
-							, stencilSize
+									   "\n"
+									   , colorSize * 4, depthSize
+									   , ( depthEncoding == EGL_DEPTH_ENCODING_NONLINEAR_NV ) ? " (non-linear)" : ""
+									   , stencilSize
 #ifndef GLIMP_EGL_FORCE_VSYNC
-							, minSwapInterval
+									   , minSwapInterval
 #endif
-						);
+									   );
 						glConfig.stencilBits = stencilSize;
 						ri.Cvar_ForceSet( "r_swapinterval_min", ( minSwapInterval > 0 ) ? "1" : "0" );
 						return;
@@ -222,8 +208,7 @@ static void GLimp_EGL_ChooseConfig( void )
  *
  * @return 1x1 pbuffer surface
  */
-static EGLSurface GLimp_EGL_CreatePbufferSurface( void )
-{
+static EGLSurface GLimp_EGL_CreatePbufferSurface( void ) {
 	const int pbufferAttribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
 	return qeglCreatePbufferSurface( glw_state.display, glw_state.config, pbufferAttribs );
 }
@@ -231,31 +216,30 @@ static EGLSurface GLimp_EGL_CreatePbufferSurface( void )
 /**
  * Recreates and selects the surface for the newly created window, or selects a dummy buffer when there's no window.
  */
-static void GLimp_EGL_UpdateWindowSurface( void )
-{
+static void GLimp_EGL_UpdateWindowSurface( void ) {
 	EGLNativeWindowType window = glw_state.window;
 	EGLContext context = qeglGetCurrentContext();
 
-	if( context == EGL_NO_CONTEXT )
+	if( context == EGL_NO_CONTEXT ) {
 		return;
+	}
 
-	if( glw_state.surface != EGL_NO_SURFACE )
-	{
+	if( glw_state.surface != EGL_NO_SURFACE ) {
 		qeglMakeCurrent( glw_state.display, glw_state.noWindowPbuffer, glw_state.noWindowPbuffer, context );
 		qeglDestroySurface( glw_state.display, glw_state.surface );
 		glw_state.surface = EGL_NO_SURFACE;
 	}
 
-	if( !window )
+	if( !window ) {
 		return;
+	}
 
 #ifdef __ANDROID__
 	ANativeWindow_setBuffersGeometry( window, glConfig.width, glConfig.height, glw_state.format );
 #endif
 
 	glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, window, NULL );
-	if( glw_state.surface == EGL_NO_SURFACE )
-	{
+	if( glw_state.surface == EGL_NO_SURFACE ) {
 		ri.Com_Printf( "GLimp_EGL_UpdateWindowSurface() - GLimp_EGL_CreateWindowSurface failed\n" );
 		return;
 	}
@@ -267,54 +251,46 @@ static void GLimp_EGL_UpdateWindowSurface( void )
 /*
 ** GLimp_InitGL
 */
-static bool GLimp_InitGL( void )
-{
+static bool GLimp_InitGL( void ) {
 	int format;
 	EGLConfig config;
 	const int contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
 	EGLSurface surface;
 
 	glw_state.display = qeglGetDisplay( EGL_DEFAULT_DISPLAY );
-	if( glw_state.display == EGL_NO_DISPLAY )
-	{
+	if( glw_state.display == EGL_NO_DISPLAY ) {
 		ri.Com_Printf( "GLimp_InitGL() - eglGetDisplay failed\n" );
 		return false;
 	}
-	if( !qeglInitialize( glw_state.display, NULL, NULL ) )
-	{
+	if( !qeglInitialize( glw_state.display, NULL, NULL ) ) {
 		ri.Com_Printf( "GLimp_InitGL() - eglInitialize failed\n" );
 		return false;
 	}
 
 	GLimp_EGL_ChooseConfig();
-	if( !glw_state.config )
-	{
+	if( !glw_state.config ) {
 		ri.Com_Printf( "GLimp_InitGL() - GLimp_EGL_ChooseConfig failed\n" );
 		return false;
 	}
-	if ( !qeglGetConfigAttrib( glw_state.display, glw_state.config, EGL_NATIVE_VISUAL_ID, &glw_state.format ) )
-	{
+	if( !qeglGetConfigAttrib( glw_state.display, glw_state.config, EGL_NATIVE_VISUAL_ID, &glw_state.format ) ) {
 		ri.Com_Printf( "GLimp_InitGL() - eglGetConfigAttrib failed\n" );
 		return false;
 	}
 
 	glw_state.mainThreadPbuffer = GLimp_EGL_CreatePbufferSurface();
-	if( glw_state.mainThreadPbuffer == EGL_NO_SURFACE )
-	{
+	if( glw_state.mainThreadPbuffer == EGL_NO_SURFACE ) {
 		ri.Com_Printf( "GLimp_InitGL() - GLimp_EGL_CreatePbufferSurface for mainThreadPbuffer failed\n" );
 		return false;
 	}
 
 	glw_state.noWindowPbuffer = GLimp_EGL_CreatePbufferSurface();
-	if( glw_state.noWindowPbuffer == EGL_NO_SURFACE )
-	{
+	if( glw_state.noWindowPbuffer == EGL_NO_SURFACE ) {
 		ri.Com_Printf( "GLimp_InitGL() - GLimp_EGL_CreatePbufferSurface for noWindowPbuffer failed\n" );
 		return false;
 	}
 
 	glw_state.context = qeglCreateContext( glw_state.display, glw_state.config, EGL_NO_CONTEXT, contextAttribs );
-	if( glw_state.context == EGL_NO_CONTEXT )
-	{
+	if( glw_state.context == EGL_NO_CONTEXT ) {
 		ri.Com_Printf( "GLimp_InitGL() - eglCreateContext failed\n" );
 		return false;
 	}
@@ -333,8 +309,7 @@ static bool GLimp_InitGL( void )
 /*
 ** GLimp_SetFullscreenMode
 */
-rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
-{
+rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen ) {
 	glConfig.fullScreen = fullscreen;
 	return rserr_ok;
 }
@@ -342,10 +317,8 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless )
-{
-	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen )
-	{
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless ) {
+	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen ) {
 #ifdef __ANDROID__
 		return rserr_ok; // The window is always fullscreen on Android
 #endif
@@ -360,8 +333,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.fullScreen = fullscreen;
 	glConfig.borderless = borderless;
 
-	if( !GLimp_InitGL() )
-	{
+	if( !GLimp_InitGL() ) {
 		ri.Com_Printf( "GLimp_SetMode() - GLimp_InitGL failed\n" );
 		GLimp_Shutdown();
 		return rserr_unknown;
@@ -373,39 +345,37 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending )
-{
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending ) {
 	EGLNativeWindowType window = ( EGLNativeWindowType )parenthWnd;
 
-	if( surfaceChangePending )
+	if( surfaceChangePending ) {
 		*surfaceChangePending = false;
+	}
 
-	if( glw_state.context == EGL_NO_CONTEXT ) // Not initialized yet
-	{
+	if( glw_state.context == EGL_NO_CONTEXT ) { // Not initialized yet
 		glw_state.window = window;
 		return rserr_ok;
 	}
 
-	if( glw_state.multithreadedRendering )
+	if( glw_state.multithreadedRendering ) {
 		ri.Mutex_Lock( glw_state.windowMutex );
+	}
 
-	if( glw_state.window != window )
-	{
+	if( glw_state.window != window ) {
 		glw_state.window = window;
-		if( glw_state.multithreadedRendering )
-		{
+		if( glw_state.multithreadedRendering ) {
 			glw_state.windowChanged = true;
-			if( surfaceChangePending )
+			if( surfaceChangePending ) {
 				*surfaceChangePending = true;
-		}
-		else
-		{
+			}
+		} else {
 			GLimp_EGL_UpdateWindowSurface();
 		}
 	}
 
-	if( glw_state.multithreadedRendering )
+	if( glw_state.multithreadedRendering ) {
 		ri.Mutex_Unlock( glw_state.windowMutex );
+	}
 
 	return rserr_ok;
 }
@@ -413,40 +383,34 @@ rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool 
 /*
 ** GLimp_AppActivate
 */
-void GLimp_AppActivate( bool active, bool destroy )
-{
+void GLimp_AppActivate( bool active, bool minimize, bool destroy ) {
 }
 
 /*
 ** GLimp_GetGammaRamp
 */
-bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
-{
+bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp ) {
 	return false;
 }
 
 /*
 ** GLimp_SetGammaRamp
 */
-void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp )
-{
+void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp ) {
 }
 
 /*
 ** GLimp_RenderingEnabled
 */
-bool GLimp_RenderingEnabled( void )
-{
+bool GLimp_RenderingEnabled( void ) {
 	return glw_state.window != NULL;
 }
 
 /*
 ** GLimp_SetSwapInterval
 */
-void GLimp_SetSwapInterval( int swapInterval )
-{
-	if( glw_state.swapInterval != swapInterval )
-	{
+void GLimp_SetSwapInterval( int swapInterval ) {
+	if( glw_state.swapInterval != swapInterval ) {
 		glw_state.swapInterval = swapInterval;
 		qeglSwapInterval( glw_state.display, swapInterval );
 	}
@@ -455,23 +419,19 @@ void GLimp_SetSwapInterval( int swapInterval )
 /*
 ** GLimp_EnableMultithreadedRendering
 */
-void GLimp_EnableMultithreadedRendering( bool enable )
-{
+void GLimp_EnableMultithreadedRendering( bool enable ) {
 	EGLSurface surface;
 
-	if( glw_state.multithreadedRendering == enable )
+	if( glw_state.multithreadedRendering == enable ) {
 		return;
+	}
 
 	glw_state.multithreadedRendering = enable;
 
-	if( enable )
-	{
+	if( enable ) {
 		surface = glw_state.mainThreadPbuffer;
-	}
-	else
-	{
-		if( glw_state.windowChanged )
-		{
+	} else {
+		if( glw_state.windowChanged ) {
 			glw_state.windowChanged = false;
 			GLimp_EGL_UpdateWindowSurface();
 		}
@@ -484,22 +444,20 @@ void GLimp_EnableMultithreadedRendering( bool enable )
 /*
 ** GLimp_GetWindowSurface
 */
-void *GLimp_GetWindowSurface( bool *renderable )
-{
-	if( renderable )
+void *GLimp_GetWindowSurface( bool *renderable ) {
+	if( renderable ) {
 		*renderable = ( glw_state.surface != EGL_NO_SURFACE );
+	}
 	return ( glw_state.surface != EGL_NO_SURFACE ? glw_state.surface : glw_state.noWindowPbuffer );
 }
 
 /*
 ** GLimp_UpdatePendingWindowSurface
 */
-void GLimp_UpdatePendingWindowSurface( void )
-{
+void GLimp_UpdatePendingWindowSurface( void ) {
 	ri.Mutex_Lock( glw_state.windowMutex );
 
-	if( glw_state.windowChanged )
-	{
+	if( glw_state.windowChanged ) {
 		glw_state.windowChanged = false;
 		GLimp_EGL_UpdateWindowSurface();
 	}
@@ -510,47 +468,46 @@ void GLimp_UpdatePendingWindowSurface( void )
 /*
 ** GLimp_MakeCurrent
 */
-bool GLimp_MakeCurrent( void *context, void *surface )
-{
+bool GLimp_MakeCurrent( void *context, void *surface ) {
 	return qeglMakeCurrent( glw_state.display, surface, surface, context ) ? true : false;
 }
 
 /*
 ** GLimp_SharedContext_Create
 */
-bool GLimp_SharedContext_Create( void **context, void **surface )
-{
+bool GLimp_SharedContext_Create( void **context, void **surface ) {
 	const int contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
 	EGLSurface pbuffer = EGL_NO_SURFACE;
 	EGLContext ctx;
 
-	if( surface )
-	{
+	if( surface ) {
 		pbuffer = GLimp_EGL_CreatePbufferSurface();
-		if( pbuffer == EGL_NO_SURFACE )
+		if( pbuffer == EGL_NO_SURFACE ) {
 			return false;
+		}
 	}
 
 	ctx = qeglCreateContext( glw_state.display, glw_state.config, glw_state.context, contextAttribs );
-	if( !ctx )
-	{
-		if( pbuffer != EGL_NO_SURFACE )
+	if( !ctx ) {
+		if( pbuffer != EGL_NO_SURFACE ) {
 			qeglDestroySurface( glw_state.display, pbuffer );
+		}
 		return false;
 	}
 
 	*context = ctx;
-	if( surface )
+	if( surface ) {
 		*surface = pbuffer;
+	}
 	return true;
 }
 
 /*
 ** GLimp_SharedContext_Destroy
 */
-void GLimp_SharedContext_Destroy( void *context, void *surface )
-{
+void GLimp_SharedContext_Destroy( void *context, void *surface ) {
 	qeglDestroyContext( glw_state.display, context );
-	if( surface )
+	if( surface ) {
 		qeglDestroySurface( glw_state.display, surface );
+	}
 }

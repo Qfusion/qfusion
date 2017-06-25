@@ -24,23 +24,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "widgets/ui_widgets.h"
 #include "widgets/ui_idiv.h"
 
-namespace WSWUI {
+namespace WSWUI
+{
 
 using namespace Rocket::Core;
 
-InlineDiv::InlineDiv( const String &tag ) : Element( tag ), timeout( WSW_UI_STREAMCACHE_TIMEOUT ), onAddLoad( false ), loading( false )
-{
+InlineDiv::InlineDiv( const String &tag ) : Element( tag ), timeout( WSW_UI_STREAMCACHE_TIMEOUT ), onAddLoad( false ), loading( false ) {
 }
 
-void InlineDiv::ReadFromFile( const char *fileName )
-{
+void InlineDiv::ReadFromFile( const char *fileName ) {
 	FileHandle handle = GetFileInterface()->Open( fileName );
 
 	if( !handle ) {
 		// missing file
 		SetInnerRML( String( "Failed to load " ) + fileName );
-	}
-	else {
+	} else {
 		size_t length = GetFileInterface()->Length( handle );
 
 		// allocate temporary buffer
@@ -61,8 +59,7 @@ void InlineDiv::ReadFromFile( const char *fileName )
 	DispatchEvent( "load", Dictionary(), false );
 }
 
-void InlineDiv::CacheRead( const char *fileName, void *privatep )
-{
+void InlineDiv::CacheRead( const char *fileName, void *privatep ) {
 	InlineDiv *element = ( InlineDiv * )privatep;
 
 	element->ReadFromFile( fileName );
@@ -71,30 +68,30 @@ void InlineDiv::CacheRead( const char *fileName, void *privatep )
 	element->RemoveReference();
 }
 
-void InlineDiv::OnChildAdd( Element* element )
-{
+void InlineDiv::OnChildAdd( Element* element ) {
 	Element::OnChildAdd( element );
 
 	if( element == this ) {
 		Element *document = GetOwnerDocument();
-		if( document == NULL )
+		if( document == NULL ) {
 			return;
-		if( onAddLoad )
+		}
+		if( onAddLoad ) {
 			LoadSource();
+		}
 	}
 }
 
-void InlineDiv::LoadSource()
-{
+void InlineDiv::LoadSource() {
 	if( loading ) {
 		// prevent recursive entries
 		return;
 	}
 
 	// Get the source URL for the image.
-	String source = GetAttribute< String >("src", "");
-	bool nocache = GetAttribute< int >("nocache", 0) != 0;
-	int expires = GetAttribute< int >("expires", WSW_UI_STREAMCACHE_CACHE_TTL);
+	String source = GetAttribute< String >( "src", "" );
+	bool nocache = GetAttribute< int >( "nocache", 0 ) != 0;
+	int expires = GetAttribute< int >( "expires", WSW_UI_STREAMCACHE_CACHE_TTL );
 
 	onAddLoad = false;
 	loading = true;
@@ -114,12 +111,11 @@ void InlineDiv::LoadSource()
 		// (passed as the void * pointer below)
 		AddReference();
 
-		UI_Main::Get()->getStreamCache()->PerformRequest( 
-			source.CString(), "GET", NULL, 
+		UI_Main::Get()->getStreamCache()->PerformRequest(
+			source.CString(), "GET", NULL,
 			NULL, NULL, &CacheRead, ( void * )this, timeout, nocache ? 0 : expires
-		);
-	}
-	else {
+			);
+	} else {
 		// get full path to the source.
 		// without the leading "/", path is considered to be relative to the document
 		Rocket::Core::ElementDocument* document = GetOwnerDocument();
@@ -149,9 +145,8 @@ void InlineDiv::LoadSource()
 }
 
 // Called when attributes on the element are changed.
-void InlineDiv::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes )
-{
-	Element::OnAttributeChange(changed_attributes);
+void InlineDiv::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+	Element::OnAttributeChange( changed_attributes );
 
 	AttributeNameList::const_iterator it;
 
@@ -165,14 +160,13 @@ void InlineDiv::OnAttributeChange( const Rocket::Core::AttributeNameList& change
 	// timeout for remote URL's
 	it = changed_attributes.find( "timeout" );
 	if( it != changed_attributes.end() ) {
-		timeout = atoi(GetAttribute< String >("src", "").CString());
+		timeout = atoi( GetAttribute< String >( "src", "" ).CString() );
 	}
 }
 
 //==============================================================
 
-ElementInstancer *GetInlineDivInstancer( void )
-{
+ElementInstancer *GetInlineDivInstancer( void ) {
 	return __new__( GenericElementInstancer<InlineDiv> )();
 }
 

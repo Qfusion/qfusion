@@ -18,15 +18,15 @@ License along with this library.
 
 #include "steamlib_local.h"
 
-namespace WSWSTEAM {
+namespace WSWSTEAM
+{
 
 static steamlib_import_t si;
 
 /*
 * GetSteamImport
 */
-steamlib_import_t *GetSteamImport( void )
-{
+steamlib_import_t *GetSteamImport( void ) {
 	return &si;
 }
 
@@ -34,10 +34,10 @@ steamlib_import_t *GetSteamImport( void )
 
 /*
 * GetSteamLibAPI
-* 
+*
 * Returns a pointer to the structure with all entry points
 */
-extern "C" STEAMDLL_EXPORT steamlib_export_t *GetSteamLibAPI( steamlib_import_t *import )
+extern "C" STEAMDLL_EXPORT steamlib_export_t * GetSteamLibAPI( steamlib_import_t * import )
 {
 	static steamlib_export_t globals;
 
@@ -60,8 +60,7 @@ extern "C" STEAMDLL_EXPORT steamlib_export_t *GetSteamLibAPI( steamlib_import_t 
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( STEAMLIB_HARD_LINKED )
-int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
-{
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved ) {
 	return 1;
 }
 #endif
