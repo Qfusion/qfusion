@@ -12,22 +12,24 @@
 class AiShutdownHooksHolder
 {
 public:
-    static constexpr unsigned MAX_HOOKS = 64;
+	static constexpr unsigned MAX_HOOKS = 64;
+
 private:
-    StaticVector<std::function<void(void)>, MAX_HOOKS / 2> untaggedHooks;
-    StaticVector<std::pair<uint64_t, std::function<void(void)>>, MAX_HOOKS / 2> taggedHooks;
-    bool hooksInvoked;
+	StaticVector<std::function<void(void)>, MAX_HOOKS / 2> untaggedHooks;
+	StaticVector<std::pair<uint64_t, std::function<void(void)> >, MAX_HOOKS / 2> taggedHooks;
+	bool hooksInvoked;
+
 public:
-    AiShutdownHooksHolder(): hooksInvoked(false) {}
-    ~AiShutdownHooksHolder();
+	AiShutdownHooksHolder() : hooksInvoked( false ) {}
+	~AiShutdownHooksHolder();
 
-    void RegisterHook(const std::function<void(void)> &hook);
-    void RegisterHook(uint64_t tag, const std::function<void(void)> &hook);
-    void UnregisterHook(uint64_t tag);
+	void RegisterHook( const std::function<void(void)> &hook );
+	void RegisterHook( uint64_t tag, const std::function<void(void)> &hook );
+	void UnregisterHook( uint64_t tag );
 
-    void InvokeHooks();
+	void InvokeHooks();
 
-    static AiShutdownHooksHolder *Instance();
+	static AiShutdownHooksHolder *Instance();
 };
 
 #endif

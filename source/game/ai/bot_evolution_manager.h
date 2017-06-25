@@ -5,21 +5,23 @@
 
 class BotEvolutionManager
 {
-    static BotEvolutionManager *instance;
+	static BotEvolutionManager *instance;
+
 protected:
-    BotEvolutionManager() {}
+	BotEvolutionManager() {}
+
 public:
-    virtual ~BotEvolutionManager() {};
+	virtual ~BotEvolutionManager() {};
 
-    static void Init();
-    static void Shutdown();
+	static void Init();
+	static void Shutdown();
 
-    static inline BotEvolutionManager *Instance() { return instance; }
+	static inline BotEvolutionManager *Instance() { return instance; }
 
-    virtual void OnBotConnected(edict_t *ent) {};
-    virtual void OnBotRespawned(edict_t *ent) {};
+	virtual void OnBotConnected( edict_t *ent ) {};
+	virtual void OnBotRespawned( edict_t *ent ) {};
 
-    virtual void SaveEvolutionResults() {};
+	virtual void SaveEvolutionResults() {};
 };
 
 #endif

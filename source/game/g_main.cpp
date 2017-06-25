@@ -114,20 +114,18 @@ static const char *G_SelectNextMapName( void );
 /*
 * G_API
 */
-int G_API( void )
-{
+int G_API( void ) {
 	return GAME_API_VERSION;
 }
 
 /*
 * G_Error
-* 
+*
 * Abort the server with a game error
 */
-void G_Error( const char *format, ... )
-{
+void G_Error( const char *format, ... ) {
 	char msg[1024];
-	va_list	argptr;
+	va_list argptr;
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
@@ -138,13 +136,12 @@ void G_Error( const char *format, ... )
 
 /*
 * G_Printf
-* 
+*
 * Debug print to server console
 */
-void G_Printf( const char *format, ... )
-{
+void G_Printf( const char *format, ... ) {
 	char msg[1024];
-	va_list	argptr;
+	va_list argptr;
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
@@ -156,27 +153,25 @@ void G_Printf( const char *format, ... )
 /*
 * G_GS_Malloc - Used only for gameshared linking
 */
-static void *G_GS_Malloc( size_t size )
-{
+static void *G_GS_Malloc( size_t size ) {
 	return G_Malloc( size );
 }
 
 /*
 * G_GS_Free - Used only for gameshared linking
 */
-static void G_GS_Free( void *data )
-{
+static void G_GS_Free( void *data ) {
 	G_Free( data );
 }
 
 /*
 * G_GS_Trace - Used only for gameshared linking
 */
-static void G_GS_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta )
-{
+static void G_GS_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta ) {
 	edict_t *passent = NULL;
-	if( ignore >= 0 && ignore < MAX_EDICTS )
+	if( ignore >= 0 && ignore < MAX_EDICTS ) {
 		passent = &game.edicts[ignore];
+	}
 
 	G_Trace4D( tr, start, mins, maxs, end, passent, contentmask, timeDelta );
 }
@@ -184,8 +179,7 @@ static void G_GS_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec
 /*
 * G_GS_RoundUpToHullSize
 */
-static void G_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs )
-{
+static void G_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs ) {
 	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
 }
 
@@ -193,14 +187,14 @@ static void G_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs )
 * G_InitGameShared
 * give gameshared access to some utilities
 */
-static void G_InitGameShared( void )
-{
+static void G_InitGameShared( void ) {
 	memset( &gs, 0, sizeof( gs_state_t ) );
 	gs.module = GS_MODULE_GAME;
 
 	gs.maxclients = atoi( trap_GetConfigString( CS_MAXCLIENTS ) );
-	if( gs.maxclients < 1 || gs.maxclients > MAX_EDICTS )
+	if( gs.maxclients < 1 || gs.maxclients > MAX_EDICTS ) {
 		G_Error( "Invalid maxclients value %i\n", gs.maxclients );
+	}
 
 	module_PredictedEvent = G_PredictedEvent;
 	module_Error = G_Error;
@@ -217,12 +211,11 @@ static void G_InitGameShared( void )
 
 /*
 * G_Init
-* 
+*
 * This will be called when the dll is first loaded, which
 * only happens when a new game is started or a save game is loaded.
 */
-void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char *demoExtension )
-{
+void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char *demoExtension ) {
 	cvar_t *g_maxentities;
 
 	G_Printf( "==== G_Init ====\n" );
@@ -231,7 +224,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 
 	G_InitGameShared();
 
-	SV_ReadIPList ();
+	SV_ReadIPList();
 
 	game.snapFrameTime = framemsec;
 	game.frametime = game.snapFrameTime;
@@ -240,8 +233,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	game.levelSpawnCount = 0;
 
 	g_maxvelocity = trap_Cvar_Get( "g_maxvelocity", "16000", 0 );
-	if( g_maxvelocity->value < 20 )
-	{
+	if( g_maxvelocity->value < 20 ) {
 		trap_Cvar_SetValue( "g_maxvelocity", 20 );
 	}
 
@@ -285,7 +277,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_deadbody_followkiller = trap_Cvar_Get( "g_deadbody_followkiller", "1", CVAR_DEVELOPER );
 	g_deadbody_autogib_delay = trap_Cvar_Get( "g_deadbody_autogib_delay", "2000", CVAR_DEVELOPER );
 	g_maxtimeouts = trap_Cvar_Get( "g_maxtimeouts", "2", CVAR_ARCHIVE );
-	g_antilag = trap_Cvar_Get( "g_antilag", "1", CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_LATCH );
+	g_antilag = trap_Cvar_Get( "g_antilag", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 	g_antilag_maxtimedelta = trap_Cvar_Get( "g_antilag_maxtimedelta", "200", CVAR_ARCHIVE );
 	g_antilag_maxtimedelta->modified = true;
 	g_antilag_timenudge = trap_Cvar_Get( "g_antilag_timenudge", "0", CVAR_ARCHIVE );
@@ -293,13 +285,10 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 
 	g_allow_spectator_voting = trap_Cvar_Get( "g_allow_spectator_voting", "1", CVAR_ARCHIVE );
 
-	if( dedicated->integer )
-	{
+	if( dedicated->integer ) {
 		g_autorecord = trap_Cvar_Get( "g_autorecord", "1", CVAR_ARCHIVE );
 		g_autorecord_maxdemos = trap_Cvar_Get( "g_autorecord_maxdemos", "200", CVAR_ARCHIVE );
-	}
-	else
-	{
+	} else {
 		g_autorecord = trap_Cvar_Get( "g_autorecord", "0", CVAR_ARCHIVE );
 		g_autorecord_maxdemos = trap_Cvar_Get( "g_autorecord_maxdemos", "0", CVAR_ARCHIVE );
 	}
@@ -326,16 +315,16 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_map_pool = trap_Cvar_Get( "g_map_pool", "", CVAR_ARCHIVE );
 
 	//game switches
-	g_instagib = trap_Cvar_Get( "g_instagib", "0", CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_LATCH );
+	g_instagib = trap_Cvar_Get( "g_instagib", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 	g_instajump = trap_Cvar_Get( "g_instajump", "1", CVAR_ARCHIVE );
 	g_instashield = trap_Cvar_Get( "g_instashield", "1", CVAR_ARCHIVE );
 
 	// helper cvars to show current status in serverinfo reply
-	trap_Cvar_Get( "g_match_time", "", CVAR_SERVERINFO|CVAR_READONLY );
-	trap_Cvar_Get( "g_match_score", "", CVAR_SERVERINFO|CVAR_READONLY );
-	trap_Cvar_Get( "g_needpass", "", CVAR_SERVERINFO|CVAR_READONLY );
-	trap_Cvar_Get( "g_gametypes_available", "", CVAR_SERVERINFO|CVAR_READONLY );
-	trap_Cvar_Get( "g_race_gametype", "0", CVAR_SERVERINFO|CVAR_READONLY );
+	trap_Cvar_Get( "g_match_time", "", CVAR_SERVERINFO | CVAR_READONLY );
+	trap_Cvar_Get( "g_match_score", "", CVAR_SERVERINFO | CVAR_READONLY );
+	trap_Cvar_Get( "g_needpass", "", CVAR_SERVERINFO | CVAR_READONLY );
+	trap_Cvar_Get( "g_gametypes_available", "", CVAR_SERVERINFO | CVAR_READONLY );
+	trap_Cvar_Get( "g_race_gametype", "0", CVAR_SERVERINFO | CVAR_READONLY );
 
 	// define this one here so we can see when it's modified
 	g_disable_vote_gametype = trap_Cvar_Get( "g_disable_vote_gametype", "0", CVAR_ARCHIVE );
@@ -343,9 +332,9 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_asGC_stats = trap_Cvar_Get( "g_asGC_stats", "0", CVAR_ARCHIVE );
 	g_asGC_interval = trap_Cvar_Get( "g_asGC_interval", "10", CVAR_ARCHIVE );
 
-	g_skillRating = trap_Cvar_Get( "sv_skillRating", va("%.0f", MM_RATING_DEFAULT), CVAR_SERVERINFO|CVAR_READONLY );
+	g_skillRating = trap_Cvar_Get( "sv_skillRating", va( "%.0f", MM_RATING_DEFAULT ), CVAR_SERVERINFO | CVAR_READONLY );
 	// trap_Cvar_ForceSet( "sv_skillRating", va("%d", MM_RATING_DEFAULT) );
-	g_bot_evolution = trap_Cvar_Get( "g_bot_evolution", "0", CVAR_ARCHIVE|CVAR_LATCH );
+	g_bot_evolution = trap_Cvar_Get( "g_bot_evolution", "0", CVAR_ARCHIVE | CVAR_LATCH );
 
 	// nextmap
 	trap_Cvar_ForceSet( "nextmap", "match \"advance\"" );
@@ -379,8 +368,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 /*
 * G_Shutdown
 */
-void G_Shutdown( void )
-{
+void G_Shutdown( void ) {
 	int i;
 
 	G_Printf( "==== G_Shutdown ====\n" );
@@ -388,15 +376,15 @@ void G_Shutdown( void )
 	GT_asCallShutdown();
 	G_asCallMapExit();
 
-    AI_BeforeLevelLevelScriptShutdown();
+	AI_BeforeLevelLevelScriptShutdown();
 
 	G_asShutdownMapScript();
 	GT_asShutdownScript();
 	G_asShutdownGameModuleEngine();
 
-    AI_AfterLevelScriptShutdown();
+	AI_AfterLevelScriptShutdown();
 
-	SV_WriteIPList ();
+	SV_WriteIPList();
 
 	trap_Cvar_ForceSet( "nextmap", va( "map \"%s\"", G_SelectNextMapName() ) );
 
@@ -408,10 +396,10 @@ void G_Shutdown( void )
 
 	G_LevelFreePool();
 
-	for( i = 0; i < game.numentities; i++ )
-	{
-		if( game.edicts[i].r.inuse )
+	for( i = 0; i < game.numentities; i++ ) {
+		if( game.edicts[i].r.inuse ) {
 			G_FreeEdict( &game.edicts[i] );
+		}
 	}
 
 	G_Free( game.edicts );
@@ -423,8 +411,7 @@ void G_Shutdown( void )
 /*
 * G_AllowDownload
 */
-bool G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname )
-{
+bool G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname ) {
 	return false;
 }
 
@@ -432,11 +419,10 @@ bool G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadn
 
 /*
 * CreateTargetChangeLevel
-* 
+*
 * Returns the created target changelevel
 */
-static edict_t *CreateTargetChangeLevel( const char *map )
-{
+static edict_t *CreateTargetChangeLevel( const char *map ) {
 	edict_t *ent;
 
 	ent = G_Spawn();
@@ -448,29 +434,29 @@ static edict_t *CreateTargetChangeLevel( const char *map )
 
 /*
 * G_UpdateMapRotation
-* 
+*
 * Reads current map rotation into internal list
 */
-static void G_UpdateMapRotation( void )
-{
+static void G_UpdateMapRotation( void ) {
 	int count, i;
 	bool thiswhitespace, lastwhitespace, found;
 	char *p, *start;
 	static const char *seps = " ,\n\r";
 
-	if( g_maplist->modified || !map_rotation_s || !map_rotation_p )
-	{
+	if( g_maplist->modified || !map_rotation_s || !map_rotation_p ) {
 		g_maplist->modified = false;
 
 		// reread the maplist
-		if( map_rotation_s )
+		if( map_rotation_s ) {
 			G_Free( map_rotation_s );
-		if( map_rotation_p )
+		}
+		if( map_rotation_p ) {
 			G_Free( map_rotation_p );
+		}
 
 		map_rotation_s = G_CopyString( g_maplist->string );
 		map_rotation_p = NULL;
-		map_rotation_current = -1;	// reset the mapcounter too
+		map_rotation_current = -1;  // reset the mapcounter too
 		map_rotation_count = 0;
 
 		// count the number of tokens
@@ -479,32 +465,30 @@ static void G_UpdateMapRotation( void )
 		lastwhitespace = true;
 		start = NULL;
 		found = false;
-		while( *p )
-		{
+		while( *p ) {
 			thiswhitespace = ( strchr( seps, *p ) != NULL ) ? true : false;
-			if( lastwhitespace && !thiswhitespace )
-			{
+			if( lastwhitespace && !thiswhitespace ) {
 				start = p;
 				count++;
-			}
-			else if( thiswhitespace && !lastwhitespace && !found && start )
-			{
+			} else if( thiswhitespace && !lastwhitespace && !found && start ) {
 				found = true;
-				for( i = 0; start + i < p; i++ )
-				{
-					if( tolower( start[i] ) != tolower( level.mapname[i] ) )
+				for( i = 0; start + i < p; i++ ) {
+					if( tolower( start[i] ) != tolower( level.mapname[i] ) ) {
 						found = false;
+					}
 				}
-				if( found )
+				if( found ) {
 					map_rotation_current = count - 1;
+				}
 			}
 
 			lastwhitespace = thiswhitespace;
 			p++;
 		}
 
-		if( !count )
+		if( !count ) {
 			return;
+		}
 
 		// allocate the array of pointers
 		map_rotation_p = ( char ** )G_Malloc( ( count + 1 ) * sizeof( *map_rotation_p ) );
@@ -513,14 +497,15 @@ static void G_UpdateMapRotation( void )
 		p = map_rotation_s;
 		count = 0;
 		lastwhitespace = true;
-		while( *p )
-		{
+		while( *p ) {
 			thiswhitespace = ( strchr( seps, *p ) != NULL ) ? true : false;
-			if( lastwhitespace && !thiswhitespace )
+			if( lastwhitespace && !thiswhitespace ) {
 				map_rotation_p[count++] = p;
+			}
 
-			if( thiswhitespace )
+			if( thiswhitespace ) {
 				*p = 0;
+			}
 
 			lastwhitespace = thiswhitespace;
 			p++;
@@ -536,17 +521,18 @@ static void G_UpdateMapRotation( void )
 /*
 * G_MapRotationNormal
 */
-static const char *G_MapRotationNormal( void )
-{
+static const char *G_MapRotationNormal( void ) {
 	G_UpdateMapRotation();
 
-	if( !map_rotation_count )
+	if( !map_rotation_count ) {
 		return NULL;
+	}
 
 	map_rotation_current++;
 
-	if( map_rotation_current >= map_rotation_count || map_rotation_p[map_rotation_current] == NULL )
+	if( map_rotation_current >= map_rotation_count || map_rotation_p[map_rotation_current] == NULL ) {
 		map_rotation_current = 0;
+	}
 
 	return map_rotation_p[map_rotation_current];
 }
@@ -554,19 +540,18 @@ static const char *G_MapRotationNormal( void )
 /*
 * G_MapRotationNormal
 */
-static const char *G_MapRotationRandom( void )
-{
+static const char *G_MapRotationRandom( void ) {
 	int seed, selection;
 
 	G_UpdateMapRotation();
 
 	// avoid eternal loop
-	if( !map_rotation_count || map_rotation_count == 1 )
+	if( !map_rotation_count || map_rotation_count == 1 ) {
 		return NULL;
+	}
 
 	seed = game.realtime;
-	do
-	{
+	do {
 		selection = (int)Q_brandom( &seed, 0, map_rotation_count );
 	} while( selection == map_rotation_current );
 
@@ -577,43 +562,36 @@ static const char *G_MapRotationRandom( void )
 /*
 * G_ChooseNextMap
 */
-static edict_t *G_ChooseNextMap( void )
-{
-	edict_t	*ent = NULL;
+static edict_t *G_ChooseNextMap( void ) {
+	edict_t *ent = NULL;
 	const char *next;
 
-	if( *level.forcemap )
-	{
+	if( *level.forcemap ) {
 		return CreateTargetChangeLevel( level.forcemap );
 	}
 
-	if( !( *g_maplist->string ) || g_maplist->string[0] == '\0' || g_maprotation->integer == 0 )
-	{
+	if( !( *g_maplist->string ) || g_maplist->string[0] == '\0' || g_maprotation->integer == 0 ) {
 		// same map again
 		return CreateTargetChangeLevel( level.mapname );
-	}
-	else if( g_maprotation->integer == 1 )
-	{
+	} else if( g_maprotation->integer == 1 ) {
 		next = G_MapRotationNormal();
 
 		// not in the list, we go for the first one
 		ent = CreateTargetChangeLevel( next ? next : level.mapname );
 		return ent;
-	}
-	else if( g_maprotation->integer == 2 )
-	{
+	} else if( g_maprotation->integer == 2 ) {
 		next = G_MapRotationRandom();
 		ent = CreateTargetChangeLevel( next ? next : level.mapname );
 		return ent;
 	}
 
-	if( level.nextmap[0] )  // go to a specific map
+	if( level.nextmap[0] ) { // go to a specific map
 		return CreateTargetChangeLevel( level.nextmap );
+	}
 
 	// search for a changelevel
 	ent = G_Find( NULL, FOFS( classname ), "target_changelevel" );
-	if( !ent )
-	{
+	if( !ent ) {
 		// the map designer didn't include a changelevel,
 		// so create a fake ent that goes back to the same level
 		return CreateTargetChangeLevel( level.mapname );
@@ -624,8 +602,7 @@ static edict_t *G_ChooseNextMap( void )
 /*
 * G_SelectNextMapName
 */
-static const char *G_SelectNextMapName( void )
-{
+static const char *G_SelectNextMapName( void ) {
 	edict_t *changelevel;
 
 	changelevel = G_ChooseNextMap();
@@ -635,10 +612,9 @@ static const char *G_SelectNextMapName( void )
 /*
 * G_ExitLevel
 */
-void G_ExitLevel( void )
-{
+void G_ExitLevel( void ) {
 	int i;
-	edict_t	*ent;
+	edict_t *ent;
 	char command[256];
 	const char *nextmapname;
 	bool loadmap = true;
@@ -652,18 +628,15 @@ void G_ExitLevel( void )
 	timeLimit *= 60 * 1000;
 
 	// if it's the same map see if we can restart without loading
-	if( !level.hardReset && !Q_stricmp( nextmapname, level.mapname ) )
-	{
-		if( ( (signed)level.time < (signed)( wrappingPoint-timeLimit ) ) && G_RespawnLevel() )
-		{
+	if( !level.hardReset && !Q_stricmp( nextmapname, level.mapname ) ) {
+		if( ( (signed)level.time < (signed)( wrappingPoint - timeLimit ) ) && G_RespawnLevel() ) {
 			loadmap = false;
 		}
 	}
 
 	AI_RemoveBots();
 
-	if( loadmap )
-	{
+	if( loadmap ) {
 		Q_snprintfz( command, sizeof( command ), "gamemap \"%s\"\n", nextmapname );
 		trap_Cmd_ExecuteText( EXEC_APPEND, command );
 	}
@@ -671,28 +644,27 @@ void G_ExitLevel( void )
 	G_SnapClients();
 
 	// clear some things before going to next level
-	for( i = 0; i < gs.maxclients; i++ )
-	{
+	for( i = 0; i < gs.maxclients; i++ ) {
 		ent = game.edicts + 1 + i;
-		if( !ent->r.inuse )
+		if( !ent->r.inuse ) {
 			continue;
+		}
 
 		ent->r.client->level.showscores = false;
 
-		if( ent->health > ent->max_health )
+		if( ent->health > ent->max_health ) {
 			ent->health = ent->max_health;
+		}
 
 		// some things are only cleared when there's a new map load
-		if( loadmap )
-		{
+		if( loadmap ) {
 			ent->r.client->connecting = true; // set all connected players as "reconnecting"
 			ent->s.team = TEAM_SPECTATOR;
 		}
 	}
 }
 
-void G_RestartLevel( void )
-{
+void G_RestartLevel( void ) {
 	Q_strncpyz( level.forcemap, level.mapname, sizeof( level.mapname ) );
 	G_EndMatch();
 }
@@ -701,9 +673,8 @@ void G_RestartLevel( void )
 
 #ifndef GAME_HARD_LINKED
 // this is only here so the functions in q_shared.c and q_math.c can link
-void Sys_Error( const char *format, ... )
-{
-	va_list	argptr;
+void Sys_Error( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );
@@ -713,9 +684,8 @@ void Sys_Error( const char *format, ... )
 	G_Error( "%s", msg );
 }
 
-void Com_Printf( const char *format, ... )
-{
-	va_list	argptr;
+void Com_Printf( const char *format, ... ) {
+	va_list argptr;
 	char msg[3072];
 
 	va_start( argptr, format );

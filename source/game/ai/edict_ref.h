@@ -7,13 +7,13 @@
 class EdictRef
 {
 public:
-    edict_t * const self;
-    EdictRef(edict_t *ent): self(ent) {}
+	edict_t * const self;
+	EdictRef( edict_t *ent ) : self( ent ) {}
 
-    edict_t *Self() { return self; }
-    const edict_t *Self() const { return self; }
+	edict_t *Self() { return self; }
+	const edict_t *Self() const { return self; }
 
-    int EntNum() const { return ENTNUM(self); }
+	int EntNum() const { return ENTNUM( self ); }
 };
 
 #endif

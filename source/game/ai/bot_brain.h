@@ -15,265 +15,259 @@
 // (such as nav targets and special movement states like camping spots),
 // and thus controlling a bot by a single flags field already is not possible.
 // This struct is likely to be extended by non-boolean values later.
-struct SelectedMiscTactics
-{
-    bool willAdvance;
-    bool willRetreat;
+struct SelectedMiscTactics {
+	bool willAdvance;
+	bool willRetreat;
 
-    bool shouldBeSilent;
-    bool shouldMoveCarefully;
+	bool shouldBeSilent;
+	bool shouldMoveCarefully;
 
-    bool shouldAttack;
-    bool shouldKeepXhairOnEnemy;
+	bool shouldAttack;
+	bool shouldKeepXhairOnEnemy;
 
-    bool willAttackMelee;
-    bool shouldRushHeadless;
+	bool willAttackMelee;
+	bool shouldRushHeadless;
 
-    inline SelectedMiscTactics() { Clear(); };
+	inline SelectedMiscTactics() { Clear(); };
 
-    inline void Clear()
-    {
-        willAdvance = false;
-        willRetreat = true;
+	inline void Clear() {
+		willAdvance = false;
+		willRetreat = true;
 
-        shouldBeSilent = false;
-        shouldMoveCarefully = false;
+		shouldBeSilent = false;
+		shouldMoveCarefully = false;
 
-        shouldAttack = false;
-        shouldKeepXhairOnEnemy = false;
+		shouldAttack = false;
+		shouldKeepXhairOnEnemy = false;
 
-        willAttackMelee = false;
-        shouldRushHeadless = false;
-    }
+		willAttackMelee = false;
+		shouldRushHeadless = false;
+	}
 
-    inline void PreferAttackRatherThanRun()
-    {
-        shouldAttack = true;
-        shouldKeepXhairOnEnemy = true;
-    }
+	inline void PreferAttackRatherThanRun() {
+		shouldAttack = true;
+		shouldKeepXhairOnEnemy = true;
+	}
 
-    inline void PreferRunRatherThanAttack()
-    {
-        shouldAttack = true;
-        shouldKeepXhairOnEnemy = true;
-    }
+	inline void PreferRunRatherThanAttack() {
+		shouldAttack = true;
+		shouldKeepXhairOnEnemy = true;
+	}
 };
 
-class BotBrain: public AiBaseBrain
+class BotBrain : public AiBaseBrain
 {
-    friend class Bot;
-    friend class BotItemsSelector;
-    friend class BotBaseGoal;
-    friend class BotGutsActionsAccessor;
+	friend class Bot;
+	friend class BotItemsSelector;
+	friend class BotBaseGoal;
+	friend class BotGutsActionsAccessor;
 
-    edict_t *bot;
+	edict_t *bot;
 
-    float baseOffensiveness;
-    const float skillLevel;
-    const unsigned reactionTime;
+	float baseOffensiveness;
+	const float skillLevel;
+	const unsigned reactionTime;
 
-    int64_t nextTargetChoiceAt;
-    const unsigned targetChoicePeriod;
+	int64_t nextTargetChoiceAt;
+	const unsigned targetChoicePeriod;
 
-    BotItemsSelector itemsSelector;
+	BotItemsSelector itemsSelector;
 
-    StaticVector<BotScriptGoal, MAX_GOALS> scriptGoals;
-    StaticVector<BotScriptAction, MAX_ACTIONS> scriptActions;
+	StaticVector<BotScriptGoal, MAX_GOALS> scriptGoals;
+	StaticVector<BotScriptAction, MAX_ACTIONS> scriptActions;
 
-    BotBaseGoal *GetGoalByName(const char *name);
-    BotBaseAction *GetActionByName(const char *name);
+	BotBaseGoal *GetGoalByName( const char *name );
+	BotBaseAction *GetActionByName( const char *name );
 
-    inline BotScriptGoal *AllocScriptGoal() { return scriptGoals.unsafe_grow_back(); }
-    inline BotScriptAction *AllocScriptAction() { return scriptActions.unsafe_grow_back(); }
+	inline BotScriptGoal *AllocScriptGoal() { return scriptGoals.unsafe_grow_back(); }
+	inline BotScriptAction *AllocScriptAction() { return scriptActions.unsafe_grow_back(); }
 
-    inline bool BotHasQuad() const { return ::HasQuad(bot); }
-    inline bool BotHasShell() const { return ::HasShell(bot); }
-    inline bool BotHasPowerups() const { return ::HasPowerups(bot); }
-    inline bool BotIsCarrier() const { return ::IsCarrier(bot); }
-    float BotSkill() const { return skillLevel; }
+	inline bool BotHasQuad() const { return ::HasQuad( bot ); }
+	inline bool BotHasShell() const { return ::HasShell( bot ); }
+	inline bool BotHasPowerups() const { return ::HasPowerups( bot ); }
+	inline bool BotIsCarrier() const { return ::IsCarrier( bot ); }
+	float BotSkill() const { return skillLevel; }
 
-    inline const int *Inventory() const { return bot->r.client->ps.inventory; }
+	inline const int *Inventory() const { return bot->r.client->ps.inventory; }
 
-    template <int Weapon> inline int AmmoReadyToFireCount() const
-    {
-        if (!Inventory()[Weapon])
-            return 0;
-        return Inventory()[WeaponAmmo<Weapon>::strongAmmoTag] + Inventory()[WeaponAmmo<Weapon>::weakAmmoTag];
-    }
+	template <int Weapon>
+	inline int AmmoReadyToFireCount() const {
+		if( !Inventory()[Weapon] ) {
+			return 0;
+		}
+		return Inventory()[WeaponAmmo < Weapon > ::strongAmmoTag] + Inventory()[WeaponAmmo < Weapon > ::weakAmmoTag];
+	}
 
-    inline int ShellsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_RIOTGUN>(); }
-    inline int GrenadesReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_GRENADELAUNCHER>(); }
-    inline int RocketsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ROCKETLAUNCHER>(); }
-    inline int PlasmasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_PLASMAGUN>(); }
-    inline int BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
-    inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
-    inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
-    inline int InstasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_INSTAGUN>(); }
+	inline int ShellsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_RIOTGUN>(); }
+	inline int GrenadesReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_GRENADELAUNCHER>(); }
+	inline int RocketsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ROCKETLAUNCHER>(); }
+	inline int PlasmasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_PLASMAGUN>(); }
+	inline int BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
+	inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
+	inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
+	inline int InstasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_INSTAGUN>(); }
 
-    SelectedMiscTactics selectedTactics;
+	SelectedMiscTactics selectedTactics;
 
-    inline bool WillAdvance() const { return selectedTactics.willAdvance; }
-    inline bool WillRetreat() const { return selectedTactics.willRetreat; }
+	inline bool WillAdvance() const { return selectedTactics.willAdvance; }
+	inline bool WillRetreat() const { return selectedTactics.willRetreat; }
 
-    inline bool ShouldBeSilent() const { return selectedTactics.shouldBeSilent; }
-    inline bool ShouldMoveCarefully() const { return selectedTactics.shouldMoveCarefully; }
+	inline bool ShouldBeSilent() const { return selectedTactics.shouldBeSilent; }
+	inline bool ShouldMoveCarefully() const { return selectedTactics.shouldMoveCarefully; }
 
-    inline bool ShouldAttack() const { return selectedTactics.shouldAttack; }
-    inline bool ShouldKeepXhairOnEnemy() const { return selectedTactics.shouldKeepXhairOnEnemy; }
+	inline bool ShouldAttack() const { return selectedTactics.shouldAttack; }
+	inline bool ShouldKeepXhairOnEnemy() const { return selectedTactics.shouldKeepXhairOnEnemy; }
 
-    inline bool WillAttackMelee() const { return selectedTactics.willAttackMelee; }
-    inline bool ShouldRushHeadless() const { return selectedTactics.shouldRushHeadless; }
+	inline bool WillAttackMelee() const { return selectedTactics.willAttackMelee; }
+	inline bool ShouldRushHeadless() const { return selectedTactics.shouldRushHeadless; }
 
-    SelectedNavEntity selectedNavEntity;
-    // For tracking picked up items
-    const NavEntity *prevSelectedNavEntity;
+	SelectedNavEntity selectedNavEntity;
+	// For tracking picked up items
+	const NavEntity *prevSelectedNavEntity;
 
-    const SelectedNavEntity &GetOrUpdateSelectedNavEntity();
+	const SelectedNavEntity &GetOrUpdateSelectedNavEntity();
 
-    inline bool HasJustPickedGoalItem() const
-    {
-        if (lastNavTargetReachedAt < prevThinkAt)
-            return false;
-        if (!lastReachedNavTarget)
-            return false;
-        if (!lastReachedNavTarget->IsBasedOnNavEntity(prevSelectedNavEntity))
-            return false;
-        return true;
-    }
+	inline bool HasJustPickedGoalItem() const {
+		if( lastNavTargetReachedAt < prevThinkAt ) {
+			return false;
+		}
+		if( !lastReachedNavTarget ) {
+			return false;
+		}
+		if( !lastReachedNavTarget->IsBasedOnNavEntity( prevSelectedNavEntity ) ) {
+			return false;
+		}
+		return true;
+	}
 
-    void UpdateBlockedAreasStatus();
+	void UpdateBlockedAreasStatus();
 
-    bool FindDodgeDangerSpot(const Danger &danger, vec3_t spotOrigin);
+	bool FindDodgeDangerSpot( const Danger &danger, vec3_t spotOrigin );
 
-    void CheckNewActiveDanger();
+	void CheckNewActiveDanger();
 
-    Danger triggeredPlanningDanger;
-    Danger actualDanger;
+	Danger triggeredPlanningDanger;
+	Danger actualDanger;
 
-    struct Threat
-    {
-        const edict_t *inflictor;
-        Vec3 possibleOrigin;
-        float totalDamage;
-        unsigned lastHitTimestamp;
+	struct Threat {
+		const edict_t *inflictor;
+		Vec3 possibleOrigin;
+		float totalDamage;
+		unsigned lastHitTimestamp;
 
-        // Initialize the inflictor by the world entity (it is never valid as one).
-        // This helps to avoid extra branching from testing for nullity.
-        Threat(): inflictor(world), possibleOrigin(NAN, NAN, NAN), totalDamage(0.0f), lastHitTimestamp(0) {}
+		// Initialize the inflictor by the world entity (it is never valid as one).
+		// This helps to avoid extra branching from testing for nullity.
+		Threat() : inflictor( world ), possibleOrigin( NAN, NAN, NAN ), totalDamage( 0.0f ), lastHitTimestamp( 0 ) {}
 
-        bool IsValidFor(const edict_t *self) const;
-    };
+		bool IsValidFor( const edict_t *self ) const;
+	};
 
-    Threat activeThreat;
+	Threat activeThreat;
 
-    void PrepareCurrWorldState(WorldState *worldState) override;
+	void PrepareCurrWorldState( WorldState *worldState ) override;
 
-    bool ShouldSkipPlanning() const override;
+	bool ShouldSkipPlanning() const override;
 
-    BotBrain() = delete;
-    // Disable copying and moving
-    BotBrain(BotBrain &&that) = delete;
+	BotBrain() = delete;
+	// Disable copying and moving
+	BotBrain( BotBrain &&that ) = delete;
 
-    class EnemyPool: public AiBaseEnemyPool
-    {
-        friend class BotBrain;
-        edict_t *bot;
-        BotBrain *botBrain;
-    protected:
-        void OnNewThreat(const edict_t *newThreat) override;
-        bool CheckHasQuad() const override { return ::HasQuad(bot); }
-        bool CheckHasShell() const override { return ::HasShell(bot); }
-        float ComputeDamageToBeKilled() const override { return DamageToKill(bot); }
-        void OnEnemyRemoved(const Enemy *enemy) override;
-        void TryPushNewEnemy(const edict_t *enemy) override { TryPushEnemyOfSingleBot(bot, enemy); }
-        void SetBotRoleWeight(const edict_t *bot_, float weight) override {}
-        float GetAdditionalEnemyWeight(const edict_t *bot_, const edict_t *enemy) const override { return 0; }
-        void OnBotEnemyAssigned(const edict_t *bot_, const Enemy *enemy) override {}
-    public:
-        EnemyPool(edict_t *bot_, BotBrain *botBrain_, float skill_)
-            : AiBaseEnemyPool(skill_), bot(bot_), botBrain(botBrain_)
-        {
-            SetTag(va("BotBrain(%s)::EnemyPool", bot->r.client->netname));
-        }
-        virtual ~EnemyPool() override {}
-    };
+	class EnemyPool : public AiBaseEnemyPool
+	{
+		friend class BotBrain;
+		edict_t *bot;
+		BotBrain *botBrain;
 
-    class AiSquad *squad;
-    EnemyPool botEnemyPool;
-    AiBaseEnemyPool *activeEnemyPool;
 protected:
-    virtual void SetFrameAffinity(unsigned modulo, unsigned offset) override
-    {
-        // Call super method first
-        AiBaseBrain::SetFrameAffinity(modulo, offset);
-        // Allow bot's own enemy pool to think
-        botEnemyPool.SetFrameAffinity(modulo, offset);
-    }
-    virtual void OnAttitudeChanged(const edict_t *ent, int oldAttitude_, int newAttitude_) override;
+		void OnNewThreat( const edict_t *newThreat ) override;
+		bool CheckHasQuad() const override { return ::HasQuad( bot ); }
+		bool CheckHasShell() const override { return ::HasShell( bot ); }
+		float ComputeDamageToBeKilled() const override { return DamageToKill( bot ); }
+		void OnEnemyRemoved( const Enemy *enemy ) override;
+		void TryPushNewEnemy( const edict_t *enemy ) override { TryPushEnemyOfSingleBot( bot, enemy ); }
+		void SetBotRoleWeight( const edict_t *bot_, float weight ) override {}
+		float GetAdditionalEnemyWeight( const edict_t *bot_, const edict_t *enemy ) const override { return 0; }
+		void OnBotEnemyAssigned( const edict_t *bot_, const Enemy *enemy ) override {}
+
 public:
-    SelectedEnemies &selectedEnemies;
-    SelectedEnemies lostEnemies;
-    SelectedWeapons &selectedWeapons;
+		EnemyPool( edict_t *bot_, BotBrain *botBrain_, float skill_ )
+			: AiBaseEnemyPool( skill_ ), bot( bot_ ), botBrain( botBrain_ ) {
+			SetTag( va( "BotBrain(%s)::EnemyPool", bot->r.client->netname ) );
+		}
+		virtual ~EnemyPool() override {}
+	};
 
-    // A WorldState cached from the moment of last world state update
-    WorldState cachedWorldState;
+	class AiSquad *squad;
+	EnemyPool botEnemyPool;
+	AiBaseEnemyPool *activeEnemyPool;
 
-    // Note: saving references to Bot members is the only valid access kind to Bot in this call
-    BotBrain(class Bot *bot, float skillLevel_);
+protected:
+	virtual void SetFrameAffinity( unsigned modulo, unsigned offset ) override {
+		// Call super method first
+		AiBaseBrain::SetFrameAffinity( modulo, offset );
+		// Allow bot's own enemy pool to think
+		botEnemyPool.SetFrameAffinity( modulo, offset );
+	}
+	virtual void OnAttitudeChanged( const edict_t *ent, int oldAttitude_, int newAttitude_ ) override;
 
-    virtual void Frame() override;
-    virtual void Think() override;
+public:
+	SelectedEnemies &selectedEnemies;
+	SelectedEnemies lostEnemies;
+	SelectedWeapons &selectedWeapons;
 
-    void OnAttachedToSquad(AiSquad *squad_);
-    void OnDetachedFromSquad(AiSquad *squad_);
+	// A WorldState cached from the moment of last world state update
+	WorldState cachedWorldState;
 
-    void OnNewThreat(const edict_t *newThreat, const AiFrameAwareUpdatable *threatDetector);
-    void OnEnemyRemoved(const Enemy *enemy);
+	// Note: saving references to Bot members is the only valid access kind to Bot in this call
+	BotBrain( class Bot *bot, float skillLevel_ );
 
-    inline unsigned MaxTrackedEnemies() const { return botEnemyPool.MaxTrackedEnemies(); }
+	virtual void Frame() override;
+	virtual void Think() override;
 
-    void OnEnemyViewed(const edict_t *enemy);
-    void AfterAllEnemiesViewed() {}
-    void UpdateSelectedEnemies();
+	void OnAttachedToSquad( AiSquad *squad_ );
+	void OnDetachedFromSquad( AiSquad *squad_ );
 
-    void OnPain(const edict_t *enemy, float kick, int damage);
-    void OnEnemyDamaged(const edict_t *target, int damage);
+	void OnNewThreat( const edict_t *newThreat, const AiFrameAwareUpdatable *threatDetector );
+	void OnEnemyRemoved( const Enemy *enemy );
 
-    // In these calls use not active but bot's own enemy pool
-    // (this behaviour is expected by callers, otherwise referring to a squad enemy pool is enough)
-    inline unsigned LastAttackedByTime(const edict_t *attacker) const
-    {
-        return botEnemyPool.LastAttackedByTime(attacker);
-    }
-    inline unsigned LastTargetTime(const edict_t *target) const
-    {
-        return botEnemyPool.LastTargetTime(target);
-    }
+	inline unsigned MaxTrackedEnemies() const { return botEnemyPool.MaxTrackedEnemies(); }
 
-    inline bool IsPrimaryAimEnemy(const edict_t *enemy) const
-    {
-        return selectedEnemies.IsPrimaryEnemy(enemy);
-    }
+	void OnEnemyViewed( const edict_t *enemy );
+	void AfterAllEnemiesViewed() {}
+	void UpdateSelectedEnemies();
 
-    inline float GetBaseOffensiveness() const { return baseOffensiveness; }
+	void OnPain( const edict_t *enemy, float kick, int damage );
+	void OnEnemyDamaged( const edict_t *target, int damage );
 
-    float GetEffectiveOffensiveness() const;
+	// In these calls use not active but bot's own enemy pool
+	// (this behaviour is expected by callers, otherwise referring to a squad enemy pool is enough)
+	inline unsigned LastAttackedByTime( const edict_t *attacker ) const {
+		return botEnemyPool.LastAttackedByTime( attacker );
+	}
+	inline unsigned LastTargetTime( const edict_t *target ) const {
+		return botEnemyPool.LastTargetTime( target );
+	}
 
-    inline void SetBaseOffensiveness(float baseOffensiveness_)
-    {
-        this->baseOffensiveness = baseOffensiveness_;
-        clamp(this->baseOffensiveness, 0.0f, 1.0f);
-    }
+	inline bool IsPrimaryAimEnemy( const edict_t *enemy ) const {
+		return selectedEnemies.IsPrimaryEnemy( enemy );
+	}
 
-    inline void ClearOverriddenEntityWeights()
-    {
-        itemsSelector.ClearOverriddenEntityWeights();
-    }
+	inline float GetBaseOffensiveness() const { return baseOffensiveness; }
 
-    inline void OverrideEntityWeight(const edict_t *ent, float weight)
-    {
-        itemsSelector.OverrideEntityWeight(ent, weight);
-    }
+	float GetEffectiveOffensiveness() const;
+
+	inline void SetBaseOffensiveness( float baseOffensiveness_ ) {
+		this->baseOffensiveness = baseOffensiveness_;
+		clamp( this->baseOffensiveness, 0.0f, 1.0f );
+	}
+
+	inline void ClearOverriddenEntityWeights() {
+		itemsSelector.ClearOverriddenEntityWeights();
+	}
+
+	inline void OverrideEntityWeight( const edict_t *ent, float weight ) {
+		itemsSelector.OverrideEntityWeight( ent, weight );
+	}
 };
 
 #endif

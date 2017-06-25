@@ -26,8 +26,7 @@ in NO WAY supported by Steve Yeager.
 #ifndef QFUSION_AI_H
 #define QFUSION_AI_H
 
-typedef enum
-{
+typedef enum {
 	AI_INACTIVE,
 	AI_ISBOT,
 	AI_ISMONSTER,
@@ -41,8 +40,7 @@ extern const struct asEnum_s asAIEnums[];
 extern const struct asClassDescriptor_s *asAIClassesDescriptors[];
 extern const struct asglobfuncs_s asAIGlobFuncs[];
 
-typedef enum
-{
+typedef enum {
 	// A nav entity should be reached at touch (as regular items like weapons, armors, etc.)
 	// A nav entity should be spawned, otherwise an AI may (and usually should) wait for it.
 	// This flag cannot be combined with REACH_AT_RADIUS or REACH_ON_EVENT.
@@ -78,7 +76,7 @@ typedef enum
 void AI_InitLevel( void );
 // Should be called before level and entities data cleanup
 void AI_Shutdown( void );
-void AI_BeforeLevelLevelScriptShutdown(void);
+void AI_BeforeLevelLevelScriptShutdown( void );
 // Should be called before level restart
 void AI_AfterLevelScriptShutdown();
 // Should be called before all entities (including AI's and clients) think
@@ -86,13 +84,13 @@ void AI_CommonFrame( void );
 // Should be called when an AI joins a team
 void AI_JoinedTeam( edict_t *ent, int team );
 
-void AI_InitGametypeScript(class asIScriptModule *module);
+void AI_InitGametypeScript( class asIScriptModule *module );
 void AI_ResetGametypeScript();
 
 // Should be called when a static item is spawned or a dropped item stopped its movement
 void AI_AddNavEntity( edict_t *ent, ai_nav_entity_flags flags );
 // Should be called when an item edict is about to be freed
-void AI_RemoveNavEntity(edict_t *ent);
+void AI_RemoveNavEntity( edict_t *ent );
 // Should be called when an item has been considered to be reached by this function caller
 // (A corresponding nav entity should be added with a AI_NAV_REACH_ON_EVENT flag)
 void AI_NavEntityReached( edict_t *ent );
@@ -100,16 +98,16 @@ void AI_NavEntityReached( edict_t *ent );
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );
 void        G_SpawnAI( edict_t *ent, float skillLevel = 0.1f );
-ai_type		AI_GetType( const ai_handle_t *ai );
-void		AI_TouchedEntity( edict_t *self, edict_t *ent );
+ai_type     AI_GetType( const ai_handle_t *ai );
+void        AI_TouchedEntity( edict_t *self, edict_t *ent );
 void        AI_DamagedEntity( edict_t *self, edict_t *ent, int damage );
 // For unknown reasons self->pain is not called for bots, this is the workaround
 void        AI_Pain( edict_t *self, edict_t *attacker, int kick, int damage );
 
-void        AI_SpawnBot(const char *team);
-void        AI_RemoveBot(const char *name);
+void        AI_SpawnBot( const char *team );
+void        AI_RemoveBot( const char *name );
 void        AI_RemoveBots();
-void        AI_Respawn(edict_t *ent);
+void        AI_Respawn( edict_t *ent );
 
 void        AI_Cheat_NoTarget( edict_t *ent );
 

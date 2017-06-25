@@ -38,7 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // round(x)==floor(x+0.5f)
 
 // FIXME: Medar: Remove the spectator test and just make sure they always have health
-#define G_IsDead( ent )	      ( ( !(ent)->r.client || (ent)->s.team != TEAM_SPECTATOR ) && HEALTH_TO_INT( (ent)->health ) <= 0 )
+#define G_IsDead( ent )       ( ( !( ent )->r.client || ( ent )->s.team != TEAM_SPECTATOR ) && HEALTH_TO_INT( ( ent )->health ) <= 0 )
 
 // Quad scale for damage and knockback
 #define QUAD_DAMAGE_SCALE 4
@@ -48,77 +48,75 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CLIENT_RESPAWN_FREEZE_DELAY 300
 
 // edict->flags
-#define	FL_FLY				0x00000001
-#define	FL_SWIM				0x00000002  // implied immunity to drowining
-#define FL_IMMUNE_LASER		0x00000004
-#define	FL_INWATER			0x00000008
-#define	FL_GODMODE			0x00000010
-#define	FL_NOTARGET			0x00000020
-#define FL_IMMUNE_SLIME		0x00000040
-#define FL_IMMUNE_LAVA		0x00000080
-#define	FL_PARTIALGROUND	0x00000100  // not all corners are valid
-#define	FL_WATERJUMP		0x00000200  // player jumping out of water
-#define	FL_TEAMSLAVE		0x00000400  // not the first on the team
-#define FL_NO_KNOCKBACK		0x00000800
-#define FL_BUSY				0x00001000
+#define FL_FLY              0x00000001
+#define FL_SWIM             0x00000002  // implied immunity to drowining
+#define FL_IMMUNE_LASER     0x00000004
+#define FL_INWATER          0x00000008
+#define FL_GODMODE          0x00000010
+#define FL_NOTARGET         0x00000020
+#define FL_IMMUNE_SLIME     0x00000040
+#define FL_IMMUNE_LAVA      0x00000080
+#define FL_PARTIALGROUND    0x00000100  // not all corners are valid
+#define FL_WATERJUMP        0x00000200  // player jumping out of water
+#define FL_TEAMSLAVE        0x00000400  // not the first on the team
+#define FL_NO_KNOCKBACK     0x00000800
+#define FL_BUSY             0x00001000
 
 #define FRAMETIME ( (float)game.frametime * 0.001f )
 
-#define BODY_QUEUE_SIZE	    8
+#define BODY_QUEUE_SIZE     8
 #define MAX_FLOOD_MESSAGES 32
 
-typedef enum
-{
+typedef enum {
 	DAMAGE_NO,
 	DAMAGE_YES,     // will take damage if hit
 	DAMAGE_AIM      // auto targeting recognizes this
 } damage_t;
 
 // deadflag
-#define DEAD_NO			0
-#define DEAD_DYING		1
-#define DEAD_DEAD		2
-#define DEAD_RESPAWNABLE	3
+#define DEAD_NO         0
+#define DEAD_DYING      1
+#define DEAD_DEAD       2
+#define DEAD_RESPAWNABLE    3
 
 // monster ai flags
-#define AI_STAND_GROUND		0x00000001
-#define AI_TEMP_STAND_GROUND	0x00000002
-#define AI_SOUND_TARGET		0x00000004
-#define AI_LOST_SIGHT		0x00000008
-#define AI_PURSUIT_LAST_SEEN	0x00000010
-#define AI_PURSUE_NEXT		0x00000020
-#define AI_PURSUE_TEMP		0x00000040
-#define AI_HOLD_FRAME		0x00000080
-#define AI_GOOD_GUY		0x00000100
-#define AI_BRUTAL		0x00000200
-#define AI_NOSTEP		0x00000400
-#define AI_DUCKED		0x00000800
-#define AI_COMBAT_POINT		0x00001000
-#define AI_MEDIC		0x00002000
-#define AI_RESURRECTING		0x00004000
+#define AI_STAND_GROUND     0x00000001
+#define AI_TEMP_STAND_GROUND    0x00000002
+#define AI_SOUND_TARGET     0x00000004
+#define AI_LOST_SIGHT       0x00000008
+#define AI_PURSUIT_LAST_SEEN    0x00000010
+#define AI_PURSUE_NEXT      0x00000020
+#define AI_PURSUE_TEMP      0x00000040
+#define AI_HOLD_FRAME       0x00000080
+#define AI_GOOD_GUY     0x00000100
+#define AI_BRUTAL       0x00000200
+#define AI_NOSTEP       0x00000400
+#define AI_DUCKED       0x00000800
+#define AI_COMBAT_POINT     0x00001000
+#define AI_MEDIC        0x00002000
+#define AI_RESURRECTING     0x00004000
 
 // game.serverflags values
-#define SFL_CROSS_TRIGGER_1	0x00000001
-#define SFL_CROSS_TRIGGER_2	0x00000002
-#define SFL_CROSS_TRIGGER_3	0x00000004
-#define SFL_CROSS_TRIGGER_4	0x00000008
-#define SFL_CROSS_TRIGGER_5	0x00000010
-#define SFL_CROSS_TRIGGER_6	0x00000020
-#define SFL_CROSS_TRIGGER_7	0x00000040
-#define SFL_CROSS_TRIGGER_8	0x00000080
-#define SFL_CROSS_TRIGGER_MASK	0x000000ff
+#define SFL_CROSS_TRIGGER_1 0x00000001
+#define SFL_CROSS_TRIGGER_2 0x00000002
+#define SFL_CROSS_TRIGGER_3 0x00000004
+#define SFL_CROSS_TRIGGER_4 0x00000008
+#define SFL_CROSS_TRIGGER_5 0x00000010
+#define SFL_CROSS_TRIGGER_6 0x00000020
+#define SFL_CROSS_TRIGGER_7 0x00000040
+#define SFL_CROSS_TRIGGER_8 0x00000080
+#define SFL_CROSS_TRIGGER_MASK  0x000000ff
 
 // handedness values
-#define RIGHT_HANDED		0
-#define LEFT_HANDED		1
-#define CENTER_HANDED		2
+#define RIGHT_HANDED        0
+#define LEFT_HANDED     1
+#define CENTER_HANDED       2
 
 // milliseconds before allowing fire after respawn
-#define WEAPON_RESPAWN_DELAY		    350
+#define WEAPON_RESPAWN_DELAY            350
 
 // edict->movetype values
-typedef enum
-{
+typedef enum {
 	MOVETYPE_NONE,      // never moves
 	MOVETYPE_PLAYER,    // never moves (but is moved by pmove)
 	MOVETYPE_NOCLIP,    // like MOVETYPE_PLAYER, but not clipped
@@ -137,13 +135,12 @@ typedef enum
 // it should be initialized at dll load time, and read/written to
 // the server.ssv file for savegames
 //
-typedef struct
-{
-	edict_t	*edicts;        // [maxentities]
+typedef struct {
+	edict_t *edicts;        // [maxentities]
 	gclient_t *clients;     // [maxclients]
-	gclient_quit_t *quits;	// [dynamic] <-- MM
-	clientRating_t *ratings;	// list of ratings for current game and gametype <-- MM
-	linear_allocator_t *raceruns;	// raceRun_t <-- MM
+	gclient_quit_t *quits;  // [dynamic] <-- MM
+	clientRating_t *ratings;    // list of ratings for current game and gametype <-- MM
+	linear_allocator_t *raceruns;   // raceRun_t <-- MM
 
 	int protocol;
 	char demoExtension[MAX_QPATH];
@@ -164,20 +161,19 @@ typedef struct
 	unsigned int realtime;          // actual time, set with Sys_Milliseconds every frame
 	unsigned int serverTime;        // actual time in the server
 
-	time_t localTime;				// local time in milliseconds
+	time_t localTime;               // local time in milliseconds
 
 	int numBots;
 
-	unsigned int levelSpawnCount;	// the number of times G_InitLevel was called
+	unsigned int levelSpawnCount;   // the number of times G_InitLevel was called
 } game_locals_t;
 
-#define TIMEOUT_TIME					180000
-#define TIMEIN_TIME						5000
+#define TIMEOUT_TIME                    180000
+#define TIMEIN_TIME                     5000
 
-#define SIGNIFICANT_MATCH_DURATION		66*1000
+#define SIGNIFICANT_MATCH_DURATION      66 * 1000
 
-typedef struct
-{
+typedef struct {
 	int time;
 	int endtime;
 	int caller;
@@ -188,8 +184,7 @@ typedef struct
 // this structure is cleared as each map is entered
 // it is read/written to the level.sav file for savegames
 //
-typedef struct
-{
+typedef struct {
 	unsigned int framenum;
 	unsigned int time; // time in milliseconds
 	unsigned int spawnedTimeStamp; // time when map was restarted
@@ -232,8 +227,8 @@ typedef struct
 	bool forceStart;    // force starting the game, when warmup timelimit is up
 	bool forceExit;     // just exit, ignore extended time checks
 
-	edict_t	*current_entity;    // entity running from G_RunFrame
-	edict_t	*spawning_entity;   // entity being spawned from G_InitLevel
+	edict_t *current_entity;    // entity running from G_RunFrame
+	edict_t *spawning_entity;   // entity being spawned from G_InitLevel
 	int body_que;               // dead bodies
 
 	edict_t *think_client_entity;// cycles between connected clients each frame
@@ -251,8 +246,7 @@ typedef struct
 // spawn_temp_t is only used to hold entity field values that
 // can be set from the editor, but aren't actualy present
 // in edict_t during gameplay
-typedef struct
-{
+typedef struct {
 	// world vars
 	float fov;
 	const char *nextmap;
@@ -299,11 +293,11 @@ extern spawn_temp_t st;
 extern int meansOfDeath;
 
 
-#define	FOFS( x ) offsetof(edict_t,x)
-#define	STOFS( x ) offsetof(spawn_temp_t,x)
-#define	LLOFS( x ) offsetof(level_locals_t,x)
-#define	CLOFS( x ) offsetof(gclient_t,x)
-#define	AWOFS( x ) offsetof(award_info_t,x)
+#define FOFS( x ) offsetof( edict_t,x )
+#define STOFS( x ) offsetof( spawn_temp_t,x )
+#define LLOFS( x ) offsetof( level_locals_t,x )
+#define CLOFS( x ) offsetof( gclient_t,x )
+#define AWOFS( x ) offsetof( award_info_t,x )
 
 extern cvar_t *password;
 extern cvar_t *g_operator_password;
@@ -422,8 +416,7 @@ int G_Gametype_DroppedItemTimeout( const gsitem_t *item );
 //
 // g_spawnpoints.c
 //
-enum
-{
+enum {
 	SPAWNSYSTEM_INSTANT,
 	SPAWNSYSTEM_WAVES,
 	SPAWNSYSTEM_HOLD,
@@ -476,7 +469,7 @@ void SP_func_pendulum( edict_t *ent );
 //
 // g_ascript.c
 //
-#define ANGEL_SCRIPT_EXTENSION				".as"
+#define ANGEL_SCRIPT_EXTENSION              ".as"
 
 bool GT_asLoadScript( const char *gametypeName );
 void GT_asShutdownScript( void );
@@ -518,25 +511,24 @@ void G_asShutdownGameModuleEngine( void );
 void G_asGarbageCollect( bool force );
 void G_asDumpAPI_f( void );
 
-#define world	( (edict_t *)game.edicts )
+#define world   ( (edict_t *)game.edicts )
 
 // item spawnflags
-#define ITEM_TRIGGER_SPAWN	0x00000001
-#define ITEM_NO_TOUCH		0x00000002
+#define ITEM_TRIGGER_SPAWN  0x00000001
+#define ITEM_NO_TOUCH       0x00000002
 // 6 bits reserved for editor flags
 // 8 bits used as power cube id bits for coop games
-#define DROPPED_ITEM		0x00010000
-#define	DROPPED_PLAYER_ITEM	0x00020000
-#define ITEM_TARGETS_USED	0x00040000
-#define ITEM_IGNORE_MAX		0x00080000
-#define ITEM_TIMED			0x00100000
+#define DROPPED_ITEM        0x00010000
+#define DROPPED_PLAYER_ITEM 0x00020000
+#define ITEM_TARGETS_USED   0x00040000
+#define ITEM_IGNORE_MAX     0x00080000
+#define ITEM_TIMED          0x00100000
 //
 // fields are needed for spawning from the entity string
 //
-#define FFL_SPAWNTEMP	    1
+#define FFL_SPAWNTEMP       1
 
-typedef enum
-{
+typedef enum {
 	F_INT,
 	F_FLOAT,
 	F_LSTRING,      // string on disk, pointer in memory, TAG_LEVEL
@@ -545,8 +537,7 @@ typedef enum
 	F_IGNORE
 } fieldtype_t;
 
-typedef struct
-{
+typedef struct {
 	const char *name;
 	size_t ofs;
 	fieldtype_t type;
@@ -594,7 +585,7 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 //
 // g_utils.c
 //
-#define G_LEVELPOOL_BASE_SIZE	45 * 1024 * 1024
+#define G_LEVELPOOL_BASE_SIZE   45 * 1024 * 1024
 
 bool KillBox( edict_t *ent );
 float LookAtKillerYAW( edict_t *self, edict_t *inflictor, edict_t *attacker );
@@ -709,8 +700,8 @@ void G_CallVotes_Think( void );
 void G_CallVote_Cmd( edict_t *ent );
 void G_OperatorVote_Cmd( edict_t *ent );
 void G_RegisterGametypeScriptCallvote( const char *name, const char *usage, const char *type, const char *help );
-http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const char *resource, 
-	const char *query_string, char **content, size_t *content_length );
+http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const char *resource,
+											 const char *query_string, char **content, size_t *content_length );
 
 //
 // g_trigger.c
@@ -733,13 +724,12 @@ void SP_trigger_gravity( edict_t *ent );
 //
 #define MAX_ENT_AREAS 16
 
-typedef struct link_s
-{
+typedef struct link_s {
 	struct link_s *prev, *next;
 	int entNum;
 } link_t;
 
-int	G_PointContents( vec3_t p );
+int G_PointContents( vec3_t p );
 void G_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask );
 int G_PointContents4D( vec3_t p, int timeDelta );
 void G_Trace4D( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask, int timeDelta );
@@ -783,7 +773,7 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 #define DAMAGE_STUN_CLAMP 0x00000020
 #define DAMAGE_KNOCKBACK_SOFT 0x00000040
 
-#define	GIB_HEALTH		-40
+#define GIB_HEALTH      -40
 
 
 //
@@ -826,8 +816,8 @@ edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t angles, float damage
 void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles, float maxdamage, float mindamage, int maxknockback, int minknockback, int stun, int range, int minDamageRange, int mod, int timeDelta );
 void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, float maxdamage, float mindamage, float maxknockback, float minknockback, int stun, int range, int mod, int timeDelta );
 edict_t *W_Fire_Electrobolt_Weak( edict_t *self, vec3_t start, vec3_t angles, float speed, float damage, int minKnockback, int maxKnockback, int stun, int timeout, int mod, int timeDelta );
-edict_t	*W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int stun, int timeout, int mod, int timeDelta );
-edict_t	*W_Fire_Lasergun_Weak( edict_t *self, vec3_t start, vec3_t end, float damage, int knockback, int stun, int timeout, int mod, int timeDelta );
+edict_t *W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int stun, int timeout, int mod, int timeDelta );
+edict_t *W_Fire_Lasergun_Weak( edict_t *self, vec3_t start, vec3_t end, float damage, int knockback, int stun, int timeout, int mod, int timeDelta );
 void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int stun, int radius, int range, int mod, int timeDelta );
 
 bool Pickup_Weapon( edict_t *other, const gsitem_t *item, int flags, int ammo_count );
@@ -922,7 +912,7 @@ void G_ClientDamageFeedback( edict_t *ent );
 //scoreboards string
 extern char scoreboardString[MAX_STRING_CHARS];
 extern const unsigned int scoreboardInterval;
-#define SCOREBOARD_MSG_MAXSIZE ( MAX_STRING_CHARS-8 ) //I know, I know, doesn't make sense having a bigger string than the maxsize value
+#define SCOREBOARD_MSG_MAXSIZE ( MAX_STRING_CHARS - 8 ) //I know, I know, doesn't make sense having a bigger string than the maxsize value
 
 void MoveClientToIntermission( edict_t *client );
 void G_SetClientStats( edict_t *ent );
@@ -946,19 +936,19 @@ int G_BoxSlideMove( edict_t *ent, int contentmask, float slideBounce, float fric
 #define G_Malloc( size ) trap_MemAlloc( size, __FILE__, __LINE__ )
 #define G_Free( mem ) trap_MemFree( mem, __FILE__, __LINE__ )
 
-#define	G_LevelMalloc( size ) _G_LevelMalloc( ( size ), __FILE__, __LINE__ )
-#define	G_LevelFree( data ) _G_LevelFree( ( data ), __FILE__, __LINE__ )
-#define	G_LevelCopyString( in ) _G_LevelCopyString( ( in ), __FILE__, __LINE__ )
+#define G_LevelMalloc( size ) _G_LevelMalloc( ( size ), __FILE__, __LINE__ )
+#define G_LevelFree( data ) _G_LevelFree( ( data ), __FILE__, __LINE__ )
+#define G_LevelCopyString( in ) _G_LevelCopyString( ( in ), __FILE__, __LINE__ )
 
-int	G_API( void );
-void	G_Error( const char *format, ... );
-void	G_Printf( const char *format, ... );
-void	G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char *demoExtension );
-void	G_Shutdown( void );
-void	G_ExitLevel( void );
+int G_API( void );
+void    G_Error( const char *format, ... );
+void    G_Printf( const char *format, ... );
+void    G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char *demoExtension );
+void    G_Shutdown( void );
+void    G_ExitLevel( void );
 void G_RestartLevel( void );
 game_state_t *G_GetGameState( void );
-void	G_Timeout_Reset( void );
+void    G_Timeout_Reset( void );
 
 bool G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname );
 
@@ -1006,8 +996,7 @@ void G_AwardFairPlay( edict_t *ent );
 
 #include "ai/ai.h"
 
-typedef struct
-{
+typedef struct {
 	int radius;
 	float minDamage;
 	float maxDamage;
@@ -1016,8 +1005,7 @@ typedef struct
 	int stun;
 } projectileinfo_t;
 
-typedef struct
-{
+typedef struct {
 	bool active;
 	int target;
 	int mode;                   //3rd or 1st person
@@ -1027,8 +1015,7 @@ typedef struct
 	int followmode;
 } chasecam_t;
 
-typedef struct
-{
+typedef struct {
 	// fixed data
 	vec3_t start_origin;
 	vec3_t start_angles;
@@ -1060,8 +1047,7 @@ typedef struct
 	vec3_t destangles;
 } moveinfo_t;
 
-typedef struct
-{
+typedef struct {
 	int ebhit_count;
 	int directrocket_count;
 	int directgrenade_count;
@@ -1094,8 +1080,7 @@ typedef struct
 #define G_MAX_TIME_DELTAS   8
 #define G_MAX_TIME_DELTAS_MASK ( G_MAX_TIME_DELTAS - 1 )
 
-typedef struct
-{
+typedef struct {
 	int buttons;
 	uint8_t plrkeys; // used for displaying key icons
 	int damageTaken;
@@ -1103,8 +1088,7 @@ typedef struct
 
 } client_snapreset_t;
 
-typedef struct
-{
+typedef struct {
 	client_snapreset_t snap;
 	chasecam_t chase;
 	award_info_t awardInfo;
@@ -1130,9 +1114,8 @@ typedef struct
 	unsigned int pickup_msg_time;
 } client_respawnreset_t;
 
-typedef struct
-{
-	unsigned int timeStamp;			// last time it was reset
+typedef struct {
+	unsigned int timeStamp;         // last time it was reset
 
 	unsigned int respawnCount;
 	matchmessage_t matchmessage;
@@ -1143,24 +1126,23 @@ typedef struct
 
 	score_stats_t stats;
 	bool showscores;
-	unsigned int scoreboard_time;	// when scoreboard was last sent
-	bool showPLinks;			// bot debug
+	unsigned int scoreboard_time;   // when scoreboard was last sent
+	bool showPLinks;            // bot debug
 
 	// flood protection
-	unsigned int flood_locktill;	// locked from talking
-	unsigned int flood_when[MAX_FLOOD_MESSAGES];		// when messages were said
-	int flood_whenhead;				// head pointer for when said
+	unsigned int flood_locktill;    // locked from talking
+	unsigned int flood_when[MAX_FLOOD_MESSAGES];        // when messages were said
+	int flood_whenhead;             // head pointer for when said
 	// team only
-	unsigned int flood_team_when[MAX_FLOOD_MESSAGES];	// when messages were said
-	int flood_team_whenhead;		// head pointer for when said
+	unsigned int flood_team_when[MAX_FLOOD_MESSAGES];   // when messages were said
+	int flood_team_whenhead;        // head pointer for when said
 
 	unsigned int callvote_when;
 
 	char quickMenuItems[1024];
 } client_levelreset_t;
 
-typedef struct
-{
+typedef struct {
 	unsigned int timeStamp; // last time it was reset
 
 	bool is_coach;
@@ -1176,15 +1158,14 @@ typedef struct
 
 	const gsitem_t *last_drop_item;
 	vec3_t last_drop_location;
-	edict_t	*last_pickup;
+	edict_t *last_pickup;
 	edict_t *last_killer;
 } client_teamreset_t;
 
-struct gclient_s
-{
+struct gclient_s {
 	// known to server
 	player_state_t ps;          // communicated by server to clients
-	client_shared_t	r;
+	client_shared_t r;
 
 	// DO NOT MODIFY ANYTHING ABOVE THIS, THE SERVER
 	// EXPECTS THE FIELDS IN THAT ORDER!
@@ -1207,8 +1188,8 @@ struct gclient_s
 	// persistent info along all the time the client is connected
 
 	char userinfo[MAX_INFO_STRING];
-	char netname[MAX_NAME_BYTES];	// maximum name length is characters without counting color tokens
-									// is controlled by MAX_NAME_CHARS constant
+	char netname[MAX_NAME_BYTES];   // maximum name length is characters without counting color tokens
+	                                // is controlled by MAX_NAME_CHARS constant
 	char clanname[MAX_CLANNAME_BYTES];
 	char ip[MAX_INFO_VALUE];
 	char socket[MAX_INFO_VALUE];
@@ -1222,8 +1203,8 @@ struct gclient_s
 		int channel;
 	} tv;
 
-	int mm_session;					// 0 - invalid session, < 0 - local session, > 0 authenticated account
-	clientRating_t *ratings;		// list of ratings for gametypes
+	int mm_session;                 // 0 - invalid session, < 0 - local session, > 0 authenticated account
+	clientRating_t *ratings;        // list of ratings for gametypes
 
 	bool connecting;
 	bool multiview;
@@ -1251,20 +1232,18 @@ struct gclient_s
 };
 
 // quit or teamchange data for clients (stats)
-struct gclient_quit_s
-{
+struct gclient_quit_s {
 	char netname[MAX_NAME_BYTES];
 	int team;
 	int mm_session;
 
 	score_stats_t stats;
 	unsigned int timePlayed;
-	bool final;			// is true, player was there in the end
+	bool final;         // is true, player was there in the end
 	struct gclient_quit_s *next;
 };
 
-typedef struct snap_edict_s
-{
+typedef struct snap_edict_s {
 	// whether we have killed anyone this snap
 	bool kill;
 	bool teamkill;
@@ -1279,8 +1258,7 @@ typedef struct snap_edict_s
 	float damage_fall;
 } snap_edict_t;
 
-typedef struct
-{
+typedef struct {
 	int speed;
 	int shaderIndex;
 	int spread;
@@ -1294,10 +1272,9 @@ typedef struct
 	int frequency;
 }particles_edict_t;
 
-struct edict_s
-{
+struct edict_s {
 	entity_state_t s;
-	entity_shared_t	r;
+	entity_shared_t r;
 
 	// DO NOT MODIFY ANYTHING ABOVE THIS, THE SERVER
 	// EXPECTS THE FIELDS IN THAT ORDER!
@@ -1326,7 +1303,7 @@ struct edict_s
 	//
 
 	const char *classname;
-	const char *spawnString;			// keep track of string definition of this entity
+	const char *spawnString;            // keep track of string definition of this entity
 	int spawnflags;
 
 	unsigned int nextThink;
@@ -1343,7 +1320,7 @@ struct edict_s
 	const char *killtarget;
 	const char *team;
 	const char *pathtarget;
-	edict_t	*target_ent;
+	edict_t *target_ent;
 
 	vec3_t velocity;
 	vec3_t avelocity;
@@ -1356,8 +1333,8 @@ struct edict_s
 	unsigned int deathTimeStamp;
 	int timeDelta;              // SVF_PROJECTILE only. Used for 4D collision detection
 
-	projectileinfo_t projectileInfo;	// specific for projectiles
-	particles_edict_t particlesInfo;		// specific for ET_PARTICLES
+	projectileinfo_t projectileInfo;    // specific for projectiles
+	particles_edict_t particlesInfo;        // specific for ET_PARTICLES
 
 	int dmg;
 
@@ -1369,8 +1346,8 @@ struct edict_s
 	unsigned int air_finished;
 	float gravity;              // per entity gravity multiplier (1.0 is normal) // use for lowgrav artifact, flares
 
-	edict_t	*goalentity;
-	edict_t	*movetarget;
+	edict_t *goalentity;
+	edict_t *movetarget;
 	float yaw_speed;
 
 	unsigned int pain_debounce_time;
@@ -1390,14 +1367,14 @@ struct edict_s
 
 	unsigned int timeout; // for SW and fat PG
 
-	edict_t	*chain;
-	edict_t	*enemy;
-	edict_t	*oldenemy;
-	edict_t	*activator;
-	edict_t	*groundentity;
+	edict_t *chain;
+	edict_t *enemy;
+	edict_t *oldenemy;
+	edict_t *activator;
+	edict_t *groundentity;
 	int groundentity_linkcount;
-	edict_t	*teamchain;
-	edict_t	*teammaster;
+	edict_t *teamchain;
+	edict_t *teammaster;
 	int noise_index;
 	float attenuation;
 
@@ -1433,7 +1410,7 @@ struct edict_s
 	bool was_swim;
 	bool was_step;
 
-	edict_t	*trigger_entity;
+	edict_t *trigger_entity;
 	unsigned int trigger_timeout;
 
 	bool linked;
@@ -1469,5 +1446,5 @@ void G_SetRaceTime( edict_t *ent, int sector, unsigned int time );
 void G_ListRaces_f( void );
 
 // web
-http_response_code_t G_WebRequest( http_query_method_t method, const char *resource, 
-		const char *query_string, char **content, size_t *content_length );
+http_response_code_t G_WebRequest( http_query_method_t method, const char *resource,
+								   const char *query_string, char **content, size_t *content_length );
