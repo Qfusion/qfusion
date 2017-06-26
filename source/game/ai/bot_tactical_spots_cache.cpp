@@ -301,7 +301,7 @@ void BotTacticalSpotsCache::FindReachableClassEntities( const Vec3 &origin, floa
 	// Copy to locals for faster access (a compiler might be paranoid about aliasing)
 	edict_t *gameEdicts = game.edicts;
 
-	if( numEntities > candidateEntities.capacity() ) {
+	if( numEntities > (int)candidateEntities.capacity() ) {
 		for( int i = 0; i < numEntities; ++i ) {
 			edict_t *ent = gameEdicts + triggerEntities[i];
 			// Specify expected strcmp() result explicitly to avoid misinterpreting the condition

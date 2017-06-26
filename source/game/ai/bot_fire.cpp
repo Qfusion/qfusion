@@ -178,7 +178,7 @@ void Bot::PressAttack( const GenericFireDef *fireDef,
 
 bool Bot::CheckShot( const AimParams &aimParams,
 					 const BotInput *input,
-					 const SelectedEnemies &selectedEnemies,
+					 const SelectedEnemies &selectedEnemies_,
 					 const GenericFireDef &fireDef ) {
 	// Convert modified angles to direction back (due to limited view speed it rarely will match given direction)
 	Vec3 newLookDir( 0, 0, 0 );
@@ -274,7 +274,7 @@ bool Bot::CheckShot( const AimParams &aimParams,
 		return false;
 	}
 
-	float hitToTargetDist = DistanceFast( selectedEnemies.LastSeenOrigin().Data(), tr.endpos );
+	float hitToTargetDist = DistanceFast( selectedEnemies_.LastSeenOrigin().Data(), tr.endpos );
 	float hitToBotDist = DistanceFast( self->s.origin, tr.endpos );
 	float proximityDistanceFactor = BoundedFraction( hitToBotDist, 2000.0f );
 	float hitToTargetMissThreshold = 30.0f + 300.0f * proximityDistanceFactor;

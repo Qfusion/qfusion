@@ -244,7 +244,7 @@ int BotRoamingManager::TrySuggestNearbyAasArea() {
 	const auto *aasAreaSettings = aasWorld->AreaSettings();
 	Candidates candidateAreas;
 
-	if( candidateAreas.capacity() >= numBBoxAreas ) {
+	if( (int)candidateAreas.capacity() >= numBBoxAreas ) {
 		for( int i = 0; i < numBBoxAreas; ++i ) {
 			int areaNum = bboxAreaNums[i];
 			if( currAreaNum == areaNum ) {

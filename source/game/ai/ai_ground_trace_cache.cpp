@@ -35,7 +35,7 @@ void AiGroundTraceCache::GetGroundTrace( const edict_s *ent, float depth, trace_
 	edict_t *entRef = const_cast<edict_t *>( ent );
 	CachedTrace *cachedTrace = (CachedTrace *)data + ENTNUM( entRef );
 
-	if( cachedTrace->computedAt + maxMillisAgo >= level.time ) {
+	if( (int64_t)( cachedTrace->computedAt + maxMillisAgo ) >= level.time ) {
 		if( cachedTrace->depth >= depth ) {
 			trace->startsolid = cachedTrace->trace.startsolid;
 			if( cachedTrace->trace.fraction == 1.0f ) {
@@ -71,7 +71,7 @@ bool AiGroundTraceCache::TryDropToFloor( const struct edict_s *ent, float depth,
 
 	VectorCopy( ent->s.origin, result );
 
-	if( cachedTrace->computedAt + maxMillisAgo >= level.time ) {
+	if( (int64_t)( cachedTrace->computedAt + maxMillisAgo ) >= level.time ) {
 		if( cachedTrace->depth >= depth ) {
 			if( cachedTrace->trace.fraction == 1.0f ) {
 				return false;

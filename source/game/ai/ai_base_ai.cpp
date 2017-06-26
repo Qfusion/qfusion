@@ -64,7 +64,7 @@ void Ai::UpdateReachChain( const ReachChainVector &oldReachChain,
 	// First skip reaches to reached area
 	unsigned i = 0;
 	for( i = 0; i < oldReachChain.size(); ++i ) {
-		if( reachabilities[oldReachChain[i].ReachNum()].areanum == state.currAasAreaNum ) {
+		if( reachabilities[oldReachChain[i].ReachNum()].areanum == state.CurrAasAreaNum() ) {
 			break;
 		}
 	}
@@ -93,7 +93,6 @@ void Ai::UpdateReachChain( const ReachChainVector &oldReachChain,
 }
 
 int Ai::CheckTravelTimeMillis( const Vec3& from, const Vec3 &to, bool allowUnreachable ) {
-	const AiAasWorld *aasWorld = AiAasWorld::Instance();
 
 	// We try to use the same checks the TacticalSpotsRegistry performs to find spots.
 	// If a spot is not reachable, it is an bug,
@@ -222,10 +221,10 @@ void AiEntityPhysicsState::UpdateAreaNums() {
 	if( aasWorld->AreaSettings()[this->currAasAreaNum].areaflags & AREA_GROUNDED ) {
 		float areaMinsZ = aasWorld->Areas()[this->currAasAreaNum].mins[2];
 		float selfZ = Self()->s.origin[2];
-		float heightOverGround = selfZ - areaMinsZ + playerbox_stand_maxs[2];
-		clamp_high( heightOverGround, GROUND_TRACE_DEPTH );
-		SetHeightOverGround( heightOverGround );
-		this->droppedToFloorOriginOffset = ( decltype( this->droppedToFloorOriginOffset ) )( heightOverGround - 4.0f );
+		float heightOverGround_ = selfZ - areaMinsZ + playerbox_stand_maxs[2];
+		clamp_high( heightOverGround_, GROUND_TRACE_DEPTH );
+		SetHeightOverGround( heightOverGround_ );
+		this->droppedToFloorOriginOffset = ( decltype( this->droppedToFloorOriginOffset ) )( heightOverGround_ - 4.0f );
 		this->droppedToFloorAasAreaNum = this->currAasAreaNum;
 		return;
 	}
@@ -238,10 +237,10 @@ void AiEntityPhysicsState::UpdateAreaNums() {
 	G_Trace( &trace, this->origin, ent->r.mins, ent->r.maxs, traceEnd.Data(), ent, MASK_PLAYERSOLID );
 	// Check not only whether there is a hit but test whether is it really a ground (and not a wall or obstacle)
 	if( trace.fraction != 1.0f && Origin()[2] - trace.endpos[2] > -playerbox_stand_mins[2] ) {
-		float heightOverGround = trace.fraction * GROUND_TRACE_DEPTH + playerbox_stand_mins[2];
+		float heightOverGround_ = trace.fraction * GROUND_TRACE_DEPTH + playerbox_stand_mins[2];
 		this->droppedToFloorOriginOffset = ( decltype( this->droppedToFloorOriginOffset ) )( -playerbox_stand_mins[2] );
-		this->droppedToFloorOriginOffset -= heightOverGround - 4.0f;
-		SetHeightOverGround( heightOverGround );
+		this->droppedToFloorOriginOffset -= heightOverGround_ - 4.0f;
+		SetHeightOverGround( heightOverGround_ );
 		Vec3 droppedOrigin( Origin() );
 		droppedOrigin.Z() -= this->droppedToFloorOriginOffset;
 		this->droppedToFloorAasAreaNum = ( decltype( this->droppedToFloorAasAreaNum ) )aasWorld->FindAreaNum( droppedOrigin );

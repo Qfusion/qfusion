@@ -18,6 +18,8 @@ LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
   ../matchmaker/mm_rating.c \
+  ../qalgo/base64.c \
+  ../qalgo/md5.c \
   $(addprefix ai/,$(notdir $(wildcard $(LOCAL_PATH)/ai/*.cpp))) \
   $(notdir $(wildcard $(LOCAL_PATH)/*.cpp))
 

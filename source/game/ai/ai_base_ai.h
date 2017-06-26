@@ -63,9 +63,9 @@ private:
 	unsigned speed : 18;
 	unsigned speed2D : 18;
 
-	inline void SetSpeed( const vec3_t velocity ) {
-		float squareSpeed2D = velocity[0] * velocity[0] + velocity[1] * velocity[1];
-		float squareSpeed = squareSpeed2D + velocity[2] * velocity[2];
+	inline void SetSpeed( const vec3_t velocity_ ) {
+		float squareSpeed2D = velocity_[0] * velocity_[0] + velocity_[1] * velocity_[1];
+		float squareSpeed = squareSpeed2D + velocity_[2] * velocity_[2];
 		// If a square value is very low, leave it as-is
 		if( squareSpeed > 0.001f ) {
 			this->speed = ( decltype( this->speed ) )( sqrtf( squareSpeed ) * 16.0f );
@@ -79,9 +79,9 @@ private:
 		}
 	}
 
-	inline void UpdateDirs( const vec3_t angles ) {
+	inline void UpdateDirs( const vec3_t angles_ ) {
 		vec3_t dirs[2];
-		AngleVectors( angles, dirs[0], dirs[1], nullptr );
+		AngleVectors( angles_, dirs[0], dirs[1], nullptr );
 		SetPackedDir( dirs[0], forwardDir );
 		SetPackedDir( dirs[1], rightDir );
 	}
@@ -138,7 +138,7 @@ public:
 	inline Vec3 Angles() const {
 		return Vec3( (float)SHORT2ANGLE( angles[0] ), (float)SHORT2ANGLE( angles[1] ), (float)SHORT2ANGLE( angles[2] ) );
 	}
-	inline void SetAngles( const Vec3 &angles ) { SetAngles( angles.Data() ); }
+	inline void SetAngles( const Vec3 &angles_ ) { SetAngles( angles_.Data() ); }
 	inline void SetAngles( const vec3_t angles_ ) {
 		this->angles[0] = (short)ANGLE2SHORT( angles_[0] );
 		this->angles[1] = (short)ANGLE2SHORT( angles_[1] );
@@ -159,14 +159,14 @@ public:
 
 	inline const float *Origin() const { return origin; }
 	inline void SetOrigin( const vec3_t origin_ ) { VectorCopy( origin_, this->origin ); }
-	inline void SetOrigin( const Vec3 &origin ) { SetOrigin( origin.Data() ); }
+	inline void SetOrigin( const Vec3 &origin_ ) { SetOrigin( origin_.Data() ); }
 
 	inline const float *Velocity() const { return velocity; }
 	inline void SetVelocity( const vec3_t velocity_ ) {
 		VectorCopy( velocity_, this->velocity );
 		SetSpeed( velocity_ );
 	}
-	inline void SetVelocity( const Vec3 &velocity ) { SetVelocity( velocity.Data() ); }
+	inline void SetVelocity( const Vec3 &velocity_ ) { SetVelocity( velocity_.Data() ); }
 
 	// Note: there might be mismatch with an actual value computed from the velocity
 	inline float Speed() const { return speed / 16.0f; }
@@ -212,7 +212,7 @@ protected:
 	int allowedAasTravelFlags;
 	int preferredAasTravelFlags;
 
-	unsigned blockedTimeout;
+	int64_t blockedTimeout;
 
 	vec3_t angularViewSpeed;
 

@@ -265,10 +265,10 @@ private:
 	uint16_t FindSpotsInRadius( const OriginParams &originParams, uint16_t *spotNums, uint16_t *insideSpotNum ) const;
 
 	void SelectCandidateSpots( const OriginParams &originParams, const CommonProblemParams &problemParams,
-							   const uint16_t *spotNums, uint16_t numSpots, CandidateSpots &result ) const;
+							   const uint16_t *spotNums, uint16_t numSpots_, CandidateSpots &result ) const;
 
 	void SelectCandidateSpots( const OriginParams &originParams, const AdvantageProblemParams &problemParams,
-							   const uint16_t *spotNums, uint16_t numSpots, CandidateSpots &result ) const;
+							   const uint16_t *spotNums, uint16_t numSpots_, CandidateSpots &result ) const;
 
 	void CheckSpotsReachFromOrigin( const OriginParams &originParams,
 									const CommonProblemParams &problemParams,
@@ -312,7 +312,7 @@ private:
 	void SelectPotentialDodgeSpots( const OriginParams &originParams,
 									const DodgeDangerProblemParams &problemParams,
 									const uint16_t *spotNums,
-									uint16_t numSpots,
+									uint16_t numSpots_,
 									CandidateSpots &result ) const;
 
 public:

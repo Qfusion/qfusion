@@ -275,7 +275,7 @@ private:
 #ifndef _MSC_VER
 	inline void Debug( const char *format, ... ) const __attribute__( ( format( printf, 2, 3 ) ) )
 #else
-	inline void Debug( _Printf_format_string_ const char *format ) const
+	inline void Debug( _Printf_format_string_ const char *format, ... ) const
 #endif
 	{
 		va_list va;

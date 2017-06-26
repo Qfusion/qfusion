@@ -409,8 +409,8 @@ protected:
 
 	void SetGoalAndPlan( AiBaseGoal *goal_, AiBaseActionRecord *planHead_ );
 
-	inline void SetNavTarget( NavTarget *navTarget ) {
-		this->navTarget = navTarget;
+	inline void SetNavTarget( NavTarget *navTarget_ ) {
+		this->navTarget = navTarget_;
 		self->ai->aiRef->OnNavTargetSet( this->navTarget );
 	}
 

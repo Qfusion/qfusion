@@ -183,8 +183,8 @@ public:
 		return navEntity ? navEntity->IsBasedOnEntity( ent ) : false;
 	}
 
-	inline bool IsBasedOnNavEntity( const NavEntity *navEntity ) const {
-		return navEntity && this->navEntity == navEntity;
+	inline bool IsBasedOnNavEntity( const NavEntity *navEntity_ ) const {
+		return navEntity_ && this->navEntity == navEntity_;
 	}
 
 	inline bool IsBasedOnSomeEntity() const { return navEntity != nullptr; }

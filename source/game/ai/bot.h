@@ -481,7 +481,7 @@ public:
 	void MovementFrame( BotInput *input );
 	void CheckGroundPlatform();
 	bool CanChangeWeapons() const;
-	void ChangeWeapons( const SelectedWeapons &selectedWeapons );
+	void ChangeWeapons( const SelectedWeapons &selectedWeapons_ );
 	void ChangeWeapon( int weapon );
 	void FireWeapon( BotInput *input );
 	virtual void OnBlockedTimeout() override;

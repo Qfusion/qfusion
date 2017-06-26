@@ -250,11 +250,11 @@ void BotReactToDangerGoal::UpdateWeight( const WorldState &currWorldState ) {
 	const auto &configGroup = WeightConfig().nativeGoals.reactToDanger;
 
 	float damageFraction = currWorldState.PotentialDangerDamageVar() / currWorldState.DamageToBeKilled();
-	float weight = configGroup.baseWeight + configGroup.dmgFracCoeff * damageFraction;
-	weight = BoundedFraction( weight, configGroup.weightBound );
-	weight = configGroup.weightBound / Q_RSqrt( weight );
+	float weight_ = configGroup.baseWeight + configGroup.dmgFracCoeff * damageFraction;
+	weight_ = BoundedFraction( weight_, configGroup.weightBound );
+	weight_ = configGroup.weightBound / Q_RSqrt( weight_ );
 
-	this->weight = weight;
+	this->weight = weight_;
 }
 
 PlannerNode *BotReactToDangerGoal::GetWorldStateTransitions( const WorldState &worldState ) {
@@ -274,15 +274,15 @@ void BotReactToThreatGoal::UpdateWeight( const WorldState &currWorldState ) {
 
 	const auto &configGroup = WeightConfig().nativeGoals.reactToThreat;
 	float damageRatio = currWorldState.ThreatInflictedDamageVar() / currWorldState.DamageToBeKilled();
-	float weight = configGroup.baseWeight + configGroup.dmgFracCoeff * damageRatio;
+	float weight_ = configGroup.baseWeight + configGroup.dmgFracCoeff * damageRatio;
 	float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
 	if( offensiveness >= 0.5f ) {
-		weight *= ( 1.0f + configGroup.offCoeff * ( offensiveness - 0.5f ) );
+		weight_ *= ( 1.0f + configGroup.offCoeff * ( offensiveness - 0.5f ) );
 	}
-	weight = BoundedFraction( weight, configGroup.weightBound );
-	weight = configGroup.weightBound / Q_RSqrt( weight );
+	weight_ = BoundedFraction( weight_, configGroup.weightBound );
+	weight_ = configGroup.weightBound / Q_RSqrt( weight_ );
 
-	this->weight = weight;
+	this->weight = weight_;
 }
 
 void BotReactToThreatGoal::GetDesiredWorldState( WorldState *worldState ) {

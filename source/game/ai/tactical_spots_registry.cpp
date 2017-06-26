@@ -111,7 +111,7 @@ bool TacticalSpotsRegistry::LoadRawNavFileData( const char *mapname ) {
 
 	unsigned expectedDataSize = sizeof( nav_node_s ) * numRawNodes;
 	nav_node_s nodesBuffer[MAX_SPOTS];
-	if( trap_FS_Read( nodesBuffer, expectedDataSize, fp ) != expectedDataSize ) {
+	if( trap_FS_Read( nodesBuffer, expectedDataSize, fp ) != (int)expectedDataSize ) {
 		G_Printf( S_COLOR_RED "%s: Can't read nav nodes data\n", function );
 		return false;
 	}
@@ -145,7 +145,7 @@ bool TacticalSpotsRegistry::LoadSpotsFromRawNavNodes( const char *nodeOriginsDat
 	VectorSet( dummyEnt.r.mins, -12, -12, -12 );
 	VectorSet( dummyEnt.r.maxs, +12, +12, +12 );
 
-	for( int i = 0; i < numRawNodes; ++i ) {
+	for( int i = 0; i < (int)numRawNodes; ++i ) {
 		const float *fileOrigin = (const float *)( nodeOriginsData + strideInBytes * i );
 		float *spotOrigin = dummyEnt.s.origin;
 
@@ -697,7 +697,7 @@ void TacticalSpotsRegistry::MakeSpotsGrid() {
 			if( pointCellNum == cellNum ) {
 				*listPtr = spotNum;
 				++listPtr;
-				if( listPtr - gridSpotsLists > totalNumCells + numSpots ) {
+				if( listPtr - gridSpotsLists > (ptrdiff_t)( totalNumCells + numSpots ) ) {
 					abort();
 				}
 				listSize++;
@@ -828,22 +828,22 @@ int TacticalSpotsRegistry::CopyResults( const SpotAndScore *spotsBegin,
 	bool isSpotExcluded[CandidateSpots::capacity()];
 	memset( isSpotExcluded, 0, sizeof( bool ) * CandidateSpots::capacity() );
 
-	int numSpots = 0;
+	int numSpots_ = 0;
 	unsigned keptSpotIndex = 0;
 	for(;; ) {
 		if( keptSpotIndex >= resultsSize ) {
-			return numSpots;
+			return numSpots_;
 		}
-		if( numSpots >= maxSpots ) {
-			return numSpots;
+		if( numSpots_ >= maxSpots ) {
+			return numSpots_;
 		}
 
 		// Spots are sorted by score.
 		// So first spot not marked as excluded yet has higher priority and should be kept.
 
 		const TacticalSpot &keptSpot = spots[spotsBegin[keptSpotIndex].spotNum];
-		VectorCopy( keptSpot.origin, spotOrigins[numSpots] );
-		++numSpots;
+		VectorCopy( keptSpot.origin, spotOrigins[numSpots_] );
+		++numSpots_;
 
 		// Exclude all next (i.e. lower score) spots that are too close to the kept spot.
 
@@ -924,7 +924,7 @@ int TacticalSpotsRegistry::FindPositionalAdvantageSpots( const OriginParams &ori
 void TacticalSpotsRegistry::SelectCandidateSpots( const OriginParams &originParams,
 												  const CommonProblemParams &problemParams,
 												  const uint16_t *spotNums,
-												  uint16_t numSpots, CandidateSpots &result ) const {
+												  uint16_t numSpots_, CandidateSpots &result ) const {
 	const float minHeightAdvantageOverOrigin = problemParams.minHeightAdvantageOverOrigin;
 	const float heightOverOriginInfluence = problemParams.heightOverOriginInfluence;
 	const float searchRadius = originParams.searchRadius;
@@ -932,7 +932,7 @@ void TacticalSpotsRegistry::SelectCandidateSpots( const OriginParams &originPara
 	// Copy to stack for faster access
 	Vec3 origin( originParams.origin );
 
-	for( unsigned i = 0; i < numSpots && result.size() < result.capacity(); ++i ) {
+	for( unsigned i = 0; i < numSpots_ && result.size() < result.capacity(); ++i ) {
 		const TacticalSpot &spot = spots[spotNums[i]];
 
 		float heightOverOrigin = spot.absMins[2] - originZ;
@@ -959,7 +959,7 @@ void TacticalSpotsRegistry::SelectCandidateSpots( const OriginParams &originPara
 void TacticalSpotsRegistry::SelectCandidateSpots( const OriginParams &originParams,
 												  const AdvantageProblemParams &problemParams,
 												  const uint16_t *spotNums,
-												  uint16_t numSpots, CandidateSpots &result ) const {
+												  uint16_t numSpots_, CandidateSpots &result ) const {
 	const float minHeightAdvantageOverOrigin = problemParams.minHeightAdvantageOverOrigin;
 	const float minHeightAdvantageOverEntity = problemParams.minHeightAdvantageOverEntity;
 	const float heightOverOriginInfluence = problemParams.heightOverOriginInfluence;
@@ -973,7 +973,7 @@ void TacticalSpotsRegistry::SelectCandidateSpots( const OriginParams &originPara
 	Vec3 origin( originParams.origin );
 	Vec3 entityOrigin( problemParams.keepVisibleOrigin );
 
-	for( unsigned i = 0; i < numSpots && result.size() < result.capacity(); ++i ) {
+	for( unsigned i = 0; i < numSpots_ && result.size() < result.capacity(); ++i ) {
 		const TacticalSpot &spot = spots[spotNums[i]];
 
 		float heightOverOrigin = spot.absMins[2] - originZ;
@@ -1098,17 +1098,17 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack( const OriginParams
 	// but it is intended to reduce performance drops (do not more than 2 * result.capacity() pathfinder calls).
 	if( insideSpotNum < MAX_SPOTS ) {
 		const auto *travelTimeTable = this->spotTravelTimeTable;
-		const auto numSpots = this->numSpots;
+		const auto numSpots_ = this->numSpots;
 		for( unsigned i = 0, end = std::min( candidateSpots.size(), result.capacity() ); i < end; ++i ) {
 			const SpotAndScore &spotAndScore = candidateSpots[i];
 			const TacticalSpot &spot = spots[spotAndScore.spotNum];
 
-			// If the table element i * numSpots + j is zero, j-th spot is not reachable from i-th one.
-			int tableToTravelTime = travelTimeTable[insideSpotNum * numSpots + spotAndScore.spotNum];
+			// If the table element i * numSpots_ + j is zero, j-th spot is not reachable from i-th one.
+			int tableToTravelTime = travelTimeTable[insideSpotNum * numSpots_ + spotAndScore.spotNum];
 			if( !tableToTravelTime ) {
 				continue;
 			}
-			int tableBackTravelTime = travelTimeTable[spotAndScore.spotNum * numSpots + insideSpotNum];
+			int tableBackTravelTime = travelTimeTable[spotAndScore.spotNum * numSpots_ + insideSpotNum];
 			if( !tableBackTravelTime ) {
 				continue;
 			}
@@ -1362,7 +1362,7 @@ int TacticalSpotsRegistry::FindEvadeDangerSpots( const OriginParams &originParam
 void TacticalSpotsRegistry::SelectPotentialDodgeSpots( const OriginParams &originParams,
 													   const DodgeDangerProblemParams &problemParams,
 													   const uint16_t *spotNums,
-													   uint16_t numSpots,
+													   uint16_t numSpots_,
 													   CandidateSpots &result ) const {
 	bool mightNegateDodgeDir = false;
 	Vec3 dodgeDir = MakeDodgeDangerDir( originParams, problemParams, &mightNegateDodgeDir );
@@ -1375,7 +1375,7 @@ void TacticalSpotsRegistry::SelectPotentialDodgeSpots( const OriginParams &origi
 	Vec3 origin( originParams.origin );
 
 	if( mightNegateDodgeDir ) {
-		for( unsigned i = 0; i < numSpots && result.size() < result.capacity(); ++i ) {
+		for( unsigned i = 0; i < numSpots_ && result.size() < result.capacity(); ++i ) {
 			const TacticalSpot &spot = spots[spotNums[i]];
 
 			float heightOverOrigin = spot.absMins[2] - originZ;
@@ -1403,7 +1403,7 @@ void TacticalSpotsRegistry::SelectPotentialDodgeSpots( const OriginParams &origi
 			result.push_back( SpotAndScore( spotNums[i], score ) );
 		}
 	} else {
-		for( unsigned i = 0; i < numSpots && result.size() < result.capacity(); ++i ) {
+		for( unsigned i = 0; i < numSpots_ && result.size() < result.capacity(); ++i ) {
 			const TacticalSpot &spot = spots[spotNums[i]];
 
 			float heightOverOrigin = spot.absMins[2] - originZ;
@@ -1500,7 +1500,7 @@ bool TacticalSpotsRegistry::FindClosestToTargetWalkableSpot( const OriginParams 
 															 vec3_t *spotOrigin ) const {
 	uint16_t spotNums[MAX_SPOTS];
 	uint16_t insideSpotNum;
-	uint16_t numSpots = FindSpotsInRadius( originParams, spotNums, &insideSpotNum );
+	uint16_t numSpots_ = FindSpotsInRadius( originParams, spotNums, &insideSpotNum );
 
 	const auto *routeCache = originParams.routeCache;
 	const int originAreaNum = originParams.originAreaNum;
@@ -1521,7 +1521,7 @@ bool TacticalSpotsRegistry::FindClosestToTargetWalkableSpot( const OriginParams 
 	int bestCombinedTravelTime = -1;
 	int travelTimeToSpotWalking, travelTimeFromSpotToTarget;
 
-	for( uint16_t i = 0; i < numSpots; ++i ) {
+	for( uint16_t i = 0; i < numSpots_; ++i ) {
 		const uint16_t spotNum = spotNums[i];
 		const auto &spot = spots[spotNum];
 

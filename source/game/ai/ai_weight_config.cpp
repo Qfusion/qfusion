@@ -157,7 +157,7 @@ inline T *AiBaseWeightConfigVarGroup::GetItemByPath( const char *path,
 	// Do not force path hash computation
 	unsigned pathHeadHash = 0;
 	for( auto *childGroup = childGroupsHead; childGroup; childGroup = childGroup->nextSibling ) {
-		if( childGroup->NameLength() != pathHeadLength ) {
+		if( childGroup->NameLength() != (unsigned)pathHeadLength ) {
 			continue;
 		}
 		if( pathHeadHash == 0 ) {

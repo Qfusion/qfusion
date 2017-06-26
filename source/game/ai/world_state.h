@@ -214,7 +214,8 @@ private:
 	static_assert( 8 * sizeof( decltype( boolVarsValues ) ) >= NUM_BOOL_VARS, "Values capacity overflow" );
 
 	unsigned unsignedVarsValues[NUM_UNSIGNED_VARS];
-	float floatVarsValues[NUM_FLOAT_VARS];
+	static_assert( !NUM_FLOAT_VARS, "Remove the + 1 MSVC non-zero array size fix" );
+	float floatVarsValues[NUM_FLOAT_VARS + 1];
 	short shortVarsValues[NUM_SHORT_VARS];
 	// Each origin (lazy) var needs a room for value (3 array cells) and misc packed data (1 cell)
 	short originVarsData[NUM_ORIGIN_VARS * 4];
@@ -357,7 +358,7 @@ public:
 		inline short *Data() { return &parent->originVarsData[index * 4]; }
 		inline const short *Data() const { return &parent->originVarsData[index * 4]; }
 
-		struct PackedFields {
+		struct alignas( 2 )PackedFields {
 			bool ignore : 1;
 			unsigned char satisfyOp : 5;
 			unsigned short epsilon : 10;
@@ -367,8 +368,10 @@ public:
 			}
 		};
 
+#ifndef _MSC_VER
 		static_assert( sizeof( PackedFields ) == sizeof( short ), "" );
 		static_assert( alignof( PackedFields ) == alignof( short ), "" );
+#endif
 
 		inline PackedFields &Packed() {
 			return *(PackedFields *)&Data()[3];
@@ -451,7 +454,7 @@ protected:
 		inline short *Data() { return &varsData[index * 4]; }
 		inline const short *Data() const { return &varsData[index * 4]; }
 
-		struct PackedFields {
+		struct alignas( 2 )PackedFields {
 			bool ignore : 1;
 			unsigned short stateBits : 4;
 			unsigned char satisfyOp : 1;
@@ -462,8 +465,10 @@ protected:
 			}
 		};
 
+#ifndef _MSC_VER
 		static_assert( sizeof( PackedFields ) == sizeof( short ), "" );
 		static_assert( alignof( PackedFields ) == alignof( short ), "" );
+#endif
 
 		inline PackedFields &Packed() {
 			return *(PackedFields *)&varsData[index * 4 + 3];
@@ -934,7 +939,7 @@ inline float WorldState::OriginLazyVarBase::DistanceTo( const OriginVar &that ) 
 inline bool WorldState::OriginLazyVar::IsPresent() const {
 	unsigned char stateBits = StateBits();
 	if( stateBits != PENDING ) {
-		return stateBits;
+		return stateBits != ABSENT;
 	}
 
 	const short *packedValues = ( parent->*supplier )();
@@ -1148,7 +1153,7 @@ inline void WorldState::DualOriginLazyVar::DebugPrint( const char *tag ) const {
 inline bool WorldState::DualOriginLazyVar::IsPresent() const {
 	unsigned char stateBits = StateBits();
 	if( stateBits != PENDING ) {
-		return stateBits;
+		return stateBits != ABSENT;
 	}
 
 	const short *packedValues = ( parent->*supplier )();

@@ -38,7 +38,22 @@ in NO WAY supported by Steve Yeager.
 #undef min
 #endif
 
-#include <cinttypes>
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
+#include <inttypes.h>
+
+// First try to include <math.h> for M_* defines
+#ifndef __USE_MATH_DEFINES
+#define __USE_MATH_DEFINES 1
+#endif
+#include <math.h>
+
+// If the <math.h> inclusion above still did not help
+// (in case when it was included earlier without __USE_MATH_DEFINES)
+#ifndef M_SQRT1_2
+#define M_SQRT1_2 ( 0.70710678118654752440 )
+#endif
 
 #include <algorithm>
 #include <utility>

@@ -303,7 +303,7 @@ bool BotBrain::FindDodgeDangerSpot( const Danger &danger, vec3_t spotOrigin ) {
 	problemParams.SetOriginDistanceInfluence( 0.4f );
 	problemParams.SetOriginWeightFalloffDistanceRatio( 0.9f );
 	problemParams.SetTravelTimeInfluence( 0.2f );
-	return (bool)TacticalSpotsRegistry::Instance()->FindEvadeDangerSpots( originParams, problemParams, (vec3_t *)spotOrigin, 1 );
+	return TacticalSpotsRegistry::Instance()->FindEvadeDangerSpots( originParams, problemParams, (vec3_t *)spotOrigin, 1 ) > 0;
 }
 
 void BotBrain::CheckNewActiveDanger() {
@@ -342,7 +342,7 @@ void BotBrain::CheckNewActiveDanger() {
 	}
 }
 
-bool BotBrain::Threat::IsValidFor( const edict_t *self ) const {
+bool BotBrain::Threat::IsValidFor( const edict_t *self_ ) const {
 	if( level.time - lastHitTimestamp > 350 ) {
 		return false;
 	}
@@ -363,9 +363,9 @@ bool BotBrain::Threat::IsValidFor( const edict_t *self ) const {
 
 	// It is not cheap to call so do it after all other tests have passed
 	vec3_t lookDir;
-	AngleVectors( self->s.origin, lookDir, nullptr, nullptr );
+	AngleVectors( self_->s.origin, lookDir, nullptr, nullptr );
 	Vec3 toThreat( inflictor->s.origin );
-	toThreat -= self->s.origin;
+	toThreat -= self_->s.origin;
 	toThreat.NormalizeFast();
 	return toThreat.Dot( lookDir ) < 0;
 }

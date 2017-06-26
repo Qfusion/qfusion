@@ -668,7 +668,7 @@ private:
 
 	// The resultFlag arg is supplied only for assertions check
 	inline const TraceResult &ResultForIndex( unsigned resultFlag, int index ) const {
-		Assert( resultFlag == 1 << index );
+		Assert( resultFlag == 1u << index );
 		Assert( resultFlag & this->resultsMask );
 		return results[index];
 	}
@@ -827,8 +827,8 @@ private:
 		StaticVector<T, N> values;
 		uint64_t isCachedBitset;
 
-		inline void SetBit( unsigned bit ) { isCachedBitset |= ( 1 << bit ); }
-		inline void ClearBit( unsigned bit ) { isCachedBitset &= ~( 1 << bit ); }
+		inline void SetBit( unsigned bit ) { isCachedBitset |= ( ( (uint64_t)1 ) << bit ); }
+		inline void ClearBit( unsigned bit ) { isCachedBitset &= ~( ( (uint64_t)1 ) << bit ); }
 
 public:
 		inline CachesStack() : isCachedBitset( 0 ) {}
@@ -859,14 +859,14 @@ public:
 		}
 		inline const T *GetCached() const {
 			assert( values.size() );
-			return ( isCachedBitset & ( 1 << ( values.size() - 1 ) ) ) ? &values.back() : nullptr;
+			return ( isCachedBitset & ( ( (uint64_t)1 ) << ( values.size() - 1 ) ) ) ? &values.back() : nullptr;
 		}
 		inline const T *GetCachedValueBelowTopOfStack() const {
 			assert( values.size() );
 			if( values.size() == 1 ) {
 				return nullptr;
 			}
-			return ( isCachedBitset & ( 1 << ( values.size() - 2 ) ) ) ? &values[values.size() - 2] : nullptr;
+			return ( isCachedBitset & ( ( (uint64_t)1 ) << ( values.size() - 2 ) ) ) ? &values[values.size() - 2] : nullptr;
 		}
 
 		inline unsigned Size() const { return values.size(); }
@@ -997,7 +997,7 @@ public:
 	inline void SaveSuggestedActionForNextFrame( BotBaseMovementAction *action );
 	inline unsigned MillisAheadForFrameStart( unsigned frameIndex ) const;
 
-	class BotBaseMovementAction *GetCachedActionAndRecordForCurrTime( BotMovementActionRecord *record );
+	class BotBaseMovementAction *GetCachedActionAndRecordForCurrTime( BotMovementActionRecord *record_ );
 
 	void SetDefaultBotInput();
 
@@ -1016,7 +1016,7 @@ public:
 	void OnInterceptedPredictedEvent( int ev, int parm );
 	void OnInterceptedPMoveTouchTriggers( pmove_t *pm, vec3_t const previousOrigin );
 
-	class BotBaseMovementAction *GetActionAndRecordForCurrTime( BotMovementActionRecord *record );
+	class BotBaseMovementAction *GetActionAndRecordForCurrTime( BotMovementActionRecord *record_ );
 
 	// Might be called for failed attempts too
 	void ShowBuiltPlanPath() const;

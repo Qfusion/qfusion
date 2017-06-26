@@ -91,15 +91,15 @@ Bot::Bot( edict_t *self_, float skillLevel_ )
 
 void Bot::ApplyPendingTurnToLookAtPoint( BotInput *botInput, BotMovementPredictionContext *context ) const {
 	BotPendingLookAtPointState *pendingLookAtPointState;
-	AiEntityPhysicsState *entityPhysicsState;
+	AiEntityPhysicsState *entityPhysicsState_;
 	unsigned frameTime;
 	if( context ) {
 		pendingLookAtPointState = &context->movementState->pendingLookAtPointState;
-		entityPhysicsState = &context->movementState->entityPhysicsState;
+		entityPhysicsState_ = &context->movementState->entityPhysicsState;
 		frameTime = context->predictionStepMillis;
 	} else {
 		pendingLookAtPointState = &self->ai->botRef->movementState.pendingLookAtPointState;
-		entityPhysicsState = &self->ai->botRef->movementState.entityPhysicsState;
+		entityPhysicsState_ = &self->ai->botRef->movementState.entityPhysicsState;
 		frameTime = game.frametime;
 	}
 
@@ -109,14 +109,14 @@ void Bot::ApplyPendingTurnToLookAtPoint( BotInput *botInput, BotMovementPredicti
 
 	const AiPendingLookAtPoint &pendingLookAtPoint = pendingLookAtPointState->pendingLookAtPoint;
 	Vec3 toPointDir( pendingLookAtPoint.Origin() );
-	toPointDir -= entityPhysicsState->Origin();
+	toPointDir -= entityPhysicsState_->Origin();
 	toPointDir.NormalizeFast();
 
 	botInput->SetIntendedLookDir( toPointDir, true );
 	botInput->isLookDirSet = true;
 
 	float turnSpeedMultiplier = pendingLookAtPoint.TurnSpeedMultiplier();
-	Vec3 newAngles = GetNewViewAngles( entityPhysicsState->Angles().Data(), toPointDir, frameTime, turnSpeedMultiplier );
+	Vec3 newAngles = GetNewViewAngles( entityPhysicsState_->Angles().Data(), toPointDir, frameTime, turnSpeedMultiplier );
 	botInput->SetAlreadyComputedAngles( newAngles );
 
 	botInput->canOverrideLookVec = false;
@@ -137,7 +137,7 @@ void Bot::ApplyInput( BotInput *input, BotMovementPredictionContext *context ) {
 	}
 
 	if( context ) {
-		auto *entityPhysicsState = &context->movementState->entityPhysicsState;
+		auto *entityPhysicsState_ = &context->movementState->entityPhysicsState;
 		if( !input->hasAlreadyComputedAngles ) {
 			if( CheckInputInversion( input, context ) ) {
 				InvertKeys( input, context );
@@ -145,12 +145,12 @@ void Bot::ApplyInput( BotInput *input, BotMovementPredictionContext *context ) {
 												  context->predictionStepMillis, 5.0f * input->TurnSpeedMultiplier() ) );
 				input->SetAlreadyComputedAngles( newAngles );
 			} else {
-				Vec3 newAngles( GetNewViewAngles( entityPhysicsState->Angles(), input->IntendedLookDir(),
+				Vec3 newAngles( GetNewViewAngles( entityPhysicsState_->Angles(), input->IntendedLookDir(),
 												  context->predictionStepMillis, input->TurnSpeedMultiplier() ) );
 				input->SetAlreadyComputedAngles( newAngles );
 			}
 		}
-		entityPhysicsState->SetAngles( input->AlreadyComputedAngles() );
+		entityPhysicsState_->SetAngles( input->AlreadyComputedAngles() );
 	} else {
 		if( !input->hasAlreadyComputedAngles ) {
 			if( CheckInputInversion( input, context ) ) {
@@ -504,12 +504,12 @@ bool Bot::CanChangeWeapons() const {
 	return false;
 }
 
-void Bot::ChangeWeapons( const SelectedWeapons &selectedWeapons ) {
-	if( selectedWeapons.BuiltinFireDef() != nullptr ) {
-		self->r.client->ps.stats[STAT_PENDING_WEAPON] = selectedWeapons.BuiltinWeaponNum();
+void Bot::ChangeWeapons( const SelectedWeapons &selectedWeapons_ ) {
+	if( selectedWeapons_.BuiltinFireDef() != nullptr ) {
+		self->r.client->ps.stats[STAT_PENDING_WEAPON] = selectedWeapons_.BuiltinWeaponNum();
 	}
-	if( selectedWeapons.ScriptFireDef() != nullptr ) {
-		GT_asSelectScriptWeapon( self->r.client, selectedWeapons.ScriptWeaponNum() );
+	if( selectedWeapons_.ScriptFireDef() != nullptr ) {
+		GT_asSelectScriptWeapon( self->r.client, selectedWeapons_.ScriptWeaponNum() );
 	}
 }
 

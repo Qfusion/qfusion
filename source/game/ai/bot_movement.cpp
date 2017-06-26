@@ -257,7 +257,7 @@ bool BotMovementState::TestActualStatesForExpectedMask( unsigned expectedStatesM
 	return result;
 }
 
-BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordForCurrTime( BotMovementActionRecord *record ) {
+BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordForCurrTime( BotMovementActionRecord *record_ ) {
 	const int64_t levelTime = level.time;
 	PredictedMovementAction *prevPredictedAction = nullptr;
 	PredictedMovementAction *nextPredictedAction = nullptr;
@@ -281,7 +281,7 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
 		Assert( VectorCompare( nextPredictedAction->entityPhysicsState.Origin(), self->s.origin ) );
 		Assert( VectorCompare( nextPredictedAction->entityPhysicsState.Velocity(), self->velocity ) );
 		// If there is a modified velocity, it will be copied with this record and then applied
-		*record = nextPredictedAction->record;
+		*record_ = nextPredictedAction->record;
 		Debug( "Using just computed predicted movement action %s\n", nextPredictedAction->action->Name() );
 		return nextPredictedAction->action;
 	}
@@ -376,10 +376,10 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
 
 	// If next predicted state is likely to be completed next frame, use its input as-is (except the velocity)
 	if( nextPredictedAction->timestamp - levelTime <= game.frametime ) {
-		*record = nextPredictedAction->record;
+		*record_ = nextPredictedAction->record;
 		// Apply modified velocity only once for an exact timestamp
 		if( nextPredictedAction->timestamp != levelTime ) {
-			record->hasModifiedVelocity = false;
+			record_->hasModifiedVelocity = false;
 		}
 		return nextPredictedAction->action;
 	}
@@ -387,24 +387,24 @@ BotBaseMovementAction *BotMovementPredictionContext::GetCachedActionAndRecordFor
 	float inputLerpFrac = game.frametime / ( (float)( nextPredictedAction->timestamp - levelTime ) );
 	Assert( inputLerpFrac > 0 && inputLerpFrac <= 1.0f );
 	// If next predicted time is likely to be pending next frame again, interpolate input for a single frame ahead
-	*record = nextPredictedAction->record;
+	*record_ = nextPredictedAction->record;
 	// Prevent applying a modified velocity from the new state
-	record->hasModifiedVelocity = false;
-	if( !record->botInput.canOverrideLookVec ) {
+	record_->hasModifiedVelocity = false;
+	if( !record_->botInput.canOverrideLookVec ) {
 		Vec3 actualLookDir( self->ai->botRef->entityPhysicsState->ForwardDir() );
-		Vec3 intendedLookVec( record->botInput.IntendedLookDir() );
+		Vec3 intendedLookVec( record_->botInput.IntendedLookDir() );
 		VectorLerp( actualLookDir.Data(), inputLerpFrac, intendedLookVec.Data(), intendedLookVec.Data() );
-		record->botInput.SetIntendedLookDir( intendedLookVec );
+		record_->botInput.SetIntendedLookDir( intendedLookVec );
 	}
 
 	return nextPredictedAction->action;
 }
 
-BotBaseMovementAction *BotMovementPredictionContext::GetActionAndRecordForCurrTime( BotMovementActionRecord *record ) {
-	auto *action = GetCachedActionAndRecordForCurrTime( record );
+BotBaseMovementAction *BotMovementPredictionContext::GetActionAndRecordForCurrTime( BotMovementActionRecord *record_ ) {
+	auto *action = GetCachedActionAndRecordForCurrTime( record_ );
 	if( !action ) {
 		BuildPlan();
-		action = GetCachedActionAndRecordForCurrTime( record );
+		action = GetCachedActionAndRecordForCurrTime( record_ );
 	}
 
 	//AITools_DrawColorLine(self->s.origin, (Vec3(0, 0, 48) + self->s.origin).Data(), action->DebugColor(), 0);
@@ -2600,7 +2600,7 @@ void BotLandOnSavedAreasMovementAction::PlanPredictionStep( BotMovementPredictio
 
 	// If there the current tested area is set
 	if( currAreaIndex >= 0 ) {
-		Assert( savedLandingAreas.size() > currAreaIndex );
+		Assert( (int)savedLandingAreas.size() > currAreaIndex );
 		// Continue testing this area
 		if( TryLandingStepOnArea( savedLandingAreas[currAreaIndex], context ) ) {
 			context->SaveSuggestedActionForNextFrame( this );
@@ -2684,7 +2684,7 @@ void BotLandOnSavedAreasMovementAction::CheckPredictionStepResults( BotMovementP
 	}
 
 	// Check which area bot has landed in
-	Assert( currAreaIndex >= 0 && currAreaIndex == totalTestedAreas && currAreaIndex < savedLandingAreas.size() );
+	Assert( currAreaIndex >= 0 && currAreaIndex == totalTestedAreas && currAreaIndex < (int)savedLandingAreas.size() );
 	const int landingArea = savedLandingAreas[currAreaIndex];
 	if( landingArea == entityPhysicsState.CurrAasAreaNum() || landingArea == entityPhysicsState.DroppedToFloorAasAreaNum() ) {
 		Debug( "A prediction step has lead to touching a ground in the target landing area, should stop planning\n" );
@@ -3352,7 +3352,7 @@ AreaAndScore *BotBunnyStraighteningReachChainMovementAction::SelectCandidateArea
 			// Do not test lower score areas if there is already enough tested candidates
 			if( score > minScore ) {
 				minScore = score;
-			} else if( candidatesPtr - candidatesBegin >= maxSuggestedLookDirs ) {
+			} else if( candidatesPtr - candidatesBegin >= (ptrdiff_t)maxSuggestedLookDirs ) {
 				continue;
 			}
 		}
@@ -3532,7 +3532,7 @@ AreaAndScore *BotBunnyToBestShortcutAreaMovementAction::SelectCandidateAreas( Bo
 		// Do not test lower score areas if there is already enough tested candidates
 		if( travelTimeSave > minTravelTimeSave ) {
 			minTravelTimeSave = travelTimeSave;
-		} else if( candidatesPtr - candidatesBegin >= maxSuggestedLookDirs ) {
+		} else if( candidatesPtr - candidatesBegin >= (ptrdiff_t)maxSuggestedLookDirs ) {
 			continue;
 		}
 
@@ -4273,7 +4273,7 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults( BotMovemen
 		}
 	} else {
 		constexpr const char *format = "A prediction step has lead to increased travel time to nav target\n";
-		if( currTravelTimeToNavTarget > minTravelTimeToNavTargetSoFar + tolerableWalkableIncreasedTravelTimeMillis ) {
+		if( currTravelTimeToNavTarget > (int)( minTravelTimeToNavTargetSoFar + tolerableWalkableIncreasedTravelTimeMillis ) ) {
 			context->SetPendingRollback();
 			Debug( format );
 			return;
@@ -4306,7 +4306,7 @@ void BotGenericRunBunnyingMovementAction::CheckPredictionStepResults( BotMovemen
 				int toAreaNum = minTravelTimeAreaNumSoFar;
 				if( int aasTime = self->ai->botRef->routeCache->TravelTimeToGoalArea( areaNums[i], toAreaNum, travelFlags ) ) {
 					// aasTime is in seconds^-2
-					if( aasTime * 10 < tolerableWalkableIncreasedTravelTimeMillis ) {
+					if( aasTime * 10 < (int)tolerableWalkableIncreasedTravelTimeMillis ) {
 						walkable = true;
 						break;
 					}
@@ -4780,7 +4780,7 @@ void BotEnvironmentTraceCache::MakeRandomizedKeyMovesToTarget( BotMovementPredic
 
 	// A uniformly distributed random number in (0, scoresSum)
 	const float rn = random() * scoresSum;
-	for( int i = 0; i < numNonBlockedDirs; ++i ) {
+	for( unsigned i = 0; i < numNonBlockedDirs; ++i ) {
 		if( rn > dirDistributionUpperBound[i] ) {
 			continue;
 		}

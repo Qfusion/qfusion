@@ -186,6 +186,8 @@ static const asMethod_t asAiUnsignedVar_ObjectMethods[] =
 {
     DECLARE_SCRIPT_VAR_BASE_ACCESSOR_METHODS_LIST(UnsignedVar, uint),
 
+    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op), objectUnsignedVar_setSatisfyOp),
+
     ASLIB_METHOD_NULL
 };
 
@@ -197,6 +199,8 @@ static const asMethod_t asAiFloatVar_ObjectMethods[] =
 {
     DECLARE_SCRIPT_VAR_BASE_ACCESSOR_METHODS_LIST(FloatVar, float),
 
+    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op), objectFloatVar_setSatisfyOp),
+
     ASLIB_METHOD_NULL
 };
 
@@ -207,6 +211,8 @@ DEFINE_NATIVE_VAR_BASE_ACCESSORS(ShortVar, short);
 static const asMethod_t asAiShortVar_ObjectMethods[] =
 {
     DECLARE_SCRIPT_VAR_BASE_ACCESSOR_METHODS_LIST(ShortVar, int16),
+
+    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op), objectShortVar_setSatisfyOp),
 
     ASLIB_METHOD_NULL
 };
@@ -278,7 +284,7 @@ static const asMethod_t asAiOriginLazyVar_ObjectMethods[] =
     DECLARE_METHOD(void, setIgnore, (bool ignore), objectOriginLazyVar_setIgnore),
     DECLARE_METHOD(bool, isPresent, () const, objectOriginLazyVar_isPresent),
     DECLARE_METHOD(bool, ignoreOrAbsent, () const, objectOriginLazyVar_ignoreOrAbsent),
-    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op, float epsilon), objectOriginVar_setSatisfyOp),
+    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op, float epsilon), objectOriginLazyVar_setSatisfyOp),
 
     ASLIB_METHOD_NULL
 };
@@ -306,7 +312,7 @@ static const asMethod_t asAiDualOriginLazyVar_ObjectMethods[] =
     DECLARE_METHOD(void, setIgnore, (bool ignore), objectDualOriginLazyVar_setIgnore),
     DECLARE_METHOD(bool, isPresent, () const, objectDualOriginLazyVar_isPresent),
     DECLARE_METHOD(bool, ignoreOrAbsent, () const, objectDualOriginLazyVar_ignoreOrAbsent),
-    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op, float epsilon), objectOriginVar_setSatisfyOp),
+    DECLARE_METHOD(void, setSatisfyOp, (var_satisfy_op_e op, float epsilon), objectDualOriginLazyVar_setSatisfyOp),
 
     ASLIB_METHOD_NULL
 };
