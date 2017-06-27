@@ -447,24 +447,27 @@ static bool SNAP_BitsCullEntity( cmodel_state_t *cms, edict_t *ent, uint8_t *bit
 typedef struct {
 	int numSnapshotEntities;
 	int snapshotEntities[MAX_SNAPSHOT_ENTITIES];
-	int entityAddedToSnapList[MAX_EDICTS];
+	uint8_t entityAddedToSnapList[MAX_EDICTS / 8];
 } snapshotEntityNumbers_t;
 
 /*
 * SNAP_AddEntNumToSnapList
 */
 static void SNAP_AddEntNumToSnapList( int entNum, snapshotEntityNumbers_t *entsList ) {
+	if( entNum >= MAX_EDICTS ) {
+		return;
+	}
 	if( entsList->numSnapshotEntities >= MAX_SNAPSHOT_ENTITIES ) { // silent ignore of overflood
 		return;
 	}
 
 	// don't double add entities
-	if( entsList->entityAddedToSnapList[entNum] ) {
+	if( entsList->entityAddedToSnapList[entNum >> 3] & (1 << (entNum & 7)) ) {
 		return;
 	}
 
 	entsList->snapshotEntities[entsList->numSnapshotEntities++] = entNum;
-	entsList->entityAddedToSnapList[entNum] = true;
+	entsList->entityAddedToSnapList[entNum >> 3] |=  (1 << (entNum & 7));
 }
 
 /*
@@ -473,10 +476,11 @@ static void SNAP_AddEntNumToSnapList( int entNum, snapshotEntityNumbers_t *entsL
 static void SNAP_SortSnapList( snapshotEntityNumbers_t *entsList ) {
 	int i;
 
-	// avoid adding world to the list by all costs
 	entsList->numSnapshotEntities = 0;
+
+	// avoid adding world to the list by all costs
 	for( i = 1; i < MAX_EDICTS; i++ ) {
-		if( entsList->entityAddedToSnapList[i] == true ) {
+		if( entsList->entityAddedToSnapList[i >> 3] & (1 << (i & 7)) ) {
 			entsList->snapshotEntities[entsList->numSnapshotEntities++] = i;
 		}
 	}
