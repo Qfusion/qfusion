@@ -4,6 +4,7 @@
 
 generic/quickmenu.as;
 generic/awards.as;
+generic/bots.as;
 generic/matchstates.as;
 generic/items.as;
 
