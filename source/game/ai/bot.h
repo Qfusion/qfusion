@@ -7,6 +7,16 @@
 #include "ai_base_ai.h"
 #include "vec3.h"
 
+#include "bot_movement.h"
+#include "bot_weapon_selector.h"
+#include "bot_fire_target_cache.h"
+#include "bot_tactical_spots_cache.h"
+#include "bot_roaming_manager.h"
+#include "bot_weight_config.h"
+
+#include "bot_goals.h"
+#include "bot_actions.h"
+
 class AiSquad;
 class AiBaseEnemyPool;
 
@@ -18,7 +28,7 @@ struct AiAlertSpot {
 	float carrierEnemyInfluenceScale;
 
 	AiAlertSpot( int id_,
-				 Vec3 origin_,
+				 const Vec3 &origin_,
 				 float radius_,
 				 float regularEnemyInfluenceScale_ = 1.0f,
 				 float carrierEnemyInfluenceScale_ = 1.0f )
@@ -32,45 +42,68 @@ struct AiAlertSpot {
 class Bot : public Ai
 {
 	friend class AiManager;
+	friend class BotEvolutionManager;
 	friend class AiBaseTeamBrain;
 	friend class BotBrain;
 	friend class AiSquad;
 	friend class AiBaseEnemyPool;
-	friend class FireTargetCache;
+	friend class BotFireTargetCache;
+	friend class BotItemsSelector;
+	friend class BotWeaponSelector;
+	friend class BotRoamingManager;
+	friend class BotBaseGoal;
+	friend class BotGrabItemGoal;
+	friend class BotKillEnemyGoal;
+	friend class BotRunAwayGoal;
+	friend class BotReactToDangerGoal;
+	friend class BotReactToThreatGoal;
+	friend class BotReactToEnemyLostGoal;
+	friend class BotAttackOutOfDespairGoal;
+	friend class BotRoamGoal;
+	friend class BotTacticalSpotsCache;
+	friend class WorldState;
+	friend struct BotMovementState;
+	friend class BotMovementPredictionContext;
+	friend class BotBaseMovementAction;
+	friend class BotDummyMovementAction;
+	friend class BotMoveOnLadderMovementAction;
+	friend class BotHandleTriggeredJumppadMovementAction;
+	friend class BotLandOnSavedAreasMovementAction;
+	friend class BotRidePlatformMovementAction;
+	friend class BotSwimMovementAction;
+	friend class BotFlyUntilLandingMovementAction;
+	friend class BotCampASpotMovementAction;
+	friend class BotWalkCarefullyMovementAction;
+	friend class BotGenericRunBunnyingMovementAction;
+	friend class BotBunnyStraighteningReachChainMovementAction;
+	friend class BotBunnyToBestShortcutAreaMovementAction;
+	friend class BotBunnyInterpolatingReachChainMovementAction;
+	friend class BotWalkOrSlideInterpolatingReachChainMovementAction;
+	friend class BotCombatDodgeSemiRandomlyToTargetMovementAction;
 
 public:
 	static constexpr auto PREFERRED_TRAVEL_FLAGS =
 		TFL_WALK | TFL_WALKOFFLEDGE | TFL_JUMP | TFL_AIR | TFL_TELEPORT | TFL_JUMPPAD;
 	static constexpr auto ALLOWED_TRAVEL_FLAGS =
-		PREFERRED_TRAVEL_FLAGS | TFL_WATER | TFL_WATERJUMP | TFL_SWIM | TFL_LADDER | TFL_ELEVATOR;
+		PREFERRED_TRAVEL_FLAGS | TFL_WATER | TFL_WATERJUMP | TFL_SWIM | TFL_LADDER | TFL_ELEVATOR | TFL_BARRIERJUMP;
 
 	Bot( edict_t *self_, float skillLevel_ );
 	virtual ~Bot() override {
 		AiAasRouteCache::ReleaseInstance( routeCache );
 	}
 
-	void Move( usercmd_t *ucmd, bool beSilent );
-	void LookAround();
-	void ChangeWeapon( const CombatTask &combatTask );
-	void ChangeWeapon( int weapon );
-	bool FireWeapon( bool *didBuiltinAttack );
+	inline float Skill() const { return skillLevel; }
+	inline bool IsReady() const { return level.ready[PLAYERNUM( self )]; }
+
 	void Pain( const edict_t *enemy, float kick, int damage ) {
+		if( kick != 0.0f ) {
+			lastKnockbackAt = level.time;
+		}
 		botBrain.OnPain( enemy, kick, damage );
 	}
 	void OnEnemyDamaged( const edict_t *enemy, int damage ) {
 		botBrain.OnEnemyDamaged( enemy, damage );
 	}
-	virtual void OnBlockedTimeout() override;
-	void SayVoiceMessages();
-	void GhostingFrame();
-	void ActiveFrame();
-	void CallGhostingClientThink( usercmd_t *ucmd );
-	void CallActiveClientThink( usercmd_t *ucmd );
-
-	void OnRespawn();
-
-	inline float Skill() const { return skillLevel; }
-	inline bool IsReady() const { return level.ready[PLAYERNUM( self )]; }
 
 	inline void OnAttachedToSquad( AiSquad *squad ) {
 		botBrain.OnAttachedToSquad( squad );
@@ -82,10 +115,10 @@ public:
 	}
 	inline bool IsInSquad() const { return isInSquad; }
 
-	inline int64_t LastAttackedByTime( const edict_t *attacker ) {
+	inline unsigned LastAttackedByTime( const edict_t *attacker ) {
 		return botBrain.LastAttackedByTime( attacker );
 	}
-	inline int64_t LastTargetTime( const edict_t *target ) {
+	inline unsigned LastTargetTime( const edict_t *target ) {
 		return botBrain.LastTargetTime( target );
 	}
 	inline void OnEnemyRemoved( const Enemy *enemy ) {
@@ -136,15 +169,6 @@ public:
 	inline void DropArmor() {
 		GT_asBotDropArmor( self->r.client );
 	}
-	inline bool CanAndWouldCloak() const {
-		return GT_asBotWouldCloak( self->r.client );
-	}
-	inline void SetCloakEnabled( bool enabled ) {
-		GT_asSetBotCloakEnabled( self->r.client, enabled );
-	}
-	inline bool IsCloaking() const {
-		return GT_asIsEntityCloaking( self );
-	}
 	inline float PlayerDefenciveAbilitiesRating() const {
 		return GT_asPlayerDefenciveAbilitiesRating( self->r.client );
 	}
@@ -165,6 +189,24 @@ public:
 		defenceSpotId = -1;
 		offenseSpotId = spotId;
 	}
+	inline float Fov() const { return 110.0f + 69.0f * Skill(); }
+	inline float FovDotFactor() const { return cosf( (float)DEG2RAD( Fov() / 2 ) ); }
+
+	inline BotBaseGoal *GetGoalByName( const char *name ) { return botBrain.GetGoalByName( name ); }
+	inline BotBaseAction *GetActionByName( const char *name ) { return botBrain.GetActionByName( name ); }
+
+	inline BotScriptGoal *AllocScriptGoal() { return botBrain.AllocScriptGoal(); }
+	inline BotScriptAction *AllocScriptAction() { return botBrain.AllocScriptAction(); }
+
+	inline const BotWeightConfig &WeightConfig() const { return weightConfig; }
+	inline BotWeightConfig &WeightConfig() { return weightConfig; }
+
+	inline void OnInterceptedPredictedEvent( int ev, int parm ) {
+		movementPredictionContext.OnInterceptedPredictedEvent( ev, parm );
+	}
+	inline void OnInterceptedPMoveTouchTriggers( pmove_t *pm, const vec3_t previousOrigin ) {
+		movementPredictionContext.OnInterceptedPMoveTouchTriggers( pm, previousOrigin );
+	}
 
 protected:
 	virtual void Frame() override;
@@ -176,241 +218,96 @@ protected:
 		UpdateScriptWeaponsStatus();
 	}
 
-	virtual void TouchedGoal( const edict_t *goalUnderlyingEntity ) override;
-	virtual void TouchedJumppad( const edict_t *jumppad ) override;
+	virtual void OnNavTargetTouchHandled() override {
+		botBrain.selectedNavEntity.InvalidateNextFrame();
+	}
+
+	virtual void TouchedOtherEntity( const edict_t *entity ) override;
 
 private:
 	void RegisterVisibleEnemies();
 
 	inline bool IsPrimaryAimEnemy( const edict_t *enemy ) const { return botBrain.IsPrimaryAimEnemy( enemy ); }
 
+	BotWeightConfig weightConfig;
 	DangersDetector dangersDetector;
 	BotBrain botBrain;
 
 	float skillLevel;
 
-	unsigned nextBlockedEscapeAttemptAt;
-	Vec3 blockedEscapeGoalOrigin;
+	SelectedEnemies selectedEnemies;
+	SelectedWeapons selectedWeapons;
 
-	struct JumppadMovementState {
-		// Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
-		// It gets processed by movement code in next frame
-		bool hasTouchedJumppad;
-		// If this flag is set, bot is in "jumppad" movement state
-		bool hasEnteredJumppad;
-		// This timeout is computed and set in Bot::TouchedJumppad().
-		// Bot tries to keep flying even if next reach. cache is empty if the timeout is greater than level time.
-		// If there are no cached reach.'s and the timeout is not greater than level time bot tries to find area to land to.
-		int64_t jumppadMoveTimeout;
-		// Next reach. cache is lost in air.
-		// Thus we have to store next areas starting a jumppad movement and try to prefer these areas for landing
-		static constexpr int MAX_LANDING_AREAS = 16;
-		int landingAreas[MAX_LANDING_AREAS];
-		int landingAreasCount;
-		Vec3 jumppadTarget;
+	BotWeaponSelector weaponsSelector;
 
-		inline JumppadMovementState()
-			: hasTouchedJumppad( false ),
-			hasEnteredJumppad( false ),
-			jumppadMoveTimeout( 0 ),
-			landingAreasCount( 0 ),
-			jumppadTarget( INFINITY, INFINITY, INFINITY ) {}
+	BotTacticalSpotsCache tacticalSpotsCache;
+	BotRoamingManager roamingManager;
 
-		inline bool IsActive() const {
-			return hasTouchedJumppad || hasEnteredJumppad;
-		}
-	};
+	BotFireTargetCache builtinFireTargetCache;
+	BotFireTargetCache scriptFireTargetCache;
 
-	JumppadMovementState jumppadMovementState;
+	BotGrabItemGoal grabItemGoal;
+	BotKillEnemyGoal killEnemyGoal;
+	BotRunAwayGoal runAwayGoal;
+	BotReactToDangerGoal reactToDangerGoal;
+	BotReactToThreatGoal reactToThreatGoal;
+	BotReactToEnemyLostGoal reactToEnemyLostGoal;
+	BotAttackOutOfDespairGoal attackOutOfDespairGoal;
+	BotRoamGoal roamGoal;
 
-	struct RocketJumpMovementState {
-		const edict_t *self;
+	BotGenericRunToItemAction genericRunToItemAction;
+	BotPickupItemAction pickupItemAction;
+	BotWaitForItemAction waitForItemAction;
 
-		Vec3 jumpTarget;
-		Vec3 fireTarget;
-		bool hasTriggeredRocketJump;
-		bool hasCorrectedRocketJump;
-		bool wasTriggeredPrevFrame;
-		int64_t timeoutAt;
+	BotKillEnemyAction killEnemyAction;
+	BotAdvanceToGoodPositionAction advanceToGoodPositionAction;
+	BotRetreatToGoodPositionAction retreatToGoodPositionAction;
+	BotSteadyCombatAction steadyCombatAction;
+	BotGotoAvailableGoodPositionAction gotoAvailableGoodPositionAction;
+	BotAttackFromCurrentPositionAction attackFromCurrentPositionAction;
 
-		RocketJumpMovementState( const edict_t *self_ )
-			: self( self_ ),
-			jumpTarget( INFINITY, INFINITY, INFINITY ),
-			fireTarget( INFINITY, INFINITY, INFINITY ),
-			hasTriggeredRocketJump( false ),
-			hasCorrectedRocketJump( false ),
-			wasTriggeredPrevFrame( false ),
-			timeoutAt( 0 ) {}
+	BotGenericRunAvoidingCombatAction genericRunAvoidingCombatAction;
+	BotStartGotoCoverAction startGotoCoverAction;
+	BotTakeCoverAction takeCoverAction;
 
-		inline bool IsActive() const {
-			return hasTriggeredRocketJump;
-		}
+	BotStartGotoRunAwayTeleportAction startGotoRunAwayTeleportAction;
+	BotDoRunAwayViaTeleportAction doRunAwayViaTeleportAction;
+	BotStartGotoRunAwayJumppadAction startGotoRunAwayJumppadAction;
+	BotDoRunAwayViaJumppadAction doRunAwayViaJumppadAction;
+	BotStartGotoRunAwayElevatorAction startGotoRunAwayElevatorAction;
+	BotDoRunAwayViaElevatorAction doRunAwayViaElevatorAction;
+	BotStopRunningAwayAction stopRunningAwayAction;
 
-		inline bool HasBeenJustTriggered() const {
-			return hasTriggeredRocketJump && !wasTriggeredPrevFrame;
-		}
+	BotDodgeToSpotAction dodgeToSpotAction;
 
-		void TryInvalidate() {
-			if( hasTriggeredRocketJump ) {
-				if( self->groundentity || ( jumpTarget - self->s.origin ).SquaredLength() < 48 * 48 ) {
-					hasTriggeredRocketJump = false;
-				}
-			}
-		}
+	BotTurnToThreatOriginAction turnToThreatOriginAction;
 
-		void SetTriggered( const Vec3 &jumpTarget_, const Vec3 &fireTarget_, unsigned timeoutPeriod ) {
-			this->jumpTarget = jumpTarget_;
-			this->fireTarget = fireTarget_;
-			hasTriggeredRocketJump = true;
-			hasCorrectedRocketJump = false;
-			timeoutAt = level.time + timeoutPeriod;
-		}
-	};
+	BotTurnToLostEnemyAction turnToLostEnemyAction;
+	BotStartLostEnemyPursuitAction startLostEnemyPursuitAction;
+	BotStopLostEnemyPursuitAction stopLostEnemyPursuitAction;
 
-	RocketJumpMovementState rocketJumpMovementState;
+	// Must be initialized before any of movement actions constructors is called
+	StaticVector<BotBaseMovementAction *, 16> movementActions;
 
-	struct PendingLandingDashState {
-		bool isTriggered;
-		bool isOnGroundThisFrame;
-		bool wasOnGroundPrevFrame;
-		int64_t timeoutAt;
+	BotDummyMovementAction dummyMovementAction;
+	BotHandleTriggeredJumppadMovementAction handleTriggeredJumppadMovementAction;
+	BotLandOnSavedAreasMovementAction landOnSavedAreasSetMovementAction;
+	BotRidePlatformMovementAction ridePlatformMovementAction;
+	BotSwimMovementAction swimMovementAction;
+	BotFlyUntilLandingMovementAction flyUntilLandingMovementAction;
+	BotCampASpotMovementAction campASpotMovementAction;
+	BotWalkCarefullyMovementAction walkCarefullyMovementAction;
+	BotBunnyStraighteningReachChainMovementAction bunnyStraighteningReachChainMovementAction;
+	BotBunnyToBestShortcutAreaMovementAction bunnyToBestShortcutAreaMovementAction;
+	BotBunnyInterpolatingReachChainMovementAction bunnyInterpolatingReachChainMovementAction;
+	BotWalkOrSlideInterpolatingReachChainMovementAction walkOrSlideInterpolatingReachChainMovementAction;
+	BotCombatDodgeSemiRandomlyToTargetMovementAction combatDodgeSemiRandomlyToTargetMovementAction;
 
-		inline PendingLandingDashState()
-			: isTriggered( false ),
-			isOnGroundThisFrame( false ),
-			wasOnGroundPrevFrame( false ),
-			timeoutAt( 0 ) {}
+	BotMovementState movementState;
 
-		inline bool IsActive() const {
-			return isTriggered;
-		}
-
-		inline bool MayApplyDash() const {
-			return !wasOnGroundPrevFrame && isOnGroundThisFrame;
-		}
-
-		inline void Invalidate() {
-			isTriggered = false;
-		}
-
-		void TryInvalidate() {
-			if( IsActive() ) {
-				if( timeoutAt < level.time ) {
-					Invalidate();
-				} else if( isOnGroundThisFrame && wasOnGroundPrevFrame ) {
-					Invalidate();
-				}
-			}
-		}
-
-		inline void SetTriggered( unsigned timeoutPeriod ) {
-			isTriggered = true;
-			timeoutAt = level.time + timeoutPeriod;
-		}
-
-		inline float EffectiveTurnSpeedMultiplier( float baseTurnSpeedMultiplier ) const {
-			return isTriggered ? 1.35f : baseTurnSpeedMultiplier;
-		}
-	};
-
-	PendingLandingDashState pendingLandingDashState;
-
-	int64_t combatMovePushTimeout;
-	int combatMovePushes[3];
+	BotMovementPredictionContext movementPredictionContext;
 
 	int64_t vsayTimeout;
-
-	struct PendingLookAtPointState {
-		Vec3 lookAtPoint;
-		int64_t timeoutAt;
-		float turnSpeedMultiplier;
-		bool isTriggered;
-
-		inline PendingLookAtPointState()
-			: lookAtPoint( INFINITY, INFINITY, INFINITY ),
-			timeoutAt( 0 ),
-			turnSpeedMultiplier( 1.0f ),
-			isTriggered( false ) {}
-
-		inline bool IsActive() const {
-			return isTriggered && timeoutAt > level.time;
-		}
-
-		inline void SetTriggered( const Vec3 &lookAtPoint_, float turnSpeedMultiplier_ = 0.5f, unsigned timeoutPeriod = 500 ) {
-			this->lookAtPoint = lookAtPoint_;
-			this->turnSpeedMultiplier = turnSpeedMultiplier_;
-			this->timeoutAt = level.time + timeoutPeriod;
-			this->isTriggered = true;
-		}
-
-		inline float EffectiveTurnSpeedMultiplier( float baseTurnSpeedMultiplier ) const {
-			return isTriggered ? turnSpeedMultiplier : baseTurnSpeedMultiplier;
-		}
-	};
-
-	PendingLookAtPointState pendingLookAtPointState;
-
-	struct CampingSpotState {
-		bool isTriggered;
-		// If it is set, the bot should prefer to look at the campingSpotLookAtPoint while camping
-		// Otherwise the bot should spin view randomly
-		bool hasLookAtPoint;
-		// Maximum bot origin deviation from campingSpotOrigin while strafing when camping a spot
-		float spotRadius;
-		// 0..1, greater values result in frequent and hectic strafing/camera rotating
-		float alertness;
-		Vec3 spotOrigin;
-		Vec3 lookAtPoint;
-		Vec3 strafeDir;
-		// When to change chosen strafe dir
-		int64_t strafeTimeoutAt;
-		// When to change randomly chosen look-at-point (if the point is not initially specified)
-		int64_t lookAtPointTimeoutAt;
-
-		inline CampingSpotState()
-			: isTriggered( false ),
-			hasLookAtPoint( false ),
-			spotRadius( INFINITY ),
-			alertness( INFINITY ),
-			spotOrigin( INFINITY, INFINITY, INFINITY ),
-			lookAtPoint( INFINITY, INFINITY, INFINITY ),
-			strafeDir( INFINITY, INFINITY, INFINITY ),
-			strafeTimeoutAt( 0 ),
-			lookAtPointTimeoutAt( 0 ) {}
-
-		inline bool IsActive() const {
-			return isTriggered;
-		}
-
-		inline void SetWithoutDirection( const Vec3 &spotOrigin_, float spotRadius_, float alertness_ ) {
-			isTriggered = true;
-			hasLookAtPoint = false;
-			this->spotOrigin = spotOrigin_;
-			this->spotRadius = spotRadius_;
-			this->alertness = alertness_;
-			strafeTimeoutAt = 0;
-			lookAtPointTimeoutAt = 0;
-		}
-
-		inline void SetDirectional( const Vec3 &spotOrigin_, const Vec3 &lookAtPoint_, float spotRadius_, float alertness_ ) {
-			isTriggered = true;
-			hasLookAtPoint = true;
-			this->spotOrigin = spotOrigin_;
-			this->lookAtPoint = lookAtPoint_;
-			this->spotRadius = spotRadius_;
-			this->alertness = alertness_;
-			strafeTimeoutAt = 0;
-			lookAtPointTimeoutAt = 0;
-		}
-
-		inline void Invalidate() {
-			isTriggered = false;
-		}
-	};
-
-	CampingSpotState campingSpotState;
-
-	bool isWaitingForItemSpawn;
 
 	bool isInSquad;
 
@@ -447,213 +344,235 @@ private:
 	StaticVector<AiScriptWeaponDef, MAX_SCRIPT_WEAPONS> scriptWeaponDefs;
 	StaticVector<int, MAX_SCRIPT_WEAPONS> scriptWeaponCooldown;
 
+	int64_t lastTouchedTeleportAt;
+	int64_t lastTouchedJumppadAt;
+	int64_t lastTouchedElevatorAt;
+	int64_t lastKnockbackAt;
+
+	unsigned similarWorldStateInstanceId;
+
+	int64_t lastItemSelectedAt;
+	int64_t noItemAvailableSince;
+
+	inline bool ShouldUseRoamSpotAsNavTarget() const {
+		const auto &selectedNavEntity = GetSelectedNavEntity();
+		// Wait for item selection in this case (the selection is just no longer valid).
+		if( !selectedNavEntity.IsValid() ) {
+			return false;
+		}
+		// There was a valid item selected
+		if( !selectedNavEntity.IsEmpty() ) {
+			return false;
+		}
+
+		return level.time - noItemAvailableSince > 3000;
+	}
+
+	class AimingRandomHolder
+	{
+		int64_t valuesTimeoutAt[3];
+		float values[3];
+
+public:
+		inline AimingRandomHolder() {
+			std::fill_n( valuesTimeoutAt, 3, 0 );
+			std::fill_n( values, 3, 0.5f );
+		}
+		inline float GetCoordRandom( int coordNum ) {
+			if( valuesTimeoutAt[coordNum] <= level.time ) {
+				values[coordNum] = random();
+				valuesTimeoutAt[coordNum] = level.time + 128 + From0UpToMax( 256, random() );
+			}
+			return values[coordNum];
+		}
+	};
+
+	AimingRandomHolder aimingRandomHolder;
+
+	class KeptInFovPoint
+	{
+		const edict_t *self;
+		Vec3 origin;
+		unsigned instanceId;
+		float viewDot;
+		bool isActive;
+
+		float ComputeViewDot( const vec3_t origin_ ) {
+			Vec3 selfToOrigin( origin_ );
+			selfToOrigin -= self->s.origin;
+			selfToOrigin.NormalizeFast();
+			vec3_t forward;
+			AngleVectors( self->s.angles, forward, nullptr, nullptr );
+			return selfToOrigin.Dot( forward );
+		}
+
+public:
+		KeptInFovPoint( const edict_t *self_ ) :
+			self( self_ ), origin( 0, 0, 0 ), instanceId( 0 ), isActive( false ) {}
+
+		void Activate( const Vec3 &origin_, unsigned instanceId_ ) {
+			Activate( origin_.Data(), instanceId_ );
+		}
+
+		void Activate( const vec3_t origin_, unsigned instanceId_ ) {
+			this->origin.Set( origin_ );
+			this->instanceId = instanceId_;
+			this->isActive = true;
+			this->viewDot = ComputeViewDot( origin_ );
+		}
+
+		inline void TryDeactivate( const Vec3 &actualOrigin, unsigned instanceId_ ) {
+			TryDeactivate( actualOrigin.Data(), instanceId_ );
+		}
+
+		inline void TryDeactivate( const vec3_t actualOrigin, unsigned instanceId_ ) {
+			if( !this->isActive ) {
+				return;
+			}
+
+			if( this->instanceId != instanceId_ ) {
+				Deactivate();
+				return;
+			}
+
+			if( this->origin.SquareDistanceTo( actualOrigin ) < 32 * 32 ) {
+				return;
+			}
+
+			float actualDot = ComputeViewDot( actualOrigin );
+			// Do not deactivate if an origin has been changed but the view angles are approximately the same
+			if( fabsf( viewDot - actualDot ) > 0.1f ) {
+				Deactivate();
+				return;
+			}
+		}
+
+		inline void Update( const Vec3 &actualOrigin, unsigned instanceId_ ) {
+			Update( actualOrigin.Data(), instanceId );
+		}
+
+		inline void Update( const vec3_t actualOrigin, unsigned instanceId_ ) {
+			TryDeactivate( actualOrigin, instanceId_ );
+
+			if( !IsActive() ) {
+				Activate( actualOrigin, instanceId_ );
+			}
+		}
+
+		inline void Deactivate() { isActive = false; }
+		inline bool IsActive() const { return isActive; }
+		inline const Vec3 &Origin() const {
+			assert( isActive );
+			return origin;
+		}
+		inline unsigned InstanceIdOrDefault( unsigned default_ = 0 ) const {
+			return isActive ? instanceId : default_;
+		}
+	};
+
+	KeptInFovPoint keptInFovPoint;
+	const Enemy *lastChosenLostOrHiddenEnemy;
+	unsigned lastChosenLostOrHiddenEnemyInstanceId;
+
+	void UpdateKeptInFovPoint();
+
 	void UpdateScriptWeaponsStatus();
 
-	inline bool HasPendingLookAtPoint() const {
-		return pendingLookAtPointState.IsActive();
-	}
-	inline void SetPendingLookAtPoint( const Vec3 &point, float turnSpeedMultiplier = 0.5f, unsigned timeoutPeriod = 500 ) {
-		pendingLookAtPointState.SetTriggered( point, turnSpeedMultiplier, timeoutPeriod );
-	}
-	void ApplyPendingTurnToLookAtPoint();
+	void MovementFrame( BotInput *input );
+	void CheckGroundPlatform();
+	bool CanChangeWeapons() const;
+	void ChangeWeapons( const SelectedWeapons &selectedWeapons_ );
+	void ChangeWeapon( int weapon );
+	void FireWeapon( BotInput *input );
+	virtual void OnBlockedTimeout() override;
+	void SayVoiceMessages();
+	void GhostingFrame();
+	void ActiveFrame();
+	void CallGhostingClientThink( const BotInput &input );
+	void CallActiveClientThink( const BotInput &input );
 
-	// Must be called on each frame
-	void MoveFrame( usercmd_t *ucmd, bool inhibitCombat, bool beSilent );
+	void OnRespawn();
 
-	void MoveOnLadder( Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void MoveEnteringJumppad( Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void MoveRidingJummpad( Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void MoveTriggeredARocketJump( Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void MoveOnPlatform( Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void MoveCampingASpot( Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void MoveCampingASpotWithGivenLookAtPoint( const Vec3 &givenLookAtPoint, Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void MoveSwimming( Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void MoveGenericRunning( Vec3 *intendedLookVec, usercmd_t *ucmd, bool beSilent );
-	bool CheckAndTryAvoidObstacles( Vec3 *intendedLookVec, usercmd_t *ucmd, float speed );
-	// Tries to straighten look vec first.
-	// If the straightening failed, tries to interpolate it.
-	// Also, handles case of empty reachabilities chain in goal area and outside it.
-	// Returns true if look vec has been straightened (and is directed to an important spot).
-	bool StraightenOrInterpolateLookVec( Vec3 *intendedLookVec, float speed );
-	// Returns true if the intendedLookVec has been straightened
-	// Otherwise InterpolateLookVec() should be used
-	bool TryStraightenLookVec( Vec3 *intendedLookVec );
-	// Interpolates intendedLookVec for the pending areas chain
-	void InterpolateLookVec( Vec3 *intendedLookVec, float speed );
-	void SetLookVecToPendingReach( Vec3 *intendedLookVec );
-	void TryLandOnNearbyAreas( Vec3 *intendedLookVec, usercmd_t *ucmd );
-	bool TryLandOnArea( int areaNum, Vec3 *intendedLookVec, usercmd_t *ucmd );
-	void CheckTargetProximity();
-	inline bool IsCloseToAnyGoal() {
-		return botBrain.IsCloseToAnyGoal();
-	}
-	void OnGoalCleanedUp( const Goal *goal );
-
-	bool MaySetPendingLandingDash();
-	void SetPendingLandingDash( usercmd_t *ucmd );
-	void ApplyPendingLandingDash( usercmd_t *ucmd );
-
-	bool TryRocketJumpShortcut( usercmd_t *ucmd );
-	// A bot should aim to fireTarget while doing a RJ
-	// A bot should look on targetOrigin in flight
-	// Return false if targets can't be adjusted (and a RJ should be rejected).
-	bool AdjustDirectRocketJumpToAGoalTarget( Vec3 *targetOrigin, Vec3 *fireTarget ) const;
-	// Should be called when a goal does not seem to be reachable for RJ on the distance to a goal.
-	bool AdjustRocketJumpTargetForPathShortcut( Vec3 *targetOrigin, Vec3 *fireTarget ) const;
-	// Should be called when a goal seems to be reachable for RJ on the distance to a goal,
-	// but direct rocketjump to a goal is blocked by obstacles.
-	// Returns area num of found area (if any)
-	int TryFindRocketJumpAreaCloseToGoal( const Vec3 &botToGoalDir2D, float botToGoalDist2D ) const;
-	// Tries to select an appropriate weapon and trigger a rocketjump.
-	// Assumes that targetOrigin and fireTarget are checked.
-	// Returns false if a rocketjump cannot be triggered.
-	bool TryTriggerWeaponJump( usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget );
-	// Triggers a jump/dash and fire actions, and schedules trajectory correction to fireTarget to a next frame.
-	// Assumes that targetOrigin and fireTarget are checked.
-	// Make sure you have selected an appropriate weapon and its ready to fire before you call it.
-	void TriggerWeaponJump( usercmd_t *ucmd, const Vec3 &targetOrigin, const Vec3 &fireTarget );
-
-	void TryEscapeIfBlocked( usercmd_t *ucmd );
-
-	void CombatMovement( usercmd_t *ucmd, bool hasDangers );
-	void UpdateCombatMovePushes();
-	void MakeEvadeMovePushes( usercmd_t *ucmd );
-	bool MayApplyCombatDash();
-	Vec3 MakeEvadeDirection( const Danger &danger );
-	void ApplyCheatingGroundAcceleration( const usercmd_t *ucmd );
-
-	class GenericFireDef
-	{
-		const firedef_t *builtinFireDef;
-		const AiScriptWeaponDef *scriptWeaponDef;
-		int weaponNum;
-
-public:
-		GenericFireDef( int weaponNum_, const firedef_t *builtinFireDef_, const AiScriptWeaponDef *scriptWeaponDef_ ) {
-			this->builtinFireDef = builtinFireDef_;
-			this->scriptWeaponDef = scriptWeaponDef_;
-			this->weaponNum = weaponNum_;
-		}
-
-		inline int WeaponNum() const { return weaponNum; }
-		inline bool IsBuiltin() const { return builtinFireDef != nullptr; }
-
-		inline ai_weapon_aim_type AimType() const {
-			return builtinFireDef ? BuiltinWeaponAimType( weaponNum ) : scriptWeaponDef->aimType;
-		}
-		inline float ProjectileSpeed() const {
-			return builtinFireDef ? builtinFireDef->speed : scriptWeaponDef->projectileSpeed;
-		}
-		inline float SplashRadius() const {
-			return builtinFireDef ? builtinFireDef->splash_radius : scriptWeaponDef->splashRadius;
-		}
-		inline bool IsContinuousFire() const {
-			return builtinFireDef ? IsBuiltinWeaponContinuousFire( weaponNum ) : scriptWeaponDef->isContinuousFire;
-		}
-	};
-
-	struct AimParams {
-		vec3_t fireOrigin;
-		vec3_t fireTarget;
-		float suggestedBaseAccuracy;
-
-		float EffectiveAccuracy( float skill, bool importantShot ) const {
-			float accuracy = suggestedBaseAccuracy;
-			accuracy *= ( 1.0f - 0.75f * skill );
-			if( importantShot && skill > 0.33f ) {
-				accuracy *= ( 1.13f - skill );
-			}
-
-			return accuracy;
-		}
-	};
-
-	class FireTargetCache
-	{
-		struct CachedFireTarget {
-			Vec3 origin;
-			unsigned combatTaskInstanceId;
-			unsigned invalidAt;
-
-			CachedFireTarget()
-				: origin( 0, 0, 0 ), combatTaskInstanceId( 0 ), invalidAt( 0 ) {}
-
-			inline bool IsValidFor( const CombatTask &combatTask ) const {
-				return combatTaskInstanceId == combatTask.instanceId && invalidAt > level.time;
-			}
-
-			inline void SetFor( const CombatTask &combatTask, const vec3_t origin_ ) {
-				VectorCopy( origin_, this->origin.Data() );
-			}
-
-			inline void SetFor( const CombatTask &combatTask, const Vec3 &origin_ ) {
-				this->origin = origin_;
-			}
-		};
-
-		CachedFireTarget cachedFireTarget;
-		const edict_t *bot;
-
-		void SetupCoarseFireTarget( const CombatTask &combatTask, vec3_t fire_origin, vec3_t target );
-
-		void AdjustPredictionExplosiveAimTypeParams( const CombatTask &combatTask, const GenericFireDef &fireDef,
-													 AimParams *aimParams );
-		void AdjustPredictionAimTypeParams( const CombatTask &combatTask, const GenericFireDef &fireDef,
-											AimParams *aimParams );
-		void AdjustDropAimTypeParams( const CombatTask &combatTask, const GenericFireDef &fireDef,
-									  AimParams *aimParams );
-		void AdjustInstantAimTypeParams( const CombatTask &combatTask, const GenericFireDef &fireDef,
-										 AimParams *aimParams );
-
-		// Returns true if a shootable environment for inflicting a splash damage has been found
-		bool AdjustTargetByEnvironment( const CombatTask &combatTask, float splashRadius, AimParams *aimParams );
-		bool AdjustTargetByEnvironmentTracing( const CombatTask &combatTask, float splashRadius, AimParams *aimParams );
-		bool AdjustTargetByEnvironmentWithAAS( const CombatTask &combatTask, float splashRadius, int areaNum,
-											   AimParams *aimParams );
-
-		void GetPredictedTargetOrigin( const CombatTask &combatTask, float projectileSpeed, AimParams *aimParams );
-		void PredictProjectileShot( const CombatTask &combatTask, float projectileSpeed, AimParams *aimParams,
-									bool applyTargetGravity );
-
-public:
-		FireTargetCache( const edict_t *bot_ ) : bot( bot_ ) {}
-
-		void AdjustAimParams( const CombatTask &combatTask, const GenericFireDef &fireDef, AimParams *aimParams );
-	};
-
-	FireTargetCache builtinFireTargetCache;
-	FireTargetCache scriptFireTargetCache;
+	void ApplyPendingTurnToLookAtPoint( BotInput *input, BotMovementPredictionContext *context = nullptr ) const;
+	void ApplyInput( BotInput *input, BotMovementPredictionContext *context = nullptr );
+	bool CheckInputInversion( BotInput *input, BotMovementPredictionContext *context = nullptr );
+	inline void InvertKeys( BotInput *input, BotMovementPredictionContext *context = nullptr );
 
 	// Returns true if current look angle worth pressing attack
-	bool CheckShot( const AimParams &aimParams, const CombatTask &combatTask, const GenericFireDef &fireDef );
+	bool CheckShot( const AimParams &aimParams, const BotInput *input,
+					const SelectedEnemies &selectedEnemies, const GenericFireDef &fireDef );
 
-	void LookAtEnemy( float accuracy, const vec3_t fire_origin, vec3_t target );
-	bool TryPressAttack( const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
-						 const GenericFireDef *scriptFireDef, bool *didBuiltinAttack );
+	void LookAtEnemy( float coordError, const vec3_t fire_origin, vec3_t target, BotInput *input );
+	void PressAttack( const GenericFireDef *fireDef, const GenericFireDef *builtinFireDef,
+					  const GenericFireDef *scriptFireDef, BotInput *input );
 
-	inline bool HasEnemy() const { return !botBrain.combatTask.Empty(); }
-	inline bool IsEnemyAStaticSpot() const { return botBrain.combatTask.IsTargetAStaticSpot(); }
-	inline const edict_t *EnemyTraceKey() const { return botBrain.combatTask.TraceKey(); }
-	inline const bool IsEnemyOnGround() const { return botBrain.combatTask.IsOnGround(); }
-	inline Vec3 EnemyOrigin() const { return botBrain.combatTask.LastSeenEnemyOrigin(); }
-	inline Vec3 EnemyLookDir() const { return botBrain.combatTask.EnemyLookDir(); }
-	inline unsigned EnemyFireDelay() const { return botBrain.combatTask.EnemyFireDelay(); }
-	inline Vec3 EnemyVelocity() const { return botBrain.combatTask.EnemyVelocity(); }
-	inline Vec3 EnemyMins() const { return botBrain.combatTask.EnemyMins(); }
-	inline Vec3 EnemyMaxs() const { return botBrain.combatTask.EnemyMaxs(); }
-	inline unsigned EnemyInstanceId() const { return botBrain.combatTask.instanceId; }
+	inline bool HasEnemy() const { return selectedEnemies.AreValid(); }
+	inline bool IsEnemyAStaticSpot() const { return selectedEnemies.IsStaticSpot(); }
+	inline const edict_t *EnemyTraceKey() const { return selectedEnemies.TraceKey(); }
+	inline const bool IsEnemyOnGround() const { return selectedEnemies.OnGround(); }
+	inline Vec3 EnemyOrigin() const { return selectedEnemies.LastSeenOrigin(); }
+	inline Vec3 EnemyLookDir() const { return selectedEnemies.LookDir(); }
+	inline unsigned EnemyFireDelay() const { return selectedEnemies.FireDelay(); }
+	inline Vec3 EnemyVelocity() const { return selectedEnemies.LastSeenVelocity(); }
+	inline Vec3 EnemyMins() const { return selectedEnemies.Mins(); }
+	inline Vec3 EnemyMaxs() const { return selectedEnemies.Maxs(); }
 
-	bool MayKeepRunningInCombat() const;
-	void SetCombatInhibitionFlags( bool *inhibitShooting, bool *inhibitCombatMove );
-	bool ShouldBeSilent( bool inhibitShooting ) const;
+	static constexpr unsigned MAX_SAVED_AREAS = BotMovementPredictionContext::MAX_SAVED_LANDING_AREAS;
+	StaticVector<int, MAX_SAVED_AREAS> savedLandingAreas;
+	StaticVector<int, MAX_SAVED_AREAS> savedPlatformAreas;
 
-	inline bool HasSpecialGoal() const { return botBrain.HasSpecialGoal(); }
-	inline bool IsSpecialGoalSetBy( const AiFrameAwareUpdatable *setter ) const {
-		return botBrain.IsSpecialGoalSetBy( setter );
+	void CheckTargetProximity();
+
+public:
+	// These methods are exposed mostly for script interface
+	inline unsigned NextSimilarWorldStateInstanceId() {
+		return ++similarWorldStateInstanceId;
 	}
-	inline void SetSpecialGoalFromEntity( edict_t *ent, const AiFrameAwareUpdatable *setter ) {
-		botBrain.SetSpecialGoalFromEntity( ent, setter );
+	inline void SetNavTarget( NavTarget *navTarget ) {
+		botBrain.SetNavTarget( navTarget );
 	}
+	inline void SetNavTarget( const Vec3 &navTargetOrigin, float reachRadius ) {
+		botBrain.SetNavTarget( navTargetOrigin, reachRadius );
+	}
+	inline void ResetNavTarget() {
+		botBrain.ResetNavTarget();
+	}
+	inline void SetCampingSpot( const AiCampingSpot &campingSpot ) {
+		movementState.campingSpotState.Activate( campingSpot );
+	}
+	inline void ResetCampingSpot() {
+		movementState.campingSpotState.Deactivate();
+	}
+	inline bool HasActiveCampingSpot() const {
+		return movementState.campingSpotState.IsActive();
+	}
+	inline void SetPendingLookAtPoint( const AiPendingLookAtPoint &lookAtPoint, unsigned timeoutPeriod ) {
+		movementState.pendingLookAtPointState.Activate( lookAtPoint, timeoutPeriod );
+	}
+	inline void ResetPendingLookAtPoint() {
+		movementState.pendingLookAtPointState.Deactivate();
+	}
+	inline bool HasPendingLookAtPoint() const {
+		return movementState.pendingLookAtPointState.IsActive();
+	}
+	const SelectedNavEntity &GetSelectedNavEntity() const {
+		return botBrain.selectedNavEntity;
+	}
+	const SelectedEnemies &GetSelectedEnemies() const { return selectedEnemies; }
+	SelectedMiscTactics &GetMiscTactics() { return botBrain.selectedTactics; }
+	const SelectedMiscTactics &GetMiscTactics() const { return botBrain.selectedTactics; }
+
+	inline bool WillAdvance() const { return botBrain.WillAdvance(); }
+	inline bool WillRetreat() const { return botBrain.WillRetreat(); }
+
+	inline bool ShouldBeSilent() const { return botBrain.ShouldBeSilent(); }
+	inline bool ShouldMoveCarefully() const { return botBrain.ShouldMoveCarefully(); }
+
+	inline bool ShouldAttack() const { return botBrain.ShouldAttack(); }
+	inline bool ShouldKeepXhairOnEnemy() const { return botBrain.ShouldKeepXhairOnEnemy(); }
+
+	inline bool WillAttackMelee() const { return botBrain.WillAttackMelee(); }
+	inline bool ShouldRushHeadless() const { return botBrain.ShouldRushHeadless(); }
 };
 
 #endif

@@ -34,13 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define EDICT_NUM( n ) ( (edict_t *)( game.edicts + n ) )
 #define NUM_FOR_EDICT( e ) ( ENTNUM( e ) )
 
-// BoxEdicts() can return a list of either solid or trigger entities
-// FIXME: eliminate AREA_ distinction?
-#define AREA_ALL        -1
-#define AREA_SOLID      1
-#define AREA_TRIGGERS   2
-
-
 #define AREA_GRID       128
 #define AREA_GRIDNODES  ( AREA_GRID * AREA_GRID )
 #define AREA_GRIDMINSIZE 64.0f  // minimum areagrid cell size, smaller values
@@ -71,15 +64,13 @@ extern cvar_t *g_antilag_maxtimedelta;
 #define CFRAME_UPDATE_BACKUP    64  // copies of entity_state_t to keep buffered (1 second of backup at 62 fps).
 #define CFRAME_UPDATE_MASK  ( CFRAME_UPDATE_BACKUP - 1 )
 
-typedef struct c4clipedict_s
-{
+typedef struct c4clipedict_s {
 	entity_state_t s;
 	entity_shared_t r;
 } c4clipedict_t;
 
 //backups of all server frames areas and edicts
-typedef struct c4frame_s
-{
+typedef struct c4frame_s {
 	c4clipedict_t clipEdicts[MAX_EDICTS];   // fixme: there is a g_maxentities cvar. We have to adjust to it
 	int numedicts;
 
@@ -681,8 +672,8 @@ void GClip_SetAreaPortalState( edict_t *ent, bool open ) {
 * returns the number of pointers filled in
 * ??? does this always return the world?
 */
-static int GClip_AreaEdicts( const vec3_t mins, const vec3_t maxs,
-							 int *list, int maxcount, int areatype, int timeDelta ) {
+int GClip_AreaEdicts( const vec3_t mins, const vec3_t maxs,
+					  int *list, int maxcount, int areatype, int timeDelta ) {
 	int count;
 
 	count = GClip_EntitiesInBox_AreaGrid( &g_areagrid, mins, maxs,
@@ -760,8 +751,7 @@ int G_PointContents4D( vec3_t p, int timeDelta ) {
 
 //===========================================================================
 
-typedef struct
-{
+typedef struct {
 	vec3_t boxmins, boxmaxs;    // enclose the test object along entire move
 	float *mins, *maxs;         // size of the moving object
 	vec3_t mins2, maxs2;        // size when clipping against mosnters
@@ -774,7 +764,6 @@ typedef struct
 /*
 * GClip_ClipMoveToEntities
 */
-
 /*static*/ void GClip_ClipMoveToEntities( moveclip_t *clip, int timeDelta ) {
 	int i, num;
 	c4clipedict_t *touch;
@@ -978,7 +967,7 @@ void GClip_SetBrushModel( edict_t *ent, const char *name ) {
 /*
 * GClip_EntityContact
 */
-static bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent ) {
+bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent ) {
 	trace_t tr;
 	struct cmodel_s *model;
 

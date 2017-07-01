@@ -826,10 +826,12 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	GT_asCallShutdown();
 	G_asCallMapExit();
 
+	AI_BeforeLevelLevelScriptShutdown();
+
 	G_asShutdownMapScript();
 	GT_asShutdownScript();
 
-	AI_UnloadLevel();
+	AI_AfterLevelScriptShutdown();
 
 	G_FreeCallvotes();
 

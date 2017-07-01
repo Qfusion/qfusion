@@ -5,238 +5,88 @@
 #include "ai_base_ai.h"
 #include "ai_base_brain.h"
 #include "ai_base_enemy_pool.h"
+#include "bot_items_selector.h"
+#include "bot_weapon_selector.h"
+#include "bot_actions.h"
+#include "bot_goals.h"
 
-class CombatTask
-{
-	friend class BotBrain;
-	// If it is not null, it is a chosen target for shooting.
-	const Enemy *enemy;
+// This can be represented as an enum but feels better in the following form.
+// Many values that affect bot behaviour already are not boolean
+// (such as nav targets and special movement states like camping spots),
+// and thus controlling a bot by a single flags field already is not possible.
+// This struct is likely to be extended by non-boolean values later.
+struct SelectedMiscTactics {
+	bool willAdvance;
+	bool willRetreat;
 
-	int suggestedBuiltinWeapon;
-	int suggestedScriptWeapon;
-	bool preferBuiltinWeapon;
-#ifndef _MSC_VER
-	inline void FailWith( const char *message ) const __attribute__ ( ( noreturn ) )
-#else
-	__declspec( noreturn ) inline void FailWith( const char *message ) const
-#endif
-	{
-		fputs( "CombatTask ", stderr );
-		fputs( message, stderr );
-		fflush( stderr );
-		abort();
+	bool shouldBeSilent;
+	bool shouldMoveCarefully;
+
+	bool shouldAttack;
+	bool shouldKeepXhairOnEnemy;
+
+	bool willAttackMelee;
+	bool shouldRushHeadless;
+
+	inline SelectedMiscTactics() { Clear(); };
+
+	inline void Clear() {
+		willAdvance = false;
+		willRetreat = true;
+
+		shouldBeSilent = false;
+		shouldMoveCarefully = false;
+
+		shouldAttack = false;
+		shouldKeepXhairOnEnemy = false;
+
+		willAttackMelee = false;
+		shouldRushHeadless = false;
 	}
 
-	const edict_t *EnemyEnt() const {
-		if( !enemy ) {
-			FailWith( "There is no aim enemy" );
-		}
-		if( !enemy->ent ) {
-			FailWith( "AimEnemy is present but ent is null (this means this enemy slot has been released)" );
-		}
-		return enemy->ent;
+	inline void PreferAttackRatherThanRun() {
+		shouldAttack = true;
+		shouldKeepXhairOnEnemy = true;
 	}
 
-public:
-	// Used to distinguish different combat tasks and track combat task changes
-	// (e.g. when some parameters that depend of a combat task are cached by some external code
-	// and instanceId of the combat task has been changed, its time to invalidate cached parameters)
-	// When combat task is empty, instanceId is 0.
-	// When combat task is updated, instanceId is set to a number unique for all combat tasks of this bot.
-	unsigned instanceId;
-
-	bool advance;
-	bool retreat;
-	bool inhibit;
-
-	// Must be set back to false by shooting code.
-	bool importantShot;
-
-	CombatTask() {
-		Clear();
-	};
-
-	void Clear() {
-		enemy = nullptr;
-		instanceId = 0;
-		suggestedBuiltinWeapon = WEAP_NONE;
-		suggestedScriptWeapon = -1;
-		preferBuiltinWeapon = true;
-		advance = false;
-		retreat = false;
-		inhibit = false;
-		importantShot = false;
+	inline void PreferRunRatherThanAttack() {
+		shouldAttack = true;
+		shouldKeepXhairOnEnemy = true;
 	}
-
-	bool Empty() const { return !enemy; }
-
-	bool IsTargetAStaticSpot() const { return !enemy; }
-
-	bool IsOnGround() const { return enemy && enemy->ent->groundentity; }
-
-	Vec3 LastSeenEnemyOrigin() const {
-		if( enemy ) {
-			return enemy->LastSeenPosition();
-		}
-		FailWith( "LastSeenEnemyOrigin(): combat task is empty\n" );
-	}
-
-	Vec3 ActualEnemyOrigin() const {
-		if( enemy ) {
-			return Vec3( enemy->ent->s.origin );
-		}
-		FailWith( "ActualEnemyOrigin(): combat task is empty\n" );
-	}
-
-	Vec3 EnemyVelocity() const {
-		if( enemy ) {
-			return Vec3( EnemyEnt()->velocity );
-		}
-		FailWith( "EnemyVelocity(): combat task is empty\n" );
-	}
-
-	Vec3 EnemyMins() const {
-		if( enemy ) {
-			return Vec3( EnemyEnt()->r.mins );
-		}
-		FailWith( "EnemyMins(): combat task is empty\n" );
-	}
-
-	Vec3 EnemyMaxs() const {
-		if( enemy ) {
-			return Vec3( EnemyEnt()->r.maxs );
-		}
-		FailWith( "EnemyMaxs(): combat task is empty\n" );
-	}
-
-	Vec3 EnemyLookDir() const {
-		if( enemy ) {
-			return enemy->LookDir();
-		}
-		FailWith( "EnemyLookDir(): aim enemy is not present" );
-	}
-
-	Vec3 EnemyAngles() const {
-		if( enemy ) {
-			return Vec3( EnemyEnt()->s.angles );
-		}
-		FailWith( "EnemyAngles(): aim enemy is not present" );
-	}
-
-	unsigned EnemyFireDelay() const {
-		if( enemy && enemy->ent ) {
-			if( !enemy->ent->r.client ) {
-				return 0;
-			}
-			return (unsigned)enemy->ent->r.client->ps.stats[STAT_WEAPON_TIME];
-		}
-		return std::numeric_limits<unsigned>::max();
-	}
-
-	inline bool CanUseBuiltinWeapon() const { return suggestedBuiltinWeapon != WEAP_NONE; }
-	inline bool CanUseScriptWeapon() const { return suggestedScriptWeapon != -1; }
-
-	// If true, aim angles should be adjusted for a builtin weapon.
-	// Script weapon may be used occasionally when aim angles are suitable for firing a script weapon too.
-	inline bool ShouldPreferBuiltinWeapon() const { return preferBuiltinWeapon; }
-
-	int BuiltinWeapon() const {
-		if( enemy ) {
-			if( CanUseBuiltinWeapon() ) {
-				return suggestedBuiltinWeapon;
-			}
-			FailWith( "BuiltinWeapon(): builtin weapon has not been chosen" );
-		}
-		FailWith( "BuiltinWeapon(): combat task is empty\n" );
-	}
-
-	int ScriptWeapon() const {
-		if( enemy ) {
-			if( CanUseScriptWeapon() ) {
-				return suggestedScriptWeapon;
-			}
-			FailWith( "ScriptWeapon(): script weapon has not been chosen" );
-		}
-		FailWith( "BuiltinWeapon(): combat task is empty\n" );
-	}
-
-	const edict_t *TraceKey() const { return enemy ? enemy->ent : nullptr; }
-};
-
-struct CombatDisposition {
-	float damageToKill;
-	float damageToBeKilled;
-	float distance;
-	float offensiveness;
-	float enemyLookDirDotToBotDir;
-	float botLookDirDotToEnemyDir;
-	bool isOutnumbered;
-
-	inline float KillToBeKilledDamageRatio() const { return damageToKill / damageToBeKilled; }
 };
 
 class BotBrain : public AiBaseBrain
 {
 	friend class Bot;
+	friend class BotItemsSelector;
+	friend class BotBaseGoal;
+	friend class BotGutsActionsAccessor;
 
 	edict_t *bot;
+
 	float baseOffensiveness;
 	const float skillLevel;
 	const unsigned reactionTime;
 
-	const unsigned aimTargetChoicePeriod;
-	const unsigned idleTargetChoicePeriod;
-	const unsigned aimWeaponChoicePeriod;
-	const unsigned spamWeaponChoicePeriod;
-
-	unsigned combatTaskInstanceCounter;
-
 	int64_t nextTargetChoiceAt;
-	int64_t nextWeaponChoiceAt;
+	const unsigned targetChoicePeriod;
 
-	int64_t nextFastWeaponSwitchActionCheckAt;
+	BotItemsSelector itemsSelector;
 
-	int64_t prevThinkLevelTime;
+	StaticVector<BotScriptGoal, MAX_GOALS> scriptGoals;
+	StaticVector<BotScriptAction, MAX_ACTIONS> scriptActions;
 
-	// These values are loaded from cvars for fast access
-	const float armorProtection;
-	const float armorDegradation;
+	BotBaseGoal *GetGoalByName( const char *name );
+	BotBaseAction *GetActionByName( const char *name );
 
-	// Used in weapon choice. Must be a value in [-0.5, 0.5], high skill bots should have lesser absolute value.
-	// Should be updated once per some seconds in PrepareToFrame()
-	// If you update this value each frame, you will cause a weapon score "jitter",
-	// when bots tries to change weapon infinitely since on each frame different weapon is chosen.
-	float weaponScoreRandom;
-	unsigned nextWeaponScoreRandomUpdate;
-
-	// 0..1, does not depend of skill
-	float decisionRandom;
-	unsigned nextDecisionRandomUpdate;
-
-	struct TargetEnvironment {
-		// Sides are relative to direction from bot origin to target origin
-		// Order: top, bottom, front, back, left, right
-		trace_t sideTraces[6];
-
-		enum Side { TOP, BOTTOM, FRONT, BACK, LEFT, RIGHT };
-
-		float factor;
-		static const float TRACE_DEPTH;
-	};
-
-	TargetEnvironment targetEnvironment;
-
-	inline unsigned NextCombatTaskInstanceId() { return combatTaskInstanceCounter++; }
+	inline BotScriptGoal *AllocScriptGoal() { return scriptGoals.unsafe_grow_back(); }
+	inline BotScriptAction *AllocScriptAction() { return scriptActions.unsafe_grow_back(); }
 
 	inline bool BotHasQuad() const { return ::HasQuad( bot ); }
 	inline bool BotHasShell() const { return ::HasShell( bot ); }
 	inline bool BotHasPowerups() const { return ::HasPowerups( bot ); }
 	inline bool BotIsCarrier() const { return ::IsCarrier( bot ); }
 	float BotSkill() const { return skillLevel; }
-
-	inline float DamageToKill( const edict_t *client ) const {
-		return ::DamageToKill( client, armorProtection, armorDegradation );
-	}
 
 	inline const int *Inventory() const { return bot->r.client->ps.inventory; }
 
@@ -255,78 +105,72 @@ class BotBrain : public AiBaseBrain
 	inline int BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
 	inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
 	inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
+	inline int InstasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_INSTAGUN>(); }
 
-	void SuggestAimWeaponAndTactics( CombatTask *task );
-	void SuggestSniperRangeWeaponAndTactics( CombatTask *task, const CombatDisposition &disposition );
-	void SuggestFarRangeWeaponAndTactics( CombatTask *task, const CombatDisposition &disposition );
-	void SuggestMiddleRangeWeaponAndTactics( CombatTask *task, const CombatDisposition &disposition );
-	void SuggestCloseRangeWeaponAndTactics( CombatTask *task, const CombatDisposition &disposition );
-	int SuggestInstagibWeapon( const Enemy &enemy );
-	int SuggestFinishWeapon( const Enemy &enemy, const CombatDisposition &disposition );
-	const AiScriptWeaponDef *SuggestScriptWeapon( const Enemy &enemy, const CombatDisposition &disposition,
-												  int *effectiveTier );
-	bool IsEnemyEscaping( const Enemy &enemy, const CombatDisposition &disposition,
-						  bool *botMovesFast, bool *enemyMovesFast );
-	int SuggestHitEscapingEnemyWeapon( const Enemy &enemy, const CombatDisposition &disposition,
-									   bool botMovesFast, bool enemyMovesFast );
-	bool CheckForShotOfDespair( const Enemy &enemy, const CombatDisposition &disposition );
-	int SuggestShotOfDespairWeapon( const Enemy &enemy, const CombatDisposition &disposition );
-	int SuggestQuadBearerWeapon( const Enemy &enemy );
-	bool SuggestPointToTurnToWhenEnemyIsLost( const Enemy *oldEnemy );
-	void SuggestPursuitTask( CombatTask *task );
-	void TryStartPursuit( CombatTask *task, const Enemy *enemy );
-	float GetCloakingAttackChanceDelta( bool hasImportantGoals, float enemyTargetFactor );
-	int ChooseWeaponByScores( struct WeaponAndScore *begin, struct WeaponAndScore *end );
-	void TestTargetEnvironment( const Vec3 &botOrigin, const Vec3 &targetOrigin, const edict_t *traceKey );
-	void UpdateKeptCurrentCombatTask();
-	void TryFindNewCombatTask();
-	bool CheckFastWeaponSwitchAction();
-	CombatDisposition GetCombatDisposition( const Enemy &enemy );
+	SelectedMiscTactics selectedTactics;
 
-	float ComputeItemWeight( const gsitem_t *item, bool onlyGotGB ) const;
-	float ComputeWeaponWeight( const gsitem_t *item, bool onlyGotGB ) const;
-	float ComputeAmmoWeight( const gsitem_t *item ) const;
-	float ComputeArmorWeight( const gsitem_t *item ) const;
-	float ComputeHealthWeight( const gsitem_t *item ) const;
-	float ComputePowerupWeight( const gsitem_t *item ) const;
+	inline bool WillAdvance() const { return selectedTactics.willAdvance; }
+	inline bool WillRetreat() const { return selectedTactics.willRetreat; }
 
-	virtual void OnGoalCleanedUp( const Goal *goalEnt ) override;
-	virtual void OnClearSpecialGoalRequested() override;
+	inline bool ShouldBeSilent() const { return selectedTactics.shouldBeSilent; }
+	inline bool ShouldMoveCarefully() const { return selectedTactics.shouldMoveCarefully; }
 
-	int64_t GoalSpawnTime() const;
-	bool HasMoreImportantTasksThanEnemies() const;
-	bool StartPursuit( const Enemy &enemy, unsigned timeout = 1000 );
-	bool SetTacticalSpot( const Vec3 &origin, unsigned timeout = 1000 );
-	virtual bool ShouldCancelSpecialGoalBySpecificReasons() override;
+	inline bool ShouldAttack() const { return selectedTactics.shouldAttack; }
+	inline bool ShouldKeepXhairOnEnemy() const { return selectedTactics.shouldKeepXhairOnEnemy; }
 
-	void CheckTacticalPosition();
-	bool SuggestPositionalAdvantageSpot( vec3_t newSpotOrigin, float searchRadius, bool beAwareOfExplosives );
-	bool ShouldEstablishVisualContact( vec3_t newSpotOrigin );
-	bool SuggestCoverSpot( vec3_t newSpotOrigin, float searchRaidus, bool beAwareOfExplosives );
+	inline bool WillAttackMelee() const { return selectedTactics.willAttackMelee; }
+	inline bool ShouldRushHeadless() const { return selectedTactics.shouldRushHeadless; }
+
+	SelectedNavEntity selectedNavEntity;
+	// For tracking picked up items
+	const NavEntity *prevSelectedNavEntity;
+
+	const SelectedNavEntity &GetOrUpdateSelectedNavEntity();
+
+	inline bool HasJustPickedGoalItem() const {
+		if( lastNavTargetReachedAt < prevThinkAt ) {
+			return false;
+		}
+		if( !lastReachedNavTarget ) {
+			return false;
+		}
+		if( !lastReachedNavTarget->IsBasedOnNavEntity( prevSelectedNavEntity ) ) {
+			return false;
+		}
+		return true;
+	}
 
 	void UpdateBlockedAreasStatus();
 
-	inline bool HasSpecialGoal() const { return specialGoal != nullptr; }
+	bool FindDodgeDangerSpot( const Danger &danger, vec3_t spotOrigin );
 
-	bool IsSpecialGoalSetBy( const AiFrameAwareUpdatable *setter ) const {
-		return specialGoal->Setter() == setter;
-	}
+	void CheckNewActiveDanger();
 
-	unsigned specialGoalCombatTaskId;
+	Danger triggeredPlanningDanger;
+	Danger actualDanger;
 
-	NavEntity localNavEntity;
+	struct Threat {
+		const edict_t *inflictor;
+		Vec3 possibleOrigin;
+		float totalDamage;
+		unsigned lastHitTimestamp;
 
-	void SetSpecialGoalFromEntity( edict_t *entity, const AiFrameAwareUpdatable *setter );
+		// Initialize the inflictor by the world entity (it is never valid as one).
+		// This helps to avoid extra branching from testing for nullity.
+		Threat() : inflictor( world ), possibleOrigin( NAN, NAN, NAN ), totalDamage( 0.0f ), lastHitTimestamp( 0 ) {}
+
+		bool IsValidFor( const edict_t *self ) const;
+	};
+
+	Threat activeThreat;
+
+	void PrepareCurrWorldState( WorldState *worldState ) override;
+
+	bool ShouldSkipPlanning() const override;
 
 	BotBrain() = delete;
 	// Disable copying and moving
 	BotBrain( BotBrain &&that ) = delete;
-
-	void ResetCombatTask() {
-		oldCombatTask = combatTask;
-		combatTask.Clear();
-		nextTargetChoiceAt = level.time;
-	}
 
 	class EnemyPool : public AiBaseEnemyPool
 	{
@@ -357,12 +201,6 @@ public:
 	EnemyPool botEnemyPool;
 	AiBaseEnemyPool *activeEnemyPool;
 
-	CombatTask oldCombatTask;
-
-	signed char attitude[MAX_EDICTS];
-	// Used to detect attitude change
-	signed char oldAttitude[MAX_EDICTS];
-
 protected:
 	virtual void SetFrameAffinity( unsigned modulo, unsigned offset ) override {
 		// Call super method first
@@ -370,16 +208,21 @@ protected:
 		// Allow bot's own enemy pool to think
 		botEnemyPool.SetFrameAffinity( modulo, offset );
 	}
+	virtual void OnAttitudeChanged( const edict_t *ent, int oldAttitude_, int newAttitude_ ) override;
 
 public:
-	CombatTask combatTask;
+	SelectedEnemies &selectedEnemies;
+	SelectedEnemies lostEnemies;
+	SelectedWeapons &selectedWeapons;
 
-	BotBrain( edict_t *bot_, float skillLevel_ );
+	// A WorldState cached from the moment of last world state update
+	WorldState cachedWorldState;
+
+	// Note: saving references to Bot members is the only valid access kind to Bot in this call
+	BotBrain( class Bot *bot, float skillLevel_ );
 
 	virtual void Frame() override;
 	virtual void Think() override;
-	virtual void PreThink() override;
-	virtual void PostThink() override;
 
 	void OnAttachedToSquad( AiSquad *squad_ );
 	void OnDetachedFromSquad( AiSquad *squad_ );
@@ -391,23 +234,23 @@ public:
 
 	void OnEnemyViewed( const edict_t *enemy );
 	void AfterAllEnemiesViewed() {}
+	void UpdateSelectedEnemies();
+
 	void OnPain( const edict_t *enemy, float kick, int damage );
 	void OnEnemyDamaged( const edict_t *target, int damage );
 
 	// In these calls use not active but bot's own enemy pool
 	// (this behaviour is expected by callers, otherwise referring to a squad enemy pool is enough)
-	inline int64_t LastAttackedByTime( const edict_t *attacker ) const {
+	inline unsigned LastAttackedByTime( const edict_t *attacker ) const {
 		return botEnemyPool.LastAttackedByTime( attacker );
 	}
-	inline int64_t LastTargetTime( const edict_t *target ) const {
+	inline unsigned LastTargetTime( const edict_t *target ) const {
 		return botEnemyPool.LastTargetTime( target );
 	}
 
 	inline bool IsPrimaryAimEnemy( const edict_t *enemy ) const {
-		return combatTask.enemy && combatTask.enemy->ent == enemy;
+		return selectedEnemies.IsPrimaryEnemy( enemy );
 	}
-
-	void SetAttitude( const edict_t *ent, int attitude_ );
 
 	inline float GetBaseOffensiveness() const { return baseOffensiveness; }
 
@@ -418,12 +261,13 @@ public:
 		clamp( this->baseOffensiveness, 0.0f, 1.0f );
 	}
 
-	// Helps to reject non-feasible enemies quickly.
-	// A false result does not guarantee that enemy is feasible.
-	// A true result guarantees that enemy is not feasible.
-	bool MayNotBeFeasibleEnemy( const edict_t *ent ) const;
+	inline void ClearOverriddenEntityWeights() {
+		itemsSelector.ClearOverriddenEntityWeights();
+	}
 
-	virtual void UpdatePotentialGoalsWeights() override;
+	inline void OverrideEntityWeight( const edict_t *ent, float weight ) {
+		itemsSelector.OverrideEntityWeight( ent, weight );
+	}
 };
 
 #endif

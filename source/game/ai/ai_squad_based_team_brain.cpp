@@ -93,7 +93,6 @@ void AiSquad::SquadEnemyPool::CheckSquadValid() const {
 
 void AiSquad::SquadEnemyPool::OnNewThreat( const edict_t *newThreat ) {
 	CheckSquadValid();
-
 	// TODO: Use more sophisticated bot selection?
 	for( Bot *bot: squad->bots )
 		if( !bot->IsGhosting() ) {
@@ -207,7 +206,6 @@ AiSquad::AiSquad( AiSquad &&that )
 
 	// Move the allocated enemy pool
 	this->squadEnemyPool = that.squadEnemyPool;
-
 	// Hack! Since EnemyPool refers to `that`, modify the reference
 	this->squadEnemyPool->squad = this;
 	that.squadEnemyPool = nullptr;
@@ -262,10 +260,8 @@ bool AiSquad::IsSupporter( const edict_t *bot ) const {
 
 // Squad connectivity should be restored in this limit of time, otherwise a squad should be invalidated
 constexpr unsigned CONNECTIVITY_TIMEOUT = 750;
-
 // This value defines a distance limit for quick rejection of non-feasible bot pairs for new squads
 constexpr float CONNECTIVITY_PROXIMITY = 500;
-
 // This value defines summary aas move time limit from one bot to other and back
 constexpr int CONNECTIVITY_MOVE_CENTISECONDS = 400;
 
@@ -315,12 +311,10 @@ bool AiSquad::CheckCanMoveTogether() const {
 		for( unsigned j = i + 1; j < bots.size(); ++j ) {
 			// Check direct travel time (it's given in seconds^-2)
 			aasTravelTime = travelTimesMatrix.GetAASTravelTime( bots[i], bots[j] );
-
 			// At least bot j is reachable from bot i, move to next bot
 			if( aasTravelTime && aasTravelTime < CONNECTIVITY_MOVE_CENTISECONDS / 2 ) {
 				continue;
 			}
-
 			// Bot j is not reachable from bot i, check travel time from j to i
 			aasTravelTime = travelTimesMatrix.GetAASTravelTime( bots[j], bots[i] );
 			if( !aasTravelTime || aasTravelTime >= CONNECTIVITY_MOVE_CENTISECONDS / 2 ) {
@@ -375,13 +369,10 @@ void AiSquad::UpdateBotRoleWeights() {
 }
 
 static bool areWeaponDefHelpersInitialized = false;
-
 // i-th value contains a tier for weapon #i
 static int tiersForWeapon[WEAP_TOTAL];
-
 // Contains weapons sorted by tier in descending order (best weapons first)
 static int bestWeapons[WEAP_TOTAL];
-
 // i-th value contains weapon def for weapon #i
 static gs_weapon_definition_t *weaponDefs[WEAP_TOTAL];
 
@@ -429,7 +420,6 @@ int AiSquad::FindBotWeaponsTiers( int *maxBotWeaponTiers ) const {
 	InitWeaponDefHelpers();
 
 	std::fill_n( maxBotWeaponTiers, MAX_SIZE, 0 );
-
 	// Lowest best weapon tier among all squad bots
 	int minBotWeaponTier = 3;
 
@@ -542,12 +532,11 @@ void AiSquad::CheckMembersInventory() {
 		}
 
 		// Bot already has a some special goal that the squad owns
-		if( bots[botNum]->HasSpecialGoal() && bots[botNum]->IsSpecialGoalSetBy( this ) ) {
-			continue;
-		}
+		// TODO: Needs special method for check since special goals have gone
+		// if (bots[botNum]->HasSpecialGoal() && bots[botNum]->IsSpecialGoalSetBy(this))
+		//    continue;
 
 		bool needsWeapon = maxBotWeaponTiers[botNum] <= 2;
-
 		// TODO: Check player class abilities
 		bool needsHealth = bots[botNum]->Health() < 75;
 		bool needsArmor = bots[botNum]->Armor() < 50;
@@ -614,7 +603,6 @@ bool AiSquad::ShouldNotDropItemsNow() const {
 	StaticVector<PotentialStealer, AiBaseEnemyPool::MAX_TRACKED_ENEMIES> potentialStealers;
 	for( unsigned i = 0, end = squadEnemyPool->TrackedEnemiesBufferSize(); i < end; ++i ) {
 		const Enemy &enemy = squadEnemyPool->TrackedEnemiesBuffer()[i];
-
 		// Check whether an enemy has been invalidated and invalidation is not processed yet to prevent crash
 		if( !enemy.IsValid() || G_ISGHOSTING( enemy.ent ) ) {
 			continue;
@@ -703,7 +691,6 @@ void AiSquad::FindSupplierCandidates( unsigned botNum, StaticVector<unsigned, Ai
 		if( thatBotNum == botNum ) {
 			continue;
 		}
-
 		// Wait a second for next drop
 		if( level.time - lastDroppedByBotTimestamps[botNum] < 1000 ) {
 			continue;
@@ -759,8 +746,10 @@ void AiSquad::SetDroppedEntityAsBotGoal( edict_t *ent ) {
 	}
 
 	// Force dropped item as a special goal for the suppliant
-	bot->ai->botRef->SetSpecialGoalFromEntity( ent, squad );
-
+	// TODO: Bot should be waiting for this entity (if he has interrupt its curr motion for this)
+	// TODO: Just notify bot brain
+	// TODO: This should be handled via goal BotPickupDroppedItem goal that should have high priority
+	// bot->ai->botRef->SetSpecialGoalFromEntity(ent, squad);
 	// Allow other bots (and itself) to grab this item too
 	// (But the suppliant has a priority since the goal has been set immediately)
 	AI_AddNavEntity( ent, (ai_nav_entity_flags)( AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED ) );
@@ -771,7 +760,6 @@ bool AiSquad::RequestWeaponAndAmmoDrop( unsigned botNum, const int *maxBotWeapon
 	// Further drop attempts should be made only for this bot.
 	// (Items should be dropped from the same origin to be able to set a common movement goal)
 	unsigned chosenSupplier = std::numeric_limits<unsigned>::max();
-
 	// Not more than 3 items may be dropped on the same time (and by the same bot)
 	int droppedItemsCount = 0;
 
@@ -787,7 +775,6 @@ bool AiSquad::RequestWeaponAndAmmoDrop( unsigned botNum, const int *maxBotWeapon
 			if( fireDef.ammo_id == AMMO_NONE ) {
 				continue;
 			}
-
 			// Bot has enough ammo, go to the next weapon
 			if( bots[botNum]->Inventory()[fireDef.ammo_id] > fireDef.ammo_low ) {
 				continue;
@@ -845,7 +832,6 @@ bool AiSquad::RequestWeaponAndAmmoDrop( unsigned botNum, const int *maxBotWeapon
 				dropped->target_ent = bots[botNum]->Self();
 				dropped->enemy = (edict_t *)this;
 				dropped->stop = AiSquad::SetDroppedEntityAsBotGoal;
-
 				// Register drop timestamp
 				lastDroppedForBotTimestamps[botNum] = level.time;
 				lastDroppedByBotTimestamps[chosenSupplier] = level.time;
@@ -863,10 +849,8 @@ bool AiSquad::RequestWeaponAndAmmoDrop( unsigned botNum, const int *maxBotWeapon
 edict_t *AiSquad::TryDropAmmo( unsigned botNum, unsigned supplierNum, int weapon ) {
 	Bot *mate = bots[supplierNum];
 	const auto &fireDef = weaponDefs[weapon]->firedef;
-
 	// Min ammo quantity to be able to drop it
 	float minAmmo = fireDef.ammo_pickup;
-
 	// If mate has not only ammo but weapon, leave mate some ammo
 	if( mate->Inventory()[weapon] ) {
 		minAmmo += fireDef.ammo_low;
@@ -892,7 +876,6 @@ edict_t *AiSquad::TryDropWeapon( unsigned botNum, unsigned supplierNum, int weap
 	}
 
 	const auto &fireDef = weaponDefs[weapon]->firedef;
-
 	// The mate does not have enough ammo for this weapon
 	if( mate->Inventory()[fireDef.ammo_id] <= fireDef.ammo_low ) {
 		return nullptr;
@@ -941,7 +924,6 @@ bool AiSquad::RequestDrop( unsigned botNum, bool wouldSupply[MAX_SIZE], Supplier
 		if( !wouldSupply[supplierNum] ) {
 			continue;
 		}
-
 		// We have checked this once during supplier candidates selection
 		// mostly for suppliers selection algorithm optimization,
 		// but this may have changed during weapon/health/armor drops in this frame.
@@ -1004,7 +986,6 @@ bool AiSquad::MayAttachBot( const Bot *bot ) const {
 	}
 
 #ifdef _DEBUG
-
 	// First, check all bots...
 	for( Bot *presentBot: bots ) {
 		if( presentBot == bot ) {
@@ -1194,7 +1175,6 @@ static void MakeSortedNearbyMatesLists( NearbyMatesList **sortedMatesLists, Near
 	// First, fill array of references
 	for( unsigned i = 0; i < listsCount; ++i )
 		sortedMatesLists[i] = nearbyMates + i;
-
 	// Then, sort by referenced values
 	auto cmp = [ = ]( const NearbyMatesList *a, const NearbyMatesList *b ) {
 				   return *a < *b;
@@ -1232,7 +1212,6 @@ static unsigned MakeNewSquads( NearbyMatesList **sortedMatesLists, unsigned list
 		// For each bot close to the current orphan
 		for( NearbyBotProps botProps: *matesList ) {
 			unsigned botOrphanIndex = botProps.botOrphanIndex;
-
 			// Already assigned to some other squad
 			if( orphanSquadMatesCount[botOrphanIndex] ) {
 				continue;
@@ -1251,11 +1230,9 @@ static unsigned MakeNewSquads( NearbyMatesList **sortedMatesLists, unsigned list
 
 			// Mutually assign orphans
 			assignedMatesOrphanIds.push_back( botOrphanIndex );
-
 			// Increase mates count of the mates list owner (the count does not include a bot itself)
 			orphanSquadMatesCount[ownerOrphanIndex]++;
 			const auto matesCount = orphanSquadMatesCount[ownerOrphanIndex];
-
 			// For all already assigned mates modify their mates count
 			for( unsigned orphanId: assignedMatesOrphanIds )
 				orphanSquadMatesCount[orphanId] = matesCount;
@@ -1309,7 +1286,6 @@ void AiSquadBasedTeamBrain::SetupSquads() {
 	}
 
 	StaticVector<Bot*, MAX_CLIENTS> keptOrphans;
-
 	// For each orphan bot try attach a bot to an existing squad.
 	// It a bot can't be attached, copy it to `keptOrphans`
 	// (We can't modify orphanBots inplace, a logic assumes stable orphanBots indices)
@@ -1351,7 +1327,6 @@ unsigned AiSquadBasedTeamBrain::GetFreeSquadSlot() {
 		}
 	}
 	squads.emplace_back( AiSquad( travelTimesMatrix ) );
-
 	// This is very important action, otherwise the squad will not think
 	squads.back().SetFrameAffinity( frameAffinityModulo, frameAffinityOffset );
 	squads.back().PrepareToAddBots();

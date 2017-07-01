@@ -2228,7 +2228,6 @@ static const asMethod_t gedict_Methods[] =
 	{ ASLIB_FUNCTION_DECL( const String @, get_model2, ( ) const ), asFUNCTION( objectGameEntity_getModel2Name ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_sounds, ( ) const ), asFUNCTION( objectGameEntity_getSoundName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_classname, ( ) const ), asFUNCTION( objectGameEntity_getClassname ), asCALL_CDECL_OBJLAST },
-
 	//{ ASLIB_FUNCTION_DECL(const String @, getSpawnKey, ( String &in )), asFUNCTION(objectGameEntity_getSpawnKey), NULL, asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_targetname, ( ) const ), asFUNCTION( objectGameEntity_getTargetname ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_target, ( ) const ), asFUNCTION( objectGameEntity_getTarget ), asCALL_CDECL_OBJLAST },
@@ -2305,6 +2304,7 @@ static const asProperty_t gedict_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int64, timeStamp ), ASLIB_FOFFSET( edict_t, timeStamp ) },
 
 	{ ASLIB_PROPERTY_DECL( float, aiIntrinsicEnemyWeight ), ASLIB_FOFFSET( edict_t, aiIntrinsicEnemyWeight ) },
+	{ ASLIB_PROPERTY_DECL( float, aiVisibilityDistance ), ASLIB_FOFFSET( edict_t, aiVisibilityDistance ) },
 
 	{ ASLIB_PROPERTY_DECL( entThink @, think ), ASLIB_FOFFSET( edict_t, asThinkFunc ) },
 	{ ASLIB_PROPERTY_DECL( entTouch @, touch ), ASLIB_FOFFSET( edict_t, asTouchFunc ) },
@@ -2572,6 +2572,10 @@ static void asFunc_CenterPrintFormatMsg6( edict_t *ent, asstring_t *format, asst
 static void asFunc_CenterPrintFormatMsg7( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
 										  asstring_t *arg4, asstring_t *arg5, asstring_t *arg6, asstring_t *arg7 ) {
 	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, arg6->buffer, arg7->buffer, NULL );
+}
+
+static void asFunc_Error( const asstring_t *str ) {
+	G_Error( str && str->buffer ? str->buffer : "" );
 }
 
 static void asFunc_G_Sound( edict_t *owner, int channel, int soundindex, float attenuation ) {
@@ -3064,6 +3068,7 @@ static const asglobfuncs_t asGameGlobFuncs[] =
 	  ", const String &in, const String &in, const String &in, const String &in )", asFUNCTION( asFunc_CenterPrintFormatMsg6 ), NULL },
 	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in"
 	  ", const String &in, const String &in, const String &in, const String &in, const String &in )", asFUNCTION( asFunc_CenterPrintFormatMsg7 ), NULL },
+	{ "void G_Error( const String &in )", asFUNCTION( asFunc_Error ), NULL },
 	{ "void G_Sound( Entity @, int channel, int soundindex, float attenuation )", asFUNCTION( asFunc_G_Sound ), NULL },
 	{ "void G_PositionedSound( const Vec3 &in, int channel, int soundindex, float attenuation )", asFUNCTION( asFunc_PositionedSound ), NULL },
 	{ "void G_GlobalSound( int channel, int soundindex )", asFUNCTION( asFunc_G_GlobalSound ), NULL },

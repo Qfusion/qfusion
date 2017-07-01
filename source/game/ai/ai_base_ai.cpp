@@ -2,37 +2,25 @@
 #include "ai_base_brain.h"
 #include "ai_ground_trace_cache.h"
 
-Ai::Ai( edict_t *self_, int allowedAasTravelFlags_, int preferredAasTravelFlags_ )
+Ai::Ai( edict_t *self_,
+		AiBaseBrain *aiBaseBrain_,
+		AiAasRouteCache *routeCache_,
+		AiEntityPhysicsState *entityPhysicsState_,
+		int allowedAasTravelFlags_,
+		int preferredAasTravelFlags_,
+		float yawSpeed,
+		float pitchSpeed )
 	: EdictRef( self_ ),
-	aiBaseBrain( nullptr ), // Must be set in a subclass constructor
-	routeCache( nullptr ), // Must be set in a subclass constructor
+	aiBaseBrain( aiBaseBrain_ ),
+	routeCache( routeCache_ ),
 	aasWorld( AiAasWorld::Instance() ),
-	currAasAreaNum( 0 ),
-	droppedToFloorAasAreaNum( 0 ),
-	droppedToFloorOrigin( 0, 0, 0 ),
+	entityPhysicsState( entityPhysicsState_ ),
 	allowedAasTravelFlags( allowedAasTravelFlags_ ),
 	preferredAasTravelFlags( preferredAasTravelFlags_ ),
-	distanceToNextReachStart( std::numeric_limits<float>::infinity() ),
-	blockedTimeout( level.time + 15000 ),
-	aiYawSpeed( 0.0f ),
-	aiPitchSpeed( 0.0f ),
-	oldYawAbsDiff( 0.0f ),
-	oldPitchAbsDiff( 0.0f ) {
-}
-
-void Ai::Debug( const char *format, ... ) const {
-	va_list va;
-	va_start( va, format );
-	AI_Debugv( Nick(), format, va );
-	va_end( va );
-}
-
-void Ai::FailWith( const char *format, ... ) const {
-	va_list va;
-	va_start( va, format );
-	AI_Debugv( Nick(), format, va );
-	va_end( va );
-	abort();
+	blockedTimeout( level.time + 15000 ) {
+	angularViewSpeed[YAW] = yawSpeed;
+	angularViewSpeed[PITCH] = pitchSpeed;
+	angularViewSpeed[ROLL] = 999999.0f;
 }
 
 void Ai::SetFrameAffinity( unsigned modulo, unsigned offset ) {
@@ -43,160 +31,146 @@ void Ai::SetFrameAffinity( unsigned modulo, unsigned offset ) {
 
 // These getters cannot be defined in headers due to incomplete AiBaseBrain class definition
 
-int Ai::GoalAreaNum() const {
-	return aiBaseBrain->GoalAasAreaNum();
+int Ai::NavTargetAasAreaNum() const {
+	return aiBaseBrain->NavTargetAasAreaNum();
 }
 
-Vec3 Ai::GoalOrigin() const {
-	return aiBaseBrain->CurrentGoalOrigin();
+Vec3 Ai::NavTargetOrigin() const {
+	return aiBaseBrain->NavTargetOrigin();
+}
+
+float Ai::NavTargetRadius() const {
+	return aiBaseBrain->NavTargetRadius();
+}
+
+bool Ai::IsNavTargetBasedOnEntity( const edict_t *ent ) const {
+	return aiBaseBrain->IsNavTargetBasedOnEntity( ent );
 }
 
 void Ai::ResetNavigation() {
-	distanceToNextReachStart = std::numeric_limits<float>::infinity();
-
-	currAasAreaNum = aasWorld->FindAreaNum( self );
-	nextReaches.clear();
-
-	aiBaseBrain->ClearAllGoals();
-
 	blockedTimeout = level.time + BLOCKED_TIMEOUT;
 }
 
-void Ai::UpdateReachCache( int reachedAreaNum ) {
-	if( !aiBaseBrain->HasGoal() ) {
+void Ai::UpdateReachChain( const ReachChainVector &oldReachChain,
+						   ReachChainVector *currReachChain,
+						   const AiEntityPhysicsState &state ) const {
+	currReachChain->clear();
+	if( !aiBaseBrain->HasNavTarget() ) {
 		return;
 	}
-	const int goalAreaNum = GoalAreaNum();
 
+	const aas_reachability_t *reachabilities = AiAasWorld::Instance()->Reachabilities();
+	const int goalAreaNum = NavTargetAasAreaNum();
 	// First skip reaches to reached area
 	unsigned i = 0;
-	for( i = 0; i < nextReaches.size(); ++i ) {
-		if( nextReaches[i].areanum == reachedAreaNum ) {
+	for( i = 0; i < oldReachChain.size(); ++i ) {
+		if( reachabilities[oldReachChain[i].ReachNum()].areanum == state.CurrAasAreaNum() ) {
 			break;
 		}
 	}
+	// Copy remaining reachabilities
+	for( unsigned j = i + 1; j < oldReachChain.size(); ++j )
+		currReachChain->push_back( oldReachChain[j] );
 
-	// Remove all reaches including i-th
-	if( i != nextReaches.size() ) {
-		nextReaches.erase( nextReaches.begin(), nextReaches.begin() + i + 1 );
+	int areaNum;
+	if( currReachChain->empty() ) {
+		areaNum = state.currAasAreaNum;
 	} else {
-		nextReaches.clear();
+		areaNum = reachabilities[currReachChain->back().ReachNum()].areanum;
 	}
 
-	int areaNum = nextReaches.empty() ? reachedAreaNum : nextReaches.back().areanum;
-	while( areaNum != goalAreaNum && nextReaches.size() != nextReaches.capacity() ) {
-		int reachNum = routeCache->ReachabilityToGoalArea( areaNum, goalAreaNum, preferredAasTravelFlags );
-		if( !reachNum ) {
-			reachNum = routeCache->ReachabilityToGoalArea( areaNum, goalAreaNum, allowedAasTravelFlags );
+	int reachNum, travelTime;
+	while( areaNum != goalAreaNum && currReachChain->size() != currReachChain->capacity() ) {
+		if( !routeCache->ReachAndTravelTimeToGoalArea( areaNum, goalAreaNum, preferredAasTravelFlags, &reachNum, &travelTime ) ) {
+			// We hope we'll be pushed in some other area during movement, and goal area will become reachable. Leave as is.
+			if( !routeCache->ReachAndTravelTimeToGoalArea( areaNum, goalAreaNum, allowedAasTravelFlags, &reachNum, &travelTime ) ) {
+				break;
+			}
 		}
-
-		// We hope we'll be pushed in some other area during movement, and goal area will become reachable. Leave as is.
-		if( !reachNum ) {
-			break;
-		}
-		if( reachNum > aasWorld->NumReachabilities() ) {
-			break;
-		}
-		const aas_reachability_t &reach = aasWorld->Reachabilities()[reachNum];
-		areaNum = reach.areanum;
-		nextReaches.push_back( reach );
+		areaNum = reachabilities[reachNum].areanum;
+		currReachChain->emplace_back( ReachAndTravelTime( reachNum, (short)travelTime ) );
 	}
 }
 
-void Ai::CheckReachedArea() {
-	const int actualAasAreaNum = aasWorld->FindAreaNum( self );
+int Ai::CheckTravelTimeMillis( const Vec3& from, const Vec3 &to, bool allowUnreachable ) {
 
-	// It deserves a separate statement (may modify droppedToFloorOrigin)
-	bool droppedToFloor = AiGroundTraceCache::Instance()->TryDropToFloor( self, 96.0f, droppedToFloorOrigin.Data() );
-	if( droppedToFloor ) {
-		droppedToFloorAasAreaNum = aasWorld->FindAreaNum( droppedToFloorOrigin );
-		if( !droppedToFloorAasAreaNum ) {
-			// Revert the dropping attempt
-			VectorCopy( self->s.origin, droppedToFloorOrigin.Data() );
-			droppedToFloorAasAreaNum = actualAasAreaNum;
-		}
+	// We try to use the same checks the TacticalSpotsRegistry performs to find spots.
+	// If a spot is not reachable, it is an bug,
+	// because a reachability must have been checked by the spots registry first in a few preceeding calls.
+
+	int fromAreaNum;
+	constexpr float squareDistanceError = WorldState::OriginVar::MAX_ROUNDING_SQUARE_DISTANCE_ERROR;
+	if( ( from - self->s.origin ).SquaredLength() < squareDistanceError ) {
+		fromAreaNum = aasWorld->FindAreaNum( self );
 	} else {
-		droppedToFloorAasAreaNum = actualAasAreaNum;
+		fromAreaNum = aasWorld->FindAreaNum( from );
 	}
 
-	// Current aas area num did not changed
-	if( actualAasAreaNum ) {
-		if( currAasAreaNum != actualAasAreaNum ) {
-			UpdateReachCache( actualAasAreaNum );
+	if( !fromAreaNum ) {
+		if( allowUnreachable ) {
+			return 0;
 		}
-	} else {
-		nextReaches.clear();
+
+		FailWith( "CheckTravelTimeMillis(): Can't find `from` AAS area" );
 	}
 
-	currAasAreaNum = actualAasAreaNum;
+	const int toAreaNum = aasWorld->FindAreaNum( to.Data() );
+	if( !toAreaNum ) {
+		if( allowUnreachable ) {
+			return 0;
+		}
 
-	if( !nextReaches.empty() ) {
-		distanceToNextReachStart = DistanceSquared( nextReaches.front().start, self->s.origin );
-		if( distanceToNextReachStart > 1 ) {
-			distanceToNextReachStart = 1.0f / Q_RSqrt( distanceToNextReachStart );
+		FailWith( "CheckTravelTimeMillis(): Can't find `to` AAS area" );
+	}
+
+	for( int flags: { self->ai->aiRef->PreferredTravelFlags(), self->ai->aiRef->AllowedTravelFlags() } ) {
+		if( int aasTravelTime = routeCache->TravelTimeToGoalArea( fromAreaNum, toAreaNum, flags ) ) {
+			return 10U * aasTravelTime;
 		}
 	}
+
+	if( allowUnreachable ) {
+		return 0;
+	}
+
+	FailWith( "CheckTravelTimeMillis(): Can't find travel time %d->%d\n", fromAreaNum, toAreaNum );
 }
 
-void Ai::CategorizePosition() {
-	CheckReachedArea();
-
-	bool stepping = Ai::IsStep( self );
-
-	self->was_swim = self->is_swim;
-	self->was_step = self->is_step;
-
-	self->is_ladder = aasWorld->AreaLadder( currAasAreaNum );
-
-	G_CategorizePosition( self );
-	if( self->waterlevel > 2 || ( self->waterlevel && !stepping ) ) {
-		self->is_swim = true;
-		self->is_step = false;
-		return;
-	}
-
-	self->is_swim = false;
-	self->is_step = stepping;
-}
-
-void Ai::ClearAllGoals() {
-	// This clears short-term goal too
-	aiBaseBrain->ClearAllGoals();
-	nextReaches.clear();
-}
-
-void Ai::OnGoalSet( Goal *goalEnt ) {
-	if( !currAasAreaNum ) {
-		currAasAreaNum = aasWorld->FindAreaNum( self );
-		if( !currAasAreaNum ) {
-			Debug( "Still can't find curr aas area num" );
-		}
+void Ai::OnNavTargetSet( NavTarget *navTarget ) {
+	// TODO??
+	/*
+	if (!entityPhysicsState.currAasAreaNum)
+	{
+	    currAasAreaNum = aasWorld->FindAreaNum(self);
+	    if (!currAasAreaNum)
+	    {
+	        Debug("Still can't find curr aas area num");
+	    }
 	}
 
 	nextReaches.clear();
-	UpdateReachCache( currAasAreaNum );
+	UpdateReachCache(currAasAreaNum);
+	*/
 }
 
 void Ai::TouchedEntity( edict_t *ent ) {
-	if( aiBaseBrain->HandleGoalTouch( ent ) ) {
-		TouchedGoal( ent );
-
+	if( aiBaseBrain->HandleNavTargetTouch( ent ) ) {
 		// Clear goal area num to ensure bot will not repeatedly try to reach that area even if he has no goals.
 		// Usually it gets overwritten in this or next frame, when bot picks up next goal,
 		// but sometimes there are no other goals to pick up.
-		nextReaches.clear();
+		OnNavTargetTouchHandled();
 		return;
 	}
-
-	if( ent->classname && !Q_stricmp( ent->classname, "trigger_push" ) ) {
-		TouchedJumppad( ent );
-		return;
-	}
+	TouchedOtherEntity( ent );
 }
 
 void Ai::Frame() {
 	// Call super method first
 	AiFrameAwareUpdatable::Frame();
+
+	if( !G_ISGHOSTING( self ) ) {
+		entityPhysicsState->UpdateFromEntity( self );
+	}
 
 	// Call brain Update() (Frame() and, maybe Think())
 	aiBaseBrain->Update();
@@ -208,18 +182,16 @@ void Ai::Frame() {
 }
 
 void Ai::Think() {
-	// check for being blocked
 	if( !G_ISGHOSTING( self ) ) {
-		CategorizePosition();
-
-		// Update currAasAreaNum value of AiBaseBrain
-		// Ai::Think() returns to Ai::Frame()
-		// Ai::Frame() calls AiBaseBrain::Frame()
-		// AiBaseBrain::Frame() calls AiBaseBrain::Think() in this frame
-		aiBaseBrain->currAasAreaNum = currAasAreaNum;
-
 		// TODO: Check whether we are camping/holding a spot
-		if( VectorLengthFast( self->velocity ) > 37 ) {
+		bool checkBlocked = true;
+		if( !self->groundentity ) {
+			checkBlocked = false;
+		} else if( self->groundentity->use == Use_Plat && VectorLengthSquared( self->groundentity->velocity ) > 10 * 10 ) {
+			checkBlocked = false;
+		}
+
+		if( checkBlocked && VectorLengthSquared( self->velocity ) > 30 * 30 ) {
 			blockedTimeout = level.time + BLOCKED_TIMEOUT;
 		}
 
@@ -231,234 +203,95 @@ void Ai::Think() {
 	}
 }
 
-void Ai::TestMove( MoveTestResult *moveTestResult, int currAasAreaNum_, const vec3_t forward ) const {
-	// These values will be returned by default
-	moveTestResult->canWalk = 0;
-	moveTestResult->canFall = 0;
-	moveTestResult->canJump = 0;
-	moveTestResult->fallDepth = 0;
-
-	if( !aasWorld->AreaGrounded( currAasAreaNum_ ) ) {
+void AiEntityPhysicsState::UpdateAreaNums() {
+	const AiAasWorld *aasWorld = AiAasWorld::Instance();
+	this->currAasAreaNum = ( decltype( this->currAasAreaNum ) )aasWorld->FindAreaNum( Origin() );
+	// Use a computation shortcut when entity is on ground
+	if( this->groundEntNum >= 0 ) {
+		this->droppedToFloorOriginOffset = ( decltype( this->droppedToFloorOriginOffset ) )( -playerbox_stand_mins[2] );
+		this->droppedToFloorOriginOffset += 4.0f;
+		SetHeightOverGround( 0 );
+		Vec3 droppedOrigin( Origin() );
+		droppedOrigin.Z() -= this->droppedToFloorOriginOffset;
+		this->droppedToFloorAasAreaNum = ( decltype( this->droppedToFloorAasAreaNum ) )aasWorld->FindAreaNum( droppedOrigin );
 		return;
 	}
 
-	if( !currAasAreaNum ) {
+	// Use a computation shortcut when the current area is grounded
+	if( aasWorld->AreaSettings()[this->currAasAreaNum].areaflags & AREA_GROUNDED ) {
+		float areaMinsZ = aasWorld->Areas()[this->currAasAreaNum].mins[2];
+		float selfZ = Self()->s.origin[2];
+		float heightOverGround_ = selfZ - areaMinsZ + playerbox_stand_maxs[2];
+		clamp_high( heightOverGround_, GROUND_TRACE_DEPTH );
+		SetHeightOverGround( heightOverGround_ );
+		this->droppedToFloorOriginOffset = ( decltype( this->droppedToFloorOriginOffset ) )( heightOverGround_ - 4.0f );
+		this->droppedToFloorAasAreaNum = this->currAasAreaNum;
 		return;
 	}
 
-	constexpr int MAX_TRACED_AREAS = 6;
-	int tracedAreas[MAX_TRACED_AREAS];
-	Vec3 traceEnd = 36.0f * Vec3( forward ) + self->s.origin;
-	int numTracedAreas = aasWorld->TraceAreas( self->s.origin, traceEnd.Data(), tracedAreas, MAX_TRACED_AREAS );
-
-	if( !numTracedAreas ) {
-		return;
-	}
-
-	// Trace ends still in current area
-	if( numTracedAreas == 1 ) {
-		moveTestResult->canWalk = 1;
-		moveTestResult->canFall = 0;
-		moveTestResult->canJump = 1;
-		return;
-	}
-
-	int traceFlags = TFL_WALK | TFL_WALKOFFLEDGE | TFL_BARRIERJUMP;
-	float fallDepth = 0;
-
-	for( int i = 0; i < numTracedAreas - 1; ++i ) {
-		const int nextAreaNum = tracedAreas[i + 1];
-
-		// Trace ends in solid
-		if( !nextAreaNum ) {
-			return;
-		}
-
-		const aas_areasettings_t &currAreaSettings = aasWorld->AreaSettings()[tracedAreas[i]];
-		if( !currAreaSettings.numreachableareas ) {
-			return; // blocked
-
-		}
-		int reachFlags = 0;
-		for( int j = 0; j < currAreaSettings.numreachableareas; ++j ) {
-			const aas_reachability_t &reach = aasWorld->Reachabilities()[currAreaSettings.firstreachablearea + j];
-			if( reach.areanum == nextAreaNum ) {
-				switch( reach.traveltype ) {
-					case TRAVEL_WALK:
-
-					// Bot can escape using a teleporter
-					case TRAVEL_TELEPORT:
-						reachFlags |= TFL_WALK;
-						break;
-					case TRAVEL_WALKOFFLEDGE:
-						fallDepth += reach.start[2] - reach.end[2];
-						reachFlags |= TFL_WALKOFFLEDGE;
-						break;
-					case TRAVEL_BARRIERJUMP:
-					case TRAVEL_DOUBLEJUMP:
-						reachFlags |= TFL_BARRIERJUMP;
-						break;
-				}
-			}
-		}
-		traceFlags &= reachFlags;
-
-		// Reject early
-		if( !traceFlags ) {
-			return;
-		}
-	}
-
-	moveTestResult->canWalk = 0 != ( traceFlags & TFL_WALK );
-	moveTestResult->canFall = 0 != ( traceFlags & TFL_WALKOFFLEDGE );
-	moveTestResult->canJump = 0 != ( traceFlags & TFL_BARRIERJUMP );
-	moveTestResult->fallDepth = fallDepth;
-};
-
-void Ai::TestClosePlace() {
-	if( !currAasAreaNum ) {
-		closeAreaProps.frontTest.Clear();
-		closeAreaProps.backTest.Clear();
-		closeAreaProps.rightTest.Clear();
-		closeAreaProps.leftTest.Clear();
-		return;
-	}
-
-	// TODO: Try to shortcut using area boundaries
-
-	vec3_t angles, forward;
-	VectorCopy( self->s.angles, angles );
-
-	AngleVectors( angles, forward, nullptr, nullptr );
-	TestMove( &closeAreaProps.frontTest, currAasAreaNum, forward );
-
-	angles[1] = self->s.angles[1] + 90;
-	AngleVectors( angles, forward, nullptr, nullptr );
-	TestMove( &closeAreaProps.leftTest, currAasAreaNum, forward );
-
-	angles[1] = self->s.angles[1] - 90;
-	AngleVectors( angles, forward, nullptr, nullptr );
-	TestMove( &closeAreaProps.rightTest, currAasAreaNum, forward );
-
-	angles[1] = self->s.angles[1] - 180;
-	AngleVectors( angles, forward, nullptr, nullptr );
-	TestMove( &closeAreaProps.backTest, currAasAreaNum, forward );
-}
-
-//===================
-//  AI_IsStep
-//  Checks the floor one step below the player. Used to detect
-//  if the player is really falling or just walking down a stair.
-//===================
-bool Ai::IsStep( edict_t *ent ) {
-	vec3_t point;
+	// Try drop an origin from air to floor
 	trace_t trace;
-
-	//determine a point below
-	point[0] = ent->s.origin[0];
-	point[1] = ent->s.origin[1];
-	point[2] = ent->s.origin[2] - ( 1.6 * AI_STEPSIZE );
-
-	//trace to point
-	G_Trace( &trace, ent->s.origin, ent->r.mins, ent->r.maxs, point, ent, MASK_PLAYERSOLID );
-
-	if( !ISWALKABLEPLANE( &trace.plane ) && !trace.startsolid ) {
-		return false;
+	edict_t *ent = const_cast<edict_t *>( Self() );
+	Vec3 traceEnd( Origin() );
+	traceEnd.Z() -= GROUND_TRACE_DEPTH;
+	G_Trace( &trace, this->origin, ent->r.mins, ent->r.maxs, traceEnd.Data(), ent, MASK_PLAYERSOLID );
+	// Check not only whether there is a hit but test whether is it really a ground (and not a wall or obstacle)
+	if( trace.fraction != 1.0f && Origin()[2] - trace.endpos[2] > -playerbox_stand_mins[2] ) {
+		float heightOverGround_ = trace.fraction * GROUND_TRACE_DEPTH + playerbox_stand_mins[2];
+		this->droppedToFloorOriginOffset = ( decltype( this->droppedToFloorOriginOffset ) )( -playerbox_stand_mins[2] );
+		this->droppedToFloorOriginOffset -= heightOverGround_ - 4.0f;
+		SetHeightOverGround( heightOverGround_ );
+		Vec3 droppedOrigin( Origin() );
+		droppedOrigin.Z() -= this->droppedToFloorOriginOffset;
+		this->droppedToFloorAasAreaNum = ( decltype( this->droppedToFloorAasAreaNum ) )aasWorld->FindAreaNum( droppedOrigin );
+		return;
 	}
 
-	//found solid.
-	return true;
+	this->droppedToFloorOriginOffset = 0;
+	SetHeightOverGround( std::numeric_limits<float>::infinity() );
+	this->droppedToFloorAasAreaNum = this->currAasAreaNum;
 }
 
-static constexpr float ANGLE_DIFF_PRECISION_THRESHOLD = 10.0f;
-
-static inline float ComputeAngularSpeedScale( float currAngleDiff, float oldAngleDiff, float frametime ) {
-	// The angle difference has the largest influence on angular speed.
-	float scale = 0.0001f + 0.15f * ( currAngleDiff / ANGLE_DIFF_PRECISION_THRESHOLD );
-	float absDiffAccel = ( currAngleDiff - oldAngleDiff ) * frametime / 16.6f;
-
-	// If the angle difference grew up, increase angular speed proportionally
-	if( absDiffAccel > 0 ) {
-		scale *= 1.0f + 0.55f * std::min( 1.0f, absDiffAccel / 3.0f );
+float Ai::GetChangedAngle( float oldAngle, float desiredAngle, unsigned frameTime,
+						   float angularSpeedMultiplier, int angleIndex ) const {
+	if( oldAngle == desiredAngle ) {
+		return oldAngle;
 	}
-	return scale;
+
+	float maxAngularMove = angularSpeedMultiplier * angularViewSpeed[angleIndex] * ( 1e-3f * frameTime );
+	float angularMove = AngleNormalize180( desiredAngle - oldAngle );
+	if( angularMove < -maxAngularMove ) {
+		angularMove = -maxAngularMove;
+	} else if( angularMove > maxAngularMove ) {
+		angularMove = maxAngularMove;
+	}
+
+	return AngleNormalize180( oldAngle + angularMove );
 }
 
-void Ai::ChangeAngle( const Vec3 &idealDirection, float angularSpeedMultiplier /*= 1.0f*/, bool extraPrecision /*= false*/ ) {
-	const float currentYaw = anglemod( self->s.angles[YAW] );
-	const float currentPitch = anglemod( self->s.angles[PITCH] );
+Vec3 Ai::GetNewViewAngles( const vec3_t oldAngles, const Vec3 &desiredDirection,
+						   unsigned frameTime, float angularSpeedMultiplier ) const {
+	// Based on turret script code
 
-	vec3_t idealAngle;
-	VecToAngles( idealDirection.Data(), idealAngle );
+	// For those trying to learn working with angles
+	// Vec3.x is the PITCH angle (up and down rotation)
+	// Vec3.y is the YAW angle (left and right rotation)
+	// Vec3.z is the ROLL angle (left and right inclination)
 
-	const float ideal_yaw = anglemod( idealAngle[YAW] );
-	const float ideal_pitch = anglemod( idealAngle[PITCH] );
+	vec3_t newAngles, desiredAngles;
+	VecToAngles( desiredDirection.Data(), desiredAngles );
 
-	aiYawSpeed *= angularSpeedMultiplier;
-	aiPitchSpeed *= angularSpeedMultiplier;
-
-	float yawAbsDiff = fabsf( currentYaw - ideal_yaw );
-	float pitchAbsDiff = fabsf( currentPitch - ideal_pitch );
-
-	if( extraPrecision ) {
-		if( yawAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD ) {
-			aiYawSpeed *= ComputeAngularSpeedScale( yawAbsDiff, oldYawAbsDiff, game.frametime );
-		}
-
-		if( pitchAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD ) {
-			aiPitchSpeed *= ComputeAngularSpeedScale( pitchAbsDiff, oldPitchAbsDiff, game.frametime );
-		}
-	} else {
-		if( yawAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD ) {
-			aiYawSpeed *= 0.5f;
-		}
-
-		if( pitchAbsDiff < ANGLE_DIFF_PRECISION_THRESHOLD ) {
-			aiPitchSpeed *= 0.5f;
-		}
+	// Normalize180 all angles so they can be compared
+	for( int i = 0; i < 3; ++i ) {
+		newAngles[i] = AngleNormalize180( oldAngles[i] );
+		desiredAngles[i] = AngleNormalize180( desiredAngles[i] );
 	}
 
-	oldYawAbsDiff = yawAbsDiff;
-	oldPitchAbsDiff = pitchAbsDiff;
-
-	ChangeAxisAngle( currentYaw, ideal_yaw, self->yaw_speed, &aiYawSpeed, &self->s.angles[YAW] );
-	ChangeAxisAngle( currentPitch, ideal_pitch, self->yaw_speed, &aiPitchSpeed, &self->s.angles[PITCH] );
-}
-
-#define AI_YAW_ACCEL ( 95 * FRAMETIME )
-
-void Ai::ChangeAxisAngle( float currAngle, float idealAngle, float edictAngleSpeed, float *aiAngleSpeed, float *changedAngle ) {
-	float angleMove = idealAngle - currAngle;
-	float speed = edictAngleSpeed * FRAMETIME;
-	if( idealAngle > currAngle ) {
-		if( angleMove >= 180 ) {
-			angleMove -= 360;
-		}
-	} else {
-		if( angleMove <= -180 ) {
-			angleMove += 360;
-		}
-	}
-	if( angleMove > 0 ) {
-		if( *aiAngleSpeed > speed ) {
-			*aiAngleSpeed = speed;
-		}
-		if( angleMove < 3 ) {
-			*aiAngleSpeed += AI_YAW_ACCEL / 4.0;
-		} else {
-			*aiAngleSpeed += AI_YAW_ACCEL;
-		}
-	} else {
-		if( *aiAngleSpeed < -speed ) {
-			*aiAngleSpeed = -speed;
-		}
-		if( angleMove > -3 ) {
-			*aiAngleSpeed -= AI_YAW_ACCEL;
-		} else {
-			*aiAngleSpeed -= AI_YAW_ACCEL / 4.0;
-		}
+	// Rotate the entity angles to the desired angles
+	if( !VectorCompare( newAngles, desiredAngles ) ) {
+		newAngles[YAW] = GetChangedAngle( newAngles[YAW], desiredAngles[YAW], angularSpeedMultiplier, frameTime, YAW );
+		newAngles[PITCH] = GetChangedAngle( newAngles[PITCH], desiredAngles[PITCH], angularSpeedMultiplier, frameTime, PITCH );
 	}
 
-	angleMove = *aiAngleSpeed;
-	*changedAngle = anglemod( currAngle + angleMove );
+	return Vec3( newAngles );
 }

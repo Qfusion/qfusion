@@ -68,6 +68,12 @@ struct WeaponAmmo<WEAP_ELECTROBOLT>{
 	static constexpr int weakAmmoTag = AMMO_WEAK_BOLTS;
 };
 
+template<>
+struct WeaponAmmo<WEAP_INSTAGUN>{
+	static constexpr int strongAmmoTag = AMMO_INSTAS;
+	static constexpr int weakAmmoTag = AMMO_WEAK_INSTAS;
+};
+
 inline bool HasQuad( const edict_t *ent ) {
 	return ent && ent->r.client && ent->r.client->ps.inventory[POWERUP_QUAD];
 }
@@ -89,23 +95,36 @@ inline bool IsCarrier( const edict_t *ent ) {
 
 float DamageToKill( const edict_t *ent, float armorProtection, float armorDegradation );
 
+float DamageToKill( float health, float armor, float armorProtection, float armorDegradation );
+
 class Enemy
 {
-public:
-	Enemy() : ent( nullptr ), lastSeenPosition( NAN, NAN, NAN ), lastSeenVelocity( NAN, NAN, NAN ) {
-		Clear();
-	}
-
-	const edict_t *ent;  // If null, the enemy slot is unused
-
-	static constexpr unsigned MAX_TRACKED_POSITIONS = 16;
+	friend class AiBaseEnemyPool;
+	class AiBaseEnemyPool *parent;
 
 	float weight;
 	float avgPositiveWeight;
 	float maxPositiveWeight;
 	unsigned positiveWeightsCount;
 
-	unsigned registeredAt;
+	int64_t registeredAt;
+
+	// Same as front() of lastSeenPositions, used for faster access
+	Vec3 lastSeenPosition;
+	// Same as front() of lastSeenVelocities, used for faster access
+	Vec3 lastSeenVelocity;
+	// Same as front() of lastSeenTimestamps, used for faster access
+	int64_t lastSeenAt;
+
+public:
+	const edict_t *ent;  // If null, the enemy slot is unused
+
+	inline Enemy()
+		: parent( nullptr ), lastSeenPosition( NAN, NAN, NAN ), lastSeenVelocity( NAN, NAN, NAN ), ent( nullptr ) {
+		Clear();
+	}
+
+	static constexpr unsigned MAX_TRACKED_POSITIONS = 16;
 
 	void Clear();
 	void OnViewed();
@@ -116,6 +135,9 @@ public:
 		}
 		return ent->r.client ? ent->r.client->netname : ent->classname;
 	}
+
+	inline float AvgWeight() const { return avgPositiveWeight; }
+	inline float MaxWeight() const { return maxPositiveWeight; }
 
 	inline bool HasQuad() const { return ::HasQuad( ent ); }
 	inline bool HasShell() const { return ::HasShell( ent ); }
@@ -141,6 +163,7 @@ public:
 	inline int BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
 	inline int LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
 	inline int BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
+	inline int InstasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_INSTAGUN>(); }
 
 	inline int PendingWeapon() const {
 		// TODO: It does not check ammo
@@ -150,6 +173,9 @@ public:
 	inline int64_t LastSeenAt() const { return lastSeenAt; }
 	inline const Vec3 &LastSeenPosition() const { return lastSeenPosition; }
 	inline const Vec3 &LastSeenVelocity() const { return lastSeenVelocity; }
+
+	inline int64_t LastAttackedByTime() const;
+	inline float TotalInflictedDamage() const;
 
 	inline bool IsValid() const { return ent != nullptr; }
 
@@ -161,21 +187,17 @@ public:
 
 	inline Vec3 Angles() const { return Vec3( ent->s.angles ); }
 
-	// TODO: Fuse in a single array of some struct
-	// Array of last seen timestamps
-	StaticDeque<int64_t, MAX_TRACKED_POSITIONS> lastSeenTimestamps;
-	// Array of last seen positions
-	StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenPositions;
-	// Array of last seen enemy velocities
-	StaticDeque<Vec3, MAX_TRACKED_POSITIONS> lastSeenVelocities;
+	struct Snapshot {
+		const Vec3 origin;
+		const Vec3 velocity;
+		int64_t timestamp;
 
-private:
-	// Same as front() of lastSeenPositions, used for faster access
-	Vec3 lastSeenPosition;
-	// Same as front() of lastSeenVelocities, used for faster access
-	Vec3 lastSeenVelocity;
-	// Same as front() of lastSeenTimestamps, used for faster access
-	int64_t lastSeenAt;
+		Snapshot( const vec3_t origin_, const vec3_t velocity_, unsigned timestamp_ )
+			: origin( origin_ ), velocity( velocity_ ), timestamp( timestamp_ ) {}
+	};
+
+	typedef StaticDeque<Snapshot, MAX_TRACKED_POSITIONS> SnapshotsQueue;
+	SnapshotsQueue lastSeenSnapshots;
 };
 
 class AttackStats
@@ -256,7 +278,7 @@ public:
 private:
 	float avgSkill; // (0..1)
 	float decisionRandom; // [0, 1]
-	unsigned decisionRandomUpdateAt;
+	int64_t decisionRandomUpdateAt;
 
 	// All known (viewed and not forgotten) enemies
 	Enemy trackedEnemies[MAX_TRACKED_ENEMIES];
@@ -351,8 +373,8 @@ public:
 	bool WillAssignAimEnemy() const;
 
 	// Note that these methods modify this object state
-	const Enemy *ChooseAimEnemy( const edict_t *challenger );
-	const Enemy *ChooseHiddenEnemy( const edict_t *challenger );
+	const Enemy *ChooseVisibleEnemy( const edict_t *challenger );
+	const Enemy *ChooseLostOrHiddenEnemy( const edict_t *challenger, unsigned timeout = ( unsigned ) - 1 );
 
 	void OnPain( const edict_t *bot, const edict_t *enemy, float kick, int damage );
 	void OnEnemyDamaged( const edict_t *bot, const edict_t *target, int damage );
@@ -362,6 +384,11 @@ public:
 	// Returns zero if ent not found
 	int64_t LastAttackedByTime( const edict_t *ent ) const;
 	int64_t LastTargetTime( const edict_t *ent ) const;
+
+	float TotalDamageInflictedBy( const edict_t *ent ) const;
 };
+
+inline int64_t Enemy::LastAttackedByTime() const { return parent->LastAttackedByTime( ent ); }
+inline float Enemy::TotalInflictedDamage() const { return parent->TotalDamageInflictedBy( ent ); }
 
 #endif

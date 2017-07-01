@@ -2,85 +2,323 @@
 #include "ai_aas_world.h"
 #include <algorithm>
 
+#ifndef _MSC_VER
+// Allow getting an address of not initialized yet field movementState.entityPhysicsState.
+// Saving this address for further use is legal, the field is not going to be used right now.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
+
 Bot::Bot( edict_t *self_, float skillLevel_ )
-	: Ai( self_, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS ),
+	: Ai( self_, &botBrain, AiAasRouteCache::NewInstance(), &movementState.entityPhysicsState, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS ),
+	weightConfig( self_ ),
 	dangersDetector( self_ ),
-	botBrain( self_, skillLevel_ ),
+	botBrain( this, skillLevel_ ),
 	skillLevel( skillLevel_ ),
-	nextBlockedEscapeAttemptAt( 0 ),
-	blockedEscapeGoalOrigin( INFINITY, INFINITY, INFINITY ),
-	rocketJumpMovementState( self_ ),
-	combatMovePushTimeout( 0 ),
+	selectedEnemies( self_ ),
+	weaponsSelector( self_, selectedEnemies, selectedWeapons, 600 - From0UpToMax( 300, skillLevel_ ) ),
+	tacticalSpotsCache( self_ ),
+	roamingManager( self_ ),
+	builtinFireTargetCache( self_ ),
+	scriptFireTargetCache( self_ ),
+	grabItemGoal( this ),
+	killEnemyGoal( this ),
+	runAwayGoal( this ),
+	reactToDangerGoal( this ),
+	reactToThreatGoal( this ),
+	reactToEnemyLostGoal( this ),
+	attackOutOfDespairGoal( this ),
+	roamGoal( this ),
+	genericRunToItemAction( this ),
+	pickupItemAction( this ),
+	waitForItemAction( this ),
+	killEnemyAction( this ),
+	advanceToGoodPositionAction( this ),
+	retreatToGoodPositionAction( this ),
+	steadyCombatAction( this ),
+	gotoAvailableGoodPositionAction( this ),
+	attackFromCurrentPositionAction( this ),
+	genericRunAvoidingCombatAction( this ),
+	startGotoCoverAction( this ),
+	takeCoverAction( this ),
+	startGotoRunAwayTeleportAction( this ),
+	doRunAwayViaTeleportAction( this ),
+	startGotoRunAwayJumppadAction( this ),
+	doRunAwayViaJumppadAction( this ),
+	startGotoRunAwayElevatorAction( this ),
+	doRunAwayViaElevatorAction( this ),
+	stopRunningAwayAction( this ),
+	dodgeToSpotAction( this ),
+	turnToThreatOriginAction( this ),
+	turnToLostEnemyAction( this ),
+	startLostEnemyPursuitAction( this ),
+	stopLostEnemyPursuitAction( this ),
+	dummyMovementAction( this ),
+	handleTriggeredJumppadMovementAction( this ),
+	landOnSavedAreasSetMovementAction( this ),
+	ridePlatformMovementAction( this ),
+	swimMovementAction( this ),
+	flyUntilLandingMovementAction( this ),
+	campASpotMovementAction( this ),
+	walkCarefullyMovementAction( this ),
+	bunnyStraighteningReachChainMovementAction( this ),
+	bunnyToBestShortcutAreaMovementAction( this ),
+	bunnyInterpolatingReachChainMovementAction( this ),
+	walkOrSlideInterpolatingReachChainMovementAction( this ),
+	combatDodgeSemiRandomlyToTargetMovementAction( this ),
+	movementPredictionContext( self_ ),
 	vsayTimeout( level.time + 10000 ),
-	isWaitingForItemSpawn( false ),
 	isInSquad( false ),
 	defenceSpotId( -1 ),
 	offenseSpotId( -1 ),
-	builtinFireTargetCache( self_ ),
-	scriptFireTargetCache( self_ ) {
-	// Set the base brain reference in Ai class, it is mandatory
-	this->aiBaseBrain = &botBrain;
-
-	// Set the route cache reference in Ai class, it is mandatory
-	// Use a separate instance of a route cache
-	this->routeCache = AiAasRouteCache::NewInstance();
-	self->r.client->movestyle = Skill() > 0.33f ? GS_NEWBUNNY : GS_CLASSICBUNNY;
+	lastTouchedTeleportAt( 0 ),
+	lastTouchedJumppadAt( 0 ),
+	lastTouchedElevatorAt( 0 ),
+	lastKnockbackAt( 0 ),
+	similarWorldStateInstanceId( 0 ),
+	lastItemSelectedAt( 0 ),
+	noItemAvailableSince( 0 ),
+	keptInFovPoint( self_ ),
+	lastChosenLostOrHiddenEnemy( nullptr ),
+	lastChosenLostOrHiddenEnemyInstanceId( 0 ) {
+	self->r.client->movestyle = GS_CLASSICBUNNY;
 	SetTag( self->r.client->netname );
 }
 
-void Bot::LookAround() {
-	CheckIsInThinkFrame( __FUNCTION__ );
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
 
-	TestClosePlace();
-
-	RegisterVisibleEnemies();
-
-	if( !botBrain.combatTask.Empty() ) {
-		ChangeWeapon( botBrain.combatTask );
+void Bot::ApplyPendingTurnToLookAtPoint( BotInput *botInput, BotMovementPredictionContext *context ) const {
+	BotPendingLookAtPointState *pendingLookAtPointState;
+	AiEntityPhysicsState *entityPhysicsState_;
+	unsigned frameTime;
+	if( context ) {
+		pendingLookAtPointState = &context->movementState->pendingLookAtPointState;
+		entityPhysicsState_ = &context->movementState->entityPhysicsState;
+		frameTime = context->predictionStepMillis;
+	} else {
+		pendingLookAtPointState = &self->ai->botRef->movementState.pendingLookAtPointState;
+		entityPhysicsState_ = &self->ai->botRef->movementState.entityPhysicsState;
+		frameTime = game.frametime;
 	}
-}
 
-void Bot::ApplyPendingTurnToLookAtPoint() {
-	if( !pendingLookAtPointState.IsActive() ) {
+	if( !pendingLookAtPointState->IsActive() ) {
 		return;
 	}
 
-	Vec3 toPointDir( pendingLookAtPointState.lookAtPoint );
-	toPointDir -= self->s.origin;
+	const AiPendingLookAtPoint &pendingLookAtPoint = pendingLookAtPointState->pendingLookAtPoint;
+	Vec3 toPointDir( pendingLookAtPoint.Origin() );
+	toPointDir -= entityPhysicsState_->Origin();
 	toPointDir.NormalizeFast();
 
-	ChangeAngle( toPointDir, pendingLookAtPointState.EffectiveTurnSpeedMultiplier( 1.0f ) );
+	botInput->SetIntendedLookDir( toPointDir, true );
+	botInput->isLookDirSet = true;
+
+	float turnSpeedMultiplier = pendingLookAtPoint.TurnSpeedMultiplier();
+	Vec3 newAngles = GetNewViewAngles( entityPhysicsState_->Angles().Data(), toPointDir, frameTime, turnSpeedMultiplier );
+	botInput->SetAlreadyComputedAngles( newAngles );
+
+	botInput->canOverrideLookVec = false;
+	botInput->canOverridePitch = false;
 }
 
-void Bot::TouchedGoal( const edict_t *goalUnderlyingEntity ) {
-	if( botBrain.HandleGoalTouch( goalUnderlyingEntity ) ) {
-		// Stop camping a spawn point if the bot did it
-		if( isWaitingForItemSpawn ) {
-			campingSpotState.Invalidate();
-			isWaitingForItemSpawn = false;
+void Bot::ApplyInput( BotInput *input, BotMovementPredictionContext *context ) {
+	// It is legal (there are no enemies and no nav targets in some moments))
+	if( !input->isLookDirSet ) {
+		//const float *origin = entityPhysicsState ? entityPhysicsState->Origin() : self->s.origin;
+		//AITools_DrawColorLine(origin, (Vec3(-32, +32, -32) + origin).Data(), COLOR_RGB(192, 0, 0), 0);
+		return;
+	}
+	if( !input->isUcmdSet ) {
+		//const float *origin = entityPhysicsState ? entityPhysicsState->Origin() : self->s.origin;
+		//AITools_DrawColorLine(origin, (Vec3(+32, -32, +32) + origin).Data(), COLOR_RGB(192, 0, 192), 0);
+		return;
+	}
+
+	if( context ) {
+		auto *entityPhysicsState_ = &context->movementState->entityPhysicsState;
+		if( !input->hasAlreadyComputedAngles ) {
+			if( CheckInputInversion( input, context ) ) {
+				InvertKeys( input, context );
+				Vec3 newAngles( GetNewViewAngles( self->s.angles, -input->IntendedLookDir(),
+												  context->predictionStepMillis, 5.0f * input->TurnSpeedMultiplier() ) );
+				input->SetAlreadyComputedAngles( newAngles );
+			} else {
+				Vec3 newAngles( GetNewViewAngles( entityPhysicsState_->Angles(), input->IntendedLookDir(),
+												  context->predictionStepMillis, input->TurnSpeedMultiplier() ) );
+				input->SetAlreadyComputedAngles( newAngles );
+			}
+		}
+		entityPhysicsState_->SetAngles( input->AlreadyComputedAngles() );
+	} else {
+		if( !input->hasAlreadyComputedAngles ) {
+			if( CheckInputInversion( input, context ) ) {
+				InvertKeys( input, context );
+				Vec3 newAngles( GetNewViewAngles( self->s.angles, -input->IntendedLookDir(),
+												  game.frametime, 5.0f * input->TurnSpeedMultiplier() ) );
+				input->SetAlreadyComputedAngles( newAngles );
+			} else {
+				Vec3 newAngles( GetNewViewAngles( self->s.angles, input->IntendedLookDir(),
+												  game.frametime, input->TurnSpeedMultiplier() ) );
+				input->SetAlreadyComputedAngles( newAngles );
+			}
+		}
+		input->AlreadyComputedAngles().CopyTo( self->s.angles );
+	}
+}
+
+inline bool Bot::CheckInputInversion( BotInput *input, BotMovementPredictionContext *context ) {
+	// We cannot just check whether the dot product is negative.
+	// (a non-implemented side movement is required in case when fabs(the dot product) < 0.X).
+	// Invert movement only if it can be represented as a negated forward movement without a substantial side part.
+	constexpr const float INVERT_DOT_THRESHOLD = -0.3f;
+
+	if( !keptInFovPoint.IsActive() ) {
+		if( context ) {
+			context->movementState->isDoingInputInversion = false;
+		} else {
+			self->ai->botRef->movementState.isDoingInputInversion = false;
+		}
+
+		return false;
+	}
+
+	static_assert( INVERT_DOT_THRESHOLD < -0.1f, "The dot threshold is assumed to be negative in all cases" );
+	Vec3 selfToPoint( keptInFovPoint.Origin() );
+	if( context ) {
+		selfToPoint -= context->movementState->entityPhysicsState.Origin();
+		selfToPoint.NormalizeFast();
+		// Prevent choice jitter
+		float dotThreshold = INVERT_DOT_THRESHOLD;
+		if( context->movementState->isDoingInputInversion ) {
+			dotThreshold += 0.1f;
+		}
+
+		bool result = selfToPoint.Dot( input->IntendedLookDir() ) < dotThreshold;
+		context->movementState->isDoingInputInversion = result;
+		return result;
+	}
+
+	selfToPoint -= self->s.origin;
+	selfToPoint.NormalizeFast();
+
+	float dotThreshold = INVERT_DOT_THRESHOLD;
+	if( self->ai->botRef->movementState.isDoingInputInversion ) {
+		dotThreshold += 0.1f;
+	}
+
+	bool result = selfToPoint.Dot( input->IntendedLookDir() ) < dotThreshold;
+	self->ai->botRef->movementState.isDoingInputInversion = result;
+	return result;
+}
+
+inline void Bot::InvertKeys( BotInput *input, BotMovementPredictionContext *context ) {
+	input->SetForwardMovement( -input->ForwardMovement() );
+	input->SetRightMovement( -input->RightMovement() );
+
+	// If no keys are set, forward dash is preferred by default.
+	// Set negative forward movement in this case manually.
+	if( input->IsSpecialButtonSet() ) {
+		return;
+	}
+
+	if( input->ForwardMovement() || input->RightMovement() ) {
+		return;
+	}
+
+	if( context ) {
+		if( context->movementState->entityPhysicsState.GroundEntity() ) {
+			input->SetForwardMovement( -1 );
+		}
+	} else {
+		if( self->groundentity ) {
+			input->SetForwardMovement( -1 );
 		}
 	}
 }
 
-void Bot::TouchedJumppad( const edict_t *jumppad ) {
-	// jumppad->s.origin2 contains initial push velocity
-	Vec3 pushDir( jumppad->s.origin2 );
-	pushDir.NormalizeFast();
-
-	float relaxedFlightSeconds = 0;
-	float zDotFactor = pushDir.Dot( &axis_identity[AXIS_UP] );
-	if( zDotFactor > 0 ) {
-		// Start to find landing area when vertical velocity is close to zero.
-		// This may be wrong for Q3-like horizontal jumppads,
-		// but its unlikely to see this kind of triggers in the QF game.
-		relaxedFlightSeconds = 0.90f * jumppad->s.origin2[2] / ( level.gravity + 0.0001f );
+void Bot::UpdateKeptInFovPoint() {
+	if( GetMiscTactics().shouldRushHeadless ) {
+		keptInFovPoint.Deactivate();
+		return;
 	}
 
-	// Otherwise (for some weird jumppad that pushes dow) start to find landing area immediately
+	if( selectedEnemies.AreValid() ) {
+		Vec3 origin( selectedEnemies.ClosestEnemyOrigin( self->s.origin ) );
+		if( !GetMiscTactics().shouldKeepXhairOnEnemy ) {
+			if( !selectedEnemies.HaveQuad() && !selectedEnemies.HaveCarrier() ) {
+				if( origin.SquareDistanceTo( self->s.origin ) > 1024 * 1024 ) {
+					return;
+				}
+			}
+		}
 
-	jumppadMovementState.jumppadMoveTimeout = level.time + (unsigned)( 1000.0f * relaxedFlightSeconds );
-	jumppadMovementState.hasTouchedJumppad = true;
-	jumppadMovementState.jumppadTarget = Vec3( jumppad->target_ent->s.origin );
+		keptInFovPoint.Update( origin, selectedEnemies.InstanceId() );
+		return;
+	}
+
+	unsigned timeout = GetMiscTactics().shouldKeepXhairOnEnemy ? 2000 : 1000;
+	if( GetMiscTactics().willRetreat ) {
+		timeout = ( timeout * 3u ) / 2u;
+	}
+
+	if( const Enemy *lostOrHiddenEnemy = botBrain.activeEnemyPool->ChooseLostOrHiddenEnemy( self, timeout ) ) {
+		if( !lastChosenLostOrHiddenEnemy ) {
+			lastChosenLostOrHiddenEnemyInstanceId++;
+		} else if( lastChosenLostOrHiddenEnemy->ent != lostOrHiddenEnemy->ent ) {
+			lastChosenLostOrHiddenEnemyInstanceId++;
+		}
+
+		Vec3 origin( lostOrHiddenEnemy->LastSeenPosition() );
+		if( !GetMiscTactics().shouldKeepXhairOnEnemy ) {
+			float distanceThreshold = ( !selectedEnemies.HaveQuad() && !selectedEnemies.HaveCarrier() ) ? 768 : 2048;
+			if( origin.SquareDistanceTo( self->s.origin ) > distanceThreshold * distanceThreshold ) {
+				lastChosenLostOrHiddenEnemy = nullptr;
+				return;
+			}
+		}
+
+		lastChosenLostOrHiddenEnemy = lostOrHiddenEnemy;
+		keptInFovPoint.Update( origin, lastChosenLostOrHiddenEnemyInstanceId );
+		return;
+	}
+
+	lastChosenLostOrHiddenEnemy = nullptr;
+	keptInFovPoint.Deactivate();
+}
+
+void Bot::TouchedOtherEntity( const edict_t *entity ) {
+	if( !entity->classname ) {
+		return;
+	}
+
+	// Cut off string comparisons by doing these cheap tests first
+
+	// Only triggers are interesting for following code
+	if( entity->r.solid != SOLID_TRIGGER ) {
+		return;
+	}
+	// Items should be handled by TouchedNavEntity() or skipped (if it is not a current nav entity)
+	if( entity->item ) {
+		return;
+	}
+
+	if( !Q_stricmp( entity->classname, "trigger_push" ) ) {
+		lastTouchedJumppadAt = level.time;
+		movementState.jumppadMovementState.Activate( entity );
+		return;
+	}
+
+	if( !Q_stricmp( entity->classname, "trigger_teleport" ) ) {
+		lastTouchedTeleportAt = level.time;
+		return;
+	}
+
+	if( !Q_stricmp( entity->classname, "func_plat" ) ) {
+		lastTouchedElevatorAt = level.time;
+		return;
+	}
 }
 
 void Bot::EnableAutoAlert( const AiAlertSpot &alertSpot, AlertCallback callback, void *receiver ) {
@@ -120,11 +358,9 @@ void Bot::RegisterVisibleEnemies() {
 	vec3_t lookDir;
 	AngleVectors( self->s.angles, lookDir, nullptr, nullptr );
 
-	float fov = 110.0f + 69.0f * Skill();
-	float dotFactor = cosf( (float)DEG2RAD( fov / 2 ) );
+	const float dotFactor = FovDotFactor();
 
-	struct EntAndDistance
-	{
+	struct EntAndDistance {
 		int entNum;
 		float distance;
 
@@ -155,6 +391,10 @@ void Bot::RegisterVisibleEnemies() {
 		if( squareDistance < 1 ) {
 			continue;
 		}
+		if( squareDistance > ent->aiVisibilityDistance * ent->aiVisibilityDistance ) {
+			continue;
+		}
+
 		float invDistance = Q_RSqrt( squareDistance );
 		toTarget *= invDistance;
 		if( toTarget.Dot( lookDir ) < dotFactor ) {
@@ -211,7 +451,6 @@ void Bot::CheckAlertSpots( const StaticVector<edict_t *, MAX_CLIENTS> &visibleTa
 			}
 			float distance = Q_RSqrt( squareDistance + 0.001f );
 			score += 1.0f - distance * invRadius;
-
 			// Put likely case first
 			if( !( ent->s.effects & EF_CARRIER ) ) {
 				score *= alertSpot.regularEnemyInfluenceScale;
@@ -219,16 +458,12 @@ void Bot::CheckAlertSpots( const StaticVector<edict_t *, MAX_CLIENTS> &visibleTa
 				score *= alertSpot.carrierEnemyInfluenceScale;
 			}
 		}
-
 		// Clamp score by a max value
 		clamp_high( score, 3.0f );
-
 		// Convert score to [0, 1] range
 		score /= 3.0f;
-
 		// Get a square root of score (values closer to 0 gets scaled more than ones closer to 1)
 		score = 1.0f / Q_RSqrt( score + 0.001f );
-
 		// Sanitize
 		clamp( score, 0.0f, 1.0f );
 		scores[i] = score;
@@ -238,7 +473,7 @@ void Bot::CheckAlertSpots( const StaticVector<edict_t *, MAX_CLIENTS> &visibleTa
 	const int64_t levelTime = level.time;
 	for( unsigned i = 0; i < alertSpots.size(); ++i ) {
 		auto &alertSpot = alertSpots[i];
-		unsigned nonReportedFor = levelTime - alertSpot.lastReportedAt;
+		uint64_t nonReportedFor = (uint64_t)( levelTime - alertSpot.lastReportedAt );
 		if( nonReportedFor >= 1000 ) {
 			alertSpot.lastReportedScore = 0.0f;
 		}
@@ -257,12 +492,24 @@ void Bot::CheckAlertSpots( const StaticVector<edict_t *, MAX_CLIENTS> &visibleTa
 	}
 }
 
-void Bot::ChangeWeapon( const CombatTask &combatTask ) {
-	if( combatTask.CanUseBuiltinWeapon() ) {
-		self->r.client->ps.stats[STAT_PENDING_WEAPON] = combatTask.BuiltinWeapon();
+bool Bot::CanChangeWeapons() const {
+	if( !movementState.weaponJumpMovementState.IsActive() ) {
+		return true;
 	}
-	if( combatTask.CanUseScriptWeapon() ) {
-		GT_asSelectScriptWeapon( self->r.client, combatTask.ScriptWeapon() );
+
+	if( movementState.weaponJumpMovementState.hasTriggeredRocketJump ) {
+		return true;
+	}
+
+	return false;
+}
+
+void Bot::ChangeWeapons( const SelectedWeapons &selectedWeapons_ ) {
+	if( selectedWeapons_.BuiltinFireDef() != nullptr ) {
+		self->r.client->ps.stats[STAT_PENDING_WEAPON] = selectedWeapons_.BuiltinWeaponNum();
+	}
+	if( selectedWeapons_.ScriptFireDef() != nullptr ) {
+		GT_asSelectScriptWeapon( self->r.client, selectedWeapons_.ScriptWeaponNum() );
 	}
 }
 
@@ -301,7 +548,7 @@ void Bot::SayVoiceMessages() {
 		return;
 	}
 
-	vsayTimeout = level.time + ( ( 8 + random() * 12 ) * 1000 );
+	vsayTimeout = (int64_t)( level.time + ( ( 8 + random() * 12 ) * 1000 ) );
 
 	// the more bots, the less vsays to play
 	if( random() > 0.1 + 1.0f / game.numBots ) {
@@ -379,12 +626,14 @@ void Bot::OnBlockedTimeout() {
 // ent is dead = run this think func
 //==========================================
 void Bot::GhostingFrame() {
-	usercmd_t ucmd;
+	selectedEnemies.Invalidate();
+	selectedWeapons.Invalidate();
 
-	botBrain.oldCombatTask.Clear();
-	botBrain.combatTask.Clear();
+	lastChosenLostOrHiddenEnemy = nullptr;
 
-	Ai::ClearAllGoals();
+	botBrain.ClearGoalAndPlan();
+
+	movementState.Reset();
 
 	blockedTimeout = level.time + BLOCKED_TIMEOUT;
 	self->nextThink = level.time + 100;
@@ -409,28 +658,28 @@ void Bot::GhostingFrame() {
 		return;
 	}
 
-	memset( &ucmd, 0, sizeof( ucmd ) );
-
+	BotInput botInput;
+	botInput.isUcmdSet = true;
 	// ask for respawn if the minimum bot respawning time passed
 	if( level.time > self->deathTimeStamp + 3000 ) {
-		ucmd.buttons = BUTTON_ATTACK;
+		botInput.SetAttackButton( true );
 	}
 
-	CallGhostingClientThink( &ucmd );
+	CallGhostingClientThink( botInput );
 }
 
-void Bot::CallGhostingClientThink( usercmd_t *ucmd ) {
+void Bot::CallGhostingClientThink( const BotInput &input ) {
+	usercmd_t ucmd;
+	input.CopyToUcmd( &ucmd );
 	// set approximate ping and show values
-	ucmd->serverTimeStamp = game.serverTime;
-	ucmd->msec = game.frametime;
+	ucmd.serverTimeStamp = game.serverTime;
+	ucmd.msec = (uint8_t)game.frametime;
 	self->r.client->r.ping = 0;
 
-	ClientThink( self, ucmd, 0 );
+	ClientThink( self, &ucmd, 0 );
 }
 
 void Bot::OnRespawn() {
-	// Ai status will be updated implicitly (since a bot stopped ghosting)
-	combatMovePushTimeout = 0;
 	ResetNavigation();
 }
 
@@ -442,55 +691,14 @@ void Bot::Think() {
 		return;
 	}
 
-	LookAround();
-}
+	RegisterVisibleEnemies();
 
-bool Bot::MayKeepRunningInCombat() const {
-	if( !HasEnemy() ) {
-		FailWith( "MayKeepRunningInCombat(): there is no enemy" );
+	UpdateKeptInFovPoint();
+
+	if( CanChangeWeapons() ) {
+		weaponsSelector.Think( botBrain.cachedWorldState );
+		ChangeWeapons( selectedWeapons );
 	}
-
-	Vec3 enemyToBotDir = Vec3( self->s.origin ) - EnemyOrigin();
-	bool enemyMayHit = true;
-	if( IsEnemyAStaticSpot() ) {
-		enemyMayHit = false;
-	} else if( EnemyFireDelay() > 300 ) {
-		enemyMayHit = false;
-	} else {
-		Vec3 enemyLookDir = EnemyLookDir();
-		float squaredDistance = enemyToBotDir.SquaredLength();
-		if( squaredDistance > 1 ) {
-			float distance = 1.0f / Q_RSqrt( squaredDistance );
-			enemyToBotDir *= 1.0f / distance;
-
-			// Compute a cosine of angle between enemy look dir and enemy to bot dir
-			float cosPhi = enemyLookDir.Dot( enemyToBotDir );
-
-			// Be aware of RL splash on this range
-			if( distance < 150.0f ) {
-				enemyMayHit = cosPhi > 0.3;
-			} else if( cosPhi <= 0.3 ) {
-				enemyMayHit = false;
-			} else {
-				float cotPhi = Q_RSqrt( ( 1.0f / ( cosPhi * cosPhi ) ) - 1 );
-				float sideMiss = distance / cotPhi;
-
-				// Use hitbox height plus a bit as a worst case
-				float hitboxLargestSectionSide = 8.0f + playerbox_stand_maxs[2] - playerbox_stand_mins[2];
-				enemyMayHit = sideMiss < hitboxLargestSectionSide;
-			}
-		}
-	}
-
-	if( enemyMayHit ) {
-		return false;
-	}
-
-	vec3_t botLookDir;
-	AngleVectors( self->s.angles, botLookDir, nullptr, nullptr );
-
-	// Check whether the bot may hit while running
-	return ( ( -enemyToBotDir ).Dot( botLookDir ) > 0.99 );
 }
 
 //==========================================
@@ -514,131 +722,39 @@ void Bot::ActiveFrame() {
 		G_Match_Ready( self );
 	}
 
-	ApplyPendingTurnToLookAtPoint();
+	weaponsSelector.Frame( botBrain.cachedWorldState );
 
-	const CombatTask &combatTask = botBrain.combatTask;
-
-	bool inhibitShooting, inhibitCombatMove;
-	SetCombatInhibitionFlags( &inhibitShooting, &inhibitCombatMove );
-
-	// ucmd modification in FireWeapon() will be overwritten by MoveFrame()
-	bool fireButtonPressed = false;
-	if( !inhibitShooting ) {
-		SetCloakEnabled( false );
-
-		// If bot fired builtin or script weapon, save builtin fire button status
-		FireWeapon( &fireButtonPressed );
-	} else {
-		if( !combatTask.Empty() ) {
-			SetCloakEnabled( true );
-		} else if( botBrain.HasGoal() ) {
-			if( botBrain.IsCloseToAnyGoal( 768.0f, true ) ) {
-				SetCloakEnabled( true );
-			} else if( botBrain.IsCloseToAnyGoal( 384.0f, false ) ) {
-				SetCloakEnabled( true );
-			} else {
-				SetCloakEnabled( false );
-			}
-		} else {
-			SetCloakEnabled( false );
-		}
+	BotInput botInput;
+	// Might modify botInput
+	ApplyPendingTurnToLookAtPoint( &botInput );
+	// Might modify botInput
+	MovementFrame( &botInput );
+	// Might modify botInput
+	if( ShouldAttack() ) {
+		FireWeapon( &botInput );
 	}
 
-	bool beSilent = ShouldBeSilent( inhibitShooting );
-
-	// Do not modify pmove features by beSilent value, features may be changed dynamically by script.
-	usercmd_t ucmd;
-	memset( &ucmd, 0, sizeof( ucmd ) );
-	MoveFrame( &ucmd, inhibitCombatMove, beSilent );
-
-	if( fireButtonPressed ) {
-		ucmd.buttons |= BUTTON_ATTACK;
-	}
-
-	CallActiveClientThink( &ucmd );
+	// Apply modified botInput
+	ApplyInput( &botInput );
+	CallActiveClientThink( botInput );
 
 	SayVoiceMessages();
 }
 
-bool Bot::ShouldBeSilent( bool inhibitShooting ) const {
-	const CombatTask &combatTask = botBrain.combatTask;
-	if( !inhibitShooting ) {
-		return false;
-	}
+void Bot::CallActiveClientThink( const BotInput &input ) {
+	usercmd_t ucmd;
+	input.CopyToUcmd( &ucmd );
 
-	// Do not be silent if no enemy has been detected
-	if( combatTask.Empty() ) {
-		return false;
-	}
-
-	if( ( combatTask.LastSeenEnemyOrigin() - self->s.origin ).SquaredLength() < 384.0f * 384.0f ) {
-		if( CanAndWouldCloak() ) {
-			return true;
-		}
-
-		// When there is only a single enemy
-		if( botBrain.activeEnemyPool->ActiveEnemies().size() < 2 ) {
-			Vec3 enemyToBot( self->s.origin );
-			enemyToBot -= combatTask.LastSeenEnemyOrigin();
-			enemyToBot.NormalizeFast();
-			if( enemyToBot.Dot( EnemyLookDir() ) < -0 ) {
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-void Bot::SetCombatInhibitionFlags( bool *inhibitShootingRef, bool *inhibitCombatMoveRef ) {
-	// Make reference aliases to avoid pointer/boolean confusing errors
-	bool &inhibitCombatMove = *inhibitCombatMoveRef;
-	bool &inhibitShooting = *inhibitShootingRef;
-
-	const CombatTask &combatTask = botBrain.combatTask;
-	inhibitShooting = combatTask.Empty() || combatTask.inhibit;
-	inhibitCombatMove = inhibitShooting;
-	if( inhibitCombatMove ) {
-		return;
-	}
-
-	if( botBrain.HasGoal() && currAasAreaNum != GoalAreaNum() && !nextReaches.empty() ) {
-		if( IsCloseToReachStart() ) {
-			int travelType = nextReaches.front().traveltype;
-			if( travelType == TRAVEL_ROCKETJUMP || travelType == TRAVEL_JUMPPAD ) {
-				inhibitCombatMove = true;
-			} else if( travelType == TRAVEL_CROUCH ) {
-				inhibitCombatMove = true;
-			} else if( travelType == TRAVEL_LADDER ) {
-				inhibitCombatMove = inhibitShooting = true;
-			}
-		} else if( aasWorld->AreaCrouch( currAasAreaNum ) ) {
-			inhibitCombatMove = true;
-		}
-	}
-
-	// Try to move bunnying instead of dodging on ground
-	// if the enemy is not looking to bot being able to hit him
-	// and the bot is able to hit while moving without changing angle significantly
-	if( !inhibitCombatMove && MayKeepRunningInCombat() ) {
-		inhibitCombatMove = true;
-	}
-}
-
-void Bot::CallActiveClientThink( usercmd_t *ucmd ) {
 	//set up for pmove
 	for( int i = 0; i < 3; i++ )
-		ucmd->angles[i] = ANGLE2SHORT( self->s.angles[i] ) - self->r.client->ps.pmove.delta_angles[i];
+		ucmd.angles[i] = (short)ANGLE2SHORT( self->s.angles[i] ) - self->r.client->ps.pmove.delta_angles[i];
 
 	VectorSet( self->r.client->ps.pmove.delta_angles, 0, 0, 0 );
 
 	// set approximate ping and show values
-	ucmd->msec = game.frametime;
-	ucmd->serverTimeStamp = game.serverTime;
+	ucmd.msec = (uint8_t)game.frametime;
+	ucmd.serverTimeStamp = game.serverTime;
 
-	// If this value is modified by ClientThink() callbacks, it will be kept until next frame reaches this line
-	jumppadMovementState.hasTouchedJumppad = false;
-
-	ClientThink( self, ucmd, 0 );
+	ClientThink( self, &ucmd, 0 );
 	self->nextThink = level.time + 1;
 }

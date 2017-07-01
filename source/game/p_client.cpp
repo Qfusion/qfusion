@@ -620,6 +620,9 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 
 	self->s.teleported = true;
 
+	self->aiIntrinsicEnemyWeight = 1.0f;
+	self->aiVisibilityDistance = 999999.9f;
+
 	// hold in place briefly
 	client->ps.pmove.pm_flags = PMF_TIME_TELEPORT;
 	client->ps.pmove.pm_time = 14;
@@ -633,8 +636,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	client->ps.stats[STAT_TIME_ALPHA] = STAT_NOTSET;
 	client->ps.stats[STAT_TIME_BETA] = STAT_NOTSET;
 
-	AI_Respawn( self );
-
 	self->r.client->level.respawnCount++;
 
 	G_UseTargets( spawnpoint, self );
@@ -647,6 +648,8 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	} else {
 		G_Gametype_GENERIC_ClientRespawn( self, old_team, self->s.team );
 	}
+
+	AI_Respawn( self );
 }
 
 /*
@@ -1686,7 +1689,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 				continue; // duplicated
 
 			}
-
 			// player can't touch projectiles, only projectiles can touch the player
 			G_CallTouch( other, ent, NULL, 0 );
 		}

@@ -5,6 +5,8 @@
 #include "vec3.h"
 
 struct Danger {
+	static constexpr unsigned TIMEOUT = 400;
+
 	Danger( const Vec3 &hitPoint_,
 			const Vec3 &direction_,
 			float damage_,
@@ -13,6 +15,7 @@ struct Danger {
 		: hitPoint( hitPoint_ ),
 		direction( direction_ ),
 		damage( damage_ ),
+		timeoutAt( level.time + TIMEOUT ),
 		attacker( attacker_ ),
 		splash( splash_ )
 	{}
@@ -22,9 +25,12 @@ struct Danger {
 	// Ai decisions should be made by more sophisticated code.
 	bool operator<( const Danger &that ) const { return this->damage < that.damage; }
 
+	bool IsValid() const { return timeoutAt > level.time; }
+
 	Vec3 hitPoint;
 	Vec3 direction;
 	float damage;
+	int64_t timeoutAt;
 	const edict_t *attacker;
 	bool splash;
 };

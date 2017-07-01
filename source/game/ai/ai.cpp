@@ -2,7 +2,7 @@
 #include "ai_shutdown_hooks_holder.h"
 #include "ai_manager.h"
 #include "ai_objective_based_team_brain.h"
-#include "ai_tactical_spots_detector.h"
+#include "tactical_spots_registry.h"
 
 ai_weapon_aim_type BuiltinWeaponAimType( int builtinWeapon ) {
 	switch( builtinWeapon ) {
@@ -60,7 +60,8 @@ void AI_Debug( const char *nick, const char *format, ... ) {
 void AI_Debugv( const char *nick, const char *format, va_list va ) {
 	char concatBuffer[1024];
 
-	int prefixLen = sprintf( concatBuffer, "t=%09lld %s: ", (long long)level.time, nick );
+	const int64_t levelTime = level.time;
+	int prefixLen = sprintf( concatBuffer, "t=%09" PRIi64 " %s: ", levelTime, nick );
 
 	Q_vsnprintfz( concatBuffer + prefixLen, 1024 - prefixLen, format, va );
 
@@ -102,6 +103,37 @@ void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, i
 	GClip_LinkEntity( event );
 }
 
+// Almost same as COM_HashKey() but returns length too and does not perform division by hash size
+void GetHashAndLength( const char *str, unsigned *hash, unsigned *length ) {
+	unsigned i = 0;
+	unsigned v = 0;
+
+	for(; str[i]; i++ ) {
+		unsigned c = ( (unsigned char *)str )[i];
+		if( c == '\\' ) {
+			c = '/';
+		}
+		v = ( v + i ) * 37 + tolower( c ); // case insensitivity
+	}
+
+	*hash = v;
+	*length = i;
+}
+
+// A "dual" version of the function GetHashAndLength():
+// accepts the known length instead of computing it and computes a hash for the substring defined by the length.
+unsigned GetHashForLength( const char *str, unsigned length ) {
+	unsigned v = 0;
+	for( unsigned i = 0; i < length; i++ ) {
+		unsigned c = ( (unsigned char *)str )[i];
+		if( c == '\\' ) {
+			c = '/';
+		}
+		v = ( v + i ) * 37 + tolower( c ); // case insensitivity
+	}
+	return v;
+}
+
 static StaticVector<int, 16> hubAreas;
 
 //==========================================
@@ -111,6 +143,10 @@ static StaticVector<int, 16> hubAreas;
 void AI_InitLevel( void ) {
 	AiAasWorld::Init( level.mapname );
 	AiAasRouteCache::Init( *AiAasWorld::Instance() );
+	TacticalSpotsRegistry::Init( level.mapname );
+
+	AiBaseTeamBrain::OnGametypeChanged( g_gametype->string );
+	AiManager::Init( g_gametype->string, level.mapname );
 
 	NavEntitiesRegistry::Instance()->Init();
 }
@@ -118,19 +154,26 @@ void AI_InitLevel( void ) {
 void AI_Shutdown( void ) {
 	hubAreas.clear();
 
-	AI_UnloadLevel();
+	AI_AfterLevelScriptShutdown();
 
 	AiShutdownHooksHolder::Instance()->InvokeHooks();
 }
 
-void AI_UnloadLevel() {
-	AI_RemoveBots();
-	AiAasRouteCache::Shutdown();
-	AiAasWorld::Shutdown();
+void AI_BeforeLevelLevelScriptShutdown() {
+	if( auto aiManager = AiManager::Instance() ) {
+		aiManager->BeforeLevelScriptShutdown();
+	}
 }
 
-void AI_GametypeChanged( const char *gametype ) {
-	AiManager::OnGametypeChanged( gametype );
+void AI_AfterLevelScriptShutdown() {
+	if( auto aiManager = AiManager::Instance() ) {
+		aiManager->AfterLevelScriptShutdown();
+		AiManager::Shutdown();
+	}
+
+	TacticalSpotsRegistry::Shutdown();
+	AiAasRouteCache::Shutdown();
+	AiAasWorld::Shutdown();
 }
 
 void AI_JoinedTeam( edict_t *ent, int team ) {
@@ -161,7 +204,6 @@ static void FindHubAreas() {
 	{
 		int area, reachCount;
 		AreaAndReachCount( int area_, int reachCount_ ) : area( area_ ), reachCount( reachCount_ ) {}
-
 		// Ensure that area with lowest reachCount will be evicted in pop_heap(), so use >
 		bool operator<( const AreaAndReachCount &that ) const { return reachCount > that.reachCount; }
 	};
@@ -236,11 +278,9 @@ static int FindGoalAASArea( edict_t *ent ) {
 	}
 
 	Vec3 mins( ent->r.mins ), maxs( ent->r.maxs );
-
 	// Extend AABB XY dimensions
 	ExtendDimension( mins.Data(), maxs.Data(), 0 );
 	ExtendDimension( mins.Data(), maxs.Data(), 1 );
-
 	// Z needs special extension rules
 	float presentHeight = maxs.Z() - mins.Z();
 	float playerHeight = playerbox_stand_maxs[2] - playerbox_stand_mins[2];
@@ -251,7 +291,6 @@ static int FindGoalAASArea( edict_t *ent ) {
 
 	// Find all areas in bounds
 	int areas[16];
-
 	// Convert bounds to absolute ones
 	mins += ent->s.origin;
 	maxs += ent->s.origin;
@@ -270,12 +309,10 @@ static int FindGoalAASArea( edict_t *ent ) {
 			const aas_area_t &hubArea = aasWorld->Areas()[hubAreaNum];
 			Vec3 hubAreaPoint( hubArea.center );
 			hubAreaPoint.Z() = hubArea.mins[2] + std::min( 24.0f, hubArea.maxs[2] - hubArea.mins[2] );
-
 			// Do not waste pathfinder cycles testing for preferred flags that may fail.
 			constexpr int travelFlags = Bot::ALLOWED_TRAVEL_FLAGS;
 			if( routeCache->ReachabilityToGoalArea( hubAreaNum, hubAreaPoint.Data(), areaNum, travelFlags ) ) {
 				areaReachCount++;
-
 				// Thats't enough, do not waste CPU cycles
 				if( areaReachCount == 4 ) {
 					return areaNum;
@@ -301,7 +338,6 @@ void AI_AddNavEntity( edict_t *ent, ai_nav_entity_flags flags ) {
 		return;
 	}
 	int onlyMutExFlags = flags & ( AI_NAV_REACH_AT_TOUCH | AI_NAV_REACH_AT_RADIUS | AI_NAV_REACH_ON_EVENT );
-
 	// Valid mutual exclusive flags give a power of two
 	if( onlyMutExFlags & ( onlyMutExFlags - 1 ) ) {
 		G_Printf( S_COLOR_RED, "AI_AddNavEntity(): illegal flags %x for nav entity %s", flags, ent->classname );
@@ -338,7 +374,6 @@ void AI_AddNavEntity( edict_t *ent, ai_nav_entity_flags flags ) {
 	}
 
 	int areaNum = FindGoalAASArea( ent );
-
 	// Allow addition of temporary unreachable goals based on movable entities
 	if( areaNum || ( flags & AI_NAV_MOVABLE ) ) {
 		NavEntitiesRegistry::Instance()->AddNavEntity( ent, areaNum, navEntityFlags );
@@ -350,18 +385,19 @@ void AI_AddNavEntity( edict_t *ent, ai_nav_entity_flags flags ) {
 
 void AI_RemoveNavEntity( edict_t *ent ) {
 	NavEntity *navEntity = NavEntitiesRegistry::Instance()->NavEntityForEntity( ent );
-
 	// (An nav. item absence is not an error, this function is called for each entity in game)
 	if( !navEntity ) {
 		return;
 	}
 
-	AiManager::Instance()->ClearGoals( navEntity, nullptr );
+	if( AiManager::Instance() ) {
+		AiManager::Instance()->NavEntityReachedBy( navEntity, nullptr );
+	}
 	NavEntitiesRegistry::Instance()->RemoveNavEntity( navEntity );
 }
 
 void AI_NavEntityReached( edict_t *ent ) {
-	AiManager::Instance()->NavEntityReached( ent );
+	AiManager::Instance()->NavEntityReachedSignal( ent );
 }
 
 //==========================================
@@ -453,7 +489,7 @@ void AI_RemoveBot( const char *name ) {
 }
 
 void AI_RemoveBots() {
-	AiManager::Instance()->RemoveBots();
+	AiManager::Instance()->AfterLevelScriptShutdown();
 }
 
 void AI_Cheat_NoTarget( edict_t *ent ) {

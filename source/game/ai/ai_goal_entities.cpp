@@ -60,7 +60,6 @@ int64_t NavEntity::SpawnTime() const {
 	if( ent->r.solid == SOLID_TRIGGER ) {
 		return level.time;
 	}
-
 	// This means the nav entity is spawned by a script
 	// (only items are hardcoded nav. entities)
 	// Let the script manage the entity, do not prevent any action with the entity
@@ -70,7 +69,6 @@ int64_t NavEntity::SpawnTime() const {
 	if( !ent->classname ) {
 		return 0;
 	}
-
 	// MH needs special handling
 	// If MH owner is sent, exact MH spawn time can't be predicted
 	// Otherwise fallback to the generic spawn prediction code below
@@ -81,9 +79,9 @@ int64_t NavEntity::SpawnTime() const {
 	return ent->nextThink;
 }
 
-unsigned NavEntity::MaxWaitDuration() const {
+uint64_t NavEntity::MaxWaitDuration() const {
 	if( !ent->item || ShouldBeReachedOnEvent() ) {
-		return std::numeric_limits<unsigned>::max();
+		return std::numeric_limits<uint64_t>::max();
 	}
 
 	if( ent->item->type == IT_POWERUP ) {
@@ -114,52 +112,6 @@ int64_t NavEntity::Timeout() const {
 		return ent->nextThink;
 	}
 	return std::numeric_limits<int64_t>::max();
-}
-
-Goal::Goal( const AiFrameAwareUpdatable *initialSetter )
-	: explicitOrigin( INFINITY, INFINITY, INFINITY ) {
-	ResetWithSetter( initialSetter );
-}
-
-Goal::~Goal() {
-	if( name ) {
-		// If name does not refer to NavEntity::Name()
-		if( navEntity && navEntity->Name() != name ) {
-			G_Free( const_cast<char*>( name ) );
-		}
-	}
-}
-
-void Goal::SetToNavEntity( NavEntity *navEntity_, const AiFrameAwareUpdatable *setter_ ) {
-	this->navEntity = navEntity_;
-	this->name = navEntity_->Name();
-	this->setter = setter_;
-}
-
-void Goal::SetToTacticalSpot( const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter_ ) {
-	this->navEntity = nullptr;
-	this->name = nullptr;
-	this->setter = setter_;
-	this->flags = GoalFlags::REACH_ON_RADIUS | GoalFlags::TACTICAL_SPOT;
-
-	// If area num is zero, this goal will be canceled on its reevaluation
-	this->explicitAasAreaNum = AiAasWorld::Instance()->FindAreaNum( origin );
-	this->explicitOrigin = origin;
-	this->explicitSpawnTime = 1;
-	this->explicitTimeout = level.time + timeout;
-	this->explicitRadius = 48.0f;
-}
-
-void Goal::Clear() {
-	navEntity = nullptr;
-	setter = nullptr;
-	flags = GoalFlags::NONE;
-	VectorSet( explicitOrigin.Data(), INFINITY, INFINITY, INFINITY );
-	explicitAasAreaNum = 0;
-	explicitSpawnTime = 0;
-	explicitRadius = 0;
-	explicitTimeout = 0;
-	name = nullptr;
 }
 
 NavEntitiesRegistry NavEntitiesRegistry::instance;

@@ -371,6 +371,7 @@ extern cvar_t *g_asGC_stats;
 extern cvar_t *g_asGC_interval;
 
 extern cvar_t *g_skillRating;
+extern cvar_t *g_bot_evolution;
 
 edict_t **G_Teams_ChallengersQueue( void );
 void G_Teams_Join_Cmd( edict_t *ent );
@@ -582,7 +583,7 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 //
 // g_utils.c
 //
-#define G_LEVELPOOL_BASE_SIZE   15 * 1024 * 1024
+#define G_LEVELPOOL_BASE_SIZE   45 * 1024 * 1024
 
 bool KillBox( edict_t *ent );
 float LookAtKillerYAW( edict_t *self, edict_t *inflictor, edict_t *attacker );
@@ -741,6 +742,14 @@ void GClip_TouchTriggers( edict_t *ent );
 void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin );
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
 int GClip_FindInRadius( vec3_t org, float rad, int *list, int maxcount );
+
+// BoxEdicts() can return a list of either solid or trigger entities
+// FIXME: eliminate AREA_ distinction?
+#define AREA_ALL       -1
+#define AREA_SOLID      1
+#define AREA_TRIGGERS   2
+int GClip_AreaEdicts( const vec3_t mins, const vec3_t maxs, int *list, int maxcount, int areatype, int timeDelta );
+bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent );
 
 //
 // g_combat.c
@@ -1387,6 +1396,7 @@ struct edict_s {
 
 	ai_handle_t *ai;
 	float aiIntrinsicEnemyWeight;
+	float aiVisibilityDistance;
 
 	snap_edict_t snap; // information that is cleared each frame snap
 

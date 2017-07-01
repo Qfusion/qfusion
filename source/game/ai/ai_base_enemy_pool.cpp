@@ -15,6 +15,10 @@ float DamageToKill( const edict_t *ent, float armorProtection, float armorDegrad
 	float health = ent->r.client->ps.stats[STAT_HEALTH];
 	float armor = ent->r.client->ps.stats[STAT_ARMOR];
 
+	return DamageToKill( health, armor, armorProtection, armorDegradation );
+}
+
+float DamageToKill( float health, float armor, float armorProtection, float armorDegradation ) {
 	if( !armor ) {
 		return health;
 	}
@@ -43,28 +47,21 @@ void Enemy::Clear() {
 	maxPositiveWeight = 0.0f;
 	positiveWeightsCount = 0;
 	registeredAt = 0;
-	lastSeenPositions.clear();
-	lastSeenTimestamps.clear();
-	lastSeenVelocities.clear();
+	lastSeenSnapshots.clear();
 	lastSeenAt = 0;
 }
 
 void Enemy::OnViewed() {
-	if( lastSeenPositions.size() == MAX_TRACKED_POSITIONS ) {
-		lastSeenPositions.pop_back();
-		lastSeenTimestamps.pop_back();
-		lastSeenVelocities.pop_back();
+	if( lastSeenSnapshots.size() == MAX_TRACKED_POSITIONS ) {
+		lastSeenSnapshots.pop_front();
 	}
 
 	// Set members for faster access
 	VectorCopy( ent->s.origin, lastSeenPosition.Data() );
 	VectorCopy( ent->velocity, lastSeenVelocity.Data() );
 	lastSeenAt = level.time;
-
 	// Store in a queue then for history
-	lastSeenPositions.push_front( lastSeenPosition );
-	lastSeenVelocities.push_front( lastSeenVelocity );
-	lastSeenTimestamps.push_front( lastSeenAt );
+	lastSeenSnapshots.emplace_back( Snapshot( ent->s.origin, ent->velocity, level.time ) );
 }
 
 AiBaseEnemyPool::AiBaseEnemyPool( float avgSkill_ )
@@ -78,7 +75,6 @@ AiBaseEnemyPool::AiBaseEnemyPool( float avgSkill_ )
 	maxActiveEnemies( From1UpToMax( MAX_ACTIVE_ENEMIES, avgSkill_ ) ),
 	reactionTime( 320 - From0UpToMax( 300, avgSkill_ ) ) {
 	unsigned maxEnemies = maxTrackedEnemies;
-
 	// Ensure we always will have at least 2 free slots for new enemies
 	// (quad/shell owners and carrier) FOR ANY SKILL (high skills will have at least 3)
 	if( maxTrackedAttackers + 2 > maxEnemies ) {
@@ -90,6 +86,9 @@ AiBaseEnemyPool::AiBaseEnemyPool( float avgSkill_ )
 	}
 
 	// Initialize empty slots
+	for( unsigned i = 0; i < maxTrackedEnemies; ++i )
+		trackedEnemies[i].parent = this;
+
 	for( unsigned i = 0; i < maxTrackedAttackers; ++i )
 		attackers.push_back( AttackStats() );
 
@@ -130,7 +129,6 @@ void AiBaseEnemyPool::Think() {
 		if( !enemy.ent ) {
 			continue;
 		}
-
 		// Remove not seen yet enemies
 		if( levelTime - enemy.LastSeenAt() > NOT_SEEN_TIMEOUT ) {
 			Debug( "has not seen %s for %d ms, should forget this enemy\n", enemy.Nick(), NOT_SEEN_TIMEOUT );
@@ -142,12 +140,10 @@ void AiBaseEnemyPool::Think() {
 			RemoveEnemy( enemy );
 			continue;
 		}
-
 		// Do not forget, just skip
 		if( enemy.ent->flags & ( FL_NOTARGET | FL_BUSY ) ) {
 			continue;
 		}
-
 		// Skip during reaction time
 		if( enemy.registeredAt + reactionTime > levelTime ) {
 			continue;
@@ -172,13 +168,11 @@ float AiBaseEnemyPool::ComputeRawEnemyWeight( const edict_t *enemy ) {
 
 	if( int64_t time = LastAttackedByTime( enemy ) ) {
 		weight += 1.55f * ( 1.0f - BoundedFraction( level.time - time, ATTACKER_TIMEOUT ) );
-
 		// TODO: Add weight for poor attackers (by total damage / attack attepts ratio)
 	}
 
 	if( int64_t time = LastTargetTime( enemy ) ) {
 		weight += 1.55f * ( 1.0f - BoundedFraction( level.time - time, TARGET_TIMEOUT ) );
-
 		// TODO: Add weight for targets that are well hit by bot
 	}
 
@@ -230,7 +224,6 @@ void AiBaseEnemyPool::OnPain( const edict_t *bot, const edict_t *enemy, float ki
 				break;
 			}
 		}
-
 		// If current enemy did not inflict any damage
 		// or new attacker hits harder than current one, there is a new threat
 		if( currEnemySlot < 0 || attackers[currEnemySlot].totalDamage < attackers[attackerSlot].totalDamage ) {
@@ -261,6 +254,15 @@ int64_t AiBaseEnemyPool::LastTargetTime( const edict_t *ent ) const {
 	return 0;
 }
 
+float AiBaseEnemyPool::TotalDamageInflictedBy( const edict_t *ent ) const {
+	for( const AttackStats &attackStats: attackers )
+		if( ent && attackStats.ent == ent ) {
+			return attackStats.totalDamage;
+		}
+
+	return 0;
+}
+
 int AiBaseEnemyPool::EnqueueAttacker( const edict_t *attacker, int damage ) {
 	if( !attacker ) {
 		return -1;
@@ -285,7 +287,6 @@ int AiBaseEnemyPool::EnqueueAttacker( const edict_t *attacker, int damage ) {
 	for( unsigned i = 0; i < attackers.size(); ++i ) {
 		float timeFactor = ( level.time - attackers[i].LastActivityAt() ) / (float)ATTACKER_TIMEOUT;
 		float damageFactor = 1.0f - BoundedFraction( attackers[i].totalDamage, 500.0f );
-
 		// Always > 0, so we always evict some attacker
 		float evictionScore = 0.1f + timeFactor * damageFactor;
 		if( maxEvictionScore < evictionScore ) {
@@ -322,11 +323,9 @@ void AiBaseEnemyPool::EnqueueTarget( const edict_t *target ) {
 	float maxEvictionScore = 0.0f;
 	for( unsigned i = 0; i < targets.size(); ++i ) {
 		float timeFactor = ( level.time - targets[i].LastActivityAt() ) / (float)TARGET_TIMEOUT;
-
 		// Do not evict enemies that bot hit hard
 		float damageScale = this->HasQuad() ? 4.0f : 1.0f;
 		float damageFactor = 1.0f - BoundedFraction( targets[i].totalDamage, 300.0f * damageScale );
-
 		// Always > 0, so we always evict some target
 		float evictionScore = 0.1f + timeFactor * damageFactor;
 		if( maxEvictionScore < evictionScore ) {
@@ -359,8 +358,8 @@ bool AiBaseEnemyPool::WillAssignAimEnemy() const {
 		}
 		if( enemy.LastSeenAt() == level.time ) {
 			// Check whether we may react
-			for( int64_t seenTimestamp: enemy.lastSeenTimestamps ) {
-				if( seenTimestamp + reactionTime <= level.time ) {
+			for( const auto &snapshot: enemy.lastSeenSnapshots ) {
+				if( snapshot.timestamp + reactionTime <= level.time ) {
 					return true;
 				}
 			}
@@ -398,7 +397,7 @@ struct EnemyAndScore
 	bool operator<( const EnemyAndScore &that ) const { return score > that.score; }
 };
 
-const Enemy *AiBaseEnemyPool::ChooseAimEnemy( const edict_t *challenger ) {
+const Enemy *AiBaseEnemyPool::ChooseVisibleEnemy( const edict_t *challenger ) {
 	Vec3 botOrigin( challenger->s.origin );
 	vec3_t forward;
 	AngleVectors( challenger->s.angles, forward, nullptr, nullptr );
@@ -413,7 +412,6 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy( const edict_t *challenger ) {
 		if( !enemy.ent ) {
 			continue;
 		}
-
 		// Not seen in this frame enemies have zero weight;
 		if( !enemy.weight ) {
 			continue;
@@ -422,10 +420,8 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy( const edict_t *challenger ) {
 		Vec3 botToEnemy = botOrigin - enemy.ent->s.origin;
 		float distance = botToEnemy.LengthFast();
 		botToEnemy *= 1.0f / distance;
-
 		// For far enemies distance factor is lower
 		float distanceFactor = 1.0f - 0.7f * BoundedFraction( distance, distanceBounds );
-
 		// Should affect the score only a bit (otherwise bot will miss a dangerous enemy that he is not looking at).
 		float directionFactor = 0.7f + 0.3f * botToEnemy.Dot( forward );
 
@@ -444,7 +440,6 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy( const edict_t *challenger ) {
 
 	// Now candidates should be merged in a list of active enemies
 	StaticVector<EnemyAndScore, MAX_ACTIVE_ENEMIES * 2> mergedActiveEnemies;
-
 	// Best candidates are first (EnemyAndScore::operator<() yields this result)
 	// Choose not more than maxActiveEnemies candidates
 	// that have a score not than twice less than the current best one
@@ -455,7 +450,6 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy( const edict_t *challenger ) {
 		}
 		mergedActiveEnemies.push_back( candidates[i] );
 	}
-
 	// Add current active enemies to merged ones
 	for( unsigned i = 0, end = activeEnemies.size(); i < end; ++i )
 		mergedActiveEnemies.push_back( EnemyAndScore( activeEnemies[i], activeEnemiesScores[i] ) );
@@ -472,24 +466,22 @@ const Enemy *AiBaseEnemyPool::ChooseAimEnemy( const edict_t *challenger ) {
 	}
 
 	OnBotEnemyAssigned( challenger, candidates.front().enemy );
-
 	// (We operate on pointers to enemies which are allocated in the enemy pool)
 	return candidates.front().enemy;
 }
 
-const Enemy *AiBaseEnemyPool::ChooseHiddenEnemy( const edict_t *challenger ) {
+const Enemy *AiBaseEnemyPool::ChooseLostOrHiddenEnemy( const edict_t *challenger, unsigned timeout ) {
 	if( AvgSkill() < 0.33f ) {
 		return nullptr;
 	}
 
-	Vec3 botOrigin( challenger->s.origin );
 	vec3_t forward;
 	AngleVectors( challenger->s.angles, forward, nullptr, nullptr );
 
-	static_assert( NOT_SEEN_TIMEOUT > 2000, "This value will yield too low spam enemy timeout" );
-
-	// If enemy has been not seen more than timeout, do not start spam at this enemy location
-	const unsigned timeout = (unsigned)( ( NOT_SEEN_TIMEOUT - 1000 ) * AvgSkill() );
+	// ChooseLostOrHiddenEnemy(const edict_t *challenger, unsigned timeout = (unsigned)-1)
+	if( timeout > NOT_SEEN_TIMEOUT ) {
+		timeout = (unsigned)( ( NOT_SEEN_TIMEOUT - 1000 ) * AvgSkill() );
+	}
 
 	float bestScore = 0.0f;
 	const Enemy *bestEnemy = nullptr;
@@ -592,22 +584,18 @@ void AiBaseEnemyPool::TryPushEnemyOfSingleBot( const edict_t *bot, const edict_t
 	// Floating point computations for zero cases from pure math point of view may yield a non-zero result,
 	// so use some positive value that is greater that possible computation zero epsilon.
 	float maxEvictionScore = 0.001f;
-
 	// Significantly increases chances to get a slot, but not guarantees it.
 	bool isNewEnemyAttacker = LastAttackedByTime( enemy ) > 0;
-
 	// It will be useful inside the loop, so it needs to be precomputed
 	float distanceToNewEnemy = ( Vec3( bot->s.origin ) - enemy->s.origin ).LengthFast();
 	float newEnemyWeight = ComputeRawEnemyWeight( enemy );
 
 	for( unsigned i = 0; i < maxTrackedEnemies; ++i ) {
 		Enemy &slotEnemy = trackedEnemies[i];
-
 		// Skip last attackers
 		if( bot->ai->botRef->LastAttackedByTime( slotEnemy.ent ) > 0 ) {
 			continue;
 		}
-
 		// Skip last targets
 		if( bot->ai->botRef->LastTargetTime( slotEnemy.ent ) > 0 ) {
 			continue;
@@ -637,20 +625,17 @@ void AiBaseEnemyPool::TryPushEnemyOfSingleBot( const edict_t *bot, const edict_t
 		// Forget far and not seen enemies
 		if( slotEnemy.LastSeenAt() < prevThinkLevelTime ) {
 			float absTimeDiff = prevThinkLevelTime - slotEnemy.LastSeenAt();
-
 			// 0..1
 			float timeFactor = std::min( absTimeDiff, (float)NOT_SEEN_TIMEOUT ) / NOT_SEEN_TIMEOUT;
 
 			float distanceToSlotEnemy = ( slotEnemy.LastSeenPosition() - bot->s.origin ).LengthFast();
 			constexpr float maxDistanceDiff = 2500.0f;
 			float nonNegDistDiff = std::max( 0.0f, distanceToSlotEnemy - distanceToNewEnemy );
-
 			// 0..1
 			float distanceFactor = std::min( maxDistanceDiff, nonNegDistDiff ) / maxDistanceDiff;
 
 			// += 0..1,  Increase eviction score linearly for far enemies
 			currEvictionScore += 1.0f - distanceFactor;
-
 			// += 2..0, Increase eviction score non-linearly for non-seen enemies (forget far enemies faster)
 			currEvictionScore += 2.0f - timeFactor * ( 1.0f + distanceFactor );
 		}

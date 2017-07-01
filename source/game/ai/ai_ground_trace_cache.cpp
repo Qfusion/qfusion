@@ -5,9 +5,9 @@
 
 struct CachedTrace
 {
-	float depth;
-	unsigned computedAt;
 	trace_t trace;
+	int64_t computedAt;
+	float depth;
 };
 
 AiGroundTraceCache::AiGroundTraceCache() {
@@ -31,11 +31,11 @@ AiGroundTraceCache* AiGroundTraceCache::Instance() {
 	return &instanceHolder.front();
 }
 
-void AiGroundTraceCache::GetGroundTrace( const edict_s *ent, float depth, trace_t *trace, unsigned maxMillisAgo ) {
+void AiGroundTraceCache::GetGroundTrace( const edict_s *ent, float depth, trace_t *trace, uint64_t maxMillisAgo ) {
 	edict_t *entRef = const_cast<edict_t *>( ent );
 	CachedTrace *cachedTrace = (CachedTrace *)data + ENTNUM( entRef );
 
-	if( cachedTrace->computedAt + maxMillisAgo >= level.time ) {
+	if( (int64_t)( cachedTrace->computedAt + maxMillisAgo ) >= level.time ) {
 		if( cachedTrace->depth >= depth ) {
 			trace->startsolid = cachedTrace->trace.startsolid;
 			if( cachedTrace->trace.fraction == 1.0f ) {
@@ -47,10 +47,8 @@ void AiGroundTraceCache::GetGroundTrace( const edict_s *ent, float depth, trace_
 				trace->fraction = 1.0f;
 				return;
 			}
-
 			// Copy trace data
 			*trace = cachedTrace->trace;
-
 			// Recalculate result fraction
 			trace->fraction = cachedHitDepth / depth;
 			return;
@@ -59,7 +57,6 @@ void AiGroundTraceCache::GetGroundTrace( const edict_s *ent, float depth, trace_
 
 	vec3_t end = { ent->s.origin[0], ent->s.origin[1], ent->s.origin[2] - depth };
 	G_Trace( &cachedTrace->trace, entRef->s.origin, nullptr, nullptr, end, entRef, MASK_AISOLID );
-
 	// Copy trace data
 	*trace = cachedTrace->trace;
 	cachedTrace->depth = depth;
@@ -68,13 +65,13 @@ void AiGroundTraceCache::GetGroundTrace( const edict_s *ent, float depth, trace_
 }
 
 // Uses the same algorithm as GetGroundTrace() but avoids trace result copying and thus a is a bit faster.
-bool AiGroundTraceCache::TryDropToFloor( const struct edict_s *ent, float depth, vec3_t result, unsigned maxMillisAgo ) {
+bool AiGroundTraceCache::TryDropToFloor( const struct edict_s *ent, float depth, vec3_t result, uint64_t maxMillisAgo ) {
 	edict_t *entRef = const_cast<edict_t *>( ent );
 	CachedTrace *cachedTrace = (CachedTrace *)data + ENTNUM( entRef );
 
 	VectorCopy( ent->s.origin, result );
 
-	if( cachedTrace->computedAt + maxMillisAgo >= level.time ) {
+	if( (int64_t)( cachedTrace->computedAt + maxMillisAgo ) >= level.time ) {
 		if( cachedTrace->depth >= depth ) {
 			if( cachedTrace->trace.fraction == 1.0f ) {
 				return false;

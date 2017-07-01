@@ -76,10 +76,9 @@ typedef enum {
 void AI_InitLevel( void );
 // Should be called before level and entities data cleanup
 void AI_Shutdown( void );
+void AI_BeforeLevelLevelScriptShutdown( void );
 // Should be called before level restart
-void AI_UnloadLevel();
-// Should be called when current gametype has been changed on has been set up first time
-void AI_GametypeChanged( const char *gametype );
+void AI_AfterLevelScriptShutdown();
 // Should be called before all entities (including AI's and clients) think
 void AI_CommonFrame( void );
 // Should be called when an AI joins a team

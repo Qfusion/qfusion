@@ -3,7 +3,7 @@
 #include "ai_dangers_detector.h"
 #include <algorithm>
 
-static inline trace_t Trace( const Vec3 &start, const Vec3 &mins, const Vec3 &maxs, const Vec3 &end, const edict_t *passedict, int contentmask = MASK_SOLID ) {
+inline trace_t Trace( const Vec3 &start, const Vec3 &mins, const Vec3 &maxs, const Vec3 &end, const edict_t *passedict, int contentmask = MASK_SOLID ) {
 	trace_t trace;
 	float *startVec = const_cast<float*>( start.Data() );
 	float *minsVec = const_cast<float*>( mins.Data() );
@@ -13,23 +13,23 @@ static inline trace_t Trace( const Vec3 &start, const Vec3 &mins, const Vec3 &ma
 	return trace;
 }
 
-// Temporary workaround for https://github.com/Warsow/qfusion/issues/303
+constexpr float Square( float x ) { return x * x; }
+
 class EntitiesDetector
 {
-public:
-	StaticVector<const edict_t*, MAX_EDICTS> rockets;
-	StaticVector<const edict_t*, MAX_EDICTS> plasmas;
-	StaticVector<const edict_t*, MAX_EDICTS> blasts;
-	StaticVector<const edict_t*, MAX_EDICTS> grenades;
-	StaticVector<const edict_t*, MAX_EDICTS> lasers;
+	static constexpr float DETECT_ROCKET_SQ_RADIUS = Square( 300.0f );
+	static constexpr float DETECT_PLASMA_SQ_RADIUS = Square( 400.0f );
+	static constexpr float DETECT_GB_BLAST_SQ_RADIUS = Square( 400.0f );
+	static constexpr float DETECT_GRENADE_SQ_RADIUS = Square( 300.0f );
+	static constexpr float DETECT_LG_BEAM_SQ_RADIUS = Square( 1000.0f );
 
-	static constexpr int DETECT_ROCKET_RADIUS = 1000;
-	static constexpr int DETECT_PLASMA_RADIUS = 1000;
-	static constexpr int DETECT_GB_BLAST_RADIUS = 1000;
-
-	// We can't predict grenades atm. Detect grenades at the distance where linear trajectory approximation may be used.
-	static constexpr int DETECT_GRENADE_RADIUS = 350;
-	static constexpr int DETECT_LG_BEAM_RADIUS = 1000;
+	// There is a way to compute it in compile-time but it looks ugly
+	static constexpr float MAX_RADIUS = 1000.0f;
+	static_assert( MAX_RADIUS * MAX_RADIUS >= DETECT_ROCKET_SQ_RADIUS, "" );
+	static_assert( MAX_RADIUS * MAX_RADIUS >= DETECT_PLASMA_SQ_RADIUS, "" );
+	static_assert( MAX_RADIUS * MAX_RADIUS >= DETECT_GB_BLAST_SQ_RADIUS, "" );
+	static_assert( MAX_RADIUS * MAX_RADIUS >= DETECT_GRENADE_SQ_RADIUS, "" );
+	static_assert( MAX_RADIUS * MAX_RADIUS >= DETECT_LG_BEAM_SQ_RADIUS, "" );
 
 	void Clear() {
 		rockets.clear();
@@ -39,56 +39,129 @@ public:
 		lasers.clear();
 	}
 
+public:
+	StaticVector<const edict_t*, MAX_EDICTS> rockets;
+	StaticVector<const edict_t*, MAX_EDICTS> plasmas;
+	StaticVector<const edict_t*, MAX_EDICTS> blasts;
+	StaticVector<const edict_t*, MAX_EDICTS> grenades;
+	StaticVector<const edict_t*, MAX_EDICTS> lasers;
+
 	void DetectEntities( const edict_t *self ) {
 		Clear();
 
-		const Vec3 origin( self->s.origin );
+		// Copy to locals for faster access
+		const edict_t *gameEdicts = game.edicts;
+		vec3_t origin;
+		VectorCopy( self->s.origin, origin );
+		const int selfTeam = self->s.team;
+		const int selfPlayerNum = ENTNUM( const_cast<edict_t *>( self ) ) + 1;
+		const bool hasSelfDamage = GS_SelfDamage();
+		const int64_t levelTime = level.time;
+		const unsigned grenadeTimeout = GS_GetWeaponDef( WEAP_GRENADELAUNCHER )->firedef.timeout;
 
-		for( int i = 0; i < game.numentities; ++i ) {
-			const edict_t *ent = game.edicts + i;
-			if( !ent ) {
-				continue;
-			}
+		int entNums[MAX_EDICTS];
+		int numEntsInRadius = GClip_FindInRadius( origin, MAX_RADIUS, entNums, MAX_EDICTS );
 
-			edict_t *owner = ent->r.owner;
-			if( !ent->r.owner ) {
-				if( ent->s.ownerNum < 1 || ent->s.ownerNum > gs.maxclients ) {
-					continue;
+		// Conditions are put inside the switch body for optimization of cases.
+		// Note that we always skip own rockets, plasma, etc.
+		// Otherwise all own bot shot events yield a danger.
+		// There are some cases when an own rocket can hurt but they are either extremely rare or handled by bot fire code.
+		// Own grenades are the only exception. We check grenade think time to skip grenades just fired by bot.
+		// If a grenade is about to explode and is close to bot, its likely it has bounced of the world and can hurt.
+
+		if( g_allow_teamdamage->integer ) {
+			for( int i = 0; i < numEntsInRadius; ++i ) {
+				const edict_t *ent = gameEdicts + entNums[i];
+				switch( ent->s.type ) {
+					case ET_ROCKET:
+						if( selfPlayerNum != ent->s.ownerNum ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_ROCKET_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						}
+						break;
+					case ET_PLASMA:
+						if( selfPlayerNum != ent->s.ownerNum ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_PLASMA_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						}
+						break;
+					case ET_BLASTER:
+						if( selfPlayerNum != ent->s.ownerNum ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_GB_BLAST_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						}
+						break;
+					case ET_GRENADE:
+						if( selfPlayerNum != ent->s.ownerNum ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_GRENADE_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						} else if( hasSelfDamage && ent->nextThink - levelTime < grenadeTimeout - 500 ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_GRENADE_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						}
+						break;
+					case ET_LASERBEAM:
+						if( selfPlayerNum != ent->s.ownerNum ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_LG_BEAM_SQ_RADIUS ) {
+								lasers.push_back( ent );
+							}
+						}
+						break;
+					default:
+						break;
 				}
-				owner = game.edicts + ent->s.ownerNum;
 			}
-			if( owner == self ) {
-				continue;
-			}
-
-			switch( ent->s.type ) {
-				case ET_ROCKET:
-					if( ( origin - ent->s.origin ).LengthFast() < DETECT_ROCKET_RADIUS ) {
-						rockets.push_back( ent );
-					}
-					break;
-				case ET_PLASMA:
-					if( ( origin - ent->s.origin ).LengthFast() < DETECT_PLASMA_RADIUS ) {
-						plasmas.push_back( ent );
-					}
-					break;
-				case ET_BLASTER:
-					if( ( origin - ent->s.origin ).LengthFast() < DETECT_GB_BLAST_RADIUS ) {
-						blasts.push_back( ent );
-					}
-					break;
-				case ET_GRENADE:
-					if( ( origin - ent->s.origin ).LengthFast() < DETECT_GRENADE_RADIUS ) {
-						grenades.push_back( ent );
-					}
-					break;
-				case ET_LASERBEAM:
-					if( ( origin - ent->s.origin ).LengthFast() < DETECT_LG_BEAM_RADIUS ) {
-						lasers.push_back( ent );
-					}
-					break;
-				default:
-					break;
+		} else {
+			for( int i = 0; i < numEntsInRadius; ++i ) {
+				const edict_t *ent = gameEdicts + entNums[i];
+				switch( ent->s.type ) {
+					case ET_ROCKET:
+						if( self->team != ent->team ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_ROCKET_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						}
+						break;
+					case ET_PLASMA:
+						if( selfTeam != ent->s.team ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_PLASMA_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						}
+						break;
+					case ET_BLASTER:
+						if( selfTeam != ent->s.team ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_GB_BLAST_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						}
+						break;
+					case ET_GRENADE:
+						if( selfTeam != ent->s.team ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_GRENADE_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						} else if( selfPlayerNum == ent->s.ownerNum && ent->nextThink - levelTime < grenadeTimeout - 500 ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_GRENADE_SQ_RADIUS ) {
+								rockets.push_back( ent );
+							}
+						}
+						break;
+					case ET_LASERBEAM:
+						if( selfTeam != ent->s.team ) {
+							if( DistanceSquared( origin, ent->s.origin ) < DETECT_LG_BEAM_SQ_RADIUS ) {
+								lasers.push_back( ent );
+							}
+						}
+						break;
+					default:
+						break;
+				}
 			}
 		}
 	}
@@ -118,7 +191,6 @@ public:
 
 	inline void AddProjectile( const edict_t *nextProjectile ) {
 		endProjectile = nextProjectile;
-
 		// If beam is combined from projectiles of many players, a beam owner is unknown
 		if( owner != nextProjectile->r.owner ) {
 			owner = nullptr;
@@ -127,15 +199,21 @@ public:
 	}
 };
 
+struct EntAndLineParam {
+	const edict_t *ent;
+	float t;
+
+	inline EntAndLineParam( const edict_t *ent_, float t_ ) : ent( ent_ ), t( t_ ) {}
+	inline bool operator<( const EntAndLineParam &that ) const { return t < that.t; }
+};
+
 class SameDirBeamsList
 {
 	friend class PlasmaBeamsBuilder;
-
 	// All projectiles in this list belong to this line defined as a (point, direction) pair
 	Vec3 lineEqnPoint;
 
-	// Points are sorted by `t` where `t` is a 3D line equation parameter
-	std::pair<const edict_t *, float> *sortedProjectiles;
+	EntAndLineParam *sortedProjectiles;
 	unsigned projectilesCount;
 
 	static constexpr float DIST_TO_RAY_THRESHOLD = 200.0f;
@@ -204,7 +282,7 @@ public:
 	bool FindMostDangerousBeams( StaticVector<Danger, N> &beamDangers, float plasmaSplashRadius );
 };
 
-CachingGameBufferAllocator<std::pair<const edict_t*, float>, MAX_EDICTS> sortedProjectilesBufferAllocator( "prj" );
+CachingGameBufferAllocator<EntAndLineParam, MAX_EDICTS> sortedProjectilesBufferAllocator( "prj" );
 CachingGameBufferAllocator<PlasmaBeam, MAX_EDICTS> plasmaBeamsBufferAllocator( "beams" );
 
 SameDirBeamsList::SameDirBeamsList( const edict_t *firstEntity, const edict_t *bot )
@@ -228,7 +306,7 @@ SameDirBeamsList::SameDirBeamsList( const edict_t *firstEntity, const edict_t *b
 
 		isAprioriSkipped = false;
 
-		sortedProjectiles[projectilesCount++] = std::make_pair( firstEntity, ComputeLineEqnParam( firstEntity ) );
+		sortedProjectiles[projectilesCount++] = EntAndLineParam( firstEntity, ComputeLineEqnParam( firstEntity ) );
 	}
 }
 
@@ -236,7 +314,6 @@ SameDirBeamsList::~SameDirBeamsList() {
 	if( isAprioriSkipped ) {
 		return;
 	}
-
 	// (Do not spam log by messages unless we have allocated memory chunks)
 	if( sortedProjectiles ) {
 		sortedProjectilesBufferAllocator.Free( sortedProjectiles );
@@ -267,12 +344,8 @@ bool SameDirBeamsList::TryAddProjectile( const edict_t *projectile ) {
 
 	float t = ComputeLineEqnParam( projectile );
 
-	sortedProjectiles[projectilesCount++] = std::make_pair( projectile, t );
-	auto cmp = []( const std::pair<const edict_t *, float> &a, const std::pair<const edict_t *, float> &b )
-			   {
-				   return a.second < b.second;
-			   };
-	std::push_heap( sortedProjectiles, sortedProjectiles + projectilesCount, cmp );
+	sortedProjectiles[projectilesCount++] = EntAndLineParam( projectile, t );
+	std::push_heap( sortedProjectiles, sortedProjectiles + projectilesCount );
 
 	return true;
 }
@@ -283,25 +356,19 @@ void SameDirBeamsList::BuildBeams() {
 	}
 
 	if( projectilesCount == 0 ) {
-		printf( "projectiles count: %d\n", projectilesCount );
-		abort();
+		AI_FailWith( "SameDirBeamsList::BuildBeams()", "Projectiles count: %d\n", projectilesCount );
 	}
 
-	auto cmp = [&]( const std::pair<const edict_t *, float> &a, const std::pair<edict_t const *, float> &b )
-			   {
-				   return a.second < b.second;
-			   };
-
 	// Get the projectile that has a maximal `t`
-	std::pop_heap( sortedProjectiles, sortedProjectiles + projectilesCount, cmp );
-	const edict_t *prevProjectile = sortedProjectiles[--projectilesCount].first;
+	std::pop_heap( sortedProjectiles, sortedProjectiles + projectilesCount );
+	const edict_t *prevProjectile = sortedProjectiles[--projectilesCount].ent;
 
 	plasmaBeams[plasmaBeamsCount++] = PlasmaBeam( prevProjectile );
 
 	while( projectilesCount > 0 ) {
 		// Get the projectile that has a maximal `t` atm
-		std::pop_heap( sortedProjectiles, sortedProjectiles + projectilesCount, cmp );
-		const edict_t *currProjectile = sortedProjectiles[--projectilesCount].first;
+		std::pop_heap( sortedProjectiles, sortedProjectiles + projectilesCount );
+		const edict_t *currProjectile = sortedProjectiles[--projectilesCount].ent;
 
 		float prevToCurrLen = ( Vec3( prevProjectile->s.origin ) - currProjectile->s.origin ).SquaredLength();
 		if( prevToCurrLen < PRJ_PROXIMITY_THRESHOLD * PRJ_PROXIMITY_THRESHOLD ) {

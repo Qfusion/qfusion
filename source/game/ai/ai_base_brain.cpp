@@ -7,78 +7,643 @@
 #include "static_vector.h"
 #include "../../gameshared/q_collision.h"
 
-AiBaseBrain::AiBaseBrain( edict_t *self_, int preferredAasTravelFlags_, int allowedAasTravelFlags_ )
-	: self( self_ ),
-	localLongTermGoal( this ),
-	longTermGoal( nullptr ),
-	localShortTermGoal( this ),
-	shortTermGoal( nullptr ),
-	localSpecialGoal( this ),
-	specialGoal( nullptr ),
-	longTermGoalSearchTimeout( 0 ),
-	shortTermGoalSearchTimeout( 0 ),
-	longTermGoalSearchPeriod( 1500 ),
-	shortTermGoalSearchPeriod( 700 ),
-	longTermGoalReevaluationTimeout( 0 ),
-	shortTermGoalReevaluationTimeout( 0 ),
-	longTermGoalReevaluationPeriod( 700 ),
-	shortTermGoalReevaluationPeriod( 350 ),
-	currAasAreaNum( 0 ),
-	droppedToFloorAasAreaNum( 0 ),
-	droppedToFloorOrigin( NAN, NAN, NAN ),
-	preferredAasTravelFlags( preferredAasTravelFlags_ ),
-	allowedAasTravelFlags( allowedAasTravelFlags_ ) {
-	ClearInternalEntityWeights();
-
-	// External weights are cleared by AI code only once in this constructor.
-	// Their values are completely managed by external code.
-	ClearOverriddenEntityWeights();
+inline void PoolBase::Link( short itemIndex, short listIndex ) {
+#ifdef _DEBUG
+	Debug( "Link(): About to link item at index %d in %s list\n", itemIndex, ListName( listIndex ) );
+#endif
+	PoolItem &item = ItemAt( itemIndex );
+	if( listFirst[listIndex] >= 0 ) {
+		PoolItem &headItem = ItemAt( listFirst[listIndex] );
+		headItem.prevInList = itemIndex;
+		item.nextInList = listFirst[listIndex];
+	} else {
+		item.nextInList = -1;
+	}
+	item.prevInList = -1;
+	listFirst[listIndex] = itemIndex;
 }
 
-bool AiBaseBrain::IsCloseToGoal( const Goal *goal, float proximityThreshold ) const {
-	if( !goal ) {
+inline void PoolBase::Unlink( short itemIndex, short listIndex ) {
+#ifdef _DEBUG
+	Debug( "Unlink(): About to unlink item at index %d from %s list\n", itemIndex, ListName( listIndex ) );
+#endif
+	PoolItem &item = ItemAt( itemIndex );
+	if( item.prevInList >= 0 ) {
+		PoolItem &prevItem = ItemAt( item.prevInList );
+		prevItem.nextInList = item.nextInList;
+		if( item.nextInList >= 0 ) {
+			PoolItem &nextItem = ItemAt( item.nextInList );
+			nextItem.prevInList = item.prevInList;
+		}
+	} else { // An item is a list head
+		if( listFirst[listIndex] != itemIndex ) {
+			abort();
+		}
+		if( item.nextInList >= 0 ) {
+			PoolItem &nextItem = ItemAt( item.nextInList );
+			nextItem.prevInList = -1;
+			listFirst[listIndex] = item.nextInList;
+		} else {
+			listFirst[listIndex] = -1;
+		}
+	}
+}
+
+void *PoolBase::Alloc() {
+	if( listFirst[FREE_LIST] < 0 ) {
+		return nullptr;
+	}
+
+	short freeItemIndex = listFirst[FREE_LIST];
+	// Unlink from free items list
+	Unlink( freeItemIndex, FREE_LIST );
+	// Link to used items list
+	Link( freeItemIndex, USED_LIST );
+	return &ItemAt( freeItemIndex );
+}
+
+void PoolBase::Free( PoolItem *item ) {
+	short itemIndex = IndexOf( item );
+	// Unlink from used
+	Unlink( itemIndex, USED_LIST );
+	// Link to free
+	Link( itemIndex, FREE_LIST );
+}
+
+PoolBase::PoolBase( char *basePtr_, const char *tag_, unsigned itemSize_, unsigned itemsCount )
+	: basePtr( basePtr_ ), tag( tag_ ), itemSize( itemSize_ ) {
+	listFirst[FREE_LIST] = 0;
+	listFirst[USED_LIST] = -1;
+
+	// Link all items to the free list
+	short lastIndex = (short)( itemsCount - 1 );
+	ItemAt( 0 ).prevInList = -1;
+	ItemAt( 0 ).nextInList = 1;
+	ItemAt( lastIndex ).prevInList = (short)( lastIndex - 1 );
+	ItemAt( lastIndex ).nextInList = -1;
+	for( short i = 1; i < lastIndex; ++i ) {
+		ItemAt( i ).nextInList = (short)( i + 1 );
+		ItemAt( i ).prevInList = (short)( i - 1 );
+	}
+}
+
+void PoolBase::Clear() {
+	short itemIndex = listFirst[USED_LIST];
+	while( itemIndex >= 0 ) {
+		auto &item = ItemAt( itemIndex );
+		itemIndex = item.nextInList;
+		item.DeleteSelf();
+	}
+}
+
+AiBaseBrain::AiBaseBrain( edict_t *self_ )
+	: self( self_ ),
+	localNavTarget( NavTarget::Dummy() ),
+	navTarget( nullptr ),
+	planHead( nullptr ),
+	lastReachedNavTarget( nullptr ),
+	lastNavTargetReachedAt( 0 ),
+	prevThinkAt( 0 ),
+	decisionRandom( 0.5f ),
+	nextDecisionRandomUpdateAt( 0 ),
+	plannerNodesPool( "PlannerNodesPool" ) {
+	// Set a negative attitude to other entities
+	std::fill_n( attitude, MAX_EDICTS, -1 );
+	// Save the attitude values as an old attitude values
+	static_assert( sizeof( attitude ) == sizeof( oldAttitude ), "" );
+	memcpy( oldAttitude, attitude, sizeof( attitude ) );
+}
+
+void AiBaseBrain::SetAttitude( const edict_t *ent, int attitude_ ) {
+	int entNum = ENTNUM( const_cast<edict_t*>( ent ) );
+	oldAttitude[entNum] = this->attitude[entNum];
+	this->attitude[entNum] = (signed char)attitude_;
+
+	if( oldAttitude[entNum] != attitude_ ) {
+		OnAttitudeChanged( ent, oldAttitude[entNum], attitude_ );
+	}
+}
+
+struct GoalRef {
+	AiBaseGoal *goal;
+	GoalRef( AiBaseGoal *goal_ ) : goal( goal_ ) {}
+	bool operator<( const GoalRef &that ) const { return *this->goal < *that.goal; }
+};
+
+bool AiBaseBrain::FindNewGoalAndPlan( const WorldState &currWorldState ) {
+	if( planHead ) {
+		FailWith( "FindNewGoalAndPlan(): an active plan is present\n" );
+	}
+	if( activeGoal ) {
+		FailWith( "FindNewGoalAndPlan(): an active goal is present\n" );
+	}
+
+	if( ShouldSkipPlanning() ) {
 		return false;
 	}
-	float radius = goal->RadiusOrDefault( proximityThreshold ) + 32.0f;
-	return ( goal->Origin() - self->s.origin ).SquaredLength() <= radius * radius;
+
+	// Update goals weights based for the current world state before sorting
+	for( AiBaseGoal *goal: goals )
+		goal->UpdateWeight( currWorldState );
+
+	// Filter relevant goals
+	StaticVector<GoalRef, MAX_GOALS> relevantGoals;
+	for( AiBaseGoal *goal: goals )
+		if( goal->IsRelevant() ) {
+			relevantGoals.push_back( GoalRef( goal ) );
+		}
+
+	if( relevantGoals.empty() ) {
+		Debug( "There are no relevant goals\n" );
+		return false;
+	}
+
+	// Sort goals so most relevant goals are first
+	std::sort( relevantGoals.begin(), relevantGoals.end() );
+
+	// For each relevant goal try find a plan that satisfies it
+	for( const GoalRef &goalRef: relevantGoals ) {
+		if( AiBaseActionRecord *newPlanHead = BuildPlan( goalRef.goal, currWorldState ) ) {
+			Debug( "About to set new goal %s as an active one\n", goalRef.goal->Name() );
+			SetGoalAndPlan( goalRef.goal, newPlanHead );
+			return true;
+		}
+		Debug( "Can't find a plan that satisfies an relevant goal %s\n", goalRef.goal->Name() );
+	}
+
+	Debug( "Can't find any goal that has a satisfying it plan\n" );
+	return false;
 }
 
-int AiBaseBrain::GoalAasAreaNum() const {
-	if( specialGoal ) {
-		return specialGoal->AasAreaNum();
+bool AiBaseBrain::UpdateGoalAndPlan( const WorldState &currWorldState ) {
+	if( !planHead ) {
+		FailWith( "UpdateGoalAndPlan(): there is no active plan\n" );
 	}
-	if( shortTermGoal ) {
-		return shortTermGoal->AasAreaNum();
+	if( !activeGoal ) {
+		FailWith( "UpdateGoalAndPlan(): there is no active goal\n" );
 	}
-	if( longTermGoal ) {
-		return longTermGoal->AasAreaNum();
+
+	if( ShouldSkipPlanning() ) {
+		return false;
 	}
-	FailWith( "GoalAasAreaNum(): there is no goal\n" );
+
+	for( AiBaseGoal *goal: goals )
+		goal->UpdateWeight( currWorldState );
+
+	AiBaseGoal *activeRelevantGoal = nullptr;
+	// Filter relevant goals and mark whether the active goal is relevant
+	StaticVector<GoalRef, MAX_GOALS> relevantGoals;
+	for( AiBaseGoal *goal: goals ) {
+		if( goal->IsRelevant() ) {
+			if( goal == activeGoal ) {
+				activeRelevantGoal = goal;
+			}
+
+			relevantGoals.push_back( goal );
+		}
+	}
+
+	if( relevantGoals.empty() ) {
+		Debug( "There are no relevant goals\n" );
+		return false;
+	}
+
+	// Sort goals so most relevant goals are first
+	std::sort( relevantGoals.begin(), relevantGoals.end() );
+
+	// The active goal is no relevant anymore
+	if( !activeRelevantGoal ) {
+		Debug( "Old goal %s is not relevant anymore\n", activeGoal->Name() );
+		ClearGoalAndPlan();
+
+		for( const GoalRef &goalRef: relevantGoals ) {
+			if( AiBaseActionRecord *newPlanHead = BuildPlan( goalRef.goal, currWorldState ) ) {
+				Debug( "About to set goal %s as an active one\n", goalRef.goal->Name() );
+				SetGoalAndPlan( goalRef.goal, newPlanHead );
+				return true;
+			}
+		}
+
+		Debug( "Can't find any goal that has a satisfying it plan\n" );
+		return false;
+	}
+
+	AiBaseActionRecord *newActiveGoalPlan = BuildPlan( activeRelevantGoal, currWorldState );
+	if( !newActiveGoalPlan ) {
+		Debug( "There is no a plan that satisfies current goal %s anymore\n", activeGoal->Name() );
+		ClearGoalAndPlan();
+
+		for( const GoalRef &goalRef: relevantGoals ) {
+			// Skip already tested for new plan existence active goal
+			if( goalRef.goal != activeRelevantGoal ) {
+				if( AiBaseActionRecord *newPlanHead = BuildPlan( goalRef.goal, currWorldState ) ) {
+					Debug( "About to set goal %s as an active one\n", goalRef.goal->Name() );
+					SetGoalAndPlan( goalRef.goal, newPlanHead );
+					return true;
+				}
+			}
+		}
+
+		Debug( "Can't find any goal that has a satisfying it plan\n" );
+		return false;
+	}
+
+	constexpr auto KEEP_CURR_GOAL_WEIGHT_THRESHOLD = 0.3f;
+	// For each goal that has weight greater than the current one's weight (+ some threshold)
+	for( const GoalRef &goalRef: relevantGoals ) {
+		if( goalRef.goal->weight < activeGoal->weight + KEEP_CURR_GOAL_WEIGHT_THRESHOLD ) {
+			break;
+		}
+
+		if( AiBaseActionRecord *newPlanHead = BuildPlan( goalRef.goal, currWorldState ) ) {
+			// Release the new current active goal plan that is not going to be used to prevent leaks
+			DeletePlan( newActiveGoalPlan );
+			const char *format = "About to set goal %s instead of current one %s that is less relevant at the moment\n";
+			Debug( format, goalRef.goal->Name(), activeRelevantGoal->Name() );
+			ClearGoalAndPlan();
+			SetGoalAndPlan( goalRef.goal, newPlanHead );
+			return true;
+		}
+	}
+
+	Debug( "About to update a plan for the kept current goal %s\n", activeGoal->Name() );
+	ClearGoalAndPlan();
+	SetGoalAndPlan( activeRelevantGoal, newActiveGoalPlan );
+
+	return true;
 }
 
-Vec3 AiBaseBrain::CurrentGoalOrigin() const {
-	if( specialGoal ) {
-		return specialGoal->Origin();
+template <unsigned N>
+struct PlannerNodesHashSet {
+	PlannerNode *bins[N];
+
+	// Returns PlannerNode::heapArrayIndex of the removed node
+	unsigned RemoveNode( PlannerNode *node, unsigned binIndex ) {
+		// Node is not a head bin node
+		if( node->prevInHashBin ) {
+			node->prevInHashBin->nextInHashBin = node->nextInHashBin;
+			if( node->nextInHashBin ) {
+				node->nextInHashBin->prevInHashBin = node->prevInHashBin;
+			}
+		} else {
+#ifndef PUBLIC_BUILD
+			if( bins[binIndex] != node ) {
+				abort();
+			}
+#endif
+			if( node->nextInHashBin ) {
+				node->nextInHashBin->prevInHashBin = nullptr;
+				bins[binIndex] = node->nextInHashBin;
+			} else {
+				bins[binIndex] = nullptr;
+			}
+		}
+		unsigned result = node->heapArrayIndex;
+		node->DeleteSelf();
+		return result;
 	}
-	if( shortTermGoal ) {
-		return shortTermGoal->Origin();
+
+	PlannerNode *SameWorldStateNode( const PlannerNode *node ) const {
+		for( PlannerNode *binNode = bins[node->worldStateHash % N]; binNode; binNode = binNode->nextInHashBin ) {
+			if( binNode->worldStateHash != node->worldStateHash ) {
+				continue;
+			}
+			if( !( binNode->worldState == node->worldState ) ) {
+				continue;
+			}
+			return binNode;
+		}
+		return nullptr;
 	}
-	if( longTermGoal ) {
-		return longTermGoal->Origin();
+
+public:
+	inline PlannerNodesHashSet() {
+		std::fill_n( bins, N, nullptr );
 	}
-	FailWith( "CurrentGoalOrigin(): there is no goal\n" );
+
+	bool ContainsSameWorldState( const PlannerNode *node ) const {
+		return SameWorldStateNode( node ) != nullptr;
+	}
+
+	void Add( PlannerNode *node ) {
+#ifndef _DEBUG
+		if( PlannerNode *sameWorldStateNode = SameWorldStateNode( node ) ) {
+			AI_Debug( "PlannerNodesHashSet::Add()", "A node that contains same world state is already present" );
+			// This helps to discover broken equality operators
+			node->worldState.DebugPrint( "Arg node" );
+			sameWorldStateNode->worldState.DebugPrint( "Same WS Node" );
+			AI_Debug( "PlannerNodesHashSet::Add()", "Arg node tho the same WS node diff is:" );
+			node->worldState.DebugPrintDiff( sameWorldStateNode->worldState, "Node", "Same WS Node" );
+			abort();
+		}
+#endif
+		unsigned binIndex = node->worldStateHash % N;
+		PlannerNode *headBinNode = bins[binIndex];
+		if( headBinNode ) {
+			headBinNode->prevInHashBin = node;
+			node->nextInHashBin = headBinNode;
+		}
+		bins[binIndex] = node;
+	}
+
+	// Returns PlannerNode::heapArrayIndex of the removed node
+	unsigned RemoveBySameWorldState( PlannerNode *node ) {
+		unsigned binIndex = node->worldStateHash % N;
+		for( PlannerNode *binNode = bins[binIndex]; binNode; binNode = binNode->nextInHashBin ) {
+			if( binNode->worldStateHash != node->worldStateHash ) {
+				continue;
+			}
+			if( !( binNode->worldState == node->worldState ) ) {
+				continue;
+			}
+
+			return RemoveNode( binNode, binIndex );
+		}
+		AI_Debug( "PlannerNodesHashSet::RemoveBySameWorldState()", "Can't find a node that has same world state" );
+		node->worldState.DebugPrint( "Arg node" );
+		abort();
+	}
+};
+
+// A heap that supports removal of an arbitrary node by its intrusive heap index
+class PlannerNodesHeap
+{
+	StaticVector<PlannerNode *, 128> array;
+
+	inline void Swap( unsigned i, unsigned j ) {
+		PlannerNode *tmp = array[i];
+		array[i] = array[j];
+		array[i]->heapArrayIndex = i;
+		array[j] = tmp;
+		array[j]->heapArrayIndex = j;
+	}
+
+	void BubbleDown( unsigned hole ) {
+		// While a left child exists
+		while( 2 * hole + 1 < array.size() ) {
+			// Select the left child by default
+			unsigned child = 2 * hole + 1;
+			// If a right child exists
+			if( child < array.size() - 1 ) {
+				// If right child is lesser than left one
+				if( array[child + 1]->heapCost < array[child]->heapCost ) {
+					child = child + 1;
+				}
+			}
+
+			// Bubble down greater hole value
+			if( array[hole]->heapCost > array[child]->heapCost ) {
+				Swap( hole, child );
+				hole = child;
+			} else {
+				break;
+			}
+		}
+	}
+
+	void CheckIndices() {
+#ifdef _DEBUG
+		bool checkPassed = true;
+		for( unsigned i = 0; i < array.size(); ++i ) {
+			if( array[i]->heapArrayIndex != i ) {
+				const char *format = "PlannerNodesHeap::CheckIndices(): node at index %d has heap array index %d\n";
+				G_Printf( format, i, array[i]->heapArrayIndex );
+				checkPassed = false;
+			}
+		}
+		if( !checkPassed ) {
+			AI_FailWith( "PlannerNodesHeap::CheckIndices()", "There was indices mismatch" );
+		}
+#endif
+	}
+
+public:
+	void Push( PlannerNode *node ) {
+#ifdef _DEBUG
+		if( array.size() == array.capacity() ) {
+			AI_FailWith( "PlannerNodesHeap::Push()", "Capacity overflow" );
+		}
+#endif
+
+		array.push_back( node );
+		unsigned child = array.size() - 1;
+		array.back()->heapArrayIndex = child;
+
+		// While previous child is not a tree root
+		while( child > 0 ) {
+			unsigned parent = ( child - 1 ) / 2;
+			// Bubble up new value
+			if( array[child]->heapCost < array[parent]->heapCost ) {
+				Swap( child, parent );
+			} else {
+				break;
+			}
+			child = parent;
+		}
+
+		CheckIndices();
+	}
+
+	PlannerNode *Pop() {
+		if( array.empty() ) {
+			return nullptr;
+		}
+
+		PlannerNode *result = array.front();
+		array.front() = array.back();
+		array.front()->heapArrayIndex = 0;
+		array.pop_back();
+		BubbleDown( 0 );
+		CheckIndices();
+		return result;
+	}
+
+	void Remove( unsigned nodeIndex ) {
+#ifdef _DEBUG
+		if( nodeIndex > array.size() ) {
+			const char *format = "Attempt to remove node by index %d that is greater than the nodes heap size %d\n";
+			AI_FailWith( "PlannerNodesHeap::Remove()", format, nodeIndex, array.size() );
+		}
+#endif
+		array[nodeIndex] = array.back();
+		array[nodeIndex]->heapArrayIndex = nodeIndex;
+		array.pop_back();
+		BubbleDown( nodeIndex );
+		CheckIndices();
+	}
+};
+
+AiBaseActionRecord *AiBaseBrain::BuildPlan( AiBaseGoal *goal, const WorldState &currWorldState ) {
+	goal->OnPlanBuildingStarted();
+
+	PlannerNode *startNode = plannerNodesPool.New( self );
+	startNode->worldState = currWorldState;
+	startNode->worldStateHash = startNode->worldState.Hash();
+	startNode->transitionCost = 0.0f;
+	startNode->costSoFar = 0.0f;
+	startNode->heapCost = 0.0f;
+	startNode->parent = nullptr;
+	startNode->nextTransition = nullptr;
+	startNode->actionRecord = nullptr;
+
+	WorldState goalWorldState( self );
+	goal->GetDesiredWorldState( &goalWorldState );
+
+	// Use prime numbers as hash bins count parameters
+	PlannerNodesHashSet<389> closedNodesSet;
+	PlannerNodesHashSet<71> openNodesSet;
+
+	PlannerNodesHeap openNodesHeap;
+	openNodesHeap.Push( startNode );
+
+	while( PlannerNode *currNode = openNodesHeap.Pop() ) {
+		if( goalWorldState.IsSatisfiedBy( currNode->worldState ) ) {
+			AiBaseActionRecord *plan = ReconstructPlan( currNode );
+			goal->OnPlanBuildingCompleted( plan );
+			plannerNodesPool.Clear();
+			return plan;
+		}
+
+		closedNodesSet.Add( currNode );
+
+		PlannerNode *firstTransition = goal->GetWorldStateTransitions( currNode->worldState );
+		for( PlannerNode *transition = firstTransition; transition; transition = transition->nextTransition ) {
+			float cost = currNode->costSoFar + transition->transitionCost;
+			bool isInOpen = openNodesSet.ContainsSameWorldState( transition );
+			bool isInClosed = closedNodesSet.ContainsSameWorldState( transition );
+
+			// Check this assertion first before removal of the transition from sets
+			// (make an implicit crash due to violation of node indices properties explicit)
+			if( isInOpen && isInClosed ) {
+				Debug( "A world state was in OPEN and CLOSED sets simultaneously\n" );
+				currNode->worldState.DebugPrint( "WorldState" );
+				abort();
+			}
+
+			const bool wasInOpen = isInOpen;
+			const bool wasInClosed = isInClosed;
+
+			if( cost < transition->costSoFar && isInOpen ) {
+				unsigned nodeHeapIndex = openNodesSet.RemoveBySameWorldState( transition );
+				openNodesHeap.Remove( nodeHeapIndex );
+				isInOpen = false;
+			}
+			if( cost < transition->costSoFar && isInClosed ) {
+				closedNodesSet.RemoveBySameWorldState( transition );
+				isInClosed = false;
+			}
+
+			if( !isInOpen && !isInClosed ) {
+				transition->costSoFar = cost;
+				transition->heapCost = cost;
+				// Save a reference to parent (the nodes order will be reversed on plan reconstruction)
+				transition->parent = currNode;
+				openNodesSet.Add( transition );
+				openNodesHeap.Push( transition );
+			} else {
+				// If the same world state node has been kept in OPEN or CLOSED set, the new node should be released
+				if( isInOpen ) {
+					if( wasInOpen ) {
+						transition->DeleteSelf();
+					}
+				} else { // if (isInClosed) = if (true)
+					if( wasInClosed ) {
+						transition->DeleteSelf();
+					}
+				}
+			}
+		}
+	}
+
+	goal->OnPlanBuildingCompleted( nullptr );
+	plannerNodesPool.Clear();
+	return nullptr;
+}
+
+AiBaseActionRecord *AiBaseBrain::ReconstructPlan( PlannerNode *lastNode ) const {
+	AiBaseActionRecord *recordsStack[MAX_PLANNER_NODES];
+	int numNodes = 0;
+
+	// Start node does not have an associated action record (actions are transitions from parent nodes)
+	for( PlannerNode *node = lastNode; node && node->parent; node = node->parent ) {
+		recordsStack[numNodes++] = node->actionRecord;
+		// Release action record ownership (otherwise the action record will be delete by the planner node destructor)
+		node->actionRecord = nullptr;
+	}
+
+	if( !numNodes ) {
+		Debug( "Warning: goal world state is already satisfied by a current one, can't find a plan\n" );
+		return nullptr;
+	}
+
+	AiBaseActionRecord *firstInPlan = recordsStack[numNodes - 1];
+	AiBaseActionRecord *lastInPlan = recordsStack[numNodes - 1];
+	G_Printf( "Plan is %s", firstInPlan->Name() );
+	for( int i = numNodes - 2; i >= 0; --i ) {
+		lastInPlan->nextInPlan = recordsStack[i];
+		lastInPlan = recordsStack[i];
+		G_Printf( "->%s", recordsStack[i]->Name() );
+	}
+	G_Printf( "\n" );
+
+	lastInPlan->nextInPlan = nullptr;
+	return firstInPlan;
+}
+
+void AiBaseBrain::SetGoalAndPlan( AiBaseGoal *activeGoal_, AiBaseActionRecord *planHead_ ) {
+	if( this->planHead ) {
+		FailWith( "SetGoalAndPlan(): current plan is still present\n" );
+	}
+	if( this->activeGoal ) {
+		FailWith( "SetGoalAndPlan(): active goal is still present\n" );
+	}
+
+	if( !planHead_ ) {
+		FailWith( "SetGoalAndPlan(): attempt to set a null plan\n" );
+	}
+	if( !activeGoal_ ) {
+		FailWith( "SetGoalAndPlan(): attempt to set a null goal\n" );
+	}
+
+	this->activeGoal = activeGoal_;
+
+	this->planHead = planHead_;
+	this->planHead->Activate();
+}
+
+void AiBaseBrain::ClearGoalAndPlan() {
+	if( planHead ) {
+		Debug( "ClearGoalAndPlan(): Should deactivate plan head\n" );
+		planHead->Deactivate();
+		DeletePlan( planHead );
+	}
+
+	planHead = nullptr;
+	activeGoal = nullptr;
+}
+
+void AiBaseBrain::DeletePlan( AiBaseActionRecord *head ) {
+	AiBaseActionRecord *currRecord = head;
+	while( currRecord ) {
+		AiBaseActionRecord *nextRecord = currRecord->nextInPlan;
+		currRecord->DeleteSelf();
+		currRecord = nextRecord;
+	}
 }
 
 int AiBaseBrain::FindAasParamToGoalArea( int goalAreaNum, int ( AiAasRouteCache::*pathFindingMethod )( int, int, int ) const ) const {
 	const AiAasRouteCache *routeCache = RouteCache();
 
-	const int fromAreaNums[2] = { droppedToFloorAasAreaNum, currAasAreaNum };
-	const int travelFlags[2] = { preferredAasTravelFlags, allowedAasTravelFlags };
+	const int fromAreaNums[2] = { DroppedToFloorAasAreaNum(), CurrAasAreaNum() };
+	// Avoid testing same from areas twice
+	const int numFromAreas = fromAreaNums[0] != fromAreaNums[1] ? 2 : 1;
+	const int travelFlags[2] = { PreferredAasTravelFlags(), AllowedAasTravelFlags() };
 
-	for( int i = 0; i < 4; ++i ) {
-		int aasParam = ( routeCache->*pathFindingMethod )( fromAreaNums[i & 1], goalAreaNum, travelFlags[( i >> 1 ) & 1] );
-		if( aasParam ) {
-			return aasParam;
+	for( int flags: travelFlags ) {
+		for( int i = 0; i < numFromAreas; ++i ) {
+			if( int aasParam = ( routeCache->*pathFindingMethod )( fromAreaNums[i], goalAreaNum, flags ) ) {
+				return aasParam;
+			}
 		}
 	}
 
@@ -93,748 +658,140 @@ int AiBaseBrain::FindTravelTimeToGoalArea( int goalAreaNum ) const {
 	return FindAasParamToGoalArea( goalAreaNum, &AiAasRouteCache::TravelTimeToGoalArea );
 }
 
-void AiBaseBrain::UpdateInternalWeights() {
-	ClearInternalEntityWeights();
-
-	// Call (overridden) subclass method that sets nav entities weights
-	UpdatePotentialGoalsWeights();
-}
-
-// To be overridden. Its a stub that does not modify cleared weights
-void AiBaseBrain::UpdatePotentialGoalsWeights() { }
-
-float AiBaseBrain::GetEntityWeight( int entNum ) const {
-	float overriddenWeight = overriddenEntityWeights[entNum];
-
-	// Note: a negative value of an external weight overrides corresponding internal weight too.
-	if( overriddenWeight != 0.0f ) {
-		return overriddenWeight;
+bool AiBaseBrain::MayNotBeFeasibleEnemy( const edict_t *ent ) const {
+	if( !ent->r.inuse ) {
+		return true;
 	}
-	return internalEntityWeights[entNum];
+	// Skip non-clients that do not have positive intrinsic entity weight
+	if( !ent->r.client && ent->aiIntrinsicEnemyWeight <= 0.0f ) {
+		return true;
+	}
+	// Skip ghosting entities
+	if( G_ISGHOSTING( ent ) ) {
+		return true;
+	}
+	// Skip chatting or notarget entities except carriers
+	if( ( ent->flags & ( FL_NOTARGET | FL_BUSY ) ) && !( ent->s.effects & EF_CARRIER ) ) {
+		return true;
+	}
+	// Skip teammates. Note that team overrides attitude
+	if( GS_TeamBasedGametype() && ent->s.team == self->s.team ) {
+		return true;
+	}
+	// Skip entities that has a non-negative bot attitude.
+	// Note that by default all entities have negative attitude.
+	const int entNum = ENTNUM( const_cast<edict_t*>( ent ) );
+	if( attitude[entNum] >= 0 ) {
+		return true;
+	}
+
+	return self == ent;
 }
 
 void AiBaseBrain::PreThink() {
-	// Copy these values for faster access and (mainly) backward compatibility
-	// TODO: Make these values read-only properties to avoid confusion?
-	currAasAreaNum = self->ai->aiRef->currAasAreaNum;
-	droppedToFloorAasAreaNum = self->ai->aiRef->droppedToFloorAasAreaNum;
-	droppedToFloorOrigin = self->ai->aiRef->droppedToFloorOrigin;
+	if( nextDecisionRandomUpdateAt <= level.time ) {
+		decisionRandom = random();
+		nextDecisionRandomUpdateAt = level.time + 2000;
+	}
 }
 
 void AiBaseBrain::Think() {
-	if( !currAasAreaNum ) {
+	if( G_ISGHOSTING( self ) ) {
 		return;
 	}
 
-	CheckOrCancelGoal();
+	// Prepare current world state for planner
+	WorldState currWorldState( self );
+	PrepareCurrWorldState( &currWorldState );
 
-	// Do not bother of picking a goal while in air (many areas are not reachable from air areas).
-	// Otherwise bot will spam lots of messages "Can't find any goal candidates".
-	trace_t trace;
-	AiGroundTraceCache::Instance()->GetGroundTrace( self, 96.0f, &trace );
-	if( trace.fraction == 1.0f ) {
+	// If there is no active plan (the active plan was not assigned or has been completed in previous think frame)
+	if( !planHead ) {
+		// Reset an active goal (looks like its plan has been completed)
+		if( activeGoal ) {
+			activeGoal = nullptr;
+		}
+
+		// If some goal and plan for it have been found schedule goal and plan update
+		if( FindNewGoalAndPlan( currWorldState ) ) {
+			nextActiveGoalUpdateAt = level.time + activeGoal->UpdatePeriod();
+		}
+
 		return;
 	}
 
-	// Always update weights before goal picking, except we have updated it in this frame
-	bool weightsUpdated = false;
-
-	if( longTermGoalSearchTimeout <= level.time || longTermGoalReevaluationTimeout <= level.time ) {
-		if( !weightsUpdated ) {
-			UpdateInternalWeights();
-			weightsUpdated = true;
+	AiBaseActionRecord::Status status = planHead->CheckStatus( currWorldState );
+	if( status == AiBaseActionRecord::INVALID ) {
+		Debug( "Plan head %s CheckStatus() returned INVALID status\n", planHead->Name() );
+		ClearGoalAndPlan();
+		if( FindNewGoalAndPlan( currWorldState ) ) {
+			nextActiveGoalUpdateAt = level.time + activeGoal->UpdatePeriod();
 		}
-		PickLongTermGoal( longTermGoal );
+
+		return;
 	}
 
-	if( shortTermGoalSearchTimeout <= level.time || shortTermGoalReevaluationTimeout <= level.time ) {
-		if( !weightsUpdated ) {
-			UpdateInternalWeights();
-			weightsUpdated = true;
+	if( status == AiBaseActionRecord::COMPLETED ) {
+		Debug( "Plan head %s CheckStatus() returned COMPLETED status\n", planHead->Name() );
+		AiBaseActionRecord *oldPlanHead = planHead;
+		planHead = planHead->nextInPlan;
+		oldPlanHead->Deactivate();
+		oldPlanHead->DeleteSelf();
+		if( planHead ) {
+			planHead->Activate();
 		}
-		PickShortTermGoal( shortTermGoal );
-	}
-}
 
-void AiBaseBrain::CheckOrCancelGoal() {
-	// Check for goal nullity in this function, not in ShouldCancelGoal()
-	// (ShouldCancelGoal() return result may be confusing)
-
-	if( longTermGoal && ShouldCancelGoal( longTermGoal ) ) {
-		ClearAllGoals();
-	} else if( shortTermGoal && ShouldCancelGoal( shortTermGoal ) ) {
-		ClearAllGoals();
-	} else if( specialGoal && ShouldCancelGoal( specialGoal ) ) {
-		ClearAllGoals();
-	}
-}
-
-bool AiBaseBrain::ShouldCancelGoal( const Goal *goal ) {
-	if( goal->IsDisabled() ) {
-		return true;
+		// Do not check for goal update when action has been completed, defer it to the next think frame
+		return;
 	}
 
-	int64_t spawnTime = goal->SpawnTime();
-
-	// The entity is not spawned and respawn time is unknown
-	if( !spawnTime ) {
-		return true;
-	}
-
-	int64_t timeout = goal->Timeout();
-	if( timeout <= level.time ) {
-		return true;
-	}
-
-	if( goal->IsBasedOnSomeEntity() ) {
-		// Find milliseconds required to move to a goal
-		int64_t moveTime = FindTravelTimeToGoalArea( goal->AasAreaNum() ) * 10U;
-		if( moveTime ) {
-			int64_t reachTime = level.time + moveTime;
-
-			// A goal requires too long waiting
-			if( spawnTime > reachTime && spawnTime - reachTime > goal->MaxWaitDuration() ) {
-				return true;
-			}
-		}
-		// The goal is unreachable and bot is not in air
-		// (if bot is in air, some really reachable goals may be treated as unreachable ones)
-		else if( self->groundentity ) {
-			Debug( "Goal %s should be canceled as unreachable\n", goal->Name() );
-			return true;
+	// Goals that should not be updated during their execution have huge update period,
+	// so this condition is never satisfied for the mentioned kind of goals
+	if( nextActiveGoalUpdateAt <= level.time ) {
+		if( UpdateGoalAndPlan( currWorldState ) ) {
+			nextActiveGoalUpdateAt = level.time + activeGoal->UpdatePeriod();
 		}
 	}
-
-	if( goal == specialGoal ) {
-		return ShouldCancelSpecialGoalBySpecificReasons();
-	}
-
-	return false;
 }
 
-void AiBaseBrain::ClearAllGoals() {
-	if( longTermGoal ) {
-		CancelLongAndShortTermGoal( longTermGoal );
-	}
-	if( shortTermGoal ) {
-		CancelLongAndShortTermGoal( shortTermGoal );
-	}
-
-	// Do not clear directly but delegate it
-	if( specialGoal ) {
-		OnClearSpecialGoalRequested();
-	}
-}
-
-void AiBaseBrain::OnClearSpecialGoalRequested() {
-	OnGoalCleanedUp( specialGoal );
-	specialGoal = nullptr;
-}
-
-bool AiBaseBrain::MayConsiderGoalReachedAtTouch( const Goal *goal, const edict_t *touchedEntity ) const {
-	if( !goal ) {
-		return false;
-	}
-	if( !goal->ShouldBeReachedAtTouch() ) {
-		return false;
-	}
-	return goal->IsBasedOnEntity( touchedEntity );
-}
-
-bool AiBaseBrain::HandleGoalTouch( const edict_t *ent ) {
+bool AiBaseBrain::HandleNavTargetTouch( const edict_t *ent ) {
 	if( !ent ) {
 		return false;
 	}
 
-	if( MayConsiderGoalReachedAtTouch( longTermGoal, ent ) ) {
-		longTermGoal->NotifyTouchedByBot( self );
-		OnLongTermGoalReached();
-		return true;
+	if( !navTarget ) {
+		return false;
 	}
 
-	if( MayConsiderGoalReachedAtTouch( shortTermGoal, ent ) ) {
-		shortTermGoal->NotifyTouchedByBot( self );
-		OnShortTermGoalReached();
-		return true;
+	if( !navTarget->IsBasedOnEntity( ent ) ) {
+		return false;
 	}
 
-	return HandleSpecialGoalTouch( ent );
-}
-
-bool AiBaseBrain::HandleSpecialGoalTouch( const edict_t *ent ) {
-	if( MayConsiderGoalReachedAtTouch( specialGoal, ent ) ) {
-		specialGoal->NotifyTouchedByBot( self );
-		OnSpecialGoalReached();
-		return true;
+	if( !navTarget->ShouldBeReachedAtTouch() ) {
+		return false;
 	}
-	return false;
-}
 
-bool AiBaseBrain::IsCloseToAnyGoal( float proximityThreshold, bool onlyImportantGoals ) const {
-	const Goal *goals[] = { longTermGoal, shortTermGoal, specialGoal };
-
-	// Put likely case first
-	if( !onlyImportantGoals ) {
-		for( const Goal *goal: goals )
-			if( IsCloseToGoal( goal, proximityThreshold ) ) {
-				return true;
-			}
-	} else {
-		for( const Goal *goal: goals )
-			if( IsCloseToGoal( goal, proximityThreshold ) && IsGoalATopTierItem( goal ) ) {
-				return true;
-			}
-	}
-	return false;
+	lastReachedNavTarget = navTarget;
+	lastNavTargetReachedAt = level.time;
+	return true;
 }
 
 constexpr float GOAL_PROXIMITY_THRESHOLD = 40.0f * 40.0f;
 
-bool AiBaseBrain::MayConsiderGoalReachedAtRadius( const Goal *goal ) const {
-	if( !goal ) {
+bool AiBaseBrain::TryReachNavTargetByProximity() {
+	if( !navTarget ) {
 		return false;
 	}
-	if( !goal->ShouldBeReachedAtRadius() ) {
+
+	if( !navTarget->ShouldBeReachedAtRadius() ) {
 		return false;
 	}
-	float radius = goal->RadiusOrDefault( GOAL_PROXIMITY_THRESHOLD );
-	return DistanceSquared( goal->Origin().Data(), self->s.origin ) < radius * radius;
-}
 
-bool AiBaseBrain::TryReachGoalByProximity() {
-	// Bots do not wait for these kind of goals atm, just check goal presence, kind and proximity
-	// Check long-term goal first
-	if( MayConsiderGoalReachedAtRadius( longTermGoal ) ) {
-		longTermGoal->NotifyBotReachedRadius( self );
-		OnLongTermGoalReached();
+	float goalRadius = navTarget->RadiusOrDefault( GOAL_PROXIMITY_THRESHOLD );
+	if( ( navTarget->Origin() - self->s.origin ).SquaredLength() < goalRadius * goalRadius ) {
+		lastReachedNavTarget = navTarget;
+		lastNavTargetReachedAt = level.time;
 		return true;
 	}
 
-	if( MayConsiderGoalReachedAtRadius( shortTermGoal ) ) {
-		shortTermGoal->NotifyBotReachedRadius( self );
-		OnShortTermGoalReached();
-		return true;
-	}
-
-	return TryReachSpecialGoalByProximity();
-}
-
-bool AiBaseBrain::TryReachSpecialGoalByProximity() {
-	if( MayConsiderGoalReachedAtRadius( specialGoal ) ) {
-		specialGoal->NotifyBotReachedRadius( self );
-		OnSpecialGoalReached();
-		return true;
-	}
 	return false;
-}
-
-bool AiBaseBrain::ShouldWaitForGoal( const Goal *goal ) const {
-	if( !goal ) {
-		return false;
-	}
-	float radius = GOAL_PROXIMITY_THRESHOLD;
-	if( DistanceSquared( goal->Origin().Data(), self->s.origin ) > radius * radius ) {
-		return false;
-	}
-	if( goal->ShouldBeReachedOnEvent() ) {
-		return true;
-	}
-	if( goal->SpawnTime() > level.time ) {
-		return true;
-	}
-	return false;
-}
-
-bool AiBaseBrain::ShouldWaitForGoal() const {
-	return ShouldWaitForGoal( longTermGoal ) || ShouldWaitForSpecialGoal();
-}
-
-bool AiBaseBrain::ShouldWaitForSpecialGoal() const {
-	return ShouldWaitForGoal( specialGoal );
-}
-
-Vec3 AiBaseBrain::ClosestGoalOrigin() const {
-	float minSqDist = std::numeric_limits<float>::max();
-	Goal *chosenGoal = nullptr;
-	for( Goal *goal: { longTermGoal, shortTermGoal, specialGoal } ) {
-		if( !goal ) {
-			continue;
-		}
-		float sqDist = ( goal->Origin() - self->s.origin ).SquaredLength();
-		if( minSqDist > sqDist ) {
-			minSqDist = sqDist;
-			chosenGoal = goal;
-		}
-	}
-	if( !chosenGoal ) {
-		FailWith( "ClosestGoalOrigin(): there are no goals\n" );
-	}
-	return chosenGoal->Origin();
-}
-
-constexpr float MOVE_TIME_WEIGHT = 1.0f;
-constexpr float WAIT_TIME_WEIGHT = 3.5f;
-
-float AiBaseBrain::SelectLongTermGoalCandidates( const Goal *currLongTermGoal, GoalCandidates &result ) {
-	result.clear();
-	float currGoalEntWeight = 0.0f;
-
-	GoalCandidates rawWeightCandidates;
-	FOREACH_NAVENT( navEnt )
-	{
-		if( navEnt->IsDisabled() ) {
-			continue;
-		}
-
-		// Since movable goals have been introduced (and clients qualify as movable goals), prevent picking itself as a goal.
-		if( navEnt->Id() == ENTNUM( self ) ) {
-			continue;
-		}
-
-		if( navEnt->Item() && !G_Gametype_CanPickUpItem( navEnt->Item() ) ) {
-			continue;
-		}
-
-		// Reject an entity quickly if it looks like blocked by an enemy that is close to the entity.
-		// Note than passing this test does not guarantee that entire path to the entity is not blocked by enemies.
-		if( RouteCache()->AreaDisabled( navEnt->AasAreaNum() ) ) {
-			continue;
-		}
-
-		// This is a coarse and cheap test, helps to reject recently picked armors and powerups
-		int64_t spawnTime = navEnt->SpawnTime();
-
-		// A feasible spawn time (non-zero) always >= level.time.
-		if( !spawnTime || level.time - spawnTime > 15000 ) {
-			continue;
-		}
-
-		float weight = GetEntityWeight( navEnt->Id() );
-		if( weight > 0 ) {
-			rawWeightCandidates.push_back( NavEntityAndWeight( navEnt, weight ) );
-		}
-	}
-
-	// Sort all pre-selected candidates by their raw weights
-	std::sort( rawWeightCandidates.begin(), rawWeightCandidates.end() );
-
-	// Test not more than 16 best pre-selected by raw weight candidates.
-	// (We try to avoid too many expensive FindTravelTimeToGoalArea() calls,
-	// thats why we start from the best item to avoid wasting these calls for low-priority items)
-	for( unsigned i = 0, end = std::min( rawWeightCandidates.size(), 16U ); i < end; ++i ) {
-		NavEntity *navEnt = rawWeightCandidates[i].goal;
-		float weight = rawWeightCandidates[i].weight;
-
-		unsigned moveDuration = 1;
-		unsigned waitDuration = 1;
-		if( currAasAreaNum != navEnt->AasAreaNum() ) {
-			// We ignore cost of traveling in goal area, since:
-			// 1) to estimate it we have to retrieve reachability to goal area from last area before the goal area
-			// 2) it is relative low compared to overall travel cost, and movement in areas is cheap anyway
-			moveDuration = FindTravelTimeToGoalArea( navEnt->AasAreaNum() ) * 10U;
-
-			// AAS functions return 0 as a "none" value, 1 as a lowest feasible value
-			if( !moveDuration ) {
-				continue;
-			}
-
-			if( navEnt->IsDroppedEntity() ) {
-				// Do not pick an entity that is likely to dispose before it may be reached
-				if( navEnt->Timeout() <= level.time + moveDuration ) {
-					continue;
-				}
-			}
-		}
-
-		int64_t spawnTime = navEnt->SpawnTime();
-
-		// The entity is not spawned and respawn time is unknown
-		if( !spawnTime ) {
-			continue;
-		}
-
-		// Entity origin may be reached at this time
-		int64_t reachTime = level.time + moveDuration;
-		if( reachTime < spawnTime ) {
-			waitDuration = spawnTime - reachTime;
-		}
-
-		if( waitDuration > navEnt->MaxWaitDuration() ) {
-			continue;
-		}
-
-		float cost = 0.0001f + MOVE_TIME_WEIGHT * moveDuration + WAIT_TIME_WEIGHT * waitDuration;
-
-		weight = ( 1000 * weight ) / ( cost * navEnt->CostInfluence() ); // Check against cost of getting there
-
-		// Store current weight of the current goal entity
-		if( currLongTermGoal && currLongTermGoal->IsBasedOnNavEntity( navEnt ) ) {
-			currGoalEntWeight = weight;
-		}
-
-		result.emplace_back( NavEntityAndWeight( navEnt, weight ) );
-	}
-
-	std::sort( result.begin(), result.end() );
-
-	return currGoalEntWeight;
-}
-
-void AiBaseBrain::PickLongTermGoal( const Goal *currLongTermGoal ) {
-	shortTermGoal = nullptr;
-
-	if( G_ISGHOSTING( self ) ) {
-		return;
-	}
-
-	// Present special goal blocks other goals selection
-	if( specialGoal ) {
-		return;
-	}
-
-	// Should defer long-term goal pickup
-	if( longTermGoalSearchTimeout > level.time && longTermGoalReevaluationTimeout > level.time ) {
-		return;
-	}
-
-	// Can't pickup items if can't move
-	if( !self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED] ) {
-		return;
-	}
-
-	StaticVector<NavEntityAndWeight, MAX_NAVENTS> goalCandidates;
-	float currGoalEntWeight = SelectLongTermGoalCandidates( currLongTermGoal, goalCandidates );
-
-	// Always check current goal feasibility if this goal has non-zero current weight
-	if( currGoalEntWeight && MayNotBeFeasibleGoal( currLongTermGoal ) ) {
-		currGoalEntWeight = 0;
-	}
-
-	if( goalCandidates.empty() ) {
-		Debug( "Can't find any long-term goal nav. entity candidates\n" );
-		return;
-	}
-
-	NavEntity *bestNavEnt = nullptr;
-	float bestWeight = 0;
-
-	for( auto &goalAndWeight: goalCandidates ) {
-		if( !MayNotBeFeasibleGoal( goalAndWeight.goal ) ) {
-			// Goals are sorted by weight in descending order,
-			// so the first feasible goal has largest weight among other feasible ones
-			bestNavEnt = goalAndWeight.goal;
-			bestWeight = goalAndWeight.weight;
-			break;
-		}
-	}
-
-	if( !bestNavEnt ) {
-		Debug( "Can't find a feasible long-term goal nav. entity\n" );
-		return;
-	}
-
-	// If it is time to pick a new goal (not just re-evaluate current one), do not be too sticky to the current goal
-	const float currToBestWeightThreshold = longTermGoalSearchTimeout > level.time ? 0.6f : 0.8f;
-
-	if( currLongTermGoal && currLongTermGoal->IsBasedOnNavEntity( bestNavEnt ) ) {
-		Debug( "current long-term goal %s is kept as still having best weight %.3f\n", currLongTermGoal->Name(), bestWeight );
-	} else if( currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold ) {
-		const char *format =
-			"current long-term goal %s is kept as having weight %.3f good enough to not consider picking another one\n";
-
-		// If currGoalEntWeight > 0, currLongTermGoalEnt is guaranteed to be non-null
-		Debug( format, currLongTermGoal->Name(), currGoalEntWeight );
-	} else {
-		if( currLongTermGoal ) {
-			const char *format = "chose %s weighted %.3f as a long-term goal instead of %s weighted now as %.3f\n";
-			Debug( format, bestNavEnt->Name(), bestWeight, currLongTermGoal->Name(), currGoalEntWeight );
-		} else {
-			Debug( "chose %s weighted %.3f as a new long-term goal\n", bestNavEnt->Name(), bestWeight );
-		}
-	}
-
-	if( !currLongTermGoal || !currLongTermGoal->IsBasedOnNavEntity( bestNavEnt ) ) {
-		SetLongTermGoal( bestNavEnt );
-	}
-
-	// Was doing search
-	if( longTermGoalSearchTimeout <= level.time ) {
-		longTermGoalSearchTimeout = level.time + longTermGoalSearchPeriod;
-		longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
-		shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
-		shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationTimeout;
-	} else {
-		longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
-	}
-}
-
-float AiBaseBrain::SelectShortTermGoalCandidates( const Goal *currShortTermGoal, GoalCandidates &result ) {
-	result.clear();
-	float currGoalEntWeight = 0.0f;
-
-	bool canPickupItems = ( self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK ) != 0;
-
-	vec3_t forward;
-	AngleVectors( self->s.angles, forward, nullptr, nullptr );
-
-	FOREACH_NAVENT( navEnt )
-	{
-		if( navEnt->IsDisabled() ) {
-			continue;
-		}
-
-		// Do not predict short-term goal spawn (looks weird)
-		if( navEnt->ToBeSpawnedLater() ) {
-			continue;
-		}
-
-		// Since movable goals have been introduced (and clients qualify as movable goals), prevent picking itself as a goal.
-		if( navEnt->Id() == ENTNUM( self ) ) {
-			continue;
-		}
-
-		float weight = GetEntityWeight( navEnt->Id() );
-		if( weight <= 0.0f ) {
-			continue;
-		}
-
-		if( canPickupItems && navEnt->Item() ) {
-			if( !G_Gametype_CanPickUpItem( navEnt->Item() ) || !( navEnt->Item()->flags & ITFLAG_PICKABLE ) ) {
-				continue;
-			}
-		}
-
-		// First cut off items by distance for performance reasons since this function is called quite frequently.
-		// It is not very accurate in terms of level connectivity, but short-term goals are not critical.
-		float dist = ( navEnt->Origin() - self->s.origin ).LengthFast();
-		if( longTermGoal && longTermGoal->IsBasedOnNavEntity( navEnt ) ) {
-			if( dist > AI_GOAL_SR_LR_RADIUS ) {
-				continue;
-			}
-		} else {
-			if( dist > AI_GOAL_SR_RADIUS ) {
-				continue;
-			}
-		}
-
-		clamp_low( dist, 0.01f );
-
-		bool inFront = true;
-		if( dist > 1 ) {
-			Vec3 botToTarget = navEnt->Origin() - self->s.origin;
-			botToTarget *= 1.0f / dist;
-			if( botToTarget.Dot( forward ) < 0.7 ) {
-				inFront = false;
-			}
-		}
-
-		weight = weight / dist * ( inFront ? 1.0f : 0.5f ) * navEnt->CostInfluence();
-
-		// Store current short-term goal current weight
-		if( currShortTermGoal && currShortTermGoal->IsBasedOnNavEntity( navEnt ) ) {
-			currGoalEntWeight = weight;
-		}
-
-		result.emplace_back( NavEntityAndWeight( navEnt, weight ) );
-	}
-
-	std::sort( result.begin(), result.end() );
-
-	return currGoalEntWeight;
-}
-
-bool AiBaseBrain::SelectShortTermReachableGoals( const Goal *currShortTermGoal, const GoalCandidates &candidates,
-												 GoalCandidates &result ) {
-	result.clear();
-	bool isCurrGoalReachable = false;
-
-	for( const NavEntityAndWeight &goalAndWeight: candidates ) {
-		std::pair<unsigned, unsigned> toAndBackAasTravelTimes = FindToAndBackTravelTimes( goalAndWeight.goal->Origin() );
-		bool shortTermReachable = false;
-
-		// If current and goal points are mutually reachable
-		if( toAndBackAasTravelTimes.first > 0 && toAndBackAasTravelTimes.second > 0 ) {
-			// Convert from AAS centiseconds
-			unsigned toTravelMillis = 10 * toAndBackAasTravelTimes.first;
-			unsigned backTravelMillis = 10 * toAndBackAasTravelTimes.second;
-			if( goalAndWeight.goal->IsDroppedEntity() ) {
-				// Ensure it will not dispose before the bot may reach it
-				if( goalAndWeight.goal->Timeout() > level.time + toTravelMillis ) {
-					if( ( toTravelMillis + backTravelMillis ) / 2 < AI_GOAL_SR_MILLIS ) {
-						result.push_back( goalAndWeight );
-						shortTermReachable = true;
-					}
-				}
-			} else if( ( toTravelMillis + backTravelMillis ) / 2 < AI_GOAL_SR_MILLIS ) {
-				result.push_back( goalAndWeight );
-				shortTermReachable = true;
-			}
-		}
-		if( shortTermReachable && currShortTermGoal && currShortTermGoal->IsBasedOnNavEntity( goalAndWeight.goal ) ) {
-			isCurrGoalReachable = true;
-		}
-	}
-
-	return isCurrGoalReachable;
-}
-
-void AiBaseBrain::PickShortTermGoal( const Goal *currShortTermGoal ) {
-	// Present special goal blocks other goals selection
-	if( specialGoal ) {
-		return;
-	}
-
-	if( G_ISGHOSTING( self ) ) {
-		return;
-	}
-
-	if( shortTermGoalSearchTimeout > level.time && shortTermGoalReevaluationTimeout > level.time ) {
-		return;
-	}
-
-	// First, filter all goals by non-zero weight to choose best goals for further checks
-	StaticVector<NavEntityAndWeight, MAX_NAVENTS> goalCandidates;
-	float currGoalEntWeight = SelectShortTermGoalCandidates( currShortTermGoal, goalCandidates );
-
-	if( goalCandidates.empty() ) {
-		return;
-	}
-
-	// Always check feasibility for current short-term goal
-	if( currGoalEntWeight > 0 && MayNotBeFeasibleGoal( currShortTermGoal ) ) {
-		currGoalEntWeight = 0;
-	}
-
-	// Then, filter non-zero weight goals by short-term reachability to choose best goals for feasibilty checks
-	StaticVector<NavEntityAndWeight, MAX_NAVENTS> shortTermReachableGoals;
-	if( !SelectShortTermReachableGoals( currShortTermGoal, goalCandidates, shortTermReachableGoals ) ) {
-		currGoalEntWeight = 0;
-	}
-
-	if( shortTermReachableGoals.empty() ) {
-		return;
-	}
-
-	NavEntity *bestGoalEnt = nullptr;
-	float bestWeight = 0.000001f;
-
-	// Since `goalCandidates` is sorted and the filter was sequential, `shortTermReachableGoals` is sorted too
-	for( auto &goalAndWeight: shortTermReachableGoals ) {
-		if( !MayNotBeFeasibleGoal( goalAndWeight.goal ) ) {
-			bestGoalEnt = goalAndWeight.goal;
-			bestWeight = goalAndWeight.weight;
-			break;
-		}
-	}
-
-	if( !bestGoalEnt ) {
-		return;
-	}
-
-	const bool isDoingSearch = level.time <= shortTermGoalReevaluationTimeout;
-	const float currToBestWeightThreshold = isDoingSearch ? 0.9f : 0.7f;
-
-	if( currShortTermGoal && currShortTermGoal->IsBasedOnNavEntity( bestGoalEnt ) ) {
-		Debug( "current short-term goal %s is kept as still having best weight %.3f\n", bestGoalEnt->Name(), bestWeight );
-	} else if( currGoalEntWeight > 0 && currGoalEntWeight / bestWeight > currToBestWeightThreshold ) {
-		const char *format =
-			"current short-term goal %s is kept as having weight %.3f good enough to not consider picking another one\n";
-
-		// If currGoalEntWeight > 0, currShortTermGoal is guaranteed to be non-null
-		Debug( format, currShortTermGoal->Name(), currGoalEntWeight );
-	} else {
-		if( currShortTermGoal ) {
-			const char *format = "chose %s weighted %.3f as a short-term goal instead of %s weighted now as %.3f\n";
-			Debug( format, bestGoalEnt->Name(), bestWeight, currShortTermGoal->Name(), currGoalEntWeight );
-		} else {
-			Debug( "chose %s weighted %.3f as a new short-term goal\n", bestGoalEnt->Name(), bestWeight );
-		}
-	}
-
-	if( !currShortTermGoal || !currShortTermGoal->IsBasedOnNavEntity( bestGoalEnt ) ) {
-		SetShortTermGoal( bestGoalEnt );
-	}
-
-	if( isDoingSearch ) {
-		shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
-	}
-	shortTermGoalReevaluationTimeout = level.time + shortTermGoalReevaluationPeriod;
-}
-
-void AiBaseBrain::SetLongTermGoal( NavEntity *goalEnt ) {
-	longTermGoal = &localLongTermGoal;
-	longTermGoal->SetToNavEntity( goalEnt, this );
-	longTermGoalSearchTimeout = level.time + longTermGoalSearchPeriod;
-	longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
-	self->ai->aiRef->OnGoalSet( &localLongTermGoal );
-}
-
-void AiBaseBrain::SetShortTermGoal( NavEntity *goalEnt ) {
-	shortTermGoal = &localShortTermGoal;
-	shortTermGoal->SetToNavEntity( goalEnt, this );
-	shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
-	shortTermGoalReevaluationTimeout = level.time + shortTermGoalReevaluationPeriod;
-	self->ai->aiRef->OnGoalSet( &localShortTermGoal );
-}
-
-void AiBaseBrain::SetSpecialGoal( Goal *goal ) {
-	specialGoal = goal;
-	self->ai->aiRef->OnGoalSet( goal );
-}
-
-void AiBaseBrain::CancelLongAndShortTermGoal( const Goal *canceledGoal ) {
-	longTermGoal = nullptr;
-
-	// Request long-term goal update in next frame
-	longTermGoalSearchTimeout = level.time + 1;
-	longTermGoalReevaluationTimeout = level.time + longTermGoalReevaluationPeriod;
-
-	// Clear short-term goal too
-	shortTermGoal = nullptr;
-	shortTermGoalSearchTimeout = level.time + shortTermGoalSearchPeriod;
-	shortTermGoalReevaluationTimeout = level.time + shortTermGoalSearchPeriod + shortTermGoalReevaluationPeriod;
-
-	// Call possible overridden child callback method
-	OnGoalCleanedUp( canceledGoal );
-}
-
-void AiBaseBrain::OnLongTermGoalReached() {
-	Debug( "reached long-term goal %s\n", longTermGoal->Name() );
-	AiManager::Instance()->ClearGoals( longTermGoal, self->ai->aiRef );
-	CancelLongAndShortTermGoal( longTermGoal );
-}
-
-void AiBaseBrain::OnShortTermGoalReached() {
-	Debug( "reached short-term goal %s\n", shortTermGoal->Name() );
-	AiManager::Instance()->ClearGoals( shortTermGoal, self->ai->aiRef );
-	CancelLongAndShortTermGoal( shortTermGoal );
-}
-
-void AiBaseBrain::OnSpecialGoalReached() {
-	Debug( "reached special goal %s\n", specialGoal->Name() );
-	AiManager::Instance()->ClearGoals( specialGoal, self->ai->aiRef );
-	OnClearSpecialGoalRequested();
-}
-
-std::pair<unsigned, unsigned> AiBaseBrain::FindToAndBackTravelTimes( const Vec3 &targetOrigin ) const {
-	// We hope that target origin has been already dropped to floor, so no adjustment is required
-	float *targetOriginRef = const_cast<float*>( targetOrigin.Data() );
-	int areaNum = AasWorld()->FindAreaNum( targetOriginRef );
-
-	if( !areaNum ) {
-		return std::make_pair( 0, 0 );
-	}
-	if( areaNum == currAasAreaNum ) {
-		return std::make_pair( 1, 1 );
-	}
-
-	int toAasTravelTime = FindTravelTimeToGoalArea( areaNum );
-	if( !toAasTravelTime ) {
-		return std::make_pair( 0, 0 );
-	}
-	int backAasTravelTime = RouteCache()->TravelTimeToGoalArea( areaNum, targetOriginRef, currAasAreaNum, preferredAasTravelFlags );
-	if( !backAasTravelTime ) {
-		backAasTravelTime = RouteCache()->TravelTimeToGoalArea( areaNum, targetOriginRef, currAasAreaNum, allowedAasTravelFlags );
-	}
-	return std::make_pair( toAasTravelTime, backAasTravelTime );
 }

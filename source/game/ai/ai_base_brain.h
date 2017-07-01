@@ -7,168 +7,527 @@
 #include "static_vector.h"
 #include "ai_aas_route_cache.h"
 #include "ai_base_ai.h"
+#include "world_state.h"
+
+class AiBaseGoal
+{
+	friend class Ai;
+	friend class AiBaseBrain;
+
+	static inline void Register( Ai *ai, AiBaseGoal *goal );
+
+protected:
+	edict_t *self;
+	const char *name;
+	const unsigned updatePeriod;
+
+	float weight;
+
+public:
+	// Don't pass self as a constructor argument (self->ai ptr might not been set yet)
+	inline AiBaseGoal( Ai *ai, const char *name_, unsigned updatePeriod_ )
+		: self( ai->self ), name( name_ ), updatePeriod( updatePeriod_ ), weight( 0.0f ) {
+		Register( ai, this );
+	}
+
+	virtual ~AiBaseGoal() {};
+
+	virtual void UpdateWeight( const WorldState &worldState ) = 0;
+	virtual void GetDesiredWorldState( WorldState *worldState ) = 0;
+	virtual struct PlannerNode *GetWorldStateTransitions( const WorldState &worldState ) = 0;
+
+	virtual void OnPlanBuildingStarted() {}
+	virtual void OnPlanBuildingCompleted( const class AiBaseActionRecord *planHead ) {}
+
+	inline bool IsRelevant() const { return weight > 0; }
+
+	// More important goals are first after sorting goals array
+	inline bool operator<( const AiBaseGoal &that ) const {
+		return this->weight > that.weight;
+	}
+
+	inline const char *Name() const { return name; }
+	inline unsigned UpdatePeriod() const { return updatePeriod; }
+};
+
+class alignas ( 8 )PoolBase
+{
+	friend class PoolItem;
+
+	char *basePtr;
+	const char *tag;
+	unsigned itemSize;
+
+	static constexpr auto FREE_LIST = 0;
+	static constexpr auto USED_LIST = 1;
+
+	short listFirst[2];
+
+#ifdef _DEBUG
+	inline const char *ListName( short index ) {
+		switch( index ) {
+			case FREE_LIST: return "FREE";
+			case USED_LIST: return "USED";
+			default: abort();
+		}
+	}
+#endif
+
+	inline class PoolItem &ItemAt( short index ) {
+		return *(PoolItem *)( basePtr + itemSize * index );
+	}
+	inline short IndexOf( const class PoolItem *item ) const {
+		return (short)( ( (const char *)item - basePtr ) / itemSize );
+	}
+
+	inline void Link( short itemIndex, short listIndex );
+	inline void Unlink( short itemIndex, short listIndex );
+
+protected:
+	void *Alloc();
+	void Free( class PoolItem *poolItem );
+
+#ifndef _MSC_VER
+	inline void Debug( const char *format, ... ) const __attribute__( ( format( printf, 2, 3 ) ) )
+#else
+	inline void Debug( _Printf_format_string_ const char *format, ... ) const
+#endif
+	{
+		va_list va;
+		va_start( va, format );
+		AI_Debugv( tag, format, va );
+		va_end( va );
+	}
+
+public:
+	PoolBase( char *basePtr_, const char *tag_, unsigned itemSize_, unsigned itemsCount );
+
+	void Clear();
+};
+
+class alignas ( 8 )PoolItem
+{
+	friend class PoolBase;
+	PoolBase *pool;
+	short prevInList;
+	short nextInList;
+
+public:
+	PoolItem( PoolBase * pool_ ) : pool( pool_ ) {
+	}
+	virtual ~PoolItem() {
+	}
+
+	inline void DeleteSelf() {
+		this->~PoolItem();
+		pool->Free( this );
+	}
+};
+
+template<class Item, unsigned N>
+class alignas ( 8 )Pool : public PoolBase
+{
+	static constexpr unsigned ChunkSize() {
+		return ( sizeof( Item ) % 8 ) ? sizeof( Item ) + 8 - ( sizeof( Item ) % 8 ) : sizeof( Item );
+	}
+
+	alignas( 8 ) char buffer[N * ChunkSize()];
+
+public:
+	Pool( const char *tag_ ) : PoolBase( buffer, tag_, sizeof( Item ), N ) {
+	}
+
+	inline Item *New() {
+		if( void *mem = Alloc() ) {
+			return new(mem) Item( this );
+		}
+		return nullptr;
+	}
+
+	template <typename Arg1>
+	inline Item *New( Arg1 arg1 ) {
+		if( void *mem = Alloc() ) {
+			return new(mem) Item( this, arg1 );
+		}
+		return nullptr;
+	}
+
+	template <typename Arg1, typename Arg2>
+	inline Item *New( Arg1 arg1, Arg2 arg2 ) {
+		if( void *mem = Alloc() ) {
+			return new(mem) Item( this, arg1, arg2 );
+		}
+		return nullptr;
+	};
+
+	template <typename Arg1, typename Arg2, typename Arg3>
+	inline Item *New( Arg1 arg1, Arg2 arg2, Arg3 arg3 ) {
+		if( void *mem = Alloc() ) {
+			return new(mem) Item( this, arg1, arg2, arg3 );
+		}
+		return nullptr;
+	};
+
+	template <typename Arg1, typename Arg2, typename Arg3, typename Arg4>
+	inline Item *New( Arg1 arg1, Arg2 arg2, Arg3 arg3, Arg4 arg4 ) {
+		if( void *mem = Alloc() ) {
+			return new(mem) Item( this, arg1, arg2, arg3, arg4 );
+		}
+		return nullptr;
+	};
+
+	template <typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5>
+	inline Item *New( Arg1 arg1, Arg2 arg2, Arg3 arg3, Arg4 arg4, Arg5 arg5 ) {
+		if( void *mem = Alloc() ) {
+			return new(mem) Item( this, arg1, arg2, arg3, arg4, arg5 );
+		}
+		return nullptr;
+	};
+};
+
+class AiBaseActionRecord : public PoolItem
+{
+	friend class AiBaseAction;
+
+protected:
+	edict_t *self;
+	const char *name;
+
+#ifndef _MSC_VER
+	inline void Debug( const char *format, ... ) const __attribute__( ( format( printf, 2, 3 ) ) )
+#else
+	inline void Debug( _Printf_format_string_ const char *format, ... ) const
+#endif
+	{
+		va_list va;
+		va_start( va, format );
+		AI_Debugv( name, format, va );
+		va_end( va );
+	}
+
+public:
+	AiBaseActionRecord *nextInPlan;
+
+	inline AiBaseActionRecord( PoolBase *pool_, edict_t *self_, const char *name_ )
+		: PoolItem( pool_ ), self( self_ ), name( name_ ), nextInPlan( nullptr ) {}
+
+	virtual ~AiBaseActionRecord() {}
+
+	virtual void Activate() {
+		Debug( "About to activate\n" );
+	};
+	virtual void Deactivate() {
+		Debug( "About to deactivate\n" );
+	};
+
+	const char *Name() const { return name; }
+
+	enum Status {
+		INVALID,
+		VALID,
+		COMPLETED
+	};
+
+	virtual Status CheckStatus( const WorldState &currWorldState ) const = 0;
+};
+
+struct PlannerNode : PoolItem {
+	// World state after applying an action
+	WorldState worldState;
+	// An action record to apply
+	AiBaseActionRecord *actionRecord;
+	// Used to reconstruct a plan
+	PlannerNode *parent;
+	// Next in linked list of transitions for current node
+	PlannerNode *nextTransition;
+
+	// AStar edge "distance"
+	float transitionCost;
+	// AStar node G
+	float costSoFar;
+	// Priority queue parameter
+	float heapCost;
+	// Utility for retrieval an actual index in heap array by a node value
+	unsigned heapArrayIndex;
+
+	// Utilities for storing the node in a hash set
+	PlannerNode *prevInHashBin;
+	PlannerNode *nextInHashBin;
+	uint32_t worldStateHash;
+
+	inline PlannerNode( PoolBase *pool, edict_t *self )
+		: PoolItem( pool ), worldState( self ) {}
+
+	~PlannerNode() override {
+		if( actionRecord ) {
+			actionRecord->DeleteSelf();
+		}
+
+		// Prevent use-after-free
+		actionRecord = nullptr;
+		parent = nullptr;
+		nextTransition = nullptr;
+		prevInHashBin = nullptr;
+		nextInHashBin = nullptr;
+	}
+};
+
+class AiBaseAction
+{
+	friend class Ai;
+	friend class AiBaseBrain;
+
+	static inline void Register( Ai *ai, AiBaseAction *action );
+
+protected:
+	edict_t *self;
+	const char *name;
+
+#ifndef _MSC_VER
+	inline void Debug( const char *format, ... ) const __attribute__( ( format( printf, 2, 3 ) ) )
+#else
+	inline void Debug( _Printf_format_string_ const char *format, ... ) const
+#endif
+	{
+		va_list va;
+		va_start( va, format );
+		AI_Debugv( name, format, va );
+		va_end( va );
+	}
+
+	class PlannerNodePtr
+	{
+		PlannerNode *node;
+		PlannerNodePtr( const PlannerNodePtr &that ) = delete;
+		PlannerNodePtr &operator=( const PlannerNodePtr &that ) = delete;
+
+public:
+		inline explicit PlannerNodePtr( PlannerNode *node_ ) : node( node_ ) {}
+		inline PlannerNodePtr( PlannerNodePtr &&that ) : node( that.node ) {
+			that.node = nullptr;
+		}
+		inline PlannerNodePtr &operator=( PlannerNodePtr &&that ) {
+			node = that.node;
+			that.node = nullptr;
+			return *this;
+		}
+		inline PlannerNode *ReleaseOwnership() {
+			PlannerNode *result = node;
+			// Clear node reference to avoid being deleted in the destructor
+			node = nullptr;
+			return result;
+		}
+		inline ~PlannerNodePtr();
+		inline PlannerNode *PrepareActionResult();
+		inline class WorldState &WorldState();
+		inline float &Cost();
+		inline operator bool() const { return node != nullptr; }
+	};
+
+	inline PlannerNodePtr NewNodeForRecord( AiBaseActionRecord *record );
+
+public:
+	// Don't pass self as a constructor argument (self->ai ptr might not been set yet)
+	inline AiBaseAction( Ai *ai, const char *name_ ) : self( ai->self ), name( name_ ) {
+		Register( ai, this );
+	}
+
+	virtual ~AiBaseAction() {}
+
+	const char *Name() const { return name; }
+
+	virtual PlannerNode *TryApply( const WorldState &worldState ) = 0;
+};
 
 class AiBaseBrain : public AiFrameAwareUpdatable
 {
 	friend class Ai;
 	friend class AiManager;
 	friend class AiBaseTeamBrain;
+	friend class AiBaseGoal;
+	friend class AiBaseAction;
+	friend class AiBaseActionRecord;
+	friend class BotGutsActionsAccessor;
+
+public:
+	static constexpr unsigned MAX_GOALS = 12;
+	static constexpr unsigned MAX_ACTIONS = 36;
 
 protected:
 	edict_t *self;
 
-	Goal localLongTermGoal;
-	Goal *longTermGoal;
-	Goal localShortTermGoal;
-	Goal *shortTermGoal;
-	// A domain-specific goal that overrides regular goals.
-	// By default is NULL. May be set by subclasses logic/team AI logic.
-	Goal localSpecialGoal;
-	Goal *specialGoal;
+	// Its mainly used as a storage for nav targets set by scripts
+	NavTarget localNavTarget;
+	NavTarget *navTarget;
+	AiBaseActionRecord *planHead;
+	AiBaseGoal *activeGoal;
+	int64_t nextActiveGoalUpdateAt;
 
-	int64_t longTermGoalSearchTimeout;
-	int64_t shortTermGoalSearchTimeout;
+	const NavTarget *lastReachedNavTarget;
+	int64_t lastNavTargetReachedAt;
 
-	const unsigned longTermGoalSearchPeriod;
-	const unsigned shortTermGoalSearchPeriod;
+	int64_t prevThinkAt;
 
-	int64_t longTermGoalReevaluationTimeout;
-	int64_t shortTermGoalReevaluationTimeout;
+	float decisionRandom;
+	int64_t nextDecisionRandomUpdateAt;
 
-	const unsigned longTermGoalReevaluationPeriod;
-	const unsigned shortTermGoalReevaluationPeriod;
+	StaticVector<AiBaseGoal *, MAX_GOALS> goals;
+	StaticVector<AiBaseAction *, MAX_ACTIONS> actions;
 
-	int currAasAreaNum;
-	int droppedToFloorAasAreaNum;
-	Vec3 droppedToFloorOrigin;
+	static constexpr unsigned MAX_PLANNER_NODES = 384;
+	Pool<PlannerNode, MAX_PLANNER_NODES> plannerNodesPool;
 
-	int preferredAasTravelFlags;
-	int allowedAasTravelFlags;
+	signed char attitude[MAX_EDICTS];
+	// Used to detect attitude change
+	signed char oldAttitude[MAX_EDICTS];
+
+	int CurrAasAreaNum() const { return self->ai->aiRef->entityPhysicsState->CurrAasAreaNum(); };
+	int DroppedToFloorAasAreaNum() const { return self->ai->aiRef->entityPhysicsState->DroppedToFloorAasAreaNum(); }
+	Vec3 DroppedToFloorOrigin() const { return self->ai->aiRef->entityPhysicsState->DroppedToFloorOrigin(); }
+
+	int PreferredAasTravelFlags() const { return self->ai->aiRef->preferredAasTravelFlags; }
+	int AllowedAasTravelFlags() const { return self->ai->aiRef->allowedAasTravelFlags; }
 
 	const AiAasWorld *AasWorld() const { return self->ai->aiRef->aasWorld; }
 	AiAasRouteCache *RouteCache() { return self->ai->aiRef->routeCache; }
 	const AiAasRouteCache *RouteCache() const { return self->ai->aiRef->routeCache; }
 
-	// Weights computed by a bot
-	float internalEntityWeights[MAX_EDICTS];
-	// Weights set by external code.
-	// These weights completely override internal weights
-	// (If an external weight != 0, the external weight is used).
-	// Weights may be negative (in this case an entity will be excluded from potential goals).
-	float overriddenEntityWeights[MAX_EDICTS];
+	AiBaseBrain( edict_t *self );
 
-	AiBaseBrain( edict_t *self_, int preferredAasTravelFlags_, int allowedAasTravelFlags_ );
+	virtual void PrepareCurrWorldState( WorldState *worldState ) = 0;
+
+	virtual bool ShouldSkipPlanning() const = 0;
+
+	bool UpdateGoalAndPlan( const WorldState &currWorldState );
+
+	bool FindNewGoalAndPlan( const WorldState &currWorldState );
+
+	// Allowed to be overridden in a subclass for class-specific optimization purposes
+	virtual AiBaseActionRecord *BuildPlan( AiBaseGoal *goal, const WorldState &startWorldState );
+
+	AiBaseActionRecord *ReconstructPlan( PlannerNode *lastNode ) const;
+
+	void SetGoalAndPlan( AiBaseGoal *goal_, AiBaseActionRecord *planHead_ );
+
+	inline void SetNavTarget( NavTarget *navTarget_ ) {
+		this->navTarget = navTarget_;
+		self->ai->aiRef->OnNavTargetSet( this->navTarget );
+	}
+
+	inline void SetNavTarget( const Vec3 &navTargetOrigin, float reachRadius ) {
+		localNavTarget.SetToTacticalSpot( navTargetOrigin, reachRadius );
+		self->ai->aiRef->OnNavTargetSet( &localNavTarget );
+	}
+
+	inline void ResetNavTarget() {
+		this->navTarget = nullptr;
+		self->ai->aiRef->OnNavTargetTouchHandled();
+	}
 
 	int FindAasParamToGoalArea( int goalAreaNum, int ( AiAasRouteCache::*pathFindingMethod )( int, int, int ) const ) const;
 
 	int FindReachabilityToGoalArea( int goalAreaNum ) const;
 	int FindTravelTimeToGoalArea( int goalAreaNum ) const;
 
-	inline void ClearInternalEntityWeights() {
-		memset( internalEntityWeights, 0, sizeof( internalEntityWeights ) );
-	}
-	void UpdateInternalWeights();
-	virtual void UpdatePotentialGoalsWeights();
-	float GetEntityWeight( int entNum ) const;
-
-	void CheckOrCancelGoal();
-	bool ShouldCancelGoal( const Goal *goal );
-	// To be overridden in subclass. Should check other reasons of goal rejection aside generic ones for all goals.
-	virtual bool ShouldCancelSpecialGoalBySpecificReasons() { return false; }
-
-	void PickLongTermGoal( const Goal *currLongTermGoal );
-	void PickShortTermGoal( const Goal *currLongTermGoal );
-	void CancelLongAndShortTermGoal( const Goal *canceledGoal );
-	void SetShortTermGoal( NavEntity *navEntity );
-	void SetLongTermGoal( NavEntity *navEntity );
-	// Overriding method should call this one
-	virtual void SetSpecialGoal( Goal *goal );
-	virtual void OnGoalCleanedUp( const Goal *goal ) {}
-
-	// Returns a pair of AAS travel times to the target point and back
-	std::pair<unsigned, unsigned> FindToAndBackTravelTimes( const Vec3 &targetPoint ) const;
-
-	bool IsCloseToGoal( const Goal *goal, float proximityThreshold ) const;
-
-	inline bool IsGoalATopTierItem() const {
-		return IsGoalATopTierItem( specialGoal ) || IsGoalATopTierItem( longTermGoal ) || IsGoalATopTierItem( shortTermGoal );
-	}
-	inline bool IsGoalATopTierItem( const Goal *goal ) const {
-		return goal && goal->IsTopTierItem( overriddenEntityWeights );
-	}
-
-	int GoalAasAreaNum() const;
-	Vec3 CurrentGoalOrigin() const;
-
 	virtual void PreThink() override;
+
 	virtual void Think() override;
 
-	// Used for additional potential goal rejection that does not reflected in entity weights.
-	// Returns true if the goal entity is not feasible for some reasons.
-	// Return result "false" does not means that goal is feasible though.
-	// Should be overridden in subclasses to implement domain-specific behaviour.
-	virtual bool MayNotBeFeasibleGoal( const Goal *goal ) { return false; };
-	virtual bool MayNotBeFeasibleGoal( const NavEntity *navEntity ) { return false; }
+	virtual void PostThink() override {
+		prevThinkAt = level.time;
+	}
 
-	void OnLongTermGoalReached();
-	void OnShortTermGoalReached();
-	// To be overridden in subclasses
-	virtual void OnSpecialGoalReached();
-
-private:
-	struct NavEntityAndWeight {
-		NavEntity *goal;
-		float weight;
-		inline NavEntityAndWeight( NavEntity *goal_, float weight_ ) : goal( goal_ ), weight( weight_ ) {}
-		// For sorting in descending by weight order operator < is negated
-		inline bool operator<( const NavEntityAndWeight &that ) const { return weight > that.weight; }
-	};
-	typedef StaticVector<NavEntityAndWeight, MAX_NAVENTS> GoalCandidates;
-
-	// Fills a result container and returns it sorted by weight in descending order.
-	// Returns weight of current long-term goal (or zero).
-	float SelectLongTermGoalCandidates( const Goal *currLongTermGoal, GoalCandidates &result );
-	// (Same as SelectLongTermGoalCandidates applied to a short-term goal)
-	float SelectShortTermGoalCandidates( const Goal *currShortTermGoal, GoalCandidates &result );
-	// Filters candidates selected by SelectLongTermGoalCandidates() by short-term reachability
-	// Returns true if current short-term goal (if any) is reachable
-	bool SelectShortTermReachableGoals( const Goal *currShortTermGoal, const GoalCandidates &candidates,
-										GoalCandidates &result );
-
-	bool MayConsiderGoalReachedAtTouch( const Goal *goal, const edict_t *touchedEntity ) const;
-	bool MayConsiderGoalReachedAtRadius( const Goal *goal ) const;
-	bool ShouldWaitForGoal( const Goal *goal ) const;
+	virtual void OnAttitudeChanged( const edict_t *ent, int oldAttitude_, int newAttitude_ ) {}
 
 public:
 	virtual ~AiBaseBrain() override {}
 
-	inline bool HasGoal() const {
-		return longTermGoal || shortTermGoal || specialGoal;
+	void SetAttitude( const edict_t *ent, int attitude );
+
+	inline bool HasNavTarget() const { return navTarget != nullptr; }
+
+	inline bool HasPlan() const { return planHead != nullptr; }
+
+	void ClearGoalAndPlan();
+
+	void DeletePlan( AiBaseActionRecord *head );
+
+	bool IsCloseToNavTarget( float proximityThreshold ) const {
+		return DistanceSquared( self->s.origin, navTarget->Origin().Data() ) < proximityThreshold * proximityThreshold;
+	}
+	// Calling it when there is no nav target is legal
+	int NavTargetAasAreaNum() const {
+		return navTarget ? navTarget->AasAreaNum() : 0;
+	}
+	Vec3 NavTargetOrigin() const { return navTarget->Origin(); }
+	float NavTargetRadius() const { return navTarget->RadiusOrDefault( 12.0f ); }
+	bool IsNavTargetBasedOnEntity( const edict_t *ent ) const {
+		return navTarget ? navTarget->IsBasedOnEntity( ent ) : false;
 	}
 
-	void ClearOverriddenEntityWeights() {
-		memset( overriddenEntityWeights, 0, sizeof( overriddenEntityWeights ) );
-	}
-	// This weight overrides internal one computed by this brain itself.
-	void OverrideEntityWeight( const edict_t *ent, float weight ) {
-		overriddenEntityWeights[ENTNUM( const_cast<edict_t*>( ent ) )] = weight;
-	}
+	bool HandleNavTargetTouch( const edict_t *ent );
+	bool TryReachNavTargetByProximity();
 
-	void ClearAllGoals();
-	// May be overridden in subclasses
-	virtual void OnClearSpecialGoalRequested();
-
-	// Should return true if entity touch has been handled
-	bool HandleGoalTouch( const edict_t *ent );
-	virtual bool HandleSpecialGoalTouch( const edict_t *ent );
-	bool IsCloseToAnyGoal( float proximityThreshold = 96.0f, bool onlyImportantGoals = false ) const;
-	bool TryReachGoalByProximity();
-	// To be overridden in subclasses
-	virtual bool TryReachSpecialGoalByProximity();
-	bool ShouldWaitForGoal() const;
-	// To be overridden in subclasses
-	virtual bool ShouldWaitForSpecialGoal() const;
-	Vec3 ClosestGoalOrigin() const;
+	// Helps to reject non-feasible enemies quickly.
+	// A false result does not guarantee that enemy is feasible.
+	// A true result guarantees that enemy is not feasible.
+	bool MayNotBeFeasibleEnemy( const edict_t *ent ) const;
 };
+
+inline void AiBaseGoal::Register( Ai *ai, AiBaseGoal *goal ) {
+	ai->aiBaseBrain->goals.push_back( goal );
+}
+
+inline void AiBaseAction::Register( Ai *ai, AiBaseAction *action ) {
+	ai->aiBaseBrain->actions.push_back( action );
+}
+
+inline AiBaseAction::PlannerNodePtr::~PlannerNodePtr() {
+	if( this->node ) {
+		this->node->DeleteSelf();
+	}
+}
+
+inline PlannerNode *AiBaseAction::PlannerNodePtr::PrepareActionResult() {
+	PlannerNode *result = this->node;
+	this->node = nullptr;
+
+#ifndef PUBLIC_BUILD
+	if( !result->worldState.IsCopiedFromOtherWorldState() ) {
+		AI_FailWith( "PlannerNodePtr::PrepareActionResult()", "World state has not been copied from parent one" );
+	}
+#endif
+
+	// Compute modified world state hash
+	// This computation have been put here to avoid error-prone copy-pasting.
+	// Another approach is to use lazy hash code computation but it adds branching on each hash code access
+	result->worldStateHash = result->worldState.Hash();
+	return result;
+}
+
+inline WorldState &AiBaseAction::PlannerNodePtr::WorldState() {
+	return node->worldState;
+}
+
+inline float &AiBaseAction::PlannerNodePtr::Cost() {
+	return node->transitionCost;
+}
+
+inline AiBaseAction::PlannerNodePtr AiBaseAction::NewNodeForRecord( AiBaseActionRecord *record ) {
+	if( !record ) {
+		Debug( "Can't allocate an action record\n" );
+		return PlannerNodePtr( nullptr );
+	}
+
+	PlannerNode *node = self->ai->aiRef->aiBaseBrain->plannerNodesPool.New( self );
+	if( !node ) {
+		Debug( "Can't allocate a planner node\n" );
+		record->DeleteSelf();
+		return PlannerNodePtr( nullptr );
+	}
+
+	node->actionRecord = record;
+	return PlannerNodePtr( node );
+}
 
 #endif

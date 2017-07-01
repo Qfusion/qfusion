@@ -411,8 +411,11 @@ void SV_ShutdownGameProgs( void ) {
 	}
 
 	ge->Shutdown();
-	Mem_FreePool( &sv_gameprogspool );
+	// This call might still require the memory pool to be valid
+	// (for example if there are global object destructors calling G_Free()),
+	// that's why it's called before releasing the pool.
 	Com_UnloadGameLibrary( &module_handle );
+	Mem_FreePool( &sv_gameprogspool );
 	ge = NULL;
 }
 

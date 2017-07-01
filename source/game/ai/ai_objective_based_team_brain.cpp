@@ -15,7 +15,6 @@ inline int AiObjectiveBasedTeamBrain::AddItem( const char *name, Container &c, T
 			return -1;
 		}
 	}
-
 	// Check for duplicates first, check capacity only after that.
 	if( c.size() == c.capacity() ) {
 		G_Printf( S_COLOR_YELLOW "Can't add %s (id=%d): too many %s's\n", name, item.id, name );
@@ -97,14 +96,12 @@ AiAlertSpot AiObjectiveBasedTeamBrain::DefenceSpot::ToAlertSpot() const {
 
 void AiObjectiveBasedTeamBrain::EnableDefenceSpotAutoAlert( DefenceSpot *defenceSpot ) {
 	AiAlertSpot alertSpot( defenceSpot->ToAlertSpot() );
-
 	// TODO: Track a list of all bots in AiBaseTeamBrain
 	for( int i = 1; i <= gs.maxclients; ++i ) {
 		edict_t *ent = game.edicts + i;
 		if( !ent->ai || !ent->ai->botRef ) {
 			continue;
 		}
-
 		// If an entity is an AI, it is a client.
 		if( ent->r.client->team != this->team ) {
 			continue;
@@ -139,7 +136,6 @@ void AiObjectiveBasedTeamBrain::OnAlertReported( Bot *bot, int id, float alertLe
 			// (in alert reporting "fair" bot vision is used, and bot may have missed other attackers)
 
 			float oldAlertLevel = defenceSpots[i].alertLevel;
-
 			// If reported alert level is greater than the current one, always override the current level
 			if( defenceSpots[i].alertLevel <= alertLevel ) {
 				defenceSpots[i].alertLevel = alertLevel;
@@ -171,7 +167,6 @@ void AiObjectiveBasedTeamBrain::OnAlertReported( Bot *bot, int id, float alertLe
 			return;
 		}
 	}
-
 	// Since alert reports are not scriptable, the native code should abort on error.
 	FailWith( "OnAlertReported(): Can't find a DefenceSpot (id=%d)\n", id );
 }
@@ -249,7 +244,6 @@ void AiObjectiveBasedTeamBrain::FindAllCandidates( Candidates &candidates ) {
 		if( !ent->r.inuse || !ent->ai || !ent->ai->botRef ) {
 			continue;
 		}
-
 		// If an entity is an AI, it is a client too.
 		if( G_ISGHOSTING( ent ) ) {
 			continue;
@@ -298,7 +292,6 @@ void AiObjectiveBasedTeamBrain::AssignDefenders( Candidates &candidates ) {
 
 		// Compute effective bot defender scores for i-th defence spot
 		ComputeDefenceScore( candidates, spotNum );
-
 		// Sort candidates so best candidates are last
 		std::sort( candidates.begin(), candidates.end() );
 
@@ -396,10 +389,8 @@ void AiObjectiveBasedTeamBrain::AssignAttackers( Candidates &candidates ) {
 		if( candidates.empty() ) {
 			break;
 		}
-
 		// Compute effective bot defender scores for i-th defence spot
 		ComputeOffenceScore( candidates, spotNum );
-
 		// Sort candidates so best candidates are last
 		std::sort( candidates.begin(), candidates.end() );
 
@@ -468,7 +459,6 @@ void AiObjectiveBasedTeamBrain::UpdateAttackersStatus( unsigned offenceSpotNum )
 	for( unsigned i = 0; i < attackers[offenceSpotNum].size(); ++i ) {
 		edict_t *bot = attackers[offenceSpotNum][i];
 		bot->ai->botRef->SetOffenseSpotId( offenseSpots[offenceSpotNum].id );
-
 		// If bot is not in squad, set an offence spot weight to a value of an ordinary valuable item.
 		// Thus bots will not attack alone and will grab some items instead in order to prepare to attack.
 		if( bot->ai->botRef->IsInSquad() ) {
@@ -513,7 +503,6 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders( const edict_t *carrier,
 			}
 			float *botOrigin = botAndScore.bot->s.origin;
 			float squareDistance = DistanceSquared( botOrigin, carrierOrigin );
-
 			// The carrier is too far, hurry up to support it
 			if( squareDistance > 768.0f * 768.0f ) {
 				botAndScore.bot->ai->botRef->OverrideEntityWeight( carrier, 9.0f );
@@ -530,7 +519,6 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders( const edict_t *carrier,
 		}
 		float *botOrigin = botAndScore.bot->s.origin;
 		float squareDistance = DistanceSquared( botOrigin, carrierOrigin );
-
 		// The carrier is too far, hurry up to support it
 		if( squareDistance > 768.0f * 768.0f ) {
 			botAndScore.bot->ai->botRef->OverrideEntityWeight( carrier, 9.0f );
@@ -538,7 +526,6 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders( const edict_t *carrier,
 		}
 		trace_t trace;
 		G_Trace( &trace, carrierOrigin, nullptr, nullptr, carrierOrigin, botAndScore.bot, MASK_AISOLID );
-
 		// The carrier is not visible, hurry up to support it
 		if( trace.fraction != 1.0f && carrier != game.edicts + trace.ent ) {
 			botAndScore.bot->ai->botRef->OverrideEntityWeight( carrier, 4.5f );
@@ -556,14 +543,12 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders( const edict_t *carrier,
 		}
 		int travelTime = routeCache->TravelTimeToGoalArea( botAreaNum, groundedBotOrigin, carrierAreaNum,
 														   Bot::ALLOWED_TRAVEL_FLAGS );
-
 		// A carrier is not reachable in a short period of time
 		// AAS travel time is given in seconds^-2 and lowest feasible value is 1
 		if( !travelTime || travelTime > 250 ) {
 			botAndScore.bot->ai->botRef->OverrideEntityWeight( carrier, 4.5f );
 			continue;
 		}
-		;
 
 		// Decrease carrier weight if bot is already close to it
 		float distance = 1.0f / Q_RSqrt( squareDistance );

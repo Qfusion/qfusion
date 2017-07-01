@@ -38,11 +38,26 @@ in NO WAY supported by Steve Yeager.
 #undef min
 #endif
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
+#include <inttypes.h>
+
+// First try to include <math.h> for M_* defines
+#ifndef __USE_MATH_DEFINES
+#define __USE_MATH_DEFINES 1
+#endif
+#include <math.h>
+
+// If the <math.h> inclusion above still did not help
+// (in case when it was included earlier without __USE_MATH_DEFINES)
+#ifndef M_SQRT1_2
+#define M_SQRT1_2 ( 0.70710678118654752440 )
+#endif
+
 #include <algorithm>
 #include <utility>
 #include <stdarg.h>
-
-constexpr auto AI_DEFAULT_YAW_SPEED = 35 * 5;
 
 // Platform states:
 constexpr auto STATE_TOP    = 0;
@@ -81,15 +96,23 @@ inline bool IsBuiltinWeaponContinuousFire( int builtinWeapon ) {
 
 int BuiltinWeaponTier( int builtinWeapon );
 
+void *GENERIC_asInstantiateGoal( void *factoryObject, edict_t *owner, class BotScriptGoal *nativeGoal );
+void *GENERIC_asInstantiateAction( void *factoryObject, edict_t *owner, class BotScriptAction *nativeAction );
+
+void GENERIC_asActivateScriptActionRecord( void *scriptObject );
+void GENERIC_asDeactivateScriptActionRecord( void *scriptObject );
+void GENERIC_asDeleteScriptActionRecord( void *scriptObject );
+int GENERIC_asCheckScriptActionRecordStatus( void *scriptObject, const class WorldState &currWorldState );
+void *GENERIC_asTryApplyScriptAction( void *scriptObject, const class WorldState &worldState );
+float GENERIC_asGetScriptGoalWeight( void *scriptObject, const class WorldState &currWorldState );
+void GENERIC_asGetScriptGoalDesiredWorldState( void *scriptObject, class WorldState *worldState );
+void GENERIC_asOnScriptGoalPlanBuildingStarted( void *scriptObject );
+void GENERIC_asOnScriptGoalPlanBuildingCompleted( void *scriptObject, bool succeeded );
+
 bool GT_asBotWouldDropHealth( const gclient_t *client );
 void GT_asBotDropHealth( gclient_t *client );
 bool GT_asBotWouldDropArmor( const gclient_t *client );
 void GT_asBotDropArmor( gclient_t *client );
-
-bool GT_asBotWouldCloak( const gclient_t *client );
-void GT_asSetBotCloakEnabled( gclient_t *client, bool enabled );
-// Useful for testing any entity for cloaking
-bool GT_asIsEntityCloaking( const edict_t *ent );
 
 void GT_asBotTouchedGoal( const ai_handle_t *bot, const edict_t *goalEnt );
 void GT_asBotReachedGoalRadius( const ai_handle_t *bot, const edict_t *goalEnt );
@@ -178,6 +201,20 @@ inline unsigned From1UpToMax( unsigned maxValue, float ratio ) {
 	return 1 + From0UpToMax( maxValue - 1, ratio );
 }
 
+inline void SetPacked4uVec( const vec3_t vec, short *packed ) {
+	packed[0] = (short)( vec[0] / 4.0f );
+	packed[1] = (short)( vec[1] / 4.0f );
+	packed[2] = (short)( vec[2] / 4.0f );
+}
+
+inline void SetPacked4uVec( const Vec3 &vec, short *packed ) {
+	SetPacked4uVec( vec.Data(), packed );
+}
+
+inline Vec3 GetUnpacked4uVec( const short *packed ) {
+	return Vec3( packed[0] * 4, packed[1] * 4, packed[2] * 4 );
+}
+
 inline const char *Nick( const edict_t *ent ) {
 	if( !ent ) {
 		return "???";
@@ -200,5 +237,22 @@ void Use_Plat( edict_t *ent, edict_t *other, edict_t *activator );
 
 void AITools_DrawLine( const vec3_t origin, const vec3_t dest );
 void AITools_DrawColorLine( const vec3_t origin, const vec3_t dest, int color, int parm );
+
+void GetHashAndLength( const char *str, unsigned *hash, unsigned *length );
+unsigned GetHashForLength( const char *str, unsigned length );
+
+// A cheaper version of G_Trace() that does not check against entities
+inline void SolidWorldTrace( trace_t *trace, const vec3_t from, const vec3_t to,
+							 const vec3_t mins = vec3_origin, const vec3_t maxs = vec3_origin ) {
+	assert( from );
+	float *from_ = const_cast<float *>( from );
+	assert( to );
+	float *to_ = const_cast<float *>( to );
+	assert( mins );
+	float *mins_ = const_cast<float *>( mins );
+	assert( maxs );
+	float *maxs_ = const_cast<float *>( maxs );
+	trap_CM_TransformedBoxTrace( trace, from_, to_, mins_, maxs_, nullptr, MASK_SOLID, nullptr, nullptr );
+}
 
 #endif

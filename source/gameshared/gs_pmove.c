@@ -48,8 +48,6 @@ int playerbox_gib_viewheight = 8;
 #define PM_SPECIAL_CROUCH_INHIBIT 400
 #define PM_AIRCONTROL_BOUNCE_DELAY 200
 #define PM_OVERBOUNCE       1.01f
-#define PM_CROUCHSLIDE 1500
-#define PM_CROUCHSLIDE_FADE 500
 #define PM_CROUCHSLIDE_TIMEDELAY 700
 #define PM_CROUCHSLIDE_CONTROL 3
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in
@@ -412,7 +410,7 @@ static int PM_SlideMove( void ) {
 	}
 
 	if( pm->numtouch ) {
-		if( pm->playerState->pmove.pm_time || ( pm->groundentity == -1 && pm->waterlevel < 2 
+		if( pm->playerState->pmove.pm_time || ( pm->groundentity == -1 && pm->waterlevel < 2
 												&& ( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CORNERSKIMMING )
 												&& pm->playerState->pmove.skim_time > 0 && old_velocity[2] >= pml.velocity[2] ) ) {
 			VectorCopy( old_velocity, pml.velocity );
@@ -1973,7 +1971,6 @@ void Pmove( pmove_t *pmove ) {
 	} else if( pm->playerState->pmove.pm_flags & PMF_TIME_WATERJUMP ) {
 		// waterjump has no control, but falls
 		pml.velocity[2] -= pm->playerState->pmove.gravity * pml.frametime;
-
 		if( pml.velocity[2] < 0 ) {
 			// cancel as soon as we are falling down again
 			pm->playerState->pmove.pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );

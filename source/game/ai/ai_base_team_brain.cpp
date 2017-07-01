@@ -56,7 +56,6 @@ unsigned AiBaseTeamBrain::TeamAffinityOffset() const {
 void AiBaseTeamBrain::InitTeamAffinity() const {
 	// We round frame time to integer milliseconds
 	int frameTime = 1000 / ServerFps();
-
 	// 4 for 60 fps or more, 1 for 16 fps or less
 	teamBrainAffinityModulo = std::min( 4, std::max( 1, 64 / frameTime ) );
 	if( team == TEAM_PLAYERS ) {
@@ -69,17 +68,13 @@ void AiBaseTeamBrain::InitTeamAffinity() const {
 	switch( teamBrainAffinityModulo ) {
 		// The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 2
 		case 4: teamBrainAffinityOffset = ( team - 2 ) * 2; break;
-
 		// Both Alpha and Beta team brains think on frame 0
 		case 3: teamBrainAffinityOffset = 0; break;
-
 		// The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 1
 		case 2: teamBrainAffinityOffset = team - 2; break;
-
 		// All brains think in the same frame
 		case 1: teamBrainAffinityOffset = 0; break;
 	}
-
 	// Initialize superclass fields
 	const_cast<AiBaseTeamBrain*>( this )->SetFrameAffinity( teamBrainAffinityModulo, teamBrainAffinityOffset );
 }
@@ -88,7 +83,6 @@ void AiBaseTeamBrain::AddBot( Bot *bot ) {
 	Debug( "new bot %s has been added\n", bot->Nick() );
 
 	AcquireBotFrameAffinity( bot->EntNum() );
-
 	// Call subtype method (if any)
 	OnBotAdded( bot );
 }
@@ -97,7 +91,6 @@ void AiBaseTeamBrain::RemoveBot( Bot *bot ) {
 	Debug( "bot %s has been removed\n", bot->Nick() );
 
 	ReleaseBotFrameAffinity( bot->EntNum() );
-
 	// Call subtype method (if any)
 	OnBotRemoved( bot );
 }
@@ -114,20 +107,17 @@ void AiBaseTeamBrain::AcquireBotFrameAffinity( int entNum ) {
 		static_assert( MAX_AFFINITY_OFFSET == 4, "Only two teams are supported" );
 		switch( modulo ) {
 			case 4:
-
 				// If the think cycle consist of 4 frames:
 				// the Alpha team brain thinks on frame 0, bots of team Alpha think on frame 1,
 				// the Beta team brain thinks on frame 2, bots of team Beta think on frame 3
 				SetBotFrameAffinity( entNum, modulo, 2 * ( (unsigned)team - TEAM_ALPHA ) + 1 );
 				break;
 			case 3:
-
 				// If the think cycle consist of 3 frames:
 				// team brains think on frame 0, bots of team Alpha think on frame 1, bots of team Beta think on frame 2
 				SetBotFrameAffinity( entNum, modulo, 1 + (unsigned)team - TEAM_ALPHA );
 				break;
 			case 2:
-
 				// If the think cycle consist of 2 frames:
 				// the Alpha team brain and team Alpha bot brains think on frame 0,
 				// the Beta team brain an team Beta bot brains think on frame 1
@@ -178,13 +168,10 @@ void AiBaseTeamBrain::RegisterTeamBrain( int team, AiBaseTeamBrain *brain ) {
 	if( teamBrains[team - 1] ) {
 		UnregisterTeamBrain( team );
 	}
-
 	// Set team brain pointer
 	teamBrains[team - 1] = brain;
-
 	// Use address of a static array cell for the brain pointer as a tag
 	uint64_t tag = (uint64_t)( teamBrains + team - 1 );
-
 	// Capture brain pointer (a stack variable) by value!
 	AiShutdownHooksHolder::Instance()->RegisterHook( tag, [ = ]
 	{
@@ -199,16 +186,12 @@ void AiBaseTeamBrain::UnregisterTeamBrain( int team ) {
 	}
 
 	AiBaseTeamBrain *brainToDelete = teamBrains[team - 1];
-
 	// Reset team brain pointer
 	teamBrains[team - 1] = nullptr;
-
 	// Destruct the brain
 	brainToDelete->~AiBaseTeamBrain();
-
 	// Free brain memory
 	G_Free( brainToDelete );
-
 	// Use address of a static array cell for the brain pointer as a tag
 	uint64_t tag = (uint64_t)( teamBrains + team - 1 );
 	AiShutdownHooksHolder::Instance()->UnregisterHook( tag );

@@ -275,8 +275,7 @@ void G_LevelGarbageCollect( void ) {
 #define STRINGPOOL_SIZE         1024 * 1024
 #define STRINGPOOL_HASH_SIZE    32
 
-typedef struct g_poolstring_s
-{
+typedef struct g_poolstring_s {
 	char *buf;
 	struct g_poolstring_s *hash_next;
 } g_poolstring_t;
@@ -737,6 +736,10 @@ void G_InitEdict( edict_t *e ) {
 	e->s.number = ENTNUM( e );
 
 	G_asResetEntityBehaviors( e );
+
+	// Reset AI intrinsic properties
+	e->aiIntrinsicEnemyWeight = 0.0f;
+	e->aiVisibilityDistance = 999999.9f;
 
 	// mark all entities to not be sent by default
 	e->r.svflags = SVF_NOCLIENT | (e->r.svflags & SVF_FAKECLIENT);
@@ -1496,7 +1499,6 @@ bool KillBox( edict_t *ent ) {
 			return telefragged; // found the world (but a player could be in there too). suicide?
 
 		}
-
 		// nail it
 		G_Damage( &game.edicts[tr.ent], ent, ent, vec3_origin, vec3_origin, ent->s.origin, 100000, 0, 0, DAMAGE_NO_PROTECTION, MOD_TELEFRAG );
 		telefragged = true;
@@ -2112,7 +2114,6 @@ static bool G_ParseFiredefFile( uint8_t *buf, int weapon, firedef_t *firedef ) {
 		if( token[strlen( token ) - 1] == '}' ) {
 			token[strlen( token ) - 1] = 0;
 		}
-
 		//(I don't fix these ones, but show the error)
 		if( token[0] == ',' ) {
 			G_Printf( "ERROR in script. Comma must be followed by space or newline\n" );
@@ -2149,7 +2150,6 @@ static bool G_ParseFiredefFile( uint8_t *buf, int weapon, firedef_t *firedef ) {
 	// validate
 
 	count = 0;
-
 	// put the data into the firedef
 	firedef->usage_count = (int)parm[count++];
 	firedef->projectile_count = (int)parm[count++];

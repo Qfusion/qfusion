@@ -22,7 +22,7 @@ inline NavEntityFlags operator&( const NavEntityFlags &lhs, const NavEntityFlags
 	return (NavEntityFlags)( (unsigned)lhs & (unsigned)( rhs ) );
 }
 
-enum class GoalFlags : unsigned {
+enum class NavTargetFlags : unsigned {
 	NONE = 0x0,
 	REACH_ON_RADIUS = 0x1,
 	REACH_ON_EVENT = 0x2,
@@ -30,11 +30,11 @@ enum class GoalFlags : unsigned {
 	TACTICAL_SPOT = 0x8
 };
 
-inline GoalFlags operator|( const GoalFlags &lhs, const GoalFlags &rhs ) {
-	return (GoalFlags)( (unsigned)lhs | (unsigned)rhs );
+inline NavTargetFlags operator|( const NavTargetFlags &lhs, const NavTargetFlags &rhs ) {
+	return (NavTargetFlags)( (unsigned)lhs | (unsigned)rhs );
 }
-inline GoalFlags operator&( const GoalFlags &lhs, const GoalFlags &rhs ) {
-	return (GoalFlags)( (unsigned)lhs & (unsigned)rhs );
+inline NavTargetFlags operator&( const NavTargetFlags &lhs, const NavTargetFlags &rhs ) {
+	return (NavTargetFlags)( (unsigned)lhs & (unsigned)rhs );
 }
 
 // A NavEntity is based on some entity (edict_t) plus some attributes.
@@ -91,19 +91,19 @@ public:
 
 	inline bool MayBeReachedInGroup() const { return IsFlagSet( NavEntityFlags::REACH_IN_GROUP ); }
 
-	unsigned MaxWaitDuration() const;
+	uint64_t MaxWaitDuration() const;
 
 	bool IsTopTierItem( const float *overriddenEntityWeights = nullptr ) const;
 
 	const char *Name() const { return name; }
 
-	inline void NotifyTouchedByBot( const edict_t *bot ) {
+	inline void NotifyTouchedByBot( const edict_t *bot ) const {
 		if( ShouldNotifyScript() ) {
 			GT_asBotTouchedGoal( bot->ai, ent );
 		}
 	}
 
-	inline void NotifyBotReachedRadius( const edict_t *bot ) {
+	inline void NotifyBotReachedRadius( const edict_t *bot ) const {
 		if( ShouldNotifyScript() ) {
 			GT_asBotReachedGoalRadius( bot->ai, ent );
 		}
@@ -123,48 +123,50 @@ public:
 	int64_t SpawnTime() const;
 };
 
-// A goal may be based on a NavEntity (an item with attributes) or may be an "aritficial" spot
-// A goal has a setter, an Ai superclass.
-// If a goal user does not own a goal (is not a setter of a goal),
-// the goal cannot be canceled by the user, but can time out as any other goal.
-class Goal
+// A NavTarget may be based on a NavEntity (an item with attributes) or may be an "artificial" spot
+class NavTarget
 {
-	friend class Ai;
-
-	NavEntity *navEntity;
-
-	const class AiFrameAwareUpdatable *setter;
-
-	GoalFlags flags;
-
 	Vec3 explicitOrigin;
-
-	int explicitAasAreaNum;
+	NavTargetFlags explicitFlags;
 	int64_t explicitSpawnTime;
 	int64_t explicitTimeout;
+	int explicitAasAreaNum;
 	float explicitRadius;
+
+	const NavEntity *navEntity;
 
 	const char *name;
 
-	void Clear();
-
-	inline bool IsFlagSet( GoalFlags flag ) const {
-		return GoalFlags::NONE != ( this->flags & flag );
+	inline bool IsFlagSet( NavTargetFlags flag ) const {
+		return NavTargetFlags::NONE != ( this->explicitFlags & flag );
 	}
+
+	NavTarget()
+		: explicitOrigin( NAN, NAN, NAN ),
+		explicitFlags( NavTargetFlags::NONE ),
+		explicitSpawnTime( 0 ),
+		explicitTimeout( 0 ),
+		explicitAasAreaNum( 0 ),
+		explicitRadius( 0 ),
+		navEntity( nullptr ),
+		name( nullptr ) {}
 
 public:
-	Goal( const class AiFrameAwareUpdatable *initialSetter );
-	~Goal();
+	static inline NavTarget Dummy() { return NavTarget(); }
 
-	// Instead of cleaning the goal completely set a "setter" of this action
-	// (otherwise a null setter cannot release the goal ownership)
-	void ResetWithSetter( const class AiFrameAwareUpdatable *setter_ ) {
-		Clear();
-		this->setter = setter_;
+	void SetToNavEntity( const NavEntity *navEntity_ ) {
+		this->navEntity = navEntity_;
 	}
 
-	void SetToNavEntity( NavEntity *navEntity_, const AiFrameAwareUpdatable *setter_ );
-	void SetToTacticalSpot( const Vec3 &origin, unsigned timeout, const AiFrameAwareUpdatable *setter_ );
+	void SetToTacticalSpot( const Vec3 &origin, float reachRadius = 32.0f ) {
+		this->navEntity = nullptr;
+		this->explicitOrigin = origin;
+		this->explicitFlags = NavTargetFlags::REACH_ON_RADIUS | NavTargetFlags::TACTICAL_SPOT;
+		this->explicitSpawnTime = 0;
+		this->explicitTimeout = std::numeric_limits<int64_t>::max();
+		this->explicitAasAreaNum = AiAasWorld::Instance()->FindAreaNum( origin );
+		this->explicitRadius = reachRadius;
+	}
 
 	inline int AasAreaNum() const {
 		return navEntity ? navEntity->AasAreaNum() : explicitAasAreaNum;
@@ -195,7 +197,7 @@ public:
 		return navEntity && navEntity->IsDroppedEntity();
 	}
 
-	inline bool IsTacticalSpot() const { return IsFlagSet( GoalFlags::TACTICAL_SPOT ); }
+	inline bool IsTacticalSpot() const { return IsFlagSet( NavTargetFlags::TACTICAL_SPOT ); }
 
 	inline bool IsEnabled() const { return !IsDisabled(); }
 
@@ -203,7 +205,7 @@ public:
 		return navEntity && navEntity->IsTopTierItem( overriddenEntityWeights );
 	}
 
-	inline unsigned MaxWaitDuration() const {
+	inline uint64_t MaxWaitDuration() const {
 		return navEntity ? navEntity->MaxWaitDuration() : 0;
 	}
 
@@ -211,7 +213,7 @@ public:
 		if( navEntity ) {
 			return navEntity->MayBeReachedInGroup();
 		}
-		return IsFlagSet( GoalFlags::REACH_IN_GROUP );
+		return IsFlagSet( NavTargetFlags::REACH_IN_GROUP );
 	}
 
 	inline const char *Name() const { return name ? name : "???"; }
@@ -235,14 +237,14 @@ public:
 		if( navEntity ) {
 			return navEntity->ShouldBeReachedAtRadius();
 		}
-		return IsFlagSet( GoalFlags::REACH_ON_RADIUS );
+		return IsFlagSet( NavTargetFlags::REACH_ON_RADIUS );
 	}
 
 	inline bool ShouldBeReachedOnEvent() const {
 		if( navEntity ) {
 			return navEntity->ShouldBeReachedOnEvent();
 		}
-		return IsFlagSet( GoalFlags::REACH_ON_EVENT );
+		return IsFlagSet( NavTargetFlags::REACH_ON_EVENT );
 	}
 
 	inline bool ShouldNotifyScript() const {
@@ -265,15 +267,18 @@ public:
 	// Returns zero if spawn time is unknown
 	// Returns spawn time when the item is not spawned and spawn time may be predicted
 	inline int64_t SpawnTime() const {
-		return navEntity ? navEntity->SpawnTime() : explicitSpawnTime;
+		if( navEntity ) {
+			return navEntity->SpawnTime();
+		}
+		if( explicitSpawnTime > level.time ) {
+			return explicitSpawnTime;
+		}
+		return level.time;
 	}
 
 	inline int64_t Timeout() const {
 		return navEntity ? navEntity->Timeout() : explicitTimeout;
 	}
-
-	// Hack for incomplete type
-	inline const decltype( setter )Setter() const { return setter; }
 };
 
 class NavEntitiesRegistry
