@@ -370,25 +370,10 @@ void SV_WriteFrameSnapToClient( client_t *client, msg_t *msg ) {
 * SV_BuildClientFrameSnap
 */
 void SV_BuildClientFrameSnap( client_t *client ) {
-	vec_t *skyorg = NULL, origin[3];
-
-	if( sv.configstrings[CS_SKYBOX][0] != '\0' ) {
-		int noents = 0;
-		float f1 = 0, f2 = 0;
-
-		if( sscanf( sv.configstrings[CS_SKYBOX], "%f %f %f %f %f %i", &origin[0], &origin[1], &origin[2], &f1, &f2, &noents ) >= 3 ) {
-			if( !noents ) {
-				skyorg = origin;
-			}
-		}
-	}
-
-	svs.fatvis.skyorg = skyorg;     // HACK HACK HACK
 	SNAP_BuildClientFrameSnap( svs.cms, &sv.gi, sv.framenum, svs.gametime,
-							   &svs.fatvis, client, ge->GetGameState(),
+							  client, ge->GetGameState(),
 							   &svs.client_entities,
 							   false, sv_mempool );
-	svs.fatvis.skyorg = NULL;
 }
 
 /*

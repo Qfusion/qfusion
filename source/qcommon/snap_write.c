@@ -528,7 +528,7 @@ static float SNAP_GainForAttenuation( float dist, float attenuation ) {
 /*
 * SNAP_SnapCullSoundEntity
 */
-static bool SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, vec3_t listener_origin, float attenuation ) {
+static bool SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, const vec3_t listener_origin, float attenuation ) {
 	float gain, dist;
 
 	if( !attenuation ) {
@@ -548,7 +548,7 @@ static bool SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, vec3_t 
 /*
 * SNAP_SnapCullEntity
 */
-static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *clent, client_snapshot_t *frame, vec3_t vieworg, uint8_t *fatpvs ) {
+static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *clent, client_snapshot_t *frame, const vec3_t vieworg, uint8_t *fatpvs ) {
 	uint8_t *areabits;
 	bool snd_cull_only;
 	bool snd_culled;
@@ -622,63 +622,23 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 }
 
 /*
-* SNAP_BuildSnapEntitiesList
+* SNAP_AddEntitiesVisibleAtOrigin
 */
-static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, vec3_t vieworg, vec3_t skyorg, uint8_t *fatpvs, client_snapshot_t *frame, snapshotEntityNumbers_t *entsList ) {
-	int leafnum = -1, clusternum = -1, clientarea = -1;
+static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg, client_snapshot_t *frame, snapshotEntityNumbers_t *entList ) {
 	int entNum;
 	edict_t *ent;
+	uint8_t *pvs;
+	int leafnum = -1, clusternum = -1, clientarea = -1;
 
 	// find the client's PVS
-	if( frame->allentities ) {
-		clientarea = -1;
-	} else {
+	if( !frame->allentities ) {
 		leafnum = CM_PointLeafnum( cms, vieworg );
 		clusternum = CM_LeafCluster( cms, leafnum );
 		clientarea = CM_LeafArea( cms, leafnum );
 	}
 
-	frame->clientarea = clientarea;
-	frame->areabytes = CM_WriteAreaBits( cms, frame->areabits );
-
-	if( clent ) {
-		SNAP_FatPVS( cms, vieworg, fatpvs );
-
-		// if the client is outside of the world, don't send him any entity (excepting himself)
-		if( !frame->allentities && clusternum == -1 ) {
-			entNum = NUM_FOR_EDICT( clent );
-			if( clent->s.number != entNum ) {
-				Com_Printf( "FIXING CLENT->S.NUMBER: %i %i!!!\n", clent->s.number, entNum );
-				clent->s.number = entNum;
-			}
-
-			// FIXME we should send all the entities who's POV we are sending if frame->multipov
-			SNAP_AddEntNumToSnapList( entNum, entsList );
-			return;
-		}
-	}
-
-	// no need of merging when we are sending the whole level
-	if( !frame->allentities && clientarea >= 0 ) {
-		// make a pass checking for sky portal and portal entities and merge PVS in case of finding any
-		if( skyorg ) {
-			CM_MergeVisSets( cms, skyorg, fatpvs, frame->areabits + clientarea * CM_AreaRowSize( cms ) );
-		}
-
-		for( entNum = 1; entNum < gi->num_edicts; entNum++ ) {
-			ent = EDICT_NUM( entNum );
-			if( ent->r.svflags & SVF_PORTAL ) {
-				// merge visibility sets if portal
-				if( SNAP_SnapCullEntity( cms, ent, clent, frame, vieworg, fatpvs ) ) {
-					continue;
-				}
-
-				if( !VectorCompare( ent->s.origin, ent->s.origin2 ) ) {
-					CM_MergeVisSets( cms, ent->s.origin2, fatpvs, frame->areabits + clientarea * CM_AreaRowSize( cms ) );
-				}
-			}
-		}
-	}
+	pvs = alloca( CM_ClusterRowSize( cms ) );
+	SNAP_FatPVS( cms, vieworg, pvs );
 
 	// add the entities to the list
 	for( entNum = 1; entNum < gi->num_edicts; entNum++ ) {
@@ -690,26 +650,71 @@ static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_
 			ent->s.number = entNum;
 		}
 
-		// always add the client entity, even if SVF_NOCLIENT
-		if( ( ent != clent ) && SNAP_SnapCullEntity( cms, ent, clent, frame, vieworg, fatpvs ) ) {
-			continue;
+		if( !frame->allentities ) {
+			// always add the client entity, even if SVF_NOCLIENT
+			if( ( ent != clent ) && SNAP_SnapCullEntity( cms, ent, clent, frame, vieworg, pvs ) ) {
+				continue;
+			}
 		}
 
 		// add it
-		SNAP_AddEntNumToSnapList( entNum, entsList );
+		SNAP_AddEntNumToSnapList( entNum, entList );
 
 		if( ent->r.svflags & SVF_FORCEOWNER ) {
 			// make sure owner number is valid too
 			if( ent->s.ownerNum > 0 && ent->s.ownerNum < gi->num_edicts ) {
-				SNAP_AddEntNumToSnapList( ent->s.ownerNum, entsList );
+				SNAP_AddEntNumToSnapList( ent->s.ownerNum, entList );
 			} else {
 				Com_Printf( "FIXING ENT->S.OWNERNUM: %i %i!!!\n", ent->s.type, ent->s.ownerNum );
 				ent->s.ownerNum = 0;
 			}
 		}
+
+		if( ent->r.svflags & SVF_PORTAL ) {
+			// if it's a portal entity and not a mirror,
+			// recursively add everything from its camera positiom
+			if( !VectorCompare( ent->s.origin, ent->s.origin2 ) ) {
+				SNAP_AddEntitiesVisibleAtOrigin( cms, gi, clent, ent->s.origin2, frame, entList );
+			}
+		}
+	}
+}
+
+/*
+* SNAP_BuildSnapEntitiesList
+*/
+static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg, client_snapshot_t *frame, snapshotEntityNumbers_t *entList ) {
+	int entNum;
+	int leafnum = -1, clientarea = -1;
+
+	entList->numSnapshotEntities = 0;
+	memset( entList->entityAddedToSnapList, 0, sizeof( entList->entityAddedToSnapList ) );
+
+	// find the client's PVS
+	leafnum = CM_PointLeafnum( cms, vieworg );
+	clientarea = CM_LeafArea( cms, leafnum );
+
+	frame->clientarea = clientarea;
+	frame->areabytes = CM_WriteAreaBits( cms, frame->areabits );
+
+	// always add the client entity
+	if( clent ) {
+		entNum = NUM_FOR_EDICT( clent );
+		if( clent->s.number != entNum ) {
+			Com_Printf( "FIXING CLENT->S.NUMBER: %i %i!!!\n", clent->s.number, entNum );
+			clent->s.number = entNum;
+		}
+
+		// FIXME we should send all the entities who's POV we are sending if frame->multipov
+		SNAP_AddEntNumToSnapList( entNum, entList );
 	}
 
-	SNAP_SortSnapList( entsList );
+	// if the client is outside of the world, don't send him any entity
+	if( frame->clientarea >= 0 || frame->allentities ) {
+		SNAP_AddEntitiesVisibleAtOrigin( cms, gi, clent, vieworg, frame, entList );
+	}
+
+	SNAP_SortSnapList( entList );
 }
 
 /*
@@ -719,7 +724,7 @@ static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_
 * copies off the playerstat and areabits.
 */
 void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, int64_t frameNum, int64_t timeStamp,
-								fatvis_t *fatvis, client_t *client,
+								client_t *client,
 								game_state_t *gameState, client_entities_t *client_entities,
 								bool relay, mempool_t *mempool ) {
 	int e, i, ne;
@@ -812,19 +817,7 @@ void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, int64_t frameN
 
 	// build up the list of visible entities
 	//=============================
-	entsList.numSnapshotEntities = 0;
-	memset( entsList.entityAddedToSnapList, 0, sizeof( entsList.entityAddedToSnapList ) );
-	SNAP_BuildSnapEntitiesList( cms, gi, clent, org, fatvis->skyorg, fatvis->pvs, frame, &entsList );
-
-	if( developer->integer ) {
-		int olde = -1;
-		for( e = 0; e < entsList.numSnapshotEntities; e++ ) {
-			if( olde >= entsList.snapshotEntities[e] ) {
-				Com_Printf( "WARNING 'SV_BuildClientFrameSnap': Unsorted entities list\n" );
-			}
-			olde = entsList.snapshotEntities[e];
-		}
-	}
+	SNAP_BuildSnapEntitiesList( cms, gi, clent, org, frame, &entsList );
 
 	// store current match state information
 	frame->gameState = *gameState;

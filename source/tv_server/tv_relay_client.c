@@ -32,18 +32,6 @@ void TV_Relay_BuildClientFrameSnap( relay_t *relay, client_t *client ) {
 	edict_t *clent;
 	entity_state_t backup_state = { 0 };
 	entity_shared_t backup_shared = { 0 };
-	vec_t *skyorg = NULL, origin[3];
-
-	if( relay->configstrings[CS_SKYBOX][0] != '\0' ) {
-		int noents = 0;
-		float f1 = 0, f2 = 0;
-
-		if( sscanf( relay->configstrings[CS_SKYBOX], "%f %f %f %f %f %i", &origin[0], &origin[1], &origin[2], &f1, &f2, &noents ) >= 3 ) {
-			if( !noents ) {
-				skyorg = origin;
-			}
-		}
-	}
 
 	// pretend client occupies our slot on real server
 	clent = client->edict;
@@ -70,8 +58,7 @@ void TV_Relay_BuildClientFrameSnap( relay_t *relay, client_t *client ) {
 		}
 	}
 
-	relay->fatvis.skyorg = skyorg;      // HACK HACK HACK
-	SNAP_BuildClientFrameSnap( relay->cms, &relay->gi, relay->framenum, relay->realtime, &relay->fatvis,
+	SNAP_BuildClientFrameSnap( relay->cms, &relay->gi, relay->framenum, relay->realtime,
 							   client, relay->module_export->GetGameState( relay->module ),
 							   &relay->client_entities,
 							   true, tv_mempool );

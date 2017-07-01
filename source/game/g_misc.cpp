@@ -846,10 +846,14 @@ void SP_skyportal( edict_t *ent ) {
 	// default to client's FOV
 	//	if (!st.fov)
 	//		st.fov = 90;
-	ent->r.svflags = SVF_NOCLIENT;
+	ent->r.svflags = SVF_BROADCAST|SVF_PORTAL;
+	VectorCopy( ent->s.origin, ent->s.origin2 ); // the camera position
 
 	trap_ConfigString( CS_SKYBOX, va( "%.3f %.3f %.3f %.1f %.1f %d %.1f %.1f %.1f", ent->s.origin[0], ent->s.origin[1], ent->s.origin[2],
 									  st.fov, st.scale, st.noents, ent->s.angles[0], ent->s.angles[1], ent->s.angles[2] ) );
+
+	// to differentiate from origin2, otherwise the snapshotter is going to assume it's a mirror portal
+	ent->s.origin[0] += 2;
 }
 
 //=====================================================

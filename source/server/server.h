@@ -234,11 +234,6 @@ typedef struct client_entities_s {
 	entity_state_t *entities;           // [num_entities]
 } client_entities_t;
 
-typedef struct fatvis_s {
-	vec_t *skyorg;
-	uint8_t pvs[MAX_MAP_LEAFS / 8];
-} fatvis_t;
-
 typedef struct {
 	bool initialized;               // sv_init has completed
 	int64_t realtime;               // real world time - always increasing, no clamping, etc
@@ -270,8 +265,6 @@ typedef struct {
 	purelist_t *purelist;               // pure file support
 
 	cmodel_state_t *cms;                // passed to CM-functions
-
-	fatvis_t fatvis;
 
 	char *motd;
 
