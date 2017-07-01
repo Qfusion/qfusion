@@ -4,6 +4,7 @@
 
 generic/quickmenu.as;
 generic/matchstates.as;
+generic/bots.as;
 race.as;
 
 legacy/quake1.as;

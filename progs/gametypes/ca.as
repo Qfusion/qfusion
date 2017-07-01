@@ -635,9 +635,6 @@ void CA_SetUpWarmup()
     // set spawnsystem type to instant while players join
     for ( int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
         gametype.setTeamSpawnsystem( team, SPAWNSYSTEM_INSTANT, 0, 0, false );
-
-    // Add dummy goals for bots
-    GENERIC_AddBotroamGoals();
 }
 
 void CA_SetUpCountdown()
@@ -945,8 +942,6 @@ void GT_ThinkRules()
         return;
 
     caRound.think();
-
-    GENERIC_UpdateBotroamGoalsWeights();
 }
 
 // The game has detected the end of the match state, but it
