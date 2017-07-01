@@ -757,7 +757,7 @@ bool CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, uint8_t *visbits ) {
 * CM_MergePVS
 * Merge PVS at origin into out
 */
-void CM_MergePVS( cmodel_state_t *cms, vec3_t org, uint8_t *out ) {
+void CM_MergePVS( cmodel_state_t *cms, const vec3_t org, uint8_t *out ) {
 	int leafs[128];
 	int i, j, count;
 	int longs;
@@ -797,7 +797,7 @@ void CM_MergePVS( cmodel_state_t *cms, vec3_t org, uint8_t *out ) {
 /*
 * CM_MergeVisSets
 */
-int CM_MergeVisSets( cmodel_state_t *cms, vec3_t org, uint8_t *pvs, uint8_t *areabits ) {
+int CM_MergeVisSets( cmodel_state_t *cms, const vec3_t org, uint8_t *pvs, uint8_t *areabits ) {
 	int area;
 
 	assert( pvs || areabits );

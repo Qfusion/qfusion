@@ -68,9 +68,9 @@ bool CM_HeadnodeVisible( cmodel_state_t *cms, int headnode, uint8_t *visbits );
 void CM_WritePortalState( cmodel_state_t *cms, int file );
 void CM_ReadPortalState( cmodel_state_t *cms, int file );
 
-void CM_MergePVS( cmodel_state_t *cms, vec3_t org, uint8_t *out );
+void CM_MergePVS( cmodel_state_t *cms, const vec3_t org, uint8_t *out );
 void CM_MergePHS( cmodel_state_t *cms, int cluster, uint8_t *out );
-int CM_MergeVisSets( cmodel_state_t *cms, vec3_t org, uint8_t *pvs, uint8_t *areabits );
+int CM_MergeVisSets( cmodel_state_t *cms, const vec3_t org, uint8_t *pvs, uint8_t *areabits );
 
 bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 );
 
