@@ -41,6 +41,12 @@ static void CL_UIModule_Print( const char *msg ) {
 	Com_Printf( "%s", msg );
 }
 
+#ifndef _MSC_VER
+static void CL_UIModule_Error( const char *msg ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) static void CL_UIModule_Error( const char *msg );
+#endif
+
 /*
 * CL_UIModule_Error
 */

@@ -193,6 +193,12 @@ static void PF_dprint( const char *msg ) {
 	Com_Printf( "%s", copy );
 }
 
+#ifndef _MSC_VER
+static void PF_error( const char *msg ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) static void PF_error( const char *msg );
+#endif
+
 /*
 * PF_error
 *
@@ -204,7 +210,6 @@ static void PF_error( const char *msg ) {
 
 	if( !msg ) {
 		Com_Error( ERR_DROP, "Game Error: unknown error" );
-		return;
 	}
 
 	// mask off high bits and colored strings

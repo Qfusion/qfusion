@@ -111,8 +111,15 @@ struct relay_s {
 void TV_Relay_Init( relay_t *relay, upstream_t *upstream, int delay );
 void TV_Relay_ClearState( relay_t *relay );
 void TV_Relay_InitMap( relay_t *relay );
-void TV_Relay_Error( relay_t *relay, const char *format, ... );
-void TV_Relay_Shutdown( relay_t *relay, const char *format, ... );
+
+#ifndef _MSC_VER
+void TV_Relay_Error( relay_t *relay, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) ) __attribute__( ( noreturn ) );
+void TV_Relay_Shutdown( relay_t *relay, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
+#else
+__declspec( noreturn ) void TV_Relay_Error( relay_t *relay, _Printf_format_string_ const char *format, ... );
+void TV_Relay_Shutdown( relay_t *relay, _Printf_format_string_ const char *format, ... );
+#endif
+
 void TV_Relay_Run( relay_t *relay, int msec );
 void TV_Relay_UpstreamUserinfoChanged( relay_t *relay );
 int TV_Relay_NumPlayers( relay_t *relay );

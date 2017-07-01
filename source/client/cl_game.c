@@ -76,6 +76,12 @@ static inline bool CL_GameModule_CM_InPVS( const vec3_t p1, const vec3_t p2 ) {
 
 //======================================================================
 
+#ifndef _MSC_VER
+static void CL_GameModule_Error( const char *msg ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) static void CL_GameModule_Error( const char *msg );
+#endif
+
 /*
 * CL_GameModule_Error
 */

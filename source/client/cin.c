@@ -25,6 +25,12 @@ static cin_export_t *cin_export;
 static void *cin_libhandle = NULL;
 static mempool_t *cin_mempool;
 
+#ifndef _MSC_VER
+static void CL_CinModule_Error( const char *msg ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) static void CL_CinModule_Error( const char *msg );
+#endif
+
 /*
 * CL_CinModule_Error
 */

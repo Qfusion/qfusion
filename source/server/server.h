@@ -444,7 +444,12 @@ void SV_FlushRedirect( int sv_redirected, const char *outputbuf, const void *ext
 void SV_SendClientMessages( void );
 
 void SV_Multicast( vec3_t origin, multicast_t to );
-void SV_BroadcastCommand( const char *format, ... );
+
+#ifndef _MSC_VER
+void SV_BroadcastCommand( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+#else
+void SV_BroadcastCommand( _Printf_format_string_ const char *format, ... );
+#endif
 
 //
 // sv_client.c
@@ -453,16 +458,16 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg );
 bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
 					   int game_port, int challenge, bool fakeClient, bool tvClient,
 					   unsigned int ticket_id, int session_id );
-void SV_DropClient( client_t *drop, int type, const char *format, ... );
+
+#ifndef _MSC_VER
+void SV_DropClient( client_t *drop, int type, const char *format, ... ) __attribute__( ( format( printf, 3, 4 ) ) );
+#else
+void SV_DropClient( client_t *drop, int type, _Printf_format_string_ const char *format, ... );
+#endif
+
 void SV_ExecuteClientThinks( int clientNum );
 void SV_ClientResetCommandBuffers( client_t *client );
 void SV_ClientCloseDownload( client_t *client );
-
-//
-// sv_mv.c
-//
-bool SV_Multiview_CreateStartMessages( bool ( *callback )( msg_t *msg, void *extra ), void *extra );
-
 
 //
 // sv_ccmds.c
@@ -476,8 +481,6 @@ void SV_WriteFrameSnapToClient( client_t *client, msg_t *msg );
 void SV_BuildClientFrameSnap( client_t *client );
 
 
-void SV_Error( char *error, ... );
-
 //
 // sv_game.c
 //
@@ -485,7 +488,6 @@ extern game_export_t *ge;
 
 void SV_InitGameProgs( void );
 void SV_ShutdownGameProgs( void );
-void SV_InitEdict( edict_t *e );
 
 
 //============================================================

@@ -330,7 +330,7 @@ void BotTacticalSpotsCache::FindReachableClassEntities( const Vec3 &origin, floa
 	AiAasRouteCache *routeCache = self->ai->botRef->routeCache;
 
 	bool testTwoCurrAreas = false;
-	int fromAreaNum;
+	int fromAreaNum = 0;
 	// If an origin matches actual bot origin
 	if( ( origin - self->s.origin ).SquaredLength() < WorldState::OriginVar::MAX_ROUNDING_SQUARE_DISTANCE_ERROR ) {
 		// Try testing both areas

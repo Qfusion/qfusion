@@ -2684,7 +2684,7 @@ void BotLandOnSavedAreasMovementAction::CheckPredictionStepResults( BotMovementP
 	}
 
 	// Check which area bot has landed in
-	Assert( currAreaIndex >= 0 && currAreaIndex == totalTestedAreas && currAreaIndex < (int)savedLandingAreas.size() );
+	Assert( currAreaIndex >= 0 && currAreaIndex == (int)totalTestedAreas && currAreaIndex < (int)savedLandingAreas.size() );
 	const int landingArea = savedLandingAreas[currAreaIndex];
 	if( landingArea == entityPhysicsState.CurrAasAreaNum() || landingArea == entityPhysicsState.DroppedToFloorAasAreaNum() ) {
 		Debug( "A prediction step has lead to touching a ground in the target landing area, should stop planning\n" );

@@ -29,8 +29,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern "C" {
 #endif
 
-extern void ( *module_Printf )( const char *format, ... );
-extern void ( *module_Error )( const char *format, ... );
+#ifndef _MSC_VER
+extern void ( *module_Printf )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+extern void ( *module_Error )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
+#else
+extern void ( *module_Printf )( _Printf_format_string_ const char *format, ... );
+extern void ( *module_Error )( _Printf_format_string_ const char *format, ... );
+#endif
+
 extern void *( *module_Malloc )( size_t size );
 extern void ( *module_Free )( void *data );
 extern void ( *module_Trace )( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta );

@@ -1057,7 +1057,7 @@ void G_PrintChasersf( edict_t *self, const char *format, ... ) {
 
 	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {
 		if( ent->r.client->resp.chase.active && ent->r.client->resp.chase.target == ENTNUM( self ) ) {
-			G_PrintMsg( ent, msg );
+			G_PrintMsg( ent, "%s", msg );
 		}
 	}
 }

@@ -1176,7 +1176,10 @@ inline uint32_t WorldState::DualOriginLazyVar::Hash() const {
 	}
 	unsigned originHash = ( 17U * Data()[0] + ( Data()[1] | ( Data()[2] << 16 ) ) );
 	unsigned originHash2 = ( 17U * Data2()[0] + ( Data2()[1] | ( Data2()[2] << 16 ) ) );
-	return 17U * ( *(short *)&Packed() ) + originHash ^ originHash2;
+	uint32_t result = 17 * ( *(short *)&Packed() );
+	result = result * 31 + originHash;
+	result = result * 31 + originHash2;
+	return result;
 }
 
 #undef VAR_NAME_FORMAT

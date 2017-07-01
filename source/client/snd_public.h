@@ -31,7 +31,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 typedef struct {
 	// drops to console a client game error
+#ifndef _MSC_VER
+	void ( *Error )( const char *msg ) __attribute__( ( noreturn ) );
+#else
 	void ( *Error )( const char *msg );
+#endif
+
 
 	// console messages
 	void ( *Print )( const char *msg );

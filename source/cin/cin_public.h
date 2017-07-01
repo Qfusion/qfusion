@@ -79,7 +79,11 @@ typedef unsigned int (*cin_get_raw_samples_cb_t)( void* );
 //
 typedef struct {
 	// drops to console a client game error
+#ifndef _MSC_VER
+	void ( *Error )( const char *msg ) __attribute__( ( noreturn ) );
+#else
 	void ( *Error )( const char *msg );
+#endif
 
 	// console messages
 	void ( *Print )( const char *msg );

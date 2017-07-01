@@ -68,7 +68,7 @@ void AI_Debugv( const char *nick, const char *format, va_list va ) {
 	// concatBuffer may contain player names such as "%APPDATA%"
 	char outputBuffer[2048];
 	EscapePercent( concatBuffer, outputBuffer, 2048 );
-	G_Printf( outputBuffer );
+	G_Printf( "%s", outputBuffer );
 }
 
 void AI_FailWith( const char *tag, const char *format, ... ) {
@@ -340,12 +340,12 @@ void AI_AddNavEntity( edict_t *ent, ai_nav_entity_flags flags ) {
 	int onlyMutExFlags = flags & ( AI_NAV_REACH_AT_TOUCH | AI_NAV_REACH_AT_RADIUS | AI_NAV_REACH_ON_EVENT );
 	// Valid mutual exclusive flags give a power of two
 	if( onlyMutExFlags & ( onlyMutExFlags - 1 ) ) {
-		G_Printf( S_COLOR_RED, "AI_AddNavEntity(): illegal flags %x for nav entity %s", flags, ent->classname );
+		G_Printf( S_COLOR_RED "AI_AddNavEntity(): illegal flags %x for nav entity %s", flags, ent->classname );
 		return;
 	}
 
 	if( ( flags & AI_NAV_NOTIFY_SCRIPT ) && !( flags & ( AI_NAV_REACH_AT_TOUCH | AI_NAV_REACH_AT_RADIUS ) ) ) {
-		G_Printf( S_COLOR_RED,
+		G_Printf( S_COLOR_RED
 				  "AI_AddNavEntity(): NOTIFY_SCRIPT flag may be combined only with REACH_AT_TOUCH or REACH_AT_RADIUS" );
 		return;
 	}

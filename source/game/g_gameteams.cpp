@@ -1156,7 +1156,7 @@ static void Say_Team_Point( edict_t *who, char *buf, int buflen, const char *cur
 		if( item ) {
 			Q_snprintfz( buf, buflen, "%s%s%s", ( item->color ? item->color : "" ), item->shortname, current_color );
 		} else {
-			Q_snprintfz( buf, buflen, point->classname );
+			Q_snprintfz( buf, buflen, "%s", point->classname );
 		}
 	} else {
 		Q_snprintfz( buf, buflen, "%s%s", point->classname, current_color );

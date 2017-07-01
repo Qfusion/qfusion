@@ -156,8 +156,14 @@ extern cvar_t *tv_chasemode;
 #define PLAYERNUM( x ) ( ( x->local ? ( x ) - x->relay->local_edicts : ( x ) - x->relay->edicts - 1 ) )
 
 // from tvm_main.c
-void TVM_Printf( const char *format, ... );
-void TVM_Error( const char *format, ... );
-void TVM_RelayError( tvm_relay_t *relay, const char *format, ... );
+#ifndef _MSC_VER
+void TVM_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+void TVM_Error( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+void TVM_RelayError( tvm_relay_t *relay, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
+#else
+void TVM_Printf( _Printf_format_string_ const char *format, ... );
+__declspec( noreturn ) void TVM_Error( _Printf_format_string_ const char *format, ... );
+__declspec( noreturn ) void TVM_RelayError( tvm_relay_t *relay, _Printf_format_string_ const char *format, ... );
+#endif
 
 #endif // __TVM_LOCAL_H

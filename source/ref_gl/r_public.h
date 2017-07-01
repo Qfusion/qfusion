@@ -28,12 +28,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // these are the functions exported by the refresh module
 //
 typedef struct {
+#ifndef _MSC_VER
 	// halts the application or drops to console
-	void ( *Com_Error )( com_error_code_t code, const char *format, ... );
-
+	void ( *Com_Error )( com_error_code_t code, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) ) __attribute( ( noreturn ) );
 	// console messages
-	void ( *Com_Printf )( const char *format, ... );
-	void ( *Com_DPrintf )( const char *format, ... );
+	void ( *Com_Printf )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+	void ( *Com_DPrintf )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+#else
+	void ( *Com_Error )( com_error_code_t code, _Printf_format_string_ const char *format, ... );
+	void ( *Com_Printf )( _Printf_format_string_ const char *format, ... );
+	void ( *Com_DPrintf )( _Printf_format_string_ const char *format, ... );
+#endif
 
 	// console variable interaction
 	cvar_t *( *Cvar_Get )( const char *name, const char *value, int flags );

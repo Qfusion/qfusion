@@ -26,18 +26,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_MASTERS 16 // max recipients for heartbeat packets
 #define HEARTBEAT_SECONDS 300
 
-void TV_Downstream_Msg( client_t *client, relay_t *relay, client_t *who, bool chat, const char *format, ... );
+#ifndef _MSC_VER
+void TV_Downstream_Msg( client_t *client, relay_t *relay, client_t *who, bool chat, const char *format, ... ) __attribute__( ( format( printf, 5, 6 ) ) );
+void TV_Downstream_SendServerCommand( client_t *cl, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
+void TV_Downstream_DropClient( client_t *drop, int type, const char *format, ... ) __attribute__( ( format( printf, 3, 4 ) ) );
+#else
+void TV_Downstream_Msg( client_t *client, relay_t *relay, client_t *who, bool chat, _Printf_format_string_ const char *format, ... );
+void TV_Downstream_SendServerCommand( client_t *cl, _Printf_format_string_ const char *format, ... );
+void TV_Downstream_DropClient( client_t *drop, int type, _Printf_format_string_ const char *format, ... );
+#endif
+
 void TV_Downstream_ClientResetCommandBuffers( client_t *client, bool resetReliable );
 char *TV_Downstream_FixName( const char *orginal_name, client_t *client );
 bool TV_Downstream_ChangeStream( client_t *client, relay_t *relay );
 void TV_Downstream_AddGameCommand( relay_t *relay, client_t *client, const char *cmd );
 void TV_Downstream_UserinfoChanged( client_t *cl );
 void TV_Downstream_AddServerCommand( client_t *client, const char *cmd );
-void TV_Downstream_SendServerCommand( client_t *cl, const char *format, ... );
 void TV_Downstream_AddReliableCommandsToMessage( client_t *client, msg_t *msg );
 void TV_Downstream_InitClientMessage( client_t *client, msg_t *msg, uint8_t *data, size_t size );
 bool TV_Downstream_SendMessageToClient( client_t *client, msg_t *msg );
-void TV_Downstream_DropClient( client_t *drop, int type, const char *format, ... );
+
+
+
 void TV_Downstream_ReadPackets( void );
 void TV_Downstream_CheckTimeouts( void );
 bool TV_Downstream_SendClientsFragments( void );

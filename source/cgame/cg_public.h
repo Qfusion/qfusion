@@ -80,7 +80,11 @@ typedef struct snapshot_s {
 //
 typedef struct {
 	// drops to console a client game error
+#ifndef _MSC_VER
+	void ( *Error )( const char *msg ) __attribute__( ( noreturn ) );
+#else
 	void ( *Error )( const char *msg );
+#endif
 
 	// console messages
 	void ( *Print )( const char *msg );

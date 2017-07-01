@@ -24,7 +24,7 @@ static void ApiError(const char *func, const char *format, ...)
     Q_snprintfz(formatBuffer, sizeof(formatBuffer), "%s: %s\n", func, format);
     Q_vsnprintfz(messageBuffer, sizeof(messageBuffer), formatBuffer, va);
     va_end(va);
-    G_Error(messageBuffer);
+    G_Error( "%s", messageBuffer );
 }
 
 #define API_ERROR(message) ApiError(__FUNCTION__, message)

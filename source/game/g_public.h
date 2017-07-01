@@ -72,7 +72,11 @@ typedef struct {
 	void ( *Print )( const char *msg );
 
 	// aborts server with a game error
+#ifndef _MSC_VER
+	void ( *Error )( const char *msg ) __attribute__( ( noreturn ) );
+#else
 	void ( *Error )( const char *msg );
+#endif
 
 	// server commands sent to clients
 	void ( *GameCmd )( edict_t *ent, const char *cmd );

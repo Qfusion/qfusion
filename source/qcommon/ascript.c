@@ -24,6 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static angelwrap_export_t *ae;
 static mempool_t *com_scriptmodulepool;
 
+#ifndef _MSC_VER
+static void Com_ScriptModule_Error( const char *msg ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) static void Com_ScriptModule_Error( const char *msg );
+#endif
+
 static void Com_ScriptModule_Error( const char *msg ) {
 	Com_Error( ERR_DROP, "%s", msg );
 }

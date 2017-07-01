@@ -28,6 +28,12 @@ static inline void trap_Print( const char *msg ) {
 	CIN_IMPORT.Print( msg );
 }
 
+#ifndef _MSC_VER
+static inline void trap_Error( const char *msg ) __attribute( ( noreturn ) );
+#else
+__declspec( noreturn ) static inline void trap_Error( const char *msg );
+#endif
+
 static inline void trap_Error( const char *msg ) {
 	CIN_IMPORT.Error( msg );
 }

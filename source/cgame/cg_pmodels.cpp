@@ -119,8 +119,8 @@ static void CG_ParseTagMask( struct model_s *model, int bonenum, char *name, flo
 
 	//now store it
 	tagmask = ( cg_tagmask_t * )CG_Malloc( sizeof( cg_tagmask_t ) );
-	Q_snprintfz( tagmask->tagname, sizeof( tagmask->tagname ), name );
-	Q_snprintfz( tagmask->bonename, sizeof( tagmask->bonename ), skel->bones[bonenum].name );
+	Q_snprintfz( tagmask->tagname, sizeof( tagmask->tagname ), "%s", name );
+	Q_snprintfz( tagmask->bonename, sizeof( tagmask->bonename ), "%s", skel->bones[bonenum].name );
 	tagmask->bonenum = bonenum;
 	tagmask->offset[FORWARD] = forward;
 	tagmask->offset[RIGHT] = right;

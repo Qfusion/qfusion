@@ -43,7 +43,11 @@ enum {
 //
 typedef struct {
 	// halts the application
+#ifndef _MSC_VER
+	void ( *Error )( const char *str ) __attribute__( ( noreturn ) );
+#else
 	void ( *Error )( const char *str );
+#endif
 
 	// console messages
 	void ( *Print )( const char *str );
