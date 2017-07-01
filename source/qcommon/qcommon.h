@@ -507,7 +507,13 @@ int         NET_Monitor( int msec, socket_t *sockets[],
 						 void ( *write_cb )( socket_t *socket, void* ),
 						 void ( *exception_cb )( socket_t *socket, void* ), void *privatep[] );
 const char *NET_ErrorString( void );
-void        NET_SetErrorString( const char *format, ... );
+
+#ifndef _MSC_VER
+void NET_SetErrorString( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+#else
+void NET_SetErrorString( _Printf_format_string_ const char *format, ... );
+#endif
+
 void        NET_SetErrorStringFromLastError( const char *function );
 void        NET_ShowIP( void );
 int         NET_SetSocketNoDelay( socket_t *socket, int nodelay );
@@ -572,7 +578,13 @@ bool Netchan_TransmitNextFragment( netchan_t *chan );
 int Netchan_CompressMessage( msg_t *msg );
 int Netchan_DecompressMessage( msg_t *msg );
 void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t length, const uint8_t *data );
-void Netchan_OutOfBandPrint( const socket_t *socket, const netadr_t *address, const char *format, ... );
+
+#ifndef _MSC_VER
+void Netchan_OutOfBandPrint( const socket_t *socket, const netadr_t *address, const char *format, ... ) __attribute__( ( format( printf, 3, 4 ) ) );
+#else
+void Netchan_OutOfBandPrint( const socket_t *socket, const netadr_t *address, _Printf_format_string_ const char *format, ... );
+#endif
+
 int Netchan_GamePort( void );
 
 /*
@@ -621,7 +633,13 @@ void    FS_FCloseFile( int file );
 
 int     FS_Read( void *buffer, size_t len, int file );
 int     FS_Print( int file, const char *msg );
-int     FS_Printf( int file, const char *format, ... );
+
+#ifndef _MSC_VER
+int FS_Printf( int file, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
+#else
+int FS_Printf( int file, _Printf_format_string_ const char *format, ... );
+#endif
+
 int     FS_Write( const void *buffer, size_t len, int file );
 int     FS_Tell( int file );
 int     FS_Seek( int file, int offset, int whence );
@@ -706,11 +724,20 @@ void        Com_BeginRedirect( int target, char *buffer, int buffersize,
 							   void ( *flush )( int, const char*, const void* ), const void *extra );
 void        Com_EndRedirect( void );
 void        Com_DeferConsoleLogReopen( void );
-void        Com_Printf( const char *format, ... );
-void        Com_DPrintf( const char *format, ... );
-void        Com_Error( com_error_code_t code, const char *format, ... );
+
+#ifndef _MSC_VER
+void Com_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+void Com_DPrintf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+void Com_Error( com_error_code_t code, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) ) __attribute__( ( noreturn ) );
+void Com_Quit( void ) __attribute__( ( noreturn ) );
+#else
+void Com_Printf( _Printf_format_string_ const char *format, ... );
+void Com_DPrintf( _Printf_format_string_ const char *format, ... );
+__declspec( noreturn ) void Com_Error( com_error_code_t code, _Printf_format_string_ const char *format, ... );
+__declspec( noreturn ) void Com_Quit( void );
+#endif
+
 void        Com_DeferQuit( void );
-void        Com_Quit( void );
 
 int         Com_ClientState( void );        // this should have just been a cvar...
 void        Com_SetClientState( int state );
@@ -842,8 +869,15 @@ void        Sys_Sleep( unsigned int millis );
 char    *Sys_ConsoleInput( void );
 void    Sys_ConsoleOutput( char *string );
 void    Sys_SendKeyEvents( void );
-void    Sys_Error( const char *error, ... );
-void    Sys_Quit( void );
+
+#ifndef _MSC_VER
+void Sys_Error( const char *error, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
+void Sys_Quit( void ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) void Sys_Error( _Printf_format_string_ const char *error, ... );
+__declspec( noreturn ) void Sys_Quit( void );
+#endif
+
 char    *Sys_GetClipboardData( void );
 bool Sys_SetClipboardData( const char *data );
 void    Sys_FreeClipboardData( char *data );

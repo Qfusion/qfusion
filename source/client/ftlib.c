@@ -25,6 +25,12 @@ static ftlib_export_t *ftlib_export;
 static void *ftlib_libhandle = NULL;
 static mempool_t *ftlib_mempool;
 
+#ifndef _MSC_VER
+static void CL_FTLibModule_Error( const char *msg ) __attribute( ( noreturn ) );
+#else
+__declspec( noreturn ) static void CL_FTLibModule_Error( const char *msg );
+#endif
+
 static void CL_FTLibModule_Error( const char *msg ) {
 	Com_Error( ERR_FATAL, "%s", msg );
 }

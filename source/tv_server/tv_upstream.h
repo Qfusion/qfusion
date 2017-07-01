@@ -113,9 +113,17 @@ struct upstream_s {
 #define TV_Upstream_CopyString( upstream,in ) _TVCopyString_Pool( ( upstream )->mempool, in, __FILE__, __LINE__ )
 bool TV_UpstreamForText( const char *text, upstream_t **upstream );
 void TV_Upstream_UpdateReliableCommandsToServer( upstream_t *upstream, msg_t *msg );
-void TV_Upstream_Error( upstream_t *upstream, const char *format, ... );
-void TV_Upstream_Disconnect( upstream_t *upstream, const char *format, ... );
-void TV_Upstream_Shutdown( upstream_t *upstream, const char *format, ... );
+
+#ifndef _MSC_VER
+void TV_Upstream_Error( upstream_t *upstream, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) ) __attribute__( ( noreturn ) );
+void TV_Upstream_Disconnect( upstream_t *upstream, const char *format, ... ) __attribute( ( format( printf, 2, 3 ) ) );
+void TV_Upstream_Shutdown( upstream_t *upstream, const char *format, ... ) __attribute( ( format( printf, 2, 3 ) ) );
+#else
+__declspec( noreturn ) void TV_Upstream_Error( upstream_t *upstream, _Printf_format_string_ const char *format, ... );
+void TV_Upstream_Disconnect( upstream_t *upstream, _Printf_format_string_ const char *format, ... );
+void TV_Upstream_Shutdown( upstream_t *upstream, _Printf_format_string_ const char *format, ... );
+#endif
+
 void TV_Upstream_ClearState( upstream_t *upstream );
 void TV_Upstream_AddReliableCommand( upstream_t *upstream, const char *cmd );
 void TV_Upstream_Run( upstream_t *upstream, int msec );

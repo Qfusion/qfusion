@@ -65,6 +65,12 @@ static char *CL_SetSoundExtension( const char *name ) {
 	return finalname;
 }
 
+#ifndef _MSC_VER
+static void CL_SoundModule_Error( const char *msg ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) static void CL_SoundModule_Error( const char *msg );
+#endif
+
 /*
 * CL_SoundModule_Error
 */

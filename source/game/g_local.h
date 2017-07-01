@@ -629,11 +629,20 @@ void G_CallDie( edict_t *ent, edict_t *inflictor, edict_t *attacker, int damage,
 
 int G_PlayerGender( edict_t *player );
 
-void G_PrintMsg( edict_t *ent, const char *format, ... );
-void G_PrintChasersf( edict_t *self, const char *format, ... );
-void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, ... );
-void G_CenterPrintMsg( edict_t *ent, const char *format, ... );
-void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... );
+#ifndef _MSC_VER
+void G_PrintMsg( edict_t *ent, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
+void G_PrintChasersf( edict_t *self, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
+void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, ... ) __attribute__( ( format( printf, 4, 5 ) ) );
+void G_CenterPrintMsg( edict_t *ent, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
+void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
+#else
+void G_PrintMsg( edict_t *ent, _Printf_format_string_ const char *format, ... );
+void G_PrintChasersf( edict_t *self, _Printf_format_string_ const char *format, ... );
+void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, _Printf_format_string_ const char *format, ... );
+void G_CenterPrintMsg( edict_t *ent, _Printf_format_string_ const char *format, ... );
+void G_CenterPrintFormatMsg( edict_t *ent, _Printf_format_string_ const char *format, ... );
+#endif
+
 void G_UpdatePlayerMatchMsg( edict_t *ent, bool force = false );
 void G_UpdatePlayersMatchMsgs( void );
 void G_Obituary( edict_t *victim, edict_t *attacker, int mod );
@@ -938,8 +947,15 @@ int G_BoxSlideMove( edict_t *ent, int contentmask, float slideBounce, float fric
 #define G_LevelCopyString( in ) _G_LevelCopyString( ( in ), __FILE__, __LINE__ )
 
 int G_API( void );
-void    G_Error( const char *format, ... );
-void    G_Printf( const char *format, ... );
+
+#ifndef _MSC_VER
+void G_Error( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
+void G_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+#else
+__declspec( noreturn ) void G_Error( _Printf_format_string_ const char *format, ... );
+void G_Printf( _Printf_format_string_ const char *format, ... );
+#endif
+
 void    G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char *demoExtension );
 void    G_Shutdown( void );
 void    G_ExitLevel( void );

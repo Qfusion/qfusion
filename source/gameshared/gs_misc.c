@@ -25,8 +25,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_collision.h"
 #include "gs_public.h"
 
+#ifndef _MSC_VER
+void ( *module_Printf )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+void ( *module_Error)( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
+#else
 void ( *module_Printf )( const char *format, ... );
 void ( *module_Error )( const char *format, ... );
+#endif
+
 void *( *module_Malloc )( size_t size );
 void ( *module_Free )( void *data );
 void ( *module_Trace )( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta );

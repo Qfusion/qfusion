@@ -87,7 +87,7 @@ static inline bool TestCareFlags( T thisFlags, T thatFlags ) {
 	{                                                                                 \
 		if( !TestCareFlags( flags, that.flags ) ) { return false; }                          \
 		decltype( flags )mask = 1;                                                     \
-		for( auto i = 0; i < sizeof( values ) / sizeof( values[0] ); ++i, mask <<= 1 )     \
+		for( unsigned i = 0; i < sizeof( values ) / sizeof( values[0] ); ++i, mask <<= 1 )     \
 		{                                                                             \
 			if( flags & mask ) { continue; }                                               \
 			switch( this->GetVarSatisfyOp( ops, i ) )                                    \
@@ -245,7 +245,7 @@ uint32_t WorldState::Hash() const {
 		if( flags != that.flags ) {                                             \
 			return false; }                                                    \
 		decltype( flags )mask = 1;                                            \
-		for( int i = 0; i < sizeof( values ) / sizeof( values[0] ); ++i )         \
+		for( unsigned i = 0; i < sizeof( values ) / sizeof( values[0] ); ++i )         \
 		{                                                                    \
 			if( !( flags & mask ) )                                             \
 			{                                                                \

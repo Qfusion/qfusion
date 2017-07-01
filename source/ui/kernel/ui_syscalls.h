@@ -17,6 +17,12 @@ namespace trap
 {
 using WSWUI::UI_IMPORT;
 
+#ifndef _MSC_VER
+inline void Error( const char *str ) __attribute__( (noreturn ) );
+#else
+__declspec( noreturn ) inline void Error( const char *str );
+#endif
+
 inline void Error( const char *str ) {
 	UI_IMPORT.Error( str );
 }

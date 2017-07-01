@@ -658,7 +658,7 @@ static void SP_target_print_print( edict_t *self, edict_t *activator ) {
 	if( self->mapmessage_index && self->mapmessage_index <= MAX_HELPMESSAGES ) {
 		G_SetPlayerHelpMessage( activator, self->mapmessage_index );
 	} else if( self->message && self->message[0] ) {
-		G_CenterPrintMsg( activator, self->message );
+		G_CenterPrintMsg( activator, "%s", self->message );
 	}
 }
 

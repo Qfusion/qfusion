@@ -32,6 +32,13 @@ static inline void trap_Print( const char *msg ) {
 	SOUND_IMPORT.Print( msg );
 }
 
+#ifndef _MSC_VER
+static inline void trap_Error( const char *msg ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) static inline void trap_Error( const char *msg );
+#endif
+
+
 static inline void trap_Error( const char *msg ) {
 	SOUND_IMPORT.Error( msg );
 }

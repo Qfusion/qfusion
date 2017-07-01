@@ -945,8 +945,17 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 			  int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
 void CG_Shutdown( void );
 void CG_ValidateItemDef( int tag, char *name );
-void CG_Printf( const char *format, ... );
-void CG_Error( const char *format, ... );
+
+#ifndef _MSC_VER
+void CG_Printf( const char *format, ... ) __attribute( ( format( printf, 1, 2 ) ) );
+void CG_LocalPrint( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+void CG_Error( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
+#else
+void CG_Printf( _Printf_format_string_ const char *format, ... );
+void CG_LocalPrint( _Printf_format_string_ const char *format, ... );
+void CG_Error( _Printf_format_string_ const char *format, ... );
+#endif
+
 void CG_Reset( void );
 void CG_Precache( void );
 char *_CG_CopyString( const char *in, const char *filename, int fileline );
@@ -960,7 +969,6 @@ void CG_AddAward( const char *str );
 void CG_OverrideWeapondef( int index, const char *cstring );
 
 void CG_StartBackgroundTrack( void );
-void CG_LocalPrint( const char *format, ... );
 
 int CG_AsyncGetRequest( const char *resource, void ( *done_cb )( int status, const char *resp ), void *privatep );
 

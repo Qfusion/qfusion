@@ -833,13 +833,13 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 
 				milli = (unsigned int)( atoi( token ) );
 				if( !milli ) {
-					Q_snprintfz( string, sizeof( string ), CG_TranslateString( "no time" ) );
+					Q_snprintfz( string, sizeof( string ), "%s", CG_TranslateString( "no time" ) );
 				} else {
 					min = milli / 60000;
 					milli -= min * 60000;
 					sec = milli / 1000;
 					milli -= sec * 1000;
-					Q_snprintfz( string, sizeof( string ), va( "%02i:%02i.%03i", min, sec, milli ) );
+					Q_snprintfz( string, sizeof( string ), "%02i:%02i.%03i", min, sec, milli );
 				}
 			}
 			break;

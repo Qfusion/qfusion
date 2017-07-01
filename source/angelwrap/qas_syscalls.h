@@ -31,6 +31,12 @@ static inline void trap_Print( const char *msg ) {
 	ANGELWRAP_IMPORT.Print( msg );
 }
 
+#ifndef _MSC_VER
+static inline void trap_Error( const char *msg ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) static inline void trap_Error( const char *msg );
+#endif
+
 static inline void trap_Error( const char *msg ) {
 	ANGELWRAP_IMPORT.Error( msg );
 }

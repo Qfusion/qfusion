@@ -52,7 +52,7 @@ struct ScopedMessagePrinter {
 
 	~ScopedMessagePrinter() {
 		if( *buffer ) {
-			G_Printf( buffer );
+			G_Printf( "%s", buffer );
 		}
 	}
 
@@ -243,7 +243,7 @@ static bool ExpectFileString( const char *expected, int fp, const char *message 
 
 	data[dataLength - 1] = 0;
 	if( Q_stricmp( expected, data ) ) {
-		G_Printf( message );
+		G_Printf( "%s", message );
 		G_Printf( "Actual string: `%s`\n", data );
 		G_Printf( "Expected string: `%s`\n", expected );
 		G_LevelFree( data );
@@ -281,12 +281,12 @@ bool TacticalSpotsRegistry::TryLoadPrecomputedData( const char *mapname ) {
 		return false;
 	}
 
-	const char *mapMessage = va( S_COLOR_YELLOW "The map version differs with the precomputed data one\n", function );
+	const char *mapMessage = va( S_COLOR_YELLOW "%s: The map version differs with the precomputed data one\n", function );
 	if( !ExpectFileString( trap_GetConfigString( CS_MAPCHECKSUM ), fp, mapMessage ) ) {
 		return false;
 	}
 
-	const char *aasMessage = va( S_COLOR_YELLOW "The AAS data version differs with the precomputed data one\n", function );
+	const char *aasMessage = va( S_COLOR_YELLOW "%s: The AAS data version differs with the precomputed data one\n", function );
 	if( !ExpectFileString( AiAasWorld::Instance()->Checksum(), fp, aasMessage ) ) {
 		return false;
 	}

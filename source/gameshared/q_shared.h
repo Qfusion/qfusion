@@ -203,8 +203,15 @@ char *COM_ListNameForPosition( const char *namesList, int position, const char s
 
 void Q_strncpyz( char *dest, const char *src, size_t size );
 void Q_strncatz( char *dest, const char *src, size_t size );
+
 int Q_vsnprintfz( char *dest, size_t size, const char *format, va_list argptr );
-int Q_snprintfz( char *dest, size_t size, const char *format, ... );
+
+#ifndef _MSC_VER
+int Q_snprintfz( char *dest, size_t size, const char *format, ... ) __attribute__( ( format( printf, 3, 4 ) ) );
+#else
+int Q_snprintfz( char *dest, size_t size, _Printf_format_string_ const char *format, ... );
+#endif
+
 char *Q_strupr( char *s );
 char *Q_strlwr( char *s );
 const char *Q_strlocate( const char *s, const char *substr, int skip );
@@ -253,8 +260,14 @@ bool Q_IsBreakingSpaceChar( wchar_t c );
 
 float *tv( float x, float y, float z );
 char *vtos( float v[3] );
-char *va( const char *format, ... );
-char *va_r( char *dst, size_t size, const char *format, ... );
+
+#ifndef _MSC_VER
+char *va( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+char *va_r( char *dst, size_t size, const char *format, ... ) __attribute__( ( format( printf, 3, 4 ) ) );
+#else
+char *va( _Printf_format_string_ const char *format, ... );
+char *va_r( char *dst, size_t size, _Printf_format_string_ const char *format, ... );
+#endif
 
 //
 // key / value info strings
@@ -344,9 +357,15 @@ typedef enum {
 
 // this is only here so the functions in q_shared.c and q_math.c can link
 
-void Sys_Error( const char *error, ... );
-void Com_Printf( const char *msg, ... );
-void Com_Error( com_error_code_t code, const char *format, ... );
+#ifndef _MSC_VER
+void Sys_Error( const char *error, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
+void Com_Printf( const char *msg, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+void Com_Error( com_error_code_t code, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) ) __attribute__( ( noreturn ) );
+#else
+__declspec( noreturn ) void Sys_Error( _Printf_format_string_ const char *error, ... );
+void Com_Printf( _Printf_format_string_ const char *msg, ... );
+__declspec( noreturn ) void Com_Error( com_error_code_t code, _Printf_format_string_ const char *format, ... );
+#endif
 
 //==============================================================
 //

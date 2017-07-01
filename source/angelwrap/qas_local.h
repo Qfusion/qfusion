@@ -71,8 +71,13 @@ int QAS_Init( void );
 void QAS_ShutDown( void );
 struct angelwrap_api_s *QAS_GetAngelExport( void );
 
-void QAS_Printf( const char *format, ... );
-void QAS_Error( const char *format, ... );
+#ifndef _MSC_VER
+void QAS_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+void QAS_Error( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
+#else
+void QAS_Printf( _Printf_format_string_ const char *format, ... );
+__declspec( noreturn ) void QAS_Error( _Printf_format_string_ const char *format, ... );
+#endif
 
 /******* C++ objects *******/
 asIScriptEngine *qasCreateEngine( bool *asMaxPortability );

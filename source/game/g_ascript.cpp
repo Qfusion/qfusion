@@ -2575,7 +2575,7 @@ static void asFunc_CenterPrintFormatMsg7( edict_t *ent, asstring_t *format, asst
 }
 
 static void asFunc_Error( const asstring_t *str ) {
-	G_Error( str && str->buffer ? str->buffer : "" );
+	G_Error( "%s", str && str->buffer ? str->buffer : "" );
 }
 
 static void asFunc_G_Sound( edict_t *owner, int channel, int soundindex, float attenuation ) {

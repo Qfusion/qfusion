@@ -122,7 +122,7 @@ static void _Mem_Error( const char *format, ... ) {
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
 
-	Sys_Error( msg );
+	Sys_Error( "%s", msg );
 }
 
 ATTRIBUTE_MALLOC void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int musthave, int canthave, const char *filename, int fileline ) {
