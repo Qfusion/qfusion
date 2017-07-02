@@ -220,8 +220,7 @@ static void G_VoteMapExtraHelp( edict_t *ent ) {
 		strcat( message, "\nNone" );
 	}
 
-	G_PrintMsg( ent, "%s", message );
-	G_PrintMsg( ent, "\n", message );
+	G_PrintMsg( ent, "%s\n", message );
 
 	if( i < nummaps ) {
 		G_PrintMsg( ent, "Type 'callvote map %i' for more maps\n", i + 1 );
@@ -2200,7 +2199,7 @@ static void G_CallVote( edict_t *ent, bool isopcall ) {
 
 	if( !isopcall && ent->r.client->level.callvote_when &&
 		( ent->r.client->level.callvote_when + g_callvote_cooldowntime->integer * 1000 > game.realtime ) ) {
-		G_PrintMsg( ent, "%sYou can not call a vote right now\n", S_COLOR_RED, callvote->name );
+		G_PrintMsg( ent, "%sYou can not call a vote right now\n", S_COLOR_RED );
 		return;
 	}
 

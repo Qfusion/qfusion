@@ -45,6 +45,12 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
+#include <inttypes.h>
+
+
 #ifdef __cplusplus
 };
 #endif

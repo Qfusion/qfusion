@@ -3653,7 +3653,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 				filename = (char *) G_Malloc( filename_size );
 			}
 
-			Q_snprintfz( filename, filename_size, "%s%s.h", path, name, ".h" );
+			Q_snprintfz( filename, filename_size, "%s%s.h", path, name );
 			if( trap_FS_FOpenFile( filename, &file, FS_WRITE ) == -1 ) {
 				G_Printf( "G_asDumpAPIToFile: Couldn't write %s.\n", filename );
 				return;
@@ -3758,7 +3758,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 		filename = ( char * )G_Malloc( filename_size );
 	}
 
-	Q_snprintfz( filename, filename_size, "%s%s.h", path, name, ".h" );
+	Q_snprintfz( filename, filename_size, "%s%s.h", path, name );
 	if( trap_FS_FOpenFile( filename, &file, FS_WRITE ) == -1 ) {
 		G_Printf( "G_asDumpAPIToFile: Couldn't write %s.\n", filename );
 		return;

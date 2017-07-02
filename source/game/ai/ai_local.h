@@ -38,11 +38,6 @@ in NO WAY supported by Steve Yeager.
 #undef min
 #endif
 
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS 1
-#endif
-#include <inttypes.h>
-
 // First try to include <math.h> for M_* defines
 #ifndef __USE_MATH_DEFINES
 #define __USE_MATH_DEFINES 1

@@ -1651,16 +1651,7 @@ static void PM_AdjustBBox( void ) {
 * PM_AdjustViewheight
 */
 void PM_AdjustViewheight( void ) {
-	vec3_t pm_maxs, mins, maxs;
 
-	if( pm->playerState->pmove.pm_type == PM_SPECTATOR ) {
-		VectorCopy( playerbox_stand_mins, mins );
-		VectorCopy( playerbox_stand_maxs, maxs );
-	} else {
-		VectorCopy( pm->mins, mins );
-		VectorCopy( pm->maxs, maxs );
-	}
-	VectorCopy( maxs, pm_maxs );
 }
 
 static void PM_UpdateDeltaAngles( void ) {

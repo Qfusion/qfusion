@@ -426,8 +426,8 @@ void G_ListRaces_f( void ) {
 		run = (raceRun_t*)LA_Pointer( game.raceruns, i );
 		G_Printf( S_COLOR_RED "  %d    " S_COLOR_YELLOW, run->owner );
 		for( j = 0; j < run->numSectors; j++ )
-			G_Printf( "%d ", run->times[j] );
-		G_Printf( S_COLOR_GREEN "%d\n", run->times[run->numSectors] );    // SAFE!
+			G_Printf( "%" PRIi64 " ", run->times[j] );
+		G_Printf( S_COLOR_GREEN "%" PRIi64 "\n", run->times[run->numSectors] );    // SAFE!
 	}
 }
 
