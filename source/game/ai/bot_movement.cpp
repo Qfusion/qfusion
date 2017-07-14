@@ -1462,6 +1462,10 @@ inline unsigned BotBaseMovementAction::SequenceDuration( const BotMovementPredic
 // Height threshold should be set according to used time step
 // (we might miss crouch sliding activation if its low and the time step is large)
 inline bool ShouldPrepareForCrouchSliding( BotMovementPredictionContext *context, float heightThreshold = 12.0f ) {
+	if( !(context->currPlayerState->pmove.stats[PM_STAT_FEATURES ] & PMFEAT_CROUCHSLIDING ) ) {
+		return false;
+	}
+
 	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
 	if( entityPhysicsState.GroundEntity() ) {
 		return false;
@@ -1612,6 +1616,10 @@ bool BotDummyMovementAction::HandleClimbJumpReachability( BotMovementPredictionC
 }
 
 bool BotDummyMovementAction::ShouldCrouchSlideNow( BotMovementPredictionContext *context ) const {
+	if( !( context->currPlayerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CROUCHSLIDING ) ) {
+		return false;
+	}
+
 	if( context->currPlayerState->pmove.pm_flags & PMF_CROUCH_SLIDING ) {
 		if( context->currPlayerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > PM_CROUCHSLIDE_FADE ) {
 			return true;
