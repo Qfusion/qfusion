@@ -465,6 +465,9 @@ typedef struct {
 	// command (in)
 	usercmd_t cmd;
 
+	// A hint (in)
+	bool skipCollision;
+
 	// results (out)
 	int numtouch;
 	int touchents[MAXTOUCH];
@@ -473,10 +476,15 @@ typedef struct {
 	vec3_t mins, maxs;          // bounding box size
 
 	int groundentity;
+	cplane_t groundplane;       // valid if groundentity >= 0
+	int groundsurfFlags;        // valid if groundentity >= 0
+	int groundcontents;         // valid if groundentity >= 0
 	int watertype;
 	int waterlevel;
 
 	int contentmask;
+
+	bool ladder;
 } pmove_t;
 
 
