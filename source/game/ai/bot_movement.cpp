@@ -1098,6 +1098,11 @@ void BotMovementPredictionContext::NextMovementStep() {
 
 	this->frameEvents.Clear();
 
+	// The naive solution of supplying a dummy trace function
+	// (that yields a zeroed output with fraction = 1) does not work.
+	// An actual logic tied to this flag has to be added in Pmove() for each module_Trace() call.
+	pm.skipCollision = EnvironmentTraceCache().CanSkipPMoveCollision( this );
+
 	// We currently test collisions only against a solid world on each movement step and the corresponding PMove() call.
 	// Touching trigger entities is handled by Intercepted_PMoveTouchTriggers(), also we use AAS sampling for it.
 	// Actions that involve touching trigger entities currently are never predicted ahead.
@@ -5060,6 +5065,7 @@ void BotEnvironmentTraceCache::SetFullHeightCachedTracesEmpty( const vec3_t fron
 		VectorCopy( fullResult.traceDir, jumpableResult.traceDir );
 	}
 	resultsMask |= ALL_SIDES_MASK;
+	hasNoFullHeightObstaclesAround = true;
 }
 
 void BotEnvironmentTraceCache::SetJumpableHeightCachedTracesEmpty( const vec3_t front2DDir, const vec3_t right2DDir ) {
@@ -5269,6 +5275,26 @@ void BotEnvironmentTraceCache::TestForResultsMask( BotMovementPredictionContext 
 
 	// Check whether all requires side traces have been computed
 	Assert( ( this->resultsMask & requiredResultsMask ) == requiredResultsMask );
+}
+
+bool BotEnvironmentTraceCache::CanSkipPMoveCollision( BotMovementPredictionContext *context ) {
+	// Do not force computations in this case.
+	// Otherwise there is no speedup shown according to testing results.
+	if( !this->didAreaTest ) {
+		return false;
+	}
+
+	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+	// We might still need to check steps even if there is no full height obstacles around.
+	if( entityPhysicsState.GroundEntity() ) {
+		return false;
+	}
+	// If the bot is likely to land on this step
+	if( entityPhysicsState.HeightOverGround() <= 8.0f && entityPhysicsState.Velocity()[2] < 0 ) {
+		return false;
+	}
+
+	return this->hasNoFullHeightObstaclesAround;
 }
 
 // Make a type alias to fit into a line length limit
