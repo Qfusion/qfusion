@@ -472,6 +472,10 @@ static void Intercepted_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t max
 	trap_CM_TransformedBoxTrace( t, start, end, mins, maxs, nullptr, contentmask, nullptr, nullptr );
 }
 
+static int Intercepted_PointContents( vec3_t p, int timeDelta ) {
+	return trap_CM_TransformedPointContents( p, nullptr, nullptr, nullptr );
+}
+
 void BotMovementPredictionContext::OnInterceptedPredictedEvent( int ev, int parm ) {
 	switch( ev ) {
 		case EV_JUMP:
@@ -1113,10 +1117,17 @@ void BotMovementPredictionContext::NextMovementStep() {
 	auto oldModuleTrace = module_Trace;
 	module_Trace = Intercepted_Trace;
 
+	// Do not test entities contents for same reasons
+	// Save the G_PointContents4D() pointer
+	auto oldModulePointContents = module_PointContents;
+	module_PointContents = Intercepted_PointContents;
+
 	Pmove( &pm );
 
 	// Restore the G_GS_Trace() pointer
 	module_Trace = oldModuleTrace;
+	// Restore the G_PointContents4D() pointer
+	module_PointContents = oldModulePointContents;
 
 	// Update the entity physics state that is going to be used in the next prediction frame
 	entityPhysicsState->UpdateFromPMove( &pm );
