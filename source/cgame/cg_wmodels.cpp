@@ -119,7 +119,7 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 				weaponinfo->barrelSpeed = atof( COM_ParseExt( &ptr, false ) );
 
 				if( debug ) {
-					CG_Printf( "%s time:%i, speed:%.2f\n", S_COLOR_BLUE, (int)weaponinfo->barrelTime, weaponinfo->barrelSpeed, S_COLOR_WHITE );
+					CG_Printf( "%s time:%" PRIi64 ", speed:%.2f%s\n", S_COLOR_BLUE, weaponinfo->barrelTime, weaponinfo->barrelSpeed, S_COLOR_WHITE );
 				}
 			} else if( !Q_stricmp( token, "flash" ) ) {
 				if( debug ) {

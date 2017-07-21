@@ -172,7 +172,7 @@ sfxcache_t *SNDOGG_Load( sfx_t *s ) {
 	}
 
 	if( qov_open_callbacks( (void *)(intptr_t)filenum, &vorbisfile, NULL, 0, callbacks ) < 0 ) {
-		Com_Printf( "Couldn't open %s for reading: %s\n", s->name );
+		Com_Printf( "Couldn't open %s for reading\n", s->name );
 		trap_FS_FCloseFile( filenum );
 		return NULL;
 	}

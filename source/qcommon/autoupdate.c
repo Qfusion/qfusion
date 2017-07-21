@@ -221,9 +221,9 @@ static void AU_FinishDownload( filedownload_t *fd_, int status ) {
 			filepath = fd->filepath;
 
 			if( fd->checksum ) {
-				unsigned checksum = FS_ChecksumBaseFile( temppath, true );
+				unsigned long checksum = FS_ChecksumBaseFile( temppath, true );
 				if( checksum != fd->checksum ) {
-					Com_Printf( "AU_FinishDownload: checksum mismatch for %s. Expected %u, got %u\n", temppath, fd->checksum, checksum );
+					Com_Printf( "AU_FinishDownload: checksum mismatch for %s. Expected %lu, got %lu\n", temppath, fd->checksum, checksum );
 					au_download_errcount++;
 					break;
 				}

@@ -261,7 +261,7 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ram
 	memcpy( ramp256 + 256, ramp + stride, size * sizeof( *ramp ) );
 	memcpy( ramp256 + 2 * 256, ramp + 2 * stride, size * sizeof( *ramp ) );
 	if( SDL_SetWindowGammaRamp( glw_state.sdl_window, ramp256, ramp256 + 256, ramp256 + ( 256 << 1 ) ) == -1 ) {
-		Com_Printf( "SDL_SetWindowGammaRamp(...) failed: ", SDL_GetError() );
+		Com_Printf( "SDL_SetWindowGammaRamp() failed: \"%s\"\n", SDL_GetError() );
 	}
 }
 

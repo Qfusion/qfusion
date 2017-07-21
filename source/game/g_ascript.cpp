@@ -2543,35 +2543,35 @@ static void asFunc_CenterPrintMsg( edict_t *ent, asstring_t *str ) {
 }
 
 static void asFunc_CenterPrintFormatMsg1( edict_t *ent, asstring_t *format, asstring_t *arg1 ) {
-	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, NULL );
+	G_CenterPrintFormatMsg( ent, 1, format->buffer, arg1->buffer );
 }
 
 static void asFunc_CenterPrintFormatMsg2( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2 ) {
-	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, NULL );
+	G_CenterPrintFormatMsg( ent, 2, format->buffer, arg1->buffer, arg2->buffer );
 }
 
 static void asFunc_CenterPrintFormatMsg3( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3 ) {
-	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, NULL );
+	G_CenterPrintFormatMsg( ent, 3, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer );
 }
 
 static void asFunc_CenterPrintFormatMsg4( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
 										  asstring_t *arg4 ) {
-	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, NULL );
+	G_CenterPrintFormatMsg( ent, 4, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer );
 }
 
 static void asFunc_CenterPrintFormatMsg5( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
 										  asstring_t *arg4, asstring_t *arg5 ) {
-	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, NULL );
+	G_CenterPrintFormatMsg( ent, 5, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer );
 }
 
 static void asFunc_CenterPrintFormatMsg6( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
 										  asstring_t *arg4, asstring_t *arg5, asstring_t *arg6 ) {
-	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, arg6->buffer, NULL );
+	G_CenterPrintFormatMsg( ent, 6, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, arg6->buffer );
 }
 
 static void asFunc_CenterPrintFormatMsg7( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
 										  asstring_t *arg4, asstring_t *arg5, asstring_t *arg6, asstring_t *arg7 ) {
-	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, arg6->buffer, arg7->buffer, NULL );
+	G_CenterPrintFormatMsg( ent, 7, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, arg6->buffer, arg7->buffer );
 }
 
 static void asFunc_Error( const asstring_t *str ) {
@@ -3613,7 +3613,7 @@ void G_asGarbageCollect( bool force ) {
 		asEngine->GetGCStatistics( &currentSize, &totalDestroyed, &totalDetected );
 
 		if( g_asGC_stats->integer ) {
-			G_Printf( "GC: t=%u size=%u destroyed=%u detected=%u\n", game.serverTime, currentSize, totalDestroyed, totalDetected );
+			G_Printf( "GC: t=%" PRIi64 " size=%u destroyed=%u detected=%u\n", game.serverTime, currentSize, totalDestroyed, totalDetected );
 		}
 
 		asEngine->GarbageCollect();

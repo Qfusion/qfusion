@@ -49,10 +49,6 @@ std::string hex2rgb( const char *hexstr ) {
 
 //==============================================================
 
-const char *int_to_addr( uint64_t r ) {
-	return va( "%d.%d.%d.%d:%d", r & 0xff, ( r >> 8 ) & 0xff, ( r >> 16 ) & 0xff, ( r >> 24 ) & 0xff, ( r >> 32 ) & 0xffff );
-}
-
 uint64_t addr_to_int( const std::string &adr ) {
 	uint64_t r = 0, acc = 0, dots = 0;
 
@@ -71,7 +67,6 @@ uint64_t addr_to_int( const std::string &adr ) {
 	// and the remaining part
 	r |= ( acc << ( dots << 3 ) );
 
-	// Com_Printf("addr_to_int %s %s\n", adr.c_str(), int_to_addr( r ) );
 	return r;
 }
 

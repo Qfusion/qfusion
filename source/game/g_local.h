@@ -634,13 +634,13 @@ void G_PrintMsg( edict_t *ent, const char *format, ... ) __attribute__( ( format
 void G_PrintChasersf( edict_t *self, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
 void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, ... ) __attribute__( ( format( printf, 4, 5 ) ) );
 void G_CenterPrintMsg( edict_t *ent, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
-void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... );
+void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, const char *format, ... ) __attribute__( ( format( printf, 3, 4 ) ) );
 #else
 void G_PrintMsg( edict_t *ent, _Printf_format_string_ const char *format, ... );
 void G_PrintChasersf( edict_t *self, _Printf_format_string_ const char *format, ... );
 void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, _Printf_format_string_ const char *format, ... );
 void G_CenterPrintMsg( edict_t *ent, _Printf_format_string_ const char *format, ... );
-void G_CenterPrintFormatMsg( edict_t *ent, _Printf_format_string_ const char *format, ... );
+void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, _Printf_format_string_ const char *format, ... );
 #endif
 
 void G_UpdatePlayerMatchMsg( edict_t *ent, bool force = false );
@@ -1433,11 +1433,11 @@ struct edict_s {
 	void *asSpawnFunc, *asThinkFunc, *asUseFunc, *asTouchFunc, *asPainFunc, *asDieFunc, *asStopFunc;
 };
 
-static inline int ENTNUM( edict_t *x ) { return x - game.edicts; }
-static inline int ENTNUM( gclient_t *x ) { return x - game.clients + 1; }
+static inline int ENTNUM( const edict_t *x ) { return x - game.edicts; }
+static inline int ENTNUM( const gclient_t *x ) { return x - game.clients + 1; }
 
-static inline int PLAYERNUM( edict_t *x ) { return x - game.edicts - 1; }
-static inline int PLAYERNUM( gclient_t *x ) { return x - game.clients; }
+static inline int PLAYERNUM( const edict_t *x ) { return x - game.edicts - 1; }
+static inline int PLAYERNUM( const gclient_t *x ) { return x - game.clients; }
 
 static inline edict_t *PLAYERENT( int x ) { return game.edicts + x + 1; }
 

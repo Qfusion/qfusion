@@ -217,7 +217,7 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, un
 	}
 
 	if( !bspFormat ) {
-		Com_Error( ERR_DROP, "CM_LoadMap: %s: unknown bsp format" );
+		Com_Error( ERR_DROP, "CM_LoadMap: %s: unknown bsp format", name );
 	}
 
 	// copy header into temp variable to be saveed in a cvar

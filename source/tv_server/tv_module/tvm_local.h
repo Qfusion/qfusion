@@ -152,8 +152,8 @@ extern tv_module_locals_t tvm;
 extern cvar_t *developer;
 extern cvar_t *tv_chasemode;
 
-#define ENTNUM( x ) ( ( x->local ? ( x ) - x->relay->local_edicts : ( x ) - x->relay->edicts ) )
-#define PLAYERNUM( x ) ( ( x->local ? ( x ) - x->relay->local_edicts : ( x ) - x->relay->edicts - 1 ) )
+static inline int ENTNUM( const edict_t *x ) { return x->local ? ( x ) - x->relay->local_edicts : ( x ) - x->relay->edicts; }
+static inline int PLAYERNUM( const edict_t *x ) { return x->local ? ( x ) - x->relay->local_edicts : ( x ) - x->relay->edicts - 1; }
 
 // from tvm_main.c
 #ifndef _MSC_VER

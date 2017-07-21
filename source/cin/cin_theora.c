@@ -1032,11 +1032,11 @@ bool Theora_Init_CIN( cinematics_t *cin ) {
 		// look for further theora headers
 		while( theora_p && ( theora_p < 3 ) && ( status = qogg_stream_packetout( &qth->os_video, &op ) ) ) {
 			if( status < 0 ) {
-				Com_Printf( S_COLOR_YELLOW, "File %s: error parsing Theora stream headers; corrupt stream?\n" );
+				Com_Printf( S_COLOR_YELLOW "File %s: error parsing Theora stream headers; corrupt stream?\n", cin->name );
 				return false;
 			}
 			if( qth_decode_headerin( &qth->ti, &qth->tc, &qth->tsi, &op ) == 0 ) {
-				Com_Printf( S_COLOR_YELLOW, "File %s: error parsing Theora stream headers; corrupt stream?\n" );
+				Com_Printf( S_COLOR_YELLOW "File %s: error parsing Theora stream headers; corrupt stream?\n", cin->name );
 				return false;
 			}
 			theora_p++;
@@ -1045,11 +1045,11 @@ bool Theora_Init_CIN( cinematics_t *cin ) {
 		// look for more vorbis header packets
 		while( vorbis_p && ( vorbis_p < 3 ) && ( status = qogg_stream_packetout( &qth->os_audio, &op ) ) ) {
 			if( status < 0 ) {
-				Com_Printf( S_COLOR_YELLOW, "File %s: error parsing Vorbis stream headers; corrupt stream?\n" );
+				Com_Printf( S_COLOR_YELLOW "File %s: error parsing Vorbis stream headers; corrupt stream?\n", cin->name );
 				return false;
 			}
 			if( qvorbis_synthesis_headerin( &qth->vi, &qth->vc, &op ) != 0 ) {
-				Com_Printf( S_COLOR_YELLOW, "File %s: error parsing Vorbis stream headers; corrupt stream?\n" );
+				Com_Printf( S_COLOR_YELLOW "File %s: error parsing Vorbis stream headers; corrupt stream?\n", cin->name );
 				return false;
 			}
 			vorbis_p++;

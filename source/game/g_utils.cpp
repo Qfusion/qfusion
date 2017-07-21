@@ -1167,14 +1167,20 @@ void G_CenterPrintMsg( edict_t *ent, const char *format, ... ) {
 *
 * NULL sends to all the message to all clients
 */
-void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... ) {
+void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, const char *format, ... ) {
+	int i;
 	char cmd[MAX_STRING_CHARS];
 	char arg_fmt[MAX_TOKEN_CHARS];
 	va_list argptr;
 	char *p, *arg_p;
-	int num_args;
 	bool overflow = false;
 	edict_t *other;
+
+	if( !numVargs ) {
+		// can't transmit formatted message with no arguments or
+		// no strings to replace the placeholders
+		return;
+	}
 
 	Q_strncpyz( cmd, "cpf ", sizeof( cmd ) );
 
@@ -1182,20 +1188,19 @@ void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... ) {
 	Q_strncpyz( arg_fmt, format, sizeof( arg_fmt ) );
 	arg_p = arg_fmt;
 
-	num_args = 0;
 	va_start( argptr, format );
 
-	do {
+	for( i = 0; i <= numVargs; i++ ) {
 		size_t cmd_len;
 		size_t arg_len;
 
-		if( num_args + 1 == MAX_STRING_TOKENS ) {
+		// double quotes are bad
+		p = arg_p;
+		if( !p ) {
 			overflow = true;
 			break;
 		}
 
-		// double quotes are bad
-		p = arg_p;
 		while( ( p = strchr( p, '\"' ) ) != NULL )
 			*p = '\'';
 
@@ -1217,18 +1222,13 @@ void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... ) {
 		cmd[cmd_len + 2 + arg_len] = '"';
 		cmd[cmd_len + 3 + arg_len] = '\0';
 
-		num_args++;
-	} while( ( arg_p = va_arg( argptr, char * ) ) );
+		arg_p = va_arg( argptr, char * );
+	}
 
 	va_end( argptr );
 
 	if( overflow ) {
 		// couldn't fit it all into the cmd buffer
-		return;
-	}
-	if( num_args < 2 ) {
-		// can't transmit formatted message with no arguments or
-		// no strings to replace the placeholders
 		return;
 	}
 
@@ -1256,7 +1256,7 @@ void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... ) {
 */
 void G_Obituary( edict_t *victim, edict_t *attacker, int mod ) {
 	if( victim && attacker ) {
-		trap_GameCmd( NULL, va( "obry %i %i %i", victim - game.edicts, attacker - game.edicts, mod ) );
+		trap_GameCmd( NULL, va( "obry %i %i %i", (int)(victim - game.edicts), (int)(attacker - game.edicts), mod ) );
 	}
 }
 
