@@ -954,11 +954,11 @@ void Mod_Modellist_f( void ) {
 			continue;
 		}
 		size = ri.Mem_PoolTotalSize( mod->mempool );
-		Com_Printf( "%8i : %s\n", size, mod->name );
+		Com_Printf( "%8" PRIuPTR " : %s\n", (uintptr_t)size, mod->name );
 		total += size;
 	}
 	Com_Printf( "Total: %i\n", mod_numknown );
-	Com_Printf( "Total resident: %i\n", total );
+	Com_Printf( "Total resident: %" PRIuPTR "\n", (uintptr_t)total );
 }
 
 /*

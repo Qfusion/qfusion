@@ -1569,7 +1569,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 
 	if( startBuf ) {
 		if( parser->numStrings == parser->maxStrings ) {
-			Com_Printf( S_COLOR_YELLOW "numStrings overflow in '%s'\n", fileName, startBuf );
+			Com_Printf( S_COLOR_YELLOW "numStrings overflow in '%s'\n", fileName );
 			return true;
 		}
 		parser->strings[parser->numStrings++] = startBuf;

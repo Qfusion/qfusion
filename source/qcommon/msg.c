@@ -685,7 +685,7 @@ static void MSG_WriteDeltaArray( msg_t *msg, const void *from, const void *to, c
 
 	assert( numElems < 256 );
 	if( numElems > 256 ) {
-		Com_Error( ERR_FATAL, "MSG_WriteDeltaArray: numFields == %i", numElems );
+		Com_Error( ERR_FATAL, "MSG_WriteDeltaArray: numFields == %" PRIu32, (unsigned)numElems );
 	}
 
 	byteMask = MSG_CompareArrays( from, to, field, elemMask, sizeof( elemMask ), false );
@@ -713,7 +713,7 @@ static void MSG_ReadDeltaArray( msg_t *msg, const void *from, void *to, const ms
 
 	assert( maxElems < 256 );
 	if( maxElems > 256 ) {
-		Com_Error( ERR_FATAL, "MSG_ReadDeltaArray: numFields == %i", maxElems );
+		Com_Error( ERR_FATAL, "MSG_ReadDeltaArray: numFields == %" PRIu32, (unsigned)maxElems );
 	}
 
 	// set everything to the state we are delta'ing from
@@ -855,7 +855,7 @@ void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const m
 
 	assert( numFields < 256 );
 	if( numFields > 256 ) {
-		Com_Error( ERR_FATAL, "MSG_WriteDeltaStruct: numFields == %i", numFields );
+		Com_Error( ERR_FATAL, "MSG_WriteDeltaStruct: numFields == %" PRIu32, (unsigned)numFields );
 	}
 
 	byteMask = MSG_CompareStructs( from, to, fields, numFields, fieldMask, sizeof( fieldMask ) );
@@ -881,7 +881,7 @@ void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, c
 
 	assert( numFields < 256 );
 	if( numFields > 256 ) {
-		Com_Error( ERR_FATAL, "MSG_ReadDeltaStruct: numFields == %i", numFields );
+		Com_Error( ERR_FATAL, "MSG_ReadDeltaStruct: numFields == %" PRIu32, (unsigned)numFields );
 	}
 
 	// set everything to the state we are delta'ing from

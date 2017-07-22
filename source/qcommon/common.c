@@ -739,7 +739,7 @@ void *Q_malloc( size_t size ) {
 	void *buf = malloc( size );
 
 	if( !buf ) {
-		Sys_Error( "Q_malloc: failed on allocation of %i bytes.\n", size );
+		Sys_Error( "Q_malloc: failed on allocation of %" PRIuPTR " bytes.\n", (uintptr_t)size );
 	}
 
 	return buf;
@@ -754,7 +754,7 @@ void *Q_realloc( void *buf, size_t newsize ) {
 	void *newbuf = realloc( buf, newsize );
 
 	if( !newbuf && newsize ) {
-		Sys_Error( "Q_realloc: failed on allocation of %i bytes.\n", newsize );
+		Sys_Error( "Q_realloc: failed on allocation of %" PRIuPTR " bytes.\n", (uintptr_t)newsize );
 	}
 
 	return newbuf;
