@@ -76,6 +76,7 @@ AiManager::AiManager( const char *gametype, const char *mapname )
 	REGISTER_BUILTIN_GOAL( BotReactToThreatGoal );
 	REGISTER_BUILTIN_GOAL( BotReactToEnemyLostGoal );
 	REGISTER_BUILTIN_GOAL( BotAttackOutOfDespairGoal );
+	REGISTER_BUILTIN_GOAL( BotRoamGoal );
 
 	// Do not clear built-in goals later
 	registeredGoals.MarkClearLimit();

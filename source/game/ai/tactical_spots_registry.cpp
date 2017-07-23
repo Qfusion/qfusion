@@ -1231,7 +1231,7 @@ void TacticalSpotsRegistry::SortByVisAndOtherFactors( const OriginParams &origin
 		float score = result[i].score;
 
 		// The maximum possible visibility score for a pair of spots is 255
-		float visFactor = visibilitySum / ( ( result.size() - 1 ) * 255 );
+		float visFactor = visibilitySum / ( ( result.size() - 1 ) * 255.0f );
 		visFactor = 1.0f / Q_RSqrt( visFactor );
 		score *= visFactor;
 
