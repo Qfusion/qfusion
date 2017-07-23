@@ -1957,8 +1957,8 @@ void BotRidePlatformMovementAction::TrySaveExitAreas( BotMovementPredictionConte
 	for( unsigned i = 1, end = savedAreas.size(); i < end; ++i ) {
 		int area = savedAreas[i];
 		int travelTime = areaTravelTimes[i];
-		unsigned j = i - 1;
-		for(; j < std::numeric_limits<unsigned>::max() && areaTravelTimes[j] < travelTime; --j ) {
+		int j = i - 1;
+		for(; j >= 0 && areaTravelTimes[j] < travelTime; j-- ) {
 			savedAreas[j + 1] = savedAreas[j];
 			areaTravelTimes[j + 1] = areaTravelTimes[j];
 		}
@@ -3245,7 +3245,7 @@ void BotBunnyStraighteningReachChainMovementAction::SaveSuggestedLookDirs( BotMo
 	const AiAasWorld *aasWorld = AiAasWorld::Instance();
 	const aas_reachability_t *aasReachabilities = aasWorld->Reachabilities();
 
-	unsigned lastValidReachIndex = std::numeric_limits<unsigned>::max();
+	int lastValidReachIndex = -1;
 	constexpr unsigned MAX_TESTED_REACHABILITIES = 16U;
 	const unsigned maxTestedReachabilities = std::min( MAX_TESTED_REACHABILITIES, nextReachChain.size() );
 	const aas_reachability_t *reachStoppedAt = nullptr;
@@ -3258,18 +3258,17 @@ void BotBunnyStraighteningReachChainMovementAction::SaveSuggestedLookDirs( BotMo
 			}
 		}
 
-		// Wraps on the first increment
 		lastValidReachIndex++;
 	}
 
-	if( lastValidReachIndex > maxTestedReachabilities ) {
+	if( lastValidReachIndex < 0 || lastValidReachIndex >= maxTestedReachabilities ) {
 		Debug( "There were no supported for bunnying reachabilities\n" );
 		return;
 	}
 	Assert( lastValidReachIndex < maxTestedReachabilities );
 
 	AreaAndScore candidates[MAX_TESTED_REACHABILITIES];
-	AreaAndScore *candidatesEnd = SelectCandidateAreas( context, candidates, lastValidReachIndex );
+	AreaAndScore *candidatesEnd = SelectCandidateAreas( context, candidates, (unsigned)lastValidReachIndex );
 
 	SaveCandidateAreaDirs( context, candidates, candidatesEnd );
 

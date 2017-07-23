@@ -58,7 +58,9 @@ class BotAttackOutOfDespairGoal : public BotBaseGoal
 	float oldOffensiveness;
 
 public:
-	BotAttackOutOfDespairGoal( Ai *ai_ ) : BotBaseGoal( ai_, "BotAttackOutOfDespairGoal", 400 ) {}
+	BotAttackOutOfDespairGoal( Ai *ai_ )
+		: BotBaseGoal( ai_, "BotAttackOutOfDespairGoal", 400 ),
+		oldOffensiveness( 1.0f ) {}
 
 	void UpdateWeight( const WorldState &currWorldState ) override;
 	void GetDesiredWorldState( WorldState *worldState ) override;

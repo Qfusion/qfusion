@@ -13,8 +13,7 @@ class alignas ( 2 )AiCampingSpot
 	short lookAtPoint[3];
 	unsigned char radius;
 	unsigned char alertness : 7;
-	AiCampingSpot() {
-	}
+	AiCampingSpot() = default;
 
 public:
 	bool hasLookAtPoint : 1;
@@ -243,7 +242,8 @@ public:
 	bool hasEnteredJumppad : 1;
 
 	inline BotJumppadMovementState()
-		: hasTouchedJumppad( false ),
+		: jumppadEntNum( 0 ),        // shut up an analyzer
+		hasTouchedJumppad( false ),
 		hasEnteredJumppad( false ) {
 	}
 
@@ -914,14 +914,18 @@ public:
 		int touchedTriggerEnts[MAX_TOUCHED_TRIGGERS];
 		int numTouchedTriggers;
 
-		bool hasJumped;
-		bool hasDashed;
-		bool hasWalljumped;
-		bool hasTakenFallDamage;
+		bool hasJumped: 1;
+		bool hasDashed: 1;
+		bool hasWalljumped: 1;
+		bool hasTakenFallDamage: 1;
 
-		bool hasTouchedJumppad;
-		bool hasTouchedTeleporter;
-		bool hasTouchedPlatform;
+		bool hasTouchedJumppad: 1;
+		bool hasTouchedTeleporter: 1;
+		bool hasTouchedPlatform: 1;
+
+		inline FrameEvents() {
+			Clear();
+		}
 
 		inline void Clear() {
 			numTouchedTriggers = 0;
@@ -1153,7 +1157,7 @@ public:
 	struct AreaAndScore {
 		int areaNum;
 		float score;
-		AreaAndScore() {}
+		AreaAndScore(): areaNum( 0 ), score( 0.0f ) {}
 		AreaAndScore( int areaNum_, float score_ ) : areaNum( areaNum_ ), score( score_ ) {}
 		bool operator<( const AreaAndScore &that ) const { return score > that.score; }
 	};
@@ -1163,6 +1167,9 @@ public:
 		name( name_ ),
 		debugColor( debugColor_ ),
 		originAtSequenceStart( 0, 0, 0 ),
+		sequenceStartFrameIndex( std::numeric_limits<unsigned>::max() ),
+		sequenceEndFrameIndex( std::numeric_limits<unsigned>::max() ),
+		isDisabledForPlanning( false ),
 		stopPredictionOnTouchingJumppad( true ),
 		stopPredictionOnTouchingTeleporter( true ),
 		stopPredictionOnTouchingPlatform( true ),
@@ -1205,7 +1212,7 @@ public:
 };
 
 #define DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( name, debugColor_ ) \
-	name( class Bot *bot_ ) : BotBaseMovementAction( bot_, #name, debugColor_ ) {}
+	name( class Bot *bot_ ) : BotBaseMovementAction( bot_, #name, debugColor_ )
 
 class BotDummyMovementAction : public BotBaseMovementAction
 {
@@ -1217,7 +1224,7 @@ class BotDummyMovementAction : public BotBaseMovementAction
 	bool HandleClimbJumpReachability( BotMovementPredictionContext *context, const aas_reachability_t &reach );
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotDummyMovementAction, COLOR_RGB( 0, 0, 0 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotDummyMovementAction, COLOR_RGB( 0, 0, 0 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override {
 		AI_FailWith( __FUNCTION__, "This method should never get called (PlanMovmementStep() should stop planning)\n" );
@@ -1227,7 +1234,7 @@ public:
 class BotHandleTriggeredJumppadMovementAction : public BotBaseMovementAction
 {
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotHandleTriggeredJumppadMovementAction, COLOR_RGB( 0, 128, 128 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotHandleTriggeredJumppadMovementAction, COLOR_RGB( 0, 128, 128 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 };
 
@@ -1254,7 +1261,7 @@ class BotLandOnSavedAreasMovementAction : public BotBaseMovementAction
 									  const FilteredAreas &filteredAreas );
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotLandOnSavedAreasMovementAction, COLOR_RGB( 255, 0, 255 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotLandOnSavedAreasMovementAction, COLOR_RGB( 255, 0, 255 ) ) {}
 	bool TryLandingStepOnArea( int areaNum, BotMovementPredictionContext *context );
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
@@ -1267,7 +1274,7 @@ class BotRidePlatformMovementAction : public BotBaseMovementAction
 	friend class Bot;
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotRidePlatformMovementAction, COLOR_RGB( 128, 128, 0 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotRidePlatformMovementAction, COLOR_RGB( 128, 128, 0 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
 
@@ -1300,8 +1307,7 @@ private:
 class BotSwimMovementAction : public BotBaseMovementAction
 {
 public:
-	BotSwimMovementAction( class Bot *bot_ )
-		: BotBaseMovementAction( bot_, "BotSwimMovementAction", COLOR_RGB( 0, 0, 255 ) ) {
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotSwimMovementAction, COLOR_RGB( 0, 0, 255 ) ) {
 		this->stopPredictionOnEnteringWater = false;
 	}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
@@ -1311,7 +1317,7 @@ public:
 class BotFlyUntilLandingMovementAction : public BotBaseMovementAction
 {
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotFlyUntilLandingMovementAction, COLOR_RGB( 0, 255, 0 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotFlyUntilLandingMovementAction, COLOR_RGB( 0, 255, 0 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 };
 
@@ -1320,7 +1326,9 @@ class BotCampASpotMovementAction : public BotBaseMovementAction
 	unsigned disabledForApplicationFrameIndex;
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotCampASpotMovementAction, COLOR_RGB( 128, 0, 128 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotCampASpotMovementAction, COLOR_RGB( 128, 0, 128 ) ) {
+		this->disabledForApplicationFrameIndex = std::numeric_limits<unsigned>::max();
+	}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
 	void OnApplicationSequenceStopped( BotMovementPredictionContext *context,
@@ -1335,7 +1343,7 @@ public:
 class BotWalkCarefullyMovementAction : public BotBaseMovementAction
 {
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotWalkCarefullyMovementAction, COLOR_RGB( 128, 0, 255 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotWalkCarefullyMovementAction, COLOR_RGB( 128, 0, 255 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 };
 
@@ -1394,10 +1402,16 @@ protected:
 public:
 	BotGenericRunBunnyingMovementAction( class Bot *bot_, const char *name_, int debugColor_ = 0 )
 		: BotBaseMovementAction( bot_, name_, debugColor_ ),
+		minTravelTimeToNavTargetSoFar( 0 ),  // shut up an analyzer
+		minTravelTimeAreaNumSoFar( 0 ),
+		minTravelTimeAreaGroundZ( 0 ),
 		minDesiredSpeedGainPerSecond( 0.0f ),
+		currentSpeedLossSequentialMillis( 0 ), // shut up an analyzer
 		tolerableSpeedLossSequentialMillis( 300 ),
+		currentUnreachableTargetSequentialMillis( 0 ), // shut up an analyzer
 		tolerableUnreachableTargetSequentialMillis( 700 ),
 		tolerableWalkableIncreasedTravelTimeMillis( 2000 ),
+		disabledForApplicationFrameIndex( std::numeric_limits<unsigned>::max() ),
 		supportsObstacleAvoidance( false ) {
 		ResetObstacleAvoidanceState();
 	}
@@ -1443,7 +1457,9 @@ protected:
 public:
 	BotBunnyTestingMultipleLookDirsMovementAction( class Bot *bot_, const char *name_, int debugColor_ )
 		: BotGenericRunBunnyingMovementAction( bot_, name_, debugColor_ ),
-		maxSuggestedLookDirs( MAX_SUGGESTED_LOOK_DIRS ) {}
+		maxSuggestedLookDirs( MAX_SUGGESTED_LOOK_DIRS ),
+		currSuggestedLookDirNum( 0 ),
+		suggestedAction( nullptr ) {}
 
 	void BeforePlanning() override;
 	void OnApplicationSequenceStarted( BotMovementPredictionContext *context ) override;
@@ -1504,7 +1520,7 @@ class BotWalkOrSlideInterpolatingReachChainMovementAction : public BotBaseMoveme
 	inline bool TrySetupCrouchSliding( BotMovementPredictionContext *context, const Vec3 &intendedLookDir );
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotWalkOrSlideInterpolatingReachChainMovementAction, COLOR_RGB( 16, 72, 128 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotWalkOrSlideInterpolatingReachChainMovementAction, COLOR_RGB( 16, 72, 128 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
 	void OnApplicationSequenceStarted( BotMovementPredictionContext *context ) override;
@@ -1539,7 +1555,7 @@ class BotCombatDodgeSemiRandomlyToTargetMovementAction : public BotBaseMovementA
 	void UpdateKeyMoveDirs( BotMovementPredictionContext *context );
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotCombatDodgeSemiRandomlyToTargetMovementAction, COLOR_RGB( 192, 192, 192 ) );
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotCombatDodgeSemiRandomlyToTargetMovementAction, COLOR_RGB( 192, 192, 192 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
 	void OnApplicationSequenceStarted( BotMovementPredictionContext *context ) override;

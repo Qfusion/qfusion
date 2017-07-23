@@ -274,7 +274,10 @@ void Bot::UpdateKeptInFovPoint() {
 
 		Vec3 origin( lostOrHiddenEnemy->LastSeenPosition() );
 		if( !GetMiscTactics().shouldKeepXhairOnEnemy ) {
-			float distanceThreshold = ( !selectedEnemies.HaveQuad() && !selectedEnemies.HaveCarrier() ) ? 768 : 2048;
+			float distanceThreshold = 768.0f;
+			if( lostOrHiddenEnemy->ent && lostOrHiddenEnemy->ent->s.effects & ( EF_QUAD | EF_CARRIER ) ) {
+				distanceThreshold = 2048.0f;
+			}
 			if( origin.SquareDistanceTo( self->s.origin ) > distanceThreshold * distanceThreshold ) {
 				lastChosenLostOrHiddenEnemy = nullptr;
 				return;

@@ -1157,11 +1157,9 @@ int BotWeaponSelector::SuggestQuadBearerWeapon( const WorldState &worldState ) {
 	auto lgRange = ( lgDef->firedef.timeout + lgDef->firedef_weak.timeout ) / 2.0f;
 	int lasersCount = 0;
 	if( Inventory()[WEAP_LASERGUN] && distance < lgRange ) {
-		if( ( lgDef->firedef.timeout + lgDef->firedef_weak.timeout ) / 2 < distance ) {
-			lasersCount = Inventory()[AMMO_LASERS] + Inventory()[AMMO_WEAK_LASERS];
-			if( lasersCount > 7 ) {
-				return WEAP_LASERGUN;
-			}
+		lasersCount = Inventory()[AMMO_LASERS] + Inventory()[AMMO_WEAK_LASERS];
+		if( lasersCount > 7 ) {
+			return WEAP_LASERGUN;
 		}
 	}
 	int bulletsCount = BulletsReadyToFireCount();
