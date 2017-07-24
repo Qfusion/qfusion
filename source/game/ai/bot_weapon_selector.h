@@ -16,7 +16,12 @@ class GenericFireDef
 	short weaponNum;
 	bool isBuiltin;
 
-	GenericFireDef() = default;
+	GenericFireDef()
+		: projectileSpeed( 0 ),
+		splashRadius( 0 ),
+		aimType( AI_WEAPON_AIM_TYPE_INSTANT_HIT ),
+		weaponNum( -1 ),
+		isBuiltin( false ) {}
 
 public:
 	GenericFireDef( int weaponNum_, const firedef_t *builtinFireDef ) {
