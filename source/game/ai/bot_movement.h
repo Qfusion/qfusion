@@ -63,6 +63,8 @@ class alignas ( 2 )AiPendingLookAtPoint
 	unsigned short turnSpeedMultiplier;
 
 	AiPendingLookAtPoint() {
+		// Shut an analyzer up
+		turnSpeedMultiplier = 16;
 	}
 
 public:
@@ -113,19 +115,15 @@ public:
 
 	inline BotInput()
 		: intendedLookDir( NAN, NAN, NAN ),
-		alreadyComputedAngles( NAN, NAN, NAN ),
-		turnSpeedMultiplier( 16 )
+		alreadyComputedAngles( NAN, NAN, NAN )
 	{
 		Clear();
 	}
 
 	inline void Clear() {
-		// Do not use memset() call (there is few bytes to clear)
+		memset( this, 0, sizeof( BotInput ) );
+		// Restore the default value overwritten by the memset() call
 		turnSpeedMultiplier = 16;
-		char *ptr = reinterpret_cast<char *>( &turnSpeedMultiplier ) + 1;
-		char *end = reinterpret_cast<char *>( this ) + sizeof( BotInput );
-		for(; ptr != end; ++ptr )
-			*ptr = 0;
 	}
 
 	// Button accessors are kept for backward compatibility with existing bot movement code
@@ -330,8 +328,11 @@ class alignas ( 2 )BotFlyUntilLandingMovementState : protected BotAerialMovement
 	bool isLanding : 1;
 
 public:
-	inline BotFlyUntilLandingMovementState() : isTriggered( false ), isLanding( false ) {
-	}
+	inline BotFlyUntilLandingMovementState()
+		: landingDistanceThreshold( 0 ),
+		isTriggered( false ),
+		usesDistanceThreshold( false ),
+		isLanding( false ) {}
 
 	inline void Frame( unsigned frameTime ) {}
 
@@ -741,7 +742,10 @@ public:
 		return ResultForIndex( JumpableHeightMask( BACK_RIGHT ), 15 );
 	}
 
-	inline BotEnvironmentTraceCache() : resultsMask( 0 ), didAreaTest( false ), hasNoFullHeightObstaclesAround( false ) {}
+	inline BotEnvironmentTraceCache() {
+		// Shut an analyzer up
+		memset( this, 0, sizeof( BotEnvironmentTraceCache ) );
+	}
 
 	void TestForResultsMask( class BotMovementPredictionContext *context, unsigned requiredResultsMask );
 
@@ -813,6 +817,12 @@ private:
 		int64_t timestamp;
 		unsigned stepMillis;
 		unsigned movementStatesMask;
+
+		PredictedMovementAction()
+			: action(nullptr),
+			timestamp( 0 ),
+			stepMillis( 0 ),
+			movementStatesMask( 0 ) {}
 	};
 
 	StaticVector<PredictedMovementAction, MAX_PREDICTED_STATES> predictedMovementActions;
@@ -974,7 +984,23 @@ public:
 		return results[1];
 	}
 
-	inline BotMovementPredictionContext( edict_t *self_ ) : self( self_ ) {}
+	inline BotMovementPredictionContext( edict_t *self_ )
+		: self( self_ ),
+		movementState( nullptr ),
+		record( nullptr ),
+		oldPlayerState( nullptr ),
+		currPlayerState( nullptr ),
+		actionSuggestedByAction( nullptr ),
+		activeAction( nullptr ),
+		totalMillisAhead( 0 ),
+		predictionStepMillis( 0 ),
+		oldStepMillis( 0 ),
+		topOfStackIndex( 0 ),
+		savepointTopOfStackIndex( 0 ),
+		sequenceStopReason( SequenceStopReason::SUCCEEDED ),
+		isCompleted( false ),
+		cannotApplyAction( false ),
+		shouldRollback( false ) {}
 
 	HitWhileRunningTestResult MayHitWhileRunning();
 
@@ -1261,7 +1287,11 @@ class BotLandOnSavedAreasMovementAction : public BotBaseMovementAction
 									  const FilteredAreas &filteredAreas );
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotLandOnSavedAreasMovementAction, COLOR_RGB( 255, 0, 255 ) ) {}
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotLandOnSavedAreasMovementAction, COLOR_RGB( 255, 0, 255 ) ) {
+		// Shut an analyzer up
+		this->currAreaIndex = 0;
+		this->totalTestedAreas = 0;
+	}
 	bool TryLandingStepOnArea( int areaNum, BotMovementPredictionContext *context );
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
@@ -1274,7 +1304,10 @@ class BotRidePlatformMovementAction : public BotBaseMovementAction
 	friend class Bot;
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotRidePlatformMovementAction, COLOR_RGB( 128, 128, 0 ) ) {}
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotRidePlatformMovementAction, COLOR_RGB( 128, 128, 0 ) ) {
+		// Shut an analyzer up
+		currTestedAreaIndex = 0;
+	}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
 
@@ -1520,7 +1553,12 @@ class BotWalkOrSlideInterpolatingReachChainMovementAction : public BotBaseMoveme
 	inline bool TrySetupCrouchSliding( BotMovementPredictionContext *context, const Vec3 &intendedLookDir );
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotWalkOrSlideInterpolatingReachChainMovementAction, COLOR_RGB( 16, 72, 128 ) ) {}
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotWalkOrSlideInterpolatingReachChainMovementAction, COLOR_RGB( 16, 72, 128 ) ) {
+		// Shut an analyzer up
+		this->minTravelTimeToTarget = std::numeric_limits<int>::max();
+		this->totalNumFrames = 0;
+		this->numSlideFrames = 0;
+	}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
 	void OnApplicationSequenceStarted( BotMovementPredictionContext *context ) override;
@@ -1555,7 +1593,13 @@ class BotCombatDodgeSemiRandomlyToTargetMovementAction : public BotBaseMovementA
 	void UpdateKeyMoveDirs( BotMovementPredictionContext *context );
 
 public:
-	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotCombatDodgeSemiRandomlyToTargetMovementAction, COLOR_RGB( 192, 192, 192 ) ) {}
+	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotCombatDodgeSemiRandomlyToTargetMovementAction, COLOR_RGB( 192, 192, 192 ) ) {
+		// Shut an analyzer up
+		this->minTravelTimeToTarget = std::numeric_limits<int>::max();
+		this->totalCovered2DDistance = 0.0f;
+		this->maxAttempts = 0;
+		this->attemptNum = 0;
+	}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
 	void OnApplicationSequenceStarted( BotMovementPredictionContext *context ) override;

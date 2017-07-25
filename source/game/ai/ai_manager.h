@@ -68,7 +68,11 @@ public:
 		// Null if builtin
 		void *factoryObject;
 
-		inline ActionProps() : name( nullptr ) {}
+		inline ActionProps() {
+			// Shut an analyzer up
+			memset( this, 0, sizeof( ActionProps ) );
+		}
+
 		inline ActionProps( const char *name_, void *factoryObject_ ) {
 			auto nameLen = strlen( name_ );
 			name = (char *)G_Malloc( nameLen + 1 );
@@ -103,13 +107,19 @@ public:
 		const char *applicableActions[MAX_ACTIONS];
 		unsigned numApplicableActions;
 
-		inline GoalProps() : name( nullptr ) {}
+		inline GoalProps() {
+			// Shut an analyzer up
+			memset( this, 0, sizeof( GoalProps ) );
+		}
+
 		inline GoalProps( const char *name_, void *factoryObject_, unsigned updatePeriod_ ) {
 			auto nameLen = strlen( name_ );
 			name = (char *)G_Malloc( nameLen + 1 );
 			memcpy( name, name_, nameLen + 1 );
 			factoryObject = factoryObject_;
 			updatePeriod = updatePeriod_;
+			// Shut an analyzer up
+			memset( applicableActions, 0, sizeof( applicableActions ) );
 			numApplicableActions = 0;
 		}
 
@@ -123,11 +133,13 @@ public:
 			name = that.name;
 			that.name = nullptr;
 			factoryObject = that.factoryObject;
+			updatePeriod = that.updatePeriod;
 #ifdef _DEBUG
 			if( that.numApplicableActions != 0 ) {
 				AI_FailWith( "GoalProps(GoalProps &&that)", "Wrong usage pattern. Do not copy non-empty GoalProps\n" );
 			}
 #endif
+			std::copy_n( that.applicableActions, that.numApplicableActions, this->applicableActions );
 			numApplicableActions = that.numApplicableActions;
 			return *this;
 		}

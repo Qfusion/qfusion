@@ -131,6 +131,8 @@ public:
 			: keepVisibleEntity( nullptr ),
 			minSpotDistanceToEntity( 0 ),
 			maxSpotDistanceToEntity( 999999.0f ),
+			entityDistanceInfluence( 0.5f ),
+			entityWeightFalloffDistanceRatio( 0 ),
 			minHeightAdvantageOverEntity( -999999.0f ),
 			heightOverEntityInfluence( 0.5f ) {
 			VectorCopy( keepVisibleOrigin_, this->keepVisibleOrigin );

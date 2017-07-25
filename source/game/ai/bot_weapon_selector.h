@@ -273,9 +273,13 @@ public:
 		: self( self_ ),
 		selectedWeapons( selectedWeapons_ ),
 		selectedEnemies( selectedEnemies_ ),
+		weaponChoiceRandom( 0.5f ),
 		weaponChoiceRandomTimeoutAt( 0 ),
 		nextFastWeaponSwitchActionCheckAt( 0 ),
-		weaponChoicePeriod( weaponChoicePeriod_ ) {}
+		weaponChoicePeriod( weaponChoicePeriod_ ) {
+		// Shut an analyzer up
+		memset( &targetEnvironment, 0, sizeof( TargetEnvironment ) );
+	}
 
 	void Frame( const WorldState &cachedWorldState );
 	void Think( const WorldState &cachedWorldState );

@@ -81,17 +81,23 @@ AiAasRouteCache::AiAasRouteCache( AiAasRouteCache &&that )
 
 	areaupdate = that.areaupdate;
 	portalupdate = that.portalupdate;
+	dijkstralabels = that.dijkstralabels;
 
 	reversedreachability = that.reversedreachability;
 
 	clusterareacache = that.clusterareacache;
 	portalcache = that.portalcache;
 
+	oldestcache = that.oldestcache;
+	newestcache = that.newestcache;
+
 	areatraveltimes = that.areatraveltimes;
 	portalmaxtraveltimes = that.portalmaxtraveltimes;
 
 	reachabilityareas = that.reachabilityareas;
 	reachabilityareaindex = that.reachabilityareaindex;
+
+	maxreachabilityareas = that.maxreachabilityareas;
 
 	that.loaded = false;
 }
@@ -894,6 +900,9 @@ void AiAasRouteCache::InitRoutingUpdate( void ) {
 	portalupdate = (aas_routingupdate_t *) GetClearedMemory( ( aasWorld.NumPortals() + 1 ) * sizeof( aas_routingupdate_t ) );
 	//allocate memory for the Dijkstra's algorithm labels
 	dijkstralabels = (signed char *) GetClearedMemory( maxreachabilityareas );
+
+	oldestcache = nullptr;
+	newestcache = nullptr;
 }
 
 constexpr auto MAX_REACHABILITYPASSAREAS = 32;

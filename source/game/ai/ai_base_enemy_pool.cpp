@@ -73,7 +73,11 @@ AiBaseEnemyPool::AiBaseEnemyPool( float avgSkill_ )
 	maxTrackedAttackers( From1UpToMax( MAX_TRACKED_ATTACKERS, avgSkill_ ) ),
 	maxTrackedTargets( From1UpToMax( MAX_TRACKED_TARGETS, avgSkill_ ) ),
 	maxActiveEnemies( From1UpToMax( MAX_ACTIVE_ENEMIES, avgSkill_ ) ),
-	reactionTime( 320 - From0UpToMax( 300, avgSkill_ ) ) {
+	reactionTime( 320 - From0UpToMax( 300, avgSkill_ ) ),
+	prevThinkLevelTime( 0 ),
+	hasQuad( false ),
+	hasShell( false ),
+	damageToBeKilled( 0.0f ) {
 	unsigned maxEnemies = maxTrackedEnemies;
 	// Ensure we always will have at least 2 free slots for new enemies
 	// (quad/shell owners and carrier) FOR ANY SKILL (high skills will have at least 3)

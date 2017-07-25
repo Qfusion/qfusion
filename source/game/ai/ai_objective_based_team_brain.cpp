@@ -331,14 +331,14 @@ void AiObjectiveBasedTeamBrain::ComputeDefenceRawScore( Candidates &candidates )
 
 			const auto *weaponDef = GS_GetWeaponDef( weapon );
 
-			if( weaponDef->firedef.ammo_id != AMMO_NONE ) {
+			if( weaponDef->firedef.ammo_id != AMMO_NONE && weaponDef->firedef.ammo_max ) {
 				weaponScore += inventory[weaponDef->firedef.ammo_id] / weaponDef->firedef.ammo_max;
 			} else {
 				weaponScore += 1.0f;
 			}
 
-			if( weaponDef->firedef_weak.ammo_id != AMMO_NONE ) {
-				weaponScore += inventory[weaponDef->firedef_weak.ammo_id] / weaponDef->firedef.ammo_max;
+			if( weaponDef->firedef_weak.ammo_id != AMMO_NONE && weaponDef->firedef_weak.ammo_max ) {
+				weaponScore += inventory[weaponDef->firedef_weak.ammo_id] / weaponDef->firedef_weak.ammo_max;
 			} else {
 				weaponScore += 1.0f;
 			}
