@@ -219,15 +219,8 @@ int AiAasWorld::TraceAreas(const vec3_t start, const vec3_t end, int *areas_, ve
             int tmpplanenum = tstack_p->planenum;
             //calculate the hitpoint with the node (split point of the line)
             //put the crosspoint TRACEPLANE_EPSILON pixels on the near side
-            float frac;
-            if (front < 0)
-                frac = (front)/(front-back);
-            else
-                frac = (front)/(front-back);
-            if (frac < 0)
-                frac = 0;
-            else if (frac > 1)
-                frac = 1;
+            float frac = front / ( front - back );
+            clamp( frac, 0.0f, 1.0f );
             //frac = front / (front-back);
             //
             cur_mid[0] = cur_start[0] + (cur_end[0] - cur_start[0]) * frac;
@@ -646,7 +639,7 @@ public:
         return std::make_tuple((T*)rawData, length / sizeof(T));
     };
 
-    bool ComputeChecksum(unsigned char *digest);
+    bool ComputeChecksum( char **base64Digest );
 };
 
 #define AASID						(('S'<<24)+('A'<<16)+('A'<<8)+'E')
@@ -656,6 +649,9 @@ public:
 AasFileReader::AasFileReader(const char *mapname)
     : lastoffset(0)
 {
+    // Shut up an analyzer
+    memset( &header, 0, sizeof( header ) );
+
     char filename[MAX_QPATH];
     Q_snprintfz(filename, MAX_QPATH, "maps/%s.aas", mapname);
 
@@ -721,7 +717,7 @@ char *AasFileReader::LoadLump(int lumpNum, int size)
     return buf;
 }
 
-bool AasFileReader::ComputeChecksum(unsigned char *digest)
+bool AasFileReader::ComputeChecksum( char **base64Digest )
 {
     if (trap_FS_Seek(fp, 0, FS_SEEK_SET) < 0)
         return false;
@@ -734,12 +730,24 @@ bool AasFileReader::ComputeChecksum(unsigned char *digest)
         return false;
     }
 
-    static_assert(sizeof(*digest) == sizeof(md5_byte_t), "");
-    md5_digest(mem, fileSize, digest);
+    // Compute a binary MD5 digest of the file data first
+    md5_byte_t binaryDigest[16];
+    md5_digest( mem, fileSize, binaryDigest );
+
+    // Get a base64-encoded digest in a temporary buffer allocated via malloc()
     size_t base64Length;
-    base64_encode(digest, 16, &base64Length);
-    digest[base64Length] = '\0';
+    char *tmpBase64Chars = ( char * )base64_encode( binaryDigest, 16, &base64Length );
+
+    // Free the level data
     G_LevelFree(mem);
+
+    // Copy the base64-encoded digest to the game memory storage to avoid further confusion
+    *base64Digest = ( char * )G_LevelMalloc( base64Length + 1 );
+    // Include the last zero byte in copied chars
+    memcpy( *base64Digest, tmpBase64Chars, base64Length + 1 );
+
+    free( tmpBase64Chars );
+
     return true;
 }
 
@@ -805,7 +813,8 @@ bool AiAasWorld::Load(const char *mapname)
     if (numclusters && !clusters)
         return false;
 
-    if (!reader.ComputeChecksum(checksum))
+    checksum = nullptr;
+    if( !reader.ComputeChecksum( &checksum ) )
         return false;
 
     SwapData();
@@ -818,6 +827,10 @@ AiAasWorld::~AiAasWorld()
 {
     if (!loaded)
         return;
+
+    if( checksum ) {
+        G_LevelFree( checksum );
+    }
 
     FreeLinkedEntities();
     FreeLinkHeap();

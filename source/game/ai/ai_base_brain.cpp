@@ -101,6 +101,8 @@ AiBaseBrain::AiBaseBrain( edict_t *self_ )
 	localNavTarget( NavTarget::Dummy() ),
 	navTarget( nullptr ),
 	planHead( nullptr ),
+	activeGoal( nullptr ),
+	nextActiveGoalUpdateAt( 0 ),
 	lastReachedNavTarget( nullptr ),
 	lastNavTargetReachedAt( 0 ),
 	prevThinkAt( 0 ),

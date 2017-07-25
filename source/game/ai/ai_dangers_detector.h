@@ -40,7 +40,7 @@ class DangersDetector
 	const edict_t *const self; // Bot reference
 
 public:
-	DangersDetector( const edict_t *bot ) : self( bot ) {}
+	DangersDetector( const edict_t *bot ) : self( bot ), primaryDanger( nullptr ) {}
 
 	static constexpr unsigned MAX_ROCKETS = 3;
 	static constexpr unsigned MAX_PLASMA_BEAMS = 3;

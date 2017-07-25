@@ -59,8 +59,10 @@ class NavEntity
 	edict_t *ent;
 	// Links for registry goals pool
 	NavEntity *prev, *next;
-	// All fields are set to zero by NavEntities registry initialization code
-	NavEntity() : origin( 0, 0, 0 ) {}
+
+	NavEntity(): origin( 0, 0, 0 ) {
+		memset( this, 0, sizeof( NavEntity ) );
+	}
 
 	static constexpr unsigned MAX_NAME_LEN = 128;
 	char name[MAX_NAME_LEN];
@@ -287,6 +289,10 @@ class NavEntitiesRegistry
 	NavEntity *entityToNavEntity[MAX_EDICTS];
 	NavEntity *freeNavEntity;
 	NavEntity headnode;
+
+	NavEntitiesRegistry() {
+		memset( this, 0, sizeof( NavEntitiesRegistry ) );
+	}
 
 	static NavEntitiesRegistry instance;
 

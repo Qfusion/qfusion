@@ -178,6 +178,8 @@ void AiSquad::SquadEnemyPool::OnBotEnemyAssigned( const edict_t *bot, const Enem
 AiSquad::AiSquad( CachedTravelTimesMatrix &travelTimesMatrix_ )
 	: isValid( false ),
 	inUse( false ),
+	canFightTogether( false ),
+	canMoveTogether( false ),
 	brokenConnectivityTimeoutAt( 0 ),
 	botsDetached( false ),
 	travelTimesMatrix( travelTimesMatrix_ ) {
@@ -384,7 +386,7 @@ static void InitWeaponDefHelpers() {
 	struct WeaponAndTier
 	{
 		int weapon, tier;
-		WeaponAndTier() {}
+		WeaponAndTier(): weapon( 0 ), tier( 0 ) {}
 		WeaponAndTier( int weapon_, int tier_ ) : weapon( weapon_ ), tier( tier_ ) {}
 		bool operator<( const WeaponAndTier &that ) const { return tier > that.tier; }
 	};

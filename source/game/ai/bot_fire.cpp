@@ -116,8 +116,11 @@ void Bot::FireWeapon( BotInput *input ) {
 		}
 	}
 
-	if( CheckShot( *aimParams, input, selectedEnemies, *primaryFireDef ) ) {
-		PressAttack( primaryFireDef, builtinFireDef, scriptFireDef, input );
+	// Shut an analyzer up by this condition
+	if( primaryFireDef ) {
+		if( CheckShot( *aimParams, input, selectedEnemies, *primaryFireDef ) ) {
+			PressAttack( primaryFireDef, builtinFireDef, scriptFireDef, input );
+		}
 	}
 
 	if( secondaryFireDef ) {
@@ -127,7 +130,8 @@ void Bot::FireWeapon( BotInput *input ) {
 		}
 	}
 
-	if( input->fireScriptWeapon ) {
+	// Shut an analyzer up by testing scriptFireDef too
+	if( input->fireScriptWeapon && scriptFireDef ) {
 		GT_asFireScriptWeapon( self->r.client, scriptFireDef->WeaponNum() );
 	}
 }

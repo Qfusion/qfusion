@@ -408,7 +408,7 @@ public:
 
 public:
 		KeptInFovPoint( const edict_t *self_ ) :
-			self( self_ ), origin( 0, 0, 0 ), instanceId( 0 ), isActive( false ) {}
+			self( self_ ), origin( 0, 0, 0 ), instanceId( 0 ), viewDot( -1.0f ), isActive( false ) {}
 
 		void Activate( const Vec3 &origin_, unsigned instanceId_ ) {
 			Activate( origin_.Data(), instanceId_ );

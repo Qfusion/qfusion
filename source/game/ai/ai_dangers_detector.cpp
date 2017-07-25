@@ -171,7 +171,11 @@ class PlasmaBeam
 {
 	friend class PlasmaBeamsBuilder;
 
-	PlasmaBeam() {}
+	PlasmaBeam()
+		: startProjectile( nullptr ),
+		endProjectile( nullptr ),
+		owner( nullptr ),
+		projectilesCount( 0 ) {}
 
 public:
 	PlasmaBeam( const edict_t *firstProjectile )

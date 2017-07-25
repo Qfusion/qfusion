@@ -91,6 +91,18 @@ private:
 public:
 	unsigned short waterLevel : 2;
 
+	AiEntityPhysicsState()
+		: waterType( 0 ),
+		groundEntNum( 0 ),
+		selfEntNum( 0 ),
+		heightOverGround( 0 ),
+		droppedToFloorOriginOffset( 0 ),
+		currAasAreaNum( 0 ),
+		droppedToFloorAasAreaNum( 0 ),
+		speed( 0 ),
+		speed2D( 0 ),
+		waterLevel( 0 ) {}
+
 	inline void UpdateFromEntity( const edict_t *ent ) {
 		VectorCopy( ent->s.origin, this->origin );
 		SetVelocity( ent->velocity );

@@ -266,6 +266,8 @@ public:
 	BotDodgeToSpotActionRecord( PoolBase *pool_, edict_t *self_, const Vec3 &spotOrigin )
 		: BotBaseActionRecord( pool_, self_, "BotDodgeToSpotActionRecord" ),
 		navTarget( NavTarget::Dummy() ) {
+		// Shut an analyzer up (this var value gets really set in Activate()).
+		timeoutAt = std::numeric_limits<int>::max();
 		navTarget.SetToTacticalSpot( spotOrigin );
 	}
 

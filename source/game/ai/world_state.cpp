@@ -2,7 +2,14 @@
 
 #ifndef PUBLIC_BUILD
 
-WorldState::WorldState( edict_t *self_ ) : self( self_ ), isCopiedFromOtherWorldState( false ) {
+WorldState::WorldState( edict_t *self_ ) {
+	// Shut up an analyzer
+	memset( this, 0, sizeof( WorldState ) );
+
+	// Initialize these fields after the memset() call
+	this->self = self_;
+	this->isCopiedFromOtherWorldState = false;
+
 	// If state bits are not initialized, vars often does not get printed in debug output.
 	// This is useful for release non-public builds too, not only for debug ones.
 	for( unsigned i = 0; i < NUM_ORIGIN_VARS; ++i ) {
@@ -27,7 +34,6 @@ WorldState::WorldState( edict_t *self_ ) : self( self_ ), isCopiedFromOtherWorld
 		packedFields->epsilon = 1;
 		packedFields->satisfyOp = (unsigned char)SatisfyOp::EQ;
 	}
-	;
 
 	scriptAttachment = GENERIC_asNewScriptWorldStateAttachment( self_ );
 }
@@ -115,7 +121,7 @@ bool WorldState::IsSatisfiedBy( const WorldState &that ) const {
 	}
 
 	TEST_GENERIC_COMPARABLE_VARS_SATISFACTION( unsignedVarsValues, unsignedVarsIgnoreFlags, unsignedVarsSatisfyOps );
-	TEST_GENERIC_COMPARABLE_VARS_SATISFACTION( floatVarsValues, floatVarsIgnoreFlags, floatVarsSatisfyOps );
+	static_assert( NUM_FLOAT_VARS == 0, "Implement satisfaction tests for float vars" );
 	TEST_GENERIC_COMPARABLE_VARS_SATISFACTION( shortVarsValues, shortVarsIgnoreFlags, shortVarsSatisfyOps );
 
 	for( int i = 0, offset = 0; i < NUM_ORIGIN_VARS; ++i, offset += 4 ) {
@@ -194,14 +200,7 @@ uint32_t WorldState::Hash() const {
 		result = result * 17 + (unsigned)GetVarSatisfyOp( unsignedVarsSatisfyOps, i ) + 1;
 	}
 
-	decltype( floatVarsIgnoreFlags )floatVarsMask = 1;
-	for( int i = 0; i < NUM_FLOAT_VARS; ++i ) {
-		if( floatVarsIgnoreFlags & floatVarsMask ) {
-			continue;
-		}
-		result = result * 17 + *( (uint32_t *)( &floatVarsValues[i] ) );
-		result = result * 17 + (unsigned)GetVarSatisfyOp( floatVarsSatisfyOps, i ) + 1;
-	}
+	static_assert( NUM_FLOAT_VARS == 0, "Implement hashing for float vars" );
 
 	decltype( shortVarsIgnoreFlags )shortVarsMask = 1;
 	for( int i = 0; i < NUM_SHORT_VARS; ++i ) {
@@ -272,7 +271,7 @@ bool WorldState::operator==( const WorldState &that ) const {
 	}
 
 	TEST_VARS_EQUALITY( unsignedVarsValues, unsignedVarsIgnoreFlags, unsignedVarsSatisfyOps );
-	TEST_VARS_EQUALITY( floatVarsValues, floatVarsIgnoreFlags, floatVarsSatisfyOps );
+	static_assert( NUM_FLOAT_VARS == 0, "Implement equality tests for float vars" );
 	TEST_VARS_EQUALITY( shortVarsValues, shortVarsIgnoreFlags, shortVarsSatisfyOps );
 
 	for( int i = 0, offset = 0; i < NUM_ORIGIN_VARS; ++i, offset += 4 ) {
