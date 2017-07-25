@@ -50,18 +50,19 @@ public:
 	inline unsigned UpdatePeriod() const { return updatePeriod; }
 };
 
-class alignas ( 8 )PoolBase
+class alignas ( sizeof( void * ) )PoolBase
 {
 	friend class PoolItem;
 
 	char *basePtr;
 	const char *tag;
-	unsigned itemSize;
+	const uint16_t linksOffset;
+	const uint16_t alignedChunkSize;
 
 	static constexpr auto FREE_LIST = 0;
 	static constexpr auto USED_LIST = 1;
 
-	short listFirst[2];
+	int16_t listFirst[2];
 
 #ifdef _DEBUG
 	inline const char *ListName( short index ) {
@@ -73,15 +74,34 @@ class alignas ( 8 )PoolBase
 	}
 #endif
 
-	inline class PoolItem &ItemAt( short index ) {
-		return *(PoolItem *)( basePtr + itemSize * index );
-	}
-	inline short IndexOf( const class PoolItem *item ) const {
-		return (short)( ( (const char *)item - basePtr ) / itemSize );
+	static inline uint16_t LinksOffset( uint16_t itemSize ) {
+		uint16_t remainder = itemSize % alignof( uint16_t );
+		if( !remainder ) {
+			return itemSize;
+		}
+		return itemSize + alignof( uint16_t ) - remainder;
 	}
 
-	inline void Link( short itemIndex, short listIndex );
-	inline void Unlink( short itemIndex, short listIndex );
+	static inline uint16_t AlignedChunkSize( uint16_t itemSize ) {
+		uint16_t totalSize = LinksOffset( itemSize ) + sizeof( ItemLinks );
+		uint16_t remainder = totalSize % alignof( void * );
+		if( !remainder ) {
+			return totalSize;
+		}
+		return totalSize + alignof( void * ) - remainder;
+	}
+
+	inline class PoolItem &ItemAt( int16_t index ) {
+		char *mem = ( basePtr + alignedChunkSize * index );
+		assert( !( (uintptr_t)mem % sizeof( void * ) ) );
+		return *(PoolItem *)mem;
+	}
+	inline int16_t IndexOf( const class PoolItem *item ) const {
+		return (int16_t)( ( (const char *)item - basePtr ) / alignedChunkSize );
+	}
+
+	inline void Link( int16_t itemIndex, int16_t listIndex );
+	inline void Unlink( int16_t itemIndex, int16_t listIndex );
 
 protected:
 	void *Alloc();
@@ -99,18 +119,31 @@ protected:
 		va_end( va );
 	}
 
+	// These links follow an item in-memory, not precede it.
+	// This is to avoid wasting bytes on aligning an item after these links.
+	// (An item is required to be 8-byte aligned on 64-bit systems
+	// while the links alignment is less restrictive).
+	struct alignas( 2 )ItemLinks {
+		int16_t links[2];
+		int16_t &Prev() { return links[0]; }
+		int16_t &Next() { return links[1]; }
+	};
+
+	inline ItemLinks &ItemLinksAt( int16_t index ) {
+		char *mem = ( basePtr + alignedChunkSize * index + linksOffset );
+		assert( !( (uintptr_t)mem % alignof( ItemLinks ) ) );
+		return *(ItemLinks *)mem;
+	}
 public:
-	PoolBase( char *basePtr_, const char *tag_, unsigned itemSize_, unsigned itemsCount );
+	PoolBase( char *basePtr_, const char *tag_, uint16_t itemSize, uint16_t itemsCount );
 
 	void Clear();
 };
 
-class alignas ( 8 )PoolItem
+class alignas ( sizeof( void * ) )PoolItem
 {
 	friend class PoolBase;
 	PoolBase *pool;
-	short prevInList;
-	short nextInList;
 
 public:
 	PoolItem( PoolBase * pool_ ) : pool( pool_ ) {
@@ -125,16 +158,35 @@ public:
 };
 
 template<class Item, unsigned N>
-class alignas ( 8 )Pool : public PoolBase
+class alignas ( sizeof( void * ) )Pool : public PoolBase
 {
-	static constexpr unsigned ChunkSize() {
-		return ( sizeof( Item ) % 8 ) ? sizeof( Item ) + 8 - ( sizeof( Item ) % 8 ) : sizeof( Item );
+	// We have to introduce these intermediates instead of variables since we are limited to C++11 (not 14) standard.
+
+	static constexpr unsigned OffsetRemainder() {
+		return sizeof( Item ) % alignof( ItemLinks );
 	}
 
-	alignas( 8 ) char buffer[N * ChunkSize()];
+	static constexpr unsigned ItemLinksOffset() {
+		return OffsetRemainder() ? sizeof( Item ) + alignof( ItemLinks ) - OffsetRemainder() : sizeof( Item );
+	}
+
+	static constexpr unsigned TotalSize() {
+		return ItemLinksOffset() + sizeof( ItemLinks );
+	}
+
+	static constexpr unsigned ChunkSizeRemainder() {
+		return TotalSize() % sizeof( void * );
+	}
+
+	static constexpr unsigned ChunkSize() {
+		return ChunkSizeRemainder() ? TotalSize() + sizeof( void * ) - ChunkSizeRemainder() : TotalSize();
+	}
+
+	alignas( alignof( void * ) ) char buffer[N * ChunkSize()];
 
 public:
-	Pool( const char *tag_ ) : PoolBase( buffer, tag_, sizeof( Item ), N ) {
+	Pool( const char *tag_ ) : PoolBase( buffer, tag_, sizeof( Item ), (uint16_t)N ) {
+		static_assert( N <= std::numeric_limits<int16_t>::max(), "Links can't handle more than 2^15 elements in pool" );
 	}
 
 	inline Item *New() {

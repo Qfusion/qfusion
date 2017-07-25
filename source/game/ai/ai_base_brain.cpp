@@ -7,42 +7,42 @@
 #include "static_vector.h"
 #include "../../gameshared/q_collision.h"
 
-inline void PoolBase::Link( short itemIndex, short listIndex ) {
+inline void PoolBase::Link( int16_t itemIndex, int16_t listIndex ) {
 #ifdef _DEBUG
-	Debug( "Link(): About to link item at index %d in %s list\n", itemIndex, ListName( listIndex ) );
+	Debug( "Link(): About to link item at index %d in %s list\n", (int)itemIndex, ListName( listIndex ) );
 #endif
-	PoolItem &item = ItemAt( itemIndex );
+	ItemLinks &links = ItemLinksAt( itemIndex );
 	if( listFirst[listIndex] >= 0 ) {
-		PoolItem &headItem = ItemAt( listFirst[listIndex] );
-		headItem.prevInList = itemIndex;
-		item.nextInList = listFirst[listIndex];
+		ItemLinks &headLinks = ItemLinksAt( listFirst[listIndex] );
+		headLinks.Prev() = itemIndex;
+		links.Next() = listFirst[listIndex];
 	} else {
-		item.nextInList = -1;
+		links.Next() = -1;
 	}
-	item.prevInList = -1;
+	links.Prev() = -1;
 	listFirst[listIndex] = itemIndex;
 }
 
-inline void PoolBase::Unlink( short itemIndex, short listIndex ) {
+inline void PoolBase::Unlink( int16_t itemIndex, int16_t listIndex ) {
 #ifdef _DEBUG
-	Debug( "Unlink(): About to unlink item at index %d from %s list\n", itemIndex, ListName( listIndex ) );
+	Debug( "Unlink(): About to unlink item at index %d from %s list\n", (int)itemIndex, ListName( listIndex ) );
 #endif
-	PoolItem &item = ItemAt( itemIndex );
-	if( item.prevInList >= 0 ) {
-		PoolItem &prevItem = ItemAt( item.prevInList );
-		prevItem.nextInList = item.nextInList;
-		if( item.nextInList >= 0 ) {
-			PoolItem &nextItem = ItemAt( item.nextInList );
-			nextItem.prevInList = item.prevInList;
+	ItemLinks &links = ItemLinksAt( itemIndex );
+	if( links.Prev() >= 0 ) {
+		ItemLinks &prevLinks = ItemLinksAt( links.Prev() );
+		prevLinks.Next() = links.Next();
+		if( links.Next() >= 0 ) {
+			ItemLinks &nextLinks = ItemLinksAt( links.Next() );
+			nextLinks.Prev() = links.Prev();
 		}
 	} else { // An item is a list head
 		if( listFirst[listIndex] != itemIndex ) {
 			abort();
 		}
-		if( item.nextInList >= 0 ) {
-			PoolItem &nextItem = ItemAt( item.nextInList );
-			nextItem.prevInList = -1;
-			listFirst[listIndex] = item.nextInList;
+		if( links.Next() >= 0 ) {
+			ItemLinks &nextItem = ItemLinksAt( links.Next() );
+			nextItem.Prev() = -1;
+			listFirst[listIndex] = links.Next();
 		} else {
 			listFirst[listIndex] = -1;
 		}
@@ -54,7 +54,7 @@ void *PoolBase::Alloc() {
 		return nullptr;
 	}
 
-	short freeItemIndex = listFirst[FREE_LIST];
+	int16_t freeItemIndex = listFirst[FREE_LIST];
 	// Unlink from free items list
 	Unlink( freeItemIndex, FREE_LIST );
 	// Link to used items list
@@ -63,35 +63,39 @@ void *PoolBase::Alloc() {
 }
 
 void PoolBase::Free( PoolItem *item ) {
-	short itemIndex = IndexOf( item );
+	int16_t itemIndex = IndexOf( item );
 	// Unlink from used
 	Unlink( itemIndex, USED_LIST );
 	// Link to free
 	Link( itemIndex, FREE_LIST );
 }
 
-PoolBase::PoolBase( char *basePtr_, const char *tag_, unsigned itemSize_, unsigned itemsCount )
-	: basePtr( basePtr_ ), tag( tag_ ), itemSize( itemSize_ ) {
+PoolBase::PoolBase( char *basePtr_, const char *tag_, uint16_t itemSize, uint16_t itemsCount )
+	: basePtr( basePtr_ ),
+	tag( tag_ ),
+	linksOffset( LinksOffset( itemSize ) ),
+	alignedChunkSize( AlignedChunkSize( itemSize ) ) {
 	listFirst[FREE_LIST] = 0;
 	listFirst[USED_LIST] = -1;
 
 	// Link all items to the free list
-	short lastIndex = (short)( itemsCount - 1 );
-	ItemAt( 0 ).prevInList = -1;
-	ItemAt( 0 ).nextInList = 1;
-	ItemAt( lastIndex ).prevInList = (short)( lastIndex - 1 );
-	ItemAt( lastIndex ).nextInList = -1;
-	for( short i = 1; i < lastIndex; ++i ) {
-		ItemAt( i ).nextInList = (short)( i + 1 );
-		ItemAt( i ).prevInList = (short)( i - 1 );
+	int16_t lastIndex = (int16_t)( itemsCount - 1 );
+	ItemLinksAt( 0 ).Prev() = -1;
+	ItemLinksAt( 0 ).Next() = 1;
+	ItemLinksAt( lastIndex ).Prev() = (int16_t)( lastIndex - 1 );
+	ItemLinksAt( lastIndex ).Next() = -1;
+	for( int16_t i = 1; i < lastIndex; ++i ) {
+		ItemLinksAt( i ).Next() = (int16_t)( i + 1 );
+		ItemLinksAt( i ).Prev() = (int16_t)( i - 1 );
 	}
 }
 
 void PoolBase::Clear() {
-	short itemIndex = listFirst[USED_LIST];
+	int16_t itemIndex = listFirst[USED_LIST];
 	while( itemIndex >= 0 ) {
 		auto &item = ItemAt( itemIndex );
-		itemIndex = item.nextInList;
+		auto &itemLinks = ItemLinksAt( itemIndex );
+		itemIndex = itemLinks.Next();
 		item.DeleteSelf();
 	}
 }
