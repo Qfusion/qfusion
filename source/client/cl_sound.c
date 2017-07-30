@@ -181,6 +181,7 @@ static bool CL_SoundModule_Load( const char *name, sound_import_t *import, bool 
 void CL_SoundModule_Init( bool verbose ) {
 	static const char *sound_modules[] = { "qf", "openal" };
 	static const int num_sound_modules = sizeof( sound_modules ) / sizeof( sound_modules[0] );
+	int sm, smfb;
 	sound_import_t import;
 
 	if( !s_module ) {
@@ -281,9 +282,12 @@ void CL_SoundModule_Init( bool verbose ) {
 	import.BufPipe_ReadCmds = QBufPipe_ReadCmds;
 	import.BufPipe_Wait = QBufPipe_Wait;
 
-	if( !CL_SoundModule_Load( sound_modules[s_module->integer - 1], &import, verbose ) ) {
-		if( s_module->integer == s_module_fallback->integer ||
-			!CL_SoundModule_Load( sound_modules[s_module_fallback->integer - 1], &import, verbose ) ) {
+	sm = bound( 1, s_module->integer, num_sound_modules );
+	smfb = bound( 0, s_module_fallback->integer, num_sound_modules );
+
+	if( !CL_SoundModule_Load( sound_modules[sm - 1], &import, verbose ) ) {
+		if( s_module->integer == smfb || !smfb ||
+			!CL_SoundModule_Load( sound_modules[smfb - 1], &import, verbose ) ) {
 			if( verbose ) {
 				Com_Printf( "Couldn't load a sound module\n" );
 				Com_Printf( "------------------------------------\n" );
@@ -292,7 +296,7 @@ void CL_SoundModule_Init( bool verbose ) {
 			se = NULL;
 			return;
 		}
-		Cvar_ForceSet( "s_module", va( "%i", s_module_fallback->integer ) );
+		Cvar_ForceSet( "s_module", va( "%i", smfb ) );
 	}
 
 	CL_SoundModule_SetAttenuationModel();
