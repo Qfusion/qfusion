@@ -50,25 +50,31 @@ static void EscapePercent( const char *string, char *buffer, int bufferLen ) {
 	buffer[j] = '\0';
 }
 
+static void AI_PrintToBufferv( char *outputBuffer, size_t bufferSize, const char *nick, const char *format, va_list va ) {
+	char concatBuffer[1024];
+
+	int prefixLen = sprintf( concatBuffer, "t=%09" PRIi64 " %s: ", level.time, nick );
+	Q_vsnprintfz( concatBuffer + prefixLen, 1024 - prefixLen, format, va );
+
+	// concatBuffer may contain player names such as "%APPDATA%"
+	EscapePercent( concatBuffer, outputBuffer, 2048 );
+}
+
 void AI_Debug( const char *nick, const char *format, ... ) {
+#ifndef PUBLIC_BUILD
 	va_list va;
 	va_start( va, format );
 	AI_Debugv( nick, format, va );
 	va_end( va );
+#endif
 }
 
 void AI_Debugv( const char *nick, const char *format, va_list va ) {
-	char concatBuffer[1024];
-
-	const int64_t levelTime = level.time;
-	int prefixLen = sprintf( concatBuffer, "t=%09" PRIi64 " %s: ", levelTime, nick );
-
-	Q_vsnprintfz( concatBuffer + prefixLen, 1024 - prefixLen, format, va );
-
-	// concatBuffer may contain player names such as "%APPDATA%"
+#ifndef PUBLIC_BUILD
 	char outputBuffer[2048];
-	EscapePercent( concatBuffer, outputBuffer, 2048 );
+	AI_PrintToBufferv( outputBuffer, 2048, nick, format, va );
 	G_Printf( "%s", outputBuffer );
+#endif
 }
 
 void AI_FailWith( const char *tag, const char *format, ... ) {
@@ -79,9 +85,9 @@ void AI_FailWith( const char *tag, const char *format, ... ) {
 }
 
 void AI_FailWithv( const char *tag, const char *format, va_list va ) {
-	AI_Debugv( tag, format, va );
-	fflush( stdout );
-	abort();
+	char outputBuffer[2048];
+	AI_PrintToBufferv( outputBuffer, 2048, tag, format, va );
+	G_Error( "%s", outputBuffer );
 }
 
 void AITools_DrawLine( const vec3_t origin, const vec3_t dest ) {

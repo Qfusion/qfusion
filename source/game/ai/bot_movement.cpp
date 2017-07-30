@@ -1158,10 +1158,14 @@ void BotMovementPredictionContext::Debug( const char *format, ... ) const {
 #endif
 }
 
-inline void BotMovementPredictionContext::Assert( bool condition ) const {
+inline void BotMovementPredictionContext::Assert( bool condition, const char *message ) const {
 #ifdef ENABLE_MOVEMENT_ASSERTIONS
 	if( !condition ) {
-		abort();
+		if( message ) {
+			AI_FailWith( "BotMovementPredictionContext::Assert()", "%s\n", message );
+		} else {
+			AI_FailWith( "BotMovementPredictionContext::Assert()", "An assertion has failed\n" );
+		}
 	}
 #endif
 }
@@ -1295,10 +1299,14 @@ void BotBaseMovementAction::Debug( const char *format, ... ) const {
 #endif
 }
 
-inline void BotBaseMovementAction::Assert( bool condition ) const {
+inline void BotBaseMovementAction::Assert( bool condition, const char *message ) const {
 #ifdef ENABLE_MOVEMENT_ASSERTIONS
 	if( !condition ) {
-		abort();
+		if( message ) {
+			AI_FailWith("BotBaseMovementAction::Assert()", "An assertion has failed\n", message );
+		} else {
+			AI_FailWith("BotBaseMovementAction::Assert()", "An assertion has failed\n");
+		}
 	}
 #endif
 }

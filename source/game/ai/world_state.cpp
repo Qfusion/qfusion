@@ -151,7 +151,7 @@ bool WorldState::IsSatisfiedBy( const WorldState &that ) const {
 				}
 				break;
 			default:
-				abort();
+				AI_FailWith( "WorldState::IsSatisfiedBy()", "Illegal packed.satisfyOp bits: %d\n", (int)packed.satisfyOp );
 		}
 	}
 

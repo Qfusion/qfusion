@@ -2059,12 +2059,10 @@ PlannerNode *BotDodgeToSpotAction::TryApply( const WorldState &worldState ) {
 #ifndef _DEBUG
 	// Sanity check
 	if( worldState.DangerHitPointVar().Ignore() ) {
-		Debug( "Danger hit point is ignored in the given world state\n" );
-		abort();
+		AI_FailWith( "BotDodgeToSpotAction::TryApply()", "Danger hit point is ignored in the given world state\n" );
 	}
 	if( worldState.DangerDirectionVar().Ignore() ) {
-		Debug( "Danger direction is ignored in the given world state\n" );
-		abort();
+		AI_FailWith( "BotDodgeToSpotAction::TryApply()", "Danger direction is ignored in the given world state\n" );
 	}
 #endif
 

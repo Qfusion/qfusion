@@ -73,6 +73,11 @@ void Bot::FireWeapon( BotInput *input ) {
 	const GenericFireDef *builtinFireDef = selectedWeapons.BuiltinFireDef();
 	const GenericFireDef *scriptFireDef = selectedWeapons.ScriptFireDef();
 
+	// Should not really happen but an analyzer is unaware of this.
+	if( !builtinFireDef && !scriptFireDef ) {
+		AI_FailWith( "Bot::FireWeapon()", "Both builtin and script fire defs are null\n" );
+	}
+
 	AimParams builtinWeaponAimParams;
 	AimParams scriptWeaponAimParams;
 
@@ -90,14 +95,12 @@ void Bot::FireWeapon( BotInput *input ) {
 	AimParams *aimParams;
 	if( selectedWeapons.PreferBuiltinWeapon() ) {
 		aimParams = &builtinWeaponAimParams;
-		assert( builtinFireDef );
 		primaryFireDef = builtinFireDef;
 		if( scriptFireDef ) {
 			secondaryFireDef = scriptFireDef;
 		}
 	} else {
 		aimParams = &scriptWeaponAimParams;
-		assert( scriptFireDef );
 		primaryFireDef = scriptFireDef;
 		if( builtinFireDef ) {
 			secondaryFireDef = builtinFireDef;
@@ -109,7 +112,7 @@ void Bot::FireWeapon( BotInput *input ) {
 
 	// Attack only in Think() frames unless a continuousFire is required or the bot has hard skill
 	if( ShouldSkipThinkFrame() && Skill() < 0.66f ) {
-		if( !primaryFireDef->IsContinuousFire() ) {
+		if( !primaryFireDef || !primaryFireDef->IsContinuousFire() ) {
 			if( !secondaryFireDef || !secondaryFireDef->IsContinuousFire() ) {
 				return;
 			}
