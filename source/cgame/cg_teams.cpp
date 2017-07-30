@@ -49,6 +49,7 @@ void CG_SetSceneTeamColors( void ) {
 
 	// send always white for the team spectators
 	trap_R_SetCustomColor( TEAM_SPECTATOR, 255, 255, 255 );
+
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ ) {
 		CG_TeamColor( team, color );
 		trap_R_SetCustomColor( team, (uint8_t)( color[0] * 255 ), (uint8_t)( color[1] * 255 ), (uint8_t)( color[2] * 255 ) ); // update the renderer
@@ -62,15 +63,15 @@ static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceMode
 	pmodelinfo_t *pmodelinfo;
 	struct skinfile_s *skin = NULL;
 
-	if( teamForceModel ) {
+	if( teamForceModel->modified ) {
 		teamForceModel->modified = false;
 	}
 
-	if( teamForceModelToggle ) {
+	if( teamForceModelToggle->modified ) {
 		teamForceModelToggle->modified = false;
 	}
 
-	if( teamForceSkin ) {
+	if( teamForceSkin->modified ) {
 		teamForceSkin->modified = false;
 	}
 
@@ -382,6 +383,7 @@ uint8_t *CG_PlayerColorForEntity( int entNum, byte_vec4_t color ) {
 */
 void CG_RegisterForceModels( void ) {
 	int team;
+
 	CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSmodelForce, cg_teamPLAYERSskin, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
 	CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAmodelForce, cg_teamALPHAskin, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
 	CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAmodelForce, cg_teamBETAskin, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
