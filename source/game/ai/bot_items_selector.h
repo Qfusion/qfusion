@@ -26,9 +26,13 @@ class SelectedNavEntity
 		selectedAt( level.time ),
 		timeoutAt( timeoutAt_ ) {}
 
-	inline void CheckValid() const {
+	inline void CheckValid( const char *message = nullptr ) const {
 		if( !IsValid() ) {
-			abort();
+			if( message ) {
+				AI_FailWith( "SelectedNavEntity::CheckValid()", "%s\n", message );
+			} else {
+				AI_FailWith( "SelectedNavEntity::CheckValid()", "A check has failed\n" );
+			}
 		}
 	}
 

@@ -1,6 +1,6 @@
 #include "ai_aas_world.h"
 #include "static_vector.h"
-#include "../g_local.h"
+#include "ai_local.h"
 #include "../../qalgo/md5.h"
 #include "../../qalgo/base64.h"
 
@@ -22,8 +22,7 @@ bool AiAasWorld::Init(const char *mapname)
 {
     if (instance)
     {
-        G_Printf("AiAasWorld::Init(): an instance is already present\n");
-        abort();
+        AI_FailWith( "AiAasWorld::Init()", "An instance is already present\n" );
     }
     instance = (AiAasWorld *)G_Malloc(sizeof(AiAasWorld));
     new(instance) AiAasWorld;

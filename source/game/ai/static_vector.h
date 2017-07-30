@@ -9,6 +9,8 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+#include "ai_local.h"
+
 #ifdef _MSC_VER
 #pragma warning( disable : 4324 )       // structure was padded due to alignment specifier
 #endif
@@ -44,11 +46,8 @@ private:
 	{
 		va_list va;
 		va_start( va, format );
-		vprintf( format, va );
-		// Ensure that all buffered output will be shown
-		fflush( stdout );
+		AI_FailWithv( "StaticVector::fail_with()", format, va );
 		va_end( va );
-		abort();
 	}
 
 	inline ptrdiff_t idx( const_iterator ptr ) { return ptr - basePointer; }

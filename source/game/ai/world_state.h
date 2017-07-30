@@ -784,7 +784,7 @@ inline void WorldState::SetVarSatisfyOp( uint8_t *ops, int varIndex, SatisfyOp v
 
 #ifdef _DEBUG
 	if( ( ( 0xF << varShift ) | ( 0xF << complementaryShift ) ) != 0xFF ) {
-		abort();
+		AI_FailWith( "WorldState::SetVarSatisfyOp()", "Var shift and complementary shift masks do not compose a byte\n" );
 	}
 #endif
 
@@ -841,14 +841,14 @@ inline void WorldState::OriginVar::DebugPrint( const char *tag ) const {
 inline float WorldState::OriginVar::DistanceTo( const OriginVar &that ) const {
 #ifdef _DEBUG
 	if( this->Ignore() ) {
-		AI_FailWith( "OriginVar", "GetDistance(): `this` var is ignored\n" );
+		AI_FailWith( "OriginVar::GetDistance()", "`this` var is ignored\n" );
 	}
 	if( that.Ignore() ) {
-		AI_FailWith( "OriginVar", "GetDistance(): `that` var is ignored\n" );
+		AI_FailWith( "OriginVar::GetDistance()", "`that` var is ignored\n" );
 	}
 	// Its might be legal from coding point of view, but does not make sense
 	if( this->parent != that.parent ) {
-		AI_FailWith( "OriginVar", "GetDistance(): vars belong to different world states\n" );
+		AI_FailWith( "OriginVar::GetDistance()", "Vars belong to different world states\n" );
 	}
 #endif
 	vec3_t unpackedThis, unpackedThat;
@@ -862,10 +862,10 @@ inline float WorldState::OriginVar::DistanceTo( const OriginVar &that ) const {
 inline WorldState::OriginVar &WorldState::OriginVar::SetSatisfyOp( WorldState::SatisfyOp op, float epsilon ) {
 #ifdef _DEBUG
 	if( op != SatisfyOp::EQ && op != SatisfyOp::NE ) {
-		abort();
+		AI_FailWith( "OriginVar::SetSatisfyOp()", "Illegal satisfy op %d for this kind of var\n", (int)op );
 	}
 	if( epsilon < 4.0f || epsilon >= 4096.0f ) {
-		abort();
+		AI_FailWith( "OriginVar::SetSatisfyOp()", "An epsilon %f is out of valid [4, 4096] range\n", epsilon );
 	}
 #endif
 	// Up to 10 bits
@@ -893,16 +893,16 @@ inline Vec3 WorldState::OriginLazyVarBase::Value() const {
 		return Vec3( 4 * Data()[0], 4 * Data()[1], 4 * Data()[2] );
 	}
 
-	AI_FailWith( "OriginLazyVar", "Attempt to get a value of var #%hd which is not in PRESENT state\n", index );
+	AI_FailWith( "OriginLazyVar::Value()", "Attempt to get a value of var #%hd which is not in PRESENT state\n", index );
 }
 
 inline WorldState::OriginLazyVarBase &WorldState::OriginLazyVarBase::SetSatisfyOp( WorldState::SatisfyOp op, float epsilon ) {
 #ifdef _DEBUG
 	if( op != WorldState::SatisfyOp::EQ && op != WorldState::SatisfyOp::NE ) {
-		abort();
+		AI_FailWith( "OriginLazyVarBase::SetSatisfyOp()", "Illegal satisfy op %d for this kind of var\n", (int)op );
 	}
 	if( epsilon < 4.0f || epsilon >= 4096.0f ) {
-		abort();
+		AI_FailWith( "OriginLazyVarBase::SetSatisfyOp()", "An epsilon %f is out of valid [4, 4096] range\n", epsilon );
 	}
 #endif
 	// Up to 10 bits
@@ -925,7 +925,7 @@ inline float WorldState::OriginLazyVarBase::DistanceTo( const OriginVar &that ) 
 		AI_FailWith( "OriginLazyVar::GetDistance(const OriginVar &)", "`that` var is ignored\n" );
 	}
 	if( this->parent != that.parent ) {
-		AI_FailWith( "OriginLazyVar::GetDistance(const OriginVar &)", "vars belong to different world states\n" );
+		AI_FailWith( "OriginLazyVar::GetDistance(const OriginVar &)", "Vars belong to different world states\n" );
 	}
 #endif
 	vec3_t unpackedThis, unpackedThat;
@@ -956,7 +956,7 @@ inline bool WorldState::OriginLazyVar::IsPresent() const {
 inline bool WorldState::OriginLazyVar::operator==( const OriginLazyVar &that ) const {
 #ifdef _DEBUG
 	if( this->index != that.index ) {
-		AI_FailWith( "OriginLazyVar", "IsSatisfiedBy(): vars index mismatch\n" );
+		AI_FailWith( "OriginLazyVar::IsSatisfiedBy()", "Vars index mismatch\n" );
 	}
 #endif
 	if( !Packed().ignore ) {
@@ -1012,7 +1012,7 @@ inline void WorldState::OriginLazyVar::DebugPrint( const char *tag ) const {
 inline bool WorldState::OriginLazyVar::IsSatisfiedBy( const OriginLazyVar &that ) const {
 #ifdef _DEBUG
 	if( this->index != that.index ) {
-		AI_FailWith( "OriginLazyVar", "IsSatisfiedBy(): vars index mismatch\n" );
+		AI_FailWith( "OriginLazyVar::IsSatisfiedBy()", "Vars index mismatch\n" );
 	}
 #endif
 	if( Packed().ignore ) {
@@ -1044,7 +1044,7 @@ inline bool WorldState::OriginLazyVar::IsSatisfiedBy( const OriginLazyVar &that 
 			}
 			break;
 		default:
-			abort();
+			AI_FailWith( "OriginLazyVar::IsSatisfiedBy()", "Illegal satisfy op %d\n", (int)SatisfyOp() );
 	}
 	return true;
 }
@@ -1054,13 +1054,13 @@ inline Vec3 WorldState::DualOriginLazyVar::Value2() const {
 		return Vec3( Data2()[0], Data2()[1], Data2()[2] );
 	}
 
-	AI_FailWith( "OriginLazyVar", "Attempt to get a 2nd value of var #%hd which is not in PRESENT state\n", index );
+	AI_FailWith( "OriginLazyVar::Value2()", "Attempt to get a 2nd value of var #%hd which is not in PRESENT state\n", index );
 }
 
 inline bool WorldState::DualOriginLazyVar::IsSatisfiedBy( const DualOriginLazyVar &that ) const {
 #ifdef _DEBUG
 	if( this->index != that.index ) {
-		AI_FailWith( "OriginLazyVar", "IsSatisfiedBy(): vars index mismatch\n" );
+		AI_FailWith( "OriginLazyVar::IsSatisfiedBy()", "Vars index mismatch\n" );
 	}
 #endif
 	if( Packed().ignore ) {
@@ -1102,7 +1102,7 @@ inline bool WorldState::DualOriginLazyVar::IsSatisfiedBy( const DualOriginLazyVa
 			}
 			break;
 		default:
-			abort();
+			AI_FailWith( "DualOriginLazyVar::IsSatisfiedBy()", "Illegal satisfy op %d\n", (int)SatisfyOp() );
 	}
 	return true;
 }
@@ -1110,7 +1110,7 @@ inline bool WorldState::DualOriginLazyVar::IsSatisfiedBy( const DualOriginLazyVa
 inline bool WorldState::DualOriginLazyVar::operator==( const DualOriginLazyVar &that ) const {
 #ifdef _DEBUG
 	if( this->index != that.index ) {
-		AI_FailWith( "OriginLazyVar", "IsSatisfiedBy(): vars index mismatch\n" );
+		AI_FailWith( "OriginLazyVar::IsSatisfiedBy()", "Vars index mismatch\n" );
 	}
 #endif
 	if( !Packed().ignore ) {
