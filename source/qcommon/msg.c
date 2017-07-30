@@ -191,7 +191,7 @@ int MSG_ReadInt8( msg_t *msg ) {
 int MSG_ReadUint8( msg_t *msg ) {
 	msg->readcount++;
 	if( msg->readcount > msg->cursize ) {
-		return -1;
+		return 0;
 	}
 
 	return ( unsigned char )( msg->data[msg->readcount - 1] );
@@ -265,8 +265,6 @@ int64_t MSG_ReadIntBase128( msg_t *msg ) {
 
 float MSG_ReadFloat( msg_t *msg ) {
 	union {
-
-
 		float f;
 		int l;
 	} dat;
