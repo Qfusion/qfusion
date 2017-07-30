@@ -1064,6 +1064,11 @@ void CG_UpdatePlayerModelEnt( centity_t *cent ) {
 			cent->yawVelocity += cent->lastVelocities[i & 3][3];
 		}
 
+		// safety/static code analysis check
+		if( count == 0 ) {
+			count = 1;
+		}
+
 		VectorScale( cent->animVelocity, 1.0f / (float)count, cent->animVelocity );
 		cent->yawVelocity /= (float)count;
 
