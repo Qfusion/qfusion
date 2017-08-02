@@ -6,14 +6,13 @@
 
 class BotRoamingManager
 {
-	static constexpr unsigned MAX_SPOTS = 2048;
 	// Note: very large values lead to all spots being considered as visited
 	// during the first VISITED_SPOT_EXPIRATION_TIME millis of the level time.
 	// Even if TryResetAllSpotsDisabledState() fills visitedAt by zero,
 	// levelTime - visitedAt[spotNum] is still below this limit.
 	static constexpr unsigned VISITED_SPOT_EXPIRATION_TIME = 10 * 1000;
 
-	int64_t visitedAt[MAX_SPOTS];
+	int64_t *visitedAt;
 	edict_t *self;
 	Vec3 tmpSpotOrigin;
 	Vec3 cachedSpotOrigin;
@@ -41,8 +40,12 @@ class BotRoamingManager
 	int TrySuggestNearbyAasArea();
 	bool IsFeasibleArea( const aas_area_t &area, const aas_areasettings_t &areaSettings );
 
+	inline void ClearVisitedSpots();
 public:
 	BotRoamingManager( edict_t *self_ );
+	~BotRoamingManager() {
+		G_LevelFree( visitedAt );
+	}
 
 	// All calls during a single frame are guaranteed to return the same result
 	const Vec3 &GetCachedRoamingSpot();
