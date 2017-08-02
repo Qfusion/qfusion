@@ -9,6 +9,7 @@
 class TacticalSpotsRegistry
 {
 	friend class BotRoamingManager;
+	friend class TacticalSpotsBuilder;
 	// These types need forward declaration before methods where they are used.
 
 public:
@@ -187,7 +188,7 @@ public:
 	};
 
 private:
-	static constexpr uint16_t MAX_SPOTS = 2048;
+	static constexpr uint16_t MAX_SPOTS_PER_QUERY = 384;
 	static constexpr uint16_t MIN_GRID_CELL_SIDE = 512;
 	static constexpr uint16_t MAX_GRID_DIMENSION = 32;
 
@@ -204,21 +205,116 @@ private:
 	// Non-zero does not guarantee the spot is reachable for some picked bot
 	// (these values are calculated using shared AI route cache and bots have individual one for blocked paths handling).
 	uint16_t *spotTravelTimeTable;
-	// i-th element contains an offset of a grid cell spot nums list for i=cellNum
-	uint32_t *gridListOffsets;
-	// Contains packed lists of grid cell spot nums.
-	// Each list starts by number of spot nums followed by spot nums.
-	uint16_t *gridSpotsLists;
-
-	vec3_t worldMins;
-	vec3_t worldMaxs;
-
-	unsigned gridCellSize[3];
-	unsigned gridNumCells[3];
 
 	unsigned numSpots;
 
 	bool needsSavingPrecomputedData;
+
+	class SpotsGridBuilder;
+
+	class BaseSpotsGrid
+	{
+		friend class TacticalSpotsRegistry::SpotsGridBuilder;
+	protected:
+		TacticalSpot *spots;
+		unsigned numSpots;
+
+		vec3_t worldMins;
+		vec3_t worldMaxs;
+		unsigned gridCellSize[3];
+		unsigned gridNumCells[3];
+
+		inline unsigned PointGridCellNum( const vec3_t point ) const;
+		void SetupGridParams();
+
+	public:
+		BaseSpotsGrid( const BaseSpotsGrid &that ) = delete;
+		BaseSpotsGrid &operator=( const BaseSpotsGrid &that ) = delete;
+		BaseSpotsGrid( BaseSpotsGrid &&that ) = delete;
+		BaseSpotsGrid &operator=( BaseSpotsGrid &&that ) = delete;
+
+		BaseSpotsGrid() : spots( nullptr ), numSpots( 0 ) {}
+		virtual ~BaseSpotsGrid() {}
+
+		inline unsigned NumGridCells() const { return gridNumCells[0] * gridNumCells[1] * gridNumCells[2]; }
+
+		const float *WorldMins() const { return &worldMins[0]; }
+		const float *WorldMaxs() const { return &worldMaxs[0]; }
+
+		void AttachSpots( TacticalSpot *spots_, unsigned numSpots_ ) {
+			this->spots = spots_;
+			this->numSpots = numSpots_;
+		}
+
+		virtual uint16_t FindSpotsInRadius( const OriginParams &originParams,
+											uint16_t *spotNums,
+											uint16_t *insideSpotNum ) const;
+
+		virtual uint16_t *GetCellSpotsList( unsigned gridCellNum, uint16_t *numCellSpots ) const = 0;
+	};
+
+	class PrecomputedSpotsGrid final: public BaseSpotsGrid
+	{
+		friend class TacticalSpotsRegistry::SpotsGridBuilder;
+
+		// i-th element contains an offset of a grid cell spot nums list for i=cellNum
+		uint32_t *gridListOffsets;
+		// Contains packed lists of grid cell spot nums.
+		// Each list starts by number of spot nums followed by spot nums.
+		uint16_t *gridSpotsLists;
+	public:
+		PrecomputedSpotsGrid() : gridListOffsets( nullptr ), gridSpotsLists( nullptr ) {}
+
+		~PrecomputedSpotsGrid() override;
+
+		bool IsLoaded() const { return gridListOffsets != nullptr; }
+		bool Load( int fp );
+		void Save( int fp );
+
+		uint16_t FindSpotsInRadius( const OriginParams &originParams,
+									uint16_t *spotNums,
+									uint16_t *insideSpotNum ) const override;
+
+		uint16_t *GetCellSpotsList( unsigned gridCellNum, uint16_t *numCellSpots ) const override;
+	};
+
+	class SpotsGridBuilder final: public BaseSpotsGrid
+	{
+		// Contains a list of spot nums for the grid cell
+		struct GridSpotsArray {
+			uint16_t *data;
+			uint16_t internalBuffer[8];
+			uint16_t size;
+			uint16_t capacity;
+
+			GridSpotsArray() : data( internalBuffer ), size( 0 ), capacity( 8 ) {}
+
+			~GridSpotsArray() {
+				if( data != internalBuffer ) {
+					G_LevelFree( data );
+				}
+			}
+
+			void AddSpot( uint16_t spotNum );
+		};
+
+		// A sparse storage for grid cell spots lists used for grid building.
+		// Each array element corresponds to a grid cell, and might be null.
+		// Built cells spots list get compactified while being copied to a PrecomputedSpotsGrid.
+		GridSpotsArray **gridSpotsArrays;
+	public:
+		SpotsGridBuilder();
+
+		~SpotsGridBuilder() override;
+
+		uint16_t *GetCellSpotsList( unsigned gridCellNum, uint16_t *numCellSpots ) const override;
+
+		void AddSpot( const vec3_t origin, uint16_t spotNum );
+		void AddSpotToGridList( unsigned gridCellNum, uint16_t spotNum );
+		void CopyTo( PrecomputedSpotsGrid *precomputedGrid );
+	};
+
+	PrecomputedSpotsGrid spotsGrid;
 
 	struct SpotAndScore {
 		float score;
@@ -232,39 +328,27 @@ private:
 	typedef StaticVector<SpotAndScore, 256> ReachCheckedSpots;
 	typedef StaticVector<SpotAndScore, 128> TraceCheckedSpots;
 
-	static TacticalSpotsRegistry instance;
+	static TacticalSpotsRegistry *instance;
 
-	inline TacticalSpotsRegistry() {
-		memset( this, 0, sizeof( TacticalSpotsRegistry ) );
-	}
+public:
+	inline TacticalSpotsRegistry()
+		: spots( nullptr ),
+		spotVisibilityTable( nullptr ),
+		spotTravelTimeTable( nullptr ),
+		numSpots( 0 ),
+		needsSavingPrecomputedData( false ) {}
 
 	~TacticalSpotsRegistry();
 
 	bool Load( const char *mapname );
-	bool LoadRawNavFileData( const char *mapname );
-	bool LoadSpotsFromRawNavNodes( const char *nodeOriginsData, unsigned strideInBytes, unsigned numRawNodes );
+
+private:
 	bool TryLoadPrecomputedData( const char *mapname );
 	void SavePrecomputedData( const char *mapname );
 
-	void ComputeMutualSpotsVisibility();
-	void ComputeMutualSpotsReachability();
-	void MakeSpotsGrid();
-	void SetupGridParams();
-
-	inline unsigned PointGridCellNum( const vec3_t point ) {
-		vec3_t offset;
-		VectorSubtract( point, worldMins, offset );
-
-		unsigned i = (unsigned)( offset[0] / gridCellSize[0] );
-		unsigned j = (unsigned)( offset[1] / gridCellSize[1] );
-		unsigned k = (unsigned)( offset[2] / gridCellSize[2] );
-
-		return i * ( gridNumCells[1] * gridNumCells[2] ) + j * gridNumCells[2] + k;
+	uint16_t FindSpotsInRadius( const OriginParams &originParams, uint16_t *spotNums, uint16_t *insideSpotNum ) const {
+		return spotsGrid.FindSpotsInRadius( originParams, spotNums, insideSpotNum );
 	}
-
-	inline unsigned NumGridCells() const { return gridNumCells[0] * gridNumCells[1] * gridNumCells[2]; }
-
-	uint16_t FindSpotsInRadius( const OriginParams &originParams, uint16_t *spotNums, uint16_t *insideSpotNum ) const;
 
 	void SelectCandidateSpots( const OriginParams &originParams, const CommonProblemParams &problemParams,
 							   const uint16_t *spotNums, uint16_t numSpots_, CandidateSpots &result ) const;
@@ -326,7 +410,7 @@ public:
 	inline bool IsLoaded() const { return spots != nullptr && numSpots > 0; }
 
 	static inline const TacticalSpotsRegistry *Instance() {
-		return instance.IsLoaded() ? &instance : nullptr;
+		return ( instance && instance->IsLoaded() ) ? instance : nullptr;
 	}
 
 	int FindPositionalAdvantageSpots( const OriginParams &originParams, const AdvantageProblemParams &problemParams,

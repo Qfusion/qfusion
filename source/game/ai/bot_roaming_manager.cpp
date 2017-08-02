@@ -11,8 +11,8 @@ BotRoamingManager::BotRoamingManager( edict_t *self_ )
 	numVisitedSpots( 0 ),
 	tacticalSpotsRegistry( TacticalSpotsRegistry::Instance() ),
 	aasWorld( AiAasWorld::Instance() ) {
-	static_assert( MAX_SPOTS == TacticalSpotsRegistry::MAX_SPOTS, "" );
-	memset( visitedAt, 0, sizeof( visitedAt ) );
+	visitedAt = (int64_t *)G_LevelMalloc( sizeof( int64_t ) * tacticalSpotsRegistry->numSpots );
+	ClearVisitedSpots();
 }
 
 const Vec3 &BotRoamingManager::GetCachedRoamingSpot() {
@@ -21,6 +21,13 @@ const Vec3 &BotRoamingManager::GetCachedRoamingSpot() {
 		spotSelectedAt = level.time;
 	}
 	return cachedSpotOrigin;
+}
+
+inline void BotRoamingManager::ClearVisitedSpots() {
+	if( !tacticalSpotsRegistry->numSpots ) {
+		AI_FailWith( "BotRoamingManager::ClearVisitedSpots()", "There is no tactical spots\n" );
+	}
+	memset( visitedAt, 0, sizeof( int64_t ) * tacticalSpotsRegistry->numSpots );
 }
 
 const Vec3 &BotRoamingManager::GetRoamingSpot() {
@@ -335,11 +342,11 @@ void BotRoamingManager::TryResetAllSpotsDisabledState() {
 	}
 
 	// If (almost) all spots are visited (and have not expired yet), make all spots available to visit
-	memset( visitedAt, 0, sizeof( visitedAt ) );
+	ClearVisitedSpots();
 }
 
 void BotRoamingManager::OnNavTargetReached( const Vec3 &navTargetOrigin ) {
-	uint16_t spotNums[TacticalSpotsRegistry::MAX_SPOTS];
+	uint16_t spotNums[TacticalSpotsRegistry::MAX_SPOTS_PER_QUERY];
 	TacticalSpotsRegistry::OriginParams originParams( self, 128.0f, self->ai->botRef->routeCache );
 	uint16_t insideSpotNum = std::numeric_limits<uint16_t>::max();
 	const unsigned numNearbySpots = tacticalSpotsRegistry->FindSpotsInRadius( originParams, spotNums, &insideSpotNum );

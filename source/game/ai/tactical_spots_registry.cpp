@@ -1,19 +1,22 @@
 #include "tactical_spots_registry.h"
 #include "bot.h"
 
-TacticalSpotsRegistry TacticalSpotsRegistry::instance;
+TacticalSpotsRegistry *TacticalSpotsRegistry::instance = nullptr;
+// An actual storage for an instance
+static StaticVector<TacticalSpotsRegistry, 1> instanceHolder;
 
-#define NAV_FILE_VERSION 10
-#define NAV_FILE_EXTENSION "nav"
-#define NAV_FILE_FOLDER "navigation"
+#define PRECOMPUTED_DATA_EXTENSION "spotscache"
 
 bool TacticalSpotsRegistry::Init( const char *mapname ) {
-	if( instance.IsLoaded() ) {
-		G_Printf( "TacticalSpotsRegistry::Init(): The instance has been already initialized\n" );
-		abort();
+	if( instance ) {
+		AI_FailWith( "TacticalSpotsRegistry::Init()", "The instance has been already initialized\n" );
+	}
+	if( instanceHolder.size() ) {
+		AI_FailWith( "TacticalSpotsRegistry::Init()", "The instance holder must be empty at this moment\n" );
 	}
 
-	return instance.Load( mapname );
+	instance = new( instanceHolder.unsafe_grow_back() )TacticalSpotsRegistry;
+	return instance->Load( mapname );
 }
 
 struct FileCloseGuard {
@@ -59,142 +62,80 @@ struct ScopedMessagePrinter {
 	void CancelPendingMessage() { buffer[0] = 0; }
 };
 
-// Nav nodes used for old bots navigation
-struct nav_node_s {
-	vec3_t origin;
-	int32_t flags;
-	int32_t area;
+class TacticalSpotsBuilder {
+	typedef TacticalSpotsRegistry::TacticalSpot TacticalSpot;
+
+	int *candidateAreas;
+	int numCandidateAreas;
+	int candidateAreasCapacity;
+
+	Vec3 *candidatePoints;
+	int numCandidatePoints;
+	int candidatePointsCapacity;
+
+	TacticalSpot *spots;
+	int numSpots;
+	int spotsCapacity;
+
+	uint8_t *spotVisibilityTable;
+	uint16_t *spotTravelTimeTable;
+
+	TacticalSpotsRegistry::SpotsGridBuilder gridBuilder;
+
+	bool TestAas();
+
+	template< typename T >
+	void AddItem( const T &item, T **items, int *numItems, int *itemsCapacity ) {
+		void *mem = AllocItem( items, numItems, itemsCapacity );
+		new( mem )T( item );
+	}
+
+	template<typename T>
+	T *AllocItem( T **items, int *numItems, int *itemsCapacity );
+
+	void FindCandidateAreas();
+	void AddCandidateArea( int areaNum ) {
+		AddItem( areaNum, &candidateAreas, &numCandidateAreas, &candidateAreasCapacity );
+	}
+
+	void FindCandidatePoints();
+	void AddAreaFacePoints( int areaNum );
+	void AddCandidatePoint( const Vec3 &point ) {
+		AddItem( point, &candidatePoints, &numCandidatePoints, &candidatePointsCapacity );
+	}
+
+	void TryAddSpotFromPoint( const Vec3 &point );
+	int TestPointForGoodAreaNum( const Vec3 &point );
+	bool IsGoodSpotPosition( const Vec3 &point, const uint16_t *nearbySpotNums,
+							 uint16_t numNearbySpots, int *numVisNearbySpots, int *areaNum );
+
+	TacticalSpot *AllocSpot() {
+		return AllocItem( &spots, &numSpots, &spotsCapacity );
+	}
+
+	void PickTacticalSpots();
+	void ComputeMutualSpotsVisibility();
+	void ComputeMutualSpotsReachability();
+public:
+	TacticalSpotsBuilder();
+	~TacticalSpotsBuilder();
+
+	bool Build();
+
+	void CopyTo( TacticalSpotsRegistry *registry );
 };
-
-bool TacticalSpotsRegistry::LoadRawNavFileData( const char *mapname ) {
-	char filename[MAX_QPATH];
-	Q_snprintfz( filename, sizeof( filename ), "%s/%s.%s", NAV_FILE_FOLDER, mapname, NAV_FILE_EXTENSION );
-
-	constexpr const char *function = "TacticalSpotsRegistry::Load()";
-	ScopedMessagePrinter messagePrinter( S_COLOR_RED "%s: Can't load file %s\n", function, filename );
-
-	int fp;
-	int fileSize = trap_FS_FOpenFile( filename, &fp, FS_READ );
-	if( fileSize <= 0 ) {
-		G_Printf( S_COLOR_RED "%s: Cannot open file %s", function, filename );
-		return false;
-	}
-
-	FileCloseGuard fileCloseGuard( fp );
-
-	// TODO: Old nav files never were arch/endian-aware.
-	// We assume they are written on a little-endian arch hardware compiled with 32-bit int.
-
-	int32_t version;
-	if( trap_FS_Read( &version, 4, fp ) != 4 ) {
-		G_Printf( S_COLOR_RED "%s: Can't read 4 bytes of the nav file version\n", function );
-		return false;
-	}
-
-	version = LittleLong( version );
-	if( version != NAV_FILE_VERSION ) {
-		G_Printf( S_COLOR_RED "%s: Invalid nav file version %d\n", function, version );
-		return false;
-	}
-
-	int32_t numRawNodes;
-	if( trap_FS_Read( &numRawNodes, 4, fp ) != 4 ) {
-		G_Printf( S_COLOR_RED "%s: Can't read 4 bytes of the raw nodes number\n", function );
-		return false;
-	}
-
-	numRawNodes = LittleLong( numRawNodes );
-	if( numRawNodes > MAX_SPOTS ) {
-		G_Printf( S_COLOR_RED "%s: Too many nodes in file\n", function );
-		return false;
-	}
-
-	unsigned expectedDataSize = sizeof( nav_node_s ) * numRawNodes;
-	nav_node_s nodesBuffer[MAX_SPOTS];
-	if( trap_FS_Read( nodesBuffer, expectedDataSize, fp ) != (int)expectedDataSize ) {
-		G_Printf( S_COLOR_RED "%s: Can't read nav nodes data\n", function );
-		return false;
-	}
-
-	messagePrinter.CancelPendingMessage();
-
-	const char *nodeOriginsData = (const char *)nodesBuffer + offsetof( nav_node_s, origin );
-	return LoadSpotsFromRawNavNodes( nodeOriginsData, sizeof( nav_node_s ), (unsigned)numRawNodes );
-}
-
-bool TacticalSpotsRegistry::LoadSpotsFromRawNavNodes( const char *nodeOriginsData,
-													  unsigned strideInBytes,
-													  unsigned numRawNodes ) {
-	if( spots ) {
-		G_LevelFree( spots );
-	}
-
-	spots = (TacticalSpot *) G_LevelMalloc( sizeof( TacticalSpot ) * numRawNodes );
-	numSpots = 0;
-
-	const AiAasWorld *aasWorld = AiAasWorld::Instance();
-
-	// Its good idea to make mins/maxs rounded too as was mentioned above
-	constexpr int mins[] = { -24, -24, 0 };
-	constexpr int maxs[] = { +24, +24, 72 };
-	static_assert( mins[0] % 4 == 0 && mins[1] % 4 == 0 && mins[2] % 4 == 0, "" );
-	static_assert( maxs[0] % 4 == 0 && maxs[1] % 4 == 0 && maxs[2] % 4 == 0, "" );
-
-	// Prepare a dummy entity for the AAS area sampling
-	edict_t dummyEnt;
-	VectorSet( dummyEnt.r.mins, -12, -12, -12 );
-	VectorSet( dummyEnt.r.maxs, +12, +12, +12 );
-
-	for( int i = 0; i < (int)numRawNodes; ++i ) {
-		const float *fileOrigin = (const float *)( nodeOriginsData + strideInBytes * i );
-		float *spotOrigin = dummyEnt.s.origin;
-
-		for( int j = 0; j < 3; ++j ) {
-			// Convert byte order
-			spotOrigin[j] = LittleFloat( fileOrigin[j] );
-			// Cached tactical spot origins are rounded up to 4 units.
-			// We want tactical spot origins to match spot origins exactly.
-			// Otherwise an original tactical spot may pass reachability check
-			// and one restored from packed values may not,
-			// and it happens quite often (blame AAS for it).
-			spotOrigin[j] = 4.0f * ( (short)( ( (int)spotOrigin[j] ) / 4 ) );
-		}
-
-		VectorAdd( dummyEnt.s.origin, dummyEnt.r.mins, dummyEnt.r.absmin );
-		VectorAdd( dummyEnt.s.origin, dummyEnt.r.maxs, dummyEnt.r.absmax );
-		// AiAasWorld tries many attempts to find an area for an entity,
-		// do not try to request finding a point area num
-		if( int aasAreaNum = aasWorld->FindAreaNum( &dummyEnt ) ) {
-			TacticalSpot &spot = spots[numSpots];
-			spot.aasAreaNum = aasAreaNum;
-			VectorCopy( spotOrigin, spot.origin );
-			VectorCopy( spotOrigin, spot.absMins );
-			VectorCopy( spotOrigin, spot.absMaxs );
-			VectorAdd( spot.absMins, mins, spot.absMins );
-			VectorAdd( spot.absMaxs, maxs, spot.absMaxs );
-			numSpots++;
-		} else {
-			const char *format = S_COLOR_YELLOW "Can't find AAS area num for spot @ %.1f %.1f %.1f (rounded to 4 units)\n";
-			G_Printf( format, spotOrigin[0], spotOrigin[1], spotOrigin[2] );
-		}
-	}
-
-	return numSpots > 0;
-}
 
 bool TacticalSpotsRegistry::Load( const char *mapname ) {
 	if( TryLoadPrecomputedData( mapname ) ) {
 		return true;
 	}
 
-	if( !LoadRawNavFileData( mapname ) ) {
+	TacticalSpotsBuilder builder;
+	if( !builder.Build() ) {
 		return false;
 	}
 
-	ComputeMutualSpotsVisibility();
-	ComputeMutualSpotsReachability();
-	MakeSpotsGrid();
-	needsSavingPrecomputedData = true;
+	builder.CopyTo( this );
 	return true;
 }
 
@@ -258,7 +199,7 @@ constexpr const uint32_t PRECOMPUTED_DATA_VERSION = 13371337;
 
 bool TacticalSpotsRegistry::TryLoadPrecomputedData( const char *mapname ) {
 	char filename[MAX_QPATH];
-	Q_snprintfz( filename, MAX_QPATH, "ai/%s.nav.cache", mapname );
+	Q_snprintfz( filename, MAX_QPATH, "ai/%s." PRECOMPUTED_DATA_EXTENSION, mapname );
 
 	constexpr const char *function = "TacticalSpotsRegistry::TryLoadPrecomputedData()";
 	ScopedMessagePrinter messagePrinter( S_COLOR_YELLOW "%s: Can't load %s\n", function, filename );
@@ -327,32 +268,6 @@ bool TacticalSpotsRegistry::TryLoadPrecomputedData( const char *mapname ) {
 		return false;
 	}
 
-	SetupGridParams();
-	const unsigned numGridCells = NumGridCells();
-
-	// Read grid list offsets
-	if( !ReadLengthAndData( &data, &dataLength, fp ) ) {
-		return false;
-	}
-
-	gridListOffsets = (uint32_t *)data;
-	if( dataLength / sizeof( uint32_t ) != numGridCells ) {
-		G_Printf( S_COLOR_RED "%s: Grid spot list offsets size does not match the number of cells\n", function );
-		return false;
-	}
-
-	// Read grid spot lists
-	if( !ReadLengthAndData( &data, &dataLength, fp ) ) {
-		return false;
-	}
-
-	gridSpotsLists = (uint16_t *)data;
-	const unsigned gridListsArraySize = dataLength / sizeof( uint16_t );
-	if( gridListsArraySize != numGridCells + numSpots ) {
-		G_Printf( S_COLOR_RED "%s: Grid spot lists array size does not match numbers of cells and spots\n", function );
-		return false;
-	}
-
 	// Byte swap and validate tactical spots
 	const int numAasAreas = AiAasWorld::Instance()->NumAreas();
 	for( unsigned i = 0; i < numSpots; ++i ) {
@@ -371,11 +286,52 @@ bool TacticalSpotsRegistry::TryLoadPrecomputedData( const char *mapname ) {
 	}
 
 	// Byte swap and travel times
-	for( unsigned i = 0; i < numSpots; ++i )
+	for( unsigned i = 0; i < numSpots; ++i ) {
 		spotTravelTimeTable[i] = LittleShort( spotTravelTimeTable[i] );
+	}
 
 	// Spot visibility does not need neither byte swap nor validation being just an unsigned byte
 	static_assert( sizeof( *spotVisibilityTable ) == 1, "" );
+
+	spotsGrid.AttachSpots( spots, numSpots );
+	if( !spotsGrid.Load( fp ) ) {
+		return false;
+	}
+
+	messagePrinter.CancelPendingMessage();
+	return true;
+}
+
+bool TacticalSpotsRegistry::PrecomputedSpotsGrid::Load( int fp ) {
+	SetupGridParams();
+	const unsigned numGridCells = NumGridCells();
+
+	uint32_t dataLength;
+	char *data;
+	// Read grid list offsets
+	if( !ReadLengthAndData( &data, &dataLength, fp ) ) {
+		return false;
+	}
+
+	constexpr const char *function = "TacticalSpotsRegistry::PrecomputedSpotsGrid::Load()";
+
+	gridListOffsets = (uint32_t *)data;
+	if( dataLength / sizeof( uint32_t ) != numGridCells ) {
+		G_Printf( S_COLOR_RED "%s: Grid spot list offsets size does not match the number of cells\n", function );
+		return false;
+	}
+
+	// Read grid spot lists
+	if( !ReadLengthAndData( &data, &dataLength, fp ) ) {
+		return false;
+	}
+
+	gridSpotsLists = (uint16_t *)data;
+	const unsigned gridListsArraySize = dataLength / sizeof( uint16_t );
+	if( gridListsArraySize != numGridCells + numSpots ) {
+		G_Printf( S_COLOR_RED "%s: Grid spot lists array size does not match numbers of cells and spots\n", function );
+		return false;
+	}
 
 	// Byte swap and validate offsets
 	for( unsigned i = 0; i < numGridCells; ++i ) {
@@ -397,17 +353,17 @@ bool TacticalSpotsRegistry::TryLoadPrecomputedData( const char *mapname ) {
 		}
 
 		// Byte swap grid spot list nums
-		for( uint16_t j = 0; j < numListSpots; ++j )
+		for( uint16_t j = 0; j < numListSpots; ++j ) {
 			gridSpotsList[j + 1] = LittleShort( gridSpotsList[j + 1] );
+		}
 	}
 
-	messagePrinter.CancelPendingMessage();
 	return true;
 }
 
 void TacticalSpotsRegistry::SavePrecomputedData( const char *mapname ) {
 	char filename[MAX_QPATH];
-	Q_snprintfz( filename, MAX_QPATH, "ai/%s.nav.cache", mapname );
+	Q_snprintfz( filename, MAX_QPATH, "ai/%s." PRECOMPUTED_DATA_EXTENSION, mapname );
 
 	ScopedMessagePrinter messagePrinter( S_COLOR_RED "Can't save %s\n", filename );
 
@@ -482,6 +438,17 @@ void TacticalSpotsRegistry::SavePrecomputedData( const char *mapname ) {
 	G_LevelFree( spotVisibilityTable );
 	spotVisibilityTable = nullptr;
 
+	spotsGrid.Save( fp );
+
+	fileRemoveGuard.CancelPendingRemoval();
+	messagePrinter.CancelPendingMessage();
+
+	G_Printf( "The precomputed nav data file %s has been saved successfully\n", filename );
+}
+
+void TacticalSpotsRegistry::PrecomputedSpotsGrid::Save( int fp ) {
+	uint32_t dataLength;
+
 	// Byte swap grid list offsets and grid spots lists
 	static_assert( sizeof( *gridListOffsets ) == 4, "LittleLong() is not applicable" );
 	for( unsigned i = 0, end = NumGridCells(); i < end; ++i ) {
@@ -511,15 +478,18 @@ void TacticalSpotsRegistry::SavePrecomputedData( const char *mapname ) {
 	// Prevent using byte-swapped grid spots lists
 	G_LevelFree( gridSpotsLists );
 	gridSpotsLists = nullptr;
-
-	fileRemoveGuard.CancelPendingRemoval();
-	messagePrinter.CancelPendingMessage();
-
-	G_Printf( "The precomputed nav data file %s has been saved successfully\n", filename );
 }
 
 void TacticalSpotsRegistry::Shutdown() {
-	instance.~TacticalSpotsRegistry();
+	if( !instance ) {
+		if( instanceHolder.size() ) {
+			AI_FailWith("TacticalSpotsRegistry::Shutdown()", "The instance holder must be empty at this moment\n" );
+		}
+		// Calling Shutdown() without a preceding initialization is legal.
+		return;
+	}
+	instanceHolder.pop_back();
+	instance = nullptr;
 }
 
 TacticalSpotsRegistry::~TacticalSpotsRegistry() {
@@ -531,40 +501,25 @@ TacticalSpotsRegistry::~TacticalSpotsRegistry() {
 	numSpots = 0;
 	if( spots ) {
 		G_LevelFree( spots );
-		spots = nullptr;
 	}
 	if( spotVisibilityTable ) {
 		G_LevelFree( spotVisibilityTable );
-		spotVisibilityTable = nullptr;
 	}
 	if( spotTravelTimeTable ) {
 		G_LevelFree( spotTravelTimeTable );
-		spotTravelTimeTable = nullptr;
-	}
-	if( gridListOffsets ) {
-		G_LevelFree( gridListOffsets );
-		gridListOffsets = nullptr;
-	}
-	if( gridSpotsLists ) {
-		G_LevelFree( gridSpotsLists );
-		gridSpotsLists = nullptr;
 	}
 }
 
-void TacticalSpotsRegistry::ComputeMutualSpotsVisibility() {
+void TacticalSpotsBuilder::ComputeMutualSpotsVisibility() {
 	G_Printf( "Computing mutual tactical spots visibility (it might take a while)...\n" );
 
-	if( spotVisibilityTable ) {
-		G_LevelFree( spotVisibilityTable );
-	}
-
-	spotVisibilityTable = (unsigned char *)G_LevelMalloc( numSpots * numSpots );
+	spotVisibilityTable = (unsigned char *)G_LevelMalloc( (unsigned)( numSpots * numSpots ) );
 
 	float *mins = vec3_origin;
 	float *maxs = vec3_origin;
 
 	trace_t trace;
-	for( unsigned i = 0; i < numSpots; ++i ) {
+	for( unsigned i = 0; i < (unsigned)numSpots; ++i ) {
 		// Consider each spot visible to itself
 		spotVisibilityTable[i * numSpots + i] = 255;
 
@@ -629,12 +584,8 @@ void TacticalSpotsRegistry::ComputeMutualSpotsVisibility() {
 	}
 }
 
-void TacticalSpotsRegistry::ComputeMutualSpotsReachability() {
+void TacticalSpotsBuilder::ComputeMutualSpotsReachability() {
 	G_Printf( "Computing mutual tactical spots reachability (it might take a while)...\n" );
-
-	if( spotTravelTimeTable ) {
-		G_LevelFree( spotTravelTimeTable );
-	}
 
 	spotTravelTimeTable = (unsigned short *)G_LevelMalloc( sizeof( unsigned short ) * numSpots * numSpots );
 	const int flags = Bot::ALLOWED_TRAVEL_FLAGS;
@@ -642,7 +593,7 @@ void TacticalSpotsRegistry::ComputeMutualSpotsReachability() {
 	// Note: spots reachabilities are not reversible
 	// (for spots two A and B reachabilies A->B and B->A might differ, including being invalid, non-existent)
 	// Thus we have to find a reachability for each possible pair of spots
-	for( unsigned i = 0; i < numSpots; ++i ) {
+	for( unsigned i = 0; i < (unsigned)numSpots; ++i ) {
 		const int currAreaNum = spots[i].aasAreaNum;
 		for( unsigned j = 0; j < i; ++j ) {
 			const int testedAreaNum = spots[j].aasAreaNum;
@@ -662,51 +613,367 @@ void TacticalSpotsRegistry::ComputeMutualSpotsReachability() {
 	}
 }
 
-void TacticalSpotsRegistry::MakeSpotsGrid() {
-	SetupGridParams();
+TacticalSpotsBuilder::TacticalSpotsBuilder()
+	: candidateAreas( nullptr ),
+	numCandidateAreas( 0 ),
+	candidateAreasCapacity( 0 ),
+	candidatePoints( nullptr ),
+	numCandidatePoints( 0 ),
+	candidatePointsCapacity( 0 ),
+	spots( nullptr ),
+	numSpots( 0 ),
+	spotsCapacity( 0 ),
+	spotVisibilityTable( nullptr ),
+	spotTravelTimeTable( nullptr ) {}
 
-	if( gridListOffsets ) {
-		G_LevelFree( gridListOffsets );
+TacticalSpotsBuilder::~TacticalSpotsBuilder() {
+	if( candidateAreas ) {
+		G_LevelFree( candidateAreas );
+	}
+	if ( candidatePoints ) {
+		G_LevelFree( candidatePoints );
+	}
+	if( spots ) {
+		G_LevelFree( spots );
+	}
+	if( spotVisibilityTable ) {
+		G_LevelFree( spotVisibilityTable );
+	}
+	if( spotTravelTimeTable ) {
+		G_LevelFree( spotTravelTimeTable );
+	}
+}
+
+bool TacticalSpotsBuilder::Build() {
+	if( !TestAas() ) {
+		return false;
 	}
 
-	if( gridSpotsLists ) {
-		G_LevelFree( gridSpotsLists );
+	PickTacticalSpots();
+	ComputeMutualSpotsVisibility();
+	ComputeMutualSpotsReachability();
+	return true;
+}
+
+bool TacticalSpotsBuilder::TestAas() {
+	const auto *aasWorld = AiAasWorld::Instance();
+	if( !aasWorld->IsLoaded() ) {
+		G_Printf( S_COLOR_RED "TacticalSpotsBuilder::Build(): AAS world is not loaded\n" );
+		return false;
 	}
 
-	unsigned totalNumCells = NumGridCells();
-	gridListOffsets = (uint32_t *)G_LevelMalloc( sizeof( uint32_t ) * totalNumCells );
-	// For each cell at least 1 short value is used to store spots count.
-	// Also totalNumCells short values are required to store spot nums
-	// assuming that each spot belongs to a single cell.
-	gridSpotsLists = (uint16_t *)G_LevelMalloc( sizeof( uint16_t ) * ( totalNumCells + numSpots ) );
+	if( aasWorld->NumAreas() > 256 && aasWorld->NumFaces() < 256 ) {
+		G_Printf( S_COLOR_RED "TacticalSpotsBuilder::Build(): Looks like the AAS file is stripped\n" );
+		return false;
+	}
 
-	uint16_t *listPtr = gridSpotsLists;
-	// For each cell of all possible cells
-	for( unsigned cellNum = 0; cellNum < totalNumCells; ++cellNum ) {
-		// Store offset of the cell spots list
-		gridListOffsets[cellNum] = (unsigned)( listPtr - gridSpotsLists );
-		// Use a reference to cell spots list head that contains number of spots in the cell
-		uint16_t &listSize = listPtr[0];
-		listSize = 0;
-		// Skip list head
-		++listPtr;
-		// For each loaded spot
-		for( uint16_t spotNum = 0; spotNum < numSpots; ++spotNum ) {
-			auto pointCellNum = PointGridCellNum( spots[spotNum].origin );
-			// If the spot belongs to the cell
-			if( pointCellNum == cellNum ) {
-				*listPtr = spotNum;
-				++listPtr;
-				if( listPtr - gridSpotsLists > (ptrdiff_t)( totalNumCells + numSpots ) ) {
-					abort();
-				}
-				listSize++;
-			}
+	return true;
+}
+
+void TacticalSpotsBuilder::PickTacticalSpots() {
+	G_Printf( "Picking tactical spots (it might take a while)...\n" );
+	FindCandidatePoints();
+	for( int i = 0; i < numCandidatePoints; ++i ) {
+		TryAddSpotFromPoint( candidatePoints[i] );
+	}
+}
+
+inline bool LooksLikeAGoodArea( const aas_areasettings_t &areaSettings, int badContents ) {
+	if( !( areaSettings.areaflags & AREA_GROUNDED ) ) {
+		return false;
+	}
+	if( areaSettings.areaflags & ( AREA_JUNK | AREA_DISABLED ) ) {
+		return false;
+	}
+	if( areaSettings.contents & badContents ) {
+		return false;
+	}
+	return true;
+}
+
+void TacticalSpotsBuilder::FindCandidateAreas() {
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasAreaSettings = aasWorld->AreaSettings();
+	const int numAasAreas = aasWorld->NumAreas();
+
+	const auto badContents = AREACONTENTS_WATER | AREACONTENTS_LAVA | AREACONTENTS_SLIME | AREACONTENTS_DONOTENTER;
+	for( int i = 1; i < numAasAreas; ++i ) {
+		if( LooksLikeAGoodArea( aasAreaSettings[i], badContents ) ) {
+			AddCandidateArea( i );
 		}
 	}
 }
 
-void TacticalSpotsRegistry::SetupGridParams() {
+void TacticalSpotsBuilder::FindCandidatePoints() {
+	FindCandidateAreas();
+
+	const auto *aasAreas = AiAasWorld::Instance()->Areas();
+	// Add boundary area points first, they should have a priority over centers
+	for( int i = 0; i < numCandidateAreas; i++ ) {
+		AddAreaFacePoints( candidateAreas[i] );
+	}
+
+	// Add areas centers
+	for( int i = 0; i < numCandidateAreas; i++ ) {
+		Vec3 areaPoint( aasAreas[i].center );
+		areaPoint.Z() = aasAreas[i].mins[2];
+		AddCandidatePoint( areaPoint );
+	}
+}
+
+void TacticalSpotsBuilder::AddAreaFacePoints( int areaNum ) {
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasFaceIndex = aasWorld->FaceIndex();
+	const auto *aasFaces = aasWorld->Faces();
+	const auto *aasEdgeIndex = aasWorld->EdgeIndex();
+	const auto *aasEdges = aasWorld->Edges();
+	const auto *aasPlanes = aasWorld->Planes();
+	const auto *aasVertices = aasWorld->Vertexes();
+
+	const float maxZ = gridBuilder.WorldMaxs()[2] + 999.0f;
+
+	const auto &area = aasWorld->Areas()[areaNum];
+	for( int faceIndexNum = area.firstface; faceIndexNum < area.firstface + area.numfaces; ++faceIndexNum ) {
+		const auto &face = aasFaces[ abs( aasFaceIndex[faceIndexNum] ) ];
+		// Skip boundaries with solid (some of areas split by face is solid)
+		if( !( face.frontarea & face.backarea ) ) {
+			continue;
+		}
+		// Reject non-vertical faces
+		const auto &plane = aasPlanes[face.planenum];
+		if( fabsf( plane.normal[2] ) > 0.1f ) {
+			continue;
+		}
+		// Find the lowest face edge
+		float minZ = maxZ;
+		int lowestEdgeNum = -1;
+		for ( int edgeIndexNum = face.firstedge; edgeIndexNum < face.firstedge + face.numedges; ++edgeIndexNum ) {
+			const int edgeNum = abs( aasEdgeIndex[edgeIndexNum ] );
+			const auto &edge = aasEdges[ edgeNum ];
+			const float *v1 = aasVertices[edge.v[0]];
+			const float *v2 = aasVertices[edge.v[1]];
+			// Reject vertical edges
+			if( fabsf( v1[2] - v2[2] ) > 1.0f ) {
+				continue;
+			}
+			// Reject edges that are above the lowest known one
+			if( v1[2] >= minZ ) {
+				continue;
+			}
+
+			minZ = v1[2];
+			lowestEdgeNum = edgeNum;
+		}
+
+		if( lowestEdgeNum < 0 ) {
+			continue;
+		}
+
+		const auto &edge = aasEdges[ lowestEdgeNum ];
+		Vec3 edgePoint( aasVertices[edge.v[0]] );
+		edgePoint += aasVertices[edge.v[1]];
+		edgePoint *= 0.5f;
+		AddCandidatePoint( edgePoint );
+	}
+}
+
+static const vec3_t spotMins = { -24, -24, 0 };
+static const vec3_t spotMaxs = { +24, +24, 64 };
+
+static const vec3_t testedMins = { -36, -36, 0 };
+static const vec3_t testedMaxs = { +36, +36, 72 };
+
+void TacticalSpotsBuilder::TryAddSpotFromPoint( const Vec3 &point ) {
+	uint16_t nearbySpotNums[TacticalSpotsRegistry::MAX_SPOTS_PER_QUERY];
+	uint16_t insideSpotNum;
+	TacticalSpotsRegistry::OriginParams originParams( point.Data(), 1024.0f, AiAasRouteCache::Shared() );
+	const uint16_t numNearbySpots = gridBuilder.FindSpotsInRadius( originParams, nearbySpotNums, &insideSpotNum );
+
+	int bestNumVisNearbySpots = -1;
+	int bestSpotAreaNum = 0;
+	Vec3 bestSpotOrigin( point );
+	for( int i = -3; i < 3; ++i ) {
+		for( int j = -3; j < 3; ++j ) {
+			Vec3 spotOrigin( point );
+			spotOrigin.X() += i * 24.0f;
+			spotOrigin.Y() += j * 24.0f;
+			// Usually spots are picked on ground, add an offset to avoid being qualified as starting in solid
+			spotOrigin.Z() += 1.0f;
+			int numVisNearbySpots, areaNum;
+			if( IsGoodSpotPosition( spotOrigin, nearbySpotNums, numNearbySpots, &numVisNearbySpots, &areaNum ) ) {
+				if( numVisNearbySpots > bestNumVisNearbySpots ) {
+					bestNumVisNearbySpots = numVisNearbySpots;
+					bestSpotOrigin = spotOrigin;
+					bestSpotAreaNum = areaNum;
+				}
+			}
+		}
+	}
+
+	if( bestNumVisNearbySpots < 0 ) {
+		return;
+	}
+
+	if( numSpots >= std::numeric_limits<uint16_t>::max() ) {
+		AI_FailWith( "TacticalSpotsBuilder::Build()", "Too many spots (>2^16) have been produced" );
+	}
+
+	TacticalSpot *newSpot = AllocSpot();
+	bestSpotOrigin.CopyTo( newSpot->origin );
+	newSpot->aasAreaNum = bestSpotAreaNum;
+	VectorCopy( spotMins, newSpot->absMins );
+	VectorCopy( spotMaxs, newSpot->absMaxs );
+
+	gridBuilder.AttachSpots( spots, (unsigned)numSpots );
+	gridBuilder.AddSpot( bestSpotOrigin.Data(), (uint16_t)( numSpots - 1 ) );
+}
+
+static constexpr float SPOT_SQUARE_PROXIMITY_THRESHOLD = 172.0f * 172.0f;
+
+int TacticalSpotsBuilder::TestPointForGoodAreaNum( const Vec3 &point ) {
+	const auto *aasWorld = AiAasWorld::Instance();
+	int areaNum = aasWorld->FindAreaNum( point );
+	if( !areaNum ) {
+		return 0;
+	}
+
+	const auto *aasAreaSettings = aasWorld->AreaSettings();
+	const auto &areaSettings = aasAreaSettings[areaNum];
+	constexpr auto badContents = AREACONTENTS_LAVA | AREACONTENTS_SLIME | AREACONTENTS_DONOTENTER;
+	if( !LooksLikeAGoodArea( areaSettings, badContents ) ) {
+		return 0;
+	}
+
+	// Check whether there are "good" (walk/teleport) reachabilities to the area and from the area
+	int numGoodReaches = 0;
+	const int endReachNum = areaSettings.firstreachablearea + areaSettings.numreachableareas;
+	const auto *aasReach = aasWorld->Reachabilities();
+	for( int reachNum = areaSettings.firstreachablearea; reachNum != endReachNum; ++reachNum ) {
+		const auto &reach = aasReach[reachNum];
+		if( reach.traveltype != TRAVEL_WALK && reach.traveltype != TRAVEL_TELEPORT ) {
+			continue;
+		}
+		const auto thatAreaSettings = aasAreaSettings[reach.areanum];
+		if( !LooksLikeAGoodArea( thatAreaSettings, badContents ) ) {
+			continue;
+		}
+		const int thatEndReachNum = thatAreaSettings.firstreachablearea + thatAreaSettings.numreachableareas;
+		for( int thatReachNum = thatAreaSettings.firstreachablearea; thatReachNum != thatEndReachNum; ++thatReachNum ) {
+			const auto revReach = aasReach[thatReachNum];
+			if( revReach.areanum != areaNum ) {
+				continue;
+			}
+			if( revReach.traveltype != TRAVEL_WALK && reach.traveltype != TRAVEL_TELEPORT ) {
+				continue;
+			}
+			numGoodReaches++;
+			if( numGoodReaches > 1 ) {
+				return areaNum;
+			}
+		}
+	}
+
+	return 0;
+}
+
+bool TacticalSpotsBuilder::IsGoodSpotPosition( const Vec3 &point, const uint16_t *nearbySpotNums,
+											   uint16_t numNearbySpots, int *numVisNearbySpots, int *areaNum ) {
+	trace_t trace;
+	// Test whether there is a solid inside extended spot bounds
+	SolidWorldTrace( &trace, point.Data(), point.Data(), testedMins, testedMaxs );
+	if( trace.fraction != 1.0f || trace.startsolid ) {
+		return false;
+	}
+
+	// Operate on these local vars. Do not modify output params unless the result is successful.
+	int numVisNearbySpots_ = 0;
+	int areaNum_ = 0;
+
+	if( !( areaNum_ = TestPointForGoodAreaNum( point ) ) ) {
+		return false;
+	}
+
+	// Check whether there is really a ground below
+	Vec3 groundedPoint( point );
+	groundedPoint.Z() -= 32.0f;
+	SolidWorldTrace( &trace, point.Data(), groundedPoint.Data() );
+	if( trace.fraction == 1.0f || trace.startsolid || trace.allsolid ) {
+		return false;
+	}
+	if( trace.contents & ( CONTENTS_LAVA | CONTENTS_SLIME | CONTENTS_DONOTENTER ) ) {
+		return false;
+	}
+	if( !ISWALKABLEPLANE( &trace.plane ) ) {
+		return false;
+	}
+
+	// Test whether there are way too close visible spots.
+	// Also compute overall spots visibility.
+	for( unsigned i = 0; i < numNearbySpots; ++i ) {
+		const auto &spot = spots[nearbySpotNums[i]];
+		SolidWorldTrace( &trace, point.Data(), spot.origin );
+		if( trace.fraction == 1.0f && !trace.startsolid ) {
+			if( DistanceSquared( point.Data(), spot.origin ) < SPOT_SQUARE_PROXIMITY_THRESHOLD ) {
+				return false;
+			}
+			numVisNearbySpots_++;
+		}
+	}
+
+	*areaNum = areaNum_;
+	*numVisNearbySpots = numVisNearbySpots_;
+	return true;
+}
+
+template <typename T>
+T *TacticalSpotsBuilder::AllocItem( T **items, int *numItems, int *itemsCapacity ) {
+	if( *numItems < *itemsCapacity ) {
+		return ( *items ) + ( *numItems )++;
+	}
+	if( *itemsCapacity < 1024 ) {
+		*itemsCapacity = ( *itemsCapacity + 16 ) * 2;
+	} else {
+		*itemsCapacity = ( 3 * ( *itemsCapacity ) ) / 2;
+	}
+	T *newData = (T *)G_LevelMalloc( sizeof( T ) * ( *itemsCapacity ) );
+	if( *items ) {
+		memcpy( newData, *items, sizeof( T ) * ( *numItems ) );
+		G_LevelFree( *items );
+	}
+	*items = newData;
+	return ( *items ) + ( *numItems )++;
+}
+
+void TacticalSpotsBuilder::CopyTo( TacticalSpotsRegistry *registry ) {
+	this->gridBuilder.CopyTo( &registry->spotsGrid );
+
+	registry->spots = this->spots;
+	this->spots = nullptr;
+
+	registry->numSpots = (unsigned)this->numSpots;
+	this->numSpots = 0;
+
+	registry->spotVisibilityTable = this->spotVisibilityTable;
+	this->spotVisibilityTable = nullptr;
+
+	registry->spotTravelTimeTable = this->spotTravelTimeTable;
+	this->spotTravelTimeTable = nullptr;
+
+	registry->needsSavingPrecomputedData = true;
+}
+
+inline unsigned TacticalSpotsRegistry::BaseSpotsGrid::PointGridCellNum( const vec3_t point ) const {
+	vec3_t offset;
+	VectorSubtract( point, worldMins, offset );
+
+	unsigned i = (unsigned)( offset[0] / gridCellSize[0] );
+	unsigned j = (unsigned)( offset[1] / gridCellSize[1] );
+	unsigned k = (unsigned)( offset[2] / gridCellSize[2] );
+
+	return i * ( gridNumCells[1] * gridNumCells[2] ) + j * gridNumCells[2] + k;
+}
+
+void TacticalSpotsRegistry::BaseSpotsGrid::SetupGridParams() {
 	// Get world bounds
 	trap_CM_InlineModelBounds( trap_CM_InlineModel( 0 ), worldMins, worldMaxs );
 
@@ -725,12 +992,9 @@ void TacticalSpotsRegistry::SetupGridParams() {
 	}
 }
 
-uint16_t TacticalSpotsRegistry::FindSpotsInRadius( const OriginParams &originParams,
-												   unsigned short *spotNums,
-												   unsigned short *insideSpotNum ) const {
-	if( !IsLoaded() ) {
-		abort();
-	}
+uint16_t TacticalSpotsRegistry::BaseSpotsGrid::FindSpotsInRadius( const OriginParams &originParams,
+																  unsigned short *spotNums,
+																  unsigned short *insideSpotNum ) const {
 
 	vec3_t boxMins, boxMaxs;
 	VectorCopy( originParams.origin, boxMins );
@@ -756,9 +1020,7 @@ uint16_t TacticalSpotsRegistry::FindSpotsInRadius( const OriginParams &originPar
 		maxCellDimIndex[i] = (unsigned)( boxMaxs[i] / gridCellSize[i] );
 	}
 
-	// Avoid unsigned wrapping
-	static_assert( MAX_SPOTS < std::numeric_limits<uint16_t>::max(), "" );
-	*insideSpotNum = MAX_SPOTS + 1;
+	*insideSpotNum = std::numeric_limits<uint16_t>::max();
 
 	// Copy to locals for faster access
 	const Vec3 searchOrigin( originParams.origin );
@@ -774,18 +1036,16 @@ uint16_t TacticalSpotsRegistry::FindSpotsInRadius( const OriginParams &originPar
 			for( unsigned k = minCellDimIndex[2]; k <= maxCellDimIndex[2]; ++k ) {
 				// The cell is at this offset from the beginning of a linear cells array
 				unsigned cellIndex = indexIOffset + indexJOffset + k;
-				// Get the offset of the list of spot nums for the cell
-				unsigned gridListOffset = gridListOffsets[cellIndex];
-				uint16_t *spotsList = gridSpotsLists + gridListOffset;
-				// List head contains the count of spots (spot numbers)
-				uint16_t numGridSpots = spotsList[0];
-				// Skip list head
-				spotsList++;
+				uint16_t numGridSpots;
+				uint16_t *spotsList = GetCellSpotsList( cellIndex, &numGridSpots );
 				// For each spot number fetch a spot and test against the problem params
 				for( uint16_t spotNumIndex = 0; spotNumIndex < numGridSpots; ++spotNumIndex ) {
 					uint16_t spotNum = spotsList[spotNumIndex];
 					const TacticalSpot &spot = spots[spotNum];
 					if( DistanceSquared( spot.origin, searchOrigin.Data() ) < squareRadius ) {
+						if( numSpotsInRadius >= MAX_SPOTS_PER_QUERY ) {
+							AI_FailWith( "FindSpotsInRadius()", "Too many spots in query result\n" );
+						}
 						spotNums[numSpotsInRadius++] = spotNum;
 						// Test whether search origin is inside the spot
 						if( searchOrigin.X() < spot.absMins[0] || searchOrigin.X() > spot.absMaxs[0] ) {
@@ -806,6 +1066,155 @@ uint16_t TacticalSpotsRegistry::FindSpotsInRadius( const OriginParams &originPar
 	}
 
 	return numSpotsInRadius;
+}
+
+TacticalSpotsRegistry::PrecomputedSpotsGrid::~PrecomputedSpotsGrid() {
+	if( gridListOffsets ) {
+		G_LevelFree( gridListOffsets );
+	}
+	if( gridSpotsLists ) {
+		G_LevelFree( gridSpotsLists );
+	}
+}
+
+uint16_t TacticalSpotsRegistry::PrecomputedSpotsGrid::FindSpotsInRadius( const OriginParams &originParams,
+																		 uint16_t *spotNums,
+																		 uint16_t *insideSpotNum ) const {
+	if( !IsLoaded() ) {
+		AI_FailWith( "PrecomputedSpotsGrid::FindSpotsInRadius()", "The grid has not been loaded\n" );
+	}
+
+	// We hope a compiler is able to substitute the parent implementation here
+	// and use devirtualized overridden GetCellsSpotsLists() calls.
+	return BaseSpotsGrid::FindSpotsInRadius( originParams, spotNums, insideSpotNum );
+}
+
+uint16_t *TacticalSpotsRegistry::PrecomputedSpotsGrid::GetCellSpotsList( unsigned gridCellNum,
+																		 uint16_t *numCellSpots ) const {
+	unsigned gridListOffset = gridListOffsets[gridCellNum];
+	uint16_t *spotsList = gridSpotsLists + gridListOffset;
+	// Spots list head contains the count of spots (spot numbers)
+	*numCellSpots = spotsList[0];
+	// The spots data follow the head.
+	return spotsList + 1;
+}
+
+TacticalSpotsRegistry::SpotsGridBuilder::SpotsGridBuilder() {
+	SetupGridParams();
+
+	gridSpotsArrays = ( GridSpotsArray ** )( G_LevelMalloc( NumGridCells() * sizeof( GridSpotsArray * ) ) );
+}
+
+TacticalSpotsRegistry::SpotsGridBuilder::~SpotsGridBuilder() {
+	if( gridSpotsArrays ) {
+		for( unsigned i = 0, end = NumGridCells(); i < end; ++i ) {
+			if( gridSpotsArrays[i] ) {
+				gridSpotsArrays[i]->~GridSpotsArray();
+				G_LevelFree( gridSpotsArrays[i] );
+			}
+		}
+		G_LevelFree( gridSpotsArrays );
+	}
+}
+
+uint16_t *TacticalSpotsRegistry::SpotsGridBuilder::GetCellSpotsList( unsigned gridCellNum,
+																	 uint16_t *numCellSpots ) const {
+	if( GridSpotsArray *array = gridSpotsArrays[gridCellNum] ) {
+		*numCellSpots = array->size;
+		return array->data;
+	}
+	*numCellSpots = 0;
+	return nullptr;
+}
+
+void TacticalSpotsRegistry::SpotsGridBuilder::AddSpot( const vec3_t origin, uint16_t spotNum ) {
+	unsigned gridCellNum = PointGridCellNum( origin );
+	AddSpotToGridList( gridCellNum, spotNum );
+}
+
+void TacticalSpotsRegistry::SpotsGridBuilder::AddSpotToGridList( unsigned gridCellNum, uint16_t spotNum ) {
+	GridSpotsArray *array = gridSpotsArrays[gridCellNum];
+	// Put the likely case first
+	if( array ) {
+		array->AddSpot( spotNum );
+		return;
+	}
+
+	array = new( G_LevelMalloc( sizeof( GridSpotsArray ) ) )GridSpotsArray;
+	array->AddSpot( spotNum );
+	gridSpotsArrays[gridCellNum] = array;
+}
+
+void TacticalSpotsRegistry::SpotsGridBuilder::GridSpotsArray::AddSpot( uint16_t spotNum ) {
+	if( this->size < this->capacity ) {
+		this->data[this->size++] = spotNum;
+		return;
+	}
+
+	uint16_t *newData = (uint16_t *)G_LevelMalloc( sizeof( uint16_t ) * ( this->capacity + 16 ) );
+	memcpy( newData, this->data, sizeof( uint16_t ) * this->size );
+	if( this->data != internalBuffer ) {
+		G_LevelFree( this->data );
+	}
+
+	if( this->capacity > MAX_SPOTS_PER_QUERY ) {
+		AI_FailWith( "GridSpotsArray::AddSpot()", "Too many spots per a grid cell" );
+	}
+
+	this->data = newData;
+	this->size = this->capacity;
+	this->capacity += 16;
+	this->data[this->size++] = spotNum;
+}
+
+void TacticalSpotsRegistry::SpotsGridBuilder::CopyTo( PrecomputedSpotsGrid *precomputedGrid ) {
+	if( !this->spots ) {
+		AI_FailWith( "SpotsGridBuilder::CopyTo()", "Spots have not been attached\n" );
+	}
+
+	VectorCopy( this->worldMins, precomputedGrid->worldMins );
+	VectorCopy( this->worldMaxs, precomputedGrid->worldMaxs );
+	VectorCopy( this->gridNumCells, precomputedGrid->gridNumCells );
+	VectorCopy( this->gridCellSize, precomputedGrid->gridCellSize );
+
+	// Should not really happen if it is used as intended,
+	// but calling CopyTo() with an initialized grid as an argument is legal
+	if( precomputedGrid->gridListOffsets ) {
+		G_LevelFree( precomputedGrid->gridListOffsets );
+	}
+	if( precomputedGrid->gridSpotsLists ) {
+		G_LevelFree( precomputedGrid->gridSpotsLists );
+	}
+
+	precomputedGrid->numSpots = this->numSpots;
+	precomputedGrid->spots = this->spots;
+
+	unsigned totalNumCells = NumGridCells();
+	precomputedGrid->gridListOffsets = (uint32_t *)G_LevelMalloc( sizeof( uint32_t ) * totalNumCells );
+	precomputedGrid->gridSpotsLists = (uint16_t *)G_LevelMalloc( sizeof( uint16_t ) * ( totalNumCells + numSpots ) );
+
+	uint16_t *listPtr = precomputedGrid->gridSpotsLists;
+	// For each cell of all possible cells
+	for( unsigned cellNum = 0; cellNum < totalNumCells; ++cellNum ) {
+		// Store offset of the cell spots list
+		precomputedGrid->gridListOffsets[cellNum] = (unsigned)( listPtr - precomputedGrid->gridSpotsLists );
+		// Use a reference to cell spots list head that contains number of spots in the cell
+		uint16_t *listSize = &listPtr[0];
+		*listSize = 0;
+		// Skip list head
+		++listPtr;
+		if( GridSpotsArray *spotsArray = gridSpotsArrays[cellNum] ) {
+			if( spotsArray->size > MAX_SPOTS_PER_QUERY ) {
+				AI_FailWith( "SpotsGridBuilder::CopyTo()", "Too many spots in cell %d/%d\n", cellNum, totalNumCells );
+			}
+			*listSize = spotsArray->size;
+			memcpy( listPtr, spotsArray->data, sizeof( spotsArray->data[0] ) * spotsArray->size );
+			listPtr += *listSize;
+		}
+		if( listPtr - precomputedGrid->gridSpotsLists > totalNumCells + numSpots ) {
+			AI_FailWith( "SpotsGridBuilder::CopyTo()", "List ptr went out of bounds\n" );
+		}
+	}
 }
 
 int TacticalSpotsRegistry::CopyResults( const SpotAndScore *spotsBegin,
@@ -899,7 +1308,7 @@ inline float ApplyFactor( float value, float factor, float factorInfluence ) {
 int TacticalSpotsRegistry::FindPositionalAdvantageSpots( const OriginParams &originParams,
 														 const AdvantageProblemParams &problemParams,
 														 vec3_t *spotOrigins, int maxSpots ) const {
-	uint16_t boundsSpots[MAX_SPOTS];
+	uint16_t boundsSpots[MAX_SPOTS_PER_QUERY];
 	uint16_t insideSpotNum;
 	uint16_t numSpotsInBounds = FindSpotsInRadius( originParams, boundsSpots, &insideSpotNum );
 
@@ -1031,7 +1440,7 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOrigin( const OriginParams &origi
 	// Do not more than result.capacity() iterations.
 	// Some feasible areas in candidateAreas tai that pass test may be skipped,
 	// but this is intended to reduce performance drops (do not more than result.capacity() pathfinder calls).
-	if( insideSpotNum < MAX_SPOTS ) {
+	if( insideSpotNum < MAX_SPOTS_PER_QUERY ) {
 		const auto *travelTimeTable = this->spotTravelTimeTable;
 		const auto tableRowOffset = insideSpotNum * this->numSpots;
 		for( unsigned i = 0, end = std::min( candidateSpots.size(), result.capacity() ); i < end; ++i ) {
@@ -1096,7 +1505,7 @@ void TacticalSpotsRegistry::CheckSpotsReachFromOriginAndBack( const OriginParams
 	// Do not more than result.capacity() iterations.
 	// Some feasible areas in candidateAreas tai that pass test may be skipped,
 	// but it is intended to reduce performance drops (do not more than 2 * result.capacity() pathfinder calls).
-	if( insideSpotNum < MAX_SPOTS ) {
+	if( insideSpotNum < MAX_SPOTS_PER_QUERY ) {
 		const auto *travelTimeTable = this->spotTravelTimeTable;
 		const auto numSpots_ = this->numSpots;
 		for( unsigned i = 0, end = std::min( candidateSpots.size(), result.capacity() ); i < end; ++i ) {
@@ -1264,7 +1673,7 @@ void TacticalSpotsRegistry::SortByVisAndOtherFactors( const OriginParams &origin
 int TacticalSpotsRegistry::FindCoverSpots( const OriginParams &originParams,
 										   const CoverProblemParams &problemParams,
 										   vec3_t *spotOrigins, int maxSpots ) const {
-	uint16_t boundsSpots[MAX_SPOTS];
+	uint16_t boundsSpots[MAX_SPOTS_PER_QUERY];
 	uint16_t insideSpotNum;
 	uint16_t numSpotsInBounds = FindSpotsInRadius( originParams, boundsSpots, &insideSpotNum );
 
@@ -1342,7 +1751,7 @@ bool TacticalSpotsRegistry::LooksLikeACoverSpot( uint16_t spotNum, const OriginP
 int TacticalSpotsRegistry::FindEvadeDangerSpots( const OriginParams &originParams,
 												 const DodgeDangerProblemParams &problemParams,
 												 vec3_t *spotOrigins, int maxSpots ) const {
-	uint16_t boundsSpots[MAX_SPOTS];
+	uint16_t boundsSpots[MAX_SPOTS_PER_QUERY];
 	uint16_t insideSpotNum;
 	uint16_t numSpotsInBounds = FindSpotsInRadius( originParams, boundsSpots, &insideSpotNum );
 
@@ -1498,7 +1907,7 @@ Vec3 TacticalSpotsRegistry::MakeDodgeDangerDir( const OriginParams &originParams
 bool TacticalSpotsRegistry::FindClosestToTargetWalkableSpot( const OriginParams &originParams,
 															 int targetAreaNum,
 															 vec3_t *spotOrigin ) const {
-	uint16_t spotNums[MAX_SPOTS];
+	uint16_t spotNums[MAX_SPOTS_PER_QUERY];
 	uint16_t insideSpotNum;
 	uint16_t numSpots_ = FindSpotsInRadius( originParams, spotNums, &insideSpotNum );
 
