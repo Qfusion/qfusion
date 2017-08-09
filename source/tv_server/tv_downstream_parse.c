@@ -87,16 +87,16 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 	assert( msg );
 
 	while( 1 ) {
+		if( msg->readcount == msg->cursize ) {
+			break;
+		}
+
 		if( msg->readcount > msg->cursize ) {
 			TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "bad message from client" );
 			break;
 		}
 
 		c = MSG_ReadUint8( msg );
-		if( c == -1 ) {
-			break;
-		}
-
 		switch( c ) {
 			case clc_nop:
 				break;

@@ -1206,6 +1206,14 @@ void CL_ParseServerMessage( msg_t *msg ) {
 
 	// parse the message
 	while( 1 ) {
+		if( msg->readcount == msg->cursize ) {
+			if( cl_debug_serverCmd->integer & 4 ) {
+				Com_Printf( "%3i:CMD %i %s\n", msg->readcount, -1, "EOF" );
+			}
+			SHOWNET( msg, "END OF MESSAGE" );
+			break;
+		}
+
 		if( msg->readcount > msg->cursize ) {
 			Com_Error( ERR_DROP, "CL_ParseServerMessage: Bad server message" );
 			break;
@@ -1213,16 +1221,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 
 		cmd = MSG_ReadUint8( msg );
 		if( cl_debug_serverCmd->integer & 4 ) {
-			if( cmd == -1 ) {
-				Com_Printf( "%3i:CMD %i %s\n", msg->readcount - 1, cmd, "EOF" );
-			} else {
-				Com_Printf( "%3i:CMD %i %s\n", msg->readcount - 1, cmd, !svc_strings[cmd] ? "bad" : svc_strings[cmd] );
-			}
-		}
-
-		if( cmd == -1 ) {
-			SHOWNET( msg, "END OF MESSAGE" );
-			break;
+			Com_Printf( "%3i:CMD %i %s\n", msg->readcount - 1, cmd, !svc_strings[cmd] ? "bad" : svc_strings[cmd] );
 		}
 
 		if( cl_shownet->integer >= 2 ) {

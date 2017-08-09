@@ -143,20 +143,19 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 
 	// parse the message
 	while( upstream->state >= CA_HANDSHAKE ) {
+		if( msg->readcount == msg->cursize ) {
+			break;
+		}
 		if( msg->readcount > msg->cursize ) {
 			TV_Upstream_Error( upstream, "Bad server message" );
-		}
-
-		cmd = MSG_ReadUint8( msg );
-
-		if( cmd == -1 ) {
 			break;
 		}
 
-		// other commands
+		cmd = MSG_ReadUint8( msg );
 		switch( cmd ) {
 			default:
 				TV_Upstream_Error( upstream, "Illegible server message" );
+				break;
 
 			case svc_nop:
 				break;
@@ -166,6 +165,7 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 					int cmdNum = MSG_ReadInt32( msg );
 					if( cmdNum < 0 ) {
 						TV_Upstream_Error( upstream, "Invalid cmdNum value" );
+						break;
 					}
 					if( cmdNum <= upstream->lastExecutedServerCommand ) {
 						MSG_ReadString( msg ); // read but ignore
@@ -201,6 +201,7 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 			case svc_clcack:
 				if( upstream->reliable ) {
 					TV_Upstream_Error( upstream, "clack message while reliable" );
+					break;
 				}
 				upstream->reliableAcknowledge = (unsigned)MSG_ReadInt32( msg );
 				MSG_ReadInt32( msg ); // ucmdAcknowledged

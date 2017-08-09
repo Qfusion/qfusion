@@ -162,24 +162,20 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 
 	// parse the message
 	while( relay->state >= CA_HANDSHAKE ) {
-		if( msg->readcount > msg->cursize ) {
-			TV_Relay_Error( relay, "Bad server message" );
-		}
-
-		cmd = MSG_ReadUint8( msg );
-		/*if( cmd == -1 )
-		Com_Printf( "%3i:CMD %i %s\n", msg->readcount-1, cmd, "EOF" );
-		else
-		Com_Printf( "%3i:CMD %i %s\n", msg->readcount-1, cmd, !svc_strings[cmd] ? "bad" : svc_strings[cmd] );*/
-
-		if( cmd == -1 ) {
+		if( msg->readcount == msg->cursize ) {
 			break;
 		}
 
-		// other commands
+		if( msg->readcount > msg->cursize ) {
+			TV_Relay_Error( relay, "Bad server message" );
+			break;
+		}
+
+		cmd = MSG_ReadUint8( msg );
 		switch( cmd ) {
 			default:
 				TV_Relay_Error( relay, "Illegible server message" );
+				break;
 
 			case svc_nop:
 				break;
@@ -189,6 +185,7 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 					int cmdNum = MSG_ReadInt32( msg );
 					if( cmdNum < 0 ) {
 						TV_Relay_Error( relay, "Invalid cmdNum value" );
+						break;
 					}
 					if( cmdNum <= relay->lastExecutedServerCommand ) {
 						MSG_ReadString( msg ); // read but ignore
@@ -225,6 +222,7 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 			case svc_clcack:
 				if( relay->reliable ) {
 					TV_Relay_Error( relay, "clack message while reliable" );
+					break;
 				}
 				MSG_ReadInt32( msg ); // reliableAcknowledge
 				MSG_ReadInt32( msg ); // ucmdAcknowledged
