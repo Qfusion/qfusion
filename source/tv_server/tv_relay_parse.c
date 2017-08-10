@@ -155,21 +155,13 @@ static void TV_Relay_ParseBaseline( relay_t *relay, msg_t *msg ) {
 * TV_Relay_ParseServerMessage
 */
 void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
-	int cmd;
-
 	assert( relay && relay->state >= CA_HANDSHAKE );
 	assert( msg );
 
 	// parse the message
-	while( relay->state >= CA_HANDSHAKE ) {
-		if( msg->readcount == msg->cursize ) {
-			break;
-		}
-
-		if( msg->readcount > msg->cursize ) {
-			TV_Relay_Error( relay, "Bad server message" );
-			break;
-		}
+	while( ( relay->state >= CA_HANDSHAKE ) && ( msg->readcount < msg->cursize ) ) {
+		int cmd;
+		int length;
 
 		cmd = MSG_ReadUint8( msg );
 		switch( cmd ) {
@@ -233,12 +225,8 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 				break;
 
 			case svc_demoinfo:
-			{
-				int length;
-
 				length = MSG_ReadInt32( msg );
 				MSG_SkipData( msg, length );
-			}
 			break;
 
 			case svc_playerinfo:
@@ -248,15 +236,16 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg ) {
 				break;
 
 			case svc_extension:
-				if( 1 ) {
-					int len;
-
-					MSG_ReadUint8( msg );        // extension id
-					MSG_ReadUint8( msg );        // version number
-					len = MSG_ReadInt16( msg ); // command length
-					MSG_SkipData( msg, len );   // command data
-				}
+				MSG_ReadUint8( msg );        // extension id
+				MSG_ReadUint8( msg );        // version number
+				length = MSG_ReadInt16( msg ); // command length
+				MSG_SkipData( msg, length );   // command data
 				break;
 		}
+	}
+
+	if( msg->readcount > msg->cursize ) {
+		TV_Relay_Error( relay, "Bad server message" );
+		return;
 	}
 }

@@ -79,22 +79,15 @@ static void TV_Downstream_ParseMoveCommand( client_t *client, msg_t *msg ) {
 * The current message is parsed for the given client
 */
 void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
-	int c;
 	int64_t cmdNum;
 	char *s;
 
 	assert( client );
 	assert( msg );
 
-	while( 1 ) {
-		if( msg->readcount == msg->cursize ) {
-			break;
-		}
-
-		if( msg->readcount > msg->cursize ) {
-			TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "bad message from client" );
-			break;
-		}
+	while( msg->readcount < msg->cursize ) {
+		int c;
+		int ext, len;
 
 		c = MSG_ReadUint8( msg );
 		switch( c ) {
@@ -135,19 +128,15 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 				break;
 
 			case clc_extension:
-				if( 1 ) {
-					int ext, len;
+				ext = MSG_ReadUint8( msg );  // extension id
+				MSG_ReadUint8( msg );        // version number
+				len = MSG_ReadInt16( msg );  // command length
 
-					ext = MSG_ReadUint8( msg );  // extension id
-					MSG_ReadUint8( msg );        // version number
-					len = MSG_ReadInt16( msg ); // command length
-
-					switch( ext ) {
-						default:
-							// unsupported
-							MSG_SkipData( msg, len );
-							break;
-					}
+				switch( ext ) {
+					default:
+						// unsupported
+						MSG_SkipData( msg, len );
+						break;
 				}
 				break;
 
@@ -155,5 +144,10 @@ void TV_Downstream_ParseClientMessage( client_t *client, msg_t *msg ) {
 				TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "unknown command char" );
 				break;
 		}
+	}
+
+	if( msg->readcount > msg->cursize ) {
+		TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "bad message from client" );
+		return;
 	}
 }

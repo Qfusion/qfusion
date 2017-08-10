@@ -1034,7 +1034,6 @@ static void SV_ParseMoveCommand( client_t *client, msg_t *msg ) {
 * The current message is parsed for the given client
 */
 void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
-	int c;
 	char *s;
 	bool move_issued;
 	int64_t cmdNum;
@@ -1049,17 +1048,9 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 
 	// only allow one move command
 	move_issued = false;
-	while( 1 ) {
-		if( msg->readcount == msg->cursize ) {
-			break;
-		}
-
-		if( msg->readcount > msg->cursize ) {
-			Com_Printf( "SV_ParseClientMessage: badread\n" );
-			SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Bad message" );
-			return;
-		}
-
+	while( msg->readcount < msg->cursize ) {
+		int c;
+		
 		c = MSG_ReadUint8( msg );
 		switch( c ) {
 			default:
@@ -1130,5 +1121,11 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 				}
 				break;
 		}
+	}
+
+	if( msg->readcount > msg->cursize ) {
+		Com_Printf( "SV_ParseClientMessage: badread\n" );
+		SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Bad message" );
+		return;
 	}
 }

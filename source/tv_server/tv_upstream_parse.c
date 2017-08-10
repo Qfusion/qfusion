@@ -136,21 +136,13 @@ static void TV_Upstream_ParseBaseline( upstream_t *upstream, msg_t *msg ) {
 * TV_Upstream_ParseServerMessage
 */
 void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
-	int cmd;
-
 	assert( upstream && upstream->state >= CA_HANDSHAKE );
 	assert( msg );
 
 	// parse the message
-	while( upstream->state >= CA_HANDSHAKE ) {
-		if( msg->readcount == msg->cursize ) {
-			break;
-		}
-		if( msg->readcount > msg->cursize ) {
-			TV_Upstream_Error( upstream, "Bad server message" );
-			break;
-		}
-
+	while( ( upstream->state >= CA_HANDSHAKE ) && ( msg->readcount < msg->cursize ) ) {
+		int cmd;
+		int length;
 		cmd = MSG_ReadUint8( msg );
 		switch( cmd ) {
 			default:
@@ -212,14 +204,9 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 				break;
 
 			case svc_demoinfo:
-			{
-				int length;
-
 				assert( upstream->demo.playing );
-
 				length = MSG_ReadInt32( msg );
 				MSG_SkipData( msg, length );
-			}
 			break;
 
 			case svc_playerinfo:
@@ -229,16 +216,17 @@ void TV_Upstream_ParseServerMessage( upstream_t *upstream, msg_t *msg ) {
 				break;
 
 			case svc_extension:
-				if( 1 ) {
-					int len;
-
-					MSG_ReadUint8( msg );        // extension id
-					MSG_ReadUint8( msg );        // version number
-					len = MSG_ReadInt16( msg ); // command length
-					MSG_SkipData( msg, len );   // command data
-				}
+				MSG_ReadUint8( msg );        // extension id
+				MSG_ReadUint8( msg );        // version number
+				length = MSG_ReadInt16( msg ); // command length
+				MSG_SkipData( msg, length );   // command data
 				break;
 		}
+	}
+
+	if( msg->readcount > msg->cursize ) {
+		TV_Upstream_Error( upstream, "Bad server message" );
+		return;
 	}
 
 	// if recording demos, copy the message out

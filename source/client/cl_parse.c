@@ -1196,8 +1196,6 @@ ACTION MESSAGES
 * CL_ParseServerMessage
 */
 void CL_ParseServerMessage( msg_t *msg ) {
-	int cmd;
-
 	if( cl_shownet->integer == 1 ) {
 		Com_Printf( "%i ", msg->cursize );
 	} else if( cl_shownet->integer >= 2 ) {
@@ -1205,19 +1203,10 @@ void CL_ParseServerMessage( msg_t *msg ) {
 	}
 
 	// parse the message
-	while( 1 ) {
-		if( msg->readcount == msg->cursize ) {
-			if( cl_debug_serverCmd->integer & 4 ) {
-				Com_Printf( "%3i:CMD %i %s\n", msg->readcount, -1, "EOF" );
-			}
-			SHOWNET( msg, "END OF MESSAGE" );
-			break;
-		}
-
-		if( msg->readcount > msg->cursize ) {
-			Com_Error( ERR_DROP, "CL_ParseServerMessage: Bad server message" );
-			break;
-		}
+	while( msg->readcount < msg->cursize ) {
+		int cmd;
+		int ext, len;
+		size_t meta_data_maxsize;
 
 		cmd = MSG_ReadUint8( msg );
 		if( cl_debug_serverCmd->integer & 4 ) {
@@ -1296,25 +1285,22 @@ void CL_ParseServerMessage( msg_t *msg ) {
 
 			case svc_demoinfo:
 				assert( cls.demo.playing );
-				{
-					size_t meta_data_maxsize;
 
-					MSG_ReadInt32( msg );
-					MSG_ReadInt32( msg );
-					cls.demo.meta_data_realsize = (size_t)MSG_ReadInt32( msg );
-					meta_data_maxsize = (size_t)MSG_ReadInt32( msg );
+				MSG_ReadInt32( msg );
+				MSG_ReadInt32( msg );
+				cls.demo.meta_data_realsize = (size_t)MSG_ReadInt32( msg );
+				meta_data_maxsize = (size_t)MSG_ReadInt32( msg );
 
-					// sanity check
-					if( cls.demo.meta_data_realsize > meta_data_maxsize ) {
-						cls.demo.meta_data_realsize = meta_data_maxsize;
-					}
-					if( cls.demo.meta_data_realsize > sizeof( cls.demo.meta_data ) ) {
-						cls.demo.meta_data_realsize = sizeof( cls.demo.meta_data );
-					}
-
-					MSG_ReadData( msg, cls.demo.meta_data, cls.demo.meta_data_realsize );
-					MSG_SkipData( msg, meta_data_maxsize - cls.demo.meta_data_realsize );
+				// sanity check
+				if( cls.demo.meta_data_realsize > meta_data_maxsize ) {
+					cls.demo.meta_data_realsize = meta_data_maxsize;
 				}
+				if( cls.demo.meta_data_realsize > sizeof( cls.demo.meta_data ) ) {
+					cls.demo.meta_data_realsize = sizeof( cls.demo.meta_data );
+				}
+
+				MSG_ReadData( msg, cls.demo.meta_data, cls.demo.meta_data_realsize );
+				MSG_SkipData( msg, meta_data_maxsize - cls.demo.meta_data_realsize );
 				break;
 
 			case svc_playerinfo:
@@ -1324,23 +1310,29 @@ void CL_ParseServerMessage( msg_t *msg ) {
 				break;
 
 			case svc_extension:
-				if( 1 ) {
-					int ext, len;
+				ext = MSG_ReadUint8( msg );  // extension id
+				MSG_ReadUint8( msg );        // version number
+				len = MSG_ReadInt16( msg ); // command length
 
-					ext = MSG_ReadUint8( msg );  // extension id
-					MSG_ReadUint8( msg );        // version number
-					len = MSG_ReadInt16( msg ); // command length
-
-					switch( ext ) {
-						default:
-							// unsupported
-							MSG_SkipData( msg, len );
-							break;
-					}
+				switch( ext ) {
+					default:
+						// unsupported
+						MSG_SkipData( msg, len );
+						break;
 				}
 				break;
 		}
 	}
+
+	if( msg->readcount > msg->cursize ) {
+		Com_Error( ERR_DROP, "CL_ParseServerMessage: Bad server message" );
+		return;
+	}
+
+	if( cl_debug_serverCmd->integer & 4 ) {
+		Com_Printf( "%3i:CMD %i %s\n", msg->readcount, -1, "EOF" );
+	}
+	SHOWNET( msg, "END OF MESSAGE" );
 
 	CL_AddNetgraph();
 
