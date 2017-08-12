@@ -84,8 +84,18 @@ public:
 	}
 };
 
+enum class BotInputRotation : uint8_t {
+	NONE = 0,
+	BACK = 1 << 0,
+	RIGHT = 1 << 1,
+	LEFT = 1 << 2,
+	SIDE_KINDS_MASK = ( 1 << 1 ) | ( 1 << 2 ),
+	ALL_KINDS_MASK = ( 1 << 3 ) - 1
+};
+
 class alignas ( 4 )BotInput
 {
+	friend class BotMovementPredictionContext;
 	// Todo: Pack since it is required to be normalized now?
 	Vec3 intendedLookDir;
 	// A copy of self->s.angles for modification
@@ -93,6 +103,7 @@ class alignas ( 4 )BotInput
 	// the BotInput should be only mutable thing in the related code.
 	// Should be copied back to self->s.angles if it has been modified when the BotInput gets applied.
 	Vec3 alreadyComputedAngles;
+	BotInputRotation allowedRotationMask;
 	unsigned char turnSpeedMultiplier;
 	signed ucmdForwardMove : 2;
 	signed ucmdSideMove : 2;
@@ -122,8 +133,17 @@ public:
 
 	inline void Clear() {
 		memset( this, 0, sizeof( BotInput ) );
-		// Restore the default value overwritten by the memset() call
+		// Restore default values overwritten by the memset() call
 		turnSpeedMultiplier = 16;
+		allowedRotationMask = BotInputRotation::ALL_KINDS_MASK;
+	}
+
+	inline void SetAllowedRotationMask( BotInputRotation rotationMask ) {
+		this->allowedRotationMask = rotationMask;
+	}
+
+	bool IsRotationAllowed( BotInputRotation rotation ) {
+		return ( (int)allowedRotationMask & (int)rotation ) != 0;
 	}
 
 	// Button accessors are kept for backward compatibility with existing bot movement code
@@ -540,12 +560,13 @@ struct alignas ( 4 )BotMovementState {
 	static_assert( alignof( BotCombatMoveDirsState ) == 2, "Members order by alignment is broken" );
 	BotCombatMoveDirsState combatMoveDirsState;
 
-	// Prevents jitter (switching input inversion on/off if the view dot product is near the inversion dot threshold)
-	// If this flag is set, the threshold is lowered.
-	bool isDoingInputInversion;
+	// A current input rotation kind that is used in this state.
+	// This value is saved to prevent choice jitter trying to apply an input rotation.
+	// (The current input rotation kind has a bit less restrictive application conditions).
+	BotInputRotation inputRotation;
 
 	inline BotMovementState()
-		: isDoingInputInversion( false ) {
+		: inputRotation( BotInputRotation::NONE ) {
 	}
 
 	inline void Frame( unsigned frameTime ) {

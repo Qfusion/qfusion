@@ -471,6 +471,10 @@ public:
 	};
 
 	KeptInFovPoint keptInFovPoint;
+	int64_t nextRotateInputAttemptAt;
+	int64_t inputRotationBlockingTimer;
+	int64_t lastInputRotationFailureAt;
+
 	const Enemy *lastChosenLostOrHiddenEnemy;
 	unsigned lastChosenLostOrHiddenEnemyInstanceId;
 
@@ -495,8 +499,13 @@ public:
 
 	void ApplyPendingTurnToLookAtPoint( BotInput *input, BotMovementPredictionContext *context = nullptr ) const;
 	void ApplyInput( BotInput *input, BotMovementPredictionContext *context = nullptr );
-	bool CheckInputInversion( BotInput *input, BotMovementPredictionContext *context = nullptr );
-	inline void InvertKeys( BotInput *input, BotMovementPredictionContext *context = nullptr );
+
+	void CheckBlockingDueToInputRotation();
+
+	inline void InvertInput( BotInput *input, BotMovementPredictionContext *context = nullptr );
+	inline void TurnInputToSide( vec3_t sideDir, int sign, BotInput *input, BotMovementPredictionContext *context = nullptr );
+
+	inline bool TryRotateInput( BotInput *input, BotMovementPredictionContext *context = nullptr );
 
 	// Returns true if current look angle worth pressing attack
 	bool CheckShot( const AimParams &aimParams, const BotInput *input,
