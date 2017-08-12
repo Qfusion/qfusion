@@ -79,6 +79,9 @@ Bot::Bot( edict_t *self_, float skillLevel_ )
 	lastItemSelectedAt( 0 ),
 	noItemAvailableSince( 0 ),
 	keptInFovPoint( self_ ),
+	nextRotateInputAttemptAt( 0 ),
+	inputRotationBlockingTimer( 0 ),
+	lastInputRotationFailureAt( 0 ),
 	lastChosenLostOrHiddenEnemy( nullptr ),
 	lastChosenLostOrHiddenEnemyInstanceId( 0 ) {
 	self->r.client->movestyle = GS_CLASSICBUNNY;
@@ -141,87 +144,120 @@ void Bot::ApplyInput( BotInput *input, BotMovementPredictionContext *context ) {
 	if( context ) {
 		auto *entityPhysicsState_ = &context->movementState->entityPhysicsState;
 		if( !input->hasAlreadyComputedAngles ) {
-			if( CheckInputInversion( input, context ) ) {
-				InvertKeys( input, context );
-				Vec3 newAngles( GetNewViewAngles( self->s.angles, -input->IntendedLookDir(),
-												  context->predictionStepMillis, 5.0f * input->TurnSpeedMultiplier() ) );
-				input->SetAlreadyComputedAngles( newAngles );
-			} else {
-				Vec3 newAngles( GetNewViewAngles( entityPhysicsState_->Angles(), input->IntendedLookDir(),
-												  context->predictionStepMillis, input->TurnSpeedMultiplier() ) );
-				input->SetAlreadyComputedAngles( newAngles );
-			}
+			TryRotateInput( input, context );
+			Vec3 newAngles( GetNewViewAngles( entityPhysicsState_->Angles(), input->IntendedLookDir(),
+											  context->predictionStepMillis, input->TurnSpeedMultiplier() ) );
+			input->SetAlreadyComputedAngles( newAngles );
 		}
 		entityPhysicsState_->SetAngles( input->AlreadyComputedAngles() );
 	} else {
 		if( !input->hasAlreadyComputedAngles ) {
-			if( CheckInputInversion( input, context ) ) {
-				InvertKeys( input, context );
-				Vec3 newAngles( GetNewViewAngles( self->s.angles, -input->IntendedLookDir(),
-												  game.frametime, 5.0f * input->TurnSpeedMultiplier() ) );
-				input->SetAlreadyComputedAngles( newAngles );
-			} else {
-				Vec3 newAngles( GetNewViewAngles( self->s.angles, input->IntendedLookDir(),
-												  game.frametime, input->TurnSpeedMultiplier() ) );
-				input->SetAlreadyComputedAngles( newAngles );
-			}
+			TryRotateInput( input, context );
+			Vec3 newAngles( GetNewViewAngles( self->s.angles, input->IntendedLookDir(),
+											  game.frametime, input->TurnSpeedMultiplier() ) );
+			input->SetAlreadyComputedAngles( newAngles );
 		}
 		input->AlreadyComputedAngles().CopyTo( self->s.angles );
 	}
 }
 
-inline bool Bot::CheckInputInversion( BotInput *input, BotMovementPredictionContext *context ) {
-	// We cannot just check whether the dot product is negative.
-	// (a non-implemented side movement is required in case when fabs(the dot product) < 0.X).
-	// Invert movement only if it can be represented as a negated forward movement without a substantial side part.
-	constexpr const float INVERT_DOT_THRESHOLD = -0.3f;
+bool Bot::TryRotateInput( BotInput *input, BotMovementPredictionContext *context ) {
 
-	if( !keptInFovPoint.IsActive() ) {
-		if( context ) {
-			context->movementState->isDoingInputInversion = false;
-		} else {
-			self->ai->botRef->movementState.isDoingInputInversion = false;
-		}
+	const float *botOrigin;
+	BotInputRotation *prevRotation;
 
+	if( context ) {
+		botOrigin = context->movementState->entityPhysicsState.Origin();
+		prevRotation = &context->movementState->inputRotation;
+	} else {
+		botOrigin = self->s.origin;
+		prevRotation = &self->ai->botRef->movementState.inputRotation;
+	}
+
+	if( !keptInFovPoint.IsActive() || nextRotateInputAttemptAt > level.time ) {
+		*prevRotation = BotInputRotation::NONE;
 		return false;
 	}
 
-	static_assert( INVERT_DOT_THRESHOLD < -0.1f, "The dot threshold is assumed to be negative in all cases" );
 	Vec3 selfToPoint( keptInFovPoint.Origin() );
-	if( context ) {
-		selfToPoint -= context->movementState->entityPhysicsState.Origin();
-		selfToPoint.NormalizeFast();
-		// Prevent choice jitter
-		float dotThreshold = INVERT_DOT_THRESHOLD;
-		if( context->movementState->isDoingInputInversion ) {
-			dotThreshold += 0.1f;
-		}
-
-		bool result = selfToPoint.Dot( input->IntendedLookDir() ) < dotThreshold;
-		context->movementState->isDoingInputInversion = result;
-		return result;
-	}
-
-	selfToPoint -= self->s.origin;
+	selfToPoint -= botOrigin;
 	selfToPoint.NormalizeFast();
 
-	float dotThreshold = INVERT_DOT_THRESHOLD;
-	if( self->ai->botRef->movementState.isDoingInputInversion ) {
-		dotThreshold += 0.1f;
+	if( input->IsRotationAllowed( BotInputRotation::BACK ) ) {
+		float backDotThreshold = ( *prevRotation == BotInputRotation::BACK ) ? -0.3f : -0.5f;
+		if( selfToPoint.Dot( input->IntendedLookDir() ) < backDotThreshold ) {
+			*prevRotation = BotInputRotation::BACK;
+			InvertInput( input, context );
+			return true;
+		}
 	}
 
-	bool result = selfToPoint.Dot( input->IntendedLookDir() ) < dotThreshold;
-	self->ai->botRef->movementState.isDoingInputInversion = result;
-	return result;
+	if( input->IsRotationAllowed( BotInputRotation::SIDE_KINDS_MASK ) ) {
+		vec3_t intendedRightDir, intendedUpDir;
+		MakeNormalVectors( input->IntendedLookDir().Data(), intendedRightDir, intendedUpDir );
+		const float dotRight = selfToPoint.Dot( intendedRightDir );
+
+		if( input->IsRotationAllowed( BotInputRotation::RIGHT ) ) {
+			const float rightDotThreshold = ( *prevRotation == BotInputRotation::RIGHT ) ? 0.6f : 0.7f;
+			if( dotRight > rightDotThreshold ) {
+				*prevRotation = BotInputRotation::RIGHT;
+				TurnInputToSide( intendedRightDir, +1, input, context );
+				return true;
+			}
+		}
+
+		if( input->IsRotationAllowed( BotInputRotation::LEFT ) ) {
+			const float leftDotThreshold = ( *prevRotation == BotInputRotation::LEFT ) ? -0.6f : -0.7f;
+			if( dotRight < leftDotThreshold ) {
+				*prevRotation = BotInputRotation::LEFT;
+				TurnInputToSide( intendedRightDir, -1, input, context );
+				return true;
+			}
+		}
+	}
+
+	*prevRotation = BotInputRotation::NONE;
+	return false;
 }
 
-inline void Bot::InvertKeys( BotInput *input, BotMovementPredictionContext *context ) {
+static inline void SetupInputForTransition( BotInput *input, const edict_t *groundEntity, const vec3_t intendedForwardDir ) {
+	// If actual input is not inverted, release keys/clear special button while starting a transition
+	float intendedDotForward = input->IntendedLookDir().Dot( intendedForwardDir );
+	if( intendedDotForward < 0 ) {
+		if( groundEntity ) {
+			input->SetSpecialButton( false );
+		}
+		input->ClearMovementDirections();
+		input->SetTurnSpeedMultiplier( 2.0f - 5.0f * intendedDotForward );
+	} else if( intendedDotForward < 0.3f ) {
+		if( groundEntity ) {
+			input->SetSpecialButton( false );
+		}
+		input->SetTurnSpeedMultiplier( 2.0f );
+	}
+}
+
+inline void Bot::InvertInput( BotInput *input, BotMovementPredictionContext *context ) {
 	input->SetForwardMovement( -input->ForwardMovement() );
 	input->SetRightMovement( -input->RightMovement() );
 
-	// If no keys are set, forward dash is preferred by default.
-	// Set negative forward movement in this case manually.
-	if( input->IsSpecialButtonSet() ) {
+	input->SetIntendedLookDir( -input->IntendedLookDir(), true );
+
+	const edict_t *groundEntity;
+	vec3_t forwardDir;
+	if( context ) {
+		context->movementState->entityPhysicsState.ForwardDir().CopyTo( forwardDir );
+		groundEntity = context->movementState->entityPhysicsState.GroundEntity();
+	} else {
+		self->ai->botRef->movementState.entityPhysicsState.ForwardDir().CopyTo( forwardDir );
+		groundEntity = self->groundentity;
+	}
+
+	SetupInputForTransition( input, groundEntity, forwardDir );
+
+	// Prevent doing a forward dash if all direction keys are clear.
+
+	if( !input->IsSpecialButtonSet() || !groundEntity ) {
 		return;
 	}
 
@@ -229,14 +265,74 @@ inline void Bot::InvertKeys( BotInput *input, BotMovementPredictionContext *cont
 		return;
 	}
 
+	input->SetForwardMovement( -1 );
+}
+
+void Bot::TurnInputToSide( vec3_t sideDir, int sign, BotInput *input, BotMovementPredictionContext *context ) {
+	VectorScale( sideDir, sign, sideDir );
+
+	const edict_t *groundEntity;
+	vec3_t forwardDir;
 	if( context ) {
-		if( context->movementState->entityPhysicsState.GroundEntity() ) {
-			input->SetForwardMovement( -1 );
-		}
+		context->movementState->entityPhysicsState.ForwardDir().CopyTo( forwardDir );
+		groundEntity = context->movementState->entityPhysicsState.GroundEntity();
 	} else {
-		if( self->groundentity ) {
-			input->SetForwardMovement( -1 );
+		self->ai->botRef->movementState.entityPhysicsState.ForwardDir().CopyTo( forwardDir );
+		groundEntity = self->groundentity;
+	}
+
+	// Rotate input
+	input->SetIntendedLookDir( sideDir, true );
+
+	// If flying, release side keys to prevent unintended aircontrol usage
+	if( !groundEntity ) {
+		input->SetForwardMovement( 0 );
+		input->SetRightMovement( 0 );
+	} else {
+		int oldForwardMovement = input->ForwardMovement();
+		int oldRightMovement = input->RightMovement();
+		input->SetForwardMovement( sign * oldRightMovement );
+		input->SetRightMovement( sign * oldForwardMovement );
+		input->SetSpecialButton( false );
+	}
+
+	SetupInputForTransition( input, groundEntity, sideDir );
+}
+
+void Bot::CheckBlockingDueToInputRotation() {
+	if( movementState.campingSpotState.IsActive() ) {
+		return;
+	}
+	if( movementState.inputRotation == BotInputRotation::NONE ) {
+		return;
+	}
+	if( !self->groundentity ) {
+		return;
+	}
+
+	float threshold = self->r.client->ps.stats[PM_STAT_MAXSPEED] - 30.0f;
+	if( threshold < 0 ) {
+		threshold = DEFAULT_PLAYERSPEED - 30.0f;
+	}
+
+	if( self->velocity[0] * self->velocity[0] + self->velocity[1] * self->velocity[1] > threshold * threshold ) {
+		nextRotateInputAttemptAt = 0;
+		inputRotationBlockingTimer = 0;
+		lastInputRotationFailureAt = 0;
+		return;
+	}
+
+	inputRotationBlockingTimer += game.frametime;
+	if( inputRotationBlockingTimer > 200 ) {
+		int64_t millisSinceLastFailure = level.time - lastInputRotationFailureAt;
+		assert( millisSinceLastFailure >= 0 );
+		if( millisSinceLastFailure >= 10000 ) {
+			nextRotateInputAttemptAt = level.time + 400;
+		} else {
+			nextRotateInputAttemptAt = level.time + 2000 - 400 * ( millisSinceLastFailure / 2500 );
+			assert( nextRotateInputAttemptAt > level.time + 400 );
 		}
+		lastInputRotationFailureAt = level.time;
 	}
 }
 
@@ -728,6 +824,8 @@ void Bot::ActiveFrame() {
 	if( GS_MatchState() <= MATCH_STATE_WARMUP && !IsReady() && self->r.client->teamstate.timeStamp + 4000 < level.time ) {
 		G_Match_Ready( self );
 	}
+
+	CheckBlockingDueToInputRotation();
 
 	weaponsSelector.Frame( botBrain.cachedWorldState );
 
