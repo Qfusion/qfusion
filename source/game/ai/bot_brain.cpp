@@ -122,8 +122,8 @@ BotBrain::BotBrain( Bot *bot, float skillLevel_ )
 	itemsSelector( bot->self ),
 	selectedNavEntity( nullptr, std::numeric_limits<float>::max(), 0, 0 ),
 	prevSelectedNavEntity( nullptr ),
-	triggeredPlanningDanger( Vec3( vec3_origin ), Vec3( vec3_origin ), 0 ),
-	actualDanger( Vec3( vec3_origin ), Vec3( vec3_origin ), 0 ),
+	triggeredPlanningDanger( nullptr ),
+	actualDanger( nullptr ),
 	squad( nullptr ),
 	botEnemyPool( bot->self, this, skillLevel_ ),
 	selectedEnemies( bot->selectedEnemies ),
@@ -311,11 +311,12 @@ void BotBrain::CheckNewActiveDanger() {
 		return;
 	}
 
-	if( !self->ai->botRef->dangersDetector.FindDangers() ) {
+	const Danger *danger = self->ai->botRef->perceptionManager.PrimaryDanger();
+	if( !danger ) {
 		return;
 	}
 
-	actualDanger = *self->ai->botRef->dangersDetector.primaryDanger;
+	actualDanger = *danger;
 	bool needsUrgentReplanning = false;
 	// The old danger has timed out
 	if( !triggeredPlanningDanger.IsValid() ) {
