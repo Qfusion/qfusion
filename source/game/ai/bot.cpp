@@ -12,7 +12,7 @@
 Bot::Bot( edict_t *self_, float skillLevel_ )
 	: Ai( self_, &botBrain, AiAasRouteCache::NewInstance(), &movementState.entityPhysicsState, PREFERRED_TRAVEL_FLAGS, ALLOWED_TRAVEL_FLAGS ),
 	weightConfig( self_ ),
-	dangersDetector( self_ ),
+	perceptionManager( self_ ),
 	botBrain( this, skillLevel_ ),
 	skillLevel( skillLevel_ ),
 	selectedEnemies( self_ ),
@@ -448,104 +448,18 @@ void Bot::DisableAutoAlert( int id ) {
 	FailWith( "Can't find alert spot by id %d\n", id );
 }
 
-void Bot::RegisterVisibleEnemies() {
-	if( G_ISGHOSTING( self ) || GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled() ) {
-		return;
-	}
-
-	CheckIsInThinkFrame( __FUNCTION__ );
-
-	// Compute look dir before loop
-	vec3_t lookDir;
-	AngleVectors( self->s.angles, lookDir, nullptr, nullptr );
-
-	const float dotFactor = FovDotFactor();
-
-	struct EntAndDistance {
-		int entNum;
-		float distance;
-
-		EntAndDistance( int entNum_, float distance_ ) : entNum( entNum_ ), distance( distance_ ) {}
-		bool operator<( const EntAndDistance &that ) const { return distance < that.distance; }
-	};
-
-	// Do not call inPVS() and G_Visible() for potential targets inside a loop for all clients.
-	// In worst case when all bots may see each other we get N^2 traces and PVS tests
-	// First, select all candidate targets along with distance to a bot.
-	// Then choose not more than BotBrain::maxTrackedEnemies nearest enemies for calling OnEnemyViewed()
-	// It may cause data loss (far enemies may have higher logical priority),
-	// but in a common good case (when there are few visible enemies) it preserves data,
-	// and in the worst case mentioned above it does not act weird from player POV and prevents server hang up.
-	// Note: non-client entities also may be candidate targets.
-	StaticVector<EntAndDistance, MAX_EDICTS> candidateTargets;
-
-	for( int i = 1; i < game.numentities; ++i ) {
-		edict_t *ent = game.edicts + i;
-		if( botBrain.MayNotBeFeasibleEnemy( ent ) ) {
-			continue;
-		}
-
-		// Reject targets quickly by fov
-		Vec3 toTarget( ent->s.origin );
-		toTarget -= self->s.origin;
-		float squareDistance = toTarget.SquaredLength();
-		if( squareDistance < 1 ) {
-			continue;
-		}
-		if( squareDistance > ent->aiVisibilityDistance * ent->aiVisibilityDistance ) {
-			continue;
-		}
-
-		float invDistance = Q_RSqrt( squareDistance );
-		toTarget *= invDistance;
-		if( toTarget.Dot( lookDir ) < dotFactor ) {
-			continue;
-		}
-
-		// It seams to be more instruction cache-friendly to just add an entity to a plain array
-		// and sort it once after the loop instead of pushing an entity in a heap on each iteration
-		candidateTargets.emplace_back( EntAndDistance( ENTNUM( ent ), 1.0f / invDistance ) );
-	}
-
-	std::sort( candidateTargets.begin(), candidateTargets.end() );
-
-	// Select inPVS/visible targets first to aid instruction cache, do not call callbacks in loop
-	StaticVector<edict_t *, MAX_CLIENTS> targetsInPVS;
-	StaticVector<edict_t *, MAX_CLIENTS> visibleTargets;
-
-	static_assert( AiBaseEnemyPool::MAX_TRACKED_ENEMIES <= MAX_CLIENTS, "targetsInPVS capacity may be exceeded" );
-
-	for( int i = 0, end = std::min( candidateTargets.size(), botBrain.MaxTrackedEnemies() ); i < end; ++i ) {
-		edict_t *ent = game.edicts + candidateTargets[i].entNum;
-		if( trap_inPVS( self->s.origin, ent->s.origin ) ) {
-			targetsInPVS.push_back( ent );
-		}
-	}
-
-	for( auto ent: targetsInPVS )
-		if( G_Visible( self, ent ) ) {
-			visibleTargets.push_back( ent );
-		}
-
-	// Call bot brain callbacks on visible targets
-	for( auto ent: visibleTargets )
-		botBrain.OnEnemyViewed( ent );
-
-	botBrain.AfterAllEnemiesViewed();
-
-	CheckAlertSpots( visibleTargets );
-}
-
-void Bot::CheckAlertSpots( const StaticVector<edict_t *, MAX_CLIENTS> &visibleTargets ) {
+void Bot::CheckAlertSpots( const StaticVector<uint16_t, MAX_CLIENTS> &visibleTargets ) {
 	float scores[MAX_ALERT_SPOTS];
 
+	edict_t *const gameEdicts = game.edicts;
 	// First compute scores (good for instruction cache)
 	for( unsigned i = 0; i < alertSpots.size(); ++i ) {
 		float score = 0.0f;
 		const auto &alertSpot = alertSpots[i];
 		const float squareRadius = alertSpot.radius * alertSpot.radius;
 		const float invRadius = 1.0f / alertSpot.radius;
-		for( const edict_t *ent: visibleTargets ) {
+		for( uint16_t entNum: visibleTargets ) {
+			edict_t *ent = gameEdicts + entNum;
 			float squareDistance = DistanceSquared( ent->s.origin, alertSpot.origin.Data() );
 			if( squareDistance > squareRadius ) {
 				continue;
@@ -794,7 +708,7 @@ void Bot::Think() {
 		return;
 	}
 
-	RegisterVisibleEnemies();
+	perceptionManager.Frame();
 
 	UpdateKeptInFovPoint();
 
