@@ -127,7 +127,7 @@ public:
 	static constexpr unsigned MAX_TRACKED_POSITIONS = 16;
 
 	void Clear();
-	void OnViewed();
+	void OnViewed( const float *specifiedOrigin = nullptr );
 
 	inline const char *Nick() const {
 		if( !ent ) {
@@ -302,7 +302,7 @@ private:
 	StaticVector<AttackStats, MAX_TRACKED_ATTACKERS> attackers;
 	StaticVector<AttackStats, MAX_TRACKED_TARGETS> targets;
 
-	void EmplaceEnemy( const edict_t *enemy, int slot );
+	void EmplaceEnemy( const edict_t *enemy, int slot, const float *specifiedOrigin = nullptr );
 	void RemoveEnemy( Enemy &enemy );
 
 	void UpdateEnemyWeight( Enemy &enemy );
@@ -324,7 +324,7 @@ protected:
 	// Used to compare enemy strength and pool owner
 	virtual float ComputeDamageToBeKilled() const = 0;
 	// Contains enemy eviction code
-	virtual void TryPushNewEnemy( const edict_t *enemy ) = 0;
+	virtual void TryPushNewEnemy( const edict_t *enemy, const float *suggesedOrigin ) = 0;
 	// Overridden method may give some additional weight to an enemy
 	// (Useful for case when a bot should have some reinforcements)
 	virtual float GetAdditionalEnemyWeight( const edict_t *bot, const edict_t *enemy ) const = 0;
@@ -342,7 +342,7 @@ protected:
 	inline float AvgSkill() const { return avgSkill; }
 	inline float DecisionRandom() const { return decisionRandom; }
 
-	void TryPushEnemyOfSingleBot( const edict_t *bot, const edict_t *enemy );
+	void TryPushEnemyOfSingleBot( const edict_t *bot, const edict_t *enemy, const float *specfiedOrigin = nullptr );
 
 public:
 	AiBaseEnemyPool( float avgSkill_ );
@@ -366,6 +366,9 @@ public:
 	}
 
 	void OnEnemyViewed( const edict_t *enemy );
+	void OnEnemyOriginGuessed( const edict_t *enemy,
+							   unsigned minMillisSinceLastSeen,
+							   const float *guessedOrigin = nullptr );
 
 	// Force the pool to forget the enemy (for example, when bot attitude to an enemy has been changed)
 	void Forget( const edict_t *enemy );
