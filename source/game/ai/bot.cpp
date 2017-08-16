@@ -386,7 +386,15 @@ void Bot::UpdateKeptInFovPoint() {
 	}
 
 	lastChosenLostOrHiddenEnemy = nullptr;
-	keptInFovPoint.Deactivate();
+
+	// Check whether there is a valid active threat.
+	// Set the kept in fov point to a possible threat origin in that case.
+	if( !botBrain.activeThreat.IsValidFor( self ) ) {
+		keptInFovPoint.Deactivate();
+		return;
+	}
+
+	keptInFovPoint.Activate( botBrain.activeThreat.possibleOrigin, (unsigned)botBrain.activeThreat.lastHitTimestamp );
 }
 
 void Bot::TouchedOtherEntity( const edict_t *entity ) {
