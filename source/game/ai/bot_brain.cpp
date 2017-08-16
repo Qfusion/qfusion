@@ -364,11 +364,11 @@ bool BotBrain::Threat::IsValidFor( const edict_t *self_ ) const {
 
 	// It is not cheap to call so do it after all other tests have passed
 	vec3_t lookDir;
-	AngleVectors( self_->s.origin, lookDir, nullptr, nullptr );
+	AngleVectors( self_->s.angles, lookDir, nullptr, nullptr );
 	Vec3 toThreat( inflictor->s.origin );
 	toThreat -= self_->s.origin;
 	toThreat.NormalizeFast();
-	return toThreat.Dot( lookDir ) < 0;
+	return toThreat.Dot( lookDir ) < self_->ai->botRef->FovDotFactor();
 }
 
 void BotBrain::PrepareCurrWorldState( WorldState *worldState ) {
