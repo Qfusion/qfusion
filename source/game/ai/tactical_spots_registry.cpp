@@ -1760,6 +1760,24 @@ int TacticalSpotsRegistry::FindEvadeDangerSpots( const OriginParams &originParam
 	CandidateSpots candidateSpots;
 	SelectPotentialDodgeSpots( originParams, problemParams, boundsSpots, numSpotsInBounds, candidateSpots );
 
+	// Try preferring spots that conform well to the existing velocity direction
+	if( const edict_t *ent = originParams.originEntity ) {
+		// Make sure that the current entity params match problem params
+		if( VectorCompare( ent->s.origin, originParams.origin ) ) {
+			float squareSpeed = VectorLengthSquared( ent->velocity );
+			if( squareSpeed > DEFAULT_PLAYERSPEED * DEFAULT_PLAYERSPEED ) {
+				Vec3 velocityDir( ent->velocity );
+				velocityDir *= 1.0f / sqrtf( squareSpeed );
+				for( auto &spotAndScore: candidateSpots ) {
+					Vec3 toSpotDir( spots[spotAndScore.spotNum].origin );
+					toSpotDir -= ent->s.origin;
+					toSpotDir.NormalizeFast();
+					spotAndScore.score *= 1.0f + velocityDir.Dot( toSpotDir );
+				}
+			}
+		}
+	}
+
 	ReachCheckedSpots reachCheckedSpots;
 	if( problemParams.checkToAndBackReachability ) {
 		CheckSpotsReachFromOriginAndBack( originParams, problemParams, candidateSpots, insideSpotNum, reachCheckedSpots );
