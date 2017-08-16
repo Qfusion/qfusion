@@ -56,43 +56,51 @@ class EntitiesDetector
 	static_assert( MAX_RADIUS * MAX_RADIUS >= DETECT_GRENADE_SQ_RADIUS, "" );
 	static_assert( MAX_RADIUS * MAX_RADIUS >= DETECT_LG_BEAM_SQ_RADIUS, "" );
 
-	void Clear() {
-		rawRockets.clear();
-		visibleRockets.clear();
-		rawPlasmas.clear();
-		visiblePlasmas.clear();
-		rawBlasts.clear();
-		visibleBlasts.clear();
-		rawGrenades.clear();
-		visibleGrenades.clear();
-		rawLasers.clear();
-		visibleLasers.clear();
-	}
+	void Clear();
 
 	static const auto MAX_NONCLIENT_ENTITIES = MAX_EDICTS - MAX_CLIENTS;
 	typedef StaticVector<EntAndDistance, MAX_NONCLIENT_ENTITIES> EntsAndDistancesVector;
-	inline void TryAddEntity( const edict_t *ent, float squareDistanceThreshold,
-							  EntsAndDistancesVector &entsAndDistances );
-	inline void TryAddGrenade( const edict_t *ent, EntsAndDistancesVector &entsAndDistances );
+	typedef StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> EntNumsVector;
 
+	inline void TryAddEntity( const edict_t *ent,
+							  float squareDistanceThreshold,
+							  EntsAndDistancesVector &dangerousEntities,
+							  EntsAndDistancesVector &otherEntities );
+	inline void TryAddGrenade( const edict_t *ent,
+							   EntsAndDistancesVector &dangerousEntities,
+							   EntsAndDistancesVector &otherEntities );
+
+
+	// Returns false if not all entities were tested (some entities have been rejected by the limit)
 	template<unsigned N, unsigned M, typename PvsFunc, typename VisFunc>
-	void FilterRawEntitiesWithDistances( StaticVector<EntAndDistance, N> &rawEnts,
+	bool FilterRawEntitiesWithDistances( StaticVector<EntAndDistance, N> &rawEnts,
 										 StaticVector<uint16_t, M> &filteredEnts,
 										 unsigned visEntsLimit,
 										 PvsFunc pvsFunc, VisFunc visFunc );
 
 	const edict_t *const self;
 
-	StaticVector<EntAndDistance, MAX_NONCLIENT_ENTITIES> rawRockets;
-	StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> visibleRockets;
-	StaticVector<EntAndDistance, MAX_NONCLIENT_ENTITIES> rawPlasmas;
-	StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> visiblePlasmas;
-	StaticVector<EntAndDistance, MAX_NONCLIENT_ENTITIES> rawBlasts;
-	StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> visibleBlasts;
-	StaticVector<EntAndDistance, MAX_NONCLIENT_ENTITIES> rawGrenades;
-	StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> visibleGrenades;
-	StaticVector<EntAndDistance, MAX_NONCLIENT_ENTITIES> rawLasers;
-	StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> visibleLasers;
+	EntsAndDistancesVector maybeDangerousRockets;
+	EntNumsVector dangerousRockets;
+	EntsAndDistancesVector maybeDangerousPlasmas;
+	EntNumsVector dangerousPlasmas;
+	EntsAndDistancesVector maybeDangerousBlasts;
+	EntNumsVector dangerousBlasts;
+	EntsAndDistancesVector maybeDangerousGrenades;
+	EntNumsVector dangerousGrenades;
+	StaticVector<EntAndDistance, MAX_NONCLIENT_ENTITIES> maybeDangerousLasers;
+	StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> dangerousLasers;
+
+	EntsAndDistancesVector maybeVisibleOtherRockets;
+	EntNumsVector visibleOtherRockets;
+	EntsAndDistancesVector maybeVisibleOtherPlasmas;
+	EntNumsVector visibleOtherPlasmas;
+	EntsAndDistancesVector maybeVisibleOtherBlasts;
+	EntNumsVector visibleOtherBlasts;
+	EntsAndDistancesVector maybeVisibleOtherGrenades;
+	EntNumsVector visibleOtherGrenades;
+	EntsAndDistancesVector maybeVisibleOtherLasers;
+	EntNumsVector visibleOtherLasers;
 
 	EntitiesDetector( const edict_t *self_ ) : self( self_ ) {}
 
@@ -120,6 +128,14 @@ class BotPerceptionManager
 
 	Danger *primaryDanger;
 
+	float viewDirDotTeammateDir[MAX_CLIENTS];
+	float distancesToTeammates[MAX_CLIENTS];
+	uint8_t testedTeammatePlayerNums[MAX_CLIENTS];
+	int8_t teammatesVisStatus[MAX_CLIENTS];
+	unsigned numTestedTeamMates;
+	bool hasComputedTeammatesVisData;
+	bool areAllTeammatesInFov;
+
 	static const auto MAX_NONCLIENT_ENTITIES = EntitiesDetector::MAX_NONCLIENT_ENTITIES;
 	typedef EntitiesDetector::EntAndDistance EntAndDistance;
 
@@ -133,6 +149,14 @@ class BotPerceptionManager
 
 	void FindPlasmaDangers( const EntNumsVector &entNums );
 	void FindLaserDangers( const EntNumsVector &entNums );
+
+	// The failure chance is specified mainly to throttle excessive plasma spam
+	void TryGuessingBeamOwnersOrigins( const EntNumsVector &dangerousEntsNums, float failureChance );
+	void TryGuessingProjectileOwnersOrigins( const EntNumsVector &dangerousEntNums, float failureChance );
+
+	void ResetTeammatesVisData();
+	void ComputeTeammatesVisData( const vec3_t forwardDir, float fovDotFactor );
+	bool CanDistinguishEnemyShotsFromTeammates( const vec_t *guessedEnemyOrigin );
 
 	void RegisterVisibleEnemies();
 public:

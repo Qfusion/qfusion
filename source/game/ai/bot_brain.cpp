@@ -204,6 +204,13 @@ void BotBrain::OnEnemyViewed( const edict_t *enemy ) {
 	}
 }
 
+void BotBrain::OnEnemyOriginGuessed( const edict_t *enemy, unsigned minMillisSinceLastSeen, const float *guessedOrigin ) {
+	botEnemyPool.OnEnemyOriginGuessed( enemy, minMillisSinceLastSeen, guessedOrigin );
+	if( squad ) {
+		squad->OnBotGuessedEnemyOrigin( self, enemy, minMillisSinceLastSeen, guessedOrigin );
+	}
+}
+
 void BotBrain::OnPain( const edict_t *enemy, float kick, int damage ) {
 	botEnemyPool.OnPain( self, enemy, kick, damage );
 	if( squad ) {

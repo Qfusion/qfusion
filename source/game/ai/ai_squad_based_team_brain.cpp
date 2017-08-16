@@ -132,11 +132,11 @@ void AiSquad::SquadEnemyPool::OnEnemyRemoved( const Enemy *enemy ) {
 		bot->OnEnemyRemoved( enemy );
 }
 
-void AiSquad::SquadEnemyPool::TryPushNewEnemy( const edict_t *enemy ) {
+void AiSquad::SquadEnemyPool::TryPushNewEnemy( const edict_t *enemy, const float *suggestedOrigin ) {
 	CheckSquadValid();
 	for( Bot *bot: squad->bots )
 		if( !bot->IsGhosting() ) {
-			TryPushEnemyOfSingleBot( bot->Self(), enemy );
+			TryPushEnemyOfSingleBot( bot->Self(), enemy, suggestedOrigin );
 		}
 }
 

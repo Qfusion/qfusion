@@ -49,11 +49,32 @@ static inline bool IsLaserBeamInPvs( const edict_t *self, const edict_t *ent ) {
 	return false;
 }
 
+void EntitiesDetector::Clear() {
+	maybeDangerousRockets.clear();
+	dangerousRockets.clear();
+	maybeDangerousPlasmas.clear();
+	dangerousPlasmas.clear();
+	maybeDangerousBlasts.clear();
+	dangerousBlasts.clear();
+	maybeDangerousGrenades.clear();
+	dangerousGrenades.clear();
+	maybeDangerousLasers.clear();
+	dangerousLasers.clear();
+
+	maybeVisibleOtherRockets.clear();
+	visibleOtherRockets.clear();
+	maybeVisibleOtherPlasmas.clear();
+	visibleOtherPlasmas.clear();
+	maybeVisibleOtherBlasts.clear();
+	visibleOtherBlasts.clear();
+	maybeVisibleOtherGrenades.clear();
+	visibleOtherGrenades.clear();
+	maybeVisibleOtherLasers.clear();
+	visibleOtherLasers.clear();
+}
+
 void EntitiesDetector::Run() {
 	Clear();
-
-	int entNums[MAX_EDICTS];
-	int numEntsInRadius = GClip_FindInRadius( const_cast<float *>( self->s.origin ), MAX_RADIUS, entNums, MAX_EDICTS );
 
 	// Note that we always skip own rockets, plasma, etc.
 	// Otherwise all own bot shot events yield a danger.
@@ -62,31 +83,58 @@ void EntitiesDetector::Run() {
 	// If a grenade is about to explode and is close to bot, its likely it has bounced of the world and can hurt.
 
 	const edict_t *gameEdicts = game.edicts;
-	for( int i = 0; i < numEntsInRadius; ++i ) {
-		const edict_t *ent = gameEdicts + entNums[i];
+	for( int i = gs.maxclients + 1, end = game.numentities; i < end; ++i ) {
+		const edict_t *ent = gameEdicts + i;
 		switch( ent->s.type ) {
 			case ET_ROCKET:
-				TryAddEntity( ent, DETECT_ROCKET_SQ_RADIUS, rawRockets );
+				TryAddEntity( ent, DETECT_ROCKET_SQ_RADIUS, maybeDangerousRockets, maybeVisibleOtherRockets );
 				break;
 			case ET_PLASMA:
-				TryAddEntity( ent, DETECT_PLASMA_SQ_RADIUS, rawPlasmas );
+				TryAddEntity( ent, DETECT_PLASMA_SQ_RADIUS, maybeDangerousPlasmas, maybeVisibleOtherPlasmas );
 				break;
 			case ET_BLASTER:
-				TryAddEntity( ent, DETECT_GB_BLAST_SQ_RADIUS, rawBlasts );
+				TryAddEntity( ent, DETECT_GB_BLAST_SQ_RADIUS, maybeDangerousBlasts, maybeVisibleOtherBlasts );
 				break;
 			case ET_GRENADE:
-				TryAddGrenade( ent, rawGrenades );
+				TryAddGrenade( ent, maybeDangerousGrenades, maybeVisibleOtherGrenades );
 				break;
 			case ET_LASERBEAM:
-				TryAddEntity( ent, DETECT_LG_BEAM_SQ_RADIUS, rawLasers );
+				TryAddEntity( ent, DETECT_LG_BEAM_SQ_RADIUS, maybeDangerousLasers, maybeVisibleOtherLasers );
 			default:
 				break;
 		}
 	}
+
+	constexpr auto isGenInPvs = IsGenericEntityInPvs;
+	constexpr auto isLaserInPvs = IsLaserBeamInPvs;
+	constexpr auto isGenVisible = IsGenericProjectileVisible;
+	constexpr auto isLaserVisible = IsLaserBeamVisible;
+
+	// If all potentially dangerous entities have been processed successfully
+	// (no entity has been rejected due to limit/capacity overflow)
+	// filter other visible entities of the same kind.
+
+	if( FilterRawEntitiesWithDistances( maybeDangerousRockets, dangerousRockets, 12, isGenInPvs, isGenVisible ) ) {
+		FilterRawEntitiesWithDistances( maybeVisibleOtherRockets, visibleOtherRockets, 6, isGenInPvs, isGenVisible );
+	}
+	if( FilterRawEntitiesWithDistances( maybeDangerousPlasmas, dangerousPlasmas, 48, isGenInPvs, isGenVisible ) ) {
+		FilterRawEntitiesWithDistances( maybeVisibleOtherPlasmas, visibleOtherPlasmas, 12, isGenInPvs, isGenVisible );
+	}
+	if( FilterRawEntitiesWithDistances( maybeDangerousBlasts, dangerousBlasts, 6, isGenInPvs, isGenVisible ) ) {
+		FilterRawEntitiesWithDistances( maybeVisibleOtherBlasts, visibleOtherBlasts, 3, isGenInPvs, isGenVisible );
+	}
+	if( FilterRawEntitiesWithDistances( maybeDangerousGrenades, dangerousGrenades, 6, isGenInPvs, isGenVisible ) ) {
+		FilterRawEntitiesWithDistances( maybeVisibleOtherGrenades, visibleOtherGrenades, 3, isGenInPvs, isGenVisible );
+	}
+	if( FilterRawEntitiesWithDistances( maybeDangerousLasers, dangerousLasers, 4, isLaserInPvs, isLaserVisible ) ) {
+		FilterRawEntitiesWithDistances( maybeVisibleOtherLasers, visibleOtherLasers, 4, isLaserInPvs, isLaserVisible );
+	}
 }
 
-inline void EntitiesDetector::TryAddEntity( const edict_t *ent, float squareDistanceThreshold,
-											EntsAndDistancesVector &entsAndDistances ) {
+inline void EntitiesDetector::TryAddEntity( const edict_t *ent,
+											float squareDistanceThreshold,
+											EntsAndDistancesVector &dangerousEntities,
+											EntsAndDistancesVector &otherEntities ) {
 	assert( ent->s.type != ET_GRENADE );
 
 	if( ent->s.ownerNum == ENTNUM( self ) ) {
@@ -100,14 +148,16 @@ inline void EntitiesDetector::TryAddEntity( const edict_t *ent, float squareDist
 	}
 
 	float squareDistance = DistanceSquared( self->s.origin, ent->s.origin );
-	if( squareDistance > squareDistanceThreshold ) {
-		return;
+	if( squareDistance < squareDistanceThreshold ) {
+		dangerousEntities.emplace_back( EntAndDistance( ENTNUM( ent ), sqrtf( squareDistance ) ) );
+	} else {
+		otherEntities.emplace_back( EntAndDistance( ENTNUM( ent ), sqrtf( squareDistance ) ) );
 	}
-
-	entsAndDistances.emplace_back( EntAndDistance( ENTNUM( ent ), sqrtf( squareDistance ) ) );
 }
 
-inline void EntitiesDetector::TryAddGrenade( const edict_t *ent, EntsAndDistancesVector &entsAndDistances ) {
+inline void EntitiesDetector::TryAddGrenade( const edict_t *ent,
+											 EntsAndDistancesVector &dangerousEntities,
+											 EntsAndDistancesVector &otherEntities ) {
 	assert( ent->s.type == ET_GRENADE );
 
 	if( ent->s.ownerNum == ENTNUM( self ) ) {
@@ -129,10 +179,10 @@ inline void EntitiesDetector::TryAddGrenade( const edict_t *ent, EntsAndDistance
 
 	float squareDistance = DistanceSquared( self->s.origin, ent->s.origin );
 	if( squareDistance < 300 * 300 ) {
-		return;
+		dangerousEntities.emplace_back( EntAndDistance( ENTNUM( ent ), sqrtf( squareDistance ) ) );
+	} else {
+		otherEntities.emplace_back( EntAndDistance( ENTNUM( ent ), sqrtf( squareDistance ) ) );
 	}
-
-	entsAndDistances.emplace_back( EntAndDistance( ENTNUM( ent ), sqrtf( squareDistance ) ) );
 }
 
 class PlasmaBeam
@@ -480,28 +530,45 @@ void BotPerceptionManager::Frame() {
 	EntitiesDetector entitiesDetector( self );
 	entitiesDetector.Run();
 
-	if( !entitiesDetector.visibleRockets.empty() ) {
+	ResetTeammatesVisData();
+
+	if( !entitiesDetector.dangerousRockets.empty() ) {
 		const auto &def = GS_GetWeaponDef( WEAP_ROCKETLAUNCHER );
-		FindProjectileDangers( entitiesDetector.visibleRockets, 1.35f * def->firedef.splash_radius, def->firedef.damage );
+		FindProjectileDangers( entitiesDetector.dangerousRockets, 1.35f * def->firedef.splash_radius, def->firedef.damage );
+		TryGuessingProjectileOwnersOrigins( entitiesDetector.dangerousRockets, 0.0f );
 	}
 
-	if( !entitiesDetector.visibleBlasts.empty() ) {
+	TryGuessingProjectileOwnersOrigins( entitiesDetector.visibleOtherRockets, 0.0f );
+
+	if( !entitiesDetector.dangerousBlasts.empty() ) {
 		const auto &def = GS_GetWeaponDef( WEAP_GUNBLADE );
-		FindProjectileDangers( entitiesDetector.visibleBlasts, 1.20f * def->firedef.splash_radius, def->firedef.damage );
+		FindProjectileDangers( entitiesDetector.dangerousBlasts, 1.20f * def->firedef.splash_radius, def->firedef.damage );
+		TryGuessingProjectileOwnersOrigins( entitiesDetector.dangerousBlasts, 0.0f );
 	}
 
-	if( !entitiesDetector.visibleGrenades.empty() ) {
+	TryGuessingProjectileOwnersOrigins( entitiesDetector.visibleOtherBlasts, 0.0f );
+
+	if( !entitiesDetector.dangerousGrenades.empty() ) {
 		const auto &def = GS_GetWeaponDef( WEAP_GRENADELAUNCHER );
-		FindProjectileDangers( entitiesDetector.visibleGrenades, 1.75f * def->firedef.splash_radius, def->firedef.damage );
+		FindProjectileDangers( entitiesDetector.dangerousGrenades, 1.75f * def->firedef.splash_radius, def->firedef.damage );
+		TryGuessingProjectileOwnersOrigins( entitiesDetector.dangerousGrenades, 0.0f );
 	}
 
-	if( !entitiesDetector.visiblePlasmas.empty() ) {
-		FindPlasmaDangers( entitiesDetector.visiblePlasmas );
+	TryGuessingProjectileOwnersOrigins( entitiesDetector.visibleOtherGrenades, 0.0f );
+
+	if( !entitiesDetector.dangerousPlasmas.empty() ) {
+		FindPlasmaDangers( entitiesDetector.dangerousPlasmas );
+		TryGuessingProjectileOwnersOrigins( entitiesDetector.dangerousPlasmas, 0.7f );
 	}
 
-	if( !entitiesDetector.visibleLasers.empty() ) {
-		FindLaserDangers( entitiesDetector.visibleLasers );
+	TryGuessingProjectileOwnersOrigins( entitiesDetector.visibleOtherPlasmas, 0.7f );
+
+	if( !entitiesDetector.dangerousLasers.empty() ) {
+		FindLaserDangers( entitiesDetector.dangerousLasers );
+		TryGuessingBeamOwnersOrigins( entitiesDetector.dangerousLasers, 0.0f );
 	}
+
+	TryGuessingProjectileOwnersOrigins( entitiesDetector.visibleOtherLasers, 0.0f );
 
 	// Set the primary danger timeout after all
 	if( primaryDanger ) {
@@ -693,6 +760,64 @@ static bool IsEnemyVisible( const edict_t *self, const edict_t *enemyEnt ) {
 	return false;
 }
 
+void BotPerceptionManager::TryGuessingBeamOwnersOrigins( const EntNumsVector &dangerousEntsNums, float failureChance ) {
+	const edict_t *const gameEdicts = game.edicts;
+	auto *const botBrain = &self->ai->botRef->botBrain;
+	for( auto entNum: dangerousEntsNums ) {
+		if( random() < failureChance ) {
+			continue;
+		}
+		const edict_t *owner = &gameEdicts[gameEdicts[entNum].s.ownerNum];
+		if( botBrain->MayNotBeFeasibleEnemy( owner ) ) {
+			continue;
+		}
+		if( CanDistinguishEnemyShotsFromTeammates( owner->s.origin ) ) {
+			botBrain->OnEnemyOriginGuessed( owner, 128 );
+		}
+	}
+}
+
+void BotPerceptionManager::TryGuessingProjectileOwnersOrigins( const EntNumsVector &dangerousEntNums, float failureChance ) {
+	const edict_t *const gameEdicts = game.edicts;
+	const int64_t levelTime = level.time;
+	auto *const botBrain = &self->ai->botRef->botBrain;
+	for( auto entNum: dangerousEntNums ) {
+		if( random() < failureChance ) {
+			continue;
+		}
+		const edict_t *projectile = &gameEdicts[entNum];
+		const edict_t *owner = &gameEdicts[projectile->s.ownerNum];
+		if( botBrain->MayNotBeFeasibleEnemy( owner ) ) {
+			continue;
+		}
+
+		if( projectile->s.linearMovement ) {
+			// This test is expensive, do it after cheaper ones have succeeded.
+			if( CanDistinguishEnemyShotsFromTeammates( projectile->s.linearMovementBegin ) ) {
+				botBrain->OnEnemyOriginGuessed( owner, 256, projectile->s.linearMovementBegin );
+			}
+			return;
+		}
+
+		// Can't guess in this case
+		if( projectile->s.type != ET_GRENADE ) {
+			return;
+		}
+
+		unsigned timeout = GS_GetWeaponDef( WEAP_GRENADELAUNCHER )->firedef.timeout;
+		// Can't guess in this case
+		if( projectile->nextThink < levelTime + timeout / 2 ) {
+			continue;
+		}
+
+		// This test is expensive, do it after cheaper ones have succeeded.
+		if( CanDistinguishEnemyShotsFromTeammates( owner->s.origin ) ) {
+			// Use the exact enemy origin as a guessed one
+			botBrain->OnEnemyOriginGuessed( owner, 384 );
+		}
+	}
+}
+
 void BotPerceptionManager::RegisterVisibleEnemies() {
 	if( GS_MatchState() == MATCH_STATE_COUNTDOWN || GS_ShootingDisabled() ) {
 		return;
@@ -752,7 +877,7 @@ void BotPerceptionManager::RegisterVisibleEnemies() {
 }
 
 template<unsigned N, unsigned M, typename PvsFunc, typename VisFunc>
-void EntitiesDetector::FilterRawEntitiesWithDistances( StaticVector<EntAndDistance, N> &rawEnts,
+bool EntitiesDetector::FilterRawEntitiesWithDistances( StaticVector<EntAndDistance, N> &rawEnts,
 													   StaticVector<uint16_t, M> &filteredEnts,
 													   unsigned visEntsLimit,
 													   PvsFunc pvsFunc, VisFunc visFunc ) {
@@ -770,7 +895,17 @@ void EntitiesDetector::FilterRawEntitiesWithDistances( StaticVector<EntAndDistan
 	const edict_t *gameEdicts = game.edicts;
 
 	StaticVector<uint16_t, M> entsInPvs;
-	unsigned limit = std::min( visEntsLimit, std::min( rawEnts.size(), entsInPvs.capacity() ) );
+	bool result = true;
+	unsigned limit = rawEnts.size();
+	if( limit > entsInPvs.capacity() ) {
+		limit = entsInPvs.capacity();
+		result = false;
+	}
+	if( limit > visEntsLimit ) {
+		limit = visEntsLimit;
+		result = false;
+	}
+
 	for( unsigned i = 0; i < limit; ++i ) {
 		uint16_t entNum = (uint16_t)rawEnts[i].entNum;
 		if( pvsFunc( self, gameEdicts + entNum ) ) {
@@ -784,4 +919,147 @@ void EntitiesDetector::FilterRawEntitiesWithDistances( StaticVector<EntAndDistan
 			filteredEnts.push_back( entNum );
 		}
 	}
+
+	return result;
 };
+
+void BotPerceptionManager::ResetTeammatesVisData() {
+	numTestedTeamMates = 0;
+	hasComputedTeammatesVisData = false;
+	static_assert( sizeof( *teammatesVisStatus ) == 1, "" );
+	static_assert( sizeof( teammatesVisStatus ) == MAX_CLIENTS, "" );
+	std::fill_n( teammatesVisStatus, MAX_CLIENTS, -1 );
+}
+
+void BotPerceptionManager::ComputeTeammatesVisData( const vec3_t forwardDir, float fovDotFactor ) {
+	numTestedTeamMates = 0;
+	areAllTeammatesInFov = true;
+	const int numMates = teamlist[self->s.team].numplayers;
+	const int *mateNums = teamlist[self->s.team].playerIndices;
+	const auto *gameEdicts = game.edicts;
+	for( int i = 0; i < numMates; ++i ) {
+		const edict_t *mate = gameEdicts + mateNums[i];
+		if( mate == self || G_ISGHOSTING( mate ) ) {
+			continue;
+		}
+		Vec3 dir( mate->s.origin );
+		dir -= self->s.origin;
+		distancesToTeammates[i] = dir.NormalizeFast();
+		float dot = dir.Dot( forwardDir );
+		if( dot < fovDotFactor ) {
+			areAllTeammatesInFov = false;
+		}
+		viewDirDotTeammateDir[numTestedTeamMates] = dot;
+		testedTeammatePlayerNums[numTestedTeamMates] = (uint8_t)PLAYERNUM( mate );
+		numTestedTeamMates++;
+	}
+	hasComputedTeammatesVisData = true;
+}
+
+bool BotPerceptionManager::CanDistinguishEnemyShotsFromTeammates( const float *guessedEnemyOrigin ) {
+	if ( !GS_TeamBasedGametype() ) {
+		return true;
+	}
+
+	trace_t trace;
+
+	Vec3 toEnemyDir( guessedEnemyOrigin );
+	toEnemyDir -= self->s.origin;
+	const float distanceToEnemy = toEnemyDir.NormalizeFast();
+
+	const auto *gameEdicts = game.edicts;
+	const Vec3 forwardDir( self->ai->botRef->entityPhysicsState->ForwardDir() );
+	const float fovDotFactor = self->ai->botRef->FovDotFactor();
+
+	// Compute vis data lazily
+	if( !hasComputedTeammatesVisData ) {
+		ComputeTeammatesVisData( forwardDir.Data(), fovDotFactor );
+		hasComputedTeammatesVisData = true;
+	}
+
+	const bool canShowMinimap = GS_CanShowMinimap();
+	// If the bot can't see the guessed enemy origin
+	if( toEnemyDir.Dot( forwardDir ) < fovDotFactor ) {
+		if( areAllTeammatesInFov ) {
+			return true;
+		}
+		// Try using a minimap to make the distinction.
+		for( unsigned i = 0; i < numTestedTeamMates; ++i ) {
+			if( viewDirDotTeammateDir[i] >= fovDotFactor ) {
+				continue;
+			}
+			const edict_t *mate = gameEdicts + testedTeammatePlayerNums[i] + 1;
+			if( !canShowMinimap ) {
+				return false;
+			}
+			// A mate is way too close to the guessed origin.
+			// Check whether there is a wall that helps to make the distinction.
+			if( DistanceSquared( mate->s.origin, guessedEnemyOrigin ) < 300 * 300 ) {
+				if( trap_inPVS( mate->s.origin, guessedEnemyOrigin ) ) {
+					SolidWorldTrace( &trace, mate->s.origin, guessedEnemyOrigin );
+					if( trace.fraction == 1.0f ) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	const float viewDotEnemy = forwardDir.Dot( toEnemyDir );
+	for( unsigned i = 0; i < numTestedTeamMates; ++i ) {
+		const float viewDotTeammate = viewDirDotTeammateDir[i];
+		const edict_t *mate = gameEdicts + testedTeammatePlayerNums[i] + 1;
+		// The bot can't see or hear the teammate. Try using a minimap to make the distinction.
+		if( viewDotTeammate <= fovDotFactor ) {
+			// A mate is way too close to the guessed origin.
+			if( DistanceSquared( mate->s.origin, guessedEnemyOrigin ) < 300 * 300 ) {
+				if( !canShowMinimap ) {
+					return false;
+				}
+				// Check whether there is a wall that helps to make the distinction.
+				if( trap_inPVS( mate->s.origin, guessedEnemyOrigin ) ) {
+					SolidWorldTrace( &trace, mate->s.origin, guessedEnemyOrigin );
+					if( trace.fraction == 1.0f ) {
+						return false;
+					}
+				}
+			}
+			continue;
+		}
+
+		// In this case it's guaranteed that the enemy cannot be distinguished from a teammate
+		if( fabsf( viewDotEnemy - viewDotTeammate ) < 0.9f ) {
+			continue;
+		}
+
+		// Test teammate visibility status lazily
+		if( teammatesVisStatus[i] < 0 ) {
+			teammatesVisStatus[i] = 0;
+			Vec3 viewPoint( self->s.origin );
+			viewPoint.Z() += self->viewheight;
+			if( trap_inPVS( viewPoint.Data(), mate->s.origin ) ) {
+				SolidWorldTrace( &trace, viewPoint.Data(), mate->s.origin );
+				if( trace.fraction == 1.0f ) {
+					teammatesVisStatus[i] = 1;
+				}
+			}
+		}
+
+		// Can't say much if the teammate is not visible.
+		// We can test visibility of the guessed origin but its way too expensive.
+		// (there might be redundant computations overlapping with the normal bot vision).
+		if( teammatesVisStatus[i] < 0 ) {
+			return false;
+		}
+
+		if( distanceToEnemy > 2048 ) {
+			// A teammate probably blocks enemy on the line of sight
+			if( distancesToTeammates[i] < distanceToEnemy ) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
