@@ -103,18 +103,41 @@ AiBaseEnemyPool::AiBaseEnemyPool( float avgSkill_ )
 }
 
 void AiBaseEnemyPool::Frame() {
+
+	const int64_t levelTime = level.time;
+
 	for( AttackStats &attackerStats: attackers ) {
 		attackerStats.Frame();
-		if( attackerStats.LastActivityAt() + ATTACKER_TIMEOUT < level.time ) {
+		if( attackerStats.LastActivityAt() + ATTACKER_TIMEOUT < levelTime ) {
 			attackerStats.Clear();
 		}
 	}
 
 	for( AttackStats &targetStats: targets ) {
 		targetStats.Frame();
-		if( targetStats.LastActivityAt() + TARGET_TIMEOUT < level.time ) {
+		if( targetStats.LastActivityAt() + TARGET_TIMEOUT < levelTime ) {
 			targetStats.Clear();
 		}
+	}
+
+	// If we could see enemy entering teleportation a last Think() frame, update its tracked origin by the actual one.
+	for( unsigned i = 0; i < maxTrackedEnemies; ++i ) {
+		Enemy *enemy = &trackedEnemies[i];
+		const edict_t *ent = enemy->ent;
+		if( !ent ) {
+			continue;
+		}
+		// If the enemy cannot be longer valid
+		if( G_ISGHOSTING( ent ) ) {
+			continue;
+		}
+		if( !ent->s.teleported ) {
+			continue;
+		}
+		if( levelTime - enemy->lastSeenAt >= 64 ) {
+			continue;
+		}
+		enemy->OnViewed();
 	}
 }
 

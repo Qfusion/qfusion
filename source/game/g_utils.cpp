@@ -830,6 +830,8 @@ void G_AddEvent( edict_t *ent, int event, int parm, bool highPriority ) {
 	ent->s.events[eventNum] = event;
 	ent->s.eventParms[eventNum] = parm & 0xFF;
 	ent->eventPriority[eventNum] = highPriority;
+
+	AI_RegisterEvent( ent, event, parm );
 }
 
 /*

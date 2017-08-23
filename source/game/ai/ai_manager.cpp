@@ -202,6 +202,14 @@ void AiManager::UnlinkAi( ai_handle_t *ai ) {
 	}
 }
 
+void AiManager::RegisterEvent( const edict_t *ent, int event, int parm ) {
+	for( ai_handle_t *ai = last; ai; ai = ai->prev ) {
+		if( ai->botRef ) {
+			ai->botRef->RegisterEvent( ent, event, parm );
+		}
+	}
+}
+
 static struct { const char *name; const char *model; } botCharacters[] = {
 	{ "Viciious",   "bigvic" },
 	{ "Sid",        "bigvic" },

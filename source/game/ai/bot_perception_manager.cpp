@@ -484,6 +484,19 @@ void PlasmaBeamsBuilder::FindMostDangerousBeams() {
 	}
 }
 
+BotPerceptionManager::BotPerceptionManager( edict_t *self_ )
+	: entitiesDetector( self_ ),
+	self( self_ ),
+	rocketDangersPool( "rocket dangers pool" ),
+	plasmaBeamDangersPool( "plasma beam dangers pool" ),
+	grenadeDangersPool( "grenade dangers pool" ),
+	blastDangersPool( "blast dangers pool" ),
+	laserBeamsPool( "laser beams pool" ),
+	primaryDanger( nullptr ),
+	jumppadUsersTracker( this ) {
+	SetupEventHandlers();
+}
+
 bool BotPerceptionManager::TryAddDanger( float damageScore, const vec3_t hitPoint, const vec3_t direction,
 										 const edict_t *owner, bool splash ) {
 	if( primaryDanger ) {
@@ -518,8 +531,10 @@ void BotPerceptionManager::ClearDangers() {
 }
 
 // TODO: Do not detect dangers that may not be seen by bot, but make bot aware if it can hear the danger
-void BotPerceptionManager::Frame() {
+void BotPerceptionManager::Think() {
+
 	RegisterVisibleEnemies();
+	ProcessEvents();
 
 	if( primaryDanger && primaryDanger->IsValid() ) {
 		return;
@@ -1063,3 +1078,371 @@ bool BotPerceptionManager::CanDistinguishEnemyShotsFromTeammates( const float *g
 
 	return true;
 }
+
+void BotPerceptionManager::HandleGenericPlayerEntityEvent( const edict_t *player, float distanceThreshold ) {
+	if( CanPlayerBeHeardAsEnemy( player, distanceThreshold ) ) {
+		PushEnemyEventOrigin( player, player->s.origin );
+	}
+}
+
+// This is a compact storage for 64-bit values.
+// If an int64_t field is used in an array of tiny structs,
+// a substantial amount of space can be lost for alignment.
+class alignas ( 4 )Int64Align4 {
+	uint32_t parts[2];
+public:
+	operator int64_t() const {
+		return (int64_t)( ( (uint64_t)parts[0] << 32 ) | parts[1] );
+	}
+	Int64Align4 operator=( int64_t value ) {
+		parts[0] = (uint32_t)( ( (uint64_t)value >> 32 ) & 0xFFFFFFFFu );
+		parts[1] = (uint32_t)( ( (uint64_t)value >> 00 ) & 0xFFFFFFFFu );
+		return *this;
+	}
+};
+
+class CachedEventsToPlayersMap {
+	struct alignas ( 4 )Entry {
+		Int64Align4 computedAt;
+		// If we use lesser types the rest of 4 bytes would be lost for alignment anyway
+		int32_t playerEntNum;
+	};
+
+	Entry entries[MAX_EDICTS];
+public:
+	CachedEventsToPlayersMap() {
+		memset( entries, 0, sizeof( entries ) );
+	}
+
+	int PlayerEntNumForEvent( int eventEntNum );
+
+	const edict_t *PlayerEntForEvent( int eventEntNum ) {
+		if( int entNum = PlayerEntNumForEvent( eventEntNum ) ) {
+			return game.edicts + entNum;
+		}
+		return nullptr;
+	}
+
+	const edict_t *PlayerEntForEvent( const edict_t *event ) {
+		assert( event->s.type == ET_EVENT );
+		return PlayerEntForEvent( ENTNUM( event ) );
+	}
+};
+
+static CachedEventsToPlayersMap eventsToPlayersMap;
+
+int CachedEventsToPlayersMap::PlayerEntNumForEvent( int eventEntNum ) {
+	const int64_t levelTime = level.time;
+	const edict_t *gameEdicts = game.edicts;
+	Entry *const entry = &entries[eventEntNum];
+	if( entry->computedAt == levelTime ) {
+		return entry->playerEntNum;
+	}
+
+	const edict_t *event = &gameEdicts[eventEntNum];
+	Vec3 mins( event->s.origin );
+	Vec3 maxs( event->s.origin );
+	mins += playerbox_stand_mins;
+	maxs += playerbox_stand_maxs;
+
+	int entNums[16];
+	int numEnts = GClip_FindInRadius( const_cast<float *>( event->s.origin ), 16.0f, entNums, 16 );
+	for( int i = 0; i < numEnts; ++i ) {
+		const edict_t *ent = gameEdicts + entNums[i];
+		if( !ent->r.client || G_ISGHOSTING( ent ) ) {
+			continue;
+		}
+
+		if( !VectorCompare( ent->s.origin, event->s.origin ) ) {
+			continue;
+		}
+
+		entry->computedAt = levelTime;
+		entry->playerEntNum = entNums[i];
+		return entNums[i];
+	}
+
+	entry->computedAt = levelTime;
+	entry->playerEntNum = 0;
+	return 0;
+}
+
+void BotPerceptionManager::HandleGenericEventAtPlayerOrigin( const edict_t *ent, float distanceThreshold ) {
+	if( DistanceSquared( self->s.origin, ent->s.origin ) > distanceThreshold * distanceThreshold ) {
+		return;
+	}
+
+	const edict_t *player = eventsToPlayersMap.PlayerEntForEvent( ent );
+	if( !player ) {
+		return;
+	}
+
+	if( self->s.team == player->s.team && !GS_TeamBasedGametype() ) {
+		return;
+	}
+
+	assert( VectorCompare( ent->s.origin, player->s.origin ) );
+	PushEnemyEventOrigin( player, player->s.origin );
+}
+
+void BotPerceptionManager::HandleGenericImpactEvent( const edict_t *event, float visibleDistanceThreshold ) {
+	if( !CanEntityBeHeardAsEnemy( event, visibleDistanceThreshold ) ) {
+		return;
+	}
+
+	// Throttle plasma impacts
+	if( event->s.events[event->numEvents & 1] == EV_PLASMA_EXPLOSION && random() > 0.3f ) {
+		return;
+	}
+
+	// TODO: Throttle PVS/trace calls
+	if( trap_inPVS( self->s.origin, event->s.origin ) ) {
+		trace_t trace;
+		Vec3 viewPoint( self->s.origin );
+		viewPoint.Z() += self->viewheight;
+		SolidWorldTrace( &trace, viewPoint.Data(), event->s.origin );
+		// Not sure if the event entity is on a solid plane.
+		// Do not check whether the fraction equals 1.0f
+		if( DistanceSquared( trace.endpos, event->s.origin ) < 1.0f * 1.0f ) {
+			// We can consider the explosion visible.
+			// In this case cheat a bit, get the actual owner origin.
+			const edict_t *owner = game.edicts + event->s.ownerNum;
+			PushEnemyEventOrigin( owner, owner->s.origin );
+			return;
+		}
+	}
+
+	// If we can't see the impact, use try hear it
+	if( DistanceSquared( self->s.origin, event->s.origin ) < 512.0f * 512.0f ) {
+		// Let enemy origin be the explosion origin in this case
+		PushEnemyEventOrigin( game.edicts + event->s.ownerNum, event->s.origin );
+	}
+}
+
+void BotPerceptionManager::HandleJumppadEvent( const edict_t *player, float ) {
+	// A trajectory of a jumppad user is predictable in most cases.
+	// So we track a user and push updates using its real origin without an obvious cheating.
+
+	// If a player uses a jumppad, a player sound is emitted, so we can distinguish enemies from teammates.
+	// Just check whether we can hear the sound.
+	if( CanPlayerBeHeardAsEnemy( player, 512.0f * ( 1.0f + 2.0f * self->ai->botRef->Skill() ) ) ) {
+		jumppadUsersTracker.Register( player );
+	}
+}
+
+class TeleportTriggersDestCache {
+	uint16_t destEntNums[MAX_EDICTS];
+public:
+	TeleportTriggersDestCache() {
+		memset( destEntNums, 0, sizeof( destEntNums ) );
+	}
+
+	const float *GetTeleportDest( int entNum );
+};
+
+static TeleportTriggersDestCache teleportTriggersDestCache;
+
+const float *TeleportTriggersDestCache::GetTeleportDest( int entNum ) {
+	const edict_t *gameEdicts = game.edicts;
+	const edict_t *ent = gameEdicts + entNum;
+	assert( ent->classname && !Q_stricmp( ent->classname, "trigger_teleport" ) );
+
+	if ( int destEntNum = destEntNums[entNum] ) {
+		return gameEdicts[destEntNum].s.origin;
+	}
+
+	if( const edict_t *destEnt = G_Find( nullptr, FOFS( targetname ), ent->target ) ) {
+		destEntNums[entNum] = (uint16_t)ENTNUM( destEnt );
+		return destEnt->s.origin;
+	}
+
+	// We do not cache a result of failure. However these broken triggers should not be met often.
+	return nullptr;
+}
+
+class PlayerTeleOutEventsCache {
+	struct Entry {
+		Int64Align4 computedAt;
+		uint16_t triggerEntNum;
+		uint16_t playerEntNum;
+	} entries[MAX_EDICTS];
+public:
+	PlayerTeleOutEventsCache() {
+		memset( entries, 0, sizeof( entries ) );
+	}
+
+	const edict_t *GetPlayerAndDestOriginByEvent( const edict_t *teleportOutEvent, const float **origin );
+};
+
+static PlayerTeleOutEventsCache playerTeleOutEventsCache;
+
+const edict_t *PlayerTeleOutEventsCache::GetPlayerAndDestOriginByEvent( const edict_t *teleportOutEvent, const float **origin ) {
+	assert( teleportOutEvent->s.type == ET_EVENT );
+
+	Entry *const entry = &entries[ENTNUM( teleportOutEvent )];
+	const int64_t levelTime = level.time;
+	const edict_t *gameEdicts = game.edicts;
+
+	if( entry->computedAt == levelTime ) {
+		if( entry->triggerEntNum && entry->playerEntNum ) {
+			if( const float *dest = teleportTriggersDestCache.GetTeleportDest( entry->triggerEntNum ) ) {
+				*origin = dest;
+				return gameEdicts + entry->playerEntNum;
+			}
+		}
+		return nullptr;
+	}
+
+	int entNums[16];
+	int triggerEntNum = 0, playerEntNum = 0;
+	int numEnts = GClip_FindInRadius( const_cast<float *>( teleportOutEvent->s.origin ), 64.0f, entNums, 16 );
+	for( int i = 0; i < numEnts; ++i ) {
+		const edict_t *ent = gameEdicts + entNums[i];
+		if( ent->classname && !Q_stricmp( ent->classname, "trigger_teleport" ) ) {
+			triggerEntNum = entNums[i];
+		} else if ( ent->r.client && VectorCompare( ent->s.origin, teleportOutEvent->s.origin ) ) {
+			playerEntNum = entNums[i];
+		}
+	}
+
+	if( !( triggerEntNum && playerEntNum ) ) {
+		// Set both ent nums to zero even if some is not to speed up further calls on cached data
+		entry->triggerEntNum = 0;
+		entry->playerEntNum = 0;
+		entry->computedAt = levelTime;
+		return nullptr;
+	}
+
+	entry->triggerEntNum = (uint16_t)triggerEntNum;
+	entry->playerEntNum = (uint16_t)playerEntNum;
+	entry->computedAt = levelTime;
+
+	if( const float *dest = teleportTriggersDestCache.GetTeleportDest( triggerEntNum ) ) {
+		*origin = dest;
+		return game.edicts + playerEntNum;
+	}
+
+	return nullptr;
+}
+
+void BotPerceptionManager::HandlePlayerTeleportOutEvent( const edict_t *ent, float ) {
+	float distanceThreshold = 512.0f * ( 2.0f + 1.0f * self->ai->botRef->Skill() );
+	if( DistanceSquared( self->s.origin, ent->s.origin ) > distanceThreshold * distanceThreshold ) {
+		return;
+	}
+
+	// This event is spawned when the player has not been teleported yet,
+	// so we do not know an actual origin after teleportation and have to look at the trigger destination.
+
+	const float *teleportDest;
+	const edict_t *player = playerTeleOutEventsCache.GetPlayerAndDestOriginByEvent( ent, &teleportDest );
+	if( !player ) {
+		return;
+	}
+
+	if( self->s.team == ent->s.team && GS_TeamBasedGametype() ) {
+		return;
+	}
+
+	PushEnemyEventOrigin( player, teleportDest );
+}
+
+void BotPerceptionManager::JumppadUsersTracker::Think() {
+	// Report new origins of tracked players.
+
+	BotBrain *botBrain = &perceptionManager->self->ai->botRef->botBrain;
+	const edict_t *gameEdicts = game.edicts;
+	for( int i = 0, end = gs.maxclients; i < end; ++i ) {
+		if( !isTrackedUser[i] ) {
+			continue;
+		}
+		const edict_t *ent = gameEdicts + i + 1;
+		// Check whether a player cannot be longer a valid entity
+		if( botBrain->MayNotBeFeasibleEnemy( ent ) ) {
+			isTrackedUser[i] = false;
+			continue;
+		}
+		botBrain->OnEnemyOriginGuessed( ent, 128 );
+	}
+}
+
+void BotPerceptionManager::JumppadUsersTracker::Frame() {
+	// Stop tracking landed players.
+	// It should be done each frame since a player might continue bunnying after landing,
+	// and we might miss all frames when the player is on ground keeping tracking it forever.
+
+	const edict_t *gameEdicts = game.edicts;
+	for( int i = 0, end = gs.maxclients; i < end; ++i ) {
+		if( !isTrackedUser[i] ) {
+			continue;
+		}
+		if( gameEdicts[i + 1].groundentity ) {
+			isTrackedUser[i] = false;
+		}
+	}
+}
+
+void BotPerceptionManager::RegisterEvent( const edict_t *ent, int event, int parm ) {
+	( this->*eventHandlers[event])( ent, this->eventHandlingParams[event] );
+}
+
+void BotPerceptionManager::SetupEventHandlers() {
+	for( int i = 0; i < MAX_EVENTS; ++i ) {
+		SetEventHandler( i, &BotPerceptionManager::HandleDummyEvent );
+	}
+
+	// Note: radius values are a bit lower than it is expected for a human perception,
+	// but otherwise bots behave way too hectic detecting all minor events
+
+	for( int i : { EV_FIREWEAPON, EV_SMOOTHREFIREWEAPON } ) {
+		SetEventHandler( i, &BotPerceptionManager::HandleGenericPlayerEntityEvent, 768.0f );
+	}
+	SetEventHandler( EV_WEAPONACTIVATE, &BotPerceptionManager::HandleGenericPlayerEntityEvent, 512.0f );
+	SetEventHandler( EV_NOAMMOCLICK, &BotPerceptionManager::HandleGenericPlayerEntityEvent, 256.0f );
+
+	// TODO: We currently skip weapon beam-like events.
+	// This kind of events is extremely expensive to check for visibility.
+
+	for( int i : { EV_DASH, EV_WALLJUMP, EV_WALLJUMP_FAILED, EV_DOUBLEJUMP, EV_JUMP } ) {
+		SetEventHandler( i, &BotPerceptionManager::HandleGenericPlayerEntityEvent, 512.0f );
+	}
+
+	SetEventHandler( EV_JUMP_PAD, &BotPerceptionManager::HandleJumppadEvent );
+
+	SetEventHandler( EV_FALL, &BotPerceptionManager::HandleGenericPlayerEntityEvent, 512.0f );
+
+	for( int i : { EV_PLAYER_RESPAWN, EV_PLAYER_TELEPORT_IN } ) {
+		SetEventHandler( i, &BotPerceptionManager::HandleGenericEventAtPlayerOrigin, 768.0f );
+	}
+
+	SetEventHandler( EV_PLAYER_TELEPORT_OUT, &BotPerceptionManager::HandlePlayerTeleportOutEvent );
+
+	for( int i : { EV_GUNBLADEBLAST_IMPACT, EV_PLASMA_EXPLOSION, EV_BOLT_EXPLOSION, EV_INSTA_EXPLOSION } ) {
+		SetEventHandler( i, &BotPerceptionManager::HandleGenericImpactEvent, 1024.0f + 256.0f );
+	}
+
+	for( int i : { EV_ROCKET_EXPLOSION, EV_GRENADE_EXPLOSION, EV_GRENADE_BOUNCE } ) {
+		SetEventHandler( i, &BotPerceptionManager::HandleGenericImpactEvent, 2048.0f );
+	}
+
+	// TODO: Track platform users (almost the same as with jumppads)
+	// TODO: React to door activation
+}
+
+void BotPerceptionManager::ProcessEvents() {
+	// We have to validate detected enemies since the events queue
+	// has been accumulated during the Think() frames cycle
+	// and might contain outdated info (e.g. a player has changed its team).
+	const auto *gameEdicts = game.edicts;
+	auto *botBrain = &self->ai->botRef->botBrain;
+	for( const auto &detectedEvent: eventsQueue ) {
+		const edict_t *ent = gameEdicts + detectedEvent.enemyEntNum;
+		if( botBrain->MayNotBeFeasibleEnemy( ent ) ) {
+			continue;
+		}
+		botBrain->OnEnemyOriginGuessed( ent, 96, detectedEvent.origin );
+	}
+
+	eventsQueue.clear();
+}
+

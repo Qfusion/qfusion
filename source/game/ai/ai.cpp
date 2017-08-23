@@ -482,6 +482,10 @@ void AI_Think( edict_t *self ) {
 	self->ai->aiRef->Update();
 }
 
+void AI_RegisterEvent( edict_t *ent, int event, int parm ) {
+	AiManager::Instance()->RegisterEvent( ent, event, parm );
+}
+
 void AI_SpawnBot( const char *team ) {
 	AiManager::Instance()->SpawnBot( team );
 }

@@ -106,6 +106,10 @@ public:
 		botBrain.OnEnemyDamaged( enemy, damage );
 	}
 
+	void RegisterEvent( const edict_t *ent, int event, int parm ) {
+		perceptionManager.RegisterEvent( ent, event, parm );
+	}
+
 	inline void OnAttachedToSquad( AiSquad *squad ) {
 		botBrain.OnAttachedToSquad( squad );
 		isInSquad = true;
@@ -217,6 +221,12 @@ protected:
 		// We should update weapons status each frame since script weapons may be changed each frame.
 		// These statuses are used by firing methods, so actual weapon statuses are required.
 		UpdateScriptWeaponsStatus();
+	}
+
+	virtual void SetFrameAffinity( unsigned modulo, unsigned offset ) override {
+		AiFrameAwareUpdatable::SetFrameAffinity( modulo, offset );
+		botBrain.SetFrameAffinity( modulo, offset );
+		perceptionManager.SetFrameAffinity( modulo, offset );
 	}
 
 	virtual void OnNavTargetTouchHandled() override {
