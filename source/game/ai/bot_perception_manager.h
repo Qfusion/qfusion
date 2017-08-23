@@ -2,6 +2,7 @@
 #define QFUSION_BOT_PERCEPTION_MANAGER_H
 
 #include "ai_base_brain.h"
+#include "static_deque.h"
 
 struct Danger : public PoolItem {
 	static constexpr unsigned TIMEOUT = 400;
@@ -107,10 +108,13 @@ class EntitiesDetector
 	void Run();
 };
 
-class BotPerceptionManager
+class BotBrain;
+
+class BotPerceptionManager: public AiFrameAwareUpdatable
 {
 	friend class PlasmaBeamsBuilder;
 	friend class EntitiesDetector;
+	friend class JumppadUsersTracker;
 
 	EntitiesDetector entitiesDetector;
 
@@ -136,6 +140,17 @@ class BotPerceptionManager
 	bool hasComputedTeammatesVisData;
 	bool areAllTeammatesInFov;
 
+	struct DetectedEvent {
+		vec3_t origin;
+		int enemyEntNum;
+		DetectedEvent( const vec3_t origin_, int enemyEntNum_ ) {
+			VectorCopy( origin_, this->origin );
+			this->enemyEntNum = enemyEntNum_;
+		}
+	};
+
+	StaticDeque<DetectedEvent, 16> eventsQueue;
+
 	static const auto MAX_NONCLIENT_ENTITIES = EntitiesDetector::MAX_NONCLIENT_ENTITIES;
 	typedef EntitiesDetector::EntAndDistance EntAndDistance;
 
@@ -159,20 +174,95 @@ class BotPerceptionManager
 	bool CanDistinguishEnemyShotsFromTeammates( const vec_t *guessedEnemyOrigin );
 
 	void RegisterVisibleEnemies();
+
+	void PushEnemyEventOrigin( const edict_t *enemy, const vec3_t origin ) {
+		if( eventsQueue.size() == eventsQueue.capacity() ) {
+			eventsQueue.pop_back();
+		}
+		eventsQueue.emplace_front( DetectedEvent( origin, ENTNUM( enemy ) ) );
+	}
+
+	bool CanPlayerBeHeardAsEnemy( const edict_t *ent, float distanceThreshold ) {
+		if( self->s.team != ent->s.team || self->s.team == TEAM_PLAYERS ) {
+			if( DistanceSquared( self->s.origin, ent->s.origin ) < distanceThreshold * distanceThreshold ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool CanEntityBeHeardAsEnemy( const edict_t *ent, float distanceThreshold ) {
+		const edict_t *owner = game.edicts + ent->s.ownerNum;
+		if( self->s.team != owner->s.team || self->s.team == TEAM_PLAYERS ) {
+			if( DistanceSquared( self->s.origin, ent->s.origin ) < distanceThreshold * distanceThreshold ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void HandleGenericPlayerEntityEvent( const edict_t *player, float distanceThreshold );
+	void HandleGenericEventAtPlayerOrigin( const edict_t *event, float distanceThreshold );
+	void HandleGenericImpactEvent( const edict_t *event, float visibleDistanceThreshold );
+	void HandleDummyEvent( const edict_t *, float ) {}
+	void HandleJumppadEvent( const edict_t *player, float );
+	void HandlePlayerTeleportOutEvent( const edict_t *player, float );
+
+	// We are not sure what code a switch statement produces.
+	// Event handling code is quite performance-sensitive since its is called for each bot for each event.
+	// So we set up a lookup table manually.
+	typedef void ( BotPerceptionManager::*EventHandler )( const edict_t *, float );
+	EventHandler eventHandlers[MAX_EVENTS];
+	float eventHandlingParams[MAX_EVENTS];
+
+	void SetupEventHandlers();
+	void SetEventHandler( int event, EventHandler handler, float param = 0.0f ) {
+		eventHandlers[event] = handler;
+		eventHandlingParams[event] = param;
+	}
+
+	class JumppadUsersTracker: public AiFrameAwareUpdatable {
+		friend class BotPerceptionManager;
+		BotPerceptionManager *perceptionManager;
+		// An i-th element corresponds to an i-th client
+		bool isTrackedUser[MAX_CLIENTS];
+	public:
+		JumppadUsersTracker( BotPerceptionManager *perceptionManager_ ) {
+			this->perceptionManager = perceptionManager_;
+			memset( isTrackedUser, 0, sizeof( isTrackedUser ) );
+		}
+
+		void Register( const edict_t *ent ) {
+			assert( ent->r.client );
+			isTrackedUser[PLAYERNUM( ent )] = true;
+		}
+
+		void Think() override;
+		void Frame() override;
+	};
+
+	JumppadUsersTracker jumppadUsersTracker;
+
+	void ProcessEvents();
 public:
-	BotPerceptionManager( edict_t *self_ )
-		: entitiesDetector( self_ ),
-		self( self_ ),
-		rocketDangersPool( "rocket dangers pool" ),
-		plasmaBeamDangersPool( "plasma beam dangers pool" ),
-		grenadeDangersPool( "grenade dangers pool" ),
-		blastDangersPool( "blast dangers pool" ),
-		laserBeamsPool( "laser beams pool" ),
-		primaryDanger( nullptr ) {}
+	BotPerceptionManager( edict_t *self_ );
 
 	const Danger *PrimaryDanger() const { return primaryDanger; }
 
-	void Frame();
+	void RegisterEvent( const edict_t *ent, int event, int parm );
+
+	void Think() override;
+
+	void Frame() override {
+		AiFrameAwareUpdatable::Frame();
+		// Always calls Frame() and calls Think() if needed
+		jumppadUsersTracker.Update();
+	}
+
+	void SetFrameAffinity( unsigned modulo, unsigned offset ) override {
+		AiFrameAwareUpdatable::SetFrameAffinity( modulo, offset );
+		jumppadUsersTracker.SetFrameAffinity( modulo, offset );
+	}
 };
 
 #endif

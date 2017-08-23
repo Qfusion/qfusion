@@ -174,6 +174,8 @@ public:
 	void NavEntityReachedSignal( const edict_t *ent );
 	void OnBotJoinedTeam( edict_t *ent, int team );
 
+	void RegisterEvent( const edict_t *ent, int event, int parm );
+
 	void SpawnBot( const char *teamName );
 	void RespawnBot( edict_t *ent );
 	void RemoveBot( const char *name );
