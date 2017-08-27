@@ -3291,11 +3291,11 @@ void BotBunnyStraighteningReachChainMovementAction::SaveSuggestedLookDirs( BotMo
 		lastValidReachIndex++;
 	}
 
-	if( lastValidReachIndex < 0 || lastValidReachIndex >= maxTestedReachabilities ) {
+	if( lastValidReachIndex < 0 || lastValidReachIndex >= (int)maxTestedReachabilities ) {
 		Debug( "There were no supported for bunnying reachabilities\n" );
 		return;
 	}
-	Assert( lastValidReachIndex < maxTestedReachabilities );
+	Assert( lastValidReachIndex < (int)maxTestedReachabilities );
 
 	AreaAndScore candidates[MAX_TESTED_REACHABILITIES];
 	AreaAndScore *candidatesEnd = SelectCandidateAreas( context, candidates, (unsigned)lastValidReachIndex );

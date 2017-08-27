@@ -513,13 +513,14 @@ TacticalSpotsRegistry::~TacticalSpotsRegistry() {
 void TacticalSpotsBuilder::ComputeMutualSpotsVisibility() {
 	G_Printf( "Computing mutual tactical spots visibility (it might take a while)...\n" );
 
-	spotVisibilityTable = (unsigned char *)G_LevelMalloc( (unsigned)( numSpots * numSpots ) );
+	unsigned uNumSpots = (unsigned)numSpots;
+	spotVisibilityTable = (unsigned char *)G_LevelMalloc( uNumSpots * uNumSpots );
 
 	float *mins = vec3_origin;
 	float *maxs = vec3_origin;
 
 	trace_t trace;
-	for( unsigned i = 0; i < (unsigned)numSpots; ++i ) {
+	for( unsigned i = 0; i < uNumSpots; ++i ) {
 		// Consider each spot visible to itself
 		spotVisibilityTable[i * numSpots + i] = 255;
 
@@ -529,7 +530,7 @@ void TacticalSpotsBuilder::ComputeMutualSpotsVisibility() {
 		VectorCopy( currSpot.absMaxs, currSpotBounds[1] );
 
 		// Mutual visibility for spots [0, i) has been already computed
-		for( unsigned j = i + 1; j < numSpots; ++j ) {
+		for( unsigned j = i + 1; j < uNumSpots; ++j ) {
 			TacticalSpot &testedSpot = spots[j];
 			if( !trap_inPVS( currSpot.origin, testedSpot.origin ) ) {
 				spotVisibilityTable[j * numSpots + i] = 0;
@@ -587,13 +588,14 @@ void TacticalSpotsBuilder::ComputeMutualSpotsVisibility() {
 void TacticalSpotsBuilder::ComputeMutualSpotsReachability() {
 	G_Printf( "Computing mutual tactical spots reachability (it might take a while)...\n" );
 
-	spotTravelTimeTable = (unsigned short *)G_LevelMalloc( sizeof( unsigned short ) * numSpots * numSpots );
+	unsigned uNumSpots = (unsigned)numSpots;
+	spotTravelTimeTable = (unsigned short *)G_LevelMalloc( sizeof( unsigned short ) * uNumSpots * uNumSpots );
 	const int flags = Bot::ALLOWED_TRAVEL_FLAGS;
 	AiAasRouteCache *routeCache = AiAasRouteCache::Shared();
 	// Note: spots reachabilities are not reversible
 	// (for spots two A and B reachabilies A->B and B->A might differ, including being invalid, non-existent)
 	// Thus we have to find a reachability for each possible pair of spots
-	for( unsigned i = 0; i < (unsigned)numSpots; ++i ) {
+	for( unsigned i = 0; i < uNumSpots; ++i ) {
 		const int currAreaNum = spots[i].aasAreaNum;
 		for( unsigned j = 0; j < i; ++j ) {
 			const int testedAreaNum = spots[j].aasAreaNum;
@@ -604,7 +606,7 @@ void TacticalSpotsBuilder::ComputeMutualSpotsReachability() {
 		}
 		// Set the lowest feasible travel time value for traveling from the curr spot to the curr spot itself.
 		spotTravelTimeTable[i * numSpots + i] = 1;
-		for( unsigned j = i + 1; j < numSpots; ++j ) {
+		for( unsigned j = i + 1; j < uNumSpots; ++j ) {
 			const int testedAreaNum = spots[j].aasAreaNum;
 			const int travelTime = routeCache->TravelTimeToGoalArea( currAreaNum, testedAreaNum, flags );
 			assert( travelTime <= std::numeric_limits<unsigned short>::max() );
@@ -1211,7 +1213,7 @@ void TacticalSpotsRegistry::SpotsGridBuilder::CopyTo( PrecomputedSpotsGrid *prec
 			memcpy( listPtr, spotsArray->data, sizeof( spotsArray->data[0] ) * spotsArray->size );
 			listPtr += *listSize;
 		}
-		if( listPtr - precomputedGrid->gridSpotsLists > totalNumCells + numSpots ) {
+		if( (unsigned)(listPtr - precomputedGrid->gridSpotsLists) > totalNumCells + numSpots ) {
 			AI_FailWith( "SpotsGridBuilder::CopyTo()", "List ptr went out of bounds\n" );
 		}
 	}
