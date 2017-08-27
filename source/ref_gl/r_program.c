@@ -977,7 +977,12 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#define qf_lowp_vec2 vec2\n" \
 	"#define qf_lowp_vec3 vec3\n" \
 	"#define qf_lowp_vec4 vec4\n" \
-	"#endif\n"
+	"#endif\n" \
+	"\n" \
+	"#ifdef VERTEX_SHADER\n" \
+	"invariant gl_Position;\n" \
+	"#endif\n" \
+	"\n"
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL120 "" \
 	"#define qf_varying varying\n" \
