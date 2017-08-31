@@ -328,10 +328,15 @@ bool AiSquad::CheckCanMoveTogether() const {
 bool AiSquad::CheckCanFightTogether() const {
 	// Just check that each bot is visible for each other one
 	trace_t trace;
+	const auto *pvsCache = EntitiesPvsCache::Instance();
 	for( unsigned i = 0; i < bots.size(); ++i ) {
 		for( unsigned j = i + 1; j < bots.size(); ++j ) {
 			edict_t *firstEnt = const_cast<edict_t*>( bots[i]->Self() );
 			edict_t *secondEnt = const_cast<edict_t*>( bots[j]->Self() );
+			if( !pvsCache->AreInPvs( firstEnt, secondEnt ) ) {
+				continue;
+			}
+
 			G_Trace( &trace, firstEnt->s.origin, nullptr, nullptr, secondEnt->s.origin, firstEnt, MASK_AISOLID );
 			if( trace.fraction != 1.0f && trace.ent != ENTNUM( secondEnt ) ) {
 				return false;
@@ -652,10 +657,15 @@ bool AiSquad::ShouldNotDropItemsNow() const {
 	// Check not more than 4 most recently seen stealers.
 	// Use trace instead of path travel time estimation because pathfinder may fail to find a path.
 	trace_t trace;
+	const auto *pvsCache = EntitiesPvsCache::Instance();
 	for( unsigned i = 0, end = std::min( 4u, potentialStealers.size() ); i < end; ++i ) {
 		PotentialStealer stealer = potentialStealers[i];
 		for( const Bot *bot: bots ) {
 			edict_t *botEnt = const_cast<edict_t*>( bot->Self() );
+			if( !pvsCache->AreInPvs( botEnt, stealer.enemy->ent ) ) {
+				continue;
+			}
+
 			G_Trace( &trace, botEnt->s.origin, nullptr, nullptr, stealer.extrapolatedOrigin.Data(), botEnt, MASK_AISOLID );
 			if( trace.fraction == 1.0f || game.edicts + trace.ent == stealer.enemy->ent ) {
 				return true;

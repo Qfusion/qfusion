@@ -420,6 +420,7 @@ bool BotTacticalSpotsCache::FindRunAwayTeleportOrigin( const Vec3 &origin, const
 	FindReachableClassEntities( origin, 128.0f + 384.0f * Skill(), "trigger_teleport", reachableEntities );
 
 	trace_t trace;
+	const auto *pvsCache = EntitiesPvsCache::Instance();
 	edict_t *enemyEnt = const_cast<edict_t *>( self->ai->botRef->selectedEnemies.Ent() );
 	for( const auto &entAndScore: reachableEntities ) {
 		edict_t *ent = game.edicts + entAndScore.entNum;
@@ -428,6 +429,10 @@ bool BotTacticalSpotsCache::FindRunAwayTeleportOrigin( const Vec3 &origin, const
 		}
 		edict_t *dest = G_Find( NULL, FOFS( targetname ), ent->target );
 		if( !dest ) {
+			continue;
+		}
+
+		if( !pvsCache->AreInPvs( enemyEnt, dest ) ) {
 			continue;
 		}
 
@@ -451,9 +456,14 @@ bool BotTacticalSpotsCache::FindRunAwayJumppadOrigin( const Vec3 &origin, const 
 	FindReachableClassEntities( origin, 128.0f + 384.0f * Skill(), "trigger_push", reachableEntities );
 
 	trace_t trace;
+	const auto *pvsCache = EntitiesPvsCache::Instance();
 	edict_t *enemyEnt = const_cast<edict_t *>( self->ai->botRef->selectedEnemies.Ent() );
 	for( const auto &entAndScore: reachableEntities ) {
 		edict_t *ent = game.edicts + entAndScore.entNum;
+		if( !pvsCache->AreInPvs( enemyEnt, ent ) ) {
+			continue;
+		}
+
 		G_Trace( &trace, enemyEnt->s.origin, nullptr, nullptr, ent->target_ent->s.origin, enemyEnt, MASK_AISOLID );
 		if( trace.fraction == 1.0f || trace.ent > 0 ) {
 			continue;
@@ -474,12 +484,17 @@ bool BotTacticalSpotsCache::FindRunAwayElevatorOrigin( const Vec3 &origin, const
 	FindReachableClassEntities( origin, 128.0f + 384.0f * Skill(), "func_plat", reachableEntities );
 
 	trace_t trace;
+	const auto *pvsCache = EntitiesPvsCache::Instance();
 	edict_t *enemyEnt = const_cast<edict_t *>( self->ai->botRef->selectedEnemies.Ent() );
 	edict_t *gameEdicts = game.edicts;
 	for( const auto &entAndScore: reachableEntities ) {
 		edict_t *ent = gameEdicts + entAndScore.entNum;
 		// Can't run away via elevator if the elevator has been always activated
 		if( ent->moveinfo.state != STATE_BOTTOM ) {
+			continue;
+		}
+
+		if( !pvsCache->AreInPvs( enemyEnt, ent ) ) {
 			continue;
 		}
 
