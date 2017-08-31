@@ -637,7 +637,9 @@ void GClip_LinkEntity( edict_t *ent ) {
 					ent->r.headnode = topnode;
 					break;
 				}
-				ent->r.clusternums[ent->r.num_clusters++] = clusters[i];
+				ent->r.clusternums[ent->r.num_clusters] = clusters[i];
+				ent->r.leafnums[ent->r.num_clusters] = leafs[i];
+				ent->r.num_clusters++;
 			}
 		}
 	}
