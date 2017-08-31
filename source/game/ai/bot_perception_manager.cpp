@@ -3,6 +3,72 @@
 #include "bot_perception_manager.h"
 #include "bot.h"
 
+EntitiesPvsCache EntitiesPvsCache::instance;
+
+bool EntitiesPvsCache::AreInPvs( const edict_t *ent1, const edict_t *ent2 ) const {
+	// Prevent signed shift bugs
+	const auto entNum1 = (unsigned)ENTNUM( ent1 );
+	const auto entNum2 = (unsigned)ENTNUM( ent2 );
+
+	uint32_t *ent1Vis = visStrings[entNum1];
+	// An offset of an array cell containing entity bits.
+	unsigned ent2ArrayOffset = ( entNum2 * 2 ) / 32;
+	// An offset of entity bits inside a 32-bit array cell
+	unsigned ent2BitsOffset = ( entNum2 * 2 ) % 32;
+
+	unsigned ent2Bits = ( ent1Vis[ent2ArrayOffset] >> ent2BitsOffset ) & 0x3;
+	if( ent2Bits != 0 ) {
+		// If 2, return true, if 1, return false. Masking with & 1 should help a compiler to avoid branches here
+		return (bool)( ( ent2Bits - 1 ) & 1 );
+	}
+
+	bool result = AreInPvsUncached( ent1, ent2 );
+
+	// We assume the PVS relation is symmetrical, so set the result in strings for every entity
+	uint32_t *ent2Vis = visStrings[entNum2];
+	unsigned ent1ArrayOffset = ( entNum1 * 2 ) / 32;
+	unsigned ent1BitsOffset = ( entNum1 * 2 ) % 32;
+
+	// Convert boolean result to a non-zero integer
+	unsigned ent1Bits = ent2Bits = (unsigned)result + 1;
+	assert( ent1Bits == 1 || ent1Bits == 2 );
+	// Convert entity bits (1 or 2) into a mask
+	ent1Bits <<= ent1BitsOffset;
+	ent2Bits <<= ent2BitsOffset;
+
+	// Clear old bits in array cells
+	ent1Vis[ent2ArrayOffset] &= ~ent2Bits;
+	ent2Vis[ent1ArrayOffset] &= ~ent1Bits;
+	// Set new bits in array cells
+	ent1Vis[ent2ArrayOffset] |= ent2Bits;
+	ent2Vis[ent1ArrayOffset] |= ent1Bits;
+
+	return result;
+}
+
+bool EntitiesPvsCache::AreInPvsUncached( const edict_t *ent1, const edict_t *ent2 ) {
+	const int numClusters1 = ent1->r.num_clusters;
+	if( numClusters1 < 0 ) {
+		return trap_inPVS( ent1->s.origin, ent2->s.origin );
+	}
+	const int numClusters2 = ent2->r.num_clusters;
+	if( numClusters2 < 0 ) {
+		return trap_inPVS( ent1->s.origin, ent2->s.origin );
+	}
+
+	const int *leafNums1 = ent1->r.leafnums;
+	const int *leafNums2 = ent2->r.leafnums;
+	for( int i = 0; i < numClusters1; ++i ) {
+		for( int j = 0; j < numClusters2; ++j ) {
+			if( trap_CM_LeafsInPVS( leafNums1[i], leafNums2[j] ) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 static inline bool IsGenericProjectileVisible( const edict_t *self, const edict_t *ent ) {
 	trace_t trace;
 	edict_t *self_ = const_cast<edict_t *>( self );
@@ -30,23 +96,11 @@ static inline bool IsLaserBeamVisible( const edict_t *self, const edict_t *ent )
 }
 
 static inline bool IsGenericEntityInPvs( const edict_t *self, const edict_t *ent ) {
-	return trap_inPVS( self->s.origin, ent->s.origin );
+	return EntitiesPvsCache::Instance()->AreInPvs( self, ent );
 }
 
 static inline bool IsLaserBeamInPvs( const edict_t *self, const edict_t *ent ) {
-	// TODO: We traverse a BSP tree to get area num of self->s.origin on each trap_inPVS call.
-	// Moreover we do it in a loop over all PVS-tested entities, it just looks even more obvious here.
-	// The game module imports should provide an optimized version
-	// of inPVS() call that allows precomputing the first result once before the loop.
-	// TODO: Import and use BoxLeafNums() call and find all leafs where the beam is first?
-
-	if( trap_inPVS( self->s.origin, ent->s.origin ) ) {
-		return true;
-	}
-	if( trap_inPVS( self->s.origin, ent->s.origin2 ) ) {
-		return true;
-	}
-	return false;
+	return EntitiesPvsCache::Instance()->AreInPvs( self, ent );
 }
 
 void EntitiesDetector::Clear() {
@@ -786,7 +840,7 @@ void BotPerceptionManager::TryGuessingBeamOwnersOrigins( const EntNumsVector &da
 		if( botBrain->MayNotBeFeasibleEnemy( owner ) ) {
 			continue;
 		}
-		if( CanDistinguishEnemyShotsFromTeammates( owner->s.origin ) ) {
+		if( CanDistinguishEnemyShotsFromTeammates( owner ) ) {
 			botBrain->OnEnemyOriginGuessed( owner, 128 );
 		}
 	}
@@ -826,7 +880,7 @@ void BotPerceptionManager::TryGuessingProjectileOwnersOrigins( const EntNumsVect
 		}
 
 		// This test is expensive, do it after cheaper ones have succeeded.
-		if( CanDistinguishEnemyShotsFromTeammates( owner->s.origin ) ) {
+		if( CanDistinguishEnemyShotsFromTeammates( owner ) ) {
 			// Use the exact enemy origin as a guessed one
 			botBrain->OnEnemyOriginGuessed( owner, 384 );
 		}
@@ -971,14 +1025,14 @@ void BotPerceptionManager::ComputeTeammatesVisData( const vec3_t forwardDir, flo
 	hasComputedTeammatesVisData = true;
 }
 
-bool BotPerceptionManager::CanDistinguishEnemyShotsFromTeammates( const float *guessedEnemyOrigin ) {
+bool BotPerceptionManager::CanDistinguishEnemyShotsFromTeammates( const GuessedEnemy &guessedEnemy ) {
 	if ( !GS_TeamBasedGametype() ) {
 		return true;
 	}
 
 	trace_t trace;
 
-	Vec3 toEnemyDir( guessedEnemyOrigin );
+	Vec3 toEnemyDir( guessedEnemy.origin );
 	toEnemyDir -= self->s.origin;
 	const float distanceToEnemy = toEnemyDir.NormalizeFast();
 
@@ -1007,20 +1061,25 @@ bool BotPerceptionManager::CanDistinguishEnemyShotsFromTeammates( const float *g
 			if( !canShowMinimap ) {
 				return false;
 			}
+
+			if( DistanceSquared( mate->s.origin, guessedEnemy.origin ) > 300 * 300 ) {
+				continue;
+			}
+
 			// A mate is way too close to the guessed origin.
 			// Check whether there is a wall that helps to make the distinction.
-			if( DistanceSquared( mate->s.origin, guessedEnemyOrigin ) < 300 * 300 ) {
-				if( trap_inPVS( mate->s.origin, guessedEnemyOrigin ) ) {
-					SolidWorldTrace( &trace, mate->s.origin, guessedEnemyOrigin );
-					if( trace.fraction == 1.0f ) {
-						return false;
-					}
+
+			if( guessedEnemy.AreInPvsWith( self ) ) {
+				SolidWorldTrace( &trace, mate->s.origin, guessedEnemy.origin );
+				if( trace.fraction == 1.0f ) {
+					return false;
 				}
 			}
 		}
 		return true;
 	}
 
+	const auto *pvsCache = EntitiesPvsCache::Instance();
 	const float viewDotEnemy = forwardDir.Dot( toEnemyDir );
 	for( unsigned i = 0; i < numTestedTeamMates; ++i ) {
 		const float viewDotTeammate = viewDirDotTeammateDir[i];
@@ -1028,13 +1087,14 @@ bool BotPerceptionManager::CanDistinguishEnemyShotsFromTeammates( const float *g
 		// The bot can't see or hear the teammate. Try using a minimap to make the distinction.
 		if( viewDotTeammate <= fovDotFactor ) {
 			// A mate is way too close to the guessed origin.
-			if( DistanceSquared( mate->s.origin, guessedEnemyOrigin ) < 300 * 300 ) {
+			if( DistanceSquared( mate->s.origin, guessedEnemy.origin ) < 300 * 300 ) {
 				if( !canShowMinimap ) {
 					return false;
 				}
+
 				// Check whether there is a wall that helps to make the distinction.
-				if( trap_inPVS( mate->s.origin, guessedEnemyOrigin ) ) {
-					SolidWorldTrace( &trace, mate->s.origin, guessedEnemyOrigin );
+				if( guessedEnemy.AreInPvsWith( self ) ) {
+					SolidWorldTrace( &trace, mate->s.origin, guessedEnemy.origin );
 					if( trace.fraction == 1.0f ) {
 						return false;
 					}
@@ -1051,9 +1111,9 @@ bool BotPerceptionManager::CanDistinguishEnemyShotsFromTeammates( const float *g
 		// Test teammate visibility status lazily
 		if( teammatesVisStatus[i] < 0 ) {
 			teammatesVisStatus[i] = 0;
-			Vec3 viewPoint( self->s.origin );
-			viewPoint.Z() += self->viewheight;
-			if( trap_inPVS( viewPoint.Data(), mate->s.origin ) ) {
+			if( pvsCache->AreInPvs( self, mate ) ) {
+				Vec3 viewPoint( self->s.origin );
+				viewPoint.Z() += self->viewheight;
 				SolidWorldTrace( &trace, viewPoint.Data(), mate->s.origin );
 				if( trace.fraction == 1.0f ) {
 					teammatesVisStatus[i] = 1;
@@ -1077,6 +1137,44 @@ bool BotPerceptionManager::CanDistinguishEnemyShotsFromTeammates( const float *g
 	}
 
 	return true;
+}
+
+bool BotPerceptionManager::GuessedEnemyEnt::AreInPvsWith( const edict_t *botEnt ) const {
+	return EntitiesPvsCache::Instance()->AreInPvs( botEnt, ent );
+}
+
+bool BotPerceptionManager::GuessedEnemyOrigin::AreInPvsWith( const edict_t *botEnt ) const {
+	if( botEnt->r.num_clusters < 0 ) {
+		return trap_inPVS( botEnt->s.origin, this->origin );
+	}
+
+	// Compute leafs for the own origin lazily
+	if( !numLeafs ) {
+		vec3_t mins = { -4, -4, -4 };
+		vec3_t maxs = { +4, +4, +4 };
+		int topnode;
+		numLeafs = trap_CM_BoxLeafnums( mins, maxs, leafNums, 4, &topnode );
+		// Filter out solid leafs
+		for( int i = 0; i < numLeafs; ) {
+			if( trap_CM_LeafCluster( leafNums[i] ) >= 0 ) {
+				i++;
+			} else {
+				numLeafs--;
+				leafNums[i] = leafNums[numLeafs];
+			}
+		}
+	}
+
+	const int *botLeafNums = botEnt->r.leafnums;
+	for( int i = 0, end = botEnt->r.num_clusters; i < end; ++i ) {
+		for( int j = 0; j < this->numLeafs; ++j ) {
+			if( trap_CM_LeafsInPVS( botLeafNums[i], this->leafNums[j] ) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void BotPerceptionManager::HandleGenericPlayerEntityEvent( const edict_t *player, float distanceThreshold ) {
@@ -1196,7 +1294,7 @@ void BotPerceptionManager::HandleGenericImpactEvent( const edict_t *event, float
 	}
 
 	// TODO: Throttle PVS/trace calls
-	if( trap_inPVS( self->s.origin, event->s.origin ) ) {
+	if( EntitiesPvsCache::Instance()->AreInPvs( self, event ) ) {
 		trace_t trace;
 		Vec3 viewPoint( self->s.origin );
 		viewPoint.Z() += self->viewheight;

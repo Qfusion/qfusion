@@ -171,7 +171,39 @@ class BotPerceptionManager: public AiFrameAwareUpdatable
 
 	void ResetTeammatesVisData();
 	void ComputeTeammatesVisData( const vec3_t forwardDir, float fovDotFactor );
-	bool CanDistinguishEnemyShotsFromTeammates( const vec_t *guessedEnemyOrigin );
+
+	// We introduce a common wrapper superclass for either edict_t or vec3_t
+	// to avoid excessive branching in the call below that that leads to unmaintainable code.
+	// Virtual calls are not so expensive as one might think (they are predicted on a sane arch).
+	struct GuessedEnemy {
+		vec3_t origin;
+		GuessedEnemy( const vec3_t origin_ ) {
+			VectorCopy( origin_, this->origin );
+		}
+		virtual bool AreInPvsWith( const edict_t *botEnt ) const = 0;
+	};
+
+	struct GuessedEnemyEnt final: public GuessedEnemy {
+		const edict_t *const ent;
+		GuessedEnemyEnt( const edict_t *ent_ ) : GuessedEnemy( ent_->s.origin ), ent( ent_ ) {}
+		bool AreInPvsWith( const edict_t *botEnt ) const override;
+	};
+
+	struct GuessedEnemyOrigin final: public BotPerceptionManager::GuessedEnemy {
+		mutable int leafNums[4], numLeafs;
+		GuessedEnemyOrigin( const vec3_t origin_ ) : GuessedEnemy( origin_ ), numLeafs( 0 ) {}
+		bool AreInPvsWith( const edict_t *botEnt ) const override;
+	};
+
+	bool CanDistinguishEnemyShotsFromTeammates( const edict_t *enemy ) {
+		return CanDistinguishEnemyShotsFromTeammates( GuessedEnemyEnt( enemy ));
+	}
+
+	bool CanDistinguishEnemyShotsFromTeammates( const vec3_t specifiedOrigin ) {
+		return CanDistinguishEnemyShotsFromTeammates( GuessedEnemyOrigin( specifiedOrigin ) );
+	}
+
+	bool CanDistinguishEnemyShotsFromTeammates( const GuessedEnemy &guessedEnemy );
 
 	void RegisterVisibleEnemies();
 
@@ -263,6 +295,36 @@ public:
 		AiFrameAwareUpdatable::SetFrameAffinity( modulo, offset );
 		jumppadUsersTracker.SetFrameAffinity( modulo, offset );
 	}
+};
+
+class EntitiesPvsCache: public AiFrameAwareUpdatable {
+	// 2 bits per each other entity
+	static constexpr unsigned ENTITY_DATA_STRIDE = 2 * (MAX_EDICTS / 32);
+	// MAX_EDICTS strings per each entity
+	mutable uint32_t visStrings[MAX_EDICTS][ENTITY_DATA_STRIDE];
+
+	static bool AreInPvsUncached( const edict_t *ent1, const edict_t *ent2 );
+
+	static EntitiesPvsCache instance;
+public:
+	EntitiesPvsCache() {
+		// Can't use virtual SetFrameAffinity() call here
+		// Schedule Think() for every 4-th frame
+		this->frameAffinityModulo = 4;
+		this->frameAffinityOffset = 0;
+	}
+
+	static EntitiesPvsCache *Instance() { return &instance; }
+
+	// We could avoid explicit clearing of the cache each frame by marking each entry by the computation timestamp.
+	// This approach is convenient and is widely for bot perception caches.
+	// However we have to switch to the explicit cleaning in this case
+	// to prevent excessive memory usage and cache misses.
+	void Think() override {
+		memset( &visStrings[0][0], 0, sizeof( visStrings ) );
+	}
+
+	bool AreInPvs( const edict_t *ent1, const edict_t *ent2 ) const;
 };
 
 #endif

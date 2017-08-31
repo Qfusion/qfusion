@@ -513,6 +513,7 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders( const edict_t *carrier,
 		return;
 	}
 
+	const auto *pvsCache = EntitiesPvsCache::Instance();
 	for( const auto &botAndScore: candidates ) {
 		if( botAndScore.bot == carrier ) {
 			continue;
@@ -524,8 +525,13 @@ void AiObjectiveBasedTeamBrain::SetSupportCarrierOrders( const edict_t *carrier,
 			botAndScore.bot->ai->botRef->OverrideEntityWeight( carrier, 9.0f );
 			continue;
 		}
+
+		if( !pvsCache->AreInPvs( botAndScore.bot, carrier ) ) {
+			continue;
+		}
+
 		trace_t trace;
-		G_Trace( &trace, carrierOrigin, nullptr, nullptr, carrierOrigin, botAndScore.bot, MASK_AISOLID );
+		G_Trace( &trace, carrierOrigin, nullptr, nullptr, botAndScore.bot->s.origin, botAndScore.bot, MASK_AISOLID );
 		// The carrier is not visible, hurry up to support it
 		if( trace.fraction != 1.0f && carrier != game.edicts + trace.ent ) {
 			botAndScore.bot->ai->botRef->OverrideEntityWeight( carrier, 4.5f );
