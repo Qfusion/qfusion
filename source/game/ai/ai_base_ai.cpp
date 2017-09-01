@@ -289,8 +289,10 @@ Vec3 Ai::GetNewViewAngles( const vec3_t oldAngles, const Vec3 &desiredDirection,
 
 	// Rotate the entity angles to the desired angles
 	if( !VectorCompare( newAngles, desiredAngles ) ) {
-		newAngles[YAW] = GetChangedAngle( newAngles[YAW], desiredAngles[YAW], angularSpeedMultiplier, frameTime, YAW );
-		newAngles[PITCH] = GetChangedAngle( newAngles[PITCH], desiredAngles[PITCH], angularSpeedMultiplier, frameTime, PITCH );
+		for( auto angleNum: { YAW, PITCH } ) {
+			newAngles[angleNum] = GetChangedAngle( newAngles[angleNum], desiredAngles[angleNum],
+												   frameTime, angularSpeedMultiplier, angleNum );
+		}
 	}
 
 	return Vec3( newAngles );

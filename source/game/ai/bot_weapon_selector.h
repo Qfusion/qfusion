@@ -213,7 +213,7 @@ public:
 	unsigned FireDelay() const;
 
 	inline bool IsStaticSpot() const {
-		return Ent()->r.client != nullptr;
+		return Ent()->r.client == nullptr;
 	}
 
 	inline const edict_t *Ent() const {
@@ -314,6 +314,11 @@ private:
 			return 0;
 		}
 		return Inventory()[WeaponAmmo < Weapon > ::strongAmmoTag] + Inventory()[WeaponAmmo < Weapon > ::weakAmmoTag];
+	}
+
+	inline int BlastsReadyToFireCount() const {
+		// Check only strong ammo, the weak ammo enables blade attack
+		return Inventory()[AMMO_GUNBLADE];
 	}
 
 	inline int ShellsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_RIOTGUN>(); }

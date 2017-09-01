@@ -145,7 +145,7 @@ void Bot::ApplyInput( BotInput *input, BotMovementPredictionContext *context ) {
 		auto *entityPhysicsState_ = &context->movementState->entityPhysicsState;
 		if( !input->hasAlreadyComputedAngles ) {
 			TryRotateInput( input, context );
-			Vec3 newAngles( GetNewViewAngles( entityPhysicsState_->Angles(), input->IntendedLookDir(),
+			Vec3 newAngles( GetNewViewAngles( entityPhysicsState_->Angles().Data(), input->IntendedLookDir(),
 											  context->predictionStepMillis, input->TurnSpeedMultiplier() ) );
 			input->SetAlreadyComputedAngles( newAngles );
 		}
@@ -428,6 +428,16 @@ void Bot::TouchedOtherEntity( const edict_t *entity ) {
 		lastTouchedElevatorAt = level.time;
 		return;
 	}
+}
+
+Vec3 Bot::GetNewViewAngles( const vec3_t oldAngles, const Vec3 &desiredDirection,
+							unsigned frameTime, float angularSpeedMultiplier ) const {
+	// A hack for evil hard bots aiming
+	if( GetSelectedEnemies().AreValid() && GetMiscTactics().shouldKeepXhairOnEnemy && Skill() > 0.33f ) {
+		angularSpeedMultiplier *= 1.0f + 0.33f * ( Skill() - 0.33f );
+	}
+
+	return Ai::GetNewViewAngles( oldAngles, desiredDirection, frameTime, angularSpeedMultiplier );
 }
 
 void Bot::EnableAutoAlert( const AiAlertSpot &alertSpot, AlertCallback callback, void *receiver ) {
