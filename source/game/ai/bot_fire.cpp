@@ -185,6 +185,134 @@ void Bot::PressAttack( const GenericFireDef *fireDef,
 	}
 }
 
+bool Bot::TryTraceShot( trace_t *tr, const Vec3 &newLookDir, const AimParams &aimParams, const GenericFireDef &fireDef ) {
+	if( fireDef.AimType() != AI_WEAPON_AIM_TYPE_DROP ) {
+		Vec3 traceEnd( newLookDir );
+		traceEnd *= 999999.0f;
+		traceEnd += aimParams.fireOrigin;
+		G_Trace( tr, const_cast<float*>( aimParams.fireOrigin ), nullptr, nullptr, traceEnd.Data(), self, MASK_AISOLID );
+		return true;
+	}
+
+	// For drop aim type weapons (a gravity is applied to a projectile) split projectile trajectory in segments
+	vec3_t segmentStart;
+	vec3_t segmentEnd;
+	VectorCopy( aimParams.fireOrigin, segmentEnd );
+
+	Vec3 projectileVelocity( newLookDir );
+	projectileVelocity *= fireDef.ProjectileSpeed();
+
+	const int numSegments = (int)( 2 + 4 * Skill() );
+	// Predict for 1 second
+	const float timeStep = 1.0f / numSegments;
+	const float halfGravity = 0.5f * level.gravity;
+	const float *fireOrigin = aimParams.fireOrigin;
+
+	float currTime = timeStep;
+	for( int i = 0; i < numSegments; ++i ) {
+		VectorCopy( segmentEnd, segmentStart );
+		segmentEnd[0] = fireOrigin[0] + projectileVelocity.X() * currTime;
+		segmentEnd[1] = fireOrigin[1] + projectileVelocity.Y() * currTime;
+		segmentEnd[2] = fireOrigin[2] + projectileVelocity.Z() * currTime - halfGravity * currTime * currTime;
+
+		G_Trace( tr, segmentStart, nullptr, nullptr, segmentEnd, self, MASK_AISOLID );
+		if( tr->fraction != 1.0f ) {
+			break;
+		}
+
+		currTime += timeStep;
+	}
+
+	if( tr->fraction != 1.0f ) {
+		return true;
+	}
+
+	// If hit point has not been found for predicted for 1 second trajectory
+	// Check a trace from the last segment end to an infinite point
+	VectorCopy( segmentEnd, segmentStart );
+	currTime = 999.0f;
+	segmentEnd[0] = fireOrigin[0] + projectileVelocity.X() * currTime;
+	segmentEnd[1] = fireOrigin[1] + projectileVelocity.Y() * currTime;
+	segmentEnd[2] = fireOrigin[2] + projectileVelocity.Z() * currTime - halfGravity * currTime * currTime;
+	G_Trace( tr, segmentStart, nullptr, nullptr, segmentEnd, self, MASK_AISOLID );
+	if( tr->fraction == 1.0f ) {
+		return false;
+	}
+
+	return true;
+}
+
+bool Bot::CheckSplashTeamDamage( const vec3_t hitOrigin, const AimParams &aimParams, const GenericFireDef &fireDef ) {
+	// TODO: Predict actual teammates origins at the moment of explosion
+	// (it requires a coarse physics simulation and collision tests)
+
+	trace_t trace;
+	// Make sure the tested explosion origin is not on a solid plane
+	Vec3 traceStart( aimParams.fireOrigin );
+	traceStart -= hitOrigin;
+	traceStart.NormalizeFast();
+	traceStart += hitOrigin;
+
+	int entNums[32];
+	// This call might return an actual entities count exceeding the buffer capacity
+	int numEnts = GClip_FindInRadius( const_cast<float *>( hitOrigin ), fireDef.SplashRadius(), entNums, 32 );
+	const edict_t *gameEdicts = game.edicts;
+	for( int i = 0, end = std::min( 32, numEnts ); i < end; ++i ) {
+		const edict_t *ent = gameEdicts + entNums[i];
+		if( ent->s.team != self->s.team ) {
+			continue;
+		}
+		if( ent->s.solid == SOLID_NOT ) {
+			continue;
+		}
+		// Also prevent damaging non-client team entities
+		if( !ent->r.client && ent->takedamage == DAMAGE_NO ) {
+			continue;
+		}
+		// Very coarse but satisfiable
+		SolidWorldTrace( &trace, traceStart.Data(), ent->s.origin );
+		if( trace.fraction != 1.0f ) {
+			continue;
+		}
+		return false;
+	}
+
+	return true;
+}
+
+bool Bot::IsShotBlockedBySolidWall( trace_t *tr,
+									float distanceThreshold,
+									const AimParams &aimParams,
+									const GenericFireDef &fireDef ) {
+	AimParams adjustedParams;
+	memcpy( &adjustedParams, &aimParams, sizeof( AimParams ) );
+
+	adjustedParams.fireTarget[0] -= 20.0f;
+	adjustedParams.fireTarget[1] -= 20.0f;
+	Vec3 adjustedLookDir( adjustedParams.fireTarget );
+	adjustedLookDir -= adjustedParams.fireOrigin;
+	adjustedLookDir.NormalizeFast();
+	TryTraceShot( tr, adjustedLookDir, adjustedParams, fireDef );
+	if( tr->fraction == 1.0f ) {
+		return false;
+	}
+	if( DistanceSquared( tr->endpos, aimParams.fireTarget ) < distanceThreshold * distanceThreshold ) {
+		return false;
+	}
+
+	adjustedParams.fireTarget[0] += 40.0f;
+	adjustedParams.fireTarget[1] += 40.0f;
+	adjustedLookDir.Set( adjustedParams.fireTarget );
+	adjustedLookDir -= adjustedParams.fireOrigin;
+	adjustedLookDir.NormalizeFast();
+	TryTraceShot( tr, adjustedLookDir, adjustedParams, fireDef );
+	if( tr->fraction == 1.0f ) {
+		return false;
+	}
+
+	return DistanceSquared( tr->endpos, aimParams.fireTarget ) > distanceThreshold * distanceThreshold;
+}
+
 bool Bot::CheckShot( const AimParams &aimParams,
 					 const BotInput *input,
 					 const SelectedEnemies &selectedEnemies_,
@@ -198,29 +326,16 @@ bool Bot::CheckShot( const AimParams &aimParams,
 	toTarget.NormalizeFast();
 	float toTargetDotLookDir = toTarget.Dot( newLookDir );
 
-	// 0 on zero range, 1 on distanceFactorBound range
-	float directionDistanceFactor = 0.0001f;
-	float squareDistanceToTarget = toTarget.SquaredLength();
-	if( squareDistanceToTarget > 1 ) {
-		float distance = 1.0f / Q_RSqrt( squareDistanceToTarget );
-		directionDistanceFactor += BoundedFraction( distance, 450.0f );
-	}
-
 	// Precache this result, it is not just a value getter
 	const auto aimType = fireDef.AimType();
 
-	if( fireDef.IsContinuousFire() ) {
-		if( toTargetDotLookDir < 0.8f * directionDistanceFactor ) {
+	// Cut off early
+	if( aimType != AI_WEAPON_AIM_TYPE_DROP ) {
+		if( toTargetDotLookDir < 0.5f ) {
 			return false;
 		}
-	} else if( aimType != AI_WEAPON_AIM_TYPE_DROP ) {
-		if( toTargetDotLookDir < 0.6f * directionDistanceFactor ) {
-			return false;
-		}
-	} else {
-		if( toTargetDotLookDir < 0 ) {
-			return false;
-		}
+	} else if( toTargetDotLookDir < 0 ) {
+		return false;
 	}
 
 	// Do not shoot in enemies that are behind obstacles atm, bot may kill himself easily
@@ -228,73 +343,61 @@ bool Bot::CheckShot( const AimParams &aimParams,
 
 	trace_t tr;
 	memset( &tr, 0, sizeof( trace_t ) );
-	if( aimType != AI_WEAPON_AIM_TYPE_DROP ) {
-		Vec3 traceEnd( newLookDir );
-		traceEnd *= 999999.0f;
-		traceEnd += aimParams.fireOrigin;
-		G_Trace( &tr, const_cast<float*>( aimParams.fireOrigin ), nullptr, nullptr, traceEnd.Data(), self, MASK_AISOLID );
-		if( tr.fraction == 1.0f ) {
-			return true;
-		}
-	} else {
-		// For drop aim type weapons (a gravity is applied to a projectile) split projectile trajectory in segments
-		vec3_t segmentStart;
-		vec3_t segmentEnd;
-		VectorCopy( aimParams.fireOrigin, segmentEnd );
-
-		Vec3 projectileVelocity( newLookDir );
-		projectileVelocity *= fireDef.ProjectileSpeed();
-
-		const int numSegments = (int)( 2 + 4 * Skill() );
-		// Predict for 1 second
-		const float timeStep = 1.0f / numSegments;
-		const float halfGravity = 0.5f * level.gravity;
-		const float *fireOrigin = aimParams.fireOrigin;
-
-		float currTime = timeStep;
-		for( int i = 0; i < numSegments; ++i ) {
-			VectorCopy( segmentEnd, segmentStart );
-			segmentEnd[0] = fireOrigin[0] + projectileVelocity.X() * currTime;
-			segmentEnd[1] = fireOrigin[1] + projectileVelocity.Y() * currTime;
-			segmentEnd[2] = fireOrigin[2] + projectileVelocity.Z() * currTime - halfGravity * currTime * currTime;
-
-			G_Trace( &tr, segmentStart, nullptr, nullptr, segmentEnd, self, MASK_AISOLID );
-			if( tr.fraction != 1.0f ) {
-				break;
-			}
-
-			currTime += timeStep;
-		}
-		// If hit point has not been found for predicted for 1 second trajectory
-		if( tr.fraction == 1.0f ) {
-			// Check a trace from the last segment end to an infinite point
-			VectorCopy( segmentEnd, segmentStart );
-			currTime = 999.0f;
-			segmentEnd[0] = fireOrigin[0] + projectileVelocity.X() * currTime;
-			segmentEnd[1] = fireOrigin[1] + projectileVelocity.Y() * currTime;
-			segmentEnd[2] = fireOrigin[2] + projectileVelocity.Z() * currTime - halfGravity * currTime * currTime;
-			G_Trace( &tr, segmentStart, nullptr, nullptr, segmentEnd, self, MASK_AISOLID );
-			if( tr.fraction == 1.0f ) {
-				return true;
-			}
-		}
-	}
-
-	if( game.edicts[tr.ent].s.team == self->s.team && GS_TeamBasedGametype() ) {
+	if( !TryTraceShot( &tr, newLookDir, aimParams, fireDef ) ) {
 		return false;
 	}
 
-	float hitToTargetDist = DistanceFast( selectedEnemies_.LastSeenOrigin().Data(), tr.endpos );
-	float hitToBotDist = DistanceFast( self->s.origin, tr.endpos );
-	float proximityDistanceFactor = BoundedFraction( hitToBotDist, 2000.0f );
-	float hitToTargetMissThreshold = 30.0f + 300.0f * proximityDistanceFactor;
-
-	if( hitToBotDist < hitToTargetDist && !fireDef.IsContinuousFire() ) {
-		return false;
+	float hitToBotDist = std::numeric_limits<float>::max();
+	if( tr.fraction != 1.0f ) {
+		// Do a generic check for team damage
+		if( ( game.edicts[tr.ent].s.team == self->s.team ) && GS_TeamBasedGametype() && g_allow_teamdamage->integer ) {
+			return false;
+		}
+		hitToBotDist = DistanceFast( self->s.origin, tr.endpos );
 	}
 
 	if( aimType == AI_WEAPON_AIM_TYPE_PREDICTION_EXPLOSIVE ) {
-		return hitToTargetDist < std::max( hitToTargetMissThreshold, 0.85f * fireDef.SplashRadius() );
+		if( tr.fraction == 1.0f ) {
+			return true;
+		}
+
+		if( GS_SelfDamage() && hitToBotDist < fireDef.SplashRadius() ) {
+			return false;
+		}
+
+		if( GS_TeamBasedGametype() && g_allow_teamdamage->integer ) {
+			if( !CheckSplashTeamDamage( tr.endpos, aimParams, fireDef ) ) {
+				return false;
+			}
+		}
+
+		float testedSplashRadius = 0.5f * fireDef.SplashRadius();
+		if( !this->ShouldKeepXhairOnEnemy() ) {
+			testedSplashRadius *= 1.5f;
+		}
+		return DistanceSquared( tr.endpos, aimParams.fireTarget ) < testedSplashRadius * testedSplashRadius;
+	}
+
+	if( aimType == AI_WEAPON_AIM_TYPE_PREDICTION ) {
+		if( tr.fraction == 1.0f ) {
+			return true;
+		}
+
+		// Avoid suicide with PG
+		if( hitToBotDist < fireDef.SplashRadius() && GS_SelfDamage() ) {
+			return false;
+		}
+
+		if( IsShotBlockedBySolidWall( &tr, 96.0f, aimParams, fireDef ) ) {
+			return false;
+		}
+
+		// Put very low restrictions on PG since spammy fire style is even adviced.
+		if( fireDef.IsBuiltin() && fireDef.WeaponNum() == WEAP_PLASMAGUN ) {
+			return toTargetDotLookDir > ( ( this->ShouldKeepXhairOnEnemy() ) ? 0.85f : 0.70f );
+		}
+
+		return toTargetDotLookDir > ( ( this->ShouldKeepXhairOnEnemy() ) ? 0.95f : 0.90f );
 	}
 
 	// Trajectory prediction is not accurate, also this adds some randomization in grenade spamming.
@@ -304,20 +407,65 @@ bool Bot::CheckShot( const AimParams &aimParams,
 			return false;
 		}
 
-		return hitToTargetDist < std::max( hitToTargetMissThreshold, 1.15f * fireDef.SplashRadius() );
+		if( GS_TeamBasedGametype() && g_allow_teamdamage->integer ) {
+			if( !CheckSplashTeamDamage( tr.endpos, aimParams, fireDef ) ) {
+				return false;
+			}
+		}
+
+		float testedSplashRadius = fireDef.SplashRadius();
+		if( !this->ShouldKeepXhairOnEnemy() ) {
+			testedSplashRadius *= 1.25f;
+		}
+		return DistanceSquared( tr.endpos, aimParams.fireTarget ) < testedSplashRadius * testedSplashRadius;
 	}
 
-	// For one-shot instant-hit weapons each shot is important, so check against a player bounding box
-	Vec3 absMins( aimParams.fireTarget );
-	Vec3 absMaxs( aimParams.fireTarget );
-	absMins += playerbox_stand_mins;
-	absMaxs += playerbox_stand_maxs;
-	float factor = 0.33f;
-	// Extra hack for EB/IG, otherwise they miss too lot due to premature firing
-	if( fireDef.IsBuiltin() ) {
+	if( fireDef.IsBuiltin() && this->ShouldKeepXhairOnEnemy() ) {
+		// For one-shot instant-hit weapons each shot is important, so check against a player bounding box
+		// This is an extra hack for EB/IG, otherwise they miss too lot due to premature firing
 		if( fireDef.WeaponNum() == WEAP_ELECTROBOLT || fireDef.WeaponNum() == WEAP_INSTAGUN ) {
-			factor *= std::max( 0.0f, 0.66f - Skill() );
+			if( tr.fraction == 1.0f ) {
+				return true;
+			}
+
+			// If trace hit pos is behind the target, fallback to generic
+			// instant hit dot product tests which are fine in this case
+			float distanceToTarget = DistanceFast( aimParams.fireOrigin, aimParams.fireTarget );
+			// Add a distance offset to ensure the hit pos is really behind the target in the case described above
+			distanceToTarget += 48.0f;
+			float squareDistanceToHitPos = DistanceSquared( aimParams.fireOrigin, tr.endpos );
+			if( squareDistanceToHitPos < distanceToTarget * distanceToTarget ) {
+				Vec3 absMins( aimParams.fireTarget );
+				Vec3 absMaxs( aimParams.fireTarget );
+				absMins += playerbox_stand_mins;
+				absMaxs += playerbox_stand_maxs;
+
+				float factor = ( 1.0f - 0.75f * Skill() );
+				if( this->ShouldKeepXhairOnEnemy() ) {
+					factor *= 1.0f - 0.75 * Skill();
+				}
+
+				float radius = 1.0f + factor * 64.0f;
+				return BoundsAndSphereIntersect( absMins.Data(), absMaxs.Data(), tr.endpos, radius );
+			}
 		}
 	}
-	return BoundsAndSphereIntersect( absMins.Data(), absMaxs.Data(), tr.endpos, 1.0f + factor * hitToTargetMissThreshold );
+
+	// Generic instant-hit weapons without splash
+	if( tr.fraction != 1.0f && IsShotBlockedBySolidWall( &tr, 64.0f, aimParams, fireDef ) ) {
+		return false;
+	}
+
+	float dotThreshold = 0.97f;
+	if( fireDef.IsBuiltin() ) {
+		if( fireDef.WeaponNum() == WEAP_LASERGUN || fireDef.WeaponNum() == WEAP_RIOTGUN ) {
+			dotThreshold -= ( this->ShouldKeepXhairOnEnemy() ) ? 0.10f : 0.20f;
+		}
+	} else {
+		if( !this->ShouldKeepXhairOnEnemy() ) {
+			dotThreshold -= 0.03f;
+		}
+	}
+
+	return toTargetDotLookDir >= dotThreshold;
 }

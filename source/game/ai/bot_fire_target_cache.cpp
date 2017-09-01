@@ -542,11 +542,26 @@ void BotFireTargetCache::GetPredictedTargetOrigin( const SelectedEnemies &select
 	}
 }
 
+static inline void TryAimingAtGround( trace_t *trace, AimParams *aimParams, edict_t *traceKey ) {
+	// In this case try fallback to the ground below the target.
+	Vec3 endPoint( 0, 0, -128 );
+	endPoint += aimParams->fireTarget;
+	G_Trace( trace, aimParams->fireTarget, nullptr, nullptr, endPoint.Data(), traceKey, MASK_AISOLID );
+	if( trace->fraction != 1.0f ) {
+		VectorCopy( trace->endpos, aimParams->fireTarget );
+		// Add some offset from the ground (enviroment tests probably expect this input).
+		aimParams->fireTarget[2] += 1.0f;
+	}
+}
+
 void BotFireTargetCache::PredictProjectileShot( const SelectedEnemies &selectedEnemies, float projectileSpeed,
 												AimParams *aimParams, bool applyTargetGravity ) {
 	if( projectileSpeed <= 0.0f ) {
 		return;
 	}
+
+	trace_t trace;
+	edict_t *traceKey = const_cast<edict_t*>( selectedEnemies.TraceKey() );
 
 	// Copy for convenience
 	Vec3 fireOrigin( aimParams->fireOrigin );
@@ -564,8 +579,6 @@ void BotFireTargetCache::PredictProjectileShot( const SelectedEnemies &selectedE
 		float currTime = 0.0f;
 		float nextTime = TIME_STEP;
 
-		trace_t trace;
-		edict_t *traceKey = const_cast<edict_t*>( selectedEnemies.TraceKey() );
 
 		const int maxSegments = 2 + (int)( 2.1 * bot->ai->botRef->Skill() );
 
@@ -587,6 +600,7 @@ void BotFireTargetCache::PredictProjectileShot( const SelectedEnemies &selectedE
 			// Exact formula is to be proven yet
 			Vec3 predictedTarget( currPoint );
 			if( !PredictProjectileNoClip( fireOrigin, projectileSpeed, predictedTarget.Data(), currTargetVelocity ) ) {
+				TryAimingAtGround( &trace, aimParams, traceKey );
 				return;
 			}
 
@@ -631,6 +645,7 @@ void BotFireTargetCache::PredictProjectileShot( const SelectedEnemies &selectedE
 
 		Vec3 predictedTarget( currPoint );
 		if( !PredictProjectileNoClip( fireOrigin, projectileSpeed, predictedTarget.Data(), currTargetVelocity ) ) {
+			TryAimingAtGround( &trace, aimParams, traceKey );
 			return;
 		}
 
@@ -646,11 +661,10 @@ void BotFireTargetCache::PredictProjectileShot( const SelectedEnemies &selectedE
 									  projectileSpeed,
 									  predictedTarget.Data(),
 									  selectedEnemies.LastSeenVelocity() ) ) {
+			TryAimingAtGround( &trace, aimParams, traceKey );
 			return;
 		}
 
-		trace_t trace;
-		edict_t *traceKey = const_cast<edict_t *>( selectedEnemies.TraceKey() );
 		G_Trace( &trace, aimParams->fireTarget, nullptr, nullptr, predictedTarget.Data(), traceKey, MASK_AISOLID );
 		if( trace.fraction == 1.0f ) {
 			VectorCopy( predictedTarget.Data(), aimParams->fireTarget );

@@ -269,8 +269,8 @@ public:
 		AiEntityPhysicsState *entityPhysicsState_,
 		int preferredAasTravelFlags_,
 		int allowedAasTravelFlags_,
-		float yawSpeed = 270.0f,
-		float pitchSpeed = 140.0f );
+		float yawSpeed = 330.0f,
+		float pitchSpeed = 170.0f );
 
 	virtual ~Ai() override {};
 
@@ -312,11 +312,12 @@ protected:
 	// This function produces very basic but reliable results.
 	// Imitation of human-like aiming should be a burden of callers that prepare the desiredDirection.
 	inline Vec3 GetNewViewAngles( const Vec3 &oldAngles, const Vec3 &desiredDirection,
-								  unsigned frameTime, float angularSpeedMultiplier = 1.0f ) const {
+								  unsigned frameTime, float angularSpeedMultiplier ) const {
 		return GetNewViewAngles( oldAngles.Data(), desiredDirection, frameTime, angularSpeedMultiplier );
 	}
-	Vec3 GetNewViewAngles( const vec3_t oldAngles, const Vec3 &desiredDirection,
-						   unsigned frameTime, float angularSpeedMultiplier = 1.0f ) const;
+
+	virtual Vec3 GetNewViewAngles( const vec3_t oldAngles, const Vec3 &desiredDirection,
+								   unsigned frameTime, float angularSpeedMultiplier ) const;
 
 	void UpdateReachChain( const ReachChainVector &oldReachChain,
 						   ReachChainVector *currReachChain,

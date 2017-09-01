@@ -351,7 +351,7 @@ bool BotWeaponSelector::CheckFastWeaponSwitchAction( const WorldState &worldStat
 	bool botMovesFast, enemyMovesFast;
 
 	int chosenWeapon = WEAP_NONE;
-	if( worldState.DamageToKill() < 75 ) {
+	if( worldState.DamageToKill() < 50 ) {
 		chosenWeapon = SuggestFinishWeapon( worldState );
 	}
 	// Try to hit escaping enemies hard in a single shot
@@ -417,9 +417,19 @@ void BotWeaponSelector::SuggestSniperRangeWeapon( const WorldState &worldState )
 		if( PlasmasReadyToFireCount() && weaponChoiceRandom > 0.5f ) {
 			chosenWeapon = WEAP_PLASMAGUN;
 		}
+	} else if( !self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+		// In this case try preferring weapons that does not require precise aiming.
+		// Otherwise the bot is unlikely to start firing at all due to view angles mismatch.
+		if( PlasmasReadyToFireCount() && weaponChoiceRandom > 0.7f ) {
+			chosenWeapon = WEAP_PLASMAGUN;
+		} else if( ShellsReadyToFireCount() ) {
+			chosenWeapon = WEAP_RIOTGUN;
+		}
 	}
+
 	if( chosenWeapon == WEAP_NONE ) {
-		if( worldState.DamageToKill() > 50.0f ) {
+		// Add a hack for draining health with MG if there is no health to pick on the level
+		if( worldState.DamageToKill() > 50.0f && ( level.gametype.spawnableItemsMask & IT_HEALTH ) ) {
 			if( BoltsReadyToFireCount() ) {
 				chosenWeapon = WEAP_ELECTROBOLT;
 			} else if( BulletsReadyToFireCount() ) {
@@ -560,6 +570,18 @@ void BotWeaponSelector::SuggestFarRangeWeapon( const WorldState &worldState ) {
 		weaponScores[MG].score *= 1.75f;
 	}
 
+	// Add extra scores for weapons that do not require precise aiming in this case
+	if( !self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+		weaponScores[PG].score *= 3.0f;
+		weaponScores[RG].score *= 2.0f;
+	}
+
+	// Add a hack for draining health with MG if there is no health to pick on the level
+	if( !( level.gametype.spawnableItemsMask & IT_HEALTH ) ) {
+		weaponScores[MG].score *= 2.25f;
+		weaponScores[RG].score *= 1.25f;
+	}
+
 	int chosenWeapon = ChooseWeaponByScores( weaponScores, weaponScores + 4 );
 
 	if( chosenWeapon == WEAP_NONE ) {
@@ -652,6 +674,17 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 	weaponScores[RG].score *= 1.0f - 0.5f * targetEnvironment.factor;
 	weaponScores[GL].score *= targetEnvironment.factor;
 
+	// Add extra scores for weapons that do not require precise aiming in this case
+	if( !self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+		weaponScores[PG].score *= 1.5f;
+		weaponScores[RG].score *= 2.0f;
+		weaponScores[GL].score *= 1.5f;
+		if( self->ai->botRef->WillRetreat() ) {
+			weaponScores[PG].score *= 1.5f;
+			weaponScores[GL].score *= 1.5f;
+		}
+	}
+
 	chosenWeapon = ChooseWeaponByScores( weaponScores, weaponScores + 6 );
 	if( chosenWeapon == WEAP_NONE ) {
 		chosenWeapon = WEAP_GUNBLADE;
@@ -698,15 +731,14 @@ void BotWeaponSelector::SuggestCloseRangeWeapon( const WorldState &worldState ) 
 		if( shellsCount > 0 ) {
 			chosenWeapon = WEAP_RIOTGUN;
 		}
-		// High-skill bots have high accuracy, so they may fight quite well with EB on short range.
-		else if( ( weaponChoiceRandom < self->ai->botRef->Skill() ) && BoltsReadyToFireCount() ) {
-			chosenWeapon = WEAP_ELECTROBOLT;
-		} else if( BulletsReadyToFireCount() > 0 ) {
-			chosenWeapon = WEAP_MACHINEGUN;
+		if( plasmasCount > 0 ) {
+			chosenWeapon = WEAP_PLASMAGUN;
 		} else if( lasersCount > 0 ) {
 			chosenWeapon = WEAP_LASERGUN;
-		} else if( plasmasCount > 0 ) {
-			chosenWeapon = WEAP_PLASMAGUN;
+		} else if( BulletsReadyToFireCount() ) {
+			chosenWeapon = WEAP_MACHINEGUN;
+		} else if( BoltsReadyToFireCount() ) {
+			chosenWeapon = WEAP_ELECTROBOLT;
 		} else {
 			chosenWeapon = WEAP_GUNBLADE;
 		}
@@ -875,7 +907,8 @@ int BotWeaponSelector::SuggestFinishWeapon( const WorldState &worldState ) {
 
 static bool IsEscapingFromStandingEntity( const edict_t *escaping, const edict_t *standing, float escapingVelocitySqLen ) {
 	// Too low relative speed with almost standing enemy
-	if( escaping->speed < DEFAULT_DASHSPEED * 1.35f ) {
+	float speedThreshold = DEFAULT_PLAYERSPEED * 1.35f;
+	if( escapingVelocitySqLen < speedThreshold * speedThreshold ) {
 		return false;
 	}
 
@@ -940,97 +973,86 @@ int BotWeaponSelector::SuggestHitEscapingEnemyWeapon( const WorldState &worldSta
 		return WEAP_NONE;
 	}
 
-	if( worldState.DistanceToEnemy() < GetLaserRange() ) {
-		// If target will be lost out of sight, its worth to do a fast weapon switching
-		// Extrapolate bot origin for 0.5 seconds
-		Vec3 extrapolatedBotOrigin = 0.5f * Vec3( self->velocity ) + self->s.origin;
-		Vec3 predictedBotOrigin( extrapolatedBotOrigin );
-		// Extrapolate enemy origin for 0.5 seconds
-		Vec3 extrapolatedEnemyOrigin = 0.5f * selectedEnemies.LastSeenVelocity() + selectedEnemies.LastSeenOrigin();
-		Vec3 predictedEnemyOrigin( extrapolatedEnemyOrigin );
+	// If target will be lost out of sight, its worth to do a fast weapon switching
 
-		trace_t trace;
-		// Predict bot position after 0.5 seconds
-		G_Trace( &trace, self->s.origin, playerbox_stand_mins, playerbox_stand_maxs,
-				 extrapolatedBotOrigin.Data(), self, MASK_AISOLID );
-		if( trace.fraction != 1.0f ) {
-			predictedBotOrigin = Vec3( trace.endpos );
-			// Compensate Z for ground trace hit point
-			if( trace.endpos[2] > extrapolatedBotOrigin.Z() ) {
-				predictedBotOrigin.Z() += std::min( 24.0f, trace.endpos[2] = extrapolatedEnemyOrigin.Z() );
-			}
-		}
-		// Predict enemy origin after 0.5 seconds
-		G_Trace( &trace, selectedEnemies.LastSeenOrigin().Data(), playerbox_stand_mins, playerbox_stand_maxs,
-				 extrapolatedEnemyOrigin.Data(), const_cast<edict_t *>( selectedEnemies.Ent() ), MASK_AISOLID );
-		if( trace.fraction != 1.0f ) {
-			predictedEnemyOrigin = Vec3( trace.endpos );
-			if( trace.endpos[2] > extrapolatedEnemyOrigin.Z() ) {
-				predictedEnemyOrigin.Z() += std::min( 24.0f, trace.endpos[2] - extrapolatedEnemyOrigin.Z() );
-			}
-		}
+	constexpr float predictionSeconds = 0.8f;
 
-		// Check whether bot may hit enemy after 0.5s
+	// Extrapolate bot origin
+	Vec3 extrapolatedBotOrigin( self->velocity );
+	extrapolatedBotOrigin *= predictionSeconds;
+	extrapolatedBotOrigin += self->s.origin;
+	Vec3 predictedBotOrigin( extrapolatedBotOrigin );
+
+	// Extrapolate enemy origin
+	float *initialEnemyOrigin = selectedEnemies.LastSeenOrigin().Data();
+	Vec3 extrapolatedEnemyOrigin( selectedEnemies.LastSeenVelocity() );
+	extrapolatedEnemyOrigin *= predictionSeconds;
+	extrapolatedEnemyOrigin += initialEnemyOrigin;
+	Vec3 predictedEnemyOrigin( extrapolatedEnemyOrigin );
+
+	float *const mins = playerbox_stand_mins;
+	float *const maxs = playerbox_stand_maxs;
+
+	trace_t trace;
+	// Get a coarse predicted bot origin
+	G_Trace( &trace, self->s.origin, mins, playerbox_stand_maxs, extrapolatedBotOrigin.Data(), self, MASK_AISOLID );
+	if( trace.fraction != 1.0f ) {
+		predictedBotOrigin.Set( trace.endpos );
+		// Compensate Z for ground trace hit point
+		if( trace.endpos[2] > extrapolatedBotOrigin.Z() ) {
+			predictedBotOrigin.Z() += -playerbox_stand_mins[2];
+		}
+	}
+
+	// Get a coarse predicted enemy origin
+	auto *skip = const_cast<edict_t *>( selectedEnemies.Ent() );
+	G_Trace( &trace, initialEnemyOrigin, mins, maxs, extrapolatedEnemyOrigin.Data(), skip, MASK_AISOLID );
+	if( trace.fraction != 1.0f ) {
+		predictedEnemyOrigin.Set( trace.endpos );
+		if( trace.endpos[2] > extrapolatedEnemyOrigin.Z() ) {
+			predictedEnemyOrigin.Z() += -playerbox_stand_mins[2];
+		}
+	}
+
+	// Check whether the bot is likely to be able to hit the enemy
+	if( trap_inPVS( predictedBotOrigin.Data(), predictedBotOrigin.Data() ) ) {
 		G_Trace( &trace, predictedBotOrigin.Data(), nullptr, nullptr, predictedEnemyOrigin.Data(), self, MASK_AISOLID );
 		// Still may hit, keep using current weapon
 		if( trace.fraction == 1.0f || selectedEnemies.Ent() == game.edicts + trace.ent ) {
 			return WEAP_NONE;
 		}
+	}
 
-		TestTargetEnvironment( Vec3( self->s.origin ), selectedEnemies.LastSeenOrigin(), selectedEnemies.Ent() );
-		// Hit fast-moving enemy using EB
-		if( BoltsReadyToFireCount() && ( enemyMovesFast || targetEnvironment.factor < 0.5f ) ) {
+	// Only switch to EB on far range. Keep using the current weapon.
+	if( worldState.DistanceToEnemy() > GetLaserRange() ) {
+		if( BoltsReadyToFireCount() ) {
 			return WEAP_ELECTROBOLT;
 		}
-		// Bot moves fast or target environment is good for explosives. Choose RL, GL or GB
-		if( RocketsReadyToFireCount() ) {
-			return WEAP_ROCKETLAUNCHER;
+		return WEAP_NONE;
+	}
+
+	// Hit fast-moving enemy using EB
+	if( BoltsReadyToFireCount() && ( enemyMovesFast && !botMovesFast ) ) {
+		return WEAP_ELECTROBOLT;
+	}
+
+	if( botMovesFast && !enemyMovesFast ) {
+		TestTargetEnvironment( Vec3( self->s.origin ), selectedEnemies.LastSeenOrigin(), selectedEnemies.Ent() );
+		if( targetEnvironment.factor > 0.5f ) {
+			if( RocketsReadyToFireCount() ) {
+				return WEAP_ROCKETLAUNCHER;
+			}
+			if( GrenadesReadyToFireCount() ) {
+				return WEAP_GRENADELAUNCHER;
+			}
 		}
-		if( GrenadesReadyToFireCount() ) {
-			return WEAP_GRENADELAUNCHER;
-		}
+	}
+
+	if( BlastsReadyToFireCount() && worldState.DamageToKill() < 100 ) {
 		return WEAP_GUNBLADE;
 	}
 
-	TestTargetEnvironment( Vec3( self->s.origin ), selectedEnemies.LastSeenOrigin(), selectedEnemies.Ent() );
-
-	enum { EB, RL, GB, MAX_WEAPONS };
-	WeaponAndScore weaponScores[MAX_WEAPONS] =
-	{
-		WeaponAndScore( WEAP_ELECTROBOLT, BoltsReadyToFireCount() > 0 ),
-		WeaponAndScore( WEAP_ROCKETLAUNCHER, RocketsReadyToFireCount() > 0 ),
-		WeaponAndScore( WEAP_GUNBLADE, 0.8f )
-	};
-
-	weaponScores[EB].score *= 1.0f + 0.33f * self->ai->botRef->Skill();
-	if( enemyMovesFast ) {
-		weaponScores[EB].score += 0.33f;
-	}
-
-	weaponScores[RL].score *= 1.33f * ( 0.3f + 0.7f * targetEnvironment.factor );
-	weaponScores[GB].score *= 0.6f + 0.4f * targetEnvironment.factor;
-	if( botMovesFast ) {
-		weaponScores[GB].score += 0.33f;
-	}
-
-	weaponScores[EB].score *= 0.3f + 0.7f * BoundedFraction( worldState.DistanceToEnemy(), 2000.0f );
-	weaponScores[RL].score *= 1.0f - BoundedFraction( worldState.DistanceToEnemy(), 1500.0f );
-	weaponScores[GB].score *= 1.0f - 0.3f * BoundedFraction( worldState.DistanceToEnemy(), 2500.0f );
-
-	// We are sure that weapon switch not only costs nothing, but even is intended, so do not call ChooseWeaponByScore()
-	int weapon = WEAP_NONE;
-	float maxScore = 0.0f;
-	for( int i = 0; i < MAX_WEAPONS; ++i ) {
-		if( maxScore < weaponScores[i].score ) {
-			maxScore = weaponScores[i].score;
-			weapon = weaponScores[i].weapon;
-		}
-	}
-
-	constexpr const char *format = "(hit escaping) raw scores: EB %.2f RL %.2f GB %.2f chose %s\n";
-	Debug( format, weaponScores[EB].score, weaponScores[RL].score, weaponScores[GB].score, WeapName( weapon ) );
-
-	return weapon;
+	return WEAP_NONE;
 }
 
 bool BotWeaponSelector::CheckForShotOfDespair( const WorldState &worldState ) {
