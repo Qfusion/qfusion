@@ -179,6 +179,15 @@ bool Bot::TryRotateInput( BotInput *input, BotMovementPredictionContext *context
 		return false;
 	}
 
+	// Cut off an expensive PVS call early
+	if( input->IsRotationAllowed( BotInputRotation::ALL_KINDS_MASK ) ) {
+		// We do not utilize PVS cache since it might produce different results for predicted and actual bot origin
+		if( !trap_inPVS( keptInFovPoint.Origin().Data(), botOrigin ) ) {
+			*prevRotation = BotInputRotation::NONE;
+			return false;
+		}
+	}
+
 	Vec3 selfToPoint( keptInFovPoint.Origin() );
 	selfToPoint -= botOrigin;
 	selfToPoint.NormalizeFast();
@@ -346,7 +355,9 @@ void Bot::UpdateKeptInFovPoint() {
 		Vec3 origin( selectedEnemies.ClosestEnemyOrigin( self->s.origin ) );
 		if( !GetMiscTactics().shouldKeepXhairOnEnemy ) {
 			if( !selectedEnemies.HaveQuad() && !selectedEnemies.HaveCarrier() ) {
-				if( origin.SquareDistanceTo( self->s.origin ) > 1024 * 1024 ) {
+				float distanceThreshold = 768.0f + 1024.0f * selectedEnemies.MaxThreatFactor();
+				distanceThreshold *= 0.5f + 0.5f * self->ai->botRef->GetEffectiveOffensiveness();
+				if( origin.SquareDistanceTo( self->s.origin ) > distanceThreshold * distanceThreshold ) {
 					return;
 				}
 			}
@@ -370,10 +381,11 @@ void Bot::UpdateKeptInFovPoint() {
 
 		Vec3 origin( lostOrHiddenEnemy->LastSeenPosition() );
 		if( !GetMiscTactics().shouldKeepXhairOnEnemy ) {
-			float distanceThreshold = 768.0f;
-			if( lostOrHiddenEnemy->ent && lostOrHiddenEnemy->ent->s.effects & ( EF_QUAD | EF_CARRIER ) ) {
-				distanceThreshold = 2048.0f;
+			float distanceThreshold = 384.0f;
+			if( lostOrHiddenEnemy->ent ) {
+				distanceThreshold += 1024.0f * selectedEnemies.ComputeThreatFactor( lostOrHiddenEnemy->ent );
 			}
+			distanceThreshold *= 0.5f + 0.5f * self->ai->botRef->GetEffectiveOffensiveness();
 			if( origin.SquareDistanceTo( self->s.origin ) > distanceThreshold * distanceThreshold ) {
 				lastChosenLostOrHiddenEnemy = nullptr;
 				return;

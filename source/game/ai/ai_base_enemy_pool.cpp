@@ -66,6 +66,16 @@ void Enemy::OnViewed( const float *specifiedOrigin ) {
 	lastSeenSnapshots.emplace_back( Snapshot( ent->s.origin, ent->velocity, level.time ) );
 }
 
+Vec3 Enemy::LookDir() const {
+	if( ent->ai && ent->ai->botRef ) {
+		return ent->ai->botRef->EntityPhysicsState()->ForwardDir();
+	}
+
+	vec3_t lookDir;
+	AngleVectors( ent->s.angles, lookDir, nullptr, nullptr );
+	return Vec3( lookDir );
+}
+
 AiBaseEnemyPool::AiBaseEnemyPool( float avgSkill_ )
 	: avgSkill( avgSkill_ ),
 	decisionRandom( 0.5f ),
@@ -494,9 +504,9 @@ const Enemy *AiBaseEnemyPool::ChooseVisibleEnemy( const edict_t *challenger ) {
 		activeEnemiesScores.push_back( mergedActiveEnemies[i].score );
 	}
 
-	OnBotEnemyAssigned( challenger, candidates.front().enemy );
+	OnBotEnemyAssigned( challenger, activeEnemies.front() );
 	// (We operate on pointers to enemies which are allocated in the enemy pool)
-	return candidates.front().enemy;
+	return activeEnemies.front();
 }
 
 const Enemy *AiBaseEnemyPool::ChooseLostOrHiddenEnemy( const edict_t *challenger, unsigned timeout ) {

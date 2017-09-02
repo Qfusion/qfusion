@@ -1034,9 +1034,9 @@ static const edict_t *objectSelectedEnemies_get_traceKey(const SelectedEnemies *
     return CHECK_ARG(obj)->TraceKey();
 }
 
-static bool objectSelectedEnemies_canHit(const SelectedEnemies *obj, const edict_t *ent)
+static bool objectSelectedEnemies_canHit(const SelectedEnemies *obj)
 {
-    return CHECK_ARG(obj)->CanHit(CHECK_ARG(ent));
+    return CHECK_ARG(obj)->CanHit();
 }
 
 // There are currently no reasons to expose all methods of SelectedNavEntity or underlying NavEntity.
@@ -1060,7 +1060,7 @@ static const asMethod_t asAiSelectedEnemies_ObjectMethods[] =
     DECLARE_METHOD(bool, isPrimaryEnemy, (const Client @client) const, objectSelectedEnemies_isPrimaryEnemy2),
     DECLARE_METHOD(const Entity @, get_traceKey, () const, objectSelectedEnemies_get_traceKey),
 
-    DECLARE_METHOD(bool, canHit, (const Entity @ent) const, objectSelectedEnemies_canHit),
+    DECLARE_METHOD(bool, canHit, () const, objectSelectedEnemies_canHit),
 
     ASLIB_METHOD_NULL
 };
