@@ -704,9 +704,12 @@ inline BotBaseMovementAction *BotMovementPredictionContext::SuggestAnyAction() {
 
 	// If no action has been suggested, use a default/dummy one.
 	// We have to check the combat action since it might be disabled due to planning stack overflow.
-	if( self->ai->botRef->GetSelectedEnemies().AreValid() && self->ai->botRef->ShouldAttack() ) {
-		if( !self->ai->botRef->combatDodgeSemiRandomlyToTargetMovementAction.IsDisabledForPlanning() ) {
-			return &self->ai->botRef->combatDodgeSemiRandomlyToTargetMovementAction;
+	if( self->ai->botRef->ShouldAttack() && self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+		const auto &selectedEnemies = self->ai->botRef->selectedEnemies;
+		if( selectedEnemies.AreValid() && selectedEnemies.ArePotentiallyHittable() ) {
+			if( !self->ai->botRef->combatDodgeSemiRandomlyToTargetMovementAction.IsDisabledForPlanning() ) {
+				return &self->ai->botRef->combatDodgeSemiRandomlyToTargetMovementAction;
+			}
 		}
 	}
 
@@ -3750,12 +3753,15 @@ bool BotGenericRunBunnyingMovementAction::CheckCommonBunnyingActionPreconditions
 		return false;
 	}
 
-	if( self->ai->botRef->GetSelectedEnemies().AreValid() && self->ai->botRef->GetMiscTactics().shouldKeepXhairOnEnemy ) {
-		if( !context->MayHitWhileRunning().CanHit() ) {
-			Debug( "Cannot apply action: cannot hit an enemy while keeping the crosshair on it is required\n" );
-			context->SetPendingRollback();
-			this->isDisabledForPlanning = true;
-			return false;
+	if( self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+		const auto &selectedEnemies = self->ai->botRef->GetSelectedEnemies();
+		if( selectedEnemies.AreValid() && selectedEnemies.ArePotentiallyHittable() ) {
+			if( !context->MayHitWhileRunning().CanHit() ) {
+				Debug( "Cannot apply action: cannot hit an enemy while keeping the crosshair on it is required\n" );
+				context->SetPendingRollback();
+				this->isDisabledForPlanning = true;
+				return false;
+			}
 		}
 	}
 

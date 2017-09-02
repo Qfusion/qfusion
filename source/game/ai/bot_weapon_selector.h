@@ -99,10 +99,23 @@ class SelectedEnemies
 	const edict_t *self;
 
 	const Enemy *primaryEnemy;
-	StaticVector<const Enemy *, AiBaseEnemyPool::MAX_ACTIVE_ENEMIES> activeEnemies;
+
+	static const auto MAX_ACTIVE_ENEMIES = AiBaseEnemyPool::MAX_ACTIVE_ENEMIES;
+
+	StaticVector<const Enemy *, MAX_ACTIVE_ENEMIES> activeEnemies;
+	mutable int64_t threatFactorsComputedAt[MAX_ACTIVE_ENEMIES];
+	mutable int64_t canEnemyHitComputedAt[MAX_ACTIVE_ENEMIES];
+	mutable int64_t maxThreatFactorComputedAt;
+	mutable int64_t canEnemiesHitComputedAt;
+	mutable int64_t arePotentiallyHittableComputedAt;
+	mutable float threatFactors[MAX_ACTIVE_ENEMIES];
+	mutable bool canEnemyHit[MAX_ACTIVE_ENEMIES];
+	mutable bool canEnemiesHit;
+	mutable bool arePotentiallyHittable;
 
 	int64_t timeoutAt;
 	unsigned instanceId;
+	mutable float maxThreatFactor;
 
 	inline void CheckValid( const char *function ) const {
 #ifdef _DEBUG
@@ -114,15 +127,30 @@ class SelectedEnemies
 
 	explicit SelectedEnemies( const edict_t *self_ )
 		: self( self_ ),
-        primaryEnemy( nullptr ),
-        timeoutAt( 0 ),
-        instanceId( 0 ) {}
+		primaryEnemy( nullptr ),
+		maxThreatFactorComputedAt( 0 ),
+		canEnemiesHitComputedAt( 0 ),
+		arePotentiallyHittableComputedAt( 0 ),
+		canEnemiesHit( false ),
+		arePotentiallyHittable( false ),
+		timeoutAt( 0 ),
+		instanceId( 0 ),
+		maxThreatFactor( 0.0f ) {
+		memset( threatFactorsComputedAt, 0, sizeof( threatFactorsComputedAt ) );
+		memset( threatFactors, 0, sizeof( threatFactors ) );
+		memset( canEnemyHitComputedAt, 0, sizeof( canEnemyHitComputedAt ) );
+		memset( canEnemyHit, 0, sizeof( canEnemyHit ) );
+	}
 
 public:
 	bool AreValid() const;
 
 	inline void Invalidate() {
 		timeoutAt = 0;
+		maxThreatFactorComputedAt = 0;
+		canEnemiesHitComputedAt = 0;
+		memset( threatFactorsComputedAt, 0, sizeof( threatFactorsComputedAt ) );
+		memset( canEnemyHitComputedAt, 0, sizeof( canEnemyHitComputedAt ) );
 		primaryEnemy = nullptr;
 		activeEnemies.clear();
 	}
@@ -234,22 +262,36 @@ public:
 	bool HaveQuad() const;
 	bool HaveCarrier() const;
 	bool Contain( const Enemy *enemy ) const;
-	bool AreThreatening() const;
 	float TotalInflictedDamage() const;
 
 	float MaxDotProductOfBotViewAndDirToEnemy() const;
 	float MaxDotProductOfEnemyViewAndDirToBot() const;
 
+	// Checks whether a bot can potentially hit enemies from its origin if it adjusts view angles properly
+	bool ArePotentiallyHittable() const;
+
 	typedef const Enemy **EnemiesIterator;
 	inline EnemiesIterator begin() const { return (EnemiesIterator)activeEnemies.cbegin(); }
 	inline EnemiesIterator end() const { return (EnemiesIterator)activeEnemies.cend(); }
 
-	bool CanHit( const edict_t *ent ) const;
+	bool CanHit() const;
+	bool GetCanHit( int enemyNum ) const;
+	bool TestCanHit( const edict_t *enemy ) const;
 
 	bool HaveGoodSniperRangeWeapons() const;
 	bool HaveGoodFarRangeWeapons() const;
 	bool HaveGoodMiddleRangeWeapons() const;
 	bool HaveGoodCloseRangeWeapons() const;
+
+	bool AreThreatening() const {
+		CheckValid( __FUNCTION__ );
+		return MaxThreatFactor() > 0.9f;
+	}
+
+	float MaxThreatFactor() const;
+	float GetThreatFactor( int enemyNum ) const;
+	float ComputeThreatFactor( int enemyNum ) const;
+	float ComputeThreatFactor( const edict_t *ent, int enemyNum = -1 ) const;
 };
 
 class BotWeaponSelector

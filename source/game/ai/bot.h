@@ -213,6 +213,10 @@ public:
 		movementPredictionContext.OnInterceptedPMoveTouchTriggers( pm, previousOrigin );
 	}
 
+	inline const AiEntityPhysicsState *EntityPhysicsState() const {
+		return entityPhysicsState;
+	}
+
 protected:
 	virtual void Frame() override;
 	virtual void Think() override;
