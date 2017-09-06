@@ -9,17 +9,17 @@ class alignas ( 2 )AiCampingSpot
 	friend class Bot;
 	friend class BotCampingSpotState;
 
-	short origin[3];
-	short lookAtPoint[3];
-	unsigned char radius;
-	unsigned char alertness : 7;
-	AiCampingSpot() : radius( 32 ), alertness( 127 ), hasLookAtPoint( false ) {}
+	int16_t origin[3];
+	int16_t lookAtPoint[3];
+	uint16_t radius;
+	uint8_t alertness;
+	AiCampingSpot() : radius( 32 ), alertness( 255 ), hasLookAtPoint( false ) {}
 
 public:
-	bool hasLookAtPoint : 1;
+	bool hasLookAtPoint;
 
-	inline float Radius() const { return radius * 2; }
-	inline float Alertness() const { return alertness / 128.0f; }
+	inline float Radius() const { return radius; }
+	inline float Alertness() const { return alertness / 256.0f; }
 	inline Vec3 Origin() const { return GetUnpacked4uVec( origin ); }
 	inline Vec3 LookAtPoint() const { return GetUnpacked4uVec( lookAtPoint ); }
 	// Warning! This does not set hasLookAtPoint, only used to store a vector in (initially unsused) lookAtPoint field
@@ -27,26 +27,26 @@ public:
 	inline void SetLookAtPoint( const Vec3 &lookAtPoint_ ) { SetPacked4uVec( lookAtPoint_, lookAtPoint ); }
 
 	AiCampingSpot( const Vec3 &origin_, float radius_, float alertness_ = 0.75f )
-		: radius( ( decltype( radius ) )( radius_ / 2 ) ), alertness( ( decltype( alertness ) )( alertness_ * 128 ) ), hasLookAtPoint( false )
+		: radius( (uint16_t)( radius_ ) ), alertness( (uint8_t)( alertness_ * 255 ) ), hasLookAtPoint( false )
 	{
 		SetPacked4uVec( origin_, origin );
 	}
 
 	AiCampingSpot( const vec3_t &origin_, float radius_, float alertness_ = 0.75f )
-		: radius( ( decltype( radius ) )( radius_ / 2 ) ), alertness( ( decltype( alertness ) )( alertness_ * 128 ) ), hasLookAtPoint( false )
+		: radius( (uint16_t)radius_ ), alertness( (uint8_t)( alertness_ * 255 ) ), hasLookAtPoint( false )
 	{
 		SetPacked4uVec( origin_, origin );
 	}
 
 	AiCampingSpot( const vec3_t &origin_, const vec3_t &lookAtPoint_, float radius_, float alertness_ = 0.75f )
-		: radius( ( decltype( radius ) )( radius_ / 2 ) ), alertness( ( decltype( alertness ) )( alertness_ * 128 ) ), hasLookAtPoint( true )
+		: radius( (uint16_t)radius_ ), alertness( (uint8_t)( alertness_ * 255 ) ), hasLookAtPoint( true )
 	{
 		SetPacked4uVec( origin_, origin );
 		SetPacked4uVec( lookAtPoint_, lookAtPoint );
 	}
 
 	AiCampingSpot( const Vec3 &origin_, const Vec3 &lookAtPoint_, float radius_, float alertness_ = 0.75f )
-		: radius( ( decltype( radius ) )( radius_ / 2 ) ), alertness( ( decltype( alertness ) )( alertness_ * 128 ) ), hasLookAtPoint( true )
+		: radius( (uint16_t)radius_ ), alertness( (uint8_t)( alertness_ * 255 ) ), hasLookAtPoint( true )
 	{
 		SetPacked4uVec( origin_, origin );
 		SetPacked4uVec( lookAtPoint_, lookAtPoint );
@@ -58,9 +58,9 @@ class alignas ( 2 )AiPendingLookAtPoint
 	// Fields of this class are packed to allow cheap copying of class instances in bot movement prediction code
 	friend struct BotPendingLookAtPointState;
 
-	short origin[3];
+	int16_t origin[3];
 	// Floating point values greater than 1.0f are allowed (unless they are significantly greater than 1.0f);
-	unsigned short turnSpeedMultiplier;
+	uint16_t turnSpeedMultiplier;
 
 	AiPendingLookAtPoint() {
 		// Shut an analyzer up
@@ -72,13 +72,13 @@ public:
 	inline float TurnSpeedMultiplier() const { return turnSpeedMultiplier / 16.0f; };
 
 	AiPendingLookAtPoint( const vec3_t origin_, float turnSpeedMultiplier_ )
-		: turnSpeedMultiplier( ( decltype( turnSpeedMultiplier ) ) std::min( 255.0f, turnSpeedMultiplier_ * 16.0f ) )
+		: turnSpeedMultiplier( (uint16_t)( std::min( 255.0f, turnSpeedMultiplier_ * 16.0f ) ) )
 	{
 		SetPacked4uVec( origin_, origin );
 	}
 
 	AiPendingLookAtPoint( const Vec3 &origin_, float turnSpeedMultiplier_ )
-		: turnSpeedMultiplier( ( decltype( turnSpeedMultiplier ) ) std::min( 255.0f, turnSpeedMultiplier_ * 16.0f ) )
+		: turnSpeedMultiplier(  (uint16_t)( std::min( 255.0f, turnSpeedMultiplier_ * 16.0f ) ) )
 	{
 		SetPacked4uVec( origin_, origin );
 	}
@@ -104,7 +104,7 @@ class alignas ( 4 )BotInput
 	// Should be copied back to self->s.angles if it has been modified when the BotInput gets applied.
 	Vec3 alreadyComputedAngles;
 	BotInputRotation allowedRotationMask;
-	unsigned char turnSpeedMultiplier;
+	uint8_t turnSpeedMultiplier;
 	signed ucmdForwardMove : 2;
 	signed ucmdSideMove : 2;
 	signed ucmdUpMove : 2;
@@ -239,15 +239,15 @@ struct alignas ( 2 )BotJumppadMovementState : protected BotAerialMovementState {
 	// Fields of this class are packed to allow cheap copying of class instances in bot movement prediction code
 
 private:
-	static_assert( MAX_EDICTS <= ( 1 << 10 ), "Cannot store jumppad entity number in 10 bits" );
-	unsigned short jumppadEntNum : 10;
+	static_assert( MAX_EDICTS < ( 1 << 16 ), "Cannot store jumppad entity number in 16 bits" );
+	uint16_t jumppadEntNum;
 
 public:
 	// Should be set by Bot::TouchedJumppad() callback (its get called in ClientThink())
 	// It gets processed by movement code in next frame
-	bool hasTouchedJumppad : 1;
+	bool hasTouchedJumppad;
 	// If this flag is set, bot is in "jumppad" movement state
-	bool hasEnteredJumppad : 1;
+	bool hasEnteredJumppad;
 
 	inline BotJumppadMovementState()
 		: jumppadEntNum( 0 ),        // shut up an analyzer
@@ -284,8 +284,8 @@ public:
 
 class alignas ( 2 )BotWeaponJumpMovementState : protected BotAerialMovementState
 {
-	short jumpTarget[3];
-	short fireTarget[3];
+	int16_t jumpTarget[3];
+	int16_t fireTarget[3];
 
 public:
 	bool hasPendingWeaponJump : 1;
@@ -330,8 +330,8 @@ public:
 
 class alignas ( 2 )BotFlyUntilLandingMovementState : protected BotAerialMovementState
 {
-	short target[3];
-	unsigned short landingDistanceThreshold : 13;
+	int16_t target[3];
+	uint16_t landingDistanceThreshold;
 	bool isTriggered : 1;
 	// If not set, uses target Z level as landing threshold
 	bool usesDistanceThreshold : 1;
@@ -415,12 +415,12 @@ class alignas ( 2 )BotCampingSpotState
 {
 	mutable AiCampingSpot campingSpot;
 	// When to change chosen strafe dir
-	mutable unsigned short moveDirsTimeLeft : 13;
+	mutable uint16_t moveDirsTimeLeft;
 	// When to change randomly chosen look-at-point (if the point is not initially specified)
-	mutable unsigned short lookAtPointTimeLeft : 14;
-	signed char forwardMove : 2;
-	signed char rightMove : 2;
-	bool isTriggered : 1;
+	mutable uint16_t lookAtPointTimeLeft;
+	int8_t forwardMove : 4;
+	int8_t rightMove : 4;
+	bool isTriggered;
 
 	inline unsigned StrafeDirTimeout() const {
 		return (unsigned)( 400 + 100 * random() + 300 * ( 1.0f - campingSpot.Alertness() ) );
@@ -439,8 +439,8 @@ public:
 	}
 
 	inline void Frame( unsigned frameTime ) {
-		moveDirsTimeLeft = ( decltype( moveDirsTimeLeft ) ) std::max( 0, (int)moveDirsTimeLeft - (int)frameTime );
-		lookAtPointTimeLeft = ( decltype( lookAtPointTimeLeft ) ) std::max( 0, (int)lookAtPointTimeLeft - (int)frameTime );
+		moveDirsTimeLeft = ( uint16_t ) std::max( 0, (int)moveDirsTimeLeft - (int)frameTime );
+		lookAtPointTimeLeft = ( uint16_t ) std::max( 0, (int)lookAtPointTimeLeft - (int)frameTime );
 	}
 
 	inline bool IsActive() const { return isTriggered; }
@@ -496,17 +496,12 @@ public:
 
 class alignas ( 2 )BotCombatMoveDirsState
 {
-	// Can store up to 4096 millis without rounding.
-	// Using a lower bits count does not make sence since either
-	// the struct has a size of 2 bytes due to alignment
-	// or there are only 4 bits left for this field what is not capable
-	// to store the TIMEOUT_PERIOD with 16 millis rounding
-	unsigned short timeLeft : 12;
-	signed char forwardMove : 2;
-	signed char rightMove : 2;
+	uint16_t timeLeft;
+	int8_t forwardMove;
+	int8_t rightMove;
 
 public:
-	static constexpr unsigned short TIMEOUT_PERIOD = 512;
+	static constexpr uint16_t TIMEOUT_PERIOD = 512;
 
 	inline BotCombatMoveDirsState()
 		: timeLeft( 0 ),
@@ -526,7 +521,7 @@ public:
 	inline void Activate( int forwardMove_, int rightMove_ ) {
 		this->forwardMove = ( decltype( this->forwardMove ) )forwardMove_;
 		this->rightMove = ( decltype( this->rightMove ) )rightMove_;
-		this->timeLeft = TIMEOUT_PERIOD / 8;
+		this->timeLeft = TIMEOUT_PERIOD;
 	}
 
 	inline int ForwardMove() const { return forwardMove; }
@@ -606,10 +601,10 @@ struct BotMovementActionRecord {
 	BotInput botInput;
 
 private:
-	signed short modifiedVelocity[3];
+	int16_t modifiedVelocity[3];
 
 public:
-	signed char pendingWeapon : 7;
+	int8_t pendingWeapon : 7;
 	bool hasModifiedVelocity : 1;
 
 	inline BotMovementActionRecord()
@@ -1115,9 +1110,9 @@ inline bool BotFlyUntilLandingMovementState::CheckForLanding( const class BotMov
 		return false;
 	}
 
-	const float distanceThreshold = this->landingDistanceThreshold * 4.0f;
+	const float threshold = this->landingDistanceThreshold;
 	Vec3 unpackedTarget( GetUnpacked4uVec( target ) );
-	if( unpackedTarget.SquareDistanceTo( botOrigin ) > distanceThreshold * distanceThreshold ) {
+	if( unpackedTarget.SquareDistanceTo( botOrigin ) > threshold * threshold ) {
 		return false;
 	}
 
