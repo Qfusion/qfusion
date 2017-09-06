@@ -548,47 +548,115 @@ void BotMovementPredictionContext::OnInterceptedPMoveTouchTriggers( pmove_t *pm,
 		}
 	}
 
-	int *triggerEnts = this->frameEvents.touchedTriggerEnts;
-	this->frameEvents.numTouchedTriggers =
-		GClip_AreaEdicts( mins, maxs, triggerEnts, FrameEvents::MAX_TOUCHED_TRIGGERS, AREA_TRIGGERS, 0 );
+	// Make a local copy of the reference for faster access (avoid accessing shared library relocation table).
+	edict_t *const gameEdicts = game.edicts;
 
-	// Save this reference on stack for faster access
-	edict_t *gameEdicts = game.edicts;
-	for( int i = 0, end = this->frameEvents.numTouchedTriggers; i < end; i++ ) {
-		if( !ent->r.inuse ) {
+	nearbyTriggersCache.EnsureValidForBounds( mins, maxs );
+
+	for( int i = 0; i < nearbyTriggersCache.numJumppadEnts; ++i ) {
+		if( GClip_EntityContact( mins, maxs, gameEdicts + nearbyTriggersCache.jumppadEntNums[i] ) ) {
+			frameEvents.hasTouchedJumppad = true;
 			break;
 		}
+	}
 
-		edict_t *hit = gameEdicts + triggerEnts[i];
-		if( !hit->r.inuse ) {
+	for( int i = 0; i < nearbyTriggersCache.numTeleportEnts; ++i ) {
+		if( GClip_EntityContact( mins, maxs, gameEdicts + nearbyTriggersCache.teleportEntNums[i] ) ) {
+			frameEvents.hasTouchedTeleporter = true;
+			break;
+		}
+	}
+
+	for( int i = 0; i < nearbyTriggersCache.numPlatformEnts; ++i ) {
+		if( GClip_EntityContact( mins, maxs, gameEdicts + nearbyTriggersCache.platformEntNums[i] ) ) {
+			frameEvents.hasTouchedPlatform = true;
+			break;
+		}
+	}
+
+	if ( nearbyTriggersCache.numOtherEnts <= FrameEvents::MAX_TOUCHED_OTHER_TRIGGERS ) {
+		for( int i = 0; i < nearbyTriggersCache.numOtherEnts; ++i ) {
+			uint16_t entNum = nearbyTriggersCache.otherEntNums[i];
+			if( GClip_EntityContact( mins, maxs, gameEdicts + entNum ) ) {
+				frameEvents.otherTouchedTriggerEnts[frameEvents.numOtherTouchedTriggers++] = entNum;
+			}
+		}
+	} else {
+		for( int i = 0; i < nearbyTriggersCache.numOtherEnts; ++i ) {
+			uint16_t entNum = nearbyTriggersCache.otherEntNums[i];
+			if( GClip_EntityContact( mins, maxs, gameEdicts + entNum ) ) {
+				frameEvents.otherTouchedTriggerEnts[frameEvents.numOtherTouchedTriggers++] = entNum;
+				if( frameEvents.numOtherTouchedTriggers == FrameEvents::MAX_TOUCHED_OTHER_TRIGGERS ) {
+					break;
+				}
+			}
+		}
+	}
+}
+
+void BotMovementPredictionContext::NearbyTriggersCache::EnsureValidForBounds( const vec3_t absMins,
+																			  const vec3_t absMaxs ) {
+	int i = 0;
+	for( i = 0; i < 3; ++i ) {
+		if ( lastComputedForMins[i] + 192.0f > absMins[i] ) {
+			break;
+		}
+		if ( lastComputedForMaxs[i] - 192.0f < absMaxs[i] ) {
+			break;
+		}
+	}
+
+	// If all coords have passed tests
+	if ( i == 3 ) {
+		return;
+	}
+
+	VectorSet( lastComputedForMins, -256, -256, -256 );
+	VectorSet( lastComputedForMaxs, +256, +256, +256 );
+	VectorAdd( absMins, lastComputedForMins, lastComputedForMins );
+	VectorAdd( absMaxs, lastComputedForMaxs, lastComputedForMaxs );
+
+	numTeleportEnts = numJumppadEnts = numPlatformEnts = numOtherEnts = 0;
+
+	constexpr auto maxEnts = 3 * MAX_GROUP_ENTITIES + MAX_OTHER_ENTITIES;
+	int entNums[maxEnts];
+	const int numEnts = GClip_AreaEdicts( lastComputedForMins, lastComputedForMaxs, entNums, maxEnts, AREA_TRIGGERS, 0 );
+
+	const edict_t *const gameEdicts = game.edicts;
+	for( i = 0; i < numEnts; ++i ) {
+		const edict_t *ent = gameEdicts + entNums[i];
+		if( !ent->r.inuse ) {
 			continue;
 		}
 
-		if( !hit->classname ) {
+		const char *classname = ent->classname;
+		if( !classname ) {
 			continue;
 		}
 
-		// Speed up a bit by inline testing of first character before Q_stricmp() call
-		// TODO: Entity classname must have a hash attribute
-		switch( hit->classname[0] ) {
-			case 'f':
-			case 'F':
-				if( !Q_stricmp( "unc_plat", hit->classname + 1 ) && GClip_EntityContact( mins, maxs, hit ) ) {
-					this->frameEvents.hasTouchedPlatform = true;
-				}
-				break;
-			case 't':
-			case 'T':
-				if( !Q_stricmp( "rigger_push", hit->classname + 1 ) ) {
-					if( GClip_EntityContact( mins, maxs, ent ) ) {
-						this->frameEvents.hasTouchedJumppad = true;
-					}
-				} else if( !Q_stricmp( "rigger_teleport", hit->classname + 1 ) ) {
-					if( GClip_EntityContact( mins, maxs, ent ) ) {
-						this->frameEvents.hasTouchedTeleporter = true;
-					}
-				}
-				break;
+		if( !Q_stricmp( "func_plat", classname ) ) {
+			if( numPlatformEnts != MAX_GROUP_ENTITIES ) {
+				platformEntNums[numPlatformEnts++] = (uint16_t)entNums[i];
+			}
+			continue;
+		}
+
+		if( !Q_stricmp( "trigger_push", classname ) ) {
+			if( numJumppadEnts != MAX_GROUP_ENTITIES ) {
+				jumppadEntNums[numJumppadEnts] = (uint16_t)entNums[i];
+			}
+			continue;
+		}
+
+		if( !Q_stricmp( "trigger_teleport", classname ) ) {
+			if( numTeleportEnts != MAX_GROUP_ENTITIES ) {
+				teleportEntNums[numTeleportEnts++] = (uint16_t)entNums[i];
+			}
+			continue;
+		}
+
+		if( numOtherEnts != MAX_OTHER_ENTITIES ) {
+			otherEntNums[numOtherEnts++] = (uint16_t)entNums[i];
 		}
 	}
 }
@@ -1427,8 +1495,8 @@ void BotBaseMovementAction::CheckPredictionStepResults( BotMovementPredictionCon
 
 	if( this->stopPredictionOnTouchingNavEntity ) {
 		const edict_t *gameEdicts = game.edicts;
-		const int *ents = context->frameEvents.touchedTriggerEnts;
-		for( int i = 0, end = context->frameEvents.numTouchedTriggers; i < end; ++i ) {
+		const uint16_t *ents = context->frameEvents.otherTouchedTriggerEnts;
+		for( int i = 0, end = context->frameEvents.numOtherTouchedTriggers; i < end; ++i ) {
 			const edict_t *ent = gameEdicts + ents[i];
 			if( self->ai->botRef->IsNavTargetBasedOnEntity( ent ) ) {
 				const char *entName = ent->classname ? ent->classname : "???";
