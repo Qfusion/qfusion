@@ -196,17 +196,17 @@ inline unsigned From1UpToMax( unsigned maxValue, float ratio ) {
 	return 1 + From0UpToMax( maxValue - 1, ratio );
 }
 
-inline void SetPacked4uVec( const vec3_t vec, short *packed ) {
-	packed[0] = (short)( vec[0] / 4.0f );
-	packed[1] = (short)( vec[1] / 4.0f );
-	packed[2] = (short)( vec[2] / 4.0f );
+inline void SetPacked4uVec( const vec3_t vec, int16_t *packed ) {
+	packed[0] = (int16_t)( vec[0] / 4.0f );
+	packed[1] = (int16_t)( vec[1] / 4.0f );
+	packed[2] = (int16_t)( vec[2] / 4.0f );
 }
 
-inline void SetPacked4uVec( const Vec3 &vec, short *packed ) {
+inline void SetPacked4uVec( const Vec3 &vec, int16_t *packed ) {
 	SetPacked4uVec( vec.Data(), packed );
 }
 
-inline Vec3 GetUnpacked4uVec( const short *packed ) {
+inline Vec3 GetUnpacked4uVec( const int16_t *packed ) {
 	return Vec3( packed[0] * 4, packed[1] * 4, packed[2] * 4 );
 }
 
