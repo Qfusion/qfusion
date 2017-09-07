@@ -117,25 +117,25 @@ uint64_t NavEntity::MaxWaitDuration() const {
 	const int itemTag = ent->item->tag;
 
 	if( itemType == IT_POWERUP ) {
-		return 9000;
+		return 5000;
 	}
 
 	if( itemType == IT_HEALTH && ( itemTag == HEALTH_MEGA || itemTag == HEALTH_ULTRA ) ) {
-		return 6000;
+		return 3000;
 	}
 
 	if( itemType == IT_ARMOR ) {
 		switch( itemTag ) {
 			case ARMOR_RA:
-				return 6000;
+				return 3000;
 			case ARMOR_YA:
-				return 5000;
+				return 2000;
 			case ARMOR_GA:
-				return 4000;
+				return 1500;
 		}
 	}
 
-	return 3000;
+	return 1000;
 }
 
 int64_t NavEntity::Timeout() const {
