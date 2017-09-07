@@ -402,7 +402,7 @@ void AiAasRouteCache::CreateReversedReachability( void ) {
 //travel time in hundreths of a second = distance * 100 / speed
 constexpr auto DISTANCEFACTOR_CROUCH = 1.3f; //crouch speed = 100
 constexpr auto DISTANCEFACTOR_SWIM = 1.0f;   //should be 0.66, swim speed = 150
-constexpr auto DISTANCEFACTOR_WALK = 0.33f;  //walk speed = 300
+constexpr auto DISTANCEFACTOR_WALK = 0.16f;  //Qfusion: corrected for real bot traveling speed
 
 unsigned short AiAasRouteCache::AreaTravelTime( int areanum, const vec3_t start, const vec3_t end ) {
 	vec3_t dir;
