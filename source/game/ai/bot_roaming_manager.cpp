@@ -67,7 +67,6 @@ const Vec3 &BotRoamingManager::GetRoamingSpot() {
 	if( spotNum >= 0 ) {
 		tmpSpotOrigin.Set( tacticalSpotsRegistry->spots[spotNum].origin );
 		currTacticalSpotNum = spotNum;
-		G_Printf( "SELECTED spot %d\n", spotNum );
 		return tmpSpotOrigin;
 	}
 
