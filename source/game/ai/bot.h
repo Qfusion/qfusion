@@ -565,6 +565,12 @@ public:
 	inline unsigned NextSimilarWorldStateInstanceId() {
 		return ++similarWorldStateInstanceId;
 	}
+	inline void ForceSetNavEntity( const SelectedNavEntity &selectedNavEntity_ ) {
+		botBrain.ForceSetNavEntity( selectedNavEntity_ );
+	}
+	inline void ForcePlanBuilding() {
+		botBrain.ClearGoalAndPlan();
+	}
 	inline void SetNavTarget( NavTarget *navTarget ) {
 		botBrain.SetNavTarget( navTarget );
 	}

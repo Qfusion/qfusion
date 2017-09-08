@@ -225,22 +225,25 @@ void BotBrain::OnEnemyDamaged( const edict_t *target, int damage ) {
 	}
 }
 
-inline const SelectedNavEntity &BotBrain::GetOrUpdateSelectedNavEntity() {
+const SelectedNavEntity &BotBrain::GetOrUpdateSelectedNavEntity() {
 	if( selectedNavEntity.IsValid() ) {
 		return selectedNavEntity;
 	}
 
+	ForceSetNavEntity( itemsSelector.SuggestGoalNavEntity( selectedNavEntity ) );
+	return selectedNavEntity;
+}
+
+void BotBrain::ForceSetNavEntity( const SelectedNavEntity &selectedNavEntity_ ) {
 	// Use direct access to the field to skip assertion
-	prevSelectedNavEntity = selectedNavEntity.navEntity;
-	selectedNavEntity = itemsSelector.SuggestGoalNavEntity( selectedNavEntity );
+	this->prevSelectedNavEntity = this->selectedNavEntity.navEntity;
+	this->selectedNavEntity = selectedNavEntity_;
 
 	if( !selectedNavEntity.IsEmpty() ) {
 		self->ai->botRef->lastItemSelectedAt = level.time;
 	} else if( self->ai->botRef->lastItemSelectedAt >= self->ai->botRef->noItemAvailableSince ) {
 		self->ai->botRef->noItemAvailableSince = level.time;
 	}
-
-	return selectedNavEntity;
 }
 
 void BotBrain::UpdateBlockedAreasStatus() {

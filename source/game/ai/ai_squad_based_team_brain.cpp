@@ -531,15 +531,18 @@ void AiSquad::CheckMembersInventory() {
 
 	for( unsigned botNum = 0; botNum < bots.size(); ++botNum ) {
 		// We can't set special goal immediately (a dropped entity must touch a solid first)
-		// For this case, we just prevent dropping for this bot for 1000 ms
-		if( level.time - lastDroppedForBotTimestamps[botNum] < 1000 ) {
+		// For this case, we just prevent dropping for this bot for 2000 ms
+		if( level.time - lastDroppedForBotTimestamps[botNum] < 2000 ) {
 			continue;
 		}
 
-		// Bot already has a some special goal that the squad owns
-		// TODO: Needs special method for check since special goals have gone
-		// if (bots[botNum]->HasSpecialGoal() && bots[botNum]->IsSpecialGoalSetBy(this))
-		//    continue;
+		// Check whether a bot is likely to already have a dropped item as a goal
+		const SelectedNavEntity &selectedNavEntity = bots[botNum]->GetSelectedNavEntity();
+		if( selectedNavEntity.IsValid() && !selectedNavEntity.IsEmpty() ) {
+			if( selectedNavEntity.navEntity->IsDroppedEntity() && selectedNavEntity.GetCost() > 3.0f ) {
+				continue;
+			}
+		}
 
 		bool needsWeapon = maxBotWeaponTiers[botNum] <= 2;
 		// TODO: Check player class abilities
@@ -743,26 +746,20 @@ void AiSquad::SetDroppedEntityAsBotGoal( edict_t *ent ) {
 		AI_FailWith( tag, "target_ent is not set or not in use" );
 	}
 
+	// Allow other bots (and itself) to grab this item too
+	// (But the suppliant has a priority since the goal has been set immediately)
+	AI_AddNavEntity( ent, (ai_nav_entity_flags)( AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED ) );
+
 	// Check whether bot has been removed
 	edict_t *bot = ent->target_ent;
 	if( !bot->ai || !bot->ai->botRef ) {
 		return;
 	}
 
-	// The enemy should point to a squad ref
-	AiSquad *squad = (AiSquad *)ent->enemy;
-	if( !squad ) {
-		AI_FailWith( tag, "Squad is not set" );
-	}
-
-	// Force dropped item as a special goal for the suppliant
-	// TODO: Bot should be waiting for this entity (if he has interrupt its curr motion for this)
-	// TODO: Just notify bot brain
-	// TODO: This should be handled via goal BotPickupDroppedItem goal that should have high priority
-	// bot->ai->botRef->SetSpecialGoalFromEntity(ent, squad);
-	// Allow other bots (and itself) to grab this item too
-	// (But the suppliant has a priority since the goal has been set immediately)
-	AI_AddNavEntity( ent, (ai_nav_entity_flags)( AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED ) );
+	const NavEntity *navEntity = NavEntitiesRegistry::Instance()->NavEntityForEntity( ent );
+	SelectedNavEntity selectedNavEntity( navEntity, 1.0f, 5.0f, level.time + 2000 );
+	bot->ai->botRef->ForceSetNavEntity( selectedNavEntity );
+	bot->ai->botRef->ForcePlanBuilding();
 }
 
 bool AiSquad::RequestWeaponAndAmmoDrop( unsigned botNum, const int *maxBotWeaponTiers, Suppliers &supplierCandidates ) {
