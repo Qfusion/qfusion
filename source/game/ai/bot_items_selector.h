@@ -9,17 +9,18 @@ class SelectedNavEntity
 {
 	friend class BotBrain;
 	friend class BotItemsSelector;
+	friend class AiSquad;
 
 	const NavEntity *navEntity;
 	float cost;
 	float pickupGoalWeight;
-	unsigned selectedAt;
-	unsigned timeoutAt;
+	int64_t selectedAt;
+	int64_t timeoutAt;
 
 	inline SelectedNavEntity( const NavEntity *navEntity_,
 							  float cost_,
 							  float pickupGoalWeight_,
-							  unsigned timeoutAt_ )
+							  int64_t timeoutAt_ )
 		: navEntity( navEntity_ ),
 		cost( cost_ ),
 		pickupGoalWeight( pickupGoalWeight_ ),
