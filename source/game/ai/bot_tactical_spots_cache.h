@@ -79,13 +79,6 @@ class BotTacticalSpotsCache
 	bool FindRunAwayJumppadOrigin( const Vec3 &origin, const Vec3 &enemyOrigin, vec3_t result[2] );
 	bool FindRunAwayElevatorOrigin( const Vec3 &origin, const Vec3 &enemyOrigin, vec3_t result[2] );
 
-	struct EntAndScore {
-		int entNum;
-		float score;
-		EntAndScore( int entNum_, float score_ ) : entNum( entNum_ ), score( score_ ) {}
-		bool operator<( const EntAndScore &that ) const { return score > that.score; }
-	};
-
 	typedef StaticVector<EntAndScore, 16> ReachableEntities;
 	void FindReachableClassEntities( const Vec3 &origin, float radius, const char *classname, ReachableEntities &result );
 

@@ -250,4 +250,33 @@ inline void SolidWorldTrace( trace_t *trace, const vec3_t from, const vec3_t to,
 	trap_CM_TransformedBoxTrace( trace, from_, to_, mins_, maxs_, nullptr, MASK_SOLID, nullptr, nullptr );
 }
 
+struct EntAndScore {
+	int entNum;
+	float score;
+	EntAndScore(): entNum( 0 ), score( 0.0f ) {}
+	EntAndScore( int entNum_, float score_ ) : entNum( entNum_ ), score( score_ ) {}
+	bool operator<( const EntAndScore &that ) const { return score > that.score; }
+};
+
+struct AreaAndScore {
+	int areaNum;
+	float score;
+	AreaAndScore(): areaNum( 0 ), score( 0.0f ) {}
+	AreaAndScore( int areaNum_, float score_ ) : areaNum( areaNum_ ), score( score_ ) {}
+	bool operator<( const AreaAndScore &that ) const { return score > that.score; }
+};
+
+template<typename T>
+class ArrayRange {
+	const T *begin_;
+	const T *end_;
+public:
+	ArrayRange( const T *basePtr, size_t size ) {
+		begin_ = basePtr;
+		end_ = basePtr + size;
+	}
+	const T *begin() const { return begin_; }
+	const T *end() const { return end_; }
+};
+
 #endif
