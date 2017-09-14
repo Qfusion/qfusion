@@ -182,6 +182,27 @@ public:
 
 	inline Vec3 ForwardDir() const { return UnpackedDir( forwardDir ); }
 	inline Vec3 RightDir() const { return UnpackedDir( rightDir ); }
+
+	// Returns number of start areas to use in routing
+	inline int PrepareRoutingStartAreas( int *areaNums ) const {
+		int numAreas = 0;
+
+		if( int areaNum = CurrAasAreaNum() ) {
+			areaNums[numAreas++] = areaNum;
+		}
+
+		if( int areaNum = DroppedToFloorAasAreaNum() ) {
+			if( numAreas ) {
+				if( areaNums[0] != areaNum ) {
+					areaNums[numAreas++] = areaNum;
+				}
+			} else {
+				areaNums[numAreas++] = areaNum;
+			}
+		}
+
+		return numAreas;
+	}
 };
 
 class Ai : public EdictRef, public AiFrameAwareUpdatable
@@ -208,10 +229,11 @@ protected:
 	// Can point to external (predicted) entity physics state during movement planning.
 	AiEntityPhysicsState *entityPhysicsState;
 
-	int allowedAasTravelFlags;
-	int preferredAasTravelFlags;
+	// Preferred and allowed travel flags
+	int travelFlags[2];
+	ArrayRange<int> travelFlagsRange;
 
-	int64_t blockedTimeout;
+	int64_t blockedTimeoutAt;
 
 	vec3_t angularViewSpeed;
 
@@ -273,8 +295,10 @@ public:
 	// Exposed for native and script actions
 	int CheckTravelTimeMillis( const Vec3 &from, const Vec3 &to, bool allowUnreachable = true );
 
-	inline int PreferredTravelFlags() const { return preferredAasTravelFlags; }
-	inline int AllowedTravelFlags() const { return allowedAasTravelFlags; }
+	inline int PreferredTravelFlags() const { return travelFlags[0]; }
+	inline int AllowedTravelFlags() const { return travelFlags[1]; }
+
+	inline const ArrayRange<int> TravelFlags() const { return travelFlagsRange; }
 
 	// Accepts a touched entity and its old solid before touch
 	void TouchedEntity( edict_t *ent );
@@ -289,6 +313,25 @@ public:
 
 	static constexpr unsigned BLOCKED_TIMEOUT = 15000;
 
+	unsigned MillisInBlockedState() const {
+		int64_t diff = BLOCKED_TIMEOUT - ( blockedTimeoutAt - level.time );
+		return diff >= 0 ? (unsigned)diff : 0;
+	}
+
+	bool IsBlocked() const {
+		// Blocking is checked in Think() frames (usually every 64 millis),
+		// so the blockedTimeoutAt value might be a bit outdated
+		return MillisInBlockedState() > 64 + 16;
+	}
+
+	unsigned MillisUntilBlockedTimeout() const {
+		// Returning a positive BLOCKED_TIMEOUT might be confusing in this case
+		if( !IsBlocked() ) {
+			return 0;
+		}
+		int64_t diff = level.time - blockedTimeoutAt;
+		return diff >= 0 ? (unsigned)diff : 0;
+	}
 protected:
 	const char *Nick() const {
 		return self->r.client ? self->r.client->netname : self->classname;

@@ -63,6 +63,7 @@ Bot::Bot( edict_t *self_, float skillLevel_ )
 	walkCarefullyMovementAction( this ),
 	bunnyStraighteningReachChainMovementAction( this ),
 	bunnyToBestShortcutAreaMovementAction( this ),
+	bunnyToBestFloorClusterPointMovementAction( this ),
 	bunnyInterpolatingReachChainMovementAction( this ),
 	walkOrSlideInterpolatingReachChainMovementAction( this ),
 	combatDodgeSemiRandomlyToTargetMovementAction( this ),
@@ -78,12 +79,14 @@ Bot::Bot( edict_t *self_, float skillLevel_ )
 	similarWorldStateInstanceId( 0 ),
 	lastItemSelectedAt( 0 ),
 	noItemAvailableSince( 0 ),
+	lastBlockedNavTargetReportedAt( 0 ),
 	keptInFovPoint( self_ ),
 	nextRotateInputAttemptAt( 0 ),
 	inputRotationBlockingTimer( 0 ),
 	lastInputRotationFailureAt( 0 ),
 	lastChosenLostOrHiddenEnemy( nullptr ),
-	lastChosenLostOrHiddenEnemyInstanceId( 0 ) {
+	lastChosenLostOrHiddenEnemyInstanceId( 0 ),
+	visitedAreasCache( self_ ) {
 	self->r.client->movestyle = GS_CLASSICBUNNY;
 	// Enable skimming for bots (since it is useful and should not be noticed from a 3rd person POV).
 	self->r.client->ps.pmove.stats[PM_STAT_FEATURES] &= PMFEAT_CORNERSKIMMING;
@@ -660,7 +663,7 @@ void Bot::SayVoiceMessages() {
 //==========================================
 void Bot::OnBlockedTimeout() {
 	self->health = 0;
-	blockedTimeout = level.time + BLOCKED_TIMEOUT;
+	blockedTimeoutAt = level.time + BLOCKED_TIMEOUT;
 	self->die( self, self, self, 100000, vec3_origin );
 	G_Killed( self, self, self, 999, vec3_origin, MOD_SUICIDE );
 	self->nextThink = level.time + 1;
@@ -679,8 +682,9 @@ void Bot::GhostingFrame() {
 	botBrain.ClearGoalAndPlan();
 
 	movementState.Reset();
+	fallbackMovementPath.Deactivate();
 
-	blockedTimeout = level.time + BLOCKED_TIMEOUT;
+	blockedTimeoutAt = level.time + BLOCKED_TIMEOUT;
 	self->nextThink = level.time + 100;
 
 	// wait 4 seconds after entering the level
@@ -809,4 +813,35 @@ void Bot::CallActiveClientThink( const BotInput &input ) {
 
 	ClientThink( self, &ucmd, 0 );
 	self->nextThink = level.time + 1;
+}
+
+void Bot::OnMovementToNavTargetBlocked() {
+	auto *selectedNavEntity = &botBrain.selectedNavEntity;
+	if( !selectedNavEntity->IsValid() || selectedNavEntity->IsEmpty() ) {
+		return;
+	}
+
+	// If a new nav target is set in blocked state, the bot remains blocked
+	// for few millis since the ground acceleration is finite.
+	// Prevent classifying just set nav targets as ones that have led to blocking.
+	if( level.time - lastBlockedNavTargetReportedAt < 400 ) {
+		return;
+	}
+
+	lastBlockedNavTargetReportedAt = level.time;
+
+	// Force replanning
+	botBrain.ClearGoalAndPlan();
+
+	const auto *navEntity = selectedNavEntity->GetNavEntity();
+	if( !navEntity ) {
+		// It is very likely that the nav entity was based on a tactical spot.
+		// Disable all nearby tactical spots for the origin
+		roamingManager.DisableSpotsInRadius( navEntity->Origin(), 144.0f );
+		selectedNavEntity->InvalidateNextFrame();
+		return;
+	}
+
+	botBrain.itemsSelector.MarkAsDisabled( *navEntity, 4000 );
+	selectedNavEntity->InvalidateNextFrame();
 }

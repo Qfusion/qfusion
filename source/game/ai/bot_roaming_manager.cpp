@@ -40,14 +40,13 @@ const Vec3 &BotRoamingManager::GetRoamingSpot() {
 			currTacticalSpotNum = -1;
 		} else {
 			// Check whether it is still reachable
-			const int allowedTravelFlags = self->ai->botRef->allowedAasTravelFlags;
+			const int allowedTravelFlags = self->ai->botRef->AllowedTravelFlags();
 			const int spotAreaNum = tacticalSpotsRegistry->spots[currTacticalSpotNum].aasAreaNum;
-			const int currAreaNum = self->ai->botRef->movementState.entityPhysicsState.CurrAasAreaNum();
-			const int groundedAreaNum = self->ai->botRef->movementState.entityPhysicsState.DroppedToFloorAasAreaNum();
-			const int areaNums[] = { currAreaNum, groundedAreaNum };
+			int fromAreaNums[2] = { 0, 0 };
+			const int numFromAreas = self->ai->botRef->EntityPhysicsState()->PrepareRoutingStartAreas( fromAreaNums );
 			int travelTime = 0;
-			for( int i = 0, end = areaNums[0] == areaNums[1] ? 1 : 2; i < end; ++i ) {
-				travelTime = routeCache->TravelTimeToGoalArea( areaNums[i], spotAreaNum, allowedTravelFlags );
+			for( int i = 0; i < numFromAreas; ++i ) {
+				travelTime = routeCache->TravelTimeToGoalArea( fromAreaNums[i], spotAreaNum, allowedTravelFlags );
 				if( travelTime > 0 ) {
 					break;
 				}
@@ -89,16 +88,6 @@ inline const Vec3 &BotRoamingManager::SetTmpSpotFromArea( int areaNum ) {
 	return tmpSpotOrigin;
 }
 
-inline bool BotRoamingManager::IsTemporarilyDisabled( unsigned spotNum ) {
-	assert( level.time >= visitedAt[spotNum] );
-	return level.time - visitedAt[spotNum] < VISITED_SPOT_EXPIRATION_TIME;
-}
-
-inline bool BotRoamingManager::IsTemporarilyDisabled( unsigned spotNum, int64_t levelTime ) {
-	assert( levelTime >= visitedAt[spotNum] );
-	return levelTime - visitedAt[spotNum] < VISITED_SPOT_EXPIRATION_TIME;
-}
-
 int BotRoamingManager::TrySuggestTacticalSpot() {
 	// Limit the number of tested for reachability spots.
 	// It may lead to performance spikes otherwise.
@@ -126,12 +115,9 @@ int BotRoamingManager::TrySuggestTacticalSpot() {
 		TryResetAllSpotsDisabledState();
 	}
 
-	const int currAreaNum = self->ai->botRef->movementState.entityPhysicsState.CurrAasAreaNum();
-	const int groundedAreaNum = self->ai->botRef->movementState.entityPhysicsState.DroppedToFloorAasAreaNum();
-	const int fromAreas[] = { currAreaNum, groundedAreaNum };
-	const int numFromAreas = fromAreas[0] == fromAreas[1] ? 1 : 2;
-
-	for( int travelFlags: { self->ai->botRef->preferredAasTravelFlags, self->ai->botRef->allowedAasTravelFlags } ) {
+	int fromAreas[2] = { 0, 0 };
+	const int numFromAreas = self->ai->botRef->EntityPhysicsState()->PrepareRoutingStartAreas( fromAreas );
+	for( int travelFlags: self->ai->botRef->TravelFlags() ) {
 		int spotNum = TryFindReachableSpot( candidateSpots, travelFlags, fromAreas, numFromAreas );
 		if( spotNum >= 0 ) {
 			return spotNum;
@@ -226,7 +212,7 @@ int BotRoamingManager::TrySuggestRandomAasArea() {
 
 	int fromAreaNums[] = { currAreaNum, groundedAreaNum };
 	int numFromAreas = fromAreaNums[0] == fromAreaNums[1] ? 2 : 1;
-	for( int travelFlags: { self->ai->botRef->preferredAasTravelFlags, self->ai->botRef->allowedAasTravelFlags } ) {
+	for( int travelFlags: self->ai->botRef->TravelFlags() ) {
 		if( int areaNum = TryFindReachableArea( candidateAreas, travelFlags, fromAreaNums, numFromAreas ) ) {
 			return areaNum;
 		}
@@ -292,7 +278,7 @@ int BotRoamingManager::TrySuggestNearbyAasArea() {
 
 	int fromAreaNums[] = { currAreaNum, groundedAreaNum };
 	int numFromAreas = fromAreaNums[0] == fromAreaNums[1] ? 1 : 2;
-	for( int travelFlags: { self->ai->botRef->preferredAasTravelFlags, self->ai->botRef->allowedAasTravelFlags } ) {
+	for( int travelFlags: self->ai->botRef->TravelFlags() ) {
 		if( int areaNum = TryFindReachableArea( candidateAreas, travelFlags, fromAreaNums, numFromAreas ) ) {
 			return areaNum;
 		}
@@ -344,14 +330,14 @@ void BotRoamingManager::TryResetAllSpotsDisabledState() {
 	ClearVisitedSpots();
 }
 
-void BotRoamingManager::OnNavTargetReached( const Vec3 &navTargetOrigin ) {
+void BotRoamingManager::DisableSpotsInRadius( const vec3_t origin, float radius ) {
 	uint16_t spotNums[TacticalSpotsRegistry::MAX_SPOTS_PER_QUERY];
-	TacticalSpotsRegistry::OriginParams originParams( self, 128.0f, self->ai->botRef->routeCache );
+	TacticalSpotsRegistry::OriginParams originParams( self, radius, self->ai->botRef->routeCache );
 	uint16_t insideSpotNum = std::numeric_limits<uint16_t>::max();
 	const unsigned numNearbySpots = tacticalSpotsRegistry->FindSpotsInRadius( originParams, spotNums, &insideSpotNum );
 	const int64_t levelTime = level.time;
-	// Consider all these spots visited with the only exception:
-	// do not count spots behind a wall / an obstacle as visited.
+
+	// Do not count spots behind a wall / an obstacle as visited.
 	trace_t trace;
 	for( unsigned i = 0; i < numNearbySpots; ++i ) {
 		const unsigned spotNum = spotNums[i];

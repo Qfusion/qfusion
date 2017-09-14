@@ -63,6 +63,8 @@ class BotItemsSelector
 {
 	edict_t *self;
 
+	int64_t disabledForSelectionUntil[MAX_EDICTS];
+
 	float internalEntityWeights[MAX_EDICTS];
 	float overriddenEntityWeights[MAX_EDICTS];
 
@@ -119,7 +121,10 @@ class BotItemsSelector
 	}
 
 public:
-	inline BotItemsSelector( edict_t *self_ ) : self( self_ ) {}
+	inline BotItemsSelector( edict_t *self_ ) : self( self_ ) {
+		// We zero only this array as its content does not get cleared in SuggestGoalEntity() calls
+		memset( disabledForSelectionUntil, 0, sizeof( disabledForSelectionUntil ) );
+	}
 
 	inline void ClearOverriddenEntityWeights() {
 		memset( overriddenEntityWeights, 0, sizeof( overriddenEntityWeights ) );
@@ -128,6 +133,10 @@ public:
 	// This weight overrides internal one computed by this brain itself.
 	inline void OverrideEntityWeight( const edict_t *ent, float weight ) {
 		overriddenEntityWeights[ENTNUM( const_cast<edict_t*>( ent ) )] = weight;
+	}
+
+	inline void MarkAsDisabled( const NavEntity &navEntity, unsigned millis ) {
+		disabledForSelectionUntil[navEntity.Id()] = level.time + millis;
 	}
 
 	SelectedNavEntity SuggestGoalNavEntity( const SelectedNavEntity &currSelectedNavEntity );

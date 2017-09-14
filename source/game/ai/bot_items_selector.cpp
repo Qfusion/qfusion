@@ -14,10 +14,19 @@ void BotItemsSelector::UpdateInternalItemAndGoalWeights() {
 		}
 	}
 
-	FOREACH_NAVENT( goalEnt )
-	{
+	const auto levelTime = level.time;
+	auto *navEntitiesRegistry = NavEntitiesRegistry::Instance();
+	for( auto it = navEntitiesRegistry->begin(), end = navEntitiesRegistry->end(); it != end; ++it ) {
+		const NavEntity *goalEnt = *it;
 		// Picking clients as goal entities is currently disabled
 		if( goalEnt->IsClient() ) {
+			continue;
+		}
+
+		// Do not even try to compute a weight for the disabled item
+		if( disabledForSelectionUntil[goalEnt->Id()] >= levelTime ) {
+			internalEntityWeights[goalEnt->Id()] = 0;
+			internalPickupGoalWeights[goalEnt->Id()] = 0;
 			continue;
 		}
 
@@ -174,9 +183,18 @@ SelectedNavEntity BotItemsSelector::SuggestGoalNavEntity( const SelectedNavEntit
 	UpdateInternalItemAndGoalWeights();
 
 	StaticVector<NavEntityAndWeight, MAX_NAVENTS> rawWeightCandidates;
-	FOREACH_NAVENT( navEnt )
-	{
+	const auto levelTime = level.time;
+	auto *navEntitiesRegistry = NavEntitiesRegistry::Instance();
+	for( auto it = navEntitiesRegistry->begin(), end = navEntitiesRegistry->end(); it != end; ++it ) {
+		const NavEntity *navEnt = *it;
 		if( navEnt->IsDisabled() ) {
+			continue;
+		}
+
+		// We cannot just set a zero internal weight for a temporarily disabled nav entity
+		// (it might be overridden by an external weight, and we should not modify external weights
+		// as script users expect them remaining the same unless explicitly changed via script API)
+		if( disabledForSelectionUntil[navEnt->Id()] >= levelTime ) {
 			continue;
 		}
 

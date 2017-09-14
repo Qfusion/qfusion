@@ -494,7 +494,7 @@ public:
 	}
 };
 
-class alignas ( 2 )BotCombatMoveDirsState
+class alignas ( 2 )BotKeyMoveDirsState
 {
 	uint16_t timeLeft;
 	int8_t forwardMove;
@@ -503,7 +503,7 @@ class alignas ( 2 )BotCombatMoveDirsState
 public:
 	static constexpr uint16_t TIMEOUT_PERIOD = 512;
 
-	inline BotCombatMoveDirsState()
+	inline BotKeyMoveDirsState()
 		: timeLeft( 0 ),
 		forwardMove( 0 ),
 		rightMove( 0 ) {}
@@ -542,8 +542,8 @@ struct alignas ( 4 )BotMovementState {
 	BotPendingLookAtPointState pendingLookAtPointState;
 	static_assert( alignof( BotFlyUntilLandingMovementState ) == 2, "Members order by alignment is broken" );
 	BotFlyUntilLandingMovementState flyUntilLandingMovementState;
-	static_assert( alignof( BotCombatMoveDirsState ) == 2, "Members order by alignment is broken" );
-	BotCombatMoveDirsState combatMoveDirsState;
+	static_assert( alignof( BotKeyMoveDirsState ) == 2, "Members order by alignment is broken" );
+	BotKeyMoveDirsState keyMoveDirsState;
 
 	// A current input rotation kind that is used in this state.
 	// This value is saved to prevent choice jitter trying to apply an input rotation.
@@ -559,7 +559,7 @@ struct alignas ( 4 )BotMovementState {
 		weaponJumpMovementState.Frame( frameTime );
 		pendingLookAtPointState.Frame( frameTime );
 		campingSpotState.Frame( frameTime );
-		combatMoveDirsState.Frame( frameTime );
+		keyMoveDirsState.Frame( frameTime );
 		flyUntilLandingMovementState.Frame( frameTime );
 	}
 
@@ -568,7 +568,7 @@ struct alignas ( 4 )BotMovementState {
 		weaponJumpMovementState.TryDeactivate( self, context );
 		pendingLookAtPointState.TryDeactivate( self, context );
 		campingSpotState.TryDeactivate( self, context );
-		combatMoveDirsState.TryDeactivate( self, context );
+		keyMoveDirsState.TryDeactivate( self, context );
 		flyUntilLandingMovementState.TryDeactivate( self, context );
 	}
 
@@ -577,7 +577,7 @@ struct alignas ( 4 )BotMovementState {
 		weaponJumpMovementState.Deactivate();
 		pendingLookAtPointState.Deactivate();
 		campingSpotState.Deactivate();
-		combatMoveDirsState.Deactivate();
+		keyMoveDirsState.Deactivate();
 		flyUntilLandingMovementState.Deactivate();
 	}
 
@@ -587,7 +587,7 @@ struct alignas ( 4 )BotMovementState {
 		result |= ( (unsigned)( weaponJumpMovementState.IsActive() ) ) << 1;
 		result |= ( (unsigned)( pendingLookAtPointState.IsActive() ) ) << 2;
 		result |= ( (unsigned)( campingSpotState.IsActive() ) ) << 3;
-		// Skip combatMoveDirsState.
+		// Skip keyMoveDirsState.
 		// It either should not affect movement at all if regular movement is chosen,
 		// or should be handled solely by the combat movement code.
 		result |= ( (unsigned)( flyUntilLandingMovementState.IsActive() ) ) << 4;
@@ -801,10 +801,58 @@ struct BotMovementPredictionConstants {
 	static constexpr unsigned MAX_SAVED_LANDING_AREAS = 16;
 };
 
+class FloorClusterBuilder;
+
+class BotSameFloorClusterAreasCache
+{
+	typedef StaticVector<AreaAndScore, 16> CandidateAreasHeap;
+
+	// Candidate areas selected on the previous FindClosestToTargetPoint() invocation
+	// arranged in a heap by a travel time to goal area.
+	// If a bot remains in the same area, candidates computation might be skipped,
+	// and only straight-line walkability tests are to be performed.
+	mutable CandidateAreasHeap oldCandidatesHeap;
+
+	edict_t *const self;
+	const AiAasWorld *aasWorld;
+	mutable int64_t computedAt;
+	mutable Vec3 computedForOrigin;
+	mutable Vec3 computedTargetAreaPoint;
+	mutable int computedForAreaNum;
+	mutable int computedTargetAreaNum;
+	mutable int computedTravelTime;
+
+	bool IsAreaWalkable( BotMovementPredictionContext *context,
+						 const aas_area_t &startArea,
+						 const aas_area_t &testedArea ) const;
+
+	void BuildCandidateAreasHeap( BotMovementPredictionContext *context,
+								  const uint16_t *clusterAreaNums,
+								  int numClusterAreas,
+								  CandidateAreasHeap &result ) const;
+
+	int FindClosestToTargetPoint( BotMovementPredictionContext *context, int *areaNum ) const;
+public:
+	BotSameFloorClusterAreasCache( edict_t *self_ )
+		: self( self_ ),
+		aasWorld( AiAasWorld::Instance() ),
+		computedAt( 0 ),
+		computedForOrigin( 0, 0, 0 ),
+		computedTargetAreaPoint( 0, 0, 0 ),
+		computedForAreaNum( 0 ),
+		computedTargetAreaNum( 0 ),
+		computedTravelTime( 0 ) {}
+
+	// Returns travel time from the target point
+	int GetClosestToTargetPoint( BotMovementPredictionContext *context,
+								 float *resultPoint, int *areaNum = nullptr ) const;
+};
+
 class BotMovementPredictionContext : public BotMovementPredictionConstants
 {
 	friend class BotTriggerPendingWeaponJumpMovementAction;
 
+	edict_t *const self;
 public:
 	static constexpr unsigned MAX_PREDICTED_STATES = 48;
 
@@ -824,6 +872,7 @@ public:
 		static inline HitWhileRunningTestResult Failure() { return HitWhileRunningTestResult(); }
 	};
 
+	BotSameFloorClusterAreasCache sameFloorClusterAreasCache;
 private:
 	struct PredictedMovementAction {
 		AiEntityPhysicsState entityPhysicsState;
@@ -844,8 +893,6 @@ private:
 	StaticVector<BotMovementState, MAX_PREDICTED_STATES> botMovementStatesStack;
 	StaticVector<player_state_t, MAX_PREDICTED_STATES> playerStatesStack;
 	StaticVector<signed char, MAX_PREDICTED_STATES> pendingWeaponsStack;
-
-	edict_t *self;
 
 	template <typename T, unsigned N>
 	class CachesStack
@@ -910,7 +957,7 @@ public:
 	CachesStack<HitWhileRunningTestResult, MAX_PREDICTED_STATES> mayHitWhileRunningCachesStack;
 	CachesStack<bool, MAX_PREDICTED_STATES> canSafelyKeepHighSpeedCachesStack;
 	StaticVector<BotEnvironmentTraceCache, MAX_PREDICTED_STATES> environmentTestResultsStack;
-
+public:
 	struct NearbyTriggersCache {
 		vec3_t lastComputedForMins;
 		vec3_t lastComputedForMaxs;
@@ -928,6 +975,10 @@ public:
 		uint16_t platformEntNums[MAX_GROUP_ENTITIES];
 		uint16_t otherEntNums[MAX_OTHER_ENTITIES];
 
+		int triggerTravelFlags[3];
+		const int *triggerNumEnts[3];
+		const uint16_t *triggerEntNums[3];
+
 		NearbyTriggersCache()
 			: numJumppadEnts( 0 ),
 			numTeleportEnts( 0 ),
@@ -935,11 +986,23 @@ public:
 			numOtherEnts( 0 ) {
 			// Set illegal bounds to force update on first access
 			ClearBounds( lastComputedForMins, lastComputedForMaxs );
+
+			triggerTravelFlags[0] = TRAVEL_JUMPPAD;
+			triggerTravelFlags[1] = TRAVEL_TELEPORT;
+			triggerTravelFlags[2] = TRAVEL_ELEVATOR;
+
+			triggerNumEnts[0] = &numJumppadEnts;
+			triggerNumEnts[1] = &numTeleportEnts;
+			triggerNumEnts[2] = &numPlatformEnts;
+
+			triggerEntNums[0] = &jumppadEntNums[0];
+			triggerEntNums[1] = &teleportEntNums[0];
+			triggerEntNums[2] = &platformEntNums[0];
 		}
 
 		void EnsureValidForBounds( const vec3_t absMins, const vec3_t absMaxs );
 	} nearbyTriggersCache;
-public:
+
 	BotMovementState *movementState;
 	BotMovementActionRecord *record;
 
@@ -1031,6 +1094,7 @@ public:
 
 	inline BotMovementPredictionContext( edict_t *self_ )
 		: self( self_ ),
+		sameFloorClusterAreasCache( self_ ),
 		movementState( nullptr ),
 		record( nullptr ),
 		oldPlayerState( nullptr ),
@@ -1220,19 +1284,16 @@ protected:
 	}
 
 	void CheatingAccelerate( BotMovementPredictionContext *context, float frac ) const;
+
+	void CheatingCorrectVelocity( BotMovementPredictionContext *context, const Vec3 &target ) {
+		CheatingCorrectVelocity( context, target.Data() );
+	}
+	void CheatingCorrectVelocity( BotMovementPredictionContext *context, const vec3_t target );
 	void CheatingCorrectVelocity( BotMovementPredictionContext *context,
 								  float velocity2DDirDotToTarget2DDir,
 								  const Vec3 &toTargetDir2D ) const;
 
 public:
-	struct AreaAndScore {
-		int areaNum;
-		float score;
-		AreaAndScore(): areaNum( 0 ), score( 0.0f ) {}
-		AreaAndScore( int areaNum_, float score_ ) : areaNum( areaNum_ ), score( score_ ) {}
-		bool operator<( const AreaAndScore &that ) const { return score > that.score; }
-	};
-
 	inline BotBaseMovementAction( class Bot *bot_, const char *name_, int debugColor_ = 0 )
 		: bot( bot_ ),
 		name( name_ ),
@@ -1288,17 +1349,198 @@ public:
 class BotDummyMovementAction : public BotBaseMovementAction
 {
 	inline bool ShouldCrouchSlideNow( BotMovementPredictionContext *context ) const;
+	bool HandleSpecialReachability( BotMovementPredictionContext *context, int nextReachNum );
 	bool HandleWalkOrFallReachability( BotMovementPredictionContext *context,
 									   const aas_reachability_t &reach,
 									   float zNoBendScale );
 	bool HandleLongJumpReachability( BotMovementPredictionContext *context, const aas_reachability_t &reach );
 	bool HandleClimbJumpReachability( BotMovementPredictionContext *context, const aas_reachability_t &reach );
 
+	struct ClosestTriggerProblemParams {
+	private:
+		vec3_t origin;
+		int fromAreaNums[2];
+	public:
+		const int numFromAreas;
+		const int goalAreaNum;
+
+		ClosestTriggerProblemParams( const vec3_t origin_, const int *fromAreaNums_, int numFromAreas_, int goalAreaNum_ )
+				: numFromAreas( numFromAreas_ ), goalAreaNum( goalAreaNum_ ) {
+			VectorCopy( origin_, this->origin );
+			fromAreaNums[0] = numFromAreas_ > 0 ? fromAreaNums_[0] : 0;
+			fromAreaNums[1] = numFromAreas_ > 1 ? fromAreaNums_[1] : 0;
+		}
+
+		const float *Origin() const { return origin; }
+		const int *FromAreaNums() const { return fromAreaNums; }
+	};
+
+	int FindClosestToTargetTrigger( BotMovementPredictionContext *context,
+									float *triggerOrigin = nullptr,
+									int *triggerAreaNum = nullptr );
+
+	int FindClosestToTargetTrigger( const ClosestTriggerProblemParams &problemParams,
+									const BotMovementPredictionContext::NearbyTriggersCache &triggersCache,
+									float *triggerOrigin = nullptr,
+									int *triggerAreaNum = nullptr );
+
+	int FindClosestToTargetTrigger( const ClosestTriggerProblemParams &problemParams,
+									float *triggerOrigin,
+									int *triggerAreaNum,
+									const uint16_t *triggerEntNums,
+									int numTriggerEnts );
+
+	void SetupNavTargetAreaMovement( BotMovementPredictionContext *context );
+	void SetupLostNavTargetMovement( BotMovementPredictionContext *context );
+	bool TryFindFallbackMovementPath( BotMovementPredictionContext *context );
+	bool TryFindFallbackStairsPath( BotMovementPredictionContext *context );
+	bool TryFindClosestNonVisitedAreaOrTrigger( BotMovementPredictionContext *context );
+	bool TryBuildClosestTacticalSpotsChain( BotMovementPredictionContext *context );
+	int TryFindFirstClosestTacticalSpot( BotMovementPredictionContext *context, float *spotOrigin, float *reachRadius );
+	void SetupFallbackMovement( BotMovementPredictionContext *context );
 public:
 	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotDummyMovementAction, COLOR_RGB( 0, 0, 0 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override {
 		AI_FailWith( __FUNCTION__, "This method should never get called (PlanMovmementStep() should stop planning)\n" );
+	}
+};
+
+class BotVisitedAreasCache
+{
+	const edict_t *const self;
+
+	// TODO: AAS subsystem should check at loading and guarantee this limit of areas number
+	static constexpr unsigned MAX_AREAS = std::numeric_limits<uint16_t>::max();
+
+	// Storing 64-bit timestamps for every area is not a cache-friendly approach.
+	// A time delta since last visited timestamp is stored instead.
+	// A delta is limited by the array element max value (the delta does not grow in this case).
+	uint16_t millisSinceLastVisited[MAX_AREAS];
+
+	static constexpr unsigned MAX_BOX_AREAS = 384;
+	static constexpr float BOX_SIDE = 512.0f;
+	static constexpr float BOX_HEIGHT = 96.0f;
+
+	static constexpr unsigned AREA_VISITED_TIMEOUT = 7000;
+
+	mutable int boxAreaNums[MAX_BOX_AREAS];
+	mutable int64_t boxAreasComputedAt;
+	mutable vec3_t boxAreasComputedForOrigin;
+	mutable float boxComputedForSide;
+	mutable int numBoxAreas;
+
+	void EnsureBoxAreasCacheValid( const vec3_t origin, float side = BOX_SIDE ) const;
+	void TickAreasVisitedTimes();
+public:
+	BotVisitedAreasCache( const edict_t *self_ )
+		: self( self_ ), boxAreasComputedAt( 0 ), numBoxAreas( 0 ) {
+		std::fill_n( millisSinceLastVisited, MAX_AREAS, std::numeric_limits<uint16_t>::max() );
+	}
+
+	inline void MarkAsVisited( int areaNum ) {
+		assert( (unsigned)areaNum < AiAasWorld::Instance()->NumAreas() );
+		millisSinceLastVisited[areaNum] = 0;
+	}
+
+	inline unsigned MillisSinceLastVisited( int areaNum ) const {
+		assert( (unsigned)areaNum < AiAasWorld::Instance()->NumAreas() );
+		return millisSinceLastVisited[areaNum];
+	}
+
+	void Update();
+
+	struct ProblemParams {
+		vec3_t origin;
+		int fromAreaNums[2];
+	public:
+		const float side;
+		const int numFromAreas;
+
+		ProblemParams( const vec3_t origin_, const int *fromAreaNums_, int numFromAreas_, float side_ = BOX_SIDE )
+			: side( side_ ), numFromAreas( numFromAreas_ ) {
+			VectorCopy( origin_, this->origin );
+			fromAreaNums[0] = numFromAreas_ > 0 ? fromAreaNums_[0] : 0;
+			fromAreaNums[1] = numFromAreas_ > 1 ? fromAreaNums_[1] : 0;
+		}
+
+		const float *Origin() const { return origin; }
+		const int *FromAreaNums() const { return fromAreaNums; }
+	};
+
+	int FindClosestToTargetNonVisitedArea( const ProblemParams &problemParams,
+                                           float *resultPoint = nullptr,
+                                           int *resultAreaNum = nullptr ) const;
+
+	int FindClosestToTargetNonVisitedArea( BotMovementPredictionContext *context,
+                                           vec3_t resultPoint = nullptr,
+                                           int *resultAreaNum = nullptr ) const {
+		const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+		int fromAreaNums[2] = { entityPhysicsState.CurrAasAreaNum(), entityPhysicsState.DroppedToFloorAasAreaNum() };
+		int numFromAreas = fromAreaNums[0] == fromAreaNums[1] ? 1 : 2;
+		ProblemParams problemParams( entityPhysicsState.Origin(), fromAreaNums, numFromAreas );
+		return FindClosestToTargetNonVisitedArea( problemParams, resultPoint, resultAreaNum );
+	}
+};
+
+class BotFallbackMovementPath
+{
+	struct Node {
+		vec3_t origin;
+		int aasAreaNum;
+		float reachRadius;
+	};
+
+	enum Status {
+		COMPLETED,
+		PENDING,
+		INVALID
+	};
+
+	// Can't be defined as constexpr for some arcane reasons
+	// (a library symbol is expected and is not generated)
+	enum { MAX_NODES = 3 };
+
+	Node nodes[MAX_NODES];
+
+	int currNode;
+	int numNodes;
+
+	Status TryDeactivateNode( const Node &node, const edict_t *self, BotMovementPredictionContext *context );
+public:
+	static constexpr auto TRAVEL_FLAGS = TFL_WALK | TFL_WALKOFFLEDGE | TFL_AIR;
+
+	BotFallbackMovementPath(): currNode( 0 ), numNodes( 0 ) {}
+
+	void Activate( const Vec3 &origin, int areaNum = 0, float reachRadius = 48.0f ) {
+		Activate( origin.Data(), areaNum, reachRadius );
+	}
+
+	void Activate( const vec3_t origin, int areaNum = 0, float reachRadius = 48.0f ) {
+		this->numNodes = 1;
+		this->currNode = 0;
+		VectorCopy( origin, nodes[0].origin );
+		nodes[0].aasAreaNum = areaNum ? areaNum: AiAasWorld::Instance()->FindAreaNum( origin );
+		nodes[0].reachRadius = reachRadius;
+	}
+
+	void Activate( const vec3_t *origins, int numNodes_,
+				   const int *areaNums = nullptr,
+				   const float *reachRadii = nullptr );
+
+	void Deactivate() {
+		currNode = 0;
+		numNodes = 0;
+	}
+
+	bool IsActive() const {
+		return currNode < numNodes;
+	}
+
+	void TryDeactivate( const edict_t *self, BotMovementPredictionContext *context = nullptr );
+
+	inline const float *Origin() const {
+		return IsActive() ? nodes[currNode].origin : nullptr;
 	}
 };
 
@@ -1468,7 +1710,9 @@ protected:
 	// TODO: Mark as virtual in base class and mark as final here to avoid a warning about hiding parent member?
 	bool GenericCheckIsActionEnabled( BotMovementPredictionContext *context, BotBaseMovementAction *suggestedAction );
 	bool CheckCommonBunnyingActionPreconditions( BotMovementPredictionContext *context );
-	bool SetupBunnying( const Vec3 &intendedLookVec, BotMovementPredictionContext *context );
+	bool SetupBunnying( const Vec3 &intendedLookVec,
+						BotMovementPredictionContext *context,
+						float maxAccelDotThreshold = 1.0f );
 	bool CanFlyAboveGroundRelaxed( const BotMovementPredictionContext *context ) const;
 	bool CanSetWalljump( BotMovementPredictionContext *context ) const;
 	inline void TrySetWalljump( BotMovementPredictionContext *context );
@@ -1587,6 +1831,24 @@ public:
 		supportsObstacleAvoidance = false;
 	}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
+};
+
+class BotBunnyToBestFloorClusterPointMovementAction: public BotGenericRunBunnyingMovementAction
+{
+	vec3_t spotOrigin;
+	bool hasSpotOrigin;
+public:
+	DECLARE_BUNNYING_MOVEMENT_ACTION_CONSTRUCTOR( BotBunnyToBestFloorClusterPointMovementAction, COLOR_RGB( 255, 0, 255 ) ) {
+		supportsObstacleAvoidance = false;
+		hasSpotOrigin = false;
+	}
+
+	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
+
+	void BeforePlanning() override {
+		BotGenericRunBunnyingMovementAction::BeforePlanning();
+		hasSpotOrigin = false;
+	}
 };
 
 class BotWalkOrSlideInterpolatingReachChainMovementAction : public BotBaseMovementAction

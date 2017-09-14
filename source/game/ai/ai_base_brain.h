@@ -448,8 +448,8 @@ protected:
 	int DroppedToFloorAasAreaNum() const { return self->ai->aiRef->entityPhysicsState->DroppedToFloorAasAreaNum(); }
 	Vec3 DroppedToFloorOrigin() const { return self->ai->aiRef->entityPhysicsState->DroppedToFloorOrigin(); }
 
-	int PreferredAasTravelFlags() const { return self->ai->aiRef->preferredAasTravelFlags; }
-	int AllowedAasTravelFlags() const { return self->ai->aiRef->allowedAasTravelFlags; }
+	int PreferredAasTravelFlags() const { return self->ai->aiRef->PreferredTravelFlags(); }
+	int AllowedAasTravelFlags() const { return self->ai->aiRef->AllowedTravelFlags(); }
 
 	const AiAasWorld *AasWorld() const { return self->ai->aiRef->aasWorld; }
 	AiAasRouteCache *RouteCache() { return self->ai->aiRef->routeCache; }

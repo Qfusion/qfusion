@@ -44,6 +44,15 @@ public:
 			allowedTravelFlags = Bot::ALLOWED_TRAVEL_FLAGS;
 		}
 
+		OriginParams( const vec3_t origin_, const edict_t *originEntity_, float searchRadius_, AiAasRouteCache *routeCache_ )
+			: originEntity( originEntity_ ), searchRadius( searchRadius_ ), routeCache( routeCache_ ) {
+			VectorCopy( origin_, this->origin );
+			const AiAasWorld *aasWorld = AiAasWorld::Instance();
+			originAreaNum = aasWorld->IsLoaded() ? aasWorld->FindAreaNum( originEntity ) : 0;
+			preferredTravelFlags = Bot::PREFERRED_TRAVEL_FLAGS;
+			allowedTravelFlags = Bot::ALLOWED_TRAVEL_FLAGS;
+		}
+
 		inline Vec3 MinBBoxBounds( float minHeightAdvantage = 0.0f ) const {
 			return Vec3( -searchRadius, -searchRadius, minHeightAdvantage ) + origin;
 		}
@@ -188,7 +197,7 @@ public:
 	};
 
 private:
-	static constexpr uint16_t MAX_SPOTS_PER_QUERY = 384;
+	static constexpr uint16_t MAX_SPOTS_PER_QUERY = 768;
 	static constexpr uint16_t MIN_GRID_CELL_SIDE = 512;
 	static constexpr uint16_t MAX_GRID_DIMENSION = 32;
 
@@ -422,7 +431,16 @@ public:
 	int FindEvadeDangerSpots( const OriginParams &originParams, const DodgeDangerProblemParams &problemParams,
 							  vec3_t *spotOrigins, int maxSpots ) const;
 
-	bool FindClosestToTargetWalkableSpot( const OriginParams &originParams, int targetAreaNum, vec3_t *spotOrigin ) const;
+	// Returns an AAS travel time from the spot to the target
+	int FindClosestToTargetWalkableSpot( const OriginParams &originParams, int targetAreaNum, vec3_t spotOrigin ) const;
+
+	static inline void GetSpotsWalkabilityTraceBounds( vec3_t mins, vec3_t maxs ) {
+		// This step size is rather huge but produces satisfiable results espectially on inclined surfaces
+		VectorSet( mins, -2, -2, AI_STEPSIZE + 4 );
+		VectorSet( maxs, +2, +2, +2 );
+		VectorAdd( mins, playerbox_stand_mins, mins );
+		VectorAdd( maxs, playerbox_stand_maxs, maxs );
+	}
 };
 
 #endif
