@@ -4,7 +4,7 @@
 [![Build Status][appveyor-badge]][appveyor-url]
 [![Coverity Scan Build Status][coverity-badge]][coverity-url]
 
-http://www.qfusion.net/
+http://qfusion.github.io/qfusion/
 
 qfusion is the id Tech 2 derived game engine
 
