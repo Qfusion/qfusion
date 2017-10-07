@@ -558,6 +558,7 @@ static void CMod_LoadNodes( cmodel_state_t *cms, lump_t *l ) {
 	int count;
 	dnode_t *in;
 	cnode_t *out;
+	vec_t maxside;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) ) {
@@ -575,6 +576,18 @@ static void CMod_LoadNodes( cmodel_state_t *cms, lump_t *l ) {
 		cms->world_mins[i] = LittleFloat( in->mins[i] );
 		cms->world_maxs[i] = LittleFloat( in->maxs[i] );
 	}
+
+	// Compute extended bounds for builtin box/oct brushes
+	// to avoid rejection by bounds checking in CM_CollideBox()
+	maxside = 0.0f;
+	for( i = 0; i < 3; i++ ) {
+		maxside = max( maxside, fabsf( cms->world_mins[i] ) );
+		maxside = max( maxside, fabsf( cms->world_maxs[i] ) );
+	}
+
+	maxside += 1.0f;
+	VectorSet( cms->entity_brush_mins, -maxside, -maxside, -maxside );
+	VectorSet( cms->entity_brush_maxs, +maxside, +maxside, +maxside );
 
 	for( i = 0; i < count; i++, out++, in++ ) {
 		out->plane = cms->map_planes + LittleLong( in->planenum );

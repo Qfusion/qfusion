@@ -132,6 +132,7 @@ struct cmodel_state_s {
 	cmodel_t map_cmodel_empty;
 	cmodel_t *map_cmodels;          // = &map_cmodel_empty;
 	vec3_t world_mins, world_maxs;
+	vec3_t entity_brush_mins, entity_brush_maxs; // oct/box builtin brushes bounds
 
 	int numbrushes;
 	cbrush_t *map_brushes;
