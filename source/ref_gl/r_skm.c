@@ -1024,7 +1024,7 @@ static skmcacheentry_t *R_AllocSkeletalDataCache( int entNum, int lodNum, const 
 		best_prev = NULL;
 	}
 
-	assert( best->size >= size );
+	assert( best->data_size >= size );
 
 	// unlink this cache entry from the current list
 	if( best_prev ) {
@@ -1480,7 +1480,7 @@ static void R_AddSkeletalModelCacheJob( const entity_t *e, const model_t *mod ) 
 		return;
 	}
 
-	hwTransform = (skmodel->numbones == 0 || glConfig.maxGLSLBones > 0) && !r_temp1->integer;
+	hwTransform = (skmodel->numbones == 0 || glConfig.maxGLSLBones > 0);
 	cache = ( void * )R_AllocSkeletalDataCache( entNum, mod->lodnum, skmodel, hwTransform );
 	if( !cache ) {
 		// probably out of memory
