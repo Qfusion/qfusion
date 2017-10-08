@@ -662,7 +662,7 @@ void RB_RegisterStreamVBOs( void ) {
 		}
 		stream->vbo = R_CreateMeshVBO( &rb,
 									   MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, 0,
-									   vattribs[i], VBO_TAG_STREAM, VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT );
+									   vattribs[i], VBO_TAG_STREAM, 0 );
 		stream->vertexData = RB_Alloc( MAX_STREAM_VBO_VERTS * stream->vbo->vertexSize );
 	}
 }
