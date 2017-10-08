@@ -927,7 +927,13 @@ static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec
 //=======================================================================
 
 typedef struct skmcacheentry_s {
-	size_t size;
+	bool hwTransform;
+	int entNum;
+	int lodNum;
+	int framenum, oldframenum;
+	size_t data_size;
+	const bonepose_t *boneposes, *oldboneposes;
+	const mskmodel_t *skmodel;
 	uint8_t *data;
 	struct skmcacheentry_s *next;
 } skmcacheentry_t;
@@ -953,14 +959,14 @@ void R_InitSkeletalCache( void ) {
 /*
 * R_GetSkeletalCache
 */
-static uint8_t *R_GetSkeletalCache( int entNum, int lodNum ) {
+static skmcacheentry_t *R_GetSkeletalCache( int entNum, int lodNum ) {
 	skmcacheentry_t *cache;
 
 	cache = r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum];
 	if( !cache ) {
 		return NULL;
 	}
-	return cache->data;
+	return cache;
 }
 
 /*
@@ -971,32 +977,38 @@ static uint8_t *R_GetSkeletalCache( int entNum, int lodNum ) {
 * all of the entries in the "allocation" list are moved to the "free" list, to be reused in the
 * later function calls.
 */
-static uint8_t *R_AllocSkeletalDataCache( int entNum, int lodNum, size_t size ) {
+static skmcacheentry_t *R_AllocSkeletalDataCache( int entNum, int lodNum, const mskmodel_t *skmodel, bool hwTransform ) {
 	size_t best_size;
 	skmcacheentry_t *cache, *prev;
 	skmcacheentry_t *best_prev, *best;
-
+	size_t size;
+	
 	best = NULL;
 	best_prev = NULL;
 	best_size = 0;
 
 	assert( !r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] );
 
+	size = sizeof( dualquat_t ) * skmodel->numbones;
+	if( !hwTransform ) {
+		size += sizeof( mat4_t ) * ( skmodel->numbones + skmodel->numblends );
+	}
+
 	// scan the list of free cache entries to see if there's a suitable candidate
 	prev = NULL;
 	cache = r_skmcache_free;
 	while( cache ) {
-		if( cache->size >= size ) {
+		if( cache->data_size >= size ) {
 			// keep track of the cache entry with the minimal overhead
-			if( !best || cache->size < best_size ) {
-				best_size = cache->size;
+			if( !best || cache->data_size < best_size ) {
+				best_size = cache->data_size;
 				best = cache;
 				best_prev = prev;
 			}
 		}
 
 		// return early if we find a perfect fit
-		if( cache->size == size ) {
+		if( cache->data_size == size ) {
 			break;
 		}
 
@@ -1008,7 +1020,7 @@ static uint8_t *R_AllocSkeletalDataCache( int entNum, int lodNum, size_t size ) 
 	if( !best ) {
 		best = R_SKMCacheAlloc( sizeof( *best ) );
 		best->data = R_SKMCacheAlloc( size );
-		best->size = size;
+		best->data_size = size;
 		best_prev = NULL;
 	}
 
@@ -1023,11 +1035,18 @@ static uint8_t *R_AllocSkeletalDataCache( int entNum, int lodNum, size_t size ) 
 	}
 
 	// and link it to the allocation list
+	best->hwTransform = false;
+	best->entNum = entNum;
+	best->lodNum = lodNum;
+	best->skmodel = skmodel;
+	best->boneposes = best->oldboneposes = NULL;
+	best->framenum = best->oldframenum = 0;
 	best->next = r_skmcache_head;
+	best->hwTransform = hwTransform;
 	r_skmcache_head = best;
 	r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] = best;
 
-	return best->data;
+	return best;
 }
 
 /*
@@ -1169,208 +1188,189 @@ static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int
 # pragma fp_contract(off)   // this line is needed on Itanium processors
 #endif
 
+/*
+* R_CacheBoneTransformsJob
+*/
+static void R_CacheBoneTransformsJob( unsigned first, unsigned items, jobarg_t *ja ) {
+	unsigned i, j;
+	const entity_t *e;
+	float frontlerp;
+	bonepose_t tempbonepose[256];
+	const bonepose_t *bp, *oldbp, *bonepose, *oldbonepose, *lerpedbonepose;
+	bonepose_t *out, tp;
+	mskbone_t *bone;
+	const mskmodel_t *skmodel;
+	skmcacheentry_t *cache;
+	mat4_t *bonePoseRelativeMat;
+	dualquat_t *bonePoseRelativeDQ;
+
+	cache = ja->parg;
+	if( !cache ) {
+		return;
+	}
+
+	e = R_NUM2ENT( cache->entNum );
+	skmodel = cache->skmodel;
+	bp = cache->boneposes;
+	oldbp = cache->oldboneposes;
+	frontlerp = 1.0 - e->backlerp;
+
+	// lerp boneposes and store results in cache
+
+	lerpedbonepose = tempbonepose;
+	if( bp == oldbp || frontlerp == 1 ) {
+		if( e->boneposes ) {
+			// assume that parent transforms have already been applied
+			lerpedbonepose = bp;
+		} else {
+			for( i = 0; i < skmodel->numbones; i++ ) {
+				j = i;
+				out = tempbonepose + j;
+				bonepose = bp + j;
+				bone = skmodel->bones + j;
+
+				if( bone->parent >= 0 ) {
+					DualQuat_Multiply( tempbonepose[bone->parent].dualquat, bonepose->dualquat, out->dualquat );
+				} else {
+					DualQuat_Copy( bonepose->dualquat, out->dualquat );
+				}
+			}
+		}
+	} else {
+		if( e->boneposes ) {
+			// lerp, assume that parent transforms have already been applied
+			for( i = 0, out = tempbonepose, bonepose = bp, oldbonepose = oldbp, bone = skmodel->bones; i < skmodel->numbones; i++, out++, bonepose++, oldbonepose++, bone++ ) {
+				DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
+			}
+		} else {
+			// lerp and transform
+			for( i = 0; i < skmodel->numbones; i++ ) {
+				j = i;
+				out = tempbonepose + j;
+				bonepose = bp + j;
+				oldbonepose = oldbp + j;
+				bone = skmodel->bones + j;
+
+				DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
+
+				if( bone->parent >= 0 ) {
+					DualQuat_Copy( out->dualquat, tp.dualquat );
+					DualQuat_Multiply( tempbonepose[bone->parent].dualquat, tp.dualquat, out->dualquat );
+				}
+			}
+		}
+	}
+
+	bonePoseRelativeDQ = ( dualquat_t * )cache->data;
+
+	// generate dual quaternions for all bones
+	for( i = 0; i < skmodel->numbones; i++ ) {
+		DualQuat_Multiply( lerpedbonepose[i].dualquat, skmodel->invbaseposes[i].dualquat, bonePoseRelativeDQ[i] );
+		DualQuat_Normalize( bonePoseRelativeDQ[i] );
+	}
+
+	// check if we need to do transforms on the CPU rather on the GPU
+	if( !cache->hwTransform ) {
+		bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + sizeof( dualquat_t ) * skmodel->numbones );
+
+		// generate matrices for all bones
+		for( i = 0; i < skmodel->numbones; i++ ) {
+			Matrix4_FromDualQuaternion( bonePoseRelativeDQ[i], bonePoseRelativeMat[i] );
+		}
+
+		// generate matrices for all blend combinations
+		R_SkeletalBlendPoses( skmodel->numblends, skmodel->blends, skmodel->numbones, bonePoseRelativeMat );
+	}
+}
+
 //=======================================================================
 
 /*
 * R_DrawSkeletalSurf
 */
 void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceSkeletal_t *drawSurf ) {
-	unsigned int i, j;
-	int framenum = e->frame;
-	int oldframenum = e->oldframe;
-	float backlerp = e->backlerp;
-	float frontlerp = 1.0 - backlerp;
-	bonepose_t tempbonepose[256];
-	const bonepose_t *bp, *oldbp, *bonepose, *oldbonepose, *lerpedbonepose;
-	bonepose_t *out, tp;
-	mskbone_t *bone;
-	mat4_t *bonePoseRelativeMat;
-	dualquat_t *bonePoseRelativeDQ;
-	size_t bonePoseRelativeMatSize, bonePoseRelativeDQSize;
+	mesh_t dynamicMesh;
+	vattribmask_t vattribs;
 	const model_t *mod = drawSurf->model;
 	const mskmodel_t *skmodel = ( const mskmodel_t * )mod->extradata;
 	const mskmesh_t *skmesh = drawSurf->mesh;
-	bool hardwareTransform = skmesh->vbo != NULL && (skmodel->numbones == 0 || glConfig.maxGLSLBones > 0) ? true : false;
-	vattribmask_t vattribs;
+	skmcacheentry_t *cache;	
+	mat4_t *bonePoseRelativeMat;
+	dualquat_t *bonePoseRelativeDQ;
 
-	bonePoseRelativeMat = NULL;
+	cache = NULL;
 	bonePoseRelativeDQ = NULL;
+	bonePoseRelativeMat = NULL;
 
-	bp = e->boneposes;
-	oldbp = e->oldboneposes;
-
-	// not sure if it's really needed
-	if( !skmodel->numframes || bp == skmodel->frames[0].boneposes ) {
-		bp = NULL;
-		framenum = oldframenum = 0;
+	skmodel = ( ( mskmodel_t * )mod->extradata );
+	if( skmodel->numbones && skmodel->numframes > 0 ) {
+		cache = R_GetSkeletalCache( R_ENT2NUM( e ), mod->lodnum );
 	}
 
-	// choose boneposes for lerping
-	if( !skmodel->numframes || !skmodel->numbones ) {
-		framenum = 0;
-		bp = oldbp = NULL;
-	} else if( bp ) {
-		if( !oldbp ) {
-			oldbp = bp;
-		}
-	} else {
-		if( ( framenum >= (int)skmodel->numframes ) || ( framenum < 0 ) ) {
-#ifndef PUBLIC_BUILD
-			ri.Com_DPrintf( "R_DrawBonesFrameLerp %s: no such frame %d\n", mod->name, framenum );
-#endif
-			framenum = 0;
-		}
-		if( ( oldframenum >= (int)skmodel->numframes ) || ( oldframenum < 0 ) ) {
-#ifndef PUBLIC_BUILD
-			ri.Com_DPrintf( "R_DrawBonesFrameLerp %s: no such oldframe %d\n", mod->name, oldframenum );
-#endif
-			oldframenum = 0;
-		}
-
-		bp = skmodel->frames[framenum].boneposes;
-		oldbp = skmodel->frames[oldframenum].boneposes;
+	if( cache ) {
+		bonePoseRelativeDQ = ( dualquat_t * )cache->data;
+		bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + sizeof( dualquat_t ) * skmodel->numbones );
 	}
 
-	if( bp == oldbp && !framenum && skmesh->vbo != NULL ) {
+	if( !cache || ( cache->boneposes == cache->oldboneposes && !cache->framenum ) ) {
 		// fastpath: render static frame 0 as is
-		RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
-
-		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3,
-						 0, skmesh->numverts, 0, skmesh->numtris * 3 );
-
-		return;
-	}
-
-	// see what vertex attribs backend needs
-	vattribs = RB_GetVertexAttribs();
-
-	// cache size
-	if( skmodel->numbones ) {
-		bonePoseRelativeMatSize = sizeof( mat4_t ) * ( skmodel->numbones + skmodel->numblends );
-		bonePoseRelativeDQSize = sizeof( dualquat_t ) * skmodel->numbones;
-
-		// fetch bones tranforms from cache (both matrices and dual quaternions)
-		bonePoseRelativeDQ = ( dualquat_t * )R_GetSkeletalCache( R_ENT2NUM( e ), mod->lodnum );
-		if( bonePoseRelativeDQ ) {
-			bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize );
-		} else {
-			// lerp boneposes and store results in cache
-
-			lerpedbonepose = tempbonepose;
-			if( bp == oldbp || frontlerp == 1 ) {
-				if( e->boneposes ) {
-					// assume that parent transforms have already been applied
-					lerpedbonepose = bp;
-				} else {
-					for( i = 0; i < skmodel->numbones; i++ ) {
-						j = i;
-						out = tempbonepose + j;
-						bonepose = bp + j;
-						bone = skmodel->bones + j;
-
-						if( bone->parent >= 0 ) {
-							DualQuat_Multiply( tempbonepose[bone->parent].dualquat, bonepose->dualquat, out->dualquat );
-						} else {
-							DualQuat_Copy( bonepose->dualquat, out->dualquat );
-						}
-					}
-				}
-			} else {
-				if( e->boneposes ) {
-					// lerp, assume that parent transforms have already been applied
-					for( i = 0, out = tempbonepose, bonepose = bp, oldbonepose = oldbp, bone = skmodel->bones; i < skmodel->numbones; i++, out++, bonepose++, oldbonepose++, bone++ ) {
-						DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
-					}
-				} else {
-					// lerp and transform
-					for( i = 0; i < skmodel->numbones; i++ ) {
-						j = i;
-						out = tempbonepose + j;
-						bonepose = bp + j;
-						oldbonepose = oldbp + j;
-						bone = skmodel->bones + j;
-
-						DualQuat_Lerp( oldbonepose->dualquat, bonepose->dualquat, frontlerp, out->dualquat );
-
-						if( bone->parent >= 0 ) {
-							DualQuat_Copy( out->dualquat, tp.dualquat );
-							DualQuat_Multiply( tempbonepose[bone->parent].dualquat, tp.dualquat, out->dualquat );
-						}
-					}
-				}
-			}
-
-			bonePoseRelativeDQ = ( dualquat_t * )R_AllocSkeletalDataCache( R_ENT2NUM( e ), mod->lodnum,
-																		   bonePoseRelativeDQSize + bonePoseRelativeMatSize );
-
-			// generate dual quaternions for all bones
-			for( i = 0; i < skmodel->numbones; i++ ) {
-				DualQuat_Multiply( lerpedbonepose[i].dualquat, skmodel->invbaseposes[i].dualquat, bonePoseRelativeDQ[i] );
-				DualQuat_Normalize( bonePoseRelativeDQ[i] );
-			}
-
-			// CPU transforms
-			if( !hardwareTransform ) {
-				bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize );
-
-				// generate matrices for all bones
-				for( i = 0; i < skmodel->numbones; i++ ) {
-					Matrix4_FromDualQuaternion( bonePoseRelativeDQ[i], bonePoseRelativeMat[i] );
-				}
-
-				// generate matrices for all blend combinations
-				R_SkeletalBlendPoses( skmodel->numblends, skmodel->blends, skmodel->numbones, bonePoseRelativeMat );
-			}
+		if( skmesh->vbo ) {
+			RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
+			RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3,
+				 0, skmesh->numverts, 0, skmesh->numtris * 3 );
+			return;
 		}
 	}
 
-	if( hardwareTransform ) {
+	if( bonePoseRelativeDQ && cache->hwTransform && skmesh->vbo ) {
+		// another fastpath: transform the initial pose on the GPU
 		RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
 		RB_SetBonesData( skmodel->numbones, bonePoseRelativeDQ, skmesh->maxWeights );
 		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3,
 						 0, skmesh->numverts, 0, skmesh->numtris * 3 );
-	} else {
-		mesh_t dynamicMesh;
-
-		memset( &dynamicMesh, 0, sizeof( dynamicMesh ) );
-
-		dynamicMesh.elems = skmesh->elems;
-		dynamicMesh.numElems = skmesh->numtris * 3;
-		dynamicMesh.numVerts = skmesh->numverts;
-
-		R_GetTransformBufferForMesh( &dynamicMesh, true,
-									 ( vattribs & ( VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT ) ) ? true : false,
-									 ( vattribs & VATTRIB_SVECTOR_BIT ) ? true : false );
-
-		if( bonePoseRelativeMat ) {
-			R_SkeletalTransformVerts( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-									  ( vec_t * )skmesh->xyzArray[0], ( vec_t * )( dynamicMesh.xyzArray ) );
-
-			if( vattribs & VATTRIB_SVECTOR_BIT ) {
-				R_SkeletalTransformNormalsAndSVecs( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-													( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ),
-													( vec_t * )skmesh->sVectorsArray[0], ( vec_t * )( dynamicMesh.sVectorsArray ) );
-			} else if( vattribs & VATTRIB_NORMAL_BIT ) {
-				R_SkeletalTransformNormals( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-											( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ) );
-			}
-		} else {
-			memcpy( ( vec_t * )( dynamicMesh.xyzArray ), ( vec_t * )skmesh->xyzArray[0], sizeof( vec4_t ) * skmesh->numverts );
-
-			if( vattribs & VATTRIB_SVECTOR_BIT ) {
-				memcpy( ( vec_t * )( dynamicMesh.normalsArray ), ( vec_t * )skmesh->normalsArray[0], sizeof( vec4_t ) * skmesh->numverts );
-				memcpy( ( vec_t * )( dynamicMesh.sVectorsArray ), ( vec_t * )skmesh->sVectorsArray[0], sizeof( vec4_t ) * skmesh->numverts );
-			} else if( vattribs & VATTRIB_NORMAL_BIT ) {
-				memcpy( ( vec_t * )( dynamicMesh.normalsArray ), ( vec_t * )skmesh->normalsArray[0], sizeof( vec4_t ) * skmesh->numverts );
-			}
-		}
-
-		dynamicMesh.stArray = skmesh->stArray;
-
-		RB_AddDynamicMesh( e, shader, fog, portalSurface, shadowBits, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
-
-		RB_FlushDynamicMeshes();
+		return;
 	}
+
+	// the slowest path: transform the initial pose on the CPU
+
+	// see what vertex attribs backend needs
+	vattribs = RB_GetVertexAttribs();
+
+	memset( &dynamicMesh, 0, sizeof( dynamicMesh ) );
+	dynamicMesh.elems = skmesh->elems;
+	dynamicMesh.numElems = skmesh->numtris * 3;
+	dynamicMesh.numVerts = skmesh->numverts;
+	dynamicMesh.stArray = skmesh->stArray;
+
+	R_GetTransformBufferForMesh( &dynamicMesh, true,
+		 ( vattribs & ( VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT ) ) ? true : false,
+		 ( vattribs & VATTRIB_SVECTOR_BIT ) ? true : false );
+
+	if( bonePoseRelativeMat ) {
+		R_SkeletalTransformVerts( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
+			  ( vec_t * )skmesh->xyzArray[0], ( vec_t * )( dynamicMesh.xyzArray ) );
+
+		if( vattribs & VATTRIB_SVECTOR_BIT ) {
+			R_SkeletalTransformNormalsAndSVecs( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
+					( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ),
+					( vec_t * )skmesh->sVectorsArray[0], ( vec_t * )( dynamicMesh.sVectorsArray ) );
+		} else if( vattribs & VATTRIB_NORMAL_BIT ) {
+			R_SkeletalTransformNormals( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
+					( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ) );
+		}
+	} else {
+		memcpy( ( vec_t * )( dynamicMesh.xyzArray ), ( vec_t * )skmesh->xyzArray[0], sizeof( vec4_t ) * skmesh->numverts );
+
+		if( vattribs & VATTRIB_SVECTOR_BIT ) {
+			memcpy( ( vec_t * )( dynamicMesh.normalsArray ), ( vec_t * )skmesh->normalsArray[0], sizeof( vec4_t ) * skmesh->numverts );
+			memcpy( ( vec_t * )( dynamicMesh.sVectorsArray ), ( vec_t * )skmesh->sVectorsArray[0], sizeof( vec4_t ) * skmesh->numverts );
+		} else if( vattribs & VATTRIB_NORMAL_BIT ) {
+			memcpy( ( vec_t * )( dynamicMesh.normalsArray ), ( vec_t * )skmesh->normalsArray[0], sizeof( vec4_t ) * skmesh->numverts );
+		}
+	}
+
+	RB_AddDynamicMesh( e, shader, fog, portalSurface, shadowBits, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_FlushDynamicMeshes();
 }
 
 /*
@@ -1457,6 +1457,87 @@ void R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec
 }
 
 /*
+* R_AddSkeletalModelCacheJob
+*/
+static void R_AddSkeletalModelCacheJob( const entity_t *e, const model_t *mod ) {
+	int entNum;
+	int framenum, oldframenum;
+	const mskmodel_t *skmodel;
+	const bonepose_t *bp, *oldbp;
+	skmcacheentry_t *cache;
+	bool hwTransform;
+	jobarg_t ja = { 0 };
+
+	entNum = R_ENT2NUM( e );
+	skmodel = ( ( mskmodel_t * )mod->extradata );
+	if( !skmodel->numbones || skmodel->numframes == 0 ) {
+		return;
+	}
+
+	cache = R_GetSkeletalCache( entNum, mod->lodnum );
+	if( cache != NULL ) {
+		// already cached
+		return;
+	}
+
+	hwTransform = (skmodel->numbones == 0 || glConfig.maxGLSLBones > 0) && !r_temp1->integer;
+	cache = ( void * )R_AllocSkeletalDataCache( entNum, mod->lodnum, skmodel, hwTransform );
+	if( !cache ) {
+		// probably out of memory
+		return;
+	}
+
+	framenum = e->frame;
+	oldframenum = e->oldframe;
+	bp = e->boneposes;
+	oldbp = e->oldboneposes;
+
+	// not sure if it's really needed
+	if( !skmodel->numframes || bp == skmodel->frames[0].boneposes ) {
+		bp = NULL;
+		framenum = oldframenum = 0;
+	}
+
+	// choose boneposes for lerping
+	if( !skmodel->numframes || !skmodel->numbones ) {
+		framenum = 0;
+		bp = oldbp = NULL;
+	} else if( bp ) {
+		if( !oldbp ) {
+			oldbp = bp;
+		}
+	} else {
+		if( ( framenum >= (int)skmodel->numframes ) || ( framenum < 0 ) ) {
+#ifndef PUBLIC_BUILD
+			ri.Com_DPrintf( "R_DrawBonesFrameLerp %s: no such frame %d\n", mod->name, framenum );
+#endif
+			framenum = 0;
+		}
+		if( ( oldframenum >= (int)skmodel->numframes ) || ( oldframenum < 0 ) ) {
+#ifndef PUBLIC_BUILD
+			ri.Com_DPrintf( "R_DrawBonesFrameLerp %s: no such oldframe %d\n", mod->name, oldframenum );
+#endif
+			oldframenum = 0;
+		}
+
+		bp = skmodel->frames[framenum].boneposes;
+		oldbp = skmodel->frames[oldframenum].boneposes;
+	}
+
+	cache->boneposes = bp;
+	cache->oldboneposes = oldbp;
+	cache->framenum = framenum;
+	cache->oldframenum = oldframenum;
+
+	if( bp == oldbp && !framenum ) {
+		return;
+	}
+
+	ja.parg = cache;
+	RJ_ScheduleJob( &R_CacheBoneTransformsJob, &ja, 1 );
+}
+
+/*
 * R_AddSkeletalModelToDrawList
 */
 bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
@@ -1509,8 +1590,12 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
 	}
 #endif
 
+	// run quaternions lerping job in the background
+	R_AddSkeletalModelCacheJob( e, mod );
+
 	for( i = 0, mesh = skmodel->meshes; i < (int)skmodel->nummeshes; i++, mesh++ ) {
 		shader = NULL;
+
 		if( e->customSkin ) {
 			shader = R_FindShaderForSkinFile( e->customSkin, mesh->name );
 		} else if( e->customShader ) {
