@@ -46,7 +46,7 @@ static void RJ_IssueJobQuitCmd( unsigned thread );
 static void *R_JobThreadProc( void *param );
 
 /*
-* RJ_IssueJobCmd
+* RJ_Init
 */
 void RJ_Init( void ) {
 	int i;
@@ -60,7 +60,7 @@ void RJ_Init( void ) {
 }
 
 /*
-* RJ_IssueJobCmd
+* RJ_ScheduleJob
 */
 void RJ_ScheduleJob( jobfunc_t job, jobarg_t *arg, unsigned items ) {
 	unsigned first;
@@ -80,9 +80,9 @@ void RJ_ScheduleJob( jobfunc_t job, jobarg_t *arg, unsigned items ) {
 }
 
 /*
-* RJ_IssueJobCmd
+* RJ_FinishJobs
 */
-void RJ_CompleteJobs( void ) {
+void RJ_FinishJobs( void ) {
 	int i;
 
 	for( i = 0; i < NUM_JOB_THREADS; i++ )
@@ -90,7 +90,7 @@ void RJ_CompleteJobs( void ) {
 }
 
 /*
-* RJ_IssueJobCmd
+* RJ_Shutdown
 */
 void RJ_Shutdown( void ) {
 	int i;
@@ -99,7 +99,7 @@ void RJ_Shutdown( void ) {
 		RJ_IssueJobQuitCmd( i );
 	}
 
-	RJ_CompleteJobs();
+	RJ_FinishJobs();
 
 	for( i = 0; i < NUM_JOB_THREADS; i++ ) {
 		ri.Thread_Join( job_thread[i] );

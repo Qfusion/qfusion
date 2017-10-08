@@ -1242,7 +1242,7 @@ void R_RenderView( const refdef_t *fd ) {
 		rf.stats.t_add_entities += ( ri.Sys_Milliseconds() - msec );
 	}
 
-	RJ_CompleteJobs();
+	RJ_FinishJobs();
 
 	if( !shadowMap ) {
 		// now set  the real far clip value and reload view matrices

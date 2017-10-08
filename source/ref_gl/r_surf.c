@@ -937,7 +937,7 @@ void R_DrawWorld( void ) {
 		//
 		RJ_ScheduleJob( &R_CullVisLeavesJob, &ja, rsh.worldBrushModel->numvisleafs );
 
-		RJ_CompleteJobs();
+		RJ_FinishJobs();
 
 		if( speeds ) {
 			rf.stats.t_cull_world_nodes += ri.Sys_Milliseconds() - msec2;
@@ -955,7 +955,7 @@ void R_DrawWorld( void ) {
 
 	R_PostCullVisLeaves();
 
-	RJ_CompleteJobs();
+	RJ_FinishJobs();
 
 	if( speeds ) {
 		rf.stats.t_cull_world_surfs += ri.Sys_Milliseconds() - msec2;

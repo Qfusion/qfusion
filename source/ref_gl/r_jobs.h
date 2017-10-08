@@ -26,13 +26,14 @@
 typedef struct {
 	int iarg;
 	unsigned uarg;
+	void *parg;
 } jobarg_t;
 
 typedef void (*jobfunc_t)( unsigned first, unsigned items, jobarg_t * );
 
 void RJ_Init( void );
 void RJ_ScheduleJob( jobfunc_t job, jobarg_t *arg, unsigned items );
-void RJ_CompleteJobs( void );
+void RJ_FinishJobs( void );
 void RJ_Shutdown( void );
 
 #endif // R_JOBS_H
