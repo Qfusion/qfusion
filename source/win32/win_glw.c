@@ -46,6 +46,30 @@ glwstate_t glw_state;
 
 #pragma warning( disable : 4055 )
 
+static int GLimp_GetWindowStyle( bool fullscreen, bool borderless, int *pexstyle ) {
+	int stylebits;
+	int exstyle;
+	HWND parentHWND = glw_state.parenthWnd;
+
+	if( fullscreen ) {
+		exstyle = WS_EX_TOPMOST;
+		stylebits = ( WS_POPUP | WS_VISIBLE );
+		parentHWND = NULL;
+	} else {
+		if( parentHWND ) {
+			exstyle = 0;
+			stylebits = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE;
+		} else {
+			exstyle = 0;
+			stylebits = WINDOW_STYLE;
+		}
+	}
+
+	*pexstyle = exstyle;
+
+	return stylebits;
+}
+
 static void GLimp_SetWindowSize( bool fullscreen, bool borderless ) {
 	RECT r;
 	int stylebits;
@@ -58,28 +82,12 @@ static void GLimp_SetWindowSize( bool fullscreen, bool borderless ) {
 		return;
 	}
 
-	if( fullscreen ) {
-		exstyle = WS_EX_TOPMOST;
-		stylebits = ( WS_POPUP | WS_VISIBLE );
-		parentHWND = NULL;
-	} else {
-		if( borderless ) {
-			exstyle = WS_EX_TOPMOST;
-			stylebits = ( WS_POPUP | WS_VISIBLE );
-			parentHWND = NULL;
-		} else if( parentHWND ) {
-			exstyle = 0;
-			stylebits = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE;
-		} else {
-			exstyle = 0;
-			stylebits = WINDOW_STYLE;
-		}
-	}
-
 	r.left = 0;
 	r.top = 0;
 	r.right  = width;
 	r.bottom = height;
+
+	stylebits = GLimp_GetWindowStyle( fullscreen, borderless, &exstyle );
 
 	AdjustWindowRect( &r, stylebits, FALSE );
 
@@ -183,7 +191,7 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen ) {
 	glConfig.fullScreen = false;
 
 	// do a CDS if needed
-	if( fullscreen ) {
+	if( fullscreen && !glConfig.borderless ) {
 		int a;
 		DEVMODE dm;
 
@@ -217,7 +225,8 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen ) {
 	}
 
 	ChangeDisplaySettings( 0, 0 );
-	GLimp_SetWindowSize( false, glConfig.borderless );
+	GLimp_SetWindowSize( fullscreen, glConfig.borderless );
+	glConfig.fullScreen = fullscreen;
 
 	return rserr_ok;
 }
@@ -253,25 +262,26 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.fullScreen = ( fullscreen ? GLimp_SetFullscreenMode( displayFrequency, fullscreen ) == rserr_ok : false );
-							glConfig.stereoEnabled = stereo;
-							glConfig.borderless = borderless;
+	glConfig.stereoEnabled = stereo;
+	glConfig.borderless = borderless;
 
-							if( r_stencilbits->integer == 8 || r_stencilbits->integer == 16 ) {
+	GLimp_SetFullscreenMode( displayFrequency, fullscreen );
+
+	if( r_stencilbits->integer == 8 || r_stencilbits->integer == 16 ) {
 		glConfig.stencilBits = r_stencilbits->integer;
 	} else {
 		glConfig.stencilBits = 0;
 	}
 
-							GLimp_CreateWindow( false );
+	GLimp_CreateWindow( false );
 
-	                        // init all the gl stuff for the window
-							if( !GLimp_InitGL() ) {
+	// init all the gl stuff for the window
+	if( !GLimp_InitGL() ) {
 		ri.Com_Printf( "GLimp_CreateWindow() - GLimp_InitGL failed\n" );
 		return false;
 	}
 
-							return ( fullscreen == glConfig.fullScreen ? rserr_ok : rserr_invalid_fullscreen );
+	return ( fullscreen == glConfig.fullScreen ? rserr_ok : rserr_invalid_fullscreen );
 }
 
 /*

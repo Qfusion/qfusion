@@ -971,22 +971,30 @@ void IN_Frame( void ) {
 		return;
 	}
 
-	if( vid_fullscreen && ( !vid_fullscreen->integer || cl_parent_hwnd ) ) {
-		extern cvar_t *in_grabinconsole;
+	if( vid_fullscreen ) {
+		if( !vid_fullscreen->integer || cl_parent_hwnd ) {
+			extern cvar_t *in_grabinconsole;
 
-		// if we have a parent window (say, a browser plugin window) and
-		// the window is not focused, deactivate the input
-		if( cl_parent_hwnd && !AppFocused ) {
-			if( in_appactive ) {
-				IN_Activate( false );
-			}
-		} else if( in_grabinconsole->integer || cls.key_dest != key_console ) {
-			if( !in_appactive && ActiveApp ) {
-				IN_Activate( true );
+			// if we have a parent window (say, a browser plugin window) and
+			// the window is not focused, deactivate the input
+			if( cl_parent_hwnd && !AppFocused ) {
+				if( in_appactive ) {
+					IN_Activate( false );
+				}
+			} else if( in_grabinconsole->integer || cls.key_dest != key_console ) {
+				if( !in_appactive && ActiveApp ) {
+					IN_Activate( true );
+				}
+			} else {
+				if( in_appactive ) {
+					IN_Activate( false );
+				}
 			}
 		} else {
-			if( in_appactive ) {
+			if( !ActiveApp && in_appactive ) {
 				IN_Activate( false );
+			} else if( ActiveApp && !in_appactive ) {
+				IN_Activate( true );
 			}
 		}
 	}
