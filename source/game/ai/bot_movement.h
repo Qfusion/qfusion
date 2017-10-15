@@ -205,11 +205,6 @@ public:
 	}
 
 	inline const Vec3 &AlreadyComputedAngles() const {
-#ifndef PUBLIC_BUILD
-		if( !hasAlreadyComputedAngles ) {
-			AI_FailWith( "BotInput::AlreadyComputedAngles()", "The angles have not been computed yet\n" );
-		}
-#endif
 		return alreadyComputedAngles;
 	}
 
@@ -231,11 +226,6 @@ public:
 	}
 
 	inline const Vec3 &IntendedLookDir() const {
-#ifndef PUBLIC_BUILD
-		if( isLookDirSet ) {
-			AI_FailWith( "BotInput::IntendedLookDir()", "The intended look dir has not been set yet\n" );
-		}
-#endif
 		return intendedLookDir;
 	}
 };

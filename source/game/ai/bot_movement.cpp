@@ -1307,7 +1307,7 @@ inline void BotBaseMovementAction::Assert( bool condition, const char *message )
 #ifdef ENABLE_MOVEMENT_ASSERTIONS
 	if( !condition ) {
 		if( message ) {
-			AI_FailWith("BotBaseMovementAction::Assert()", "An assertion has failed\n", message );
+			AI_FailWith("BotBaseMovementAction::Assert()", "An assertion has failed: %s\n", message );
 		} else {
 			AI_FailWith("BotBaseMovementAction::Assert()", "An assertion has failed\n");
 		}
@@ -1743,7 +1743,7 @@ void BotDummyMovementAction::PlanPredictionStep( BotMovementPredictionContext *c
 				if( entityPhysicsState.Speed2D() > context->GetRunSpeed() ) {
 					// If there is a substantial 2D speed, looks like the bot is jumping over a gap
 					Vec3 intendedLookDir( entityPhysicsState.Velocity() );
-					intendedLookDir *= 1.0f / entityPhysicsState.Speed2D();
+					intendedLookDir *= 1.0f / entityPhysicsState.Speed();
 					botInput->SetIntendedLookDir( intendedLookDir, true );
 				} else {
 					// Force falling down
