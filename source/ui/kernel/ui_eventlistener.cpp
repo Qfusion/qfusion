@@ -60,7 +60,7 @@ void BaseEventListener::StartTargetPropertySound( Element *target, const String 
 		}
 	}
 
-	trap::S_StartLocalSound( sound.CString() + 1 );
+	trap::S_StartLocalSound( trap::S_RegisterSound( sound.CString() + 1 ), 1.0 );
 }
 
 static BaseEventListener ui_baseEventListener;

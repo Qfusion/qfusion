@@ -401,7 +401,7 @@ ALuint S_GetALSource( const src_t *src ) {
 /*
 * S_StartLocalSound
 */
-void S_StartLocalSound( sfx_t *sfx ) {
+void S_StartLocalSound( sfx_t *sfx, float fvol ) {
 	src_t *src;
 
 	if( !sfx ) {
@@ -415,7 +415,7 @@ void S_StartLocalSound( sfx_t *sfx ) {
 
 	S_UseBuffer( sfx );
 
-	source_setup( src, sfx, SRCPRI_LOCAL, -1, 0, 1.0, ATTN_NONE );
+	source_setup( src, sfx, SRCPRI_LOCAL, -1, 0, fvol, ATTN_NONE );
 	qalSourcei( src->source, AL_SOURCE_RELATIVE, AL_TRUE );
 
 	qalSourcePlay( src->source );

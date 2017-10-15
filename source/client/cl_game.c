@@ -472,6 +472,7 @@ void CL_GameModule_Init( void ) {
 	import.S_StartFixedSound = CL_SoundModule_StartFixedSound;
 	import.S_StartRelativeSound = CL_SoundModule_StartRelativeSound;
 	import.S_StartGlobalSound = CL_SoundModule_StartGlobalSound;
+	import.S_StartLocalSound = CL_SoundModule_StartLocalSound;
 	import.S_Update = CL_GameModule_SoundUpdate;
 	import.S_AddLoopSound = CL_SoundModule_AddLoopSound;
 	import.S_StartBackgroundTrack = CL_SoundModule_StartBackgroundTrack;

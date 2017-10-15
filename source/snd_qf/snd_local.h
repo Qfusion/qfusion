@@ -286,7 +286,7 @@ void SF_SetAttenuationModel( int model, float maxdistance, float refdistance );
 void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation );
 void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol );
-void SF_StartLocalSound( const char *sound );
+void SF_StartLocalSound( sfx_t *sfx, float fvol );
 void SF_Clear( void );
 void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation );
 void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump );

@@ -170,10 +170,11 @@ void S_IssueSetListenerCmd( sndCmdPipe_t *queue, const vec3_t origin,
 /*
 * S_IssueStartLocalSoundCmd
 */
-void S_IssueStartLocalSoundCmd( sndCmdPipe_t *queue, int sfx ) {
+void S_IssueStartLocalSoundCmd( sndCmdPipe_t *queue, int sfx, float fvol ) {
 	sndCmdStartLocalSound_t cmd;
 	cmd.id = SND_CMD_START_LOCAL_SOUND;
 	cmd.sfx = sfx;
+	cmd.fvol = fvol;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }
 

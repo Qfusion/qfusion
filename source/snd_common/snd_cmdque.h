@@ -121,6 +121,7 @@ typedef struct {
 typedef struct {
 	int id;
 	int sfx;
+	float fvol;
 } sndCmdStartLocalSound_t;
 
 typedef struct {
@@ -244,7 +245,7 @@ void S_IssueSetAttenuationCmd( sndCmdPipe_t *queue, int model,
 void S_IssueSetEntitySpatializationCmd( sndCmdPipe_t *queue, const smdCmdSpatialization_t *spat );
 void S_IssueSetListenerCmd( sndCmdPipe_t *queue, const vec3_t origin,
 							const vec3_t velocity, const mat3_t axis, bool avidump );
-void S_IssueStartLocalSoundCmd( sndCmdPipe_t *queue, int sfx );
+void S_IssueStartLocalSoundCmd( sndCmdPipe_t *queue, int sfx, float fvol );
 void S_IssueStartFixedSoundCmd( sndCmdPipe_t *queue, int sfx, const vec3_t origin,
 								int channel, float fvol, float attenuation );
 void S_IssueStartGlobalSoundCmd( sndCmdPipe_t *queue, int sfx, int channel,

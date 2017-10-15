@@ -434,7 +434,7 @@ struct sfx_s *CL_SoundModule_RegisterSound( const char *sample );
 void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
 void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
-void CL_SoundModule_StartLocalSound( const char *s );
+void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, float fvol );
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate,
 								unsigned short width, unsigned short channels, const uint8_t *data, bool music );
