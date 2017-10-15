@@ -36,9 +36,9 @@ void CM_InitBoxHull( cmodel_state_t *cms ) {
 	cms->box_brush->numsides = 6;
 	cms->box_brush->brushsides = cms->box_brushsides;
 	cms->box_brush->contents = CONTENTS_BODY;
+
 	// Make sure CM_CollideBox() will not reject the brush by its bounds
-	VectorCopy( cms->world_mins, cms->box_brush->mins );
-	VectorCopy( cms->world_maxs, cms->box_brush->maxs );
+	ClearBounds( cms->box_brush->maxs, cms->box_brush->mins );
 
 	cms->box_markbrushes[0] = cms->box_brush;
 
@@ -90,9 +90,9 @@ void CM_InitOctagonHull( cmodel_state_t *cms ) {
 	cms->oct_brush->numsides = 10;
 	cms->oct_brush->brushsides = cms->oct_brushsides;
 	cms->oct_brush->contents = CONTENTS_BODY;
+
 	// Make sure CM_CollideBox() will not reject the brush by its bounds
-	VectorCopy( cms->world_mins, cms->oct_brush->mins );
-	VectorCopy( cms->world_maxs, cms->oct_brush->maxs );
+	ClearBounds( cms->box_brush->maxs, cms->box_brush->mins );
 
 	cms->oct_markbrushes[0] = cms->oct_brush;
 
