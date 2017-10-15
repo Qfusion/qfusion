@@ -285,7 +285,7 @@ public:
 	}
 
 	void startLocalSound( const asstring_t &s, float volume ) {
-		trap::S_StartLocalSound( trap::S_RegisterSound( s.buffer ), volume );
+		trap::S_StartLocalSound( trap::S_RegisterSound( s.buffer ), 0, volume );
 	}
 
 	void startBackgroundTrack( const asstring_t &intro, const asstring_t &loop, bool stopIfPlaying ) {

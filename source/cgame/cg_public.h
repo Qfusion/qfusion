@@ -210,7 +210,7 @@ typedef struct {
 	void ( *S_StartFixedSound )( struct sfx_s *sfx, const vec3_t origin, int entchannel, float fvol, float attenuation );
 	void ( *S_StartRelativeSound )( struct sfx_s *sfx, int entnum, int entchannel, float fvol, float attenuation );
 	void ( *S_StartGlobalSound )( struct sfx_s *sfx, int entchannel, float fvol );
-	void ( *S_StartLocalSound )( struct sfx_s *sfx, float fvol );
+	void ( *S_StartLocalSound )( struct sfx_s *sfx, int channel, float fvol );
 	void ( *S_Update )( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity );
 	void ( *S_AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop, int mode );

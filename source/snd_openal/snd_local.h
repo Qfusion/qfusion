@@ -110,8 +110,7 @@ struct sfx_s *S_RegisterSound( const char *sample );
 void S_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 void S_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
 void S_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
-
-void S_StartLocalSound( sfx_t *sfx, float fvol );
+void S_StartLocalSound( sfx_t *sfx, int channel, float fvol );
 
 void S_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
@@ -280,7 +279,7 @@ void SF_SetAttenuationModel( int model, float maxdistance, float refdistance );
 void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation );
 void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol );
-void SF_StartLocalSound( sfx_t *sfx, float fvol );
+void SF_StartLocalSound( sfx_t *sfx, int channel, float fvol );
 void SF_Clear( void );
 void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation );
 void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump );

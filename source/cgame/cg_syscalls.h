@@ -396,8 +396,8 @@ static inline void trap_S_StartGlobalSound( struct sfx_s *sfx, int channel, floa
 	CGAME_IMPORT.S_StartGlobalSound( sfx, channel, fvol );
 }
 
-static inline void trap_S_StartLocalSound( struct sfx_s *sfx, float fvol ) {
-	CGAME_IMPORT.S_StartLocalSound( sfx, fvol );
+static inline void trap_S_StartLocalSound( struct sfx_s *sfx, int channel, float fvol ) {
+	CGAME_IMPORT.S_StartLocalSound( sfx, channel, fvol );
 }
 
 static inline void trap_S_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation ) {

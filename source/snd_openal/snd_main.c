@@ -60,7 +60,7 @@ static void SF_Play_f( void ) {
 	while( i < trap_Cmd_Argc() ) {
 		Q_strncpyz( name, trap_Cmd_Argv( i ), sizeof( name ) );
 
-		S_StartLocalSound( name, 1.0 );
+		S_StartLocalSound( name, CHAN_AUTO, 1.0 );
 		i++;
 	}
 }
@@ -394,9 +394,9 @@ void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol ) {
 /*
 * SF_StartLocalSound
 */
-void SF_StartLocalSound( sfx_t *sfx, float fvol ) {
+void SF_StartLocalSound( sfx_t *sfx, int channel, float fvol ) {
 	if( sfx != NULL ) {
-		S_IssueStartLocalSoundCmd( s_cmdPipe, sfx->id, fvol );
+		S_IssueStartLocalSoundCmd( s_cmdPipe, sfx->id, channel, fvol );
 	}
 }
 

@@ -59,7 +59,7 @@ static void CG_SC_ChatPrint( void ) {
 	}
 
 	if( cg_chatBeep->integer ) {
-		trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
+		trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
 	}
 }
 
@@ -77,7 +77,7 @@ static void CG_SC_TVChatPrint( void ) {
 
 	CG_LocalPrint( S_COLOR_RED "[TV]" S_COLOR_WHITE "%s" S_COLOR_GREEN ": %s", name, text );
 	if( cg_chatBeep->integer ) {
-		trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
+		trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
 	}
 }
 

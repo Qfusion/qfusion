@@ -138,7 +138,7 @@ typedef struct {
 	void ( *StartFixedSound )( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 	void ( *StartRelativeSound )( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
 	void ( *StartGlobalSound )( struct sfx_s *sfx, int channel, float fvol );
-	void ( *StartLocalSound )( struct sfx_s *sfx, float fvol );
+	void ( *StartLocalSound )( struct sfx_s *sfx, int channel, float fvol );
 	void ( *AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
 	// cinema

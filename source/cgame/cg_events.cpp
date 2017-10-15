@@ -785,7 +785,7 @@ void CG_AddAnnouncerEvent( struct sfx_s *sound, bool queued ) {
 	}
 
 	if( !queued ) {
-		trap_S_StartGlobalSound( sound, CHAN_ANNOUNCER, cg_volume_announcer->value );
+		trap_S_StartLocalSound( sound, CHAN_ANNOUNCER, cg_volume_announcer->value );
 		cg_announcerEventsDelay = CG_ANNOUNCER_EVENTS_FRAMETIME; // wait
 		return;
 	}
@@ -815,7 +815,7 @@ void CG_ReleaseAnnouncerEvents( void ) {
 		// play the event
 		sound = cg_announcerEvents[cg_announcerEventsCurrent & CG_MAX_ANNOUNCER_EVENTS_MASK].sound;
 		if( sound ) {
-			trap_S_StartGlobalSound( sound, CHAN_ANNOUNCER, cg_volume_announcer->value );
+			trap_S_StartLocalSound( sound, CHAN_ANNOUNCER, cg_volume_announcer->value );
 			cg_announcerEventsDelay = CG_ANNOUNCER_EVENTS_FRAMETIME; // wait
 		}
 		cg_announcerEventsCurrent++;
@@ -856,7 +856,7 @@ static void CG_StartVoiceTokenEffect( int entNum, int type, int vsay ) {
 	}
 
 	// played as it was made by the 1st person player
-	trap_S_StartGlobalSound( CG_MediaSfx( sound ), CHAN_AUTO, cg_volume_voicechats->value );
+	trap_S_StartLocalSound( CG_MediaSfx( sound ), CHAN_AUTO, cg_volume_voicechats->value );
 }
 
 //==================================================================
@@ -1591,13 +1591,13 @@ static void CG_FirePlayerStateEvents( void ) {
 					break;
 				}
 				if( parm < 4 ) { // hit of some caliber
-					trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxWeaponHit[parm] ), CHAN_AUTO, cg_volume_hitsound->value );
+					trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxWeaponHit[parm] ), CHAN_AUTO, cg_volume_hitsound->value );
 					CG_ScreenCrosshairDamageUpdate();
 				} else if( parm == 4 ) {  // killed an enemy
-					trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxWeaponKill ), CHAN_AUTO, cg_volume_hitsound->value );
+					trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxWeaponKill ), CHAN_AUTO, cg_volume_hitsound->value );
 					CG_ScreenCrosshairDamageUpdate();
 				} else {  // hit a teammate
-					trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxWeaponHitTeam ), CHAN_AUTO, cg_volume_hitsound->value );
+					trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxWeaponHitTeam ), CHAN_AUTO, cg_volume_hitsound->value );
 					if( cg_showhelp->integer ) {
 						if( random() <= 0.5f ) {
 							CG_CenterPrint( "Don't shoot at members of your team!" );

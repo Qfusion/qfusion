@@ -104,7 +104,7 @@ typedef struct {
 	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
 
 	struct sfx_s *( *S_RegisterSound )( const char *name );
-	void ( *S_StartLocalSound )( struct sfx_s *sfx, float fvol );
+	void ( *S_StartLocalSound )( struct sfx_s *sfx, int channel, float fvol );
 	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop, int mode );
 	void ( *S_StopBackgroundTrack )( void );
 
