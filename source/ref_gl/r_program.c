@@ -268,7 +268,7 @@ void RP_PrecachePrograms( void ) {
 
 	token = COM_Parse_r( tempbuf, sizeof( tempbuf ), ptr );
 	if( strcmp( token, glConfig.applicationName ) ) {
-		ri.Com_DPrintf( "Ignoring %s: unknown application name \"%s\", expected \"%s\"\n",
+		ri.Com_DPrintf( "Ignoring GLSL cache: unknown application name \"%s\", expected \"%s\"\n",
 						token, glConfig.applicationName );
 		return;
 	}
@@ -277,7 +277,7 @@ void RP_PrecachePrograms( void ) {
 	version = atoi( token );
 	if( version != GLSL_BITS_VERSION ) {
 		// ignore cache files with mismatching version number
-		ri.Com_DPrintf( "Ignoring %s: found version %i, expected %i\n", version, GLSL_BITS_VERSION );
+		ri.Com_DPrintf( "Ignoring GLSL cache: found version %i, expected %i\n", version, GLSL_BITS_VERSION );
 	} else {
 		while( 1 ) {
 			int type;
