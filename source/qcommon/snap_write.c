@@ -528,7 +528,8 @@ static float SNAP_GainForAttenuation( float dist, float attenuation ) {
 /*
 * SNAP_SnapCullSoundEntity
 */
-static bool SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, const vec3_t listener_origin, float attenuation ) {
+static bool SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, const vec3_t listener_origin, 
+									float attenuation ) {
 	float gain, dist;
 
 	if( !attenuation ) {
@@ -548,7 +549,8 @@ static bool SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, const v
 /*
 * SNAP_SnapCullEntity
 */
-static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *clent, client_snapshot_t *frame, const vec3_t vieworg, uint8_t *fatpvs ) {
+static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *clent, client_snapshot_t *frame, 
+								const vec3_t vieworg, int viewarea, uint8_t *fatpvs ) {
 	uint8_t *areabits;
 	bool snd_cull_only;
 	bool snd_culled;
@@ -585,9 +587,9 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 	if( ent->r.areanum < 0 ) {
 		return true;
 	}
-	if( frame->clientarea >= 0 ) {
+	if( viewarea >= 0 ) {
 		// this is the same as CM_AreasConnected but portal's visibility included
-		areabits = frame->areabits + frame->clientarea * CM_AreaRowSize( cms );
+		areabits = frame->areabits + viewarea * CM_AreaRowSize( cms );
 		if( !( areabits[ent->r.areanum >> 3] & ( 1 << ( ent->r.areanum & 7 ) ) ) ) {
 			// doors can legally straddle two areas, so we may need to check another one
 			if( ent->r.areanum2 < 0 || !( areabits[ent->r.areanum2 >> 3] & ( 1 << ( ent->r.areanum2 & 7 ) ) ) ) {
@@ -624,18 +626,11 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 /*
 * SNAP_AddEntitiesVisibleAtOrigin
 */
-static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg, client_snapshot_t *frame, snapshotEntityNumbers_t *entList ) {
+static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg, 
+											int viewarea, client_snapshot_t *frame, snapshotEntityNumbers_t *entList ) {
 	int entNum;
 	edict_t *ent;
 	uint8_t *pvs;
-	int leafnum = -1, clusternum = -1, clientarea = -1;
-
-	// find the client's PVS
-	if( !frame->allentities ) {
-		leafnum = CM_PointLeafnum( cms, vieworg );
-		clusternum = CM_LeafCluster( cms, leafnum );
-		clientarea = CM_LeafArea( cms, leafnum );
-	}
 
 	pvs = alloca( CM_ClusterRowSize( cms ) );
 	SNAP_FatPVS( cms, vieworg, pvs );
@@ -652,7 +647,7 @@ static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, e
 
 		if( !frame->allentities ) {
 			// always add the client entity, even if SVF_NOCLIENT
-			if( ( ent != clent ) && SNAP_SnapCullEntity( cms, ent, clent, frame, vieworg, pvs ) ) {
+			if( ( ent != clent ) && SNAP_SnapCullEntity( cms, ent, clent, frame, vieworg, viewarea, pvs ) ) {
 				continue;
 			}
 		}
@@ -674,7 +669,7 @@ static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, e
 			// if it's a portal entity and not a mirror,
 			// recursively add everything from its camera positiom
 			if( !VectorCompare( ent->s.origin, ent->s.origin2 ) ) {
-				SNAP_AddEntitiesVisibleAtOrigin( cms, gi, clent, ent->s.origin2, frame, entList );
+				SNAP_AddEntitiesVisibleAtOrigin( cms, gi, clent, ent->s.origin2, ent->r.areanum, frame, entList );
 			}
 		}
 	}
@@ -683,9 +678,10 @@ static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, e
 /*
 * SNAP_BuildSnapEntitiesList
 */
-static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg, client_snapshot_t *frame, snapshotEntityNumbers_t *entList ) {
+static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg, 
+										client_snapshot_t *frame, snapshotEntityNumbers_t *entList ) {
 	int entNum;
-	int leafnum = -1, clientarea = -1;
+	int leafnum, clientarea;
 
 	entList->numSnapshotEntities = 0;
 	memset( entList->entityAddedToSnapList, 0, sizeof( entList->entityAddedToSnapList ) );
@@ -710,8 +706,8 @@ static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_
 	}
 
 	// if the client is outside of the world, don't send him any entity
-	if( frame->clientarea >= 0 || frame->allentities ) {
-		SNAP_AddEntitiesVisibleAtOrigin( cms, gi, clent, vieworg, frame, entList );
+	if( clientarea >= 0 || frame->allentities ) {
+		SNAP_AddEntitiesVisibleAtOrigin( cms, gi, clent, vieworg, clientarea, frame, entList );
 	}
 
 	SNAP_SortSnapList( entList );
