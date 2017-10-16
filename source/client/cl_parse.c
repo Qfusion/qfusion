@@ -381,7 +381,7 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 	if( FS_CheckPakExtension( filename ) != cls.download.requestpak ) {
 		const char *requested = cls.download.requestpak ? "pak" : "normal";
 		const char *got = cls.download.requestpak ? "normal" : "pak";
-		Com_Printf( "Got a %s file when requesting a % file, not downloading\n", got, requested );
+		Com_Printf( "Got '%s' file after requesting '%s', not downloading\n", got, requested );
 		CL_DownloadDone();
 		return;
 	}
