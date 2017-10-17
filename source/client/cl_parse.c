@@ -1197,7 +1197,7 @@ ACTION MESSAGES
 */
 void CL_ParseServerMessage( msg_t *msg ) {
 	if( cl_shownet->integer == 1 ) {
-		Com_Printf( "%i ", msg->cursize );
+		Com_Printf( "%" PRIuPTR " ", (uintptr_t)msg->cursize );
 	} else if( cl_shownet->integer >= 2 ) {
 		Com_Printf( "------------------\n" );
 	}
@@ -1210,12 +1210,12 @@ void CL_ParseServerMessage( msg_t *msg ) {
 
 		cmd = MSG_ReadUint8( msg );
 		if( cl_debug_serverCmd->integer & 4 ) {
-			Com_Printf( "%3i:CMD %i %s\n", msg->readcount - 1, cmd, !svc_strings[cmd] ? "bad" : svc_strings[cmd] );
+			Com_Printf( "%3" PRIi64 ":CMD %i %s\n", (int64_t)(msg->readcount - 1), cmd, !svc_strings[cmd] ? "bad" : svc_strings[cmd] );
 		}
 
 		if( cl_shownet->integer >= 2 ) {
 			if( !svc_strings[cmd] ) {
-				Com_Printf( "%3i:BAD CMD %i\n", msg->readcount - 1, cmd );
+				Com_Printf( "%3" PRIi64 ":BAD CMD %i\n", (int64_t)(msg->readcount - 1), cmd );
 			} else {
 				SHOWNET( msg, svc_strings[cmd] );
 			}
@@ -1275,7 +1275,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 				cls.reliableAcknowledge = MSG_ReadUintBase128( msg );
 				cls.ucmdAcknowledged = MSG_ReadUintBase128( msg );
 				if( cl_debug_serverCmd->integer & 4 ) {
-					Com_Printf( "svc_clcack:reliable cmd ack:%i ucmdack:%i\n", cls.reliableAcknowledge, cls.ucmdAcknowledged );
+					Com_Printf( "svc_clcack:reliable cmd ack:%" PRIi64 " ucmdack:%" PRIi64 "\n", cls.reliableAcknowledge, cls.ucmdAcknowledged );
 				}
 				break;
 

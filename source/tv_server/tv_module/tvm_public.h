@@ -75,13 +75,13 @@ typedef struct {
 #define MAX_PARSE_ENTITIES  1024
 typedef struct snapshot_s {
 	bool valid;             // cleared if delta parsing was invalid
-	int serverFrame;
+	int64_t serverFrame;
 	int64_t serverTime;    // time in the server when frame was created
 	int64_t ucmdExecuted;
 	bool delta;
 	bool allentities;
 	bool multipov;
-	int deltaFrameNum;
+	int64_t deltaFrameNum;
 	size_t areabytes;
 	uint8_t *areabits;             // portalarea visibility bits
 	int numplayers;

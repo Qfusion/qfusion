@@ -694,15 +694,15 @@ void Key_Event( int key, bool down, int64_t time ) {
 
 		if( kb ) {
 			if( in_debug && in_debug->integer ) {
-				Com_Printf( "key:%i down:%i time:%i %s\n", key, down, time, kb );
+				Com_Printf( "key:%i down:%i time:%" PRIi64 " %s\n", key, down, time, kb );
 			}
 
 			if( kb[0] == '+' ) { // button commands add keynum and time as a parm
 				if( down ) {
-					Q_snprintfz( cmd, sizeof( cmd ), "%s %i %u\n", kb, key, time );
+					Q_snprintfz( cmd, sizeof( cmd ), "%s %i %" PRIi64 "\n", kb, key, time );
 					Cbuf_AddText( cmd );
 				} else if( keydown[key] ) {
-					Q_snprintfz( cmd, sizeof( cmd ), "-%s %i %u\n", kb + 1, key, time );
+					Q_snprintfz( cmd, sizeof( cmd ), "-%s %i %" PRIi64 "\n", kb + 1, key, time );
 					Cbuf_AddText( cmd );
 				}
 			} else if( down ) {

@@ -377,7 +377,7 @@ void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg
 	}
 
 	if( pingserver && pingserver->pingTimeStamp ) { // valid ping
-		int64_t ping = Sys_Milliseconds() - pingserver->pingTimeStamp;
+		int ping = (int)(Sys_Milliseconds() - pingserver->pingTimeStamp);
 		CL_UIModule_AddToServerList( adrString, va( "\\\\ping\\\\%i%s", ping, s ) );
 		pingserver->pingTimeStamp = 0;
 		pingserver->lastValidPing = Com_DaysSince1900();
@@ -386,7 +386,7 @@ void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg
 
 	// assume LAN response
 	if( NET_IsLANAddress( address ) && ( localQueryTimeStamp + LAN_SERVER_PINGING_TIMEOUT > Sys_Milliseconds() ) ) {
-		int64_t ping = Sys_Milliseconds() - localQueryTimeStamp;
+		int ping = (int)(Sys_Milliseconds() - localQueryTimeStamp);
 		CL_UIModule_AddToServerList( adrString, va( "\\\\ping\\\\%i%s", ping, s ) );
 		return;
 	}
