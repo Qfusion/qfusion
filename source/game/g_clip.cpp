@@ -143,6 +143,13 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 		return clipent;
 	}
 
+	// always use the latest information about moving world brushes
+	if( ent->movetype == MOVETYPE_PUSH ) {
+		clipent->r = ent->r;
+		clipent->s = ent->s;
+		return clipent;
+	}
+
 	// clamp delta time inside the backed up limits
 	backTime = abs( deltaTime );
 	if( g_antilag_maxtimedelta->integer ) {
