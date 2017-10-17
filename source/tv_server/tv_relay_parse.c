@@ -39,7 +39,7 @@ static void TV_Relay_ParseFrame( relay_t *relay, msg_t *msg ) {
 	// ignore older than already received
 	if( relay->lastFrame && snap->serverFrame <= relay->lastFrame->serverFrame ) {
 		if( relay->lastFrame->serverFrame == snap->serverFrame ) {
-			Com_Printf( "Frame %i received twice\n", relay->lastFrame->serverFrame );
+			Com_Printf( "Frame %" PRIi64 " received twice\n", relay->lastFrame->serverFrame );
 		} else {
 			Com_Printf( "Dropping older frame snap\n" );
 		}
