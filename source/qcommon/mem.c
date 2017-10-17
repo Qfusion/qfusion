@@ -152,7 +152,7 @@ ATTRIBUTE_MALLOC void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t align
 	}
 
 	if( developer_memory && developer_memory->integer ) {
-		Com_DPrintf( "Mem_Alloc: pool %s, file %s:%i, size %i bytes\n", pool->name, filename, fileline, size );
+		Com_DPrintf( "Mem_Alloc: pool %s, file %s:%i, size %" PRIuPTR " bytes\n", pool->name, filename, fileline, (uintptr_t)size );
 	}
 
 	QMutex_Lock( memMutex );
@@ -254,10 +254,12 @@ void _Mem_Free( void *data, int musthave, int canthave, const char *filename, in
 	assert( *( (uint8_t *) mem + sizeof( memheader_t ) + mem->size ) == MEMHEADER_SENTINEL2 );
 
 	if( mem->sentinel1 != MEMHEADER_SENTINEL1 ) {
-		_Mem_Error( "Mem_Free: trashed header sentinel 1 (alloc at %s:%i, free at %s:%i)", mem->filename, mem->fileline, filename, fileline );
+		_Mem_Error( "Mem_Free: trashed header sentinel 1 (alloc at %s:%i, free at %s:%i)", 
+			mem->filename, mem->fileline, filename, fileline );
 	}
 	if( *( (uint8_t *)mem + sizeof( memheader_t ) + mem->size ) != MEMHEADER_SENTINEL2 ) {
-		_Mem_Error( "Mem_Free: trashed header sentinel 2 (alloc at %s:%i, free at %s:%i)", mem->filename, mem->fileline, filename, fileline );
+		_Mem_Error( "Mem_Free: trashed header sentinel 2 (alloc at %s:%i, free at %s:%i)", 
+			mem->filename, mem->fileline, filename, fileline );
 	}
 
 	pool = mem->pool;
@@ -269,7 +271,8 @@ void _Mem_Free( void *data, int musthave, int canthave, const char *filename, in
 	}
 
 	if( developer_memory && developer_memory->integer ) {
-		Com_DPrintf( "Mem_Free: pool %s, alloc %s:%i, free %s:%i, size %i bytes\n", pool->name, mem->filename, mem->fileline, filename, fileline, mem->size );
+		Com_DPrintf( "Mem_Free: pool %s, alloc %s:%i, free %s:%i, size %" PRIuPTR " bytes\n", 
+			pool->name, mem->filename, mem->fileline, filename, fileline, (uintptr_t)mem->size );
 	}
 
 	QMutex_Lock( memMutex );
@@ -566,7 +569,7 @@ static void Mem_PrintStats( void ) {
 			Com_Printf( "listing temporary memory allocations for %s:\n", pool->name );
 
 			for( mem = tempMemPool->chain; mem; mem = mem->next )
-				Com_Printf( "%10i bytes allocated at %s:%i\n", mem->size, mem->filename, mem->fileline );
+				Com_Printf( "%10" PRIuPTR " bytes allocated at %s:%i\n", (uintptr_t)mem->size, mem->filename, mem->fileline );
 		}
 	}
 }
@@ -596,7 +599,7 @@ static void Mem_PrintPoolStats( mempool_t *pool, int listchildren, int listalloc
 
 	if( listallocations ) {
 		for( mem = pool->chain; mem; mem = mem->next )
-			Com_Printf( "%10i bytes allocated at %s:%i\n", mem->size, mem->filename, mem->fileline );
+			Com_Printf( "%10" PRIuPTR " bytes allocated at %s:%i\n", (uintptr_t)mem->size, mem->filename, mem->fileline );
 	}
 
 	if( listchildren ) {
@@ -648,7 +651,7 @@ static void MemList_f( void ) {
 		}
 	}
 
-	Com_Printf( "MemList_f: unknown pool name '%s'. Usage: [all|pool]\n", name, Cmd_Argv( 0 ) );
+	Com_Printf( "MemList_f: unknown pool name '%s'. Usage: %s [all|pool]\n", name, Cmd_Argv( 0 ) );
 }
 
 static void MemStats_f( void ) {

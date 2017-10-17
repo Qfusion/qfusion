@@ -382,8 +382,8 @@ public:
 					if( behaviourType == asBEHAVE_ADDREF || behaviourType == asBEHAVE_RELEASE ) {
 						continue;
 					}
-					const char *decl = va( "\t%s;&s\r\n", function->GetDeclaration( false ),
-										   ( behaviourType == asBEHAVE_FACTORY ? " /* factory */ " : "" ) );
+					const char *decl = va( "\t%s;%s\r\n", function->GetDeclaration( false ),
+										( behaviourType == asBEHAVE_FACTORY ? " /* factory */ " : "" ) );
 					trap::FS_Write( decl, strlen( decl ), filenum );
 				}
 

@@ -50,7 +50,7 @@ const char * const svc_strings[256] =
 
 void _SHOWNET( msg_t *msg, const char *s, int shownet ) {
 	if( shownet >= 2 ) {
-		Com_Printf( "%3i:%s\n", msg->readcount - 1, s );
+		Com_Printf( "%3i:%s\n", (int)(msg->readcount - 1), s );
 	}
 }
 
@@ -407,7 +407,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 	// read areabits
 	len = (size_t)MSG_ReadUint8( msg );
 	if( len > newframe->areabytes ) {
-		Com_Error( ERR_DROP, "Invalid areabits size: %u > %u", len, newframe->areabytes );
+		Com_Error( ERR_DROP, "Invalid areabits size: %" PRIuPTR " > %" PRIuPTR, (uintptr_t)len, (uintptr_t)newframe->areabytes );
 	}
 	memset( newframe->areabits, 0, newframe->areabytes );
 	MSG_ReadData( msg, newframe->areabits, len );

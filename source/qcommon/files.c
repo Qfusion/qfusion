@@ -1430,7 +1430,7 @@ static int FS_ReadPK3File( uint8_t *buf, size_t len, filehandle_t *fh ) {
 			read = fread( zipEntry->readBuffer, 1, block, fh->fstream );
 
 			if( read != block ) {
-				Sys_Error( "FS_Read: can't read %i bytes", block );
+				Sys_Error( "FS_Read: can't read %" PRIuPTR " bytes", (uintptr_t)block );
 			}
 
 			zipEntry->restReadCompressed -= block;
@@ -1558,7 +1558,7 @@ int FS_Write( const void *buffer, size_t len, int file ) {
 
 	written = fwrite( buf, 1, len, fh->fstream );
 	if( written != len ) {
-		Sys_Error( "FS_Write: can't write %i bytes", len );
+		Sys_Error( "FS_Write: can't write %" PRIuPTR " bytes", (uintptr_t)len );
 	}
 
 	fh->offset += written;

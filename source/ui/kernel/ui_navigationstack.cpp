@@ -98,7 +98,7 @@ void DocumentCache::purgeAllDocuments() {
 	// DEBUG
 	if( UI_Main::Get()->debugOn() ) {
 		if( !documentSet.empty() ) {
-			Com_Printf( "Warning: DocumentCache::purgeAllDocuments: still have %d documents in the cache\n", documentSet.size() );
+			Com_Printf( "Warning: DocumentCache::purgeAllDocuments: still have %d documents in the cache\n", (int)documentSet.size() );
 			for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
 				Com_Printf( "    %s (refcount %d)\n", ( *it )->getName().c_str(), ( *it )->getReference() );
 		}

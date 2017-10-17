@@ -1154,12 +1154,12 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con ) {
 			Q_strncatz( resp_stream->header_buf, "Content-Range: bytes */*\r\n",
 						sizeof( resp_stream->header_buf ) );
 		} else {
-			Q_snprintfz( vastr, sizeof( vastr ), "Content-Range: bytes */%i\r\n", content_length );
+			Q_snprintfz( vastr, sizeof( vastr ), "Content-Range: bytes */" PRIuPTR "\r\n", (uintptr_t)content_length );
 			Q_strncatz( resp_stream->header_buf, vastr, sizeof( resp_stream->header_buf ) );
 		}
 	} else if( response->code == HTTP_RESP_PARTIAL_CONTENT ) {
-		Q_snprintfz( vastr, sizeof( vastr ), "Content-Range: bytes %i-%i/%i\r\n",
-					 response->stream.content_range.begin, response->stream.content_range.end, content_length );
+		Q_snprintfz( vastr, sizeof( vastr ), "Content-Range: bytes %" PRIuPTR "-%" PRIuPTR "/" PRIuPTR "i\r\n",
+					(uintptr_t)response->stream.content_range.begin, (uintptr_t)response->stream.content_range.end, (uintptr_t)content_length );
 		Q_strncatz( resp_stream->header_buf, vastr, sizeof( resp_stream->header_buf ) );
 		content_length = response->stream.content_range.end - response->stream.content_range.begin;
 	}
@@ -1176,7 +1176,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con ) {
 	}
 
 	// resource length
-	Q_strncatz( resp_stream->header_buf, va( "Content-Length: %i\r\n", content_length ),
+	Q_strncatz( resp_stream->header_buf, va( "Content-Length: %" PRIuPTR "\r\n", (uintptr_t)content_length ),
 				sizeof( resp_stream->header_buf ) );
 
 	if( response->file ) {
