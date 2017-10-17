@@ -128,8 +128,9 @@ static sfx_t *SF_FindName( const char *name ) {
 	if( !name ) {
 		S_Error( "SF_FindName: NULL" );
 	}
-	if( !name[0] != '\0' ) {
-		assert( name[0] != '\0' );
+
+	if( name[0] == '\0' ) {
+		assert( name[0] == '\0' );
 		S_Error( "SF_FindName: empty name" );
 	}
 
