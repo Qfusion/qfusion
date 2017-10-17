@@ -349,7 +349,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 	deltaframe = NULL;
 
 	if( showNet == 3 ) {
-		Com_Printf( "   frame:%i  old:%i%s\n", newframe->serverFrame, newframe->deltaFrameNum,
+		Com_Printf( "   frame:%" PRIi64 "  old:%" PRIi64 "%s\n", newframe->serverFrame, newframe->deltaFrameNum,
 					( newframe->delta ? "" : " no delta" ) );
 	}
 

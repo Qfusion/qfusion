@@ -219,7 +219,7 @@ static void SV_Demo_Stop( bool cancel, bool silent ) {
 	} else {
 		// write some meta information about the match/demo
 		SV_SetDemoMetaKeyValue( "hostname", sv.configstrings[CS_HOSTNAME] );
-		SV_SetDemoMetaKeyValue( "localtime", va( "%u", svs.demo.localtime ) );
+		SV_SetDemoMetaKeyValue( "localtime", va( "%" PRIi64, (int64_t)svs.demo.localtime ) );
 		SV_SetDemoMetaKeyValue( "multipov", "1" );
 		SV_SetDemoMetaKeyValue( "duration", va( "%u", (int)ceil( svs.demo.duration / 1000.0f ) ) );
 		SV_SetDemoMetaKeyValue( "mapname", sv.configstrings[CS_MAPNAME] );

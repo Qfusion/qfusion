@@ -432,7 +432,7 @@ void NavigationStack::hideStack() {
 // DEBUG
 void NavigationStack::printStack() {
 	for( DocumentStack::iterator it = documentStack.begin(); it != documentStack.end(); ++it )
-		Com_Printf( "  %d %s\n", std::distance( documentStack.begin(), it ), ( *it )->getName().c_str() );
+		Com_Printf( "  %d %s\n", (int)std::distance( documentStack.begin(), it ), ( *it )->getName().c_str() );
 }
 
 }
