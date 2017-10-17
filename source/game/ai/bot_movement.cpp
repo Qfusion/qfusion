@@ -419,7 +419,7 @@ void BotMovementPredictionContext::ShowBuiltPlanPath() const {
 	for( unsigned i = 0, j = 1; j < predictedMovementActions.size(); ++i, ++j ) {
 		int color;
 		switch( i % 3 ) {
-			case 0: color = COLOR_RGB( 192, 0, 0 ); break;
+			case 0: default: color = COLOR_RGB( 192, 0, 0 ); break;
 			case 1: color = COLOR_RGB( 0, 192, 0 ); break;
 			case 2: color = COLOR_RGB( 0, 0, 192 ); break;
 		}
