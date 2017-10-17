@@ -183,7 +183,7 @@ void SV_AddReliableCommandsToMessage( client_t *client, msg_t *msg ) {
 	}
 
 	if( sv_debug_serverCmd->integer ) {
-		Com_Printf( "sv_cl->reliableAcknowledge: %i sv_cl->reliableSequence:%i\n", client->reliableAcknowledge,
+		Com_Printf( "sv_cl->reliableAcknowledge: %" PRIi64" sv_cl->reliableSequence:%" PRIi64"\n", client->reliableAcknowledge,
 					client->reliableSequence );
 	}
 

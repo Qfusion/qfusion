@@ -241,7 +241,7 @@ static void PF_ConfigString( int index, const char *val ) {
 
 	len = strlen( val );
 	if( len >= sizeof( sv.configstrings[0] ) ) {
-		Com_Printf( "WARNING: 'PF_Configstring', configstring %i overflowed (%i)\n", index, strlen( val ) );
+		Com_Printf( "WARNING: 'PF_Configstring', configstring %i overflowed (%" PRIuPTR ")\n", index, (uintptr_t)strlen( val ) );
 		len = sizeof( sv.configstrings[0] ) - 1;
 	}
 

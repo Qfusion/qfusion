@@ -624,7 +624,7 @@ static bool CL_MM_LoginReal( const char *user, const char *password ) {
 			return false;
 		}
 
-		Q_snprintfz( id, sizeof( id ), "%llu", cl_mm_steam_id );
+		Q_snprintfz( id, sizeof( id ), "%" PRIu64, cl_mm_steam_id );
 		ticketb64 = ( char * )base64_encode( cl_mm_steam_token, cl_mm_steam_token_len, NULL );
 
 		Com_DPrintf( "Logging in with %s %s\n", id, ticketb64 );

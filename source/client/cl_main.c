@@ -117,7 +117,7 @@ void CL_AddReliableCommand( /*const*/ char *cmd ) {
 	// we must drop the connection
 	if( cls.reliableSequence > cls.reliableAcknowledge + MAX_RELIABLE_COMMANDS ) {
 		cls.reliableAcknowledge = cls.reliableSequence; // try to avoid loops
-		Com_Error( ERR_DROP, "Client command overflow %i %i", cls.reliableAcknowledge, cls.reliableSequence );
+		Com_Error( ERR_DROP, "Client command overflow %" PRIi64 " %" PRIi64, cls.reliableAcknowledge, cls.reliableSequence );
 	}
 	cls.reliableSequence++;
 	index = cls.reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
