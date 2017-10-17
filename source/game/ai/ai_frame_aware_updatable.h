@@ -24,9 +24,9 @@ protected:
 	inline void CheckIsInThinkFrame( const char *function ) {
 #ifdef _DEBUG
 		if( ShouldSkipThinkFrame() ) {
-			const char *tag = "AiFrameAwareUpdatable::CheckIsInThinkFrame()";
+			const char *tag_ = "AiFrameAwareUpdatable::CheckIsInThinkFrame()";
 			const char *format = "%s has been called not in think frame: frame#=%" PRId64 ", modulo=%d, offset=%d\n";
-			AI_FailWith( tag, format, function, level.framenum, frameAffinityModulo, frameAffinityOffset );
+			AI_FailWith( tag_, format, function, level.framenum, frameAffinityModulo, frameAffinityOffset );
 		}
 #endif
 	}
