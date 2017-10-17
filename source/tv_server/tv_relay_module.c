@@ -385,7 +385,7 @@ static void TV_Module_ConfigString( relay_t *relay, int index, const char *val )
 
 	len = strlen( val );
 	if( len >= sizeof( relay->configstrings[0] ) ) {
-		Com_Printf( "WARNING: 'TV_Module_ConfigString', configstring %i overflowed (%i)\n", index, len );
+		Com_Printf( "WARNING: 'TV_Module_ConfigString', configstring %i overflowed (%" PRIuPTR ")\n", index, (uintptr_t)len );
 		len = sizeof( relay->configstrings[0] ) - 1;
 	}
 

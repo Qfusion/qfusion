@@ -70,9 +70,9 @@ void CL_Stop_f( void ) {
 
 	// write some meta information about the match/demo
 	CL_SetDemoMetaKeyValue( "hostname", cl.configstrings[CS_HOSTNAME] );
-	CL_SetDemoMetaKeyValue( "localtime", va( "%u", cls.demo.localtime ) );
+	CL_SetDemoMetaKeyValue( "localtime", va( "%" PRIi64, (int64_t)cls.demo.localtime ) );
 	CL_SetDemoMetaKeyValue( "multipov", "0" );
-	CL_SetDemoMetaKeyValue( "duration", va( "%u", (int)ceil( cls.demo.duration / 1000.0f ) ) );
+	CL_SetDemoMetaKeyValue( "duration", va( "%u", (int)ceil( (double)cls.demo.duration / 1000.0 ) ) );
 	CL_SetDemoMetaKeyValue( "mapname", cl.configstrings[CS_MAPNAME] );
 	CL_SetDemoMetaKeyValue( "gametype", cl.configstrings[CS_GAMETYPENAME] );
 	CL_SetDemoMetaKeyValue( "levelname", cl.configstrings[CS_MESSAGE] );

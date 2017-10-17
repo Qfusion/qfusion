@@ -221,7 +221,7 @@ static void SV_Demo_Stop( bool cancel, bool silent ) {
 		SV_SetDemoMetaKeyValue( "hostname", sv.configstrings[CS_HOSTNAME] );
 		SV_SetDemoMetaKeyValue( "localtime", va( "%" PRIi64, (int64_t)svs.demo.localtime ) );
 		SV_SetDemoMetaKeyValue( "multipov", "1" );
-		SV_SetDemoMetaKeyValue( "duration", va( "%u", (int)ceil( svs.demo.duration / 1000.0f ) ) );
+		SV_SetDemoMetaKeyValue( "duration", va( "%u", (int)ceil( (double)svs.demo.duration / 1000.0 ) ) );
 		SV_SetDemoMetaKeyValue( "mapname", sv.configstrings[CS_MAPNAME] );
 		SV_SetDemoMetaKeyValue( "gametype", sv.configstrings[CS_GAMETYPENAME] );
 		SV_SetDemoMetaKeyValue( "levelname", sv.configstrings[CS_MESSAGE] );

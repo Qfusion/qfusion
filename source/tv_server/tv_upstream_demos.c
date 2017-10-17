@@ -282,9 +282,9 @@ void TV_Upstream_StopDemoRecord( upstream_t *upstream, bool silent, bool cancel 
 	} else {
 		// write some meta information about the match/demo
 		TV_Upstream_SetDemoMetaKeyValue( upstream, "hostname", upstream->configstrings[CS_HOSTNAME] );
-		TV_Upstream_SetDemoMetaKeyValue( upstream, "localtime", va( "%u", upstream->demo.localtime ) );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "localtime", va( "%" PRIi64, (int64_t)upstream->demo.localtime ) );
 		TV_Upstream_SetDemoMetaKeyValue( upstream, "multipov", "1" );
-		TV_Upstream_SetDemoMetaKeyValue( upstream, "duration", va( "%u", (int)ceil( upstream->demo.duration / 1000.0f ) ) );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "duration", va( "%u", (int)ceil( (double)upstream->demo.duration / 1000.0 ) ) );
 		TV_Upstream_SetDemoMetaKeyValue( upstream, "mapname", upstream->configstrings[CS_MAPNAME] );
 		TV_Upstream_SetDemoMetaKeyValue( upstream, "gametype", upstream->configstrings[CS_GAMETYPENAME] );
 		TV_Upstream_SetDemoMetaKeyValue( upstream, "levelname", upstream->configstrings[CS_MESSAGE] );
