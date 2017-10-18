@@ -113,11 +113,11 @@ static int CG_ViewWeapon_baseanimFromWeaponState( int weaponState ) {
 
 	switch( weaponState ) {
 		case WEAPON_STATE_ACTIVATING:
-			anim = WEAPMODEL_WEAPONUP;
+			anim = WEAPANIM_WEAPONUP;
 			break;
 
 		case WEAPON_STATE_DROPPING:
-			anim = WEAPMODEL_WEAPDOWN;
+			anim = WEAPANIM_WEAPDOWN;
 			break;
 
 		case WEAPON_STATE_FIRING:
@@ -134,9 +134,9 @@ static int CG_ViewWeapon_baseanimFromWeaponState( int weaponState ) {
 		default:
 		case WEAPON_STATE_READY:
 			if( cg_gunbob->integer ) {
-				anim = WEAPMODEL_STANDBY;
+				anim = WEAPANIM_STANDBY;
 			} else {
-				anim = WEAPMODEL_NOANIM;
+				anim = WEAPANIM_NOANIM;
 			}
 			break;
 	}
@@ -264,7 +264,7 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon ) {
 	//	return;
 
 	weaponInfo = CG_GetWeaponInfo( viewweapon->weapon );
-	viewweapon->ent.model = weaponInfo->model[HAND];
+	viewweapon->ent.model = weaponInfo->model[WEAPMODEL_HAND];
 	viewweapon->ent.renderfx = RF_MINLIGHT | RF_WEAPONMODEL | RF_FORCENOLOD | ( cg_shadows->integer < 2 ? RF_NOSHADOW : 0 );
 	viewweapon->ent.scale = 1.0f;
 	viewweapon->ent.customShader = NULL;

@@ -36,14 +36,25 @@ extern cvar_t *cg_gun_fov;
 extern cvar_t *cg_handOffset;
 
 enum {
-	WEAPMODEL_NOANIM,
-	WEAPMODEL_STANDBY,
-	WEAPMODEL_ATTACK_WEAK,
-	WEAPMODEL_ATTACK_STRONG,
-	WEAPMODEL_WEAPDOWN,
-	WEAPMODEL_WEAPONUP,
+	WEAPANIM_NOANIM,
+	WEAPANIM_STANDBY,
+	WEAPANIM_ATTACK_WEAK,
+	WEAPANIM_ATTACK_STRONG,
+	WEAPANIM_WEAPDOWN,
+	WEAPANIM_WEAPONUP,
 
 	VWEAP_MAXANIMS
+};
+
+enum {
+	WEAPMODEL_WEAPON,
+	WEAPMODEL_EXPANSION,
+	WEAPMODEL_FLASH,
+	WEAPMODEL_HAND,
+	WEAPMODEL_BARREL,
+	WEAPMODEL_BARREL2,
+
+	VWEAP_MAXPARTS
 };
 
 #define WEAPONINFO_MAX_FIRE_SOUNDS 4
@@ -53,7 +64,7 @@ typedef struct weaponinfo_s {
 	char name[MAX_QPATH];
 	bool inuse;
 
-	struct  model_s *model[WEAPMODEL_PARTS]; //one weapon consists of several models
+	struct  model_s *model[VWEAP_MAXPARTS]; //one weapon consists of several models
 
 	int firstframe[VWEAP_MAXANIMS];         //animation script
 	int lastframe[VWEAP_MAXANIMS];
@@ -75,7 +86,7 @@ typedef struct weaponinfo_s {
 
 	// barrel
 	int64_t barrelTime;
-	float barrelSpeed;
+	float barrelSpeed[VWEAP_MAXPARTS];
 
 	// sfx
 	int num_fire_sounds;

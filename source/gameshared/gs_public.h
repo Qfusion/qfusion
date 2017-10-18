@@ -358,16 +358,6 @@ enum {
 	, PMODEL_TOTAL_ANIMATIONS
 };
 
-enum {
-	WEAPON,
-	EXPANSION,
-	BARREL,
-	FLASH,
-	HAND,
-
-	WEAPMODEL_PARTS
-};
-
 // gender stuff
 enum {
 	GENDER_MALE,

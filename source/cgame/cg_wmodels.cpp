@@ -38,7 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
 
-static const char *wmPartSufix[] = { "", "_expansion", "_barrel", "_flash", "_hand", NULL };
+static const char *wmPartSufix[] = { "", "_expansion", "_flash", "_hand", "_barrel", "_barrel2", NULL };
 
 /*
 * CG_vWeap_ParseAnimationScript
@@ -65,7 +65,8 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 	counter = 1; // reserve 0 for 'no animation'
 
 	// set some defaults
-	weaponinfo->barrelSpeed = 0;
+	for( i = 0; i < VWEAP_MAXPARTS; i++ )
+		weaponinfo->barrelSpeed[i] = 0;
 	weaponinfo->flashFade = true;
 
 	if( !cg_debugWeaponModels->integer ) {
@@ -116,10 +117,11 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 				weaponinfo->barrelTime = (unsigned int)( i > 0 ? i : 0 );
 
 				// speed
-				weaponinfo->barrelSpeed = atof( COM_ParseExt( &ptr, false ) );
+				weaponinfo->barrelSpeed[WEAPMODEL_BARREL] = atof( COM_ParseExt( &ptr, false ) );
+				weaponinfo->barrelSpeed[WEAPMODEL_BARREL2] = atof( COM_ParseExt( &ptr, false ) );
 
 				if( debug ) {
-					CG_Printf( "%s time:%" PRIi64 ", speed:%.2f%s\n", S_COLOR_BLUE, weaponinfo->barrelTime, weaponinfo->barrelSpeed, S_COLOR_WHITE );
+					CG_Printf( "%s time:%" PRIi64 ", speed:%.2f%s\n", S_COLOR_BLUE, weaponinfo->barrelTime, weaponinfo->barrelSpeed[WEAPMODEL_BARREL], S_COLOR_WHITE );
 				}
 			} else if( !Q_stricmp( token, "flash" ) ) {
 				if( debug ) {
@@ -272,95 +274,104 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 * CG_LoadHandAnimations
 */
 static void CG_CreateHandDefaultAnimations( weaponinfo_t *weaponinfo ) {
+	int i;
 	float defaultfps = 15.0f;
 
-	weaponinfo->barrelSpeed = 0; // default
+	for( i = 0; i < VWEAP_MAXPARTS; i++ )
+		weaponinfo->barrelSpeed[i] = 0;
 
 	// default wsw hand
-	weaponinfo->firstframe[WEAPMODEL_STANDBY] = 0;
-	weaponinfo->lastframe[WEAPMODEL_STANDBY] = 0;
-	weaponinfo->loopingframes[WEAPMODEL_STANDBY] = 1;
-	weaponinfo->frametime[WEAPMODEL_STANDBY] = 1000 / defaultfps;
+	weaponinfo->firstframe[WEAPANIM_STANDBY] = 0;
+	weaponinfo->lastframe[WEAPANIM_STANDBY] = 0;
+	weaponinfo->loopingframes[WEAPANIM_STANDBY] = 1;
+	weaponinfo->frametime[WEAPANIM_STANDBY] = 1000 / defaultfps;
 
-	weaponinfo->firstframe[WEAPMODEL_ATTACK_WEAK] = 1; // attack animation (1-5)
-	weaponinfo->lastframe[WEAPMODEL_ATTACK_WEAK] = 5;
-	weaponinfo->loopingframes[WEAPMODEL_ATTACK_WEAK] = 0;
-	weaponinfo->frametime[WEAPMODEL_ATTACK_WEAK] = 1000 / defaultfps;
+	weaponinfo->firstframe[WEAPANIM_ATTACK_WEAK] = 1; // attack animation (1-5)
+	weaponinfo->lastframe[WEAPANIM_ATTACK_WEAK] = 5;
+	weaponinfo->loopingframes[WEAPANIM_ATTACK_WEAK] = 0;
+	weaponinfo->frametime[WEAPANIM_ATTACK_WEAK] = 1000 / defaultfps;
 
-	weaponinfo->firstframe[WEAPMODEL_ATTACK_STRONG] = 0;
-	weaponinfo->lastframe[WEAPMODEL_ATTACK_STRONG] = 0;
-	weaponinfo->loopingframes[WEAPMODEL_ATTACK_STRONG] = 1;
-	weaponinfo->frametime[WEAPMODEL_ATTACK_STRONG] = 1000 / defaultfps;
+	weaponinfo->firstframe[WEAPANIM_ATTACK_STRONG] = 0;
+	weaponinfo->lastframe[WEAPANIM_ATTACK_STRONG] = 0;
+	weaponinfo->loopingframes[WEAPANIM_ATTACK_STRONG] = 1;
+	weaponinfo->frametime[WEAPANIM_ATTACK_STRONG] = 1000 / defaultfps;
 
-	weaponinfo->firstframe[WEAPMODEL_WEAPDOWN] = 0;
-	weaponinfo->lastframe[WEAPMODEL_WEAPDOWN] = 0;
-	weaponinfo->loopingframes[WEAPMODEL_WEAPDOWN] = 1;
-	weaponinfo->frametime[WEAPMODEL_WEAPDOWN] = 1000 / defaultfps;
+	weaponinfo->firstframe[WEAPANIM_WEAPDOWN] = 0;
+	weaponinfo->lastframe[WEAPANIM_WEAPDOWN] = 0;
+	weaponinfo->loopingframes[WEAPANIM_WEAPDOWN] = 1;
+	weaponinfo->frametime[WEAPANIM_WEAPDOWN] = 1000 / defaultfps;
 
-	weaponinfo->firstframe[WEAPMODEL_WEAPONUP] = 6; // flipout animation (6-10)
-	weaponinfo->lastframe[WEAPMODEL_WEAPONUP] = 10;
-	weaponinfo->loopingframes[WEAPMODEL_WEAPONUP] = 1;
-	weaponinfo->frametime[WEAPMODEL_WEAPONUP] = 1000 / defaultfps;
+	weaponinfo->firstframe[WEAPANIM_WEAPONUP] = 6; // flipout animation (6-10)
+	weaponinfo->lastframe[WEAPANIM_WEAPONUP] = 10;
+	weaponinfo->loopingframes[WEAPANIM_WEAPONUP] = 1;
+	weaponinfo->frametime[WEAPANIM_WEAPONUP] = 1000 / defaultfps;
 
 	return;
 }
 
 /*
-* CG_BuildProjectionOrigin
-* store the orientation_t closer to the tag_flash we can create,
+* CG_ComputeWeaponInfoTags
+*
+* Store the orientation_t closer to the tag_flash we can create,
 * or create one using an offset we consider acceptable.
+*
 * NOTE: This tag will ignore weapon models animations. You'd have to
 * do it in realtime to use it with animations. Or be careful on not
 * moving the weapon too much
 */
-static void CG_BuildProjectionOrigin( weaponinfo_t *weaponinfo ) {
-	orientation_t tag, tag_barrel;
-	static entity_t ent;
+static void CG_ComputeWeaponInfoTags( weaponinfo_t *weaponinfo ) {
+	orientation_t tag, tag_barrel, tag_barrel2;
+	entity_t ent;
+	bool have_barrel;
 
-	if( !weaponinfo ) {
+	VectorSet( weaponinfo->tag_projectionsource.origin, 16, 0, 8 );
+	Matrix3_Identity( weaponinfo->tag_projectionsource.axis );
+
+	if( !weaponinfo->model[WEAPMODEL_WEAPON] ) {
 		return;
 	}
 
-	if( weaponinfo->model[WEAPON] ) {
+	// assign the model to an entity_t, so we can build boneposes
+	memset( &ent, 0, sizeof( ent ) );
+	ent.rtype = RT_MODEL;
+	ent.scale = 1.0f;
+	ent.model = weaponinfo->model[WEAPMODEL_WEAPON];
+	CG_SetBoneposesForTemporaryEntity( &ent ); // assigns and builds the skeleton so we can use grabtag
 
-		// assign the model to an entity_t, so we can build boneposes
-		memset( &ent, 0, sizeof( ent ) );
-		ent.rtype = RT_MODEL;
-		ent.scale = 1.0f;
-		ent.model = weaponinfo->model[WEAPON];
-		CG_SetBoneposesForTemporaryEntity( &ent ); // assigns and builds the skeleton so we can use grabtag
-
-		// try getting the tag_flash from the weapon model
-		if( CG_GrabTag( &weaponinfo->tag_projectionsource, &ent, "tag_flash" ) ) {
-			return; // succesfully
-
-		}
-
-		// if it didn't work, try getting it from the barrel model
-		if( CG_GrabTag( &tag_barrel, &ent, "tag_barrel" ) && weaponinfo->model[BARREL] ) {
-			// assign the model to an entity_t, so we can build boneposes
-			memset( &ent, 0, sizeof( ent ) );
-			ent.rtype = RT_MODEL;
-			ent.scale = 1.0f;
-			ent.model = weaponinfo->model[BARREL];
-			CG_SetBoneposesForTemporaryEntity( &ent );
-			if( CG_GrabTag( &tag, &ent, "tag_flash" ) && weaponinfo->model[BARREL] ) {
-				VectorCopy( vec3_origin, weaponinfo->tag_projectionsource.origin );
-				Matrix3_Identity( weaponinfo->tag_projectionsource.axis );
-				CG_MoveToTag( weaponinfo->tag_projectionsource.origin,
-							  weaponinfo->tag_projectionsource.axis,
-							  tag_barrel.origin,
-							  tag_barrel.axis,
-							  tag.origin,
-							  tag.axis );
-				return; // succesfully
-			}
+	have_barrel = false;
+	if( weaponinfo->model[WEAPMODEL_BARREL] && CG_GrabTag( &tag_barrel, &ent, "tag_barrel" ) ) {
+		have_barrel = true;
+	}
+	
+	if( weaponinfo->model[WEAPMODEL_BARREL2] ) {
+		if( !have_barrel || !CG_GrabTag( &tag_barrel2, &ent, "tag_barrel2" ) ) {
+			weaponinfo->model[WEAPMODEL_BARREL2] = NULL;
 		}
 	}
 
-	// doesn't have a weapon model, or the weapon model doesn't have a tag
-	VectorSet( weaponinfo->tag_projectionsource.origin, 16, 0, 8 );
-	Matrix3_Identity( weaponinfo->tag_projectionsource.axis );
+	// try getting the tag_flash from the weapon model
+	if( !CG_GrabTag( &weaponinfo->tag_projectionsource, &ent, "tag_flash" ) && have_barrel ) {
+		// if it didn't work, try getting it from the barrel model
+		// assign the model to an entity_t, so we can build boneposes
+		entity_t ent_barrel;
+
+		memset( &ent_barrel, 0, sizeof( ent_barrel ) );
+		ent_barrel.rtype = RT_MODEL;
+		ent_barrel.scale = 1.0f;
+		ent_barrel.model = weaponinfo->model[WEAPMODEL_BARREL];
+		CG_SetBoneposesForTemporaryEntity( &ent_barrel );
+
+		if( CG_GrabTag( &tag, &ent_barrel, "tag_flash" ) ) {
+			VectorCopy( vec3_origin, weaponinfo->tag_projectionsource.origin );
+			Matrix3_Identity( weaponinfo->tag_projectionsource.axis );
+			CG_MoveToTag( weaponinfo->tag_projectionsource.origin,
+						  weaponinfo->tag_projectionsource.axis,
+						  tag_barrel.origin,
+						  tag_barrel.axis,
+						  tag.origin,
+						  tag.axis );
+		}
+	}
 }
 
 /*
@@ -370,7 +381,7 @@ static bool CG_WeaponModelUpdateRegistration( weaponinfo_t *weaponinfo, char *fi
 	int p;
 	char scratch[MAX_QPATH];
 
-	for( p = 0; p < WEAPMODEL_PARTS; p++ ) {
+	for( p = 0; p < VWEAP_MAXPARTS; p++ ) {
 		// iqm
 		if( !weaponinfo->model[p] ) {
 			Q_snprintfz( scratch, sizeof( scratch ), "models/weapons/%s%s.iqm", filename, wmPartSufix[p] );
@@ -384,12 +395,15 @@ static bool CG_WeaponModelUpdateRegistration( weaponinfo_t *weaponinfo, char *fi
 		}
 	}
 
-	// load failed
-	if( !weaponinfo->model[HAND] ) {
-		weaponinfo->name[0] = 0;
-		for( p = 0; p < WEAPMODEL_PARTS; p++ )
-			weaponinfo->model[p] = NULL;
+	if( !weaponinfo->model[WEAPMODEL_BARREL] ) {
+		weaponinfo->model[WEAPMODEL_BARREL2] = NULL;
+	}
 
+	// load failed
+	if( !weaponinfo->model[WEAPMODEL_HAND] ) {
+		weaponinfo->name[0] = 0;
+		for( p = 0; p < VWEAP_MAXPARTS; p++ )
+			weaponinfo->model[p] = NULL;
 		return false;
 	}
 
@@ -400,8 +414,15 @@ static bool CG_WeaponModelUpdateRegistration( weaponinfo_t *weaponinfo, char *fi
 		CG_CreateHandDefaultAnimations( weaponinfo );
 	}
 
-	//create a tag_projection from tag_flash, to position fire effects
-	CG_BuildProjectionOrigin( weaponinfo );
+	// reuse the main barrel model for the second barrel if the later is not found on disk but
+	// rotation speed is specified in the script
+	if( weaponinfo->barrelSpeed[WEAPMODEL_BARREL2] && !weaponinfo->model[WEAPMODEL_BARREL2] ) {
+		weaponinfo->model[WEAPMODEL_BARREL2] = weaponinfo->model[WEAPMODEL_BARREL];
+	}
+
+	// create a tag_projection from tag_flash, to position fire effects
+	CG_ComputeWeaponInfoTags( weaponinfo );
+
 	Vector4Set( weaponinfo->outlineColor, 0, 0, 0, 255 );
 
 	if( cg_debugWeaponModels->integer ) {
@@ -534,7 +555,7 @@ struct weaponinfo_s *CG_CreateWeaponZeroModel( char *filename ) {
 //======================================================================
 
 /*
-* CG_GetWeaponFromClientIndex
+* CG_GetWeaponInfo
 */
 struct weaponinfo_s *CG_GetWeaponInfo( int weapon ) {
 	if( weapon < 0 || ( weapon >= WEAP_TOTAL ) ) {
@@ -545,6 +566,137 @@ struct weaponinfo_s *CG_GetWeaponInfo( int weapon ) {
 }
 
 /*
+* CG_AddWeaponFlashOnTag
+*/
+static void CG_AddWeaponFlashOnTag( entity_t *weapon, weaponinfo_t *weaponInfo, int modelid, 
+	const char *tag_flash, int effects, int64_t flash_time ) {
+	uint8_t c;
+	orientation_t tag;
+	entity_t flash;
+	float intensity;
+
+	if( flash_time < cg.time ) {
+		return;
+	}
+	if( !weaponInfo->model[modelid] ) {
+		return;
+	}
+	if( !CG_GrabTag( &tag, weapon, tag_flash ) ) {
+		return;
+	}
+
+	if( weaponInfo->flashFade ) {
+		intensity = (float)( flash_time - cg.time ) / (float)weaponInfo->flashTime;
+		c = ( uint8_t )( 255 * intensity );
+	} else {
+		intensity = 1.0f;
+		c = 255;
+	}
+
+	memset( &flash, 0, sizeof( flash ) );
+	Vector4Set( flash.shaderRGBA, c, c, c, c );
+	flash.model = weaponInfo->model[modelid];
+	flash.scale = weapon->scale;
+	flash.renderfx = weapon->renderfx | RF_NOSHADOW;
+	flash.frame = 0;
+	flash.oldframe = 0;
+
+	CG_PlaceModelOnTag( &flash, weapon, &tag );
+	
+	if( !( effects & EF_RACEGHOST ) ) {
+		CG_AddEntityToScene( &flash );
+	}
+
+	CG_AddLightToScene( flash.origin, weaponInfo->flashRadius * intensity,
+		weaponInfo->flashColor[0], weaponInfo->flashColor[1], weaponInfo->flashColor[2] );
+}
+
+/*
+* CG_AddWeaponExpansionOnTag
+*/
+static void CG_AddWeaponExpansionOnTag( entity_t *weapon, weaponinfo_t *weaponInfo, int modelid, 
+	const char *tag_expansion, int effects ) {
+	orientation_t tag;
+	entity_t expansion;
+
+	if( !weaponInfo->model[modelid] ) {
+		return;
+	}
+	if( !CG_GrabTag( &tag, weapon, tag_expansion ) ) {
+		return;
+	}
+
+	memset( &expansion, 0, sizeof( expansion ) );
+	Vector4Set( expansion.shaderRGBA, 255, 255, 255, weapon->shaderRGBA[3] );
+	expansion.model = weaponInfo->model[modelid];
+	expansion.scale = weapon->scale;
+	expansion.renderfx = weapon->renderfx;
+	expansion.frame = 0;
+	expansion.oldframe = 0;
+
+	CG_PlaceModelOnTag( &expansion, weapon, &tag );
+	
+	CG_AddColoredOutLineEffect( &expansion, effects, 0, 0, 0, 255 );
+
+	if( !( effects & EF_RACEGHOST ) ) {
+		CG_AddEntityToScene( &expansion ); // skelmod
+	}
+
+	CG_AddShellEffects( &expansion, effects );
+}
+
+/*
+* CG_AddWeaponBarrelOnTag
+*/
+static void CG_AddWeaponBarrelOnTag( entity_t *weapon, weaponinfo_t *weaponInfo, int modelid, 
+	const char *tag_barrel, const char *tag_recoil, int effects, int64_t barrel_time ) {
+	orientation_t tag;
+	vec3_t rotangles = { 0, 0, 0 };
+	entity_t barrel;
+
+	if( !weaponInfo->model[modelid] ) {
+		return;
+	}
+	if( !CG_GrabTag( &tag, weapon, tag_barrel ) ) {
+		return;
+	}
+
+	memset( &barrel, 0, sizeof( barrel ) );
+	Vector4Set( barrel.shaderRGBA, 255, 255, 255, weapon->shaderRGBA[3] );
+	barrel.model = weaponInfo->model[modelid];
+	barrel.scale = weapon->scale;
+	barrel.renderfx = weapon->renderfx;
+	barrel.frame = 0;
+	barrel.oldframe = 0;
+
+	// rotation
+	if( barrel_time > cg.time ) {
+		float intensity;
+		orientation_t recoil;
+
+		intensity =  (float)( barrel_time - cg.time ) / (float)weaponInfo->barrelTime;
+		rotangles[2] = anglemod( 360.0f * weaponInfo->barrelSpeed[modelid] * intensity * intensity );
+
+		// Check for tag_recoil
+		if( CG_GrabTag( &recoil, weapon, tag_recoil ) ) {
+			VectorLerp( tag.origin, intensity, recoil.origin, tag.origin );
+		}
+	}
+
+	AnglesToAxis( rotangles, barrel.axis );
+
+	// barrel requires special tagging
+	CG_PlaceRotatedModelOnTag( &barrel, weapon, &tag );
+
+	CG_AddColoredOutLineEffect( &barrel, effects, 0, 0, 0, weapon->shaderRGBA[3] );
+
+	if( !( effects & EF_RACEGHOST ) )
+		CG_AddEntityToScene( &barrel );
+
+	CG_AddShellEffects( &barrel, effects );
+}
+
+/*
 * CG_AddWeaponOnTag
 *
 * Add weapon model(s) positioned at the tag
@@ -552,15 +704,9 @@ struct weaponinfo_s *CG_GetWeaponInfo( int weapon ) {
 void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int effects, orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time ) {
 	entity_t weapon;
 	weaponinfo_t *weaponInfo;
-	float intensity;
 
-	//don't try without base model
-	if( !ent->model ) {
-		return;
-	}
-
-	//don't try without a tag
-	if( !tag ) {
+	// don't try without base model or tag
+	if( !ent->model || !tag ) {
 		return;
 	}
 
@@ -572,14 +718,13 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 	//if( ent->renderfx & RF_WEAPONMODEL )
 	//	effects &= ~EF_RACEGHOST;
 
-	//weapon
 	memset( &weapon, 0, sizeof( weapon ) );
 	Vector4Set( weapon.shaderRGBA, 255, 255, 255, ent->shaderRGBA[3] );
 	weapon.scale = ent->scale;
 	weapon.renderfx = ent->renderfx;
 	weapon.frame = 0;
 	weapon.oldframe = 0;
-	weapon.model = weaponInfo->model[WEAPON];
+	weapon.model = weaponInfo->model[WEAPMODEL_WEAPON];
 
 	CG_PlaceModelOnTag( &weapon, ent, tag );
 
@@ -605,107 +750,15 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 					  weaponInfo->tag_projectionsource.axis );
 	}
 
-	//expansion
-	if( ( effects & EF_STRONG_WEAPON ) && weaponInfo->model[EXPANSION] ) {
-		if( CG_GrabTag( tag, &weapon, "tag_expansion" ) ) {
-			entity_t expansion;
-			memset( &expansion, 0, sizeof( expansion ) );
-			Vector4Set( expansion.shaderRGBA, 255, 255, 255, ent->shaderRGBA[3] );
-			expansion.model = weaponInfo->model[EXPANSION];
-			expansion.scale = ent->scale;
-			expansion.renderfx = ent->renderfx;
-			expansion.frame = 0;
-			expansion.oldframe = 0;
-
-			CG_PlaceModelOnTag( &expansion, &weapon, tag );
-
-			CG_AddColoredOutLineEffect( &expansion, effects, 0, 0, 0, 255 );
-
-			if( !( effects & EF_RACEGHOST ) ) {
-				CG_AddEntityToScene( &expansion ); // skelmod
-
-			}
-			CG_AddShellEffects( &expansion, effects );
-		}
+	// expansion
+	if( effects & EF_STRONG_WEAPON ) {
+		CG_AddWeaponExpansionOnTag( &weapon, weaponInfo, WEAPMODEL_EXPANSION, "tag_expansion", effects );
 	}
 
-	// barrel
-	if( weaponInfo->model[BARREL] ) {
-		if( CG_GrabTag( tag, &weapon, "tag_barrel" ) ) {
-			orientation_t barrel_recoiled;
-			vec3_t rotangles = { 0, 0, 0 };
-
-			entity_t barrel;
-			memset( &barrel, 0, sizeof( barrel ) );
-			Vector4Set( barrel.shaderRGBA, 255, 255, 255, ent->shaderRGBA[3] );
-			barrel.model = weaponInfo->model[BARREL];
-			barrel.scale = ent->scale;
-			barrel.renderfx = ent->renderfx;
-			barrel.frame = 0;
-			barrel.oldframe = 0;
-
-			// rotation
-			if( barrel_time > cg.time ) {
-				intensity =  (float)( barrel_time - cg.time ) / (float)weaponInfo->barrelTime;
-				rotangles[2] = anglemod( 360.0f * weaponInfo->barrelSpeed * intensity * intensity );
-
-				// Check for tag_recoil
-				if( CG_GrabTag( &barrel_recoiled, &weapon, "tag_recoil" ) ) {
-					VectorLerp( tag->origin, intensity, barrel_recoiled.origin, tag->origin );
-				}
-			}
-
-			AnglesToAxis( rotangles, barrel.axis );
-
-			// barrel requires special tagging
-			CG_PlaceRotatedModelOnTag( &barrel, &weapon, tag );
-
-			CG_AddColoredOutLineEffect( &barrel, effects, 0, 0, 0, ent->shaderRGBA[3] );
-
-			if( !( effects & EF_RACEGHOST ) ) {
-				CG_AddEntityToScene( &barrel ); // skelmod
-
-			}
-			CG_AddShellEffects( &barrel, effects );
-		}
-	}
-
-	if( flash_time < cg.time ) {
-		return;
-	}
+	// barrels
+	CG_AddWeaponBarrelOnTag( &weapon, weaponInfo, WEAPMODEL_BARREL, "tag_barrel", "tag_recoil", effects, barrel_time );
+	CG_AddWeaponBarrelOnTag( &weapon, weaponInfo, WEAPMODEL_BARREL2, "tag_barrel2", "tag_recoil2", effects, barrel_time );
 
 	// flash
-	if( !CG_GrabTag( tag, &weapon, "tag_flash" ) ) {
-		return;
-	}
-
-	if( weaponInfo->model[FLASH] ) {
-		entity_t flash;
-		uint8_t c;
-
-		if( weaponInfo->flashFade ) {
-			intensity = (float)( flash_time - cg.time ) / (float)weaponInfo->flashTime;
-			c = ( uint8_t )( 255 * intensity );
-		} else {
-			intensity = 1.0f;
-			c = 255;
-		}
-
-		memset( &flash, 0, sizeof( flash ) );
-		Vector4Set( flash.shaderRGBA, c, c, c, c );
-		flash.model = weaponInfo->model[FLASH];
-		flash.scale = ent->scale;
-		flash.renderfx = ent->renderfx | RF_NOSHADOW;
-		flash.frame = 0;
-		flash.oldframe = 0;
-
-		CG_PlaceModelOnTag( &flash, &weapon, tag );
-
-		if( !( effects & EF_RACEGHOST ) ) {
-			CG_AddEntityToScene( &flash );
-		}
-
-		CG_AddLightToScene( flash.origin, weaponInfo->flashRadius * intensity,
-							weaponInfo->flashColor[0], weaponInfo->flashColor[1], weaponInfo->flashColor[2] );
-	}
+	CG_AddWeaponFlashOnTag( &weapon, weaponInfo, WEAPMODEL_FLASH, "tag_flash", effects, flash_time );
 }
