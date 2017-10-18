@@ -801,14 +801,10 @@ struct BotMovementPredictionConstants {
 	static constexpr unsigned MAX_SAVED_LANDING_AREAS = 16;
 };
 
-class FloorClusterBuilder;
-
 class BotSameFloorClusterAreasCache
 {
 	typedef StaticVector<AreaAndScore, 16> CandidateAreasHeap;
 
-	// Candidate areas selected on the previous FindClosestToTargetPoint() invocation
-	// arranged in a heap by a travel time to goal area.
 	// If a bot remains in the same area, candidates computation might be skipped,
 	// and only straight-line walkability tests are to be performed.
 	mutable CandidateAreasHeap oldCandidatesHeap;

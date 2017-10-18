@@ -1873,322 +1873,6 @@ bool BotDummyMovementAction::TryFindClosestNonVisitedAreaOrTrigger( BotMovementP
 	return false;
 }
 
-// ClassfiyFunc operator() invocation must yield these results:
-// -1: the area should be marked as flooded and skipped
-//  0: the area should be skipped without marking as flooded
-//  1: the area should be marked as flooded and put in the results list
-template<typename ClassifyFunc>
-class AreasClusterBuilder {
-	ClassifyFunc classifyFunc;
-protected:
-	bool *isFlooded;
-	uint16_t *resultsBase;
-	uint16_t *resultsPtr;
-
-	// This field is initialized lazily since the AAS world is not loaded on the global object construction
-	const AiAasWorld *aasWorld;
-
-	vec3_t floodedRegionMins;
-	vec3_t floodedRegionMaxs;
-
-	void FloodAreasRecursive( int areaNum );
-public:
-	static constexpr auto MAX_AREAS = std::numeric_limits<uint16_t>::max();
-
-	AreasClusterBuilder( bool *isFloodedBuffer, uint16_t *resultsBuffer )
-		: isFlooded( isFloodedBuffer ), resultsBase( resultsBuffer ), aasWorld( nullptr ) {}
-
-	int FindFloodStartArea( BotMovementPredictionContext *context );
-
-	void PrepareToFlood() {
-		memset( isFlooded, 0, sizeof( bool ) * aasWorld->NumAreas() );
-		resultsPtr = &resultsBase[0];
-		ClearBounds( floodedRegionMins, floodedRegionMaxs );
-	}
-
-	const uint16_t *ResultAreas() const { return resultsBase; }
-	int ResultSize() const { return (int)( resultsPtr - resultsBase ); }
-
-	const float *FloodedRegionMins() const { return floodedRegionMins; }
-	const float *FloodedRegionMaxs() const { return floodedRegionMaxs; }
-};
-
-template<typename ClassifyFunc>
-int AreasClusterBuilder<ClassifyFunc>::FindFloodStartArea( BotMovementPredictionContext *context ) {
-	if( !aasWorld ) {
-		aasWorld = AiAasWorld::Instance();
-	}
-
-	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-	for( int areaNum : { entityPhysicsState.CurrAasAreaNum(), entityPhysicsState.DroppedToFloorAasAreaNum() } ) {
-		if( areaNum && aasWorld->AreaGrounded( areaNum ) ) {
-			return areaNum;
-		}
-	}
-
-	return false;
-}
-
-template <typename ClassifyFunc>
-void AreasClusterBuilder<ClassifyFunc>::FloodAreasRecursive( int areaNum ) {
-	const auto *aasAreas = aasWorld->Areas();
-	const auto *aasAreaSettings = aasWorld->AreaSettings();
-	const auto *aasReach = aasWorld->Reachabilities();
-
-	// TODO: Rewrite to stack-based non-recursive version
-
-	*resultsPtr++ = (uint16_t)areaNum;
-	isFlooded[areaNum] = true;
-
-	const auto &currArea = aasAreas[areaNum];
-	AddPointToBounds( currArea.mins, floodedRegionMins, floodedRegionMaxs );
-	AddPointToBounds( currArea.maxs, floodedRegionMins, floodedRegionMaxs );
-
-	const auto &currAreaSettings = aasAreaSettings[areaNum];
-	int reachNum = currAreaSettings.firstreachablearea;
-	const int maxReachNum = reachNum + currAreaSettings.numreachableareas;
-	for( ; reachNum < maxReachNum; ++reachNum ) {
-		const auto &reach = aasReach[reachNum];
-		if( isFlooded[reach.areanum] ) {
-			continue;
-		}
-
-		int classifyResult = classifyFunc( currArea, reach, aasAreas[reach.areanum], aasAreaSettings[reach.areanum] );
-		if( classifyResult < 0 ) {
-			isFlooded[reach.areanum] = true;
-			continue;
-		}
-
-		if( classifyResult > 0 ) {
-			FloodAreasRecursive( reach.areanum );
-		}
-	}
-}
-
-struct ClassifyFloorArea
-{
-	int operator()( const aas_area_t &currArea,
-					const aas_reachability_t &reach,
-					const aas_area_t &reachArea,
-					const aas_areasettings_t &reachAreaSetttings ) {
-		if( reach.traveltype != TRAVEL_WALK ) {
-			// Do not disable the area for further search,
-			// it might be reached by walking through some intermediate area
-			return 0;
-		}
-
-		if( fabsf( reachArea.mins[2] - currArea.mins[2] ) > 1.0f ) {
-			// Disable the area for further search
-			return -1;
-		}
-
-		if( !( reachAreaSetttings.areaflags & AREA_GROUNDED ) ) {
-			// Disable the area for further search
-			return -1;
-		}
-
-		return 1;
-	}
-};
-
-class FloorClusterBuilder : public AreasClusterBuilder<ClassifyFloorArea> {
-	bool IsFloodedRegionDegenerate() const;
-public:
-	FloorClusterBuilder( bool *isFloodedBuffer, uint16_t *resultsBuffer )
-		: AreasClusterBuilder( isFloodedBuffer, resultsBuffer ) {}
-
-	bool Build( BotMovementPredictionContext *context ) {
-		if( int startAreaNum = FindFloodStartArea( context ) ) {
-			return Build( startAreaNum );
-		}
-		return false;
-	}
-
-	bool Build( int startAreaNum );
-};
-
-bool FloorClusterBuilder::IsFloodedRegionDegenerate() const {
-	float dimsSum = 0.0f;
-	for( int i = 0; i < 2; ++i ) {
-		float dims = floodedRegionMaxs[i] - floodedRegionMins[i];
-		if( dims < 8.0f ) {
-			return true;
-		}
-		dimsSum += dims;
-	}
-	return dimsSum < 192.0f;
-}
-
-bool FloorClusterBuilder::Build( int startAreaNum ) {
-	PrepareToFlood();
-
-	FloodAreasRecursive( startAreaNum );
-
-	if( !ResultSize() || IsFloodedRegionDegenerate() ) {
-		return false;
-	}
-
-	return true;
-}
-
-struct ClassifyStairsArea {
-	int operator()( const aas_area_t &currArea,
-					const aas_reachability_t &reach,
-					const aas_area_t &reachArea,
-					const aas_areasettings_t &reachAreaSetttings ) {
-		if( reach.traveltype != TRAVEL_WALK ) {
-			// Do not disable the area for further search,
-			// it might be reached by walking through some intermediate area
-			return 0;
-		}
-
-		// Check whether there is a feasible height difference with the current area
-		float relativeHeight = fabsf( reachArea.mins[2] - currArea.mins[2] );
-		if( relativeHeight < 4 || relativeHeight > AI_JUMPABLE_HEIGHT - 4 ) {
-			// Disable the area for further search
-			return -1;
-		}
-
-		if( !( reachAreaSetttings.areaflags & AREA_GROUNDED ) ) {
-			// Disable the area for further search
-			return -1;
-		}
-
-		// Check whether the area top projection looks like a streched rectangle
-		float dx = reachArea.maxs[0] - reachArea.mins[0];
-		float dy = reachArea.maxs[1] - reachArea.mins[1];
-		if( dx / dy < 4.0f && dy / dx < 4.0f ) {
-			// Disable the area for further search
-			return -1;
-		}
-
-		// TODO: There should be more strict tests... A substantial amount of false positives is noticed.
-
-		return 1;
-	}
-};
-
-// Lets hide non-relevant to the problem accessors
-class StairsClusterBuilder: protected AreasClusterBuilder<ClassifyStairsArea>
-{
-	int lowestArea;
-	int highestArea;
-public:
-	StairsClusterBuilder( bool *isFloodedBuffer, uint16_t *resultsBuffer )
-		: AreasClusterBuilder( isFloodedBuffer, resultsBuffer ) {}
-
-	bool Build( BotMovementPredictionContext *context );
-
-	// TODO: Some stairs are curved, like in wdm4 RA area, yield a nodes chain instead?
-	int LowestStairsArea() const { return lowestArea; }
-	int HighestStairsArea() const { return highestArea; }
-};
-
-bool StairsClusterBuilder::Build( BotMovementPredictionContext *context ) {
-	lowestArea = 0;
-	highestArea = 0;
-
-	int startAreaNum = FindFloodStartArea( context );
-	if( !startAreaNum ) {
-		return false;
-	}
-
-	// We do not check intentionally whether the start area belongs to stairs itself and is not just adjacent to stairs.
-	// (whether the area top projection dimensions ratio looks like a stair step)
-	// (A bot might get blocked on such stairs entrance/exit areas)
-
-	PrepareToFlood();
-
-	FloodAreasRecursive( startAreaNum );
-
-	const int numAreas = ResultSize();
-	if( numAreas < 3 ) {
-		return false;
-	}
-
-	if( numAreas > 64 ) {
-		G_Printf( S_COLOR_YELLOW "Warning: StairsClusterBuilder::Build(): too many stairs-like areas in cluster\n" );
-		return false;
-	}
-
-	const auto *aasAreas = aasWorld->Areas();
-	const auto *areaNums = ResultAreas();
-	StaticVector<AreaAndScore, 64> areasAndHeights;
-	for( int i = 0; i < numAreas; ++i) {
-		const int areaNum = areaNums[i];
-		// Negate the "score" so lowest areas (having the highest "score") are first after sorting
-		new( areasAndHeights.unsafe_grow_back() )AreaAndScore( areaNum, -aasAreas[areaNum].mins[2] );
-	}
-
-	std::sort( areasAndHeights.begin(), areasAndHeights.end() );
-
-	// Check monotionically height increase ("score" decrease)
-	float prevScore = areasAndHeights[0].score;
-	for( int i = 1, end = (int)areasAndHeights.size(); i < end; ++i ) {
-		float currScore = areasAndHeights[i].score;
-		if( fabsf( currScore - prevScore ) <= 1.0f ) {
-			return false;
-		}
-		assert( currScore < prevScore );
-		prevScore = currScore;
-	}
-
-	// Check connectivity between adjacent stair steps, it should not be broken after sorting for real stairs
-
-	// Let us assume we have a not stair-like environment of this kind as an algorithm input:
-	//   I
-	//   I I
-	// I I I
-	// 1 2 3
-
-	// After sorting it looks like this:
-	//     I
-	//   I I
-	// I I I
-	// 1 3 2
-
-	// The connectivity between steps 1<->2, 2<->3 is broken
-	// (there are no mutual walk reachabilities connecting some of steps of these false stairs)
-
-	const auto *aasAreaSettings = aasWorld->AreaSettings();
-	const auto *aasReach = aasWorld->Reachabilities();
-	for( int i = 0, end = (int)areasAndHeights.size() - 1; i < end; ++i ) {
-		const int prevAreaNum = areasAndHeights[i + 0].areaNum;
-		const int currAreaNum = areasAndHeights[i + 1].areaNum;
-		const auto &currAreaSettings = aasAreaSettings[currAreaNum];
-		int currReachNum = currAreaSettings.firstreachablearea;
-		const int maxReachNum = currReachNum + currAreaSettings.numreachableareas;
-		if( currReachNum == maxReachNum ) {
-			// Prevent inclusion of denenerate areas in chain?
-			return false;
-		}
-
-		for( ; currReachNum < maxReachNum; ++currReachNum ) {
-			const auto &reach = aasReach[currReachNum];
-			if( reach.areanum == prevAreaNum && reach.traveltype == TRAVEL_WALK ) {
-				break;
-			}
-		}
-
-		if( currReachNum == maxReachNum ) {
-			return false;
-		}
-	}
-
-	lowestArea = areasAndHeights.front().areaNum;
-	highestArea = areasAndHeights.back().areaNum;
-
-	return true;
-}
-
-// Share these buffers for different builders (they're not used simultaneously)
-static bool floodIsFloodedBuffer[FloorClusterBuilder::MAX_AREAS];
-static uint16_t floodResultsBuffer[FloorClusterBuilder::MAX_AREAS];
-
-static FloorClusterBuilder floorClusterBuilder( floodIsFloodedBuffer, floodResultsBuffer );
-
-static StairsClusterBuilder stairsClusterBuilder( floodIsFloodedBuffer, floodResultsBuffer );
-
 bool BotSameFloorClusterAreasCache::IsAreaWalkable( BotMovementPredictionContext *context,
 													const aas_area_t &startArea,
 													const aas_area_t &testedArea ) const {
@@ -2289,23 +1973,23 @@ int BotSameFloorClusterAreasCache::GetClosestToTargetPoint( BotMovementPredictio
 
 int BotSameFloorClusterAreasCache::FindClosestToTargetPoint( BotMovementPredictionContext *context,
 															 int *resultAreaNum ) const {
-	// Get the current floor cluster start area deferring an actual cluster building
-	int currFloodStartArea = floorClusterBuilder.FindFloodStartArea( context );
-	if( !currFloodStartArea ) {
-		return 0;
+	int currGroundedAreaNum = context->CurrGroundedAasAreaNum();
+	if( !currGroundedAreaNum ) {
+		return false;
 	}
 
 	CandidateAreasHeap candidateAreasHeap;
-	if( currFloodStartArea != computedForAreaNum || oldCandidatesHeap.empty() ) {
+	if( currGroundedAreaNum != computedForAreaNum || oldCandidatesHeap.empty() ) {
 		oldCandidatesHeap.clear();
-		// Force building a floor cluster
-		if( !floorClusterBuilder.Build( currFloodStartArea ) ) {
-			return 0;
+		int floorClusterNum = aasWorld->FloorClusterNum( currGroundedAreaNum );
+		if( !floorClusterNum ) {
+			return false;
 		}
-		computedForAreaNum = currFloodStartArea;
+		computedForAreaNum = currGroundedAreaNum;
 		// Build new areas heap for the new flood start area
-		const auto *clusterAreaNums = floorClusterBuilder.ResultAreas();
-		const auto numClusterAreas = floorClusterBuilder.ResultSize();
+		const auto *clusterAreaNums = aasWorld->FloorClusterData( floorClusterNum ) + 1;
+		// The number of areas in the cluster areas list prepends the first area num
+		const auto numClusterAreas = clusterAreaNums[-1];
 		BuildCandidateAreasHeap( context, clusterAreaNums, numClusterAreas, candidateAreasHeap );
 		// Save the heap
 		for( const auto &heapElem: candidateAreasHeap ) {
@@ -2327,7 +2011,7 @@ int BotSameFloorClusterAreasCache::FindClosestToTargetPoint( BotMovementPredicti
 		int travelTime = (int)( -candidateAreasHeap.back().score );
 		candidateAreasHeap.pop_back();
 
-		if( !IsAreaWalkable( context, aasAreas[currFloodStartArea], aasAreas[areaNum] ) ) {
+		if( !IsAreaWalkable( context, aasAreas[currGroundedAreaNum], aasAreas[areaNum] ) ) {
 			continue;
 		}
 
@@ -2456,15 +2140,25 @@ bool BotDummyMovementAction::TryFindFallbackStairsPath( BotMovementPredictionCon
 		return false;
 	}
 
-	if( !stairsClusterBuilder.Build( context ) ) {
+	int currGroundedAreaNum = context->CurrGroundedAasAreaNum();
+	if( !currGroundedAreaNum ) {
 		return false;
 	}
+
+	const auto *aasWorld = AiAasWorld::Instance();
+	int stairsClusterNum = aasWorld->StairsClusterNum( currGroundedAreaNum );
+	if( !stairsClusterNum ) {
+		return false;
+	}
+
+	const uint16_t *stairsClusterAreaNums = aasWorld->StairsClusterData( stairsClusterNum );
+	int numAreasInStairsCluster = stairsClusterAreaNums[-1];
 
 	// TODO: Support curved stairs, here and from StairsClusterBuilder side
 
 	// Determine whether highest or lowest area is closer to the nav target
 	const auto *routeCache = self->ai->botRef->routeCache;
-	const int stairsBoundaryAreas[] = { stairsClusterBuilder.LowestStairsArea(), stairsClusterBuilder.HighestStairsArea() };
+	const int stairsBoundaryAreas[] = { stairsClusterAreaNums[0], stairsClusterAreaNums[numAreasInStairsCluster - 1] };
 
 	int bestStairsAreaIndex = -1;
 	int bestTravelTimeOfStairsAreas = std::numeric_limits<int>::max();
