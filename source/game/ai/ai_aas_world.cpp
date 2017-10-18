@@ -460,12 +460,15 @@ void AiAasWorld::FreeLinkedEntities() {
 	arealinkedentities = nullptr;
 }
 
-void AiAasWorld::ComputeExtraAreaFlags() {
+void AiAasWorld::ComputeExtraAreaData() {
 	for( int areaNum = 1; areaNum < numareas; ++areaNum ) {
 		TrySetAreaLedgeFlags( areaNum );
 		TrySetAreaWallFlags( areaNum );
 		TrySetAreaJunkFlags( areaNum );
+		TrySetAreaRampFlags( areaNum );
 	}
+
+	ComputeLogicalAreaClusters();
 }
 
 void AiAasWorld::TrySetAreaLedgeFlags( int areaNum ) {
@@ -515,13 +518,91 @@ void AiAasWorld::TrySetAreaJunkFlags( int areaNum ) {
 	const aas_area_t &area = areas[areaNum];
 	int junkFactor = 0;
 
-	for( int i = 0; i < 3; ++i ) {
+	// Changed to test only 2D dimensions, otherwise there will be way too many bogus ramp flags set
+	for( int i = 0; i < 2; ++i ) {
 		if( area.maxs[i] - area.mins[i] < 24.0f ) {
 			++junkFactor;
 		}
 	}
 	if( junkFactor > 1 ) {
 		areasettings[areaNum].areaflags |= AREA_JUNK;
+	}
+}
+
+void AiAasWorld::TrySetAreaRampFlags( int areaNum ) {
+	// Since we extend the trace end a bit below the area,
+	// this test is added to avoid classifying non-grounded areas as having a ramp
+	if( !( AreaSettings()[areaNum].areaflags & AREA_GROUNDED ) ) {
+		return;
+	}
+	// Skip junk areas as well
+	if( AreaSettings()[areaNum].areaflags & AREA_JUNK ) {
+		return;
+	}
+
+	// AAS does not make a distinction for areas having an inclined floor.
+	// This leads to a poor bot behaviour since bots threat areas of these kind as obstacles.
+	// Moreover if an "area" (which should not be a single area) has both flat and inclined floor parts,
+	// the inclined part is still ignored.
+
+	// There is an obvious approach of testing ground faces of the area but it does not work for several reasons
+	// (some faces are falsely marked as FACE_GROUND).
+
+	const auto &area = areas[areaNum];
+	// Since an area might contain both flat and inclined part, we cannot just test a trace going through the center
+	float stepX = 0.2f * ( area.maxs[0] - area.mins[0] );
+	float stepY = 0.2f * ( area.maxs[1] - area.mins[1] );
+
+	static const float zNormalThreshold = cosf( DEG2RAD( 2.0f ) );
+
+	trace_t trace;
+	for( int i = -2; i <= 2; ++i ) {
+		for( int j = -2; j <= 2; ++j ) {
+			Vec3 start( area.center );
+			Vec3 end( area.center );
+			start.X() += stepX * i;
+			start.Y() += stepY * j;
+			end.X() += stepX * i;
+			end.Y() += stepY * j;
+
+			// These margins added are absolutely required in order to produce satisfiable results
+			start.Z() = area.maxs[2] + 16.0f;
+			end.Z() = area.mins[2] - 16.0f;
+
+			G_Trace( &trace, start.Data(), nullptr, nullptr, end.Data(), nullptr, MASK_PLAYERSOLID );
+			if( trace.fraction == 1.0f || trace.startsolid ) {
+				continue;
+			}
+
+			if( !ISWALKABLEPLANE( &trace.plane ) ) {
+				continue;
+			}
+
+			if( trace.plane.normal[2] > zNormalThreshold ) {
+				continue;
+			}
+
+			// Check whether we're still in the same area
+			if( trace.endpos[2] < area.mins[2] || trace.endpos[2] > area.maxs[2] ) {
+				continue;
+			}
+
+			// TODO: This does not really work for some weird reasons so we have to live with false positives
+			// Area bounds extend the actual area geometry,
+			// so a point might be within the bounds but outside the area hull
+			//Vec3 testedPoint( trace.endpos );
+			//testedPoint.Z() += 1.0f;
+			//if( PointAreaNum( testedPoint.Data() ) != areaNum ) {
+			//	continue;
+			//}
+
+			areasettings[areaNum].areaflags |= AREA_INCLINED_FLOOR;
+			if( trace.plane.normal[2] <= 1.0f - SLIDEMOVE_PLANEINTERACT_EPSILON ) {
+				areasettings[areaNum].areaflags |= AREA_SLIDABLE_RAMP;
+				// All flags that could be set are present
+				return;
+			}
+		}
 	}
 }
 
@@ -861,6 +942,25 @@ AiAasWorld::~AiAasWorld() {
 	if( clusters ) {
 		G_LevelFree( clusters );
 	}
+
+	if( areaFloorClusterNums ) {
+		G_LevelFree( areaFloorClusterNums );
+	}
+	if( areaStairsClusterNums ) {
+		G_LevelFree( areaStairsClusterNums );
+	}
+	if( floorClusterDataOffsets ) {
+		G_LevelFree( floorClusterDataOffsets );
+	}
+	if( stairsClusterDataOffsets ) {
+		G_LevelFree( stairsClusterDataOffsets );
+	}
+	if( floorClusterData ) {
+		G_LevelFree( floorClusterData );
+	}
+	if( stairsClusterData ) {
+		G_LevelFree( stairsClusterData );
+	}
 }
 
 void AiAasWorld::SwapData() {
@@ -982,3 +1082,523 @@ void AiAasWorld::SwapData() {
 		clusters[i].firstportal = LittleLong( clusters[i].firstportal );
 	}
 }
+
+// ClassfiyFunc operator() invocation must yield these results:
+// -1: the area should be marked as flooded and skipped
+//  0: the area should be skipped without marking as flooded
+//  1: the area should be marked as flooded and put in the results list
+template<typename ClassifyFunc>
+class AreasClusterBuilder {
+protected:
+	ClassifyFunc classifyFunc;
+
+	bool *isFlooded;
+	uint16_t *resultsBase;
+	uint16_t *resultsPtr;
+
+	const AiAasWorld *aasWorld;
+
+	vec3_t floodedRegionMins;
+	vec3_t floodedRegionMaxs;
+
+public:
+	AreasClusterBuilder( bool *isFloodedBuffer, uint16_t *resultsBuffer, AiAasWorld *aasWorld_ )
+		: isFlooded( isFloodedBuffer ), resultsBase( resultsBuffer ), aasWorld( aasWorld_ ) {}
+
+	void FloodAreasRecursive( int areaNum );
+
+	void PrepareToFlood() {
+		memset( isFlooded, 0, sizeof( bool ) * aasWorld->NumAreas() );
+		resultsPtr = &resultsBase[0];
+		ClearBounds( floodedRegionMins, floodedRegionMaxs );
+	}
+
+	const uint16_t *ResultAreas() const { return resultsBase; }
+	int ResultSize() const { return (int)( resultsPtr - resultsBase ); }
+};
+
+template <typename ClassifyFunc>
+void AreasClusterBuilder<ClassifyFunc>::FloodAreasRecursive( int areaNum ) {
+	const auto *aasAreas = aasWorld->Areas();
+	const auto *aasAreaSettings = aasWorld->AreaSettings();
+	const auto *aasReach = aasWorld->Reachabilities();
+
+	// TODO: Rewrite to stack-based non-recursive version
+
+	*resultsPtr++ = (uint16_t)areaNum;
+	isFlooded[areaNum] = true;
+
+	const auto &currArea = aasAreas[areaNum];
+	AddPointToBounds( currArea.mins, floodedRegionMins, floodedRegionMaxs );
+	AddPointToBounds( currArea.maxs, floodedRegionMins, floodedRegionMaxs );
+
+	const auto &currAreaSettings = aasAreaSettings[areaNum];
+	int reachNum = currAreaSettings.firstreachablearea;
+	const int maxReachNum = reachNum + currAreaSettings.numreachableareas;
+	for( ; reachNum < maxReachNum; ++reachNum ) {
+		const auto &reach = aasReach[reachNum];
+		if( isFlooded[reach.areanum] ) {
+			continue;
+		}
+
+		int classifyResult = classifyFunc( currArea, reach, aasAreas[reach.areanum], aasAreaSettings[reach.areanum] );
+		if( classifyResult < 0 ) {
+			isFlooded[reach.areanum] = true;
+			continue;
+		}
+
+		if( classifyResult > 0 ) {
+			FloodAreasRecursive( reach.areanum );
+		}
+	}
+}
+
+struct ClassifyFloorArea
+{
+	int operator()( const aas_area_t &currArea,
+					const aas_reachability_t &reach,
+					const aas_area_t &reachArea,
+					const aas_areasettings_t &reachAreaSetttings ) {
+		if( reach.traveltype != TRAVEL_WALK ) {
+			// Do not disable the area for further search,
+			// it might be reached by walking through some intermediate area
+			return 0;
+		}
+
+		if( fabsf( reachArea.mins[2] - currArea.mins[2] ) > 1.0f ) {
+			// Disable the area for further search
+			return -1;
+		}
+
+		if( !LooksLikeAFloorArea( reachAreaSetttings ) ) {
+			// Disable the area for further search
+			return -1;
+		}
+
+		return 1;
+	}
+
+	bool LooksLikeAFloorArea( const aas_areasettings_t &areaSettings ) {
+		if( !( areaSettings.areaflags & AREA_GROUNDED ) ) {
+			return false;
+		}
+		if( areaSettings.areaflags & AREA_INCLINED_FLOOR ) {
+			return false;
+		}
+		return true;
+	}
+};
+
+class FloorClusterBuilder : public AreasClusterBuilder<ClassifyFloorArea> {
+	bool IsFloodedRegionDegenerate() const;
+public:
+	FloorClusterBuilder( bool *isFloodedBuffer, uint16_t *resultsBuffer, AiAasWorld *aasWorld_ )
+		: AreasClusterBuilder( isFloodedBuffer, resultsBuffer, aasWorld_ ) {}
+
+	bool Build( int startAreaNum );
+};
+
+bool FloorClusterBuilder::IsFloodedRegionDegenerate() const {
+	float dimsSum = 0.0f;
+	for( int i = 0; i < 2; ++i ) {
+		float dims = floodedRegionMaxs[i] - floodedRegionMins[i];
+		if( dims < 48.0f ) {
+			return true;
+		}
+		dimsSum += dims;
+	}
+
+	// If there are only few single area, apply greater restrictions
+	switch( ResultSize() ) {
+		case 1: return dimsSum < 256.0f + 32.0f;
+		case 2: return dimsSum < 192.0f + 32.0f;
+		case 3: return dimsSum < 144.0f + 32.0f;
+		default: return dimsSum < 144.0f;
+	}
+}
+
+bool FloorClusterBuilder::Build( int startAreaNum ) {
+	if( !classifyFunc.LooksLikeAFloorArea( aasWorld->AreaSettings()[startAreaNum] ) ) {
+		return false;
+	}
+
+	PrepareToFlood();
+
+	FloodAreasRecursive( startAreaNum );
+
+	return ResultSize() && !IsFloodedRegionDegenerate();
+}
+
+struct ClassifyStairsArea {
+	int operator()( const aas_area_t &currArea,
+					const aas_reachability_t &reach,
+					const aas_area_t &reachArea,
+					const aas_areasettings_t &reachAreaSettings ) {
+		if( reach.traveltype != TRAVEL_WALK && reach.traveltype != TRAVEL_WALKOFFLEDGE && reach.traveltype != TRAVEL_JUMP ) {
+			// Do not disable the area for further search,
+			// it might be reached by walking through some intermediate area
+			return 0;
+		}
+
+		// Check whether there is a feasible height difference with the current area
+		float relativeHeight = fabsf( reachArea.mins[2] - currArea.mins[2] );
+		if( relativeHeight < 4 || relativeHeight > -playerbox_stand_mins[2] ) {
+			// Disable the area for further search
+			return -1;
+		}
+
+		// HACK: TODO: Refactor this (operator()) method params
+		const auto *aasWorld = AiAasWorld::Instance();
+		if( aasWorld->FloorClusterNum( &currArea - aasWorld->Areas() ) ) {
+			// The area is already in a floor cluster
+			return -1;
+		}
+
+		if( !LooksLikeAStairsArea( reachArea, reachAreaSettings ) ) {
+			// Disable the area for further search
+			return -1;
+		}
+
+		return 1;
+	}
+
+	bool LooksLikeAStairsArea( const aas_area_t &area, const aas_areasettings_t &areaSettings ) {
+		if( !( areaSettings.areaflags & AREA_GROUNDED ) ) {
+			return false;
+		}
+		if( areaSettings.areaflags & AREA_INCLINED_FLOOR ) {
+			return false;
+		}
+
+		// TODO: There should be more strict tests... A substantial amount of false positives is noticed.
+
+		// Check whether the area top projection looks like a stretched rectangle
+		float dx = area.maxs[0] - area.mins[0];
+		float dy = area.maxs[1] - area.mins[1];
+
+		return dx / dy > 4.0f || dy / dx > 4.0f;
+	}
+};
+
+class StairsClusterBuilder: public AreasClusterBuilder<ClassifyStairsArea>
+{
+public:
+	StaticVector<AreaAndScore, 128> areasAndHeights;
+
+	StairsClusterBuilder( bool *isFloodedBuffer, uint16_t *resultsBuffer, AiAasWorld *aasWorld_ )
+		: AreasClusterBuilder( isFloodedBuffer, resultsBuffer, aasWorld_ ) {}
+
+	bool Build( int startAreaNum );
+};
+
+bool StairsClusterBuilder::Build( int startAreaNum ) {
+	// We do not check intentionally whether the start area belongs to stairs itself and is not just adjacent to stairs.
+	// (whether the area top projection dimensions ratio looks like a stair step)
+	// (A bot might get blocked on such stairs entrance/exit areas)
+
+	PrepareToFlood();
+
+	const auto *aasAreas = aasWorld->Areas();
+	const auto *aasAreaSettings = aasWorld->AreaSettings();
+
+	if( !classifyFunc.LooksLikeAStairsArea( aasAreas[startAreaNum], aasAreaSettings[startAreaNum ] ) ) {
+		return false;
+	}
+
+	FloodAreasRecursive( startAreaNum );
+
+	const int numAreas = ResultSize();
+	if( numAreas < 3 ) {
+		return false;
+	}
+
+	if( numAreas > 128 ) {
+		G_Printf( S_COLOR_YELLOW "Warning: StairsClusterBuilder::Build(): too many stairs-like areas in cluster\n" );
+		return false;
+	}
+
+	const auto *areaNums = ResultAreas();
+	areasAndHeights.clear();
+	for( int i = 0; i < numAreas; ++i) {
+		const int areaNum = areaNums[i];
+		// Negate the "score" so lowest areas (having the highest "score") are first after sorting
+		new( areasAndHeights.unsafe_grow_back() )AreaAndScore( areaNum, -aasAreas[areaNum].mins[2] );
+	}
+
+	std::sort( areasAndHeights.begin(), areasAndHeights.end() );
+
+	// Check monotone height increase ("score" decrease)
+	float prevScore = areasAndHeights[0].score;
+	for( int i = 1, end = (int)areasAndHeights.size(); i < end; ++i ) {
+		float currScore = areasAndHeights[i].score;
+		if( fabsf( currScore - prevScore ) <= 1.0f ) {
+			return false;
+		}
+		assert( currScore < prevScore );
+		prevScore = currScore;
+	}
+
+	// Check connectivity between adjacent stair steps, it should not be broken after sorting for real stairs
+
+	// Let us assume we have a not stair-like environment of this kind as an algorithm input:
+	//   I
+	//   I I
+	// I I I
+	// 1 2 3
+
+	// After sorting it looks like this:
+	//     I
+	//   I I
+	// I I I
+	// 1 3 2
+
+	// The connectivity between steps 1<->2, 2<->3 is broken
+	// (there are no mutual walk reachabilities connecting some of steps of these false stairs)
+
+	const auto *aasReach = aasWorld->Reachabilities();
+	for( int i = 0, end = (int)areasAndHeights.size() - 1; i < end; ++i ) {
+		const int prevAreaNum = areasAndHeights[i + 0].areaNum;
+		const int currAreaNum = areasAndHeights[i + 1].areaNum;
+		const auto &currAreaSettings = aasAreaSettings[currAreaNum];
+		int currReachNum = currAreaSettings.firstreachablearea;
+		const int maxReachNum = currReachNum + currAreaSettings.numreachableareas;
+		for(; currReachNum < maxReachNum; ++currReachNum ) {
+			const auto &reach = aasReach[currReachNum];
+			// We have dropped condition on travel type of the reachability as showing unsatisfiable results
+			if( reach.areanum == prevAreaNum ) {
+				break;
+			}
+		}
+
+		if( currReachNum == maxReachNum ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+// A container that avoids allocations of the entire data on capacity overflow.
+template<typename T>
+class BufferBuilder {
+
+	struct alignas ( 8 )Chunk {
+		Chunk *next;
+		T *data;
+		unsigned size;
+		unsigned capacity;
+
+		explicit Chunk( T *data_, unsigned capacity_ ) {
+			data = data_;
+			size = 0;
+			capacity = capacity_;
+			next = nullptr;
+		}
+
+		static Chunk *New( unsigned chunkSize ) {
+			// Allocate the chunk along with its data in the single block of memory
+			static_assert( sizeof( Chunk ) % 8 == 0, "" );
+			static_assert( alignof( Chunk ) % 8 == 0, "" );
+			auto *mem = (uint8_t *)malloc( sizeof( Chunk ) + sizeof( T ) * chunkSize );
+			return new( mem )Chunk( (T *)( mem + sizeof( Chunk ) ), chunkSize );
+		}
+
+		static void Delete( Chunk *chunk ) {
+			free( chunk );
+		}
+
+		bool IsFull() const {
+			return size == capacity;
+		}
+
+		void Add( const T &elem ) {
+			assert( !IsFull() );
+			data[size++] = elem;
+		}
+
+		unsigned Add( const T *elems, unsigned numElems ) {
+			unsigned elemsToCopy = numElems;
+			if( numElems > capacity - size ) {
+				elemsToCopy = capacity - size;
+			}
+
+			memcpy( data + size, elems, sizeof( T ) * elemsToCopy );
+			size += elemsToCopy;
+			return elemsToCopy;
+		}
+	};
+
+	Chunk *first;
+	Chunk *last;
+	unsigned size;
+	unsigned chunkSize;
+
+public:
+	explicit BufferBuilder( unsigned chunkSize_ ) : size( 0 ), chunkSize( chunkSize_ ) {
+		first = last = Chunk::New( chunkSize_ );
+	}
+
+	~BufferBuilder() {
+		Clear();
+	}
+
+	void Clear();
+
+	unsigned Size() const { return size; }
+
+	void Add( const T &elem );
+	void Add( const T *elems, int numElems );
+
+	// Constructs a single continuous array from chunks
+	T *FlattenResult() const;
+};
+
+template <typename T>
+void BufferBuilder<T>::Clear() {
+	Chunk *chunk, *nextChunk;
+	for( chunk = first; chunk; chunk = nextChunk ) {
+		nextChunk = chunk->next;
+		Chunk::Delete( chunk );
+	}
+
+	first = last = nullptr;
+	size = 0;
+}
+
+template <typename T>
+void BufferBuilder<T>::Add( const T &elem ) {
+	if( last->IsFull() ) {
+		Chunk *newChunk = Chunk::New( chunkSize );
+		last->next = newChunk;
+		last = newChunk;
+	}
+
+	last->Add( elem );
+	size++;
+}
+
+template<typename T>
+T *BufferBuilder<T>::FlattenResult() const {
+	auto *result = (T *)G_LevelMalloc( sizeof( T ) * size );
+	auto *resultPtr = result;
+
+	for( const Chunk *chunk = first; chunk; chunk = chunk->next ) {
+		memcpy( resultPtr, chunk->data, sizeof( T ) * chunk->size );
+		resultPtr += chunk->size;
+	}
+
+	return result;
+}
+
+template <typename T>
+void BufferBuilder<T>::Add( const T *elems, int numElems ) {
+	auto remaining = (unsigned)numElems;
+	for(;; ) {
+		unsigned added = last->Add( elems, remaining );
+		elems += added;
+		size += added;
+		if( added == remaining ) {
+			return;
+		}
+		remaining -= added;
+		Chunk *newChunk = Chunk::New( chunkSize );
+		last->next = newChunk;
+		last = newChunk;
+	}
+}
+
+void AiAasWorld::ComputeLogicalAreaClusters() {
+	auto isFloodedBuffer = (bool *)G_LevelMalloc( sizeof( bool ) * this->NumAreas() );
+	auto floodResultsBuffer = (uint16_t *)G_LevelMalloc( sizeof( uint16_t ) * this->NumAreas() );
+
+	FloorClusterBuilder floorClusterBuilder( isFloodedBuffer, floodResultsBuffer, this );
+	StairsClusterBuilder stairsClusterBuilder( isFloodedBuffer, floodResultsBuffer, this );
+
+	this->areaFloorClusterNums = (uint16_t *)G_LevelMalloc( sizeof( uint16_t ) * this->NumAreas() );
+	memset( this->areaFloorClusterNums, 0, sizeof( uint16_t ) * this->NumAreas() );
+	this->areaStairsClusterNums = (uint16_t *)G_LevelMalloc( sizeof( uint16_t ) * this->NumAreas() );
+	memset( this->areaStairsClusterNums, 0, sizeof( uint16_t ) * this->NumAreas() );
+
+	BufferBuilder<uint16_t> floorData( 256 );
+	BufferBuilder<int> floorDataOffsets( 32 );
+	BufferBuilder<uint16_t> stairsData( 128 );
+	BufferBuilder<int> stairsDataOffsets( 16 );
+
+	// Add dummy clusters at index 0 in order to conform to the rest of AAS code
+	numFloorClusters = 1;
+	floorDataOffsets.Add( 0 );
+	floorData.Add( 0 );
+
+	for( int i = 1; i < this->NumAreas(); ++i ) {
+		// If an area is already marked
+		if( areaFloorClusterNums[i] ) {
+			continue;
+		}
+
+		if( !floorClusterBuilder.Build( i ) ) {
+			continue;
+		}
+
+		// Important: Mark all areas in the built cluster
+		int numClusterAreas = floorClusterBuilder.ResultSize();
+		const auto *clusterAreaNums = floorClusterBuilder.ResultAreas();
+		for( int j = 0; j < numClusterAreas; ++j ) {
+			areaFloorClusterNums[clusterAreaNums[j]] = (uint16_t)numFloorClusters;
+		}
+
+		numFloorClusters++;
+		floorDataOffsets.Add( floorData.Size() );
+		floorData.Add( (uint16_t)numClusterAreas );
+		floorData.Add( clusterAreaNums, numClusterAreas );
+	}
+
+	assert( numFloorClusters == floorDataOffsets.Size() );
+	this->floorClusterDataOffsets = floorDataOffsets.FlattenResult();
+	// Clear as no longer needed immediately for same reasons
+	floorDataOffsets.Clear();
+	this->floorClusterData = floorData.FlattenResult();
+	floorData.Clear();
+
+	numStairsClusters = 1;
+	stairsDataOffsets.Add( 0 );
+	stairsData.Add( 0 );
+
+	for( int i = 0; i < this->NumAreas(); ++i ) {
+		// If an area is already marked
+		if( areaFloorClusterNums[i] || areaStairsClusterNums[i] ) {
+			continue;
+		}
+
+		if( !stairsClusterBuilder.Build( i ) ) {
+			continue;
+		}
+
+		// Important: Mark all areas in the built cluster
+		for( auto areaAndHeight: stairsClusterBuilder.areasAndHeights ) {
+			areaFloorClusterNums[areaAndHeight.areaNum] = (uint16_t)numStairsClusters;
+		}
+
+		numStairsClusters++;
+		stairsDataOffsets.Add( stairsData.Size() );
+		stairsData.Add( (uint16_t)stairsClusterBuilder.ResultSize() );
+		// Save areas preserving sorting by height
+		for( auto areaAndHeight: stairsClusterBuilder.areasAndHeights ) {
+			stairsData.Add( (uint16_t)areaAndHeight.areaNum );
+		}
+	}
+
+	// Clear as no longer needed to provide free space for further allocations
+	G_LevelFree( isFloodedBuffer );
+	G_LevelFree( floodResultsBuffer );
+
+	assert( numStairsClusters == stairsDataOffsets.Size() );
+	this->stairsClusterDataOffsets = stairsDataOffsets.FlattenResult();
+	stairsDataOffsets.Clear();
+	this->stairsClusterData = stairsData.FlattenResult();
+
+	constexpr auto *format =
+		"AiAasWorld: %d floor clusters, %d stairs clusters "
+		"(including dummy zero ones) have been detected\n";
+	G_Printf( format, numFloorClusters, numStairsClusters );
+}
+

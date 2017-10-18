@@ -71,9 +71,12 @@
 #define AREA_LIQUID                 4       //area contains a liquid
 #define AREA_DISABLED               8       //area is disabled for routing when set
 #define AREA_BRIDGE                 16      //area ontop of a bridge
-#define AREA_LEDGE                  128     //Qfusion: area looks like a ledge. This flag is set on world loading.
-#define AREA_WALL                   256     //Qfusion: area has bounding solid walls.
-#define AREA_JUNK                   512     //Qfusion: area does not look like useful.
+// These flags are specific to this engine and are set on world loading based on various computations
+#define AREA_LEDGE                  128     //area looks like a ledge. This flag is set on world loading.
+#define AREA_WALL                   256     //area has bounding solid walls.
+#define AREA_JUNK                   512     //area does not look like useful.
+#define AREA_INCLINED_FLOOR         1024    //area has an inclined floor (AAS treats these areas as having a flat one)
+#define AREA_SLIDABLE_RAMP          2048    //area is a slidable ramp (AREA_INCLINED_FLOOR is implied and set too)
 
 //========== bounding box =========
 
@@ -242,6 +245,18 @@ class AiAasWorld
 	aas_link_t **arealinkedentities;            //entities linked into areas
 	int numaaslinks;
 
+	uint16_t *areaFloorClusterNums;            // A number of a floor cluster for an area, 0 = not in a floor cluster
+	uint16_t *areaStairsClusterNums;           // A number of a stairs cluster for an area, 0 = not in a stairs cluster
+
+	int numFloorClusters;
+	int numStairsClusters;
+
+	int *floorClusterDataOffsets;    // An element #i contains an offset of cluster elements sequence in the joint data
+	int *stairsClusterDataOffsets;   // An element #i contains an offset of cluster elements sequence in the joint data
+
+	uint16_t *floorClusterData;    // Contains floor clusters element sequences, each one is prepended by the length
+	uint16_t *stairsClusterData;    // Contains stairs clusters element sequences, each one is prepended by the length
+
 	static AiAasWorld *instance;
 
 	AiAasWorld() {
@@ -253,7 +268,7 @@ class AiAasWorld
 	void PostLoad() {
 		InitLinkHeap();
 		InitLinkedEntities();
-		ComputeExtraAreaFlags();
+		ComputeExtraAreaData();
 	}
 
 	void SwapData();
@@ -261,10 +276,14 @@ class AiAasWorld
 	void InitLinkHeap();
 	void InitLinkedEntities();
 	// Computes extra Qfusion area flags based on loaded world data
-	void ComputeExtraAreaFlags();
+	void ComputeExtraAreaData();
+	// Computes extra Qfusion area floor and stairs clusters
+	void ComputeLogicalAreaClusters();
+
 	void TrySetAreaLedgeFlags( int areaNum );
 	void TrySetAreaWallFlags( int areaNum );
 	void TrySetAreaJunkFlags( int areaNum );
+	void TrySetAreaRampFlags( int areaNum );
 
 	void FreeLinkHeap();
 	void FreeLinkedEntities();
@@ -408,6 +427,31 @@ public:
 	//clusters
 	inline int NumClusters() const { return numclusters; }
 	inline const aas_cluster_t *Clusters() const { return clusters; }
+
+	inline int NumFloorClusters() const { return numFloorClusters; }
+	inline int NumStairsClusters() const { return numStairsClusters; }
+
+	// A feasible cluster num in non-zero
+	inline uint16_t FloorClusterNum( int areaNum ) const {
+		return loaded ? areaFloorClusterNums[areaNum] : (uint16_t)0;
+	}
+
+	// A feasible cluster num is non-zero
+	inline uint16_t StairsClusterNum( int areaNum ) const {
+		return loaded ? areaStairsClusterNums[areaNum] : (uint16_t)0;
+	}
+
+	// In order to be conform with the rest of AAS code the zero cluster is dummy
+	inline const uint16_t *FloorClusterData( int floorClusterNum ) const {
+		assert( floorClusterNum >= 0 && floorClusterNum < numFloorClusters );
+		return floorClusterData + floorClusterDataOffsets[floorClusterNum];
+	}
+
+	// In order to be conform with the rest of AAS code the zero cluster is dummy
+	inline const uint16_t *StairsClusterData( int stairsClusterNum ) const {
+		assert( stairsClusterNum >= 0 && stairsClusterNum < numStairsClusters );
+		return stairsClusterData + stairsClusterDataOffsets[stairsClusterNum];
+	}
 };
 
 #endif
