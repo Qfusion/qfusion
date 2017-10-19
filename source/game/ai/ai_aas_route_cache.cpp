@@ -1289,34 +1289,6 @@ bool AiAasRouteCache::RoutingResultToGoalArea( int fromAreaNum, const vec_t *ori
 
 	uint32_t hash = ResultCache::Hash( cachedOrigin, fromAreaNum, toAreaNum, travelFlags );
 	if( auto *cacheNode = resultCache.GetCachedResultForHash( hash, cachedOrigin, fromAreaNum, toAreaNum, travelFlags ) ) {
-#ifdef _DEBUG
-		RoutingRequest request( fromAreaNum, origin, toAreaNum, travelFlags );
-		constexpr const char *tag = "AiAasRouteCache::RoutingResultToGoalArea()";
-		// Check for corrupt cache results
-		G_Printf( "Cached: reach %d time %d\n", cacheNode->reachability, cacheNode->travelTime );
-		if( ( cacheNode->reachability != 0 ) ^ ( cacheNode->travelTime != 0 ) ) {
-			const char *format = "Reachability and travel time valid status must be tied. Reachability: %d, time: %d";
-			AI_FailWith( tag, format, cacheNode->reachability, cacheNode->travelTime );
-		}
-		if( !nonConstThis->RouteToGoalArea( request, result ) ) {
-			if( !cacheNode->reachability ) {
-				return false;
-			}
-
-			const char *format = "Can't find an actual route %d -> %d (flags = %X) while cached one exists (and is valid)";
-			AI_FailWith( tag, format, fromAreaNum, toAreaNum, travelFlags );
-		}
-		G_Printf( "Actual: reach %d time %d\n", result->reachnum, result->traveltime );
-		if( result->reachnum != cacheNode->reachability ) {
-			const char *format = "Route %d -> %d (flags = %X): actual reach num %d, cached one %d";
-			AI_FailWith( tag, format, fromAreaNum, toAreaNum, travelFlags, result->reachnum, cacheNode->reachability );
-		}
-		if( result->traveltime != cacheNode->travelTime ) {
-			const char *format = "Route %d -> %d (flags = %X): actual travel time %d, cached one %d";
-			AI_FailWith( tag, format, fromAreaNum, toAreaNum, travelFlags, result->reachnum, cacheNode->reachability );
-		}
-#endif
-
 		result->reachnum = cacheNode->reachability;
 		result->traveltime = cacheNode->travelTime;
 		return cacheNode->reachability != 0;
