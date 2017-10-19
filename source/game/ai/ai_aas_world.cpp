@@ -469,6 +469,7 @@ void AiAasWorld::ComputeExtraAreaData() {
 	}
 
 	ComputeLogicalAreaClusters();
+	ComputeFace2DProjVertices();
 }
 
 void AiAasWorld::TrySetAreaLedgeFlags( int areaNum ) {
@@ -960,6 +961,10 @@ AiAasWorld::~AiAasWorld() {
 	}
 	if( stairsClusterData ) {
 		G_LevelFree( stairsClusterData );
+	}
+
+	if( face2DProjVertexNums ) {
+		G_LevelFree( face2DProjVertexNums );
 	}
 }
 
@@ -1602,3 +1607,39 @@ void AiAasWorld::ComputeLogicalAreaClusters() {
 	G_Printf( format, numFloorClusters, numStairsClusters );
 }
 
+void AiAasWorld::ComputeFace2DProjVertices() {
+	face2DProjVertexNums = (int *)G_LevelMalloc( sizeof( int ) * 2 * this->NumFaces() );
+	int *vertexNumsPtr = face2DProjVertexNums;
+
+	// Skip 2 vertices for the dummy zero face
+	vertexNumsPtr += 2;
+
+	const auto *faces = this->faces;
+	const auto *edgeIndex = this->edgeindex;
+	const auto *edges = this->edges;
+	const auto *vertices = this->vertexes;
+
+	for( int i = 1; i < numfaces; ++i ) {
+		const auto &face = faces[i];
+		int edgeIndexNum = face.firstedge;
+		const int endEdgeIndexNum = edgeIndexNum + face.numedges;
+		// Put dummy values by default. Make sure they're distinct.
+		int n1 = 0, n2 = 1;
+		for(; edgeIndexNum != endEdgeIndexNum; ++edgeIndexNum ) {
+			const auto &edge = edges[abs( edgeIndex[edgeIndexNum] )];
+			int ev1 = edge.v[0];
+			int ev2 = edge.v[1];
+			Vec3 dir( vertices[ev1] );
+			dir -= vertices[ev2];
+			dir.NormalizeFast();
+			if( fabsf( dir.Z() ) > 0.001f ) {
+				continue;
+			}
+			n1 = ev1;
+			n2 = ev2;
+			break;
+		}
+		*vertexNumsPtr++ = n1;
+		*vertexNumsPtr++ = n2;
+	}
+}
