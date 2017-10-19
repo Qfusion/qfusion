@@ -1388,6 +1388,10 @@ class BotDummyMovementAction : public BotBaseMovementAction
 	void SetupLostNavTargetMovement( BotMovementPredictionContext *context );
 	bool TryFindFallbackMovementPath( BotMovementPredictionContext *context );
 	bool TryFindFallbackStairsPath( BotMovementPredictionContext *context );
+	bool TrySetupRampMovement( BotMovementPredictionContext *context, int rampAreaNum );
+	const int *TryFindBestRampExitArea( BotMovementPredictionContext *context, int rampAreaNum, int forbiddenAreaNum = 0 );
+	bool TryFindFallbackRampAreaPath( BotMovementPredictionContext *context, int rampAreaNum, int forbiddenAreaNum = 0 );
+	bool TryFindNearbyRampAreasPaths( BotMovementPredictionContext *context );
 	bool TryFindClosestNonVisitedAreaOrTrigger( BotMovementPredictionContext *context );
 	bool TryBuildClosestTacticalSpotsChain( BotMovementPredictionContext *context );
 	int TryFindFirstClosestTacticalSpot( BotMovementPredictionContext *context, float *spotOrigin, float *reachRadius );
