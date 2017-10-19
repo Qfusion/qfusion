@@ -55,6 +55,11 @@ private:
 		}
 	}
 
+	mutable int16_t groundNormalZ;
+
+	inline void SetGroundNormalZ( float value ) {
+		this->groundNormalZ = (int16_t)( value * std::numeric_limits<int16_t>::max() );
+	}
 private:
 	uint16_t currAasAreaNum;
 	uint16_t droppedToFloorAasAreaNum;
@@ -86,6 +91,7 @@ public:
 		groundEntNum( 0 ),
 		selfEntNum( 0 ),
 		heightOverGround( 0 ),
+		groundNormalZ( 0 ),
 		currAasAreaNum( 0 ),
 		droppedToFloorAasAreaNum( 0 ),
 		droppedToFloorOriginOffset( 0 ),
@@ -102,6 +108,8 @@ public:
 			this->groundEntNum = ( decltype( this->groundEntNum ) )( ENTNUM( ent->groundentity ) );
 		}
 		this->selfEntNum = ( decltype( this->selfEntNum ) )ENTNUM( ent );
+		// Compute lazily on demand in this case
+		SetGroundNormalZ( 0 );
 
 		UpdateAreaNums();
 	}
@@ -114,6 +122,7 @@ public:
 		SetAngles( pmove->playerState->viewangles );
 		this->groundEntNum = ( decltype( this->groundEntNum ) )pmove->groundentity;
 		this->selfEntNum = ( decltype( this->selfEntNum ) )( pmove->playerState->playerNum + 1 );
+		SetGroundNormalZ( pmove->groundentity >= 0 ? pmove->groundplane.normal[2] : 0 );
 
 		UpdateAreaNums();
 	}
@@ -202,6 +211,30 @@ public:
 		}
 
 		return numAreas;
+	}
+
+	inline float GetGroundNormalZ() const {
+		if( groundNormalZ != 0 ) {
+			return groundNormalZ / std::numeric_limits<int16_t>::max();
+		}
+		if( groundEntNum < 0 ) {
+			return 0;
+		}
+
+		// In worst case that is rarely gets triggered the bot is on ground
+		// but the ground normal has not been computed yet, and was not initially available.
+		// Compute it right now following PMove() implementation.
+		// This lazy approach really helps reducing amount of expensive trace calls.
+		trace_t trace;
+		auto *start = const_cast<float *>( Origin() );
+		Vec3 end( Origin() );
+		end.Z() -= 0.25f;
+		edict_t *self = game.edicts + selfEntNum;
+		G_Trace( &trace, start, playerbox_stand_mins, playerbox_stand_maxs, end.Data(), self, MASK_PLAYERSOLID );
+		if( trace.fraction != 1.0f ) {
+			groundNormalZ = (int16_t)( trace.plane.normal[2] / std::numeric_limits<int16_t>::max() );
+		}
+		return groundNormalZ;
 	}
 };
 

@@ -1744,6 +1744,16 @@ void BotDummyMovementAction::PlanPredictionStep( BotMovementPredictionContext *c
 	}
 
 	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+	if( entityPhysicsState.GroundEntity() && entityPhysicsState.GetGroundNormalZ() < 0.999f ) {
+		if( int groundedAreaNum = context->CurrGroundedAasAreaNum() ) {
+			if( AiAasWorld::Instance()->AreaSettings()[groundedAreaNum].areaflags & AREA_SLIDABLE_RAMP ) {
+				if( TrySetupRampMovement( context, groundedAreaNum ) ) {
+					handledSpecialMovement = true;
+				}
+			}
+		}
+	}
+
 	auto *botInput = &context->record->botInput;
 	if( handledSpecialMovement ) {
 		botInput->SetAllowedRotationMask( BotInputRotation::NONE );
@@ -2180,8 +2190,26 @@ void BotSameFloorClusterAreasCache::BuildCandidateAreasHeap( BotMovementPredicti
 }
 
 bool BotDummyMovementAction::TryFindFallbackMovementPath( BotMovementPredictionContext *context ) {
-	// Check for stairs first
+	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+	// Check if the bot is standing on a ramp first
+	if( entityPhysicsState.GroundEntity() && entityPhysicsState.GetGroundNormalZ() < 0.999f ) {
+		if( int groundedAreaNum = context->CurrGroundedAasAreaNum() ) {
+			if( AiAasWorld::Instance()->AreaSettings()[groundedAreaNum].areaflags & AREA_INCLINED_FLOOR ) {
+				if( TryFindFallbackRampAreaPath( context, groundedAreaNum ) ) {
+					return true;
+				}
+			}
+		}
+	}
+
+	// Check for stairs
 	if( TryFindFallbackStairsPath( context ) ) {
+		return true;
+	}
+
+	// It is not unusual to see tiny ramp-like areas to the both sides of stairs.
+	// Try using these ramp areas as directions for fallback movement.
+	if( TryFindNearbyRampAreasPaths( context ) ) {
 		return true;
 	}
 
@@ -2189,7 +2217,6 @@ bool BotDummyMovementAction::TryFindFallbackMovementPath( BotMovementPredictionC
 		return true;
 	}
 
-	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
 	auto *fallbackMovementPath = &self->ai->botRef->fallbackMovementPath;
 
 	// Try using the nav target as a fallback movement target
@@ -2288,6 +2315,168 @@ bool BotDummyMovementAction::TryFindFallbackStairsPath( BotMovementPredictionCon
 
 	self->ai->botRef->fallbackMovementPath.Activate( areaPoint, areaNum );
 	return true;
+}
+
+bool BotDummyMovementAction::TrySetupRampMovement( BotMovementPredictionContext *context, int rampAreaNum ) {
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasAreas = aasWorld->Areas();
+	if( const int *bestAreaNum = TryFindBestRampExitArea( context, rampAreaNum ) ) {
+		const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+		Vec3 intendedLookDir( aasAreas[*bestAreaNum].center );
+		intendedLookDir -= entityPhysicsState.Origin();
+		intendedLookDir.NormalizeFast();
+
+		context->record->botInput.SetIntendedLookDir( intendedLookDir, true );
+		float dot = intendedLookDir.Dot( entityPhysicsState.ForwardDir() );
+		if( dot > 0.5f ) {
+			context->record->botInput.SetForwardMovement( 1 );
+			if( dot > 0.9f && entityPhysicsState.Speed2D() < context->GetDashSpeed() - 10 ) {
+				const auto *stats = context->currPlayerState->pmove.stats;
+				if( ( stats[PM_STAT_FEATURES] & PMFEAT_DASH ) && !stats[PM_STAT_DASHTIME] ) {
+					context->record->botInput.SetSpecialButton( true );
+				}
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+const int *BotDummyMovementAction::TryFindBestRampExitArea( BotMovementPredictionContext *context,
+															int rampAreaNum, int forbiddenAreaNum ) {
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasAreas = aasWorld->Areas();
+	const auto *aasAreaSettings = aasWorld->AreaSettings();
+	const auto *aasReach = aasWorld->Reachabilities();
+
+	// Find ramp start and end flat grounded areas
+
+	int lowestAreaNum = 0;
+	int lowestReachNum = 0;
+	float lowestAreaHeight = std::numeric_limits<float>::max();
+	int highestAreaNum = 0;
+	int highestReachNum = 0;
+	float highestAreaHeight = std::numeric_limits<float>::min();
+
+	const auto &rampAreaSettings = aasAreaSettings[rampAreaNum];
+	int reachNum = rampAreaSettings.firstreachablearea;
+	const int endReachNum = reachNum + rampAreaSettings.numreachableareas;
+	for(; reachNum != endReachNum; ++reachNum) {
+		const auto &reach = aasReach[reachNum];
+		if( reach.traveltype != TRAVEL_WALK ) {
+			continue;
+		}
+		const int reachAreaNum = reach.areanum;
+		const auto &reachAreaFlags = aasAreaSettings[reachAreaNum].areaflags;
+		if( !( reachAreaFlags & AREA_GROUNDED ) ) {
+			continue;
+		}
+		// The area should not have an inclined floor itself
+		if( reachAreaFlags & AREA_INCLINED_FLOOR ) {
+			continue;
+		}
+
+		const auto &reachArea = aasAreas[reachAreaNum];
+		if( reachArea.mins[2] < lowestAreaHeight ) {
+			lowestAreaHeight = reachArea.mins[2];
+			lowestAreaNum = reachAreaNum;
+			lowestReachNum = reachNum;
+		}
+		if( reachArea.mins[2] > highestAreaHeight ) {
+			highestAreaHeight = reachArea.mins[2];
+			highestAreaNum = reachAreaNum;
+			highestReachNum = reachNum;
+		}
+	}
+
+	if( !lowestAreaNum || !highestAreaNum ) {
+		return nullptr;
+	}
+
+	if( lowestAreaHeight >= highestAreaHeight ) {
+		return nullptr;
+	}
+
+	const int travelTimeToTarget = context->TravelTimeToNavTarget();
+	if( !travelTimeToTarget ) {
+		return nullptr;
+	}
+
+	// Find what area is closer to the nav target
+	int fromAreaNums[2] = { lowestAreaNum, highestAreaNum };
+	int fromReachNums[2] = { lowestReachNum, highestReachNum };
+	int toAreaNum = context->NavTargetAasAreaNum();
+	int bestIndex = -1;
+	int bestTravelTime = std::numeric_limits<int>::max();
+	const auto *routeCache = self->ai->botRef->routeCache;
+	for( int i = 0; i < 2; ++i ) {
+		if( fromAreaNums[i] == forbiddenAreaNum ) {
+			continue;
+		}
+		for( int travelFlags: self->ai->botRef->TravelFlags() ) {
+			int travelTime = routeCache->TravelTimeToGoalArea( fromAreaNums[i], toAreaNum, travelFlags );
+			if( travelTime && travelTime < travelTimeToTarget && travelTime < bestTravelTime ) {
+				bestIndex = i;
+				bestTravelTime = travelTime;
+			}
+		}
+	}
+
+	if( bestIndex < 0 ) {
+		return nullptr;
+	}
+
+	// Return a pointer to a persistent during the match memory
+	return &aasReach[fromReachNums[bestIndex]].areanum;
+}
+
+bool BotDummyMovementAction::TryFindFallbackRampAreaPath( BotMovementPredictionContext *context,
+														  int rampAreaNum, int forbiddenAreaNum ) {
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasAreas = aasWorld->Areas();
+
+	if( const int *bestAreaNum = TryFindBestRampExitArea( context, rampAreaNum, forbiddenAreaNum ) ) {
+		const auto &bestArea = aasAreas[*bestAreaNum];
+		Vec3 areaPoint( bestArea.center );
+		areaPoint.Z() = bestArea.mins[2] + 48;
+		self->ai->botRef->fallbackMovementPath.Activate( areaPoint, *bestAreaNum, 24.0f );
+		return true;
+	}
+
+	return false;
+}
+
+bool BotDummyMovementAction::TryFindNearbyRampAreasPaths( BotMovementPredictionContext *context ) {
+	int currGroundedAreaNum = context->CurrGroundedAasAreaNum();
+	if( !currGroundedAreaNum ) {
+		return false;
+	}
+
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasAreaSettings = aasWorld->AreaSettings();
+	const auto *aasReach = aasWorld->Reachabilities();
+
+	const auto &currAreaSettings = aasAreaSettings[currGroundedAreaNum];
+	int reachNum = currAreaSettings.firstreachablearea;
+	const int endReachNum = reachNum + currAreaSettings.numreachableareas;
+	for(; reachNum != endReachNum; reachNum++ ) {
+		const auto reach = aasReach[reachNum];
+		if( reach.traveltype != TRAVEL_WALK ) {
+			continue;
+		}
+		int reachAreaNum = reach.areanum;
+		if( !( aasAreaSettings[reachAreaNum].areaflags & AREA_INCLINED_FLOOR ) ) {
+			continue;
+		}
+		// Set the current grounded area num as a forbidden to avoid looping
+		if( TryFindFallbackRampAreaPath( context, reachAreaNum, currGroundedAreaNum ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static constexpr auto FALLBACK_SPOT_SEARCH_RADIUS = 192.0f;
