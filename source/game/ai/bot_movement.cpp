@@ -1873,53 +1873,123 @@ bool BotDummyMovementAction::TryFindClosestNonVisitedAreaOrTrigger( BotMovementP
 	return false;
 }
 
-bool BotSameFloorClusterAreasCache::IsAreaWalkable( BotMovementPredictionContext *context,
-													const aas_area_t &startArea,
-													const aas_area_t &testedArea ) const {
-	// Given an set of areas that are on the same height and knowing their faces anb/or bounds,
-	// we can use a 2D raycast for strict walkability tests.
-	// TODO: Implement an optimized 2D raycasting version
+template<typename T1, typename T2>
+static inline float PerpDot2D( const T1 &v1, const T2 &v2 ) {
+	return v1[0] * v2[1] - v1[1] * v2[0];
+}
 
-	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+static bool FindSegments2DIntersectionPoint( const vec3_t start1, const vec3_t end1,
+											 const vec3_t start2, const vec3_t end2, vec3_t result ) {
+	// Copyright 2001 softSurfer, 2012 Dan Sunday
+	// This code may be freely used and modified for any purpose
+	// providing that this copyright notice is included with it.
+	// SoftSurfer makes no warranty for this code, and cannot be held
+	// liable for any real or imagined damage resulting from its use.
+	// Users of this code must verify correctness for their application.
 
-	Vec3 areaPoint( testedArea.center );
-	areaPoint.Z() = testedArea.mins[2] + ( -playerbox_stand_mins[2] );
-	if( !trap_inPVS( entityPhysicsState.Origin(), areaPoint.Data() ) ) {
+	// Compute first segment direction vector
+	vec3_t u = { end1[0] - start1[0], end1[1] - start1[1], 0 };
+	// Compute second segment direction vector
+	vec3_t v = { end2[0] - start2[0], end2[1] - start2[1], 0 };
+	// Compute a vector from second start point to the first one
+	vec3_t w = { start1[0] - start2[0], start1[1] - start2[1], 0 };
+
+	// |u| * |v| * sin( u ^ v ), if parallel than zero, if some of inputs has zero-length than zero
+	float d = PerpDot2D( u, v );
+
+	// We treat parallel or degenerate cases as a failure
+	if( fabsf( d ) < 0.0001f ) {
 		return false;
 	}
 
-	// Note: TraceAreas() call is much cheaper than G_Trace(), that's why it is put first
+	// Group computations together aside from branches
+	float t1 = PerpDot2D( v, w ) / d;
+	float t2 = PerpDot2D( u, w ) / d;
+
+	// If the first segment direction vector is "behind" or "ahead" of start1-to-start2 vector
+	if (t1 < 0 || t1 > 1)
+		return false;
+
+	// If the second segment direction vector is "behind" or "ahead" of start1-to-start2 vector
+	if (t2 < 0 || t2 > 1)
+		return false;
+
+	VectorMA( start1, t1, u, result );
+	return true;
+}
+
+bool BotSameFloorClusterAreasCache::IsAreaWalkableInFloorCluster( int startAreaNum, int targetAreaNum ) const {
+	const auto *areaFloorClusterNums = aasWorld->AreaFloorClusterNums();
+	int startFloorClusterNum = areaFloorClusterNums[startAreaNum];
+	if( !startFloorClusterNum ) {
+		return false;
+	}
 
 	const auto *aasAreas = aasWorld->Areas();
-	const auto *aasAreaSettings = aasWorld->AreaSettings();
+	Vec3 testedSegmentEnd( aasAreas[targetAreaNum].center[0], aasAreas[targetAreaNum].center[1], 0.0f );
+	Vec3 testedSegmentStart( aasAreas[startAreaNum].center[0], aasAreas[startAreaNum].center[1], 0.0f );
 
-	int tracedAreas[128];
-	int numTracedAreas = aasWorld->TraceAreas( entityPhysicsState.Origin(), areaPoint.Data(), tracedAreas, 128 );
-	for( int j = 0; j < numTracedAreas; ++j ) {
-		int tracedAreaNum = tracedAreas[j];
-		const auto &tracedArea = aasAreas[tracedAreaNum];
-		const auto &tracedAreaSettings = aasAreaSettings[tracedAreaNum];
-		if( !( tracedAreaSettings.areaflags & AREA_GROUNDED ) ) {
-			// A pit
-			if( tracedArea.mins[2] < startArea.mins[2] - 1 ) {
-				return false;
+	Vec3 rayDir( testedSegmentEnd );
+	rayDir -= testedSegmentStart;
+	rayDir.NormalizeFast();
+
+	const auto *aasFaceIndex = aasWorld->FaceIndex();
+	const auto *aasFaces = aasWorld->Faces();
+	const auto *aasPlanes = aasWorld->Planes();
+	const auto *aasVertices = aasWorld->Vertexes();
+	const auto *face2DProjVertexNums = aasWorld->Face2DProjVertexNums();
+
+	int currAreaNum = startAreaNum;
+	while( currAreaNum != targetAreaNum ) {
+		const auto &currArea = aasAreas[currAreaNum];
+		// For each area face
+		int faceIndexNum = currArea.firstface;
+		const int endFaceIndexNum = faceIndexNum + currArea.numfaces;
+		for(; faceIndexNum != endFaceIndexNum; ++faceIndexNum) {
+			int signedFaceNum = aasFaceIndex[faceIndexNum];
+			const auto &face = aasFaces[abs( signedFaceNum )];
+			const auto &plane = aasPlanes[face.planenum];
+			// Reject non-2D faces
+			if( fabsf( plane.normal[2] ) > 0.1f ) {
+				continue;
 			}
-			continue;
+			// We assume we're inside the area.
+			// Do not try intersection tests for already "passed" by the ray faces
+			int areaBehindFace;
+			if( signedFaceNum < 0 ) {
+				if( rayDir.Dot( plane.normal ) < 0 ) {
+					continue;
+				}
+				areaBehindFace = face.frontarea;
+			} else {
+				if( rayDir.Dot( plane.normal ) > 0 ) {
+					continue;
+				}
+				areaBehindFace = face.backarea;
+			}
+
+			// If an area behind the face is in another or zero floor cluster
+			if( areaFloorClusterNums[areaBehindFace] != startFloorClusterNum ) {
+				continue;
+			}
+
+			const auto *projVertexNums = face2DProjVertexNums + 2 * abs( signedFaceNum );
+			const float *edgePoint1 = aasVertices[projVertexNums[0]];
+			const float *edgePoint2 = aasVertices[projVertexNums[1]];
+			vec3_t intersectionPoint;
+			if( !FindSegments2DIntersectionPoint( testedSegmentStart.Data(), testedSegmentEnd.Data(),
+												  edgePoint1, edgePoint2, intersectionPoint ) ) {
+				continue;
+			}
+
+			testedSegmentStart.Set( intersectionPoint );
+			currAreaNum = areaBehindFace;
+			goto nextArea;
 		}
 
-		if( fabsf( tracedArea.mins[2] - startArea.mins[2] ) > 1.0f ) {
-			return false;
-		}
-	}
-
-	trace_t trace;
-	vec3_t traceMins, traceMaxs;
-	TacticalSpotsRegistry::GetSpotsWalkabilityTraceBounds( traceMins, traceMaxs );
-	float *start = const_cast<float *>( entityPhysicsState.Origin() );
-	// We deliberately have to check against entities, like the tank on wbomb1 A spot, and not only solid world
-	G_Trace( &trace, start, traceMins, traceMaxs, areaPoint.Data(), self, MASK_AISOLID );
-	if( trace.fraction != 1.0f ) {
+		// There are no feasible areas behind feasible faces of the current area
 		return false;
+	nextArea:;
 	}
 
 	return true;
@@ -2004,14 +2074,36 @@ int BotSameFloorClusterAreasCache::FindClosestToTargetPoint( BotMovementPredicti
 		}
 	}
 
-	const auto *aasAreas = aasWorld->Areas();
+	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+	const auto &aasAreas = aasWorld->Areas();
+
+	trace_t trace;
+	vec3_t traceMins, traceMaxs;
+	TacticalSpotsRegistry::GetSpotsWalkabilityTraceBounds( traceMins, traceMaxs );
+	Vec3 start( entityPhysicsState.Origin() );
+	if( entityPhysicsState.GroundEntity() ) {
+		start.Z() += 1.0f;
+	}
+
 	while( !candidateAreasHeap.empty() ) {
 		std::pop_heap( candidateAreasHeap.begin(), candidateAreasHeap.end() );
 		int areaNum = candidateAreasHeap.back().areaNum;
 		int travelTime = (int)( -candidateAreasHeap.back().score );
 		candidateAreasHeap.pop_back();
 
-		if( !IsAreaWalkable( context, aasAreas[currGroundedAreaNum], aasAreas[areaNum] ) ) {
+		if( !IsAreaWalkableInFloorCluster( currGroundedAreaNum, areaNum ) ) {
+			continue;
+		}
+
+		// We hope we have done all possible cutoffs at this moment of execution.
+		// We still need this collision test since cutoffs are performed using thin rays.
+		// This test is expensive that's why we try to defer it as far at it is possible.
+
+		Vec3 areaPoint( aasAreas[areaNum].center );
+		areaPoint.Z() = aasAreas[areaNum].mins[2] + 1.0f + ( -playerbox_stand_mins[2] );
+		// We deliberately have to check against entities, like the tank on wbomb1 A spot, and not only solid world
+		G_Trace( &trace, start.Data(), traceMins, traceMaxs, areaPoint.Data(), self, MASK_AISOLID );
+		if( trace.fraction != 1.0f ) {
 			continue;
 		}
 
