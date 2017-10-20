@@ -161,21 +161,21 @@ extern "C" {
 #define PATH_SHARD_MODEL        "models/items/armor/shard/shard.md3"
 
 // weapons
-#define PATH_GUNBLADE_MODEL     "models/weapons/gunblade/gunblade.md3"
+#define PATH_GUNBLADE_MODEL     "models/weapons/gunblade/gunblade.iqm"
 #define PATH_MACHINEGUN_MODEL       "models/weapons/machinegun/machinegun.iqm"
 #define PATH_MACHINEGUN_BARREL_MODEL        "models/weapons/machinegun/machinegun_barrel.iqm"
-#define PATH_RIOTGUN_MODEL      "models/weapons/riotgun/riotgun.md3"
+#define PATH_RIOTGUN_MODEL      "models/weapons/riotgun/riotgun.iqm"
 #define PATH_GRENADELAUNCHER_MODEL  "models/weapons/glauncher/glauncher.iqm"
 #define PATH_GRENADELAUNCHER_BARREL_MODEL   "models/weapons/glauncher/glauncher_barrel.iqm"
-#define PATH_ROCKETLAUNCHER_MODEL   "models/weapons/rlauncher/rlauncher.md3"
-#define PATH_PLASMAGUN_MODEL        "models/weapons/plasmagun/plasmagun.md3"
+#define PATH_ROCKETLAUNCHER_MODEL   "models/weapons/rlauncher/rlauncher.iqm"
+#define PATH_PLASMAGUN_MODEL        "models/weapons/plasmagun/plasmagun.iqm"
 #define PATH_ELECTROBOLT_MODEL      "models/weapons/electrobolt/electrobolt.iqm"
-#define PATH_LASERGUN_MODEL     "models/weapons/lasergun/lasergun.md3"
-#define PATH_INSTAGUN_MODEL     "models/weapons/instagun/instagun.md3"
+#define PATH_LASERGUN_MODEL     "models/weapons/lasergun/lasergun.iqm"
+#define PATH_INSTAGUN_MODEL     "models/weapons/instagun/instagun.iqm"
 
 // ammoboxes
-#define PATH_AMMO_BOX_MODEL     "models/items/ammo/ammobox/ammobox.md3"
-#define PATH_AMMO_BOX_MODEL2        "models/items/ammo/ammobox/ammobox_icon.md3"
+#define PATH_AMMO_BOX_MODEL     "models/items/ammo/ammobox/ammobox.iqm"
+#define PATH_AMMO_BOX_MODEL2        "models/items/ammo/ammobox/ammobox_icon.iqm"
 #define PATH_AMMO_PACK_MODEL        "models/items/ammo/pack/pack.md3"
 
 // health
