@@ -900,7 +900,7 @@ static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec
 		if( e->scale == 1 ) {
 			return mod->radius;
 		}
-	} if( pframe == poldframe ) {
+	} else if( pframe == poldframe ) {
 		VectorCopy( pframe->mins, mins );
 		VectorCopy( pframe->maxs, maxs );
 		if( e->scale == 1 ) {
