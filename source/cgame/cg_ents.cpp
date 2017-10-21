@@ -567,7 +567,8 @@ static void CG_EntAddTeamColorTransitionEffect( centity_t *cent ) {
 * CG_AddLinkedModel
 */
 static void CG_AddLinkedModel( centity_t *cent ) {
-	static entity_t ent;
+	bool barrel;
+	entity_t ent;
 	orientation_t tag;
 	struct model_s *model;
 
@@ -599,8 +600,13 @@ static void CG_AddLinkedModel( centity_t *cent ) {
 		ent.customShader = trap_R_RegisterPic( cent->item->icon );
 	}
 
+	CG_AddColoredOutLineEffect( &ent, cent->effects,
+		cent->outlineColor[0], cent->outlineColor[1], cent->outlineColor[2], cent->outlineColor[3] );
+
+	barrel = false;
 	if( cent->item && ( cent->item->type & IT_WEAPON ) ) {
 		if( CG_GrabTag( &tag, &cent->ent, "tag_barrel" ) ) {
+			barrel = true;
 			CG_PlaceModelOnTag( &ent, &cent->ent, &tag );
 		}
 	} else {
@@ -609,10 +615,14 @@ static void CG_AddLinkedModel( centity_t *cent ) {
 		}
 	}
 
-	CG_AddColoredOutLineEffect( &ent, cent->effects,
-								cent->outlineColor[0], cent->outlineColor[1], cent->outlineColor[2], cent->outlineColor[3] );
 	CG_AddEntityToScene( &ent );
 	CG_AddShellEffects( &ent, cent->effects );
+
+	if( barrel && CG_GrabTag( &tag, &cent->ent, "tag_barrel2" ) ) {
+		CG_PlaceModelOnTag( &ent, &cent->ent, &tag );
+		CG_AddEntityToScene( &ent );
+		CG_AddShellEffects( &ent, cent->effects );
+	}
 }
 
 /*
@@ -620,7 +630,7 @@ static void CG_AddLinkedModel( centity_t *cent ) {
 */
 void CG_AddCentityOutLineEffect( centity_t *cent ) {
 	CG_AddColoredOutLineEffect( &cent->ent, cent->effects,
-								cent->outlineColor[0], cent->outlineColor[1], cent->outlineColor[2], cent->outlineColor[3] );
+		cent->outlineColor[0], cent->outlineColor[1], cent->outlineColor[2], cent->outlineColor[3] );
 }
 
 //==========================================================================
