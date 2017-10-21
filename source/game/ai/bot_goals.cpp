@@ -190,8 +190,8 @@ void BotAttackOutOfDespairGoal::UpdateWeight( const WorldState &currWorldState )
 		return;
 	}
 
-	// The bot already has high offensiveness, changing it would have the same effect as using duplicated search.
-	if( self->ai->botRef->GetEffectiveOffensiveness() > 0.9f ) {
+	// The bot already has the maximal offensiveness, changing it would have the same effect as using duplicated search.
+	if( self->ai->botRef->GetEffectiveOffensiveness() == 1.0f ) {
 		return;
 	}
 

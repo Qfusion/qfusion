@@ -201,6 +201,8 @@ class BotRunAwayAction : public BotBaseAction
 {
 protected:
 	bool CheckCommonRunAwayPreconditions( const WorldState &worldState ) const;
+	bool CheckMiddleRangeKDDamageRatio( const WorldState &worldState ) const;
+	bool CheckCloseRangeKDDamageRatio( const WorldState &worldState ) const;
 
 public:
 	BotRunAwayAction( Ai *ai_, const char *name_ ) : BotBaseAction( ai_, name_ ) {}

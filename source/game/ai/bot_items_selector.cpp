@@ -89,12 +89,12 @@ BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputeWeaponWeights( con
 
 	for( int i = 0; i < 4; ++i ) {
 		if( topTierWeapons[i] == item->tag ) {
-			float weight = ( onlyGotGB ? 1.5f : 0.9f ) + ( topTierWeaponGreed - 1.0f ) / 3.0f;
+			float weight = ( onlyGotGB ? 2.0f : 0.9f ) + ( topTierWeaponGreed - 1.0f ) / 3.0f;
 			return ItemAndGoalWeights( weight, weight );
 		}
 	}
 
-	return onlyGotGB ? ItemAndGoalWeights( 1.5f, 1.5f ) : ItemAndGoalWeights( 0.75f, 0.75f );
+	return onlyGotGB ? ItemAndGoalWeights( 1.5f, 2.0f ) : ItemAndGoalWeights( 0.75f, 0.75f );
 }
 
 BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputeAmmoWeights( const gsitem_t *item ) const {

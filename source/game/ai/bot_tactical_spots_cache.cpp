@@ -96,7 +96,7 @@ bool BotTacticalSpotsCache::FindSniperRangeTacticalSpot( const Vec3 &origin, con
 	TacticalSpotsRegistry::AdvantageProblemParams problemParams( enemyOrigin.Data() );
 	problemParams.SetMinSpotDistanceToEntity( WorldState::FAR_RANGE_MAX );
 	problemParams.SetOriginDistanceInfluence( 0.0f );
-	problemParams.SetTravelTimeInfluence( 0.5f );
+	problemParams.SetTravelTimeInfluence( 0.8f );
 	problemParams.SetMinHeightAdvantageOverOrigin( -1024.0f );
 	problemParams.SetMinHeightAdvantageOverEntity( -1024.0f );
 	problemParams.SetHeightOverOriginInfluence( 0.3f );
@@ -120,7 +120,7 @@ bool BotTacticalSpotsCache::FindFarRangeTacticalSpot( const Vec3 &origin, const 
 	problemParams.SetOriginDistanceInfluence( 0.0f );
 	problemParams.SetEntityDistanceInfluence( 0.3f );
 	problemParams.SetEntityWeightFalloffDistanceRatio( 0.25f );
-	problemParams.SetTravelTimeInfluence( 0.5f );
+	problemParams.SetTravelTimeInfluence( 0.8f );
 	problemParams.SetMinHeightAdvantageOverOrigin( -192.0f );
 	problemParams.SetMinHeightAdvantageOverEntity( -512.0f );
 	problemParams.SetHeightOverOriginInfluence( 0.3f );
@@ -200,7 +200,7 @@ bool BotTacticalSpotsCache::FindCoverSpot( const Vec3 &origin, const Vec3 &enemy
 	const float searchRadius = 192.0f + 512.0f * Skill();
 	TacticalSpotsRegistry::CoverProblemParams problemParams( enemyOrigin.Data(), 32.0f );
 	problemParams.SetOriginDistanceInfluence( 0.0f );
-	problemParams.SetTravelTimeInfluence( 0.3f );
+	problemParams.SetTravelTimeInfluence( 0.9f );
 	problemParams.SetMinHeightAdvantageOverOrigin( -searchRadius );
 	problemParams.SetHeightOverOriginInfluence( 0.3f );
 	problemParams.SetCheckToAndBackReachability( false );

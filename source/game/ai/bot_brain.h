@@ -32,7 +32,7 @@ struct SelectedMiscTactics {
 
 	inline void Clear() {
 		willAdvance = false;
-		willRetreat = true;
+		willRetreat = false;
 
 		shouldBeSilent = false;
 		shouldMoveCarefully = false;
@@ -51,7 +51,7 @@ struct SelectedMiscTactics {
 
 	inline void PreferRunRatherThanAttack() {
 		shouldAttack = true;
-		shouldKeepXhairOnEnemy = true;
+		shouldKeepXhairOnEnemy = false;
 	}
 };
 
