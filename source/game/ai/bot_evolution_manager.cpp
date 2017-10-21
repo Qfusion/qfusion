@@ -188,7 +188,7 @@ void DefaultBotEvolutionManager::OnBotConnected( edict_t *ent ) {
 
 	CopyWeightConfigRandomizing( (AiBaseWeightConfigVarGroup *)&referenceConfig,
 								 (AiBaseWeightConfigVarGroup *)&ent->ai->botRef->WeightConfig(),
-								 0.5f * ( botNumRatio - 0.5f ) );
+								 0.25f * ( botNumRatio - 0.5f ) );
 }
 
 float DefaultBotEvolutionManager::DefaultEvolutionScore( const edict_t *ent ) const {

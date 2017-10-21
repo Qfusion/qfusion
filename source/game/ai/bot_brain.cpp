@@ -118,7 +118,7 @@ BotBrain::BotBrain( Bot *bot, float skillLevel_ )
 	skillLevel( skillLevel_ ),
 	reactionTime( 320 - From0UpToMax( 300, BotSkill() ) ),
 	nextTargetChoiceAt( level.time ),
-	targetChoicePeriod( 800 - From0UpToMax( 300, BotSkill() ) ),
+	targetChoicePeriod( 1000 ),
 	itemsSelector( bot->self ),
 	selectedNavEntity( nullptr, std::numeric_limits<float>::max(), 0, 0 ),
 	prevSelectedNavEntity( nullptr ),
@@ -326,28 +326,12 @@ void BotBrain::CheckNewActiveDanger() {
 		return;
 	}
 
-	actualDanger = *danger;
-	bool needsUrgentReplanning = false;
-	// The old danger has timed out
-	if( !triggeredPlanningDanger.IsValid() ) {
-		needsUrgentReplanning = true;
-	}
-	// The old danger is about to time out
-	else if( level.time - triggeredPlanningDanger.timeoutAt < Danger::TIMEOUT / 3 ) {
-		needsUrgentReplanning = true;
-	} else if( actualDanger.splash != triggeredPlanningDanger.splash ) {
-		needsUrgentReplanning = true;
-	} else if( actualDanger.attacker != triggeredPlanningDanger.attacker ) {
-		needsUrgentReplanning = true;
-	} else if( actualDanger.damage - triggeredPlanningDanger.damage > 10 ) {
-		needsUrgentReplanning = true;
-	} else if( ( actualDanger.hitPoint - triggeredPlanningDanger.hitPoint ).SquaredLength() > 32 * 32 ) {
-		needsUrgentReplanning = true;
-	} else if( actualDanger.direction.Dot( triggeredPlanningDanger.direction ) < 0.9 ) {
-		needsUrgentReplanning = true;
-	}
+	// Trying to do urgent replanning based on more sophisticated formulae was a bad idea.
+	// The bot has inertia and cannot change dodge direction so fast,
+	// and it just lead to no actual dodging performed since the actual mean dodge vector is about zero.
 
-	if( needsUrgentReplanning ) {
+	actualDanger = *danger;
+	if( !triggeredPlanningDanger.IsValid() ) {
 		triggeredPlanningDanger = actualDanger;
 		nextActiveGoalUpdateAt = level.time;
 	}
@@ -414,11 +398,16 @@ void BotBrain::PrepareCurrWorldState( WorldState *worldState ) {
 		worldState->HasReactedToEnemyLostVar().SetValue( false );
 		worldState->LostEnemyLastSeenOriginVar().SetValue( lostEnemies.LastSeenOrigin() );
 		worldState->MightSeeLostEnemyAfterTurnVar().SetValue( false );
-		if( EntitiesPvsCache::Instance()->AreInPvs( self, lostEnemies.TraceKey() ) ) {
-			trace_t trace;
-			G_Trace( &trace, self->s.origin, nullptr, nullptr, lostEnemies.ActualOrigin().Data(), self, MASK_AISOLID );
-			if( trace.fraction == 1.0f || game.edicts + trace.ent == lostEnemies.TraceKey() ) {
-				worldState->MightSeeLostEnemyAfterTurnVar().SetValue( true );
+		Vec3 toEnemiesDir( lostEnemies.LastSeenOrigin() );
+		toEnemiesDir -= self->s.origin;
+		toEnemiesDir.NormalizeFast();
+		if( toEnemiesDir.Dot( self->ai->botRef->EntityPhysicsState()->ForwardDir() ) < self->ai->botRef->FovDotFactor() ) {
+			if( EntitiesPvsCache::Instance()->AreInPvs( self, lostEnemies.TraceKey() ) ) {
+				trace_t trace;
+				G_Trace( &trace, self->s.origin, nullptr, nullptr, lostEnemies.LastSeenOrigin().Data(), self, MASK_AISOLID );
+				if( trace.fraction == 1.0f || game.edicts + trace.ent == lostEnemies.TraceKey() ) {
+					worldState->MightSeeLostEnemyAfterTurnVar().SetValue( true );
+				}
 			}
 		}
 	} else {
@@ -530,13 +519,14 @@ void BotBrain::PrepareCurrWorldState( WorldState *worldState ) {
 		worldState->DodgeDangerSpotVar().SetIgnore( true );
 	}
 
-	worldState->HasReactedToThreatVar().SetValue( false );
 	if( activeThreat.IsValidFor( self ) ) {
 		worldState->ThreatInflictedDamageVar().SetValue( (short)activeThreat.totalDamage );
 		worldState->ThreatPossibleOriginVar().SetValue( activeThreat.possibleOrigin );
+		worldState->HasReactedToThreatVar().SetValue( false );
 	} else {
 		worldState->ThreatInflictedDamageVar().SetIgnore( true );
 		worldState->ThreatPossibleOriginVar().SetIgnore( true );
+		worldState->HasReactedToThreatVar().SetIgnore( true );
 	}
 
 	worldState->ResetTacticalSpots();

@@ -1,6 +1,7 @@
 #include "bot_actions.h"
 #include "bot.h"
 #include "ai_ground_trace_cache.h"
+#include "tactical_spots_registry.h"
 
 typedef WorldState::SatisfyOp SatisfyOp;
 
@@ -122,6 +123,7 @@ PlannerNode *BotGenericRunToItemAction::TryApply( const WorldState &worldState )
 void BotPickupItemActionRecord::Activate() {
 	BotBaseActionRecord::Activate();
 	self->ai->botRef->GetMiscTactics().shouldMoveCarefully = true;
+	self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
 	self->ai->botRef->SetCampingSpot( AiCampingSpot( navTarget.Origin(), GOAL_PICKUP_ACTION_RADIUS, 0.5f ) );
 	self->ai->botRef->SetNavTarget( &navTarget );
 }
@@ -213,6 +215,7 @@ PlannerNode *BotPickupItemAction::TryApply( const WorldState &worldState ) {
 void BotWaitForItemActionRecord::Activate() {
 	BotBaseActionRecord::Activate();
 	self->ai->botRef->GetMiscTactics().shouldMoveCarefully = true;
+	self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
 	self->ai->botRef->SetNavTarget( &navTarget );
 	self->ai->botRef->SetCampingSpot( AiCampingSpot( navTarget.Origin(), GOAL_PICKUP_ACTION_RADIUS, 0.5f ) );
 }
@@ -341,53 +344,19 @@ AiBaseActionRecord::Status BotAdvanceToGoodPositionActionRecord::CheckStatus( co
 	return VALID;
 }
 
-// Can be applied to each structurally-compatible config group
-template <typename ConfigGroup>
-inline float GoodNmyWeapDmgRatioThreshold( const ConfigGroup &configGroup, float effectiveOffensiveness ) {
-	float offCoeff = (float)configGroup.baseOffCoeff - (float)configGroup.goodNmyWeapMinusOffCoeff;
-	clamp_low( offCoeff, 0.2f );
-	float dmgRatio = configGroup.baseDmgRatio - configGroup.goodNmyWeapMinusDmgRatio;
-	float result = dmgRatio - offCoeff * effectiveOffensiveness;
-	clamp_low( result, 0.2f );
-	return result;
-}
-
-template <typename ConfigGroup>
-inline float BaseDmgRatioThreshold( const ConfigGroup &configGroup, float effectiveOffensiveness ) {
-	float result = (float)configGroup.baseDmgRatio - configGroup.baseOffCoeff * effectiveOffensiveness;
-	clamp_low( result, 0.2f );
-	return result;
-}
-
-template <typename ConfigGroup>
-inline float DmgRatioThreshold( const ConfigGroup &configGroup, float effectiveOffensiveness ) {
-	float result = (float)configGroup.dmgRatio - configGroup.offCoeff;
-	clamp_low( result, 0.2f );
-	return result;
-};
-
-// Do not compare damage ratio directly, use these wrappers to avoid comparison ops confusion.
-// The first argument has non-float type intentionally to avoid confusion of two floats too.
-// Make sure all threshold values are sanitized (we can't guarantee it is done by every caller).
-
-inline bool ShouldAttackWithThisDamageRatio( const WorldState &worldState, float ratioThreshold ) {
-	clamp_low( ratioThreshold, 0.2f );
-	return worldState.KillToBeKilledDamageRatio() < ratioThreshold;
-}
 
 inline bool ShouldRetreatWithThisDamageRatio( const WorldState &worldState, float ratioThreshold ) {
 	clamp_low( ratioThreshold, 0.2f );
 	return worldState.KillToBeKilledDamageRatio() > ratioThreshold;
 }
 
-inline bool CanAttackWithThisDamageToBeKilled( const WorldState &worldState, float damageThreshold ) {
-	clamp_low( damageThreshold, 15 );
-	return worldState.DamageToBeKilled() > damageThreshold;
-}
-
 inline bool ShouldRetreatWithThisDamageToBeKilled( const WorldState &worldState, float damageThreshold ) {
 	clamp_low( damageThreshold, 15 );
 	return worldState.DamageToBeKilled() < damageThreshold;
+}
+
+inline float LgRange() {
+	return GS_GetWeaponDef( WEAP_LASERGUN )->firedef.timeout;
 }
 
 PlannerNode *BotAdvanceToGoodPositionAction::TryApply( const WorldState &worldState ) {
@@ -405,7 +374,9 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply( const WorldState &worldSt
 	}
 
 	const float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
+	float actionPenalty = 1.0f;
 	Vec3 spotOrigin( 0, 0, 0 );
+
 	if( worldState.EnemyIsOnSniperRange() ) {
 		if( !worldState.HasGoodFarRangeWeaponsVar() ) {
 			Debug( "Bot doesn't have good far range weapons\n" );
@@ -413,48 +384,32 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply( const WorldState &worldSt
 		}
 
 		if( !worldState.HasGoodSniperRangeWeaponsVar() ) {
-			Debug( "Bot doesn't have good sniper range weapons and thus can't advance attacking\n" );
-			return nullptr;
-		}
-
-		if( worldState.HasThreateningEnemyVar() ) {
-			auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.sniperRange.hasThreateningEnemy;
-			if( !CanAttackWithThisDamageToBeKilled( worldState, configGroup.baseDmgToBeKilled * ( 1.0f - offensiveness ) ) ) {
+			if( offensiveness <= 0.5f ) {
+				Debug( "Bot doesn't have good sniper range weapons and thus can't advance attacking\n" );
 				return nullptr;
 			}
-
-			if( worldState.EnemyHasGoodFarRangeWeaponsVar() ) {
-				if( !ShouldAttackWithThisDamageRatio( worldState,
-													  GoodNmyWeapDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-					return nullptr;
-				}
-			} else {
-				if( !ShouldAttackWithThisDamageRatio( worldState, BaseDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-					return nullptr;
-				}
-			}
-		} else {
-			auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.sniperRange.noThreateningEnemy;
-			if( worldState.EnemyHasGoodFarRangeWeaponsVar() ) {
-				float ratioThreshold = configGroup.goodNmyWeapDmgRatio + configGroup.goodNmyWeapOffCoeff * offensiveness;
-				if( !ShouldAttackWithThisDamageRatio( worldState, ratioThreshold ) ) {
-					return nullptr;
-				}
-			} else {
-				if( !CanAttackWithThisDamageToBeKilled( worldState, configGroup.baseDmgToBeKilled * ( 1.0f - offensiveness ) ) ) {
-					return nullptr;
-				}
-			}
+			actionPenalty += 0.5f;
 		}
 
 		// Put this condition last to avoid forcing tactical spot to be computed.
 		// Test cheap conditions first for early action rejection.
 		if( worldState.FarRangeTacticalSpotVar().IgnoreOrAbsent() ) {
-			Debug( "Far range tactical spot is ignored or absent in the given world state\n" );
-			return nullptr;
+			if( worldState.HasGoodMiddleRangeWeaponsVar() || worldState.HasGoodCloseRangeWeaponsVar() ) {
+				if( offensiveness <= 0.5f ) {
+					actionPenalty += 1.0f;
+				}
+				if( worldState.MiddleRangeTacticalSpotVar().IsPresent() ) {
+					spotOrigin = worldState.MiddleRangeTacticalSpotVar().Value();
+				} else if( worldState.CloseRangeTacticalSpotVar().IsPresent() ) {
+					spotOrigin = worldState.CloseRangeTacticalSpotVar().Value();
+				} else {
+					Debug( "Far range tactical spot is ignored or absent in the given world state\n" );
+					return nullptr;
+				}
+			}
+		} else {
+			spotOrigin = worldState.FarRangeTacticalSpotVar().Value();
 		}
-
-		spotOrigin = worldState.FarRangeTacticalSpotVar().Value();
 	} else if( worldState.EnemyIsOnFarRange() ) {
 		if( !worldState.HasGoodMiddleRangeWeaponsVar() ) {
 			Debug( "Bot doesn't have good middle range weapons\n" );
@@ -462,25 +417,8 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply( const WorldState &worldSt
 		}
 
 		if( !worldState.HasGoodFarRangeWeaponsVar() ) {
-			Debug( "Bot doesn't have good far range weapons and thus can't advance attacking\n" );
-			return nullptr;
-		}
-
-		if( worldState.HasThreateningEnemyVar() ) {
-			const auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.farRange.hasThreateningEnemy;
-			if( worldState.EnemyHasGoodMiddleRangeWeaponsVar() ) {
-				float damageRatio = configGroup.goodNmyWeapBaseDmgRatio + configGroup.goodNmyWeapOffCoeff * offensiveness;
-				if( !ShouldAttackWithThisDamageRatio( worldState, damageRatio ) ) {
-					return nullptr;
-				}
-			} else {
-				if( !CanAttackWithThisDamageToBeKilled( worldState, configGroup.baseDmgToBeKilled * ( 1.0f - offensiveness ) ) ) {
-					return nullptr;
-				}
-			}
-		} else {
-			const auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.farRange.noThreateningEnemy;
-			if( !CanAttackWithThisDamageToBeKilled( worldState, configGroup.baseDmgToBeKilled * ( 1.0f - offensiveness ) ) ) {
+			if( offensiveness <= 0.5f ) {
+				Debug( "Bot doesn't have good far range weapons and thus can't advance attacking\n" );
 				return nullptr;
 			}
 		}
@@ -488,11 +426,22 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply( const WorldState &worldSt
 		// Put this condition last to avoid forcing tactical spot to be computed.
 		// Test cheap conditions first for early action rejection.
 		if( worldState.MiddleRangeTacticalSpotVar().IgnoreOrAbsent() ) {
-			Debug( "Middle range tactical spot is ignored or absent in the given world state\n" );
-			return nullptr;
+			if( worldState.HasGoodMiddleRangeWeaponsVar() || worldState.HasGoodCloseRangeWeaponsVar() ) {
+				if( offensiveness <= 0.5f ) {
+					actionPenalty += 0.5f;
+				}
+				if( worldState.CloseRangeTacticalSpotVar().IsPresent() ) {
+					if( worldState.HasGoodCloseRangeWeaponsVar() || worldState.HasGoodMiddleRangeWeaponsVar()) {
+						spotOrigin = worldState.CloseRangeTacticalSpotVar().Value();
+					} else {
+						Debug( "Middle range tactical spot is ignored or absent in the given world state\n" );
+						return nullptr;
+					}
+				}
+			}
+		} else {
+			spotOrigin = worldState.MiddleRangeTacticalSpotVar().Value();
 		}
-
-		spotOrigin = worldState.MiddleRangeTacticalSpotVar().Value();
 	} else if( worldState.EnemyIsOnMiddleRange() ) {
 		if( !worldState.HasGoodCloseRangeWeaponsVar() ) {
 			Debug( "Bot doesn't have good close range weapons in the given world state\n" );
@@ -502,30 +451,6 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply( const WorldState &worldSt
 		if( !worldState.HasGoodMiddleRangeWeaponsVar() ) {
 			Debug( "Bot doesn't have good middle range weapons and thus can't advance attacking\n" );
 			return nullptr;
-		}
-
-		if( worldState.HasThreateningEnemyVar() ) {
-			const auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.middleRange.hasThreateningEnemy;
-			if( !CanAttackWithThisDamageToBeKilled( worldState, configGroup.baseDmgToBeKilled * ( 1.0f - offensiveness ) ) ) {
-				return nullptr;
-			}
-
-			float ratioThreshold = configGroup.baseDmgRatio + configGroup.offCoeff * offensiveness;
-			if( worldState.EnemyHasGoodCloseRangeWeaponsVar() ) {
-				ratioThreshold -= configGroup.goodNmyWeapMinusDmgRatio;
-			}
-			if( !ShouldAttackWithThisDamageRatio( worldState, std::max( 0.2f, ratioThreshold ) ) ) {
-				return nullptr;
-			}
-		} else {
-			const auto &configGroup = WeightConfig().nativeActions.advanceToGoodPosition.middleRange.noThreateningEnemy;
-			float ratioThreshold = configGroup.baseDmgRatio + configGroup.offCoeff * offensiveness;
-			if( worldState.EnemyHasGoodCloseRangeWeaponsVar() ) {
-				ratioThreshold -= configGroup.goodNmyWeapMinusDmgRatio;
-			}
-			if( !ShouldAttackWithThisDamageRatio( worldState, std::max( 0.2f, ratioThreshold ) ) ) {
-				return nullptr;
-			}
 		}
 
 		// Put this condition last to avoid forcing tactical spot to be computed.
@@ -541,6 +466,21 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply( const WorldState &worldSt
 		return nullptr;
 	}
 
+	// It is faster to check this apriori before spot assignation but the code becomes unmaintainable
+	if( worldState.HasThreateningEnemyVar() && offensiveness != 1.0f ) {
+		if( worldState.BotOriginVar().Value().DistanceTo( spotOrigin ) > LgRange() ) {
+			if( offensiveness <= 0.5f ) {
+				if( worldState.DamageToBeKilled() < 80.0f && worldState.KillToBeKilledDamageRatio() > 1.0f ) {
+					return nullptr;
+				}
+			}
+		} else {
+			if( worldState.KillToBeKilledDamageRatio() > 0.5f + 2.0f * offensiveness ) {
+				return nullptr;
+			}
+		}
+	}
+
 	int travelTimeMillis = self->ai->botRef->CheckTravelTimeMillis( worldState.BotOriginVar().Value(), spotOrigin );
 	if( !travelTimeMillis ) {
 		Debug( "Warning: can't find travel time from the bot origin to the spot origin in the given world state\n" );
@@ -553,7 +493,10 @@ PlannerNode *BotAdvanceToGoodPositionAction::TryApply( const WorldState &worldSt
 		return nullptr;
 	}
 
-	plannerNode.Cost() = travelTimeMillis;
+	// Decrease action penalty for high offensiveness
+	actionPenalty *= 1.25f - 0.5f * offensiveness;
+
+	plannerNode.Cost() = travelTimeMillis * actionPenalty;
 	plannerNode.WorldState() = worldState;
 
 	plannerNode.WorldState().BotOriginVar().SetValue( spotOrigin ).SetSatisfyOp( SatisfyOp::EQ, TACTICAL_SPOT_RADIUS );
@@ -604,36 +547,23 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply( const WorldState &worldSt
 		Debug( "Health or armor are ignored in the given world state\n" );
 		return nullptr;
 	}
+	if( !worldState.HasThreateningEnemyVar() ) {
+		Debug( "There is no threatening enemy, and thus retreating does not make sense\n" );
+		return nullptr;
+	}
 
+	float actionPenalty = 1.0f;
 	const float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
 	Vec3 spotOrigin( 0, 0, 0 );
 	if( worldState.EnemyIsOnSniperRange() ) {
 		Debug( "Retreating on sniper range does not make sense\n" );
 		return nullptr;
 	} else if( worldState.EnemyIsOnFarRange() ) {
-		if( !worldState.HasThreateningEnemyVar() ) {
-			Debug( "There is no threatening enemy, and thus retreating on far range does not make sense\n" );
-			return nullptr;
-		}
-
 		if( !worldState.HasGoodSniperRangeWeaponsVar() ) {
-			Debug( "Bot doesn't have good sniper range weapons\n" );
-			return nullptr;
-		}
-
-		auto &configGroup = WeightConfig().nativeActions.retreatToGoodPosition.farRange;
-		if( worldState.HasGoodFarRangeWeaponsVar() ) {
-			if( worldState.EnemyHasGoodFarRangeWeaponsVar() ) {
-				if( !ShouldRetreatWithThisDamageRatio( worldState, GoodNmyWeapDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-					return nullptr;
-				}
+			if( offensiveness < 0.5f && worldState.HasGoodFarRangeWeaponsVar() ) {
+				actionPenalty += 1.0f;
 			} else {
-				if( !ShouldRetreatWithThisDamageRatio( worldState, BaseDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-					return nullptr;
-				}
-			}
-		} else {
-			if( !worldState.EnemyHasGoodFarRangeWeaponsVar() ) {
+				Debug( "Bot doesn't have good sniper range weapons\n" );
 				return nullptr;
 			}
 		}
@@ -647,50 +577,46 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply( const WorldState &worldSt
 
 		spotOrigin = worldState.SniperRangeTacticalSpotVar().Value();
 	} else if( worldState.EnemyIsOnMiddleRange() ) {
-		if( !worldState.HasGoodFarRangeWeaponsVar() ) {
-			Debug( "Bot doesn't have good far range weapons\n" );
+		if( !worldState.HasGoodFarRangeWeaponsVar() && !worldState.HasGoodSniperRangeWeaponsVar() ) {
+			Debug( "Bot doesn't have good far or sniper range weapons\n" );
 			return nullptr;
-		}
-
-		if( !worldState.HasThreateningEnemyVar() ) {
-			if( worldState.HasGoodMiddleRangeWeaponsVar() ) {
-				Debug( "Bot has good middle range weapons and the enemy is not threatening\n" );
-				return nullptr;
-			}
-		} else {
-			auto &configGroup = WeightConfig().nativeActions.retreatToGoodPosition.middleRange;
-			if( worldState.HasGoodMiddleRangeWeaponsVar() ) {
-				if( worldState.EnemyHasGoodMiddleRangeWeaponsVar() ) {
-					if( !ShouldRetreatWithThisDamageRatio( worldState, GoodNmyWeapDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-						return nullptr;
-					}
-				} else {
-					if( !ShouldRetreatWithThisDamageRatio( worldState, BaseDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-						return nullptr;
-					}
-				}
-			} else {
-				if( !worldState.HasGoodMiddleRangeWeaponsVar() ) {
-					return nullptr;
-				}
-			}
 		}
 
 		// Put this condition last to avoid forcing tactical spot to be computed.
 		// Test cheap conditions first for early action rejection.
 		if( worldState.FarRangeTacticalSpotVar().IgnoreOrAbsent() ) {
-			Debug( "Far range tactical spot is ignored or absent in the given world state\n" );
-			return nullptr;
+			if( worldState.SniperRangeTacticalSpotVar().IgnoreOrAbsent() ) {
+				Debug( "Far range tactical spot is ignored or absent in the given world state\n" );
+				return nullptr;
+			} else {
+				actionPenalty += 1.0f * offensiveness;
+				spotOrigin = worldState.SniperRangeTacticalSpotVar().Value();
+			}
+		} else {
+			spotOrigin = worldState.FarRangeTacticalSpotVar().Value();
 		}
-
-		spotOrigin = worldState.FarRangeTacticalSpotVar().Value();
 	} else if( worldState.EnemyIsOnCloseRange() ) {
 		if( worldState.MiddleRangeTacticalSpotVar().IgnoreOrAbsent() ) {
-			Debug( "Middle range tactical spot is ignored or absent in the given world state\n" );
-			return nullptr;
-		}
+			if( !worldState.HasGoodFarRangeWeaponsVar() && !worldState.HasGoodSniperRangeWeaponsVar() ) {
+				Debug( "Middle range tactical spot is ignored or absent in the given world state\n" );
+				return nullptr;
+			}
 
-		spotOrigin = worldState.MiddleRangeTacticalSpotVar().Value();
+			if( worldState.FarRangeTacticalSpotVar().IgnoreOrAbsent() ) {
+				if( worldState.SniperRangeTacticalSpotVar().IgnoreOrAbsent() ) {
+					Debug( "Middle range tactical spot is ignored or absent in the given world state\n" );
+					return nullptr;
+				} else {
+					actionPenalty += 2.0f * offensiveness;
+					spotOrigin = worldState.SniperRangeTacticalSpotVar().Value();
+				}
+			} else {
+				actionPenalty += 1.0f * offensiveness;
+				spotOrigin = worldState.FarRangeTacticalSpotVar().Value();
+			}
+		} else {
+			spotOrigin = worldState.MiddleRangeTacticalSpotVar().Value();
+		}
 	}
 
 	int travelTimeMillis = self->ai->botRef->CheckTravelTimeMillis( worldState.BotOriginVar().Value(), spotOrigin );
@@ -705,7 +631,10 @@ PlannerNode *BotRetreatToGoodPositionAction::TryApply( const WorldState &worldSt
 		return nullptr;
 	}
 
-	plannerNode.Cost() = travelTimeMillis;
+	// Increase the action penalty for high offensiveness
+	actionPenalty *= 0.75f + 0.5f * offensiveness;
+
+	plannerNode.Cost() = travelTimeMillis * actionPenalty;
 	plannerNode.WorldState() = worldState;
 
 	plannerNode.WorldState().BotOriginVar().SetValue( spotOrigin ).SetSatisfyOp( SatisfyOp::EQ, TACTICAL_SPOT_RADIUS );
@@ -761,32 +690,24 @@ PlannerNode *BotSteadyCombatAction::TryApply( const WorldState &worldState ) {
 	}
 
 	Vec3 spotOrigin( 0, 0, 0 );
-	float actionPenalty = 0.0f;
+	float actionPenalty = 1.0f;
 	const float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
 	if( worldState.EnemyIsOnSniperRange() ) {
 		if( !worldState.HasGoodSniperRangeWeaponsVar() ) {
-			return nullptr;
+			if( offensiveness < 0.5f || !worldState.HasGoodFarRangeWeaponsVar() ) {
+				return nullptr;
+			}
+			actionPenalty += 0.5f;
 		}
 
 		if( worldState.EnemyHasGoodSniperRangeWeaponsVar() ) {
-			auto &configGroup = WeightConfig().nativeActions.steadyCombat.sniperRange;
-			if( worldState.DamageToBeKilled() < 80.0f ) {
-				float ratioThreshold = DmgRatioThreshold( configGroup, offensiveness );
-				if( !worldState.HasThreateningEnemyVar() ) {
-					ratioThreshold -= 0.7f * configGroup.offCoeff * offensiveness;
-				}
-				if( !ShouldAttackWithThisDamageRatio( worldState, ratioThreshold ) ) {
-					return nullptr;
-				}
-			}
-		} else {
-			if( worldState.HasGoodFarRangeWeaponsVar() ) {
+			if( !worldState.EnemyHasGoodSniperRangeWeaponsVar() && worldState.HasGoodFarRangeWeaponsVar() ) {
 				actionPenalty += 0.5f * offensiveness;
 			}
-			if( worldState.HasGoodMiddleRangeWeaponsVar() ) {
+			if( !worldState.EnemyHasGoodMiddleRangeWeaponsVar() && worldState.HasGoodMiddleRangeWeaponsVar() ) {
 				actionPenalty += 0.5f * offensiveness;
 			}
-			if( worldState.HasGoodCloseRangeWeaponsVar() ) {
+			if( !worldState.EnemyHasGoodCloseRangeWeaponsVar() && worldState.HasGoodCloseRangeWeaponsVar() ) {
 				actionPenalty += 0.5f * offensiveness;
 			}
 		}
@@ -808,19 +729,10 @@ PlannerNode *BotSteadyCombatAction::TryApply( const WorldState &worldState ) {
 		}
 
 		if( worldState.EnemyHasGoodFarRangeWeaponsVar() ) {
-			auto &configGroup = WeightConfig().nativeActions.steadyCombat.farRange;
-			float ratioThreshold = DmgRatioThreshold( configGroup, offensiveness );
-			if( !worldState.HasThreateningEnemyVar() ) {
-				ratioThreshold -= 0.5f * configGroup.offCoeff * offensiveness;
-			}
-			if( !ShouldAttackWithThisDamageRatio( worldState, ratioThreshold ) ) {
-				return nullptr;
-			}
-		} else {
-			if( worldState.HasGoodMiddleRangeWeaponsVar() ) {
+			if( !worldState.EnemyHasGoodSniperRangeWeaponsVar() && worldState.HasGoodMiddleRangeWeaponsVar() ) {
 				actionPenalty += 0.5f * offensiveness;
 			}
-			if( worldState.HasGoodCloseRangeWeaponsVar() ) {
+			if( !worldState.EnemyHasGoodCloseRangeWeaponsVar() && worldState.HasGoodCloseRangeWeaponsVar() ) {
 				actionPenalty += 0.5f * offensiveness;
 			}
 		}
@@ -842,16 +754,7 @@ PlannerNode *BotSteadyCombatAction::TryApply( const WorldState &worldState ) {
 		}
 
 		if( worldState.EnemyHasGoodMiddleRangeWeaponsVar() ) {
-			auto &configGroup = WeightConfig().nativeActions.steadyCombat.middleRange;
-			float damageRatio = DmgRatioThreshold( configGroup, offensiveness );
-			if( !worldState.HasThreateningEnemyVar() ) {
-				damageRatio -= 0.3f * configGroup.offCoeff;
-			}
-			if( !ShouldAttackWithThisDamageRatio( worldState, damageRatio ) ) {
-				return nullptr;
-			}
-		} else {
-			if( worldState.HasGoodCloseRangeWeaponsVar() ) {
+			if( !worldState.EnemyHasGoodMiddleRangeWeaponsVar() && worldState.HasGoodCloseRangeWeaponsVar() ) {
 				actionPenalty += 1.0f * offensiveness;
 			}
 		}
@@ -868,27 +771,9 @@ PlannerNode *BotSteadyCombatAction::TryApply( const WorldState &worldState ) {
 
 		spotOrigin = worldState.MiddleRangeTacticalSpotVar().Value();
 	} else {
-		auto &configGroup = WeightConfig().nativeActions.steadyCombat.closeRange;
 		if( !worldState.HasGoodCloseRangeWeaponsVar() ) {
 			Debug( "Bot does not have good close range weapons\n" );
 			return nullptr;
-		}
-		if( worldState.EnemyHasGoodCloseRangeWeaponsVar() ) {
-			float damageRatio = configGroup.dmgRatio + configGroup.offCoeff * offensiveness;
-			if( worldState.HasThreateningEnemyVar() ) {
-				damageRatio *= 0.5f;
-			}
-			if( !ShouldAttackWithThisDamageRatio( worldState, damageRatio ) ) {
-				return nullptr;
-			}
-		} else {
-			float damageRatio = configGroup.dmgRatio + configGroup.offCoeff * offensiveness;
-			if( !worldState.HasThreateningEnemyVar() ) {
-				damageRatio += 0.6f * configGroup.offCoeff * offensiveness;
-			}
-			if( !ShouldAttackWithThisDamageRatio( worldState, damageRatio ) ) {
-				return nullptr;
-			}
 		}
 
 		// Put this condition last to avoid forcing tactical spot to be computed.
@@ -905,13 +790,30 @@ PlannerNode *BotSteadyCombatAction::TryApply( const WorldState &worldState ) {
 		spotOrigin = worldState.CloseRangeTacticalSpotVar().Value();
 	}
 
+	// It is faster to check this apriori before spot assignation but the code becomes unmaintainable
+	if( worldState.HasThreateningEnemyVar() && offensiveness != 1.0f ) {
+		if( worldState.BotOriginVar().Value().DistanceTo( spotOrigin ) > LgRange() ) {
+			if( offensiveness <= 0.5f ) {
+				if( worldState.DamageToBeKilled() < 80.0f && worldState.KillToBeKilledDamageRatio() > 2.0f ) {
+					return nullptr;
+				}
+			}
+		} else {
+			if( worldState.KillToBeKilledDamageRatio() > 2.0f * offensiveness ) {
+				return nullptr;
+			}
+		}
+	}
+
 	unsigned selectedEnemiesInstanceId = self->ai->botRef->GetSelectedEnemies().InstanceId();
 	PlannerNodePtr plannerNode = NewNodeForRecord( pool.New( self, spotOrigin, selectedEnemiesInstanceId ) );
 	if( !plannerNode ) {
 		return nullptr;
 	}
 
-	plannerNode.Cost() = ( 1.0f + actionPenalty ) * worldState.DamageToKill();
+	// Cost is measured in milliseconds, so we have to convert our estimations to this unit, assuming dps is 50
+	float secondsToKill = worldState.DamageToKill() / 50.0f;
+	plannerNode.Cost() = actionPenalty * (1000 * secondsToKill);
 
 	plannerNode.WorldState() = worldState;
 	plannerNode.WorldState().BotOriginVar().SetValue( spotOrigin );
@@ -967,7 +869,7 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply( const WorldState &wor
 	// Don't check whether enemy is threatening.
 	// (Use any chance to get a good position)
 
-	const float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
+	float actionPenalty = 1.0f;
 	Vec3 spotOrigin( 0, 0, 0 );
 	if( worldState.EnemyIsOnSniperRange() ) {
 		if( !worldState.HasGoodSniperRangeWeaponsVar() ) {
@@ -978,43 +880,28 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply( const WorldState &wor
 			Debug( "Sniper range tactical spot is ignored or absent in the given world state\n" );
 			return nullptr;
 		}
-		if( worldState.HasThreateningEnemyVar() ) {
-			if( worldState.DamageToBeKilled() < 80 && worldState.EnemyHasGoodSniperRangeWeaponsVar() ) {
-				return nullptr;
-			}
-		}
+
 		spotOrigin = worldState.SniperRangeTacticalSpotVar().Value();
 	} else if( worldState.EnemyIsOnFarRange() ) {
-		if( !worldState.HasGoodFarRangeWeaponsVar() ) {
-			Debug( "Bot does not have good far range weapons\n" );
+		if( !worldState.HasGoodFarRangeWeaponsVar() && !worldState.HasGoodSniperRangeWeaponsVar() ) {
+			Debug( "Bot does not have good far or sniper range weapons\n" );
 			return nullptr;
 		}
 		if( worldState.FarRangeTacticalSpotVar().IgnoreOrAbsent() ) {
-			Debug( "Far range tactical spot is ignored or absent in the given world state\n" );
-			return nullptr;
-		}
-		if( worldState.HasThreateningEnemyVar() ) {
-			if( worldState.DamageToBeKilled() < 80 && worldState.EnemyHasGoodSniperRangeWeaponsVar() ) {
+			if( worldState.SniperRangeTacticalSpotVar().IgnoreOrAbsent() ) {
+				Debug( "Far range tactical spot is ignored or absent in the given world state\n" );
 				return nullptr;
+			} else {
+				actionPenalty += 0.5f;
+				spotOrigin = worldState.SniperRangeTacticalSpotVar().Value();
 			}
+		} else {
+			spotOrigin = worldState.FarRangeTacticalSpotVar().Value();
 		}
-		spotOrigin = worldState.FarRangeTacticalSpotVar().Value();
 	} else if( worldState.EnemyIsOnMiddleRange() ) {
 		if( !worldState.HasGoodMiddleRangeWeaponsVar() ) {
 			Debug( "Bot does not have good middle range weapons\n" );
 			return nullptr;
-		}
-		if( worldState.HasThreateningEnemyVar() ) {
-			auto &configGroup = WeightConfig().nativeActions.gotoAvailableGoodPosition.middleRange;
-			if( worldState.EnemyHasGoodMiddleRangeWeaponsVar() ) {
-				if( !ShouldAttackWithThisDamageRatio( worldState, GoodNmyWeapDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-					return nullptr;
-				}
-			} else {
-				if( !ShouldAttackWithThisDamageRatio( worldState, BaseDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-					return nullptr;
-				}
-			}
 		}
 		if( worldState.MiddleRangeTacticalSpotVar().IgnoreOrAbsent() ) {
 			Debug( "Middle range tactical spot is ignored or absent in the given world state\n" );
@@ -1027,23 +914,28 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply( const WorldState &wor
 			Debug( "Bot does not have good close range weapons\n" );
 			return nullptr;
 		}
-		if( worldState.HasThreateningEnemyVar() ) {
-			auto &configGroup = WeightConfig().nativeActions.gotoAvailableGoodPosition.closeRange;
-			if( worldState.EnemyHasGoodMiddleRangeWeaponsVar() ) {
-				if( !ShouldAttackWithThisDamageRatio( worldState, GoodNmyWeapDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-					return nullptr;
-				}
-			} else {
-				if( !ShouldAttackWithThisDamageRatio( worldState, BaseDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-					return nullptr;
-				}
-			}
-		}
 		if( worldState.CloseRangeTacticalSpotVar().IgnoreOrAbsent() ) {
 			Debug( "Close range tactical spot is ignored or absent in the given world state\n" );
 			return nullptr;
 		}
+
 		spotOrigin = worldState.CloseRangeTacticalSpotVar().Value();
+	}
+
+	float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
+	// It is faster to check this apriori before spot assignation but the code becomes unmaintainable
+	if( worldState.HasThreateningEnemyVar() && offensiveness != 1.0f ) {
+		if( worldState.BotOriginVar().Value().DistanceTo( spotOrigin ) > LgRange() ) {
+			if( offensiveness <= 0.5f ) {
+				if( worldState.DamageToBeKilled() < 80.0f && worldState.KillToBeKilledDamageRatio() > 2.0f ) {
+					return nullptr;
+				}
+			}
+		} else {
+			if( worldState.KillToBeKilledDamageRatio() > 2.0f * offensiveness ) {
+				return nullptr;
+			}
+		}
 	}
 
 	int travelTimeMillis = self->ai->botRef->CheckTravelTimeMillis( worldState.BotOriginVar().Value(), spotOrigin );
@@ -1058,7 +950,7 @@ PlannerNode *BotGotoAvailableGoodPositionAction::TryApply( const WorldState &wor
 		return nullptr;
 	}
 
-	plannerNode.Cost() = travelTimeMillis;
+	plannerNode.Cost() = travelTimeMillis * actionPenalty;
 	plannerNode.WorldState() = worldState;
 	plannerNode.WorldState().BotOriginVar().SetValue( spotOrigin );
 	plannerNode.WorldState().BotOriginVar().SetSatisfyOp( SatisfyOp::EQ, TACTICAL_SPOT_RADIUS );
@@ -1089,6 +981,15 @@ AiBaseActionRecord::Status BotAttackFromCurrentPositionActionRecord::CheckStatus
 		return INVALID;
 	}
 
+	if( navTarget.Origin().SquareDistance2DTo( self->s.origin ) < 16 * 16 ) {
+		vec3_t spotOrigin;
+		TacticalSpotsRegistry::OriginParams originParams( self, 128.0f, AiAasRouteCache::Shared() );
+		const float *keepVisOrigin = self->ai->botRef->GetSelectedEnemies().LastSeenOrigin().Data();
+		if( TacticalSpotsRegistry::Instance()->FindShortSideStepDodgeSpot( originParams, keepVisOrigin, spotOrigin ) ) {
+			self->ai->botRef->SetNavTarget( Vec3( spotOrigin ), 16.0f );
+		}
+	}
+
 	// This action is likely to be deactivate on goal search/reevaluation, do not do extra tests.
 	return VALID;
 }
@@ -1113,99 +1014,52 @@ PlannerNode *BotAttackFromCurrentPositionAction::TryApply( const WorldState &wor
 	}
 
 	float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
-	// Make an offensiveness actually taken into account lower for all values except 1.0f ("enraged mode").
-	// It has its purpose for making bot always attacking headless in "enraged mode".
-	offensiveness *= offensiveness;
+	if( offensiveness <= 0.5f && !worldState.HasThreateningEnemyVar() ) {
+		return nullptr;
+	}
 
-	if( worldState.EnemyIsOnSniperRange() ) {
-		if( !worldState.HasGoodSniperRangeWeaponsVar() ) {
-			return nullptr;
-		}
-
-		// Put this condition last to avoid forcing tactical spot to be computed.
-		// Test cheap conditions first for early action rejection.
-		if( offensiveness < 0.7f && worldState.SniperRangeTacticalSpotVar().IsPresent() ) {
-			Debug( "Sniper range tactical spot is present\n" );
-			return nullptr;
-		}
-	} else if( worldState.EnemyIsOnFarRange() ) {
-		if( !worldState.HasGoodFarRangeWeaponsVar() ) {
-			if( offensiveness < 0.9f ) {
-				return nullptr;
-			}
-		}
-
-		const auto &configGroup = WeightConfig().nativeActions.attackFromCurrentPosition.farRange;
-		if( worldState.EnemyHasGoodFarRangeWeaponsVar() ) {
-			if( !ShouldAttackWithThisDamageRatio( worldState, DmgRatioThreshold( configGroup, offensiveness ) ) ) {
-				return nullptr;
-			}
-		}
-
-		// Put this condition last to avoid forcing tactical spot to be computed.
-		// Test cheap conditions first for early action rejection.
-		if( offensiveness < 0.7f && worldState.FarRangeTacticalSpotVar().IsPresent() ) {
-			Debug( "Far range tactical spot is present\n" );
-			return nullptr;
-		}
-	} else if( worldState.EnemyIsOnMiddleRange() ) {
-		if( !worldState.HasGoodMiddleRangeWeaponsVar() ) {
-			if( worldState.HasGoodCloseRangeWeaponsVar() ) {
-				if( offensiveness < 0.45f ) {
+	if( offensiveness != 1.0f ) {
+		if( worldState.EnemyIsOnSniperRange() ) {
+			if( !worldState.HasGoodSniperRangeWeaponsVar() ) {
+				if( offensiveness <= 0.5f && !worldState.HasGoodFarRangeWeaponsVar() ) {
 					return nullptr;
 				}
-			} else if( worldState.HasGoodSniperRangeWeaponsVar() || worldState.HasGoodFarRangeWeaponsVar() ) {
-				if( offensiveness < 0.60f ) {
+			}
+		} else if( worldState.EnemyIsOnFarRange()) {
+			if( offensiveness <= 0.5f ) {
+				if( !worldState.HasGoodFarRangeWeaponsVar() && !worldState.HasGoodSniperRangeWeaponsVar()) {
 					return nullptr;
 				}
-			} else if( offensiveness < 0.90f ) {
-				return nullptr;
+			}
+		} else if( worldState.EnemyIsOnMiddleRange()) {
+			if( !worldState.HasGoodMiddleRangeWeaponsVar()) {
+				if( offensiveness <= 0.5f && !worldState.HasGoodFarRangeWeaponsVar() ) {
+					return nullptr;
+				}
+			}
+		} else if( worldState.EnemyIsOnCloseRange()) {
+			if( !worldState.HasGoodCloseRangeWeaponsVar()) {
+				if( offensiveness <= 0.5f ) {
+					if( !worldState.HasGoodMiddleRangeWeaponsVar() && !worldState.HasGoodFarRangeWeaponsVar() ) {
+						return nullptr;
+					}
+				}
 			}
 		}
 
-		const auto &configGroup = WeightConfig().nativeActions.attackFromCurrentPosition.middleRange;
-		if( worldState.EnemyHasGoodMiddleRangeWeaponsVar() ) {
-			if( !ShouldAttackWithThisDamageRatio( worldState, DmgRatioThreshold( configGroup, offensiveness ) ) ) {
-				return nullptr;
-			}
-		}
-
-		// Put this condition last to avoid forcing tactical spot to be computed.
-		// Test cheap conditions first for early action rejection.
-		if( offensiveness < 0.7f && worldState.MiddleRangeTacticalSpotVar().IsPresent() ) {
-			Debug( "Middle range tactical spot is present\n" );
-			return nullptr;
-		}
-	} else {
-		if( !worldState.HasGoodCloseRangeWeaponsVar() ) {
-			if( worldState.HasGoodMiddleRangeWeaponsVar() ) {
-				if( offensiveness < 0.50f ) {
+		// It is faster to check this apriori before spot assignation but the code becomes unmaintainable
+		if( worldState.HasThreateningEnemyVar() && offensiveness != 1.0f ) {
+			if( worldState.EnemyIsOnFarRange() || worldState.EnemyIsOnFarRange() ) {
+				if( offensiveness <= 0.5f ) {
+					if( worldState.DamageToBeKilled() < 80.0f && worldState.KillToBeKilledDamageRatio() > 2.0f ) {
+						return nullptr;
+					}
+				}
+			} else {
+				if( worldState.KillToBeKilledDamageRatio() > 1.3f * offensiveness ) {
 					return nullptr;
 				}
-			} else if( worldState.HasGoodSniperRangeWeaponsVar() || worldState.HasGoodFarRangeWeaponsVar() ) {
-				if( offensiveness < 0.75f ) {
-					return nullptr;
-				}
-			} else if( offensiveness < 0.90f ) {
-				return nullptr;
 			}
-		}
-		const auto &configGroup = WeightConfig().nativeActions.attackFromCurrentPosition.closeRange;
-		if( worldState.EnemyHasGoodCloseRangeWeaponsVar() ) {
-			if( !ShouldAttackWithThisDamageRatio( worldState, GoodNmyWeapDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-				return nullptr;
-			}
-		} else {
-			if( !ShouldAttackWithThisDamageRatio( worldState, BaseDmgRatioThreshold( configGroup, offensiveness ) ) ) {
-				return nullptr;
-			}
-		}
-
-		// Put this condition last to avoid forcing tactical spot to be computed.
-		// Test cheap conditions first for early action rejection.
-		if( offensiveness < 0.7f && worldState.CloseRangeTacticalSpotVar().IsPresent() ) {
-			Debug( "Close range tactical spot is present\n" );
-			return nullptr;
 		}
 	}
 
@@ -1294,8 +1148,21 @@ bool BotRunAwayAction::CheckCommonRunAwayPreconditions( const WorldState &worldS
 		return false;
 	}
 
-	if( worldState.EnemyIsOnSniperRange() ) {
-		if( !worldState.EnemyHasGoodSniperRangeWeaponsVar() ) {
+	float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
+	if( offensiveness == 1.0f ) {
+		return false;
+	}
+
+	if( worldState.EnemyHasQuadVar() && !worldState.HasQuadVar() ) {
+		return true;
+	}
+
+	if( worldState.HasThreateningEnemyVar() && worldState.DamageToBeKilled() < 25 ) {
+		return true;
+	}
+
+	if( worldState.EnemyIsOnSniperRange() || worldState.EnemyIsOnSniperRange() ) {
+		if( !worldState.EnemyHasGoodSniperRangeWeaponsVar() && !worldState.EnemyHasGoodFarRangeWeaponsVar() ) {
 			Debug( "Enemy does not have good sniper range weapons and thus taking cover makes no sense\n" );
 			return false;
 		}
@@ -1303,60 +1170,60 @@ bool BotRunAwayAction::CheckCommonRunAwayPreconditions( const WorldState &worldS
 			Debug( "Bot can resist more than 80 damage units on sniper range and thus taking cover makes no sense\n" );
 			return false;
 		}
-	} else if( worldState.EnemyIsOnFarRange() ) {
-		if( !worldState.EnemyHasGoodFarRangeWeaponsVar() ) {
-			Debug( "Enemy does not have good far range weapons and thus taking cover makes no sense\n" );
-			return false;
-		}
-		if( worldState.DamageToBeKilled() > 80 ) {
-			Debug( "Bot can resist more than 80 damage units on far range and thus taking cover makes no sense\n" );
-			return false;
-		}
-	} else if( worldState.EnemyIsOnMiddleRange() ) {
-		const auto &configGroup = WeightConfig().nativeActions.runAway.middleRange;
-		if( !worldState.EnemyHasGoodMiddleRangeWeaponsVar() ) {
-			if( worldState.HasGoodMiddleRangeWeaponsVar() ) {
-				if( !ShouldRetreatWithThisDamageToBeKilled( worldState, configGroup.goodWeapDmgToBeKilled ) ) {
-					return false;
-				}
-				if( !ShouldRetreatWithThisDamageRatio( worldState, configGroup.goodWeapDmgRatio ) ) {
-					return false;
-				}
-			} else {
-				if( !ShouldRetreatWithThisDamageToBeKilled( worldState, configGroup.baseDmgToBeKilled ) ) {
-					return false;
-				}
-				if( !ShouldRetreatWithThisDamageRatio( worldState, configGroup.baseDmgRatio ) ) {
-					return false;
-				}
-			}
-		}
-	} else {
-		if( !worldState.HasGoodCloseRangeWeaponsVar() ) {
-			if( !worldState.EnemyHasGoodCloseRangeWeaponsVar() ) {
-				Debug( "Bot and enemy both do not have good close range weapons\n" );
+		return true;
+	}
+
+	if( worldState.EnemyIsOnMiddleRange() ) {
+		return CheckMiddleRangeKDDamageRatio( worldState );
+	}
+
+	return CheckCloseRangeKDDamageRatio( worldState );
+}
+
+bool BotRunAwayAction::CheckMiddleRangeKDDamageRatio( const WorldState &worldState ) const {
+	float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
+	if( worldState.HasThreateningEnemyVar() ) {
+		if( worldState.HasGoodMiddleRangeWeaponsVar() ) {
+			if( worldState.KillToBeKilledDamageRatio() < 1.0f + 1.0f * offensiveness ) {
 				return false;
 			}
 		} else {
-			const auto &configGroup = WeightConfig().nativeActions.runAway.closeRange;
-			float damageRatio = worldState.KillToBeKilledDamageRatio();
-			float ratioThreshold = configGroup.baseDmgRatio;
-			if( worldState.EnemyHasGoodCloseRangeWeaponsVar() ) {
-				ratioThreshold = configGroup.goodNmyWeapDmgRatio;
-			}
-			if( !ShouldRetreatWithThisDamageRatio( worldState, ratioThreshold ) ) {
-				Debug( "Enemy has %f x weaker HP than bot\n", damageRatio );
+			if( worldState.KillToBeKilledDamageRatio() < 0.75f + 0.5f * offensiveness ) {
 				return false;
 			}
 		}
+		return true;
 	}
 
-	return true;
+	if( worldState.HasGoodMiddleRangeWeaponsVar() ) {
+		if( worldState.KillToBeKilledDamageRatio() < 1.5f + 3.0f * offensiveness ) {
+			return false;
+		}
+	}
+
+	return worldState.KillToBeKilledDamageRatio() > 1.5f + 1.5f * offensiveness;
+}
+
+bool BotRunAwayAction::CheckCloseRangeKDDamageRatio( const WorldState &worldState ) const {
+	float offensiveness = self->ai->botRef->GetEffectiveOffensiveness();
+	if( worldState.HasThreateningEnemyVar() ) {
+		if( worldState.HasGoodCloseRangeWeaponsVar() ) {
+			if( worldState.KillToBeKilledDamageRatio() < 1.0f + 1.0f * offensiveness ) {
+				return false;
+			}
+		} else {
+			if( worldState.KillToBeKilledDamageRatio() < 0.5f + 0.5f * offensiveness ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	return worldState.KillToBeKilledDamageRatio() > 2.0f + 1.0f * offensiveness;
 }
 
 void BotGenericRunAvoidingCombatActionRecord::Activate() {
 	BotBaseActionRecord::Activate();
-	// Since the combat movement has a decent quality and this action is often triggered in combat, set flags this way.
 	self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
 	self->ai->botRef->SetNavTarget( &navTarget );
 }
@@ -2029,8 +1896,7 @@ PlannerNode *BotStopRunningAwayAction::TryApply( const WorldState &worldState ) 
 void BotDodgeToSpotActionRecord::Activate() {
 	BotBaseActionRecord::Activate();
 	self->ai->botRef->SetNavTarget( &navTarget );
-	timeoutAt = level.time + 350;
-	// Keep aiming at enemy
+	timeoutAt = level.time + Danger::TIMEOUT;
 	self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
 }
 
@@ -2103,6 +1969,7 @@ PlannerNode *BotDodgeToSpotAction::TryApply( const WorldState &worldState ) {
 void BotTurnToThreatOriginActionRecord::Activate() {
 	BotBaseActionRecord::Activate();
 	self->ai->botRef->SetPendingLookAtPoint( AiPendingLookAtPoint( threatPossibleOrigin, 3.0f ), 350 );
+	self->ai->botRef->GetMiscTactics().PreferAttackRatherThanRun();
 }
 
 void BotTurnToThreatOriginActionRecord::Deactivate() {
@@ -2159,6 +2026,7 @@ PlannerNode *BotTurnToThreatOriginAction::TryApply( const WorldState &worldState
 void BotTurnToLostEnemyActionRecord::Activate() {
 	BotBaseActionRecord::Activate();
 	self->ai->botRef->SetPendingLookAtPoint( AiPendingLookAtPoint( lastSeenEnemyOrigin, 3.0f ), 400 );
+	self->ai->botRef->GetMiscTactics().PreferRunRatherThanAttack();
 }
 
 void BotTurnToLostEnemyActionRecord::Deactivate() {

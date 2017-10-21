@@ -612,6 +612,9 @@ void AiBaseBrain::SetGoalAndPlan( AiBaseGoal *activeGoal_, AiBaseActionRecord *p
 	}
 
 	this->activeGoal = activeGoal_;
+#if 0
+	AITools_DrawColorLine( self->s.origin, ( Vec3( 0, 0, 56 ) + self->s.origin ).Data(), activeGoal_->DebugColor(), 0 );
+#endif
 
 	this->planHead = planHead_;
 	this->planHead->Activate();

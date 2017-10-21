@@ -5,7 +5,7 @@
 #include "static_deque.h"
 
 struct Danger : public PoolItem {
-	static constexpr unsigned TIMEOUT = 400;
+	static constexpr unsigned TIMEOUT = 750;
 
 	Danger( PoolBase *pool_ )
         : PoolItem( pool_ ),

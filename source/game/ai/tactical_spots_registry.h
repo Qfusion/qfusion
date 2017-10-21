@@ -441,6 +441,10 @@ public:
 		VectorAdd( mins, playerbox_stand_mins, mins );
 		VectorAdd( maxs, playerbox_stand_maxs, maxs );
 	}
+
+	bool FindShortSideStepDodgeSpot( const OriginParams &originParams,
+									 const vec3_t keepVisibleOrigin,
+									 vec3_t spotOrigin ) const;
 };
 
 #endif
