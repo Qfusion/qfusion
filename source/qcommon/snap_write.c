@@ -453,21 +453,22 @@ typedef struct {
 /*
 * SNAP_AddEntNumToSnapList
 */
-static void SNAP_AddEntNumToSnapList( int entNum, snapshotEntityNumbers_t *entsList ) {
+static bool SNAP_AddEntNumToSnapList( int entNum, snapshotEntityNumbers_t *entList ) {
 	if( entNum >= MAX_EDICTS ) {
-		return;
+		return false;
 	}
-	if( entsList->numSnapshotEntities >= MAX_SNAPSHOT_ENTITIES ) { // silent ignore of overflood
-		return;
+	if( entList->numSnapshotEntities >= MAX_SNAPSHOT_ENTITIES ) { // silent ignore of overflood
+		return false;
 	}
 
 	// don't double add entities
-	if( entsList->entityAddedToSnapList[entNum >> 3] & (1 << (entNum & 7)) ) {
-		return;
+	if( entList->entityAddedToSnapList[entNum >> 3] & (1 << (entNum & 7)) ) {
+		return false;
 	}
 
-	entsList->snapshotEntities[entsList->numSnapshotEntities++] = entNum;
-	entsList->entityAddedToSnapList[entNum >> 3] |=  (1 << (entNum & 7));
+	entList->snapshotEntities[entList->numSnapshotEntities++] = entNum;
+	entList->entityAddedToSnapList[entNum >> 3] |=  (1 << (entNum & 7));
+	return true;
 }
 
 /*
@@ -653,7 +654,9 @@ static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, e
 		}
 
 		// add it
-		SNAP_AddEntNumToSnapList( entNum, entList );
+		if( !SNAP_AddEntNumToSnapList( entNum, entList ) ) {
+			continue;
+		}
 
 		if( ent->r.svflags & SVF_FORCEOWNER ) {
 			// make sure owner number is valid too
