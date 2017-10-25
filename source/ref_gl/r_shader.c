@@ -1564,8 +1564,8 @@ static void Shaderpass_TcMod( shader_t *shader, shaderpass_t *pass, const char *
 		tcmod->type = TC_MOD_STRETCH;
 	} else if( !strcmp( token, "transform" ) ) {
 		Shader_ParseVector( ptr, tcmod->args, 6 );
-		tcmod->args[4] = tcmod->args[4] - floor( tcmod->args[4] );
-		tcmod->args[5] = tcmod->args[5] - floor( tcmod->args[5] );
+		//tcmod->args[4] = tcmod->args[4] - floor( tcmod->args[4] );
+		//tcmod->args[5] = tcmod->args[5] - floor( tcmod->args[5] );
 		tcmod->type = TC_MOD_TRANSFORM;
 	} else if( !strcmp( token, "turb" ) ) {
 		Shader_ParseVector( ptr, tcmod->args, 4 );
