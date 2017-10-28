@@ -92,7 +92,7 @@ void CM_InitOctagonHull( cmodel_state_t *cms ) {
 	cms->oct_brush->contents = CONTENTS_BODY;
 
 	// Make sure CM_CollideBox() will not reject the brush by its bounds
-	ClearBounds( cms->box_brush->maxs, cms->box_brush->mins );
+	ClearBounds( cms->oct_brush->maxs, cms->box_brush->mins );
 
 	cms->oct_markbrushes[0] = cms->oct_brush;
 
