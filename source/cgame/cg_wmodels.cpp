@@ -393,6 +393,11 @@ static bool CG_WeaponModelUpdateRegistration( weaponinfo_t *weaponinfo, char *fi
 			Q_snprintfz( scratch, sizeof( scratch ), "models/weapons/%s%s.md3", filename, wmPartSufix[p] );
 			weaponinfo->model[p] = CG_RegisterModel( scratch );
 		}
+
+		weaponinfo->skel[p] = NULL;
+		if( ( p == WEAPMODEL_HAND ) && ( weaponinfo->model[p] ) ) {
+			weaponinfo->skel[p] = CG_SkeletonForModel( weaponinfo->model[p] );
+		}
 	}
 
 	if( !weaponinfo->model[WEAPMODEL_BARREL] ) {

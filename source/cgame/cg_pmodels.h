@@ -59,14 +59,15 @@ enum {
 
 #define WEAPONINFO_MAX_FIRE_SOUNDS 4
 
-//equivalent to pmodelinfo_t. Shared by different players, etc.
+// equivalent to pmodelinfo_t. Shared by different players, etc.
 typedef struct weaponinfo_s {
 	char name[MAX_QPATH];
 	bool inuse;
 
-	struct  model_s *model[VWEAP_MAXPARTS]; //one weapon consists of several models
+	struct model_s *model[VWEAP_MAXPARTS]; // one weapon consists of several models
+	struct cgs_skeleton_s *skel[VWEAP_MAXPARTS];
 
-	int firstframe[VWEAP_MAXANIMS];         //animation script
+	int firstframe[VWEAP_MAXANIMS];         // animation script
 	int lastframe[VWEAP_MAXANIMS];
 	int loopingframes[VWEAP_MAXANIMS];
 	unsigned int frametime[VWEAP_MAXANIMS];
