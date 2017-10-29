@@ -486,7 +486,7 @@ bool CG_GrabTag( orientation_t *tag, entity_t *ent, const char *tagname ) {
 	}
 
 	skel = CG_SkeletonForModel( ent->model );
-	if( skel ) {
+	if( skel && ent->boneposes ) {
 		return CG_SkeletalPoseGetAttachment( tag, skel, ent->boneposes, tagname );
 	}
 

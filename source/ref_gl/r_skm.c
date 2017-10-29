@@ -220,10 +220,6 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	H_SWAP( ofs_extensions );
 #undef H_SWAP
 
-	if( header->num_triangles < 1 || header->num_vertexes < 3 || header->num_vertexarrays < 1 || header->num_meshes < 1 ) {
-		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no geometry\n", mod->name );
-		goto error;
-	}
 	if( header->num_vertexes >= USHRT_MAX ) {
 		ri.Com_Printf( S_COLOR_RED "ERROR: %s has too many vertices\n", mod->name );
 		goto error;
@@ -877,13 +873,15 @@ static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec
 
 	if( frame < 0 || frame >= (int)skmodel->numframes ) {
 #ifndef PUBLIC_BUILD
-		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such frame %i\n", mod->name, frame );
+		if( skmodel->numframes )
+			ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such frame %i\n", mod->name, frame );
 #endif
 		frame = 0;
 	}
 	if( oldframe < 0 || oldframe >= (int)skmodel->numframes ) {
 #ifndef PUBLIC_BUILD
-		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such oldframe %i\n", mod->name, oldframe );
+		if( skmodel->numframes )
+			ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such oldframe %i\n", mod->name, oldframe );
 #endif
 		oldframe = 0;
 	}
