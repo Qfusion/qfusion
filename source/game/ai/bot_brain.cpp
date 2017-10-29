@@ -247,59 +247,18 @@ void BotBrain::ForceSetNavEntity( const SelectedNavEntity &selectedNavEntity_ ) 
 }
 
 void BotBrain::UpdateBlockedAreasStatus() {
-	if( activeEnemyPool->ActiveEnemies().empty() || ShouldRushHeadless() ) {
-		// Reset all possibly blocked areas
-		RouteCache()->SetDisabledRegions( nullptr, nullptr, 0, DroppedToFloorAasAreaNum() );
-		return;
-	}
+	// The old functionality has been temporarily disabled,
+	// and its deprecation produces better bot behaviour (but rather stupid sometimes).
 
-	// Wait for enemies selection, do not perform cache flushing
-	// which is extremely expensive and are likely to be overridden next frame
-	if( !selectedEnemies.AreValid() ) {
-		return;
-	}
+	// It used to mark as blocked all areas near selected active enemies
+	// (except they are close and marking this areas as blocked did not leave non-blocked areas around the bot).
+	// This approach has failed, not only the code determining whether an area should be blocked was not reliable,
+	// but this also used to add lots of jitter to the planner choice, since areas become available once the bot
+	// turns away the visible active enemy.
 
-	StaticVector<Vec3, EnemyPool::MAX_TRACKED_ENEMIES> mins;
-	StaticVector<Vec3, EnemyPool::MAX_TRACKED_ENEMIES> maxs;
-
-	AiGroundTraceCache *groundTraceCache = AiGroundTraceCache::Instance();
-	for( const Enemy *enemy: selectedEnemies ) {
-		if( selectedEnemies.IsPrimaryEnemy( enemy ) && WillAttackMelee() ) {
-			continue;
-		}
-
-		// TODO: This may act as cheating since actual enemy origin is used.
-		// This is kept for conformance to following ground trace check.
-		float squareDistance = DistanceSquared( self->s.origin, enemy->ent->s.origin );
-		// (Otherwise all nearby paths are treated as blocked by enemy)
-		if( squareDistance < 72.0f ) {
-			continue;
-		}
-		float distance = 1.0f / Q_RSqrt( squareDistance );
-		float side = 24.0f + 96.0f * BoundedFraction( distance - 72.0f, 4 * 384.0f );
-
-		// Try to drop an enemy origin to floor
-		// TODO: AiGroundTraceCache interface forces using an actual enemy origin
-		// and not last seen one, so this may act as cheating.
-		vec3_t origin;
-		// If an enemy is close to ground (an origin may and has been dropped to floor)
-		if( groundTraceCache->TryDropToFloor( enemy->ent, 128.0f, origin, level.time - enemy->LastSeenAt() ) ) {
-			// Do not use bounds lower than origin[2] (except some delta)
-			mins.push_back( Vec3( -side, -side, -8.0f ) + origin );
-			maxs.push_back( Vec3( +side, +side, 128.0f ) + origin );
-		} else {
-			// Use a bit lower bounds (an enemy is likely to fall down)
-			mins.push_back( Vec3( -side, -side, -192.0f ) + origin );
-			maxs.push_back( Vec3( +side, +side, +108.0f ) + origin );
-		}
-	}
-
-	// getting mins[0] address for an empty vector in debug will trigger an assertion
-	if( !mins.empty() ) {
-		RouteCache()->SetDisabledRegions( &mins[0], &maxs[0], mins.size(), DroppedToFloorAasAreaNum() );
-	} else {
-		RouteCache()->SetDisabledRegions( nullptr, nullptr, 0, DroppedToFloorAasAreaNum() );
-	}
+	// The proper solution is maintaining a list of blockers for each nav entity / choke point
+	// and listen to in-game events whether the area (not in AAS sense) became available
+	// (a blocker has been killed or has been seen somewhere else).
 }
 
 bool BotBrain::FindDodgeDangerSpot( const Danger &danger, vec3_t spotOrigin ) {
