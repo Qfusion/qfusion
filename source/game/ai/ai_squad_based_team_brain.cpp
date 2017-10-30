@@ -303,6 +303,33 @@ void AiSquad::Think() {
 }
 
 bool AiSquad::CheckCanMoveTogether() const {
+	// Test for a possible cheap shortcut using floor cluster nums of the bots
+	if( auto firstClusterNum = GetBotFloorCluster( bots[0] ) ) {
+		// Check whether all bots are in the same floor cluster
+		unsigned i = 1;
+		for(; i < bots.size(); ++i ) {
+			if( firstClusterNum != GetBotFloorCluster( bots[i] ) ) {
+				break;
+			}
+		}
+
+		// All bots are in the same floor cluster.
+		if( i == bots.size() ) {
+			// Just check the distance between bots corresponding to CONNECTIVITY_MOVE_CENTISECONDS
+			// Assume the average moving speed to be 450 ups (average as physics defines in 3D space)
+			float distanceThreshold = 450 * ( CONNECTIVITY_MOVE_CENTISECONDS * 1e-2f );
+			for( i = 0; i < bots.size() / 2 + 1; ++i ) {
+				for( unsigned j = 1; j < bots.size(); ++j ) {
+					float squareDistance = DistanceSquared( bots[i]->self->s.origin, bots[j]->self->s.origin );
+					if( squareDistance > distanceThreshold * distanceThreshold ) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+	}
+
 	// Check whether each bot is reachable for at least a single other bot
 	// or may reach at least a single other bot
 	// (some reachabilities such as teleports are not reversible)
@@ -344,6 +371,18 @@ bool AiSquad::CheckCanFightTogether() const {
 		}
 	}
 	return true;
+}
+
+int AiSquad::GetBotFloorCluster( Bot *bot ) const {
+	const auto *aasFloorClusters = AiAasWorld::Instance()->AreaFloorClusterNums();
+	// Zero area nums are handled by the dummy zero cluster num for the zero area
+	if( int clusterNum = aasFloorClusters[bot->EntityPhysicsState()->CurrAasAreaNum()] ) {
+		return clusterNum;
+	}
+	if( int clusterNum = aasFloorClusters[bot->EntityPhysicsState()->DroppedToFloorAasAreaNum()] ) {
+		return clusterNum;
+	}
+	return 0;
 }
 
 void AiSquad::UpdateBotRoleWeights() {
@@ -927,10 +966,21 @@ bool AiSquad::RequestArmorDrop( unsigned botNum, bool wouldSupplyArmor[MAX_SIZE]
 }
 
 bool AiSquad::RequestDrop( unsigned botNum, bool wouldSupply[MAX_SIZE], Suppliers &suppliers, void ( Bot::*dropFunc )() ) {
+	const int botFloorClusterNum = GetBotFloorCluster( bots[botNum] );
+	// Disallow dropping items outside of floor clusters
+	if( !botFloorClusterNum ) {
+		return false;
+	}
+
 	for( const unsigned supplierNum: suppliers ) {
 		if( !wouldSupply[supplierNum] ) {
 			continue;
 		}
+
+		if( botFloorClusterNum != GetBotFloorCluster( bots[supplierNum] ) ) {
+			continue;
+		}
+
 		// We have checked this once during supplier candidates selection
 		// mostly for suppliers selection algorithm optimization,
 		// but this may have changed during weapon/health/armor drops in this frame.

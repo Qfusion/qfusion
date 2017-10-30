@@ -56,6 +56,9 @@ private:
 	bool CheckCanFightTogether() const;
 	bool CheckCanMoveTogether() const;
 
+	int GetBotFloorCluster( Bot *bot ) const;
+	bool IsInTheSameFloorCluster( Bot *bot, int givenClusterNum ) const;
+
 	void UpdateBotRoleWeights();
 
 	int64_t lastDroppedByBotTimestamps[MAX_SIZE];
