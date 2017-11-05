@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct {
 	unsigned number;
+	int cluster;
 	msurface_t *surf;
 } msortedSurface_t;
 
@@ -323,6 +324,23 @@ static int R_CompareSurfacesByDrawSurf( const void *ps1, const void *ps2 ) {
 }
 
 /*
+* R_CompareSurfacesByCluster
+*/
+static int R_CompareSurfacesByCluster( const void *ps1, const void *ps2 ) {
+	const msortedSurface_t *s1 = ps1;
+	const msortedSurface_t *s2 = ps2;
+	if( s1->cluster > s2->cluster )
+		return 1;
+	if( s1->cluster < s2->cluster )
+		return -1;
+	if( s1->surf > s2->surf )
+		return 1;
+	if( s1->surf < s2->surf )
+		return -1;
+	return 0;
+}
+
+/*
 * Mod_SortModelSurfaces
 */
 static void Mod_SortModelSurfaces( model_t *mod, unsigned int modnum ) {
@@ -355,6 +373,7 @@ static void Mod_SortModelSurfaces( model_t *mod, unsigned int modnum ) {
 	backupSurfaces = ( msurface_t * )Mod_Malloc( mod, numSurfaces * sizeof( *backupSurfaces ) );
 	for( i = 0; i < numSurfaces; i++ ) {
 		sortedSurfaces[i].number = i;
+		sortedSurfaces[i].cluster = 0;
 		sortedSurfaces[i].surf = loadbmodel->surfaces + firstSurface + i;
 	}
 
@@ -408,19 +427,16 @@ static void Mod_SortModelSurfaces( model_t *mod, unsigned int modnum ) {
 * Mod_CreateSubmodelBufferObjects
 */
 static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, size_t *vbo_total_size ) {
-	unsigned int i, j, k;
+	unsigned int i, j;
 	uint8_t *visdata = NULL;
 	uint8_t *areadata = NULL;
 	unsigned int rowbytes, rowlongs;
 	int areabytes;
 	uint8_t *arearow;
-	int *longrow, *longrow2;
 	mmodel_t *bm;
 	mbrushmodel_t *loadbmodel;
 	msurface_t *surf, *surf2;
 	msurface_t **surfmap;
-	msurface_t **surfaces;
-	unsigned numSurfaces;
 	unsigned numUnmappedSurfaces;
 	unsigned startDrawSurface;
 	drawSurfaceBSP_t *drawSurf;
@@ -429,6 +445,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	mesh_vbo_t *tempVBOs;
 	unsigned numTempVBOs, maxTempVBOs;
 	unsigned numUnmergedVBOs;
+	msortedSurface_t *sortedSurfaces;
 
 	assert( mod );
 
@@ -443,9 +460,15 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		return 0;
 	}
 
+	numUnmappedSurfaces = 0;
 	surfmap = ( msurface_t ** )Mod_Malloc( mod, bm->numModelSurfaces * sizeof( *surfmap ) );
-	surfaces = ( msurface_t ** )Mod_Malloc( mod, bm->numModelSurfaces * sizeof( *surfaces ) );
-	numSurfaces = 0;
+
+	sortedSurfaces = ( msortedSurface_t * )Mod_Malloc( mod, bm->numModelSurfaces * sizeof( *sortedSurfaces ) );
+	for( i = 0, surf = loadbmodel->surfaces + bm->firstModelSurface; i < bm->numModelSurfaces; i++, surf++ ) {
+		sortedSurfaces[i].number = i;
+		sortedSurfaces[i].cluster = -1;
+		sortedSurfaces[i].surf = surf;
+	}
 
 	numTempVBOs = 0;
 	maxTempVBOs = 1024;
@@ -482,32 +505,27 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 					// some buggy maps such as aeroq2 contain visleafs that address faces from submodels...
 					continue;
 				}
+
+				if( sortedSurfaces[surfnum].cluster < leaf->cluster ) {
+					sortedSurfaces[surfnum].cluster = leaf->cluster;
+				}
+
 				if( surfmap[surfnum] ) {
 					continue;
 				}
 				surfmap[surfnum] = surf;
 
-				surfaces[numSurfaces] = surf;
-
-				longrow  = ( int * )( visdata + numSurfaces * rowbytes );
-				longrow2 = ( int * )( Mod_ClusterPVS( leaf->cluster, mod ) );
-
-				// merge parent leaf cluster visibility into face visibility set
-				// we could probably check for duplicates here because face can be
-				// shared among multiple leafs
-				for( j = 0; j < rowlongs; j++ )
-					longrow[j] |= longrow2[j];
-
 				if( leaf->area >= 0 ) {
-					arearow = areadata + numSurfaces * areabytes;
+					arearow = areadata + surfnum * areabytes;
 					arearow[leaf->area >> 3] |= ( 1 << ( leaf->area & 7 ) );
 				}
 
-				numSurfaces++;
+				numUnmappedSurfaces++;
 			}
 		}
 
 		memset( surfmap, 0, bm->numModelSurfaces * sizeof( *surfmap ) );
+		qsort( sortedSurfaces, bm->numModelSurfaces, sizeof( msortedSurface_t ), &R_CompareSurfacesByCluster );
 	} else {
 		// either a submodel or an unvised map
 		rowbytes = 0;
@@ -521,8 +539,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				continue;
 			}
 
-			surfaces[numSurfaces] = surf;
-			numSurfaces++;
+			sortedSurfaces[i].cluster = 0;
+			numUnmappedSurfaces++;
 		}
 	}
 
@@ -539,8 +557,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 
 	num_vbos = 0;
 	*vbo_total_size = 0;
-	numUnmappedSurfaces = numSurfaces;
-	for( i = 0; i < numSurfaces; i++ ) {
+	for( i = 0; i < bm->numModelSurfaces; i++ ) {
 		mesh_vbo_t *vbo;
 		shader_t *shader;
 		int fcount;
@@ -557,11 +574,13 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		if( surfmap[i] ) {
 			continue;
 		}
+		if( sortedSurfaces[i].cluster < 0 ) {
+			continue;
+		}
 
-		surf = surfaces[i];
+		surf = sortedSurfaces[i].surf;
 		shader = surf->shader;
-		longrow  = ( int * )( visdata + i * rowbytes );
-		arearow = areadata + i * areabytes;
+		arearow = areadata + sortedSurfaces[i].number * areabytes;
 
 		fcount = 1;
 		vcount = surf->mesh.numVerts;
@@ -570,8 +589,12 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		// portal or foliage surfaces can not be batched
 		if( !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) && !surf->numInstances ) {
 			// scan remaining face checking whether we merge them with the current one
-			for( j = i + 1; j < numSurfaces; j++ ) {
-				surf2 = surfaces[j];
+			for( j = i + 1; j < bm->numModelSurfaces; j++ ) {
+				if( sortedSurfaces[j].cluster < 0 ) {
+					continue;
+				}
+
+				surf2 = sortedSurfaces[j].surf;
 
 				// already merged
 				if( surf2->drawSurf ) {
@@ -593,34 +616,19 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 					continue;
 				}
 
-				// unvised maps and submodels submodel can simply skip PVS checks
-				if( !visdata ) {
-					goto merge;
-				}
-
 				// only merge faces that reside in same map areas
 				if( areabytes > 0 ) {
 					// if areabits aren't equal, faces have different area visibility
-					if( memcmp( arearow, areadata + j * areabytes, areabytes ) ) {
+					if( memcmp( arearow, areadata + sortedSurfaces[j].number * areabytes, areabytes ) ) {
 						continue;
 					}
 				}
 
-				// if two faces potentially see same things, we can merge them
-				longrow2 = ( int * )( visdata + j * rowbytes );
-				for( k = 0; k < rowlongs && !( longrow[k] & longrow2[k] ); k++ ) ;
-
-				if( k != rowlongs ) {
-					// merge visibility sets
-					for( k = 0; k < rowlongs; k++ )
-						longrow[k] |= longrow2[k];
-merge:
-					fcount++;
-					vcount += surf2->mesh.numVerts;
-					ecount += surf2->mesh.numElems;
-					surfmap[j] = surf;
-					last_merged = j;
-				}
+				fcount++;
+				vcount += surf2->mesh.numVerts;
+				ecount += surf2->mesh.numElems;
+				surfmap[j] = surf;
+				last_merged = j;
 			}
 		}
 
@@ -678,7 +686,12 @@ merge:
 					continue;
 				}
 
-				surf2 = surfaces[j];
+				assert( numUnmappedSurfaces != 0 );
+				if( numUnmappedSurfaces == 0 ) {
+					break;
+				}
+
+				surf2 = sortedSurfaces[j].surf;
 				surf2->drawSurf = loadbmodel->numDrawSurfaces;
 				surf2->firstDrawSurfVert = vcount;
 				surf2->firstDrawSurfElem = ecount;
@@ -789,12 +802,12 @@ merge:
 	assert( numUnmergedVBOs == 0 );
 
 	// upload data to merged VBO's and assign offsets to drawSurfs
-	for( i = 0; i < numSurfaces; i++ ) {
+	for( i = 0; i < bm->numModelSurfaces; i++ ) {
 		mesh_vbo_t *vbo;
 		const mesh_t *mesh;
 		int vertsOffset, elemsOffset;
 
-		surf = surfaces[i];
+		surf = sortedSurfaces[i].surf;
 
 		if( !surf->drawSurf ) {
 			continue;
@@ -816,7 +829,7 @@ merge:
 
 	R_Free( tempVBOs );
 	R_Free( surfmap );
-	R_Free( surfaces );
+	R_Free( sortedSurfaces );
 
 	if( visdata ) {
 		R_Free( visdata );
