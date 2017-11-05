@@ -251,6 +251,11 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 
 				if( fontName[0] && fontSize ) {
 					weaponinfo->acFont = trap_SCR_RegisterFont( fontName, QFONT_STYLE_NONE, fontSize );
+				} else {
+					weaponinfo->acFont = NULL;
+				}
+				if( weaponinfo->acFont ) {
+					weaponinfo->acFontWidth = trap_SCR_strWidth( "0", weaponinfo->acFont, 0 );
 				}
 
 				if( debug ) {
@@ -769,10 +774,12 @@ void CG_AddAmmoDigitOnTag( entity_t *weapon, weaponinfo_t *weaponInfo, int num, 
 	byte_vec4_t colors[4];
 	unsigned short elems[6] = { 0, 1, 2, 0, 2, 3 };
 
-	if( !weaponInfo->acFont || !weaponInfo->acDigitHeight ) {
+	if( !weaponInfo->acFont ) {
 		return;
 	}
-
+	if( !weaponInfo->acDigitWidth || !weaponInfo->acDigitHeight ) {
+		return;
+	}
 	if( !CG_GrabTag( &tag_digit, weapon, tag_name ) ) {
 		return;
 	}
@@ -788,7 +795,7 @@ void CG_AddAmmoDigitOnTag( entity_t *weapon, weaponinfo_t *weaponInfo, int num, 
 	s1 = char_s1, t1 = char_t1;
 	s2 = char_s2, t2 = char_t2;
 
-	x_width = trap_SCR_strWidth( "0", weaponInfo->acFont, 0 );
+	x_width = weaponInfo->acFontWidth;
 	x_offset = width * (1.0 - (float)char_w / x_width);
 
 	Vector4Set( origin, 0, width / 2.0, height / 2.0, 1 );

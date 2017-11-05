@@ -99,6 +99,7 @@ typedef struct weaponinfo_s {
 	// ammo counter display
 	float acDigitWidth, acDigitHeight;
 	struct qfontface_s *acFont;
+	int acFontWidth;
 	byte_vec4_t acColor;
 } weaponinfo_t;
 
