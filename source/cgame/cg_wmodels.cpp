@@ -52,6 +52,7 @@ static const char *wmPartSufix[] = { "", "_expansion", "_flash", "_hand", "_barr
 * keywords:
 * "islastframe":Will read the second value of each animation as lastframe (usually means numframes)
 * "rotationscale": value witch will scale the barrel rotation speed
+* "ammoCounter": digital ammo counter parameters: geom_width geom_height r g b font_family font_size
 */
 static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char *filename ) {
 	uint8_t *buf;
@@ -219,6 +220,43 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 				}
 				if( debug ) {
 					CG_Printf( "%s%s%s\n", S_COLOR_BLUE, token, S_COLOR_WHITE );
+				}
+			} else if( !Q_stricmp( token, "ammoCounter" ) ) {
+				char fontName[MAX_TOKEN_CHARS];
+				char fontSize;
+
+				if( debug ) {
+					CG_Printf( "%sScript: ammoCounter:%s", S_COLOR_BLUE, S_COLOR_WHITE );
+				}
+
+				weaponinfo->acDigitWidth = atof( token = COM_ParseExt( &ptr, false ) );
+				weaponinfo->acDigitHeight = atof( token = COM_ParseExt( &ptr, false ) );
+
+				token = COM_ParseExt( &ptr, false );
+				weaponinfo->acColor[0] = bound( 0, atof( token ) * 255.0, 255 );
+
+				token = COM_ParseExt( &ptr, false );
+				weaponinfo->acColor[1] = bound( 0, atof( token ) * 255.0, 255 );
+
+				token = COM_ParseExt( &ptr, false );
+				weaponinfo->acColor[2] = bound( 0, atof( token ) * 255.0, 255 );
+
+				weaponinfo->acColor[3] = 255;
+
+				token = COM_ParseExt( &ptr, false );
+				Q_strncpyz( fontName, token, sizeof( fontName ) );
+
+				token = COM_ParseExt( &ptr, false );
+				fontSize = atoi( token );
+
+				if( fontName[0] && fontSize ) {
+					weaponinfo->acFont = trap_SCR_RegisterFont( fontName, QFONT_STYLE_NONE, fontSize );
+				}
+
+				if( debug ) {
+					CG_Printf( "%s%f %f %s %i%s\n", S_COLOR_BLUE,
+						weaponinfo->acDigitWidth, weaponinfo->acDigitHeight, fontName, fontSize,
+						S_COLOR_WHITE );
 				}
 			} else if( token[0] && debug ) {
 				CG_Printf( "%signored: %s%s\n", S_COLOR_YELLOW, token, S_COLOR_WHITE );
@@ -701,12 +739,123 @@ static void CG_AddWeaponBarrelOnTag( entity_t *weapon, weaponinfo_t *weaponInfo,
 	CG_AddShellEffects( &barrel, effects );
 }
 
+static int char_w, char_h;
+static float char_s1, char_t1, char_s2, char_t2;
+static struct shader_s *char_shader;
+
+static void DrawCharCallback( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader ) {
+	char_w = w;
+	char_h = h;
+	char_s1 = s1, char_t1 = t1, char_s2 = s2, char_t2 = t2;
+	char_shader = (struct shader_s *)shader;
+}
+
+/*
+* CG_AddAmmoDigitOnTag
+*/
+void CG_AddAmmoDigitOnTag( entity_t *weapon, weaponinfo_t *weaponInfo, int num, const char *tag_name ) {
+	int i;
+	float width, height;
+	float x_width, x_offset;
+	float s1, t1, s2, t2;
+	vec4_t origin;
+	mat3_t mat, tmat;
+	cg_fdrawchar_t pop;
+	orientation_t tag_digit;
+	poly_t p;
+	vec4_t verts[4];
+	vec4_t normals[4];
+	vec2_t texcoords[4];
+	byte_vec4_t colors[4];
+	unsigned short elems[6] = { 0, 1, 2, 0, 2, 3 };
+
+	if( !weaponInfo->acFont || !weaponInfo->acDigitHeight ) {
+		return;
+	}
+
+	if( !CG_GrabTag( &tag_digit, weapon, tag_name ) ) {
+		return;
+	}
+	
+	width = weaponInfo->acDigitWidth;
+	height = weaponInfo->acDigitHeight;
+
+	pop = trap_SCR_SetDrawCharIntercept( (cg_fdrawchar_t)&DrawCharCallback );
+	trap_SCR_DrawRawChar( 0, 0, '0' + num, weaponInfo->acFont, colorWhite );
+
+	trap_SCR_SetDrawCharIntercept( pop );
+
+	s1 = char_s1, t1 = char_t1;
+	s2 = char_s2, t2 = char_t2;
+
+	x_width = trap_SCR_strWidth( "0", weaponInfo->acFont, 0 );
+	x_offset = width * (1.0 - (float)char_w / x_width);
+
+	Vector4Set( origin, 0, width / 2.0, height / 2.0, 1 );
+
+	Vector4Set( verts[0], 0, x_offset, 0, 1 );
+	Vector4Set( normals[0], 0, 0, 0, 0 );
+	Vector2Set( texcoords[0], s1, t1 );
+	Vector4Copy( weaponInfo->acColor, colors[0] );
+	colors[0][3] = weapon->shaderRGBA[3];
+
+	Vector4Set( verts[1], 0, width, 0, 1 );
+	Vector4Set( normals[0], 0, 0, 0, 0 );
+	Vector2Set( texcoords[1], s2, t1 );
+	Vector4Copy( colors[0], colors[1] );
+
+	Vector4Set( verts[2], 0, width, height, 1 );
+	Vector4Set( normals[2], 0, 0, 0, 0 );
+	Vector2Set( texcoords[2], s2, t2 );
+	Vector4Copy( colors[0], colors[2] );
+
+	Vector4Set( verts[3], 0, x_offset, height, 1 );
+	Vector4Set( normals[3], 0, 0, 0, 0 );
+	Vector2Set( texcoords[3], s1, t2 );
+	Vector4Copy( colors[0], colors[3] );
+
+	memset( &p, 0, sizeof( p ) );
+	p.verts = verts;
+	p.normals = normals;
+	p.stcoords = texcoords;
+	p.colors = colors;
+	p.numverts = 4;
+	p.elems = elems;
+	p.numelems = 6;
+	p.renderfx = weapon->renderfx;
+	p.shader = char_shader;
+
+	for( i = 0; i < 4; i++ ) {
+		vec3_t vv;
+		vec3_t org;
+
+		VectorClear( org );
+		Matrix3_Identity( mat );
+		VectorSubtract( verts[i], origin, verts[i] );
+
+		CG_MoveToTag( org, mat,
+			weapon->origin, weapon->axis,
+			tag_digit.origin,
+			tag_digit.axis
+		);
+
+		Matrix3_Transpose( mat, tmat );
+		Matrix3_TransformVector( tmat, verts[i], vv );
+		VectorAdd( vv, org, verts[i] );
+	}
+
+	trap_R_AddPolyToScene( &p );
+}
+
 /*
 * CG_AddWeaponOnTag
 *
 * Add weapon model(s) positioned at the tag
+*
+* @param ammo_count Current ammo count for the counter. Negative value skips rendering of the counter. 
 */
-void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int effects, orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time ) {
+void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int effects, orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time,
+	int ammo_count ) {
 	entity_t weapon;
 	weaponinfo_t *weaponInfo;
 
@@ -766,4 +915,10 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 
 	// flash
 	CG_AddWeaponFlashOnTag( &weapon, weaponInfo, WEAPMODEL_FLASH, "tag_flash", effects, flash_time );
+
+	if( ammo_count >= 0 ) {
+		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammo_count % 10, "tag_ammo_digit_1" );
+		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, (ammo_count % 100) / 10, "tag_ammo_digit_10" );
+		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammo_count / 100, "tag_ammo_digit_100" );
+	}
 }

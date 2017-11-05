@@ -95,6 +95,11 @@ typedef struct weaponinfo_s {
 	int num_strongfire_sounds;
 	struct sfx_s *sound_strongfire[WEAPONINFO_MAX_FIRE_SOUNDS];
 	struct sfx_s *sound_reload;
+
+	// ammo counter display
+	float acDigitWidth, acDigitHeight;
+	struct qfontface_s *acFont;
+	byte_vec4_t acColor;
 } weaponinfo_t;
 
 extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
@@ -171,7 +176,8 @@ void CG_PModel_ClearEventAnimations( int entNum );
 //
 struct weaponinfo_s *CG_CreateWeaponZeroModel( char *cgs_name );
 struct weaponinfo_s *CG_RegisterWeaponModel( char *cgs_name, int weaponTag );
-void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time );
+void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, 
+	orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time, int ammo_count );
 struct weaponinfo_s *CG_GetWeaponInfo( int currentweapon );
 
 //=================================================

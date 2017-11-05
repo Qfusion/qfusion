@@ -1283,6 +1283,6 @@ void CG_AddPModel( centity_t *cent ) {
 
 	// add weapon model
 	if( cent->current.weapon && CG_GrabTag( &tag_weapon, &cent->ent, "tag_weapon" ) ) {
-		CG_AddWeaponOnTag( &cent->ent, &tag_weapon, cent->current.weapon, cent->effects, &pmodel->projectionSource, pmodel->flash_time, pmodel->barrel_time );
+		CG_AddWeaponOnTag( &cent->ent, &tag_weapon, cent->current.weapon, cent->effects, &pmodel->projectionSource, pmodel->flash_time, pmodel->barrel_time, -1 );
 	}
 }
