@@ -522,7 +522,7 @@ typedef struct gitem_s {
 
 extern gsitem_t itemdefs[];
 
-gsitem_t *GS_FindItemByTag( int tag );
+gsitem_t *GS_FindItemByTag( const int tag );
 gsitem_t *GS_FindItemByClassname( const char *classname );
 gsitem_t *GS_FindItemByName( const char *name );
 gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int typeMask );

@@ -1038,16 +1038,29 @@ gsitem_t itemdefs[] =
 	{ NULL }
 };
 
+static int static_assert_itemdefs_gt_GS_MAX_ITEM_TAGS[sizeof( itemdefs ) / sizeof( itemdefs[0] ) - GS_MAX_ITEM_TAGS];
+static int static_assert_GS_MAX_ITEM_TAGS_gt_itemdefs_plus1[GS_MAX_ITEM_TAGS + 2 - sizeof( itemdefs ) / sizeof( itemdefs[0] )];
+
 //====================================================================
 
 /*
 * GS_FindItemByTag
 */
-gsitem_t *GS_FindItemByTag( int tag ) {
-	gsitem_t    *it;
+gsitem_t *GS_FindItemByTag( const int tag ) {
+	gsitem_t *it;
+
+	assert( tag >= 0 );
+	assert( tag < GS_MAX_ITEM_TAGS );
 
 	if( tag <= 0 || tag >= GS_MAX_ITEM_TAGS ) {
 		return NULL;
+	}
+
+	it = &itemdefs[tag];
+
+	assert( tag == it->tag );
+	if( tag == it->tag ) {
+		return it;
 	}
 
 	for( it = &itemdefs[1]; it->classname; it++ ) {
