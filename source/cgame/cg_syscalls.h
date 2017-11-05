@@ -495,6 +495,10 @@ static inline void trap_SCR_DrawChat( int x, int y, int width, struct qfontface_
 	CGAME_IMPORT.SCR_DrawChat( x, y, width, font );
 }
 
+inline cg_fdrawchar_t trap_SCR_SetDrawCharIntercept( cg_fdrawchar_t intercept ) {
+	return CGAME_IMPORT.SCR_SetDrawCharIntercept( intercept );
+}
+
 static inline ATTRIBUTE_MALLOC void *trap_MemAlloc( size_t size, const char *filename, int fileline ) {
 	return CGAME_IMPORT.Mem_Alloc( size, filename, fileline );
 }
