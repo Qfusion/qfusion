@@ -265,6 +265,7 @@ typedef struct {
 	entity_t entities[MAX_REF_ENTITIES];
 	entity_t        *worldent;
 	entity_t        *polyent;
+	entity_t        *polyweapent;
 	entity_t        *skyent;
 
 	unsigned int numDlights;

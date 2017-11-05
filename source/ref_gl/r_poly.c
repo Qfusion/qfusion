@@ -49,6 +49,7 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 void R_DrawPolys( void ) {
 	unsigned int i;
 	drawSurfacePoly_t *p;
+	entity_t *e;
 	mfog_t *fog;
 
 	if( rn.renderFlags & RF_ENVVIEW ) {
@@ -63,7 +64,14 @@ void R_DrawPolys( void ) {
 			fog = rsh.worldBrushModel->fogs + p->fogNum - 1;
 		}
 
-		if( !R_AddSurfToDrawList( rn.meshlist, rsc.polyent, fog, p->shader, 0, i, NULL, p ) ) {
+		if( p->renderfx & RF_WEAPONMODEL ) {
+			e = rsc.polyweapent;
+		} else {
+			e = rsc.polyent;
+		}
+		e->renderfx = p->renderfx;
+
+		if( !R_AddSurfToDrawList( rn.meshlist, e, fog, p->shader, 0, i, NULL, p ) ) {
 			continue;
 		}
 	}

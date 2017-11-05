@@ -85,6 +85,7 @@ typedef struct poly_s {
 	unsigned short *elems;
 	struct shader_s *shader;
 	int fognum;
+	int renderfx;
 } poly_t;
 
 typedef struct {

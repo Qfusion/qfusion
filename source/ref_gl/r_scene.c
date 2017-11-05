@@ -65,6 +65,14 @@ void R_ClearScene( void ) {
 	Matrix3_Identity( rsc.polyent->axis );
 	rsc.numLocalEntities++;
 
+	rsc.polyweapent = R_NUM2ENT( rsc.numLocalEntities );
+	rsc.polyweapent->scale = 1.0f;
+	rsc.polyweapent->model = NULL;
+	rsc.polyweapent->rtype = RT_MODEL;
+	rsc.polyweapent->renderfx = RF_WEAPONMODEL;
+	Matrix3_Identity( rsc.polyweapent->axis );
+	rsc.numLocalEntities++;
+
 	rsc.skyent = R_NUM2ENT( rsc.numLocalEntities );
 	*rsc.skyent = *rsc.worldent;
 	rsc.numLocalEntities++;
@@ -178,6 +186,7 @@ void R_AddPolyToScene( const poly_t *poly ) {
 		dp->numElems = poly->numelems;
 		dp->elems = ( elem_t * )poly->elems;
 		dp->fogNum = poly->fognum;
+		dp->renderfx = poly->renderfx;
 
 		// if fogNum is unset, we need to find the volume for polygon bounds
 		if( !dp->fogNum ) {

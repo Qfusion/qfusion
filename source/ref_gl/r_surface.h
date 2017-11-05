@@ -97,6 +97,7 @@ typedef struct {
 	drawSurfaceType_t type;
 
 	int fogNum;
+	int renderfx;
 
 	int numElems;
 	int numVerts;
