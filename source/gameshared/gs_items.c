@@ -1038,8 +1038,13 @@ gsitem_t itemdefs[] =
 	{ NULL }
 };
 
-static int static_assert_itemdefs_gt_GS_MAX_ITEM_TAGS[sizeof( itemdefs ) / sizeof( itemdefs[0] ) - GS_MAX_ITEM_TAGS];
-static int static_assert_GS_MAX_ITEM_TAGS_gt_itemdefs_plus1[GS_MAX_ITEM_TAGS + 2 - sizeof( itemdefs ) / sizeof( itemdefs[0] )];
+typedef struct {
+	char dummy[sizeof( itemdefs ) / sizeof( itemdefs[0] ) - GS_MAX_ITEM_TAGS];
+} static_assert_itemdefs_gt_GS_MAX_ITEM_TAGS;
+
+typedef struct {
+	char dummy[GS_MAX_ITEM_TAGS + 2 - sizeof( itemdefs ) / sizeof( itemdefs[0] )];
+} static_assert_GS_MAX_ITEM_TAGS_gt_itemdefs_plus1;
 
 //====================================================================
 
