@@ -978,12 +978,22 @@ void AiAasWorld::SwapData() {
 			bboxes[i].mins[j] = LittleLong( bboxes[i].mins[j] );
 			bboxes[i].maxs[j] = LittleLong( bboxes[i].maxs[j] );
 		}
+		// Note: we do not care about dimensions shift described below
+		// because these AAS bboxes are unused and should be removed.
 	}
+
+	// We have to shift all vertices/bounding boxes by this value,
+	// as the entire bot code expects area mins to match ground,
+	// and values loaded as-is are -shifts[2] units above the ground.
+	// This behavior is observed not only on maps compiled by the Qfusion-compatible BSPC, but on vanilla Q3 maps as well.
+	// XY-shifts are also observed, but are not so painful as the Z one is.
+	// Also XY shifts seem to vary (?) from map to map and even in the same map.
+	const vec3_t shifts = { 0, 0, -24.0f + 0.25f };
 
 	//vertexes
 	for( int i = 0; i < numvertexes; i++ ) {
 		for( int j = 0; j < 3; j++ )
-			vertexes[i][j] = LittleFloat( vertexes[i][j] );
+			vertexes[i][j] = LittleFloat( vertexes[i][j] ) + shifts[j];
 	}
 
 	//planes
@@ -1027,9 +1037,9 @@ void AiAasWorld::SwapData() {
 		areas[i].firstface = LittleLong( areas[i].firstface );
 
 		for( int j = 0; j < 3; j++ ) {
-			areas[i].mins[j] = LittleFloat( areas[i].mins[j] );
-			areas[i].maxs[j] = LittleFloat( areas[i].maxs[j] );
-			areas[i].center[j] = LittleFloat( areas[i].center[j] );
+			areas[i].mins[j] = LittleFloat( areas[i].mins[j] ) + shifts[j];
+			areas[i].maxs[j] = LittleFloat( areas[i].maxs[j] ) + shifts[j];
+			areas[i].center[j] = LittleFloat( areas[i].center[j] ) + shifts[j];
 		}
 	}
 
@@ -1051,9 +1061,10 @@ void AiAasWorld::SwapData() {
 		reachability[i].edgenum = LittleLong( reachability[i].edgenum );
 
 		for( int j = 0; j < 3; j++ ) {
-			reachability[i].start[j] = LittleFloat( reachability[i].start[j] );
-			reachability[i].end[j] = LittleFloat( reachability[i].end[j] );
+			reachability[i].start[j] = LittleFloat( reachability[i].start[j] ) + shifts[j];
+			reachability[i].end[j] = LittleFloat( reachability[i].end[j] ) + shifts[j];
 		}
+
 		reachability[i].traveltype = LittleLong( reachability[i].traveltype );
 		reachability[i].traveltime = LittleShort( reachability[i].traveltime );
 	}
