@@ -83,7 +83,7 @@ typedef enum {
 	AI_WEAPON_AIM_TYPE_DROP
 } ai_weapon_aim_type;
 
-ai_weapon_aim_type BuiltinWeaponAimType( int builtinWeapon );
+ai_weapon_aim_type BuiltinWeaponAimType( int builtinWeapon, int fireMode );
 
 inline bool IsBuiltinWeaponContinuousFire( int builtinWeapon ) {
 	return builtinWeapon == WEAP_LASERGUN || builtinWeapon == WEAP_PLASMAGUN || builtinWeapon == WEAP_MACHINEGUN;

@@ -27,7 +27,7 @@ public:
 	GenericFireDef( int weaponNum_, const firedef_t *builtinFireDef ) {
 		this->projectileSpeed = builtinFireDef->speed;
 		this->splashRadius = builtinFireDef->splash_radius;
-		this->aimType = BuiltinWeaponAimType( weaponNum_ );
+		this->aimType = BuiltinWeaponAimType( weaponNum_, builtinFireDef->fire_mode );
 		this->weaponNum = (short)weaponNum_;
 		this->isBuiltin = true;
 	}
