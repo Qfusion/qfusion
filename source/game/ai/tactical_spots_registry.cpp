@@ -208,7 +208,7 @@ bool TacticalSpotsRegistry::TryLoadPrecomputedData( const char *mapname ) {
 	ScopedMessagePrinter messagePrinter( S_COLOR_YELLOW "%s: Can't load %s\n", function, filename );
 
 	int fp;
-	if( trap_FS_FOpenFile( filename, &fp, FS_READ ) <= 0 ) {
+	if( trap_FS_FOpenFile( filename, &fp, FS_READ | FS_CACHE ) <= 0 ) {
 		return false;
 	}
 
@@ -371,7 +371,7 @@ void TacticalSpotsRegistry::SavePrecomputedData( const char *mapname ) {
 	ScopedMessagePrinter messagePrinter( S_COLOR_RED "Can't save %s\n", filename );
 
 	int fp;
-	if( trap_FS_FOpenFile( filename, &fp, FS_WRITE ) < 0 ) {
+	if( trap_FS_FOpenFile( filename, &fp, FS_WRITE | FS_CACHE ) < 0 ) {
 		return;
 	}
 
