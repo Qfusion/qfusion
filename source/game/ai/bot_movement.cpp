@@ -4379,7 +4379,8 @@ void BotBunnyTestingMultipleLookDirsMovementAction::SaveCandidateAreaDirs( BotMo
 	const auto *aasAreas = AiAasWorld::Instance()->Areas();
 
 	AreaAndScore *takenAreasBegin = candidateAreasBegin;
-	unsigned maxAreas = suggestedLookDirs.capacity() - suggestedLookDirs.size();
+	Assert( maxSuggestedLookDirs <= suggestedLookDirs.capacity() );
+	unsigned maxAreas = maxSuggestedLookDirs - suggestedLookDirs.size();
 	AreaAndScore *takenAreasEnd = TakeBestCandidateAreas( candidateAreasBegin, candidateAreasEnd, maxAreas );
 
 	for( auto iter = takenAreasBegin; iter < takenAreasEnd; ++iter ) {
@@ -4460,15 +4461,18 @@ void BotBunnyStraighteningReachChainMovementAction::SaveSuggestedLookDirs( BotMo
 	AreaAndScore *candidatesEnd = SelectCandidateAreas( context, candidates, (unsigned)lastValidReachIndex );
 
 	SaveCandidateAreaDirs( context, candidates, candidatesEnd );
-
-	if( suggestedLookDirs.size() == maxSuggestedLookDirs ) {
-		return;
-	}
+	Assert( suggestedLookDirs.size() <= maxSuggestedLookDirs );
 
 	// If there is a trigger entity in the reach chain, try keep looking at it
 	if( reachStoppedAt ) {
 		int travelType = reachStoppedAt->traveltype;
 		if( travelType == TRAVEL_TELEPORT || travelType == TRAVEL_JUMPPAD || travelType == TRAVEL_ELEVATOR ) {
+			Assert( maxSuggestedLookDirs > 0 );
+			// Evict the last dir, the trigger should have a priority over it
+			if( suggestedLookDirs.size() == maxSuggestedLookDirs ) {
+				suggestedLookDirs.pop_back();
+			}
+			dirsBaseAreas.push_back( 0 );
 			void *mem = suggestedLookDirs.unsafe_grow_back();
 			// reachStoppedAt->areanum is an area num of reach destination, not the trigger itself.
 			// Saving or restoring the trigger area num does not seem worth this minor case.
@@ -4954,8 +4958,11 @@ void BotGenericRunBunnyingMovementAction::SetupCommonBunnyingInput( BotMovementP
 
 	botInput->SetForwardMovement( 1 );
 	const auto &hitWhileRunningTestResult = context->MayHitWhileRunning();
-	if( self->ai->botRef->GetSelectedEnemies().AreValid() && self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
-		Assert( hitWhileRunningTestResult.CanHit() );
+	if( self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+		const auto &selectedEnemies = self->ai->botRef->GetSelectedEnemies();
+		if( selectedEnemies.AreValid() && selectedEnemies.ArePotentiallyHittable() ) {
+			Assert( hitWhileRunningTestResult.CanHit() );
+		}
 	}
 
 	botInput->canOverrideLookVec = hitWhileRunningTestResult.canHitAsIs;
