@@ -360,18 +360,16 @@ public:
 
 		struct alignas( 2 )PackedFields {
 			bool ignore : 1;
-			unsigned char satisfyOp : 5;
-			unsigned short epsilon : 10;
+			uint8_t satisfyOp : 5;
+			uint8_t epsilon : 8;
 
 			bool operator==( const PackedFields &that ) const {
 				return *( (const short *)this ) == *( (const short *)&that );
 			}
 		};
 
-#ifndef _MSC_VER
 		static_assert( sizeof( PackedFields ) == sizeof( short ), "" );
 		static_assert( alignof( PackedFields ) == alignof( short ), "" );
-#endif
 
 		inline PackedFields &Packed() {
 			return *(PackedFields *)&Data()[3];
@@ -416,8 +414,8 @@ public:
 			return (WorldState::SatisfyOp)( Packed().satisfyOp );
 		}
 
-		inline unsigned short SatisfyEpsilon() const {
-			return (unsigned short)( Packed().epsilon );
+		inline float SatisfyEpsilon() const {
+			return ( Packed().epsilon ) * 4;
 		}
 
 		inline bool operator==( const OriginVar &that ) const;
@@ -456,19 +454,17 @@ protected:
 
 		struct alignas( 2 )PackedFields {
 			bool ignore : 1;
-			unsigned short stateBits : 4;
-			unsigned char satisfyOp : 1;
-			unsigned short epsilon : 10;
+			uint8_t stateBits : 4;
+			uint8_t satisfyOp : 1;
+			uint8_t epsilon : 8;
 
 			bool operator==( const PackedFields &that ) const {
 				return *( (const short *)this ) == *( (const short *)&that );
 			}
 		};
 
-#ifndef _MSC_VER
 		static_assert( sizeof( PackedFields ) == sizeof( short ), "" );
 		static_assert( alignof( PackedFields ) == alignof( short ), "" );
-#endif
 
 		inline PackedFields &Packed() {
 			return *(PackedFields *)&varsData[index * 4 + 3];
@@ -517,8 +513,8 @@ public:
 			return (WorldState::SatisfyOp)( Packed().satisfyOp );
 		}
 
-		inline unsigned short SatisfyEpsilon() const {
-			return Packed().epsilon;
+		inline float SatisfyEpsilon() const {
+			return Packed().epsilon * 4;
 		}
 
 		inline float DistanceTo( const OriginVar &that ) const;
@@ -864,13 +860,13 @@ inline WorldState::OriginVar &WorldState::OriginVar::SetSatisfyOp( WorldState::S
 	if( op != SatisfyOp::EQ && op != SatisfyOp::NE ) {
 		AI_FailWith( "OriginVar::SetSatisfyOp()", "Illegal satisfy op %d for this kind of var\n", (int)op );
 	}
-	if( epsilon < 4.0f || epsilon >= 4096.0f ) {
-		AI_FailWith( "OriginVar::SetSatisfyOp()", "An epsilon %f is out of valid [4, 4096] range\n", epsilon );
+	if( epsilon < 4.0f || epsilon >= 1024.0f ) {
+		AI_FailWith( "OriginVar::SetSatisfyOp()", "An epsilon %f is out of valid [4, 1024] range\n", epsilon );
 	}
 #endif
-	// Up to 10 bits
-	unsigned short packedEpsilon = (unsigned short)( (unsigned)epsilon / 4 );
-	unsigned char packedOp = (unsigned char)op;
+	// Up to 8 bits
+	auto packedEpsilon = (uint8_t)( (unsigned)epsilon / 4 );
+	auto packedOp = (uint8_t)op;
 	Packed().epsilon = packedEpsilon;
 	Packed().satisfyOp = packedOp;
 	return *this;
@@ -901,16 +897,16 @@ inline WorldState::OriginLazyVarBase &WorldState::OriginLazyVarBase::SetSatisfyO
 	if( op != WorldState::SatisfyOp::EQ && op != WorldState::SatisfyOp::NE ) {
 		AI_FailWith( "OriginLazyVarBase::SetSatisfyOp()", "Illegal satisfy op %d for this kind of var\n", (int)op );
 	}
-	if( epsilon < 4.0f || epsilon >= 4096.0f ) {
-		AI_FailWith( "OriginLazyVarBase::SetSatisfyOp()", "An epsilon %f is out of valid [4, 4096] range\n", epsilon );
+	if( epsilon < 4.0f || epsilon >= 1024.0f ) {
+		AI_FailWith( "OriginLazyVarBase::SetSatisfyOp()", "An epsilon %f is out of valid [4, 1024] range\n", epsilon );
 	}
 #endif
-	// Up to 10 bits
-	unsigned short packedEpsilon = (unsigned short)( (unsigned)epsilon / 4 );
+	// Up to 8 bits
+	auto packedEpsilon = (uint8_t)( (unsigned)epsilon / 4 );
 	// A single bit
-	unsigned char packedOp = (unsigned char)op;
-	static_assert( (unsigned short)WorldState::SatisfyOp::EQ == 0, "SatisfyOp can't be packed in a single bit" );
-	static_assert( (unsigned short)WorldState::SatisfyOp::NE == 1, "SatisfyOp can't be packed in a single bit" );
+	auto packedOp = (uint8_t)op;
+	static_assert( (unsigned)WorldState::SatisfyOp::EQ == 0, "SatisfyOp can't be packed in a single bit" );
+	static_assert( (unsigned)WorldState::SatisfyOp::NE == 1, "SatisfyOp can't be packed in a single bit" );
 	Packed().epsilon = packedEpsilon;
 	Packed().satisfyOp = packedOp;
 	return *this;
@@ -1031,7 +1027,7 @@ inline bool WorldState::OriginLazyVar::IsSatisfiedBy( const OriginLazyVar &that 
 		return true;
 	}
 
-	unsigned short epsilon = SatisfyEpsilon();
+	const float epsilon = SatisfyEpsilon();
 	switch( SatisfyOp() ) {
 		case WorldState::SatisfyOp::EQ:
 			if( DistanceSquared( Data(), that.Data() ) > epsilon * epsilon ) {
@@ -1083,7 +1079,7 @@ inline bool WorldState::DualOriginLazyVar::IsSatisfiedBy( const DualOriginLazyVa
 		return false;
 	}
 
-	unsigned short epsilon = SatisfyEpsilon();
+	const float epsilon = SatisfyEpsilon();
 	switch( SatisfyOp() ) {
 		case WorldState::SatisfyOp::EQ:
 			if( DistanceSquared( Data(), that.Data() ) > epsilon * epsilon ) {
