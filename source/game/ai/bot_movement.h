@@ -1437,12 +1437,12 @@ public:
 	}
 
 	inline void MarkAsVisited( int areaNum ) {
-		assert( (unsigned)areaNum < AiAasWorld::Instance()->NumAreas() );
+		assert( areaNum < AiAasWorld::Instance()->NumAreas() );
 		millisSinceLastVisited[areaNum] = 0;
 	}
 
 	inline unsigned MillisSinceLastVisited( int areaNum ) const {
-		assert( (unsigned)areaNum < AiAasWorld::Instance()->NumAreas() );
+		assert( areaNum < AiAasWorld::Instance()->NumAreas() );
 		return millisSinceLastVisited[areaNum];
 	}
 
