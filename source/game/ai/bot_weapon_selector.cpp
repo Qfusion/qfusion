@@ -448,6 +448,12 @@ void BotWeaponSelector::Frame( const WorldState &cachedWorldState ) {
 		return;
 	}
 
+	// Disallow "fast weapon switch actions" while a bot has quad.
+	// The weapon balance and usage is completely different for a quad bearer.
+	if( cachedWorldState.HasQuadVar() ) {
+		return;
+	}
+
 	if( CheckFastWeaponSwitchAction( cachedWorldState ) ) {
 		nextFastWeaponSwitchActionCheckAt = level.time + 750;
 	}
