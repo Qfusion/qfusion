@@ -52,7 +52,7 @@ static const char *wmPartSufix[] = { "", "_expansion", "_flash", "_hand", "_barr
 * keywords:
 * "islastframe":Will read the second value of each animation as lastframe (usually means numframes)
 * "rotationscale": value witch will scale the barrel rotation speed
-* "ammoCounter": digital ammo counter parameters: digit_width digit_height font_family font_size icon_size
+* "ammoCounter": digital ammo counter parameters: font_family font_size digit_width digit_height digit_alpha icon_size icon_alpha
 */
 static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char *filename ) {
 	uint8_t *buf;
@@ -229,9 +229,6 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 					CG_Printf( "%sScript: ammoCounter:%s", S_COLOR_BLUE, S_COLOR_WHITE );
 				}
 
-				weaponinfo->acDigitWidth = atof( token = COM_ParseExt( &ptr, false ) );
-				weaponinfo->acDigitHeight = atof( token = COM_ParseExt( &ptr, false ) );
-
 				token = COM_ParseExt( &ptr, false );
 				Q_strncpyz( fontName, token, sizeof( fontName ) );
 
@@ -247,13 +244,16 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 					weaponinfo->acFontWidth = trap_SCR_strWidth( "0", weaponinfo->acFont, 0 );
 				}
 
-				token = COM_ParseExt( &ptr, false );
-				weaponinfo->acIconSize = atof( token );
+				weaponinfo->acDigitWidth = atof( token = COM_ParseExt( &ptr, false ) );
+				weaponinfo->acDigitHeight = atof( token = COM_ParseExt( &ptr, false ) );
+				weaponinfo->acDigitAlpha = atof( token = COM_ParseExt( &ptr, false ) );
+				weaponinfo->acIconSize = atof( COM_ParseExt( &ptr, false ) );
+				weaponinfo->acIconAlpha = atof( COM_ParseExt( &ptr, false ) );
 
 				if( debug ) {
-					CG_Printf( "%s%f %f %s %i %f%s\n", S_COLOR_BLUE,
-						weaponinfo->acDigitWidth, weaponinfo->acDigitHeight, fontName, fontSize,
-						weaponinfo->acIconSize, S_COLOR_WHITE );
+					CG_Printf( S_COLOR_BLUE "%s %i %f %f %f %f %f" S_COLOR_WHITE "\n",
+						fontName, fontSize, weaponinfo->acDigitWidth, weaponinfo->acDigitHeight, 
+						weaponinfo->acDigitAlpha, weaponinfo->acIconSize, weaponinfo->acIconAlpha );
 				}
 			} else if( token[0] && debug ) {
 				CG_Printf( "%signored: %s%s\n", S_COLOR_YELLOW, token, S_COLOR_WHITE );
@@ -740,7 +740,7 @@ static void CG_AddWeaponBarrelOnTag( entity_t *weapon, weaponinfo_t *weaponInfo,
 * CG_AddPolyOnTag
 */
 static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, float width, float height, 
-	float x_offset, float s1, float t1, float s2, float t2, const vec4_t color, struct shader_s *shader ) {
+	float x_offset, float s1, float t1, float s2, float t2, const vec4_t color, float alpha, struct shader_s *shader ) {
 	int i;
 	vec4_t origin;
 	mat3_t mat, tmat;
@@ -754,6 +754,9 @@ static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, f
 	if( !tag ) {
 		return;
 	}
+	if( !alpha ) {
+		return;
+	}
 
 	Vector4Set( origin, 0, width / 2.0, height / 2.0, 1 );
 
@@ -763,7 +766,7 @@ static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, f
 
 	for( i = 0; i < 3; i++ )
 		colors[0][i] = ( uint8_t )bound( 0, color[i] * 255, 255 );
-	colors[0][3] = weapon->shaderRGBA[3];
+	colors[0][3] = ( uint8_t )(alpha * (float)weapon->shaderRGBA[3]);
 
 	Vector4Set( verts[1], 0, width, 0, 1 );
 	Vector4Set( normals[0], 0, 0, 0, 0 );
@@ -857,18 +860,18 @@ static void CG_AddAmmoDigitOnTag( entity_t *weapon, const weaponinfo_t *weaponIn
 	x_offset = width * (1.0 - (float)char_w / x_width);
 
 	CG_AddPolyOnTag( weapon, &tag_digit, width, height, x_offset, char_s1, char_t1, char_s2, char_t2, 
-		color_table[ColorIndex( ammoItem->color[1] )], char_shader );
+		color_table[ColorIndex( ammoItem->color[1] )], weaponInfo->acDigitAlpha, char_shader );
 }
 
 /*
-* CG_AddAmmoIconOnTag
+* CG_AddItemIconOnTag
 */
-static void CG_AddAmmoIconOnTag( entity_t *weapon, const weaponinfo_t *weaponInfo, 
-	const gsitem_t *ammoItem, int weaponid, const char *tag_name ) {
+static void CG_AddItemIconOnTag( entity_t *weapon, const weaponinfo_t *weaponInfo, 
+	const gsitem_t *item, const char *tag_name ) {
 	float size;
-	orientation_t tag_ammo_icon;
+	orientation_t tag_icon;
 
-	if( !CG_GrabTag( &tag_ammo_icon, weapon, tag_name ) ) {
+	if( !CG_GrabTag( &tag_icon, weapon, tag_name ) ) {
 		return;
 	}
 
@@ -877,8 +880,8 @@ static void CG_AddAmmoIconOnTag( entity_t *weapon, const weaponinfo_t *weaponInf
 		return;
 	}
 
-	CG_AddPolyOnTag( weapon, &tag_ammo_icon, size, size, 0, 0.0, 0.0, 1.0, 1.0, 
-		color_table[ColorIndex( ammoItem->color[1] )], trap_R_RegisterPic( ammoItem->icon ) );
+	CG_AddPolyOnTag( weapon, &tag_icon, size, size, 0, 0.0, 0.0, 1.0, 1.0, 
+		colorWhite, weaponInfo->acIconAlpha, trap_R_RegisterPic( item->icon ) );
 }
 
 /*
@@ -888,8 +891,8 @@ static void CG_AddAmmoIconOnTag( entity_t *weapon, const weaponinfo_t *weaponInf
 *
 * @param ammo_count Current ammo count for the counter. Negative value skips rendering of the counter. 
 */
-void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int effects, orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time,
-	int ammo_count ) {
+void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int effects, 
+	orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time, int ammo_count ) {
 	entity_t weapon;
 	weaponinfo_t *weaponInfo;
 	gsitem_t *weaponItem, *ammoItem;
@@ -958,11 +961,14 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 	// flash
 	CG_AddWeaponFlashOnTag( &weapon, weaponInfo, WEAPMODEL_FLASH, "tag_flash", effects, flash_time );
 
+	// ammo counter
 	if( ammo_count >= 0 ) {
 		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, ammo_count % 10, "tag_ammo_digit_1" );
 		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, (ammo_count % 100) / 10, "tag_ammo_digit_10" );
 		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, ammo_count / 100, "tag_ammo_digit_100" );
 	}
 
-	CG_AddAmmoIconOnTag( &weapon, weaponInfo, ammoItem, weaponid, "tag_ammo_icon" );
+	// icons
+	CG_AddItemIconOnTag( &weapon, weaponInfo, weaponItem, "tag_weapon_icon" );
+	CG_AddItemIconOnTag( &weapon, weaponInfo, ammoItem, "tag_ammo_icon" );
 }
