@@ -100,7 +100,7 @@ typedef struct weaponinfo_s {
 	float acDigitWidth, acDigitHeight;
 	struct qfontface_s *acFont;
 	int acFontWidth;
-	byte_vec4_t acColor;
+	float acIconSize;
 } weaponinfo_t;
 
 extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
