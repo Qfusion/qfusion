@@ -515,7 +515,9 @@ void PlasmaBeamsBuilder::FindMostDangerousBeams() {
 			if( bot == game.edicts + trace.ent ) {
 				float damageScore = beam->damage;
 				if( damageScore > minDamageScore ) {
-					if( perceptionManager->TryAddDanger( damageScore, trace.endpos, beamsList.avgDirection.Data(), beam->owner ) ) {
+					if( perceptionManager->TryAddDanger( damageScore, trace.endpos,
+														 beamsList.avgDirection.Data(),
+														 beam->owner, 1.5f * splashRadius ) ) {
 						minDamageScore = damageScore;
 					}
 				}
@@ -527,7 +529,9 @@ void PlasmaBeamsBuilder::FindMostDangerousBeams() {
 			if( hitVecLen < splashRadius ) {
 				float damageScore = beam->damage * ( 1.0f - hitVecLen / splashRadius );
 				if( damageScore > minDamageScore ) {
-					if( perceptionManager->TryAddDanger( damageScore, trace.endpos, beamsList.avgDirection.Data(), beam->owner ) ) {
+					if( perceptionManager->TryAddDanger( damageScore, trace.endpos,
+														 beamsList.avgDirection.Data(),
+														 beam->owner, 1.5f * splashRadius ) ) {
 						minDamageScore = damageScore;
 					}
 				}
@@ -546,7 +550,7 @@ BotPerceptionManager::BotPerceptionManager( edict_t *self_ )
 }
 
 bool BotPerceptionManager::TryAddDanger( float damageScore, const vec3_t hitPoint, const vec3_t direction,
-										 const edict_t *owner, bool splash ) {
+										 const edict_t *owner, float splashRadius ) {
 	if( primaryDanger ) {
 		if( primaryDanger->damage >= damageScore ) {
 			return false;
@@ -558,7 +562,7 @@ bool BotPerceptionManager::TryAddDanger( float damageScore, const vec3_t hitPoin
 		danger->hitPoint.Set( hitPoint );
 		danger->direction.Set( direction );
 		danger->attacker = owner;
-		danger->splash = splash;
+		danger->splashRadius = splashRadius;
 		if( primaryDanger ) {
 			primaryDanger->DeleteSelf();
 		}
@@ -692,7 +696,7 @@ void BotPerceptionManager::FindLaserDangers( const EntNumsVector &entNums ) {
 		}
 
 		if( damageScore > maxDamageScore ) {
-			if( TryAddDanger( damageScore, trace.endpos, direction.Data(), owner, false ) ) {
+			if( TryAddDanger( damageScore, trace.endpos, direction.Data(), owner, 0.0f ) ) {
 				maxDamageScore = damageScore;
 			}
 		}
@@ -733,7 +737,9 @@ void BotPerceptionManager::FindProjectileDangers( const EntNumsVector &entNums )
 		} else {
 			direction = Vec3( &axis_identity[AXIS_UP] );
 		}
-		if( TryAddDanger( damageScore, trace.endpos, direction.Data(), gameEdicts + target->s.ownerNum, true ) ) {
+		if( TryAddDanger( damageScore, trace.endpos, direction.Data(),
+						  gameEdicts + target->s.ownerNum,
+						  1.25f * target->projectileInfo.radius ) ) {
 			minDamageScore = damageScore;
 		}
 	}
