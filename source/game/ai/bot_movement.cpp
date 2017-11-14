@@ -1501,6 +1501,20 @@ void BotBaseMovementAction::CheckPredictionStepResults( BotMovementPredictionCon
 			}
 		}
 	}
+
+	if( this->failPredictionOnEnteringDangerImpactZone && !self->ai->botRef->ShouldRushHeadless() ) {
+		if( const auto *danger = self->ai->botRef->perceptionManager.PrimaryDanger() ) {
+			if( danger->SupportsImpactTests() ) {
+				if( !danger->HasImpactOnPoint( oldEntityPhysicsState.Origin() ) ) {
+					if( danger->HasImpactOnPoint( newEntityPhysicsState.Origin() ) ) {
+						Debug("A prediction step has lead to entering a danger impact zone, should rollback\n" );
+						context->SetPendingRollback();
+						return;
+					}
+				}
+			}
+		}
+	}
 }
 
 void BotBaseMovementAction::BeforePlanning() {
@@ -2146,6 +2160,12 @@ void BotSameFloorClusterAreasCache::BuildCandidateAreasHeap( BotMovementPredicti
 		return;
 	}
 
+	const auto *dangerToEvade = self->ai->botRef->perceptionManager.PrimaryDanger();
+	// Reduce branching in the loop below
+	if( self->ai->botRef->ShouldRushHeadless() || ( dangerToEvade && !dangerToEvade->SupportsImpactTests() ) ) {
+		dangerToEvade = nullptr;
+	}
+
 	const auto *aasAreas = aasWorld->Areas();
 	const auto &visitedAreasCache = self->ai->botRef->visitedAreasCache;
 	const auto *routeCache = self->ai->botRef->routeCache;
@@ -2165,6 +2185,10 @@ void BotSameFloorClusterAreasCache::BuildCandidateAreasHeap( BotMovementPredicti
 		}
 
 		if( squareDistance < SQUARE( 128.0f ) && visitedAreasCache.MillisSinceLastVisited( areaNum ) < 5000 ) {
+			continue;
+		}
+
+		if( dangerToEvade && dangerToEvade->HasImpactOnPoint( areaPoint ) ) {
 			continue;
 		}
 
@@ -4499,6 +4523,12 @@ AreaAndScore *BotBunnyStraighteningReachChainMovementAction::SelectCandidateArea
 	const auto *aasAreaSettings = aasWorld->AreaSettings();
 	const int navTargetAasAreaNum = context->NavTargetAasAreaNum();
 
+	const auto *dangerToEvade = self->ai->botRef->perceptionManager.PrimaryDanger();
+	// Reduce branching in the loop below
+	if( self->ai->botRef->ShouldRushHeadless() || ( dangerToEvade && !dangerToEvade->SupportsImpactTests() ) ) {
+		dangerToEvade = nullptr;
+	}
+
 	// Do not make it speed-depended, it leads to looping/jitter!
 	const float distanceThreshold = 256.0f + 512.0f * self->ai->botRef->Skill();
 
@@ -4543,6 +4573,10 @@ AreaAndScore *BotBunnyStraighteningReachChainMovementAction::SelectCandidateArea
 
 		// Skip way too far areas (this is mainly an optimization for the following SolidWorldTrace() call)
 		if( squareDistanceToArea > SQUARE( distanceThreshold ) ) {
+			continue;
+		}
+
+		if( dangerToEvade && dangerToEvade->HasImpactOnPoint( areaPoint ) ) {
 			continue;
 		}
 
@@ -4680,6 +4714,12 @@ AreaAndScore *BotBunnyToBestShortcutAreaMovementAction::SelectCandidateAreas( Bo
 	traceStartPoint.Z() += playerbox_stand_viewheight;
 	trace_t trace;
 
+	const auto *dangerToEvade = self->ai->botRef->perceptionManager.PrimaryDanger();
+	// Reduce branching in the loop below
+	if( self->ai->botRef->ShouldRushHeadless() || ( dangerToEvade && !dangerToEvade->SupportsImpactTests() ) ) {
+		dangerToEvade = nullptr;
+	}
+
 	int bboxAreaNums[MAX_BBOX_AREAS];
 	int numBBoxAreas = FindBBoxAreas( context, bboxAreaNums, MAX_BBOX_AREAS );
 	for( int i = 0; i < numBBoxAreas; ++i ) {
@@ -4731,6 +4771,10 @@ AreaAndScore *BotBunnyToBestShortcutAreaMovementAction::SelectCandidateAreas( Bo
 		// Reject areas behind/not in front depending on speed
 		float speedDotFactor = -1.0f + 2 * 0.99f * BoundedFraction( speed, 900 );
 		if( velocityDir.Dot( toAreaDir ) < speedDotFactor ) {
+			continue;
+		}
+
+		if( dangerToEvade && dangerToEvade->HasImpactOnPoint( areaPoint ) ) {
 			continue;
 		}
 

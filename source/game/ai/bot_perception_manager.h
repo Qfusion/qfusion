@@ -12,9 +12,9 @@ struct Danger : public PoolItem {
         hitPoint( 0, 0, 0 ),
         direction( 0, 0, 0 ),
         damage( 0 ),
+        splashRadius( 0 ),
         timeoutAt( 0 ),
-        attacker( nullptr ),
-        splash( false ) {}
+        attacker( nullptr ) {}
 
 	// Sorting by this operator is fast but should be used only
 	// to prepare most dangerous entities of the same type.
@@ -26,9 +26,21 @@ struct Danger : public PoolItem {
 	Vec3 hitPoint;
 	Vec3 direction;
 	float damage;
+	float splashRadius;
 	int64_t timeoutAt;
 	const edict_t *attacker;
-	bool splash;
+	bool IsSplashLike() const { return splashRadius > 0; };
+
+	bool SupportsImpactTests() const { return IsSplashLike(); }
+
+	bool HasImpactOnPoint( const Vec3 &point ) const {
+		return HasImpactOnPoint( point.Data() );
+	}
+
+	bool HasImpactOnPoint( const vec3_t point ) const {
+		// Currently only splash-like dangers are supported
+		return IsSplashLike() && hitPoint.SquareDistanceTo( point ) <= splashRadius * splashRadius;
+	}
 };
 
 class EntitiesDetector
@@ -151,7 +163,7 @@ class BotPerceptionManager: public AiFrameAwareUpdatable
 	void ClearDangers();
 
 	bool TryAddDanger( float damageScore, const vec3_t hitPoint, const vec3_t direction,
-					   const edict_t *owner, bool splash = false );
+					   const edict_t *owner, float splashRadius = 0.0f );
 
 	typedef StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> EntNumsVector;
 	void FindProjectileDangers( const EntNumsVector &entNums );

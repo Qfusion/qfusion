@@ -263,7 +263,7 @@ void BotBrain::UpdateBlockedAreasStatus() {
 
 bool BotBrain::FindDodgeDangerSpot( const Danger &danger, vec3_t spotOrigin ) {
 	TacticalSpotsRegistry::OriginParams originParams( self, 128.0f + 192.0f * BotSkill(), RouteCache() );
-	TacticalSpotsRegistry::DodgeDangerProblemParams problemParams( danger.hitPoint, danger.direction, danger.splash );
+	TacticalSpotsRegistry::DodgeDangerProblemParams problemParams( danger.hitPoint, danger.direction, danger.IsSplashLike() );
 	problemParams.SetCheckToAndBackReachability( false );
 	problemParams.SetMinHeightAdvantageOverOrigin( -64.0f );
 	// Influence values are quite low because evade direction factor must be primary
