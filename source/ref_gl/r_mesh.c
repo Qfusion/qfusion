@@ -124,8 +124,8 @@ static int R_PackDistKey( int renderFx, const shader_t *shader, float dist, unsi
 */
 static unsigned int R_PackSortKey( unsigned int shaderNum, int fogNum,
 								   int portalNum, unsigned int entNum ) {
-	return ( shaderNum & 0x7FF ) << 21 | ( entNum & 0x7FF ) << 10 |
-		   ( ( ( portalNum + 1 ) & 0x1F ) << 5 ) | ( (unsigned int)( fogNum + 1 ) & 0x1F );
+	return ( shaderNum & 0x7FF ) << 21 | ( ( (unsigned int)( fogNum + 1 ) & 0x1F ) << 16 ) |
+		( entNum & 0x7FF ) << 5 | ( ( ( portalNum + 1 ) & 0x1F ) );
 }
 
 /*
@@ -134,9 +134,9 @@ static unsigned int R_PackSortKey( unsigned int shaderNum, int fogNum,
 static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int *fogNum,
 							 int *portalNum, unsigned int *entNum ) {
 	*shaderNum = ( sortKey >> 21 ) & 0x7FF;
-	*entNum = ( sortKey >> 10 ) & 0x7FF;
-	*portalNum = (signed int)( ( sortKey >> 5 ) & 0x1F ) - 1;
-	*fogNum = (signed int)( sortKey & 0x1F ) - 1;
+	*fogNum = (signed int)( ( sortKey >> 16 ) & 0x1F ) - 1;
+	*entNum = ( sortKey >> 5 ) & 0x7FF;
+	*portalNum = (signed int)( ( sortKey ) & 0x1F ) - 1;
 }
 
 /*
@@ -356,7 +356,6 @@ void R_GetVBOSliceCounts( drawList_t *list, unsigned *numSliceVerts, unsigned *n
 
 	for( i = 0; i < list->maxVboSlices; i++ ) {
 		*numSliceVerts += list->vboSlices[i].numVerts;
-
 		*numSliceElems += list->vboSlices[i].numElems;
 	}
 }
