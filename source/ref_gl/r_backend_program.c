@@ -366,6 +366,7 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 	const shaderfunc_t *rgbgenfunc = &pass->rgbgen.func;
 	const shaderfunc_t *alphagenfunc = &pass->alphagen.func;
 
+	*colorMod = 1;
 	Vector4Set( rgba, 255, 255, 255, 255 );
 
 	switch( pass->rgbgen.type ) {
@@ -520,9 +521,7 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass ) {
 */
 static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colorgen_t *alphagen ) {
 	r_glslfeat_t programFeatures;
-	int identity;
 
-	identity = 0;
 	programFeatures = 0;
 
 	switch( rgbgen->type ) {
@@ -536,15 +535,12 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 		case RGB_GEN_WAVE:
 		case RGB_GEN_CUSTOMWAVE:
 		case RGB_GEN_ENTITYWAVE:
-			programFeatures |= GLSL_SHADER_COMMON_RGB_GEN_CONST;
 			if( rgbgen->func.type == SHADER_FUNC_RAMP ) {
 				programFeatures |= GLSL_SHADER_COMMON_RGB_DISTANCERAMP;
 			}
 			break;
 		case RGB_GEN_IDENTITY:
-			identity++;
 		default:
-			programFeatures |= GLSL_SHADER_COMMON_RGB_GEN_CONST;
 			break;
 	}
 
@@ -556,20 +552,12 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 			programFeatures |= GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX;
 			break;
 		case ALPHA_GEN_WAVE:
-			programFeatures |= GLSL_SHADER_COMMON_ALPHA_GEN_CONST;
 			if( alphagen->func.type == SHADER_FUNC_RAMP ) {
 				programFeatures |= GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP;
 			}
 			break;
-		case ALPHA_GEN_IDENTITY:
-			identity++;
 		default:
-			programFeatures |= GLSL_SHADER_COMMON_ALPHA_GEN_CONST;
 			break;
-	}
-
-	if( identity == 2 && !rb.alphaHack ) {
-		return 0;
 	}
 
 	return programFeatures;
