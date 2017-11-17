@@ -43,10 +43,10 @@ class EntitiesDetector
 		bool operator<( const EntAndDistance &that ) const { return distance < that.distance; }
 	};
 
-	static constexpr float DETECT_ROCKET_SQ_RADIUS = 300 * 300;
-	static constexpr float DETECT_PLASMA_SQ_RADIUS = 400 * 400;
-	static constexpr float DETECT_GB_BLAST_SQ_RADIUS = 400 * 400;
-	static constexpr float DETECT_GRENADE_SQ_RADIUS = 300 * 300;
+	static constexpr float DETECT_ROCKET_SQ_RADIUS = 650 * 650;
+	static constexpr float DETECT_PLASMA_SQ_RADIUS = 650 * 650;
+	static constexpr float DETECT_GB_BLAST_SQ_RADIUS = 700 * 700;
+	static constexpr float DETECT_GRENADE_SQ_RADIUS = 450 * 450;
 	static constexpr float DETECT_LG_BEAM_SQ_RADIUS = 1000 * 1000;
 
 	// There is a way to compute it in compile-time but it looks ugly
@@ -121,16 +121,10 @@ class BotPerceptionManager: public AiFrameAwareUpdatable
 	edict_t *const self;
 
 	// Currently there is no more than a single active danger. It might be changed in future.
-	static constexpr auto MAX_CLASS_DANGERS = 1;
-	typedef Pool<Danger, MAX_CLASS_DANGERS> DangersPool;
-
-	DangersPool rocketDangersPool;
-	DangersPool plasmaBeamDangersPool;
-	DangersPool grenadeDangersPool;
-	DangersPool blastDangersPool;
-	DangersPool laserBeamsPool;
-
 	Danger *primaryDanger;
+
+	// We need a bit more space for intermediate results
+	Pool<Danger, 3> dangersPool;
 
 	float viewDirDotTeammateDir[MAX_CLIENTS];
 	float distancesToTeammates[MAX_CLIENTS];
@@ -160,7 +154,7 @@ class BotPerceptionManager: public AiFrameAwareUpdatable
 					   const edict_t *owner, bool splash = false );
 
 	typedef StaticVector<uint16_t, MAX_NONCLIENT_ENTITIES> EntNumsVector;
-	void FindProjectileDangers( const EntNumsVector &entNums, float dangerRadius, float damageScale );
+	void FindProjectileDangers( const EntNumsVector &entNums );
 
 	void FindPlasmaDangers( const EntNumsVector &entNums );
 	void FindLaserDangers( const EntNumsVector &entNums );
