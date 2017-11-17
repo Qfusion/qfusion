@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
+#define MD3SURF_DISTANCE(s, d) ((s)->flags & SHADER_AUTOSPRITE ? d : 0)
+
 /*
 * Mod_AliasBuildStaticVBOForMesh
 *
@@ -730,9 +732,8 @@ bool R_AddAliasModelToDrawList( const entity_t *e ) {
 	}
 
 	// make sure weapon model is always closest to the viewer
-	if( e->renderfx & RF_WEAPONMODEL ) {
-		distance = 0;
-	} else {
+	distance = 0;
+	if( !( e->renderfx & RF_WEAPONMODEL ) ) {
 		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
 
@@ -758,7 +759,8 @@ bool R_AddAliasModelToDrawList( const entity_t *e ) {
 				shader = mesh->skins[j].shader;
 				if( shader ) {
 					int drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
-					R_AddSurfToDrawList( rn.meshlist, e, fog, shader, distance, drawOrder, NULL, aliasmodel->drawSurfs + i );
+					R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 
+						MD3SURF_DISTANCE( shader, distance ), drawOrder, NULL, aliasmodel->drawSurfs + i );
 				}
 			}
 			continue;
@@ -766,7 +768,8 @@ bool R_AddAliasModelToDrawList( const entity_t *e ) {
 
 		if( shader ) {
 			int drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
-			R_AddSurfToDrawList( rn.meshlist, e, fog, shader, distance, drawOrder, NULL, aliasmodel->drawSurfs + i );
+			R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 
+				MD3SURF_DISTANCE( shader, distance ), drawOrder, NULL, aliasmodel->drawSurfs + i );
 		}
 	}
 

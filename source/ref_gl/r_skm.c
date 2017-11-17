@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "iqm.h"
 
+#define SKMSURF_DISTANCE(s, d) ((s)->flags & SHADER_AUTOSPRITE ? d : 0)
+
 // typedefs
 typedef struct iqmheader iqmheader_t;
 typedef struct iqmvertexarray iqmvertexarray_t;
@@ -1572,9 +1574,8 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
 	}
 
 	// make sure weapon model is always closest to the viewer
-	if( e->renderfx & RF_WEAPONMODEL ) {
-		distance = 0;
-	} else {
+	distance = 0;
+	if( !( e->renderfx & RF_WEAPONMODEL ) ) {
 		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
 
@@ -1604,7 +1605,8 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
 
 		if( shader ) {
 			int drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
-			R_AddSurfToDrawList( rn.meshlist, e, fog, shader, distance, drawOrder, NULL, skmodel->drawSurfs + i );
+			R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 
+				SKMSURF_DISTANCE( shader, distance ), drawOrder, NULL, skmodel->drawSurfs + i );
 		}
 	}
 
