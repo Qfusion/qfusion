@@ -112,7 +112,6 @@ protected:
 		virtual bool CheckHasShell() const override;
 		virtual float ComputeDamageToBeKilled() const override;
 		virtual void OnEnemyRemoved( const Enemy *enemy ) override;
-		virtual void TryPushNewEnemy( const edict_t *enemy, const float *suggestedOrigin ) override;
 
 		void SetBotRoleWeight( const edict_t *bot, float weight ) override;
 		float GetAdditionalEnemyWeight( const edict_t *bot, const edict_t *enemy ) const override;
