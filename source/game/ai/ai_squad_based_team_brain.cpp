@@ -132,14 +132,6 @@ void AiSquad::SquadEnemyPool::OnEnemyRemoved( const Enemy *enemy ) {
 		bot->OnEnemyRemoved( enemy );
 }
 
-void AiSquad::SquadEnemyPool::TryPushNewEnemy( const edict_t *enemy, const float *suggestedOrigin ) {
-	CheckSquadValid();
-	for( Bot *bot: squad->bots )
-		if( !bot->IsGhosting() ) {
-			TryPushEnemyOfSingleBot( bot->Self(), enemy, suggestedOrigin );
-		}
-}
-
 void AiSquad::SquadEnemyPool::SetBotRoleWeight( const edict_t *bot, float weight ) {
 	CheckSquadValid();
 	botRoleWeights[GetBotSlot( bot->ai->botRef )] = weight;
@@ -647,15 +639,14 @@ bool AiSquad::ShouldNotDropItemsNow() const {
 	};
 
 	// First reject enemies by distance
-	StaticVector<PotentialStealer, AiBaseEnemyPool::MAX_TRACKED_ENEMIES> potentialStealers;
-	for( unsigned i = 0, end = squadEnemyPool->TrackedEnemiesBufferSize(); i < end; ++i ) {
-		const Enemy &enemy = squadEnemyPool->TrackedEnemiesBuffer()[i];
+	StaticVector<PotentialStealer, MAX_EDICTS> potentialStealers;
+	for( const Enemy *enemy = squadEnemyPool->TrackedEnemiesHead(); enemy; enemy = enemy->NextInTrackedList() ) {
 		// Check whether an enemy has been invalidated and invalidation is not processed yet to prevent crash
-		if( !enemy.IsValid() || G_ISGHOSTING( enemy.ent ) ) {
+		if( !enemy->IsValid() || G_ISGHOSTING( enemy->ent ) ) {
 			continue;
 		}
 
-		Vec3 enemyVelocityDir( enemy.LastSeenVelocity() );
+		Vec3 enemyVelocityDir( enemy->LastSeenVelocity() );
 		float squareEnemySpeed = enemyVelocityDir.SquaredLength();
 		if( squareEnemySpeed < 1 ) {
 			continue;
@@ -667,15 +658,15 @@ bool AiSquad::ShouldNotDropItemsNow() const {
 		// Extrapolate last seen position but not more for 1 second
 		// TODO: Test for collisions with the solid (it may be expensive)
 		// If an extrapolated origin is inside solid, further trace test will treat an enemy as invisible
-		float extrapolationSeconds = std::min( 1.0f, 0.001f * ( level.time - enemy.LastSeenAt() ) );
-		Vec3 extrapolatedLastSeenPosition( enemy.LastSeenVelocity() );
+		float extrapolationSeconds = std::min( 1.0f, 0.001f * ( level.time - enemy->LastSeenAt() ) );
+		Vec3 extrapolatedLastSeenPosition( enemy->LastSeenVelocity() );
 		extrapolatedLastSeenPosition *= extrapolationSeconds;
-		extrapolatedLastSeenPosition += enemy.LastSeenPosition();
+		extrapolatedLastSeenPosition += enemy->LastSeenOrigin();
 
 		Vec3 enemyToSquadCenterDir( squadCenter );
 		enemyToSquadCenterDir -= extrapolatedLastSeenPosition;
 		if( enemyToSquadCenterDir.SquaredLength() < 1 ) {
-			potentialStealers.push_back( PotentialStealer( &enemy, extrapolatedLastSeenPosition ) );
+			potentialStealers.push_back( PotentialStealer( enemy, extrapolatedLastSeenPosition ) );
 			continue;
 		}
 		enemyToSquadCenterDir.NormalizeFast();
@@ -683,12 +674,12 @@ bool AiSquad::ShouldNotDropItemsNow() const {
 		float directionFactor = enemyToSquadCenterDir.Dot( enemyVelocityDir );
 		if( directionFactor < 0 ) {
 			if( BoundsAndSphereIntersect( mins, maxs, extrapolatedLastSeenPosition.Data(), 192.0f ) ) {
-				potentialStealers.push_back( PotentialStealer( &enemy, extrapolatedLastSeenPosition ) );
+				potentialStealers.push_back( PotentialStealer( enemy, extrapolatedLastSeenPosition ) );
 			}
 		} else {
 			float radius = 192.0f + extrapolationSeconds * enemySpeed * directionFactor;
 			if( BoundsAndSphereIntersect( mins, maxs, extrapolatedLastSeenPosition.Data(), radius ) ) {
-				potentialStealers.push_back( PotentialStealer( &enemy, extrapolatedLastSeenPosition ) );
+				potentialStealers.push_back( PotentialStealer( enemy, extrapolatedLastSeenPosition ) );
 			}
 		}
 	}

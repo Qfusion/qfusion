@@ -181,8 +181,9 @@ void BotBrain::UpdateSelectedEnemies() {
 	lostEnemies.Invalidate();
 	float visibleEnemyWeight = 0.0f;
 	if( const Enemy *visibleEnemy = activeEnemyPool->ChooseVisibleEnemy( self ) ) {
-		const auto &activeEnemies = activeEnemyPool->ActiveEnemies();
-		selectedEnemies.Set( visibleEnemy, targetChoicePeriod, activeEnemies.begin(), activeEnemies.end() );
+		// A compiler prefers a non-const version here, and therefore fails on non-const version of method being private
+		const auto *activeEnemiesHead = ( (const AiBaseEnemyPool *)activeEnemyPool )->ActiveEnemiesHead();
+		selectedEnemies.Set( visibleEnemy, targetChoicePeriod, activeEnemiesHead );
 		visibleEnemyWeight = 0.5f * ( visibleEnemy->AvgWeight() + visibleEnemy->MaxWeight() );
 	}
 	if( const Enemy *lostEnemy = activeEnemyPool->ChooseLostOrHiddenEnemy( self ) ) {

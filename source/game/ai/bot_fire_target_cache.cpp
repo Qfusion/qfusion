@@ -433,7 +433,7 @@ void BotFireTargetCache::SetupCoarseFireTarget( const SelectedEnemies &selectedE
 		float weightsSum = 1.0f;
 		for( auto iter = snapshots.begin(), end = snapshots.end(); iter != end; ++iter ) {
 			const auto &snapshot = *iter;
-			unsigned timeDelta = (unsigned)( levelTime - snapshot.timestamp );
+			unsigned timeDelta = (unsigned)( levelTime - snapshot.Timestamp() );
 			// If snapshot is too outdated, stop accumulation
 			if( timeDelta > maxTimeDelta ) {
 				break;
@@ -441,12 +441,13 @@ void BotFireTargetCache::SetupCoarseFireTarget( const SelectedEnemies &selectedE
 
 			// Recent snapshots have greater weight
 			float weight = 1.0f - timeDelta * weightTimeDeltaScale;
-			const float *originData = snapshot.origin.Data();
-			const float *velocityData = snapshot.velocity.Data();
+			// We have to store these temporarily unpacked values in locals
+			Vec3 snapshotOrigin( snapshot.Origin() );
+			Vec3 snapshotVelocity( snapshot.Velocity() );
 			// Accumulate snapshot target origin using the weight
-			VectorMA( target, weight, originData, target );
+			VectorMA( target, weight, snapshotOrigin.Data(), target );
 			// Accumulate snapshot target velocity using the weight
-			VectorMA( velocity, weight, velocityData, velocity );
+			VectorMA( velocity, weight, snapshotVelocity.Data(), velocity );
 			weightsSum += weight;
 		}
 		float invWeightsSum = 1.0f / weightsSum;

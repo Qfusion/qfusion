@@ -279,4 +279,20 @@ public:
 	const T *end() const { return end_; }
 };
 
+// This is a compact storage for 64-bit values.
+// If an int64_t field is used in an array of tiny structs,
+// a substantial amount of space can be lost for alignment.
+class alignas ( 4 )Int64Align4 {
+	uint32_t parts[2];
+public:
+	operator int64_t() const {
+		return (int64_t)( ( (uint64_t)parts[0] << 32 ) | parts[1] );
+	}
+	Int64Align4 operator=( int64_t value ) {
+		parts[0] = (uint32_t)( ( (uint64_t)value >> 32 ) & 0xFFFFFFFFu );
+		parts[1] = (uint32_t)( ( (uint64_t)value >> 00 ) & 0xFFFFFFFFu );
+		return *this;
+	}
+};
+
 #endif
