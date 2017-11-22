@@ -247,19 +247,192 @@ void BotBrain::ForceSetNavEntity( const SelectedNavEntity &selectedNavEntity_ ) 
 	}
 }
 
+struct DisableBlockedByEnemyZoneRequest final: public AiAasRouteCache::DisableZoneRequest {
+	const edict_t *const self;
+	const Enemy *const enemy;
+	const float factor;
+
+	DisableBlockedByEnemyZoneRequest( const edict_t *self_, const Enemy *enemy_, float factor_ )
+		: self( self_ ), enemy( enemy_ ), factor( factor_ ) {}
+
+	int FillRequestedAreasBuffer( int *areasBuffer, int bufferCapacity ) override;
+};
+
+static int FindBestWeaponTier( const gclient_t *client ) {
+	const auto *inventory = client->ps.inventory;
+	constexpr int ammoShift = AMMO_GUNBLADE - WEAP_GUNBLADE;
+	constexpr int weakAmmoShift = AMMO_WEAK_GUNBLADE - WEAP_GUNBLADE;
+
+	int maxTier = 0;
+	for( int weapon = WEAP_GUNBLADE; weapon < WEAP_TOTAL; ++weapon ) {
+		if( !inventory[weapon] || ( !inventory[weapon + ammoShift] && !inventory[weapon + weakAmmoShift] ) ) {
+			continue;
+		}
+		int tier = BuiltinWeaponTier( weapon );
+		if( tier <= maxTier ) {
+			continue;
+		}
+		maxTier = tier;
+	}
+
+	return maxTier;
+}
+
 void BotBrain::UpdateBlockedAreasStatus() {
-	// The old functionality has been temporarily disabled,
-	// and its deprecation produces better bot behaviour (but rather stupid sometimes).
+	if( self->ai->botRef->ShouldRushHeadless() ) {
+		self->ai->botRef->routeCache->ClearDisabledZones();
+		return;
+	}
 
-	// It used to mark as blocked all areas near selected active enemies
-	// (except they are close and marking this areas as blocked did not leave non-blocked areas around the bot).
-	// This approach has failed, not only the code determining whether an area should be blocked was not reliable,
-	// but this also used to add lots of jitter to the planner choice, since areas become available once the bot
-	// turns away the visible active enemy.
+	float damageToKillBot = DamageToKill( self, g_armor_protection->value, g_armor_degradation->value );
+	if( HasShell( bot ) ) {
+		damageToKillBot *= 4.0f;
+	}
 
-	// The proper solution is maintaining a list of blockers for each nav entity / choke point
-	// and listen to in-game events whether the area (not in AAS sense) became available
-	// (a blocker has been killed or has been seen somewhere else).
+	// We modify "damage to kill" in order to take quad bearing into account
+	if( HasQuad( bot ) && damageToKillBot > 50.0f ) {
+		damageToKillBot *= 2.0f;
+	}
+
+	const int botBestWeaponTier = FindBestWeaponTier( self->r.client );
+
+	// MAX_EDICTS is the actual maximum allowed tracked enemies count, but lets limit it to a lower value
+
+	// A stack storage for objects of this type
+	StaticVector<DisableBlockedByEnemyZoneRequest, MAX_CLIENTS> requestsStorage;
+	// A polymorphic array of requests expected by the route cache
+	StaticVector<AiAasRouteCache::DisableZoneRequest *, MAX_CLIENTS> requestsRefs;
+
+	// TODO: Why is non-const method non-accessible from here preferred by a compiler?
+	const Enemy *enemy = ( (const AiBaseEnemyPool *)activeEnemyPool )->TrackedEnemiesHead();
+	if( activeEnemyPool->NumTrackedEnemies() <= requestsRefs.capacity() ) {
+		for(; enemy; enemy = enemy->NextInTrackedList() ) {
+			if( float factor = ComputeEnemyAreasBlockingFactor( enemy, damageToKillBot, botBestWeaponTier ) ) {
+				// Modify the factor by the effective bot offensiveness
+				factor *= 1.0f - 0.5f * self->ai->botRef->GetEffectiveOffensiveness();
+				clamp( factor, 0.0f, 4.0f );
+				// Allocate a raw storage and create an object in-place
+				new( requestsStorage.unsafe_grow_back() )DisableBlockedByEnemyZoneRequest( self, enemy, factor );
+				// Add the reference to the list
+				requestsRefs.push_back( &requestsStorage.back() );
+			}
+		}
+	} else {
+		// This branch should not be really triggered in-game, but its algorithmically possible
+		for(; enemy; enemy = enemy->NextInTrackedList() ) {
+			if( float factor = ComputeEnemyAreasBlockingFactor( enemy, damageToKillBot, botBestWeaponTier ) ) {
+				clamp( factor, 0.0f, 3.0f );
+				new( requestsStorage.unsafe_grow_back() )DisableBlockedByEnemyZoneRequest( self, enemy, factor );
+				requestsRefs.push_back( &requestsStorage.back() );
+				if( requestsRefs.size() == requestsRefs.capacity() ) {
+					break;
+				}
+			}
+		}
+	}
+
+	if( !requestsRefs.empty() ) {
+		// This statement works well for an empty request container too, but triggers an assertion in debug mode on front()
+		self->ai->botRef->routeCache->SetDisabledZones( &requestsRefs.front(), (int)requestsRefs.size() );
+	} else {
+		self->ai->botRef->routeCache->ClearDisabledZones();
+	}
+}
+
+float BotBrain::ComputeEnemyAreasBlockingFactor( const Enemy *enemy, float damageToKillBot, int botBestWeaponTier ) {
+	int enemyWeaponTier;
+	if( const auto *client = enemy->ent->r.client ) {
+		enemyWeaponTier = FindBestWeaponTier( client );
+		if( enemyWeaponTier < 1 && !HasPowerups( enemy->ent ) ) {
+			return 0.0f;
+		}
+	} else {
+		// Try guessing...
+		enemyWeaponTier = (int)( 1.0f + BoundedFraction( enemy->ent->aiIntrinsicEnemyWeight, 3.0f ) );
+	}
+
+	float damageToKillEnemy = DamageToKill( enemy->ent, g_armor_protection->value, g_armor_degradation->value );
+
+	if( HasShell( enemy->ent ) ) {
+		damageToKillEnemy *= 4.0f;
+	}
+
+	// We modify "damage to kill" in order to take quad bearing into account
+	if( HasQuad( enemy->ent ) && damageToKillEnemy > 50 ) {
+		damageToKillEnemy *= 2.0f;
+	}
+
+	if( damageToKillBot < 50 && damageToKillEnemy < 50 ) {
+		// Just check weapons. Note: GB has 0 tier, GL has 1 tier, the rest of weapons have a greater tier
+		return std::min( 1, enemyWeaponTier ) / (float)std::min( 1, botBestWeaponTier );
+	}
+
+	float ratioThreshold = 1.25f;
+	if( selectedEnemies.AreValid() && selectedEnemies.AreThreatening() && selectedEnemies.Contain( enemy ) ) {
+		// If the bot is outnumbered
+		if( selectedEnemies.end() - selectedEnemies.begin() > 1 ) {
+			ratioThreshold *= 1.25f;
+		}
+    }
+
+	ratioThreshold -= ( botBestWeaponTier - enemyWeaponTier ) * 0.25f;
+	if( damageToKillEnemy / damageToKillBot < ratioThreshold ) {
+		return 0.0f;
+	}
+
+	return damageToKillEnemy / damageToKillBot;
+}
+
+int DisableBlockedByEnemyZoneRequest::FillRequestedAreasBuffer( int *areasBuffer, int bufferCapacity ) {
+	if( bufferCapacity <= 0 ) {
+		return 0;
+	}
+
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasAreas = aasWorld->Areas();
+	const auto *aasAreaSettings = aasWorld->AreaSettings();
+
+	int botAreaNums[2] = { 0, 0 };
+	self->ai->botRef->EntityPhysicsState()->PrepareRoutingStartAreas( botAreaNums );
+
+	// TODO: Expand bounds for non-clients (like turrets) by introducing aiIntrinsicDangerRadius entity field
+	Vec3 enemyOrigin( enemy->LastSeenOrigin() );
+
+	// Estimate box side (XY) and height
+	float sideForFactor = 56.0f + 72.0f * factor;
+	float heightForFactor = 64.0f + 24.0f * factor;
+	Vec3 mins( -0.5f * sideForFactor, -0.5f * sideForFactor, -0.5f * heightForFactor );
+	Vec3 maxs( +0.5f * sideForFactor, +0.5f * sideForFactor, +0.5f * heightForFactor );
+	mins += enemyOrigin;
+	maxs += enemyOrigin;
+
+	int numRawBoxAreas = aasWorld->BBoxAreas( mins, maxs, areasBuffer, std::min( 128, bufferCapacity ) );
+
+	// Filter areas in-place
+	int numFilteredBoxAreas = 0;
+	for( int i = 0; i < numRawBoxAreas; ++i ) {
+		const int areaNum = areasBuffer[i];
+		// Prevent blocking of the bot if the enemy is very close
+		if ( areaNum == botAreaNums[0] || areaNum == botAreaNums[1] ) {
+			return 0;
+		}
+
+		// Cut off non-grounded areas since grounded areas are principal for movement
+		if( !( aasAreaSettings[areaNum].areaflags & AREA_GROUNDED ) ) {
+			continue;
+		}
+
+		// Try cutting off expensive PVS test in this case
+		if( DistanceSquared( aasAreas[areaNum].center, enemyOrigin.Data() ) < 96.0f * 96.0f ) {
+			areasBuffer[numFilteredBoxAreas++] = areaNum;
+		} else if( trap_inPVS( enemyOrigin.Data(), aasAreas[areaNum].center ) ) {
+			areasBuffer[numFilteredBoxAreas++] = areaNum;
+		}
+	}
+
+	// TODO: Check for areas volatile for LG/EB/IG shots if an enemy has these weapons
+
+	return numFilteredBoxAreas;
 }
 
 bool BotBrain::FindDodgeDangerSpot( const Danger &danger, vec3_t spotOrigin ) {

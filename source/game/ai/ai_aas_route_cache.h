@@ -97,13 +97,36 @@ class AiAasRouteCache
 	int *currDisabledAreaNums;
 	// A scratchpad for SetDisabledRegions() that is capable to store aasWorld.NumAreas() values
 	int *cleanCacheAreaNums;
-	// Has (almost) direct mapping to area num indices:
-	// for an index i value at i * 2 + 0 is a new status
-	// for an index i value at i * 2 + 1 is an old status
-	// We do not use bitsets since variable shifts are required in used access patterns,
+
+	// It is sufficient to fit all required info in 2 bits, but we should avoid using bitsets
+	// since variable shifts are required for access patterns used by implemented algorithms,
 	// and variable shift instructions are usually microcoded.
-	// We store adjacent pair of statuses according to the memory access pattern used.
-	bool *oldAndCurrAreaDisabledStatus;
+	struct alignas( 1 )AreaDisabledStatus {
+		uint8_t value;
+
+		// We hope a compiler avoids using branches here
+		bool OldStatus() const { return (bool)( ( value >> 1 ) & 1 ); }
+		bool CurrStatus() const { return (bool)( ( value >> 0 ) & 1 ); }
+
+		// Also we hope a compiler eliminates branches for a known constant status
+		void SetOldStatus( bool status ) {
+			status ? ( value |= 2 ) : ( value &= ~2 );
+		}
+
+		void SetCurrStatus( bool status ) {
+			status ? ( value |= 1 ) : ( value &= ~1 );
+		}
+
+		// Copies curr status to old status and clears the curr status
+		void ShiftCurrToOldStatus() {
+			// Clear 6 high bits to avoid confusion
+			value &= 3;
+			// Promote the curr bit to the old bit position
+			value <<= 1;
+		}
+	};
+
+	AreaDisabledStatus *areasDisabledStatus;
 
 	//index to retrieve travel flag for a travel type
 	// Note this is not shared for faster local acccess
@@ -422,19 +445,19 @@ public:
 	}
 
 	inline bool AreaDisabled( int areaNum ) {
-		return oldAndCurrAreaDisabledStatus[areaNum * 2] || ( aasWorld.AreaSettings()[areaNum].areaflags & AREA_DISABLED );
+		return areasDisabledStatus[areaNum].CurrStatus() || ( aasWorld.AreaSettings()[areaNum].areaflags & AREA_DISABLED );
 	}
 
-	// For numSpots regions disables all areas in region for routing.
-	// An i-th region is defined by absolute bounds mins[i], maxs[i].
-	// Note than bounding box of areas disabled for region is wider than the defined region itself.
-	// In order to prevent blocking important areas
-	// regions will not be disabled if any of a region areas contains noBlockPoint.
-	inline void SetDisabledRegions( const Vec3 *mins, const Vec3 *maxs, int numRegions, const vec3_t noBlockPoint ) {
-		SetDisabledRegions( mins, maxs, numRegions, aasWorld.PointAreaNum( noBlockPoint ) );
+	struct DisableZoneRequest {
+		virtual int FillRequestedAreasBuffer( int *areasBuffer, int bufferCapacity ) = 0;
+	};
+
+	inline void ClearDisabledZones() {
+		SetDisabledZones( nullptr, 0 );
 	}
 
-	void SetDisabledRegions( const Vec3 *mins, const Vec3 *maxs, int numRegions, int noBlockAreaNum );
+	// Pass an array of object references since they are generic non-POD objects having different size/vtbl
+	void SetDisabledZones( DisableZoneRequest **requests, int numRequests );
 };
 
 #endif
