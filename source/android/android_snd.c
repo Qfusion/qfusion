@@ -55,8 +55,8 @@ static void SNDDMA_Android_Callback( SLBufferQueueItf bq, void *context ) {
 	trap_Mutex_Lock( snddma_android_mutex );
 
 	buffer2 = ( uint8_t * )dma.buffer + snddma_android_size;
-	( *bq )->Enqueue( bq, buffer2, snddma_android_size );
 	memcpy( buffer2, dma.buffer, snddma_android_size );
+	( *bq )->Enqueue( bq, buffer2, snddma_android_size );
 	memset( dma.buffer, ( dma.samplebits == 8 ) ? 128 : 0, snddma_android_size );
 	snddma_android_pos += dma.samples;
 
