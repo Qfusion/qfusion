@@ -71,7 +71,7 @@ AiAasRouteCache::AiAasRouteCache( AiAasRouteCache &&that )
 	: aasWorld( that.aasWorld ), loaded( true ) {
 	currDisabledAreaNums = that.currDisabledAreaNums;
 	cleanCacheAreaNums = that.cleanCacheAreaNums;
-	oldAndCurrAreaDisabledStatus = that.oldAndCurrAreaDisabledStatus;
+	areasDisabledStatus = that.areasDisabledStatus;
 
 	memcpy( travelflagfortype, that.travelflagfortype, sizeof( travelflagfortype ) );
 
@@ -264,51 +264,34 @@ void AiAasRouteCache::RemoveAllPortalsCache() {
 	}
 }
 
-void AiAasRouteCache::SetDisabledRegions( const Vec3 *mins, const Vec3 *maxs, int numSpots, int noBlockAreaNum ) {
-	// (We try to aid data and instruction cache, so we do not do
-	// any complicated control flow in loops and use several loops instead)
+void AiAasRouteCache::SetDisabledZones( DisableZoneRequest **requests, int numRequests ) {
+	// Copy the reference to a local var for faster access
+	AreaDisabledStatus *areasDisabledStatus = this->areasDisabledStatus;
 
 	// First, save old area statuses and set new ones as non-blocked
-	for( int i = 0, end = 2 * aasWorld.NumAreas(); i < end; i += 2 ) {
-		oldAndCurrAreaDisabledStatus[i + 1] = oldAndCurrAreaDisabledStatus[i];
-		oldAndCurrAreaDisabledStatus[i] = false;
+	for( int i = 0, end = aasWorld.NumAreas(); i < end; ++i ) {
+		areasDisabledStatus[i].ShiftCurrToOldStatus();
 	}
 
 	// Select all disabled area nums
-	int totalDisabledAreas = 0;
-	// It's unlikely areasBuffer will overflow for real count of spots, but check it anyway.
-	// (We give each spot a room of 96 areas)
-	for( int spotNum = 0, endNum = std::min( numSpots * 96, aasWorld.NumAreas() ) / 96; spotNum < endNum; ++spotNum ) {
-		int *areasBuffer = currDisabledAreaNums + totalDisabledAreas;
-		int numBBoxAreas = aasWorld.BBoxAreas( mins[spotNum], maxs[spotNum], areasBuffer, 96 );
-		// Check whether these areas contains an area that should not be blocked.
-		// (We cannot just skip this area because in that case the area may become surrounded by disabled areas)
-		for( int i = 0; i < numBBoxAreas; ++i ) {
-			if( areasBuffer[i] == noBlockAreaNum ) {
-				goto nextSpot;
-			}
-		}
-		totalDisabledAreas += numBBoxAreas;
-nextSpot:;
+	int numDisabledAreas = 0;
+	int capacityLeft = aasWorld.NumAreas();
+	for( int i = 0; i < numRequests; ++i ) {
+		int numAreas = requests[i]->FillRequestedAreasBuffer( currDisabledAreaNums + numDisabledAreas, capacityLeft );
+		numDisabledAreas += numAreas;
+		capacityLeft -= numAreas;
 	}
 
-	// Precache this reference for faster access
-	const aas_areasettings_t *areaSettings = aasWorld.AreaSettings();
 	// For each selected area mark area as disabled
-	for( int i = 0; i < totalDisabledAreas; ++i ) {
-		int areaNum = currDisabledAreaNums[i];
-		// Cut off non-grounded areas. Setting these areas disabled makes less sence and also it causes lags.
-		if( areaSettings[areaNum].areaflags & AREA_GROUNDED ) {
-			oldAndCurrAreaDisabledStatus[areaNum * 2] = true;
-		}
+	for( int i = 0; i < numDisabledAreas; ++i ) {
+		areasDisabledStatus[currDisabledAreaNums[i]].SetCurrStatus( true );
 	}
 
 	// For each area compare its old and new status
 	int totalClearCacheAreas = 0;
 	for( int i = 0, end = aasWorld.NumAreas(); i < end; ++i ) {
-		bool oldStatus = oldAndCurrAreaDisabledStatus[i * 2 + 1];
-		bool currStatus = oldAndCurrAreaDisabledStatus[i * 2];
-		if( currStatus != oldStatus ) {
+		const auto &status = areasDisabledStatus[i];
+		if( status.OldStatus() != status.CurrStatus() ) {
 			cleanCacheAreaNums[totalClearCacheAreas++] = i;
 		}
 	}
@@ -351,12 +334,13 @@ int AiAasRouteCache::GetAreaContentsTravelFlags( int areanum ) {
 }
 
 void AiAasRouteCache::InitDisabledAreasStatusAndHelpers() {
-	static_assert( sizeof( bool ) == 1, "" );
-	int size = aasWorld.NumAreas() * ( 2 * sizeof( int ) + 2 * sizeof( bool ) );
+	static_assert( sizeof( AreaDisabledStatus ) == 1, "" );
+	static_assert( alignof( AreaDisabledStatus ) == 1, "" );
+	int size = aasWorld.NumAreas() * ( 2 * sizeof( int ) + sizeof( AreaDisabledStatus ) );
 	char *ptr = (char *)GetClearedMemory( size );
 	currDisabledAreaNums = (int *)ptr;
 	cleanCacheAreaNums = ( (int *)ptr ) + aasWorld.NumAreas();
-	oldAndCurrAreaDisabledStatus = (bool *)( ( (int *)ptr ) + 2 * aasWorld.NumAreas() );
+	areasDisabledStatus = (AreaDisabledStatus *)( ( (int *)ptr ) + aasWorld.NumAreas() );
 }
 
 void AiAasRouteCache::InitAreaContentsTravelFlags( void ) {
@@ -1005,7 +989,7 @@ void AiAasRouteCache::UpdateAreaRoutingCache( aas_routingcache_t *areaCache ) {
 	const aas_portal_t *portals = aasWorld.Portals();
 	aas_routingupdate_t *routingUpdate = this->areaupdate;
 	const int *areaContentsTravelFlags = this->areacontentstravelflags;
-	const bool *areaDisabledStatusPairs = this->oldAndCurrAreaDisabledStatus;
+	const auto *areaDisabledStatus = this->areasDisabledStatus;
 	unsigned short ***areaTravelTimes = this->areatraveltimes;
 
 	signed char *dijkstraAreaLabels = this->dijkstralabels;
@@ -1042,7 +1026,7 @@ void AiAasRouteCache::UpdateAreaRoutingCache( aas_routingcache_t *areaCache ) {
 				continue;
 			}
 			//if not allowed to enter the next area
-			if( areaDisabledStatusPairs[reach->areanum * 2] ) {
+			if( areaDisabledStatus[reach->areanum].CurrStatus() ) {
 				continue;
 			}
 			// Respect global flags too
