@@ -1502,17 +1502,32 @@ void BotBaseMovementAction::CheckPredictionStepResults( BotMovementPredictionCon
 		}
 	}
 
-	if( this->failPredictionOnEnteringDangerImpactZone && !self->ai->botRef->ShouldRushHeadless() ) {
+	if( self->ai->botRef->ShouldRushHeadless() ) {
+		return;
+	}
+
+	if( this->failPredictionOnEnteringDangerImpactZone ) {
 		if( const auto *danger = self->ai->botRef->perceptionManager.PrimaryDanger() ) {
 			if( danger->SupportsImpactTests() ) {
-				if( !danger->HasImpactOnPoint( oldEntityPhysicsState.Origin() ) ) {
-					if( danger->HasImpactOnPoint( newEntityPhysicsState.Origin() ) ) {
-						Debug("A prediction step has lead to entering a danger impact zone, should rollback\n" );
+				// Check the new origin condition first to cut off early
+				if( danger->HasImpactOnPoint( newEntityPhysicsState.Origin() ) ) {
+					if( !danger->HasImpactOnPoint( oldEntityPhysicsState.Origin() ) ) {
+						Debug( "A prediction step has lead to entering a danger influence zone, should rollback\n" );
 						context->SetPendingRollback();
 						return;
 					}
 				}
 			}
+		}
+	}
+
+	// If misc tactics flag "rush headless" is set, areas occupied by enemies are never excluded from routing
+	const auto *routeCache = self->ai->botRef->routeCache;
+	// Check the new origin condition first to cut off early
+	if( routeCache->AreaTemporarilyDisabled( newAasAreaNum ) ) {
+		if( !routeCache->AreaTemporarilyDisabled( oldAasAreaNum ) ) {
+			Debug( "A prediction step has lead to entering a temporarily excluded from routing, should rollback\n" );
+			return;
 		}
 	}
 }
