@@ -401,12 +401,25 @@ int DisableBlockedByEnemyZoneRequest::FillRequestedAreasBuffer( int *areasBuffer
 	// Estimate box side (XY) and height
 	float sideForFactor = 56.0f + 72.0f * factor;
 	float heightForFactor = 64.0f + 24.0f * factor;
-	Vec3 mins( -0.5f * sideForFactor, -0.5f * sideForFactor, -0.5f * heightForFactor );
-	Vec3 maxs( +0.5f * sideForFactor, +0.5f * sideForFactor, +0.5f * heightForFactor );
-	mins += enemyOrigin;
-	maxs += enemyOrigin;
+	Vec3 areasBoxMins( -0.5f * sideForFactor, -0.5f * sideForFactor, -0.5f * heightForFactor );
+	Vec3 areasBoxMaxs( +0.5f * sideForFactor, +0.5f * sideForFactor, +0.5f * heightForFactor );
+	areasBoxMins += enemyOrigin;
+	areasBoxMaxs += enemyOrigin;
 
-	int numRawBoxAreas = aasWorld->BBoxAreas( mins, maxs, areasBuffer, std::min( 128, bufferCapacity ) );
+	int numRawBoxAreas = aasWorld->BBoxAreas( areasBoxMins, areasBoxMaxs, areasBuffer, std::min( 128, bufferCapacity ) );
+
+	// Precompute enemy CM/vis leaf nums in order to use for faster PVS test version.
+	// Note: we can't reuse actual leaf nums stored in enemy entity
+	// after linking it to area grid since we use last seen enemy origin
+
+	Vec3 enemyBoxMins( playerbox_stand_mins );
+	Vec3 enemyBoxMaxs( playerbox_stand_maxs );
+	enemyBoxMins += enemyOrigin;
+	enemyBoxMaxs += enemyOrigin;
+
+	int enemyLeafNums[16], topNode;
+	int numEnemyLeafs = trap_CM_BoxLeafnums( enemyBoxMins.Data(), enemyBoxMaxs.Data(), enemyLeafNums, 16, &topNode );
+	clamp_high( numEnemyLeafs, 16 );
 
 	// Filter areas in-place
 	int numFilteredBoxAreas = 0;
@@ -422,12 +435,22 @@ int DisableBlockedByEnemyZoneRequest::FillRequestedAreasBuffer( int *areasBuffer
 			continue;
 		}
 
-		// Try cutting off expensive PVS test in this case
-		if( DistanceSquared( aasAreas[areaNum].center, enemyOrigin.Data() ) < 96.0f * 96.0f ) {
+		// Try cutting off still rather expensive PVS test in this case
+		if( enemyOrigin.SquareDistanceTo( aasAreas[areaNum].center ) < 96.0f * 96.0f ) {
 			areasBuffer[numFilteredBoxAreas++] = areaNum;
-		} else if( trap_inPVS( enemyOrigin.Data(), aasAreas[areaNum].center ) ) {
-			areasBuffer[numFilteredBoxAreas++] = areaNum;
+			continue;
 		}
+
+		for( int j = 0; j < numEnemyLeafs; ++j ) {
+			const int *areaLeafsList = aasWorld->AreaMapLeafsList( areaNum ) + 1;
+			for( int k = 0; k < areaLeafsList[-1]; ++k ) {
+				if( trap_CM_LeafsInPVS( enemyLeafNums[j], areaLeafsList[k] ) ) {
+					areasBuffer[numFilteredBoxAreas++] = areaNum;
+					goto nextArea;
+				}
+			}
+		}
+nextArea:;
 	}
 
 	// TODO: Check for areas volatile for LG/EB/IG shots if an enemy has these weapons
