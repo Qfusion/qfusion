@@ -470,6 +470,7 @@ void AiAasWorld::ComputeExtraAreaData() {
 
 	ComputeLogicalAreaClusters();
 	ComputeFace2DProjVertices();
+	ComputeAreasLeafsLists();
 }
 
 void AiAasWorld::TrySetAreaLedgeFlags( int areaNum ) {
@@ -965,6 +966,13 @@ AiAasWorld::~AiAasWorld() {
 
 	if( face2DProjVertexNums ) {
 		G_LevelFree( face2DProjVertexNums );
+	}
+
+	if( areaMapLeafListOffsets ) {
+		G_LevelFree( areaMapLeafListOffsets );
+	}
+	if( areaMapLeafsData ) {
+		G_LevelFree( areaMapLeafsData );
 	}
 }
 
@@ -1653,4 +1661,26 @@ void AiAasWorld::ComputeFace2DProjVertices() {
 		*vertexNumsPtr++ = n1;
 		*vertexNumsPtr++ = n2;
 	}
+}
+
+void AiAasWorld::ComputeAreasLeafsLists() {
+	BufferBuilder<int> leafListsData( 512 );
+	BufferBuilder<int> listOffsets( 128 );
+
+	// Add a dummy list for the dummy zero area
+	leafListsData.Add( 0 );
+	listOffsets.Add( 0 );
+
+	int tmpLeafNums[256];
+	int topNode;
+	for( int i = 1, end = this->NumAreas(); i < end; ++i ) {
+		int numLeafs = trap_CM_BoxLeafnums( areas[i].mins, areas[i].maxs, tmpLeafNums, 256, &topNode );
+		listOffsets.Add( (int)listOffsets.Size() );
+		leafListsData.Add( tmpLeafNums, std::min( 256, numLeafs ) );
+	}
+
+	this->areaMapLeafListOffsets = listOffsets.FlattenResult();
+	// Clear early to free some allocation space for flattening of the next result
+	listOffsets.Clear();
+	this->areaMapLeafsData = leafListsData.FlattenResult();
 }
