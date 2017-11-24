@@ -46,6 +46,17 @@ BotItemsSelector::ItemAndGoalWeights BotItemsSelector::ComputeItemWeights( const
 		case IT_ARMOR: return ComputeArmorWeights( item );
 		case IT_POWERUP: return ComputePowerupWeights( item );
 	}
+
+	// Collect ammo packs too.
+	// Checking an actual pack contents might sound better, but:
+	// 1) It complicates the item selection code that is likely to be reworked anyway.
+	// 2) It adds some degree of cheating (a bot knows exact pack contents in this case)
+	if( item->tag == AMMO_PACK || item->tag == AMMO_PACK_STRONG || item->tag == AMMO_PACK_WEAK ) {
+		// These weights are relatively large for this kind of item,
+		// but we guess ammo packs are valuable in gametypes where they might be dropped.
+		return ItemAndGoalWeights( 0.75f, 0.75f );
+	}
+
 	return ItemAndGoalWeights( 0, 0 );
 }
 
