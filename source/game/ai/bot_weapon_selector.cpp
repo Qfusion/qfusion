@@ -172,7 +172,7 @@ float SelectedEnemies::ComputeThreatFactor( const edict_t *ent, int enemyNum ) c
 	// Try cutting off further expensive calls by doing this cheap test first
 	if( const auto *client = ent->r.client ) {
 		// Can't shoot soon.
-		if( client->ps.stats[STAT_WEAPON_TIME] > 500 ) {
+		if( client->ps.stats[STAT_WEAPON_TIME] > 800 ) {
 			return 0.0f;
 		}
 	}
@@ -204,6 +204,12 @@ float SelectedEnemies::ComputeThreatFactor( const edict_t *ent, int enemyNum ) c
 
 	if( ent->s.effects & ( EF_QUAD | EF_CARRIER ) ) {
 		return 1.0f;
+	}
+
+	if( const auto *danger = self->ai->botRef->PrimaryDanger() ) {
+		if( danger->attacker == ent ) {
+			return 0.5f + 0.5f * BoundedFraction( danger->damage, 75 );
+		}
 	}
 
 	// Its guaranteed that the enemy cannot hit
