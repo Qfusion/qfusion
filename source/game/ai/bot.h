@@ -619,6 +619,8 @@ public:
 	SelectedMiscTactics &GetMiscTactics() { return botBrain.selectedTactics; }
 	const SelectedMiscTactics &GetMiscTactics() const { return botBrain.selectedTactics; }
 
+	const Danger *PrimaryDanger() const { return perceptionManager.PrimaryDanger(); }
+
 	inline bool WillAdvance() const { return botBrain.WillAdvance(); }
 	inline bool WillRetreat() const { return botBrain.WillRetreat(); }
 
