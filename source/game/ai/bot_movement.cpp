@@ -6,6 +6,9 @@
 #ifndef PUBLIC_BUILD
 #define CHECK_ACTION_SUGGESTION_LOOPS
 #define ENABLE_MOVEMENT_ASSERTIONS
+#define CHECK_INFINITE_NEXT_STEP_LOOPS
+static int nextStepIterationsCounter = 0;
+static constexpr int NEXT_STEP_INFINITE_LOOP_THRESHOLD = 10000;
 #endif
 
 // Useful for debugging but freezes even Release version
@@ -223,8 +226,16 @@ bool BotMovementState::TestActualStatesForExpectedMask( unsigned expectedStatesM
 	// Might be set to null if verbose logging is not needed
 #ifdef ENABLE_MOVEMENT_DEBUG_OUTPUT
 	void ( *logFunc )( const char *format, ... ) = G_Printf;
+#elif defined( CHECK_INFINITE_NEXT_STEP_LOOPS )
+	void ( *logFunc )( const char *format, ... );
+	// Suppress output if the iterations counter is within a feasible range
+	if( ::nextStepIterationsCounter < NEXT_STEP_INFINITE_LOOP_THRESHOLD ) {
+		logFunc = nullptr;
+	} else {
+		logFunc = G_Printf;
+	}
 #else
-	void ( *logFunc )( const char *format, ... ) = nullptr;
+	void ( logFunc )( const char *format, ... ) = nullptr;
 #endif
 	constexpr const char *format = "BotMovementState(%s): %s %d has mismatch with the mask value\n";
 
@@ -1082,11 +1093,34 @@ void BotMovementPredictionContext::BuildPlan() {
 	this->sequenceStopReason = UNSPECIFIED;
 	this->isCompleted = false;
 	this->shouldRollback = false;
+
+#ifndef CHECK_INFINITE_NEXT_STEP_LOOPS
 	for(;; ) {
 		if( !NextPredictionStep() ) {
 			break;
 		}
 	}
+#else
+	::nextStepIterationsCounter = 0;
+	for(;; ) {
+		if( !NextPredictionStep() ) {
+			break;
+		}
+		++nextStepIterationsCounter;
+		if( nextStepIterationsCounter < NEXT_STEP_INFINITE_LOOP_THRESHOLD ) {
+			continue;
+		}
+		// An verbose output has been enabled at this stage
+		if( nextStepIterationsCounter < NEXT_STEP_INFINITE_LOOP_THRESHOLD + 200 ) {
+			continue;
+		}
+		constexpr const char *message =
+			"BotMovementPredictionContext::BuildPlan(): "
+			"an infinite NextPredictionStep() loop has been detected. "
+			"Check the server console output of last 200 steps\n";
+		G_Error( "%s", message );
+	}
+#endif
 
 	// The entity might be linked for some predicted state by Intercepted_PMoveTouchTriggers()
 	GClip_UnlinkEntity( self );
@@ -1209,7 +1243,14 @@ void BotMovementPredictionContext::NextMovementStep() {
 }
 
 void BotMovementPredictionContext::Debug( const char *format, ... ) const {
-#ifdef ENABLE_MOVEMENT_DEBUG_OUTPUT
+#if ( defined( ENABLE_MOVEMENT_DEBUG_OUTPUT ) || defined( CHECK_INFINITE_NEXT_STEP_LOOPS ) )
+// Check if there is an already detected error in this case and perform output only it the condition passes
+#if !defined( ENABLE_MOVEMENT_DEBUG_OUTPUT )
+	if( ::nextStepIterationsCounter < NEXT_STEP_INFINITE_LOOP_THRESHOLD ) {
+		return;
+	}
+#endif
+
 	char tag[64];
 	Q_snprintfz( tag, 64, "^6MovementPredictionContext(%s)", Nick( self ) );
 
@@ -1350,7 +1391,14 @@ inline BotLandOnSavedAreasMovementAction &BotBaseMovementAction::LandOnSavedArea
 }
 
 void BotBaseMovementAction::Debug( const char *format, ... ) const {
-#ifdef ENABLE_MOVEMENT_DEBUG_OUTPUT
+#if ( defined( ENABLE_MOVEMENT_DEBUG_OUTPUT ) || defined( CHECK_INFINITE_NEXT_STEP_LOOPS ) )
+// Check if there is an already detected error in this case and perform output only it the condition passes
+#if !defined( ENABLE_MOVEMENT_DEBUG_OUTPUT )
+	if( ::nextStepIterationsCounter < NEXT_STEP_INFINITE_LOOP_THRESHOLD ) {
+		return;
+	}
+#endif
+
 	char tag[128];
 	Q_snprintfz( tag, 128, "^5%s(%s)", this->Name(), Nick( self ) );
 
