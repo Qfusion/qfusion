@@ -1665,6 +1665,7 @@ class BotWalkCarefullyMovementAction : public BotBaseMovementAction
 public:
 	DECLARE_MOVEMENT_ACTION_CONSTRUCTOR( BotWalkCarefullyMovementAction, COLOR_RGB( 128, 0, 255 ) ) {}
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
+	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override;
 };
 
 class BotGenericRunBunnyingMovementAction : public BotBaseMovementAction
