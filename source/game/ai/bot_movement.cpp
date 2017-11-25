@@ -4988,6 +4988,19 @@ void BotWalkCarefullyMovementAction::PlanPredictionStep( BotMovementPredictionCo
 	}
 }
 
+void BotWalkCarefullyMovementAction::CheckPredictionStepResults( BotMovementPredictionContext *context ) {
+	BotBaseMovementAction::CheckPredictionStepResults( context );
+	if( context->isCompleted ) {
+		return;
+	}
+
+	if( context->cannotApplyAction && context->shouldRollback ) {
+		Debug( "A prediction step has lead to rolling back, the action will be disabled for planning\n" );
+		this->isDisabledForPlanning = true;
+		return;
+	}
+}
+
 bool BotGenericRunBunnyingMovementAction::GenericCheckIsActionEnabled( BotMovementPredictionContext *context,
 																	   BotBaseMovementAction *suggestedAction ) {
 	if( !BotBaseMovementAction::GenericCheckIsActionEnabled( context, suggestedAction ) ) {
