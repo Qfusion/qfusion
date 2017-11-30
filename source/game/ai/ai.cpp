@@ -1,6 +1,7 @@
 #include "bot.h"
 #include "ai_shutdown_hooks_holder.h"
 #include "ai_manager.h"
+#include "ai_nav_mesh_manager.h"
 #include "ai_objective_based_team_brain.h"
 #include "tactical_spots_registry.h"
 
@@ -153,6 +154,7 @@ static StaticVector<int, 16> hubAreas;
 void AI_InitLevel( void ) {
 	AiAasWorld::Init( level.mapname );
 	AiAasRouteCache::Init( *AiAasWorld::Instance() );
+	AiNavMeshManager::Init( level.mapname );
 	TacticalSpotsRegistry::Init( level.mapname );
 
 	AiBaseTeamBrain::OnGametypeChanged( g_gametype->string );
@@ -182,6 +184,7 @@ void AI_AfterLevelScriptShutdown() {
 	}
 
 	TacticalSpotsRegistry::Shutdown();
+	AiNavMeshManager::Shutdown();
 	AiAasRouteCache::Shutdown();
 	AiAasWorld::Shutdown();
 }
