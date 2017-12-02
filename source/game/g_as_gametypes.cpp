@@ -70,7 +70,7 @@ void GT_asCallSpawn( void ) {
 		return;
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.spawnFunc ) );
 	if( error < 0 ) {
@@ -92,7 +92,7 @@ void GT_asCallMatchStateStarted( void ) {
 		return;
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.matchStateStartedFunc ) );
 	if( error < 0 ) {
@@ -115,7 +115,7 @@ bool GT_asCallMatchStateFinished( int incomingMatchState ) {
 		return true;
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.matchStateFinishedFunc ) );
 	if( error < 0 ) {
@@ -145,7 +145,7 @@ void GT_asCallThinkRules( void ) {
 		return;
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.thinkRulesFunc ) );
 	if( error < 0 ) {
@@ -167,7 +167,7 @@ void GT_asCallPlayerRespawn( edict_t *ent, int old_team, int new_team ) {
 		return;
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.playerRespawnFunc ) );
 	if( error < 0 ) {
@@ -203,7 +203,7 @@ void GT_asCallScoreEvent( gclient_t *client, const char *score_event, const char
 		args = "";
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.scoreEventFunc ) );
 	if( error < 0 ) {
@@ -211,8 +211,8 @@ void GT_asCallScoreEvent( gclient_t *client, const char *score_event, const char
 	}
 
 	// Now we need to pass the parameters to the script function.
-	s1 = angelExport->asStringFactoryBuffer( score_event, strlen( score_event ) );
-	s2 = angelExport->asStringFactoryBuffer( args, strlen( args ) );
+	s1 = game.asExport->asStringFactoryBuffer( score_event, strlen( score_event ) );
+	s2 = game.asExport->asStringFactoryBuffer( args, strlen( args ) );
 
 	ctx->SetArgObject( 0, client );
 	ctx->SetArgObject( 1, s1 );
@@ -223,8 +223,8 @@ void GT_asCallScoreEvent( gclient_t *client, const char *score_event, const char
 		GT_asShutdownScript();
 	}
 
-	angelExport->asStringRelease( s1 );
-	angelExport->asStringRelease( s2 );
+	game.asExport->asStringRelease( s1 );
+	game.asExport->asStringRelease( s2 );
 }
 
 //"String @GT_ScoreboardMessage( uint maxlen )"
@@ -240,7 +240,7 @@ void GT_asCallScoreboardMessage( unsigned int maxlen ) {
 		return;
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.scoreboardMessageFunc ) );
 	if( error < 0 ) {
@@ -273,7 +273,7 @@ edict_t *GT_asCallSelectSpawnPoint( edict_t *ent ) {
 		return SelectDeathmatchSpawnPoint( ent ); // should have a hardcoded backup
 
 	}
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.selectSpawnPointFunc ) );
 	if( error < 0 ) {
@@ -312,7 +312,7 @@ bool GT_asCallGameCommand( gclient_t *client, const char *cmd, const char *args,
 		return false;
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.clientCommandFunc ) );
 	if( error < 0 ) {
@@ -320,8 +320,8 @@ bool GT_asCallGameCommand( gclient_t *client, const char *cmd, const char *args,
 	}
 
 	// Now we need to pass the parameters to the script function.
-	s1 = angelExport->asStringFactoryBuffer( cmd, strlen( cmd ) );
-	s2 = angelExport->asStringFactoryBuffer( args, strlen( args ) );
+	s1 = game.asExport->asStringFactoryBuffer( cmd, strlen( cmd ) );
+	s2 = game.asExport->asStringFactoryBuffer( args, strlen( args ) );
 
 	ctx->SetArgObject( 0, client );
 	ctx->SetArgObject( 1, s1 );
@@ -333,8 +333,8 @@ bool GT_asCallGameCommand( gclient_t *client, const char *cmd, const char *args,
 		GT_asShutdownScript();
 	}
 
-	angelExport->asStringRelease( s1 );
-	angelExport->asStringRelease( s2 );
+	game.asExport->asStringRelease( s1 );
+	game.asExport->asStringRelease( s2 );
 
 	// Retrieve the return from the context
 	return ctx->GetReturnByte() == 0 ? false : true;
@@ -345,11 +345,11 @@ void GT_asCallShutdown( void ) {
 	int error;
 	asIScriptContext *ctx;
 
-	if( !level.gametype.shutdownFunc || !angelExport ) {
+	if( !level.gametype.shutdownFunc || !game.asExport ) {
 		return;
 	}
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.shutdownFunc ) );
 	if( error < 0 ) {
@@ -489,7 +489,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule ) {
 	// execute the GT_InitGametype function
 	//
 
-	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 
 	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.initFunc ) );
 	if( error < 0 ) {

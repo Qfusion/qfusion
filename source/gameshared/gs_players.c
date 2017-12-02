@@ -187,7 +187,7 @@ int GS_UpdateBaseAnims( entity_state_t *state, vec3_t velocity ) {
 	trace_t trace;
 
 	if( !state ) {
-		module_Error( "GS_UpdateBaseAnims: NULL state\n" );
+		gs.api.Error( "GS_UpdateBaseAnims: NULL state\n" );
 		return 0;
 	}
 
@@ -201,7 +201,7 @@ int GS_UpdateBaseAnims( entity_state_t *state, vec3_t velocity ) {
 	point[0] = state->origin[0];
 	point[1] = state->origin[1];
 	point[2] = state->origin[2] - ( 1.6 * STEPSIZE );
-	module_Trace( &trace, state->origin, mins, maxs, point, state->number, MASK_PLAYERSOLID, 0 );
+	gs.api.Trace( &trace, state->origin, mins, maxs, point, state->number, MASK_PLAYERSOLID, 0 );
 	if( trace.ent == -1 || ( trace.fraction < 1.0f && !ISWALKABLEPLANE( &trace.plane ) && !trace.startsolid ) ) {
 		pmanim.moveflags |= ANIMMOVE_AIR;
 	}

@@ -3,18 +3,19 @@ project (game)
 include_directories(${ANGELSCRIPT_INCLUDE_DIR})
 
 file(GLOB GAME_HEADERS
-    "*.h"
-    "ai/*.h"
+	"*.h"
+	"ai/*.h"
 	"../gameshared/*.h"
 	"../qalgo/base64.h"
 	"../qalgo/md5.h"
 )
 
 file(GLOB GAME_SOURCES
-    "*.cpp"
-    "ai/*.cpp"
-    "../gameshared/*.c"
-    "../matchmaker/mm_rating.c"
+	"*.cpp"
+	"ai/*.cpp"
+	"../gameshared/*.c"
+	"../gameshared/gs_ascript.cpp"
+	"../matchmaker/mm_rating.c"
 	"../qalgo/base64.c"
 	"../qalgo/md5.c"
 )

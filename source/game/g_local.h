@@ -153,6 +153,7 @@ typedef struct {
 	int serverflags;
 
 	// AngelScript engine object
+	struct angelwrap_api_s *asExport;
 	void *asEngine;
 	bool asGlobalsInitialized;
 

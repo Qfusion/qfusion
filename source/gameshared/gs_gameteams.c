@@ -56,7 +56,7 @@ const char *GS_TeamName( int team ) {
 	if( team < 0 || team >= GS_MAX_TEAMS ) {
 		return NULL;
 	}
-	return module_GetConfigString( CS_TEAM_SPECTATOR_NAME + team );
+	return gs.api.GetConfigString( CS_TEAM_SPECTATOR_NAME + team );
 }
 
 const char *GS_DefaultTeamName( int team ) {
@@ -93,7 +93,7 @@ int GS_Teams_TeamFromName( const char *teamname ) {
 			return i;
 		}
 
-		s = module_GetConfigString( CS_TEAM_SPECTATOR_NAME + i );
+		s = gs.api.GetConfigString( CS_TEAM_SPECTATOR_NAME + i );
 		if( s && !Q_stricmp( s, teamname ) ) {
 			return i;
 		}

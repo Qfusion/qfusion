@@ -46,7 +46,7 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 	VectorNormalizeFast( dir );
 	NormalVectorToAxis( dir, axis );
 
-	if( module_PointContents( start, timeDelta ) & MASK_WATER ) {
+	if( gs.api.PointContents( start, timeDelta ) & MASK_WATER ) {
 		water = true;
 		VectorCopy( start, water_start );
 		content_mask &= ~MASK_WATER;
@@ -65,7 +65,7 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 		VectorMA( end, u, &axis[AXIS_UP], end );
 	}
 
-	module_Trace( trace, start, vec3_origin, vec3_origin, end, ignore, content_mask, timeDelta );
+	gs.api.Trace( trace, start, vec3_origin, vec3_origin, end, ignore, content_mask, timeDelta );
 
 	// see if we hit water
 	if( trace->contents & MASK_WATER ) {
@@ -93,7 +93,7 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 #endif
 
 		// re-trace ignoring water this time
-		module_Trace( trace, water_start, vec3_origin, vec3_origin, end, ignore, MASK_SHOT, timeDelta );
+		gs.api.Trace( trace, water_start, vec3_origin, vec3_origin, end, ignore, MASK_SHOT, timeDelta );
 
 		return &water_trace;
 	}
@@ -130,7 +130,7 @@ void GS_TraceLaserBeam( trace_t *trace, vec3_t origin, vec3_t angles, float rang
 
 	numhits = 0;
 	while( trace->ent != -1 ) {
-		module_Trace( trace, from, mins, maxs, end, passthrough, mask, timeDelta );
+		gs.api.Trace( trace, from, mins, maxs, end, passthrough, mask, timeDelta );
 		if( trace->ent != -1 ) {
 			// prevent endless loops by checking whether we have already impacted this entity
 			for( j = 0; j < numhits; j++ ) {
@@ -148,7 +148,7 @@ void GS_TraceLaserBeam( trace_t *trace, vec3_t origin, vec3_t angles, float rang
 			}
 
 			// check for pass-through
-			hit = module_GetEntityState( trace->ent, timeDelta );
+			hit = gs.api.GetEntityState( trace->ent, timeDelta );
 			if( trace->ent == 0 || !hit || hit->solid == SOLID_BMODEL ) { // can't pass through brush models
 				break;
 			}
@@ -284,13 +284,13 @@ static bool GS_CheckBladeAutoAttack( player_state_t *playerState, int timeDelta 
 	VectorMA( origin, weapondef->firedef_weak.timeout, dir, end );
 
 	// check for a player to touch
-	module_Trace( &trace, origin, vec3_origin, vec3_origin, end, playerState->POVnum, CONTENTS_BODY, timeDelta );
+	gs.api.Trace( &trace, origin, vec3_origin, vec3_origin, end, playerState->POVnum, CONTENTS_BODY, timeDelta );
 	if( trace.ent <= 0 || trace.ent > gs.maxclients ) {
 		return false;
 	}
 
-	player = module_GetEntityState( playerState->POVnum, 0 );
-	targ = module_GetEntityState( trace.ent, 0 );
+	player = gs.api.GetEntityState( playerState->POVnum, 0 );
+	targ = gs.api.GetEntityState( trace.ent, 0 );
 	if( !( targ->effects & EF_TAKEDAMAGE ) || targ->type != ET_PLAYER ) {
 		return false;
 	}
@@ -481,7 +481,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 				playerState->stats[STAT_WEAPON_TIME] += firedef->weapondown_time;
 
 				if( firedef->weapondown_time ) {
-					module_PredictedEvent( playerState->POVnum, EV_WEAPONDROP, 0 );
+					gs.api.PredictedEvent( playerState->POVnum, EV_WEAPONDROP, 0 );
 				}
 			}
 		}
@@ -499,7 +499,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 		firedef = GS_FiredefForPlayerState( playerState, playerState->stats[STAT_WEAPON] );
 		playerState->weaponState = WEAPON_STATE_ACTIVATING;
 		playerState->stats[STAT_WEAPON_TIME] += firedef->weaponup_time;
-		module_PredictedEvent( playerState->POVnum, EV_WEAPONACTIVATE, playerState->stats[STAT_WEAPON]<<1 );
+		gs.api.PredictedEvent( playerState->POVnum, EV_WEAPONACTIVATE, playerState->stats[STAT_WEAPON]<<1 );
 	}
 
 	if( playerState->weaponState == WEAPON_STATE_ACTIVATING ) {
@@ -530,7 +530,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 					} else {
 						playerState->weaponState = WEAPON_STATE_NOAMMOCLICK;
 						playerState->stats[STAT_WEAPON_TIME] += NOAMMOCLICK_PENALTY;
-						module_PredictedEvent( playerState->POVnum, EV_NOAMMOCLICK, 0 );
+						gs.api.PredictedEvent( playerState->POVnum, EV_NOAMMOCLICK, 0 );
 						goto done;
 					}
 				}
@@ -560,9 +560,9 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 		}
 
 		if( refire && firedef->smooth_refire ) {
-			module_PredictedEvent( playerState->POVnum, EV_SMOOTHREFIREWEAPON, parm );
+			gs.api.PredictedEvent( playerState->POVnum, EV_SMOOTHREFIREWEAPON, parm );
 		} else {
-			module_PredictedEvent( playerState->POVnum, EV_FIREWEAPON, parm );
+			gs.api.PredictedEvent( playerState->POVnum, EV_FIREWEAPON, parm );
 		}
 
 		// waste ammo
