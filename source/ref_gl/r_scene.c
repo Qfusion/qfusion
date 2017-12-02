@@ -73,6 +73,14 @@ void R_ClearScene( void ) {
 	Matrix3_Identity( rsc.polyweapent->axis );
 	rsc.numLocalEntities++;
 
+	rsc.polyviewerent = R_NUM2ENT( rsc.numLocalEntities );
+	rsc.polyviewerent->scale = 1.0f;
+	rsc.polyviewerent->model = NULL;
+	rsc.polyviewerent->rtype = RT_MODEL;
+	rsc.polyviewerent->renderfx = RF_VIEWERMODEL;
+	Matrix3_Identity( rsc.polyviewerent->axis );
+	rsc.numLocalEntities++;
+
 	rsc.skyent = R_NUM2ENT( rsc.numLocalEntities );
 	*rsc.skyent = *rsc.worldent;
 	rsc.numLocalEntities++;

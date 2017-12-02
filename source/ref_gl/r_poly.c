@@ -57,14 +57,32 @@ void R_DrawPolys( void ) {
 	}
 
 	for( i = 0; i < rsc.numPolys; i++ ) {
+		int renderfx;
+
 		p = rsc.polys + i;
+		renderfx = p->renderfx;
+
 		if( p->fogNum <= 0 || (unsigned)p->fogNum > rsh.worldBrushModel->numfogs ) {
 			fog = NULL;
 		} else {
 			fog = rsh.worldBrushModel->fogs + p->fogNum - 1;
 		}
 
-		if( p->renderfx & RF_WEAPONMODEL ) {
+		if( renderfx & RF_WEAPONMODEL ) {
+			if( rn.renderFlags & RF_NONVIEWERREF ) {
+				continue;
+			}
+		}
+
+		if( renderfx & RF_VIEWERMODEL ) {
+			if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_SHADOWMAPVIEW ) ) ) {
+				continue;
+			}
+		}
+
+		if( renderfx & RF_VIEWERMODEL ) {
+			e = rsc.polyviewerent;
+		} else if( renderfx & RF_WEAPONMODEL ) {
 			e = rsc.polyweapent;
 		} else {
 			e = rsc.polyent;

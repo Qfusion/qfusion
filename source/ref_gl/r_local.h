@@ -266,6 +266,7 @@ typedef struct {
 	entity_t        *worldent;
 	entity_t        *polyent;
 	entity_t        *polyweapent;
+	entity_t        *polyviewerent;
 	entity_t        *skyent;
 
 	unsigned int numDlights;
