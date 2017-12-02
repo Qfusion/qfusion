@@ -181,24 +181,28 @@ static void G_GS_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec
 * give gameshared access to some utilities
 */
 static void G_InitGameShared( void ) {
-	memset( &gs, 0, sizeof( gs_state_t ) );
-	gs.module = GS_MODULE_GAME;
+	int maxclients;
+	gs_module_api_t api;
 
-	gs.maxclients = atoi( trap_GetConfigString( CS_MAXCLIENTS ) );
-	if( gs.maxclients < 1 || gs.maxclients > MAX_EDICTS ) {
-		G_Error( "Invalid maxclients value %i\n", gs.maxclients );
+	maxclients = atoi( trap_GetConfigString( CS_MAXCLIENTS ) );
+	if( maxclients < 1 || maxclients > MAX_EDICTS ) {
+		G_Error( "Invalid maxclients value %i\n", maxclients );
 	}
 
-	module_PredictedEvent = G_PredictedEvent;
-	module_Error = G_Error;
-	module_Printf = G_Printf;
-	module_Malloc = G_GS_Malloc;
-	module_Free = G_GS_Free;
-	module_Trace = G_GS_Trace;
-	module_GetEntityState = G_GetEntityStateForDeltaTime;
-	module_PointContents = G_PointContents4D;
-	module_PMoveTouchTriggers = G_PMoveTouchTriggers;
-	module_GetConfigString = trap_GetConfigString;
+	memset( &api, 0, sizeof( api ) );
+	api.PredictedEvent = G_PredictedEvent;
+	api.Error = G_Error;
+	api.Printf = G_Printf;
+	api.Malloc = G_GS_Malloc;
+	api.Free = G_GS_Free;
+	api.Trace = G_GS_Trace;
+	api.GetEntityState = G_GetEntityStateForDeltaTime;
+	api.PointContents = G_PointContents4D;
+	api.PMoveTouchTriggers = G_PMoveTouchTriggers;
+	api.GetConfigString = trap_GetConfigString;
+	api.GetAngelExport = trap_asGetAngelExport;
+
+	GS_InitModule( GS_MODULE_GAME, maxclients, &api );
 }
 
 /*

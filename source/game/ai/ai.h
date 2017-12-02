@@ -36,9 +36,9 @@ typedef enum {
 
 typedef struct ai_handle_s ai_handle_t;
 
-extern const struct asEnum_s asAIEnums[];
-extern const struct asClassDescriptor_s *asAIClassesDescriptors[];
-extern const struct asglobfuncs_s asAIGlobFuncs[];
+extern const struct gs_asEnum_s asAIEnums[];
+extern const struct gs_asClassDescriptor_s *asAIClassesDescriptors[];
+extern const struct gs_asglobfuncs_s asAIGlobFuncs[];
 
 typedef enum {
 	// A nav entity should be reached at touch (as regular items like weapons, armors, etc.)

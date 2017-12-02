@@ -851,7 +851,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 	} else if( view->type == VIEWDEF_CAMERA ) {
 		CG_DemoCam_GetViewDef( view );
 	} else {
-		module_Error( "CG_SetupView: Invalid view type %i\n", view->type );
+		CG_Error( "CG_SetupView: Invalid view type %i\n", view->type );
 	}
 
 	//

@@ -29,22 +29,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern "C" {
 #endif
 
+typedef struct {
 #ifndef _MSC_VER
-extern void ( *module_Printf )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
-extern void ( *module_Error )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
+	void ( *Printf )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
+	void ( *Error )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
 #else
-extern void ( *module_Printf )( _Printf_format_string_ const char *format, ... );
-extern void ( *module_Error )( _Printf_format_string_ const char *format, ... );
+	void ( *Printf )( _Printf_format_string_ const char *format, ... );
+	void ( *Error )( _Printf_format_string_ const char *format, ... );
 #endif
 
-extern void *( *module_Malloc )( size_t size );
-extern void ( *module_Free )( void *data );
-extern void ( *module_Trace )( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta );
-extern entity_state_t *( *module_GetEntityState )( int entNum, int deltaTime );
-extern int ( *module_PointContents )( vec3_t point, int timeDelta );
-extern void ( *module_PredictedEvent )( int entNum, int ev, int parm );
-extern void ( *module_PMoveTouchTriggers )( pmove_t *pm, vec3_t previous_origin );
-extern const char *( *module_GetConfigString )( int index );
+	void *( *Malloc )( size_t size );
+	void ( *Free )( void *data );
+	void ( *Trace )( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta );
+	entity_state_t *( *GetEntityState )( int entNum, int deltaTime );
+	int ( *PointContents )( vec3_t point, int timeDelta );
+	void ( *PredictedEvent )( int entNum, int ev, int parm );
+	void ( *PMoveTouchTriggers )( pmove_t *pm, vec3_t previous_origin );
+	const char *( *GetConfigString )( int index );
+	struct angelwrap_api_s *( *GetAngelExport )( void );
+} gs_module_api_t;
+
+extern gs_module_api_t gs_api;
 
 //===============================================================
 //		WARSOW player AAboxes sizes
@@ -140,6 +145,7 @@ typedef struct {
 	int maxclients;
 	char gametypeName[MAX_CONFIGSTRING_CHARS];
 	game_state_t gameState;
+	gs_module_api_t api;
 } gs_state_t;
 
 extern gs_state_t gs;
@@ -1103,6 +1109,7 @@ typedef struct {
 	firedef_t firedef_weak;
 } gs_weapon_definition_t;
 
+void GS_InitModule( int module, int maxClients, gs_module_api_t *api );
 gs_weapon_definition_t *GS_GetWeaponDef( int weapon );
 void GS_InitWeapons( void );
 int GS_SelectBestWeapon( player_state_t *playerState );
