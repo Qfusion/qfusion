@@ -53,7 +53,6 @@ class Bot : public Ai
 	friend class BotWeaponSelector;
 	friend class BotRoamingManager;
 	friend class TacticalSpotsRegistry;
-	friend class BotVisitedAreasCache;
 	friend class BotFallbackMovementPath;
 	friend class BotSameFloorClusterAreasCache;
 	friend class BotBaseGoal;
@@ -570,7 +569,6 @@ public:
 	StaticVector<int, MAX_SAVED_AREAS> savedPlatformAreas;
 
 	BotFallbackMovementPath fallbackMovementPath;
-	BotVisitedAreasCache visitedAreasCache;
 
 	void CheckTargetProximity();
 

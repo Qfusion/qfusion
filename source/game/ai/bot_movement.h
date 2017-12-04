@@ -1394,8 +1394,7 @@ class BotDummyMovementAction : public BotBaseMovementAction
 	const int *TryFindBestRampExitArea( BotMovementPredictionContext *context, int rampAreaNum, int forbiddenAreaNum = 0 );
 	bool TryFindFallbackRampAreaPath( BotMovementPredictionContext *context, int rampAreaNum, int forbiddenAreaNum = 0 );
 	bool TryFindNearbyRampAreasPaths( BotMovementPredictionContext *context );
-	bool TryFindClosestNonVisitedAreaOrTrigger( BotMovementPredictionContext *context );
-	bool TryBuildClosestTacticalSpotsChain( BotMovementPredictionContext *context );
+	bool TryFindClosestToTargetWalkableTrigger( BotMovementPredictionContext *context );
 	int TryFindFirstClosestTacticalSpot( BotMovementPredictionContext *context, float *spotOrigin, float *reachRadius );
 	void SetupFallbackMovement( BotMovementPredictionContext *context );
 public:
@@ -1403,83 +1402,6 @@ public:
 	void PlanPredictionStep( BotMovementPredictionContext *context ) override;
 	void CheckPredictionStepResults( BotMovementPredictionContext *context ) override {
 		AI_FailWith( __FUNCTION__, "This method should never get called (PlanMovmementStep() should stop planning)\n" );
-	}
-};
-
-class BotVisitedAreasCache
-{
-	const edict_t *const self;
-
-	// TODO: AAS subsystem should check at loading and guarantee this limit of areas number
-	static constexpr unsigned MAX_AREAS = std::numeric_limits<uint16_t>::max();
-
-	// Storing 64-bit timestamps for every area is not a cache-friendly approach.
-	// A time delta since last visited timestamp is stored instead.
-	// A delta is limited by the array element max value (the delta does not grow in this case).
-	uint16_t millisSinceLastVisited[MAX_AREAS];
-
-	static constexpr unsigned MAX_BOX_AREAS = 384;
-	static constexpr float BOX_SIDE = 512.0f;
-	static constexpr float BOX_HEIGHT = 96.0f;
-
-	static constexpr unsigned AREA_VISITED_TIMEOUT = 7000;
-
-	mutable int boxAreaNums[MAX_BOX_AREAS];
-	mutable int64_t boxAreasComputedAt;
-	mutable vec3_t boxAreasComputedForOrigin;
-	mutable float boxComputedForSide;
-	mutable int numBoxAreas;
-
-	void EnsureBoxAreasCacheValid( const vec3_t origin, float side = BOX_SIDE ) const;
-	void TickAreasVisitedTimes();
-public:
-	BotVisitedAreasCache( const edict_t *self_ )
-		: self( self_ ), boxAreasComputedAt( 0 ), numBoxAreas( 0 ) {
-		std::fill_n( millisSinceLastVisited, MAX_AREAS, std::numeric_limits<uint16_t>::max() );
-	}
-
-	inline void MarkAsVisited( int areaNum ) {
-		assert( areaNum < AiAasWorld::Instance()->NumAreas() );
-		millisSinceLastVisited[areaNum] = 0;
-	}
-
-	inline unsigned MillisSinceLastVisited( int areaNum ) const {
-		assert( areaNum < AiAasWorld::Instance()->NumAreas() );
-		return millisSinceLastVisited[areaNum];
-	}
-
-	void Update();
-
-	struct ProblemParams {
-		vec3_t origin;
-		int fromAreaNums[2];
-	public:
-		const float side;
-		const int numFromAreas;
-
-		ProblemParams( const vec3_t origin_, const int *fromAreaNums_, int numFromAreas_, float side_ = BOX_SIDE )
-			: side( side_ ), numFromAreas( numFromAreas_ ) {
-			VectorCopy( origin_, this->origin );
-			fromAreaNums[0] = numFromAreas_ > 0 ? fromAreaNums_[0] : 0;
-			fromAreaNums[1] = numFromAreas_ > 1 ? fromAreaNums_[1] : 0;
-		}
-
-		const float *Origin() const { return origin; }
-		const int *FromAreaNums() const { return fromAreaNums; }
-	};
-
-	int FindClosestToTargetNonVisitedArea( const ProblemParams &problemParams,
-                                           float *resultPoint = nullptr,
-                                           int *resultAreaNum = nullptr ) const;
-
-	int FindClosestToTargetNonVisitedArea( BotMovementPredictionContext *context,
-                                           vec3_t resultPoint = nullptr,
-                                           int *resultAreaNum = nullptr ) const {
-		const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-		int fromAreaNums[2] = { entityPhysicsState.CurrAasAreaNum(), entityPhysicsState.DroppedToFloorAasAreaNum() };
-		int numFromAreas = fromAreaNums[0] == fromAreaNums[1] ? 1 : 2;
-		ProblemParams problemParams( entityPhysicsState.Origin(), fromAreaNums, numFromAreas );
-		return FindClosestToTargetNonVisitedArea( problemParams, resultPoint, resultAreaNum );
 	}
 };
 

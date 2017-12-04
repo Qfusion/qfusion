@@ -1941,26 +1941,12 @@ void BotDummyMovementAction::SetupLostNavTargetMovement( BotMovementPredictionCo
 	botInput->SetIntendedLookDir( entityPhysicsState.ForwardDir(), true );
 }
 
-bool BotDummyMovementAction::TryFindClosestNonVisitedAreaOrTrigger( BotMovementPredictionContext *context ) {
-	const auto &visitedAreasCache = self->ai->botRef->visitedAreasCache;
+bool BotDummyMovementAction::TryFindClosestToTargetWalkableTrigger( BotMovementPredictionContext *context ) {
 	auto *fallbackMovementPath = &self->ai->botRef->fallbackMovementPath;
 
-	vec3_t origins[2];
-	int areaNums[2];
-
-	if( int triggerTravelTime = FindClosestToTargetTrigger( context, origins[0], &areaNums[0] ) ) {
-		int bestIndex = 0;
-		if( int areaTravelTime = visitedAreasCache.FindClosestToTargetNonVisitedArea( context, origins[1], &areaNums[1] ) ) {
-			if( triggerTravelTime > areaTravelTime ) {
-				bestIndex = 1;
-			}
-		}
-
-		fallbackMovementPath->Activate( &origins[bestIndex], 1, &areaNums[bestIndex] );
-		return true;
-	}
-
-	if( visitedAreasCache.FindClosestToTargetNonVisitedArea( context, origins[0], &areaNums[0] ) ) {
+	vec3_t origins[1];
+	int areaNums[1];
+	if( FindClosestToTargetTrigger( context, origins[0], &areaNums[0] ) ) {
 		fallbackMovementPath->Activate( &origins[0], 1, &areaNums[0] );
 		return true;
 	}
@@ -2230,7 +2216,6 @@ void BotSameFloorClusterAreasCache::BuildCandidateAreasHeap( BotMovementPredicti
 	}
 
 	const auto *aasAreas = aasWorld->Areas();
-	const auto &visitedAreasCache = self->ai->botRef->visitedAreasCache;
 	const auto *routeCache = self->ai->botRef->routeCache;
 	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
 	const int toAreaNum = context->NavTargetAasAreaNum();
@@ -2244,10 +2229,6 @@ void BotSameFloorClusterAreasCache::BuildCandidateAreasHeap( BotMovementPredicti
 
 		float squareDistance = areaPoint.SquareDistanceTo( entityPhysicsState.Origin() );
 		if( squareDistance < SQUARE( 64.0f ) ) {
-			continue;
-		}
-
-		if( squareDistance < SQUARE( 128.0f ) && visitedAreasCache.MillisSinceLastVisited( areaNum ) < 5000 ) {
 			continue;
 		}
 
@@ -2308,7 +2289,7 @@ bool BotDummyMovementAction::TryFindFallbackMovementPath( BotMovementPredictionC
 		return true;
 	}
 
-	if( TryFindClosestNonVisitedAreaOrTrigger( context ) ) {
+	if( TryFindClosestToTargetWalkableTrigger( context ) ) {
 		return true;
 	}
 
@@ -2327,10 +2308,6 @@ bool BotDummyMovementAction::TryFindFallbackMovementPath( BotMovementPredictionC
 	// A movement on fallback path with more than a 1 node is very restrictive.
 	// Use it only as a last hope if the bot has really started being blocked
 	if( self->ai->botRef->MillisInBlockedState() > 800 ) {
-		if( TryBuildClosestTacticalSpotsChain( context ) ) {
-			return true;
-		}
-
 		vec3_t areaPoint;
 		int areaNum;
 		if( context->sameFloorClusterAreasCache.GetClosestToTargetPoint( context, areaPoint, &areaNum ) ) {
@@ -2574,161 +2551,7 @@ bool BotDummyMovementAction::TryFindNearbyRampAreasPaths( BotMovementPredictionC
 	return false;
 }
 
-static constexpr auto FALLBACK_SPOT_SEARCH_RADIUS = 192.0f;
-
 typedef TacticalSpotsRegistry::OriginParams OriginParams;
-
-bool BotDummyMovementAction::TryBuildClosestTacticalSpotsChain( BotMovementPredictionContext *context ) {
-	const TacticalSpotsRegistry *registry = TacticalSpotsRegistry::Instance();
-	auto *const routeCache = self->ai->botRef->routeCache;
-	const int toAreaNum = context->NavTargetAasAreaNum();
-	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-	int fromAreaNums[2] = { 0, 0 };
-	const int numFromAreas = entityPhysicsState.PrepareRoutingStartAreas( fromAreaNums );
-
-	int currTravelTimeToTarget = context->TravelTimeToNavTarget();
-	if( !currTravelTimeToTarget ) {
-		return false;
-	}
-
-	vec3_t origins[3];
-	float reachRadii[3] = { 48.0f, 48.0f, 48.0f };
-	int t1 = TryFindFirstClosestTacticalSpot( context, origins[0], reachRadii );
-	if( !t1 ) {
-		return false;
-	}
-
-	auto *fallbackMovementPath = &self->ai->botRef->fallbackMovementPath;
-	OriginParams nextSpotParams( origins[0], self, FALLBACK_SPOT_SEARCH_RADIUS, routeCache );
-	if( int t2 = registry->FindClosestToTargetWalkableSpot( nextSpotParams, toAreaNum, origins[1] ) ) {
-		// The registry method does not check whether spot travel time
-		// is less than the current travel time with intention (so we can get at least a single spot).
-		if( t2 < t1 ) {
-			int numSpots = 1;
-
-			OriginParams thirdSpotParams( origins[1], self, FALLBACK_SPOT_SEARCH_RADIUS, routeCache );
-			if( int t3 = registry->FindClosestToTargetWalkableSpot( thirdSpotParams, toAreaNum, origins[2] ) ) {
-				if( t3 < t2 && t2 < currTravelTimeToTarget ) {
-					numSpots = 3;
-				}
-			}
-
-			if( t2 < currTravelTimeToTarget ) {
-				numSpots = 2;
-			}
-
-			if( numSpots > 1 ) {
-				fallbackMovementPath->Activate( origins, numSpots, nullptr, reachRadii );
-				return true;
-			}
-		}
-	}
-
-	// We can't find a feasible next tactical spot, and generally we should not
-	// yield a single-spot path to avoid looping. However we should check whether
-	// there are various opportunities to reach the nav target after the first spot is reached.
-
-	// Try find areas in an extended box around the first spot that are not visited and are closer to the nav target
-	const auto &visitedAreasCache = self->ai->botRef->visitedAreasCache;
-	const int spotAreaNums[1] = { AiAasWorld::Instance()->FindAreaNum( origins[0] ) };
-	BotVisitedAreasCache::ProblemParams areaProblemParams( origins[0], spotAreaNums, 1, 768.0f );
-	if( int tt = visitedAreasCache.FindClosestToTargetNonVisitedArea( areaProblemParams, origins[1] ) ) {
-		if( tt < t1 && tt < currTravelTimeToTarget ) {
-			fallbackMovementPath->Activate( origins, 2, nullptr, reachRadii );
-			return true;
-		}
-	}
-
-	// Try find trigger entities around the first spot that are closer to the nav target
-	ClosestTriggerProblemParams triggerProblemParams( origins[0], fromAreaNums, numFromAreas, toAreaNum );
-	Vec3 triggerSearchMins( -256, -256, -64 );
-	Vec3 triggerSearchMaxs( +256, +256, +64 );
-	context->nearbyTriggersCache.EnsureValidForBounds( triggerSearchMins.Data(), triggerSearchMaxs.Data() );
-	if( int tt = FindClosestToTargetTrigger( triggerProblemParams, context->nearbyTriggersCache, origins[1] ) ) {
-		if( tt < t1 && tt < currTravelTimeToTarget ) {
-			fallbackMovementPath->Activate( origins, 2, nullptr, reachRadii );
-		}
-	}
-
-	// The last one, try check whether the spot is close to the nav target
-
-	// Do an early cutoff by distance
-	if( context->NavTargetOrigin().SquareDistanceTo( entityPhysicsState.Origin() ) > SQUARE( 384.0f ) ) {
-		return false;
-	}
-
-	// We can't use t1 for short range reachability tests since it has been computed for all allowed travel flags
-	int tt = routeCache->TravelTimeToGoalArea( spotAreaNums[0], toAreaNum, BotFallbackMovementPath::TRAVEL_FLAGS );
-	// The nav target is not walkable at all or not in walkable in short-range (200 AAS time units)
-	if( !tt || tt > 200 ) {
-		return false;
-	}
-
-	// Test whether the nav target can be considered walkable from the first spot by results of a coarse trace test
-
-	trace_t trace;
-	vec3_t traceMins, traceMaxs;
-	TacticalSpotsRegistry::GetSpotsWalkabilityTraceBounds( traceMins, traceMaxs );
-	context->NavTargetOrigin().CopyTo( origins[1] );
-	G_Trace( &trace, origins[0], traceMins, traceMaxs, origins[1], self, MASK_AISOLID );
-	if( trace.fraction != 1.0f && Distance2DSquared( origins[1], trace.endpos ) > 8 * 8 ) {
-		return false;
-	}
-
-	fallbackMovementPath->Activate( origins, 2, nullptr, reachRadii );
-	return true;
-}
-
-int BotDummyMovementAction::TryFindFirstClosestTacticalSpot( BotMovementPredictionContext *context,
-															 float *spotOrigin, float *reachRadius ) {
-	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-	int toAreaNum = context->NavTargetAasAreaNum();
-	const auto *registry = TacticalSpotsRegistry::Instance();
-	auto *routeCache = self->ai->botRef->routeCache;
-
-	OriginParams firstSpotParams( entityPhysicsState.Origin(), self, FALLBACK_SPOT_SEARCH_RADIUS, routeCache );
-	int travelTime = registry->FindClosestToTargetWalkableSpot( firstSpotParams, toAreaNum, spotOrigin );
-	if( travelTime ) {
-		return travelTime;
-	}
-
-	int bestTime = std::numeric_limits<int>::max();
-	trace_t trace;
-	float *mins = playerbox_stand_mins;
-	float *maxs = playerbox_stand_maxs;
-	for( int i = -1; i <= 1; i++ ) {
-		for( int j = -1; j <= 1; j++ ) {
-			// Already computed before these loops
-			if( i == 0 && j == 0 ) {
-				continue;
-			}
-
-			Vec3 adjustedOrigin( entityPhysicsState.Origin() );
-			adjustedOrigin.X() += i * playerbox_stand_maxs[0];
-			adjustedOrigin.Y() += i * playerbox_stand_maxs[1];
-			adjustedOrigin.Z() += 1.0f;
-			G_Trace( &trace, adjustedOrigin.Data(), mins, maxs, adjustedOrigin.Data(), self, MASK_AISOLID );
-			if( trace.fraction != 1.0f ) {
-				continue;
-			}
-
-			OriginParams adjustedParams( adjustedOrigin.Data(), self, FALLBACK_SPOT_SEARCH_RADIUS, routeCache );
-			vec3_t tmpOrigin;
-			int time = registry->FindClosestToTargetWalkableSpot( adjustedParams, toAreaNum, tmpOrigin );
-			if( time && time < bestTime ) {
-				bestTime = time;
-				VectorCopy( tmpOrigin, spotOrigin );
-			}
-		}
-	}
-
-	if( bestTime == std::numeric_limits<int>::max() ) {
-		return 0;
-	}
-
-	*reachRadius = 4.0f;
-	return bestTime;
-}
 
 void BotDummyMovementAction::SetupFallbackMovement( BotMovementPredictionContext *context ) {
 	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
@@ -3364,7 +3187,6 @@ void Bot::MovementFrame( BotInput *input ) {
 
 	movementAction->ExecActionRecord( &movementActionRecord, input, nullptr );
 
-	visitedAreasCache.Update();
 	roamingManager.CheckSpotsProximity();
 	CheckTargetProximity();
 	CheckGroundPlatform();
@@ -6719,255 +6541,6 @@ ObstacleAvoidanceResult BotEnvironmentTraceCache::TryAvoidObstacles( BotMovement
 	}
 
 	return ObstacleAvoidanceResult::KEPT_AS_IS;
-}
-
-void BotVisitedAreasCache::EnsureBoxAreasCacheValid( const vec3_t origin, float side ) const {
-	if( boxAreasComputedAt == level.time && boxComputedForSide == side ) {
-		if( VectorCompare( origin, boxAreasComputedForOrigin ) ) {
-			return;
-		}
-	}
-
-	Vec3 mins( -0.5f * BOX_SIDE, -0.5f * BOX_SIDE, -0.5f * BOX_HEIGHT );
-	Vec3 maxs( +0.5f * BOX_SIDE, +0.5f * BOX_SIDE, +0.5f * BOX_HEIGHT );
-	mins += origin;
-	maxs += origin;
-
-	const auto *aasWorld = AiAasWorld::Instance();
-	numBoxAreas = aasWorld->BBoxAreas( mins, maxs, boxAreaNums, MAX_BOX_AREAS );
-
-	// Skip "bad" areas
-	const auto *aasAreaSettings = aasWorld->AreaSettings();
-	auto *const routeCache = self->ai->botRef->routeCache;
-	int i = 0, j = 0;
-	for( ; i < numBoxAreas; ++i ) {
-		int areaNum = boxAreaNums[i];
-		const auto &areaSettings = aasAreaSettings[areaNum];
-		if( !( areaSettings.areaflags & AREA_GROUNDED ) ) {
-			continue;
-		}
-		if( areaSettings.areaflags & AREA_DISABLED ) {
-			continue;
-		}
-		if( areaSettings.contents & AREACONTENTS_DONOTENTER ) {
-			continue;
-		}
-		if( routeCache->AreaDisabled( areaNum ) ) {
-			continue;
-		}
-
-		boxAreaNums[j++] = areaNum;
-	}
-
-	numBoxAreas = j;
-	boxAreasComputedAt = level.time;
-	boxComputedForSide = side;
-	VectorCopy( origin, boxAreasComputedForOrigin );
-}
-
-void BotVisitedAreasCache::TickAreasVisitedTimes() {
-	const unsigned frametime = game.frametime;
-	const unsigned maxTime = std::numeric_limits<uint16_t>::max();
-	for( int i = 0, end = AiAasWorld::Instance()->NumAreas(); i < end; ++i ) {
-		// We hope a compiler uses a saturated arythmetic here
-		millisSinceLastVisited[i] = (uint16_t)std::min( millisSinceLastVisited[i] + frametime, maxTime );
-	}
-}
-
-void BotVisitedAreasCache::Update() {
-	EnsureBoxAreasCacheValid( self->s.origin );
-	TickAreasVisitedTimes();
-
-	// We have to mark current area and areas below and above as reached,
-	// otherwise a bug of sticking to the same area is often observed
-	// (A bot keeps trying reach an area above looking at the ceiling,
-	// until it gets rejected by 2D distance limit, then repeats).
-	Vec3 mins( playerbox_stand_mins[0], playerbox_stand_mins[1], -0.5f * BOX_HEIGHT );
-	Vec3 maxs( playerbox_stand_maxs[0], playerbox_stand_maxs[1], +0.5f * BOX_HEIGHT );
-
-	const auto *aasAreas = AiAasWorld::Instance()->Areas();
-	for( int i = 0; i < numBoxAreas; ++i ) {
-		const int areaNum = boxAreaNums[i];
-		const auto &area = aasAreas[areaNum];
-		if( BoundsOverlap( mins.Data(), maxs.Data(), area.mins, area.maxs ) ) {
-			MarkAsVisited( areaNum );
-		}
-	}
-
-	const int toAreaNum = self->ai->botRef->NavTargetAasAreaNum();
-	if( !toAreaNum ) {
-		return;
-	}
-
-	// Try marking all spots that has greater travel time to the nav target than the current one as visited too.
-
-	const auto &entityPhysicsState = self->ai->botRef->EntityPhysicsState();
-	int fromAreaNums[2] = { 0, 0 };
-	const int numFromAreas = entityPhysicsState->PrepareRoutingStartAreas( fromAreaNums );
-	const auto *routeCache = self->ai->botRef->routeCache;
-
-	// Try finding the current travel time to the nav target
-
-	int currTravelTimeToNavTarget = std::numeric_limits<int>::max();
-	for( int travelFlags: self->ai->botRef->TravelFlags() ) {
-		for( int i = 0; i < numFromAreas; ++i ) {
-			int travelTime = routeCache->TravelTimeToGoalArea( fromAreaNums[i], toAreaNum, travelFlags );
-			if( travelTime && travelTime < currTravelTimeToNavTarget ) {
-				currTravelTimeToNavTarget = travelTime;
-			}
-		}
-	}
-
-	if( currTravelTimeToNavTarget == std::numeric_limits<int>::max() ) {
-		return;
-	}
-
-	for( int i = 0; i < numBoxAreas; ++i ) {
-		const int areaNum = boxAreaNums[i];
-		// Skip already marked areas
-		if( MillisSinceLastVisited( areaNum ) < AREA_VISITED_TIMEOUT ) {
-			continue;
-		}
-		int travelTimeFromAreaToTarget = std::numeric_limits<int>::max();
-		for( int travelFlags: self->ai->botRef->TravelFlags() ) {
-			int travelTime = routeCache->TravelTimeToGoalArea( areaNum, toAreaNum, travelFlags );
-			if( travelTime && travelTime < currTravelTimeToNavTarget ) {
-				travelTimeFromAreaToTarget = travelTime;
-			}
-		}
-		if( travelTimeFromAreaToTarget > currTravelTimeToNavTarget ) {
-			MarkAsVisited( areaNum );
-		}
-	}
-}
-
-int BotVisitedAreasCache::FindClosestToTargetNonVisitedArea( const ProblemParams &problemParams,
-															 float *resultPoint,
-															 int *resultAreaNum ) const {
-	EnsureBoxAreasCacheValid( problemParams.Origin(), problemParams.side );
-
-	const int toAreaNum = self->ai->botRef->NavTargetAasAreaNum();
-	const float *origin = problemParams.Origin();
-	const int *fromAreaNums = problemParams.fromAreaNums;
-	const int numFromAreas = problemParams.numFromAreas;
-
-	const auto *aasWorld = AiAasWorld::Instance();
-	const auto aasAreas = aasWorld->Areas();
-	const auto aasAreaSettings = aasWorld->AreaSettings();
-	const auto *routeCache = self->ai->botRef->routeCache;
-
-	// We have to select candidate areas first, then do trace tests starting from the best area.
-	// Otherwise lots of CPU cycles would be lost on tracing for intermediate best areas that are not best overall.
-	StaticVector<AreaAndScore, MAX_BOX_AREAS> candidateAreas;
-
-	for( int i = 0; i < numBoxAreas; ++i ) {
-		const int areaNum = boxAreaNums[i];
-
-		// Skip recently visited areas
-		if( MillisSinceLastVisited( areaNum ) < AREA_VISITED_TIMEOUT ) {
-			continue;
-		}
-
-		// Check whether an area is a current area
-
-		bool isCurrentArea = false;
-		for( int j = 0; j < numFromAreas; ++j ) {
-			if( fromAreaNums[j] == areaNum ) {
-				isCurrentArea = true;
-				break;
-			}
-		}
-		if( isCurrentArea ) {
-			continue;
-		}
-
-		const auto &area = aasAreas[areaNum];
-		if( Distance2DSquared( area.center, self->s.origin ) < 48 * 48 ) {
-			continue;
-		}
-
-		const auto &areaSettings = aasAreaSettings[areaNum];
-		if( areaSettings.areaflags & ( AREA_JUNK | AREA_DISABLED ) ) {
-			continue;
-		}
-		if( !( areaSettings.areaflags & AREA_GROUNDED ) ) {
-			continue;
-		}
-		// Allow lava/slime since the action is generic
-		if( areaSettings.contents & AREACONTENTS_DONOTENTER ) {
-			continue;
-		}
-
-		// Check whether the area is reachable from the current area for the preferred travel flags
-
-		int travelTimeToArea = 0;
-		for( int j = 0; j < numFromAreas; ++j ) {
-			constexpr auto travelFlags = BotFallbackMovementPath::TRAVEL_FLAGS;
-			travelTimeToArea = routeCache->TravelTimeToGoalArea( fromAreaNums[j], areaNum, travelFlags );
-			if( travelTimeToArea ) {
-				break;
-			}
-		}
-		if( !travelTimeToArea ) {
-			continue;
-		}
-
-		// Check whether the nav target is reachable from the area
-
-		int travelTimeToTarget = 0;
-		for( int travelFlags: self->ai->botRef->TravelFlags() ) {
-			for( int j = 0; j < numFromAreas; ++j ) {
-				travelTimeToTarget = routeCache->TravelTimeToGoalArea( areaNum, toAreaNum, travelFlags );
-				if( travelTimeToTarget ) {
-					break;
-				}
-			}
-			if( travelTimeToTarget ) {
-				break;
-			}
-		}
-		if( !travelTimeToTarget ) {
-			continue;
-		}
-
-		// Negate the travel time so the best area has the greatest negative travel time as a score
-		new( candidateAreas.unsafe_grow_back() )AreaAndScore( areaNum, -travelTimeToTarget );
-	}
-
-	// Sort candidates so the best area is the first
-	std::sort( candidateAreas.begin(), candidateAreas.end() );
-
-	// Find first area that passes a trace test.
-	trace_t trace;
-	vec3_t traceMins, traceMaxs;
-	TacticalSpotsRegistry::GetSpotsWalkabilityTraceBounds( traceMins, traceMaxs );
-
-	for( const auto &areaAndScore: candidateAreas ) {
-		int areaNum = areaAndScore.areaNum;
-		float *start = const_cast<float *>( origin );
-		float *end = const_cast<float *>( aasAreas[areaNum].center );
-		edict_t *skip = const_cast<edict_t *>( self );
-		// We have to test against entities and not only solid world
-		// since this is a fallback action and any failure is critical
-		G_Trace( &trace, start, traceMins, traceMaxs, end, skip, MASK_AISOLID );
-		if( trace.fraction != 1.0f ) {
-			continue;
-		}
-
-		if( resultPoint ) {
-			Vec3 areaPoint( aasAreas[areaNum].center );
-			areaPoint.Z() = aasAreas[areaNum].mins[2] + 1 + ( -playerbox_stand_mins[2] );
-			areaPoint.CopyTo( resultPoint );
-		}
-
-		if( resultAreaNum ) {
-			assert( areaAndScore.score < 0 );
-			*resultAreaNum = areaNum;
-		}
-		return (int)( -areaAndScore.score );
-	}
-
-	return 0;
 }
 
 void BotFallbackMovementPath::Activate( const vec3_t *origins,
