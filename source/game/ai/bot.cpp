@@ -1,5 +1,6 @@
 #include "bot.h"
 #include "ai_aas_world.h"
+#include "ai_nav_mesh_manager.h"
 #include <algorithm>
 
 #ifndef _MSC_VER
@@ -95,6 +96,14 @@ Bot::Bot( edict_t *self_, float skillLevel_ )
 #ifndef _MSC_VER
 #pragma GCC diagnostic pop
 #endif
+
+Bot::~Bot() {
+	AiAasRouteCache::ReleaseInstance( routeCache );
+
+	if( navMeshQuery ) {
+		AiNavMeshManager::Instance()->FreeQuery( navMeshQuery );
+	}
+}
 
 void Bot::ApplyPendingTurnToLookAtPoint( BotInput *botInput, BotMovementPredictionContext *context ) const {
 	BotPendingLookAtPointState *pendingLookAtPointState;
@@ -685,6 +694,13 @@ void Bot::GhostingFrame() {
 
 	blockedTimeoutAt = level.time + BLOCKED_TIMEOUT;
 	self->nextThink = level.time + 100;
+
+	// Release this quite huge object while it is not really needed.
+	// We have decided avoid its preallocation and ignore allocation failures.
+	if( navMeshQuery ) {
+		AiNavMeshManager::Instance()->FreeQuery( navMeshQuery );
+		navMeshQuery = nullptr;
+	}
 
 	// wait 4 seconds after entering the level
 	if( self->r.client->level.timeStamp + 4000 > level.time || !level.canSpawnEntities ) {

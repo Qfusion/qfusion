@@ -842,6 +842,19 @@ public:
 								 float *resultPoint, int *areaNum = nullptr ) const;
 };
 
+class BotNavMeshQueryCache {
+	edict_t *const self;
+	mutable int64_t computedAt;
+	mutable vec3_t computedForOrigin;
+	mutable vec3_t computedResultPoint;
+
+	bool FindClosestToTargetPoint( BotMovementPredictionContext *context, float *resultPoint ) const;
+public:
+	BotNavMeshQueryCache( edict_t *self_ ) : self( self_ ), computedAt( 0 ) {}
+
+	bool GetClosestToTargetPoint( BotMovementPredictionContext *context, float *resultPoint ) const;
+};
+
 class BotMovementPredictionContext : public BotMovementPredictionConstants
 {
 	friend class BotTriggerPendingWeaponJumpMovementAction;
@@ -867,6 +880,7 @@ public:
 	};
 
 	BotSameFloorClusterAreasCache sameFloorClusterAreasCache;
+	BotNavMeshQueryCache navMeshQueryCache;
 private:
 	struct PredictedMovementAction {
 		AiEntityPhysicsState entityPhysicsState;
@@ -1089,6 +1103,7 @@ public:
 	inline BotMovementPredictionContext( edict_t *self_ )
 		: self( self_ ),
 		sameFloorClusterAreasCache( self_ ),
+		navMeshQueryCache( self_ ),
 		movementState( nullptr ),
 		record( nullptr ),
 		oldPlayerState( nullptr ),
@@ -1434,11 +1449,11 @@ public:
 
 	BotFallbackMovementPath(): currNode( 0 ), numNodes( 0 ) {}
 
-	void Activate( const Vec3 &origin, int areaNum = 0, float reachRadius = 48.0f ) {
+	void Activate( const Vec3 &origin, int areaNum = 0, float reachRadius = 64.0f ) {
 		Activate( origin.Data(), areaNum, reachRadius );
 	}
 
-	void Activate( const vec3_t origin, int areaNum = 0, float reachRadius = 48.0f ) {
+	void Activate( const vec3_t origin, int areaNum = 0, float reachRadius = 64.0f ) {
 		this->numNodes = 1;
 		this->currNode = 0;
 		VectorCopy( origin, nodes[0].origin );

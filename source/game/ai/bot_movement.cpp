@@ -2,6 +2,7 @@
 #include "bot_movement.h"
 #include "ai_aas_world.h"
 #include "tactical_spots_registry.h"
+#include "ai_nav_mesh_manager.h"
 
 #ifndef PUBLIC_BUILD
 #define CHECK_ACTION_SUGGESTION_LOOPS
@@ -2265,6 +2266,110 @@ void BotSameFloorClusterAreasCache::BuildCandidateAreasHeap( BotMovementPredicti
 	std::make_heap( result.begin(), result.end() );
 }
 
+bool BotNavMeshQueryCache::GetClosestToTargetPoint( BotMovementPredictionContext *context, float *resultPoint ) const {
+	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+	if( computedAt == level.time && VectorCompare( entityPhysicsState.Origin(), computedForOrigin ) ) {
+		if( fabsf( computedResultPoint[0] ) < std::numeric_limits<float>::max() ) {
+			VectorCopy( computedResultPoint, resultPoint );
+			return true;
+		}
+		return false;
+	}
+
+	computedAt = level.time;
+	VectorCopy( entityPhysicsState.Origin(), computedForOrigin );
+	computedResultPoint[0] = std::numeric_limits<float>::infinity();
+	if( FindClosestToTargetPoint( context, computedResultPoint ) ) {
+		VectorCopy( computedResultPoint, resultPoint );
+		return true;
+	}
+	return false;
+}
+
+bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContext *context, float *resultPoint ) const {
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasReach = aasWorld->Reachabilities();
+	const auto *aasAreas = aasWorld->Areas();
+
+	int lastReachIndex = -1;
+	const auto &reachChain = context->NextReachChain();
+	for( auto &reachAndTravelTime: reachChain ) {
+		const auto &reach = aasReach[reachAndTravelTime.ReachNum()];
+		int travelType = reach.traveltype;
+		if( travelType != TRAVEL_WALK ) {
+			break;
+		}
+		lastReachIndex++;
+	}
+
+	if( lastReachIndex < 0 ) {
+		return false;
+	}
+
+	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+
+	Vec3 startAbsMins( playerbox_stand_mins );
+	Vec3 startAbsMaxs( playerbox_stand_maxs );
+	Vec3 startOrigin( entityPhysicsState.Origin() );
+	startAbsMins += startOrigin;
+	startAbsMins.Z() -= 0.25f;
+	startAbsMaxs += startOrigin;
+	if( !entityPhysicsState.GroundEntity() ) {
+		if( entityPhysicsState.IsHighAboveGround() ) {
+			return false;
+		}
+		float heightOverGround = entityPhysicsState.HeightOverGround();
+		startAbsMins.Z() -= heightOverGround;
+		startAbsMaxs.Z() -= heightOverGround;
+		startOrigin.Z() -= heightOverGround;
+	}
+
+	if( !self->ai->botRef->navMeshQuery ) {
+		if( !( self->ai->botRef->navMeshQuery = AiNavMeshManager::Instance()->AllocQuery( self->r.client ) ) ) {
+			return false;
+		}
+	}
+
+	auto *query = self->ai->botRef->navMeshQuery;
+	const uint32_t startPolyRef = query->FindNearestPoly( startAbsMins.Data(), startAbsMaxs.Data() );
+	if( !startPolyRef ) {
+		return false;
+	}
+
+	uint32_t pathPolyRefs[64];
+	for( int reachChainIndex = lastReachIndex; reachChainIndex >= 0; --reachChainIndex ) {
+		const auto &area = aasAreas[aasReach[reachChain[reachChainIndex].ReachNum()].areanum];
+		const uint32_t areaPolyRef = query->FindNearestPoly( area.mins, area.maxs );
+        if( !areaPolyRef ) {
+            continue;
+        }
+
+		const int numPathPolys = query->FindPath( startPolyRef, areaPolyRef, pathPolyRefs, 64 );
+		// Check whether a path exists and really ends with the target poly
+		if( !numPathPolys || pathPolyRefs[numPathPolys - 1] != areaPolyRef ) {
+			continue;
+		}
+
+		// Starting from the last poly in the path, find first walkable poly
+		int pathPolyIndex = numPathPolys - 1;
+		for(; pathPolyIndex > 0; --pathPolyIndex ) {
+			if( query->TraceWalkability( startPolyRef, startOrigin.Data(), pathPolyRefs[pathPolyIndex] ) ) {
+				break;
+			}
+		}
+
+		if( pathPolyIndex <= 0 ) {
+			continue;
+		}
+
+		AiNavMeshManager::Instance()->GetPolyCenter( pathPolyRefs[pathPolyIndex], resultPoint );
+		resultPoint[2] -= playerbox_stand_mins[2];
+		return true;
+	}
+
+	return false;
+}
+
 bool BotDummyMovementAction::TryFindFallbackMovementPath( BotMovementPredictionContext *context ) {
 	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
 	// Check if the bot is standing on a ramp first
@@ -2305,9 +2410,7 @@ bool BotDummyMovementAction::TryFindFallbackMovementPath( BotMovementPredictionC
 		}
 	}
 
-	// A movement on fallback path with more than a 1 node is very restrictive.
-	// Use it only as a last hope if the bot has really started being blocked
-	if( self->ai->botRef->MillisInBlockedState() > 800 ) {
+	if( self->ai->botRef->MillisInBlockedState() > 500 ) {
 		vec3_t areaPoint;
 		int areaNum;
 		if( context->sameFloorClusterAreasCache.GetClosestToTargetPoint( context, areaPoint, &areaNum ) ) {
@@ -2315,8 +2418,20 @@ bool BotDummyMovementAction::TryFindFallbackMovementPath( BotMovementPredictionC
 			return true;
 		}
 
-		// Notify the nav target selection code
-		self->ai->botRef->OnMovementToNavTargetBlocked();
+		if( context->navMeshQueryCache.GetClosestToTargetPoint( context, areaPoint ) ) {
+			float squareDistance = Distance2DSquared( context->movementState->entityPhysicsState.Origin(), areaPoint );
+			if( squareDistance > SQUARE( 8 ) ) {
+				areaNum = AiAasWorld::Instance()->FindAreaNum( areaPoint );
+				float reachRadius = std::min( 64.0f, SQRTFAST( squareDistance ) );
+				fallbackMovementPath->Activate( areaPoint, areaNum, reachRadius );
+				return true;
+			}
+		}
+
+		if( self->ai->botRef->MillisInBlockedState() > 1000 ) {
+			// Notify the nav target selection code
+			self->ai->botRef->OnMovementToNavTargetBlocked();
+		}
 	}
 
 	return false;
@@ -2562,13 +2677,27 @@ void BotDummyMovementAction::SetupFallbackMovement( BotMovementPredictionContext
 
 	Vec3 intendedLookDir( fallbackMovementPath->Origin() );
 	intendedLookDir -= entityPhysicsState.Origin();
+
 	float squareDistanceToTarget = intendedLookDir.SquaredLength();
 	intendedLookDir.Z() *= Z_NO_BEND_SCALE;
-	intendedLookDir.NormalizeFast();
+	intendedLookDir.Normalize();
 
 	botInput->SetIntendedLookDir( intendedLookDir, true );
 
-	const float intendedDotActual = intendedLookDir.Dot( entityPhysicsState.ForwardDir() );
+	// Set 1.0f as a default value to prevent blocking in some cases
+	float intendedDotActual = 1.0f;
+	// We should operate on vectors in 2D plane, otherwise we get dot product match rather selfdom.
+	Vec3 intendedLookDir2D( intendedLookDir.X(), intendedLookDir.Y(), 0.0f );
+	if( intendedLookDir2D.SquaredLength() > 0.001f ) {
+		intendedLookDir2D.Normalize();
+		Vec3 forward2DDir( entityPhysicsState.ForwardDir() );
+		forward2DDir.Z() = 0;
+		if( forward2DDir.SquaredLength() > 0.001f ) {
+			forward2DDir.Normalize();
+			intendedDotActual = intendedLookDir2D.Dot( forward2DDir );
+		}
+	}
+
 	if( !entityPhysicsState.GroundEntity() ) {
 		if( intendedDotActual > 0.9f ) {
 			if( squareDistanceToTarget > SQUARE( 72.0f ) ) {
@@ -2590,13 +2719,13 @@ void BotDummyMovementAction::SetupFallbackMovement( BotMovementPredictionContext
 	}
 
 	botInput->SetForwardMovement( 1 );
-
 	if( intendedDotActual < 0.9f ) {
-		if( intendedDotActual < 0.5f ) {
+		if( intendedDotActual < 0.7f ) {
+			botInput->SetTurnSpeedMultiplier( 2.0f );
 			botInput->SetWalkButton( true );
-		}
-		if( intendedDotActual > 0 ) {
-			CheatingCorrectVelocity( context, self->ai->botRef->fallbackMovementPath.Origin() );
+		} else if( intendedDotActual < 0 ) {
+			botInput->SetForwardMovement( 0 );
+			botInput->SetTurnSpeedMultiplier( 5.0f );
 		}
 		return;
 	}
@@ -2637,7 +2766,7 @@ void BotDummyMovementAction::SetupFallbackMovement( BotMovementPredictionContext
 	// If a dash cannot be performed, try jumping
 	if( pmStats[PM_STAT_DASHTIME] ) {
 		// Don't check jump time (we rely on autohop)
-		if( pmStats[PM_STAT_FEATURES] & PMFEAT_JUMP ) {
+		if( ( pmStats[PM_STAT_FEATURES] & PMFEAT_JUMP ) && entityPhysicsState.Speed2D() > 200.0f ) {
 			botInput->SetUpMovement( 1 );
 		}
 		return;
@@ -6554,7 +6683,7 @@ void BotFallbackMovementPath::Activate( const vec3_t *origins,
 		auto *node = nodes + i;
 		VectorCopy( origins[i], node->origin );
 		node->aasAreaNum = areaNums ? areaNums[i] : aasWorld->FindAreaNum( origins[i] );
-		node->reachRadius = reachRadii ? reachRadii[i] : 48.0f;
+		node->reachRadius = reachRadii ? reachRadii[i] : 64.0f;
 	}
 }
 

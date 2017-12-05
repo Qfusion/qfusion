@@ -53,6 +53,7 @@ class Bot : public Ai
 	friend class BotWeaponSelector;
 	friend class BotRoamingManager;
 	friend class TacticalSpotsRegistry;
+	friend class BotNavMeshQueryCache;
 	friend class BotFallbackMovementPath;
 	friend class BotSameFloorClusterAreasCache;
 	friend class BotBaseGoal;
@@ -93,9 +94,8 @@ public:
 		PREFERRED_TRAVEL_FLAGS | TFL_WATER | TFL_WATERJUMP | TFL_SWIM | TFL_LADDER | TFL_ELEVATOR | TFL_BARRIERJUMP;
 
 	Bot( edict_t *self_, float skillLevel_ );
-	virtual ~Bot() override {
-		AiAasRouteCache::ReleaseInstance( routeCache );
-	}
+
+	~Bot() override;
 
 	inline float Skill() const { return skillLevel; }
 	inline bool IsReady() const { return level.ready[PLAYERNUM( self )]; }
@@ -502,6 +502,8 @@ public:
 
 	const Enemy *lastChosenLostOrHiddenEnemy;
 	unsigned lastChosenLostOrHiddenEnemyInstanceId;
+
+	class AiNavMeshQuery *navMeshQuery;
 
 	void UpdateKeptInFovPoint();
 
