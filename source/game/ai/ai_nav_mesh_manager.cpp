@@ -347,8 +347,42 @@ bool AiNavMeshQuery::TraceWalkabilityImpl( uint32_t startPolyRef, const vec3_t s
 		return false;
 	}
 
-	// Its rather coarse but should work for short distances the tests is intended to be used.
-	return hit.t > 0.99f;
+	if( hit.t > 0.999f ) {
+		return true;
+	}
+
+	// This is a hack for poor quality nav meshes.
+	// Get the actual origin where the ray has stopped,
+	// skip few units in the trace direction and do a second attempt.
+
+	Vec3 traceDir( endPos );
+	traceDir -= startPos;
+	traceDir.NormalizeFast();
+
+	Vec3 continueFrom( endPos );
+	continueFrom -= startPos;
+	continueFrom *= hit.t;
+	continueFrom += startPos;
+	continueFrom += 4.0f * traceDir;
+
+	// Y is the height axis, give it a greater value
+	Vec3 halfExtents( 4, 24, 4 );
+
+	uint32_t continuePolyRef = 0;
+	vec3_t dummyPos;
+	status = underlying->findNearestPoly( continueFrom.Data(), halfExtents.Data(), filter, &continuePolyRef, dummyPos );
+	if( dtStatusFailed( status ) || !continuePolyRef ) {
+		return false;
+	}
+
+	memset( &hit, 0, sizeof( hit ) );
+	status = underlying->raycast( continuePolyRef, continueFrom.Data(), endPos, filter, 0, &hit );
+	status &= ~DT_BUFFER_TOO_SMALL;
+	if( dtStatusFailed( status ) ) {
+		return false;
+	}
+
+	return hit.t > 0.999f;
 }
 
 struct NavMeshInputTris {
