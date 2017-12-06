@@ -2266,6 +2266,14 @@ void BotSameFloorClusterAreasCache::BuildCandidateAreasHeap( BotMovementPredicti
 	std::make_heap( result.begin(), result.end() );
 }
 
+BotNavMeshQueryCache::BotNavMeshQueryCache( edict_t *self_ )
+	: self( self_ ),
+	  aasWorld( AiAasWorld::Instance() ),
+	  computedAt( 0 ),
+	  startOrigin( 0, 0, 0 ) {
+	TacticalSpotsRegistry::GetSpotsWalkabilityTraceBounds( walkabilityTraceMins, walkabilityTraceMaxs );
+}
+
 bool BotNavMeshQueryCache::GetClosestToTargetPoint( BotMovementPredictionContext *context, float *resultPoint ) const {
 	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
 	if( computedAt == level.time && VectorCompare( entityPhysicsState.Origin(), computedForOrigin ) ) {
@@ -2289,10 +2297,9 @@ bool BotNavMeshQueryCache::GetClosestToTargetPoint( BotMovementPredictionContext
 bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContext *context, float *resultPoint ) const {
 	const auto *aasWorld = AiAasWorld::Instance();
 	const auto *aasReach = aasWorld->Reachabilities();
-	const auto *aasAreas = aasWorld->Areas();
 
 	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-	Vec3 startOrigin( entityPhysicsState.Origin() );
+	this->startOrigin.Set( entityPhysicsState.Origin() );
 
 	int lastReachIndex = -1;
 	const auto &reachChain = context->NextReachChain();
@@ -2303,13 +2310,14 @@ bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContex
 			break;
 		}
 		// Skip far areas, except they are next in the chain
-		if( startOrigin.SquareDistanceTo( reach.start ) > SQUARE( 768.0f ) ) {
+		if( this->startOrigin.SquareDistanceTo( reach.start ) > SQUARE( 768.0f )) {
 			if( lastReachIndex > 2 ) {
 				break;
 			}
 		}
 		lastReachIndex++;
-		if( lastReachIndex > 16 ) {
+		// Make sure reach indices are in [0, MAX_TESTED_REACH) range
+		if( lastReachIndex + 1 == MAX_TESTED_REACH ) {
 			break;
 		}
 	}
@@ -2319,11 +2327,33 @@ bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContex
 		return false;
 	}
 
+	BotNavMeshQueryCache *mutableThis = const_cast<BotNavMeshQueryCache *>( this );
+	// Try finding a path to each area on the nav mesh, test and mark path polys using nav mesh raycasting
+	if( !mutableThis->TryNavMeshWalkabilityTests( context, lastReachIndex, resultPoint ) ) {
+		// Try testing and marking paths polys using collision/aas raycasting
+		if( !mutableThis->TryTraceAndAasWalkabilityTests( context, lastReachIndex, resultPoint ) ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool BotNavMeshQueryCache::TryNavMeshWalkabilityTests( BotMovementPredictionContext *context,
+													   int lastReachIndex,
+													   float *resultPoint ) {
+	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+	const auto &reachChain = context->NextReachChain();
+
+	const auto *aasWorld = AiAasWorld::Instance();
+	const auto *aasAreas = aasWorld->Areas();
+	const auto *aasReach = aasWorld->Reachabilities();
+
 	Vec3 startAbsMins( playerbox_stand_mins );
 	Vec3 startAbsMaxs( playerbox_stand_maxs );
-	startAbsMins += startOrigin;
+	startAbsMins += this->startOrigin;
 	startAbsMins.Z() -= 0.25f;
-	startAbsMaxs += startOrigin;
+	startAbsMaxs += this->startOrigin;
 	if( !entityPhysicsState.GroundEntity() ) {
 		if( entityPhysicsState.IsHighAboveGround() ) {
 			return false;
@@ -2349,45 +2379,191 @@ bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContex
 	const auto *navMeshManager = AiNavMeshManager::Instance();
 
 	trace_t trace;
-	vec3_t traceMins, traceMaxs;
-	TacticalSpotsRegistry::GetSpotsWalkabilityTraceBounds( traceMins, traceMaxs );
-
-	uint32_t pathPolyRefs[64];
 	for( int reachChainIndex = lastReachIndex; reachChainIndex >= 0; --reachChainIndex ) {
+		uint32_t *const pathPolyRefs = this->paths[reachChainIndex];
 		const auto &area = aasAreas[aasReach[reachChain[reachChainIndex].ReachNum()].areanum];
 		const uint32_t areaPolyRef = query->FindNearestPoly( area.mins, area.maxs );
-        if( !areaPolyRef ) {
-            continue;
-        }
-
-		const int numPathPolys = query->FindPath( startPolyRef, areaPolyRef, pathPolyRefs, 64 );
-		// Check whether a path exists and really ends with the target poly
-		if( !numPathPolys || pathPolyRefs[numPathPolys - 1] != areaPolyRef ) {
+		if( !areaPolyRef ) {
 			continue;
 		}
 
+		const int numPathPolys = query->FindPath( startPolyRef, areaPolyRef, pathPolyRefs, MAX_PATH_POLYS );
+		// Check whether a path exists and really ends with the target poly
+		if( !numPathPolys || pathPolyRefs[numPathPolys - 1] != areaPolyRef ) {
+			// Invalidate the path for further trace tests
+			this->pathLengths[reachChainIndex] = 0;
+			continue;
+		}
+
+		// Mark the path as valid for further trace tests
+		this->pathLengths[reachChainIndex] = numPathPolys;
+
 		// Starting from the last poly in the path, find first walkable poly
 		int pathPolyIndex = numPathPolys - 1;
-		for(; pathPolyIndex > 0; --pathPolyIndex ) {
+		for( ; pathPolyIndex > 0; --pathPolyIndex ) {
 			if( query->TraceWalkability( startPolyRef, startOrigin.Data(), pathPolyRefs[pathPolyIndex] ) ) {
 				// We have to check a real trace as well since Detour raycast ignores height
 				navMeshManager->GetPolyCenter( pathPolyRefs[pathPolyIndex], resultPoint );
 				resultPoint[2] += 1.0f - playerbox_stand_mins[2];
-				SolidWorldTrace( &trace, startOrigin.Data(), resultPoint, traceMins, traceMaxs );
+				SolidWorldTrace( &trace, startOrigin.Data(), resultPoint, walkabilityTraceMins, walkabilityTraceMaxs );
 				if( trace.fraction == 1.0f ) {
-					break;
+					return true;
+				}
+
+				// Invalidate poly ref for further trace tests
+				pathPolyRefs[pathPolyIndex] = 0;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool BotNavMeshQueryCache::TryTraceAndAasWalkabilityTests( BotMovementPredictionContext *context,
+														   int lastReachIndex,
+														   float *resultPoint ) {
+	const auto *aasReach = aasWorld->Reachabilities();
+	const auto &reachChain = context->NextReachChain();
+	const auto *navMeshManager = AiNavMeshManager::Instance();
+
+	// At this moment all nav mesh raycasts have failed.
+	// Try using a real trace and check areas along the traced segment.
+	// We have to do it due to poor nav mesh quality and necessity to provide a feasible path
+	// in all cases where it is possible (nav mesh is primarily used for fallback movement).
+
+	trace_t trace;
+	for( int reachChainIndex = lastReachIndex; reachChainIndex >= 0; --reachChainIndex ) {
+		if( !pathLengths[reachChainIndex] ) {
+			continue;
+		}
+
+		const auto &reach = aasReach[reachChain[reachChainIndex].ReachNum()];
+		// The poly is way too far and tracing through collision world/areas will be too expensive.
+		if( startOrigin.SquareDistanceTo( reach.start ) > SQUARE( 384.0f ) ) {
+			continue;
+		}
+
+		uint32_t *const pathPolyRefs = paths[reachChainIndex];
+		for( int pathPolyIndex = pathLengths[reachChainIndex] - 1; pathPolyIndex > 0; --pathPolyIndex ) {
+			uint32_t pathPolyRef = pathPolyRefs[pathPolyIndex];
+			// If tests above have invalidated this poly
+			if( !pathPolyRef ) {
+				continue;
+			}
+
+			vec3_t pathPolyOrigin;
+			navMeshManager->GetPolyCenter( pathPolyRefs[pathPolyIndex], pathPolyOrigin );
+			pathPolyOrigin[2] += 1.0f - playerbox_stand_mins[2];
+
+			if( !InspectAasWorldTraceToPoly( pathPolyOrigin ) ) {
+				continue;
+			}
+
+			SolidWorldTrace( &trace, startOrigin.Data(), pathPolyOrigin, walkabilityTraceMins, walkabilityTraceMaxs );
+			if( trace.fraction == 1.0f ) {
+				VectorCopy( pathPolyOrigin, resultPoint );
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool BotNavMeshQueryCache::InspectAasWorldTraceToPoly( const vec3_t polyOrigin ) {
+	const int polyAreaNum = aasWorld->FindAreaNum( polyOrigin );
+	if( !polyAreaNum ) {
+		return false;
+	}
+
+	int tracedAreaNums[32];
+	const int numTracedAreas = aasWorld->TraceAreas( startOrigin.Data(), polyOrigin, tracedAreaNums, 32 );
+	// The last area in traced areas must match the destination (poly) area, otherwise we have probably hit an obstacle
+	if( !numTracedAreas || tracedAreaNums[numTracedAreas - 1] != polyAreaNum ) {
+		return false;
+	}
+
+	const auto *aasAreas = aasWorld->Areas();
+	const auto *aasAreaSettings = aasWorld->AreaSettings();
+	const auto *aasAreaStairsClusterNums = aasWorld->AreaStairsClusterNums();
+	const auto *aasFaceIndex = aasWorld->FaceIndex();
+	const auto *aasPlanes = aasWorld->Planes();
+	const auto numAasPlanes = aasWorld->NumPlanes();
+	const auto *aasFaces = aasWorld->Faces();
+
+	constexpr auto BAD_CONTENTS = AREACONTENTS_LAVA | AREACONTENTS_SLIME | AREACONTENTS_DONOTENTER;
+
+	// Try checking all areas the trace has passed through for being a pit/an obstacle or just bad
+	for( int j = 1; j < numTracedAreas; ++j ) {
+		const int areaNum = tracedAreaNums[j];
+		const auto &areaSettings = aasAreaSettings[areaNum];
+		// If the area is not an ramp-like area
+		if( !( areaSettings.areaflags & AREA_INCLINED_FLOOR ) ) {
+			// If the area is not in stairs cluster too
+			if( !aasAreaStairsClusterNums[areaNum] ) {
+				// Check whether area mins is within sane bounds relative to the start origin.
+				// This condition should cut off pits/obstacles.
+				const auto &currTraceArea = aasAreas[areaNum];
+				if( areaSettings.areaflags & AREA_GROUNDED ) {
+					float areaMinZ = currTraceArea.mins[2];
+					if( startOrigin.Z() > 24.0f + areaMinZ ) {
+						return false;
+					}
+					if( startOrigin.Z() < areaMinZ ) {
+						return false;
+					}
+				} else {
+					// Try cut off pits. Make sure there is a grounded area below and its within the bounds
+					int faceIndexNum = currTraceArea.firstface;
+					int faceIndexNumBound = faceIndexNum + currTraceArea.numfaces;
+					for(; faceIndexNum < faceIndexNumBound; ++faceIndexNum ) {
+						const auto &face = aasFaces[abs(aasFaceIndex[faceIndexNum])];
+						// IIRC some faces have bogus plane nums
+						if( abs( face.planenum ) > numAasPlanes ) {
+							continue;
+						}
+						const auto &plane = aasPlanes[abs( face.planenum )];
+						if( fabsf( plane.normal[2] ) < 0.9f ) {
+							continue;
+						}
+						const int faceAreaNum = face.frontarea == areaNum ? face.backarea : face.frontarea;
+						if( !faceAreaNum ) {
+							continue;
+						}
+
+						const auto &faceAreaSettings = aasAreaSettings[faceAreaNum];
+						if( faceAreaSettings.contents & BAD_CONTENTS ) {
+							return false;
+						}
+
+						if( faceAreaSettings.areaflags & AREA_GROUNDED ) {
+							// Check the ground height condition
+							float areaMinZ = aasAreas[faceAreaNum].mins[2];
+							if( startOrigin.Z() > 24.0f + areaMinZ ) {
+								return false;
+							}
+							if( startOrigin.Z() < areaMinZ ) {
+								return false;
+							}
+							// We have found a grounded area that has a boundary with the current area on the trace segment
+							break;
+						}
+					}
+
+					// There is no grounded area below
+					if( faceIndexNum == faceIndexNumBound ) {
+						return false;
+					}
 				}
 			}
 		}
 
-		if( pathPolyIndex <= 0 ) {
-			continue;
+		if( areaSettings.contents & BAD_CONTENTS ) {
+			return false;
 		}
-
-		return true;
 	}
 
-	return false;
+	return true;
 }
 
 bool BotDummyMovementAction::TryFindFallbackMovementPath( BotMovementPredictionContext *context ) {
