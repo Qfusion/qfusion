@@ -2291,26 +2291,36 @@ bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContex
 	const auto *aasReach = aasWorld->Reachabilities();
 	const auto *aasAreas = aasWorld->Areas();
 
+	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
+	Vec3 startOrigin( entityPhysicsState.Origin() );
+
 	int lastReachIndex = -1;
 	const auto &reachChain = context->NextReachChain();
-	for( auto &reachAndTravelTime: reachChain ) {
-		const auto &reach = aasReach[reachAndTravelTime.ReachNum()];
+	for( unsigned i = 0; i < reachChain.size(); ++i ) {
+		const auto &reach = aasReach[reachChain[i].ReachNum()];
 		int travelType = reach.traveltype;
 		if( travelType != TRAVEL_WALK ) {
 			break;
 		}
+		// Skip far areas, except they are next in the chain
+		if( startOrigin.SquareDistanceTo( reach.start ) > SQUARE( 768.0f ) ) {
+			if( lastReachIndex > 2 ) {
+				break;
+			}
+		}
 		lastReachIndex++;
+		if( lastReachIndex > 16 ) {
+			break;
+		}
 	}
 
+	// There were no reachabilities having the given criteria found
 	if( lastReachIndex < 0 ) {
 		return false;
 	}
 
-	const auto &entityPhysicsState = context->movementState->entityPhysicsState;
-
 	Vec3 startAbsMins( playerbox_stand_mins );
 	Vec3 startAbsMaxs( playerbox_stand_maxs );
-	Vec3 startOrigin( entityPhysicsState.Origin() );
 	startAbsMins += startOrigin;
 	startAbsMins.Z() -= 0.25f;
 	startAbsMaxs += startOrigin;
@@ -2336,6 +2346,12 @@ bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContex
 		return false;
 	}
 
+	const auto *navMeshManager = AiNavMeshManager::Instance();
+
+	trace_t trace;
+	vec3_t traceMins, traceMaxs;
+	TacticalSpotsRegistry::GetSpotsWalkabilityTraceBounds( traceMins, traceMaxs );
+
 	uint32_t pathPolyRefs[64];
 	for( int reachChainIndex = lastReachIndex; reachChainIndex >= 0; --reachChainIndex ) {
 		const auto &area = aasAreas[aasReach[reachChain[reachChainIndex].ReachNum()].areanum];
@@ -2354,7 +2370,13 @@ bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContex
 		int pathPolyIndex = numPathPolys - 1;
 		for(; pathPolyIndex > 0; --pathPolyIndex ) {
 			if( query->TraceWalkability( startPolyRef, startOrigin.Data(), pathPolyRefs[pathPolyIndex] ) ) {
-				break;
+				// We have to check a real trace as well since Detour raycast ignores height
+				navMeshManager->GetPolyCenter( pathPolyRefs[pathPolyIndex], resultPoint );
+				resultPoint[2] += 1.0f - playerbox_stand_mins[2];
+				SolidWorldTrace( &trace, startOrigin.Data(), resultPoint, traceMins, traceMaxs );
+				if( trace.fraction == 1.0f ) {
+					break;
+				}
 			}
 		}
 
@@ -2362,8 +2384,6 @@ bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContex
 			continue;
 		}
 
-		AiNavMeshManager::Instance()->GetPolyCenter( pathPolyRefs[pathPolyIndex], resultPoint );
-		resultPoint[2] -= playerbox_stand_mins[2];
 		return true;
 	}
 
