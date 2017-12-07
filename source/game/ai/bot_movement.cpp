@@ -2339,6 +2339,93 @@ bool BotNavMeshQueryCache::FindClosestToTargetPoint( BotMovementPredictionContex
 	return true;
 }
 
+template<typename T>
+class BloomFilterSet {
+	// All size parameters are prime numbers
+	static constexpr uint16_t BIN_1_SIZE = 5791;
+	static constexpr uint16_t BIN_2_SIZE = 5827;
+	static constexpr uint16_t BIN_3_SIZE = 5939;
+	static constexpr uint16_t BIN_4_SIZE = 5987;
+
+	uint32_t bin1Words[(BIN_1_SIZE / 32) + 1];
+	uint32_t bin2Words[(BIN_2_SIZE / 32) + 1];
+	uint32_t bin3Words[(BIN_3_SIZE / 32) + 1];
+	uint32_t bin4Words[(BIN_4_SIZE / 32) + 1];
+
+	static constexpr auto NUM_BINS = 4;
+
+	static_assert( !std::numeric_limits<T>::is_signed, "The set is not applicable to signed types" );
+public:
+	BloomFilterSet() {
+		Clear();
+	}
+
+	void Clear() {
+		memset( this, 0, sizeof( *this ) );
+	}
+
+	// Checks whether the value is definitely is not in set.
+	// If true, adds it to set and returns true.
+	// Otherwise, returns false (so there might be false positives).
+	bool MarkIfIsDefinitelyNotMarked( T value ) {
+		// There could be much trickier bit ops but remember that this bloom filter
+		// is used to cut off much more expensive computations, so keep it readable.
+
+		// A modulo of the value by the corresponding bin size
+		uint16_t binIndices[NUM_BINS];
+		// An iterable array of bin sizes
+		const uint16_t binSizes[NUM_BINS] = { BIN_1_SIZE, BIN_2_SIZE, BIN_3_SIZE, BIN_4_SIZE };
+		// An iterable array of bin words
+		uint32_t *binWordArrays[NUM_BINS] = { bin1Words, bin2Words, bin3Words, bin4Words };
+
+		// An integer division is not cheap and it's better to use
+		// a dynamic branch to force 16-bit division in suitable cases
+		if( sizeof( T ) > sizeof( uint16_t ) && value <= (T)std::numeric_limits<uint16_t>::max() ) {
+			uint16_t uint16Value = (uint16_t)value;
+			for( int i = 0; i < NUM_BINS; ++i ) {
+				binIndices[i] = uint16Value % binSizes[i];
+			}
+		} else {
+			for( int i = 0; i < NUM_BINS; ++i ) {
+				binIndices[i] = value % binSizes[i];
+			}
+		}
+
+		// Each index corresponds to a pair (word num in a bin, mask for the word at word num)
+		uint16_t binWordNums[NUM_BINS];
+		uint32_t binBitMasks[NUM_BINS];
+		for( int i = 0; i < NUM_BINS; ++i ) {
+			binWordNums[i] = binIndices[i] / (uint16_t)32;
+			binBitMasks[i] = 1u << ( binIndices[i] % 32u );
+		}
+
+		int j = 0;
+		for(; j < NUM_BINS; ++j ) {
+			// The actual words array for j-th bin
+			uint32_t *binWords = binWordArrays[j];
+			if( !( binWords[binWordNums[j]] & binBitMasks[j] ) ) {
+				break;
+			}
+		}
+
+		// If all bits corresponding to the value in all bins are set
+		if( j == NUM_BINS ) {
+			return false;
+		}
+
+		// Set bits in all bins
+		for( int i = 0; i < NUM_BINS; ++i ) {
+			// The actual words array for j-th bin
+			uint32_t *binWords = binWordArrays[j];
+			binWords[binWordNums[j]] |= binBitMasks[j];
+		}
+
+		return true;
+	}
+};
+
+static BloomFilterSet<uint32_t> polysBloomFilterSet;
+
 bool BotNavMeshQueryCache::TryNavMeshWalkabilityTests( BotMovementPredictionContext *context,
 													   int lastReachIndex,
 													   float *resultPoint ) {
@@ -2378,6 +2465,9 @@ bool BotNavMeshQueryCache::TryNavMeshWalkabilityTests( BotMovementPredictionCont
 
 	const auto *navMeshManager = AiNavMeshManager::Instance();
 
+	auto *polysSet = &::polysBloomFilterSet;
+	polysSet->Clear();
+
 	trace_t trace;
 	for( int reachChainIndex = lastReachIndex; reachChainIndex >= 0; --reachChainIndex ) {
 		uint32_t *const pathPolyRefs = this->paths[reachChainIndex];
@@ -2401,6 +2491,12 @@ bool BotNavMeshQueryCache::TryNavMeshWalkabilityTests( BotMovementPredictionCont
 		// Starting from the last poly in the path, find first walkable poly
 		int pathPolyIndex = numPathPolys - 1;
 		for( ; pathPolyIndex > 0; --pathPolyIndex ) {
+			uint32_t polyRef = pathPolyRefs[pathPolyIndex];
+			// Skip testing if the poly is likely to have been already tested
+			if( !polysSet->MarkIfIsDefinitelyNotMarked( polyRef ) ) {
+				continue;
+			}
+
 			if( query->TraceWalkability( startPolyRef, startOrigin.Data(), pathPolyRefs[pathPolyIndex] ) ) {
 				// We have to check a real trace as well since Detour raycast ignores height
 				navMeshManager->GetPolyCenter( pathPolyRefs[pathPolyIndex], resultPoint );
@@ -2426,6 +2522,12 @@ bool BotNavMeshQueryCache::TryTraceAndAasWalkabilityTests( BotMovementPrediction
 	const auto &reachChain = context->NextReachChain();
 	const auto *navMeshManager = AiNavMeshManager::Instance();
 
+	auto *const polysSet = &::polysBloomFilterSet;
+	// We use different ways of raycasting now, so previous results are not applicable.
+	// Polys cut off by a final trace is the only exception,
+	// but it has been already handled differenly by setting zero poly ref in the path.
+	polysSet->Clear();
+
 	// At this moment all nav mesh raycasts have failed.
 	// Try using a real trace and check areas along the traced segment.
 	// We have to do it due to poor nav mesh quality and necessity to provide a feasible path
@@ -2448,6 +2550,10 @@ bool BotNavMeshQueryCache::TryTraceAndAasWalkabilityTests( BotMovementPrediction
 			uint32_t pathPolyRef = pathPolyRefs[pathPolyIndex];
 			// If tests above have invalidated this poly
 			if( !pathPolyRef ) {
+				continue;
+			}
+			// Skip testing if the poly is likely to have been already tested
+			if( !polysSet->MarkIfIsDefinitelyNotMarked( pathPolyRef ) ) {
 				continue;
 			}
 
