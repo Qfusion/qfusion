@@ -203,10 +203,9 @@ static void CG_NewPacketEntityState( entity_state_t *state ) {
 				CG_PModel_ClearEventAnimations( state->number );
 				memset( &cg_entPModels[state->number].animState, 0, sizeof( cg_entPModels[state->number].animState ) );
 
-				// if it's a player and new in PVS, remove the old power time
-				// This is way far from being the right thing. But will make it less bad for now
-				cg_entPModels[state->number].flash_time = cg.time;
-				cg_entPModels[state->number].barrel_time = cg.time;
+				// reset the weapon animation timers for new players
+				cg_entPModels[state->number].flash_time = 0;
+				cg_entPModels[state->number].barrel_time = 0;
 			}
 		} else {   // shuffle the last state to previous
 			cent->prev = cent->current;

@@ -1144,6 +1144,10 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 				cg.predictedWeaponSwitch = 0;
 			}
 
+			// reset weapon animation timers
+			cg_entPModels[ent->number].flash_time = 0;
+			cg_entPModels[ent->number].barrel_time = 0;
+
 			if( viewer ) {
 				trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxWeaponUp ), CHAN_AUTO, cg_volume_effects->value );
 			} else {
