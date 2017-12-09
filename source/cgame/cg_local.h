@@ -422,6 +422,22 @@ typedef struct {
 	struct shader_s *shaderWhite;
 	struct shader_s *shaderMiniMap;
 
+	// AngelScript
+	struct angelwrap_api_s *asExport;
+	void *asEngine;
+
+	// AS input subsystem API
+	struct {
+		void *init;
+		void *shutdown;
+		void *frame;
+		void *clearState;
+		void *mouseMove;
+		void *getButtonBits;
+		void *addViewAngles;
+		void *addMovement;
+	} asInput;
+
 	// fonts
 	char fontSystemFamily[MAX_QPATH];
 	char fontSystemMonoFamily[MAX_QPATH];
@@ -1179,6 +1195,14 @@ void CG_InitChat( cg_gamechat_t *chat );
 void CG_StackChatString( cg_gamechat_t *chat, const char *str );
 void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, int fontSize,
 				  int width, int height, int padding_x, int padding_y, vec4_t backColor, struct shader_s *backShader );
+
+//
+// cg_ascript.cpp
+//
+void CG_asInitScriptEngine( void );
+void CG_asShutdownScriptEngine( void );
+bool CG_asLoadGameScript( void );
+bool CG_asLoadInputScript( void );
 
 //
 // cg_input.cpp

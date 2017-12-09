@@ -522,6 +522,8 @@ void CL_GameModule_Init( void ) {
 	import.IN_IME_GetCandidates = IN_IME_GetCandidates;
 	import.IN_SupportedDevices = IN_SupportedDevices;
 
+	import.asGetAngelExport = Com_asGetAngelExport;
+
 	if( builtinAPIfunc ) {
 		cge = builtinAPIfunc( &import );
 	} else {

@@ -2683,7 +2683,6 @@ asIScriptModule *G_LoadGameScript( const char *moduleName, const char *dir, cons
 */
 static void G_ResetGameModuleScriptData( void ) {
 	game.asEngine = NULL;
-	game.asGlobalsInitialized = false;
 
 	asEntityCallThinkFuncPtr = NULL;
 	asEntityCallTouchFuncPtr = NULL;
@@ -2697,18 +2696,12 @@ static void G_ResetGameModuleScriptData( void ) {
 * G_InitializeGameModuleSyntax
 */
 static void G_InitializeGameModuleSyntax( asIScriptEngine *asEngine ) {
-	if( game.asGlobalsInitialized ) {
-		return;
-	}
-
-	game.asGlobalsInitialized = true;
-
 	G_Printf( "* Initializing Game module syntax\n" );
 
 	// register shared stuff
 	GS_asInitializeEngine( asEngine );
 
-	// register global variables
+	// register global enums
 	GS_asRegisterEnums( asEngine, asGameEnums );
 	GS_asRegisterEnums( asEngine, asAIEnums );
 
@@ -2765,12 +2758,12 @@ void G_asInitGameModuleEngine( void ) {
 * G_asShutdownGameModuleEngine
 */
 void G_asShutdownGameModuleEngine( void ) {
-	if( game.asEngine != NULL ) {
-		if( game.asExport ) {
-			game.asExport->asReleaseEngine( static_cast<asIScriptEngine *>( game.asEngine ) );
-		}
-		G_ResetGameModuleScriptData();
+	if( game.asEngine == NULL ) {
+		return;
 	}
+
+	game.asExport->asReleaseEngine( static_cast<asIScriptEngine *>( game.asEngine ) );
+	G_ResetGameModuleScriptData();
 }
 
 /*

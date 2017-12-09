@@ -1171,6 +1171,10 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	cgs.hasGametypeMenu = false; // this will update as soon as we receive configstrings
 	cgs.gameMenuRequested = !gameStart;
 
+	CG_asInitScriptEngine();
+
+	CG_asLoadInputScript();
+
 	CG_RefreshQuickMenu();
 
 	CG_InitInput();
@@ -1223,6 +1227,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	CG_ConfigString( CS_AUTORECORDSTATE, cgs.configStrings[CS_AUTORECORDSTATE] );
 
 	CG_DemocamInit();
+
+	CG_asLoadGameScript();
 }
 
 /*
@@ -1230,6 +1236,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 */
 void CG_Shutdown( void ) {
 	CG_FreeLocalEntities();
+	CG_asShutdownScriptEngine();
 	CG_DemocamShutdown();
 	CG_ScreenShutdown();
 	CG_UnregisterCGameCommands();

@@ -43,7 +43,7 @@ typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1
 
 // cg_public.h -- client game dll information visible to engine
 
-#define CGAME_API_VERSION   101
+#define CGAME_API_VERSION   102
 
 //
 // structs and variables shared with the main engine
@@ -262,6 +262,9 @@ typedef struct {
 	unsigned int ( *IN_IME_GetCandidates )( char * const *cands, size_t candSize, unsigned int maxCands,
 											int *selected, int *firstKey );
 	unsigned int ( *IN_SupportedDevices )( void );
+
+	// angelscript api
+	struct angelwrap_api_s *( *asGetAngelExport )( void );
 } cgame_import_t;
 
 //
