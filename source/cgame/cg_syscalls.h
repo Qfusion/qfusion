@@ -553,3 +553,7 @@ static inline unsigned int trap_IN_IME_GetCandidates( char * const *cands, size_
 static inline unsigned int trap_IN_SupportedDevices( void ) {
 	return CGAME_IMPORT.IN_SupportedDevices();
 }
+
+static inline struct angelwrap_api_s *trap_asGetAngelExport( void ) {
+	return CGAME_IMPORT.asGetAngelExport();
+}

@@ -155,7 +155,6 @@ typedef struct {
 	// AngelScript engine object
 	struct angelwrap_api_s *asExport;
 	void *asEngine;
-	bool asGlobalsInitialized;
 
 	unsigned int frametime;         // in milliseconds
 	int snapFrameTime;              // in milliseconds

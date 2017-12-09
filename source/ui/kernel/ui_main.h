@@ -67,7 +67,7 @@ public:
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
 
-	void mouseMove( int contextId, int framTime, int x, int y, bool absolute, bool showCursor );
+	void mouseMove( int contextId, int frameTime, int x, int y, bool absolute, bool showCursor );
 	void textInput( int contextId, wchar_t c );
 	void keyEvent( int contextId, int key, bool pressed );
 	bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
@@ -82,8 +82,6 @@ public:
 	static void M_Menu_Force_f( void );
 	static void M_Menu_Open_f( void );
 	static void M_Menu_Modal_f( void );
-	static void M_Menu_Tv_f( void );
-	static void M_Menu_DemoPlay_f( void );
 	static void M_Menu_Close_f( void );
 	static void M_Menu_AddTVChannel_f( void );
 	static void M_Menu_RemoveTVChannel_f( void );
