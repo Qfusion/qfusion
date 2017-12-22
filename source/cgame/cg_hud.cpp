@@ -2581,20 +2581,23 @@ static void CG_ViewUpFunc( int id, int64_t time ) {
 	CG_SetTouchpad( TOUCHPAD_VIEW, -1 );
 
 	if( cg_hud_touch_zoomSeq ) {
-		cg_touch_t &touch = cg_touches[id];
+		cg_touch_t *touch = CG_GetTouch( id );
+
+		if( !touch )
+			return;
 
 		int threshold = ( int )( cg_touch_zoomThres->value * cgs.pixelRatio );
 		if( !time || ( (int)( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-			( abs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
-			( abs( touch.y - cg_hud_touch_zoomY ) > threshold ) ) {
+			( abs( touch->x - cg_hud_touch_zoomX ) > threshold ) ||
+			( abs( touch->y - cg_hud_touch_zoomY ) > threshold ) ) {
 			cg_hud_touch_zoomSeq = 0;
 		}
 
 		if( cg_hud_touch_zoomSeq == 1 ) {
 			cg_hud_touch_zoomSeq = 2;
 			cg_hud_touch_zoomLastTouch = time;
-			cg_hud_touch_zoomX = touch.x;
-			cg_hud_touch_zoomY = touch.y;
+			cg_hud_touch_zoomX = touch->x;
+			cg_hud_touch_zoomY = touch->y;
 		} else if( cg_hud_touch_zoomSeq == 3 ) {
 			cg_hud_touch_zoomSeq = 0;
 			cg_hud_touch_buttons ^= BUTTON_ZOOM; // toggle zoom after a double tap
@@ -2610,20 +2613,24 @@ static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_la
 	if( touchID >= 0 ) {
 		CG_SetTouchpad( TOUCHPAD_VIEW, touchID );
 
-		cg_touch_t &touch = cg_touches[touchID];
+		cg_touch_t *touch = CG_GetTouch( touchID );
+		if( !touch ) {
+			return true;
+		}
+
 		if( cg_hud_touch_zoomSeq ) {
 			int threshold = ( int )( cg_touch_zoomThres->value * cgs.pixelRatio );
-			if( ( ( int )( touch.time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-				( abs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
-				( abs( touch.y - cg_hud_touch_zoomY ) > threshold ) ) {
+			if( ( ( int )( touch->time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
+				( abs( touch->x - cg_hud_touch_zoomX ) > threshold ) ||
+				( abs( touch->y - cg_hud_touch_zoomY ) > threshold ) ) {
 				cg_hud_touch_zoomSeq = 0;
 			}
 		}
 		if( !cg_hud_touch_zoomSeq || ( cg_hud_touch_zoomSeq == 2 ) ) {
 			cg_hud_touch_zoomSeq++;
-			cg_hud_touch_zoomLastTouch = touch.time;
-			cg_hud_touch_zoomX = touch.x;
-			cg_hud_touch_zoomY = touch.y;
+			cg_hud_touch_zoomLastTouch = touch->time;
+			cg_hud_touch_zoomX = touch->x;
+			cg_hud_touch_zoomY = touch->y;
 		}
 	}
 

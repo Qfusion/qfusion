@@ -1173,8 +1173,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_asInitScriptEngine();
 
-	CG_asLoadInputScript();
-
 	CG_RefreshQuickMenu();
 
 	CG_InitInput();
@@ -1236,12 +1234,12 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 */
 void CG_Shutdown( void ) {
 	CG_FreeLocalEntities();
-	CG_asShutdownScriptEngine();
 	CG_DemocamShutdown();
 	CG_ScreenShutdown();
 	CG_UnregisterCGameCommands();
 	CG_FreeTemporaryBoneposesCache();
 	CG_ShutdownInput();
+	CG_asShutdownScriptEngine();
 }
 
 //======================================================================
