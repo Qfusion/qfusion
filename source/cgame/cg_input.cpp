@@ -337,6 +337,8 @@ void CG_MouseMove( int mx, int my ) {
 	static float old_mouse_x = 0, old_mouse_y = 0;
 	float accelSensitivity;
 
+	CG_asInputMouseMove( mx, my );
+
 	// mouse filtering
 	switch( m_filter->integer ) {
 	case 1:
@@ -643,6 +645,16 @@ int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id
 }
 
 /*
+* CG_GetTouch
+*/
+cg_touch_t *CG_GetTouch( int id ) {
+	if( id < 0 || id >= CG_MAX_TOUCHES ) {
+		return NULL;
+	}
+	return &cg_touches[id];
+}
+
+/*
 * CG_TouchEvent
 */
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
@@ -689,7 +701,7 @@ bool CG_IsTouchDown( int id ) {
 /*
 * CG_TouchFrame
 */
-void CG_TouchFrame( void ) {
+static void CG_TouchFrame( void ) {
 	int i;
 	bool touching = false;
 
@@ -888,6 +900,10 @@ static void CG_CenterView( void ) {
 * CG_InputInit
 */
 void CG_InitInput( void ) {
+	CG_asLoadInputScript();
+
+	CG_asInputInit();
+
 	trap_Cmd_AddCommand( "+moveup", IN_UpDown );
 	trap_Cmd_AddCommand( "-moveup", IN_UpUp );
 	trap_Cmd_AddCommand( "+movedown", IN_DownDown );
@@ -969,6 +985,10 @@ void CG_InitInput( void ) {
 * CG_ShutdownInput
 */
 void CG_ShutdownInput( void ) {
+	CG_asInputShutdown();
+
+	CG_asUnloadInputScript();
+
 	trap_Cmd_RemoveCommand( "+moveup" );
 	trap_Cmd_RemoveCommand( "-moveup" );
 	trap_Cmd_RemoveCommand( "+movedown" );
@@ -1018,6 +1038,8 @@ unsigned int CG_GetButtonBits( void ) {
 	buttons |= CG_GetButtonBitsFromKeys();
 
 	buttons |= CG_GetTouchButtonBits();
+
+	buttons |= CG_asGetButtonBits();
 
 	return buttons;
 }
@@ -1073,6 +1095,8 @@ void CG_AddMovement( vec3_t movement ) {
 * CG_InputFrame
 */
 void CG_InputFrame( int frameTime ) {
+	CG_asInputFrame( frameTime );
+
 	cg_inputTime = trap_Milliseconds();
 	cg_inputFrameTime = frameTime;
 
@@ -1085,6 +1109,8 @@ void CG_InputFrame( int frameTime ) {
 * CG_ClearInputState
 */
 void CG_ClearInputState( void ) {
+	CG_asInputClearState();
+
 	cg_inputFrameTime = 0;
 	cg_gamepadAccelPitch = 1.0f;
 	cg_gamepadAccelYaw = 1.0f;

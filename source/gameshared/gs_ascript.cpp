@@ -832,7 +832,11 @@ void GS_asRegisterGlobalFunctions( asIScriptEngine *asEngine, const gs_asglobfun
 	int count = 0, failedcount = 0;
 	const gs_asglobfuncs_t *func;
 
-	asEngine->SetDefaultNamespace( nameSpace );
+	if( nameSpace ) {
+		asEngine->SetDefaultNamespace( nameSpace );
+	} else {
+		asEngine->SetDefaultNamespace( "" );
+	}
 
 	for( func = funcs; func->declaration; func++ ) {
 		error = asEngine->RegisterGlobalFunction( func->declaration, func->pointer, asCALL_CDECL );
@@ -852,7 +856,9 @@ void GS_asRegisterGlobalFunctions( asIScriptEngine *asEngine, const gs_asglobfun
 		}
 	}
 
-	asEngine->SetDefaultNamespace( "" );
+	if( nameSpace ) {
+		asEngine->SetDefaultNamespace( "" );
+	}
 }
 
 /*

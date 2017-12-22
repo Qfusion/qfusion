@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include <functional>
 #include "cg_local.h"
 #include "angelscript.h"
 #include "../gameshared/q_angeliface.h"
@@ -27,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CG_SCRIPTS_INPUT_MODULE_NAME "input"
 
 #define CGAME_AS_ENGINE() static_cast<asIScriptEngine *>( cgs.asEngine )
+
+static std::function<void(asIScriptContext *)> empty_as_cb = [](asIScriptContext *ctx) {};
 
 //=======================================================================
 
@@ -45,6 +48,16 @@ static const gs_asEnumVal_t asTouchpadEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asTouchareaEnumVals[] =
+{
+	ASLIB_ENUM_VAL( TOUCHAREA_NONE ),
+	ASLIB_ENUM_VAL( TOUCHAREA_HUD ),
+	ASLIB_ENUM_VAL( TOUCHAREA_SUB_SHIFT ),
+	ASLIB_ENUM_VAL( TOUCHAREA_MASK ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 static const gs_asEnumVal_t asLimitsEnumVals[] =
 {
 	ASLIB_ENUM_VAL( CG_MAX_TOUCHES ),
@@ -57,10 +70,91 @@ static const gs_asEnumVal_t asLimitsEnumVals[] =
 static const gs_asEnum_t asCGameEnums[] =
 {
 	{ "cg_touchpad_e", asTouchpadEnumVals },
+	{ "cg_toucharea_e", asTouchareaEnumVals },
 	{ "cg_limits_e", asLimitsEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
 };
+
+//=======================================================================
+
+static const gs_asFuncdef_t astouch_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static const gs_asBehavior_t astouch_ObjectBehaviors[] =
+{
+	ASLIB_BEHAVIOR_NULL
+};
+
+static const gs_asMethod_t astouch_Methods[] =
+{
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t astouch_Properties[] =
+{
+	{ ASLIB_PROPERTY_DECL( const bool, down ), ASLIB_FOFFSET( cg_touch_t, down ) },
+	{ ASLIB_PROPERTY_DECL( const int, x ), ASLIB_FOFFSET( cg_touch_t, x ) },
+	{ ASLIB_PROPERTY_DECL( const int, y ), ASLIB_FOFFSET( cg_touch_t, y ) },
+	{ ASLIB_PROPERTY_DECL( const int64, time ), ASLIB_FOFFSET( cg_touch_t, time ) },
+	{ ASLIB_PROPERTY_DECL( const int, area ), ASLIB_FOFFSET( cg_touch_t, area ) },
+	{ ASLIB_PROPERTY_DECL(const  bool, areaValid ), ASLIB_FOFFSET( cg_touch_t, area_valid ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asTouchClassDescriptor =
+{
+	"Touch",                    /* name */
+	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
+	sizeof( cg_touch_t ),       /* size */
+	astouch_Funcdefs,           /* funcdefs */
+	astouch_ObjectBehaviors,    /* object behaviors */
+	astouch_Methods,            /* methods */
+	astouch_Properties,         /* properties */
+	NULL, NULL                  /* string factory hack */
+};
+
+//=======================================================================
+
+static const gs_asClassDescriptor_t * const asCGameClassesDescriptors[] =
+{
+	&asTouchClassDescriptor,
+
+	NULL
+};
+
+//=======================================================================
+
+static const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
+{
+	{ "Touch @GetTouch( int id )", asFUNCTION( CG_GetTouch ), NULL },
+
+	{ NULL }
+};
+
+//======================================================================
+
+static void asFunc_Print( const asstring_t *str ) {
+	if( !str || !str->buffer ) {
+		return;
+	}
+
+	CG_Printf( "%s", str->buffer );
+}
+
+//=======================================================================
+
+static const gs_asglobfuncs_t asCGameGlobalFuncs[] =
+{
+	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
+
+	{ NULL }
+};
+
+//======================================================================
 
 /*
 * CG_asInitializeCGameEngineSyntax
@@ -75,10 +169,14 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
 	GS_asRegisterEnums( asEngine, asCGameEnums );
 
 	// first register all class names so methods using custom classes work
+	GS_asRegisterObjectClassNames( asEngine, asCGameClassesDescriptors );
 
 	// register classes
+	GS_asRegisterObjectClasses( asEngine, asCGameClassesDescriptors );
 
 	// register global functions
+	GS_asRegisterGlobalFunctions( asEngine, asCGameGlobalFuncs, "CG" );
+	GS_asRegisterGlobalFunctions( asEngine, asCGameInputGlobalFuncs, "CG::Input" );
 
 	// register global properties
 }
@@ -139,17 +237,65 @@ static bool CG_asExecutionErrorReport( int error ) {
 }
 
 /*
+* CG_asCallScriptFunc
+*/
+static bool CG_asCallScriptFunc( void *ptr, std::function<void(asIScriptContext *)> setArgs,
+	std::function<void(asIScriptContext *)> getResult ) {
+	bool ok;
+
+	if( !ptr ) {
+		return false;
+	}
+
+	auto ctx = cgs.asExport->asAcquireContext( CGAME_AS_ENGINE() );
+
+	auto error = ctx->Prepare( static_cast<asIScriptFunction *>( ptr ) );
+	if( error < 0 ) {
+		return false;
+	}
+
+	// Now we need to pass the parameters to the script function.
+	setArgs( ctx );
+
+	error = ctx->Execute();
+	ok = CG_asExecutionErrorReport( error ) == false;
+
+	assert( ok == true );
+
+	if( ok ) {
+		getResult( ctx );
+	}
+
+	return ok;
+}
+
+/*
+* CG_asUnloadScriptModule
+*/
+static void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api ) {
+	auto asEngine = CGAME_AS_ENGINE();
+	if( asEngine == NULL ) {
+		return;
+	}
+
+	for( size_t i = 0; api[i].decl != nullptr; i++ ) {
+		*api[i].ptr = NULL;
+	}
+	asEngine->DiscardModule( moduleName );
+}
+
+/*
 * CG_asLoadScriptModule
 */
 static asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *filename, cg_asApiFuncPtr_t *api ) {
-	auto asEngine = static_cast<asIScriptEngine *>( cgs.asEngine );
+	auto asEngine = CGAME_AS_ENGINE();
 	if( asEngine == NULL ) {
 		return NULL;
 	}
 
 	asEngine->DiscardModule( moduleName );
 
-	auto asModule = cgs.asExport->asLoadScriptProject( CGAME_AS_ENGINE(), moduleName, 
+	auto asModule = cgs.asExport->asLoadScriptProject( asEngine, moduleName, 
 		"progs", "client", filename, ".cp" );
 	if( asModule == nullptr ) {
 		return nullptr;
@@ -171,30 +317,23 @@ static asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const cha
 	}
 
 	//
-	// execute the init function
+	// execute the optional 'load' function
 	//
-	auto ctx = cgs.asExport->asAcquireContext( CGAME_AS_ENGINE() );
-
-	auto error = ctx->Prepare( static_cast<asIScriptFunction *>( *api[0].ptr ) );
-	if( error < 0 ) {
-		goto error;
-	}
-
-	error = ctx->Execute();
-	if( CG_asExecutionErrorReport( error ) ) {
-		goto error;
+	if( *api[0].ptr != NULL ) {
+		if( !CG_asCallScriptFunc( *api[0].ptr, empty_as_cb, empty_as_cb ) ) {
+			goto error;
+		}
 	}
 
 	return asModule;
 
 error:
-	for( size_t i = 0; api[i].decl != nullptr; i++ ) {
-		*api[i].ptr = NULL;
-	}
-	asEngine->DiscardModule( moduleName );
+	CG_asUnloadScriptModule( moduleName, api );
 
 	return nullptr;
 }
+
+//======================================================================
 
 /*
 * CG_asLoadGameScript
@@ -204,30 +343,100 @@ bool CG_asLoadGameScript( void ) {
 	if( asModule == nullptr ) {
 		return false;
 	}
-
 	return true;
 }
+
+//======================================================================
+
+static cg_asApiFuncPtr_t cg_asInputAPI[] = {
+	"void CG::Input::Load()", &cgs.asInput.init, false,
+	"void CG::Input::Init()", &cgs.asInput.init, true,
+	"void CG::Input::Shutdown()", &cgs.asInput.shutdown, true,
+	"void CG::Input::Frame( int frameTime )", &cgs.asInput.frame, true,
+	"void CG::Input::ClearState()", &cgs.asInput.clearState, true,
+	"void CG::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true,
+	"uint CG::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true,
+	"Vec3 CG::Input::AddViewAngles( const Vec3 &in angles )", &cgs.asInput.addViewAngles, true,
+	"Vec3 CG::Input::AddMovement( const Vec3 &in move )", &cgs.asInput.addMovement, true,
+	nullptr, nullptr, false,
+};
 
 /*
 * CG_asLoadInputScript
 */
 bool CG_asLoadInputScript( void ) {
-	cg_asApiFuncPtr_t api[] = {
-		"void IN_Init()", &cgs.asInput.init, true,
-		"void IN_Shutdown()", &cgs.asInput.shutdown, true,
-		"void IN_Frame( int frameTime )", &cgs.asInput.frame, true,
-		"void IN_ClearState()", &cgs.asInput.clearState, true,
-		"void IN_MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true,
-		"uint IN_GetButtonBits()", &cgs.asInput.getButtonBits, true,
-		"void IN_AddViewAngles( const Vec3 &in angles )", &cgs.asInput.addViewAngles, true,
-		"void IN_AddMovement( const Vec3 &in move )", &cgs.asInput.addMovement, true,
-		nullptr, nullptr, false,
-	};
-
-	auto asModule = CG_asLoadScriptModule( CG_SCRIPTS_INPUT_MODULE_NAME, "input", api );
+	auto asModule = CG_asLoadScriptModule( CG_SCRIPTS_INPUT_MODULE_NAME, "input", cg_asInputAPI );
 	if( asModule == nullptr ) {
 		return false;
 	}
-
 	return true;
+}
+
+/*
+* CG_asUnloadInputScript
+*/
+void CG_asUnloadInputScript( void ) {
+	CG_asUnloadScriptModule( CG_SCRIPTS_INPUT_MODULE_NAME, cg_asInputAPI );
+}
+
+/*
+* CG_asInputInit
+*/
+void CG_asInputInit( void ) {
+	CG_asCallScriptFunc( cgs.asInput.init, empty_as_cb, empty_as_cb );
+}
+
+/*
+* CG_asInputShutdown
+*/
+void CG_asInputShutdown( void ) {
+	CG_asCallScriptFunc( cgs.asInput.shutdown, empty_as_cb, empty_as_cb );
+}
+
+/*
+* CG_asInputFrame
+*/
+void CG_asInputFrame( int frameTime ) {
+	CG_asCallScriptFunc( cgs.asInput.frame, [frameTime](asIScriptContext *ctx)
+		{
+			ctx->SetArgDWord( 0, frameTime );
+		},
+		empty_as_cb
+	);
+}
+
+/*
+* CG_asInputClearState
+*/
+void CG_asInputClearState( void ) {
+	CG_asCallScriptFunc( cgs.asInput.clearState, empty_as_cb, empty_as_cb );
+}
+
+/*
+* CG_asInputMouseMove
+*/
+void CG_asInputMouseMove( int mx, int my ) {
+	CG_asCallScriptFunc( cgs.asInput.mouseMove, [mx, my](asIScriptContext *ctx)
+	{
+		ctx->SetArgDWord( 0, mx );
+		ctx->SetArgDWord( 1, my );
+	},
+		empty_as_cb
+	);
+}
+
+/*
+* CG_asGetButtonBits
+*/
+unsigned CG_asGetButtonBits( void ) {
+	unsigned res = 0;
+
+	CG_asCallScriptFunc( cgs.asInput.getButtonBits, empty_as_cb,
+		[&res](asIScriptContext *ctx)
+		{
+			res = ctx->GetReturnDWord();
+		}
+	);
+
+	return res;
 }

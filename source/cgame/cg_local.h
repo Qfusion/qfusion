@@ -789,44 +789,6 @@ void CG_RefreshQuickMenu( void );
  */
 void CG_ShowQuickMenu( int state );
 
-/**
- * Touch area ID namespaces.
- */
-enum {
-	TOUCHAREA_NONE,
-	TOUCHAREA_HUD
-	// next would be 0x101, 0x201... until 0xf01
-};
-
-#define TOUCHAREA_SUB_SHIFT 16
-#define TOUCHAREA_MASK ( ( 1 << TOUCHAREA_SUB_SHIFT ) - 1 )
-
-typedef struct {
-	bool down; // is the finger currently down?
-	int x, y; // current x and y of the touch
-	int64_t time; // system time when pressed
-	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
-	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
-	void ( *upfunc )( int id, int64_t time ); // function to call when the finger is released, time is 0 if cancelled
-} cg_touch_t;
-
-extern cg_touch_t cg_touches[];
-
-int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, int64_t time ) );
-void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
-bool CG_IsTouchDown( int id );
-void CG_TouchFrame( void );
-void CG_CancelTouches( void );
-
-enum {
-	TOUCHPAD_MOVE,
-	TOUCHPAD_VIEW,
-
-	TOUCHPAD_COUNT
-};
-
-void CG_SetTouchpad( int padID, int touchID );
-
 //
 // cg_hud.c
 //
@@ -1202,7 +1164,15 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 void CG_asInitScriptEngine( void );
 void CG_asShutdownScriptEngine( void );
 bool CG_asLoadGameScript( void );
+
 bool CG_asLoadInputScript( void );
+void CG_asUnloadInputScript( void );
+void CG_asInputInit( void );
+void CG_asInputShutdown( void );
+void CG_asInputFrame( int frameTime );
+void CG_asInputClearState( void );
+void CG_asInputMouseMove( int mx, int my );
+unsigned CG_asGetButtonBits( void );
 
 //
 // cg_input.cpp
@@ -1226,6 +1196,41 @@ void CG_AddMovement( vec3_t movement );
  * @param keysSize output string buffer size
  */
 void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize );
+
+/**
+* Touch area ID namespaces.
+*/
+enum {
+	TOUCHAREA_NONE,
+	TOUCHAREA_HUD
+	// next would be 0x101, 0x201... until 0xf01
+};
+
+#define TOUCHAREA_SUB_SHIFT 16
+#define TOUCHAREA_MASK ( ( 1 << TOUCHAREA_SUB_SHIFT ) - 1 )
+
+typedef struct {
+	bool down; // is the finger currently down?
+	int x, y; // current x and y of the touch
+	int64_t time; // system time when pressed
+	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
+	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
+	void ( *upfunc )( int id, int64_t time ); // function to call when the finger is released, time is 0 if cancelled
+} cg_touch_t;
+
+int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, int64_t time ) );
+void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
+cg_touch_t *CG_GetTouch( int id );
+bool CG_IsTouchDown( int id );
+void CG_CancelTouches( void );
+
+enum {
+	TOUCHPAD_MOVE,
+	TOUCHPAD_VIEW,
+	TOUCHPAD_COUNT
+};
+
+void CG_SetTouchpad( int padID, int touchID );
 
 void CG_GetTouchMovement( vec3_t movement );
 
