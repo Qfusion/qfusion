@@ -43,13 +43,14 @@ void ClearState()
 
 void MouseMove( int mx, int my )
 {
+	CGame::Input::Mouse::Move( mx, my );
 }
 
 uint GetButtonBits()
 {
 	uint bits = BUTTON_NONE;
 	
-	bits |= CGame::Input::Keyboard::GetButtonBitsFromKeys();
+	bits |= CGame::Input::Keyboard::GetButtonBits();
 	
 	return bits;
 }
@@ -58,8 +59,9 @@ Vec3 AddViewAngles( const Vec3 angles )
 {
 	Vec3 diff;
 	
-	diff += CGame::Input::Keyboard::AddKeysViewAngles();
-	
+	diff += CGame::Input::Keyboard::AddViewAngles();
+	diff += CGame::Input::Mouse::AddViewAngles();
+
 	return angles + diff;
 }
 
@@ -67,7 +69,7 @@ Vec3 AddMovement( const Vec3 move )
 {
 	Vec3 diff;
 
-	diff += CGame::Input::Keyboard::AddKeysMovement();
+	diff += CGame::Input::Keyboard::AddMovement();
 
 	return move + diff;
 }

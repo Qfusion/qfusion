@@ -71,6 +71,46 @@ Cvar cl_anglespeedkey( "cl_anglespeedkey", "1.5", 0 );
 Cvar cl_run( "cl_run", "1", CVAR_ARCHIVE );
 
 /*
+* Init
+*/
+void Init() {
+	CGame::Cmd::AddCommand( "+moveup", UpDown );
+	CGame::Cmd::AddCommand( "-moveup", UpUp );
+	CGame::Cmd::AddCommand( "+movedown", DownDown );
+	CGame::Cmd::AddCommand( "-movedown", DownUp );
+	CGame::Cmd::AddCommand( "+left", LeftDown );
+	CGame::Cmd::AddCommand( "-left", LeftUp );
+	CGame::Cmd::AddCommand( "+right", RightDown );
+	CGame::Cmd::AddCommand( "-right", RightUp );
+	CGame::Cmd::AddCommand( "+forward", ForwardDown );
+	CGame::Cmd::AddCommand( "-forward", ForwardUp );
+	CGame::Cmd::AddCommand( "+back", BackDown );
+	CGame::Cmd::AddCommand( "-back", BackUp );
+	CGame::Cmd::AddCommand( "+lookup", LookupDown );
+	CGame::Cmd::AddCommand( "-lookup", LookupUp );
+	CGame::Cmd::AddCommand( "+lookdown", LookdownDown );
+	CGame::Cmd::AddCommand( "-lookdown", LookdownUp );
+	CGame::Cmd::AddCommand( "+strafe", StrafeDown );
+	CGame::Cmd::AddCommand( "-strafe", StrafeUp );
+	CGame::Cmd::AddCommand( "+moveleft", MoveleftDown );
+	CGame::Cmd::AddCommand( "-moveleft", MoveleftUp );
+	CGame::Cmd::AddCommand( "+moveright", MoverightDown );
+	CGame::Cmd::AddCommand( "-moveright", MoverightUp );
+	CGame::Cmd::AddCommand( "+speed", SpeedDown );
+	CGame::Cmd::AddCommand( "-speed", SpeedUp );
+	CGame::Cmd::AddCommand( "+attack", AttackDown );
+	CGame::Cmd::AddCommand( "-attack", AttackUp );
+	CGame::Cmd::AddCommand( "+use", UseDown );
+	CGame::Cmd::AddCommand( "-use", UseUp );
+	CGame::Cmd::AddCommand( "+klook", KLookDown );
+	CGame::Cmd::AddCommand( "-klook", KLookUp );
+	CGame::Cmd::AddCommand( "+special", SpecialDown );
+	CGame::Cmd::AddCommand( "-special", SpecialUp );
+	CGame::Cmd::AddCommand( "+zoom", ZoomDown );
+	CGame::Cmd::AddCommand( "-zoom", ZoomUp );
+}
+
+/*
 * KeyDown
 */
 void KeyDown( Kbutton @b ) {
@@ -223,9 +263,9 @@ float KeyState( Kbutton @key ) {
 }
 
 /*
-* AddKeysViewAngles
+* AddViewAngles
 */
-Vec3 AddKeysViewAngles( void ) {
+Vec3 AddViewAngles( void ) {
 	float speed;
 	Vec3 viewAngles;
 
@@ -251,9 +291,9 @@ Vec3 AddKeysViewAngles( void ) {
 }
 
 /*
-* AddKeysMovement
+* AddMovement
 */
-Vec3 AddKeysMovement() {
+Vec3 AddMovement() {
 	float down;
 	Vec3 movement;
 
@@ -280,9 +320,9 @@ Vec3 AddKeysMovement() {
 }
 
 /*
-* GetButtonBitsFromKeys
+* GetButtonBits
 */
-uint GetButtonBitsFromKeys() {
+uint GetButtonBits() {
 	uint buttons = BUTTON_NONE;
 
 	// figure button bits
@@ -312,46 +352,6 @@ uint GetButtonBitsFromKeys() {
 	in_zoom.state &= ~2;
 
 	return buttons;
-}
-
-/*
-* Init
-*/
-void Init() {
-	CGame::Cmd::AddCommand( "+moveup", UpDown );
-	CGame::Cmd::AddCommand( "-moveup", UpUp );
-	CGame::Cmd::AddCommand( "+movedown", DownDown );
-	CGame::Cmd::AddCommand( "-movedown", DownUp );
-	CGame::Cmd::AddCommand( "+left", LeftDown );
-	CGame::Cmd::AddCommand( "-left", LeftUp );
-	CGame::Cmd::AddCommand( "+right", RightDown );
-	CGame::Cmd::AddCommand( "-right", RightUp );
-	CGame::Cmd::AddCommand( "+forward", ForwardDown );
-	CGame::Cmd::AddCommand( "-forward", ForwardUp );
-	CGame::Cmd::AddCommand( "+back", BackDown );
-	CGame::Cmd::AddCommand( "-back", BackUp );
-	CGame::Cmd::AddCommand( "+lookup", LookupDown );
-	CGame::Cmd::AddCommand( "-lookup", LookupUp );
-	CGame::Cmd::AddCommand( "+lookdown", LookdownDown );
-	CGame::Cmd::AddCommand( "-lookdown", LookdownUp );
-	CGame::Cmd::AddCommand( "+strafe", StrafeDown );
-	CGame::Cmd::AddCommand( "-strafe", StrafeUp );
-	CGame::Cmd::AddCommand( "+moveleft", MoveleftDown );
-	CGame::Cmd::AddCommand( "-moveleft", MoveleftUp );
-	CGame::Cmd::AddCommand( "+moveright", MoverightDown );
-	CGame::Cmd::AddCommand( "-moveright", MoverightUp );
-	CGame::Cmd::AddCommand( "+speed", SpeedDown );
-	CGame::Cmd::AddCommand( "-speed", SpeedUp );
-	CGame::Cmd::AddCommand( "+attack", AttackDown );
-	CGame::Cmd::AddCommand( "-attack", AttackUp );
-	CGame::Cmd::AddCommand( "+use", UseDown );
-	CGame::Cmd::AddCommand( "-use", UseUp );
-	CGame::Cmd::AddCommand( "+klook", KLookDown );
-	CGame::Cmd::AddCommand( "-klook", KLookUp );
-	CGame::Cmd::AddCommand( "+special", SpecialDown );
-	CGame::Cmd::AddCommand( "-special", SpecialUp );
-	CGame::Cmd::AddCommand( "+zoom", ZoomDown );
-	CGame::Cmd::AddCommand( "-zoom", ZoomUp );
 }
 
 }
