@@ -479,6 +479,29 @@ static const gs_asEnumVal_t asKeyiconEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asAxisEnumVals[] =
+{
+	ASLIB_ENUM_VAL( PITCH ),
+	ASLIB_ENUM_VAL( YAW ),
+	ASLIB_ENUM_VAL( ROLL ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
+static const gs_asEnumVal_t asButtonEnumVals[] =
+{
+	ASLIB_ENUM_VAL( BUTTON_NONE ),
+	ASLIB_ENUM_VAL( BUTTON_ATTACK ),
+	ASLIB_ENUM_VAL( BUTTON_WALK ),
+	ASLIB_ENUM_VAL( BUTTON_SPECIAL ),
+	ASLIB_ENUM_VAL( BUTTON_USE ),
+	ASLIB_ENUM_VAL( BUTTON_ZOOM ),
+	ASLIB_ENUM_VAL( BUTTON_BUSYICON ),
+	ASLIB_ENUM_VAL( BUTTON_ANY ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 //=======================================================================
 
 static const gs_asEnum_t asGameEnums[] =
@@ -507,6 +530,9 @@ static const gs_asEnum_t asGameEnums[] =
 	{ "serverflags_e", asSVFlagEnumVals },
 	{ "meaningsofdeath_e", asMeaningsOfDeathEnumVals },
 	{ "keyicon_e", asKeyiconEnumVals },
+
+	{ "axis_e", asAxisEnumVals },
+	{ "button_e", asButtonEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
 };
