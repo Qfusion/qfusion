@@ -126,9 +126,16 @@ static const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[] =
 	NULL
 };
 
+static asvec4_t CG_asInputGetThumbsticks( void ) {
+	asvec4_t sticks;
+	trap_IN_GetThumbsticks( sticks.v );
+	return sticks;
+}
+
 static const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 {
 	{ "Touch @GetTouch( int id )", asFUNCTION( CG_GetTouch ), NULL },
+	{ "Vec4 GetThumbsticks()", asFUNCTION( CG_asInputGetThumbsticks ), NULL },
 
 	{ NULL }
 };
