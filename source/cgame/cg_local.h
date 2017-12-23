@@ -1173,6 +1173,8 @@ void CG_asInputFrame( int frameTime );
 void CG_asInputClearState( void );
 void CG_asInputMouseMove( int mx, int my );
 unsigned CG_asGetButtonBits( void );
+void CG_asAddViewAngles( vec3_t viewAngles );
+void CG_asAddMovement( vec3_t movement );
 
 //
 // cg_input.cpp

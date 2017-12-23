@@ -119,14 +119,12 @@ static const gs_asClassDescriptor_t asTouchClassDescriptor =
 
 //=======================================================================
 
-static const gs_asClassDescriptor_t * const asCGameClassesDescriptors[] =
+static const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[] =
 {
 	&asTouchClassDescriptor,
 
 	NULL
 };
-
-//=======================================================================
 
 static const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 {
@@ -166,17 +164,17 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
 	GS_asInitializeEngine( asEngine );
 
 	// register global enums
-	GS_asRegisterEnums( asEngine, asCGameEnums );
+	GS_asRegisterEnums( asEngine, asCGameEnums, "CGame" );
 
 	// first register all class names so methods using custom classes work
-	GS_asRegisterObjectClassNames( asEngine, asCGameClassesDescriptors );
+	GS_asRegisterObjectClassNames( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 
 	// register classes
-	GS_asRegisterObjectClasses( asEngine, asCGameClassesDescriptors );
+	GS_asRegisterObjectClasses( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 
 	// register global functions
-	GS_asRegisterGlobalFunctions( asEngine, asCGameGlobalFuncs, "CG" );
-	GS_asRegisterGlobalFunctions( asEngine, asCGameInputGlobalFuncs, "CG::Input" );
+	GS_asRegisterGlobalFunctions( asEngine, asCGameGlobalFuncs, "CGame" );
+	GS_asRegisterGlobalFunctions( asEngine, asCGameInputGlobalFuncs, "CGame::Input" );
 
 	// register global properties
 }
@@ -349,15 +347,15 @@ bool CG_asLoadGameScript( void ) {
 //======================================================================
 
 static cg_asApiFuncPtr_t cg_asInputAPI[] = {
-	"void CG::Input::Load()", &cgs.asInput.init, false,
-	"void CG::Input::Init()", &cgs.asInput.init, true,
-	"void CG::Input::Shutdown()", &cgs.asInput.shutdown, true,
-	"void CG::Input::Frame( int frameTime )", &cgs.asInput.frame, true,
-	"void CG::Input::ClearState()", &cgs.asInput.clearState, true,
-	"void CG::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true,
-	"uint CG::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true,
-	"Vec3 CG::Input::AddViewAngles( const Vec3 &in angles )", &cgs.asInput.addViewAngles, true,
-	"Vec3 CG::Input::AddMovement( const Vec3 &in move )", &cgs.asInput.addMovement, true,
+	"void CGame::Input::Load()", &cgs.asInput.init, false,
+	"void CGame::Input::Init()", &cgs.asInput.init, true,
+	"void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true,
+	"void CGame::Input::Frame( int frameTime )", &cgs.asInput.frame, true,
+	"void CGame::Input::ClearState()", &cgs.asInput.clearState, true,
+	"void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true,
+	"uint CGame::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true,
+	"Vec3 CGame::Input::AddViewAngles( const Vec3 angles )", &cgs.asInput.addViewAngles, true,
+	"Vec3 CGame::Input::AddMovement( const Vec3 move )", &cgs.asInput.addMovement, true,
 	nullptr, nullptr, false,
 };
 
@@ -439,4 +437,42 @@ unsigned CG_asGetButtonBits( void ) {
 	);
 
 	return res;
+}
+
+/*
+* CG_asAddViewAngles
+*/
+void CG_asAddViewAngles( vec3_t viewAngles ) {
+	CG_asCallScriptFunc( cgs.asInput.addViewAngles,
+		[viewAngles](asIScriptContext *ctx)
+		{
+			asvec3_t va;
+			VectorCopy( viewAngles, va.v );
+			ctx->SetArgObject( 0, &va );
+		},
+		[viewAngles](asIScriptContext *ctx)
+		{
+			const asvec3_t *va = ( const asvec3_t * )ctx->GetReturnAddress();
+			VectorCopy( va->v, viewAngles );
+		}
+	);
+}
+
+/*
+* CG_asAddMovement
+*/
+void CG_asAddMovement( vec3_t movement ) {
+	CG_asCallScriptFunc( cgs.asInput.addViewAngles,
+		[movement](asIScriptContext *ctx)
+		{
+			asvec3_t mv;
+			VectorCopy( movement, mv.v );
+			ctx->SetArgObject( 0, &mv );
+		},
+		[movement](asIScriptContext *ctx)
+		{
+			const asvec3_t *mv = ( const asvec3_t * )ctx->GetReturnAddress();
+			VectorCopy( mv->v, movement );
+		}
+	);
 }

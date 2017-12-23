@@ -1070,6 +1070,10 @@ void CG_AddViewAngles( vec3_t viewAngles ) {
 		viewAngles[PITCH] = -SHORT2ANGLE( cg.predictedPlayerState.pmove.delta_angles[PITCH] );
 		cg_inputCenterView = false;
 	}
+
+	VectorCopy( viewAngles, am );
+	CG_asAddViewAngles( am );
+	VectorCopy( am, viewAngles );
 }
 
 /*
