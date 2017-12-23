@@ -106,9 +106,9 @@ static void gs_asemptyfunc( void ) {}
 #define ASLIB_PROPERTY_NULL                     { NULL, 0 }
 
 void GS_asInitializeEngine( asIScriptEngine *asEngine );
-void GS_asRegisterEnums( asIScriptEngine *asEngine, const gs_asEnum_t *asEnums );
-void GS_asRegisterObjectClassNames( asIScriptEngine *asEngine, const gs_asClassDescriptor_t *const *asClassesDescriptors );
-void GS_asRegisterObjectClasses( asIScriptEngine *asEngine, const gs_asClassDescriptor_t *const *asClassesDescriptors );
+void GS_asRegisterEnums( asIScriptEngine *asEngine, const gs_asEnum_t *asEnums, const char *nameSpace );
+void GS_asRegisterObjectClassNames( asIScriptEngine *asEngine, const gs_asClassDescriptor_t *const *asClassesDescriptors, const char *nameSpace );
+void GS_asRegisterObjectClasses( asIScriptEngine *asEngine, const gs_asClassDescriptor_t *const *asClassesDescriptors, const char *nameSpace );
 void GS_asRegisterGlobalFunctions( asIScriptEngine *asEngine, const gs_asglobfuncs_t *funcs, const char *nameSpace );
 void GS_asRegisterGlobalProperties( asIScriptEngine *asEngine, const gs_asglobproperties_t *props, const char *nameSpace );
 
