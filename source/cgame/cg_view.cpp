@@ -198,24 +198,6 @@ static void CG_FlashGameWindow( void ) {
 }
 
 /*
-* CG_GetSensitivityScale
-* Scale sensitivity for different view effects
-*/
-float CG_GetSensitivityScale( float sens, float zoomSens ) {
-	float sensScale = 1.0f;
-
-	if( !cgs.demoPlaying && sens && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) ) {
-		if( zoomSens ) {
-			return zoomSens / sens;
-		}
-
-		return cg_zoomfov->value / cg_fov->value;
-	}
-
-	return sensScale;
-}
-
-/*
 * CG_AddKickAngles
 */
 void CG_AddKickAngles( vec3_t viewangles ) {

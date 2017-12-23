@@ -45,19 +45,6 @@ cvar_t *cl_demoavi_audio;
 cvar_t *cl_demoavi_fps;
 cvar_t *cl_demoavi_scissor;
 
-cvar_t *sensitivity;
-cvar_t *zoomsens;
-cvar_t *m_accel;
-cvar_t *m_accelStyle;
-cvar_t *m_accelOffset;
-cvar_t *m_accelPow;
-cvar_t *m_filter;
-cvar_t *m_filterStrength;
-cvar_t *m_sensCap;
-
-cvar_t *m_pitch;
-cvar_t *m_yaw;
-
 //
 // userinfo
 //
