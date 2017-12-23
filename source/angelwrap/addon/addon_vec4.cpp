@@ -153,6 +153,17 @@ static asvec3_t objectVec4_XYZ( const asvec4_t *self ) {
 	return v;
 }
 
+static float *objectVec4_Index( unsigned index, asvec3_t *self ) {
+	if( index < 0 || index > 3 ) {
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx ) {
+			ctx->SetException( "Index out of bounds" );
+		}
+		return NULL;
+	}
+	return &self->v[index];
+}
+
 void PreRegisterVec4Addon( asIScriptEngine *engine ) {
 	int r;
 
@@ -200,6 +211,8 @@ void RegisterVec4Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec4", "float distance(const Vec4 &in) const", asFUNCTION( objectVec4_Distance ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod( "Vec4", "Vec3 xyz() const", asFUNCTION( objectVec4_XYZ ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec4", "float &opIndex(uint)", asFUNCTION( objectVec4_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec4", "const float &opIndex(uint) const", asFUNCTION( objectVec4_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	// properties
 	r = engine->RegisterObjectProperty( "Vec4", "float x", asOFFSET( asvec4_t, v[0] ) ); assert( r >= 0 );

@@ -182,6 +182,17 @@ static void objectVec3_MakeNormalVectors( asvec3_t *r, asvec3_t *u, asvec3_t *se
 	MakeNormalVectors( self->v, r->v, u->v );
 }
 
+static float *objectVec3_Index( unsigned index, asvec3_t *self ) {
+	if( index < 0 || index > 2 ) {
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx ) {
+			ctx->SetException( "Index out of bounds" );
+		}
+		return NULL;
+	}
+	return &self->v[index];
+}
+
 void PreRegisterVec3Addon( asIScriptEngine *engine ) {
 	int r;
 
@@ -234,6 +245,8 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 toAngles() const", asFUNCTION( objectVec3_VecToAngles ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 perpendicular() const", asFUNCTION( objectVec3_Perpendicular ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "void makeNormalVectors(Vec3 &out, Vec3 &out) const", asFUNCTION( objectVec3_MakeNormalVectors ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec3", "float &opIndex(uint)", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec3", "const float &opIndex(uint) const", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	// properties
 	r = engine->RegisterObjectProperty( "Vec3", "float x", asOFFSET( asvec3_t, v[0] ) ); assert( r >= 0 );
