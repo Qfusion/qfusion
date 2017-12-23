@@ -31,286 +31,6 @@ static bool cg_inputCenterView;
 /*
 ===============================================================================
 
-KEY BUTTONS
-
-Continuous button event tracking is complicated by the fact that two different
-input sources (say, mouse button 1 and the control key) can both press the
-same button, but the button should only be released when both of the
-pressing key have been released.
-
-When a key event issues a button command (+forward, +attack, etc), it appends
-its key number as a parameter to the command so it can be matched up with
-the release.
-
-state bit 0 is the current state of the key
-state bit 1 is edge triggered on the up to down transition
-state bit 2 is edge triggered on the down to up transition
-
-
-Key_Event (int key, bool down, int64_t time);
-
-===============================================================================
-*/
-
-typedef struct {
-	int down[2];            // key nums holding it down
-	int64_t downtime;       // msec timestamp
-	unsigned msec;          // msec down this frame
-	int state;
-} kbutton_t;
-
-static kbutton_t in_klook;
-static kbutton_t in_left, in_right, in_forward, in_back;
-static kbutton_t in_lookup, in_lookdown, in_moveleft, in_moveright;
-static kbutton_t in_strafe, in_speed, in_use, in_attack;
-static kbutton_t in_up, in_down;
-static kbutton_t in_special;
-static kbutton_t in_zoom;
-
-static cvar_t *cl_yawspeed;
-static cvar_t *cl_pitchspeed;
-
-static cvar_t *cl_run;
-
-static cvar_t *cl_anglespeedkey;
-
-/*
-* CG_KeyDown
-*/
-static void CG_KeyDown( kbutton_t *b ) {
-	int k;
-	const char *c;
-
-	c = trap_Cmd_Argv( 1 );
-	if( c[0] ) {
-		k = atoi( c );
-	} else {
-		k = -1; // typed manually at the console for continuous down
-
-	}
-	if( k == b->down[0] || k == b->down[1] ) {
-		return; // repeating key
-
-	}
-	if( !b->down[0] ) {
-		b->down[0] = k;
-	} else if( !b->down[1] ) {
-		b->down[1] = k;
-	} else {
-		Com_Printf( "Three keys down for a button!\n" );
-		return;
-	}
-
-	if( b->state & 1 ) {
-		return; // still down
-
-	}
-	// save timestamp
-	c = trap_Cmd_Argv( 2 );
-	b->downtime = atoi( c );
-	if( !b->downtime ) {
-		b->downtime = cg_inputTime - 100;
-	}
-
-	b->state |= 1 + 2; // down + impulse down
-}
-
-/*
-* CG_KeyUp
-*/
-static void CG_KeyUp( kbutton_t *b ) {
-	int k;
-	const char *c;
-	int uptime;
-
-	c = trap_Cmd_Argv( 1 );
-	if( c[0] ) {
-		k = atoi( c );
-	} else { // typed manually at the console, assume for unsticking, so clear all
-		b->down[0] = b->down[1] = 0;
-		b->state = 4; // impulse up
-		return;
-	}
-
-	if( b->down[0] == k ) {
-		b->down[0] = 0;
-	} else if( b->down[1] == k ) {
-		b->down[1] = 0;
-	} else {
-		return; // key up without corresponding down (menu pass through)
-	}
-	if( b->down[0] || b->down[1] ) {
-		return; // some other key is still holding it down
-
-	}
-	if( !( b->state & 1 ) ) {
-		return; // still up (this should not happen)
-
-	}
-	// save timestamp
-	c = trap_Cmd_Argv( 2 );
-	uptime = atoi( c );
-	if( uptime ) {
-		b->msec += uptime - b->downtime;
-	} else {
-		b->msec += 10;
-	}
-
-	b->state &= ~1; // now up
-	b->state |= 4;  // impulse up
-}
-
-static void IN_KLookDown( void ) { CG_KeyDown( &in_klook ); }
-static void IN_KLookUp( void ) { CG_KeyUp( &in_klook ); }
-static void IN_UpDown( void ) { CG_KeyDown( &in_up ); }
-static void IN_UpUp( void ) { CG_KeyUp( &in_up ); }
-static void IN_DownDown( void ) { CG_KeyDown( &in_down ); }
-static void IN_DownUp( void ) { CG_KeyUp( &in_down ); }
-static void IN_LeftDown( void ) { CG_KeyDown( &in_left ); }
-static void IN_LeftUp( void ) { CG_KeyUp( &in_left ); }
-static void IN_RightDown( void ) { CG_KeyDown( &in_right ); }
-static void IN_RightUp( void ) { CG_KeyUp( &in_right ); }
-static void IN_ForwardDown( void ) { CG_KeyDown( &in_forward ); }
-static void IN_ForwardUp( void ) { CG_KeyUp( &in_forward ); }
-static void IN_BackDown( void ) { CG_KeyDown( &in_back ); }
-static void IN_BackUp( void ) { CG_KeyUp( &in_back ); }
-static void IN_LookupDown( void ) { CG_KeyDown( &in_lookup ); }
-static void IN_LookupUp( void ) { CG_KeyUp( &in_lookup ); }
-static void IN_LookdownDown( void ) { CG_KeyDown( &in_lookdown ); }
-static void IN_LookdownUp( void ) { CG_KeyUp( &in_lookdown ); }
-static void IN_MoveleftDown( void ) { CG_KeyDown( &in_moveleft ); }
-static void IN_MoveleftUp( void ) { CG_KeyUp( &in_moveleft ); }
-static void IN_MoverightDown( void ) { CG_KeyDown( &in_moveright ); }
-static void IN_MoverightUp( void ) { CG_KeyUp( &in_moveright ); }
-static void IN_SpeedDown( void ) { CG_KeyDown( &in_speed ); }
-static void IN_SpeedUp( void ) { CG_KeyUp( &in_speed ); }
-static void IN_StrafeDown( void ) { CG_KeyDown( &in_strafe ); }
-static void IN_StrafeUp( void ) { CG_KeyUp( &in_strafe ); }
-static void IN_AttackDown( void ) { CG_KeyDown( &in_attack ); }
-static void IN_AttackUp( void ) { CG_KeyUp( &in_attack ); }
-static void IN_UseDown( void ) { CG_KeyDown( &in_use ); }
-static void IN_UseUp( void ) { CG_KeyUp( &in_use ); }
-static void IN_SpecialDown( void ) { CG_KeyDown( &in_special ); }
-static void IN_SpecialUp( void ) { CG_KeyUp( &in_special ); }
-static void IN_ZoomDown( void ) { CG_KeyDown( &in_zoom ); }
-static void IN_ZoomUp( void ) { CG_KeyUp( &in_zoom ); }
-
-
-/*
-* CG_KeyState
-*/
-static float CG_KeyState( kbutton_t *key ) {
-	float val;
-	int msec;
-
-	key->state &= 1; // clear impulses
-
-	msec = key->msec;
-	key->msec = 0;
-
-	if( key->state ) {
-		// still down
-		msec += cg_inputTime - key->downtime;
-		key->downtime = cg_inputTime;
-	}
-
-	if( !cg_inputFrameTime )
-		return 0;
-
-	val = (float) msec / (float)cg_inputFrameTime;
-
-	return bound( 0, val, 1 );
-}
-
-/*
-* CG_AddKeysViewAngles
-*/
-static void CG_AddKeysViewAngles( vec3_t viewAngles ) {
-	float speed;
-
-	if( in_speed.state & 1 ) {
-		speed = ( (float)cg_inputFrameTime * 0.001f ) * cl_anglespeedkey->value;
-	} else {
-		speed = (float)cg_inputFrameTime * 0.001f;
-	}
-
-	if( !( in_strafe.state & 1 ) ) {
-		viewAngles[YAW] -= speed * cl_yawspeed->value * CG_KeyState( &in_right );
-		viewAngles[YAW] += speed * cl_yawspeed->value * CG_KeyState( &in_left );
-	}
-	if( in_klook.state & 1 ) {
-		viewAngles[PITCH] -= speed * cl_pitchspeed->value * CG_KeyState( &in_forward );
-		viewAngles[PITCH] += speed * cl_pitchspeed->value * CG_KeyState( &in_back );
-	}
-
-	viewAngles[PITCH] -= speed * cl_pitchspeed->value * CG_KeyState( &in_lookup );
-	viewAngles[PITCH] += speed * cl_pitchspeed->value * CG_KeyState( &in_lookdown );
-}
-
-/*
-* CG_AddKeysMovement
-*/
-static void CG_AddKeysMovement( vec3_t movement ) {
-	float down;
-
-	if( in_strafe.state & 1 ) {
-		movement[0] += CG_KeyState( &in_right );
-		movement[0] -= CG_KeyState( &in_left );
-	}
-
-	movement[0] += CG_KeyState( &in_moveright );
-	movement[0] -= CG_KeyState( &in_moveleft );
-
-	if( !( in_klook.state & 1 ) ) {
-		movement[1] += CG_KeyState( &in_forward );
-		movement[1] -= CG_KeyState( &in_back );
-	}
-
-	movement[2] += CG_KeyState( &in_up );
-	down = CG_KeyState( &in_down );
-	if( down > movement[2] ) {
-		movement[2] -= down;
-	}
-}
-
-/*
-* CG_GetButtonBitsFromKeys
-*/
-unsigned int CG_GetButtonBitsFromKeys( void ) {
-	int buttons = 0;
-
-	// figure button bits
-
-	if( in_attack.state & 3 ) {
-		buttons |= BUTTON_ATTACK;
-	}
-	in_attack.state &= ~2;
-
-	if( in_special.state & 3 ) {
-		buttons |= BUTTON_SPECIAL;
-	}
-	in_special.state &= ~2;
-
-	if( in_use.state & 3 ) {
-		buttons |= BUTTON_USE;
-	}
-	in_use.state &= ~2;
-
-	if( ( in_speed.state & 1 ) ^ !cl_run->integer ) {
-		buttons |= BUTTON_WALK;
-	}
-
-	if( in_zoom.state & 3 ) {
-		buttons |= BUTTON_ZOOM;
-	}
-	in_zoom.state &= ~2;
-
-	return buttons;
-}
-
-/*
-===============================================================================
-
 MOUSE
 
 ===============================================================================
@@ -904,49 +624,7 @@ void CG_InitInput( void ) {
 
 	CG_asInputInit();
 
-	trap_Cmd_AddCommand( "+moveup", IN_UpDown );
-	trap_Cmd_AddCommand( "-moveup", IN_UpUp );
-	trap_Cmd_AddCommand( "+movedown", IN_DownDown );
-	trap_Cmd_AddCommand( "-movedown", IN_DownUp );
-	trap_Cmd_AddCommand( "+left", IN_LeftDown );
-	trap_Cmd_AddCommand( "-left", IN_LeftUp );
-	trap_Cmd_AddCommand( "+right", IN_RightDown );
-	trap_Cmd_AddCommand( "-right", IN_RightUp );
-	trap_Cmd_AddCommand( "+forward", IN_ForwardDown );
-	trap_Cmd_AddCommand( "-forward", IN_ForwardUp );
-	trap_Cmd_AddCommand( "+back", IN_BackDown );
-	trap_Cmd_AddCommand( "-back", IN_BackUp );
-	trap_Cmd_AddCommand( "+lookup", IN_LookupDown );
-	trap_Cmd_AddCommand( "-lookup", IN_LookupUp );
-	trap_Cmd_AddCommand( "+lookdown", IN_LookdownDown );
-	trap_Cmd_AddCommand( "-lookdown", IN_LookdownUp );
-	trap_Cmd_AddCommand( "+strafe", IN_StrafeDown );
-	trap_Cmd_AddCommand( "-strafe", IN_StrafeUp );
-	trap_Cmd_AddCommand( "+moveleft", IN_MoveleftDown );
-	trap_Cmd_AddCommand( "-moveleft", IN_MoveleftUp );
-	trap_Cmd_AddCommand( "+moveright", IN_MoverightDown );
-	trap_Cmd_AddCommand( "-moveright", IN_MoverightUp );
-	trap_Cmd_AddCommand( "+speed", IN_SpeedDown );
-	trap_Cmd_AddCommand( "-speed", IN_SpeedUp );
-	trap_Cmd_AddCommand( "+attack", IN_AttackDown );
-	trap_Cmd_AddCommand( "-attack", IN_AttackUp );
-	trap_Cmd_AddCommand( "+use", IN_UseDown );
-	trap_Cmd_AddCommand( "-use", IN_UseUp );
-	trap_Cmd_AddCommand( "+klook", IN_KLookDown );
-	trap_Cmd_AddCommand( "-klook", IN_KLookUp );
-	// wsw
-	trap_Cmd_AddCommand( "+special", IN_SpecialDown );
-	trap_Cmd_AddCommand( "-special", IN_SpecialUp );
-	trap_Cmd_AddCommand( "+zoom", IN_ZoomDown );
-	trap_Cmd_AddCommand( "-zoom", IN_ZoomUp );
-
 	trap_Cmd_AddCommand( "centerview", CG_CenterView );
-
-	cl_yawspeed =  trap_Cvar_Get( "cl_yawspeed", "140", 0 );
-	cl_pitchspeed = trap_Cvar_Get( "cl_pitchspeed", "150", 0 );
-	cl_anglespeedkey = trap_Cvar_Get( "cl_anglespeedkey", "1.5", 0 );
-
-	cl_run = trap_Cvar_Get( "cl_run", "1", CVAR_ARCHIVE );
 
 	sensitivity = trap_Cvar_Get( "sensitivity", "3", CVAR_ARCHIVE );
 	zoomsens = trap_Cvar_Get( "zoomsens", "0", CVAR_ARCHIVE );
@@ -989,42 +667,6 @@ void CG_ShutdownInput( void ) {
 
 	CG_asUnloadInputScript();
 
-	trap_Cmd_RemoveCommand( "+moveup" );
-	trap_Cmd_RemoveCommand( "-moveup" );
-	trap_Cmd_RemoveCommand( "+movedown" );
-	trap_Cmd_RemoveCommand( "-movedown" );
-	trap_Cmd_RemoveCommand( "+left" );
-	trap_Cmd_RemoveCommand( "-left" );
-	trap_Cmd_RemoveCommand( "+right" );
-	trap_Cmd_RemoveCommand( "-right" );
-	trap_Cmd_RemoveCommand( "+forward" );
-	trap_Cmd_RemoveCommand( "-forward" );
-	trap_Cmd_RemoveCommand( "+back" );
-	trap_Cmd_RemoveCommand( "-back" );
-	trap_Cmd_RemoveCommand( "+lookup" );
-	trap_Cmd_RemoveCommand( "-lookup" );
-	trap_Cmd_RemoveCommand( "+lookdown" );
-	trap_Cmd_RemoveCommand( "-lookdown" );
-	trap_Cmd_RemoveCommand( "+strafe" );
-	trap_Cmd_RemoveCommand( "-strafe" );
-	trap_Cmd_RemoveCommand( "+moveleft" );
-	trap_Cmd_RemoveCommand( "-moveleft" );
-	trap_Cmd_RemoveCommand( "+moveright" );
-	trap_Cmd_RemoveCommand( "-moveright" );
-	trap_Cmd_RemoveCommand( "+speed" );
-	trap_Cmd_RemoveCommand( "-speed" );
-	trap_Cmd_RemoveCommand( "+attack" );
-	trap_Cmd_RemoveCommand( "-attack" );
-	trap_Cmd_RemoveCommand( "+use" );
-	trap_Cmd_RemoveCommand( "-use" );
-	trap_Cmd_RemoveCommand( "+klook" );
-	trap_Cmd_RemoveCommand( "-klook" );
-	// wsw
-	trap_Cmd_RemoveCommand( "+special" );
-	trap_Cmd_RemoveCommand( "-special" );
-	trap_Cmd_RemoveCommand( "+zoom" );
-	trap_Cmd_RemoveCommand( "-zoom" );
-
 	trap_Cmd_RemoveCommand( "centerview" );
 }
 
@@ -1033,9 +675,6 @@ void CG_ShutdownInput( void ) {
 */
 unsigned int CG_GetButtonBits( void ) {
 	int buttons = 0;
-
-	// figure button bits
-	buttons |= CG_GetButtonBitsFromKeys();
 
 	buttons |= CG_GetTouchButtonBits();
 
@@ -1056,7 +695,6 @@ void CG_AddViewAngles( vec3_t viewAngles ) {
 	
 	VectorClear( am );
 
-	CG_AddKeysViewAngles( am );
 	CG_AddGamepadViewAngles( am );
 	CG_AddTouchViewAngles( am );
 	CG_AddMouseViewAngles( am );
@@ -1085,7 +723,6 @@ void CG_AddMovement( vec3_t movement ) {
 
 	VectorClear( dm );
 
-	CG_AddKeysMovement( dm );
 	CG_AddGamepadMovement( dm );
 	CG_AddTouchMovement( dm );
 
@@ -1093,6 +730,10 @@ void CG_AddMovement( vec3_t movement ) {
 		dm[0] = dm[0] * -1.0;
 	}
 	VectorAdd( movement, dm, movement );
+
+	VectorCopy( movement, dm );
+	CG_asAddMovement( dm );
+	VectorCopy( dm, movement );
 }
 
 /*

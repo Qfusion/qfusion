@@ -417,7 +417,7 @@ static asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const cha
 		auto decl = api[i].decl;
 		auto ptr = asModule->GetFunctionByDecl( decl );
 
-		if( !ptr ) {
+		if( !ptr && api[i].mandatory ) {
 			CG_Printf( S_COLOR_RED "* The function '%s' was not found. Can not continue.\n", decl );
 			goto error;
 		}
@@ -460,7 +460,7 @@ static cg_asApiFuncPtr_t cg_asInputAPI[] = {
 	"void CGame::Input::Load()", &cgs.asInput.load, false,
 	"void CGame::Input::Init()", &cgs.asInput.init, true,
 	"void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true,
-	"void CGame::Input::Frame( int frameTime )", &cgs.asInput.frame, true,
+	"void CGame::Input::Frame( int64 curTime, int frameTime )", &cgs.asInput.frame, true,
 	"void CGame::Input::ClearState()", &cgs.asInput.clearState, true,
 	"void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true,
 	"uint CGame::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true,
@@ -507,7 +507,8 @@ void CG_asInputShutdown( void ) {
 void CG_asInputFrame( int frameTime ) {
 	CG_asCallScriptFunc( cgs.asInput.frame, [frameTime](asIScriptContext *ctx)
 		{
-			ctx->SetArgDWord( 0, frameTime );
+			ctx->SetArgQWord( 0, trap_Milliseconds() );
+			ctx->SetArgDWord( 1, frameTime );
 		},
 		empty_as_cb
 	);
@@ -572,7 +573,7 @@ void CG_asAddViewAngles( vec3_t viewAngles ) {
 * CG_asAddMovement
 */
 void CG_asAddMovement( vec3_t movement ) {
-	CG_asCallScriptFunc( cgs.asInput.addViewAngles,
+	CG_asCallScriptFunc( cgs.asInput.addMovement,
 		[movement](asIScriptContext *ctx)
 		{
 			asvec3_t mv;
