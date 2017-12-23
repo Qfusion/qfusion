@@ -43,7 +43,7 @@ typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1
 
 // cg_public.h -- client game dll information visible to engine
 
-#define CGAME_API_VERSION   102
+#define CGAME_API_VERSION   103
 
 //
 // structs and variables shared with the main engine
@@ -290,8 +290,6 @@ typedef struct {
 	void ( *EscapeKey )( void );
 
 	void ( *GetEntitySpatilization )( int entNum, vec3_t origin, vec3_t velocity );
-
-	float ( *GetSensitivityScale )( float sens, float zoomSens );
 
 	void ( *Trace )( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask );
 

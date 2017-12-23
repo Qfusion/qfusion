@@ -616,17 +616,6 @@ void CL_GameModule_ConfigString( int number, const char *value ) {
 }
 
 /*
-* CL_GameModule_GetSensitivityScale
-*/
-float CL_GameModule_GetSensitivityScale( float sens, float zoomSens ) {
-	if( cge ) {
-		return cge->GetSensitivityScale( sens, zoomSens );
-	} else {
-		return 1.0f;
-	}
-}
-
-/*
 * CL_GameModule_NewSnapshot
 */
 bool CL_GameModule_NewSnapshot( int pendingSnapshot ) {
