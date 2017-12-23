@@ -1179,26 +1179,6 @@ void CG_asAddMovement( vec3_t movement );
 //
 // cg_input.cpp
 //
-void CG_InitInput( void );
-void CG_ShutdownInput( void );
-void CG_InputFrame( int frameTime );
-void CG_ClearInputState( void );
-
-void CG_MouseMove( int mx, int my );
-float CG_GetSensitivityScale( float sens, float zoomSens );
-
-unsigned int CG_GetButtonBits( void );
-void CG_AddViewAngles( vec3_t viewAngles );
-void CG_AddMovement( vec3_t movement );
-
-/**
- * Gets up to two bound keys for a command.
- *
- * @param cmd      console command to get binds for
- * @param keys     output string
- * @param keysSize output string buffer size
- */
-void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize );
 
 /**
 * Touch area ID namespaces.
@@ -1207,6 +1187,12 @@ enum {
 	TOUCHAREA_NONE,
 	TOUCHAREA_HUD
 	// next would be 0x101, 0x201... until 0xf01
+};
+
+enum {
+	TOUCHPAD_MOVE,
+	TOUCHPAD_VIEW,
+	TOUCHPAD_COUNT
 };
 
 #define TOUCHAREA_SUB_SHIFT 16
@@ -1221,20 +1207,38 @@ typedef struct {
 	void ( *upfunc )( int id, int64_t time ); // function to call when the finger is released, time is 0 if cancelled
 } cg_touch_t;
 
+typedef struct {
+	int touch;
+	float x, y;
+} cg_touchpad_t;
+
+void CG_InitInput( void );
+void CG_ShutdownInput( void );
+void CG_InputFrame( int frameTime );
+void CG_ClearInputState( void );
+void CG_MouseMove( int mx, int my );
+float CG_GetSensitivityScale( float sens, float zoomSens );
+unsigned int CG_GetButtonBits( void );
+void CG_AddViewAngles( vec3_t viewAngles );
+void CG_AddMovement( vec3_t movement );
+
+void CG_SetTouchpad( int padID, int touchID );
+cg_touchpad_t *CG_GetTouchpad( int padID );
+
 int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, int64_t time ) );
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 cg_touch_t *CG_GetTouch( int id );
 bool CG_IsTouchDown( int id );
 void CG_CancelTouches( void );
-
-enum {
-	TOUCHPAD_MOVE,
-	TOUCHPAD_VIEW,
-	TOUCHPAD_COUNT
-};
-
-void CG_SetTouchpad( int padID, int touchID );
-
 void CG_GetTouchMovement( vec3_t movement );
+
+/**
+ * Gets up to two bound keys for a command.
+ *
+ * @param cmd      console command to get binds for
+ * @param keys     output string
+ * @param keysSize output string buffer size
+ */
+void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize );
 
 //=================================================
