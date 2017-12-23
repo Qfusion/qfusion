@@ -22,9 +22,15 @@ namespace CGame {
 
 namespace Input {
 
+int64 curTime;
+int frameTime;
+float pixelRatio;
+
 void Init()
 {
-	CGame::Input::Keyboard::Init();
+	pixelRatio = GetPixelRatio();
+
+	CGame::Input::Keys::Init();
 }
 
 void Shutdown()
@@ -35,10 +41,16 @@ void Frame( int64 curTime_, int frameTime_ )
 {
 	curTime = curTime_;
 	frameTime = frameTime_;
+
+	CGame::Input::Gamepad::Frame();
+	CGame::Input::Touch::Frame();
 }
 
 void ClearState()
 {
+	frameTime = 0;
+
+	CGame::Input::Gamepad::ClearState();
 }
 
 void MouseMove( int mx, int my )
@@ -50,7 +62,7 @@ uint GetButtonBits()
 {
 	uint bits = BUTTON_NONE;
 	
-	bits |= CGame::Input::Keyboard::GetButtonBits();
+	bits |= CGame::Input::Keys::GetButtonBits();
 	
 	return bits;
 }
@@ -59,8 +71,10 @@ Vec3 AddViewAngles( const Vec3 angles )
 {
 	Vec3 diff;
 	
-	diff += CGame::Input::Keyboard::AddViewAngles();
+	diff += CGame::Input::Keys::AddViewAngles();
 	diff += CGame::Input::Mouse::AddViewAngles();
+	diff += CGame::Input::Gamepad::AddViewAngles();
+	diff += CGame::Input::Touch::AddViewAngles();
 
 	return angles + diff;
 }
@@ -69,7 +83,9 @@ Vec3 AddMovement( const Vec3 move )
 {
 	Vec3 diff;
 
-	diff += CGame::Input::Keyboard::AddMovement();
+	diff += CGame::Input::Keys::AddMovement();
+	diff += CGame::Input::Gamepad::AddMovement();
+	diff += CGame::Input::Touch::AddMovement();
 
 	return move + diff;
 }

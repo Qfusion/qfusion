@@ -1,6 +1,6 @@
 /shared/constants.as;
-input/local.as;
-input/keyboard.as;
+input/keys.as;
 input/mouse.as;
 input/touch.as;
+input/gamepad.as;
 input/main.as;

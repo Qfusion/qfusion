@@ -23,7 +23,7 @@ namespace CGame {
 
 namespace Input {
 
-namespace Keyboard {
+namespace Keys {
 
 /*
 ===============================================================================
@@ -42,9 +42,6 @@ the release.
 state bit 0 is the current state of the key
 state bit 1 is edge triggered on the up to down transition
 state bit 2 is edge triggered on the down to up transition
-
-
-Key_Event (int key, bool down, int64_t time);
 
 ===============================================================================
 */
