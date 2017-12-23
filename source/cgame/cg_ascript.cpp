@@ -123,6 +123,45 @@ static const gs_asClassDescriptor_t asTouchClassDescriptor =
 	NULL, NULL                  /* string factory hack */
 };
 
+
+//=======================================================================
+
+static const gs_asFuncdef_t astouchpad_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static const gs_asBehavior_t astouchpad_ObjectBehaviors[] =
+{
+	ASLIB_BEHAVIOR_NULL
+};
+
+static const gs_asMethod_t astouchpad_Methods[] =
+{
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t astouchpad_Properties[] =
+{
+	{ ASLIB_PROPERTY_DECL( int, x ), ASLIB_FOFFSET( cg_touchpad_t, x ) },
+	{ ASLIB_PROPERTY_DECL( int, y ), ASLIB_FOFFSET( cg_touch_t, y ) },
+	{ ASLIB_PROPERTY_DECL( const int, touch ), ASLIB_FOFFSET( cg_touchpad_t, touch ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asTouchpadClassDescriptor =
+{
+	"Touchpad",                 /* name */
+	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
+	sizeof( cg_touchpad_t ),    /* size */
+	astouchpad_Funcdefs,        /* funcdefs */
+	astouchpad_ObjectBehaviors, /* object behaviors */
+	astouchpad_Methods,         /* methods */
+	astouchpad_Properties,      /* properties */
+	NULL, NULL                  /* string factory hack */
+};
+
 //=======================================================================
 
 static asvec4_t CG_asInputGetThumbsticks( void ) {
@@ -131,9 +170,14 @@ static asvec4_t CG_asInputGetThumbsticks( void ) {
 	return sticks;
 }
 
+static float CG_asInputGetPixelRatio( void ) {
+	return cgs.pixelRatio;
+}
+
 static const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[] =
 {
 	&asTouchClassDescriptor,
+	&asTouchpadClassDescriptor,
 
 	NULL
 };
@@ -141,8 +185,10 @@ static const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[] =
 static const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 {
 	{ "Touch @GetTouch( int id )", asFUNCTION( CG_GetTouch ), NULL },
+	{ "Touchpad @GetTouchpad( int id )", asFUNCTION( CG_GetTouchpad ), NULL },
 	{ "Vec4 GetThumbsticks()", asFUNCTION( CG_asInputGetThumbsticks ), NULL },
 	{ "float GetSensitivityScale( float sens, float zoomSens )", asFUNCTION( CG_GetSensitivityScale ), NULL },
+	{ "float GetPixelRatio()", asFUNCTION( CG_asInputGetPixelRatio ), NULL },
 
 	{ NULL }
 };
