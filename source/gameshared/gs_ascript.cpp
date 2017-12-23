@@ -539,6 +539,29 @@ void GS_asRegisterEnums( asIScriptEngine *asEngine, const gs_asEnum_t *asEnums, 
 
 //=======================================================================
 
+/*
+* GS_asRegisterFuncdefs
+*/
+void GS_asRegisterFuncdefs( asIScriptEngine *asEngine, const gs_asFuncdef_t *asFuncdefs, const char *nameSpace ) {
+	const gs_asFuncdef_t *asFuncdef;
+
+	if( nameSpace ) {
+		asEngine->SetDefaultNamespace( nameSpace );
+	} else {
+		asEngine->SetDefaultNamespace( "" );
+	}
+
+	for( asFuncdef = asFuncdefs; asFuncdef->declaration != NULL; asFuncdef++ ) {
+		asEngine->RegisterFuncdef( asFuncdef->declaration );
+	}
+
+	if( nameSpace ) {
+		asEngine->SetDefaultNamespace( "" );
+	}
+}
+
+//=======================================================================
+
 // CLASS: Trace
 typedef struct
 {
