@@ -36,116 +36,29 @@ MOUSE
 ===============================================================================
 */
 
-static cvar_t *sensitivity;
-static cvar_t *zoomsens;
-static cvar_t *m_accel;
-static cvar_t *m_accelStyle;
-static cvar_t *m_accelOffset;
-static cvar_t *m_accelPow;
-static cvar_t *m_filter;
-static cvar_t *m_sensCap;
+/*
+* CG_GetSensitivityScale
+* Scale sensitivity for different view effects
+*/
+float CG_GetSensitivityScale( float sens, float zoomSens ) {
+	float sensScale = 1.0f;
 
-static cvar_t *m_pitch;
-static cvar_t *m_yaw;
+	if( !cgs.demoPlaying && sens && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) ) {
+		if( zoomSens ) {
+			return zoomSens / sens;
+		}
 
-static float mouse_x = 0, mouse_y = 0;
+		return cg_zoomfov->value / cg_fov->value;
+	}
+
+	return sensScale;
+}
 
 /*
 * CG_MouseMove
 */
 void CG_MouseMove( int mx, int my ) {
-	static float old_mouse_x = 0, old_mouse_y = 0;
-	float accelSensitivity;
-
 	CG_asInputMouseMove( mx, my );
-
-	// mouse filtering
-	switch( m_filter->integer ) {
-	case 1:
-	{
-		mouse_x = ( mx + old_mouse_x ) * 0.5;
-		mouse_y = ( my + old_mouse_y ) * 0.5;
-	}
-	break;
-
-	default: // no filtering
-		mouse_x = mx;
-		mouse_y = my;
-		break;
-	}
-
-	old_mouse_x = mx;
-	old_mouse_y = my;
-
-	accelSensitivity = sensitivity->value;
-
-	if( m_accel->value != 0.0f && cg_inputFrameTime != 0 ) {
-		float rate;
-
-		// QuakeLive-style mouse acceleration, ported from ioquake3
-		// original patch by Gabriel Schnoering and TTimo
-		if( m_accelStyle->integer == 1 ) {
-			float base[2];
-			float power[2];
-
-			// sensitivity remains pretty much unchanged at low speeds
-			// m_accel is a power value to how the acceleration is shaped
-			// m_accelOffset is the rate for which the acceleration will have doubled the non accelerated amplification
-			// NOTE: decouple the config cvars for independent acceleration setup along X and Y?
-
-			base[0] = (float) ( abs( mx ) ) / (float) cg_inputFrameTime;
-			base[1] = (float) ( abs( my ) ) / (float) cg_inputFrameTime;
-			power[0] = powf( base[0] / m_accelOffset->value, m_accel->value );
-			power[1] = powf( base[1] / m_accelOffset->value, m_accel->value );
-
-			mouse_x = ( mouse_x + ( ( mouse_x < 0 ) ? -power[0] : power[0] ) * m_accelOffset->value );
-			mouse_y = ( mouse_y + ( ( mouse_y < 0 ) ? -power[1] : power[1] ) * m_accelOffset->value );
-		} else if( m_accelStyle->integer == 2 ) {
-			float accelOffset, accelPow;
-
-			// ch : similar to normal acceleration with offset and variable pow mechanisms
-
-			// sanitize values
-			accelPow = m_accelPow->value > 1.0 ? m_accelPow->value : 2.0;
-			accelOffset = m_accelOffset->value >= 0.0 ? m_accelOffset->value : 0.0;
-
-			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)cg_inputFrameTime;
-			rate -= accelOffset;
-			if( rate < 0 ) {
-				rate = 0.0;
-			}
-			// ch : TODO sens += pow( rate * m_accel->value, m_accelPow->value - 1.0 )
-			accelSensitivity += pow( rate * m_accel->value, accelPow - 1.0 );
-
-			// TODO : move this outside of this branch?
-			if( m_sensCap->value > 0 && accelSensitivity > m_sensCap->value ) {
-				accelSensitivity = m_sensCap->value;
-			}
-		} else {
-			rate = sqrt( mouse_x * mouse_x + mouse_y * mouse_y ) / (float)cg_inputFrameTime;
-			accelSensitivity += rate * m_accel->value;
-		}
-	}
-
-	accelSensitivity *= CG_GetSensitivityScale( sensitivity->value, zoomsens->value );
-
-	mouse_x *= accelSensitivity;
-	mouse_y *= accelSensitivity;
-}
-
-/**
-* Adds view rotation from mouse.
-*
-* @param viewAngles view angles to modify
-*/
-static void CG_AddMouseViewAngles( vec3_t viewAngles ) {
-	if( !mouse_x && !mouse_y ) {
-		return;
-	}
-
-	// add mouse X/Y movement to cmd
-	viewAngles[YAW] -= m_yaw->value * mouse_x;
-	viewAngles[PITCH] += m_pitch->value * mouse_y;
 }
 
 /*
@@ -626,17 +539,6 @@ void CG_InitInput( void ) {
 
 	trap_Cmd_AddCommand( "centerview", CG_CenterView );
 
-	sensitivity = trap_Cvar_Get( "sensitivity", "3", CVAR_ARCHIVE );
-	zoomsens = trap_Cvar_Get( "zoomsens", "0", CVAR_ARCHIVE );
-	m_accel = trap_Cvar_Get( "m_accel", "0", CVAR_ARCHIVE );
-	m_accelStyle = trap_Cvar_Get( "m_accelStyle", "0", CVAR_ARCHIVE );
-	m_accelOffset = trap_Cvar_Get( "m_accelOffset", "0", CVAR_ARCHIVE );
-	m_accelPow = trap_Cvar_Get( "m_accelPow", "2", CVAR_ARCHIVE );
-	m_filter = trap_Cvar_Get( "m_filter", "0", CVAR_ARCHIVE );
-	m_pitch = trap_Cvar_Get( "m_pitch", "0.022", CVAR_ARCHIVE );
-	m_yaw = trap_Cvar_Get( "m_yaw", "0.022", CVAR_ARCHIVE );
-	m_sensCap = trap_Cvar_Get( "m_sensCap", "0", CVAR_ARCHIVE );
-
 	cg_gamepad_moveThres = trap_Cvar_Get( "cg_gamepad_moveThres", "0.239", CVAR_ARCHIVE );
 	cg_gamepad_runThres = trap_Cvar_Get( "cg_gamepad_runThres", "0.75", CVAR_ARCHIVE );
 	cg_gamepad_strafeThres = trap_Cvar_Get( "cg_gamepad_strafeThres", "0.239", CVAR_ARCHIVE );
@@ -697,7 +599,6 @@ void CG_AddViewAngles( vec3_t viewAngles ) {
 
 	CG_AddGamepadViewAngles( am );
 	CG_AddTouchViewAngles( am );
-	CG_AddMouseViewAngles( am );
 
 	if( flipped ) {
 		am[YAW] = -am[YAW];

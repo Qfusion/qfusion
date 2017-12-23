@@ -1005,7 +1005,6 @@ void CG_ResetColorBlend( void );
 void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int time );
 void CG_StartColorBlendEffect( float r, float g, float b, float a, int time );
 void CG_StartFallKickEffect( int bounceTime );
-float CG_GetSensitivityScale( float sens, float zoomSens );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
 float CG_ViewSmoothFallKick( void );
 void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime );
@@ -1186,6 +1185,7 @@ void CG_InputFrame( int frameTime );
 void CG_ClearInputState( void );
 
 void CG_MouseMove( int mx, int my );
+float CG_GetSensitivityScale( float sens, float zoomSens );
 
 unsigned int CG_GetButtonBits( void );
 void CG_AddViewAngles( vec3_t viewAngles );

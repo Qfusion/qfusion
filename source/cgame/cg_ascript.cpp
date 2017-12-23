@@ -142,6 +142,7 @@ static const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 {
 	{ "Touch @GetTouch( int id )", asFUNCTION( CG_GetTouch ), NULL },
 	{ "Vec4 GetThumbsticks()", asFUNCTION( CG_asInputGetThumbsticks ), NULL },
+	{ "float GetSensitivityScale( float sens, float zoomSens )", asFUNCTION( CG_GetSensitivityScale ), NULL },
 
 	{ NULL }
 };
