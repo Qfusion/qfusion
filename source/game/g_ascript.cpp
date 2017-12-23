@@ -2702,23 +2702,23 @@ static void G_InitializeGameModuleSyntax( asIScriptEngine *asEngine ) {
 	GS_asInitializeEngine( asEngine );
 
 	// register global enums
-	GS_asRegisterEnums( asEngine, asGameEnums );
-	GS_asRegisterEnums( asEngine, asAIEnums );
+	GS_asRegisterEnums( asEngine, asGameEnums, NULL );
+	GS_asRegisterEnums( asEngine, asAIEnums, NULL );
 
 	// first register all class names so methods using custom classes work
-	GS_asRegisterObjectClassNames( asEngine, asGameClassesDescriptors );
-	GS_asRegisterObjectClassNames( asEngine, asAIClassesDescriptors );
+	GS_asRegisterObjectClassNames( asEngine, asGameClassesDescriptors, NULL );
+	GS_asRegisterObjectClassNames( asEngine, asAIClassesDescriptors, NULL );
 
 	// register classes
-	GS_asRegisterObjectClasses( asEngine, asGameClassesDescriptors );
-	GS_asRegisterObjectClasses( asEngine, asAIClassesDescriptors );
+	GS_asRegisterObjectClasses( asEngine, asGameClassesDescriptors, NULL );
+	GS_asRegisterObjectClasses( asEngine, asAIClassesDescriptors, NULL );
 
 	// register global functions
-	GS_asRegisterGlobalFunctions( asEngine, asGameGlobFuncs, "" );
+	GS_asRegisterGlobalFunctions( asEngine, asGameGlobFuncs, NULL );
 	GS_asRegisterGlobalFunctions( asEngine, asAIGlobFuncs, "AI" );
 
 	// register global properties
-	GS_asRegisterGlobalProperties( asEngine, asGlobProps, "" );
+	GS_asRegisterGlobalProperties( asEngine, asGlobProps, NULL );
 }
 
 /*
