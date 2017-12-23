@@ -30,6 +30,7 @@ extern "C" {
 //
 // button bits
 //
+#define BUTTON_NONE                 0
 #define BUTTON_ATTACK               1
 #define BUTTON_WALK                 2
 #define BUTTON_SPECIAL              4
