@@ -188,10 +188,14 @@ int Q_bitcount( int v );
 #define Vector4Copy( a, b )    ( ( b )[0] = ( a )[0], ( b )[1] = ( a )[1], ( b )[2] = ( a )[2], ( b )[3] = ( a )[3] )
 #define Vector4Scale( in, scale, out )      ( ( out )[0] = ( in )[0] * scale, ( out )[1] = ( in )[1] * scale, ( out )[2] = ( in )[2] * scale, ( out )[3] = ( in )[3] * scale )
 #define Vector4Add( a, b, c )       ( ( c )[0] = ( ( ( ( a )[0] ) + ( ( b )[0] ) ) ), ( c )[1] = ( ( ( ( a )[1] ) + ( ( b )[1] ) ) ), ( c )[2] = ( ( ( ( a )[2] ) + ( ( b )[2] ) ) ), ( c )[3] = ( ( ( ( a )[3] ) + ( ( b )[3] ) ) ) )
+#define Vector4Subtract( a, b, c )       ( ( c )[0] = ( ( ( ( a )[0] ) - ( ( b )[0] ) ) ), ( c )[1] = ( ( ( ( a )[1] ) - ( ( b )[1] ) ) ), ( c )[2] = ( ( ( ( a )[2] ) - ( ( b )[2] ) ) ), ( c )[3] = ( ( ( ( a )[3] ) - ( ( b )[3] ) ) ) )
 #define Vector4Avg( a, b, c )       ( ( c )[0] = ( ( ( ( a )[0] ) + ( ( b )[0] ) ) * 0.5f ), ( c )[1] = ( ( ( ( a )[1] ) + ( ( b )[1] ) ) * 0.5f ), ( c )[2] = ( ( ( ( a )[2] ) + ( b )[2] ) ) * 0.5f ), ( c )[3] = ( ( ( ( a )[3] ) + ( ( b )[3] ) ) * 0.5f ) )
 #define Vector4Negate( a, b )      ( ( b )[0] = -( a )[0], ( b )[1] = -( a )[1], ( b )[2] = -( a )[2], ( b )[3] = -( a )[3] )
 #define Vector4Inverse( v )         ( ( v )[0] = -( v )[0], ( v )[1] = -( v )[1], ( v )[2] = -( v )[2], ( v )[3] = -( v )[3] )
 #define DotProduct4( x, y )    ( ( x )[0] * ( y )[0] + ( x )[1] * ( y )[1] + ( x )[2] * ( y )[2] + ( x )[3] * ( y )[3] )
+#define Vector4Compare( v1, v2 )    ( ( v1 )[0] == ( v2 )[0] && ( v1 )[1] == ( v2 )[1] && ( v1 )[2] == ( v2 )[2] && ( v1 )[3] == ( v2 )[3] )
+#define Vector4LengthSquared( v )    ( DotProduct4( ( v ), ( v ) ) )
+#define Vector4Length( v )     ( sqrt( Vector4LengthSquared( v ) ) )
 
 vec_t VectorNormalize( vec3_t v );       // returns vector length
 vec_t VectorNormalize2( const vec3_t v, vec3_t out );
