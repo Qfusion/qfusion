@@ -107,6 +107,7 @@ static void gs_asemptyfunc( void ) {}
 
 void GS_asInitializeEngine( asIScriptEngine *asEngine );
 void GS_asRegisterEnums( asIScriptEngine *asEngine, const gs_asEnum_t *asEnums, const char *nameSpace );
+void GS_asRegisterFuncdefs( asIScriptEngine *asEngine, const gs_asFuncdef_t *asFuncdefs, const char *nameSpace );
 void GS_asRegisterObjectClassNames( asIScriptEngine *asEngine, const gs_asClassDescriptor_t *const *asClassesDescriptors, const char *nameSpace );
 void GS_asRegisterObjectClasses( asIScriptEngine *asEngine, const gs_asClassDescriptor_t *const *asClassesDescriptors, const char *nameSpace );
 void GS_asRegisterGlobalFunctions( asIScriptEngine *asEngine, const gs_asglobfuncs_t *funcs, const char *nameSpace );

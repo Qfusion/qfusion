@@ -428,6 +428,7 @@ typedef struct {
 
 	// AS input subsystem API
 	struct {
+		void *load;
 		void *init;
 		void *shutdown;
 		void *frame;

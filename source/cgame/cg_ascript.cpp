@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include <functional>
+#include <map>
+#include <string>
 #include "cg_local.h"
 #include "angelscript.h"
 #include "../gameshared/q_angeliface.h"
@@ -29,7 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define CGAME_AS_ENGINE() static_cast<asIScriptEngine *>( cgs.asEngine )
 
+typedef std::map<std::string, asIScriptFunction *> scriptCommandMap_t;
+typedef std::map<std::string, scriptCommandMap_t> moduleCommands_t;
+
 static std::function<void(asIScriptContext *)> empty_as_cb = [](asIScriptContext *ctx) {};
+static moduleCommands_t moduleConsoleCmds;
 
 //=======================================================================
 
@@ -100,7 +106,7 @@ static const gs_asProperty_t astouch_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const int, y ), ASLIB_FOFFSET( cg_touch_t, y ) },
 	{ ASLIB_PROPERTY_DECL( const int64, time ), ASLIB_FOFFSET( cg_touch_t, time ) },
 	{ ASLIB_PROPERTY_DECL( const int, area ), ASLIB_FOFFSET( cg_touch_t, area ) },
-	{ ASLIB_PROPERTY_DECL(const  bool, areaValid ), ASLIB_FOFFSET( cg_touch_t, area_valid ) },
+	{ ASLIB_PROPERTY_DECL( const  bool, areaValid ), ASLIB_FOFFSET( cg_touch_t, area_valid ) },
 
 	ASLIB_PROPERTY_NULL
 };
@@ -119,18 +125,18 @@ static const gs_asClassDescriptor_t asTouchClassDescriptor =
 
 //=======================================================================
 
+static asvec4_t CG_asInputGetThumbsticks( void ) {
+	asvec4_t sticks;
+	trap_IN_GetThumbsticks( sticks.v );
+	return sticks;
+}
+
 static const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[] =
 {
 	&asTouchClassDescriptor,
 
 	NULL
 };
-
-static asvec4_t CG_asInputGetThumbsticks( void ) {
-	asvec4_t sticks;
-	trap_IN_GetThumbsticks( sticks.v );
-	return sticks;
-}
 
 static const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 {
@@ -142,6 +148,9 @@ static const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 
 //======================================================================
 
+static void asFunc_RemoveCommand( const asstring_t *cmd );
+static void asFunc_AddCommand( const asstring_t *cmd, asIScriptFunction *f );
+
 static void asFunc_Print( const asstring_t *str ) {
 	if( !str || !str->buffer ) {
 		return;
@@ -150,7 +159,90 @@ static void asFunc_Print( const asstring_t *str ) {
 	CG_Printf( "%s", str->buffer );
 }
 
-//=======================================================================
+static void asFunc_CmdProxyFunc( void ) {
+	std::string cmdName = trap_Cmd_Argv( 0 );
+
+	for( moduleCommands_t::const_iterator it = moduleConsoleCmds.begin(); it != moduleConsoleCmds.end(); ++it ) {
+		auto &cmds = it->second;
+		auto fit = cmds.find( cmdName );
+		if( fit != cmds.end() ) {
+			auto f = fit->second;
+			auto ctx = cgs.asExport->asAcquireContext( CGAME_AS_ENGINE() );
+			auto error = ctx->Prepare( f );
+			if( error < 0 ) {
+				return;
+			}
+			error = ctx->Execute();
+		}
+	}
+
+	return;
+}
+
+static void asFunc_RemoveCommand( const asstring_t *cmd ) {
+	asIScriptContext *ctx = cgs.asExport->asGetActiveContext();
+	std::string moduleName = ctx->GetFunction()->GetModuleName();
+	std::string cmdName = cmd->buffer;
+
+	auto &cmds = moduleConsoleCmds[moduleName];
+	auto fit = cmds.find( cmdName );
+	if( fit != cmds.end() ) {
+		fit->second->Release();
+		cmds.erase( fit );
+		trap_Cmd_RemoveCommand( cmd->buffer );
+		return;
+	}
+
+	CG_Printf( S_COLOR_YELLOW "RemoveCommand: cmd '%s' doesn't exist in module '%s'\n", cmd->buffer, moduleName.c_str() );
+}
+
+static void asFunc_AddCommand( const asstring_t *cmd, asIScriptFunction *f ) {
+	std::string moduleName = f->GetModuleName();
+	std::string cmdName = cmd->buffer;
+
+	auto &cmds = moduleConsoleCmds[moduleName];
+	auto oldf = cmds.find( cmdName );
+	if( oldf != cmds.end() ) {
+		oldf->second->Release();
+	}
+
+	f->AddRef();
+	cmds[cmdName] = f;
+
+	trap_Cmd_AddCommand( cmd->buffer, &asFunc_CmdProxyFunc );
+}
+
+static asstring_t *asFunc_CmdArgv( int index ) {
+	const char *buf = trap_Cmd_Argv( index );
+	asstring_t *data = cgs.asExport->asStringFactoryBuffer( buf, strlen( buf ) );
+	return data;
+}
+
+static asstring_t *asFunc_CmdArgs( void ) {
+	const char *buf = trap_Cmd_Args();
+	asstring_t *data = cgs.asExport->asStringFactoryBuffer( buf, strlen( buf ) );
+	return data;
+}
+
+static const gs_asFuncdef_t asCGameCmdFuncdefs[] =
+{
+	{ "void CmdFunction()" },
+
+	ASLIB_FUNCDEF_NULL
+};
+
+static const gs_asglobfuncs_t asCGameCmdGlobalFuncs[] =
+{
+	{ "void AddCommand( const String &in, CmdFunction @f )", asFUNCTION( asFunc_AddCommand ), NULL },
+	{ "void RemoveCommand( const String &in )", asFUNCTION( asFunc_RemoveCommand ), NULL },
+	{ "uint Argc()", asFUNCTION( trap_Cmd_Argc ), NULL },
+	{ "const String @Argv( uint index )", asFUNCTION( asFunc_CmdArgv ), NULL },
+	{ "const String @Args()", asFUNCTION( asFunc_CmdArgs ), NULL },
+
+	{ NULL }
+};
+
+//======================================================================
 
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] =
 {
@@ -173,6 +265,9 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
 	// register global enums
 	GS_asRegisterEnums( asEngine, asCGameEnums, "CGame" );
 
+	// register global funcdefs
+	GS_asRegisterFuncdefs( asEngine, asCGameCmdFuncdefs, "CGame::Cmd" );
+
 	// first register all class names so methods using custom classes work
 	GS_asRegisterObjectClassNames( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 
@@ -181,6 +276,7 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
 
 	// register global functions
 	GS_asRegisterGlobalFunctions( asEngine, asCGameGlobalFuncs, "CGame" );
+	GS_asRegisterGlobalFunctions( asEngine, asCGameCmdGlobalFuncs, "CGame::Cmd" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameInputGlobalFuncs, "CGame::Input" );
 
 	// register global properties
@@ -222,7 +318,7 @@ void CG_asInitScriptEngine( void ) {
 * CG_asShutdownScriptEngine
 */
 void CG_asShutdownScriptEngine( void ) {
-	auto asEngine = static_cast<asIScriptEngine *>( cgs.asEngine );
+	auto asEngine = CGAME_AS_ENGINE();
 	if( asEngine == NULL ) {
 		return;
 	}
@@ -286,6 +382,13 @@ static void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *
 	for( size_t i = 0; api[i].decl != nullptr; i++ ) {
 		*api[i].ptr = NULL;
 	}
+
+	auto &cmds = moduleConsoleCmds[moduleName];
+	for( scriptCommandMap_t::const_iterator fit = cmds.begin(); fit != cmds.end(); ++fit ) {
+		fit->second->Release();
+	}
+	cmds.clear();
+
 	asEngine->DiscardModule( moduleName );
 }
 
@@ -354,7 +457,7 @@ bool CG_asLoadGameScript( void ) {
 //======================================================================
 
 static cg_asApiFuncPtr_t cg_asInputAPI[] = {
-	"void CGame::Input::Load()", &cgs.asInput.init, false,
+	"void CGame::Input::Load()", &cgs.asInput.load, false,
 	"void CGame::Input::Init()", &cgs.asInput.init, true,
 	"void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true,
 	"void CGame::Input::Frame( int frameTime )", &cgs.asInput.frame, true,
