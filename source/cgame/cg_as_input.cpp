@@ -18,22 +18,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "cg_local.h"
 #include "cg_as_local.h"
 
 //=======================================================================
 
 static cg_asApiFuncPtr_t cg_asInputAPI[] = {
-	"void CGame::Input::Load()", &cgs.asInput.load, false,
-	"void CGame::Input::Init()", &cgs.asInput.init, true,
-	"void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true,
-	"void CGame::Input::Frame( int64 curTime, int frameTime )", &cgs.asInput.frame, true,
-	"void CGame::Input::ClearState()", &cgs.asInput.clearState, true,
-	"void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true,
-	"uint CGame::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true,
-	"Vec3 CGame::Input::GetAngularMovement()", &cgs.asInput.getAngularMovement, true,
-	"Vec3 CGame::Input::GetMovement()", &cgs.asInput.getMovement, true,
-	nullptr, nullptr, false,
+	{ "void CGame::Input::Load()", &cgs.asInput.load, false },
+	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
+	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
+	{ "void CGame::Input::Frame( int64 curTime, int frameTime )", &cgs.asInput.frame, true },
+	{ "void CGame::Input::ClearState()", &cgs.asInput.clearState, true },
+	{ "void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true },
+	{ "uint CGame::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true },
+	{ "Vec3 CGame::Input::GetAngularMovement()", &cgs.asInput.getAngularMovement, true },
+	{ "Vec3 CGame::Input::GetMovement()", &cgs.asInput.getMovement, true },
+	{ nullptr, nullptr, false },
 };
 
 static const gs_asEnumVal_t asTouchpadEnumVals[] =

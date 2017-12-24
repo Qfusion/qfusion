@@ -154,7 +154,7 @@ static asvec3_t objectVec4_XYZ( const asvec4_t *self ) {
 }
 
 static float *objectVec4_Index( unsigned index, asvec3_t *self ) {
-	if( index < 0 || index > 3 ) {
+	if( index > 3 ) {
 		asIScriptContext *ctx = asGetActiveContext();
 		if( ctx ) {
 			ctx->SetException( "Index out of bounds" );

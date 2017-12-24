@@ -183,7 +183,7 @@ static void objectVec3_MakeNormalVectors( asvec3_t *r, asvec3_t *u, asvec3_t *se
 }
 
 static float *objectVec3_Index( unsigned index, asvec3_t *self ) {
-	if( index < 0 || index > 2 ) {
+	if( index > 2 ) {
 		asIScriptContext *ctx = asGetActiveContext();
 		if( ctx ) {
 			ctx->SetException( "Index out of bounds" );
