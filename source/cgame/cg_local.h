@@ -1164,6 +1164,7 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 void CG_asInitScriptEngine( void );
 void CG_asShutdownScriptEngine( void );
 bool CG_asLoadGameScript( void );
+void CG_asUnloadGameScript( void );
 
 bool CG_asLoadInputScript( void );
 void CG_asUnloadInputScript( void );
