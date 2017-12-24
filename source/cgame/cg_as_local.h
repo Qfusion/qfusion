@@ -18,12 +18,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include <functional>
-#include <map>
-#include <string>
+#include "cg_local.h"
 #include "angelscript.h"
 #include "../gameshared/q_angeliface.h"
 #include "../gameshared/gs_ascript.h"
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
+#include <functional>
+#include <map>
+#include <string>
 
 #define CG_SCRIPTS_GAME_MODULE_NAME "cgame"
 #define CG_SCRIPTS_INPUT_MODULE_NAME "input"
