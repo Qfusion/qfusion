@@ -4,8 +4,10 @@ LOCAL_MODULE := cgame
 LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 
 LOCAL_CFLAGS := -DCGAME_MODULE
+LOCAL_C_INCLUDES := $(QFUSION_PATH)/third-party/angelscript/sdk/angelscript/include
 
 LOCAL_SRC_FILES := \
+  ../gameshared/gs_ascript.cpp \
   ../gameshared/gs_gameteams.c \
   ../gameshared/gs_items.c \
   ../gameshared/gs_misc.c \
