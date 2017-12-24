@@ -67,27 +67,27 @@ uint GetButtonBits()
 	return bits;
 }
 
-Vec3 AddViewAngles( const Vec3 angles )
+Vec3 GetAngularMovement()
 {
-	Vec3 diff;
+	Vec3 move;
 	
-	diff += CGame::Input::Keys::AddViewAngles();
-	diff += CGame::Input::Mouse::AddViewAngles();
-	diff += CGame::Input::Gamepad::AddViewAngles();
-	diff += CGame::Input::Touch::AddViewAngles();
+	move += CGame::Input::Keys::GetAngularMovement();
+	move += CGame::Input::Mouse::GetAngularMovement();
+	move += CGame::Input::Gamepad::GetAngularMovement();
+	move += CGame::Input::Touch::GetAngularMovement();
 
-	return angles + diff;
+	return move;
 }
 
-Vec3 AddMovement( const Vec3 move )
+Vec3 GetMovement()
 {
-	Vec3 diff;
+	Vec3 move;
 
-	diff += CGame::Input::Keys::AddMovement();
-	diff += CGame::Input::Gamepad::AddMovement();
-	diff += CGame::Input::Touch::AddMovement();
+	move += CGame::Input::Keys::GetMovement();
+	move += CGame::Input::Gamepad::GetMovement();
+	move += CGame::Input::Touch::GetMovement();
 
-	return move + diff;
+	return move;
 }
 
 }

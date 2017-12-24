@@ -69,9 +69,9 @@ void Frame( void ) {
 }
 
 /*
-* AddViewAngles
+* GetAngularMovement
 */
-Vec3 AddViewAngles() {
+Vec3 GetAngularMovement() {
 	Vec3 viewAngles;
 
 	Touchpad @viewpad = GetTouchpad( TOUCHPAD_VIEW );
@@ -111,9 +111,9 @@ Vec3 AddViewAngles() {
 }
 
 /*
-* AddMovement
+* GetMovement
 */
-Vec3 AddMovement() {
+Vec3 GetMovement() {
 	int upmove;
 	Vec3 movement;
 

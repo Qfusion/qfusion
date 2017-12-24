@@ -130,7 +130,7 @@ void Move( int mx, int my ) {
 /**
 * Adds view rotation from mouse.
 */
-Vec3 AddViewAngles() {
+Vec3 GetAngularMovement() {
 	Vec3 move;
 
 	if( mouse_x != 0.0 || mouse_y != 0.0 ) {

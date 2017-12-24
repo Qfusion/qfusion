@@ -93,7 +93,7 @@ void ClearState( void ) {
 /**
  * Adds view rotation from the gamepad.
  */
-Vec3 AddViewAngles() {
+Vec3 GetAngularMovement() {
 	Vec3 viewAngles;
 	Vec4 sticks = GetThumbsticks();
 
@@ -131,7 +131,7 @@ Vec3 AddViewAngles() {
 /**
  * Adds movement from the gamepad.
  */
-Vec3 AddMovement() {
+Vec3 GetMovement() {
 	Vec3 movement;
 	Vec4 sticks = GetThumbsticks();
 

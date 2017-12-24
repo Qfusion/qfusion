@@ -260,9 +260,9 @@ float KeyState( Kbutton @key ) {
 }
 
 /*
-* AddViewAngles
+* GetAngularMovement
 */
-Vec3 AddViewAngles( void ) {
+Vec3 GetAngularMovement( void ) {
 	float speed;
 	Vec3 viewAngles;
 
@@ -288,9 +288,9 @@ Vec3 AddViewAngles( void ) {
 }
 
 /*
-* AddMovement
+* GetMovement
 */
-Vec3 AddMovement() {
+Vec3 GetMovement() {
 	float down;
 	Vec3 movement;
 
