@@ -7,6 +7,7 @@ LOCAL_CFLAGS := -DGAME_MODULE
 LOCAL_C_INCLUDES := $(QFUSION_PATH)/third-party/angelscript/sdk/angelscript/include
 
 LOCAL_SRC_FILES := \
+  ../gameshared/gs_ascript.cpp \
   ../gameshared/gs_gameteams.c \
   ../gameshared/gs_items.c \
   ../gameshared/gs_misc.c \
