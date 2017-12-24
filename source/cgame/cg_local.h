@@ -435,8 +435,8 @@ typedef struct {
 		void *clearState;
 		void *mouseMove;
 		void *getButtonBits;
-		void *addViewAngles;
-		void *addMovement;
+		void *getAngularMovement;
+		void *getMovement;
 	} asInput;
 
 	// fonts
@@ -1173,8 +1173,8 @@ void CG_asInputFrame( int frameTime );
 void CG_asInputClearState( void );
 void CG_asInputMouseMove( int mx, int my );
 unsigned CG_asGetButtonBits( void );
-void CG_asAddViewAngles( vec3_t viewAngles );
-void CG_asAddMovement( vec3_t movement );
+void CG_asGetAngularMovement( vec3_t viewAngles );
+void CG_asGetMovement( vec3_t movement );
 
 //
 // cg_input.cpp
@@ -1221,6 +1221,19 @@ float CG_GetSensitivityScale( float sens, float zoomSens );
 unsigned int CG_GetButtonBits( void );
 void CG_AddViewAngles( vec3_t viewAngles );
 void CG_AddMovement( vec3_t movement );
+void CG_CenterView( float pitch );
+
+/*
+* Returns angular movement vector (in euler angles) obtained from the input.
+* Doesn't take flipping into account.
+*/
+void CG_GetAngularMovement( vec3_t movement );
+
+/*
+* Returns spatial movement vector obtained from the input.
+* Doesn't take flipping into account.
+*/
+void CG_GetMovement( vec3_t movement );
 
 void CG_SetTouchpad( int padID, int touchID );
 cg_touchpad_t *CG_GetTouchpad( int padID );
@@ -1230,7 +1243,6 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 cg_touch_t *CG_GetTouch( int id );
 bool CG_IsTouchDown( int id );
 void CG_CancelTouches( void );
-void CG_GetTouchMovement( vec3_t movement );
 
 /**
  * Gets up to two bound keys for a command.

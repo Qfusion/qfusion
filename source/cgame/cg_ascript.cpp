@@ -511,8 +511,8 @@ static cg_asApiFuncPtr_t cg_asInputAPI[] = {
 	"void CGame::Input::ClearState()", &cgs.asInput.clearState, true,
 	"void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true,
 	"uint CGame::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true,
-	"Vec3 CGame::Input::AddViewAngles( const Vec3 angles )", &cgs.asInput.addViewAngles, true,
-	"Vec3 CGame::Input::AddMovement( const Vec3 move )", &cgs.asInput.addMovement, true,
+	"Vec3 CGame::Input::GetAngularMovement()", &cgs.asInput.getAngularMovement, true,
+	"Vec3 CGame::Input::GetMovement()", &cgs.asInput.getMovement, true,
 	nullptr, nullptr, false,
 };
 
@@ -598,16 +598,11 @@ unsigned CG_asGetButtonBits( void ) {
 }
 
 /*
-* CG_asAddViewAngles
+* CG_asGetAngularMovement
 */
-void CG_asAddViewAngles( vec3_t viewAngles ) {
-	CG_asCallScriptFunc( cgs.asInput.addViewAngles,
-		[viewAngles](asIScriptContext *ctx)
-		{
-			asvec3_t va;
-			VectorCopy( viewAngles, va.v );
-			ctx->SetArgObject( 0, &va );
-		},
+void CG_asGetAngularMovement( vec3_t viewAngles ) {
+	CG_asCallScriptFunc( cgs.asInput.getAngularMovement,
+		empty_as_cb,
 		[viewAngles](asIScriptContext *ctx)
 		{
 			const asvec3_t *va = ( const asvec3_t * )ctx->GetReturnAddress();
@@ -617,16 +612,11 @@ void CG_asAddViewAngles( vec3_t viewAngles ) {
 }
 
 /*
-* CG_asAddMovement
+* CG_asGetMovement
 */
-void CG_asAddMovement( vec3_t movement ) {
-	CG_asCallScriptFunc( cgs.asInput.addMovement,
-		[movement](asIScriptContext *ctx)
-		{
-			asvec3_t mv;
-			VectorCopy( movement, mv.v );
-			ctx->SetArgObject( 0, &mv );
-		},
+void CG_asGetMovement( vec3_t movement ) {
+	CG_asCallScriptFunc( cgs.asInput.getMovement,
+		empty_as_cb,
 		[movement](asIScriptContext *ctx)
 		{
 			const asvec3_t *mv = ( const asvec3_t * )ctx->GetReturnAddress();

@@ -24,9 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-static int64_t cg_inputTime;
-static int cg_inputFrameTime;
 static bool cg_inputCenterView;
+static float cg_inputCenterViewPitch;
 
 /*
 ===============================================================================
@@ -70,7 +69,6 @@ TOUCH INPUT
 */
 
 static cg_touch_t cg_touches[CG_MAX_TOUCHES];
-
 static cg_touchpad_t cg_touchpads[TOUCHPAD_COUNT];
 
 /*
@@ -170,7 +168,6 @@ bool CG_IsTouchDown( int id ) {
 	if( id < 0 || id >= CG_MAX_TOUCHES ) {
 		return false;
 	}
-
 	return cg_touches[id].down;
 }
 
@@ -215,23 +212,6 @@ static int CG_GetTouchButtonBits( void ) {
 	int buttons;
 	CG_GetHUDTouchButtons( &buttons, NULL );
 	return buttons;
-}
-
-/*
-* CG_GetTouchMovement
-*/
-void CG_GetTouchMovement( vec3_t movement ) {
-	// FIXME
-	VectorClear( movement );
-}
-
-/*
-* CG_AddTouchMovement
-*/
-static void CG_AddTouchMovement( vec3_t movement ) {
-	int upmove;
-	CG_GetHUDTouchButtons( NULL, &upmove );
-	movement[2] += ( float )upmove;
 }
 
 /*
@@ -292,8 +272,9 @@ COMMON
 /*
 * CG_CenterView
 */
-static void CG_CenterView( void ) {
+void CG_CenterView( float pitch ) {
 	cg_inputCenterView = true;
+	cg_inputCenterViewPitch = pitch;
 }
 
 /*
@@ -303,8 +284,6 @@ void CG_InitInput( void ) {
 	CG_asLoadInputScript();
 
 	CG_asInputInit();
-
-	trap_Cmd_AddCommand( "centerview", CG_CenterView );
 }
 
 /*
@@ -324,9 +303,8 @@ void CG_ShutdownInput( void ) {
 unsigned int CG_GetButtonBits( void ) {
 	int buttons = 0;
 
-	buttons |= CG_GetTouchButtonBits();
-
 	buttons |= CG_asGetButtonBits();
+	buttons |= CG_GetTouchButtonBits();
 
 	return buttons;
 }
@@ -341,21 +319,18 @@ void CG_AddViewAngles( vec3_t viewAngles ) {
 	vec3_t am;
 	bool flipped = cg_flip->integer != 0;
 	
-	VectorClear( am );
+	CG_GetAngularMovement( am );
 
 	if( flipped ) {
 		am[YAW] = -am[YAW];
 	}
+
 	VectorAdd( viewAngles, am, viewAngles );
 
 	if( cg_inputCenterView ) {
-		viewAngles[PITCH] = -SHORT2ANGLE( cg.predictedPlayerState.pmove.delta_angles[PITCH] );
+		viewAngles[PITCH] = cg_inputCenterViewPitch;
 		cg_inputCenterView = false;
 	}
-
-	VectorCopy( viewAngles, am );
-	CG_asAddViewAngles( am );
-	VectorCopy( am, viewAngles );
 }
 
 /*
@@ -365,27 +340,38 @@ void CG_AddMovement( vec3_t movement ) {
 	vec3_t dm;
 	bool flipped = cg_flip->integer != 0;
 
-	VectorClear( dm );
-
-	CG_AddTouchMovement( dm );
+	CG_GetMovement( dm );
 
 	if( flipped ) {
 		dm[0] = dm[0] * -1.0;
 	}
-	VectorAdd( movement, dm, movement );
 
-	VectorCopy( movement, dm );
-	CG_asAddMovement( dm );
-	VectorCopy( dm, movement );
+	VectorAdd( movement, dm, movement );
+}
+
+/*
+* CG_GetAngularMovement
+*/
+void CG_GetAngularMovement( vec3_t movement ) {
+	CG_asGetAngularMovement( movement );
+}
+
+/*
+* CG_GetMovement
+*/
+void CG_GetMovement( vec3_t movement ) {
+	int upmove;
+
+	CG_asGetMovement( movement );
+
+	CG_GetHUDTouchButtons( NULL, &upmove );
+	movement[2] += ( float )upmove;
 }
 
 /*
 * CG_InputFrame
 */
 void CG_InputFrame( int frameTime ) {
-	cg_inputTime = trap_Milliseconds();
-	cg_inputFrameTime = frameTime;
-
 	CG_asInputFrame( frameTime );
 
 	CG_TouchFrame();
@@ -396,8 +382,6 @@ void CG_InputFrame( int frameTime ) {
 */
 void CG_ClearInputState( void ) {
 	CG_asInputClearState();
-
-	cg_inputFrameTime = 0;
 
 	CG_ClearHUDInputState();
 }

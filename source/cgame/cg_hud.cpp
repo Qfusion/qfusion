@@ -552,7 +552,7 @@ static int CG_GetTouchUpmove( const void *parameter ) {
 static int CG_GetTouchMovementDirection( const void *parameter ) {
 	vec3_t movement;
 
-	CG_GetTouchMovement( movement );
+	CG_GetMovement( movement );
 
 	if( !movement[0] && !movement[1] ) {
 		return STAT_NOTSET;
@@ -563,14 +563,16 @@ static int CG_GetTouchMovementDirection( const void *parameter ) {
 			return 0;
 		}
 		return ( movement[1] > 0.0f ) ? 45 : -45;
-	} else if( movement[0] < 0.0f ) {
+	}
+
+	if( movement[0] < 0.0f ) {
 		if( !movement[1] ) {
 			return 180;
 		}
 		return 180 - ( ( movement[1] > 0.0f ) ? 45 : -45 );
-	} else {
-		return ( movement[1] > 0.0f ) ? 90 : -90;
 	}
+
+	return ( movement[1] > 0.0f ) ? 90 : -90;
 }
 
 static int CG_GetScoreboardShown( const void *parameter ) {
