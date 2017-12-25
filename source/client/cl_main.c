@@ -2281,7 +2281,7 @@ static bool CL_MaxPacketsReached( void ) {
 		lastPacketTime = cls.realtime;
 	}
 
-	if( cl_pps->integer > 62 || cl_pps->integer < 20 ) {
+	if( cl_pps->integer > 62 || cl_pps->integer < 40 ) {
 		Com_Printf( "'cl_pps' value is out of valid range, resetting to default\n" );
 		Cvar_ForceSet( "cl_pps", va( "%s", cl_pps->dvalue ) );
 	}
