@@ -1,0 +1,8 @@
+title: qfusion
+description: qfusion is the id Tech 2 derived game engine
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-slate
+
+gems:
+  - jekyll-mentions
