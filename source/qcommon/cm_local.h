@@ -145,14 +145,6 @@ struct cmodel_state_s {
 	vec3_t *map_verts;              // this will be freed
 	int numvertexes;
 
-	// ==== Q1 specific stuff ===
-	int numclipnodes;
-	cnode_t *map_clipnodes;
-
-	int nummaphulls;
-	struct chull_s *map_hulls;      // nummaphulls * numcmodels
-	// ==== Q1 specific stuff ===
-
 	// each area has a list of portals that lead into other areas
 	// when portals are closed, other areas may not be visible or
 	// hearable even if the vis info says that it should be
@@ -186,11 +178,6 @@ struct cmodel_state_s {
 	cbrush_t oct_brush[1];
 	cbrush_t *oct_markbrushes[1];
 	cmodel_t oct_cmodel[1];
-
-	int leaf_count, leaf_maxcount;
-	int *leaf_list;
-	float *leaf_mins, *leaf_maxs;
-	int leaf_topnode;
 };
 
 //=======================================================================

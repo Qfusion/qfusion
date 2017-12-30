@@ -22,6 +22,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 #include "cm_local.h"
 
+typedef struct {
+	int leaf_count, leaf_maxcount;
+	int *leaf_list;
+	float *leaf_mins, *leaf_maxs;
+	int leaf_topnode;
+} boxLeafsWork_t;
+
+typedef struct {
+	vec3_t start, end;
+	vec3_t mins, maxs;
+	vec3_t startmins, startmaxs;
+	vec3_t endmins, endmaxs;
+	vec3_t absmins, absmaxs;
+	vec3_t extents;
+	trace_t *trace;
+#ifdef TRACEVICFIX
+	float realfraction;
+#endif
+	int contents;
+	bool ispoint;
+} traceWork_t;
+
 /*
 * CM_InitBoxHull
 *
@@ -245,13 +267,13 @@ int CM_PointLeafnum( cmodel_state_t *cms, const vec3_t p ) {
 *
 * Fills in a list of all the leafs touched
 */
-static void CM_BoxLeafnums_r( cmodel_state_t *cms, int nodenum ) {
+static void CM_BoxLeafnums_r( boxLeafsWork_t *bw, cmodel_state_t *cms, int nodenum ) {
 	int s;
 	cnode_t *node;
 
 	while( nodenum >= 0 ) {
 		node = &cms->map_nodes[nodenum];
-		s = BOX_ON_PLANE_SIDE( cms->leaf_mins, cms->leaf_maxs, node->plane ) - 1;
+		s = BOX_ON_PLANE_SIDE( bw->leaf_mins, bw->leaf_maxs, node->plane ) - 1;
 
 		if( s < 2 ) {
 			nodenum = node->children[s];
@@ -259,15 +281,15 @@ static void CM_BoxLeafnums_r( cmodel_state_t *cms, int nodenum ) {
 		}
 
 		// go down both sides
-		if( cms->leaf_topnode == -1 ) {
-			cms->leaf_topnode = nodenum;
+		if( bw->leaf_topnode == -1 ) {
+			bw->leaf_topnode = nodenum;
 		}
-		CM_BoxLeafnums_r( cms, node->children[0] );
+		CM_BoxLeafnums_r( bw, cms, node->children[0] );
 		nodenum = node->children[1];
 	}
 
-	if( cms->leaf_count < cms->leaf_maxcount ) {
-		cms->leaf_list[cms->leaf_count++] = -1 - nodenum;
+	if( bw->leaf_count < bw->leaf_maxcount ) {
+		bw->leaf_list[bw->leaf_count++] = -1 - nodenum;
 	}
 }
 
@@ -275,21 +297,22 @@ static void CM_BoxLeafnums_r( cmodel_state_t *cms, int nodenum ) {
 * CM_BoxLeafnums
 */
 int CM_BoxLeafnums( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, int *list, int listsize, int *topnode ) {
-	cms->leaf_list = list;
-	cms->leaf_count = 0;
-	cms->leaf_maxcount = listsize;
-	cms->leaf_mins = mins;
-	cms->leaf_maxs = maxs;
+	boxLeafsWork_t bw;
 
-	cms->leaf_topnode = -1;
+	bw.leaf_list = list;
+	bw.leaf_count = 0;
+	bw.leaf_maxcount = listsize;
+	bw.leaf_mins = mins;
+	bw.leaf_maxs = maxs;
+	bw.leaf_topnode = -1;
 
-	CM_BoxLeafnums_r( cms, 0 );
+	CM_BoxLeafnums_r( &bw, cms, 0 );
 
 	if( topnode ) {
-		*topnode = cms->leaf_topnode;
+		*topnode = bw.leaf_topnode;
 	}
 
-	return cms->leaf_count;
+	return bw.leaf_count;
 }
 
 /*
@@ -449,21 +472,6 @@ BOX TRACING
 #define FRAC_EPSILON    ( 1.0f / 1024.0f )
 #endif
 #define RADIUS_EPSILON      1.0f
-
-typedef struct {
-	vec3_t start, end;
-	vec3_t mins, maxs;
-	vec3_t startmins, startmaxs;
-	vec3_t endmins, endmaxs;
-	vec3_t absmins, absmaxs;
-	vec3_t extents;
-	trace_t *trace;
-#ifdef TRACEVICFIX
-	float realfraction;
-#endif
-	int contents;
-	bool ispoint;
-} traceWork_t;
 
 /*
 * CM_ClipBoxToBrush
