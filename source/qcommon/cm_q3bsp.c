@@ -26,6 +26,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_FACET_PLANES 32
 
 /*
+* CM_BoundBrush
+*/
+static void CM_BoundBrush( cbrush_t *brush ) {
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		brush->mins[i] = -brush->brushsides[i * 2 + 0].plane->dist;
+		brush->maxs[i] = +brush->brushsides[i * 2 + 1].plane->dist;
+	}
+}
+
+/*
 * CM_CreateFacetFromPoints
 */
 static int CM_CreateFacetFromPoints( cmodel_state_t *cms, cbrush_t *facet, vec3_t *verts, int numverts, cshaderref_t *shaderref, cplane_t *brushplanes ) {
@@ -825,7 +837,7 @@ static void CMod_LoadBrushes( cmodel_state_t *cms, lump_t *l ) {
 		out->contents = cms->map_shaderrefs[shaderref].contents;
 		out->numsides = LittleLong( in->numsides );
 		out->brushsides = cms->map_brushsides + LittleLong( in->firstside );
-		CM_BoundBrush( cms, out );
+		CM_BoundBrush( out );
 	}
 }
 
@@ -901,14 +913,5 @@ void CM_LoadQ3BrushModel( cmodel_state_t *cms, void *parent, void *buf, bspForma
 
 	if( cms->numvertexes ) {
 		Mem_Free( cms->map_verts );
-	}
-}
-
-void CM_BoundBrush( cmodel_state_t *cms, cbrush_t *brush ) {
-	int i;
-
-	for( i = 0; i < 3; i++ ) {
-		brush->mins[i] = -brush->brushsides[i * 2 + 0].plane->dist;
-		brush->maxs[i] = +brush->brushsides[i * 2 + 1].plane->dist;
 	}
 }

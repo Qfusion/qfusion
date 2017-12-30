@@ -41,6 +41,7 @@ typedef struct {
 	float realfraction;
 #endif
 	int contents;
+	int checkcount;
 	bool ispoint;
 } traceWork_t;
 
@@ -728,14 +729,15 @@ static void CM_CollideBox( traceWork_t *tw, cmodel_state_t *cms, cbrush_t **mark
 	cbrush_t *b;
 	cface_t *patch;
 	cbrush_t *facet;
+	int checkcount = tw->checkcount;
 
 	// trace line against all brushes
 	for( i = 0; i < nummarkbrushes; i++ ) {
 		b = markbrushes[i];
-		if( b->checkcount == cms->checkcount ) {
+		if( b->checkcount == checkcount ) {
 			continue; // already checked this brush
 		}
-		b->checkcount = cms->checkcount;
+		b->checkcount = checkcount;
 		if( !( b->contents & tw->contents ) ) {
 			continue;
 		}
@@ -755,10 +757,10 @@ static void CM_CollideBox( traceWork_t *tw, cmodel_state_t *cms, cbrush_t **mark
 	// trace line against all patches
 	for( i = 0; i < nummarkfaces; i++ ) {
 		patch = markfaces[i];
-		if( patch->checkcount == cms->checkcount ) {
+		if( patch->checkcount == checkcount ) {
 			continue; // already checked this patch
 		}
-		patch->checkcount = cms->checkcount;
+		patch->checkcount = checkcount;
 		if( !( patch->contents & tw->contents ) ) {
 			continue;
 		}
@@ -914,7 +916,6 @@ static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr, vec3
 
 	notworld = ( cmodel != cms->map_cmodels ? true : false );
 
-	cms->checkcount++;  // for multi-check avoidance
 	c_traces++;     // for statistics, may be zeroed
 
 	// fill in a default trace
@@ -929,7 +930,10 @@ static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr, vec3
 		return;
 	}
 
+	cms->checkcount++;  // for multi-check avoidance
+
 	memset( tw, 0, sizeof( *tw ) );
+	tw->checkcount = cms->checkcount;
 	tw->trace = tr;
 	tw->contents = brushmask;
 	VectorCopy( start, tw->start );

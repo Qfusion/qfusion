@@ -30,14 +30,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SURFACE_CLIP_EPSILON    ( 0.125 )
 
 typedef struct {
-	char *name;
 	int contents;
 	int flags;
+	char *name;
 } cshaderref_t;
 
 typedef struct {
-	cplane_t *plane;
 	int children[2];            // negative numbers are leafs
+	cplane_t *plane;
 } cnode_t;
 
 typedef struct {
@@ -47,21 +47,21 @@ typedef struct {
 
 typedef struct {
 	int contents;
+	int numsides;
 	int checkcount;             // to avoid repeated testings
 
 	vec3_t mins, maxs;
 
-	int numsides;
 	cbrushside_t *brushsides;
 } cbrush_t;
 
 typedef struct {
 	int contents;
+	int numfacets;
 	int checkcount;             // to avoid repeated testings
 
 	vec3_t mins, maxs;
 
-	int numfacets;
 	cbrush_t *facets;
 } cface_t;
 
@@ -72,26 +72,26 @@ typedef struct {
 	int area;
 
 	int nummarkbrushes;
-	cbrush_t **markbrushes;
-
 	int nummarkfaces;
+
+	cbrush_t **markbrushes;
 	cface_t **markfaces;
 } cleaf_t;
 
 typedef struct cmodel_s {
-	vec3_t mins, maxs;
+	bool builtin;
 
 	int nummarkfaces;
-	cface_t **markfaces;
-
 	int nummarkbrushes;
-	cbrush_t **markbrushes;
 
-	vec3_t cyl_offset;
 	float cyl_halfheight;
 	float cyl_radius;
+	vec3_t cyl_offset;
 
-	bool builtin;
+	vec3_t mins, maxs;
+
+	cface_t **markfaces;
+	cbrush_t **markbrushes;
 } cmodel_t;
 
 typedef struct {
@@ -102,6 +102,8 @@ typedef struct {
 struct cmodel_state_s {
 	int checkcount;
 	int refcount;
+	int floodvalid;
+
 	struct mempool_s *mempool;
 
 	const bspFormatDesc_t *cmap_bspFormat;
@@ -162,8 +164,6 @@ struct cmodel_state_s {
 	char map_entitystring_empty;
 	char *map_entitystring;         // = &map_entitystring_empty;
 
-	int floodvalid;
-
 	uint8_t *cmod_base;
 
 	// cm_trace.c
@@ -185,8 +185,4 @@ struct cmodel_state_s {
 void    CM_InitBoxHull( cmodel_state_t *cms );
 void    CM_InitOctagonHull( cmodel_state_t *cms );
 
-void    CM_BoundBrush( cmodel_state_t *cms, cbrush_t *brush );
-
 void    CM_FloodAreaConnections( cmodel_state_t *cms );
-
-uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed );

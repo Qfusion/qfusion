@@ -428,39 +428,6 @@ PVS
 */
 
 /*
-* CM_DecompressVis
-*
-* Decompresses RLE-compressed PVS data
-*/
-uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed ) {
-	int c;
-	uint8_t *out;
-	int row;
-
-	row = rowsize;
-	out = decompressed;
-
-	if( !in ) {
-		// no vis info, so make all visible
-		memset( out, 0xff, rowsize );
-	} else {
-		do {
-			if( *in ) {
-				*out++ = *in++;
-				continue;
-			}
-
-			c = in[1];
-			in += 2;
-			while( c-- )
-				*out++ = 0;
-		} while( out - decompressed < row );
-	}
-
-	return decompressed;
-}
-
-/*
 * CM_ClusterRowSize
 */
 int CM_ClusterRowSize( cmodel_state_t *cms ) {
