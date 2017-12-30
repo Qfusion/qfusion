@@ -47,7 +47,6 @@ void QCondVar_Wake( qcondvar_t *cond );
 
 qthread_t *QThread_Create( void *( *routine )( void* ), void *param );
 void QThread_Join( qthread_t *thread );
-int QThread_Cancel( qthread_t *thread );
 void QThread_Yield( void );
 
 void QThreads_Init( void );
@@ -60,5 +59,8 @@ void QBufPipe_WriteCmd( qbufPipe_t *queue, const void *cmd, unsigned cmd_size );
 int QBufPipe_ReadCmds( qbufPipe_t *queue, unsigned( **cmdHandlers )( const void * ) );
 void QBufPipe_Wait( qbufPipe_t *queue, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ), bool ),
 					unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec );
+
+int QAtomic_Add( volatile int *value, int add, qmutex_t *mutex );
+bool QAtomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex );
 
 #endif // Q_THREADS_H

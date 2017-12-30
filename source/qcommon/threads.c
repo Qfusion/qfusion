@@ -143,6 +143,22 @@ void QThreads_Shutdown( void ) {
 
 // ============================================================================
 
+/*
+* QAtomic_Add
+*/
+int QAtomic_Add( volatile int *value, int add, qmutex_t *mutex ) {
+	return Sys_Atomic_Add( value, add, mutex );
+}
+
+/*
+* QAtomic_CAS
+*/
+bool QAtomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex ) {
+	return Sys_Atomic_CAS( value, oldval, newval, mutex );
+}
+
+// ============================================================================
+
 struct qbufPipe_s {
 	int blockWrite;
 	volatile int terminated;

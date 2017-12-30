@@ -562,26 +562,10 @@ static void CL_MasterAddressCache_Init( void ) {
 * CL_MasterAddressCache_Shutdown
 */
 static void CL_MasterAddressCache_Shutdown( void ) {
-#if defined( UNSAFE_EXIT ) && defined( Q_THREADS_HAVE_CANCEL )
-	int i;
-
-	for( i = 0; i < numMasterServers; i++ ) {
-		if( masterServers[i].resolverThread ) {
-			QThread_Cancel( masterServers[i].resolverThread );
-		}
-	}
-
-	for( i = 0; i < numMasterServers; i++ ) {
-		if( masterServers[i].resolverThread ) {
-			QThread_Join( masterServers[i].resolverThread );
-		}
-	}
-#else
 	// here we leak the mutex and resources allocated for resolving threads,
 	// but at least we're not calling cancel on them, which is possibly dangerous
 
 	// we're going to kill the main thread anyway, so keep the lock and let the threads die
-#endif
 
 	numMasterServers = 0;
 }

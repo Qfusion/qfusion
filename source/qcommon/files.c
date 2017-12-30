@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 
 #include "sys_fs.h"
-#include "sys_threads.h"
 
 #include "compression.h"
 #include "wswcurl.h"
@@ -3992,7 +3991,7 @@ static void *FS_LoadDeferredPaks_Job( void *parg ) {
 	deferred_pack_arg_t *arg = parg;
 
 	while( true ) {
-		i = Sys_Atomic_Add( arg->cnt, 1, arg->mutex );
+		i = QAtomic_Add( arg->cnt, 1, arg->mutex );
 		if( i >= arg->maxcnt ) {
 			break;
 		}
