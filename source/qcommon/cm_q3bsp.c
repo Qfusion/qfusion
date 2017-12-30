@@ -544,15 +544,26 @@ static void CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l ) {
 	cms->numcmodels = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
+		out->faces = cms->map_faces;
 		out->nummarkfaces = LittleLong( in->numfaces );
-		out->markfaces = Mem_Alloc( cms->mempool, out->nummarkfaces * sizeof( cface_t * ) );
-		out->nummarkbrushes = LittleLong( in->numbrushes );
-		out->markbrushes = Mem_Alloc( cms->mempool, out->nummarkbrushes * sizeof( cbrush_t * ) );
+		out->markfaces = Mem_Alloc( cms->mempool, out->nummarkfaces * sizeof( *out->markfaces ) );
 
-		for( j = 0; j < out->nummarkfaces; j++ )
-			out->markfaces[j] = cms->map_faces + LittleLong( in->firstface ) + j;
-		for( j = 0; j < out->nummarkbrushes; j++ )
-			out->markbrushes[j] = cms->map_brushes + LittleLong( in->firstbrush ) + j;
+		out->brushes = cms->map_brushes;
+		out->nummarkbrushes = LittleLong( in->numbrushes );
+		out->markbrushes = Mem_Alloc( cms->mempool, out->nummarkbrushes * sizeof( *out->markbrushes ) );
+
+		if( out->nummarkfaces ) {
+			int firstface = LittleLong( in->firstface );
+			for( j = 0; j < out->nummarkfaces; j++ )
+				out->markfaces[j] = firstface + j;
+		}
+
+		if( out->nummarkbrushes ) {
+			int firstbrush = LittleLong( in->firstbrush );
+			for( j = 0; j < out->nummarkbrushes; j++ ) {
+				out->markbrushes[j] = firstbrush + j;
+			}
+		}
 
 		for( j = 0; j < 3; j++ ) {
 			// spread the mins / maxs by a pixel
@@ -601,7 +612,7 @@ static void CMod_LoadNodes( cmodel_state_t *cms, lump_t *l ) {
 static void CMod_LoadMarkFaces( cmodel_state_t *cms, lump_t *l ) {
 	int i, j;
 	int count;
-	cface_t **out;
+	int *out;
 	int *in;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
@@ -621,7 +632,7 @@ static void CMod_LoadMarkFaces( cmodel_state_t *cms, lump_t *l ) {
 		if( j < 0 || j >= cms->numfaces ) {
 			Com_Error( ERR_DROP, "CMod_LoadMarkFaces: bad surface number" );
 		}
-		out[i] = cms->map_faces + j;
+		out[i] = j;
 	}
 }
 
@@ -657,26 +668,25 @@ static void CMod_LoadLeafs( cmodel_state_t *cms, lump_t *l ) {
 
 		// OR brushes' contents
 		for( j = 0; j < out->nummarkbrushes; j++ )
-			out->contents |= out->markbrushes[j]->contents;
+			out->contents |= cms->map_brushes[out->markbrushes[j]].contents;
 
 		// exclude markfaces that have no facets
 		// so we don't perform this check at runtime
 		for( j = 0; j < out->nummarkfaces; ) {
 			k = j;
-			if( !out->markfaces[j]->facets ) {
-				for(; ( ++j < out->nummarkfaces ) && !out->markfaces[j]->facets; ) ;
+			if( !cms->map_faces[out->markfaces[j]].facets ) {
+				for(; ( ++j < out->nummarkfaces ) && !cms->map_faces[out->markfaces[j]].facets; ) ;
 				if( j < out->nummarkfaces ) {
 					memmove( &out->markfaces[k], &out->markfaces[j], ( out->nummarkfaces - j ) * sizeof( *out->markfaces ) );
 				}
 				out->nummarkfaces -= j - k;
-
 			}
 			j = k + 1;
 		}
 
 		// OR patches' contents
 		for( j = 0; j < out->nummarkfaces; j++ )
-			out->contents |= out->markfaces[j]->contents;
+			out->contents |= cms->map_faces[out->markfaces[j]].contents;
 
 		if( out->area >= cms->numareas ) {
 			cms->numareas = out->area + 1;
@@ -729,7 +739,7 @@ static void CMod_LoadPlanes( cmodel_state_t *cms, lump_t *l ) {
 static void CMod_LoadMarkBrushes( cmodel_state_t *cms, lump_t *l ) {
 	int i;
 	int count;
-	cbrush_t **out;
+	int *out;
 	int *in;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
@@ -745,7 +755,7 @@ static void CMod_LoadMarkBrushes( cmodel_state_t *cms, lump_t *l ) {
 	cms->nummarkbrushes = count;
 
 	for( i = 0; i < count; i++, in++ )
-		out[i] = cms->map_brushes + LittleLong( *in );
+		out[i] = LittleLong( *in );
 }
 
 /*

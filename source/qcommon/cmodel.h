@@ -69,7 +69,6 @@ void CM_WritePortalState( cmodel_state_t *cms, int file );
 void CM_ReadPortalState( cmodel_state_t *cms, int file );
 
 void CM_MergePVS( cmodel_state_t *cms, const vec3_t org, uint8_t *out );
-void CM_MergePHS( cmodel_state_t *cms, int cluster, uint8_t *out );
 int CM_MergeVisSets( cmodel_state_t *cms, const vec3_t org, uint8_t *pvs, uint8_t *areabits );
 
 bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 );
@@ -80,6 +79,14 @@ bool CM_LeafsInPVS( cmodel_state_t *cms, int leafnum1, int leafnum2 );
 cmodel_state_t *CM_New( void *mempool );
 void CM_AddReference( cmodel_state_t *cms );
 void CM_ReleaseReference( cmodel_state_t *cms );
+
+/*
+* CM_ThreadLocalCopy
+*
+* Returns a shallow copy of the collision model instance, for performing
+* ray and box tracing in a thread-safe manner.
+*/
+cmodel_state_t *CM_ThreadLocalCopy( cmodel_state_t *cms, void *mempool );
 
 //
 void CM_Init( void );

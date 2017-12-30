@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include "qthreads.h"
+
 #define MAX_CM_LEAFS        ( MAX_MAP_LEAFS )
 
 #define CM_SUBDIV_LEVEL     ( 16 )
@@ -48,7 +50,6 @@ typedef struct {
 typedef struct {
 	int contents;
 	int numsides;
-	int checkcount;             // to avoid repeated testings
 
 	vec3_t mins, maxs;
 
@@ -58,7 +59,6 @@ typedef struct {
 typedef struct {
 	int contents;
 	int numfacets;
-	int checkcount;             // to avoid repeated testings
 
 	vec3_t mins, maxs;
 
@@ -74,8 +74,8 @@ typedef struct {
 	int nummarkbrushes;
 	int nummarkfaces;
 
-	cbrush_t **markbrushes;
-	cface_t **markfaces;
+	int *markbrushes;
+	int *markfaces;
 } cleaf_t;
 
 typedef struct cmodel_s {
@@ -90,8 +90,13 @@ typedef struct cmodel_s {
 
 	vec3_t mins, maxs;
 
-	cface_t **markfaces;
-	cbrush_t **markbrushes;
+	cbrush_t *brushes;
+	cface_t *faces;
+
+	// dummy iterators for the tracing code
+	// which treats brush models as leafs
+	int *markfaces;
+	int *markbrushes;
 } cmodel_t;
 
 typedef struct {
@@ -100,10 +105,13 @@ typedef struct {
 } carea_t;
 
 struct cmodel_state_s {
+	volatile int refcount;
+	qmutex_t *refcount_mutex;
+
 	int checkcount;
-	int refcount;
 	int floodvalid;
 
+	struct cmodel_state_s *parent;
 	struct mempool_s *mempool;
 
 	const bspFormatDesc_t *cmap_bspFormat;
@@ -128,7 +136,7 @@ struct cmodel_state_s {
 	cleaf_t *map_leafs;             // = &map_leaf_empty;
 
 	int nummarkbrushes;
-	cbrush_t **map_markbrushes;
+	int *map_markbrushes;
 
 	int numcmodels;
 	cmodel_t map_cmodel_empty;
@@ -142,7 +150,7 @@ struct cmodel_state_s {
 	cface_t *map_faces;
 
 	int nummarkfaces;
-	cface_t **map_markfaces;
+	int *map_markfaces;
 
 	vec3_t *map_verts;              // this will be freed
 	int numvertexes;
@@ -170,14 +178,19 @@ struct cmodel_state_s {
 	cplane_t box_planes[6];
 	cbrushside_t box_brushsides[6];
 	cbrush_t box_brush[1];
-	cbrush_t *box_markbrushes[1];
+	int box_markbrushes[1];
 	cmodel_t box_cmodel[1];
+	int box_checkcount;
 
 	cplane_t oct_planes[10];
 	cbrushside_t oct_brushsides[10];
 	cbrush_t oct_brush[1];
-	cbrush_t *oct_markbrushes[1];
+	int oct_markbrushes[1];
 	cmodel_t oct_cmodel[1];
+	int oct_checkcount;
+
+	int *map_brush_checkcheckouts;
+	int *map_face_checkcheckouts;
 };
 
 //=======================================================================

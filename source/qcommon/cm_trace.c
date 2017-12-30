@@ -23,26 +23,41 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cm_local.h"
 
 typedef struct {
+	int leaf_topnode;
 	int leaf_count, leaf_maxcount;
 	int *leaf_list;
 	float *leaf_mins, *leaf_maxs;
-	int leaf_topnode;
 } boxLeafsWork_t;
 
 typedef struct {
+	bool ispoint;
+	int contents;
+	int checkcount;
+
+#ifdef TRACEVICFIX
+	float realfraction;
+#endif
+
+	vec3_t extents;
+
 	vec3_t start, end;
 	vec3_t mins, maxs;
 	vec3_t startmins, startmaxs;
 	vec3_t endmins, endmaxs;
 	vec3_t absmins, absmaxs;
-	vec3_t extents;
+
 	trace_t *trace;
-#ifdef TRACEVICFIX
-	float realfraction;
-#endif
-	int contents;
-	int checkcount;
-	bool ispoint;
+
+	int nummarkbrushes;
+	cbrush_t *brushes;
+	int *markbrushes;
+
+	int nummarkfaces;
+	cface_t *faces;
+	int *markfaces;
+
+	int *brush_checkcounts;
+	int *face_checkcounts;
 } traceWork_t;
 
 /*
@@ -63,8 +78,9 @@ void CM_InitBoxHull( cmodel_state_t *cms ) {
 	// Make sure CM_CollideBox() will not reject the brush by its bounds
 	ClearBounds( cms->box_brush->maxs, cms->box_brush->mins );
 
-	cms->box_markbrushes[0] = cms->box_brush;
+	cms->box_markbrushes[0] = 0;
 
+	cms->box_cmodel->brushes = cms->box_brush;
 	cms->box_cmodel->builtin = true;
 	cms->box_cmodel->nummarkfaces = 0;
 	cms->box_cmodel->markfaces = NULL;
@@ -117,8 +133,9 @@ void CM_InitOctagonHull( cmodel_state_t *cms ) {
 	// Make sure CM_CollideBox() will not reject the brush by its bounds
 	ClearBounds( cms->oct_brush->maxs, cms->oct_brush->mins );
 
-	cms->oct_markbrushes[0] = cms->oct_brush;
+	cms->oct_markbrushes[0] = 0;
 
+	cms->oct_cmodel->brushes = cms->oct_brush;
 	cms->oct_cmodel->builtin = true;
 	cms->oct_cmodel->nummarkfaces = 0;
 	cms->oct_cmodel->markfaces = NULL;
@@ -352,8 +369,10 @@ static inline int CM_PatchContents( cface_t *patch, vec3_t p ) {
 static int CM_PointContents( cmodel_state_t *cms, vec3_t p, cmodel_t *cmodel ) {
 	int i, superContents, contents;
 	int nummarkfaces, nummarkbrushes;
-	cface_t *patch, **markface;
-	cbrush_t *brush, **markbrush;
+	cface_t *faces;
+	int *markface;
+	cbrush_t *brushes;
+	int *markbrush;
 
 	if( !cms->numnodes ) {  // map not loaded
 		return 0;
@@ -383,9 +402,11 @@ static int CM_PointContents( cmodel_state_t *cms, vec3_t p, cmodel_t *cmodel ) {
 	}
 
 	contents = superContents;
+	brushes = cmodel->brushes;
+	faces = cmodel->faces;
 
 	for( i = 0; i < nummarkbrushes; i++ ) {
-		brush = markbrush[i];
+		cbrush_t *brush = brushes + markbrush[i];
 
 		// check if brush adds something to contents
 		if( contents & brush->contents ) {
@@ -397,7 +418,7 @@ static int CM_PointContents( cmodel_state_t *cms, vec3_t p, cmodel_t *cmodel ) {
 
 	if( !cm_noCurves->integer ) {
 		for( i = 0; i < nummarkfaces; i++ ) {
-			patch = markface[i];
+			cface_t *patch = faces + markface[i];
 
 			// check if patch adds something to contents
 			if( contents & patch->contents ) {
@@ -477,7 +498,7 @@ BOX TRACING
 /*
 * CM_ClipBoxToBrush
 */
-static void CM_ClipBoxToBrush( traceWork_t *tw, cmodel_state_t *cms, cbrush_t *brush ) {
+static void CM_ClipBoxToBrush( cmodel_state_t *cms, traceWork_t *tw, cbrush_t *brush ) {
 	int i;
 	cplane_t *p, *clipplane;
 	float enterfrac, leavefrac;
@@ -646,7 +667,7 @@ static void CM_ClipBoxToBrush( traceWork_t *tw, cmodel_state_t *cms, cbrush_t *b
 /*
 * CM_TestBoxInBrush
 */
-static void CM_TestBoxInBrush( traceWork_t *tw, cmodel_state_t *cms, cbrush_t *brush ) {
+static void CM_TestBoxInBrush( cmodel_state_t *cms, traceWork_t *tw, cbrush_t *brush ) {
 	int i;
 	cplane_t *p;
 	cbrushside_t *side;
@@ -723,28 +744,30 @@ static void CM_TestBoxInBrush( traceWork_t *tw, cmodel_state_t *cms, cbrush_t *b
 /*
 * CM_CollideBox
 */
-static void CM_CollideBox( traceWork_t *tw, cmodel_state_t *cms, cbrush_t **markbrushes, int nummarkbrushes, cface_t **markfaces,
-						   int nummarkfaces, void ( *func )( traceWork_t *, cmodel_state_t *cms, cbrush_t *b ) ) {
+static void CM_CollideBox( cmodel_state_t *cms, traceWork_t *tw, int *markbrushes, int nummarkbrushes, 
+	int *markfaces, int nummarkfaces, void ( *func )( cmodel_state_t *cms, traceWork_t *, cbrush_t *b ) ) {
 	int i, j;
-	cbrush_t *b;
-	cface_t *patch;
-	cbrush_t *facet;
+	cbrush_t *brushes = tw->brushes;
+	cface_t *faces = tw->faces;
 	int checkcount = tw->checkcount;
 
 	// trace line against all brushes
 	for( i = 0; i < nummarkbrushes; i++ ) {
-		b = markbrushes[i];
-		if( b->checkcount == checkcount ) {
+		int mb = markbrushes[i];
+		cbrush_t *b = brushes + mb;
+
+		if( tw->brush_checkcounts[mb] == checkcount ) {
 			continue; // already checked this brush
 		}
-		b->checkcount = checkcount;
+		tw->brush_checkcounts[mb] = checkcount;
+
 		if( !( b->contents & tw->contents ) ) {
 			continue;
 		}
 		if( !BoundsIntersect( b->mins, b->maxs, tw->absmins, tw->absmaxs ) ) {
 			continue;
 		}
-		func( tw, cms, b );
+		func( cms, tw, b );
 		if( !tw->trace->fraction ) {
 			return;
 		}
@@ -756,11 +779,15 @@ static void CM_CollideBox( traceWork_t *tw, cmodel_state_t *cms, cbrush_t **mark
 
 	// trace line against all patches
 	for( i = 0; i < nummarkfaces; i++ ) {
-		patch = markfaces[i];
-		if( patch->checkcount == checkcount ) {
-			continue; // already checked this patch
+		int mf = markfaces[i];
+		cface_t *patch = faces + mf;
+		cbrush_t *facet;
+
+		if( tw->face_checkcounts[mf] == checkcount ) {
+			continue; // already checked this brush
 		}
-		patch->checkcount = checkcount;
+		tw->face_checkcounts[mf] = checkcount;
+
 		if( !( patch->contents & tw->contents ) ) {
 			continue;
 		}
@@ -772,7 +799,7 @@ static void CM_CollideBox( traceWork_t *tw, cmodel_state_t *cms, cbrush_t **mark
 			if( !BoundsIntersect( facet->mins, facet->maxs, tw->absmins, tw->absmaxs ) ) {
 				continue;
 			}
-			func( tw, cms, facet );
+			func( cms, tw, facet );
 			if( !tw->trace->fraction ) {
 				return;
 			}
@@ -783,23 +810,23 @@ static void CM_CollideBox( traceWork_t *tw, cmodel_state_t *cms, cbrush_t **mark
 /*
 * CM_ClipBox
 */
-static inline void CM_ClipBox( traceWork_t *tw, cmodel_state_t *cms, cbrush_t **markbrushes, 
-	int nummarkbrushes, cface_t **markfaces, int nummarkfaces ) {
-	CM_CollideBox( tw, cms, markbrushes, nummarkbrushes, markfaces, nummarkfaces, CM_ClipBoxToBrush );
+static inline void CM_ClipBox( cmodel_state_t *cms, traceWork_t *tw, 
+	int *markbrushes, int nummarkbrushes, int *markfaces, int nummarkfaces ) {
+	CM_CollideBox( cms, tw, markbrushes, nummarkbrushes, markfaces, nummarkfaces, CM_ClipBoxToBrush );
 }
 
 /*
 * CM_TestBox
 */
-static inline void CM_TestBox( traceWork_t *tw, cmodel_state_t *cms, cbrush_t **markbrushes, 
-	int nummarkbrushes, cface_t **markfaces, int nummarkfaces ) {
-	CM_CollideBox( tw, cms, markbrushes, nummarkbrushes, markfaces, nummarkfaces, CM_TestBoxInBrush );
+static inline void CM_TestBox( cmodel_state_t *cms, traceWork_t *tw, 
+	int *markbrushes, int nummarkbrushes, int *markfaces, int nummarkfaces ) {
+	CM_CollideBox( cms, tw,  markbrushes, nummarkbrushes, markfaces, nummarkfaces, CM_TestBoxInBrush );
 }
 
 /*
 * CM_RecursiveHullCheck
 */
-static void CM_RecursiveHullCheck( traceWork_t *tw, cmodel_state_t *cms, int num, float p1f, float p2f, vec3_t p1, vec3_t p2 ) {
+static void CM_RecursiveHullCheck( cmodel_state_t *cms, traceWork_t *tw, int num, float p1f, float p2f, vec3_t p1, vec3_t p2 ) {
 	cnode_t *node;
 	cplane_t *plane;
 	int side;
@@ -825,7 +852,7 @@ loc0:
 
 		leaf = &cms->map_leafs[-1 - num];
 		if( leaf->contents & tw->contents ) {
-			CM_ClipBox( tw, cms, leaf->markbrushes, leaf->nummarkbrushes, leaf->markfaces, leaf->nummarkfaces );
+			CM_ClipBox( cms, tw, leaf->markbrushes, leaf->nummarkbrushes, leaf->markfaces, leaf->nummarkfaces );
 		}
 		return;
 	}
@@ -895,14 +922,14 @@ loc0:
 	midf = p1f + ( p2f - p1f ) * frac;
 	VectorLerp( p1, frac, p2, mid );
 
-	CM_RecursiveHullCheck( tw, cms, node->children[side], p1f, midf, p1, mid );
+	CM_RecursiveHullCheck( cms, tw, node->children[side], p1f, midf, p1, mid );
 
 	// go past the node
 	clamp( frac2, 0, 1 );
 	midf = p1f + ( p2f - p1f ) * frac2;
 	VectorLerp( p1, frac2, p2, mid );
 
-	CM_RecursiveHullCheck( tw, cms, node->children[side ^ 1], midf, p2f, mid, p2 );
+	CM_RecursiveHullCheck( cms, tw, node->children[side ^ 1], midf, p2f, mid, p2 );
 }
 
 //======================================================================
@@ -956,6 +983,20 @@ static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr, vec3
 	VectorAdd( end, tw->maxs, tw->endmaxs );
 	AddPointToBounds( tw->endmaxs, tw->absmins, tw->absmaxs );
 
+	tw->brushes = cmodel->brushes;
+	tw->faces = cmodel->faces;
+
+	if( cmodel == cms->oct_cmodel ) {
+		tw->brush_checkcounts = &cms->oct_checkcount;
+		tw->face_checkcounts = NULL;
+	} else if( cmodel == cms->box_cmodel ) {
+		tw->brush_checkcounts = &cms->box_checkcount;
+		tw->face_checkcounts = NULL;
+	} else {
+		tw->brush_checkcounts = cms->map_brush_checkcheckouts;
+		tw->face_checkcounts = cms->map_face_checkcheckouts;
+	}
+
 	//
 	// check for position test special case
 	//
@@ -968,7 +1009,7 @@ static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr, vec3
 
 		if( notworld ) {
 			if( BoundsIntersect( cmodel->mins, cmodel->maxs, tw->absmins, tw->absmaxs ) ) {
-				CM_TestBox( tw, cms, cmodel->markbrushes, cmodel->nummarkbrushes, cmodel->markfaces, cmodel->nummarkfaces );
+				CM_TestBox( cms, tw, cmodel->markbrushes, cmodel->nummarkbrushes, cmodel->markfaces, cmodel->nummarkfaces );
 			}
 		} else {
 			for( i = 0; i < 3; i++ ) {
@@ -981,7 +1022,7 @@ static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr, vec3
 				leaf = &cms->map_leafs[leafs[i]];
 
 				if( leaf->contents & brushmask ) {
-					CM_TestBox( tw, cms, leaf->markbrushes, leaf->nummarkbrushes, leaf->markfaces, leaf->nummarkfaces );
+					CM_TestBox( cms, tw, leaf->markbrushes, leaf->nummarkbrushes, leaf->markfaces, leaf->nummarkfaces );
 					if( tr->allsolid ) {
 						break;
 					}
@@ -1011,9 +1052,9 @@ static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr, vec3
 	// general sweeping through world
 	//
 	if( !notworld ) {
-		CM_RecursiveHullCheck( tw, cms, 0, 0, 1, start, end );
+		CM_RecursiveHullCheck( cms, tw, 0, 0, 1, start, end );
 	} else if( BoundsIntersect( cmodel->mins, cmodel->maxs, tw->absmins, tw->absmaxs ) ) {
-		CM_ClipBox( tw, cms, cmodel->markbrushes, cmodel->nummarkbrushes, cmodel->markfaces, cmodel->nummarkfaces );
+		CM_ClipBox( cms, tw, cmodel->markbrushes, cmodel->nummarkbrushes, cmodel->markfaces, cmodel->nummarkfaces );
 	}
 
 #ifdef TRACEVICFIX

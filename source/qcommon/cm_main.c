@@ -41,6 +41,8 @@ static const modelFormatDescr_t cm_supportedformats[] =
 	{ NULL, 0, NULL, 0, NULL }
 };
 
+static void CM_AllocateCheckCounts( cmodel_state_t *cms );
+
 /*
 ===============================================================================
 
@@ -48,6 +50,32 @@ PATCH LOADING
 
 ===============================================================================
 */
+
+/*
+* CM_AllocateCheckCounts
+*/
+static void CM_AllocateCheckCounts( cmodel_state_t *cms ) {
+	cms->checkcount = 0;
+	cms->map_brush_checkcheckouts = Mem_Alloc( cms->mempool, cms->numbrushes * sizeof( int ) );
+	cms->map_face_checkcheckouts = Mem_Alloc( cms->mempool, cms->numfaces * sizeof( int ) );
+}
+
+/*
+* CM_FreeCheckCounts
+*/
+static void CM_FreeCheckCounts( cmodel_state_t *cms ) {
+	cms->checkcount = 0;
+
+	if( cms->map_brush_checkcheckouts ) {
+		Mem_Free( cms->map_brush_checkcheckouts );
+		cms->map_brush_checkcheckouts = NULL;
+	}
+
+	if( cms->map_face_checkcheckouts ) {
+		Mem_Free( cms->map_face_checkcheckouts );
+		cms->map_face_checkcheckouts = NULL;
+	}
+}
 
 /*
 * CM_Clear
@@ -142,6 +170,8 @@ static void CM_Clear( cmodel_state_t *cms ) {
 		Mem_Free( cms->map_entitystring );
 		cms->map_entitystring = &cms->map_entitystring_empty;
 	}
+
+	CM_FreeCheckCounts( cms );
 
 	cms->map_name[0] = 0;
 
@@ -238,6 +268,8 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, un
 		memset( cms->map_areaportals, 0, cms->numareas * cms->numareas * sizeof( *cms->map_areaportals ) );
 		CM_FloodAreaConnections( cms );
 	}
+
+	CM_AllocateCheckCounts( cms );
 
 	memset( cms->nullrow, 255, MAX_CM_LEAFS / 8 );
 
@@ -816,31 +848,59 @@ bool CM_LeafsInPVS( cmodel_state_t *cms, int leafnum1, int leafnum2 ) {
 }
 
 /*
-* CM_New
+* CM_New_
 */
-cmodel_state_t *CM_New( void *mempool ) {
+static cmodel_state_t *CM_New_( cmodel_state_t *parent, void *mempool ) {
 	cmodel_state_t *cms;
 	mempool_t *cms_mempool;
 
 	cms_mempool = ( mempool ? (mempool_t *)mempool : cmap_mempool );
-	cms = Mem_Alloc( cms_mempool, sizeof( cmodel_state_t ) );
 
-	cms->mempool = cms_mempool;
+	cms = Mem_Alloc( cms_mempool, sizeof( cmodel_state_t ) );
 	cms->map_cmodels = &cms->map_cmodel_empty;
 	cms->map_leafs = &cms->map_leaf_empty;
 	cms->map_areas = &cms->map_area_empty;
 	cms->map_entitystring = &cms->map_entitystring_empty;
 
+	if( parent ) {
+		*cms = *parent;
+		CM_AddReference( parent );
+	}
+
+	cms->refcount = 0;
+	cms->parent = parent;
+	cms->mempool = cms_mempool;
+	cms->refcount_mutex = QMutex_Create();
+
 	return cms;
+}
+
+/*
+* CM_New
+*/
+cmodel_state_t *CM_New( void *mempool ) {
+	return CM_New_( NULL, mempool );
 }
 
 /*
 * CM_Free
 */
 static void CM_Free( cmodel_state_t *cms ) {
-	CM_Clear( cms );
+	cmodel_state_t *parent = cms->parent;
+
+	QMutex_Destroy( &cms->refcount_mutex );
+
+	if( parent ) {
+		CM_FreeCheckCounts( cms );
+	} else {
+		CM_Clear( cms );
+	}
 
 	Mem_Free( cms );
+
+	if( parent ) {
+		CM_ReleaseReference( parent );
+	}
 }
 
 /*
@@ -850,23 +910,46 @@ void CM_AddReference( cmodel_state_t *cms ) {
 	if( !cms ) {
 		return;
 	}
-	cms->refcount++;
+	QAtomic_Add( &cms->refcount, 1, cms->refcount_mutex );
 }
 
 /*
 * CM_ReleaseReference
 */
 void CM_ReleaseReference( cmodel_state_t *cms ) {
+	int rc;
+
 	if( !cms ) {
 		return;
 	}
 
-	cms->refcount--;
-	if( cms->refcount > 0 ) {
+	rc = QAtomic_Add( &cms->refcount, -1, cms->refcount_mutex );
+	if( rc != 0 ) {
+		return;
+	}
+
+	if( rc < 0 ) {
+		Com_Error( ERR_FATAL, "CM_ReleaseReference: refcount < 0" );
 		return;
 	}
 
 	CM_Free( cms );
+}
+
+/*
+* CM_ThreadLocalCopy
+*/
+cmodel_state_t *CM_ThreadLocalCopy( cmodel_state_t *cms, void *mempool ) {
+	cmodel_state_t *copy;
+
+	if( cms->parent ) {
+		Com_Error( ERR_FATAL, "CM_ThreadLocalCopy: tried to copy a thread-local model" );
+		return NULL;
+	}
+
+	copy = CM_New_( cms, mempool );
+	CM_AllocateCheckCounts( copy );
+	return copy;
 }
 
 /*
