@@ -31,8 +31,6 @@ static cvar_t *cm_noAreas;
 cvar_t *cm_noCurves;
 
 void CM_LoadQ3BrushModel( cmodel_state_t *cms, void *parent, void *buffer, bspFormatDesc_t *format );
-void CM_LoadQ2BrushModel( cmodel_state_t *cms, void *parent, void *buf, bspFormatDesc_t *format );
-void CM_LoadQ1BrushModel( cmodel_state_t *cms, void *parent, void *buffer, bspFormatDesc_t *format );
 
 static const modelFormatDescr_t cm_supportedformats[] =
 {
@@ -148,9 +146,6 @@ static void CM_Clear( cmodel_state_t *cms ) {
 	cms->map_name[0] = 0;
 
 	ClearBounds( cms->world_mins, cms->world_maxs );
-
-	cms->CM_TransformedBoxTrace = NULL;
-	cms->CM_TransformedPointContents = NULL;
 }
 
 /*
