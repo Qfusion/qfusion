@@ -32,8 +32,8 @@ static void CM_BoundBrush( cbrush_t *brush ) {
 	int i;
 
 	for( i = 0; i < 3; i++ ) {
-		brush->mins[i] = -brush->brushsides[i * 2 + 0].plane->dist;
-		brush->maxs[i] = +brush->brushsides[i * 2 + 1].plane->dist;
+		brush->mins[i] = -brush->brushsides[i * 2 + 0].plane.dist;
+		brush->maxs[i] = +brush->brushsides[i * 2 + 1].plane.dist;
 	}
 }
 
@@ -284,18 +284,14 @@ static void CM_CreatePatch( cmodel_state_t *cms, cface_t *patch, cshaderref_t *s
 		patch->facets = ( cbrush_t * )fdata; fdata += patch->numfacets * sizeof( cbrush_t );
 		memcpy( patch->facets, facets, patch->numfacets * sizeof( cbrush_t ) );
 		for( i = 0, k = 0, facet = patch->facets; i < patch->numfacets; i++, facet++ ) {
-			cplane_t *planes;
 			cbrushside_t *s;
 
 			facet->brushsides = ( cbrushside_t * )fdata; fdata += facet->numsides * sizeof( cbrushside_t );
-			planes = ( cplane_t * )fdata; fdata += facet->numsides * sizeof( cplane_t );
 
 			for( j = 0, s = facet->brushsides; j < facet->numsides; j++, s++ ) {
-				planes[j] = brushplanes[k++];
-
-				s->plane = &planes[j];
-				SnapPlane( s->plane->normal, &s->plane->dist );
-				CategorizePlane( s->plane );
+				s->plane = brushplanes[k++];
+				SnapPlane( s->plane.normal, &s->plane.dist );
+				CategorizePlane( &s->plane );
 				s->surfFlags = shaderref->flags;
 			}
 		}
@@ -780,12 +776,14 @@ static void CMod_LoadBrushSides( cmodel_state_t *cms, lump_t *l ) {
 	cms->numbrushsides = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
-		out->plane = cms->map_planes + LittleLong( in->planenum );
+		cplane_t *plane = cms->map_planes + LittleLong( in->planenum );
 		j = LittleLong( in->shadernum );
 		if( j >= cms->numshaderrefs ) {
 			Com_Error( ERR_DROP, "Bad brushside texinfo" );
 		}
+		out->plane = *plane;
 		out->surfFlags = cms->map_shaderrefs[j].flags;
+		CategorizePlane( &out->plane );
 	}
 }
 
@@ -811,12 +809,14 @@ static void CMod_LoadBrushSides_RBSP( cmodel_state_t *cms, lump_t *l ) {
 	cms->numbrushsides = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
-		out->plane = cms->map_planes + LittleLong( in->planenum );
+		cplane_t *plane = cms->map_planes + LittleLong( in->planenum );
 		j = LittleLong( in->shadernum );
 		if( j >= cms->numshaderrefs ) {
 			Com_Error( ERR_DROP, "Bad brushside texinfo" );
 		}
+		out->plane = *plane;
 		out->surfFlags = cms->map_shaderrefs[j].flags;
+		CategorizePlane( &out->plane );
 	}
 }
 

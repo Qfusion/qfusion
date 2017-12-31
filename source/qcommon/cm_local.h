@@ -43,8 +43,8 @@ typedef struct {
 } cnode_t;
 
 typedef struct {
-	cplane_t *plane;
 	int surfFlags;
+	cplane_t plane;
 } cbrushside_t;
 
 typedef struct {
@@ -175,14 +175,12 @@ struct cmodel_state_s {
 	uint8_t *cmod_base;
 
 	// cm_trace.c
-	cplane_t box_planes[6];
 	cbrushside_t box_brushsides[6];
 	cbrush_t box_brush[1];
 	int box_markbrushes[1];
 	cmodel_t box_cmodel[1];
 	int box_checkcount;
 
-	cplane_t oct_planes[10];
 	cbrushside_t oct_brushsides[10];
 	cbrush_t oct_brush[1];
 	int oct_markbrushes[1];

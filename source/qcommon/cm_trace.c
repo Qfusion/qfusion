@@ -90,11 +90,10 @@ void CM_InitBoxHull( cmodel_state_t *cms ) {
 	for( i = 0; i < 6; i++ ) {
 		// brush sides
 		s = cms->box_brushsides + i;
-		s->plane = cms->box_planes + i;
 		s->surfFlags = 0;
 
 		// planes
-		p = &cms->box_planes[i];
+		p = &s->plane;
 		VectorClear( p->normal );
 
 		if( ( i & 1 ) ) {
@@ -146,11 +145,10 @@ void CM_InitOctagonHull( cmodel_state_t *cms ) {
 	for( i = 0; i < 6; i++ ) {
 		// brush sides
 		s = cms->oct_brushsides + i;
-		s->plane = cms->oct_planes + i;
 		s->surfFlags = 0;
 
 		// planes
-		p = &cms->oct_planes[i];
+		p = &s->plane;
 		VectorClear( p->normal );
 
 		if( ( i & 1 ) ) {
@@ -168,11 +166,10 @@ void CM_InitOctagonHull( cmodel_state_t *cms ) {
 	for( i = 6; i < 10; i++ ) {
 		// brush sides
 		s = cms->oct_brushsides + i;
-		s->plane = cms->oct_planes + i;
 		s->surfFlags = 0;
 
 		// planes
-		p = &cms->oct_planes[i];
+		p = &s->plane;
 		VectorCopy( oct_dirs[i - 6], p->normal );
 
 		p->type = PLANE_NONAXIAL;
@@ -186,12 +183,12 @@ void CM_InitOctagonHull( cmodel_state_t *cms ) {
 * To keep everything totally uniform, bounding boxes are turned into inline models
 */
 cmodel_t *CM_ModelForBBox( cmodel_state_t *cms, vec3_t mins, vec3_t maxs ) {
-	cms->box_planes[0].dist = maxs[0];
-	cms->box_planes[1].dist = -mins[0];
-	cms->box_planes[2].dist = maxs[1];
-	cms->box_planes[3].dist = -mins[1];
-	cms->box_planes[4].dist = maxs[2];
-	cms->box_planes[5].dist = -mins[2];
+	cms->box_brushsides[0].plane.dist = maxs[0];
+	cms->box_brushsides[1].plane.dist = -mins[0];
+	cms->box_brushsides[2].plane.dist = maxs[1];
+	cms->box_brushsides[3].plane.dist = -mins[1];
+	cms->box_brushsides[4].plane.dist = maxs[2];
+	cms->box_brushsides[5].plane.dist = -mins[2];
 
 	VectorCopy( mins, cms->box_cmodel->mins );
 	VectorCopy( maxs, cms->box_cmodel->maxs );
@@ -221,12 +218,12 @@ cmodel_t *CM_OctagonModelForBBox( cmodel_state_t *cms, vec3_t mins, vec3_t maxs 
 	VectorCopy( size[0], cms->oct_cmodel->mins );
 	VectorCopy( size[1], cms->oct_cmodel->maxs );
 
-	cms->oct_planes[0].dist = size[1][0];
-	cms->oct_planes[1].dist = -size[0][0];
-	cms->oct_planes[2].dist = size[1][1];
-	cms->oct_planes[3].dist = -size[0][1];
-	cms->oct_planes[4].dist = size[1][2];
-	cms->oct_planes[5].dist = -size[0][2];
+	cms->oct_brushsides[0].plane.dist = size[1][0];
+	cms->oct_brushsides[1].plane.dist = -size[0][0];
+	cms->oct_brushsides[2].plane.dist = size[1][1];
+	cms->oct_brushsides[3].plane.dist = -size[0][1];
+	cms->oct_brushsides[4].plane.dist = size[1][2];
+	cms->oct_brushsides[5].plane.dist = -size[0][2];
 
 	a = size[1][0]; // halfx
 	b = size[1][1]; // halfy
@@ -246,17 +243,17 @@ cmodel_t *CM_OctagonModelForBBox( cmodel_state_t *cms, vec3_t mins, vec3_t maxs 
 
 	// the following should match normals and signbits set in CM_InitOctagonHull
 
-	VectorSet( cms->oct_planes[6].normal, cosa, sina, 0 );
-	cms->oct_planes[6].dist = d;
+	VectorSet( cms->oct_brushsides[6].plane.normal, cosa, sina, 0 );
+	cms->oct_brushsides[6].plane.dist = d;
 
-	VectorSet( cms->oct_planes[7].normal, -cosa, sina, 0 );
-	cms->oct_planes[7].dist = d;
+	VectorSet( cms->oct_brushsides[7].plane.normal, -cosa, sina, 0 );
+	cms->oct_brushsides[7].plane.dist = d;
 
-	VectorSet( cms->oct_planes[8].normal, -cosa, -sina, 0 );
-	cms->oct_planes[8].dist = d;
+	VectorSet( cms->oct_brushsides[8].plane.normal, -cosa, -sina, 0 );
+	cms->oct_brushsides[8].plane.dist = d;
 
-	VectorSet( cms->oct_planes[9].normal, cosa, -sina, 0 );
-	cms->oct_planes[9].dist = d;
+	VectorSet( cms->oct_brushsides[9].plane.normal, cosa, -sina, 0 );
+	cms->oct_brushsides[9].plane.dist = d;
 
 	return cms->oct_cmodel;
 }
@@ -341,7 +338,7 @@ static inline int CM_BrushContents( cbrush_t *brush, vec3_t p ) {
 	cbrushside_t *brushside;
 
 	for( i = 0, brushside = brush->brushsides; i < brush->numsides; i++, brushside++ )
-		if( PlaneDiff( p, brushside->plane ) > 0 ) {
+		if( PlaneDiff( p, &brushside->plane ) > 0 ) {
 			return 0;
 		}
 
@@ -525,7 +522,7 @@ static void CM_ClipBoxToBrush( cmodel_state_t *cms, traceWork_t *tw, cbrush_t *b
 	side = brush->brushsides;
 
 	for( i = 0; i < brush->numsides; i++, side++ ) {
-		p = side->plane;
+		p = &side->plane;
 
 		// push the plane out apropriately for mins/maxs
 		if( p->type < 3 ) {
@@ -678,7 +675,7 @@ static void CM_TestBoxInBrush( cmodel_state_t *cms, traceWork_t *tw, cbrush_t *b
 
 	side = brush->brushsides;
 	for( i = 0; i < brush->numsides; i++, side++ ) {
-		p = side->plane;
+		p = &side->plane;
 
 		// push the plane out appropriately for mins/maxs
 		// if completely in front of face, no intersection
