@@ -258,9 +258,6 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, un
 
 	descr->loader( cms, NULL, buf, bspFormat );
 
-	CM_InitBoxHull( cms );
-	CM_InitOctagonHull( cms );
-
 	if( cms->numareas ) {
 		cms->map_areas = Mem_Alloc( cms->mempool, cms->numareas * sizeof( *cms->map_areas ) );
 		cms->map_areaportals = Mem_Alloc( cms->mempool, cms->numareas * cms->numareas * sizeof( *cms->map_areaportals ) );
@@ -871,6 +868,10 @@ static cmodel_state_t *CM_New_( cmodel_state_t *parent, void *mempool ) {
 	cms->parent = parent;
 	cms->mempool = cms_mempool;
 	cms->refcount_mutex = QMutex_Create();
+
+	CM_InitBoxHull( cms );
+
+	CM_InitOctagonHull( cms );
 
 	return cms;
 }
