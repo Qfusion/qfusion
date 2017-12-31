@@ -495,16 +495,16 @@ BOX TRACING
 /*
 * CM_ClipBoxToBrush
 */
-static void CM_ClipBoxToBrush( cmodel_state_t *cms, traceWork_t *tw, cbrush_t *brush ) {
+static void CM_ClipBoxToBrush( cmodel_state_t *cms, traceWork_t *tw, const cbrush_t *brush ) {
 	int i;
-	cplane_t *p, *clipplane;
+	const cplane_t *p, *clipplane;
 	float enterfrac, leavefrac;
 #ifdef TRACEVICFIX
 	float enterdist = 0, move = 1;
 #endif
 	float d1, d2, f;
 	bool getout, startout;
-	cbrushside_t *side, *leadside;
+	const cbrushside_t *side, *leadside;
 
 	if( !brush->numsides ) {
 		return;
@@ -664,10 +664,10 @@ static void CM_ClipBoxToBrush( cmodel_state_t *cms, traceWork_t *tw, cbrush_t *b
 /*
 * CM_TestBoxInBrush
 */
-static void CM_TestBoxInBrush( cmodel_state_t *cms, traceWork_t *tw, cbrush_t *brush ) {
+static void CM_TestBoxInBrush( cmodel_state_t *cms, traceWork_t *tw, const cbrush_t *brush ) {
 	int i;
-	cplane_t *p;
-	cbrushside_t *side;
+	const cplane_t *p;
+	const cbrushside_t *side;
 
 	if( !brush->numsides ) {
 		return;
@@ -741,17 +741,17 @@ static void CM_TestBoxInBrush( cmodel_state_t *cms, traceWork_t *tw, cbrush_t *b
 /*
 * CM_CollideBox
 */
-static void CM_CollideBox( cmodel_state_t *cms, traceWork_t *tw, int *markbrushes, int nummarkbrushes, 
-	int *markfaces, int nummarkfaces, void ( *func )( cmodel_state_t *cms, traceWork_t *, cbrush_t *b ) ) {
+static void CM_CollideBox( cmodel_state_t *cms, traceWork_t *tw, const int *markbrushes, int nummarkbrushes, 
+	const int *markfaces, int nummarkfaces, void ( *func )( cmodel_state_t *cms, traceWork_t *, const cbrush_t *b ) ) {
 	int i, j;
-	cbrush_t *brushes = tw->brushes;
-	cface_t *faces = tw->faces;
+	const cbrush_t *brushes = tw->brushes;
+	const cface_t *faces = tw->faces;
 	int checkcount = tw->checkcount;
 
 	// trace line against all brushes
 	for( i = 0; i < nummarkbrushes; i++ ) {
 		int mb = markbrushes[i];
-		cbrush_t *b = brushes + mb;
+		const cbrush_t *b = brushes + mb;
 
 		if( tw->brush_checkcounts[mb] == checkcount ) {
 			continue; // already checked this brush
@@ -777,8 +777,8 @@ static void CM_CollideBox( cmodel_state_t *cms, traceWork_t *tw, int *markbrushe
 	// trace line against all patches
 	for( i = 0; i < nummarkfaces; i++ ) {
 		int mf = markfaces[i];
-		cface_t *patch = faces + mf;
-		cbrush_t *facet;
+		const cface_t *patch = faces + mf;
+		const cbrush_t *facet;
 
 		if( tw->face_checkcounts[mf] == checkcount ) {
 			continue; // already checked this brush
@@ -808,7 +808,7 @@ static void CM_CollideBox( cmodel_state_t *cms, traceWork_t *tw, int *markbrushe
 * CM_ClipBox
 */
 static inline void CM_ClipBox( cmodel_state_t *cms, traceWork_t *tw, 
-	int *markbrushes, int nummarkbrushes, int *markfaces, int nummarkfaces ) {
+	const int *markbrushes, int nummarkbrushes, const int *markfaces, int nummarkfaces ) {
 	CM_CollideBox( cms, tw, markbrushes, nummarkbrushes, markfaces, nummarkfaces, CM_ClipBoxToBrush );
 }
 
@@ -816,16 +816,17 @@ static inline void CM_ClipBox( cmodel_state_t *cms, traceWork_t *tw,
 * CM_TestBox
 */
 static inline void CM_TestBox( cmodel_state_t *cms, traceWork_t *tw, 
-	int *markbrushes, int nummarkbrushes, int *markfaces, int nummarkfaces ) {
+	const int *markbrushes, int nummarkbrushes, const int *markfaces, int nummarkfaces ) {
 	CM_CollideBox( cms, tw,  markbrushes, nummarkbrushes, markfaces, nummarkfaces, CM_TestBoxInBrush );
 }
 
 /*
 * CM_RecursiveHullCheck
 */
-static void CM_RecursiveHullCheck( cmodel_state_t *cms, traceWork_t *tw, int num, float p1f, float p2f, vec3_t p1, vec3_t p2 ) {
-	cnode_t *node;
-	cplane_t *plane;
+static void CM_RecursiveHullCheck( cmodel_state_t *cms, traceWork_t *tw, int num, 
+	float p1f, float p2f, const vec3_t p1, const vec3_t p2 ) {
+	const cnode_t *node;
+	const cplane_t *plane;
 	int side;
 	float t1, t2, offset;
 	float frac, frac2;
@@ -934,8 +935,9 @@ loc0:
 /*
 * CM_BoxTrace
 */
-static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr, vec3_t start, vec3_t end, 
-	vec3_t mins, vec3_t maxs, cmodel_t *cmodel, vec3_t origin, int brushmask ) {
+static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr, 
+	const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs, 
+	cmodel_t *cmodel, const vec3_t origin, int brushmask ) {
 	bool notworld;
 
 	notworld = ( cmodel != cms->map_cmodels ? true : false );
