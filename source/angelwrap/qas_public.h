@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __QAS_PUBLIC_H__
 #define __QAS_PUBLIC_H__
 
-#define ANGELWRAP_API_VERSION   15
+#define ANGELWRAP_API_VERSION   16
 
 typedef struct {
 	void ( *Print )( const char *msg );

@@ -35,6 +35,7 @@ void QAS_InitAngelExport( void ) {
 
 	angelExport.asCreateEngine = qasCreateEngine;
 	angelExport.asReleaseEngine = qasReleaseEngine;
+	angelExport.asWriteEngineDocsToFile = qasWriteEngineDocsToFile;
 
 	angelExport.asAcquireContext = qasAcquireContext;
 	angelExport.asReleaseContext = qasReleaseContext;

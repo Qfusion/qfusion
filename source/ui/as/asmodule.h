@@ -55,7 +55,7 @@ public:
 	virtual bool addFunction( asIScriptModule *module, const char *name, const char *code, asIScriptFunction **outFunction ) = 0;
 
 	// testing, dumapi command
-	virtual void dumpAPI( const char *path ) = 0;
+	virtual void dumpAPI( const char *path, bool markdown, bool singleFile, unsigned andMask, unsigned notMask ) = 0;
 
 	// reset all potentially referenced global vars
 	// (used for releasing reference-counted Rocket objects)

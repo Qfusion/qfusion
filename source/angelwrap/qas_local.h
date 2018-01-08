@@ -85,6 +85,7 @@ asIScriptContext *qasAcquireContext( asIScriptEngine *engine );
 void qasReleaseContext( asIScriptContext *ctx );
 void qasReleaseEngine( asIScriptEngine *engine );
 asIScriptContext *qasGetActiveContext( void );
+void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool singleFile, bool markdown, unsigned andMask, unsigned notMask );
 
 // array tools
 CScriptArrayInterface *qasCreateArrayCpp( unsigned int length, void *ot );

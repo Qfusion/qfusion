@@ -124,6 +124,7 @@ typedef struct angelwrap_api_s {
 	// engine
 	asIScriptEngine *( *asCreateEngine )( bool *asMaxPortability );
 	void ( *asReleaseEngine )( asIScriptEngine *engine );
+	void ( *asWriteEngineDocsToFile )( asIScriptEngine *engine, const char *path, bool markdown, bool singleFile, unsigned andMask, unsigned notMask );
 
 	// context
 	asIScriptContext *( *asAcquireContext )( asIScriptEngine * engine );

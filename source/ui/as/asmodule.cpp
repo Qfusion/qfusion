@@ -139,6 +139,8 @@ class ASModule : public ASInterface
 	struct angelwrap_api_s *as_api;
 	asIObjectType *stringObjectType;
 
+	static const asDWORD accessMask = 0x1;
+
 // private class, its ok to have everything as public :)
 
 public:
@@ -167,6 +169,8 @@ public:
 		if( as_max_portability != false ) {
 			return false;
 		}
+
+		engine->SetDefaultAccessMask( accessMask );
 
 		stringObjectType = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "String" ) );
 
@@ -269,142 +273,15 @@ public:
 	// TODO: disk/mem-cache fully compiled set (use Binary*Stream)
 
 	// testing, dumpapi, note that path has to end with '/'
-	virtual void dumpAPI( const char *path ) {
-		int i, j, filenum;
-		const char *str = 0;    // for temporary strings
-		std::string spath( path );
-
-		if( spath[spath.size() - 1] != '/' ) {
-			spath += '/';
+	virtual void dumpAPI( const char *path, bool markdown, bool singleFile, unsigned andMask, unsigned notMask ) {
+		if( andMask == 0 ) {
+			andMask = accessMask;
+		}
+		if( notMask == 0 ) {
+			notMask = ~notMask;
 		}
 
-		// global file
-		std::string global_file( spath + "globals.h" );
-		if( trap::FS_FOpenFile( global_file.c_str(), &filenum, FS_WRITE ) == -1 ) {
-			Com_Printf( "ASModule::dumpAPI: Couldn't write %s.\n", global_file.c_str() );
-			return;
-		}
-
-		// global enums
-		str = "/**\r\n * Enums\r\n */\r\n";
-		trap::FS_Write( str, strlen( str ), filenum );
-
-		int enumCount = engine->GetEnumCount();
-		for( i = 0; i < enumCount; i++ ) {
-			str = "typedef enum\r\n{\r\n";
-			trap::FS_Write( str, strlen( str ), filenum );
-
-			int enumTypeId;
-			const char *enumName = engine->GetEnumByIndex( i, &enumTypeId );
-
-			int enumValueCount = engine->GetEnumValueCount( enumTypeId );
-			for( j = 0; j < enumValueCount; j++ ) {
-				int outValue;
-				const char *valueName = engine->GetEnumValueByIndex( enumTypeId, j, &outValue );
-				str = va( "\t%s = 0x%x,\r\n", valueName, outValue );
-				trap::FS_Write( str, strlen( str ), filenum );
-			}
-
-			str = va( "} %s;\r\n\r\n", enumName );
-			trap::FS_Write( str, strlen( str ), filenum );
-		}
-
-		// global properties
-		str = "/**\r\n * Global properties\r\n */\r\n";
-		trap::FS_Write( str, strlen( str ), filenum );
-
-		int propertyCount = engine->GetGlobalPropertyCount();
-		for( i = 0; i < propertyCount; i++ ) {
-			const char *propertyName;
-			const char *propertyNamespace;
-			int propertyTypeId;
-			bool propertyIsConst;
-
-			if( engine->GetGlobalPropertyByIndex( i, &propertyName, &propertyNamespace, &propertyTypeId, &propertyIsConst ) > 0 ) {
-				const char *decl = va( "%s%s %s::%s;\r\n", propertyIsConst ? "const " : "",
-									   engine->GetTypeDeclaration( propertyTypeId ), propertyNamespace, propertyName );
-				trap::FS_Write( decl, strlen( decl ), filenum );
-			}
-		}
-
-		// global functions
-		str = "/**\r\n * Global functions\r\n */\r\n";
-		trap::FS_Write( str, strlen( str ), filenum );
-
-		int functionCount = engine->GetGlobalFunctionCount();
-		for( i = 0; i < functionCount; i++ ) {
-			asIScriptFunction *func = engine->GetGlobalFunctionByIndex( i );
-			if( func ) {
-				const char *decl = va( "%s;\r\n", func->GetDeclaration( false ) );
-				trap::FS_Write( decl, strlen( decl ), filenum );
-			}
-		}
-
-		trap::FS_FCloseFile( filenum );
-		Com_Printf( "Wrote %s\n", global_file.c_str() );
-
-		// classes
-		int objectCount = engine->GetObjectTypeCount();
-		for( i = 0; i < objectCount; i++ ) {
-			asIObjectType *objectType = engine->GetObjectTypeByIndex( i );
-			if( objectType ) {
-				// class file
-				std::string class_file( spath + objectType->GetName() + ".h" );
-				if( trap::FS_FOpenFile( class_file.c_str(), &filenum, FS_WRITE ) == -1 ) {
-					Com_Printf( "ASModule::dumpAPI: Couldn't write %s.\n", class_file.c_str() );
-					continue;
-				}
-
-				str = va( "/**\r\n * %s\r\n */\r\n", objectType->GetName() );
-				trap::FS_Write( str, strlen( str ), filenum );
-				str = va( "class %s\r\n{\r\npublic:", objectType->GetName() );
-				trap::FS_Write( str, strlen( str ), filenum );
-
-				// properties
-				str = "\r\n\t/* object properties */\r\n";
-				trap::FS_Write( str, strlen( str ), filenum );
-
-				int memberCount = objectType->GetPropertyCount();
-				for( j = 0; j < memberCount; j++ ) {
-					const char *decl = va( "\t%s;\r\n", objectType->GetPropertyDeclaration( j ) );
-					trap::FS_Write( decl, strlen( decl ), filenum );
-				}
-
-				// behaviours
-				str = "\r\n\t/* object behaviors */\r\n";
-				trap::FS_Write( str, strlen( str ), filenum );
-
-				int behaviourCount = objectType->GetBehaviourCount();
-				for( j = 0; j < behaviourCount; j++ ) {
-					// ch : FIXME: obscure function names in behaviours
-					asEBehaviours behaviourType;
-					asIScriptFunction *function = objectType->GetBehaviourByIndex( j, &behaviourType );
-					if( behaviourType == asBEHAVE_ADDREF || behaviourType == asBEHAVE_RELEASE ) {
-						continue;
-					}
-					const char *decl = va( "\t%s;%s\r\n", function->GetDeclaration( false ),
-										( behaviourType == asBEHAVE_FACTORY ? " /* factory */ " : "" ) );
-					trap::FS_Write( decl, strlen( decl ), filenum );
-				}
-
-				// methods
-				str = "\r\n\t/* object methods */\r\n";
-				trap::FS_Write( str, strlen( str ), filenum );
-
-				int methodCount = objectType->GetMethodCount();
-				for( j = 0; j < methodCount; j++ ) {
-					asIScriptFunction *method = objectType->GetMethodByIndex( j );
-					const char *decl = va( "\t%s;\r\n", method->GetDeclaration( false ) );
-					trap::FS_Write( decl, strlen( decl ), filenum );
-				}
-
-				str = "};\r\n\r\n";
-				trap::FS_Write( str, strlen( str ), filenum );
-				trap::FS_FCloseFile( filenum );
-
-				Com_Printf( "Wrote %s\n", class_file.c_str() );
-			}
-		}
+		as_api->asWriteEngineDocsToFile( engine, path, markdown, singleFile, andMask, notMask );
 	}
 
 	virtual void buildReset( asIScriptModule *module ) {

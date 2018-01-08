@@ -830,11 +830,21 @@ void UI_Main::ReloadUI_Cmd_f( void ) {
 }
 
 void UI_Main::DumpAPI_f( void ) {
+	float version;
+	bool markdown, singleFile;
+	unsigned andMask = 0;
+	unsigned notMask = 0;
+
 	if( !self || !self->asmodule ) {
 		return;
 	}
 
-	self->asmodule->dumpAPI( va( "AS_API/v%.g-ui/", trap::Cvar_Value( "version" ) ) );
+	version = trap::Cvar_Value( "version" );
+	markdown = atoi( trap::Cmd_Argv( 1 ) ) != 0;
+	singleFile = atoi( trap::Cmd_Argv( 2 ) ) != 0;
+	andMask = strtoul( trap::Cmd_Argv( 3 ), NULL, 16 );
+	notMask = strtoul( trap::Cmd_Argv( 4 ), NULL, 16 );
+	self->asmodule->dumpAPI( va( "AS_API/v%.g-ui/", version ), markdown, singleFile, andMask, notMask );
 }
 
 void UI_Main::M_Menu_Force_f( void ) {
