@@ -291,7 +291,7 @@ inline const char *typestr<unsigned short>() { return "uint16"; }
 template<>
 inline const char *typestr<bool>() { return "bool"; }
 template<>
-inline const char *typestr<int64_t>() { return "int16"; }
+inline const char *typestr<int64_t>() { return "int64"; }
 template<>
 inline const char *typestr<uint64_t>() { return "uint64"; }
 
