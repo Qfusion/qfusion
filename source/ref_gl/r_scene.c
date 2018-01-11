@@ -441,7 +441,7 @@ void R_RenderScene( const refdef_t *fd ) {
 		}
 
 		// reload the multisample framebuffer if needed
-		if( samples > 0 && (  !rn.st->multisampleTarget || RFB_GetSamples( rn.st->multisampleTarget ) != samples ) ) {
+		if( samples > 0 && ( !rn.st->multisampleTarget || RFB_GetSamples( rn.st->multisampleTarget ) != samples ) ) {
 			int width, height;
 			R_GetRenderBufferSize( glConfig.width, glConfig.height, 0, IT_SPECIAL, &width, &height );
 
@@ -545,10 +545,10 @@ void R_RenderScene( const refdef_t *fd ) {
 		}
 	}
 
-	if( fbFlags == PPFX_BIT_SOFT_PARTICLES ) {
-		// only blit soft particles directly when we don't have any other post processing
-		// otherwise use the soft particles FBO as the base texture on the next layer
-		// to avoid wasting time on resolves and the fragment shader to blit to a temp texture
+	if( ( ppSource != NULL ) && ( fbFlags == PPFX_BIT_SOFT_PARTICLES || fbFlags == 0 ) ) {
+		// blit soft particles or resolved MSAA to default FB as don't have any other post 
+		// processing effects, otherwise use the source FBO as the base texture on the next 
+		// layer to avoid wasting time on resolves in the fragment shader
 		R_BlitTextureToScrFbo( fd,
 							   ppSource, 0,
 							   GLSL_PROGRAM_TYPE_NONE,
