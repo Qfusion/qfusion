@@ -128,7 +128,7 @@ const gs_asFuncdef_t asCGameCmdFuncdefs[] =
 
 const gs_asglobfuncs_t asCGameCmdGlobalFuncs[] =
 {
-	{ "void AddCommand( const String &in, CmdFunction @f )", asFUNCTION( asFunc_AddCommand ), NULL },
+	{ "void AddCommand( const String &in, CmdFunction @+f )", asFUNCTION( asFunc_AddCommand ), NULL },
 	{ "void RemoveCommand( const String &in )", asFUNCTION( asFunc_RemoveCommand ), NULL },
 	{ "uint Argc()", asFUNCTION( trap_Cmd_Argc ), NULL },
 	{ "const String @Argv( uint index )", asFUNCTION( asFunc_CmdArgv ), NULL },
