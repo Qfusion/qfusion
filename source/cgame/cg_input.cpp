@@ -293,8 +293,6 @@ void CG_ShutdownInput( void ) {
 	CG_asInputShutdown();
 
 	CG_asUnloadInputScript();
-
-	trap_Cmd_RemoveCommand( "centerview" );
 }
 
 /*
