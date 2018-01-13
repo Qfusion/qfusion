@@ -33,6 +33,7 @@ typedef struct {
 	unsigned int colorRenderBuffer;
 	int width, height;
 	int samples;
+	bool sRGB;
 	image_t *depthTexture;
 	image_t *colorTexture[MAX_FRAMEBUFFER_COLOR_ATTACHMENTS];
 } r_fbo_t;
@@ -93,7 +94,7 @@ static void RFB_DeleteObject( r_fbo_t *fbo ) {
 * RFB_RegisterObject
 */
 int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB,
-						bool colorRB, int samples, bool useFloat ) {
+						bool colorRB, int samples, bool useFloat, bool sRGB ) {
 	int i;
 	int format;
 	GLuint fbID;
@@ -143,6 +144,7 @@ found:
 	fbo->width = width;
 	fbo->height = height;
 	fbo->samples = samples;
+	fbo->sRGB = sRGB;
 
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
@@ -432,10 +434,12 @@ bool RFB_HasColorRenderBuffer( int object ) {
 	if( object < 0 || object > r_num_framebuffer_objects ) {
 		return false;
 	}
+
 	fbo = r_framebuffer_objects + object - 1;
 	if( fbo->colorRenderBuffer != 0 ) {
 		return true;
 	}
+
 	for( i = 0; i < MAX_FRAMEBUFFER_COLOR_ATTACHMENTS; i++ ) {
 		if( fbo->colorTexture[i] != NULL ) {
 			return true;
@@ -492,6 +496,23 @@ int RFB_GetSamples( int object ) {
 	}
 	fbo = r_framebuffer_objects + object - 1;
 	return fbo->samples;
+}
+
+/*
+* RFB_sRGBColorSpace
+*/
+bool RFB_sRGBColorSpace( int object ) {
+	r_fbo_t *fbo;
+
+	assert( object >= 0 && object <= r_num_framebuffer_objects );
+	if( object == 0 ) {
+		return true;
+	}
+	if( object < 0 || object > r_num_framebuffer_objects ) {
+		return false;
+	}
+	fbo = r_framebuffer_objects + object - 1;
+	return fbo->sRGB;
 }
 
 /*

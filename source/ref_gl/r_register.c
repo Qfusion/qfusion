@@ -46,7 +46,7 @@ cvar_t *r_coronascale;
 cvar_t *r_detailtextures;
 cvar_t *r_subdivisions;
 cvar_t *r_showtris;
-cvar_t *r_shownormals;
+cvar_t *r_showtris2D;
 cvar_t *r_draworder;
 cvar_t *r_leafvis;
 
@@ -96,6 +96,7 @@ cvar_t *r_bloom;
 
 cvar_t *r_fxaa;
 cvar_t *r_samples;
+cvar_t *r_samples2D;
 
 cvar_t *r_lodbias;
 cvar_t *r_lodscale;
@@ -1067,6 +1068,7 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_speeds = ri.Cvar_Get( "r_speeds", "0", 0 );
 	r_drawelements = ri.Cvar_Get( "r_drawelements", "1", 0 );
 	r_showtris = ri.Cvar_Get( "r_showtris", "0", CVAR_CHEAT );
+	r_showtris2D = ri.Cvar_Get( "r_showtris2D", "0", CVAR_CHEAT );
 	r_leafvis = ri.Cvar_Get( "r_leafvis", "0", CVAR_CHEAT );
 	r_lockpvs = ri.Cvar_Get( "r_lockpvs", "0", CVAR_CHEAT );
 	r_nobind = ri.Cvar_Get( "r_nobind", "0", 0 );
@@ -1082,7 +1084,6 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_dynamiclight = ri.Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
 	r_coronascale = ri.Cvar_Get( "r_coronascale", "0.4", 0 );
 	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	r_shownormals = ri.Cvar_Get( "r_shownormals", "0", CVAR_CHEAT );
 	r_draworder = ri.Cvar_Get( "r_draworder", "0", CVAR_CHEAT );
 
 	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
@@ -1136,6 +1137,7 @@ static void R_Register( const char *screenshotsPrefix ) {
 
 	r_fxaa = ri.Cvar_Get( "r_fxaa", "0", CVAR_ARCHIVE );
 	r_samples = ri.Cvar_Get( "r_samples", "0", CVAR_ARCHIVE );
+	r_samples2D = ri.Cvar_Get( "r_samples2D", "8", CVAR_ARCHIVE );
 
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );

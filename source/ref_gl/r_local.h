@@ -246,7 +246,7 @@ typedef struct {
 	image_t         *portalTextures[MAX_PORTAL_TEXTURES + 1];
 	image_t         *shadowmapTextures[MAX_SHADOWGROUPS];
 
-	refScreenTexSet_t st, stf;
+	refScreenTexSet_t st, stf, st2D;
 
 	shader_t        *envShader;
 	shader_t        *skyShader;
@@ -296,8 +296,14 @@ typedef struct {
 // global frontend variables are stored here
 // the backend should never attempt reading or modifying them
 typedef struct {
-	bool in2D;
-	int width2D, height2D;
+	struct {
+		bool enabled;
+		int width, height;
+		bool multiSamples;
+	} twoD;
+
+	// the default or multi-sampled framebuffer 
+	int renderTarget;
 
 	int frameBufferWidth, frameBufferHeight;
 
@@ -377,7 +383,7 @@ extern cvar_t *r_coronascale;
 extern cvar_t *r_detailtextures;
 extern cvar_t *r_subdivisions;
 extern cvar_t *r_showtris;
-extern cvar_t *r_shownormals;
+extern cvar_t *r_showtris2D;
 extern cvar_t *r_draworder;
 extern cvar_t *r_leafvis;
 
@@ -427,6 +433,7 @@ extern cvar_t *r_bloom;
 
 extern cvar_t *r_fxaa;
 extern cvar_t *r_samples;
+extern cvar_t *r_samples2D;
 
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
@@ -537,7 +544,8 @@ enum {
 };
 
 void        RFB_Init( void );
-int         RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB, bool colorRB, int samples, bool useFloat );
+int         RFB_RegisterObject( int width, int height, 
+				bool builtin, bool depthRB, bool stencilRB, bool colorRB, int samples, bool useFloat, bool sRGB );
 void        RFB_UnregisterObject( int object );
 void        RFB_TouchObject( int object );
 void        RFB_BindObject( int object );
@@ -548,6 +556,7 @@ bool        RFB_HasColorRenderBuffer( int object );
 bool        RFB_HasDepthRenderBuffer( int object );
 bool        RFB_HasStencilRenderBuffer( int object );
 int         RFB_GetSamples( int object );
+bool		RFB_sRGBColorSpace( int object );
 void        RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt );
 bool        RFB_CheckObjectStatus( void );
 void        RFB_GetObjectSize( int object, int *width, int *height );
@@ -608,13 +617,23 @@ int         R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void        R_SetGamma( float gamma );
 void        R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
 void        R_SetDrawBuffer( const char *drawbuffer );
-void        R_Set2DMode( bool enable );
 void        R_RenderView( const refdef_t *fd );
 const msurface_t *R_GetDebugSurface( void );
 const char *R_WriteSpeedsMessage( char *out, size_t size );
 void        R_RenderDebugSurface( const refdef_t *fd );
 void        R_Finish( void );
 void        R_Flush( void );
+
+void        R_Begin2D( bool multiSamples );
+void		R_SetupGL2D( void );
+void        R_End2D( void );
+
+int			R_MultisampleSamples( int samples );
+int			R_RegisterMultisampleTarget( refScreenTexSet_t *st, int samples, bool useFloat, bool sRGB );
+
+void		R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
+	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages,
+	int iParam0 );
 
 /**
  * Calls R_Finish if data sync was previously deferred.
