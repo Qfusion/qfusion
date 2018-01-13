@@ -615,7 +615,9 @@ shader_t *RF_GetShaderForOrigin( const vec3_t origin ) {
 			dir[i] = j;
 			VectorMA( origin, 64, dir, end );
 
-			R_TraceLine( &tr, origin, end, 0 );
+			if( !R_TraceLine( &tr, origin, end, 0 ) ) {
+				continue;
+			}
 			if( !tr.shader ) {
 				continue;
 			}

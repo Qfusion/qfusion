@@ -295,7 +295,7 @@ static msurface_t *R_TransformedTraceLine( rtrace_t *tr, const vec3_t start, con
 	}
 
 	// calculate the impact plane, if any
-	if( trace_fraction < 1 ) {
+	if( trace_fraction < 1 && trace_surface != NULL ) {
 		VectorNormalize( trace_plane.normal );
 		trace_plane.dist = DotProduct( trace_plane.normal, trace_impact );
 		CategorizePlane( &trace_plane );
@@ -320,6 +320,11 @@ msurface_t *R_TraceLine( rtrace_t *tr, const vec3_t start, const vec3_t end, int
 	msurface_t *surf;
 
 	if( !rsh.worldBrushModel ) {
+		return NULL;
+	}
+
+	if( rsc.worldent->model != rsh.worldModel ) {
+		// may happen if new client frame arrives before world model registration
 		return NULL;
 	}
 

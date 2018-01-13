@@ -810,6 +810,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		surf = sortedSurfaces[i].surf;
 
 		if( !surf->drawSurf ) {
+			memset( &surf->mesh, 0, sizeof( surf->mesh ) );
 			continue;
 		}
 

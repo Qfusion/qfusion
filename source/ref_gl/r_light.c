@@ -125,7 +125,9 @@ void R_DrawCoronas( void ) {
 			continue;
 		}
 
-		R_TraceLine( &tr, light->origin, rn.viewOrigin, SURF_NONSOLID );
+		if( !R_TraceLine( &tr, light->origin, rn.viewOrigin, SURF_NONSOLID ) ) {
+			continue;
+		}
 		if( tr.fraction != 1.0f ) {
 			continue;
 		}
