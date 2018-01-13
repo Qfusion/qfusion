@@ -126,9 +126,12 @@ static bool DS_CreateBuffers( void ) {
 	// create the secondary buffer we'll actually work with
 	memset( &dsbuf, 0, sizeof( dsbuf ) );
 	dsbuf.dwSize = sizeof( DSBUFFERDESC );
-	dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCHARDWARE | DSBCAPS_GLOBALFOCUS;
 	dsbuf.dwBufferBytes = SECONDARY_BUFFER_SIZE;
 	dsbuf.lpwfxFormat = &format;
+	dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCHARDWARE;
+	if( s_globalfocus->integer ) {
+		dsbuf.dwFlags |= DSBCAPS_GLOBALFOCUS;
+	}
 
 	memset( &dsbcaps, 0, sizeof( dsbcaps ) );
 	dsbcaps.dwSize = sizeof( dsbcaps );
@@ -137,7 +140,10 @@ static bool DS_CreateBuffers( void ) {
 		Com_Printf( "...creating secondary buffer: " );
 	}
 	if( DS_OK != pDS->lpVtbl->CreateSoundBuffer( pDS, &dsbuf, &pDSBuf, NULL ) ) {
-		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE | DSBCAPS_GLOBALFOCUS;
+		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE;
+		if( s_globalfocus->integer ) {
+			dsbuf.dwFlags |= DSBCAPS_GLOBALFOCUS;
+		}
 
 		if( DS_OK != pDS->lpVtbl->CreateSoundBuffer( pDS, &dsbuf, &pDSBuf, NULL ) ) {
 			if( developer->integer ) {
@@ -749,6 +755,21 @@ void SNDDMA_BeginPainting( void ) {
 }
 
 /*
+* SNDDMA_CheckGlobalFocus
+*/
+static void SNDDMA_CheckGlobalFocus( void ) {
+	if( !s_globalfocus->modified ) {
+		return;
+	}
+
+	s_globalfocus->modified = false;
+
+	SNDDMA_Shutdown( false );
+
+	SNDDMA_InitDirect( false );
+}
+
+/*
 * SNDDMA_Submit
 *
 * Send sound to device if buffer isn't really the dma buffer
@@ -761,6 +782,8 @@ void SNDDMA_Submit( void ) {
 	if( !dma.buffer ) {
 		return;
 	}
+
+	SNDDMA_CheckGlobalFocus();
 
 	// unlock the dsound buffer
 	if( pDSBuf ) {
@@ -831,20 +854,10 @@ void SNDDMA_Shutdown( bool verbose ) {
 * between a deactivate and an activate.
 */
 void S_Activate( bool active ) {
+	SNDDMA_CheckGlobalFocus();
+
 	if( !pDS ) {
 		return;
-	}
-
-	if( s_globalfocus->modified ) {
-		SNDDMA_Shutdown( false );
-
-		SNDDMA_InitDirect( false );
-
-		s_globalfocus->modified = false;
-
-		if( !pDS ) {
-			return;
-		}
 	}
 
 	// just set the priority for directsound
