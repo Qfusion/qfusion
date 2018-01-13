@@ -195,6 +195,7 @@ static unsigned R_HandleEndFrameCmd( uint8_t *pcmd ) {
 
 static unsigned R_HandleDrawStretchPicCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchPic_t *cmd = (void *)pcmd;
+	R_Begin2D( true );
 	R_DrawRotatedStretchPic( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2,
 							 cmd->angle, cmd->color, cmd->shader );
 	return sizeof( *cmd );
@@ -202,6 +203,7 @@ static unsigned R_HandleDrawStretchPicCmd( uint8_t *pcmd ) {
 
 static unsigned R_HandleDrawStretchPolyCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchOrScenePoly_t *cmd = (void *)pcmd;
+	R_Begin2D( true );
 	R_DrawStretchPoly( &cmd->poly, cmd->x_offset, cmd->y_offset );
 	return cmd->length;
 }
@@ -271,12 +273,14 @@ static unsigned R_HandleResetScissorCmd( uint8_t *pcmd ) {
 
 static unsigned R_HandleDrawStretchRawCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchRaw_t *cmd = (void *)pcmd;
+	R_Begin2D( true );
 	R_DrawStretchRaw( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
 	return sizeof( *cmd );
 }
 
 static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *pcmd ) {
 	refCmdDrawStretchRaw_t *cmd = (void *)pcmd;
+	R_Begin2D( true );
 	R_DrawStretchRawYUV( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
 	return sizeof( *cmd );
 }

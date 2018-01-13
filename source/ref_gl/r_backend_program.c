@@ -669,15 +669,16 @@ static r_glslfeat_t RB_sRGBProgramFeatures( const shaderpass_t *pass ) {
 	r_glslfeat_t f = 0;
 
 	if( pass->flags & SHADERPASS_NOSRGB ) {
-		return 0; // don't do srgb<->linear conversions at all, used for blitting framebuffers
-
+		// don't perform srgb<->linear conversion at all - used for blitting framebuffers
+		return 0;
 	}
+
 	if( glConfig.sSRGB ) {
 		f |= GLSL_SHADER_COMMON_SRGB2LINEAR;
 
-		// ok, so we're getting sRGB linear input while rendering to
-		// default framebuffer, so we need to go back from linear to sRGB
-		if( RB_BoundFrameBufferObject() == 0 ) {
+		// ok, so we're getting linear color input while rendering to
+		// sRGB framebuffer, convert from linear color space to sRGB
+		if( RFB_sRGBColorSpace( RB_BoundFrameBufferObject() ) ) {
 			f |= GLSL_SHADER_COMMON_LINEAR2SRB;
 		}
 	}
@@ -1742,7 +1743,8 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, NULL,
-								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, 0 );
+
 	if( RB_BindProgram( program ) ) {
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
 

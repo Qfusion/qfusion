@@ -449,49 +449,85 @@ static elem_t pic_elems[6] = { 0, 1, 2, 0, 2, 3 };
 static mesh_t pic_mesh = { 4, 6, pic_elems, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, NULL, NULL };
 
 /*
-* R_Set2DMode
+* R_Begin2D
 *
 * Note that this sets the viewport to size of the active framebuffer.
 */
-void R_Set2DMode( bool enable ) {
+void R_Begin2D( bool multiSamples ) {
 	int width, height;
 
 	width = rf.frameBufferWidth;
 	height = rf.frameBufferHeight;
 
-	if( rf.in2D == true && enable == true && width == rf.width2D && height == rf.height2D ) {
-		return;
-	} else if( rf.in2D == false && enable == false ) {
+	if( rf.twoD.enabled == true ) {
+		if( width == rf.twoD.width && height == rf.twoD.height && multiSamples == rf.twoD.multiSamples ) {
+			return;
+		}
+	}
+
+	RB_FlushDynamicMeshes();
+
+	rf.twoD.enabled = true;
+	rf.twoD.width = width;
+	rf.twoD.height = height;
+	rf.twoD.multiSamples = multiSamples;
+
+	if( multiSamples )
+		R_BindFrameBufferObject( rf.renderTarget );
+	else
+		R_BindFrameBufferObject( 0 );
+
+	RB_EnableTriangleOutlines( multiSamples && ( r_showtris2D->integer != 0 ) );
+
+	R_SetupGL2D();
+}
+
+/*
+* R_SetupGL2D
+*
+* Note that this sets the viewport to size of the active framebuffer.
+*/
+void R_SetupGL2D( void ) {
+	int width, height;
+
+	width = rf.frameBufferWidth;
+	height = rf.frameBufferHeight;
+
+	Matrix4_OrthogonalProjection( 0, width, height, 0, -99999, 99999, rn.projectionMatrix );
+	Matrix4_Copy( mat4x4_identity, rn.modelviewMatrix );
+	Matrix4_Copy( rn.projectionMatrix, rn.cameraProjectionMatrix );
+
+	// set 2D virtual screen size
+	RB_Scissor( 0, 0, width, height );
+	RB_Viewport( 0, 0, width, height );
+
+	RB_LoadProjectionMatrix( rn.projectionMatrix );
+	RB_LoadCameraMatrix( mat4x4_identity );
+	RB_LoadObjectMatrix( mat4x4_identity );
+
+	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
+
+	RB_SetRenderFlags( 0 );
+}
+
+/*
+* R_End2D
+*/
+void R_End2D( void ) {
+	if( rf.twoD.enabled == false ) {
 		return;
 	}
 
-	rf.in2D = enable;
+	rf.twoD.enabled = false;
 
-	if( enable ) {
-		rf.width2D = width;
-		rf.height2D = height;
+	// render previously batched 2D geometry, if any
+	RB_FlushDynamicMeshes();
 
-		Matrix4_OrthogonalProjection( 0, width, height, 0, -99999, 99999, rn.projectionMatrix );
-		Matrix4_Copy( mat4x4_identity, rn.modelviewMatrix );
-		Matrix4_Copy( rn.projectionMatrix, rn.cameraProjectionMatrix );
+	RB_EnableTriangleOutlines( false );
 
-		// set 2D virtual screen size
-		RB_Scissor( 0, 0, width, height );
-		RB_Viewport( 0, 0, width, height );
+	RB_SetShaderStateMask( ~0, 0 );
 
-		RB_LoadProjectionMatrix( rn.projectionMatrix );
-		RB_LoadCameraMatrix( mat4x4_identity );
-		RB_LoadObjectMatrix( mat4x4_identity );
-
-		RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
-
-		RB_SetRenderFlags( 0 );
-	} else {
-		// render previously batched 2D geometry, if any
-		RB_FlushDynamicMeshes();
-
-		RB_SetShaderStateMask( ~0, 0 );
-	}
+	RB_SetRenderFlags( 0 );
 }
 
 /*
@@ -679,8 +715,6 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 	}
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, colorWhite, &s );
-
-	RB_FlushDynamicMeshes();
 }
 
 /*
@@ -773,7 +807,6 @@ static void R_PolyBlend( void ) {
 		return;
 	}
 
-	R_Set2DMode( true );
 	R_DrawStretchPic( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1, rsc.refdef.blend, rsh.whiteShader );
 	RB_FlushDynamicMeshes();
 }
@@ -794,7 +827,6 @@ static void R_ApplyBrightness( void ) {
 
 	color[0] = color[1] = color[2] = c, color[3] = 1;
 
-	R_Set2DMode( true );
 	R_DrawStretchQuick( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1,
 						color, GLSL_PROGRAM_TYPE_NONE, rsh.whiteTexture, GLSTATE_SRCBLEND_ONE | GLSTATE_DSTBLEND_ONE );
 }
@@ -1067,6 +1099,8 @@ static void R_SetupGL( void ) {
 
 	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow ) {
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE );
+	} else {
+		RB_SetShaderStateMask( ~0, 0 );
 	}
 }
 
@@ -1074,6 +1108,8 @@ static void R_SetupGL( void ) {
 * R_EndGL
 */
 static void R_EndGL( void ) {
+	RB_FlushDynamicMeshes();
+
 	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow ) {
 		RB_SetShaderStateMask( ~0, 0 );
 	}
@@ -1320,6 +1356,8 @@ void R_PopRefInst( void ) {
 		return;
 	}
 
+	RB_FlushDynamicMeshes();
+
 	rn = riStack[--riStackSize];
 	R_BindRefInstFBO();
 
@@ -1421,6 +1459,129 @@ bool R_IsRenderingToScreen( void ) {
 	bool surfaceRenderable = true;
 	GLimp_GetWindowSurface( &surfaceRenderable );
 	return surfaceRenderable;
+}
+
+/*
+* R_MultisampleSamples
+*/
+int R_MultisampleSamples( int samples ) {
+	if( !glConfig.ext.framebuffer_multisample || samples <= 1 ) {
+		return 0;
+	}
+	return bound( 2, samples, glConfig.maxFramebufferSamples );
+}
+
+/*
+* R_BlitTextureToScrFbo
+*/
+void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
+	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages,
+	int iParam0 ) {
+	int x, y;
+	int w, h, fw, fh;
+	static char s_name[] = "$builtinpostprocessing";
+	static shaderpass_t p;
+	static shader_t s;
+	int i;
+	static tcmod_t tcmod;
+	mat4_t m;
+
+	assert( rsh.postProcessingVBO );
+	if( numShaderImages >= MAX_SHADER_IMAGES ) {
+		numShaderImages = MAX_SHADER_IMAGES;
+	}
+
+	// blit + flip using a static mesh to avoid redundant buffer uploads
+	// (also using custom PP effects like FXAA with the stream VBO causes
+	// Adreno to mark the VBO as "slow" (due to some weird bug)
+	// for the rest of the frame and drop FPS to 10-20).
+	RB_FlushDynamicMeshes();
+
+	RB_BindFrameBufferObject( dstFbo );
+
+	if( !dstFbo ) {
+		// default framebuffer
+		// set the viewport to full resolution
+		// but keep the scissoring region
+		if( fd ) {
+			x = fd->x;
+			y = fd->y;
+			w = fw = fd->width;
+			h = fh = fd->height;
+		} else {
+			x = 0;
+			y = 0;
+			w = fw = glConfig.width;
+			h = fh = glConfig.height;
+		}
+		RB_Viewport( 0, 0, glConfig.width, glConfig.height );
+		RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
+	} else {
+		// aux framebuffer
+		// set the viewport to full resolution of the framebuffer (without the NPOT padding if there's one)
+		// draw quad on the whole framebuffer texture
+		// set scissor to default framebuffer resolution
+		image_t *cb = RFB_GetObjectTextureAttachment( dstFbo, false, 0 );
+		x = 0;
+		y = 0;
+		w = fw = rf.frameBufferWidth;
+		h = fh = rf.frameBufferHeight;
+		if( cb ) {
+			fw = cb->upload_width;
+			fh = cb->upload_height;
+		}
+		RB_Viewport( 0, 0, w, h );
+		RB_Scissor( 0, 0, glConfig.width, glConfig.height );
+	}
+
+	s.vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT;
+	s.sort = SHADER_SORT_NEAREST;
+	s.numpasses = 1;
+	s.name = s_name;
+	s.passes = &p;
+
+	p.rgbgen.type = RGB_GEN_IDENTITY;
+	p.alphagen.type = ALPHA_GEN_IDENTITY;
+	p.tcgen = TC_GEN_NONE;
+	p.images[0] = image;
+	for( i = 1; i < numShaderImages + 1; i++ ) {
+		if( i >= MAX_SHADER_IMAGES ) {
+			break;
+		}
+		p.images[i] = shaderImages[i - 1];
+	}
+	for( ; i < MAX_SHADER_IMAGES; i++ )
+		p.images[i] = NULL;
+	p.flags = blendMask | SHADERPASS_NOSRGB;
+	p.program_type = program_type;
+	p.anim_numframes = iParam0;
+
+	if( !dstFbo ) {
+		tcmod.type = TC_MOD_TRANSFORM;
+		tcmod.args[0] = ( float )( w ) / ( float )( image->upload_width );
+		tcmod.args[1] = ( float )( h ) / ( float )( image->upload_height );
+		tcmod.args[4] = ( float )( x ) / ( float )( image->upload_width );
+		tcmod.args[5] = ( float )( image->upload_height - h - y ) / ( float )( image->upload_height );
+		p.numtcmods = 1;
+		p.tcmods = &tcmod;
+	} else {
+		p.numtcmods = 0;
+	}
+
+	Matrix4_Identity( m );
+	Matrix4_Scale2D( m, fw, fh );
+	Matrix4_Translate2D( m, x, y );
+	RB_LoadObjectMatrix( m );
+
+	RB_BindShader( NULL, &s, NULL );
+	RB_BindVBO( rsh.postProcessingVBO->index, GL_TRIANGLES );
+	RB_DrawElements( 0, 4, 0, 6, 0, 0, 0, 0 );
+
+	RB_LoadObjectMatrix( mat4x4_identity );
+
+	// restore 2D viewport and scissor
+	RB_Viewport( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
+	RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
 }
 
 /*
@@ -1592,6 +1753,7 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 * R_BeginFrame
 */
 void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
+	int samples;
 	int64_t time = ri.Sys_Milliseconds();
 
 	GLimp_BeginFrame();
@@ -1649,7 +1811,8 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
 		rf.frameTime.oldCount = rf.frameTime.count;
 	}
 
-	R_Set2DMode( true );
+	samples = R_MultisampleSamples( r_samples2D->integer );
+	rf.renderTarget = R_RegisterMultisampleTarget( &rsh.st2D, samples, false, true );
 }
 
 /*
@@ -1659,13 +1822,28 @@ void R_EndFrame( void ) {
 	// render previously batched 2D geometry, if any
 	RB_FlushDynamicMeshes();
 
+	R_BindFrameBufferObject( 0 );
+
+	R_Begin2D( false );
+
+	RB_EnableTriangleOutlines( false );
+
+	// resolve multisampling and blit to default framebuffer
+	if( rf.renderTarget > 0 ) {
+		RB_BlitFrameBufferObject( rf.renderTarget, rsh.st2D.screenTex->fbo, 
+			GL_COLOR_BUFFER_BIT, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
+
+		R_BlitTextureToScrFbo( NULL, rsh.st2D.screenTex, 0, GLSL_PROGRAM_TYPE_NONE, 
+			colorWhite, 0, 0, NULL, 0 );
+
+		RB_FlushDynamicMeshes();
+	}
+
 	R_PolyBlend();
 
 	R_ApplyBrightness();
 
-	// reset the 2D state so that the mode will be
-	// properly set back again in R_BeginFrame
-	R_Set2DMode( false );
+	R_End2D();
 
 	RB_EndFrame();
 
