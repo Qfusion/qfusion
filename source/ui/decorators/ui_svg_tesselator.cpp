@@ -39,7 +39,7 @@ namespace WSWUI
 
 	SVGTesselator::SVGTesselator(): initialised( false ),
 		numPoints( 0 ), maxPoints( 0 ), 
-		poolSize( NULL ), poolBase( NULL ),
+		poolSize( 0 ), poolBase( NULL ),
 		xyData( NULL ) {
 		memset( &ma, 0, sizeof( ma ) );
 		ma.memalloc = svgPoolAlloc;
