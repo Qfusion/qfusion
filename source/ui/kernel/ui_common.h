@@ -200,7 +200,7 @@ __delete_no_destructor( void );
 #endif
 
 	#define __SAFE_DELETE_NULLIFY( a ) \
-	if( ( a ) ) { __delete__( a ); a = 0; }
+	if( ( a ) ) { __delete__( a ); a = nullptr; }
 
 //==========================================
 
