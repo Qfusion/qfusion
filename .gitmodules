@@ -7,3 +7,10 @@
 [submodule "libsrcs"]
 	path = libsrcs
 	url = https://github.com/Qfusion/qfusion-libsrcs.git
+[submodule "third-party/nanosvg"]
+	path = third-party/nanosvg
+	url = https://github.com/Qfusion/nanosvg
+
+[submodule "third-party/libtess2"]
+	path = third-party/libtess2
+	url = https://github.com/Qfusion/libtess2
