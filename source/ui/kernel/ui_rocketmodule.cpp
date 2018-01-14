@@ -470,6 +470,7 @@ void RocketModule::registerCustoms() {
 	// DECORATORS
 	registerDecorator( "gradient", GetGradientDecoratorInstancer() );
 	registerDecorator( "ninepatch", GetNinePatchDecoratorInstancer() );
+	registerDecorator( "svg", GetSVGDecoratorInstancer() );
 
 	//
 	// GLOBAL CUSTOM PROPERTIES
