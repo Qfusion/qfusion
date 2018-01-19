@@ -663,7 +663,6 @@ void CG_LerpGenericEnt( centity_t *cent );
 void CG_SetOutlineColor( byte_vec4_t outlineColor, byte_vec4_t color );
 void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t g, uint8_t b, uint8_t a );
 void CG_AddCentityOutLineEffect( centity_t *cent );
-void CG_AddItemGhostEffect( centity_t *cent );
 
 void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *tagname );
 
@@ -673,13 +672,15 @@ centity_t *CG_GetItemTimerEnt( int num );
 //
 // cg_draw.c
 //
+#define DEFAULT_MINIMAP_VIEW_DISTANCE 4096
+
 int CG_HorizontalAlignForWidth( const int x, int align, int width );
 int CG_VerticalAlignForHeight( const int y, int align, int height );
 int CG_HorizontalMovementForAlign( int align );
 
 void CG_DrawHUDField( int x, int y, int align, float *color, int size, int width, int value );
 void CG_DrawHUDModel( int x, int y, int align, int w, int h, struct model_s *model, struct shader_s *shader, float yawspeed );
-void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool draw_itemnames, int align, vec4_t color );
+void CG_DrawMiniMap( int x, int y, int iw, int ih, float viewDist, int align, vec4_t color );
 void CG_DrawHUDRect( int x, int y, int align, int w, int h, int val, int maxval, vec4_t color, struct shader_s *shader );
 void CG_DrawPicBar( int x, int y, int width, int height, int align, float percent, struct shader_s *shader, vec4_t backColor, vec4_t color );
 

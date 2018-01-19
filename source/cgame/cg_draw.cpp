@@ -233,17 +233,21 @@ void CG_DrawHUDModel( int x, int y, int align, int w, int h, struct model_s *mod
 /*
 * CG_DrawMiniMap
 */
-void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool draw_itemnames, int align, vec4_t color ) {
+void CG_DrawMiniMap( int x, int y, int iw, int ih, float viewDist, int align, vec4_t color ) {
 	int i, entnum;
 	centity_t *cent;
-	vec3_t coords;
+	vec3_t coords, self;
+	vec3_t centre;
 	vec4_t tmp_col, tmp_white_alpha, tmp_yellow_alpha;      // background color of the map
 	vec3_t mins, maxs, extend;
+	int isize;
 	int map_w, map_h, map_z;
 	int x_lefttop, y_lefttop, z_lefttop;    // the negative y coordinate (bottom of the map)
-	float map_div_w, map_div_h;
+	float map_scale_w, map_scale_h, map_scale_z;
 	bool isSelf;
-	int nameDir = 1, nameAlign = ALIGN_LEFT_TOP;
+	float scale;
+	float angle = DEG2RAD( anglemod( cg.predictedPlayerState.viewangles[YAW] - 90 ) );
+	float sina = sin( angle ), cosa = cos( angle );
 
 	if( !cg_showminimap->integer ) {
 		return;
@@ -266,14 +270,16 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 		return;
 	}
 
-	x = CG_HorizontalAlignForWidth( x, align, iw );
-	y = CG_VerticalAlignForHeight( y, align, ih );
+	if( viewDist < DEFAULT_MINIMAP_VIEW_DISTANCE )
+		viewDist = DEFAULT_MINIMAP_VIEW_DISTANCE;
 
-	// if the minimap is in the right part of the screen, draw the names to the left
-	if( ( x + ( iw >> 1 ) ) > ( cgs.vidWidth >> 1 ) ) {
-		nameDir = -1;
-		nameAlign = ALIGN_RIGHT_TOP;
-	}
+	// make the minimap a square, scissorring will do the rest
+	isize = max( iw, ih );
+
+	x = CG_HorizontalAlignForWidth( x, align, isize );
+	y = CG_VerticalAlignForHeight( y, align, isize );
+
+	trap_R_Scissor( x, y, iw, ih );
 
 	Vector4Copy( color, tmp_col );
 	Vector4Copy( colorWhite, tmp_white_alpha );
@@ -289,9 +295,14 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 	if( extend[1] > extend[0] ) {
 		mins[0] -= ( extend[1] - extend[0] ) * 0.5;
 		maxs[0] += ( extend[1] - extend[0] ) * 0.5;
+		scale = extend[1] / viewDist;
 	} else {
 		mins[1] -= ( extend[0] - extend[1] ) * 0.5;
 		maxs[1] += ( extend[0] - extend[1] ) * 0.5;
+		scale = extend[0] / viewDist;
+	}
+	if( scale < 1.0 ) {
+		scale = 1.0;
 	}
 
 	map_w = maxs[0] - mins[0];      // map width (in game units)
@@ -301,13 +312,62 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 	y_lefttop = -mins[1];   // the negative y coordinate (bottom of the map)
 	z_lefttop = -mins[2];   // the negative y coordinate (bottom of the map)
 
-	map_div_w = (float)map_w / (float)iw;
-	map_div_h = (float)map_h / (float)ih;
+	map_scale_w = (float)isize / (float)map_w;
+	map_scale_h = (float)isize / (float)map_h;
+	map_scale_z = 1.0f / (float)map_z;
 
-	CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, iw, ih, 1, 1, tmp_col, cgs.shaderMiniMap );
+	isize *= scale;
+	map_scale_w *= scale;
+	map_scale_h *= scale;
 
-	//alignment test, to display green dot at 0,0
-	//CG_DrawHUDRect( x + x_lefttop/map_div_w -1, y + y_lefttop/map_div_h -1,ALIGN_LEFT_TOP,3,3,1,1, colorGreen, CG_MediaShader( cgs.media.shaderMiniMap ) );
+	auto project_vec3_to_map = [ x_lefttop, y_lefttop, z_lefttop, map_scale_w, map_scale_h, map_scale_z, isize ] ( vec3_t coords ) {
+		coords[0] = ( coords[0] + x_lefttop ) * map_scale_w;
+		coords[1] = isize - ( coords[1] + y_lefttop ) * map_scale_h;
+		coords[2] = ( coords[2] + z_lefttop ) * map_scale_z;
+	};
+
+	auto rotate2d_vec3_around_point = [ sina, cosa ]( vec3_t coords, const vec3_t point ) {
+		float px = coords[0] - point[0], nx;
+		float py = coords[1] - point[1], ny;
+		nx = px * cosa - py * sina;
+		ny = px * sina + py * cosa;
+		coords[0] = nx + point[0];
+		coords[1] = ny + point[1];
+	};
+
+	auto draw_minimap = [rotate2d_vec3_around_point]( int x, int y, int size, const vec4_t color, const vec3_t centre ) {
+		vec4_t verts[4] = { { x, y }, { x + size, y }, { x + size, y + size }, { x, y + size } };
+		vec2_t stcoords[4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } };
+		byte_vec4_t colors[4], ucolor;
+		unsigned short elems[6] = { 0, 1, 2, 0, 2, 3 };
+		poly_t poly = { 4, verts, NULL, stcoords, colors, 6, elems, cgs.shaderMiniMap, 0 };
+	
+		for( int i = 0; i < 4; i++ ) {
+			ucolor[i] = color[i]*255;
+		}
+
+		for( int i = 0; i < 4; i++ ) {
+			verts[i][2] = 0, verts[i][3] = 1;
+			rotate2d_vec3_around_point( verts[i], centre );
+			Vector4Copy( ucolor, colors[i] );
+		}
+
+		trap_R_DrawStretchPoly( &poly, 0, 0 );
+	};
+
+	// place the player in the center of the map
+	VectorCopy( cg.predictedPlayerState.pmove.origin, self );
+	project_vec3_to_map( self );
+
+	// rotate map around the player
+	centre[0] = x + iw / 2;
+	centre[1] = y + ih / 2;
+	centre[2] = 0;
+
+	x = centre[0] - self[0];
+	y = centre[1] - self[1];
+
+	draw_minimap( x, y, isize, tmp_col, centre );
 
 	for( i = cg.frame.numEntities - 1; i >= 0; i-- ) { // draw players above everything
 		entnum = cg.frame.parsedEntities[i & ( MAX_PARSE_ENTITIES - 1 )].number;
@@ -333,9 +393,9 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 			VectorCopy( cent->current.origin, coords );
 		}
 
-		coords[0] = ( coords[0] + x_lefttop ) / map_div_w;
-		coords[1] = ih - ( coords[1] + y_lefttop ) / map_div_h;
-		coords[2] = ( coords[2] + (float)z_lefttop ) / (float)map_z;
+		project_vec3_to_map( coords );
+
+		rotate2d_vec3_around_point( coords, self );
 
 		// is it a player?
 		if( cent->current.type == ET_PLAYER ) {
@@ -376,13 +436,6 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 				thisY = CG_VerticalAlignForHeight( y + (int)coords[1] - thisSize, ALIGN_CENTER_MIDDLE, thisSize );
 				trap_R_DrawStretchPic( thisX, thisY, thisSize, thisSize, 0, 0, 1, 1, tmp_yellow_alpha, CG_MediaShader( cgs.media.shaderDownArrow ) );
 			}
-
-			// do we want names too?
-			if( draw_playernames == true ) {
-				trap_SCR_DrawString( x + (int)coords[0] + 8 * nameDir * cgs.vidHeight / 600, y + (int)coords[1] - 4 * cgs.vidHeight / 600,
-									 nameAlign, COM_RemoveColorTokensExt( cgs.clientInfo[cent->current.number - 1].name, true ),
-									 cgs.fontSystemSmall, tmp_yellow_alpha );
-			}
 		} else if( cent->current.type == ET_MINIMAP_ICON ) {
 			if( cent->ent.customShader ) {
 				vec4_t tmp_this_color;
@@ -411,12 +464,10 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 			// so thats why they are set manually at the correct pos with -n
 			CG_DrawHUDRect( x + (int)coords[0] - thisOffset, y + (int)coords[1] - thisOffset,
 							ALIGN_LEFT_TOP, thisSize, thisSize, 1, 1, tmp_white_alpha, trap_R_RegisterPic( cent->item->icon ) );
-			if( draw_itemnames == true ) {
-				trap_SCR_DrawString( x + (int)coords[0] + 2 * nameDir * thisOffset, y + (int)coords[1] - thisOffset,
-									 nameAlign, cent->item->shortname, cgs.fontSystemSmall, tmp_yellow_alpha );
-			}
 		}
 	}
+
+	trap_R_ResetScissor();
 }
 
 /*

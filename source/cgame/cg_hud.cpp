@@ -2481,12 +2481,11 @@ static bool CG_LFuncDrawCaptureAreas( struct cg_layoutnode_s *commandnode, struc
 }
 
 static bool CG_LFuncDrawMiniMap( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	bool draw_playernames, draw_itemnames;
+	float viewDist;
 
-	draw_playernames = (int)( CG_GetNumericArg( &argumentnode ) ) == 0 ? false : true;
-	draw_itemnames = (int)( CG_GetNumericArg( &argumentnode ) ) == 0 ? false : true;
+	viewDist = CG_GetNumericArg( &argumentnode );
 
-	CG_DrawMiniMap( layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, draw_playernames, draw_itemnames, layout_cursor_align, layout_cursor_color );
+	CG_DrawMiniMap( layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, viewDist, layout_cursor_align, layout_cursor_color );
 
 	return true;
 }
