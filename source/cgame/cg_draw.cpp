@@ -336,12 +336,21 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, float viewDist, int align, ve
 	};
 
 	auto draw_minimap = [rotate2d_vec3_around_point]( int x, int y, int size, const vec4_t color, const vec3_t centre ) {
-		vec4_t verts[4] = { { x, y }, { x + size, y }, { x + size, y + size }, { x, y + size } };
+		vec4_t verts[4] = { { 0 }, { 0 }, { 0 }, { 0 } };
 		vec2_t stcoords[4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } };
 		byte_vec4_t colors[4], ucolor;
 		unsigned short elems[6] = { 0, 1, 2, 0, 2, 3 };
 		poly_t poly = { 4, verts, NULL, stcoords, colors, 6, elems, cgs.shaderMiniMap, 0 };
-	
+
+		for( int i = 0; i < 4; i++ ) {
+			verts[i][0] = x;
+			verts[i][1] = y;
+		}
+		verts[1][0] += size;
+		verts[2][0] += size;
+		verts[2][1] += size;
+		verts[3][1] += size;
+
 		for( int i = 0; i < 4; i++ ) {
 			ucolor[i] = color[i]*255;
 		}
