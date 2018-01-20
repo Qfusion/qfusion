@@ -129,13 +129,14 @@ static void _LaserImpact( trace_t *trace, vec3_t dir ) {
 }
 
 void CG_LaserBeamEffect( centity_t *cent ) {
+	int i, j;
 	struct sfx_s *sound = NULL;
 	float range;
+	bool firstPerson;
 	trace_t trace;
 	orientation_t projectsource;
 	vec4_t color;
 	vec3_t laserOrigin, laserAngles, laserPoint;
-	int i, j;
 
 	if( cent->localEffects[LOCALEFFECT_LASERBEAM] <= cg.time ) {
 		if( cent->localEffects[LOCALEFFECT_LASERBEAM] ) {
@@ -159,8 +160,9 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 	_LaserColor( color );
 
 	// interpolate the positions
+	firstPerson = (ISVIEWERENTITY( cent->current.number ) && !cg.view.thirdperson);
 
-	if( ISVIEWERENTITY( cent->current.number ) && !cg.view.thirdperson ) {
+	if( firstPerson ) {
 		VectorCopy( cg.predictedPlayerState.pmove.origin, laserOrigin );
 		laserOrigin[2] += cg.predictedPlayerState.viewheight;
 		VectorCopy( cg.predictedPlayerState.viewangles, laserAngles );
@@ -194,12 +196,16 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 		GS_TraceLaserBeam( &trace, laserOrigin, laserAngles, range, cent->current.number, 0, _LaserImpact );
 
 		// draw the beam: for drawing we use the weapon projection source (already handles the case of viewer entity)
-		if( !CG_PModel_GetProjectionSource( cent->current.number, &projectsource ) ) {
-			VectorCopy( laserOrigin, projectsource.origin );
+		if( CG_PModel_GetProjectionSource( cent->current.number, &projectsource ) ) {
+			VectorCopy( projectsource.origin, laserOrigin );
 		}
 
 		CG_KillPolyBeamsByTag( cent->current.number );
-		CG_LaserGunPolyBeam( projectsource.origin, trace.endpos, color, cent->current.number );
+
+		for( int phase = 0; phase < 3; phase++ ) {
+			CG_ElectroPolyboardBeam( laserOrigin, trace.endpos, cg_laserBeamSubdivisions->integer, 
+				phase, range, color, cent->current.number, firstPerson );
+		}
 	} else {
 		float frac, subdivisions = cg_laserBeamSubdivisions->integer;
 		vec3_t from, dir, end, blendPoint;
