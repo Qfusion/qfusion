@@ -330,6 +330,23 @@ vec_t LogisticPDF( vec_t x );
 vec_t NormalCDF( vec_t x );
 vec_t NormalPDF( vec_t x );
 
+// ============================================================================
+
+#define NOISE_SIZE  256
+
+void Q_InitNoiseTable( int seed, float *noisetable, int *noiseperm );
+
+float Q_GetNoiseValueFromTable( float *noisetable, int *noiseperm, 
+	float x, float y, float z, float t );
+
+/*
+* Q_GetNoiseValue
+
+* Simplified version of Q_GetNoiseValueFromTable, to be used for general purposes.
+* NOT thread-safe!
+*/
+float Q_GetNoiseValue( float x, float y, float z, float t );
+
 #ifdef __cplusplus
 };
 #endif

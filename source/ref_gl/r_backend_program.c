@@ -139,12 +139,7 @@ void RB_InitShading( void ) {
 	}
 
 	// init the noise table
-	srand( 1001 );
-
-	for( i = 0; i < NOISE_SIZE; i++ ) {
-		rb_noisetable[i] = (float)( ( ( rand() / (float)RAND_MAX ) * 2.0 - 1.0 ) );
-		rb_noiseperm[i] = (unsigned char)( rand() / (float)RAND_MAX * 255 );
-	}
+	Q_InitNoiseTable( 1001, rb_noisetable, rb_noiseperm );
 
 	RB_InitBuiltinPasses();
 }
@@ -182,40 +177,7 @@ static float *RB_TableForFunc( unsigned int func ) {
 * RB_BackendGetNoiseValue
 */
 static float RB_BackendGetNoiseValue( float x, float y, float z, float t ) {
-	int i;
-	int ix, iy, iz, it;
-	float fx, fy, fz, ft;
-	float front[4], back[4];
-	float fvalue, bvalue, value[2], finalvalue;
-
-	ix = ( int )floor( x );
-	fx = x - ix;
-	iy = ( int )floor( y );
-	fy = y - iy;
-	iz = ( int )floor( z );
-	fz = z - iz;
-	it = ( int )floor( t );
-	ft = t - it;
-
-	for( i = 0; i < 2; i++ ) {
-		front[0] = rb_noisetable[NOISE_INDEX( ix, iy, iz, it + i )];
-		front[1] = rb_noisetable[NOISE_INDEX( ix + 1, iy, iz, it + i )];
-		front[2] = rb_noisetable[NOISE_INDEX( ix, iy + 1, iz, it + i )];
-		front[3] = rb_noisetable[NOISE_INDEX( ix + 1, iy + 1, iz, it + i )];
-
-		back[0] = rb_noisetable[NOISE_INDEX( ix, iy, iz + 1, it + i )];
-		back[1] = rb_noisetable[NOISE_INDEX( ix + 1, iy, iz + 1, it + i )];
-		back[2] = rb_noisetable[NOISE_INDEX( ix, iy + 1, iz + 1, it + i )];
-		back[3] = rb_noisetable[NOISE_INDEX( ix + 1, iy + 1, iz + 1, it + i )];
-
-		fvalue = NOISE_LERP( NOISE_LERP( front[0], front[1], fx ), NOISE_LERP( front[2], front[3], fx ), fy );
-		bvalue = NOISE_LERP( NOISE_LERP( back[0], back[1], fx ), NOISE_LERP( back[2], back[3], fx ), fy );
-		value[i] = NOISE_LERP( fvalue, bvalue, fz );
-	}
-
-	finalvalue = NOISE_LERP( value[0], value[1], ft );
-
-	return finalvalue;
+	return Q_GetNoiseValueFromTable( rb_noisetable, rb_noiseperm, x, y, z, t );
 }
 
 /*

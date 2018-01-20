@@ -1450,3 +1450,79 @@ vec_t NormalCDF( vec_t x ) {
 vec_t NormalPDF( vec_t x ) {
 	return exp( ( -x * x ) / 2 ) / sqrt( 2.0 * M_PI );
 }
+
+//============================================================================
+
+/*
+* Q_InitNoiseTable
+*/
+void Q_InitNoiseTable( int seed, float *noisetable, int *noiseperm ) {
+	int i;
+	
+	srand( seed );
+
+	for( i = 0; i < NOISE_SIZE; i++ ) {
+		noisetable[i] = (float)( ( ( rand() / (float)RAND_MAX ) * 2.0 - 1.0 ) );
+		noiseperm[i] = (unsigned char)( rand() / (float)RAND_MAX * 255 );
+	}
+}
+
+/*
+* Q_GetNoiseValueFromTable
+*/
+float Q_GetNoiseValueFromTable( float *noisetable, int *noiseperm, float x, float y, float z, float t ) {
+	int i;
+	int ix, iy, iz, it;
+	float fx, fy, fz, ft;
+	float front[4], back[4];
+	float fvalue, bvalue, value[2], finalvalue;
+
+#define NOISE_VAL( a )    noiseperm[( a ) & ( NOISE_SIZE - 1 )]
+#define NOISE_INDEX( x, y, z, t ) NOISE_VAL( x + NOISE_VAL( y + NOISE_VAL( z + NOISE_VAL( t ) ) ) )
+#define NOISE_LERP( a, b, w ) ( a * ( 1.0f - w ) + b * w )
+
+	ix = ( int )floor( x );
+	fx = x - ix;
+	iy = ( int )floor( y );
+	fy = y - iy;
+	iz = ( int )floor( z );
+	fz = z - iz;
+	it = ( int )floor( t );
+	ft = t - it;
+
+	for( i = 0; i < 2; i++ ) {
+		front[0] = noisetable[NOISE_INDEX( ix, iy, iz, it + i )];
+		front[1] = noisetable[NOISE_INDEX( ix + 1, iy, iz, it + i )];
+		front[2] = noisetable[NOISE_INDEX( ix, iy + 1, iz, it + i )];
+		front[3] = noisetable[NOISE_INDEX( ix + 1, iy + 1, iz, it + i )];
+
+		back[0] = noisetable[NOISE_INDEX( ix, iy, iz + 1, it + i )];
+		back[1] = noisetable[NOISE_INDEX( ix + 1, iy, iz + 1, it + i )];
+		back[2] = noisetable[NOISE_INDEX( ix, iy + 1, iz + 1, it + i )];
+		back[3] = noisetable[NOISE_INDEX( ix + 1, iy + 1, iz + 1, it + i )];
+
+		fvalue = NOISE_LERP( NOISE_LERP( front[0], front[1], fx ), NOISE_LERP( front[2], front[3], fx ), fy );
+		bvalue = NOISE_LERP( NOISE_LERP( back[0], back[1], fx ), NOISE_LERP( back[2], back[3], fx ), fy );
+		value[i] = NOISE_LERP( fvalue, bvalue, fz );
+	}
+
+	finalvalue = NOISE_LERP( value[0], value[1], ft );
+
+	return finalvalue;
+}
+
+/*
+* Q_GetNoiseValue
+*/
+float Q_GetNoiseValue( float x, float y, float z, float t ) {
+	static int init;
+	static float noisetable[NOISE_SIZE];
+	static int noiseperm[NOISE_SIZE];
+
+	if( !init ) {
+		init = 1;
+		Q_InitNoiseTable( 2002, noisetable, noiseperm );
+	}
+
+	return Q_GetNoiseValueFromTable( noisetable, noiseperm, x, y, z, t );
+}
