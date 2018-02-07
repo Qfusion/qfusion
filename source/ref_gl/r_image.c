@@ -2732,7 +2732,7 @@ void R_InitBuiltinScreenImages( void ) {
 		R_InitBuiltinScreenImageSet( &rsh.stf, IT_FLOAT );
 	}
 
-	R_InitScreenImagePair( "r_2Dtex", &rsh.st2D.screenTex, NULL, IT_SRGB, 0, ~0 );
+	R_InitScreenImagePair( "r_2Dtex", &rsh.st2D.screenTex, &rsh.st2D.screenDepthTex, IT_SRGB, 0, ~0 );
 }
 
 /*

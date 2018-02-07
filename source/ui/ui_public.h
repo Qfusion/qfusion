@@ -103,6 +103,18 @@ typedef struct {
 	void ( *R_SkeletalGetBonePose )( const struct model_s *mod, int bone, int frame, bonepose_t *bonepose );
 	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
 
+	/**
+	* R_PushTransformMatrix
+	* Called by UI when it wants to set the current transform matrix to a new matrix
+	*/
+	void ( *R_PushTransformMatrix )( bool projection, const float *m );
+
+	/**
+	* R_PopTransformMatrix
+	* Called by UI when it wants to revert the latest transform matrix change
+	*/
+	void ( *R_PopTransformMatrix )( bool projection );
+
 	struct sfx_s *( *S_RegisterSound )( const char *name );
 	void ( *S_StartLocalSound )( struct sfx_s *sfx, int channel, float fvol );
 	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop, int mode );

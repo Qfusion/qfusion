@@ -282,7 +282,7 @@ void RB_LoadCameraMatrix( const mat4_t m ) {
 */
 void RB_LoadObjectMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.objectMatrix );
-	Matrix4_MultiplyFast( rb.cameraMatrix, m, rb.modelviewMatrix );
+	Matrix4_Multiply( rb.cameraMatrix, m, rb.modelviewMatrix );
 	Matrix4_Multiply( rb.projectionMatrix, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
 }
 
@@ -827,8 +827,8 @@ void RB_FlushDynamicMeshes( void ) {
 	rbDynamicStream_t *stream;
 	rbDynamicDraw_t *draw;
 	int sx, sy, sw, sh;
-	float offsetx = 0.0f, offsety = 0.0f, transx, transy;
-	mat4_t m;
+	float offsetx = 0.0f, offsety = 0.0f;
+	mat4_t om, m;
 
 	if( !numDraws ) {
 		return;
@@ -862,9 +862,7 @@ void RB_FlushDynamicMeshes( void ) {
 
 	RB_GetScissor( &sx, &sy, &sw, &sh );
 
-	Matrix4_Copy( rb.objectMatrix, m );
-	transx = m[12];
-	transy = m[13];
+	Matrix4_Copy( rb.objectMatrix, om );
 
 	for( i = 0, draw = rb.dynamicDraws; i < numDraws; i++, draw++ ) {
 		RB_BindShader( draw->entity, draw->shader, draw->fog );
@@ -874,11 +872,13 @@ void RB_FlushDynamicMeshes( void ) {
 		RB_Scissor( draw->scissor[0], draw->scissor[1], draw->scissor[2], draw->scissor[3] );
 
 		// translate the mesh in 2D
-		if( ( offsetx != draw->offset[0] ) || ( offsety != draw->offset[1] ) ) {
+		if( i == 0 || ( offsetx != draw->offset[0] ) || ( offsety != draw->offset[1] ) ) {
 			offsetx = draw->offset[0];
 			offsety = draw->offset[1];
-			m[12] = transx + offsetx;
-			m[13] = transy + offsety;
+
+			Matrix4_Copy( om, m );
+			Matrix4_Translate( m, draw->offset[0], draw->offset[1], 0 );
+
 			RB_LoadObjectMatrix( m );
 		}
 
@@ -893,12 +893,8 @@ void RB_FlushDynamicMeshes( void ) {
 
 	RB_Scissor( sx, sy, sw, sh );
 
-	// restore the original translation in the object matrix if it has been changed
-	if( offsetx || offsety ) {
-		m[12] = transx;
-		m[13] = transy;
-		RB_LoadObjectMatrix( m );
-	}
+	// restore the original translation in the object matrix
+	RB_LoadObjectMatrix( om );
 }
 
 /*

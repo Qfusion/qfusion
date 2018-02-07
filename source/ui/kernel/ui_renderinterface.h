@@ -52,6 +52,12 @@ public:
 	/// Returns the number of pixels per inch when 1dp equals to 1px.
 	virtual float GetBasePixelsPerInch( void );
 
+	/// Called by Rocket when it wants to set the current transform matrix to a new matrix.
+	virtual void PushTransform( bool projection, const Rocket::Core::RowMajorMatrix4f& transform );
+	virtual void PushTransform( bool projection, const Rocket::Core::ColumnMajorMatrix4f& transform );
+	/// Called by Rocket when it wants to revert the latest transform change.
+	virtual void PopTransform( bool projection, const Rocket::Core::Matrix4f& transform );
+
 	//// Methods
 	int GetWidth( void );
 	int GetHeight( void );

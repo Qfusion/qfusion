@@ -158,6 +158,19 @@ bool UI_RenderInterface::LoadTexture( Rocket::Core::TextureHandle & texture_hand
 	return true;
 }
 
+void UI_RenderInterface::PushTransform( bool projection, const Rocket::Core::RowMajorMatrix4f& transform ) {
+	trap::R_PushTransformMatrix( projection, (const float *)transform.Transpose() );
+}
+
+void UI_RenderInterface::PushTransform( bool projection, const Rocket::Core::ColumnMajorMatrix4f& transform ) {
+	trap::R_PushTransformMatrix( projection, (const float *)transform );
+}
+
+void UI_RenderInterface::PopTransform( bool projection, const Rocket::Core::Matrix4f& ROCKET_UNUSED_PARAMETER( transform ) ) {
+	ROCKET_UNUSED( transform );
+	trap::R_PopTransformMatrix( projection );
+}
+
 int UI_RenderInterface::GetHeight( void ) {
 	return this->vid_height;
 }
@@ -188,12 +201,12 @@ poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex
 	for( i = 0; i < num_vertices; i++ ) {
 		poly->verts[i][0] = vertices[i].position.x;
 		poly->verts[i][1] = vertices[i].position.y;
-		poly->verts[i][2] = 1; // ??
+		poly->verts[i][2] = 0;
 		poly->verts[i][3] = 1;
 
 		poly->normals[i][0] = 0;
 		poly->normals[i][1] = 0;
-		poly->normals[i][2] = 1; // ??
+		poly->normals[i][2] = 0;
 		poly->normals[i][3] = 0;
 
 		poly->stcoords[i][0] = vertices[i].tex_coord.x;

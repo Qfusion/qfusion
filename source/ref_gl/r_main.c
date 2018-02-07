@@ -489,21 +489,31 @@ void R_Begin2D( bool multiSamples ) {
 */
 void R_SetupGL2D( void ) {
 	int width, height;
+	mat4_t projectionMatrix;
 
 	width = rf.frameBufferWidth;
 	height = rf.frameBufferHeight;
 
-	Matrix4_OrthogonalProjection( 0, width, height, 0, -99999, 99999, rn.projectionMatrix );
-	Matrix4_Copy( mat4x4_identity, rn.modelviewMatrix );
-	Matrix4_Copy( rn.projectionMatrix, rn.cameraProjectionMatrix );
+	Matrix4_OrthogonalProjection( 0, width, height, 0, -1, 1, projectionMatrix );
 
 	// set 2D virtual screen size
 	RB_Scissor( 0, 0, width, height );
 	RB_Viewport( 0, 0, width, height );
 
-	RB_LoadProjectionMatrix( rn.projectionMatrix );
+	RB_SetZClip( Z_NEAR, 1024 );
+	RB_SetCamera( vec3_origin, axis_identity );
+
 	RB_LoadCameraMatrix( mat4x4_identity );
-	RB_LoadObjectMatrix( mat4x4_identity );
+
+	if( rf.transformMatrixStackSize[0] > 0 )
+		RB_LoadObjectMatrix( rf.transformMatricesStack[0][rf.transformMatrixStackSize[0] - 1] );
+	else
+		RB_LoadObjectMatrix( mat4x4_identity );
+
+	if( rf.transformMatrixStackSize[1] > 0 )
+		RB_LoadProjectionMatrix( rf.transformMatricesStack[1][rf.transformMatrixStackSize[1] - 1] );
+	else
+		RB_LoadProjectionMatrix( projectionMatrix );
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
@@ -1002,24 +1012,26 @@ static void R_SetupFrame( void ) {
 /*
 * R_SetupViewMatrices
 */
-static void R_SetupViewMatrices( void ) {
-	refdef_t *rd = &rn.refdef;
+static void R_SetupViewMatrices( const refdef_t *rd ) {
+	mat4_t cam, proj;
 
-	Matrix4_Modelview( rd->vieworg, rd->viewaxis, rn.cameraMatrix );
+	Matrix4_Modelview( rd->vieworg, rd->viewaxis, cam );
 
 	if( rd->rdflags & RDF_USEORTHO ) {
 		Matrix4_OrthogonalProjection( -rd->ortho_x, rd->ortho_x, -rd->ortho_y, rd->ortho_y,
-									  -rn.farClip, rn.farClip, rn.projectionMatrix );
+									  -rn.farClip, rn.farClip, proj );
 	} else {
 		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y,
-									   Z_NEAR, rn.farClip, rf.cameraSeparation, rn.projectionMatrix );
+									   Z_NEAR, rn.farClip, rf.cameraSeparation, proj );
 	}
 
 	if( rd->rdflags & RDF_FLIPPED ) {
-		rn.projectionMatrix[0] = -rn.projectionMatrix[0];
+		proj[0] = -proj[0];
 		rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
 
+	Matrix4_Copy( cam, rn.cameraMatrix );
+	Matrix4_Copy( proj, rn.projectionMatrix );
 	Matrix4_Multiply( rn.projectionMatrix, rn.cameraMatrix, rn.cameraProjectionMatrix );
 }
 
@@ -1040,7 +1052,7 @@ static void R_Clear( int bitMask ) {
 		clearColor = true;
 		Vector4Set( envColor, 1, 1, 1, 1 );
 	} else if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
-		clearColor = rn.renderTarget != 0;
+		clearColor = rn.renderTarget != rf.renderTarget;
 		Vector4Set( envColor, 1, 1, 1, 0 );
 	} else {
 		clearColor = !rn.numDepthPortalSurfaces || R_FASTSKY();
@@ -1208,7 +1220,7 @@ void R_RenderView( const refdef_t *fd ) {
 	rn.refdef = *fd;
 
 	// load view matrices with default far clip value
-	R_SetupViewMatrices();
+	R_SetupViewMatrices( fd );
 
 	rn.fog_eye = NULL;
 	rn.hdrExposure = 1;
@@ -1284,7 +1296,7 @@ void R_RenderView( const refdef_t *fd ) {
 		// now set  the real far clip value and reload view matrices
 		R_SetFarClip();
 
-		R_SetupViewMatrices();
+		R_SetupViewMatrices( &rn.refdef );
 
 		// render to depth textures, mark shadowed entities and surfaces
 		R_DrawShadowmaps();
@@ -1366,6 +1378,53 @@ void R_PopRefInst( void ) {
 
 //=======================================================================
 
+/*
+* R_PushTransformMatrix
+*/
+void R_PushTransformMatrix( bool projection, const float *pm ) {
+	int i;
+	int p;
+	int l = projection ? 1 : 0;
+
+	p = rf.transformMatrixStackSize[l];
+	if( p == MAX_PROJMATRIX_STACK_SIZE ) {
+		return;
+	}
+	for( i = 0; i < 16; i++ ) {
+		rf.transformMatricesStack[l][p][i] = pm[i];
+	}
+
+	RB_FlushDynamicMeshes();
+
+	RB_LoadObjectMatrix( rf.transformMatricesStack[l][p] );
+	rf.transformMatrixStackSize[l]++;
+}
+
+/*
+* R_PopTransformMatrix
+*/
+void R_PopTransformMatrix( bool projection ) {
+	int p;
+	int l = projection ? 1 : 0;
+
+	p = rf.transformMatrixStackSize[l];
+	if( p == 0 ) {
+		return;
+	}
+
+	RB_FlushDynamicMeshes();
+
+	if( p == 1 ) {
+		rf.transformMatrixStackSize[l] = 0;
+		RB_LoadObjectMatrix( mat4x4_identity );
+		return;
+	}
+
+	RB_LoadObjectMatrix( rf.transformMatricesStack[l][p - 1] );
+	rf.transformMatrixStackSize[l]--;
+}
+
+//=======================================================================
 
 void R_Finish( void ) {
 	qglFinish();
@@ -1848,6 +1907,9 @@ void R_EndFrame( void ) {
 	RB_EndFrame();
 
 	GLimp_EndFrame();
+
+	rf.transformMatrixStackSize[0] = 0;
+	rf.transformMatrixStackSize[1] = 0;
 
 	assert( qglGetError() == GL_NO_ERROR );
 }

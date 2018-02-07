@@ -261,6 +261,9 @@ void CL_UIModule_Init( void ) {
 	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;
 	import.R_GetShaderCinematic = re.GetShaderCinematic;
 
+	import.R_PushTransformMatrix = re.PushTransformMatrix;
+	import.R_PopTransformMatrix = re.PopTransformMatrix;
+
 	import.S_RegisterSound = CL_SoundModule_RegisterSound;
 	import.S_StartLocalSound = CL_SoundModule_StartLocalSound;
 	import.S_StartBackgroundTrack = CL_SoundModule_StartBackgroundTrack;

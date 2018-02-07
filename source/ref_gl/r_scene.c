@@ -377,6 +377,9 @@ void R_RenderScene( const refdef_t *fd ) {
 				}
 			}
 		}
+	} else {
+		fbFlags = 0;
+		rn.renderTarget = rf.renderTarget;
 	}
 
 	// clip new scissor region to the one currently set
@@ -417,7 +420,7 @@ void R_RenderScene( const refdef_t *fd ) {
 		RB_BlitFrameBufferObject( rn.renderTarget, rn.st->screenTexCopy->fbo, bits, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
 		ppSource = rn.st->screenTexCopy;
 	} else {
-		if( rn.renderTarget ) {
+		if( rn.renderTarget != rf.renderTarget ) {
 			ppSource = RFB_GetObjectTextureAttachment( rn.renderTarget, false, 0 );
 		} else {
 			ppSource = NULL;
@@ -550,6 +553,8 @@ void R_RenderScene( const refdef_t *fd ) {
 	}
 
 done:
+	Vector4Set( rn.scissor, 0, 0, glConfig.width, glConfig.height );
+	Vector4Set( rn.viewport, 0, 0, glConfig.width, glConfig.height );
 	R_BindFrameBufferObject( rf.renderTarget );
 }
 

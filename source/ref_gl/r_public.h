@@ -226,6 +226,18 @@ typedef struct {
 	void ( *StopAviDemo )( void );
 
 	void ( *AppActivate )( bool active, bool minimize, bool destroy );
+
+	/**
+	* PushTransformMatrix
+	* Called by UI when it wants to set the current transform matrix to a new matrix
+	*/
+	void ( *PushTransformMatrix )( bool projection, const float *m );
+
+	/**
+	* PopTransformMatrix
+	* Called by UI when it wants to revert the latest transform matrix change
+	*/
+	void ( *PopTransformMatrix )( bool projection );
 } ref_export_t;
 
 typedef ref_export_t *(*GetRefAPI_t)( const ref_import_t *imports );

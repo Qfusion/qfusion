@@ -60,7 +60,6 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 void RF_AppActivate( bool active, bool minimize, bool destroy );
 rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 void RF_Shutdown( bool verbose );
-void RF_SurfaceChangePending( void );
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS );
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );
@@ -101,5 +100,15 @@ void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t 
 shader_t *RF_GetShaderForOrigin( const vec3_t origin );
 struct cinematics_s *RF_GetShaderCinematic( shader_t *shader );
 void RF_Finish( void );
+
+/**
+* Called by UI when it wants to set the current transform matrix to a new matrix
+*/
+void RF_PushTransformMatrix( bool projection, const float *m );
+
+/**
+* Called by UI when it wants to revert the latest transform matrix change
+*/
+void RF_PopTransformMatrix( bool projection );
 
 #endif // R_FRONTEND_H
