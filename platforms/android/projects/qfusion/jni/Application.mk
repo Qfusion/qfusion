@@ -21,7 +21,6 @@ APP_MODULES := \
   RocketCore \
   RocketControls \
   ssl \
-  tess2 \
   theora \
   vorbis \
   \

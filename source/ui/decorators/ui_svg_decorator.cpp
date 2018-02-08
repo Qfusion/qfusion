@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ui_precompiled.h"
 #include "kernel/ui_common.h"
 #include "kernel/ui_main.h"
-#include "ui_svg_tesselator.h"
 #include "ui_svg_rasterizer.h"
 
 #define NANOSVG_IMPLEMENTATION
@@ -34,14 +33,12 @@ using namespace Rocket::Core;
 class SVGDecorator : public Decorator
 {
 	String path;
-	bool tesselate;
 	NSVGimage *image;
-	SVGTesselator *tesselator;
 	SVGRasterizer *rasterizer;
 
 public:
 	SVGDecorator() : 
-		Decorator(), tesselate( false ), image( NULL ), tesselator( NULL ), rasterizer( NULL ) {
+		Decorator(), image( NULL ), rasterizer( NULL ) {
 	}
 
 	~SVGDecorator() {
@@ -99,12 +96,6 @@ public:
 			image = NULL;
 			return false;
 		}
-
-		property = _properties.GetProperty( "tesselate" );
-		tesselate = property && property->Get< int >() != 0;
-
-		tesselator = SVGTesselator::GetInstance();
-		tesselator->Initialise();
 		
 		rasterizer = SVGRasterizer::GetInstance();
 		rasterizer->Initialise();
@@ -145,11 +136,6 @@ public:
 		size.y = (int)(image->height * scale_y + 0.5f);
 		int width = size.x;
 		int height = size.y;
-
-		if( tesselate ) {
-			geom = tesselator->Tesselate( image, width, height );
-			return reinterpret_cast< DecoratorDataHandle >( geom );
-		}
 
 		String rasterPath( path );
 		rasterizer->Rasterize( rasterPath, image, std::min( scale_x, scale_y ), width, height );
