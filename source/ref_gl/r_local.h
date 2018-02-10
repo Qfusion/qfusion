@@ -54,21 +54,7 @@ enum {
 #include "r_math.h"
 #include "r_public.h"
 #include "r_vattribs.h"
-
-typedef struct {
-	vec3_t origin;
-	vec3_t color;
-	float intensity;
-} dlight_t;
-
-typedef struct superLightStyle_s {
-	vattribmask_t vattribs;
-	int lightmapNum[MAX_LIGHTMAPS];
-	int lightmapStyles[MAX_LIGHTMAPS];
-	int vertexStyles[MAX_LIGHTMAPS];
-	float stOffset[MAX_LIGHTMAPS][2];
-} superLightStyle_t;
-
+#include "r_light.h"
 #include "r_glimp.h"
 #include "r_surface.h"
 #include "r_image.h"
@@ -80,6 +66,7 @@ typedef struct superLightStyle_s {
 #include "r_trace.h"
 #include "r_program.h"
 #include "r_jobs.h"
+#include "r_portals.h"
 
 #ifdef CGAMEGETLIGHTORIGIN
 #define SHADOW_MAPPING          2
@@ -129,6 +116,8 @@ typedef struct superLightStyle_s {
 #define MAX_REF_SCENES          32 // max scenes rendered per frame
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
+#define MAX_VIS_RTLIGHTS	32
+
 //===================================================================
 
 typedef struct refScreenTexSet_s {
@@ -141,15 +130,6 @@ typedef struct refScreenTexSet_s {
 	image_t         *screenBloomLodTex[NUM_BLOOM_LODS][2]; // lods + backups for bloom
 	int multisampleTarget;                // multisample fbo
 } refScreenTexSet_t;
-
-typedef struct portalSurface_s {
-	const entity_t  *entity;
-	cplane_t plane, untransformed_plane;
-	const shader_t  *shader;
-	vec3_t mins, maxs, centre;
-	image_t         *texures[2];            // front and back portalmaps
-	skyportal_t     *skyPortal;
-} portalSurface_t;
 
 typedef struct {
 	unsigned int renderFlags;
@@ -196,6 +176,9 @@ typedef struct {
 	unsigned int numDepthPortalSurfaces;
 	portalSurface_t portalSurfaces[MAX_PORTAL_SURFACES];
 	portalSurface_t *skyportalSurface;
+
+	rtlight_t rtlights[MAX_VIS_RTLIGHTS];
+	unsigned numRealtimeLights;
 
 	refdef_t refdef;
 
@@ -569,28 +552,6 @@ void        RFB_FreeUnusedObjects( void );
 void        RFB_Shutdown( void );
 
 //
-// r_light.c
-//
-#define DLIGHT_SCALE        0.5f
-#define MAX_SUPER_STYLES    128
-
-unsigned int R_AddSurfaceDlighbits( const msurface_t *surf, unsigned int checkDlightBits );
-void        R_AddDynamicLights( unsigned int dlightbits, int state );
-void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
-float       R_LightExposureForOrigin( const vec3_t origin );
-void        R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects );
-void        R_InitLightStyles( model_t *mod );
-superLightStyle_t   *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
-										   const uint8_t *lightmapStyles, const uint8_t *vertexStyles, mlightmapRect_t **lmRects );
-void        R_SortSuperLightStyles( model_t *mod );
-void        R_TouchLightmapImages( model_t *mod );
-
-void        R_InitCoronas( void );
-void        R_BatchCoronaSurf(  const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf );
-void        R_DrawCoronas( void );
-void        R_ShutdownCoronas( void );
-
-//
 // r_main.c
 //
 #define R_FASTSKY() ( r_fastsky->integer || rf.viewcluster == -1 )
@@ -727,17 +688,6 @@ void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset
 void R_BuildTrifanElements( int vertsOffset, int numVerts, elem_t *elems );
 void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsArray, vec2_t *stArray,
 							int numTris, elem_t *elems, vec4_t *sVectorsArray );
-
-//
-// r_portals.c
-//
-extern drawList_t r_portallist, r_skyportallist;
-
-portalSurface_t *R_AddPortalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf );
-portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf );
-void R_UpdatePortalSurface( portalSurface_t *portalSurface, const mesh_t *mesh,
-									 const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf );
-void R_DrawPortals( void );
 
 //
 // r_poly.c

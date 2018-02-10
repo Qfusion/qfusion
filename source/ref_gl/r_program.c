@@ -106,8 +106,8 @@ typedef struct glsl_program_s {
 			DeluxemapOffset,
 			LightstyleColor[MAX_LIGHTMAPS],
 
-			DynamicLightsPosition[MAX_DLIGHTS],
-			DynamicLightsDiffuseAndInvRadius[MAX_DLIGHTS >> 2],
+			DynamicLightsPosition[MAX_VIS_RTLIGHTS],
+			DynamicLightsDiffuseAndInvRadius[MAX_VIS_RTLIGHTS >> 2],
 			NumDynamicLights,
 
 			AttrBonesIndices,
@@ -2260,16 +2260,12 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 }
 
 /*
-* RP_UpdateDynamicLightsUniforms
+* RP_UpdateRealtimeLightsUniforms
 */
-unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
-											 const vec3_t entOrigin, const mat3_t entAxis, unsigned int dlightbits ) {
+unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
+	const vec3_t entOrigin, const mat3_t entAxis, const rtlight_t *rtlights, unsigned int dlightbits ) {
 	int i, n, c;
-	dlight_t *dl;
-	vec3_t dlorigin, tvec;
 	glsl_program_t *program = r_glslprograms + elem - 1;
-	bool identityAxis = Matrix3_Compare( entAxis, axis_identity );
-	vec4_t shaderColor[4];
 
 	if( superLightStyle ) {
 		GLfloat rgb[3];
@@ -2292,31 +2288,37 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 	}
 
 	if( dlightbits ) {
+		const rtlight_t *rl;
+		vec3_t rlorigin, tvec;
+		vec4_t shaderColor[4];
+		bool identityAxis = Matrix3_Compare( entAxis, axis_identity );
+
 		memset( shaderColor, 0, sizeof( vec4_t ) * 3 );
 		Vector4Set( shaderColor[3], 1.0f, 1.0f, 1.0f, 1.0f );
+
 		n = 0;
-		for( i = 0; i < MAX_DLIGHTS; i++ ) {
-			dl = rsc.dlights + i;
-			if( !dl->intensity ) {
+		for( i = 0; i < MAX_VIS_RTLIGHTS; i++ ) {
+			rl = rtlights + i;
+			if( !(dlightbits & (1<<i)) ) {
 				continue;
 			}
 			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
 
-			VectorSubtract( dl->origin, entOrigin, dlorigin );
+			VectorSubtract( rl->origin, entOrigin, rlorigin );
 			if( !identityAxis ) {
-				VectorCopy( dlorigin, tvec );
-				Matrix3_TransformVector( entAxis, tvec, dlorigin );
+				VectorCopy( rlorigin, tvec );
+				Matrix3_TransformVector( entAxis, tvec, rlorigin );
 			}
 
-			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, dlorigin );
+			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, rlorigin );
 
 			c = n & 3;
-			shaderColor[0][c] = dl->color[0];
-			shaderColor[1][c] = dl->color[1];
-			shaderColor[2][c] = dl->color[2];
-			shaderColor[3][c] = 1.0f / dl->intensity;
+			shaderColor[0][c] = rl->color[0];
+			shaderColor[1][c] = rl->color[1];
+			shaderColor[2][c] = rl->color[2];
+			shaderColor[3][c] = 1.0f / rl->intensity;
 
 			// DynamicLightsDiffuseAndInvRadius is transposed for SIMD, but it's still 4x4
 			if( c == 3 ) {
@@ -2343,7 +2345,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			qglUniform1iARB( program->loc.NumDynamicLights, n );
 		}
 
-		for( ; n < MAX_DLIGHTS; n += 4 ) {
+		for( ; n < MAX_VIS_RTLIGHTS; n += 4 ) {
 			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
@@ -2638,7 +2640,7 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.builtin.ShaderTime = qglGetUniformLocationARB( program->object, "u_QF_ShaderTime" );
 
 	// dynamic lights
-	for( i = 0; i < MAX_DLIGHTS; i++ ) {
+	for( i = 0; i < MAX_VIS_RTLIGHTS; i++ ) {
 		program->loc.DynamicLightsPosition[i] = qglGetUniformLocationARB( program->object,
 																		  va_r( tmp, sizeof( tmp ), "u_DlightPosition[%i]", i ) );
 

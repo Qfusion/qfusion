@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_MODEL_H
 #define R_MODEL_H
 
+#include "r_mesh.h"
+#include "r_shader.h"
 #include "r_surface.h"
 
 /*
@@ -64,7 +66,7 @@ typedef struct mshaderref_s {
 	char name[MAX_QPATH];
 	int flags;
 	int contents;
-	shader_t        *shaders[NUM_SHADER_TYPES_BSP];
+	shader_t *shaders[NUM_SHADER_TYPES_BSP];
 } mshaderref_t;
 
 typedef struct msurface_s {
@@ -130,12 +132,6 @@ typedef struct {
 	uint8_t styles[MAX_LIGHTMAPS];
 	uint8_t direction[2];
 } mgridlight_t;
-
-typedef struct {
-	int texNum;
-	int texLayer;
-	float texMatrix[2][2];
-} mlightmapRect_t;
 
 typedef struct mbrushmodel_s {
 	const bspFormatDesc_t *format;

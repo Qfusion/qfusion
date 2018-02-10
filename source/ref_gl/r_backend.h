@@ -93,7 +93,7 @@ void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );
 void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
 void RB_SetRenderFlags( int flags );
-void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure );
+void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure, unsigned numRtLights, const rtlight_t *rtlights );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
 void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis );
 bool RB_EnableTriangleOutlines( bool enable );
