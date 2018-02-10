@@ -2263,7 +2263,7 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 * RP_UpdateRealtimeLightsUniforms
 */
 unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
-	const vec3_t entOrigin, const mat3_t entAxis, const rtlight_t *rtlights, unsigned int dlightbits ) {
+	const vec3_t entOrigin, const mat3_t entAxis, const rtlight_t *rtlights, unsigned int rtlightBits ) {
 	int i, n, c;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
@@ -2287,7 +2287,7 @@ unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t 
 		}
 	}
 
-	if( dlightbits ) {
+	if( rtlightBits ) {
 		const rtlight_t *rl;
 		vec3_t rlorigin, tvec;
 		vec4_t shaderColor[4];
@@ -2299,7 +2299,7 @@ unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t 
 		n = 0;
 		for( i = 0; i < MAX_VIS_RTLIGHTS; i++ ) {
 			rl = rtlights + i;
-			if( !(dlightbits & (1<<i)) ) {
+			if( !(rtlightBits & (1<<i)) ) {
 				continue;
 			}
 			if( program->loc.DynamicLightsPosition[n] < 0 ) {
@@ -2328,8 +2328,8 @@ unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t 
 			}
 
 			n++;
-			dlightbits &= ~( 1 << i );
-			if( !dlightbits ) {
+			rtlightBits &= ~( 1 << i );
+			if( !rtlightBits ) {
 				break;
 			}
 		}

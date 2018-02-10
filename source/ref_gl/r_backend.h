@@ -86,7 +86,7 @@ void RB_FlushTextureCache( void );
 // shader
 void RB_BindShader( const entity_t *e, const struct shader_s *shader, const struct mfog_s *fog );
 void RB_SetLightstyle( const struct superLightStyle_s *lightStyle );
-void RB_SetDlightBits( unsigned int dlightBits );
+void RB_SetRtLightBits( unsigned int rtlightBits );
 void RB_SetShadowBits( unsigned int shadowBits );
 void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
 void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );

@@ -44,8 +44,8 @@ typedef struct {
 	unsigned int shadowBits;
 	unsigned int shadowFrame;
 
-	unsigned int dlightBits;
-	unsigned int dlightFrame;
+	unsigned int rtlightBits;
+	unsigned int rtlightFrame;
 
 	unsigned int numVerts;
 	unsigned int numElems;

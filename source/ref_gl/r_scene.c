@@ -310,7 +310,7 @@ void R_RenderScene( const refdef_t *fd ) {
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
 	rn.shadowBits = 0;
-	rn.dlightBits = 0;
+	rn.rtlightBits = 0;
 	rn.shadowGroup = NULL;
 
 	rn.st = &rsh.st;

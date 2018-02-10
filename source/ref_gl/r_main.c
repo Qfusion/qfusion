@@ -1227,7 +1227,7 @@ void R_RenderView( const refdef_t *fd ) {
 	rn.hdrExposure = 1;
 
 	rn.shadowBits = 0;
-	rn.dlightBits = 0;
+	rn.rtlightBits = 0;
 	rn.numRealtimeLights = 0;
 
 	rn.numPortalSurfaces = 0;
