@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_MESH_H
 #define R_MESH_H
 
+#include "r_surface.h"
+
 struct shader_s;
 struct mfog_s;
 struct portalSurface_s;

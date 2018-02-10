@@ -40,7 +40,7 @@ static int loadmodel_numsurfelems;
 static elem_t *loadmodel_surfelems;
 
 static int loadmodel_numlightmaps;
-static mlightmapRect_t *loadmodel_lightmapRects;
+static lightmapRect_t *loadmodel_lightmapRects;
 
 static int loadmodel_numshaderrefs;
 static mshaderref_t *loadmodel_shaderrefs;
@@ -301,7 +301,7 @@ static void Mod_LoadFaces( const lump_t *l ) {
 		int fogNum;
 		mshaderref_t *shaderRef;
 		shaderType_e shaderType;
-		mlightmapRect_t *lmRects[MAX_LIGHTMAPS];
+		lightmapRect_t *lmRects[MAX_LIGHTMAPS];
 		int lightmaps[MAX_LIGHTMAPS];
 		uint8_t lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
 
@@ -1529,7 +1529,7 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out ) {
 	float *lmArray;
 	uint8_t *lmlayersArray;
 	mesh_t *mesh = &out->mesh;
-	mlightmapRect_t *lmRects[MAX_LIGHTMAPS];
+	lightmapRect_t *lmRects[MAX_LIGHTMAPS];
 	int lightmaps[MAX_LIGHTMAPS];
 	uint8_t lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
 

@@ -201,7 +201,6 @@ void RP_StorePrecacheList( void );
 
 void RP_ProgramList_f( void );
 
-int RP_FindProgram( const char *name );
 int RP_RegisterProgram( int type, const char *name, const char *deformsKey,
 						const deformv_t *deforms, int numDeforms, r_glslfeat_t features );
 int RP_GetProgramObject( int elem );
@@ -235,8 +234,8 @@ void RP_UpdateOutlineUniforms( int elem, float projDistance );
 void RP_UpdateDiffuseLightUniforms( int elem,
 									const vec3_t lightDir, const vec4_t lightAmbient, const vec4_t lightDiffuse );
 
-unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
-											 const vec3_t entOrigin, const mat3_t entAxis, unsigned int dlightbits );
+unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
+											 const vec3_t entOrigin, const mat3_t entAxis, const rtlight_t *rtlights, unsigned int dlightbits );
 
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist,
 						   cplane_t *fogPlane, cplane_t *eyePlane, float eyeFogDist );

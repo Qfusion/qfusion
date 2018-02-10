@@ -83,7 +83,7 @@ typedef struct image_s {
 
 	char extension[8];                          // file extension
 	int flags;
-	GLuint texnum;                              // gl texture binding
+	unsigned texnum;                              // gl texture binding
 	int width, height;                          // source image
 	int layers;                                 // texture array size
 	int upload_width,

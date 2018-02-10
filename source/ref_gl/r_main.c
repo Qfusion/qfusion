@@ -1095,7 +1095,8 @@ static void R_SetupGL( void ) {
 
 	RB_SetCamera( rn.viewOrigin, rn.viewAxis );
 
-	RB_SetLightParams( rn.refdef.minLight, ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) != 0, rn.hdrExposure );
+	RB_SetLightParams( rn.refdef.minLight, ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) != 0, rn.hdrExposure,
+		rn.numRealtimeLights, rn.rtlights );
 
 	RB_SetRenderFlags( rn.renderFlags );
 
@@ -1227,6 +1228,7 @@ void R_RenderView( const refdef_t *fd ) {
 
 	rn.shadowBits = 0;
 	rn.dlightBits = 0;
+	rn.numRealtimeLights = 0;
 
 	rn.numPortalSurfaces = 0;
 	rn.numDepthPortalSurfaces = 0;

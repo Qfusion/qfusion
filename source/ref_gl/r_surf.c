@@ -86,7 +86,7 @@ bool R_CullSurface( const entity_t *e, const msurface_t *surf, unsigned int clip
 */
 static unsigned int R_SurfaceDlightBits( const msurface_t *surf, unsigned int checkDlightBits ) {
 	unsigned int i, bit;
-	dlight_t *lt;
+	rtlight_t *lt;
 	float dist;
 	unsigned int surfDlightBits = 0;
 
@@ -94,7 +94,7 @@ static unsigned int R_SurfaceDlightBits( const msurface_t *surf, unsigned int ch
 		return 0;
 	}
 
-	for( i = 0, bit = 1, lt = rsc.dlights; i < rsc.numDlights; i++, bit <<= 1, lt++ ) {
+	for( i = 0, bit = 1, lt = rn.rtlights; i < rn.numRealtimeLights; i++, bit <<= 1, lt++ ) {
 		if( checkDlightBits & bit ) {
 			switch( surf->facetype ) {
 				case FACETYPE_PLANAR:
@@ -568,7 +568,7 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 		if( !( fullBits & bit ) ) {
 			continue;
 		}
-		if( !BoundsAndSphereIntersect( bmins, bmaxs, rsc.dlights[i].origin, rsc.dlights[i].intensity ) ) {
+		if( !BoundsAndSphereIntersect( bmins, bmaxs, rn.rtlights[i].origin, rn.rtlights[i].intensity ) ) {
 			continue;
 		}
 		dlightBits |= bit;
@@ -884,17 +884,28 @@ void R_DrawWorld( void ) {
 		clipFlags = 0;
 	}
 
-	// cull dynamic lights
+	// cull lights
 	if( !( rn.renderFlags & RF_ENVVIEW ) ) {
 		if( r_dynamiclight->integer == 1 && !r_fullbright->integer ) {
+			dlight_t *dl;
+			
 			for( i = 0; i < rsc.numDlights; i++ ) {
-				if( R_CullSphere( rsc.dlights[i].origin, rsc.dlights[i].intensity, clipFlags ) ) {
+				dl = rsc.dlights + i;
+
+				if( rn.numRealtimeLights == MAX_VIS_RTLIGHTS ) {
+					break;
+				}
+				if( R_CullSphere( dl->origin, dl->intensity, clipFlags ) ) {
 					continue;
 				}
-				dlightBits |= 1 << i;
+
+				R_DlightToRTLight( dl, &rn.rtlights[rn.numRealtimeLights] );
+				rn.numRealtimeLights++;
 			}
 		}
 	}
+	
+	dlightBits = (1<<rn.numRealtimeLights) - 1;
 
 	// cull shadowmaps
 	if( !( rn.renderFlags & RF_ENVVIEW ) ) {

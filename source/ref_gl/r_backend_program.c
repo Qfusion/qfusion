@@ -984,8 +984,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		}
 
 		// dynamic lights
-		RP_UpdateDynamicLightsUniforms( program, lightStyle, rb.currentEntity->origin, rb.currentEntity->axis,
-										rb.currentDlightBits );
+		RP_UpdateRealtimeLightsUniforms( program, lightStyle, rb.currentEntity->origin, rb.currentEntity->axis,
+										rb.rtlights, rb.currentDlightBits );
 
 		// r_drawflat
 		if( programFeatures & GLSL_SHADER_COMMON_DRAWFLAT ) {
@@ -1511,7 +1511,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// dynamic lights
 		if( isLightmapped || isWorldVertexLight ) {
-			RP_UpdateDynamicLightsUniforms( program, lightStyle, e->origin, e->axis, rb.currentDlightBits );
+			RP_UpdateRealtimeLightsUniforms( program, lightStyle, e->origin, e->axis, rb.rtlights, rb.currentDlightBits );
 		}
 
 		// r_drawflat
@@ -2055,10 +2055,16 @@ void RB_SetZClip( float zNear, float zFar ) {
 /*
 * RB_SetLightParams
 */
-void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure ) {
+void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure, unsigned numRtLights, const rtlight_t *rtlights ) {
+	if( numRtLights > MAX_VIS_RTLIGHTS ) {
+		numRtLights = MAX_VIS_RTLIGHTS;
+	}
+
 	rb.minLight = minLight;
 	rb.noWorldLight = noWorldLight;
 	rb.hdrExposure = hdrExposure;
+	rb.numRealtimeLights = numRtLights;
+	memcpy( rb.rtlights, rtlights, numRtLights * sizeof( rtlight_t ) );
 }
 
 /*

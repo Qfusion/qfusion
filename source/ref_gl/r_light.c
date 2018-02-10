@@ -193,9 +193,9 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 	for( i = 0; i < 4; i++ ) {
 		lightarray[i * 2 + 0] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[bound( 0, elem[i] + 0,
-																									  (int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
+			(int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
 		lightarray[i * 2 + 1] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[bound( 1, elem[i] + 1,
-																									  (int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
+			(int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
 	}
 
 	t[0] = vf2[0] * vf2[1] * vf2[2];
@@ -448,14 +448,14 @@ static int R_UploadLightmap( const char *name, uint8_t *data, int w, int h, int 
 * R_PackLightmaps
 */
 static int R_PackLightmaps( int num, int w, int h, int dataSize, int stride, int samples, bool deluxe,
-							const char *name, const uint8_t *data, mlightmapRect_t *rects ) {
+							const char *name, const uint8_t *data, lightmapRect_t *rects ) {
 	int i, x, y, root;
 	uint8_t *block;
 	int lightmapNum;
 	int rectX, rectY, rectW, rectH, rectSize;
 	int maxX, maxY, max, xStride;
 	double tw, th, tx, ty;
-	mlightmapRect_t *rect;
+	lightmapRect_t *rect;
 
 	maxX = r_maxLightmapBlockSize / w;
 	maxY = r_maxLightmapBlockSize / h;
@@ -581,7 +581,7 @@ static int R_PackLightmaps( int num, int w, int h, int dataSize, int stride, int
 /*
 * R_BuildLightmaps
 */
-void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects ) {
+void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, lightmapRect_t *rects ) {
 	int i, j, p;
 	int numBlocks = numLightmaps;
 	int samples;
@@ -635,7 +635,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 		int layer = 0;
 		int lightmapNum = 0;
 		image_t *image = NULL;
-		mlightmapRect_t *rect = rects;
+		lightmapRect_t *rect = rects;
 		int blockSize = w * h * LIGHTMAP_BYTES;
 		float texScale = 1.0f;
 		char tempbuf[16];
@@ -763,7 +763,7 @@ void R_InitLightStyles( model_t *mod ) {
 * R_AddSuperLightStyle
 */
 superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
-										 const uint8_t *lightmapStyles, const uint8_t *vertexStyles, mlightmapRect_t **lmRects ) {
+										 const uint8_t *lightmapStyles, const uint8_t *vertexStyles, lightmapRect_t **lmRects ) {
 	unsigned int i, j;
 	superLightStyle_t *sls;
 	mbrushmodel_t *loadbmodel;
@@ -860,4 +860,30 @@ void R_SortSuperLightStyles( model_t *mod ) {
 	loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 	qsort( loadbmodel->superLightStyles, loadbmodel->numSuperLightStyles,
 		   sizeof( superLightStyle_t ), ( int ( * )( const void *, const void * ) )R_SuperLightStylesCmp );
+}
+
+/*
+=============================================================================
+
+REALTIME LIGHTS
+
+=============================================================================
+*/
+
+/*
+* R_DlightToRTLight
+*/
+void R_DlightToRTLight( const dlight_t *dl, rtlight_t *rl ) {
+	int i;
+
+	memset( rl, 0, sizeof( *rl ) );
+
+	rl->intensity = dl->intensity;
+	VectorCopy( dl->origin, rl->origin );
+	VectorCopy( dl->color, rl->color );
+
+	for( i = 0; i < 3; i++ ) {
+		rl->cullmins[i] = rl->origin[i] - rl->intensity;
+		rl->cullmaxs[i] = rl->origin[i] + rl->intensity;
+	}
 }

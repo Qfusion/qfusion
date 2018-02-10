@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_SHADER_H
 #define R_SHADER_H
 
+#include "r_image.h"
+
 #define MAX_SHADERS                 2048
 #define MAX_SHADER_PASSES           8
 #define MAX_SHADER_DEFORMVS         8
