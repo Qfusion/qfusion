@@ -871,9 +871,9 @@ REALTIME LIGHTS
 */
 
 /*
-* R_DlightToRTLight
+* R_DlightToRtLight
 */
-void R_DlightToRTLight( const dlight_t *dl, rtlight_t *rl ) {
+void R_DlightToRtLight( const dlight_t *dl, rtlight_t *rl ) {
 	int i;
 
 	memset( rl, 0, sizeof( *rl ) );

@@ -235,7 +235,7 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 									const vec3_t lightDir, const vec4_t lightAmbient, const vec4_t lightDiffuse );
 
 unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
-											 const vec3_t entOrigin, const mat3_t entAxis, const rtlight_t *rtlights, unsigned int dlightbits );
+											 const vec3_t entOrigin, const mat3_t entAxis, const rtlight_t *rtlights, unsigned int rtlightbits );
 
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist,
 						   cplane_t *fogPlane, cplane_t *eyePlane, float eyeFogDist );

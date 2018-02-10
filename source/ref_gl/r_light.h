@@ -74,6 +74,6 @@ void        R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const 
 void        R_DrawCoronas( void );
 void        R_ShutdownCoronas( void );
 
-void		R_DlightToRTLight( const dlight_t *dl, rtlight_t *rl );
+void		R_DlightToRtLight( const dlight_t *dl, rtlight_t *rl );
 
 #endif // R_LIGHT_H

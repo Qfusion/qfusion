@@ -541,27 +541,27 @@ static r_glslfeat_t RB_BonesTransformsToProgramFeatures( void ) {
 }
 
 /*
-* RB_DlightbitsToProgramFeatures
+* RB_RtlightbitsToProgramFeatures
 */
-static r_glslfeat_t RB_DlightbitsToProgramFeatures( unsigned int dlightBits ) {
-	int numDlights;
+static r_glslfeat_t RB_RtlightbitsToProgramFeatures( unsigned int rtlightBits ) {
+	int numRtlights;
 
-	if( !dlightBits ) {
+	if( !rtlightBits ) {
 		return 0;
 	}
 
-	numDlights = Q_bitcount( dlightBits );
-	if( r_lighting_maxglsldlights->integer && numDlights > r_lighting_maxglsldlights->integer ) {
-		numDlights = r_lighting_maxglsldlights->integer;
+	numRtlights = Q_bitcount( rtlightBits );
+	if( r_lighting_maxglsldlights->integer && numRtlights > r_lighting_maxglsldlights->integer ) {
+		numRtlights = r_lighting_maxglsldlights->integer;
 	}
 
-	if( numDlights <= 4 ) {
+	if( numRtlights <= 4 ) {
 		return GLSL_SHADER_COMMON_DLIGHTS_4;
 	}
-	if( numDlights <= 8 ) {
+	if( numRtlights <= 8 ) {
 		return GLSL_SHADER_COMMON_DLIGHTS_8;
 	}
-	if( numDlights <= 12 ) {
+	if( numRtlights <= 12 ) {
 		return GLSL_SHADER_COMMON_DLIGHTS_12;
 	}
 	return GLSL_SHADER_COMMON_DLIGHTS_16;
@@ -826,8 +826,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	}
 
 	// add dynamic lights
-	if( rb.currentDlightBits ) {
-		programFeatures |= RB_DlightbitsToProgramFeatures( rb.currentDlightBits );
+	if( rb.currentRtlightBits ) {
+		programFeatures |= RB_RtlightbitsToProgramFeatures( rb.currentRtlightBits );
 	}
 
 	Matrix4_Identity( texMatrix );
@@ -985,7 +985,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		// dynamic lights
 		RP_UpdateRealtimeLightsUniforms( program, lightStyle, rb.currentEntity->origin, rb.currentEntity->axis,
-										rb.rtlights, rb.currentDlightBits );
+										rb.rtlights, rb.currentRtlightBits );
 
 		// r_drawflat
 		if( programFeatures & GLSL_SHADER_COMMON_DRAWFLAT ) {
@@ -1434,8 +1434,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	image = RB_ShaderpassTex( pass );
 	if( isLightmapped || isWorldVertexLight ) {
 		// add dynamic lights
-		if( rb.currentDlightBits ) {
-			programFeatures |= RB_DlightbitsToProgramFeatures( rb.currentDlightBits );
+		if( rb.currentRtlightBits ) {
+			programFeatures |= RB_RtlightbitsToProgramFeatures( rb.currentRtlightBits );
 		}
 		if( DRAWFLAT() ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT;
@@ -1511,7 +1511,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// dynamic lights
 		if( isLightmapped || isWorldVertexLight ) {
-			RP_UpdateRealtimeLightsUniforms( program, lightStyle, e->origin, e->axis, rb.rtlights, rb.currentDlightBits );
+			RP_UpdateRealtimeLightsUniforms( program, lightStyle, e->origin, e->axis, rb.rtlights, rb.currentRtlightBits );
 		}
 
 		// r_drawflat
@@ -1903,7 +1903,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	rb.currentEntity = e ? e : &rb.nullEnt;
 	rb.currentModelType = rb.currentEntity->rtype == RT_MODEL && rb.currentEntity->model ? rb.currentEntity->model->type : mod_bad;
-	rb.currentDlightBits = 0;
+	rb.currentRtlightBits = 0;
 	rb.currentShadowBits = 0;
 	rb.superLightStyle = NULL;
 
@@ -1963,11 +1963,11 @@ void RB_SetLightstyle( const superLightStyle_t *lightStyle ) {
 }
 
 /*
-* RB_SetDlightBits
+* RB_SetRtLightBits
 */
-void RB_SetDlightBits( unsigned int dlightBits ) {
+void RB_SetRtLightBits( unsigned int rtlightBits ) {
 	assert( rb.currentShader != NULL );
-	rb.currentDlightBits = dlightBits;
+	rb.currentRtlightBits = rtlightBits;
 	rb.dirtyUniformState = true;
 }
 
@@ -2274,7 +2274,7 @@ void RB_DrawOutlinedElements( void ) {
 
 	// set some flags
 	rb.currentShadowBits = 0;
-	rb.currentDlightBits = 0;
+	rb.currentRtlightBits = 0;
 	rb.colorFog = rb.texFog = NULL;
 	rb.superLightStyle = NULL;
 

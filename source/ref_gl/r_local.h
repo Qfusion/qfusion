@@ -133,7 +133,7 @@ typedef struct refScreenTexSet_s {
 
 typedef struct {
 	unsigned int renderFlags;
-	unsigned int dlightBits;
+	unsigned int rtlightBits;
 
 	unsigned int shadowBits;
 

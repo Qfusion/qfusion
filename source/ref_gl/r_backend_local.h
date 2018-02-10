@@ -143,7 +143,7 @@ typedef struct r_backend_s {
 	int currentVBOId;
 	mesh_vbo_t *currentVBO;
 
-	unsigned int currentDlightBits;
+	unsigned int currentRtlightBits;
 	unsigned int currentShadowBits;
 
 	const shader_t *skyboxShader;
