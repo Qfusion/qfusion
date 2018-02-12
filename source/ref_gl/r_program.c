@@ -2263,7 +2263,7 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 * RP_UpdateRealtimeLightsUniforms
 */
 unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
-	const vec3_t entOrigin, const mat3_t entAxis, const rtlight_t *rtlights, unsigned int rtlightBits ) {
+	const vec3_t entOrigin, const mat3_t entAxis, unsigned int rtlightBits, const rtlight_t *rtlights ) {
 	int i, n, c;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 

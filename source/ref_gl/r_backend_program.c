@@ -544,15 +544,14 @@ static r_glslfeat_t RB_BonesTransformsToProgramFeatures( void ) {
 * RB_RtlightbitsToProgramFeatures
 */
 static r_glslfeat_t RB_RtlightbitsToProgramFeatures( unsigned int rtlightBits ) {
-	int numRtlights;
+	unsigned numRtlights = Q_bitcount( rtlightBits );
 
-	if( !rtlightBits ) {
-		return 0;
+	if( r_lighting_maxglsldlights->integer >= 0 && numRtlights > (unsigned)r_lighting_maxglsldlights->integer ) {
+		numRtlights = r_lighting_maxglsldlights->integer;
 	}
 
-	numRtlights = Q_bitcount( rtlightBits );
-	if( r_lighting_maxglsldlights->integer && numRtlights > r_lighting_maxglsldlights->integer ) {
-		numRtlights = r_lighting_maxglsldlights->integer;
+	if( !numRtlights ) {
+		return 0;
 	}
 
 	if( numRtlights <= 4 ) {
@@ -985,7 +984,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		// dynamic lights
 		RP_UpdateRealtimeLightsUniforms( program, lightStyle, rb.currentEntity->origin, rb.currentEntity->axis,
-										rb.rtlights, rb.currentRtlightBits );
+			rb.numRealtimeLights, rb.rtlights );
 
 		// r_drawflat
 		if( programFeatures & GLSL_SHADER_COMMON_DRAWFLAT ) {
@@ -1511,7 +1510,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// dynamic lights
 		if( isLightmapped || isWorldVertexLight ) {
-			RP_UpdateRealtimeLightsUniforms( program, lightStyle, e->origin, e->axis, rb.rtlights, rb.currentRtlightBits );
+			RP_UpdateRealtimeLightsUniforms( program, lightStyle, e->origin, e->axis, rb.numRealtimeLights, rb.rtlights );
 		}
 
 		// r_drawflat
