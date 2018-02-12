@@ -446,6 +446,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	unsigned numTempVBOs, maxTempVBOs;
 	unsigned numUnmergedVBOs;
 	msortedSurface_t *sortedSurfaces;
+	unsigned *surfRtlightBits;
 
 	assert( mod );
 
@@ -474,6 +475,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	maxTempVBOs = 1024;
 	tempVBOs = ( mesh_vbo_t * )Mod_Malloc( mod, maxTempVBOs * sizeof( *tempVBOs ) );
 	startDrawSurface = loadbmodel->numDrawSurfaces;
+
+	surfRtlightBits = loadbmodel->surfRtlightBits;
 
 	bm->numModelDrawSurfaces = 0;
 	bm->firstModelDrawSurface = startDrawSurface;
@@ -629,6 +632,11 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				ecount += surf2->mesh.numElems;
 				surfmap[j] = surf;
 				last_merged = j;
+
+				// limit the number of surfaces to a 8-bit integer
+				if( fcount == 255 ) {
+					break;
+				}
 			}
 		}
 
@@ -662,6 +670,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		drawSurf->fog = surf->fog;
 		drawSurf->shader = surf->shader;
 		drawSurf->numLightmaps = 0;
+		drawSurf->numWorldSurfaces = fcount;
+		drawSurf->surfRtlightBits = surfRtlightBits;
 
 		// upload vertex and elements data for face itself
 		surf->drawSurf = loadbmodel->numDrawSurfaces;
@@ -673,6 +683,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		numUnmappedSurfaces--;
 
 		// count lightmaps
+		drawSurf->numLightmaps = 0;
 		for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
 			if( surf->superLightStyle->lightmapStyles[j] == 255 )
 				break;
@@ -706,6 +717,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		drawSurf->numElems = ecount;
 
 		*vbo_total_size += vbo->arrayBufferSize + vbo->elemBufferSize;
+		surfRtlightBits += fcount;
 	}
 
 	assert( numUnmappedSurfaces == 0 );
@@ -861,6 +873,7 @@ void Mod_CreateVertexBufferObjects( model_t *mod ) {
 	// allocate memory for drawsurfs
 	loadbmodel->numDrawSurfaces = 0;
 	loadbmodel->drawSurfaces = Mod_Malloc( mod, sizeof( *loadbmodel->drawSurfaces ) * loadbmodel->numsurfaces );
+	loadbmodel->surfRtlightBits = Mod_Malloc( mod, sizeof( *loadbmodel->surfRtlightBits ) * loadbmodel->numsurfaces );
 
 	for( i = 0; i < loadbmodel->numsubmodels; i++ ) {
 		vbos = Mod_CreateSubmodelBufferObjects( mod, i, &size );
