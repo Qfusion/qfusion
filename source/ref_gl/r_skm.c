@@ -79,7 +79,7 @@ static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh ) {
 	skmmesh.blendIndices = mesh->blendIndices;
 	skmmesh.blendWeights = mesh->blendWeights;
 
-	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &skmmesh );
+	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &skmmesh, 0 );
 	R_UploadVBOElemData( mesh->vbo, 0, 0, &skmmesh );
 }
 

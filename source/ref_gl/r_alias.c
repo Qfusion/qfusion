@@ -59,7 +59,7 @@ static void Mod_AliasBuildStaticVBOForMesh( maliasmesh_t *mesh ) {
 	aliasmesh.normalsArray = mesh->normalsArray;
 	aliasmesh.sVectorsArray = mesh->sVectorsArray;
 
-	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &aliasmesh );
+	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &aliasmesh, 0 );
 	R_UploadVBOElemData( mesh->vbo, 0, 0, &aliasmesh );
 }
 

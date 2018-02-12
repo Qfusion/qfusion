@@ -233,12 +233,12 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 	// which only has 1 side for skybox
 	if( side != 5 ) {
 		mesh->stArray = skydome->sphereStCoords[side];
-		R_UploadVBOVertexData( skydome->sphereVbos[side], 0, SKYDOME_VATTRIBS, mesh );
+		R_UploadVBOVertexData( skydome->sphereVbos[side], 0, SKYDOME_VATTRIBS, mesh, 0 );
 		R_UploadVBOElemData( skydome->sphereVbos[side], 0, 0, mesh );
 	}
 
 	skydome->meshes[side].stArray = skydome->linearStCoords[side];
-	R_UploadVBOVertexData( skydome->linearVbos[side], 0, SKYDOME_VATTRIBS, mesh );
+	R_UploadVBOVertexData( skydome->linearVbos[side], 0, SKYDOME_VATTRIBS, mesh, 0 );
 	R_UploadVBOElemData( skydome->linearVbos[side], 0, 0, mesh );
 }
 
