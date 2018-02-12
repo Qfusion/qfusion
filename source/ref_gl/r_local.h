@@ -116,7 +116,9 @@ enum {
 #define MAX_REF_SCENES          32 // max scenes rendered per frame
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
-#define MAX_VIS_RTLIGHTS	32
+#define MAX_VIS_RTLIGHTS		32
+
+#define MAX_DRAWSURF_SURFS		64 // limit the number of surfaces to a sane 8-bit integer
 
 //===================================================================
 
