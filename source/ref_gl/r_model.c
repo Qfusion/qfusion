@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct {
 	unsigned number;
 	int cluster;
+	unsigned drawSurfIndex;
 	msurface_t *surf;
 } msortedSurface_t;
 
@@ -469,6 +470,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		sortedSurfaces[i].number = i;
 		sortedSurfaces[i].cluster = -1;
 		sortedSurfaces[i].surf = surf;
+		sortedSurfaces[i].drawSurfIndex = 0;
 	}
 
 	numTempVBOs = 0;
@@ -692,6 +694,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 
 		// now if there are any merged faces upload them to the same VBO
 		if( fcount > 1 ) {
+			unsigned si = 1;
+
 			for( j = i + 1; j <= last_merged; j++ ) {
 				if( surfmap[j] != surf ) {
 					continue;
@@ -707,6 +711,9 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				surf2->firstDrawSurfVert = vcount;
 				surf2->firstDrawSurfElem = ecount;
 
+				sortedSurfaces[j].drawSurfIndex = si;
+
+				si++;
 				vcount += surf2->mesh.numVerts;
 				ecount += surf2->mesh.numElems;
 				numUnmappedSurfaces--;
@@ -833,7 +840,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		vertsOffset = drawSurf->firstVboVert + surf->firstDrawSurfVert;
 		elemsOffset = drawSurf->firstVboElem + surf->firstDrawSurfElem;
 
-		R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, mesh );
+		R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, mesh, sortedSurfaces[i].drawSurfIndex );
 		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, mesh );
 		R_UploadVBOInstancesData( vbo, 0, surf->numInstances, surf->instances );
 	}

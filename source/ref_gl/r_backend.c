@@ -802,7 +802,7 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 
 	destVertOffset = stream->drawElements.firstVert + stream->drawElements.numVerts;
 	R_FillVBOVertexDataBuffer( stream->vbo, vattribs, mesh,
-							   stream->vertexData + destVertOffset * stream->vbo->vertexSize );
+							   stream->vertexData + destVertOffset * stream->vbo->vertexSize, 0 );
 
 	destElems = dynamicStreamElems[-streamId - 1] + stream->drawElements.firstElem + stream->drawElements.numElems;
 	if( trifan ) {

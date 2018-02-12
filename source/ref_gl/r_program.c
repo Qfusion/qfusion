@@ -2783,6 +2783,8 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program ) {
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS01, "a_LightmapCoord01" );
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS23, "a_LightmapCoord23" );
 
+	qglBindAttribLocationARB( program->object, VATTRIB_SURFINDEX, "a_SurfaceIndex" );
+
 	if( glConfig.ext.texture_array ) {
 		qglBindAttribLocationARB( program->object, VATTRIB_LMLAYERS0123, "a_LightmapLayer0123" );
 	}
