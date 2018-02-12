@@ -59,6 +59,8 @@ typedef struct {
 
 	unsigned int numLightmaps;
 
+	unsigned int *surfRtlightBits; // [numSurfaces]
+
 	struct shader_s *shader;
 
 	struct mfog_s *fog;

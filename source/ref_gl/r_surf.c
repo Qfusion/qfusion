@@ -364,7 +364,7 @@ static bool R_ClipSpecialWorldSurf( drawSurfaceBSP_t *drawSurf, const msurface_t
 * For sky surfaces, skybox clipping is also performed.
 */
 static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int rtlightBits, unsigned shadowBits, const vec3_t origin ) {
-	unsigned i, end;
+	unsigned i;
 	float dist = 0;
 	bool special;
 	msurface_t *surf;
@@ -386,15 +386,21 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 	curRtlightBits = rtlightFrame == rsc.frameCount ? drawSurf->rtlightBits : 0;
 	curShadowBits = shadowFrame == rsc.frameCount ? drawSurf->shadowBits : 0;
 
-	end = drawSurf->firstWorldSurface + drawSurf->numWorldSurfaces;
 	surf = rsh.worldBrushModel->surfaces + drawSurf->firstWorldSurface;
 
 	special = ( drawSurf->shader->flags & (SHADER_SKY|SHADER_PORTAL) ) != 0;
 
-	for( i = drawSurf->firstWorldSurface; i < end; i++ ) {
-		if( rf.worldSurfVis[i] ) {
+	if( rtlightFrame != rsc.frameCount ) {
+		// reset lightbits for individual surfaces
+		memset( drawSurf->surfRtlightBits, 0, sizeof( *drawSurf->surfRtlightBits ) * drawSurf->numWorldSurfaces );
+	}
+
+	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
+		int s = drawSurf->firstWorldSurface + i;
+
+		if( rf.worldSurfVis[s] ) {
 			float sdist = 0;
-			unsigned int checkRtlightBits = rtlightBits & ~curRtlightBits;
+			unsigned int checkRtlightBits = rtlightBits;
 			unsigned int checkShadowBits = shadowBits & ~curShadowBits;
 
 			if( special && !R_ClipSpecialWorldSurf( drawSurf, surf, origin, &sdist ) ) {
@@ -419,6 +425,7 @@ static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, unsigned int 
 					rtlightFrame = rsc.frameCount;
 					curRtlightBits = checkRtlightBits;
 				}
+				drawSurf->surfRtlightBits[i] = checkRtlightBits;
 			}
 
 			// shadows that are projected onto the surface
