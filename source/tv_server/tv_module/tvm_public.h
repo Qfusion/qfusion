@@ -114,6 +114,7 @@ typedef struct {
 
 	struct cmodel_s *( *CM_InlineModel )( relay_t * relay, int num );
 	int ( *CM_TransformedPointContents )( relay_t *relay, vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
+	void ( *CM_RoundUpToHullSize )( relay_t *relay, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 	void ( *CM_TransformedBoxTrace )( relay_t *relay, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
 	void ( *CM_InlineModelBounds )( relay_t *relay, struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
 	struct cmodel_s *( *CM_ModelForBBox )( relay_t * relay, vec3_t mins, vec3_t maxs );
