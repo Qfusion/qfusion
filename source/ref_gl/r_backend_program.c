@@ -543,11 +543,12 @@ static r_glslfeat_t RB_BonesTransformsToProgramFeatures( void ) {
 /*
 * RB_RtlightbitsToProgramFeatures
 */
-static r_glslfeat_t RB_RtlightbitsToProgramFeatures( unsigned int rtlightBits ) {
-	unsigned numRtlights = Q_bitcount( rtlightBits );
-
+static r_glslfeat_t RB_RtlightbitsToProgramFeatures( unsigned int numRtlights ) {
 	if( r_lighting_maxglsldlights->integer >= 0 && numRtlights > (unsigned)r_lighting_maxglsldlights->integer ) {
 		numRtlights = r_lighting_maxglsldlights->integer;
+	}
+	if( numRtlights > MAX_DRAWSURF_RTLIGHTS ) {
+		numRtlights = MAX_DRAWSURF_RTLIGHTS;
 	}
 
 	if( !numRtlights ) {
@@ -563,7 +564,19 @@ static r_glslfeat_t RB_RtlightbitsToProgramFeatures( unsigned int rtlightBits ) 
 	if( numRtlights <= 12 ) {
 		return GLSL_SHADER_COMMON_DLIGHTS_12;
 	}
-	return GLSL_SHADER_COMMON_DLIGHTS_16;
+	if( numRtlights <= 16 ) {
+		return GLSL_SHADER_COMMON_DLIGHTS_16;
+	}
+	if( numRtlights <= 20 ) {
+		return GLSL_SHADER_COMMON_DLIGHTS_20;
+	}
+	if( numRtlights <= 24 ) {
+		return GLSL_SHADER_COMMON_DLIGHTS_24;
+	}
+	if( numRtlights <= 28 ) {
+		return GLSL_SHADER_COMMON_DLIGHTS_28;
+	}
+	return GLSL_SHADER_COMMON_DLIGHTS_32;
 }
 
 /*
@@ -741,6 +754,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	const mfog_t *fog = rb.fog;
 	bool applyDecal;
 	mat4_t texMatrix;
+	const entity_t *e = rb.currentEntity;
 
 	// handy pointers
 	base = RB_ShaderpassTex( pass );
@@ -825,8 +839,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	}
 
 	// add dynamic lights
-	if( rb.currentRtlightBits ) {
-		programFeatures |= RB_RtlightbitsToProgramFeatures( rb.currentRtlightBits );
+	if( rb.numRealtimeLights ) {
+		programFeatures |= RB_RtlightbitsToProgramFeatures( rb.numRealtimeLights );
 	}
 
 	Matrix4_Identity( texMatrix );
@@ -880,84 +894,98 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 						   GLSL_SHADER_MATERIAL_RELIEFMAPPING : GLSL_SHADER_MATERIAL_OFFSETMAPPING;
 	}
 
-	if( rb.currentModelType == mod_brush ) {
-		// world surface
-		if( rb.superLightStyle && rb.superLightStyle->lightmapNum[0] >= 0 ) {
-			lightStyle = rb.superLightStyle;
-
-			// bind lightmap textures and set program's features for lightstyles
-			for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-				RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] );
-
-			programFeatures |= ( i * GLSL_SHADER_MATERIAL_LIGHTSTYLE0 );
-
-			if( mapConfig.lightmapArrays ) {
-				programFeatures |= GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS;
-			}
-
-			if( i == 1 ) {
-				vec_t *rgb = rsc.lightStyles[lightStyle->lightmapStyles[0]].rgb;
-
-				// GLSL_SHADER_MATERIAL_FB_LIGHTMAP indicates that there's no need to renormalize
-				// the lighting vector for specular (saves 3 adds, 3 muls and 1 normalize per pixel)
-				if( rgb[0] == 1 && rgb[1] == 1 && rgb[2] == 1 ) {
-					programFeatures |= GLSL_SHADER_MATERIAL_FB_LIGHTMAP;
-				}
-			}
-
-			if( !VectorCompare( mapConfig.ambient, vec3_origin ) ) {
-				VectorCopy( mapConfig.ambient, ambient );
-				programFeatures |= GLSL_SHADER_MATERIAL_AMBIENT_COMPENSATION;
-			}
-		} else {
-			// vertex lighting
-			VectorSet( lightDir, 0.1f, 0.2f, 0.7f );
-			VectorSet( ambient, rb.minLight, rb.minLight, rb.minLight );
-			VectorSet( diffuse, rb.minLight, rb.minLight, rb.minLight );
-
-			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT | GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT_MIX;
-		}
-	} else {
-		vec3_t temp;
-
-		programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
-
-		if( rb.currentModelType == mod_bad ) {
-			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT_FROM_NORMAL;
-
-			VectorSet( lightDir, 0, 0, 0 );
-			Vector4Set( ambient, 0, 0, 0, 0 );
+	if( r_lighting_realtime_world->integer ) {
+		if( e->flags & RF_FULLBRIGHT ) {
+			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
+			Vector4Set( ambient, 1, 1, 1, 1 );
 			Vector4Set( diffuse, 1, 1, 1, 1 );
 		} else {
-			const entity_t *e = rb.currentEntity;
+			programFeatures |= GLSL_SHADER_COMMON_REALTIME_LIGHTS;
 
-			if( e->flags & RF_FULLBRIGHT ) {
-				Vector4Set( ambient, 1, 1, 1, 1 );
-				Vector4Set( diffuse, 1, 1, 1, 1 );
-			} else {
-				if( e->model && e != rsc.worldent ) {
-					// get weighted incoming direction of world and dynamic lights
-					R_LightForOrigin( e->lightingOrigin, temp, ambient, diffuse,
-									  e->model->radius * e->scale, rb.noWorldLight );
-				} else {
-					VectorSet( temp, 0.1f, 0.2f, 0.7f );
+			if( e->flags & RF_MINLIGHT ) {
+				programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
+				Vector4Set( ambient, 0.2, 0.2, 0.2, 0 );
+				Vector4Set( diffuse, 0, 0, 0, 0 );
+			}
+		}
+	} else {
+		if( rb.currentModelType == mod_brush ) {
+			// world surface
+			if( rb.superLightStyle && rb.superLightStyle->lightmapNum[0] >= 0 ) {
+				lightStyle = rb.superLightStyle;
+
+				// bind lightmap textures and set program's features for lightstyles
+				for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
+					RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] );
+
+				programFeatures |= ( i * GLSL_SHADER_MATERIAL_LIGHTSTYLE0 );
+
+				if( mapConfig.lightmapArrays ) {
+					programFeatures |= GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS;
 				}
 
-				if( e->flags & RF_MINLIGHT ) {
-					float minLight = rb.minLight;
-					float ambientL = VectorLength( ambient );
+				if( i == 1 ) {
+					vec_t *rgb = rsc.lightStyles[lightStyle->lightmapStyles[0]].rgb;
 
-					if( ambientL < minLight ) {
-						if( ambientL < 0.001 ) {
-							VectorSet( ambient, 1, 1, 1 );
-						}
-						VectorNormalize( ambient );
-						VectorScale( ambient, minLight, ambient );
+					// GLSL_SHADER_MATERIAL_FB_LIGHTMAP indicates that there's no need to renormalize
+					// the lighting vector for specular (saves 3 adds, 3 muls and 1 normalize per pixel)
+					if( rgb[0] == 1 && rgb[1] == 1 && rgb[2] == 1 ) {
+						programFeatures |= GLSL_SHADER_MATERIAL_FB_LIGHTMAP;
 					}
 				}
 
-				// rotate direction
-				Matrix3_TransformVector( e->axis, temp, lightDir );
+				if( !VectorCompare( mapConfig.ambient, vec3_origin ) ) {
+					VectorCopy( mapConfig.ambient, ambient );
+					programFeatures |= GLSL_SHADER_MATERIAL_AMBIENT_COMPENSATION;
+				}
+			} else {
+				// vertex lighting
+				VectorSet( lightDir, 0.1f, 0.2f, 0.7f );
+				VectorSet( ambient, rb.minLight, rb.minLight, rb.minLight );
+				VectorSet( diffuse, rb.minLight, rb.minLight, rb.minLight );
+
+				programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT | GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT_MIX;
+			}
+		} else {
+			vec3_t temp;
+
+			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
+
+			if( rb.currentModelType == mod_bad ) {
+				programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT_FROM_NORMAL;
+
+				VectorSet( lightDir, 0, 0, 0 );
+				Vector4Set( ambient, 0, 0, 0, 0 );
+				Vector4Set( diffuse, 1, 1, 1, 1 );
+			} else {
+				if( e->flags & RF_FULLBRIGHT ) {
+					Vector4Set( ambient, 1, 1, 1, 1 );
+					Vector4Set( diffuse, 1, 1, 1, 1 );
+				} else {
+					if( e->model && e != rsc.worldent ) {
+						// get weighted incoming direction of world and dynamic lights
+						R_LightForOrigin( e->lightingOrigin, temp, ambient, diffuse,
+										  e->model->radius * e->scale, rb.noWorldLight );
+					} else {
+						VectorSet( temp, 0.1f, 0.2f, 0.7f );
+					}
+
+					if( e->flags & RF_MINLIGHT ) {
+						float minLight = rb.minLight;
+						float ambientL = VectorLength( ambient );
+
+						if( ambientL < minLight ) {
+							if( ambientL < 0.001 ) {
+								VectorSet( ambient, 1, 1, 1 );
+							}
+							VectorNormalize( ambient );
+							VectorScale( ambient, minLight, ambient );
+						}
+					}
+
+					// rotate direction
+					Matrix3_TransformVector( e->axis, temp, lightDir );
+				}
 			}
 		}
 	}
@@ -984,7 +1012,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		// dynamic lights
 		RP_UpdateRealtimeLightsUniforms( program, lightStyle, rb.currentEntity->origin, rb.currentEntity->axis,
-			rb.numRealtimeLights, rb.rtlights );
+			rb.numRealtimeLights, rb.rtlights, rb.numSurfaces, rb.surfRtLightBits );
 
 		// r_drawflat
 		if( programFeatures & GLSL_SHADER_COMMON_DRAWFLAT ) {
@@ -1433,8 +1461,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	image = RB_ShaderpassTex( pass );
 	if( isLightmapped || isWorldVertexLight ) {
 		// add dynamic lights
-		if( rb.currentRtlightBits ) {
-			programFeatures |= RB_RtlightbitsToProgramFeatures( rb.currentRtlightBits );
+		if( rb.numRealtimeLights ) {
+			programFeatures |= RB_RtlightbitsToProgramFeatures( rb.numRealtimeLights );
 		}
 		if( DRAWFLAT() ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT;
@@ -1476,14 +1504,18 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	}
 
 	if( isLightmapped ) {
-		int i;
+		if( r_lighting_realtime_world->integer ) {
+			programFeatures |= GLSL_SHADER_COMMON_REALTIME_LIGHTS;
+		} else {
+			int i;
 
-		// bind lightmap textures and set program's features for lightstyles
-		for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-			RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
-		programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
-		if( mapConfig.lightmapArrays ) {
-			programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
+			// bind lightmap textures and set program's features for lightstyles
+			for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
+				RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
+			programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
+			if( mapConfig.lightmapArrays ) {
+				programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
+			}
 		}
 	}
 
@@ -1510,7 +1542,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// dynamic lights
 		if( isLightmapped || isWorldVertexLight ) {
-			RP_UpdateRealtimeLightsUniforms( program, lightStyle, e->origin, e->axis, rb.numRealtimeLights, rb.rtlights );
+			RP_UpdateRealtimeLightsUniforms( program, lightStyle, e->origin, e->axis, 
+				rb.numRealtimeLights, rb.rtlights, rb.numSurfaces, rb.surfRtLightBits );
 		}
 
 		// r_drawflat
@@ -1870,14 +1903,18 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 * RB_UpdateVertexAttribs
 */
 static void RB_UpdateVertexAttribs( void ) {
-	vattribmask_t vattribs = rb.currentShader->vattribs;
+	vattribmask_t vattribs = 0;
+	
+	if( rb.currentShader ) {
+		vattribs |= rb.currentShader->vattribs;
+	}
 	if( rb.superLightStyle ) {
 		vattribs |= rb.superLightStyle->vattribs;
 	}
 	if( rb.bonesData.numBones ) {
 		vattribs |= VATTRIB_BONES_BITS;
 	}
-	if( rb.currentEntity->outlineHeight ) {
+	if( rb.currentEntity && rb.currentEntity->outlineHeight ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
 	if( DRAWFLAT() ) {
@@ -1886,6 +1923,10 @@ static void RB_UpdateVertexAttribs( void ) {
 	if( rb.currentShadowBits && ( rb.currentModelType == mod_brush ) ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
+	if( rb.numSurfaces && rb.numRealtimeLights ) {
+		vattribs |= VATTRIB_SURFINDEX_BIT|VATTRIB_NORMAL_BIT;
+	}
+
 	rb.currentVAttribs = vattribs;
 }
 
@@ -1913,6 +1954,9 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	rb.skyboxShader = NULL;
 	rb.skyboxSide = -1;
+
+	rb.numSurfaces = 0;
+	rb.numRealtimeLights = 0;
 
 	if( !e ) {
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
@@ -2054,16 +2098,32 @@ void RB_SetZClip( float zNear, float zFar ) {
 /*
 * RB_SetLightParams
 */
-void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure, unsigned numRtLights, const rtlight_t *rtlights ) {
-	if( numRtLights > MAX_VIS_RTLIGHTS ) {
-		numRtLights = MAX_VIS_RTLIGHTS;
-	}
-
+void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure ) {
 	rb.minLight = minLight;
 	rb.noWorldLight = noWorldLight;
 	rb.hdrExposure = hdrExposure;
+}
+
+/*
+* RB_SetRtLightParams
+*/
+void RB_SetRtLightParams( unsigned numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
+	if( numRtLights > MAX_DRAWSURF_RTLIGHTS ) {
+		numRtLights = MAX_DRAWSURF_RTLIGHTS;
+	}
+	if( numSurfs > MAX_DRAWSURF_SURFS ) {
+		numSurfs = MAX_DRAWSURF_SURFS;
+	}
+
 	rb.numRealtimeLights = numRtLights;
-	memcpy( rb.rtlights, rtlights, numRtLights * sizeof( rtlight_t ) );
+	if( rtlights )
+		memcpy( rb.rtlights, rtlights, numRtLights * sizeof( *rtlights ) );
+
+	rb.numSurfaces = numSurfs;
+	if( surfRtLightBits )
+		memcpy( rb.surfRtLightBits, surfRtLightBits, numSurfs * sizeof( *surfRtLightBits ) );
+
+	RB_UpdateVertexAttribs();
 }
 
 /*

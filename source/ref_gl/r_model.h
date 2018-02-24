@@ -174,6 +174,9 @@ typedef struct mbrushmodel_s {
 	mfog_t          *fogs;
 	mfog_t          *globalfog;
 
+	unsigned int numRtLights;
+	rtlight_t *rtLights;
+
 	/*unsigned*/ int numareas;
 
 	vec3_t gridSize;
@@ -192,6 +195,9 @@ typedef struct mbrushmodel_s {
 	struct superLightStyle_s *superLightStyles;
 
 	unsigned *surfRtlightBits; // [numsurfaces]
+
+	unsigned numMiptex;
+	void            *mipTex;
 } mbrushmodel_t;
 
 /*

@@ -34,9 +34,13 @@ typedef struct {
 void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadSkeletalModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_LoadQ2BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_FixupQ1MipTex( model_t *mod );
 
 static void R_InitMapConfig( const char *model );
 static void R_FinishMapConfig( const model_t *mod );
+static void R_LoadWorldModelRtLights( model_t *model );
 
 static uint8_t mod_novis[MAX_MAP_LEAFS / 8];
 
@@ -60,6 +64,12 @@ static const modelFormatDescr_t mod_supportedformats[] =
 
 	// Q3-alike .bsp models
 	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ3BrushModel },
+
+	// Q2 .bsp models
+	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ2BrushModel },
+
+	// Q1 .bsp models
+	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ1BrushModel },
 
 	// trailing NULL
 	{ NULL, 0, NULL, 0, NULL }
@@ -288,6 +298,8 @@ static void Mod_SetupSubmodels( model_t *mod ) {
 		bmodel->firstModelDrawSurface = bm->firstModelDrawSurface;
 		bmodel->numModelDrawSurfaces = bm->numModelDrawSurfaces;
 
+		bmodel->surfRtlightBits = loadbmodel->surfRtlightBits + bm->firstModelSurface;
+
 		starmod->extradata = bmodel;
 		if( i == 0 ) {
 			bmodel->visleafs = loadbmodel->visleafs;
@@ -376,6 +388,7 @@ static void Mod_SortModelSurfaces( model_t *mod, unsigned int modnum ) {
 		sortedSurfaces[i].number = i;
 		sortedSurfaces[i].cluster = 0;
 		sortedSurfaces[i].surf = loadbmodel->surfaces + firstSurface + i;
+		sortedSurfaces[i].drawSurfIndex = 0;
 	}
 
 	memcpy( backupSurfaces, loadbmodel->surfaces + firstSurface, numSurfaces * sizeof( msurface_t ) );
@@ -383,6 +396,7 @@ static void Mod_SortModelSurfaces( model_t *mod, unsigned int modnum ) {
 
 	for( i = 0; i < numSurfaces; i++ ) {
 		map[sortedSurfaces[i].number] = i;
+		sortedSurfaces[i].drawSurfIndex = i;
 	}
 
 	if( !modnum && loadbmodel->visleafs ) {
@@ -478,7 +492,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	tempVBOs = ( mesh_vbo_t * )Mod_Malloc( mod, maxTempVBOs * sizeof( *tempVBOs ) );
 	startDrawSurface = loadbmodel->numDrawSurfaces;
 
-	surfRtlightBits = loadbmodel->surfRtlightBits;
+	surfRtlightBits = loadbmodel->surfRtlightBits + bm->firstModelSurface;
 
 	bm->numModelDrawSurfaces = 0;
 	bm->firstModelDrawSurface = startDrawSurface;
@@ -554,7 +568,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	// them in hardware (some Q3A shaders require GLSL for that)
 
 	// don't use half-floats for XYZ due to precision issues
-	floatVattribs = VATTRIB_POSITION_BIT;
+	floatVattribs = VATTRIB_POSITION_BIT|VATTRIB_SURFINDEX_BIT;
 	if( mapConfig.maxLightmapSize > 1024 ) {
 		// don't use half-floats for lightmaps if there's not enough precision (half mantissa is 10 bits)
 		floatVattribs |= VATTRIB_LMCOORDS_BITS;
@@ -595,6 +609,9 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		if( !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) && !surf->numInstances ) {
 			// scan remaining face checking whether we merge them with the current one
 			for( j = i + 1; j < bm->numModelSurfaces; j++ ) {
+				if( fcount == MAX_DRAWSURF_SURFS ) {
+					break;
+				}
 				if( sortedSurfaces[j].cluster < 0 ) {
 					continue;
 				}
@@ -634,16 +651,11 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				ecount += surf2->mesh.numElems;
 				surfmap[j] = surf;
 				last_merged = j;
-
-				// limit the number of surfaces to a 8-bit integer
-				if( fcount == 255 ) {
-					break;
-				}
 			}
 		}
 
 		// create vertex buffer object for this face then upload data
-		vattribs = shader->vattribs | surf->superLightStyle->vattribs | VATTRIB_NORMAL_BIT;
+		vattribs = shader->vattribs | surf->superLightStyle->vattribs | VATTRIB_NORMAL_BIT | VATTRIB_SURFINDEX_BIT;
 		if( surf->numInstances ) {
 			vattribs |= VATTRIB_INSTANCES_BITS;
 		}
@@ -1223,6 +1235,8 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 	if( mod_isworldmodel ) {
 		// we only init map config when loading the map from disk
 		R_FinishMapConfig( mod );
+
+		R_LoadWorldModelRtLights( mod );
 	}
 
 	// do some common things
@@ -1390,6 +1404,9 @@ void R_RegisterWorldModel( const char *model ) {
 void R_WaitWorldModel( void ) {
 	// load all world images if not yet
 	R_FinishLoadingImages();
+
+	// if it's a Quake1 .bsp, load default miptex's for all missing high res images
+	Mod_FixupQ1MipTex( rsh.worldModel );
 }
 
 /*
@@ -1403,6 +1420,121 @@ struct model_s *R_RegisterModel( const char *name ) {
 		R_TouchModel( mod );
 	}
 	return mod;
+}
+
+/*
+* R_LoadWorldModelRtLights
+*/
+static void R_LoadWorldModelRtLights( model_t *model ) {
+	mbrushmodel_t *bmodel;
+	char shortname[MAX_QPATH];
+	char *buf;
+	size_t buflen;
+	int n;
+	char tempchar, *s, *t;
+	bool shadow;
+	char cubemap[MAX_QPATH];
+	int style, flags;
+	float origin[3], radius, color[3], angles[3], corona, coronasizescale, ambientscale, diffusescale, specularscale;
+	char format[128];
+	unsigned numLights, maxLights;
+	rtlight_t *lights;
+
+	if( !model || !( bmodel = ( mbrushmodel_t * )model->extradata ) ) {
+		return;
+	}
+
+	Q_snprintfz( format, sizeof( format ), "%%f %%f %%f %%f %%f %%f %%f %%d %%%zus %%f %%f %%f %%f %%f %%f %%f %%f %%i", sizeof( cubemap ) );
+
+	Q_strncpyz( shortname, model->name, sizeof( shortname ) );
+	COM_ReplaceExtension( shortname, ".rtlights", sizeof( shortname ) );
+
+	buflen = R_LoadFile( shortname, &buf );
+	if( !buf ) {
+		return;
+	}
+
+	numLights = 0;
+	maxLights = 128;
+	lights = ( rtlight_t * )Mod_Malloc( model, maxLights * sizeof( *lights ) );
+
+	s = buf;
+	n = 0;
+	while( *s ) {
+		int a;
+		rtlight_t *l;
+
+		t = s;
+		while( *s && *s != '\n' && *s != '\r' ) {
+			s++;
+		}
+		if( !*s )
+			break;
+
+		tempchar = *s;
+		shadow = true;
+
+		// check for modifier flags
+		if( *t == '!' ) {
+			shadow = false;
+			t++;
+		}
+
+		*s = 0;
+		a = sscanf( t, format, &origin[0], &origin[1], &origin[2], &radius, &color[0], &color[1], &color[2], &style, cubemap, 
+			&corona, &angles[0], &angles[1], &angles[2], &coronasizescale, &ambientscale, &diffusescale, &specularscale, &flags );
+		*s = tempchar;
+
+		if( a < 8 ) {
+			Com_Printf( S_COLOR_YELLOW "Found %d parameters on line %i, should be 8 or more parameters "
+				"(origin[0] origin[1] origin[2] radius color[0] color[1] color[2] style \"cubemapname\" corona "
+				"angles[0] angles[1] angles[2] coronasizescale ambientscale diffusescale specularscale flags)\n", 
+				a, n + 1);
+			break;
+		}
+
+		if( a < 18 )
+			flags = LIGHTFLAG_REALTIMEMODE;
+		if( a < 17 )
+			specularscale = 1;
+		if( a < 16 )
+			diffusescale = 1;
+		if( a < 15 )
+			ambientscale = 0;
+		if( a < 14 )
+			coronasizescale = 0.25f;
+		if( a < 13 )
+			VectorClear( angles );
+		if( a < 10 )
+			corona = 0;
+
+		if( numLights == maxLights ) {
+			maxLights = maxLights + 128;
+			lights = Mod_Realloc( lights, maxLights * sizeof( *lights ) );
+		}
+
+		l = &lights[numLights++];
+		VectorCopy( origin, l->origin );
+		VectorCopy( color, l->color );
+		l->intensity = radius;
+		l->flags = flags;
+		l->style = style;
+
+		if( *s == '\r' )
+			s++;
+		if( *s == '\n' )
+			s++;
+		n++;
+	}
+
+	if( numLights ) {
+		bmodel->numRtLights = numLights;
+		bmodel->rtLights = Mod_Malloc( model, numLights * sizeof( rtlight_t ) );
+		memcpy( bmodel->rtLights, lights, numLights * sizeof( rtlight_t ) );
+	}
+
+	R_Free( buf );
+	R_Free( lights );
 }
 
 /*

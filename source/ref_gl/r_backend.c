@@ -1012,6 +1012,14 @@ static void RB_EnableVertexAttribs( void ) {
 
 			lmattr++;
 		}
+
+		if( vattribs & VATTRIB_SURFINDEX_BIT ) {
+			RB_EnableVertexAttrib( VATTRIB_SURFINDEX, true );
+			qglVertexAttribPointerARB( VATTRIB_SURFINDEX, 1, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SURFINDEX_BIT, hfa ),
+				GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->siOffset );
+		} else {
+			RB_EnableVertexAttrib( VATTRIB_SURFINDEX, false );
+		}
 	}
 
 	if( ( vattribs & VATTRIB_INSTANCES_BITS ) == VATTRIB_INSTANCES_BITS ) {

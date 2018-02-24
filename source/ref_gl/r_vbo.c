@@ -204,7 +204,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		if( vattribs & VATTRIB_SURFINDEX_BIT ) {
 			assert( !( vertexSize & 3 ) );
 			vbo->siOffset = vertexSize;
-			vertexSize += sizeof( int );
+			vertexSize += FLOAT_VATTRIB_SIZE( VATTRIB_SURFINDEX_BIT, halfFloatVattribs );
 		}
 	}
 
@@ -677,10 +677,16 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 		}
 	} else {
 		if( vattribs & VATTRIB_SURFINDEX_BIT ) {
-			if( vbo->siOffset ) {
-				int *out = ( int * )( data + vbo->siOffset );
+			if( !vbo->siOffset ) {
+				errMask |= VATTRIB_SURFINDEX_BIT;
+			} else {
+				float fsurfIndex = surfIndex;
+				size_t bufferOffset = vbo->siOffset;
+
 				for( i = 0; i < mesh->numVerts; i++ ) {
-					out[i] = surfIndex;
+					R_FillVertexBuffer_float_or_half( FLOAT_VATTRIB_GL_TYPE( VATTRIB_SURFINDEX_BIT, hfa ),
+						&fsurfIndex, 1, vertSize, 1, data + bufferOffset );
+					bufferOffset += vertSize;
 				}
 			}
 		}

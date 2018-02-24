@@ -41,6 +41,18 @@ typedef unsigned short elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
+typedef struct {
+	int flags;
+	int style;
+	float intensity;
+
+	vec3_t origin;
+	vec3_t color;
+
+	vec3_t cullmins;
+	vec3_t cullmaxs;
+} rtlight_t;
+
 #define NUM_CUSTOMCOLORS        16
 
 #define NUM_LOADER_THREADS      4 // optimal value found by testing, when there are too many, CPU usage may be 100%
@@ -113,12 +125,9 @@ enum {
 #define RF_CUBEMAPVIEW          ( RF_ENVVIEW )
 #define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW )
 
-#define MAX_REF_SCENES          32 // max scenes rendered per frame
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
-#define MAX_VIS_RTLIGHTS		32
-
-#define MAX_DRAWSURF_SURFS		64 // limit the number of surfaces to a sane 8-bit integer
+#define MAX_SCENE_RTLIGHTS		1024
 
 //===================================================================
 
@@ -135,7 +144,6 @@ typedef struct refScreenTexSet_s {
 
 typedef struct {
 	unsigned int renderFlags;
-	unsigned int rtlightBits;
 
 	unsigned int shadowBits;
 
@@ -179,7 +187,7 @@ typedef struct {
 	portalSurface_t portalSurfaces[MAX_PORTAL_SURFACES];
 	portalSurface_t *skyportalSurface;
 
-	rtlight_t rtlights[MAX_VIS_RTLIGHTS];
+	rtlight_t *rtlights[MAX_SCENE_RTLIGHTS];
 	unsigned numRealtimeLights;
 
 	refdef_t refdef;
@@ -255,7 +263,7 @@ typedef struct {
 	entity_t        *skyent;
 
 	unsigned int numDlights;
-	dlight_t dlights[MAX_DLIGHTS];
+	rtlight_t dlights[MAX_DLIGHTS];
 
 	unsigned int numPolys;
 	drawSurfacePoly_t polys[MAX_POLYS];
@@ -394,6 +402,8 @@ extern cvar_t *r_lighting_vertexlight;
 extern cvar_t *r_lighting_maxglsldlights;
 extern cvar_t *r_lighting_grayscale;
 extern cvar_t *r_lighting_intensity;
+extern cvar_t *r_lighting_realtime_world;
+extern cvar_t *r_lighting_realtime_dynamic;
 
 extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;
@@ -515,12 +525,12 @@ void        R_ShaderDump_f( void );
 //
 // r_cull.c
 //
-void        R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum );
+void    R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum );
 bool    R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags );
 bool    R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
 bool    R_VisCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_VisCullSphere( const vec3_t origin, float radius );
-int         R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull, bool pvsCull );
+int     R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull, bool pvsCull );
 bool    R_CullSpriteEntity( const entity_t *e );
 
 //

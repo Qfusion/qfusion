@@ -559,8 +559,12 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 				assert( r_drawSurfCb[drawSurfType] );
 
 				RB_BindShader( entity, shader, fog );
+
 				RB_SetPortalSurface( portalSurface );
+
 				RB_SetShadowBits( shadowBits );
+
+				RB_SetRtLightParams( 0, NULL, 0, NULL );
 
 				r_drawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, shadowBits, sds->drawSurf );
 			}

@@ -196,6 +196,9 @@ bool R_VisCullBox( const vec3_t mins, const vec3_t maxs ) {
 	if( rn.renderFlags & RF_NOVIS ) {
 		return false;
 	}
+	if( rf.viewcluster < 0 ) {
+		return false;
+	}
 
 	for( s = 0; s < 3; s++ ) {
 		extmins[s] = mins[s] - 4;
@@ -204,14 +207,15 @@ bool R_VisCullBox( const vec3_t mins, const vec3_t maxs ) {
 
 	for( node = rsh.worldBrushModel->nodes;; ) {
 		if( !node->plane ) {
-			/*if( !rf.worldLeafVis[(mleaf_t *)node - rsh.worldBrushModel->leafs] )
-			{
-			    if( !stackdepth )
-			        return true;
-			    node = localstack[--stackdepth];
-			    continue;
-			}*/
-			return false;
+			mleaf_t *leaf = (mleaf_t *)node;
+			unsigned leafNum = leaf - rsh.worldBrushModel->leafs;
+
+			if( leafNum < rsh.worldBrushModel->numvisleafs && rf.worldLeafVis[leafNum] )
+				return false;
+			if( !stackdepth )
+		        return true;
+		    node = localstack[--stackdepth];
+		    continue;
 		}
 
 		s = BOX_ON_PLANE_SIDE( extmins, extmaxs, node->plane ) - 1;
@@ -244,18 +248,22 @@ bool R_VisCullSphere( const vec3_t origin, float radius ) {
 	if( rn.renderFlags & RF_NOVIS ) {
 		return false;
 	}
+	if( rf.viewcluster < 0 ) {
+		return false;
+	}
 
 	radius += 4;
 	for( node = rsh.worldBrushModel->nodes;; ) {
 		if( !node->plane ) {
-			/*if( !rf.worldLeafVis[(mleaf_t *)node - rsh.worldBrushModel->leafs] )
-			{
-			    if( !stackdepth )
-			        return true;
-			    node = localstack[--stackdepth];
-			    continue;
-			}*/
-			return false;
+			mleaf_t *leaf = (mleaf_t *)node;
+			unsigned leafNum = leaf - rsh.worldBrushModel->leafs;
+
+			if( leafNum < rsh.worldBrushModel->numvisleafs && rf.worldLeafVis[leafNum] )
+				return false;
+			if( !stackdepth )
+				return true;
+			node = localstack[--stackdepth];
+			continue;
 		}
 
 		dist = PlaneDiff( origin, node->plane );
