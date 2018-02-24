@@ -57,7 +57,6 @@ typedef struct {
 	const shader_t *shader;
 	const mfog_t *fog;
 	const portalSurface_t *portalSurface;
-	unsigned int shadowBits;
 	vattribmask_t vattribs; // based on the fields above - cached to avoid rebinding
 	int streamId;
 	int primitive;
@@ -142,9 +141,6 @@ typedef struct r_backend_s {
 	int primitive;
 	int currentVBOId;
 	mesh_vbo_t *currentVBO;
-
-	unsigned int currentRtlightBits;
-	unsigned int currentShadowBits;
 
 	const shader_t *skyboxShader;
 	int skyboxSide;

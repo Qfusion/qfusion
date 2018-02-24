@@ -127,6 +127,7 @@ enum {
 
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
+#define MAX_ENT_RTLIGHTS		8
 #define MAX_SCENE_RTLIGHTS		1024
 
 //===================================================================
@@ -144,8 +145,6 @@ typedef struct refScreenTexSet_s {
 
 typedef struct {
 	unsigned int renderFlags;
-
-	unsigned int shadowBits;
 
 	int renderTarget;                       // target framebuffer object
 	bool multisampleDepthResolved;
@@ -198,8 +197,6 @@ typedef struct {
 	drawList_t      *portalmasklist;        // sky and portal BSP surfaces are rendered before (sky-)portals
 											// to create depth mask
 
-	shadowGroup_t   *shadowGroup;
-
 	mfog_t          *fog_eye;
 } refinst_t;
 
@@ -237,7 +234,6 @@ typedef struct {
 	image_t         *particleTexture;           // little dot for particles
 	image_t         *coronaTexture;
 	image_t         *portalTextures[MAX_PORTAL_TEXTURES + 1];
-	image_t         *shadowmapTextures[MAX_SHADOWGROUPS];
 
 	refScreenTexSet_t st, stf, st2D;
 
@@ -272,16 +268,13 @@ typedef struct {
 
 	unsigned int numBmodelEntities;
 	entity_t        *bmodelEntities[MAX_REF_ENTITIES];
-
-	unsigned int maxShadowGroups;
-	unsigned int numShadowGroups;
-	shadowGroup_t shadowGroups[MAX_REF_ENTITIES];
-	unsigned int entShadowGroups[MAX_REF_ENTITIES];
-	unsigned int entShadowBits[MAX_REF_ENTITIES];
+	
+	// negative index points to dynamic lights
+	// 0 for stop
+	// positive index points to world lights
+	unsigned short entShadowLights[MAX_REF_ENTITIES][MAX_ENT_RTLIGHTS];
 
 	float farClipMin, farClipBias;
-
-	unsigned int renderedShadowBits;
 
 	refdef_t refdef;
 } r_scene_t;
@@ -488,7 +481,7 @@ void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 // r_alias.c
 //
 bool    R_AddAliasModelToDrawList( const entity_t *e );
-void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceAlias_t *drawSurf );
+void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf );
 bool    R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
 							 float lerpfrac, const char *name );
 float       R_AliasModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
@@ -629,10 +622,10 @@ bool    R_CompletelyFogged( const mfog_t *fog, vec3_t origin, float radius );
 int         R_LODForSphere( const vec3_t origin, float radius );
 float       R_DefaultFarClip( void );
 
-void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf );
+void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
 
 struct mesh_vbo_s *R_InitNullModelVBO( void );
-void    R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf );
+void    R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
 
 struct mesh_vbo_s *R_InitPostProcessingVBO( void );
 
@@ -704,7 +697,7 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 //
 // r_poly.c
 //
-void        R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfacePoly_t *poly );
+void        R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly );
 void        R_DrawPolys( void );
 void        R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
 bool    R_SurfPotentiallyFragmented( const msurface_t *surf );
@@ -748,7 +741,7 @@ bool    R_SurfPotentiallyShadowed( const msurface_t *surf );
 bool    R_SurfPotentiallyLit( const msurface_t *surf );
 bool    R_AddBrushModelToDrawList( const entity_t *e );
 float       R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
-void    R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceBSP_t *drawSurf );
+void    R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf );
 
 //
 // r_skin.c
@@ -764,7 +757,7 @@ shader_t    *R_FindShaderForSkinFile( const struct skinfile_s *skinfile, const c
 // r_skm.c
 //
 bool    R_AddSkeletalModelToDrawList( const entity_t *e );
-void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceSkeletal_t *drawSurf );
+void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf );
 float       R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
 void        R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 int         R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags );
@@ -852,8 +845,7 @@ enum {
 
 struct skydome_s *R_CreateSkydome( model_t *model );
 void        R_TouchSkydome( struct skydome_s *skydome );
-void        R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, 
-	                       unsigned int shadowBits, drawSurfaceSky_t *drawSurf );
+void        R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf );
 void        R_ClearSky( drawSurfaceSky_t *drawSurf );
 
 /**

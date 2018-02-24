@@ -301,8 +301,7 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 /*
 * R_DrawSkySurf
 */
-void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, 
-	                unsigned int shadowBits, drawSurfaceSky_t *drawSurf ) {
+void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf ) {
 	int i;
 	int numVisSides;
 	visSkySide_t visSkySides[6];

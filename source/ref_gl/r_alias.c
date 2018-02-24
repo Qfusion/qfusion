@@ -531,7 +531,7 @@ bool R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel
 *
 * Interpolates between two frames and origins
 */
-void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceAlias_t *drawSurf ) {
+void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf ) {
 	int i;
 	int framenum = e->frame, oldframenum = e->oldframe;
 	float backv[3], frontv[3];
@@ -648,7 +648,7 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 			dynamicMesh.sVectorsArray = aliasmesh->sVectorsArray;
 		}
 
-		RB_AddDynamicMesh( e, shader, fog, portalSurface, shadowBits, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( e, shader, fog, portalSurface, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
 
 		RB_FlushDynamicMeshes();
 	}
@@ -724,9 +724,6 @@ bool R_AddAliasModelToDrawList( const entity_t *e ) {
 	// never render weapon models or non-occluders into shadowmaps
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		if( e->renderfx & RF_WEAPONMODEL ) {
-			return true;
-		}
-		if( rsc.entShadowGroups[R_ENT2NUM( e )] != rn.shadowGroup->id ) {
 			return true;
 		}
 	}

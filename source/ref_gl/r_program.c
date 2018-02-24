@@ -2407,65 +2407,6 @@ void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat
 }
 
 /*
-* RP_UpdateShadowsUniforms
-*/
-void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **groups, const mat4_t objectMatrix,
-							   const vec3_t objectOrigin, const mat3_t objectAxis ) {
-	int i;
-	const shadowGroup_t *group;
-	mat4_t matrix;
-	vec4_t alpha;
-	glsl_program_t *program = r_glslprograms + elem - 1;
-
-	assert( groups != NULL );
-	assert( numShadows <= GLSL_SHADOWMAP_LIMIT );
-
-	if( numShadows > GLSL_SHADOWMAP_LIMIT ) {
-		numShadows = GLSL_SHADOWMAP_LIMIT;
-	}
-
-	for( i = 0; i < numShadows; i++ ) {
-		group = groups[i];
-
-		if( program->loc.ShadowmapTextureParams[i] >= 0 ) {
-			qglUniform4fARB( program->loc.ShadowmapTextureParams[i],
-							 group->viewportSize[0], group->viewportSize[1],
-							 1.0f / group->textureSize[0], 1.0 / group->textureSize[1] );
-		}
-
-		if( program->loc.ShadowmapMatrix[i] >= 0 ) {
-			Matrix4_Multiply( group->cameraProjectionMatrix, objectMatrix, matrix );
-			qglUniformMatrix4fvARB( program->loc.ShadowmapMatrix[i], 1, GL_FALSE, matrix );
-		}
-
-		if( program->loc.ShadowAlpha[i >> 2] >= 0 ) {
-			alpha[i & 3] = group->alpha;
-			if( ( i & 3 ) == 3 ) {
-				qglUniform4fvARB( program->loc.ShadowAlpha[i >> 2], 1, alpha );
-			}
-		}
-
-		if( program->loc.ShadowDir[i] >= 0 ) {
-			vec4_t lightDir;
-			Matrix3_TransformVector( objectAxis, group->lightDir, lightDir );
-			lightDir[3] = group->projDist;
-			qglUniform4fvARB( program->loc.ShadowDir[i], 1, lightDir );
-		}
-
-		if( program->loc.ShadowEntityDist[i] >= 0 ) {
-			vec3_t tmp, entDist;
-			VectorSubtract( group->origin, objectOrigin, tmp );
-			Matrix3_TransformVector( objectAxis, tmp, entDist );
-			qglUniform3fvARB( program->loc.ShadowEntityDist[i], 1, entDist );
-		}
-	}
-
-	if( ( i & 3 ) && ( program->loc.ShadowAlpha[i >> 2] >= 0 ) ) {
-		qglUniform4fvARB( program->loc.ShadowAlpha[i >> 2], 1, alpha );
-	}
-}
-
-/*
 * RP_UpdateBonesUniforms
 *
 * Set uniform values for animation dual quaternions

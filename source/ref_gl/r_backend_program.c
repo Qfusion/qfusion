@@ -801,7 +801,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	// possibly apply the "texture" fog inline
 	if( fog == rb.texFog ) {
-		if( ( rb.currentShader->numpasses == 1 ) && !rb.currentShadowBits ) {
+		if( rb.currentShader->numpasses == 1 ) {
 			rb.texFog = NULL;
 		} else {
 			fog = NULL;
@@ -1107,73 +1107,6 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 }
 
 /*
-* RB_RenderMeshGLSL_ShadowmapBatch
-*
-* Renders a batch of shadowmap groups in one pass
-*/
-static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfeat_t programFeatures,
-											  int numShadows, const shadowGroup_t **shadowGroups, int *scissor ) {
-	int i;
-	int program;
-	mat4_t texMatrix;
-
-	assert( numShadows <= GLSL_SHADOWMAP_LIMIT );
-
-	if( numShadows > GLSL_SHADOWMAP_LIMIT ) {
-		numShadows = GLSL_SHADOWMAP_LIMIT;
-	}
-
-	// this will tell the program how many shaders we want to render
-	if( numShadows > 1 ) {
-		programFeatures |= GLSL_SHADER_SHADOWMAP_SHADOW2 << ( numShadows - 2 );
-	}
-	if( glConfig.ext.shadow ) {
-		programFeatures |= GLSL_SHADER_SHADOWMAP_SAMPLERS;
-	} else {
-		// pack depth into RGB triplet of the colorbuffer
-		if( glConfig.ext.rgb8_rgba8 ) {
-			// pack depth into RGB888 triplet
-			programFeatures |= GLSL_SHADER_SHADOWMAP_24BIT;
-		}
-	}
-	if( rb.currentShadowBits && ( rb.currentModelType == mod_brush ) ) {
-		programFeatures |= GLSL_SHADER_SHADOWMAP_NORMALCHECK;
-	}
-
-	// update uniforms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, NULL,
-								  rb.currentShader->deformsKey, rb.currentShader->deforms,
-								  rb.currentShader->numdeforms, programFeatures );
-	if( !RB_BindProgram( program ) ) {
-		return;
-	}
-
-	for( i = 0; i < numShadows; i++ ) {
-		RB_BindImage( i, shadowGroups[i]->shadowmap );
-	}
-
-	Matrix4_Identity( texMatrix );
-
-	if( rb.currentModelType == mod_brush ) {
-		RB_Scissor( rb.gl.viewport[0] + scissor[0], rb.gl.viewport[1] + scissor[1],
-					scissor[2] - scissor[0], scissor[3] - scissor[1] );
-	}
-
-	RB_SetShaderpassState( pass->flags );
-
-	RB_UpdateCommonUniforms( program, pass, texMatrix );
-
-	RP_UpdateShadowsUniforms( program, numShadows, shadowGroups, rb.objectMatrix, rb.currentEntity->origin, rb.currentEntity->axis );
-
-	// submit animation data
-	if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
-		RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
-	}
-
-	RB_DrawElementsReal( &rb.drawShadowElements );
-}
-
-/*
 * RB_RenderMeshGLSL_RGBShadow
 */
 static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
@@ -1211,82 +1144,7 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 * The downside of this approach is that scissoring won't be as useful.
 */
 static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	unsigned int i, j;
-	int scissor[4], old_scissor[4];
-	int numShadows, maxShadows;
-	shadowGroup_t *group, *shadowGroups[GLSL_SHADOWMAP_LIMIT];
 
-	if( r_shadows_pcf->integer ) {
-		programFeatures |= GLSL_SHADER_SHADOWMAP_PCF;
-	}
-	if( r_shadows_dither->integer ) {
-		programFeatures |= GLSL_SHADER_SHADOWMAP_DITHER;
-	}
-
-	Vector4Copy( rb.gl.scissor, old_scissor );
-
-	// the shader uses 2 varying vectors per shadow and 1 additional varying
-	maxShadows = ( ( glConfig.maxVaryingFloats & ~3 ) - 4 ) / 8;
-	if( maxShadows > GLSL_SHADOWMAP_LIMIT ) {
-		maxShadows = GLSL_SHADOWMAP_LIMIT;
-	}
-
-	numShadows = 0;
-	for( i = 0; i < rsc.numShadowGroups; i++ ) {
-		vec3_t bbox[8];
-		vec_t *visMins, *visMaxs;
-		int groupScissor[4] = { 0, 0, 0, 0 };
-
-		group = rsc.shadowGroups + i;
-		if( !( rb.currentShadowBits & group->bit ) ) {
-			continue;
-		}
-
-		// project the bounding box on to screen then use scissor test
-		// so that fragment shader isn't run for unshadowed regions
-
-		visMins = group->visMins;
-		visMaxs = group->visMaxs;
-
-		for( j = 0; j < 8; j++ ) {
-			vec_t *corner = bbox[j];
-
-			corner[0] = ( ( j & 1 ) ? visMins[0] : visMaxs[0] );
-			corner[1] = ( ( j & 2 ) ? visMins[1] : visMaxs[1] );
-			corner[2] = ( ( j & 4 ) ? visMins[2] : visMaxs[2] );
-		}
-
-		if( !RB_ScissorForBounds( bbox,
-								  &groupScissor[0], &groupScissor[1], &groupScissor[2], &groupScissor[3] ) ) {
-			continue;
-		}
-
-		// compute scissor in absolute coordinates
-		if( !numShadows ) {
-			Vector4Copy( groupScissor, scissor );
-			scissor[2] += scissor[0];
-			scissor[3] += scissor[1];
-		} else {
-			scissor[2] = max( scissor[2], groupScissor[0] + groupScissor[2] );
-			scissor[3] = max( scissor[3], groupScissor[1] + groupScissor[3] );
-			scissor[0] = min( scissor[0], groupScissor[0] );
-			scissor[1] = min( scissor[1], groupScissor[1] );
-		}
-
-		shadowGroups[numShadows++] = group;
-		if( numShadows >= maxShadows ) {
-			RB_RenderMeshGLSL_ShadowmapArray( pass, programFeatures, numShadows,
-											  (const shadowGroup_t **)shadowGroups, scissor );
-			numShadows = 0;
-		}
-	}
-
-	if( numShadows > 0 ) {
-		RB_RenderMeshGLSL_ShadowmapArray( pass, programFeatures, numShadows,
-										  (const shadowGroup_t **)shadowGroups, scissor );
-	}
-
-	RB_Scissor( old_scissor[0], old_scissor[1], old_scissor[2], old_scissor[3] );
 }
 
 /*
@@ -1422,9 +1280,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 	// possibly apply the fog inline
 	if( fog == rb.texFog ) {
-		if( rb.currentShadowBits ) {
-			fog = NULL;
-		} else if( rb.currentShader->numpasses == 1 || ( isLightmapped && rb.currentShader->numpasses == 2 ) ) {
+		if( rb.currentShader->numpasses == 1 || ( isLightmapped && rb.currentShader->numpasses == 2 ) ) {
 			rb.texFog = NULL;
 		} else {
 			fog = NULL;
@@ -1586,7 +1442,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 
 	// possibly apply the "texture" fog inline
 	if( fog == rb.texFog ) {
-		if( ( rb.currentShader->numpasses == 1 ) && !rb.currentShadowBits ) {
+		if( rb.currentShader->numpasses == 1 ) {
 			rb.texFog = NULL;
 		} else {
 			fog = NULL;
@@ -1920,9 +1776,6 @@ static void RB_UpdateVertexAttribs( void ) {
 	if( DRAWFLAT() ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
-	if( rb.currentShadowBits && ( rb.currentModelType == mod_brush ) ) {
-		vattribs |= VATTRIB_NORMAL_BIT;
-	}
 	if( rb.numSurfaces && rb.numRealtimeLights ) {
 		vattribs |= VATTRIB_SURFINDEX_BIT|VATTRIB_NORMAL_BIT;
 	}
@@ -1943,8 +1796,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	rb.currentEntity = e ? e : &rb.nullEnt;
 	rb.currentModelType = rb.currentEntity->rtype == RT_MODEL && rb.currentEntity->model ? rb.currentEntity->model->type : mod_bad;
-	rb.currentRtlightBits = 0;
-	rb.currentShadowBits = 0;
 	rb.superLightStyle = NULL;
 
 	rb.bonesData.numBones = 0;
@@ -2003,24 +1854,6 @@ void RB_SetLightstyle( const superLightStyle_t *lightStyle ) {
 	rb.dirtyUniformState = true;
 
 	RB_UpdateVertexAttribs();
-}
-
-/*
-* RB_SetRtLightBits
-*/
-void RB_SetRtLightBits( unsigned int rtlightBits ) {
-	assert( rb.currentShader != NULL );
-	rb.currentRtlightBits = rtlightBits;
-	rb.dirtyUniformState = true;
-}
-
-/*
-* RB_SetShadowBits
-*/
-void RB_SetShadowBits( unsigned int shadowBits ) {
-	assert( rb.currentShader != NULL );
-	rb.currentShadowBits = shadowBits;
-	rb.dirtyUniformState = true;
 }
 
 /*
@@ -2332,8 +2165,6 @@ void RB_DrawOutlinedElements( void ) {
 	}
 
 	// set some flags
-	rb.currentShadowBits = 0;
-	rb.currentRtlightBits = 0;
 	rb.colorFog = rb.texFog = NULL;
 	rb.superLightStyle = NULL;
 
@@ -2383,12 +2214,6 @@ void RB_DrawShadedElements( void ) {
 			continue;
 		}
 		RB_RenderPass( pass );
-	}
-
-	// shadow map
-	if( rb.currentShadowBits && ( rb.currentShader->sort >= SHADER_SORT_OPAQUE )
-		&& ( rb.currentShader->sort <= SHADER_SORT_ALPHATEST ) ) {
-		RB_RenderPass( &r_GLSLpasses[BUILTIN_GLSLPASS_SHADOWMAP] );
 	}
 
 	// outlines
