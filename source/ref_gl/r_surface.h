@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_SURFACE_H
 #define R_SURFACE_H
 
+#define MAX_DRAWSURF_RTLIGHTS	32 //
+#define MAX_DRAWSURF_SURFS		64 // limit the number of surfaces to a sane 8-bit integer
+
 typedef enum {
 	ST_NONE,
 	ST_BSP,
@@ -41,11 +44,8 @@ typedef struct {
 
 	unsigned int visFrame;          // should be drawn when node is crossed
 
-	unsigned int shadowBits;
-	unsigned int shadowFrame;
-
-	unsigned int rtlightBits;
-	unsigned int rtlightFrame;
+	unsigned int numRtLights;
+	unsigned int rtLightFrame;
 
 	unsigned int numVerts;
 	unsigned int numElems;
@@ -70,6 +70,8 @@ typedef struct {
 	struct superLightStyle_s *superLightStyle;
 
 	void *listSurf;                 // only valid if visFrame == rf.frameCount
+
+	rtlight_t *rtLights[MAX_DRAWSURF_RTLIGHTS];
 } drawSurfaceBSP_t;
 
 typedef struct {

@@ -180,8 +180,11 @@ typedef struct r_backend_s {
 	bool noWorldLight;
 	refScreenTexSet_t st;
 
-	rtlight_t rtlights[MAX_VIS_RTLIGHTS];
 	unsigned numRealtimeLights;
+	rtlight_t *rtlights[MAX_DRAWSURF_RTLIGHTS];
+
+	unsigned numSurfaces;
+	unsigned surfRtLightBits[MAX_DRAWSURF_SURFS];
 } rbackend_t;
 
 extern rbackend_t rb;

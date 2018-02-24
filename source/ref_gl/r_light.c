@@ -55,7 +55,7 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 	int i;
 	vec3_t origin, point;
 	vec3_t v_left, v_up;
-	dlight_t *light = rsc.dlights + ( drawSurf - r_coronaSurfs );
+	rtlight_t *light = rsc.dlights + ( drawSurf - r_coronaSurfs );
 	float radius = light->intensity, colorscale;
 	elem_t elems[6] = { 0, 1, 2, 0, 2, 3 };
 	vec4_t xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
@@ -108,7 +108,7 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 void R_DrawCoronas( void ) {
 	unsigned int i;
 	float dist;
-	dlight_t *light;
+	rtlight_t *light;
 	rtrace_t tr;
 
 	if( r_dynamiclight->integer != 2 ) {
@@ -273,7 +273,7 @@ dynamic:
 	// add dynamic lights
 	if( radius && r_dynamiclight->integer ) {
 		unsigned int lnum;
-		dlight_t *dl;
+		rtlight_t *dl;
 		float dist, dist2, add;
 		vec3_t direction;
 		bool anyDlights = false;
@@ -860,30 +860,4 @@ void R_SortSuperLightStyles( model_t *mod ) {
 	loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 	qsort( loadbmodel->superLightStyles, loadbmodel->numSuperLightStyles,
 		   sizeof( superLightStyle_t ), ( int ( * )( const void *, const void * ) )R_SuperLightStylesCmp );
-}
-
-/*
-=============================================================================
-
-REALTIME LIGHTS
-
-=============================================================================
-*/
-
-/*
-* R_DlightToRtLight
-*/
-void R_DlightToRtLight( const dlight_t *dl, rtlight_t *rl ) {
-	int i;
-
-	memset( rl, 0, sizeof( *rl ) );
-
-	rl->intensity = dl->intensity;
-	VectorCopy( dl->origin, rl->origin );
-	VectorCopy( dl->color, rl->color );
-
-	for( i = 0; i < 3; i++ ) {
-		rl->cullmins[i] = rl->origin[i] - rl->intensity;
-		rl->cullmaxs[i] = rl->origin[i] + rl->intensity;
-	}
 }

@@ -106,9 +106,10 @@ typedef struct glsl_program_s {
 			DeluxemapOffset,
 			LightstyleColor[MAX_LIGHTMAPS],
 
-			DynamicLightsPosition[MAX_VIS_RTLIGHTS],
-			DynamicLightsDiffuseAndInvRadius[MAX_VIS_RTLIGHTS >> 2],
+			DynamicLightsPosition[MAX_DRAWSURF_RTLIGHTS],
+			DynamicLightsDiffuseAndInvRadius[MAX_DRAWSURF_RTLIGHTS >> 2],
 			NumDynamicLights,
+			LightBits,
 
 			AttrBonesIndices,
 			AttrBonesWeights,
@@ -602,10 +603,16 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
+	{ GLSL_SHADER_COMMON_DLIGHTS_32, "#define NUM_DLIGHTS 32\n", "_dl32" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_28, "#define NUM_DLIGHTS 28\n", "_dl28" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_24, "#define NUM_DLIGHTS 24\n", "_dl24" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_20, "#define NUM_DLIGHTS 20\n", "_dl20" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#define NUM_DLIGHTS 16\n", "_dl16" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_12, "#define NUM_DLIGHTS 12\n", "_dl12" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_8, "#define NUM_DLIGHTS 8\n", "_dl8" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_4, "#define NUM_DLIGHTS 4\n", "_dl4" },
+
+	{ GLSL_SHADER_COMMON_REALTIME_LIGHTS, "#define APPLY_REALTIME_LIGHTS\n", "_rtlight" },
 
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
@@ -759,10 +766,16 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
+	{ GLSL_SHADER_COMMON_DLIGHTS_32, "#define NUM_DLIGHTS 32\n", "_dl32" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_28, "#define NUM_DLIGHTS 28\n", "_dl28" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_24, "#define NUM_DLIGHTS 24\n", "_dl24" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_20, "#define NUM_DLIGHTS 20\n", "_dl20" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#define NUM_DLIGHTS 16\n", "_dl16" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_12, "#define NUM_DLIGHTS 12\n", "_dl12" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_8, "#define NUM_DLIGHTS 8\n", "_dl8" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_4, "#define NUM_DLIGHTS 4\n", "_dl4" },
+
+	{ GLSL_SHADER_COMMON_REALTIME_LIGHTS, "#define APPLY_REALTIME_LIGHTS\n", "_rtlight" },
 
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
@@ -1088,6 +1101,10 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"\n" \
 	"#ifndef MAX_UNIFORM_INSTANCES\n" \
 	"#define MAX_UNIFORM_INSTANCES " STR_TOSTR( MAX_GLSL_UNIFORM_INSTANCES ) "\n" \
+	"#endif\n" \
+	"\n" \
+	"#ifndef MAX_DRAWSURF_SURFS\n" \
+	"#define MAX_DRAWSURF_SURFS " STR_TOSTR( MAX_DRAWSURF_SURFS ) "\n" \
 	"#endif\n"
 
 #define QF_BUILTIN_GLSL_UNIFORMS \
@@ -2263,8 +2280,10 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 * RP_UpdateRealtimeLightsUniforms
 */
 unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
-	const vec3_t entOrigin, const mat3_t entAxis, unsigned int rtlightBits, const rtlight_t *rtlights ) {
-	int i, n, c;
+	const vec3_t entOrigin, const mat3_t entAxis, unsigned int numRtLights, const rtlight_t **rtlights, 
+	unsigned numSurfs, unsigned *surfRtLightBits ) {
+	unsigned i;
+	int n, c;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
 	if( superLightStyle ) {
@@ -2287,7 +2306,7 @@ unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t 
 		}
 	}
 
-	if( rtlightBits ) {
+	if( numRtLights ) {
 		const rtlight_t *rl;
 		vec3_t rlorigin, tvec;
 		vec4_t shaderColor[4];
@@ -2297,11 +2316,9 @@ unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t 
 		Vector4Set( shaderColor[3], 1.0f, 1.0f, 1.0f, 1.0f );
 
 		n = 0;
-		for( i = 0; i < MAX_VIS_RTLIGHTS; i++ ) {
-			rl = rtlights + i;
-			if( !(rtlightBits & (1<<i)) ) {
-				continue;
-			}
+		for( i = 0; i < numRtLights; i++ ) {
+			rl = rtlights[i];
+
 			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
@@ -2315,10 +2332,23 @@ unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t 
 			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, rlorigin );
 
 			c = n & 3;
-			shaderColor[0][c] = rl->color[0];
-			shaderColor[1][c] = rl->color[1];
-			shaderColor[2][c] = rl->color[2];
+			if( glConfig.sSRGB ) {
+				shaderColor[0][c] = R_LinearFloatFromsRGBFloat( rl->color[0] );
+				shaderColor[1][c] = R_LinearFloatFromsRGBFloat( rl->color[1] );
+				shaderColor[2][c] = R_LinearFloatFromsRGBFloat( rl->color[2] );
+			} else {
+				shaderColor[0][c] = rl->color[0];
+				shaderColor[1][c] = rl->color[1];
+				shaderColor[2][c] = rl->color[2];
+			}
 			shaderColor[3][c] = 1.0f / rl->intensity;
+
+			if( rl->style >= 0 && rl->style < MAX_LIGHTSTYLES ) {
+				float *rgb = rsc.lightStyles[rl->style].rgb;
+				shaderColor[0][c] *= rgb[0];
+				shaderColor[1][c] *= rgb[1];
+				shaderColor[2][c] *= rgb[2];
+			}
 
 			// DynamicLightsDiffuseAndInvRadius is transposed for SIMD, but it's still 4x4
 			if( c == 3 ) {
@@ -2328,10 +2358,6 @@ unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t 
 			}
 
 			n++;
-			rtlightBits &= ~( 1 << i );
-			if( !rtlightBits ) {
-				break;
-			}
 		}
 
 		if( n & 3 ) {
@@ -2345,11 +2371,17 @@ unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t 
 			qglUniform1iARB( program->loc.NumDynamicLights, n );
 		}
 
-		for( ; n < MAX_VIS_RTLIGHTS; n += 4 ) {
+		for( ; n < MAX_DRAWSURF_RTLIGHTS; n += 4 ) {
 			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
 			qglUniform4fvARB( program->loc.DynamicLightsDiffuseAndInvRadius[n >> 2], 4, shaderColor[0] );
+		}
+	}
+
+	if( numSurfs ) {
+		if( program->loc.LightBits >= 0 ) {
+			qglUniform1ivARB( program->loc.LightBits, numSurfs, (const GLint *)surfRtLightBits );
 		}
 	}
 
@@ -2640,9 +2672,11 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.builtin.ShaderTime = qglGetUniformLocationARB( program->object, "u_QF_ShaderTime" );
 
 	// dynamic lights
-	for( i = 0; i < MAX_VIS_RTLIGHTS; i++ ) {
+	for( i = 0; i < MAX_DRAWSURF_RTLIGHTS; i++ ) {
 		program->loc.DynamicLightsPosition[i] = qglGetUniformLocationARB( program->object,
 																		  va_r( tmp, sizeof( tmp ), "u_DlightPosition[%i]", i ) );
+		if( program->loc.DynamicLightsPosition[i] < 0 )
+			break;
 
 		if( !( i & 3 ) ) {
 			// 4x4 transposed, so we can index it with `i`
@@ -2650,7 +2684,9 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 				qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_DlightDiffuseAndInvRadius[%i]", i ) );
 		}
 	}
+
 	program->loc.NumDynamicLights = qglGetUniformLocationARB( program->object, "u_NumDynamicLights" );
+	program->loc.LightBits = qglGetUniformLocationARB( program->object, "u_LightBits[0]" );
 
 	// shadowmaps
 	for( i = 0; i < GLSL_SHADOWMAP_LIMIT; i++ ) {

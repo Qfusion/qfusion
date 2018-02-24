@@ -152,22 +152,36 @@ void R_AddEntityToScene( const entity_t *ent ) {
 * R_AddLightToScene
 */
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	if( ( rsc.numDlights < MAX_DLIGHTS ) && intensity && ( r != 0 || g != 0 || b != 0 ) ) {
-		dlight_t *dl = &rsc.dlights[rsc.numDlights];
+	int i;
+	rtlight_t *dl;
 
-		VectorCopy( org, dl->origin );
-		dl->intensity = intensity * DLIGHT_SCALE;
-		dl->color[0] = r;
-		dl->color[1] = g;
-		dl->color[2] = b;
-
-		if( r_lighting_grayscale->integer ) {
-			vec_t grey = ColorGrayscale( dl->color );
-			dl->color[0] = dl->color[1] = dl->color[2] = bound( 0, grey, 1 );
-		}
-
-		rsc.numDlights++;
+	if( rsc.numDlights >= MAX_DLIGHTS ) {
+		return;
 	}
+	if( !intensity || ( r == 0 && g == 0 && b == 0 ) ) {
+		return;
+	}
+	
+	dl = &rsc.dlights[rsc.numDlights];
+	VectorCopy( org, dl->origin );
+	dl->intensity = intensity * DLIGHT_SCALE;
+	dl->color[0] = r;
+	dl->color[1] = g;
+	dl->color[2] = b;
+	dl->flags = LIGHTFLAG_NORMALMODE|LIGHTFLAG_REALTIMEMODE;
+	dl->style = MAX_LIGHTSTYLES;
+
+	for( i = 0; i < 3; i++ ) {
+		dl->cullmins[i] = dl->origin[i] - dl->intensity;
+		dl->cullmaxs[i] = dl->origin[i] + dl->intensity;
+	}
+
+	if( r_lighting_grayscale->integer ) {
+		vec_t grey = ColorGrayscale( dl->color );
+		dl->color[0] = dl->color[1] = dl->color[2] = bound( 0, grey, 1 );
+	}
+
+	rsc.numDlights++;
 }
 
 /*
@@ -310,8 +324,8 @@ void R_RenderScene( const refdef_t *fd ) {
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
 	rn.shadowBits = 0;
-	rn.rtlightBits = 0;
 	rn.shadowGroup = NULL;
+	rn.numRealtimeLights = 0;
 
 	rn.st = &rsh.st;
 	rn.renderTarget = 0;

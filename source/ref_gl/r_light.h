@@ -28,14 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_portals.h"
 #include "r_vattribs.h"
 
+// flags for rtlight rendering
+#define LIGHTFLAG_NORMALMODE 1
+#define LIGHTFLAG_REALTIMEMODE 2
+
 #define DLIGHT_SCALE        0.5f
 #define MAX_SUPER_STYLES    128
-
-typedef struct {
-	vec3_t origin;
-	vec3_t color;
-	float intensity;
-} dlight_t;
 
 typedef struct superLightStyle_s {
 	vattribmask_t vattribs;
@@ -51,16 +49,6 @@ typedef struct {
 	float texMatrix[2][2];
 } lightmapRect_t;
 
-typedef struct {
-	float intensity;
-
-	vec3_t origin;
-	vec3_t color;
-
-	vec3_t cullmins;
-	vec3_t cullmaxs;
-} rtlight_t;
-
 void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
 float       R_LightExposureForOrigin( const vec3_t origin );
 void        R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, lightmapRect_t *rects );
@@ -73,7 +61,5 @@ void        R_InitCoronas( void );
 void        R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf );
 void        R_DrawCoronas( void );
 void        R_ShutdownCoronas( void );
-
-void		R_DlightToRtLight( const dlight_t *dl, rtlight_t *rl );
 
 #endif // R_LIGHT_H
