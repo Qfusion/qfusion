@@ -253,9 +253,6 @@ void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat
 
 void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDualQuat );
 
-void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **groups, const mat4_t objectMatrix,
-							   const vec3_t objectOrigin, const mat3_t objectAxis );
-
 void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePoint_t *instances );
 
 void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t floorColor );

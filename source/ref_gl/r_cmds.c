@@ -227,7 +227,6 @@ void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels ) {
 	// do not render non-bmodel entities
 	rn.renderFlags |= RF_CUBEMAPVIEW;
 	rn.clipFlags = 15;
-	rn.shadowGroup = NULL;
 	rn.renderTarget = 0;
 
 	Vector4Set( rn.viewport, fd.x, glConfig.height - size - fd.y, size, size );

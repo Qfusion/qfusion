@@ -2700,6 +2700,7 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 * R_GetShadowmapTexture
 */
 image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, int flags ) {
+#if 0
 	int samples;
 
 	if( id < 0 || id >= MAX_SHADOWGROUPS ) {
@@ -2720,6 +2721,8 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 						   IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHCOMPARE | flags, IMAGE_TAG_GENERIC, samples );
 
 	return rsh.shadowmapTextures[id];
+#endif
+	return NULL;
 }
 
 /*
@@ -3077,7 +3080,6 @@ void R_FreeUnusedImages( void ) {
 	R_FinishLoadingImages();
 
 	memset( rsh.portalTextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
-	memset( rsh.shadowmapTextures, 0, sizeof( image_t * ) * MAX_SHADOWGROUPS );
 }
 
 /*
@@ -3130,7 +3132,6 @@ void R_ShutdownImages( void ) {
 	r_screenShotBufferSize = 0;
 
 	memset( rsh.portalTextures, 0, sizeof( rsh.portalTextures ) );
-	memset( rsh.shadowmapTextures, 0, sizeof( rsh.shadowmapTextures ) );
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;

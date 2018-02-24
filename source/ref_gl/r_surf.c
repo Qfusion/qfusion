@@ -116,7 +116,7 @@ static bool R_SurfaceClipRtLight( const msurface_t *surf, const rtlight_t *lt ) 
 * R_DrawBSPSurf
 */
 void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
-	const portalSurface_t *portalSurface, unsigned int entShadowBits, drawSurfaceBSP_t *drawSurf ) {
+	const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf ) {
 	const vboSlice_t *slice;
 	static const vboSlice_t nullSlice = { 0 };
 	int firstVert, firstElem;
@@ -129,8 +129,6 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		return;
 	}
 
-	// if either shadow slice is empty or shadowBits is 0, then we must pass the surface unshadowed
-
 	numVerts = slice->numVerts;
 	numElems = slice->numElems;
 	firstVert = drawSurf->firstVboVert + slice->firstVert;
@@ -141,8 +139,6 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	}
 
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
-
-	RB_SetShadowBits( 0 );
 
 	RB_SetLightstyle( drawSurf->superLightStyle );
 
@@ -455,9 +451,6 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 
 	// never render weapon models or non-occluders into shadowmaps
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		if( rsc.entShadowGroups[R_ENT2NUM( e )] != rn.shadowGroup->id ) {
-			return true;
-		}
 	}
 
 	VectorAdd( e->model->mins, e->model->maxs, origin );

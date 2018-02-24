@@ -338,7 +338,6 @@ setup_and_render:
 
 	rn.refdef.rdflags &= ~( RDF_UNDERWATER | RDF_CROSSINGWATER | RDF_FLIPPED );
 
-	rn.shadowGroup = NULL;
 	rn.meshlist = &r_portallist;
 	rn.portalmasklist = NULL;
 
@@ -501,7 +500,6 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 	rn.farClip = R_DefaultFarClip();
 
 	rn.clipFlags = 15;
-	rn.shadowGroup = NULL;
 	rn.meshlist = &r_skyportallist;
 	rn.portalmasklist = NULL;
 	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );

@@ -89,12 +89,9 @@ void R_ClearScene( void ) {
 
 	rsc.numBmodelEntities = 0;
 
-	rsc.renderedShadowBits = 0;
 	rsc.frameCount++;
 
 	R_ClearDebugBounds();
-
-	R_ClearShadowGroups();
 
 	R_ClearSkeletalCache();
 }
@@ -115,15 +112,10 @@ void R_AddEntityToScene( const entity_t *ent ) {
 		if( r_outlines_scale->value <= 0 ) {
 			de->outlineHeight = 0;
 		}
-		rsc.entShadowBits[eNum] = 0;
-		rsc.entShadowGroups[eNum] = 0;
 
 		if( de->rtype == RT_MODEL ) {
 			if( de->model && de->model->type == mod_brush ) {
 				rsc.bmodelEntities[rsc.numBmodelEntities++] = de;
-			}
-			if( !( de->renderfx & RF_NOSHADOW ) ) {
-				R_AddLightOccluder( de ); // build groups and mark shadow casters
 			}
 		} else if( de->rtype == RT_SPRITE ) {
 			// simplifies further checks
@@ -323,8 +315,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	}
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
-	rn.shadowBits = 0;
-	rn.shadowGroup = NULL;
 	rn.numRealtimeLights = 0;
 
 	rn.st = &rsh.st;
@@ -403,8 +393,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	VectorCopy( fd->vieworg, rn.lodOrigin );
 
 	R_BindFrameBufferObject( 0 );
-
-	R_BuildShadowGroups();
 
 	R_RenderView( fd );
 
@@ -687,7 +675,7 @@ static void R_RenderDebugBounds( void ) {
 			Vector4Copy( color, colors[j] );
 		}
 
-		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, NULL, 0, &mesh, GL_LINES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, NULL, &mesh, GL_LINES, 0.0f, 0.0f );
 	}
 
 	RB_FlushDynamicMeshes();

@@ -275,7 +275,7 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 /*
 * R_BatchSpriteSurf
 */
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf ) {
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
 	int i;
 	vec3_t point;
 	vec3_t v_left, v_up;
@@ -325,7 +325,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
 
-	RB_AddDynamicMesh( e, shader, fog, portalSurface, 0, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -416,7 +416,7 @@ mesh_vbo_t *R_InitNullModelVBO( void ) {
 /*
 * R_DrawNullSurf
 */
-void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf ) {
+void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
 	assert( rsh.nullVBO != NULL );
 	if( !rsh.nullVBO ) {
 		return;
@@ -598,7 +598,7 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		}
 	}
 
-	RB_AddDynamicMesh( NULL, shader, NULL, NULL, 0, &pic_mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( NULL, shader, NULL, NULL, &pic_mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -879,7 +879,7 @@ float R_DefaultFarClip( void ) {
 	float farclip_dist;
 
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		return rn.shadowGroup->projDist;
+		farclip_dist = 0;
 	} else if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		farclip_dist = 1024;
 	} else if( rsh.worldModel && rsh.worldBrushModel->globalfog ) {
@@ -1139,7 +1139,7 @@ static void R_EndGL( void ) {
 static void R_DrawEntities( void ) {
 	unsigned int i;
 	entity_t *e;
-	bool shadowmap = ( ( rn.renderFlags & RF_SHADOWMAPVIEW ) != 0 );
+	//bool shadowmap = ( ( rn.renderFlags & RF_SHADOWMAPVIEW ) != 0 );
 	bool culled = true;
 
 	if( rn.renderFlags & RF_ENVVIEW ) {
@@ -1191,14 +1191,6 @@ static void R_DrawEntities( void ) {
 			default:
 				break;
 		}
-
-		if( shadowmap && !culled ) {
-			if( rsc.entShadowGroups[i] != rn.shadowGroup->id ||
-				r_shadows_self_shadow->integer ) {
-				// not from the casting group, mark as shadowed
-				rsc.entShadowBits[i] |= rn.shadowGroup->bit;
-			}
-		}
 	}
 }
 
@@ -1227,9 +1219,7 @@ void R_RenderView( const refdef_t *fd ) {
 	rn.fog_eye = NULL;
 	rn.hdrExposure = 1;
 
-	rn.shadowBits = 0;
 	rn.numRealtimeLights = 0;
-
 	rn.numPortalSurfaces = 0;
 	rn.numDepthPortalSurfaces = 0;
 	rn.skyportalSurface = NULL;
@@ -1301,7 +1291,7 @@ void R_RenderView( const refdef_t *fd ) {
 		R_SetupViewMatrices( &rn.refdef );
 
 		// render to depth textures, mark shadowed entities and surfaces
-		R_DrawShadowmaps();
+		R_DrawLights();
 	}
 
 	R_SortDrawList( rn.meshlist );

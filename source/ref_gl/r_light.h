@@ -58,7 +58,7 @@ void        R_SortSuperLightStyles( model_t *mod );
 void        R_TouchLightmapImages( model_t *mod );
 
 void        R_InitCoronas( void );
-void        R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf );
+void        R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
 void        R_DrawCoronas( void );
 void        R_ShutdownCoronas( void );
 
