@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_SHADOW_H
 #define R_SHADOW_H
 
+extern drawList_t r_shadowlist;
+
 void        R_DrawLights( void );
 
 #endif // R_SHADOW_H

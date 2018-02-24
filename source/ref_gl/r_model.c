@@ -1519,6 +1519,7 @@ static void R_LoadWorldModelRtLights( model_t *model ) {
 		l->intensity = radius;
 		l->flags = flags;
 		l->style = style;
+		l->shadow = shadow;
 
 		if( *s == '\r' )
 			s++;

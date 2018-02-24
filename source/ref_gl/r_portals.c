@@ -219,8 +219,9 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface ) {
 
 	best = NULL;
 	best_d = 100000000;
-	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
-		ent = R_NUM2ENT( i );
+	for( i = 0; i < rn.numEntities; i++ ) {
+		ent = rn.entities[i];
+
 		if( ent->rtype != RT_PORTALSURFACE ) {
 			continue;
 		}
@@ -502,6 +503,7 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 	rn.clipFlags = 15;
 	rn.meshlist = &r_skyportallist;
 	rn.portalmasklist = NULL;
+	rn.rtLight = NULL;
 	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 
 	if( skyportal->noEnts ) {

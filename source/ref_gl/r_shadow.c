@@ -32,4 +32,43 @@ STANDARD PROJECTIVE SHADOW MAPS (SSM)
 * R_DrawLights
 */
 void R_DrawLights( void ) {
+	unsigned i;
+	rtlight_t *l;
+	float farClip;
+
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		return;
+	}
+
+	if( !R_PushRefInst() ) {
+		return;
+	}
+
+	for( i = 0; i < rn.numRealtimeLights; i++ ) {
+		l = rn.rtlights[i];
+
+		if( l->frameCount == rsc.frameCount ) {
+			continue;
+		}
+
+		l->frameCount = rsc.frameCount;
+
+		farClip = l->intensity;
+
+		//rn.renderTarget = shadowmap->fbo;
+		rn.farClip = farClip;
+		rn.renderFlags = RF_SHADOWMAPVIEW | RF_FLIPFRONTFACE;
+		//if( !( shadowmap->flags & IT_DEPTH ) ) {
+		//	rn.renderFlags |= RF_SHADOWMAPVIEW_RGB;
+		//}
+		rn.clipFlags = 31; // clip by far plane too
+		rn.meshlist = &r_shadowlist;
+		rn.portalmasklist = NULL;
+		rn.lod_dist_scale_for_fov = 0;
+		rn.rtLight = l;
+		VectorCopy( l->origin, rn.lodOrigin );
+		VectorCopy( l->origin, rn.viewOrigin );
+	}
+
+	R_PopRefInst();
 }

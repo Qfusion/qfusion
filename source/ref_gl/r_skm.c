@@ -1538,6 +1538,28 @@ static void R_AddSkeletalModelCacheJob( const entity_t *e, const model_t *mod ) 
 }
 
 /*
+* R_CacheSkeletalModelEntity
+*/
+void R_CacheSkeletalModelEntity( const entity_t *e ) {
+	const model_t *mod;
+	entSceneCache_t *cache = R_ENTCACHE( e );
+
+	mod = e->model;
+	if( !mod || !mod->extradata ) {
+		cache->mod_type = mod_bad;
+		return;
+	}
+	if( mod->type != mod_skeletal ) {
+		assert( mod->type == mod_skeletal );
+		return;
+	}
+
+	cache->rotated = true;
+	cache->radius = R_SkeletalModelLerpBBox( e, mod, cache->mins, cache->maxs );
+	cache->fog = R_FogForSphere( e->origin, cache->radius );
+}
+
+/*
 * R_AddSkeletalModelToDrawList
 */
 bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
@@ -1547,36 +1569,25 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
 	const shader_t *shader;
 	const mskmesh_t *mesh;
 	const mskmodel_t *skmodel;
-	vec3_t mins, maxs;
-	float radius;
 	float distance;
-	int clipped;
+	const entSceneCache_t *cache = R_ENTCACHE( e );
+
+	if( cache->mod_type != mod_skeletal ) {
+		return false;
+	}
 
 	mod = R_SkeletalModelLOD( e );
 	if( !( skmodel = ( ( mskmodel_t * )mod->extradata ) ) || !skmodel->nummeshes ) {
 		return false;
 	}
 
-	radius = R_SkeletalModelLerpBBox( e, mod, mins, maxs );
-	clipped = R_CullModelEntity( e, mins, maxs, radius, true, true );
-	if( clipped ) {
-		return false;
-	}
-
-	// never render weapon models or non-occluders into shadowmaps
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		if( e->renderfx & RF_WEAPONMODEL ) {
-			return true;
-		}
-	}
-
-	// make sure weapon model is always closest to the viewer
+	// make sure weapon model is always close to the viewer
 	distance = 0;
 	if( !( e->renderfx & RF_WEAPONMODEL ) ) {
 		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
 
-	fog = R_FogForSphere( e->origin, radius );
+	fog = cache->fog;
 #if 0
 	if( !( e->flags & RF_WEAPONMODEL ) && fog ) {
 		R_SkeletalModelLerpBBox( e, mod );

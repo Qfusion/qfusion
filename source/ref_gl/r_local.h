@@ -41,44 +41,9 @@ typedef unsigned short elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
-typedef struct {
-	int flags;
-	int style;
-	float intensity;
-
-	vec3_t origin;
-	vec3_t color;
-
-	vec3_t cullmins;
-	vec3_t cullmaxs;
-} rtlight_t;
-
 #define NUM_CUSTOMCOLORS        16
 
 #define NUM_LOADER_THREADS      4 // optimal value found by testing, when there are too many, CPU usage may be 100%
-
-enum {
-	QGL_CONTEXT_MAIN,
-	QGL_CONTEXT_LOADER,
-	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER + NUM_LOADER_THREADS
-};
-
-#include "r_math.h"
-#include "r_public.h"
-#include "r_vattribs.h"
-#include "r_light.h"
-#include "r_glimp.h"
-#include "r_surface.h"
-#include "r_image.h"
-#include "r_mesh.h"
-#include "r_shader.h"
-#include "r_backend.h"
-#include "r_shadow.h"
-#include "r_model.h"
-#include "r_trace.h"
-#include "r_program.h"
-#include "r_jobs.h"
-#include "r_portals.h"
 
 #ifdef CGAMEGETLIGHTORIGIN
 #define SHADOW_MAPPING          2
@@ -130,7 +95,59 @@ enum {
 #define MAX_ENT_RTLIGHTS		8
 #define MAX_SCENE_RTLIGHTS		1024
 
+enum {
+	QGL_CONTEXT_MAIN,
+	QGL_CONTEXT_LOADER,
+	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER + NUM_LOADER_THREADS
+};
+
+typedef struct {
+	int flags;
+	int style;
+	unsigned frameCount;
+	bool shadow;
+	float intensity;
+
+	vec3_t origin;
+	vec3_t color;
+
+	vec3_t cullmins;
+	vec3_t cullmaxs;
+} rtlight_t;
+
+#include "r_math.h"
+#include "r_public.h"
+#include "r_vattribs.h"
+#include "r_light.h"
+#include "r_glimp.h"
+#include "r_surface.h"
+#include "r_image.h"
+#include "r_mesh.h"
+#include "r_shader.h"
+#include "r_backend.h"
+#include "r_shadow.h"
+#include "r_model.h"
+#include "r_trace.h"
+#include "r_program.h"
+#include "r_jobs.h"
+#include "r_portals.h"
+
 //===================================================================
+
+// cached for this frame for zero LOD
+typedef struct {
+	int mod_type;
+	bool rotated;
+	float radius;
+
+	vec3_t mins;
+	vec3_t maxs;
+
+	struct mfog_s *fog;
+
+	unsigned numRtLights;
+	rtlight_t *entRtLights[MAX_ENT_RTLIGHTS];
+} entSceneCache_t;
 
 typedef struct refScreenTexSet_s {
 	image_t         *screenTex;
@@ -191,6 +208,9 @@ typedef struct {
 
 	refdef_t refdef;
 
+	unsigned int numEntities;
+	entity_t *entities[MAX_REF_ENTITIES];
+
 	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
 
 	drawList_t      *meshlist;              // meshes to be rendered
@@ -198,6 +218,8 @@ typedef struct {
 											// to create depth mask
 
 	mfog_t          *fog_eye;
+
+	rtlight_t		*rtLight;
 } refinst_t;
 
 //====================================================
@@ -252,6 +274,7 @@ typedef struct {
 	unsigned int numEntities;
 	unsigned int numLocalEntities;
 	entity_t entities[MAX_REF_ENTITIES];
+	entSceneCache_t entSceneCache[MAX_REF_ENTITIES];
 	entity_t        *worldent;
 	entity_t        *polyent;
 	entity_t        *polyweapent;
@@ -268,11 +291,6 @@ typedef struct {
 
 	unsigned int numBmodelEntities;
 	entity_t        *bmodelEntities[MAX_REF_ENTITIES];
-	
-	// negative index points to dynamic lights
-	// 0 for stop
-	// positive index points to world lights
-	unsigned short entShadowLights[MAX_REF_ENTITIES][MAX_ENT_RTLIGHTS];
 
 	float farClipMin, farClipBias;
 
@@ -355,6 +373,9 @@ extern r_globals_t rf;
 
 #define R_ENT2NUM( ent ) ( ( ent ) - rsc.entities )
 #define R_NUM2ENT( num ) ( rsc.entities + ( num ) )
+
+#define R_ENTNUMCACHE( num ) ( rsc.entSceneCache + num )
+#define R_ENTCACHE( ent ) R_ENTNUMCACHE( R_ENT2NUM( ent ) )
 
 extern cvar_t *r_norefresh;
 extern cvar_t *r_drawentities;
@@ -480,6 +501,7 @@ void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 //
 // r_alias.c
 //
+void	R_CacheAliasModelEntity( const entity_t *e );
 bool    R_AddAliasModelToDrawList( const entity_t *e );
 void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf );
 bool    R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
@@ -523,8 +545,8 @@ bool    R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clip
 bool    R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
 bool    R_VisCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_VisCullSphere( const vec3_t origin, float radius );
-int     R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull, bool pvsCull );
-bool    R_CullSpriteEntity( const entity_t *e );
+int     R_CullModelEntity( const entity_t *e, bool pvsCull );
+int		R_CullSpriteEntity( const entity_t *e );
 
 //
 // r_framebuffer.c
@@ -626,6 +648,8 @@ void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const 
 
 struct mesh_vbo_s *R_InitNullModelVBO( void );
 void    R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
+
+void		R_CacheSpriteEntity( const entity_t *e );
 
 struct mesh_vbo_s *R_InitPostProcessingVBO( void );
 
@@ -739,6 +763,7 @@ void        R_DrawWorld( void );
 bool    R_SurfPotentiallyVisible( const msurface_t *surf );
 bool    R_SurfPotentiallyShadowed( const msurface_t *surf );
 bool    R_SurfPotentiallyLit( const msurface_t *surf );
+void	R_CacheBrushModelEntity( const entity_t *e );
 bool    R_AddBrushModelToDrawList( const entity_t *e );
 float       R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
 void    R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf );
@@ -756,6 +781,7 @@ shader_t    *R_FindShaderForSkinFile( const struct skinfile_s *skinfile, const c
 //
 // r_skm.c
 //
+void	R_CacheSkeletalModelEntity( const entity_t *e );
 bool    R_AddSkeletalModelToDrawList( const entity_t *e );
 void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf );
 float       R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
