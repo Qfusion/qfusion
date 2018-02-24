@@ -329,16 +329,29 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 }
 
 /*
+* R_CacheSpriteEntity
+*/
+void R_CacheSpriteEntity( const entity_t *e ) {
+	int i;
+	float corner;
+	entSceneCache_t *cache = R_ENTCACHE( e );
+
+	cache->rotated = true;
+	cache->radius = e->radius;
+	cache->fog = R_FogForSphere( e->origin, e->radius );
+
+	corner = e->radius * 1.74;
+	for( i = 0; i < 3; i++ ) {
+		cache->mins[i] = e->origin[i] - corner;
+		cache->maxs[i] = e->origin[i] + corner;
+	}
+}
+
+/*
 * R_AddSpriteToDrawList
 */
 static bool R_AddSpriteToDrawList( const entity_t *e ) {
 	float dist;
-
-	if( e->flags & RF_NOSHADOW ) {
-		if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-			return false;
-		}
-	}
 
 	if( e->radius <= 0 || e->customShader == NULL || e->scale <= 0 ) {
 		return false;
@@ -348,10 +361,11 @@ static bool R_AddSpriteToDrawList( const entity_t *e ) {
 		( e->origin[0] - rn.refdef.vieworg[0] ) * rn.viewAxis[AXIS_FORWARD + 0] +
 		( e->origin[1] - rn.refdef.vieworg[1] ) * rn.viewAxis[AXIS_FORWARD + 1] +
 		( e->origin[2] - rn.refdef.vieworg[2] ) * rn.viewAxis[AXIS_FORWARD + 2];
+
 	if( dist <= 0 ) {
 		return false; // cull it because we don't want to sort unneeded things
-
 	}
+
 	if( !R_AddSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, e->radius ),
 							  e->customShader, dist, 0, NULL, &spriteDrawSurf ) ) {
 		return false;
@@ -431,8 +445,12 @@ void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fo
 * R_AddNullSurfToDrawList
 */
 static bool R_AddNullSurfToDrawList( const entity_t *e ) {
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		return false;
+	}
+
 	if( !R_AddSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, 0.1f ),
-							  rsh.whiteShader, 0, 0, NULL, &nullDrawSurf ) ) {
+		rsh.whiteShader, 0, 0, NULL, &nullDrawSurf ) ) {
 		return false;
 	}
 
@@ -1134,62 +1152,103 @@ static void R_EndGL( void ) {
 }
 
 /*
+* R_CullEntities
+*/
+static void R_CullEntities( void ) {
+	unsigned int i;
+
+	if( rn.renderFlags & RF_ENVVIEW ) {
+		for( i = 0; i < rsc.numBmodelEntities; i++ ) {
+			rn.entities[i] = rsc.bmodelEntities[i];
+		}
+		rn.numEntities = rsc.numBmodelEntities;
+		return;
+	}
+
+	rn.numEntities = 0;
+
+	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
+		entity_t *e = R_NUM2ENT( i );
+		bool culled = true;
+
+		if( e->flags & RF_NOSHADOW ) {
+			if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+				continue;
+			}
+		}
+
+		if( e->flags & RF_WEAPONMODEL ) {
+			if( rn.renderFlags & RF_NONVIEWERREF ) {
+				continue;
+			}
+			goto add;
+		}
+
+		if( e->flags & RF_VIEWERMODEL ) {
+			//if( !(rn.renderFlags & RF_NONVIEWERREF) )
+			if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_SHADOWMAPVIEW ) ) ) {
+				continue;
+			}
+		}
+
+		if( e->flags & RF_NODEPTHTEST ) {
+			goto add;
+		}
+
+		switch( e->rtype ) {
+		case RT_MODEL:
+			culled = R_CullModelEntity( e, false ) != 0;
+			break;
+		case RT_SPRITE:
+			culled = R_CullSpriteEntity( e ) != 0;
+			break;
+		default:
+			break;
+		}
+
+		if( !culled ) {
+add:
+			rn.entities[rn.numEntities++] = e;
+		}
+	}
+}
+
+/*
 * R_DrawEntities
 */
 static void R_DrawEntities( void ) {
 	unsigned int i;
 	entity_t *e;
-	//bool shadowmap = ( ( rn.renderFlags & RF_SHADOWMAPVIEW ) != 0 );
-	bool culled = true;
+	entSceneCache_t *cache;
 
-	if( rn.renderFlags & RF_ENVVIEW ) {
-		for( i = 0; i < rsc.numBmodelEntities; i++ ) {
-			e = rsc.bmodelEntities[i];
-			if( !r_lerpmodels->integer ) {
-				e->backlerp = 0;
-			}
-			e->outlineHeight = rsc.worldent->outlineHeight;
-			Vector4Copy( rsc.worldent->outlineRGBA, e->outlineColor );
-			R_AddBrushModelToDrawList( e );
-		}
-		return;
-	}
-
-	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
-		e = R_NUM2ENT( i );
-		culled = true;
-
-		if( !r_lerpmodels->integer ) {
-			e->backlerp = 0;
-		}
+	for( i = 0; i < rn.numEntities; i++ ) {
+		e = rn.entities[i];
+		cache = R_ENTCACHE( e );
 
 		switch( e->rtype ) {
-			case RT_MODEL:
-				if( !e->model ) {
-					R_AddNullSurfToDrawList( e );
-					continue;
-				}
-
-				switch( e->model->type ) {
-					case mod_alias:
-						culled = !R_AddAliasModelToDrawList( e );
-						break;
-					case mod_skeletal:
-						culled = !R_AddSkeletalModelToDrawList( e );
-						break;
-					case mod_brush:
-						e->outlineHeight = rsc.worldent->outlineHeight;
-						Vector4Copy( rsc.worldent->outlineRGBA, e->outlineColor );
-						culled = !R_AddBrushModelToDrawList( e );
-					default:
-						break;
-				}
+		case RT_MODEL:
+			switch( e->model->type ) {
+			case mod_alias:
+				R_AddAliasModelToDrawList( e );
 				break;
-			case RT_SPRITE:
-				culled = !R_AddSpriteToDrawList( e );
+			case mod_skeletal:
+				R_AddSkeletalModelToDrawList( e );
+				break;
+			case mod_brush:
+				R_AddBrushModelToDrawList( e );
+				break;
+			case mod_bad:
+				R_AddNullSurfToDrawList( e );
 				break;
 			default:
 				break;
+			}
+			break;
+		case RT_SPRITE:
+			R_AddSpriteToDrawList( e );
+			break;
+		default:
+			break;
 		}
 	}
 }
@@ -1277,7 +1336,11 @@ void R_RenderView( const refdef_t *fd ) {
 	if( r_speeds->integer ) {
 		msec = ri.Sys_Milliseconds();
 	}
+
+	R_CullEntities();
+
 	R_DrawEntities();
+
 	if( r_speeds->integer ) {
 		rf.stats.t_add_entities += ( ri.Sys_Milliseconds() - msec );
 	}

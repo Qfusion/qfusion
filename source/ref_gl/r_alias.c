@@ -694,6 +694,28 @@ void R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t
 }
 
 /*
+* R_CacheAliasModelEntity
+*/
+void R_CacheAliasModelEntity( const entity_t *e ) {
+	const model_t *mod;
+	entSceneCache_t *cache = R_ENTCACHE( e );
+
+	mod = e->model;
+	if( !mod || !mod->extradata ) {
+		cache->mod_type = mod_bad;
+		return;
+	}
+	if( mod->type != mod_alias ) {
+		assert( mod->type == mod_alias );
+		return;
+	}
+
+	cache->rotated = true;
+	cache->radius = R_AliasModelLerpBBox( e, mod, cache->mins, cache->maxs );
+	cache->fog = R_FogForSphere( e->origin, cache->radius );
+}
+
+/*
 * R_AddAliasModelToDrawList
 *
 * Returns true if the entity is added to draw list
@@ -705,40 +727,29 @@ bool R_AddAliasModelToDrawList( const entity_t *e ) {
 	const mfog_t *fog;
 	const shader_t *shader;
 	const maliasmesh_t *mesh;
-	vec3_t mins, maxs;
-	float radius;
 	float distance;
-	int clipped;
+	const entSceneCache_t *cache = R_ENTCACHE( e );
+
+	if( cache->mod_type != mod_alias ) {
+		return false;
+	}
 
 	mod = R_AliasModelLOD( e );
 	if( !( aliasmodel = ( ( const maliasmodel_t * )mod->extradata ) ) || !aliasmodel->nummeshes ) {
 		return false;
 	}
 
-	radius = R_AliasModelLerpBBox( e, mod, mins, maxs );
-	clipped = R_CullModelEntity( e, mins, maxs, radius, true, aliasmodel->numtris > 100 );
-	if( clipped ) {
-		return false;
-	}
-
-	// never render weapon models or non-occluders into shadowmaps
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		if( e->renderfx & RF_WEAPONMODEL ) {
-			return true;
-		}
-	}
-
-	// make sure weapon model is always closest to the viewer
+	// make sure weapon model is always close to the viewer
 	distance = 0;
 	if( !( e->renderfx & RF_WEAPONMODEL ) ) {
 		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
 
-	fog = R_FogForSphere( e->origin, radius );
+	fog = cache->fog;
 #if 0
 	if( !( e->flags & RF_WEAPONMODEL ) && fog ) {
 		R_AliasModelLerpBBox( e, mod );
-		if( R_CompletelyFogged( fog, e->origin, radius ) ) {
+		if( R_CompletelyFogged( fog, e->origin, cache->radius ) ) {
 			return false;
 		}
 	}

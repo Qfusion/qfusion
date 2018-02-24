@@ -414,7 +414,7 @@ float R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotat
 	}
 }
 
-#define R_TransformPointToModelSpace( e,rotate,in,out ) \
+#define R_TransformPointToModelSpace( e,rotated,in,out ) \
 	VectorSubtract( in, ( e )->origin, out ); \
 	if( rotated ) { \
 		vec3_t temp; \
@@ -423,42 +423,51 @@ float R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotat
 	}
 
 /*
+* R_CacheBrushModelEntity
+*/
+void R_CacheBrushModelEntity( const entity_t *e ) {
+	const model_t *mod;
+	entSceneCache_t *cache = R_ENTCACHE( e );
+
+	mod = e->model;
+	if( mod->type != mod_brush ) {
+		assert( mod->type == mod_brush );
+		return;
+	}
+
+	cache->radius = R_BrushModelBBox( e, cache->mins, cache->maxs, &cache->rotated );
+	cache->fog = R_FogForBounds( cache->mins, cache->maxs );
+}
+
+/*
 * R_AddBrushModelToDrawList
 */
 bool R_AddBrushModelToDrawList( const entity_t *e ) {
 	unsigned int i;
 	vec3_t origin;
-	vec3_t bmins, bmaxs;
-	bool rotated;
 	model_t *model = e->model;
 	mbrushmodel_t *bmodel = ( mbrushmodel_t * )model->extradata;
 	mfog_t *fog;
-	float radius;
 	int numRtLights;
 	unsigned rtLightBits;
 	rtlight_t *rtLights[MAX_DRAWSURF_RTLIGHTS];
 	unsigned numVisSurfaces;
+	const entSceneCache_t *cache = R_ENTCACHE( e );
+
+	if( cache->mod_type != mod_brush ) {
+		return false;
+	}
 
 	if( bmodel->numModelDrawSurfaces == 0 ) {
 		return false;
 	}
 
-	radius = R_BrushModelBBox( e, bmins, bmaxs, &rotated );
-
-	if( R_CullModelEntity( e, bmins, bmaxs, radius, rotated, false ) ) {
-		return false;
-	}
-
-	// never render weapon models or non-occluders into shadowmaps
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-	}
-
 	VectorAdd( e->model->mins, e->model->maxs, origin );
 	VectorMA( e->origin, 0.5, origin, origin );
 
-	fog = R_FogForBounds( bmins, bmaxs );
+	fog = cache->fog;
 
-	R_TransformPointToModelSpace( e, rotated, rn.refdef.vieworg, modelOrg );
+	R_TransformPointToModelSpace( e, cache->rotated, rn.refdef.vieworg, modelOrg );
 
 	numVisSurfaces = 0;
 
@@ -490,7 +499,7 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 		if( numRtLights == MAX_DRAWSURF_RTLIGHTS ) {
 			break;
 		}
-		if( !BoundsAndSphereIntersect( bmins, bmaxs, l->origin, l->intensity ) ) {
+		if( !BoundsAndSphereIntersect( cache->mins, cache->maxs, l->origin, l->intensity ) ) {
 			continue;
 		}
 		rtLights[numRtLights++] = l;

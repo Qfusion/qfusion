@@ -97,6 +97,48 @@ void R_ClearScene( void ) {
 }
 
 /*
+* R_CacheSceneEntity
+*/
+static void R_CacheSceneEntity( entity_t *e ) {
+	entSceneCache_t *cache = R_ENTCACHE( e );
+
+	switch( e->rtype ) {
+	case RT_MODEL:
+		if( !e->model ) {
+			cache->mod_type = mod_bad;
+			return;
+		}
+
+		cache->mod_type = e->model->type;
+		cache->radius = 0;
+		cache->rotated = false;
+		cache->numRtLights = 0;
+		ClearBounds( cache->mins, cache->maxs );
+
+		switch( e->model->type ) {
+		case mod_alias:
+			R_CacheAliasModelEntity( e );
+			break;
+		case mod_skeletal:
+			R_CacheSkeletalModelEntity( e );
+			break;
+		case mod_brush:
+			R_CacheBrushModelEntity( e );
+			break;
+		default:
+			e->model->type = mod_bad;
+			break;
+		}
+		break;
+	case RT_SPRITE:
+		R_CacheSpriteEntity( e );
+		break;
+	default:
+		break;
+	}
+}
+
+/*
 * R_AddEntityToScene
 */
 void R_AddEntityToScene( const entity_t *ent ) {
@@ -114,6 +156,9 @@ void R_AddEntityToScene( const entity_t *ent ) {
 		}
 
 		if( de->rtype == RT_MODEL ) {
+			de->outlineHeight = rsc.worldent->outlineHeight;
+			Vector4Copy( rsc.worldent->outlineRGBA, de->outlineColor );
+
 			if( de->model && de->model->type == mod_brush ) {
 				rsc.bmodelEntities[rsc.numBmodelEntities++] = de;
 			}
@@ -127,6 +172,12 @@ void R_AddEntityToScene( const entity_t *ent ) {
 				de->renderfx &= ~RF_ALPHAHACK;
 			}
 		}
+
+		if( !r_lerpmodels->integer ) {
+			de->backlerp = 0;
+		}
+
+		R_CacheSceneEntity( de );
 
 		rsc.numEntities++;
 
@@ -160,8 +211,9 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	dl->color[0] = r;
 	dl->color[1] = g;
 	dl->color[2] = b;
-	dl->flags = LIGHTFLAG_NORMALMODE|LIGHTFLAG_REALTIMEMODE;
+	dl->flags = LIGHTFLAG_REALTIMEMODE;
 	dl->style = MAX_LIGHTSTYLES;
+	dl->shadow = false;
 
 	for( i = 0; i < 3; i++ ) {
 		dl->cullmins[i] = dl->origin[i] - dl->intensity;
@@ -315,7 +367,9 @@ void R_RenderScene( const refdef_t *fd ) {
 	}
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
+	rn.numEntities = 0;
 	rn.numRealtimeLights = 0;
+	rn.rtLight = NULL;
 
 	rn.st = &rsh.st;
 	rn.renderTarget = 0;

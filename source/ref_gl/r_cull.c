@@ -290,29 +290,15 @@ bool R_VisCullSphere( const vec3_t origin, float radius ) {
 /*
 * R_CullModelEntity
 */
-int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull, bool pvsCull ) {
-	if( e->flags & RF_NOSHADOW ) {
-		if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-			return 3;
-		}
-	}
+int R_CullModelEntity( const entity_t *e, bool pvsCull ) {
+	const entSceneCache_t *cache = R_ENTCACHE( e );
+	const vec_t *mins = cache->mins;
+	const vec_t *maxs = cache->maxs;
+	float radius = cache->radius;
+	bool sphereCull = cache->rotated;
 
-	if( e->flags & RF_WEAPONMODEL ) {
-		if( rn.renderFlags & RF_NONVIEWERREF ) {
-			return 1;
-		}
-		return 0;
-	}
-
-	if( e->flags & RF_VIEWERMODEL ) {
-		//if( !(rn.renderFlags & RF_NONVIEWERREF) )
-		if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_SHADOWMAPVIEW ) ) ) {
-			return 1;
-		}
-	}
-
-	if( e->flags & RF_NODEPTHTEST ) {
-		return 0;
+	if( cache->mod_type == mod_bad ) {
+		return false;
 	}
 
 	// account for possible outlines
@@ -342,5 +328,12 @@ int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius
 		}
 	}
 
+	return 0;
+}
+
+/*
+* R_CullSpriteEntity
+*/
+int R_CullSpriteEntity( const entity_t *e ) {
 	return 0;
 }
