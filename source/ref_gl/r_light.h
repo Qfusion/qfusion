@@ -62,4 +62,7 @@ void        R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const 
 void        R_DrawCoronas( void );
 void        R_ShutdownCoronas( void );
 
+void		R_GetLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
+void		R_RenderDebugLights( void );
+
 #endif // R_LIGHT_H

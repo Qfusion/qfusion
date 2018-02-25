@@ -861,3 +861,106 @@ void R_SortSuperLightStyles( model_t *mod ) {
 	qsort( loadbmodel->superLightStyles, loadbmodel->numSuperLightStyles,
 		   sizeof( superLightStyle_t ), ( int ( * )( const void *, const void * ) )R_SuperLightStylesCmp );
 }
+
+/*
+=============================================================================
+
+REALTIME LIGHTS
+
+=============================================================================
+*/
+
+/*
+* R_GetLightVisInfo_r
+*/
+static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node ) {
+	unsigned i;
+	mleaf_t *leaf;
+
+	while( node->plane != NULL ) {
+		float d = PlaneDiff( l->origin, node->plane );
+
+		if( d > l->intensity ) {
+			node = node->children[0];
+		} else if( d < -l->intensity ) {
+			node = node->children[1];
+		}  else {
+			R_GetLightVisInfo_r( l, node->children[0] );
+			node = node->children[1];
+		}
+	}
+
+	leaf = ( mleaf_t * )node;
+	if( leaf->cluster < 0 || !leaf->numVisSurfaces ) {
+		return;
+	}
+
+	for( i = 0; i < 3; i++ ) {
+		l->cullmins[i] = min( l->cullmins[i], leaf->mins[i] );
+		l->cullmaxs[i] = max( l->cullmaxs[i], leaf->maxs[i] );
+	}
+}
+
+/*
+* R_GetLightVisInfo
+*/
+void R_GetLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
+	unsigned i;
+
+	VectorCopy( l->origin, l->cullmins );
+	VectorCopy( l->origin, l->cullmaxs );
+
+	R_GetLightVisInfo_r( l, bm->nodes );
+
+	for( i = 0; i < 3; i++ ) {
+		l->cullmins[i] = max( l->cullmins[i], l->lightmins[i] );
+		l->cullmaxs[i] = min( l->cullmaxs[i], l->lightmaxs[i] );
+	}
+}
+
+/*
+* R_RenderDebugLights
+*/
+void R_RenderDebugLights( void ) {
+	unsigned i;
+
+	if( !r_lighting_debuglights->integer ) {
+		return;
+	}
+
+	if( r_lighting_debuglights->integer == 1 ) {
+		for( i = 0; i < rn.numRealtimeLights; i++ ) {
+			rtlight_t *l = rn.rtlights[i];
+
+			R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+		}
+	} else {
+		const msurface_t *surf;
+		const drawSurfaceBSP_t *drawSurf;
+
+		surf = R_GetDebugSurface();
+		if( !surf ) {
+			return;
+		}
+
+		drawSurf = rsh.worldBrushModel->drawSurfaces + surf->drawSurf - 1;
+		if( r_lighting_debuglights->integer == 2 ) {
+			for( i = 0; i < drawSurf->numRtLights; i++ ) {
+				rtlight_t *l = drawSurf->rtLights[i];
+
+				R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+			}
+		} else if( r_lighting_debuglights->integer == 3 ) {
+			unsigned lightBits = *surf->rtLightBits;
+
+			for( i = 0; i < drawSurf->numRtLights; i++ ) {
+				rtlight_t *l = drawSurf->rtLights[i];
+
+				if( lightBits & (1<<i) ) {
+					R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+					R_AddDebugBounds( l->lightmins, l->lightmaxs, colorWhite );
+				}
+			}
+		}
+	}
+}

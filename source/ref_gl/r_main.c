@@ -1747,8 +1747,6 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 								 "%s type:%i sort:%i",
 								 debugSurface->shader->name, debugSurface->facetype, debugSurface->shader->sort );
 
-					Q_strncatz( out, "\n", size );
-
 					if( r_speeds->integer == 5 && drawSurf->vbo ) {
 						numVerts = drawSurf->vbo->numVerts;
 						numTris = drawSurf->vbo->numElems / 3;
@@ -1758,15 +1756,34 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 					}
 
 					if( numVerts ) {
+						Q_strncatz( out, "\n", size );
 						Q_snprintfz( out + strlen( out ), size - strlen( out ),
 									 "verts: %5i tris: %5i", numVerts, numTris );
 					}
 
-					Q_strncatz( out, "\n", size );
-
 					if( debugSurface->fog && debugSurface->fog->shader
 						&& debugSurface->fog->shader != debugSurface->shader ) {
+						Q_strncatz( out, "\n", size );
 						Q_strncatz( out, debugSurface->fog->shader->name, size );
+					}
+
+					if( drawSurf && ( r_lighting_realtime_world->integer || r_lighting_realtime_dynamic->integer ) ) {
+						unsigned numRtLights = drawSurf->numRtLights;
+
+						if( r_speeds->integer == 4 ) {
+							unsigned i;
+							unsigned rtLightBits = *debugSurface->rtLightBits;
+
+							numRtLights = 0;
+							for( i = 0; i < drawSurf->numRtLights; i++ ) {
+								if( rtLightBits & (1<<i) )
+									numRtLights++;
+							}
+						}
+
+						Q_strncatz( out, "\n", size );
+						Q_snprintfz( out + strlen( out ), size - strlen( out ),
+							"lights: %5i", numRtLights );
 					}
 				}
 				break;
@@ -1810,10 +1827,6 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 	vec3_t forward;
 	vec3_t start, end;
 	msurface_t *debugSurf = NULL;
-
-	if( fd->rdflags & RDF_NOWORLDMODEL ) {
-		return;
-	}
 
 	if( r_speeds->integer == 4 || r_speeds->integer == 5 ) {
 		msurface_t *surf = NULL;

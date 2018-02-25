@@ -113,6 +113,9 @@ typedef struct {
 
 	vec3_t cullmins;
 	vec3_t cullmaxs;
+
+	vec3_t lightmins;
+	vec3_t lightmaxs;
 } rtlight_t;
 
 #include "r_math.h"
@@ -418,6 +421,7 @@ extern cvar_t *r_lighting_grayscale;
 extern cvar_t *r_lighting_intensity;
 extern cvar_t *r_lighting_realtime_world;
 extern cvar_t *r_lighting_realtime_dynamic;
+extern cvar_t *r_lighting_debuglights;
 
 extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;
@@ -745,7 +749,7 @@ rserr_t     R_SetMode( int x, int y, int width, int height, int displayFrequency
 //
 extern drawList_t r_worldlist, r_portalmasklist;
 
-void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color );
+void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color );
 void R_ClearScene( void );
 void R_AddEntityToScene( const entity_t *ent );
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );

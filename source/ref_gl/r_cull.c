@@ -207,11 +207,14 @@ bool R_VisCullBox( const vec3_t mins, const vec3_t maxs ) {
 
 	for( node = rsh.worldBrushModel->nodes;; ) {
 		if( !node->plane ) {
+			unsigned j;
 			mleaf_t *leaf = (mleaf_t *)node;
-			unsigned leafNum = leaf - rsh.worldBrushModel->leafs;
 
-			if( leafNum < rsh.worldBrushModel->numvisleafs && rf.worldLeafVis[leafNum] )
-				return false;
+			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+				if( rf.worldSurfVis[leaf->visSurfaces[j]] )
+					return false;
+			}
+
 			if( !stackdepth )
 		        return true;
 		    node = localstack[--stackdepth];
@@ -255,11 +258,14 @@ bool R_VisCullSphere( const vec3_t origin, float radius ) {
 	radius += 4;
 	for( node = rsh.worldBrushModel->nodes;; ) {
 		if( !node->plane ) {
+			unsigned j;
 			mleaf_t *leaf = (mleaf_t *)node;
-			unsigned leafNum = leaf - rsh.worldBrushModel->leafs;
 
-			if( leafNum < rsh.worldBrushModel->numvisleafs && rf.worldLeafVis[leafNum] )
-				return false;
+			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+				if( rf.worldSurfVis[leaf->visSurfaces[j]] )
+					return false;
+			}
+
 			if( !stackdepth )
 				return true;
 			node = localstack[--stackdepth];
@@ -278,8 +284,6 @@ bool R_VisCullSphere( const vec3_t origin, float radius ) {
 		// go down both sides
 		if( stackdepth < sizeof( localstack ) / sizeof( mnode_t * ) ) {
 			localstack[stackdepth++] = node->children[0];
-		} else {
-			assert( 0 );
 		}
 		node = node->children[1];
 	}
@@ -303,7 +307,7 @@ int R_CullModelEntity( const entity_t *e, bool pvsCull ) {
 
 	// account for possible outlines
 	if( e->outlineHeight ) {
-		radius += e->outlineHeight * r_outlines_scale->value * 1.73 /*sqrt(3)*/;
+		radius += e->outlineHeight * r_outlines_scale->value * 1.733 /*sqrt(3)*/;
 	}
 
 	if( sphereCull ) {

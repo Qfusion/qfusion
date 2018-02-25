@@ -98,6 +98,8 @@ typedef struct msurface_s {
 	shader_t *shader;
 	mfog_t *fog;
 
+	unsigned *rtLightBits;
+
 	struct superLightStyle_s *superLightStyle;
 } msurface_t;
 
