@@ -724,6 +724,11 @@ void ClearBounds( vec3_t mins, vec3_t maxs ) {
 	maxs[0] = maxs[1] = maxs[2] = -99999;
 }
 
+void CopyBounds( const vec3_t inmins, const vec3_t inmaxs, vec3_t outmins, vec3_t outmaxs ) {
+	VectorCopy( inmins, outmins );
+	VectorCopy( inmaxs, outmaxs );
+}
+
 bool BoundsIntersect( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 ) {
 	return (bool)( mins1[0] <= maxs2[0] && mins1[1] <= maxs2[1] && mins1[2] <= maxs2[2] &&
 				   maxs1[0] >= mins2[0] && maxs1[1] >= mins2[1] && maxs1[2] >= mins2[2] );
@@ -776,6 +781,19 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs ) {
 
 	return VectorLength( corner );
 }
+
+/*
+* BoundsFromRadius
+*/
+void BoundsFromRadius( const vec3_t centre, vec_t radius, vec3_t mins, vec3_t maxs ) {
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		mins[i] = centre[i] - radius * 1.733;
+		maxs[i] = centre[i] + radius * 1.733;
+	}
+}
+
 
 vec_t VectorNormalize( vec3_t v ) {
 	float length, ilength;
