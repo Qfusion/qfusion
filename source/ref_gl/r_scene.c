@@ -195,7 +195,6 @@ void R_AddEntityToScene( const entity_t *ent ) {
 * R_AddLightToScene
 */
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	int i;
 	rtlight_t *dl;
 
 	if( rsc.numDlights >= MAX_DLIGHTS ) {
@@ -214,11 +213,8 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	dl->flags = LIGHTFLAG_REALTIMEMODE;
 	dl->style = MAX_LIGHTSTYLES;
 	dl->shadow = false;
-
-	for( i = 0; i < 3; i++ ) {
-		dl->cullmins[i] = dl->origin[i] - dl->intensity;
-		dl->cullmaxs[i] = dl->origin[i] + dl->intensity;
-	}
+	BoundsFromRadius( dl->origin, dl->intensity, dl->lightmins, dl->lightmaxs );
+	CopyBounds( dl->lightmins, dl->lightmaxs, dl->cullmins, dl->cullmaxs );
 
 	if( r_lighting_grayscale->integer ) {
 		vec_t grey = ColorGrayscale( dl->color );
@@ -450,9 +446,13 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	R_RenderView( fd );
 
-	R_RenderDebugSurface( fd );
+	if( !(fd->rdflags & RDF_NOWORLDMODEL) ) {
+		R_RenderDebugSurface( fd );
 
-	R_RenderDebugBounds();
+		R_RenderDebugLights();
+
+		R_RenderDebugBounds();
+	}
 
 	R_Begin2D( false );
 
@@ -649,7 +649,7 @@ BOUNDING BOXES
 typedef struct {
 	vec3_t mins;
 	vec3_t maxs;
-	byte_vec4_t color;
+	vec4_t color;
 } r_debug_bound_t;
 
 static unsigned r_num_debug_bounds;
@@ -666,7 +666,7 @@ static void R_ClearDebugBounds( void ) {
 /*
 * R_AddDebugBounds
 */
-void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color ) {
+void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color ) {
 	unsigned i;
 
 	i = r_num_debug_bounds;
@@ -683,7 +683,7 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t c
 
 	VectorCopy( mins, r_debug_bounds[i].mins );
 	VectorCopy( maxs, r_debug_bounds[i].maxs );
-	Vector4Copy( color, r_debug_bounds[i].color );
+	ColorNormalize( color, r_debug_bounds[i].color );
 }
 
 /*
@@ -692,10 +692,9 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t c
 static void R_RenderDebugBounds( void ) {
 	unsigned i, j;
 	const vec_t *mins, *maxs;
-	const uint8_t *color;
 	mesh_t mesh;
 	vec4_t verts[8];
-	byte_vec4_t colors[8];
+	byte_vec4_t colors[8], ucolor;
 	elem_t elems[24] =
 	{
 		0, 1, 1, 3, 3, 2, 2, 0,
@@ -719,14 +718,17 @@ static void R_RenderDebugBounds( void ) {
 	for( i = 0; i < r_num_debug_bounds; i++ ) {
 		mins = r_debug_bounds[i].mins;
 		maxs = r_debug_bounds[i].maxs;
-		color = r_debug_bounds[i].color;
+		
+		for( j = 0; j < 3; j++ )
+			ucolor[j] = r_debug_bounds[i].color[j] * 255;
+		ucolor[3] = 255;
 
 		for( j = 0; j < 8; j++ ) {
 			verts[j][0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
 			verts[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
 			verts[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
 			verts[j][3] = 1.0f;
-			Vector4Copy( color, colors[j] );
+			Vector4Copy( ucolor, colors[j] );
 		}
 
 		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, NULL, &mesh, GL_LINES, 0.0f, 0.0f );

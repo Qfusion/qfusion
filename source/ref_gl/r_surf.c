@@ -94,7 +94,7 @@ static bool R_SurfaceClipRtLight( const msurface_t *surf, const rtlight_t *lt ) 
 	switch( surf->facetype ) {
 		case FACETYPE_PLANAR:
 			dist = DotProduct( lt->origin, surf->plane ) - surf->plane[3];
-			if( dist > -lt->intensity && dist < lt->intensity ) {
+			if( dist >= 0 && dist < lt->intensity ) {
 				if( BoundsAndSphereIntersect( surf->mins, surf->maxs, lt->origin, lt->intensity ) ) {
 					return true;
 				}
@@ -552,8 +552,7 @@ static void R_PostCullVisLeaves( void ) {
 
 		leaf = rsh.worldBrushModel->visleafs[i];
 		if( r_leafvis->integer && !( rn.renderFlags & RF_NONVIEWERREF ) ) {
-			const byte_vec4_t color = { 255, 0, 0, 255 };
-			R_AddDebugBounds( leaf->mins, leaf->maxs, color );
+			R_AddDebugBounds( leaf->mins, leaf->maxs, colorRed );
 		}
 
 		// add leaf bounds to view bounds
@@ -657,6 +656,7 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 			}
 		}
 
+		assert( l < rf.numWorldLeafVis );
 		rf.worldLeafVis[l] = 1;
 	}
 }
@@ -771,7 +771,7 @@ static void R_AddRealtimeLights( unsigned numLights, rtlight_t *lights, unsigned
 		if( !(l->flags & LIGHTFLAG_REALTIMEMODE ) ) {
 			break;
 		}
-		if( R_CullSphere( l->origin, l->intensity, clipFlags ) ) {
+		if( R_CullBox( l->cullmins, l->cullmaxs, clipFlags ) ) {
 			continue;
 		}
 		if( R_VisCullSphere( l->origin, l->intensity ) ) {

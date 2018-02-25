@@ -442,12 +442,13 @@ static void Mod_SortModelSurfaces( model_t *mod, unsigned int modnum ) {
 * Mod_CreateSubmodelBufferObjects
 */
 static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, size_t *vbo_total_size ) {
-	unsigned int i, j;
+	unsigned int i, j, k;
 	uint8_t *visdata = NULL;
 	uint8_t *areadata = NULL;
 	unsigned int rowbytes, rowlongs;
 	int areabytes;
 	uint8_t *arearow;
+	int *longrow, *longrow2;
 	mmodel_t *bm;
 	mbrushmodel_t *loadbmodel;
 	msurface_t *surf, *surf2;
@@ -534,6 +535,15 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				}
 				surfmap[surfnum] = surf;
 
+				longrow  = ( int * )( visdata + surfnum * rowbytes );
+				longrow2 = ( int * )( Mod_ClusterPVS( leaf->cluster, mod ) );
+
+				// merge parent leaf cluster visibility into face visibility set
+				// we could probably check for duplicates here because face can be
+				// shared among multiple leafs
+				for( j = 0; j < rowlongs; j++ )
+					longrow[j] |= longrow2[j];
+
 				if( leaf->area >= 0 ) {
 					arearow = areadata + surfnum * areabytes;
 					arearow[leaf->area >> 3] |= ( 1 << ( leaf->area & 7 ) );
@@ -583,6 +593,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		int vcount, ecount;
 		vattribmask_t vattribs;
 		unsigned last_merged = i;
+		vec3_t mins, maxs;
 
 		if( numUnmappedSurfaces == 0 ) {
 			// done
@@ -599,14 +610,19 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 
 		surf = sortedSurfaces[i].surf;
 		shader = surf->shader;
+		longrow  = ( int * )( visdata + sortedSurfaces[i].number * rowbytes );
 		arearow = areadata + sortedSurfaces[i].number * areabytes;
 
 		fcount = 1;
 		vcount = surf->mesh.numVerts;
 		ecount = surf->mesh.numElems;
+		CopyBounds( surf->mins, surf->maxs, mins, maxs );
 
 		// portal or foliage surfaces can not be batched
 		if( !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) && !surf->numInstances ) {
+			vec_t teslen;
+			vec3_t testmins, testmaxs, testsize;
+
 			// scan remaining face checking whether we merge them with the current one
 			for( j = i + 1; j < bm->numModelSurfaces; j++ ) {
 				if( fcount == MAX_DRAWSURF_SURFS ) {
@@ -646,11 +662,40 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 					}
 				}
 
-				fcount++;
-				vcount += surf2->mesh.numVerts;
-				ecount += surf2->mesh.numElems;
-				surfmap[j] = surf;
-				last_merged = j;
+				// keep the draw surface spatially compact
+				CopyBounds( mins, maxs, testmins, testmaxs );
+				AddPointToBounds( surf2->mins, testmins, testmaxs );
+				AddPointToBounds( surf2->maxs, testmins, testmaxs );
+
+				testsize[0] = testmaxs[0] - testmins[0];
+				testsize[1] = testmaxs[1] - testmins[1];
+				testsize[2] = testmaxs[2] - testmins[2];
+				teslen = max( max( testsize[0], testsize[1] ), testsize[2] );
+				if( teslen > 700 ) {
+					continue;
+				}
+
+				if( !visdata ) {
+					goto merge;
+				}
+
+				// if two faces potentially see same things, we can merge them
+				longrow2 = ( int * )( visdata + sortedSurfaces[j].number * rowbytes );
+				for( k = 0; k < rowlongs && !( longrow[k] & longrow2[k] ); k++ ) ;
+
+				if( k != rowlongs ) {
+					// merge visibility sets
+					for( k = 0; k < rowlongs; k++ )
+							longrow[k] |= longrow2[k];
+
+merge:
+					fcount++;
+					vcount += surf2->mesh.numVerts;
+					ecount += surf2->mesh.numElems;
+					surfmap[j] = surf;
+					last_merged = j;
+					CopyBounds( testmins, testmaxs, mins, maxs );
+				}
 			}
 		}
 
@@ -691,6 +736,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		surf->drawSurf = loadbmodel->numDrawSurfaces;
 		surf->firstDrawSurfVert = 0;
 		surf->firstDrawSurfElem = 0;
+		surf->rtLightBits = surfRtlightBits;
 
 		vcount = surf->mesh.numVerts;
 		ecount = surf->mesh.numElems;
@@ -722,6 +768,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				surf2->drawSurf = loadbmodel->numDrawSurfaces;
 				surf2->firstDrawSurfVert = vcount;
 				surf2->firstDrawSurfElem = ecount;
+				surf2->rtLightBits = surfRtlightBits + si;
 
 				sortedSurfaces[j].drawSurfIndex = si;
 
@@ -1520,6 +1567,10 @@ static void R_LoadWorldModelRtLights( model_t *model ) {
 		l->flags = flags;
 		l->style = style;
 		l->shadow = shadow;
+		BoundsFromRadius( l->origin, l->intensity, l->lightmins, l->lightmaxs );
+		CopyBounds( l->lightmins, l->lightmaxs, l->cullmins, l->cullmaxs );
+
+		R_GetLightVisInfo( bmodel, l );
 
 		if( *s == '\r' )
 			s++;

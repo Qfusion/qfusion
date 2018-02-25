@@ -69,6 +69,7 @@ cvar_t *r_lighting_grayscale;
 cvar_t *r_lighting_intensity;
 cvar_t *r_lighting_realtime_world;
 cvar_t *r_lighting_realtime_dynamic;
+cvar_t *r_lighting_debuglights;
 
 cvar_t *r_offsetmapping;
 cvar_t *r_offsetmapping_scale;
@@ -1108,6 +1109,7 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
 	r_lighting_realtime_world = ri.Cvar_Get( "r_lighting_realtime_world", "1", CVAR_ARCHIVE );
 	r_lighting_realtime_dynamic = ri.Cvar_Get( "r_lighting_realtime_dynamic", "1", CVAR_ARCHIVE );
+	r_lighting_debuglights = ri.Cvar_Get( "r_lighting_debuglights", "0", 0 );
 
 	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
 	r_offsetmapping_scale = ri.Cvar_Get( "r_offsetmapping_scale", "0.02", CVAR_ARCHIVE );
