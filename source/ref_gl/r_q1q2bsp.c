@@ -1038,7 +1038,7 @@ static size_t Mod_RecursiveLightPoint( vec3_t start, vec3_t lightpoint ) {
 static int Mod_PointCluster( vec3_t point ) {
 	mleaf_t *leaf;
 
-	leaf = Mod_PointInLeaf( point, loadmodel );
+	leaf = Mod_PointInLeaf( point, loadbmodel );
 	if( leaf ) {
 		return leaf->cluster;
 	}

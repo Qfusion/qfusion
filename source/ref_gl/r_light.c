@@ -873,7 +873,7 @@ REALTIME LIGHTS
 /*
 * R_GetLightVisInfo_r
 */
-static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node ) {
+static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node, const uint8_t *pvs ) {
 	unsigned i;
 	mleaf_t *leaf;
 
@@ -885,7 +885,7 @@ static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node ) {
 		} else if( d < -l->intensity ) {
 			node = node->children[1];
 		}  else {
-			R_GetLightVisInfo_r( l, node->children[0] );
+			R_GetLightVisInfo_r( l, node->children[0], pvs );
 			node = node->children[1];
 		}
 	}
@@ -894,6 +894,18 @@ static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node ) {
 	if( leaf->cluster < 0 || !leaf->numVisSurfaces ) {
 		return;
 	}
+
+	if( !BoundsIntersect( l->lightmins, l->lightmaxs, leaf->mins, leaf->maxs ) ) {
+		return;
+	}
+
+#if 1
+	if( pvs ) {
+		if( !( pvs[leaf->cluster >> 3] & ( 1 << ( leaf->cluster & 7 ) ) ) ) {
+			return; // not visible
+		}
+	}
+#endif
 
 	for( i = 0; i < 3; i++ ) {
 		l->cullmins[i] = min( l->cullmins[i], leaf->mins[i] );
@@ -906,15 +918,30 @@ static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node ) {
 */
 void R_GetLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 	unsigned i;
+	mleaf_t *leaf;
+	const uint8_t *pvs = NULL;
+
+	l->area = -1;
+	l->cluster = -1;
+
+	leaf = Mod_PointInLeaf( l->origin, bm );
+	if( leaf ) {
+		l->cluster = leaf->cluster;
+		l->area = leaf->area;
+
+		if( l->cluster >= 0 )
+			pvs = Mod_ClusterPVS( l->cluster, bm );
+	}
 
 	VectorCopy( l->origin, l->cullmins );
 	VectorCopy( l->origin, l->cullmaxs );
 
-	R_GetLightVisInfo_r( l, bm->nodes );
+	R_GetLightVisInfo_r( l, bm->nodes, pvs );
 
+	// limit combined leaf box to light boundaries
 	for( i = 0; i < 3; i++ ) {
-		l->cullmins[i] = max( l->cullmins[i], l->lightmins[i] );
-		l->cullmaxs[i] = min( l->cullmaxs[i], l->lightmaxs[i] );
+		l->cullmins[i] = max( l->cullmins[i] - 1, l->lightmins[i] );
+		l->cullmaxs[i] = min( l->cullmaxs[i] + 1, l->lightmaxs[i] );
 	}
 }
 

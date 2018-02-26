@@ -983,7 +983,7 @@ static void R_SetupFrame( void ) {
 		VectorCopy( rsh.worldModel->mins, rn.visMins );
 		VectorCopy( rsh.worldModel->maxs, rn.visMaxs );
 
-		leaf = Mod_PointInLeaf( rn.pvsOrigin, rsh.worldModel );
+		leaf = Mod_PointInLeaf( rn.pvsOrigin, rsh.worldBrushModel );
 		viewcluster = leaf->cluster;
 		viewarea = leaf->area;
 

@@ -95,16 +95,20 @@ static bool R_SurfaceClipRtLight( const msurface_t *surf, const rtlight_t *lt ) 
 		case FACETYPE_PLANAR:
 			dist = DotProduct( lt->origin, surf->plane ) - surf->plane[3];
 			if( dist >= 0 && dist < lt->intensity ) {
-				if( BoundsAndSphereIntersect( surf->mins, surf->maxs, lt->origin, lt->intensity ) ) {
-					return true;
+				if( BoundsIntersect( surf->mins, surf->maxs, lt->cullmins, lt->cullmaxs ) ) {
+					if( BoundsAndSphereIntersect( surf->mins, surf->maxs, lt->origin, lt->intensity ) ) {
+						return true;
+					}
 				}
 			}
 			break;
 		case FACETYPE_PATCH:
 		case FACETYPE_TRISURF:
 		case FACETYPE_FOLIAGE:
-			if( BoundsAndSphereIntersect( surf->mins, surf->maxs, lt->origin, lt->intensity ) ) {
-				return true;
+			if( BoundsIntersect( surf->mins, surf->maxs, lt->cullmins, lt->cullmaxs ) ) {
+				if( BoundsAndSphereIntersect( surf->mins, surf->maxs, lt->origin, lt->intensity ) ) {
+					return true;
+				}
 			}
 			break;
 	}
@@ -502,6 +506,9 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 		if( !BoundsAndSphereIntersect( cache->mins, cache->maxs, l->origin, l->intensity ) ) {
 			continue;
 		}
+		if( !BoundsIntersect( cache->mins, cache->maxs, l->cullmins, l->cullmaxs ) ) {
+			continue;
+		}
 		rtLights[numRtLights++] = l;
 	}
 	rtLightBits = (1<<numRtLights) - 1;
@@ -587,7 +594,7 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 	areabytes *= rsh.worldBrushModel->numareas;
 #endif
 
-	pvs = Mod_ClusterPVS( rf.viewcluster, rsh.worldModel );
+	pvs = Mod_ClusterPVS( rf.viewcluster, rsh.worldBrushModel );
 	if( rf.viewarea > -1 && rn.refdef.areabits )
 #ifdef AREAPORTALS_MATRIX
 	{ areabits = rn.refdef.areabits + rf.viewarea * arearowbytes;}
@@ -771,9 +778,23 @@ static void R_AddRealtimeLights( unsigned numLights, rtlight_t *lights, unsigned
 		if( !(l->flags & LIGHTFLAG_REALTIMEMODE ) ) {
 			break;
 		}
+
+		if( l->cluster == -2 ) {
+			// dynamic light with no vis info for this frame
+			R_GetLightVisInfo( rsh.worldBrushModel, l );
+		}
+
+		if( l->cluster < 0 ) {
+			continue;
+		}
+
+		// TODO
+		// check area
+
 		if( R_CullBox( l->cullmins, l->cullmaxs, clipFlags ) ) {
 			continue;
 		}
+
 		if( R_VisCullSphere( l->origin, l->intensity ) ) {
 			continue;
 		}

@@ -104,6 +104,8 @@ enum {
 typedef struct {
 	int flags;
 	int style;
+	int cluster;
+	int area;
 	unsigned frameCount;
 	bool shadow;
 	float intensity;
