@@ -213,6 +213,8 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	dl->flags = LIGHTFLAG_REALTIMEMODE;
 	dl->style = MAX_LIGHTSTYLES;
 	dl->shadow = false;
+	dl->cluster = -2;
+	dl->area = -1;
 	BoundsFromRadius( dl->origin, dl->intensity, dl->lightmins, dl->lightmaxs );
 	CopyBounds( dl->lightmins, dl->lightmaxs, dl->cullmins, dl->cullmaxs );
 

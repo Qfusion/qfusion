@@ -80,12 +80,11 @@ static const modelFormatDescr_t mod_supportedformats[] =
 /*
 * Mod_PointInLeaf
 */
-mleaf_t *Mod_PointInLeaf( vec3_t p, model_t *model ) {
+mleaf_t *Mod_PointInLeaf( vec3_t p, mbrushmodel_t *bmodel ) {
 	mnode_t *node;
 	cplane_t *plane;
-	mbrushmodel_t *bmodel;
 
-	if( !model || !( bmodel = ( mbrushmodel_t * )model->extradata ) || !bmodel->nodes ) {
+	if( !bmodel || !bmodel->nodes ) {
 		ri.Com_Error( ERR_DROP, "Mod_PointInLeaf: bad model" );
 		return NULL;
 	}
@@ -112,8 +111,8 @@ static inline uint8_t *Mod_ClusterVS( int cluster, dvis_t *vis ) {
 /*
 * Mod_ClusterPVS
 */
-uint8_t *Mod_ClusterPVS( int cluster, model_t *model ) {
-	return Mod_ClusterVS( cluster, ( ( mbrushmodel_t * )model->extradata )->pvs );
+uint8_t *Mod_ClusterPVS( int cluster, mbrushmodel_t *bmodel ) {
+	return Mod_ClusterVS( cluster, bmodel->pvs );
 }
 
 //===============================================================================
@@ -536,7 +535,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				surfmap[surfnum] = surf;
 
 				longrow  = ( int * )( visdata + surfnum * rowbytes );
-				longrow2 = ( int * )( Mod_ClusterPVS( leaf->cluster, mod ) );
+				longrow2 = ( int * )( Mod_ClusterPVS( leaf->cluster, loadbmodel ) );
 
 				// merge parent leaf cluster visibility into face visibility set
 				// we could probably check for duplicates here because face can be
