@@ -789,8 +789,8 @@ void BoundsFromRadius( const vec3_t centre, vec_t radius, vec3_t mins, vec3_t ma
 	int i;
 
 	for( i = 0; i < 3; i++ ) {
-		mins[i] = centre[i] - radius * 1.733;
-		maxs[i] = centre[i] + radius * 1.733;
+		mins[i] = centre[i] - radius;
+		maxs[i] = centre[i] + radius;
 	}
 }
 
