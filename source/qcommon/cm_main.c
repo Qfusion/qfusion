@@ -990,17 +990,16 @@ void CM_ReleaseReference( cmodel_state_t *cms ) {
 		return;
 	}
 
+	// note: QAtomic_Add returns the previous value of refcount
 	rc = QAtomic_Add( &cms->refcount, -1, cms->refcount_mutex );
-	if( rc != 0 ) {
-		return;
-	}
-
-	if( rc < 0 ) {
+	if( rc <= 0 ) {
 		Com_Error( ERR_FATAL, "CM_ReleaseReference: refcount < 0" );
 		return;
 	}
 
-	CM_Free( cms );
+	if( QAtomic_Add( &cms->refcount, 0, cms->refcount_mutex ) == 0 ) {
+		CM_Free( cms );
+	}
 }
 
 /*
