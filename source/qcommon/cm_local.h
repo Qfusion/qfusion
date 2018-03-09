@@ -216,4 +216,6 @@ void    CM_InitOctagonHull( cmodel_state_t *cms );
 
 void    CM_FloodAreaConnections( cmodel_state_t *cms );
 
+void	CM_BoundBrush( cbrush_t *brush );
+
 uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed );
