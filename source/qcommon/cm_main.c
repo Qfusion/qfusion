@@ -179,6 +179,16 @@ static void CM_Clear( cmodel_state_t *cms ) {
 		cms->map_entitystring = &cms->map_entitystring_empty;
 	}
 
+	if( cms->map_hulls ) {
+		Mem_Free( cms->map_hulls );
+		cms->map_hulls = NULL;
+	}
+
+	if( cms->map_clipnodes ) {
+		Mem_Free( cms->map_clipnodes );
+		cms->map_clipnodes = NULL;
+	}
+
 	CM_FreeCheckCounts( cms );
 
 	cms->map_name[0] = 0;

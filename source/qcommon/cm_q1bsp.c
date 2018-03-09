@@ -398,10 +398,11 @@ MAP LOADING
 * CMod_LoadClipnodes
 */
 void CMod_LoadClipnodes( cmodel_state_t *cms, lump_t *l ) {
-	int i;
+	int i, j;
 	int count;
 	q1dclipnode_t   *in;
 	cnode_t         *out;
+	cnode_t         *node, *clipnode;
 
 	in = ( void * )( cms->cmod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) ) {
@@ -413,13 +414,29 @@ void CMod_LoadClipnodes( cmodel_state_t *cms, lump_t *l ) {
 		Com_Error( ERR_DROP, "Map with no clipnodes" );
 	}
 
-	out = cms->map_clipnodes = Mem_Alloc( cms->mempool, count * sizeof( *out ) );
+	out = cms->map_clipnodes = Mem_Alloc( cms->mempool, (count + cms->numnodes) * sizeof( *out ) );
 	cms->numclipnodes = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		out->plane = cms->map_planes + LittleLong( in->planenum );
 		out->children[0] = LittleShort( in->children[0] );
 		out->children[1] = LittleShort( in->children[1] );
+	}
+
+	// duplicate the drawing hull structure as clipping hull for hull0
+	clipnode = cms->map_clipnodes + count;
+	node = cms->map_nodes;
+	for( i = 0; i < cms->numnodes; i++, node++, clipnode++ ) {
+		clipnode->plane = node->plane;
+
+		for( j = 0; j < 2; j++ ) {
+			int child = node->children[j];
+			if( child < 0 ) {
+				clipnode->children[j] = cms->map_leafs[-child - 1].contents;
+			} else {
+				clipnode->children[j] = child;
+			}
+		}
 	}
 }
 
@@ -431,8 +448,6 @@ void CMod_LoadClipnodes( cmodel_state_t *cms, lump_t *l ) {
 static int CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l ) {
 	int i, j;
 	int numvisleafs;
-	int child;
-	cnode_t     *node, *clipnode;
 	int count;
 	int headnode;
 	q1dmodel_t  *in;
@@ -454,28 +469,12 @@ static int CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l ) {
 
 	// initialize the clipping hull for world submodel
 
-	// duplicate the drawing hull structure as a clipping hull for hull0
 	hull = &cms->map_hulls[0 + 0];
-	hull->clipnodes = Mem_Alloc( cms->mempool, cms->numnodes * sizeof( *hull->clipnodes ) );
+	hull->clipnodes = cms->map_clipnodes + cms->numclipnodes;
 	hull->firstclipnode = 0;
 	hull->lastclipnode = cms->numnodes - 1;
 	VectorSet( hull->clip_mins, 0, 0, 0 );
 	VectorSet( hull->clip_maxs, 0, 0, 0 );
-
-	clipnode = hull->clipnodes;
-	node = cms->map_nodes;
-	for( i = 0; i < cms->numnodes; i++, node++, clipnode++ ) {
-		clipnode->plane = node->plane;
-
-		for( j = 0; j < 2; j++ ) {
-			child = node->children[j];
-			if( child < 0 ) {
-				clipnode->children[j] = cms->map_leafs[-child - 1].contents;
-			} else {
-				clipnode->children[j] = child;
-			}
-		}
-	}
 
 	hull = &cms->map_hulls[0 + 1];
 	hull->clipnodes = cms->map_clipnodes;
