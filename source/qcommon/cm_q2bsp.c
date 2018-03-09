@@ -115,18 +115,10 @@ static void CMod_SubmodelBrushes_r( cmodel_state_t *cms, int nodenum, int *count
 		leaf = &cms->map_leafs[-1 - nodenum];
 		for( i = 0; i < leaf->nummarkbrushes; i++ ) {
 			int mb = leaf->markbrushes[i];
-
-			// avoid adding duplicate brushes, although we have a similar check in tracing code..
-			if( cms->map_brush_checkcheckouts[mb] == cmap_checkcount ) {
-				continue;
-			}
-
 			if( markbrushes ) {
 				markbrushes[*count] = mb;
 			}
 			*count = *count + 1;
-
-			cms->map_brush_checkcheckouts[mb] = cmap_checkcount;
 		}
 		return;
 	}
@@ -138,11 +130,7 @@ static void CMod_SubmodelBrushes_r( cmodel_state_t *cms, int nodenum, int *count
 static int CMod_SubmodelBrushes( cmodel_state_t *cms, int headnode, int *markbrushes ) {
 	int count = 0;
 
-	cmap_checkcount++;
 	CMod_SubmodelBrushes_r( cms, headnode, &count, markbrushes );
-
-	// cleanup
-	cmap_checkcount++;
 
 	return count;
 }
@@ -172,6 +160,7 @@ static void CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l ) {
 	for( i = 0; i < count; i++, in++, out++ ) {
 		headnode = LittleLong( in->headnode );
 
+		out->brushes = cms->map_brushes;
 		out->nummarkbrushes = CMod_SubmodelBrushes( cms, headnode, NULL );
 		out->markbrushes = Mem_Alloc( cms->mempool, out->nummarkbrushes * sizeof( int ) );
 
@@ -433,6 +422,8 @@ static void CMod_LoadBrushes( cmodel_state_t *cms, lump_t *l ) {
 		// OR brush contents onto brushsides (mostly for ladders)
 		for( j = 0; j < out->numsides; j++ )
 			out->brushsides[j].surfFlags |= CMod_SurfaceFlags( 0, contents );
+
+		CM_BoundBrush( out );
 	}
 }
 
