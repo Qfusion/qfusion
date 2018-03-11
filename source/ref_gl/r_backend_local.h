@@ -86,6 +86,8 @@ typedef struct r_backend_s {
 
 		int fbWidth, fbHeight;
 
+		float polygonfactor, polygonunits;
+
 		float depthmin, depthmax;
 
 		bool depthoffset;
@@ -134,7 +136,6 @@ typedef struct r_backend_s {
 	int maxDrawInstances;
 
 	rbDrawElements_t drawElements;
-	rbDrawElements_t drawShadowElements;
 
 	vattribmask_t currentVAttribs;
 

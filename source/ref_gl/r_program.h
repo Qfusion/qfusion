@@ -23,12 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef uint64_t r_glslfeat_t;
 
 #define GLSL_BIT( x )                           ( 1ULL << ( x ) )
-#define GLSL_BITS_VERSION                       20
+#define GLSL_BITS_VERSION                       21
 
 #define DEFAULT_GLSL_MATERIAL_PROGRAM           "defaultMaterial"
 #define DEFAULT_GLSL_DISTORTION_PROGRAM         "defaultDistortion"
 #define DEFAULT_GLSL_RGB_SHADOW_PROGRAM         "defaultRGBShadow"
-#define DEFAULT_GLSL_SHADOWMAP_PROGRAM          "defaultShadowmap"
 #define DEFAULT_GLSL_OUTLINE_PROGRAM            "defaultOutline"
 #define DEFAULT_GLSL_DYNAMIC_LIGHTS_PROGRAM     "defaultDynamicLights"
 #define DEFAULT_GLSL_Q3A_SHADER_PROGRAM         "defaultQ3AShader"
@@ -45,7 +44,6 @@ enum {
 	GLSL_PROGRAM_TYPE_MATERIAL,
 	GLSL_PROGRAM_TYPE_DISTORTION,
 	GLSL_PROGRAM_TYPE_RGB_SHADOW,
-	GLSL_PROGRAM_TYPE_SHADOWMAP,
 	GLSL_PROGRAM_TYPE_OUTLINE,
 	GLSL_PROGRAM_TYPE_UNUSED,
 	GLSL_PROGRAM_TYPE_Q3A_SHADER,
@@ -90,32 +88,36 @@ enum {
 #define GLSL_SHADER_COMMON_DLIGHTS_20           ( GLSL_SHADER_COMMON_DLIGHTS_4 | GLSL_SHADER_COMMON_DLIGHTS_16 ) // 20
 #define GLSL_SHADER_COMMON_DLIGHTS_24           ( GLSL_SHADER_COMMON_DLIGHTS_8 | GLSL_SHADER_COMMON_DLIGHTS_16 ) // 24
 #define GLSL_SHADER_COMMON_DLIGHTS_28           ( GLSL_SHADER_COMMON_DLIGHTS_4 | GLSL_SHADER_COMMON_DLIGHTS_8 | GLSL_SHADER_COMMON_DLIGHTS_16 ) // 28
-#define GLSL_SHADER_COMMON_DLIGHTS_32           GLSL_BIT( 14 ) // 32
 #define GLSL_SHADER_COMMON_DLIGHTS              ( GLSL_SHADER_COMMON_DLIGHTS_4 | GLSL_SHADER_COMMON_DLIGHTS_8 \
 												  | GLSL_SHADER_COMMON_DLIGHTS_12 | GLSL_SHADER_COMMON_DLIGHTS_16 \
 												  | GLSL_SHADER_COMMON_DLIGHTS_20 | GLSL_SHADER_COMMON_DLIGHTS_24 \
-												  | GLSL_SHADER_COMMON_DLIGHTS_28 | GLSL_SHADER_COMMON_DLIGHTS_32 )
+												  | GLSL_SHADER_COMMON_DLIGHTS_28 )
 
-#define GLSL_SHADER_COMMON_DRAWFLAT             GLSL_BIT( 15 )
+#define GLSL_SHADER_COMMON_DRAWFLAT             GLSL_BIT( 14 )
 
-#define GLSL_SHADER_COMMON_AUTOSPRITE           GLSL_BIT( 16 )
-#define GLSL_SHADER_COMMON_AUTOSPRITE2          GLSL_BIT( 17 )
-#define GLSL_SHADER_COMMON_AUTOPARTICLE         GLSL_BIT( 18 )
+#define GLSL_SHADER_COMMON_AUTOSPRITE           GLSL_BIT( 15 )
+#define GLSL_SHADER_COMMON_AUTOSPRITE2          GLSL_BIT( 16 )
+#define GLSL_SHADER_COMMON_AUTOPARTICLE         GLSL_BIT( 17 )
 
-#define GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS GLSL_BIT( 19 )
-#define GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS  GLSL_BIT( 20 )
+#define GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS GLSL_BIT( 18 )
+#define GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS  GLSL_BIT( 19 )
 
-#define GLSL_SHADER_COMMON_SOFT_PARTICLE        GLSL_BIT( 21 )
+#define GLSL_SHADER_COMMON_SOFT_PARTICLE        GLSL_BIT( 20 )
 
-#define GLSL_SHADER_COMMON_AFUNC_GT0            GLSL_BIT( 22 )
-#define GLSL_SHADER_COMMON_AFUNC_LT128          GLSL_BIT( 23 )
+#define GLSL_SHADER_COMMON_AFUNC_GT0            GLSL_BIT( 21 )
+#define GLSL_SHADER_COMMON_AFUNC_LT128          GLSL_BIT( 22 )
 #define GLSL_SHADER_COMMON_AFUNC_GE128          ( GLSL_SHADER_COMMON_AFUNC_GT0 | GLSL_SHADER_COMMON_AFUNC_LT128 )
 
-#define GLSL_SHADER_COMMON_FRAGMENT_HIGHP       GLSL_BIT( 24 )
+#define GLSL_SHADER_COMMON_FRAGMENT_HIGHP       GLSL_BIT( 23 )
 
-#define GLSL_SHADER_COMMON_LINEAR2SRB           GLSL_BIT( 25 )
+#define GLSL_SHADER_COMMON_LINEAR2SRB           GLSL_BIT( 24 )
 
-#define GLSL_SHADER_COMMON_REALTIME_LIGHTS      GLSL_BIT( 26 )
+#define GLSL_SHADER_COMMON_REALTIME_SHADOWS     GLSL_BIT( 25 )
+#define GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS   GLSL_BIT( 26 )
+#define GLSL_SHADER_COMMON_SHADOWMAP_PCF        GLSL_BIT( 27 )
+#define GLSL_SHADER_COMMON_SHADOWMAP_PCF2		GLSL_BIT( 28 )
+#define GLSL_SHADER_COMMON_RGBSHADOW_24BIT      GLSL_BIT( 29 )
+#define GLSL_SHADER_COMMON_LIGHTBITS			GLSL_BIT( 30 )
 
 // material program type features
 #define GLSL_SHADER_MATERIAL_LIGHTSTYLE0        GLSL_BIT( 32 )
@@ -167,17 +169,6 @@ enum {
 
 // rgb shadows
 #define GLSL_SHADER_RGBSHADOW_24BIT             GLSL_BIT( 32 )
-
-// shadowmaps
-#define GLSL_SHADOWMAP_LIMIT                    4 // shadowmaps per program limit
-#define GLSL_SHADER_SHADOWMAP_DITHER            GLSL_BIT( 32 )
-#define GLSL_SHADER_SHADOWMAP_PCF               GLSL_BIT( 33 )
-#define GLSL_SHADER_SHADOWMAP_SHADOW2           GLSL_BIT( 34 )
-#define GLSL_SHADER_SHADOWMAP_SHADOW3           GLSL_BIT( 35 )
-#define GLSL_SHADER_SHADOWMAP_SHADOW4           GLSL_BIT( 36 )
-#define GLSL_SHADER_SHADOWMAP_SAMPLERS          GLSL_BIT( 37 )
-#define GLSL_SHADER_SHADOWMAP_24BIT             GLSL_BIT( 38 )
-#define GLSL_SHADER_SHADOWMAP_NORMALCHECK       GLSL_BIT( 39 )
 
 // outlines
 #define GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF     GLSL_BIT( 32 )
@@ -242,9 +233,11 @@ void RP_UpdateOutlineUniforms( int elem, float projDistance );
 void RP_UpdateDiffuseLightUniforms( int elem,
 									const vec3_t lightDir, const vec4_t lightAmbient, const vec4_t lightDiffuse );
 
-unsigned int RP_UpdateRealtimeLightsUniforms( int elem, const superLightStyle_t *superLightStyle,
-											 const vec3_t entOrigin, const mat3_t entAxis, unsigned int numRtLights, 
-											const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
+void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle );
+
+void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, 
+	const vec3_t entOrigin, const mat3_t entAxis,
+	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
 
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist,
 						   cplane_t *fogPlane, cplane_t *eyePlane, float eyeFogDist );

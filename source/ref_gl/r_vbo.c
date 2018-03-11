@@ -87,6 +87,53 @@ void R_InitVBO( void ) {
 }
 
 /*
+* R_AllocVBO
+*/
+static mesh_vbo_t *R_AllocVBO( void ) {
+	vbohandle_t *vboh = NULL;
+	mesh_vbo_t *vbo = NULL;
+
+	if( !r_free_vbohandles ) {
+		return NULL;
+	}
+
+	vboh = r_free_vbohandles;
+	vbo = &r_mesh_vbo[vboh->index];
+	memset( vbo, 0, sizeof( *vbo ) );
+	vbo->index = vboh->index + 1;
+	r_free_vbohandles = vboh->next;
+
+	// link to the list of active vbo handles
+	vboh->prev = &r_vbohandles_headnode;
+	vboh->next = r_vbohandles_headnode.next;
+	vboh->next->prev = vboh;
+	vboh->prev->next = vboh;
+
+	r_num_active_vbos++;
+
+	return vbo;
+}
+
+/*
+* R_UnlinkVBO
+*/
+static void R_UnlinkVBO( mesh_vbo_t *vbo ) {
+	if( vbo->index >= 1 && vbo->index <= MAX_MESH_VERTEX_BUFFER_OBJECTS ) {
+		vbohandle_t *vboh = &r_vbohandles[vbo->index - 1];
+
+		// remove from linked active list
+		vboh->prev->next = vboh->next;
+		vboh->next->prev = vboh->prev;
+
+		// insert into linked free list
+		vboh->next = r_free_vbohandles;
+		r_free_vbohandles = vboh;
+
+		r_num_active_vbos--;
+	}
+}
+
+/*
 * R_CreateMeshVBO
 *
 * Create two static buffer objects: vertex buffer and elements buffer, the real
@@ -99,7 +146,6 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	int i;
 	size_t size;
 	GLuint vbo_id;
-	vbohandle_t *vboh = NULL;
 	mesh_vbo_t *vbo = NULL;
 	GLenum usage = VBO_USAGE_FOR_TAG( tag );
 	size_t vertexSize;
@@ -109,7 +155,8 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		return NULL;
 	}
 
-	if( !r_free_vbohandles ) {
+	vbo = R_AllocVBO();
+	if( !vbo ) {
 		return NULL;
 	}
 
@@ -127,10 +174,6 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		// when uploading instances data
 		halfFloatVattribs &= ~VATTRIB_INSTANCES_BITS;
 	}
-
-	vboh = r_free_vbohandles;
-	vbo = &r_mesh_vbo[vboh->index];
-	memset( vbo, 0, sizeof( *vbo ) );
 
 	// vertex data
 	vertexSize = 0;
@@ -259,26 +302,73 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	}
 
 	vbo->elemBufferSize = size;
-
-	r_free_vbohandles = vboh->next;
-
-	// link to the list of active vbo handles
-	vboh->prev = &r_vbohandles_headnode;
-	vboh->next = r_vbohandles_headnode.next;
-	vboh->next->prev = vboh;
-	vboh->prev->next = vboh;
-
-	r_num_active_vbos++;
-
 	vbo->registrationSequence = rsh.registrationSequence;
 	vbo->vertexSize = vertexSize;
 	vbo->numVerts = numVerts;
 	vbo->numElems = numElems;
 	vbo->owner = owner;
-	vbo->index = vboh->index + 1;
 	vbo->tag = tag;
 	vbo->vertexAttribs = vattribs;
 	vbo->halfFloatAttribs = halfFloatVattribs;
+	vbo->vertsVbo = NULL;
+
+	return vbo;
+
+error:
+	if( vbo ) {
+		R_ReleaseMeshVBO( vbo );
+	}
+
+	return NULL;
+}
+
+/*
+* R_CreateElemsVBO
+*/
+mesh_vbo_t *R_CreateElemsVBO( void *owner, mesh_vbo_t *vertsVbo, int numElems, vbo_tag_t tag ) {
+	int index;
+	mesh_vbo_t *vbo;
+	GLuint vbo_id;
+	size_t size;
+	GLenum usage = VBO_USAGE_FOR_TAG( tag );
+
+	if( !glConfig.ext.vertex_buffer_object ) {
+		return NULL;
+	}
+
+	if( !vertsVbo || !vertsVbo->vertexId ) {
+		return NULL;
+	}
+
+	vbo = R_AllocVBO();
+	if( !vbo ) {
+		return NULL;
+	}
+
+	// pre-allocate elements buffer
+	vbo_id = 0;
+	qglGenBuffersARB( 1, &vbo_id );
+	if( !vbo_id ) {
+		goto error;
+	}
+
+	size = numElems * sizeof( elem_t );
+	qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, vbo_id );
+	qglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, size, NULL, usage );
+	if( qglGetError() == GL_OUT_OF_MEMORY ) {
+		goto error;
+	}
+
+	index = vbo->index;
+	*vbo = *vertsVbo;
+	vbo->index = index;
+	vbo->elemId = vbo_id;
+	vbo->elemBufferSize = size;
+	vbo->registrationSequence = rsh.registrationSequence;
+	vbo->numElems = numElems;
+	vbo->owner = owner;
+	vbo->tag = tag;
+	vbo->vertsVbo = vertsVbo;
 
 	return vbo;
 
@@ -295,6 +385,10 @@ error:
 */
 void R_TouchMeshVBO( mesh_vbo_t *vbo ) {
 	vbo->registrationSequence = rsh.registrationSequence;
+	
+	if( vbo->vertsVbo ) {
+		R_TouchMeshVBO( vbo->vertsVbo );
+	}
 }
 
 /*
@@ -318,9 +412,12 @@ void R_ReleaseMeshVBO( mesh_vbo_t *vbo ) {
 	qglBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
 	qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
 
-	if( vbo->vertexId ) {
-		vbo_id = vbo->vertexId;
-		qglDeleteBuffersARB( 1, &vbo_id );
+	// check if it's a real vertex VBO
+	if( vbo->vertsVbo == NULL ) {
+		if( vbo->vertexId ) {
+			vbo_id = vbo->vertexId;
+			qglDeleteBuffersARB( 1, &vbo_id );
+		}
 	}
 
 	if( vbo->elemId ) {
@@ -328,19 +425,7 @@ void R_ReleaseMeshVBO( mesh_vbo_t *vbo ) {
 		qglDeleteBuffersARB( 1, &vbo_id );
 	}
 
-	if( vbo->index >= 1 && vbo->index <= MAX_MESH_VERTEX_BUFFER_OBJECTS ) {
-		vbohandle_t *vboh = &r_vbohandles[vbo->index - 1];
-
-		// remove from linked active list
-		vboh->prev->next = vboh->next;
-		vboh->next->prev = vboh->prev;
-
-		// insert into linked free list
-		vboh->next = r_free_vbohandles;
-		r_free_vbohandles = vboh;
-
-		r_num_active_vbos--;
-	}
+	R_UnlinkVBO( vbo );
 
 	memset( vbo, 0, sizeof( *vbo ) );
 	vbo->tag = VBO_TAG_NONE;

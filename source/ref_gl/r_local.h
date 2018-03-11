@@ -41,6 +41,8 @@ typedef unsigned short elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
+#include "r_math.h"
+
 #define NUM_CUSTOMCOLORS        16
 
 #define NUM_LOADER_THREADS      4 // optimal value found by testing, when there are too many, CPU usage may be 100%
@@ -62,10 +64,13 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 
 #define BACKFACE_EPSILON        4
 
-#define ON_EPSILON              0.1         // point on plane side epsilon
+#define ON_EPSILON              0.03125 // 1/32 to keep floating point happy
 
 #define Z_NEAR                  4.0f
 #define Z_BIAS                  64.0f
+
+#define POLYOFFSET_FACTOR       -2.0f
+#define POLYOFFSET_UNITS        -1.0f
 
 #define SIDE_FRONT              0
 #define SIDE_BACK               1
@@ -106,9 +111,15 @@ typedef struct {
 	int style;
 	int cluster;
 	int area;
-	unsigned frameCount;
+	bool world;
 	bool shadow;
 	float intensity;
+
+	int receiveMask;
+	int lod;
+	int shadowBorder;
+	int shadowSize;
+	int shadowOffset[2];
 
 	vec3_t origin;
 	vec3_t color;
@@ -118,9 +129,12 @@ typedef struct {
 
 	vec3_t lightmins;
 	vec3_t lightmaxs;
+
+	mat4_t worldToLightMatrix;
+
+	void   *compiledSurf[6];
 } rtlight_t;
 
-#include "r_math.h"
 #include "r_public.h"
 #include "r_vattribs.h"
 #include "r_light.h"
@@ -145,13 +159,14 @@ typedef struct {
 	bool rotated;
 	float radius;
 
-	vec3_t mins;
-	vec3_t maxs;
+	vec3_t mins, maxs;
+	vec3_t absmins, absmaxs;
 
 	struct mfog_s *fog;
 
+	unsigned rtLightFrame;
 	unsigned numRtLights;
-	rtlight_t *entRtLights[MAX_ENT_RTLIGHTS];
+	rtlight_t *rtLights[MAX_DRAWSURF_RTLIGHTS];
 } entSceneCache_t;
 
 typedef struct refScreenTexSet_s {
@@ -180,11 +195,14 @@ typedef struct {
 	vec3_t viewOrigin;
 	mat3_t viewAxis;
 	cplane_t frustum[6];
-	float farClip;
+	float nearClip, farClip;
+	float polygonFactor, polygonUnits;
 	unsigned int clipFlags;
 	vec3_t visMins, visMaxs;
 	float visFarClip;
 	float hdrExposure;
+
+	int viewcluster, viewarea;
 
 	vec3_t lodOrigin;
 	vec3_t pvsOrigin;
@@ -201,7 +219,8 @@ typedef struct {
 
 	drawSurfaceSky_t skyDrawSurface;
 
-	float lod_dist_scale_for_fov;
+	int lodBias;
+	float lodScale;
 
 	unsigned int numPortalSurfaces;
 	unsigned int numDepthPortalSurfaces;
@@ -216,6 +235,9 @@ typedef struct {
 	unsigned int numEntities;
 	entity_t *entities[MAX_REF_ENTITIES];
 
+	int				rtLightSide;
+	rtlight_t		*rtLight;
+
 	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
 
 	drawList_t      *meshlist;              // meshes to be rendered
@@ -224,7 +246,7 @@ typedef struct {
 
 	mfog_t          *fog_eye;
 
-	rtlight_t		*rtLight;
+	uint8_t			*pvs, *areabits;
 } refinst_t;
 
 //====================================================
@@ -261,6 +283,7 @@ typedef struct {
 	image_t         *particleTexture;           // little dot for particles
 	image_t         *coronaTexture;
 	image_t         *portalTextures[MAX_PORTAL_TEXTURES + 1];
+	image_t         *shadowmapAtlasTexture;
 
 	refScreenTexSet_t st, stf, st2D;
 
@@ -275,6 +298,8 @@ typedef struct {
 typedef struct {
 	// bumped each R_ClearScene
 	unsigned int frameCount;
+
+	int worldModelSequence;
 
 	unsigned int numEntities;
 	unsigned int numLocalEntities;
@@ -321,18 +346,17 @@ typedef struct {
 	float cameraSeparation;
 	int swapInterval;
 
-	int worldModelSequence;
-
 	// used for dlight push checking
 	unsigned int frameCount;
-
-	int viewcluster, viewarea;
 
 	struct {
 		unsigned int c_brush_polys, c_world_leafs;
 		unsigned int c_slices_verts, c_slices_elems;
 		unsigned int c_world_draw_surfs;
+		unsigned int c_world_lights, c_dynamic_lights;
+		unsigned int c_ents_total, c_ents_bmodels;
 		unsigned int t_cull_world_nodes, t_cull_world_surfs;
+		unsigned int t_cull_rtlights;
 		unsigned int t_world_node;
 		unsigned int t_add_world_surfs;
 		unsigned int t_add_polys, t_add_entities;
@@ -350,6 +374,7 @@ typedef struct {
 	char speedsMsg[2048];
 	qmutex_t        *speedsMsgLock;
 
+	rtrace_t		debugTrace;
 	msurface_t      *debugSurface;
 	qmutex_t        *debugSurfaceLock;
 
@@ -422,21 +447,30 @@ extern cvar_t *r_lighting_maxglsldlights;
 extern cvar_t *r_lighting_grayscale;
 extern cvar_t *r_lighting_intensity;
 extern cvar_t *r_lighting_realtime_world;
-extern cvar_t *r_lighting_realtime_dynamic;
+extern cvar_t *r_lighting_realtime_dlight;
+extern cvar_t *r_lighting_realtime_world_shadows;
+extern cvar_t *r_lighting_realtime_dlight_shadows;
 extern cvar_t *r_lighting_debuglights;
+extern cvar_t *r_lighting_realtime_world_importfrommap;
 
 extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;
 extern cvar_t *r_offsetmapping_reliefmapping;
 
 extern cvar_t *r_shadows;
-extern cvar_t *r_shadows_alpha;
-extern cvar_t *r_shadows_nudge;
-extern cvar_t *r_shadows_projection_distance;
-extern cvar_t *r_shadows_maxtexsize;
+extern cvar_t *r_shadows_minsize;
+extern cvar_t *r_shadows_maxsize;
+extern cvar_t *r_shadows_texturesize;
+extern cvar_t *r_shadows_bordersize;
 extern cvar_t *r_shadows_pcf;
 extern cvar_t *r_shadows_self_shadow;
 extern cvar_t *r_shadows_dither;
+extern cvar_t *r_shadows_precision;
+extern cvar_t *r_shadows_nearclip;
+extern cvar_t *r_shadows_bias;
+extern cvar_t *r_shadows_usecompiled;
+extern cvar_t *r_shadows_polygonoffset_factor;
+extern cvar_t *r_shadows_polygonoffset_units;
 
 extern cvar_t *r_outlines_world;
 extern cvar_t *r_outlines_scale;
@@ -508,11 +542,10 @@ void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 // r_alias.c
 //
 void	R_CacheAliasModelEntity( const entity_t *e );
-bool    R_AddAliasModelToDrawList( const entity_t *e );
+bool    R_AddAliasModelToDrawList( const entity_t *e, int lod );
 void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf );
 bool    R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
 							 float lerpfrac, const char *name );
-float       R_AliasModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
 void        R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 
 //
@@ -546,13 +579,15 @@ void        R_ShaderDump_f( void );
 //
 // r_cull.c
 //
-void    R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum );
+void    R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum );
+void	R_SetupSideViewFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, int side );
 bool    R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags );
 bool    R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
 bool    R_VisCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_VisCullSphere( const vec3_t origin, float radius );
 int     R_CullModelEntity( const entity_t *e, bool pvsCull );
 int		R_CullSpriteEntity( const entity_t *e );
+bool	R_FogCull( const mfog_t *fog, vec3_t origin, float radius );
 
 //
 // r_framebuffer.c
@@ -587,7 +622,7 @@ void        RFB_Shutdown( void );
 //
 // r_main.c
 //
-#define R_FASTSKY() ( r_fastsky->integer || rf.viewcluster == -1 )
+#define R_FASTSKY() ( r_fastsky->integer || rn.viewcluster == -1 )
 
 extern mempool_t *r_mempool;
 
@@ -616,6 +651,10 @@ int         R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void        R_SetGamma( float gamma );
 void        R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
 void        R_SetDrawBuffer( const char *drawbuffer );
+void		R_SetupPVSFromCluster( int cluster, int area );
+void		R_SetupPVS( const refdef_t *fd );
+void		R_SetupViewMatrices( const refdef_t *rd );
+void		R_SetupSideViewMatrices( const refdef_t *rd, int side );
 void        R_RenderView( const refdef_t *fd );
 const msurface_t *R_GetDebugSurface( void );
 const char *R_WriteSpeedsMessage( char *out, size_t size );
@@ -646,8 +685,8 @@ void        R_DeferDataSync( void );
 
 mfog_t      *R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t      *R_FogForSphere( const vec3_t centre, const float radius );
-bool    R_CompletelyFogged( const mfog_t *fog, vec3_t origin, float radius );
-int         R_LODForSphere( const vec3_t origin, float radius );
+
+int			R_ComputeLOD( const vec3_t viewOrg, const vec3_t mins, const vec3_t maxs, float lodDistance, float lodScale, int lodBias );
 float       R_DefaultFarClip( void );
 
 void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
@@ -685,7 +724,7 @@ void        R_ShutdownCustomColors( void );
 #define ENTITY_OUTLINE( ent ) ( ( !( rn.renderFlags & RF_MIRRORVIEW ) && ( ( ent )->renderfx & RF_VIEWERMODEL ) ) ? 0 : ( ent )->outlineHeight )
 
 void        R_ClearRefInstStack( void );
-bool        R_PushRefInst( void );
+refinst_t  *R_PushRefInst( void );
 void        R_PopRefInst( void );
 
 void        R_BindFrameBufferObject( int object );
@@ -717,6 +756,7 @@ void R_InitDrawLists( void );
 void R_SortDrawList( drawList_t *list );
 void R_DrawSurfaces( drawList_t *list );
 void R_DrawOutlinedSurfaces( drawList_t *list );
+void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr );
 
 void R_CopyOffsetElements( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
 void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
@@ -765,14 +805,15 @@ void R_BlurScreen( void );
 //
 #define MAX_SURF_QUERIES        0x1E0
 
-void        R_DrawWorld( void );
-bool    R_SurfPotentiallyVisible( const msurface_t *surf );
-bool    R_SurfPotentiallyShadowed( const msurface_t *surf );
-bool    R_SurfPotentiallyLit( const msurface_t *surf );
+void    R_DrawWorld( void );
+bool    R_SurfNoDraw( const msurface_t *surf );
+bool	R_SurfNoDlight( const msurface_t *surf );
+bool    R_SurfNoShadow( const msurface_t *surf );
 void	R_CacheBrushModelEntity( const entity_t *e );
 bool    R_AddBrushModelToDrawList( const entity_t *e );
-float       R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
+float   R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
 void    R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf );
+void	R_WalkBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr );
 
 //
 // r_skin.c
@@ -788,9 +829,8 @@ shader_t    *R_FindShaderForSkinFile( const struct skinfile_s *skinfile, const c
 // r_skm.c
 //
 void	R_CacheSkeletalModelEntity( const entity_t *e );
-bool    R_AddSkeletalModelToDrawList( const entity_t *e );
+bool    R_AddSkeletalModelToDrawList( const entity_t *e, int lod );
 void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf );
-float       R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
 void        R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 int         R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags );
 void        R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose );
@@ -819,7 +859,6 @@ typedef struct mesh_vbo_s {
 
 	unsigned int vertexId;
 	unsigned int elemId;
-	void                *owner;
 	unsigned int visframe;
 
 	unsigned int numVerts;
@@ -844,11 +883,15 @@ typedef struct mesh_vbo_s {
 	size_t bonesWeightsOffset;
 	size_t spritePointsOffset;              // autosprite or autosprite2 centre + radius
 	size_t instancesOffset;
+
+	void *owner;							// opaque pointer
+	struct mesh_vbo_s *vertsVbo;			// pointer to linked vertex data VBO, only relevant for elems-only VBOs
 } mesh_vbo_t;
 
 void        R_InitVBO( void );
 mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numInstances,
 							 vattribmask_t vattribs, vbo_tag_t tag, vattribmask_t halfFloatVattribs );
+mesh_vbo_t *R_CreateElemsVBO( void *owner, mesh_vbo_t *vertsVbo, int numElems, vbo_tag_t tag );
 void        R_ReleaseMeshVBO( mesh_vbo_t *vbo );
 void        R_TouchMeshVBO( mesh_vbo_t *vbo );
 mesh_vbo_t *R_GetVBOByIndex( int index );

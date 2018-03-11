@@ -865,15 +865,87 @@ void R_SortSuperLightStyles( model_t *mod ) {
 /*
 =============================================================================
 
+LIGHTMAP ALLOCATION
+
+=============================================================================
+*/
+
+/*
+* R_AllocLightmap_Init
+*/
+void R_AllocLightmap_Init( lightmapAllocState_t *state, int width, int height )
+{
+	state->width = width;
+	state->height = height;
+	state->allocated = R_Malloc( sizeof( *(state->allocated) ) * width );
+}
+
+/*
+* R_AllocLightmap_Reset
+*/
+void R_AllocLightmap_Reset( lightmapAllocState_t *state )
+{
+	memset( state->allocated, 0, sizeof( *(state->allocated) ) * state->width );
+}
+
+/*
+* R_AllocLightmap_Free
+*/
+void R_AllocLightmap_Free( lightmapAllocState_t *state )
+{
+	R_Free( state->allocated );
+	memset( state, 0, sizeof( *state ) );
+}
+
+/*
+* R_AllocLightmap_Block
+*/
+bool R_AllocLightmap_Block( lightmapAllocState_t *state, int w, int h, int *x, int *y )
+{
+	int i, j;
+	int best, best2;
+
+	best = state->width;
+	for( i = 0; i < state->width - w; i++ ) {
+		best2 = 0;
+		for( j = 0; j < w; j++ ) {
+			if( state->allocated[i + j] >= best ) {
+				break;
+			}
+			if( state->allocated[i + j] > best2 ) {
+				best2 = state->allocated[i + j];
+			}
+		}
+
+		if( j == w ) {
+			// this is a valid spot
+			*x = i;
+			*y = best = best2;
+		}
+	}
+
+	if( best + h > state->height ) {
+		return false;
+	}
+
+	for( i = 0; i < w; i++ )
+		state->allocated[*x + i] = best + h;
+
+	return true;
+}
+
+/*
+=============================================================================
+
 REALTIME LIGHTS
 
 =============================================================================
 */
 
 /*
-* R_GetLightVisInfo_r
+* R_GetRtLightVisInfo_r
 */
-static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node, const uint8_t *pvs ) {
+static void R_GetRtLightVisInfo_r( rtlight_t *l, const mnode_t *node, const uint8_t *pvs ) {
 	unsigned i;
 	mleaf_t *leaf;
 
@@ -885,7 +957,7 @@ static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node, const uint8_
 		} else if( d < -l->intensity ) {
 			node = node->children[1];
 		}  else {
-			R_GetLightVisInfo_r( l, node->children[0], pvs );
+			R_GetRtLightVisInfo_r( l, node->children[0], pvs );
 			node = node->children[1];
 		}
 	}
@@ -899,13 +971,11 @@ static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node, const uint8_
 		return;
 	}
 
-#if 1
 	if( pvs ) {
 		if( !( pvs[leaf->cluster >> 3] & ( 1 << ( leaf->cluster & 7 ) ) ) ) {
 			return; // not visible
 		}
 	}
-#endif
 
 	for( i = 0; i < 3; i++ ) {
 		l->cullmins[i] = min( l->cullmins[i], leaf->mins[i] );
@@ -914,9 +984,9 @@ static void R_GetLightVisInfo_r( rtlight_t *l, const mnode_t *node, const uint8_
 }
 
 /*
-* R_GetLightVisInfo
+* R_GetRtLightVisInfo
 */
-void R_GetLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
+void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 	unsigned i;
 	mleaf_t *leaf;
 	const uint8_t *pvs = NULL;
@@ -936,13 +1006,147 @@ void R_GetLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 	VectorCopy( l->origin, l->cullmins );
 	VectorCopy( l->origin, l->cullmaxs );
 
-	R_GetLightVisInfo_r( l, bm->nodes, pvs );
+	R_GetRtLightVisInfo_r( l, bm->nodes, pvs );
 
 	// limit combined leaf box to light boundaries
 	for( i = 0; i < 3; i++ ) {
 		l->cullmins[i] = max( l->cullmins[i] - 1, l->lightmins[i] );
 		l->cullmaxs[i] = min( l->cullmaxs[i] + 1, l->lightmaxs[i] );
 	}
+}
+
+/*
+* R_InitRtLight
+*/
+void R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_t color ) {
+	mat4_t lightMatrix;
+
+	memset( l, 0, sizeof( rtlight_t ) );
+
+	VectorCopy( origin, l->origin );
+	VectorCopy( color, l->color );
+
+	l->area = -1;
+	l->cluster = -2; // differentiate from valid cluster -1, call R_GetRtLightVisInfo on first render
+	l->intensity = radius;
+	l->flags = LIGHTFLAG_REALTIMEMODE;
+	l->style = MAX_LIGHTSTYLES;
+
+	Matrix4_ObjectMatrix( origin, axis_identity, 1, lightMatrix );
+	Matrix4_Invert( lightMatrix, l->worldToLightMatrix );
+
+	BoundsFromRadius( l->origin, l->intensity, l->lightmins, l->lightmaxs );
+	CopyBounds( l->lightmins, l->lightmaxs, l->cullmins, l->cullmaxs );
+}
+
+/*
+* R_RtLightsShadowSizeCmp
+*/
+static int R_RtLightsShadowSizeCmp( const void *pl1, const void *pl2 ) {
+	const rtlight_t *l1 = *((const rtlight_t **)pl1);
+	const rtlight_t *l2 = *((const rtlight_t **)pl2);
+	int s1 = l1->intensity / (l1->lod + 1.0);
+	int s2 = l2->intensity / (l2->lod + 1.0);
+	return s2 - s1;
+}
+
+/*
+* R_DrawRtLights
+*/
+unsigned R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows ) {
+	unsigned i;
+	unsigned count;
+	const uint8_t *areabits = rn.areabits;
+
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		return 0;
+	}
+
+	count = 0;
+	for( i = 0; i < numLights; i++ ) {
+		rtlight_t *l = lights + i;
+
+		if( rn.numRealtimeLights == MAX_SCENE_RTLIGHTS ) {
+			break;
+		}
+		if( !(l->flags & LIGHTFLAG_REALTIMEMODE ) ) {
+			continue;
+		}
+		if( l->style >= 0 && l->style < MAX_LIGHTSTYLES ) {
+			if( VectorLength( rsc.lightStyles[l->style].rgb ) < 0.01 ) {
+				continue;
+			}
+		}
+
+		if( l->cluster == -2 ) {
+			// dynamic light with no vis info for this frame
+			R_GetRtLightVisInfo( rsh.worldBrushModel, l );
+		}
+
+		if( l->cluster < 0 ) {
+			continue;
+		}
+
+		if( areabits ) {
+			if( l->area < 0 || !( areabits[l->area >> 3] & ( 1 << ( l->area & 7 ) ) ) ) {
+				continue; // not visible
+			}
+		}
+
+		if( R_CullBox( l->cullmins, l->cullmaxs, clipFlags ) ) {
+			continue;
+		}
+
+		if( R_VisCullBox( l->cullmins, l->cullmaxs ) ) {
+			continue;
+		}
+
+		l->receiveMask = 0;
+		l->shadowSize = 0;
+		l->lod = R_ComputeLOD( rn.viewOrigin, l->lightmins, l->lightmaxs, l->intensity, 1.0, 0 );
+
+		rn.rtlights[rn.numRealtimeLights] = l;
+		rn.numRealtimeLights++;
+
+		count++;
+	}
+
+	// sort lights by predicted shadow size in ascending order so that
+	// more important lights are always processed first
+	qsort( rn.rtlights, rn.numRealtimeLights, sizeof( *rn.rtlights ), &R_RtLightsShadowSizeCmp );
+
+	return count;
+}
+
+/*
+* R_CaclRtLightBBoxSidemask
+*/
+int R_CaclRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs ) {
+	int i;
+	int sidemask = 0x3F;
+	const vec_t *o = &l->origin[0];
+	const vec_t *lmins = &l->cullmins[0];
+	const vec_t *lmaxs = &l->cullmaxs[0];
+
+	for( i = 0; i < 3; i++ ) {
+		int j = i << 1;
+
+		if( mins[i] > lmaxs[i] + ON_EPSILON ) {
+			return 0;
+		}
+		if( maxs[i] < lmins[i] - ON_EPSILON ) {
+			return 0;
+		}
+
+		if( o[i] > maxs[i] + ON_EPSILON ) {
+			sidemask &= ~(1<<j);
+		}
+		if( o[i] < mins[i] - ON_EPSILON ) {
+			sidemask &= ~(1<<(j+1));
+		}
+	}
+
+	return sidemask;
 }
 
 /*
@@ -959,34 +1163,58 @@ void R_RenderDebugLights( void ) {
 		for( i = 0; i < rn.numRealtimeLights; i++ ) {
 			rtlight_t *l = rn.rtlights[i];
 
+			if( !l->receiveMask ) {
+				continue;
+			}
 			R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
 		}
 	} else {
 		const msurface_t *surf;
 		const drawSurfaceBSP_t *drawSurf;
 
-		surf = R_GetDebugSurface();
+		surf = rf.debugSurface;
 		if( !surf ) {
 			return;
 		}
 
-		drawSurf = rsh.worldBrushModel->drawSurfaces + surf->drawSurf - 1;
-		if( r_lighting_debuglights->integer == 2 ) {
-			for( i = 0; i < drawSurf->numRtLights; i++ ) {
-				rtlight_t *l = drawSurf->rtLights[i];
+		if( rf.debugTrace.ent == R_ENT2NUM( rsc.worldent ) ) {
+			drawSurf = rsh.worldBrushModel->drawSurfaces + surf->drawSurf - 1;
+			if( r_lighting_debuglights->integer == 2 ) {
+				for( i = 0; i < drawSurf->numRtLights; i++ ) {
+					rtlight_t *l = drawSurf->rtLights[i];
+
+					if( !l->receiveMask ) {
+						continue;
+					}
+
+					R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+				}
+			} else if( r_lighting_debuglights->integer == 3 ) {
+				unsigned lightBits = *surf->rtLightBits;
+
+				for( i = 0; i < drawSurf->numRtLights; i++ ) {
+					rtlight_t *l = drawSurf->rtLights[i];
+
+					if( !l->receiveMask ) {
+						continue;
+					}
+
+					if( lightBits & (1<<i) ) {
+						R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+						R_AddDebugBounds( l->lightmins, l->lightmaxs, colorWhite );
+					}
+				}
+			}
+		} else if( rf.debugTrace.ent >= 0 ) {
+			entSceneCache_t *cache = R_ENTNUMCACHE( rf.debugTrace.ent );
+			for( i = 0; i < cache->numRtLights; i++ ) {
+				rtlight_t *l = cache->rtLights[i];
+
+				if( !l->receiveMask ) {
+					continue;
+				}
 
 				R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
-			}
-		} else if( r_lighting_debuglights->integer == 3 ) {
-			unsigned lightBits = *surf->rtLightBits;
-
-			for( i = 0; i < drawSurf->numRtLights; i++ ) {
-				rtlight_t *l = drawSurf->rtLights[i];
-
-				if( lightBits & (1<<i) ) {
-					R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
-					R_AddDebugBounds( l->lightmins, l->lightmaxs, colorWhite );
-				}
 			}
 		}
 	}

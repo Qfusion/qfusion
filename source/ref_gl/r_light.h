@@ -29,11 +29,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_vattribs.h"
 
 // flags for rtlight rendering
-#define LIGHTFLAG_NORMALMODE 1
-#define LIGHTFLAG_REALTIMEMODE 2
+#define LIGHTFLAG_NORMALMODE		1
+#define LIGHTFLAG_REALTIMEMODE		2
 
-#define DLIGHT_SCALE        0.5f
-#define MAX_SUPER_STYLES    128
+#define MAPLIGHT_MIN_SHADOW_RADIUS  100.0f
+#define DLIGHT_MIN_SHADOW_RADIUS    50.0f
+
+#define DLIGHT_SCALE				0.5f
+#define MAX_SUPER_STYLES			128
 
 typedef struct superLightStyle_s {
 	vattribmask_t vattribs;
@@ -49,6 +52,13 @@ typedef struct {
 	float texMatrix[2][2];
 } lightmapRect_t;
 
+typedef struct
+{
+	int width;
+	int height;
+	int *allocated;
+} lightmapAllocState_t;
+
 void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
 float       R_LightExposureForOrigin( const vec3_t origin );
 void        R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, lightmapRect_t *rects );
@@ -62,7 +72,15 @@ void        R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const 
 void        R_DrawCoronas( void );
 void        R_ShutdownCoronas( void );
 
-void		R_GetLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
+void		R_AllocLightmap_Init( lightmapAllocState_t *state, int width, int height );
+void		R_AllocLightmap_Reset( lightmapAllocState_t *state );
+void		R_AllocLightmap_Free( lightmapAllocState_t *state );
+bool		R_AllocLightmap_Block( lightmapAllocState_t *state, int w, int h, int *x, int *y );
+
+void		R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_t color );
+void		R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
+unsigned	R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows );
+int			R_CaclRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs );
 void		R_RenderDebugLights( void );
 
 #endif // R_LIGHT_H

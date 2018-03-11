@@ -857,9 +857,11 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 		}
 
 		// add shadows for items (do it before offseting for weapons)
-		if( !( cent->renderfx & RF_NOSHADOW ) && cg_shadows->integer ) {
-			CG_AllocShadeBox( cent->current.number, cent->ent.origin, item_box_mins, item_box_maxs, NULL );
-			cent->ent.renderfx |= RF_NOSHADOW;
+		if( cg_shadows->integer && !( cent->renderfx & RF_NOSHADOW ) ) {
+			if( cg_shadows->integer == 1 ) {
+				CG_AllocShadeBox( cent->current.number, cent->ent.origin, item_box_mins, item_box_maxs, NULL );
+				cent->ent.renderfx |= RF_NOSHADOW;
+			}
 		} else {
 			cent->ent.renderfx |= RF_NOSHADOW;
 		}
@@ -871,7 +873,9 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 			CG_PlaceModelOnTag( &cent->ent, &cent->ent, &cgs.weaponItemTag );
 		}
 	} else {
-		cent->ent.renderfx |= RF_NOSHADOW;
+		if( cent->current.solid != SOLID_BMODEL ) {
+			cent->ent.renderfx |= RF_NOSHADOW;
+		}
 	}
 
 	if( cent->skel ) {

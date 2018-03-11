@@ -113,7 +113,7 @@ LIGHTMAP ALLOCATION
 #define BLOCK_HEIGHT    256
 
 typedef struct {
-	int         *allocated;
+	lightmapAllocState_t state;
 
 	int last_lmnum;
 
@@ -126,15 +126,13 @@ static lightmapstate_t lms;
 
 static void LM_Init( void ) {
 	memset( &lms, 0, sizeof( lms ) );
-
-	lms.allocated = Mod_Malloc( loadmodel, sizeof( *lms.allocated ) * BLOCK_WIDTH );
-
-	lms.last_lmnum = 0;
 	lms.lightmap_buffer = Mod_Malloc( loadmodel, BLOCK_WIDTH * BLOCK_HEIGHT * LIGHTMAP_BYTES );
+
+	R_AllocLightmap_Init( &lms.state, BLOCK_WIDTH, BLOCK_HEIGHT );
 }
 
 static void LM_InitBlock( void ) {
-	memset( lms.allocated, 0, sizeof( *lms.allocated ) * BLOCK_WIDTH );
+	R_AllocLightmap_Reset( &lms.state );
 }
 
 static int LM_UploadBlock( void ) {
@@ -149,42 +147,15 @@ static void LM_Stop( void ) {
 	loadmodel_lightmapRects = Mod_Malloc( loadmodel, lms.last_lmnum * sizeof( *loadmodel_lightmapRects ) );
 	R_BuildLightmaps( loadmodel, lms.last_lmnum, BLOCK_WIDTH, BLOCK_HEIGHT, lms.lightmap_buffer, loadmodel_lightmapRects );
 
-	Mod_MemFree( lms.allocated );
+	R_AllocLightmap_Free( &lms.state );
+
 	Mod_MemFree( lms.lightmap_buffer );
+
+	memset( &lms, 0, sizeof( lms ) );
 }
 
-// returns a texture number and the position inside it
 static bool LM_AllocBlock( int w, int h, int *x, int *y ) {
-	int i, j;
-	int best, best2;
-
-	best = BLOCK_HEIGHT;
-	for( i = 0; i < BLOCK_WIDTH - w; i++ ) {
-		best2 = 0;
-		for( j = 0; j < w; j++ ) {
-			if( lms.allocated[i + j] >= best ) {
-				break;
-			}
-			if( lms.allocated[i + j] > best2 ) {
-				best2 = lms.allocated[i + j];
-			}
-		}
-
-		if( j == w ) {
-			// this is a valid spot
-			*x = i;
-			*y = best = best2;
-		}
-	}
-
-	if( best + h > BLOCK_HEIGHT ) {
-		return false;
-	}
-
-	for( i = 0; i < w; i++ )
-		lms.allocated[*x + i] = best + h;
-
-	return true;
+	return R_AllocLightmap_Block( &lms.state, w, h, x, y );
 }
 
 //=================================================
@@ -1324,15 +1295,25 @@ static void Mod_Q2LoadSubmodels( const lump_t *l ) {
 	loadbmodel->inlines = mod_inline;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
+		vec3_t origin, mins, maxs;
+		
 		mod_inline[i].extradata = bmodel + i;
 
 		for( j = 0; j < 3; j++ ) {
 			// spread the mins / maxs by a pixel
 			out->mins[j] = LittleFloat( in->mins[j] ) - 1;
 			out->maxs[j] = LittleFloat( in->maxs[j] ) + 1;
+			origin[j] = (out->mins[j] + out->maxs[j]) * 0.5f;
 		}
 
-		out->radius = RadiusFromBounds( out->mins, out->maxs );
+		// the bounds are from world to local coordinates
+		// otherwise bmodel radius isn't going make any sense
+		for( j = 0; j < 3; j++ ) {
+			mins[j] = out->mins[j] - origin[j];
+			maxs[j] = out->maxs[j] - origin[j];
+		}
+
+		out->radius = RadiusFromBounds( mins, maxs );
 		out->firstModelSurface = LittleLong( in->firstface );
 		out->numModelSurfaces = LittleLong( in->numfaces );
 	}
@@ -1705,6 +1686,7 @@ static void Mod_Q2LoadLeafs( const lump_t *l, const lump_t *msLump ) {
 	bool badBounds;
 	short       *inMarkSurfaces;
 	int numMarkSurfaces, firstMarkSurface;
+	vec3_t worldMins, worldMaxs;
 
 	inMarkSurfaces = ( void * )( mod_base + msLump->fileofs );
 	if( msLump->filelen % sizeof( *inMarkSurfaces ) ) {
@@ -1722,15 +1704,22 @@ static void Mod_Q2LoadLeafs( const lump_t *l, const lump_t *msLump ) {
 	loadbmodel->leafs = out;
 	loadbmodel->numleafs = count;
 
+	ClearBounds( worldMins, worldMaxs );
+
 	for( i = 0; i < count; i++, in++, out++ ) {
 		badBounds = false;
 		for( j = 0; j < 3; j++ ) {
 			out->mins[j] = (float)LittleShort( in->mins[j] );
 			out->maxs[j] = (float)LittleShort( in->maxs[j] );
+
 			if( out->mins[j] > out->maxs[j] ) {
 				badBounds = true;
+			} else {
+				if( worldMins[j] > out->mins[j] ) worldMins[j] = out->mins[j];
+				if( worldMaxs[j] < out->maxs[j] ) worldMaxs[j] = out->maxs[j];
 			}
 		}
+
 		out->cluster = LittleLong( in->cluster );
 
 		if( i && ( badBounds || VectorCompare( out->mins, out->maxs ) ) ) {
@@ -1780,6 +1769,11 @@ static void Mod_Q2LoadLeafs( const lump_t *l, const lump_t *msLump ) {
 			out->fragmentSurfaces[j] = k;
 		}
 	}
+
+	// don't trust qbsp on world bounds
+	VectorCopy( worldMins, loadbmodel->submodels[0].mins );
+	VectorCopy( worldMaxs, loadbmodel->submodels[0].maxs );
+	loadbmodel->submodels[0].radius = RadiusFromBounds( worldMins, worldMaxs );
 }
 
 /*
@@ -1792,9 +1786,14 @@ static void Mod_Q2LoadEntities( const lump_t *l ) {
 	char sky[MAX_KEY];
 
 	data = (char *)mod_base + l->fileofs;
-	if( !data || !data[0] ) {
+	if( !data[0] ) {
 		return;
 	}
+
+	loadbmodel->entityStringLen = l->filelen;
+	loadbmodel->entityString = ( char * )Mod_Malloc( loadmodel, l->filelen + 1 );
+	memcpy( loadbmodel->entityString, data, l->filelen );
+	loadbmodel->entityString[l->filelen] = '\0';
 
 	Q_strncpyz( sky, "env/unit1_", sizeof( sky ) );
 
@@ -1874,6 +1873,7 @@ static void Mod_Q2LoadVisibility( lump_t *l ) {
 	out = Mod_Malloc( loadmodel, visdatasize );
 	out->numclusters = numclusters;
 	out->rowsize = rowsize;
+	loadbmodel->pvs = out;
 
 	for( i = 0; i < numclusters; i++ ) {
 		Mod_DecompressVis( ( uint8_t * )in + LittleLong( in->bitofs[i][0] ), rowsize, out->data + i * rowsize );
@@ -1906,8 +1906,8 @@ void Mod_LoadQ2BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 		( (int *)header )[i] = LittleLong( ( (int *)header )[i] );
 
 	// load into heap
-	Mod_Q2LoadEntities( &header->lumps[Q2_LUMP_ENTITIES] );
 	Mod_Q2LoadSubmodels( &header->lumps[Q2_LUMP_MODELS] );
+	Mod_Q2LoadEntities( &header->lumps[Q2_LUMP_ENTITIES] );
 	Mod_Q2LoadVertexes( &header->lumps[Q2_LUMP_VERTEXES] );
 	Mod_Q2LoadEdges( &header->lumps[Q2_LUMP_EDGES] );
 	Mod_Q2LoadSurfedges( &header->lumps[Q2_LUMP_SURFEDGES] );
@@ -2020,15 +2020,25 @@ static unsigned Mod_Q1LoadSubmodels( const lump_t *l ) {
 		numvisleafs = (unsigned)j;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
+		vec3_t origin, mins, maxs;
+
 		mod_inline[i].extradata = bmodel + i;
 
 		for( j = 0; j < 3; j++ ) {
 			// spread the mins / maxs by a pixel
 			out->mins[j] = LittleFloat( in->mins[j] ) - 1;
 			out->maxs[j] = LittleFloat( in->maxs[j] ) + 1;
+			origin[j] = (out->mins[j] + out->maxs[j]) * 0.5f;
 		}
 
-		out->radius = RadiusFromBounds( out->mins, out->maxs );
+		// the bounds are from world to local coordinates
+		// otherwise bmodel radius isn't going make any sense
+		for( j = 0; j < 3; j++ ) {
+			mins[j] = out->mins[j] - origin[j];
+			maxs[j] = out->maxs[j] - origin[j];
+		}
+
+		out->radius = RadiusFromBounds( mins, maxs );
 		out->firstModelSurface = LittleLong( in->firstface );
 		out->numModelSurfaces = LittleLong( in->numfaces );
 	}
@@ -2412,7 +2422,7 @@ static void Mod_Q1LoadTexinfo( const lump_t *l ) {
 			continue;
 		}
 
-		Q_snprintfz( out->texture, sizeof( out->texture ), miptex->texture );
+		Q_snprintfz( out->texture, sizeof( out->texture ), "%s", miptex->texture );
 
 		for( j = 0; j < 4; j++ ) {
 			out->vecs[0][j] = LittleFloat( in->vecs[0][j] );
@@ -2601,6 +2611,7 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 	bool badBounds;
 	short       *inMarkSurfaces;
 	int numMarkSurfaces, firstMarkSurface;
+	vec3_t worldMins, worldMaxs;
 
 	inMarkSurfaces = ( void * )( mod_base + msLump->fileofs );
 	if( msLump->filelen % sizeof( *inMarkSurfaces ) ) {
@@ -2619,6 +2630,8 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 	loadbmodel->numleafs = count;
 	numclusters = numvisleafs;
 
+	ClearBounds( worldMins, worldMaxs );
+
 	for( i = 0; i < count; i++, in++, out++ ) {
 		badBounds = false;
 		for( j = 0; j < 3; j++ ) {
@@ -2626,6 +2639,9 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 			out->maxs[j] = (float)LittleShort( in->maxs[j] );
 			if( out->mins[j] > out->maxs[j] ) {
 				badBounds = true;
+			} else {
+				if( worldMins[j] > out->mins[j] ) worldMins[j] = out->mins[j];
+				if( worldMaxs[j] < out->maxs[j] ) worldMaxs[j] = out->maxs[j];
 			}
 		}
 		out->cluster = LittleLong( in->visofs );
@@ -2668,6 +2684,11 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 	}
 
 	loadbmodel->numareas = 1;
+
+	// don't trust qbsp on world bounds
+	VectorCopy( worldMins, loadbmodel->submodels[0].mins );
+	VectorCopy( worldMaxs, loadbmodel->submodels[0].maxs );
+	loadbmodel->submodels[0].radius = RadiusFromBounds( worldMins, worldMaxs );
 }
 
 /*
@@ -2714,6 +2735,23 @@ static void Mod_Q1LoadVisibility( lump_t *l, unsigned numvisleafs ) {
 			leaf->cluster = -1;
 		}
 	}
+}
+
+/*
+* Mod_Q1LoadEntities
+*/
+static void Mod_Q1LoadEntities( lump_t *l ) {
+	char *data;
+
+	data = (char *)mod_base + l->fileofs;
+	if( !data[0] ) {
+		return;
+	}
+
+	loadbmodel->entityStringLen = l->filelen;
+	loadbmodel->entityString = ( char * )Mod_Malloc( loadmodel, l->filelen + 1 );
+	memcpy( loadbmodel->entityString, data, l->filelen );
+	loadbmodel->entityString[l->filelen] = '\0';
 }
 
 /*
@@ -2773,6 +2811,7 @@ void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 
 	// load into heap
 	numvisleafs = Mod_Q1LoadSubmodels( &header->lumps[Q1_LUMP_MODELS] );
+	Mod_Q1LoadEntities( &header->lumps[Q1_LUMP_ENTITIES] );
 	Mod_Q1LoadVertexes( &header->lumps[Q1_LUMP_VERTEXES] );
 	Mod_Q1LoadEdges( &header->lumps[Q1_LUMP_EDGES] );
 	Mod_Q1LoadSurfedges( &header->lumps[Q1_LUMP_SURFEDGES] );

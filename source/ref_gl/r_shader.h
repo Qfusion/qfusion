@@ -272,7 +272,12 @@ typedef struct shader_s {
 #define     Shader_UseTextureFog( s ) ( ( ( s )->sort <= SHADER_SORT_FOG && \
 										  ( ( s )->flags & SHADER_DEPTHWRITE ) ) || ( s )->fog_dist || ( s )->type == SHADER_TYPE_FOG )
 
-#define     Shader_ReadDepth( s ) ( ( s )->flags & SHADER_SOFT_PARTICLE )
+#define     Shader_DepthRead( s ) ( ( ( s )->flags & SHADER_SOFT_PARTICLE ) != 0 )
+#define     Shader_DepthWrite( s ) ( ( ( s )->flags & SHADER_DEPTHWRITE ) != 0 )
+
+#define     Shader_CullFront( s ) ( ( ( s )->flags & (SHADER_CULL_FRONT | SHADER_CULL_BACK) ) == SHADER_CULL_FRONT )
+#define     Shader_CullBack( s ) ( ( ( s )->flags & (SHADER_CULL_FRONT | SHADER_CULL_BACK) ) == SHADER_CULL_BACK )
+#define     Shader_CullNone( s ) ( ( ( s )->flags & (SHADER_CULL_FRONT | SHADER_CULL_BACK) ) == 0 )
 
 void        R_InitShaders( void );
 void        R_ShutdownShaders( void );

@@ -398,41 +398,66 @@ void Matrix4_PerspectiveProjectionToInfinity( vec_t near, mat4_t m, vec_t epsilo
 */
 void Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m ) {
 	mat3_t axis;
-	mat4_t flip, view;
-
-#if 0
-	Matrix4_Identity( flip );
-	Matrix4_Rotate( flip, -90, 1, 0, 0 );
-	Matrix4_Rotate( flip, 90, 0, 0, 1 );
-#else
-	Vector4Set( &flip[0], 0, 0, -1, 0 );
-	Vector4Set( &flip[4], -1, 0, 0, 0 );
-	Vector4Set( &flip[8], 0, 1, 0, 0 );
-	Vector4Set( &flip[12], 0, 0, 0, 1 );
-#endif
 
 	Matrix3_Copy( viewAxis, axis );
 
-	view[0 ] = axis[0];
-	view[4 ] = axis[1];
-	view[8 ] = axis[2];
-	view[12] = -viewOrg[0] * view[0] + -viewOrg[1] * view[4] + -viewOrg[2] * view[8];
+	m[0 ] = axis[0];
+	m[4 ] = axis[1];
+	m[8 ] = axis[2];
+	m[12] = -viewOrg[0] * m[0] + -viewOrg[1] * m[4] + -viewOrg[2] * m[8];
 
-	view[1 ] = axis[3];
-	view[5 ] = axis[4];
-	view[9 ] = axis[5];
-	view[13] = -viewOrg[0] * view[1] + -viewOrg[1] * view[5] + -viewOrg[2] * view[9];
+	m[1 ] = axis[3];
+	m[5 ] = axis[4];
+	m[9 ] = axis[5];
+	m[13] = -viewOrg[0] * m[1] + -viewOrg[1] * m[5] + -viewOrg[2] * m[9];
 
-	view[2 ] = axis[6];
-	view[6 ] = axis[7];
-	view[10] = axis[8];
-	view[14] = -viewOrg[0] * view[2] + -viewOrg[1] * view[6] + -viewOrg[2] * view[10];
+	m[2 ] = axis[6];
+	m[6 ] = axis[7];
+	m[10] = axis[8];
+	m[14] = -viewOrg[0] * m[2] + -viewOrg[1] * m[6] + -viewOrg[2] * m[10];
 
-	view[3] = 0;
-	view[7] = 0;
-	view[11] = 0;
-	view[15] = 1;
+	m[3] = 0;
+	m[7] = 0;
+	m[11] = 0;
+	m[15] = 1;
+}
 
+/*
+* Matrix4_ObjectMatrix
+*/
+void Matrix4_ObjectMatrix( const vec3_t origin, const mat3_t axis, float scale, mat4_t m ) {
+	m[0] = axis[0] * scale;
+	m[1] = axis[1] * scale;
+	m[2] = axis[2] * scale;
+	m[4] = axis[3] * scale;
+	m[5] = axis[4] * scale;
+	m[6] = axis[5] * scale;
+	m[8] = axis[6] * scale;
+	m[9] = axis[7] * scale;
+	m[10] = axis[8] * scale;
+
+	m[3] = 0;
+	m[7] = 0;
+	m[11] = 0;
+	m[12] = origin[0];
+	m[13] = origin[1];
+	m[14] = origin[2];
+	m[15] = 1.0;
+}
+
+/*
+* Matrix4_QuakeModelview
+*/
+void Matrix4_QuakeModelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m ) {
+	mat4_t view;
+	const mat4_t flip = { 
+		0, 0, -1, 0,
+		-1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 0, 1
+	};
+
+	Matrix4_Modelview( viewOrg, viewAxis, view );
 	Matrix4_Multiply( flip, view, m );
 }
 

@@ -68,7 +68,10 @@ cvar_t *r_lighting_maxglsldlights;
 cvar_t *r_lighting_grayscale;
 cvar_t *r_lighting_intensity;
 cvar_t *r_lighting_realtime_world;
-cvar_t *r_lighting_realtime_dynamic;
+cvar_t *r_lighting_realtime_dlight;
+cvar_t *r_lighting_realtime_world_shadows;
+cvar_t *r_lighting_realtime_dlight_shadows;
+cvar_t *r_lighting_realtime_world_importfrommap;
 cvar_t *r_lighting_debuglights;
 
 cvar_t *r_offsetmapping;
@@ -76,13 +79,19 @@ cvar_t *r_offsetmapping_scale;
 cvar_t *r_offsetmapping_reliefmapping;
 
 cvar_t *r_shadows;
-cvar_t *r_shadows_alpha;
-cvar_t *r_shadows_nudge;
-cvar_t *r_shadows_projection_distance;
-cvar_t *r_shadows_maxtexsize;
+cvar_t *r_shadows_minsize;
+cvar_t *r_shadows_maxsize;
+cvar_t *r_shadows_texturesize;
+cvar_t *r_shadows_bordersize;
 cvar_t *r_shadows_pcf;
 cvar_t *r_shadows_self_shadow;
 cvar_t *r_shadows_dither;
+cvar_t *r_shadows_precision;
+cvar_t *r_shadows_nearclip;
+cvar_t *r_shadows_bias;
+cvar_t *r_shadows_usecompiled;
+cvar_t *r_shadows_polygonoffset_factor;
+cvar_t *r_shadows_polygonoffset_units;
 
 cvar_t *r_outlines_world;
 cvar_t *r_outlines_scale;
@@ -1108,7 +1117,10 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
 	r_lighting_realtime_world = ri.Cvar_Get( "r_lighting_realtime_world", "1", CVAR_ARCHIVE );
-	r_lighting_realtime_dynamic = ri.Cvar_Get( "r_lighting_realtime_dynamic", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_dlight = ri.Cvar_Get( "r_lighting_realtime_dlight", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_world_shadows = ri.Cvar_Get( "r_lighting_realtime_world_shadows", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_dlight_shadows = ri.Cvar_Get( "r_lighting_realtime_dlight_shadows", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_world_importfrommap = ri.Cvar_Get( "r_lighting_realtime_world_importfrommap", "1", CVAR_ARCHIVE );
 	r_lighting_debuglights = ri.Cvar_Get( "r_lighting_debuglights", "0", 0 );
 
 	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
@@ -1120,13 +1132,19 @@ static void R_Register( const char *screenshotsPrefix ) {
 #else
 	r_shadows = ri.Cvar_Get( "r_shadows", "0", CVAR_ARCHIVE );
 #endif
-	r_shadows_alpha = ri.Cvar_Get( "r_shadows_alpha", "0.7", CVAR_ARCHIVE );
-	r_shadows_nudge = ri.Cvar_Get( "r_shadows_nudge", "1", CVAR_ARCHIVE );
-	r_shadows_projection_distance = ri.Cvar_Get( "r_shadows_projection_distance", "64", CVAR_CHEAT );
-	r_shadows_maxtexsize = ri.Cvar_Get( "r_shadows_maxtexsize", "64", CVAR_ARCHIVE );
+	r_shadows_minsize = ri.Cvar_Get( "r_shadows_minsize", "32", CVAR_ARCHIVE );
+	r_shadows_maxsize = ri.Cvar_Get( "r_shadows_maxsize", "512", CVAR_ARCHIVE );
+	r_shadows_texturesize = ri.Cvar_Get( "r_shadows_texturesize", "4096", CVAR_ARCHIVE );
+	r_shadows_bordersize = ri.Cvar_Get( "r_shadows_bordersize", "4", CVAR_ARCHIVE );
 	r_shadows_pcf = ri.Cvar_Get( "r_shadows_pcf", "1", CVAR_ARCHIVE );
 	r_shadows_self_shadow = ri.Cvar_Get( "r_shadows_self_shadow", "0", CVAR_ARCHIVE );
 	r_shadows_dither = ri.Cvar_Get( "r_shadows_dither", "0", CVAR_ARCHIVE );
+	r_shadows_precision = ri.Cvar_Get( "r_shadows_precision", "1", CVAR_ARCHIVE );
+	r_shadows_nearclip = ri.Cvar_Get( "r_shadows_nearclip", "1", CVAR_ARCHIVE );
+	r_shadows_bias = ri.Cvar_Get( "r_shadows_bias", "0.03", CVAR_ARCHIVE );
+	r_shadows_usecompiled  = ri.Cvar_Get( "r_shadows_usecompiled", "1", CVAR_ARCHIVE );
+	r_shadows_polygonoffset_factor  = ri.Cvar_Get( "r_shadows_polygonoffset_factor", "2", CVAR_ARCHIVE );
+	r_shadows_polygonoffset_units  = ri.Cvar_Get( "r_shadows_polygonoffset_units", "0", CVAR_ARCHIVE );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );
@@ -1539,6 +1557,8 @@ void R_BeginRegistration( void ) {
 	R_DeferDataSync();
 
 	R_DataSync();
+
+	R_ClearScene();
 }
 
 /*
@@ -1563,6 +1583,8 @@ void R_EndRegistration( void ) {
 	R_DeferDataSync();
 
 	R_DataSync();
+
+	R_ClearScene();
 }
 
 /*

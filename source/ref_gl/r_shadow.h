@@ -20,8 +20,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_SHADOW_H
 #define R_SHADOW_H
 
+#define SHADOWMAP_MIN_SIZE			32
+#define SHADOWMAP_MIN_BORDER		4
+#define SHADOWMAP_MIN_ATLAS_SIZE	1024
+
 extern drawList_t r_shadowlist;
 
-void        R_DrawLights( void );
+void        R_DrawShadows( void );
+
+void		R_DrawRtLightWorld( void );
+void		R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool compile );
+void		R_CompileRtLightShadow( rtlight_t *l );
+void		R_TouchCompiledRtLightShadows( rtlight_t *l );
+
+void		R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+	const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf );
+
+const shader_t *R_OpaqueShadowShader( const shader_t *shader );
 
 #endif // R_SHADOW_H

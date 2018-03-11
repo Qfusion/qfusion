@@ -199,7 +199,10 @@ typedef struct mbrushmodel_s {
 	unsigned *surfRtlightBits; // [numsurfaces]
 
 	unsigned numMiptex;
-	void            *mipTex;
+	void *mipTex;
+
+	unsigned entityStringLen;
+	char *entityString;
 } mbrushmodel_t;
 
 /*
@@ -418,9 +421,8 @@ struct model_s *R_RegisterModel( const char *name );
 
 void R_GetTransformBufferForMesh( mesh_t *mesh, bool positions, bool normals, bool sVectors );
 
-void        Mod_ClearAll( void );
 model_t     *Mod_ForName( const char *name, bool crash );
-mleaf_t     *Mod_PointInLeaf( float *p, mbrushmodel_t *bmodel );
+mleaf_t     *Mod_PointInLeaf( const vec3_t p, mbrushmodel_t *bmodel );
 uint8_t     *Mod_ClusterPVS( int cluster, mbrushmodel_t *bmodel );
 
 unsigned int Mod_Handle( const model_t *mod );

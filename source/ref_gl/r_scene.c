@@ -114,6 +114,7 @@ static void R_CacheSceneEntity( entity_t *e ) {
 		cache->rotated = false;
 		cache->numRtLights = 0;
 		ClearBounds( cache->mins, cache->maxs );
+		ClearBounds( cache->absmins, cache->absmaxs );
 
 		switch( e->model->type ) {
 		case mod_alias:
@@ -160,11 +161,16 @@ void R_AddEntityToScene( const entity_t *ent ) {
 			Vector4Copy( rsc.worldent->outlineRGBA, de->outlineColor );
 
 			if( de->model && de->model->type == mod_brush ) {
+				de->flags |= RF_FORCENOLOD;
 				rsc.bmodelEntities[rsc.numBmodelEntities++] = de;
 			}
 		} else if( de->rtype == RT_SPRITE ) {
 			// simplifies further checks
 			de->model = NULL;
+			de->flags |= RF_FORCENOLOD;
+			if( !de->customShader || de->radius <= 0 || de->scale <= 0 ) {
+				return;
+			}
 		}
 
 		if( de->renderfx & RF_ALPHAHACK ) {
@@ -205,22 +211,15 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	}
 	
 	dl = &rsc.dlights[rsc.numDlights];
-	VectorCopy( org, dl->origin );
-	dl->intensity = intensity * DLIGHT_SCALE;
-	dl->color[0] = r;
-	dl->color[1] = g;
-	dl->color[2] = b;
-	dl->flags = LIGHTFLAG_REALTIMEMODE;
-	dl->style = MAX_LIGHTSTYLES;
-	dl->shadow = false;
-	dl->cluster = -2;
-	dl->area = -1;
-	BoundsFromRadius( dl->origin, dl->intensity, dl->lightmins, dl->lightmaxs );
-	CopyBounds( dl->lightmins, dl->lightmaxs, dl->cullmins, dl->cullmaxs );
+	R_InitRtLight( dl, org, intensity * DLIGHT_SCALE, colorWhite );
+	dl->shadow = dl->intensity >= DLIGHT_MIN_SHADOW_RADIUS;
 
 	if( r_lighting_grayscale->integer ) {
 		vec_t grey = ColorGrayscale( dl->color );
 		dl->color[0] = dl->color[1] = dl->color[2] = bound( 0, grey, 1 );
+	} else {
+		VectorSet( dl->color, r, g, b );
+		VectorScale( dl->color, 1.0 / DLIGHT_SCALE, dl->color );
 	}
 
 	rsc.numDlights++;
@@ -347,6 +346,13 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
 		rsc.refdef = *fd;
+
+		if( rsc.worldModelSequence != rsh.worldModelSequence ) {
+			rsc.frameCount = !rsc.frameCount;
+			rsc.worldModelSequence = rsh.worldModelSequence;
+
+			R_WaitWorldModel();
+		}
 	}
 
 	rn.refdef = *fd;
@@ -358,10 +364,13 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	rn.renderFlags = RF_NONE;
 
+	rn.nearClip = Z_NEAR;
 	rn.farClip = R_DefaultFarClip();
+	rn.polygonFactor = POLYOFFSET_FACTOR;
+	rn.polygonUnits = POLYOFFSET_UNITS;
 	rn.clipFlags = 15;
 	if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ) {
-		rn.clipFlags |= 16;
+		rn.clipFlags |= 32; // farlip
 	}
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
@@ -442,9 +451,18 @@ void R_RenderScene( const refdef_t *fd ) {
 	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
 	Vector4Set( rn.viewport, fd->x, fd->y, fd->width, fd->height );
 	VectorCopy( fd->vieworg, rn.pvsOrigin );
+
 	VectorCopy( fd->vieworg, rn.lodOrigin );
+	rn.lodBias = r_lodbias->integer;
+	rn.lodScale = r_lodscale->value;
 
 	R_BindFrameBufferObject( 0 );
+
+	R_SetupViewMatrices( fd );
+
+	R_SetupFrustum( fd, rn.nearClip, rn.farClip, rn.frustum );
+
+	R_SetupPVS( fd );
 
 	R_RenderView( fd );
 
