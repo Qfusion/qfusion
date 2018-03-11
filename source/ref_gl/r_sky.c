@@ -262,7 +262,7 @@ static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visS
 
 	RB_SetSkyboxSide( imageIndex );
 
-	RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems, 0, 0, 0, 0 );
+	RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems );
 }
 
 /*
@@ -295,7 +295,7 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 
 	RB_BindVBO( skydome->linearVbos[side]->index, GL_TRIANGLES );
 
-	RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems, 0, 0, 0, 0 );
+	RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems );
 }
 
 /*
@@ -389,12 +389,14 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 				RB_BindVBO( skydome->sphereVbos[i]->index, GL_TRIANGLES );
 
-				RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems, 0, 0, 0, 0 );
+				RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems );
 			}
 		}
 	}
 
 	R_TransformForEntity( e );
+
+	R_ClearSky( drawSurf );
 }
 
 //===================================================================

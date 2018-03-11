@@ -405,24 +405,6 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 }
 
 /*
-* R_AliasModelLOD
-*/
-static model_t *R_AliasModelLOD( const entity_t *e ) {
-	int lod;
-
-	if( !e->model->numlods || ( e->flags & RF_FORCENOLOD ) ) {
-		return e->model;
-	}
-
-	lod = R_LODForSphere( e->origin, e->model->radius );
-
-	if( lod < 1 ) {
-		return e->model;
-	}
-	return e->model->lods[min( lod, e->model->numlods ) - 1];
-}
-
-/*
 * R_AliasModelLerpBBox
 */
 static float R_AliasModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t mins, vec3_t maxs ) {
@@ -544,6 +526,7 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	const maliasmodel_t *model = ( const maliasmodel_t * )drawSurf->model->extradata;
 	const maliasmesh_t *aliasmesh = drawSurf->mesh;
 	vattribmask_t vattribs;
+	entSceneCache_t *entCache = R_ENTCACHE( e );
 
 	// see what vertex attribs backend needs
 	vattribs = RB_GetVertexAttribs();
@@ -561,11 +544,12 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	for( i = 0; i < 3; i++ )
 		move[i] = frame->translate[i] + ( oldframe->translate[i] - frame->translate[i] ) * backlerp;
 
+	RB_SetRtLightParams( entCache->numRtLights, entCache->rtLights, 0, NULL );
+
 	if( aliasmesh->vbo != NULL && !framenum && !oldframenum ) {
 		RB_BindVBO( aliasmesh->vbo->index, GL_TRIANGLES );
 
-		RB_DrawElements( 0, aliasmesh->numverts, 0, aliasmesh->numtris * 3,
-						 0, aliasmesh->numverts, 0, aliasmesh->numtris * 3 );
+		RB_DrawElements( 0, aliasmesh->numverts, 0, aliasmesh->numtris * 3 );
 	} else {
 		mesh_t dynamicMesh;
 		vec4_t *inVertsArray;
@@ -655,20 +639,6 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 }
 
 /*
-* R_AliasModelBBox
-*/
-float R_AliasModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs ) {
-	const model_t *mod;
-
-	mod = R_AliasModelLOD( e );
-	if( !mod ) {
-		return 0;
-	}
-
-	return R_AliasModelLerpBBox( e, mod, mins, maxs );
-}
-
-/*
 * R_AliasModelFrameBounds
 */
 void R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs ) {
@@ -713,6 +683,7 @@ void R_CacheAliasModelEntity( const entity_t *e ) {
 	cache->rotated = true;
 	cache->radius = R_AliasModelLerpBBox( e, mod, cache->mins, cache->maxs );
 	cache->fog = R_FogForSphere( e->origin, cache->radius );
+	BoundsFromRadius( e->origin, cache->radius, cache->absmins, cache->absmaxs );
 }
 
 /*
@@ -720,9 +691,9 @@ void R_CacheAliasModelEntity( const entity_t *e ) {
 *
 * Returns true if the entity is added to draw list
 */
-bool R_AddAliasModelToDrawList( const entity_t *e ) {
+bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 	int i, j;
-	const model_t *mod;
+	const model_t *mod = lod < e->model->numlods ? e->model->lods[lod] : e->model;
 	const maliasmodel_t *aliasmodel;
 	const mfog_t *fog;
 	const shader_t *shader;
@@ -733,8 +704,6 @@ bool R_AddAliasModelToDrawList( const entity_t *e ) {
 	if( cache->mod_type != mod_alias ) {
 		return false;
 	}
-
-	mod = R_AliasModelLOD( e );
 	if( !( aliasmodel = ( ( const maliasmodel_t * )mod->extradata ) ) || !aliasmodel->nummeshes ) {
 		return false;
 	}
@@ -749,7 +718,7 @@ bool R_AddAliasModelToDrawList( const entity_t *e ) {
 #if 0
 	if( !( e->flags & RF_WEAPONMODEL ) && fog ) {
 		R_AliasModelLerpBBox( e, mod );
-		if( R_CompletelyFogged( fog, e->origin, cache->radius ) ) {
+		if( R_FogCull( fog, e->origin, cache->radius ) ) {
 			return false;
 		}
 	}

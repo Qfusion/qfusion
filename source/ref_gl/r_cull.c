@@ -30,21 +30,32 @@ FRUSTUM AND PVS CULLING
 */
 
 /*
-* R_SetupFrustum
+* R_SetupSideViewFrustum
 */
-void R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum ) {
+void R_SetupSideViewFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, int side )
+{
 	int i;
+	float sign;
+	int a0, a1, a2;
 	vec3_t forward, left, up;
 
 	// 0 - left
 	// 1 - right
 	// 2 - down
 	// 3 - up
-	// 4 - farclip
+	// 4 - nearclip
+	// 5 - farclip
 
-	VectorCopy( &rd->viewaxis[AXIS_FORWARD], forward );
-	VectorCopy( &rd->viewaxis[AXIS_RIGHT], left );
-	VectorCopy( &rd->viewaxis[AXIS_UP], up );
+	sign = side & 1 ? -1 : 1;
+	a0 = (AXIS_FORWARD + 3 * (side >> 1)) % 12;
+	a1 = (AXIS_RIGHT + 3 * (side >> 1)) % 12;
+	a2 = (AXIS_UP + 3 * (side >> 1)) % 12;
+
+	VectorCopy( &rd->viewaxis[a0], forward );
+	VectorCopy( &rd->viewaxis[a1], left );
+	VectorCopy( &rd->viewaxis[a2], up );
+
+	VectorScale( forward, sign, forward );
 
 	if( rd->rdflags & RDF_USEORTHO ) {
 		VectorNegate( left, frustum[0].normal );
@@ -66,6 +77,7 @@ void R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum ) {
 		vec3_t right;
 
 		VectorNegate( left, right );
+
 		// rotate rn.vpn right by FOV_X/2 degrees
 		RotatePointAroundVector( frustum[0].normal, up, forward, -( 90 - rd->fov_x / 2 ) );
 		// rotate rn.vpn left by FOV_X/2 degrees
@@ -82,11 +94,41 @@ void R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum ) {
 		}
 	}
 
-	// farclip
-	VectorNegate( forward, frustum[4].normal );
+	// near clip
+	VectorCopy( forward, frustum[4].normal );
 	frustum[4].type = PLANE_NONAXIAL;
-	frustum[4].dist = DotProduct( rd->vieworg, frustum[4].normal ) - farClip;
+	frustum[4].dist = DotProduct( rd->vieworg, frustum[4].normal ) + nearClip;
 	frustum[4].signbits = SignbitsForPlane( &frustum[4] );
+
+	// farclip
+	VectorNegate( forward, frustum[5].normal );
+	frustum[5].type = PLANE_NONAXIAL;
+	frustum[5].dist = DotProduct( rd->vieworg, frustum[5].normal ) - farClip;
+	frustum[5].signbits = SignbitsForPlane( &frustum[5] );
+}
+
+/*
+* R_SetupFrustum
+*/
+void R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum )
+{
+	R_SetupSideViewFrustum( rd, nearClip, farClip, frustum, 0 );
+}
+
+/*
+* R_FogCull
+*/
+bool R_FogCull( const mfog_t *fog, vec3_t origin, float radius ) {
+	// note that fog->distanceToEye < 0 is always true if
+	// globalfog is not NULL and we're inside the world boundaries
+	if( fog && fog->shader && fog == rn.fog_eye ) {
+		float vpnDist = ( ( rn.viewOrigin[0] - origin[0] ) * rn.viewAxis[AXIS_FORWARD + 0] +
+			( rn.viewOrigin[1] - origin[1] ) * rn.viewAxis[AXIS_FORWARD + 1] +
+			( rn.viewOrigin[2] - origin[2] ) * rn.viewAxis[AXIS_FORWARD + 2] );
+		return ( ( vpnDist + radius ) / fog->shader->fog_dist ) < -1;
+	}
+
+	return false;
 }
 
 /*
@@ -196,7 +238,7 @@ bool R_VisCullBox( const vec3_t mins, const vec3_t maxs ) {
 	if( rn.renderFlags & RF_NOVIS ) {
 		return false;
 	}
-	if( rf.viewcluster < 0 ) {
+	if( rn.viewcluster < 0 ) {
 		return false;
 	}
 
@@ -251,7 +293,7 @@ bool R_VisCullSphere( const vec3_t origin, float radius ) {
 	if( rn.renderFlags & RF_NOVIS ) {
 		return false;
 	}
-	if( rf.viewcluster < 0 ) {
+	if( rn.viewcluster < 0 ) {
 		return false;
 	}
 
@@ -296,8 +338,8 @@ bool R_VisCullSphere( const vec3_t origin, float radius ) {
 */
 int R_CullModelEntity( const entity_t *e, bool pvsCull ) {
 	const entSceneCache_t *cache = R_ENTCACHE( e );
-	const vec_t *mins = cache->mins;
-	const vec_t *maxs = cache->maxs;
+	const vec_t *mins = cache->absmins;
+	const vec_t *maxs = cache->absmaxs;
 	float radius = cache->radius;
 	bool sphereCull = cache->rotated;
 
@@ -339,5 +381,10 @@ int R_CullModelEntity( const entity_t *e, bool pvsCull ) {
 * R_CullSpriteEntity
 */
 int R_CullSpriteEntity( const entity_t *e ) {
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		if( !Shader_DepthWrite( e->customShader ) ) {
+			return 1;
+		}
+	}
 	return 0;
 }

@@ -841,24 +841,6 @@ void R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose
 }
 
 /*
-* R_SkeletalModelLOD
-*/
-static model_t *R_SkeletalModelLOD( const entity_t *e ) {
-	int lod;
-
-	if( !e->model->numlods || ( e->flags & RF_FORCENOLOD ) ) {
-		return e->model;
-	}
-
-	lod = R_LODForSphere( e->origin, e->model->radius );
-
-	if( lod < 1 ) {
-		return e->model;
-	}
-	return e->model->lods[min( lod, e->model->numlods ) - 1];
-}
-
-/*
 * R_SkeletalModelLerpBBox
 */
 static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t mins, vec3_t maxs ) {
@@ -1297,6 +1279,7 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	skmcacheentry_t *cache;	
 	mat4_t *bonePoseRelativeMat;
 	dualquat_t *bonePoseRelativeDQ;
+	entSceneCache_t *entCache = R_ENTCACHE( e );
 
 	cache = NULL;
 	bonePoseRelativeDQ = NULL;
@@ -1312,12 +1295,13 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 		bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + sizeof( dualquat_t ) * skmodel->numbones );
 	}
 
+	RB_SetRtLightParams( entCache->numRtLights, entCache->rtLights, 0, NULL );
+
 	if( !cache || ( cache->boneposes == cache->oldboneposes && !cache->framenum ) ) {
 		// fastpath: render static frame 0 as is
 		if( skmesh->vbo ) {
 			RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
-			RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3,
-				 0, skmesh->numverts, 0, skmesh->numtris * 3 );
+			RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3 );
 			return;
 		}
 	}
@@ -1326,8 +1310,7 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 		// another fastpath: transform the initial pose on the GPU
 		RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
 		RB_SetBonesData( skmodel->numbones, bonePoseRelativeDQ, skmesh->maxWeights );
-		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3,
-						 0, skmesh->numverts, 0, skmesh->numtris * 3 );
+		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3 );
 		return;
 	}
 
@@ -1415,20 +1398,6 @@ bool R_SkeletalModelLerpTag( orientation_t *orient, const mskmodel_t *skmodel, i
 	DualQuat_ToMatrix3AndVector( dq, orient->axis, orient->origin );
 
 	return true;
-}
-
-/*
-* R_SkeletalModelBBox
-*/
-float R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs ) {
-	model_t *mod;
-
-	mod = R_SkeletalModelLOD( e );
-	if( !mod ) {
-		return 0;
-	}
-
-	return R_SkeletalModelLerpBBox( e, mod, mins, maxs );
 }
 
 /*
@@ -1557,15 +1526,16 @@ void R_CacheSkeletalModelEntity( const entity_t *e ) {
 	cache->rotated = true;
 	cache->radius = R_SkeletalModelLerpBBox( e, mod, cache->mins, cache->maxs );
 	cache->fog = R_FogForSphere( e->origin, cache->radius );
+	BoundsFromRadius( e->origin, cache->radius, cache->absmins, cache->absmaxs );
 }
 
 /*
 * R_AddSkeletalModelToDrawList
 */
-bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
+bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 	int i;
 	const mfog_t *fog;
-	const model_t *mod;
+	const model_t *mod = lod < e->model->numlods ? e->model->lods[lod] : e->model;
 	const shader_t *shader;
 	const mskmesh_t *mesh;
 	const mskmodel_t *skmodel;
@@ -1575,8 +1545,6 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
 	if( cache->mod_type != mod_skeletal ) {
 		return false;
 	}
-
-	mod = R_SkeletalModelLOD( e );
 	if( !( skmodel = ( ( mskmodel_t * )mod->extradata ) ) || !skmodel->nummeshes ) {
 		return false;
 	}
@@ -1591,7 +1559,7 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e ) {
 #if 0
 	if( !( e->flags & RF_WEAPONMODEL ) && fog ) {
 		R_SkeletalModelLerpBBox( e, mod );
-		if( R_CompletelyFogged( fog, e->origin, skm_radius ) ) {
+		if( R_FogCull( fog, e->origin, skm_radius ) ) {
 			return false;
 		}
 	}

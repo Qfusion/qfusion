@@ -2697,32 +2697,29 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 }
 
 /*
-* R_GetShadowmapTexture
+* R_GetShadowmapAtlasTexture
 */
-image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, int flags ) {
-#if 0
+image_t *R_GetShadowmapAtlasTexture( void ) {
+	int flags;
 	int samples;
+	int size;
 
-	if( id < 0 || id >= MAX_SHADOWGROUPS ) {
-		return NULL;
-	}
+	size = max( r_shadows_texturesize->integer, SHADOWMAP_MIN_ATLAS_SIZE );
 
 	if( glConfig.ext.shadow ) {
 		// render to depthbuffer, GL_ARB_shadow path
-		flags |= IT_DEPTH;
+		flags = IT_DEPTH;
 		samples = 1;
 	} else {
-		flags |= IT_NOFILTERING;
+		flags = IT_NOFILTERING;
 		samples = 3;
 	}
 
-	R_InitViewportTexture( &rsh.shadowmapTextures[id], "r_shadowmap", id,
-						   viewportWidth, viewportHeight, r_shadows_maxtexsize->integer,
-						   IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHCOMPARE | flags, IMAGE_TAG_GENERIC, samples );
+	R_InitViewportTexture( &rsh.shadowmapAtlasTexture, "r_shadowmap", 0,
+		size, size, size,
+		IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHCOMPARE | flags, IMAGE_TAG_BUILTIN, samples );
 
-	return rsh.shadowmapTextures[id];
-#endif
-	return NULL;
+	return rsh.shadowmapAtlasTexture;
 }
 
 /*
@@ -2976,6 +2973,7 @@ static void R_ReleaseBuiltinImages( void ) {
 	rsh.blankBumpTexture = NULL;
 	rsh.particleTexture = NULL;
 	rsh.coronaTexture = NULL;
+	rsh.shadowmapAtlasTexture = NULL;
 }
 
 //=======================================================

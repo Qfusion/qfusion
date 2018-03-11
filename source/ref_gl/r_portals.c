@@ -346,11 +346,15 @@ setup_and_render:
 	rn.renderFlags &= ~RF_SOFT_PARTICLES;
 	rn.clipPlane = *portal_plane;
 
+	rn.nearClip = Z_NEAR;
 	rn.farClip = R_DefaultFarClip();
 
-	rn.clipFlags |= ( 1 << 5 );
-	rn.frustum[5] = *portal_plane;
-	CategorizePlane( &rn.frustum[5] );
+	rn.polygonFactor = POLYOFFSET_FACTOR;
+	rn.polygonUnits = POLYOFFSET_UNITS;
+
+	rn.clipFlags |= 16;
+	rn.frustum[4] = *portal_plane; // nearclip
+	CategorizePlane( &rn.frustum[4] );
 
 	// if we want to render to a texture, initialize texture
 	// but do not try to render to it more than once
@@ -383,6 +387,12 @@ setup_and_render:
 
 	VectorCopy( origin, rn.refdef.vieworg );
 	Matrix3_Copy( axis, rn.refdef.viewaxis );
+
+	R_SetupViewMatrices( &rn.refdef );
+
+	R_SetupFrustum( &rn.refdef, rn.nearClip, rn.farClip, rn.frustum );
+
+	R_SetupPVS( &rn.refdef );
 
 	R_RenderView( &rn.refdef );
 
@@ -436,7 +446,7 @@ static void R_DrawPortalsDepthMask( void ) {
 void R_DrawPortals( void ) {
 	unsigned int i;
 
-	if( rf.viewcluster == -1 ) {
+	if( rn.viewcluster == -1 ) {
 		return;
 	}
 
@@ -498,7 +508,10 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 	//rn.renderFlags &= ~RF_SOFT_PARTICLES;
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
+	rn.nearClip = Z_NEAR;
 	rn.farClip = R_DefaultFarClip();
+	rn.polygonFactor = POLYOFFSET_FACTOR;
+	rn.polygonUnits = POLYOFFSET_UNITS;
 
 	rn.clipFlags = 15;
 	rn.meshlist = &r_skyportallist;
@@ -541,6 +554,12 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
 		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );
 	}
+
+	R_SetupViewMatrices( &rn.refdef );
+
+	R_SetupFrustum( &rn.refdef, rn.nearClip, rn.farClip, rn.frustum );
+
+	R_SetupPVS( &rn.refdef );
 
 	R_RenderView( &rn.refdef );
 

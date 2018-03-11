@@ -54,18 +54,21 @@ typedef struct {
 typedef struct {
 	unsigned int distKey;
 	unsigned int sortKey;
-	drawSurfaceType_t   *drawSurf;
+	drawSurfaceType_t *drawSurf;
 } sortedDrawSurf_t;
 
 typedef struct {
 	unsigned int numDrawSurfs, maxDrawSurfs;
-	sortedDrawSurf_t    *drawSurfs;
+	sortedDrawSurf_t *drawSurfs;
 
 	unsigned int maxVboSlices;
-	vboSlice_t          *vboSlices;
+	vboSlice_t *vboSlices;
 } drawList_t;
 
 typedef void (*drawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, const struct portalSurface_s *, void * );
 typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, const struct portalSurface_s *, void * );
+
+typedef void (*walkDrawSurf_cb_cb)( void *, const entity_t *, const struct shader_s *, void *, void *p );
+typedef void (*walkDrawSurf_cb)( const entity_t *, const struct shader_s *, void *, walkDrawSurf_cb_cb, void * );
 
 #endif // R_MESH_H

@@ -33,6 +33,7 @@ typedef enum {
 	ST_POLY,
 	ST_CORONA,
 	ST_NULLMODEL,
+	ST_COMPILED_LIGHT,
 
 	ST_MAX_TYPES,
 
@@ -43,9 +44,6 @@ typedef struct {
 	drawSurfaceType_t type;
 
 	unsigned int visFrame;          // should be drawn when node is crossed
-
-	unsigned int numRtLights;
-	unsigned int rtLightFrame;
 
 	unsigned int numVerts;
 	unsigned int numElems;
@@ -58,6 +56,8 @@ typedef struct {
 	instancePoint_t *instances;
 
 	unsigned int numLightmaps;
+
+	unsigned int numRtLights;
 
 	unsigned int *surfRtlightBits; // [numSurfaces]
 
@@ -113,5 +113,17 @@ typedef struct {
 	elem_t *elems;
 	struct shader_s *shader;
 } drawSurfacePoly_t;
+
+typedef struct {
+	drawSurfaceType_t type;
+
+	int firstVert, numVerts;
+	int firstElem, numElems;
+
+	int numInstances;
+	instancePoint_t *instances;
+
+	struct mesh_vbo_s *vbo;
+} drawSurfaceCompiledLight_t;
 
 #endif // R_SURFACE_H

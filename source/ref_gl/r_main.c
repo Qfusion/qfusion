@@ -68,14 +68,8 @@ void R_TransformForWorld( void ) {
 * R_TranslateForEntity
 */
 void R_TranslateForEntity( const entity_t *e ) {
-	Matrix4_Identity( rn.objectMatrix );
-
-	rn.objectMatrix[0] = e->scale;
-	rn.objectMatrix[5] = e->scale;
-	rn.objectMatrix[10] = e->scale;
-	rn.objectMatrix[12] = e->origin[0];
-	rn.objectMatrix[13] = e->origin[1];
-	rn.objectMatrix[14] = e->origin[2];
+	Matrix4_ObjectMatrix( e->origin, axis_identity, e->scale, rn.objectMatrix );
+	Matrix4_MultiplyFast( rn.cameraMatrix, rn.objectMatrix, rn.modelviewMatrix );
 
 	RB_LoadObjectMatrix( rn.objectMatrix );
 }
@@ -93,36 +87,7 @@ void R_TransformForEntity( const entity_t *e ) {
 		return;
 	}
 
-	if( e->scale != 1.0f ) {
-		rn.objectMatrix[0] = e->axis[0] * e->scale;
-		rn.objectMatrix[1] = e->axis[1] * e->scale;
-		rn.objectMatrix[2] = e->axis[2] * e->scale;
-		rn.objectMatrix[4] = e->axis[3] * e->scale;
-		rn.objectMatrix[5] = e->axis[4] * e->scale;
-		rn.objectMatrix[6] = e->axis[5] * e->scale;
-		rn.objectMatrix[8] = e->axis[6] * e->scale;
-		rn.objectMatrix[9] = e->axis[7] * e->scale;
-		rn.objectMatrix[10] = e->axis[8] * e->scale;
-	} else {
-		rn.objectMatrix[0] = e->axis[0];
-		rn.objectMatrix[1] = e->axis[1];
-		rn.objectMatrix[2] = e->axis[2];
-		rn.objectMatrix[4] = e->axis[3];
-		rn.objectMatrix[5] = e->axis[4];
-		rn.objectMatrix[6] = e->axis[5];
-		rn.objectMatrix[8] = e->axis[6];
-		rn.objectMatrix[9] = e->axis[7];
-		rn.objectMatrix[10] = e->axis[8];
-	}
-
-	rn.objectMatrix[3] = 0;
-	rn.objectMatrix[7] = 0;
-	rn.objectMatrix[11] = 0;
-	rn.objectMatrix[12] = e->origin[0];
-	rn.objectMatrix[13] = e->origin[1];
-	rn.objectMatrix[14] = e->origin[2];
-	rn.objectMatrix[15] = 1.0;
-
+	Matrix4_ObjectMatrix( e->origin, e->axis, e->scale, rn.objectMatrix );
 	Matrix4_MultiplyFast( rn.cameraMatrix, rn.objectMatrix, rn.modelviewMatrix );
 
 	RB_LoadObjectMatrix( rn.objectMatrix );
@@ -184,41 +149,31 @@ mfog_t *R_FogForSphere( const vec3_t centre, const float radius ) {
 }
 
 /*
-* R_CompletelyFogged
+* R_ComputeLOD
 */
-bool R_CompletelyFogged( const mfog_t *fog, vec3_t origin, float radius ) {
-	// note that fog->distanceToEye < 0 is always true if
-	// globalfog is not NULL and we're inside the world boundaries
-	if( fog && fog->shader && fog == rn.fog_eye ) {
-		float vpnDist = ( ( rn.viewOrigin[0] - origin[0] ) * rn.viewAxis[AXIS_FORWARD + 0] +
-						  ( rn.viewOrigin[1] - origin[1] ) * rn.viewAxis[AXIS_FORWARD + 1] +
-						  ( rn.viewOrigin[2] - origin[2] ) * rn.viewAxis[AXIS_FORWARD + 2] );
-		return ( ( vpnDist + radius ) / fog->shader->fog_dist ) < -1;
+int R_ComputeLOD( const vec3_t viewOrg, const vec3_t mins, const vec3_t maxs, 
+	float lodDistance, float lodScale, int lodBias ) {
+	int i;
+	int lodi;
+	float dist, lod;
+	vec3_t nearestpoint;
+
+	if( lodDistance < 1.0f )
+		lodDistance = 1.0f;
+
+	for( i = 0; i < 3; i++ )
+		nearestpoint[i] = bound( mins[i], viewOrg[i], maxs[i] );
+	dist = DistanceFast( nearestpoint, viewOrg );
+	//dist *= tan( DEG2RAD( rn.refdef.fov_x ) * 0.5f );
+
+	if( dist <= lodDistance ) {
+		lod = 0;
+	} else {
+		lod = sqrt( dist / lodDistance ) * lodScale;
 	}
 
-	return false;
-}
-
-/*
-* R_LODForSphere
-*/
-int R_LODForSphere( const vec3_t origin, float radius ) {
-	float dist;
-	int lod;
-
-	dist = DistanceFast( origin, rn.lodOrigin );
-	dist *= rn.lod_dist_scale_for_fov;
-
-	lod = (int)( dist / radius );
-	if( r_lodscale->integer ) {
-		lod /= r_lodscale->integer;
-	}
-	lod += r_lodbias->integer;
-
-	if( lod < 1 ) {
-		return 0;
-	}
-	return lod;
+	lodi = (int)( lod + 0.5f ) + lodBias;
+	return clamp_low( lodi, 0 );
 }
 
 /*
@@ -353,10 +308,6 @@ void R_CacheSpriteEntity( const entity_t *e ) {
 static bool R_AddSpriteToDrawList( const entity_t *e ) {
 	float dist;
 
-	if( e->radius <= 0 || e->customShader == NULL || e->scale <= 0 ) {
-		return false;
-	}
-
 	dist =
 		( e->origin[0] - rn.refdef.vieworg[0] ) * rn.viewAxis[AXIS_FORWARD + 0] +
 		( e->origin[1] - rn.refdef.vieworg[1] ) * rn.viewAxis[AXIS_FORWARD + 1] +
@@ -438,7 +389,7 @@ void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fo
 
 	RB_BindVBO( rsh.nullVBO->index, GL_LINES );
 
-	RB_DrawElements( 0, 6, 0, 6, 0, 0, 0, 0 );
+	RB_DrawElements( 0, 6, 0, 6 );
 }
 
 /*
@@ -534,6 +485,8 @@ void R_SetupGL2D( void ) {
 		RB_LoadProjectionMatrix( projectionMatrix );
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
+
+	RB_SetRtLightParams( 0, NULL, 0, NULL );
 
 	RB_SetRenderFlags( 0 );
 }
@@ -910,127 +863,67 @@ float R_DefaultFarClip( void ) {
 }
 
 /*
-* R_SetVisFarClip
+* R_SetupPVSFromCluster
 */
-static float R_SetVisFarClip( void ) {
-	int i;
-	float dist;
-	vec3_t tmp;
-	float farclip_dist;
+void R_SetupPVSFromCluster( int cluster, int area ) {
+	int viewcluster = -1;
+	int viewarea = -1;
+	bool novis;
+	uint8_t *pvs = NULL;
+	uint8_t *areabits = NULL;
+	int arearowbytes, areabytes;
 
-	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
-		return rn.visFarClip;
+	// current viewcluster
+	if( cluster >= 0 ) {
+		viewcluster = cluster;
+		viewarea = area;
 	}
 
-	rn.visFarClip = 0;
+	novis = viewcluster == -1 || !rsh.worldBrushModel->pvs;
+	if( !novis ) {
+		arearowbytes = ( ( rsh.worldBrushModel->numareas + 7 ) / 8 );
+		areabytes = arearowbytes;
+#ifdef AREAPORTALS_MATRIX
+		areabytes *= rsh.worldBrushModel->numareas;
+#endif
 
-	farclip_dist = 0;
-	for( i = 0; i < 8; i++ ) {
-		tmp[0] = ( ( i & 1 ) ? rn.visMins[0] : rn.visMaxs[0] );
-		tmp[1] = ( ( i & 2 ) ? rn.visMins[1] : rn.visMaxs[1] );
-		tmp[2] = ( ( i & 4 ) ? rn.visMins[2] : rn.visMaxs[2] );
-
-		dist = DistanceSquared( tmp, rn.viewOrigin );
-		farclip_dist = max( farclip_dist, dist );
+		pvs = Mod_ClusterPVS( viewcluster, rsh.worldBrushModel );
+		if( viewarea > -1 && rn.refdef.areabits )
+#ifdef AREAPORTALS_MATRIX
+		{ areabits = rn.refdef.areabits + viewarea * arearowbytes;}
+#else
+		{ areabits = rn.refdef.areabits;}
+#endif
+		else {
+			areabits = NULL;
+		}
 	}
 
-	rn.visFarClip = sqrt( farclip_dist );
-	return rn.visFarClip;
+	rn.viewcluster = viewcluster;
+	rn.viewarea = viewarea;
+	rn.pvs = pvs;
+	rn.areabits = areabits;
 }
 
 /*
-* R_SetFarClip
+* R_SetupPVS
 */
-static void R_SetFarClip( void ) {
-	float farclip;
+void R_SetupPVS( const refdef_t *fd ) {
+	const mleaf_t *leaf;
 
-	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
-		rn.farClip = R_DefaultFarClip();
+	if( ( fd->rdflags & RDF_NOWORLDMODEL ) || !rsh.worldBrushModel ) {
+		R_SetupPVSFromCluster( -1, -1 );
 		return;
 	}
 
-	farclip = R_SetVisFarClip();
-
-	if( rsh.worldBrushModel->globalfog ) {
-		float fogdist = rsh.worldBrushModel->globalfog->shader->fog_dist;
-		if( farclip > fogdist ) {
-			farclip = fogdist;
-		} else {
-			rn.clipFlags &= ~16;
-		}
-	}
-
-	rn.farClip = max( Z_NEAR, farclip ) + Z_BIAS;
+	leaf = Mod_PointInLeaf( fd->vieworg, rsh.worldBrushModel );
+	R_SetupPVSFromCluster( leaf->cluster, leaf->area );
 }
 
 /*
-* R_SetupFrame
+* R_SetupViewMatrices_
 */
-static void R_SetupFrame( void ) {
-	int viewcluster;
-	int viewarea;
-
-	// build the transformation matrix for the given view angles
-	VectorCopy( rn.refdef.vieworg, rn.viewOrigin );
-	Matrix3_Copy( rn.refdef.viewaxis, rn.viewAxis );
-
-	rn.lod_dist_scale_for_fov = tan( rn.refdef.fov_x * ( M_PI / 180 ) * 0.5f );
-
-	// current viewcluster
-	if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
-		mleaf_t *leaf;
-
-		VectorCopy( rsh.worldModel->mins, rn.visMins );
-		VectorCopy( rsh.worldModel->maxs, rn.visMaxs );
-
-		leaf = Mod_PointInLeaf( rn.pvsOrigin, rsh.worldBrushModel );
-		viewcluster = leaf->cluster;
-		viewarea = leaf->area;
-
-		if( rf.worldModelSequence != rsh.worldModelSequence ) {
-			rf.frameCount = 0;
-			rf.worldModelSequence = rsh.worldModelSequence;
-
-			if( !rf.numWorldSurfVis ) {
-				rf.worldSurfVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-				rf.worldSurfFullVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-			} else if( rf.numWorldSurfVis < rsh.worldBrushModel->numsurfaces ) {
-				rf.worldSurfVis = R_Realloc( (void *)rf.worldSurfVis, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-				rf.worldSurfFullVis = R_Realloc( (void *)rf.worldSurfFullVis, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-			}
-			rf.numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
-
-			if( !rf.numWorldLeafVis ) {
-				rf.worldLeafVis = R_Malloc( rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
-			} else if( rf.numWorldLeafVis < rsh.worldBrushModel->numvisleafs ) {
-				rf.worldLeafVis = R_Realloc( (void *)rf.worldLeafVis, rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
-			}
-			rf.numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
-
-			if( !rf.numWorldDrawSurfVis ) {
-				rf.worldDrawSurfVis = R_Malloc( rsh.worldBrushModel->numDrawSurfaces * sizeof( *rf.worldDrawSurfVis ) );
-			} else if( rf.numWorldDrawSurfVis < rsh.worldBrushModel->numDrawSurfaces ) {
-				rf.worldDrawSurfVis = R_Realloc( (void *)rf.worldDrawSurfVis, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rf.worldDrawSurfVis ) );
-			}
-			rf.numWorldDrawSurfVis = rsh.worldBrushModel->numDrawSurfaces;
-
-			R_WaitWorldModel();
-		}
-	} else {
-		viewcluster = -1;
-		viewarea = -1;
-	}
-
-	rf.viewcluster = viewcluster;
-	rf.viewarea = viewarea;
-
-	rf.frameCount++;
-}
-
-/*
-* R_SetupViewMatrices
-*/
-static void R_SetupViewMatrices( const refdef_t *rd ) {
+static void R_SetupViewMatrices_( const refdef_t *rd, const mat4_t camTransform ) {
 	mat4_t cam, proj;
 
 	Matrix4_Modelview( rd->vieworg, rd->viewaxis, cam );
@@ -1040,7 +933,7 @@ static void R_SetupViewMatrices( const refdef_t *rd ) {
 									  -rn.farClip, rn.farClip, proj );
 	} else {
 		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y,
-									   Z_NEAR, rn.farClip, rf.cameraSeparation, proj );
+									   rn.nearClip, rn.farClip, rf.cameraSeparation, proj );
 	}
 
 	if( rd->rdflags & RDF_FLIPPED ) {
@@ -1048,9 +941,76 @@ static void R_SetupViewMatrices( const refdef_t *rd ) {
 		rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
 
-	Matrix4_Copy( cam, rn.cameraMatrix );
+	Matrix4_Multiply( camTransform, cam, rn.cameraMatrix );
 	Matrix4_Copy( proj, rn.projectionMatrix );
 	Matrix4_Multiply( rn.projectionMatrix, rn.cameraMatrix, rn.cameraProjectionMatrix );
+}
+
+/*
+* R_SetupViewMatrices
+*/
+void R_SetupViewMatrices( const refdef_t *rd ) {
+	const mat4_t flip = { 
+		0, 0, -1, 0,
+		-1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 0, 1
+	};
+
+	R_SetupViewMatrices_( rd, flip );
+}
+
+/*
+* R_SetupSideViewMatrices
+*/
+void R_SetupSideViewMatrices( const refdef_t *rd, int side ) {
+	const mat4_t rectviewmatrix[6] =
+	{
+		// sign-preserving cubemap projections
+		{ // +X
+			0, 0,-1, 0,
+			0, 1, 0, 0,
+			1, 0, 0, 0,
+			0, 0, 0, 1,
+		},
+		{ // -X
+			0, 0, 1, 0,
+			0, 1, 0, 0,
+			1, 0, 0, 0,
+			0, 0, 0, 1,
+		},
+		{ // +Y
+			1, 0, 0, 0,
+			0, 0,-1, 0,
+			0, 1, 0, 0,
+			0, 0, 0, 1,
+		},
+		{ // -Y
+			1, 0, 0, 0,
+			0, 0, 1, 0,
+			0, 1, 0, 0,
+			0, 0, 0, 1,
+		},
+		{ // +Z
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0,-1, 0,
+			0, 0, 0, 1,
+		},
+		{ // -Z
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1,
+		},
+	};
+
+	assert( side >= 0 && side < 6 );
+	if( side < 0 || side >= 6 ) {
+		return;
+	}
+
+	R_SetupViewMatrices_( rd, rectviewmatrix[side] );
 }
 
 /*
@@ -1109,7 +1069,7 @@ static void R_SetupGL( void ) {
 		Matrix4_ObliqueNearClipping( p->normal, -p->dist, rn.cameraMatrix, rn.projectionMatrix );
 	}
 
-	RB_SetZClip( Z_NEAR, rn.farClip );
+	RB_SetZClip( rn.nearClip, rn.farClip );
 
 	RB_SetCamera( rn.viewOrigin, rn.viewAxis );
 
@@ -1129,8 +1089,10 @@ static void R_SetupGL( void ) {
 		RB_FlipFrontFace();
 	}
 
+	RB_PolygonOffset( rn.polygonFactor, rn.polygonUnits );
+
 	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow ) {
-		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE );
+		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE|GLSTATE_OFFSET_FILL );
 	} else {
 		RB_SetShaderStateMask( ~0, 0 );
 	}
@@ -1152,24 +1114,66 @@ static void R_EndGL( void ) {
 }
 
 /*
+* R_AddEntityRtLights
+*/
+static void R_AddEntityRtLights( entity_t *e ) {
+	unsigned i;
+	entSceneCache_t *cache = R_ENTCACHE( e );
+
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		return;
+	}
+	if( cache->rtLightFrame == rsc.frameCount ) {
+		return;
+	}
+
+	cache->numRtLights = 0;
+	cache->rtLightFrame = rsc.frameCount;
+
+	for( i = 0; i < rn.numRealtimeLights; i++ ) {
+		int sideMask;
+		rtlight_t *l = rn.rtlights[i];
+
+		if( cache->numRtLights == MAX_DRAWSURF_RTLIGHTS ) {
+			break;
+		}
+		if( !BoundsAndSphereIntersect( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
+			continue;
+		}
+
+		sideMask = R_CaclRtLightBBoxSidemask( l, cache->absmins, cache->absmaxs );
+		if( !sideMask ) {
+			continue;
+		}
+
+		l->receiveMask |= sideMask;
+		cache->rtLights[cache->numRtLights++] = l;
+	}
+}
+
+/*
 * R_CullEntities
 */
 static void R_CullEntities( void ) {
 	unsigned int i;
 
+	rn.numEntities = 0;
 	if( rn.renderFlags & RF_ENVVIEW ) {
 		for( i = 0; i < rsc.numBmodelEntities; i++ ) {
-			rn.entities[i] = rsc.bmodelEntities[i];
+			entity_t *e = rsc.bmodelEntities[i];
+			if( R_CullModelEntity( e, false ) != 0 ) {
+				continue;
+			}
+			R_AddEntityRtLights( e );
+			rn.entities[rn.numEntities++] = e;
 		}
-		rn.numEntities = rsc.numBmodelEntities;
 		return;
 	}
-
-	rn.numEntities = 0;
 
 	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
 		entity_t *e = R_NUM2ENT( i );
 		bool culled = true;
+		bool addlights = e->rtype == RT_MODEL;
 
 		if( e->flags & RF_NOSHADOW ) {
 			if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
@@ -1206,10 +1210,14 @@ static void R_CullEntities( void ) {
 			break;
 		}
 
-		if( !culled ) {
-add:
-			rn.entities[rn.numEntities++] = e;
+		if( culled ) {
+			continue;
 		}
+
+add:
+		if( addlights )
+			R_AddEntityRtLights( e );
+		rn.entities[rn.numEntities++] = e;
 	}
 }
 
@@ -1218,6 +1226,7 @@ add:
 */
 static void R_DrawEntities( void ) {
 	unsigned int i;
+	int lod;
 	entity_t *e;
 	entSceneCache_t *cache;
 
@@ -1225,17 +1234,23 @@ static void R_DrawEntities( void ) {
 		e = rn.entities[i];
 		cache = R_ENTCACHE( e );
 
+		lod = 0;
+		if( !(e->flags & RF_FORCENOLOD ) ) {
+			lod = R_ComputeLOD( rn.lodOrigin, cache->absmins, cache->absmaxs, cache->radius, rn.lodScale, rn.lodBias );
+		}
+
 		switch( e->rtype ) {
 		case RT_MODEL:
-			switch( e->model->type ) {
+			switch( cache->mod_type ) {
 			case mod_alias:
-				R_AddAliasModelToDrawList( e );
+				R_AddAliasModelToDrawList( e, lod );
 				break;
 			case mod_skeletal:
-				R_AddSkeletalModelToDrawList( e );
+				R_AddSkeletalModelToDrawList( e, lod );
 				break;
 			case mod_brush:
 				R_AddBrushModelToDrawList( e );
+				rf.stats.c_ents_bmodels++;
 				break;
 			case mod_bad:
 				R_AddNullSurfToDrawList( e );
@@ -1250,6 +1265,8 @@ static void R_DrawEntities( void ) {
 		default:
 			break;
 		}
+
+		rf.stats.c_ents_total++;
 	}
 }
 
@@ -1270,10 +1287,9 @@ void R_RenderView( const refdef_t *fd ) {
 	int msec = 0;
 	bool shadowMap = rn.renderFlags & RF_SHADOWMAPVIEW ? true : false;
 
-	rn.refdef = *fd;
+	rf.frameCount++;
 
-	// load view matrices with default far clip value
-	R_SetupViewMatrices( fd );
+	rn.refdef = *fd;
 
 	rn.fog_eye = NULL;
 	rn.hdrExposure = 1;
@@ -1284,6 +1300,9 @@ void R_RenderView( const refdef_t *fd ) {
 	rn.skyportalSurface = NULL;
 
 	ClearBounds( rn.visMins, rn.visMaxs );
+
+	VectorCopy( rn.refdef.vieworg, rn.viewOrigin );
+	Matrix3_Copy( rn.refdef.viewaxis, rn.viewAxis );
 
 	R_ClearSky( &rn.skyDrawSurface );
 
@@ -1307,17 +1326,18 @@ void R_RenderView( const refdef_t *fd ) {
 		return;
 	}
 
-	R_SetupFrame();
-
-	R_SetupFrustum( &rn.refdef, rn.farClip, rn.frustum );
-
-	// we know the initial farclip at this point after determining visible world leafs
-	// R_DrawEntities can make adjustments as well
+	if( shadowMap ) {
+		R_DrawRtLightWorld();
+	} else {
+		if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+			// we know the initial farclip at this point after determining visible world leafs
+			// R_DrawEntities can make adjustments as well
+			R_DrawWorld();
+		}
+	}
 
 	if( !shadowMap ) {
 		if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
-			R_DrawWorld();
-
 			rn.fog_eye = R_FogForSphere( rn.viewOrigin, 0.5 );
 			rn.hdrExposure = R_LightExposureForOrigin( rn.viewOrigin );
 		}
@@ -1347,15 +1367,7 @@ void R_RenderView( const refdef_t *fd ) {
 
 	RJ_FinishJobs();
 
-	if( !shadowMap ) {
-		// now set  the real far clip value and reload view matrices
-		R_SetFarClip();
-
-		R_SetupViewMatrices( &rn.refdef );
-
-		// render to depth textures, mark shadowed entities and surfaces
-		R_DrawLights();
-	}
+	R_DrawShadows();
 
 	R_SortDrawList( rn.meshlist );
 
@@ -1406,13 +1418,13 @@ void R_ClearRefInstStack( void ) {
 /*
 * R_PushRefInst
 */
-bool R_PushRefInst( void ) {
+refinst_t *R_PushRefInst( void ) {
 	if( riStackSize == REFINST_STACK_SIZE ) {
-		return false;
+		return NULL;
 	}
 	riStack[riStackSize++] = rn;
 	R_EndGL();
-	return true;
+	return &riStack[riStackSize-1];
 }
 
 /*
@@ -1689,7 +1701,7 @@ void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
 
 	RB_BindShader( NULL, &s, NULL );
 	RB_BindVBO( rsh.postProcessingVBO->index, GL_TRIANGLES );
-	RB_DrawElements( 0, 4, 0, 6, 0, 0, 0, 0 );
+	RB_DrawElements( 0, 4, 0, 6 );
 
 	RB_LoadObjectMatrix( mat4x4_identity );
 
@@ -1712,29 +1724,30 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 	if( r_speeds->integer && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 		switch( r_speeds->integer ) {
 			case 1:
+			case 2:
+			case 3:
 				RB_StatsMessage( backend_msg, sizeof( backend_msg ) );
 
 				Q_snprintfz( out, size,
 							 "%u fps\n"
 							 "%4u wpoly %4u leafs %4u surfs\n"
 							 "%5u sverts %5u stris\n"
+							 "cull nodes\\surfs\\lights: %5u\\%5u\\%5u\n"
+							 "node: %5u\n"
+							 "polys\\ents: %5u\\%5u  draw: %5u\n"
+							 "lights world\\dynamic: %5u\\%5u\n"
+							 "ents total: %5u bmodels: %5u\n"
 							 "%s",
 							 (int)(1000.0 / rf.frameTime.average),
 							 rf.stats.c_brush_polys, rf.stats.c_world_leafs, rf.stats.c_world_draw_surfs,
 							 rf.stats.c_slices_verts, rf.stats.c_slices_elems / 3,
-							 backend_msg
-							 );
-				break;
-			case 2:
-			case 3:
-				Q_snprintfz( out, size,
-							 "cull nodes\\surfs: %5u\\%5u\n"
-							 "node: %5u\n"
-							 "polys\\ents: %5u\\%5u  draw: %5u\n",
-							 rf.stats.t_cull_world_nodes, rf.stats.t_cull_world_surfs, 
+							 rf.stats.t_cull_world_nodes, rf.stats.t_cull_world_surfs, rf.stats.t_cull_rtlights, 
 							 rf.stats.t_world_node,
-							 rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
-							 );
+							 rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes,
+							 rf.stats.c_world_lights, rf.stats.c_dynamic_lights,
+							 rf.stats.c_ents_total, rf.stats.c_ents_bmodels,
+							 backend_msg
+							);
 				break;
 			case 4:
 			case 5:
@@ -1767,18 +1780,25 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 						Q_strncatz( out, debugSurface->fog->shader->name, size );
 					}
 
-					if( drawSurf && ( r_lighting_realtime_world->integer || r_lighting_realtime_dynamic->integer ) ) {
-						unsigned numRtLights = drawSurf->numRtLights;
+					if( drawSurf ) {
+						unsigned numRtLights = 0;
+						
+						if( rf.debugTrace.ent == R_ENT2NUM( rsc.worldent ) ) {
+							numRtLights = drawSurf->numRtLights;
 
-						if( r_speeds->integer == 4 ) {
-							unsigned i;
-							unsigned rtLightBits = *debugSurface->rtLightBits;
+							if( r_speeds->integer == 4 ) {
+								unsigned i;
+								unsigned rtLightBits = *debugSurface->rtLightBits;
 
-							numRtLights = 0;
-							for( i = 0; i < drawSurf->numRtLights; i++ ) {
-								if( rtLightBits & (1<<i) )
-									numRtLights++;
+								numRtLights = 0;
+								for( i = 0; i < drawSurf->numRtLights; i++ ) {
+									if( rtLightBits & (1<<i) )
+										numRtLights++;
+								}
 							}
+						} else if( rf.debugTrace.ent >= 0 ) {
+							entSceneCache_t *cache = R_ENTNUMCACHE( rf.debugTrace.ent );
+							numRtLights = cache->numRtLights;
 						}
 
 						Q_strncatz( out, "\n", size );
@@ -1823,7 +1843,7 @@ const msurface_t *R_GetDebugSurface( void ) {
 * R_RenderDebugSurface
 */
 void R_RenderDebugSurface( const refdef_t *fd ) {
-	rtrace_t tr;
+	rtrace_t tr = { 0 };
 	vec3_t forward;
 	vec3_t start, end;
 	msurface_t *debugSurf = NULL;
@@ -1872,6 +1892,7 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 	}
 
 	ri.Mutex_Lock( rf.debugSurfaceLock );
+	rf.debugTrace = tr;
 	rf.debugSurface = debugSurf;
 	ri.Mutex_Unlock( rf.debugSurfaceLock );
 }
@@ -1970,6 +1991,13 @@ void R_EndFrame( void ) {
 
 	R_ApplyBrightness();
 
+	{
+		image_t *atlas = R_GetShadowmapAtlasTexture();
+		if( r_temp1->integer && atlas && 0 )
+			R_DrawStretchQuick( 0, 0, 1024, 1024, 0, 0, 
+				1.0, 1.0, colorWhite, GLSL_PROGRAM_TYPE_NONE,
+				atlas, 0 );
+	}
 	R_End2D();
 
 	RB_EndFrame();

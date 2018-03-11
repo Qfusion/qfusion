@@ -48,6 +48,7 @@ void RB_LoadCameraMatrix( const mat4_t m );
 void RB_LoadObjectMatrix( const mat4_t m );
 void RB_LoadProjectionMatrix( const mat4_t m );
 
+void RB_PolygonOffset( float factor, float units );
 void RB_DepthRange( float depthmin, float depthmax );
 void RB_GetDepthRange( float* depthmin, float *depthmax );
 void RB_DepthOffset( bool enable );
@@ -75,10 +76,8 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 						const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
 void RB_FlushDynamicMeshes( void );
 
-void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
-					  int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems );
+void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems );
 void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems,
-							   int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
 							   int numInstances, instancePoint_t *instances );
 
 void RB_FlushTextureCache( void );
@@ -92,7 +91,7 @@ void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
 void RB_SetRenderFlags( int flags );
 void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure );
-void RB_SetRtLightParams( unsigned numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
+void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
 void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis );
 bool RB_EnableTriangleOutlines( bool enable );

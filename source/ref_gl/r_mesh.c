@@ -93,7 +93,7 @@ static int R_PackDistKey( int renderFx, const shader_t *shader, float dist, unsi
 	shaderSort = shader->sort;
 
 	if( renderFx & RF_WEAPONMODEL ) {
-		bool depthWrite = ( shader->flags & SHADER_DEPTHWRITE ) ? true : false;
+		bool depthWrite = Shader_DepthWrite( shader );
 
 		if( renderFx & RF_NOCOLORWRITE ) {
 			// depth-pass for alpha-blended weapon:
@@ -179,9 +179,16 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 	if( !list || !shader ) {
 		return NULL;
 	}
-	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && Shader_ReadDepth( shader ) ) {
-		return NULL;
+
+	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
+		if( Shader_DepthRead( shader ) ) {
+			return NULL;
+		}
+		if( !Shader_DepthWrite( shader ) ) {
+			return NULL;
+		}
 	}
+
 	if( !rsh.worldBrushModel ) {
 		fog = NULL;
 	}
@@ -380,6 +387,8 @@ static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 	NULL,
 	/* ST_NULLMODEL */
 	( drawSurf_cb ) & R_DrawNullSurf,
+	/* ST_COMPILED_LIGHT */
+	( drawSurf_cb ) & R_DrawCompiledLightSurf,
 };
 
 static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
@@ -401,6 +410,32 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 	/* ST_CORONA */
 	( batchDrawSurf_cb ) & R_BatchCoronaSurf,
 	/* ST_NULLMODEL */
+	NULL,
+	/* ST_COMPILED_LIGHT */
+	NULL,
+};
+
+static const walkDrawSurf_cb r_walkSurfCb[ST_MAX_TYPES] =
+{
+	/* ST_NONE */
+	NULL,
+	/* ST_BSP */
+	( walkDrawSurf_cb ) & R_WalkBSPSurf,
+	/* ST_SKY */
+	NULL,
+	/* ST_ALIAS */
+	NULL,
+	/* ST_SKELETAL */
+	NULL,
+	/* ST_SPRITE */
+	NULL,
+	/* ST_POLY */
+	NULL,
+	/* ST_CORONA */
+	NULL,
+	/* ST_NULLMODEL */
+	NULL,
+	/* ST_COMPILED_LIGHT */
 	NULL,
 };
 
@@ -456,7 +491,7 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 		fog = fogNum >= 0 ? rsh.worldBrushModel->fogs + fogNum : NULL;
 		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 		entityFX = entity->renderfx;
-		depthWrite = shader->flags & SHADER_DEPTHWRITE ? true : false;
+		depthWrite = Shader_DepthWrite( shader );
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum ||
@@ -506,7 +541,7 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 				batchFlushed = true;
 				if( infiniteProj ) {
 					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
-					Matrix4_PerspectiveProjectionToInfinity( Z_NEAR, projectionMatrix, glConfig.depthEpsilon );
+					Matrix4_PerspectiveProjectionToInfinity( rn.nearClip, projectionMatrix, glConfig.depthEpsilon );
 					RB_LoadProjectionMatrix( projectionMatrix );
 				} else {
 					RB_LoadProjectionMatrix( rn.projectionMatrix );
@@ -517,7 +552,7 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 				batchOpaque = false;
 			}
 
-			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
+			if( !depthWrite && !depthCopied && Shader_DepthRead( shader ) ) {
 				// ignore portals because oblique frustum messes up the depth values
 				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && !( rn.renderFlags & RF_CLIPPLANE ) ) {
 					int fbo = RB_BoundFrameBufferObject();
@@ -624,6 +659,39 @@ void R_DrawOutlinedSurfaces( drawList_t *list ) {
 	triOutlines = RB_EnableTriangleOutlines( true );
 	_R_DrawSurfaces( list );
 	RB_EnableTriangleOutlines( triOutlines );
+}
+
+/*
+* R_WalkDrawList
+*/
+void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr ) {
+	unsigned i;
+	sortedDrawSurf_t *sds;
+	int drawSurfType;
+	unsigned int sortKey;
+	unsigned int shaderNum;
+	unsigned int entNum;
+	int portalNum;
+	int fogNum;
+	walkDrawSurf_cb walkCb;
+
+	if( !cb ) {
+		return;
+	}
+
+	for( i = 0; i < list->numDrawSurfs; i++ ) {
+		sds = list->drawSurfs + i;
+		sortKey = sds->sortKey;
+		drawSurfType = *(int *)sds->drawSurf;
+
+		// decode draw surface properties
+		R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &portalNum, &entNum );
+
+		walkCb = r_walkSurfCb[drawSurfType];
+		if( walkCb ) {
+			walkCb( R_NUM2ENT( entNum ), R_ShaderById( shaderNum ), sds->drawSurf, cb, ptr );
+		}
+	}
 }
 
 /*

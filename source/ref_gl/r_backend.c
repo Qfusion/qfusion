@@ -226,6 +226,14 @@ void RB_BindImage( int tmu, const image_t *tex ) {
 }
 
 /*
+* RB_PolygonOffset
+*/
+void RB_PolygonOffset( float polygonfactor, float polygonunits ) {
+	rb.gl.polygonfactor = polygonfactor;
+	rb.gl.polygonunits = polygonunits;
+}
+
+/*
 * RB_DepthRange
 */
 void RB_DepthRange( float depthmin, float depthmax ) {
@@ -433,10 +441,17 @@ void RB_SetState( int state ) {
 	if( diff & GLSTATE_OFFSET_FILL ) {
 		if( state & GLSTATE_OFFSET_FILL ) {
 			qglEnable( GL_POLYGON_OFFSET_FILL );
+#ifdef GL_ES_VERSION_2_0
+			qglPolygonOffset( rb.gl.polygonfactor, 0 );
 			RB_DepthOffset( true );
+#else
+			qglPolygonOffset( rb.gl.polygonfactor, rb.gl.polygonunits );
+#endif
 		} else {
-			qglDisable( GL_POLYGON_OFFSET_FILL );
+#ifdef GL_ES_VERSION_2_0
 			RB_DepthOffset( false );
+#endif
+			qglDisable( GL_POLYGON_OFFSET_FILL );
 		}
 	}
 
@@ -881,8 +896,6 @@ void RB_FlushDynamicMeshes( void ) {
 
 		RB_DrawElements(
 			draw->drawElements.firstVert, draw->drawElements.numVerts,
-			draw->drawElements.firstElem, draw->drawElements.numElems,
-			draw->drawElements.firstVert, draw->drawElements.numVerts,
 			draw->drawElements.firstElem, draw->drawElements.numElems );
 	}
 
@@ -1128,14 +1141,16 @@ vattribmask_t RB_GetVertexAttribs( void ) {
 * RB_DrawElements_
 */
 static void RB_DrawElements_( void ) {
+	int err;
+
 	if( !rb.drawElements.numVerts || !rb.drawElements.numElems ) {
 		return;
 	}
 
 	assert( rb.currentShader != NULL );
-
+	err = qglGetError();assert( err == GL_NO_ERROR );
 	RB_EnableVertexAttribs();
-
+	err = qglGetError();assert( err == GL_NO_ERROR );
 	if( rb.triangleOutlines ) {
 		RB_DrawOutlinedElements();
 	} else {
@@ -1146,8 +1161,7 @@ static void RB_DrawElements_( void ) {
 /*
 * RB_DrawElements
 */
-void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
-					  int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems ) {
+void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems ) {
 	rb.currentVAttribs &= ~VATTRIB_INSTANCES_BITS;
 
 	rb.drawElements.numVerts = numVerts;
@@ -1155,12 +1169,6 @@ void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
 	rb.drawElements.firstVert = firstVert;
 	rb.drawElements.firstElem = firstElem;
 	rb.drawElements.numInstances = 0;
-
-	rb.drawShadowElements.numVerts = numShadowVerts;
-	rb.drawShadowElements.numElems = numShadowElems;
-	rb.drawShadowElements.firstVert = firstShadowVert;
-	rb.drawShadowElements.firstElem = firstShadowElem;
-	rb.drawShadowElements.numInstances = 0;
 
 	RB_DrawElements_();
 }
@@ -1171,7 +1179,6 @@ void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
 * Draws <numInstances> instances of elements
 */
 void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems,
-							   int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
 							   int numInstances, instancePoint_t *instances ) {
 	if( !numInstances ) {
 		return;
@@ -1190,12 +1197,6 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	rb.drawElements.firstVert = firstVert;
 	rb.drawElements.firstElem = firstElem;
 	rb.drawElements.numInstances = 0;
-
-	rb.drawShadowElements.numVerts = numShadowVerts;
-	rb.drawShadowElements.numElems = numShadowElems;
-	rb.drawShadowElements.firstVert = firstShadowVert;
-	rb.drawShadowElements.firstElem = firstShadowElem;
-	rb.drawShadowElements.numInstances = 0;
 
 	// check for vertex-attrib-divisor style instancing
 	if( glConfig.ext.instanced_arrays ) {
@@ -1219,7 +1220,6 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	}
 
 	rb.drawElements.numInstances = numInstances;
-	rb.drawShadowElements.numInstances = numInstances;
 	RB_DrawElements_();
 }
 
