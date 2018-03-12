@@ -100,7 +100,7 @@ typedef struct msurface_s {
 
 	unsigned *rtLightBits;
 
-	struct superLightStyle_s *superLightStyle;
+	int superLightStyle;
 } msurface_t;
 
 typedef struct mnode_s {

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_image.h"
 
-#define MAX_SHADERS                 2048
+#define MAX_SHADERS                 4096
 #define MAX_SHADER_PASSES           8
 #define MAX_SHADER_DEFORMVS         8
 #define MAX_SHADER_IMAGES           16

@@ -301,7 +301,8 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 /*
 * R_DrawSkySurf
 */
-void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf ) {
+void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf ) {
 	int i;
 	int numVisSides;
 	visSkySide_t visSkySides[6];
@@ -619,7 +620,7 @@ bool R_ClipSkySurface( drawSurfaceSky_t *drawSurf, const msurface_t *surf ) {
 * R_AddSkySurfToDrawList
 */
 void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader,const portalSurface_t *portalSurf, drawSurfaceSky_t *drawSurf ) {
-	return R_AddSurfToDrawList( rn.meshlist, rsc.skyent, NULL, shader, 0, 0, portalSurf, drawSurf );
+	return R_AddSurfToDrawList( rn.meshlist, rsc.skyent, shader, NULL, -1, 0, 0, portalSurf, drawSurf );
 }
 
 /*

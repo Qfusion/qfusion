@@ -543,9 +543,10 @@ void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 //
 void	R_CacheAliasModelEntity( const entity_t *e );
 bool    R_AddAliasModelToDrawList( const entity_t *e, int lod );
-void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf );
+void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf );
 bool    R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
-							 float lerpfrac, const char *name );
+	float lerpfrac, const char *name );
 void        R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 
 //
@@ -689,10 +690,10 @@ mfog_t      *R_FogForSphere( const vec3_t centre, const float radius );
 int			R_ComputeLOD( const vec3_t viewOrg, const vec3_t mins, const vec3_t maxs, float lodDistance, float lodScale, int lodBias );
 float       R_DefaultFarClip( void );
 
-void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
+flushBatchDrawSurf_cb R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
 
 struct mesh_vbo_s *R_InitNullModelVBO( void );
-void    R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
+void    R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
 
 void		R_CacheSpriteEntity( const entity_t *e );
 
@@ -742,8 +743,8 @@ void		R_PopTransformMatrix( bool projection );
 void R_InitDrawList( drawList_t *list );
 void R_ClearDrawList( drawList_t *list );
 unsigned R_PackOpaqueOrder( const mfog_t *fog, const shader_t *shader, int numLightmaps, bool dlight );
-void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader,
-						   float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, const mfog_t *fog,
+	int superLightStyle, float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
 void R_UpdateDrawSurfDistKey( void *psds, int renderFx, const shader_t *shader, float dist, unsigned order );
 portalSurface_t *R_GetDrawListSurfPortal( void *psds );
 void R_AddDrawListVBOSlice( drawList_t *list, unsigned int index, unsigned int numVerts, unsigned int numElems,
@@ -767,7 +768,8 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 //
 // r_poly.c
 //
-void        R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly );
+flushBatchDrawSurf_cb R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum,
+	const portalSurface_t *portalSurface, drawSurfacePoly_t *poly );
 void        R_DrawPolys( void );
 void        R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
 bool    R_SurfPotentiallyFragmented( const msurface_t *surf );
@@ -812,8 +814,10 @@ bool    R_SurfNoShadow( const msurface_t *surf );
 void	R_CacheBrushModelEntity( const entity_t *e );
 bool    R_AddBrushModelToDrawList( const entity_t *e );
 float   R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
-void    R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf );
-void	R_WalkBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr );
+void    R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf );
+void	R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, 
+	drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr );
 
 //
 // r_skin.c
@@ -830,7 +834,8 @@ shader_t    *R_FindShaderForSkinFile( const struct skinfile_s *skinfile, const c
 //
 void	R_CacheSkeletalModelEntity( const entity_t *e );
 bool    R_AddSkeletalModelToDrawList( const entity_t *e, int lod );
-void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf );
+void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf );
 void        R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 int         R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags );
 void        R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose );
@@ -920,7 +925,8 @@ enum {
 
 struct skydome_s *R_CreateSkydome( model_t *model );
 void        R_TouchSkydome( struct skydome_s *skydome );
-void        R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf );
+void        R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf );
 void        R_ClearSky( drawSurfaceSky_t *drawSurf );
 
 /**

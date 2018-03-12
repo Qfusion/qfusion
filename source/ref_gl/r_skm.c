@@ -1270,7 +1270,8 @@ static void R_CacheBoneTransformsJob( unsigned first, unsigned items, jobarg_t *
 /*
 * R_DrawSkeletalSurf
 */
-void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf ) {
+void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf ) {
 	mesh_t dynamicMesh;
 	vattribmask_t vattribs;
 	const model_t *mod = drawSurf->model;
@@ -1581,7 +1582,7 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 
 		if( shader ) {
 			int drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
-			R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 
+			R_AddSurfToDrawList( rn.meshlist, e, shader, fog, -1, 
 				SKMSURF_DISTANCE( shader, distance ), drawOrder, NULL, skmodel->drawSurfs + i );
 		}
 	}
