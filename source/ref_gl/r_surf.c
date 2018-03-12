@@ -114,7 +114,7 @@ static bool R_SurfaceClipRtLight( const msurface_t *surf, rtlight_t *lt ) {
 * R_DrawBSPSurf
 */
 void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
-	const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf ) {
+	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf ) {
 	const vboSlice_t *slice;
 	static const vboSlice_t nullSlice = { 0 };
 	int firstVert, firstElem;
@@ -141,15 +141,14 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
 
+	RB_SetLightstyle( lightStyleNum >= 0 ? rsh.worldBrushModel->superLightStyles + lightStyleNum : NULL );
+
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		RB_SetLightstyle( NULL );
 		RB_SetRtLightParams( 0, NULL, 0, NULL );
 	} else if ( e != rsc.worldent ) {
 		entSceneCache_t *cache = R_ENTCACHE( e );
-		RB_SetLightstyle( drawSurf->superLightStyle );
 		RB_SetRtLightParams( cache->numRtLights, cache->rtLights, 0, NULL );
 	} else {
-		RB_SetLightstyle( drawSurf->superLightStyle );
 		RB_SetRtLightParams( drawSurf->numRtLights, drawSurf->rtLights, drawSurf->numWorldSurfaces, drawSurf->surfRtlightBits );
 	}
 
@@ -164,7 +163,8 @@ void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 /*
 * R_WalkBSPSurf
 */
-void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr ) {
+void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum,
+	drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr ) {
 	unsigned i;
 
 	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
@@ -174,7 +174,7 @@ void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t 
 		assert( rf.worldDrawSurfVis[surf->drawSurf - 1] );
 
 		if( rf.worldSurfVis[s] ) {
-			cb( ptr, e, shader, drawSurf, surf );
+			cb( ptr, e, shader, lightStyleNum, drawSurf, surf );
 		}
 	}
 }
@@ -194,6 +194,7 @@ static void R_AddSurfaceVBOSlice( drawList_t *list, drawSurfaceBSP_t *drawSurf, 
 static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSurf ) {
 	const mfog_t *fog = drawSurf->fog;
 	const shader_t *shader = drawSurf->shader;
+	int lightStyleNum = drawSurf->superLightStyle;
 	portalSurface_t *portalSurface = NULL;
 	bool sky, portal;
 	unsigned drawOrder = 0;
@@ -208,7 +209,9 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		fog = NULL;
+		lightStyleNum = -1;
 		shader = R_OpaqueShadowShader( shader );
+
 		if( !shader ) {
 			return false;
 		}
@@ -224,7 +227,8 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 		}
 
 		drawSurf->visFrame = rf.frameCount;
-		drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, fog, shader, 0, drawOrder, portalSurface, drawSurf );
+		drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, fog, lightStyleNum, 
+			0, drawOrder, portalSurface, drawSurf );
 
 		R_AddSkySurfToDrawList( rn.meshlist, shader, portalSurface, &rn.skyDrawSurface );
 
@@ -241,14 +245,15 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 	drawOrder = R_PackOpaqueOrder( fog, shader, DrawSurfLightsKey( drawSurf ), false );
 
 	drawSurf->visFrame = rf.frameCount;
-	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, fog, shader, WORLDSURF_DIST, drawOrder, portalSurface, drawSurf );
+	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, fog, lightStyleNum, 
+		WORLDSURF_DIST, drawOrder, portalSurface, drawSurf );
 
 	if( !drawSurf->listSurf ) {
 		return false;
 	}
 
 	if( portalSurface && !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) ) {
-		R_AddSurfToDrawList( rn.portalmasklist, e, NULL, rsh.skyShader, 0, 0, NULL, drawSurf );
+		R_AddSurfToDrawList( rn.portalmasklist, e, rsh.skyShader, NULL, -1, 0, 0, NULL, drawSurf );
 	}
 
 	R_AddDrawListVBOSlice( rn.meshlist, sliceIndex, 0, 0, 0, 0 );

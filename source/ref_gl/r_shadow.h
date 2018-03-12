@@ -34,7 +34,7 @@ void		R_CompileRtLightShadow( rtlight_t *l );
 void		R_TouchCompiledRtLightShadows( rtlight_t *l );
 
 void		R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
-	const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf );
+	int lightStyle, const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf );
 
 const shader_t *R_OpaqueShadowShader( const shader_t *shader );
 

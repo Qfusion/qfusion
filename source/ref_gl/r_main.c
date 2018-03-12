@@ -230,7 +230,8 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 /*
 * R_BatchSpriteSurf
 */
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
+flushBatchDrawSurf_cb R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
 	int i;
 	vec3_t point;
 	vec3_t v_left, v_up;
@@ -281,6 +282,8 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	mesh.sVectorsArray = NULL;
 
 	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+
+	return &RB_FlushDynamicMeshes;
 }
 
 /*
@@ -317,8 +320,8 @@ static bool R_AddSpriteToDrawList( const entity_t *e ) {
 		return false; // cull it because we don't want to sort unneeded things
 	}
 
-	if( !R_AddSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, e->radius ),
-							  e->customShader, dist, 0, NULL, &spriteDrawSurf ) ) {
+	if( !R_AddSurfToDrawList( rn.meshlist, e, e->customShader, 
+		R_FogForSphere( e->origin, e->radius ), -1, dist, 0, NULL, &spriteDrawSurf ) ) {
 		return false;
 	}
 
@@ -381,7 +384,8 @@ mesh_vbo_t *R_InitNullModelVBO( void ) {
 /*
 * R_DrawNullSurf
 */
-void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
+void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
 	assert( rsh.nullVBO != NULL );
 	if( !rsh.nullVBO ) {
 		return;
@@ -400,8 +404,8 @@ static bool R_AddNullSurfToDrawList( const entity_t *e ) {
 		return false;
 	}
 
-	if( !R_AddSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, 0.1f ),
-		rsh.whiteShader, 0, 0, NULL, &nullDrawSurf ) ) {
+	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader, 
+		R_FogForSphere( e->origin, 0.1f ), -1, 0, 0, NULL, &nullDrawSurf ) ) {
 		return false;
 	}
 
@@ -1863,7 +1867,7 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 
 			R_ClearDrawList( rn.portalmasklist );
 
-			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), NULL, surf->shader, 0, 0, NULL, drawSurf ) ) {
+			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), surf->shader, NULL, -1, 0, 0, NULL, drawSurf ) ) {
 				if( rn.refdef.rdflags & RDF_FLIPPED ) {
 					RB_FlipFrontFace();
 				}

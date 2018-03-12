@@ -71,7 +71,7 @@ const shader_t *R_OpaqueShadowShader( const shader_t *shader ) {
 * R_DrawCompiledLightSurf
 */
 void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
-	const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf ) {
+	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf ) {
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
 
 	RB_SetLightstyle( NULL );
@@ -91,7 +91,7 @@ void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const m
 * R_BatchLightSideView
 */
 static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, const shader_t *shader,
-	drawSurfaceBSP_t *drawSurf, msurface_t *surf ) {
+	int lightStyleNum, drawSurfaceBSP_t *drawSurf, msurface_t *surf ) {
 	mesh_vbo_t *vbo;
 	int vertsOffset;
 	int firstVert, lastVert;
@@ -248,8 +248,8 @@ void R_DrawRtLightWorld( void ) {
 	}
 
 	for( b = l->compiledSurf[side]; b && b->shaderId; b = b->next ) {
-		R_AddSurfToDrawList( rn.meshlist, rsc.worldent, NULL, R_ShaderById( b->shaderId ), 
-			0, 0, NULL, &b->drawSurf );
+		R_AddSurfToDrawList( rn.meshlist, rsc.worldent, R_ShaderById( b->shaderId ), NULL, 
+			-1, 0, 0, NULL, &b->drawSurf );
 	}
 }
 

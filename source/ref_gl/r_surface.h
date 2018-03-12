@@ -53,7 +53,8 @@ typedef struct {
 	unsigned int firstWorldSurface, numWorldSurfaces;
 
 	unsigned int numInstances;
-	instancePoint_t *instances;
+
+	int superLightStyle;
 
 	unsigned int numLightmaps;
 
@@ -61,13 +62,13 @@ typedef struct {
 
 	unsigned int *surfRtlightBits; // [numSurfaces]
 
+	instancePoint_t *instances;
+
 	struct shader_s *shader;
 
 	struct mfog_s *fog;
 
 	struct mesh_vbo_s *vbo;
-
-	struct superLightStyle_s *superLightStyle;
 
 	void *listSurf;                 // only valid if visFrame == rf.frameCount
 

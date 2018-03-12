@@ -63,12 +63,13 @@ void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, v
 float       R_LightExposureForOrigin( const vec3_t origin );
 void        R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, lightmapRect_t *rects );
 void        R_InitLightStyles( model_t *mod );
-superLightStyle_t   *R_AddSuperLightStyle( model_t *mod, const int *lightmaps, const uint8_t *lightmapStyles, const uint8_t *vertexStyles, lightmapRect_t **lmRects );
+int         R_AddSuperLightStyle( model_t *mod, const int *lightmaps, const uint8_t *lightmapStyles, const uint8_t *vertexStyles, lightmapRect_t **lmRects );
 void        R_SortSuperLightStyles( model_t *mod );
 void        R_TouchLightmapImages( model_t *mod );
 
 void        R_InitCoronas( void );
-void        R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
+flushBatchDrawSurf_cb R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
 void        R_DrawCoronas( void );
 void        R_ShutdownCoronas( void );
 

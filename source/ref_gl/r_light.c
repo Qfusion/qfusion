@@ -50,8 +50,8 @@ void R_InitCoronas( void ) {
 /*
 * R_BatchCoronaSurf
 */
-void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
-						const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
+flushBatchDrawSurf_cb R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+	int lightStyle, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
 	int i;
 	vec3_t origin, point;
 	vec3_t v_left, v_up;
@@ -100,6 +100,8 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 	mesh.colorsArray[0] = colors;
 
 	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+
+	return &RB_FlushDynamicMeshes;
 }
 
 /*
@@ -133,9 +135,8 @@ void R_DrawCoronas( void ) {
 		}
 
 		R_AddSurfToDrawList( rn.meshlist, rsc.polyent,
-							 R_FogForSphere( light->origin, 1 ),
-							 r_coronaShader,
-							 Distance( rn.viewOrigin, light->origin ), 0, NULL, &r_coronaSurfs[i] );
+			r_coronaShader,	R_FogForSphere( light->origin, 1 ), -1,
+			Distance( rn.viewOrigin, light->origin ), 0, NULL, &r_coronaSurfs[i] );
 	}
 }
 
@@ -762,8 +763,8 @@ void R_InitLightStyles( model_t *mod ) {
 /*
 * R_AddSuperLightStyle
 */
-superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
-										 const uint8_t *lightmapStyles, const uint8_t *vertexStyles, lightmapRect_t **lmRects ) {
+int R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
+	const uint8_t *lightmapStyles, const uint8_t *vertexStyles, lightmapRect_t **lmRects ) {
 	unsigned int i, j;
 	superLightStyle_t *sls;
 	mbrushmodel_t *loadbmodel;
@@ -780,14 +781,14 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
 				break;
 			}
 		if( j == MAX_LIGHTMAPS ) {
-			return sls;
+			return i;
 		}
 	}
 
 	if( loadbmodel->numSuperLightStyles == MAX_SUPER_STYLES ) {
-		ri.Com_Error( ERR_DROP, "R_AddSuperLightStyle: r_numSuperLightStyles == MAX_SUPER_STYLES" );
+		Com_Printf( "R_AddSuperLightStyle: r_numSuperLightStyles == MAX_SUPER_STYLES" );
+		return -1;
 	}
-	loadbmodel->numSuperLightStyles++;
 
 	sls->vattribs = 0;
 	for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
@@ -811,7 +812,7 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
 		}
 	}
 
-	return sls;
+	return loadbmodel->numSuperLightStyles++;
 }
 
 /*

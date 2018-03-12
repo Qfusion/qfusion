@@ -705,9 +705,12 @@ merge:
 			}
 
 			// create vertex buffer object for this face then upload data
-			vattribs = shader->vattribs | surf->superLightStyle->vattribs | VATTRIB_NORMAL_BIT | VATTRIB_SURFINDEX_BIT;
+			vattribs = shader->vattribs | VATTRIB_NORMAL_BIT | VATTRIB_SURFINDEX_BIT;
 			if( surf->numInstances ) {
 				vattribs |= VATTRIB_INSTANCES_BITS;
+			}
+			if( surf->superLightStyle >= 0 ) {
+				vattribs |= loadbmodel->superLightStyles[surf->superLightStyle].vattribs;
 			}
 
 			// create temp VBO to hold pre-batched info
@@ -748,10 +751,12 @@ merge:
 
 			// count lightmaps
 			drawSurf->numLightmaps = 0;
-			for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
-				if( surf->superLightStyle->lightmapStyles[j] == 255 )
-					break;
-				drawSurf->numLightmaps++;
+			if( surf->superLightStyle >= 0 ) {
+				for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
+					if( loadbmodel->superLightStyles[surf->superLightStyle].lightmapStyles[j] == 255 )
+						break;
+					drawSurf->numLightmaps++;
+				}
 			}
 
 			// now if there are any merged faces upload them to the same VBO

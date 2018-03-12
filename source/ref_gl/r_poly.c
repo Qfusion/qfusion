@@ -25,7 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * R_BatchPolySurf
 */
-void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly ) {
+flushBatchDrawSurf_cb R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly ) {
 	mesh_t mesh;
 
 	mesh.elems = poly->elems;
@@ -41,6 +42,8 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	mesh.sVectorsArray = NULL;
 
 	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+
+	return &RB_FlushDynamicMeshes;
 }
 
 /*
@@ -89,7 +92,7 @@ void R_DrawPolys( void ) {
 		}
 		e->renderfx = p->renderfx;
 
-		if( !R_AddSurfToDrawList( rn.meshlist, e, fog, p->shader, 0, i, NULL, p ) ) {
+		if( !R_AddSurfToDrawList( rn.meshlist, e, p->shader, fog, -1, 0, i, NULL, p ) ) {
 			continue;
 		}
 	}
