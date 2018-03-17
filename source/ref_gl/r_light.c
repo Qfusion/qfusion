@@ -876,9 +876,19 @@ LIGHTMAP ALLOCATION
 */
 void R_AllocLightmap_Init( lightmapAllocState_t *state, int width, int height )
 {
+	int y;
+
 	state->width = width;
 	state->height = height;
-	state->allocated = R_Malloc( sizeof( *(state->allocated) ) * width );
+	state->width = width;
+	state->height = height;
+	state->currentY = 0;
+
+	state->rows = ( lightmapAllocRow_t * )R_Malloc( state->height * sizeof( *state->rows ) );
+	for( y = 0; y < state->height; y++ ) {
+		state->rows[y].currentX = 0;
+		state->rows[y].rowY = -1;
+	}
 }
 
 /*
@@ -886,7 +896,13 @@ void R_AllocLightmap_Init( lightmapAllocState_t *state, int width, int height )
 */
 void R_AllocLightmap_Reset( lightmapAllocState_t *state )
 {
-	memset( state->allocated, 0, sizeof( *(state->allocated) ) * state->width );
+	int y;
+
+	state->currentY = 0;
+	for( y = 0; y < state->height; y++ ) {
+		state->rows[y].currentX = 0;
+		state->rows[y].rowY = -1;
+	}
 }
 
 /*
@@ -894,43 +910,42 @@ void R_AllocLightmap_Reset( lightmapAllocState_t *state )
 */
 void R_AllocLightmap_Free( lightmapAllocState_t *state )
 {
-	R_Free( state->allocated );
+	R_Free( state->rows );
 	memset( state, 0, sizeof( *state ) );
 }
 
 /*
 * R_AllocLightmap_Block
 */
-bool R_AllocLightmap_Block( lightmapAllocState_t *state, int w, int h, int *x, int *y )
+bool R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int blockheight, int *outx, int *outy )
 {
-	int i, j;
-	int best, best2;
+	int y;
+	lightmapAllocRow_t *row;
 
-	best = state->width;
-	for( i = 0; i < state->width - w; i++ ) {
-		best2 = 0;
-		for( j = 0; j < w; j++ ) {
-			if( state->allocated[i + j] >= best ) {
-				break;
+	row = state->rows + blockheight;
+	if( ( row->rowY < 0 ) || ( row->currentX + blockwidth > state->width ) ) {
+		if( state->currentY + blockheight <= state->height ) {
+			// use the current allocation position
+			row->rowY = state->currentY;
+			row->currentX = 0;
+			state->currentY += blockheight;
+		} else {
+			// find another position
+			for( y = blockheight; y < state->height; y++ ) {
+				if( ( state->rows[y].rowY >= 0 ) && ( state->rows[y].currentX + blockwidth <= state->width ) ) {
+					row = state->rows + y;
+					break;
+				}
 			}
-			if( state->allocated[i + j] > best2 ) {
-				best2 = state->allocated[i + j];
+			if( y == state->height ) {
+				return false;
 			}
-		}
-
-		if( j == w ) {
-			// this is a valid spot
-			*x = i;
-			*y = best = best2;
 		}
 	}
 
-	if( best + h > state->height ) {
-		return false;
-	}
-
-	for( i = 0; i < w; i++ )
-		state->allocated[*x + i] = best + h;
+	*outy = row->rowY;
+	*outx = row->currentX;
+	row->currentX += blockwidth;
 
 	return true;
 }
