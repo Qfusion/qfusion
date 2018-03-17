@@ -54,9 +54,16 @@ typedef struct {
 
 typedef struct
 {
+	int rowY;
+	int currentX;
+} lightmapAllocRow_t;
+
+typedef struct
+{
 	int width;
 	int height;
-	int *allocated;
+	int currentY;
+	lightmapAllocRow_t *rows;
 } lightmapAllocState_t;
 
 void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
@@ -76,7 +83,7 @@ void        R_ShutdownCoronas( void );
 void		R_AllocLightmap_Init( lightmapAllocState_t *state, int width, int height );
 void		R_AllocLightmap_Reset( lightmapAllocState_t *state );
 void		R_AllocLightmap_Free( lightmapAllocState_t *state );
-bool		R_AllocLightmap_Block( lightmapAllocState_t *state, int w, int h, int *x, int *y );
+bool		R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int blockheight, int *outx, int *outy );
 
 void		R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_t color );
 void		R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
