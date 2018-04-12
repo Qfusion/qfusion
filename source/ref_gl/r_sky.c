@@ -400,6 +400,19 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	R_ClearSky( drawSurf );
 }
 
+
+/*
+* R_DrawDepthSkySurf
+*/
+void R_DrawDepthSkySurf( void ) {
+	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE );
+	if( mapConfig.writeSkyDepth ) {
+		R_DrawSkySurfaces( rn.meshlist );
+	}
+	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
+	RB_SetShaderStateMask( ~0, 0 );
+}
+
 //===================================================================
 
 const vec3_t skyclip[6] = {
@@ -619,7 +632,7 @@ bool R_ClipSkySurface( drawSurfaceSky_t *drawSurf, const msurface_t *surf ) {
 /*
 * R_AddSkySurfToDrawList
 */
-void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader,const portalSurface_t *portalSurf, drawSurfaceSky_t *drawSurf ) {
+void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader, const portalSurface_t *portalSurf, drawSurfaceSky_t *drawSurf ) {
 	return R_AddSurfToDrawList( rn.meshlist, rsc.skyent, shader, NULL, -1, 0, 0, portalSurf, drawSurf );
 }
 

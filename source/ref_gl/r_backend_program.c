@@ -55,7 +55,7 @@ static void RB_SetShaderpassState( int state );
 
 static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t programFeatures );
-static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_Shadow( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures );
@@ -537,13 +537,6 @@ static r_glslfeat_t RB_RtlightbitsToProgramFeatures( void ) {
 	r_glslfeat_t bits;
 	unsigned int numRtlights = rb.numRealtimeLights;
 
-	if( r_lighting_maxglsldlights->integer >= 0 && numRtlights > (unsigned)r_lighting_maxglsldlights->integer ) {
-		numRtlights = r_lighting_maxglsldlights->integer;
-	}
-	if( numRtlights > MAX_DRAWSURF_RTLIGHTS ) {
-		numRtlights = MAX_DRAWSURF_RTLIGHTS;
-	}
-
 	bits = 0;
 
 	if( rb.numSurfaces )
@@ -1010,7 +1003,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		// dynamic lights
 		if( rb.numRealtimeLights > 0 ) {
 			RP_UpdateRealtimeLightsUniforms( program, rb.objectMatrix,
-				rb.currentEntity->origin, rb.currentEntity->axis,
+				rb.currentEntity == rsc.worldent,
 				rb.numRealtimeLights, rb.rtlights, rb.numSurfaces, rb.surfRtLightBits );
 		}
 
@@ -1107,15 +1100,26 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 }
 
 /*
-* RB_RenderMeshGLSL_RGBShadow
+* RB_RenderMeshGLSL_Shadow
 */
-static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
+static void RB_RenderMeshGLSL_Shadow( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
 	int program;
 	mat4_t texMatrix;
+	const image_t *base;
 
-	if( glConfig.ext.rgb8_rgba8 ) {
-		programFeatures |= GLSL_SHADER_RGBSHADOW_24BIT;
+	if( glConfig.ext.shadow ) {
+		programFeatures |= GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS;
+	} else if( glConfig.ext.rgb8_rgba8 ) {
+		programFeatures |= GLSL_SHADER_COMMON_RGBSHADOW_24BIT;
 	}
+
+	if( pass->flags & SHADERPASS_ALPHAFUNC ) {
+		base = RB_ShaderpassTex( pass );
+	} else {
+		base = rsh.whiteTexture;
+	}
+
+	RB_BindImage( 0, base );
 
 	Matrix4_Identity( texMatrix );
 
@@ -1123,7 +1127,7 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 	RB_SetShaderpassState( pass->flags );
 
 	// update uniforms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOW, NULL,
 								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) ) {
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
@@ -1308,13 +1312,20 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 	image = RB_ShaderpassTex( pass );
 	if( isLightmapped || isWorldVertexLight ) {
+		applyLighting = true;
+	} else {
+		if( rb.currentShader->flags & SHADER_LIGHTMAP ) {
+			applyLighting = r_lighting_realtime_world->integer != 0;
+		}
+	}
+
+	if( applyLighting ) {
 		if( DRAWFLAT() ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT;
 		}
 		if( rb.renderFlags & RF_LIGHTMAP ) {
 			image = rsh.whiteTexture;
 		}
-		applyLighting = true;
 	}
 
 	if( image->flags & IT_ALPHAMASK ) {
@@ -1331,7 +1342,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	// set shaderpass state (blending, depthwrite, etc)
 	state = pass->flags;
 
-	// possibly force depthwrite and give up blending when doing a lightmapped pass
 	if( ( isLightmapped || isWorldVertexLight ) &&
 		!rb.doneDepthPass &&
 		!( state & GLSTATE_DEPTHWRITE ) &&
@@ -1392,8 +1402,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		RP_UpdateLightstyleUniforms( program, lightStyle );
 
 		// dynamic lights
-		if( rb.numRealtimeLights > 0 ) {
-			RP_UpdateRealtimeLightsUniforms( program, rb.objectMatrix, e->origin, e->axis, 
+		if( applyLighting ) {
+			RP_UpdateRealtimeLightsUniforms( program, rb.objectMatrix, e == rsc.worldent,
 				rb.numRealtimeLights, rb.rtlights, rb.numSurfaces, rb.surfRtLightBits );
 		}
 
@@ -1712,8 +1722,8 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 		case GLSL_PROGRAM_TYPE_DISTORTION:
 			RB_RenderMeshGLSL_Distortion( pass, features );
 			break;
-		case GLSL_PROGRAM_TYPE_RGB_SHADOW:
-			RB_RenderMeshGLSL_RGBShadow( pass, features );
+		case GLSL_PROGRAM_TYPE_SHADOW:
+			RB_RenderMeshGLSL_Shadow( pass, features );
 			break;
 		case GLSL_PROGRAM_TYPE_OUTLINE:
 			RB_RenderMeshGLSL_Outline( pass, features );
@@ -1782,6 +1792,10 @@ static void RB_UpdateVertexAttribs( void ) {
 * RB_BindShader
 */
 void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog ) {
+	if( rb.currentEntity == e && rb.currentShader == shader && rb.fog == fog ) {
+		return;
+	}
+
 	rb.currentShader = shader;
 	rb.fog = fog;
 	rb.texFog = rb.colorFog = NULL;
@@ -1849,6 +1863,10 @@ void RB_SetLightstyle( const superLightStyle_t *lightStyle ) {
 		return;
 	}
 
+	if( rb.superLightStyle == lightStyle ) {
+		return;
+	}
+
 	assert( rb.currentShader != NULL );
 	rb.superLightStyle = lightStyle;
 	rb.dirtyUniformState = true;
@@ -1882,6 +1900,9 @@ void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights ) {
 * RB_SetPortalSurface
 */
 void RB_SetPortalSurface( const portalSurface_t *portalSurface ) {
+	if( rb.currentPortalSurface == portalSurface ) {
+		return;
+	}
 	assert( rb.currentShader != NULL );
 	rb.currentPortalSurface = portalSurface;
 	rb.dirtyUniformState = true;
@@ -1891,6 +1912,9 @@ void RB_SetPortalSurface( const portalSurface_t *portalSurface ) {
 * RB_SetSkyboxShader
 */
 void RB_SetSkyboxShader( const shader_t *shader ) {
+	if( rb.skyboxShader == shader ) {
+		return;
+	}
 	rb.skyboxShader = shader;
 	rb.dirtyUniformState = true;
 }
@@ -1900,10 +1924,14 @@ void RB_SetSkyboxShader( const shader_t *shader ) {
 */
 void RB_SetSkyboxSide( int side ) {
 	if( side < 0 || side >= 6 ) {
-		rb.skyboxSide = -1;
-	} else {
-		rb.skyboxSide = side;
+		side = -1;
 	}
+
+	if( rb.skyboxSide == side ) {
+		return;
+	}
+
+	rb.skyboxSide = side;
 	rb.dirtyUniformState = true;
 }
 
@@ -1926,6 +1954,7 @@ void RB_SetInstanceData( int numInstances, instancePoint_t *instances ) {
 void RB_SetZClip( float zNear, float zFar ) {
 	rb.zNear = zNear;
 	rb.zFar = zFar;
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -1935,23 +1964,30 @@ void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure ) {
 	rb.minLight = minLight;
 	rb.noWorldLight = noWorldLight;
 	rb.hdrExposure = hdrExposure;
+	rb.dirtyUniformState = true;
 }
 
 /*
 * RB_SetRtLightParams
 */
 void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
-	if( rb.triangleOutlines || ( rb.renderFlags & RF_SHADOWMAPVIEW ) ) {
-		rb.numRealtimeLights = 0;
-		rb.numSurfaces = 0;
-		return;
+	if( r_lighting_maxglsldlights->integer >= 0 && numRtLights > (unsigned)r_lighting_maxglsldlights->integer ) {
+		numRtLights = r_lighting_maxglsldlights->integer;
 	}
-
 	if( numRtLights > MAX_DRAWSURF_RTLIGHTS ) {
 		numRtLights = MAX_DRAWSURF_RTLIGHTS;
 	}
 	if( numSurfs > MAX_DRAWSURF_SURFS ) {
 		numSurfs = MAX_DRAWSURF_SURFS;
+	}
+
+	if( rb.triangleOutlines || ( rb.renderFlags & RF_SHADOWMAPVIEW ) ) {
+		numSurfs = 0;
+		numRtLights = 0;
+	}
+
+	if( rb.numRealtimeLights == 0 && rb.numSurfaces == 0 && numRtLights == 0 && numSurfs == 0 ) {
+		return;
 	}
 
 	rb.numRealtimeLights = numRtLights;
@@ -1961,6 +1997,8 @@ void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned n
 	rb.numSurfaces = numSurfs;
 	if( surfRtLightBits )
 		memcpy( rb.surfRtLightBits, surfRtLightBits, numSurfs * sizeof( *surfRtLightBits ) );
+
+	rb.dirtyUniformState = true;
 
 	RB_UpdateVertexAttribs();
 }
@@ -2031,8 +2069,8 @@ static void RB_RenderPass( const shaderpass_t *pass ) {
 		return;
 	}
 
-	if( ( rb.renderFlags & RF_SHADOWMAPVIEW ) && !glConfig.ext.shadow ) {
-		RB_RenderMeshGLSLProgrammed( pass, GLSL_PROGRAM_TYPE_RGB_SHADOW );
+	if( rb.renderFlags & RF_SHADOWMAPVIEW ) {
+		RB_RenderMeshGLSLProgrammed( pass, GLSL_PROGRAM_TYPE_SHADOW );
 	} else if( pass->program_type ) {
 		RB_RenderMeshGLSLProgrammed( pass, pass->program_type );
 	} else {
@@ -2122,7 +2160,7 @@ static void RB_SetShaderpassState( int state ) {
 */
 static bool RB_CleanSinglePass( void ) {
 	// reuse current GLSL state (same program bound, same uniform values)
-	if( !rb.dirtyUniformState && rb.donePassesTotal == 1 ) {
+	if( !rb.dirtyUniformState && rb.donePassesTotal == 1 && rb.currentShader->numpasses == 1 ) {
 		RB_DrawElementsReal( &rb.drawElements );
 		return true;
 	}
@@ -2199,7 +2237,6 @@ void RB_DrawOutlinedElements( void ) {
 void RB_DrawShadedElements( void ) {
 	unsigned i;
 	bool addGLSLOutline = false;
-	int err;
 	shaderpass_t *pass;
 
 	if( RB_CleanSinglePass() ) {
@@ -2211,9 +2248,9 @@ void RB_DrawShadedElements( void ) {
 		&& !( rb.renderFlags & RF_SHADOWMAPVIEW ) ) {
 		addGLSLOutline = true;
 	}
-	err = qglGetError();assert( err == GL_NO_ERROR );
+
 	RB_SetShaderState();
-	err = qglGetError();assert( err == GL_NO_ERROR );
+
 	for( i = 0, pass = rb.currentShader->passes; i < rb.currentShader->numpasses; i++, pass++ ) {
 		if( ( pass->flags & SHADERPASS_DETAIL ) && !r_detailtextures->integer ) {
 			continue;
@@ -2221,7 +2258,7 @@ void RB_DrawShadedElements( void ) {
 		if( pass->flags & SHADERPASS_LIGHTMAP ) {
 			continue;
 		}
-		RB_RenderPass( pass );err = qglGetError();
+		RB_RenderPass( pass );
 	}
 
 	// outlines

@@ -53,13 +53,9 @@ void R_ClearDrawList( drawList_t *list ) {
 		return;
 	}
 
-	// clear counters
 	list->numDrawSurfs = 0;
 
-	// clear VBO slices
-	if( list->vboSlices ) {
-		memset( list->vboSlices, 0, sizeof( *list->vboSlices ) * list->maxVboSlices );
-	}
+	memset( &rn.meshlist->bspBatch, 0, sizeof( drawListBatch_t ) );
 }
 
 /*
@@ -82,6 +78,34 @@ static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes ) {
 
 	list->drawSurfs = newDs;
 	list->maxDrawSurfs = newSize;
+}
+
+/*
+* R_ReserveDrawListWorldSurfaces
+*/
+void R_ReserveDrawListWorldSurfaces( drawList_t *list ) {
+	if( !list->numWorldSurfVis ) {
+		list->worldSurfVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *list->worldSurfVis ) );
+		list->worldSurfFullVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *list->worldSurfVis ) );
+	} else if( list->numWorldSurfVis < rsh.worldBrushModel->numsurfaces ) {
+		list->worldSurfVis = R_Realloc( (void *)list->worldSurfVis, rsh.worldBrushModel->numsurfaces * sizeof( *list->worldSurfVis ) );
+		list->worldSurfFullVis = R_Realloc( (void *)list->worldSurfFullVis, rsh.worldBrushModel->numsurfaces * sizeof( *list->worldSurfVis ) );
+	}
+	list->numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
+
+	if( !list->numWorldLeafVis ) {
+		list->worldLeafVis = R_Malloc( rsh.worldBrushModel->numvisleafs * sizeof( *list->worldLeafVis ) );
+	} else if( list->numWorldLeafVis < rsh.worldBrushModel->numvisleafs ) {
+		list->worldLeafVis = R_Realloc( (void *)list->worldLeafVis, rsh.worldBrushModel->numvisleafs * sizeof( *list->worldLeafVis ) );
+	}
+	list->numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
+
+	if( !list->numWorldDrawSurfVis ) {
+		list->worldDrawSurfVis = R_Malloc( rsh.worldBrushModel->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
+	} else if( list->numWorldDrawSurfVis < rsh.worldBrushModel->numDrawSurfaces ) {
+		list->worldDrawSurfVis = R_Realloc( (void *)list->worldDrawSurfVis, rsh.worldBrushModel->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
+	}
+	list->numWorldDrawSurfVis = rsh.worldBrushModel->numDrawSurfaces;
 }
 
 /*
@@ -266,6 +290,13 @@ static int R_DrawSurfCompare( const sortedDrawSurf_t *sbs1, const sortedDrawSurf
 		return -1;
 	}
 
+	if( sbs1->drawSurf > sbs2->drawSurf ) {
+		return 1;
+	}
+	if( sbs2->drawSurf < sbs2->drawSurf ) {
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -284,98 +315,12 @@ void R_SortDrawList( drawList_t *list ) {
 		   ( int ( * )( const void *, const void * ) )R_DrawSurfCompare );
 }
 
-/*
-* R_ReserveVBOSlices
-*
-* Ensures there's enough space to store the minSlices amount of slices
-* plus some more.
-*/
-static void R_ReserveVBOSlices( drawList_t *list, unsigned int minSlices ) {
-	unsigned int oldSize, newSize;
-	vboSlice_t *slices, *newSlices;
-
-	oldSize = list->maxVboSlices;
-	newSize = max( minSlices, oldSize * 2 );
-
-	slices = list->vboSlices;
-	newSlices = R_Malloc( newSize * sizeof( vboSlice_t ) );
-	if( slices ) {
-		memcpy( newSlices, slices, oldSize * sizeof( vboSlice_t ) );
-		R_Free( slices );
-	}
-
-	list->vboSlices = newSlices;
-	list->maxVboSlices = newSize;
-}
-
-/*
-* R_AddDrawListVBOSlice
-*/
-void R_AddDrawListVBOSlice( drawList_t *list, unsigned int index, unsigned int numVerts, unsigned int numElems,
-					unsigned int firstVert, unsigned int firstElem ) {
-	vboSlice_t *slice;
-
-	if( index >= list->maxVboSlices ) {
-		unsigned int minSlices = index + 1;
-		if( rsh.worldBrushModel ) {
-			minSlices = max( rsh.worldBrushModel->numDrawSurfaces, minSlices );
-		}
-		R_ReserveVBOSlices( list, minSlices );
-	}
-
-	slice = &list->vboSlices[index];
-	if( !slice->numVerts ) {
-		// initialize the slice
-		slice->firstVert = firstVert;
-		slice->firstElem = firstElem;
-		slice->numVerts = numVerts;
-		slice->numElems = numElems;
-	} else {
-		if( firstVert < slice->firstVert ) {
-			// prepend
-			slice->numVerts = slice->numVerts + slice->firstVert - firstVert;
-			slice->numElems = slice->numElems + slice->firstElem - firstElem;
-
-			slice->firstVert = firstVert;
-			slice->firstElem = firstElem;
-		} else {
-			// append
-			slice->numVerts = max( slice->numVerts, numVerts + firstVert - slice->firstVert );
-			slice->numElems = max( slice->numElems, numElems + firstElem - slice->firstElem );
-		}
-	}
-}
-
-/*
-* R_GetDrawListVBOSlice
-*/
-vboSlice_t *R_GetDrawListVBOSlice( drawList_t *list, unsigned int index ) {
-	if( index >= list->maxVboSlices ) {
-		return NULL;
-	}
-	return &list->vboSlices[index];
-}
-
-/*
-* R_GetDrawListVBOSliceCounts
-*
-* The initial values are not reset
-*/
-void R_GetVBOSliceCounts( drawList_t *list, unsigned *numSliceVerts, unsigned *numSliceElems ) {
-	unsigned i;
-
-	for( i = 0; i < list->maxVboSlices; i++ ) {
-		*numSliceVerts += list->vboSlices[i].numVerts;
-		*numSliceElems += list->vboSlices[i].numElems;
-	}
-}
-
 static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 {
 	/* ST_NONE */
 	NULL,
 	/* ST_BSP */
-	( drawSurf_cb ) & R_DrawBSPSurf,
+	( drawSurf_cb ) NULL,
 	/* ST_SKY */
 	( drawSurf_cb ) & R_DrawSkySurf,
 	/* ST_ALIAS */
@@ -399,7 +344,7 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 	/* ST_NONE */
 	NULL,
 	/* ST_BSP */
-	NULL,
+	( batchDrawSurf_cb ) & R_BatchBSPSurf,
 	/* ST_SKY */
 	NULL,
 	/* ST_ALIAS */
@@ -445,7 +390,7 @@ static const walkDrawSurf_cb r_walkSurfCb[ST_MAX_TYPES] =
 /*
 * R_DrawSurfaces
 */
-static void _R_DrawSurfaces( drawList_t *list ) {
+static void _R_DrawSurfaces( drawList_t *list, int drawSurfTypeFilter ) {
 	unsigned int i;
 	uint64_t sortKey;
 	unsigned int shaderNum = 0, prevShaderNum = MAX_SHADERS;
@@ -467,6 +412,7 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 	bool depthWrite = false;
 	bool depthCopied = false;
 	bool batchFlushed = true, batchOpaque = false;
+	bool batchMergable = true;
 	int entityFX = 0, prevEntityFX = -1;
 	mat4_t projectionMatrix;
 	int riFBO = 0;
@@ -485,6 +431,9 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 		drawSurfType = *(int *)sds->drawSurf;
 
 		assert( drawSurfType > ST_NONE && drawSurfType < ST_MAX_TYPES );
+		if( drawSurfTypeFilter > ST_NONE && drawSurfType != drawSurfTypeFilter ) {
+			continue;
+		}
 
 		batchDrawSurf = ( r_batchDrawSurfCb[drawSurfType] ? true : false );
 
@@ -497,6 +446,7 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 		entityFX = entity->renderfx;
 		depthWrite = Shader_DepthWrite( shader );
+		batchMergable = true;
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum ||
@@ -504,6 +454,7 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 			( entNum != prevEntNum && !( shader->flags & SHADER_ENTITY_MERGABLE ) ) ||
 			entityFX != prevEntityFX ) {
 
+			batchMergable = false;
 			if( prevBatchDrawSurf && !batchDrawSurf ) {
 				batchFlush();
 				batchFlushed = true;
@@ -612,14 +563,16 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 			prevPortalNum = portalNum;
 			prevInfiniteProj = infiniteProj;
 			prevEntityFX = entityFX;
+			prevLightStyle = lightStyle;
 		}
 
 		if( batchDrawSurf ) {
-			batchFlush = r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, lightStyle, portalSurface, sds->drawSurf );
+			batchFlush = r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, lightStyle, portalSurface, sds->drawSurf, batchMergable );
 			batchFlushed = false;
 			if( depthWrite ) {
 				batchOpaque = true;
 			}
+			batchMergable = false;
 		}
 	}
 
@@ -631,6 +584,9 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 	}
 	if( cullHack ) {
 		RB_FlipFrontFace();
+	}
+	if( infiniteProj ) {
+		RB_LoadProjectionMatrix( rn.projectionMatrix );
 	}
 
 	RB_BindFrameBufferObject( riFBO );
@@ -645,7 +601,21 @@ void R_DrawSurfaces( drawList_t *list ) {
 	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
 		// do not recurse into normal mode when rendering triangle outlines
-		_R_DrawSurfaces( list );
+		_R_DrawSurfaces( list, ST_NONE );
+	}
+	RB_EnableTriangleOutlines( triOutlines );
+}
+
+/*
+* R_DrawSkySurfaces
+*/
+void R_DrawSkySurfaces( drawList_t *list ) {
+	bool triOutlines;
+
+	triOutlines = RB_EnableTriangleOutlines( false );
+	if( !triOutlines ) {
+		// do not recurse into normal mode when rendering triangle outlines
+		_R_DrawSurfaces( list, ST_SKY );
 	}
 	RB_EnableTriangleOutlines( triOutlines );
 }
@@ -663,7 +633,7 @@ void R_DrawOutlinedSurfaces( drawList_t *list ) {
 	// properly store and restore the state, as the
 	// R_DrawOutlinedSurfaces calls can be nested
 	triOutlines = RB_EnableTriangleOutlines( true );
-	_R_DrawSurfaces( list );
+	_R_DrawSurfaces( list, ST_NONE );
 	RB_EnableTriangleOutlines( triOutlines );
 }
 

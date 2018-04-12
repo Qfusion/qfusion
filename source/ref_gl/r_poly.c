@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * R_BatchPolySurf
 */
 flushBatchDrawSurf_cb R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
-	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly ) {
+	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly, bool mergable ) {
 	mesh_t mesh;
 
 	mesh.elems = poly->elems;

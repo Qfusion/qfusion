@@ -102,6 +102,7 @@ void RB_EndRegistration( void ) {
 void RB_SetTime( int64_t time ) {
 	rb.time = time;
 	rb.nullEnt.shaderTime = ri.Sys_Milliseconds();
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -112,6 +113,7 @@ void RB_BeginFrame( void ) {
 	rb.nullEnt.scale = 1;
 	VectorClear( rb.nullEnt.origin );
 	Matrix3_Identity( rb.nullEnt.axis );
+	rb.dirtyUniformState = true;
 
 	memset( &rb.stats, 0, sizeof( rb.stats ) );
 
@@ -155,7 +157,9 @@ static void RB_SetGLDefaults( void ) {
 	qglDepthFunc( GL_LEQUAL );
 	qglDepthMask( GL_FALSE );
 	qglDisable( GL_POLYGON_OFFSET_FILL );
+#ifdef GL_ES_VERSION_2_0
 	qglPolygonOffset( -1.0f, 0.0f ); // units will be handled by RB_DepthOffset
+#endif
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	qglEnable( GL_DEPTH_TEST );
 #ifndef GL_ES_VERSION_2_0
@@ -241,10 +245,12 @@ void RB_DepthRange( float depthmin, float depthmax ) {
 	clamp( depthmax, 0.0f, 1.0f );
 	rb.gl.depthmin = depthmin;
 	rb.gl.depthmax = depthmax;
+#ifdef GL_ES_VERSION_2_0
 	// depthmin == depthmax is a special case when a specific depth value is going to be written
 	if( ( depthmin != depthmax ) && !rb.gl.depthoffset ) {
 		depthmin += 4.0f / 65535.0f;
 	}
+#endif
 	qglDepthRange( depthmin, depthmax );
 }
 
@@ -264,9 +270,11 @@ void RB_DepthOffset( bool enable ) {
 	float depthmax = rb.gl.depthmax;
 	rb.gl.depthoffset = enable;
 	if( depthmin != depthmax ) {
+#ifdef GL_ES_VERSION_2_0
 		if( !enable ) {
 			depthmin += 4.0f / 65535.0f;
 		}
+#endif
 		qglDepthRange( depthmin, depthmax );
 	}
 }
@@ -283,6 +291,7 @@ void RB_ClearDepth( float depth ) {
 */
 void RB_LoadCameraMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.cameraMatrix );
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -292,7 +301,7 @@ void RB_LoadObjectMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.objectMatrix );
 	Matrix4_Multiply( rb.cameraMatrix, m, rb.modelviewMatrix );
 	Matrix4_Multiply( rb.projectionMatrix, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
-}
+	rb.dirtyUniformState = true;}
 
 /*
 * RB_LoadProjectionMatrix
@@ -300,6 +309,7 @@ void RB_LoadObjectMatrix( const mat4_t m ) {
 void RB_LoadProjectionMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.projectionMatrix );
 	Matrix4_Multiply( m, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -1141,16 +1151,14 @@ vattribmask_t RB_GetVertexAttribs( void ) {
 * RB_DrawElements_
 */
 static void RB_DrawElements_( void ) {
-	int err;
-
 	if( !rb.drawElements.numVerts || !rb.drawElements.numElems ) {
 		return;
 	}
 
 	assert( rb.currentShader != NULL );
-	err = qglGetError();assert( err == GL_NO_ERROR );
+
 	RB_EnableVertexAttribs();
-	err = qglGetError();assert( err == GL_NO_ERROR );
+
 	if( rb.triangleOutlines ) {
 		RB_DrawOutlinedElements();
 	} else {

@@ -424,6 +424,7 @@ void R_GetTransformBufferForMesh( mesh_t *mesh, bool positions, bool normals, bo
 model_t     *Mod_ForName( const char *name, bool crash );
 mleaf_t     *Mod_PointInLeaf( const vec3_t p, mbrushmodel_t *bmodel );
 uint8_t     *Mod_ClusterPVS( int cluster, mbrushmodel_t *bmodel );
+uint8_t		*Mod_SpherePVS( const vec3_t origin, float radius, mbrushmodel_t *bmodel, uint8_t *fatpvs );
 
 unsigned int Mod_Handle( const model_t *mod );
 model_t     *Mod_ForHandle( unsigned int elem );
