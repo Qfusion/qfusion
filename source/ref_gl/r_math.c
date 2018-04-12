@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_math.h"
 
-const mat4_t mat4x4_identity =
+const ATTRIBUTE_ALIGNED( 16 ) mat4_t mat4x4_identity =
 {
 	1, 0, 0, 0,
 	0, 1, 0, 0,
@@ -89,6 +89,41 @@ void Matrix4_MultiplyFast( const mat4_t m1, const mat4_t m2, mat4_t out ) {
 	out[14] = m1[2] * m2[12] + m1[6] * m2[13] + m1[10] * m2[14] + m1[14];
 	out[15] = 1.0f;
 }
+
+#if defined ( id386 ) && ( defined ( __GNUC__ ) && defined ( __SSE__ ) ) ||  ( defined ( _WIN32 ) && ( _MSC_VER >= 1400 ) ) && 0
+
+#include <xmmintrin.h>
+
+static inline __m128 lincomb_SSE( const __m128 a, const float *m )
+{
+	__m128 result;
+	result = _mm_mul_ps( _mm_shuffle_ps( a, a, 0x00 ), _mm_load_ps( m ) );
+	result = _mm_add_ps( result, _mm_mul_ps( _mm_shuffle_ps( a, a, 0x55 ), _mm_load_ps( m + 4 ) ) );
+	result = _mm_add_ps( result, _mm_mul_ps( _mm_shuffle_ps( a, a, 0xaa ), _mm_load_ps( m + 8 ) ) );
+	result = _mm_add_ps( result, _mm_mul_ps( _mm_shuffle_ps( a, a, 0xff ), _mm_load_ps( m + 12 ) ) );
+	return result;
+}
+
+void Matrix4_MultiplySSE( const mat4_t m1, const mat4_t m2, mat4_t out ) {
+	float *fo = &out[0];
+	const float *fm1 = &m2[0], *fm2 = &m1[0];
+	__m128 out0x = lincomb_SSE( _mm_load_ps( fm1 ), fm2 );
+	__m128 out1x = lincomb_SSE( _mm_load_ps( fm1 + 4 ), fm2 );
+	__m128 out2x = lincomb_SSE( _mm_load_ps( fm1 + 8 ), fm2 );
+	__m128 out3x = lincomb_SSE( _mm_load_ps( fm1 + 12 ), fm2 );
+	_mm_store_ps( fo     , out0x );
+	_mm_store_ps( fo + 4 , out1x );
+	_mm_store_ps( fo + 8 , out2x );
+	_mm_store_ps( fo + 12 , out3x );
+}
+
+#else
+
+void Matrix4_MultiplySSE( const mat4_t m1, const mat4_t m2, mat4_t out ) {
+	Matrix4_Multiply( m1, m2, out );
+}
+
+#endif
 
 // Taken from Darkplaces source code
 // Adapted from code contributed to Mesa by David Moore (Mesa 7.6 under SGI Free License B - which is MIT/X11-type)
