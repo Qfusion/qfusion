@@ -211,7 +211,7 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	}
 	
 	dl = &rsc.dlights[rsc.numDlights];
-	R_InitRtLight( dl, org, intensity * DLIGHT_SCALE, colorWhite );
+	R_InitRtLight( dl, r_mempool, org, intensity * DLIGHT_SCALE, colorWhite ); // FIXME: use a different mempool
 	dl->shadow = dl->intensity >= DLIGHT_MIN_SHADOW_RADIUS;
 
 	if( r_lighting_grayscale->integer ) {
@@ -221,6 +221,8 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 		VectorSet( dl->color, r, g, b );
 		VectorScale( dl->color, 1.0 / DLIGHT_SCALE, dl->color );
 	}
+
+	//assert( rsc.polys[0].type == ST_POLY );
 
 	rsc.numDlights++;
 }
@@ -353,6 +355,19 @@ void R_RenderScene( const refdef_t *fd ) {
 
 			R_WaitWorldModel();
 		}
+
+		// FIXME: find a better place for this
+		if( rsh.worldBrushModel ) {
+			if( r_lighting_realtime_world->modified || r_lighting_realtime_world_shadows->modified ) {
+				unsigned i;
+
+				for( i = 0; i < rsh.worldBrushModel->numRtLights; i++ ) {
+					R_CompileRtLight( rsh.worldBrushModel->rtLights + i);
+				}
+			}
+			r_lighting_realtime_world->modified = false;
+			r_lighting_realtime_world_shadows->modified = false;
+		}
 	}
 
 	rn.refdef = *fd;
@@ -469,7 +484,7 @@ void R_RenderScene( const refdef_t *fd ) {
 	if( !(fd->rdflags & RDF_NOWORLDMODEL) ) {
 		R_RenderDebugSurface( fd );
 
-		R_RenderDebugLights();
+		R_RenderDebugLightVolumes();
 
 		R_RenderDebugBounds();
 	}

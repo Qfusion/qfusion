@@ -419,10 +419,13 @@ done:
 *
 * The depth buffer is then preserved for portal render stage to minimize overdraw.
 */
-static void R_DrawPortalsDepthMask( void ) {
+void R_DrawPortalsDepthMask( void ) {
 	float depthmin, depthmax;
 
 	if( !rn.portalmasklist || !rn.portalmasklist->numDrawSurfs ) {
+		return;
+	}
+	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) {
 		return;
 	}
 
@@ -453,10 +456,14 @@ void R_DrawPortals( void ) {
 	if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) ) {
 		R_DrawPortalsDepthMask();
 
-		// render skyportal
 		if( rn.skyportalSurface ) {
+			// render skyportal
 			portalSurface_t *ps = rn.skyportalSurface;
 			R_DrawSkyportal( ps->entity, ps->skyPortal );
+		} else {
+			// FIXME: move this?
+			// render sky dome that writes to depth
+			R_DrawDepthSkySurf();
 		}
 
 		// render regular portals

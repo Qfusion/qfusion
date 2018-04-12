@@ -56,12 +56,22 @@ const shader_t *R_OpaqueShadowShader( const shader_t *shader ) {
 
 	sky = ( shader->flags & SHADER_SKY ) != 0;
 	portal = ( shader->flags & SHADER_PORTAL ) != 0;
-	if( sky || portal || !Shader_DepthWrite( shader ) ) {
+
+	if( portal ) {
 		return NULL;
+	}
+	if( sky ) {
+		if( !mapConfig.writeSkyDepth ) {
+			return NULL;
+		}
+	} else {
+		if( !Shader_DepthWrite( shader ) ) {
+			return NULL;
+		}
 	}
 
 	// use a simplistic dummy opaque shader if we can
-	if( shader->sort == SHADER_SORT_OPAQUE && !shader->numdeforms && Shader_CullFront( shader ) ) {
+	if( ( shader->sort <= SHADER_SORT_SKY ) && !shader->numdeforms && Shader_CullFront( shader ) ) {
 		return rsh.envShader;
 	}
 	return shader;
@@ -74,17 +84,15 @@ void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const m
 	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf ) {
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
 
-	RB_SetLightstyle( NULL );
-
 	RB_SetRtLightParams( 0, NULL, 0, NULL );
 
 	if( drawSurf->numInstances ) {
-		RB_DrawElementsInstanced( 0, drawSurf->vbo->vertsVbo->numVerts, 
+		RB_DrawElementsInstanced( drawSurf->firstVert, drawSurf->numVerts, 
 			0, drawSurf->numElems,	drawSurf->numInstances, drawSurf->instances );
 		return;
 	}
 
-	RB_DrawElements( 0, drawSurf->vbo->vertsVbo->numVerts, 0, drawSurf->numElems );
+	RB_DrawElements( drawSurf->firstVert, drawSurf->numVerts, 0, drawSurf->numElems );
 }
 
 /*
@@ -256,10 +264,10 @@ void R_DrawRtLightWorld( void ) {
 /*
 * R_DrawRtLightShadow
 */
-void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool compile ) {
+void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool compile, bool novis ) {
+	int x, y, size, border;
 	int side;
 	refdef_t *fd;
-	int x, y, size, border;
 	refinst_t *rnp = &rn;
 
 	if( !l->shadow ) {
@@ -306,6 +314,9 @@ void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool comp
 		}
 		if( !( target->flags & IT_DEPTH ) ) {
 			rnp->renderFlags |= RF_SHADOWMAPVIEW_RGB;
+		}
+		if( novis ) {
+			rnp->renderFlags |= RF_NOVIS;
 		}
 
 		fd->x = x + (side & 1) * size;
@@ -356,7 +367,7 @@ void R_CompileRtLightShadow( rtlight_t *l ) {
 
 	R_PushRefInst();
 
-	R_DrawRtLightShadow( l, atlas, 0x3F, true );
+	R_DrawRtLightShadow( l, atlas, 0x3F, true, false );
 
 	R_PopRefInst();
 }
@@ -411,7 +422,7 @@ void R_DrawShadows( void ) {
 	vec3_t viewOrigin;
 	int border = max( r_shadows_bordersize->integer, SHADOWMAP_MIN_BORDER );
 	int minsize = max( r_shadows_minsize->integer, SHADOWMAP_MIN_SIZE );
-	int maxsize = max( min( r_shadows_maxsize->integer, r_shadows_texturesize->integer ), minsize );
+	int maxsize = bound( minsize + 2, r_shadows_maxsize->integer, r_shadows_texturesize->integer / 8 );
 	refinst_t *prevrn;
 
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
@@ -481,7 +492,7 @@ void R_DrawShadows( void ) {
 
 		size = l->lod;
 		size = l->intensity * r_shadows_precision->value / (size + 1.0);
-		size = bound( minsize, size & ~1, maxsize );
+		size = bound( minsize, size, maxsize );
 
 		x = y = 0;
 		haveBlock = false;
@@ -511,7 +522,7 @@ void R_DrawShadows( void ) {
 		l->shadowOffset[0] = x;
 		l->shadowOffset[1] = y;
 
-		R_DrawRtLightShadow( l, atlas, sideMask, true );
+		R_DrawRtLightShadow( l, atlas, sideMask, false, false );
 	}
 
 	R_PopRefInst();

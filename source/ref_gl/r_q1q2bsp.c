@@ -1635,6 +1635,13 @@ static void Mod_Q2LoadNodes( const lump_t *l ) {
 	loadbmodel->nodes = out;
 	loadbmodel->numnodes = count;
 
+	// don't trust qbsp on world model bounds
+	for( i = 0; i < 3; i++ ) {
+		loadbmodel->submodels[0].mins[i] = LittleFloat( in->mins[i] );
+		loadbmodel->submodels[0].maxs[i] = LittleFloat( in->maxs[i] );
+	}
+	loadbmodel->submodels[0].radius = RadiusFromBounds( loadbmodel->submodels[0].mins, loadbmodel->submodels[0].maxs );
+
 	for( i = 0; i < count; i++, in++, out++ ) {
 		out->plane = loadbmodel->planes + LittleLong( in->planenum );
 
@@ -1686,7 +1693,6 @@ static void Mod_Q2LoadLeafs( const lump_t *l, const lump_t *msLump ) {
 	bool badBounds;
 	short       *inMarkSurfaces;
 	int numMarkSurfaces, firstMarkSurface;
-	vec3_t worldMins, worldMaxs;
 
 	inMarkSurfaces = ( void * )( mod_base + msLump->fileofs );
 	if( msLump->filelen % sizeof( *inMarkSurfaces ) ) {
@@ -1704,8 +1710,6 @@ static void Mod_Q2LoadLeafs( const lump_t *l, const lump_t *msLump ) {
 	loadbmodel->leafs = out;
 	loadbmodel->numleafs = count;
 
-	ClearBounds( worldMins, worldMaxs );
-
 	for( i = 0; i < count; i++, in++, out++ ) {
 		badBounds = false;
 		for( j = 0; j < 3; j++ ) {
@@ -1714,9 +1718,6 @@ static void Mod_Q2LoadLeafs( const lump_t *l, const lump_t *msLump ) {
 
 			if( out->mins[j] > out->maxs[j] ) {
 				badBounds = true;
-			} else {
-				if( worldMins[j] > out->mins[j] ) worldMins[j] = out->mins[j];
-				if( worldMaxs[j] < out->maxs[j] ) worldMaxs[j] = out->maxs[j];
 			}
 		}
 
@@ -1769,11 +1770,6 @@ static void Mod_Q2LoadLeafs( const lump_t *l, const lump_t *msLump ) {
 			out->fragmentSurfaces[j] = k;
 		}
 	}
-
-	// don't trust qbsp on world bounds
-	VectorCopy( worldMins, loadbmodel->submodels[0].mins );
-	VectorCopy( worldMaxs, loadbmodel->submodels[0].maxs );
-	loadbmodel->submodels[0].radius = RadiusFromBounds( worldMins, worldMaxs );
 }
 
 /*
@@ -2166,7 +2162,7 @@ static void Mod_Q1FixUpMiptexShader( q1mmiptex_t *miptex ) {
 		for( j = basepass; j < shader->numpasses; j++, pass++ ) {
 			data = miptex->texdata;
 			pass->images[0] = R_LoadImage( miptex->texture, &data, miptex->width, miptex->height,
-										   IT_MIPTEX | IT_SKY | ( j > basepass ? IT_LEFTHALF : IT_RIGHTHALF ), 1, IMAGE_TAG_GENERIC, 1 );
+				IT_MIPTEX | IT_SKY | ( j > basepass ? IT_LEFTHALF : IT_RIGHTHALF ), 1, IMAGE_TAG_GENERIC, 1 );
 		}
 	} else {
 		for( j = basepass; j < shader->numpasses; j++, pass++ ) {
@@ -2181,7 +2177,7 @@ static void Mod_Q1FixUpMiptexShader( q1mmiptex_t *miptex ) {
 
 				data = step->texdata;
 				pass->images[k] = R_LoadImage( step->texture, &data, step->width, step->height,
-											   IT_MIPTEX | ( j > basepass && miptex->fullbrights ? IT_MIPTEX_FULLBRIGHT : 0 ), 1, IMAGE_TAG_GENERIC, 1 );
+					IT_MIPTEX | ( j > basepass && miptex->fullbrights ? IT_MIPTEX_FULLBRIGHT : 0 ), 1, IMAGE_TAG_GENERIC, 1 );
 			}
 		}
 	}
@@ -2558,6 +2554,13 @@ static void Mod_Q1LoadNodes( const lump_t *l ) {
 	loadbmodel->nodes = out;
 	loadbmodel->numnodes = count;
 
+	// don't trust qbsp on world model bounds
+	for( i = 0; i < 3; i++ ) {
+		loadbmodel->submodels[0].mins[i] = LittleFloat( in->mins[i] );
+		loadbmodel->submodels[0].maxs[i] = LittleFloat( in->maxs[i] );
+	}
+	loadbmodel->submodels[0].radius = RadiusFromBounds( loadbmodel->submodels[0].mins, loadbmodel->submodels[0].maxs );
+
 	for( i = 0; i < count; i++, in++, out++ ) {
 		out->plane = loadbmodel->planes + LittleLong( in->planenum );
 
@@ -2611,7 +2614,6 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 	bool badBounds;
 	short       *inMarkSurfaces;
 	int numMarkSurfaces, firstMarkSurface;
-	vec3_t worldMins, worldMaxs;
 
 	inMarkSurfaces = ( void * )( mod_base + msLump->fileofs );
 	if( msLump->filelen % sizeof( *inMarkSurfaces ) ) {
@@ -2630,8 +2632,6 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 	loadbmodel->numleafs = count;
 	numclusters = numvisleafs;
 
-	ClearBounds( worldMins, worldMaxs );
-
 	for( i = 0; i < count; i++, in++, out++ ) {
 		badBounds = false;
 		for( j = 0; j < 3; j++ ) {
@@ -2639,9 +2639,6 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 			out->maxs[j] = (float)LittleShort( in->maxs[j] );
 			if( out->mins[j] > out->maxs[j] ) {
 				badBounds = true;
-			} else {
-				if( worldMins[j] > out->mins[j] ) worldMins[j] = out->mins[j];
-				if( worldMaxs[j] < out->maxs[j] ) worldMaxs[j] = out->maxs[j];
 			}
 		}
 		out->cluster = LittleLong( in->visofs );
@@ -2684,11 +2681,6 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 	}
 
 	loadbmodel->numareas = 1;
-
-	// don't trust qbsp on world bounds
-	VectorCopy( worldMins, loadbmodel->submodels[0].mins );
-	VectorCopy( worldMaxs, loadbmodel->submodels[0].maxs );
-	loadbmodel->submodels[0].radius = RadiusFromBounds( worldMins, worldMaxs );
 }
 
 /*
@@ -2823,6 +2815,8 @@ void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 	Mod_Q1LoadLeafs( &header->lumps[Q1_LUMP_LEAFS], &header->lumps[Q1_LUMP_MARKSURFACES], numvisleafs );
 	Mod_Q1LoadNodes( &header->lumps[Q1_LUMP_NODES] );
 	Mod_Q1LoadVisibility( &header->lumps[Q1_LUMP_VISIBILITY], numvisleafs );
+
+	mapConfig.writeSkyDepth = true;
 
 	Mod_Finish();
 }

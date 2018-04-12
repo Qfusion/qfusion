@@ -74,21 +74,31 @@ int         R_AddSuperLightStyle( model_t *mod, const int *lightmaps, const uint
 void        R_SortSuperLightStyles( model_t *mod );
 void        R_TouchLightmapImages( model_t *mod );
 
+
 void        R_InitCoronas( void );
 flushBatchDrawSurf_cb R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
-	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
+	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable );
 void        R_DrawCoronas( void );
 void        R_ShutdownCoronas( void );
+
 
 void		R_AllocLightmap_Init( lightmapAllocState_t *state, int width, int height );
 void		R_AllocLightmap_Reset( lightmapAllocState_t *state );
 void		R_AllocLightmap_Free( lightmapAllocState_t *state );
 bool		R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int blockheight, int *outx, int *outy );
 
-void		R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_t color );
+
+void		R_InitRtLight( rtlight_t *l, mempool_t *mempool, const vec3_t origin, float radius, const vec3_t color );
 void		R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
+
 unsigned	R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows );
-int			R_CaclRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs );
-void		R_RenderDebugLights( void );
+
+int			R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs );
+int			R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf );
+
+void		R_CompileRtLightSurfPvs( rtlight_t *l );
+void		R_CompileRtLight( rtlight_t *l );
+
+void		R_RenderDebugLightVolumes( void );
 
 #endif // R_LIGHT_H

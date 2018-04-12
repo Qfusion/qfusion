@@ -50,7 +50,7 @@ typedef struct {
 
 	unsigned int firstVboVert, firstVboElem;
 
-	unsigned int firstWorldSurface, numWorldSurfaces;
+	unsigned int *worldSurfaces, numWorldSurfaces;
 
 	unsigned int numInstances;
 

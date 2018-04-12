@@ -2428,7 +2428,7 @@ void R_UploadCinematicShader( const shader_t *shader ) {
 
 	// upload cinematics
 	for( j = 0, pass = shader->passes; j < shader->numpasses; j++, pass++ ) {
-		if( pass->cin ) {
+ 		if( pass->cin ) {
 			R_UploadCinematic( pass->cin );
 		}
 	}
@@ -2709,6 +2709,24 @@ create_default:
 				s->numpasses = 0;
 				s->name = ( char * )data;
 				strcpy( s->name, shortname );
+				break;
+			case SHADER_TYPE_DEPTHONLY:
+				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
+
+				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT;
+				s->sort = SHADER_SORT_PORTAL;
+				s->flags = SHADER_CULL_FRONT | SHADER_DEPTHWRITE;
+				s->numpasses = 1;
+				s->passes = ( shaderpass_t * )data;
+				s->name = ( char * )( s->passes + 1 );
+				strcpy( s->name, shortname );
+
+				pass = &s->passes[0];
+				pass->rgbgen.type = RGB_GEN_IDENTITY;
+				pass->alphagen.type = ALPHA_GEN_IDENTITY;
+				pass->tcgen = TC_GEN_BASE;
+				pass->flags = GLSTATE_NO_COLORWRITE|GLSTATE_DEPTHWRITE;
+				pass->images[0] = rsh.whiteTexture;
 				break;
 			default:
 				break;

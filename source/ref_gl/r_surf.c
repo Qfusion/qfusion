@@ -51,8 +51,11 @@ bool R_SurfNoDraw( const msurface_t *surf ) {
 * R_SurfNoShadow
 */
 bool R_SurfNoShadow( const msurface_t *surf ) {
-	if( surf->flags & ( SURF_SKY | SURF_NODRAW ) ) {
+	if( surf->flags & SURF_NODRAW ) {
 		return true;
+	}
+	if( ( surf->flags & SURF_SKY ) && mapConfig.writeSkyDepth ) {
+		return false;
 	}
 	if( !Shader_DepthWrite( surf->shader ) ) {
 		return true;
@@ -83,25 +86,21 @@ static bool R_CullSurface( const entity_t *e, const msurface_t *surf, unsigned i
 /*
 * R_SurfaceClipRtLight
 */
-static bool R_SurfaceClipRtLight( const msurface_t *surf, rtlight_t *lt ) {
-	float dist;
+bool R_SurfaceClipRtLight( rtlight_t *lt, unsigned s, bool useCompiledMask ) {
+	int sideMask;
 
-	switch( surf->facetype ) {
-		case FACETYPE_PLANAR:
-			dist = DotProduct( lt->origin, surf->plane ) - surf->plane[3];
-			if( dist < -ON_EPSILON || dist >= lt->intensity + ON_EPSILON ) {
-				return false;
-			}
-			break;
-		case FACETYPE_PATCH:
-		case FACETYPE_TRISURF:
-		case FACETYPE_FOLIAGE:
-			if( !BoundsAndSphereIntersect( surf->mins, surf->maxs, lt->origin, lt->intensity ) ) {
-				return false;
-			}
+	if( useCompiledMask && lt->worldSurfMasks ) {
+		sideMask = lt->worldSurfMasks[s];
+	} else {
+		msurface_t *surf = rsh.worldBrushModel->surfaces + s;
+
+		if( R_SurfNoDlight( surf ) ) {
+			return false;
+		}
+
+		sideMask = R_CalcRtLightSurfaceSidemask( lt, surf );
 	}
 
-	int sideMask = R_CaclRtLightBBoxSidemask( lt, surf->mins, surf->maxs );
 	if( !sideMask ) {
 		return false;
 	}
@@ -111,53 +110,197 @@ static bool R_SurfaceClipRtLight( const msurface_t *surf, rtlight_t *lt ) {
 }
 
 /*
-* R_DrawBSPSurf
+* R_AddLightsToSurfaces
 */
-void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
-	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf ) {
-	const vboSlice_t *slice;
-	static const vboSlice_t nullSlice = { 0 };
-	int firstVert, firstElem;
-	int numVerts, numElems;
+static void R_AddLightsToSurfaces( void ) {
+	unsigned i, j, k;
+	mmodel_t *bmodel = &rsh.worldBrushModel->submodels[0];
+	unsigned **lsi, *lc, *lm;
+	unsigned **lsip, *lcp;
 
-	slice = R_GetDrawListVBOSlice( rn.meshlist, drawSurf - rsh.worldBrushModel->drawSurfaces );
-
-	assert( slice != NULL );
-	if( !slice ) {
-		return;
-	}
-	if( shader->flags & SHADER_SKY ) {
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		return;
 	}
 
-	numVerts = slice->numVerts;
-	numElems = slice->numElems;
-	firstVert = drawSurf->firstVboVert + slice->firstVert;
-	firstElem = drawSurf->firstVboElem + slice->firstElem;
+	lsi = alloca( sizeof( *lsi ) * rn.numRealtimeLights );
+	lc = alloca( sizeof( *lc ) * rn.numRealtimeLights );
+	lm = alloca( sizeof( *lm ) * rn.numRealtimeLights );
 
-	if( !numVerts ) {
+	lsip = lsi;
+	lcp = lc;
+
+	for( j = 0; j < rn.numRealtimeLights; j++ ) {
+		lsi[j] = rn.rtlights[j]->surfaceInfo;
+		lm[j] = 0;
+
+		if( !lsi[j] ) {
+			lc[j] = 0;
+			continue;
+		}
+
+		lc[j] = lsi[j][0];
+		lsi[j]++;
+	}
+
+	for( i = 0; i < bmodel->numModelDrawSurfaces; i++ ) {
+		unsigned ds = bmodel->firstModelDrawSurface + i;
+		drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
+
+		if( drawSurf->visFrame != rf.frameCount ) {
+			continue;
+		}
+
+		drawSurf->numRtLights = 0;
+		memset( drawSurf->surfRtlightBits, 0, sizeof( *drawSurf->surfRtlightBits ) * drawSurf->numWorldSurfaces );
+
+		for( j = 0; j < rn.numRealtimeLights; j++ ) {
+			rtlight_t *l = rn.rtlights[j];
+
+			if( drawSurf->numRtLights == MAX_DRAWSURF_RTLIGHTS ) {
+				break;
+			}
+
+			while( lc[j] > 0 && lsi[j][0] < ds ) {
+				lc[j]--;
+				lsi[j] = lsi[j] + 2 + lsi[j][1] * 3;
+				continue;
+			}
+
+			if( lc[j] == 0 ) {
+				continue;
+			}
+
+			if( lsi[j][0] == ds ) {
+				bool clipped;
+				unsigned *p = lsi[j];
+				p++;
+				unsigned ns = *p++;			
+
+				clipped = false;
+				for( k = 0; k < ns; k++, p += 3 ) {
+					if( rn.meshlist->worldSurfVis[p[0]] ) {
+						clipped = true;
+						break;
+					}
+				}
+
+				if( clipped ) {
+					unsigned bit = 1 << drawSurf->numRtLights;
+					drawSurf->rtLights[drawSurf->numRtLights++] = l;
+
+					for( ; k < ns; k++, p += 3 ) {
+						unsigned s = p[0], si = p[1], mask = p[2];
+						if( !rn.meshlist->worldSurfVis[s] ) {
+							continue;
+						}
+
+						lm[j] |= mask;
+						drawSurf->surfRtlightBits[si] |= bit;
+					}
+				}
+			}
+		}
+	}
+
+	for( j = 0; j < rn.numRealtimeLights; j++ ) {
+		rtlight_t *l = rn.rtlights[j];
+		l->receiveMask |= lm[j];
+	}
+}
+
+/*
+* R_FlushBSPSurfBatch
+*/
+static void R_FlushBSPSurfBatch( void ) {
+	drawListBatch_t *batch = &rn.meshlist->bspBatch;
+	drawSurfaceBSP_t *drawSurf = batch->lastDrawSurf;
+	int lightStyleNum = batch->lightStyleNum;
+	const entity_t *e = batch->entity;
+	const shader_t *shader = batch->shader;
+	entSceneCache_t *cache = R_ENTCACHE( e );
+
+	if( batch->count == 0 ) {
 		return;
 	}
 
-	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
+	batch->count = 0;
+
+	RB_BindShader( e, shader, batch->fog );
+
+	RB_SetPortalSurface( batch->portalSurface );
 
 	RB_SetLightstyle( lightStyleNum >= 0 ? rsh.worldBrushModel->superLightStyles + lightStyleNum : NULL );
 
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		RB_SetRtLightParams( 0, NULL, 0, NULL );
-	} else if ( e != rsc.worldent ) {
-		entSceneCache_t *cache = R_ENTCACHE( e );
+	if( e != rsc.worldent ) {	
 		RB_SetRtLightParams( cache->numRtLights, cache->rtLights, 0, NULL );
 	} else {
 		RB_SetRtLightParams( drawSurf->numRtLights, drawSurf->rtLights, drawSurf->numWorldSurfaces, drawSurf->surfRtlightBits );
 	}
 
-	if( drawSurf->numInstances ) {
-		RB_DrawElementsInstanced( firstVert, numVerts, firstElem, numElems, drawSurf->numInstances, drawSurf->instances );
-		return;
+	RB_BindVBO( batch->vbo, GL_TRIANGLES );
+
+	RB_DrawElements( batch->firstVert, batch->numVerts, batch->firstElem, batch->numElems );
+}
+
+/*
+* R_BatchBSPSurf
+*/
+flushBatchDrawSurf_cb R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf, bool mergable ) {
+	unsigned i;
+	drawListBatch_t *batch = &rn.meshlist->bspBatch;
+
+	if( !mergable ) {
+		R_FlushBSPSurfBatch();
+
+		if( batch->entity != e ) {
+			R_TransformForEntity( e );
+		}
 	}
 
-	RB_DrawElements( firstVert, numVerts, firstElem, numElems );
+	if( drawSurf->numInstances ) {
+		batch->count = 0;
+
+		RB_DrawElementsInstanced( drawSurf->firstVboVert, drawSurf->numVerts, 
+			drawSurf->firstVboElem, drawSurf->numElems, drawSurf->numInstances, drawSurf->instances );
+	} else {
+		for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
+			unsigned si = drawSurf->worldSurfaces[i];
+			msurface_t *surf = rsh.worldBrushModel->surfaces + si;
+			unsigned surfFirstVert = drawSurf->firstVboVert + surf->firstDrawSurfVert;
+			unsigned surfFirstElem = drawSurf->firstVboElem + surf->firstDrawSurfElem;
+
+			if( batch->vbo != drawSurf->vbo->index || surfFirstElem != batch->firstElem+batch->numElems ) {
+				R_FlushBSPSurfBatch();
+			}
+
+			if( rn.meshlist->worldSurfVis[si] ) {
+				if( batch->count == 0 ) {
+					batch->vbo = drawSurf->vbo->index;
+					batch->shader = ( shader_t * )shader;
+					batch->portalSurface = ( portalSurface_t *)portalSurface;
+					batch->entity = ( entity_t * )e;
+					batch->fog = ( mfog_t * )fog;
+					batch->lightStyleNum = lightStyleNum;
+					batch->lastDrawSurf = drawSurf;
+					batch->firstVert = surfFirstVert;
+					batch->firstElem = surfFirstElem;
+					batch->numVerts = 0;
+					batch->numElems = 0;
+				}
+
+				batch->count++;
+				batch->numVerts += surf->mesh.numVerts;
+				batch->numElems += surf->mesh.numElems;
+			}
+		}
+		
+		if( !( rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
+			R_FlushBSPSurfBatch();
+		}
+	}
+
+	return &R_FlushBSPSurfBatch;
 }
 
 /*
@@ -168,37 +311,28 @@ void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum
 	unsigned i;
 
 	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
-		int s = drawSurf->firstWorldSurface + i;
+		int s = drawSurf->worldSurfaces[i];
 		msurface_t *surf = rsh.worldBrushModel->surfaces + s;
 
-		assert( rf.worldDrawSurfVis[surf->drawSurf - 1] );
+		assert( rn.meshlist->worldDrawSurfVis[surf->drawSurf - 1] );
 
-		if( rf.worldSurfVis[s] ) {
+		if( rn.meshlist->worldSurfVis[s] ) {
 			cb( ptr, e, shader, lightStyleNum, drawSurf, surf );
 		}
 	}
 }
 
 /*
-* R_AddSurfaceVBOSlice
-*/
-static void R_AddSurfaceVBOSlice( drawList_t *list, drawSurfaceBSP_t *drawSurf, const msurface_t *surf, int offset ) {
-	R_AddDrawListVBOSlice( list, offset + drawSurf - rsh.worldBrushModel->drawSurfaces,
-				   surf->mesh.numVerts, surf->mesh.numElems,
-				   surf->firstDrawSurfVert, surf->firstDrawSurfElem );
-}
-
-/*
 * R_AddSurfaceToDrawList
 */
-static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSurf ) {
+static bool R_AddSurfaceToDrawList( const entity_t *e, unsigned ds ) {
+	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
 	const mfog_t *fog = drawSurf->fog;
 	const shader_t *shader = drawSurf->shader;
 	int lightStyleNum = drawSurf->superLightStyle;
 	portalSurface_t *portalSurface = NULL;
 	bool sky, portal;
 	unsigned drawOrder = 0;
-	unsigned sliceIndex = drawSurf - rsh.worldBrushModel->drawSurfaces;
 
 	if( drawSurf->visFrame == rf.frameCount ) {
 		return true;
@@ -211,10 +345,13 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 		fog = NULL;
 		lightStyleNum = -1;
 		shader = R_OpaqueShadowShader( shader );
-
 		if( !shader ) {
 			return false;
 		}
+	}
+
+	if( r_lighting_realtime_world_shadows->integer ) {
+		lightStyleNum = -1;
 	}
 
 	if( sky ) {
@@ -223,17 +360,21 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 		}
 
 		if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
+			// this will later trigger the skyportal view to be rendered in R_DrawPortals
 			portalSurface = R_AddSkyportalSurface( e, shader, drawSurf );
+		} else if( mapConfig.writeSkyDepth ) {
+			// add the sky surface to depth mask
+			R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
 		}
 
+		// we still need to add draw surface to the draw list to perform sky clipping in R_UpdateSurfaceInDrawList
 		drawSurf->visFrame = rf.frameCount;
-		drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, fog, lightStyleNum, 
-			0, drawOrder, portalSurface, drawSurf );
+		drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, mapConfig.writeSkyDepth ? rsh.depthOnlyShader : shader, 
+			fog, lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
 
+		// the actual skydome surface
 		R_AddSkySurfToDrawList( rn.meshlist, shader, portalSurface, &rn.skyDrawSurface );
 
-		R_AddDrawListVBOSlice( rn.meshlist, sliceIndex, 0, 0, 0, 0 );
-	
 		rf.stats.c_world_draw_surfs++;
 		return true;
 	}
@@ -253,10 +394,8 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, drawSurfaceBSP_t *drawSur
 	}
 
 	if( portalSurface && !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) ) {
-		R_AddSurfToDrawList( rn.portalmasklist, e, rsh.skyShader, NULL, -1, 0, 0, NULL, drawSurf );
+		R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
 	}
-
-	R_AddDrawListVBOSlice( rn.meshlist, sliceIndex, 0, 0, 0, 0 );
 
 	rf.stats.c_world_draw_surfs++;
 	return true;
@@ -313,105 +452,56 @@ static bool R_ClipSpecialWorldSurf( drawSurfaceBSP_t *drawSurf, const msurface_t
 /*
 * R_UpdateSurfaceInDrawList
 *
-* Walk the list of visible world surfaces and prepare the final VBO slice and draw order bits.
+* Walk the list of visible world surfaces and draw order bits.
 * For sky surfaces, skybox clipping is also performed.
 */
-static void R_UpdateSurfaceInDrawList( drawSurfaceBSP_t *drawSurf, const vec3_t origin ) {
+static void R_UpdateSurfaceInDrawList( const entity_t *e, unsigned ds, const vec3_t origin ) {
 	unsigned i;
 	float dist = 0;
 	bool special;
-	msurface_t *firstVisSurf, *lastVisSurf;
+	bool rtlight;
+	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
+	unsigned numVisSurfaces;
+	unsigned visSurfaces[MAX_DRAWSURF_SURFS];
 
 	if( !drawSurf->listSurf ) {
 		return;
 	}
 
-	firstVisSurf = lastVisSurf = NULL;
+	numVisSurfaces = 0;
+	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
+		int s = drawSurf->worldSurfaces[i];
+		if( !rn.meshlist->worldSurfVis[s] ) {
+			continue;			
+		}
+		visSurfaces[numVisSurfaces++] = i;
+	}
 
 	special = ( drawSurf->shader->flags & (SHADER_SKY|SHADER_PORTAL) ) != 0;
 
-	if( !(rn.renderFlags & RF_SHADOWMAPVIEW) ) {
-		unsigned l;
-
-		drawSurf->numRtLights = 0;
-
-		// reset lightbits for individual surfaces
-		memset( drawSurf->surfRtlightBits, 0, sizeof( *drawSurf->surfRtlightBits ) * drawSurf->numWorldSurfaces );
-
-		for( l = 0; l < rn.numRealtimeLights; l++ ) {
-			int bit = 1 << drawSurf->numRtLights;
-			rtlight_t *lt = rn.rtlights[l];
-			bool clipped = false;
-
-			if( drawSurf->numRtLights == MAX_DRAWSURF_RTLIGHTS ) {
-				break;
-			}
-
-			for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
-				int s = drawSurf->firstWorldSurface + i;
-				msurface_t *surf = rsh.worldBrushModel->surfaces + s;
-
-				if( !rf.worldSurfVis[s] ) {
-					continue;
-				}
-				if( R_SurfNoDlight( surf ) ) {
-					continue;
-				}
-
-				if( R_SurfaceClipRtLight( surf, lt ) ) {
-					if( !clipped ) {
-						if( drawSurf->numRtLights == MAX_DRAWSURF_RTLIGHTS ) {
-							break;
-						}
-						drawSurf->rtLights[drawSurf->numRtLights++] = lt;
-						clipped = true;
-					}
-
-					drawSurf->surfRtlightBits[i] |= bit;
-				}
-			}
-		}
-	}
-
-	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
-		int s = drawSurf->firstWorldSurface + i;
+	for( i = 0; i < numVisSurfaces; i++ ) {
+		unsigned si = visSurfaces[i];
+		unsigned s = drawSurf->worldSurfaces[si];
 		msurface_t *surf = rsh.worldBrushModel->surfaces + s;
+		float sdist = 0;
 
-		if( rf.worldSurfVis[s] ) {
-			float sdist = 0;
-
-			if( special && !R_ClipSpecialWorldSurf( drawSurf, surf, origin, &sdist ) ) {
-				// clipped away
-				continue;
-			}
-
-			if( sdist > sdist )
-				dist = sdist;
-
-			// surfaces are sorted by their firstDrawVert index so to cut the final slice
-			// we only need to note the first and the last surface
-			if( firstVisSurf == NULL )
-				firstVisSurf = surf;
-			lastVisSurf = surf;
+		if( special && !R_ClipSpecialWorldSurf( drawSurf, surf, origin, &sdist ) ) {
+			// clipped away
+			continue;
 		}
+
+		if( sdist > sdist )
+			dist = sdist;
 	}
 
-	// prepare the slice
-	if( firstVisSurf ) {
-		bool rtlight = drawSurf->numRtLights != 0;
+	rtlight = drawSurf->numRtLights != 0;
 
-		R_AddSurfaceVBOSlice( rn.meshlist, drawSurf, firstVisSurf, 0 );
-
-		if( lastVisSurf != firstVisSurf )
-			R_AddSurfaceVBOSlice( rn.meshlist, drawSurf, lastVisSurf, 0 );
-
-		// update the distance sorting key if it's a portal surface or a normal dlit surface
-		if( dist != 0 || rtlight ) {
-			int drawOrder = R_PackOpaqueOrder( drawSurf->fog, drawSurf->shader, DrawSurfLightsKey( drawSurf ), rtlight );
-			if( dist == 0 )
-				dist = WORLDSURF_DIST;
-			R_UpdateDrawSurfDistKey( drawSurf->listSurf, 0, drawSurf->shader, dist, drawOrder );
-		}
+	// update the distance sorting key if it's a portal surface or a normal dlit surface
+	if( dist != 0 || rtlight ) {
+		int drawOrder = R_PackOpaqueOrder( drawSurf->fog, drawSurf->shader, DrawSurfLightsKey( drawSurf ), rtlight );
+		if( dist == 0 )
+			dist = WORLDSURF_DIST;
+		R_UpdateDrawSurfDistKey( drawSurf->listSurf, 0, drawSurf->shader, dist, drawOrder );
 	}
 }
 
@@ -512,8 +602,8 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 			continue;
 		}
 
-		rf.worldSurfVis[s] = 1;
-		rf.worldDrawSurfVis[surf->drawSurf - 1] = 1;
+		rn.meshlist->worldSurfVis[s] = 1;
+		rn.meshlist->worldDrawSurfVis[surf->drawSurf - 1] = 1;
 
 		numVisSurfaces++;
 	}
@@ -523,13 +613,12 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 	}
 
 	for( i = 0; i < bmodel->numModelDrawSurfaces; i++ ) {
-		unsigned s = bmodel->firstModelDrawSurface + i;
-		drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + s;
+		unsigned ds = bmodel->firstModelDrawSurface + i;
 
-		if( rf.worldDrawSurfVis[s] ) {
-			R_AddSurfaceToDrawList( e, drawSurf );
+		if( rn.meshlist->worldDrawSurfVis[ds] ) {
+			R_AddSurfaceToDrawList( e, ds );
 
-			R_UpdateSurfaceInDrawList( drawSurf, origin );
+			R_UpdateSurfaceInDrawList( e, ds, origin );
 		}
 	}
 
@@ -552,6 +641,11 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 	mleaf_t *leaf;
 	const uint8_t *pvs = rn.pvs;
 	const uint8_t *areabits = rn.areabits;
+
+	if( rn.renderFlags & RF_NOVIS ) {
+		pvs = NULL;
+		areabits = NULL;
+	}
 
 	for( i = 0; i < numLeaves; i++ ) {
 		int clipped;
@@ -599,19 +693,19 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 		if( testFlags == 0 ) {
 			// fully visible
 			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-				assert( leaf->visSurfaces[j] < rf.numWorldSurfVis );
-				rf.worldSurfFullVis[leaf->visSurfaces[j]] = 1;
+				assert( leaf->visSurfaces[j] < rn.meshlist->numWorldSurfVis );
+				rn.meshlist->worldSurfFullVis[leaf->visSurfaces[j]] = 1;
 			}
 		} else {
 			// partly visible
 			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-				assert( leaf->visSurfaces[j] < rf.numWorldSurfVis );
-				rf.worldSurfVis[leaf->visSurfaces[j]] = 1;
+				assert( leaf->visSurfaces[j] < rn.meshlist->numWorldSurfVis );
+				rn.meshlist->worldSurfVis[leaf->visSurfaces[j]] = 1;
 			}
 		}
 
-		assert( l < rf.numWorldLeafVis );
-		rf.worldLeafVis[l] = 1;
+		assert( l < rn.meshlist->numWorldLeafVis );
+		rn.meshlist->worldLeafVis[l] = 1;
 	}
 }
 
@@ -628,33 +722,33 @@ static void R_CullVisSurfaces( unsigned firstSurf, unsigned numSurfs, unsigned c
 		msurface_t *surf = rsh.worldBrushModel->surfaces + i;
 
 		if( !surf->drawSurf ) {
-			rf.worldSurfVis[i] = 0;
-			rf.worldSurfFullVis[i] = 0;
+			rn.meshlist->worldSurfVis[i] = 0;
+			rn.meshlist->worldSurfFullVis[i] = 0;
 			continue;
 		}
 
 		if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && R_SurfNoShadow( surf ) ) {
-			rf.worldSurfVis[i] = 0;
-			rf.worldSurfFullVis[i] = 0;
+			rn.meshlist->worldSurfVis[i] = 0;
+			rn.meshlist->worldSurfFullVis[i] = 0;
 			continue;
 		}
 
-		if( rf.worldSurfVis[i] ) {
+		if( rn.meshlist->worldSurfVis[i] ) {
 			// the surface is at partly visible in at least one leaf, frustum cull it
 			if( R_CullSurface( rsc.worldent, surf, clipFlags ) ) {
-				rf.worldSurfVis[i] = 0;
+				rn.meshlist->worldSurfVis[i] = 0;
 			}
-			rf.worldSurfFullVis[i] = 0;
+			rn.meshlist->worldSurfFullVis[i] = 0;
 		}
 		else {
-			if( rf.worldSurfFullVis[i] ) {
+			if( rn.meshlist->worldSurfFullVis[i] ) {
 				// a fully visible surface, mark as visible
-				rf.worldSurfVis[i] = 1;
+				rn.meshlist->worldSurfVis[i] = 1;
 			}
 		}
 
-		if( rf.worldSurfVis[i] ) {
-			rf.worldDrawSurfVis[surf->drawSurf - 1] = 1;
+		if( rn.meshlist->worldSurfVis[i] ) {
+			rn.meshlist->worldDrawSurfVis[surf->drawSurf - 1] = 1;
 		}
 	}
 }
@@ -663,17 +757,13 @@ static void R_CullVisSurfaces( unsigned firstSurf, unsigned numSurfs, unsigned c
 * R_AddVisSurfaces
 */
 static void R_AddVisSurfaces( void ) {
-
 	unsigned i;
 
 	for( i = 0; i < rsh.worldBrushModel->numModelDrawSurfaces; i++ ) {
-		drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + i;
-
-		if( !rf.worldDrawSurfVis[i] ) {
+		if( !rn.meshlist->worldDrawSurfVis[i] ) {
 			continue;
 		}
-
-		R_AddSurfaceToDrawList( rsc.worldent, drawSurf );
+		R_AddSurfaceToDrawList( rsc.worldent, i );
 	}
 }
 
@@ -684,14 +774,12 @@ static void R_AddWorldDrawSurfaces( unsigned firstDrawSurf, unsigned numDrawSurf
 	unsigned i;
 
 	for( i = 0; i < numDrawSurfs; i++ ) {
-		unsigned s = firstDrawSurf + i;
-		drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + s;
+		unsigned ds = firstDrawSurf + i;
 
-		if( !rf.worldDrawSurfVis[s] ) {
+		if( !rn.meshlist->worldDrawSurfVis[ds] ) {
 			continue;
 		}
-
-		R_UpdateSurfaceInDrawList( drawSurf, NULL );
+		R_UpdateSurfaceInDrawList( rsc.worldent, ds, NULL );
 	}
 }
 
@@ -747,7 +835,7 @@ static void R_PostCullVisLeaves( void ) {
 	float farclip;
 
 	for( i = 0; i < rsh.worldBrushModel->numvisleafs; i++ ) {
-		if( !rf.worldLeafVis[i] ) {
+		if( !rn.meshlist->worldLeafVis[i] ) {
 			continue;
 		}
 
@@ -821,7 +909,6 @@ void R_DrawWorld( void ) {
 	Vector4Copy( mapConfig.outlineColor, rsc.worldent->outlineColor );
 
 	clipFlags = rn.clipFlags;
-
 	if( r_nocull->integer ) {
 		clipFlags = 0;
 	}
@@ -833,39 +920,18 @@ void R_DrawWorld( void ) {
 
 	ja.uarg = clipFlags;
 
-	if( !rf.numWorldSurfVis ) {
-		rf.worldSurfVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-		rf.worldSurfFullVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-	} else if( rf.numWorldSurfVis < rsh.worldBrushModel->numsurfaces ) {
-		rf.worldSurfVis = R_Realloc( (void *)rf.worldSurfVis, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-		rf.worldSurfFullVis = R_Realloc( (void *)rf.worldSurfFullVis, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-	}
-	rf.numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
-
-	if( !rf.numWorldLeafVis ) {
-		rf.worldLeafVis = R_Malloc( rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
-	} else if( rf.numWorldLeafVis < rsh.worldBrushModel->numvisleafs ) {
-		rf.worldLeafVis = R_Realloc( (void *)rf.worldLeafVis, rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
-	}
-	rf.numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
-
-	if( !rf.numWorldDrawSurfVis ) {
-		rf.worldDrawSurfVis = R_Malloc( rsh.worldBrushModel->numDrawSurfaces * sizeof( *rf.worldDrawSurfVis ) );
-	} else if( rf.numWorldDrawSurfVis < rsh.worldBrushModel->numDrawSurfaces ) {
-		rf.worldDrawSurfVis = R_Realloc( (void *)rf.worldDrawSurfVis, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rf.worldDrawSurfVis ) );
-	}
-	rf.numWorldDrawSurfVis = rsh.worldBrushModel->numDrawSurfaces;
+	R_ReserveDrawListWorldSurfaces( rn.meshlist );
 
 	if( rsh.worldBrushModel->numvisleafs > rsh.worldBrushModel->numsurfaces ) {
-		memset( (void *)rf.worldSurfVis, 1, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-		memset( (void *)rf.worldSurfFullVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-		memset( (void *)rf.worldLeafVis, 1, rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
-		memset( (void *)rf.worldDrawSurfVis, 0, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rf.worldDrawSurfVis ) );
+		memset( (void *)rn.meshlist->worldSurfVis, 1, rsh.worldBrushModel->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
+		memset( (void *)rn.meshlist->worldSurfFullVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
+		memset( (void *)rn.meshlist->worldLeafVis, 1, rsh.worldBrushModel->numvisleafs * sizeof( *rn.meshlist->worldLeafVis ) );
+		memset( (void *)rn.meshlist->worldDrawSurfVis, 0, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
 	} else {
-		memset( (void *)rf.worldSurfVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-		memset( (void *)rf.worldSurfFullVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rf.worldSurfVis ) );
-		memset( (void *)rf.worldLeafVis, 0, rsh.worldBrushModel->numvisleafs * sizeof( *rf.worldLeafVis ) );
-		memset( (void *)rf.worldDrawSurfVis, 0, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rf.worldDrawSurfVis ) );
+		memset( (void *)rn.meshlist->worldSurfVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
+		memset( (void *)rn.meshlist->worldSurfFullVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
+		memset( (void *)rn.meshlist->worldLeafVis, 0, rsh.worldBrushModel->numvisleafs * sizeof( *rn.meshlist->worldLeafVis ) );
+		memset( (void *)rn.meshlist->worldDrawSurfVis, 0, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
 	}
 
 	//
@@ -876,9 +942,10 @@ void R_DrawWorld( void ) {
 			msec2 = ri.Sys_Milliseconds();
 		}
 
-		RJ_ScheduleJob( &R_CullVisLeavesJob, &ja, rsh.worldBrushModel->numvisleafs );
+		//RJ_ScheduleJob( &R_CullVisLeavesJob, &ja, rsh.worldBrushModel->numvisleafs );
+		R_CullVisLeaves( 0, rsh.worldBrushModel->numvisleafs, clipFlags );
 
-		RJ_FinishJobs();
+		//RJ_FinishJobs();
 
 		if( speeds ) {
 			rf.stats.t_cull_world_nodes += ri.Sys_Milliseconds() - msec2;
@@ -892,11 +959,12 @@ void R_DrawWorld( void ) {
 		msec2 = ri.Sys_Milliseconds();
 	}
 
-	RJ_ScheduleJob( &R_CullVisSurfacesJob, &ja, rsh.worldBrushModel->numModelSurfaces );
+	//RJ_ScheduleJob( &R_CullVisSurfacesJob, &ja, rsh.worldBrushModel->numModelSurfaces );
+	R_CullVisSurfaces( 0, rsh.worldBrushModel->numModelSurfaces, clipFlags );
 
 	R_PostCullVisLeaves();
 
-	RJ_FinishJobs();
+	//RJ_FinishJobs();
 
 	if( speeds ) {
 		rf.stats.t_cull_world_surfs += ri.Sys_Milliseconds() - msec2;
@@ -936,11 +1004,14 @@ void R_DrawWorld( void ) {
 
 	R_AddVisSurfaces();
 
-	RJ_ScheduleJob( &R_AddWorldDrawSurfacesJob, &ja, rsh.worldBrushModel->numModelDrawSurfaces );
+	//RJ_ScheduleJob( &R_AddWorldDrawSurfacesJob, &ja, rsh.worldBrushModel->numModelDrawSurfaces );
+	R_AddWorldDrawSurfaces( 0, rsh.worldBrushModel->numModelDrawSurfaces );
+
+	R_AddLightsToSurfaces();
 
 	if( speeds ) {
 		for( i = 0; i < rsh.worldBrushModel->numsurfaces; i++ ) {
-			if( rf.worldSurfVis[i] ) {
+			if( rn.meshlist->worldSurfVis[i] ) {
 				rf.stats.c_brush_polys++;
 			}
 		}

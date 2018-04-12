@@ -27,7 +27,7 @@ typedef uint64_t r_glslfeat_t;
 
 #define DEFAULT_GLSL_MATERIAL_PROGRAM           "defaultMaterial"
 #define DEFAULT_GLSL_DISTORTION_PROGRAM         "defaultDistortion"
-#define DEFAULT_GLSL_RGB_SHADOW_PROGRAM         "defaultRGBShadow"
+#define DEFAULT_GLSL_SHADOW_PROGRAM             "defaultShadow"
 #define DEFAULT_GLSL_OUTLINE_PROGRAM            "defaultOutline"
 #define DEFAULT_GLSL_DYNAMIC_LIGHTS_PROGRAM     "defaultDynamicLights"
 #define DEFAULT_GLSL_Q3A_SHADER_PROGRAM         "defaultQ3AShader"
@@ -43,7 +43,7 @@ enum {
 	GLSL_PROGRAM_TYPE_NONE,
 	GLSL_PROGRAM_TYPE_MATERIAL,
 	GLSL_PROGRAM_TYPE_DISTORTION,
-	GLSL_PROGRAM_TYPE_RGB_SHADOW,
+	GLSL_PROGRAM_TYPE_SHADOW,
 	GLSL_PROGRAM_TYPE_OUTLINE,
 	GLSL_PROGRAM_TYPE_UNUSED,
 	GLSL_PROGRAM_TYPE_Q3A_SHADER,
@@ -167,9 +167,6 @@ enum {
 #define GLSL_SHADER_DISTORTION_REFLECTION       GLSL_BIT( 35 )
 #define GLSL_SHADER_DISTORTION_REFRACTION       GLSL_BIT( 36 )
 
-// rgb shadows
-#define GLSL_SHADER_RGBSHADOW_24BIT             GLSL_BIT( 32 )
-
 // outlines
 #define GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF     GLSL_BIT( 32 )
 
@@ -235,8 +232,7 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 
 void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle );
 
-void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, 
-	const vec3_t entOrigin, const mat3_t entAxis,
+void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, bool world,
 	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
 
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist,

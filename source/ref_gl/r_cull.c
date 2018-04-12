@@ -253,7 +253,7 @@ bool R_VisCullBox( const vec3_t mins, const vec3_t maxs ) {
 			mleaf_t *leaf = (mleaf_t *)node;
 
 			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-				if( rf.worldSurfVis[leaf->visSurfaces[j]] )
+				if( rn.meshlist->worldSurfVis[leaf->visSurfaces[j]] )
 					return false;
 			}
 
@@ -304,7 +304,7 @@ bool R_VisCullSphere( const vec3_t origin, float radius ) {
 			mleaf_t *leaf = (mleaf_t *)node;
 
 			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-				if( rf.worldSurfVis[leaf->visSurfaces[j]] )
+				if( rn.meshlist->worldSurfVis[leaf->visSurfaces[j]] )
 					return false;
 			}
 

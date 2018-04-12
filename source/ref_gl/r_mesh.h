@@ -47,28 +47,45 @@ typedef struct mesh_s {
 } mesh_t;
 
 typedef struct {
-	unsigned int firstVert, firstElem;
-	unsigned int numVerts, numElems; // real counts, including the overdraw
-} vboSlice_t;
-
-typedef struct {
 	unsigned int distKey;
 	uint64_t sortKey;
 	drawSurfaceType_t *drawSurf;
 } sortedDrawSurf_t;
 
 typedef struct {
+	unsigned vbo;
+	unsigned count;
+	unsigned firstVert, numVerts;
+	unsigned firstElem, numElems;
+	int lightStyleNum;
+	void *lastDrawSurf;
+	entity_t *entity;
+	struct shader_s *shader;
+	struct mfog_s *fog;
+	struct portalSurface_s *portalSurface;
+} drawListBatch_t;
+
+typedef struct {
 	unsigned int numDrawSurfs, maxDrawSurfs;
 	sortedDrawSurf_t *drawSurfs;
 
-	unsigned int maxVboSlices;
-	vboSlice_t *vboSlices;
+	drawListBatch_t bspBatch;
+
+	unsigned int numWorldSurfVis;
+	volatile unsigned char *worldSurfVis;
+	volatile unsigned char *worldSurfFullVis;
+
+	unsigned int numWorldLeafVis;
+	volatile unsigned char *worldLeafVis;
+
+	unsigned int numWorldDrawSurfVis;
+	volatile unsigned char *worldDrawSurfVis;
 } drawList_t;
 
 typedef void *(*drawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, int, const struct portalSurface_s *, void * );
 
 typedef void (*flushBatchDrawSurf_cb)( void );
-typedef flushBatchDrawSurf_cb (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, int, const struct portalSurface_s *, void * );
+typedef flushBatchDrawSurf_cb (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, int, const struct portalSurface_s *, void *, bool );
 
 typedef void (*walkDrawSurf_cb_cb)( void *, const entity_t *, const struct shader_s *, int, void *, void *p );
 typedef void (*walkDrawSurf_cb)( const entity_t *, const struct shader_s *, int, void *, walkDrawSurf_cb_cb, void * );

@@ -182,7 +182,7 @@ void RP_Init( void ) {
 	// register base programs
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, DEFAULT_GLSL_MATERIAL_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, DEFAULT_GLSL_DISTORTION_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, DEFAULT_GLSL_RGB_SHADOW_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOW, DEFAULT_GLSL_SHADOW_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, DEFAULT_GLSL_OUTLINE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, DEFAULT_GLSL_CELSHADE_PROGRAM, NULL, NULL, 0, 0 );
@@ -614,7 +614,7 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
 	{ GLSL_SHADER_COMMON_RGBSHADOW_24BIT, "#define APPLY_RGB_SHADOW_24BIT\n", "_rgb24b" },
-	{ GLSL_SHADER_COMMON_LIGHTBITS, "#define APPLY_REALTIME_LIGHTBITS\n", "_lbits" },
+	{ GLSL_SHADER_COMMON_LIGHTBITS, "#define APPLY_LIGHTBITS\n", "_lbits" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF, "#define APPLY_SHADOW_PCF 1\n", "_spcf" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF2, "#define APPLY_SHADOW_PCF 2\n", "_spcf2" },
 
@@ -695,7 +695,7 @@ static const glsl_feature_t glsl_features_distortion[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_rgbshadow[] =
+static const glsl_feature_t glsl_features_shadow[] =
 {
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS4, "#define QF_NUM_BONE_INFLUENCES 4\n", "_bones4" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS3, "#define QF_NUM_BONE_INFLUENCES 3\n", "_bones3" },
@@ -705,7 +705,12 @@ static const glsl_feature_t glsl_features_rgbshadow[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
-	{ GLSL_SHADER_RGBSHADOW_24BIT, "#define APPLY_RGB_SHADOW_24BIT\n", "_rgb24" },
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define QF_ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
+
+	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
+	{ GLSL_SHADER_COMMON_RGBSHADOW_24BIT, "#define APPLY_RGB_SHADOW_24BIT\n", "_rgb24b" },
 
 	{ 0, NULL, NULL }
 };
@@ -897,8 +902,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_material,
 	// GLSL_PROGRAM_TYPE_DISTORTION
 	glsl_features_distortion,
-	// GLSL_PROGRAM_TYPE_RGB_SHADOW
-	glsl_features_rgbshadow,
+	// GLSL_PROGRAM_TYPE_SHADOW
+	glsl_features_shadow,
 	// GLSL_PROGRAM_TYPE_OUTLINE
 	glsl_features_outline,
 	// GLSL_PROGRAM_TYPE_UNUSED
@@ -2293,7 +2298,7 @@ void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightS
 /*
 * RP_UpdateRealtimeLightsUniforms
 */
-void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, const vec3_t entOrigin, const mat3_t entAxis, 
+void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, bool world,
 	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
 	unsigned i;
 	int n, c;
@@ -2315,21 +2320,25 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, const
 				break;
 			}
 
-			Matrix4_Multiply( rl->worldToLightMatrix, objectMatrix, m );
+			if( world )
+				Matrix4_Copy( rl->worldToLightMatrix, m );
+			else
+				Matrix4_Multiply( rl->worldToLightMatrix, objectMatrix, m );
 
 			qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix[n], 1, GL_FALSE, m );
 
 			c = n & 3;
 			if( glConfig.sSRGB ) {
-				shaderColor[0][c] = R_LinearFloatFromsRGBFloat( rl->color[0] );
-				shaderColor[1][c] = R_LinearFloatFromsRGBFloat( rl->color[1] );
-				shaderColor[2][c] = R_LinearFloatFromsRGBFloat( rl->color[2] );
+				shaderColor[0][c] = rl->linearColor[0];
+				shaderColor[1][c] = rl->linearColor[1];
+				shaderColor[2][c] = rl->linearColor[2];
+				shaderColor[3][c] = rl->linearColor[3];
 			} else {
 				shaderColor[0][c] = rl->color[0];
 				shaderColor[1][c] = rl->color[1];
 				shaderColor[2][c] = rl->color[2];
+				shaderColor[3][c] = rl->color[3];
 			}
-			shaderColor[3][c] = 1.0f / rl->intensity;
 
 			if( rl->style >= 0 && rl->style < MAX_LIGHTSTYLES ) {
 				float *rgb = rsc.lightStyles[rl->style].rgb;
@@ -2353,7 +2362,7 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, const
 					int border = rl->shadowBorder;
 					float nearclip = r_shadows_nearclip->value;
 					float farclip = rl->intensity;
-					float bias = r_shadows_bias->value * nearclip * (1024.0f / (size * 3));// * rsurface.rtlight->radius;
+					float bias = r_shadows_bias->value * nearclip * (1024.0f / (size/* * 3*/));
 
 					params[0] = 0.5f * (size - border);
 					params[1] = -nearclip * farclip / (farclip - nearclip) - 0.5f * bias;

@@ -231,7 +231,7 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 * R_BatchSpriteSurf
 */
 flushBatchDrawSurf_cb R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
-	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
+	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable ) {
 	int i;
 	vec3_t point;
 	vec3_t v_left, v_up;
@@ -462,7 +462,7 @@ void R_Begin2D( bool multiSamples ) {
 */
 void R_SetupGL2D( void ) {
 	int width, height;
-	mat4_t projectionMatrix;
+	/*ATTRIBUTE_ALIGNED( 16 ) */mat4_t projectionMatrix;
 
 	width = rf.frameBufferWidth;
 	height = rf.frameBufferHeight;
@@ -1037,7 +1037,7 @@ static void R_Clear( int bitMask ) {
 		clearColor = rn.renderTarget != rf.renderTarget;
 		Vector4Set( envColor, 1, 1, 1, 0 );
 	} else {
-		clearColor = !rn.numDepthPortalSurfaces || R_FASTSKY();
+		clearColor = (!rn.numDepthPortalSurfaces && !mapConfig.writeSkyDepth) || R_FASTSKY();
 		if( rsh.worldBrushModel && rsh.worldBrushModel->globalfog && rsh.worldBrushModel->globalfog->shader ) {
 			Vector4Scale( rsh.worldBrushModel->globalfog->shader->fog_color, 1.0 / 255.0, envColor );
 		} else {
@@ -1096,7 +1096,7 @@ static void R_SetupGL( void ) {
 	RB_PolygonOffset( rn.polygonFactor, rn.polygonUnits );
 
 	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow ) {
-		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE|GLSTATE_OFFSET_FILL );
+		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE|GLSTATE_OFFSET_FILL|GLSTATE_DEPTHWRITE );
 	} else {
 		RB_SetShaderStateMask( ~0, 0 );
 	}
@@ -1145,7 +1145,7 @@ static void R_AddEntityRtLights( entity_t *e ) {
 			continue;
 		}
 
-		sideMask = R_CaclRtLightBBoxSidemask( l, cache->absmins, cache->absmaxs );
+		sideMask = R_CalcRtLightBBoxSidemask( l, cache->absmins, cache->absmaxs );
 		if( !sideMask ) {
 			continue;
 		}
@@ -1393,10 +1393,6 @@ void R_RenderView( const refdef_t *fd ) {
 	R_DrawSurfaces( rn.meshlist );
 	if( r_speeds->integer ) {
 		rf.stats.t_draw_meshes += ( ri.Sys_Milliseconds() - msec );
-	}
-
-	if( r_speeds->integer ) {
-		R_GetVBOSliceCounts( rn.meshlist, &rf.stats.c_slices_verts, &rf.stats.c_slices_elems );
 	}
 
 	if( r_showtris->integer ) {
@@ -1796,8 +1792,12 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 
 								numRtLights = 0;
 								for( i = 0; i < drawSurf->numRtLights; i++ ) {
-									if( rtLightBits & (1<<i) )
+									if( rtLightBits & (1<<i) ) {
 										numRtLights++;
+
+										Q_strncatz( out, "\n", size );
+										Q_strncatz( out, va("%i %p", i, drawSurf->rtLights[i]), size );
+									}
 								}
 							}
 						} else if( rf.debugTrace.ent >= 0 ) {
@@ -1873,15 +1873,14 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 				}
 
 				if( r_speeds->integer == 5 ) {
-					// VBO debug mode
-					R_AddDrawListVBOSlice( rn.meshlist, drawSurf - rsh.worldBrushModel->drawSurfaces,
-								   drawSurf->numVerts, drawSurf->numElems,
-								   0, 0 );
+					unsigned i;
+
+					// vbo debug mode
+					for( i = 0; i < drawSurf->numWorldSurfaces; i++ )
+						rn.meshlist->worldSurfVis[drawSurf->worldSurfaces[i]] = 1;
 				} else {
-					// classic mode (showtris for individual surface)
-					R_AddDrawListVBOSlice( rn.meshlist, drawSurf - rsh.worldBrushModel->drawSurfaces,
-								   surf->mesh.numVerts, surf->mesh.numElems,
-								   surf->firstDrawSurfVert, surf->firstDrawSurfElem );
+					// individual surface
+					rn.meshlist->worldSurfVis[surf - rsh.worldBrushModel->surfaces] = 1;
 				}
 
 				R_DrawOutlinedSurfaces( rn.meshlist );
@@ -1995,13 +1994,32 @@ void R_EndFrame( void ) {
 
 	R_ApplyBrightness();
 
+	if( 0 )
 	{
+		int side = /*r_temp2->integer - 1*/0;
 		image_t *atlas = R_GetShadowmapAtlasTexture();
-		if( r_temp1->integer && atlas && 0 )
-			R_DrawStretchQuick( 0, 0, 1024, 1024, 0, 0, 
-				1.0, 1.0, colorWhite, GLSL_PROGRAM_TYPE_NONE,
+
+		if( side >= 0 && atlas && rn.numRealtimeLights > 0 ) {
+			int size = rn.rtlights[0]->shadowSize;
+			float x = rn.rtlights[0]->shadowOffset[0];
+			float y = rn.rtlights[0]->shadowOffset[1];
+			float st = (float)size / rsh.shadowmapAtlasTexture->upload_width;
+
+			x = (1.0 * x + (side & 1) * size) / (float)rsh.shadowmapAtlasTexture->upload_width;
+			y = (1.0 * y + (side >> 1) * size) / (float)rsh.shadowmapAtlasTexture->upload_width;
+
+			R_DrawStretchQuick( 0, 0, size, size, 
+				x, y, 
+				x + st, y + st, colorRed, GLSL_PROGRAM_TYPE_NONE,
+				rsh.whiteTexture, 0 );
+
+			R_DrawStretchQuick( 0, 0, size, size, 
+				x, y, 
+				x + st, y + st, colorWhite, GLSL_PROGRAM_TYPE_NONE,
 				atlas, 0 );
+		}
 	}
+
 	R_End2D();
 
 	RB_EndFrame();
