@@ -1319,6 +1319,10 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 	}
 
+	if( rb.triangleOutlines ) {
+		applyLighting = false;
+	}
+
 	if( applyLighting ) {
 		if( DRAWFLAT() ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT;
