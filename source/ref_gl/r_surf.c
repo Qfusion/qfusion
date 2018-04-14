@@ -350,7 +350,7 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 		}
 	}
 
-	if( r_lighting_realtime_world_shadows->integer ) {
+	if( r_lighting_realtime_world->integer && r_lighting_realtime_world_shadows->integer ) {
 		lightStyleNum = -1;
 	}
 
