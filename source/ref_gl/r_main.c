@@ -1737,6 +1737,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 							 "polys\\ents: %5u\\%5u  draw: %5u\n"
 							 "lights world\\dynamic: %5u\\%5u\n"
 							 "ents total: %5u bmodels: %5u\n"
+							 "frame cache: %.3fMB\n"
 							 "%s",
 							 (int)(1000.0 / rf.frameTime.average),
 							 rf.stats.c_brush_polys, rf.stats.c_world_leafs, rf.stats.c_world_draw_surfs,
@@ -1746,6 +1747,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 							 rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes,
 							 rf.stats.c_world_lights, rf.stats.c_dynamic_lights,
 							 rf.stats.c_ents_total, rf.stats.c_ents_bmodels,
+							 R_FrameCache_TotalSize() / 1048576.0,
 							 backend_msg
 							);
 				break;
@@ -1907,6 +1909,8 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
 	int samples;
 	int64_t time = ri.Sys_Milliseconds();
 
+	R_FrameCache_BeginFrame();
+
 	GLimp_BeginFrame();
 
 	RB_BeginFrame();
@@ -2026,6 +2030,8 @@ void R_EndFrame( void ) {
 
 	GLimp_EndFrame();
 
+	R_FrameCache_EndFrame();
+
 	rf.transformMatrixStackSize[0] = 0;
 	rf.transformMatrixStackSize[1] = 0;
 
@@ -2128,4 +2134,130 @@ int R_LoadFile_( const char *path, int flags, void **buffer, const char *filenam
 */
 void R_FreeFile_( void *buffer, const char *filename, int fileline ) {
 	ri.Mem_Free( buffer, filename, fileline );
+}
+
+//===================================================================
+
+typedef struct r_framecache_s {
+	size_t remaining;
+	size_t dataSize;
+	uint8_t *dataRover;
+	struct r_framecache_s *next;
+} r_framecache_t;
+
+static r_framecache_t *r_frameCacheHead;
+static size_t r_frameCacheTotalSize;
+
+/*
+* R_FrameCache_Free
+*/
+void R_FrameCache_Free( void ) {
+	r_framecache_t *next, *cache;
+
+	cache = r_frameCacheHead;
+	while( cache ) {
+		next = cache->next;
+		R_Free( cache );
+		cache = next;
+	}
+
+	r_frameCacheHead = NULL;
+	r_frameCacheTotalSize = 0;
+}
+
+/*
+* R_FrameCache_ResetBlock
+*/
+static void R_FrameCache_ResetBlock( r_framecache_t *cache ) {
+	cache->dataRover = (uint8_t *)(((uintptr_t)(cache + 1) + 15) & ~15);
+	cache->remaining = cache->dataSize - (cache->dataRover - (uint8_t *)cache);
+}
+
+/*
+* R_FrameCache_NewBlock
+*/
+r_framecache_t *R_FrameCache_NewBlock( size_t size ) {
+	r_framecache_t *cache;
+
+	cache = R_Malloc( size + sizeof( r_framecache_t ) + 16 );
+	cache->dataSize = size;
+
+	R_FrameCache_ResetBlock( cache );
+
+	r_frameCacheTotalSize += size;
+	return cache;
+}
+
+/*
+* R_FrameCache_BeginFrame
+*
+* Allocate a whole new block of heap memory to accomodate all data from the previous frame.
+*/
+void R_FrameCache_BeginFrame( void ) {
+	size_t newSize;
+	
+	newSize = r_frameCacheTotalSize;
+	if( newSize < MIN_FRAMECACHE_SIZE )
+		newSize = MIN_FRAMECACHE_SIZE;
+
+	if( !r_frameCacheHead || r_frameCacheHead->dataSize < newSize ) {
+		r_framecache_t *cache;
+
+		R_FrameCache_Free();
+
+		cache = R_FrameCache_NewBlock( newSize );
+
+		r_frameCacheHead = cache;
+	}
+
+	R_FrameCache_ResetBlock( r_frameCacheHead );
+}
+
+/*
+* R_FrameCache_Alloc
+*/
+void *R_FrameCache_Alloc( size_t size ) {
+	uint8_t *data;
+	r_framecache_t *cache = r_frameCacheHead;
+
+	size = ((size + 15) & ~15);
+
+	assert( cache != NULL );
+	if( cache == NULL ) {
+		return NULL;
+	}
+
+	if( size > cache->remaining ) {
+		size_t newSize = r_frameCacheTotalSize / 2;
+
+		if( newSize < MIN_FRAMECACHE_SIZE ) {
+			newSize = MIN_FRAMECACHE_SIZE;
+		}
+		if( newSize < size ) {
+			newSize = size;
+		}
+
+		cache = R_FrameCache_NewBlock( newSize );
+		cache->next = r_frameCacheHead;
+		r_frameCacheHead = cache;
+	}
+
+	data = cache->dataRover;
+	cache->dataRover += size;
+	cache->remaining -= size;
+	return data;
+}
+
+/*
+* R_FrameCache_TotalSize
+*/
+size_t R_FrameCache_TotalSize( void ) {
+	return r_frameCacheTotalSize;
+}
+
+/*
+* R_FrameCache_EndFrame
+*/
+void R_FrameCache_EndFrame( void ) {
+
 }

@@ -57,6 +57,8 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define SUBDIVISIONS_MAX        16
 #define SUBDIVISIONS_DEFAULT    5
 
+#define MIN_FRAMECACHE_SIZE		32 * 1024
+
 #define MAX_PORTAL_SURFACES     32
 #define MAX_PORTAL_TEXTURES     64
 
@@ -743,6 +745,12 @@ void        R_ResetScissor( void );
 void		R_PushTransformMatrix( bool projection, const float *pm );
 void		R_PopTransformMatrix( bool projection );
 
+void		R_FrameCache_Free( void );
+void		R_FrameCache_BeginFrame( void );
+void		*R_FrameCache_Alloc( size_t size );
+void		R_FrameCache_EndFrame( void );
+size_t		R_FrameCache_TotalSize( void );
+
 //
 // r_mesh.c
 //
@@ -845,10 +853,6 @@ int         R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, 
 void        R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose );
 int         R_SkeletalGetNumBones( const model_t *mod, int *numFrames );
 bool        R_SkeletalModelLerpTag( orientation_t *orient, const mskmodel_t *skmodel, int oldframenum, int framenum, float lerpfrac, const char *name );
-
-void        R_InitSkeletalCache( void );
-void        R_ClearSkeletalCache( void );
-void        R_ShutdownSkeletalCache( void );
 
 //
 // r_vbo.c

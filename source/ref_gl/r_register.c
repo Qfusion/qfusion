@@ -1506,7 +1506,6 @@ rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bo
 */
 static void R_InitVolatileAssets( void ) {
 	// init volatile data
-	R_InitSkeletalCache();
 	R_InitCoronas();
 	R_InitCustomColors();
 
@@ -1536,7 +1535,6 @@ static void R_DestroyVolatileAssets( void ) {
 	// kill volatile data
 	R_ShutdownCustomColors();
 	R_ShutdownCoronas();
-	R_ShutdownSkeletalCache();
 }
 
 /*
@@ -1638,6 +1636,8 @@ void R_Shutdown( bool verbose ) {
 
 	// shutdown our QGL subsystem
 	QGL_Shutdown();
+
+	R_FrameCache_Free();
 
 	R_FreePool( &r_mempool );
 }
