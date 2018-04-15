@@ -92,8 +92,6 @@ void R_ClearScene( void ) {
 	rsc.frameCount++;
 
 	R_ClearDebugBounds();
-
-	R_ClearSkeletalCache();
 }
 
 /*

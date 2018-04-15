@@ -917,26 +917,10 @@ typedef struct skmcacheentry_s {
 	const bonepose_t *boneposes, *oldboneposes;
 	const mskmodel_t *skmodel;
 	uint8_t *data;
-	struct skmcacheentry_s *next;
 } skmcacheentry_t;
 
-mempool_t *r_skmcachepool;
-
-static skmcacheentry_t *r_skmcache_head;    // actual entries are linked to this
-static skmcacheentry_t *r_skmcache_free;    // actual entries are linked to this
+static unsigned r_skmcacheFrame;
 static skmcacheentry_t *r_skmcachekeys[MAX_REF_ENTITIES * ( MOD_MAX_LODS + 1 )];      // entities linked to cache entries
-
-#define R_SKMCacheAlloc( size ) R_MallocExt( r_skmcachepool, ( size ), 16, 1 )
-
-/*
-* R_InitSkeletalCache
-*/
-void R_InitSkeletalCache( void ) {
-	r_skmcachepool = R_AllocPool( r_mempool, "SKM Cache" );
-
-	r_skmcache_head = NULL;
-	r_skmcache_free = NULL;
-}
 
 /*
 * R_GetSkeletalCache
@@ -944,10 +928,17 @@ void R_InitSkeletalCache( void ) {
 static skmcacheentry_t *R_GetSkeletalCache( int entNum, int lodNum ) {
 	skmcacheentry_t *cache;
 
+	if( r_skmcacheFrame != rsc.frameCount ) {
+		r_skmcacheFrame = rsc.frameCount;
+		memset( r_skmcachekeys, 0, sizeof( r_skmcachekeys ) );
+		return NULL;
+	}
+
 	cache = r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum];
 	if( !cache ) {
 		return NULL;
 	}
+
 	return cache;
 }
 
@@ -960,15 +951,9 @@ static skmcacheentry_t *R_GetSkeletalCache( int entNum, int lodNum ) {
 * later function calls.
 */
 static skmcacheentry_t *R_AllocSkeletalDataCache( int entNum, int lodNum, const mskmodel_t *skmodel, bool hwTransform ) {
-	size_t best_size;
-	skmcacheentry_t *cache, *prev;
-	skmcacheentry_t *best_prev, *best;
+	skmcacheentry_t *cache;
 	size_t size;
 	
-	best = NULL;
-	best_prev = NULL;
-	best_size = 0;
-
 	assert( !r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] );
 
 	size = sizeof( dualquat_t ) * skmodel->numbones;
@@ -976,96 +961,19 @@ static skmcacheentry_t *R_AllocSkeletalDataCache( int entNum, int lodNum, const 
 		size += sizeof( mat4_t ) * ( skmodel->numbones + skmodel->numblends );
 	}
 
-	// scan the list of free cache entries to see if there's a suitable candidate
-	prev = NULL;
-	cache = r_skmcache_free;
-	while( cache ) {
-		if( cache->data_size >= size ) {
-			// keep track of the cache entry with the minimal overhead
-			if( !best || cache->data_size < best_size ) {
-				best_size = cache->data_size;
-				best = cache;
-				best_prev = prev;
-			}
-		}
-
-		// return early if we find a perfect fit
-		if( cache->data_size == size ) {
-			break;
-		}
-
-		prev = cache;
-		cache = cache->next;
-	}
-
-	// no suitable entries found, allocate
-	if( !best ) {
-		best = R_SKMCacheAlloc( sizeof( *best ) );
-		best->data = R_SKMCacheAlloc( size );
-		best->data_size = size;
-		best_prev = NULL;
-	}
-
-	assert( best->data_size >= size );
-
-	// unlink this cache entry from the current list
-	if( best_prev ) {
-		best_prev->next = best->next;
-	}
-	if( best == r_skmcache_free ) {
-		r_skmcache_free = best->next;
-	}
-
 	// and link it to the allocation list
-	best->hwTransform = false;
-	best->entNum = entNum;
-	best->lodNum = lodNum;
-	best->skmodel = skmodel;
-	best->boneposes = best->oldboneposes = NULL;
-	best->framenum = best->oldframenum = 0;
-	best->next = r_skmcache_head;
-	best->hwTransform = hwTransform;
-	r_skmcache_head = best;
-	r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] = best;
+	cache = R_FrameCache_Alloc( sizeof( skmcacheentry_t ) );
+	cache->data = R_FrameCache_Alloc( size );
+	cache->hwTransform = false;
+	cache->entNum = entNum;
+	cache->lodNum = lodNum;
+	cache->skmodel = skmodel;
+	cache->boneposes = cache->oldboneposes = NULL;
+	cache->framenum = cache->oldframenum = 0;
+	cache->hwTransform = hwTransform;
+	r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] = cache;
 
-	return best;
-}
-
-/*
-* R_ClearSkeletalCache
-*
-* Remove entries from the "allocation" list to the "free" list.
-* FIXME: this can probably be optimized a bit better.
-*/
-void R_ClearSkeletalCache( void ) {
-	skmcacheentry_t *next, *cache;
-
-	cache = r_skmcache_head;
-	while( cache ) {
-		next = cache->next;
-
-		cache->next = r_skmcache_free;
-		r_skmcache_free = cache;
-
-		cache = next;
-	}
-	r_skmcache_head = NULL;
-
-	memset( r_skmcachekeys, 0, sizeof( r_skmcachekeys ) );
-}
-
-/*
-* R_ShutdownSkeletalCache
-*/
-void R_ShutdownSkeletalCache( void ) {
-	if( !r_skmcachepool ) {
-		return;
-	}
-
-	R_FreePool( &r_skmcachepool );
-
-	r_skmcache_head = NULL;
-	r_skmcache_free = NULL;
+	return cache;
 }
 
 //=======================================================================
