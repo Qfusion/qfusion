@@ -1795,10 +1795,12 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 								numRtLights = 0;
 								for( i = 0; i < drawSurf->numRtLights; i++ ) {
 									if( rtLightBits & (1<<i) ) {
-										numRtLights++;
+										rtlight_t *l = drawSurf->rtLights[i];
 
 										Q_strncatz( out, "\n", size );
-										Q_strncatz( out, va("%i %p", i, drawSurf->rtLights[i]), size );
+										Q_strncatz( out, va("%i %i %i", i, l->world, l->world ? l - rsh.worldBrushModel->rtLights : -1 ), size );
+
+										numRtLights++;
 									}
 								}
 							}

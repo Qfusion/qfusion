@@ -200,6 +200,7 @@ void R_AddEntityToScene( const entity_t *ent ) {
 */
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
 	rtlight_t *dl;
+	vec3_t color;
 
 	if( rsc.numDlights >= MAX_DLIGHTS ) {
 		return;
@@ -207,20 +208,19 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	if( !intensity || ( r == 0 && g == 0 && b == 0 ) ) {
 		return;
 	}
-	
-	dl = &rsc.dlights[rsc.numDlights];
-	R_InitRtLight( dl, r_mempool, org, intensity * DLIGHT_SCALE, colorWhite ); // FIXME: use a different mempool
-	dl->shadow = dl->intensity >= DLIGHT_MIN_SHADOW_RADIUS;
 
+	VectorSet( color, r, g, b );
 	if( r_lighting_grayscale->integer ) {
-		vec_t grey = ColorGrayscale( dl->color );
-		dl->color[0] = dl->color[1] = dl->color[2] = bound( 0, grey, 1 );
+		vec_t grey = ColorGrayscale( color );
+		color[0] = color[1] = color[2] = bound( 0, grey, 1 );
 	} else {
-		VectorSet( dl->color, r, g, b );
-		VectorScale( dl->color, 1.0 / DLIGHT_SCALE, dl->color );
+		VectorScale( color, 1.0 / DLIGHT_SCALE, color );
 	}
 
-	//assert( rsc.polys[0].type == ST_POLY );
+	dl = &rsc.dlights[rsc.numDlights];
+	R_InitRtLight( dl, org, intensity * DLIGHT_SCALE, color );
+	dl->worldModel = rsh.worldModel;
+	dl->shadow = dl->intensity >= DLIGHT_MIN_SHADOW_RADIUS;
 
 	rsc.numDlights++;
 }

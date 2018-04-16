@@ -157,8 +157,6 @@ typedef struct mbrushmodel_s {
 
 	unsigned int numleafs;              // number of visible leafs, not counting 0
 	mleaf_t         *leafs;
-	mleaf_t         **visleafs;
-	unsigned int numvisleafs;
 
 	unsigned int numnodes;
 	mnode_t         *nodes;
@@ -178,6 +176,8 @@ typedef struct mbrushmodel_s {
 
 	unsigned int numRtLights;
 	rtlight_t *rtLights;
+	uint8_t *rtLightSurfmasks;
+	uint8_t *rtLightDrawSurfPvs;
 
 	/*unsigned*/ int numareas;
 

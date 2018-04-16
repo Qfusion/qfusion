@@ -84,32 +84,6 @@ static bool R_CullSurface( const entity_t *e, const msurface_t *surf, unsigned i
 }
 
 /*
-* R_SurfaceClipRtLight
-*/
-bool R_SurfaceClipRtLight( rtlight_t *lt, unsigned s, bool useCompiledMask ) {
-	int sideMask;
-
-	if( useCompiledMask && lt->worldSurfMasks ) {
-		sideMask = lt->worldSurfMasks[s];
-	} else {
-		msurface_t *surf = rsh.worldBrushModel->surfaces + s;
-
-		if( R_SurfNoDlight( surf ) ) {
-			return false;
-		}
-
-		sideMask = R_CalcRtLightSurfaceSidemask( lt, surf );
-	}
-
-	if( !sideMask ) {
-		return false;
-	}
-
-	lt->receiveMask |= sideMask; 
-	return true;
-}
-
-/*
 * R_AddLightsToSurfaces
 */
 static void R_AddLightsToSurfaces( void ) {
@@ -653,9 +627,8 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 		cplane_t *clipplane;
 		unsigned l = firstLeaf + i;
 
-		leaf = rsh.worldBrushModel->visleafs[l];
-		if( leaf->cluster < 0 ) {
-			// we shouldn't really be here...
+		leaf = &rsh.worldBrushModel->leafs[l];
+		if( leaf->cluster < 0 || !leaf->numVisSurfaces ) {
 			continue;
 		}
 
@@ -704,7 +677,6 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 			}
 		}
 
-		assert( l < rn.meshlist->numWorldLeafVis );
 		rn.meshlist->worldLeafVis[l] = 1;
 	}
 }
@@ -834,7 +806,7 @@ static void R_PostCullVisLeaves( void ) {
 	mleaf_t *leaf;
 	float farclip;
 
-	for( i = 0; i < rsh.worldBrushModel->numvisleafs; i++ ) {
+	for( i = 0; i < rsh.worldBrushModel->numleafs; i++ ) {
 		if( !rn.meshlist->worldLeafVis[i] ) {
 			continue;
 		}
@@ -845,7 +817,7 @@ static void R_PostCullVisLeaves( void ) {
 			continue;
 		}
 
-		leaf = rsh.worldBrushModel->visleafs[i];
+		leaf = &rsh.worldBrushModel->leafs[i];
 		if( r_leafvis->integer && !( rn.renderFlags & RF_NONVIEWERREF ) ) {
 			R_AddDebugBounds( leaf->mins, leaf->maxs, colorRed );
 		}
@@ -922,28 +894,28 @@ void R_DrawWorld( void ) {
 
 	R_ReserveDrawListWorldSurfaces( rn.meshlist );
 
-	if( rsh.worldBrushModel->numvisleafs > rsh.worldBrushModel->numsurfaces ) {
+	if( rsh.worldBrushModel->numleafs > rsh.worldBrushModel->numsurfaces ) {
 		memset( (void *)rn.meshlist->worldSurfVis, 1, rsh.worldBrushModel->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
 		memset( (void *)rn.meshlist->worldSurfFullVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-		memset( (void *)rn.meshlist->worldLeafVis, 1, rsh.worldBrushModel->numvisleafs * sizeof( *rn.meshlist->worldLeafVis ) );
+		memset( (void *)rn.meshlist->worldLeafVis, 1, rsh.worldBrushModel->numleafs * sizeof( *rn.meshlist->worldLeafVis ) );
 		memset( (void *)rn.meshlist->worldDrawSurfVis, 0, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
 	} else {
 		memset( (void *)rn.meshlist->worldSurfVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
 		memset( (void *)rn.meshlist->worldSurfFullVis, 0, rsh.worldBrushModel->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-		memset( (void *)rn.meshlist->worldLeafVis, 0, rsh.worldBrushModel->numvisleafs * sizeof( *rn.meshlist->worldLeafVis ) );
+		memset( (void *)rn.meshlist->worldLeafVis, 0, rsh.worldBrushModel->numleafs * sizeof( *rn.meshlist->worldLeafVis ) );
 		memset( (void *)rn.meshlist->worldDrawSurfVis, 0, rsh.worldBrushModel->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
 	}
 
 	//
 	// cull leafs
 	//
-	if( rsh.worldBrushModel->numvisleafs <= rsh.worldBrushModel->numsurfaces ) {
+	if( rsh.worldBrushModel->numleafs <= rsh.worldBrushModel->numsurfaces ) {
 		if( r_speeds->integer ) {
 			msec2 = ri.Sys_Milliseconds();
 		}
 
-		//RJ_ScheduleJob( &R_CullVisLeavesJob, &ja, rsh.worldBrushModel->numvisleafs );
-		R_CullVisLeaves( 0, rsh.worldBrushModel->numvisleafs, clipFlags );
+		//RJ_ScheduleJob( &R_CullVisLeavesJob, &ja, rsh.worldBrushModel->numleafs );
+		R_CullVisLeaves( 0, rsh.worldBrushModel->numleafs, clipFlags );
 
 		//RJ_FinishJobs();
 

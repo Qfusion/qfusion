@@ -94,11 +94,11 @@ void R_ReserveDrawListWorldSurfaces( drawList_t *list ) {
 	list->numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
 
 	if( !list->numWorldLeafVis ) {
-		list->worldLeafVis = R_Malloc( rsh.worldBrushModel->numvisleafs * sizeof( *list->worldLeafVis ) );
-	} else if( list->numWorldLeafVis < rsh.worldBrushModel->numvisleafs ) {
-		list->worldLeafVis = R_Realloc( (void *)list->worldLeafVis, rsh.worldBrushModel->numvisleafs * sizeof( *list->worldLeafVis ) );
+		list->worldLeafVis = R_Malloc( rsh.worldBrushModel->numleafs * sizeof( *list->worldLeafVis ) );
+	} else if( list->numWorldLeafVis < rsh.worldBrushModel->numleafs ) {
+		list->worldLeafVis = R_Realloc( (void *)list->worldLeafVis, rsh.worldBrushModel->numleafs * sizeof( *list->worldLeafVis ) );
 	}
-	list->numWorldLeafVis = rsh.worldBrushModel->numvisleafs;
+	list->numWorldLeafVis = rsh.worldBrushModel->numleafs;
 
 	if( !list->numWorldDrawSurfVis ) {
 		list->worldDrawSurfVis = R_Malloc( rsh.worldBrushModel->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );

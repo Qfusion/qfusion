@@ -137,17 +137,14 @@ typedef struct {
 
 	mat4_t worldToLightMatrix;
 
+	struct model_s *worldModel;
 	void   *compiledSurf[6];
 
-	// for static lights, this contains the receiving masks for surfaces
 	unsigned numSurfaces;
 	unsigned *surfaceInfo;
-	uint8_t *worldSurfMasks;
-	uint8_t *worldDrawSurfPvs;
 
-	uint8_t *fatpvs;
-
-	mempool_t *mempool;
+	unsigned numVisLeafs;
+	unsigned *visLeafs;
 } rtlight_t;
 
 #include "r_public.h"
