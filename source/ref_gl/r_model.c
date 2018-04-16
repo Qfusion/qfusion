@@ -165,17 +165,14 @@ uint8_t *Mod_SpherePVS( const vec3_t origin, float radius, mbrushmodel_t *bmodel
 */
 static void Mod_CreateVisLeafs( model_t *mod ) {
 	unsigned i, j;
-	unsigned count, numVisLeafs;
+	unsigned count;
 	unsigned numVisSurfaces, numFragmentSurfaces;
 	mleaf_t *leaf;
 	msurface_t *surf;
 	mbrushmodel_t *loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 
 	count = loadbmodel->numleafs;
-	loadbmodel->visleafs = Mod_Malloc( mod, (count + 1) * sizeof( *loadbmodel->visleafs ) );
-	memset( loadbmodel->visleafs, 0, (count + 1) * sizeof( *loadbmodel->visleafs ) );
 
-	numVisLeafs = 0;
 	for( i = 0; i < count; i++ ) {
 		numVisSurfaces = numFragmentSurfaces = 0;
 
@@ -205,17 +202,7 @@ static void Mod_CreateVisLeafs( model_t *mod ) {
 
 		leaf->numVisSurfaces = numVisSurfaces;
 		leaf->numFragmentSurfaces = numFragmentSurfaces;
-
-		if( !numVisSurfaces ) {
-			//out->cluster = -1;
-			continue;
-		}
-
-		loadbmodel->visleafs[numVisLeafs++] = leaf;
 	}
-
-	loadbmodel->visleafs[numVisLeafs] = NULL;
-	loadbmodel->numvisleafs = numVisLeafs;
 }
 
 /*
@@ -343,13 +330,6 @@ static void Mod_SetupSubmodels( model_t *mod ) {
 		bmodel->surfRtlightBits = loadbmodel->surfRtlightBits + bm->firstModelSurface;
 
 		starmod->extradata = bmodel;
-		if( i == 0 ) {
-			bmodel->visleafs = loadbmodel->visleafs;
-			bmodel->numvisleafs = loadbmodel->numvisleafs;
-		} else {
-			bmodel->visleafs = NULL;
-			bmodel->numvisleafs = 0;
-		}
 
 		VectorCopy( bm->maxs, starmod->maxs );
 		VectorCopy( bm->mins, starmod->mins );
@@ -746,6 +726,20 @@ static void Mod_CreateSkydome( model_t *mod ) {
 }
 
 /*
+* Mod_AllocateRtLightMasks
+*/
+static void Mod_AllocateRtLightMasks( model_t *model ) {
+	mbrushmodel_t *loadbmodel = ( ( mbrushmodel_t * )model->extradata );
+
+	assert( loadbmodel->numsurfaces != 0 );
+	assert( loadbmodel->numDrawSurfaces != 0 );
+	
+	// allocate surface pvs for rt lights
+	loadbmodel->rtLightSurfmasks = Mod_Malloc( model, loadbmodel->numsurfaces );
+	loadbmodel->rtLightDrawSurfPvs = Mod_Malloc( model, (loadbmodel->numDrawSurfaces+7)/8 );
+}
+
+/*
 * Mod_FinalizeBrushModel
 */
 static void Mod_FinalizeBrushModel( model_t *model ) {
@@ -758,6 +752,8 @@ static void Mod_FinalizeBrushModel( model_t *model ) {
 	Mod_SetupSubmodels( model );
 
 	Mod_CreateSkydome( model );
+
+	Mod_AllocateRtLightMasks( model );
 }
 
 /*
@@ -1054,14 +1050,16 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 	if( mod_isworldmodel ) {
 		// we only init map config when loading the map from disk
 		R_FinishMapConfig( mod );
-
-		R_LoadWorldRtLights( mod );
 	}
 
 	// do some common things
 	if( mod->type == mod_brush ) {
 		Mod_FinalizeBrushModel( mod );
 		mod->touch = &Mod_TouchBrushModel;
+	}
+
+	if( mod_isworldmodel ) {
+		R_LoadWorldRtLights( mod );
 	}
 
 	if( !descr->maxLods ) {
@@ -1334,12 +1332,13 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 				shadow = false;
 
 			l = &lights[numLights++];
-			R_InitRtLight( l, model->mempool, originf, radius, colorf );
+			R_InitRtLight( l, originf, radius, colorf );
 
 			l->flags = flags;
 			l->shadow = shadow;
 			l->style = style;
 			l->world = true;
+			l->worldModel = model;
 
 			R_GetRtLightVisInfo( bmodel, l );
 		}
@@ -1456,11 +1455,12 @@ static void R_LoadWorldRtLights( model_t *model ) {
 		}
 
 		l = &lights[numLights++];
-		R_InitRtLight( l, model->mempool, origin, radius, color );
+		R_InitRtLight( l, origin, radius, color );
 		l->flags = flags;
 		l->style = style;
 		l->shadow = shadow;
 		l->world = true;
+		l->worldModel = model;
 		R_GetRtLightVisInfo( bmodel, l );
 
 		if( *s == '\r' )

@@ -958,22 +958,75 @@ REALTIME LIGHTS
 =============================================================================
 */
 
+typedef struct {
+	unsigned maxLeafs;
+	unsigned maxSurfaces;
+	unsigned maxDrawSurfaces;
+
+	unsigned numSurfaces;
+	unsigned numDrawSurfaces;
+
+	vec3_t leafMins, leafMaxs;
+	vec3_t surfMins, surfMaxs;
+
+	unsigned *visLeafs; // [maxLeafs + 1]
+	uint8_t *surfMasks; // [maxSurfaces]
+	uint8_t *drawSurfPvs; // [(maxDrawSurfaces + 7)/8]
+} r_lightWorldVis_t;
+
+static r_lightWorldVis_t r_lightWorldVis;
+
 /*
-* R_GetRtLightVisInfo_r
+* R_AllocLightWorldVis
 */
-static void R_GetRtLightVisInfo_r( rtlight_t *l, const mnode_t *node, mbrushmodel_t *bm, const uint8_t *pvs, uint8_t *fatpvs ) {
-	int i;
+static void R_AllocLightWorldVis( r_lightWorldVis_t *vis, mbrushmodel_t *bm ) {
+	if( bm->numleafs > vis->maxLeafs ) {
+		R_Free( vis->visLeafs );
+		vis->maxLeafs = bm->numleafs;
+		vis->visLeafs = R_Malloc( sizeof( *(vis->visLeafs) ) * (vis->maxLeafs + 1) );
+	}
+
+	if( bm->numsurfaces > vis->maxSurfaces ) {
+		R_Free( vis->surfMasks );
+		vis->maxSurfaces = bm->numsurfaces;
+		vis->surfMasks = R_Malloc( sizeof( *(vis->surfMasks) ) * vis->maxSurfaces );
+	}
+
+	if( bm->numDrawSurfaces > vis->maxDrawSurfaces ) {
+		R_Free( vis->drawSurfPvs );
+		vis->maxDrawSurfaces = bm->numDrawSurfaces;
+		vis->drawSurfPvs = R_Malloc( (vis->maxDrawSurfaces+7)/8 );
+	}
+}
+
+/*
+* R_RtLightMalloc
+*/
+static void *R_RtLightMalloc( rtlight_t *l, size_t size ) {
+	if( l->world ) {
+		return R_MallocExt( l->worldModel->mempool, size, 0, 1 );
+	}
+	return R_FrameCache_Alloc( size );
+}
+
+/*
+* R_GetRtLightLeafVisInfo_r
+*/
+static void R_GetRtLightLeafVisInfo_r( rtlight_t *l, const mnode_t *node, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
+	unsigned i;
 	mleaf_t *leaf;
+	unsigned *numLeafs;
+	unsigned *nextLeaf;
 
 	while( node->plane != NULL ) {
 		float d = PlaneDiff( l->origin, node->plane );
 
-		if( d > l->intensity - ON_EPSILON ) {
+		if( d > l->intensity + ON_EPSILON ) {
 			node = node->children[0];
-		} else if( d < -l->intensity + ON_EPSILON ) {
+		} else if( d < -l->intensity - ON_EPSILON ) {
 			node = node->children[1];
 		}  else {
-			R_GetRtLightVisInfo_r( l, node->children[0], bm, pvs, fatpvs );
+			R_GetRtLightLeafVisInfo_r( l, node->children[0], bm, vis );
 			node = node->children[1];
 		}
 	}
@@ -987,23 +1040,159 @@ static void R_GetRtLightVisInfo_r( rtlight_t *l, const mnode_t *node, mbrushmode
 		return;
 	}
 
-	if( pvs ) {
+	if( l->shadow ) {
+		const uint8_t *pvs = Mod_ClusterPVS( l->cluster, bm );
 		if( !( pvs[leaf->cluster >> 3] & ( 1 << ( leaf->cluster & 7 ) ) ) ) {
-			return; // not visible
+			return;
 		}
 	}
 
-	if( fatpvs ) {
-		const uint8_t *row = Mod_ClusterPVS( leaf->cluster, bm );
-		for( i = 0; i < bm->pvs->rowsize; i++ ) {
-			fatpvs[i] |= row[i];
-		}
-	}
+	numLeafs = vis->visLeafs;
+	nextLeaf = vis->visLeafs + 1 + *numLeafs;
+	*nextLeaf = leaf - bm->leafs;
+	*numLeafs = *numLeafs + 1;
 
 	for( i = 0; i < 3; i++ ) {
-		l->cullmins[i] = min( l->cullmins[i], leaf->mins[i] );
-		l->cullmaxs[i] = max( l->cullmaxs[i], leaf->maxs[i] );
+		vis->leafMins[i] = min( vis->leafMins[i], leaf->mins[i] );
+		vis->leafMaxs[i] = max( vis->leafMaxs[i], leaf->maxs[i] );
 	}
+}
+
+/*
+* R_GetRtLightLeafVisInfo
+*/
+static void R_GetRtLightLeafVisInfo( rtlight_t *l, const mnode_t *node, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
+	vis->visLeafs[0] = 0;
+
+	VectorCopy( l->origin, vis->leafMins );
+	VectorCopy( l->origin, vis->leafMaxs );
+
+	R_GetRtLightLeafVisInfo_r( l, bm->nodes, bm, vis );
+}
+
+/*
+* R_GetRtLightSurfaceVisInfo
+*/
+static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
+	unsigned i, j;
+	uint8_t *smasks, *dspvs;
+	unsigned *scount = NULL, *dscount = NULL;
+	unsigned numLeafs = vis->visLeafs[0];
+	unsigned *visLeafs = vis->visLeafs + 1;
+
+	smasks = vis->surfMasks;
+	dspvs = vis->drawSurfPvs;
+	scount = &vis->numSurfaces;
+	dscount = &vis->numDrawSurfaces;
+
+	vis->numSurfaces = 0;
+	vis->numDrawSurfaces = 0;
+
+	memset( smasks, 0, bm->numsurfaces );
+	memset( dspvs, 0, (bm->numDrawSurfaces + 7)/8 );
+
+	ClearBounds( vis->surfMins, vis->surfMaxs );
+
+	for( i = 0; i < numLeafs; i++ ) {
+		int leafNum = visLeafs[i];
+		const mleaf_t *leaf = bm->leafs + leafNum;
+
+		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+			unsigned s = leaf->visSurfaces[j];
+			const msurface_t *surf = bm->surfaces + s;
+			unsigned ds = surf->drawSurf - 1;
+			unsigned mask;
+
+			if( !surf->drawSurf ) {
+				continue;
+			}
+
+			if( smasks[s] ) {
+				continue;
+			}
+			if( R_SurfNoDlight( surf ) ) {
+				continue;
+			}
+
+			mask = R_CalcRtLightSurfaceSidemask( l, surf );
+			if( !mask ) {
+				continue;
+			}
+
+			AddPointToBounds( surf->mins, vis->surfMins, vis->surfMaxs );
+			AddPointToBounds( surf->maxs, vis->surfMins, vis->surfMaxs );
+
+			*scount = *scount + 1;
+			if( !( dspvs[ds>>3] & (1<<(ds&7))) ) {
+				*dscount = *dscount + 1;
+			}
+
+			smasks[s] = mask;
+			dspvs[ds>>3] |= (1<<(ds&7));
+		}
+	}
+}
+
+/*
+* R_CompileRtLightVisInfo
+*/
+static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
+	unsigned i, j;
+	unsigned *p;
+	unsigned nds;
+	unsigned lcount, scount, dscount;
+	const uint8_t *smasks;
+	const uint8_t *dspvs;
+
+	if( l->surfaceInfo != NULL ) {
+		return;
+	}
+
+	lcount = vis->visLeafs[0];
+	scount = vis->numSurfaces;
+	dscount = vis->numDrawSurfaces;
+	smasks = vis->surfMasks;
+	dspvs = vis->drawSurfPvs;
+
+	l->numVisLeafs = lcount;
+	l->visLeafs = R_RtLightMalloc( l, sizeof( int ) * lcount );
+	memcpy( l->visLeafs, vis->visLeafs + 1, sizeof( int ) * lcount );
+
+	// drawSurf, numVisSurfs, (surf, mask)[numVisSurfs]
+	l->surfaceInfo = R_RtLightMalloc( l, sizeof( unsigned ) * (1 + dscount*2 + scount*3) );
+
+	nds = 0;
+	p = l->surfaceInfo + 1;
+	for( i = 0; i < bm->numDrawSurfaces; i++ ) {
+		unsigned n, *np;
+		drawSurfaceBSP_t *drawSurf = bm->drawSurfaces + i;
+
+		if( !( dspvs[i>>3] & (1<<(i&7))) ) {
+			continue;
+		}
+
+		*p++ = i;
+		np = p++;
+		n = 0;
+
+		for( j = 0; j < drawSurf->numWorldSurfaces; j++ ) {
+			unsigned s = drawSurf->worldSurfaces[j];
+			if( !smasks[s] ) {
+				continue;
+			}
+
+			*p++ = s;
+			*p++ = j;
+			*p++ = smasks[s];
+			n++;
+		}
+
+		*np = n;
+		nds++;
+	}
+
+	*l->surfaceInfo = nds;
+	l->numSurfaces = scount;
 }
 
 /*
@@ -1012,7 +1201,7 @@ static void R_GetRtLightVisInfo_r( rtlight_t *l, const mnode_t *node, mbrushmode
 void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 	unsigned i;
 	mleaf_t *leaf;
-	uint8_t *pvs = NULL;
+	r_lightWorldVis_t *vis = &r_lightWorldVis;
 
 	l->area = -1;
 	l->cluster = -1;
@@ -1023,34 +1212,31 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 		l->area = leaf->area;
 	}
 
-	if( bm->pvs && 1 ) {
-		pvs = alloca( bm->pvs->rowsize );
-		if( l->shadow )
-			pvs = Mod_SpherePVS( l->origin, 1.0, bm, pvs );
-		else
-			pvs = Mod_SpherePVS( l->origin, 1.0, bm, pvs );
-	}
+	R_AllocLightWorldVis( &r_lightWorldVis, bm );
 
-	if( bm->pvs ) {
-		l->fatpvs = R_MallocExt( l->mempool, bm->pvs->rowsize, 0, 1 );
-	}
-
-	VectorCopy( l->origin, l->cullmins );
-	VectorCopy( l->origin, l->cullmaxs );
-
-	R_GetRtLightVisInfo_r( l, bm->nodes, bm, pvs, l->fatpvs );
+	R_GetRtLightLeafVisInfo( l, bm->nodes, bm, vis );
 
 	// limit combined leaf box to light boundaries
 	for( i = 0; i < 3; i++ ) {
-		l->cullmins[i] = max( l->cullmins[i] - 1, l->lightmins[i] );
-		l->cullmaxs[i] = min( l->cullmaxs[i] + 1, l->lightmaxs[i] );
+		l->cullmins[i] = max( vis->leafMins[i] - 1, l->lightmins[i] );
+		l->cullmaxs[i] = min( vis->leafMaxs[i] + 1, l->lightmaxs[i] );
+	}
+
+	R_GetRtLightSurfaceVisInfo( l, bm, vis );
+
+	R_CompileRtLightVisInfo( l, bm, vis );
+
+	// limit combined surface box to light boundaries
+	for( i = 0; i < 3; i++ ) {
+		l->cullmins[i] = max( vis->surfMins[i] - 1, l->lightmins[i] );
+		l->cullmaxs[i] = min( vis->surfMaxs[i] + 1, l->lightmaxs[i] );
 	}
 }
 
 /*
 * R_InitRtLight
 */
-void R_InitRtLight( rtlight_t *l, mempool_t *mempool, const vec3_t origin, float radius, const vec3_t color ) {
+void R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_t color ) {
 	mat4_t lightMatrix;
 
 	if( radius < 1.0 )
@@ -1063,7 +1249,6 @@ void R_InitRtLight( rtlight_t *l, mempool_t *mempool, const vec3_t origin, float
 	l->intensity = radius;
 	l->flags = LIGHTFLAG_REALTIMEMODE;
 	l->style = MAX_LIGHTSTYLES;
-	l->mempool = mempool;
 	VectorCopy( origin, l->origin );
 
 	VectorCopy( color, l->color );
@@ -1077,7 +1262,7 @@ void R_InitRtLight( rtlight_t *l, mempool_t *mempool, const vec3_t origin, float
 	Matrix4_ObjectMatrix( origin, axis_identity, 1, lightMatrix );
 	Matrix4_Invert( lightMatrix, l->worldToLightMatrix );
 
-	BoundsFromRadius( l->origin, l->intensity, l->lightmins, l->lightmaxs );
+	BoundsFromRadius( l->origin, l->intensity + 1, l->lightmins, l->lightmaxs );
 	CopyBounds( l->lightmins, l->lightmaxs, l->cullmins, l->cullmaxs );
 }
 
@@ -1096,9 +1281,10 @@ static int R_RtLightsShadowSizeCmp( const void *pl1, const void *pl2 ) {
 * R_DrawRtLights
 */
 unsigned R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows ) {
-	unsigned i;
+	unsigned i, j;
 	unsigned count;
 	const uint8_t *areabits = rn.areabits;
+	const uint8_t *pvs = rn.pvs;
 
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		return 0;
@@ -1142,15 +1328,20 @@ unsigned R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 			continue;
 		}
 
-		if( l->fatpvs ) {
-			if( rn.viewcluster >= 0 && !( l->fatpvs[rn.viewcluster >> 3] & ( 1 << ( rn.viewcluster & 7 ) ) ) ) {
-				continue; // not visible
+		if( pvs ) {
+			unsigned numLeafs = l->numVisLeafs;
+			unsigned *visLeafs = l->visLeafs;
+
+			for( j = 0; j < numLeafs; j++ ) {
+				unsigned leafNum = visLeafs[j];
+				if( rn.meshlist->worldLeafVis[leafNum] ) {
+					break;
+				}
 			}
-		} else {
-			// FIXME: this is too slow
-			//if( R_VisCullBox( l->cullmins, l->cullmaxs ) ) {
-			//	continue;
-			//}
+
+			if( j == numLeafs ) {
+				continue;
+			}
 		}
 
 		l->receiveMask = 0;
@@ -1238,156 +1429,12 @@ int R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf ) 
 }
 
 /*
-* R_CompileRtLightSurfPvs_r
-*/
-static void R_CompileRtLightSurfPvs_r( rtlight_t *l, const mnode_t *node, uint8_t *smasks, uint8_t *dspvs, 
-	unsigned *scount, unsigned *dscount, vec3_t smins, vec3_t smaxs ) {
-	unsigned j;
-	mleaf_t *leaf;
-
-	while( node->plane != NULL ) {
-		int side = BOX_ON_PLANE_SIDE( l->cullmins, l->cullmaxs, node->plane );
-		if( side == 0 )
-			return;
-
-		if( side < 3 ) {
-			node = node->children[side - 1];
-		} else {
-			R_CompileRtLightSurfPvs_r( l, node->children[0], smasks, dspvs, scount, dscount, smins, smaxs );
-			node = node->children[1];
-		}
-	}
-
-	leaf = ( mleaf_t * )node;
-	if( leaf->cluster < 0 ) {
-		return;
-	}
-
-	if( !BoundsIntersect( l->cullmins, l->cullmaxs, leaf->mins, leaf->maxs ) ) {
-		return;
-	}
-
-	if( l->fatpvs ) {
-		if( !( l->fatpvs[leaf->cluster >> 3] & ( 1 << ( leaf->cluster & 7 ) ) ) ) {
-			return; // not visible
-		}
-	}
-
-	for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-		unsigned s = leaf->visSurfaces[j];
-		const msurface_t *surf = rsh.worldBrushModel->surfaces + s;
-		unsigned ds = surf->drawSurf - 1;
-		unsigned mask;
-
-		if( !surf->drawSurf ) {
-			continue;
-		}
-
-		AddPointToBounds( surf->mins, smins, smaxs );
-		AddPointToBounds( surf->maxs, smins, smaxs );
-
-		if( smasks[s] || R_SurfNoDlight( surf ) ) {
-			continue;
-		}
-
-		mask = R_CalcRtLightSurfaceSidemask( l, surf );
-		if( !mask ) {
-			continue;
-		}
-
-		*scount = *scount + 1;
-		if( !( dspvs[ds>>3] & (1<<(ds&7))) ) {
-			*dscount = *dscount + 1;
-		}
-
-		smasks[s] = mask;
-		dspvs[ds>>3] |= (1<<(ds&7));
-	}
-}
-
-/*
-* R_CompileRtLightSurfPvs
-*/
-void R_CompileRtLightSurfPvs( rtlight_t *l ) {
-	unsigned i, j;
-	uint8_t *smasks;
-	uint8_t *dspvs;
-	unsigned scount, dscount;
-	unsigned *p;
-	unsigned nds;
-	vec3_t smins, smaxs;
-
-	if( !l->world ) {
-		return;
-	}
-	if( l->worldSurfMasks ) {
-		return;
-	}
-
-	// allocate surface pvs
-	smasks = R_MallocExt( l->mempool, rsh.worldBrushModel->numsurfaces, 0, 1 );
-	dspvs = R_MallocExt( l->mempool, rsh.worldBrushModel->numDrawSurfaces, 0, 1 );
-
-	scount = 0;
-	dscount = 0;
-	ClearBounds( smins, smaxs );
-
-	R_CompileRtLightSurfPvs_r( l, rsh.worldBrushModel->nodes, smasks, dspvs, &scount, &dscount, smins, smaxs );
-
-	// drawSurf, numVisSurfs, (surf, mask)[numVisSurfs]
-	l->surfaceInfo = R_MallocExt( l->mempool, sizeof( unsigned ) * (1 + dscount*2 + scount*3), 0, 1 );
-
-	nds = 0;
-	p = l->surfaceInfo + 1;
-	for( i = 0; i < rsh.worldBrushModel->numDrawSurfaces; i++ ) {
-		unsigned n, *np;
-		drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + i;
-
-		if( !( dspvs[i>>3] & (1<<(i&7))) ) {
-			continue;
-		}
-
-		*p++ = i;
-		np = p++;
-		n = 0;
-
-		for( j = 0; j < drawSurf->numWorldSurfaces; j++ ) {
-			unsigned s = drawSurf->worldSurfaces[j];
-			if( !smasks[s] ) {
-				continue;
-			}
-
-			*p++ = s;
-			*p++ = j;
-			*p++ = smasks[s];
-			n++;
-		}
-
-		*np = n;
-		nds++;
-	}
-
-	*l->surfaceInfo = nds;
-	l->numSurfaces = scount;
-	l->worldSurfMasks = smasks;
-	l->worldDrawSurfPvs = dspvs;
-
-	// further tighten the light's bounds
-	for( i = 0; i < 3; i++ ) {
-		l->cullmins[i] = max( l->cullmins[i], smins[i] );
-		l->cullmaxs[i] = min( l->cullmaxs[i], smaxs[i] );
-	}
-}
-
-/*
 * R_CompileRtLight
 */
 void R_CompileRtLight( rtlight_t *l ) {
 	if( !l->world ) {
 		return;
 	}
-
-	R_CompileRtLightSurfPvs( l );
 
 	R_CompileRtLightShadow( l );
 }

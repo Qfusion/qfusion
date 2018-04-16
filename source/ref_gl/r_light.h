@@ -88,7 +88,7 @@ void		R_AllocLightmap_Free( lightmapAllocState_t *state );
 bool		R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int blockheight, int *outx, int *outy );
 
 
-void		R_InitRtLight( rtlight_t *l, mempool_t *mempool, const vec3_t origin, float radius, const vec3_t color );
+void		R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_t color );
 void		R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
 
 unsigned	R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows );
