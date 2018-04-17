@@ -1016,6 +1016,9 @@ bool CG_SwitchChaseCamMode( void );
 //
 // cg_lents.c
 //
+
+#define IMPACT_POINT_OFFSET 2.0f
+
 void CG_ClearLocalEntities( void );
 void CG_AddLocalEntities( void );
 void CG_FreeLocalEntities( void );
@@ -1046,7 +1049,7 @@ void CG_SpawnSprite( const vec3_t origin, const vec3_t velocity, const vec3_t ac
 					 float radius, int time, int bounce, bool expandEffect, bool shrinkEffect,
 					 float r, float g, float b, float a,
 					 float light, float lr, float lg, float lb, struct shader_s *shader );
-void CG_LaserGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color );
+void CG_LaserGunImpact( const vec3_t pos, float radius, const vec3_t laser_dir, const vec4_t color );
 
 void CG_Dash( const entity_state_t *state );
 void CG_SpawnTracer( const vec3_t origin, const vec3_t dir, const vec3_t dir_per1, const vec3_t dir_per2 );

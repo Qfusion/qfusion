@@ -475,20 +475,21 @@ void CG_BubbleTrail( const vec3_t start, const vec3_t end, int dist ) {
 void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, float radius ) {
 	lentity_t *le;
 	vec3_t angles;
+	vec3_t origin;
 	float model_radius = PLASMA_EXPLOSION_MODEL_RADIUS;
 
 	VecToAngles( dir, angles );
+	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
 	if( fire_mode == FIRE_MODE_STRONG ) {
-		le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 4,
+		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 4,
 							1, 1, 1, 1,
 							150, 0, 0.75, 0,
 							CG_MediaModel( cgs.media.modPlasmaExplosion ),
 							NULL );
 		le->ent.scale = radius / model_radius;
 	} else {
-
-		le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 4,
+		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 4,
 							1, 1, 1, 1,
 							80, 0, 0.75, 0,
 							CG_MediaModel( cgs.media.modPlasmaExplosion ),
@@ -509,6 +510,7 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, floa
 void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, int surfFlags ) {
 	lentity_t *le;
 	vec3_t angles;
+	vec3_t origin;
 
 	if( !CG_SpawnDecal( pos, dir, random() * 360, 12,
 						1, 1, 1, 1, 10, 1, true, CG_MediaShader( cgs.media.shaderElectroboltMark ) ) ) {
@@ -518,6 +520,7 @@ void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, in
 	}
 
 	VecToAngles( dir, angles );
+	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
 	le = CG_AllocModel( LE_INVERSESCALE_ALPHA_FADE, pos, angles, 6, // 6 is time
 						1, 1, 1, 1, //full white no inducted alpha
@@ -528,9 +531,9 @@ void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, in
 	le->ent.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
 
 	// add white energy particles on the impact
-	CG_ImpactPuffParticles( pos, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
+	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
 
-	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), pos, CHAN_AUTO,
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), origin, CHAN_AUTO,
 							cg_volume_effects->value, ATTN_STATIC );
 }
 
@@ -542,6 +545,7 @@ void CG_InstaExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, i
 	vec4_t tcolor = { 0.65f, 0.0f, 0.26f, 1.0f };
 	lentity_t *le;
 	vec3_t angles;
+	vec3_t origin;
 
 	if( cg_teamColoredInstaBeams->integer && owner && ( owner < gs.maxclients + 1 ) ) {
 		team = cg_entities[owner].current.team;
@@ -553,6 +557,9 @@ void CG_InstaExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, i
 		tcolor[2] *= 0.65f;
 	}
 
+	VecToAngles( dir, angles );
+	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
+
 	if( !CG_SpawnDecal( pos, dir, random() * 360, 12,
 						tcolor[0], tcolor[1], tcolor[2], 1.0f,
 						10, 1, true, CG_MediaShader( cgs.media.shaderInstagunMark ) ) ) {
@@ -561,9 +568,7 @@ void CG_InstaExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, i
 		}
 	}
 
-	VecToAngles( dir, angles );
-
-	le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 6, // 6 is time
+	le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 6, // 6 is time
 						tcolor[0], tcolor[1], tcolor[2], 1,
 						250, 0.65, 0.65, 0.65, //white dlight
 						CG_MediaModel( cgs.media.modInstagunWallHit ), NULL );
@@ -572,9 +577,9 @@ void CG_InstaExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, i
 	le->ent.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
 
 	// add white energy particles on the impact
-	CG_ImpactPuffParticles( pos, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
+	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
 
-	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), pos, CHAN_AUTO,
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), origin, CHAN_AUTO,
 							cg_volume_effects->value, ATTN_STATIC );
 }
 
@@ -644,6 +649,7 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, 
 void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 	lentity_t *le;
 	vec3_t angles;
+	vec3_t origin;
 	vec3_t end;
 	vec3_t local_pos, local_dir;
 	trace_t trace;
@@ -658,28 +664,29 @@ void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 	}
 
 	VecToAngles( local_dir, angles );
+	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
 	if( trace.surfFlags & SURF_FLESH ||
 		( trace.ent > 0 && cg_entities[trace.ent].current.type == ET_PLAYER )
 		|| ( trace.ent > 0 && cg_entities[trace.ent].current.type == ET_CORPSE ) ) {
-		le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 3, //3 frames for weak
+		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
 							1, 1, 1, 1, //full white no inducted alpha
 							0, 0, 0, 0, //dlight
 							CG_MediaModel( cgs.media.modBladeWallHit ), NULL );
 		le->ent.rotation = rand() % 360;
 		le->ent.scale = 1.0f;
 
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeFleshHit[(int)( random() * 3 )] ), pos, CHAN_AUTO,
+		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeFleshHit[(int)( random() * 3 )] ), origin, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 	} else if( trace.surfFlags & SURF_DUST ) {
 		// throw particles on dust
 		CG_ParticleEffect( trace.endpos, trace.plane.normal, 0.30f, 0.30f, 0.25f, 30 );
 
 		//fixme? would need a dust sound
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random() * 2 )] ), pos, CHAN_AUTO,
+		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random() * 2 )] ), origin, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 	} else {
-		le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 3, //3 frames for weak
+		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
 							1, 1, 1, 1, //full white no inducted alpha
 							0, 0, 0, 0, //dlight
 							CG_MediaModel( cgs.media.modBladeWallHit ), NULL );
@@ -688,7 +695,7 @@ void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 
 		CG_ParticleEffect( trace.endpos, trace.plane.normal, 0.30f, 0.30f, 0.25f, 15 );
 
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random() * 2 )] ), pos, CHAN_AUTO,
+		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random() * 2 )] ), origin, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 		if( !( trace.surfFlags & SURF_NOMARKS ) ) {
 			CG_SpawnDecal( pos, dir, random() * 10, 8, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderBladeMark ) );
@@ -699,14 +706,13 @@ void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 /*
 * CG_LasertGunImpact
 */
-void CG_LaserGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color ) {
+void CG_LaserGunImpact( const vec3_t pos, float radius, const vec3_t laser_dir, const vec4_t color ) {
 	entity_t ent;
 	vec3_t ndir;
 	vec3_t angles;
 
 	memset( &ent, 0, sizeof( ent ) );
 	VectorCopy( pos, ent.origin );
-	VectorMA( ent.origin, 2, dir, ent.origin );
 	ent.renderfx = RF_FULLBRIGHT | RF_NOSHADOW;
 	ent.scale = 1.45f;
 	Vector4Set( ent.shaderRGBA, color[0] * 255, color[1] * 255, color[2] * 255, color[3] * 255 );
@@ -727,9 +733,11 @@ void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius ) 
 	lentity_t *le;
 	lentity_t *le_explo;
 	vec3_t angles;
+	vec3_t origin;
 	float model_radius = GUNBLADEBLAST_EXPLOSION_MODEL_RADIUS;
 
 	VecToAngles( dir, angles );
+	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
 	le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 2, //3 frames
 						1, 1, 1, 1, //full white no inducted alpha
@@ -742,7 +750,7 @@ void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius ) 
 	le->ent.scale = 1.0f; // this is the small bullet impact
 
 
-	le_explo = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 2 + ( radius / 16.1f ),
+	le_explo = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 2 + ( radius / 16.1f ),
 							  1, 1, 1, 1, //full white no inducted alpha
 							  0, 0, 0, 0, //dlight
 							  CG_MediaModel( cgs.media.modBladeWallExplo ),
