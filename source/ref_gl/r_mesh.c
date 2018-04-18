@@ -84,28 +84,30 @@ static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes ) {
 * R_ReserveDrawListWorldSurfaces
 */
 void R_ReserveDrawListWorldSurfaces( drawList_t *list ) {
+	const mbrushmodel_t *bm = rsh.worldBrushModel;
+
 	if( !list->numWorldSurfVis ) {
-		list->worldSurfVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *list->worldSurfVis ) );
-		list->worldSurfFullVis = R_Malloc( rsh.worldBrushModel->numsurfaces * sizeof( *list->worldSurfVis ) );
-	} else if( list->numWorldSurfVis < rsh.worldBrushModel->numsurfaces ) {
-		list->worldSurfVis = R_Realloc( (void *)list->worldSurfVis, rsh.worldBrushModel->numsurfaces * sizeof( *list->worldSurfVis ) );
-		list->worldSurfFullVis = R_Realloc( (void *)list->worldSurfFullVis, rsh.worldBrushModel->numsurfaces * sizeof( *list->worldSurfVis ) );
+		list->worldSurfVis = R_Malloc( bm->numsurfaces * sizeof( *list->worldSurfVis ) );
+		list->worldSurfFullVis = R_Malloc( bm->numsurfaces * sizeof( *list->worldSurfVis ) );
+	} else if( list->numWorldSurfVis < bm->numsurfaces ) {
+		list->worldSurfVis = R_Realloc( (void *)list->worldSurfVis, bm->numsurfaces * sizeof( *list->worldSurfVis ) );
+		list->worldSurfFullVis = R_Realloc( (void *)list->worldSurfFullVis, bm->numsurfaces * sizeof( *list->worldSurfVis ) );
 	}
-	list->numWorldSurfVis = rsh.worldBrushModel->numsurfaces;
+	list->numWorldSurfVis = bm->numsurfaces;
 
 	if( !list->numWorldLeafVis ) {
-		list->worldLeafVis = R_Malloc( rsh.worldBrushModel->numleafs * sizeof( *list->worldLeafVis ) );
-	} else if( list->numWorldLeafVis < rsh.worldBrushModel->numleafs ) {
-		list->worldLeafVis = R_Realloc( (void *)list->worldLeafVis, rsh.worldBrushModel->numleafs * sizeof( *list->worldLeafVis ) );
+		list->worldLeafVis = R_Malloc( bm->numleafs * sizeof( *list->worldLeafVis ) );
+	} else if( list->numWorldLeafVis < bm->numleafs ) {
+		list->worldLeafVis = R_Realloc( (void *)list->worldLeafVis, bm->numleafs * sizeof( *list->worldLeafVis ) );
 	}
-	list->numWorldLeafVis = rsh.worldBrushModel->numleafs;
+	list->numWorldLeafVis = bm->numleafs;
 
 	if( !list->numWorldDrawSurfVis ) {
-		list->worldDrawSurfVis = R_Malloc( rsh.worldBrushModel->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
-	} else if( list->numWorldDrawSurfVis < rsh.worldBrushModel->numDrawSurfaces ) {
-		list->worldDrawSurfVis = R_Realloc( (void *)list->worldDrawSurfVis, rsh.worldBrushModel->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
+		list->worldDrawSurfVis = R_Malloc( bm->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
+	} else if( list->numWorldDrawSurfVis < bm->numDrawSurfaces ) {
+		list->worldDrawSurfVis = R_Realloc( (void *)list->worldDrawSurfVis, bm->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
 	}
-	list->numWorldDrawSurfVis = rsh.worldBrushModel->numDrawSurfaces;
+	list->numWorldDrawSurfVis = bm->numDrawSurfaces;
 }
 
 /*

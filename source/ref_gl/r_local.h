@@ -137,14 +137,14 @@ typedef struct {
 
 	mat4_t worldToLightMatrix;
 
-	struct model_s *worldModel;
-	void   *compiledSurf[6];
-
+	unsigned numVisLeafs;
 	unsigned numSurfaces;
+
+	unsigned *visLeafs;
 	unsigned *surfaceInfo;
 
-	unsigned numVisLeafs;
-	unsigned *visLeafs;
+	struct model_s *worldModel;
+	void *compiledSurf[6];
 } rtlight_t;
 
 #include "r_public.h"
@@ -364,13 +364,12 @@ typedef struct {
 
 	struct {
 		unsigned int c_brush_polys, c_world_leafs;
-		unsigned int c_slices_verts, c_slices_elems;
 		unsigned int c_world_draw_surfs;
 		unsigned int c_world_lights, c_dynamic_lights;
 		unsigned int c_ents_total, c_ents_bmodels;
 		unsigned int t_cull_world_nodes, t_cull_world_surfs;
 		unsigned int t_cull_rtlights;
-		unsigned int t_world_node;
+		unsigned int t_world_node, t_light_node;
 		unsigned int t_add_world_surfs;
 		unsigned int t_add_polys, t_add_entities;
 		unsigned int t_draw_meshes;
@@ -816,9 +815,9 @@ void R_BlurScreen( void );
 //
 #define MAX_SURF_QUERIES        0x1E0
 
-void    R_DrawWorld( void );
+void    R_DrawWorldNode( void );
+void	R_DrawWorldShadowNode( void );
 bool    R_SurfNoDraw( const msurface_t *surf );
-bool	R_SurfNoDlight( const msurface_t *surf );
 bool    R_SurfNoShadow( const msurface_t *surf );
 void	R_CacheBrushModelEntity( const entity_t *e );
 bool    R_AddBrushModelToDrawList( const entity_t *e );

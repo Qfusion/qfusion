@@ -453,26 +453,28 @@ void R_DrawPortals( void ) {
 		return;
 	}
 
-	if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) ) {
-		R_DrawPortalsDepthMask();
+	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) {
+		return;
+	}
 
-		if( rn.skyportalSurface ) {
-			// render skyportal
-			portalSurface_t *ps = rn.skyportalSurface;
-			R_DrawSkyportal( ps->entity, ps->skyPortal );
-		} else {
-			// FIXME: move this?
-			// render sky dome that writes to depth
-			R_DrawDepthSkySurf();
-		}
+	R_DrawPortalsDepthMask();
 
-		// render regular portals
-		for( i = 0; i < rn.numPortalSurfaces; i++ ) {
-			portalSurface_t ps = rn.portalSurfaces[i];
-			if( !ps.skyPortal ) {
-				R_DrawPortalSurface( &ps );
-				rn.portalSurfaces[i] = ps;
-			}
+	if( rn.skyportalSurface ) {
+		// render skyportal
+		portalSurface_t *ps = rn.skyportalSurface;
+		R_DrawSkyportal( ps->entity, ps->skyPortal );
+	} else {
+		// FIXME: move this?
+		// render sky dome that writes to depth
+		R_DrawDepthSkySurf();
+	}
+
+	// render regular portals
+	for( i = 0; i < rn.numPortalSurfaces; i++ ) {
+		portalSurface_t ps = rn.portalSurfaces[i];
+		if( !ps.skyPortal ) {
+			R_DrawPortalSurface( &ps );
+			rn.portalSurfaces[i] = ps;
 		}
 	}
 }

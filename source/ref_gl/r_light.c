@@ -1110,9 +1110,6 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 			if( smasks[s] ) {
 				continue;
 			}
-			if( R_SurfNoDlight( surf ) ) {
-				continue;
-			}
 
 			mask = R_CalcRtLightSurfaceSidemask( l, surf );
 			if( !mask ) {

@@ -251,7 +251,7 @@ void R_DrawRtLightWorld( void ) {
 	}
 
 	if( !l->compiledSurf[side] || !r_shadows_usecompiled->integer ) {
-		R_DrawWorld();
+		R_DrawWorldShadowNode();
 		return;
 	}
 
