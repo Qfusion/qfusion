@@ -48,9 +48,9 @@ typedef struct {
 	unsigned int numVerts;
 	unsigned int numElems;
 
-	unsigned int firstVboVert, firstVboElem;
+	unsigned int numWorldSurfaces;
 
-	unsigned int *worldSurfaces, numWorldSurfaces;
+	unsigned int firstVboVert, firstVboElem;
 
 	unsigned int numInstances;
 
@@ -59,6 +59,10 @@ typedef struct {
 	unsigned int numLightmaps;
 
 	unsigned int numRtLights;
+
+	unsigned int surfFlags;
+
+	unsigned int *worldSurfaces; // [numSurfaces]
 
 	unsigned int *surfRtlightBits; // [numSurfaces]
 

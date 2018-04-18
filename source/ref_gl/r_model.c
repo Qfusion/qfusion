@@ -496,7 +496,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			surf = sortedSurfaces[bm->firstModelSurface+i];
 			shader = surf->shader;
 
-			if( !surf->mesh.numElems || surf->drawSurf != 0 || !shader ) {
+			if( R_SurfNoDraw( surf ) || surf->drawSurf != 0 || !shader ) {
 				i++;
 				continue;
 			}
@@ -519,6 +519,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			drawSurf->fog = surf->fog;
 			drawSurf->shader = surf->shader;
 			drawSurf->numLightmaps = 0;
+			drawSurf->surfFlags = surf->flags;
 			drawSurf->surfRtlightBits = surfRtlightBits;
 			drawSurf->numLightmaps = 0;
 
@@ -563,7 +564,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 					if( R_SurfaceCmp( surf, surf2 ) || surf2->numInstances )  {
 						break;
 					}
-					if( !surf2->mesh.numElems || surf2->drawSurf != 0 ) {
+					if( R_SurfNoDraw( surf2 ) || surf2->drawSurf != 0 ) {
 						continue;
 					}
 
