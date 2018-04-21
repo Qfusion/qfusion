@@ -2745,7 +2745,7 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	assert( !depth || glConfig.ext.depth_texture );
 
 	if( !glConfig.stencilBits ) {
-		orFlags &= IT_STENCIL;
+		orFlags &= ~IT_STENCIL;
 	}
 	if( width < 1 ) {
 		width = 1;
