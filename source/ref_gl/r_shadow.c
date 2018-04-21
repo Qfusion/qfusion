@@ -416,10 +416,8 @@ void R_DrawShadows( void ) {
 	rtlight_t *l;
 	image_t *atlas;
 	lightmapAllocState_t *salloc = &shadowAtlasAlloc;
-	refdef_t refdef;
 	unsigned numRtLights;
 	rtlight_t **rtLights;
-	vec3_t viewOrigin;
 	int border = max( r_shadows_bordersize->integer, SHADOWMAP_MIN_BORDER );
 	int minsize = max( r_shadows_minsize->integer, SHADOWMAP_MIN_SIZE );
 	int maxsize = bound( minsize + 2, r_shadows_maxsize->integer, r_shadows_texturesize->integer / 8 );
@@ -436,10 +434,8 @@ void R_DrawShadows( void ) {
 		return;
 	}
 
-	refdef = rn.refdef;
 	rtLights = rn.rtlights;
 	numRtLights = rn.numRealtimeLights;
-	VectorCopy( rn.viewOrigin, viewOrigin );
 
 	if( !numRtLights ) {
 		return;

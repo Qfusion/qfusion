@@ -1251,7 +1251,6 @@ struct model_s *R_RegisterModel( const char *name ) {
 * R_LoadWorldRtLightsFromMap
 */
 static void R_LoadWorldRtLightsFromMap( model_t *model ) {
-	int n;
 	char *data;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
 	bool islight, shadow;
@@ -1304,15 +1303,15 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 					islight = true;
 				}
 			} else if( !strcmp( key, "_color" ) ) {
-				n = sscanf( value, "%8f %8f %8f", &colorf[0], &colorf[1], &colorf[2] );
+				sscanf( value, "%8f %8f %8f", &colorf[0], &colorf[1], &colorf[2] );
 			} else if( !strcmp( key, "color" ) ) {
-				n = sscanf( value, "%8f %8f %8f", &colorf[0], &colorf[1], &colorf[2] );
+				sscanf( value, "%8f %8f %8f", &colorf[0], &colorf[1], &colorf[2] );
 			} else if( !strcmp( key, "origin" ) ) {
-				n = sscanf( value, "%8f %8f %8f", &originf[0], &originf[1], &originf[2] );
+				sscanf( value, "%8f %8f %8f", &originf[0], &originf[1], &originf[2] );
 			} else if( !strcmp( key, "light" ) ) {
-				n = sscanf( value, "%8f", &radius );
+				sscanf( value, "%8f", &radius );
 			} else if( !strcmp( key, "style" ) ) {
-				n = sscanf( value, "%d", &style );
+				sscanf( value, "%d", &style );
 			}
 		}
 
@@ -1361,7 +1360,6 @@ static void R_LoadWorldRtLights( model_t *model ) {
 	mbrushmodel_t *bmodel;
 	char shortname[MAX_QPATH];
 	char *buf;
-	size_t buflen;
 	int n;
 	char tempchar, *s, *t;
 	bool shadow;
@@ -1386,7 +1384,7 @@ static void R_LoadWorldRtLights( model_t *model ) {
 	Q_strncpyz( shortname, model->name, sizeof( shortname ) );
 	COM_ReplaceExtension( shortname, ".rtlights", sizeof( shortname ) );
 
-	buflen = R_LoadFile( shortname, ( void ** )&buf );
+	R_LoadFile( shortname, ( void ** )&buf );
 	if( !buf ) {
 		if( r_lighting_realtime_world_importfrommap->integer ) {
 			R_LoadWorldRtLightsFromMap( model );
