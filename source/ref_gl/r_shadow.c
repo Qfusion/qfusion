@@ -300,6 +300,11 @@ void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool comp
 	VectorCopy( l->origin, fd->vieworg );
 	Matrix3_Copy( axis_identity, fd->viewaxis );
 
+	// ignore current frame's area vis when compiling shadow geometry
+	if( compile ) {
+		fd->areabits = NULL;
+	}
+
 	for( side = 0; side < 6; side++ ) {
 		if( !(sideMask & (1<<side)) ) {
 			continue;
