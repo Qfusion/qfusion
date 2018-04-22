@@ -2155,14 +2155,12 @@ static void Mod_Q1FixUpMiptexShader( q1mmiptex_t *miptex ) {
 	pass = shader->passes + basepass;
 
 	if( miptex->flags & Q2_SURF_SKY ) {
-		if( !pass->images[0]->missing ) {
-			return;
-		}
-
-		for( j = basepass; j < shader->numpasses; j++, pass++ ) {
-			data = miptex->texdata;
-			pass->images[0] = R_LoadImage( miptex->texture, &data, miptex->width, miptex->height,
-				IT_MIPTEX | IT_SKY | ( j > basepass ? IT_LEFTHALF : IT_RIGHTHALF ), 1, IMAGE_TAG_GENERIC, 1 );
+		if( pass->images[0]->missing || pass->images[0] == rsh.noTexture ) {
+			for( j = basepass; j < shader->numpasses; j++, pass++ ) {
+				data = miptex->texdata;
+				pass->images[0] = R_LoadImage( miptex->texture, &data, miptex->width, miptex->height,
+					IT_MIPTEX | IT_SKY | ( j > basepass ? IT_LEFTHALF : IT_RIGHTHALF ), 1, IMAGE_TAG_GENERIC, 1 );
+			}
 		}
 	} else {
 		for( j = basepass; j < shader->numpasses; j++, pass++ ) {
@@ -2171,13 +2169,11 @@ static void Mod_Q1FixUpMiptexShader( q1mmiptex_t *miptex ) {
 			}
 
 			for( k = 0, step = miptex; k < max( pass->anim_numframes, 1 ); k++, step = step->anim_next ) {
-				if( !pass->images[k]->missing ) {
-					continue;
+				if( pass->images[k]->missing || pass->images[k] == rsh.noTexture ) {
+					data = step->texdata;
+					pass->images[k] = R_LoadImage( step->texture, &data, step->width, step->height,
+						IT_MIPTEX | ( j > basepass && miptex->fullbrights ? IT_MIPTEX_FULLBRIGHT : 0 ), 1, IMAGE_TAG_GENERIC, 1 );
 				}
-
-				data = step->texdata;
-				pass->images[k] = R_LoadImage( step->texture, &data, step->width, step->height,
-					IT_MIPTEX | ( j > basepass && miptex->fullbrights ? IT_MIPTEX_FULLBRIGHT : 0 ), 1, IMAGE_TAG_GENERIC, 1 );
 			}
 		}
 	}
