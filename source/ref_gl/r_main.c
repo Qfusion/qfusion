@@ -1381,7 +1381,7 @@ void R_RenderView( const refdef_t *fd ) {
 	R_DrawPortals();
 
 	if( r_portalonly->integer && !( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW ) ) ) {
-		return;
+		goto end;
 	}
 
 	R_Clear( ~0 );
@@ -1389,7 +1389,9 @@ void R_RenderView( const refdef_t *fd ) {
 	if( r_speeds->integer ) {
 		msec = ri.Sys_Milliseconds();
 	}
+
 	R_DrawSurfaces( rn.meshlist );
+
 	if( r_speeds->integer ) {
 		rf.stats.t_draw_meshes += ( ri.Sys_Milliseconds() - msec );
 	}
@@ -1398,6 +1400,7 @@ void R_RenderView( const refdef_t *fd ) {
 		R_DrawOutlinedSurfaces( rn.meshlist );
 	}
 
+end:
 	R_TransformForWorld();
 
 	R_EndGL();

@@ -1195,8 +1195,6 @@ static void R_FinishMapConfig( const model_t *mod ) {
 * Specifies the model that will be used as the world
 */
 void R_RegisterWorldModel( const char *model ) {
-	unsigned i;
-
 	r_prevworldmodel = rsh.worldModel;
 	rsh.worldModel = NULL;
 	rsh.worldBrushModel = NULL;
@@ -1218,9 +1216,8 @@ void R_RegisterWorldModel( const char *model ) {
 	R_TouchModel( rsh.worldModel );
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
 
-	// compile light shadows
-	for( i = 0; i < rsh.worldBrushModel->numRtLights; i++ )
-		R_CompileRtLight( rsh.worldBrushModel->rtLights + i );
+	// lazy-compile realtime light shadows
+	r_lighting_realtime_world_shadows->modified = true;
 }
 
 /*
