@@ -1300,13 +1300,13 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 					islight = true;
 				}
 			} else if( !strcmp( key, "_color" ) ) {
-				sscanf( value, "%8f %8f %8f", &colorf[0], &colorf[1], &colorf[2] );
+				sscanf( value, "%f %f %f", &colorf[0], &colorf[1], &colorf[2] );
 			} else if( !strcmp( key, "color" ) ) {
-				sscanf( value, "%8f %8f %8f", &colorf[0], &colorf[1], &colorf[2] );
+				sscanf( value, "%f %f %f", &colorf[0], &colorf[1], &colorf[2] );
 			} else if( !strcmp( key, "origin" ) ) {
-				sscanf( value, "%8f %8f %8f", &originf[0], &originf[1], &originf[2] );
+				sscanf( value, "%f %f %f", &originf[0], &originf[1], &originf[2] );
 			} else if( !strcmp( key, "light" ) ) {
-				sscanf( value, "%8f", &radius );
+				sscanf( value, "%f", &radius );
 			} else if( !strcmp( key, "style" ) ) {
 				sscanf( value, "%d", &style );
 			}
