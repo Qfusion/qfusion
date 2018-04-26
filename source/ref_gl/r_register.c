@@ -68,10 +68,11 @@ cvar_t *r_lighting_maxglsldlights;
 cvar_t *r_lighting_grayscale;
 cvar_t *r_lighting_intensity;
 cvar_t *r_lighting_realtime_world;
-cvar_t *r_lighting_realtime_dlight;
+cvar_t *r_lighting_realtime_world_lightmaps;
 cvar_t *r_lighting_realtime_world_shadows;
-cvar_t *r_lighting_realtime_dlight_shadows;
 cvar_t *r_lighting_realtime_world_importfrommap;
+cvar_t *r_lighting_realtime_dlight;
+cvar_t *r_lighting_realtime_dlight_shadows;
 cvar_t *r_lighting_showlightvolumes;
 cvar_t *r_lighting_debuglight;
 
@@ -1118,10 +1119,11 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
 	r_lighting_realtime_world = ri.Cvar_Get( "r_lighting_realtime_world", "1", CVAR_ARCHIVE );
-	r_lighting_realtime_dlight = ri.Cvar_Get( "r_lighting_realtime_dlight", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_world_lightmaps = ri.Cvar_Get( "r_lighting_realtime_world_lightmaps", "0", CVAR_ARCHIVE );
 	r_lighting_realtime_world_shadows = ri.Cvar_Get( "r_lighting_realtime_world_shadows", "1", CVAR_ARCHIVE );
-	r_lighting_realtime_dlight_shadows = ri.Cvar_Get( "r_lighting_realtime_dlight_shadows", "1", CVAR_ARCHIVE );
 	r_lighting_realtime_world_importfrommap = ri.Cvar_Get( "r_lighting_realtime_world_importfrommap", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_dlight = ri.Cvar_Get( "r_lighting_realtime_dlight", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_dlight_shadows = ri.Cvar_Get( "r_lighting_realtime_dlight_shadows", "1", CVAR_ARCHIVE );
 	r_lighting_showlightvolumes = ri.Cvar_Get( "r_lighting_showlightvolumes", "0", 0 );
 	r_lighting_debuglight = ri.Cvar_Get( "r_lighting_debuglight", "-1", 0 );
 

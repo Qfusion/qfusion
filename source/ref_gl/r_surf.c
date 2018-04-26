@@ -321,7 +321,7 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 		}
 	}
 
-	if( r_lighting_realtime_world->integer && r_lighting_realtime_world_shadows->integer ) {
+	if( r_lighting_realtime_world->integer && r_lighting_realtime_world_lightmaps->value < 0.01 ) {
 		lightStyleNum = -1;
 	}
 
@@ -870,7 +870,7 @@ void R_DrawWorldShadowNode( void ) {
 	memset( (void *)rn.meshlist->worldLeafVis, 0, bm->numleafs * sizeof( *rn.meshlist->worldLeafVis ) );
 	memset( (void *)rn.meshlist->worldDrawSurfVis, 0, bm->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
 
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && l->surfaceInfo ) {
 		unsigned *p = l->surfaceInfo;
 		unsigned numDrawSurfaces = *p++;
 
