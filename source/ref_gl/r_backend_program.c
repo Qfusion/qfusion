@@ -912,7 +912,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		}
 
 		// world surface
-		if( rb.currentModelType == mod_brush && !r_lighting_realtime_world->integer ) {
+		if( rb.currentModelType == mod_brush ) {
 			if( rb.superLightStyle && rb.superLightStyle->lightmapNum[0] >= 0 ) {
 				lightStyle = rb.superLightStyle;
 
@@ -940,7 +940,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 					VectorCopy( mapConfig.ambient, ambient );
 					programFeatures |= GLSL_SHADER_MATERIAL_AMBIENT_COMPENSATION;
 				}
-			} else {
+			} else if( !(rb.currentShader->flags & SHADER_LIGHTMAP ) ) {
 				// vertex lighting
 				VectorSet( lightDir, 0.1f, 0.2f, 0.7f );
 				VectorSet( ambient, rb.minLight, rb.minLight, rb.minLight );
@@ -1362,7 +1362,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		RB_BindImage( 3, rb.st.screenDepthTexCopy );
 	}
 
-	if( isLightmapped && !r_lighting_realtime_world->integer ) {
+	if( isLightmapped ) {
 		int i;
 
 		// bind lightmap textures and set program's features for lightstyles

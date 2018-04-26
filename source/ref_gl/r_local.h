@@ -449,12 +449,13 @@ extern cvar_t *r_lighting_maxglsldlights;
 extern cvar_t *r_lighting_grayscale;
 extern cvar_t *r_lighting_intensity;
 extern cvar_t *r_lighting_realtime_world;
-extern cvar_t *r_lighting_realtime_dlight;
+extern cvar_t *r_lighting_realtime_world_lightmaps;
 extern cvar_t *r_lighting_realtime_world_shadows;
+extern cvar_t *r_lighting_realtime_world_importfrommap;
+extern cvar_t *r_lighting_realtime_dlight;
 extern cvar_t *r_lighting_realtime_dlight_shadows;
 extern cvar_t *r_lighting_showlightvolumes;
 extern cvar_t *r_lighting_debuglight;
-extern cvar_t *r_lighting_realtime_world_importfrommap;
 
 extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;
