@@ -84,7 +84,7 @@ void RB_FlushTextureCache( void );
 
 // shader
 void RB_BindShader( const entity_t *e, const struct shader_s *shader, const struct mfog_s *fog );
-void RB_SetLightstyle( const struct superLightStyle_s *lightStyle );
+void RB_SetLightstyle( const struct superLightStyle_s *lightStyle, const struct superLightStyle_s *realLightStyle );
 void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
 void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );
 void RB_SetSkyboxShader( const shader_t *shader );

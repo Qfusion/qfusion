@@ -180,16 +180,24 @@ static void R_AddLightsToSurfaces( void ) {
 /*
 * R_FlushBSPSurfBatch
 */
-static void R_FlushBSPSurfBatch( void ) {
+void R_FlushBSPSurfBatch( void ) {
 	drawListBatch_t *batch = &rn.meshlist->bspBatch;
 	drawSurfaceBSP_t *drawSurf = batch->lastDrawSurf;
 	int lightStyleNum = batch->lightStyleNum;
 	const entity_t *e = batch->entity;
 	const shader_t *shader = batch->shader;
 	entSceneCache_t *cache = R_ENTCACHE( e );
+	superLightStyle_t *ls = NULL, *rls = NULL;
 
 	if( batch->count == 0 ) {
 		return;
+	}
+
+	if( lightStyleNum >= 0 ) {
+		ls = rls = rsh.worldBrushModel->superLightStyles + lightStyleNum;
+		if( r_lighting_realtime_world->integer && r_lighting_realtime_world_lightmaps->value < 0.01 ) {
+			ls = NULL;
+		}
 	}
 
 	batch->count = 0;
@@ -198,7 +206,7 @@ static void R_FlushBSPSurfBatch( void ) {
 
 	RB_SetPortalSurface( batch->portalSurface );
 
-	RB_SetLightstyle( lightStyleNum >= 0 ? rsh.worldBrushModel->superLightStyles + lightStyleNum : NULL );
+	RB_SetLightstyle( ls, rls );
 
 	if( R_SurfFlagsNoDlight( drawSurf->surfFlags ) ) {
 		RB_SetRtLightParams( 0, NULL, 0, NULL );
@@ -319,10 +327,6 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 		if( !shader ) {
 			return false;
 		}
-	}
-
-	if( r_lighting_realtime_world->integer && r_lighting_realtime_world_lightmaps->value < 0.01 ) {
-		lightStyleNum = -1;
 	}
 
 	if( sky ) {

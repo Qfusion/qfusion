@@ -411,9 +411,7 @@ static mesh_t *Mod_BuildMeshForSurface( q2msurface_t *fa, msurface_t *out ) {
 	}
 	for( j = 0; j < max_style; j++ ) {
 		mesh->colorsArray[j] = ( byte_vec4_t * )buffer; buffer += numVerts * sizeof( byte_vec4_t );
-		if( r_fullbright->integer ) {
-			memset( mesh->colorsArray[j], 255, numVerts * sizeof( byte_vec4_t ) );
-		}
+		memset( mesh->colorsArray[j], 255 * (r_fullbright->integer != 0), numVerts * sizeof( byte_vec4_t ) );
 	}
 	if( mapConfig.lightmapArrays ) {
 		for( j = 0; j < max_style; j++ ) {
@@ -664,7 +662,7 @@ static void Mod_BuildMeshForWarpSurface( q2msurface_t *fa, msurface_t *out ) {
 	}
 
 	// build mesh
-	bufSize = numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
+	bufSize = numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) + sizeof( byte_vec4_t ) );
 	bufSize += numElems * sizeof( elem_t );
 
 	buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
@@ -676,6 +674,7 @@ static void Mod_BuildMeshForWarpSurface( q2msurface_t *fa, msurface_t *out ) {
 	mesh->xyzArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
 	mesh->normalsArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
 	mesh->stArray = ( vec2_t * )buffer; buffer += numVerts * sizeof( vec2_t );
+	mesh->colorsArray[0] = ( byte_vec4_t * )buffer; buffer += numVerts * sizeof( byte_vec4_t );
 
 	mesh->elems = ( elem_t * )buffer; buffer += numElems * sizeof( elem_t );
 
@@ -736,6 +735,8 @@ static void Mod_BuildMeshForWarpSurface( q2msurface_t *fa, msurface_t *out ) {
 		VectorCopy( fa->plane->normal, mesh->normalsArray[i] );
 		mesh->normalsArray[i][3] = 0.0f;
 	}
+
+	memset( mesh->colorsArray[0], 255, numVerts * sizeof( byte_vec4_t ) );
 }
 
 //=======================================================
@@ -782,7 +783,13 @@ static void Mod_ApplySuperStylesToFace( const q2msurface_t *in, msurface_t *out 
 		if( lightmaps[j] < 0 || in->styles[j] == 255 || ( j > 0 && lightmaps[j - 1] < 0 ) ) {
 			lmRects[j] = NULL;
 			lightmaps[j] = -1;
-			lightmapStyles[j] = vertexStyles[j] = 255;
+			lightmapStyles[j] = 255;
+			vertexStyles[j] = 255;
+		} else if( r_lighting_vertexlight->integer ) {
+			lmRects[j] = NULL;
+			lightmaps[j] = -1;
+			lightmapStyles[j] = 255;
+			vertexStyles[j] = in->styles[j];
 		} else {
 			lmRects[j] = &loadmodel_lightmapRects[lightmaps[j]];
 			lightmaps[j] = lmRects[j]->texNum;
@@ -1454,6 +1461,8 @@ static void Mod_Q2LoadTexinfo( const lump_t *l ) {
 
 	// load shaders
 	for( i = 0; i < count; i++ ) {
+		int shaderType;
+
 		out = &loadmodel_texinfo[i];
 
 		shadertext = NULL;
@@ -1511,7 +1520,13 @@ static void Mod_Q2LoadTexinfo( const lump_t *l ) {
 			Q_strncatz( rawtext, "}", sizeof( rawtext ) );
 		}
 
-		out->shader = R_LoadShader( out->texture, SHADER_TYPE_DELUXEMAP, false, shadertext );
+		if( r_lighting_vertexlight->integer ) {
+			shaderType = SHADER_TYPE_VERTEX;
+		} else {
+			shaderType = SHADER_TYPE_DELUXEMAP;
+		}
+
+		out->shader = R_LoadShader( out->texture, shaderType, false, shadertext );
 	}
 }
 
@@ -1602,7 +1617,13 @@ static void Mod_Q2LoadFaces( const lump_t *l ) {
 			if( lightmaps[j] < 0 || ( j > 0 && lightmaps[j - 1] < 0 ) ) {
 				lmRects[j] = NULL;
 				lightmaps[j] = -1;
-				lightmapStyles[j] = vertexStyles[j] = 255;
+				lightmapStyles[j] = 255;
+				vertexStyles[j] = 255;
+			} else if( r_lighting_vertexlight->integer ) {
+				lmRects[j] = NULL;
+				lightmaps[j] = -1;
+				lightmapStyles[j] = 255;
+				vertexStyles[j] = out->styles[j];
 			} else {
 				lmRects[j] = &loadmodel_lightmapRects[lightmaps[j]];
 				lightmaps[j] = lmRects[j]->texNum;
@@ -2321,6 +2342,8 @@ static void Mod_Q1LoadMiptex( const lump_t *l ) {
 
 	// load shaders
 	for( i = 0; i < count; i++ ) {
+		int shaderType;
+
 		out = (q1mmiptex_t *)loadbmodel->mipTex + i;
 		if( out->numframes < 1 ) {
 			continue;
@@ -2379,7 +2402,13 @@ static void Mod_Q1LoadMiptex( const lump_t *l ) {
 		}
 
 		// load shader
-		out->shader = R_LoadShader( out->texture, SHADER_TYPE_DELUXEMAP, false, shadertext );
+		if( r_lighting_vertexlight->integer ) {
+			shaderType = SHADER_TYPE_VERTEX;
+		} else {
+			shaderType = SHADER_TYPE_DELUXEMAP;
+		}
+
+		out->shader = R_LoadShader( out->texture, shaderType, false, shadertext );
 	}
 }
 
@@ -2518,6 +2547,11 @@ static void Mod_Q1LoadFaces( const lump_t *l ) {
 				lmRects[j] = NULL;
 				lightmaps[j] = -1;
 				lightmapStyles[j] = vertexStyles[j] = 255;
+			} else if( r_lighting_vertexlight->integer ) {
+				lmRects[j] = NULL;
+				lightmaps[j] = -1;
+				lightmapStyles[j] = 255;
+				vertexStyles[j] = out->styles[j];
 			} else {
 				lmRects[j] = &loadmodel_lightmapRects[lightmaps[j]];
 				lightmaps[j] = lmRects[j]->texNum;
