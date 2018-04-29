@@ -898,18 +898,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		Vector4Set( ambient, 1, 1, 1, 1 );
 		Vector4Set( diffuse, 1, 1, 1, 1 );
 	} else {
-		if( rb.currentModelType != mod_brush ) {
-			vec3_t temp;
-
-			// get weighted incoming direction of world and dynamic lights
-			R_LightForOrigin( e->lightingOrigin, temp, ambient, diffuse,
-				e->model->radius * e->scale, rb.noWorldLight );
-
-			// rotate direction
-			Matrix3_TransformVector( e->axis, temp, lightDir );
-
-			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
-		}
+		bool minLight = ( e->flags & RF_MINLIGHT ) != 0;
 
 		// world surface
 		if( rb.currentModelType == mod_brush ) {
@@ -940,37 +929,41 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 					VectorCopy( mapConfig.ambient, ambient );
 					programFeatures |= GLSL_SHADER_MATERIAL_AMBIENT_COMPENSATION;
 				}
-			} else if( !(rb.currentShader->flags & SHADER_LIGHTMAP ) ) {
-				// vertex lighting
-				VectorSet( lightDir, 0.1f, 0.2f, 0.7f );
-				VectorSet( ambient, rb.minLight, rb.minLight, rb.minLight );
-				VectorSet( diffuse, rb.minLight, rb.minLight, rb.minLight );
-
-				programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT | GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT_MIX;
+			} else {
+				if( pass->rgbgen.type == RGB_GEN_VERTEX || pass->rgbgen.type == RGB_GEN_ONE_MINUS_VERTEX ) {
+					// vertex lighting
+					programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
+				}
 			}
+		} else {
+			vec3_t temp;
+
+			// get weighted incoming direction of world and dynamic lights
+			R_LightForOrigin( e->lightingOrigin, temp, ambient, diffuse,
+				e->model->radius * e->scale, rb.noWorldLight );
+
+			// rotate direction
+			Matrix3_TransformVector( e->axis, temp, lightDir );
+
+			minLight = true;
+			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
 		}
 
 		programFeatures |= RB_RtlightbitsToProgramFeatures();
 
-		if( programFeatures & GLSL_SHADER_COMMON_REALTIME_SHADOWS ) {
-			VectorClear( diffuse );
-			VectorScale( ambient, 0.25, ambient );
-		}
-
-		if( e->flags & RF_MINLIGHT ) {
-			float minLight = rb.minLight;
+		if( minLight ) {
 			float ambientL = VectorLength( ambient );
 
-			if( ambientL < minLight ) {
+			if( ambientL < rb.minLight ) {
 				if( ambientL < 0.001 ) {
 					VectorSet( ambient, 1, 1, 1 );
 				}
-				VectorNormalize( ambient );
-				VectorScale( ambient, 
-					minLight, ambient );
-			}
 
-			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
+				VectorNormalize( ambient );
+				VectorScale( ambient, rb.minLight, ambient );
+
+				programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
+			}
 		}
 	}
 
@@ -1238,7 +1231,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	const image_t *image;
 	const mfog_t *fog = rb.fog;
 	bool isWorldSurface = rb.currentModelType == mod_brush ? true : false;
-	const superLightStyle_t *lightStyle = NULL;
+	const superLightStyle_t *lightStyle = rb.superLightStyle;
 	const entity_t *e = rb.currentEntity;
 	bool isLightmapped = false, isWorldVertexLight = false, applyLighting = false;
 	vec3_t lightDir;
@@ -1247,8 +1240,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 	// lightmapped surface pass
 	if( isWorldSurface &&
-		rb.superLightStyle &&
-		rb.superLightStyle->lightmapNum[0] >= 0 &&
+		lightStyle &&
 		( rgbgen == RGB_GEN_IDENTITY
 		  || rgbgen == RGB_GEN_CONST
 		  || rgbgen == RGB_GEN_WAVE
@@ -1259,15 +1251,15 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		( rb.currentShader->flags & SHADER_LIGHTMAP ) &&
 		( pass->flags & GLSTATE_BLEND_ADD ) != GLSTATE_BLEND_ADD &&
 		( pass->flags & ( GLSTATE_SRCBLEND_SRC_ALPHA ) ) != GLSTATE_SRCBLEND_SRC_ALPHA ) {
-		lightStyle = rb.superLightStyle;
-		isLightmapped = true;
+		isLightmapped = rb.superLightStyle->lightmapNum[0] >= 0;
 	}
 
 	// vertex-lit world surface
 	if( isWorldSurface
 		&& ( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX )
-		&& ( rb.superLightStyle != NULL ) ) {
+		&& ( rb.currentShader->vattribs & VATTRIB_COLOR0_BIT ) ) {
 		isWorldVertexLight = true;
+		programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
 	} else {
 		isWorldVertexLight = false;
 	}

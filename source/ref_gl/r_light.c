@@ -167,7 +167,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	VectorSet( ambientLocal, 0, 0, 0 );
 	VectorSet( diffuseLocal, 0, 0, 0 );
 
-	if( noWorldLight ) {
+	if( noWorldLight || r_lighting_realtime_world->integer ) {
 		VectorSet( dir, 0.0f, 0.0f, 0.0f );
 		goto dynamic;
 	}
@@ -272,7 +272,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 dynamic:
 	// add dynamic lights
-	if( radius && r_dynamiclight->integer ) {
+	if( radius && r_dynamiclight->integer && !r_lighting_realtime_dlight->integer ) {
 		unsigned int lnum;
 		rtlight_t *dl;
 		float dist, dist2, add;
