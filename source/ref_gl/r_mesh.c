@@ -49,13 +49,32 @@ void R_InitDrawLists( void ) {
 * R_ClearDrawList
 */
 void R_ClearDrawList( drawList_t *list ) {
+	unsigned numSurfaces, numLeafs, numDrawSurfaces;
+	const mbrushmodel_t *bm = rsh.worldBrushModel;
+
 	if( !list ) {
 		return;
 	}
 
 	list->numDrawSurfs = 0;
-
 	memset( &rn.meshlist->bspBatch, 0, sizeof( drawListBatch_t ) );
+
+	if( !bm ) {
+		return;
+	}
+
+	numSurfaces = bm->numsurfaces;
+	numLeafs = bm->numleafs;
+	numDrawSurfaces = bm->numDrawSurfaces;
+
+	clamp_high( numSurfaces, list->numWorldSurfVis );
+	clamp_high( numLeafs, list->numWorldLeafVis );
+	clamp_high( numDrawSurfaces, list->numWorldDrawSurfVis );
+
+	memset( (void *)list->worldSurfVis, 0, numSurfaces * sizeof( *list->worldSurfVis ) );
+	memset( (void *)list->worldSurfFullVis, 0, numSurfaces * sizeof( *list->worldSurfVis ) );
+	memset( (void *)list->worldLeafVis, 0, numLeafs * sizeof( *list->worldLeafVis ) );
+	memset( (void *)list->worldDrawSurfVis, 0, numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
 }
 
 /*
