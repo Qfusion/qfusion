@@ -408,6 +408,30 @@ static const walkDrawSurf_cb r_walkSurfCb[ST_MAX_TYPES] =
 	NULL,
 };
 
+static const flushBatchDrawSurf_cb r_flushBatchSurfCb[ST_MAX_TYPES] =
+{
+	/* ST_NONE */
+	NULL,
+	/* ST_BSP */
+	( flushBatchDrawSurf_cb ) & R_FlushBSPSurfBatch,
+	/* ST_SKY */
+	NULL,
+	/* ST_ALIAS */
+	NULL,
+	/* ST_SKELETAL */
+	NULL,
+	/* ST_SPRITE */
+	( flushBatchDrawSurf_cb ) & RB_FlushDynamicMeshes,
+	/* ST_POLY */
+	( flushBatchDrawSurf_cb ) & RB_FlushDynamicMeshes,
+	/* ST_CORONA */
+	( flushBatchDrawSurf_cb ) & RB_FlushDynamicMeshes,
+	/* ST_NULLMODEL */
+	NULL,
+	/* ST_COMPILED_LIGHT */
+	NULL,
+};
+
 /*
 * R_DrawSurfaces
 */
@@ -476,10 +500,6 @@ static void _R_DrawSurfaces( drawList_t *list, int drawSurfTypeFilter ) {
 			entityFX != prevEntityFX ) {
 
 			batchMergable = false;
-			if( prevBatchDrawSurf && !batchDrawSurf ) {
-				batchFlush();
-				batchFlushed = true;
-			}
 
 			// hack the depth range to prevent view model from poking into walls
 			if( entity->flags & RF_WEAPONMODEL ) {
@@ -523,6 +543,11 @@ static void _R_DrawSurfaces( drawList_t *list, int drawSurfTypeFilter ) {
 				} else {
 					RB_LoadProjectionMatrix( rn.projectionMatrix );
 				}
+			}
+
+			if( prevBatchDrawSurf && !batchDrawSurf || batchFlush != r_flushBatchSurfCb[drawSurfType] ) {
+				if( batchFlush ) batchFlush();
+				batchFlushed = true;
 			}
 
 			if( batchFlushed ) {
@@ -588,7 +613,8 @@ static void _R_DrawSurfaces( drawList_t *list, int drawSurfTypeFilter ) {
 		}
 
 		if( batchDrawSurf ) {
-			batchFlush = r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, lightStyle, portalSurface, sds->drawSurf, batchMergable );
+			batchFlush = r_flushBatchSurfCb[drawSurfType];
+			r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, lightStyle, portalSurface, sds->drawSurf, batchMergable );
 			batchFlushed = false;
 			if( depthWrite ) {
 				batchOpaque = true;

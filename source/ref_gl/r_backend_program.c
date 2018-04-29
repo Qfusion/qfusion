@@ -895,6 +895,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	}
 
 
+	programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
+
 	if( e->flags & RF_FULLBRIGHT || rb.currentModelType == mod_bad ) {
 		programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
 		Vector4Set( ambient, 1, 1, 1, 1 );
@@ -1236,10 +1238,11 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	vec4_t lightAmbient, lightDiffuse;
 	mat4_t texMatrix, genVectors;
 
-	// lightmapped surface pass
-	if( isWorldSurface &&
-		lightStyle &&
-		( rgbgen == RGB_GEN_IDENTITY
+	if( isWorldSurface && rb.realSuperLightStyle ) {
+		if( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX ) {
+			// vertex-lit world surface
+			isWorldVertexLight = rb.realSuperLightStyle->vertexStyles[0] != 255;
+		} else if( ( rgbgen == RGB_GEN_IDENTITY
 		  || rgbgen == RGB_GEN_CONST
 		  || rgbgen == RGB_GEN_WAVE
 		  || rgbgen == RGB_GEN_CUSTOMWAVE
@@ -1249,17 +1252,9 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		( rb.currentShader->flags & SHADER_LIGHTMAP ) &&
 		( pass->flags & GLSTATE_BLEND_ADD ) != GLSTATE_BLEND_ADD &&
 		( pass->flags & ( GLSTATE_SRCBLEND_SRC_ALPHA ) ) != GLSTATE_SRCBLEND_SRC_ALPHA ) {
-		isLightmapped = rb.superLightStyle->lightmapNum[0] >= 0;
-	}
-
-	// vertex-lit world surface
-	if( isWorldSurface
-		&& ( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX )
-		&& ( rb.currentShader->vattribs & VATTRIB_COLOR0_BIT ) ) {
-		isWorldVertexLight = true;
-		programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
-	} else {
-		isWorldVertexLight = false;
+			// lightmapped surface pass
+			isLightmapped = rb.realSuperLightStyle->lightmapStyles[0] != 255;
+		}
 	}
 
 	// possibly apply the fog inline
@@ -1303,10 +1298,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	image = RB_ShaderpassTex( pass );
 	if( isLightmapped || isWorldVertexLight ) {
 		applyLighting = true;
-	} else {
-		if( rb.currentShader->flags & SHADER_LIGHTMAP ) {
-			applyLighting = r_lighting_realtime_world->integer != 0;
-		}
+		programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
 	}
 
 	if( rb.triangleOutlines ) {
@@ -1322,6 +1314,9 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 	}
 
+	if( isWorldVertexLight ) {
+		programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
+	}
 	if( image->flags & IT_ALPHAMASK ) {
 		programFeatures |= GLSL_SHADER_Q3_ALPHA_MASK;
 	}
@@ -1352,7 +1347,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		RB_BindImage( 3, rb.st.screenDepthTexCopy );
 	}
 
-	if( isLightmapped ) {
+	if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
 		int i;
 
 		// bind lightmap textures and set program's features for lightstyles
@@ -1851,18 +1846,19 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 /*
 * RB_SetLightstyle
 */
-void RB_SetLightstyle( const superLightStyle_t *lightStyle ) {
+void RB_SetLightstyle( const superLightStyle_t *lightStyle, const superLightStyle_t *realLightStyle ) {
 	if( rb.triangleOutlines ) {
 		rb.superLightStyle = NULL;
 		return;
 	}
 
-	if( rb.superLightStyle == lightStyle ) {
-		return;
+	if( rb.superLightStyle == lightStyle && rb.realSuperLightStyle == realLightStyle ) {
+		//return;
 	}
 
 	assert( rb.currentShader != NULL );
 	rb.superLightStyle = lightStyle;
+	rb.realSuperLightStyle = realLightStyle;
 	rb.dirtyUniformState = true;
 
 	RB_UpdateVertexAttribs();

@@ -622,7 +622,8 @@ static const glsl_feature_t glsl_features_material[] =
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
-	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
+
+	{ GLSL_SHADER_COMMON_LIGHTING, "#define APPLY_LIGHTING\n", "" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
@@ -675,7 +676,6 @@ static const glsl_feature_t glsl_features_distortion[] =
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
-	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
@@ -770,7 +770,8 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
-	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
+
+	{ GLSL_SHADER_COMMON_LIGHTING, "#define APPLY_LIGHTING\n", "" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
@@ -816,7 +817,8 @@ static const glsl_feature_t glsl_features_celshade[] =
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
-	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
+
+	{ GLSL_SHADER_COMMON_LIGHTING, "#define APPLY_LIGHTING\n", "" },
 
 	{ GLSL_SHADER_COMMON_RGB_GEN_ONE_MINUS_VERTEX, "#define APPLY_RGB_ONE_MINUS_VERTEX\n", "_c1-v" },
 	{ GLSL_SHADER_COMMON_RGB_GEN_VERTEX, "#define APPLY_RGB_VERTEX\n", "_cv" },
@@ -865,7 +867,6 @@ static const glsl_feature_t glsl_features_fog[] =
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
-	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
@@ -2272,32 +2273,33 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 */
 void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle ) {
 	unsigned i;
+	GLfloat rgb[3];
+	float deluxemapOffset[( MAX_LIGHTMAPS + 3 ) & ( ~3 )] = { 0 };
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
-	if( superLightStyle ) {
-		GLfloat rgb[3];
-		float deluxemapOffset[( MAX_LIGHTMAPS + 3 ) & ( ~3 )];
+	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
+		VectorClear( rgb );
 
-		for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
+		if( superLightStyle ) {
 			if( superLightStyle->lightmapStyles[i] != 255 ) {
 				VectorCopy( rsc.lightStyles[superLightStyle->lightmapStyles[i]].rgb, rgb );
 			} else if( superLightStyle->vertexStyles[i] != 255 ) {
 				VectorCopy( rsc.lightStyles[superLightStyle->vertexStyles[i]].rgb, rgb );
-			} else {
-				break;
-			}
-
-			if( program->loc.LightstyleColor[i] >= 0 ) {
-				qglUniform3fvARB( program->loc.LightstyleColor[i], 1, rgb );
 			}
 			if( program->loc.DeluxemapOffset >= 0 ) {
 				deluxemapOffset[i] = superLightStyle->stOffset[i][0];
 			}
 		}
 
-		if( i && ( program->loc.DeluxemapOffset >= 0 ) ) {
-			qglUniform4fvARB( program->loc.DeluxemapOffset, ( i + 3 ) / 4, deluxemapOffset );
+		if( program->loc.LightstyleColor[i] >= 0 ) {
+			qglUniform3fvARB( program->loc.LightstyleColor[i], 1, rgb );
+		} else if( program->loc.DeluxemapOffset < 0 ) {
+			break;
 		}
+	}
+	
+	if( i && ( program->loc.DeluxemapOffset >= 0 ) ) {
+		qglUniform4fvARB( program->loc.DeluxemapOffset, ( i + 3 ) / 4, deluxemapOffset );
 	}
 }
 

@@ -825,6 +825,7 @@ bool    R_AddBrushModelToDrawList( const entity_t *e );
 float   R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
 flushBatchDrawSurf_cb R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
 	const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf, bool mergable );
+void	R_FlushBSPSurfBatch( void );
 void	R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, 
 	drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr );
 
