@@ -632,6 +632,8 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
 	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
+	{ GLSL_SHADER_COMMON_VERTEX_LIGHTING, "#define APPLY_VERTEX_LIGHTING\n", "_bvc" },
+
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec4\n", "_ls3" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec2\n", "_ls2" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n#define qf_lmvec01 vec4\n", "_ls1" },
@@ -652,10 +654,6 @@ static const glsl_feature_t glsl_features_material[] =
 
 	{ GLSL_SHADER_MATERIAL_ENTITY_DECAL, "#define APPLY_ENTITY_DECAL\n", "_decal2" },
 	{ GLSL_SHADER_MATERIAL_ENTITY_DECAL_ADD, "#define APPLY_ENTITY_DECAL_ADD\n", "_decal2_add" },
-
-	// doesn't make sense without APPLY_DIRECTIONAL_LIGHT
-	{ GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT_MIX, "#define APPLY_DIRECTIONAL_LIGHT_MIX\n", "_mix" },
-	{ GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT_FROM_NORMAL, "#define APPLY_DIRECTIONAL_LIGHT_FROM_NORMAL\n", "_normlight" },
 
 	{ 0, NULL, NULL }
 };
@@ -785,6 +783,8 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_COMMON_SRGB2LINEAR, "#define APPLY_SRGB2LINEAR\n", "_srgb" },
 	{ GLSL_SHADER_COMMON_LINEAR2SRB, "#define APPLY_LINEAR2SRGB\n", "_linear" },
+
+	{ GLSL_SHADER_COMMON_VERTEX_LIGHTING, "#define APPLY_VERTEX_LIGHTING\n", "_bvc" },
 
 	{ GLSL_SHADER_Q3_TC_GEN_CELSHADE, "#define APPLY_TC_GEN_CELSHADE\n", "_tc_cel" },
 	{ GLSL_SHADER_Q3_TC_GEN_PROJECTION, "#define APPLY_TC_GEN_PROJECTION\n", "_tc_proj" },
@@ -2276,10 +2276,16 @@ void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightS
 
 	if( superLightStyle ) {
 		GLfloat rgb[3];
-		static float deluxemapOffset[( MAX_LIGHTMAPS + 3 ) & ( ~3 )];
+		float deluxemapOffset[( MAX_LIGHTMAPS + 3 ) & ( ~3 )];
 
-		for( i = 0; i < MAX_LIGHTMAPS && superLightStyle->lightmapStyles[i] != 255; i++ ) {
-			VectorCopy( rsc.lightStyles[superLightStyle->lightmapStyles[i]].rgb, rgb );
+		for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
+			if( superLightStyle->lightmapStyles[i] != 255 ) {
+				VectorCopy( rsc.lightStyles[superLightStyle->lightmapStyles[i]].rgb, rgb );
+			} else if( superLightStyle->vertexStyles[i] != 255 ) {
+				VectorCopy( rsc.lightStyles[superLightStyle->vertexStyles[i]].rgb, rgb );
+			} else {
+				break;
+			}
 
 			if( program->loc.LightstyleColor[i] >= 0 ) {
 				qglUniform3fvARB( program->loc.LightstyleColor[i], 1, rgb );
@@ -2590,14 +2596,14 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
 		// arrays of samplers are broken on ARM Mali so get u_LightmapTexture%i instead of u_LightmapTexture[%i]
 		locLightmapTexture[i] = qglGetUniformLocationARB( program->object,
-														  va_r( tmp, sizeof( tmp ), "u_LightmapTexture%i", i ) );
-
-		if( locLightmapTexture[i] < 0 ) {
-			break;
-		}
+			va_r( tmp, sizeof( tmp ), "u_LightmapTexture%i", i ) );
 
 		program->loc.LightstyleColor[i] = qglGetUniformLocationARB( program->object,
-																	va_r( tmp, sizeof( tmp ), "u_LightstyleColor[%i]", i ) );
+			va_r( tmp, sizeof( tmp ), "u_LightstyleColor[%i]", i ) );
+
+		if( locLightmapTexture[i] < 0 && program->loc.LightstyleColor[i] < 0 ) {
+			break;
+		}
 	}
 
 	program->loc.GlossFactors = qglGetUniformLocationARB( program->object, "u_GlossFactors" );

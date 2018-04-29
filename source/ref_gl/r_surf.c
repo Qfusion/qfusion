@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static vec3_t modelOrg;                         // relative to view point
 
-#define R_SurfFlagsNoDlight(surfFlags) ( (surfFlags) & ( SURF_NOLIGHTMAP | SURF_NODLIGHT | SURF_SKY | SURF_NODRAW ) )
+#define R_SurfFlagsNoDlight(surfFlags) ( (surfFlags) & ( SURF_NODLIGHT | SURF_SKY | SURF_NODRAW ) )
 #define R_DrawSurfLightsKey(ds) ((ds)->numRtLights ? (ds)->numRtLights >> 2 : (ds)->numLightmaps)
 
 //==================================================================================
