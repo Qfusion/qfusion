@@ -813,6 +813,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	if( rb.currentModelType == mod_brush ) {
+		lightStyle = rb.superLightStyle;
+
 		// brush models
 		if( !( r_offsetmapping->integer & 1 ) ) {
 			offsetmappingScale = 0;
@@ -901,10 +903,11 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		bool minLight = ( e->flags & RF_MINLIGHT ) != 0;
 
 		// world surface
-		if( rb.currentModelType == mod_brush ) {
-			if( rb.superLightStyle && rb.superLightStyle->lightmapNum[0] >= 0 ) {
-				lightStyle = rb.superLightStyle;
-
+		if( lightStyle ) {
+			if( pass->rgbgen.type == RGB_GEN_VERTEX || pass->rgbgen.type == RGB_GEN_ONE_MINUS_VERTEX ) {
+				// vertex lighting
+				programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
+			} else if( lightStyle->lightmapNum[0] >= 0 ) {
 				// bind lightmap textures and set program's features for lightstyles
 				for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
 					RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] );
@@ -928,11 +931,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 				if( !VectorCompare( mapConfig.ambient, vec3_origin ) ) {
 					VectorCopy( mapConfig.ambient, ambient );
 					programFeatures |= GLSL_SHADER_MATERIAL_AMBIENT_COMPENSATION;
-				}
-			} else {
-				if( pass->rgbgen.type == RGB_GEN_VERTEX || pass->rgbgen.type == RGB_GEN_ONE_MINUS_VERTEX ) {
-					// vertex lighting
-					programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
 				}
 			}
 		} else {
