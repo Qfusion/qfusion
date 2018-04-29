@@ -865,11 +865,6 @@ void R_DrawWorldShadowNode( void ) {
 		msec = ri.Sys_Milliseconds();
 	}
 
-	memset( (void *)rn.meshlist->worldSurfVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-	memset( (void *)rn.meshlist->worldSurfFullVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-	memset( (void *)rn.meshlist->worldLeafVis, 0, bm->numleafs * sizeof( *rn.meshlist->worldLeafVis ) );
-	memset( (void *)rn.meshlist->worldDrawSurfVis, 0, bm->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
-
 	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && l->surfaceInfo ) {
 		unsigned *p = l->surfaceInfo;
 		unsigned numDrawSurfaces = *p++;
@@ -968,34 +963,27 @@ void R_DrawWorldNode( void ) {
 		msec = ri.Sys_Milliseconds();
 	}
 
-	if( bm->numleafs > bm->numsurfaces ) {
-		memset( (void *)rn.meshlist->worldSurfVis, 1, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-		memset( (void *)rn.meshlist->worldSurfFullVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-		memset( (void *)rn.meshlist->worldLeafVis, 1, bm->numleafs * sizeof( *rn.meshlist->worldLeafVis ) );
-		memset( (void *)rn.meshlist->worldDrawSurfVis, 0, bm->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
-	} else {
-		memset( (void *)rn.meshlist->worldSurfVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-		memset( (void *)rn.meshlist->worldSurfFullVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-		memset( (void *)rn.meshlist->worldLeafVis, 0, bm->numleafs * sizeof( *rn.meshlist->worldLeafVis ) );
-		memset( (void *)rn.meshlist->worldDrawSurfVis, 0, bm->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
-	}
-
 	VectorCopy( rsh.worldModel->mins, rn.visMins );
 	VectorCopy( rsh.worldModel->maxs, rn.visMaxs );
 
 	//
 	// cull leafs
 	//
+	if( r_speeds->integer ) {
+		msec2 = ri.Sys_Milliseconds();
+	}
+
 	if( bm->numleafs <= bm->numsurfaces ) {
-		if( r_speeds->integer ) {
-			msec2 = ri.Sys_Milliseconds();
-		}
-
 		R_CullVisLeaves( 0, bm->numleafs, clipFlags );
+	} else {
+		memset( (void *)rn.meshlist->worldSurfVis, 1, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
+		memset( (void *)rn.meshlist->worldSurfFullVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
+		memset( (void *)rn.meshlist->worldLeafVis, 1, bm->numleafs * sizeof( *rn.meshlist->worldLeafVis ) );
+		memset( (void *)rn.meshlist->worldDrawSurfVis, 0, bm->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
+	}
 
-		if( speeds ) {
-			rf.stats.t_cull_world_nodes += ri.Sys_Milliseconds() - msec2;
-		}
+	if( speeds ) {
+		rf.stats.t_cull_world_nodes += ri.Sys_Milliseconds() - msec2;
 	}
 
 	//
