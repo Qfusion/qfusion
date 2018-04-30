@@ -1445,7 +1445,6 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 	int i;
 	const mfog_t *fog;
 	const model_t *mod = lod < e->model->numlods ? e->model->lods[lod] : e->model;
-	const shader_t *shader;
 	const mskmesh_t *mesh;
 	const mskmodel_t *skmodel;
 	float distance;
@@ -1478,7 +1477,8 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 	R_AddSkeletalModelCacheJob( e, mod );
 
 	for( i = 0, mesh = skmodel->meshes; i < (int)skmodel->nummeshes; i++, mesh++ ) {
-		shader = NULL;
+		int drawOrder;
+		const shader_t *shader = NULL;
 
 		if( e->customSkin ) {
 			shader = R_FindShaderForSkinFile( e->customSkin, mesh->name );
@@ -1488,11 +1488,16 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 			shader = mesh->skin.shader;
 		}
 
-		if( shader ) {
-			int drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
-			R_AddSurfToDrawList( rn.meshlist, e, shader, fog, -1, 
-				SKMSURF_DISTANCE( shader, distance ), drawOrder, NULL, skmodel->drawSurfs + i );
+		if( !shader ) {
+			continue;
 		}
+		if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && R_ShaderNoShadow( shader ) ) {
+			continue;
+		}
+
+		drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
+		R_AddSurfToDrawList( rn.meshlist, e, shader, fog, -1, 
+			SKMSURF_DISTANCE( shader, distance ), drawOrder, NULL, skmodel->drawSurfs + i );
 	}
 
 	return true;

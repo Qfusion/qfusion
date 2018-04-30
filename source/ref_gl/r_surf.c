@@ -58,13 +58,7 @@ bool R_SurfNoShadow( const msurface_t *surf ) {
 	if( ( surf->flags & SURF_SKY ) && mapConfig.writeSkyDepth ) {
 		return false;
 	}
-	if( !Shader_DepthWrite( surf->shader ) ) {
-		return true;
-	}
-	if( ( surf->shader->sort >= SHADER_SORT_OPAQUE ) && ( surf->shader->sort <= SHADER_SORT_ALPHATEST ) ) {
-		return false;
-	}
-	return true;
+	return R_ShaderNoShadow( surf->shader );
 }
 
 /*
@@ -577,6 +571,12 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 
 		if( !surf->drawSurf ) {
 			continue;
+		}
+
+		if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+			if( R_SurfNoShadow( surf ) ) {
+				continue;
+			}
 		}
 
 		rn.meshlist->worldSurfVis[s] = 1;

@@ -2786,6 +2786,22 @@ shader_t *R_ShaderById( unsigned int id ) {
 }
 
 /*
+* R_ShaderNoShadow
+*/
+bool R_ShaderNoShadow( const shader_t *shader ) {
+	if( ( shader->flags & (SHADER_CULL_BACK|SHADER_CULL_FRONT) ) == SHADER_CULL_BACK ) {
+		return true;
+	}
+	if( Shader_DepthRead( shader ) || !Shader_DepthWrite( shader ) ) {
+		return true;
+	}
+	if( ( shader->sort < SHADER_SORT_OPAQUE ) || ( shader->sort > SHADER_SORT_ALPHATEST ) ) {
+		return true;
+	}
+	return false;
+}
+
+/*
 * R_TouchShadersByName
 */
 void R_TouchShadersByName( const char *name ) {
