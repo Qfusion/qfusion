@@ -228,15 +228,6 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *
 		return NULL;
 	}
 
-	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
-		if( Shader_DepthRead( shader ) ) {
-			return NULL;
-		}
-		if( !Shader_DepthWrite( shader ) ) {
-			return NULL;
-		}
-	}
-
 	if( !rsh.worldBrushModel ) {
 		fog = NULL;
 	}

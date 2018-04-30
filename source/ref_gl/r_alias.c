@@ -697,10 +697,10 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 	const model_t *mod = lod < e->model->numlods ? e->model->lods[lod] : e->model;
 	const maliasmodel_t *aliasmodel;
 	const mfog_t *fog;
-	const shader_t *shader;
 	const maliasmesh_t *mesh;
 	float distance;
 	const entSceneCache_t *cache = R_ENTCACHE( e );
+	maliasskin_t fakeskin;
 
 	if( cache->mod_type != mod_alias ) {
 		return false;
@@ -725,27 +725,36 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 	}
 #endif
 
+	fakeskin.name[0] = 0;
+	fakeskin.shader = NULL;
+
 	for( i = 0, mesh = aliasmodel->meshes; i < aliasmodel->nummeshes; i++, mesh++ ) {
-		shader = NULL;
+		int numSkins = 1;
+		maliasskin_t *skins = &fakeskin;
 
 		if( e->customSkin ) {
-			shader = R_FindShaderForSkinFile( e->customSkin, mesh->name );
+			fakeskin.shader = R_FindShaderForSkinFile( e->customSkin, mesh->name );
 		} else if( e->customShader ) {
-			shader = e->customShader;
+			fakeskin.shader = e->customShader;
 		} else if( mesh->numskins ) {
-			for( j = 0; j < mesh->numskins; j++ ) {
-				shader = mesh->skins[j].shader;
-				if( shader ) {
-					int drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
-					R_AddSurfToDrawList( rn.meshlist, e, shader, fog, -1,
-						MD3SURF_DISTANCE( shader, distance ), drawOrder, NULL, aliasmodel->drawSurfs + i );
-				}
-			}
+			skins = mesh->skins;
+			numSkins = mesh->numskins;
+		} else {
 			continue;
 		}
 
-		if( shader ) {
-			int drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
+		for( j = 0; j < mesh->numskins; j++ ) {
+			int drawOrder;
+			const shader_t *shader = mesh->skins[j].shader;
+		
+			if( !shader ) {
+				continue;
+			}
+			if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && R_ShaderNoShadow( shader ) ) {
+				continue;
+			}
+
+			drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
 			R_AddSurfToDrawList( rn.meshlist, e, shader, fog, -1,
 				MD3SURF_DISTANCE( shader, distance ), drawOrder, NULL, aliasmodel->drawSurfs + i );
 		}

@@ -310,6 +310,7 @@ void R_CacheSpriteEntity( const entity_t *e ) {
 */
 static bool R_AddSpriteToDrawList( const entity_t *e ) {
 	float dist;
+	const shader_t *shader = e->customShader;
 
 	dist =
 		( e->origin[0] - rn.refdef.vieworg[0] ) * rn.viewAxis[AXIS_FORWARD + 0] +
@@ -320,7 +321,11 @@ static bool R_AddSpriteToDrawList( const entity_t *e ) {
 		return false; // cull it because we don't want to sort unneeded things
 	}
 
-	if( !R_AddSurfToDrawList( rn.meshlist, e, e->customShader, 
+	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && R_ShaderNoShadow( shader ) ) {
+		return false;
+	}
+
+	if( !R_AddSurfToDrawList( rn.meshlist, e, shader, 
 		R_FogForSphere( e->origin, e->radius ), -1, dist, 0, NULL, &spriteDrawSurf ) ) {
 		return false;
 	}
