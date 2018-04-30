@@ -1296,13 +1296,10 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	}
 
 	image = RB_ShaderpassTex( pass );
-	if( isLightmapped || isWorldVertexLight ) {
-		applyLighting = true;
-		programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
-	}
-
-	if( rb.triangleOutlines ) {
+	if( rb.triangleOutlines || rb.noColorWrite ) {
 		applyLighting = false;
+	} else {
+		applyLighting = ( isLightmapped || isWorldVertexLight );
 	}
 
 	if( applyLighting ) {
@@ -1314,9 +1311,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 	}
 
-	if( isWorldVertexLight ) {
-		programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
-	}
 	if( image->flags & IT_ALPHAMASK ) {
 		programFeatures |= GLSL_SHADER_Q3_ALPHA_MASK;
 	}
@@ -1347,19 +1341,25 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		RB_BindImage( 3, rb.st.screenDepthTexCopy );
 	}
 
-	if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
-		int i;
-
-		// bind lightmap textures and set program's features for lightstyles
-		for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-			RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
-		programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
-		if( mapConfig.lightmapArrays ) {
-			programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
-		}
-	}
-
 	if( applyLighting ) {
+		programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
+
+		if( isWorldVertexLight ) {
+			programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
+		}
+
+		if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
+			int i;
+
+			// bind lightmap textures and set program's features for lightstyles
+			for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
+				RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
+			programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
+			if( mapConfig.lightmapArrays ) {
+				programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
+			}
+		}
+
 		programFeatures |= RB_RtlightbitsToProgramFeatures();
 	}
 
