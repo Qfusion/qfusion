@@ -577,9 +577,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 					testsize[1] = testmaxs[1] - testmins[1];
 					testsize[2] = testmaxs[2] - testmins[2];
 					testlen = max( max( testsize[0], testsize[1] ), testsize[2] );
-					if( testlen > 700 ) {
-						continue;
-					}
 
 					if( fcount == MAX_DRAWSURF_SURFS ) {
 						break;
@@ -603,7 +600,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 				}
 			}
 
-			if( !vbo || !mergable || vbo->vertexAttribs != vattribs || vbo->numVerts + vcount >= USHRT_MAX ) {
+			if( !vbo || vbo->vertexAttribs != vattribs || vbo->numVerts + vcount >= USHRT_MAX ) {
 				// create temp VBO to hold pre-batched info
 				if( numTempVBOs == maxTempVBOs ) {
 					maxTempVBOs += 1024;
@@ -611,6 +608,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 				}
 
 				vbo = &tempVBOs[numTempVBOs++];
+				vbo->owner = NULL;
 				vbo->numVerts = 0;
 				vbo->numElems = 0;
 				vbo->vertexAttribs = vattribs;
@@ -656,6 +654,10 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 		drawSurf = &loadbmodel->drawSurfaces[i];
 		vbo = drawSurf->vbo->owner;
 		drawSurf->vbo = vbo;
+
+		if( !vbo ) {
+			continue;
+		}
 
 		for( j = 0; j < drawSurf->numWorldSurfaces; j++ ) {
 			unsigned si = drawSurf->worldSurfaces[j];

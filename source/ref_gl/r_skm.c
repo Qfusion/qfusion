@@ -1188,7 +1188,6 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	skmcacheentry_t *cache;	
 	mat4_t *bonePoseRelativeMat;
 	dualquat_t *bonePoseRelativeDQ;
-	entSceneCache_t *entCache = R_ENTCACHE( e );
 
 	cache = NULL;
 	bonePoseRelativeDQ = NULL;
@@ -1203,8 +1202,6 @@ void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 		bonePoseRelativeDQ = ( dualquat_t * )cache->data;
 		bonePoseRelativeMat = ( mat4_t * )( ( uint8_t * )bonePoseRelativeDQ + sizeof( dualquat_t ) * skmodel->numbones );
 	}
-
-	RB_SetRtLightParams( entCache->numRtLights, entCache->rtLights, 0, NULL );
 
 	if( !cache || ( cache->boneposes == cache->oldboneposes && !cache->framenum ) ) {
 		// fastpath: render static frame 0 as is
@@ -1492,6 +1489,9 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 			continue;
 		}
 		if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && R_ShaderNoShadow( shader ) ) {
+			continue;
+		}
+		if( ( rn.renderFlags & RF_LIGHTVIEW ) && R_ShaderNoDlight( shader ) ) {
 			continue;
 		}
 

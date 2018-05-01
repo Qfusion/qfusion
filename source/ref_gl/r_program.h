@@ -118,7 +118,6 @@ enum {
 #define GLSL_SHADER_COMMON_SHADOWMAP_PCF        GLSL_BIT( 27 )
 #define GLSL_SHADER_COMMON_SHADOWMAP_PCF2		GLSL_BIT( 28 )
 #define GLSL_SHADER_COMMON_RGBSHADOW_24BIT      GLSL_BIT( 29 )
-#define GLSL_SHADER_COMMON_LIGHTBITS			GLSL_BIT( 30 )
 #define GLSL_SHADER_COMMON_VERTEX_LIGHTING		GLSL_BIT( 31 )
 
 // material program type features
@@ -232,7 +231,7 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 
 void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle );
 
-void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, bool world,
+void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectToLightMatrix,
 	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
 
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist,

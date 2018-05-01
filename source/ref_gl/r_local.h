@@ -179,7 +179,6 @@ typedef struct {
 
 	unsigned rtLightFrame;
 	unsigned numRtLights;
-	rtlight_t *rtLights[MAX_DRAWSURF_RTLIGHTS];
 } entSceneCache_t;
 
 typedef struct refScreenTexSet_s {
@@ -193,7 +192,7 @@ typedef struct refScreenTexSet_s {
 	int multisampleTarget;                // multisample fbo
 } refScreenTexSet_t;
 
-typedef struct {
+typedef struct refinst_s {
 	unsigned int renderFlags;
 
 	int renderTarget;                       // target framebuffer object
@@ -248,6 +247,8 @@ typedef struct {
 	unsigned int numEntities;
 	entity_t *entities[MAX_REF_ENTITIES];
 
+	struct refinst_s *parent;
+
 	int				rtLightSide;
 	rtlight_t		*rtLight;
 
@@ -256,7 +257,6 @@ typedef struct {
 	drawList_t      *meshlist;              // meshes to be rendered
 	drawList_t      *portalmasklist;        // sky and portal BSP surfaces are rendered before (sky-)portals
 											// to create depth mask
-	drawList_t      *parentmeshlist;        // pointer to main camera view, for lights
 
 	mfog_t          *fog_eye;
 
@@ -766,6 +766,7 @@ void R_InitDrawLists( void );
 
 void R_SortDrawList( drawList_t *list );
 void R_DrawSurfaces( drawList_t *list );
+void R_DrawPortalSurfaces( drawList_t *list );
 void R_DrawSkySurfaces( drawList_t *list );
 void R_DrawOutlinedSurfaces( drawList_t *list );
 void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr );

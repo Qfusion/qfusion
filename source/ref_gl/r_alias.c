@@ -527,7 +527,6 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	const maliasmodel_t *model = ( const maliasmodel_t * )drawSurf->model->extradata;
 	const maliasmesh_t *aliasmesh = drawSurf->mesh;
 	vattribmask_t vattribs;
-	entSceneCache_t *entCache = R_ENTCACHE( e );
 
 	// see what vertex attribs backend needs
 	vattribs = RB_GetVertexAttribs();
@@ -544,8 +543,6 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	oldframe = model->frames + oldframenum;
 	for( i = 0; i < 3; i++ )
 		move[i] = frame->translate[i] + ( oldframe->translate[i] - frame->translate[i] ) * backlerp;
-
-	RB_SetRtLightParams( entCache->numRtLights, entCache->rtLights, 0, NULL );
 
 	if( aliasmesh->vbo != NULL && !framenum && !oldframenum ) {
 		RB_BindVBO( aliasmesh->vbo->index, GL_TRIANGLES );
@@ -751,6 +748,9 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 				continue;
 			}
 			if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && R_ShaderNoShadow( shader ) ) {
+				continue;
+			}
+			if( ( rn.renderFlags & RF_LIGHTVIEW ) && R_ShaderNoDlight( shader ) ) {
 				continue;
 			}
 

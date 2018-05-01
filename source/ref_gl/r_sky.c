@@ -406,10 +406,11 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 */
 void R_DrawDepthSkySurf( void ) {
 	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE );
+
 	if( mapConfig.writeSkyDepth ) {
 		R_DrawSkySurfaces( rn.meshlist );
 	}
-	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
+
 	RB_SetShaderStateMask( ~0, 0 );
 }
 

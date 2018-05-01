@@ -301,7 +301,11 @@ void RB_LoadObjectMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.objectMatrix );
 	Matrix4_Multiply( rb.cameraMatrix, m, rb.modelviewMatrix );
 	Matrix4_Multiply( rb.projectionMatrix, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
-	rb.dirtyUniformState = true;}
+	if( rb.numRealtimeLights > 0 ) {
+		Matrix4_Multiply( rb.rtlights[0]->worldToLightMatrix, m, rb.objectToLightMatrix );
+	}
+	rb.dirtyUniformState = true;
+}
 
 /*
 * RB_LoadProjectionMatrix
@@ -1240,10 +1244,27 @@ void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis ) {
 }
 
 /*
+* RB_SetMode
+*/
+void RB_SetMode( int mode ) {
+	rb.mode = mode;
+	rb.dirtyUniformState = true;
+}
+
+/*
+* RB_SetSurfFlags
+*/
+void RB_SetSurfFlags( int flags ) {
+	rb.surfFlags = flags;
+	rb.dirtyUniformState = true;
+}
+
+/*
 * RB_SetRenderFlags
 */
 void RB_SetRenderFlags( int flags ) {
 	rb.renderFlags = flags;
+	rb.dirtyUniformState = true;
 }
 
 /*

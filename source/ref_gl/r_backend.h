@@ -27,6 +27,16 @@ enum {
 	RB_VBO_NUM_STREAMS          = -RB_VBO_STREAM_COMPACT
 };
 
+enum {
+	RB_MODE_NORMAL,
+	RB_MODE_DEPTH,
+	RB_MODE_BLACK_GT,
+	RB_MODE_LIGHT,
+	RB_MODE_POST_LIGHT,
+	RB_MODE_DECALS,
+	RB_MODE_TRIANGLE_OUTLINES,
+};
+
 //===================================================================
 
 struct shader_s;
@@ -89,6 +99,8 @@ void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
 void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );
 void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
+void RB_SetMode( int mode );
+void RB_SetSurfFlags( int flags );
 void RB_SetRenderFlags( int flags );
 void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure );
 void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );

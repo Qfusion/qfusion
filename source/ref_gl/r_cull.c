@@ -381,8 +381,13 @@ int R_CullModelEntity( const entity_t *e, bool pvsCull ) {
 * R_CullSpriteEntity
 */
 int R_CullSpriteEntity( const entity_t *e ) {
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		if( !R_ShaderNoDlight( e->customShader ) ) {
+			return 1;
+		}
+	}
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		if( !Shader_DepthWrite( e->customShader ) ) {
+		if( !R_ShaderNoShadow( e->customShader ) ) {
 			return 1;
 		}
 	}

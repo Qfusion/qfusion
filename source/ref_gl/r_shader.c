@@ -2792,7 +2792,7 @@ bool R_ShaderNoDlight( const shader_t *shader ) {
 	if( Shader_DepthRead( shader ) || !Shader_DepthWrite( shader ) ) {
 		return true;
 	}
-	if( ( shader->sort < SHADER_SORT_OPAQUE ) || ( shader->sort > SHADER_SORT_ALPHATEST ) ) {
+	if( ( shader->sort < SHADER_SORT_OPAQUE ) || ( shader->sort > SHADER_SORT_BANNER ) ) {
 		return true;
 	}
 	return false;
@@ -2808,7 +2808,7 @@ bool R_ShaderNoShadow( const shader_t *shader ) {
 	if( Shader_DepthRead( shader ) || !Shader_DepthWrite( shader ) ) {
 		return true;
 	}
-	if( ( shader->sort < SHADER_SORT_OPAQUE ) || ( shader->sort > SHADER_SORT_ALPHATEST ) ) {
+	if( ( shader->sort < SHADER_SORT_OPAQUE ) || ( shader->sort > SHADER_SORT_BANNER ) ) {
 		return true;
 	}
 	return false;

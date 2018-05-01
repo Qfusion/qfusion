@@ -84,8 +84,6 @@ void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const m
 	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf ) {
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
 
-	RB_SetRtLightParams( 0, NULL, 0, NULL );
-
 	if( drawSurf->numInstances ) {
 		RB_DrawElementsInstanced( drawSurf->firstVert, drawSurf->numVerts, 
 			0, drawSurf->numElems,	drawSurf->numInstances, drawSurf->instances );
@@ -286,10 +284,11 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	rnp->polygonFactor = r_shadows_polygonoffset_factor->value;
 	rnp->polygonUnits = r_shadows_polygonoffset_units->value;
 	rnp->meshlist = &r_shadowlist;
-	rnp->parentmeshlist = prevrn->meshlist;
+	rnp->parent = prevrn;
 	rnp->portalmasklist = NULL;
 	rnp->lodBias = 0;
 	rnp->lodScale = 1;
+	rnp->numDepthPortalSurfaces = 0;
 	VectorCopy( l->origin, rnp->lodOrigin );
 	VectorCopy( l->origin, rnp->pvsOrigin );
 
@@ -430,7 +429,7 @@ void R_DrawShadows( void ) {
 	int maxsize = bound( minsize + 2, r_shadows_maxsize->integer, r_shadows_texturesize->integer / 8 );
 	refinst_t *prevrn;
 
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		return;
 	}
 
