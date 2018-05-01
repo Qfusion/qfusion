@@ -103,12 +103,15 @@ typedef struct r_backend_s {
 
 	mat4_t cameraMatrix;
 	mat4_t objectMatrix;
+	mat4_t objectToLightMatrix;
 	mat4_t modelviewMatrix;
 	mat4_t projectionMatrix;
 	mat4_t modelviewProjectionMatrix;
 	float zNear, zFar;
 
+	int mode;
 	int renderFlags;
+	int surfFlags;
 
 	vec3_t cameraOrigin;
 	mat3_t cameraAxis;

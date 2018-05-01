@@ -539,10 +539,7 @@ static r_glslfeat_t RB_RtlightbitsToProgramFeatures( void ) {
 
 	bits = 0;
 
-	if( rb.numSurfaces )
-		bits |= GLSL_SHADER_COMMON_LIGHTBITS;
-
-	if( ( r_lighting_realtime_world_shadows->integer || r_lighting_realtime_dlight_shadows->integer ) && rsh.shadowmapAtlasTexture ) {
+	if( rb.numRealtimeLights > 0 && rb.rtlights[0]->shadowSize > 0 && rsh.shadowmapAtlasTexture ) {
 		bits |= GLSL_SHADER_COMMON_REALTIME_SHADOWS;
 
 		if( glConfig.ext.shadow ) {
@@ -784,7 +781,11 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		normalmap = rsh.blankBumpTexture;
 	}
 
-	if( ( rb.currentModelType == mod_brush && !mapConfig.deluxeMappingEnabled )
+	if( rb.mode == RB_MODE_POST_LIGHT ) {
+		return;
+	}
+
+	if( rb.noColorWrite || ( rb.currentModelType == mod_brush && !mapConfig.deluxeMappingEnabled )
 	    /*|| ( normalmap == rsh.blankBumpTexture && !glossmap && !decalmap && !entdecalmap )*/ ) {
 		// render as plain Q3A shader, which is less computation-intensive
 		RB_RenderMeshGLSL_Q3AShader( pass, programFeatures );
@@ -951,7 +952,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		programFeatures |= RB_RtlightbitsToProgramFeatures();
 
-		if( minLight ) {
+		if( minLight && false ) {
 			float ambientL = VectorLength( ambient );
 
 			if( ambientL < rb.minLight ) {
@@ -995,8 +996,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		// dynamic lights
 		if( rb.numRealtimeLights > 0 ) {
-			RP_UpdateRealtimeLightsUniforms( program, rb.objectMatrix,
-				rb.currentEntity == rsc.worldent,
+			RP_UpdateRealtimeLightsUniforms( program, rb.objectToLightMatrix,
 				rb.numRealtimeLights, rb.rtlights, rb.numSurfaces, rb.surfRtLightBits );
 		}
 
@@ -1281,7 +1281,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		// get weighted incoming direction of world and dynamic lights
 		R_LightForOrigin( e->lightingOrigin, temp, lightAmbient, lightDiffuse, radius * e->scale, rb.noWorldLight );
 
-		if( e->flags & RF_MINLIGHT ) {
+		if( ( e->flags & RF_MINLIGHT ) && false ) {
 			if( lightAmbient[0] <= 0.1f || lightAmbient[1] <= 0.1f || lightAmbient[2] <= 0.1f ) {
 				VectorSet( lightAmbient, 0.1f, 0.1f, 0.1f );
 			}
@@ -1296,10 +1296,17 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	}
 
 	image = RB_ShaderpassTex( pass );
-	if( rb.triangleOutlines || rb.noColorWrite ) {
+	if( rb.triangleOutlines || rb.noColorWrite || rb.mode == RB_MODE_DECALS ) {
 		applyLighting = false;
-	} else {
-		applyLighting = ( isLightmapped || isWorldVertexLight );
+	} else if( !applyLighting ) {
+		applyLighting = ( isLightmapped || isWorldVertexLight ) || ( ( rb.surfFlags & SURF_NODLIGHT ) == 0 );
+	}
+
+	if( !applyLighting && ( rb.mode == RB_MODE_LIGHT ) ) {
+		return;
+	}
+	if( applyLighting && ( rb.mode == RB_MODE_POST_LIGHT ) ) {
+		return;
 	}
 
 	if( applyLighting ) {
@@ -1392,7 +1399,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// dynamic lights
 		if( applyLighting ) {
-			RP_UpdateRealtimeLightsUniforms( program, rb.objectMatrix, e == rsc.worldent,
+			RP_UpdateRealtimeLightsUniforms( program, rb.objectToLightMatrix,
 				rb.numRealtimeLights, rb.rtlights, rb.numSurfaces, rb.surfRtLightBits );
 		}
 
@@ -1785,6 +1792,10 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		return;
 	}
 
+	if( rb.mode == RB_MODE_BLACK_GT ) {
+		shader = rsh.whiteShader;
+	}
+
 	rb.currentShader = shader;
 	rb.fog = fog;
 	rb.texFog = rb.colorFog = NULL;
@@ -1804,15 +1815,14 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	rb.skyboxShader = NULL;
 	rb.skyboxSide = -1;
 
-	rb.numSurfaces = 0;
-	rb.numRealtimeLights = 0;
+	rb.surfFlags = SURF_NODLIGHT;
 
 	if( !e ) {
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
 		rb.alphaHack = false;
 		rb.greyscale = false;
 		rb.noDepthTest = false;
-		rb.noColorWrite =  false;
+		rb.noColorWrite = false;
 		rb.depthEqual = false;
 	} else {
 		Vector4Copy( rb.currentEntity->shaderRGBA, rb.entityColor );
@@ -1828,6 +1838,13 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.noDepthTest = e->renderfx & RF_NODEPTHTEST && e->rtype == RT_SPRITE ? true : false;
 		rb.noColorWrite = e->renderfx & RF_NOCOLORWRITE ? true : false;
 		rb.depthEqual = rb.alphaHack && ( e->renderfx & RF_WEAPONMODEL );
+	}
+
+	if( rb.mode == RB_MODE_DEPTH ) {
+		rb.noColorWrite = true;
+	}
+	if( rb.mode == RB_MODE_LIGHT ) {
+		rb.depthEqual = true;
 	}
 
 	if( fog && fog->shader && !rb.noColorWrite ) {
@@ -1853,7 +1870,7 @@ void RB_SetLightstyle( const superLightStyle_t *lightStyle, const superLightStyl
 	}
 
 	if( rb.superLightStyle == lightStyle && rb.realSuperLightStyle == realLightStyle ) {
-		//return;
+		return;
 	}
 
 	assert( rb.currentShader != NULL );
@@ -1976,9 +1993,9 @@ void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned n
 		numRtLights = 0;
 	}
 
-	if( rb.numRealtimeLights == 0 && rb.numSurfaces == 0 && numRtLights == 0 && numSurfs == 0 ) {
-		return;
-	}
+	//if( rb.numRealtimeLights == 0 && rb.numSurfaces == 0 && numRtLights == 0 && numSurfs == 0 ) {
+	//	return;
+	//}
 
 	rb.numRealtimeLights = numRtLights;
 	if( rtlights )
@@ -1987,6 +2004,10 @@ void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned n
 	rb.numSurfaces = numSurfs;
 	if( surfRtLightBits )
 		memcpy( rb.surfRtLightBits, surfRtLightBits, numSurfs * sizeof( *surfRtLightBits ) );
+
+	if( rb.numRealtimeLights > 0 ) {
+		Matrix4_Multiply( rb.rtlights[0]->worldToLightMatrix, rb.objectMatrix, rb.objectToLightMatrix );
+	}
 
 	rb.dirtyUniformState = true;
 
@@ -2126,18 +2147,26 @@ static void RB_SetShaderState( void ) {
 */
 static void RB_SetShaderpassState( int state ) {
 	state |= rb.currentShaderState;
-	if( rb.alphaHack ) {
-		if( !( state & GLSTATE_BLEND_MASK ) ) {
+
+	if( rb.mode == RB_MODE_LIGHT ) {
+		state &= ~GLSTATE_DEPTHWRITE;
+		state |= GLSTATE_DEPTHFUNC_EQ | GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE;
+	} else if( rb.mode == RB_MODE_BLACK_GT ) {
+		state &= ~(GLSTATE_BLEND_MASK|GLSTATE_DEPTHWRITE);
+		state |= GLSTATE_DEPTHFUNC_GT | GLSTATE_SRCBLEND_ZERO | GLSTATE_DSTBLEND_ZERO;
+	} else {
+		if( rb.alphaHack && !( state & GLSTATE_BLEND_MASK ) ) {
 			// force alpha blending
 			state = ( state & ~GLSTATE_DEPTHWRITE ) | GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 		}
+		if( rb.noColorWrite ) {
+			state |= GLSTATE_NO_COLORWRITE;
+		}
+		if( rb.depthEqual && ( state & GLSTATE_DEPTHWRITE ) ) {
+			state |= GLSTATE_DEPTHFUNC_EQ;
+		}
 	}
-	if( rb.noColorWrite ) {
-		state |= GLSTATE_NO_COLORWRITE;
-	}
-	if( rb.depthEqual && ( state & GLSTATE_DEPTHWRITE ) ) {
-		state |= GLSTATE_DEPTHFUNC_EQ;
-	}
+
 	RB_SetState( state );
 }
 
@@ -2229,19 +2258,38 @@ void RB_DrawShadedElements( void ) {
 	bool addGLSLOutline = false;
 	shaderpass_t *pass;
 
+	if( ( rb.mode == RB_MODE_DEPTH ) && !( rb.currentShader->flags & SHADER_DEPTHWRITE ) ) {
+		return;
+	}
 	if( RB_CleanSinglePass() ) {
 		return;
 	}
 
 	if( ENTITY_OUTLINE( rb.currentEntity ) && !( rb.renderFlags & RF_CLIPPLANE )
 		&& ( rb.currentShader->sort == SHADER_SORT_OPAQUE ) && Shader_CullFront( rb.currentShader )
-		&& !( rb.renderFlags & RF_SHADOWMAPVIEW ) ) {
+		&& !( rb.renderFlags & RF_NONVIEWERREF ) ) {
 		addGLSLOutline = true;
 	}
 
 	RB_SetShaderState();
 
 	for( i = 0, pass = rb.currentShader->passes; i < rb.currentShader->numpasses; i++, pass++ ) {
+		if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_LIGHT ) {
+			if( !(pass->flags & GLSTATE_DEPTHWRITE) ) {
+				continue;
+			}
+			if( pass->flags & GLSTATE_BLEND_MASK ) {
+				continue;
+			}
+		}
+		if( rb.mode == RB_MODE_DECALS ) {
+			if( pass->flags & GLSTATE_DEPTHWRITE ) {
+				continue;
+			}
+			if( !(pass->flags & GLSTATE_BLEND_MASK) ) {
+				continue;
+			}
+		}
 		if( ( pass->flags & SHADERPASS_DETAIL ) && !r_detailtextures->integer ) {
 			continue;
 		}
@@ -2249,6 +2297,10 @@ void RB_DrawShadedElements( void ) {
 			continue;
 		}
 		RB_RenderPass( pass );
+	}
+
+	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHT ) {
+		return;
 	}
 
 	// outlines

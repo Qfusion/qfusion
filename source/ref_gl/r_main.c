@@ -1031,6 +1031,13 @@ static void R_Clear( int bitMask ) {
 	bool rgbShadow = ( rn.renderFlags & ( RF_SHADOWMAPVIEW | RF_SHADOWMAPVIEW_RGB ) ) == ( RF_SHADOWMAPVIEW | RF_SHADOWMAPVIEW_RGB );
 	bool depthPortal = ( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW ) ) != 0 && ( rn.renderFlags & RF_PORTAL_CAPTURE ) == 0;
 
+	if( depthPortal ) {
+		return;
+	}
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		return;
+	}
+
 	fbo = RB_BoundFrameBufferObject();
 
 	if( rgbShadow ) {
@@ -1040,7 +1047,12 @@ static void R_Clear( int bitMask ) {
 		clearColor = rn.renderTarget != rf.renderTarget;
 		Vector4Set( envColor, 1, 1, 1, 0 );
 	} else {
-		clearColor = (!rn.numDepthPortalSurfaces && !mapConfig.writeSkyDepth) || R_FASTSKY();
+		if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+			clearColor = false;
+		} else {
+			clearColor = (rn.portalmasklist && !rn.portalmasklist->numDrawSurfs) || R_FASTSKY();
+		}
+
 		if( rsh.worldBrushModel && rsh.worldBrushModel->globalfog && rsh.worldBrushModel->globalfog->shader ) {
 			Vector4Scale( rsh.worldBrushModel->globalfog->shader->fog_color, 1.0 / 255.0, envColor );
 		} else {
@@ -1049,9 +1061,9 @@ static void R_Clear( int bitMask ) {
 	}
 
 	bits = 0;
-	if( !depthPortal ) {
+	//if( !depthPortal ) {
 		bits |= GL_DEPTH_BUFFER_BIT;
-	}
+	//}
 	if( clearColor ) {
 		bits |= GL_COLOR_BUFFER_BIT;
 	}
@@ -1082,8 +1094,6 @@ static void R_SetupGL( void ) {
 
 	RB_SetLightParams( rn.refdef.minLight, ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) != 0, rn.hdrExposure );
 
-	RB_SetRtLightParams( 0, NULL, 0, NULL );
-
 	RB_SetRenderFlags( rn.renderFlags );
 
 	RB_LoadProjectionMatrix( rn.projectionMatrix );
@@ -1097,6 +1107,12 @@ static void R_SetupGL( void ) {
 	}
 
 	RB_PolygonOffset( rn.polygonFactor, rn.polygonUnits );
+
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		RB_SetRtLightParams( 1, &rn.rtLight, 0, NULL );
+	} else {
+		RB_SetRtLightParams( 0, NULL, 0, NULL );
+	}
 
 	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow ) {
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE|GLSTATE_OFFSET_FILL|GLSTATE_DEPTHWRITE );
@@ -1127,7 +1143,7 @@ static void R_AddEntityRtLights( entity_t *e ) {
 	unsigned i;
 	entSceneCache_t *cache = R_ENTCACHE( e );
 
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		return;
 	}
 	if( cache->rtLightFrame == rsc.frameCount ) {
@@ -1141,9 +1157,6 @@ static void R_AddEntityRtLights( entity_t *e ) {
 		int sideMask;
 		rtlight_t *l = rn.rtlights[i];
 
-		if( cache->numRtLights == MAX_DRAWSURF_RTLIGHTS ) {
-			break;
-		}
 		if( !BoundsAndSphereIntersect( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
 			continue;
 		}
@@ -1154,7 +1167,7 @@ static void R_AddEntityRtLights( entity_t *e ) {
 		}
 
 		l->receiveMask |= sideMask;
-		cache->rtLights[cache->numRtLights++] = l;
+		cache->numRtLights++;
 	}
 }
 
@@ -1164,8 +1177,8 @@ static void R_AddEntityRtLights( entity_t *e ) {
 static void R_CullEntities( void ) {
 	unsigned int i;
 
-	rn.numEntities = 0;
 	if( rn.renderFlags & RF_ENVVIEW ) {
+		rn.numEntities = 0;
 		for( i = 0; i < rsc.numBmodelEntities; i++ ) {
 			entity_t *e = rsc.bmodelEntities[i];
 			if( R_CullModelEntity( e, false ) != 0 ) {
@@ -1177,6 +1190,34 @@ static void R_CullEntities( void ) {
 		return;
 	}
 
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		const rtlight_t *l = rn.rtLight;
+
+		rn.numEntities = 0;
+		for( i = 0; i < rn.parent->numEntities; i++ ) {
+			int sideMask;
+			entity_t *e = rn.parent->entities[i];
+			entSceneCache_t *cache = R_ENTCACHE( e );
+
+			if( e->rtype != RT_MODEL || cache->numRtLights == 0 ) {
+				continue;
+			}
+
+			if( !BoundsAndSphereIntersect( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
+				continue;
+			}
+
+			sideMask = R_CalcRtLightBBoxSidemask( l, cache->absmins, cache->absmaxs );
+			if( !sideMask ) {
+				continue;
+			}
+
+			rn.entities[rn.numEntities++] = e;
+		}
+		return;
+	}
+
+	rn.numEntities = 0;
 	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
 		entity_t *e = R_NUM2ENT( i );
 		bool culled = true;
@@ -1292,7 +1333,7 @@ static void R_BindRefInstFBO( void ) {
 */
 void R_RenderView( const refdef_t *fd ) {
 	int msec = 0;
-	bool shadowMap = rn.renderFlags & RF_SHADOWMAPVIEW ? true : false;
+	bool lightOrShadow = rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ? true : false;
 
 	rf.frameCount++;
 
@@ -1336,13 +1377,15 @@ void R_RenderView( const refdef_t *fd ) {
 	// we know the initial farclip at this point after determining visible world leafs
 	// R_DrawEntities can make adjustments as well
 
-	if( shadowMap ) {
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		R_DrawWorldShadowNode();
+	} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		R_DrawRtLightWorld();
 	} else {
 		R_DrawWorldNode();
 	}
 
-	if( !shadowMap ) {
+	if( !lightOrShadow ) {
 		if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 			rn.fog_eye = R_FogForSphere( rn.viewOrigin, 0.5 );
 			rn.hdrExposure = R_LightExposureForOrigin( rn.viewOrigin );

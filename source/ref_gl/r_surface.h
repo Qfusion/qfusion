@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define R_SURFACE_H
 
 #define MAX_DRAWSURF_RTLIGHTS	32 //
-#define MAX_DRAWSURF_SURFS		64 // limit the number of surfaces to a sane 8-bit integer
+#define MAX_DRAWSURF_SURFS		128 // limit the number of surfaces to a sane 8-bit integer
 
 typedef enum {
 	ST_NONE,

@@ -106,12 +106,10 @@ typedef struct glsl_program_s {
 			DeluxemapOffset,
 			LightstyleColor[MAX_LIGHTMAPS],
 
-			DynamicLightsMatrix[MAX_DRAWSURF_RTLIGHTS],
-			DynamicLightsDiffuseAndInvRadius[MAX_DRAWSURF_RTLIGHTS >> 2],
-			DynamicLightShadowmapParams[MAX_DRAWSURF_RTLIGHTS],
-			DynamicLightShadowmapTextureScale[MAX_DRAWSURF_RTLIGHTS],
-			NumDynamicLights,
-			LightBits,
+			DynamicLightsMatrix,
+			DynamicLightsDiffuseAndInvRadius,
+			DynamicLightShadowmapParams,
+			DynamicLightShadowmapTextureScale,
 
 			AttrBonesIndices,
 			AttrBonesWeights,
@@ -614,7 +612,6 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
 	{ GLSL_SHADER_COMMON_RGBSHADOW_24BIT, "#define APPLY_RGB_SHADOW_24BIT\n", "_rgb24b" },
-	{ GLSL_SHADER_COMMON_LIGHTBITS, "#define APPLY_LIGHTBITS\n", "_lbits" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF, "#define APPLY_SHADOW_PCF 1\n", "_spcf" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF2, "#define APPLY_SHADOW_PCF 2\n", "_spcf2" },
 
@@ -762,7 +759,6 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
 	{ GLSL_SHADER_COMMON_RGBSHADOW_24BIT, "#define APPLY_RGB_SHADOW_24BIT\n", "_rgb24b" },
-	{ GLSL_SHADER_COMMON_LIGHTBITS, "#define APPLY_LIGHTBITS\n", "_lbits" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF, "#define APPLY_SHADOW_PCF 1\n", "_spcf" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF2, "#define APPLY_SHADOW_PCF 2\n", "_spcf2" },
 
@@ -1463,6 +1459,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 			token += 12;
 
 			ignore_include = true;
+
 			if( ( !Q_stricmp( token, "APPLY_FOG)" ) && ( features & GLSL_SHADER_COMMON_FOG ) ) ||
 
 				( !Q_stricmp( token, "NUM_DLIGHTS)" ) && ( features & GLSL_SHADER_COMMON_DLIGHTS ) ) ||
@@ -2306,7 +2303,7 @@ void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightS
 /*
 * RP_UpdateRealtimeLightsUniforms
 */
-void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, bool world,
+void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectToLightMatrix,
 	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
 	unsigned i;
 	int n, c;
@@ -2314,55 +2311,42 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, bool 
 
 	if( numRtLights ) {
 		const rtlight_t *rl;
-		vec4_t shaderColor[4];
-		mat4_t m;
-
-		memset( shaderColor, 0, sizeof( vec4_t ) * 3 );
-		Vector4Set( shaderColor[3], 1.0f, 1.0f, 1.0f, 1.0f );
+		vec4_t shaderColor = { 0 };
 
 		n = 0;
 		for( i = 0; i < numRtLights; i++ ) {
 			rl = rtlights[i];
 
-			if( program->loc.DynamicLightsMatrix[n] < 0 ) {
+			if( program->loc.DynamicLightsMatrix < 0 ) {
 				break;
 			}
 
-			if( world )
-				Matrix4_Copy( rl->worldToLightMatrix, m );
-			else
-				Matrix4_Multiply( rl->worldToLightMatrix, objectMatrix, m );
-
-			qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix[n], 1, GL_FALSE, m );
+			qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
 
 			c = n & 3;
 			if( glConfig.sSRGB ) {
-				shaderColor[0][c] = rl->linearColor[0];
-				shaderColor[1][c] = rl->linearColor[1];
-				shaderColor[2][c] = rl->linearColor[2];
-				shaderColor[3][c] = rl->linearColor[3];
+				shaderColor[0] = rl->linearColor[0];
+				shaderColor[1] = rl->linearColor[1];
+				shaderColor[2] = rl->linearColor[2];
+				shaderColor[3] = rl->linearColor[3];
 			} else {
-				shaderColor[0][c] = rl->color[0];
-				shaderColor[1][c] = rl->color[1];
-				shaderColor[2][c] = rl->color[2];
-				shaderColor[3][c] = rl->color[3];
+				shaderColor[0] = rl->color[0];
+				shaderColor[1] = rl->color[1];
+				shaderColor[2] = rl->color[2];
+				shaderColor[3] = rl->color[3];
 			}
 
 			if( rl->style >= 0 && rl->style < MAX_LIGHTSTYLES ) {
 				float *rgb = rsc.lightStyles[rl->style].rgb;
-				shaderColor[0][c] *= rgb[0];
-				shaderColor[1][c] *= rgb[1];
-				shaderColor[2][c] *= rgb[2];
+				shaderColor[0] *= rgb[0];
+				shaderColor[1] *= rgb[1];
+				shaderColor[2] *= rgb[2];
 			}
 
 			// DynamicLightsDiffuseAndInvRadius is transposed for SIMD, but it's still 4x4
-			if( c == 3 ) {
-				qglUniform4fvARB( program->loc.DynamicLightsDiffuseAndInvRadius[n >> 2], 4, shaderColor[0] );
-				memset( shaderColor, 0, sizeof( vec4_t ) * 3 );
-				Vector4Set( shaderColor[3], 1.0f, 1.0f, 1.0f, 1.0f );
-			}
+			qglUniform4fvARB( program->loc.DynamicLightsDiffuseAndInvRadius, 1, shaderColor );
 
-			if( program->loc.DynamicLightShadowmapParams[n] >= 0 ) {
+			if( program->loc.DynamicLightShadowmapParams >= 0 ) {
 				GLfloat params[4] = { 0, 0, 0, 0 };
 				int size = rl->shadowSize;
 
@@ -2378,10 +2362,10 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, bool 
 					params[3] = 0.5f + 0.5f * (farclip + nearclip) / (farclip - nearclip);
 				}
 
-				qglUniform4fvARB( program->loc.DynamicLightShadowmapParams[n], 1, params );
+				qglUniform4fvARB( program->loc.DynamicLightShadowmapParams, 1, params );
 			}
 
-			if( program->loc.DynamicLightShadowmapTextureScale[n] >= 0 ) {
+			if( program->loc.DynamicLightShadowmapTextureScale >= 0 ) {
 				GLfloat scale[4] = { 0, 0, 0, 0 };
 				int size = rl->shadowSize;
 
@@ -2392,34 +2376,10 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectMatrix, bool 
 					scale[3] = rl->shadowOffset[1];
 				}
 
-				qglUniform4fvARB( program->loc.DynamicLightShadowmapTextureScale[n], 1, scale );
+				qglUniform4fvARB( program->loc.DynamicLightShadowmapTextureScale, 1, scale );
 			}
 
 			n++;
-		}
-
-		if( n & 3 ) {
-			qglUniform4fvARB( program->loc.DynamicLightsDiffuseAndInvRadius[n >> 2], 4, shaderColor[0] );
-			memset( shaderColor, 0, sizeof( vec4_t ) * 3 ); // to set to zero for the remaining lights
-			Vector4Set( shaderColor[3], 1.0f, 1.0f, 1.0f, 1.0f );
-			n = ALIGN( n, 4 );
-		}
-
-		if( program->loc.NumDynamicLights >= 0 ) {
-			qglUniform1iARB( program->loc.NumDynamicLights, n );
-		}
-
-		for( ; n < MAX_DRAWSURF_RTLIGHTS; n += 4 ) {
-			if( program->loc.DynamicLightsMatrix[n] < 0 ) {
-				break;
-			}
-			qglUniform4fvARB( program->loc.DynamicLightsDiffuseAndInvRadius[n >> 2], 4, shaderColor[0] );
-		}
-	}
-
-	if( numSurfs ) {
-		if( program->loc.LightBits >= 0 ) {
-			qglUniform1ivARB( program->loc.LightBits, numSurfs, (const GLint *)surfRtLightBits );
 		}
 	}
 }
@@ -2643,26 +2603,10 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.builtin.ShaderTime = qglGetUniformLocationARB( program->object, "u_QF_ShaderTime" );
 
 	// dynamic lights
-	for( i = 0; i < MAX_DRAWSURF_RTLIGHTS; i++ ) {
-		program->loc.DynamicLightsMatrix[i] = qglGetUniformLocationARB( program->object,
-																		  va_r( tmp, sizeof( tmp ), "u_DlightMatrix[%i]", i ) );
-		if( program->loc.DynamicLightsMatrix[i] < 0 )
-			break;
-
-		if( !( i & 3 ) ) {
-			// 4x4 transposed, so we can index it with `i`
-			program->loc.DynamicLightsDiffuseAndInvRadius[i >> 2] =
-				qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_DlightDiffuseAndInvRadius[%i]", i ) );
-		}
-	}
-
-	program->loc.NumDynamicLights = qglGetUniformLocationARB( program->object, "u_NumDynamicLights" );
-	program->loc.LightBits = qglGetUniformLocationARB( program->object, "u_LightBits[0]" );
-
-	for( i = 0; i < MAX_DRAWSURF_RTLIGHTS; i++ ) {
-		program->loc.DynamicLightShadowmapParams[i] = qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_DlightShadowmapParams[%i]", i ) );
-		program->loc.DynamicLightShadowmapTextureScale[i] = qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_DlightShadowmapTextureScale[%i]", i ) );
-	}
+	program->loc.DynamicLightsDiffuseAndInvRadius = qglGetUniformLocationARB( program->object, "u_DlightDiffuseAndInvRadius" );
+	program->loc.DynamicLightsMatrix = qglGetUniformLocationARB( program->object, "u_DlightMatrix" );
+	program->loc.DynamicLightShadowmapParams = qglGetUniformLocationARB( program->object, "u_DlightShadowmapParams" );
+	program->loc.DynamicLightShadowmapTextureScale = qglGetUniformLocationARB( program->object, "u_DlightShadowmapTextureScale" );
 
 	program->loc.ShadowmapTextureSize =	qglGetUniformLocationARB( program->object, "u_ShadowmapTextureSize" );
 

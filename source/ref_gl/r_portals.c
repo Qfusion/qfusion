@@ -419,24 +419,21 @@ done:
 *
 * The depth buffer is then preserved for portal render stage to minimize overdraw.
 */
-void R_DrawPortalsDepthMask( void ) {
+static void R_DrawPortalsDepthMask( void ) {
 	float depthmin, depthmax;
 
 	if( !rn.portalmasklist || !rn.portalmasklist->numDrawSurfs ) {
-		return;
-	}
-	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) {
 		return;
 	}
 
 	RB_GetDepthRange( &depthmin, &depthmax );
 
 	RB_ClearDepth( depthmin );
-	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
+	RB_Clear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT, 0, 0, 0, 0 );
 	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_DEPTHFUNC_GT | GLSTATE_NO_COLORWRITE );
 	RB_DepthRange( depthmax, depthmax );
 
-	R_DrawSurfaces( rn.portalmasklist );
+	R_DrawPortalSurfaces( rn.portalmasklist );
 
 	RB_DepthRange( depthmin, depthmax );
 	RB_ClearDepth( depthmax );
@@ -452,8 +449,7 @@ void R_DrawPortals( void ) {
 	if( rn.viewcluster == -1 ) {
 		return;
 	}
-
-	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) {
+	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_LIGHTVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) {
 		return;
 	}
 

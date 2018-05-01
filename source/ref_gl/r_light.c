@@ -1490,17 +1490,6 @@ void R_RenderDebugLightVolumes( void ) {
 					}
 				}
 			}
-		} else if( rf.debugTrace.ent >= 0 ) {
-			entSceneCache_t *cache = R_ENTNUMCACHE( rf.debugTrace.ent );
-			for( i = 0; i < cache->numRtLights; i++ ) {
-				rtlight_t *l = cache->rtLights[i];
-
-				if( !l->receiveMask ) {
-					continue;
-				}
-
-				R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
-			}
 		}
 	}
 }
