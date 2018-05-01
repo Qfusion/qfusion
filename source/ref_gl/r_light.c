@@ -50,7 +50,7 @@ void R_InitCoronas( void ) {
 /*
 * R_BatchCoronaSurf
 */
-flushBatchDrawSurf_cb R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
 	int lightStyle, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable ) {
 	int i;
 	vec3_t origin, point;
@@ -100,8 +100,6 @@ flushBatchDrawSurf_cb R_BatchCoronaSurf( const entity_t *e, const shader_t *shad
 	mesh.colorsArray[0] = colors;
 
 	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
-
-	return &RB_FlushDynamicMeshes;
 }
 
 /*

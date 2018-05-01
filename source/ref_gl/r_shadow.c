@@ -264,7 +264,7 @@ void R_DrawRtLightWorld( void ) {
 /*
 * R_DrawRtLightShadow
 */
-void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool compile, bool novis ) {
+static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool compile, bool novis, refinst_t *prevrn ) {
 	int x, y, size, border;
 	int side;
 	refdef_t *fd;
@@ -286,6 +286,7 @@ void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool comp
 	rnp->polygonFactor = r_shadows_polygonoffset_factor->value;
 	rnp->polygonUnits = r_shadows_polygonoffset_units->value;
 	rnp->meshlist = &r_shadowlist;
+	rnp->parentmeshlist = prevrn->meshlist;
 	rnp->portalmasklist = NULL;
 	rnp->lodBias = 0;
 	rnp->lodScale = 1;
@@ -348,6 +349,7 @@ void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bool comp
 */
 void R_CompileRtLightShadow( rtlight_t *l ) {
 	image_t *atlas;
+	refinst_t *prevrn;
 
 	if( !l->world || !l->shadow ) {
 		return;
@@ -370,9 +372,9 @@ void R_CompileRtLightShadow( rtlight_t *l ) {
 	l->shadowOffset[0] = 0;
 	l->shadowOffset[1] = 0;
 
-	R_PushRefInst();
+	prevrn = R_PushRefInst();
 
-	R_DrawRtLightShadow( l, atlas, 0x3F, true, false );
+	R_DrawRtLightShadow( l, atlas, 0x3F, true, false, prevrn );
 
 	R_PopRefInst();
 }
@@ -523,7 +525,7 @@ void R_DrawShadows( void ) {
 		l->shadowOffset[0] = x;
 		l->shadowOffset[1] = y;
 
-		R_DrawRtLightShadow( l, atlas, sideMask, false, false );
+		R_DrawRtLightShadow( l, atlas, sideMask, false, false, prevrn );
 	}
 
 	R_PopRefInst();

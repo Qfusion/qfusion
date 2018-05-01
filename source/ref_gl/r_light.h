@@ -76,7 +76,7 @@ void        R_TouchLightmapImages( model_t *mod );
 
 
 void        R_InitCoronas( void );
-flushBatchDrawSurf_cb R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+void        R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
 	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable );
 void        R_DrawCoronas( void );
 void        R_ShutdownCoronas( void );

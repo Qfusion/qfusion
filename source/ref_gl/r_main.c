@@ -230,7 +230,7 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 /*
 * R_BatchSpriteSurf
 */
-flushBatchDrawSurf_cb R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
 	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable ) {
 	int i;
 	vec3_t point;
@@ -282,8 +282,6 @@ flushBatchDrawSurf_cb R_BatchSpriteSurf( const entity_t *e, const shader_t *shad
 	mesh.sVectorsArray = NULL;
 
 	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
-
-	return &RB_FlushDynamicMeshes;
 }
 
 /*
