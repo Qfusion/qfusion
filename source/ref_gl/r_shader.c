@@ -2786,6 +2786,19 @@ shader_t *R_ShaderById( unsigned int id ) {
 }
 
 /*
+* R_ShaderNoDlight
+*/
+bool R_ShaderNoDlight( const shader_t *shader ) {
+	if( Shader_DepthRead( shader ) || !Shader_DepthWrite( shader ) ) {
+		return true;
+	}
+	if( ( shader->sort < SHADER_SORT_OPAQUE ) || ( shader->sort > SHADER_SORT_ALPHATEST ) ) {
+		return true;
+	}
+	return false;
+}
+
+/*
 * R_ShaderNoShadow
 */
 bool R_ShaderNoShadow( const shader_t *shader ) {

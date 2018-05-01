@@ -426,7 +426,7 @@ static const flushBatchDrawSurf_cb r_flushBatchSurfCb[ST_MAX_TYPES] =
 /*
 * R_DrawSurfaces
 */
-static void _R_DrawSurfaces( drawList_t *list, int drawSurfTypeFilter ) {
+static void _R_DrawSurfaces( drawList_t *list, int drawSurfTypeFilter, unsigned minSort, unsigned maxSort ) {
 	unsigned int i;
 	uint64_t sortKey;
 	unsigned int shaderNum = 0, prevShaderNum = MAX_SHADERS;
@@ -483,6 +483,13 @@ static void _R_DrawSurfaces( drawList_t *list, int drawSurfTypeFilter ) {
 		entityFX = entity->renderfx;
 		depthWrite = Shader_DepthWrite( shader );
 		batchMergable = true;
+
+		if( shader->sort < minSort ) {
+			continue;
+		}
+		if( shader->sort > maxSort ) {
+			break;
+		}
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum ||
@@ -547,7 +554,7 @@ static void _R_DrawSurfaces( drawList_t *list, int drawSurfTypeFilter ) {
 
 			if( !depthWrite && !depthCopied && Shader_DepthRead( shader ) ) {
 				// ignore portals because oblique frustum messes up the depth values
-				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && !( rn.renderFlags & RF_CLIPPLANE ) ) {
+				if( ( rn.renderFlags & (RF_SOFT_PARTICLES|RF_CLIPPLANE) ) == RF_SOFT_PARTICLES ) {
 					int fbo = RB_BoundFrameBufferObject();
 					if( RFB_HasDepthRenderBuffer( fbo ) && rn.st->screenTexCopy ) {
 						// draw all dynamic surfaces that write depth before copying
@@ -639,7 +646,7 @@ void R_DrawSurfaces( drawList_t *list ) {
 	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
 		// do not recurse into normal mode when rendering triangle outlines
-		_R_DrawSurfaces( list, ST_NONE );
+		_R_DrawSurfaces( list, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
 	}
 	RB_EnableTriangleOutlines( triOutlines );
 }
@@ -653,7 +660,7 @@ void R_DrawSkySurfaces( drawList_t *list ) {
 	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
 		// do not recurse into normal mode when rendering triangle outlines
-		_R_DrawSurfaces( list, ST_SKY );
+		_R_DrawSurfaces( list, ST_SKY, SHADER_SORT_SKY, SHADER_SORT_SKY );
 	}
 	RB_EnableTriangleOutlines( triOutlines );
 }
@@ -671,7 +678,7 @@ void R_DrawOutlinedSurfaces( drawList_t *list ) {
 	// properly store and restore the state, as the
 	// R_DrawOutlinedSurfaces calls can be nested
 	triOutlines = RB_EnableTriangleOutlines( true );
-	_R_DrawSurfaces( list, ST_NONE );
+	_R_DrawSurfaces( list, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
 	RB_EnableTriangleOutlines( triOutlines );
 }
 

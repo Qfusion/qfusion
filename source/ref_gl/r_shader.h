@@ -84,6 +84,7 @@ enum {
 	SHADER_SORT_NEAREST             = 14,
 	SHADER_SORT_WEAPON              = 15, // optional phase: depth write but no color write
 	SHADER_SORT_WEAPON2             = 16,
+	SHADER_SORT_MAX                 = SHADER_SORT_WEAPON2
 };
 
 // shaderpass flags
@@ -290,6 +291,7 @@ void        R_PrintShaderCache( const char *name );
 
 shader_t    *R_ShaderById( unsigned int id );
 
+bool		R_ShaderNoDlight( const shader_t *shader );
 bool		R_ShaderNoShadow( const shader_t *shader );
 
 shader_t    *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, const char *text );

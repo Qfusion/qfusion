@@ -49,6 +49,16 @@ bool R_SurfNoDraw( const msurface_t *surf ) {
 }
 
 /*
+* R_SurfNoDlight
+*/
+bool R_SurfNoDlight( const msurface_t *surf ) {
+	if( surf->flags & (SURF_NODRAW|SURF_SKY|SURF_NODLIGHT) ) {
+		return true;
+	}
+	return R_ShaderNoDlight( surf->shader );
+}
+
+/*
 * R_SurfNoShadow
 */
 bool R_SurfNoShadow( const msurface_t *surf ) {
@@ -204,6 +214,8 @@ void R_FlushBSPSurfBatch( void ) {
 
 	if( R_SurfFlagsNoDlight( drawSurf->surfFlags ) ) {
 		RB_SetRtLightParams( 0, NULL, 0, NULL );
+	} else if( rn.renderFlags & RF_LIGHTVIEW ) {
+		RB_SetRtLightParams( 1, &rn.rtLight, 0, NULL );
 	} else if( e != rsc.worldent ) {
 		RB_SetRtLightParams( cache->numRtLights, cache->rtLights, 0, NULL );
 	} else {
@@ -218,7 +230,7 @@ void R_FlushBSPSurfBatch( void ) {
 /*
 * R_BatchBSPSurf
 */
-flushBatchDrawSurf_cb R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
 	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf, bool mergable ) {
 	unsigned i;
 	drawListBatch_t *batch = &rn.meshlist->bspBatch;
@@ -272,8 +284,6 @@ flushBatchDrawSurf_cb R_BatchBSPSurf( const entity_t *e, const shader_t *shader,
 			R_FlushBSPSurfBatch();
 		}
 	}
-
-	return &R_FlushBSPSurfBatch;
 }
 
 /*
@@ -849,6 +859,9 @@ void R_DrawWorldShadowNode( void ) {
 	mbrushmodel_t *bm = rsh.worldBrushModel;
 	rtlight_t *l = rn.rtLight;
 	const uint8_t *areabits = rn.areabits;
+	unsigned *p;
+	unsigned numDrawSurfaces;
+	bool (*skipSurf)( const msurface_t * ) = NULL;
 
 	R_ReserveDrawListWorldSurfaces( rn.meshlist );
 
@@ -858,7 +871,10 @@ void R_DrawWorldShadowNode( void ) {
 	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		return;
 	}
-	if( !l ) {
+	if( !l || !l->surfaceInfo ) {
+		return;
+	}
+	if( !( rn.renderFlags & (RF_SHADOWMAPVIEW|RF_LIGHTVIEW) ) ) {
 		return;
 	}
 
@@ -869,57 +885,83 @@ void R_DrawWorldShadowNode( void ) {
 		msec = ri.Sys_Milliseconds();
 	}
 
-	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && l->surfaceInfo ) {
-		unsigned *p = l->surfaceInfo;
-		unsigned numDrawSurfaces = *p++;
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		skipSurf = R_SurfNoShadow;
+	} else if( rn.renderFlags & RF_LIGHTVIEW ) {
+		skipSurf = R_SurfNoDlight;
+	} else {
+		return;
+	}
 
-		for( i = 0; i < l->numVisLeafs; i++ ) {
-			int leafNum = l->visLeafs[i];
-			const mleaf_t *leaf = bm->leafs + leafNum;
+	for( i = 0; i < l->numVisLeafs; i++ ) {
+		int leafNum = l->visLeafs[i];
+		const mleaf_t *leaf = bm->leafs + leafNum;
 
-			// check for door connected areas
-			if( areabits ) {
-				if( leaf->area < 0 || !( areabits[leaf->area >> 3] & ( 1 << ( leaf->area & 7 ) ) ) ) {
-					continue; // not visible
-				}
-			}
-
-			if( R_CullBox( leaf->mins, leaf->maxs, rn.clipFlags ) ) {
-				continue;
-			}
-
-			rn.meshlist->worldLeafVis[leafNum] = 1;
-
-			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-				assert( leaf->visSurfaces[j] < rn.meshlist->numWorldSurfVis );
-				rn.meshlist->worldSurfVis[leaf->visSurfaces[j]] = 1;
+		// check for door connected areas
+		if( areabits ) {
+			if( leaf->area < 0 || !( areabits[leaf->area >> 3] & ( 1 << ( leaf->area & 7 ) ) ) ) {
+				continue; // not visible
 			}
 		}
 
+		if( R_CullBox( leaf->mins, leaf->maxs, rn.clipFlags ) ) {
+			continue;
+		}
+
+		rn.meshlist->worldLeafVis[leafNum] = 1;
+
+		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+			assert( leaf->visSurfaces[j] < rn.meshlist->numWorldSurfVis );
+			rn.meshlist->worldSurfVis[leaf->visSurfaces[j]] = 1;
+		}
+	}
+
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		p = l->surfaceInfo;
+		numDrawSurfaces = *p++;
+
 		for( i = 0; i < numDrawSurfaces; i++ ) {
-			bool culled = true;
-			unsigned ds = *p++;
-			unsigned numSurfaces = *p++;
+			for( i = 0; i < numDrawSurfaces; i++ ) {
+				p++;
+				unsigned numSurfaces = *p++;
 
-			for( j = 0; j < numSurfaces; j++ ) {
-				unsigned s = *p++;
-				const msurface_t *surf = bm->surfaces + s;
-
-				if( rn.meshlist->worldSurfVis[s] && !R_SurfNoShadow( surf ) ) {
-					if( !R_CullSurface( rsc.worldent, surf, clipFlags ) ) {
-						culled = false;
-						rn.meshlist->worldSurfVis[s] = 1;
-						rf.stats.c_brush_polys++;
+				for( j = 0; j < numSurfaces; j++ ) {
+					unsigned s = *p++;
+					if( !rn.parentmeshlist->worldSurfVis[s] ) {
+						rn.meshlist->worldSurfVis[s] = 0;
 					}
+					p += 2;
 				}
+			}
+		}
+	}
 
-				p++, p++;
+	p = l->surfaceInfo;
+	numDrawSurfaces = *p++;
+
+	for( i = 0; i < numDrawSurfaces; i++ ) {
+		bool culled = true;
+		unsigned ds = *p++;
+		unsigned numSurfaces = *p++;
+
+		for( j = 0; j < numSurfaces; j++ ) {
+			unsigned s = *p++;
+			const msurface_t *surf = bm->surfaces + s;
+
+			if( rn.meshlist->worldSurfVis[s] && !skipSurf( surf ) ) {
+				if( !R_CullSurface( rsc.worldent, surf, clipFlags ) ) {
+					culled = false;
+					rn.meshlist->worldSurfVis[s] = 1;
+					rf.stats.c_brush_polys++;
+				}
 			}
 
-			if( !culled ) {
-				rn.meshlist->worldDrawSurfVis[ds] = 1;
-				R_AddSurfaceToDrawList( rsc.worldent, ds );
-			}
+			p += 2;
+		}
+
+		if( !culled ) {
+			rn.meshlist->worldDrawSurfVis[ds] = 1;
+			R_AddSurfaceToDrawList( rsc.worldent, ds );
 		}
 	}
 

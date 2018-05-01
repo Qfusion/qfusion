@@ -93,9 +93,10 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define RF_SOFT_PARTICLES       RF_BIT( 9 )
 #define RF_PORTAL_CAPTURE       RF_BIT( 10 )
 #define RF_SHADOWMAPVIEW_RGB    RF_BIT( 11 )
+#define RF_LIGHTVIEW            RF_BIT( 12 )
 
 #define RF_CUBEMAPVIEW          ( RF_ENVVIEW )
-#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW )
+#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW | RF_LIGHTVIEW )
 
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
@@ -255,6 +256,7 @@ typedef struct {
 	drawList_t      *meshlist;              // meshes to be rendered
 	drawList_t      *portalmasklist;        // sky and portal BSP surfaces are rendered before (sky-)portals
 											// to create depth mask
+	drawList_t      *parentmeshlist;        // pointer to main camera view, for lights
 
 	mfog_t          *fog_eye;
 
@@ -694,7 +696,7 @@ mfog_t      *R_FogForSphere( const vec3_t centre, const float radius );
 int			R_ComputeLOD( const vec3_t viewOrg, const vec3_t mins, const vec3_t maxs, float lodDistance, float lodScale, int lodBias );
 float       R_DefaultFarClip( void );
 
-flushBatchDrawSurf_cb R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
 	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable );
 
 struct mesh_vbo_s *R_InitNullModelVBO( void );
@@ -777,7 +779,7 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 //
 // r_poly.c
 //
-flushBatchDrawSurf_cb R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum,
+void       R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum,
 	const portalSurface_t *portalSurface, drawSurfacePoly_t *poly, bool mergable );
 void        R_DrawPolys( void );
 void        R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
@@ -823,7 +825,7 @@ bool    R_SurfNoShadow( const msurface_t *surf );
 void	R_CacheBrushModelEntity( const entity_t *e );
 bool    R_AddBrushModelToDrawList( const entity_t *e );
 float   R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
-flushBatchDrawSurf_cb R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+void    R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
 	const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf, bool mergable );
 void	R_FlushBSPSurfBatch( void );
 void	R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, 
