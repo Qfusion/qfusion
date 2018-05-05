@@ -318,17 +318,17 @@ static unsigned R_HandlePopProjectionMatrixCmd( uint8_t *pcmd ) {
 // ============================================================================
 
 static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_len, size_t cmd_len ) {
-	if( cmdbuf->sync ) {
-		int id = *( (int *)cmd );
-		refCmdHandlers[id]( (uint8_t *)cmd );
-		return;
-	}
-
 	if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
 		return;
 	}
+
 	memcpy( cmdbuf->buf + cmdbuf->len, cmd, struct_len );
 	cmdbuf->len += cmd_len;
+
+	if( cmdbuf->sync ) {
+		int id = *( (int *)cmd );
+		refCmdHandlers[id]( (uint8_t *)cmd );
+	}
 }
 
 static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval ) {
@@ -404,39 +404,37 @@ static void RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, in
 
 	cmd.length = cmd_len;
 
-	if( !cmdbuf->sync ) {
-		if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
-			return;
-		}
+	if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
+		return;
+	}
 
-		pcmd = cmdbuf->buf + cmdbuf->len;
-		pcmd += sizeof( cmd );
+	pcmd = cmdbuf->buf + cmdbuf->len;
+	pcmd += sizeof( cmd );
 
-		if( poly->verts ) {
-			cmd.poly.verts = (void *)pcmd;
-			memcpy( pcmd, poly->verts, numverts * sizeof( vec4_t ) );
-			pcmd += numverts * sizeof( vec4_t );
-		}
-		if( poly->stcoords ) {
-			cmd.poly.stcoords = (void *)pcmd;
-			memcpy( pcmd, poly->stcoords, numverts * sizeof( vec2_t ) );
-			pcmd += numverts * sizeof( vec2_t );
-		}
-		if( poly->normals ) {
-			cmd.poly.normals = (void *)pcmd;
-			memcpy( pcmd, poly->normals, numverts * sizeof( vec4_t ) );
-			pcmd += numverts * sizeof( vec4_t );
-		}
-		if( poly->colors ) {
-			cmd.poly.colors = (void *)pcmd;
-			memcpy( pcmd, poly->colors, numverts * sizeof( byte_vec4_t ) );
-			pcmd += numverts * sizeof( byte_vec4_t );
-		}
-		if( poly->elems ) {
-			cmd.poly.elems = (void *)pcmd;
-			memcpy( pcmd, poly->elems, poly->numelems * sizeof( elem_t ) );
-			pcmd += poly->numelems * sizeof( elem_t );
-		}
+	if( poly->verts ) {
+		cmd.poly.verts = (void *)pcmd;
+		memcpy( pcmd, poly->verts, numverts * sizeof( vec4_t ) );
+		pcmd += numverts * sizeof( vec4_t );
+	}
+	if( poly->stcoords ) {
+		cmd.poly.stcoords = (void *)pcmd;
+		memcpy( pcmd, poly->stcoords, numverts * sizeof( vec2_t ) );
+		pcmd += numverts * sizeof( vec2_t );
+	}
+	if( poly->normals ) {
+		cmd.poly.normals = (void *)pcmd;
+		memcpy( pcmd, poly->normals, numverts * sizeof( vec4_t ) );
+		pcmd += numverts * sizeof( vec4_t );
+	}
+	if( poly->colors ) {
+		cmd.poly.colors = (void *)pcmd;
+		memcpy( pcmd, poly->colors, numverts * sizeof( byte_vec4_t ) );
+		pcmd += numverts * sizeof( byte_vec4_t );
+	}
+	if( poly->elems ) {
+		cmd.poly.elems = (void *)pcmd;
+		memcpy( pcmd, poly->elems, poly->numelems * sizeof( elem_t ) );
+		pcmd += poly->numelems * sizeof( elem_t );
 	}
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
@@ -470,25 +468,23 @@ static void RF_IssueAddEntityToSceneCmd( ref_cmdbuf_t *cmdbuf, const entity_t *e
 	}
 	cmd.length = cmd_len;
 
-	if( !cmdbuf->sync ) {
-		if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
-			return;
-		}
+	if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
+		return;
+	}
 
-		pcmd = cmdbuf->buf + cmdbuf->len;
-		pcmd += sizeof( cmd );
+	pcmd = cmdbuf->buf + cmdbuf->len;
+	pcmd += sizeof( cmd );
 
-		if( cmd.numBoneposes && ent->boneposes ) {
-			cmd.entity.boneposes = (void *)pcmd;
-			memcpy( pcmd, ent->boneposes, bones_len );
-			pcmd += bones_len;
-		}
+	if( cmd.numBoneposes && ent->boneposes ) {
+		cmd.entity.boneposes = (void *)pcmd;
+		memcpy( pcmd, ent->boneposes, bones_len );
+		pcmd += bones_len;
+	}
 
-		if( cmd.numBoneposes && ent->oldboneposes ) {
-			cmd.entity.oldboneposes = (void *)pcmd;
-			memcpy( pcmd, ent->oldboneposes, bones_len );
-			pcmd += bones_len;
-		}
+	if( cmd.numBoneposes && ent->oldboneposes ) {
+		cmd.entity.oldboneposes = (void *)pcmd;
+		memcpy( pcmd, ent->oldboneposes, bones_len );
+		pcmd += bones_len;
 	}
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
@@ -544,18 +540,16 @@ static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd ) {
 
 	cmd.length = cmd_len;
 
-	if( !cmdbuf->sync ) {
-		if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
-			return;
-		}
+	if( cmdbuf->len + cmd_len > cmdbuf->buf_size ) {
+		return;
+	}
 
-		pcmd = cmdbuf->buf + cmdbuf->len;
-		pcmd += sizeof( cmd );
+	pcmd = cmdbuf->buf + cmdbuf->len;
+	pcmd += sizeof( cmd );
 
-		if( areabytes > 0 ) {
-			cmd.refdef.areabits = (void*)pcmd;
-			memcpy( pcmd, fd->areabits, areabytes );
-		}
+	if( areabytes > 0 ) {
+		cmd.refdef.areabits = (void*)pcmd;
+		memcpy( pcmd, fd->areabits, areabytes );
 	}
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
@@ -668,13 +662,9 @@ ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
 	ref_cmdbuf_t *cmdbuf;
 
 	cmdbuf = R_Malloc( sizeof( *cmdbuf ) );
-	if( sync ) {
-		cmdbuf->sync = true;
-	} else {
-		cmdbuf->buf = R_Malloc( REF_CMD_BUF_SIZE );
-		cmdbuf->buf_size = REF_CMD_BUF_SIZE;
-	}
-
+	cmdbuf->sync = sync;
+	cmdbuf->buf = R_Malloc( REF_CMD_BUF_SIZE );
+	cmdbuf->buf_size = REF_CMD_BUF_SIZE;
 	cmdbuf->BeginFrame = &RF_IssueBeginFrameCmd;
 	cmdbuf->EndFrame = &RF_IssueEndFrameCmd;
 	cmdbuf->DrawRotatedStretchPic = &RF_IssueDrawRotatedStretchPicCmd;
