@@ -753,7 +753,7 @@ static int Mod_SurfaceFlags( int oldflags ) {
 		flags |= SURF_SKY | SURF_NOIMPACT | SURF_NOMARKS | SURF_NODLIGHT;
 	}
 	if( oldflags & Q2_SURF_WARP ) {
-		flags |= SURF_NOMARKS | SURF_NOIMPACT;
+		flags |= SURF_NOMARKS | SURF_NOIMPACT | SURF_NODLIGHT;
 	}
 	if( ( oldflags & ( Q2_SURF_NODRAW | Q2_SURF_SKY ) ) == Q2_SURF_NODRAW ) {
 		flags |= SURF_NODRAW;

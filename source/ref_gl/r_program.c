@@ -110,6 +110,7 @@ typedef struct glsl_program_s {
 			DynamicLightsDiffuseAndInvRadius,
 			DynamicLightShadowmapParams,
 			DynamicLightShadowmapTextureScale,
+			DynamicLightVector,
 
 			AttrBonesIndices,
 			AttrBonesWeights,
@@ -601,13 +602,8 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
-	{ GLSL_SHADER_COMMON_DLIGHTS_28, "#define NUM_DLIGHTS 28\n", "_dl28" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_24, "#define NUM_DLIGHTS 24\n", "_dl24" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_20, "#define NUM_DLIGHTS 20\n", "_dl20" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#define NUM_DLIGHTS 16\n", "_dl16" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_12, "#define NUM_DLIGHTS 12\n", "_dl12" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_8, "#define NUM_DLIGHTS 8\n", "_dl8" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_4, "#define NUM_DLIGHTS 4\n", "_dl4" },
+	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
+	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
 
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
@@ -748,13 +744,8 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
-	{ GLSL_SHADER_COMMON_DLIGHTS_28, "#define NUM_DLIGHTS 28\n", "_dl28" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_24, "#define NUM_DLIGHTS 24\n", "_dl24" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_20, "#define NUM_DLIGHTS 20\n", "_dl20" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#define NUM_DLIGHTS 16\n", "_dl16" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_12, "#define NUM_DLIGHTS 12\n", "_dl12" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_8, "#define NUM_DLIGHTS 8\n", "_dl8" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_4, "#define NUM_DLIGHTS 4\n", "_dl4" },
+	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
+	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
 
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
@@ -2303,7 +2294,7 @@ void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightS
 /*
 * RP_UpdateRealtimeLightsUniforms
 */
-void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectToLightMatrix,
+void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat4_t objectToLightMatrix,
 	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
 	unsigned i;
 	int n, c;
@@ -2317,7 +2308,7 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectToLightMatrix
 		for( i = 0; i < numRtLights; i++ ) {
 			rl = rtlights[i];
 
-			if( program->loc.DynamicLightsMatrix < 0 ) {
+			if( program->loc.DynamicLightsDiffuseAndInvRadius < 0 ) {
 				break;
 			}
 
@@ -2377,6 +2368,10 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectToLightMatrix
 				}
 
 				qglUniform4fvARB( program->loc.DynamicLightShadowmapTextureScale, 1, scale );
+			}
+
+			if( program->loc.DynamicLightVector >= 0 ) {
+				qglUniform3fvARB( program->loc.DynamicLightVector, 1, lightVec );
 			}
 
 			n++;
@@ -2501,7 +2496,8 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 		locYUVTextureY,
 		locYUVTextureU,
 		locYUVTextureV,
-		locColorLUT
+		locColorLUT,
+		locCubeFilter
 	;
 
 	memset( &program->loc, -1, sizeof( program->loc ) );
@@ -2552,6 +2548,7 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 		locBloomTexture[i] = qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_BloomTexture%i", i ) );
 
 	locColorLUT = qglGetUniformLocationARB( program->object, "u_ColorLUT" );
+	locCubeFilter = qglGetUniformLocationARB( program->object, "u_CubeFilter" );
 
 	program->loc.DeluxemapOffset = qglGetUniformLocationARB( program->object, "u_DeluxemapOffset" );
 
@@ -2607,6 +2604,7 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.DynamicLightsMatrix = qglGetUniformLocationARB( program->object, "u_DlightMatrix" );
 	program->loc.DynamicLightShadowmapParams = qglGetUniformLocationARB( program->object, "u_DlightShadowmapParams" );
 	program->loc.DynamicLightShadowmapTextureScale = qglGetUniformLocationARB( program->object, "u_DlightShadowmapTextureScale" );
+	program->loc.DynamicLightVector = qglGetUniformLocationARB( program->object, "u_DlightVector" );
 
 	program->loc.ShadowmapTextureSize =	qglGetUniformLocationARB( program->object, "u_ShadowmapTextureSize" );
 
@@ -2696,6 +2694,10 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 
 	for( i = 0; i < NUM_BLOOM_LODS && locBloomTexture[i] >= 0; i++ )
 		qglUniform1iARB( locBloomTexture[i], 2 + i );
+
+	if( locCubeFilter >= 0 ) {
+		qglUniform1iARB( locCubeFilter, 5 );
+	}
 }
 
 /*

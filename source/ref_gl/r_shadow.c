@@ -38,8 +38,8 @@ typedef struct shadowSurfBatch_s {
 
 	drawSurfaceCompiledLight_t drawSurf;
 
-	mesh_vbo_t *vbo;
-	mesh_vbo_t *elemsVbo;
+	int vbo;
+	int elemsVbo;
 
 	instancePoint_t *instances;
 
@@ -82,7 +82,7 @@ const shader_t *R_OpaqueShadowShader( const shader_t *shader ) {
 */
 void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
 	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf ) {
-	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
+	RB_BindVBO( drawSurf->vbo, GL_TRIANGLES );
 
 	if( drawSurf->numInstances ) {
 		RB_DrawElementsInstanced( drawSurf->firstVert, drawSurf->numVerts, 
@@ -98,7 +98,7 @@ void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const m
 */
 static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, const shader_t *shader,
 	int lightStyleNum, drawSurfaceBSP_t *drawSurf, msurface_t *surf ) {
-	mesh_vbo_t *vbo;
+	int vbo;
 	int vertsOffset;
 	int firstVert, lastVert;
 	int numVerts, numElems;
@@ -130,12 +130,14 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 		tail = tail->next;
 
 		if( tail->elemsVbo ) {
+			mesh_vbo_t *elemsVbo = R_GetVBOByIndex( tail->elemsVbo );
+
 			if( numInstances ) {
 				tail->elemsVbo = vbo;
 				return;
 			}
 
-			R_UploadVBOElemData( tail->elemsVbo, vertsOffset, 0, &surf->mesh );
+			R_UploadVBOElemData( elemsVbo, vertsOffset, 0, &surf->mesh );
 			tail->numElems = numElems;
 			return;
 		}
@@ -152,7 +154,8 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 	}
 
 	if( tail->elemsVbo ) {
-		R_UploadVBOElemData( tail->elemsVbo, vertsOffset, tail->numElems, &surf->mesh );
+		mesh_vbo_t *elemsVbo = R_GetVBOByIndex( tail->elemsVbo );
+		R_UploadVBOElemData( elemsVbo, vertsOffset, tail->numElems, &surf->mesh );
 		tail->numElems += numElems;
 		return;
 	}
@@ -185,13 +188,17 @@ static void R_CompileLightSideView( rtlight_t *l, int side ) {
 	R_WalkDrawList( &r_shadowlist, R_BatchLightSideView, &head );
 
 	for( p = head.next; p && p != &head; p = next ) {
+		mesh_vbo_t *vbo, *elemsVbo;
+
 		next = p->next;
 
+		vbo = R_GetVBOByIndex( p->vbo );
 		if( p->numInstances )
-			p->elemsVbo = p->vbo;
+			elemsVbo = vbo;
 		else
-			p->elemsVbo = R_CreateElemsVBO( l, p->vbo, p->numElems, VBO_TAG_WORLD );
+			elemsVbo = R_CreateElemsVBO( l, vbo, p->numElems, VBO_TAG_WORLD );
 
+		p->elemsVbo = elemsVbo->index;
 		p->drawSurf.type = ST_COMPILED_LIGHT;
 		p->drawSurf.firstVert = p->firstVert;
 		p->drawSurf.numVerts = p->lastVert - p->firstVert + 1;
@@ -225,7 +232,7 @@ void R_TouchCompiledRtLightShadows( rtlight_t *l ) {
 		}
 
 		for( b = l->compiledSurf[side]; b && b->shaderId; b = b->next ) {
-			R_TouchMeshVBO( b->elemsVbo );
+			R_TouchMeshVBO( R_GetVBOByIndex( b->elemsVbo ) );
 
 			R_TouchShader( R_ShaderById( b->shaderId ) );
 		}
@@ -298,7 +305,7 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	fd->width = size;
 	fd->height = size;
 	VectorCopy( l->origin, fd->vieworg );
-	Matrix3_Copy( axis_identity, fd->viewaxis );
+	Matrix3_Copy( l->axis, fd->viewaxis );
 
 	// ignore current frame's area vis when compiling shadow geometry
 	if( compile ) {
@@ -386,25 +393,27 @@ void R_CompileRtLightShadow( rtlight_t *l ) {
 static int R_CullRtLightFrumSides( const refinst_t *r, const rtlight_t *l, float size, float border ) {
 	int i;
 	int sides = 0x3F;
+	vec3_t n;
 	float scale = (size - 2*border) / size, len;
-	const vec_t *o = l->origin;
 
 	// check if cone enclosing side would cross frustum plane
 	scale = 2 / ( scale * scale + 2 );
 
 	for( i = 0; i < 5; i++ ) {
-		const vec_t *n = r->frustum[i].normal;
-		if( PlaneDiff( o, &r->frustum[i] ) > -ON_EPSILON ) {
+		Matrix4_Multiply_Vector3( l->worldToLightMatrix, r->frustum[i].normal, n );
+		if( PlaneDiff( l->origin, &r->frustum[i] ) > -ON_EPSILON ) {
 			continue;
 		}
+
 		len = scale;
 		if( n[0]*n[0] > len ) sides &= n[0] < 0 ? ~(1<<0) : ~(2 << 0);
 		if( n[1]*n[1] > len ) sides &= n[1] < 0 ? ~(1<<2) : ~(2 << 2);
 		if( n[2]*n[2] > len ) sides &= n[2] < 0 ? ~(1<<4) : ~(2 << 4);
 	}
 
-	if( PlaneDiff( o, &r->frustum[4] ) >= r->farClip - r->nearClip + ON_EPSILON ) {
-		const vec_t *n = r->frustum[4].normal;
+	if( PlaneDiff( l->origin, &r->frustum[4] ) >= r->farClip - r->nearClip + ON_EPSILON ) {
+		Matrix4_Multiply_Vector3( l->worldToLightMatrix, r->frustum[4].normal, n );
+
 		len = scale;
 		if( n[0]*n[0] > len ) sides &= n[0] >= 0 ? ~(1<<0) : ~(2 << 0);
 		if( n[1]*n[1] > len ) sides &= n[1] >= 0 ? ~(1<<2) : ~(2 << 2);

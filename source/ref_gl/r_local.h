@@ -109,45 +109,6 @@ enum {
 	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER + NUM_LOADER_THREADS
 };
 
-typedef struct {
-	float intensity;
-	int flags;
-	int style;
-	int cluster;
-	int area;
-	bool world;
-	bool shadow;
-
-	int receiveMask;
-	int sort;
-	int lod;
-	int shadowBorder;
-	int shadowSize;
-	int shadowOffset[2];
-
-	vec4_t color; // r, g, b, 1.0 / intensity
-	vec4_t linearColor; // r, g, b, 1.0 / intensity
-
-	vec3_t origin;
-
-	vec3_t cullmins;
-	vec3_t cullmaxs;
-
-	vec3_t lightmins;
-	vec3_t lightmaxs;
-
-	mat4_t worldToLightMatrix;
-
-	unsigned numVisLeafs;
-	unsigned numSurfaces;
-
-	unsigned *visLeafs;
-	unsigned *surfaceInfo;
-
-	struct model_s *worldModel;
-	void *compiledSurf[6];
-} rtlight_t;
-
 #include "r_public.h"
 #include "r_vattribs.h"
 #include "r_light.h"
@@ -164,6 +125,8 @@ typedef struct {
 #include "r_jobs.h"
 #include "r_portals.h"
 
+extern const elem_t r_boxedges[24];
+
 //===================================================================
 
 // cached for this frame for zero LOD
@@ -176,9 +139,6 @@ typedef struct {
 	vec3_t absmins, absmaxs;
 
 	struct mfog_s *fog;
-
-	unsigned rtLightFrame;
-	unsigned numRtLights;
 } entSceneCache_t;
 
 typedef struct refScreenTexSet_s {
@@ -710,6 +670,9 @@ void        R_TransformForWorld( void );
 void        R_TransformForEntity( const entity_t *e );
 void        R_TranslateForEntity( const entity_t *e );
 void        R_TransformBounds( const vec3_t origin, const mat3_t axis, vec3_t mins, vec3_t maxs, vec3_t bbox[8] );
+
+bool		R_ScissorForCorners( const refinst_t *rnp, vec3_t corner[8], int *scissor );
+bool		R_ScissorForBBox( const refinst_t *rnp, vec3_t mins, vec3_t maxs, int *scissor );
 
 void        R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 							  const vec4_t color, const shader_t *shader );

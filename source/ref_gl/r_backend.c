@@ -301,9 +301,17 @@ void RB_LoadObjectMatrix( const mat4_t m ) {
 	Matrix4_Copy( m, rb.objectMatrix );
 	Matrix4_Multiply( rb.cameraMatrix, m, rb.modelviewMatrix );
 	Matrix4_Multiply( rb.projectionMatrix, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
+
 	if( rb.numRealtimeLights > 0 ) {
+		vec3_t tvec;
+		rtlight_t *rl = rb.rtlights[0];
+
 		Matrix4_Multiply( rb.rtlights[0]->worldToLightMatrix, m, rb.objectToLightMatrix );
+
+		VectorSubtract( rl->origin, rb.currentEntity->origin, tvec );
+		Matrix3_TransformVector( rb.currentEntity->axis, tvec, rb.lightDir );
 	}
+
 	rb.dirtyUniformState = true;
 }
 
@@ -1138,6 +1146,12 @@ void RB_DrawElementsReal( rbDrawElements_t *de ) {
 		rb.stats.c_totalDraws++;
 	}
 
+	if( rb.gl.state & GLSTATE_DEPTHWRITE ) {
+		rb.doneDepthPass = true;
+	}
+
+	rb.donePassesTotal++;
+
 	rb.stats.c_totalVerts += numVerts * numInstances;
 	if( rb.primitive == GL_TRIANGLES ) {
 		rb.stats.c_totalTris += numElems * numInstances / 3;
@@ -1241,6 +1255,7 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis ) {
 	VectorCopy( cameraOrigin, rb.cameraOrigin );
 	Matrix3_Copy( cameraAxis, rb.cameraAxis );
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -1255,6 +1270,9 @@ void RB_SetMode( int mode ) {
 * RB_SetSurfFlags
 */
 void RB_SetSurfFlags( int flags ) {
+	if( rb.surfFlags == flags ) {
+		return;
+	}
 	rb.surfFlags = flags;
 	rb.dirtyUniformState = true;
 }
@@ -1277,6 +1295,7 @@ bool RB_EnableTriangleOutlines( bool enable ) {
 
 	if( rb.triangleOutlines != enable ) {
 		rb.triangleOutlines = enable;
+		rb.dirtyUniformState = true;
 
 		// OpenGL ES systems don't support glPolygonMode
 #ifndef GL_ES_VERSION_2_0

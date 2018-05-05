@@ -428,6 +428,7 @@ static const flushBatchDrawSurf_cb r_flushBatchSurfCb[ST_MAX_TYPES] =
 */
 static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int drawSurfTypeFilter, unsigned minSort, unsigned maxSort ) {
 	unsigned int i;
+	unsigned distKey, sortDist;
 	uint64_t sortKey;
 	unsigned int shaderNum = 0, prevShaderNum = MAX_SHADERS;
 	unsigned int entNum = 0, prevEntNum = MAX_REF_ENTITIES;
@@ -464,33 +465,38 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 
 	for( i = 0; i < list->numDrawSurfs; i++ ) {
 		sds = list->drawSurfs + i;
+		distKey = sds->distKey;
 		sortKey = sds->sortKey;
+		sortDist = (distKey >> 26) & 31;
 		drawSurfType = *(int *)sds->drawSurf;
 
 		assert( drawSurfType > ST_NONE && drawSurfType < ST_MAX_TYPES );
 		if( drawSurfTypeFilter > ST_NONE && drawSurfType != drawSurfTypeFilter ) {
 			continue;
 		}
-
-		batchDrawSurf = ( r_batchDrawSurfCb[drawSurfType] ? true : false );
+		if( sortDist < minSort ) {
+			continue;
+		}
+		if( sortDist > maxSort ) {
+			break;
+		}
 
 		// decode draw surface properties
 		R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &lightStyle, &portalNum, &entNum );
 
-		shader = R_ShaderById( shaderNum );
 		entity = R_NUM2ENT( entNum );
+		entityFX = entity->renderfx;
 		fog = fogNum >= 0 ? rsh.worldBrushModel->fogs + fogNum : NULL;
 		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
-		entityFX = entity->renderfx;
+		shader = R_ShaderById( shaderNum );
 		depthWrite = Shader_DepthWrite( shader );
 		batchMergable = true;
 
-		if( shader->sort < minSort ) {
+		if( ( mode == RB_MODE_DEPTH ) && !depthWrite ) {
 			continue;
 		}
-		if( shader->sort > maxSort ) {
-			break;
-		}
+
+		batchDrawSurf = ( r_batchDrawSurfCb[drawSurfType] ? true : false );
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum ||
@@ -575,7 +581,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 
 			if( batchDrawSurf ) {
 				// don't transform batched surfaces
-				if( !prevBatchDrawSurf ) {
+				if( !prevBatchDrawSurf || batchFlush != r_flushBatchSurfCb[drawSurfType] ) {
 					RB_LoadObjectMatrix( mat4x4_identity );
 				}
 			} else {
@@ -623,6 +629,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 	if( batchDrawSurf ) {
 		if( batchFlush ) batchFlush();
 	}
+
 	if( depthHack ) {
 		RB_DepthRange( depthmin, depthmax );
 	}
@@ -637,27 +644,27 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 }
 
 /*
-* R_DrawRtLightViewSurfaces
+* R_DrawLightSurfaces
 */
-static void R_DrawRtLightViewSurfaces( drawList_t *list ) {
+static void R_DrawLightSurfaces( drawList_t *list ) {
 	bool depthCopied = false;
 
 	_R_DrawSurfaces( list, &depthCopied, RB_MODE_LIGHT, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
 }
 
 /*
-* R_DrawShadowViewSurfaces
+* R_DrawShadowSurfaces
 */
-static void R_DrawShadowViewSurfaces( drawList_t *list ) {
+static void R_DrawShadowSurfaces( drawList_t *list ) {
 	bool depthCopied = false;
 
 	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DEPTH, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
 }
 
 /*
-* R_DrawEarlyZSurfaces
+* R_DrawForwardRtLightSurfaces
 */
-static void R_DrawEarlyZSurfaces( drawList_t *list ) {
+static void R_DrawForwardRtLightSurfaces( drawList_t *list ) {
 	bool depthCopied = false, _dummy = false;
 
 	// early Z-pass
@@ -667,36 +674,7 @@ static void R_DrawEarlyZSurfaces( drawList_t *list ) {
 	_R_DrawSurfaces( rn.portalmasklist, &_dummy, RB_MODE_BLACK_GT, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_SKY );
 
 	// draw additive lights
-	{
-		unsigned i;
-		unsigned numRtLights;
-		rtlight_t *l, **rtLights;
-		refinst_t *prevrn;
-
-		rtLights = rn.rtlights;
-		numRtLights = rn.numRealtimeLights;
-
-		prevrn = R_PushRefInst();
-
-		rn = *prevrn;
-		rn.meshlist = &r_shadowlist;
-		rn.portalmasklist = NULL;
-		rn.parent = prevrn;
-		rn.renderFlags |= RF_LIGHTVIEW;
-		rn.numDepthPortalSurfaces = 0;
-
-		for( i = 0; i < numRtLights; i++ ) {
-			l = rtLights[i];
-			if( !l->receiveMask ) {
-				continue;
-			}
-
-			rn.rtLight = l;
-			R_RenderView( &rn.refdef );
-		}
-
-		R_PopRefInst();
-	}
+	R_DrawRtLights();
 
 	// draw decal passes for opaque shaders
 	_R_DrawSurfaces( list, &depthCopied, RB_MODE_POST_LIGHT, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
@@ -706,6 +684,7 @@ static void R_DrawEarlyZSurfaces( drawList_t *list ) {
 
 	RB_SetMode( RB_MODE_NORMAL );
 }
+
 /*
 * R_DrawPortalSurfaces
 */
@@ -725,11 +704,11 @@ void R_DrawSurfaces( drawList_t *list ) {
 	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
 		if( rn.renderFlags & RF_LIGHTVIEW ) {
-			R_DrawRtLightViewSurfaces( list );
+			R_DrawLightSurfaces( list );
 		} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-			R_DrawShadowViewSurfaces( list );
+			R_DrawShadowSurfaces( list );
 		} else if( rn.numRealtimeLights ) {
-			R_DrawEarlyZSurfaces( list );
+			R_DrawForwardRtLightSurfaces( list );
 		} else {
 			_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
 		}
@@ -760,7 +739,7 @@ void R_DrawOutlinedSurfaces( drawList_t *list ) {
 	bool triOutlines;
 	bool depthCopied = false;
 
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		return;
 	}
 

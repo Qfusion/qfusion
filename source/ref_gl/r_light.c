@@ -1231,7 +1231,7 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 /*
 * R_InitRtLight
 */
-void R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_t color ) {
+void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float radius, const vec3_t color ) {
 	mat4_t lightMatrix;
 
 	if( radius < 1.0 )
@@ -1245,6 +1245,7 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_
 	l->flags = LIGHTFLAG_REALTIMEMODE;
 	l->style = MAX_LIGHTSTYLES;
 	VectorCopy( origin, l->origin );
+	Matrix3_Copy( axis, l->axis );
 
 	VectorCopy( color, l->color );
 	l->color[3] = 1.0 / radius;
@@ -1254,7 +1255,7 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_
 	l->linearColor[2] = R_LinearFloatFromsRGBFloat( color[2] );
 	l->linearColor[3] = 1.0 / radius;
 
-	Matrix4_ObjectMatrix( origin, axis_identity, 1, lightMatrix );
+	Matrix4_ObjectMatrix( origin, axis, 1, lightMatrix );
 	Matrix4_Invert( lightMatrix, l->worldToLightMatrix );
 
 	BoundsFromRadius( l->origin, l->intensity + 1, l->lightmins, l->lightmaxs );
@@ -1273,15 +1274,15 @@ static int R_RtLightsShadowSizeCmp( const void *pl1, const void *pl2 ) {
 }
 
 /*
-* R_DrawRtLights
+* R_CullRtLights
 */
-unsigned R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows ) {
+unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows ) {
 	unsigned i, j;
 	unsigned count;
 	const uint8_t *areabits = rn.areabits;
 	const uint8_t *pvs = rn.pvs;
 
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		return 0;
 	}
 
@@ -1359,6 +1360,8 @@ unsigned R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 
 /*
 * R_CalcRtLightBBoxSidemask
+*
+* FIXME: Needs support for rotating lights
 */
 int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs ) {
 	int i;
@@ -1366,6 +1369,10 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 	const vec_t *o = &l->origin[0];
 	const vec_t *lmins = &l->cullmins[0];
 	const vec_t *lmaxs = &l->cullmaxs[0];
+
+	if( !BoundsAndSphereIntersect( mins, maxs, l->origin, l->intensity ) ) {
+		return 0;
+	}
 
 	for( i = 0; i < 3; i++ ) {
 		int j = i << 1;
@@ -1394,13 +1401,9 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 int R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf ) {
 	float dist;
 
-	switch( surf->facetype ) {
-	case FACETYPE_PLANAR:
-		if( !BoundsAndSphereIntersect( surf->mins, surf->maxs, lt->origin, lt->intensity ) ) {
-			return 0;
-		}
-
+	if( surf->facetype == FACETYPE_PLANAR ) {
 		dist = DotProduct( lt->origin, surf->plane ) - surf->plane[3];
+
 		if( ( surf->shader->flags & (SHADER_CULL_BACK|SHADER_CULL_FRONT) ) == SHADER_CULL_BACK ) {
 			if( dist <= -1.0 * lt->intensity - ON_EPSILON ) {
 				return 0;
@@ -1410,14 +1413,6 @@ int R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf ) 
 				return 0;
 			}
 		}
-		break;
-	case FACETYPE_PATCH:
-	case FACETYPE_TRISURF:
-	case FACETYPE_FOLIAGE:
-		if( !BoundsAndSphereIntersect( surf->mins, surf->maxs, lt->origin, lt->intensity ) ) {
-			return 0;
-		}
-		break;
 	}
 
 	return R_CalcRtLightBBoxSidemask( lt, surf->mins, surf->maxs );
@@ -1435,6 +1430,16 @@ void R_CompileRtLight( rtlight_t *l ) {
 }
 
 /*
+* R_TouchRtLight
+*/
+void R_TouchRtLight( rtlight_t *l ) {
+	if( l->cubemapFilter ) {
+		R_TouchImage( l->cubemapFilter, IMAGE_TAG_WORLD );
+	}
+	R_TouchCompiledRtLightShadows( l );
+}
+
+/*
 * R_RenderDebugLightVolumes
 */
 void R_RenderDebugLightVolumes( void ) {
@@ -1444,52 +1449,59 @@ void R_RenderDebugLightVolumes( void ) {
 		return;
 	}
 
-	if( r_lighting_showlightvolumes->integer == 1 ) {
-		for( i = 0; i < rn.numRealtimeLights; i++ ) {
-			rtlight_t *l = rn.rtlights[i];
+	for( i = 0; i < rn.numRealtimeLights; i++ ) {
+		rtlight_t *l = rn.rtlights[i];
 
-			if( !l->receiveMask ) {
-				continue;
-			}
-			R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
-		}
-	} else {
-		const msurface_t *surf;
-		const drawSurfaceBSP_t *drawSurf;
-
-		surf = rf.debugSurface;
-		if( !surf ) {
-			return;
+		if( !l->receiveMask ) {
+			continue;
 		}
 
-		if( rf.debugTrace.ent == R_ENT2NUM( rsc.worldent ) ) {
-			drawSurf = rsh.worldBrushModel->drawSurfaces + surf->drawSurf - 1;
-			if( r_lighting_showlightvolumes->integer == 2 ) {
-				for( i = 0; i < drawSurf->numRtLights; i++ ) {
-					rtlight_t *l = drawSurf->rtLights[i];
-
-					if( !l->receiveMask ) {
-						continue;
-					}
-
-					R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
-				}
-			} else if( r_lighting_showlightvolumes->integer == 3 ) {
-				unsigned lightBits = *surf->rtLightBits;
-
-				for( i = 0; i < drawSurf->numRtLights; i++ ) {
-					rtlight_t *l = drawSurf->rtLights[i];
-
-					if( !l->receiveMask ) {
-						continue;
-					}
-
-					if( lightBits & (1<<i) ) {
-						R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
-						R_AddDebugBounds( l->lightmins, l->lightmaxs, colorWhite );
-					}
-				}
-			}
-		}
+		R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
 	}
+}
+
+/*
+* R_DrawRtLights
+*/
+void R_DrawRtLights( void ) {
+	unsigned i;
+	unsigned numRtLights;
+	rtlight_t *l, **rtLights;
+	refinst_t *prevrn;
+
+	rtLights = rn.rtlights;
+	numRtLights = rn.numRealtimeLights;
+
+	if( !numRtLights ) {
+		return;
+	}
+
+	prevrn = R_PushRefInst();
+
+	rn = *prevrn;
+	rn.meshlist = &r_shadowlist;
+	rn.portalmasklist = NULL;
+	rn.parent = prevrn;
+	rn.renderFlags |= RF_LIGHTVIEW;
+	rn.numDepthPortalSurfaces = 0;
+
+	for( i = 0; i < numRtLights; i++ ) {
+		l = rtLights[i];
+		if( !l->receiveMask ) {
+			continue;
+		}
+
+		rn.rtLight = l;
+
+		if( R_ScissorForBBox( prevrn, l->cullmins, l->cullmaxs, rn.scissor ) ) {
+			// clipped away
+			continue;
+		}
+
+		R_SetupPVSFromCluster( l->cluster, l->area );
+
+		R_RenderView( &rn.refdef );
+	}
+
+	R_PopRefInst();
 }

@@ -53,7 +53,7 @@ typedef struct {
 } sortedDrawSurf_t;
 
 typedef struct {
-	unsigned vbo;
+	int vbo;
 	unsigned count;
 	unsigned firstVert, numVerts;
 	unsigned firstElem, numElems;

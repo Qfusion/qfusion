@@ -327,8 +327,6 @@ static void Mod_SetupSubmodels( model_t *mod ) {
 		bmodel->firstModelDrawSurface = bm->firstModelDrawSurface;
 		bmodel->numModelDrawSurfaces = bm->numModelDrawSurfaces;
 
-		bmodel->surfRtlightBits = loadbmodel->surfRtlightBits + bm->firstModelSurface;
-
 		starmod->extradata = bmodel;
 
 		VectorCopy( bm->maxs, starmod->maxs );
@@ -443,7 +441,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 	vattribmask_t floatVattribs;
 	mesh_vbo_t *tempVBOs;
 	unsigned numTempVBOs, maxTempVBOs;
-	unsigned *surfRtlightBits;
 	unsigned *worldSurfaces;
 	mesh_vbo_t *vbo;
 	mbrushmodel_t *loadbmodel;
@@ -483,8 +480,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 
 		qsort( sortedSurfaces + bm->firstModelSurface, bm->numModelSurfaces, sizeof( *sortedSurfaces ), &R_SortSurfacesCmp );
 
-		surfRtlightBits = loadbmodel->surfRtlightBits + bm->firstModelSurface;
-
 		for( i = 0; i < bm->numModelSurfaces;  ) {
 			shader_t *shader;
 			int fcount;
@@ -520,7 +515,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			drawSurf->shader = surf->shader;
 			drawSurf->numLightmaps = 0;
 			drawSurf->surfFlags = surf->flags;
-			drawSurf->surfRtlightBits = surfRtlightBits;
 			drawSurf->numLightmaps = 0;
 
 			// count lightmaps
@@ -540,7 +534,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			surf->drawSurf = loadbmodel->numDrawSurfaces;
 			surf->firstDrawSurfVert = 0;
 			surf->firstDrawSurfElem = 0;
-			surf->rtLightBits = surfRtlightBits;
 
 			// portal or foliage surfaces can not be batched
 			mergable = true;
@@ -590,7 +583,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 					surf2->drawSurf = loadbmodel->numDrawSurfaces;
 					surf2->firstDrawSurfVert = vcount;
 					surf2->firstDrawSurfElem = ecount;
-					surf2->rtLightBits = surfRtlightBits + fcount;
 
 					fcount++;
 					vcount += surf2->mesh.numVerts;
@@ -600,25 +592,27 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 				}
 			}
 
-			if( !vbo || vbo->vertexAttribs != vattribs || vbo->numVerts + vcount >= USHRT_MAX ) {
+			if( !vbo || vbo->vertexAttribs != vattribs || vbo->numVerts + vcount >= USHRT_MAX || vbo->instancesOffset ) {
 				// create temp VBO to hold pre-batched info
 				if( numTempVBOs == maxTempVBOs ) {
 					maxTempVBOs += 1024;
 					tempVBOs = Mod_Realloc( tempVBOs, maxTempVBOs * sizeof( *tempVBOs ) );
 				}
 
-				vbo = &tempVBOs[numTempVBOs++];
+				vbo = &tempVBOs[numTempVBOs];
 				vbo->owner = NULL;
 				vbo->numVerts = 0;
 				vbo->numElems = 0;
 				vbo->vertexAttribs = vattribs;
 				vbo->index = numTempVBOs;
+				vbo->instancesOffset = drawSurf->numInstances;
+				numTempVBOs++;
 			}
 
 			drawSurf->numVerts = vcount;
 			drawSurf->numElems = ecount;
 			drawSurf->numWorldSurfaces = fcount;
-			drawSurf->vbo = vbo;
+			drawSurf->vbo = vbo->index;
 			drawSurf->firstVboVert = vbo->numVerts;
 			drawSurf->firstVboElem = vbo->numElems;
 
@@ -628,7 +622,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			*vbo_total_size += vbo->arrayBufferSize + vbo->elemBufferSize;
 
 			i++;
-			surfRtlightBits += fcount;
 			worldSurfaces += fcount;
 		}
 
@@ -640,7 +633,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 		vbo = &tempVBOs[i];
 
 		// don't use half-floats for XYZ due to precision issues
-		vbo->owner = R_CreateMeshVBO( vbo, vbo->numVerts, vbo->numElems, /*drawSurf->numInstances*/0,
+		vbo->owner = R_CreateMeshVBO( vbo, vbo->numVerts, vbo->numElems, (int)vbo->instancesOffset,
 			vbo->vertexAttribs, VBO_TAG_WORLD, vbo->vertexAttribs & ~floatVattribs );
 
 		num_vbos++;
@@ -652,8 +645,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 		int vertsOffset, elemsOffset;
 
 		drawSurf = &loadbmodel->drawSurfaces[i];
-		vbo = drawSurf->vbo->owner;
-		drawSurf->vbo = vbo;
+		vbo = tempVBOs[drawSurf->vbo].owner;
+		drawSurf->vbo = vbo->index;
 
 		if( !vbo ) {
 			continue;
@@ -698,7 +691,6 @@ void Mod_CreateVertexBufferObjects( model_t *mod ) {
 	// allocate memory for drawsurfs
 	loadbmodel->numDrawSurfaces = 0;
 	loadbmodel->drawSurfaces = Mod_Malloc( mod, sizeof( *loadbmodel->drawSurfaces ) * loadbmodel->numsurfaces );
-	loadbmodel->surfRtlightBits = Mod_Malloc( mod, sizeof( *loadbmodel->surfRtlightBits ) * loadbmodel->numsurfaces );
 
 	total_vbos = Mod_CreateSubmodelBufferObjects( mod, &total_size );
 
@@ -729,20 +721,6 @@ static void Mod_CreateSkydome( model_t *mod ) {
 }
 
 /*
-* Mod_AllocateRtLightMasks
-*/
-static void Mod_AllocateRtLightMasks( model_t *model ) {
-	mbrushmodel_t *loadbmodel = ( ( mbrushmodel_t * )model->extradata );
-
-	assert( loadbmodel->numsurfaces != 0 );
-	assert( loadbmodel->numDrawSurfaces != 0 );
-	
-	// allocate surface pvs for rt lights
-	loadbmodel->rtLightSurfmasks = Mod_Malloc( model, loadbmodel->numsurfaces );
-	loadbmodel->rtLightDrawSurfPvs = Mod_Malloc( model, (loadbmodel->numDrawSurfaces+7)/8 );
-}
-
-/*
 * Mod_FinalizeBrushModel
 */
 static void Mod_FinalizeBrushModel( model_t *model ) {
@@ -755,8 +733,6 @@ static void Mod_FinalizeBrushModel( model_t *model ) {
 	Mod_SetupSubmodels( model );
 
 	Mod_CreateSkydome( model );
-
-	Mod_AllocateRtLightMasks( model );
 }
 
 /*
@@ -781,7 +757,7 @@ static void Mod_TouchBrushModel( model_t *model ) {
 	for( i = 0; i < loadbmodel->numDrawSurfaces; i++ ) {
 		drawSurfaceBSP_t *drawSurf = &loadbmodel->drawSurfaces[i];
 		R_TouchShader( drawSurf->shader );
-		R_TouchMeshVBO( drawSurf->vbo );
+		R_TouchMeshVBO( R_GetVBOByIndex( drawSurf->vbo ) );
 	}
 
 	for( i = 0; i < loadbmodel->numfogs; i++ ) {
@@ -795,7 +771,7 @@ static void Mod_TouchBrushModel( model_t *model ) {
 	}
 
 	for( i = 0; i < loadbmodel->numRtLights; i++ ) {
-		R_TouchCompiledRtLightShadows( loadbmodel->rtLights + i);
+		R_TouchRtLight( loadbmodel->rtLights + i );
 	}
 
 	R_TouchLightmapImages( model );
@@ -1331,7 +1307,7 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 				shadow = false;
 
 			l = &lights[numLights++];
-			R_InitRtLight( l, originf, radius, colorf );
+			R_InitRtLight( l, originf, axis_identity, radius, colorf );
 
 			l->flags = flags;
 			l->shadow = shadow;
@@ -1361,10 +1337,7 @@ static void R_LoadWorldRtLights( model_t *model ) {
 	char *buf;
 	int n;
 	char tempchar, *s, *t;
-	bool shadow;
 	char cubemap[MAX_QPATH];
-	int style, flags;
-	float origin[3], radius, color[3], angles[3], corona, coronasizescale, ambientscale, diffusescale, specularscale;
 	char format[128];
 	unsigned numLights, maxLights;
 	rtlight_t *lights;
@@ -1401,6 +1374,10 @@ static void R_LoadWorldRtLights( model_t *model ) {
 	n = 0;
 	while( *s ) {
 		int a;
+		bool shadow;
+		int style, flags;
+		float origin[3], radius, color[3], angles[3], corona, coronasizescale, ambientscale, diffusescale, specularscale;
+		mat3_t axis;
 		rtlight_t *l;
 
 		t = s;
@@ -1418,6 +1395,8 @@ static void R_LoadWorldRtLights( model_t *model ) {
 			shadow = false;
 			t++;
 		}
+
+		cubemap[0] = '\0';
 
 		*s = 0;
 		a = sscanf( t, format, &origin[0], &origin[1], &origin[2], &radius, &color[0], &color[1], &color[2], &style, cubemap, 
@@ -1446,6 +1425,7 @@ static void R_LoadWorldRtLights( model_t *model ) {
 			VectorClear( angles );
 		if( a < 10 )
 			corona = 0;
+		AnglesToAxis( angles, axis );
 
 		if( numLights == maxLights ) {
 			maxLights = maxLights + 64;
@@ -1453,12 +1433,24 @@ static void R_LoadWorldRtLights( model_t *model ) {
 		}
 
 		l = &lights[numLights++];
-		R_InitRtLight( l, origin, radius, color );
+		R_InitRtLight( l, origin, axis, radius, color );
 		l->flags = flags;
 		l->style = style;
 		l->shadow = shadow;
 		l->world = true;
 		l->worldModel = model;
+
+		if( cubemap[0] ) {
+			// strip quotes
+			if( cubemap[0] == '"' && cubemap[strlen(cubemap) - 1] == '"' ) {
+				size_t namelen;
+				namelen = strlen( cubemap ) - 2;
+				memmove( cubemap, cubemap + 1, namelen );
+				cubemap[namelen] = '\0';
+			}
+			l->cubemapFilter = R_FindImage( cubemap, NULL, IT_SRGB | IT_CLAMP | IT_CUBEMAP, 1, IMAGE_TAG_WORLD );
+		}
+
 		R_GetRtLightVisInfo( bmodel, l );
 
 		if( *s == '\r' )

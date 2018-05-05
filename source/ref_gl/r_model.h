@@ -98,8 +98,6 @@ typedef struct msurface_s {
 	shader_t *shader;
 	mfog_t *fog;
 
-	unsigned *rtLightBits;
-
 	int superLightStyle;
 } msurface_t;
 
@@ -175,9 +173,7 @@ typedef struct mbrushmodel_s {
 	mfog_t          *globalfog;
 
 	unsigned int numRtLights;
-	rtlight_t *rtLights;
-	uint8_t *rtLightSurfmasks;
-	uint8_t *rtLightDrawSurfPvs;
+	struct rtlight_s *rtLights;
 
 	/*unsigned*/ int numareas;
 
@@ -195,8 +191,6 @@ typedef struct mbrushmodel_s {
 
 	unsigned int numSuperLightStyles;
 	struct superLightStyle_s *superLightStyles;
-
-	unsigned *surfRtlightBits; // [numsurfaces]
 
 	unsigned numMiptex;
 	void *mipTex;

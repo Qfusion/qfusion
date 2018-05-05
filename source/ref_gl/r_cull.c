@@ -116,6 +116,122 @@ void R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t
 }
 
 /*
+* R_ScissorForCorners
+* 
+* Calculates 2-D scissor for bounding box defined as 8 corner verts in 3-D space.
+* Returns true if the bbox is off-screen.
+*/
+bool R_ScissorForCorners( const refinst_t *rnp, vec3_t corner[8], int *scissor ) {
+	int i;
+	int clipped[8];
+	float dist[8];
+	int numVerts;
+	vec4_t verts[8+12];
+	float x1, y1, x2, y2;
+	int ix1, iy1, ix2, iy2;
+
+	numVerts = 0;
+	for( i = 0; i < 8; i++ ) {
+		dist[i] = PlaneDiff( corner[i], &rnp->frustum[4] );
+		clipped[i] = dist[i] <= 0;
+
+		if( !clipped[i] ) {
+			VectorCopy( corner[i], verts[numVerts] );
+			numVerts++;
+		}
+	}
+
+	if( numVerts == 0 ) {
+		// all points are behind the nearplane
+		return true;
+	}
+
+	if( numVerts < 8 ) {
+		// some points are crossing the nearplane, clip edges
+		// insert vertices at intersection points
+		for( i = 0; i < 12; i++ ) {
+			int e1 = r_boxedges[i*2+0];
+			int e2 = r_boxedges[i*2+1];
+
+			if( clipped[e1] != clipped[e2] ) {
+				vec_t frac = dist[e1] / (dist[e1] - dist[e2]);
+				VectorLerp( corner[e1], frac, corner[e2], verts[numVerts] );
+				numVerts++;
+			}
+		}
+	}
+
+	// project all vertices in front of the nearplane and from the clipped edges
+	x1 = y1 = 999999;
+	x2 = y2 = -999999;
+	for( i = 0; i < numVerts; i++ ) {
+		vec4_t v, proj;
+
+		verts[i][3] = 1.0f;
+		Matrix4_Multiply_Vector( rnp->cameraProjectionMatrix, verts[i], proj );
+
+		v[0] = ( proj[0] / proj[3] + 1.0f ) * 0.5f * rnp->viewport[2];
+		v[1] = ( proj[1] / proj[3] + 1.0f ) * 0.5f * rnp->viewport[3];
+		v[2] = ( proj[2] / proj[3] + 1.0f ) * 0.5f; // [-1..1] -> [0..1]
+
+		if( !i ) {
+			x1 = x2 = v[0];
+			y1 = y2 = v[1];
+		} else {
+			x1 = min( x1, v[0] ); y1 = min( y1, v[1] );
+			x2 = max( x2, v[0] ); y2 = max( y2, v[1] );
+		}
+	}
+
+	ix1 = max( x1 - 1.0f, 0 );
+	ix2 = min( x2 + 1.0f, rnp->viewport[2] );
+
+	iy1 = max( y1 - 1.0f, 0 );
+	iy2 = min( y2 + 1.0f, rnp->viewport[3] );
+
+	if( ix1 >= ix2 || iy1 >= iy2 ) {
+		return true;
+	}
+
+	scissor[0] = ix1 + rnp->viewport[0];
+	scissor[1] = rnp->viewport[3] - iy2 + rnp->viewport[1];
+	scissor[2] = ix2 - ix1;
+	scissor[3] = iy2 - iy1;
+
+	if( scissor[0] < rnp->scissor[0] ) scissor[0] = rnp->scissor[0];
+	if( scissor[1] < rnp->scissor[1] ) scissor[1] = rnp->scissor[1];
+	if( scissor[2] > rnp->scissor[2] ) scissor[2] = rnp->scissor[2];
+	if( scissor[3] > rnp->scissor[3] ) scissor[3] = rnp->scissor[3];
+
+	return false;
+}
+
+/*
+* R_ScissorForBBox
+* 
+* Returns true if the bbox is off-screen.
+*/
+bool R_ScissorForBBox( const refinst_t *rnp, vec3_t mins, vec3_t maxs, int *scissor ) {
+	int i;
+	vec3_t corner[8];
+
+	if( BoundsIntersect( rnp->viewOrigin, rnp->viewOrigin, mins, maxs ) ) {
+		for( i = 0; i < 4; i++ ) {
+			scissor[i] = rnp->scissor[i];
+		}
+		return false;
+	}
+
+	for( i = 0; i < 8; i++ ) {
+		corner[i][0] = ( ( i & 1 ) ? mins[0] : maxs[0] );
+		corner[i][1] = ( ( i & 2 ) ? mins[1] : maxs[1] );
+		corner[i][2] = ( ( i & 4 ) ? mins[2] : maxs[2] );
+	}
+
+	return R_ScissorForCorners( rnp, corner, scissor );
+}
+
+/*
 * R_FogCull
 */
 bool R_FogCull( const mfog_t *fog, vec3_t origin, float radius ) {
