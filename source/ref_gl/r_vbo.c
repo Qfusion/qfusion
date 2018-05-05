@@ -384,8 +384,11 @@ error:
 * R_TouchMeshVBO
 */
 void R_TouchMeshVBO( mesh_vbo_t *vbo ) {
+	if( !vbo ) {
+		return;
+	}
+
 	vbo->registrationSequence = rsh.registrationSequence;
-	
 	if( vbo->vertsVbo ) {
 		R_TouchMeshVBO( vbo->vertsVbo );
 	}

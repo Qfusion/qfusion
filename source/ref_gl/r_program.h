@@ -81,17 +81,8 @@ enum {
 #define GLSL_SHADER_COMMON_BONE_TRANSFORMS      ( GLSL_SHADER_COMMON_BONE_TRANSFORMS1 | GLSL_SHADER_COMMON_BONE_TRANSFORMS2 \
 												  | GLSL_SHADER_COMMON_BONE_TRANSFORMS3 | GLSL_SHADER_COMMON_BONE_TRANSFORMS4 )
 
-#define GLSL_SHADER_COMMON_DLIGHTS_4            GLSL_BIT( 11 ) // 4
-#define GLSL_SHADER_COMMON_DLIGHTS_8            GLSL_BIT( 12 ) // 8
-#define GLSL_SHADER_COMMON_DLIGHTS_12           ( GLSL_SHADER_COMMON_DLIGHTS_4 | GLSL_SHADER_COMMON_DLIGHTS_8 ) // 12
-#define GLSL_SHADER_COMMON_DLIGHTS_16           GLSL_BIT( 13 ) // 16
-#define GLSL_SHADER_COMMON_DLIGHTS_20           ( GLSL_SHADER_COMMON_DLIGHTS_4 | GLSL_SHADER_COMMON_DLIGHTS_16 ) // 20
-#define GLSL_SHADER_COMMON_DLIGHTS_24           ( GLSL_SHADER_COMMON_DLIGHTS_8 | GLSL_SHADER_COMMON_DLIGHTS_16 ) // 24
-#define GLSL_SHADER_COMMON_DLIGHTS_28           ( GLSL_SHADER_COMMON_DLIGHTS_4 | GLSL_SHADER_COMMON_DLIGHTS_8 | GLSL_SHADER_COMMON_DLIGHTS_16 ) // 28
-#define GLSL_SHADER_COMMON_DLIGHTS              ( GLSL_SHADER_COMMON_DLIGHTS_4 | GLSL_SHADER_COMMON_DLIGHTS_8 \
-												  | GLSL_SHADER_COMMON_DLIGHTS_12 | GLSL_SHADER_COMMON_DLIGHTS_16 \
-												  | GLSL_SHADER_COMMON_DLIGHTS_20 | GLSL_SHADER_COMMON_DLIGHTS_24 \
-												  | GLSL_SHADER_COMMON_DLIGHTS_28 )
+#define GLSL_SHADER_COMMON_DLIGHTS              GLSL_BIT( 11 )
+#define GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER    GLSL_BIT( 12 )
 
 #define GLSL_SHADER_COMMON_DRAWFLAT             GLSL_BIT( 14 )
 
@@ -231,7 +222,7 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 
 void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle );
 
-void RP_UpdateRealtimeLightsUniforms( int elem, const mat4_t objectToLightMatrix,
+void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat4_t objectToLightMatrix,
 	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
 
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist,

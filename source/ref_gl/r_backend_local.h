@@ -104,6 +104,7 @@ typedef struct r_backend_s {
 	mat4_t cameraMatrix;
 	mat4_t objectMatrix;
 	mat4_t objectToLightMatrix;
+	vec3_t lightDir;
 	mat4_t modelviewMatrix;
 	mat4_t projectionMatrix;
 	mat4_t modelviewProjectionMatrix;
@@ -182,9 +183,6 @@ typedef struct r_backend_s {
 
 	unsigned numRealtimeLights;
 	rtlight_t *rtlights[MAX_DRAWSURF_RTLIGHTS];
-
-	unsigned numSurfaces;
-	unsigned surfRtLightBits[MAX_DRAWSURF_SURFS];
 } rbackend_t;
 
 extern rbackend_t rb;

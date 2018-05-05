@@ -31,6 +31,12 @@ refinst_t rn;
 
 r_scene_t rsc;
 
+const elem_t r_boxedges[24] = {
+	0, 1, 0, 2, 1, 3, 2, 3,
+	4, 5, 4, 6, 5, 7, 6, 7,
+	0, 4, 1, 5, 2, 6, 3, 7,
+};
+
 /*
 * R_TransformBounds
 */
@@ -1146,18 +1152,12 @@ static void R_AddEntityRtLights( entity_t *e ) {
 	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		return;
 	}
-	if( cache->rtLightFrame == rsc.frameCount ) {
-		return;
-	}
-
-	cache->numRtLights = 0;
-	cache->rtLightFrame = rsc.frameCount;
 
 	for( i = 0; i < rn.numRealtimeLights; i++ ) {
 		int sideMask;
 		rtlight_t *l = rn.rtlights[i];
 
-		if( !BoundsAndSphereIntersect( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
+		if( l->receiveMask == 0x3F ) {
 			continue;
 		}
 
@@ -1167,7 +1167,6 @@ static void R_AddEntityRtLights( entity_t *e ) {
 		}
 
 		l->receiveMask |= sideMask;
-		cache->numRtLights++;
 	}
 }
 
@@ -1195,20 +1194,14 @@ static void R_CullEntities( void ) {
 
 		rn.numEntities = 0;
 		for( i = 0; i < rn.parent->numEntities; i++ ) {
-			int sideMask;
 			entity_t *e = rn.parent->entities[i];
 			entSceneCache_t *cache = R_ENTCACHE( e );
 
-			if( e->rtype != RT_MODEL || cache->numRtLights == 0 ) {
+			if( e->rtype != RT_MODEL ) {
 				continue;
 			}
 
 			if( !BoundsAndSphereIntersect( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
-				continue;
-			}
-
-			sideMask = R_CalcRtLightBBoxSidemask( l, cache->absmins, cache->absmaxs );
-			if( !sideMask ) {
 				continue;
 			}
 
@@ -1808,9 +1801,10 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 								 "%s type:%i sort:%i",
 								 debugSurface->shader->name, debugSurface->facetype, debugSurface->shader->sort );
 
-					if( r_speeds->integer == 5 && drawSurf->vbo ) {
-						numVerts = drawSurf->vbo->numVerts;
-						numTris = drawSurf->vbo->numElems / 3;
+					if( r_speeds->integer == 5 && drawSurf && drawSurf->vbo ) {
+						mesh_vbo_t *vbo = R_GetVBOByIndex( drawSurf->vbo );
+						numVerts = vbo->numVerts;
+						numTris = vbo->numElems / 3;
 					} else {
 						numVerts = debugSurface->mesh.numVerts;
 						numTris = debugSurface->mesh.numElems;
@@ -1826,38 +1820,6 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 						&& debugSurface->fog->shader != debugSurface->shader ) {
 						Q_strncatz( out, "\n", size );
 						Q_strncatz( out, debugSurface->fog->shader->name, size );
-					}
-
-					if( drawSurf ) {
-						unsigned numRtLights = 0;
-						
-						if( rf.debugTrace.ent == R_ENT2NUM( rsc.worldent ) ) {
-							numRtLights = drawSurf->numRtLights;
-
-							if( r_speeds->integer == 4 ) {
-								unsigned i;
-								unsigned rtLightBits = *debugSurface->rtLightBits;
-
-								numRtLights = 0;
-								for( i = 0; i < drawSurf->numRtLights; i++ ) {
-									if( rtLightBits & (1<<i) ) {
-										rtlight_t *l = drawSurf->rtLights[i];
-
-										Q_strncatz( out, "\n", size );
-										Q_strncatz( out, va("%i %i %i", i, l->world, l->world ? l - rsh.worldBrushModel->rtLights : -1 ), size );
-
-										numRtLights++;
-									}
-								}
-							}
-						} else if( rf.debugTrace.ent >= 0 ) {
-							entSceneCache_t *cache = R_ENTNUMCACHE( rf.debugTrace.ent );
-							numRtLights = cache->numRtLights;
-						}
-
-						Q_strncatz( out, "\n", size );
-						Q_snprintfz( out + strlen( out ), size - strlen( out ),
-							"lights: %5i", numRtLights );
 					}
 				}
 				break;

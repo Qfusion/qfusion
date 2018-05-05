@@ -119,56 +119,43 @@ static void R_AddLightsToSurfaces( void ) {
 			continue;
 		}
 
-		//drawSurf->numRtLights = 0;
-		//memset( drawSurf->surfRtlightBits, 0, sizeof( *drawSurf->surfRtlightBits ) * drawSurf->numWorldSurfaces );
-
 		if( R_SurfFlagsNoDlight( drawSurf->surfFlags ) ) {
 			continue;
 		}
 
 		for( j = 0; j < rn.numRealtimeLights; j++ ) {
-			//rtlight_t *l = rn.rtlights[j];
+			if( lm[j] == 0x3F ) {
+				continue;
+			}
 
-			//if( drawSurf->numRtLights == MAX_DRAWSURF_RTLIGHTS ) {
-			//	break;
-			//}
-
+			// advance to the next drawsurface in the list
 			while( lc[j] > 0 && lsi[j][0] < ds ) {
 				lc[j]--;
 				lsi[j] = lsi[j] + 2 + lsi[j][1] * 3;
 				continue;
 			}
 
+			// end of list
 			if( lc[j] == 0 ) {
 				continue;
 			}
 
 			if( lsi[j][0] == ds ) {
-				bool clipped;
+				// matching draw surface
+				// iterate the list of world surfaces
 				unsigned *p = lsi[j];
 				p++;
 				unsigned ns = *p++;			
 
-				clipped = false;
 				for( k = 0; k < ns; k++, p += 3 ) {
-					if( rn.meshlist->worldSurfVis[p[0]] ) {
-						clipped = true;
-						break;
+					unsigned s = p[0], mask = p[2];
+					if( !rn.meshlist->worldSurfVis[s] ) {
+						continue;
 					}
-				}
 
-				if( clipped ) {
-					//unsigned bit = 1 << drawSurf->numRtLights;
-					//drawSurf->rtLights[drawSurf->numRtLights++] = l;
-
-					for( ; k < ns; k++, p += 3 ) {
-						unsigned s = p[0], /*si = p[1],*/ mask = p[2];
-						if( !rn.meshlist->worldSurfVis[s] ) {
-							continue;
-						}
-
-						lm[j] |= mask;
-						//drawSurf->surfRtlightBits[si] |= bit;
+					lm[j] |= mask;
+					if( lm[j] == 0x3F ) {
+						break;
 					}
 				}
 			}
@@ -196,14 +183,18 @@ void R_FlushBSPSurfBatch( void ) {
 		return;
 	}
 
+	batch->count = 0;
+
+	if( shader->flags & SHADER_SKY ) {
+		return;
+	}
+
 	if( lightStyleNum >= 0 ) {
 		ls = rls = rsh.worldBrushModel->superLightStyles + lightStyleNum;
 		if( r_lighting_realtime_world->integer && r_lighting_realtime_world_lightmaps->value < 0.01 ) {
 			ls = NULL;
 		}
 	}
-
-	batch->count = 0;
 
 	RB_BindShader( e, shader, batch->fog );
 
@@ -248,12 +239,12 @@ void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fo
 				unsigned surfFirstVert = drawSurf->firstVboVert + surf->firstDrawSurfVert;
 				unsigned surfFirstElem = drawSurf->firstVboElem + surf->firstDrawSurfElem;
 
-				if( batch->vbo != drawSurf->vbo->index || surfFirstElem != batch->firstElem+batch->numElems ) {
+				if( batch->vbo != drawSurf->vbo || surfFirstElem != batch->firstElem+batch->numElems ) {
 					R_FlushBSPSurfBatch();
 				}
 
 				if( batch->count == 0 ) {
-					batch->vbo = drawSurf->vbo->index;
+					batch->vbo = drawSurf->vbo;
 					batch->shader = ( shader_t * )shader;
 					batch->portalSurface = ( portalSurface_t *)portalSurface;
 					batch->entity = ( entity_t * )e;
@@ -1053,13 +1044,13 @@ void R_DrawWorldNode( void ) {
 		}
 
 		if( r_lighting_realtime_world->integer != 0 ) {
-			rf.stats.c_world_lights += R_DrawRtLights( bm->numRtLights, 
+			rf.stats.c_world_lights += R_CullRtLights( bm->numRtLights, 
 				bm->rtLights, clipFlags, r_lighting_realtime_world_shadows->integer != 0 );
 		}
 
 		if( r_lighting_realtime_dlight->integer != 0 ) {
 			if( !( rn.renderFlags & RF_ENVVIEW ) && r_dynamiclight->integer == 1 ) {
-				rf.stats.c_dynamic_lights += R_DrawRtLights( rsc.numDlights, 
+				rf.stats.c_dynamic_lights += R_CullRtLights( rsc.numDlights, 
 					rsc.dlights, clipFlags, r_lighting_realtime_dlight_shadows->integer != 0 );
 			}
 		}

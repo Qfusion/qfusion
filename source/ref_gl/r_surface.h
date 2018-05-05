@@ -62,9 +62,9 @@ typedef struct {
 
 	unsigned int surfFlags;
 
-	unsigned int *worldSurfaces; // [numSurfaces]
+	int vbo;
 
-	unsigned int *surfRtlightBits; // [numSurfaces]
+	unsigned int *worldSurfaces; // [numSurfaces]
 
 	instancePoint_t *instances;
 
@@ -72,11 +72,9 @@ typedef struct {
 
 	struct mfog_s *fog;
 
-	struct mesh_vbo_s *vbo;
-
 	void *listSurf;                 // only valid if visFrame == rf.frameCount
 
-	rtlight_t *rtLights[MAX_DRAWSURF_RTLIGHTS];
+	struct rtlight_s *rtLights[MAX_DRAWSURF_RTLIGHTS];
 } drawSurfaceBSP_t;
 
 typedef struct {
@@ -122,13 +120,13 @@ typedef struct {
 typedef struct {
 	drawSurfaceType_t type;
 
+	int vbo;
+
 	int firstVert, numVerts;
 	int firstElem, numElems;
 
 	int numInstances;
 	instancePoint_t *instances;
-
-	struct mesh_vbo_s *vbo;
 } drawSurfaceCompiledLight_t;
 
 #endif // R_SURFACE_H

@@ -51,7 +51,7 @@ static int rb_noiseperm[NOISE_SIZE];
 
 static shaderpass_t r_GLSLpasses[MAX_BUILTIN_GLSLPASSES];
 
-static void RB_SetShaderpassState( int state );
+static int RB_GetShaderpassState( int state );
 
 static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t programFeatures );
@@ -558,25 +558,12 @@ static r_glslfeat_t RB_RtlightbitsToProgramFeatures( void ) {
 		return bits;
 	}
 
-	if( numRtlights <= 4 ) {
-		return bits|GLSL_SHADER_COMMON_DLIGHTS_4;
+	if( rb.rtlights[0]->cubemapFilter ) {
+		if( !rb.rtlights[0]->cubemapFilter->missing )
+			bits |= GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER;
 	}
-	if( numRtlights <= 8 ) {
-		return bits|GLSL_SHADER_COMMON_DLIGHTS_8;
-	}
-	if( numRtlights <= 12 ) {
-		return bits|GLSL_SHADER_COMMON_DLIGHTS_12;
-	}
-	if( numRtlights <= 16 ) {
-		return bits|GLSL_SHADER_COMMON_DLIGHTS_16;
-	}
-	if( numRtlights <= 20 ) {
-		return bits|GLSL_SHADER_COMMON_DLIGHTS_20;
-	}
-	if( numRtlights <= 24 ) {
-		return bits|GLSL_SHADER_COMMON_DLIGHTS_24;
-	}
-	return bits|GLSL_SHADER_COMMON_DLIGHTS_28;
+
+	return bits|GLSL_SHADER_COMMON_DLIGHTS;
 }
 
 /*
@@ -745,6 +732,7 @@ static void RB_UpdateFogUniforms( int program, const mfog_t *fog ) {
 */
 static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
 	int i;
+	int state;
 	int program;
 	const image_t *base, *normalmap, *glossmap, *decalmap, *entdecalmap;
 	vec3_t lightDir = { 0.0f, 0.0f, 0.0f };
@@ -782,7 +770,11 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	}
 
 	if( rb.mode == RB_MODE_POST_LIGHT ) {
-		return;
+		if( !decalmap && !entdecalmap ) {
+			return;
+		}
+		normalmap = rsh.blankBumpTexture;
+		glossmap = NULL;
 	}
 
 	if( rb.noColorWrite || ( rb.currentModelType == mod_brush && !mapConfig.deluxeMappingEnabled )
@@ -796,6 +788,11 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		offsetmappingScale = r_offsetmapping_scale->value * rb.currentShader->offsetmappingScale;
 	} else { // no alpha in normalmap, don't bother with offset mapping
 		offsetmappingScale = 0;
+	}
+
+	state = RB_GetShaderpassState( pass->flags );
+	if( rb.mode == RB_MODE_POST_LIGHT ) {
+		state = ( state & ~GLSTATE_DEPTHWRITE ) | GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE;
 	}
 
 	glossIntensity = rb.currentShader->glossIntensity ? rb.currentShader->glossIntensity : r_lighting_glossintensity->value;
@@ -852,7 +849,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( state );
 
 	// we only send S-vectors to GPU and recalc T-vectors as cross product
 	// in vertex shader
@@ -898,15 +895,24 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
 
-	if( e->flags & RF_FULLBRIGHT || rb.currentModelType == mod_bad ) {
+	if( rb.mode == RB_MODE_POST_LIGHT ) {
+		// only apply decals
+		programFeatures &= ~GLSL_SHADER_COMMON_LIGHTING;
+	} else if( e->flags & RF_FULLBRIGHT || rb.currentModelType == mod_bad ) {
 		programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
 		Vector4Set( ambient, 1, 1, 1, 1 );
 		Vector4Set( diffuse, 1, 1, 1, 1 );
+	} else if( rb.mode == RB_MODE_LIGHT ) {
+		programFeatures |= RB_RtlightbitsToProgramFeatures();
+
+		if( programFeatures & GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER ) {
+			RB_BindImage( 5, rb.rtlights[0]->cubemapFilter );
+		}
 	} else {
 		bool minLight = ( e->flags & RF_MINLIGHT ) != 0;
 
-		// world surface
 		if( lightStyle ) {
+			// world surface
 			if( pass->rgbgen.type == RGB_GEN_VERTEX || pass->rgbgen.type == RGB_GEN_ONE_MINUS_VERTEX ) {
 				// vertex lighting
 				programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
@@ -949,8 +955,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 			minLight = true;
 			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
 		}
-
-		programFeatures |= RB_RtlightbitsToProgramFeatures();
 
 		if( minLight && false ) {
 			float ambientL = VectorLength( ambient );
@@ -996,8 +1000,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		// dynamic lights
 		if( rb.numRealtimeLights > 0 ) {
-			RP_UpdateRealtimeLightsUniforms( program, rb.objectToLightMatrix,
-				rb.numRealtimeLights, rb.rtlights, rb.numSurfaces, rb.surfRtLightBits );
+			RP_UpdateRealtimeLightsUniforms( program, rb.lightDir, rb.objectToLightMatrix,
+				rb.numRealtimeLights, rb.rtlights, 0, NULL );
 		}
 
 		// r_drawflat
@@ -1066,7 +1070,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	programFeatures |= RB_FogProgramFeatures( pass, rb.fog );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	if( normalmap != rsh.blankBumpTexture ) {
 		// eyeDot
@@ -1117,7 +1121,7 @@ static void RB_RenderMeshGLSL_Shadow( const shaderpass_t *pass, r_glslfeat_t pro
 	Matrix4_Identity( texMatrix );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOW, NULL,
@@ -1163,7 +1167,7 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	RB_Cull( GL_BACK );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	RB_UpdateCommonUniforms( program, pass, texMatrix );
 
@@ -1232,16 +1236,18 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	const mfog_t *fog = rb.fog;
 	bool isWorldSurface = rb.currentModelType == mod_brush ? true : false;
 	const superLightStyle_t *lightStyle = rb.superLightStyle;
+	const superLightStyle_t *realLightStyle = rb.realSuperLightStyle;
 	const entity_t *e = rb.currentEntity;
 	bool isLightmapped = false, isWorldVertexLight = false, applyLighting = false;
 	vec3_t lightDir;
 	vec4_t lightAmbient, lightDiffuse;
 	mat4_t texMatrix, genVectors;
+	bool noDlight = ( ( rb.surfFlags & SURF_NODLIGHT ) != 0 );
 
-	if( isWorldSurface && rb.realSuperLightStyle ) {
+	if( isWorldSurface ) {
 		if( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX ) {
 			// vertex-lit world surface
-			isWorldVertexLight = rb.realSuperLightStyle->vertexStyles[0] != 255;
+			isWorldVertexLight = ( realLightStyle && realLightStyle->vertexStyles[0] != 255 ) || ( noDlight == false );
 		} else if( ( rgbgen == RGB_GEN_IDENTITY
 		  || rgbgen == RGB_GEN_CONST
 		  || rgbgen == RGB_GEN_WAVE
@@ -1253,7 +1259,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		( pass->flags & GLSTATE_BLEND_ADD ) != GLSTATE_BLEND_ADD &&
 		( pass->flags & ( GLSTATE_SRCBLEND_SRC_ALPHA ) ) != GLSTATE_SRCBLEND_SRC_ALPHA ) {
 			// lightmapped surface pass
-			isLightmapped = rb.realSuperLightStyle->lightmapStyles[0] != 255;
+			isLightmapped = ( realLightStyle && realLightStyle->lightmapStyles[0] != 255 ) || ( noDlight == false );
 		}
 	}
 
@@ -1299,7 +1305,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	if( rb.triangleOutlines || rb.noColorWrite || rb.mode == RB_MODE_DECALS ) {
 		applyLighting = false;
 	} else if( !applyLighting ) {
-		applyLighting = ( isLightmapped || isWorldVertexLight ) || ( ( rb.surfFlags & SURF_NODLIGHT ) == 0 );
+		applyLighting = ( isLightmapped || isWorldVertexLight );
 	}
 
 	if( !applyLighting && ( rb.mode == RB_MODE_LIGHT ) ) {
@@ -1342,7 +1348,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		state |= GLSTATE_DEPTHWRITE;
 	}
 
-	RB_SetShaderpassState( state );
+	RB_SetState( RB_GetShaderpassState( state ) );
 
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
 		RB_BindImage( 3, rb.st.screenDepthTexCopy );
@@ -1351,23 +1357,29 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	if( applyLighting ) {
 		programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
 
-		if( isWorldVertexLight ) {
-			programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
-		}
+		if( rb.mode == RB_MODE_LIGHT ) {
+			programFeatures |= RB_RtlightbitsToProgramFeatures();
 
-		if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
-			int i;
+			if( programFeatures & GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER ) {
+				RB_BindImage( 5, rb.rtlights[0]->cubemapFilter );
+			}
+		} else {
+			if( isWorldVertexLight ) {
+				programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
+			}
 
-			// bind lightmap textures and set program's features for lightstyles
-			for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-				RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
-			programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
-			if( mapConfig.lightmapArrays ) {
-				programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
+			if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
+				int i;
+
+				// bindr lightmap textures and set program's features for lightstyles
+				for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
+					RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
+				programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
+				if( mapConfig.lightmapArrays ) {
+					programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
+				}
 			}
 		}
-
-		programFeatures |= RB_RtlightbitsToProgramFeatures();
 	}
 
 	if( programFeatures & GLSL_SHADER_COMMON_REALTIME_SHADOWS ) {
@@ -1399,8 +1411,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// dynamic lights
 		if( applyLighting ) {
-			RP_UpdateRealtimeLightsUniforms( program, rb.objectToLightMatrix,
-				rb.numRealtimeLights, rb.rtlights, rb.numSurfaces, rb.surfRtLightBits );
+			RP_UpdateRealtimeLightsUniforms( program, rb.lightDir, rb.objectToLightMatrix,
+				rb.numRealtimeLights, rb.rtlights, 0, NULL );
 		}
 
 		// r_drawflat
@@ -1455,7 +1467,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	// replacement images are there to ensure that the entity is still
 	// properly colored despite real images still being loaded in a separate thread
@@ -1518,7 +1530,7 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 	programFeatures |= GLSL_SHADER_COMMON_FOG;
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, NULL,
@@ -1547,7 +1559,7 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 	mat4_t texMatrix;
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	Matrix4_Identity( texMatrix );
 
@@ -1586,7 +1598,7 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 	mat4_t texMatrix = { 0 };
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	RB_BindImage( 0, pass->images[0] );
 	RB_BindImage( 1, pass->images[1] );
@@ -1632,7 +1644,7 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 	}
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	Matrix4_Identity( texMatrix );
 
@@ -1666,7 +1678,7 @@ static void RB_RenderMeshGLSL_KawaseBlur( const shaderpass_t *pass, r_glslfeat_t
 	mat4_t texMatrix = { 0 };
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetShaderpassState( pass->flags );
+	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
 	RB_BindImage( 0, pass->images[0] );
 
@@ -1776,9 +1788,6 @@ static void RB_UpdateVertexAttribs( void ) {
 	}
 	if( rb.numRealtimeLights ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
-		if( rb.numSurfaces ) {
-			vattribs |= VATTRIB_SURFINDEX_BIT;
-		}
 	}
 
 	rb.currentVAttribs = vattribs;
@@ -1788,12 +1797,14 @@ static void RB_UpdateVertexAttribs( void ) {
 * RB_BindShader
 */
 void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog ) {
-	if( rb.currentEntity == e && rb.currentShader == shader && rb.fog == fog ) {
-		return;
-	}
-
 	if( rb.mode == RB_MODE_BLACK_GT ) {
 		shader = rsh.whiteShader;
+	}
+
+	if( !rb.dirtyUniformState ) {
+		if( rb.currentEntity == e && rb.currentShader == shader && rb.fog == fog ) {
+			return;
+		}
 	}
 
 	rb.currentShader = shader;
@@ -1817,6 +1828,14 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	rb.surfFlags = SURF_NODLIGHT;
 
+	if( rb.numRealtimeLights )
+	{
+		vec3_t tvec;
+		rtlight_t *rl = rb.rtlights[0];
+		VectorSubtract( rl->origin, rb.currentEntity->origin, tvec );
+		Matrix3_TransformVector( rb.currentEntity->axis, tvec, rb.lightDir );
+	}
+
 	if( !e ) {
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
 		rb.alphaHack = false;
@@ -1837,7 +1856,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.greyscale = e->renderfx & RF_GREYSCALE ? true : false;
 		rb.noDepthTest = e->renderfx & RF_NODEPTHTEST && e->rtype == RT_SPRITE ? true : false;
 		rb.noColorWrite = e->renderfx & RF_NOCOLORWRITE ? true : false;
-		rb.depthEqual = rb.alphaHack && ( e->renderfx & RF_WEAPONMODEL );
+		rb.depthEqual = rb.alphaHack && !( e->renderfx & RF_WEAPONMODEL );
 	}
 
 	if( rb.mode == RB_MODE_DEPTH ) {
@@ -1993,21 +2012,13 @@ void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned n
 		numRtLights = 0;
 	}
 
-	//if( rb.numRealtimeLights == 0 && rb.numSurfaces == 0 && numRtLights == 0 && numSurfs == 0 ) {
-	//	return;
-	//}
+	if( rb.numRealtimeLights == 0 && numRtLights == 0 ) {
+		return;
+	}
 
 	rb.numRealtimeLights = numRtLights;
 	if( rtlights )
 		memcpy( rb.rtlights, rtlights, numRtLights * sizeof( *rtlights ) );
-
-	rb.numSurfaces = numSurfs;
-	if( surfRtLightBits )
-		memcpy( rb.surfRtLightBits, surfRtLightBits, numSurfs * sizeof( *surfRtLightBits ) );
-
-	if( rb.numRealtimeLights > 0 ) {
-		Matrix4_Multiply( rb.rtlights[0]->worldToLightMatrix, rb.objectMatrix, rb.objectToLightMatrix );
-	}
 
 	rb.dirtyUniformState = true;
 
@@ -2087,17 +2098,6 @@ static void RB_RenderPass( const shaderpass_t *pass ) {
 	} else {
 		RB_RenderMeshGLSLProgrammed( pass, GLSL_PROGRAM_TYPE_Q3A_SHADER );
 	}
-
-	if( rb.dirtyUniformState ) {
-		rb.donePassesTotal = 0;
-		rb.dirtyUniformState = false;
-	}
-
-	if( rb.gl.state & GLSTATE_DEPTHWRITE ) {
-		rb.doneDepthPass = true;
-	}
-
-	rb.donePassesTotal++;
 }
 
 /*
@@ -2139,13 +2139,14 @@ static void RB_SetShaderState( void ) {
 		state |= GLSTATE_NO_DEPTH_TEST;
 	}
 
+	rb.donePassesTotal = 0;
 	rb.currentShaderState = ( state & rb.shaderStateANDmask ) | rb.shaderStateORmask;
 }
 
 /*
-* RB_SetShaderpassState
+* RB_GetShaderpassState
 */
-static void RB_SetShaderpassState( int state ) {
+static int RB_GetShaderpassState( int state ) {
 	state |= rb.currentShaderState;
 
 	if( rb.mode == RB_MODE_LIGHT ) {
@@ -2166,8 +2167,7 @@ static void RB_SetShaderpassState( int state ) {
 			state |= GLSTATE_DEPTHFUNC_EQ;
 		}
 	}
-
-	RB_SetState( state );
+	return state;
 }
 
 /*
@@ -2179,8 +2179,9 @@ static void RB_SetShaderpassState( int state ) {
 */
 static bool RB_CleanSinglePass( void ) {
 	// reuse current GLSL state (same program bound, same uniform values)
-	if( !rb.dirtyUniformState && rb.donePassesTotal == 1 && rb.currentShader->numpasses == 1 ) {
+	if( !rb.dirtyUniformState && rb.donePassesTotal == 1 ) {
 		RB_DrawElementsReal( &rb.drawElements );
+		rb.donePassesTotal = 1;
 		return true;
 	}
 	return false;
@@ -2283,10 +2284,11 @@ void RB_DrawShadedElements( void ) {
 			}
 		}
 		if( rb.mode == RB_MODE_DECALS ) {
-			if( pass->flags & GLSTATE_DEPTHWRITE ) {
+			int state = RB_GetShaderpassState( pass->flags );
+			if( state & GLSTATE_DEPTHWRITE ) {
 				continue;
 			}
-			if( !(pass->flags & GLSTATE_BLEND_MASK) ) {
+			if( !(state & GLSTATE_BLEND_MASK) ) {
 				continue;
 			}
 		}
@@ -2300,7 +2302,7 @@ void RB_DrawShadedElements( void ) {
 	}
 
 	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHT ) {
-		return;
+		goto end;
 	}
 
 	// outlines
@@ -2320,4 +2322,7 @@ void RB_DrawShadedElements( void ) {
 		}
 		RB_RenderPass( fogPass );
 	}
+
+end:
+	rb.dirtyUniformState = rb.donePassesTotal != 1;
 }

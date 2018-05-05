@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_surface.h"
 #include "r_portals.h"
 #include "r_vattribs.h"
+#include "r_image.h"
 
 // flags for rtlight rendering
 #define LIGHTFLAG_NORMALMODE		1
@@ -66,6 +67,48 @@ typedef struct
 	lightmapAllocRow_t *rows;
 } lightmapAllocState_t;
 
+typedef struct rtlight_s {
+	float intensity;
+	int flags;
+	int style;
+	int cluster;
+	int area;
+	bool world;
+	bool shadow;
+
+	int receiveMask;
+	int sort;
+	int lod;
+	int shadowBorder;
+	int shadowSize;
+	int shadowOffset[2];
+
+	vec4_t color; // r, g, b, 1.0 / intensity
+	vec4_t linearColor; // r, g, b, 1.0 / intensity
+
+	vec3_t origin;
+
+	vec3_t cullmins;
+	vec3_t cullmaxs;
+
+	vec3_t lightmins;
+	vec3_t lightmaxs;
+
+	mat3_t axis;
+	mat4_t worldToLightMatrix;
+
+	unsigned numVisLeafs;
+	unsigned numSurfaces;
+
+	image_t *cubemapFilter;
+
+	unsigned *visLeafs;
+	unsigned *surfaceInfo;
+
+	struct model_s *worldModel;
+	void *compiledSurf[6];
+} rtlight_t;
+
 void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
 float       R_LightExposureForOrigin( const vec3_t origin );
 void        R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, lightmapRect_t *rects );
@@ -88,16 +131,17 @@ void		R_AllocLightmap_Free( lightmapAllocState_t *state );
 bool		R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int blockheight, int *outx, int *outy );
 
 
-void		R_InitRtLight( rtlight_t *l, const vec3_t origin, float radius, const vec3_t color );
+void		R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float radius, const vec3_t color );
 void		R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
 
-unsigned	R_DrawRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows );
+unsigned	R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows );
+void		R_DrawRtLights( void );
 
 int			R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs );
 int			R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf );
 
-void		R_CompileRtLightSurfPvs( rtlight_t *l );
 void		R_CompileRtLight( rtlight_t *l );
+void		R_TouchRtLight( rtlight_t *l );
 
 void		R_RenderDebugLightVolumes( void );
 

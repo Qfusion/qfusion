@@ -110,7 +110,6 @@ static void R_CacheSceneEntity( entity_t *e ) {
 		cache->mod_type = e->model->type;
 		cache->radius = 0;
 		cache->rotated = false;
-		cache->numRtLights = 0;
 		ClearBounds( cache->mins, cache->maxs );
 		ClearBounds( cache->absmins, cache->absmaxs );
 
@@ -218,7 +217,7 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	}
 
 	dl = &rsc.dlights[rsc.numDlights];
-	R_InitRtLight( dl, org, intensity * DLIGHT_SCALE, color );
+	R_InitRtLight( dl, org, axis_identity, intensity * DLIGHT_SCALE, color );
 	dl->worldModel = rsh.worldModel;
 	dl->shadow = dl->intensity >= DLIGHT_MIN_SHADOW_RADIUS;
 
@@ -729,12 +728,7 @@ static void R_RenderDebugBounds( void ) {
 	mesh_t mesh;
 	vec4_t verts[8];
 	byte_vec4_t colors[8], ucolor;
-	elem_t elems[24] =
-	{
-		0, 1, 1, 3, 3, 2, 2, 0,
-		0, 4, 1, 5, 2, 6, 3, 7,
-		4, 5, 5, 7, 7, 6, 6, 4
-	};
+	elem_t elems[24];
 
 	if( !r_num_debug_bounds ) {
 		return;
@@ -749,6 +743,10 @@ static void R_RenderDebugBounds( void ) {
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
+	for( i = 0; i < 24; i++ ) {
+		elems[i] = r_boxedges[i];
+	}
+
 	for( i = 0; i < r_num_debug_bounds; i++ ) {
 		mins = r_debug_bounds[i].mins;
 		maxs = r_debug_bounds[i].maxs;
@@ -762,6 +760,7 @@ static void R_RenderDebugBounds( void ) {
 			verts[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
 			verts[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
 			verts[j][3] = 1.0f;
+
 			Vector4Copy( ucolor, colors[j] );
 		}
 
