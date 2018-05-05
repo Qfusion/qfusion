@@ -1810,64 +1810,78 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
 	pathname[len] = 0;
 
 	if( flags & IT_CUBEMAP ) {
-		int i, j;
+		int i, j, k;
 		uint8_t *pic[6];
 		struct cubemapSufAndFlip {
 			char *suf; int flags;
 		} cubemapSides[2][6] = {
 			{
-				{ "px", 0 }, { "nx", 0 }, { "py", 0 },
-				{ "ny", 0 }, { "pz", 0 }, { "nz", 0 }
+				{ "px", 0 },
+				{ "nx", 0 },
+				{ "py", 0 },
+				{ "ny", 0 },
+				{ "pz", 0 },
+				{ "nz", 0 }
 			},
 			{
-				{ "rt", IT_FLIPDIAGONAL }, { "lf", IT_FLIPX | IT_FLIPY | IT_FLIPDIAGONAL }, { "bk", IT_FLIPY },
-				{ "ft", IT_FLIPX }, { "up", IT_FLIPDIAGONAL }, { "dn", IT_FLIPDIAGONAL }
+				{ "rt", IT_FLIPX | IT_FLIPDIAGONAL }, 
+				{ "lf", IT_FLIPY | IT_FLIPDIAGONAL },
+				{ "ft", IT_FLIPX | IT_FLIPY },
+				{ "bk", 0 },
+				{ "up", IT_FLIPX | IT_FLIPDIAGONAL },
+				{ "dn", IT_FLIPX | IT_FLIPDIAGONAL }
 			}
 		};
 		int lastSize = 0;
 
-		pathname[len] = '_';
-		for( i = 0; i < 2; i++ ) {
-			for( j = 0; j < 6; j++ ) {
-				int cbflags = cubemapSides[i][j].flags;
+		for( k = 0; k < 2; k++ ) {
+			pathname[len] = '_';
 
-				pathname[len + 1] = cubemapSides[i][j].suf[0];
-				pathname[len + 2] = cubemapSides[i][j].suf[1];
-				pathname[len + 3] = 0;
+			for( i = 0; i < 2; i++ ) {
+				for( j = 0; j < 6; j++ ) {
+					int cbflags = cubemapSides[i][j].flags;
 
-				Q_strncatz( pathname, ".tga", pathsize );
-				samples = R_ReadImageFromDisk( ctx, pathname, pathsize,
-											   &( pic[j] ), &width, &height, &flags, j );
-				if( pic[j] ) {
-					if( width != height ) {
-						ri.Com_DPrintf( S_COLOR_YELLOW "Not square cubemap image %s\n", pathname );
-						break;
+					pathname[len + k + 0] = cubemapSides[i][j].suf[0];
+					pathname[len + k + 1] = cubemapSides[i][j].suf[1];
+					pathname[len + k + 2] = 0;
+
+					Q_strncatz( pathname, ".tga", pathsize );
+					samples = R_ReadImageFromDisk( ctx, pathname, pathsize,
+												   &( pic[j] ), &width, &height, &flags, j );
+					if( pic[j] ) {
+						if( width != height ) {
+							ri.Com_DPrintf( S_COLOR_YELLOW "Not square cubemap image %s\n", pathname );
+							break;
+						}
+						if( !j ) {
+							lastSize = width;
+						} else if( lastSize != width ) {
+							ri.Com_DPrintf( S_COLOR_YELLOW "Different cubemap image size: %s\n", pathname );
+							break;
+						}
+						if( cbflags & ( IT_FLIPX | IT_FLIPY | IT_FLIPDIAGONAL ) ) {
+							uint8_t *temp = R_PrepareImageBuffer( ctx,
+								TEXTURE_FLIPPING_BUF0 + j, width * height * samples );
+							R_FlipTexture( pic[j], temp, width, height, samples,
+										   ( cbflags & IT_FLIPX ) ? true : false,
+										   ( cbflags & IT_FLIPY ) ? true : false,
+										   ( cbflags & IT_FLIPDIAGONAL ) ? true : false );
+							pic[j] = temp;
+						}
+						continue;
 					}
-					if( !j ) {
-						lastSize = width;
-					} else if( lastSize != width ) {
-						ri.Com_DPrintf( S_COLOR_YELLOW "Different cubemap image size: %s\n", pathname );
-						break;
-					}
-					if( cbflags & ( IT_FLIPX | IT_FLIPY | IT_FLIPDIAGONAL ) ) {
-						uint8_t *temp = R_PrepareImageBuffer( ctx,
-															  TEXTURE_FLIPPING_BUF0 + j, width * height * samples );
-						R_FlipTexture( pic[j], temp, width, height, 4,
-									   ( cbflags & IT_FLIPX ) ? true : false,
-									   ( cbflags & IT_FLIPY ) ? true : false,
-									   ( cbflags & IT_FLIPDIAGONAL ) ? true : false );
-						pic[j] = temp;
-					}
-					continue;
+					break;
 				}
-				break;
+				if( j == 6 ) {
+					break;
+				}
 			}
-			if( j == 6 ) {
+			if( i != 2 ) {
 				break;
 			}
 		}
 
-		if( i != 2 ) {
+		if( k != 2 ) {
 			image->width = width;
 			image->height = height;
 			image->samples = samples;
@@ -1875,9 +1889,9 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
 			R_BindImage( image );
 
 			R_Upload32( ctx, pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width,
-						&image->upload_height, samples, false, false );
+				&image->upload_height, samples, false, false );
 
-			Q_strncpyz( image->extension, &pathname[len + 3], sizeof( image->extension ) );
+			Q_strncpyz( image->extension, &pathname[len + k + 2], sizeof( image->extension ) );
 			loaded = true;
 		} else {
 			ri.Com_DPrintf( S_COLOR_YELLOW "Missing image: %s\n", image->name );
