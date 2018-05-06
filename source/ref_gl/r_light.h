@@ -140,6 +140,8 @@ void		R_DrawRtLights( void );
 int			R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs );
 int			R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf );
 
+int			R_CullRtLightSurfaceTriangles( const rtlight_t *l, const msurface_t *surf, bool cull, int vertsOffset, elem_t *oe, int *firstVert, int *lastVert );
+
 void		R_CompileRtLight( rtlight_t *l );
 void		R_TouchRtLight( rtlight_t *l );
 
