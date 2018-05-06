@@ -29,6 +29,7 @@ OMNIDIRECTIONAL SHADOW MAPS
 */
 
 typedef struct shadowSurfBatch_s {
+	int pass;
 	unsigned shaderId;
 
 	int firstVert, lastVert;
@@ -36,11 +37,13 @@ typedef struct shadowSurfBatch_s {
 	int numInstances;
 	int numWorldSurfaces;
 
-	drawSurfaceCompiledLight_t drawSurf;
-
 	int vbo;
 	int elemsVbo;
+	elem_t *elemsBuffer;
 
+	drawSurfaceCompiledLight_t drawSurf;
+
+	rtlight_t *light;
 	instancePoint_t *instances;
 
 	struct shadowSurfBatch_s *prev, *next, *tail;
@@ -86,11 +89,91 @@ void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const m
 
 	if( drawSurf->numInstances ) {
 		RB_DrawElementsInstanced( drawSurf->firstVert, drawSurf->numVerts, 
-			0, drawSurf->numElems,	drawSurf->numInstances, drawSurf->instances );
+			drawSurf->firstElem, drawSurf->numElems, drawSurf->numInstances, drawSurf->instances );
 		return;
 	}
 
-	RB_DrawElements( drawSurf->firstVert, drawSurf->numVerts, 0, drawSurf->numElems );
+	RB_DrawElements( drawSurf->firstVert, drawSurf->numVerts, drawSurf->firstElem, drawSurf->numElems );
+}
+
+/*
+* R_BatchShadowSurfElems
+*/
+static void R_BatchShadowSurfElems( shadowSurfBatch_t *batch, int vertsOffset, const msurface_t *surf ) {
+	unsigned i, j;
+	const mesh_t *mesh = &surf->mesh;
+	const elem_t *ie = mesh->elems;
+	unsigned numElems = mesh->numElems;
+	elem_t *oe = batch->elemsBuffer + batch->numElems;
+	const vec_t *lmins = batch->light->cullmins;
+	const vec_t *lmaxs = batch->light->cullmaxs;
+
+	if( r_shadows_culltriangles->integer && !BoundsInsideBounds( surf->mins, surf->maxs, lmins, lmaxs ) ) {
+		for( i = 0; i < numElems; i += 3, ie += 3 ) {
+			const vec_t *v1 = mesh->xyzArray[ie[0]];
+			const vec_t *v2 = mesh->xyzArray[ie[1]];
+			const vec_t *v3 = mesh->xyzArray[ie[2]];
+
+			if( BoundsOverlapTriangle( v1, v2, v3, lmins, lmaxs ) ) {
+				for( j = 0; j < 3; j++ ) {
+					int e = vertsOffset + ie[j];
+					if( e < batch->firstVert ) {
+						batch->firstVert = e;
+					}
+					if( e > batch->lastVert ) {
+						batch->lastVert = e;
+					}
+					oe[j] = e;
+				}
+				oe += 3;
+				batch->numElems += 3;
+			}
+		}
+	} else {
+		for( i = 0; i < numElems; i += 3, ie += 3 ) {
+			for( j = 0; j < 3; j++ ) {
+				int e = vertsOffset + ie[j];
+				if( e < batch->firstVert ) {
+					batch->firstVert = e;
+				}
+				if( e > batch->lastVert ) {
+					batch->lastVert = e;
+				}
+				oe[j] = e;
+			}
+			oe += 3;
+		}
+		batch->numElems += numElems;
+	}
+}
+
+/*
+* R_UploadBatchShadowElems
+*/
+static void R_UploadBatchShadowElems( shadowSurfBatch_t *batch ) {
+	mesh_t mesh;
+	mesh_vbo_t *elemsVbo;
+	drawSurfaceCompiledLight_t *drawSurf;
+
+	memset( &mesh, 0, sizeof( mesh_t ) );
+	mesh.numElems = batch->numElems;
+	mesh.elems = batch->elemsBuffer;
+
+	elemsVbo = R_CreateElemsVBO( batch->light, R_GetVBOByIndex( batch->vbo ), batch->numElems, VBO_TAG_WORLD );
+	R_UploadVBOElemData( elemsVbo, 0, 0, &mesh );
+
+	batch->elemsVbo = elemsVbo->index;
+	batch->elemsBuffer = NULL;
+
+	drawSurf = &batch->drawSurf;
+	drawSurf->type = ST_COMPILED_LIGHT;
+	drawSurf->firstVert = batch->firstVert;
+	drawSurf->numVerts = batch->lastVert - batch->firstVert + 1;
+	drawSurf->firstElem = 0;
+	drawSurf->numElems = batch->numElems;
+	drawSurf->vbo = batch->elemsVbo;
+
+	R_FrameCache_FreeToMark();
 }
 
 /*
@@ -100,7 +183,6 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 	int lightStyleNum, drawSurfaceBSP_t *drawSurf, msurface_t *surf ) {
 	int vbo;
 	int vertsOffset;
-	int firstVert, lastVert;
 	int numVerts, numElems;
 	int numInstances;
 	instancePoint_t *instances;
@@ -115,13 +197,17 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 	numElems = surf->mesh.numElems;
 	numInstances = drawSurf->numInstances;
 	instances = drawSurf->instances;
-	firstVert = drawSurf->firstVboVert + surf->firstDrawSurfVert;
-	lastVert = firstVert + numVerts - 1;
 	vertsOffset = drawSurf->firstVboVert + surf->firstDrawSurfVert;
 
 	tail = batch->tail;
 
-	if( tail->vbo != vbo || tail->shaderId != shader->id || tail->numInstances != 0 || numInstances != 0 ) {
+	if( tail->vbo != vbo || tail->shaderId != shader->id || 
+		tail->numInstances != 0 || numInstances != 0 || 
+		tail->numElems + numElems > UINT16_MAX ) {
+		if( tail->pass ) {
+			R_UploadBatchShadowElems( tail );
+		}
+
 		if( !tail->next ) {
 			tail->next = Mod_Malloc( rsh.worldModel, sizeof( shadowSurfBatch_t ) );
 			tail->next->prev = tail;
@@ -129,23 +215,25 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 		batch->tail = tail->next;
 		tail = tail->next;
 
-		if( tail->elemsVbo ) {
-			mesh_vbo_t *elemsVbo = R_GetVBOByIndex( tail->elemsVbo );
-
+		if( tail->pass ) {
 			if( numInstances ) {
-				tail->elemsVbo = vbo;
+				tail->elemsVbo = tail->vbo;
 				return;
 			}
 
-			R_UploadVBOElemData( elemsVbo, vertsOffset, 0, &surf->mesh );
-			tail->numElems = numElems;
+			R_FrameCache_SetMark();
+
+			tail->elemsBuffer = R_FrameCache_Alloc( sizeof( elem_t ) * tail->numElems );
+			tail->numElems = 0;
+			tail->firstVert = UINT16_MAX;
+			tail->lastVert = 0;
+			R_BatchShadowSurfElems( tail, vertsOffset, surf );
 			return;
 		}
 
+		tail->light = rn.rtLight;
 		tail->vbo = vbo;
 		tail->shaderId = shader->id;
-		tail->firstVert = firstVert;
-		tail->lastVert = lastVert;
 		tail->numElems = numElems;
 		tail->numInstances = numInstances;
 		tail->instances = instances;
@@ -153,19 +241,11 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 		return;
 	}
 
-	if( tail->elemsVbo ) {
-		mesh_vbo_t *elemsVbo = R_GetVBOByIndex( tail->elemsVbo );
-		R_UploadVBOElemData( elemsVbo, vertsOffset, tail->numElems, &surf->mesh );
-		tail->numElems += numElems;
+	if( tail->pass ) {
+		R_BatchShadowSurfElems( tail, vertsOffset, surf );
 		return;
 	}
 
-	if( firstVert < tail->firstVert ) {
-		tail->firstVert = firstVert;
-	}
-	if( lastVert > tail->lastVert ) {
-		tail->lastVert = lastVert;
-	}
 	tail->numElems += numElems;
 	tail->numWorldSurfaces++;
 }
@@ -188,25 +268,10 @@ static void R_CompileLightSideView( rtlight_t *l, int side ) {
 	R_WalkDrawList( &r_shadowlist, R_BatchLightSideView, &head );
 
 	for( p = head.next; p && p != &head; p = next ) {
-		mesh_vbo_t *vbo, *elemsVbo;
-
 		next = p->next;
-
-		vbo = R_GetVBOByIndex( p->vbo );
-		if( p->numInstances )
-			elemsVbo = vbo;
-		else
-			elemsVbo = R_CreateElemsVBO( l, vbo, p->numElems, VBO_TAG_WORLD );
-
-		p->elemsVbo = elemsVbo->index;
-		p->drawSurf.type = ST_COMPILED_LIGHT;
-		p->drawSurf.firstVert = p->firstVert;
-		p->drawSurf.numVerts = p->lastVert - p->firstVert + 1;
-		p->drawSurf.firstElem = 0;
-		p->drawSurf.numElems = p->numElems;
-		p->drawSurf.vbo = p->elemsVbo;
+		p->pass++;
 	}
-	
+
 	if( !head.next ) {
 		// create a stub batch so that the early exit check above won't fail
 		head.next = Mod_Malloc( rsh.worldModel, sizeof( shadowSurfBatch_t ) );
@@ -214,6 +279,7 @@ static void R_CompileLightSideView( rtlight_t *l, int side ) {
 		// walk the list again, now uploading elems to newly created VBO's
 		head.tail = &head;
 		R_WalkDrawList( &r_shadowlist, R_BatchLightSideView, &head );
+		R_UploadBatchShadowElems( head.tail );
 	}
 
 	l->compiledSurf[side] = head.next;
@@ -329,6 +395,9 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 		}
 		if( novis ) {
 			rnp->renderFlags |= RF_NOVIS;
+		}
+		if( compile ) {
+			rnp->renderFlags |= RF_NOENTS;
 		}
 
 		fd->x = x + (side & 1) * size;
