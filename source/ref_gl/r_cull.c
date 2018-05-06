@@ -215,7 +215,7 @@ bool R_ScissorForBBox( const refinst_t *rnp, vec3_t mins, vec3_t maxs, int *scis
 	int i;
 	vec3_t corner[8];
 
-	if( BoundsIntersect( rnp->viewOrigin, rnp->viewOrigin, mins, maxs ) ) {
+	if( BoundsOverlap( rnp->viewOrigin, rnp->viewOrigin, mins, maxs ) ) {
 		for( i = 0; i < 4; i++ ) {
 			scissor[i] = rnp->scissor[i];
 		}

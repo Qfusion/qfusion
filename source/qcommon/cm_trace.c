@@ -434,7 +434,7 @@ static int CM_PointContents( cmodel_state_t *cms, vec3_t p, cmodel_t *cmodel ) {
 
 			// check if patch adds something to contents
 			if( contents & patch->contents ) {
-				if( BoundsIntersect( p, p, patch->mins, patch->maxs ) ) {
+				if( BoundsOverlap( p, p, patch->mins, patch->maxs ) ) {
 					if( !( contents &= ~CM_PatchContents( patch, p ) ) ) {
 						return superContents;
 					}
@@ -781,7 +781,7 @@ static void CM_CollideBox( cmodel_state_t *cms, traceWork_t *tw, const int *mark
 		if( !( b->contents & tw->contents ) ) {
 			continue;
 		}
-		if( !BoundsIntersect( b->mins, b->maxs, tw->absmins, tw->absmaxs ) ) {
+		if( !BoundsOverlap( b->mins, b->maxs, tw->absmins, tw->absmaxs ) ) {
 			continue;
 		}
 		func( cms, tw, b );
@@ -808,12 +808,12 @@ static void CM_CollideBox( cmodel_state_t *cms, traceWork_t *tw, const int *mark
 		if( !( patch->contents & tw->contents ) ) {
 			continue;
 		}
-		if( !BoundsIntersect( patch->mins, patch->maxs, tw->absmins, tw->absmaxs ) ) {
+		if( !BoundsOverlap( patch->mins, patch->maxs, tw->absmins, tw->absmaxs ) ) {
 			continue;
 		}
 		facet = patch->facets;
 		for( j = 0; j < patch->numfacets; j++, facet++ ) {
-			if( !BoundsIntersect( facet->mins, facet->maxs, tw->absmins, tw->absmaxs ) ) {
+			if( !BoundsOverlap( facet->mins, facet->maxs, tw->absmins, tw->absmaxs ) ) {
 				continue;
 			}
 			func( cms, tw, facet );
@@ -1027,7 +1027,7 @@ static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr,
 		cleaf_t *leaf;
 
 		if( notworld ) {
-			if( BoundsIntersect( cmodel->mins, cmodel->maxs, tw->absmins, tw->absmaxs ) ) {
+			if( BoundsOverlap( cmodel->mins, cmodel->maxs, tw->absmins, tw->absmaxs ) ) {
 				CM_TestBox( cms, tw, cmodel->markbrushes, cmodel->nummarkbrushes, cmodel->markfaces, cmodel->nummarkfaces );
 			}
 		} else {
@@ -1072,7 +1072,7 @@ static void CM_BoxTrace( traceWork_t *tw, cmodel_state_t *cms, trace_t *tr,
 	//
 	if( !notworld ) {
 		CM_RecursiveHullCheck( cms, tw, 0, 0, 1, start, end );
-	} else if( BoundsIntersect( cmodel->mins, cmodel->maxs, tw->absmins, tw->absmaxs ) ) {
+	} else if( BoundsOverlap( cmodel->mins, cmodel->maxs, tw->absmins, tw->absmaxs ) ) {
 		CM_ClipBox( cms, tw, cmodel->markbrushes, cmodel->nummarkbrushes, cmodel->markfaces, cmodel->nummarkfaces );
 	}
 
