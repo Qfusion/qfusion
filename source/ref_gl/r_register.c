@@ -92,6 +92,7 @@ cvar_t *r_shadows_precision;
 cvar_t *r_shadows_nearclip;
 cvar_t *r_shadows_bias;
 cvar_t *r_shadows_usecompiled;
+cvar_t *r_shadows_culltriangles;
 cvar_t *r_shadows_polygonoffset_factor;
 cvar_t *r_shadows_polygonoffset_units;
 
@@ -1147,6 +1148,7 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_shadows_nearclip = ri.Cvar_Get( "r_shadows_nearclip", "1", CVAR_ARCHIVE );
 	r_shadows_bias = ri.Cvar_Get( "r_shadows_bias", "0.03", CVAR_ARCHIVE );
 	r_shadows_usecompiled  = ri.Cvar_Get( "r_shadows_usecompiled", "1", 0 );
+	r_shadows_culltriangles  = ri.Cvar_Get( "r_shadows_culltriangles", "1", 0 );
 	r_shadows_polygonoffset_factor  = ri.Cvar_Get( "r_shadows_polygonoffset_factor", "2", CVAR_ARCHIVE );
 	r_shadows_polygonoffset_units  = ri.Cvar_Get( "r_shadows_polygonoffset_units", "0", CVAR_ARCHIVE );
 

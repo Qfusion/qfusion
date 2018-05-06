@@ -743,6 +743,10 @@ static void R_RenderDebugBounds( void ) {
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
+	RB_SetLightstyle( NULL, NULL );
+
+	RB_SetRtLightParams( 0, NULL, 0, NULL );
+
 	for( i = 0; i < 24; i++ ) {
 		elems[i] = r_boxedges[i];
 	}

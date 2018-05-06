@@ -91,9 +91,15 @@ static void R_AddLightsToSurfaces( void ) {
 		return;
 	}
 
-	lsi = alloca( sizeof( *lsi ) * rn.numRealtimeLights );
-	lc = alloca( sizeof( *lc ) * rn.numRealtimeLights );
-	lm = alloca( sizeof( *lm ) * rn.numRealtimeLights );
+	R_FrameCache_SetMark();
+
+	lsi = R_FrameCache_Alloc( sizeof( *lsi ) * rn.numRealtimeLights );
+	lc = R_FrameCache_Alloc( sizeof( *lc ) * rn.numRealtimeLights );
+	lm = R_FrameCache_Alloc( sizeof( *lm ) * rn.numRealtimeLights );
+
+	memset( lsi, 0, sizeof( *lsi ) * rn.numRealtimeLights );
+	memset( lc, 0, sizeof( *lc ) * rn.numRealtimeLights );
+	memset( lm, 0, sizeof( *lm ) * rn.numRealtimeLights );
 
 	lsip = lsi;
 	lcp = lc;
@@ -166,6 +172,8 @@ static void R_AddLightsToSurfaces( void ) {
 		rtlight_t *l = rn.rtlights[j];
 		l->receiveMask |= lm[j];
 	}
+
+	R_FrameCache_FreeToMark();
 }
 
 /*
@@ -854,7 +862,8 @@ void R_DrawWorldShadowNode( void ) {
 	unsigned *p;
 	unsigned numDrawSurfaces;
 	bool (*skipSurf)( const msurface_t * ) = NULL;
-	drawList_t *parentDrawList;
+	drawList_t *parentDrawList = NULL;
+	uint8_t *tempSurfVis;
 
 	R_ReserveDrawListWorldSurfaces( rn.meshlist );
 
@@ -871,9 +880,11 @@ void R_DrawWorldShadowNode( void ) {
 		return;
 	}
 
-	parentDrawList = rn.parent->meshlist;
-	if( !parentDrawList ) {
-		return;
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		parentDrawList = rn.parent->meshlist;
+		if( !parentDrawList ) {
+			return;
+		}
 	}
 
 	VectorCopy( rn.refdef.vieworg, modelOrg );
@@ -888,6 +899,11 @@ void R_DrawWorldShadowNode( void ) {
 	} else if( rn.renderFlags & RF_LIGHTVIEW ) {
 		skipSurf = R_SurfNoDlight;
 	}
+
+	R_FrameCache_SetMark();
+
+	tempSurfVis = R_FrameCache_Alloc( sizeof( *tempSurfVis ) * rsh.worldBrushModel->numsurfaces );
+	memset( (void *)tempSurfVis, 0, sizeof( *tempSurfVis ) * rsh.worldBrushModel->numsurfaces );
 
 	for( i = 0; i < l->numVisLeafs; i++ ) {
 		int leafNum = l->visLeafs[i];
@@ -914,7 +930,7 @@ void R_DrawWorldShadowNode( void ) {
 
 		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
 			assert( leaf->visSurfaces[j] < rn.meshlist->numWorldSurfVis );
-			rn.meshlist->worldSurfVis[leaf->visSurfaces[j]] = 1;
+			tempSurfVis[leaf->visSurfaces[j]] = 1;
 		}
 	}
 
@@ -937,7 +953,7 @@ void R_DrawWorldShadowNode( void ) {
 				}
 			}
 
-			if( rn.meshlist->worldSurfVis[s] && !skipSurf( surf ) ) {
+			if( tempSurfVis[s] && !skipSurf( surf ) ) {
 				if( ( rn.renderFlags & RF_LIGHTVIEW ) || !R_CullSurface( rsc.worldent, surf, clipFlags ) ) {
 					culled = false;
 					rn.meshlist->worldSurfVis[s] = 1;
@@ -952,6 +968,8 @@ void R_DrawWorldShadowNode( void ) {
 			R_AddSurfaceToDrawList( rsc.worldent, ds );
 		}
 	}
+
+	R_FrameCache_FreeToMark();
 
 	// END t_world_node
 	if( speeds ) {
