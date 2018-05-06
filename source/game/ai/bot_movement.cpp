@@ -6789,7 +6789,7 @@ void BotVisitedAreasCache::Update() {
 	for( int i = 0; i < numBoxAreas; ++i ) {
 		const int areaNum = boxAreaNums[i];
 		const auto &area = aasAreas[areaNum];
-		if( BoundsIntersect( mins.Data(), maxs.Data(), area.mins, area.maxs ) ) {
+		if( BoundsOverlap( mins.Data(), maxs.Data(), area.mins, area.maxs ) ) {
 			MarkAsVisited( areaNum );
 		}
 	}

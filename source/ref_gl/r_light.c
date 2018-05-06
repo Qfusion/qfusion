@@ -1034,7 +1034,7 @@ static void R_GetRtLightLeafVisInfo_r( rtlight_t *l, const mnode_t *node, mbrush
 		return;
 	}
 
-	if( !BoundsIntersect( l->lightmins, l->lightmaxs, leaf->mins, leaf->maxs ) ) {
+	if( !BoundsOverlap( l->lightmins, l->lightmaxs, leaf->mins, leaf->maxs ) ) {
 		return;
 	}
 
@@ -1370,7 +1370,7 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 	const vec_t *lmins = &l->cullmins[0];
 	const vec_t *lmaxs = &l->cullmaxs[0];
 
-	if( !BoundsAndSphereIntersect( mins, maxs, l->origin, l->intensity ) ) {
+	if( !BoundsOverlapSphere( mins, maxs, l->origin, l->intensity ) ) {
 		return 0;
 	}
 

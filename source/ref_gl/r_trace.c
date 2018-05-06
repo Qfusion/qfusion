@@ -281,7 +281,7 @@ static msurface_t *R_TransformedTraceLine( rtrace_t *tr, const vec3_t start, con
 			// just walk the list of surfaces linearly
 			if( test->model == rsh.worldModel ) {
 				R_RecursiveHullCheck( bmodel->nodes, start_l, end_l );
-			} else if( BoundsIntersect( model->mins, model->maxs, trace_absmins, trace_absmaxs ) ) {
+			} else if( BoundsOverlap( model->mins, model->maxs, trace_absmins, trace_absmaxs ) ) {
 				R_TraceAgainstBmodel( bmodel );
 			}
 

@@ -458,7 +458,7 @@ static void R_RecursiveFragmentNode( void ) {
 				}
 				surf->fragmentframe = r_fragmentframecount;
 
-				if( !BoundsAndSphereIntersect( surf->mins, surf->maxs, fragmentOrigin, fragmentRadius ) ) {
+				if( !BoundsOverlapSphere( surf->mins, surf->maxs, fragmentOrigin, fragmentRadius ) ) {
 					continue;
 				}
 

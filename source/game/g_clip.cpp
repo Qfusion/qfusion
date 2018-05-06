@@ -423,7 +423,7 @@ static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins
 				continue;
 			}
 
-			if( BoundsIntersect( paddedmins, paddedmaxs, clipEnt->r.absmin, clipEnt->r.absmax ) ) {
+			if( BoundsOverlap( paddedmins, paddedmaxs, clipEnt->r.absmin, clipEnt->r.absmax ) ) {
 				if( numlist < maxcount ) {
 					list[numlist] = l->entNum;
 				}
@@ -460,7 +460,7 @@ static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins
 					continue;
 				}
 
-				if( BoundsIntersect( paddedmins, paddedmaxs, clipEnt->r.absmin, clipEnt->r.absmax ) ) {
+				if( BoundsOverlap( paddedmins, paddedmaxs, clipEnt->r.absmin, clipEnt->r.absmax ) ) {
 					if( numlist < maxcount ) {
 						list[numlist] = l->entNum;
 					}
@@ -999,7 +999,7 @@ bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent ) {
 		return tr.startsolid || tr.allsolid ? true : false;
 	}
 
-	return ( BoundsIntersect( mins, maxs, ent->r.absmin, ent->r.absmax ) ) == true;
+	return ( BoundsOverlap( mins, maxs, ent->r.absmin, ent->r.absmax ) ) == true;
 }
 
 
@@ -1147,7 +1147,7 @@ int GClip_FindInRadius4D( vec3_t org, float rad, int *list, int maxcount, int ti
 		check = EDICT_NUM( touch[i] );
 
 		// make absolute mins and maxs
-		if( !BoundsAndSphereIntersect( check->r.absmin, check->r.absmax, org, rad ) ) {
+		if( !BoundsOverlapSphere( check->r.absmin, check->r.absmax, org, rad ) ) {
 			continue;
 		}
 
