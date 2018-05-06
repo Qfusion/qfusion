@@ -1419,6 +1419,46 @@ int R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf ) 
 }
 
 /*
+* R_BatchRtLightSurfaceTriangles
+*/
+int R_CullRtLightSurfaceTriangles( const rtlight_t *l, const msurface_t *surf, bool cull, int vertsOffset, elem_t *oe, int *firstVert, int *lastVert ) {
+	unsigned i, j;
+	bool inside;
+	const mesh_t *mesh = &surf->mesh;
+	const elem_t *ie = mesh->elems;
+	unsigned numElems = mesh->numElems;
+	unsigned numOutElems = 0;
+	const vec_t *lmins = l->cullmins;
+	const vec_t *lmaxs = l->cullmaxs;
+
+	inside = BoundsInsideBounds( surf->mins, surf->maxs, lmins, lmaxs );
+
+	for( i = 0; i < numElems; i += 3, ie += 3 ) {
+		if( cull ) {
+			const vec_t *v[3] = { mesh->xyzArray[ie[0]], mesh->xyzArray[ie[1]], mesh->xyzArray[ie[2]] };
+
+			if( !inside && !BoundsOverlapTriangle( v[0], v[1], v[2], lmins, lmaxs ) ) {
+				continue;
+			}
+			if( !PointInfrontOfTriangle( l->origin, v[0], v[1], v[2] ) ) {
+				continue;
+			}
+		}
+
+		for( j = 0; j < 3; j++ ) {
+			oe[j] = vertsOffset + ie[j];
+			if( firstVert && oe[j] < *firstVert ) *firstVert = oe[j];
+			if( lastVert && oe[j] > *lastVert  ) *lastVert = oe[j];
+		}
+
+		oe += 3;
+		numOutElems += 3;
+	}
+
+	return numOutElems;
+}
+
+/*
 * R_CompileRtLight
 */
 void R_CompileRtLight( rtlight_t *l ) {

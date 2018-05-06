@@ -100,51 +100,11 @@ void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const m
 * R_BatchShadowSurfElems
 */
 static void R_BatchShadowSurfElems( shadowSurfBatch_t *batch, int vertsOffset, const msurface_t *surf ) {
-	unsigned i, j;
-	const mesh_t *mesh = &surf->mesh;
-	const elem_t *ie = mesh->elems;
-	unsigned numElems = mesh->numElems;
 	elem_t *oe = batch->elemsBuffer + batch->numElems;
-	const vec_t *lmins = batch->light->cullmins;
-	const vec_t *lmaxs = batch->light->cullmaxs;
+	const rtlight_t *l = batch->light;
+	bool cull = r_shadows_culltriangles->integer != 0;
 
-	if( r_shadows_culltriangles->integer && !BoundsInsideBounds( surf->mins, surf->maxs, lmins, lmaxs ) ) {
-		for( i = 0; i < numElems; i += 3, ie += 3 ) {
-			const vec_t *v1 = mesh->xyzArray[ie[0]];
-			const vec_t *v2 = mesh->xyzArray[ie[1]];
-			const vec_t *v3 = mesh->xyzArray[ie[2]];
-
-			if( BoundsOverlapTriangle( v1, v2, v3, lmins, lmaxs ) ) {
-				for( j = 0; j < 3; j++ ) {
-					int e = vertsOffset + ie[j];
-					if( e < batch->firstVert ) {
-						batch->firstVert = e;
-					}
-					if( e > batch->lastVert ) {
-						batch->lastVert = e;
-					}
-					oe[j] = e;
-				}
-				oe += 3;
-				batch->numElems += 3;
-			}
-		}
-	} else {
-		for( i = 0; i < numElems; i += 3, ie += 3 ) {
-			for( j = 0; j < 3; j++ ) {
-				int e = vertsOffset + ie[j];
-				if( e < batch->firstVert ) {
-					batch->firstVert = e;
-				}
-				if( e > batch->lastVert ) {
-					batch->lastVert = e;
-				}
-				oe[j] = e;
-			}
-			oe += 3;
-		}
-		batch->numElems += numElems;
-	}
+	batch->numElems += R_CullRtLightSurfaceTriangles( l, surf, cull, vertsOffset, oe, &batch->firstVert, &batch->lastVert );
 }
 
 /*
