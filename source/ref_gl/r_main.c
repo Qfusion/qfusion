@@ -1176,6 +1176,11 @@ static void R_AddEntityRtLights( entity_t *e ) {
 static void R_CullEntities( void ) {
 	unsigned int i;
 
+	if( rn.renderFlags & RF_NOENTS ) {
+		rn.numEntities = 0;
+		return;
+	}
+
 	if( rn.renderFlags & RF_ENVVIEW ) {
 		rn.numEntities = 0;
 		for( i = 0; i < rsc.numBmodelEntities; i++ ) {
@@ -1201,7 +1206,7 @@ static void R_CullEntities( void ) {
 				continue;
 			}
 
-			if( !BoundsAndSphereIntersect( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
+			if( !BoundsOverlapSphere( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
 				continue;
 			}
 
@@ -2149,9 +2154,8 @@ void R_FreeFile_( void *buffer, const char *filename, int fileline ) {
 //===================================================================
 
 typedef struct r_framecache_s {
-	size_t remaining;
 	size_t dataSize;
-	uint8_t *dataRover;
+	uint8_t *dataRover, *mark;
 	struct r_framecache_s *next;
 } r_framecache_t;
 
@@ -2180,7 +2184,7 @@ void R_FrameCache_Free( void ) {
 */
 static void R_FrameCache_ResetBlock( r_framecache_t *cache ) {
 	cache->dataRover = (uint8_t *)(((uintptr_t)(cache + 1) + 15) & ~15);
-	cache->remaining = cache->dataSize - (cache->dataRover - (uint8_t *)cache);
+	cache->mark = cache->dataRover;
 }
 
 /*
@@ -2229,6 +2233,7 @@ void R_FrameCache_BeginFrame( void ) {
 void *R_FrameCache_Alloc( size_t size ) {
 	uint8_t *data;
 	r_framecache_t *cache = r_frameCacheHead;
+	size_t remaining;
 
 	size = ((size + 15) & ~15);
 
@@ -2237,7 +2242,8 @@ void *R_FrameCache_Alloc( size_t size ) {
 		return NULL;
 	}
 
-	if( size > cache->remaining ) {
+	remaining = cache->dataSize - (cache->dataRover - (uint8_t *)cache);
+	if( size > remaining ) {
 		size_t newSize = r_frameCacheTotalSize / 2;
 
 		if( newSize < MIN_FRAMECACHE_SIZE ) {
@@ -2254,7 +2260,6 @@ void *R_FrameCache_Alloc( size_t size ) {
 
 	data = cache->dataRover;
 	cache->dataRover += size;
-	cache->remaining -= size;
 	return data;
 }
 
@@ -2270,4 +2275,20 @@ size_t R_FrameCache_TotalSize( void ) {
 */
 void R_FrameCache_EndFrame( void ) {
 
+}
+
+/*
+* R_FrameCache_SetMark
+*/
+void R_FrameCache_SetMark( void ) {
+	r_framecache_t *cache = r_frameCacheHead;
+	cache->mark = cache->dataRover;
+}
+
+/*
+* R_FrameCache_FreeToMark
+*/
+void R_FrameCache_FreeToMark( void ) {
+	r_framecache_t *cache = r_frameCacheHead;
+	cache->dataRover = cache->mark;
 }

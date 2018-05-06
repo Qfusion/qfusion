@@ -94,6 +94,7 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define RF_PORTAL_CAPTURE       RF_BIT( 10 )
 #define RF_SHADOWMAPVIEW_RGB    RF_BIT( 11 )
 #define RF_LIGHTVIEW            RF_BIT( 12 )
+#define RF_NOENTS               RF_BIT( 13 )
 
 #define RF_CUBEMAPVIEW          ( RF_ENVVIEW )
 #define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW | RF_LIGHTVIEW )
@@ -435,6 +436,7 @@ extern cvar_t *r_shadows_precision;
 extern cvar_t *r_shadows_nearclip;
 extern cvar_t *r_shadows_bias;
 extern cvar_t *r_shadows_usecompiled;
+extern cvar_t *r_shadows_culltriangles;
 extern cvar_t *r_shadows_polygonoffset_factor;
 extern cvar_t *r_shadows_polygonoffset_units;
 
@@ -712,6 +714,8 @@ void		R_FrameCache_BeginFrame( void );
 void		*R_FrameCache_Alloc( size_t size );
 void		R_FrameCache_EndFrame( void );
 size_t		R_FrameCache_TotalSize( void );
+void		R_FrameCache_SetMark( void );
+void		R_FrameCache_FreeToMark( void );
 
 //
 // r_mesh.c
