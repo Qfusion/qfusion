@@ -76,20 +76,32 @@ typedef struct rtlight_s {
 	bool world;
 	bool shadow;
 
-	int receiveMask;
+	// frame data
+	unsigned sceneFrame;
+	int sideMask;
+	int entSideMask;
 	int sort;
 	int lod;
 	int shadowBorder;
 	int shadowSize;
 	int shadowOffset[2];
 
+	unsigned numReceieveEnts;
+	unsigned numShadowEnts;
+
+	int *receiveEnts;
+	int *shadowEnts;
+
+	vec3_t cullmins; // worldmins & all influenced entities
+	vec3_t cullmaxs; // worldmaxs & all influenced entities
+
 	vec4_t color; // r, g, b, 1.0 / intensity
 	vec4_t linearColor; // r, g, b, 1.0 / intensity
 
 	vec3_t origin;
 
-	vec3_t cullmins;
-	vec3_t cullmaxs;
+	vec3_t worldmins;
+	vec3_t worldmaxs;
 
 	vec3_t lightmins;
 	vec3_t lightmaxs;

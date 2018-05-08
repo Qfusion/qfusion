@@ -106,7 +106,7 @@ static void R_AddLightsToSurfaces( void ) {
 
 	for( j = 0; j < rn.numRealtimeLights; j++ ) {
 		lsi[j] = rn.rtlights[j]->surfaceInfo;
-		lm[j] = 0;
+		lm[j] = rn.rtlights[j]->sideMask;
 
 		if( !lsi[j] ) {
 			lc[j] = 0;
@@ -170,7 +170,7 @@ static void R_AddLightsToSurfaces( void ) {
 
 	for( j = 0; j < rn.numRealtimeLights; j++ ) {
 		rtlight_t *l = rn.rtlights[j];
-		l->receiveMask |= lm[j];
+		l->sideMask |= lm[j];
 	}
 
 	R_FrameCache_FreeToMark();

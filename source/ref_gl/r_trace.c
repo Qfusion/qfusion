@@ -336,7 +336,7 @@ msurface_t *R_TraceLine( rtrace_t *tr, const vec3_t start, const vec3_t end, int
 		rtrace_t t2;
 		msurface_t *s2;
 
-		s2 = R_TransformedTraceLine( &t2, start, end, rsc.bmodelEntities[i], surfumask );
+		s2 = R_TransformedTraceLine( &t2, start, end, R_NUM2ENT( rsc.bmodelEntities[i] ), surfumask );
 		if( t2.fraction < tr->fraction ) {
 			*tr = t2;   // closer impact point
 			surf = s2;

@@ -390,7 +390,7 @@ setup_and_render:
 
 	R_SetupViewMatrices( &rn.refdef );
 
-	R_SetupFrustum( &rn.refdef, rn.nearClip, rn.farClip, rn.frustum );
+	R_SetupFrustum( &rn.refdef, rn.nearClip, rn.farClip, rn.frustum, rn.frustumCorners );
 
 	R_SetupPVS( &rn.refdef );
 
@@ -562,7 +562,7 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 
 	R_SetupViewMatrices( &rn.refdef );
 
-	R_SetupFrustum( &rn.refdef, rn.nearClip, rn.farClip, rn.frustum );
+	R_SetupFrustum( &rn.refdef, rn.nearClip, rn.farClip, rn.frustum, rn.frustumCorners );
 
 	R_SetupPVS( &rn.refdef );
 

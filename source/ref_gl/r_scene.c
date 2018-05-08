@@ -47,6 +47,10 @@ static void R_RenderDebugBounds( void );
 * R_ClearScene
 */
 void R_ClearScene( void ) {
+	R_FrameCache_Clear();
+
+	R_ClearDebugBounds();
+
 	rsc.numLocalEntities = 0;
 	rsc.numDlights = 0;
 	rsc.numPolys = 0;
@@ -90,8 +94,6 @@ void R_ClearScene( void ) {
 	rsc.numBmodelEntities = 0;
 
 	rsc.frameCount++;
-
-	R_ClearDebugBounds();
 }
 
 /*
@@ -159,7 +161,7 @@ void R_AddEntityToScene( const entity_t *ent ) {
 
 			if( de->model && de->model->type == mod_brush ) {
 				de->flags |= RF_FORCENOLOD;
-				rsc.bmodelEntities[rsc.numBmodelEntities++] = de;
+				rsc.bmodelEntities[rsc.numBmodelEntities++] = eNum;
 			}
 		} else if( de->rtype == RT_SPRITE ) {
 			// simplifies further checks
@@ -464,6 +466,8 @@ void R_RenderScene( const refdef_t *fd ) {
 	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
 	Vector4Set( rn.viewport, fd->x, fd->y, fd->width, fd->height );
 	VectorCopy( fd->vieworg, rn.pvsOrigin );
+	VectorCopy( fd->vieworg, rn.viewOrigin );
+	Matrix3_Copy( fd->viewaxis, rn.viewAxis );
 
 	VectorCopy( fd->vieworg, rn.lodOrigin );
 	rn.lodBias = r_lodbias->integer;
@@ -473,7 +477,7 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	R_SetupViewMatrices( fd );
 
-	R_SetupFrustum( fd, rn.nearClip, rn.farClip, rn.frustum );
+	R_SetupFrustum( fd, rn.nearClip, rn.farClip, rn.frustum, rn.frustumCorners );
 
 	R_SetupPVS( fd );
 
@@ -730,9 +734,9 @@ static void R_RenderDebugBounds( void ) {
 	byte_vec4_t colors[8], ucolor;
 	elem_t elems[24];
 
-	if( !r_num_debug_bounds ) {
-		return;
-	}
+	//if( !r_num_debug_bounds ) {
+	//	return;
+	//}
 
 	memset( &mesh, 0, sizeof( mesh ) );
 	mesh.numVerts = 8;

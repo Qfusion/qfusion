@@ -1143,52 +1143,31 @@ static void R_EndGL( void ) {
 }
 
 /*
-* R_AddEntityRtLights
-*/
-static void R_AddEntityRtLights( entity_t *e ) {
-	unsigned i;
-	entSceneCache_t *cache = R_ENTCACHE( e );
-
-	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
-		return;
-	}
-
-	for( i = 0; i < rn.numRealtimeLights; i++ ) {
-		int sideMask;
-		rtlight_t *l = rn.rtlights[i];
-
-		if( l->receiveMask == 0x3F ) {
-			continue;
-		}
-
-		sideMask = R_CalcRtLightBBoxSidemask( l, cache->absmins, cache->absmaxs );
-		if( !sideMask ) {
-			continue;
-		}
-
-		l->receiveMask |= sideMask;
-	}
-}
-
-/*
 * R_CullEntities
 */
 static void R_CullEntities( void ) {
 	unsigned int i;
+	int entNum;
+	entity_t *e;
+	entSceneCache_t *cache;
+
+	rn.numEntities = 0;
+	memset( rn.entpvs, 0, (rsc.numEntities+7)/8 );
 
 	if( rn.renderFlags & RF_NOENTS ) {
-		rn.numEntities = 0;
 		return;
 	}
 
 	if( rn.renderFlags & RF_ENVVIEW ) {
-		rn.numEntities = 0;
 		for( i = 0; i < rsc.numBmodelEntities; i++ ) {
-			entity_t *e = rsc.bmodelEntities[i];
+			entNum = rsc.bmodelEntities[i];
+			e = R_NUM2ENT( entNum );
+
 			if( R_CullModelEntity( e, false ) != 0 ) {
 				continue;
 			}
-			R_AddEntityRtLights( e );
+
+			rn.entpvs[entNum>>3] |= (1<<(entNum&7));
 			rn.entities[rn.numEntities++] = e;
 		}
 		return;
@@ -1197,35 +1176,48 @@ static void R_CullEntities( void ) {
 	if( rn.renderFlags & RF_LIGHTVIEW ) {
 		const rtlight_t *l = rn.rtLight;
 
-		rn.numEntities = 0;
-		for( i = 0; i < rn.parent->numEntities; i++ ) {
-			entity_t *e = rn.parent->entities[i];
-			entSceneCache_t *cache = R_ENTCACHE( e );
+		for( i = 0; i < l->numReceieveEnts; i++ ) {
+			entNum = l->receiveEnts[i];
 
-			if( e->rtype != RT_MODEL ) {
+			if( !(rn.parent->entpvs[entNum>>3] & (1<<(entNum&7))) ) {
+				// not visible in parent view
 				continue;
 			}
 
-			if( !BoundsOverlapSphere( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
-				continue;
-			}
-
+			e = R_NUM2ENT( entNum );
+			rn.entpvs[entNum>>3] |= (1<<(entNum&7));
 			rn.entities[rn.numEntities++] = e;
 		}
 		return;
 	}
 
-	rn.numEntities = 0;
-	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
-		entity_t *e = R_NUM2ENT( i );
-		bool culled = true;
-		bool addlights = e->rtype == RT_MODEL;
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		const rtlight_t *l = rn.rtLight;
 
-		if( e->flags & RF_NOSHADOW ) {
-			if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		for( i = 0; i < l->numShadowEnts; i++ ) {
+			entNum = l->shadowEnts[i];
+			e = R_NUM2ENT( entNum );
+			cache = R_ENTCACHE( e );
+
+			if( R_CullModelEntity( e, false ) ) {
 				continue;
 			}
+			if( R_DeformedCullBox( cache->absmins, cache->absmaxs ) ) {
+				continue;
+			}
+
+			rn.entpvs[entNum>>3] |= (1<<(entNum&7));
+			rn.entities[rn.numEntities++] = e;
 		}
+		return;
+	}
+
+	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
+		bool culled;
+
+		entNum = i;
+		e = R_NUM2ENT( entNum );
+		culled = true;
 
 		if( e->flags & RF_WEAPONMODEL ) {
 			if( rn.renderFlags & RF_NONVIEWERREF ) {
@@ -1236,7 +1228,7 @@ static void R_CullEntities( void ) {
 
 		if( e->flags & RF_VIEWERMODEL ) {
 			//if( !(rn.renderFlags & RF_NONVIEWERREF) )
-			if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_SHADOWMAPVIEW ) ) ) {
+			if( !( rn.renderFlags & ( RF_MIRRORVIEW ) ) ) {
 				continue;
 			}
 		}
@@ -1261,8 +1253,7 @@ static void R_CullEntities( void ) {
 		}
 
 add:
-		if( addlights )
-			R_AddEntityRtLights( e );
+		rn.entpvs[entNum>>3] |= (1<<(entNum&7));
 		rn.entities[rn.numEntities++] = e;
 	}
 }
@@ -1924,8 +1915,6 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
 	int samples;
 	int64_t time = ri.Sys_Milliseconds();
 
-	R_FrameCache_BeginFrame();
-
 	GLimp_BeginFrame();
 
 	RB_BeginFrame();
@@ -2044,8 +2033,6 @@ void R_EndFrame( void ) {
 	RB_EndFrame();
 
 	GLimp_EndFrame();
-
-	R_FrameCache_EndFrame();
 
 	rf.transformMatrixStackSize[0] = 0;
 	rf.transformMatrixStackSize[1] = 0;
@@ -2203,11 +2190,11 @@ r_framecache_t *R_FrameCache_NewBlock( size_t size ) {
 }
 
 /*
-* R_FrameCache_BeginFrame
+* R_FrameCache_Clear
 *
 * Allocate a whole new block of heap memory to accomodate all data from the previous frame.
 */
-void R_FrameCache_BeginFrame( void ) {
+void R_FrameCache_Clear( void ) {
 	size_t newSize;
 	
 	newSize = r_frameCacheTotalSize;
@@ -2268,13 +2255,6 @@ void *R_FrameCache_Alloc( size_t size ) {
 */
 size_t R_FrameCache_TotalSize( void ) {
 	return r_frameCacheTotalSize;
-}
-
-/*
-* R_FrameCache_EndFrame
-*/
-void R_FrameCache_EndFrame( void ) {
-
 }
 
 /*
