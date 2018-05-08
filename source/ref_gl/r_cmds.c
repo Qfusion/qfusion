@@ -241,7 +241,7 @@ void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels ) {
 
 		R_SetupViewMatrices( &fd );
 
-		R_SetupFrustum( &fd, rn.nearClip, rn.farClip, rn.frustum );
+		R_SetupFrustum( &fd, rn.nearClip, rn.farClip, rn.frustum, rn.frustumCorners );
 
 		R_SetupPVS( &fd );
 

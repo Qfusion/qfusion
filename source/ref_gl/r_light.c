@@ -1213,8 +1213,8 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 
 	// limit combined leaf box to light boundaries
 	for( i = 0; i < 3; i++ ) {
-		l->cullmins[i] = max( vis->leafMins[i] - 1, l->lightmins[i] );
-		l->cullmaxs[i] = min( vis->leafMaxs[i] + 1, l->lightmaxs[i] );
+		l->worldmins[i] = max( vis->leafMins[i] - 1, l->lightmins[i] );
+		l->worldmaxs[i] = min( vis->leafMaxs[i] + 1, l->lightmaxs[i] );
 	}
 
 	R_GetRtLightSurfaceVisInfo( l, bm, vis );
@@ -1223,8 +1223,8 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 
 	// limit combined surface box to light boundaries
 	for( i = 0; i < 3; i++ ) {
-		l->cullmins[i] = max( vis->surfMins[i] - 1, l->lightmins[i] );
-		l->cullmaxs[i] = min( vis->surfMaxs[i] + 1, l->lightmaxs[i] );
+		l->worldmins[i] = max( vis->surfMins[i] - 1, l->lightmins[i] );
+		l->worldmaxs[i] = min( vis->surfMaxs[i] + 1, l->lightmaxs[i] );
 	}
 }
 
@@ -1241,6 +1241,7 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float 
 
 	l->area = -1;
 	l->cluster = -2; // differentiate from valid cluster -1, call R_GetRtLightVisInfo on first render
+	l->sceneFrame = !rsc.frameCount;
 	l->intensity = radius;
 	l->flags = LIGHTFLAG_REALTIMEMODE;
 	l->style = MAX_LIGHTSTYLES;
@@ -1259,7 +1260,7 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float 
 	Matrix4_Invert( lightMatrix, l->worldToLightMatrix );
 
 	BoundsFromRadius( l->origin, l->intensity + 1, l->lightmins, l->lightmaxs );
-	CopyBounds( l->lightmins, l->lightmaxs, l->cullmins, l->cullmaxs );
+	CopyBounds( l->lightmins, l->lightmaxs, l->worldmins, l->worldmaxs );
 }
 
 /*
@@ -1271,6 +1272,92 @@ static int R_RtLightsShadowSizeCmp( const void *pl1, const void *pl2 ) {
 	int s1 = l1->sort;
 	int s2 = l2->sort;
 	return s2 - s1;
+}
+
+/*
+* R_PrepareRtLightntities
+*/
+void R_PrepareRtLightEntities( rtlight_t *l ) {
+	unsigned i;
+	int nre, nse;
+	static int re[MAX_REF_ENTITIES], se[MAX_REF_ENTITIES];
+
+	nre = 0;
+	nse = 0;
+
+	l->entSideMask = 0;
+
+	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
+		bool ignore;
+		entity_t *e = R_NUM2ENT( i );
+		int entNum = R_ENT2NUM( e );
+		entSceneCache_t *cache = R_ENTCACHE( e );
+		int sideMask;
+
+		if( e->rtype != RT_MODEL ) {
+			continue;
+		}
+		if( !BoundsOverlapSphere( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
+			continue;
+		}
+
+		ignore = true;
+		if( !(e->flags & RF_FULLBRIGHT) ) {
+			ignore = false;
+			re[nre++] = entNum;
+		}
+		if( !(e->flags & (RF_NOSHADOW|RF_WEAPONMODEL|RF_NODEPTHTEST)) ) {
+			ignore = false;
+			se[nse++] = entNum;
+		}
+
+		if( ignore ) {
+			continue;
+		}
+
+		sideMask = R_CalcRtLightBBoxSidemask( l, cache->absmins, cache->absmaxs );
+		if( !sideMask ) {
+			continue;
+		}
+
+		// expand the cullmins/maxs to include influenced entities
+		AddPointToBounds( cache->mins, l->cullmins, l->cullmaxs );
+		AddPointToBounds( cache->maxs, l->cullmins, l->cullmaxs );
+
+		l->entSideMask |= sideMask;
+	}
+
+	l->numReceieveEnts = nre;
+	l->numShadowEnts = nse;
+
+	l->receiveEnts = R_FrameCache_Alloc( sizeof( int ) * l->numReceieveEnts );
+	memcpy( l->receiveEnts, re, sizeof( int ) * l->numReceieveEnts );
+
+	l->shadowEnts = R_FrameCache_Alloc( sizeof( int ) * l->numShadowEnts );
+	memcpy( l->shadowEnts, se, sizeof( int ) * l->numShadowEnts );
+}
+
+/*
+* R_PrepareRtLightFrameData
+*/
+void R_PrepareRtLightFrameData( rtlight_t *l ) {
+	int i;
+
+	if( l->sceneFrame == rsc.frameCount ) {
+		return;
+	}
+
+	CopyBounds( l->worldmins, l->worldmaxs, l->cullmins, l->cullmaxs );
+
+	l->sceneFrame = rsc.frameCount;
+
+	R_PrepareRtLightEntities( l );
+
+	// limit combined world + ents box to light boundaries
+	for( i = 0; i < 3; i++ ) {
+		l->cullmins[i] = max( l->cullmins[i], l->lightmins[i] );
+		l->cullmaxs[i] = min( l->cullmaxs[i], l->lightmaxs[i] );
+	}
 }
 
 /*
@@ -1305,6 +1392,10 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 			}
 		}
 
+		if( R_CullSphere( l->origin, l->intensity, rn.clipFlags ) ) {
+			continue;
+		}
+
 		if( l->cluster == -2 ) {
 			// dynamic light with no vis info for this frame
 			R_GetRtLightVisInfo( rsh.worldBrushModel, l );
@@ -1318,10 +1409,6 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 			if( l->area < 0 || !( areabits[l->area >> 3] & ( 1 << ( l->area & 7 ) ) ) ) {
 				continue; // not visible
 			}
-		}
-
-		if( R_CullBox( l->cullmins, l->cullmaxs, clipFlags ) ) {
-			continue;
 		}
 
 		if( pvs ) {
@@ -1340,7 +1427,13 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 			}
 		}
 
-		l->receiveMask = 0;
+		R_PrepareRtLightFrameData( l );
+
+		if( R_CullBox( l->cullmins, l->cullmaxs, clipFlags ) ) {
+			continue;
+		}
+
+		l->sideMask = l->entSideMask;
 		l->shadowSize = 0;
 		l->lod = R_ComputeLOD( rn.viewOrigin, l->lightmins, l->lightmaxs, l->intensity, 1.0, 0 );
 		l->sort = l->intensity / (l->lod + 1.0);
@@ -1367,8 +1460,8 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 	int i;
 	int sidemask = 0x3F;
 	const vec_t *o = &l->origin[0];
-	const vec_t *lmins = &l->cullmins[0];
-	const vec_t *lmaxs = &l->cullmaxs[0];
+	const vec_t *lmins = &l->lightmins[0];
+	const vec_t *lmaxs = &l->lightmaxs[0];
 
 	if( !BoundsOverlapSphere( mins, maxs, l->origin, l->intensity ) ) {
 		return 0;
@@ -1428,8 +1521,8 @@ int R_CullRtLightSurfaceTriangles( const rtlight_t *l, const msurface_t *surf, b
 	const elem_t *ie = mesh->elems;
 	unsigned numElems = mesh->numElems;
 	unsigned numOutElems = 0;
-	const vec_t *lmins = l->cullmins;
-	const vec_t *lmaxs = l->cullmaxs;
+	const vec_t *lmins = l->worldmins;
+	const vec_t *lmaxs = l->worldmaxs;
 
 	inside = BoundsInsideBounds( surf->mins, surf->maxs, lmins, lmaxs );
 
@@ -1491,12 +1584,21 @@ void R_RenderDebugLightVolumes( void ) {
 
 	for( i = 0; i < rn.numRealtimeLights; i++ ) {
 		rtlight_t *l = rn.rtlights[i];
-
-		if( !l->receiveMask ) {
+		if( !l->sideMask ) {
 			continue;
 		}
 
-		R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+		switch( r_lighting_showlightvolumes->integer ) {
+			case 2:
+				R_AddDebugBounds( l->worldmins, l->worldmaxs, l->color );
+				break;
+			case 3:
+				R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+				break;
+			default:
+				R_AddDebugBounds( l->lightmins, l->lightmaxs, l->color );
+				break;
+		}
 	}
 }
 
@@ -1527,7 +1629,7 @@ void R_DrawRtLights( void ) {
 
 	for( i = 0; i < numRtLights; i++ ) {
 		l = rtLights[i];
-		if( !l->receiveMask ) {
+		if( !l->sideMask ) {
 			continue;
 		}
 

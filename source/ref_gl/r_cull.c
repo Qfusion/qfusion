@@ -32,8 +32,7 @@ FRUSTUM AND PVS CULLING
 /*
 * R_SetupSideViewFrustum
 */
-void R_SetupSideViewFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, int side )
-{
+void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] ) {
 	int i;
 	float sign;
 	int a0, a1, a2;
@@ -75,6 +74,8 @@ void R_SetupSideViewFrustum( const refdef_t *rd, float nearClip, float farClip, 
 		frustum[3].dist -= rd->ortho_y;
 	} else {
 		vec3_t right;
+		vec_t fpx, fnx, fpy, fny;
+		vec_t dist;
 
 		VectorNegate( left, right );
 
@@ -92,6 +93,33 @@ void R_SetupSideViewFrustum( const refdef_t *rd, float nearClip, float farClip, 
 			frustum[i].dist = DotProduct( rd->vieworg, frustum[i].normal );
 			frustum[i].signbits = SignbitsForPlane( &frustum[i] );
 		}
+
+		// calculate frustum corners
+
+		// change this dist to nearClip to calculate the near corner
+		// instead of an arbitrary corner on the frustum
+		dist = 1024.0f;
+
+		fpx = dist * tan( rd->fov_x * M_PI / 360.0 );
+		fnx = -1.0 * fpx;
+		fpy = dist * tan( rd->fov_y * M_PI / 360.0 );
+		fny = -1.0 * fpy;
+
+		VectorMA( rd->vieworg, dist, forward, corner[0] );
+		VectorMA( corner[0], fnx, left, corner[0] );
+		VectorMA( corner[0], fny, up, corner[0] );
+
+		VectorMA( rd->vieworg, dist, forward, corner[1] );
+		VectorMA( corner[1], fnx, left, corner[1] );
+		VectorMA( corner[1], fpy, up, corner[1] );
+
+		VectorMA( rd->vieworg, dist, forward, corner[2] );
+		VectorMA( corner[2], fpx, left, corner[2] );
+		VectorMA( corner[2], fpy, up, corner[2] );
+
+		VectorMA( rd->vieworg, dist, forward, corner[3] );
+		VectorMA( corner[3], fpx, left, corner[3] );
+		VectorMA( corner[3], fny, up, corner[3] );
 	}
 
 	// near clip
@@ -110,9 +138,88 @@ void R_SetupSideViewFrustum( const refdef_t *rd, float nearClip, float farClip, 
 /*
 * R_SetupFrustum
 */
-void R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum )
-{
-	R_SetupSideViewFrustum( rd, nearClip, farClip, frustum, 0 );
+void R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] ) {
+	R_SetupSideViewFrustum( rd, 0, nearClip, farClip, frustum, corner );
+}
+
+/*
+* R_DeformFrustum
+*
+* Based off R_Shadow_ComputeShadowCasterCullingPlanes from Darkplaces
+*
+* FIXME: this should also handle the near and far frustum planes?..
+*/
+int R_DeformFrustum( const cplane_t *frustum, const vec3_t corners[4], const vec3_t origin, const vec3_t point, cplane_t *deformed ) {
+	int i, j;
+	int n;
+
+	n = 0;
+
+	for( i = 0; i < 4; i++ ) {
+		if( PlaneDiff( point, &frustum[i] ) < -ON_EPSILON ) {
+			// reject planes that put the point outside the frustum
+			continue;
+		}
+		deformed[n++] = frustum[i];
+	}
+
+	if( n == 4 ) {
+		return n;
+	}
+
+	// if the point is onscreen the result will be 4 planes exactly
+	// if the point is offscreen on only one axis the result will
+	// be exactly 5 planes (split-side case)
+	// if the point is offscreen on two axes the result will be
+	// exactly 4 planes (stretched corner case)
+
+	for( i = 0; i < 4; i++ ) {
+		cplane_t plane;
+
+		// create a plane using the view origin and light origin, and a
+		// single point from the frustum corner set
+		TriangleNormal( origin, corners[i], point, plane.normal );
+
+		VectorNormalize( plane.normal );
+		plane.type = PLANE_NONAXIAL;
+		plane.dist = DotProduct( origin, plane.normal );
+
+		// see if this plane is backwards and flip it if so
+		for( j = 0; j < 4; j++ ) {
+			if( j != i && PlaneDiff( corners[j], &plane ) < -ON_EPSILON )
+				break;
+		}
+
+		if( j < 4 ) {
+			VectorNegate( plane.normal, plane.normal );
+			plane.dist *= -1;
+
+			// flipped plane, test again to see if it is now valid
+			for( j = 0; j < 4; j++ ) {
+				if( j != i && PlaneDiff( corners[j], &plane ) < -ON_EPSILON )
+					break;
+			}
+		}
+
+		// if the plane is still not valid, then it is dividing the
+		// frustum and has to be rejected
+		if( j < 4 ) {
+			continue;
+		}
+
+		// we have created a valid plane, compute extra info
+		CategorizePlane( &plane );
+		deformed[n++] = plane;
+
+		// if we've found 5 frustum planes then we have constructed a
+		// proper split-side case and do not need to keep searching for
+		// planes to enclose the light origin
+		if( n == 5 ) {
+			break;
+		}
+	}
+
+	return n;
 }
 
 /*
@@ -248,66 +355,108 @@ bool R_FogCull( const mfog_t *fog, vec3_t origin, float radius ) {
 }
 
 /*
-* R_CullBox
+* R_CullBoxCustomPlanes
 *
 * Returns true if the box is completely outside the frustum
 */
-bool R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags ) {
+static bool R_CullBoxCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t mins, const vec3_t maxs, const unsigned int clipflags ) {
 	unsigned int i, bit;
-	const cplane_t *p;
 
 	if( r_nocull->integer ) {
 		return false;
 	}
 
-	for( i = sizeof( rn.frustum ) / sizeof( rn.frustum[0] ), bit = 1, p = rn.frustum; i > 0; i--, bit <<= 1, p++ ) {
+	for( i = 0, bit = 1; i < nump; i++, bit <<= 1, p++ ) {
 		if( !( clipflags & bit ) ) {
 			continue;
 		}
 
 		switch( p->signbits & 7 ) {
-			case 0:
-				if( p->normal[0] * maxs[0] + p->normal[1] * maxs[1] + p->normal[2] * maxs[2] < p->dist ) {
-					return true;
-				}
-				break;
-			case 1:
-				if( p->normal[0] * mins[0] + p->normal[1] * maxs[1] + p->normal[2] * maxs[2] < p->dist ) {
-					return true;
-				}
-				break;
-			case 2:
-				if( p->normal[0] * maxs[0] + p->normal[1] * mins[1] + p->normal[2] * maxs[2] < p->dist ) {
-					return true;
-				}
-				break;
-			case 3:
-				if( p->normal[0] * mins[0] + p->normal[1] * mins[1] + p->normal[2] * maxs[2] < p->dist ) {
-					return true;
-				}
-				break;
-			case 4:
-				if( p->normal[0] * maxs[0] + p->normal[1] * maxs[1] + p->normal[2] * mins[2] < p->dist ) {
-					return true;
-				}
-				break;
-			case 5:
-				if( p->normal[0] * mins[0] + p->normal[1] * maxs[1] + p->normal[2] * mins[2] < p->dist ) {
-					return true;
-				}
-				break;
-			case 6:
-				if( p->normal[0] * maxs[0] + p->normal[1] * mins[1] + p->normal[2] * mins[2] < p->dist ) {
-					return true;
-				}
-				break;
-			case 7:
-				if( p->normal[0] * mins[0] + p->normal[1] * mins[1] + p->normal[2] * mins[2] < p->dist ) {
-					return true;
-				}
-				break;
-			default:
-				break;
+		case 0:
+			if( p->normal[0] * maxs[0] + p->normal[1] * maxs[1] + p->normal[2] * maxs[2] < p->dist ) {
+				return true;
+			}
+			break;
+		case 1:
+			if( p->normal[0] * mins[0] + p->normal[1] * maxs[1] + p->normal[2] * maxs[2] < p->dist ) {
+				return true;
+			}
+			break;
+		case 2:
+			if( p->normal[0] * maxs[0] + p->normal[1] * mins[1] + p->normal[2] * maxs[2] < p->dist ) {
+				return true;
+			}
+			break;
+		case 3:
+			if( p->normal[0] * mins[0] + p->normal[1] * mins[1] + p->normal[2] * maxs[2] < p->dist ) {
+				return true;
+			}
+			break;
+		case 4:
+			if( p->normal[0] * maxs[0] + p->normal[1] * maxs[1] + p->normal[2] * mins[2] < p->dist ) {
+				return true;
+			}
+			break;
+		case 5:
+			if( p->normal[0] * mins[0] + p->normal[1] * maxs[1] + p->normal[2] * mins[2] < p->dist ) {
+				return true;
+			}
+			break;
+		case 6:
+			if( p->normal[0] * maxs[0] + p->normal[1] * mins[1] + p->normal[2] * mins[2] < p->dist ) {
+				return true;
+			}
+			break;
+		case 7:
+			if( p->normal[0] * mins[0] + p->normal[1] * mins[1] + p->normal[2] * mins[2] < p->dist ) {
+				return true;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	return false;
+
+}
+
+/*
+* R_CullBox
+*
+* Returns true if the bounding box is completely outside the frustum
+*/
+bool R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipFlags ) {
+	return R_CullBoxCustomPlanes( rn.frustum, sizeof( rn.frustum ) / sizeof( rn.frustum[0] ), mins, maxs, clipFlags );
+}
+
+/*
+* R_DeformedCullBox
+*
+* Returns true if the bounding box is completely outside the deformed frustum
+*/
+bool R_DeformedCullBox( const vec3_t mins, const vec3_t maxs ) {
+	return R_CullBoxCustomPlanes( rn.deformedFrustum, rn.numDeformedFrustumPlanes, mins, maxs, (1<<rn.numDeformedFrustumPlanes)-1 );
+}
+
+/*
+* R_CullSphereCustomPlanes
+*
+* Returns true if the sphere is completely outside the frustum
+*/
+static bool R_CullSphereCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t centre, const float radius, const unsigned int clipflags ) {
+	unsigned int i, bit;
+
+	if( r_nocull->integer ) {
+		return false;
+	}
+
+	for( i = 0, bit = 1; i < nump; i++, bit <<= 1, p++ ) {
+		if( !( clipflags & bit ) ) {
+			continue;
+		}
+		if( DotProduct( centre, p->normal ) - p->dist <= -radius ) {
+			return true;
 		}
 	}
 
@@ -319,25 +468,17 @@ bool R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipfla
 *
 * Returns true if the sphere is completely outside the frustum
 */
-bool R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags ) {
-	unsigned int i;
-	unsigned int bit;
-	const cplane_t *p;
+bool R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipFlags ) {
+	return R_CullSphereCustomPlanes( rn.frustum, sizeof( rn.frustum ) / sizeof( rn.frustum[0] ), centre, radius, clipFlags );
+}
 
-	if( r_nocull->integer ) {
-		return false;
-	}
-
-	for( i = sizeof( rn.frustum ) / sizeof( rn.frustum[0] ), bit = 1, p = rn.frustum; i > 0; i--, bit <<= 1, p++ ) {
-		if( !( clipflags & bit ) ) {
-			continue;
-		}
-		if( DotProduct( centre, p->normal ) - p->dist <= -radius ) {
-			return true;
-		}
-	}
-
-	return false;
+/*
+* R_DeformedCullSphere
+*
+* Returns true if the sphere is completely outside the deformed frustum
+*/
+bool R_DeformedCullSphere( const vec3_t centre, const float radius ) {
+	return R_CullSphereCustomPlanes( rn.deformedFrustum, rn.numDeformedFrustumPlanes, centre, radius, (1<<rn.numDeformedFrustumPlanes)-1 );
 }
 
 /*

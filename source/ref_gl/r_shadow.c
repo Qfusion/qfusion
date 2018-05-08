@@ -292,6 +292,8 @@ void R_DrawRtLightWorld( void ) {
 	}
 }
 
+int R_DeformFrustum2( const cplane_t *frustum, const vec3_t corners[4], const vec3_t origin, const vec3_t point, cplane_t *deformed );
+
 /*
 * R_DrawRtLightShadow
 */
@@ -369,7 +371,16 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 
 		R_SetupSideViewMatrices( fd, side );
 
-		R_SetupSideViewFrustum( fd, rnp->nearClip, rnp->farClip, rnp->frustum, side );
+		R_SetupSideViewFrustum( fd, side, rnp->nearClip, rnp->farClip, rnp->frustum, rn.frustumCorners );
+
+		if( prevrn != NULL && !compile ) {
+			// generate a deformed frustum that includes the light origin, this is
+			// used to cull shadow casting surfaces that can not possibly cast a
+			// shadow onto the visible light-receiving surfaces, which can be a
+			// performance gain
+			rnp->numDeformedFrustumPlanes = R_DeformFrustum( prevrn->frustum, prevrn->frustumCorners, 
+					prevrn->viewOrigin, l->origin, rnp->deformedFrustum  );
+		}
 
 		R_RenderView( fd );
 
@@ -516,7 +527,7 @@ void R_DrawShadows( void ) {
 		if( !l->shadow ) {
 			continue;
 		}
-		if( !l->receiveMask ) {
+		if( !l->sideMask ) {
 			continue;
 		}
 
@@ -552,7 +563,7 @@ void R_DrawShadows( void ) {
 		}
 
 		sideMask = R_CullRtLightFrumSides( prevrn, l, size, border );
-		sideMask &= l->receiveMask;
+		sideMask &= l->sideMask;
 		if( !sideMask ) {
 			continue;
 		}

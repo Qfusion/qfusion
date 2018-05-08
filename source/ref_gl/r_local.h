@@ -154,6 +154,7 @@ typedef struct refScreenTexSet_s {
 } refScreenTexSet_t;
 
 typedef struct refinst_s {
+	unsigned int clipFlags;
 	unsigned int renderFlags;
 
 	int renderTarget;                       // target framebuffer object
@@ -168,9 +169,14 @@ typedef struct refinst_s {
 	vec3_t viewOrigin;
 	mat3_t viewAxis;
 	cplane_t frustum[6];
+	vec3_t frustumCorners[4];
+
+	cplane_t deformedFrustum[6];
+	int numDeformedFrustumPlanes;
+
 	float nearClip, farClip;
 	float polygonFactor, polygonUnits;
-	unsigned int clipFlags;
+
 	vec3_t visMins, visMaxs;
 	float visFarClip;
 	float hdrExposure;
@@ -207,6 +213,7 @@ typedef struct refinst_s {
 
 	unsigned int numEntities;
 	entity_t *entities[MAX_REF_ENTITIES];
+	uint8_t entpvs[(MAX_REF_ENTITIES+7)/8];
 
 	struct refinst_s *parent;
 
@@ -296,7 +303,7 @@ typedef struct {
 	lightstyle_t lightStyles[MAX_LIGHTSTYLES];
 
 	unsigned int numBmodelEntities;
-	entity_t        *bmodelEntities[MAX_REF_ENTITIES];
+	int bmodelEntities[MAX_REF_ENTITIES];
 
 	float farClipMin, farClipBias;
 
@@ -548,10 +555,13 @@ void        R_ShaderDump_f( void );
 //
 // r_cull.c
 //
-void    R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum );
-void	R_SetupSideViewFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, int side );
+void    R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
+void	R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
+int		R_DeformFrustum( const cplane_t *frustum, const vec3_t corners[4], const vec3_t origin, const vec3_t point, cplane_t *deformed );
 bool    R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags );
+bool    R_DeformedCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
+bool    R_DeformedCullSphere( const vec3_t centre, const float radius );
 bool    R_VisCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_VisCullSphere( const vec3_t origin, float radius );
 int     R_CullModelEntity( const entity_t *e, bool pvsCull );
@@ -710,9 +720,8 @@ void		R_PushTransformMatrix( bool projection, const float *pm );
 void		R_PopTransformMatrix( bool projection );
 
 void		R_FrameCache_Free( void );
-void		R_FrameCache_BeginFrame( void );
+void		R_FrameCache_Clear( void );
 void		*R_FrameCache_Alloc( size_t size );
-void		R_FrameCache_EndFrame( void );
 size_t		R_FrameCache_TotalSize( void );
 void		R_FrameCache_SetMark( void );
 void		R_FrameCache_FreeToMark( void );
