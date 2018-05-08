@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
 	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly, bool mergable ) {
 	mesh_t mesh;
-	int renderfx;
 
 	mesh.elems = poly->elems;
 	mesh.numElems = poly->numElems;
@@ -41,15 +40,6 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	mesh.colorsArray[0] = poly->colorsArray;
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
-
-	renderfx = e->renderfx;
-	if( renderfx & RF_VIEWERMODEL ) {
-		printf("");
-	} else if( renderfx & RF_WEAPONMODEL ) {
-		printf("");
-	} else {
-		printf("");
-	}
 
 	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
