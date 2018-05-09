@@ -32,6 +32,7 @@ typedef struct shadowSurfBatch_s {
 	int pass;
 	unsigned shaderId;
 
+	int firstElem;
 	int firstVert, lastVert;
 	int numElems;
 	int numInstances;
@@ -112,11 +113,25 @@ static void R_BatchShadowSurfElems( shadowSurfBatch_t *batch, int vertsOffset, c
 }
 
 /*
+* R_UpdateBatchShadowDrawSurf
+*/
+static void R_UpdateBatchShadowDrawSurf( shadowSurfBatch_t *batch ) {
+	drawSurfaceCompiledLight_t *drawSurf;
+
+	drawSurf = &batch->drawSurf;
+	drawSurf->type = ST_COMPILED_LIGHT;
+	drawSurf->firstVert = batch->firstVert;
+	drawSurf->numVerts = batch->lastVert - batch->firstVert + 1;
+	drawSurf->firstElem = batch->firstElem;
+	drawSurf->numElems = batch->numElems;
+	drawSurf->vbo = batch->elemsVbo;
+	drawSurf->numInstances = batch->numInstances;
+}
+
+/*
 * R_UploadBatchShadowElems
 */
 static void R_UploadBatchShadowElems( shadowSurfBatch_t *batch ) {
-	drawSurfaceCompiledLight_t *drawSurf;
-
 	if( batch->numElems ) {
 		mesh_t mesh;
 		mesh_vbo_t *elemsVbo;
@@ -131,13 +146,7 @@ static void R_UploadBatchShadowElems( shadowSurfBatch_t *batch ) {
 		batch->elemsVbo = elemsVbo->index;
 	}
 
-	drawSurf = &batch->drawSurf;
-	drawSurf->type = ST_COMPILED_LIGHT;
-	drawSurf->firstVert = batch->firstVert;
-	drawSurf->numVerts = batch->lastVert - batch->firstVert + 1;
-	drawSurf->firstElem = 0;
-	drawSurf->numElems = batch->numElems;
-	drawSurf->vbo = batch->elemsVbo;
+	R_UpdateBatchShadowDrawSurf( batch );
 
 	batch->elemsBuffer = NULL;
 	R_FrameCache_FreeToMark();
@@ -184,17 +193,12 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 
 		if( tail->pass ) {
 			if( numInstances ) {
-				drawSurfaceCompiledLight_t *sdrawSurf;
-
 				tail->elemsVbo = tail->vbo;
- 
-				sdrawSurf = &tail->drawSurf;
-				sdrawSurf->type = ST_COMPILED_LIGHT;
-				sdrawSurf->firstVert = drawSurf->firstVboVert + surf->firstDrawSurfVert;
-				sdrawSurf->numVerts = numVerts;
-				sdrawSurf->firstElem = drawSurf->firstVboElem + surf->firstDrawSurfElem;
-				sdrawSurf->numElems = numElems;
-				sdrawSurf->vbo = tail->elemsVbo;
+				tail->numElems = numElems;
+				tail->firstVert = drawSurf->firstVboVert + surf->firstDrawSurfVert;
+				tail->lastVert = tail->firstVert + numVerts - 1;
+				tail->firstElem = drawSurf->firstVboElem + surf->firstDrawSurfElem;
+				R_UpdateBatchShadowDrawSurf( tail );
 				return;
 			}
 
